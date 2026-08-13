@@ -223,6 +223,23 @@ ARTIFACTS = (
                  "years 2023-2026, so the baseline is defined using rows it also scores. Read "
                  "`primary_corrected_amendment_2`, not `primary_as_registered`."),
     },
+    {
+        "file": "xfv_headtohead_frame_eval.json", "group": "prospects",
+        "title": "Which frame the head-to-head is scored on",
+        "what": ("eFV carries one grade per player, fitted at that player's decision year, "
+                 "while the common set carries a consensus read for every base year. That "
+                 "makes the comparison frame a choice, and the choice decides the answer. "
+                 "This scores three frames inside the same bootstrap draws: every base year, "
+                 "post-debut reads removed, and base year equal to the decision year. Each "
+                 "gets its own floor."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_headtohead_frame.py",
+        "note": ("The middle frame is the only one that clears a floor and it is deliberately "
+                 "NOT the headline: it removes the rows where the consensus is advantaged "
+                 "while keeping those where eFV is, so its margin is partly an artifact of "
+                 "that asymmetry. Read `vintage_matched`, which is the symmetric contest and "
+                 "reads a tie at the smallest floor of the three."),
+    },
     # ---- MLB -------------------------------------------------------------
     {
         "file": "mlb_projections.json", "group": "mlb",

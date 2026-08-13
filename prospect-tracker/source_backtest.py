@@ -704,6 +704,33 @@ XFV_VS_CONSENSUS_MDE95 = 0.044
 #: ledger data/xfv_headtohead_gap.json. One-sided 95%, sd 0.02139.
 XFV_HEADTOHEAD_MDE95 = 0.0352
 
+#: The same gap on the two OTHER frames, measured 2026-08-13 by
+#: `python tools/efv_headtohead_frame_lab.py 2000` (artifact
+#: data/xfv_headtohead_frame_eval.json, pre-registration
+#: docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md). All three frames are scored
+#: INSIDE THE SAME DRAWS at the same seed, so these are not a stored constant read
+#: against a fresh delta, and the incumbent frame is re-derived there too: it comes
+#: back at MDE95 0.0355 against the 0.0352 above, i.e. the constant is not stale.
+#:
+#: WHY THREE FLOORS EXIST. The frame decides the answer, and each frame hands one
+#: of the two graders an information edge:
+#:
+#:   all base years      delta +0.0313  floor 0.0355  0.881x  not resolvable
+#:   pre-debut only      delta +0.0625  floor 0.0372  1.679x  "beats consensus"
+#:   base year == debut  delta +0.0040  floor 0.0303  0.131x  not resolvable
+#:
+#: The first hands the CONSENSUS up to 2.5 years of major league outcome on 550 of
+#: 3,234 rows. The second removes exactly those rows, but keeps rows whose base
+#: year PRECEDES eFV's decision year, where eFV is the side with extra
+#: information, so its margin is earned partly by that asymmetry rather than by
+#: better ordering. The third holds vintage fixed on both sides and is the honest
+#: contest; it reads a dead tie, at the SMALLEST floor of the three because one row
+#: per player removes the duplication that inflates variance under player
+#: resampling. The tie is therefore better measured than either alternative, not
+#: worse, and "not resolvable" here is not a power excuse.
+XFV_HEADTOHEAD_PREDEBUT_MDE95 = 0.0372
+XFV_HEADTOHEAD_VINTAGE_MDE95 = 0.0303
+
 #: MDE95 for the THIRD gap the site asserts, and the one it defends blending with:
 #: the PROSPX consensus against its best single input on the pooled common set
 #: (accuracy.consensus_vs_inputs). Per metric, because the two legs do not have the
@@ -1234,37 +1261,160 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     # claim can rest on. `pooled` is kept because the per-source calibration and
     # coverage story legitimately wants each source's full common cohort.
     efv_common = [c for c in pooled_common if c["grades"].get("xfv") is not None]
+    # M-1 (2026-08-13, docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md). The eFV side
+    # of this contest is ONE grade per player, anchored strictly pre-debut
+    # (xfv_oos is keyed by player). pooled_common carries a row per base year, so
+    # for anyone who debuted inside the window the later rows pair that frozen
+    # pre-debut eFV grade against a consensus read taken AFTER the player reached
+    # the majors. That hands the BASELINE up to 2.5 years of the outcome.
+    #
+    # _xfv_vs_consensus_detail has stripped those rows since the 2026-07-15 audit
+    # fix (see its comment) and _archetype_accuracy strips them too. The pooled
+    # head-to-head basis, which is the one the published claim rests on, never
+    # received the same filter. Same convention as both of them: a base year EQUAL
+    # to the debut year is a preseason read and stays eligible.
+    def _is_predebut(c: dict) -> bool:
+        dy = (c.get("outcome") or {}).get("debut_year")
+        return dy is None or (c.get("year") or 0) <= dy
+
+    efv_common_predebut = [c for c in efv_common if _is_predebut(c)]
+    efv_common_postdebut = [c for c in efv_common if not _is_predebut(c)]
+
+    # THE STRIP ALONE IS NOT A SYMMETRIC FRAME, and the third basis below is why
+    # this module publishes three rather than one (measured 2026-08-13,
+    # tools/efv_headtohead_frame_lab.py, artifact data/xfv_headtohead_frame_eval.json).
+    #
+    # eFV holds ONE grade per player, fitted at that player's decision year, which
+    # `efv_model._decision_year` sets to the DEBUT year for a debuted player. A
+    # common-set row from an EARLIER base year therefore scores eFV's later-vintage
+    # grade against a consensus read taken before it, and there eFV is the side
+    # holding extra information. Removing post-debut rows removes the reads where
+    # the CONSENSUS was advantaged while keeping the ones where eFV is, so the
+    # pre-debut basis is tilted toward eFV rather than neutral.
+    #
+    # Measured, same draws, cluster bootstrap by player, B=2000:
+    #   all base years       delta +0.0313  0.881x floor  not resolvable
+    #   pre-debut only       delta +0.0625  1.679x floor  "beats consensus"
+    #   base year == debut   delta +0.0040  0.131x floor  not resolvable
+    # The vintage-matched cell carries the SMALLEST floor of the three (0.0303),
+    # because one row per player removes the duplication that inflates the variance
+    # under player resampling. So the tie is measured MORE precisely than either
+    # other frame and is not a power excuse.
+    def _is_vintage_matched(c: dict) -> bool:
+        dy = (c.get("outcome") or {}).get("debut_year")
+        return dy is not None and (c.get("year") or 0) == dy
+
+    efv_common_vintage = [c for c in efv_common if _is_vintage_matched(c)]
     accuracy = {
         "capture_curve": capture_curve,
         "common_n": len(pooled_common),
         "head_to_head_raters": disp_raters,   # includes "xfv" (OOS) for the bars/archetype
         "pooled": _acc(pooled_common),
         "common_n_efv": len(efv_common),
+        "common_n_efv_predebut": len(efv_common_predebut),
+        "common_n_efv_vintage_matched": len(efv_common_vintage),
         "pooled_efv_common": _acc(efv_common) if len(efv_common) >= 40 else None,
+        "pooled_efv_common_predebut": (_acc(efv_common_predebut)
+                                       if len(efv_common_predebut) >= 40 else None),
+        # The only frame in which neither side holds a timing edge, and therefore
+        # the one the head-to-head verdict is read off.
+        "pooled_efv_common_vintage_matched": (_acc(efv_common_vintage)
+                                              if len(efv_common_vintage) >= 40 else None),
+        # The removed rows, scored on their own. The mechanism above predicts the
+        # consensus orders these BETTER than the retained rows, because on them it
+        # is reading players it has already seen in the majors. This is the gate's
+        # direction control: if it does not hold, the stated mechanism is wrong.
+        "pooled_efv_common_postdebut_removed": (_acc(efv_common_postdebut)
+                                                if len(efv_common_postdebut) >= 40 else None),
         "pooled_basis_note": ("pooled = each rater on its own rows (eFV n < the others); "
-                              "pooled_efv_common = every rater on the eFV-covered rows, "
-                              "which is the identical-rows basis for any head-to-head claim"),
+                              "pooled_efv_common_predebut = every rater on the eFV-covered "
+                              "rows with post-debut consensus reads removed, which is the "
+                              "identical-rows AND identical-vintage basis any head-to-head "
+                              "claim has to rest on; pooled_efv_common is the same set "
+                              "BEFORE that strip and is kept as the regression control"),
         "per_year": {y: {"common_n": len(common_by_year[y]), **_acc(common_by_year[y])}
                      for y in years if common_by_year[y]},
+    }
+    # M-1 row accounting. Published rather than left in a doc, because the strip
+    # changes the population every head-to-head number is computed on and a reader
+    # has to be able to see exactly what left.
+    _rm_by_year: dict[int, int] = {}
+    for _c in efv_common_postdebut:
+        _y = _c.get("year")
+        if _y is not None:
+            _rm_by_year[_y] = _rm_by_year.get(_y, 0) + 1
+    accuracy["head_to_head_frame"] = {
+        "basis": "pooled_efv_common_predebut",
+        "rule": ("drop rows whose base year is strictly later than the player's "
+                 "debut year; a base year equal to the debut year is a preseason "
+                 "read and is kept"),
+        "rows_before": len(efv_common),
+        "rows_after": len(efv_common_predebut),
+        "rows_removed": len(efv_common_postdebut),
+        "players_before": len({c.get("key") for c in efv_common}),
+        "players_after": len({c.get("key") for c in efv_common_predebut}),
+        "removed_by_base_year": {str(k): _rm_by_year[k] for k in sorted(_rm_by_year)},
+        "multi_vintage_retained": True,
+        "note": ("the strip and the one-row-per-player dedup are SEPARATE "
+                 "operations with different measured effects; this frame applies "
+                 "only the strip, per docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md"),
     }
     # The head-to-head verdict, carrying its own floor. Without this the surface
     # renders a bare inequality, which is the pattern the 2026-08-06 resolvability
     # gate was added to stop one level up.
-    _pec = accuracy.get("pooled_efv_common") or {}
-    _x, _c = (_pec.get("xfv") or {}), (_pec.get(CONSENSUS_KEY) or {})
-    if _x.get("spearman") is not None and _c.get("spearman") is not None:
-        _d = round(_x["spearman"] - _c["spearman"], 5)
-        _res = abs(_d) >= XFV_HEADTOHEAD_MDE95
-        accuracy["head_to_head_verdict"] = {
-            "basis": "pooled_efv_common (identical rows)",
-            "n": _pec.get("xfv", {}).get("n"),
-            "xfv_spearman": _x["spearman"], "consensus_spearman": _c["spearman"],
-            "delta": _d, "mde95": XFV_HEADTOHEAD_MDE95, "resolvable": _res,
-            "xfv_beats": bool(_d > 0 and _res),
-            "verdict": ("beats consensus" if (_d > 0 and _res)
-                        else "loses to consensus" if (_d < 0 and _res)
+    #
+    # The verdict is read off the VINTAGE-MATCHED basis, which is the only one of
+    # the three where neither grader holds a timing edge (see the block above).
+    # Every basis is still published, each against its OWN measured floor, so a
+    # reader can see that the answer moves with the frame and by how much.
+    def _h2h_cell(basis_key: str, rows_block: dict | None, floor: float,
+                  basis_note: str) -> dict | None:
+        blk = rows_block or {}
+        x, c = (blk.get("xfv") or {}), (blk.get(CONSENSUS_KEY) or {})
+        if x.get("spearman") is None or c.get("spearman") is None:
+            return None
+        d = round(x["spearman"] - c["spearman"], 5)
+        res = abs(d) >= floor
+        return {
+            "basis": basis_key,
+            "basis_note": basis_note,
+            "n": x.get("n"),
+            "xfv_spearman": x["spearman"], "consensus_spearman": c["spearman"],
+            "delta": d, "mde95": floor, "resolvable": bool(res),
+            "margin_x_floor": round(abs(d) / floor, 3) if floor else None,
+            "xfv_beats": bool(d > 0 and res),
+            "verdict": ("beats consensus" if (d > 0 and res)
+                        else "loses to consensus" if (d < 0 and res)
                         else "not resolvable at this power"),
         }
+
+    _frames = {
+        "vintage_matched": _h2h_cell(
+            "pooled_efv_common_vintage_matched",
+            accuracy.get("pooled_efv_common_vintage_matched"),
+            XFV_HEADTOHEAD_VINTAGE_MDE95,
+            "base year equals the eFV decision year; neither side holds a timing edge"),
+        "predebut": _h2h_cell(
+            "pooled_efv_common_predebut",
+            accuracy.get("pooled_efv_common_predebut"),
+            XFV_HEADTOHEAD_PREDEBUT_MDE95,
+            "post-debut consensus reads removed, all remaining base years kept; "
+            "tilted TOWARD eFV, which is graded at the decision year while the "
+            "retained earlier reads are not"),
+        "all_vintages": _h2h_cell(
+            "pooled_efv_common",
+            accuracy.get("pooled_efv_common"),
+            XFV_HEADTOHEAD_MDE95,
+            "every base year including post-debut consensus reads; tilted TOWARD "
+            "the consensus, which sees major league performance on those rows"),
+    }
+    accuracy["head_to_head_by_frame"] = {k: v for k, v in _frames.items() if v}
+    if _frames.get("vintage_matched"):
+        accuracy["head_to_head_verdict"] = dict(_frames["vintage_matched"])
+        accuracy["head_to_head_verdict"]["frame_note"] = (
+            "read off the vintage-matched basis. The other two frames are published "
+            "in head_to_head_by_frame and each is tilted toward one of the two "
+            "graders; see docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md.")
     # Does the consensus beat its best individual input on each metric? Each leg
     # carries its own measured floor (CONSENSUS_VS_INPUTS_MDE95) because the two do
     # not have the same precision: on this vintage the AUC leg clears its floor by

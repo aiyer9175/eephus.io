@@ -140,4 +140,95 @@ baseline advantage.
 
 ## Results
 
-(empty at pre-registration; filled by the lane)
+Measured 2026-08-13. Lab `tools/efv_headtohead_frame_lab.py 2000`, artifact
+`data/xfv_headtohead_frame_eval.json`, B=2000, seed 20260808, cluster paired
+bootstrap by player, all frames scored INSIDE THE SAME DRAWS.
+
+### Every control passed
+
+- **PARITY: exact.** The incumbent frame reproduced the published artifact
+  bit-identically on all four raters at n=3,234 (xfv 0.3485, consensus 0.3193,
+  fangraphs 0.2765, mlb_pipeline 0.3226, delta 0.0292).
+- **ROW ACCOUNTING**: 3,234 rows to 2,684; 550 removed; 1,051 players to 1,006.
+  Removed by base year: 2017:14, 2018:33, 2019:48, 2020:89, 2021:136, 2022:106,
+  2023:124.
+- **DIRECTION CONTROL: confirmed, and not marginally.** The consensus scores
+  **0.4003** on the removed post-debut rows against **0.3012** on the retained
+  ones. It orders far better precisely where it has already watched the player in
+  the majors. eFV moves the other way (0.2889 removed vs 0.3637 retained), which
+  is what a grade frozen at the decision date should do.
+- The pre-registered direction was right: the strip **increased** the delta
+  (+0.0313 to +0.0625, paired difference +0.0312 with CI95 [0.0180, 0.0457], so
+  the two frames are themselves distinguishable) and **raised** the floor
+  (0.0355 to 0.0372) as n fell.
+
+### The headline result is NOT the one the strip alone produces
+
+| frame | n | delta | MDE95 | margin | verdict |
+| --- | --- | --- | --- | --- | --- |
+| all base years | 3,234 | +0.0313 | 0.0355 | 0.881x | not resolvable |
+| pre-debut only | 2,684 | **+0.0625** | 0.0372 | **1.679x** | would read "beats consensus" |
+| base year == decision year | 802 | **+0.0040** | 0.0303 | **0.131x** | not resolvable |
+
+Production `oos_grades` path reproduces the ordering on its own numbers:
++0.0292 / +0.0602 / **+0.0014**.
+
+**THE PRE-DEBUT FRAME IS THE ONLY ONE THAT CLEARS A FLOOR AND IT IS NOT SHIPPED
+AS THE HEADLINE.** The strip removes the rows where the CONSENSUS holds an
+information edge and keeps the rows where eFV holds one: eFV carries a single
+grade per player fitted at the decision year, so a base year EARLIER than that
+compares eFV's later-vintage grade against a consensus read taken before it. The
+frame is not symmetric, it is tilted the other way, and its margin is earned
+partly by that tilt rather than by better ordering.
+
+The vintage-matched cell is the symmetric contest, and it reads a dead tie. Its
+floor is the **smallest of the three** (0.0303), because one row per player
+removes the duplication that inflates variance under player resampling, so the
+tie is measured MORE precisely than either alternative. "Not resolvable" here is
+not a power excuse. This also independently reproduces the +0.00567 tie the gate
+standard recorded for the latest-pre-debut frame, by a different route.
+
+### What this changes on the page
+
+On the vintage-matched basis the ordering is eFV 0.3937, **MLB Pipeline 0.3956**,
+consensus 0.3923, FanGraphs 0.3482. eFV's lead over the best public source is
+**-0.0019**, i.e. nominally behind, at a fraction of any floor.
+
+The hero copy asserted "it ranks ahead of every public source" as fixed prose and
+spliced in a lead behind a hard-coded "+". On this basis it would have rendered
+"ahead of every one of them ... a +-0.002 point estimate": a false claim and
+broken arithmetic in one sentence. Both the claim and the sign are now DERIVED,
+with a third branch for the indistinguishable case. Hard-coded accuracy numbers
+in copy are already banned; a hard-coded accuracy CLAIM is the same defect in
+prose.
+
+While fixing that, `_methHeroBanner` was about to reference an `hhv` binding that
+did not exist in its scope, which is the same ReferenceError shape that blanked
+this whole view once before and passed the suite because the view-walk test
+accepted the empty state. Caught before it ran; declared at function scope.
+
+### Verdict
+
+**The corrected frame is adopted as a basis and REFUSED as a headline.** The
+defect the strip fixes is real and the strip is kept: the receipts table and the
+archetype table have stripped post-debut reads since 2026-07-15 and the pooled
+head-to-head basis never did. But the published verdict is read off the
+vintage-matched basis, and on equal information **eFV and the public consensus
+are statistically indistinguishable**.
+
+All three frames ship in `accuracy.head_to_head_by_frame`, each against its own
+floor, so a reader can see that the frame decides the answer and by how much.
+
+### Limits
+
+- Floors here are the REFIT estimator. E_cond's floor for this statistic class is
+  the smaller of the two (0.0322 against 0.0345, `EFV_GATE_STANDARD.md` 7.6), so
+  no verdict above can flip toward LESS resolvable under it, but E_cond was not
+  re-derived on these frames. Owed.
+- The vintage-matched basis is defined as base year == debut year, which equals
+  `efv_model._decision_year` for debuted players. Never-debuted busts have no
+  debut year and are absent from this cell; the common set is close to fully
+  debuted, so the effect is small but it is a population difference, not a
+  reweighting of the same one.
+- n=802 is the smallest of the three cells. Its floor is nonetheless the
+  smallest, which is the point.

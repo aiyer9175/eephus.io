@@ -57,6 +57,12 @@ MODEL_GLOSSARY = {
     # grade whose lead over that baseline is the thing being adjudicated).
     "efv_denoised_baseline_control": ["consensus_fv", "xfv"],
 
+    # M-1. Not "internal": this row SELECTS the frame the published head-to-head
+    # verdict is computed on, so the number a reader sees on the source-comparison
+    # view is written to it. Same two entries as the row above and for the same
+    # reason - it adjudicates eFV's grade against the consensus baseline.
+    "xfv_headtohead_frame": ["consensus_fv", "xfv"],
+
     "consensus_recency_decay": "internal",
     # measurement of the single-source shrinkage; nothing shipped, the incumbent
     # constant was tested against the mechanism it approximates and survived

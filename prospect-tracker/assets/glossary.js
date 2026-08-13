@@ -664,13 +664,27 @@ function _methAccuracyChart(bt) {
   // 4,259; roughly half the gap that pairing showed was the row difference, not
   // ordering skill. pooled_efv_common re-scores every rater on the rows eFV
   // covers. Falls back only for an artifact written before that block existed.
-  const pld = bt.accuracy.pooled_efv_common || bt.accuracy.pooled || {};
+  // SAME VINTAGE OR THE COMPARISON IS NOT ONE EITHER (M-1, 2026-08-13). Identical
+  // rows was only half the fix. eFV holds ONE grade per player, fitted at that
+  // player's decision year, while the common set carries a consensus read for
+  // every base year, so pooled_efv_common still pairs eFV against reads taken
+  // years before or after its own. Both directions were measured and both bite:
+  // post-debut reads hand the consensus up to 2.5 years of realized major league
+  // outcome (it scores 0.400 there against 0.301 on the rest), and reads earlier
+  // than the decision year hand eFV the information edge instead. The
+  // vintage-matched block holds the vintage fixed on both sides and is the basis
+  // head_to_head_verdict is computed on, so reading it here keeps the number and
+  // the floor beneath it on the same population - which is the mismatch the hero
+  // banner below was already fixed for once.
+  const pld = bt.accuracy.pooled_efv_common_vintage_matched
+    || bt.accuracy.pooled_efv_common || bt.accuracy.pooled || {};
   const x = pld.xfv, c = pld.prospx_consensus, fg = pld.fangraphs, mlb = pld.mlb_pipeline;
   const hh = bt.accuracy.head_to_head_verdict || null;
   let verdict;
   if (x && x.spearman != null && c && c.spearman != null) {
     const f3 = v => (v == null ? "-" : v.toFixed(3));
-    const n = (bt.accuracy.common_n_efv || 0).toLocaleString();
+    const n = (bt.accuracy.common_n_efv_vintage_matched
+      || bt.accuracy.common_n_efv || 0).toLocaleString();
     const gap = x.spearman - c.spearman;
     // A bare inequality is not a result. The gap is reported against the floor
     // this backtest can actually resolve, so a lead inside the floor reads as
@@ -1830,7 +1844,13 @@ function _methHeroBanner(bt) {
   // that same 0.035 floor, which is the honest "cannot call it a win" the
   // headline claims. The chart below even warns about this exact number, so
   // the page was contradicting itself top to bottom.
-  const p = (bt.accuracy && (bt.accuracy.pooled_efv_common || bt.accuracy.pooled)) || {};
+  // M-1 (2026-08-13): identical rows was only half of it. The floor this banner
+  // attaches is now measured on the VINTAGE-MATCHED basis (base year equals the
+  // eFV decision year), so the lead printed here has to come from that same
+  // block or the banner is back to floor-checking one population with another
+  // population's floor, which is the exact failure this comment already records.
+  const p = (bt.accuracy && (bt.accuracy.pooled_efv_common_vintage_matched
+    || bt.accuracy.pooled_efv_common || bt.accuracy.pooled)) || {};
   const x = p.xfv, c = p.prospx_consensus, fg = p.fangraphs, mlb = p.mlb_pipeline;
   if (!x || x.spearman == null) return "";
   const f3 = v => (v == null ? "-" : v.toFixed(3));
@@ -1838,16 +1858,45 @@ function _methHeroBanner(bt) {
     .filter(pr => pr[1] && pr[1].spearman != null);
   const bestPub = pubs.length ? pubs.reduce((a, b) => (b[1].spearman > a[1].spearman ? b : a)) : null;
   const lead = (bestPub && x.spearman != null) ? (x.spearman - bestPub[1].spearman) : null;
+  // Read the floored verdict from the artifact rather than re-deriving one here.
+  // Declared at function scope on purpose: the last time this file reached for a
+  // helper that was only bound inside another function, the ReferenceError blanked
+  // the entire source-comparison view and the suite stayed green because the
+  // view-walk test accepted the empty state as a pass.
+  const hhv = (bt.accuracy && bt.accuracy.head_to_head_verdict) || null;
   const tile = (lbl, v, isEfv) => `<div class="meth-find-card${isEfv ? " scx-hero-efv" : ""}">
     <div class="meth-find-stat">${f3(v)}</div>
     <div class="meth-find-label">${escapeHtml(lbl)}</div>
     <div class="meth-find-sub">${isEfv ? "outcome-grounded model" : "public scouting grade"}</div>
   </div>`;
   const tiles = tile("eFV", x.spearman, true) + pubs.map(pr => tile(pr[0], pr[1].spearman, false)).join("");
+  // THE HEADLINE IS DERIVED, NEVER ASSERTED (M-1, 2026-08-13). It used to state
+  // "ranks ahead of every public source" as fixed prose and then splice in a lead
+  // that the template prefixed with a hard-coded "+". Moving the page onto the
+  // vintage-matched basis, where neither grader holds a timing edge, put eFV
+  // 0.002 BEHIND MLB Pipeline, which would have rendered "ahead of every one of
+  // them ... a +-0.002 point estimate": a false claim and broken arithmetic in
+  // one sentence. Hard-coded accuracy numbers in copy are banned for this exact
+  // reason, and a hard-coded accuracy CLAIM is the same defect wearing prose.
+  // Both directions now come from the measurement, and the floor decides whether
+  // any of it may be called a lead at all.
+  const ahead = (lead != null && lead > 0);
+  const resolvable = !!(hhv && hhv.resolvable);
+  const headline = (lead == null)
+    ? "eFV grades prospects on what they actually <em>became</em>."
+    : (ahead && resolvable)
+      ? "eFV grades prospects on what they actually <em>became</em>, and out of sample it ranks ahead of every public source by a margin that clears our noise floor."
+      : ahead
+        ? "eFV grades prospects on what they actually <em>became</em>, and out of sample it ranks ahead of every public source - by a margin we still cannot call a win."
+        : "eFV grades prospects on what they actually <em>became</em>, and out of sample it is statistically indistinguishable from the best public scouting grade.";
+  const leadClause = (lead != null && bestPub)
+    ? `, ${f3(x.spearman)} against ${f3(bestPub[1].spearman)} for the best public source (${escapeHtml(bestPub[0])}), a ${lead >= 0 ? "+" : ""}${lead.toFixed(3)} point estimate`
+    : "";
+  const verbPhrase = ahead ? "it grades ahead of every one of them" : "it lands level with them";
   return `<div class="source-comp-hero">
     <div class="source-comp-hero-kicker">A different kind of Future Value</div>
-    <h2 class="source-comp-hero-title">eFV grades prospects on what they actually <em>became</em>, and out of sample it ranks ahead of every public source - by a margin we still cannot call a win.</h2>
-    <p class="source-comp-hero-lede">Every public FV grade is an educated opinion about the future. eFV is a model trained on resolved outcomes and scored the honest way: leakage-free, forward-chained, on the same players and the same window as the sources it is measured against. On ordering skill - how well a preseason grade tracks the WAR a prospect went on to produce - it grades ahead of every one of them${(lead != null && bestPub) ? `, ${f3(x.spearman)} to ${f3(bestPub[1].spearman)} over the best public source (${escapeHtml(bestPub[0])}), a +${lead.toFixed(3)} point estimate` : ""}${_hhFloorClause(bt)}</p>
+    <h2 class="source-comp-hero-title">${headline}</h2>
+    <p class="source-comp-hero-lede">Every public FV grade is an educated opinion about the future. eFV is a model trained on resolved outcomes and scored the honest way: leakage-free, forward-chained, on the same players, the same window AND the same vintage as the sources it is measured against. On ordering skill - how well a preseason grade tracks the WAR a prospect went on to produce - ${verbPhrase}${leadClause}${_hhFloorClause(bt)}</p>
     <div class="meth-findings source-comp-hero-tiles">${tiles}</div>
     <p class="source-comp-hero-foot">Ordering skill = Spearman correlation between the preseason grade and realized MLB WAR (higher is better). The full method, per-FV-tier and per-archetype breakdowns, and the honest limits are all below - nothing cherry-picked.</p>
   </div>`;

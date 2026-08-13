@@ -1,0 +1,118 @@
+{
+ "generated_at": "2026-08-13T18:02:12Z",
+ "produced_by": "tools/efv_headtohead_frame_lab.py",
+ "pre_registration": "docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md",
+ "basis": {
+  "scored_years": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "common_set_players": 1571,
+  "frames": {
+   "incumbent": "every eFV-covered common-set row, all base years",
+   "corrected": "post-debut consensus reads removed; a base year equal to the debut year is a preseason read and is kept"
+  }
+ },
+ "protocol": "cluster paired bootstrap, resampled BY PLAYER over the eFV matrix pool, forward chain refit inside every draw, both legs scored on the common-set rows the resampled players own. BOTH FRAMES ARE SCORED INSIDE THE SAME DRAW, so the incumbent is re-derived here rather than read off a stored constant, and the two frames are paired. MDE95 = 1.645 * sd(delta), one-sided, matching the convention of the floor it supersedes.",
+ "B_requested": 2000,
+ "B_used": 2000,
+ "seed": 20260808,
+ "elapsed_s": 122.5,
+ "point": {
+  "incumbent": {
+   "n_rows": 3234,
+   "efv": 0.35059,
+   "consensus": 0.31931,
+   "delta": 0.03128
+  },
+  "corrected": {
+   "n_rows": 2684,
+   "efv": 0.36369,
+   "consensus": 0.30118,
+   "delta": 0.06251
+  },
+  "removed": {
+   "n_rows": 550,
+   "efv": 0.28937,
+   "consensus": 0.40028,
+   "delta": -0.11091
+  },
+  "vintage_matched": {
+   "n_rows": 802,
+   "efv": 0.39565,
+   "consensus": 0.39169,
+   "delta": 0.00396
+  }
+ },
+ "incumbent": {
+  "delta": 0.03128,
+  "sd": 0.02159,
+  "mde95": 0.0355,
+  "mde95_twosided": 0.0423,
+  "ci95": [
+   -0.0177,
+   0.06757
+  ],
+  "p_gt_0": 0.879,
+  "margin_x_floor": 0.881,
+  "resolvable": false,
+  "verdict": "not resolvable at this power"
+ },
+ "corrected": {
+  "delta": 0.06251,
+  "sd": 0.02263,
+  "mde95": 0.0372,
+  "mde95_twosided": 0.0443,
+  "ci95": [
+   0.01427,
+   0.10079
+  ],
+  "p_gt_0": 0.997,
+  "margin_x_floor": 1.679,
+  "resolvable": true,
+  "verdict": "beats consensus"
+ },
+ "vintage_matched": {
+  "delta": 0.00396,
+  "sd": 0.01844,
+  "mde95": 0.0303,
+  "mde95_twosided": 0.0361,
+  "ci95": [
+   -0.04003,
+   0.03244
+  ],
+  "p_gt_0": 0.4565,
+  "margin_x_floor": 0.131,
+  "resolvable": false,
+  "verdict": "not resolvable at this power"
+ },
+ "asymmetry_control": {
+  "question": "does the corrected frame win because the strip removed the consensus's timing advantage, or because it KEPT eFV's?",
+  "mechanism": "eFV holds one grade per player, fitted at the decision year. Rows from an EARLIER base year compare that grade against a consensus read taken before it, where eFV is the side with extra information. The strip removes only the rows where the consensus is advantaged, so the corrected frame is not symmetric.",
+  "reading": "if vintage_matched resolves in the same direction, the corrected win is not an artifact of that asymmetry. If vintage_matched is a tie, the corrected margin depends on rows where eFV had more information and MUST be reported with that qualifier."
+ },
+ "paired_difference": {
+  "delta": 0.03123,
+  "sd": 0.00713,
+  "ci95": [
+   0.01801,
+   0.0457
+  ],
+  "note": "the frames share their draws, so this is the sd of the paired difference and not the difference of two independent sds"
+ },
+ "direction_control": {
+  "consensus_rho_retained": 0.30118,
+  "consensus_rho_removed": 0.40028,
+  "mechanism_holds": true,
+  "note": "the mechanism predicts the consensus orders the REMOVED rows better, because on those it is grading players it has already seen in the majors"
+ }
+}
