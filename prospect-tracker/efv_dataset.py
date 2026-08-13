@@ -266,10 +266,35 @@ DATA_DIR = Path(__file__).parent / "data"
 MATRIX_PATH = DATA_DIR / "xfv_hitter_matrix.json"
 REPORT_PATH = DATA_DIR / "xfv_dataset_report.json"
 
-DEBUT_YEARS = tuple(range(2011, 2025))      # 2011-2024 (2011-2016 via the MLB Pipeline
-#   backfill, now in debuts.json after the rebuild — captured directly, no augment needed)
 RESOLVED_THROUGH = 2025                      # last fully-played season
 TARGET_SEASONS = 6
+
+# 2011 through RESOLVED_THROUGH - 1. (2011-2016 arrive via the MLB Pipeline
+# backfill, now in debuts.json after the rebuild, captured directly with no
+# augment needed.)
+#
+# DERIVED, not a literal, since 2026-08-13. It read `range(2011, 2025)`, which is
+# the same tuple, but as an independent constant it could drift away from
+# RESOLVED_THROUGH silently and the bound it encodes is not arbitrary: stopping
+# one year short guarantees every admitted debut cohort has AT LEAST TWO observed
+# seasons. A debut in RESOLVED_THROUGH itself would have exactly one, and
+# `_label_6yr` would then project a six-season label off a single season at
+# weight 1/6, which is the regime the censoring work already measured as
+# materially biased.
+#
+# THIS LINE IS ALSO THE PITCHER STUFF-FEATURE CLOCK, so it is worth knowing what
+# moving it does. AAA tracking begins in 2023, so pre-decision stuff coverage is
+# zero for every cohort through 2023 and first appears in the 2024 debut cohort
+# (48 pitchers) and 2025 (64). A feature only enters the model through TRAINING
+# rows, and training for test year Y is decision_year < Y, so the earliest fold
+# that can train on covered rows is test year 2025. That fold does not exist
+# today: the pitcher matrix holds 256 rows at 2024 and ZERO debuted rows at 2025,
+# because this bound excludes them, even though debuts.json already carries 243
+# debuts from 2025. When RESOLVED_THROUGH advances to 2026 the 2025 cohort gains
+# its second observed season, this bound admits it automatically, and the stuff
+# gate at data/xfv_pitcher_stuff_eval.json becomes runnable for the first time
+# rather than structurally untrainable. See docs/efv-2026-08-13/PITCHER_STUFF_CLOCK.md.
+DEBUT_YEARS = tuple(range(2011, RESOLVED_THROUGH))
 CURRENT_SEASON = 2026
 _LEVEL_RANK = {"DSL": 0, "CPX": 1, "A": 2, "A+": 3, "AA": 4, "AAA": 5}
 # contemporaneous-ish typical age by level (leakage-free static prior for age-rel-level;
