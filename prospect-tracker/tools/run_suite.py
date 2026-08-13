@@ -18,10 +18,12 @@ _restore_committed_build_artifacts snapshots dirty tracked files at session star
 and git-checkouts anything the suite dirtied at the end, so an edit made DURING a
 run is silently reverted. Run between edit batches, never alongside them.
 
-Expected baseline on this tree is exactly two reds, both needing a real box
-rebuild_only and neither a regression:
+Expected baseline on this tree is exactly three reds, all needing a real box
+rebuild_only and none a regression. KNOWN_BASELINE_REDS below is the canonical
+list; keep this docstring in step with it:
     test_efv_export.py::test_xfv_golden_fingerprint
     test_proj_export.py::test_vet_surplus_only_on_contracted_seasons
+    test_identity_collisions.py::test_no_new_merged_identity_on_the_active_board
 test_atomic_artifact_write is a known load-dependent flake (its reader thread
 starves the os.replace writer only on an idle fast box); re-run it in a fresh
 process before calling it a regression.

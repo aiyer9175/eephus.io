@@ -340,6 +340,33 @@ _DET_ORGS = ["ARI", "ATL", "BAL", "BOS", "CHC", "CWS", "CIN", "CLE", "COL", "DET
              "PHI", "PIT", "SD", "SF", "SEA", "STL", "TB", "TEX", "TOR", "WSH"]
 
 
+def _det_vintages() -> tuple[tuple[str, str], ...]:
+    """The two snapshot vintages, derived from TODAY so this fixture cannot rot.
+
+    They used to be the literals 2024-02-14 and 2025-02-12, and that made the test
+    time-dependent in a way that failed silently. `export_timeseries_json` drops a
+    player from the active pool when `fv_stale and play_stale` (storage.py:10924).
+    `play_stale` is unconditionally True here because the test passes no
+    career_stats, so the whole fixture rode on `fv_stale`, which compares the latest
+    grade against `_inactive_cutoff()` = today minus INACTIVE_MONTHS (18).
+
+    On 2026-08-12 that cutoff was 2025-02-12 and `2025-02-12 < 2025-02-12` is False,
+    so the pool survived. On 2026-08-13 the cutoff became 2025-02-13, the newest
+    vintage fell one day behind it, all 60 players went inactive, and org_summary
+    came back EMPTY. The determinism assertions still passed at that point, because
+    two empty dicts are trivially equal; only the `len(a) >= 20` guard caught it.
+    That guard is the reason this was a red and not a silent pass forever.
+
+    Anchoring on today keeps both vintages inside the 18-month window, and taking
+    the older one exactly 365 days back guarantees the two interval_labels land in
+    different calendar years so they stay distinct publications.
+    """
+    recent = date.today() - timedelta(days=45)
+    older = recent - timedelta(days=365)
+    return ((older.isoformat(), f"{older.year}report"),
+            (recent.isoformat(), f"{recent.year}report"))
+
+
 def _det_snaps() -> list[Snapshot]:
     """Two graded fangraphs prospects per org across two vintages, FV spread so the
     30 orgs get distinct farm scores (a mid-pack tie would still be deterministic,
@@ -349,7 +376,7 @@ def _det_snaps() -> list[Snapshot]:
         for j in range(2):
             fv = 40.0 + (i % 8) * 3 + j * 5
             key = f"{org.lower()}_p{j}"
-            for sd, lbl in (("2024-02-14", "2024report"), ("2025-02-12", "2025report")):
+            for sd, lbl in _det_vintages():
                 snaps.append(Snapshot(
                     source="fangraphs", snapshot_date=sd, interval_label=lbl,
                     player_key=key, player_name=f"{org} Prospect {j}",
