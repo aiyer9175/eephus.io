@@ -71,6 +71,45 @@ narrower path the owner was offered and declined in favour of the full epoch;
 recorded here because the verification is what makes its cost concrete, and the
 owner's choice was made before this evidence existed.
 
+## The lambda re-gate, quantified 2026-08-13, and it does not pass on the pitcher side
+
+The epoch's implicit lambda change is computable exactly. Substituting
+`a_c + b_c * xfv_war` leaves the consensus leg at `1 - lam` and puts the model leg
+at `lam * b_c`, so the equivalent pure lambda is
+
+    lam_eff = lam * b_c / ((1 - lam) + lam * b_c)
+
+Using the leave-one-fold-out coefficients this lane already fitted:
+
+| side | lam shipped | b_c per fold | mean b_c | **lam_eff** | shift | clamp floor |
+| --- | --- | --- | --- | --- | --- | --- |
+| hit | 0.70 | 0.637 0.640 0.609 0.577 0.644 | 0.6212 | **0.5917** | -0.108 | +0.242 clear |
+| pit | 0.57 | 0.308 0.651 0.350 0.417 0.380 | 0.4213 | **0.3583** | -0.212 | **+0.008 clear** |
+
+`_BLEND_LAMBDA_CLAMP` is `(0.35, 0.90)`.
+
+**HITTERS: acceptable.** 0.5917 lands beside 0.60, which the TOST battery already
+tested and RULED OUT as a difference. The hitter side's implicit shift is
+therefore inside territory that has been measured and found to change nothing.
+
+**PITCHERS: this is a stop.** 0.3583 sits **0.0083 above the clamp floor the
+model imposes on itself**. The clamp exists precisely to stop lambda going that
+low, and nothing near 0.36 has ever been tested; the TOST work covered 0.65,
+0.60 and 0.51. The full epoch would therefore drive the pitcher blend to the edge
+of its own admissible range as an UNMEASURED SIDE EFFECT of a calibration fix.
+
+It is also the least trustworthy number in the lane. Pitcher `b_c` ranges 0.308
+to 0.651 across folds, better than a factor of two, which is the same instability
+already visible in the pitcher slope CI [0.0677, 1.1341]. So the side whose
+correction is least precise is the side whose implied lambda lands on the floor.
+
+**Conclusion: the full epoch cannot ship on the pitcher side as specified.** Not
+because the calibration is wrong, but because routing it through the blend spends
+the correction as a lambda cut into untested territory. The options that remain
+are the narrow path above, which touches no lambda at all, or a hitter-only
+epoch, or an explicit and separately gated pitcher lambda decision taken on its
+own evidence rather than inherited from a dispersion fit.
+
 ## What the full epoch now has to include
 
 1. An explicit blend-lambda re-gate, or an argument that `lam * b_c` against
