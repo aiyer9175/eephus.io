@@ -5,7 +5,7 @@
     "back": [
       "Founder and lead developer of eephus.io: the site architecture, the static build pipeline, the data model, and the retro card-and-newspaper design system.",
       "PROSPX end to end: the prospect board, filters, player cards, the farm system, Generate GFX, and the account and forum layer.",
-      "eFV, the outcome-grounded Future Value model: a leakage-clean feature matrix, a ridge WAR projection, the realized-implied grade, the 20-80 quantile scale, surplus value, and the backtest that shows eFV out-ranks consensus, FanGraphs, and MLB Pipeline out of sample.",
+      "eFV, the outcome-grounded Future Value model: a leakage-clean feature matrix, a ridge WAR projection, the realized-implied grade, the 20-80 quantile scale, surplus value, and the forward-chained backtest that scores it against consensus, FanGraphs, and MLB Pipeline on the same players, the same window and the same vintage.",
       "MLB Projections: the league-wide projection engine, Team Outlook, and the merged MLB player cards.",
       "MLB Free Agency: the market-value engine, the fit model, and the verdict framework.",
       "MLB Stats: the leaderboard module and the REM+, RIV+, SEM+, and HEM+ Arkmetrics, plus the Leverage boards.",

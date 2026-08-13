@@ -155,3 +155,33 @@ def test_epoch_was_bumped_past_the_last_old_basis_snapshot():
     feeding them to the movement engine publishes a basis change as player movement."""
     assert S.BOARD_RANK_BASIS_EPOCH >= "2026-08-13", (
         "epoch not bumped for the dispersion basis change")
+
+
+def test_no_surface_asserts_an_unearned_accuracy_claim():
+    """RATCHET. Four surfaces asserted "eFV out-ranks consensus" as fixed prose while
+    the artifact they describe carries xfv_beats:false and "not resolvable at this
+    power" on both sides. The hero was moved onto derived copy on 2026-08-13 and these
+    were missed.
+
+    An out-ranks claim is allowed ONLY inside a branch that the measurement selects.
+    Grep-level, deliberately: the defect is prose, so prose is what is pinned."""
+    import pathlib
+    root = pathlib.Path(__file__).parent
+    banned = ("out-ranks consensus", "OUT-RANKS", "out-ranks the scouting industry")
+    # glossary.js is exempt: its two occurrences are inside _methEfvVerdict branches
+    # that only render when beat.length says the measurement earned them.
+    targets = ["data/glossary.json", "content/team.json", "prospx/index.html"]
+    bad = []
+    for t in targets:
+        p = root / t
+        if not p.exists():
+            continue
+        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if line.lstrip().startswith(("//", "#", "/*", "*")):
+                continue          # the comments recording the defect are not the defect
+            for b in banned:
+                if b in line:
+                    bad.append(f"{t}:{i}: {b}")
+    assert not bad, (
+        "unearned accuracy claim reintroduced; derive it from the backtest artifact "
+        "or drop it:\n  " + "\n  ".join(bad))

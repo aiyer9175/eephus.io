@@ -704,6 +704,63 @@ function _methAccuracyChart(bt) {
   </div>`;
 }
 
+// THE VERDICT UNDER THE eFV CHARTS IS DERIVED, NEVER ASSERTED (2026-08-14).
+//
+// This paragraph used to read "eFV out-ranks consensus FV out-of-sample on both sides,
+// and the edge holds on the recent 2019-2023 cohorts" as FIXED PROSE, styled is-good,
+// sitting directly beneath two charts whose own artifact fields say xfv_beats:false and
+// verdict:"not resolvable at this power" on BOTH sides (hitters +0.0112, pitchers
+// +0.0061, both against an MDE95 of 0.044). The bars and the star were already honest;
+// only the sentence under them was not.
+//
+// The hero banner was moved onto derived copy on 2026-08-13 (see _methHeroBanner) and
+// this sibling claim was missed, along with three others off-page. Hard-coded accuracy
+// NUMBERS in copy were already banned; a hard-coded accuracy CLAIM is the same defect
+// wearing prose, and it is worse here because the artifact carries a machine-readable
+// verdict field that contradicts it.
+function _methEfvVerdict(xc) {
+  const sides = [["hitters", xc.sides.hitters], ["pitchers", xc.sides.pitchers]]
+    .filter(p => p[1]);
+  if (!sides.length) return "";
+  const beat = sides.filter(p => p[1].xfv_beats && p[1].resolvable);
+  const all = beat.length === sides.length;
+  // The era clause is derived the same way: read which side/era cells actually lead
+  // rather than asserting that "the edge holds on the recent cohorts".
+  // Tallied PER ERA ACROSS SIDES, not pooled into one list. Pooling put 2019-2021 in
+  // both the leading and the trailing column, because hitters and pitchers disagree
+  // inside that cohort, and the sentence read as nonsense.
+  let eraClause = "";
+  const tally = {};
+  sides.forEach(([, s]) => Object.keys(s.era_split || {}).forEach(k => {
+    const e = s.era_split[k];
+    if (e.xfv_blend_spearman == null || e.consensus_spearman == null) return;
+    const t = (tally[k] = tally[k] || { up: 0, down: 0 });
+    if (e.xfv_blend_spearman > e.consensus_spearman) t.up++; else t.down++;
+  }));
+  const eras = Object.keys(tally).sort();
+  const cls = k => (tally[k].down === 0 ? "up" : tally[k].up === 0 ? "down" : "mixed");
+  // ESCAPED. The era keys are artifact-supplied and one of them is literally "<=2018",
+  // which raw would open a bogus tag and swallow the rest of the paragraph up to the
+  // next ">". The era table above already escapes these for the same reason.
+  const grp = w => eras.filter(k => cls(k) === w).map(escapeHtml);
+  const [up, down, mixed] = [grp("up"), grp("down"), grp("mixed")];
+  const bits = [];
+  if (up.length) bits.push(`eFV leads on ${up.join(" and ")}`);
+  if (down.length) bits.push(`consensus leads on ${down.join(" and ")}`);
+  if (mixed.length) bits.push(`${mixed.join(" and ")} splits by side`);
+  if (bits.length > 1) {
+    eraClause = ` Split by debut era, ${bits.join(", ")}, so the ordering is not uniform across cohorts.`;
+  } else if (up.length && eras.length) {
+    eraClause = ` eFV leads in every debut era measured (${up.join(", ")}).`;
+  }
+  const head = all
+    ? "eFV out-ranks consensus FV out-of-sample on both sides by a margin this eval can resolve."
+    : beat.length
+      ? `eFV out-ranks consensus FV by a resolvable margin on ${beat.map(p => p[0]).join(" and ")} only; on the other side the gap is inside the noise floor.`
+      : "eFV and consensus FV are statistically indistinguishable on eFV's own out-of-sample protocol: on both sides the gap is smaller than the margin this eval can resolve.";
+  return `<p class="meth-verdict${all ? " is-good" : ""}">${head}${eraClause} eFV is the primary grade; consensus FV remains a reference input. (This is eFV's own out-of-sample protocol, a more conservative test than the in-sample common-set bars above.)</p>`;
+}
+
 // eFV vs consensus FV - our outcome-grounded model, shown SEPARATELY from the per-source
 // bars because it runs on its own out-of-sample protocol (the harder, conservative bar).
 function _methEfvPanel(bt) {
@@ -781,7 +838,7 @@ function _methEfvPanel(bt) {
     <p class="meth-note">${escapeHtml(xc.protocol || "")}</p>
     ${sideBlock("hitters", "Hitters - ordering skill (Spearman ρ, grade vs realized WAR)")}
     ${sideBlock("pitchers", "Pitchers - ordering skill (Spearman ρ, grade vs realized WAR)")}
-    <p class="meth-verdict is-good">eFV out-ranks consensus FV out-of-sample on both sides, and the edge holds on the recent 2019-2023 cohorts, so it is not merely exploiting older, less-accurate scouting. eFV is the primary grade; consensus FV remains a reference input. (This is eFV's own out-of-sample protocol, a more conservative test than the in-sample common-set bars above.)</p>
+    ${_methEfvVerdict(xc)}
     ${tierTable}
     ${receipts}
   </div>`;

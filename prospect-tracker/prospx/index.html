@@ -32896,7 +32896,12 @@ function efvTooltip(x) {
   if (x.injury_factor != null)
     parts.push(`injury penalty ${Math.round((1 - x.injury_factor) * 100)}%`
       + (x.xfv_grade_healthy != null ? ` (healthy: ~${Math.round(x.xfv_grade_healthy)})` : ""));
-  parts.push("Predicts a calibrated 6-yr WAR outcome distribution from how comparable prospects actually turned out; it out-ranks consensus out-of-sample. Open the player for the full mix.");
+  // No accuracy CLAIM in a tooltip. This used to end "it out-ranks consensus
+  // out-of-sample", which the eval it refers to does not support: xfv_beats is false
+  // on both sides and the gap is inside the noise floor. A chip explainer has nowhere
+  // to carry a floor or an n, so it states what the number IS and sends the reader to
+  // the methodology page, which derives the standing from the artifact.
+  parts.push("Predicts a calibrated 6-yr WAR outcome distribution from how comparable prospects actually turned out. Open the player for the full mix.");
   return parts.join(" · ");
 }
 // Which grade leads the board: follows the eFV/Consensus toggle (state.gradePrimary).
@@ -33194,7 +33199,7 @@ function efvDetailCard(p) {
         <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Star Odds <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;color:var(--text-tertiary);">2+ seasons of 4+ WAR</span></span>
         <span style="font-family:var(--font-mono);font-weight:700;color:${Number(p.surplus.star_odds) >= 0.20 ? "var(--up)" : Number(p.surplus.star_odds) >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)"};font-variant-numeric:tabular-nums;">${fmtStarOdds(p.surplus.star_odds)}</span>
       </div>` : ""}
-      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}eFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. It out-ranks consensus FV out-of-sample; the headline grade is on the familiar 20-80 scale, while the outcome mix uses the honest (typically lower) outcome-implied grade because scout FV runs optimistic. The dollar surplus + its range are in the Surplus value card below. Provisional. <a href="/glossary/#g=xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}eFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. Its ordering skill is measured against consensus FV out-of-sample on the Methodology page; the headline grade is on the familiar 20-80 scale, while the outcome mix uses the honest (typically lower) outcome-implied grade because scout FV runs optimistic. The dollar surplus + its range are in the Surplus value card below. Provisional. <a href="/glossary/#g=xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
     </div>`;
 }
 
