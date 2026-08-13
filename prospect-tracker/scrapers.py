@@ -2430,6 +2430,45 @@ def validate_pipeline_live_board(rows: list[Snapshot]) -> list[str]:
     return problems
 
 
+#: Thinnest legitimate archived Top-100 board. 2011 is published as a Top 50, which
+#: is the floor; every later year is 99 or 100. The wrong-list payloads that polluted
+#: 2011, 2014 and 2016 were org boards of 10, 20 and 30 rows, so this separates them
+#: cleanly without a per-year table to keep in step.
+_ARCHIVE_MIN_ROWS = 40
+
+
+def validate_pipeline_archive_board(rows: list[Snapshot], year: int) -> list[str]:
+    """Health gate for an ARCHIVED Top-100 page.
+
+    Deliberately NOT validate_pipeline_live_board. That one requires 90 rows and 80%
+    FV coverage, both of which are correct for a current board and WRONG for the
+    backfill: 2011 is a Top 50 at ~38% FV and 2012 runs ~73% FV with the remainder
+    rank-only, exactly as the MLB_PIPELINE_INTERVALS comment records. Reusing the live
+    gate here would refuse two legitimate boards.
+
+    What this must catch is the failure that actually happened: a page parsing to a
+    SHORT list that is internally consistent (ranks 1..N, full FV, real names) because
+    the payload was a different board entirely. No internal-consistency check can see
+    that, so the size floor is the discriminator."""
+    problems: list[str] = []
+    if len(rows) < _ARCHIVE_MIN_ROWS:
+        problems.append(
+            f"{year} top100: only {len(rows)} parsed rows, below the {_ARCHIVE_MIN_ROWS} "
+            "floor. A Top-100 page cannot be this short; suspect a wrong-list or "
+            "poisoned-cache payload")
+        return problems
+    ranks = [s.rank for s in rows if s.rank is not None]
+    if len(set(ranks)) != len(ranks):
+        problems.append(f"{year} top100: duplicate ranks")
+    if not ranks or min(ranks) != 1 or max(ranks) > 105:
+        problems.append(f"{year} top100: rank span {min(ranks) if ranks else '-'}"
+                        f"..{max(ranks) if ranks else '-'}")
+    placeholder = sum(1 for s in rows if s.player_name.startswith("Person "))
+    if placeholder > 2:
+        problems.append(f"{year} top100: {placeholder} unresolved player names")
+    return problems
+
+
 def validate_pipeline_org_boards(org_rows: dict[str, list[Snapshot]]) -> list[str]:
     """Health gate for the daily per-team Top-30 capture, the sibling of
     validate_pipeline_live_board. Refuse to re-stamp the org boards if the
@@ -4052,9 +4091,43 @@ def scrape_all(force: bool = False) -> tuple[list[Snapshot], dict[str, str]]:
             counts[label] = -1
 
     # Tier B: MLB Pipeline (archived top-100 pages, one per year)
+    #
+    # TWO GUARDS, both added 2026-08-14 after auditing every vintage label.
+    #
+    # 1. THE CURRENT YEAR IS NOT ARCHIVAL. mlb.com serves a FROZEN page at
+    #    /prospects/{y}/top100/ for a past year and the LIVE board for the current
+    #    one, so scraping the current year here writes today's board under the
+    #    preseason label with the hardcoded "{y}-01-22" date. Because
+    #    insert_snapshots upserts on (source, interval_label, player_key), a player
+    #    who was not on the first capture INSERTS rather than updates, and the label
+    #    accretes: 139 rows for 100 ranks by August 2026, ten of them players drafted
+    #    in June, and 1,249 rows against 900 across the org boards. Every prior year
+    #    is clean. run_mlb_pipeline_live already covers the current year under a
+    #    correctly dated "MLB Pipeline Live YYYY-MM-DD" label, so skipping here loses
+    #    nothing. See docs/efv-2026-08-13/PIPELINE_VINTAGE_CONTAMINATION.md.
+    #
+    # 2. THE ARCHIVE LOOP WAS UNGATED, and that is how a wrong list got in. On
+    #    2026-06-22 the 2011, 2014 and 2016 pages parsed from a poisoned cache
+    #    holding the YANKEES ORG BOARD, and 10, 20 and 30 rows were ingested under
+    #    the Top-100 labels without complaint; a forced re-run 48 seconds later wrote
+    #    the true boards over them but could only correct the Yankees who were also
+    #    genuine Top-100 players, leaving 7, 18 and 27 orphans behind. The live and
+    #    org paths both call a validator; this one called nothing, so a 10-row parse
+    #    of a 100-row page was indistinguishable from success.
+    _this_year = date.today().year
     for url, label, snap, year in MLB_PIPELINE_INTERVALS:
+        if year >= _this_year:
+            log.info("mlb_pipeline %s: skipped, the current-year page is the LIVE "
+                     "board and is captured under its own dated label", label)
+            continue
         try:
             got = scrape_mlb_pipeline(url, label, snap, year, force=force)
+            problems = validate_pipeline_archive_board(got, year)
+            if problems:
+                log.error("mlb_pipeline %s REJECTED, not ingested: %s", label,
+                          "; ".join(problems))
+                counts[label] = -1
+                continue
             snapshots.extend(got)
             counts[label] = len(got)
         except Exception as e:
