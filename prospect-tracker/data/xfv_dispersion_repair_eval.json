@@ -1,0 +1,496 @@
+{
+ "generated_at": "2026-08-13T20:32:15Z",
+ "produced_by": "tools/efv_dispersion_repair_lab.py",
+ "pre_registration": "docs/efv-2026-08-13/DISPERSION_REPAIR_GATE.md",
+ "lane": "C-1 -- rank-preserving level correction of xfv_war_6yr (Defect A)",
+ "correction": "affine, strictly increasing, fitted LEAVE-ONE-FOLD-OUT so no row contributes to the correction applied to it",
+ "folds": [
+  2016,
+  2017,
+  2018,
+  2019,
+  2020
+ ],
+ "bootstrap": {
+  "B": 2000,
+  "seed": 7
+ },
+ "parity": {
+  "hit": {
+   "registered": 0.654,
+   "reproduced": 0.6491,
+   "within_tol": true,
+   "tol": 0.12
+  },
+  "pit": {
+   "registered": 0.5868,
+   "reproduced": 0.5624,
+   "within_tol": true,
+   "tol": 0.12
+  }
+ },
+ "loo_coefficients": {
+  "hit": {
+   "2016": {
+    "a": 0.42191,
+    "b": 0.63687
+   },
+   "2017": {
+    "a": 0.5632,
+    "b": 0.63966
+   },
+   "2018": {
+    "a": 0.47406,
+    "b": 0.60899
+   },
+   "2019": {
+    "a": 0.45134,
+    "b": 0.57683
+   },
+   "2020": {
+    "a": 0.38539,
+    "b": 0.64356
+   }
+  },
+  "pit": {
+   "2016": {
+    "a": 0.56648,
+    "b": 0.30796
+   },
+   "2017": {
+    "a": 0.28681,
+    "b": 0.65058
+   },
+   "2018": {
+    "a": 0.71267,
+    "b": 0.35046
+   },
+   "2019": {
+    "a": 0.47315,
+    "b": 0.41716
+   },
+   "2020": {
+    "a": 0.56855,
+    "b": 0.38009
+   }
+  }
+ },
+ "point": {
+  "hit": {
+   "n": 747,
+   "slope_pre": 0.6491213502039904,
+   "slope_post": 1.0079913609931073,
+   "spearman_pre": 0.28734949705652163,
+   "spearman_post": 0.2841324558561349,
+   "mae_pre": 2.441506423632964,
+   "mae_post": 2.1365417891828526,
+   "tail_mae_pre": 7.132037859600585,
+   "tail_mae_post": 8.387162571402248,
+   "tail_n": 75,
+   "neg_pre": 270,
+   "neg_post": 167,
+   "at_floor_pre": 51,
+   "at_floor_post": 6
+  },
+  "pit": {
+   "n": 816,
+   "slope_pre": 0.562387914339905,
+   "slope_post": 0.9350989592785158,
+   "spearman_pre": 0.16651373748513193,
+   "spearman_post": 0.1566149130343261,
+   "mae_pre": 1.7192833004948367,
+   "mae_post": 1.5700748606009534,
+   "tail_mae_pre": 5.807244061281653,
+   "tail_mae_post": 6.709107713738189,
+   "tail_n": 82,
+   "neg_pre": 195,
+   "neg_post": 49,
+   "at_floor_pre": 22,
+   "at_floor_post": 10
+  }
+ },
+ "boot_ci95": {
+  "hit": {
+   "n": [
+    704.0,
+    791.0
+   ],
+   "slope_pre": [
+    0.4638,
+    0.7877
+   ],
+   "slope_post": [
+    0.7821,
+    1.1858
+   ],
+   "spearman_pre": [
+    0.1891,
+    0.3689
+   ],
+   "spearman_post": [
+    0.1811,
+    0.3635
+   ],
+   "mae_pre": [
+    2.1812,
+    2.87
+   ],
+   "mae_post": [
+    1.8796,
+    2.5655
+   ],
+   "tail_mae_pre": [
+    5.8898,
+    8.7864
+   ],
+   "tail_mae_post": [
+    7.3048,
+    10.4463
+   ],
+   "tail_n": [
+    71.0,
+    81.0
+   ],
+   "neg_pre": [
+    194.0,
+    348.0
+   ],
+   "neg_post": [
+    33.975,
+    208.0
+   ],
+   "at_floor_pre": [
+    29.0,
+    133.0
+   ],
+   "at_floor_post": [
+    1.0,
+    27.0
+   ]
+  },
+  "pit": {
+   "n": [
+    771.0,
+    858.225
+   ],
+   "slope_pre": [
+    0.2214,
+    0.744
+   ],
+   "slope_post": [
+    0.0677,
+    1.1341
+   ],
+   "spearman_pre": [
+    0.0582,
+    0.2405
+   ],
+   "spearman_post": [
+    0.0206,
+    0.2296
+   ],
+   "mae_pre": [
+    1.4914,
+    2.105
+   ],
+   "mae_post": [
+    1.2989,
+    1.9156
+   ],
+   "tail_mae_pre": [
+    4.7904,
+    7.2173
+   ],
+   "tail_mae_post": [
+    5.5183,
+    8.1362
+   ],
+   "tail_n": [
+    78.0,
+    87.0
+   ],
+   "neg_pre": [
+    138.0,
+    288.225
+   ],
+   "neg_post": [
+    12.0,
+    157.0
+   ],
+   "at_floor_pre": [
+    13.0,
+    51.0
+   ],
+   "at_floor_post": [
+    1.0,
+    18.0
+   ]
+  }
+ },
+ "zero_info_permuted_prediction_ci95": {
+  "hit": {
+   "n": [
+    704.0,
+    789.0
+   ],
+   "slope_pre": [
+    0.0116,
+    0.1182
+   ],
+   "slope_post": [
+    -2.8808,
+    0.5648
+   ],
+   "spearman_pre": [
+    -0.0329,
+    0.0795
+   ],
+   "spearman_post": [
+    -0.1069,
+    0.0515
+   ],
+   "mae_pre": [
+    2.9837,
+    4.1134
+   ],
+   "mae_post": [
+    2.1296,
+    3.0779
+   ],
+   "tail_mae_pre": [
+    9.7256,
+    13.1398
+   ],
+   "tail_mae_post": [
+    9.8923,
+    13.3249
+   ],
+   "tail_n": [
+    71.0,
+    81.0
+   ],
+   "neg_pre": [
+    196.9,
+    346.1
+   ],
+   "neg_post": [
+    0.0,
+    4.0
+   ],
+   "at_floor_pre": [
+    28.0,
+    140.0
+   ],
+   "at_floor_post": [
+    0.0,
+    0.0
+   ]
+  },
+  "pit": {
+   "n": [
+    771.0,
+    860.0
+   ],
+   "slope_pre": [
+    0.0071,
+    0.1605
+   ],
+   "slope_post": [
+    -3.3223,
+    0.656
+   ],
+   "spearman_pre": [
+    -0.0249,
+    0.0935
+   ],
+   "spearman_post": [
+    -0.1237,
+    0.057
+   ],
+   "mae_pre": [
+    1.8031,
+    2.5363
+   ],
+   "mae_post": [
+    1.3653,
+    2.0115
+   ],
+   "tail_mae_pre": [
+    6.0579,
+    8.9974
+   ],
+   "tail_mae_post": [
+    6.2891,
+    9.0596
+   ],
+   "tail_n": [
+    78.0,
+    87.0
+   ],
+   "neg_pre": [
+    139.0,
+    285.25
+   ],
+   "neg_post": [
+    0.0,
+    12.0
+   ],
+   "at_floor_pre": [
+    13.0,
+    52.0
+   ],
+   "at_floor_post": [
+    0.0,
+    2.0
+   ]
+  }
+ },
+ "permutation_null_permuted_outcome_ci95": {
+  "hit": {
+   "n": [
+    702.6,
+    790.4
+   ],
+   "slope_pre": [
+    0.0119,
+    0.1317
+   ],
+   "slope_post": [
+    -2.9655,
+    0.6592
+   ],
+   "spearman_pre": [
+    -0.0343,
+    0.0859
+   ],
+   "spearman_post": [
+    -0.1087,
+    0.0587
+   ],
+   "mae_pre": [
+    3.0153,
+    4.0441
+   ],
+   "mae_post": [
+    2.196,
+    3.0677
+   ],
+   "tail_mae_pre": [
+    9.6462,
+    13.1085
+   ],
+   "tail_mae_post": [
+    10.1124,
+    13.2911
+   ],
+   "tail_n": [
+    71.0,
+    81.0
+   ],
+   "neg_pre": [
+    193.6,
+    344.0
+   ],
+   "neg_post": [
+    0.0,
+    4.0
+   ],
+   "at_floor_pre": [
+    29.0,
+    132.4
+   ],
+   "at_floor_post": [
+    0.0,
+    0.0
+   ]
+  },
+  "pit": {
+   "n": [
+    771.0,
+    859.0
+   ],
+   "slope_pre": [
+    0.0048,
+    0.1605
+   ],
+   "slope_post": [
+    -3.0,
+    0.6536
+   ],
+   "spearman_pre": [
+    -0.0279,
+    0.0957
+   ],
+   "spearman_post": [
+    -0.1217,
+    0.0568
+   ],
+   "mae_pre": [
+    1.7955,
+    2.5087
+   ],
+   "mae_post": [
+    1.336,
+    2.0013
+   ],
+   "tail_mae_pre": [
+    6.0422,
+    9.0445
+   ],
+   "tail_mae_post": [
+    6.2441,
+    9.0433
+   ],
+   "tail_n": [
+    78.0,
+    87.0
+   ],
+   "neg_pre": [
+    139.0,
+    290.1
+   ],
+   "neg_post": [
+    0.0,
+    13.55
+   ],
+   "at_floor_pre": [
+    13.0,
+    51.1
+   ],
+   "at_floor_post": [
+    0.0,
+    4.0
+   ]
+  }
+ },
+ "elapsed_s": 274.4,
+ "verdict": {
+  "hit": {
+   "c1_slope_ci_covers_1": true,
+   "slope_post_ci95": [
+    0.7821,
+    1.1858
+   ],
+   "c2_spearman_unchanged_within_floor": true,
+   "d_spearman": -0.00322,
+   "rho_floor": 0.0206,
+   "c3_floor_no_longer_binds": true,
+   "added_clause_tail_mae_not_worse": false,
+   "PASS": false
+  },
+  "pit": {
+   "c1_slope_ci_covers_1": true,
+   "slope_post_ci95": [
+    0.0677,
+    1.1341
+   ],
+   "c2_spearman_unchanged_within_floor": true,
+   "d_spearman": -0.0099,
+   "rho_floor": 0.0212,
+   "c3_floor_no_longer_binds": true,
+   "added_clause_tail_mae_not_worse": false,
+   "PASS": false
+  }
+ },
+ "overall": "NO_SHIP"
+}

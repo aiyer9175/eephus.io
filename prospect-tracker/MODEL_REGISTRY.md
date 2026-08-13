@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-08-12**. `validate()` at generation time: **clean**.
 
-**247 models.** Verdicts: validated: 51, provisional: 87, unvalidated: 29, deprecated: 80.
+**248 models.** Verdicts: validated: 51, provisional: 88, unvalidated: 29, deprecated: 80.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -257,6 +257,7 @@ stamped as of **2026-08-12**. `validate()` at generation time: **clean**.
 | `xfv_side_correction` | NOTHING. This is a LOSS LEDGER. The correction was tested... | whether a per-side monotone (isotonic) recalibration of predicted 6yr WAR, fitted on earlier grade cohorts, removes the FV 45 p... | NONE ADOPTED. Candidate was per-side PAVA of realized WAR on predicted WAR, f... | the shipped grade map, uncorrected | three pre-registered clauses: FV45 band gap shrinks with a bootstrap interval... | **deprecated** | `data/xfv_side_correction_eval.json` | - | - |
 | `betting_market_blend` | NOTHING YET. Measurement only: it decides whether a marke... | whether blending the model's probability toward the de-vigged market price improves calibration, and at what weight | NONE. Underpowered; nothing fitted, nothing shipped. | the model's own probability (w=0) against the market's (w=1) | Brier, with a GAME-clustered bootstrap on the model-minus-market difference | **provisional** | `data/betting_market_blend_eval.json` | - | - |
 | `xfv_headtohead_frame` | glossary source-comparison hero + eFV scoreboard: the pub... | n/a - measurement: which comparison FRAME the eFV-vs-consensus head-to-head claim may rest on, given that eFV holds one grade p... | vintage-matched basis: base year equals the eFV decision year, so neither gra... | the two asymmetric frames it replaces - all base years (hands the consensus u... | delta pooled Spearman against realized WAR, every rater on identical rows wit... | **validated** | `data/xfv_headtohead_frame_eval.json` | 0 | no |
+| `xfv_dispersion_repair` | NOTHING SERVED. Measurement plus a fitted-but-unshipped c... | whether an affine, strictly increasing, out-of-fold level correction of xfv_war_6yr removes the measured over-dispersion withou... | NONE ADOPTED. Candidate is a leave-one-fold-out affine map, war_corrected = a... | the served prediction, clamp(-2, a + b*ridge) with (a,b) fitted in-sample on... | OLS slope of realized first-6yr WAR on the OOS prediction (1.0 == calibrated)... | **provisional** | `data/xfv_dispersion_repair_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

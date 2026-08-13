@@ -121,4 +121,98 @@ for on 2026-08-12.
 
 ## Results
 
-(empty at pre-registration; filled by the lane)
+Measured 2026-08-13. `tools/efv_dispersion_repair_lab.py 2000`, artifact
+`data/xfv_dispersion_repair_eval.json`, folds 2016-2020 (the registered
+protocol), B=2000, seed 7, 274s.
+
+### Parity passed
+
+Reproduced the registered uncorrected slopes on this lane's own pool
+reconstruction: **hit 0.6491 against 0.6540 registered, pit 0.5624 against
+0.5868**. The lane is measuring the same quantity.
+
+### The correction works, and it works well
+
+| | hit | pit |
+| --- | --- | --- |
+| slope, before | 0.6491 | 0.5624 |
+| **slope, after** | **1.0080** | **0.9351** |
+| slope CI95 after | [0.7821, 1.1858] | [0.0677, 1.1341] |
+| overall MAE | 2.4415 to **2.1365** (-12.5%) | 1.7193 to **1.5701** (-8.7%) |
+| rows with negative WAR | 270 to 167 | 195 to 49 |
+| rows pinned at the -2.0 floor | 51 to **6** | 22 to **10** |
+| Spearman shift | -0.0032 (floor 0.0206) | -0.0099 (floor 0.0212) |
+| tail MAE, top decile of realized | 7.132 to **8.387** | 5.807 to **6.711** |
+
+Leave-one-fold-out coefficients are stable in sign and magnitude across folds
+(hit b_c 0.577 to 0.644; pit 0.308 to 0.651), so no fold is driving it.
+
+Controls all clean. The corrected slope is NOT reproducible from zero
+information: permuted-prediction CI95 is [-2.881, 0.565] hit and [-3.322, 0.656]
+pit, and the permutation null is [-2.966, 0.659] / [-3.000, 0.654]. The achieved
+1.008 and 0.935 sit outside both bands.
+
+### Verdict under the gate AS WRITTEN: NO_SHIP
+
+| clause | hit | pit |
+| --- | --- | --- |
+| 1. slope CI95 covers 1.0 | PASS | PASS |
+| 2. Spearman unchanged within floor | PASS | PASS |
+| 3. floor no longer binds | PASS | PASS |
+| 4. tail MAE not worse (ADDED by this gate) | **FAIL** | **FAIL** |
+
+**All three clauses the 2026-07-29 programme pre-registered PASS on both sides.
+The only failing clause is the one this gate added today.**
+
+### The added clause is reported as failed, and its stated rationale does not transfer
+
+Recording this rather than quietly dropping it, because dropping a clause after
+seeing it fail is the exact move this program bans.
+
+The clause was justified in the pre-registration by "the tail is where the board
+order and the dollars live". **That justification does not hold for this lane.**
+The correction is affine and strictly increasing, so it moves the board order by
+nothing, and served surplus prices off `xfv_grade_quantile`, a rank-quantile map,
+so it moves dollars by exactly $0.00. The clause was imported from E2b, where the
+change DID move served grades, and its reason did not come with it.
+
+What remains true after removing the bad justification is the fact itself: the
+published WAR number would read further BELOW the outcome for players who went on
+to be stars, by about 1.25 WAR hit and 0.90 WAR pit over six years, in exchange
+for the level being right everywhere else.
+
+That trade is intrinsic and not a defect of this functional form. A slope-1
+correction is the linear map that minimises squared error overall; on a noisy
+predictor it necessarily pulls the extremes toward the middle, and the top decile
+of REALIZED outcomes is exactly where predictions were already low. No affine map
+can improve the level and the tail at once, so re-fitting a different family in
+search of a pass is banned by this gate's own stop clause and would be the FV45
+mistake again.
+
+### What this is worth if shipped
+
+The published WAR number becomes calibrated in level (slope 1.008 / 0.935 against
+0.649 / 0.562), overall MAE improves 12.5% and 8.7% on the metric eFV carries a
+standing committed loss on, and the number stops claiming that 270 hitters and
+195 pitchers will produce negative six-year WAR, with rows pinned at the -2.0
+floor falling from 51 to 6 on the hitter side. Nothing about the board moves.
+
+### Referred, not shipped
+
+Under the gate as written this is a NO_SHIP and it is recorded as one. Because
+the sole failing clause is one this gate added today under a rationale that does
+not apply to a rank-neutral and dollar-neutral change, the ship decision is
+referred to the owner with both halves stated, rather than being resolved by the
+lane in either direction.
+
+### Limits
+
+- The pitcher slope CI is wide, [0.0677, 1.1341]. It covers 1.0, which is the
+  clause, but it also covers 0.07, so the pitcher correction is imprecise even
+  though its point estimate is good. The hitter CI is much tighter.
+- Folds are the registered 2016-2020 set, not the current 11-fold SCORED_YEARS.
+  That is deliberate for parity with the registered measurement; a ship would
+  re-fit the coefficients on the production frame.
+- Spearman moves slightly negative on both sides. Both shifts are inside their
+  floors, and the mechanism is the -2.0 clamp rather than the affine map: rows
+  pinned at the floor are tied, and lifting them off it breaks those ties.

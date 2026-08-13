@@ -3570,6 +3570,20 @@
    "last_checked": "2026-08-13",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "xfv_dispersion_repair",
+   "surface": "NOTHING SERVED. Measurement plus a fitted-but-unshipped correction; the ship decision is referred to the owner",
+   "predicts": "whether an affine, strictly increasing, out-of-fold level correction of xfv_war_6yr removes the measured over-dispersion without becoming a rank change",
+   "champion": "NONE ADOPTED. Candidate is a leave-one-fold-out affine map, war_corrected = a_c + b_c * war_pred with b_c > 0 enforced",
+   "baseline": "the served prediction, clamp(-2, a + b*ridge) with (a,b) fitted in-sample on train",
+   "metric": "OLS slope of realized first-6yr WAR on the OOS prediction (1.0 == calibrated), plus Spearman shift against the registered rank floors, negative-row and at-floor counts, overall MAE and top-decile-of-realized tail MAE; paired bootstrap B=2000 seed 7 with a zero-information twin and a permutation null",
+   "eval_artifact": "data/xfv_dispersion_repair_eval.json",
+   "verdict": "provisional",
+   "notes": "C-1, pre-registered at docs/efv-2026-08-13/DISPERSION_REPAIR_GATE.md, which copies its first three PASS conditions verbatim from the 2026-07-29 pre-registration (docs/efv-2026-07-29/CALIBRATION_FINDINGS.md item 2) rather than inventing them. THE CORRECTION WORKS: slope 0.649 to 1.008 hit and 0.562 to 0.935 pit, overall MAE -12.5% and -8.7%, rows pinned at the -2.0 floor 51 to 6 and 22 to 10, Spearman shift -0.0032 and -0.0099 against floors 0.0206 and 0.0212. Parity reproduced the registered uncorrected slopes (0.6491 vs 0.6540, 0.5624 vs 0.5868). Controls clean: the corrected slope is outside both the permuted-prediction band ([-2.881,0.565] hit) and the permutation null. ALL THREE ORIGINALLY PRE-REGISTERED CLAUSES PASS ON BOTH SIDES. The gate nonetheless returns NO_SHIP because of a FOURTH clause this lane added today, tail MAE not worse, which fails both sides (7.13 to 8.39 hit, 5.81 to 6.71 pit). That clause was justified by 'the tail is where the board order and the dollars live', and that justification DOES NOT TRANSFER: an affine increasing map leaves board order identical and served surplus prices off xfv_grade_quantile, a rank-quantile map, so the dollar effect is exactly zero. The underlying trade is intrinsic rather than a defect of the family: a slope-1 map minimises squared error overall and necessarily pulls extremes toward the middle, so no affine correction improves level and tail together, and the gate's own stop clause forbids fitting a second family in search of a pass. REFERRED TO THE OWNER with both halves stated. LIMITS: the pitcher slope CI is wide [0.0677,1.1341]; folds are the registered 2016-2020 set, so a ship would re-fit coefficients on the production frame.",
+   "last_checked": "2026-08-13",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []

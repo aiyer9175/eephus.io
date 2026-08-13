@@ -63,6 +63,12 @@ MODEL_GLOSSARY = {
     # reason - it adjudicates eFV's grade against the consensus baseline.
     "xfv_headtohead_frame": ["consensus_fv", "xfv"],
 
+    # C-1. Measurement plus an unshipped candidate correction to the published
+    # WAR number; nothing serves it, and the ship decision is referred. Marked
+    # internal rather than mapped to a glossary term because no reader-facing
+    # definition changes while it stays unshipped.
+    "xfv_dispersion_repair": "internal",
+
     "consensus_recency_decay": "internal",
     # measurement of the single-source shrinkage; nothing shipped, the incumbent
     # constant was tested against the mechanism it approximates and survived
