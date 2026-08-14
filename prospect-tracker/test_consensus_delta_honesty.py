@@ -176,6 +176,43 @@ def test_served_board_suppresses_exactly_the_two_cohorts(art):
                        - round(r["xfv_grade"] - r["consensus_fv"], 1)) < 0.051
 
 
+def test_the_served_artifact_holds_the_invariant_across_every_scoring_path():
+    """THE PIN THAT WOULD HAVE CAUGHT C-6b, and the reason it reads xfv.json rather
+    than the scored files.
+
+    C-6 was verified against data/xfv_scored_live_*.json and passed, because those
+    are exactly the rows run_live scores. But run_live SKIPS 168 active players for
+    having no pro track record, run_backgrade scores them, and efv_export writes them
+    into xfv.json as kind: "active". Measured before the fix, all 168 published a
+    delta, 34 of them from the FV20 abstention knot and 19 against the fabricated
+    consensus 35.0, each with consensus_is_placeholder:false beside it.
+
+    xfv.json is the file the board reads. Asserting on the input to the export while
+    the export has more than one input is how a lane passes its own gate and ships a
+    hole anyway."""
+    p = DATA / "xfv.json"
+    if not p.exists():
+        pytest.skip("xfv.json not built")
+    bp = json.loads(p.read_text(encoding="utf-8")).get("by_player") or {}
+    act = {k: v for k, v in bp.items() if v.get("kind") == "active"}
+    if not act:
+        pytest.skip("no active rows")
+    suppressed = {k for k, v in act.items() if v.get("xfv_minus_consensus") is None}
+    marked = {k for k, v in act.items()
+              if v.get("consensus_is_placeholder") or v.get("xfv_grade_is_floor")}
+    assert suppressed == marked, (
+        f"{len(suppressed ^ marked)} active rows disagree between the delta and its "
+        "reason markers; a scoring path is reaching the board without the seam")
+    knot = _floor_knot()
+    for k, v in act.items():
+        if v.get("xfv_minus_consensus") is None:
+            continue
+        assert abs((v.get("xfv_grade") or -1) - knot) > 1e-9, (
+            f"{k} publishes a delta from the abstention knot")
+        assert not v.get("consensus_is_placeholder"), (
+            f"{k} publishes a delta against a fabricated consensus")
+
+
 def test_the_divergence_aggregate_declares_what_it_left_out():
     """`run_live` returns its report rather than persisting one, so this drives
     the block directly. It is the aggregate that carried the -5.13 headline: it

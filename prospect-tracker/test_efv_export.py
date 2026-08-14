@@ -543,7 +543,17 @@ def test_committed_artifact_headline_alias_contract():
 # hash carries C-4 and nothing else; see the pinning rule at
 # efv_score._DISPERSION_CORRECTION. Stamped OUTSIDE pytest from the pass-2
 # artifact. Prior restamp note follows.
-_GOLDEN_XFV_SHA256 = "fe31d9e0913585a66c6741b821f1bbb0a49bb2fe272e6fe27cc9753d9d24d3e4"
+# Restamped 2026-08-14 for C-6 + C-6b + C-7, three sanctioned ships in one artifact.
+# Stamped OUTSIDE pytest from the post-rebuild file, per the standing rule.
+#   C-7  the dispersion correction reverts to identity on the owner's decision, so
+#        xfv_war_6yr moves on 99.9% of rows and xfv_grade on 33.7%. No dollar and no
+#        rank moved. docs/efv-2026-08-13/DISPERSION_REVERT_GATE.md.
+#   C-6  xfv_minus_consensus becomes NULL where no comparison exists, and two reason
+#        markers are added to the schema.
+#   C-6b the same suppression applied at the export funnel, closing the run_backgrade
+#        path that reached the board without the seam.
+#        docs/efv-2026-08-13/CONSENSUS_DELTA_HONESTY_GATE.md.
+_GOLDEN_XFV_SHA256 = "687aab4b420f0b550848714deb6b565880b77622b0a9983b2bd40dfe97777c31"
 # OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
 # whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
 # factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which

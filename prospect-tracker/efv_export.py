@@ -30,6 +30,76 @@ OUT_PATH = DATA_DIR / "xfv.json"
 VALUATION_CURVE_PATH = DATA_DIR / "xfv_valuation_curve.json"
 
 
+_ANCHOR_CONST: dict | None = None
+
+
+def _anchor_constant_map() -> dict:
+    """player_key -> anchor_constant_only, read from the LIVE matrices.
+
+    `run_live` stamps this onto its own rows, but it is not the only path that
+    reaches the served board (see `_delta_fields`), and the other one has no anchor
+    on its rows at all. The matrices carry the flag for all 4,657 live players,
+    including the ones run_live skipped, so this is where the missing half comes
+    from. Best effort: a missing map degrades to "not a placeholder", which is the
+    pre-C-6 behaviour rather than a crash."""
+    global _ANCHOR_CONST
+    if _ANCHOR_CONST is None:
+        m: dict = {}
+        for fn in ("xfv_live_hitter_matrix.json", "xfv_live_pitcher_matrix.json"):
+            p = DATA_DIR / fn
+            if not p.exists():
+                continue
+            try:
+                for r in json.loads(p.read_text(encoding="utf-8")):
+                    m[r.get("player_key")] = bool(r.get("anchor_constant_only"))
+            except (OSError, json.JSONDecodeError, TypeError):
+                log.warning("anchor map unreadable from %s; placeholder "
+                            "suppression degrades to off for rows it would cover", fn)
+        _ANCHOR_CONST = m
+    return _ANCHOR_CONST
+
+
+def _delta_fields(s, kind) -> dict:
+    """The consensus delta and its two reason markers, for ANY path into xfv.json.
+
+    THE FUNNEL FIX (C-6b, 2026-08-14), and it closes a hole in C-6 as shipped.
+    C-6 applied `consensus_delta` in `run_live` only, on the stated scope that the
+    resolved path feeds evaluation frames. That was right about the resolved path
+    and wrong about the board: `run_live` SKIPS 168 active players for having no pro
+    track record, `run_backgrade` scores them instead, and `efv_export.run` writes
+    them into xfv.json as `kind: "active"`. Measured on the first C-7 rebuild, all
+    168 published a delta, and **34 of them sat on the FV20 abstention knot and 19
+    carried the fabricated consensus 35.0**. So 53 rows on the served board were
+    still publishing exactly the manufactured comparison C-6 exists to suppress,
+    with `consensus_is_placeholder: false` beside them, which is worse than absent
+    because the page guard reads the false and renders the chip.
+
+    This is the "a new seam must be applied at EVERY site" lesson from 2026-08-13b
+    repeating inside the very next lane. Fixed at the export because that is the one
+    funnel all scoring paths pass through to reach the board.
+
+    Scope: `kind == "active"`, the served board. Resolved and backgraded-graduate
+    rows keep their unconditional delta, as C-6's gate scoped, and that remaining
+    inconsistency is recorded rather than silently widened.
+
+    Calls the SHIPPED predicate, never a copy of it."""
+    if kind != "active":
+        return {"xfv_minus_consensus": s.get("xfv_minus_consensus")}
+    if "consensus_is_placeholder" in s:          # run_live already decided this row
+        return {"xfv_minus_consensus": s.get("xfv_minus_consensus"),
+                "consensus_is_placeholder": bool(s.get("consensus_is_placeholder")),
+                "xfv_grade_is_floor": bool(s.get("xfv_grade_is_floor"))}
+    from efv_score import consensus_delta
+    d, ph, fl = consensus_delta(
+        s.get("xfv_grade"), s.get("consensus_fv"),
+        anchor_constant_only=_anchor_constant_map().get(s.get("player_key"), False),
+        # These rows never route: run_backgrade has no provisional path, so a grade
+        # on the knot here is always the outcome map abstaining.
+        grade_from_outcome_map=True)
+    return {"xfv_minus_consensus": d,
+            "consensus_is_placeholder": ph, "xfv_grade_is_floor": fl}
+
+
 def _entry(s, side, kind):
     e = {
         "side": "P" if side == "pit" else "H",
@@ -87,9 +157,7 @@ def _entry(s, side, kind):
         # falls back to subtracting the two displayed numbers and re-manufactures
         # exactly the delta the scorer withheld.
         # docs/efv-2026-08-13/CONSENSUS_DELTA_HONESTY_GATE.md
-        "xfv_minus_consensus": s.get("xfv_minus_consensus"),          # SERVED headline - consensus
-        "consensus_is_placeholder": bool(s.get("consensus_is_placeholder")),
-        "xfv_grade_is_floor": bool(s.get("xfv_grade_is_floor")),
+        **_delta_fields(s, kind),
         "xfv_minus_consensus_quantile": s.get("xfv_minus_consensus_display"),  # retired quantile - consensus
         "xfv_war_6yr": s.get("xfv_war_6yr"),
         "p_bucket": s.get("p_bucket"),

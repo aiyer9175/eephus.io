@@ -206,6 +206,47 @@ mean stays +2.03, suppressed union stays 3,160. Pinned by
 `test_a_routed_grade_on_the_same_number_is_not_an_abstention`, which also asserts the
 two constants still collide so the guard cannot be deleted as dead once they diverge.
 
+### C-6b: the lane passed its own gate and shipped a hole anyway
+
+Found on the C-7 rebuild, when the served artifact reported 4,657 active rows
+against the 4,489 this lane had verified. **The missing 168 are a second scoring
+path that reaches the board without the seam.**
+
+`run_live` SKIPS active players with no pro track record (56 hit, 112 pit).
+`run_backgrade` scores them instead, and `efv_export.run` writes them into
+`xfv.json` as `kind: "active"`. All 168 published a delta, and of those **34 sat on
+the FV20 abstention knot and 19 carried the fabricated consensus 35.0**. Each
+carried `consensus_is_placeholder: false` beside it, which is worse than the field
+being absent, because the page guard reads the false and renders the chip.
+
+So 34 rows on the served board were still publishing exactly the manufactured
+comparison this lane exists to suppress, after the lane had verified clause 3 and
+passed.
+
+**Why the verification missed it**: clauses 1 and 3 were asserted against
+`xfv_scored_live_*.json`, which is by definition exactly the set `run_live` scores.
+Verifying a suppression against the input of the export, while the export has more
+than one input, cannot see a path that bypasses it. **This is the 2026-08-13b
+four-sites lesson repeating inside the very next lane.**
+
+Fixed at `efv_export._delta_fields`, the one funnel every scoring path passes
+through to reach the board, calling the SHIPPED `consensus_delta` rather than a copy.
+Rows that already carry the markers pass through untouched; rows that do not get the
+predicate applied, with the constant-anchor flag read from the live matrices (which
+carry it for all 4,657, including the ones `run_live` skipped).
+
+After: **0 rows publish a delta from the knot, 0 against a fabricated consensus**,
+and the suppressed set equals the marked set exactly across all 4,657 active rows,
+3,544 of them. Board-wide published mean +1.54 over 1,113 rows.
+
+Scope held rather than widened: `kind == "active"` only. Resolved and
+backgraded-graduate rows keep their unconditional delta as this gate scoped, and
+that remaining inconsistency is recorded here rather than quietly fixed.
+
+Pinned by `test_the_served_artifact_holds_the_invariant_across_every_scoring_path`,
+which reads `xfv.json` precisely because the scored files cannot see this class of
+defect. Mutation-proved: bypassing the funnel fails it.
+
 ### Marking, per the owner decision
 
 The 509 floor rows now carry a dashed badge and read `at the scale floor, not a
