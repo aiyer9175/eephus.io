@@ -350,6 +350,36 @@ PLAYER_KEY_ALIASES = {
         "player_name": "Zach Root",
     },
 
+    # 2026-08-14 - two keys per human, surfaced as CLASS C of the MLB Pipeline
+    # vintage audit (docs/efv-2026-08-13/PIPELINE_VINTAGE_CONTAMINATION.md).
+    # They presented as "rows > distinct ranks" on eight labels, the same
+    # symptom as the accretion and the wrong-list write that audit also found,
+    # and they are deliberately NOT repaired the same way: deleting a row fixes
+    # one label, an alias fixes every consumer that keys on player_key.
+    #
+    # The Twins 3B/2B/1B. Both keys carry the SAME rank in all seven labels
+    # they share (2017-2022 Twins Top 30 plus the 2022 Top 100), which is the
+    # signature of one human printed two ways rather than two players.
+    # "jose_miranda" is incumbent on every count: 18 snapshots against 8, three
+    # sources including FanGraphs against two, and the clean printed form.
+    # "Jose F Miranda" is Pipeline carrying a middle initial.
+    "jose_f_miranda": {
+        "player_key": "jose_miranda",
+        "player_name": "Jose Miranda",
+    },
+    # The Athletics RHP. NOTE the direction is the OPPOSITE of the pair above,
+    # and it is worth stating why rather than letting it read as a slip. Here
+    # the SUFFIXED key is the live one: "lou_trivino_iii" holds the
+    # performance_ingest statline and runs current to 2026-01-01 with a
+    # resolved position, while "lou_trivino" is a single positionless
+    # mlb_pipeline row from the 2018 Athletics Top 30. Incumbency follows the
+    # statline, per the zachary_root and jaiden_lore entries above, not the
+    # shorter spelling.
+    "lou_trivino": {
+        "player_key": "lou_trivino_iii",
+        "player_name": "Lou Trivino III",
+    },
+
     # 2026-08-09 - the Baseball America 2026 MIDSEASON org Top 30 drop, 30
     # boards, 900 rows. BA prints the SHORT form of a name where this database
     # holds the suffixed or fuller form, so 15 correctly-parsed rows for players
