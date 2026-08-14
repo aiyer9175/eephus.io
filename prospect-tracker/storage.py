@@ -5004,7 +5004,17 @@ BOARD_RANK_BASIS_EPOCH = "2026-08-13"   # STRICTLY-AFTER gate: see load_rank_his
 # 2026-07-29 incident.
 BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
                            "|roles=usage_both|feats=b747e1d3|stale=source"
-                           "|floorroute=on@ff60a349|gradanchor=rookie_window")
+                           "|floorroute=on@ff60a349|gradanchor=rookie_window"
+                           "|disp=hit:0.460179/0.667655|pit:0.494262/0.546925")
+# disp added 2026-08-14 WITH an epoch bump, which is the case this pin is for. The
+# dispersion correction (Defect A) is an affine level fix on xfv_war fitted out of fold
+# on the production frame, and it moves 4,585 of 4,664 served grades. Gate:
+# docs/efv-2026-08-13/GRADE_BASIS_EPOCH_GATE.md.
+#
+# Unlike the floorroute and feats restamps below, this one DOES take the epoch with it.
+# The test that caught the omission said so in its own failure message, and it was right:
+# every displayed grade moves, so pre-change ranks and post-change ranks are not
+# comparable and the movement engine must not difference across the boundary.
 # floorroute off -> on 2026-08-07: efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT was
 # flipped once the prospx dedupe and the two-scale disclosure landed. Ship record and
 # re-run gates: docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_SHIP.md. The map hash is
