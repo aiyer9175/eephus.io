@@ -41,17 +41,34 @@ and the invariant that whatever the trim keeps must cover whatever they read.
 from __future__ import annotations
 
 import inspect
+import datetime as _dt
 import re
 
 import pytest
 
 import statcast_metrics as sm
 
+# FIXTURE DATE IS DERIVED, NOT HARDCODED (2026-08-14).
+#
+# It was "2026-07-30", and _extract_standout_games filters on a TRAILING WINDOW:
+# `cutoff = date.today() - timedelta(days=window_days)` with window_days=14
+# (statcast_metrics.py:267,284). So the fixture sat exactly ON the cutoff on
+# 2026-08-13 and fell one day outside it on 2026-08-14, and both parametrisations
+# of test_extractors_need_the_untrimmed_split went red at midnight with
+# "fixture is not a standout" -- a test asserting its own fixture qualifies, which
+# it no longer did.
+#
+# This is the SAME disease as test_farm_rank_and_letter_are_deterministic, which
+# rotted to the day on 2026-08-13 against the INACTIVE_MONTHS cutoff. A fixture
+# that must sit inside a rolling window has to be derived from today, or it is a
+# time bomb with a known fuse length.
+_FIXTURE_DATE = (_dt.date.today() - _dt.timedelta(days=2)).isoformat()
+
 
 def _hitter_split() -> dict:
     return {
-        "game": {"gamePk": 777001, "officialDate": "2026-07-30"},
-        "date": "2026-07-30",
+        "game": {"gamePk": 777001, "officialDate": _FIXTURE_DATE},
+        "date": _FIXTURE_DATE,
         "_level": "AA",
         "isHome": True,
         "opponent": {"name": "Tulsa Drillers"},
@@ -141,7 +158,7 @@ def test_trim_keeps_what_the_parent_and_the_level_filter_read():
     filter rather than a widget."""
     slim = _slim(_hitter_split())
     assert (slim.get("game") or {}).get("gamePk") == 777001
-    assert slim.get("date") == "2026-07-30"
+    assert slim.get("date") == _FIXTURE_DATE
     assert slim.get("_level") == "AA"
 
 
