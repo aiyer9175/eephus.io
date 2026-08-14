@@ -68,17 +68,26 @@ Substituting `a_c + b_c * xfv_war` into `(1 - lam) * cons_war + lam * xfv_war` m
 the model leg carry `lam * b_c` against the consensus leg's `1 - lam`. The
 equivalent pure lambda is `lam*b_c / ((1 - lam) + lam*b_c)`:
 
-| side | lam | mean b_c | lam_eff | against clamp floor 0.35 |
-| --- | --- | --- | --- | --- |
-| hit | 0.70 | 0.6212 | 0.5917 | +0.242 clear |
-| pit | 0.57 | 0.4213 | **0.3583** | **+0.008 clear** |
+| side | lam | b_c (registered folds) | lam_eff | b_c (PRODUCTION) | **lam_eff** |
+| --- | --- | --- | --- | --- | --- |
+| hit | 0.70 | 0.6212 | 0.5917 | 0.667655 | **0.6090** |
+| pit | 0.57 | 0.4213 | 0.3583 | 0.546925 | **0.4203** |
 
-The hitter figure sits beside 0.60, already TOST-ruled-out as a difference. The
-pitcher figure is eight thousandths above `_BLEND_LAMBDA_CLAMP` and far outside
-anything tested (TOST covered .65 / .60 / .51), and pitcher `b_c` is the least
-stable quantity in the lane (0.308 to 0.651 across folds). Routing the correction
-through the blend would spend the calibration fix as an unmeasured lambda cut to the
-clamp floor.
+**The production refit weakens this argument and it is restated on the new number
+rather than left standing on the old one.** The 2026-08-13 stop was written when
+pitcher `b_c` was 0.4213, which put `lam_eff` at 0.3583, eight thousandths above
+`_BLEND_LAMBDA_CLAMP`. On the 11-fold production frame `b_c` is 0.546925 and
+`lam_eff` is **0.4203**, clear of the floor by 0.070 rather than 0.008, and the
+fold-to-fold spread tightens from 0.308-0.651 to 0.506-0.738. The clamp-proximity
+half of the stop is largely gone.
+
+What survives is the part that never depended on the margin: 0.4203 is still
+outside everything TOST covered (.65 / .60 / .51), and blend-lambda shifts are a
+banned lane on their own terms, not because of how close they land to a clamp.
+Routing the correction through the blend would still spend the calibration fix as
+an unmeasured lambda change. The conclusion holds; one of its two supports does not,
+and mixing a stored figure with a fresh fit is the specific error this programme
+has crossed a verdict boundary on twice.
 
 So the split is deliberate and its cost is stated: the grade and the blend read two
 versions of one quantity. The argument is that the blend is an ORDERING instrument
@@ -184,4 +193,87 @@ pass, which is what the FV45 band correction was banned for on 2026-08-12.
 
 ## Results
 
-(empty at pre-registration)
+Measured 2026-08-14 on the PRODUCTION frame (`efv_model.SCORED_YEARS`, 11 folds),
+with the coefficients that actually serve. Nothing here is inherited from the
+registered 2016-2020 measurement.
+
+### Coefficients, and the parity check that licenses them
+
+| side | n | a_c | b_c | LOO b_c range |
+| --- | --- | --- | --- | --- |
+| hit | 1,779 | 0.460179 | 0.667655 | 0.607 to 0.737 |
+| pit | 1,878 | 0.494262 | 0.546925 | 0.506 to 0.738 |
+
+Parity PASSED on the registered frame before anything was reported on the new one:
+reproduced 0.6489 against 0.654 registered (hit) and 0.5624 against 0.5868 (pit),
+both inside `PARITY_TOL` 0.12.
+
+`b_c > 0` on both sides, so no abort. `a_c <= 2*b_c` on both (margins -0.875 and
+-0.600), so correct-then-clamp and clamp-then-correct are provably identical here
+and the seam order costs nothing.
+
+**The 11-fold frame is materially better behaved on the pitcher side**: LOO `b_c`
+tightens from the registered 0.308-0.651 to 0.506-0.738. The registered spread was
+the single least stable number in this lane and it was the reason the full-epoch
+route looked dangerous; on the production frame it is not.
+
+### Ship conditions
+
+| # | condition | hit | pit |
+| --- | --- | --- | --- |
+| 1 | slope CI95 covers 1.0 | 0.6926 -> **1.0151**, CI [0.8457, 1.1848] PASS | 0.6741 -> **1.1778**, CI [0.9129, 1.4783] PASS |
+| 2 | negatives down, floor not binding | 643 -> 409, floor 117 -> **13** PASS | 530 -> 147, floor 24 -> **10** PASS |
+| 3 | parity before corrected report | PASS | PASS |
+| 4 | re-rank MEASURED | 4,585 of 4,664 moved, max 3,414, median 354, p90 377 | |
+| 5 | dollars MEASURED | 2,397 rows move `_odds_grade`; `rank_war` untouched so the quantile channel is 0 by construction | |
+| 6 | routing flip MEASURED | **0 lost, 0 gained** | |
+| 7 | epoch + fingerprint term | `BOARD_RANK_BASIS_EPOCH` 2026-08-13, `disp=` term added and the pinned constant restamped | |
+
+Top-of-board movement, the abort tripwire: **top-10 membership changes 0**. top25 2,
+top100 1, top250 3. The churn is entirely in the 250 to 3,000 band, which is the
+same signature the 2026-08-07 floor-routing bump was written for.
+
+### Condition 6 is the finding, not a formality
+
+The naive seam decides routing on the CORRECTED grade. Measured that way:
+
+    currently routed             2,397
+    cross the 0-WAR knot upward  1,065
+    LOSE a routed grade            950
+    largest drops   diego_fernandez  40.1 -> 25.0   (war -0.68 -> +0.01)
+                    sebastian_puche  40.0 -> 25.0   (war -0.68 -> +0.01)
+                    kevin_martinez   36.6 -> 25.0   (war -0.68 -> +0.01)
+
+A 15-point grade drop on a WAR move of eight hundredths. The mechanism:
+`route_floor_grade` uses "the flagship grade sits exactly on the floor knot" as its
+proxy for "the model has no real prediction for this player", and a positive
+intercept breaks that proxy for every row at once. The provisional map exists
+BECAUSE the flagship curve is unusable near zero, so lifting 950 players onto that
+exact region is the opposite of the repair's intent.
+
+Routing is therefore answered on the uncorrected grade. It is a question about the
+model, not about the calibration of its level. With that ordering the routed cohort
+is preserved exactly and the re-rank p90 tightens from 1,253 to 377.
+
+### Reported, not gated
+
+Tail MAE worsens, as pre-registered: hit 7.480 -> 8.664 (+15.8%, n=178), pit
+6.303 -> 6.836 (+8.5%, n=188). Overall MAE improves 10.7% and 8.0%. The trade is
+intrinsic to any affine map on a noisy predictor and the stop clause forbids
+answering it by fitting a second family. Disclosed to the reader in
+`data/glossary.json` per condition 12, at the measured magnitude (about 1.2 WAR
+hit, 0.5 pit) rather than the registered-frame figures.
+
+### Limits
+
+- The pitcher slope OVERSHOOTS 1.0 (1.1778) and its CI is wide, [0.913, 1.478]. It
+  covers 1.0, which is the clause, but the pitcher correction remains the imprecise
+  half of this lane.
+- The correction is fitted on the pre-clamp model prediction and applied at the
+  grade seam, which is post-tilt. For rows carrying an overlay (injury, Statcast,
+  age, reliever ceiling) the domain therefore differs slightly from the fitted one.
+  For every row with `adj_factor == 1.0` and no xline lean, which is the large
+  majority and ALL of the measured frame, the two coincide exactly.
+- `board_sort_key` stays on the uncorrected pre-clamp value. Order is unaffected
+  because the correction is strictly increasing, but the key is not on the same
+  basis as the grade it breaks ties for, and that predates this change.
