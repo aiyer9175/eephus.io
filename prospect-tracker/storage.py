@@ -5005,7 +5005,7 @@ BOARD_RANK_BASIS_EPOCH = "2026-08-13"   # STRICTLY-AFTER gate: see load_rank_his
 BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
                            "|roles=usage_both|feats=b747e1d3|stale=source"
                            "|floorroute=on@ff60a349|gradanchor=rookie_window"
-                           "|disp=hit:0.460179/0.667655|pit:0.494262/0.546925")
+                           "|disp=hit:0.470359/0.663929|pit:0.493744/0.546915")
 # disp added 2026-08-14 WITH an epoch bump, which is the case this pin is for. The
 # dispersion correction (Defect A) is an affine level fix on xfv_war fitted out of fold
 # on the production frame, and it moves 4,585 of 4,664 served grades. Gate:

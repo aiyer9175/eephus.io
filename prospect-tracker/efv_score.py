@@ -189,10 +189,31 @@ def _outcome_floor_knot() -> float:
 # (a_c - 2*b_c = -0.875 hit, -0.600 pit). Outside that regime the other order collapses
 # every sub-floor row onto one identical grade and can emit a served WAR below -2.0,
 # breaking the floor contract _apply_war_tilt and efv_export both assume.
+# RE-FITTED 2026-08-14 on the POST-REPAIR matrices, and the re-fit was not
+# cosmetic. The first fit ran on matrices that still carried 540 contaminated MLB
+# Pipeline rows and two split identities; the vintage repair removed them and the
+# matrices were rebuilt, so the original coefficients were pinned to a frame that
+# no longer exists. Measured before adopting: the shift moves 1,515 of 3,391
+# non-routed served grades, up to 6.5 FV.
+#
+# SENSITIVITY, disclosed because it is the uncomfortable part. Hitter a_c moved by
+# only 0.0102 and that alone re-graded 45% of non-routed rows. The reason is the
+# outcome curve, not instability in the fit: between knots 30 and 35 it runs about
+# 122 FV per WAR, so a hundredth of a WAR is more than an FV point there. And a_c
+# is itself known only to about +/- 0.06 across folds (hit LOO 0.419 to 0.546).
+# A number we cannot pin to two decimals is therefore setting grades in a region
+# where a hundredth matters.
+#
+# That is tolerable ONLY because it is confined to where the curve is already
+# disclosed as non-calibrated: the glossary states that below roughly FV 45 the
+# measured curve is flat, so grades there preserve ORDER but their SPACING is not
+# an outcome statement. Above that region the curve flattens and the same
+# coefficient shift moves almost nothing. It is recorded here so nobody later
+# reads three decimals of a_c as three decimals of precision.
 _DISPERSION_CORRECTION = {
     #        a_c        b_c
-    "hit": (0.460179, 0.667655),
-    "pit": (0.494262, 0.546925),
+    "hit": (0.470359, 0.663929),
+    "pit": (0.493744, 0.546915),
 }
 
 
