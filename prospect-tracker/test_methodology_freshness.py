@@ -44,6 +44,10 @@ MODEL_GLOSSARY = {
     # reopened with real power, the finding graduates to the xfv entry and this
     # mapping changes with it.
     "xfv_tail_preserving_refit": "internal",
+    # C-1d, the fitting-frame lane (2026-08-14). INTERNAL: both frames returned
+    # NO_SHIP and C-7 reverted the correction to identity the same night, so
+    # nothing it measured reaches a reader and there is no claim to document.
+    "xfv_served_frame": "internal",
     # C-1c, the powered elite lane (2026-08-14). INTERNAL for the same reason as
     # C-1b above: it adjudicates a shipped correction and promotes nothing. Its
     # reader-facing half (that the top of the board is the least resolved part of
