@@ -230,12 +230,35 @@ ADOPT_NORMALIZED_CONSENSUS = True
 # consensus points move, mean +1.3407 FV (max +4.66), and the LATEST (served)
 # point moves for 11 players, mean +0.8927 FV, flipping the displayed
 # consensus_fv on 6 of them. All 11 are 2021-2023 MLB Pipeline International
-# hitters, which is the only cohort the cap reaches. Pre-2017 is exempt inside
-# grade_normalization and is a separate, larger question (3,478 units, ~+3.9 FV).
+# hitters, which is the only cohort the cap reaches.
 # RE-MEASURED 2026-08-09b on the full 56,018-snapshot pool (9,721 players, both
 # remappers): 5 served consensus_fv values flip, not 6. The corpus moved, the cap
 # did not. Treat the size of this basis change as a per-vintage measurement, not a
 # constant, and re-measure before flipping.
+#
+# STALE CLAUSE REMOVED 2026-08-14, and the correction matters more than the
+# removal. This block used to end "Pre-2017 is exempt inside grade_normalization
+# and is a separate, larger question (3,478 units, ~+3.9 FV)". That exemption was
+# REMOVED on 2026-08-14: build_remapper used to hand pre-reference cells a cap of
+# None, which made the era floor landed on 2026-08-13 unreachable for exactly the
+# cells it was built for, so the flip would have been a silent no-op there. See
+# docs/efv-2026-08-13/C4_REACHABILITY_DEFECT.md.
+#
+# So a reader of the old text would have planned a flip believing the pre-2017
+# block does not move. IT NOW MOVES, all 3,478 units of it, and DOWNWARD rather
+# than up. Re-measured 2026-08-14 on the live corpus, the two populations move in
+# OPPOSITE directions and must never be netted:
+#
+#   pre-2017 (era floor):   3,478 served units, unit-weighted mean  -0.2396 FV
+#   2017+    (as-of cap):      99 served units, unit-weighted mean  +2.1004 FV
+#
+# The dense grid reports 2,824 of 6,048 probe cells moving with a tail out to
+# +7.02 FV, and that headline is misleading on its own: 128 of the 143 moved
+# (source, role, year) cells serve ZERO units. They exist only because the
+# uncapped pool reached forward into 2026 for sources with no rows that early
+# (baseballamerica starts 2023, espn 2025, just_baseball and tjstats 2026). Under
+# the cap they lose every pair and drop to raw, which IS the leak closing, on
+# cells nobody is graded by. Quote the 3,577 served units, never the 2,824 cells.
 #
 # When it is on, build_timeseries caps at the newest snapshot year in the pool,
 # which yields a per-cell as-of table (cap = each cell's own year). The cutoff is
