@@ -110,4 +110,61 @@ which family wins. Tracked as its own fix, not gated here.
 
 ## Results
 
-(empty at pre-registration)
+Measured 2026-08-14, `tools/efv_tail_preserving_lab.py 400`, artifact
+`data/xfv_tail_preserving_eval.json`, production frame, leave-one-fold-out.
+
+**ABORT. No family clears all four clauses.**
+
+| family | slope hit / pit | c1 | tail MAE hit | c2 | elite eFV-cons | c3 | c4 | verdict |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| identity (control) | 0.689 / 0.674 | FAIL | 7.44 -> 7.44 | PASS | +0.14 | PASS | **FAIL** | NO_SHIP |
+| affine (incumbent) | 0.985 / 1.077 | PASS | 7.44 -> 8.69 | FAIL | -4.95 | FAIL | PASS | NO_SHIP |
+| war-weighted affine | 0.569 / 0.422 | FAIL | 7.44 -> 5.38 | PASS | +7.91 | PASS | PASS | NO_SHIP |
+| isotonic + lin extrap | 0.880 / 0.719 | FAIL | 7.44 -> 8.31 | FAIL | -3.47 | FAIL | PASS | NO_SHIP |
+| quantile piecewise | 1.200 / 1.170 | PASS | 7.44 -> 9.24 | FAIL | -6.36 | FAIL | PASS | NO_SHIP |
+
+The identity control FAILED clause 4 as the gate required, so clause 4 discriminates
+and the abort is clean rather than an artifact of an inert gate.
+
+### The negative result has a shape, and the shape is the finding
+
+**Every family that calibrates the slope deflates the elite. Every family that
+preserves the elite fails the slope.** Five families, no exceptions, and the split
+is exact:
+
+- slope in CI of 1.0: affine (0.985/1.077), quantile piecewise (1.200/1.170).
+  Elite: -4.95 and -6.36.
+- elite preserved: identity (+0.14), war-weighted (+7.91). Slope: 0.689 and 0.569.
+
+This is not five coincidences. Driving the OOS slope to 1.0 REQUIRES shrinking high
+predictions, because the model genuinely over-predicts at the top out of sample.
+Preserving the elite tier means declining to shrink a prediction the out-of-sample
+evidence says is too high. **On this predictor the two goals are in direct conflict,
+and no monotone map resolves it.** That is a fact about the model, not about the
+functional forms tried.
+
+The uncomfortable reading, stated plainly: eFV serving Jesus Made 4.3 FV below
+consensus may be eFV being RIGHT and disagreeing with scouts, rather than eFV being
+broken. The model's raw 12.08 WAR for him is the number the OOS record says is
+inflated. What the affine map costs is not accuracy at the top, it is agreement
+with the industry at the top, and this lane cannot tell those apart because the
+elite cohort is 14 rows.
+
+### A flaw in my own clause 3, recorded rather than fixed
+
+Clause 3 was written one-sided (`mean elite eFV - consensus >= 0`). The
+war-weighted family satisfies it at **+7.91**, i.e. by inflating every grade about
+eight points ABOVE consensus, which is plainly not what the clause intended. It
+fails clause 1 anyway so nothing turns on it operationally.
+
+The clause is NOT amended, because amending a clause after seeing which family
+exploits it is the exact move this programme bans. It is recorded here so the next
+registration writes a two-sided band instead.
+
+### What ships
+
+Per the pre-registered abort condition: nothing. The affine map stays in place, and
+this document is its loss ledger. Note that the incumbent it leaves in place fails
+two of these four clauses; the alternative (identity) fails two different ones. **No
+option available tonight is clean**, which is why the choice between them is
+referred rather than taken by this lane.
