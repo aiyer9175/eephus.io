@@ -5006,11 +5006,27 @@ BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353
                            "|roles=usage_both|feats=b747e1d3|stale=source"
                            "|floorroute=on@ff60a349|gradanchor=rookie_window"
                            "|disp=hit:0.470359/0.663929|pit:0.493744/0.546915"
-                           "|gradenorm=off@ref2017")
-# gradenorm added 2026-08-14 BEFORE the C-4 flip rather than with it. It reads
-# "off@ref2017" today because consensus.GRADE_NORM_AS_OF is still False, so this
-# restamp records NO change to any served grade. It becomes "asof@ref2017" the day
-# the flip lands, which is the day it has to be able to trip.
+                           "|gradenorm=asof@ref2017")
+# gradenorm off@ref2017 -> asof@ref2017 on 2026-08-14: THE C-4 FLIP.
+#
+# The term was added three commits earlier, deliberately BEFORE the change it
+# guards, and it did the job it was added for: the moment the flag flipped, the
+# pinned-fingerprint test failed and demanded this restamp. Every other term on
+# this device was added AFTER something moved every served grade invisibly, so this
+# is the first time the sequence ran the right way round.
+#
+# The epoch is NOT bumped with it, and that is a judgement rather than an omission.
+# BOARD_RANK_BASIS_EPOCH exists for ONE job: stop the movement engine differencing
+# ranks across a basis change. It was already moved to 2026-08-13 for the
+# dispersion epoch, and no board row dated after that has been served on the
+# pre-C-4 basis, so the gate it controls is already closed over exactly the right
+# window. Bumping it again would drop a second day of history for no additional
+# protection.
+#
+# Coefficients deliberately NOT re-fitted for this flip; see the pinning rule in
+# efv_score._DISPERSION_CORRECTION. A re-fit would have re-graded 48.5% of the
+# non-routed board to chase an a_c shift of 0.0115, well inside its own +/-0.06
+# fold noise, and drowned C-4's actual -0.24 FV effect.
 # disp added 2026-08-14 WITH an epoch bump, which is the case this pin is for. The
 # dispersion correction (Defect A) is an affine level fix on xfv_war fitted out of fold
 # on the production frame, and it moves 4,585 of 4,664 served grades. Gate:

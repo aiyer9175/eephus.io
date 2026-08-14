@@ -210,6 +210,26 @@ def _outcome_floor_knot() -> float:
 # an outcome statement. Above that region the curve flattens and the same
 # coefficient shift moves almost nothing. It is recorded here so nobody later
 # reads three decimals of a_c as three decimals of precision.
+#
+# THEREFORE THESE ARE PINNED. Do NOT re-fit them as a side effect of another
+# change. Established 2026-08-14 when the C-4 era-floor flip moved the matrices and
+# a re-fit came back with a_c shifted by -0.0115 on both sides, which would have
+# re-graded 1,648 of 3,400 non-routed rows (48.5%) by up to 5.9 FV. C-4's OWN
+# measured effect is -0.2396 FV on 3,478 pre-2017 units. Chasing the coefficients
+# would have amplified a small deliberate change into a large incidental one and
+# made the margin re-read uninterpretable, because the board would have moved
+# mostly for a reason nobody chose.
+#
+# The justification is the sensitivity above, not convenience: a_c is knowable to
+# about +/- 0.06 across folds, so a 0.0115 shift is deep inside the noise of its own
+# estimate. Re-fitting inside the noise is not a calibration improvement, it is
+# churn with a calibration story attached.
+#
+# This REFINES the reasoning used earlier the same day, when the coefficients WERE
+# re-fitted after the Pipeline vintage repair. That was a data-QUALITY fix (540
+# contaminated rows removed from the frame) and re-fitting was right. A basis change
+# that leaves the data intact is a different case. The rule: re-fit when the frame
+# is CORRECTED, pin when the frame merely MOVES, and never re-fit as a side effect.
 _DISPERSION_CORRECTION = {
     #        a_c        b_c
     "hit": (0.470359, 0.663929),

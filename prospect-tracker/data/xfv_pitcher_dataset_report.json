@@ -9,7 +9,7 @@
   "debuted_no_pre_fv": 131,
   "debuted_no_war": 35,
   "debuted_kept": 982,
-  "bust_seen": 2357,
+  "bust_seen": 2358,
   "bust_hitter": 1130,
   "bust_no_fv": 47,
   "bust_kept": 1052,
@@ -57,19 +57,19 @@
  "baseline_consensus_fv_spearman": {
   "debuted_only_resolved": {
    "n": 530,
-   "spearman": 0.3028
+   "spearman": 0.3018
   },
   "full_pool_resolved": {
    "n": 1522,
-   "spearman": 0.2188
+   "spearman": 0.2181
   },
   "full_pool_km_censored": {
    "n": 1974,
-   "spearman": 0.2122
+   "spearman": 0.2116
   },
   "debuted_km_censored": {
    "n": 982,
-   "spearman": 0.2711
+   "spearman": 0.2704
   }
  },
  "baseline_note": "THE bar. consensus_fv_raw rank vs realized first-6yr bWAR. debuted-only ~ the 0.38 Phase-1 sweep figure; full-pool dilutes with busts. Sensitivity = resolved vs KM-censored."

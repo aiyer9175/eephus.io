@@ -45,7 +45,7 @@
 "live": {
 "n": 189,
 "surplus_mm_median": 2.9,
-"war6_median": 1.2,
+"war6_median": 1.21,
 "p_star_median": 0.004
 }
 },
@@ -65,7 +65,7 @@
 "live": {
 "n": 116,
 "surplus_mm_median": 8.0,
-"war6_median": 2.02,
+"war6_median": 2.03,
 "p_star_median": 0.007
 }
 },
@@ -83,9 +83,9 @@
 "star_odds": 0.0006
 },
 "live": {
-"n": 34,
-"surplus_mm_median": 17.3,
-"war6_median": 3.04,
+"n": 33,
+"surplus_mm_median": 17.6,
+"war6_median": 3.05,
 "p_star_median": 0.01
 }
 },
@@ -105,7 +105,7 @@
 "live": {
 "n": 38,
 "surplus_mm_median": 28.8,
-"war6_median": 3.77,
+"war6_median": 3.79,
 "p_star_median": 0.013
 }
 },
@@ -125,7 +125,7 @@
 "live": {
 "n": 42,
 "surplus_mm_median": 38.3,
-"war6_median": 4.71,
+"war6_median": 4.73,
 "p_star_median": 0.019
 }
 },
@@ -145,7 +145,7 @@
 "live": {
 "n": 9,
 "surplus_mm_median": 60.8,
-"war6_median": 6.45,
+"war6_median": 6.46,
 "p_star_median": 0.04
 }
 },
@@ -219,9 +219,9 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 2054,
+"n": 2053,
 "surplus_mm_median": 0.7,
-"war6_median": 0.14,
+"war6_median": 0.13,
 "p_star_median": 0.0
 }
 },
@@ -239,7 +239,7 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 283,
+"n": 284,
 "surplus_mm_median": 2.8,
 "war6_median": 0.88,
 "p_star_median": 0.001
@@ -261,7 +261,7 @@
 "live": {
 "n": 57,
 "surplus_mm_median": 7.1,
-"war6_median": 1.4,
+"war6_median": 1.41,
 "p_star_median": 0.001
 }
 },
@@ -280,8 +280,8 @@
 },
 "live": {
 "n": 57,
-"surplus_mm_median": 13.4,
-"war6_median": 1.77,
+"surplus_mm_median": 13.7,
+"war6_median": 1.79,
 "p_star_median": 0.002
 }
 },
@@ -301,7 +301,7 @@
 "live": {
 "n": 9,
 "surplus_mm_median": 28.7,
-"war6_median": 2.1,
+"war6_median": 2.12,
 "p_star_median": 0.002
 }
 },
@@ -319,9 +319,9 @@
 "star_odds": 0.0028
 },
 "live": {
-"n": 24,
-"surplus_mm_median": 36.4,
-"war6_median": 2.62,
+"n": 23,
+"surplus_mm_median": 36.1,
+"war6_median": 2.57,
 "p_star_median": 0.002
 }
 },
@@ -339,10 +339,10 @@
 "star_odds": 0.0073
 },
 "live": {
-"n": 5,
-"surplus_mm_median": 50.9,
-"war6_median": 3.87,
-"p_star_median": 0.003
+"n": 6,
+"surplus_mm_median": 52.0,
+"war6_median": 3.75,
+"p_star_median": 0.0035
 }
 },
 "60": {

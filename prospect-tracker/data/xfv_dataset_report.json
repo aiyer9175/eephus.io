@@ -9,39 +9,39 @@
   "debuted_no_pre_fv": 104,
   "debuted_no_war": 17,
   "debuted_kept": 844,
-  "bust_seen": 2357,
-  "bust_hitter": 1133,
+  "bust_seen": 2358,
+  "bust_hitter": 1134,
   "bust_no_fv": 61,
-  "bust_kept": 1058,
-  "bust_recent_flagged": 33,
+  "bust_kept": 1059,
+  "bust_recent_flagged": 34,
   "bust_mlb_exposure_rerouted": 0,
   "bust_mlb_exposure_dropped": 14,
   "debuted_veteran_dropped": 28,
   "debuted_terminal_resolved": 3
  },
  "counts": {
-  "rows_total": 1902,
+  "rows_total": 1903,
   "debuted": 844,
-  "busts": 1058,
+  "busts": 1059,
   "resolved_debuted": 462,
   "censored_debuted": 382,
-  "bust_recent_excluded_from_label": 33
+  "bust_recent_excluded_from_label": 34
  },
  "feature_coverage": {
-  "consensus_fv_raw": "1902/1902",
-  "fv_fangraphs": "1266/1902",
-  "fv_mlb_pipeline": "1571/1902",
-  "fv_stddev": "976/1902",
-  "tool_hit": "1688/1902",
-  "tool_game_pwr": "1688/1902",
-  "pick_overall": "761/1902",
-  "bonus_usd": "545/1902"
+  "consensus_fv_raw": "1903/1903",
+  "fv_fangraphs": "1267/1903",
+  "fv_mlb_pipeline": "1571/1903",
+  "fv_stddev": "976/1903",
+  "tool_hit": "1689/1903",
+  "tool_game_pwr": "1689/1903",
+  "pick_overall": "761/1903",
+  "bonus_usd": "545/1903"
  },
  "milb_feature_coverage": {
-  "level_rank": "1123/1902",
-  "age_rel_level": "1123/1902",
-  "k_rel": "1123/1902",
-  "iso_rel": "1123/1902"
+  "level_rank": "1123/1903",
+  "age_rel_level": "1123/1903",
+  "k_rel": "1123/1903",
+  "iso_rel": "1123/1903"
  },
  "war_distribution_resolved_debuted": {
   "n": 462,
@@ -55,19 +55,19 @@
  "baseline_consensus_fv_spearman": {
   "debuted_only_resolved": {
    "n": 462,
-   "spearman": 0.393
+   "spearman": 0.3924
   },
   "full_pool_resolved": {
    "n": 1487,
-   "spearman": 0.2663
+   "spearman": 0.2659
   },
   "full_pool_km_censored": {
    "n": 1869,
-   "spearman": 0.2752
+   "spearman": 0.275
   },
   "debuted_km_censored": {
    "n": 844,
-   "spearman": 0.3776
+   "spearman": 0.3774
   }
  },
  "baseline_note": "THE bar. consensus_fv_raw rank vs realized first-6yr bWAR. debuted-only ~ the 0.38 Phase-1 sweep figure; full-pool dilutes with busts. Sensitivity = resolved vs KM-censored."

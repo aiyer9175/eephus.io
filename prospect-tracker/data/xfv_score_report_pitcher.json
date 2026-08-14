@@ -4,29 +4,29 @@
  "n_scored": 1974,
  "calibration_scale": {
   "a": -0.021,
-  "b": 1.074
+  "b": 1.073
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 0.61,
-  "max_up": 5.4,
+  "mean_abs_delta": 0.59,
+  "max_up": 5.6,
   "max_down": -4.6,
-  "share_within_2_grades": 0.928
+  "share_within_2_grades": 0.926
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 3.26,
+  "mean_abs_delta": 3.27,
   "max_up": 8.6,
-  "max_down": -18.2
+  "max_down": -18.1
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1646,
+  "spearman_adj_vs_consensus_miss": 0.153,
   "n": 530,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 13729.9,
-  "consensus": 14047.8
+  "xfv": 13502.7,
+  "consensus": 13904.8
  },
  "example_up_adjustments": [
   {
@@ -46,23 +46,16 @@
   {
    "player_key": "kyle_cody",
    "consensus_fv": 37.8,
-   "xfv_grade": 43.2,
+   "xfv_grade": 43.3,
    "delta": 5.5,
    "realized_war_6yr": 0.47
   },
   {
    "player_key": "angel_perdomo",
-   "consensus_fv": 38.1,
-   "xfv_grade": 43.4,
-   "delta": 5.3,
+   "consensus_fv": 38.0,
+   "xfv_grade": 43.3,
+   "delta": 5.4,
    "realized_war_6yr": -0.01
-  },
-  {
-   "player_key": "zack_burdi",
-   "consensus_fv": 37.6,
-   "xfv_grade": 42.7,
-   "delta": 5.2,
-   "realized_war_6yr": -0.78
   },
   {
    "player_key": "johan_quezada",
@@ -70,35 +63,42 @@
    "xfv_grade": 40.1,
    "delta": 5.1,
    "realized_war_6yr": -0.2
+  },
+  {
+   "player_key": "jesus_cruz",
+   "consensus_fv": 35.0,
+   "xfv_grade": 40.1,
+   "delta": 5.1,
+   "realized_war_6yr": -0.21
   }
  ],
  "example_down_adjustments": [
   {
    "player_key": "shohei_ohtani",
    "consensus_fv": 67.8,
-   "xfv_grade": 49.6,
-   "delta": -18.2,
+   "xfv_grade": 49.7,
+   "delta": -18.1,
    "realized_war_6yr": 34.59
   },
   {
    "player_key": "zack_wheeler",
-   "consensus_fv": 66.2,
+   "consensus_fv": 65.9,
    "xfv_grade": 49.2,
-   "delta": -17.1,
+   "delta": -16.8,
    "realized_war_6yr": 5.74
   },
   {
    "player_key": "gerrit_cole",
-   "consensus_fv": 66.2,
+   "consensus_fv": 65.9,
    "xfv_grade": 49.2,
-   "delta": -17.1,
+   "delta": -16.8,
    "realized_war_6yr": 16.88
   },
   {
    "player_key": "taijuan_walker",
-   "consensus_fv": 66.2,
+   "consensus_fv": 65.9,
    "xfv_grade": 49.2,
-   "delta": -17.1,
+   "delta": -16.8,
    "realized_war_6yr": 5.81
   },
   {
@@ -110,9 +110,9 @@
   },
   {
    "player_key": "noah_syndergaard",
-   "consensus_fv": 61.2,
+   "consensus_fv": 60.9,
    "xfv_grade": 48.4,
-   "delta": -12.8,
+   "delta": -12.5,
    "realized_war_6yr": 14.96
   }
  ],

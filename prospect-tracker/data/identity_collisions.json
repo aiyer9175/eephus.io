@@ -1,8 +1,8 @@
 {
- "generated_at": "2026-08-14T02:53:36Z",
+ "generated_at": "2026-08-14T05:25:25Z",
  "summary": {
   "board_rows": 9721,
-  "active_board_rows": 4658,
+  "active_board_rows": 4657,
   "roster_rows": 10703,
   "colliding_slugs": 198,
   "critical_player_keys": 22,
@@ -20,7 +20,7 @@
   "c7_name_variant_splits": 22,
   "c7_name_variant_open": 11,
   "frankenstein_records": 0,
-  "unassigned_null_id_rows": 24
+  "unassigned_null_id_rows": 23
  },
  "critical_player_keys": [
   "aaron_brown",
@@ -1637,7 +1637,7 @@
    "fielded_games": 10,
    "mlbam_id": 805052,
    "scope": "active",
-   "overall_rank": 3574
+   "overall_rank": 3571
   }
  ],
  "birthdate_conflicts": [],
