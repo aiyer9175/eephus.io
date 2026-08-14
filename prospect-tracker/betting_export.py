@@ -691,9 +691,29 @@ def write_record(rows: list[dict], *, path: Path | None = None) -> list[dict]:
 
 
 def append_record(new_rows: list[dict], *, path: Path | None = None) -> list[dict]:
-    """The only sanctioned way to add to the record."""
+    """The only sanctioned way to add to the record.
+
+    SEAM 2 of 2 for the dispersion exclusion, and it is enforced HERE rather
+    than at the call sites because this function is documented as the only
+    sanctioned way in. A guard at the funnel cannot be bypassed by a future
+    caller that does not know about it, which is the C-6 lesson: a suppression
+    is not shipped until every path that could publish the suppressed quantity
+    is guarded, and the cheapest way to guarantee that is to guard the funnel.
+
+    The record is empty today (five publish blockers are open), so this changes
+    nothing now. It is here so the exclusion is already true on the first
+    nightly that clears those blockers, rather than being remembered then.
+    """
+    rows = list(new_rows or [])
+    kept = [r for r in rows if bm.market_is_publishable(r.get("market"))]
+    if len(kept) != len(rows):
+        dropped = Counter(r.get("market") for r in rows
+                          if not bm.market_is_publishable(r.get("market")))
+        log.warning("betting_record: refused %d row(s) on a market excluded "
+                    "while the dispersion correction is unserved: %s",
+                    len(rows) - len(kept), dict(dropped))
     existing = load_record(path) if path is not None else load_record()
-    return write_record(existing + list(new_rows or []), path=path)
+    return write_record(existing + kept, path=path)
 
 
 def bet_id(*parts) -> str:
@@ -2960,6 +2980,14 @@ def _floor_clearing_sides(bets: list[dict], thr: float) -> list[dict]:
         for market, rows in (("moneyline", b.get("moneyline") or []),
                              ("runline", b.get("runline") or []),
                              ("total", (b.get("total") or {}).get("sides") or [])):
+            # SEAM 1 of 2 for the dispersion exclusion. betting_model has
+            # documented since the gate returned INDETERMINATE that these
+            # markets do not fill a published slot, and nothing enforced it:
+            # the pick of the day on 2026-08-14 was a runline at edge 0.123 on
+            # a market whose own graded Brier (0.26301) is worse than a coin.
+            # The predicate lifts itself the moment SERVE_RUN_DISPERSION flips.
+            if not bm.market_is_publishable(market):
+                continue
             for row in rows or []:
                 if row.get("edge") is None or row["edge"] < thr:
                     continue

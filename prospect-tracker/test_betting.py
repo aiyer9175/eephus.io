@@ -531,12 +531,22 @@ def _slot_board():
 
 
 def test_the_headline_slot_takes_confidence_not_the_longest_price():
+    """UPDATED 2026-08-14. The expected label moved from "ATH +1.5" to "CIN"
+    because the runline is now excluded from published slots while the
+    dispersion correction is unserved (betting_model.market_is_publishable).
+
+    THE TEST'S POINT IS UNCHANGED AND STILL EXERCISED: the +450 ATH row has the
+    best EV on this board and the worst probability, and it still does not win.
+    The winner is the highest-probability PUBLISHABLE row, 0.66, over a row with
+    better EV at 0.30. Selecting on EV is what this slot exists to stop doing
+    and this test still fails if it ever does."""
     slots, _, meta = be.provisional_picks(_slot_board(), odds_configured=True)
     potd = slots["pick_of_the_day"]
-    assert potd["label"] == "ATH +1.5", (
+    assert potd["label"] == "CIN", (
         "the +450 row has the best EV on this board and the worst probability; "
         "selecting on EV is what this slot exists to stop doing")
-    assert potd["model_prob"] == 0.70
+    assert potd["model_prob"] == 0.66
+    assert potd["market"] == "moneyline"
     assert meta["slots"]["pick_of_the_day"]["present"] is True
 
 
@@ -550,12 +560,32 @@ def test_the_longshot_slot_takes_the_long_price_by_ev():
 def test_a_price_band_tie_breaks_toward_a_standard_price():
     """Two sides with the same model probability: the one priced nearest -110
     wins, because it is the more ordinary bet and the tiebreak has to be
-    deterministic or two identical boards publish two different picks."""
+    deterministic or two identical boards publish two different picks.
+
+    REBUILT 2026-08-14. The tie used to be struck between a moneyline and a
+    RUNLINE, and the runline is no longer publishable, so the old fixture had
+    no tie left to break. The rule under test is unchanged: on equal model
+    probability the price nearest -110 wins. It is now exercised between two
+    publishable rows in different games, which is the real slate shape anyway.
+    """
     bets = _slot_board()
     bets[0]["moneyline"][1].update({"model_prob": 0.70, "odds": -180,
                                     "decimal": 1.56, "edge": 0.09})
+    second = {
+        "game_pk": 2, "start": "2026-08-06T23:05:00Z",
+        "home": {"org": "SEA"}, "away": {"org": "TEX"},
+        "moneyline": [
+            {"side": "home", "label": "SEA", "point": None, "edge": 0.09,
+             "odds": -115, "decimal": 1.87, "book": "dk", "model_prob": 0.70,
+             "ev_per_unit": 0.12, "kelly_full": 0.14},
+        ],
+        "runline": [], "total": {"line": 8.5, "sides": []},
+    }
+    bets.append(second)
     slots, _, _ = be.provisional_picks(bets, odds_configured=True)
-    assert slots["pick_of_the_day"]["label"] == "ATH +1.5"     # -136 beats -180
+    potd = slots["pick_of_the_day"]
+    assert potd["label"] == "SEA", "-115 is nearer -110 than -180"
+    assert potd["model_prob"] == 0.70 and potd["market"] == "moneyline"
 
 
 def test_an_empty_longshot_slot_names_the_floor_it_could_not_clear():
@@ -585,11 +615,18 @@ def test_a_slot_row_is_the_board_row_plus_context_only():
     """The enumeration reads the board it was handed. Every priced field on the
     published row must be the same object's value, because an independent
     pricing pass is what fused two books into one row and produced a 0.38839
-    edge on 2026-08-06."""
+    edge on 2026-08-06.
+
+    UPDATED 2026-08-14: the source row moved from the runline to the moneyline
+    the slot now actually selects. The assertion is unchanged and so is its
+    point, that every priced field on the published row is the SAME object's
+    value rather than a re-priced one.
+    """
     bets = _slot_board()
-    src = bets[0]["runline"][0]
+    src = bets[0]["moneyline"][1]                     # CIN, the row now chosen
     slots, _, _ = be.provisional_picks(bets, odds_configured=True)
     potd = slots["pick_of_the_day"]
+    assert potd["label"] == src["label"], "fixture drift: the slot moved"
     for f in ("odds", "decimal", "book", "edge", "model_prob", "ev_per_unit",
               "kelly_full", "point"):
         assert potd[f] == src[f], f

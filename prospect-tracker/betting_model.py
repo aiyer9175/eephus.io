@@ -53,8 +53,18 @@ WHAT THIS MODEL IS NOT, AND THE PAGE SAYS SO
     bar at split quantiles 0.6 and 0.7 and misses it at 0.8, and a verdict that
     moves with the split point is a verdict about the split point. It is not
     served. Until a correction passes, the runline and the total are excluded
-    from both published slots, from the public record and from the paper bet
-    ledger. See SERVE_RUN_DISPERSION.
+    from both published slots and from the public record, enforced by
+    `market_is_publishable` rather than asserted here.
+
+    AMENDED 2026-08-14, and the amendment is the honest half. This paragraph
+    previously also claimed the exclusion covered the PAPER BET LEDGER, and
+    for months NONE of the three was implemented at all: the published pick of
+    the day was a runline and 78 percent of shadow rows were runline or total.
+    The slots and the record are now genuinely excluded. The ledger is
+    deliberately NOT, because it is the instrument that accumulates the settled
+    outcomes needed to resolve the dispersion gate, and excluding them there
+    would delete the only evidence that could ever lift the exclusion. Owner
+    decision 2026-08-14. See SERVE_RUN_DISPERSION and market_is_publishable.
 
     Worse, and this is the reason the module ships UNVALIDATED: the team
     inputs are SEASON-TO-DATE aggregates. Backtesting 2026 games against
@@ -226,6 +236,45 @@ RUN_DISPERSION_MAX_ALPHA = 2.0
 # test_betting_dispersion.py and the persisted `run_dispersion` block in the
 # same commit. The three move together or not at all.
 SERVE_RUN_DISPERSION = False
+
+# ── THE EXCLUSION THIS MODULE HAS ALWAYS DOCUMENTED AND NEVER IMPLEMENTED ────
+# The docstring at the top of this file has said, since the dispersion gate came
+# back INDETERMINATE, that the runline and the total are excluded from the
+# published slots, the public record and the paper ledger until a correction
+# passes. NOTHING IMPLEMENTED IT. The only consequence was
+# betting_export.POISSON_CAVEAT, a string attached to the row.
+#
+# Measured 2026-08-14, which is why this is a P0 and not a tidy-up:
+#   - the published pick of the day WAS a runline, edge 0.123, model prob 0.725
+#   - the shadow ledger held 62 of 80 rows (78%) in runline + total
+#   - those two markets' own graded Brier is 0.26301 and 0.26522, both WORSE
+#     than a flat 0.500, which is exactly what the underdispersed Skellam
+#     predicts and what the INDETERMINATE gate declined to fix
+# So the module was publishing its most confident number on the markets it had
+# itself measured as its least reliable, under a docstring promising the
+# opposite.
+DISPERSION_SENSITIVE_MARKETS = ("runline", "total")
+
+
+def market_is_publishable(market: str | None) -> bool:
+    """False for a market whose prices depend on the margin distribution while
+    the dispersion correction is not served.
+
+    Scope is the PUBLISHING seam only: the two slots and the public record,
+    where a pick is a CLAIM. The paper ledger deliberately keeps recording
+    these rows, and that is an amendment to the docstring's third clause made
+    with its reason stated rather than silently: the shadow ledger is the
+    instrument that accumulates the settled runline and total outcomes needed
+    to ever RESOLVE the dispersion gate. Excluding them there would remove the
+    only evidence that could lift this exclusion, so the ledger would freeze
+    the model in its current state forever. Owner decision 2026-08-14.
+
+    Flips itself off automatically if SERVE_RUN_DISPERSION is ever set True, so
+    this cannot outlive the defect it guards.
+    """
+    if SERVE_RUN_DISPERSION:
+        return True
+    return str(market or "").lower() not in DISPERSION_SENSITIVE_MARKETS
 # The gate itself, verbatim, so the artifact carries its own pre-registration
 # and a reader never has to trust that the doc and the code agree. Written into
 # docs/diamond-betting.md section 11a BEFORE the gate was run.
