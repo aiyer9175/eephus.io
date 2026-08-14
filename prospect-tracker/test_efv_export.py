@@ -518,7 +518,14 @@ def test_committed_artifact_headline_alias_contract():
 # xfv.json written at 23:01 by rebuild pass 3, per the 2026-07-30 note above: a
 # mid-suite test regenerates xfv.json under fixtures and stamping from that would
 # record a fixture state as production truth.
-_GOLDEN_XFV_SHA256 = "37dd827ba1ea27a46b82a2bef8aea02bb511ceadb186e32312e806e7556f5f77"
+# RESTAMPED AGAIN 2026-08-14, same day, DISPLAY ONLY. The factor explainer gained a
+# "Level calibration" chip naming the dispersion correction's own contribution
+# (owner: "why is eFV -4 on Jesus Made when all of his drivers are positive?").
+# No served grade, WAR, surplus, probability or ordering moved: the chip is inserted
+# into factors[] after every number is computed. Made now reads
+# Level calibration down 3.59 against five up-chips totalling 1.97, so the sign of
+# the delta is finally visible on the card. Prior restamp note follows.
+_GOLDEN_XFV_SHA256 = "1532042c43234bcbb2ac8226f504d1e1bdb740f715efd10cc4150e8283bf526e"
 # OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
 # whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
 # factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which

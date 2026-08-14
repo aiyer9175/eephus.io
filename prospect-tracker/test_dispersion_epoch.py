@@ -185,3 +185,27 @@ def test_no_surface_asserts_an_unearned_accuracy_claim():
     assert not bad, (
         "unearned accuracy claim reintroduced; derive it from the backtest artifact "
         "or drop it:\n  " + "\n  ".join(bad))
+
+
+def test_the_level_correction_is_named_on_the_card():
+    """Owner, 2026-08-14: "why is eFV -4 on Jesus Made when all of his drivers are
+    positive?" The card could not answer it. His five chips all read up while the
+    served delta read -4.3, because the chips are model contributions in WAR space
+    and the delta is a difference between two FV scales, with the dispersion
+    correction sitting unnamed in between. For him it is the DOMINANT term: -3.59
+    WAR against chips of 0.68 and 0.65.
+
+    This does NOT claim the chips sum to xfv_minus_consensus; _factors' docstring
+    has denied that since the 2026-07-14 audit. It pins that the largest single
+    mover is no longer invisible."""
+    import inspect
+    live = inspect.getsource(E.run_live)
+    assert '"label": "Level calibration"' in live, (
+        "the dispersion correction is applied but not named on the card; the "
+        "largest single mover would be the one thing the reader cannot see")
+    # it must be derived from the ACTUAL applied delta, not a constant
+    assert "_corr_delta = xfv_war - _war_pre_correction" in live
+    assert live.index("_war_pre_correction = xfv_war") < \
+        live.index("xfv_war = apply_dispersion_correction"), (
+        "the pre-correction value is captured after the correction, so the chip "
+        "would always report zero")

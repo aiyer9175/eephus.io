@@ -2134,7 +2134,27 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         # answered before the level is corrected and the routed cohort is preserved
         # exactly (measured: 0 rows lose a routed grade, 0 gain one).
         _grade_uncorrected = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
+        _war_pre_correction = xfv_war
         xfv_war = apply_dispersion_correction(xfv_war, is_pit)
+        # NAME THE LEVEL CORRECTION ON THE CARD, added 2026-08-14 (owner: "why is eFV
+        # -4 on Jesus Made when all of his drivers are positive?").
+        #
+        # It was a fair question and the card could not answer it. Made's five chips
+        # all read UP while the served delta read -4.3, because the chips are model
+        # contributions in WAR space and the delta is a difference between two FV
+        # scales. The dispersion correction sat between them, unnamed, and for him it
+        # is the DOMINANT term: -3.59 WAR against chips of 0.68 and 0.65.
+        #
+        # The chips still do not sum to xfv_minus_consensus, and _factors' docstring
+        # has said so since the 2026-07-14 audit. This does not pretend otherwise. It
+        # stops the largest single mover being the one thing the reader cannot see,
+        # which is the same failure the 2026-07-25 collinear-group fix addressed when
+        # a plus-contact hitter was told his contact hurt him.
+        _corr_delta = xfv_war - _war_pre_correction
+        if abs(_corr_delta) >= 0.05:
+            factors.insert(0, {"label": "Level calibration",
+                               "dir": "up" if _corr_delta > 0 else "down",
+                               "mag": round(abs(_corr_delta), 2)})
         if xfv_war_healthy is not None:                    # keep the counterfactual on one basis
             xfv_war_healthy = apply_dispersion_correction(xfv_war_healthy, is_pit)
         xfv_grade = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
