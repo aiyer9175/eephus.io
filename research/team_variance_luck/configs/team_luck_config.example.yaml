@@ -1,0 +1,11 @@
+paths:
+  internal_model_output: data/interim/team_luck_internal.parquet
+  elo_parquet_output: research/team_variance_luck/artifacts/team_luck_elo_features.parquet
+  # Optional convenience export for systems without a Parquet engine.
+  elo_csv_output: research/team_variance_luck/artifacts/team_luck_elo_features.csv
+
+model_version: "0.1.0-interface"
+
+notes:
+  - Full rebuild inputs and health/injury model dependencies will be added later.
+  - ELO consumption should depend only on the stable exported feature table.

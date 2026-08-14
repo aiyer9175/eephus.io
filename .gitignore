@@ -9,8 +9,15 @@ env/
 # large local data
 *.csv
 *.parquet
+*.duckdb
 *.sqlite
 *.db
+data/raw/
+data/private/
+data/health/
+data/injury/
+data/interim/
+.env
 # prospect-tracker carve-outs: manual_rankings.csv is the source of truth
 !prospect-tracker/manual_rankings.csv
 
