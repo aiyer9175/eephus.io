@@ -55,6 +55,31 @@ def test_grade_at_the_abstention_knot_publishes_no_delta():
     assert fl is True
 
 
+def test_a_routed_grade_on_the_same_number_is_not_an_abstention():
+    """TWO DIFFERENT 20.0s. efv_ungraded._GRADE_MAP["hit"]["FLOOR"] is also 20.0, so
+    a routed row can serve the outcome curve's knot VALUE while the number came from
+    the provisional model, where it is a resolved answer rather than an abstention.
+    The first version of the predicate marked 275 such rows 'not a resolved level'."""
+    from efv_ungraded import _GRADE_MAP
+    assert _GRADE_MAP["hit"]["FLOOR"] == _floor_knot(), (
+        "the collision this guards is gone; re-read the predicate before deleting")
+    _, _, fl = E.consensus_delta(_floor_knot(), 35.0, anchor_constant_only=True,
+                                 grade_from_outcome_map=False)
+    assert fl is False
+    _, _, fl = E.consensus_delta(_floor_knot(), 35.0, anchor_constant_only=True,
+                                 grade_from_outcome_map=True)
+    assert fl is True
+
+
+def test_scoping_the_floor_marker_moves_no_delta():
+    """The refinement is about the REASON, never the suppression. A routed row is
+    constant-anchor by construction, so it stays suppressed either way."""
+    for from_map in (True, False):
+        d, ph, _ = E.consensus_delta(_floor_knot(), 35.0, anchor_constant_only=True,
+                                     grade_from_outcome_map=from_map)
+        assert d is None and ph is True
+
+
 def test_the_knot_is_read_from_the_curve_not_hardcoded():
     """A curve refit that moves the first knot must move this predicate with it,
     or the suppression silently stops matching the map it describes."""

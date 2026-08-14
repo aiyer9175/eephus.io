@@ -314,7 +314,8 @@ def _divergence_block(scored) -> dict:
     }
 
 
-def consensus_delta(xfv_grade, cons_fv, *, anchor_constant_only: bool):
+def consensus_delta(xfv_grade, cons_fv, *, anchor_constant_only: bool,
+                    grade_from_outcome_map: bool = True):
     """The publishable eFV-minus-consensus delta, or (None, reason) where there is
     no comparison to publish.
 
@@ -325,7 +326,16 @@ def consensus_delta(xfv_grade, cons_fv, *, anchor_constant_only: bool):
     Pure and side-effect free, so the tests exercise the SHIPPED predicate rather
     than a copy of it (the lesson route_floor_grade's docstring records)."""
     placeholder = bool(anchor_constant_only)
-    is_floor = (xfv_grade is not None
+    # TWO DIFFERENT 20.0s, and the first version of this predicate conflated them.
+    # efv_ungraded._GRADE_MAP["hit"]["FLOOR"] is ALSO 20.0, so a routed row can serve
+    # 20.0 as the provisional model's own resolved answer at its floor. Only the
+    # OUTCOME map's first knot is an abstention, because that map returns it for
+    # every non-positive prediction without distinguishing them. Scoping this to the
+    # outcome map moved 275 routed rows off a "not a resolved level" badge that was
+    # describing the wrong map. It changes no delta: those rows are constant-anchor
+    # and were already suppressed as placeholders, so the suppressed union, the
+    # 1,329 compared rows and the +2.03 are all unchanged.
+    is_floor = (bool(grade_from_outcome_map) and xfv_grade is not None
                 and abs(float(xfv_grade) - _outcome_floor_knot()) <= 1e-9)
     if xfv_grade is None or cons_fv is None or placeholder or is_floor:
         return None, placeholder, is_floor
@@ -2308,7 +2318,8 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         # C-6: publish the delta only where the industry spoke and the map answered.
         _delta, _placeholder, _is_floor = consensus_delta(
             round(xfv_grade, 1), round(cons_fv, 1),
-            anchor_constant_only=bool(r.get("anchor_constant_only")))
+            anchor_constant_only=bool(r.get("anchor_constant_only")),
+            grade_from_outcome_map=(_grade_basis == "outcome_pooled"))
         entry = {
             "player_key": r["player_key"], "kind": "active", "position": pos,
             "consensus_fv": round(cons_fv, 1),

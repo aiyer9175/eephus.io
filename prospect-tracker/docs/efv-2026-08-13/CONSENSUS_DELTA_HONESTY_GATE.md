@@ -186,6 +186,26 @@ Downstream rendering degrades correctly on the null: `efvDeltaText(null)` return
 the empty string and every call site is already guarded by `dtxt ? ... : ""`, so a
 suppressed row shows no chip rather than a zero.
 
+### A defect in the first shipped version of this lane, found and fixed the same run
+
+The first `is_floor` read "served grade equals the outcome curve's first knot" and
+that is TWO different statements, because **`efv_ungraded._GRADE_MAP["hit"]["FLOOR"]
+is also 20.0**. A routed row can serve 20.0 as the provisional model's own resolved
+answer at its floor, which is not an abstention by the outcome map at all. The first
+version marked **784** rows, of which 259 were routed and were being told "not a
+resolved level" about a map that had not produced their grade.
+
+Scoped to `grade_from_outcome_map`, i.e. `_grade_basis == "outcome_pooled"`. Floor
+marks go **784 to 525**, and the 525 are verified all-flagship and all exactly 20.0.
+
+**It changed no delta**, which is the point: the 259 are constant-anchor by
+construction (routing requires it), so they were already suppressed as placeholders.
+Re-verified against the pre-refinement artifact, **71,824 frozen-field comparisons
+with `xfv_minus_consensus` ITSELF included, 0 violations**. n_compared stays 1,329,
+mean stays +2.03, suppressed union stays 3,160. Pinned by
+`test_a_routed_grade_on_the_same_number_is_not_an_abstention`, which also asserts the
+two constants still collide so the guard cannot be deleted as dead once they diverge.
+
 ### Marking, per the owner decision
 
 The 509 floor rows now carry a dashed badge and read `at the scale floor, not a
