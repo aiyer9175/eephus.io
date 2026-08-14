@@ -104,4 +104,110 @@ UNVERIFIED.
 
 ## Results
 
-(empty at pre-registration)
+The full 2011-2026 audit the owner called for did NOT confirm the hypothesis above
+for the historical years. It refuted it, with better evidence, and found a second
+defect that had nothing to do with accretion. Recording that the plan was wrong
+before recording what shipped.
+
+### THREE defects, one symptom
+
+`rows > distinct ranks` turned out to be three unrelated things.
+
+**CLASS A, accretion. Confirmed, current year only.** The mechanism above is
+correct and it is confined to the year being scraped live. 388 rows: 39 on the
+Top 100 and 349 across all 30 org boards. Every prior year is clean at its own
+published depth.
+
+**CLASS B, a WRONG-LIST WRITE. Not accretion at all.** 2014 (118 rows) and 2016
+(127) looked like older accretion. They are not. On 2026-06-22 at 02:50:02 the
+2011, 2014 and 2016 Top-100 pages parsed from a cache holding the **Yankees org
+board**, and 10, 20 and 30 rows were ingested under the Top-100 labels. A forced
+re-run **48 seconds later** wrote the true boards over them, but the upsert could
+only correct the Yankees who were ALSO genuine Top-100 players. The rest were left
+behind carrying an org rank under a Top-100 label.
+
+Four independent lines of evidence, none of which the accretion story survives:
+
+- the insertion span is 48 SECONDS inside one run, not months (2026 spans May to
+  August, genuinely different)
+- the early batch is SET-IDENTICAL to that year's Yankees org board, and the batch
+  sizes 10/20/30 match era-correct org depth exactly (2011 orgs are 10 deep,
+  2012-14 are 20, 2015-16 are 30)
+- the AUTOINCREMENT id blocks reconstruct the run: pass 2 spans exactly 550 ids,
+  242 inserts plus 308 upsert-burned, and the arithmetic closes to the row
+- the survivors name the mechanism. The rows that were NOT orphaned are exactly
+  the Yankees who were on the real board, moved from org rank to true rank:
+  **Aaron Judge 2 -> 31**, Jesus Montero 1 -> 9, Jorge Mateo 1 -> 30.
+
+The repair tool's own dry run confirmed it a fifth time without being told to look
+for it: every one of the 52 orphans is a Yankees prospect. Betances, Romine and
+Brackman in 2011; Heathcott, Murphy and Jagielo in 2014; Kaprielian, Garcia and
+Fowler in 2016.
+
+**Root cause, and it is the finding worth keeping.** The archive Top-100 loop was
+the ONLY Pipeline path with no health gate. `validate_pipeline_live_board` is
+called from the live capture and `validate_pipeline_org_boards` from the org
+capture; the archive loop called nothing, so a 10-row parse of a 100-row page was
+indistinguishable from success. Fixed with a dedicated
+`validate_pipeline_archive_board`, because the live gate requires 90 rows and 80%
+FV coverage and would have refused two legitimate boards (2011 is a Top 50 at ~38%
+FV, 2012 runs ~73%). The wrong-list payloads are internally consistent, so a size
+floor is the only discriminator.
+
+**CLASS C, split identities.** Two keys per human on 8 labels
+(`jose_f_miranda`/`jose_miranda` on 7, `lou_trivino`/`lou_trivino_iii` on 1). Not
+a vintage defect and not repaired by deleting a row: routed through
+`consensus.PLAYER_KEY_ALIASES`, where the merge applies to every consumer.
+
+### Blast radius: SERVED-ONLY, and narrower than the row count suggests
+
+Measured by running the shipped path twice, once with the contaminated label
+removed, 9,472 players both arms.
+
+- **The eFV training frame is untouched.** Zero contaminated rows can reach either
+  matrix, proved structurally and empirically.
+- **Served `consensus_fv` is unchanged for all ten same-year draftees.** The
+  forward fill keys on `snapshot_date` and cannot see `inserted_at`, so the
+  same-day live and org rows supersede the January row, and they carry an
+  IDENTICAL FV anyway.
+- **The damage is the candlestick.** Each affected player gained a phantom
+  `2026-01-22` event date, which moves the history open and low:
+  `roch_cholowsky` `fv_open` 50 where it should read 58, `jackson_flora` 47
+  against 52.
+
+### What the repair could NOT fix, and why the label was deleted
+
+Deleting the accreted rows brought the 2026 Top 100 to 100 rows but only **78
+distinct ranks**, and that number is the lesson. `insert_snapshots` updates `rank`
+in place and never touches `inserted_at`, so the SURVIVING first-capture rows had
+their grades overwritten all season: 66 of 100 match the 2026-08-13 live board on
+both key and rank, while the 34 who fell off the board kept their May ranks. The
+label was a May membership carrying August values under a January date, and no
+row-level delete reaches that. The first capture was itself **May**, not January,
+so the preseason vintage for 2026 was never captured at all.
+
+Owner decision: delete the whole current-year archive label. Checked first that no
+player would lose their only Pipeline representation (0 would); the
+`MLB Pipeline Live YYYY-MM-DD` family carries 4,703 correctly dated rows.
+
+### Final state
+
+| family | before | after |
+| --- | --- | --- |
+| 2011 Top 100 | 57 rows / 50 ranks | 50 / 50 |
+| 2014 Top 100 | 118 / 100 | 100 / 100 |
+| 2016 Top 100 | 127 / 100 | 100 / 100 |
+| 2026 Top 100 | 139 / 100 | deleted |
+| 2026 org x30 | 1,249 | 900 |
+| 2022 Top 100 | 101 / 100 | 101 / 100, resolved by alias at read time |
+
+540 rows deleted total, database backed up to
+`prospects.db.bak-vintage-2026-08-13` first.
+
+### Residual, stated rather than left to be rediscovered
+
+The 2024 and 2025 org families remain at 901 rows against 900. The audit
+identified this as a third name-variant pair on the Rangers boards, one row each.
+It is NOT aliased here: the class-C detector found the Miranda and Trivino pairs
+and did not match this one, and chasing it belongs with the identity lane rather
+than with a vintage repair.
