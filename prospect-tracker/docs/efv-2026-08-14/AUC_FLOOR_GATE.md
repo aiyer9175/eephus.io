@@ -112,4 +112,82 @@ may not be quoted as one anywhere, in the artifact or in copy.
 
 ## RESULT (appended after the run)
 
-*(empty at pre-registration)*
+Run 2026-08-14, `tools/efv_auc_floor_lab.py 2000 2000`, artifact
+`data/xfv_auc_floor_eval.json`. No clause amended.
+
+### A0 REPRODUCTION: PASS, all 8 cells
+
+Every published margin, `n` and `n_pos` reproduced exactly.
+
+### THE VERDICT: NULL ON EVERY ADMISSIBLE CELL, UNDER BOTH ESTIMATORS
+
+| cut | cell | margin | E_cond floor | xE_cond | E_refit floor | xE_refit |
+| --- | --- | --- | --- | --- | --- | --- |
+| **debuted_km (PRIMARY)** | hit contributor | +0.00965 | 0.0131 | **0.736x** | 0.0258 | 0.374x |
+| **debuted_km** | hit star | +0.00626 | 0.0123 | 0.509x | 0.0304 | 0.206x |
+| **debuted_km** | pit contributor | +0.00403 | 0.0205 | 0.196x | 0.0282 | 0.143x |
+| **debuted_km** | pit star | +0.00617 | 0.0397 | 0.156x | 0.0522 | 0.118x |
+| full_pool (INADMISSIBLE) | hit contributor | +0.01264 | 0.0142 | 0.890x | 0.0216 | 0.585x |
+| full_pool (INADMISSIBLE) | hit star | +0.00271 | 0.0154 | 0.176x | 0.0211 | 0.128x |
+| full_pool (INADMISSIBLE) | pit contributor | +0.01967 | 0.0172 | **1.143x** | 0.0252 | 0.781x |
+| full_pool (INADMISSIBLE) | pit star | +0.01328 | 0.0330 | 0.402x | 0.0436 | 0.305x |
+
+**No admissible cell resolves under either estimator, and none survives Holm**
+(best p 0.113 against alpha 0.0125). Exactly ONE cell crosses anywhere: an
+INADMISSIBLE full-pool cell, under E_cond only, and it fails under E_refit at
+0.781x. Stop clause 3 forbids promoting it and it is not promoted.
+
+**THE SMOKE RUN WOULD HAVE LIED.** At B=60 `hit.full_pool_km.contributor` read
+1.019x and "resolves". At B=2000 it reads 0.890x. A bootstrap sd carries
+relative error 1/sqrt(2B), which is 9.1% at B=60, and that alone moved a cell
+across the line. **Pre-registering B and honouring it is what stopped a noise
+crossing from becoming a finding.**
+
+### AUC IS THE BETTER INSTRUMENT AND STILL RETURNS A NULL
+
+The owner adopted AUC as a co-primary on the hypothesis that its floors are
+smaller. Measured, on the same contrast and the same rows (hit, debuted_km):
+
+| metric | margin | E_cond floor | margin / floor |
+| --- | --- | --- | --- |
+| Spearman | +0.0101 | 0.0204 | 0.495x |
+| **AUC (contributor)** | +0.0097 | 0.0131 | **0.736x** |
+
+**AUC raises the margin-to-floor ratio by about 50% and still does not clear.**
+The decision was directionally right; the answer is still a null. That is
+knowledge, not a failure, and it is the honest outcome of the lane.
+
+### C-b FAILED, AND THE DEFECT IS IN MY OWN CLAUSE
+
+Single-draw permutation returned model AUC 0.4697 hit / 0.4815 pit against a
+pre-registered bar of `|AUC - 0.5| < 0.02`. **Hitters FAIL as written.**
+
+The bar is mis-specified. The analytic null SE of AUC is
+`sqrt((n1+n2+1)/(12*n1*n2))` = **0.0237 hit / 0.0243 pit**, so the bar sits at
+**0.84 SE** and a CORRECT implementation fails it roughly 40% of the time. The
+200-draw supplement puts the null at mean 0.5001 (sd 0.0240) and 0.5024 (sd
+0.0225), centred on 0.5 and matching the analytic SE, with the observed draw at
+the 20th percentile of its own null.
+
+**The clause is frozen and stands as FAILED.** The supplement is evidence about
+the machinery, not a rescue, and is labelled as such in the artifact. **No
+verdict depends on it**: every admissible cell is a null at 0.15x to 0.74x
+whichever way C-b is read. The reusable lesson is the one
+`efv_board_serve_probe` already recorded and I re-learned: a single draw of a
+null cannot answer whether the null is centred, and a bar set below its own
+sampling error is not a control.
+
+### OTHER CONTROLS
+
+C-a: AUC in this chain is UNWEIGHTED while every pooled rho is pair-weighted by
+`observed_seasons/6`. Recorded so the asymmetry is visible. C-c: every cell
+clears 40 positives (lowest is pit star at 46), so none is refused for
+prevalence. C-d: Spearman published beside every AUC cell.
+
+### WHAT THIS MEANS FOR THE CO-PRIMARY DECISION
+
+The AUC leg is now floored, adjudicated and honest for the first time. It says
+eFV leads on every cell in SIGN and on none in RESOLUTION. Site copy may
+therefore say eFV and the consensus are indistinguishable on discrimination as
+well as on ordering, and may NOT say eFV discriminates better. Any copy change
+is derived from this artifact.

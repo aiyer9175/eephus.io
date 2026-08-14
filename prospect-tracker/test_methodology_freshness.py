@@ -44,6 +44,10 @@ MODEL_GLOSSARY = {
     # reopened with real power, the finding graduates to the xfv entry and this
     # mapping changes with it.
     "xfv_tail_preserving_refit": "internal",
+    # A-1, the AUC floor lane (2026-08-14). NOT internal: it is the first floor
+    # ever derived for the AUC leg, and the accuracy copy is written to its
+    # conclusion (indistinguishable on discrimination, not better).
+    "xfv_auc_floor": ["xfv", "consensus_fv"],
     # S-1, the serve-basis lane (2026-08-14). INTERNAL: it measures the gap
     # between a published arm and the served ordering and promotes nothing. If
     # the remedy it points at is ever taken, the finding moves to the xfv entry

@@ -1,0 +1,474 @@
+{
+ "generated_at": "2026-08-14T21:58:30+00:00",
+ "gate": "docs/efv-2026-08-14/AUC_FLOOR_GATE.md",
+ "lane": "A-1",
+ "B_cond": 2000,
+ "B_refit": 2000,
+ "seed": 20260814,
+ "convention": "MDE95 = 1.645 * sd(margin), one-sided, matching tools/efv_mde_lab.py; mde95_twosided = 1.96 * sd. The margin is model AUC minus consensus AUC on SHARED labels, so it is label-invariant by construction.",
+ "admissibility": "EFV_GATE_STANDARD.md:121-144 rules full-pool debut/no-debut AUC INADMISSIBLE for anything that can sense MiLB-block missingness. debuted_km is the PRIMARY; full_pool_km is a SENSITIVITY and may not carry the headline.",
+ "cells": {
+  "hit.debuted_km.contributor": {
+   "admissible": true,
+   "n": 645,
+   "n_pos": 231,
+   "model_auc": 0.7508,
+   "consensus_auc": 0.7411,
+   "margin": 0.00965,
+   "E_cond": {
+    "B_effective": 2000,
+    "boot_mean": 0.009982,
+    "sd": 0.00798,
+    "mde95": 0.0131,
+    "mde95_twosided": 0.0156,
+    "ci95": [
+     -0.00574,
+     0.02551
+    ]
+   },
+   "underpowered_by_prevalence": false,
+   "E_refit": {
+    "B_effective": 2000,
+    "boot_mean": -0.00796,
+    "sd": 0.015677,
+    "mde95": 0.0258,
+    "mde95_twosided": 0.0307,
+    "ci95": [
+     -0.04282,
+     0.01985
+    ]
+   },
+   "margin_x_floor_E_cond": 0.736,
+   "resolves_E_cond": false
+  },
+  "hit.debuted_km.star": {
+   "admissible": true,
+   "n": 645,
+   "n_pos": 96,
+   "model_auc": 0.8175,
+   "consensus_auc": 0.8112,
+   "margin": 0.00626,
+   "E_cond": {
+    "B_effective": 2000,
+    "boot_mean": 0.006585,
+    "sd": 0.007454,
+    "mde95": 0.0123,
+    "mde95_twosided": 0.0146,
+    "ci95": [
+     -0.00822,
+     0.02139
+    ]
+   },
+   "underpowered_by_prevalence": false,
+   "E_refit": {
+    "B_effective": 2000,
+    "boot_mean": -0.011169,
+    "sd": 0.018477,
+    "mde95": 0.0304,
+    "mde95_twosided": 0.0362,
+    "ci95": [
+     -0.0582,
+     0.01779
+    ]
+   },
+   "margin_x_floor_E_cond": 0.509,
+   "resolves_E_cond": false
+  },
+  "hit.full_pool_km.contributor": {
+   "admissible": false,
+   "n": 1605,
+   "n_pos": 231,
+   "model_auc": 0.8547,
+   "consensus_auc": 0.8421,
+   "margin": 0.01264,
+   "E_cond": {
+    "B_effective": 2000,
+    "boot_mean": 0.01264,
+    "sd": 0.008619,
+    "mde95": 0.0142,
+    "mde95_twosided": 0.0169,
+    "ci95": [
+     -0.00341,
+     0.02915
+    ]
+   },
+   "underpowered_by_prevalence": false,
+   "E_refit": {
+    "B_effective": 2000,
+    "boot_mean": 0.010271,
+    "sd": 0.013121,
+    "mde95": 0.0216,
+    "mde95_twosided": 0.0257,
+    "ci95": [
+     -0.0166,
+     0.03564
+    ]
+   },
+   "margin_x_floor_E_cond": 0.89,
+   "resolves_E_cond": false
+  },
+  "hit.full_pool_km.star": {
+   "admissible": false,
+   "n": 1605,
+   "n_pos": 96,
+   "model_auc": 0.8947,
+   "consensus_auc": 0.892,
+   "margin": 0.00271,
+   "E_cond": {
+    "B_effective": 2000,
+    "boot_mean": 0.002559,
+    "sd": 0.009379,
+    "mde95": 0.0154,
+    "mde95_twosided": 0.0184,
+    "ci95": [
+     -0.01667,
+     0.02079
+    ]
+   },
+   "underpowered_by_prevalence": false,
+   "E_refit": {
+    "B_effective": 2000,
+    "boot_mean": 0.000735,
+    "sd": 0.012804,
+    "mde95": 0.0211,
+    "mde95_twosided": 0.0251,
+    "ci95": [
+     -0.02737,
+     0.02268
+    ]
+   },
+   "margin_x_floor_E_cond": 0.176,
+   "resolves_E_cond": false
+  },
+  "pit.debuted_km.contributor": {
+   "admissible": true,
+   "n": 766,
+   "n_pos": 187,
+   "model_auc": 0.7047,
+   "consensus_auc": 0.7007,
+   "margin": 0.00403,
+   "E_cond": {
+    "B_effective": 2000,
+    "boot_mean": 0.004348,
+    "sd": 0.012475,
+    "mde95": 0.0205,
+    "mde95_twosided": 0.0245,
+    "ci95": [
+     -0.02094,
+     0.02935
+    ]
+   },
+   "underpowered_by_prevalence": false,
+   "E_refit": {
+    "B_effective": 2000,
+    "boot_mean": -0.00817,
+    "sd": 0.017152,
+    "mde95": 0.0282,
+    "mde95_twosided": 0.0336,
+    "ci95": [
+     -0.04424,
+     0.0243
+    ]
+   },
+   "margin_x_floor_E_cond": 0.196,
+   "resolves_E_cond": false
+  },
+  "pit.debuted_km.star": {
+   "admissible": true,
+   "n": 766,
+   "n_pos": 46,
+   "model_auc": 0.8462,
+   "consensus_auc": 0.84,
+   "margin": 0.00617,
+   "E_cond": {
+    "B_effective": 2000,
+    "boot_mean": 0.006224,
+    "sd": 0.024128,
+    "mde95": 0.0397,
+    "mde95_twosided": 0.0473,
+    "ci95": [
+     -0.04235,
+     0.05242
+    ]
+   },
+   "underpowered_by_prevalence": false,
+   "E_refit": {
+    "B_effective": 2000,
+    "boot_mean": -0.010704,
+    "sd": 0.031719,
+    "mde95": 0.0522,
+    "mde95_twosided": 0.0622,
+    "ci95": [
+     -0.08819,
+     0.04283
+    ]
+   },
+   "margin_x_floor_E_cond": 0.156,
+   "resolves_E_cond": false
+  },
+  "pit.full_pool_km.contributor": {
+   "admissible": false,
+   "n": 1695,
+   "n_pos": 187,
+   "model_auc": 0.7876,
+   "consensus_auc": 0.768,
+   "margin": 0.01967,
+   "E_cond": {
+    "B_effective": 2000,
+    "boot_mean": 0.019714,
+    "sd": 0.010437,
+    "mde95": 0.0172,
+    "mde95_twosided": 0.0205,
+    "ci95": [
+     -0.00051,
+     0.04011
+    ]
+   },
+   "underpowered_by_prevalence": false,
+   "E_refit": {
+    "B_effective": 2000,
+    "boot_mean": 0.011541,
+    "sd": 0.015331,
+    "mde95": 0.0252,
+    "mde95_twosided": 0.03,
+    "ci95": [
+     -0.01875,
+     0.0415
+    ]
+   },
+   "margin_x_floor_E_cond": 1.143,
+   "resolves_E_cond": true
+  },
+  "pit.full_pool_km.star": {
+   "admissible": false,
+   "n": 1695,
+   "n_pos": 46,
+   "model_auc": 0.9084,
+   "consensus_auc": 0.8951,
+   "margin": 0.01328,
+   "E_cond": {
+    "B_effective": 2000,
+    "boot_mean": 0.012938,
+    "sd": 0.020068,
+    "mde95": 0.033,
+    "mde95_twosided": 0.0393,
+    "ci95": [
+     -0.02784,
+     0.05339
+    ]
+   },
+   "underpowered_by_prevalence": false,
+   "E_refit": {
+    "B_effective": 2000,
+    "boot_mean": 0.003429,
+    "sd": 0.026524,
+    "mde95": 0.0436,
+    "mde95_twosided": 0.052,
+    "ci95": [
+     -0.05812,
+     0.05045
+    ]
+   },
+   "margin_x_floor_E_cond": 0.402,
+   "resolves_E_cond": false
+  }
+ },
+ "A0_reproduction": {
+  "hit.debuted_km.contributor": {
+   "published_margin": 0.0096,
+   "replay_margin": 0.0096,
+   "published_n": 645,
+   "replay_n": 645,
+   "published_n_pos": 231,
+   "replay_n_pos": 231,
+   "pass": true
+  },
+  "hit.debuted_km.star": {
+   "published_margin": 0.0063,
+   "replay_margin": 0.0063,
+   "published_n": 645,
+   "replay_n": 645,
+   "published_n_pos": 96,
+   "replay_n_pos": 96,
+   "pass": true
+  },
+  "hit.full_pool_km.contributor": {
+   "published_margin": 0.0126,
+   "replay_margin": 0.0126,
+   "published_n": 1605,
+   "replay_n": 1605,
+   "published_n_pos": 231,
+   "replay_n_pos": 231,
+   "pass": true
+  },
+  "hit.full_pool_km.star": {
+   "published_margin": 0.0027,
+   "replay_margin": 0.0027,
+   "published_n": 1605,
+   "replay_n": 1605,
+   "published_n_pos": 96,
+   "replay_n_pos": 96,
+   "pass": true
+  },
+  "pit.debuted_km.contributor": {
+   "published_margin": 0.004,
+   "replay_margin": 0.004,
+   "published_n": 766,
+   "replay_n": 766,
+   "published_n_pos": 187,
+   "replay_n_pos": 187,
+   "pass": true
+  },
+  "pit.debuted_km.star": {
+   "published_margin": 0.0062,
+   "replay_margin": 0.0062,
+   "published_n": 766,
+   "replay_n": 766,
+   "published_n_pos": 46,
+   "replay_n_pos": 46,
+   "pass": true
+  },
+  "pit.full_pool_km.contributor": {
+   "published_margin": 0.0197,
+   "replay_margin": 0.0197,
+   "published_n": 1695,
+   "replay_n": 1695,
+   "published_n_pos": 187,
+   "replay_n_pos": 187,
+   "pass": true
+  },
+  "pit.full_pool_km.star": {
+   "published_margin": 0.0133,
+   "replay_margin": 0.0133,
+   "published_n": 1695,
+   "replay_n": 1695,
+   "published_n_pos": 46,
+   "replay_n_pos": 46,
+   "pass": true
+  }
+ },
+ "controls": {
+  "C_a_weighting": {
+   "note": "AUC in this chain is UNWEIGHTED while every pooled rho is pair-weighted by observed_seasons/6. Reported so the choice is visible rather than assumed.",
+   "auc_is_weighted": false
+  },
+  "C_b_permutation": {
+   "hit.debuted_km.contributor": {
+    "model_auc": 0.4697,
+    "pass": false
+   },
+   "pit.debuted_km.contributor": {
+    "model_auc": 0.4815,
+    "pass": true
+   }
+  },
+  "C_c_prevalence": {
+   "hit.debuted_km.contributor": {
+    "n_pos": 231,
+    "underpowered": false
+   },
+   "hit.debuted_km.star": {
+    "n_pos": 96,
+    "underpowered": false
+   },
+   "hit.full_pool_km.contributor": {
+    "n_pos": 231,
+    "underpowered": false
+   },
+   "hit.full_pool_km.star": {
+    "n_pos": 96,
+    "underpowered": false
+   },
+   "pit.debuted_km.contributor": {
+    "n_pos": 187,
+    "underpowered": false
+   },
+   "pit.debuted_km.star": {
+    "n_pos": 46,
+    "underpowered": false
+   },
+   "pit.full_pool_km.contributor": {
+    "n_pos": 187,
+    "underpowered": false
+   },
+   "pit.full_pool_km.star": {
+    "n_pos": 46,
+    "underpowered": false
+   }
+  },
+  "C_d_spearman_beside_auc": {
+   "hit.debuted_km": {
+    "spearman_blend": 0.3933,
+    "spearman_baseline": 0.3832
+   },
+   "pit.debuted_km": {
+    "spearman_blend": 0.2584,
+    "spearman_baseline": 0.253
+   }
+  },
+  "C_b_supplementary_200_draws": {
+   "hit.debuted_km.contributor": {
+    "draws": 200,
+    "mean_auc": 0.5001,
+    "sd_auc": 0.024,
+    "p05": 0.4604,
+    "p95": 0.5385,
+    "analytic_null_se": 0.0237,
+    "preregistered_bar_in_se": 0.84,
+    "null_is_centred_on_half": true,
+    "observed_single_draw": 0.4697
+   },
+   "pit.debuted_km.contributor": {
+    "draws": 200,
+    "mean_auc": 0.5024,
+    "sd_auc": 0.0225,
+    "p05": 0.4689,
+    "p95": 0.5401,
+    "analytic_null_se": 0.0243,
+    "preregistered_bar_in_se": 0.82,
+    "null_is_centred_on_half": true,
+    "observed_single_draw": 0.4815
+   }
+  },
+  "C_b_clause_defect": "C-b FAILED AS WRITTEN on hitters (0.4697 against a |AUC-0.5| < 0.02 bar). The bar is MIS-SPECIFIED: the analytic null SE of AUC is 0.0237 hit and 0.0243 pit, so the bar sits at 0.84 SE and a correct implementation fails it roughly 40% of the time. The clause is frozen and stands as FAILED; the 200-draw supplement shows the null is centred on 0.5 and the observed draw sits at the 20th percentile of its own null. This is a defect in my pre-registered clause, not evidence about the lane, and NO VERDICT DEPENDS ON IT: every admissible cell is a null at 0.15x to 0.74x either way."
+ },
+ "holm_admissible_family": {
+  "hit.debuted_km.contributor": {
+   "margin": 0.00965,
+   "sd": 0.00798,
+   "z": 1.209,
+   "p_one_sided": 0.11337,
+   "rank": 1,
+   "holm_alpha": 0.0125,
+   "survives_holm": false
+  },
+  "hit.debuted_km.star": {
+   "margin": 0.00626,
+   "sd": 0.007454,
+   "z": 0.84,
+   "p_one_sided": 0.20045,
+   "rank": 2,
+   "holm_alpha": 0.01667,
+   "survives_holm": false
+  },
+  "pit.debuted_km.contributor": {
+   "margin": 0.00403,
+   "sd": 0.012475,
+   "z": 0.323,
+   "p_one_sided": 0.37343,
+   "rank": 3,
+   "holm_alpha": 0.025,
+   "survives_holm": false
+  },
+  "pit.debuted_km.star": {
+   "margin": 0.00617,
+   "sd": 0.024128,
+   "z": 0.256,
+   "p_one_sided": 0.39901,
+   "rank": 4,
+   "holm_alpha": 0.05,
+   "survives_holm": false
+  }
+ },
+ "A0_all_pass": true
+}
