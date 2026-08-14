@@ -1,0 +1,228 @@
+{
+ "generated_at": "2026-08-14T04:27:17Z",
+ "gate": "docs/efv-2026-08-13/ELITE_POWERED_LANE_GATE.md",
+ "B": 2000,
+ "primary_band": 50.0,
+ "sides": {
+  "hit": {
+   "n_pool": 1779,
+   "control_full_pool": {
+    "A_corrected": {
+     "mae": 2.287,
+     "bias": 0.0103,
+     "spearman": 0.1527
+    },
+    "B_uncorrected": {
+     "mae": 2.5657,
+     "bias": 0.1615,
+     "spearman": 0.1537
+    },
+    "C_consensus": {
+     "mae": 1.8768,
+     "bias": -0.1858,
+     "spearman": 0.0899
+    },
+    "paired_A_vs_B": {
+     "delta_mae_A_minus_B": -0.2787,
+     "ci95": [
+      -0.3337,
+      -0.2235
+     ],
+     "excludes_zero": true,
+     "favours": "A_corrected"
+    }
+   },
+   "primary_cons_ge_50": {
+    "n": 165,
+    "A_corrected": {
+     "mae": 7.2986,
+     "bias": -1.3327,
+     "spearman": 0.2991
+    },
+    "B_uncorrected": {
+     "mae": 7.7319,
+     "bias": 1.7836,
+     "spearman": 0.2991
+    },
+    "C_consensus": {
+     "mae": 6.985,
+     "bias": -0.5616,
+     "spearman": 0.34
+    },
+    "paired_A_vs_B": {
+     "delta_mae_A_minus_B": -0.4333,
+     "ci95": [
+      -0.9332,
+      0.0609
+     ],
+     "excludes_zero": false,
+     "favours": "neither"
+    }
+   },
+   "secondary_cons_ge_55": {
+    "n": 70,
+    "A_corrected": {
+     "mae": 8.6306,
+     "bias": -2.7938,
+     "spearman": 0.1889
+    },
+    "B_uncorrected": {
+     "mae": 8.6829,
+     "bias": 1.2912,
+     "spearman": 0.1889
+    },
+    "C_consensus": {
+     "mae": 7.9555,
+     "bias": -1.0694,
+     "spearman": 0.3109
+    },
+    "paired_A_vs_B": {
+     "delta_mae_A_minus_B": -0.0523,
+     "ci95": [
+      -1.0603,
+      0.8815
+     ],
+     "excludes_zero": false,
+     "favours": "neither"
+    }
+   },
+   "biased_outcome_top_decile": {
+    "n": 178,
+    "A_corrected": {
+     "mae": 8.6295,
+     "bias": -8.4446,
+     "spearman": 0.4709
+    },
+    "B_uncorrected": {
+     "mae": 7.4404,
+     "bias": -6.4512,
+     "spearman": 0.4708
+    },
+    "C_consensus": {
+     "mae": 8.7029,
+     "bias": -8.3087,
+     "spearman": 0.4832
+    },
+    "paired_A_vs_B": {
+     "delta_mae_A_minus_B": 1.189,
+     "ci95": [
+      0.8323,
+      1.5255
+     ],
+     "excludes_zero": true,
+     "favours": "B_uncorrected"
+    }
+   }
+  },
+  "pit": {
+   "n_pool": 1879,
+   "control_full_pool": {
+    "A_corrected": {
+     "mae": 1.6288,
+     "bias": 0.0164,
+     "spearman": 0.067
+    },
+    "B_uncorrected": {
+     "mae": 1.7702,
+     "bias": -0.0416,
+     "spearman": 0.067
+    },
+    "C_consensus": {
+     "mae": 1.4754,
+     "bias": 0.0119,
+     "spearman": 0.019
+    },
+    "paired_A_vs_B": {
+     "delta_mae_A_minus_B": -0.1415,
+     "ci95": [
+      -0.1732,
+      -0.109
+     ],
+     "excludes_zero": true,
+     "favours": "A_corrected"
+    }
+   },
+   "primary_cons_ge_50": {
+    "n": 110,
+    "A_corrected": {
+     "mae": 4.9171,
+     "bias": -2.521,
+     "spearman": -0.0329
+    },
+    "B_uncorrected": {
+     "mae": 5.1339,
+     "bias": -0.7447,
+     "spearman": -0.0329
+    },
+    "C_consensus": {
+     "mae": 5.3381,
+     "bias": 1.3388,
+     "spearman": -0.0014
+    },
+    "paired_A_vs_B": {
+     "delta_mae_A_minus_B": -0.2168,
+     "ci95": [
+      -0.5609,
+      0.1381
+     ],
+     "excludes_zero": false,
+     "favours": "neither"
+    }
+   },
+   "secondary_cons_ge_55": {
+    "n": 27,
+    "A_corrected": {
+     "mae": 5.8865,
+     "bias": -2.7137,
+     "spearman": 0.1685
+    },
+    "B_uncorrected": {
+     "mae": 6.5011,
+     "bias": -0.1271,
+     "spearman": 0.1685
+    },
+    "C_consensus": {
+     "mae": 6.8649,
+     "bias": 2.6965,
+     "spearman": 0.5464
+    },
+    "paired_A_vs_B": {
+     "delta_mae_A_minus_B": -0.6146,
+     "ci95": [
+      -1.618,
+      0.3913
+     ],
+     "excludes_zero": false,
+     "favours": "neither"
+    }
+   },
+   "biased_outcome_top_decile": {
+    "n": 188,
+    "A_corrected": {
+     "mae": 6.8368,
+     "bias": -6.8318,
+     "spearman": 0.3286
+    },
+    "B_uncorrected": {
+     "mae": 6.3028,
+     "bias": -6.0922,
+     "spearman": 0.3286
+    },
+    "C_consensus": {
+     "mae": 6.1853,
+     "bias": -5.7384,
+     "spearman": 0.3577
+    },
+    "paired_A_vs_B": {
+     "delta_mae_A_minus_B": 0.534,
+     "ci95": [
+      0.377,
+      0.6827
+     ],
+     "excludes_zero": true,
+     "favours": "B_uncorrected"
+    }
+   }
+  }
+ }
+}

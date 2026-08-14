@@ -108,4 +108,104 @@ eFV at the top generally, not about the correction.
 
 ## Results
 
-(empty at pre-registration)
+Measured 2026-08-14, `tools/efv_elite_band_lab.py 2000`, artifact
+`data/xfv_elite_band_eval.json`, forward-chained on `SCORED_YEARS`.
+
+### An ambiguity in my own abort condition, resolved against myself
+
+The gate says "ABORT if the primary band has fewer than 150 rows" and does not say
+whether that is per side or overall. Measured: **hit 165, pit 110**, total 275.
+
+Read as a total it passes; read per side the pitcher arm fails. I am NOT taking the
+reading that lets the lane report: the pitcher primary band is treated as
+**UNDERPOWERED**, its result is reported but may not carry a verdict, and the
+hitter band (165) carries the primary result. The next registration writes the
+threshold per side.
+
+### Sanity control PASSES
+
+On the full pool the correction beats uncorrected decisively, reproducing the
+effect it was fitted to produce:
+
+| side | A corrected MAE | B uncorrected MAE | paired A-B | CI95 | favours |
+| --- | --- | --- | --- | --- | --- |
+| hit | 2.2870 | 2.5657 | **-0.2787** | [-0.334, -0.224] | A |
+| pit | 1.6288 | 1.7702 | **-0.1415** | [-0.173, -0.109] | A |
+
+Both exclude zero. The harness measures what it claims to.
+
+### PRIMARY: on a consensus-selected elite band the correction does NOT hurt
+
+| band | n | A MAE | B MAE | paired A-B | CI95 | verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| hit cons >= 50 | 165 | **7.2986** | 7.7319 | -0.4333 | [-0.933, +0.061] | NULL |
+| pit cons >= 50 | 110 | **4.9171** | 5.1339 | -0.2168 | [-0.561, +0.138] | NULL (underpowered) |
+| hit cons >= 55 | 70 | **8.6306** | 8.6829 | -0.0523 | [-1.060, +0.882] | NULL |
+| pit cons >= 55 | 27 | **5.8865** | 6.5011 | -0.6146 | [-1.618, +0.391] | NULL |
+
+**Decision rule branch 3: NULL.** The CI covers zero on every band. Per the
+pre-registration this is a real outcome and is NOT a win for the incumbent.
+
+But note the direction: the corrected arm is nominally BETTER on all four bands,
+never worse. Whatever the elite deflation is, **it is not visible as damage to
+predictive accuracy on a band chosen before the outcome was known.**
+
+### THE PRE-REGISTERED SELECTION EFFECT IS CONFIRMED, and it is large
+
+The same comparison on the BIASED cut, the top decile of realized WAR, the rule the
+original tail-MAE clause used:
+
+| cut | side | paired A-B | CI95 | favours |
+| --- | --- | --- | --- | --- |
+| consensus >= 50 (unbiased) | hit | -0.4333 | [-0.933, +0.061] | neither |
+| **realized top decile (biased)** | hit | **+1.1890** | **[0.832, 1.526]** | **B** |
+| consensus >= 50 (unbiased) | pit | -0.2168 | [-0.561, +0.138] | neither |
+| **realized top decile (biased)** | pit | **+0.5340** | **[0.377, 0.683]** | **B** |
+
+The correction loses RESOLVABLY on the outcome-selected cut and does not lose at
+all on the pre-decision cut, on both sides. This is exactly the pattern the gate
+predicted in advance and the reason the prediction was written down first.
+
+**Consequence: the tail-MAE clause that failed the affine map, and that motivated
+the whole of C-1b, was measuring a selection artifact rather than a defect.**
+Conditioning on a high realized outcome preferentially selects rows where a
+high-variance predictor guessed high, so the over-dispersed arm wins there by
+construction. The clause should never have been promoted to gating in C-1b on that
+evidence, and C-1b's clause 2 is retrospectively unsound. Its ABORT still stands,
+because clause 3 (elite inversion) failed independently of clause 2.
+
+### A finding this lane was not looking for: consensus beats eFV on elite hitters
+
+On the hitter primary band, `C_consensus` is the best arm on BOTH metrics:
+
+    C_consensus   MAE 6.9850   rho +0.3400
+    A_corrected   MAE 7.2986   rho +0.2991
+    B_uncorrected MAE 7.7319   rho +0.2991
+
+That is the branch the gate flagged in advance: if consensus beats both eFV arms,
+the finding is about eFV at the top generally, not about the correction. It does
+NOT hold on pitchers, where consensus is the worst arm on MAE (5.3381 against A's
+4.9171). Recorded as an open question with its own power, not adjudicated here.
+
+### Bias, which is the quantity the owner actually saw
+
+| band | A bias | B bias | C bias |
+| --- | --- | --- | --- |
+| hit cons >= 50 | **-1.33** | +1.78 | -0.56 |
+| pit cons >= 50 | -2.52 | **-0.74** | +1.34 |
+
+On elite hitters the corrected arm is LESS biased in absolute terms than the
+uncorrected one (1.33 against 1.78), in the opposite direction. On elite pitchers
+the uncorrected arm is less biased. So "the correction pushes the elite down" is
+true as a statement about the served grade and is NOT true as a statement about
+error against outcomes on the hitter side.
+
+### What ships
+
+Nothing changes. The correction stays, now on evidence rather than on the C-1b
+abort default: it is not measurably worse at the top on any pre-decision band, and
+the clause that said it was has been shown to select on the outcome.
+
+Two things are owed to the reader and are NOT resolved here: the top of the board
+remains the least resolved part of the model (every elite band returns NULL), and
+consensus outperforming both eFV arms on elite hitters deserves its own lane.
