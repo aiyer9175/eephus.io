@@ -11,6 +11,7 @@ Usage:  python tools/efv_tail_preserving_lab.py [B]
 """
 from __future__ import annotations
 
+import datetime as _dt
 import importlib.util as _ilu
 import json
 import sys
@@ -240,7 +241,13 @@ def run(B: int = 500):
         keys = M._feature_spec(s)[0]
         pools[s] = LAB._pool(data, keys, M.SCORED_YEARS)
 
-    out = {"gate": "docs/efv-2026-08-13/TAIL_PRESERVING_REFIT_GATE.md",
+    # generated_at is REQUIRED, not decoration. model_registry.freshness() ages an
+    # undated artifact by file mtime, and the deploy box rewrites every mtime on its
+    # nightly `git checkout -- .`, so the age it would report there is the checkout
+    # rather than the measurement.
+    out = {"generated_at": _dt.datetime.now(_dt.timezone.utc)
+                              .replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+           "gate": "docs/efv-2026-08-13/TAIL_PRESERVING_REFIT_GATE.md",
            "B": B, "families": {}}
 
     for name, builder in FAMILIES.items():

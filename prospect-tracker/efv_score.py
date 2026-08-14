@@ -1861,6 +1861,15 @@ def score_history(persist: bool = True) -> dict:
             # rank_war is deliberately NOT the argument here. The board grade is a function
             # of the MODEL's WAR, not of the consensus-guarded blend; grading history off
             # the blend is what put it on a different scale in the first place.
+            # DISPERSION CORRECTION, added 2026-08-14 with the grade-basis epoch, and
+            # it was MISSED on the first pass. The correction landed at the three
+            # scoring seams (run, run_live, run_backgrade) and not here, which put the
+            # history series on the UNCORRECTED scale while the board moved to the
+            # corrected one: test_history_median_tail_is_on_the_board_basis caught it
+            # at a median gap of 1.30 FV over 1,882 players. That test exists because
+            # this exact class of split has happened before, and its message is right
+            # that a gap this size is a SCALE difference, not the documented tilt gap.
+            model_war = apply_dispersion_correction(model_war, side == "pit")
             grade = vf.outcome_implied_fv(model_war, exposure_seasons=TARGET_SEASONS)
             if grade is None:
                 continue
