@@ -400,11 +400,31 @@ def build_remapper(years: list[int] | None = None, aliases: dict | None = None,
     for (role, yr) in list(latest.keys()):
         if years is not None and yr not in years:
             continue
-        # Pre-reference cells are exempt from the cap (see the docstring): capping
-        # them removes the only pool they have instead of removing a leak.
+        # PRE-REFERENCE CELLS GET THE ERA FLOOR, not the exemption (changed
+        # 2026-08-14). The exemption that stood here was correct WHEN IT WAS
+        # WRITTEN, and its own reasoning is what dates it: capping a pre-2017 cell
+        # used to remove the only pool it had, because the reference scale has no
+        # row before 2017-02-15 and there are no own-year pairs to fall back on.
+        #
+        # The era floor landed 2026-08-13 inside _paired_dists precisely to make
+        # capping those cells safe, by pooling the EARLIEST year the reference
+        # exists instead of dropping to nothing. But it is gated on
+        # `as_of_year is not None`, and this branch handed it None for exactly the
+        # cells it was built for, so it could never fire. Flipping
+        # consensus.GRADE_NORM_AS_OF alone would therefore have shipped a silent
+        # no-op: all 3,478 pre-2017 served units would not have moved, the margin
+        # re-read would have shown nothing, and that would have been recorded as
+        # "the era floor is small" when the truth is "the era floor did not run".
+        #
+        # Measured, mlb_pipeline hitter, live corpus:
+        #   2013  cap None -> n 4,062 offset +4.0645   (the leak: pooled 2017-2026)
+        #   2013  cap set  -> n   309 offset +4.2880   (own-era, matches the
+        #                                               2026-08-13 measurement)
+        # Post-reference cells are byte-identical either way (2019: 395/+4.1519).
         cap = None
-        if as_of_year is not None and yr >= _REFERENCE_FIRST_YEAR:
-            cap = min(yr, as_of_year)
+        if as_of_year is not None:
+            cap = (min(yr, as_of_year) if yr >= _REFERENCE_FIRST_YEAR
+                   else _REFERENCE_FIRST_YEAR)
         for src in sources:
             if src == REFERENCE or src in _SYNTHETIC_SOURCES:
                 continue

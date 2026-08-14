@@ -253,7 +253,20 @@ def test_as_of_year_none_is_identical_to_todays_behaviour(synthetic):
     # Non-vacuous, and the moved set is pinned rather than counted: thin_src 2018
     # is the thin-cell leak, and both pipeline_intl cells only ever cleared min_n
     # by borrowing the 2019 cycle. 9 grades on the probe lattice each.
-    assert moved == {("thin_src", 2018): 9,
+    #
+    # The two 2015 cells were ADDED 2026-08-14 with the era-floor reachability
+    # fix, and their arrival is the point of that change rather than fallout from
+    # it. 2015 is BELOW _REFERENCE_FIRST_YEAR, and build_remapper used to hand
+    # pre-reference cells a cap of None unconditionally, which meant the era floor
+    # inside _paired_dists could never fire for exactly the cells it was built to
+    # repair. They now take the floor and therefore move under a cap.
+    #
+    # mlb_pipeline 2015 is deliberately NOT in this set: in this corpus its
+    # floored pool and its all-years pool agree, so it is the control showing the
+    # fix moves only what the floor actually re-estimates.
+    assert moved == {("thin_src", 2015): 9,
+                     ("thin_src", 2018): 9,
+                     ("mlb_pipeline_international", 2015): 9,
                      ("mlb_pipeline_international", 2017): 9,
                      ("mlb_pipeline_international", 2018): 9}
 
@@ -340,7 +353,7 @@ def test_consensus_defaults_to_no_cap_and_passes_the_corpus_year_when_flipped(mo
 # ---------------------------------------------------------------------------
 # 6. the same two invariants against the REAL corpus
 # ---------------------------------------------------------------------------
-def test_real_corpus_default_is_inert_and_pre_2017_is_untouched():
+def test_real_corpus_default_is_inert_and_pre_2017_now_takes_the_era_floor():
     if not gn._all_latest():
         pytest.skip("prospects.db not present")
     gn._paired_dists.cache_clear()
@@ -354,10 +367,26 @@ def test_real_corpus_default_is_inert_and_pre_2017_is_untouched():
                                ("baseballamerica", "SS"), ("espn", "SS"),
                                ("tjstats", "RHP"), ("just_baseball", "SS"))
               for yr in range(2011, 2027)]
+    # INVERTED 2026-08-14, deliberately, with the reachability fix.
+    #
+    # This assertion used to read "the cap must not touch a single one of the
+    # 3,478 pre-reference units". That was the CORRECT pin while pre-reference
+    # cells were exempt from the cap, and it was green for exactly the reason that
+    # made the exemption a defect: build_remapper handed those cells a cap of
+    # None, so the era floor landed 2026-08-13 could never fire for them. The pin
+    # was therefore certifying the no-op.
+    #
+    # It now asserts the opposite, and asserts it NON-VACUOUSLY: at least one
+    # pre-reference probe must actually move, or the floor is dead again and this
+    # test would pass by describing nothing.
+    pre_ref_moved = 0
     for fv, src, pos, yr in probes:
         assert explicit_none(fv, src, pos, yr) == base(fv, src, pos, yr)
-        if yr < gn._REFERENCE_FIRST_YEAR:
-            # the pre-reference block: 3,478 mlb_pipeline units, and the cap must
-            # not touch a single one of them.
-            assert capped(fv, src, pos, yr) == base(fv, src, pos, yr)
+        if yr < gn._REFERENCE_FIRST_YEAR and capped(fv, src, pos, yr) != base(fv, src, pos, yr):
+            pre_ref_moved += 1
+    assert pre_ref_moved > 0, (
+        "no pre-reference cell moved under the cap, so the era floor is "
+        "unreachable again. Check build_remapper's cap branch: handing "
+        "pre-reference cells a cap of None makes the floor inside _paired_dists "
+        "dead code for exactly the cells it exists to repair")
     gn._paired_dists.cache_clear()
