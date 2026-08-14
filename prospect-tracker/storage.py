@@ -5005,7 +5005,12 @@ BOARD_RANK_BASIS_EPOCH = "2026-08-13"   # STRICTLY-AFTER gate: see load_rank_his
 BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
                            "|roles=usage_both|feats=b747e1d3|stale=source"
                            "|floorroute=on@ff60a349|gradanchor=rookie_window"
-                           "|disp=hit:0.470359/0.663929|pit:0.493744/0.546915")
+                           "|disp=hit:0.470359/0.663929|pit:0.493744/0.546915"
+                           "|gradenorm=off@ref2017")
+# gradenorm added 2026-08-14 BEFORE the C-4 flip rather than with it. It reads
+# "off@ref2017" today because consensus.GRADE_NORM_AS_OF is still False, so this
+# restamp records NO change to any served grade. It becomes "asof@ref2017" the day
+# the flip lands, which is the day it has to be able to trip.
 # disp added 2026-08-14 WITH an epoch bump, which is the case this pin is for. The
 # dispersion correction (Defect A) is an affine level fix on xfv_war fitted out of fold
 # on the production frame, and it moves 4,585 of 4,664 served grades. Gate:
@@ -5131,9 +5136,32 @@ def board_basis_fingerprint() -> str:
                         for s, (_a, _b) in sorted(_es3._DISPERSION_CORRECTION.items()))
     except Exception:
         disp = "unavailable"
+    # GRADE-NORMALIZATION BASIS, added 2026-08-14, and it is the FIFTH term this
+    # device has needed for the same reason. The pattern is now unmistakable: every
+    # term here was added AFTER something moved every served grade while the
+    # fingerprint stayed byte-identical to its pin (feats 2026-07-30, floorroute
+    # 2026-08-07, gradanchor 2026-08-12, disp 2026-08-14, this one now).
+    #
+    # consensus.GRADE_NORM_AS_OF caps the grade-normalization pool at each cell's
+    # own year and, since the era-floor reachability fix earlier today, floors
+    # pre-2017 cells at the reference's first year. Flipping it moves
+    # consensus_fv_raw, which is simultaneously eFV's dominant FEATURE and its
+    # BASELINE, so it moves every served grade. Measured: 3,577 served units, mean
+    # -0.2396 FV on the 3,478 pre-2017 rows and +2.1004 on the 99 in-window ones.
+    #
+    # Added BEFORE the flip rather than after it, which is the whole point. A
+    # fingerprint that gains its term in the same commit as the change it guards
+    # has never guarded anything.
+    try:
+        import consensus as _cn
+        import grade_normalization as _gn
+        gradenorm = ("asof" if getattr(_cn, "GRADE_NORM_AS_OF", False) else "off")
+        gradenorm += f"@ref{getattr(_gn, '_REFERENCE_FIRST_YEAR', '?')}"
+    except Exception:
+        gradenorm = "unavailable"
     return (f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
             f"|feats={feats}|stale={stale}|floorroute={floorroute}|gradanchor={anchor}"
-            f"|disp={disp}")
+            f"|disp={disp}|gradenorm={gradenorm}")
 
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /
