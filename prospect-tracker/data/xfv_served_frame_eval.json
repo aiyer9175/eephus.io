@@ -1,0 +1,117 @@
+{
+ "generated_at": "2026-08-14T04:54:02Z",
+ "gate": "docs/efv-2026-08-13/SERVED_FRAME_REFIT_GATE.md",
+ "B": 2000,
+ "frames": {
+  "incumbent_full_pool": {
+   "per_side": {
+    "hit": {
+     "frame_n": 1779,
+     "a_c": 0.470359,
+     "b_c": 0.663929,
+     "slope_on_frame": 0.9846,
+     "slope_ci95": [
+      0.8082,
+      1.1636
+     ],
+     "covers_1": true,
+     "monotone": true,
+     "mae_full_pre": 2.5657,
+     "mae_full_post": 2.3043,
+     "at_floor_pre": 125,
+     "at_floor_post": 13
+    },
+    "pit": {
+     "frame_n": 1879,
+     "a_c": 0.493744,
+     "b_c": 0.546915,
+     "slope_on_frame": 1.0771,
+     "slope_ci95": [
+      0.8256,
+      1.3819
+     ],
+     "covers_1": true,
+     "monotone": true,
+     "mae_full_pre": 1.7702,
+     "mae_full_post": 1.6461,
+     "at_floor_pre": 24,
+     "at_floor_post": 12
+    }
+   },
+   "served": {
+    "elite_n": 14,
+    "elite_mean": -4.9455,
+    "sub45_mean": -5.4449,
+    "visible_n": 188,
+    "visible_shrunk_share": 1.0,
+    "break_even_war": {
+     "hit": 1.3996,
+     "pit": 1.0897
+    }
+   },
+   "clauses": {
+    "c1_slope_covers_1": true,
+    "c2_visible_not_shrunk": false,
+    "c3_elite_within_2fv": false,
+    "c4_low_end_retained": true,
+    "c5_monotone": true
+   },
+   "verdict": "NO_SHIP"
+  },
+  "restricted_resolves_on_curve": {
+   "per_side": {
+    "hit": {
+     "frame_n": 1131,
+     "a_c": -0.340605,
+     "b_c": 0.803349,
+     "slope_on_frame": 0.9557,
+     "slope_ci95": [
+      0.7476,
+      1.1743
+     ],
+     "covers_1": true,
+     "monotone": true,
+     "mae_full_pre": 2.5657,
+     "mae_full_post": 2.3608,
+     "at_floor_pre": 125,
+     "at_floor_post": 108
+    },
+    "pit": {
+     "frame_n": 1349,
+     "a_c": -0.003408,
+     "b_c": 0.812217,
+     "slope_on_frame": 0.9437,
+     "slope_ci95": [
+      0.6811,
+      1.2529
+     ],
+     "covers_1": true,
+     "monotone": true,
+     "mae_full_pre": 1.7702,
+     "mae_full_post": 1.6486,
+     "at_floor_pre": 24,
+     "at_floor_post": 20
+    }
+   },
+   "served": {
+    "elite_n": 14,
+    "elite_mean": -3.5002,
+    "sub45_mean": -11.7247,
+    "visible_n": 188,
+    "visible_shrunk_share": 1.0,
+    "break_even_war": {
+     "hit": -1.732,
+     "pit": -0.0182
+    }
+   },
+   "clauses": {
+    "c1_slope_covers_1": true,
+    "c2_visible_not_shrunk": false,
+    "c3_elite_within_2fv": false,
+    "c4_low_end_retained": false,
+    "c5_monotone": true
+   },
+   "verdict": "NO_SHIP"
+  }
+ }
+}

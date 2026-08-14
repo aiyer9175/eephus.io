@@ -108,4 +108,71 @@ direction flips for much of the board, which is the visible point of the change.
 
 ## Results
 
-(empty at pre-registration)
+Measured 2026-08-14, `tools/efv_served_frame_lab.py 2000`, artifact
+`data/xfv_served_frame_eval.json`.
+
+**ABORT. The restricted frame is NO_SHIP, and it fails worse than the incumbent.**
+
+| frame | side | n | a_c | b_c | break-even | elite mean | sub45 mean | visible shrunk |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| incumbent | hit | 1,779 | +0.4704 | 0.6639 | **1.40** | -4.95 | -5.44 | **100%** |
+| incumbent | pit | 1,879 | +0.4937 | 0.5469 | 1.09 | | | |
+| restricted | hit | 1,131 | **-0.3406** | 0.8033 | **-1.73** | -3.50 | **-11.72** | **100%** |
+| restricted | pit | 1,349 | -0.0034 | 0.8122 | -0.02 | | | |
+
+Clause 2 fails on BOTH frames: 100% of the 188 visible rows are shrunk either way.
+Clause 3 fails on both. Clause 4 fails on the restricted frame, which is the
+decisive one: the sub-45 cohort goes to **-11.72**, worse than the uncorrected
+-10.97, and the floor rows barely improve (125 to 108 against the incumbent's 13).
+
+### Why the frame change did not help, and what it actually revealed
+
+Restricting the frame did what it was supposed to do to the SLOPE: `b_c` rises
+from 0.664 to 0.803 on hitters, so the shrinkage of high predictions genuinely
+eases, and the elite gap narrows from -4.95 to -3.50.
+
+But `a_c` goes NEGATIVE (-0.34), which moves the break-even from +1.40 WAR to
+**-1.73 WAR**. So the map now shrinks everything above -1.73 instead of everything
+above +1.40, i.e. MORE of the board, and it pushes the low end down hard enough to
+fail clause 4. Trading a small gain at the top for a large loss at the bottom is
+precisely what clause 4 was written to refuse.
+
+**The structural fact, now confirmed from a third independent direction: `b_c` is
+below 1.0 on EVERY frame tried.** Full pool 0.664 / 0.547. Restricted to rows that
+resolve on the curve, 0.803 / 0.812. C-1b's five families, all of them. The model
+is over-dispersed out of sample on every population it is measured on, so any
+affine map that calibrates it must shrink high predictions, and the only thing a
+frame change moves is WHERE the break-even sits.
+
+There is no frame on which the correction stops shrinking good prospects, because
+the thing being corrected is real.
+
+## RETRACTION: my own "+13 FV optimism" figure was a Jensen artifact
+
+Earlier in this session I reported, to the owner, that "consensus is optimistic by
++13.12 FV (hit) and +12.51 (pit)" from comparing a mean consensus FV of 41.13
+against a mean realized-implied FV of 28.01. **That comparison is not sound and I
+am withdrawing it.**
+
+`outcome_implied_fv` is steeply convex in WAR (0 WAR to FV 20.0, 1 WAR to FV 42.8,
+3 WAR to FV 46.6), so `E[g(W)]` is not `g(E[W])`. Measured on a spread of WAR
+values: mean of the FVs is 47.93, FV of the mean WAR is 52.48, a 4.5 point gap
+created by the curve alone. Averaging FV across a population whose WAR distribution
+is mass-at-zero manufactures most of the "+13".
+
+The sound comparison is in WAR space, which C-1c already did: on the elite band the
+corrected arm's bias is -1.33 WAR (hit) and -2.52 (pit), against the uncorrected
++1.78 and -0.74. Those are the numbers that carry the claim. **The direction of the
+earlier statement survives on hitters and the magnitude does not, and no conclusion
+in this programme should rest on the retracted figure.**
+
+## What ships
+
+Nothing. Two frames, both NO_SHIP. Combined with C-1b's five families and C-1c's
+null, three independent lanes now agree that the elite shrinkage is a property of
+the model rather than of the correction's functional form or its fitting frame.
+
+The remaining candidate is the one none of these lanes touched: **the outcome
+curve itself**, which is flat below 0 WAR, runs about 122 FV per WAR between knots
+30 and 35, and is blended to an industry prior above FV 57. Every lane so far has
+corrected the INPUT to that curve. Nothing has questioned the curve.
