@@ -101,4 +101,94 @@ served dollars, and the fresh full-pool and elite-band accuracy deltas.
 
 ## Results
 
-(empty at pre-registration)
+Measured 2026-08-14 by re-scoring the live board under the identity map and diffing
+every field against the incumbent artifact captured before the change (hash-verified
+identical to the served files at capture time). **SHIPPED.**
+
+### What moved, and the blast radius is much smaller than the gate assumed
+
+| field | rows moved | mean | range |
+| --- | --- | --- | --- |
+| `xfv_war_6yr` | 4,483 of 4,489 (99.9%) | -0.637 | -1.40 to +3.60 |
+| `xfv_grade` | 1,511 (33.7%) | -5.449 | -20.30 to +6.90 |
+| `p_bust` | 2,464 (54.9%) | +0.038 | -0.09 to +0.10 |
+| `rank_war` | **0** | | |
+| `xfv_grade_display` | **0** | | |
+| `board_sort_key` | **0** | | |
+| `surplus_mm` | **0** | | |
+| `consensus_surplus_mm`, `band_p10_mm`, `band_p90_mm` | **0** | | |
+
+**No dollar moved and the board did not re-order.** Both follow from the blend leg
+reading the UNCORRECTED model leg: `rank_war` never saw the correction, the display
+grade is a quantile map of `rank_war`, and the served surplus is the display
+re-price. This CORRECTS a claim carried in the 2026-08-13b record, which said served
+dollars price off `_odds_grade` and therefore move with the correction. `_odds_grade`
+does move, and it does feed `p_bucket` / `p_bust`, but the display re-price overwrites
+the dollars downstream of it, so the served figure is invariant. Measured, not argued.
+
+### The band table, which is what the decision was about
+
+| consensus band | before | after | n |
+| --- | --- | --- | --- |
+| 55+ | **-4.96** | **+0.09** | 13 |
+| 50 to 55 | -2.85 | +0.10 | 34 |
+| 45 to 50 | -0.80 | +0.81 | 121 |
+| 40 to 45 | +1.94 | +1.96 | 361 |
+| below 40 | +2.84 | +1.53 | 450 |
+
+On the raw grade with C-6 suppression ignored, so nothing can hide inside it: the
+`consensus >= 55` cohort goes **-4.96 to +0.09** with grades up a mean of 5.05, and
+`consensus >= 50` goes **-3.43 to +0.10**. The elite inversion is gone. This
+reproduces C-1b's identity arm (+0.14 predicted, +0.09 measured) on a board two
+epochs newer.
+
+### The cost, which is real and was accepted in advance
+
+**The FV20 floor population grows 784 to 1,149, up 365.** Removing the `+0.47`
+intercept pushes those rows back below zero WAR, where the outcome map abstains.
+Rows carrying a publishable consensus comparison fall **1,329 to 979**.
+
+So the revert buys the visible top of the board and pays for it by pushing 365 rows
+out of the gradeable range entirely. That is the same trade C-1b clause 4 declined,
+taken deliberately this time by the owner rather than by a clause.
+
+The accuracy debit recorded in the pre-registration (C-1c, corrected resolvably
+better on the full pool) is NOT re-measured here and is not claimed to have changed.
+It stands as the known cost of this decision.
+
+### Clauses
+
+| clause | result |
+| --- | --- |
+| 1 monotone and floored | PASS, asserted on a 1,900-point lattice both sides |
+| 2 four call sites move together | PASS, one seam; no path reads the retired coefficients |
+| 3 consequence-pinned | PASS, `test_the_served_map_is_the_identity` asserts served WAR equals model WAR, not that two constants equal 0.0 and 1.0 |
+| 4 the chip is gone | PASS, **4,410 rows to 0** |
+| 5 C-6 survives | PASS, suppressed set still exactly the two cohorts, n=3,510 |
+
+### Fingerprint restamped, epoch deliberately NOT bumped
+
+`disp=hit:0.470359/0.663929|pit:0.493744/0.546915` becomes
+`disp=hit:0.000000/1.000000|pit:0.000000/1.000000`. The term is derived, so it moved
+on its own and the pin was restamped to match.
+
+`BOARD_RANK_BASIS_EPOCH` stays at 2026-08-13, and unlike previous instances of this
+call it is **measured rather than argued**: the epoch's one job is stopping the
+movement engine differencing RANKS, and `rank_war` and `board_sort_key` are
+byte-identical on all 4,489 rows. The grades did move, and that path is already
+covered by a different device: `xfv_history` carries the fingerprint as its basis
+stamp, and `test_board_basis_coherence` now reports
+`xfv_history.json is not on the current board basis yet (pre-regen); the eFV-delta
+movement signal is suppressed until it is`. The suppression fired on its own, which
+is the check working rather than a gap.
+
+### Pins
+
+`test_dispersion_epoch.py`, plus two new ones. `test_routing_is_decided_on_the_
+uncorrected_grade` was REBUILT rather than deleted: its fixture asserted
+`apply_dispersion_correction(-0.68) > 0`, true only because the shipped intercept
+lifted that row across zero, so the identity revert made the pin fail on its own
+fixture while the property it guards still matters for any reintroduction. It now
+supplies its own synthetic correction. Mutation-proved: restoring the hitter
+coefficients fails `test_the_served_map_is_the_identity`, and restoring the identity
+returns 13 green.

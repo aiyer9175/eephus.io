@@ -74,7 +74,18 @@ def test_routing_is_decided_on_the_uncorrected_grade():
     from every row the intercept lifts across zero: 950 rows measured, worst case
     40.1 -> 25.0 on a WAR move of -0.68 to +0.01.
 
-    A player sitting at the floor with a provisional grade must keep it."""
+    A player sitting at the floor with a provisional grade must keep it.
+
+    REBUILT 2026-08-14 for C-7. The original fixture asserted
+    `apply_dispersion_correction(-0.68) > 0`, which was only true because the shipped
+    intercept lifted that row across zero. The identity revert makes routing-on-
+    corrected and routing-on-uncorrected the SAME operation, so the original pin
+    stopped distinguishing anything and failed on its own fixture.
+
+    Deleting it would have been wrong: the guard cost 950 rows to learn, and it must
+    still hold the day a correction is reintroduced. So the pin now supplies its OWN
+    correction instead of borrowing the shipped one, and separately asserts what the
+    shipped map currently is."""
     knot = E._outcome_floor_knot()
     key = "_synthetic_routed_row"
     E._prov_grades_cache = {key: 40.1}
@@ -88,9 +99,11 @@ def test_routing_is_decided_on_the_uncorrected_grade():
         # What the shipped seam does: route on the UNCORRECTED grade.
         assert E.route_floor_grade(key, grade_uncorrected, True) == 40.1
 
-        # What the naive seam would have done: route on the CORRECTED grade.
-        war_corrected = E.apply_dispersion_correction(war_uncorrected, False)
-        assert war_corrected > 0, "fixture no longer crosses the knot; correction moved"
+        # What the naive seam would do under ANY correction with a positive
+        # intercept. Supplied here rather than read from _DISPERSION_CORRECTION so
+        # the guard survives the identity revert and is ready if a refit returns.
+        war_corrected = 0.470359 + 0.663929 * war_uncorrected
+        assert war_corrected > 0, "synthetic correction no longer crosses the knot"
         grade_corrected = vf.outcome_implied_fv(war_corrected,
                                                 exposure_seasons=TARGET_SEASONS)
         assert E.route_floor_grade(key, grade_corrected, True) is None, (
@@ -98,6 +111,33 @@ def test_routing_is_decided_on_the_uncorrected_grade():
             "the two seams no longer differ and this pin proves nothing")
     finally:
         E._prov_grades_cache = None
+
+
+def test_the_served_map_is_the_identity():
+    """C-7. THE CONSEQUENCE PIN, and the reason it is not written as
+    `_DISPERSION_CORRECTION == {"hit": (0.0, 1.0), ...}`: a constant pin goes green
+    for any refit that happens to write those values while a second correction is
+    applied somewhere else in the chain. What the gate promised the owner is that the
+    SERVED WAR is the model's WAR, so that is what is asserted."""
+    for is_pit in (False, True):
+        for i in range(-400, 1500):
+            w = i / 100.0
+            assert abs(E.apply_dispersion_correction(w, is_pit) - max(-2.0, w)) < 1e-12, (
+                f"served WAR is not the model WAR at {w}; a correction is still "
+                "being applied after the C-7 revert")
+
+
+def test_no_second_correction_seam_was_left_behind():
+    """Clause 2 of the revert gate. One function, four call sites, and the identity
+    is only honest if nothing else scales the WAR on the way to the grade. The
+    three-site version of this mistake put the FV history series on a different basis
+    for 1,882 players the day before."""
+    import inspect
+    for fn in (E.run, E.run_live, E.run_backgrade, E.score_history):
+        src = inspect.getsource(fn)
+        assert "_DISPERSION_RETIRED" not in src, (
+            f"{fn.__name__} reads the RETIRED coefficients; they are kept for the "
+            "record and must never be applied")
 
 
 def test_the_live_seam_passes_the_uncorrected_grade_to_the_router():
@@ -197,15 +237,42 @@ def test_the_level_correction_is_named_on_the_card():
 
     This does NOT claim the chips sum to xfv_minus_consensus; _factors' docstring
     has denied that since the 2026-07-14 audit. It pins that the largest single
-    mover is no longer invisible."""
+    mover is no longer invisible.
+
+    C-7 2026-08-14: the correction is now the identity, so there is no longer a
+    mover to name and the chip renders on ZERO rows (it is gated on
+    `abs(_corr_delta) >= 0.05`). The naming machinery is deliberately KEPT so it
+    returns with any reintroduced correction rather than having to be rediscovered
+    by the same owner question. So this pins both halves: the machinery is present
+    and correctly ordered, AND under the shipped identity map it emits nothing."""
     import inspect
     live = inspect.getsource(E.run_live)
     assert '"label": "Level calibration"' in live, (
-        "the dispersion correction is applied but not named on the card; the "
-        "largest single mover would be the one thing the reader cannot see")
+        "the naming machinery was deleted; if a correction is ever reintroduced the "
+        "largest single mover becomes invisible again")
     # it must be derived from the ACTUAL applied delta, not a constant
     assert "_corr_delta = xfv_war - _war_pre_correction" in live
     assert live.index("_war_pre_correction = xfv_war") < \
         live.index("xfv_war = apply_dispersion_correction"), (
         "the pre-correction value is captured after the correction, so the chip "
         "would always report zero")
+
+
+def test_the_level_calibration_chip_is_silent_under_the_identity_map():
+    """Clause 4 of the revert gate, as a CONSEQUENCE rather than a source read. It
+    was on 4,410 of 4,489 served rows before the revert."""
+    import json
+    import pathlib
+    root = pathlib.Path(__file__).parent
+    seen = 0
+    for art in ("data/xfv_scored_live.json", "data/xfv_scored_live_pitcher.json"):
+        p = root / art
+        if not p.exists():
+            pytest.skip(f"{art} not built")
+        for r in json.loads(p.read_text(encoding="utf-8")):
+            for f in (r.get("factors") or []):
+                if f.get("label") == "Level calibration":
+                    seen += 1
+    assert seen == 0, (
+        f"{seen} rows still publish a Level calibration chip; the served map is "
+        "supposed to be the identity, so there is no level correction to name")

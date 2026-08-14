@@ -5005,8 +5005,24 @@ BOARD_RANK_BASIS_EPOCH = "2026-08-13"   # STRICTLY-AFTER gate: see load_rank_his
 BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
                            "|roles=usage_both|feats=b747e1d3|stale=source"
                            "|floorroute=on@ff60a349|gradanchor=rookie_window"
-                           "|disp=hit:0.470359/0.663929|pit:0.493744/0.546915"
+                           "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
                            "|gradenorm=asof@ref2017")
+# disp 0.470359/0.663929 -> 0.000000/1.000000 on 2026-08-14: THE C-7 REVERT, on the
+# owner's decision. Gate docs/efv-2026-08-13/DISPERSION_REVERT_GATE.md. The identity
+# map is written as coefficients rather than as the word "identity" on purpose: the
+# term must stay comparable across a re-introduction, and 0.000000/1.000000 says
+# exactly which map is serving without a reader having to trust a label.
+#
+# BOARD_RANK_BASIS_EPOCH deliberately NOT bumped, and this time it is MEASURED rather
+# than argued. The epoch has one job, stopping the movement engine differencing RANKS
+# across a basis change, and the C-7 diff found rank_war and board_sort_key
+# BYTE-IDENTICAL on all 4,489 served rows, because the blend leg reads the uncorrected
+# model leg. There is no rank basis change to suppress, and a bump would drop another
+# day of history for no protection. The GRADES did move (1,511 rows), and that path is
+# already covered: xfv_history carries this fingerprint as its basis stamp, so
+# xfv_history_is_on_board_basis withholds the eFV-delta movement override for one
+# cycle on its own.
+#
 # gradenorm off@ref2017 -> asof@ref2017 on 2026-08-14: THE C-4 FLIP.
 #
 # The term was added three commits earlier, deliberately BEFORE the change it

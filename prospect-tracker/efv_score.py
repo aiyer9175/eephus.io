@@ -230,10 +230,35 @@ def _outcome_floor_knot() -> float:
 # contaminated rows removed from the frame) and re-fitting was right. A basis change
 # that leaves the data intact is a different case. The rule: re-fit when the frame
 # is CORRECTED, pin when the frame merely MOVES, and never re-fit as a side effect.
-_DISPERSION_CORRECTION = {
-    #        a_c        b_c
+# REVERTED TO IDENTITY 2026-08-14 (C-7), on the owner's decision.
+# Pre-registration: docs/efv-2026-08-13/DISPERSION_REVERT_GATE.md.
+#
+# The owner reported twice that the board reads deflated and named this correction as
+# the cause. They are right about the part of the board they look at: the map's
+# break-even is a_c/(1-b_c) = 1.40 WAR, so it SHRANK essentially every visible row and
+# inverted the elite tier, putting 11 of 14 elite prospects below a consensus they had
+# been above. This is option (b) of the three TAIL_PRESERVING_REFIT_GATE.md left open
+# when C-1b aborted, and it is a decision, not a measurement.
+#
+# WHAT IT COSTS, recorded here because it is a real debit and not a free win:
+#   C-1c measured the corrected arm as RESOLVABLY more accurate against realized WAR
+#   on the full pool (hit paired MAE -0.2787, CI95 [-0.334, -0.224]; pit -0.1415,
+#   [-0.173, -0.109]) and nominally better on all four pre-decision elite bands. So
+#   reverting makes eFV agree with scouts more and match outcomes less. Anyone reading
+#   this constant later should know the trade was made with open eyes.
+#
+# The retired coefficients are kept below rather than deleted. They are the fitted
+# values, they cost a full lane to derive, and the reopen burden recorded in C-1b is
+# new resolved cohorts rather than a new functional form.
+_DISPERSION_RETIRED_2026_08_14 = {
+    #        a_c        b_c        fitted on the post-vintage-repair matrices
     "hit": (0.470359, 0.663929),
     "pit": (0.493744, 0.546915),
+}
+_DISPERSION_CORRECTION = {
+    #        a_c   b_c      identity: the served WAR is the model's WAR
+    "hit": (0.0, 1.0),
+    "pit": (0.0, 1.0),
 }
 
 
