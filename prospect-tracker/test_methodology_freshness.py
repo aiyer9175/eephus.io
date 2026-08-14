@@ -29,6 +29,21 @@ MODEL_GLOSSARY = {
     "xfv_rank_objective": "internal",
     "surplus_decomposition_v6": "internal",
     "xfv_dist_recalibration": "internal",
+    # C-1b, the tail-preserving refit (2026-08-14). INTERNAL on the same reasoning
+    # as the B-L3 lane below: all five declared families returned NO_SHIP, nothing
+    # was promoted, and no served number and no page copy moved because of it.
+    #
+    # Worth being precise about WHY this is internal rather than reader-facing,
+    # because it is a close call. The lane's finding IS reader-relevant in the
+    # abstract (eFV runs below consensus at the top of the board, and no monotone
+    # correction fixes that without breaking the level calibration). But the thing
+    # a reader would actually be told is a property of the SHIPPED affine
+    # correction, and that is already disclosed on the xfv entry, which carries the
+    # tail cost in WAR terms. This row documents the failed search for an
+    # alternative, which is model-dev history. If the elite question is ever
+    # reopened with real power, the finding graduates to the xfv entry and this
+    # mapping changes with it.
+    "xfv_tail_preserving_refit": "internal",
     # Opportunity/quality decomposition of eFV (lane B-L3). Model-dev only:
     # 0 of 7 arms promoted, no feature and no constant moved, and nothing on
     # any page changed, so it takes the same "internal" decision the rest of
