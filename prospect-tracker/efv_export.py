@@ -81,7 +81,15 @@ def _entry(s, side, kind):
         # disagrees with consensus by a mean 12.5 FV, the retired quantile basis
         # by 0.56, because a quantile remap onto the consensus distribution
         # reproduces consensus by construction.
+        # C-6 2026-08-14: this is now NULL where no comparison exists, and the two
+        # markers below carry the reason. They are not decoration: prospx reads them
+        # to decide whether to render a delta chip at all, and without them the page
+        # falls back to subtracting the two displayed numbers and re-manufactures
+        # exactly the delta the scorer withheld.
+        # docs/efv-2026-08-13/CONSENSUS_DELTA_HONESTY_GATE.md
         "xfv_minus_consensus": s.get("xfv_minus_consensus"),          # SERVED headline - consensus
+        "consensus_is_placeholder": bool(s.get("consensus_is_placeholder")),
+        "xfv_grade_is_floor": bool(s.get("xfv_grade_is_floor")),
         "xfv_minus_consensus_quantile": s.get("xfv_minus_consensus_display"),  # retired quantile - consensus
         "xfv_war_6yr": s.get("xfv_war_6yr"),
         "p_bucket": s.get("p_bucket"),

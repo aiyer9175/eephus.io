@@ -264,6 +264,74 @@ def route_floor_grade(player_key, flagship_grade, constant_only: bool):
     return _provisional_grades().get(player_key)
 
 
+# CONSENSUS DELTA HONESTY (C-6, 2026-08-14).
+# Pre-registration: docs/efv-2026-08-13/CONSENSUS_DELTA_HONESTY_GATE.md.
+#
+# The owner reported that eFV is deflated across the board. It is not. Board-wide
+# mean xfv_minus_consensus was -5.13 FV on 4,489 active rows, and 76% of that came
+# from 2,651 rows whose "consensus" is the performance_ingest constant FV 35, which
+# compute_consensus_point parks as "a placeholder constant, not an opinion" and folds
+# back in only when nothing real graded the player. A further 35% came from 509 rows
+# serving the FV20 abstention knot. On the 1,329 rows carrying a published opinion
+# where the map states a level, eFV read +2.04 ABOVE consensus.
+#
+# A delta is a claim that we disagree with the industry. It is only true when the
+# industry spoke AND we answered. Two ways that fails, and both are already named
+# elsewhere in this file rather than discovered here:
+#
+#   placeholder  no source published an FV, so consensus.py fabricated one to keep
+#                the player on the board. There is no opinion to differ from.
+#   floor        vf.outcome_implied_fv returns ks[0] for EVERY war <= vs[0], so the
+#                served 20.0 covers a measured -0.86 to -0.00 span of predictions.
+#                It is the bottom of the scale, not a level. route_floor_grade
+#                already reads this as ABSTAINING rather than disagreeing; it just
+#                cannot act on rows whose anchor is a real opinion.
+#
+# NOT a claim that the grades are too low. Out of fold on the resolved cohort the
+# rows predicting in (-1, 0) realized +0.122 WAR (hit) and +0.235 (pit) with 93.4%
+# and 87.5% at or below zero, and feeding their REALIZED outcomes through this same
+# map returns 21.66 and 22.92 against the 20.0 served. The grade is vindicated. The
+# DELTA is the manufactured quantity, so the delta is what this suppresses.
+def _divergence_block(scored) -> dict:
+    """Board-level eFV-against-consensus, over the rows where a comparison exists.
+
+    Publishes n_compared and n_suppressed side by side, with the reason split, so
+    the aggregate cannot silently change meaning when the suppressed share moves."""
+    cmp_rows = [s for s in scored if s.get("xfv_minus_consensus") is not None]
+    d = [s["xfv_minus_consensus"] for s in cmp_rows]
+    return {
+        "n_compared": len(cmp_rows),
+        "n_suppressed": len(scored) - len(cmp_rows),
+        "n_suppressed_placeholder_consensus": sum(
+            1 for s in scored if s.get("consensus_is_placeholder")),
+        "n_suppressed_grade_at_floor": sum(
+            1 for s in scored if s.get("xfv_grade_is_floor")),
+        "mean_abs_delta": round(statistics.mean(abs(v) for v in d), 2) if d else None,
+        "mean_signed_delta": round(statistics.mean(d), 2) if d else None,
+        "basis_note": "computed over rows with a published consensus opinion whose "
+                      "grade the outcome map could state a level for; see "
+                      "docs/efv-2026-08-13/CONSENSUS_DELTA_HONESTY_GATE.md",
+    }
+
+
+def consensus_delta(xfv_grade, cons_fv, *, anchor_constant_only: bool):
+    """The publishable eFV-minus-consensus delta, or (None, reason) where there is
+    no comparison to publish.
+
+    Returns (delta, placeholder, is_floor) so the caller can serve the REASON rather
+    than a bare null: a surface that cannot say why a number is missing will render
+    it as 0.0, which is the failure this exists to prevent.
+
+    Pure and side-effect free, so the tests exercise the SHIPPED predicate rather
+    than a copy of it (the lesson route_floor_grade's docstring records)."""
+    placeholder = bool(anchor_constant_only)
+    is_floor = (xfv_grade is not None
+                and abs(float(xfv_grade) - _outcome_floor_knot()) <= 1e-9)
+    if xfv_grade is None or cons_fv is None or placeholder or is_floor:
+        return None, placeholder, is_floor
+    return round(float(xfv_grade) - float(cons_fv), 1), placeholder, is_floor
+
+
 # P1 V2 clause-2 baseline floor. See the ANCHOR DECOUPLING note in
 # _provisional_prior_war._ref_war. The sub-45 empirical anchors were amended on
 # 2026-07-29 (0.19 WAR/yr flat -> measured 0.019 at FV35 / 0.086 at FV40), which drags
@@ -2237,6 +2305,10 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
                 float(_mk["era_rel"]) if _mk.get("era_rel") is not None else 0.0,
                 float(_mk.get("k_rel")) if _mk.get("k_rel") is not None else 0.0)
         _rank_exact[r["player_key"]] = rank_war           # unrounded, for the display-map sort
+        # C-6: publish the delta only where the industry spoke and the map answered.
+        _delta, _placeholder, _is_floor = consensus_delta(
+            round(xfv_grade, 1), round(cons_fv, 1),
+            anchor_constant_only=bool(r.get("anchor_constant_only")))
         entry = {
             "player_key": r["player_key"], "kind": "active", "position": pos,
             "consensus_fv": round(cons_fv, 1),
@@ -2245,7 +2317,11 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             # actually carrying a penalty, so a null means "not hurt", not "unknown".
             "xfv_grade_healthy": (round(xfv_grade_healthy, 1)
                                   if xfv_grade_healthy is not None else None),
-            "xfv_minus_consensus": round(xfv_grade - cons_fv, 1),
+            # NULL means "no comparison exists", never "they agree". The two markers
+            # below carry the reason so no surface has to infer it from the null.
+            "xfv_minus_consensus": _delta,
+            "consensus_is_placeholder": _placeholder,
+            "xfv_grade_is_floor": _is_floor,
             "xfv_war_6yr": round(xfv_war, 2),
             "rank_war": round(rank_war, 3),
             "p_bucket": {k: round(p, 3) for k, p in zip(_BUCKETS, probs)},
@@ -2384,10 +2460,11 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         "n_scored": len(scored),
         "skipped_no_pro_track_record": skipped_no_track,
         "calibration_scale": {"a": round(a, 3), "b": round(b, 3)},
-        "realized_grade_divergence_vs_consensus": {
-            "mean_abs_delta": round(statistics.mean(abs(s["xfv_minus_consensus"]) for s in scored), 2) if scored else None,
-            "mean_signed_delta": round(statistics.mean(s["xfv_minus_consensus"] for s in scored), 2) if scored else None,
-        },
+        # C-6: averaged over rows that HAVE a delta, and carrying its own n so a
+        # suppressed row can never be read as an agreement. Pooling the suppressed
+        # rows in is what produced the -5.13 "board-wide deflation" that was really
+        # 2,651 comparisons against a fabricated 35 and 509 against a floor knot.
+        "realized_grade_divergence_vs_consensus": _divergence_block(scored),
         "biggest_disagreements": _live_disagreement_block(scored),
         "surplus_totals_mm": {"xfv": xfv_tot, "consensus": cons_tot,
                               "xfv_share_of_consensus": round(xfv_tot / cons_tot, 3) if cons_tot else None},

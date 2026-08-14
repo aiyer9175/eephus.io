@@ -126,4 +126,89 @@ of clause 5.
 
 ## Results
 
-(empty at pre-registration)
+Measured 2026-08-14 against the pre-change artifact captured before the first edit.
+Verification harness re-ran `python efv_score.py --live` on both sides and compared
+row by row. **SHIPS. All five clauses hold.**
+
+### Clause 1 and 2: nothing that carries a number moved
+
+**94,269 frozen-field comparisons across 4,489 rows, 0 violations.** Compared per
+row: `xfv_grade`, `xfv_grade_healthy`, `xfv_war_6yr`, `rank_war`, `p_bucket`,
+`p_bust`, `surplus_mm`, `consensus_surplus_mm`, `dist`, `band_p10_mm`,
+`band_p90_mm`, `consensus_fv`, `board_sort_key`, `xfv_grade_display`,
+`xfv_grade_display_preside`, `factors`, `factors_more`, `statcast_factor`,
+`injury_factor`, `position`, `kind`. Not one dollar, probability, grade or sort key
+moved. The lane changed a claim, not a number.
+
+### Clause 3: the suppression is exactly the two declared cohorts
+
+    suppressed 3,160    placeholder 2,651    floor 784    union 3,160
+
+Third population: **0**. The 275 difference between 2,651 + 784 and 3,160 is the
+overlap, routed rows whose provisional grade happens to land on 20.0, and they are
+correctly counted once.
+
+### Clause 4: the surviving delta is the honest one
+
+**n_compared 1,329, mean signed delta +2.03**, against the +2.04 measured for this
+cohort before any code changed. Per side: hit 652 rows at +2.10, pit 677 at +1.97.
+
+### The headline
+
+| | before | after |
+| --- | --- | --- |
+| mean eFV minus consensus | **-5.13** over 4,489 rows | **+2.03** over the 1,329 rows that carry a comparison |
+
+The board-wide deflation the owner reported does not survive the removal of
+comparisons that were never comparisons. eFV reads slightly ABOVE the industry
+wherever the industry published an opinion and the map could state a level.
+
+### Clause 5, and the defect it caught
+
+**This clause was the whole ship.** Enumerating consumers found that suppressing the
+artifact field alone would have changed **nothing on screen**:
+
+- `prospx/index.html` `efvMinusConsensus` carried an explicit fallback that
+  subtracts `efvBoardValue(x) - x.consensus_fv` whenever the pre-baked field is
+  absent. A null would have been recomputed into the identical number.
+- `efvMinusConsensusDisplay`, which is the function that renders the CHIP the reader
+  actually sees, **never read the pre-baked field at all**. It subtracts the two
+  displayed integers directly.
+
+So the artifact-only version of this change would have been a silent no-op on the
+one surface the complaint came from. Both functions now consult
+`efvComparisonSuppressed(x)` before their own computation, and `efv_export._entry`
+carries the two markers through to `xfv.json`, without which the page cannot see
+them. This is the same failure class as `C4_REACHABILITY_DEFECT.md`: a change that
+is correct at its own seam and dead by the time it reaches the board.
+
+Downstream rendering degrades correctly on the null: `efvDeltaText(null)` returns
+the empty string and every call site is already guarded by `dtxt ? ... : ""`, so a
+suppressed row shows no chip rather than a zero.
+
+### Marking, per the owner decision
+
+The 509 floor rows now carry a dashed badge and read `at the scale floor, not a
+resolved level`, and placeholder rows read `no source grade published` in place of a
+fabricated `Consensus FV 35` reference line.
+
+### Pins and mutation proof
+
+`test_consensus_delta_honesty.py`, 13 tests, all green. Mutation-proved rather than
+asserted: removing the guard from `efvMinusConsensusDisplay` alone fails
+`test_prospx_does_not_re_manufacture_a_suppressed_delta`, and disabling the
+placeholder branch of the predicate fails
+`test_placeholder_consensus_publishes_no_delta`. Both restored, 13 green again. The
+suite carries a non-vacuity pin first, because a predicate that suppressed
+everything would satisfy every other pin in the file.
+
+### Scope, stated so it is not overread
+
+Serve path `run_live` only. The resolved-path `run()` report is untouched: it feeds
+evaluation artifacts, whose frames are pre-registered elsewhere, and moving them
+inside this lane would change what other gates are measured against.
+`xfv_minus_consensus_display`, the retired quantile delta, is also untouched; it is
+kept for back-compat reads and is not rendered.
+
+**Not claimed: that the grades are too low.** The evidence points the other way and
+is recorded above.

@@ -32816,7 +32816,20 @@ function efvGradeBandHTML(x) {
 // raw grade that chip no longer reconciled -- Franklin Arias read eFV 64 vs consensus 58
 // with a "+3.0" chip. The pre-baked xfv_minus_consensus is the same subtraction on the raw
 // grade, so it leads; the inline subtraction is the fallback.
+// C-6 2026-08-14: a suppressed delta must not be re-manufactured here. The scorer
+// withholds xfv_minus_consensus on two cohorts (consensus_is_placeholder: no source
+// published an FV, so the 35.0 is a fabricated anchor; xfv_grade_is_floor: the
+// outcome map returns its first knot for EVERY non-positive prediction, so 20.0 is
+// the bottom of the scale rather than a level). Without this guard the fallback
+// below subtracts the two numbers anyway and the page renders exactly the delta the
+// artifact deliberately declined to publish, which would have made the whole change
+// invisible on the one surface a reader looks at.
+// docs/efv-2026-08-13/CONSENSUS_DELTA_HONESTY_GATE.md
+function efvComparisonSuppressed(x) {
+  return !!(x && (x.consensus_is_placeholder || x.xfv_grade_is_floor));
+}
 function efvMinusConsensus(x) {
+  if (efvComparisonSuppressed(x)) return null;
   if (x && x.xfv_minus_consensus != null) return x.xfv_minus_consensus;
   const v = efvBoardValue(x);
   if (v != null && x && x.consensus_fv != null)
@@ -32832,8 +32845,13 @@ function efvMinusConsensus(x) {
 // 60. Three roundings applied to two numbers; the reader can only see two of them.
 // Owner rule 2026-07-31: the chip subtracts what is on screen. Sorting and any
 // magnitude comparison keep the raw value above - only the printed chip changes.
+// C-6: this is the CHIP the reader sees, and it never read xfv_minus_consensus at
+// all, so suppressing the artifact field alone would have changed nothing on screen.
+// It subtracts the two displayed integers, which is still the right rule when a
+// comparison exists; the guard is what decides whether one exists.
 function efvMinusConsensusDisplay(x) {
   if (!x || x.consensus_fv == null) return null;
+  if (efvComparisonSuppressed(x)) return null;
   const g = efvGradeDisplay(x);
   const c = fvCeil(x.consensus_fv);
   return (g != null && c != null) ? g - c : null;
@@ -33064,12 +33082,26 @@ function efvDetailHeaderHTML(p, fvBadge) {
   const scaleHTML = scaleNote
     ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.35;max-width:280px;margin-left:auto;text-align:right;" title="${escapeHtml(scaleNote)}">Provisional scale <b style="color:var(--text-secondary);">not the outcome curve</b> · the two differ by up to 13 FV</div>`
     : "";
+  // C-6 FLOOR DISCLOSURE. x.xfv_grade_is_floor means the outcome map returned its
+  // first knot, which it does for EVERY non-positive prediction: on the 2026-08-14
+  // board the 509 rows sitting there span predictions of -0.86 to -0.00 WAR and all
+  // read 20.0. So the number is the bottom of the scale, not an estimate of a level,
+  // and it is labelled as one rather than printed as if the model had resolved it.
+  // The grade itself is NOT wrong: out of fold this cohort realized +0.122 WAR with
+  // 93.4% at or below zero. It is the PRECISION that is unearned.
+  const isFloor = !!(x && x.xfv_grade_is_floor);
+  const floorHTML = isFloor
+    ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;" title="${escapeHtml("The outcome curve returns its lowest knot for every non-positive projection, so this is the floor of the 20-80 scale rather than a resolved level. No consensus comparison is published for it.")}">at the scale floor <b style="color:var(--text-secondary);">not a resolved level</b></div>`
+    : "";
   return `<div style="${labelStyle}"><span>${prov ? "Provisional eFV" : "eFV"}</span></div>`
-    + `<span class="fv-badge ${fvClass(String(g))} size-lg" title="${escapeHtml(efvTooltip(x))}" style="margin-top:4px;${prov ? "border-style:dashed;" : ""}">${g}</span>`
+    + `<span class="fv-badge ${fvClass(String(g))} size-lg" title="${escapeHtml(efvTooltip(x))}" style="margin-top:4px;${(prov || isFloor) ? "border-style:dashed;" : ""}">${g}</span>`
     + efvGradeBandHTML(x)
     + scaleHTML
+    + floorHTML
     + (prov
         ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">production-only · no source grade</div>`
+        : x.consensus_is_placeholder
+        ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;" title="${escapeHtml("No source published an FV for this player. The consensus point is a last-resort placeholder constant, so there is no industry grade to compare against.")}">no source grade published</div>`
         : gb.priorAnchored
         ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;" title="No pro track record yet: eFV starts at the consensus prior. Any small gap vs consensus FV is placement on the 20-80 scale when ranked among graded prospects, not a model penalty.">`
           + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
