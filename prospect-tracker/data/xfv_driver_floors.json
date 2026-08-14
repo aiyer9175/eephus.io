@@ -25,228 +25,228 @@
  "feature_add": {
   "hit": {
    "noise_seed_0": {
-    "point_rho": -0.00162,
-    "point_block": -0.00285,
+    "point_rho": -0.00179,
+    "point_block": -0.00028,
     "rho": {
      "B_used": 2000,
-     "point": -0.00162,
-     "boot_mean": -0.00039,
-     "sd": 0.00989,
-     "mde95_onesided": 0.0163,
-     "mde95_twosided": 0.0194,
-     "x_floor": 0.1,
+     "point": -0.00179,
+     "boot_mean": -0.0007,
+     "sd": 0.00882,
+     "mde95_onesided": 0.0145,
+     "mde95_twosided": 0.0173,
+     "x_floor": 0.123,
      "ci95": [
-      -0.01668,
-      0.02224
+      -0.0162,
+      0.01956
      ],
-     "p_gt_0": 0.4075,
+     "p_gt_0": 0.3945,
      "resolvable": false
     },
     "block_rho": {
      "B_used": 2000,
-     "point": -0.00285,
-     "boot_mean": -0.00042,
-     "sd": 0.01013,
-     "mde95_onesided": 0.0167,
-     "mde95_twosided": 0.0199,
-     "x_floor": 0.171,
+     "point": -0.00028,
+     "boot_mean": -0.0006,
+     "sd": 0.0094,
+     "mde95_onesided": 0.0155,
+     "mde95_twosided": 0.0184,
+     "x_floor": 0.018,
      "ci95": [
-      -0.01673,
-      0.0215
+      -0.01833,
+      0.01997
      ],
-     "p_gt_0": 0.4325,
+     "p_gt_0": 0.4475,
      "resolvable": false
     },
-    "fold_rho_wins": 4,
+    "fold_rho_wins": 5,
     "folds": 11
    },
    "noise_seed_1": {
-    "point_rho": -0.00167,
-    "point_block": -0.0051,
+    "point_rho": -0.00091,
+    "point_block": -0.0012,
     "rho": {
      "B_used": 2000,
-     "point": -0.00167,
-     "boot_mean": -0.0028,
-     "sd": 0.01172,
-     "mde95_onesided": 0.0193,
-     "mde95_twosided": 0.023,
-     "x_floor": 0.087,
+     "point": -0.00091,
+     "boot_mean": -0.00332,
+     "sd": 0.0118,
+     "mde95_onesided": 0.0194,
+     "mde95_twosided": 0.0231,
+     "x_floor": 0.047,
      "ci95": [
-      -0.02633,
-      0.02072
+      -0.02831,
+      0.02022
      ],
-     "p_gt_0": 0.3855,
+     "p_gt_0": 0.3735,
      "resolvable": false
     },
     "block_rho": {
      "B_used": 2000,
-     "point": -0.0051,
-     "boot_mean": -0.00139,
-     "sd": 0.01267,
-     "mde95_onesided": 0.0208,
-     "mde95_twosided": 0.0248,
-     "x_floor": 0.245,
+     "point": -0.0012,
+     "boot_mean": -0.00249,
+     "sd": 0.01283,
+     "mde95_onesided": 0.0211,
+     "mde95_twosided": 0.0252,
+     "x_floor": 0.057,
      "ci95": [
-      -0.02628,
-      0.02619
+      -0.02841,
+      0.02312
      ],
-     "p_gt_0": 0.428,
+     "p_gt_0": 0.4075,
      "resolvable": false
     },
     "fold_rho_wins": 6,
     "folds": 11
    },
    "noise_seed_2": {
-    "point_rho": -0.00703,
-    "point_block": -0.01952,
+    "point_rho": -0.00577,
+    "point_block": -0.01312,
     "rho": {
      "B_used": 2000,
-     "point": -0.00703,
-     "boot_mean": -0.00529,
-     "sd": 0.01146,
-     "mde95_onesided": 0.0189,
-     "mde95_twosided": 0.0225,
-     "x_floor": 0.373,
+     "point": -0.00577,
+     "boot_mean": -0.00663,
+     "sd": 0.01113,
+     "mde95_onesided": 0.0183,
+     "mde95_twosided": 0.0218,
+     "x_floor": 0.315,
      "ci95": [
-      -0.03041,
-      0.01605
+      -0.03056,
+      0.01461
      ],
-     "p_gt_0": 0.281,
+     "p_gt_0": 0.2365,
      "resolvable": false
     },
     "block_rho": {
      "B_used": 2000,
-     "point": -0.01952,
-     "boot_mean": -0.01209,
-     "sd": 0.01311,
-     "mde95_onesided": 0.0216,
-     "mde95_twosided": 0.0257,
-     "x_floor": 0.905,
+     "point": -0.01312,
+     "boot_mean": -0.01335,
+     "sd": 0.01377,
+     "mde95_onesided": 0.0227,
+     "mde95_twosided": 0.027,
+     "x_floor": 0.579,
      "ci95": [
-      -0.03899,
-      0.01152
+      -0.04303,
+      0.01096
      ],
-     "p_gt_0": 0.168,
+     "p_gt_0": 0.148,
      "resolvable": false
     },
     "fold_rho_wins": 3,
     "folds": 11
    },
-   "MDE95_pooled_rho": 0.0193,
-   "MDE95_block_rho": 0.0216,
+   "MDE95_pooled_rho": 0.0194,
+   "MDE95_block_rho": 0.0227,
    "note": "MDE95 quoted at the MAX of three noise seeds: the floor is a bound, so the conservative seed is the one that binds."
   },
   "pit": {
    "noise_seed_0": {
-    "point_rho": -0.00355,
-    "point_block": 0.00372,
+    "point_rho": -0.0021,
+    "point_block": 0.00319,
     "rho": {
      "B_used": 2000,
-     "point": -0.00355,
-     "boot_mean": -0.00213,
-     "sd": 0.0077,
-     "mde95_onesided": 0.0127,
-     "mde95_twosided": 0.0151,
-     "x_floor": 0.28,
+     "point": -0.0021,
+     "boot_mean": -0.00266,
+     "sd": 0.01046,
+     "mde95_onesided": 0.0172,
+     "mde95_twosided": 0.0205,
+     "x_floor": 0.122,
      "ci95": [
-      -0.01835,
-      0.01393
+      -0.02378,
+      0.02042
      ],
-     "p_gt_0": 0.38,
+     "p_gt_0": 0.3465,
      "resolvable": false
     },
     "block_rho": {
      "B_used": 2000,
-     "point": 0.00372,
-     "boot_mean": -0.00149,
-     "sd": 0.01043,
-     "mde95_onesided": 0.0172,
-     "mde95_twosided": 0.0204,
-     "x_floor": 0.217,
+     "point": 0.00319,
+     "boot_mean": -0.00164,
+     "sd": 0.01435,
+     "mde95_onesided": 0.0236,
+     "mde95_twosided": 0.0281,
+     "x_floor": 0.135,
      "ci95": [
-      -0.02308,
-      0.01827
+      -0.03215,
+      0.02782
      ],
-     "p_gt_0": 0.438,
+     "p_gt_0": 0.435,
      "resolvable": false
     },
-    "fold_rho_wins": 4,
+    "fold_rho_wins": 8,
     "folds": 11
    },
    "noise_seed_1": {
-    "point_rho": -0.00775,
-    "point_block": -0.0049,
+    "point_rho": -0.00345,
+    "point_block": -0.00395,
     "rho": {
      "B_used": 2000,
-     "point": -0.00775,
-     "boot_mean": -0.00604,
-     "sd": 0.00667,
-     "mde95_onesided": 0.011,
-     "mde95_twosided": 0.0131,
-     "x_floor": 0.706,
+     "point": -0.00345,
+     "boot_mean": -0.00315,
+     "sd": 0.00803,
+     "mde95_onesided": 0.0132,
+     "mde95_twosided": 0.0157,
+     "x_floor": 0.261,
      "ci95": [
-      -0.01928,
-      0.00799
+      -0.01929,
+      0.01304
      ],
-     "p_gt_0": 0.155,
+     "p_gt_0": 0.3085,
      "resolvable": false
     },
     "block_rho": {
      "B_used": 2000,
-     "point": -0.0049,
-     "boot_mean": -0.00815,
-     "sd": 0.01109,
-     "mde95_onesided": 0.0182,
-     "mde95_twosided": 0.0217,
-     "x_floor": 0.269,
+     "point": -0.00395,
+     "boot_mean": -0.00368,
+     "sd": 0.01114,
+     "mde95_onesided": 0.0183,
+     "mde95_twosided": 0.0218,
+     "x_floor": 0.216,
      "ci95": [
-      -0.03341,
-      0.01232
+      -0.02705,
+      0.01886
      ],
-     "p_gt_0": 0.2,
+     "p_gt_0": 0.341,
      "resolvable": false
     },
     "fold_rho_wins": 2,
     "folds": 11
    },
    "noise_seed_2": {
-    "point_rho": -0.00601,
-    "point_block": 0.00493,
+    "point_rho": -0.00378,
+    "point_block": -0.01175,
     "rho": {
      "B_used": 2000,
-     "point": -0.00601,
-     "boot_mean": -0.0021,
-     "sd": 0.00644,
-     "mde95_onesided": 0.0106,
-     "mde95_twosided": 0.0126,
-     "x_floor": 0.568,
+     "point": -0.00378,
+     "boot_mean": -0.00414,
+     "sd": 0.00924,
+     "mde95_onesided": 0.0152,
+     "mde95_twosided": 0.0181,
+     "x_floor": 0.249,
      "ci95": [
-      -0.01543,
-      0.01188
+      -0.02246,
+      0.0149
      ],
-     "p_gt_0": 0.3455,
+     "p_gt_0": 0.3015,
      "resolvable": false
     },
     "block_rho": {
      "B_used": 2000,
-     "point": 0.00493,
-     "boot_mean": -0.00069,
-     "sd": 0.00919,
-     "mde95_onesided": 0.0151,
-     "mde95_twosided": 0.018,
-     "x_floor": 0.326,
+     "point": -0.01175,
+     "boot_mean": -0.01198,
+     "sd": 0.01495,
+     "mde95_onesided": 0.0246,
+     "mde95_twosided": 0.0293,
+     "x_floor": 0.478,
      "ci95": [
-      -0.01991,
-      0.018
+      -0.04498,
+      0.01472
      ],
-     "p_gt_0": 0.4715,
+     "p_gt_0": 0.199,
      "resolvable": false
     },
-    "fold_rho_wins": 5,
+    "fold_rho_wins": 2,
     "folds": 11
    },
-   "MDE95_pooled_rho": 0.0127,
-   "MDE95_block_rho": 0.0182,
+   "MDE95_pooled_rho": 0.0172,
+   "MDE95_block_rho": 0.0246,
    "note": "MDE95 quoted at the MAX of three noise seeds: the floor is a bound, so the conservative seed is the one that binds."
   }
  },
@@ -254,38 +254,38 @@
   "hit": {
    "base_lambda": 0.7,
    "plus_0.05": {
-    "point_rho": -0.0008,
+    "point_rho": -0.00054,
     "rho": {
      "B_used": 2000,
-     "point": -0.0008,
-     "boot_mean": -0.00264,
-     "sd": 0.00153,
-     "mde95_onesided": 0.0025,
-     "mde95_twosided": 0.003,
-     "x_floor": 0.317,
+     "point": -0.00054,
+     "boot_mean": -0.00268,
+     "sd": 0.00156,
+     "mde95_onesided": 0.0026,
+     "mde95_twosided": 0.0031,
+     "x_floor": 0.211,
      "ci95": [
-      -0.00577,
-      0.0001
+      -0.00612,
+      7e-05
      ],
-     "p_gt_0": 0.029,
+     "p_gt_0": 0.0265,
      "resolvable": false
     }
    },
    "plus_0.1": {
-    "point_rho": -0.00141,
+    "point_rho": -0.0012,
     "rho": {
      "B_used": 2000,
-     "point": -0.00141,
-     "boot_mean": -0.00535,
-     "sd": 0.00281,
-     "mde95_onesided": 0.0046,
-     "mde95_twosided": 0.0055,
-     "x_floor": 0.305,
+     "point": -0.0012,
+     "boot_mean": -0.00542,
+     "sd": 0.00294,
+     "mde95_onesided": 0.0048,
+     "mde95_twosided": 0.0058,
+     "x_floor": 0.248,
      "ci95": [
-      -0.01126,
-      -0.00046
+      -0.01186,
+      -0.00036
      ],
-     "p_gt_0": 0.016,
+     "p_gt_0": 0.015,
      "resolvable": false
     }
    }
@@ -293,43 +293,43 @@
   "pit": {
    "base_lambda": 0.57,
    "plus_0.05": {
-    "point_rho": -0.00276,
+    "point_rho": -0.00185,
     "rho": {
      "B_used": 2000,
-     "point": -0.00276,
-     "boot_mean": -0.00236,
-     "sd": 0.00181,
-     "mde95_onesided": 0.003,
-     "mde95_twosided": 0.0035,
-     "x_floor": 0.927,
+     "point": -0.00185,
+     "boot_mean": -0.00235,
+     "sd": 0.00188,
+     "mde95_onesided": 0.0031,
+     "mde95_twosided": 0.0037,
+     "x_floor": 0.597,
      "ci95": [
-      -0.00622,
-      0.0009
+      -0.00635,
+      0.00106
      ],
-     "p_gt_0": 0.0825,
+     "p_gt_0": 0.0915,
      "resolvable": false
     }
    },
    "plus_0.1": {
-    "point_rho": -0.00462,
+    "point_rho": -0.00434,
     "rho": {
      "B_used": 2000,
-     "point": -0.00462,
-     "boot_mean": -0.00474,
-     "sd": 0.00334,
-     "mde95_onesided": 0.0055,
-     "mde95_twosided": 0.0065,
-     "x_floor": 0.842,
+     "point": -0.00434,
+     "boot_mean": -0.00467,
+     "sd": 0.00341,
+     "mde95_onesided": 0.0056,
+     "mde95_twosided": 0.0067,
+     "x_floor": 0.774,
      "ci95": [
-      -0.0118,
-      0.00125
+      -0.01216,
+      0.00147
      ],
-     "p_gt_0": 0.0635,
+     "p_gt_0": 0.07,
      "resolvable": false
     }
    }
   }
  },
- "generated_at": "2026-08-07T18:12:59Z",
+ "generated_at": "2026-08-14T22:39:54Z",
  "produced_by": "tools/efv_driver_lab.py"
 }

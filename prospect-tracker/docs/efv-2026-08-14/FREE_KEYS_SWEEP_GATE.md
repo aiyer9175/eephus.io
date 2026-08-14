@@ -115,4 +115,80 @@ complete and publishable answer.
 
 ## RESULT (appended after the run)
 
-*(empty at pre-registration)*
+Run 2026-08-14, `tools/efv_driver_lab.py freekeys 2000`, 1,456 s. Ledger
+`data/xfv_driver_freekeys.json`. No clause amended.
+
+### D0: THE FLOOR MOVED, AND ON THE PITCHER SIDE IT MOVED A LOT
+
+Re-derived on this basis (`floors generated_at 2026-08-14T22:39:54Z`):
+
+| side | feature-add MDE95 rho | previous (2026-08-07) | change |
+| --- | --- | --- | --- |
+| hit | 0.0194 | 0.0193 | +0.5% |
+| pit | **0.0172** | 0.0127 | **+35%** |
+
+Gating pitcher candidates on the stale file would have been **35% too
+permissive**. D0 was blocking for this reason and it earned it.
+
+### D1: THE NOISE BAND ON THIS BASIS
+
+hit `[-0.00577, -0.00179, -0.00091]`, pit `[-0.00378, -0.00345, -0.00210]`.
+Every delta below is read against that band, never against zero.
+
+### THE VERDICT: 26 ARMS, ZERO SURVIVORS
+
+**Only 7 of 26 candidates are positive on pooled rho at all.** Best in family:
+
+| arm | d_rho | d_block | control | folds | x floor | both instruments + | Holm |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| pit.fv_trend | +0.01028 | +0.01696 | -0.00578 | 7/11 | **0.598x** | yes | no (p 0.206) |
+| pit.tool_ch | +0.00498 | +0.00579 | **+0.00902** | 7/11 | 0.290x | yes | no |
+| pit.tool_cmd | +0.00288 | -0.00116 | +0.00122 | 8/11 | 0.167x | no | no |
+| hit.peak_obp_rel | +0.00218 | -0.00369 | +0.00279 | 4/11 | 0.112x | no | no |
+| pit.era_rel | +0.00218 | -0.00154 | -0.00679 | 4/11 | 0.127x | no | no |
+| hit.il_stints_pre | +0.00096 | +0.00129 | -0.00129 | 4/11 | 0.049x | yes | no |
+| hit.prod_trend | +0.00020 | -0.00265 | -0.00352 | 2/11 | 0.010x | no | no |
+
+**Not one arm clears D4.** The best reaches 0.598x of its own floor. **NONE
+survives Holm** over the 26-arm family (best p 0.206). `pit.tool_ch`'s
+zero-information twin scored **better than the candidate** (+0.00902 against
++0.00498), which is D4.4 failing in the most direct way available.
+
+### NINE ARMS ARE WORSE THAN PURE NOISE
+
+`pit.arsenal_depth` -0.01476, `pit.starter_shape` -0.01319, `hit.fv_trend`
+-0.01195, `hit.bonus_log` -0.01127, `hit.n_sources` -0.01096, `pit.fv_stddev`
+-0.01052, `pit.pick_overall` -0.00759, `hit.iso_rel` -0.00639, `pit.n_sources`
+-0.00505 all sit BELOW the worst noise seed on their side. These columns do not
+merely fail to help; they cost more than adding a random column costs.
+
+### THREE FINDINGS WORTH KEEPING BEYOND THE NULL
+
+**1. `bb_rel` does nothing for hitters, and that closes an obvious-looking
+gap by measuring it.** The pitcher side ships `bb_rel`; the hitter side does
+not, which looks like an oversight. Measured: **-0.00043 on rho** with a
+control of -0.01102 and 4/11 folds. It is not an oversight, it is a null.
+
+**2. The power correction survives its fourth challenge.** Both registered
+repeats fail again: `hit.iso_rel` -0.00639 **losing in 0 of 11 folds**, and
+`hit.tool_game_pwr` -0.00470 at 4/11. Neither came near the 2x bar D4.6 set for
+a prior-contradicting result. The omission of game power for hitters IS the
+power-overpricing correction and it has now been re-tested and rejected four
+times.
+
+**3. `pit.il_stints_pre` was refused, not measured, and the refusal is the
+finding.** The column is present on all 982 pitcher rows and has **sd exactly
+0.0**: no pitcher in the debuted training pool carries a pre-decision IL stint.
+Injury history is inert on the pitcher side of this pool BY CONSTRUCTION, which
+is consistent with the registry's IL revival clock and is a coverage refusal
+rather than a null.
+
+### WHAT THIS MEANS, PER D5
+
+Section 6 says do not add AND do not remove on sub-floor evidence, so none of
+these columns is dropped from `_vec` on this result. Twenty-six nulls is a
+complete answer, and stop clause 3 forbids a second family over the same
+columns. **The free-keys frontier is CLOSED.** The reopen burden is new DATA,
+which is lane D-2 (`snapshots.tools_json._extras`, where the present-vs-future
+tool gap and the 2017-onward velo and spin bands live), not a transform over
+what `_vec` already computes.

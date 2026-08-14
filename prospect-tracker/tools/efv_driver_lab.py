@@ -960,6 +960,112 @@ def lam_mode(B=1000):
 
 
 # --------------------------------------------------------------------- wRC+
+def freekeys_mode(B=2000):
+    """D-1: sweep the keys efv_model._vec ALREADY EMITS that neither feature
+    list consumes. Gate docs/efv-2026-08-14/FREE_KEYS_SWEEP_GATE.md.
+
+    Zero plumbing by construction: the candidate value is read straight out of
+    the same `feats` dict the shipped ridge is built from, so nothing is joined,
+    fetched or imputed from a new source. A key a side ALREADY ships is skipped
+    rather than duplicated, and the skip is recorded.
+    """
+    CAND = {
+        "both": ["fv_trend", "n_sources", "fv_stddev", "prod_trend", "pos_prem",
+                 "pick_overall", "bonus_log", "il_stints_pre"],
+        "hit": ["bb_rel", "tool_game_pwr", "tool_field", "peak_obp_rel", "iso_rel"],
+        "pit": ["tool_cmd", "tool_sl", "tool_ch", "era_rel", "starter_shape",
+                "arsenal_depth"],
+    }
+    # game_pwr for HITTERS is a REGISTERED REPEAT (efv_model.py:110-111,267-268):
+    # its omission IS the power-overpricing correction and it has been rejected
+    # three times. Clause D4.6 puts a 2x bar on it.
+    REPEATS = {("hit", "tool_game_pwr"), ("hit", "iso_rel")}
+
+    out = {"gate": "docs/efv-2026-08-14/FREE_KEYS_SWEEP_GATE.md", "lane": "D-1",
+           "B": B, "seed": SEED, "arms": {}, "skipped": {}, "floors": {}}
+    floors = json.loads((DATA / "xfv_driver_floors.json").read_text(encoding="utf-8"))
+    for s in SIDES:
+        fa = floors["feature_add"][s]
+        # The floor is quoted at the MAX of three noise seeds by the producer's
+        # own convention: a floor is a BOUND, so the conservative seed binds.
+        out["floors"][s] = {
+            "rho": fa["MDE95_pooled_rho"],
+            "block": fa["MDE95_block_rho"],
+            "floors_generated_at": floors.get("generated_at"),
+        }
+        out["floors"][s]["noise_band_rho"] = sorted(
+            v["point_rho"] for v in fa.values()
+            if isinstance(v, dict) and "point_rho" in v)
+
+    for side in SIDES:
+        shipped = set(E._feature_spec(side)[0])
+        want = CAND["both"] + CAND[side]
+        for i, key in enumerate(want):
+            if key in shipped:
+                out["skipped"][f"{side}.{key}"] = "already shipped on this side"
+                continue
+            def _get(raw, feats, _k=key):
+                v = feats.get(_k)
+                return None if v is None else float(v)
+            try:
+                D = load_pool(side, [{"name": key, "get": _get, "impute": "zero"}])
+            except Exception as exc:                             # noqa: BLE001
+                out["skipped"][f"{side}.{key}"] = f"pool build failed: {exc}"
+                continue
+            cov = D["cov"][key]
+            if cov["observed"] == 0 or cov["observed_sd"] in (None, 0.0):
+                out["skipped"][f"{side}.{key}"] = (
+                    f"degenerate column: observed={cov['observed']} sd={cov['observed_sd']}")
+                continue
+            rng = np.random.default_rng(SEED + 900 + 17 * i + (0 if side == "hit" else 1))
+            D2 = with_permuted(D, key, rng)
+            g = gate(D2, cand_ex=(0,), ctrl_ex=(1,), B=B, n_perm=200,
+                     perm_col=key, tag=f"D-1:{key}:{side}")
+            g["coverage"] = cov
+            g["registered_repeat"] = bool((side, key) in REPEATS)
+            g["floor_rho"] = out["floors"][side]["rho"]
+            g["floor_block"] = out["floors"][side]["block"]
+            out["arms"][f"{side}.{key}"] = g
+            print(f"  {side}.{key:16s} d_rho {g['delta']['rho']:+.5f} "
+                  f"d_block {g['delta']['block_rho']:+.5f} "
+                  f"ctrl {g['control_delta']['rho']:+.5f} "
+                  f"folds {g['fold_rho_wins']}/{g['folds_scored']} "
+                  f"floor {g['floor_rho']}", flush=True)
+
+    # D3 HOLM over the WHOLE family, both sides pooled into one family.
+    fam = []
+    for k, g in out["arms"].items():
+        sd = ((g.get("bootstrap") or {}).get("rho") or {}).get("sd")
+        if sd:
+            fam.append((k, g["delta"]["rho"], sd))
+    from math import erfc, sqrt
+    rows = [[k, d, sd, d / sd, 0.5 * erfc((d / sd) / sqrt(2))] for k, d, sd in fam]
+    rows.sort(key=lambda r: r[4])
+    m = len(rows)
+    still = True
+    holm = {}
+    for i, r in enumerate(rows):
+        alpha = 0.05 / (m - i)
+        surv = bool(still and r[4] <= alpha)
+        if not surv:
+            still = False
+        holm[r[0]] = {"d_rho": round(r[1], 5), "sd": round(r[2], 5),
+                      "z": round(r[3], 3), "p_one_sided": round(r[4], 5),
+                      "rank": i + 1, "holm_alpha": round(alpha, 5),
+                      "survives_holm": surv}
+    out["holm_family_size"] = m
+    out["holm"] = holm
+    out["n_arms"] = len(out["arms"])
+    out["n_skipped"] = len(out["skipped"])
+    (DATA / "xfv_driver_freekeys.json").write_text(json.dumps(out, indent=1),
+                                                   encoding="utf-8")
+    print(f"\nwrote data/xfv_driver_freekeys.json  arms={out['n_arms']} "
+          f"skipped={out['n_skipped']} holm_family={m}")
+    surv = [k for k, h in holm.items() if h["survives_holm"]]
+    print("SURVIVES HOLM:", surv or "NONE")
+    return out
+
+
 def wrc_mode(B=1000):
     """C6: ONE re-run of the wRC+ A2 ADD arm on the 11-fold basis.
 
@@ -1010,7 +1116,8 @@ def wrc_mode(B=1000):
 
 _MODES = {"floor": floor_mode, "sb": sb_mode, "pos": pos_mode,
           "handbuild": hand_build, "hand": hand_mode, "pairs": pairs_mode,
-          "elite": elite_mode, "lam": lam_mode, "wrc": wrc_mode}
+          "elite": elite_mode, "lam": lam_mode, "wrc": wrc_mode,
+          "freekeys": freekeys_mode}
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "floor"
