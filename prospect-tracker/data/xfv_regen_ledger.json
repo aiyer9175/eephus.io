@@ -5587,7 +5587,8 @@
      "message": "hitter feature 'age' contribution rescaled UP 12 percent (p=1.1186). Costs most to the players most exposed to it."
     }
    ],
-   "n_alerts": 2
+   "n_alerts": 2,
+   "last_seen_at": "2026-08-14T05:49:27+00:00"
   }
  ],
  "thresholds": {
@@ -5604,27 +5605,6 @@
    "chosen": "geometric midpoint of the gap [0.112, 0.253] in 12 measured side-vintage label-set churn shares; flags the same 2 of 6 vintage pairs the weight tripwire does"
   }
  },
- "generated_at": "2026-08-14T05:32:02+00:00",
- "latest_alerts": [
-  {
-   "kind": "weight_scale",
-   "side": "hit",
-   "feature": "milb_missing",
-   "direction": "UP",
-   "p": 1.550591,
-   "pct_change": 55.06,
-   "threshold": 0.0858,
-   "message": "hitter feature 'milb_missing' contribution rescaled UP 55 percent (p=1.5506). Costs most to the players most exposed to it."
-  },
-  {
-   "kind": "weight_scale",
-   "side": "hit",
-   "feature": "age",
-   "direction": "UP",
-   "p": 1.118621,
-   "pct_change": 11.86,
-   "threshold": 0.0858,
-   "message": "hitter feature 'age' contribution rescaled UP 12 percent (p=1.1186). Costs most to the players most exposed to it."
-  }
- ]
+ "generated_at": "2026-08-14T05:49:27+00:00",
+ "latest_alerts": []
 }

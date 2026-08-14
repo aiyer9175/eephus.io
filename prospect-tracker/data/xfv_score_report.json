@@ -10,8 +10,8 @@
   "scale": "rank-preserving quantile map onto consensus FV distribution",
   "mean_abs_delta": 0.64,
   "max_up": 5.9,
-  "max_down": -4.2,
-  "share_within_2_grades": 0.909
+  "max_down": -2.9,
+  "share_within_2_grades": 0.908
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
@@ -25,7 +25,7 @@
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 23511.0,
+  "xfv": 23634.2,
   "consensus": 23103.3
  },
  "example_up_adjustments": [

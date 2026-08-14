@@ -525,7 +525,25 @@ def test_committed_artifact_headline_alias_contract():
 # into factors[] after every number is computed. Made now reads
 # Level calibration down 3.59 against five up-chips totalling 1.97, so the sign of
 # the delta is finally visible on the card. Prior restamp note follows.
-_GOLDEN_XFV_SHA256 = "1532042c43234bcbb2ac8226f504d1e1bdb740f715efd10cc4150e8283bf526e"
+# RESTAMPED 2026-08-14, THE C-4 ERA-FLOOR FLIP. consensus.GRADE_NORM_AS_OF is now
+# True and the cutoff is threaded through all six remapper constructions, so a
+# pre-2017 grade is normalized against its OWN era instead of a pool reaching
+# forward to 2026. Verified in production: the mlb_pipeline hitter 2013 cell now
+# estimates from 309 own-era pairs at +4.2880, against 3,949 pooled pairs at
+# +4.0567 before, reproducing the 2026-08-13 measurement exactly. In-window cells
+# (2019: 395 pairs, +4.1519) are byte-identical either way.
+#
+# THE SERVED BOARD BARELY MOVES, which is the honest headline and was predicted:
+# 2 active rows change consensus_fv (+0.60 each) and 435 change xfv_grade by a
+# mean of +0.054. The flip's value is in the HISTORICAL vintages that feed the
+# backtests, not on today's board, and C4_ERA_FLOOR_MEASUREMENT.md said in advance
+# that nobody should expect it to move a margin.
+#
+# Dispersion coefficients deliberately NOT re-fitted for this basis change, so this
+# hash carries C-4 and nothing else; see the pinning rule at
+# efv_score._DISPERSION_CORRECTION. Stamped OUTSIDE pytest from the pass-2
+# artifact. Prior restamp note follows.
+_GOLDEN_XFV_SHA256 = "fe31d9e0913585a66c6741b821f1bbb0a49bb2fe272e6fe27cc9753d9d24d3e4"
 # OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
 # whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
 # factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which
