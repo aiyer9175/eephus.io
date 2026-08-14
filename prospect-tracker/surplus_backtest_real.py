@@ -126,11 +126,28 @@ def _age_at(birth_date: str | None, asof: str) -> float | None:
 def _remapper():
     """The PRODUCTION grade-normalization closure (same construction consensus.
     build_timeseries uses: one DB pass, aliased per outlet). None if unavailable,
-    in which case the pool degrades to the raw scale and says so."""
+    in which case the pool degrades to the raw scale and says so.
+
+    AS-OF CUTOFF THREADED 2026-08-14 with the C-4 flip, and this is THE BINDING
+    SITE. consensus.py's flip checklist names this file specifically: it prices the
+    backtest that prospect_surplus is validated against, so leaving it uncapped
+    while the served board is capped puts the board and its own validation on two
+    different normalization bases. That is a worse state than either basis alone,
+    because the backtest would then be certifying grades it was not computed from.
+
+    The cutoff comes from consensus.grade_norm_cutoff so this site cannot drift
+    from the served one; it reads the newest snapshot year in the pool, from the
+    data rather than the clock."""
     try:
         import consensus as _cons
         from grade_normalization import build_remapper
-        return build_remapper(aliases=_cons.SOURCE_ALIASES)
+        with storage.connect() as con:
+            rows = con.execute(
+                "SELECT snapshot_date FROM snapshots WHERE snapshot_date IS NOT NULL"
+            ).fetchall()
+        _snaps = [type("S", (), {"snapshot_date": r[0]})() for r in rows]
+        return build_remapper(aliases=_cons.SOURCE_ALIASES,
+                              as_of_year=_cons.grade_norm_cutoff(_snaps))
     except Exception as exc:                       # pragma: no cover - defensive
         log.warning("grade normalization unavailable (%s); pool stays RAW", exc)
         return None

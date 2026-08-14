@@ -263,7 +263,46 @@ ADOPT_NORMALIZED_CONSENSUS = True
 # When it is on, build_timeseries caps at the newest snapshot year in the pool,
 # which yields a per-cell as-of table (cap = each cell's own year). The cutoff is
 # taken from the data, never from the clock, so a rebuild is reproducible.
-GRADE_NORM_AS_OF = False
+GRADE_NORM_AS_OF = True
+
+
+def grade_norm_cutoff(snapshots=None) -> int | None:
+    """The as-of cutoff for the grade-normalization remapper, or None when the flag
+    is off. THE SINGLE POINT OF TRUTH for that derivation.
+
+    It exists because the flip checklist above lists five other places that build
+    the remapper directly, and the failure mode it warns about is precisely that
+    one of them keeps the old basis and puts the served board and the analysis on
+    two different normalizations. Five copies of `max(snapshot year)` guarded by
+    five copies of an `if` is how that happens. Callers ask this function instead,
+    so the flag reaches every site by construction and a future change to the
+    derivation cannot land in some of them and not others.
+
+    Derived from the DATA, never from the clock: the cutoff is the newest snapshot
+    year in the pool being normalized, so a rebuild of a fixed corpus is
+    reproducible and a rebuild that happens to run after midnight on New Year's Eve
+    does not silently re-base every grade.
+
+    Pass `snapshots=None` to read the newest year straight from the DB. The lab
+    scripts each load their pool differently and several do not hold a Snapshot
+    list at the point they build the remapper, so without this they would each
+    hand-roll the query, which is the duplication this function exists to prevent.
+    """
+    if not GRADE_NORM_AS_OF:
+        return None
+    if snapshots is None:
+        try:
+            import storage as _st
+            with _st.connect() as con:
+                row = con.execute(
+                    "SELECT MAX(substr(snapshot_date,1,4)) FROM snapshots "
+                    "WHERE snapshot_date IS NOT NULL").fetchone()
+            return int(row[0]) if row and row[0] and str(row[0]).isdigit() else None
+        except Exception:
+            return None
+    yrs = [int(str(s.snapshot_date)[:4]) for s in snapshots
+           if getattr(s, "snapshot_date", None) and str(s.snapshot_date)[:4].isdigit()]
+    return max(yrs) if yrs else None
 
 # Source aliases — outlets that publish multiple separate lists but
 # count as one editorial voice. MLB Pipeline splits its yearly coverage
@@ -1892,14 +1931,8 @@ def build_timeseries(
             # as_of_year = the newest snapshot year in this pool, so every cell is
             # capped at its own year and none pools a cycle that had not happened.
             # Data-derived, not clock-derived, so the build stays reproducible.
-            # None unless GRADE_NORM_AS_OF is flipped: see the flag for the
-            # measured basis move.
-            as_of = None
-            if GRADE_NORM_AS_OF:
-                _yrs = [int(str(s.snapshot_date)[:4]) for s in snapshots
-                        if s.snapshot_date and str(s.snapshot_date)[:4].isdigit()]
-                as_of = max(_yrs) if _yrs else None
-            grade_norm = build_remapper(aliases=SOURCE_ALIASES, as_of_year=as_of)
+            grade_norm = build_remapper(aliases=SOURCE_ALIASES,
+                                        as_of_year=grade_norm_cutoff(snapshots))
         except Exception:
             grade_norm = None   # degrade to the raw scale rather than crash the build
     # v14 — drop-off detection runs ONCE across the full snapshot pool so

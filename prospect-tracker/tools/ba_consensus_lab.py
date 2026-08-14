@@ -136,7 +136,10 @@ def step1_normalization(snaps):
                 "drift": GN.drift_row(BA, role, yr),
             })
     # what the LIVE remapper actually does to a probe grade in each cell
-    remap = GN.build_remapper(aliases=C.SOURCE_ALIASES)
+    # as-of cutoff threaded 2026-08-14 with the C-4 flip (single point of truth in
+    # consensus.grade_norm_cutoff).
+    remap = GN.build_remapper(aliases=C.SOURCE_ALIASES,
+                              as_of_year=C.grade_norm_cutoff())
     for role in roles:
         pos = "RHP" if role == "pitcher" else "OF"
         for yr in years:

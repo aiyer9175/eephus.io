@@ -655,7 +655,13 @@ def arias_source_mechanics():
     from grade_normalization import build_remapper
     ts = build_timeseries(storage.load_all_snapshots(), normalize=True)
     by = {p.player_key: p for p in ts}
-    rm = build_remapper(aliases=SOURCE_ALIASES)
+    # as-of cutoff threaded 2026-08-14 with the C-4 flip, and this site was
+    # INTERNALLY INCONSISTENT before it: the build_timeseries call just above runs
+    # with normalize=True and therefore picks up the flip, while this remapper did
+    # not. One script, two bases, silently.
+    import consensus as _cons
+    rm = build_remapper(aliases=SOURCE_ALIASES,
+                        as_of_year=_cons.grade_norm_cutoff())
     out = {"mechanism": (
         "grade_normalization._apply_offset(fv) = clamp(fv - (mean(source_paired) - "
         "mean(fangraphs_paired))) -- a pure per-(source, role, cycle) ADDITIVE offset, "

@@ -89,15 +89,29 @@ def test_post_reference_cells_are_untouched_by_the_floor():
             f"earlier than {RF}")
 
 
-def test_the_served_flag_is_still_off():
-    """Tripwire. The mechanism landed ahead of the flip on purpose.
+def test_the_served_flag_is_ON_and_the_floor_is_therefore_live():
+    """RETIRED TRIPWIRE, inverted 2026-08-14 when the flip landed.
 
-    If this fails the flip has happened, and it may only happen together with the
-    other five remapper call sites (consensus.py:206-224), a matrix rebuild and a
-    re-read of every margin. Turning it on alone puts the served board and the
-    surplus backtest on two different normalizations.
+    This asserted `GRADE_NORM_AS_OF is False` while the mechanism waited for its
+    flip. It has now happened, together with the other remapper call sites, the
+    fingerprint term that lets the movement engine see it, and the rebuild.
+
+    It is inverted rather than deleted, and asserts the CONSEQUENCE rather than the
+    flag, because a pin on the flag alone would have gone green again the moment
+    someone set it back to True without the era floor being reachable. That exact
+    shape of false green is what C4_REACHABILITY_DEFECT.md records: the floor was
+    built, tested and unreachable for three days.
     """
     import consensus
-    assert consensus.GRADE_NORM_AS_OF is False, (
-        "GRADE_NORM_AS_OF flipped; if that is deliberate, this pin retires WITH "
-        "the rebuild and the margin re-read, not before them")
+    assert consensus.GRADE_NORM_AS_OF is True
+
+    # and the floor must actually FIRE: a pre-reference cell under the cap must
+    # pool strictly fewer pairs than the uncapped one, or the flip is a no-op
+    yr = GN._REFERENCE_FIRST_YEAR - 4
+    capped, _r, _p = GN._paired_dists("mlb_pipeline", "hitter", yr,
+                                      GN._REFERENCE_FIRST_YEAR)
+    uncapped, _r2, _p2 = GN._paired_dists("mlb_pipeline", "hitter", yr, None)
+    assert len(capped) and len(uncapped), "no pairs at all; corpus changed"
+    assert len(capped) < len(uncapped), (
+        "the pre-reference cell pools the same set capped as uncapped, so the era "
+        "floor is not firing and the flip is a silent no-op")

@@ -322,7 +322,11 @@ def test_consensus_defaults_to_no_cap_and_passes_the_corpus_year_when_flipped(mo
     # feature AND its baseline. Measured 2026-08-09 over the 98 affected players:
     # 183 of 1,401 historical points move (mean +1.3407 FV), the served latest
     # point moves for 11 players (mean +0.8927 FV) and 6 displayed grades flip.
-    assert consensus.GRADE_NORM_AS_OF is False
+    # FLIPPED 2026-08-14. The default is now ON, so this test's two arms swap:
+    # the live flag yields the corpus year and the monkeypatched-off arm yields
+    # None. Kept as a wiring pin because what it really guards is that the flag
+    # REACHES build_remapper at all, in whichever state it is in.
+    assert consensus.GRADE_NORM_AS_OF is True
 
     from scrapers import Snapshot
     seen: list = []
@@ -341,13 +345,13 @@ def test_consensus_defaults_to_no_cap_and_passes_the_corpus_year_when_flipped(mo
                  fv=50.0, status="active", tools=None),
     ]
     consensus.build_timeseries(snaps, normalize=True)
-    assert seen == [None]
-
-    monkeypatch.setattr(consensus, "GRADE_NORM_AS_OF", True)
-    consensus.build_timeseries(snaps, normalize=True)
     # newest snapshot year in the pool, so every cell caps at its own year. Taken
     # from the data and never from the clock, so a rebuild is reproducible.
-    assert seen == [None, 2024]
+    assert seen == [2024]
+
+    monkeypatch.setattr(consensus, "GRADE_NORM_AS_OF", False)
+    consensus.build_timeseries(snaps, normalize=True)
+    assert seen == [2024, None]
 
 
 # ---------------------------------------------------------------------------

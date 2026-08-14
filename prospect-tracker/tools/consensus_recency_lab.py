@@ -316,7 +316,11 @@ def main():
     outcomes = load_outcomes()
     print("building pool ...")
     rows, org_ranked = build_pool(outcomes)
-    grade_norm = build_remapper(aliases=C.SOURCE_ALIASES)
+    # as-of cutoff threaded 2026-08-14 with the C-4 flip. consensus.grade_norm_cutoff
+    # is the single point of truth, so this lab cannot describe a basis the board
+    # does not serve.
+    grade_norm = build_remapper(aliases=C.SOURCE_ALIASES,
+                                as_of_year=C.grade_norm_cutoff())
     n = len(rows)
     players = sorted({r[0] for r in rows})
     print(f"pool rows={n} players={len(players)}  ({time.time()-t0:.1f}s)")

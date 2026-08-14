@@ -657,7 +657,11 @@ def main():
     # ---- baseline ingredients (production) ----
     print("building baseline ingredients ...", flush=True)
     dropped_full = C._dropped_off_pairs(snaps)
-    gn_full = GN.build_remapper(aliases=C.SOURCE_ALIASES)
+    # as-of cutoff threaded 2026-08-14 with the C-4 flip. This is the BASELINE the
+    # as-of arms are scored against, so leaving it uncapped would have compared the
+    # new basis against itself-minus-the-cap and reported the difference twice.
+    gn_full = GN.build_remapper(aliases=C.SOURCE_ALIASES,
+                                as_of_year=C.grade_norm_cutoff())
     print(f"  dropped_off_pairs (full corpus): {len(dropped_full)}", flush=True)
 
     # ---- as-of ingredients, one set per distinct as-of date ----
