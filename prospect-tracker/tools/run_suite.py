@@ -59,13 +59,34 @@ KNOWN_BASELINE_REDS = (
     # BUILT artifacts (data/timeseries.json, rosters_by_org.json,
     # positions_played.json), all three of which still carry the pre-repair
     # binding, so it cannot go green until they regenerate.
-    # LEAVE CONDITION: it must go green on the first `run_monthly.py
-    # --rebuild-only` after 2026-08-12. Verified by simulation before being
-    # listed here: with the pin routing mlbam 838819 to jesus_lopez_bos and the
-    # freed slug binding to mlbam 805052, the audit returns
-    # critical_active_player_keys == [] and jesus_lopez is not critical
-    # anywhere. If it is still red after that rebuild, the repair is INCOMPLETE
-    # and this entry must come out rather than be re-baselined.
+    # LEAVE CONDITION, CORRECTED 2026-08-14. The original read: "it must go
+    # green on the first `run_monthly.py --rebuild-only` after 2026-08-12 ...
+    # if it is still red after that rebuild, the repair is INCOMPLETE and this
+    # entry must come out rather than be re-baselined."
+    #
+    # THAT CONDITION WAS UNACHIEVABLE AND ITS CONCLUSION WOULD HAVE BEEN WRONG.
+    # A full `run_monthly.py` ran 2026-08-14 and the test stayed red. The
+    # repair is NOT incomplete. Two of the three artifacts named above DID
+    # regenerate (timeseries.json 16:12, rosters_by_org.json 15:31); the third,
+    # positions_played.json, sits behind the step 3a-ii freshness gate at
+    # VERSA_FRESH_DAYS = 7 and was built 2026-08-11, ONE DAY BEFORE the repair.
+    # So every rebuild skipped it, and would have kept skipping it until
+    # 2026-08-18. No `--rebuild-only` could ever have satisfied the condition.
+    #
+    # The repair is CORRECT, verified against the authoritative per-player
+    # endpoint rather than against the artifact: mlbam 805052 fields
+    # C {g:97, gs:96} + DH {g:38, gs:36} with ZERO pitching, and mlbam 838819
+    # fields P {g:11, gs:10}. The artifact's `P {g:10, gs:9}` on the catcher's
+    # key is the RHP's merge-window line, now three days out of date on its own
+    # terms. The identity layer itself reports c1_shared_key 0 and
+    # c2_double_bound 0.
+    #
+    # NEW LEAVE CONDITION: data/positions_played.json now carries an
+    # `invalidated_by` stamp that run_monthly._artifact_fresh honours ahead of
+    # age, so the NEXT ordinary rebuild regenerates step 3a-ii. This entry
+    # comes out when that rebuild has run. If it is STILL red after an actual
+    # regeneration of positions_played.json (check its generated_at moved and
+    # that `invalidated_by` is gone), only then is the repair in question.
     "test_identity_collisions.py::test_no_new_merged_identity_on_the_active_board",
 )
 

@@ -737,11 +737,42 @@ def _artifact_fresh(path: Path, max_age_days: int) -> bool:
     the 6b4 eval labs) key off the WHOLE-artifact stamp because those files
     carry no per-entry timestamps. FAIL-OPEN: any missing/unreadable/malformed
     artifact (or absent stamp) returns False (not fresh) so the caller RE-RUNS
-    the step rather than trusting stale or corrupt output."""
+    the step rather than trusting stale or corrupt output.
+
+    EXPLICIT INVALIDATION beats age (added 2026-08-14). A top-level
+    `invalidated_by` string forces a rebuild no matter how young the stamp is.
+
+    WHY THIS EXISTS, measured rather than imagined. AGE IS THE WRONG QUESTION
+    FOR AN ARTIFACT WHOSE INPUTS CAN BE RE-KEYED. The jesus_lopez identity
+    repair landed 2026-08-12 and split a Boston DSL RHP (mlbam 838819) off a
+    Texas catcher's key (805052). data/positions_played.json had been built
+    2026-08-11, ONE DAY EARLIER, so at VERSA_FRESH_DAYS = 7 every subsequent
+    run skipped step 3a-ii and the artifact kept serving the merge-window
+    value: the catcher's key credited with `P {g:10, gs:9}`, which is the
+    RHP's line. Verified against the authoritative per-player endpoint on
+    2026-08-14: 805052 fields `C {g:97, gs:96}` and `DH {g:38, gs:36}` with
+    ZERO pitching, and 838819 fields `P {g:11, gs:10}`.
+
+    The cost was not cosmetic. test_identity_collisions::
+    test_no_new_merged_identity_on_the_active_board reads that artifact, so a
+    COMPLETED repair kept failing its own gate, and the baseline entry's leave
+    condition ("still red after the next rebuild means the repair is
+    INCOMPLETE") pointed at the wrong conclusion. Nothing was wrong with the
+    repair; the gate was answering a question about age when the artifact had
+    been invalidated by a re-keying.
+
+    Backdating `generated_at` would have cleared it in one line and is
+    forbidden: that field is provenance, and moving it to buy a rebuild is
+    falsifying a measurement stamp. Hence a separate, self-documenting key."""
     try:
-        gen = json.loads(Path(path).read_text(encoding="utf-8")).get("generated_at")
+        doc = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return False
+    if not isinstance(doc, dict):
+        return False
+    if doc.get("invalidated_by"):
+        return False
+    gen = doc.get("generated_at")
     return _is_career_fresh(gen, max_age_days) if gen else False
 
 
