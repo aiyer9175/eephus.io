@@ -219,4 +219,90 @@ Its properties, to be MEASURED and not argued if it is ever proposed:
 
 ## RESULT (appended after the run)
 
-*(empty at pre-registration)*
+Run 2026-08-14, `tools/efv_serve_basis_lab.py 2000`, artifact
+`data/xfv_serve_basis_eval.json`. No clause was amended.
+
+### S0 REPRODUCTION: PASS both sides, AND IT CAUGHT MY OWN REPLAY
+
+| side | published blend | replay A0 | published ridge | replay A4 | published baseline | replay A5 | n |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| hit | 0.3933 | 0.3933 | 0.3897 | 0.3897 | 0.3832 | 0.3832 | 755 |
+| pit | 0.2584 | 0.2584 | 0.2428 | 0.2428 | 0.2530 | 0.2530 | 891 |
+
+The FIRST replay calibrated and clamped the model leg of A0. That reproduced
+hitters INSIDE tolerance (0.3936 against 0.3933) and MISSED pitchers (0.2552
+against 0.2584). `efv_model._run_eval:1534` takes the RAW ridge prediction with
+no output calibration and no -2.0 clamp. **S0 is blocking precisely so a wrong
+replay cannot become a finding, and on this run it earned that.** Note also that
+`efv_score.oos_grades` uses a DIFFERENT blend, with the calibrated and clamped
+leg: two blends exist under one name, and this lane scores the published one.
+
+### S1 THE FLOOR, DERIVED HERE, AND THE SIZE OF THE RETRACTION
+
+E_cond, player-clustered, B=2000, seed 20260814. One row per player asserted,
+not assumed.
+
+| contrast | side | sd | **MDE95 (1.645 sd)** | two-sided | G2 used |
+| --- | --- | --- | --- | --- | --- |
+| A4 ridge vs A0 blend | hit | 0.003574 | **0.0059** | 0.0070 | 0.044 |
+| A2a served vs A0 blend | hit | 0.004546 | **0.0075** | 0.0089 | 0.044 |
+| A4 ridge vs A0 blend | pit | 0.009003 | **0.0148** | 0.0176 | 0.044 |
+| A2a served vs A0 blend | pit | 0.009563 | **0.0157** | 0.0187 | 0.044 |
+
+**G2 was 3.0x too permissive on pitchers and 7.5x on hitters.** That is the
+retraction, quantified rather than argued.
+
+### C-1: THE HYPOTHESIS IS CONFIRMED, so the question collapses
+
+| side | rho(A2a served) | rho(A4 ridge) | gap | unclamped affine == ridge to 4dp | folds with b <= 0 |
+| --- | --- | --- | --- | --- | --- |
+| hit | 0.3899 | 0.3897 | **+0.0002** | yes | none |
+| pit | 0.2431 | 0.2428 | **+0.0003** | yes | none |
+
+Under ONE global affine the served grade is rank-equivalent to the raw ridge.
+**So served-vs-blend IS ridge-vs-blend, and the grade map is not the mechanism.**
+Within-fold affine invariance holds on both sides, which localises G4's C-c
+failure to cross-fold heterogeneity exactly as this gate predicted.
+
+### S2 THE VERDICT: NOT RESOLVABLE ON THE GATED ARM, BOTH SIDES
+
+| side | arm | delta | floor | margin | verdict |
+| --- | --- | --- | --- | --- | --- |
+| hit | **A2a (gated)** | -0.0034 | 0.0075 | 0.453x | not resolvable |
+| pit | **A2a (gated)** | -0.0153 | 0.0157 | **0.975x** | not resolvable |
+| hit | A4 (attribution) | -0.0036 | 0.0059 | 0.610x | not resolvable |
+| pit | A4 (attribution) | -0.0156 | 0.0148 | **1.054x** | would resolve |
+
+**THE PITCHER CELL IS A KNIFE EDGE AND IS REPORTED AS ONE.** A2a and A4 differ
+only by 1dp rounding, and they straddle: 0.975x against 1.054x. A2a carries the
+larger floor (0.0157 against 0.0148) because rounding adds ties that widen the
+bootstrap sd. **Reading A4 because it crosses and A2a does not would be
+floor-shopping**, which this gate bans by name, so the verdict stays with the
+arm the pre-registration gated: NOT RESOLVABLE, and very close.
+
+**TOST turns the hitter null into knowledge.** At the 0.02 indifference margin,
+hit CI95 [-0.0126, +0.0057] lies WHOLLY INSIDE the margin: **the hitter gap is
+RULED OUT as material.** Pitchers, CI95 [-0.0352, +0.0029], remain UNDECIDED.
+
+**Reported without a floor because it is strictly stronger:** on pitchers the
+served ordering sits BELOW the plain-consensus bar, **0.2431 against 0.2530, a
+gap of -0.0099.** On hitters it sits above it, +0.0067.
+
+### S3 ATTRIBUTION: NOT READ
+
+S3 is conditional on S2 resolving. It did not, on either side. The arms are
+recorded (dropped consensus leg -0.0036 hit / -0.0156 pit; tie, clamp and round
+cost +0.0007 hit / +0.0003 pit) and **no attribution sentence is written.**
+
+### S4 CONTROLS: ALL PASS
+
+C-2 permutation 0.0023 hit / 0.0096 pit against a 0.05 bar. C-3 tie mass 0.1881
+and 0.1796 against the 0.50 gate, with 227 and 176 distinct served values, so
+neither rho is substantially a tie artifact. C-4 basis: matrices rebuilt
+2026-08-14 15:51, evals regenerated 16:31, fingerprint recorded in the artifact.
+
+### WHAT THIS DOES NOT SAY
+
+Every gap above is a LOWER BOUND. The live tilts, `route_floor_grade` and the
+`fv_effective` discount are outside every clause, and `route_floor_grade` alone
+re-bases 55.01% of live rows. Nothing shipped and nothing is authorised.

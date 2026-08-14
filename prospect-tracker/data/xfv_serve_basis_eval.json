@@ -1,0 +1,265 @@
+{
+ "generated_at": "2026-08-14T21:40:34+00:00",
+ "gate": "docs/efv-2026-08-14/SERVE_BASIS_REMEASURE_GATE.md",
+ "lane": "S-1",
+ "estimator_note": "MDE95 = 1.645 * sd(delta), one-sided, matching tools/efv_mde_lab.py. mde95_twosided = 1.96 * sd is reported beside it. E_cond is the PRE-REGISTERED PRIMARY because the contrast is same-fit by construction.",
+ "B_cond": 2000,
+ "seeds": {
+  "bootstrap": 20260814,
+  "permutation": 20260814
+ },
+ "sides": {
+  "hit": {
+   "n_rows": 755,
+   "n_players": 755,
+   "lambda": 0.7,
+   "single_affine": {
+    "a": -0.6569,
+    "b": 1.1063,
+    "n_fit": 90
+   },
+   "leaked_affine": {
+    "a": 0.6297,
+    "b": 0.7493,
+    "n_fit": 755
+   },
+   "rho": {
+    "A0_blend": 0.3933,
+    "A1_served_foldcal": 0.3923,
+    "A2a_served_prodcal": 0.3899,
+    "A2b_served_leaked": 0.3899,
+    "A3_blend_graded": 0.394,
+    "A4_ridge": 0.3897,
+    "A5_baseline": 0.3832
+   },
+   "S0_reproduction": {
+    "published_baseline": 0.3832,
+    "replay_baseline": 0.3832,
+    "published_blend": 0.3933,
+    "replay_blend": 0.3933,
+    "published_ridge": 0.3897,
+    "replay_ridge": 0.3897,
+    "published_n": 755,
+    "replay_n": 755,
+    "serve_path_2026_08_08_served": 0.4001,
+    "replay_served_foldcal": 0.3923,
+    "pass_current_eval": true,
+    "drift_vs_2026_08_08_served": -0.0078
+   },
+   "S1_floors": {
+    "A4_ridge_vs_A0_blend": {
+     "E_cond": {
+      "B_effective": 2000,
+      "boot_mean": -0.003464,
+      "sd": 0.003574,
+      "mde95": 0.0059,
+      "mde95_twosided": 0.007,
+      "ci95": [
+       -0.0105,
+       0.0033
+      ]
+     }
+    },
+    "A2a_served_vs_A0_blend": {
+     "E_cond": {
+      "B_effective": 2000,
+      "boot_mean": -0.003371,
+      "sd": 0.004546,
+      "mde95": 0.0075,
+      "mde95_twosided": 0.0089,
+      "ci95": [
+       -0.0126,
+       0.0057
+      ]
+     }
+    }
+   },
+   "S2_verdict": {
+    "A2a_vs_blend": {
+     "delta": -0.0034,
+     "mde95": 0.0075,
+     "margin_x_floor": 0.453,
+     "verdict": "not resolvable at this power"
+    },
+    "A4_vs_blend": {
+     "delta": -0.0036,
+     "mde95": 0.0059,
+     "margin_x_floor": 0.61,
+     "verdict": "not resolvable at this power"
+    },
+    "served_below_consensus_bar": false,
+    "served_minus_consensus": 0.0067,
+    "tost": {
+     "delta_margin": 0.02,
+     "ci95_centered": [
+      -0.01263,
+      0.00567
+     ],
+     "ruled_out_as_material": true
+    }
+   },
+   "S3_attribution": {
+    "dropped_consensus_leg_A4_minus_A0": -0.0036,
+    "tie_clamp_round_cost_A3_minus_A0": 0.0007,
+    "separable_at_floor": false
+   },
+   "S4_controls": {
+    "C1_affine_invariance": {
+     "rho_single_affine_unclamped": 0.3824,
+     "rho_ridge": 0.3824,
+     "equal_to_4dp": true,
+     "rho_A2a_served": 0.3899,
+     "collapse_gap_vs_ridge": 0.0002,
+     "folds_with_nonpositive_slope": [],
+     "within_fold_affine_invariance_holds": true,
+     "note": "THE HYPOTHESIS. Under ONE global affine the served grade is non-decreasing in the ridge prediction, so rho(A2a) should equal rho(A4) up to 1dp rounding ties. A large gap REFUTES the collapse and the gate falls back to gating A2a directly."
+    },
+    "C2_permutation": {
+     "rho": 0.0023,
+     "pass": true
+    },
+    "C3_tie_mass": {
+     "floor_knot": 20.0,
+     "share_at_floor": 0.1881,
+     "distinct_served_values": 227,
+     "gate": 0.5
+    },
+    "C4_basis_drift": {
+     "board_basis_fingerprint": null,
+     "matrix_mtimes": {
+      "hit": "2026-08-14T15:51:00",
+      "pit": "2026-08-14T15:51:28"
+     },
+     "published_eval_generated_at": "2026-08-14"
+    }
+   },
+   "A2b_leaks": true
+  },
+  "pit": {
+   "n_rows": 891,
+   "n_players": 891,
+   "lambda": 0.57,
+   "single_affine": {
+    "a": -0.3208,
+    "b": 1.1059,
+    "n_fit": 91
+   },
+   "leaked_affine": {
+    "a": 0.9326,
+    "b": 0.5884,
+    "n_fit": 891
+   },
+   "rho": {
+    "A0_blend": 0.2584,
+    "A1_served_foldcal": 0.2417,
+    "A2a_served_prodcal": 0.2431,
+    "A2b_served_leaked": 0.2425,
+    "A3_blend_graded": 0.2587,
+    "A4_ridge": 0.2428,
+    "A5_baseline": 0.253
+   },
+   "S0_reproduction": {
+    "published_baseline": 0.253,
+    "replay_baseline": 0.253,
+    "published_blend": 0.2584,
+    "replay_blend": 0.2584,
+    "published_ridge": 0.2428,
+    "replay_ridge": 0.2428,
+    "published_n": 891,
+    "replay_n": 891,
+    "serve_path_2026_08_08_served": 0.2389,
+    "replay_served_foldcal": 0.2417,
+    "pass_current_eval": true,
+    "drift_vs_2026_08_08_served": 0.0028
+   },
+   "S1_floors": {
+    "A4_ridge_vs_A0_blend": {
+     "E_cond": {
+      "B_effective": 2000,
+      "boot_mean": -0.015981,
+      "sd": 0.009003,
+      "mde95": 0.0148,
+      "mde95_twosided": 0.0176,
+      "ci95": [
+       -0.0342,
+       0.0014
+      ]
+     }
+    },
+    "A2a_served_vs_A0_blend": {
+     "E_cond": {
+      "B_effective": 2000,
+      "boot_mean": -0.015702,
+      "sd": 0.009563,
+      "mde95": 0.0157,
+      "mde95_twosided": 0.0187,
+      "ci95": [
+       -0.0352,
+       0.0029
+      ]
+     }
+    }
+   },
+   "S2_verdict": {
+    "A2a_vs_blend": {
+     "delta": -0.0153,
+     "mde95": 0.0157,
+     "margin_x_floor": 0.975,
+     "verdict": "not resolvable at this power"
+    },
+    "A4_vs_blend": {
+     "delta": -0.0156,
+     "mde95": 0.0148,
+     "margin_x_floor": 1.054,
+     "verdict": "SERVED LOSES"
+    },
+    "served_below_consensus_bar": true,
+    "served_minus_consensus": -0.0099,
+    "tost": {
+     "delta_margin": 0.02,
+     "ci95_centered": [
+      -0.0348,
+      0.0033
+     ],
+     "ruled_out_as_material": false
+    }
+   },
+   "S3_attribution": {
+    "dropped_consensus_leg_A4_minus_A0": -0.0156,
+    "tie_clamp_round_cost_A3_minus_A0": 0.0003,
+    "separable_at_floor": true
+   },
+   "S4_controls": {
+    "C1_affine_invariance": {
+     "rho_single_affine_unclamped": 0.2393,
+     "rho_ridge": 0.2393,
+     "equal_to_4dp": true,
+     "rho_A2a_served": 0.2431,
+     "collapse_gap_vs_ridge": 0.0003,
+     "folds_with_nonpositive_slope": [],
+     "within_fold_affine_invariance_holds": true,
+     "note": "THE HYPOTHESIS. Under ONE global affine the served grade is non-decreasing in the ridge prediction, so rho(A2a) should equal rho(A4) up to 1dp rounding ties. A large gap REFUTES the collapse and the gate falls back to gating A2a directly."
+    },
+    "C2_permutation": {
+     "rho": 0.0096,
+     "pass": true
+    },
+    "C3_tie_mass": {
+     "floor_knot": 20.0,
+     "share_at_floor": 0.1796,
+     "distinct_served_values": 176,
+     "gate": 0.5
+    },
+    "C4_basis_drift": {
+     "board_basis_fingerprint": null,
+     "matrix_mtimes": {
+      "hit": "2026-08-14T15:51:00",
+      "pit": "2026-08-14T15:51:28"
+     },
+     "published_eval_generated_at": "2026-08-14"
+    }
+   },
+   "A2b_leaks": true
+  }
+ }
+}

@@ -44,6 +44,11 @@ MODEL_GLOSSARY = {
     # reopened with real power, the finding graduates to the xfv entry and this
     # mapping changes with it.
     "xfv_tail_preserving_refit": "internal",
+    # S-1, the serve-basis lane (2026-08-14). INTERNAL: it measures the gap
+    # between a published arm and the served ordering and promotes nothing. If
+    # the remedy it points at is ever taken, the finding moves to the xfv entry
+    # and this mapping changes with it.
+    "xfv_serve_basis": "internal",
     # C-1d, the fitting-frame lane (2026-08-14). INTERNAL: both frames returned
     # NO_SHIP and C-7 reverted the correction to identity the same night, so
     # nothing it measured reaches a reader and there is no claim to document.
