@@ -3604,6 +3604,20 @@
    "last_checked": "2026-08-14",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "xfv_elite_band_accuracy",
+   "surface": "internal",
+   "predicts": "whether the dispersion correction damages accuracy at the TOP of the board, measured on the resolved cohort against realized first-6-season WAR, on a band selected by consensus FV (a pre-decision quantity) rather than by outcome",
+   "champion": "no arm promoted. The lane adjudicates the SHIPPED affine correction rather than proposing a replacement",
+   "baseline": "the uncorrected eFV prediction, plus a consensus-implied arm read forward through the pooled outcome curve",
+   "metric": "MAE against realized 6yr WAR on consensus-selected elite bands, paired bootstrap B=2000 seed 7, with bias and Spearman secondary; the SAME comparison is also run on the outcome-selected top decile as a deliberate biased control",
+   "eval_artifact": "data/xfv_elite_band_eval.json",
+   "verdict": "provisional",
+   "notes": "NULL on every elite band: the paired CI covers zero at consensus >= 50 (hit -0.4333 [-0.933,+0.061] n=165; pit -0.2168 [-0.561,+0.138] n=110) and at >= 55. The corrected arm is nominally better on all four bands and worse on none, so the elite deflation is NOT visible as damage to predictive accuracy on a band chosen before the outcome was known. THE METHODOLOGICAL FINDING, pre-registered before measuring: the same comparison on the OUTCOME-selected top decile favours the uncorrected arm RESOLVABLY on both sides (+1.1890 [0.832,1.526] hit, +0.5340 [0.377,0.683] pit). Conditioning on a high realized outcome preferentially selects rows where a high-variance predictor guessed high, so an over-dispersed arm wins there by construction. The tail-MAE clause that failed the affine map and motivated C-1b was therefore measuring a selection artifact; C-1b's clause 2 is retrospectively unsound, though its ABORT stands because clause 3 failed independently. Sanity control passes (full pool favours corrected, -0.2787 and -0.1415, both excluding zero). Resolved against the author: the gate's 150-row abort did not say per-side or overall; hit is 165 and pit is 110, and the pitcher band is marked UNDERPOWERED and carries no verdict rather than taking the reading that lets the lane report. Unlooked-for finding: on elite HITTERS consensus beats both eFV arms on MAE and rho (6.9850/+0.3400 vs 7.2986/+0.2991), which is about eFV at the top generally rather than about the correction, and does not hold on pitchers. Recorded as an open lane.",
+   "last_checked": "2026-08-14",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []

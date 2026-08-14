@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-08-13**. `validate()` at generation time: **clean**.
 
-**249 models.** Verdicts: validated: 51, provisional: 89, unvalidated: 29, deprecated: 80.
+**250 models.** Verdicts: validated: 51, provisional: 90, unvalidated: 29, deprecated: 80.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -259,6 +259,7 @@ stamped as of **2026-08-13**. `validate()` at generation time: **clean**.
 | `xfv_headtohead_frame` | glossary source-comparison hero + eFV scoreboard: the pub... | n/a - measurement: which comparison FRAME the eFV-vs-consensus head-to-head claim may rest on, given that eFV holds one grade p... | vintage-matched basis: base year equals the eFV decision year, so neither gra... | the two asymmetric frames it replaces - all base years (hands the consensus u... | delta pooled Spearman against realized WAR, every rater on identical rows wit... | **validated** | `data/xfv_headtohead_frame_eval.json` | 0 | no |
 | `xfv_dispersion_repair` | NOTHING SERVED. Measurement plus a fitted-but-unshipped c... | whether an affine, strictly increasing, out-of-fold level correction of xfv_war_6yr removes the measured over-dispersion withou... | NONE ADOPTED. Candidate is a leave-one-fold-out affine map, war_corrected = a... | the served prediction, clamp(-2, a + b*ridge) with (a,b) fitted in-sample on... | OLS slope of realized first-6yr WAR on the OOS prediction (1.0 == calibrated)... | **provisional** | `data/xfv_dispersion_repair_eval.json` | 0 | no |
 | `xfv_tail_preserving_refit` | internal | a tail-preserving replacement for the affine dispersion correction on xfv_war_6yr: a monotone level map fitted out of fold on t... | NONE. All five declared families returned NO_SHIP against the four hard claus... | the identity map, carried as a control that MUST fail clause 4 (low-end repai... | four HARD clauses, all required: (1) slope CI95 covers 1.0 both sides; (2) ta... | **provisional** | `data/xfv_tail_preserving_eval.json` | 0 | no |
+| `xfv_elite_band_accuracy` | internal | whether the dispersion correction damages accuracy at the TOP of the board, measured on the resolved cohort against realized fi... | no arm promoted. The lane adjudicates the SHIPPED affine correction rather th... | the uncorrected eFV prediction, plus a consensus-implied arm read forward thr... | MAE against realized 6yr WAR on consensus-selected elite bands, paired bootst... | **provisional** | `data/xfv_elite_band_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

@@ -44,6 +44,11 @@ MODEL_GLOSSARY = {
     # reopened with real power, the finding graduates to the xfv entry and this
     # mapping changes with it.
     "xfv_tail_preserving_refit": "internal",
+    # C-1c, the powered elite lane (2026-08-14). INTERNAL for the same reason as
+    # C-1b above: it adjudicates a shipped correction and promotes nothing. Its
+    # reader-facing half (that the top of the board is the least resolved part of
+    # the model) belongs on the xfv entry if it is ever stated, not here.
+    "xfv_elite_band_accuracy": "internal",
     # Opportunity/quality decomposition of eFV (lane B-L3). Model-dev only:
     # 0 of 7 arms promoted, no feature and no constant moved, and nothing on
     # any page changed, so it takes the same "internal" decision the rest of
