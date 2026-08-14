@@ -2,7 +2,7 @@
   "_meta": {
     "source": "https://data-graph.mlb.com/graphql",
     "query": "getPlayerRankingsFromSelection(slug=sel-pr-YYYY-top100)",
-    "generated": "2026-08-10T22:04:20Z",
+    "generated": "2026-08-13T21:53:44Z",
     "years": [
       2015,
       2016,
@@ -9363,28 +9363,28 @@
         "mlbam": 815908,
         "name": "Jes\u00fas Made",
         "pos": "SS",
-        "eta": "2026"
+        "eta": "2027"
       },
       {
         "rank": 2,
         "mlbam": 815888,
         "name": "Leo De Vries",
-        "pos": "SS",
-        "eta": "2026"
+        "pos": "SS/3B",
+        "eta": "2027"
       },
       {
         "rank": 3,
+        "mlbam": 808265,
+        "name": "Franklin Arias",
+        "pos": "SS",
+        "eta": "2027"
+      },
+      {
+        "rank": 4,
         "mlbam": 816113,
         "name": "Eli Willits",
         "pos": "SS",
         "eta": "2028"
-      },
-      {
-        "rank": 4,
-        "mlbam": 800543,
-        "name": "Josue De Paula",
-        "pos": "OF",
-        "eta": "2027"
       },
       {
         "rank": 5,
@@ -9395,17 +9395,17 @@
       },
       {
         "rank": 6,
+        "mlbam": 800543,
+        "name": "Josue De Paula",
+        "pos": "OF",
+        "eta": "2027"
+      },
+      {
+        "rank": 7,
         "mlbam": 815825,
         "name": "Seth Hernandez",
         "pos": "RHP",
         "eta": "2028"
-      },
-      {
-        "rank": 7,
-        "mlbam": 808265,
-        "name": "Franklin Arias",
-        "pos": "SS",
-        "eta": "2027"
       },
       {
         "rank": 8,
@@ -9416,30 +9416,30 @@
       },
       {
         "rank": 9,
-        "mlbam": 815394,
-        "name": "Theo Gillen",
-        "pos": "OF",
-        "eta": "2028"
-      },
-      {
-        "rank": 10,
         "mlbam": 806964,
         "name": "Sebastian Walcott",
         "pos": "SS/3B",
         "eta": "2027"
       },
       {
+        "rank": 10,
+        "mlbam": 815690,
+        "name": "Grady Emerson",
+        "pos": "SS",
+        "eta": "2029"
+      },
+      {
         "rank": 11,
-        "mlbam": 701527,
-        "name": "Mike Sirota",
-        "pos": "OF",
+        "mlbam": 800604,
+        "name": "Roch Cholowsky",
+        "pos": "SS",
         "eta": "2027"
       },
       {
         "rank": 12,
-        "mlbam": 823787,
-        "name": "Rainiel Rodriguez",
-        "pos": "C",
+        "mlbam": 815394,
+        "name": "Theo Gillen",
+        "pos": "OF",
         "eta": "2028"
       },
       {
@@ -9451,73 +9451,73 @@
       },
       {
         "rank": 14,
+        "mlbam": 806146,
+        "name": "George Lombard Jr.",
+        "pos": "SS/3B",
+        "eta": "2026"
+      },
+      {
+        "rank": 15,
         "mlbam": 805805,
         "name": "Walker Jenkins",
         "pos": "OF",
         "eta": "2026"
       },
       {
-        "rank": 15,
+        "rank": 16,
+        "mlbam": 701527,
+        "name": "Mike Sirota",
+        "pos": "OF",
+        "eta": "2027"
+      },
+      {
+        "rank": 17,
         "mlbam": 829034,
         "name": "Josuar Gonzalez",
         "pos": "SS/2B",
         "eta": "2029"
       },
       {
-        "rank": 16,
-        "mlbam": 815352,
-        "name": "Caleb Bonemer",
-        "pos": "3B/SS",
-        "eta": "2028"
-      },
-      {
-        "rank": 17,
-        "mlbam": 815787,
-        "name": "Ethan Holliday",
-        "pos": "SS",
-        "eta": "2029"
-      },
-      {
         "rank": 18,
-        "mlbam": 821270,
-        "name": "Luis Pe\u00f1a",
-        "pos": "INF",
+        "mlbam": 823787,
+        "name": "Rainiel Rodriguez",
+        "pos": "C/1B",
         "eta": "2028"
       },
       {
         "rank": 19,
+        "mlbam": 822518,
+        "name": "Vahn Lackey",
+        "pos": "C",
+        "eta": "2029"
+      },
+      {
+        "rank": 20,
         "mlbam": 808234,
         "name": "Eduardo Quintero",
         "pos": "OF",
         "eta": "2028"
       },
       {
-        "rank": 20,
-        "mlbam": 806146,
-        "name": "George Lombard Jr.",
-        "pos": "SS/3B",
-        "eta": "2027"
-      },
-      {
         "rank": 21,
-        "mlbam": 806258,
-        "name": "Thomas White",
-        "pos": "LHP",
-        "eta": "2026"
+        "mlbam": 821270,
+        "name": "Luis Pe\u00f1a",
+        "pos": "SS",
+        "eta": "2028"
       },
       {
         "rank": 22,
-        "mlbam": 824604,
-        "name": "Liam Doyle",
-        "pos": "LHP",
-        "eta": "2027"
-      },
-      {
-        "rank": 23,
         "mlbam": 806957,
         "name": "Alfredo Duno",
         "pos": "C",
         "eta": "2028"
+      },
+      {
+        "rank": 23,
+        "mlbam": 806956,
+        "name": "Ethan Salas",
+        "pos": "C",
+        "eta": "2027"
       },
       {
         "rank": 24,
@@ -9528,171 +9528,171 @@
       },
       {
         "rank": 25,
-        "mlbam": 814307,
-        "name": "Zyhir Hope",
-        "pos": "OF",
-        "eta": "2027"
+        "mlbam": 815787,
+        "name": "Ethan Holliday",
+        "pos": "SS",
+        "eta": "2029"
       },
       {
         "rank": 26,
-        "mlbam": 701364,
-        "name": "Jamie Arnold",
-        "pos": "LHP",
-        "eta": "2027"
-      },
-      {
-        "rank": 27,
         "mlbam": 828098,
         "name": "JoJo Parker",
         "pos": "SS",
         "eta": "2029"
       },
       {
-        "rank": 28,
-        "mlbam": 821273,
-        "name": "Edward Florentino",
-        "pos": "OF/1B",
-        "eta": "2028"
-      },
-      {
-        "rank": 29,
-        "mlbam": 701785,
-        "name": "Kaelen Culpepper",
-        "pos": "SS",
-        "eta": "2026"
-      },
-      {
-        "rank": 30,
-        "mlbam": 806956,
-        "name": "Ethan Salas",
-        "pos": "C",
-        "eta": "2027"
-      },
-      {
-        "rank": 31,
+        "rank": 27,
         "mlbam": 836582,
         "name": "Luis Hern\u00e1ndez",
         "pos": "SS/3B",
         "eta": "2030"
       },
       {
-        "rank": 32,
-        "mlbam": 805809,
-        "name": "Travis Sykora",
+        "rank": 28,
+        "mlbam": 814307,
+        "name": "Zyhir Hope",
+        "pos": "OF",
+        "eta": "2027"
+      },
+      {
+        "rank": 29,
+        "mlbam": 694197,
+        "name": "Angel Genao",
+        "pos": "SS/3B",
+        "eta": "2026"
+      },
+      {
+        "rank": 30,
+        "mlbam": 815352,
+        "name": "Caleb Bonemer",
+        "pos": "3B/SS",
+        "eta": "2028"
+      },
+      {
+        "rank": 31,
+        "mlbam": 814176,
+        "name": "Jackson Flora",
         "pos": "RHP",
         "eta": "2028"
       },
       {
-        "rank": 33,
+        "rank": 32,
         "mlbam": 806252,
         "name": "Ralphy Velazquez",
         "pos": "1B/OF",
         "eta": "2027"
       },
       {
+        "rank": 33,
+        "mlbam": 805906,
+        "name": "Gage Wood",
+        "pos": "RHP",
+        "eta": "2027"
+      },
+      {
         "rank": 34,
-        "mlbam": 702281,
-        "name": "Robby Snelling",
-        "pos": "LHP",
+        "mlbam": 701785,
+        "name": "Kaelen Culpepper",
+        "pos": "SS",
         "eta": "2026"
       },
       {
         "rank": 35,
-        "mlbam": 800614,
-        "name": "Bryce Rainer",
-        "pos": "SS",
+        "mlbam": 821273,
+        "name": "Edward Florentino",
+        "pos": "OF",
         "eta": "2028"
       },
       {
         "rank": 36,
-        "mlbam": 806958,
-        "name": "Felnin Celesten",
-        "pos": "SS",
+        "mlbam": 800537,
+        "name": "Christian Zazueta",
+        "pos": "RHP",
         "eta": "2028"
       },
       {
         "rank": 37,
-        "mlbam": 804109,
-        "name": "Aiva Arquette",
-        "pos": "SS",
-        "eta": "2028"
+        "mlbam": 806258,
+        "name": "Thomas White",
+        "pos": "LHP",
+        "eta": "2026"
       },
       {
         "rank": 38,
-        "mlbam": 703155,
-        "name": "Lazaro Montes",
-        "pos": "OF",
-        "eta": "2027"
-      },
-      {
-        "rank": 39,
-        "mlbam": 694197,
-        "name": "Angel Genao",
-        "pos": "SS",
-        "eta": "2026"
-      },
-      {
-        "rank": 40,
-        "mlbam": 703197,
-        "name": "Michael Arroyo",
-        "pos": "2B/OF",
-        "eta": "2026"
-      },
-      {
-        "rank": 41,
-        "mlbam": 807284,
-        "name": "Cam Caminiti",
-        "pos": "LHP",
-        "eta": "2027"
-      },
-      {
-        "rank": 42,
-        "mlbam": 803285,
-        "name": "Tyler Bremner",
-        "pos": "RHP",
-        "eta": "2026"
-      },
-      {
-        "rank": 43,
         "mlbam": 805796,
         "name": "Arjun Nimmala",
         "pos": "SS",
         "eta": "2028"
       },
       {
-        "rank": 44,
-        "mlbam": 695491,
-        "name": "Joshua B\u00e1ez",
+        "rank": 39,
+        "mlbam": 815824,
+        "name": "Josiah Hartshorn",
+        "pos": "OF/1B",
+        "eta": "2028"
+      },
+      {
+        "rank": 40,
+        "mlbam": 835727,
+        "name": "Eric Booth Jr.",
         "pos": "OF",
-        "eta": "2026"
+        "eta": "2030"
+      },
+      {
+        "rank": 41,
+        "mlbam": 806039,
+        "name": "Drew Burress",
+        "pos": "OF",
+        "eta": "2028"
+      },
+      {
+        "rank": 42,
+        "mlbam": 807080,
+        "name": "Eric Hartman",
+        "pos": "OF",
+        "eta": "2028"
+      },
+      {
+        "rank": 43,
+        "mlbam": 807284,
+        "name": "Cam Caminiti",
+        "pos": "LHP",
+        "eta": "2027"
+      },
+      {
+        "rank": 44,
+        "mlbam": 824604,
+        "name": "Liam Doyle",
+        "pos": "LHP",
+        "eta": "2027"
       },
       {
         "rank": 45,
-        "mlbam": 703186,
-        "name": "Jarlin Susana",
+        "mlbam": 703197,
+        "name": "Michael Arroyo",
+        "pos": "OF/2B",
+        "eta": "2026"
+      },
+      {
+        "rank": 46,
+        "mlbam": 803285,
+        "name": "Tyler Bremner",
         "pos": "RHP",
         "eta": "2027"
       },
       {
-        "rank": 46,
+        "rank": 47,
         "mlbam": 815929,
         "name": "Jhonny Level",
         "pos": "SS/2B",
         "eta": "2029"
       },
       {
-        "rank": 47,
-        "mlbam": 829162,
-        "name": "Steele Hall",
-        "pos": "SS",
-        "eta": "2029"
-      },
-      {
         "rank": 48,
-        "mlbam": 805906,
-        "name": "Gage Wood",
-        "pos": "RHP",
-        "eta": "2027"
+        "mlbam": 800614,
+        "name": "Bryce Rainer",
+        "pos": "SS",
+        "eta": "2028"
       },
       {
         "rank": 49,
@@ -9703,360 +9703,360 @@
       },
       {
         "rank": 50,
-        "mlbam": 805795,
-        "name": "Aidan Miller",
+        "mlbam": 806958,
+        "name": "Felnin Celesten",
         "pos": "SS",
-        "eta": "2026"
+        "eta": "2028"
       },
       {
         "rank": 51,
-        "mlbam": 696146,
-        "name": "Hagen Smith",
-        "pos": "LHP",
-        "eta": "2026"
-      },
-      {
-        "rank": 52,
-        "mlbam": 691181,
-        "name": "Emmanuel Rodriguez",
-        "pos": "OF",
-        "eta": "2026"
-      },
-      {
-        "rank": 53,
-        "mlbam": 806953,
-        "name": "Eduardo Tait",
-        "pos": "C",
-        "eta": "2028"
-      },
-      {
-        "rank": 54,
-        "mlbam": 800522,
-        "name": "Josue Brice\u00f1o",
-        "pos": "C/1B",
-        "eta": "2027"
-      },
-      {
-        "rank": 55,
-        "mlbam": 825582,
-        "name": "Nate George",
-        "pos": "OF",
-        "eta": "2028"
-      },
-      {
-        "rank": 56,
-        "mlbam": 815814,
-        "name": "Billy Carlson",
-        "pos": "SS",
-        "eta": "2029"
-      },
-      {
-        "rank": 57,
-        "mlbam": 828076,
-        "name": "Dax Kilby",
-        "pos": "SS",
-        "eta": "2028"
-      },
-      {
-        "rank": 58,
-        "mlbam": 694876,
-        "name": "Cooper Ingle",
-        "pos": "C/OF",
-        "eta": "2026"
-      },
-      {
-        "rank": 59,
-        "mlbam": 806071,
-        "name": "Jonny Farmelo",
-        "pos": "OF",
-        "eta": "2028"
-      },
-      {
-        "rank": 60,
-        "mlbam": 815824,
-        "name": "Josiah Hartshorn",
-        "pos": "OF/1B",
-        "eta": "2028"
-      },
-      {
-        "rank": 61,
-        "mlbam": 821041,
-        "name": "Roldy Brito",
-        "pos": "OF/2B",
-        "eta": "2028"
-      },
-      {
-        "rank": 62,
-        "mlbam": 807291,
-        "name": "Caden Scarborough",
-        "pos": "RHP",
-        "eta": "2027"
-      },
-      {
-        "rank": 63,
-        "mlbam": 800473,
-        "name": "Jefferson Rojas",
-        "pos": "3B/SS",
-        "eta": "2027"
-      },
-      {
-        "rank": 64,
-        "mlbam": 800325,
-        "name": "Luis Lara",
-        "pos": "OF",
-        "eta": "2026"
-      },
-      {
-        "rank": 65,
-        "mlbam": 830402,
-        "name": "Kendry Chourio",
-        "pos": "RHP",
-        "eta": "2029"
-      },
-      {
-        "rank": 66,
-        "mlbam": 800537,
-        "name": "Christian Zazueta",
-        "pos": "RHP",
-        "eta": "2028"
-      },
-      {
-        "rank": 67,
-        "mlbam": 829037,
-        "name": "Kevin Alvarez",
-        "pos": "OF",
-        "eta": "2029"
-      },
-      {
-        "rank": 68,
-        "mlbam": 689981,
-        "name": "River Ryan",
-        "pos": "RHP",
-        "eta": "2026"
-      },
-      {
-        "rank": 69,
-        "mlbam": 809707,
-        "name": "Charlie Condon",
-        "pos": "1B/OF",
-        "eta": "2026"
-      },
-      {
-        "rank": 70,
-        "mlbam": 807083,
-        "name": "Nathan Flewelling",
-        "pos": "C",
-        "eta": "2028"
-      },
-      {
-        "rank": 71,
-        "mlbam": 703596,
-        "name": "Karson Milbrandt",
-        "pos": "RHP",
-        "eta": "2027"
-      },
-      {
-        "rank": 72,
-        "mlbam": 695684,
-        "name": "Elmer Rodr\u00edguez",
-        "pos": "RHP",
-        "eta": "2026"
-      },
-      {
-        "rank": 73,
-        "mlbam": 807080,
-        "name": "Eric Hartman",
-        "pos": "OF",
-        "eta": "2029"
-      },
-      {
-        "rank": 74,
-        "mlbam": 814409,
-        "name": "Seaver King",
-        "pos": "SS",
-        "eta": "2027"
-      },
-      {
-        "rank": 75,
-        "mlbam": 804636,
-        "name": "Jonah Tong",
-        "pos": "RHP",
-        "eta": "2026"
-      },
-      {
-        "rank": 76,
-        "mlbam": 702518,
-        "name": "Jett Williams",
-        "pos": "3B/SS/OF",
-        "eta": "2026"
-      },
-      {
-        "rank": 77,
-        "mlbam": 702610,
-        "name": "Ike Irish",
-        "pos": "OF/1B",
-        "eta": "2028"
-      },
-      {
-        "rank": 78,
-        "mlbam": 801739,
-        "name": "Carlos Lagrange",
-        "pos": "RHP",
-        "eta": "2026"
-      },
-      {
-        "rank": 79,
-        "mlbam": 815843,
-        "name": "Josh Hammond",
-        "pos": "SS/3B",
-        "eta": "2029"
-      },
-      {
-        "rank": 80,
-        "mlbam": 821100,
-        "name": "Justin Gonzales",
-        "pos": "OF",
-        "eta": "2028"
-      },
-      {
-        "rank": 81,
-        "mlbam": 804560,
-        "name": "Charles Davalan",
-        "pos": "OF",
-        "eta": "2028"
-      },
-      {
-        "rank": 82,
-        "mlbam": 815832,
-        "name": "Xavier Neyens",
-        "pos": "3B/SS",
-        "eta": "2029"
-      },
-      {
-        "rank": 83,
-        "mlbam": 826723,
-        "name": "Ronny Cruz",
-        "pos": "INF",
-        "eta": "2029"
-      },
-      {
-        "rank": 84,
-        "mlbam": 803849,
-        "name": "Devin Fitz-Gerald",
-        "pos": "INF",
-        "eta": "2028"
-      },
-      {
-        "rank": 85,
-        "mlbam": 702679,
-        "name": "Demetrio Crisantes",
-        "pos": "2B/3B",
-        "eta": "2027"
-      },
-      {
-        "rank": 86,
-        "mlbam": 836353,
-        "name": "Francisco Renteria",
-        "pos": "OF",
-        "eta": "2031"
-      },
-      {
-        "rank": 87,
-        "mlbam": 815304,
-        "name": "Josh Adamczewski",
-        "pos": "OF",
-        "eta": "2028"
-      },
-      {
-        "rank": 88,
-        "mlbam": 815617,
-        "name": "Kayson Cunningham",
-        "pos": "SS",
-        "eta": "2029"
-      },
-      {
-        "rank": 89,
-        "mlbam": 696486,
-        "name": "James Tibbs III",
-        "pos": "1B/OF",
-        "eta": "2027"
-      },
-      {
-        "rank": 90,
         "mlbam": 805207,
         "name": "Caden Bodine",
         "pos": "C",
         "eta": "2029"
       },
       {
-        "rank": 91,
+        "rank": 52,
+        "mlbam": 805809,
+        "name": "Travis Sykora",
+        "pos": "RHP",
+        "eta": "2028"
+      },
+      {
+        "rank": 53,
+        "mlbam": 702281,
+        "name": "Robby Snelling",
+        "pos": "LHP",
+        "eta": "2026"
+      },
+      {
+        "rank": 54,
+        "mlbam": 830402,
+        "name": "Kendry Chourio",
+        "pos": "RHP",
+        "eta": "2029"
+      },
+      {
+        "rank": 55,
+        "mlbam": 821041,
+        "name": "Roldy Brito",
+        "pos": "OF/2B",
+        "eta": "2028"
+      },
+      {
+        "rank": 56,
+        "mlbam": 703155,
+        "name": "Lazaro Montes",
+        "pos": "OF",
+        "eta": "2027"
+      },
+      {
+        "rank": 57,
+        "mlbam": 701364,
+        "name": "Jamie Arnold",
+        "pos": "LHP",
+        "eta": "2027"
+      },
+      {
+        "rank": 58,
+        "mlbam": 809707,
+        "name": "Charlie Condon",
+        "pos": "1B/OF",
+        "eta": "2026"
+      },
+      {
+        "rank": 59,
+        "mlbam": 695491,
+        "name": "Joshua B\u00e1ez",
+        "pos": "OF",
+        "eta": "2026"
+      },
+      {
+        "rank": 60,
+        "mlbam": 816111,
+        "name": "Tate Southisene",
+        "pos": "SS/2B",
+        "eta": "2028"
+      },
+      {
+        "rank": 61,
+        "mlbam": 805795,
+        "name": "Aidan Miller",
+        "pos": "SS",
+        "eta": "2027"
+      },
+      {
+        "rank": 62,
+        "mlbam": 815814,
+        "name": "Billy Carlson",
+        "pos": "SS",
+        "eta": "2029"
+      },
+      {
+        "rank": 63,
+        "mlbam": 804109,
+        "name": "Aiva Arquette",
+        "pos": "SS",
+        "eta": "2028"
+      },
+      {
+        "rank": 64,
+        "mlbam": 815628,
+        "name": "Tyler Bell",
+        "pos": "SS",
+        "eta": "2029"
+      },
+      {
+        "rank": 65,
+        "mlbam": 807083,
+        "name": "Nathan Flewelling",
+        "pos": "C",
+        "eta": "2028"
+      },
+      {
+        "rank": 66,
+        "mlbam": 689981,
+        "name": "River Ryan",
+        "pos": "RHP",
+        "eta": "2026"
+      },
+      {
+        "rank": 67,
+        "mlbam": 813075,
+        "name": "Jacob Lombard",
+        "pos": "SS",
+        "eta": "2030"
+      },
+      {
+        "rank": 68,
+        "mlbam": 703186,
+        "name": "Jarlin Susana",
+        "pos": "RHP",
+        "eta": "2027"
+      },
+      {
+        "rank": 69,
+        "mlbam": 800522,
+        "name": "Josue Brice\u00f1o",
+        "pos": "C/1B",
+        "eta": "2027"
+      },
+      {
+        "rank": 70,
+        "mlbam": 815843,
+        "name": "Josh Hammond",
+        "pos": "SS/3B",
+        "eta": "2029"
+      },
+      {
+        "rank": 71,
+        "mlbam": 814409,
+        "name": "Seaver King",
+        "pos": "SS/2B",
+        "eta": "2027"
+      },
+      {
+        "rank": 72,
         "mlbam": 815785,
         "name": "Braylon Doughty",
         "pos": "RHP",
         "eta": "2028"
       },
       {
-        "rank": 92,
-        "mlbam": 804526,
-        "name": "Nolan Perry",
+        "rank": 73,
+        "mlbam": 806071,
+        "name": "Jonny Farmelo",
+        "pos": "OF",
+        "eta": "2028"
+      },
+      {
+        "rank": 74,
+        "mlbam": 701339,
+        "name": "Marek Houston",
+        "pos": "SS",
+        "eta": "2028"
+      },
+      {
+        "rank": 75,
+        "mlbam": 702679,
+        "name": "Demetrio Crisantes",
+        "pos": "2B",
+        "eta": "2027"
+      },
+      {
+        "rank": 76,
+        "mlbam": 800473,
+        "name": "Jefferson Rojas",
+        "pos": "3B/SS",
+        "eta": "2027"
+      },
+      {
+        "rank": 77,
+        "mlbam": 807291,
+        "name": "Caden Scarborough",
         "pos": "RHP",
         "eta": "2027"
       },
       {
-        "rank": 93,
-        "mlbam": 816111,
-        "name": "Tate Southisene",
-        "pos": "2B/SS",
-        "eta": "2029"
-      },
-      {
-        "rank": 94,
-        "mlbam": 702693,
-        "name": "Jaison Chourio",
-        "pos": "OF",
+        "rank": 78,
+        "mlbam": 703596,
+        "name": "Karson Milbrandt",
+        "pos": "RHP",
         "eta": "2027"
       },
       {
-        "rank": 95,
+        "rank": 79,
+        "mlbam": 821100,
+        "name": "Justin Gonzales",
+        "pos": "OF",
+        "eta": "2028"
+      },
+      {
+        "rank": 80,
+        "mlbam": 829037,
+        "name": "Kevin Alvarez",
+        "pos": "OF",
+        "eta": "2029"
+      },
+      {
+        "rank": 81,
+        "mlbam": 836353,
+        "name": "Francisco Renteria",
+        "pos": "OF",
+        "eta": "2031"
+      },
+      {
+        "rank": 82,
         "mlbam": 821181,
         "name": "Juneiker Caceres",
         "pos": "OF",
         "eta": "2029"
       },
       {
-        "rank": 96,
-        "mlbam": 804530,
-        "name": "Joseph Dzierwa",
-        "pos": "LHP",
-        "eta": "2028"
-      },
-      {
-        "rank": 97,
-        "mlbam": 815789,
-        "name": "David Shields",
-        "pos": "LHP",
+        "rank": 83,
+        "mlbam": 828237,
+        "name": "Cooper Flemming",
+        "pos": "INF",
         "eta": "2029"
       },
       {
-        "rank": 98,
-        "mlbam": 809092,
-        "name": "Murf Gray",
-        "pos": "3B",
-        "eta": "2028"
-      },
-      {
-        "rank": 99,
+        "rank": 84,
         "mlbam": 825412,
         "name": "Angeibel Gomez",
         "pos": "OF",
         "eta": "2031"
       },
       {
-        "rank": 100,
-        "mlbam": 828237,
-        "name": "Cooper Flemming",
-        "pos": "INF",
+        "rank": 85,
+        "mlbam": 703448,
+        "name": "Cam Cannarella",
+        "pos": "OF",
+        "eta": "2028"
+      },
+      {
+        "rank": 86,
+        "mlbam": 828076,
+        "name": "Dax Kilby",
+        "pos": "SS",
+        "eta": "2028"
+      },
+      {
+        "rank": 87,
+        "mlbam": 804560,
+        "name": "Charles Davalan",
+        "pos": "OF",
+        "eta": "2028"
+      },
+      {
+        "rank": 88,
+        "mlbam": 815304,
+        "name": "Josh Adamczewski",
+        "pos": "OF",
+        "eta": "2028"
+      },
+      {
+        "rank": 89,
+        "mlbam": 800325,
+        "name": "Luis Lara",
+        "pos": "OF",
+        "eta": "2026"
+      },
+      {
+        "rank": 90,
+        "mlbam": 804530,
+        "name": "Joseph Dzierwa",
+        "pos": "LHP",
+        "eta": "2027"
+      },
+      {
+        "rank": 91,
+        "mlbam": 815156,
+        "name": "Derek Curiel",
+        "pos": "OF",
+        "eta": "2028"
+      },
+      {
+        "rank": 92,
+        "mlbam": 829162,
+        "name": "Steele Hall",
+        "pos": "SS",
         "eta": "2029"
+      },
+      {
+        "rank": 93,
+        "mlbam": 689196,
+        "name": "Owen Ayers",
+        "pos": "C/1B",
+        "eta": "2027"
+      },
+      {
+        "rank": 94,
+        "mlbam": 815832,
+        "name": "Xavier Neyens",
+        "pos": "3B/SS",
+        "eta": "2029"
+      },
+      {
+        "rank": 95,
+        "mlbam": 809092,
+        "name": "Murf Gray",
+        "pos": "3B",
+        "eta": "2027"
+      },
+      {
+        "rank": 96,
+        "mlbam": 804526,
+        "name": "Nolan Perry",
+        "pos": "RHP",
+        "eta": "2027"
+      },
+      {
+        "rank": 97,
+        "mlbam": 826061,
+        "name": "Gio Rojas",
+        "pos": "LHP",
+        "eta": "2029"
+      },
+      {
+        "rank": 98,
+        "mlbam": 827267,
+        "name": "Caden Hunter",
+        "pos": "LHP",
+        "eta": "2027"
+      },
+      {
+        "rank": 99,
+        "mlbam": 815816,
+        "name": "Brady Ebel",
+        "pos": "SS",
+        "eta": "2029"
+      },
+      {
+        "rank": 100,
+        "mlbam": 827408,
+        "name": "Ramon Marquez",
+        "pos": "RHP",
+        "eta": "2028"
       }
     ]
   }

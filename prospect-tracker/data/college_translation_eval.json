@@ -6,113 +6,113 @@
  "caveat": "Not adjusted for strength of schedule or park (no conference/park table held). Bands are P10-P90 and widen with thinner support. hit_ops is experimental: college tracked data barely forecasts Single-A production in our matched sample.",
  "factors": {
   "hit_k": {
-   "x_mean": 18.5,
-   "y_mean": 25.547,
-   "slope": 0.4849,
-   "ols_slope": 0.5271,
-   "band_sd": 8.081,
-   "r2": 0.184,
-   "n": 230,
+   "x_mean": 18.643,
+   "y_mean": 25.852,
+   "slope": 0.4561,
+   "ols_slope": 0.495,
+   "band_sd": 8.491,
+   "r2": 0.149,
+   "n": 234,
    "loo": {
-    "mae": 6.215,
-    "p10_p90_coverage": 0.822,
+    "mae": 6.315,
+    "p10_p90_coverage": 0.821,
     "target_coverage": 0.8,
-    "n": 230
+    "n": 234
    }
   },
   "hit_bb": {
-   "x_mean": 12.365,
-   "y_mean": 12.163,
-   "slope": 0.3266,
-   "ols_slope": 0.355,
-   "band_sd": 5.875,
-   "r2": 0.069,
-   "n": 230,
+   "x_mean": 12.251,
+   "y_mean": 12.154,
+   "slope": 0.303,
+   "ols_slope": 0.3289,
+   "band_sd": 6.055,
+   "r2": 0.052,
+   "n": 234,
    "loo": {
-    "mae": 4.167,
-    "p10_p90_coverage": 0.848,
+    "mae": 4.375,
+    "p10_p90_coverage": 0.829,
     "target_coverage": 0.8,
-    "n": 230
+    "n": 234
    }
   },
   "hit_ops": {
-   "x_mean": 0.388,
-   "y_mean": 0.735,
-   "slope": 0.4284,
-   "ols_slope": 0.4656,
-   "band_sd": 0.186,
-   "r2": 0.02,
-   "n": 230,
+   "x_mean": 0.385,
+   "y_mean": 0.729,
+   "slope": 0.3904,
+   "ols_slope": 0.4237,
+   "band_sd": 0.201,
+   "r2": 0.014,
+   "n": 234,
    "loo": {
-    "mae": 0.135,
-    "p10_p90_coverage": 0.848,
+    "mae": 0.139,
+    "p10_p90_coverage": 0.872,
     "target_coverage": 0.8,
-    "n": 230
+    "n": 234
    }
   },
   "pit_k": {
-   "x_mean": 24.221,
-   "y_mean": 23.84,
-   "slope": 0.1081,
-   "ols_slope": 0.1173,
-   "band_sd": 5.309,
-   "r2": 0.03,
-   "n": 234,
+   "x_mean": 24.185,
+   "y_mean": 23.755,
+   "slope": 0.1183,
+   "ols_slope": 0.1284,
+   "band_sd": 5.329,
+   "r2": 0.036,
+   "n": 233,
    "loo": {
-    "mae": 4.308,
-    "p10_p90_coverage": 0.786,
+    "mae": 4.346,
+    "p10_p90_coverage": 0.777,
     "target_coverage": 0.8,
-    "n": 234
+    "n": 233
    }
   },
   "pit_bb": {
-   "x_mean": 10.828,
-   "y_mean": 11.626,
-   "slope": 0.2575,
-   "ols_slope": 0.2795,
-   "band_sd": 4.078,
-   "r2": 0.113,
-   "n": 234,
+   "x_mean": 10.788,
+   "y_mean": 11.664,
+   "slope": 0.2701,
+   "ols_slope": 0.2933,
+   "band_sd": 4.018,
+   "r2": 0.128,
+   "n": 233,
    "loo": {
-    "mae": 3.183,
-    "p10_p90_coverage": 0.812,
+    "mae": 3.144,
+    "p10_p90_coverage": 0.803,
     "target_coverage": 0.8,
-    "n": 234
+    "n": 233
    }
   },
   "box_k": {
-   "x_mean": 17.16,
-   "y_mean": 24.284,
-   "slope": 0.6588,
-   "ols_slope": 0.8345,
-   "band_sd": 10.274,
-   "r2": 0.141,
-   "n": 75,
+   "x_mean": 16.997,
+   "y_mean": 24.371,
+   "slope": 0.573,
+   "ols_slope": 0.7063,
+   "band_sd": 10.494,
+   "r2": 0.09,
+   "n": 86,
    "loo": {
-    "mae": 7.348,
-    "p10_p90_coverage": 0.84,
+    "mae": 7.68,
+    "p10_p90_coverage": 0.884,
     "target_coverage": 0.8,
-    "n": 75
+    "n": 86
    }
   },
   "box_bb": {
-   "x_mean": 13.348,
-   "y_mean": 11.877,
-   "slope": 0.4703,
-   "ols_slope": 0.5957,
-   "band_sd": 8.73,
-   "r2": 0.057,
-   "n": 75,
+   "x_mean": 13.245,
+   "y_mean": 11.542,
+   "slope": 0.3948,
+   "ols_slope": 0.4866,
+   "band_sd": 8.111,
+   "r2": 0.044,
+   "n": 86,
    "loo": {
-    "mae": 6.029,
-    "p10_p90_coverage": 0.853,
+    "mae": 6.315,
+    "p10_p90_coverage": 0.767,
     "target_coverage": 0.8,
-    "n": 75
+    "n": 86
    }
   }
  },
  "matched_pairs": {
-  "hitters_with_single_a": 230,
-  "pitchers_with_single_a": 234
+  "hitters_with_single_a": 234,
+  "pitchers_with_single_a": 233
  }
 }

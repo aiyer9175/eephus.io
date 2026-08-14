@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-10",
+ "generated_at": "2026-08-13",
  "season_out_validation": {
   "pitch_level_r": 0.0213,
   "pitcher_level_r": 0.2797,
@@ -7,9 +7,9 @@
  },
  "forward_gate": {
   "n_era": 20,
-  "r_vs_mlb_era_inv": -0.1076,
+  "r_vs_mlb_era_inv": -0.115,
   "n_k": 20,
-  "r_vs_mlb_kpct": 0.4809
+  "r_vs_mlb_kpct": 0.4758
  },
  "conventions": {
   "model": "physics-only features, label = delta_run_exp",

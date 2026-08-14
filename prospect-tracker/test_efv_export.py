@@ -498,7 +498,27 @@ def test_committed_artifact_headline_alias_contract():
 # changes moved served values: SCORED_YEARS promoted 4 folds -> 11, and the
 # tool gate gained a real paired-bootstrap MDE which failed `hit` where the
 # bare `br > gr` had passed it. 178 tool_xfv blocks moved, zero headline xfv.
-_GOLDEN_XFV_SHA256 = "5430ea7b444155eea68c9313941220a7e03cf48eafbe8c80b94ff661888f237b"
+# RESTAMPED 2026-08-14, the GRADE-BASIS EPOCH. This one moved served grades on
+# purpose and at scale, so it is the restamp the ledger above exists for.
+# docs/efv-2026-08-13/GRADE_BASIS_EPOCH_GATE.md.
+#
+# Three changes reached the artifact in one rebuild sequence:
+#   1. the Defect A dispersion correction, an affine level fix on xfv_war applied
+#      at the grade seam (a_c/b_c hit 0.470359/0.663929, pit 0.493744/0.546915),
+#      fitted out of fold on the production frame. 4,585 of 4,664 served grades
+#      moved; rows pinned at the -2.0 WAR floor went to ZERO.
+#   2. the MLB Pipeline vintage repair, 540 snapshot rows deleted (current-year
+#      accretion plus the 2011/2014/2016 wrong-list orphans).
+#   3. two split identities merged through consensus.PLAYER_KEY_ALIASES.
+#
+# Routing is decided on the UNCORRECTED grade, so the routed cohort is preserved:
+# 2,400 rows against 2,397 before, verified on this artifact rather than assumed.
+#
+# Stamped from tools.pipeline_artifact_diff.fingerprint_file OUTSIDE pytest, on the
+# xfv.json written at 23:01 by rebuild pass 3, per the 2026-07-30 note above: a
+# mid-suite test regenerates xfv.json under fixtures and stamping from that would
+# record a fixture state as production truth.
+_GOLDEN_XFV_SHA256 = "37dd827ba1ea27a46b82a2bef8aea02bb511ceadb186e32312e806e7556f5f77"
 # OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
 # whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
 # factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which

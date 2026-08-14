@@ -3536,6 +3536,1631 @@
    },
    "alerts": [],
    "n_alerts": 0
+  },
+  {
+   "recorded_at": "2026-08-11T16:00:57+00:00",
+   "board_generated_at": "2026-08-11",
+   "board_basis": "xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349",
+   "fingerprint": "b7b83ff5",
+   "compared_against": "ec65d902",
+   "compared_against_generated_at": "2026-08-10",
+   "sides": {
+    "hit": {
+     "coverage": {
+      "observed": true,
+      "covered": 1123,
+      "rows": 1903,
+      "frac": 0.590121,
+      "report_generated_at": "2026-08-11",
+      "delta": 0.0,
+      "prev_frac": 0.590121,
+      "prev_covered": 1123,
+      "prev_rows": 1903
+     },
+     "weights": {
+      "observed": true,
+      "n_train": 1870,
+      "intercept": 1.710506,
+      "cal_a": 0.0314,
+      "cal_b": 1.0445,
+      "features": {
+       "fv": {
+        "w": 2.471634,
+        "mu": 41.491406,
+        "sd": 6.010598
+       },
+       "obp_rel": {
+        "w": 0.051185,
+        "mu": 0.00332,
+        "sd": 0.02727
+       },
+       "k_rel": {
+        "w": 0.178252,
+        "mu": 0.001255,
+        "sd": 0.041621
+       },
+       "peak_k_rel": {
+        "w": -0.115696,
+        "mu": -0.014404,
+        "sd": 0.039988
+       },
+       "age_rel_level": {
+        "w": -0.212212,
+        "mu": 0.135027,
+        "sd": 1.064205
+       },
+       "n_milb_seasons": {
+        "w": -0.200583,
+        "mu": 1.761497,
+        "sd": 1.853112
+       },
+       "tool_hit": {
+        "w": 0.315007,
+        "mu": 48.015508,
+        "sd": 6.40995
+       },
+       "tool_speed": {
+        "w": 0.229292,
+        "mu": 47.849733,
+        "sd": 11.435293
+       },
+       "milb_missing": {
+        "w": -0.01414,
+        "mu": 0.026738,
+        "sd": 0.161317
+       },
+       "is_ifa": {
+        "w": 0.076183,
+        "mu": 0.24385,
+        "sd": 0.429403
+       },
+       "is_college": {
+        "w": 0.332051,
+        "mu": 0.190374,
+        "sd": 0.392596
+       },
+       "ops_rel": {
+        "w": 0.222273,
+        "mu": 0.014337,
+        "sd": 0.072614
+       },
+       "age": {
+        "w": 0.059242,
+        "mu": 22.111337,
+        "sd": 1.676315
+       },
+       "level_rank": {
+        "w": 0.309172,
+        "mu": 1.912299,
+        "sd": 1.937474
+       }
+      }
+     },
+     "coverage_baseline_vintage": "2026-08-10",
+     "weights_baseline_vintage": "2026-08-10",
+     "weight_change": [
+      {
+       "feature": "age",
+       "status": "held",
+       "p": 0.986911,
+       "q": -6.6e-05,
+       "pct_change": -1.31,
+       "w_prev": 0.060082,
+       "w_now": 0.059242
+      },
+      {
+       "feature": "obp_rel",
+       "status": "held",
+       "p": 1.011541,
+       "q": 2.8e-05,
+       "pct_change": 1.15,
+       "w_prev": 0.050601,
+       "w_now": 0.051185
+      },
+      {
+       "feature": "milb_missing",
+       "status": "held",
+       "p": 1.007578,
+       "q": 1e-06,
+       "pct_change": 0.76,
+       "w_prev": -0.01403,
+       "w_now": -0.01414
+      },
+      {
+       "feature": "peak_k_rel",
+       "status": "held",
+       "p": 1.006186,
+       "q": 0.00011,
+       "pct_change": 0.62,
+       "w_prev": -0.115048,
+       "w_now": -0.115696
+      },
+      {
+       "feature": "is_ifa",
+       "status": "held",
+       "p": 1.00416,
+       "q": 7.2e-05,
+       "pct_change": 0.42,
+       "w_prev": 0.07591,
+       "w_now": 0.076183
+      },
+      {
+       "feature": "tool_speed",
+       "status": "held",
+       "p": 0.997469,
+       "q": -0.000191,
+       "pct_change": -0.25,
+       "w_prev": 0.229962,
+       "w_now": 0.229292
+      },
+      {
+       "feature": "ops_rel",
+       "status": "held",
+       "p": 0.998168,
+       "q": 5.5e-05,
+       "pct_change": -0.18,
+       "w_prev": 0.222635,
+       "w_now": 0.222273
+      },
+      {
+       "feature": "level_rank",
+       "status": "held",
+       "p": 0.998384,
+       "q": -7.8e-05,
+       "pct_change": -0.16,
+       "w_prev": 0.309608,
+       "w_now": 0.309172
+      },
+      {
+       "feature": "k_rel",
+       "status": "held",
+       "p": 0.999031,
+       "q": -0.000167,
+       "pct_change": -0.1,
+       "w_prev": 0.178532,
+       "w_now": 0.178252
+      },
+      {
+       "feature": "tool_hit",
+       "status": "held",
+       "p": 0.999235,
+       "q": 5.2e-05,
+       "pct_change": -0.08,
+       "w_prev": 0.315172,
+       "w_now": 0.315007
+      },
+      {
+       "feature": "n_milb_seasons",
+       "status": "held",
+       "p": 0.999239,
+       "q": -1.4e-05,
+       "pct_change": -0.08,
+       "w_prev": -0.200683,
+       "w_now": -0.200583
+      },
+      {
+       "feature": "is_college",
+       "status": "held",
+       "p": 1.000465,
+       "q": -8.5e-05,
+       "pct_change": 0.05,
+       "w_prev": 0.331829,
+       "w_now": 0.332051
+      },
+      {
+       "feature": "age_rel_level",
+       "status": "held",
+       "p": 0.999919,
+       "q": 5.7e-05,
+       "pct_change": -0.01,
+       "w_prev": -0.212187,
+       "w_now": -0.212212
+      },
+      {
+       "feature": "fv",
+       "status": "held",
+       "p": 0.999957,
+       "q": -0.000365,
+       "pct_change": -0.0,
+       "w_prev": 2.471121,
+       "w_now": 2.471634
+      }
+     ],
+     "explainer_churn": {
+      "observed": true,
+      "n_compared": 2099,
+      "n_only_now": 2,
+      "n_only_before": 1,
+      "share_changed_any": 0.1839,
+      "share_changed_ridge": 0.1401,
+      "share_label_set_changed": 0.0124,
+      "share_identical": 0.8161
+     }
+    },
+    "pit": {
+     "coverage": {
+      "observed": true,
+      "covered": 1022,
+      "rows": 2033,
+      "frac": 0.502705,
+      "report_generated_at": "2026-08-11",
+      "delta": 0.000244,
+      "prev_frac": 0.502461,
+      "prev_covered": 1021,
+      "prev_rows": 2032
+     },
+     "weights": {
+      "observed": true,
+      "n_train": 1973,
+      "intercept": 1.017988,
+      "cal_a": -0.0216,
+      "cal_b": 1.0738,
+      "features": {
+       "fv": {
+        "w": 1.285755,
+        "mu": 40.534126,
+        "sd": 5.026369
+       },
+       "peak_k_rel": {
+        "w": 0.145992,
+        "mu": 0.02448,
+        "sd": 0.040672
+       },
+       "k_rel": {
+        "w": 0.178754,
+        "mu": 0.009646,
+        "sd": 0.034942
+       },
+       "bb_rel": {
+        "w": -0.060234,
+        "mu": 0.002706,
+        "sd": 0.021356
+       },
+       "age_rel_level": {
+        "w": 0.058963,
+        "mu": 0.457831,
+        "sd": 1.119914
+       },
+       "x_era_k": {
+        "w": 0.085673,
+        "mu": 0.00804,
+        "sd": 0.045893
+       },
+       "tool_fb": {
+        "w": 0.079702,
+        "mu": 56.979473,
+        "sd": 7.213981
+       },
+       "age": {
+        "w": 0.11231,
+        "mu": 22.75256,
+        "sd": 1.364866
+       },
+       "seasons_at_level": {
+        "w": -0.103021,
+        "mu": 1.079067,
+        "sd": 0.280888
+       }
+      }
+     },
+     "coverage_baseline_vintage": "2026-08-10",
+     "weights_baseline_vintage": "2026-08-10",
+     "weight_change": [
+      {
+       "feature": "age_rel_level",
+       "status": "held",
+       "p": 0.972894,
+       "q": -5.5e-05,
+       "pct_change": -2.71,
+       "w_prev": 0.06057,
+       "w_now": 0.058963
+      },
+      {
+       "feature": "bb_rel",
+       "status": "held",
+       "p": 0.986835,
+       "q": -8e-06,
+       "pct_change": -1.32,
+       "w_prev": -0.061049,
+       "w_now": -0.060234
+      },
+      {
+       "feature": "tool_fb",
+       "status": "held",
+       "p": 0.988663,
+       "q": -6e-06,
+       "pct_change": -1.13,
+       "w_prev": 0.080636,
+       "w_now": 0.079702
+      },
+      {
+       "feature": "peak_k_rel",
+       "status": "held",
+       "p": 0.988807,
+       "q": -4.3e-05,
+       "pct_change": -1.12,
+       "w_prev": 0.14767,
+       "w_now": 0.145992
+      },
+      {
+       "feature": "k_rel",
+       "status": "held",
+       "p": 1.011093,
+       "q": 6.7e-05,
+       "pct_change": 1.11,
+       "w_prev": 0.176813,
+       "w_now": 0.178754
+      },
+      {
+       "feature": "seasons_at_level",
+       "status": "held",
+       "p": 0.992562,
+       "q": -1.5e-05,
+       "pct_change": -0.74,
+       "w_prev": -0.103817,
+       "w_now": -0.103021
+      },
+      {
+       "feature": "age",
+       "status": "held",
+       "p": 0.992768,
+       "q": -9.4e-05,
+       "pct_change": -0.72,
+       "w_prev": 0.113079,
+       "w_now": 0.11231
+      },
+      {
+       "feature": "fv",
+       "status": "held",
+       "p": 1.00055,
+       "q": 0.000684,
+       "pct_change": 0.06,
+       "w_prev": 1.285661,
+       "w_now": 1.285755
+      },
+      {
+       "feature": "x_era_k",
+       "status": "held",
+       "p": 1.000285,
+       "q": 7e-06,
+       "pct_change": 0.03,
+       "w_prev": 0.085671,
+       "w_now": 0.085673
+      }
+     ],
+     "explainer_churn": {
+      "observed": true,
+      "n_compared": 2387,
+      "n_only_now": 0,
+      "n_only_before": 1,
+      "share_changed_any": 0.3511,
+      "share_changed_ridge": 0.3188,
+      "share_label_set_changed": 0.0235,
+      "share_identical": 0.6489
+     }
+    }
+   },
+   "alerts": [],
+   "n_alerts": 0
+  },
+  {
+   "recorded_at": "2026-08-12T19:04:46+00:00",
+   "board_generated_at": "2026-08-12",
+   "board_basis": "xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349",
+   "fingerprint": "98f4ecae",
+   "compared_against": "b7b83ff5",
+   "compared_against_generated_at": "2026-08-11",
+   "sides": {
+    "hit": {
+     "coverage": {
+      "observed": true,
+      "covered": 1123,
+      "rows": 1903,
+      "frac": 0.590121,
+      "report_generated_at": "2026-08-12",
+      "delta": 0.0,
+      "prev_frac": 0.590121,
+      "prev_covered": 1123,
+      "prev_rows": 1903
+     },
+     "weights": {
+      "observed": true,
+      "n_train": 1870,
+      "intercept": 1.710506,
+      "cal_a": 0.0314,
+      "cal_b": 1.0445,
+      "features": {
+       "fv": {
+        "w": 2.471634,
+        "mu": 41.491406,
+        "sd": 6.010598
+       },
+       "obp_rel": {
+        "w": 0.051185,
+        "mu": 0.00332,
+        "sd": 0.02727
+       },
+       "k_rel": {
+        "w": 0.178252,
+        "mu": 0.001255,
+        "sd": 0.041621
+       },
+       "peak_k_rel": {
+        "w": -0.115696,
+        "mu": -0.014404,
+        "sd": 0.039988
+       },
+       "age_rel_level": {
+        "w": -0.212212,
+        "mu": 0.135027,
+        "sd": 1.064205
+       },
+       "n_milb_seasons": {
+        "w": -0.200583,
+        "mu": 1.761497,
+        "sd": 1.853112
+       },
+       "tool_hit": {
+        "w": 0.315007,
+        "mu": 48.015508,
+        "sd": 6.40995
+       },
+       "tool_speed": {
+        "w": 0.229292,
+        "mu": 47.849733,
+        "sd": 11.435293
+       },
+       "milb_missing": {
+        "w": -0.01414,
+        "mu": 0.026738,
+        "sd": 0.161317
+       },
+       "is_ifa": {
+        "w": 0.076183,
+        "mu": 0.24385,
+        "sd": 0.429403
+       },
+       "is_college": {
+        "w": 0.332051,
+        "mu": 0.190374,
+        "sd": 0.392596
+       },
+       "ops_rel": {
+        "w": 0.222273,
+        "mu": 0.014337,
+        "sd": 0.072614
+       },
+       "age": {
+        "w": 0.059242,
+        "mu": 22.111337,
+        "sd": 1.676315
+       },
+       "level_rank": {
+        "w": 0.309172,
+        "mu": 1.912299,
+        "sd": 1.937474
+       }
+      }
+     },
+     "coverage_baseline_vintage": "2026-08-11",
+     "weights_baseline_vintage": "2026-08-11",
+     "weight_change": [
+      {
+       "feature": "age",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.059242,
+       "w_now": 0.059242
+      },
+      {
+       "feature": "age_rel_level",
+       "status": "held",
+       "p": 1.0,
+       "q": -0.0,
+       "pct_change": 0.0,
+       "w_prev": -0.212212,
+       "w_now": -0.212212
+      },
+      {
+       "feature": "fv",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 2.471634,
+       "w_now": 2.471634
+      },
+      {
+       "feature": "is_college",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.332051,
+       "w_now": 0.332051
+      },
+      {
+       "feature": "is_ifa",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.076183,
+       "w_now": 0.076183
+      },
+      {
+       "feature": "k_rel",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.178252,
+       "w_now": 0.178252
+      },
+      {
+       "feature": "level_rank",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.309172,
+       "w_now": 0.309172
+      },
+      {
+       "feature": "milb_missing",
+       "status": "held",
+       "p": 1.0,
+       "q": -0.0,
+       "pct_change": 0.0,
+       "w_prev": -0.01414,
+       "w_now": -0.01414
+      },
+      {
+       "feature": "n_milb_seasons",
+       "status": "held",
+       "p": 1.0,
+       "q": -0.0,
+       "pct_change": 0.0,
+       "w_prev": -0.200583,
+       "w_now": -0.200583
+      },
+      {
+       "feature": "obp_rel",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.051185,
+       "w_now": 0.051185
+      },
+      {
+       "feature": "ops_rel",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.222273,
+       "w_now": 0.222273
+      },
+      {
+       "feature": "peak_k_rel",
+       "status": "held",
+       "p": 1.0,
+       "q": -0.0,
+       "pct_change": 0.0,
+       "w_prev": -0.115696,
+       "w_now": -0.115696
+      },
+      {
+       "feature": "tool_hit",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.315007,
+       "w_now": 0.315007
+      },
+      {
+       "feature": "tool_speed",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.229292,
+       "w_now": 0.229292
+      }
+     ],
+     "explainer_churn": {
+      "observed": true,
+      "n_compared": 2101,
+      "n_only_now": 14,
+      "n_only_before": 0,
+      "share_changed_any": 0.4169,
+      "share_changed_ridge": 0.3622,
+      "share_label_set_changed": 0.0528,
+      "share_identical": 0.5831
+     }
+    },
+    "pit": {
+     "coverage": {
+      "observed": true,
+      "covered": 1022,
+      "rows": 2033,
+      "frac": 0.502705,
+      "report_generated_at": "2026-08-12",
+      "delta": 0.0,
+      "prev_frac": 0.502705,
+      "prev_covered": 1022,
+      "prev_rows": 2033
+     },
+     "weights": {
+      "observed": true,
+      "n_train": 1973,
+      "intercept": 1.017988,
+      "cal_a": -0.0216,
+      "cal_b": 1.0738,
+      "features": {
+       "fv": {
+        "w": 1.285755,
+        "mu": 40.534126,
+        "sd": 5.026369
+       },
+       "peak_k_rel": {
+        "w": 0.145992,
+        "mu": 0.02448,
+        "sd": 0.040672
+       },
+       "k_rel": {
+        "w": 0.178754,
+        "mu": 0.009646,
+        "sd": 0.034942
+       },
+       "bb_rel": {
+        "w": -0.060234,
+        "mu": 0.002706,
+        "sd": 0.021356
+       },
+       "age_rel_level": {
+        "w": 0.058963,
+        "mu": 0.457831,
+        "sd": 1.119914
+       },
+       "x_era_k": {
+        "w": 0.085673,
+        "mu": 0.00804,
+        "sd": 0.045893
+       },
+       "tool_fb": {
+        "w": 0.079702,
+        "mu": 56.979473,
+        "sd": 7.213981
+       },
+       "age": {
+        "w": 0.11231,
+        "mu": 22.75256,
+        "sd": 1.364866
+       },
+       "seasons_at_level": {
+        "w": -0.103021,
+        "mu": 1.079067,
+        "sd": 0.280888
+       }
+      }
+     },
+     "coverage_baseline_vintage": "2026-08-11",
+     "weights_baseline_vintage": "2026-08-11",
+     "weight_change": [
+      {
+       "feature": "age",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.11231,
+       "w_now": 0.11231
+      },
+      {
+       "feature": "age_rel_level",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.058963,
+       "w_now": 0.058963
+      },
+      {
+       "feature": "bb_rel",
+       "status": "held",
+       "p": 1.0,
+       "q": -0.0,
+       "pct_change": 0.0,
+       "w_prev": -0.060234,
+       "w_now": -0.060234
+      },
+      {
+       "feature": "fv",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 1.285755,
+       "w_now": 1.285755
+      },
+      {
+       "feature": "k_rel",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.178754,
+       "w_now": 0.178754
+      },
+      {
+       "feature": "peak_k_rel",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.145992,
+       "w_now": 0.145992
+      },
+      {
+       "feature": "seasons_at_level",
+       "status": "held",
+       "p": 1.0,
+       "q": -0.0,
+       "pct_change": 0.0,
+       "w_prev": -0.103021,
+       "w_now": -0.103021
+      },
+      {
+       "feature": "tool_fb",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.079702,
+       "w_now": 0.079702
+      },
+      {
+       "feature": "x_era_k",
+       "status": "held",
+       "p": 1.0,
+       "q": 0.0,
+       "pct_change": 0.0,
+       "w_prev": 0.085673,
+       "w_now": 0.085673
+      }
+     ],
+     "explainer_churn": {
+      "observed": true,
+      "n_compared": 2383,
+      "n_only_now": 4,
+      "n_only_before": 4,
+      "share_changed_any": 0.2761,
+      "share_changed_ridge": 0.2287,
+      "share_label_set_changed": 0.034,
+      "share_identical": 0.7239
+     }
+    }
+   },
+   "alerts": [],
+   "n_alerts": 0
+  },
+  {
+   "recorded_at": "2026-08-13T23:07:01+00:00",
+   "board_generated_at": "2026-08-13",
+   "board_basis": "xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window",
+   "fingerprint": "efe2fbf1",
+   "compared_against": "98f4ecae",
+   "compared_against_generated_at": "2026-08-12",
+   "sides": {
+    "hit": {
+     "coverage": {
+      "observed": true,
+      "covered": 1123,
+      "rows": 1903,
+      "frac": 0.590121,
+      "report_generated_at": "2026-08-13",
+      "delta": 0.0,
+      "prev_frac": 0.590121,
+      "prev_covered": 1123,
+      "prev_rows": 1903
+     },
+     "weights": {
+      "observed": true,
+      "n_train": 1870,
+      "intercept": 1.710506,
+      "cal_a": 0.0315,
+      "cal_b": 1.0444,
+      "features": {
+       "fv": {
+        "w": 2.472035,
+        "mu": 41.486684,
+        "sd": 6.009061
+       },
+       "obp_rel": {
+        "w": 0.051074,
+        "mu": 0.00332,
+        "sd": 0.02727
+       },
+       "k_rel": {
+        "w": 0.178076,
+        "mu": 0.001255,
+        "sd": 0.041621
+       },
+       "peak_k_rel": {
+        "w": -0.115488,
+        "mu": -0.014404,
+        "sd": 0.039988
+       },
+       "age_rel_level": {
+        "w": -0.212209,
+        "mu": 0.135027,
+        "sd": 1.064205
+       },
+       "n_milb_seasons": {
+        "w": -0.201171,
+        "mu": 1.761497,
+        "sd": 1.853112
+       },
+       "tool_hit": {
+        "w": 0.314752,
+        "mu": 48.015508,
+        "sd": 6.40995
+       },
+       "tool_speed": {
+        "w": 0.229176,
+        "mu": 47.849733,
+        "sd": 11.435293
+       },
+       "milb_missing": {
+        "w": -0.014496,
+        "mu": 0.026738,
+        "sd": 0.161317
+       },
+       "is_ifa": {
+        "w": 0.076087,
+        "mu": 0.24385,
+        "sd": 0.429403
+       },
+       "is_college": {
+        "w": 0.33157,
+        "mu": 0.190374,
+        "sd": 0.392596
+       },
+       "ops_rel": {
+        "w": 0.222155,
+        "mu": 0.014337,
+        "sd": 0.072614
+       },
+       "age": {
+        "w": 0.059856,
+        "mu": 22.111337,
+        "sd": 1.676315
+       },
+       "level_rank": {
+        "w": 0.308266,
+        "mu": 1.912299,
+        "sd": 1.937474
+       }
+      }
+     },
+     "coverage_baseline_vintage": "2026-08-12",
+     "weights_baseline_vintage": "2026-08-12",
+     "weight_change": [
+      {
+       "feature": "milb_missing",
+       "status": "held",
+       "p": 1.025177,
+       "q": -0.0,
+       "pct_change": 2.52,
+       "w_prev": -0.01414,
+       "w_now": -0.014496
+      },
+      {
+       "feature": "age",
+       "status": "held",
+       "p": 1.010364,
+       "q": 0.0,
+       "pct_change": 1.04,
+       "w_prev": 0.059242,
+       "w_now": 0.059856
+      },
+      {
+       "feature": "n_milb_seasons",
+       "status": "held",
+       "p": 1.002931,
+       "q": -0.0,
+       "pct_change": 0.29,
+       "w_prev": -0.200583,
+       "w_now": -0.201171
+      },
+      {
+       "feature": "level_rank",
+       "status": "held",
+       "p": 0.99707,
+       "q": 0.0,
+       "pct_change": -0.29,
+       "w_prev": 0.309172,
+       "w_now": 0.308266
+      },
+      {
+       "feature": "obp_rel",
+       "status": "held",
+       "p": 0.997831,
+       "q": 0.0,
+       "pct_change": -0.22,
+       "w_prev": 0.051185,
+       "w_now": 0.051074
+      },
+      {
+       "feature": "peak_k_rel",
+       "status": "held",
+       "p": 0.998202,
+       "q": -0.0,
+       "pct_change": -0.18,
+       "w_prev": -0.115696,
+       "w_now": -0.115488
+      },
+      {
+       "feature": "is_college",
+       "status": "held",
+       "p": 0.998551,
+       "q": 0.0,
+       "pct_change": -0.14,
+       "w_prev": 0.332051,
+       "w_now": 0.33157
+      },
+      {
+       "feature": "is_ifa",
+       "status": "held",
+       "p": 0.99874,
+       "q": 0.0,
+       "pct_change": -0.13,
+       "w_prev": 0.076183,
+       "w_now": 0.076087
+      },
+      {
+       "feature": "k_rel",
+       "status": "held",
+       "p": 0.999013,
+       "q": 0.0,
+       "pct_change": -0.1,
+       "w_prev": 0.178252,
+       "w_now": 0.178076
+      },
+      {
+       "feature": "tool_hit",
+       "status": "held",
+       "p": 0.99919,
+       "q": 0.0,
+       "pct_change": -0.08,
+       "w_prev": 0.315007,
+       "w_now": 0.314752
+      },
+      {
+       "feature": "ops_rel",
+       "status": "held",
+       "p": 0.999469,
+       "q": 0.0,
+       "pct_change": -0.05,
+       "w_prev": 0.222273,
+       "w_now": 0.222155
+      },
+      {
+       "feature": "tool_speed",
+       "status": "held",
+       "p": 0.999494,
+       "q": 0.0,
+       "pct_change": -0.05,
+       "w_prev": 0.229292,
+       "w_now": 0.229176
+      },
+      {
+       "feature": "fv",
+       "status": "held",
+       "p": 1.000418,
+       "q": 0.001943,
+       "pct_change": 0.04,
+       "w_prev": 2.471634,
+       "w_now": 2.472035
+      },
+      {
+       "feature": "age_rel_level",
+       "status": "held",
+       "p": 0.999986,
+       "q": -0.0,
+       "pct_change": -0.0,
+       "w_prev": -0.212212,
+       "w_now": -0.212209
+      }
+     ],
+     "explainer_churn": {
+      "observed": true,
+      "n_compared": 2113,
+      "n_only_now": 9,
+      "n_only_before": 2,
+      "share_changed_any": 0.5689,
+      "share_changed_ridge": 0.4856,
+      "share_label_set_changed": 0.0653,
+      "share_identical": 0.4311
+     }
+    },
+    "pit": {
+     "coverage": {
+      "observed": true,
+      "covered": 1022,
+      "rows": 2033,
+      "frac": 0.502705,
+      "report_generated_at": "2026-08-13",
+      "delta": 0.0,
+      "prev_frac": 0.502705,
+      "prev_covered": 1022,
+      "prev_rows": 2033
+     },
+     "weights": {
+      "observed": true,
+      "n_train": 1973,
+      "intercept": 1.017988,
+      "cal_a": -0.0216,
+      "cal_b": 1.0738,
+      "features": {
+       "fv": {
+        "w": 1.285855,
+        "mu": 40.53261,
+        "sd": 5.025008
+       },
+       "peak_k_rel": {
+        "w": 0.145758,
+        "mu": 0.02448,
+        "sd": 0.040672
+       },
+       "k_rel": {
+        "w": 0.178799,
+        "mu": 0.009646,
+        "sd": 0.034942
+       },
+       "bb_rel": {
+        "w": -0.060199,
+        "mu": 0.002706,
+        "sd": 0.021356
+       },
+       "age_rel_level": {
+        "w": 0.058968,
+        "mu": 0.457831,
+        "sd": 1.119914
+       },
+       "x_era_k": {
+        "w": 0.085679,
+        "mu": 0.00804,
+        "sd": 0.045893
+       },
+       "tool_fb": {
+        "w": 0.079716,
+        "mu": 56.979473,
+        "sd": 7.213981
+       },
+       "age": {
+        "w": 0.112345,
+        "mu": 22.75256,
+        "sd": 1.364866
+       },
+       "seasons_at_level": {
+        "w": -0.103071,
+        "mu": 1.079067,
+        "sd": 0.280888
+       }
+      }
+     },
+     "coverage_baseline_vintage": "2026-08-12",
+     "weights_baseline_vintage": "2026-08-12",
+     "weight_change": [
+      {
+       "feature": "peak_k_rel",
+       "status": "held",
+       "p": 0.998397,
+       "q": 0.0,
+       "pct_change": -0.16,
+       "w_prev": 0.145992,
+       "w_now": 0.145758
+      },
+      {
+       "feature": "bb_rel",
+       "status": "held",
+       "p": 0.999419,
+       "q": -0.0,
+       "pct_change": -0.06,
+       "w_prev": -0.060234,
+       "w_now": -0.060199
+      },
+      {
+       "feature": "seasons_at_level",
+       "status": "held",
+       "p": 1.000485,
+       "q": -0.0,
+       "pct_change": 0.05,
+       "w_prev": -0.103021,
+       "w_now": -0.103071
+      },
+      {
+       "feature": "fv",
+       "status": "held",
+       "p": 1.000349,
+       "q": 0.000388,
+       "pct_change": 0.03,
+       "w_prev": 1.285755,
+       "w_now": 1.285855
+      },
+      {
+       "feature": "age",
+       "status": "held",
+       "p": 1.000312,
+       "q": 0.0,
+       "pct_change": 0.03,
+       "w_prev": 0.11231,
+       "w_now": 0.112345
+      },
+      {
+       "feature": "k_rel",
+       "status": "held",
+       "p": 1.000252,
+       "q": 0.0,
+       "pct_change": 0.03,
+       "w_prev": 0.178754,
+       "w_now": 0.178799
+      },
+      {
+       "feature": "tool_fb",
+       "status": "held",
+       "p": 1.000176,
+       "q": 0.0,
+       "pct_change": 0.02,
+       "w_prev": 0.079702,
+       "w_now": 0.079716
+      },
+      {
+       "feature": "age_rel_level",
+       "status": "held",
+       "p": 1.000085,
+       "q": 0.0,
+       "pct_change": 0.01,
+       "w_prev": 0.058963,
+       "w_now": 0.058968
+      },
+      {
+       "feature": "x_era_k",
+       "status": "held",
+       "p": 1.00007,
+       "q": 0.0,
+       "pct_change": 0.01,
+       "w_prev": 0.085673,
+       "w_now": 0.085679
+      }
+     ],
+     "explainer_churn": {
+      "observed": true,
+      "n_compared": 2381,
+      "n_only_now": 7,
+      "n_only_before": 6,
+      "share_changed_any": 0.2566,
+      "share_changed_ridge": 0.1861,
+      "share_label_set_changed": 0.0294,
+      "share_identical": 0.7434
+     }
+    }
+   },
+   "alerts": [],
+   "n_alerts": 0
+  },
+  {
+   "recorded_at": "2026-08-14T01:04:17+00:00",
+   "board_generated_at": "2026-08-13",
+   "board_basis": "xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.460179/0.667655|pit:0.494262/0.546925",
+   "fingerprint": "bf01e570",
+   "compared_against": "efe2fbf1",
+   "compared_against_generated_at": "2026-08-13",
+   "sides": {
+    "hit": {
+     "coverage": {
+      "observed": true,
+      "covered": 1123,
+      "rows": 1902,
+      "frac": 0.590431,
+      "report_generated_at": "2026-08-13",
+      "delta": 0.00031,
+      "prev_frac": 0.590121,
+      "prev_covered": 1123,
+      "prev_rows": 1903
+     },
+     "weights": {
+      "observed": true,
+      "n_train": 1869,
+      "intercept": 1.711724,
+      "cal_a": 0.0316,
+      "cal_b": 1.0443,
+      "features": {
+       "fv": {
+        "w": 2.492072,
+        "mu": 41.47932,
+        "sd": 5.996182
+       },
+       "obp_rel": {
+        "w": 0.052107,
+        "mu": 0.003322,
+        "sd": 0.027278
+       },
+       "k_rel": {
+        "w": 0.177884,
+        "mu": 0.001256,
+        "sd": 0.041632
+       },
+       "peak_k_rel": {
+        "w": -0.116093,
+        "mu": -0.014412,
+        "sd": 0.039997
+       },
+       "age_rel_level": {
+        "w": -0.203438,
+        "mu": 0.135099,
+        "sd": 1.064485
+       },
+       "n_milb_seasons": {
+        "w": -0.198647,
+        "mu": 1.76244,
+        "sd": 1.85316
+       },
+       "tool_hit": {
+        "w": 0.308056,
+        "mu": 48.013911,
+        "sd": 6.411919
+       },
+       "tool_speed": {
+        "w": 0.228258,
+        "mu": 47.849117,
+        "sd": 11.437876
+       },
+       "milb_missing": {
+        "w": -0.014212,
+        "mu": 0.026752,
+        "sd": 0.161359
+       },
+       "is_ifa": {
+        "w": 0.077125,
+        "mu": 0.243981,
+        "sd": 0.429481
+       },
+       "is_college": {
+        "w": 0.331388,
+        "mu": 0.190476,
+        "sd": 0.392677
+       },
+       "ops_rel": {
+        "w": 0.216633,
+        "mu": 0.014345,
+        "sd": 0.072633
+       },
+       "age": {
+        "w": 0.058767,
+        "mu": 22.111129,
+        "sd": 1.676739
+       },
+       "level_rank": {
+        "w": 0.29948,
+        "mu": 1.913323,
+        "sd": 1.937487
+       }
+      }
+     },
+     "coverage_baseline_vintage": "2026-08-13",
+     "weights_baseline_vintage": "2026-08-13",
+     "weight_change": [
+      {
+       "feature": "age_rel_level",
+       "status": "held",
+       "p": 0.958416,
+       "q": 1.4e-05,
+       "pct_change": -4.16,
+       "w_prev": -0.212209,
+       "w_now": -0.203438
+      },
+      {
+       "feature": "level_rank",
+       "status": "held",
+       "p": 0.971492,
+       "q": -0.000158,
+       "pct_change": -2.85,
+       "w_prev": 0.308266,
+       "w_now": 0.29948
+      },
+      {
+       "feature": "ops_rel",
+       "status": "held",
+       "p": 0.974888,
+       "q": -2.4e-05,
+       "pct_change": -2.51,
+       "w_prev": 0.222155,
+       "w_now": 0.216633
+      },
+      {
+       "feature": "tool_hit",
+       "status": "held",
+       "p": 0.978426,
+       "q": 7.7e-05,
+       "pct_change": -2.16,
+       "w_prev": 0.314752,
+       "w_now": 0.308056
+      },
+      {
+       "feature": "obp_rel",
+       "status": "held",
+       "p": 1.019926,
+       "q": -4e-06,
+       "pct_change": 1.99,
+       "w_prev": 0.051074,
+       "w_now": 0.052107
+      },
+      {
+       "feature": "milb_missing",
+       "status": "held",
+       "p": 0.980153,
+       "q": 1e-06,
+       "pct_change": -1.98,
+       "w_prev": -0.014496,
+       "w_now": -0.014212
+      },
+      {
+       "feature": "age",
+       "status": "held",
+       "p": 0.981558,
+       "q": 7e-06,
+       "pct_change": -1.84,
+       "w_prev": 0.059856,
+       "w_now": 0.058767
+      },
+      {
+       "feature": "is_ifa",
+       "status": "held",
+       "p": 1.013458,
+       "q": -2.4e-05,
+       "pct_change": 1.35,
+       "w_prev": 0.076087,
+       "w_now": 0.077125
+      },
+      {
+       "feature": "n_milb_seasons",
+       "status": "held",
+       "p": 0.987428,
+       "q": 0.000101,
+       "pct_change": -1.26,
+       "w_prev": -0.201171,
+       "w_now": -0.198647
+      },
+      {
+       "feature": "fv",
+       "status": "held",
+       "p": 1.010271,
+       "q": 0.003061,
+       "pct_change": 1.03,
+       "w_prev": 2.472035,
+       "w_now": 2.492072
+      },
+      {
+       "feature": "peak_k_rel",
+       "status": "held",
+       "p": 1.005012,
+       "q": -2.3e-05,
+       "pct_change": 0.5,
+       "w_prev": -0.115488,
+       "w_now": -0.116093
+      },
+      {
+       "feature": "tool_speed",
+       "status": "held",
+       "p": 0.995769,
+       "q": 1.2e-05,
+       "pct_change": -0.42,
+       "w_prev": 0.229176,
+       "w_now": 0.228258
+      },
+      {
+       "feature": "k_rel",
+       "status": "held",
+       "p": 0.998658,
+       "q": -4e-06,
+       "pct_change": -0.13,
+       "w_prev": 0.178076,
+       "w_now": 0.177884
+      },
+      {
+       "feature": "is_college",
+       "status": "held",
+       "p": 0.999245,
+       "q": -8.6e-05,
+       "pct_change": -0.08,
+       "w_prev": 0.33157,
+       "w_now": 0.331388
+      }
+     ],
+     "explainer_churn": {
+      "observed": true,
+      "n_compared": 2118,
+      "n_only_now": 3,
+      "n_only_before": 4,
+      "share_changed_any": 0.933,
+      "share_changed_ridge": 0.9254,
+      "share_label_set_changed": 0.0425,
+      "share_identical": 0.067
+     }
+    },
+    "pit": {
+     "coverage": {
+      "observed": true,
+      "covered": 1022,
+      "rows": 2034,
+      "frac": 0.502458,
+      "report_generated_at": "2026-08-13",
+      "delta": -0.000247,
+      "prev_frac": 0.502705,
+      "prev_covered": 1022,
+      "prev_rows": 2033
+     },
+     "weights": {
+      "observed": true,
+      "n_train": 1974,
+      "intercept": 1.017416,
+      "cal_a": -0.0215,
+      "cal_b": 1.0738,
+      "features": {
+       "fv": {
+        "w": 1.285562,
+        "mu": 40.532675,
+        "sd": 5.023734
+       },
+       "peak_k_rel": {
+        "w": 0.146032,
+        "mu": 0.024468,
+        "sd": 0.040665
+       },
+       "k_rel": {
+        "w": 0.178637,
+        "mu": 0.009641,
+        "sd": 0.034934
+       },
+       "bb_rel": {
+        "w": -0.060193,
+        "mu": 0.002704,
+        "sd": 0.02135
+       },
+       "age_rel_level": {
+        "w": 0.059155,
+        "mu": 0.457599,
+        "sd": 1.119678
+       },
+       "x_era_k": {
+        "w": 0.085652,
+        "mu": 0.008036,
+        "sd": 0.045882
+       },
+       "tool_fb": {
+        "w": 0.079836,
+        "mu": 56.97847,
+        "sd": 7.212291
+       },
+       "age": {
+        "w": 0.112232,
+        "mu": 22.752432,
+        "sd": 1.364532
+       },
+       "seasons_at_level": {
+        "w": -0.102994,
+        "mu": 1.079027,
+        "sd": 0.280822
+       }
+      }
+     },
+     "coverage_baseline_vintage": "2026-08-13",
+     "weights_baseline_vintage": "2026-08-13",
+     "weight_change": [
+      {
+       "feature": "age_rel_level",
+       "status": "held",
+       "p": 1.003383,
+       "q": 1.2e-05,
+       "pct_change": 0.34,
+       "w_prev": 0.058968,
+       "w_now": 0.059155
+      },
+      {
+       "feature": "peak_k_rel",
+       "status": "held",
+       "p": 1.002052,
+       "q": 4.3e-05,
+       "pct_change": 0.21,
+       "w_prev": 0.145758,
+       "w_now": 0.146032
+      },
+      {
+       "feature": "tool_fb",
+       "status": "held",
+       "p": 1.00174,
+       "q": 1.1e-05,
+       "pct_change": 0.17,
+       "w_prev": 0.079716,
+       "w_now": 0.079836
+      },
+      {
+       "feature": "age",
+       "status": "held",
+       "p": 0.999239,
+       "q": 1.1e-05,
+       "pct_change": -0.08,
+       "w_prev": 0.112345,
+       "w_now": 0.112232
+      },
+      {
+       "feature": "k_rel",
+       "status": "held",
+       "p": 0.999323,
+       "q": 2.6e-05,
+       "pct_change": -0.07,
+       "w_prev": 0.178799,
+       "w_now": 0.178637
+      },
+      {
+       "feature": "seasons_at_level",
+       "status": "held",
+       "p": 0.999488,
+       "q": -1.5e-05,
+       "pct_change": -0.05,
+       "w_prev": -0.103071,
+       "w_now": -0.102994
+      },
+      {
+       "feature": "bb_rel",
+       "status": "held",
+       "p": 1.000181,
+       "q": -6e-06,
+       "pct_change": 0.02,
+       "w_prev": -0.060199,
+       "w_now": -0.060193
+      },
+      {
+       "feature": "x_era_k",
+       "status": "held",
+       "p": 0.999925,
+       "q": 7e-06,
+       "pct_change": -0.01,
+       "w_prev": 0.085679,
+       "w_now": 0.085652
+      },
+      {
+       "feature": "fv",
+       "status": "held",
+       "p": 1.000026,
+       "q": -1.7e-05,
+       "pct_change": 0.0,
+       "w_prev": 1.285855,
+       "w_now": 1.285562
+      }
+     ],
+     "explainer_churn": {
+      "observed": true,
+      "n_compared": 2386,
+      "n_only_now": 4,
+      "n_only_before": 2,
+      "share_changed_any": 0.0608,
+      "share_changed_ridge": 0.0352,
+      "share_label_set_changed": 0.0084,
+      "share_identical": 0.9392
+     }
+    }
+   },
+   "alerts": [],
+   "n_alerts": 0,
+   "last_seen_at": "2026-08-14T03:02:16+00:00"
   }
  ],
  "thresholds": {
@@ -3552,6 +5177,6 @@
    "chosen": "geometric midpoint of the gap [0.112, 0.253] in 12 measured side-vintage label-set churn shares; flags the same 2 of 6 vintage pairs the weight tripwire does"
   }
  },
- "generated_at": "2026-08-11T00:09:55+00:00",
+ "generated_at": "2026-08-14T03:02:16+00:00",
  "latest_alerts": []
 }
