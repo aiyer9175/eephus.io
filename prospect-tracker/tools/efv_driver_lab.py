@@ -225,7 +225,7 @@ def fold_rhos(r, weighted=True):
 # --------------------------------------------------------------------- gate
 def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
          lam=None, lam_band=None, base_lam=None, fv_min=None, seed=SEED,
-         perm_col=None, tag=""):
+         perm_col=None, tag="", years=None):
     """The full EFV_GATE_STANDARD battery for one candidate against one baseline.
 
     Returns point deltas on pooled rho and side block-rho, a paired bootstrap of
@@ -234,8 +234,8 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
     band, and the per-fold sign count over the 11 forward-chained splits.
     """
     t0 = time.time()
-    base = chain(D, base_ex, lam=base_lam, fv_min=fv_min)
-    cand = chain(D, cand_ex, lam=lam, lam_band=lam_band, fv_min=fv_min)
+    base = chain(D, base_ex, lam=base_lam, fv_min=fv_min, years=years)
+    cand = chain(D, cand_ex, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years)
     if base is None or cand is None:
         return {"tag": tag, "error": "no fold survived"}
     sb, sc = side_stats(base), side_stats(cand)
@@ -247,7 +247,7 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
 
     ctrl = None
     if ctrl_ex is not None:
-        cc = chain(D, ctrl_ex, lam=lam, lam_band=lam_band, fv_min=fv_min)
+        cc = chain(D, ctrl_ex, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years)
         if cc is not None:
             sx = side_stats(cc)
             ctrl = {k: round(sx[k] - sb[k], 5) for k in ("rho", "block_rho")}
@@ -256,8 +256,8 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
     boot = {"rho": [], "block_rho": []}
     for _ in range(B):
         sel = rng.integers(0, D["n"], D["n"])
-        rb = chain(D, base_ex, sel=sel, lam=base_lam, fv_min=fv_min)
-        rc = chain(D, cand_ex, sel=sel, lam=lam, lam_band=lam_band, fv_min=fv_min)
+        rb = chain(D, base_ex, sel=sel, lam=base_lam, fv_min=fv_min, years=years)
+        rc = chain(D, cand_ex, sel=sel, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years)
         if rb is None or rc is None:
             continue
         a, b = side_stats(rb), side_stats(rc)
@@ -307,7 +307,7 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
             EX2 = D["EX"].copy()
             EX2[:, i] = col0[prng.permutation(len(col0))]
             D2["EX"] = EX2
-            rc = chain(D2, cand_ex, lam=lam, lam_band=lam_band, fv_min=fv_min)
+            rc = chain(D2, cand_ex, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years)
             if rc is None:
                 continue
             d = side_stats(rc)["rho"] - sb["rho"]
@@ -1053,6 +1053,167 @@ def extras_census_mode(_B=0):
     return out
 
 
+EXTRAS_YEARS = (2019, 2020, 2021, 2022, 2023, 2024)
+
+
+def _extras_join(side):
+    """{player_key: parsed _extras} from the newest PRE-DECISION FanGraphs
+    snapshot, keyed to each matrix row's own decision year."""
+    import sqlite3
+    from efv_dataset import matrix_path
+    TOOLS = {"hit": ("hit", "game_pwr", "raw_pwr", "speed", "field", "throw"),
+             "pit": ("fb", "cmd", "sl", "cb", "ch")}[side]
+    RISK = {"low": 0.0, "med": 1.0, "medium": 1.0, "high": 2.0}
+
+    def _num(x):
+        try:
+            return float(x)
+        except (TypeError, ValueError):
+            return None
+
+    def _velo(x):
+        if x is None:
+            return None
+        s = str(x)
+        if "-" in s:
+            a, b = s.split("-", 1)
+            a, b = _num(a), _num(b)
+            return None if (a is None or b is None) else (a + b) / 2.0
+        return _num(s)
+
+    def _height(x):
+        # "6' 1" -> 73.0 inches
+        if not x:
+            return None
+        s = str(x).replace('"', "").strip()
+        if "'" not in s:
+            return _num(s)
+        ft, _, inch = s.partition("'")
+        ft, inch = _num(ft), _num(inch.strip() or 0)
+        return None if ft is None else ft * 12.0 + (inch or 0.0)
+
+    con = sqlite3.connect(f"file:{ROOT / 'prospects.db'}?mode=ro", uri=True)
+    snaps = {}
+    for pk, sd, tj in con.execute(
+            "select player_key, snapshot_date, tools_json from snapshots "
+            "where source='fangraphs' and tools_json is not null"):
+        snaps.setdefault(pk, []).append((sd, tj))
+    for pk in snaps:
+        snaps[pk].sort()
+
+    rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+    prep = E._prep([r for r in rows if r["kind"] == "debuted"], "target_censored", side)
+    out = {}
+    for r in prep:
+        dy = r["decision_year"]
+        cand = [(sd, tj) for sd, tj in snaps.get(r["player_key"], []) if int(sd[:4]) <= dy]
+        if not cand:
+            continue
+        t = json.loads(cand[-1][1])
+        ex = t.get("_extras") or {}
+        p = ex.get("present") or {}
+        pairs = [(t[k], p[k]) for k in TOOLS
+                 if t.get(k) is not None and p.get(k) is not None]
+        rpm = _num(ex.get("rpm_fb"))
+        out[r["player_key"]] = {
+            # THE HEADLINE: how much growth the scout projects, in grade points.
+            "tool_gap": (sum(f - pr for f, pr in pairs) / len(pairs)) if pairs else None,
+            "risk_ord": RISK.get(str(ex.get("risk") or "").strip().lower()),
+            "height_in": _height(ex.get("height")),
+            "weight": _num(ex.get("weight")),
+            # proximity, not a calendar year: a raw year would be collinear with
+            # the fold index, which is the C1 defect in another costume.
+            "eta_delta": (None if ex.get("eta_year") is None
+                          else _num(ex["eta_year"]) - dy),
+            "sits_mid": _velo(ex.get("sits")),
+            "tops": _velo(ex.get("tops")),
+            # C2: a literal 0 is MISSING spin, not zero spin.
+            "rpm_fb": (None if (rpm is None or rpm == 0) else rpm),
+        }
+    return out
+
+
+def extras_mode(B=2000):
+    """D-2: the _extras drivers, on the SIX-fold frame the census allows.
+
+    Gate docs/efv-2026-08-14/EXTRAS_DRIVER_GATE.md. The 11-fold floors are
+    forbidden here by name (C0); this mode derives its own on EXTRAS_YEARS.
+    """
+    ARMS = {"hit": ["tool_gap", "risk_ord", "height_in", "weight", "eta_delta"],
+            "pit": ["tool_gap", "risk_ord", "height_in", "weight", "eta_delta",
+                    "sits_mid", "tops", "rpm_fb"]}
+    out = {"gate": "docs/efv-2026-08-14/EXTRAS_DRIVER_GATE.md", "lane": "D-2",
+           "B": B, "seed": SEED, "scored_years": list(EXTRAS_YEARS),
+           "frame_note": ("SIX folds, not eleven. Four folds have ZERO trainable "
+                          "coverage and would contribute a by-construction zero; "
+                          "see data/xfv_driver_extras_census.json."),
+           "floors": {}, "arms": {}, "skipped": {}}
+
+    for side in SIDES:
+        join = _extras_join(side)
+        # ── C0: the floor, derived HERE on the reduced frame, 3 noise seeds.
+        noise = []
+        for s in range(3):
+            rng = np.random.default_rng(SEED + 4400 + s)
+            D = load_pool(side, [{"name": "noise",
+                                  "get": (lambda r, f, _r=rng: float(_r.normal())),
+                                  "impute": "zero"}])
+            g = gate(D, cand_ex=(0,), B=B, n_perm=0, tag=f"D-2:noise{s}:{side}",
+                     years=EXTRAS_YEARS)
+            noise.append({"seed": s, "point_rho": g["delta"]["rho"],
+                          "mde95": g["bootstrap"]["rho"]["mde95_onesided"]})
+            print(f"  [floor] {side} noise{s} point {g['delta']['rho']:+.5f} "
+                  f"mde95 {g['bootstrap']['rho']['mde95_onesided']}", flush=True)
+        floor = max(n["mde95"] for n in noise)
+        out["floors"][side] = {"MDE95_pooled_rho": floor, "noise_arms": noise,
+                               "convention": "MAX of three noise seeds; a floor is a bound"}
+
+        for i, key in enumerate(ARMS[side]):
+            def _get(raw, feats, _k=key, _j=join):
+                v = _j.get(raw.get("player_key"), {}).get(_k)
+                return None if v is None else float(v)
+            D = load_pool(side, [{"name": key, "get": _get, "impute": "zero"}])
+            cov = D["cov"][key]
+            if cov["observed"] < 100 or not cov["observed_sd"]:
+                out["skipped"][f"{side}.{key}"] = (
+                    f"coverage {cov['observed']} sd {cov['observed_sd']}")
+                continue
+            rng = np.random.default_rng(SEED + 4500 + 13 * i + (0 if side == "hit" else 1))
+            D2 = with_permuted(D, key, rng)
+            g = gate(D2, cand_ex=(0,), ctrl_ex=(1,), B=B, n_perm=200,
+                     perm_col=key, tag=f"D-2:{key}:{side}", years=EXTRAS_YEARS)
+            g["coverage"] = cov
+            g["floor_rho"] = floor
+            out["arms"][f"{side}.{key}"] = g
+            print(f"  {side}.{key:12s} d_rho {g['delta']['rho']:+.5f} "
+                  f"d_block {g['delta']['block_rho']:+.5f} "
+                  f"ctrl {g['control_delta']['rho']:+.5f} "
+                  f"folds {g['fold_rho_wins']}/{g['folds_scored']} "
+                  f"cov {cov['frac']} floor {floor}", flush=True)
+
+    fam = [(k, g["delta"]["rho"], g["bootstrap"]["rho"]["sd"])
+           for k, g in out["arms"].items() if g["bootstrap"]["rho"].get("sd")]
+    from math import erfc, sqrt
+    rows_ = sorted(([k, d, sd, d / sd, 0.5 * erfc((d / sd) / sqrt(2))]
+                    for k, d, sd in fam), key=lambda r: r[4])
+    m, still, holm = len(rows_), True, {}
+    for i, r in enumerate(rows_):
+        alpha = 0.05 / (m - i)
+        surv = bool(still and r[4] <= alpha)
+        if not surv:
+            still = False
+        holm[r[0]] = {"d_rho": round(r[1], 5), "sd": round(r[2], 5), "z": round(r[3], 3),
+                      "p_one_sided": round(r[4], 5), "rank": i + 1,
+                      "holm_alpha": round(alpha, 5), "survives_holm": surv}
+    out["holm"], out["holm_family_size"] = holm, m
+    out["n_arms"] = len(out["arms"])
+    (DATA / "xfv_driver_extras.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
+    print(f"\nwrote data/xfv_driver_extras.json  arms={out['n_arms']} "
+          f"skipped={len(out['skipped'])} holm_family={m}")
+    print("SURVIVES HOLM:", [k for k, h in holm.items() if h["survives_holm"]] or "NONE")
+    return out
+
+
 def freekeys_mode(B=2000):
     """D-1: sweep the keys efv_model._vec ALREADY EMITS that neither feature
     list consumes. Gate docs/efv-2026-08-14/FREE_KEYS_SWEEP_GATE.md.
@@ -1210,7 +1371,7 @@ def wrc_mode(B=1000):
 _MODES = {"floor": floor_mode, "sb": sb_mode, "pos": pos_mode,
           "handbuild": hand_build, "hand": hand_mode, "pairs": pairs_mode,
           "elite": elite_mode, "lam": lam_mode, "wrc": wrc_mode,
-          "freekeys": freekeys_mode, "extras_census": extras_census_mode}
+          "freekeys": freekeys_mode, "extras_census": extras_census_mode, "extras": extras_mode}
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "floor"
