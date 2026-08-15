@@ -125,6 +125,49 @@ def test_the_undated_set_is_visible_and_bounded():
         "test_no_new_undated_eval_artifact")
 
 
+def test_a_provisional_row_without_an_artifact_says_why():
+    """`validate()` forbids validated-without-artifact and
+    unvalidated-with-artifact, but says nothing about PROVISIONAL without an
+    artifact. Seven rows are in that state (2026-08-14).
+
+    ON INSPECTION THAT IS NOT A HYGIENE FAILURE, which is why this test asserts
+    a justification rather than demanding an artifact or demoting the rows.
+    Every one of the seven falls into a category the verdict enum has no word
+    for, and each states it in its own `baseline` / `metric`:
+
+      * DESCRIPTIVE BY DESIGN, no forward claim to gate: leverage_board,
+        xrem_plus, xsem_plus ("descriptive; no forward gate by design",
+        "realized WPA is an outcome, not a forecast").
+      * INHERITS A GATED PARENT, a composition or re-expression rather than a
+        new estimator: draft_war_room (composes the validated
+        draft_slot_curve), prospect_greeks and surplus_downside_risk
+        (re-expressions of the validated prospect_surplus curve),
+        xfv_backgrade (inherits the eFV forward-chained OOS gate).
+
+    So the real gap is that the enum cannot express "measured by inheritance",
+    and the justification lives only in prose. This test makes the prose
+    load-bearing: a NEW provisional row carrying no artifact and no stated
+    reason fails here. Demoting these seven to `unvalidated` would be worse,
+    not better, because a descriptive board that makes no forward claim is not
+    the same thing as a predictive claim with zero measurement.
+    """
+    unjustified = []
+    for m in mr.load()["models"]:
+        if m.get("verdict") != "provisional" or m.get("eval_artifact"):
+            continue
+        prose = f"{m.get('baseline') or ''} {m.get('metric') or ''}".lower()
+        justified = ("descriptive" in prose or "inherit" in prose
+                     or "composes" in prose or "re-expression" in prose
+                     or "gated by" in prose or "separately gated" in prose)
+        if not justified:
+            unjustified.append(m["model_id"])
+    assert not unjustified, (
+        "provisional rows carrying no eval artifact and no stated reason: "
+        f"{sorted(unjustified)}. Either measure them, or say in `baseline` / "
+        "`metric` that the row is descriptive by design or inherits a gated "
+        "parent, naming the parent.")
+
+
 def test_stale_threshold_is_reachable():
     """A threshold far above the oldest artifact is not a freshness check.
 
