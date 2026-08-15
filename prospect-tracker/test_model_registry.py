@@ -87,7 +87,42 @@ def test_freshness_stamps():
     for mid, f in fresh.items():
         assert f["artifact_age_days"] >= 0, mid
         assert isinstance(f["stale"], bool), mid
-        assert f["age_source"] in ("artifact", "mtime"), mid
+        assert f["age_source"] in ("artifact", "mtime")
+
+
+def test_an_mtime_age_is_never_reported_as_evidence():
+    """A mtime-sourced age is not evidence about a MEASUREMENT's age.
+
+    The deploy box runs `git checkout -- .` nightly, which rewrites the mtime of
+    every tracked file to the moment of checkout. So for an artifact that does
+    not date itself, the same registry answers differently depending on which
+    machine you ask: roughly zero on the box that serves the site, and something
+    real on a dev tree. Nothing in the returned dict distinguished the two
+    beyond `age_source`, and `stale` was computed from the unreliable number.
+
+    Today this is a NO-OP by luck: no undated artifact happens to be older than
+    STALE_DAYS on this machine. It is pinned because the failure is silent and
+    machine-dependent, which is the kind that gets discovered from a wrong
+    published number rather than from a red test.
+    """
+    fresh = mr.freshness()
+    for mid, f in fresh.items():
+        assert f["age_is_evidence"] is (f["age_source"] == "artifact"), mid
+        if not f["age_is_evidence"]:
+            assert f["stale"] is False, (
+                f"{mid} claims stale={f['stale']} from a {f['age_source']}-sourced "
+                "age, which the deploy box rewrites on every checkout")
+
+
+def test_the_undated_set_is_visible_and_bounded():
+    """The undated set is a real backlog, so it is counted rather than assumed
+    away. It may shrink; test_no_new_undated_eval_artifact stops it growing."""
+    fresh = mr.freshness()
+    undated = [m for m, f in fresh.items() if not f["age_is_evidence"]]
+    assert len(undated) <= 33, (
+        f"{len(undated)} rows now take the mtime path, up from the 33 measured "
+        "2026-08-14; a new undated artifact should have been caught by "
+        "test_no_new_undated_eval_artifact")
 
 
 def test_stale_threshold_is_reachable():

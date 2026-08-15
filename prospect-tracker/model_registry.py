@@ -167,9 +167,36 @@ def _artifact_date(p: Path):
 
 
 def freshness(reg: dict | None = None) -> dict[str, dict]:
-    """{model_id: {artifact_age_days, stale, age_source}} — advisory stamps for
-    the accountability surface. Age comes from the artifact's own generated_at
-    stamp where it has one, else the file mtime (see _artifact_date)."""
+    """{model_id: {artifact_age_days, stale, age_source, age_is_evidence}}.
+
+    Age comes from the artifact's own `generated_at` where it has one, else the
+    file mtime.
+
+    `age_is_evidence` IS THE POINT OF THIS FUNCTION AND WAS MISSING (2026-08-14).
+    An mtime-sourced age is NOT evidence about how old a measurement is. The
+    deploy box runs `git checkout -- .` nightly, which rewrites the mtime of
+    every tracked file to the moment of checkout, so on the machine that SERVES
+    THE SITE these rows report an age of roughly zero and `stale: False` no
+    matter how old the measurement really is. Measured 2026-08-14: 33 of 217
+    rows, behind 28 distinct artifacts, take this path.
+
+    So the number was not merely imprecise, it was confidently wrong in exactly
+    the one place a stale eval would matter, and the freshness map presented it
+    beside genuinely-stamped ages with nothing to tell them apart. Consumers
+    MUST branch on `age_is_evidence` and render an unknown age as unknown
+    rather than as fresh.
+
+    `stale` is left False for these rows deliberately rather than flipped True:
+    an unknown age is not a finding either, and asserting staleness we cannot
+    demonstrate would be the same defect with the sign reversed. The honest
+    state is "unknown", which is what `age_is_evidence: False` says.
+
+    The durable fix is a `generated_at` in the artifact. The 28 undated files
+    are NOT retro-stamped: their true production dates are not recoverable, and
+    inventing one, or borrowing git's first-commit date and calling it a
+    production date, is falsifying provenance. `test_no_new_undated_eval_artifact`
+    stops the set from growing.
+    """
     reg = reg or load()
     out = {}
     today = datetime.now()
@@ -185,8 +212,9 @@ def freshness(reg: dict | None = None) -> dict[str, dict]:
         age = (today - when).days
         out[m["model_id"]] = {
             "artifact_age_days": age,
-            "stale": age > STALE_DAYS,
+            "stale": bool(stamped) and age > STALE_DAYS,
             "age_source": "artifact" if stamped else "mtime",
+            "age_is_evidence": bool(stamped),
         }
     return out
 
