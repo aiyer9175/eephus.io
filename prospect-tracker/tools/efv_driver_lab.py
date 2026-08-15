@@ -960,6 +960,99 @@ def lam_mode(B=1000):
 
 
 # --------------------------------------------------------------------- wRC+
+def extras_census_mode(_B=0):
+    """D-2 STEP 0: the coverage census, run BEFORE any arm and committed.
+
+    WHY THIS EXISTS AND WHY IT IS ITS OWN STEP. The registered pitcher-stuff
+    gate returned delta EXACTLY 0.0 on all three ship conditions because
+    `train_covered_rows_all_folds` was 0: with no covered TRAINING rows the
+    candidate arm is identical to the baseline BY CONSTRUCTION, and a reader
+    could log "stuff does not predict" as a measured result. This mode prints
+    the number that would have made that impossible, per fold, per side.
+
+    Writes data/xfv_driver_extras_census.json (outside the eval glob).
+    """
+    import sqlite3
+    from efv_dataset import matrix_path
+    TOOLS = {"hit": ("hit", "game_pwr", "raw_pwr", "speed", "field", "throw"),
+             "pit": ("fb", "cmd", "sl", "cb", "ch")}
+    FIELDS = ["risk", "sits", "tops", "rpm_fb", "rpm_break", "height", "weight",
+              "eta_year", "levers", "athl", "frame", "perf", "sign_market", "bonus"]
+    con = sqlite3.connect(f"file:{ROOT / 'prospects.db'}?mode=ro", uri=True)
+    snaps = {}
+    for pk, sd, tj in con.execute(
+            "select player_key, snapshot_date, tools_json from snapshots "
+            "where source='fangraphs' and tools_json is not null"):
+        snaps.setdefault(pk, []).append((sd, tj))
+    for pk in snaps:
+        snaps[pk].sort()
+
+    out = {"gate": "docs/efv-2026-08-14/EXTRAS_DRIVER_GATE.md", "lane": "D-2",
+           "source": "snapshots.tools_json._extras, source='fangraphs'",
+           "sides": {}}
+    for side in SIDES:
+        rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+        prep = E._prep([r for r in rows if r["kind"] == "debuted"],
+                       "target_censored", side)
+        gaps, fieldcov = {}, {f: 0 for f in FIELDS}
+        for r in prep:
+            cand = [(sd, tj) for sd, tj in snaps.get(r["player_key"], [])
+                    if int(sd[:4]) <= r["decision_year"]]
+            r["_cov"] = bool(cand)
+            r["_gap"] = None
+            if not cand:
+                continue
+            t = json.loads(cand[-1][1])
+            ex = t.get("_extras") or {}
+            p = ex.get("present") or {}
+            pairs = [(t[k], p[k]) for k in TOOLS[side]
+                     if t.get(k) is not None and p.get(k) is not None]
+            if pairs:
+                r["_gap"] = sum(f - pr for f, pr in pairs) / len(pairs)
+                gaps[r["player_key"]] = r["_gap"]
+            for f in FIELDS:
+                if ex.get(f) not in (None, "", {}):
+                    fieldcov[f] += 1
+        n = len(prep)
+        folds = []
+        for Y in E.SCORED_YEARS:
+            tr = [r for r in prep if r["decision_year"] < Y]
+            te = [r for r in prep if r["decision_year"] == Y]
+            if len(te) < 15 or len(tr) < 60:
+                continue
+            folds.append({"test_year": Y, "n_train": len(tr),
+                          "train_covered": sum(r["_cov"] for r in tr),
+                          "n_test": len(te),
+                          "test_covered": sum(r["_cov"] for r in te)})
+        trainable = [f["test_year"] for f in folds if f["train_covered"] >= 40]
+        vals = list(gaps.values())
+        out["sides"][side] = {
+            "n_train_rows": n,
+            "any_predecision_snapshot": sum(r["_cov"] for r in prep),
+            "gap_computable": len(vals),
+            "gap_coverage": round(len(vals) / n, 4),
+            "gap_mean": round(sum(vals) / len(vals), 4) if vals else None,
+            "gap_sd": round((sum((v - sum(vals) / len(vals)) ** 2
+                                 for v in vals) / len(vals)) ** 0.5, 4) if vals else None,
+            "field_coverage": {f: round(c / n, 4) for f, c in fieldcov.items()},
+            "folds": folds,
+            "folds_with_zero_trainable_coverage":
+                [f["test_year"] for f in folds if f["train_covered"] == 0],
+            "first_trainable_fold_ge40": trainable[0] if trainable else None,
+            "admissible_scored_years": trainable,
+        }
+        print(f"=== {side} n={n} gap on {len(vals)} ({len(vals)/n:.3f}) ===")
+        for f in folds:
+            tag = "  ZERO TRAINABLE COVERAGE" if f["train_covered"] == 0 else ""
+            print(f"   {f['test_year']}  train {f['n_train']:>4} cov {f['train_covered']:>4}"
+                  f"   test {f['n_test']:>4} cov {f['test_covered']:>4}{tag}")
+        print(f"   admissible scored years: {trainable}")
+    (DATA / "xfv_driver_extras_census.json").write_text(json.dumps(out, indent=1),
+                                                        encoding="utf-8")
+    print("\nwrote data/xfv_driver_extras_census.json")
+    return out
+
+
 def freekeys_mode(B=2000):
     """D-1: sweep the keys efv_model._vec ALREADY EMITS that neither feature
     list consumes. Gate docs/efv-2026-08-14/FREE_KEYS_SWEEP_GATE.md.
@@ -1117,7 +1210,7 @@ def wrc_mode(B=1000):
 _MODES = {"floor": floor_mode, "sb": sb_mode, "pos": pos_mode,
           "handbuild": hand_build, "hand": hand_mode, "pairs": pairs_mode,
           "elite": elite_mode, "lam": lam_mode, "wrc": wrc_mode,
-          "freekeys": freekeys_mode}
+          "freekeys": freekeys_mode, "extras_census": extras_census_mode}
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "floor"

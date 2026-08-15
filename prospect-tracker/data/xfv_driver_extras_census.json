@@ -1,0 +1,243 @@
+{
+ "gate": "docs/efv-2026-08-14/EXTRAS_DRIVER_GATE.md",
+ "lane": "D-2",
+ "source": "snapshots.tools_json._extras, source='fangraphs'",
+ "sides": {
+  "hit": {
+   "n_train_rows": 845,
+   "any_predecision_snapshot": 540,
+   "gap_computable": 533,
+   "gap_coverage": 0.6308,
+   "gap_mean": 4.1911,
+   "gap_sd": 2.6054,
+   "field_coverage": {
+    "risk": 0.5893,
+    "sits": 0.0,
+    "tops": 0.0,
+    "rpm_fb": 0.0533,
+    "rpm_break": 0.0533,
+    "height": 0.6379,
+    "weight": 0.6379,
+    "eta_year": 0.6391,
+    "levers": 0.3882,
+    "athl": 0.3018,
+    "frame": 0.2379,
+    "perf": 0.2994,
+    "sign_market": 0.3917,
+    "bonus": 0.3787
+   },
+   "folds": [
+    {
+     "test_year": 2014,
+     "n_train": 90,
+     "train_covered": 0,
+     "n_test": 48,
+     "test_covered": 0
+    },
+    {
+     "test_year": 2015,
+     "n_train": 138,
+     "train_covered": 0,
+     "n_test": 62,
+     "test_covered": 0
+    },
+    {
+     "test_year": 2016,
+     "n_train": 200,
+     "train_covered": 0,
+     "n_test": 39,
+     "test_covered": 0
+    },
+    {
+     "test_year": 2017,
+     "n_train": 239,
+     "train_covered": 0,
+     "n_test": 46,
+     "test_covered": 24
+    },
+    {
+     "test_year": 2018,
+     "n_train": 285,
+     "train_covered": 24,
+     "n_test": 44,
+     "test_covered": 29
+    },
+    {
+     "test_year": 2019,
+     "n_train": 329,
+     "train_covered": 53,
+     "n_test": 72,
+     "test_covered": 63
+    },
+    {
+     "test_year": 2020,
+     "n_train": 401,
+     "train_covered": 116,
+     "n_test": 59,
+     "test_covered": 57
+    },
+    {
+     "test_year": 2021,
+     "n_train": 460,
+     "train_covered": 173,
+     "n_test": 74,
+     "test_covered": 68
+    },
+    {
+     "test_year": 2022,
+     "n_train": 534,
+     "train_covered": 241,
+     "n_test": 127,
+     "test_covered": 122
+    },
+    {
+     "test_year": 2023,
+     "n_train": 661,
+     "train_covered": 363,
+     "n_test": 93,
+     "test_covered": 90
+    },
+    {
+     "test_year": 2024,
+     "n_train": 754,
+     "train_covered": 453,
+     "n_test": 91,
+     "test_covered": 87
+    }
+   ],
+   "folds_with_zero_trainable_coverage": [
+    2014,
+    2015,
+    2016,
+    2017
+   ],
+   "first_trainable_fold_ge40": 2019,
+   "admissible_scored_years": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+   ]
+  },
+  "pit": {
+   "n_train_rows": 982,
+   "any_predecision_snapshot": 656,
+   "gap_computable": 642,
+   "gap_coverage": 0.6538,
+   "gap_mean": 3.4688,
+   "gap_sd": 2.3954,
+   "field_coverage": {
+    "risk": 0.6303,
+    "sits": 0.5896,
+    "tops": 0.5896,
+    "rpm_fb": 0.5092,
+    "rpm_break": 0.4837,
+    "height": 0.668,
+    "weight": 0.668,
+    "eta_year": 0.668,
+    "levers": 0.4124,
+    "athl": 0.2322,
+    "frame": 0.2434,
+    "perf": 0.2403,
+    "sign_market": 0.4175,
+    "bonus": 0.3727
+   },
+   "folds": [
+    {
+     "test_year": 2014,
+     "n_train": 91,
+     "train_covered": 0,
+     "n_test": 53,
+     "test_covered": 0
+    },
+    {
+     "test_year": 2015,
+     "n_train": 144,
+     "train_covered": 0,
+     "n_test": 72,
+     "test_covered": 0
+    },
+    {
+     "test_year": 2016,
+     "n_train": 216,
+     "train_covered": 0,
+     "n_test": 49,
+     "test_covered": 0
+    },
+    {
+     "test_year": 2017,
+     "n_train": 265,
+     "train_covered": 0,
+     "n_test": 30,
+     "test_covered": 15
+    },
+    {
+     "test_year": 2018,
+     "n_train": 295,
+     "train_covered": 15,
+     "n_test": 53,
+     "test_covered": 38
+    },
+    {
+     "test_year": 2019,
+     "n_train": 348,
+     "train_covered": 53,
+     "n_test": 76,
+     "test_covered": 69
+    },
+    {
+     "test_year": 2020,
+     "n_train": 424,
+     "train_covered": 122,
+     "n_test": 104,
+     "test_covered": 97
+    },
+    {
+     "test_year": 2021,
+     "n_train": 528,
+     "train_covered": 219,
+     "n_test": 106,
+     "test_covered": 102
+    },
+    {
+     "test_year": 2022,
+     "n_train": 634,
+     "train_covered": 321,
+     "n_test": 101,
+     "test_covered": 96
+    },
+    {
+     "test_year": 2023,
+     "n_train": 735,
+     "train_covered": 417,
+     "n_test": 128,
+     "test_covered": 124
+    },
+    {
+     "test_year": 2024,
+     "n_train": 863,
+     "train_covered": 541,
+     "n_test": 119,
+     "test_covered": 115
+    }
+   ],
+   "folds_with_zero_trainable_coverage": [
+    2014,
+    2015,
+    2016,
+    2017
+   ],
+   "first_trainable_fold_ge40": 2019,
+   "admissible_scored_years": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+   ]
+  }
+ }
+}
