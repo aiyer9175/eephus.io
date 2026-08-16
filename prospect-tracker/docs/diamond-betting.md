@@ -4,12 +4,16 @@ Lane C3 of the 2026-08-04d omnibus plan. Everything the Sports Betting module
 needs to be operated, argued with, and eventually validated.
 
 Status at ship: **Diamond preview, public, model UNVALIDATED.** Since
-2026-08-06 the module publishes PROVISIONAL picks against a policy floor rather
-than showing nothing for a season, and since 2026-08-07 there are two slots.
-Every one of them is labelled provisional on every surface and none of it makes
-the model validated. Section 7a is the selection rule; section 7 is the gate
-that would replace the policy floor with a measured one. That is the honest
-state, not a bug.
+2026-08-06 the module publishes PROVISIONAL selections against a policy floor
+rather than showing nothing for a season, and since 2026-08-07 there are two
+slots. Since 2026-08-16 the two slots are framed as a MODEL WATCH (section 7a):
+the selection rules, the provisional labels and the accrual all continue, and
+the word "pick" does not, until the three gates in section 7 open. Every slot
+is labelled provisional on every surface and none of it makes the model
+validated. Section 7a is the selection rule; section 7 is the gate that would
+replace the policy floor with a measured one; section 7b is the market-level
+gate that can remove a whole market from both slots on ledger evidence. That
+is the honest state, not a bug.
 
 Status of the validation path: **running, and no longer empty.**
 `leaderboard_vintages.py` snapshots the model's team inputs nightly,
@@ -33,6 +37,8 @@ leakage check it is held to.
 | `betting_export.py` | `data/betting.json`, the preview slice, the append-only record |
 | `assets/betting.js` | The six sections, the calculators, the bet tracker |
 | `test_betting.py` | The append-only pins plus the shipped-artifact pins |
+| `test_betting_market_gate.py` | Section 7b: the ledger leg, the dwell, both seams |
+| `tools/betting_calibration.py` | The calibration ledger and `market_gate()` (section 7b) |
 | `test_leaderboard_vintages.py` | The vintage store, the strictly-before read, both modes, the three gates |
 | `test_backfill_vintages.py` | The commit-date cutoff, the named skips, first-write-wins, the arm split |
 | `test_fixtures/odds_api_mlb_sample.json` | The only odds any test ever reads |
@@ -50,6 +56,7 @@ Artifacts written:
 | `.cache/odds/<date>-<hhmm>.json` | Raw snapshots, immutable | daily |
 | `.cache/betting/completed_games.json` | Compact game results from the feed cache | on demand |
 | `.cache/leaderboard_vintages/<date>.json` | Dated team inputs, ~25 KB each, first write wins | daily |
+| `.cache/betting/market_gate_state.json` | Section 7b dwell state, one evaluation per UTC day | daily tail |
 
 ---
 
@@ -965,11 +972,65 @@ dishonest number this module could publish.
 
 ---
 
-## 7a. The two published slots (provisional)
+## 7a. The two published slots: Model Watch (owner decision 2026-08-16)
 
-Owner decision 2026-08-06 published a provisional pick rather than showing an
-empty module for a season. Owner decision 2026-08-07 split it into TWO slots,
-because one slot ranked on EV is one slot that always shows a longshot.
+Owner decision 2026-08-06 published a provisional selection rather than
+showing an empty module for a season. Owner decision 2026-08-07 split it into
+TWO slots, because one slot ranked on EV is one slot that always shows a
+longshot. **Owner decision 2026-08-16 supersedes the 2026-08-06 framing**: an
+unvalidated model whose honest sample loses to the home team does not publish
+a "pick" in any user-facing word, and it does not go dark either. While the
+three gates in section 7 are closed, the two slots are a MODEL WATCH. The
+selection rules below are unchanged, the provisional labels are unchanged, the
+shadow ledger keeps tagging and settling every slot row, and the record funnel
+keeps standing behind its blockers. What changes is the frame: each slot is
+presented as **today's largest model disagreement** with the market, beside
+that selection rule's own settled paper record, not as a recommendation.
+
+### The language scope ruling, recorded here because it looks inconsistent
+
+User-facing language and payload PROSE retire the word "pick" while the gates
+are closed. The structural JSON keys (`pick_of_the_day`,
+`longshot_of_the_day`, `pick_meta`, `pick_blockers`) KEEP their names. That is
+not an oversight: the shadow ledger's slot continuity (`SLOT_TAGS` maps those
+key names to `potd_band` and `longshot`) and the record funnel both depend on
+the key names, and the same owner decision requires the accrual to CONTINUE
+through the reframe. Renaming the keys would orphan every tagged row and reset
+gate 3's clocks to zero for a vocabulary point. A key name is plumbing; a
+sentence is a claim.
+
+### The self-lift, coded rather than remembered
+
+The frame keys off the same resolution every other surface uses:
+`resolve_min_edge` returns `provisional=True` while the gates are shut and
+`False` the moment the measured threshold exists. Gates closed serves
+`pick_meta.frame = "watch"` with the watch labels; gates open serves
+`frame = "pick"` and the pick vocabulary returns automatically, everywhere,
+with no edit. The slot labels by frame:
+
+| Slot key | Watch (gates closed) | Pick (gates open) |
+|---|---|---|
+| `pick_of_the_day` | Model Watch: largest disagreement | Pick of the Day |
+| `longshot_of_the_day` | Model Watch: long-price disagreement | Longshot Value of the Day |
+
+### The watch card carries its own evidence (2026-08-16)
+
+Two additions ride with the reframe, both served on the payload so the client
+computes neither:
+
+- **The slot's own tag record, inline.** Each slot's meta block carries
+  `tag_record`: the settled W-L, push count, net units and ROI of ITS OWN
+  shadow tag (`potd_band` for the headline slot, `longshot` for the long
+  one), read from `betting_shadow.summary()["by_tag"]`. The card can then say
+  "this selection rule is 2-4, -47.9%" without a second fetch, and the client
+  labels the sample small until the tag reaches the 100-row sweep floor. The
+  tags are never pooled, here or anywhere.
+- **A worked de-vig example on the card.** A collapsible block computed from
+  the served row and its game's board rows: both sides' raw implied
+  probabilities, the overround, the proportional fair probability, the model
+  probability, and edge = model minus fair. The disagreement framing only
+  means something if a reader can see what the disagreement is measured
+  against.
 
 ### The floor, which both slots share
 
@@ -1081,6 +1142,123 @@ tags select on three different quantities (probability inside a price band, EV
 at a long price, EV anywhere), so a pooled ROI measures a mixture nobody bet and
 a threshold fitted to that mixture is wrong for every slot it is applied to.
 `summary()["by_slot"]` reports the split and deliberately does not merge it.
+
+---
+
+## 7b. The market-level publishability gate (pre-registered 2026-08-16)
+
+**This section was written before `market_gate()` or any of its wiring
+existed**, in the same discipline as 5a and 11a: the rule goes on the record
+before the first number is computed, so the threshold cannot be picked after
+the data has been seen.
+
+### Why a second leg
+
+The dispersion exclusion (section 11a, `betting_model.market_is_publishable`)
+is a THEORY leg. It bars the runline and the total because the margin model
+that prices them is known to be mis-shaped, and it lifts itself the day
+`SERVE_RUN_DISPERSION` flips. What it cannot catch is the other failure mode:
+a market whose model is not known to be broken but whose measured
+probabilities are, in fact, losing to a coin. The calibration ledger scores
+every priced side nightly, so that evidence accumulates on its own; until now
+nothing consulted it. This gate is the EVIDENCE leg. The two legs are AND-ed:
+a market must clear both to fill a slot or reach the public record. The
+dispersion tuple stays exactly as it is.
+
+### The statistic
+
+Computed per market by `tools/betting_calibration.market_gate()`, on the
+ledger's settled CANONICAL-SIDE games only:
+
+- **One side per market per game** (home, home runline, over), the
+  `CANONICAL_SIDES` choice the ledger already fixes for its bias statistics.
+  Brier(p) equals Brier(1 - p), so the two sides of one game are the same
+  evidence twice, and counting per-side rows would double n without adding a
+  game. `n_games` counts GAMES, deduplicated on game_pk within a market.
+- `delta_vs_coin` = mean per-game Brier minus 0.25. Positive means worse than
+  a coin.
+- `t` = delta_vs_coin / (sd / sqrt(n_games)), sd the sample standard deviation
+  of the per-game Brier.
+- `worse_than_coin_95` = (n_games >= 100) AND (t >= 1.645): the one-sided 95%
+  lower bound on delta_vs_coin sits above zero at a sample the floor accepts.
+
+One honesty note rides with it: the ledger's model probabilities are priced
+from season-to-date inputs, which FAVOURS the model. A market that resolves
+worse than a coin with the contamination helping it has earned the verdict
+with room to spare, so the leg's direction of error is the safe one.
+
+### The rule
+
+- **LEDGER-CLOSED**: `worse_than_coin_95` is true on the market's FULL settled
+  canonical sample for **3 consecutive nightly evaluations**.
+- **RE-OPENS**: the same statistic computed on the **trailing 200** settled
+  canonical games fails to resolve worse-than-coin (`worse_than_coin_95`
+  false there) for **3 consecutive nightly evaluations**.
+
+An evaluation is one per UTC calendar day. The pipeline can run more than once
+in a day and the dwell counters move at most once, because "3 consecutive
+evaluations" means three nights, not three process starts; a second build on
+the same date refreshes the statistics and leaves the dwell where it was.
+
+### Where each constant comes from, honestly
+
+| Constant | Value | Standing |
+|---|---|---|
+| n floor | 100 games | mirrors `betting_shadow.MIN_BETS_FOR_SWEEP`, so the module has one small-sample floor rather than two |
+| z | 1.645 | `betting_model.Z_95_ONE_SIDED`, the same one-sided 95% every other gate in this module tests at |
+| dwell | 3 consecutive evaluations | POLICY, chosen for hysteresis, not measured |
+| trailing window | 200 games | POLICY, chosen for hysteresis, not measured |
+
+The dwell and the trailing window are named as policy because that is what
+they are. Nothing in the ledger picked 3 or 200; the dwell exists so a single
+noisy night cannot flap a market closed and open again, and the trailing
+window exists so a market that has genuinely improved can re-open on recent
+evidence without dragging its whole history behind it. Pretending either
+number was measured would be the exact laundering the rest of this document
+exists to prevent.
+
+### What it can do today: nothing, and the table must say so
+
+On the live ledger (2026-08-16) moneyline holds **49 canonical settled
+games** (98 settled rows across both sides), runline 48, total 47. Note the
+basis: the ledger's own `canonical_side.n` reports 50 and 56 canonical ROWS
+for those two markets, because a game that appears on two slates (a
+postponement) or at two lines settles more than one canonical row, and the
+gate deduplicates to GAMES. Every market is under the 100-game floor, so
+`worse_than_coin_95` is false everywhere and this gate can CLOSE NOTHING yet. Its published state for all
+three markets is `unresolved`, and the table carries that word rather than
+"open": "open" would read as a verdict, and no verdict exists at n < 100.
+The runline and the total are still off the slots today, on the theory leg
+alone.
+
+### Wiring
+
+- `tools/betting_calibration.market_gate()` returns the per-market statistic:
+  `{n_games, brier, delta_vs_coin, t, worse_than_coin_95}`, with an optional
+  trailing-window form for the re-open test.
+- `betting_export.market_publishability()` combines the dispersion leg, the
+  ledger leg and the dwell state into one table, one row per market, each row
+  carrying `publishable` and the reason. The payload publishes the table.
+- The dwell state persists in `.cache/betting/market_gate_state.json`. The
+  append-only learning history (`data/betting_learning.json`) was considered
+  first and refused, with the reason on the record: its rows are appended by
+  betting_learning.py's own build under its own append-only check, that module
+  is outside this lane's ownership, and a foreign key written into its
+  artifact from here would be dropped on the next nightly rebuild. A state
+  file under `.cache/` survives the checkout the same way the record log does.
+- BOTH seams consult the table, the same two funnels the dispersion exclusion
+  guards: `_floor_clearing_sides` (the slots) and `append_record` (the public
+  record). One repair landed with the wiring: record rows carry the FEED
+  vocabulary (`h2h` / `spreads` / `totals`) while both guards test board
+  names, so the dispersion guard at `append_record` had been checking a key
+  the feed vocabulary walks straight past. The funnel now canonicalizes the
+  row's market through `board_market()` before either leg is consulted.
+- `betting_shadow` does NOT consult it, for the same reason it does not
+  consult the dispersion exclusion: the paper ledger and the calibration
+  ledger are the instruments that accumulate the settled evidence a closed
+  market needs to ever re-open, and excluding them there would freeze every
+  closure permanently. `test_betting_market_gate.py` pins the non-consultation
+  the way `test_betting_dispersion_exclusion.py` pins it for the theory leg.
 
 ---
 
