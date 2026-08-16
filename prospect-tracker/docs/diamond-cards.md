@@ -419,6 +419,13 @@ with:
 
     python card_market_export.py --eval
 
+**Update 2026-08-16: the nightly now writes it without a hand run.** Both
+`run_monthly` call sites (monthly step `6g` and daily step `9f`) invoke
+`card_market_export.export(write_eval=True)`, so `data/card_market_eval.json`
+exists on every box the pipeline touches and the gate's terms are on disk
+before any data is. `--eval` remains the hand entry point and writes the same
+stub.
+
 It states, before the data exists, what would have to be true:
 
 * **target**: forward 90-day percent change in the published index
@@ -487,6 +494,67 @@ produces `Comp` rows, `store_comps` appends them, and the export never knows
 where a comp came from beyond a `source` string it does not publish. The honest
 cost is operator time, a few hundred rows a month to keep forty cards inside a
 45-day window at `MIN_COMPS = 5`.
+
+---
+
+## 7b. De-listed 2026-08-16, and the return path
+
+**Owner decision (2026-08-16): the cards module is de-listed from the
+`/diamond/` sales page until a price source exists.** The page itself still
+builds and still serves its honest empty state; what changed is that the
+Diamond Pass pitch no longer advertises a board that has read `fetch_blocked`
+since 2026-08-06. The registry row (`card_market_index`) records the same
+freeze. Nothing in the module was deleted, and nothing here needs re-plumbing
+to come back.
+
+### The seam a licensed feed plugs into
+
+The CSV drop contract (section 3) **is** the licensed-feed seam, on purpose.
+`CSV_ALIASES` in `card_prices_ingest.py` already anticipates foreign column
+names (`sale_price`, `amount`, `item_id`, `condition`, and so on), unknown
+extra columns are ignored, and header matching is case- and space-insensitive,
+so a feed export lands without a parser change. Since 2026-08-16 there is also
+a preflight:
+
+    python card_prices_ingest.py --validate <csv>
+
+which dry-runs one file against the contract, printing per-row accept/reject
+with reasons and storing nothing. A licensed source is therefore one of two
+shapes of work: a feed that can emit CSV is zero code, and a feed that is
+API-only needs one adapter that writes `Comp` rows, which is the same
+interface `parse_drop_csv` already targets.
+
+### The re-listing condition
+
+**The first day the export publishes a non-null index for any card**, the
+module goes back on the sales page. That is deliberately the smallest true
+claim: one card with `MIN_COMPS = 5` real comps inside a 45-day window. Not a
+promise of coverage, not a signal gate (the screen label survives re-listing;
+section 6 governs that separately), just the difference between a board with a
+number on it and a board without one.
+
+### Research directions, in order of expected yield
+
+Read `docs/card-price-source-survey-2026-08-07.md` first; every status below
+was measured there, not assumed.
+
+1. **SportsCardsPro permission email.** Still the near miss: fetchable pages,
+   the exact section 3 column shape, blocked only by their acceptable-use
+   terms, which name a contact for exactly this ask. One email.
+2. **eBay Marketplace Insights API.** The data is the actual estimand (sold
+   comps, 90-day window). It is a Limited Release API closed to new users in
+   the docs, but access programs change; worth a periodic re-check and an
+   application if the gate ever opens.
+3. **Card Ladder.** Enterprise-only as surveyed; the fit is good (historic
+   sales, clean identities), so the question is price, and nobody has asked
+   it yet.
+4. **Grader APIs** (PSA/Collectors: `collectors-apis@collectors.com`). APR
+   moved behind a login, and a paid API exists with unknown terms until
+   asked. Grader pop-report data would also firm up `GRADE_FACTORS`, which is
+   currently a hand table.
+
+The banned move stays banned: no browser emulation, no JS-challenge evasion,
+no UA spoofing. That was measured once (identical 403 either way) and closed.
 
 ---
 

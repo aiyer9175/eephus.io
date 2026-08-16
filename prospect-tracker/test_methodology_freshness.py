@@ -369,6 +369,19 @@ MODEL_GLOSSARY = {
     "betting_game_prob": "internal",
     "dfs_slate_pricing": "internal",
     "card_market_index": "internal",
+    # 2026-08-16 registry-hygiene wave: the five published fantasy surfaces
+    # that had no registry row. Same documentation decision as the Diamond
+    # trio above: each ships on a page that carries its method and its limits
+    # in user-facing copy (the ROS boards mark every heuristic cell _est, the
+    # buy/sell boards say they are a luck screen, the dynasty board states its
+    # blend), and none of them is an Arkmetric the site glossary defines. The
+    # dynasty blend's eFV INPUTS are documented by the xfv glossary entry;
+    # the blend itself is a ranking convention, not a metric.
+    "fantasy_dynasty_blend": "internal",
+    "fantasy_ros_rankings": "internal",
+    "fantasy_roto_valuation": "internal",
+    "fantasy_buy_sell": "internal",
+    "fantasy_closer_depth": "internal",
     # X-D1 gmLI deployment-context metric: gate passed and wired 2026-07-02
     # (bullpen_export join + /mlbstats/ column); documented by its glossary
     # entry.

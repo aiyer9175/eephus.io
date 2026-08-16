@@ -36,7 +36,8 @@ happen inside the called module, so this file alone cannot split them).
 | 9e-pre. Leaderboard vintage snapshot (validation clock) | betting_model_eval.json |
 | 9e-pre1. Betting model refit (betting_model_eval.json) | betting_model_eval.json |
 | 9e. Betting odds snapshot + payload (betting.json) | betting.json, betting_learning.json, betting_shadow.json, card_market.json, job_heartbeat.json, xfv.json |
-| 9f. Card comps ingest + market index (card_market.json) | card_market.json, card_market_eval.json |
+| 9f. Card comps ingest + market index (card_market.json) | card_market.json, card_market_eval.json, source_backtest.json, xfv_scoreboard_eval.json |
+| 9g. eFV scoreboard refresh (xfv_scoreboard_eval.json) | xfv_scoreboard_eval.json |
 | d10. FA signing-window refresh | mlb_projections.json |
 | d10b. FA re-export off fresh projections | - |
 | d10c. TJStats Live second capture | - |

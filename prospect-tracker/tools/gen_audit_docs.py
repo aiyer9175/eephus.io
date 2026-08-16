@@ -260,17 +260,33 @@ def render_site_map() -> str:
         "Every editorial page also loads the shared runtime (nav, account/forum layer,",
         "starfield background, glossary tooltips via `assets/eephus-gl.js`, which fetches",
         "`glossary.json` + `player_links.json`, and table/chart export). The payload",
-        "column below lists only what the surface's own module app fetches.",
+        "column lists what the surface's own module app fetches, plus the fetches of",
+        "`assets/eephus-hub.js` on the pages whose generator includes that hub runtime",
+        "(the hub is shared plumbing and stays out of the client-app column, but its",
+        "payloads are real page traffic and are attributed to every page loading it).",
         "",
         "| route | generator | client app | data payloads consumed | notes |",
         "|---|---|---|---|---|",
     ]
+    # The seam this closes (2026-08-16): _SHARED_ASSETS rightly keeps
+    # eephus-hub.js out of the "client app" column, but _payloads_of only ever
+    # scanned the per-page apps, so the hub's own fetch literals (today
+    # player_links.json, the EEPHUS_HUB.links() entity-link corpus) vanished
+    # with it and /fantasy/ among others listed a payload column missing a
+    # file the page fetches on load. The hub's payloads are introspected from
+    # the hub file itself, not hard-coded, and attributed to exactly the pages
+    # whose generator emits the hub script tag.
+    hub_payloads = set(_payloads_of([ROOT / "assets" / "eephus-hub.js"]))
     main_src = inspect.getsource(build_site.main)
     for rel, fn_name in _WRITE_CALL.findall(main_src):
         fn = getattr(build_site, fn_name)
         fn_src = inspect.getsource(fn)
-        apps = sorted({a for a in _ASSET_REF.findall(fn_src) if a not in _SHARED_ASSETS})
-        payloads = _payloads_of([ROOT / "assets" / a for a in apps])
+        refs = set(_ASSET_REF.findall(fn_src))
+        apps = sorted(a for a in refs if a not in _SHARED_ASSETS)
+        payloads = set(_payloads_of([ROOT / "assets" / a for a in apps]))
+        if "eephus-hub.js" in refs:
+            payloads |= hub_payloads
+        payloads = sorted(payloads)
         lines.append("| " + " | ".join([
             f"`{_route_of(rel)}`",
             f"`build_site.{fn_name}()`",

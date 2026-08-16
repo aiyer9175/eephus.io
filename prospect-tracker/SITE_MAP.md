@@ -53,32 +53,35 @@ fetch strings.
 Every editorial page also loads the shared runtime (nav, account/forum layer,
 starfield background, glossary tooltips via `assets/eephus-gl.js`, which fetches
 `glossary.json` + `player_links.json`, and table/chart export). The payload
-column below lists only what the surface's own module app fetches.
+column lists what the surface's own module app fetches, plus the fetches of
+`assets/eephus-hub.js` on the pages whose generator includes that hub runtime
+(the hub is shared plumbing and stays out of the client-app column, but its
+payloads are real page traffic and are attributed to every page loading it).
 
 | route | generator | client app | data payloads consumed | notes |
 |---|---|---|---|---|
 | `/` | `build_site.build_home()` | server-rendered | - | Home: brand hero + module cards + wire/ticker |
-| `/news/` | `build_site.build_news()` | server-rendered | - | News feed page (de-noised event wire) |
+| `/news/` | `build_site.build_news()` | server-rendered | `player_links.json` | News feed page (de-noised event wire) |
 | `/history/` | `build_site.build_this_day()` | server-rendered | - | Today in Prospect History: debuts, trades, signings and IL moves on today's MM-DD |
 | `/articles/` | `build_site.build_articles_index()` | server-rendered | - | article card grid, newest first |
 | `/articles/<slug>/` | `build_site.build_article_page()` | server-rendered | - | one page per content/articles/*.md |
 | `/forums/` | `build_site.build_forums_index()` | server-rendered | - | account/forum shell; Supabase-backed, inert without assets/eephus-config.js |
 | `/fa/` | `build_site.build_fa()` | `assets/fa.js` | `fa_archive.json`, `fa_class.json`, `fa_meta.json`, `glossary.json`, `mlb_current_lines.json`, `player_links.json` | Free Agency module shell |
-| `/projections/` | `build_site.build_projections()` | `assets/projections.js` | `bullpen_leaderboards.json`, `mlb_fielding_positions.json`, `mlb_player_detail.json`, `mlb_projections.json`, `model_registry.json`, `photo_ctx.json`, `proj_horizon_eval.json`, `prospect_path_eval.json`, `starter_leaderboards.json`, `swing_delta.json`, `team_outlook_eval.json` | MLB Projections (+ #player= pages, Team Outlook) |
-| `/mlbstats/` | `build_site.build_mlbstats()` | `assets/mlbstats.js` | `bullpen_history.json`, `bullpen_leaderboards.json`, `hitter_history.json`, `hitter_leaderboards.json`, `leverage_consistency_eval.json`, `leverage_history.json`, `leverage_leaderboards.json`, `starter_history.json`, `starter_leaderboards.json` | MLB Stats: Bullpen Leaderboards / REM+ |
+| `/projections/` | `build_site.build_projections()` | `assets/projections.js` | `bullpen_leaderboards.json`, `mlb_fielding_positions.json`, `mlb_player_detail.json`, `mlb_projections.json`, `model_registry.json`, `photo_ctx.json`, `player_links.json`, `proj_horizon_eval.json`, `prospect_path_eval.json`, `starter_leaderboards.json`, `swing_delta.json`, `team_outlook_eval.json` | MLB Projections (+ #player= pages, Team Outlook) |
+| `/mlbstats/` | `build_site.build_mlbstats()` | `assets/mlbstats.js` | `bullpen_history.json`, `bullpen_leaderboards.json`, `hitter_history.json`, `hitter_leaderboards.json`, `leverage_consistency_eval.json`, `leverage_history.json`, `leverage_leaderboards.json`, `player_links.json`, `starter_history.json`, `starter_leaderboards.json` | MLB Stats: Bullpen Leaderboards / REM+ |
 | `/pal/` | `build_site.build_pal()` | `assets/pal.js` | `pal.json`, `player_links.json`, `positional_fit_ui.json` | Alchemy Lab |
-| `/trademachine/` | `build_site.build_trademachine()` | `assets/trademachine.js` | `glossary.json`, `grpo_public.json`, `grpo_scores.json`, `mlb_player_detail.json`, `trade_machine_eval.json`, `trade_values.json` | Trade Machine (Bayesian trade board + one-currency deal evaluator) |
-| `/arbitration/` | `build_site.build_arbitration()` | `assets/arbitration.js` | `arb_history.json`, `arbitration.json` | Arbitration Predictor - projected arbitration salaries for every eligible player, and a per-season record of who the arbitration market overpaid and underpaid. |
-| `/fantasy/` | `build_site.build_fantasy()` | `assets/dfs.js`, `assets/dynasty.js`, `assets/fantasy-card.js`, `assets/fantasy-hub.js`, `assets/redraft.js` | `dfs.json`, `fantasy.json`, `glossary.json` | Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring |
+| `/trademachine/` | `build_site.build_trademachine()` | `assets/trademachine.js` | `glossary.json`, `grpo_public.json`, `grpo_scores.json`, `mlb_player_detail.json`, `player_links.json`, `trade_machine_eval.json`, `trade_values.json` | Trade Machine (Bayesian trade board + one-currency deal evaluator) |
+| `/arbitration/` | `build_site.build_arbitration()` | `assets/arbitration.js` | `arb_history.json`, `arbitration.json`, `player_links.json` | Arbitration Predictor - projected arbitration salaries for every eligible player, and a per-season record of who the arbitration market overpaid and underpaid. |
+| `/fantasy/` | `build_site.build_fantasy()` | `assets/dfs.js`, `assets/dynasty.js`, `assets/fantasy-card.js`, `assets/fantasy-hub.js`, `assets/redraft.js` | `dfs.json`, `fantasy.json`, `glossary.json`, `hitter_history.json`, `player_links.json`, `starter_history.json` | Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring |
 | `/dynasty/` | `build_site.build_dynasty()` | server-rendered | - | redirect stub: Dynasty is a sub-module of /fantasy/ (hash-preserving) |
 | `/redraft/` | `build_site.build_redraft()` | server-rendered | - | redirect stub: Redraft is a sub-module of /fantasy/ (hash-preserving) |
 | `/dfs/` | `build_site.build_dfs()` | server-rendered | - | redirect stub: DFS is a sub-module of /fantasy/ (hash-preserving) |
-| `/betting/` | `build_site.build_betting()` | `assets/betting.js` | `betting.json`, `betting_clv.json`, `betting_learning.json`, `betting_model_eval.json`, `betting_preview.json`, `betting_record.json`, `betting_settlement.json`, `glossary.json` | Diamond: model win probabilities against book prices; the disclaimer renders ABOVE the boards |
+| `/betting/` | `build_site.build_betting()` | `assets/betting.js` | `betting.json`, `betting_clv.json`, `betting_learning.json`, `betting_model_eval.json`, `betting_preview.json`, `betting_record.json`, `betting_settlement.json`, `glossary.json`, `player_links.json` | Diamond: model win probabilities against book prices; the disclaimer renders ABOVE the boards |
 | `/cards/` | `build_site.build_cards()` | `assets/cards.js` | `card_market.json`, `card_watchlist.json`, `glossary.json`, `player_links.json` | Diamond: card market screen; publishes a derived per-player index, never a listing price |
-| `/diamond/` | `build_site.build_diamond()` | `assets/diamond.js` | `betting_record.json`, `glossary.json`, `xfv_power_eval.json`, `xfv_scoreboard_eval.json` | Diamond Pass page; server-rendered structure, live receipt numbers filled by assets/diamond.js |
-| `/parks/` | `build_site.build_parks()` | `assets/parks.js` | `milb_park_factors.json`, `xfv_park_line_eval.json` | MiLB Park Factors reference table (display only; the eFV park-line lane stays gated off) |
+| `/diamond/` | `build_site.build_diamond()` | `assets/diamond-config.js`, `assets/diamond.js` | `betting_record.json`, `glossary.json`, `xfv_power_eval.json`, `xfv_scoreboard_eval.json` | Diamond Pass page; server-rendered structure, live receipt numbers filled by assets/diamond.js |
+| `/parks/` | `build_site.build_parks()` | `assets/parks.js` | `milb_park_factors.json`, `player_links.json`, `xfv_park_line_eval.json` | MiLB Park Factors reference table (display only; the eFV park-line lane stays gated off) |
 | `/models/` | `build_site.build_models()` | `assets/accountability.js` | - | Model Accountability hub: data/model_registry.json rendered server-side, with freshness and the ledger's own gaps counted; assets/accountability.js only filters what is already in the DOM |
-| `/glossary/` | `build_site.build_glossary()` | `assets/glossary.js` | `glossary.json`, `model_registry.json`, `source_backtest.json`, `source_cohort_accuracy.json`, `source_weights.json`, `xfv_denoised_baseline_eval.json`, `xfv_provisional_prior_eval.json`, `xfv_reliability.json`, `xfv_scoreboard_eval.json`, `xfv_side_calibration_eval.json`, `xfv_statcast_line_eval.json`, `xfv_valuation_curve.json` | Unified glossary + methodology / model accountability |
+| `/glossary/` | `build_site.build_glossary()` | `assets/glossary.js` | `glossary.json`, `model_registry.json`, `player_links.json`, `source_backtest.json`, `source_cohort_accuracy.json`, `source_weights.json`, `xfv_denoised_baseline_eval.json`, `xfv_provisional_prior_eval.json`, `xfv_reliability.json`, `xfv_scoreboard_eval.json`, `xfv_side_calibration_eval.json`, `xfv_statcast_line_eval.json`, `xfv_valuation_curve.json` | Unified glossary + methodology / model accountability |
 | `/teams/` | `build_site.build_teams_redirect()` | server-rendered | - | redirect stub: the old Teams module now lives in /projections/ Team Outlook |
 | `/team/` | `build_site.build_team()` | server-rendered | - | Developers page (content/team.json) |
 | `/sources/` | `build_site.build_sources()` | server-rendered | - | data-source credits page |
