@@ -2083,6 +2083,33 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("daily: fantasy refresh failed — continuing")
 
+        # --- 9d-pre-odds. The odds snapshot, BEFORE the DFS slate ---------
+        # THE DEFECT THIS CLOSES (found 2026-08-16): dfs.json was built at
+        # 18:01:51Z and the day's only odds snapshot was captured at 18:09:02Z
+        # by step 9e, eight minutes later, so dfs_export._vegas_index found
+        # nothing on every slate this pipeline ever priced: vegas_games read 0
+        # for the module's whole life while the betting page consumed the same
+        # snapshot happily. The one paid pull now happens here, before 9d-bis
+        # reads it. Step 9e keeps a GUARDED retry (it checks for tonight's
+        # snapshot before pulling, because betting_ingest.run fetches BEFORE
+        # its duplicate-path check and a second call would spend 3 more
+        # credits), so a transient failure here still gets one more chance and
+        # the nightly cost stays one 3-credit call.
+        with _step("9d-pre-odds. Betting odds snapshot (before the DFS slate)", log):
+            try:
+                import betting_ingest
+                import job_heartbeat as _hb
+                _st = betting_ingest.run("open")
+                _hb.record("betting_odds_snapshot", ok=True,
+                           result=str((_st or {}).get("last_run"))[:120])
+            except Exception as _e:
+                log.exception("daily: odds snapshot failed - 9e retries")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("betting_odds_snapshot", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
+
         # --- 9d-bis. DFS daily slate (dfs.json) ---------------------------
         # Prices today's slate off the probables 9d just refreshed. Reads the
         # fantasy corpus already on disk, so it adds no second corpus build.
@@ -2224,12 +2251,24 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             try:
                 import betting_ingest
                 import job_heartbeat as _hb
-                _st = betting_ingest.run("open")
+                from datetime import date as _date
                 # THE ORIGINAL OFFENDER. This step existed, was reached, and had
                 # never once produced a snapshot. `configured: true` in its own
                 # status file said nothing about whether it FIRED.
-                _hb.record("betting_odds_snapshot", ok=True,
-                           result=str((_st or {}).get("last_run"))[:120])
+                #
+                # Since 2026-08-16 the paid pull lives at 9d-pre-odds so the DFS
+                # slate can read it; this seam is the RETRY. The guard is at the
+                # call site because betting_ingest.run fetches BEFORE its
+                # duplicate-path check: calling it again tonight would spend 3
+                # more credits to learn the snapshot already exists.
+                if betting_ingest.latest_snapshot(kind="open",
+                                                  on_date=_date.today().isoformat()):
+                    log.info("betting odds: tonight's open snapshot exists, "
+                             "no second pull")
+                else:
+                    _st = betting_ingest.run("open")
+                    _hb.record("betting_odds_snapshot", ok=True,
+                               result=str((_st or {}).get("last_run"))[:120])
             except Exception as _e:
                 log.exception("daily: betting odds snapshot failed — continuing")
                 try:
@@ -2347,20 +2386,43 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 # the only tag whose ROI is a statement about the population the
                 # published floor is actually applied to, because it is the only
                 # one whose membership is not truncated by a cap.
-                _rec = betting_shadow.record_slate(
-                    _payload,
-                    min_edge=_meta.get("min_edge")
-                    or __import__("betting_export").PROVISIONAL_MIN_EDGE,
-                    gate_state={"provisional": _meta.get("provisional"),
-                                "basis": _meta.get("basis")},
-                    slots={k: _payload.get(k) for k in
-                           ("pick_of_the_day", "longshot_of_the_day")},
-                    include_board_all=True,
-                    log_fn=log.info)
+                # `or` here once treated a MEASURED min_edge of 0.0 as absent
+                # and silently substituted the provisional floor (PHASE3 finding,
+                # fixed 2026-08-16). Only None means "not measured".
+                _floor = _meta.get("min_edge")
+                if _floor is None:
+                    _floor = __import__("betting_export").PROVISIONAL_MIN_EDGE
+                # EACH LEDGER GETS ITS OWN TRY (2026-08-16). These two calls sat
+                # in one try with the settle above: a raise from the shadow
+                # record skipped the calibration record entirely, and a slate's
+                # ~44 calibration rows are unrecoverable the next day because
+                # the board they price no longer exists. A failed leg is now a
+                # RED on that leg, never a silent loss of its sibling.
+                _rec, _rec_err = {}, None
+                try:
+                    _rec = betting_shadow.record_slate(
+                        _payload,
+                        min_edge=_floor,
+                        gate_state={"provisional": _meta.get("provisional"),
+                                    "basis": _meta.get("basis")},
+                        slots={k: _payload.get(k) for k in
+                               ("pick_of_the_day", "longshot_of_the_day")},
+                        include_board_all=True,
+                        log_fn=log.info)
+                except Exception as _e:  # noqa: BLE001
+                    _rec_err = _e
+                    log.exception("daily: shadow record_slate failed - the "
+                                  "calibration ledger still records")
                 # NO FLOOR on this one, by design. A side the model rated 0.31
                 # against a market fair 0.33 is worthless as a bet and exactly as
                 # informative about calibration as the one it liked.
-                _cal = betting_calibration.record_slate(_payload, log_fn=log.info)
+                _cal, _cal_err = {}, None
+                try:
+                    _cal = betting_calibration.record_slate(_payload, log_fn=log.info)
+                except Exception as _e:  # noqa: BLE001
+                    _cal_err = _e
+                    log.exception("daily: calibration record_slate failed - "
+                                  "the shadow ledger already recorded")
                 _sum = betting_shadow.summary()
                 _ready = _sum.get("sweep_readiness") or {}
                 # PER TAG, never pooled. docs/diamond-betting.md section 7a: a
@@ -2391,20 +2453,28 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 def _settle_ok(res):
                     return not str((res or {}).get("reason", "")).startswith("failed")
                 import job_heartbeat as _hb
-                _hb.record("betting_shadow_ledger", ok=_settle_ok(_st),
+                _hb.record("betting_shadow_ledger",
+                           ok=_settle_ok(_st) and _rec_err is None,
                            result=(f"+{_rec.get('written')} logged, "
                                    f"{_st.get('settled')} settled, per-tag "
                                    f"{_per_tag} of "
                                    f"{_sum.get('min_bets_for_sweep')}"
-                                   f"{'' if _settle_ok(_st) else ' | ' + str(_st.get('reason'))}")[:120])
-                _hb.record("betting_calibration_ledger", ok=_settle_ok(_cst),
+                                   f"{'' if _settle_ok(_st) else ' | ' + str(_st.get('reason'))}"
+                                   f"{'' if _rec_err is None else ' | record: ' + str(_rec_err)}")[:120])
+                _hb.record("betting_calibration_ledger",
+                           ok=_settle_ok(_cst) and _cal_err is None,
                            result=(f"+{_cal.get('written')} priced side(s), "
                                    f"{_cst.get('settled')} settled"
-                                   f"{'' if _settle_ok(_cst) else ' | ' + str(_cst.get('reason'))}")[:120])
+                                   f"{'' if _settle_ok(_cst) else ' | ' + str(_cst.get('reason'))}"
+                                   f"{'' if _cal_err is None else ' | record: ' + str(_cal_err)}")[:120])
                 for _lbl, _res in (("shadow", _st), ("calibration", _cst)):
                     if not _settle_ok(_res):
                         log.error("!!! BETTING RED: the %s ledger did not settle: %s",
                                   _lbl, _res.get("reason"))
+                for _lbl, _err in (("shadow", _rec_err), ("calibration", _cal_err)):
+                    if _err is not None:
+                        log.error("!!! BETTING RED: the %s ledger did not record "
+                                  "tonight's slate: %s", _lbl, _err)
             except Exception as _e:
                 log.exception("daily: betting ledgers failed - continuing")
                 try:
@@ -2477,7 +2547,11 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                                scope="daily", log=log)
             try:
                 import card_market_export
-                _cm = card_market_export.export()
+                # write_eval also writes data/card_market_eval.json, the
+                # pre-registration the runbook and registry row have cited
+                # since 2026-08-07 while no caller ever passed the flag, so
+                # the file did not exist (found 2026-08-16).
+                _cm = card_market_export.export(write_eval=True)
                 _cm_meta = _cm.get("meta") or {}
                 _cm_ing = _cm_meta.get("ingest") or {}
                 log.info("card market: %d cards, %d priced, ingest=%s",
@@ -4869,7 +4943,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         with _step("6g. Card market index (card_market.json)", log):
             try:
                 import card_market_export
-                card_market_export.export()
+                # write_eval keeps data/card_market_eval.json in existence; no
+                # caller passed the flag before 2026-08-16 and the cited
+                # pre-registration artifact never existed.
+                card_market_export.export(write_eval=True)
             except Exception:
                 log.exception("card market export failed - continuing")
 

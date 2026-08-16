@@ -438,7 +438,29 @@ def _vegas_index(day: str, games: list) -> tuple[dict, dict]:
         import betting_model as bm
         wrap = bi.latest_snapshot(on_date=day)
         if not wrap:
-            meta["reason"] = ("no odds snapshot is cached for this slate date")
+            # Name the nearest miss. This leg read "no odds snapshot" on every
+            # slate the module ever priced while the betting page consumed one
+            # happily: the pipeline captured the snapshot at 9e, minutes AFTER
+            # this export ran at 9d-bis (found 2026-08-16, since reordered to
+            # 9d-pre-odds). Publishing the newest cached capture makes that
+            # class of ordering failure visible in the payload instead of
+            # indistinguishable from a night with no odds feed at all.
+            snaps = bi.list_snapshots()
+            if snaps:
+                _newest = snaps[-1]
+                meta["reason"] = (
+                    "no odds snapshot is cached for this slate date "
+                    f"(newest cached capture is {_newest.get('date')}-"
+                    f"{_newest.get('hhmm')})")
+                if _newest.get("date") == day:
+                    # Drift armor: latest_snapshot filters the same listing, so
+                    # a same-date capture it failed to return means the two
+                    # functions no longer agree about dates. Loud, not fatal.
+                    meta["ordering_regression"] = True
+                    _log.error("dfs: RED, a %s snapshot exists in the cache "
+                               "but the vegas join did not receive it", day)
+            else:
+                meta["reason"] = "no odds snapshot is cached for this slate date"
             return {}, meta
         events = bi.parse_events(wrap)
         tie_home = (bm.league_context().get("extra_inning_home_rate")

@@ -30,12 +30,13 @@ happen inside the called module, so this file alone cannot split them).
 | d9b2. Re-bake MLB player detail (mlb_player_detail.json) | mlb_player_detail.json, photo_ctx.json |
 | d9c. Headshot resolution (photo_ctx.json) | fantasy.json, photo_ctx.json |
 | 9d. Fantasy daily refresh (fantasy.json schedule) | dfs.json, fantasy.json |
+| 9d-pre-odds. Betting odds snapshot (before the DFS slate) | dfs.json |
 | 9d-bis. DFS daily slate (dfs.json) | dfs.json |
 | 9e-pre0. Refresh team leaderboards (bullpen_leaderboards.json, | bullpen_leaderboards.json, hitter_leaderboards.json, starter_leaderboards.json |
 | 9e-pre. Leaderboard vintage snapshot (validation clock) | betting_model_eval.json |
 | 9e-pre1. Betting model refit (betting_model_eval.json) | betting_model_eval.json |
 | 9e. Betting odds snapshot + payload (betting.json) | betting.json, betting_learning.json, betting_shadow.json, card_market.json, job_heartbeat.json, xfv.json |
-| 9f. Card comps ingest + market index (card_market.json) | card_market.json |
+| 9f. Card comps ingest + market index (card_market.json) | card_market.json, card_market_eval.json |
 | d10. FA signing-window refresh | mlb_projections.json |
 | d10b. FA re-export off fresh projections | - |
 | d10c. TJStats Live second capture | - |
@@ -102,7 +103,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6b6. Fantasy Tools (fantasy.json) | fantasy.json |
 | 6f. Betting model context refit | - |
 | 6g-pre. Card comps ingest (drops + gated scrape) | xfv.json |
-| 6g. Card market index (card_market.json) | card_market.json |
+| 6g. Card market index (card_market.json) | card_market.json, card_market_eval.json |
 | 6c. Organization Tendencies (farm-detail Tendencies tab) (no _step wrapper) | - |
 | 6c / 6d: exported by the chained daily tail instead (no _step wrapper) | org_tendencies.json, trade_values.json |
 | post-export passes (best-effort: board/farm snapshots, source_backtest, consensus + draft weight A/B, eta_backtest, editorial_eval, model-registry freshness,... | debuts.json, draft_source_weights.json, draft_timeseries.json, editorial_eval.json, model_registry.json, photo_ctx.json, pipeline_steps_latest.json, source_backtest.json, source_cohort_accuracy.json, source_weights.json, star_label_view.json, star_odds_eval.json, trade_values.json |
