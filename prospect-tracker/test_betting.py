@@ -1740,6 +1740,27 @@ def test_pick_carries_the_dispersion_line_in_the_caveat_slot(live_ctx):
     assert "NOT served" in text
 
 
+def test_client_renders_the_provisional_badge_and_styles_it(live_ctx):
+    """The client half of the labelling contract, unpinned until now: provBadge
+    could be gutted and the suite stayed green, and betting.js records at its
+    own provBadge comment that exactly that regression already shipped once.
+    Two badges on the pick tab, one per slot header, and the .bt-prov class the
+    badge carries has a rule in the injected sheet rather than being a dead
+    styling hook.
+
+    MUTATION PROOF: making provBadge return "" kills the count and the visible
+    "provisional"; deleting the .bt-prov line from the css array kills the
+    source assert; flipping provBadge's guard so `provisional === false` still
+    badges kills the negative case at the end."""
+    html = live_ctx.eval("__show('potd')")
+    assert html.count("bt-prov") == 2            # the pick slot and the empty slot
+    assert "provisional" in _visible_text(html)
+    assert '".bt-prov{' in JS                    # the class has a rule, not just markup
+    payload = LIVE_PAYLOAD.replace('"provisional": true', '"provisional": false')
+    c = _ctx(_fetch_js(main=payload, learning=LEARNING_ARTIFACT, evald=EVAL_ARTIFACT))
+    assert "bt-prov" not in c.eval("__show('potd')")
+
+
 def test_an_empty_board_renders_the_census_not_an_outage():
     """N sides priced, M cleared the floor, none in the band. Without it an
     empty pick tab reads as a broken feed."""
@@ -1774,6 +1795,59 @@ def test_an_unpriced_game_stays_on_the_board_and_says_why(live_ctx):
     assert "unpriced: no pre-game odds event within 3h of first pitch" in text
     assert "already under way" in text
     assert "3 odds events did not price a game" in text     # 2 in progress + 1 mismatch
+
+
+def test_a_blocked_build_suppresses_the_best_value_badge_and_says_why(live_ctx):
+    """pick_meta.blocked used to be read by pickCensus alone, and the server
+    fills pick_meta.min_edge BEFORE its block branch, so a hard-stopped build
+    with both slots nulled still badged the team board green off the surviving
+    floor and its head note asserted agreement with picks that did not exist.
+
+    MUTATION PROOF: deleting the `if (m.blocked) return null` branch from
+    pickFloor re-badges the board and kills the bt-bestval and head-note
+    asserts; deleting the blocked note from renderTeam kills the reason
+    assert. The unblocked control line pins that the suppression asserts are
+    not passing vacuously."""
+    assert "bt-bestval" in live_ctx.eval("__show('teams')")   # control: it does badge
+    payload = LIVE_PAYLOAD.replace(
+        '"pick_of_the_day": {"side": "under"',
+        '"pick_of_the_day": null, "unused_pick": {"side": "under"')
+    payload = payload.replace(
+        '"pick_meta": {"provisional": true, "min_edge": 0.06,',
+        '"pick_meta": {"provisional": true, "blocked": true, '
+        '"blocked_reason": "no odds api key at build time, the events are a cached snapshot", '
+        '"min_edge": 0.06,')
+    c = _ctx(_fetch_js(main=payload, learning=LEARNING_ARTIFACT, evald=EVAL_ARTIFACT))
+    html = c.eval("__show('teams')")
+    text = _visible_text(html)
+    assert "bt-bestval" not in html
+    assert "no odds api key at build time" in text            # the reason, above the board
+    assert "No best value badges today" in text
+    assert "never disagree about the bar" not in text         # the head note goes down too
+
+
+def test_the_team_board_discloses_the_push_on_a_whole_number_total(live_ctx):
+    """The push disclosure lived on the two pick cards alone while the board
+    rendered the same push-discounted EV and push-conditional model probability
+    with zero occurrences of "push" on the whole tab. The board's total block
+    now says the line pushes, that the Model column is conditional on the bet
+    resolving, and that the EV/u column carries the (1 - p_push) discount.
+
+    MUTATION PROOF: dropping the fourth argument from gameCard's total
+    marketBlock call, or the pushText block inside marketBlock, removes the
+    sentence and kills the first two asserts; the count pins it to the one
+    whole-number posted line on the fixture board (game 2 has none). The potd
+    asserts pin the render-order fix: pushLine said "the expected value above"
+    while pickCard renders the EV chip below it; reverting "below" to "above"
+    kills them."""
+    text = _visible_text(live_ctx.eval("__show('teams')"))
+    assert "9 is a push 12.5% of the time" in text
+    assert "the Model column is the chance to cash given the bet resolves" in text
+    assert "the EV/u column is that conditional value scaled by the 87.5%" in text
+    assert text.count("is a push") == 1
+    potd = _visible_text(live_ctx.eval("__show('potd')"))
+    assert "the expected value above" not in potd
+    assert "the expected value below is that conditional value" in potd
 
 
 # ---- 7e. the record tab ----------------------------------------------------

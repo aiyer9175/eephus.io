@@ -629,10 +629,15 @@
     return ((m.slots || {})[key]) || m;
   }
 
+  // The one guard on a null floor, and since 2026-08-16 the one renderer of
+  // the floor phrase anywhere on the page. Two of the four floor renderings
+  // used to call pct(m.min_edge) raw and printed a bare hyphen where a
+  // percentage belongs the day min_edge arrives null. The article is baked in
+  // here because the null phrase carries its own.
   function floorText(m) {
     if (!m || m.min_edge == null) return "the minimum edge";
-    return pct(m.min_edge, 1) + (m.provisional === false ? " measured threshold"
-                                                         : " policy floor");
+    return "a " + pct(m.min_edge, 1) + (m.provisional === false ? " measured threshold"
+                                                                : " policy floor");
   }
 
   // The badge that carries the whole labelling contract. Before this it existed
@@ -683,8 +688,7 @@
       (chipHtml ? '<div class="bt-pick-nums">' + chipHtml + "</div>" : "") +
       (m && m.provisional !== false
         ? note("This is a " + gl("provisional pick", "provisional_pick") +
-               ". It cleared a " + pct(m.min_edge, 1) + " " +
-               gl("policy floor", "policy_floor") + ", not a measured " +
+               ". It cleared " + floorText(m) + ", not a measured " +
                "threshold, because the model is not validated. Nothing on this " +
                "page is advice.")
         : "");
@@ -695,15 +699,26 @@
   // the two sides beside it are already conditional on it not landing. The
   // served EV carries the (1 - p_push) factor, so this line is what makes that
   // number legible rather than a discount nobody can see the reason for.
-  function pushLine(p) {
+  // 2026-08-16: the sentence used to say "the expected value above" while
+  // pickCard renders the EV chip below it, and the disclosure existed on the
+  // two pick cards only while the team board rendered the same push-discounted
+  // EV and push-conditional model probability in silence. The text is built
+  // here for both surfaces, each naming where its own numbers actually sit.
+  function pushText(p, probName, evName) {
     if (!p || p.p_push == null || !(p.p_push > 0)) return "";
     var pt = (p.point != null) ? p.point : null;
     var whole = (pt != null && Math.abs(pt - Math.round(pt)) < 1e-9);
     if (!whole) return "";
-    return "<p>" + esc(String(Math.round(pt))) + " is a push " + pct(p.p_push, 1) +
-      " of the time. A push returns the stake, so the expected value above is the " +
-      "conditional value scaled by the " + pct(1 - p.p_push, 1) +
-      " of the time the bet resolves at all.</p>";
+    return esc(String(Math.round(pt))) + " is a push " + pct(p.p_push, 1) +
+      " of the time. A push returns the stake, so " +
+      (probName || "the model probability") + " is the chance to cash given " +
+      "the bet resolves at all, and " + (evName || "the expected value below") +
+      " is that conditional value scaled by the " + pct(1 - p.p_push, 1) +
+      " of the time it does.";
+  }
+  function pushLine(p) {
+    var t = pushText(p, null, null);
+    return t ? "<p>" + t + "</p>" : "";
   }
 
   // THE MARGIN MODEL, NAMED ON THE PICK. The Poisson difference is the wrong
@@ -739,7 +754,7 @@
       return '<div class="bt-pick bt-pick-empty">' + hd +
         '<div class="bt-pick-sel bt-dim">Nothing qualifies today</div>' +
         "<p>" + esc(why) + "</p>" +
-        "<p>The floor is " + pct(m.min_edge, 1) + ", the same one every other slot " +
+        "<p>The floor is " + floorText(m) + ", the same one every other slot " +
         "clears, and it is never lowered to make a pick appear. An empty slot is " +
         "the honest answer to a slate with nothing on it.</p></div>";
     }
@@ -882,8 +897,8 @@
     if (need != null) {
       s += "The honest backtest has graded " + (have == null ? "-" : have) +
         " of the " + need + " games it needs before any edge threshold can be " +
-        "measured, so the picks above clear a " + pct(m.min_edge, 1) +
-        " floor that was chosen as policy, not fitted to anything. ";
+        "measured, so the picks above clear " + floorText(m) +
+        ", not a number fitted to anything. ";
     } else {
       s += "No minimum edge has been measured, so the picks above clear a floor " +
         "that was chosen as policy, not fitted to anything. ";
@@ -1520,14 +1535,28 @@
         "far from first pitch to be the same game. Those games are still on the board " +
         "below, marked unpriced, because an absent row reads as an absent game.");
     }
+    // 2026-08-16: pick_meta.blocked was read by pickCensus alone, so a build
+    // whose slots the server hard-stopped still handed out green badges off
+    // the surviving min_edge (the server fills meta before the block branch).
+    // The reason prints here, above the board, and pickFloor treats the block
+    // as no floor, so the badge and its head note go down with the picks they
+    // claim agreement with.
+    var meta = d.pick_meta || {};
+    if (meta.blocked) {
+      head += note("<strong>No best value badges today.</strong> " +
+        esc(meta.blocked_reason || "the selection rule never ran") +
+        ". The pick slots were hard-stopped for that reason, and the badge " +
+        "takes the same stop rather than outliving it: nothing on this board " +
+        "is marked as a bet.");
+    }
     var thr = pickFloor();
     if (hasMarket && thr != null) {
       head += note("A <strong>best value</strong> badge marks the single side in a " +
-        "game with the largest " + gl("edge", "bet_edge") + " clearing the same " +
-        esc(floorText((S.data && S.data.pick_meta) || {})) + " the picks above " +
-        "use, so the badge and the picks can never disagree about the bar. A game " +
-        "with no badge had nothing clear it, and that absence is information: it " +
-        "means the model and the market agree about that game.");
+        "game with the largest " + gl("edge", "bet_edge") + " clearing " +
+        esc(floorText((S.data && S.data.pick_meta) || {})) + ", the same bar the " +
+        "picks above use, so the badge and the picks can never disagree about the " +
+        "bar. A game with no badge had nothing clear it, and that absence is " +
+        "information: it means the model and the market agree about that game.");
     }
     return head + bets.map(gameCard).join("");
   }
@@ -1539,6 +1568,10 @@
   // two would drift the day the measured threshold replaces the policy floor.
   function pickFloor() {
     var m = (S.data && S.data.pick_meta) || {};
+    // 2026-08-16: a blocked build keeps its min_edge, so reading the floor
+    // alone let the badge outlive the stop that emptied both pick slots.
+    // Blocked means there is no bar to clear, not a bar that was cleared.
+    if (m.blocked) return null;
     return (m.min_edge == null) ? null : Number(m.min_edge);
   }
 
@@ -1602,7 +1635,7 @@
     if (b.runline) blocks.push(marketBlock(gl("Runline", "runline"), b.runline, best));
     if (b.total && b.total.sides) {
       blocks.push(marketBlock(gl("Total", "total_line") + " " + esc(b.total.line),
-                              b.total.sides, best));
+                              b.total.sides, best, b.total));
     }
     else blocks.push('<div class="bt-market"><div class="bt-market-hd">Total</div>' +
       '<div class="bt-faironly">Model fair total ' + num(m.fair_total, 2) +
@@ -1676,7 +1709,11 @@
 
   // `title` arrives as ready HTML (it carries a glossary span), so it is the one
   // argument here that is not escaped. Every value from the payload still is.
-  function marketBlock(title, rows, best) {
+  // `tot` is the total block itself and only the total call passes it: until
+  // 2026-08-16 the push disclosure lived on the two pick cards alone, while
+  // this table rendered the same push-discounted EV and push-conditional model
+  // probability on a whole-number line and said nothing about either.
+  function marketBlock(title, rows, best, tot) {
     if (!rows || !rows.length) return "";
     var hasBook = rows.some(function (r) { return r.odds != null; });
     var head = "<tr><th class=\"bt-l\">" + title + "</th><th>Model</th>" +
@@ -1701,8 +1738,17 @@
       }
       return '<tr' + (r === best ? ' class="bt-bestrow"' : "") + ">" + cells + "</tr>";
     }).join("");
+    var push = "";
+    if (tot) {
+      var pp = (tot.p_push != null) ? tot.p_push
+                                    : (((tot.sides || [])[0] || {}).p_push);
+      var pline = pushText({ p_push: pp,
+                             point: (tot.line != null ? Number(tot.line) : null) },
+                           "the Model column", "the EV/u column");
+      if (pline) push = '<div class="bt-hold">' + pline + "</div>";
+    }
     return '<div class="bt-market"><div class="bt-scroll mlbstats-scroll"><table class="bt-table bt-market-table mlbstats-table">' +
-      "<thead>" + head + "</thead><tbody>" + body + "</tbody></table></div></div>";
+      "<thead>" + head + "</thead><tbody>" + body + "</tbody></table></div>" + push + "</div>";
   }
 
   // ---- section: props -------------------------------------------------------
@@ -2350,9 +2396,10 @@
   }
 
   // ---- hash router ----------------------------------------------------------
-  // #section=pick|team|props|parlays|calc|mybets. The alternation is baked into
-  // the regex rather than looked up in a map, so "#section=constructor" cannot
-  // resolve off Object.prototype (the fantasy.js lesson).
+  // #section=potd|teams|props|parlays|calculators|record|validation|mybets,
+  // the eight ids in SECTIONS. The alternation is baked into the regex rather
+  // than looked up in a map, so "#section=constructor" cannot resolve off
+  // Object.prototype (the fantasy.js lesson).
   function hashParam(h, key, pat) {
     var m = new RegExp("(?:^#|[#&])" + key + "=(" + pat + ")(?:&|$)").exec(h || "");
     return m ? m[1] : null;
@@ -2524,6 +2571,11 @@
     ".bt-tag{font:700 9px/1 var(--font-retro,monospace);padding:3px 5px;text-transform:uppercase}",
     ".bt-tag-warn{color:var(--text-primary);border:1.5px solid var(--accent-gold,#a80)}",
     ".bt-tag-ok{color:var(--accent-green,#3a9);border:1.5px solid var(--accent-green,#3a9)}",
+    // The provisional badge's own hook, dead until 2026-08-16: provBadge has
+    // emitted .bt-prov since the labelling contract landed and no rule in this
+    // sheet ever matched it. Dashed is this sheet's dialect for informational,
+    // not validated (.bt-numchip-info), on the gold .bt-tag-warn already sets.
+    ".bt-prov{border-style:dashed;white-space:nowrap}",
     // The gate table's `why` is a paragraph, not a cell value. Without a cap
     // it stretches the row to its own length and the whole table becomes a
     // horizontal scroll of one sentence. Both selectors are qualified by

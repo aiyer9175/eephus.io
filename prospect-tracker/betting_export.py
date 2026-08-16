@@ -346,6 +346,30 @@ def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def _public_path(p) -> str:
+    """A path as the PAYLOAD may carry it: POSIX-style, relative to the site
+    checkout root.
+
+    Until 2026-08-16 the payload published four filesystem paths verbatim
+    (status.feed_health.source, record_storage.authoritative_path and
+    .derived_path, record_chain_anchor.source), and on the build box a verbatim
+    path is absolute: data/betting.json served the OS username to every reader
+    as part of "C:\\Users\\<name>\\...". A path on a public artifact is only
+    ever there to say WHICH file inside the checkout answered, and the checkout
+    root is the whole of the context a reader has, so that is the basis every
+    published path uses now. Absolute paths still go to logs, where they belong.
+
+    A path outside the checkout root has no honest relative form and is
+    returned verbatim: the only callers that can produce one are tests pointing
+    the module at tmp fixtures (test_betting.py pins the verbatim echo), and a
+    production path that ever landed outside the root would be its own defect
+    to fix at the source, not to disguise here."""
+    try:
+        return Path(p).resolve().relative_to(ROOT.resolve()).as_posix()
+    except (ValueError, OSError):
+        return str(p)
+
+
 # ===========================================================================
 # THE APPEND-ONLY RECORD
 # ===========================================================================
@@ -543,15 +567,30 @@ def ensure_record_log() -> dict:
 def read_published_chain() -> dict:
     """The chain hash the previous build published, and where it came from.
 
-    Returns {"chain_sha", "source", "published_at", "n_rows"}. `chain_sha` is
-    None when nothing has ever been published, which is the honest answer and
-    the one `chain_extends` treats as "nothing to extend".
+    Returns {"chain_sha", "source", "durable", "armed", "published_at",
+    "n_rows"}. `chain_sha` is None when nothing has ever been published, which
+    is the honest answer and the one `chain_extends` treats as "nothing to
+    extend". `durable` says whether the anchor file itself answered; `armed`
+    says whether the rewrite check this value feeds can actually detect a
+    rewrite, and when it cannot, `unarmed_reason` names why.
 
     THE FALLBACK IS DELIBERATELY KEPT and is not a hedge: a box upgrading to the
     durable anchor has a real previous value sitting in data/betting.json and
     throwing it away would lose one build's worth of rewrite detection. It is
     used ONLY while no anchor file exists, and the source is reported so a reader
-    can tell which one answered."""
+    can tell which one answered.
+
+    BUT THE FALLBACK MAY NOT MANUFACTURE A PASS (found 2026-08-16). The
+    git-tracked betting.json's committed `record.chain_sha` is genesis, and a
+    nightly `git checkout -- .` restores exactly that copy, so on production
+    this function answered genesis-or-None forever and
+    `chain_extends(None, rows)` is True by construction: the rewrite half of the
+    record_storage blocker reported itself open while it could not detect
+    anything. So when the durable anchor is absent, the fallback yields no
+    usable value AND the record already holds rows, the state is reported as
+    UNARMED, and `chain_anchor_closed_reason` turns that into a closed blocker.
+    An empty record keeps the old behaviour: genesis is legitimate when there
+    is nothing to protect yet."""
     p = PUBLISHED_CHAIN_PATH
     if p.exists():
         try:
@@ -561,15 +600,54 @@ def read_published_chain() -> dict:
                         p.name)
             obj = None
         if isinstance(obj, dict) and obj.get("chain_sha"):
-            return {"chain_sha": obj.get("chain_sha"), "source": str(p),
+            return {"chain_sha": obj.get("chain_sha"), "source": _public_path(p),
+                    "durable": True, "armed": True,
                     "published_at": obj.get("published_at"),
                     "n_rows": obj.get("n_rows")}
     board = (_load("betting.json") or {}).get("record") or {}
-    return {"chain_sha": board.get("chain_sha"),
-            "source": ("data/betting.json (git-tracked fallback; a nightly "
-                       "`git checkout -- .` reverts it, so this value is absent on "
-                       "production until the durable anchor is written)"),
-            "published_at": None, "n_rows": board.get("n_rows")}
+    out = {"chain_sha": board.get("chain_sha"),
+           "source": ("data/betting.json (git-tracked fallback; a nightly "
+                      "`git checkout -- .` reverts it, so this value is absent on "
+                      "production until the durable anchor is written)"),
+           "durable": False, "armed": True,
+           "published_at": None, "n_rows": board.get("n_rows")}
+    reason = chain_anchor_closed_reason(out, load_record())
+    if reason:
+        out["armed"] = False
+        out["unarmed_reason"] = reason
+    return out
+
+
+def chain_anchor_closed_reason(anchor: dict | None, rows: list[dict]) -> str | None:
+    """None when the rewrite check is armed; otherwise the reason the chain
+    half of the record_storage blocker must be CLOSED.
+
+    One function, read by both the anchor report and the blocker, so the payload
+    can never say "armed" while the blocker decides "vacuous". The three ways to
+    be armed:
+      * the record is empty, so there is no history to rewrite and genesis is a
+        legitimate previous value;
+      * the durable anchor answered, whose value is a real claim written at the
+        end of the last publishing build (genesis there means "the record was
+        empty when last published", and an append from it verifies);
+      * the fallback carries a real non-genesis hash, the upgrading-box case the
+        fallback exists for.
+    Anything else means `chain_extends` would return True by construction while
+    rows already exist, which is the vacuous pass found 2026-08-16."""
+    anchor = anchor or {}
+    if not rows:
+        return None
+    if anchor.get("durable"):
+        return None
+    sha = anchor.get("chain_sha")
+    if sha and sha != CHAIN_GENESIS:
+        return None
+    return (f"the record already holds {len(rows)} row(s) but no durable chain "
+            "anchor exists at .cache/betting/published_chain.json and the "
+            "git-tracked fallback carries no usable chain_sha, so "
+            "chain_extends would pass by construction without being able to "
+            "detect a rewrite; the check is fail-closed until the next build "
+            "that writes the anchor")
 
 
 def write_published_chain(rows: list[dict], *, path: Path | None = None) -> dict:
@@ -606,13 +684,17 @@ def record_storage() -> dict:
     publish blocker and not a footnote."""
     jsonl = RECORD_JSONL.exists()
     rows = load_record()
+    # The two paths ride through `_public_path`: this block lands verbatim on
+    # data/betting.json AND data/betting_preview.json, and until 2026-08-16 both
+    # published the build box's absolute paths, OS username included.
     return {
         "backend": "jsonl" if jsonl else "json_fallback",
-        "authoritative_path": str(RECORD_JSONL if jsonl else RECORD_PATH),
+        "authoritative_path": _public_path(RECORD_JSONL if jsonl else RECORD_PATH),
         "durable": bool(jsonl),
         "n_rows": len(rows),
         "chain_sha": chain_sha(rows),
-        "derived_path": str(RECORD_PATH),
+        "derived_path": _public_path(RECORD_PATH),
+        "path_basis": "relative to the site checkout root",
         "why": ("the append-only log under .cache/ is untracked, so the nightly "
                 "`git checkout -- .` cannot revert it; data/betting_record.json is "
                 "re-rendered from it every build"
@@ -1387,7 +1469,10 @@ def snapshot_health(days: int = 14, *, now: datetime | None = None) -> dict:
     return {
         "generated_at": now.replace(microsecond=0).isoformat(),
         "window_days": int(days),
-        "source": str(bi.CACHE_DIR),
+        # `_public_path`, not str(): this block is published verbatim as
+        # status.feed_health on both payload files, and the absolute form of the
+        # odds cache dir carried the build box's OS username (found 2026-08-16).
+        "source": _public_path(bi.CACHE_DIR),
         "n_slates": len(rows),
         "n_slates_with_close": n_with_close,
         "n_slates_missing_close": n_missing,
@@ -1416,6 +1501,66 @@ def snapshot_health(days: int = 14, *, now: datetime | None = None) -> dict:
 # ===========================================================================
 # THE PROVISIONAL LABEL AND THE PUBLISH BLOCKERS
 # ===========================================================================
+REGISTRY_PATH = DATA_DIR / "model_registry.json"
+
+
+def model_verdict(evald: dict | None, *, registry: dict | None = None) -> dict:
+    """The ONE place the model's two verdict words come from.
+
+    Until 2026-08-16 three surfaces each derived their own copy: status.model
+    hardcoded its enum in build(), the record label hardcoded "unvalidated" in
+    its sentence, and the registry's verdict ("provisional", a different word
+    answering a different question) reached the page not at all. Three
+    derivations of one state is how a page comes to disagree with itself, so
+    every surface now reads this function.
+
+    Two words, deliberately kept apart because they measure different things:
+      * gate_state comes from the EVAL ARTIFACT's gates, exactly the derivation
+        build() used: "validated" only when the artifact says validated AND a
+        measured min_edge exists. "All gates open" with a null min_edge is a
+        contradiction, resolved the safe way.
+      * registry_verdict is data/model_registry.json's word for the
+        betting_game_prob row (its enum: validated / provisional / unvalidated /
+        deprecated). "Provisional" there means measured and short of its sample
+        gate, not working.
+
+    `registry` is an injection seam for tests; the default reads the file. A
+    missing file or row degrades to None rather than to a guessed word."""
+    evald = evald or {}
+    gate_state = ("validated"
+                  if bool(evald.get("validated")) and evald.get("min_edge") is not None
+                  else "unvalidated")
+
+    if registry is None:
+        try:
+            registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            registry = {}
+    row = next((m for m in (registry or {}).get("models") or []
+                if isinstance(m, dict) and m.get("model_id") == "betting_game_prob"),
+               None)
+    registry_verdict = (row or {}).get("verdict")
+
+    if gate_state == "validated":
+        gate_half = ("the eval artifact's gates are open and a minimum edge "
+                     "is measured, so the served state is validated")
+    else:
+        gate_half = ("the eval artifact's gates are closed and no minimum edge "
+                     "is measured, so the served state is unvalidated")
+    if registry_verdict is None:
+        reg_half = ("the model registry carries no verdict for betting_game_prob, "
+                    "so no second word is shown")
+    else:
+        reg_half = (f"the model registry's verdict is \"{registry_verdict}\""
+                    + (", which there means measured but short of its sample "
+                       "gate, not working" if registry_verdict == "provisional" else ""))
+    return {
+        "gate_state": gate_state,
+        "registry_verdict": registry_verdict,
+        "sentence": f"{gate_half}; {reg_half}.",
+    }
+
+
 def honest_backtest_progress(evald: dict | None) -> dict:
     """(graded, needed) for the honest backtest, READ FROM THE ARTIFACT.
 
@@ -1455,8 +1600,12 @@ def provisional_record_label(evald: dict | None, *, min_edge: float,
                "has graded")
     else:
         got = f"{n} of the {need} games the honest backtest needs are graded"
+    # The verdict word comes from model_verdict, the same function status.model
+    # reads, so the label and the status chip cannot drift apart. Today that
+    # word is "unvalidated" and the sentence is unchanged.
+    state = model_verdict(evald)["gate_state"]
     return (f"Provisional. This pick clears a {min_edge:.1%} floor that was chosen as "
-            f"policy, not measured. The model is unvalidated: {got}, and no "
+            f"policy, not measured. The model is {state}: {got}, and no "
             "minimum-edge threshold exists. This row is in the public record because "
             "a claim that is not written down before the result is not a claim.")
 
@@ -1467,6 +1616,7 @@ def record_publish_blockers(*, payload: dict | None = None,
                             health: dict | None = None,
                             settlement: dict | None = None,
                             published_chain_sha: str | None = None,
+                            chain_anchor: dict | None = None,
                             now: datetime | None = None) -> list[dict]:
     """EVERY condition a pick must clear before it enters the PUBLIC record.
 
@@ -1508,6 +1658,9 @@ def record_publish_blockers(*, payload: dict | None = None,
     settlement = load_settlement() if settlement is None else settlement
     status = payload.get("status") or {}
     slate = payload.get("slate_date")
+    # The verdict word in the prose below comes from the one function every
+    # surface reads, not from a copy of it here.
+    verdict_state = model_verdict(evald)["gate_state"]
 
     out: list[dict] = []
 
@@ -1521,7 +1674,7 @@ def record_publish_blockers(*, payload: dict | None = None,
         "reason": ("a close snapshot exists, so this pick can be CLV-graded"
                    if snap else
                    "no close snapshot for this slate, so the pick could never be "
-                   "CLV-graded and the only honest read on an unvalidated model's "
+                   f"CLV-graded and the only honest read on an {verdict_state} model's "
                    "decisions would be missing. " + str(health.get("diagnosis") or "")),
     })
 
@@ -1553,21 +1706,36 @@ def record_publish_blockers(*, payload: dict | None = None,
 
     store = record_storage()
     chain_ok = chain_extends(published_chain_sha, rows)
-    store_open = bool(store["durable"] and chain_ok)
+    # THE VACUOUS PASS, FAIL-CLOSED (found 2026-08-16). With no durable anchor
+    # the previous chain value used to be read off the git-tracked betting.json,
+    # whose committed chain_sha is genesis, so `chain_extends(None, rows)`
+    # returned True by construction on every production build and the rewrite
+    # half of this blocker was disarmed while reporting itself open. A
+    # None-or-genesis previous value over a NON-EMPTY record is only trustable
+    # when the durable anchor itself asserted it; anything else closes the
+    # blocker with the reason named. An empty record keeps the old behaviour,
+    # because genesis is legitimate when there is nothing to protect yet.
+    anchor_closed = None
+    if rows and (not published_chain_sha or published_chain_sha == CHAIN_GENESIS):
+        anchor = chain_anchor if chain_anchor is not None else read_published_chain()
+        anchor_closed = chain_anchor_closed_reason(anchor, rows)
+    store_open = bool(store["durable"] and chain_ok and not anchor_closed)
     out.append({
         "id": "record_storage", "open": store_open,
         "need": ("the append-only JSONL under .cache/betting/ to be authoritative, "
                  "and its chain to extend the last published chain_sha"),
         "have": {"backend": store["backend"], "chain_sha": store["chain_sha"],
                  "published_chain_sha": published_chain_sha,
-                 "chain_extends": chain_ok},
+                 "chain_extends": chain_ok,
+                 "chain_check_armed": not anchor_closed},
         "reason": (store["why"] if not store["durable"] else
-                   ("the record is the untracked append-only log and its chain extends "
-                    "the last published value"
-                    if chain_ok else
-                    f"the last published chain_sha {str(published_chain_sha)[:12]}... is "
-                    "not a prefix hash of the current record; something rewrote history "
-                    "rather than appending to it")),
+                   (anchor_closed if anchor_closed else
+                    ("the record is the untracked append-only log and its chain extends "
+                     "the last published value"
+                     if chain_ok else
+                     f"the last published chain_sha {str(published_chain_sha)[:12]}... is "
+                     "not a prefix hash of the current record; something rewrote history "
+                     "rather than appending to it"))),
     })
 
     stale = []
@@ -1661,6 +1829,7 @@ def maybe_publish_record(payload: dict, *, evald: dict | None = None,
                          health: dict | None = None,
                          settlement: dict | None = None,
                          published_chain_sha: str | None = None,
+                         chain_anchor: dict | None = None,
                          write: bool = True, now: datetime | None = None,
                          log_fn=None) -> dict:
     """Evaluate the blockers and, ONLY if every one is open, append this slate's
@@ -1678,7 +1847,8 @@ def maybe_publish_record(payload: dict, *, evald: dict | None = None,
     rows = load_record()
     blockers = record_publish_blockers(
         payload=payload, rows=rows, evald=evald, health=health,
-        settlement=settlement, published_chain_sha=published_chain_sha, now=now)
+        settlement=settlement, published_chain_sha=published_chain_sha,
+        chain_anchor=chain_anchor, now=now)
     slate = payload.get("slate_date")
     slots = [payload.get(k) for k in ("pick_of_the_day", "longshot_of_the_day")]
     cands = [record_row(s, slate_date=slate, evald=evald) for s in slots if s]
@@ -2843,14 +3013,21 @@ def validation_state(evald: dict | None) -> dict:
 # pick of the day
 # ===========================================================================
 def pick_blockers(*, min_edge: float | None, odds_configured: bool,
-                  gate: dict | None = None) -> list[dict]:
+                  gate: dict | None = None, evald: dict | None = None) -> list[dict]:
     """EVERY reason there is no pick, not just the first one.
 
     The old shape returned the first blocker and stopped, so on a day with no
     odds feed the payload said "no odds feed" and never mentioned that the
     model has no measured threshold either. Both are true today. A reader told
     only the first would reasonably conclude that a key on the build box is all
-    that stands between him and a published pick, which is wrong by two gates."""
+    that stands between him and a published pick, which is wrong by two gates.
+
+    `evald` exists so the verdict word in the reasons comes from model_verdict
+    rather than being hardcoded here; absent, the derivation is the same one
+    (no artifact reads as unvalidated), so older callers keep their words."""
+    # One derivation of the verdict word for both reasons below, from the same
+    # function every other surface reads.
+    state = model_verdict(evald)["gate_state"]
     out = []
     if not odds_configured:
         out.append({
@@ -2872,7 +3049,7 @@ def pick_blockers(*, min_edge: float | None, odds_configured: bool,
                 "have": have,
                 "gates_closed": [g.get("id") for g in closed],
                 "n_closed": len(closed), "n_gates": n_gates,
-                "reason": (f"the model is unvalidated: the minimum-edge threshold sits behind "
+                "reason": (f"the model is {state}: the minimum-edge threshold sits behind "
                            f"{n_gates} gates and {len(closed)} are closed, starting with "
                            f"{first.get('need')} against {have_txt} in hand"),
             })
@@ -2881,7 +3058,7 @@ def pick_blockers(*, min_edge: float | None, odds_configured: bool,
                 "id": "min_edge", "open": False,
                 "need": "a clean out-of-sample test that measures a minimum edge",
                 "have": None,
-                "reason": ("the model is unvalidated: the backtest is contaminated by "
+                "reason": (f"the model is {state}: the backtest is contaminated by "
                            "season-to-date team inputs, so no minimum-edge threshold has "
                            "been measured and no pick is published"),
             })
@@ -3368,9 +3545,13 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     # (through the payload) the client's banner chip, so the three can never
     # disagree on the page. It takes BOTH halves: the artifact's gates open AND
     # a measured threshold. "All gates open" with a null min_edge is a
-    # contradiction, and this resolves it the safe way.
-    validated = bool(validation.get("validated") and min_edge is not None)
-    blockers = pick_blockers(min_edge=min_edge, odds_configured=odds_configured, gate=gate)
+    # contradiction, and this resolves it the safe way. The derivation lives in
+    # model_verdict since 2026-08-16, beside the registry's own verdict word,
+    # because three surfaces each carried a private copy of it before.
+    verdict = model_verdict(evald)
+    validated = verdict["gate_state"] == "validated"
+    blockers = pick_blockers(min_edge=min_edge, odds_configured=odds_configured,
+                             gate=gate, evald=evald)
     # PROVISIONAL PICKS (owner decision 2026-08-06, second slot 2026-08-07). The
     # blockers above are kept and published UNCHANGED: they are the honest
     # account of why the model is not validated, and a provisional pick does not
@@ -3457,7 +3638,13 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
             "odds_note": status.get("note"),
             "odds_captured_at": (snap or {}).get("captured_at"),
             "odds_kind": (snap or {}).get("kind"),
-            "model": "validated" if validated else "unvalidated",
+            # The machine enum, from model_verdict, the single source every
+            # verdict surface reads. The registry's own word rides beside it
+            # because the two answer different questions and a reader shown
+            # only one would over- or under-trust the model.
+            "model": verdict["gate_state"],
+            "model_registry_verdict": verdict["registry_verdict"],
+            "model_verdict_sentence": verdict["sentence"],
             "model_mode": validation.get("headline_mode"),
             # The observation behind any empty-board reason, so the claim on the
             # page can be checked against the files rather than believed.
@@ -3574,6 +3761,7 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     publish = maybe_publish_record(payload, evald=evald, health=feed_health,
                                    settlement=settle_map,
                                    published_chain_sha=prev_chain,
+                                   chain_anchor=prev_chain_src,
                                    write=write, log_fn=log_fn)
     payload["record_publish"] = {k: v for k, v in publish.items() if k != "blockers"}
     payload["record_publish_blockers"] = publish["blockers"]

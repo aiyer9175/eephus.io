@@ -325,10 +325,18 @@ def storage() -> dict:
     gate 3 is stored somewhere a checkout or a box rebuild can delete" is a
     finding, not a footnote."""
     durable = SHADOW_CACHE_PATH.exists()
+    # Published paths are checkout-relative. This block rode into the published
+    # learning artifact as absolute Windows paths carrying the OS username,
+    # the same leak betting_export._public_path closed on the board payload
+    # (found 2026-08-16). Lazy import: betting_export is heavy and this module
+    # is otherwise independent of it.
+    from betting_export import _public_path
     return {
         "backend": "cache" if durable else "data_fallback",
-        "authoritative_path": str(SHADOW_CACHE_PATH if durable else SHADOW_DERIVED_PATH),
-        "derived_path": str(SHADOW_DERIVED_PATH),
+        "authoritative_path": _public_path(SHADOW_CACHE_PATH if durable
+                                           else SHADOW_DERIVED_PATH),
+        "derived_path": _public_path(SHADOW_DERIVED_PATH),
+        "path_basis": "relative to the site checkout root",
         "durable": durable,
         "n_rows": len(load()),
         "why": ("the ledger lives under .cache/betting/, which is gitignored (so no "
