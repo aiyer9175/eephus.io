@@ -30,7 +30,7 @@ three are required, and any one of them missing turns the file into marketing:
      reports the sign of the change since the previous row, including "down".
 
 WHAT IS IN IT
-  latest.clocks        the two clocks, numerator / denominator / measured rate
+  latest.clocks        the three clocks, numerator / denominator / measured rate
   latest.gates         the gate table VERBATIM from betting_model.min_edge_gate
   latest.skill         vintage and forward Brier against the home-field baseline
   latest.calibration   ten bins from the calibration ledger
@@ -179,27 +179,66 @@ def _dates_back(n: int = RATE_WINDOW_DATES) -> str:
     return (datetime.now(timezone.utc).date() - timedelta(days=n)).isoformat()
 
 
-def measured_rate(counts_by_date: dict, *, window: int = RATE_WINDOW_DATES) -> dict:
+def measured_rate(counts_by_date: dict, *, window: int = RATE_WINDOW_DATES,
+                  series_start: str | None = None) -> dict:
     """Arrivals per CALENDAR DAY over the window, counted not assumed.
 
-    The denominator is calendar days in the window, NOT the number of dates that
-    happened to produce a row. That is the conservative choice and it is the
-    right one: a night the box did not capture is a night the clock did not
-    tick, and dividing by "dates with arrivals" would report the rate on the
-    days it worked and then apply it to every day."""
+    The denominator is calendar days, NOT the number of dates that happened to
+    produce a row. That is the conservative choice and it is the right one: a
+    night the box did not capture is a night the clock did not tick, and
+    dividing by "dates with arrivals" would report the rate on the days it
+    worked and then apply it to every day.
+
+    BUT ONLY THE DAYS THE SERIES COULD HAVE SEEN (fixed 2026-08-16). The old
+    denominator was the full window unconditionally, so a series younger than
+    the window divided a few days of arrivals by 28: on the vintage clock, 19
+    arrivals over a 4-day diffable span published as 0.68 a day against a true
+    ~4.75, and the 504-day ETA in the 2026-08-16 artifact was that arithmetic,
+    not a measurement (tools/betting_clock_probe.py holds the decomposition).
+    The denominator is now min(window, series age in days), the age is
+    published beside the rate, and per_day_28d keeps the full-window figure so
+    the fix can never read as the module having sped up.
+
+    `series_start` is the first date the series could have recorded an arrival
+    on; without it the earliest date in `counts_by_date` stands in, which
+    understates the age for a differenced series (the first point has no
+    predecessor to difference against) and so can only make the rate higher,
+    never lower, than the honest one."""
     cutoff = _dates_back(window)
     hit = {d: n for d, n in (counts_by_date or {}).items()
            if d and d >= cutoff}
     total = sum(hit.values())
+    start = series_start or min((d for d in (counts_by_date or {}) if d),
+                                default=None)
+    age = None
+    if start:
+        try:
+            age = max(1, (datetime.now(timezone.utc).date()
+                          - date.fromisoformat(str(start)[:10])).days + 1)
+        except ValueError:
+            age = None
+    effective = min(window, age) if age else window
+    basis = (f"counted arrivals over the {window} calendar days since {cutoff}, "
+             f"divided by {effective} day(s). A night with no capture is a night "
+             "the clock did not tick and is in the denominator")
+    if age is not None and effective < window:
+        basis += (f", but the series is only {age} day(s) old (started {start}) "
+                  "and days before it existed are not nights the clock failed "
+                  "to tick")
+    basis += "."
     return {
         "n_in_window": total,
         "n_dates_with_arrivals": len(hit),
         "window_days": window,
         "window_from": cutoff,
-        "per_day": (round(total / window, 4) if window else None),
-        "basis": (f"counted arrivals over the {window} calendar days since "
-                  f"{cutoff}, divided by {window} days. A night with no capture "
-                  "is a night the clock did not tick and is in the denominator."),
+        "series_start": start,
+        "series_age_days": age,
+        "effective_window_days": effective,
+        "per_day": (round(total / effective, 4) if effective else None),
+        # The pre-2026-08-16 figure, kept so the denominator fix is visible as
+        # a fix and can never be mistaken for the module speeding up.
+        "per_day_28d": (round(total / window, 4) if window else None),
+        "basis": basis,
     }
 
 
@@ -267,11 +306,15 @@ def _vintage_clock(evald: dict, history: list[dict]) -> dict:
     have = int(v.get("n_graded") or 0)
     need = int(v.get("min_graded_games_for_min_edge") or 600)
 
-    counts, basis = {}, None
+    counts, basis, start = {}, None, None
     pts = [(r.get("date"), r.get("vintage_n_graded")) for r in history
            if r.get("date") and r.get("vintage_n_graded") is not None]
     if len(pts) >= 2:
         basis = "this file's own history"
+        # The series began at its FIRST row, not at the first differenced
+        # arrival: the first row has no predecessor to difference against, so
+        # min(counts) would understate the age by one row.
+        start = pts[0][0]
         for (d0, n0), (d1, n1) in zip(pts, pts[1:]):
             counts[d1] = max(0, int(n1) - int(n0))
     else:
@@ -284,12 +327,13 @@ def _vintage_clock(evald: dict, history: list[dict]) -> dict:
             basis = (f"the eval's own graded span ({first} to {last}, {span} days, "
                      f"{have} games), spread evenly, because this series has fewer "
                      "than two history points to difference")
+            start = first
             per = have / span
             d = date.fromisoformat(last)
             for i in range(min(span, RATE_WINDOW_DATES)):
                 counts[(d - timedelta(days=i)).isoformat()] = per
 
-    rate = measured_rate(counts)
+    rate = measured_rate(counts, series_start=start)
     rate["basis"] = f"{rate['basis']} Source: {basis}." if basis else rate["basis"]
     prev = next((r.get("vintage_n_graded") for r in reversed(history)
                  if r.get("vintage_n_graded") is not None), None)
@@ -308,6 +352,82 @@ def _vintage_clock(evald: dict, history: list[dict]) -> dict:
         "may_go_backwards": ("yes. A refit can change which games are eligible, "
                              "and this counter renders the drop rather than "
                              "carrying the high-water mark forward."),
+    }
+
+
+def _gradable_clock(evald: dict, history: list[dict]) -> dict:
+    """The archive clock: gradable games toward the ~900 the 600-game gate
+    implies. New 2026-08-16.
+
+    THIS IS THE CLOCK THE RUNBOOK'S ETA TABLE RUNS ON. n_graded counts only
+    EVAL-window games: the fit window holds the first VINTAGE_FIT_TARGET_GAMES
+    (300) of the archive, clamped to half the covered dates while the archive
+    is short, so the eval window cannot hold 600 graded games until roughly
+    900 are gradable. Watching n_graded alone therefore makes the module look
+    about half as fast as the archive is actually growing, on top of which the
+    fit boundary eats the early half of every new stretch of dates. Publishing
+    the archive's own numerator, need and measured rate here is what lets
+    docs/diamond-betting.md's ETA table and this artifact do the same
+    arithmetic on the same numbers instead of disagreeing."""
+    v = (evald or {}).get("vintage") or {}
+    have = int(v.get("n_gradable") or 0)
+    try:
+        import betting_model as bm
+        graded_need = int(bm.VINTAGE_MIN_GRADED_GAMES)
+        fit_target = int(bm.VINTAGE_FIT_TARGET_GAMES)
+    except Exception:                                           # noqa: BLE001
+        graded_need, fit_target = 600, 300
+    need = graded_need + fit_target
+
+    counts, basis, start = {}, None, None
+    pts = [(r.get("date"), r.get("vintage_n_gradable")) for r in history
+           if r.get("date") and r.get("vintage_n_gradable") is not None]
+    if len(pts) >= 2:
+        basis = "this file's own history"
+        start = pts[0][0]
+        for (d0, n0), (d1, n1) in zip(pts, pts[1:]):
+            counts[d1] = max(0, int(n1) - int(n0))
+    else:
+        first, last = v.get("first_graded_date"), v.get("last_graded_date")
+        if first and last and have:
+            try:
+                span = max(1, (date.fromisoformat(last) - date.fromisoformat(first)).days + 1)
+            except ValueError:
+                span = 1
+            basis = (f"the eval's own gradable span ({first} to {last}, {span} "
+                     f"days, {have} games), spread evenly, because this series "
+                     "has fewer than two gradable-count history points to "
+                     "difference")
+            start = first
+            per = have / span
+            d = date.fromisoformat(last)
+            for i in range(min(span, RATE_WINDOW_DATES)):
+                counts[(d - timedelta(days=i)).isoformat()] = per
+
+    rate = measured_rate(counts, series_start=start)
+    rate["basis"] = f"{rate['basis']} Source: {basis}." if basis else rate["basis"]
+    prev = next((r.get("vintage_n_gradable") for r in reversed(history)
+                 if r.get("vintage_n_gradable") is not None), None)
+    return {
+        "id": "gradable_games",
+        "question": ("how fast is the archive itself growing toward the "
+                     "gradable total the 600-graded gate implies"),
+        "have": have, "need": need,
+        "need_derivation": (f"{graded_need} eval-window games for gate 1 plus "
+                            f"the {fit_target}-game fit window in front of them "
+                            "(VINTAGE_MIN_GRADED_GAMES + VINTAGE_FIT_TARGET_GAMES)"),
+        "pct": (round(have / need, 4) if need else None),
+        "rate": rate,
+        "eta": days_to_need(have, need, rate),
+        "direction": _direction(have, prev),
+        "why_beside_vintage_sample": ("n_graded is the eval window only; the fit "
+                                      "window absorbs roughly half of a short "
+                                      "archive's growth, so the graded clock "
+                                      "understates how fast the archive fills. "
+                                      "This clock is the archive itself."),
+        "may_go_backwards": ("yes, for the same reason as the vintage clock: a "
+                             "refit or a coverage change can shrink the "
+                             "gradable set, and the drop is rendered."),
     }
 
 
@@ -435,26 +555,72 @@ def _skill_block(evald: dict) -> dict:
     return out
 
 
+#: Where the close job proves it ran, and what its last calibration attach
+#: did. Written by tools/betting_close_job.py, read here. Both live under
+#: .cache/ because deploy/nightly-build.sh runs `git checkout -- .` before the
+#: build, so a tracked stamp would be reverted before this could read it.
+CLOSE_JOB_HEARTBEAT_PATH = ROOT / ".cache" / "betting" / "close_job_heartbeat.json"
+CLOSE_ATTACH_RESULT_PATH = ROOT / ".cache" / "betting" / "close_attach_result.json"
+
+
 def _market_move_block(cal_summary: dict) -> dict:
     """The market's own open-to-close move on the sides the ledger priced.
 
     `blocked_by` is filled whenever it is empty, because an empty CLV-shaped
     block with no explanation reads as "no edge" rather than "not measured yet".
     NEVER pooled with the published record's clv_pct: this ledger holds no
-    positions, so nothing here is closing line VALUE."""
+    positions, so nothing here is closing line VALUE.
+
+    THE EMPTY-CASE DIAGNOSIS USED TO BE WRONG TWICE OVER (fixed 2026-08-16).
+    It named data/betting_clv.json as the missing repair, but that file is the
+    published record's CLV sidecar and no calibration row is built from it,
+    so its absence explained nothing and its presence repaired nothing. Worse,
+    whenever the sidecar happened to exist, the block asserted that closes
+    "matched no open row at the same book", a book-mismatch measurement that
+    had never run: append_close had no production caller, so nothing had ever
+    been matched or mismatched. The block now walks the chain that actually
+    fills it, in order: the close job (tools/betting_close_job.py, which a
+    cron must reach), the close snapshot ingest, betting_export.
+    close_events_for_calibration, betting_calibration.append_close. And it
+    claims a book mismatch only off a PERSISTED close-attach result, never
+    from inference."""
     mm = (cal_summary or {}).get("market_move_pct") or {}
     n = int(mm.get("n") or 0)
     blocked = None
     if not n:
-        clv = _load_json(DATA_DIR / "betting_clv.json")
-        if clv is None:
-            blocked = ("no close snapshot has been joined yet. The close job has "
-                       "to run after first pitch and write data/betting_clv.json, "
-                       "and that file is not in the tree.")
+        hb = _load_json(CLOSE_JOB_HEARTBEAT_PATH)
+        attach = _load_json(CLOSE_ATTACH_RESULT_PATH)
+        if (isinstance(attach, dict) and int(attach.get("n_book_mismatch") or 0) > 0
+                and not int(attach.get("closed") or 0)):
+            blocked = (f"append_close ran and attached nothing: the persisted "
+                       f"attach result for slate {attach.get('slate_date')} "
+                       f"({attach.get('written_at')}) reports "
+                       f"{int(attach['n_book_mismatch'])} book mismatch(es) and "
+                       f"0 attached. A close taken at a different book is a "
+                       "different market, not a move.")
+        elif isinstance(attach, dict):
+            blocked = (f"the close job has run its calibration attach for slate "
+                       f"{attach.get('slate_date')} ({int(attach.get('closed') or 0)} "
+                       f"attached, {int(attach.get('n_no_close') or 0)} row(s) with "
+                       "no close price at the open row's book) but no market move "
+                       "has reached the ledger summary yet.")
+        elif hb is None:
+            blocked = ("the close job has never run on this machine: no cron or "
+                       "scheduled task reaches tools/betting_close_job.py, so the "
+                       "chain that fills this block (close job, then close "
+                       "snapshot ingest, then betting_export."
+                       "close_events_for_calibration, then betting_calibration."
+                       "append_close) stops at its first link. Install "
+                       "deploy/betting-crontab.example (Linux) or "
+                       "deploy/betting-close-task.ps1 -Register (Windows), then "
+                       "confirm with `python tools/betting_close_job.py "
+                       "--selfcheck`.")
         else:
-            blocked = ("close snapshots exist but none matched an open row at the "
-                       "same book; a close taken at a different book is a different "
-                       "market, not a move.")
+            blocked = (f"the close job is scheduled (last ran "
+                       f"{hb.get('last_run_utc')}, decision: {hb.get('reason')}) "
+                       "but it has not yet fired and persisted a close-attach "
+                       "result for any slate; whether a close matches the open "
+                       "row's book cannot be known until one exists.")
     return {
         "n": n, "mean_pct": mm.get("mean"),
         "share_positive": mm.get("share_positive"),
@@ -508,16 +674,33 @@ def build(*, path: Path | None = None) -> dict:
     except Exception as exc:                                    # noqa: BLE001
         log.warning("betting_learning: calibration ledger unavailable (%s)", exc)
 
-    gate = (evald or {}).get("min_edge_gate") or {}
-    if not gate:
-        try:
-            import betting_model as bm
-            gate = bm.min_edge_gate((evald or {}).get("vintage"))
-        except Exception as exc:                                # noqa: BLE001
-            log.warning("betting_learning: gate table unavailable (%s)", exc)
-            gate = {}
+    # THE GATE IS RECOMPUTED AT BUILD TIME, NOT COPIED FROM THE EVAL ARTIFACT
+    # (2026-08-16). The eval artifact's min_edge_gate block freezes at model
+    # refit time while the shadow ledger keeps settling, so the two drift
+    # inside one artifact: on 2026-08-16 the eval's gate said board_all had 47
+    # settled rows while the clocks below, reading the live ledger the same
+    # night, said 72. Same quantity, two denominators, one file. The gate is
+    # now always recomputed against the ledger as it stands and stamped
+    # computed_at, and the eval artifact's copy is kept beside it as
+    # gates_as_of_eval so the drift itself stays visible instead of choosing a
+    # winner silently. The eval copy is served only when the recompute is
+    # impossible, and the block says so.
+    gate_as_of_eval = (evald or {}).get("min_edge_gate") or {}
+    gate, gate_computed_at, gate_basis = {}, None, None
+    try:
+        import betting_model as bm
+        gate = bm.min_edge_gate((evald or {}).get("vintage"))
+        gate_computed_at = _now()
+        gate_basis = "recomputed against the ledger at build time"
+    except Exception as exc:                                    # noqa: BLE001
+        log.warning("betting_learning: gate recompute unavailable (%s); "
+                    "serving the eval artifact's copy", exc)
+        gate = gate_as_of_eval
+        gate_basis = ("the eval artifact's copy; the recompute was unavailable, "
+                      "so these counts are as of the last model refit")
 
     vintage_clock = _vintage_clock(evald, history)
+    gradable_clock = _gradable_clock(evald, history)
     price_clock = _price_clock(shadow_summary, ledger_rows, history)
     calibration = _calibration_block(cal_summary, history)
 
@@ -527,17 +710,35 @@ def build(*, path: Path | None = None) -> dict:
         "eval_generated_at": evald.get("generated_at"),
         "model_version": evald.get("model_version"),
         "clocks": {"vintage_sample": vintage_clock,
+                   "gradable_games": gradable_clock,
                    "graded_price_history": price_clock},
-        # VERBATIM. The gate table is the model's own statement about itself and
-        # is copied, not paraphrased: a summary here that drifted from the gate
-        # would be a second, quieter claim about the same thing.
+        # VERBATIM. The gate table is the model's own statement about itself
+        # and is copied, not paraphrased: a summary here that drifted from the
+        # gate would be a second, quieter claim about the same thing. Since
+        # 2026-08-16 it is min_edge_gate's output recomputed at build time
+        # rather than the eval artifact's frozen copy; see the comment above
+        # gate_as_of_eval for the 47-vs-72 drift that forced the change.
         "gates": {"min_edge": gate.get("min_edge"),
                   "all_gates_open": gate.get("all_gates_open"),
                   "gates": gate.get("gates"),
                   "odds_snapshot_dates": gate.get("odds_snapshot_dates"),
                   "sweep": gate.get("sweep"),
                   "policy": gate.get("policy"),
-                  "verbatim_from": "betting_model.min_edge_gate"},
+                  "verbatim_from": "betting_model.min_edge_gate",
+                  "computed_at": gate_computed_at,
+                  "gate_basis": gate_basis,
+                  "gates_as_of_eval": ({
+                      "as_of": evald.get("generated_at"),
+                      "min_edge": gate_as_of_eval.get("min_edge"),
+                      "all_gates_open": gate_as_of_eval.get("all_gates_open"),
+                      "gates": gate_as_of_eval.get("gates"),
+                      "sweep": gate_as_of_eval.get("sweep"),
+                      "note": ("the eval artifact's own copy, frozen at refit "
+                               "time. Its counts may trail the recomputed "
+                               "block because the ledger keeps settling after "
+                               "the refit; the drift is published, not "
+                               "resolved."),
+                  } if gate_as_of_eval else None)},
         "skill": _skill_block(evald),
         "calibration": calibration,
         "market_move": _market_move_block(cal_summary),
@@ -559,6 +760,10 @@ def build(*, path: Path | None = None) -> dict:
         "date": latest["date"],
         "generated_at": latest["generated_at"],
         "vintage_n_graded": vintage_clock["have"],
+        # The archive counter, stored so the gradable clock can difference its
+        # own history the way the vintage clock does (new 2026-08-16; the
+        # clock runs on the eval-span fallback until two rows carry it).
+        "vintage_n_gradable": gradable_clock["have"],
         "vintage_need": vintage_clock["need"],
         "vintage_brier": ((evald.get("vintage") or {}).get("brier")),
         "vintage_skill_t": (((evald.get("vintage") or {}).get("skill_vs_home_base")

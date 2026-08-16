@@ -115,23 +115,48 @@ evidence behind an odds-at-post claim.
 
 ### Close snapshot (near first pitch), for CLV
 
-Closing line value needs a second capture. The schedule is data, not a cron
-guess:
+Closing line value needs a second capture, and the right moment is DATA, not a
+cron guess: first pitch moves by hours between a getaway day and a night
+slate. The capture is owned by `tools/betting_close_job.py`, which is designed
+to be cron'd every 15 minutes ALL DAY and to act once. It exits quietly on
+every invocation except the one inside the firing window, refuses to fire
+twice for a slate, and refuses to fire after first pitch. On the night it
+fires it also grades the published record's CLV sidecar and attaches closing
+prices to the calibration ledger (`betting_calibration.append_close`), because
+that is the only moment the close is guaranteed to be on disk.
 
-```python
-import betting_ingest as bi, betting_export as be
-games = be.slate_games()
-bi.closing_window(games)      # UTC ISO minute of the earliest first pitch
-```
+**Install it (promoted into this runbook 2026-08-16, because the job had been
+finished for a week while no scheduler on any machine was reaching it):**
 
-Schedule the close snapshot a few minutes before that stamp:
+- Linux box: install `deploy/betting-crontab.example` with `crontab -e`. The
+  entry is `*/15 * * * *` under `TZ=UTC`; every window decision is made inside
+  the job, so no cron window is needed and none should be added.
+- Windows box: `powershell -ExecutionPolicy Bypass -File
+  deploy\betting-close-task.ps1 -Register` (elevated, as the user who owns
+  the checkout).
+- Verify: `python tools/betting_close_job.py --selfcheck`. It reads the
+  heartbeat the job stamps on EVERY invocation, refusals included, and answers
+  the question a dry run cannot: has the SCHEDULER ever reached this job on
+  this machine. Exit 1 with "NEVER RUN" means no cron or task is installed,
+  however finished the code is.
+- Inspect today's window without spending a credit:
+  `python tools/betting_close_job.py --why`.
 
-```
-python betting_ingest.py --snapshot close
-```
+As of 2026-08-16, `--selfcheck` reports NEVER RUN on every machine this repo
+has touched: the job was never the bottleneck, the installation was. Until it
+is installed, `market_move_pct` in the calibration ledger stays null and
+`data/betting_learning.json` says exactly that (its market-move block walks
+this chain by name). Two defects to know about when reading this path's
+history: the crontab example shipped 2026-08-05 with a box-local `12-23` hour
+window that closes before most first pitches (fixed 2026-08-09, all-day UTC),
+and the job's calibration attach shipped 2026-08-09 filtering the folded
+ledger rows on a `phase` field the fold deliberately drops, so its first real
+night would have attached zero closes (fixed 2026-08-16; the selector now
+reads `close_odds` and `result` off the folded row, and the attach result is
+persisted to `.cache/betting/close_attach_result.json`).
 
-This module installs no timer. It tells the box when to run; the box owns the
-scheduling.
+A manual capture remains `python betting_ingest.py --snapshot close`; the
+snapshot cache is immutable either way.
 
 ### Leaderboard vintage (nightly, before the payload)
 
@@ -365,6 +390,28 @@ start of zero, landed in mid October, and concluded that **the realistic first
 honest grade is May or June of 2027**. That conclusion is withdrawn: it rested
 on the premise that no backfill was possible, and section 5a is the backfill.
 
+> **Recomputed 2026-08-16, and now published nightly by the artifact itself.**
+> This arithmetic is the `gradable_games` clock in
+> `data/betting_learning.json` (new 2026-08-16, section 5b), so the table and
+> the artifact can no longer do the same sum on different numbers: both read
+> `n_gradable` and its measured growth.
+>
+> | Quantity | Value | Where it comes from |
+> |---|---|---|
+> | Games needed in the eval window | 600 | `VINTAGE_MIN_GRADED_GAMES` |
+> | Fit window in front of them | 300 | `VINTAGE_FIT_TARGET_GAMES` |
+> | Gradable games needed | ~900 | 600 + 300 |
+> | Gradable on 2026-08-16 | 507 | `betting_model_eval.json` vintage block |
+> | Graded (eval window) on 2026-08-16 | 258 | same block; the half-date clamp splits 38 archive dates at 2026-07-28, 249 fit / 258 eval |
+> | Still to accumulate | ~393 | 900 - 507 |
+> | Archive growth, measured | 12.4 games per calendar day | 507 games over the 41 days 2026-07-06 to 2026-08-15 |
+> | **Slate days still needed** | **~32** | 393 / 12.4 |
+> | **First possible honest grade** | **about 2026-09-17** | 2026-08-16 + 32 days |
+>
+> If a 504-day figure for this module is in your head, read section 5b: it
+> was a measurement bug in the learning artifact's rate, not a property of
+> the archive.
+
 Four caveats ride with the new date and none of them are small.
 
 1. **The no-pooling rule STANDS.** A 2026 tail plus an early 2027 run is not one
@@ -403,6 +450,16 @@ fix is to move a cheap team-level leaderboard refresh onto the daily path.
 Snapshot nightly anyway: a gap in the store is the only evidence that the step
 stopped firing, and the day the exports move to daily the store gets daily
 resolution with no rewiring.
+
+> **Correction, 2026-08-16.** The paragraph above is out of date and stands as
+> the record of why the fix exists. The three team leaderboards have refreshed
+> NIGHTLY since step 9e-pre0 landed on the daily path (run_monthly.py:2125,
+> "Refresh the boards the vintage is about to freeze"): the daily tail
+> rebuilds the bullpen, starter and hitter leaderboards immediately before the
+> vintage snapshot freezes them, skipping only on nights the monthly chain
+> just built them. The staleness ceiling this passage describes was real and
+> is closed going forward; `vintage_age_days` in the coverage block is the
+> instrument that verifies it stays closed.
 
 That staleness is now MEASURED rather than bounded by a guess.
 `coverage()["vintage_age_days"]` publishes the distribution of "how old were the
@@ -710,6 +767,74 @@ was non-inferior at BEST (paired Brier delta -9.3e-05, one-sided 95% lower bound
 -0.000383): a correction that is at best neutral on the moneyline cannot rescue
 a -0.001224 moneyline deficit. The run distribution being wrong is a real
 defect and it is not the reason this model does not beat the home team.
+
+---
+
+## 5b. The learning artifact's clocks, and the 504-day story (2026-08-16)
+
+`data/betting_learning.json` publishes the module's progress as measured
+arrival rates applied forward. Since 2026-08-16 it carries THREE clocks:
+
+| Clock | Numerator / need | Question |
+|---|---|---|
+| `vintage_sample` | `n_graded` / 600 | gate 1's own counter: eval-window games graded |
+| `gradable_games` | `n_gradable` / ~900 | the archive itself: 600 plus the 300-game fit window in front of them. This is the clock section 5's ETA table runs on |
+| `graded_price_history` | settled rows / 100 PER TAG | gate 3, one clock per selection rule, never pooled (section 7a) |
+
+### The 504-day story, which was a measurement bug
+
+On 2026-08-16 the artifact published the vintage clock at 0.68 graded games a
+day and a 504-day ETA to the 600-game gate, in a season where MLB completes
+~13.1 games per calendar date. A 19x gap between the world and the instrument
+is never one bug. `tools/betting_clock_probe.py` (read-only; run it) measured
+where every factor of it lives, with an unexplained remainder of ~0:
+
+| Factor | Size | Mechanism |
+|---|---|---|
+| Series-youth denominator inflation | 7.0x | `measured_rate` divided 19 arrivals from a 4-day diffable span by the full 28-day window. Arrivals predating the first history row (221 games were already graded when the series began on 2026-08-10) were dropped from the numerator while their days stayed in the denominator, and the window exceeded the series age outright |
+| Fit-boundary absorption | 2.0x | `n_graded` counts EVAL-window games only. While the fit window holds fewer than `VINTAGE_FIT_TARGET_GAMES` (300; it held 249), the half-of-dates clamp governs the split (`_vintage_cut_index = min(target_idx, half_idx)`, verified target_idx 23 vs half_idx 19 on 38 dates), so the eval counter receives roughly half of the archive's growth |
+| Missed and zero-increment nights | 1.3x | 2026-08-15 produced no learning row at all, and 2026-08-12 ran against an eval artifact that had not refreshed its graded count |
+| Schedule constant vs this archive's density | 1.06x | 13.1 is measured over 130 season dates; this archive window ran at 12.4 |
+
+7.0 x 1.97 x 1.32 x 1.06 = 19.3. The games were arriving on schedule the
+whole time; the instrument was wrong, twice by construction and once by
+operations.
+
+Two repairs shipped the same day, both in `betting_learning.py`:
+
+- `measured_rate`'s denominator is now `min(window_days, series age in days)`.
+  The age and the effective window are published beside the rate, and the old
+  full-window figure is kept as `per_day_28d` so the fix can never be read as
+  the module having sped up. First corrected build: 5.3 graded games a day and
+  a 65-day ETA, against the 0.68 and 504 it replaced.
+- The `gradable_games` clock publishes the archive's own numerator and its
+  measured rate (12.4 gradable games a day on the same build, ~32 days to
+  ~900), which is the quantity the graded counter systematically understates
+  by the fit-boundary factor above.
+
+### The gate-versus-clocks denominator trap
+
+The artifact's gate table used to be copied from `betting_model_eval.json`,
+which freezes at model refit time, while the clocks read the live shadow
+ledger the same night. On 2026-08-16 the frozen gate said `board_all` had 47
+settled rows while the clocks said 72: one artifact, one quantity, two
+denominators. The build now always recomputes `betting_model.min_edge_gate`
+against the ledger as it stands, stamps the result `computed_at`, and keeps
+the eval's copy beside it as `gates_as_of_eval`, so the drift stays visible
+instead of being resolved silently.
+
+### What the empty market-move block may claim
+
+The calibration ledger's `market_move_pct` stays empty until the close job
+runs (section 3 has the install runbook). The artifact's `blocked_by` used to
+name `data/betting_clv.json` as the repair, but that file is the published
+record's CLV sidecar and no calibration row is built from it; worse, whenever
+the sidecar existed the block asserted a book mismatch no run had measured.
+It now walks the real chain by name (close job, close snapshot ingest,
+`betting_export.close_events_for_calibration`,
+`betting_calibration.append_close`) and claims a book mismatch only off the
+attach result the close job persists to
+`.cache/betting/close_attach_result.json`.
 
 ---
 

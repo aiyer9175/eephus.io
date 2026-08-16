@@ -130,6 +130,75 @@ def read_heartbeat(path: Path | None = None) -> dict | None:
     except Exception:
         return None
 
+
+#: The persisted result of the last calibration close-attach. Under .cache/
+#: for the same reason the heartbeat is: deploy/nightly-build.sh runs
+#: `git checkout -- .` before the build, so a tracked stamp would be reverted
+#: before anything could read it.
+#:
+#: WHY IT IS PERSISTED AT ALL. data/betting_learning.json explains an empty
+#: market-move block, and until 2026-08-16 it explained it by guessing: it
+#: asserted a book mismatch that no run had ever measured. This file is what
+#: lets it cite what the attach actually did, n_book_mismatch included, and
+#: claim nothing beyond it.
+ATTACH_RESULT_PATH = ROOT / ".cache" / "betting" / "close_attach_result.json"
+
+
+def write_attach_result(res: dict, *, path: Path | None = None) -> None:
+    """Best effort and silent on failure, same posture as the heartbeat:
+    telemetry must never be the reason a ledger write does not land."""
+    p = path or ATTACH_RESULT_PATH
+    try:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        payload = dict(res)
+        payload["written_at"] = (datetime.now(timezone.utc)
+                                 .replace(microsecond=0).isoformat())
+        tmp = p.with_name(p.name + ".tmp")
+        tmp.write_text(json.dumps(payload, indent=1), encoding="utf-8")
+        os.replace(tmp, p)
+    except Exception:
+        log.warning("betting_close_job: could not persist the attach result; "
+                    "the ledger write is unaffected", exc_info=True)
+
+
+def attach_closes(day: str | None, *, ledger_path: Path | None = None,
+                  result_path: Path | None = None) -> dict:
+    """Attach this slate's closing prices to the calibration ledger's rows
+    that are still waiting for one, and persist what happened.
+
+    THE SELECTOR READS THE FOLDED ROW, NOT A PHASE TAG. As shipped, this
+    caller filtered bc.rows() on r["phase"] == PHASE_OPEN. But rows() is the
+    FOLDED view, one row per priced side with every phase merged, and it
+    deliberately drops `phase` while folding, so the filter matched nothing:
+    `opens` was always empty, close_events_for_calibration was handed an empty
+    list, and the first night the cron ever fired would have attached zero
+    closes while printing a healthy-looking zero. The defect was in the tree
+    from the day the caller shipped (2026-08-09) and could never have worked;
+    it went unnoticed for the same reason the whole chain sat idle, the cron
+    was never installed, so no production run ever reached the line. Found by
+    reading the fold, 2026-08-16. A row still awaiting its close is one for
+    this slate with no close_odds and no result, and those are field names the
+    folded row actually carries."""
+    import betting_export as be
+    import tools.betting_calibration as bc
+
+    if not day:
+        res = {"closed": 0, "n_no_close": 0, "n_book_mismatch": 0,
+               "n_open_rows": 0, "slate_date": None,
+               "reason": "no slate date to attach against"}
+        write_attach_result(res, path=result_path)
+        return res
+    opens = [r for r in bc.rows(path=ledger_path)
+             if r.get("slate_date") == day
+             and r.get("close_odds") is None
+             and not r.get("result")]
+    ev = be.close_events_for_calibration(day, opens)
+    res = bc.append_close(ev, path=ledger_path)
+    res["slate_date"] = day
+    res["n_open_rows"] = len(opens)
+    write_attach_result(res, path=result_path)
+    return res
+
 # Fire this many minutes BEFORE the earliest first pitch. Far enough out that
 # the request completes while the market is still open, close enough that the
 # line is genuinely a closing line. The Odds API updates on the order of a
@@ -501,24 +570,19 @@ def main() -> int:
         log.exception("betting_close_job: CLV grading failed; the close snapshot "
                       "IS captured and the grade can be rebuilt from it")
 
-    # Attach the closing price to the CALIBRATION ledger's open rows for this
+    # Attach the closing price to the CALIBRATION ledger's rows for this
     # slate. This is the other half of the close capture and it had no
     # production caller at all: append_close was reachable only from two tests,
     # so no `phase: close` row was ever written, market_move_pct was permanently
     # null, and data/betting_learning.json published a blocked_by describing a
-    # repair that would not have repaired it.
+    # repair that would not have repaired it. The selection itself was ALSO
+    # broken as shipped, in a way that made the caller a guaranteed no-op; the
+    # defect and its fix live in `attach_closes` above.
     #
     # Same posture as the CLV grade above: best effort, because the CAPTURE is
     # the irreplaceable half and every derived number can be rebuilt from it.
     try:
-        import betting_export as be
-        import tools.betting_calibration as bc
-        day = d.get("slate_date")
-        opens = [r for r in bc.rows()
-                 if r.get("slate_date") == day and r.get("phase") == bc.PHASE_OPEN
-                 and r.get("close_odds") is None]
-        ev = be.close_events_for_calibration(day, opens)
-        res = bc.append_close(ev)
+        res = attach_closes(d.get("slate_date"))
         print(f"  calibration: {res.get('closed', 0)} closing price(s) attached "
               f"({res.get('n_no_close', 0)} without a close, "
               f"{res.get('n_book_mismatch', 0)} book mismatch)")

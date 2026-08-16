@@ -343,15 +343,138 @@ def test_a_zero_rate_is_none_days_and_a_blocked_by_not_a_big_number():
 
 
 def test_the_rate_denominator_is_calendar_days_not_days_that_worked():
-    """A night the box did not capture is a night the clock did not tick."""
-    r = bl.measured_rate({bl._dates_back(1): 28}, window=28)
+    """A night the box did not capture is a night the clock did not tick, for
+    a series old enough to have seen the whole window."""
+    r = bl.measured_rate({bl._dates_back(1): 28}, window=28,
+                         series_start=bl._dates_back(60))
     assert r["n_dates_with_arrivals"] == 1
     assert r["per_day"] == 1.0, "28 arrivals over 28 calendar days, not over 1"
+
+
+def test_a_young_series_divides_by_its_age_not_the_window():
+    """The 504-day ETA bug: 19 arrivals over a 4-day-old series divided by 28
+    published 0.68 a day against a true ~4.75. A 5-day-old series with 6 a day
+    must read ~6, the basis must name the age, and the old figure must stay
+    published beside it so the fix cannot read as a speed-up."""
+    counts = {bl._dates_back(i): 6 for i in range(5)}
+    r = bl.measured_rate(counts, series_start=bl._dates_back(4))
+    assert r["series_age_days"] == 5
+    assert r["effective_window_days"] == 5
+    assert r["per_day"] == 6.0, "30 arrivals over the 5 days the series existed"
+    assert r["per_day_28d"] == round(30 / 28, 4), "the full-window figure survives"
+    assert "5 day(s) old" in r["basis"], "the basis names the age"
 
 
 def test_a_requirement_already_met_is_zero_days_and_not_a_projection():
     out = bl.days_to_need(600, 600, bl.measured_rate({}))
     assert out["days"] == 0 and out["is_projection"] is False
+
+
+# ---------------------------------------------------------------------------
+# 5b. the gradable_games clock: the archive itself, toward ~900
+# ---------------------------------------------------------------------------
+def test_the_gradable_games_clock_counts_the_archive_toward_900():
+    """n_graded is the eval window only; the fit window in front of it means
+    600 graded games need roughly 900 gradable ones. This clock publishes that
+    arithmetic so the runbook's ETA table and the artifact use one source."""
+    first, last = bl._dates_back(27), bl._dates_back(0)
+    evald = {"vintage": {"n_gradable": 280, "n_graded": 143,
+                         "first_graded_date": first,
+                         "last_graded_date": last}}
+    c = bl._gradable_clock(evald, [])
+    assert c["id"] == "gradable_games"
+    assert c["have"] == 280
+    assert c["need"] == 900, "600 eval-window games plus the 300-game fit window"
+    assert "VINTAGE_FIT_TARGET_GAMES" in c["need_derivation"]
+    assert c["rate"]["per_day"] == 10.0, "280 games over a 28-day span"
+    assert c["eta"]["days"] == 62, "620 short at 10 a day"
+    assert c["eta"]["is_projection"] is True
+
+
+def test_the_gradable_clock_differences_its_own_history_once_it_has_one():
+    history = [{"date": bl._dates_back(2), "vintage_n_gradable": 480},
+               {"date": bl._dates_back(1), "vintage_n_gradable": 500}]
+    c = bl._gradable_clock({"vintage": {"n_gradable": 507}}, history)
+    assert c["rate"]["n_in_window"] == 20
+    assert "history" in c["rate"]["basis"]
+    assert c["direction"] == "up", "507 now against 500 in the last row"
+
+
+# ---------------------------------------------------------------------------
+# the market-move diagnosis walks the real chain
+# ---------------------------------------------------------------------------
+def test_the_empty_move_block_names_the_real_chain_not_the_clv_sidecar(tmp_path, monkeypatch):
+    """The old text blamed data/betting_clv.json, the published record's CLV
+    sidecar, which no calibration row is built from; and whenever that file
+    existed it asserted a book mismatch nobody had measured. With no heartbeat
+    and no attach result the honest diagnosis is: the close job never ran."""
+    monkeypatch.setattr(bl, "CLOSE_JOB_HEARTBEAT_PATH", tmp_path / "hb.json")
+    monkeypatch.setattr(bl, "CLOSE_ATTACH_RESULT_PATH", tmp_path / "attach.json")
+    b = bl._market_move_block({"market_move_pct": {"n": 0}})["blocked_by"]
+    assert "betting_clv.json" not in b, "the sidecar is not this ledger's repair"
+    assert "never run" in b
+    assert "close_events_for_calibration" in b and "append_close" in b
+    assert "mismatch" not in b.lower(), (
+        "a book mismatch may only be claimed off a persisted attach result")
+
+
+def test_a_book_mismatch_is_only_claimed_off_a_persisted_attach_result(tmp_path, monkeypatch):
+    hb, att = tmp_path / "hb.json", tmp_path / "attach.json"
+    monkeypatch.setattr(bl, "CLOSE_JOB_HEARTBEAT_PATH", hb)
+    monkeypatch.setattr(bl, "CLOSE_ATTACH_RESULT_PATH", att)
+    hb.write_text(json.dumps({"last_run_utc": "2026-08-16T22:00:00+00:00",
+                              "reason": "inside the closing window"}),
+                  encoding="utf-8")
+
+    # Scheduled but nothing persisted: the job's own state is reported and no
+    # mismatch is invented.
+    b = bl._market_move_block({"market_move_pct": {"n": 0}})["blocked_by"]
+    assert "scheduled" in b and "mismatch" not in b.lower()
+
+    # A persisted attach result that MEASURED mismatches may be cited.
+    att.write_text(json.dumps({"slate_date": "2026-08-16", "closed": 0,
+                               "n_no_close": 2, "n_book_mismatch": 3,
+                               "written_at": "2026-08-16T22:00:05+00:00"}),
+                   encoding="utf-8")
+    b2 = bl._market_move_block({"market_move_pct": {"n": 0}})["blocked_by"]
+    assert "3 book mismatch" in b2
+    assert "2026-08-16" in b2, "the claim cites the persisted result"
+
+
+# ---------------------------------------------------------------------------
+# the gate table reads the ledger as it stands, not the eval's frozen copy
+# ---------------------------------------------------------------------------
+def test_the_gate_table_is_recomputed_not_copied_from_the_eval(tmp_path, monkeypatch):
+    """The denominator trap, pinned: on 2026-08-16 the eval artifact's gate
+    said board_all had 47 settled rows while the clocks, reading the live
+    ledger the same night, said 72. The build must serve the recomputed gate,
+    stamp computed_at, and keep the eval's copy as gates_as_of_eval."""
+    import betting_model as bm
+
+    stale = {"min_edge": None, "all_gates_open": False,
+             "gates": [{"id": "graded_price_history", "have": 47,
+                        "have_by_tag": {"board_all": 47}}]}
+    fresh = {"min_edge": None, "all_gates_open": False,
+             "gates": [{"id": "graded_price_history", "have": 72,
+                        "have_by_tag": {"board_all": 72}}],
+             "sweep": {"n_rows": 72}, "policy": "p", "odds_snapshot_dates": 9}
+    (tmp_path / "betting_model_eval.json").write_text(
+        json.dumps({"generated_at": "2026-08-16T18:02:46+00:00",
+                    "vintage": {"n_graded": 258, "n_gradable": 507},
+                    "min_edge_gate": stale}), encoding="utf-8")
+    monkeypatch.setattr(bl, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(bm, "min_edge_gate", lambda vb, **kw: fresh)
+
+    gates = bl.build(path=tmp_path / "series.json")["latest"]["gates"]
+    served = {g["id"]: g for g in gates["gates"]}["graded_price_history"]
+    assert served["have"] == 72, "the served gate counts the ledger as it stands"
+    assert gates["computed_at"], "and is stamped with when it was computed"
+    assert gates["verbatim_from"] == "betting_model.min_edge_gate"
+
+    kept = {g["id"]: g for g in gates["gates_as_of_eval"]["gates"]}[
+        "graded_price_history"]
+    assert kept["have"] == 47, "the eval's frozen copy is kept, labelled, beside it"
+    assert gates["gates_as_of_eval"]["as_of"] == "2026-08-16T18:02:46+00:00"
 
 
 # ---------------------------------------------------------------------------

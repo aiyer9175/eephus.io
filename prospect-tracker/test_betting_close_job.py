@@ -190,3 +190,60 @@ def test_the_diagnosis_separates_not_scheduled_from_never_firing(tmp_path, monke
         assert "firing window is never opening" in running["diagnosis"], \
             running["diagnosis"]
         assert running["close_job_ever_ran"] is True
+
+
+# ---------------------------------------------------------------------------
+# THE CLOSE-ATTACH, and the filter that could never match.
+#
+# The original caller filtered bc.rows() on r["phase"] == PHASE_OPEN, but
+# rows() is the FOLDED view and deliberately drops `phase` while folding, so
+# `opens` was always empty and the first cron night would have attached zero
+# closes while printing a healthy zero. Documented in the module for months as
+# the repair for market_move_pct being permanently null; the caller itself
+# could never have worked. Found and fixed 2026-08-16.
+# ---------------------------------------------------------------------------
+def test_the_close_attach_selects_folded_open_rows_not_a_phase_tag(tmp_path, monkeypatch):
+    """One open row in a real ledger, a close at the same book: the close
+    event must LAND, and the folded row must carry an attachable market move.
+    Reinstating the phase filter makes n_open_rows 0 and closed 0."""
+    import json
+    import betting_export as be
+    from tools import betting_calibration as bc
+
+    led = tmp_path / "calibration.jsonl"
+    bc.append([{
+        "cal_id": "probe0001", "phase": "open",
+        "written_at": "2026-08-05T18:00:00+00:00",
+        "slate_date": "2026-08-05", "game_pk": 900, "market": "moneyline",
+        "side": "home", "label": "PHI", "point": None, "model_prob": 0.55,
+        "market_fair_prob": 0.52, "best_odds": -120, "best_book": "draftkings",
+        "best_decimal": 1.83,
+    }], path=led)
+
+    def _events(day, opens):
+        return {(r["game_pk"], r["market"], r["side"],
+                 None if r.get("point") is None else float(r["point"])):
+                {"odds": -140, "decimal": 1.71, "book": r["best_book"],
+                 "captured_at": "2026-08-05T22:55:00+00:00"}
+                for r in opens}
+    monkeypatch.setattr(be, "close_events_for_calibration", _events)
+
+    res = job.attach_closes("2026-08-05", ledger_path=led,
+                            result_path=tmp_path / "attach.json")
+    assert res["n_open_rows"] == 1, "the folded open row was selected"
+    assert res["closed"] == 1, "the close event actually landed"
+
+    row = bc.rows(path=led)[0]
+    assert row["close_odds"] == -140
+    assert row["close_book"] == "draftkings"
+    assert row["market_move_pct"] is not None, "the move is attachable data"
+
+    persisted = json.loads((tmp_path / "attach.json").read_text(encoding="utf-8"))
+    assert persisted["closed"] == 1 and persisted["slate_date"] == "2026-08-05"
+    assert persisted["written_at"], "the attach result is a dated record"
+
+    # A second run finds nothing still waiting: the selector reads the folded
+    # close_odds, so the attach cannot double-write a slate.
+    again = job.attach_closes("2026-08-05", ledger_path=led,
+                              result_path=tmp_path / "attach.json")
+    assert again["n_open_rows"] == 0 and again["closed"] == 0
