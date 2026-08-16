@@ -36,6 +36,7 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
+import dynasty_blend
 import fa_projection as fp
 import fantasy_schedule as fsched
 import fantasy_scoring as fscore
@@ -247,8 +248,11 @@ def _pitcher_ros(proj: dict, ros_bf: float, ros_ip: float, role: str,
         "era": round(9 * er / ip, 2) if ip > 0 else None,
         "whip": round(whip, 2) if whip is not None else None,
         "hr9": round(9 * hr / ip, 2) if ip > 0 else None,
-        "k9": round(9 * k / ip, 1) if ip > 0 else None,
-        "_est": ["h", "er"],
+        # era belongs in _est (added 2026-08-16): it is 9*er/ip and er is priced
+        # at FIP (the line above), so the ERA column is exactly as heuristic as
+        # the h and er it derives from. Marking only h/er let the client render
+        # a FIP-derived ERA without the estimate marker its own inputs carried.
+        "_est": ["h", "er", "era"],
     }
     if role == "SP":
         ipgs = ip_per_gs or 5.4
@@ -546,11 +550,19 @@ def _enrich(players: list[dict]) -> None:
     string "H", which is useless to a lineup slot, so eligibility is joined from
     data/mlb_fielding_positions.json. Additive: every existing reader of `pos`
     is untouched, and dfs_export re-reads the same artifact itself when a
-    payload predates this field."""
+    payload predates this field.
+
+    DATA-HOLE FALLBACK (2026-08-16): the three skill leaderboards carry only
+    players who qualified for a board, so joining team from them alone left
+    169 of 1184 pool players teamless, 10 nameless and 88 hitters without elig
+    on the live artifact. data/mlb_player_detail.json (mlbam-resolvable,
+    nightly-fresh) backfills team, name and a single-position elig; it fills
+    holes only and never overrides a leaderboard value."""
     hit = _lb_index("hitter_leaderboards.json", "hitters")
     sp = _lb_index("starter_leaderboards.json", "starters")
     rp = _lb_index("bullpen_leaderboards.json", "relievers")
     elig = _elig_positions()
+    detail = _detail_by_mlbam()
     for p in players:
         mid, r = p["mlbam"], None
         if p["side"] == "hit":
@@ -568,6 +580,16 @@ def _enrich(players: list[dict]) -> None:
             p["skill"] = {k: r.get(k) for k in ("rem_plus", "gmli", "saves", "luck")}
             p["elig"] = ["P"]
         p["team"] = r.get("team")
+        d = detail.get(mid)
+        if d:
+            if not p.get("team"):
+                p["team"] = d.get("team")
+            if not p.get("name"):
+                p["name"] = d.get("name")
+            if p["side"] == "hit" and not p.get("elig"):
+                slot = _POS_SLOT.get(d.get("pos") or "")
+                if slot:
+                    p["elig"] = [slot]
 
 
 # StatsAPI fielding abbreviation -> fantasy lineup slot. A hitter with no
@@ -610,6 +632,25 @@ def _elig_positions() -> dict:
     return out
 
 
+def _detail_by_mlbam() -> dict:
+    """{mlbam: {team, name, pos}} off data/mlb_player_detail.json - the fallback
+    identity join for pool players the three skill leaderboards never carried
+    (see _enrich). One load, three fields kept, dict lookups after that; empty
+    when the artifact is absent, which simply leaves the holes as they were."""
+    raw = _load_json("mlb_player_detail.json")
+    players = (raw or {}).get("players") if isinstance(raw, dict) else None
+    out: dict = {}
+    if not isinstance(players, dict):
+        return out
+    for rec in players.values():
+        mid = (rec or {}).get("mlbam")
+        if not mid:
+            continue
+        out[int(mid)] = {"team": rec.get("team"), "name": rec.get("name"),
+                         "pos": rec.get("pos")}
+    return out
+
+
 def _callup_watch(ts: dict | None = None) -> list:
     """Best-effort: fantasy-relevant prospects near the majors, from PROSPX forward
     signals (timeseries.json, a generated artifact). Empty when unavailable. Accepts
@@ -637,9 +678,11 @@ def _callup_watch(ts: dict | None = None) -> list:
     return out[:60]
 
 
-# ETA-proximity discount per year still to come (sooner ETA = more dynasty value now).
-_DYN_ETA_DECAY = 0.18
-_DYN_ETA_UNKNOWN = 0.4          # proximity credit when a prospect has no ETA year
+# The blend weights and the ETA-proximity decay live in dynasty_blend (shared
+# with card_market_export.talent_score). This module carried its own copies
+# until 2026-08-16, when the card clone was found decaying ETA at 0.25 against
+# this module's 0.18; one importable module is the only shape that cannot
+# re-diverge.
 
 
 def _dynasty_tier(rank: int) -> str:
@@ -666,18 +709,18 @@ def _dynasty_prospects(ts: dict | None, season: int, xfv: dict | None = None,
     it moves no served eFV number and triggers no model gate. Joins the flagship
     eFV rows in data/xfv.json (by_player, slug-keyed) to the PROSPX prospect roster
     in timeseries.json (player_key -> mlbam / name / org / pos / ETA), then ranks
-    by a composite that keeps the eFV grade quantile PRIMARY:
+    by the shared dynasty_blend composite with THE board grade PRIMARY:
 
-        score = xfv_grade_quantile            # primary driver (~20-80 scale)
-              + 10 * p_bucket['star']         # ceiling premium (star odds)
-              -  6 * p_bust                    # floor risk
-              +  4 * eta_proximity             # sooner ETA = value sooner
-              +  2 * clamp(surplus_mm / 100)   # surplus composite (small tiebreak)
+        score = _board_grade(xr)                       # primary driver, the shown eFV
+              + W_STAR * p_bucket['star']              # ceiling premium (star odds)
+              + W_BUST * p_bust                        # floor risk (negative weight)
+              + W_ETA * eta_proximity(eta, season)     # sooner ETA = value sooner
+              + W_SURPLUS * clamp(surplus_mm / 100)    # surplus composite (tiebreak)
 
-    The DISPLAYED `efv` column is NOT that quantile: it is THE board grade
-    (_board_grade), the same number PROSPX, the homepage and /projections/ serve,
-    so /fantasy/ carries ONE eFV basis across Dynasty and Call-up Watch. The
-    quantile stays in the SCORE only, as a registered model input.
+    Driver and DISPLAYED `efv` column are the SAME number since 2026-08-16: the
+    board grade PROSPX, the homepage and /projections/ serve, so the ranking can
+    no longer contradict its own visible column (see the driver comment below for
+    the measurement). One eFV basis across Dynasty and Call-up Watch, as before.
 
     Returns rows sorted desc with rank + rank-bucket tier + the eFV outcome band
     (band_p10_mm..band_p90_mm, $M). Best-effort: empty list when inputs unavailable."""
@@ -695,40 +738,40 @@ def _dynasty_prospects(ts: dict | None, season: int, xfv: dict | None = None,
         mid = pl.get("mlbam_id")
         if not xr or not mid:
             continue
-        # SCORE input (not the displayed column): the retired per-side quantile is
-        # kept here on purpose. The blend's weights (+10 star, -6 bust, +4 ETA) were
-        # set against the quantile's spread, so swapping the driver would silently
-        # re-weight the composite. This is a model input, not a served grade.
-        efv_q = xr.get("xfv_grade_quantile")
-        if efv_q is None:
-            efv_q = xr.get("xfv_grade")
-        if efv_q is None:
+        # THE DRIVER IS THE BOARD GRADE (2026-08-16). Until today the score drove
+        # on the retired xfv_grade_quantile, a scale the site displays nowhere,
+        # while the row displayed _board_grade. The comment that used to sit here
+        # defended that with a fear: swapping the driver would silently re-weight
+        # the composite, because the weights were set against the quantile's
+        # spread. Measured on the live artifacts, the fear points the wrong way.
+        # On the served top-300 board, ranking on _board_grade with UNCHANGED
+        # weights cut visible adjacent inversions 82 to 75, >=2pt inversions 52
+        # to 20, the worst inversion 7.2 to 3.4 FV, and lifted Spearman(rank,
+        # shown eFV) 0.848 to 0.951 - a variance-matched re-derivation was WORSE
+        # than leaving them alone (98 inversions). The quantile now survives only
+        # inside _board_grade's standing fallback chain (board_value ->
+        # xfv_grade_realized -> xfv_grade_quantile), where it is a last resort,
+        # not a driver. tools/dynasty_basis_probe.py reproduces the measurement.
+        grade = _board_grade(xr)
+        if grade is None:
             continue
-        # DISPLAYED column: THE board grade. Reading the quantile here made the
-        # Dynasty eFV column disagree with Call-up Watch's fvE and with the PROSPX
-        # board for the same prospect (2026-08-03 repair).
-        efv_disp = _board_grade(xr)
-        if efv_disp is None:
-            efv_disp = efv_q
         pb = xr.get("p_bucket") or {}
         star = pb.get("star") or 0.0
         bust = xr.get("p_bust")
         if bust is None:
             bust = pb.get("bust") or 0.0
-        surplus = xr.get("surplus_mm") or 0.0
         eta = pl.get("eta")
         eta_year = eta.get("year") if isinstance(eta, dict) else (eta if isinstance(eta, int) else None)
-        if eta_year:
-            eta_prox = max(0.0, 1.0 - _DYN_ETA_DECAY * max(0, eta_year - season))
-        else:
-            eta_prox = _DYN_ETA_UNKNOWN
-        surplus_norm = max(-0.5, min(1.5, surplus / 100.0))
-        score = (efv_q + 10.0 * star - 6.0 * bust + 4.0 * eta_prox + 2.0 * surplus_norm)
+        score = dynasty_blend.blend_score(
+            grade, star, bust,
+            dynasty_blend.eta_proximity(eta_year, season),
+            dynasty_blend.surplus_norm(xr.get("surplus_mm")))
         rows.append({
             "mlbam": mid, "name": pl.get("player_name"), "org": pl.get("org"),
             "pos": pl.get("position"), "eta": eta_year,
-            "efv": round(efv_disp, 1), "star": round(star * 100),
-            "bust": round((bust or 0.0) * 100), "surplus": round(surplus),
+            "efv": round(grade, 1), "star": round(star * 100),
+            "bust": round((bust or 0.0) * 100),
+            "surplus": round(xr.get("surplus_mm") or 0.0),
             "band": [xr.get("band_p10_mm"), xr.get("band_p90_mm")],
             "score": round(score, 1),
         })

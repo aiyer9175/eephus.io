@@ -172,11 +172,23 @@ def test_dynasty_ordering_and_shape():
 
 
 def test_dynasty_efv_is_primary_driver():
-    # Two prospects identical except eFV grade quantile: higher eFV ranks first.
-    ts = {"players": [_mk_ts_row("lo", "Low", 1), _mk_ts_row("hi", "High", 2)]}
-    xfv = {"by_player": {"lo": _mk_xfv_row(45.0), "hi": _mk_xfv_row(60.0)}}
+    """The BOARD grade drives the rank (2026-08-16 driver swap), not the retired
+    quantile. The fixture makes the two scales disagree on purpose: 'lo' wins on
+    the quantile (62 vs 45) and loses on the board grade (48 vs 61), so a mutant
+    that reverts the score driver to xfv_grade_quantile ranks lo first (66.8 vs
+    49.8) and fails both assertions. Hand-computed with the shared weights
+    (star .10, bust .10, eta 2026 in season 2026 so proximity 1.0, surplus 20):
+        lo: 48 + 10(.10) - 6(.10) + 4(1.0) + 2(.20) = 48 + 1 - .6 + 4 + .4 = 52.8
+        hi: 61 + 1 - .6 + 4 + .4 = 65.8"""
+    ts = {"players": [_mk_ts_row("lo", "Low Board", 1),
+                      _mk_ts_row("hi", "High Board", 2)]}
+    xfv = {"by_player": {"lo": dict(_mk_xfv_row(62.0), xfv_grade=48.0),
+                         "hi": dict(_mk_xfv_row(45.0), xfv_grade=61.0)}}
     rows = fe._dynasty_prospects(ts, 2026, xfv=xfv)
     assert [r["mlbam"] for r in rows] == [2, 1], rows
+    assert [r["score"] for r in rows] == [65.8, 52.8], rows
+    # driver and displayed column are the same number now
+    assert [r["efv"] for r in rows] == [61.0, 48.0], rows
 
 
 def test_dynasty_eta_proximity_breaks_ties():
@@ -197,7 +209,9 @@ def test_dynasty_excludes_rows_without_efv():
 
 
 def test_dynasty_falls_back_to_xfv_grade():
-    # When xfv_grade_quantile is absent, xfv_grade is used as the primary term.
+    # A row carrying only xfv_grade still ranks and displays: xfv_grade is the
+    # first link in _board_grade's chain (board_value reads it when the side
+    # scale is off), so it is the driver, not a fallback, since 2026-08-16.
     ts = {"players": [_mk_ts_row("g", "Grade Only", 1)]}
     xfv = {"by_player": {"g": {"xfv_grade": 52.0, "p_bucket": {}, "p_bust": 0.1}}}
     rows = fe._dynasty_prospects(ts, 2026, xfv=xfv)

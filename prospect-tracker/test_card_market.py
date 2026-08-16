@@ -371,16 +371,59 @@ def test_publish_grid_is_coarse_by_design():
     assert cme._publish_round(None) is None
 
 
-def test_talent_score_clones_the_dynasty_blend():
+def test_talent_score_matches_the_shared_dynasty_blend():
     """Independent arithmetic, not a re-call of the function under test:
-    q=60, star=0.20, bust=0.30, surplus=90, eta 2027 with season 2026 ->
-    60 + 10(0.20) - 6(0.30) + 4(1 - 0.25*1) + 2(0.90)
-    = 60 + 2.0 - 1.8 + 3.0 + 1.8 = 65.0."""
+    grade=60, star=0.20, bust=0.30, surplus=90, eta 2027 with season 2026 ->
+    60 + 10(0.20) - 6(0.30) + 4(1 - 0.18*1) + 2(0.90)
+    = 60 + 2.0 - 1.8 + 3.28 + 1.8 = 65.28 -> 65.3 rounded.
+
+    The ETA leg is 3.28 because the decay is dynasty_blend.ETA_DECAY = 0.18.
+    Until 2026-08-16 this file asserted 3.0 off the local clone's 0.25 decay,
+    which is exactly how the clone's divergence from the fantasy blend (0.18)
+    survived: the test pinned the clone against itself. The literal here is
+    hand-computed from the SHARED constant on purpose; if it fails, the blend
+    changed, and that is a cross-surface event, not a card event."""
     rec = {"side": "H", "kind": "active", "xfv_grade": 60.0, "xfv_grade_quantile": 60.0,
            "p_bucket": {"star": 0.20, "bust": 0.30}, "p_bust": 0.30, "surplus_mm": 90.0}
     score, efv = cme.talent_score(rec, 2027, season=2026)
-    assert score == pytest.approx(65.0)
+    assert score == pytest.approx(65.3)
     assert efv == pytest.approx(60.0)
+
+
+def test_dynasty_blend_is_one_shared_module_not_two_clones():
+    """The 2026-08-16 convergence guard. card_market_export and fantasy_export
+    must hold the IDENTICAL dynasty_blend module and function objects - not
+    equal-looking copies - and one numeric case is pushed through each module's
+    public path against a literal hand-computed from the shared constants:
+
+        60 + 10(.20) - 6(.30) + 4(1 - 0.18) + 2(.90) = 65.28 -> 65.3
+
+    Mutation this must catch: re-cloning any constant into either file (say
+    DYN_ETA_DECAY = 0.25 reappearing here and feeding talent_score). The
+    identity asserts catch a re-cloned FUNCTION; the numeric legs catch a
+    re-cloned CONSTANT feeding either public path, because the literal comes
+    from dynasty_blend's values and a clone can drift while equality between
+    the two paths still holds."""
+    import dynasty_blend as db
+    import fantasy_export as fe
+    assert cme.dynasty_blend is db
+    assert fe.dynasty_blend is db
+    assert cme.dynasty_blend.blend_score is fe.dynasty_blend.blend_score
+    assert cme.dynasty_blend.eta_proximity is fe.dynasty_blend.eta_proximity
+    assert cme.dynasty_blend.surplus_norm is fe.dynasty_blend.surplus_norm
+
+    rec = {"side": "H", "kind": "active", "xfv_grade": 60.0,
+           "xfv_grade_quantile": 60.0, "p_bucket": {"star": 0.20, "bust": 0.30},
+           "p_bust": 0.30, "surplus_mm": 90.0}
+    # card path
+    score, _efv = cme.talent_score(rec, 2027, season=2026)
+    assert score == pytest.approx(65.3)
+    # fantasy path, same record joined the dynasty way
+    ts = {"players": [{"player_key": "k", "player_name": "K", "mlbam_id": 7,
+                       "position": "SS", "org": "MIL", "eta": {"year": 2027}}]}
+    rows = fe._dynasty_prospects(ts, 2026, xfv={"by_player": {"k": rec}})
+    assert rows and rows[0]["score"] == pytest.approx(65.3)
+    assert rows[0]["score"] == score
 
 
 def test_efv_reads_go_through_the_one_basis():

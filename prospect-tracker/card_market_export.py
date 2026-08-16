@@ -31,8 +31,8 @@ Per watchlist card, three derived numbers and one label:
 
   3. THE BUY SIGNAL - a gap between where the player ranks on TALENT and where
      his card ranks on PRICE, both as percentiles inside the watchlist. Talent
-     is the eFV blend cloned structurally from fantasy_export._dynasty_prospects
-     (same weights, same inputs); price is the Card Index.
+     is the shared dynasty_blend eFV composite, the same module and weights
+     fantasy_export._dynasty_prospects ranks with; price is the Card Index.
 
        gap = talent_percentile - market_percentile        (both 0-100)
 
@@ -84,6 +84,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import card_prices_ingest as ci
+import dynasty_blend
 
 log = logging.getLogger("card_market_export")
 
@@ -125,30 +126,23 @@ GRADE_FACTORS = {
 BUY_GAP = 20.0
 FADE_GAP = -20.0
 
-# Talent blend, cloned from fantasy_export._dynasty_prospects. Same weights,
-# same inputs, same reason: the eFV grade quantile drives, star odds add a
-# ceiling premium, bust risk subtracts, a nearer ETA is worth more, surplus is a
-# small tiebreak. Kept as a CLONE rather than an import because that function is
-# private to the fantasy module and returns fantasy-shaped rows; the arithmetic
-# is what is shared, and it is stated here in full so the two cannot silently
-# disagree about what they mean.
-DYN_W_STAR, DYN_W_BUST, DYN_W_ETA, DYN_W_SURPLUS = 10.0, -6.0, 4.0, 2.0
-DYN_ETA_DECAY = 0.25
-DYN_ETA_UNKNOWN = 0.4
-
-try:
-    from fantasy_export import _board_grade
-except Exception:                                            # pragma: no cover
-    from efv_board_scale import board_value as _bv
-
-    def _board_grade(rec):
-        rec = rec or {}
-        g = _bv(rec)
-        if g is None:
-            g = rec.get("xfv_grade_realized")
-        if g is None:
-            g = rec.get("xfv_grade_quantile")
-        return float(g) if isinstance(g, (int, float)) else None
+# The talent blend lives in dynasty_blend (imported above), shared with
+# fantasy_export._dynasty_prospects. Until 2026-08-16 this file carried a CLONE
+# of the weights, introduced with a comment promising "same weights, same
+# inputs, stated here in full so the two cannot silently disagree" - and they
+# had already silently disagreed: this clone decayed ETA proximity at 0.25 per
+# year against the fantasy module's 0.18, and the parity test hand-computed its
+# expectation from the clone's own constants, pinning the clone against itself.
+# Converging on 0.18 moved only the talent-percentile column of unpriced cards
+# (0 cards were priced on the day of the fix). The import replaces the promise
+# with a mechanism.
+#
+# _board_grade is imported plainly (2026-08-16): the except arm that used to sit
+# here re-implemented the board-grade fallback chain, a third copy of logic this
+# module exists to not duplicate, and it had never once run. If fantasy_export
+# cannot import, that is a pipeline failure to surface, not to paper over with a
+# quietly divergent shim.
+from fantasy_export import _board_grade
 
 
 def _load_json(name: str, data_dir: Path | None = None):
@@ -288,36 +282,31 @@ def percentile_ranks(pairs) -> dict:
 
 
 def talent_score(xr: dict, eta_year=None, season: int | None = None):
-    """The eFV talent composite. Structural clone of
-    fantasy_export._dynasty_prospects: quantile drives, star adds, bust
-    subtracts, ETA proximity adds, surplus is a small tiebreak.
+    """The eFV talent composite, through the SHARED dynasty_blend module: the
+    same function objects fantasy_export._dynasty_prospects ranks with, so the
+    two surfaces cannot silently disagree about the arithmetic again.
 
-    Returns (score, displayed_efv). The DISPLAYED grade is the board number via
-    _board_grade; the quantile stays a model input only, exactly as it does in
-    the fantasy module, so /cards/ shows the same eFV as PROSPX and /fantasy/."""
+    Returns (score, displayed_efv). Both legs are THE board number via
+    _board_grade: since the 2026-08-16 driver swap the blend drives on the same
+    grade the row displays (the retired quantile survives only inside
+    _board_grade's own fallback chain), so /cards/ scores and shows the same
+    eFV basis as PROSPX and /fantasy/."""
     if not isinstance(xr, dict):
         return (None, None)
     season = season or date.today().year
-    q = xr.get("xfv_grade_quantile")
-    if q is None:
-        q = xr.get("xfv_grade")
-    disp = _board_grade(xr)
-    if q is None:
-        return (None, disp)
+    grade = _board_grade(xr)
+    if grade is None:
+        return (None, None)
     pb = xr.get("p_bucket") or {}
     star = pb.get("star") or 0.0
     bust = xr.get("p_bust")
     if bust is None:
         bust = pb.get("bust") or 0.0
-    surplus = xr.get("surplus_mm") or 0.0
-    if eta_year:
-        prox = max(0.0, 1.0 - DYN_ETA_DECAY * max(0, int(eta_year) - season))
-    else:
-        prox = DYN_ETA_UNKNOWN
-    surplus_norm = max(-0.5, min(1.5, float(surplus) / 100.0))
-    score = (float(q) + DYN_W_STAR * float(star) + DYN_W_BUST * float(bust)
-             + DYN_W_ETA * prox + DYN_W_SURPLUS * surplus_norm)
-    return (round(score, 1), disp if disp is not None else float(q))
+    score = dynasty_blend.blend_score(
+        grade, star, bust,
+        dynasty_blend.eta_proximity(eta_year, season),
+        dynasty_blend.surplus_norm(xr.get("surplus_mm")))
+    return (round(score, 1), grade)
 
 
 def signal_for(gap):
@@ -550,10 +539,12 @@ METHOD = {
     "prior_window_days": PRIOR_WINDOW_DAYS,
     "trim_band": [TRIM_LOW_MULT, TRIM_HIGH_MULT],
     "publish_grid": "nearest $1 under $100, nearest $5 under $1,000, nearest $25 above",
-    "talent": ("Talent is an eFV blend cloned from fantasy_export._dynasty_prospects: "
-               f"the grade quantile, plus {DYN_W_STAR:.0f} x P(star), minus "
-               f"{abs(DYN_W_BUST):.0f} x P(bust), plus {DYN_W_ETA:.0f} x ETA proximity, "
-               f"plus {DYN_W_SURPLUS:.0f} x normalized surplus."),
+    "talent": ("Talent is the shared dynasty_blend eFV composite, the same "
+               "arithmetic that ranks the /fantasy/ Dynasty board: the board "
+               f"grade, plus {dynasty_blend.W_STAR:.0f} x P(star), minus "
+               f"{abs(dynasty_blend.W_BUST):.0f} x P(bust), plus "
+               f"{dynasty_blend.W_ETA:.0f} x ETA proximity, plus "
+               f"{dynasty_blend.W_SURPLUS:.0f} x normalized surplus."),
     "efv_basis": ("Every eFV on this page comes from efv_board_scale.board_value "
                   "through fantasy_export._board_grade, one basis site-wide."),
     "gap": ("The gap is the talent percentile minus the market percentile, both "
@@ -607,9 +598,18 @@ def index_history(card_ids, con=None, limit: int = HISTORY_POINTS) -> dict:
 
 
 def record_history(rows, as_of: date, con=None) -> int:
-    """Append today's index for every card. INSERT OR REPLACE on (card_id, as_of)
-    so a same-day re-export corrects itself instead of duplicating; yesterday's
-    rows are never touched."""
+    """Append today's index for every PRICED card. INSERT OR REPLACE on
+    (card_id, as_of) so a same-day re-export corrects itself instead of
+    duplicating; yesterday's rows are never touched.
+
+    Null-index rows are skipped as of 2026-08-16. Eleven days of daily exports
+    on a zero-priced board had appended 440 all-NULL history rows: no index, no
+    information, just one row per card per day recording that nothing was
+    known. index_history already refuses them at read time (index_usd IS NOT
+    NULL), so they fed no page; what they would have fed is the eventual
+    forward-return eval, which would have had to re-discover and filter them.
+    A card's history now starts on the day it first has a price."""
+    rows = [r for r in (rows or []) if r.get("index_usd") is not None]
     if not rows:
         return 0
 
