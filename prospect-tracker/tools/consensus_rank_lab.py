@@ -394,7 +394,10 @@ def main():
         "question": ("within a (source, org|global, snapshot_date, interval_label, fv) "
                      "cell, does that source's own rank predict realized WAR?"),
         "preregistration": "docs/efv-2026-08-07b/CONSENSUS_RANK_GATE.md",
-        "db": str(DB_PATH),
+        # Checkout-relative, not str(DB_PATH): the absolute form published the
+        # build machine's filesystem layout and OS username into a served
+        # artifact (payload-hygiene sweep, 2026-08-16).
+        "db": "prospects.db",
         "label_basis": {
             "source": "data/xfv_hitter_matrix.json + data/xfv_pitcher_matrix.json",
             "headline": ("full_pool_resolved / target_resolved (efv_dataset.py:1372); "

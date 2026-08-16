@@ -3,7 +3,7 @@
   "lane": "J1",
   "question": "within a (source, org|global, snapshot_date, interval_label, fv) cell, does that source's own rank predict realized WAR?",
   "preregistration": "docs/efv-2026-08-07b/CONSENSUS_RANK_GATE.md",
-  "db": "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker\\prospects.db",
+  "db": "prospects.db",
   "label_basis": {
     "source": "data/xfv_hitter_matrix.json + data/xfv_pitcher_matrix.json",
     "headline": "full_pool_resolved / target_resolved (efv_dataset.py:1372); censored debuted rows EXCLUDED because target_censored rides the flat-rate tail projection Lane B is measuring",

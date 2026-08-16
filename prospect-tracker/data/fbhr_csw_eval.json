@@ -12,7 +12,7 @@
  "seed": 20260715,
  "boot": 2000,
  "runtime_seconds": 30.3,
- "walker_table": "C:\\Users\\noah\\AppData\\Local\\Temp\\claude\\c--Users-noah-baseball-projects-BaseballR\\331298c7-aaee-481d-a8c1-7d07d0329da6\\scratchpad\\w3-walker-fbhr-csw\\win_prob_pitcher_seasons.parquet",
+ "walker_table": "win_prob_pitcher_seasons.parquet (session scratchpad, not retained; provenance sanitized 2026-08-16)",
  "leverage_source": "offline per-season rebuild from .cache/win_prob (offline_leverage.py; same _fold_game/_finalize as mlb_leverage; zero live fetches). Only entry_inning is load-bearing (opener drop).",
  "reliever_pool_composition": {
   "2018": {

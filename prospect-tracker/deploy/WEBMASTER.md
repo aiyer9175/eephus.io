@@ -5,6 +5,12 @@ takes a fresh box to a self-updating nightly deploy that serves a site
 **byte-for-byte identical to the developer's local build** - same code, same
 seeded database, same `build_site.py` / `run_monthly.py`, same test gate.
 
+Diamond (accounts, entitlements, the gate flip): the ordered go-live
+checklists live in `docs/diamond-go-live.md` (added 2026-08-16). Do not turn
+Supabase on or flip `gating` in `assets/diamond-config.js` without walking
+them; the gate flag deliberately neutralizes itself while the account layer
+is unconfigured.
+
 Assumes: Ubuntu-ish box, nginx, Python 3.12, a `deploy` user that owns
 `/opt/eephus`. Companion doc: `deploy/README.md` (architecture rationale, nginx
 config, DB seeding). The build entry point is `deploy/nightly-build.sh`.
