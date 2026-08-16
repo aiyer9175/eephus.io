@@ -378,15 +378,23 @@ def test_an_append_extends_the_chain_and_a_rewrite_does_not():
 
 
 def test_the_jsonl_log_round_trips_and_chains(tmp_path):
+    # The appended row is a MONEYLINE here on purpose. RECORD[1] is a total,
+    # and since 2026-08-16 append_record canonicalizes the feed market name
+    # and refuses dispersion-excluded markets at the funnel (the seam-2
+    # vocabulary hole fix), so a totals row can no longer land while the
+    # correction is unserved. The exclusion itself is pinned by
+    # test_betting_dispersion_exclusion.py; this test is about the CHAIN.
+    ml_row = dict(RECORD[1], market="h2h", selection="ATL")
+    chained = [RECORD[0], ml_row]
     p = tmp_path / "record.jsonl"
-    be.write_record(RECORD[:1], path=p)
-    be.append_record([RECORD[1]], path=p)
-    assert be.load_record(p) == RECORD
+    be.write_record(chained[:1], path=p)
+    be.append_record([ml_row], path=p)
+    assert be.load_record(p) == chained
     lines = [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines() if x.strip()]
     assert [row["seq"] for row in lines] == [0, 1]
     assert lines[0]["prev_sha"] == be.CHAIN_GENESIS
     assert lines[1]["prev_sha"] == lines[0]["chain_sha"]
-    assert lines[1]["chain_sha"] == be.chain_sha(RECORD)
+    assert lines[1]["chain_sha"] == be.chain_sha(chained)
 
 
 def test_an_edited_log_line_raises_rather_than_reading_back_clean(tmp_path):
@@ -460,8 +468,10 @@ def test_the_provisional_label_reads_its_count_from_the_artifact():
     evald = {"vintage": {"n_graded": 211, "min_graded_games_for_min_edge": 600}}
     txt = be.provisional_record_label(evald, min_edge=0.06, provisional=True)
     assert "211 of the 600 games the honest backtest needs are graded" in txt
-    assert txt.startswith("Provisional. This pick clears a 6.0% floor that was chosen "
-                          "as policy, not measured.")
+    # "selection", not "pick": Model Watch language (owner decision 2026-08-16)
+    # de-picked every prose surface while the gates are closed.
+    assert txt.startswith("Provisional. This selection clears a 6.0% floor that was "
+                          "chosen as policy, not measured.")
     assert txt.endswith("This row is in the public record because a claim that is not "
                         "written down before the result is not a claim.")
     moved = be.provisional_record_label(

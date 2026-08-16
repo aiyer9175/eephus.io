@@ -1206,7 +1206,7 @@ SMOKE_PAYLOAD = """{
                 "legality": "Sports betting is not legal in all states.",
                 "help": "If gambling stops being fun, call 1-800-GAMBLER.",
                 "affiliates": "eephus.io takes no affiliate money from any sportsbook.",
-                "staking": "Every pick on the public record is a flat 1 unit."},
+                "staking": "Every row on the public record is a flat 1 unit."},
  "pick_of_the_day": null,
  "pick_reason": "the model is unvalidated",
  "team_bets": [{"game_pk": 1, "date": "2026-08-04", "venue": "Citizens Bank Park",
@@ -1287,14 +1287,16 @@ def test_render_pick_section_says_there_is_no_pick(ok_ctx):
     # Publishing a pick by lowering the threshold is the failure this asserts
     # against, so the second clause is the load-bearing one.
     assert "Nothing qualifies today" in text
-    assert "never lowered to make a pick appear" in text
+    # Watch vocabulary (owner decision 2026-08-16): the payload carries no
+    # measured threshold, so the noun is "selection", not "pick".
+    assert "never lowered to make a selection appear" in text
     assert "0.24164" in html                     # the backtest table rendered
     assert "does not count" in html or "contamination" in html or "leak" in html
 
 
 def test_render_record_section_says_the_record_is_empty(ok_ctx):
     html = ok_ctx.eval("__show('record')")
-    assert "record starts when the picks do" in html
+    assert "record starts when the selections do" in html
     assert "Append only" in html
     assert "closing line" in html.lower()
 
@@ -1565,7 +1567,7 @@ LIVE_PAYLOAD = ("""{
  "record_publish_blockers": [
    {"id": "close_snapshot", "open": false, "need": "a close odds snapshot for slate 2026-08-09",
     "have": "0 of 4 slates in the last 14 days have one",
-    "reason": "no close snapshot for this slate, so the pick could never be CLV-graded"},
+    "reason": "no close snapshot for this slate, so the selection could never be CLV-graded"},
    {"id": "odds_slate", "open": true, "need": "the board priced against its own slate",
     "have": "matched", "reason": "the snapshot belongs to this slate"},
    {"id": "dispersion_gate", "open": true,
@@ -1876,7 +1878,7 @@ def test_record_clv_panel_draws_a_decile_histogram_from_theme_tokens():
                        evald=EVAL_ARTIFACT, clv=CLV_GRADED))
     html = c.eval("__show('record')")
     assert "bt-bar" in html                                 # bars, no chart library
-    assert "4 graded picks in ten" in _visible_text(html)
+    assert "4 graded selections in ten" in _visible_text(html)
     assert "+8.93%" in _visible_text(html)
 
 
@@ -1894,7 +1896,8 @@ def test_client_renders_a_redacted_pick_without_inventing_a_selection():
     """The preview keeps the whole trust surface and withholds the SELECTION.
     A client handed a redacted slot renders the market and the floor, and no
     side, no price and no book."""
-    redacted = """{"slot": "pick_of_the_day", "slot_label": "Pick of the Day",
+    redacted = """{"slot": "pick_of_the_day",
+      "slot_label": "Model Watch: largest disagreement", "slot_frame": "watch",
       "market": "total", "provisional": true, "min_edge_used": 0.06,
       "redacted": true,
       "redaction_note": "Preview slice: the market and the floor this pick cleared, not the selection."}"""
@@ -2114,3 +2117,273 @@ def test_every_new_table_scrolls_inside_its_own_box():
     n_tables = JS.count('<table class="bt-table')
     n_wraps = JS.count('bt-scroll mlbstats-scroll')
     assert n_wraps >= n_tables, (n_wraps, n_tables)
+
+
+# ===========================================================================
+# 10. MODEL WATCH (owner decision 2026-08-16, docs/diamond-betting.md 7a)
+# ===========================================================================
+# While the three gates are closed, user-facing language and payload prose
+# retire the word "pick"; the STRUCTURAL keys keep their names because the
+# shadow ledger's slot continuity and the record funnel depend on them. The
+# self-lift is coded: a payload that says the gates opened brings the pick
+# vocabulary back with no client edit. These tests drive the shipped client
+# against both payload shapes.
+
+#: The four key names the ruling exempts. They are plumbing, not prose, and
+#: they are removed from the rendered text before the guard runs so an
+#: incidental echo of a key name cannot pass for vocabulary.
+WATCH_STRUCTURAL_KEYS = ("pick_of_the_day", "longshot_of_the_day",
+                         "pick_meta", "pick_blockers", "pick_reason")
+
+_POTD_TAG_RECORD = {"available": True, "tag": "potd_band", "n_settled": 6,
+                    "won": 2, "lost": 4, "push": 0, "net_units": -2.876,
+                    "roi": -0.4793, "small_n": True, "sweep_floor": 100,
+                    "source": "betting_shadow.summary() by_tag"}
+_LONG_TAG_RECORD = {"available": True, "tag": "longshot", "n_settled": 1,
+                    "won": 0, "lost": 1, "push": 0, "net_units": -1.0,
+                    "roi": -1.0, "small_n": True, "sweep_floor": 100,
+                    "source": "betting_shadow.summary() by_tag"}
+
+
+def _watch_payload() -> str:
+    """LIVE_PAYLOAD as the 2026-08-16 server writes it: watch frame, watch
+    slot labels, the slot's own tag record inline, and the potd row pointing
+    at its own game so the worked de-vig has board rows to price from."""
+    d = json.loads(LIVE_PAYLOAD)
+    p = d["pick_of_the_day"]
+    p["game_pk"] = 1                       # TBR at SEA is game 1 on this board
+    p["slot"] = "pick_of_the_day"
+    p["slot_label"] = "Model Watch: largest disagreement"
+    p["slot_frame"] = "watch"
+    p["tag_record"] = dict(_POTD_TAG_RECORD)
+    m = d["pick_meta"]
+    m["frame"] = "watch"
+    for key, lab, rec in (
+            ("pick_of_the_day", "Model Watch: largest disagreement",
+             _POTD_TAG_RECORD),
+            ("longshot_of_the_day", "Model Watch: long-price disagreement",
+             _LONG_TAG_RECORD)):
+        s = m["slots"][key]
+        s["slot_label"] = lab
+        s["slot_frame"] = "watch"
+        s["tag_record"] = dict(rec)
+    return json.dumps(d)
+
+
+def _open_payload() -> str:
+    """The same board after the gates open: frame pick, measured floor, pick
+    labels. This is the self-lift shape."""
+    d = json.loads(_watch_payload())
+    p = d["pick_of_the_day"]
+    p["slot_label"] = "Pick of the Day"
+    p["slot_frame"] = "pick"
+    p["provisional"] = False
+    m = d["pick_meta"]
+    m["frame"] = "pick"
+    m["provisional"] = False
+    m["basis"] = "measured"
+    m["min_edge"] = 0.031
+    for key in m["slots"]:
+        m["slots"][key]["provisional"] = False
+        m["slots"][key]["slot_frame"] = "pick"
+        m["slots"][key]["slot_label"] = (
+            "Pick of the Day" if key == "pick_of_the_day"
+            else "Longshot Value of the Day")
+    return json.dumps(d)
+
+
+@pytest.fixture(scope="module")
+def watch_ctx():
+    return _ctx(_fetch_js(main=_watch_payload(), learning=LEARNING_ARTIFACT,
+                          evald=EVAL_ARTIFACT, clv=CLV_EMPTY))
+
+
+@pytest.fixture(scope="module")
+def open_ctx():
+    return _ctx(_fetch_js(main=_open_payload(), learning=LEARNING_ARTIFACT,
+                          evald=EVAL_ARTIFACT, clv=CLV_EMPTY))
+
+
+def _depick(text: str) -> str:
+    for tok in WATCH_STRUCTURAL_KEYS:
+        text = text.replace(tok, "")
+    return text
+
+
+def test_watch_language_guard_no_pick_noun_anywhere_visible(watch_ctx):
+    """THE LANGUAGE GUARD. Gates closed, every tab the payload reaches, the
+    banner, and the feed strip: no user-visible "pick"/"Pick" outside the
+    structural-key allowlist.
+
+    MUTATION PROOF: hardcoding any label or sentence back to the pick noun
+    (SLOTS titles, noPickHeadline, the record panels, the blocker sentence)
+    puts the word back in one of these renders and fails the tab that shows
+    it. The allowlist is exact key names, so a prose sentence containing
+    "pick" cannot hide behind it."""
+    for tab in ("potd", "teams", "record", "validation", "parlays", "props",
+                "calculators", "mybets"):
+        text = _visible_text(watch_ctx.eval(f"__show({tab!r})"))
+        assert "pick" not in _depick(text).lower(), (tab, text[:400])
+    for host in ("betting-feedhealth", "betting-banner", "betting-legal"):
+        text = _visible_text(watch_ctx.eval(f"__html[{host!r}] || ''"))
+        assert "pick" not in _depick(text).lower(), (host, text[:400])
+
+
+def test_a_pre_frame_payload_defaults_to_watch(live_ctx):
+    """A payload built before 2026-08-16 carries no frame and no slot_label.
+    Every such payload was a gates-closed payload, so the client's fallback
+    must be the WATCH vocabulary, not the pick one. MUTATION PROOF: hardcoding
+    slotTitle's fallback to the pick title is invisible on the served-label
+    fixtures and fails exactly here."""
+    text = _visible_text(live_ctx.eval("__show('potd')"))
+    assert "Model Watch: largest disagreement" in text
+    assert "Pick of the Day" not in text
+
+
+def test_watch_card_carries_the_watch_frame_and_labels(watch_ctx):
+    html = watch_ctx.eval("__show('potd')")
+    text = _visible_text(html)
+    assert "Model Watch: largest disagreement" in text
+    assert "Model Watch: long-price disagreement" in text
+    assert "not a recommendation" in text
+    # the provisional labelling contract is INTACT under the reframe
+    assert html.count("bt-prov") == 2
+    assert "provisional" in text
+
+
+def test_watch_card_shows_its_own_tag_record(watch_ctx):
+    """The slot's own selection rule's settled record, inline and small-n
+    labelled. MUTATION PROOF: dropping the tagRecordLine block from pickCard
+    removes all three fragments; dropping only the small-n label kills the
+    third."""
+    text = _visible_text(watch_ctx.eval("__show('potd')"))
+    assert "2-4" in text
+    assert "-47.9%" in text
+    assert "small sample: 6 settled" in text
+    assert "potd_band" in text
+
+
+def test_watch_card_devig_example_matches_the_row(watch_ctx):
+    """The collapsible worked de-vig, computed from the served board rows.
+    Expected values are recomputed HERE from the same fixture rows with the
+    same arithmetic (raw implied = 1/decimal, overround = sum - 1, fair =
+    raw/sum, edge = model - fair), so the client cannot drift from the math
+    without this failing.
+
+    MUTATION PROOF: breaking any step of the client arithmetic (dropping the
+    proportional division, summing decimals instead of implieds, using the
+    raw instead of the fair probability in the edge) changes at least one
+    printed percentage below."""
+    over_dec = 1 + 100 / 113          # -113
+    under_dec = 2.02                  # +102
+    q_over, q_under = 1 / over_dec, 1 / under_dec
+    s = q_over + q_under
+    fair_under = q_under / s
+    model = 0.55837
+    text = _visible_text(watch_ctx.eval("__show('potd')"))
+    assert f"{q_over * 100:.1f}%" in text                     # 53.1% raw over
+    assert f"{q_under * 100:.1f}%" in text                    # 49.5% raw under
+    assert f"{s * 100:.1f}%" in text                          # 102.6% sum
+    assert f"{(s - 1) * 100:.1f}%" in text                    # 2.6% overround
+    assert f"{fair_under * 100:.1f}%" in text                 # 48.3% fair
+    assert f"+{(model - fair_under) * 100:.1f} points" in text  # +7.6 points
+    # the served fair (48.0%, one book's two-sided quote) differs from the
+    # best-price fair above, and the example says which one the edge uses
+    assert "ONE book" in text
+
+
+def test_gates_open_payload_restores_the_pick_vocabulary(open_ctx):
+    """THE SELF-LIFT. A payload whose pick_meta says frame "pick" brings the
+    vocabulary back everywhere, and the pick rendering returns without the
+    watch additions. MUTATION PROOF: pinning watchMode() to true (or the
+    labels to the watch strings) fails the title assert; leaving the watch
+    additions unconditional fails the two negative asserts."""
+    html = open_ctx.eval("__show('potd')")
+    text = _visible_text(html)
+    assert "Pick of the Day" in text
+    assert "Longshot Value of the Day" in text
+    assert "Model Watch" not in text
+    assert "bt-tagrec" not in html
+    assert "bt-devigex" not in html
+    record = _visible_text(open_ctx.eval("__show('record')"))
+    assert "A pick is written to the public record" in record
+    assert "How a pick gets graded" in record
+
+
+def test_the_potd_tab_label_follows_the_served_frame():
+    """The tab button copy follows slot_label's frame. The harness's stub
+    buttons swallow textContent, so the contract is pinned at the source: the
+    label is derived from watchMode() inside syncTabs, and the gates-closed
+    default in SECTION_LABELS is the watch word."""
+    assert 'var potdLabel = watchMode() ? "Model Watch" : "Pick of the Day";' in JS
+    assert 'potd: "Model Watch"' in JS
+
+
+def test_export_payload_prose_is_pick_free_while_gates_are_closed():
+    """The server half of the guard: provisional_picks, pick_blockers and the
+    record label, rendered as JSON, carry the pick noun ONLY inside the
+    structural key names. MUTATION PROOF: reverting any of the de-picked
+    sentences in betting_export (the policy line, the shared-floor note, the
+    record label, the min_edge blocker) puts the word into this blob."""
+    board = [{
+        "game_pk": 1, "start": "2026-08-16T23:05:00Z",
+        "away": {"org": "AAA"}, "home": {"org": "BBB"},
+        "moneyline": [{"side": "home", "label": "BBB", "edge": 0.20,
+                       "odds": -110, "book": "b", "model_prob": 0.60,
+                       "market_fair_prob": 0.40, "kelly_full": 0.2,
+                       "ev_per_unit": 0.1}],
+        "runline": None, "total": {"sides": None},
+    }]
+    slots, reason, meta = be.provisional_picks(board, odds_configured=True,
+                                               evald=None)
+    blob = json.dumps({
+        "slots": slots, "reason": reason, "meta": meta,
+        "blockers": be.pick_blockers(min_edge=None, odds_configured=True),
+        "label": be.provisional_record_label(None, min_edge=0.06,
+                                             provisional=True),
+    })
+    assert "pick" not in _depick(blob).lower(), blob
+    assert meta["frame"] == "watch"
+    assert slots["pick_of_the_day"]["slot_label"] == "Model Watch: largest disagreement"
+    assert slots["pick_of_the_day"]["slot_frame"] == "watch"
+
+
+def test_export_self_lift_restores_the_pick_labels():
+    """Gates open in the eval artifact -> resolve_min_edge flips provisional
+    off -> the labels and the frame return, with no other change."""
+    board = [{
+        "game_pk": 1, "start": "2026-08-16T23:05:00Z",
+        "away": {"org": "AAA"}, "home": {"org": "BBB"},
+        "moneyline": [{"side": "home", "label": "BBB", "edge": 0.20,
+                       "odds": -110, "book": "b", "model_prob": 0.60,
+                       "market_fair_prob": 0.40, "kelly_full": 0.2,
+                       "ev_per_unit": 0.1}],
+        "runline": None, "total": {"sides": None},
+    }]
+    evald = {"min_edge_gate": {"min_edge": 0.031, "all_gates_open": True},
+             "validated": True, "min_edge": 0.031}
+    slots, _, meta = be.provisional_picks(board, odds_configured=True,
+                                          evald=evald)
+    assert meta["frame"] == "pick"
+    p = slots["pick_of_the_day"]
+    assert p["slot_label"] == "Pick of the Day"
+    assert p["slot_frame"] == "pick"
+    assert p["provisional"] is False
+    assert p["min_edge_used"] == 0.031
+
+
+def test_export_slots_carry_their_own_tag_record():
+    """Both slot metas carry tag_record with the tag names the shadow ledger
+    actually writes, read from betting_shadow.summary() by tag and never
+    pooled. MUTATION PROOF: dropping the tag_record key from _slot_meta, or
+    pooling the tags into one record, breaks the per-slot tag names."""
+    board = []
+    _, _, meta = be.provisional_picks(board, odds_configured=True, evald=None)
+    potd = meta["slots"]["pick_of_the_day"]["tag_record"]
+    lng = meta["slots"]["longshot_of_the_day"]["tag_record"]
+    assert potd is not None and lng is not None
+    if potd.get("available"):
+        assert potd["tag"] == "potd_band"
+        assert lng["tag"] == "longshot"
+        assert "n_settled" in potd and "roi" in potd and "net_units" in potd
+        assert isinstance(potd["small_n"], bool)

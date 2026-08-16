@@ -544,14 +544,121 @@ def summary(*, path: Path | None = None) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# the market-level publishability statistic (docs/diamond-betting.md 7b)
+# ---------------------------------------------------------------------------
+#: The three constants of the section 7b ledger leg, pre-registered 2026-08-16
+#: BEFORE this code was written. GATE_MIN_GAMES mirrors
+#: betting_shadow.MIN_BETS_FOR_SWEEP so the module carries one small-sample
+#: floor rather than two, and GATE_Z is betting_model.Z_95_ONE_SIDED; both are
+#: restated here rather than imported so this ledger module keeps its single
+#: betting_settle dependency, and test_betting_market_gate.py pins the equality
+#: so the copies cannot drift. The dwell and trailing window live in
+#: betting_export beside the state they govern.
+GATE_MIN_GAMES = 100
+GATE_Z = 1.645
+
+GATE_MARKETS = ("moneyline", "runline", "total")
+
+
+def canonical_settled_games(rws: list[dict]) -> dict:
+    """{market: [one settled canonical-side row per GAME, ledger order]}.
+
+    Both sides of every market are in this ledger on purpose, and Brier(p)
+    equals Brier(1-p), so the two sides of one game are the same evidence
+    twice: a gate that counted per-side rows would reach any n-floor at half
+    the games it claims. One row per (market, game_pk), the CANONICAL_SIDES
+    side only, first occurrence kept so a second priced line on the same game
+    cannot count the game again."""
+    out: dict[str, list[dict]] = {m: [] for m in GATE_MARKETS}
+    seen: set[tuple] = set()
+    for r in rws:
+        m = r.get("market")
+        if m not in out:
+            continue
+        if r.get("result") not in ("won", "lost"):
+            continue
+        if CANONICAL_SIDES.get(m) != r.get("side"):
+            continue
+        key = (m, r.get("game_pk"))
+        if key in seen:
+            continue
+        seen.add(key)
+        out[m].append(r)
+    return out
+
+
+def _gate_stats(games: list[dict]) -> dict:
+    """The section 7b statistic over one market's canonical games.
+
+    delta_vs_coin is mean per-game Brier minus 0.25, POSITIVE meaning worse
+    than a coin; t is that delta over its standard error; worse_than_coin_95
+    needs the n floor AND the one-sided 95% lower bound above zero. The n
+    floor is part of the verdict, not a separate flag, because a t of 3.0 on
+    12 games is not a resolution and must not read as one."""
+    briers = [float(r["brier"]) for r in games
+              if isinstance(r.get("brier"), (int, float))]
+    n = len(briers)
+    if n == 0:
+        return {"n_games": 0, "brier": None, "delta_vs_coin": None, "t": None,
+                "worse_than_coin_95": False}
+    mean = sum(briers) / n
+    delta = mean - 0.25
+    t = None
+    if n >= 2:
+        var = sum((b - mean) ** 2 for b in briers) / (n - 1)
+        sd = var ** 0.5
+        if sd > 0:
+            t = delta / (sd / n ** 0.5)
+    return {
+        "n_games": n,
+        "brier": round(mean, 6),
+        "delta_vs_coin": round(delta, 6),
+        "t": (round(t, 4) if t is not None else None),
+        "worse_than_coin_95": bool(n >= GATE_MIN_GAMES
+                                   and t is not None and t >= GATE_Z),
+    }
+
+
+def market_gate(*, path: Path | None = None, trailing: int | None = None) -> dict:
+    """Per-market {n_games, brier, delta_vs_coin, t, worse_than_coin_95} from
+    the settled CANONICAL-SIDE games (docs/diamond-betting.md section 7b).
+
+    `trailing` restricts each market to its LAST that-many settled canonical
+    games in ledger order, which is the re-open form of the statistic; None is
+    the full-sample form the closure test runs on. This function is a
+    measurement only: the dwell, the state and the publish decision live in
+    betting_export, so the ledger module cannot be talked into holding an
+    opinion about what may be published."""
+    by_market = canonical_settled_games(rows(path=path))
+    out = {}
+    for m in GATE_MARKETS:
+        games = by_market[m]
+        if trailing is not None:
+            games = games[-int(trailing):]
+        stats = _gate_stats(games)
+        stats["n_min"] = GATE_MIN_GAMES
+        stats["z"] = GATE_Z
+        if trailing is not None:
+            stats["trailing"] = int(trailing)
+        out[m] = stats
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--summary", action="store_true")
     ap.add_argument("--settle", action="store_true")
+    ap.add_argument("--market-gate", action="store_true", dest="market_gate")
     ap.add_argument("--json", dest="json_out", default=None)
     args = ap.parse_args(argv)
     if args.settle:
         print(json.dumps(settle(log_fn=print), indent=1, default=str))
+    if args.market_gate:
+        print(json.dumps({"full": market_gate(),
+                          "trailing_200": market_gate(trailing=200)},
+                         indent=1, default=str))
+        return 0
     out = summary()
     if args.json_out:
         Path(args.json_out).write_text(json.dumps(out, indent=1), encoding="utf-8")

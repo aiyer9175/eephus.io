@@ -239,7 +239,10 @@ DISCLAIMER = {
     "help": "If gambling stops being fun, call 1-800-GAMBLER.",
     "helpline": "1-800-GAMBLER",
     "affiliates": "eephus.io takes no affiliate money from any sportsbook and links to none.",
-    "staking": "Every pick on the public record is a flat 1 unit. Kelly is shown as information, never as a stake.",
+    # "row", not the p-word: the 2026-08-16 Model Watch ruling retires it from
+    # payload prose while the gates are closed, and "row" is the accurate word
+    # in both frames, so this constant does not need to change when they open.
+    "staking": "Every row on the public record is a flat 1 unit. Kelly is shown as information, never as a stake.",
 }
 
 # ---------------------------------------------------------------------------
@@ -772,28 +775,52 @@ def write_record(rows: list[dict], *, path: Path | None = None) -> list[dict]:
     return list(rows)
 
 
-def append_record(new_rows: list[dict], *, path: Path | None = None) -> list[dict]:
+def append_record(new_rows: list[dict], *, path: Path | None = None,
+                  ledger_closed: frozenset | None = None) -> list[dict]:
     """The only sanctioned way to add to the record.
 
-    SEAM 2 of 2 for the dispersion exclusion, and it is enforced HERE rather
-    than at the call sites because this function is documented as the only
-    sanctioned way in. A guard at the funnel cannot be bypassed by a future
-    caller that does not know about it, which is the C-6 lesson: a suppression
-    is not shipped until every path that could publish the suppressed quantity
-    is guarded, and the cheapest way to guarantee that is to guard the funnel.
+    SEAM 2 of 2 for the dispersion exclusion AND for the section 7b ledger
+    leg, and both are enforced HERE rather than at the call sites because this
+    function is documented as the only sanctioned way in. A guard at the
+    funnel cannot be bypassed by a future caller that does not know about it,
+    which is the C-6 lesson: a suppression is not shipped until every path
+    that could publish the suppressed quantity is guarded, and the cheapest
+    way to guarantee that is to guard the funnel.
+
+    THE VOCABULARY REPAIR (2026-08-16). Record rows built by `record_row`
+    carry `market` in the FEED vocabulary (h2h / spreads / totals) with the
+    board name beside it as `board_market`, and the dispersion guard here
+    tested the raw `market` key, which the feed vocabulary walks straight
+    past: `market_is_publishable("spreads")` is True because the exclusion
+    list holds board names. Seam 1 masked it, since a runline can never win a
+    slot while excluded, but a funnel guard that only works when the seam in
+    front of it already did the job is not a guard. Every row's market now
+    goes through `board_market()` before either leg is consulted.
 
     The record is empty today (five publish blockers are open), so this changes
-    nothing now. It is here so the exclusion is already true on the first
+    nothing now. It is here so both exclusions are already true on the first
     nightly that clears those blockers, rather than being remembered then.
     """
+    if ledger_closed is None:
+        ledger_closed = ledger_closed_markets()
     rows = list(new_rows or [])
-    kept = [r for r in rows if bm.market_is_publishable(r.get("market"))]
-    if len(kept) != len(rows):
-        dropped = Counter(r.get("market") for r in rows
-                          if not bm.market_is_publishable(r.get("market")))
+    kept, refused_dispersion, refused_ledger = [], [], []
+    for r in rows:
+        mk = board_market(r) or r.get("market")
+        if not bm.market_is_publishable(mk):
+            refused_dispersion.append(mk)
+        elif mk in ledger_closed:
+            refused_ledger.append(mk)
+        else:
+            kept.append(r)
+    if refused_dispersion:
         log.warning("betting_record: refused %d row(s) on a market excluded "
                     "while the dispersion correction is unserved: %s",
-                    len(rows) - len(kept), dict(dropped))
+                    len(refused_dispersion), dict(Counter(refused_dispersion)))
+    if refused_ledger:
+        log.warning("betting_record: refused %d row(s) on a LEDGER-CLOSED "
+                    "market (section 7b): %s",
+                    len(refused_ledger), dict(Counter(refused_ledger)))
     existing = load_record(path) if path is not None else load_record()
     return write_record(existing + kept, path=path)
 
@@ -1602,10 +1629,12 @@ def provisional_record_label(evald: dict | None, *, min_edge: float,
         got = f"{n} of the {need} games the honest backtest needs are graded"
     # The verdict word comes from model_verdict, the same function status.model
     # reads, so the label and the status chip cannot drift apart. Today that
-    # word is "unvalidated" and the sentence is unchanged.
+    # word is "unvalidated". "Selection", not the pick noun: this label only
+    # exists while provisional is true, which is exactly the gates-closed state
+    # the 2026-08-16 ruling covers.
     state = model_verdict(evald)["gate_state"]
-    return (f"Provisional. This pick clears a {min_edge:.1%} floor that was chosen as "
-            f"policy, not measured. The model is {state}: {got}, and no "
+    return (f"Provisional. This selection clears a {min_edge:.1%} floor that was chosen "
+            f"as policy, not measured. The model is {state}: {got}, and no "
             "minimum-edge threshold exists. This row is in the public record because "
             "a claim that is not written down before the result is not a claim.")
 
@@ -1659,8 +1688,11 @@ def record_publish_blockers(*, payload: dict | None = None,
     status = payload.get("status") or {}
     slate = payload.get("slate_date")
     # The verdict word in the prose below comes from the one function every
-    # surface reads, not from a copy of it here.
+    # surface reads, not from a copy of it here. The noun follows the
+    # 2026-08-16 Model Watch ruling: "selection" while the gates are closed,
+    # "pick" once resolve_min_edge reports a measured threshold.
     verdict_state = model_verdict(evald)["gate_state"]
+    noun = _selection_noun(resolve_min_edge(evald)[2])
 
     out: list[dict] = []
 
@@ -1671,9 +1703,9 @@ def record_publish_blockers(*, payload: dict | None = None,
         "have": ((snap or {}).get("captured_at") if snap else
                  f"{health.get('n_slates_with_close')} of {health.get('n_slates')} "
                  f"slates in the last {health.get('window_days')} days have one"),
-        "reason": ("a close snapshot exists, so this pick can be CLV-graded"
+        "reason": (f"a close snapshot exists, so this {noun} can be CLV-graded"
                    if snap else
-                   "no close snapshot for this slate, so the pick could never be "
+                   f"no close snapshot for this slate, so the {noun} could never be "
                    f"CLV-graded and the only honest read on an {verdict_state} model's "
                    "decisions would be missing. " + str(health.get("diagnosis") or "")),
     })
@@ -1685,8 +1717,8 @@ def record_publish_blockers(*, payload: dict | None = None,
         "have": (status.get("odds_slate") or {}).get("reason") if mismatch else "matched",
         "reason": ("the snapshot the board was priced from belongs to this slate"
                    if not mismatch else
-                   "the cached snapshot cannot price this board's slate; a pick "
-                   "against another slate's prices is worse than no pick"),
+                   f"the cached snapshot cannot price this board's slate; a {noun} "
+                   f"against another slate's prices is worse than no {noun}"),
     })
 
     disp = ((evald or {}).get("run_dispersion") or {})
@@ -1864,9 +1896,11 @@ def maybe_publish_record(payload: dict, *, evald: dict | None = None,
         "n_candidates": len(cands),
         "n_new": len(fresh),
         "written": 0,
-        "policy": ("a pick enters the public record only when every blocker is open; "
-                   "the first row is written by the first nightly that clears all of "
-                   "them, and nothing else arms it"),
+        # The noun follows the 2026-08-16 ruling and lifts with the gates.
+        "policy": (f"a {_selection_noun(resolve_min_edge(evald)[2])} enters the "
+                   "public record only when every blocker is open; the first row "
+                   "is written by the first nightly that clears all of them, and "
+                   "nothing else arms it"),
     }
     if not state["ok"]:
         state["reason"] = ("blocked: " + "; ".join(
@@ -3058,9 +3092,13 @@ def pick_blockers(*, min_edge: float | None, odds_configured: bool,
                 "id": "min_edge", "open": False,
                 "need": "a clean out-of-sample test that measures a minimum edge",
                 "have": None,
+                # No pick noun: this branch only fires while the gates are
+                # closed, which is exactly when the 2026-08-16 ruling retires
+                # the word from payload prose.
                 "reason": (f"the model is {state}: the backtest is contaminated by "
                            "season-to-date team inputs, so no minimum-edge threshold has "
-                           "been measured and no pick is published"),
+                           "been measured and nothing here is promoted as a "
+                           "recommendation"),
             })
     return out
 
@@ -3128,6 +3166,74 @@ SLOT_DISPLAY_UNITS = {"pick_of_the_day": 1.0, "longshot_of_the_day": 0.5}
 SLOT_LABELS = {"pick_of_the_day": "Pick of the Day",
                "longshot_of_the_day": "Longshot Value of the Day"}
 
+#: THE MODEL WATCH FRAME (owner decision 2026-08-16, docs/diamond-betting.md
+#: 7a; supersedes the 2026-08-06 provisional-picks framing). While the three
+#: gates are closed the slots are presented as the model's largest measured
+#: DISAGREEMENTS with the market, not as recommendations, and user-facing
+#: prose retires the pick noun. The STRUCTURAL KEYS keep their names: the
+#: shadow ledger's slot continuity (SLOT_TAGS) and the record funnel depend on
+#: them, and the same decision requires the accrual to continue through the
+#: reframe. The self-lift is coded, not remembered: everything below keys off
+#: resolve_min_edge's provisional flag, so the day the gates open the pick
+#: vocabulary returns with no edit.
+SLOT_WATCH_LABELS = {"pick_of_the_day": "Model Watch: largest disagreement",
+                     "longshot_of_the_day": "Model Watch: long-price disagreement"}
+
+
+def slot_presentation(slot: str, provisional: bool) -> dict:
+    """label + frame for one slot under the 2026-08-16 ruling."""
+    if provisional:
+        return {"slot_label": SLOT_WATCH_LABELS[slot], "slot_frame": "watch"}
+    return {"slot_label": SLOT_LABELS[slot], "slot_frame": "pick"}
+
+
+def _selection_noun(provisional: bool) -> str:
+    """The noun payload prose uses for a published slot row. "selection" while
+    the gates are closed, "pick" once they open: the vocabulary is a claim
+    about validation, so it follows the same flag everything else does."""
+    return "selection" if provisional else "pick"
+
+
+def _slot_tag_records() -> dict:
+    """{payload slot key: the settled record of ITS OWN shadow tag}, served on
+    the slot meta so the watch card can show "this selection rule is 2-4,
+    -47.9%" without a second fetch.
+
+    Read from betting_shadow.summary()["by_tag"], never pooled: potd_band and
+    longshot select on different quantities and section 7a forbids mixing
+    them. `small_n` is derived against the same 100-row floor gate 3 sweeps
+    at, so the client's small-sample label and the sweep's readiness cannot
+    disagree about what small means."""
+    try:
+        import betting_shadow as bs
+        by_tag = bs.summary().get("by_tag") or {}
+        tags = dict(bs.SLOT_TAGS)
+        floor = int(bs.MIN_BETS_FOR_SWEEP)
+    except Exception:                                          # noqa: BLE001
+        log.warning("betting_export: shadow ledger unreadable; slot tag "
+                    "records degrade to unavailable", exc_info=True)
+        return {k: {"available": False,
+                    "reason": "the shadow ledger could not be read"}
+                for k in SLOT_LABELS}
+    out = {}
+    for key, tag in tags.items():
+        t = by_tag.get(tag) or {}
+        n = t.get("n_settled") or 0
+        out[key] = {
+            "available": True,
+            "tag": tag,
+            "n_settled": n,
+            "won": t.get("won") or 0,
+            "lost": t.get("lost") or 0,
+            "push": t.get("push") or 0,
+            "net_units": t.get("net_units"),
+            "roi": t.get("roi"),
+            "small_n": n < floor,
+            "sweep_floor": floor,
+            "source": "betting_shadow.summary() by_tag",
+        }
+    return out
+
 #: Attached to any published slot on a runline or total. The Poisson-difference
 #: margin underdisperses real run scoring (docs/diamond-betting.md section 11),
 #: which pulls those two markets' probabilities toward the middle and therefore
@@ -3140,7 +3246,267 @@ POISSON_CAVEAT = ("this is a runline or total, and the margin model is a Poisson
                   "the softest of the three markets")
 
 
-def _floor_clearing_sides(bets: list[dict], thr: float) -> list[dict]:
+# ===========================================================================
+# THE MARKET-LEVEL PUBLISHABILITY GATE (docs/diamond-betting.md section 7b)
+# ===========================================================================
+# Pre-registered 2026-08-16, in the doc BEFORE this code existed. The
+# dispersion exclusion is the THEORY leg: it bars the two markets whose margin
+# model is known to be mis-shaped. This is the EVIDENCE leg: it bars any
+# market whose measured probabilities have RESOLVED worse than a coin on the
+# calibration ledger's canonical-side games, and it re-opens the market when
+# the trailing sample stops saying so. The two legs are AND-ed at both seams.
+MARKET_GATE_STATE_PATH = BETTING_CACHE_DIR / "market_gate_state.json"
+
+#: POLICY, both of them, chosen for hysteresis and not measured (section 7b
+#: says so in a table). The dwell keeps one noisy night from flapping a market
+#: closed and open again; the trailing window lets a market that improved
+#: re-open on recent evidence rather than dragging its whole history.
+MARKET_GATE_DWELL = 3
+MARKET_GATE_TRAILING = 200
+
+BOARD_MARKETS = ("moneyline", "runline", "total")
+
+
+def _fresh_market_gate_state() -> dict:
+    return {
+        "schema": 1,
+        "last_evaluation_date": None,
+        "updated_at": None,
+        "markets": {m: {"status": "open", "consecutive_worse": 0,
+                        "consecutive_recovered": 0,
+                        "closed_at": None, "reopened_at": None}
+                    for m in BOARD_MARKETS},
+        "what": ("dwell state for the section 7b market-level publishability "
+                 "gate. The statistics are recomputed every build; these "
+                 "consecutive-evaluation counters move at most once per UTC "
+                 "day. This lives under .cache/ rather than in the append-only "
+                 "learning history because that history is betting_learning.py's "
+                 "own series, written by its own build step under its own "
+                 "append-only check, and a foreign key written into its "
+                 "artifact from here would be dropped on the next nightly "
+                 "rebuild (decided 2026-08-16, docs/diamond-betting.md 7b)."),
+    }
+
+
+def load_market_gate_state(path: Path | None = None) -> dict:
+    """The persisted dwell state, or a fresh all-open one.
+
+    An unreadable file logs and starts fresh rather than raising: the worst
+    that costs is re-earning a closure over three nights, while a build that
+    dies on a corrupt sidecar publishes nothing at all."""
+    p = Path(path or MARKET_GATE_STATE_PATH)
+    if not p.exists():
+        return _fresh_market_gate_state()
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("betting_export: unreadable %s; the market-gate dwell "
+                    "restarts from all-open", p.name)
+        return _fresh_market_gate_state()
+    if not isinstance(obj, dict) or not isinstance(obj.get("markets"), dict):
+        log.warning("betting_export: %s carries no markets block; the "
+                    "market-gate dwell restarts from all-open", p.name)
+        return _fresh_market_gate_state()
+    fresh = _fresh_market_gate_state()
+    for m in BOARD_MARKETS:
+        merged = {**fresh["markets"][m], **(obj["markets"].get(m) or {})}
+        obj["markets"][m] = merged
+    for k in ("last_evaluation_date", "updated_at", "what", "schema"):
+        obj.setdefault(k, fresh[k])
+    return obj
+
+
+def save_market_gate_state(state: dict, path: Path | None = None) -> None:
+    p = Path(path or MARKET_GATE_STATE_PATH)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_suffix(p.suffix + ".tmp")
+    tmp.write_text(json.dumps(state, indent=1), encoding="utf-8")
+    tmp.replace(p)
+
+
+def ledger_closed_markets(state: dict | None = None, *,
+                          path: Path | None = None) -> frozenset:
+    """The markets the EVIDENCE leg currently bars. Cheap on purpose: the two
+    seams call this, and neither may pay for a ledger scan to answer a
+    question the persisted state already answers."""
+    st = state if state is not None else load_market_gate_state(path)
+    return frozenset(m for m, ms in (st.get("markets") or {}).items()
+                     if (ms or {}).get("status") == "ledger_closed")
+
+
+def market_publishability(*, state: dict | None = None, full: dict | None = None,
+                          trailing: dict | None = None,
+                          cal_path: Path | None = None,
+                          state_path: Path | None = None) -> dict:
+    """The combined per-market table: dispersion leg AND ledger leg, each with
+    its reason, published on the payload. Pure read; nothing here advances the
+    dwell (that is market_gate_evaluate's job, once per UTC day)."""
+    if full is None or trailing is None:
+        from tools import betting_calibration as bc
+        full = full if full is not None else bc.market_gate(path=cal_path)
+        trailing = (trailing if trailing is not None else
+                    bc.market_gate(path=cal_path, trailing=MARKET_GATE_TRAILING))
+    st = state if state is not None else load_market_gate_state(state_path)
+    n_min = next(iter(full.values()))["n_min"] if full else 100
+    z = next(iter(full.values()))["z"] if full else 1.645
+
+    markets = {}
+    for m in BOARD_MARKETS:
+        f = full.get(m) or {}
+        tr = trailing.get(m) or {}
+        ms = (st.get("markets") or {}).get(m) or {}
+        status = ms.get("status") or "open"
+        disp_ok = bm.market_is_publishable(m)
+        disp_reason = ("the margin-shape exclusion does not bar this market"
+                       if disp_ok else
+                       "excluded while the dispersion correction is unserved "
+                       "(section 11a): the margin model that prices this market "
+                       "did not clear its pre-registered gate")
+        n = f.get("n_games") or 0
+        if n < n_min:
+            verdict = "unresolved"
+            ledger_reason = (f"{n} canonical settled game(s) against the "
+                             f"{n_min}-game floor; the ledger leg is unresolved "
+                             "and closes nothing")
+        elif f.get("worse_than_coin_95"):
+            verdict = "worse_than_coin"
+            ledger_reason = (f"mean Brier {f.get('brier')} on {n} canonical games "
+                             f"resolves worse than a coin (t {f.get('t')} at the "
+                             f"one-sided 95% bar of {z})")
+        else:
+            verdict = "not_worse_than_coin"
+            ledger_reason = (f"mean Brier {f.get('brier')} on {n} canonical games "
+                             "does not resolve worse than a coin")
+        if status == "ledger_closed":
+            ledger_reason = (f"LEDGER-CLOSED: resolved worse than a coin for "
+                             f"{MARKET_GATE_DWELL} consecutive evaluations "
+                             f"(closed {ms.get('closed_at')}); re-opens when the "
+                             f"trailing {MARKET_GATE_TRAILING} games fail the same "
+                             f"test for {MARKET_GATE_DWELL} consecutive "
+                             f"evaluations. Today: {ledger_reason}")
+        publishable = bool(disp_ok and status != "ledger_closed")
+        if publishable:
+            reason = ("publishable: " + disp_reason + ", and " + ledger_reason)
+        elif not disp_ok and status == "ledger_closed":
+            reason = "excluded by both legs: " + disp_reason + "; " + ledger_reason
+        elif not disp_ok:
+            reason = disp_reason
+        else:
+            reason = ledger_reason
+        markets[m] = {
+            "market": m,
+            "publishable": publishable,
+            "reason": reason,
+            "dispersion_leg": {"publishable": disp_ok, "reason": disp_reason},
+            "ledger_leg": {
+                "status": status,
+                "verdict": verdict,
+                "n_games": f.get("n_games"), "brier": f.get("brier"),
+                "delta_vs_coin": f.get("delta_vs_coin"), "t": f.get("t"),
+                "worse_than_coin_95": bool(f.get("worse_than_coin_95")),
+                "trailing": {"n_games": tr.get("n_games"), "brier": tr.get("brier"),
+                             "delta_vs_coin": tr.get("delta_vs_coin"),
+                             "t": tr.get("t"),
+                             "worse_than_coin_95": bool(tr.get("worse_than_coin_95")),
+                             "window": MARKET_GATE_TRAILING},
+                "consecutive_worse": ms.get("consecutive_worse", 0),
+                "consecutive_recovered": ms.get("consecutive_recovered", 0),
+                "dwell_need": MARKET_GATE_DWELL,
+                "reason": ledger_reason,
+            },
+        }
+
+    under = [f"{m} {(full.get(m) or {}).get('n_games') or 0}"
+             for m in BOARD_MARKETS
+             if ((full.get(m) or {}).get("n_games") or 0) < n_min]
+    today_note = (f"no market reaches the {n_min}-game canonical floor yet "
+                  f"({', '.join(under)}), so the ledger leg closes nothing on "
+                  "this build"
+                  if len(under) == len(BOARD_MARKETS) else None)
+    return {
+        "policy": {
+            "n_min": n_min, "z": z, "dwell": MARKET_GATE_DWELL,
+            "trailing": MARKET_GATE_TRAILING,
+            "basis": ("n_min mirrors betting_shadow.MIN_BETS_FOR_SWEEP and z is "
+                      "betting_model.Z_95_ONE_SIDED; the dwell of 3 and the "
+                      "trailing 200 are POLICY chosen for hysteresis, not "
+                      "measured (docs/diamond-betting.md section 7b)"),
+        },
+        "last_evaluation_date": st.get("last_evaluation_date"),
+        "today_note": today_note,
+        "note": ("a market must clear BOTH legs to fill a slot or reach the "
+                 "public record. The shadow and calibration ledgers keep "
+                 "recording closed markets, because they are the only "
+                 "instruments that can ever accumulate the evidence to re-open "
+                 "one."),
+        "markets": markets,
+    }
+
+
+def market_gate_evaluate(*, cal_path: Path | None = None,
+                         state_path: Path | None = None,
+                         now: datetime | None = None,
+                         write: bool = True, log_fn=None) -> dict:
+    """ONE nightly evaluation of the section 7b gate, and the only function
+    that moves the dwell.
+
+    The counters advance at most once per UTC calendar day: "3 consecutive
+    nightly evaluations" means three nights, and a pipeline that runs twice in
+    an afternoon must not close a market in one day. A same-day re-run
+    refreshes the statistics and leaves the counters alone."""
+    from tools import betting_calibration as bc
+    full = bc.market_gate(path=cal_path)
+    trail = bc.market_gate(path=cal_path, trailing=MARKET_GATE_TRAILING)
+    state = load_market_gate_state(state_path)
+    today = (now or datetime.now(timezone.utc)).date().isoformat()
+    advanced = state.get("last_evaluation_date") != today
+
+    for m in BOARD_MARKETS:
+        ms = state["markets"][m]
+        if not advanced:
+            continue
+        if ms.get("status") != "ledger_closed":
+            ms["consecutive_worse"] = (ms.get("consecutive_worse", 0) + 1
+                                       if full[m]["worse_than_coin_95"] else 0)
+            if ms["consecutive_worse"] >= MARKET_GATE_DWELL:
+                ms["status"] = "ledger_closed"
+                ms["closed_at"] = _now()
+                ms["consecutive_recovered"] = 0
+                if log_fn:
+                    log_fn(f"betting_export: MARKET LEDGER-CLOSED {m} "
+                           f"(worse than a coin {MARKET_GATE_DWELL} evaluations "
+                           f"running, n={full[m]['n_games']}, "
+                           f"brier={full[m]['brier']})")
+                log.warning("betting_export: market %s is LEDGER-CLOSED "
+                            "(section 7b)", m)
+        else:
+            ms["consecutive_recovered"] = (ms.get("consecutive_recovered", 0) + 1
+                                           if not trail[m]["worse_than_coin_95"]
+                                           else 0)
+            if ms["consecutive_recovered"] >= MARKET_GATE_DWELL:
+                ms["status"] = "open"
+                ms["reopened_at"] = _now()
+                ms["consecutive_worse"] = 0
+                if log_fn:
+                    log_fn(f"betting_export: market {m} RE-OPENED (trailing "
+                           f"{MARKET_GATE_TRAILING} no longer resolve worse "
+                           f"than a coin, {MARKET_GATE_DWELL} evaluations "
+                           "running)")
+    if advanced:
+        state["last_evaluation_date"] = today
+    state["updated_at"] = _now()
+    if write:
+        try:
+            save_market_gate_state(state, state_path)
+        except OSError:
+            log.warning("betting_export: could not persist %s; the dwell will "
+                        "re-derive from tonight's statistics on the next build",
+                        MARKET_GATE_STATE_PATH.name)
+    return market_publishability(state=state, full=full, trailing=trail)
+
+
+def _floor_clearing_sides(bets: list[dict], thr: float, *,
+                          ledger_closed: frozenset | None = None) -> list[dict]:
     """Every side on the BOARD that clears `thr` at a real taken price.
 
     THE ENUMERATION MAY NOT RE-PRICE ANYTHING. Each candidate is the board row
@@ -3151,7 +3517,12 @@ def _floor_clearing_sides(bets: list[dict], thr: float) -> list[dict]:
     once, by book count, in `_consensus_point`, and priced only among the books
     posting it, in `_best_price_on_line`. Both slots and the per-game best-value
     badge read the rows that came out of that, so no two surfaces on the page
-    can disagree about what a side costs."""
+    can disagree about what a side costs.
+
+    `ledger_closed` is the section 7b evidence leg, injectable for tests;
+    None reads the persisted dwell state."""
+    if ledger_closed is None:
+        ledger_closed = ledger_closed_markets()
     cands = []
     for b in bets:
         for market, rows in (("moneyline", b.get("moneyline") or []),
@@ -3164,6 +3535,11 @@ def _floor_clearing_sides(bets: list[dict], thr: float) -> list[dict]:
             # a market whose own graded Brier (0.26301) is worse than a coin.
             # The predicate lifts itself the moment SERVE_RUN_DISPERSION flips.
             if not bm.market_is_publishable(market):
+                continue
+            # SEAM 1 of 2 for the section 7b ledger leg (2026-08-16): a market
+            # that RESOLVED worse than a coin on its own settled canonical
+            # games fills no slot until the trailing sample stops saying so.
+            if market in ledger_closed:
                 continue
             for row in rows or []:
                 if row.get("edge") is None or row["edge"] < thr:
@@ -3181,8 +3557,10 @@ def _publish_slot(row: dict, slot: str, *, thr: float, prov: bool) -> dict:
 
     A row lifted out of the payload and pasted anywhere else still carries the
     floor it cleared, whether that floor was policy or measurement, which slot
-    rule chose it and what the recorded stake was."""
-    out = {**row, "slot": slot, "slot_label": SLOT_LABELS[slot],
+    rule chose it, what the recorded stake was, and (2026-08-16) which FRAME
+    it was published under: watch while the gates are closed, pick once they
+    open."""
+    out = {**row, "slot": slot, **slot_presentation(slot, prov),
            "stake_units": STAKE_UNITS,
            "suggested_units": SLOT_DISPLAY_UNITS[slot],
            "provisional": prov, "min_edge_used": thr}
@@ -3242,24 +3620,49 @@ def provisional_picks(bets: list[dict], *, odds_configured: bool,
     pick."""
     thr, basis, prov = resolve_min_edge(evald)
     floor_txt = "provisional floor" if prov else "measured threshold"
+    noun = _selection_noun(prov)
+    tag_records = _slot_tag_records()
     meta = {"provisional": prov, "min_edge": thr, "basis": basis,
-            "policy": ("a provisional pick is published against a POLICY floor, "
-                       "not a validated threshold; it is labelled as such "
-                       "everywhere it appears and it is recorded in the shadow "
-                       "ledger so it becomes evidence"),
+            # THE FRAME (owner decision 2026-08-16). "watch" while the gates
+            # are closed, "pick" once they open; every client label keys off
+            # this and the per-slot presentation fields, so the vocabulary
+            # lifts itself the day the gates do.
+            "frame": ("watch" if prov else "pick"),
+            "frame_note": ("Model Watch framing, owner decision 2026-08-16: "
+                           "while the three validation gates are closed the "
+                           "slots present the model's largest measured "
+                           "disagreements with the market, not "
+                           "recommendations. The structural keys keep their "
+                           "names for ledger continuity; the vocabulary "
+                           "returns automatically when the gates open."
+                           if prov else
+                           "the three validation gates are open and a measured "
+                           "threshold exists, so the pick vocabulary is in "
+                           "force"),
+            "policy": (("a provisional selection is published against a POLICY "
+                        "floor, not a validated threshold; it is labelled as "
+                        "such everywhere it appears and it is recorded in the "
+                        "shadow ledger so it becomes evidence")
+                       if prov else
+                       ("the published pick clears the MEASURED minimum-edge "
+                        "threshold; the provisional policy floor is retired")),
             "shared_floor_note": ("both slots clear the same floor; no slot is "
                                   "allowed a lower one, because a threshold "
-                                  "lowered to make a pick appear is not a "
+                                  f"lowered to make a {noun} appear is not a "
                                   "threshold"),
             "slots": {}}
 
     def _slot_meta(slot, *, rule, band, present, reason, n_cands):
-        return {"slot": slot, "label": SLOT_LABELS[slot], "rule": rule,
+        return {"slot": slot, "label": slot_presentation(slot, prov)["slot_label"],
+                **slot_presentation(slot, prov), "rule": rule,
                 "band": band, "present": present, "reason": reason,
                 "n_candidates": n_cands,
                 "provisional": prov, "min_edge": thr, "basis": basis,
                 "stake_units": STAKE_UNITS,
-                "suggested_units": SLOT_DISPLAY_UNITS[slot]}
+                "suggested_units": SLOT_DISPLAY_UNITS[slot],
+                # The slot's OWN selection rule's settled paper record, so the
+                # card can show it without a second fetch (section 7a).
+                "tag_record": tag_records.get(slot)}
 
     lo, hi = POTD_ODDS_BAND
     potd_band = f"american odds from {lo:+d} to {hi:+d}"
@@ -3300,6 +3703,9 @@ def provisional_picks(bets: list[dict], *, odds_configured: bool,
             row = None
         else:
             row = _publish_slot(sorted(pool, key=rank)[0], slot, thr=thr, prov=prov)
+            # VERBATIM ON THE ROW TOO: a slot lifted out of the payload still
+            # carries its own rule's settled record beside its numbers.
+            row["tag_record"] = tag_records.get(slot)
             why = (potd_rule if slot == "pick_of_the_day" else long_rule)
         slots[slot] = row
         reasons[slot] = why
@@ -3557,6 +3963,11 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     # account of why the model is not validated, and a provisional pick does not
     # make any of them untrue. What changes is that the slate no longer renders
     # empty while they are shut.
+    # THE SECTION 7b MARKET GATE, evaluated BEFORE the slots are chosen so the
+    # seam below reads tonight's dwell state, not last night's. One evaluation
+    # per UTC day; a same-day re-run refreshes the statistics only. write=False
+    # keeps a dry build from advancing the nightly counters.
+    market_table = market_gate_evaluate(write=write, log_fn=log_fn)
     slots, pick_reason, pick_meta = provisional_picks(
         bets, odds_configured=odds_configured, evald=evald,
         block_reason=(odds_slate["reason"] if odds_slate.get("mismatch") else None))
@@ -3708,11 +4119,16 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         "pick_of_the_day": pick,
         "longshot_of_the_day": longshot,
         "pick_reason": pick_reason,
-        # The label the page keys off. Published even when there is no pick, so
+        # The label the page keys off. Published even when a slot is empty, so
         # a client can render the provisional treatment around an empty slot
-        # rather than having to infer it from the pick's own fields.
+        # rather than having to infer it from the row's own fields.
         "pick_meta": pick_meta,
         "pick_blockers": blockers,
+        # The section 7b table: dispersion leg + ledger leg + dwell state, one
+        # row per market, each with its reason. Published whether or not it
+        # bars anything, because a gate a reader cannot see is a gate he
+        # cannot hold the site to.
+        "market_publishability": market_table,
         "team_bets": bets,
         "props_fair_lines": props_fair_lines(games, starters=starters) if games else
                             {"model_only": True, "pitchers": [], "hitters": [],
@@ -3817,6 +4233,9 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         # slice's job to carry the qualifier more than anyone's.
         "pick_meta": payload["pick_meta"],
         "pick_blockers": payload["pick_blockers"],
+        # The market gate travels with the free slice for the same reason the
+        # publish blockers do: it is part of the trust surface.
+        "market_publishability": payload["market_publishability"],
         # PRE-REGISTERED, IN THE FREE SLICE. What the site refuses to publish is
         # a claim a reader can only hold it to if he can see it before the first
         # row exists, so it is not behind any gate.

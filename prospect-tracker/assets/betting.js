@@ -40,8 +40,12 @@
   var SECTIONS = ["potd", "teams", "props", "parlays", "calculators", "record",
                   "validation", "mybets"];
   var SECTION_PAT = SECTIONS.join("|");
+  // The potd label follows the SERVED frame (2026-08-16 Model Watch ruling):
+  // "Model Watch" while the gates are closed, "Pick of the Day" when the
+  // payload says they opened. The default here is the gates-closed word, and
+  // syncTabs rewrites the button the moment the payload lands.
   var SECTION_LABELS = {
-    potd: "Pick of the Day", teams: "Team Bets", props: "Player Props",
+    potd: "Model Watch", teams: "Team Bets", props: "Player Props",
     parlays: "Parlays", calculators: "Calculators", record: "The Record",
     validation: "Validation", mybets: "My Bets"
   };
@@ -85,8 +89,27 @@
     help: "If gambling stops being fun, call 1-800-GAMBLER.",
     helpline: "1-800-GAMBLER",
     affiliates: "eephus.io takes no affiliate money from any sportsbook and links to none.",
-    staking: "Every pick on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
+    staking: "Every row on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
   };
+
+  // ---- the served frame (owner decision 2026-08-16) -------------------------
+  // While the three validation gates are closed the payload serves
+  // pick_meta.frame = "watch" and the page retires the pick noun: the slots
+  // are the model's largest measured disagreements with the market, shown
+  // beside their own settled paper record. When the payload says the gates
+  // opened (frame "pick"), the pick vocabulary returns everywhere these
+  // helpers are read, with no other edit. A payload built before the frame
+  // existed reads as watch unless it explicitly says the floor is measured,
+  // because every pre-frame payload was a gates-closed payload.
+  function slotFrame() {
+    var m = (S.data && S.data.pick_meta) || {};
+    if (m.frame === "pick" || m.frame === "watch") return m.frame;
+    return (m.provisional === false) ? "pick" : "watch";
+  }
+  function watchMode() { return slotFrame() !== "pick"; }
+  function selNoun() { return watchMode() ? "selection" : "pick"; }
+  function selNounPl() { return watchMode() ? "selections" : "picks"; }
+  function selNounCap() { return watchMode() ? "Selection" : "Pick"; }
 
   // ---- the Diamond gate, wired and OFF -------------------------------------
   // assets/diamond-config.js (owned by the diamond-core lane) sets
@@ -391,17 +414,18 @@
   // reader can actually count, so it reads "600 needed, 0 today" rather than
   // "the model is unvalidated" with no way to check the claim.
   function noPickHeadline(v) {
-    if (!v) return "No pick: this payload carries no validation state, so treat the model " +
+    var lead = "No " + selNoun() + ": ";
+    if (!v) return lead + "this payload carries no validation state, so treat the model " +
       "as unvalidated.";
     if (v.available === false) {
-      return "No pick: " + (v.reason || "the validation state is unknown") + ".";
+      return lead + (v.reason || "the validation state is unknown") + ".";
     }
     var g = gateById(v, "vintage_sample");
     if (g) {
-      return "No pick: the model is unvalidated until " + g.need + " exist, and " +
+      return lead + "the model is unvalidated until " + g.need + " exist, and " +
         haveText(g) + " exist today.";
     }
-    return "No pick: the model is unvalidated and no minimum edge has been measured.";
+    return lead + "the model is unvalidated and no minimum edge has been measured.";
   }
 
   function modeTag(mode, honest) {
@@ -452,7 +476,8 @@
       "</div>");
 
     if ((gate.gates || []).length) {
-      rows.push('<div class="bt-panel-sub">The three gates on a published pick</div>');
+      rows.push('<div class="bt-panel-sub">The three gates on a published ' +
+        selNoun() + "</div>");
       rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr>' +
         '<th class="bt-l">Gate</th><th class="bt-l">What it needs</th><th>Have</th>' +
         "<th>Distance</th><th>State</th></tr></thead><tbody>" +
@@ -556,8 +581,8 @@
       (diag ? ' title="' + esc(diag) + '"' : "") + ">" +
       '<span class="bt-fh-hd">FEED</span>' + segs.join("") +
       (fh && !fh.n_slates_with_close
-        ? '<span class="bt-fh-note">no close snapshot exists, so no pick on this ' +
-          "page can ever be graded against the closing line</span>"
+        ? '<span class="bt-fh-note">no close snapshot exists, so no ' + selNoun() +
+          " on this page can ever be graded against the closing line</span>"
         : "") + "</div>";
   }
 
@@ -611,13 +636,37 @@
   // THE SLOTS ARE DECLARED, NOT HARD-CODED INTO THE RENDERER, so a third slot
   // added server-side needs one row here and inherits the badge, the sentence
   // and the empty state rather than a new copy of all three.
+  // Each slot carries BOTH frames' copy; slotTitle/slotLead pick per the
+  // served frame, preferring the payload's own slot_label so the page can
+  // never disagree with the server about what a slot is called.
   var SLOTS = [
-    { key: "pick_of_the_day", title: "Pick of the Day",
-      lead: "The side the model is most confident in, among prices in the normal range." },
-    { key: "longshot_of_the_day", title: "Longshot Value of the Day",
-      lead: "The best expected value at a long price. It will lose most nights; " +
-            "that is what a long price means." }
+    { key: "pick_of_the_day",
+      pickTitle: "Pick of the Day",
+      watchTitle: "Model Watch: largest disagreement",
+      pickLead: "The side the model is most confident in, among prices in the normal range.",
+      watchLead: "The side tonight where the model's probability differs most from the " +
+                 "de-vigged market, among prices in the normal range. A disagreement " +
+                 "being logged in public, not a recommendation." },
+    { key: "longshot_of_the_day",
+      pickTitle: "Longshot Value of the Day",
+      watchTitle: "Model Watch: long-price disagreement",
+      pickLead: "The best expected value at a long price. It will lose most nights; " +
+                "that is what a long price means.",
+      watchLead: "The largest expected-value disagreement at a long price. Long prices " +
+                 "lose most nights; that is what a long price means. A disagreement " +
+                 "being logged in public, not a recommendation." }
   ];
+
+  function slotTitle(slot) {
+    var m = slotMeta(slot.key);
+    if (m && m.slot_label) return m.slot_label;
+    var p = S.data && S.data[slot.key];
+    if (p && p.slot_label) return p.slot_label;
+    return watchMode() ? slot.watchTitle : slot.pickTitle;
+  }
+  function slotLead(slot) {
+    return watchMode() ? slot.watchLead : slot.pickLead;
+  }
 
   // The per-slot block of `pick_meta`, with the top-level block as the fallback
   // for a payload built before the slots existed. Returning the top level is
@@ -648,8 +697,8 @@
   function provBadge(m) {
     if (!m || m.provisional === false) return "";
     return '<span class="bt-tag bt-tag-warn bt-prov" title="' +
-      esc("This pick is published against a policy floor, not a validated " +
-          "threshold. The model is unvalidated.") + '">provisional</span>';
+      esc("This " + selNoun() + " is published against a policy floor, not a " +
+          "validated threshold. The model is unvalidated.") + '">provisional</span>';
   }
 
   // The sentence a reader who does not know what a de-vigged probability is can
@@ -674,8 +723,8 @@
                                                           : p.suggested_units, 1) +
       "u flat.");
     bits.push("Recorded on the public record at " + num(p.stake_units, 1) +
-      "u, the same as every other pick, because a record kept in variable " +
-      "stakes cannot be audited from its own rows.");
+      "u, the same as every other " + selNoun() + ", because a record kept in " +
+      "variable stakes cannot be audited from its own rows.");
     var kq = (p.kelly_quarter != null) ? p.kelly_quarter
       : (p.kelly_full != null ? p.kelly_full / 4 : null);
     var chipHtml = (kq == null) ? "" :
@@ -687,7 +736,8 @@
       "model's probabilities have not been checked out of sample.</p>" +
       (chipHtml ? '<div class="bt-pick-nums">' + chipHtml + "</div>" : "") +
       (m && m.provisional !== false
-        ? note("This is a " + gl("provisional pick", "provisional_pick") +
+        ? note("This is a " +
+               gl("provisional " + selNoun(), "provisional_pick") +
                ". It cleared " + floorText(m) + ", not a measured " +
                "threshold, because the model is not validated. Nothing on this " +
                "page is advice.")
@@ -740,23 +790,118 @@
       "which puts too little mass in the tails. The full grid is on the Validation tab.");
   }
 
+  // THE SLOT'S OWN SETTLED RECORD (2026-08-16). The watch framing is only
+  // honest if the card carries what this selection rule has actually done:
+  // the server reads betting_shadow.summary() by tag and serves it on the
+  // slot meta, so "this rule is 2-4, -47.9%" costs no second fetch. Small
+  // samples are labelled against the same 100-row floor gate 3 sweeps at.
+  function tagRecordLine(key, m) {
+    var tr = (m && m.tag_record) ||
+             ((S.data && S.data[key]) || {}).tag_record || null;
+    if (!tr || tr.available === false) return "";
+    if (!tr.n_settled) {
+      return '<div class="bt-tagrec">This selection rule (' + esc(tr.tag || "") +
+        ") has no settled paper record yet.</div>";
+    }
+    var rec = tr.won + "-" + tr.lost + (tr.push ? "-" + tr.push : "");
+    var units = (tr.net_units == null) ? "" : signed(tr.net_units, 1) + "u, ";
+    var roi = (tr.roi == null) ? "ROI not computable" : pct(tr.roi, 1) + " ROI";
+    var small = tr.small_n
+      ? ' <span class="bt-tag bt-tag-warn">small sample: ' + tr.n_settled +
+        " settled of the " + (tr.sweep_floor || 100) + " the sweep needs</span>"
+      : "";
+    return '<div class="bt-tagrec">This selection rule (' + esc(tr.tag || "") +
+      ") is <strong>" + rec + "</strong> on its settled paper record, " + units +
+      roi + "." + small + "</div>";
+  }
+
+  // The board rows behind one slot row, so the worked example prices the same
+  // market the reader is looking at rather than recomputing anything private.
+  function marketRowsFor(p) {
+    var bets = (S.data || {}).team_bets || [];
+    for (var i = 0; i < bets.length; i++) {
+      var b = bets[i];
+      if (b.game_pk !== p.game_pk) continue;
+      if (p.market === "moneyline") return b.moneyline || null;
+      if (p.market === "runline") return b.runline || null;
+      if (p.market === "total") return (b.total || {}).sides || null;
+    }
+    return null;
+  }
+
+  // THE WORKED DE-VIG (2026-08-16). The watch card frames the slot as a
+  // disagreement, and a disagreement is only legible if the reader can see
+  // what it is measured against. Every number here is computed from the
+  // served rows with the same primitives the calculators use: raw implied =
+  // 1/decimal per side, the overround is their sum minus one, the fair
+  // probability splits it proportionally, and the edge is model minus fair.
+  function devigExample(p) {
+    var rows = marketRowsFor(p);
+    if (!rows || rows.length < 2) return "";
+    var decs = rows.map(function (r) {
+      return (r.decimal != null) ? Number(r.decimal) : amToDec(r.odds);
+    });
+    if (decs.some(function (x) { return !x || x <= 1; })) return "";
+    var raws = decs.map(decToImplied);
+    var sum = 0;
+    raws.forEach(function (q) { sum += q; });
+    if (!sum) return "";
+    var idx = -1;
+    rows.forEach(function (r, i) {
+      if (idx !== -1) return;
+      if (r.side !== p.side) return;
+      if (r.point != null && p.point != null &&
+          Number(r.point) !== Number(p.point)) return;
+      idx = i;
+    });
+    if (idx === -1) return "";
+    var fair = raws[idx] / sum;
+    var lines = rows.map(function (r, i) {
+      return "<li>" + esc(r.label || r.side || "") + " at " + fmtOdds(r.odds) +
+        " implies " + pct(raws[i], 1) + " raw</li>";
+    }).join("");
+    var servedGap = (p.market_fair_prob != null &&
+                     Math.abs(fair - p.market_fair_prob) > 0.001)
+      ? "<p>The served fair probability (" + pct(p.market_fair_prob, 1) +
+        ") comes from ONE book's two-sided quote, while the best prices above " +
+        "can come from different books; that is why the two fair numbers can " +
+        "differ a little, and the served one is the one the edge is measured " +
+        "against.</p>"
+      : "";
+    return '<details class="bt-devigex"><summary class="bt-devigex-sum">' +
+      "The worked de-vig: what this disagreement is measured against</summary>" +
+      '<div class="bt-devigex-body">' +
+      "<p>Each price implies a probability, 1 divided by the decimal odds:</p>" +
+      '<ul class="bt-list">' + lines + "</ul>" +
+      "<p>The raw probabilities sum to " + pct(sum, 1) + "; the " +
+      pct(sum - 1, 1) + " above 100% is the " + gl("overround", "vig") +
+      ", the book's margin. Splitting it proportionally gives " +
+      esc(p.label || p.side || "this side") + " a fair " + pct(fair, 1) +
+      ". The model says " + pct(p.model_prob, 1) + ", so the disagreement is " +
+      signed((p.model_prob - fair) * 100, 1) + " points: model minus fair, " +
+      "which is the " + gl("edge", "bet_edge") + ".</p>" + servedGap +
+      "</div></details>";
+  }
+
   function pickCard(slot) {
     var d = S.data;
     var p = d[slot.key];
     var m = slotMeta(slot.key);
-    var hd = '<div class="bt-pick-hd">' + esc(slot.title) + " " + provBadge(m) + "</div>";
+    var hd = '<div class="bt-pick-hd">' + esc(slotTitle(slot)) + " " +
+      provBadge(m) + "</div>";
     if (!p) {
       // THE HONEST EMPTY STATE. It names the floor it could not clear, and it
       // says the floor is not lowered to fill the slot, because a threshold
-      // invented to make a pick appear is the single most dishonest number this
-      // module could publish.
+      // invented to make a selection appear is the single most dishonest
+      // number this module could publish.
       var why = (m && m.reason) || d.pick_reason || "";
       return '<div class="bt-pick bt-pick-empty">' + hd +
         '<div class="bt-pick-sel bt-dim">Nothing qualifies today</div>' +
         "<p>" + esc(why) + "</p>" +
         "<p>The floor is " + floorText(m) + ", the same one every other slot " +
-        "clears, and it is never lowered to make a pick appear. An empty slot is " +
-        "the honest answer to a slate with nothing on it.</p></div>";
+        "clears, and it is never lowered to make a " + selNoun() +
+        " appear. An empty slot is the honest answer to a slate with nothing " +
+        "on it.</p></div>";
     }
     // THE REDACTED SLOT (D16). The preview slice keeps the whole trust surface
     // (validation state, record, publish blockers) and withholds the SELECTION
@@ -766,27 +911,33 @@
     // rewrite rather than a client that hides fields it was sent.
     if (p.redacted) {
       return '<div class="bt-pick bt-pick-redacted">' + hd +
-        "<p class=\"bt-pick-lead\">" + esc(slot.lead) + "</p>" +
+        "<p class=\"bt-pick-lead\">" + esc(slotLead(slot)) + "</p>" +
         '<div class="bt-pick-sel bt-dim">Selection withheld</div>' +
         '<div class="bt-pick-meta">' + esc(p.market || "market not stated") +
         " &middot; cleared " + (p.min_edge_used == null ? "the floor"
                                                         : pct(p.min_edge_used, 1)) +
         "</div>" +
-        "<p>" + esc(p.redaction_note || ("This slot has a pick. The preview slice " +
+        "<p>" + esc(p.redaction_note || ("This slot is filled. The preview slice " +
           "carries its market and the floor it cleared, and not the side, the price " +
           "or the book.")) + "</p>" +
-        note("Everything needed to judge the pick is still on this page: the " +
-          "validation state, the two clocks, the gate table and the public record " +
-          "are never gated. What is behind the gate is the selection, not the " +
-          "evidence.") + "</div>";
+        note("Everything needed to judge the " + selNoun() + " is still on this " +
+          "page: the validation state, the two clocks, the gate table and the " +
+          "public record are never gated. What is behind the gate is the " +
+          "selection, not the evidence.") + "</div>";
     }
     // THE CAVEAT SLOT CARRIES BOTH LINES. The row's own caveat says the market
     // is one of the two the margin model is worst at; the dispersion line says
     // what was done about that and what the gate returned.
     var shaped = (p.market === "runline" || p.market === "total");
     var caveat = (p.caveat ? note(esc(p.caveat)) : "") + dispersionLine(shaped);
+    // The watch additions render in the watch frame only: when the gates open
+    // the pick rendering returns exactly as it was, which is the self-lift the
+    // 2026-08-16 decision requires.
+    var watchBits = watchMode()
+      ? tagRecordLine(slot.key, m) + devigExample(p)
+      : "";
     return '<div class="bt-pick">' + hd +
-      "<p class=\"bt-pick-lead\">" + esc(slot.lead) + "</p>" +
+      "<p class=\"bt-pick-lead\">" + esc(slotLead(slot)) + "</p>" +
       '<div class="bt-pick-sel">' + esc(p.label || p.side || "") + " " +
       fmtOdds(p.odds) + "</div>" +
       '<div class="bt-pick-meta">' + esc(p.matchup || "") + " &middot; " +
@@ -796,7 +947,7 @@
       chip("Model", pct(p.model_prob)) + chip("Market fair", pct(p.market_fair_prob)) +
       chip("Edge", signed(p.edge * 100, 1) + "%") +
       chip("EV / unit", signed(p.ev_per_unit, 3)) + "</div>" +
-      caveat + unitLine(p, m) + "</div>";
+      watchBits + caveat + unitLine(p, m) + "</div>";
   }
 
   // AN EMPTY BOARD IS A MEASUREMENT, NOT AN OUTAGE, and it has to read as one.
@@ -840,7 +991,7 @@
     var d = S.data;
     var out = [];
     if (!d) {
-      return empty("Pick of the day is unavailable",
+      return empty((watchMode() ? "Model Watch" : "Pick of the day") + " is unavailable",
         "The betting payload has not been built yet. Check back after the next build.");
     }
     var any = SLOTS.some(function (s) { return !!d[s.key]; });
@@ -868,8 +1019,8 @@
       out.push('<div class="bt-nopick"><div class="bt-nopick-hd">Why nothing is here' +
         "</div><p>" + esc(noPickHeadline(vstate())) + "</p>" + lines +
         "<p>These are the standing reasons the model is not validated. They stay " +
-        "on the page whether a pick ships or not, because a provisional pick does " +
-        "not make any of them untrue.</p></div>");
+        "on the page whether a " + selNoun() + " ships or not, because a " +
+        "provisional " + selNoun() + " does not make any of them untrue.</p></div>");
     }
 
     // THE PANELS ARE COLLAPSED, NOT REMOVED. Every word of the contamination
@@ -897,11 +1048,11 @@
     if (need != null) {
       s += "The honest backtest has graded " + (have == null ? "-" : have) +
         " of the " + need + " games it needs before any edge threshold can be " +
-        "measured, so the picks above clear " + floorText(m) +
+        "measured, so the " + selNounPl() + " above clear " + floorText(m) +
         ", not a number fitted to anything. ";
     } else {
-      s += "No minimum edge has been measured, so the picks above clear a floor " +
-        "that was chosen as policy, not fitted to anything. ";
+      s += "No minimum edge has been measured, so the " + selNounPl() +
+        " above clear a floor that was chosen as policy, not fitted to anything. ";
     }
     s += "Treat them as a labelled experiment being logged in public.";
     return note(s);
@@ -962,7 +1113,8 @@
       chip("Skill", signed(d, 6)) + chip("t", num(sk.t, 3)) + "</div>" +
       "<p>Lower Brier is better, so a model above its own baseline is worse than the " +
       "baseline. This is the number that decides whether anything on this site may be " +
-      "published as a pick, and it is not close to deciding it yes.</p></div>";
+      "published as a " + selNoun() + ", and it is not close to deciding it " +
+      "yes.</p></div>";
   }
 
   function clockA() {
@@ -1199,7 +1351,8 @@
   function renderValidation() {
     var v = vstate();
     var out = [honestResult(), clocksPanel()];
-    out.push('<div class="bt-subhd">The three gates on a published pick</div>');
+    out.push('<div class="bt-subhd">The three gates on a published ' + selNoun() +
+      "</div>");
     out.push(validationPanel());
     out.push(calibrationPanel());
     out.push(dispersionPanel());
@@ -1220,18 +1373,21 @@
   function renderRecord() {
     var d = S.data;
     return recordPanel(d ? d.record : null) + clvPanel() + publishBlockerPanel() +
-      '<div class="bt-panel"><div class="bt-panel-hd">How a pick gets graded</div>' +
-      "<p>Every published pick carries the timestamp, the book, the price at post " +
-      "and a flat one " + gl("unit", "betting_unit") + ". It settles won, lost or " +
-      "void, and it is then graded a second time against the closing line.</p>" +
+      '<div class="bt-panel"><div class="bt-panel-hd">How a ' + selNoun() +
+      " gets graded</div>" +
+      "<p>Every published " + selNoun() + " carries the timestamp, the book, the " +
+      "price at post and a flat one " + gl("unit", "betting_unit") +
+      ". It settles won, lost or void, and it is then graded a second time " +
+      "against the closing line.</p>" +
       "<p>" + gl("Closing line value", "clv") + " is the honest test. Beating the close means the market " +
-      "moved toward the pick after it was posted, which is evidence the pick had " +
-      "information in it. Winning a bet is not evidence of anything on its own, and " +
-      "one season of results is a smaller sample than it feels like.</p>" +
+      "moved toward the " + selNoun() + " after it was posted, which is evidence " +
+      "the " + selNoun() + " had information in it. Winning a bet is not evidence " +
+      "of anything on its own, and one season of results is a smaller sample than " +
+      "it feels like.</p>" +
       "<p>Two CLV numbers get published side by side: price CLV, the posted decimal " +
       "over the closing decimal minus one, and probability CLV, the implied " +
       "probability at close minus at post. Beat-close rate is the plain yes or no " +
-      "across every graded pick.</p></div>";
+      "across every graded " + selNoun() + ".</p></div>";
   }
 
   function chip(label, value) {
@@ -1346,10 +1502,11 @@
   function recordPanel(r) {
     var body;
     if (!r || !r.n_rows) {
-      body = empty("The record starts when the picks do",
-        "No pick has been published, so there is nothing to grade. When picks start, every " +
-        "one of them lands here with the book, the price at post, a flat 1 unit stake, and " +
-        "the closing line it is graded against. Rows are never edited or deleted.");
+      body = empty("The record starts when the " + selNounPl() + " do",
+        "No " + selNoun() + " has been published, so there is nothing to grade. " +
+        "When " + selNounPl() + " start, every one of them lands here with the " +
+        "book, the price at post, a flat 1 unit stake, and the closing line it " +
+        "is graded against. Rows are never edited or deleted.");
     } else {
       body = '<div class="bt-kv">' +
         kv("Record", r.won + "-" + r.lost + (r.push ? "-" + r.push : "")) +
@@ -1427,7 +1584,8 @@
       "</div>");
     var h = side ? clvDeciles(side.picks) : null;
     if (h) {
-      rows.push('<div class="bt-panel-sub">Distribution, ' + h.n + " graded picks in ten " +
+      rows.push('<div class="bt-panel-sub">Distribution, ' + h.n + " graded " +
+        selNounPl() + " in ten " +
         "equal-width bins from " + signed(h.lo, 2) + "% to " + signed(h.hi, 2) + "%</div>");
       rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
         '<thead><tr><th class="bt-l">Bin</th><th class="bt-l">Count</th><th>n</th>' +
@@ -1451,9 +1609,9 @@
             return '<tr><td class="bt-l">' + esc(k) + "</td><td>" + reasons[k] + "</td></tr>";
           }).join("") + "</tbody></table></div>");
       } else if (!r.n_rows) {
-        rows.push("<p>No pick has been published, so there is no position to grade " +
-          "against a close. The sidecar is derived from the record and is not " +
-          "requested until the record has a row in it.</p>");
+        rows.push("<p>No " + selNoun() + " has been published, so there is no " +
+          "position to grade against a close. The sidecar is derived from the " +
+          "record and is not requested until the record has a row in it.</p>");
       } else {
         rows.push("<p>No closing-line grade exists. " + esc(auxMissing("clv")) + "</p>");
       }
@@ -1481,8 +1639,8 @@
     }
     var nOpen = 0;
     bl.forEach(function (b) { if (b.open) nOpen += 1; });
-    rows.push("<p>" + nOpen + " of " + bl.length + " are open. A pick is written to the " +
-      "public record only when every one of them is.</p>");
+    rows.push("<p>" + nOpen + " of " + bl.length + " are open. A " + selNoun() +
+      " is written to the public record only when every one of them is.</p>");
     rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
       '<thead><tr><th class="bt-l">Blocker</th><th class="bt-l">What it needs</th>' +
       '<th class="bt-l">Have</th><th>State</th></tr></thead><tbody>' +
@@ -1545,18 +1703,19 @@
     if (meta.blocked) {
       head += note("<strong>No best value badges today.</strong> " +
         esc(meta.blocked_reason || "the selection rule never ran") +
-        ". The pick slots were hard-stopped for that reason, and the badge " +
-        "takes the same stop rather than outliving it: nothing on this board " +
-        "is marked as a bet.");
+        ". The " + selNoun() + " slots were hard-stopped for that reason, and " +
+        "the badge takes the same stop rather than outliving it: nothing on " +
+        "this board is marked as a bet.");
     }
     var thr = pickFloor();
     if (hasMarket && thr != null) {
       head += note("A <strong>best value</strong> badge marks the single side in a " +
         "game with the largest " + gl("edge", "bet_edge") + " clearing " +
         esc(floorText((S.data && S.data.pick_meta) || {})) + ", the same bar the " +
-        "picks above use, so the badge and the picks can never disagree about the " +
-        "bar. A game with no badge had nothing clear it, and that absence is " +
-        "information: it means the model and the market agree about that game.");
+        selNounPl() + " above use, so the badge and the " + selNounPl() +
+        " can never disagree about the bar. A game with no badge had nothing " +
+        "clear it, and that absence is information: it means the model and the " +
+        "market agree about that game.");
     }
     return head + bets.map(gameCard).join("");
   }
@@ -1953,7 +2112,7 @@
         "EV is what the bet returns on average per unit staked, at your probability."),
       calcBox("Kelly", "bt-c4",
         field("Your probability %", "bt-c4-p", "55") + field("Price (American)", "bt-c4-odds", "-110"),
-        "Kelly is informational on this site. Every pick on the public record is a flat " +
+        "Kelly is informational on this site. Every row on the public record is a flat " +
         "1 unit, because a variable stake makes a published ROI impossible to audit."),
       calcBox("Parlay", "bt-c5",
         field("Prices, comma separated", "bt-c5-legs", "-110, +150, -130") +
@@ -2378,8 +2537,15 @@
     });
   }
   function syncTabs() {
+    // The potd tab's copy follows the served frame (the 2026-08-16 ruling):
+    // "Model Watch" while the gates are closed, "Pick of the Day" when the
+    // payload says they opened. Rewritten on every paint so a shell-shipped
+    // button flips too.
+    var potdLabel = watchMode() ? "Model Watch" : "Pick of the Day";
     document.querySelectorAll(".mlbstats-sectionbtn[data-bettingsection]").forEach(function (b) {
-      var on = b.getAttribute("data-bettingsection") === S.section;
+      var id = b.getAttribute("data-bettingsection");
+      if (id === "potd" && b.textContent !== potdLabel) b.textContent = potdLabel;
+      var on = id === S.section;
       b.classList.toggle("active", on);
       b.setAttribute("aria-selected", on ? "true" : "false");
     });
@@ -2576,6 +2742,16 @@
     // sheet ever matched it. Dashed is this sheet's dialect for informational,
     // not validated (.bt-numchip-info), on the gold .bt-tag-warn already sets.
     ".bt-prov{border-style:dashed;white-space:nowrap}",
+    // The watch card's two additions (2026-08-16): the slot rule's own settled
+    // record, and the collapsible worked de-vig. Both are body copy, not
+    // chrome, so they take the secondary text tokens and a thin gold rail that
+    // matches the provisional dialect.
+    ".bt-tagrec{border-left:3px solid var(--accent-gold,#a80);padding:6px 10px;margin:8px 0;font-size:12.5px;color:var(--text-secondary)}",
+    ".bt-tagrec strong{color:var(--text-primary)}",
+    ".bt-devigex{border:1px solid var(--border,#333);margin:8px 0;background:var(--bg-secondary)}",
+    ".bt-devigex-sum{cursor:pointer;padding:7px 10px;font-size:12.5px;color:var(--text-primary)}",
+    ".bt-devigex-body{padding:2px 10px 8px;font-size:12.5px;color:var(--text-secondary)}",
+    ".bt-devigex-body ul{margin:4px 0}",
     // The gate table's `why` is a paragraph, not a cell value. Without a cap
     // it stretches the row to its own length and the whole table becomes a
     // horizontal scroll of one sentence. Both selectors are qualified by
