@@ -1,0 +1,273 @@
+{
+  "release": "milb_sdr_ewar_2021_2025",
+  "dataset_version": "milb-value-2026.08.14",
+  "schema_version": "milb-public-1.0.0",
+  "data_through": "statsapi-2026-07-20",
+  "ingested_at": "2026-08-16",
+  "ingestion_method": "byte-for-byte copy of the certified release candidate; no recomputation, no rounding, no schema change",
+  "grain": "player_id x season x level",
+  "seasons": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "levels": [
+    "AAA",
+    "AA",
+    "High-A",
+    "Low-A"
+  ],
+  "excluded": {
+    "2026": "no rows \u2014 the 2026 defensive substrate (SDR era refit, d02, league environment, park) does not exist; not certified",
+    "Rookie/CPX (sportId 16)": "not supported by the canonical model; research only, deliberately unpromoted",
+    "DSL (sportId 17)": "not supported by the canonical model"
+  },
+  "producer_versions": {
+    "hitter_ewar": "milb-hitter-ewar-1.3.0",
+    "defense_runs": "milb-defense-runs-1.3.0",
+    "sdr": "sdr-era-refit-2026-07-20",
+    "positional_adjustment": "posadj-noah-ladder-2.0.0",
+    "positional_spec": "POSADJ-EEPHUS-2.0.0",
+    "pitcher_ewar": "milb-pitcher-ewar-1.2.0",
+    "run_currency": "run-currency-1.0.0"
+  },
+  "provenance": {
+    "producer_repo": "~/ewar_production",
+    "promoted_run": "20260814_045956_26062c",
+    "release_builder": "~/milb_github_release_candidate/src/s03_release.py",
+    "release_manifest": "~/milb_github_release_candidate/artifacts/RELEASE_MANIFEST.json",
+    "upstream_artifacts": {
+      "milb_sdr": [
+        {
+          "path": "~/ewar_production/data/milb_defensive_runs.parquet",
+          "sha256": "2b87f12abd4991e3a8c00de513c0e07f1bf71d261ff066bf27aa917ad3e3b439"
+        }
+      ],
+      "milb_hitter_ewar": [
+        {
+          "path": "~/ewar_production/data/milb_hitter_ewar_player_season.parquet",
+          "sha256": "fd3d00d07444de4f932091b45c77677aa7ac4242b0f4ba90d99f0417eefd28bf"
+        },
+        {
+          "path": "~/ewar_production/data/milb_hitter_ewar_by_level.parquet",
+          "sha256": "2e66eb79a9dc3597021e14f8d89cecb9df94da4900e113e5defbdb638a8fb8a3"
+        }
+      ],
+      "milb_pitcher_ewar": [
+        {
+          "path": "~/ewar_production/publication/current/ewar/milb/pitchers.parquet",
+          "sha256": "b00f74c84b86118899b0e16f532b77da35016d03a37e91292935cf7cb9fcbd6e"
+        }
+      ]
+    }
+  },
+  "verification": {
+    "source_to_repo": "sha256 identical for all 4 files (byte-for-byte copy)",
+    "source_to_producer": "independent reconstruction from the production parquets reproduced every column of all three files exactly: max |\u0394| = 0.000e+00 over all numeric columns, 0 string disagreements",
+    "csv_convention": "float64 written at shortest round-trip precision; read with float_precision='round_trip'. Empty string is written as an empty field \u2014 read with keep_default_na=False to distinguish '' from null (affects milb_sdr.unobserved_defense_components on 13,348 non-catcher rows)."
+  },
+  "open_defects": [
+    {
+      "id": "D-007",
+      "severity": "material \u2014 resolve before any public or site-facing use",
+      "summary": "The promoted SDR generation (sdr-era-refit-2026-07-20) was fit with loc_code, a leaked feature. A de-leaked replacement artifact already exists and is byte-reproducible, but has NOT been promoted. Ruling 2026-08-16: DEPENDENCY_EXISTS_NEEDS_CERTIFICATION.",
+      "measured_impact_on_milb_sdr": "r = 0.848, 15.47% sign flips, max |\u0394| 11.56 runs, SD +10.1%",
+      "measured_impact_on_milb_hitter_ewar": "defense_runs mean |\u0394| 0.359, max 11.53; sign flips 5.4% at defense_runs level",
+      "affects": [
+        "milb_sdr",
+        "milb_hitter_ewar"
+      ]
+    },
+    {
+      "id": "D-001",
+      "severity": "authority \u2014 gates PUBLIC redistribution only",
+      "summary": "Whether publishing an aggregated, independently-computed statistic downstream of MLBAM access is separately permitted is UNRESOLVED. These files are stored in a PRIVATE repository and are not published; D-001 must be closed before any public exposure.",
+      "affects": [
+        "milb_sdr",
+        "milb_hitter_ewar",
+        "milb_pitcher_ewar"
+      ]
+    },
+    {
+      "id": "pitcher-aaa-join-gap",
+      "severity": "minor \u2014 fields already excluded",
+      "summary": "milb-pitcher-ewar-1.2.0 leaves sportId/g/gs/r/lg_ra9 null for 100% of AAA rows (6,167/6,167). Those auxiliary fields are excluded from this schema; pitcher_ewar itself is complete.",
+      "affects": [
+        "milb_pitcher_ewar"
+      ]
+    }
+  ],
+  "datasets": [
+    {
+      "dataset": "milb_sdr",
+      "description": "Spatial Defensive Runs + positional value, MiLB",
+      "path": "milb-value/data/milb_sdr.csv",
+      "seasons": [
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "levels": [
+        "AA",
+        "AAA",
+        "High-A",
+        "Low-A"
+      ],
+      "rows": 16824,
+      "columns": 22,
+      "column_names": [
+        "player_id",
+        "player_name",
+        "season",
+        "level",
+        "PA",
+        "position_innings",
+        "sdr_runs",
+        "sdr_standard_error",
+        "sdr_reliability",
+        "sdr_effective_opportunities",
+        "position_runs",
+        "dh_position_runs",
+        "position_runs_total",
+        "defense_runs",
+        "position_shares",
+        "exposure_shares",
+        "position_status",
+        "defense_scope",
+        "unobserved_defense_components",
+        "sdr_version",
+        "position_runs_version",
+        "model_version"
+      ],
+      "bytes": 6658601,
+      "sha256": "b6aaa24cfd3b738cb29ffa4d0012d2222bdcda02575499f93cb156a914deb374",
+      "source_path": "~/milb_github_release_candidate/release/milb_sdr.csv",
+      "source_sha256": "b6aaa24cfd3b738cb29ffa4d0012d2222bdcda02575499f93cb156a914deb374",
+      "rows_2026": 0
+    },
+    {
+      "dataset": "milb_hitter_ewar",
+      "description": "Eephus hitter WAR, MiLB",
+      "path": "milb-value/data/milb_hitter_ewar.csv",
+      "seasons": [
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "levels": [
+        "AA",
+        "AAA",
+        "High-A",
+        "Low-A"
+      ],
+      "rows": 17833,
+      "columns": 18,
+      "column_names": [
+        "player_id",
+        "player_name",
+        "season",
+        "level",
+        "organization_id",
+        "PA",
+        "batting_runs",
+        "baserunning_runs",
+        "sdr_runs",
+        "position_runs",
+        "replacement_runs",
+        "league_adjustment_runs",
+        "total_value_runs",
+        "runs_per_win",
+        "ewar",
+        "ewar_se",
+        "model_version",
+        "data_version"
+      ],
+      "bytes": 4567806,
+      "sha256": "54810275adf77cf64a5d68aceeeaa5e120ef247adcfb088b16fa35ee03861262",
+      "source_path": "~/milb_github_release_candidate/release/milb_hitter_ewar.csv",
+      "source_sha256": "54810275adf77cf64a5d68aceeeaa5e120ef247adcfb088b16fa35ee03861262",
+      "rows_2026": 0
+    },
+    {
+      "dataset": "milb_pitcher_ewar",
+      "description": "Eephus pitcher WAR, MiLB",
+      "path": "milb-value/data/milb_pitcher_ewar.csv",
+      "seasons": [
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "levels": [
+        "AA",
+        "AAA",
+        "High-A",
+        "Low-A"
+      ],
+      "rows": 22076,
+      "columns": 26,
+      "column_names": [
+        "player_id",
+        "player_name",
+        "season",
+        "level",
+        "league",
+        "org",
+        "role",
+        "innings_pitched",
+        "batters_faced",
+        "fi_runs_observed",
+        "hr_runs_above_average",
+        "contact_runs_above_average",
+        "league_adjustment_runs",
+        "replacement_runs",
+        "runs_above_replacement",
+        "runs_per_win",
+        "pitcher_ewar",
+        "pitcher_ewar_sd",
+        "pitcher_ewar_low",
+        "pitcher_ewar_high",
+        "reliability",
+        "sample_tier",
+        "coverage_level",
+        "missing_components",
+        "model_version",
+        "as_of_date"
+      ],
+      "bytes": 8224863,
+      "sha256": "d74747ccaff6a7ff30669a8140c7734b255a179ebec58f58f590893c874eed10",
+      "source_path": "~/milb_github_release_candidate/release/milb_pitcher_ewar.csv",
+      "source_sha256": "d74747ccaff6a7ff30669a8140c7734b255a179ebec58f58f590893c874eed10",
+      "rows_2026": 0
+    }
+  ],
+  "files": [
+    {
+      "filename": "milb_sdr.csv",
+      "sha256": "b6aaa24cfd3b738cb29ffa4d0012d2222bdcda02575499f93cb156a914deb374",
+      "bytes": 6658601
+    },
+    {
+      "filename": "milb_hitter_ewar.csv",
+      "sha256": "54810275adf77cf64a5d68aceeeaa5e120ef247adcfb088b16fa35ee03861262",
+      "bytes": 4567806
+    },
+    {
+      "filename": "milb_pitcher_ewar.csv",
+      "sha256": "d74747ccaff6a7ff30669a8140c7734b255a179ebec58f58f590893c874eed10",
+      "bytes": 8224863
+    },
+    {
+      "filename": "metadata.json",
+      "sha256": "0d8f37717642665a84e3be63cb6c566c8fc862e1385cfc6e716f2809a54e80fb",
+      "bytes": 1704
+    }
+  ]
+}

@@ -29,3 +29,7 @@ server.*.log
 xrv_models_vaa/
 xwoba_model_metrics.json
 ncaa_statsapi_2026_summary.json
+
+# milb-value carve-out: the certified MiLB SDR + eWAR release is tracked data.
+# See milb-value/README.md and milb-value/MANIFEST.json.
+!milb-value/data/*.csv

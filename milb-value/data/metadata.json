@@ -1,0 +1,51 @@
+{
+ "dataset": "Eephus MiLB SDR + eWAR",
+ "version": "milb-value-2026.08.14",
+ "schema_version": "milb-public-1.0.0",
+ "generated_at": "2026-08-14",
+ "data_through": "statsapi-2026-07-20",
+ "season_range": "2021-2025",
+ "level_scope": [
+  "AA",
+  "AAA",
+  "High-A",
+  "Low-A"
+ ],
+ "level_scope_note": "Full-season affiliated levels only. Rookie/CPX and DSL are NOT included and are not supported by the canonical model.",
+ "grain": "player_id x season x level",
+ "row_counts": {
+  "milb_hitter_ewar.csv": 17833,
+  "milb_sdr.csv": 16824,
+  "milb_pitcher_ewar.csv": 22076
+ },
+ "producer_versions": {
+  "hitter_ewar": "milb-hitter-ewar-1.3.0",
+  "defense_runs": "milb-defense-runs-1.3.0",
+  "sdr": "sdr-era-refit-2026-07-20",
+  "positional_adjustment": "posadj-noah-ladder-2.0.0",
+  "positional_spec": "POSADJ-EEPHUS-2.0.0",
+  "pitcher_ewar": "milb-pitcher-ewar-1.2.0",
+  "run_currency": "run-currency-1.0.0"
+ },
+ "positional_adjustment": {
+  "unit": "runs_per_650_pa_exposure",
+  "coefficients": {
+   "C": 9.4,
+   "SS": 7.9,
+   "2B": 3.64,
+   "CF": 2.66,
+   "3B": 2.14,
+   "LF": -7.87,
+   "RF": -8.0,
+   "1B": -9.88,
+   "DH": -15.18
+  },
+  "formula": "position_runs_i = PA_i / 650 * rate_i"
+ },
+ "accounting_identity": "total_value_runs = batting_runs + baserunning_runs + sdr_runs + position_runs + league_adjustment_runs + replacement_runs ; eWAR = total_value_runs / runs_per_win",
+ "known_limitations": [
+  "Catcher defensive value covers balls in play only; framing, blocking and throwing are NOT observed and are declared per row.",
+  "2026 is not included: the defensive substrate (SDR era refit, d02, league environment, park) does not exist for 2026.",
+  "Rookie/CPX and DSL are out of scope."
+ ]
+}
