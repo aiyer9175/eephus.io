@@ -390,3 +390,327 @@ def test_diamond_page_states_the_price_and_that_nothing_is_gated_yet():
     low = out.lower()
     assert "not switched on" in low
     assert "stays free" in low
+
+
+# ---------------------------------------------------------------------------
+# 6. The honest-page pass (2026-08-16): prices from the config, claims gated
+#    by the artifact, links that exist
+# ---------------------------------------------------------------------------
+# D0/D1 plus the C2 de-list. /diamond/ prices itself out of
+# assets/diamond-config.js through build_site._diamond_cfg(); the receipts
+# card may only paint a win the scoreboard artifact itself resolves
+# (verdict_vs_consensus.resolvable); the member list is Fantasy + Sports
+# Betting; the static CTA claims no control the build does not render. Every
+# behavioral pin below was proven against an in-memory mutation before it
+# landed (forced win paint, reintroduced price literal, stripped footer link,
+# removed CTA guard), so a red here is a regression, not noise.
+
+import inspect  # noqa: E402
+import json  # noqa: E402
+from datetime import date  # noqa: E402
+from unittest import mock  # noqa: E402
+
+DIAMOND_JS = ROOT / "assets" / "diamond.js"
+
+# The claim rail (owner rule): the site may call eFV and the public consensus
+# statistically indistinguishable; it may never claim a win the backtest does
+# not resolve. These are the phrasings a win claim would arrive in.
+BANNED_CLAIMS = ("beats the consensus", "orders better", "discriminates better",
+                 "outperforms")
+PARTOF_LINE = 'Part of <a href="/diamond/">Diamond</a>.'
+
+
+# ---- the config is the single price source ---------------------------------
+
+def test_diamond_cfg_parses_the_shipped_config():
+    cfg = build_site._diamond_cfg()
+    assert cfg["gating"] is False
+    assert cfg["price_usd_month"] == 15.0
+    assert cfg["founding_rate_usd"] == 9.99
+
+
+def test_diamond_cfg_refuses_a_config_missing_a_key():
+    """A pricing page that guesses its own price is worse than a build that
+    stops. Each key is load-bearing on its own."""
+    with pytest.raises(ValueError):
+        build_site._diamond_cfg("window.EEPHUS_DIAMOND = { gating: false };")
+    with pytest.raises(ValueError):
+        build_site._diamond_cfg(
+            "window.EEPHUS_DIAMOND = { price_usd_month: 15, founding_rate_usd: 9.99 };")
+    cfg = build_site._diamond_cfg(
+        "window.EEPHUS_DIAMOND = { gating: true, price_usd_month: 20, "
+        "founding_rate_usd: 12.50 };")
+    assert cfg == {"gating": True, "price_usd_month": 20.0, "founding_rate_usd": 12.5}
+
+
+def test_diamond_page_prices_are_the_configs_prices():
+    """Parity: what _diamond_cfg parses is what the page prints, in the money
+    card, the FAQ and the meta description alike."""
+    cfg = build_site._diamond_cfg()
+    price = build_site._usd(cfg["price_usd_month"])
+    founding = build_site._usd(cfg["founding_rate_usd"])
+    out = build_site.build_diamond()
+    assert f"${price} a month" in out
+    assert f"${founding}" in out
+    assert f"tools for ${price}" in out, "meta description lost the config price"
+
+
+def test_build_diamond_source_carries_no_price_literal():
+    src = inspect.getsource(build_site.build_diamond)
+    assert "$15" not in src, "hardcoded list price is back"
+    assert "9.99" not in src, "hardcoded founding rate is back"
+    assert "_diamond_cfg(" in src, "the page no longer reads the config"
+
+
+def test_gated_variant_renders_member_framing_when_the_flag_flips():
+    """Both copy variants exist NOW, selected by the parsed flag, so the day
+    diamond-config.js flips to gating true the page stops claiming a free
+    preview without anyone editing it. Asserted through a patched cfg because
+    the shipped flag is pinned off (section 5)."""
+    cfg = {"gating": True, "price_usd_month": 15.0, "founding_rate_usd": 9.99}
+    with mock.patch.object(build_site, "_diamond_cfg", return_value=cfg):
+        out = build_site.build_diamond()
+    assert "free while we build" not in out
+    assert "Founding preview" not in out
+    assert "Diamond is live" in out
+    assert "$15 a month" in out and "$9.99" in out
+    low = out.lower()
+    for claim in BANNED_CLAIMS:
+        assert claim not in low, f"gated variant ships a win claim: {claim}"
+
+
+# ---- the claim rail --------------------------------------------------------
+
+def test_no_banned_accuracy_claim_ships_on_any_diamond_surface():
+    js = DIAMOND_JS.read_text(encoding="utf-8").lower()
+    page = build_site.build_diamond().lower()
+    for claim in BANNED_CLAIMS:
+        assert claim not in js, f"diamond.js carries a win claim: {claim}"
+        assert claim not in page, f"/diamond/ carries a win claim: {claim}"
+
+
+# ---- receipts honesty, executed in V8 --------------------------------------
+# The harness runs the real assets/diamond.js over a stub DOM and a
+# SYNCHRONOUS thenable fetch. Real promises never settle here (nothing pumps
+# the microtask queue between evals, and a Promise.all in the harness would
+# hang silently), so resolution happens inline through .then/.catch, which is
+# every async shape diamond.js uses.
+
+_JS_HARNESS = r"""
+var __fixtures = {};
+function __setFixture(url, doc) { __fixtures[url] = doc; }
+var _els = {};
+function _mkEl(id) {
+  return { id: id, innerHTML: "", textContent: "",
+           querySelector: function () { return null; },
+           addEventListener: function () {},
+           appendChild: function () {} };
+}
+var document = {
+  readyState: "complete",
+  getElementById: function (id) { if (!_els[id]) _els[id] = _mkEl(id); return _els[id]; },
+  createElement: function (t) { return _mkEl("<" + t + ">"); },
+  head: { appendChild: function () {} },
+  addEventListener: function () {}
+};
+var window = { EEPHUS_DIAMOND: { gating: false, price_usd_month: 15, founding_rate_usd: 9.99 } };
+function SyncP(val, err) { this.val = val; this.err = err; this.failed = arguments.length > 1; }
+SyncP.prototype.then = function (ok, bad) {
+  if (this.failed) return bad ? _call(bad, this.err) : this;
+  return ok ? _call(ok, this.val) : this;
+};
+SyncP.prototype.catch = function (bad) { return this.then(null, bad); };
+function _call(fn, arg) {
+  try { var r = fn(arg); return (r instanceof SyncP) ? r : new SyncP(r); }
+  catch (e) { return new SyncP(undefined, e); }
+}
+function fetch(url) {
+  if (url in __fixtures) {
+    var doc = __fixtures[url];
+    return new SyncP({ ok: true, json: function () { return new SyncP(doc); } });
+  }
+  return new SyncP(undefined, new Error("HTTP 404"));
+}
+function __els() {
+  var out = {}; for (var k in _els) out[k] = _els[k].innerHTML; return out;
+}
+"""
+
+
+def _run_diamond_js(fixture: dict, extra_js: str = "") -> dict:
+    """Boot diamond.js against `fixture` as the scoreboard artifact; returns
+    {element id: innerHTML} for everything the client touched."""
+    mr = pytest.importorskip("py_mini_racer")
+    ctx = mr.MiniRacer()
+    ctx.eval(_JS_HARNESS)
+    if extra_js:
+        ctx.eval(extra_js)
+    ctx.eval("__setFixture('/data/xfv_scoreboard_eval.json', %s)" % json.dumps(fixture))
+    ctx.eval(DIAMOND_JS.read_text(encoding="utf-8"))
+    return json.loads(ctx.eval("JSON.stringify(__els())"))
+
+
+def _scoreboard(resolvable: bool, generated_at: str | None = None) -> dict:
+    return {
+        "generated_at": generated_at or date.today().isoformat(),
+        "head_to_head": {
+            "protocol": "forward-chained scoring on identical rows",
+            "verdict_vs_consensus": {
+                "n": 3210, "delta": 0.0297, "mde95": 0.0352,
+                "mde95_estimator": "E_refit", "resolvable": resolvable,
+            },
+            "vs": {"prospx_consensus": {
+                "label": "MLB Pipeline",
+                "spearman": {"efv": 0.394, "consensus": 0.396, "n": 3210, "win": False},
+                "auc_contributor": {"efv": 0.71, "consensus": 0.70, "n": 3210, "win": True},
+            }},
+            "by_archetype_vs_consensus": [
+                {"label": "Hit-first", "n": 400,
+                 "spearman": {"efv": 0.41, "consensus": 0.39, "win": True}},
+                {"label": "Arms", "n": 250,
+                 "spearman": {"efv": 0.30, "consensus": 0.33, "win": False}},
+            ],
+        },
+    }
+
+
+def test_receipts_lead_with_the_tie_when_the_artifact_says_unresolvable():
+    """resolvable:false is the shipped state of the artifact, so this is the
+    render every reader sees: no win paint anywhere, and the card's lead
+    sentence IS the verdict."""
+    htm = _run_diamond_js(_scoreboard(False))["diamond-receipts"]
+    assert "dm-ours" not in htm, "win colour painted on an unresolvable verdict"
+    assert "dm-win" not in htm, "per-row archetype win paint is back"
+    assert ("statistically indistinguishable on both ordering and discrimination"
+            in htm), "the tie lead sentence is gone"
+    assert "same players out of sample" in htm
+    assert "tie whatever its sign" in htm
+    assert "No per-group winner is called" in htm
+    assert "point estimates on small groups" in htm
+
+
+def test_receipts_win_paint_unlocks_only_when_the_artifact_resolves_it():
+    htm = _run_diamond_js(_scoreboard(True))["diamond-receipts"]
+    assert "dm-ours" in htm, "a resolvable win no longer unlocks the colour"
+    assert "dm-win" not in htm, "archetype rows call winners; they carry no floor"
+    assert "real lead" in htm
+    assert "statistically indistinguishable" not in htm, (
+        "the tie lead renders over a resolvable win")
+
+
+def test_receipts_print_the_scoring_date_and_flag_a_stale_artifact():
+    fresh = _run_diamond_js(_scoreboard(False))["diamond-receipts"]
+    assert f"Scored as of {date.today().isoformat()}" in fresh
+    assert "three weeks old" not in fresh, "a fresh artifact is flagged stale"
+    stale = _run_diamond_js(_scoreboard(False, "2026-01-01"))["diamond-receipts"]
+    assert "Scored as of 2026-01-01" in stale
+    assert "three weeks old" in stale, "a stale scoreboard renders with no warning"
+
+
+def test_diamond_js_comment_block_lost_its_stale_numerics():
+    """The E_refit vs E_cond comment used to quote the floors themselves,
+    which rotted the moment the artifact moved. The explanation stays; the
+    numbers live in the artifacts it points at."""
+    src = DIAMOND_JS.read_text(encoding="utf-8")
+    assert "E_refit" in src and "E_cond" in src
+    assert "xfv_power_eval.json" in src
+    for stale in ("0.03318", "0.0345", "0.0322", "54.1", "50.4", "64.2",
+                  "0.128", "0.0123", "0.541", "0.735"):
+        assert stale not in src, f"stale floor value back in a comment: {stale}"
+
+
+def test_diamond_js_no_longer_emits_the_dead_diamond_card_class():
+    """class="card diamond-card" had zero CSS rules on any theme; the class
+    was dead weight in every card the client painted."""
+    src = DIAMOND_JS.read_text(encoding="utf-8")
+    assert 'class="card diamond-card"' not in src
+
+
+# ---- the call to action tells the truth ------------------------------------
+
+def test_static_cta_claims_no_control_the_build_does_not_render():
+    out = build_site.build_diamond()
+    assert "sign-in control" not in out, (
+        "the static CTA references a control that does not render")
+    assert "There is no signup" in out
+    assert "founding status will be honored" in out
+
+
+def test_cta_card_is_untouched_when_the_account_layer_is_absent():
+    """renderCTA must leave the server-rendered truth alone unless
+    window.EephusAccount exists AND EephusAccount.enabled() is true."""
+    els = _run_diamond_js(_scoreboard(False))
+    assert els.get("diamond-cta", "") == "", (
+        "diamond.js painted the CTA with no account layer configured")
+
+
+def test_cta_card_is_replaced_when_the_account_layer_is_enabled():
+    """The gate has to open too, or the guard is just a deleted feature."""
+    els = _run_diamond_js(_scoreboard(False), extra_js="""
+        window.EephusAccount = {
+          enabled: function () { return true; },
+          ready: function () { return new SyncP(undefined); },
+          isSignedIn: function () { return false; }
+        };
+    """)
+    cta = els.get("diamond-cta", "")
+    assert "Create a free account" in cta
+    assert "nothing to buy yet" in cta.lower()
+
+
+# ---- the member list, the ledger, the links --------------------------------
+
+def test_member_gets_list_is_fantasy_and_betting_only():
+    """Owner de-list 2026-08-16: /prospx/ is a free page (the one dishonest
+    card) and the Card Market waits on a licensed price source. Asserted on
+    card headings, not bare hrefs: the shared nav links /prospx/ on every
+    page of the site."""
+    out = build_site.build_diamond()
+    assert '<h3><a href="/fantasy/">Fantasy</a></h3>' in out
+    assert '<h3><a href="/betting/">Sports Betting</a></h3>' in out
+    assert '<h3><a href="/prospx/">' not in out
+    assert '<h3><a href="/cards/">' not in out
+    assert "two modules" in out, "the section-sub count no longer follows the list"
+    assert "returns to the pass when a licensed price source is wired" in out, (
+        "the honest Card Market line is gone")
+
+
+def test_diamond_ledger_card_matches_the_registry():
+    """The report card is the product: /diamond/ renders the same verdict
+    split the homepage counts, off model_registry.load(), at build time."""
+    import model_registry
+    tally: dict = {}
+    for m in model_registry.load().get("models") or []:
+        tally[m.get("verdict")] = tally.get(m.get("verdict"), 0) + 1
+    out = build_site.build_diamond()
+    assert f"{sum(tally.values())} models" in out
+    for k in ("validated", "provisional", "unvalidated", "deprecated"):
+        assert f"{tally.get(k, 0)} {k}" in out, f"ledger count drifted for {k}"
+    assert 'href="/models/"' in out
+    assert "on purpose" in out, "the deprecations-shown-on-purpose sentence is gone"
+
+
+def test_footer_carries_the_diamond_link():
+    assert '<a href="/diamond/">Diamond</a>' in build_site._footer()
+
+
+def test_homepage_strip_carries_the_static_diamond_card():
+    strip = build_site._cross_module_strip()
+    assert "◆ Diamond" in strip
+    assert 'href="/diamond/"' in strip
+    assert "free during the founding preview" in strip
+    assert 'href="/fantasy/"' in strip and 'href="/betting/"' in strip
+
+
+def test_diamond_module_mastheads_carry_the_part_of_line():
+    """One server-rendered line under the fantasy, betting and cards
+    mastheads. The cards line carries the frozen-index status in plain
+    words; the free-preview clause is gating-aware and ships because the
+    pinned flag is off."""
+    for fn in ("build_fantasy", "build_betting", "build_cards"):
+        out = getattr(build_site, fn)()
+        assert PARTOF_LINE in out, f"{fn} lost the Part of Diamond line"
+        assert "Free during the founding preview." in out, fn
+    cards = build_site.build_cards()
+    assert "The card index is frozen until a licensed price source is wired" in cards
+    assert "the screen stays public" in cards

@@ -17,7 +17,9 @@
 //   2. THE BETTING RECORD. Reads data/betting_record.json. While that file
 //      does not exist (no picks posted yet) the card says the record starts
 //      when the picks do, which is the truth, instead of hiding the section.
-//   3. A SIGN-IN AWARE CALL TO ACTION, via the existing account layer.
+//   3. A SIGN-IN AWARE CALL TO ACTION that only replaces the server-rendered
+//      card once the account layer is configured and switched on. The static
+//      card is the truth for every other build.
 //
 // NOTE FOR FUTURE EDITS: this page reads EVAL METRICS, never a player's eFV
 // grade. If you ever add a grade here, it goes through the one basis rule
@@ -48,7 +50,9 @@
   function dec(v, d) {
     return (v == null || isNaN(v)) ? null : Number(v).toFixed(d == null ? 3 : d);
   }
-  function card(inner) { return '<div class="card diamond-card">' + inner + "</div>"; }
+  // Just .card: the diamond-card class this used to add had zero CSS rules in
+  // site.css or the injected sheet below, on any theme (checked 2026-08-16).
+  function card(inner) { return '<div class="card">' + inner + "</div>"; }
   function note(msg) { return card("<p>" + esc(msg) + "</p>"); }
   // Glossary term span (assets/eephus-gl.js). Slugs are checked against
   // data/glossary.json before use: a [data-gl] whose slug the artifact does not
@@ -74,13 +78,17 @@
   // eval): head_to_head.vs.<source>.{spearman,auc_contributor} each carrying
   // {n, efv, consensus, win, margin}. Anything absent is skipped rather than
   // faked, so an artifact that changes shape degrades to fewer tiles.
-  function tile(label, ours, theirs, n, sub) {
+  // `resolvable` is the artifact's own verdict (verdict_vs_consensus.resolvable):
+  // the eFV number takes the win colour only when the backtest itself resolves a
+  // lead. Two numbers whose gap sits under the floor print in the same ink,
+  // because colour is a claim too (tie-first repaint, 2026-08-16).
+  function tile(label, ours, theirs, n, sub, resolvable) {
     var a = dec(ours), b = dec(theirs);
     if (a == null || b == null) return "";
     return '<div class="dm-tile">' +
       '<div class="dm-tile-lbl">' + esc(label) + "</div>" +
       '<div class="dm-tile-row"><span class="dm-tile-who">eFV</span>' +
-        '<span class="dm-tile-val dm-ours">' + esc(a) + "</span></div>" +
+        '<span class="dm-tile-val' + (resolvable ? " dm-ours" : "") + '">' + esc(a) + "</span></div>" +
       '<div class="dm-tile-row"><span class="dm-tile-who">' + esc(sub) + "</span>" +
         '<span class="dm-tile-val">' + esc(b) + "</span></div>" +
       (n ? '<div class="dm-tile-n">' + esc(commas(n)) + " players, same set</div>" : "") +
@@ -100,53 +108,69 @@
       return;
     }
     var who = against.label || "the public consensus";
+    // THE VERDICT GATES THE PAINT (tie-first repaint, 2026-08-16). resolvable is
+    // the artifact's own call on whether the observed gap clears the minimum this
+    // backtest can resolve; until the artifact says true, no tile prints eFV in
+    // the win colour and the card LEADS with the tie, because a green number over
+    // a smaller grey one is a win claim whatever the prose under it says.
+    var vv = h2h.verdict_vs_consensus;
+    var resolvable = !!(vv && vv.resolvable);
     var sp = against.spearman || {};
     var auc = against.auc_contributor || {};
     var tiles =
-      tile("Rank correlation with realized career WAR", sp.efv, sp.consensus, sp.n, who) +
-      tile("Picking out the players who became contributors", auc.efv, auc.consensus, auc.n, who);
+      tile("Rank correlation with realized career WAR", sp.efv, sp.consensus, sp.n, who, resolvable) +
+      tile("Picking out the players who became contributors", auc.efv, auc.consensus, auc.n, who, resolvable);
     if (!tiles) {
       root.innerHTML = note("The scoreboard artifact carries no comparable metrics yet.");
       return;
     }
+    var intro = resolvable
+      ? "<p>Both numbers are scored on the same players, out of sample, in a forward-chained " +
+        gl("backtest", "backtest") + ". " + gl("eFV", "xfv") + " never sees a player's own " +
+        "outcome before it grades him. Higher is better in both rows.</p>"
+      : "<p>" + gl("eFV", "xfv") + " and the public consensus are statistically indistinguishable " +
+        "on both ordering and discrimination, scored on the same players out of sample. The tiles " +
+        "carry the raw numbers behind that verdict, from a forward-chained " +
+        gl("backtest", "backtest") + " in which the model never sees a player's own outcome " +
+        "before it grades him.</p>";
     // A LEAD IS NOT A RESULT UNTIL IT CLEARS THE FLOOR, AND A FLOOR IS NOT CHECKABLE
     // UNTIL IT NAMES ITS ESTIMATOR. These tiles used to print two numbers and let the
     // bigger one win, which is the bare-inequality pattern the eFV verdict gating
-    // removed everywhere else. The artifact now carries the minimum gap this backtest
-    // can resolve at 95%, so a lead inside it is reported as the tie it is.
+    // removed everywhere else. The artifact carries the minimum gap this backtest can
+    // resolve at 95% (verdict_vs_consensus.mde95), so a lead inside it reads as the
+    // tie it is.
     //
-    // WHICH FLOOR THIS IS (2026-08-10). vv.mde95 is source_backtest.XFV_HEADTOHEAD_MDE95,
-    // a cluster paired bootstrap that resamples players AND refits the forward chain on
-    // every draw. That is E_refit. B-L1 published a SECOND floor for this exact cell,
-    // E_cond, which holds the fit and resamples the scored clusters only, and the two
-    // return OPPOSITE CALLS here: 0.03318 is NULL against E_refit 0.0345 and a resolvable
-    // win against E_cond 0.0322. So the floor never prints without its estimator. The
-    // label comes from the artifact when it carries one; the fallback is E_refit because
-    // that is definitionally what XFV_HEADTOHEAD_MDE95 measures.
+    // WHICH FLOOR THIS IS (comment de-numbered 2026-08-16: the values that used to
+    // sit here belong to the artifacts, which move; a comment does not). vv.mde95 is
+    // source_backtest.XFV_HEADTOHEAD_MDE95, a cluster paired bootstrap that resamples
+    // players AND refits the forward chain on every draw. That is E_refit. B-L1
+    // published a SECOND floor for this exact cell, E_cond, which holds the fit and
+    // resamples the scored clusters only, and the two estimators have returned
+    // OPPOSITE calls on one observed margin. So the floor never prints without its
+    // estimator. The label comes from the artifact (verdict_vs_consensus.
+    // mde95_estimator) when it carries one; the fallback is E_refit because that is
+    // definitionally what XFV_HEADTOHEAD_MDE95 measures. Current values for both
+    // floors live in data/xfv_scoreboard_eval.json verdict_vs_consensus and
+    // data/xfv_power_eval.json partb_floors; read them there, never from here.
     //
-    // "MORE RESOLVED COHORTS, NOT A BETTER MODEL" IS CORRECT ON THIS STATISTIC. A Phase 1
-    // proposal wanted to rewrite that clause around a 54.1 percent refit-variance figure,
-    // which would have been wrong twice. That number is measured on hit.full_pool_km
-    // pooled rho, a different statistic on a different pool, and it points the other way:
-    // there 50.4 percent of the variance is refit noise, only 29 percent of the floor is
-    // removable by test n, and the cell is permanently undecidable under E_refit. On
-    // headtohead_common the refit share is 0.128, 64.2 percent of the floor IS removable,
-    // and the floor falls 0.0345 to 0.0123 at infinite test n, which is well under the
-    // observed margin. Cohorts really are what settles this one. (The proposal also
-    // conflated a variance share with a floor share: sqrt(0.541) = 0.735, not 0.541.)
-    // Do not re-import that number here. Ledger: data/xfv_power_eval.json partb_floors.
-    var vv = h2h.verdict_vs_consensus;
+    // "MORE RESOLVED COHORTS, NOT A BETTER MODEL" stays the closing clause of the
+    // tie copy. A Phase 1 proposal wanted to rewrite it around a refit-variance
+    // share measured on a DIFFERENT statistic over a DIFFERENT pool, and it also
+    // conflated a variance share with a floor share (floors scale as the square
+    // root of variance). On THIS statistic most of the floor is removable by test
+    // n, so cohorts really are what settles it. The per-cell shares are in
+    // data/xfv_power_eval.json partb_floors; do not re-import any of them here.
     var verdictHTML = "";
     if (vv && vv.delta != null && vv.mde95 != null) {
       var lead = (vv.delta >= 0 ? "+" : "") + dec(vv.delta);
       var est = vv.mde95_estimator || "E_refit";
       verdictHTML = '<p class="dm-fine">On rank correlation the margin is ' + esc(lead) +
-        " over " + esc(who) + ". " + (vv.resolvable
+        " over " + esc(who) + ". " + (resolvable
           ? "That clears the " + esc(dec(vv.mde95)) + " this backtest can resolve at 95% under " +
             esc(est) + ", so it is a real lead."
           : "That sits under the " + esc(dec(vv.mde95)) + " this backtest can resolve at 95% under " +
-            esc(est) + ", so read it as a tie that leans " +
-            gl("eFV", "xfv") + ", not a win. More resolved cohorts, not a better model, is what settles it.") +
+            esc(est) + ", so it is a tie whatever its sign. More resolved cohorts, not a " +
+            "better model, is what settles it.") +
         "</p>";
     }
     var arch = (h2h.by_archetype_vs_consensus || []).filter(function (a) {
@@ -157,10 +181,14 @@
       // SAY WHICH METRIC. The table reads by_archetype_vs_consensus[].spearman
       // and nothing else, but it sits directly under two tiles carrying two
       // DIFFERENT numbers (rank correlation and contributor AUC) and named
-      // neither of them. A reader had no way to tell which one the per-group
-      // rows were, and the green win highlight is a Spearman win specifically.
+      // neither of them, so the fine print names the metric.
+      //
+      // NO PER-ROW WIN PAINT (2026-08-16). The old green-on-the-higher-cell was
+      // the bare-inequality pattern one level down: a win call on subgroup cells
+      // that carry no resolvability floor at all. The raw numbers stay; the
+      // fine print under the table says what they are and what they are not.
       archHTML = '<p class="dm-fine">Rank correlation with realized career ' +
-        gl("WAR", "war") + ", by prospect group. Green is the higher of the two.</p>" +
+        gl("WAR", "war") + ", by prospect group.</p>" +
         // The shared table dialect: .mlbstats-scroll + .mlbstats-table give the
         // sticky header, the frozen identity column and the horizontal scroller
         // this table never had, so the archetype rows cannot pan the page
@@ -169,24 +197,36 @@
         "<th>Group</th><th>" + gl("eFV", "xfv") + "</th><th>" + esc(who) + "</th><th>n</th>" +
         "</tr></thead><tbody>" +
         arch.map(function (a) {
-          var win = a.spearman.win ? " dm-win" : "";
           return "<tr><td>" + esc(a.label || a.archetype) + "</td>" +
-            '<td class="dm-num' + win + '">' + esc(dec(a.spearman.efv)) + "</td>" +
+            '<td class="dm-num">' + esc(dec(a.spearman.efv)) + "</td>" +
             '<td class="dm-num">' + esc(dec(a.spearman.consensus)) + "</td>" +
             '<td class="dm-num">' + esc(commas(a.n)) + "</td></tr>";
         }).join("") +
-        "</tbody></table></div>";
+        "</tbody></table></div>" +
+        '<p class="dm-fine">These are point estimates on small groups. No per-group winner is ' +
+        "called: none of these rows carries a resolvable verdict of its own.</p>";
     }
     var protocol = h2h.protocol ? "<p class=\"dm-fine\">" + esc(h2h.protocol) + "</p>" : "";
+    // The scoring date, and a loud note when it is old. 21 days: the scoreboard
+    // regenerates with the monthly rebuild, so three weeks late means a cycle
+    // was missed, and a page that asks for money should say so itself.
+    var asof = String((doc && (doc.generated_at || doc.as_of)) || "").slice(0, 10);
+    var asofHTML = "";
+    if (asof) {
+      var ageDays = (Date.now() - Date.parse(asof)) / 86400000;
+      asofHTML = '<p class="dm-fine">Scored as of ' + esc(asof) + "." +
+        (isFinite(ageDays) && ageDays > 21
+          ? " That is more than three weeks old: read these as the last scoring run, not this week's."
+          : "") + "</p>";
+    }
     root.innerHTML = card(
       "<h3>The prospect model against the public consensus</h3>" +
-      "<p>Both numbers are scored on the same players, out of sample, in a forward-chained " +
-      gl("backtest", "backtest") + ". " + gl("eFV", "xfv") + " never sees a player's own " +
-      "outcome before it grades him. Higher is better in both rows.</p>" +
+      intro +
       '<div class="dm-tiles">' + tiles + "</div>" +
       verdictHTML +
       archHTML +
       protocol +
+      asofHTML +
       '<p class="dm-fine">Read live from data/xfv_scoreboard_eval.json on every page load. ' +
       "If the model slips, this card slips with it.</p>"
     );
@@ -317,21 +357,35 @@
   }
 
   // ---- 3. sign-in aware call to action -------------------------------------
+  // THE STATIC CARD IS THE DEFAULT, NOT A FALLBACK (2026-08-16). The server
+  // renders the truth for a build with no account layer: no signup exists, the
+  // preview needs no account, founding status is honored when accounts open.
+  // This function replaces that card ONLY when the account layer is configured
+  // and switched on. The old version painted over it unconditionally with a
+  // "Create a free account" button that had to disable itself when clicked,
+  // which is a control whose honest state is not existing.
   function renderCTA() {
     var root = el("diamond-cta");
     if (!root) return;
     var A = window.EephusAccount;
-    var price = CFG.price_usd_month != null ? CFG.price_usd_month : 15;
-    var founding = CFG.founding_rate_usd != null ? CFG.founding_rate_usd : 9.99;
+    if (!A || !A.enabled || !A.enabled() || !A.ready) return;
+    // Prices come from diamond-config.js via CFG, never from literals here: a
+    // sentence with no price beats a price the config no longer carries.
+    var price = CFG.price_usd_month != null ? CFG.price_usd_month : null;
+    var founding = CFG.founding_rate_usd != null ? CFG.founding_rate_usd : null;
     var gated = !!CFG.gating;
 
     function paint(html) { root.innerHTML = html; }
     function signedOut() {
       paint(
-        "<h3>There is nothing to buy yet</h3>" +
-        "<p>Diamond is " + (gated ? "live at $" + esc(price) + " a month" :
-          "free during the founding preview. When it opens it is $" + esc(price) +
-          " a month, or $" + esc(founding) + " for founding members") + ".</p>" +
+        "<h3>" + (gated ? "Membership" : "There is nothing to buy yet") + "</h3>" +
+        "<p>" + (gated
+          ? "Diamond is live" + (price != null ? " at $" + esc(price) + " a month" : "") + "."
+          : "Diamond is free during the founding preview." +
+            (price != null && founding != null
+              ? " When it opens it is $" + esc(price) + " a month, or $" + esc(founding) +
+                " for founding members."
+              : "")) + "</p>" +
         "<p>Make a free account so your watchlist, your bet log and your founding member status follow " +
         "you between devices.</p>" +
         '<button type="button" class="dm-btn" data-diamond="signin">Create a free account</button>'
@@ -341,11 +395,6 @@
         b.addEventListener("click", function () {
           if (window.EephusUI && window.EephusUI.openAuthModal) {
             window.EephusUI.openAuthModal("signin");
-          } else {
-            // The account layer is not configured on this build. Say so rather
-            // than leaving a button that does nothing when clicked.
-            b.disabled = true;
-            b.textContent = "Accounts are not switched on yet";
           }
         });
       }
@@ -355,15 +404,20 @@
         "<h3>" + (isMember ? "Thanks for keeping this free" : "You are signed in" +
           (name ? " as " + esc(name) : "")) + "</h3>" +
         (isMember
-          ? "<p>Your Diamond membership is active. Everything in the Diamond section is open to you, " +
-            "and it is open to everyone else too while the preview runs.</p>"
-          : "<p>Nothing is gated during the preview, so there is nothing you need to do. When Diamond " +
-            "opens, founding members pay $" + esc(founding) + " a month and keep that rate for a year.</p>") +
+          ? "<p>Your Diamond membership is active." +
+            (gated ? "" : " Everything in the Diamond section is open to everyone else too while " +
+              "the preview runs.") + "</p>"
+          : gated
+            ? "<p>Diamond is live" + (price != null ? " at $" + esc(price) + " a month" : "") + ".</p>"
+            : "<p>Nothing is gated during the preview, so there is nothing you need to do." +
+              (founding != null
+                ? " When Diamond opens, founding members pay $" + esc(founding) +
+                  " a month and keep that rate for a year."
+                : "") + "</p>") +
         '<p class="dm-fine">Diamond funds the free site.</p>'
       );
     }
 
-    if (!A || !A.ready) { signedOut(); return; }
     A.ready().then(function () {
       function sync() {
         var signed = A.isSignedIn && A.isSignedIn();

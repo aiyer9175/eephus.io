@@ -398,6 +398,10 @@ def _footer() -> str:
         # cannot find is the same as a page that does not exist.
         f'<a href="/sources/#api">Public Data</a>'
         f'<a href="/glossary/">Glossary</a>'
+        # The pass page. It has a nav group, but the editorial surfaces are
+        # where a reader decides the site is worth funding, so the footer
+        # carries the address on every page too.
+        f'<a href="/diamond/">Diamond</a>'
         f'<a href="/report/">Report a bug</a>'
         f'<a href="https://x.com/eephus_io" target="_blank" rel="noopener noreferrer">@eephus_io</a>'
         f'<a href="{html.escape(DISCORD_URL)}" target="_blank" rel="noopener noreferrer">Discord</a>'
@@ -472,7 +476,7 @@ BETTING_DISCLAIMER = (
     '<p>eephus.io is not a sportsbook. We do not accept wagers, we do not take a cut of yours, '
     'and there are no affiliate links anywhere on this site. Nothing here is betting advice. '
     'Sports betting is not legal in every state and the rules differ where it is. '
-    'Odds shown are the odds captured at the time a pick was posted and they move after that. '
+    'Odds shown are the odds captured at the time a selection was posted and they move after that. '
     'No model wins every bet and we do not claim one will. '
     'If betting stops being fun, call 1-800-GAMBLER or visit '
     '<a href="https://www.1800gamblerhelp.org/" target="_blank" rel="noopener noreferrer">1800gamblerhelp.org</a>.</p>'
@@ -2988,6 +2992,19 @@ def _cross_module_strip() -> str:
                           rows))
     except (OSError, ValueError, KeyError, TypeError):
         pass
+    # Diamond - static teaser (CollegeSavant's pattern: no data dependency; the
+    # pass page carries its own live receipts). Names the two member modules,
+    # and the free-preview line renders only while diamond-config.js ships
+    # gating false, so the homepage cannot promise a preview the config has
+    # closed. No try/except: a broken config already fails the /diamond/ build
+    # in this same run, and a quiet missing card would just hide that earlier.
+    free_line = ("member pass" if _diamond_cfg()["gating"]
+                 else "free during the founding preview")
+    cards.append(('◆ Diamond', '/diamond/',
+                  'the pass that funds the free site',
+                  '<a class="xmod-row" href="/fantasy/"><span class="xmod-name">Fantasy</span><span class="xmod-val">redraft · dynasty · DFS →</span></a>'
+                  '<a class="xmod-row" href="/betting/"><span class="xmod-name">Sports Betting</span><span class="xmod-val">model vs the book price →</span></a>'
+                  f'<a class="xmod-row" href="/diamond/"><span class="xmod-name">Diamond Pass</span><span class="xmod-val">{free_line} →</span></a>'))
     body = "".join(
         f'<div class="xmod-card"><div class="xmod-head"><span class="xmod-title">{title}</span>'
         f'<a class="xmod-link" href="{href}">open →</a></div>'
@@ -4079,7 +4096,8 @@ def build_fantasy() -> str:
         f'<h1>Fantasy {_stage_chip("fantasy")}</h1></div>'
         '<span class="section-sub">Three fantasy surfaces on one page, off one projection engine: '
         'rest-of-season and daily for a redraft league, an eFV-graded dynasty and keeper board, and '
-        "tonight's DFS slate with a lineup optimizer. Pick the one you play.</span></div>"
+        "tonight's DFS slate with a lineup optimizer. Pick the one you play.</span>"
+        f'{_partof_diamond()}</div>'
         f'{modbar}{redraft}{dynasty}{dfs}'
         '</div>'
         f'{DIAMOND_CONFIG_SCRIPT}'
@@ -4147,6 +4165,81 @@ location.replace("/fantasy/#m={module}"+(h?"&"+h:""));}})();</script>
 # were public and a redirect that does not ship is a 404.
 # --------------------------------------------------------------------------- #
 
+def _diamond_cfg(src: str | None = None) -> dict:
+    """The Diamond prices and the gate flag, parsed at build time OUT OF the
+    one file that owns them (assets/diamond-config.js). build_diamond() used
+    to carry the same numbers as literals in three places (the money card, the
+    FAQ, the meta description), which is exactly the drift a single-source
+    config exists to prevent: the served page could disagree with the flag the
+    client reads. A missing key is a BUILD FAILURE, not a default, because a
+    pricing page that guesses its own price is worse than a build that stops.
+
+    `src` exists for tests; the default reads the shipped config."""
+    if src is None:
+        src = (ROOT / "assets" / "diamond-config.js").read_text(encoding="utf-8")
+    out: dict = {}
+    for key, pat, conv in (
+        ("gating", r"gating:\s*(true|false)\b", lambda s: s == "true"),
+        ("price_usd_month", r"price_usd_month:\s*([0-9]+(?:\.[0-9]+)?)", float),
+        ("founding_rate_usd", r"founding_rate_usd:\s*([0-9]+(?:\.[0-9]+)?)", float),
+    ):
+        m = re.search(pat, src)
+        if m is None:
+            raise ValueError(
+                f"assets/diamond-config.js carries no {key}; /diamond/ prices "
+                "itself off that file and refuses to guess")
+        out[key] = conv(m.group(1))
+    return out
+
+
+def _usd(v: float) -> str:
+    """Price copy, not math display: $15 stays $15 (never $15.0), $9.99 stays
+    $9.99. The dollar sign is the caller's."""
+    return str(int(v)) if float(v).is_integer() else f"{float(v):.2f}"
+
+
+def _partof_diamond(extra: str = "") -> str:
+    """One masthead line under each Diamond module naming the pass it belongs
+    to. Gating-aware so the line cannot promise a free preview after the flag
+    flips: the free clause renders only while diamond-config.js ships
+    gating false. `extra` is a plain-words status tail (the cards masthead
+    carries its frozen-index note through it)."""
+    free = "" if _diamond_cfg()["gating"] else " Free during the founding preview."
+    tail = f" {html.escape(extra)}" if extra else ""
+    return (f'<span class="section-sub">Part of <a href="/diamond/">Diamond</a>.'
+            f'{html.escape(free)}{tail}</span>')
+
+
+def _diamond_ledger_card() -> str:
+    """The Model Ledger tally, server-rendered on /diamond/. The report card
+    is the product, so the pass page carries the same verdict split the
+    homepage strip counts, off the same registry, at build time. Deprecated
+    rows are in the sentence on purpose: a ledger that only lists its wins is
+    an ad, not a ledger."""
+    try:
+        reg = model_registry.load()
+    except (OSError, ValueError):
+        return ""
+    tally: dict = {}
+    for m in reg.get("models") or []:
+        tally[m.get("verdict")] = tally.get(m.get("verdict"), 0) + 1
+    total = sum(tally.values())
+    if not total:
+        return ""
+    counts = ", ".join(
+        f"{tally.get(k, 0)} {k}"
+        for k in ("validated", "provisional", "unvalidated", "deprecated"))
+    return (
+        '<div class="card diamond-get">'
+        '<h3><a href="/models/">The report card is the product</a></h3>'
+        f'<p>{total} models on this site carry a predictive claim and a registry row: '
+        f'{counts}. The deprecated rows are published on purpose: the failed experiments '
+        'are how you know the wins are real.</p>'
+        '<p class="diamond-fine">Counted at build time off data/model_registry.json. '
+        'The full ledger, eval artifacts included, is at /models/.</p>'
+        '</div>')
+
+
 def build_dynasty() -> str:
     return _fantasy_redirect(
         "Dynasty", "dynasty", "Dynasty",
@@ -4196,7 +4289,8 @@ def build_betting() -> str:
         'so you can see the edge rather than take our word for it. Every pick is posted with a timestamp, '
         'the book, the odds at post, and a flat one-unit stake. The record is append-only: nothing gets '
         'quietly deleted after it loses. Each pick is also graded against the closing line, because beating '
-        'the close is the honest test of whether a model knows something.</span></div>'
+        'the close is the honest test of whether a model knows something.</span>'
+        f'{_partof_diamond()}</div>'
         f'{BETTING_DISCLAIMER}'
         # THE FEED-HEALTH STRIP, ABOVE THE TABS. betting.js paints it from
         # status.feed_health on every load, including the load where the payload
@@ -4252,7 +4346,11 @@ def build_cards() -> str:
         'he is worth. The card index is a derived, grade-adjusted value built from public sold prices, '
         'published as an index rather than a comp sheet. Treat this as a screen, not a forecast: it has no '
         'price-history backtest behind it yet, and it will not get one until the module has collected enough '
-        'of its own history to test.</span></div>'
+        'of its own history to test.</span>'
+        # The cards line carries its status tail: this screen is public but the
+        # index is frozen, and the pass page's FAQ says the same thing.
+        + _partof_diamond("The card index is frozen until a licensed price source "
+                          "is wired; the screen stays public.") + '</div>'
         # data-cardsection, SINGULAR. This shell shipped data-cardssection (a
         # doubled s) while cards.js was written against data-cardsection, and
         # rendered in a real browser on 2026-08-05 that one letter meant the
@@ -4297,28 +4395,55 @@ def build_diamond() -> str:
     filled in by assets/diamond.js from the artifacts themselves, because a
     hardcoded accuracy claim is a claim that rots.
 
-    Two copy rules the owner set, enforced here rather than in review:
+    Copy rules the owner set, enforced here rather than in review:
       1. Public framing is "Diamond funds the free site". The internal
          subsidy framing does not appear on this page.
       2. Nothing is gated today. The page says that plainly instead of
-         implying a paywall exists. window.EEPHUS_DIAMOND.gating is false and
-         diamond.js reads it rather than a second copy of the flag."""
-    money = (
-        '<div class="card diamond-price">'
-        '<h3>$15 a month, when it goes live</h3>'
-        '<p>Nothing is for sale today. When Diamond opens, it is $15 a month, and everything else on '
-        'eephus.io stays free. Not free for now. Free.</p>'
-        '<p>The first group of members gets a founding rate of $9.99 a month, held for a year. If you are '
-        'reading this during the preview, you are in that group.</p>'
-        '<p class="diamond-fine">Diamond funds the free site. The board, the projections, the free agency '
-        'model, the glossary and every article stay open to everyone, and the people paying for Diamond are '
-        'what keeps them that way.</p>'
-        '</div>'
-    )
+         implying a paywall exists.
+      3. PRICES AND THE GATE FLAG COME FROM _diamond_cfg(), never from
+         literals here (2026-08-16): the page renders the copy variant the
+         parsed flag selects, so the day assets/diamond-config.js flips to
+         gating true, this page stops claiming a free preview without anyone
+         remembering to edit it.
+      4. The member list is Fantasy + Sports Betting (owner de-list
+         2026-08-16): /prospx/ is a free page and does not belong on a "what
+         members get" list, and the Card Market left the pass until a
+         licensed price source is wired. The FAQ says where it went."""
+    cfg = _diamond_cfg()
+    gated = cfg["gating"]
+    price = _usd(cfg["price_usd_month"])
+    founding = _usd(cfg["founding_rate_usd"])
+    if gated:
+        money = (
+            '<div class="card diamond-price">'
+            f'<h3>${price} a month</h3>'
+            f'<p>Diamond is live. Membership is ${price} a month, and everything else on '
+            'eephus.io stays free. Not free for now. Free.</p>'
+            f'<p>Founding members, the people who used the preview and told us what was broken, '
+            f'pay ${founding} a month, held for a year.</p>'
+            '<p class="diamond-fine">Diamond funds the free site. The board, the projections, the free agency '
+            'model, the glossary and every article stay open to everyone, and the people paying for Diamond are '
+            'what keeps them that way.</p>'
+            '</div>'
+        )
+    else:
+        money = (
+            '<div class="card diamond-price">'
+            f'<h3>${price} a month, when it goes live</h3>'
+            f'<p>Nothing is for sale today. When Diamond opens, it is ${price} a month, and everything else on '
+            'eephus.io stays free. Not free for now. Free.</p>'
+            f'<p>The first group of members gets a founding rate of ${founding} a month, held for a year. If you are '
+            'reading this during the preview, you are in that group.</p>'
+            '<p class="diamond-fine">Diamond funds the free site. The board, the projections, the free agency '
+            'model, the glossary and every article stay open to everyone, and the people paying for Diamond are '
+            'what keeps them that way.</p>'
+            '</div>'
+        )
     gets = [
-        # ONE card since the 2026-08-07 merge. Three of these six used to be
-        # three cards, which read as three products and was the same overcount
-        # the nav dropdown was carrying.
+        # TWO cards (owner de-list 2026-08-16). /prospx/ came off because it is
+        # a free page, and a free page on a "what members get" list was the one
+        # dishonest card here. Card Market came off because its price source is
+        # not licensed for a paid product; the FAQ carries the honest line.
         ("Fantasy", "/fantasy/",
          "Three surfaces on one board set. Redraft: rest-of-season ranks in your scoring format, "
          "daily streamers, two-start pitchers, buy and sell. Dynasty: the full keeper board with "
@@ -4326,10 +4451,6 @@ def build_diamond() -> str:
          "lineup optimizer, run against salaries you import."),
         ("Sports Betting", "/betting/",
          "Model prices on every game, the pick of the day, the calculators, and the public record graded against the close."),
-        ("Card Market", "/cards/",
-         "The card index, the movers, and where the hobby price sits against the prospect model."),
-        ("Prospect models", "/prospx/",
-         "Deeper cuts of the eFV work: movement history, the model artifacts, and the receipts behind each grade."),
     ]
     # THE EXTRAS, REWRITTEN AGAINST WHAT EXISTS (2026-08-05).
     #
@@ -4378,14 +4499,26 @@ def build_diamond() -> str:
                 f'<p>{html.escape(what)}</p></div>')
 
     extra_cards = "".join(_extra_card(*e) for e in extras)
-    faq = [
+    gate_faq = (
+        ("Is any of this gated right now?",
+         f"Yes. The member modules are for members at ${price} a month. The free site is unchanged: "
+         "the prospect board, the projections, the free agency model, the glossary and the articles "
+         "stay public.")
+        if gated else
         ("Is any of this gated right now?",
          "No. Every page in the Diamond section is public and free while we build it. There is no paywall "
          "in the code path, no card form, and no trial that quietly converts. When that changes, it will be "
-         "announced before it happens, not after."),
+         "announced before it happens, not after."))
+    faq = [
+        gate_faq,
         ("Will the price go up?",
-         "The list price is $15 a month. Founding members pay $9.99 and keep that for twelve months. If the "
-         "price ever moves above $15, founding members are not moved with it during that year."),
+         f"The list price is ${price} a month. Founding members pay ${founding} and keep that for twelve "
+         f"months. If the price ever moves above ${price}, founding members are not moved with it during "
+         "that year."),
+        ("Where is the Card Market?",
+         "Still on the site, still free, at /cards/. It is not on the member list: the screen runs on "
+         "public sold prices with no licensed feed behind it, and it returns to the pass when a licensed "
+         "price source is wired. Until then it is a public screen, not a member benefit."),
         ("Do you guarantee I will make money betting?",
          "No, and anyone who does is lying to you. What we promise instead is a record you can audit: every "
          "pick posted with its timestamp, book and odds, a flat one-unit stake, nothing deleted after the "
@@ -4404,38 +4537,89 @@ def build_diamond() -> str:
         f'<div class="card diamond-faq"><h3>{html.escape(q)}</h3><p>{html.escape(a)}</p></div>'
         for q, a in faq
     )
+    # The banner is the first thing on the page with or without JavaScript, so
+    # it is the first thing that must change when the flag flips.
+    if gated:
+        banner = (
+            '<div class="card diamond-banner" role="note">'
+            '<h3>Diamond is live</h3>'
+            f'<p>The member modules are open to members at ${price} a month, ${founding} for founding '
+            'members. The rest of the site is free and stays free.</p>'
+            '</div>'
+        )
+        cta = (
+            '<div id="diamond-cta" class="card diamond-cta">'
+            '<h3>Membership runs through your account</h3>'
+            '<p>Sign in to manage your membership. If no sign-in control renders on this build, accounts '
+            'are not wired here yet and nothing can be bought on this page.</p>'
+            '</div>'
+        )
+        sub = 'The paid tier that keeps the rest of eephus.io free.'
+        desc = (f"Diamond is the eephus.io paid tier: fantasy and sports betting tools for ${price} "
+                "a month. Everything else on the site stays free, including the public data artifacts.")
+    else:
+        banner = (
+            '<div class="card diamond-banner" role="note">'
+            '<h3>Founding preview: everything is free while we build</h3>'
+            '<p>Diamond is not switched on. Every page in this section is open to everyone right now. '
+            'Use them, tell us what is wrong with them, and you will be a founding member when the '
+            'doors open.</p>'
+            '</div>'
+        )
+        # The honest static CTA (2026-08-16). The old card told the reader to
+        # use "the sign-in control in the top bar", a control this build does
+        # not render; diamond.js only replaces this card when the account layer
+        # is configured and on, so this text is what most readers see.
+        cta = (
+            '<div id="diamond-cta" class="card diamond-cta">'
+            '<h3>There is nothing to buy yet</h3>'
+            '<p>There is no signup, because accounts are not switched on and the preview needs none. '
+            'When accounts open, founding status will be honored for the people who were here during '
+            'the preview.</p>'
+            '</div>'
+        )
+        sub = ('The paid tier that keeps the rest of eephus.io free. It is not selling '
+               'anything yet.')
+        desc = (f"Diamond is the eephus.io paid tier: fantasy and sports betting tools for ${price} "
+                "a month when it launches. Everything else on the site stays free, including the "
+                "public data artifacts. Nothing is gated today.")
+    # The section-sub counts follow the lists, not a literal: the last rewrite
+    # left "four modules" over a two-module grid for a day.
+    words = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+    n_mod, n_ex = len(gets), len(extras)
+    counts_sub = (
+        f'{words[n_mod] if n_mod < len(words) else n_mod} '
+        f'module{"" if n_mod == 1 else "s"}, plus '
+        f'{words[n_ex] if n_ex < len(words) else n_ex} '
+        f'thing{" that is" if n_ex == 1 else "s that are"} not a module, each '
+        'labeled with what actually exists today')
     body = (
         '<div class="fa-app mlbstats-app diamond-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>Diamond Pass {_stage_chip("diamond")}</h1></div>'
-        '<span class="section-sub">The paid tier that keeps the rest of eephus.io free. It is not selling '
-        'anything yet.</span></div>'
-        # The founding-preview banner. Rendered server-side so it is the first
-        # thing on the page with or without JavaScript.
-        '<div class="card diamond-banner" role="note">'
-        '<h3>Founding preview: everything is free while we build</h3>'
-        '<p>Diamond is not switched on. Every page in this section is open to everyone right now, including '
-        'the betting model and the card market screen. Use them, tell us what is wrong with them, and you '
-        'will be a founding member when the doors open.</p>'
-        '</div>'
+        f'<span class="section-sub">{sub}</span></div>'
+        f'{banner}'
         '<div class="gl-intro">'
         '<p>eephus.io is a sabermetrics site that publishes its own report card. The prospect model posts '
         'its out-of-sample accuracy against the public consensus, and it posts the experiments that failed '
         'too. That habit is the product.</p>'
-        '<p>Diamond is the paid tier on top of it: the fantasy, betting and card-market work. '
+        '<p>Diamond is the paid tier on top of it: the fantasy and betting work. '
         'Everything else on the site stays free forever. Diamond funds the free site.</p>'
         '</div>'
         f'{money}'
         '<div class="section-head"><h2>What members get</h2>'
-        '<span class="section-sub">four modules, plus four things that are not a module, each '
-        'labeled with what actually exists today</span></div>'
+        f'<span class="section-sub">{counts_sub}</span></div>'
         f'<div class="article-grid">{module_cards}</div>'
         f'<div class="article-grid">{extra_cards}</div>'
-        # Live receipts. diamond.js fills these from the artifacts; the static
-        # fallback text says what the section IS, so an absent sidecar reads as
-        # "not loaded yet" rather than a blank rectangle.
+        # Live receipts. diamond.js fills the two mounts from the artifacts; the
+        # static fallback text says what the section IS, so an absent sidecar
+        # reads as "not loaded yet" rather than a blank rectangle. The ledger
+        # card is server-rendered: its registry is read at build time, and the
+        # card says so.
         '<div class="section-head"><h2>The receipts</h2>'
-        '<span class="section-sub">read live from the model artifacts, not typed in by hand</span></div>'
+        '<span class="section-sub">the model scoreboard read live from its artifacts, and the ledger '
+        'counted at build time</span></div>'
+        f'{_diamond_ledger_card()}'
         '<div id="diamond-receipts" class="diamond-receipts">'
         '<div class="card"><p>The prospect model scoreboard loads here, straight out of the eval '
         'artifact the model writes for itself. If this sentence is still on the page, the artifact '
@@ -4448,14 +4632,10 @@ def build_diamond() -> str:
         '<div class="section-head"><h2>Questions worth asking</h2>'
         '<span class="section-sub">including the ones a sales page would skip</span></div>'
         f'<div class="article-grid">{faq_html}</div>'
-        # Sign-in aware call to action. diamond.js swaps the copy once the
-        # account layer reports a session; without it the static text still
-        # points somewhere useful.
-        '<div id="diamond-cta" class="card diamond-cta">'
-        '<h3>There is nothing to buy yet</h3>'
-        '<p>Make a free account so your watchlist, your bets and your founding-member status follow you. '
-        'Use the sign-in control in the top bar.</p>'
-        '</div>'
+        # diamond.js replaces the static CTA only when the account layer is
+        # configured and switched on; on every other build the static card IS
+        # the call to action, so it claims no control it cannot show.
+        f'{cta}'
         '<p class="diamond-fine">Sports betting content on this site is informational and for entertainment. '
         '21+. Sports betting is not legal in every state. No affiliate links. '
         'If betting stops being fun, call 1-800-GAMBLER.</p>'
@@ -4463,10 +4643,7 @@ def build_diamond() -> str:
         f'{DIAMOND_CONFIG_SCRIPT}'
         f'<script src="/assets/diamond.js?v={_DIAMOND_VER}" defer></script>'
     )
-    return page("Diamond Pass - eephus.io", "diamond", body,
-                "Diamond is the eephus.io paid tier: fantasy, DFS, betting and card-market tools for "
-                "$15 a month when it launches. Everything else on the site stays free, including the "
-                "public data artifacts. Nothing is gated today.",
+    return page("Diamond Pass - eephus.io", "diamond", body, desc,
                 url=f"{SITE_ORIGIN}/diamond/")
 
 def build_parks() -> str:
