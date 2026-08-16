@@ -398,9 +398,10 @@
     return screenBanner() + filterBar(rows.length) +
       '<p class="mlbstats-note">Ranked by the gap between where the player sits on talent and ' +
       'where the card sits on price, inside its own tier. Cards with no index are in Watchlist.</p>' +
-      renderList(rows, "No card carries a priced index yet, so there is no gap to rank. The screen " +
-                       "fills in as sold comps land in the window; every tracked card is in Watchlist " +
-                       "in the meantime.");
+      renderList(rows, emptyBoardCopy(
+        "No card carries a priced index yet, so there is no gap to rank. Every tracked " +
+        "card is in Watchlist in the meantime.",
+        "The screen fills in as sold comps land in the window."));
   }
 
   function renderMovers() {
@@ -409,7 +410,9 @@
     return screenBanner() + filterBar(rows.length) +
       '<p class="mlbstats-note">Biggest index change against the prior window. A mover needs ' +
       'both windows priced, so a card can be tracked and still not appear here.</p>' +
-      renderList(rows, "No card has two priced windows yet. Movers fill in as history accumulates.");
+      renderList(rows, emptyBoardCopy(
+        "No card has two priced windows yet.",
+        "Movers fill in as history accumulates."));
   }
 
   function renderWatchlist() {
@@ -465,6 +468,61 @@
       "<span>Derived index values only. Not investment advice, and not a backtested signal: " +
       "there is no price-history backtest yet, so every call on this page is a screen. " +
       "Individual sales and listings are not republished.</span></div>";
+  }
+
+  // ---- ingest banner --------------------------------------------------------
+  // WHY THE BOARD IS DARK, said on the page. card_market_export has published a
+  // full ingest block since 2026-08-07 (state, a why sentence, the last
+  // scrape's counters) and until 2026-08-16 this file never read one byte of
+  // it: the server diagnosed the blocked fetcher and the client went on
+  // rendering copy that promised comps would land. Rendered by render() above
+  // every board whenever the state is anything but "ok". Reuses the
+  // screen-banner furniture; a red state swaps the gold rail for the red token
+  // inline, the same way stripeFor() paints a row stripe.
+  function ingestBanner() {
+    var ing = DATA && DATA.meta && DATA.meta.ingest;
+    if (!ing || !ing.state || ing.state === "ok") return "";
+    var tone = ing.red ? "var(--accent-red)" : "var(--accent-gold)";
+    var ls = ing.last_scrape || null;
+    var facts = [];
+    if (ls) {
+      facts.push("Last scrape " + (ls.ran_on || "-") + ": " +
+        (ls.cards_attempted == null ? 0 : ls.cards_attempted) + " attempted, " +
+        (ls.cards_fetched == null ? 0 : ls.cards_fetched) + " fetched, " +
+        (ls.fetch_errors == null ? 0 : ls.fetch_errors) + " errors.");
+    }
+    if (ing.days_since_ingest != null) {
+      facts.push(ing.days_since_ingest === 0 ? "Last comp stored today." :
+        "Last comp stored " + ing.days_since_ingest + " day" +
+        (ing.days_since_ingest === 1 ? "" : "s") + " ago.");
+    } else {
+      facts.push("No comp has ever reached the store.");
+    }
+    return '<div class="cards-screen-banner" style="border-left-color:' + tone + '">' +
+      '<span class="cards-screen-tag" style="border-color:' + tone + ";color:" + tone + '">' +
+        esc(String(ing.state).replace(/_/g, " ")) + "</span>" +
+      "<div><span>" + esc(ing.why || "The export did not say why.") + "</span>" +
+      '<div class="cards-meta">' + esc(facts.join(" ")) + "</div></div></div>";
+  }
+
+  // The empty copy is a CLAIM about the future, so it branches on the ingest
+  // state. "Fills in as sold comps land" was printed unconditionally, and under
+  // fetch_blocked it was false: measured 2026-08-06, every scrape request fails
+  // before a page comes back, so no comp is landing on any schedule. The
+  // optimistic sentence survives only when the ingest itself reports ok.
+  function emptyBoardCopy(lead, okTail) {
+    var ing = DATA && DATA.meta && DATA.meta.ingest;
+    if (ing && ing.state === "ok") return lead + " " + okTail;
+    if (ing && ing.state) {
+      if (ing.state === "fetch_blocked") {
+        return lead + " The price source is refusing automated reads, so no comps are " +
+          "landing: this board stays dark until a licensed or manual source is wired.";
+      }
+      return lead + " The ingest is not delivering comps right now; the notice above " +
+        "this board says why.";
+    }
+    return lead + " This export carried no ingest health, so no claim is made about " +
+      "when comps will land.";
   }
 
   // rowCount gates the board GFX button. On a zero-comp export the Buy Screen
@@ -591,10 +649,13 @@
         "Loading the card market</div></div>";
       return;
     }
-    root.innerHTML = section === "method" ? renderMethod()
+    // The ingest banner leads EVERY board, method included: it is the page's
+    // statement of why the numbers under it look the way they do, and a reader
+    // deep-linked to any tab deserves it before the arithmetic.
+    root.innerHTML = ingestBanner() + (section === "method" ? renderMethod()
       : section === "movers" ? renderMovers()
       : section === "watchlist" ? renderWatchlist()
-      : renderBuy();
+      : renderBuy());
     bind(root);
     wireGl(root);
     var banner = el("cards-banner");

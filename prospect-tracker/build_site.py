@@ -4253,11 +4253,18 @@ def build_cards() -> str:
         'published as an index rather than a comp sheet. Treat this as a screen, not a forecast: it has no '
         'price-history backtest behind it yet, and it will not get one until the module has collected enough '
         'of its own history to test.</span></div>'
+        # data-cardsection, SINGULAR. This shell shipped data-cardssection (a
+        # doubled s) while cards.js was written against data-cardsection, and
+        # rendered in a real browser on 2026-08-05 that one letter meant the
+        # tab wiring matched nothing: three of the four boards were
+        # unreachable. The client grew a shim that accepts both spellings;
+        # normalized here 2026-08-16 to the name the client expects. The shim
+        # stays as backward armor for any cached copy of this shell.
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Card Market sections">'
-        '<button type="button" class="mlbstats-sectionbtn active" data-cardssection="screen" role="tab" aria-selected="true">Buy Screen</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-cardssection="movers" role="tab" aria-selected="false">Movers</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-cardssection="watchlist" role="tab" aria-selected="false">Watchlist</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-cardssection="method" role="tab" aria-selected="false">Method</button>'
+        '<button type="button" class="mlbstats-sectionbtn active" data-cardsection="screen" role="tab" aria-selected="true">Buy Screen</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-cardsection="movers" role="tab" aria-selected="false">Movers</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-cardsection="watchlist" role="tab" aria-selected="false">Watchlist</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-cardsection="method" role="tab" aria-selected="false">Method</button>'
         '</div>'
         '<div id="cards-section" class="mlbstats-section">'
         '<div id="cards-banner"></div>'

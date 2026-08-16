@@ -1,0 +1,29 @@
+{
+ "version": 1,
+ "captured": "2026-08-16",
+ "note": "Owner hand-picks that regeneration must not destroy. build_watchlist regenerates data/card_watchlist.json from the live eFV board and flags the top 12 prospects hot, so a rebuild off a moved board would silently demote picks the owner made by hand. Every card_id listed under hot is forced hot=true whenever the generator emits that card; cards not listed keep the generated flag; an id the generator no longer emits is ignored, because watchlist membership is a watchlist edit, not an override. Captured 2026-08-16 from the committed data/card_watchlist.json (22 hot cards).",
+ "hot": [
+  "jesus-made|bowman-chrome-prospect-auto|psa-10",
+  "leo-de-vries|bowman-chrome-prospect-auto|psa-10",
+  "franklin-arias|bowman-chrome-prospect-auto|psa-10",
+  "roch-cholowsky|bowman-chrome-prospect-auto|psa-10",
+  "eli-willits|bowman-chrome-prospect-auto|psa-10",
+  "rainiel-rodriguez|bowman-chrome-prospect-auto|psa-10",
+  "walker-jenkins|bowman-chrome-prospect-auto|psa-10",
+  "mike-sirota|bowman-chrome-prospect-auto|psa-10",
+  "george-lombard-jr|bowman-chrome-prospect-auto|psa-10",
+  "theo-gillen|bowman-chrome-prospect-auto|psa-10",
+  "josue-de-paula|bowman-chrome-prospect-auto|psa-10",
+  "grady-emerson|bowman-chrome-prospect-auto|psa-10",
+  "yordan-alvarez|topps-chrome-rookie-refractor|psa-10",
+  "juan-soto|topps-chrome-rookie-refractor|psa-10",
+  "munetaka-murakami|topps-chrome-rookie-refractor|psa-10",
+  "kyle-schwarber|topps-chrome-rookie-refractor|psa-10",
+  "james-wood|topps-chrome-rookie-refractor|psa-10",
+  "jacob-misiorowski|topps-chrome-rookie-refractor|psa-10",
+  "dylan-cease|topps-chrome-rookie-refractor|psa-10",
+  "chris-sale|topps-chrome-rookie-refractor|psa-10",
+  "cam-schlittler|topps-chrome-rookie-refractor|psa-10",
+  "tarik-skubal|topps-chrome-rookie-refractor|psa-10"
+ ]
+}

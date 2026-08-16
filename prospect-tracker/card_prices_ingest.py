@@ -661,6 +661,94 @@ def parse_drop_csv(path: Path | str, watchlist: dict | None = None) -> list:
     return out
 
 
+def validate_drop_csv(path: Path | str, watchlist: dict | None = None) -> dict:
+    """Dry-run ONE drop file against the CSV contract, storing nothing.
+
+    Added 2026-08-16. The scraper is fetch_blocked (the 2026-08-07 source
+    survey found no host that serves this module), so the CSV drop is the only
+    input that can ever populate the board, and until a real file lands there
+    was no way to check a candidate export short of ingesting it into the
+    append-only store. This is the preflight: same column map, same price and
+    date parsers, same watchlist matching as parse_drop_csv, but every row
+    comes back with a verdict and a reason, and the DB is never opened.
+
+    Returns {"file", "ok", "error", "rows", "accepted", "rejected",
+    "on_watchlist", "off_list"}. `ok` is False only when the FILE fails:
+    missing, unreadable, or the required price/date columns absent. A bad row
+    is a verdict, not a failure, so a candidate file with one broken row reads
+    as "fix row 7" rather than "the file is bad". Row numbers count the header
+    as line 1, matching what a spreadsheet shows.
+
+    Kept mirror-true to parse_drop_csv by hand, verdict for skip: if that
+    function learns a new reject rule, this one must learn it the same day or
+    the preflight will bless files the ingest then drops rows from."""
+    p = Path(path)
+    out: dict = {"file": p.name, "ok": False, "error": None, "rows": [],
+                 "accepted": 0, "rejected": 0, "on_watchlist": 0, "off_list": 0}
+    if not p.exists():
+        out["error"] = f"no such file: {p}"
+        return out
+    wl = watchlist if watchlist is not None else load_watchlist()
+    by_id = {c.get("card_id"): c for c in (wl.get("cards") or []) if c.get("card_id")}
+    by_triple = {(c.get("player_key"), slug(c.get("set_desc")), slug(c.get("grade_bucket"))): c
+                 for c in (wl.get("cards") or [])}
+    try:
+        with p.open("r", encoding="utf-8-sig", newline="") as fh:
+            rdr = csv.DictReader(fh)
+            cols = _col_map(rdr.fieldnames)
+            if "price_usd" not in cols or "sold_date" not in cols:
+                out["error"] = (f"missing required price/date columns "
+                                f"(saw {rdr.fieldnames})")
+                return out
+            for n, row in enumerate(rdr, start=2):
+                def g(k):
+                    c = cols.get(k)
+                    return row.get(c) if c else None
+
+                def verdict(accept: bool, reason: str, cid: str | None = None,
+                            listed: bool = False) -> None:
+                    out["rows"].append({"row": n, "accept": accept, "reason": reason,
+                                        "card_id": cid, "on_watchlist": listed})
+                    out["accepted" if accept else "rejected"] += 1
+                    if accept:
+                        out["on_watchlist" if listed else "off_list"] += 1
+
+                price = _parse_price(g("price_usd"))
+                sold = _parse_date(g("sold_date"))
+                if price is None:
+                    verdict(False, f"unparseable price {str(g('price_usd'))!r}")
+                    continue
+                if not sold:
+                    verdict(False, f"unparseable date {str(g('sold_date'))!r}")
+                    continue
+                grade = (g("grade") or "RAW").strip().upper().replace("PSA10", "PSA 10")
+                cid = (g("card_id") or "").strip()
+                pk = (g("player_key") or "").strip() or None
+                entry = by_id.get(cid) if cid else None
+                if entry is None and pk:
+                    entry = by_triple.get((pk, slug(g("set_desc")), slug(grade)))
+                if entry is not None:
+                    verdict(True, f"${price:.2f} {sold} {grade}, on the watchlist",
+                            entry["card_id"], listed=True)
+                    continue
+                if cid:
+                    verdict(True, f"${price:.2f} {sold} {grade}, card_id not on the "
+                            "watchlist: stored but not published until the watchlist "
+                            "names it", cid)
+                    continue
+                if not pk:
+                    verdict(False, "no card identity: needs card_id or player_key")
+                    continue
+                verdict(True, f"${price:.2f} {sold} {grade}, off-list card derived "
+                        "from player_key: stored but not published until the "
+                        "watchlist names it", card_id(pk, g("set_desc") or "unspecified", grade))
+    except (OSError, csv.Error) as e:
+        out["error"] = f"unreadable: {e}"
+        return out
+    out["ok"] = True
+    return out
+
+
 def ingest_csv(path: Path | str, watchlist: dict | None = None, con=None) -> dict:
     comps = parse_drop_csv(path, watchlist)
     ins, dup = store_comps(comps, con=con)
@@ -1012,6 +1100,22 @@ def build_watchlist(n_prospects: int = 30, n_mlb: int = 10, data_dir: Path | Non
             "grade_bucket": _DEFAULT_GRADE, "hot": True,
         })
 
+    # Hot overrides, applied last so they win. Added 2026-08-16: the hot flags
+    # in the committed watchlist are owner hand-picks, and this generator
+    # recomputes hot from the live board rank (top 12 prospects plus every MLB
+    # marquee), so a regeneration off a moved board would silently demote a
+    # card the owner chose to keep on the daily cadence.
+    # data/card_watchlist_overrides.json pins those choices: any card_id it
+    # lists under "hot" is forced hot on the cards this build emits; unlisted
+    # cards keep the generated flag; a listed id the build no longer emits is
+    # skipped, because membership belongs to the watchlist itself, not to an
+    # override on one flag.
+    ov = _load("card_watchlist_overrides.json") or {}
+    hot_ids = {str(x) for x in (ov.get("hot") or []) if x}
+    for c in cards:
+        if c["card_id"] in hot_ids:
+            c["hot"] = True
+
     return {
         "version": 1,
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -1046,12 +1150,29 @@ def main(argv=None) -> int:
                          "(what run_monthly and the crontab both call)")
     ap.add_argument("--drops", action="store_true", help="ingest every data/drops/card_comps_*.csv")
     ap.add_argument("--csv", help="ingest ONE csv file")
+    ap.add_argument("--validate", metavar="CSV",
+                    help="dry-run one drop file against the CSV contract: per-row "
+                         "accept/reject with reasons, nothing stored")
     ap.add_argument("--scrape", action="store_true", help=f"scrape (needs {SCRAPE_ENV_FLAG}=1)")
     ap.add_argument("--hot", action="store_true", help="scrape only the hot list")
     ap.add_argument("--build-watchlist", action="store_true", help="regenerate data/card_watchlist.json")
     ap.add_argument("--stats", action="store_true", help="what is in the comp store")
     a = ap.parse_args(argv)
     did = False
+    if a.validate:
+        # A preflight, not an ingest: it prints its verdicts and returns, so a
+        # --validate run can never be half of something that also stores.
+        rep = validate_drop_csv(a.validate)
+        if not rep["ok"]:
+            print(f"validate {rep['file']}: FILE REJECTED, {rep['error']}")
+            return 1
+        for r in rep["rows"]:
+            print(f"row {r['row']}: {'ACCEPT' if r['accept'] else 'REJECT'} {r['reason']}"
+                  + (f" [{r['card_id']}]" if r.get("card_id") else ""))
+        print(f"validate {rep['file']}: {rep['accepted']} accepted "
+              f"({rep['on_watchlist']} on the watchlist, {rep['off_list']} off-list), "
+              f"{rep['rejected']} rejected; nothing stored")
+        return 0
     if a.scheduled:
         print(json.dumps(run_scheduled_ingest(), indent=1))
         did = True
