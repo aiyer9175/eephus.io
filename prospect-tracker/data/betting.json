@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-16T21:19:45+00:00",
+ "generated_at": "2026-08-16T22:12:41+00:00",
  "slate_date": "2026-08-17",
  "n_games": 11,
  "status": {
@@ -64,7 +64,7 @@
    "board_slate": "2026-08-17",
    "snapshot_slate": "2026-08-16",
    "snapshot_captured_at": "2026-08-16T18:09:02+00:00",
-   "snapshot_age_hours": 3.2,
+   "snapshot_age_hours": 4.1,
    "matched": true,
    "match_rule": "carries_slate_events",
    "n_pregame_events_on_board_slate": 6,
@@ -72,10 +72,10 @@
    "reason": "the newest snapshot is stamped for the 2026-08-16 slate and carries 6 game(s) on the 2026-08-17 board that have not started; a capture is labelled by its earliest event, so this is the normal shape of an evening board"
   },
   "odds_slate_mismatch": false,
-  "odds_snapshot_age_hours": 3.2,
+  "odds_snapshot_age_hours": 4.1,
   "stale_board": false,
   "feed_health": {
-   "generated_at": "2026-08-16T21:19:45+00:00",
+   "generated_at": "2026-08-16T22:12:41+00:00",
    "window_days": 14,
    "source": ".cache/odds",
    "n_slates": 10,
@@ -84,7 +84,7 @@
    "n_unreadable_files": 0,
    "ever_captured_close": false,
    "hours_since_last_close": null,
-   "hours_since_last_open": 3.18,
+   "hours_since_last_open": 4.06,
    "close_stale_hours": 36.0,
    "close_job_last_run": null,
    "close_job_last_reason": null,
@@ -730,7 +730,7 @@
   "help": "If gambling stops being fun, call 1-800-GAMBLER.",
   "helpline": "1-800-GAMBLER",
   "affiliates": "eephus.io takes no affiliate money from any sportsbook and links to none.",
-  "staking": "Every pick on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
+  "staking": "Every row on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
  },
  "pick_of_the_day": null,
  "longshot_of_the_day": null,
@@ -739,12 +739,16 @@
   "provisional": true,
   "min_edge": 0.06,
   "basis": "provisional_policy_floor",
-  "policy": "a provisional pick is published against a POLICY floor, not a validated threshold; it is labelled as such everywhere it appears and it is recorded in the shadow ledger so it becomes evidence",
-  "shared_floor_note": "both slots clear the same floor; no slot is allowed a lower one, because a threshold lowered to make a pick appear is not a threshold",
+  "frame": "watch",
+  "frame_note": "Model Watch framing, owner decision 2026-08-16: while the three validation gates are closed the slots present the model's largest measured disagreements with the market, not recommendations. The structural keys keep their names for ledger continuity; the vocabulary returns automatically when the gates open.",
+  "policy": "a provisional selection is published against a POLICY floor, not a validated threshold; it is labelled as such everywhere it appears and it is recorded in the shadow ledger so it becomes evidence",
+  "shared_floor_note": "both slots clear the same floor; no slot is allowed a lower one, because a threshold lowered to make a selection appear is not a threshold",
   "slots": {
    "pick_of_the_day": {
     "slot": "pick_of_the_day",
-    "label": "Pick of the Day",
+    "label": "Model Watch: largest disagreement",
+    "slot_label": "Model Watch: largest disagreement",
+    "slot_frame": "watch",
     "rule": "highest model win probability among sides clearing the provisional floor, restricted to american odds from -199 to +199; ties go to the price nearest -110, then to the higher expected value",
     "band": "american odds from -199 to +199",
     "present": false,
@@ -754,11 +758,26 @@
     "min_edge": 0.06,
     "basis": "provisional_policy_floor",
     "stake_units": 1.0,
-    "suggested_units": 1.0
+    "suggested_units": 1.0,
+    "tag_record": {
+     "available": true,
+     "tag": "potd_band",
+     "n_settled": 6,
+     "won": 2,
+     "lost": 4,
+     "push": 0,
+     "net_units": -2.876,
+     "roi": -0.4793,
+     "small_n": true,
+     "sweep_floor": 100,
+     "source": "betting_shadow.summary() by_tag"
+    }
    },
    "longshot_of_the_day": {
     "slot": "longshot_of_the_day",
-    "label": "Longshot Value of the Day",
+    "label": "Model Watch: long-price disagreement",
+    "slot_label": "Model Watch: long-price disagreement",
+    "slot_frame": "watch",
     "rule": "highest expected value per unit among sides clearing the provisional floor at american odds of +200 or longer",
     "band": "american odds of +200 or longer",
     "present": false,
@@ -768,7 +787,20 @@
     "min_edge": 0.06,
     "basis": "provisional_policy_floor",
     "stake_units": 1.0,
-    "suggested_units": 0.5
+    "suggested_units": 0.5,
+    "tag_record": {
+     "available": true,
+     "tag": "longshot",
+     "n_settled": 1,
+     "won": 0,
+     "lost": 1,
+     "push": 0,
+     "net_units": -1.0,
+     "roi": -1.0,
+     "small_n": true,
+     "sweep_floor": 100,
+     "source": "betting_shadow.summary() by_tag"
+    }
    }
   },
   "blocked": true,
@@ -797,6 +829,110 @@
    "reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 3 are closed, starting with 600 vintage-graded games against 258 in hand"
   }
  ],
+ "market_publishability": {
+  "policy": {
+   "n_min": 100,
+   "z": 1.645,
+   "dwell": 3,
+   "trailing": 200,
+   "basis": "n_min mirrors betting_shadow.MIN_BETS_FOR_SWEEP and z is betting_model.Z_95_ONE_SIDED; the dwell of 3 and the trailing 200 are POLICY chosen for hysteresis, not measured (docs/diamond-betting.md section 7b)"
+  },
+  "last_evaluation_date": "2026-08-16",
+  "today_note": "no market reaches the 100-game canonical floor yet (moneyline 49, runline 48, total 47), so the ledger leg closes nothing on this build",
+  "note": "a market must clear BOTH legs to fill a slot or reach the public record. The shadow and calibration ledgers keep recording closed markets, because they are the only instruments that can ever accumulate the evidence to re-open one.",
+  "markets": {
+   "moneyline": {
+    "market": "moneyline",
+    "publishable": true,
+    "reason": "publishable: the margin-shape exclusion does not bar this market, and 49 canonical settled game(s) against the 100-game floor; the ledger leg is unresolved and closes nothing",
+    "dispersion_leg": {
+     "publishable": true,
+     "reason": "the margin-shape exclusion does not bar this market"
+    },
+    "ledger_leg": {
+     "status": "open",
+     "verdict": "unresolved",
+     "n_games": 49,
+     "brier": 0.264212,
+     "delta_vs_coin": 0.014212,
+     "t": 1.1536,
+     "worse_than_coin_95": false,
+     "trailing": {
+      "n_games": 49,
+      "brier": 0.264212,
+      "delta_vs_coin": 0.014212,
+      "t": 1.1536,
+      "worse_than_coin_95": false,
+      "window": 200
+     },
+     "consecutive_worse": 0,
+     "consecutive_recovered": 0,
+     "dwell_need": 3,
+     "reason": "49 canonical settled game(s) against the 100-game floor; the ledger leg is unresolved and closes nothing"
+    }
+   },
+   "runline": {
+    "market": "runline",
+    "publishable": false,
+    "reason": "excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate",
+    "dispersion_leg": {
+     "publishable": false,
+     "reason": "excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate"
+    },
+    "ledger_leg": {
+     "status": "open",
+     "verdict": "unresolved",
+     "n_games": 48,
+     "brier": 0.281972,
+     "delta_vs_coin": 0.031972,
+     "t": 1.3411,
+     "worse_than_coin_95": false,
+     "trailing": {
+      "n_games": 48,
+      "brier": 0.281972,
+      "delta_vs_coin": 0.031972,
+      "t": 1.3411,
+      "worse_than_coin_95": false,
+      "window": 200
+     },
+     "consecutive_worse": 0,
+     "consecutive_recovered": 0,
+     "dwell_need": 3,
+     "reason": "48 canonical settled game(s) against the 100-game floor; the ledger leg is unresolved and closes nothing"
+    }
+   },
+   "total": {
+    "market": "total",
+    "publishable": false,
+    "reason": "excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate",
+    "dispersion_leg": {
+     "publishable": false,
+     "reason": "excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate"
+    },
+    "ledger_leg": {
+     "status": "open",
+     "verdict": "unresolved",
+     "n_games": 47,
+     "brier": 0.277694,
+     "delta_vs_coin": 0.027694,
+     "t": 1.7671,
+     "worse_than_coin_95": false,
+     "trailing": {
+      "n_games": 47,
+      "brier": 0.277694,
+      "delta_vs_coin": 0.027694,
+      "t": 1.7671,
+      "worse_than_coin_95": false,
+      "window": 200
+     },
+     "consecutive_worse": 0,
+     "consecutive_recovered": 0,
+     "dwell_need": 3,
+     "reason": "47 canonical settled game(s) against the 100-game floor; the ledger leg is unresolved and closes nothing"
+    }
+   }
+  }
+ },
  "team_bets": [
   {
    "game_pk": 824514,
@@ -6807,7 +6943,7 @@
  },
  "record_url": "/data/betting_record.json",
  "record_policy": "Append only. Rows are never edited or deleted; a correction is a new row. betting_export.write_record refuses any other write and test_betting.py pins it.",
- "record_label": "Provisional. This pick clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 258 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. This row is in the public record because a claim that is not written down before the result is not a claim.",
+ "record_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 258 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. This row is in the public record because a claim that is not written down before the result is not a claim.",
  "record_storage": {
   "backend": "jsonl",
   "authoritative_path": ".cache/betting/record.jsonl",
@@ -6833,8 +6969,8 @@
   "n_candidates": 0,
   "n_new": 0,
   "written": 0,
-  "policy": "a pick enters the public record only when every blocker is open; the first row is written by the first nightly that clears all of them, and nothing else arms it",
-  "reason": "blocked: close_snapshot (no close snapshot for this slate, so the pick could never be CLV-graded and the only honest read on an unvalidated model's decisions would be missing. no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above)"
+  "policy": "a selection enters the public record only when every blocker is open; the first row is written by the first nightly that clears all of them, and nothing else arms it",
+  "reason": "blocked: close_snapshot (no close snapshot for this slate, so the selection could never be CLV-graded and the only honest read on an unvalidated model's decisions would be missing. no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above)"
  },
  "record_publish_blockers": [
   {
@@ -6842,7 +6978,7 @@
    "open": false,
    "need": "a close odds snapshot for slate 2026-08-17",
    "have": "0 of 10 slates in the last 14 days have one",
-   "reason": "no close snapshot for this slate, so the pick could never be CLV-graded and the only honest read on an unvalidated model's decisions would be missing. no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above"
+   "reason": "no close snapshot for this slate, so the selection could never be CLV-graded and the only honest read on an unvalidated model's decisions would be missing. no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above"
   },
   {
    "id": "odds_slate",
@@ -6890,7 +7026,7 @@
   "source": ".cache/betting/published_chain.json",
   "durable": true,
   "armed": true,
-  "published_at": "2026-08-16T18:09:02+00:00",
+  "published_at": "2026-08-16T21:19:45+00:00",
   "n_rows": 0
  },
  "settlement_url": "/data/betting_settlement.json",

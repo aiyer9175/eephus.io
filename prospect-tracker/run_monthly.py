@@ -2570,6 +2570,37 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("daily: card market export failed - continuing")
 
+        # --- 9g. eFV scoreboard refresh (xfv_scoreboard_eval.json) --------
+        # The /diamond/ receipts read this artifact and NOTHING regenerated it:
+        # tools/efv_scoreboard.py was wired into no pipeline step, so the sales
+        # page quoted a 9-day-old scoreboard while every artifact beside it
+        # rebuilt nightly (found 2026-08-16). Subprocess because the tool
+        # os.chdir()s at import, which must not move this process. Idempotent
+        # (compare-before-write) and cheap while source_backtest.json is under
+        # SB_MAX_AGE_DAYS old: measured 0.7s on 2026-08-16. Best-effort.
+        with _step("9g. eFV scoreboard refresh (xfv_scoreboard_eval.json)", log):
+            try:
+                import subprocess as _sp
+                import sys as _sys
+                import job_heartbeat as _hb
+                _r = _sp.run([_sys.executable, "tools/efv_scoreboard.py"],
+                             capture_output=True, text=True, timeout=1800,
+                             cwd=str(Path(__file__).resolve().parent))
+                _ok = _r.returncode == 0
+                _hb.record("efv_scoreboard", ok=_ok,
+                           result=(_r.stdout or _r.stderr or "").strip().splitlines()[-1][:120]
+                           if (_r.stdout or _r.stderr) else f"rc={_r.returncode}")
+                if not _ok:
+                    log.error("daily: efv_scoreboard exited %s: %s",
+                              _r.returncode, (_r.stderr or "")[-400:])
+            except Exception as _e:
+                log.exception("daily: efv_scoreboard refresh failed - continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("efv_scoreboard", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
+
         # --- 10. FA signing-window tracker (Nov–Mar only). ----------------
         # In-winter the class moves daily (signings, option decisions, QO
         # acceptances), so the daily job re-scrapes the current class and
