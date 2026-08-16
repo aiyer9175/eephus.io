@@ -21,8 +21,9 @@
 //      HERE: the hash is "#m=<module>&<that module's own hash>", each client
 //      reads and writes only its half through this file, and only the ACTIVE
 //      module's half is in the URL.
-//   3. THE PAYLOAD. data/fantasy.json is 576KB and both Redraft and Dynasty
-//      read it. One memoized load serves both, and the DFS card as well.
+//   3. THE PAYLOAD. data/fantasy.json runs to several hundred KB (a 600KB
+//      budget test pins the ceiling) and both Redraft and Dynasty read it.
+//      One memoized load serves both, and the DFS card as well.
 //
 // LAZY BOOT. A client's script tag is injected on the first activation of its
 // module, so a reader who opens Redraft and leaves never downloads the DFS

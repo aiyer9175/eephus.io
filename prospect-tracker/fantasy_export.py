@@ -811,11 +811,45 @@ def _start_score(p: dict, opp_org: str | None, teams_ctx: dict) -> dict | None:
             "opp_off_resolved": resolved}
 
 
+def _team_next7(sched7: dict | None, teams_ctx: dict) -> dict:
+    """sections.team_next7: {org: [{d, opp, home, opp_off, opp_bp}, ...]} for the
+    next 7 days (2026-08-16), the schedule strip the player card renders.
+
+    The raw slate is schedule.team_sched7 (see _attach_schedule: the 7-day
+    probables fetch used to be discarded once two_start was derived from it);
+    this join only adds the opponent context the card colors chips by, from the
+    same _teams_context the streamer and DFS boards already price against. An
+    opponent the context cannot resolve carries None rather than a fabricated
+    100: the card renders that chip neutral, which is the same "missing is not
+    average" rule the DFS matchup mark enforces. Values are rounded to ints
+    because 30 orgs x 7 games ride the corpus payload and a decimal tail is
+    pure bytes on a display strip."""
+    def _plus(v):
+        return round(v) if isinstance(v, (int, float)) else None
+    out: dict = {}
+    for org, games in (sched7 or {}).items():
+        rows = []
+        for g in (games or [])[:7]:
+            g = g or {}
+            opp = g.get("opp")
+            ctx = (teams_ctx or {}).get(opp) or {}
+            rows.append({"d": g.get("d"), "opp": opp,
+                         "home": bool(g.get("home")),
+                         "opp_off": _plus(ctx.get("offense_plus")),
+                         "opp_bp": _plus(ctx.get("bullpen_plus"))})
+        if rows:
+            out[org] = rows
+    return out
+
+
 def build_sections(payload: dict) -> dict:
-    """Organize the projected pool + schedule + skill context into the 9 sections.
+    """Organize the projected pool + schedule + skill context into the sections
+    (eleven of them as of 2026-08-16; the count in this line has drifted twice,
+    so count the keys below rather than trusting a number in prose).
     ROS/streamer/buy-sell/closer sections reference the MLB pool by mlbam (client
     resolves against `players`); the prospect sections (callup_watch, dynasty) are
-    self-contained rows joined from timeseries.json + xfv.json."""
+    self-contained rows joined from timeseries.json + xfv.json; team_next7 is the
+    per-club 7-day schedule strip the player card renders."""
     players = payload["players"]
     # Display-only Swing+ mechanics-trend chips (attached here so the daily
     # refresh_live path re-bakes them too). Never read by any section sort.
@@ -912,6 +946,12 @@ def build_sections(payload: dict) -> dict:
     two.sort(key=lambda s: -(s.get("total_fgp") or -1e9))
     sections["two_start"] = two
 
+    # The per-club next-7 strip for the player card, off the same 7-day slate
+    # two_start already rides and the same opponent context the streamers price
+    # against. Absent on a payload from before 2026-08-16, which simply renders
+    # no strip.
+    sections["team_next7"] = _team_next7(sched.get("team_sched7"), teams_ctx)
+
     # Parse the ~66MB timeseries.json ONCE for both prospect-roster sections.
     ts = _load_json("timeseries.json")
     sections["callup_watch"] = _callup_watch(ts)
@@ -938,10 +978,20 @@ def _attach_schedule(payload: dict) -> None:
             "streamer_window": [s3, e3],
             "games": games3,
             "two_start": {str(m): v for m, v in two.items()},
+            # The 7-day per-club slate, compacted to (date, opponent, side).
+            # Until 2026-08-16 games7 was fetched and then DISCARDED once
+            # two_start was derived from it; keeping this ~10KB view is what
+            # lets build_sections bake the card's next-7 strip (team_next7)
+            # without a second fetch, and lets a kept stale schedule keep its
+            # strip too.
+            "team_sched7": {org: [{"d": g.get("date"), "opp": g.get("opp_org"),
+                                   "home": bool(g.get("is_home"))}
+                                  for g in lst[:7]]
+                            for org, lst in team_sched.items()},
         }
     except Exception:
         log.exception("fantasy: schedule attach failed — continuing without probables")
-        payload["schedule"] = {"games": [], "two_start": {}}
+        payload["schedule"] = {"games": [], "two_start": {}, "team_sched7": {}}
 
 
 def _record_schedule_anomaly(n_prev: int) -> None:
@@ -972,6 +1022,7 @@ def refresh_live(log=print) -> int:
     # Keep the schedule we already have, so an empty fetch can be told apart from
     # a genuinely empty slate (see the guard below).
     _prev_games = ((payload.get("schedule") or {}).get("games") or {})
+    _prev_sched7 = ((payload.get("schedule") or {}).get("team_sched7") or {})
     _attach_schedule(payload)
     _new_games = ((payload.get("schedule") or {}).get("games") or {})
     # EMPTY-FETCH GUARD (2026-08-05). A StatsAPI hiccup during the daily refresh
@@ -986,6 +1037,11 @@ def refresh_live(log=print) -> int:
     # what a reader sees.
     if _prev_games and not _new_games:
         payload["schedule"]["games"] = _prev_games
+        # The 7-day club slate rides the same fetch, so a kept schedule keeps
+        # its next-7 strip too rather than blanking the card's chips while the
+        # streamer board still shows yesterday's slate (2026-08-16).
+        if _prev_sched7 and not payload["schedule"].get("team_sched7"):
+            payload["schedule"]["team_sched7"] = _prev_sched7
         payload["schedule"]["stale_schedule"] = True
         if callable(log):
             log("fantasy: schedule fetch returned NO game days but the previous "

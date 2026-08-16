@@ -35,8 +35,12 @@
     cap: null, maxPerTeam: null, minStart: 0.5, avoidOpp: false,
     salaries: {}, salaryMeta: null, lineup: null, importReport: null,
     player: null,
+    q: "", pos: null, team: null, hitShown: 100,
     sort: { pitchers: { key: "pts", asc: false }, hitters: { key: "pts", asc: false } }
   };
+  // One page of the hitter board. 508 rows in one <table> is a scroll nobody
+  // finishes; the board opens at 100 and extends on demand (2026-08-16).
+  var HIT_PAGE = 100;
   var LINKS = null;
   // The SEASON corpus, borrowed from the coordinator for the player card only.
   // This module's own payload is the slate; see the card block near the router.
@@ -339,6 +343,99 @@
     return ((S.data && S.data.players) || []).filter(function (p) { return p.side === side; });
   }
 
+  // ---- filter bar (2026-08-16) ----------------------------------------------
+  // A VIEW over the slate, and the ONE view the optimizer also honors: the
+  // pool it solves over is the filtered pool, said out loud on that panel.
+  // Name is a case-insensitive substring; position matches eligOf (so the
+  // reader's own CSV positions win here exactly as they do in a lineup slot);
+  // team matches the served code. Duplicated per client on purpose, the same
+  // trade the sort machinery already made.
+  function normQ(s) { return String(s == null ? "" : s).toLowerCase(); }
+  function decodeQ(s) {
+    try { return decodeURIComponent(s); } catch (e) { return ""; }
+  }
+  function filtersOn() { return !!(S.q || S.pos || S.team); }
+  function passFilter(p) {
+    if (!p) return false;
+    if (S.q && normQ(p.name).indexOf(normQ(S.q)) < 0) return false;
+    if (S.pos && eligOf(p).indexOf(S.pos) < 0) return false;
+    if (S.team && String(p.team || "").toUpperCase() !== S.team) return false;
+    return true;
+  }
+  function filterRows(list) {
+    return filtersOn() ? (list || []).filter(passFilter) : (list || []);
+  }
+  // Every filter change is a pool change: the shown page resets and a solved
+  // lineup goes stale, because it was solved over a pool that no longer
+  // matches the screen.
+  function filterChanged() {
+    S.hitShown = HIT_PAGE;
+    S.lineup = null;
+    renderSection();
+    writeHash();
+  }
+  function filterVocab() {
+    var pos = {}, team = {};
+    ((S.data && S.data.players) || []).forEach(function (p) {
+      eligOf(p).forEach(function (e) { pos[e] = 1; });
+      if (p.team) team[p.team] = 1;
+    });
+    return { pos: Object.keys(pos).sort(), team: Object.keys(team).sort() };
+  }
+  function filterBarHTML() {
+    var v = filterVocab();
+    var out = '<input type="search" id="dfs-f-q" class="dfs-f-q" placeholder="Filter by name"' +
+      ' aria-label="Filter by player name" maxlength="40" value="' + esc(S.q) + '">';
+    if (v.pos.length > 1) {
+      out += v.pos.map(function (e) {
+        var on = e === S.pos;
+        return '<button type="button" class="dfs-f-pos' + (on ? " active" : "") +
+          '" data-dfsfpos="' + esc(e) + '" aria-pressed="' + (on ? "true" : "false") + '">' +
+          esc(e) + "</button>";
+      }).join("");
+    }
+    if (v.team.length > 1) {
+      out += '<select id="dfs-f-team" aria-label="Filter by team"><option value="">All teams</option>' +
+        v.team.map(function (t) {
+          return '<option value="' + esc(t) + '"' + (t === S.team ? " selected" : "") + ">" +
+            esc(t) + "</option>";
+        }).join("") + "</select>";
+    }
+    if (filtersOn()) {
+      out += '<button type="button" class="dfs-f-pos" id="dfs-f-clear">Clear</button>';
+    }
+    return '<div class="dfs-filterbar">' + out + "</div>";
+  }
+  function wireFilterBar(r) {
+    var q = r.querySelector ? r.querySelector("#dfs-f-q") : null;
+    if (q) q.addEventListener("input", function () {
+      S.q = String(q.value || "").slice(0, 40);
+      filterChanged();
+      var again = r.querySelector("#dfs-f-q");
+      if (again && again.focus) {
+        again.focus();
+        try { again.setSelectionRange(again.value.length, again.value.length); } catch (e) { /* fine */ }
+      }
+    });
+    r.querySelectorAll("[data-dfsfpos]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var v = b.getAttribute("data-dfsfpos");
+        S.pos = (S.pos === v) ? null : v;
+        filterChanged();
+      });
+    });
+    var t = r.querySelector ? r.querySelector("#dfs-f-team") : null;
+    if (t) t.addEventListener("change", function () {
+      S.team = t.value ? String(t.value).toUpperCase() : null;
+      filterChanged();
+    });
+    var c = r.querySelector ? r.querySelector("#dfs-f-clear") : null;
+    if (c) c.addEventListener("click", function () {
+      S.q = ""; S.pos = null; S.team = null;
+      filterChanged();
+    });
+  }
+
   // ---- honesty signals ------------------------------------------------------
   // dfs_export publishes four things about how much this payload can be
   // trusted, and the client rendered NONE of them: the page looked identical
@@ -633,12 +730,29 @@
   function renderBoard(side) {
     var cols = side === "pit" ? PIT_COLS : HIT_COLS;
     var st = S.sort[side === "pit" ? "pitchers" : "hitters"];
-    var list = playersOf(side);
-    if (!list.length) return '<div class="dfs-note">No projected ' +
-      (side === "pit" ? "starters" : "hitters") + " on this slate.</div>";
+    var list = filterRows(playersOf(side));
+    if (!list.length) {
+      return '<div class="dfs-note">' +
+        (filtersOn()
+          ? "No " + (side === "pit" ? "starter" : "hitter") + " matches the current filter."
+          : "No projected " + (side === "pit" ? "starters" : "hitters") + " on this slate.") +
+        "</div>";
+    }
     var sorted = sortPlayers(list, cols, st);
     var total = sorted.length;
     sorted = capRows(sorted);
+    var gateShown = sorted.length;
+    // The hitter board pages: first 100, then 100 more per click. The pitcher
+    // board is ~30 rows and never pages. A filter change resets the page (see
+    // filterChanged), so a narrowed board never opens mid-scroll.
+    var pager = "";
+    if (side === "hit" && sorted.length > S.hitShown) {
+      pager = '<div class="dfs-form"><button type="button" class="dfs-btn" id="dfs-more-hit">' +
+        "Show 100 more</button>" +
+        '<span class="dfs-page-note">Showing the top ' + S.hitShown + " of " + sorted.length +
+        " hitters under the current sort.</span></div>";
+      sorted = sorted.slice(0, S.hitShown);
+    }
     // Both boards render on the Slate tab, so every sort control names the
     // board it belongs to. Without that they share one sort state and a click
     // on a hitter column re-sorts the pitchers by a column they do not have.
@@ -668,7 +782,7 @@
     return methodNote(side) +
       '<div class="dfs-scroll mlbstats-scroll"><table class="dfs-table mlbstats-table"><thead><tr>' + head +
       "</tr></thead><tbody>" + body + "</tbody></table></div>" +
-      gateNote(total, sorted.length);
+      pager + gateNote(total, gateShown);
   }
   // THE PARK SENTENCE IS DERIVED, NOT TYPED (2026-08-07). It used to read
   // "park factor neutral (no MLB park table on the site yet)" as a string
@@ -719,6 +833,11 @@
         '<div class="dfs-warn">No salaries loaded yet, so there is nothing to value. Import them above ' +
         "and this board fills in.</div>";
     }
+    priced = filterRows(priced);
+    if (!priced.length) {
+      return renderSalaries() + filterBarHTML() +
+        '<div class="dfs-note">No priced player matches the current filter.</div>';
+    }
     priced.sort(function (a, b) { return (valueOf(b) || 0) - (valueOf(a) || 0); });
     var total = priced.length;
     var shown = capRows(priced);
@@ -731,7 +850,7 @@
         (p.side === "hit" && p.start_rate != null ? Math.round(p.start_rate * 100) + "%" : "-") +
         "</td></tr>";
     }).join("");
-    return renderSalaries() +
+    return renderSalaries() + filterBarHTML() +
       '<div class="dfs-note">Projected points per thousand dollars of salary, over every player you have a ' +
       "price for. Projections are ours; salaries are yours. A high value score on a low start rate is a bench " +
       "bat who happens to be cheap, not a play.</div>" +
@@ -857,6 +976,11 @@
       if (!sal || sal <= 0) return;
       if (ptsOf(p) <= 0) return;
       if (p.side === "hit" && (p.start_rate || 0) < S.minStart) return;
+      // The board filter narrows the pool too (2026-08-16): a reader who has
+      // filtered the slate down to one club is asking the solver about that
+      // club, and a lineup drawn from rows he deliberately hid would be a
+      // lineup the boards cannot explain. The panel says so out loud.
+      if (!passFilter(p)) return;
       out.push(p);
     });
     return out;
@@ -1076,7 +1200,12 @@
     var intro = '<div class="dfs-note">A greedy build plus a local-search improvement pass over the projections ' +
       "on this page and the salaries you imported. Projections are ours and are labelled on the board tabs; " +
       "salaries are yours. This is a solver, not a prediction: it maximizes projected points under your " +
-      "constraints, and it is only as good as the projection it is handed.</div>";
+      "constraints, and it is only as good as the projection it is handed. The pool honors the filter bar on " +
+      "the Slate and Value tabs: filtering shrinks the pool, and a filtered-out player cannot be drafted.</div>" +
+      (filtersOn()
+        ? '<div class="dfs-warn">The slate filter is active, so the solver only sees the filtered pool. ' +
+          'Clear the filter on the Slate tab to solve over the whole slate.</div>'
+        : "");
     if (!haveSal) {
       // The importer comes with the message. Telling a reader what is missing
       // and then making him hunt for the control that fixes it is half a
@@ -1198,7 +1327,10 @@
     else if (S.section === "stacks") html = renderStacks();
     else if (S.section === "optimizer") html = renderOptimizer();
     else {
-      html = renderSlate() + integrityPanel() +
+      // ONE filter bar above BOTH boards: the two tables share a slate, so a
+      // filter that only narrowed one of them would leave the page disagreeing
+      // with itself about who is on it.
+      html = renderSlate() + integrityPanel() + filterBarHTML() +
         '<h3 class="dfs-h">Probable starters</h3>' + renderBoard("pit") +
         '<h3 class="dfs-h">Hitters</h3>' + renderBoard("hit");
     }
@@ -1218,6 +1350,12 @@
   }
   function wireSection(r) {
     wireSelector(r);
+    wireFilterBar(r);
+    var more = r.querySelector ? r.querySelector("#dfs-more-hit") : null;
+    if (more) more.addEventListener("click", function () {
+      S.hitShown += HIT_PAGE;
+      renderSection();
+    });
     r.querySelectorAll("[data-dfssort]").forEach(function (h) {
       function fire() {
         var st = S.sort[h.getAttribute("data-dfsboard") || "pitchers"];
@@ -1352,6 +1490,10 @@
   // ---- hash router ----------------------------------------------------------
   //   #section=slate|value|stacks|optimizer
   //   #sys=<scoring id from the served catalog>
+  //   #q= #pos= #team=   the filter bar (2026-08-16); pos and team validate
+  //                      against the served pool (pos through eligOf, so the
+  //                      reader's own CSV positions count), q is a decoded
+  //                      substring
   // The canonical names are the shell nav's own attribute values, because
   // syncTabs compares the two directly. The pre-split names are accepted as
   // aliases so a link written against an earlier build still lands somewhere
@@ -1378,6 +1520,23 @@
     var sys = hashParam(h, "sys", "[A-Za-z0-9_]+");
     var known = ((S.data && S.data.scoring_catalog) || []).filter(function (c) { return c.id === sys; });
     if (sys && known.length) S.system = sys;
+    // The filter half, validated against the served pool. Read unconditionally
+    // so a hash WITHOUT the key clears the filter (Back button undoes one),
+    // and reset the hitter page whenever the filter state moves.
+    var vocab = filterVocab();
+    var q = hashParam(h, "q", "[^&]+");
+    var nq = q ? decodeQ(q).slice(0, 40) : "";
+    var pos = hashParam(h, "pos", "[A-Za-z0-9]{1,4}");
+    var npos = (pos && vocab.pos.indexOf(pos.toUpperCase()) >= 0) ? pos.toUpperCase() : null;
+    var team = hashParam(h, "team", "[A-Za-z]{2,3}");
+    var nteam = (team && vocab.team.indexOf(team.toUpperCase()) >= 0) ? team.toUpperCase() : null;
+    if (nq !== S.q || npos !== S.pos || nteam !== S.team) {
+      // A pool change through the address bar is still a pool change: the
+      // page resets and a solved lineup goes stale, same as filterChanged.
+      S.hitShown = HIT_PAGE;
+      S.lineup = null;
+    }
+    S.q = nq; S.pos = npos; S.team = nteam;
     S.player = hashParam(h, "player", "\\d+");
   }
   // The BOARD half, card left out, so onHashChange can tell a card open from a
@@ -1386,6 +1545,9 @@
     var parts = ["section=" + S.section];
     var def = ((S.data && S.data.scoring_catalog) || []).filter(function (c) { return c.default; })[0];
     if (S.system && S.system !== (def ? def.id : "dk")) parts.push("sys=" + S.system);
+    if (S.q) parts.push("q=" + encodeURIComponent(S.q));
+    if (S.pos) parts.push("pos=" + S.pos);
+    if (S.team) parts.push("team=" + S.team);
     return "#" + parts.join("&");
   }
   function cardHash(mlbam) { return hostLink(boardHash() + "&player=" + mlbam); }
@@ -1522,6 +1684,12 @@
     // The muted colour is re-declared here so the rename costs nothing.
     ".dfs-table td.mlbstats-col-rank{color:var(--text-tertiary)}",
     ".dfs-table th [role=button]{cursor:pointer}",
+    ".dfs-filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 2px}",
+    ".dfs-f-q{padding:6px 8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font:600 12px/1 var(--font-retro,monospace);min-width:170px}",
+    ".dfs-f-pos{font:600 11px/1 var(--font-retro,monospace);padding:6px 9px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer}",
+    ".dfs-f-pos.active{background:var(--accent-cyan);color:var(--text-on-accent);border-color:transparent}",
+    ".dfs-filterbar select{padding:6px 8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font:600 12px/1 var(--font-retro,monospace)}",
+    ".dfs-page-note{font-size:11.5px;color:var(--text-tertiary)}",
     ".dfs-elig{font:600 10px/1 var(--font-retro,monospace);color:var(--text-tertiary);border:1px solid var(--border);padding:1px 4px;margin-left:4px}",
     ".dfs-note{font-size:12.5px;color:var(--text-secondary);background:var(--bg-secondary);border:1px solid var(--border);padding:9px 12px;margin:8px 0}",
     ".dfs-warn{font-size:12.5px;color:var(--text-primary);background:var(--bg-secondary);border:1px solid var(--accent-red);padding:9px 12px;margin:8px 0}",

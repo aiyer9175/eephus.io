@@ -571,9 +571,9 @@ def test_each_client_fetches_its_own_sidecar(name):
     """ONE PAYLOAD PER CLIENT, and it is the client's own.
 
     The read goes through the coordinator's memoizing loader on the combined
-    page, so that Redraft and Dynasty share ONE download and parse of the 576KB
-    corpus instead of two, and falls back to a bare fetch when the client is
-    driven standalone. So the pin is on the call site and on the URL literals,
+    page, so that Redraft and Dynasty share ONE download and parse of the
+    ~585KB corpus (budgeted under 600KB below) instead of two, and falls back
+    to a bare fetch when the client is driven standalone. So the pin is on the call site and on the URL literals,
     not on the transport: what must never happen is a client naming a sidecar
     that is not its own, which is a second corpus starting.
 
@@ -1336,7 +1336,7 @@ def test_each_submodule_mounts_exactly_once(name, fantasy_shell):
 
 
 def test_shell_lazy_loads_the_clients_and_never_scripts_them_directly(fantasy_shell):
-    """data/fantasy.json is 576KB and data/dfs.json is 253KB. A shell with
+    """data/fantasy.json is ~585KB and data/dfs.json is ~380KB. A shell with
     three <script> tags would boot all three clients, and both payloads, for a
     reader who only ever looks at one board. The clients ride data-src stamps
     that the coordinator injects on first activation instead, and only the
@@ -1660,7 +1660,7 @@ def test_two_clients_in_one_document_do_not_fight_over_the_address_bar():
 
 
 def test_the_corpus_is_downloaded_once_for_both_clients():
-    """data/fantasy.json is 576KB. Redraft and Dynasty read the same file, and
+    """data/fantasy.json is ~585KB. Redraft and Dynasty read the same file, and
     before the merge they were two pages and two downloads. One document is one
     download, or the merge made the reader's life worse."""
     c = _hub("", modules=("redraft",))
@@ -1903,14 +1903,20 @@ def test_streamer_copy_does_not_point_at_a_bar_that_is_not_there():
 # 7. The fantasy player card
 # ===========================================================================
 def test_card_is_not_a_second_corpus():
-    """It fetches ONE thing, tonight's slate, and only when a reader opens a
-    card. The rest is a lookup into the payload the host already downloaded, so
-    there is no page-per-player build and no second copy of fantasy.json."""
+    """Its lazy fetches are tonight's slate and the two season-history boards
+    behind the trend sparkline (2026-08-16), each taken only when a reader
+    opens a card that needs it. The rest is a lookup into the payload the host
+    already downloaded, so there is no page-per-player build and no second copy
+    of fantasy.json. The history literals live HERE and nowhere else: the
+    one-literal-per-client pin above keeps them out of the board clients."""
     src = _src("card")
     urls = re.findall(r'DFS_URL\s*=\s*"([^"]+)"', src)
     assert urls == ["/data/dfs.json"], urls
+    assert sorted(set(re.findall(r'"(/data/[^"]+)"', _code("card")))) == [
+        "/data/dfs.json", "/data/hitter_history.json", "/data/starter_history.json"]
+    # ONE fetch call site (the shared lazy loader), taking the url it is handed.
     fetches = [f.strip() for f in re.findall(r"fetch\(\s*([^,)]+)", src)]
-    assert fetches == ["DFS_URL"], fetches
+    assert fetches == ["url"], fetches
     assert "/data/fantasy.json" not in _code("card")
 
 
@@ -2128,6 +2134,254 @@ def test_the_card_module_ships_before_the_clients_that_bind_to_it():
     html = path.read_text(encoding="utf-8")
     assert re.search(r"/assets/fantasy-card\.js\?v=", html)
     assert html.index("fantasy-card.js") < html.index("fantasy-hub.js")
+
+
+# ===========================================================================
+# 9. Filters, pagination and the filter half of the hash grammar (2026-08-16)
+# ===========================================================================
+# The filter bar is a VIEW: name substring, served-elig position, served team.
+# It must narrow what renders without re-scoring anything, ride the same
+# validated hash grammar the boards already use, and (on DFS) govern the
+# optimizer pool out loud. Redraft is driven through the hash (the parity
+# prelude's querySelector returns null, so there is nothing to type into);
+# DFS is driven through the shipped controls.
+
+def _board_names(html: str) -> list[str]:
+    return re.findall(r'class="mlb-name">.*?>([^<]+)</a>', html)
+
+
+def test_redraft_ros_boards_render_the_filter_bar():
+    c = _redraft_ctx()
+    html = c.eval('__go("#section=ros_hitter")')
+    assert 'id="rd-f-q"' in html and 'id="rd-f-team"' in html
+    assert 'data-rdfpos="OF"' in html and 'data-rdfpos="UTIL"' in html
+    # The bar sits ABOVE the tape sort bar.
+    assert html.index("rd-filterbar") < html.index("ff-sortbar")
+    # The SP board is all "P": a one-chip position filter is a dead control,
+    # so the chips are absent while the search and team select stay.
+    sp = c.eval('__go("#section=ros_sp")')
+    assert 'id="rd-f-q"' in sp and "data-rdfpos" not in sp
+    assert 'id="rd-f-team"' in sp
+
+
+def test_redraft_name_filter_is_a_case_insensitive_substring():
+    c = _redraft_ctx()
+    html = c.eval('__go("#section=ros_hitter&q=JUDGE")')
+    assert _board_names(html) == ["Aaron Judge"], _board_names(html)
+    assert "1 of 3 rows" in html
+
+
+def test_redraft_pos_chip_and_team_filter_narrow_the_board():
+    c = _redraft_ctx()
+    html = c.eval('__go("#section=ros_hitter&pos=OF")')
+    assert _board_names(html) == ["Aaron Judge", "Juan Soto"], _board_names(html)
+    # A fresh hash WITHOUT pos= clears it: the Back button undoes a filter.
+    html = c.eval('__go("#section=ros_hitter&team=NYY")')
+    assert _board_names(html) == ["Aaron Judge"], _board_names(html)
+    html = c.eval('__go("#section=ros_hitter")')
+    assert len(_board_names(html)) == 3
+
+
+def test_redraft_filter_refuses_values_the_pool_does_not_carry():
+    """pos and team validate against the SERVED pool, the same rule #sys=
+    follows against the served scoring catalog: a stale hash degrades to no
+    filter rather than to an empty board."""
+    c = _redraft_ctx()
+    html = c.eval('__go("#section=ros_hitter&pos=ZZ&team=QQ")')
+    assert len(_board_names(html)) == 3, _board_names(html)
+
+
+def test_redraft_filter_does_not_rescore_the_roto_pool():
+    """THE FILTER IS A VIEW. Roto values are pooled z-scores, so the pool
+    scores first and the filter narrows what renders: a filtered board must
+    show the SAME value for a player as the unfiltered one."""
+    c = _redraft_ctx()
+
+    def score_of(html, name):
+        card = [x for x in html.split('<div class="mlb-card') if name in x][0]
+        return SCORE_RE.search(card).group(1)
+
+    base = score_of(c.eval('__go("#section=ros_hitter&sys=5x5")'), "Aaron Judge")
+    filt = score_of(c.eval('__go("#section=ros_hitter&sys=5x5&q=judge")'), "Aaron Judge")
+    assert filt == base, (filt, base)
+
+
+def test_redraft_buysell_takes_a_name_search():
+    c = _redraft_ctx()
+    html = c.eval('__go("#section=buysell&q=judge")')
+    assert "Aaron Judge" in html and "Shohei Ohtani" not in html
+    # The emptied side says the filter did it, not the build.
+    assert "No buy-low candidate matches the name filter." in html
+
+
+def test_redraft_closers_take_a_name_search():
+    payload = json.loads(PARITY_PAYLOAD)
+    payload["players"].append(
+        {"mlbam": 621111, "name": "Relief Guy", "side": "pit", "pos": "RP", "team": "BOS",
+         "elig": ["P"], "fpts_fgp": 60.0,
+         "skill": {"rem_plus": 133, "gmli": 1.8, "saves": 21, "luck": -0.02},
+         "ros": {"ip": 22, "k": 40, "era": 2.10, "whip": 0.95, "sv": 12}})
+    payload["sections"]["closer_depth"] = {"BOS": [621111]}
+    c = MiniRacer()
+    c.eval(PARITY_PRELUDE.replace(PARITY_PAYLOAD, json.dumps(payload)))
+    c.eval((ASSETS / "redraft.js").read_text(encoding="utf-8"))
+    html = c.eval('__go("#section=closers&q=relief")')
+    assert "Relief Guy" in html and "rd-team-card" in html
+    html = c.eval('__go("#section=closers&q=zzz")')
+    assert "No bullpen matches the name filter." in html
+
+
+def test_filter_state_rides_the_validated_hash_grammar():
+    """Round trip through the coordinator: the filter keys land in the module,
+    narrow the board, and survive into the normalized address bar. An invalid
+    value is refused AND normalized out of the URL, exactly as an invalid
+    #section= is."""
+    c = _hub("#m=redraft&section=ros_hitter&q=judge&team=NYY", modules=("redraft",))
+    h = c.eval("location.hash")
+    assert h.startswith("#m=redraft&section=ros_hitter"), h
+    assert "q=judge" in h and "team=NYY" in h, h
+    html = c.eval("__root('redraft')")
+    assert "Aaron Judge" in html and "Shohei Ohtani" not in html
+    c2 = _hub("#m=redraft&section=ros_hitter&team=QQ", modules=("redraft",))
+    assert "team=" not in c2.eval("location.hash"), c2.eval("location.hash")
+
+
+def test_dfs_filter_bar_narrows_both_boards_and_the_value_board():
+    c = _dfs_ctx()
+    html = c.eval('__go("#section=slate&q=catcher")')
+    assert 'id="dfs-f-q"' in html
+    assert "Star Catcher" in html and "Big Bat" not in html
+    # One bar governs BOTH boards: no arm matches "catcher" and the pitcher
+    # board says the filter did it.
+    assert "No starter matches the current filter." in html
+    html = c.eval('__go("#section=slate&pos=C")')
+    assert "Star Catcher" in html and "Cheap Catcher" in html and "Big Bat" not in html
+    html = c.eval('__go("#section=slate&team=EEE")')
+    assert "Big Bat" in html and "Star Catcher" not in html
+    priced = c.eval('__go("#section=value&q=arm")')
+    assert "Ace Arm" in priced and "Star Catcher" not in priced
+
+
+def test_dfs_optimizer_pool_honors_the_active_filters():
+    """Owner-approved semantics: the solver sees the filtered pool, and the
+    panel says so rather than quietly solving over rows the reader hid."""
+    c = _dfs_ctx()
+    html = c.eval('__go("#section=optimizer")')
+    assert "filtering shrinks the pool" in html
+    c.eval('__go("#section=optimizer&team=AAA")')
+    html = c.eval('__click("#dfs-run")')
+    assert "filter is active" in html
+    # One club is one arm: the C and OF slots cannot fill, and the solver says
+    # so instead of drafting a player the boards are hiding.
+    assert "No lineup satisfies" in html
+    # Clearing the filter restores the whole pool and the known optimum.
+    c.eval('__go("#section=optimizer")')
+    html = c.eval('__click("#dfs-run")')
+    pts = float(re.search(r"<b>([\d.]+)</b> projected points", html).group(1))
+    assert pts == 26.0, pts
+
+
+def _pager_payload(n: int = 130) -> str:
+    """A slate with n hitters so the pagination contract is exercised over a
+    board that actually pages."""
+    d = json.loads(_opt_payload())
+    teams = ["AAA", "BBB", "CCC"]
+    d["players"] = [p for p in d["players"] if p["side"] == "pit"] + [
+        {"mlbam": 1000 + i, "name": "Bat %03d" % i, "side": "hit", "elig": ["OF"],
+         "team": teams[i % 3], "opp": "ZZZ", "is_home": True, "game_pk": 1,
+         "start_rate": 1.0, "line": {}, "pts": {"dk": 500.0 - i, "fd": 500.0 - i}}
+        for i in range(n)]
+    d["n_players"] = len(d["players"])
+    return json.dumps(d)
+
+
+def test_dfs_hitter_board_pages_at_100_and_extends():
+    c = _dfs_boot(_pager_payload(130))
+    html = c.eval('__go("#section=slate")')
+    assert html.count("Bat ") == 100, html.count("Bat ")
+    assert 'id="dfs-more-hit"' in html
+    assert "Showing the top 100 of 130" in html
+    html = c.eval('__click("#dfs-more-hit")')
+    assert html.count("Bat ") == 130, html.count("Bat ")
+    assert 'id="dfs-more-hit"' not in html
+
+
+def test_dfs_filters_reset_the_pagination():
+    c = _dfs_boot(_pager_payload(130))
+    c.eval('__go("#section=slate")')
+    c.eval('__click("#dfs-more-hit")')                    # extended to all 130
+    c.eval("__setValue('#dfs-f-q', 'Bat')")
+    html = c.eval("__fireEvent('#dfs-f-q', 'input')")     # filter change resets the page
+    assert "Showing the top 100 of 130" in html, html[:400]
+    assert html.count("Bat ") == 100
+
+
+def test_dynasty_board_filters_on_name_org_eta_and_tier():
+    c = _dyn_ctx()
+    assert _board_names(c.eval('__go("#section=dynasty&q=middle")')) == ["Middle Kid"]
+    assert _board_names(c.eval('__go("#section=dynasty&team=NYM")')) == ["Depth Kid"]
+    assert _board_names(c.eval('__go("#section=dynasty&eta=2027")')) == ["First Kid"]
+    assert _board_names(c.eval('__go("#section=dynasty&tier=t1")')) == ["Middle Kid"]
+    # Values the served board does not carry are refused, not rendered empty.
+    assert len(_board_names(c.eval('__go("#section=dynasty&team=ZZ&eta=1999&tier=t9")'))) == 3
+    # The rank diamond keeps the MODEL rank through a filter: Depth Kid is
+    # rank 240 whether or not he is the only card on screen.
+    html = c.eval('__go("#section=dynasty&q=depth")')
+    ranks = re.findall(r'class="ff-rank-i">(\d+)</span>', html)
+    assert ranks == ["240"], ranks
+
+
+def test_dynasty_keeper_and_callups_take_a_name_search():
+    c = _dyn_ctx()
+    html = c.eval('__go("#section=keeper&q=depth")')
+    assert "Depth Kid" in html and "First Kid" not in html
+    html = c.eval('__go("#section=callups&q=zzz")')
+    assert "No call-up candidate matches the name filter." in html
+
+
+# ---------------------------------------------------------------------------
+# The team_next7 bake and the payload budget (2026-08-16)
+# ---------------------------------------------------------------------------
+def test_fantasy_team_next7_bakes_shape_and_context():
+    """{org: [{d, opp, home, opp_off, opp_bp}]}, keyed by the CLUB, capped at 7
+    rows, opponent context joined from _teams_context and rounded to ints. An
+    opponent the context cannot resolve carries None, never a fabricated 100:
+    missing is not average, the same rule the DFS matchup mark enforces."""
+    import fantasy_export as fe
+    sched = {"BOS": [{"d": "2026-08-17", "opp": "NYY", "home": True},
+                     {"d": "2026-08-18", "opp": "NYY", "home": True},
+                     {"d": "2026-08-19", "opp": "ZZZ", "home": False}] +
+                    [{"d": "2026-08-%d" % (20 + i), "opp": "TBR", "home": False}
+                     for i in range(6)]}
+    ctx = {"NYY": {"offense_plus": 104.4, "bullpen_plus": 98.6},
+           "TBR": {"offense_plus": 96.0, "bullpen_plus": 101.2}}
+    out = fe._team_next7(sched, ctx)
+    assert set(out) == {"BOS"}, out.keys()
+    assert out["BOS"][0] == {"d": "2026-08-17", "opp": "NYY", "home": True,
+                             "opp_off": 104, "opp_bp": 99}
+    assert len(out["BOS"]) == 7                       # a 9-game window still caps at 7
+    assert out["BOS"][2]["opp_off"] is None and out["BOS"][2]["opp_bp"] is None
+    assert fe._team_next7({}, ctx) == {} and fe._team_next7(None, ctx) == {}
+    # And build_sections actually wires it, off the schedule's team_sched7 leg.
+    src = (ROOT / "fantasy_export.py").read_text(encoding="utf-8")
+    assert 'sections["team_next7"]' in src and "team_sched7" in src
+
+
+def test_fantasy_payload_stays_inside_its_budget():
+    """The corpus is budgeted at 600KB (561KB before team_next7; the new
+    section plus its schedule leg measure ~24KB at the 30-org worst case). The
+    live file is asserted when it exists; the fixture bound always runs, so a
+    fresh checkout still pins the new section's size."""
+    import fantasy_export as fe
+    live = ROOT / "data" / "fantasy.json"
+    if live.exists():
+        assert live.stat().st_size < 600 * 1024, live.stat().st_size
+    full = {("ORG%02d" % i): [{"d": "2026-08-%02d" % (17 + j), "opp": "OPP",
+                               "home": j % 2 == 0} for j in range(7)]
+            for i in range(30)}
+    ctx = {"OPP": {"offense_plus": 104.4, "bullpen_plus": 98.2}}
+    blob = json.dumps(fe._team_next7(full, ctx), separators=(",", ":"))
+    assert len(blob) < 20 * 1024, len(blob)
 
 
 @pytest.mark.parametrize("name", ["dynasty", "redraft", "dfs"])

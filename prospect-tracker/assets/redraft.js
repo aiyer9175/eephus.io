@@ -30,7 +30,13 @@
   // state; it exists so writeHash can tell "the reader picked a day" from "the
   // day the board opened on" and keep the default out of the URL.
   var S = { data: null, system: "fgp", section: "streamers", byId: {},
-            streamerDay: null, streamerDay0: null, player: null };
+            streamerDay: null, streamerDay0: null, player: null,
+            q: "", pos: null, team: null };
+  // The SERVED filter vocabularies, built in onData off the payload itself so
+  // a #pos= or #team= value the pool does not carry is refused the same way an
+  // unknown #sys= is refused against the served scoring catalog.
+  var FILTER_POS = {};
+  var FILTER_TEAMS = {};
   var SORT = {
     ros_hitter: { key: "score", asc: false },
     ros_sp: { key: "score", asc: false },
@@ -83,7 +89,8 @@
   // On /fantasy/ this file is ONE OF THREE clients in one document, so it owns
   // neither the address bar nor the corpus. assets/fantasy-hub.js hands it its
   // own half of the hash (the "#m=redraft" prefix is stripped on read and put
-  // back on write), one memoized load of the 576KB data/fantasy.json that
+  // back on write), one memoized load of the ~585KB data/fantasy.json (budgeted
+  // under 600KB by test_fantasy_split) that
   // assets/dynasty.js shares, and the module's activation. Three clients each
   // writing location.hash from their own state is three writers over one
   // string, which is the collision the namespace exists to prevent.
@@ -163,6 +170,102 @@
   }
   function teamLogo(team) {
     return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && team) ? EEPHUS_HUB.teamLogo(team) : "";
+  }
+
+  // ---- filter bar (2026-08-16) ----------------------------------------------
+  // A VIEW over the board, never a re-score. Name is a case-insensitive
+  // substring, position matches the served `elig` list (which was display-only
+  // until today), team matches the served team code. Roto values are pooled
+  // z-scores, so the pool is scored FIRST and the filter narrows what renders:
+  // filtering the pool itself would quietly re-value every remaining row.
+  //
+  // Duplicated per client rather than shared, the same trade the sort and card
+  // machinery already made: a shared asset would be a fourth script tag on the
+  // shell, and these three files already carry their own copies of everything
+  // smaller than the scoring port.
+  function normQ(s) { return String(s == null ? "" : s).toLowerCase(); }
+  function filtersOn() { return !!(S.q || S.pos || S.team); }
+  function passFilter(p) {
+    if (!p) return false;
+    if (S.q && normQ(p.name).indexOf(normQ(S.q)) < 0) return false;
+    if (S.pos && (p.elig || []).indexOf(S.pos) < 0) return false;
+    if (S.team && String(p.team || "").toUpperCase() !== S.team) return false;
+    return true;
+  }
+  // recs null means a name-search-only bar (Buy/Sell, Closers). The position
+  // chips only render when the board carries at least two positions: the SP
+  // and RP boards are all "P", and a one-chip filter is a dead control.
+  function filterBar(recs, opts) {
+    opts = opts || {};
+    var out = '<input type="search" id="rd-f-q" class="rd-f-q" placeholder="Filter by name"' +
+      ' aria-label="Filter by player name" maxlength="40" value="' + esc(S.q) + '">';
+    if (recs) {
+      var pos = {}, team = {};
+      recs.forEach(function (p) {
+        if (!p) return;
+        (p.elig || []).forEach(function (e) { pos[e] = 1; });
+        if (p.team) team[p.team] = 1;
+      });
+      var posList = Object.keys(pos).sort();
+      if (posList.length > 1) {
+        out += posList.map(function (e) {
+          var on = e === S.pos;
+          return '<button type="button" class="rd-f-pos' + (on ? " active" : "") +
+            '" data-rdfpos="' + esc(e) + '" aria-pressed="' + (on ? "true" : "false") + '">' +
+            esc(e) + "</button>";
+        }).join("");
+      }
+      var teamList = Object.keys(team).sort();
+      if (teamList.length > 1) {
+        out += '<select id="rd-f-team" aria-label="Filter by team"><option value="">All teams</option>' +
+          teamList.map(function (t) {
+            return '<option value="' + esc(t) + '"' + (t === S.team ? " selected" : "") + ">" +
+              esc(t) + "</option>";
+          }).join("") + "</select>";
+      }
+    }
+    if (filtersOn()) {
+      out += '<button type="button" class="rd-f-pos" id="rd-f-clear">Clear</button>';
+      if (opts.total != null) {
+        out += '<span class="rd-f-count">' + opts.shown + " of " + opts.total + " rows</span>";
+      }
+    }
+    return '<div class="rd-filterbar">' + out + "</div>";
+  }
+  function wireFilterBar(r) {
+    var q = r.querySelector ? r.querySelector("#rd-f-q") : null;
+    if (q) q.addEventListener("input", function () {
+      S.q = String(q.value || "").slice(0, 40);
+      renderSection();
+      writeHash();
+      // The re-render replaced the input, so hand focus back with the caret
+      // where the reader left it.
+      var again = r.querySelector("#rd-f-q");
+      if (again && again.focus) {
+        again.focus();
+        try { again.setSelectionRange(again.value.length, again.value.length); } catch (e) { /* number inputs */ }
+      }
+    });
+    r.querySelectorAll("[data-rdfpos]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var v = b.getAttribute("data-rdfpos");
+        S.pos = (S.pos === v) ? null : v;
+        renderSection();
+        writeHash();
+      });
+    });
+    var t = r.querySelector ? r.querySelector("#rd-f-team") : null;
+    if (t) t.addEventListener("change", function () {
+      S.team = t.value ? String(t.value).toUpperCase() : null;
+      renderSection();
+      writeHash();
+    });
+    var c = r.querySelector ? r.querySelector("#rd-f-clear") : null;
+    if (c) c.addEventListener("click", function () {
+      S.q = ""; S.pos = null; S.team = null;
+      renderSection();
+      writeHash();
+    });
   }
 
   // ---- scoring (mirrors fantasy_scoring.py; recomputed client side) ---------
@@ -409,17 +512,31 @@
     '<div class="rd-note">FanGraphs Points and SABR Points share one hitter table. The two formats ' +
     "differ only in how pitchers are scored, which is how Ottoneu runs them, so switching between " +
     "those two leaves this board exactly where it is. The two category formats do re-rank it.</div>";
+  // The pool scores FIRST, the filter narrows what renders (see the filter-bar
+  // note: filtering before rotoValue would re-value every remaining row).
+  function filteredScored(ids, side) {
+    var all = scored(ids, side);
+    return { all: all, rows: filtersOn() ? all.filter(function (o) { return passFilter(o.p); }) : all };
+  }
+  function boardEmpty(fallback) {
+    return filtersOn() ? "No rows match the current filter." : fallback;
+  }
   function boardHitter(ids) {
-    return HIT_FORMAT_NOTE + renderCards(scored(ids, "hit"), HIT_COLS, SORT.ros_hitter, {
-      hrefOf: function (o) { return hashFor(o.p.mlbam); },
-      empty: "Rest-of-season hitter projections populate on the nightly build."
-    });
+    var f = filteredScored(ids, "hit");
+    return HIT_FORMAT_NOTE +
+      filterBar(f.all.map(function (o) { return o.p; }), { shown: f.rows.length, total: f.all.length }) +
+      renderCards(f.rows, HIT_COLS, SORT.ros_hitter, {
+        hrefOf: function (o) { return hashFor(o.p.mlbam); },
+        empty: boardEmpty("Rest-of-season hitter projections populate on the nightly build.")
+      });
   }
   function boardPitcher(ids, isRp) {
-    return renderCards(scored(ids, "pit"), pitCols(isRp), isRp ? SORT.ros_rp : SORT.ros_sp, {
-      hrefOf: function (o) { return hashFor(o.p.mlbam); },
-      empty: "Rest-of-season pitcher projections populate on the nightly build."
-    });
+    var f = filteredScored(ids, "pit");
+    return filterBar(f.all.map(function (o) { return o.p; }), { shown: f.rows.length, total: f.all.length }) +
+      renderCards(f.rows, pitCols(isRp), isRp ? SORT.ros_rp : SORT.ros_sp, {
+        hrefOf: function (o) { return hashFor(o.p.mlbam); },
+        empty: boardEmpty("Rest-of-season pitcher projections populate on the nightly build.")
+      });
   }
   function streamerDayLabel(d) {
     // "2026-07-23" -> "Thu 7/23". Parse the parts locally: a bare ISO string
@@ -503,7 +620,16 @@
   // break the left-right comparison, which is the entire point of the surface.
   function renderBuySell() {
     function col(ids, label, cls, kind) {
-      var rows = (ids || []).slice(0, 30).map(function (e) {
+      // Name search narrows BEFORE the slice, so a filtered column shows the
+      // matches rather than whatever survived the top 30.
+      var list = (ids || []);
+      if (S.q) {
+        list = list.filter(function (e) {
+          var p = recOf(e, "hit");
+          return p && normQ(p.name).indexOf(normQ(S.q)) >= 0;
+        });
+      }
+      var rows = list.slice(0, 30).map(function (e) {
         var p = recOf(e, "hit"); if (!p) return "";
         var s = p.skill || {}, isHit = p.side === "hit", gap = isHit ? s.luck_gap : s.luck;
         // Mechanics-trend chip: display context only, baked server side from
@@ -541,8 +667,10 @@
       // no id in it resolves to a player record, which reads the same way.
       if (!rows) {
         return '<div class="rd-half"><h3>' + label + "</h3>" +
-          '<div class="rd-note">No ' + esc(kind) + " candidates in this build. The list comes " +
-          "from the expected-stat gaps on the nightly run.</div></div>";
+          '<div class="rd-note">' +
+          (S.q ? "No " + esc(kind) + " candidate matches the name filter."
+               : "No " + esc(kind) + " candidates in this build. The list comes " +
+                 "from the expected-stat gaps on the nightly run.") + "</div></div>";
       }
       return '<div class="rd-half"><h3>' + label + '</h3>' +
         '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table mlbstats-table">' +
@@ -554,7 +682,8 @@
         "</tr></thead><tbody>" + rows + "</tbody></table></div></div>";
     }
     var sec = S.data.sections || {};
-    return '<div class="rd-note">Regression candidates from our expected-stat gaps (hitters: ' +
+    return filterBar(null) +
+      '<div class="rd-note">Regression candidates from our expected-stat gaps (hitters: ' +
       gl("xHEM+", "xhem_plus") + " against " + gl("HEM+", "hem_plus") + ", in plus-stat points; " +
       "pitchers: " + gl("xwOBA", "xwoba") + " against actual " + gl("wOBA", "woba") + ", in wOBA " +
       "points). The two scales sit about 500x apart, so they get a column each rather than one " +
@@ -572,6 +701,23 @@
     if (!teams.length) {
       return '<div class="rd-note">The closer grid populates from the bullpen leaderboard on the nightly build.</div>';
     }
+    // Name search keeps the WHOLE team card when the club code or any arm on
+    // it matches: a depth chart with its middle rung filtered out would
+    // misrepresent the pecking order, which is the one thing this grid is.
+    if (S.q) {
+      var q = normQ(S.q);
+      teams = teams.filter(function (tm) {
+        if (normQ(tm).indexOf(q) >= 0) return true;
+        return (depth[tm] || []).some(function (m) {
+          var p = rec(m, "pit");
+          return p && normQ(p.name).indexOf(q) >= 0;
+        });
+      });
+      if (!teams.length) {
+        return filterBar(null) +
+          '<div class="rd-note">No bullpen matches the name filter.</div>';
+      }
+    }
     var cards = teams.map(function (tm) {
       var lst = (depth[tm] || []).map(function (m, i) {
         var p = rec(m, "pit"); if (!p) return "";   // bullpen depth is pitchers
@@ -587,7 +733,8 @@
       return '<div class="rd-team-card"><div class="rd-team-hd">' + teamLogo(tm) + " " + esc(tm) + "</div>" +
         (lst || '<div class="rd-relief rd-dim">No projectable arms in this build.</div>') + "</div>";
     }).join("");
-    return '<div class="rd-note">Bullpen pecking order by average leverage (gmLI). The top arm is the likely ' +
+    return filterBar(null) +
+      '<div class="rd-note">Bullpen pecking order by average leverage (gmLI). The top arm is the likely ' +
       "closer, the rest are save handcuffs. Grab the next in line before the save chance opens.</div>" +
       '<div class="rd-grid">' + cards + "</div>";
   }
@@ -664,7 +811,10 @@
     var cols = colsFor(S.section);
     if (!cols) return null;
     var side = S.section === "ros_hitter" ? "hit" : "pit";
-    var rows = sortRowsBy(scored(sec[S.section] || [], side), cols, SORT[S.section]);
+    // The exported board follows the SECTION ON SCREEN, and since 2026-08-16
+    // the screen can be filtered, so the graphic honors the same filter rather
+    // than shipping rows the reader deliberately hid.
+    var rows = sortRowsBy(filteredScored(sec[S.section] || [], side).rows, cols, SORT[S.section]);
     var pick = cols.filter(function (c) {
       return c.key !== "rank" && c.key !== "name";
     }).slice(0, 4);
@@ -716,6 +866,7 @@
         writeHash();
       });
     });
+    wireFilterBar(r);
     // Sort headers plus the tape sort bar. Click AND Enter/Space, with focus
     // restored to the same control after the re-render replaces it. A repeat
     // click flips direction; a fresh column opens in ITS preferred direction,
@@ -812,6 +963,8 @@
   //   #sys=<scoring id>    any id the SERVED scoring_catalog carries
   //   #day=YYYY-MM-DD      the Daily Streamers slate
   //   #hsort= #spsort= #rpsort=   <column>.<a|d>, one per card board
+  //   #q= #pos= #team=     the filter bar (2026-08-16); pos and team validate
+  //                        against the SERVED pool, q is a decoded substring
   //   #player=<mlbam>      the fantasy player card, over whatever board is under it
   // section is always written; everything else only when it is off its default,
   // which keeps a shared URL short.
@@ -860,7 +1013,22 @@
     readSort(h, "hsort", "ros_hitter");
     readSort(h, "spsort", "ros_sp");
     readSort(h, "rpsort", "ros_rp");
+    // The filter half. q is percent-decoded and length-capped; pos and team
+    // are refused unless the SERVED pool carries them, same rule as sys above.
+    // Reading unconditionally (no `if`) is what makes a hash WITHOUT the key
+    // clear the filter, so the Back button undoes a filter like anything else.
+    var q = hashParam(h, "q", "[^&]+");
+    S.q = q ? decodeQ(q).slice(0, 40) : "";
+    var pos = hashParam(h, "pos", "[A-Za-z0-9]{1,4}");
+    S.pos = (pos && Object.prototype.hasOwnProperty.call(FILTER_POS, pos.toUpperCase()))
+      ? pos.toUpperCase() : null;
+    var team = hashParam(h, "team", "[A-Za-z]{2,3}");
+    S.team = (team && Object.prototype.hasOwnProperty.call(FILTER_TEAMS, team.toUpperCase()))
+      ? team.toUpperCase() : null;
     S.player = hashParam(h, "player", "\\d+");
+  }
+  function decodeQ(s) {
+    try { return decodeURIComponent(s); } catch (e) { return ""; }
   }
   function pushSort(parts, key, board) {
     var st = SORT[board], d = SORT_DEFAULTS[board];
@@ -883,6 +1051,9 @@
     pushSort(parts, "hsort", "ros_hitter");
     pushSort(parts, "spsort", "ros_sp");
     pushSort(parts, "rpsort", "ros_rp");
+    if (S.q) parts.push("q=" + encodeURIComponent(S.q));
+    if (S.pos) parts.push("pos=" + S.pos);
+    if (S.team) parts.push("team=" + S.team);
     return "#" + parts.join("&");
   }
   // The module's OWN hash, which is what LAST_HASH holds and what the host
@@ -973,7 +1144,13 @@
     if (!d || !d.players) { notReady(); return; }
     S.data = d;
     S.byId = {};
-    d.players.forEach(function (p) { S.byId[p.mlbam + "|" + p.side] = p; });
+    FILTER_POS = {};
+    FILTER_TEAMS = {};
+    d.players.forEach(function (p) {
+      S.byId[p.mlbam + "|" + p.side] = p;
+      (p.elig || []).forEach(function (e) { FILTER_POS[String(e).toUpperCase()] = 1; });
+      if (p.team) FILTER_TEAMS[String(p.team).toUpperCase()] = 1;
+    });
     var def = (d.scoring_catalog || []).filter(function (c) { return c.default; })[0];
     S.system = def ? def.id : "fgp";
     var b = bannerEl();
@@ -1050,6 +1227,12 @@
     // rule is written unqualified rather than as `td.rd-sc`.
     ".rd-table .rd-sc{font-weight:700}",
     ".rd-pos{color:var(--accent-green)}.rd-neg{color:var(--accent-red)}",
+    ".rd-filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 2px}",
+    ".rd-f-q{padding:6px 8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font:600 12px/1 var(--font-retro,monospace);min-width:170px}",
+    ".rd-f-pos{font:600 11px/1 var(--font-retro,monospace);padding:6px 9px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer}",
+    ".rd-f-pos.active{background:var(--accent-cyan);color:var(--text-on-accent);border-color:transparent}",
+    ".rd-filterbar select{padding:6px 8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font:600 12px/1 var(--font-retro,monospace)}",
+    ".rd-f-count{font-size:11px;color:var(--text-tertiary)}",
     ".rd-daypills{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}",
     ".rd-daypill{font:600 12px/1 var(--font-retro,monospace);padding:6px 11px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer}",
     ".rd-daypill.active{background:var(--accent-cyan);color:var(--text-on-accent);border-color:transparent}",

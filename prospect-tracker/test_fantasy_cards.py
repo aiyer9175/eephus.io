@@ -560,3 +560,169 @@ def test_card_activation_predicate_lets_the_card_through_and_blocks_inner_contro
     assert got == [True, False, False, True], (
         f"activation predicate wrong: {got}. Expected the card body and a bare target "
         "to activate, and a real inner control (link or sort chip) to be left alone.")
+
+
+# ===========================================================================
+# The shared player card's depth blocks (assets/fantasy-card.js, 2026-08-16):
+# the next-7 schedule strip baked into sections.team_next7 and the lazy
+# season-history sparkline. Driven directly against the card module with a
+# minimal host, the same stub dialect as the harness above.
+# ===========================================================================
+
+FCARD_JS = (ROOT / "assets" / "fantasy-card.js").read_text(encoding="utf-8")
+
+FC_CORPUS = {
+    "players": [
+        {"mlbam": 660271, "name": "Shohei Ohtani", "side": "hit", "pos": "DH", "team": "LAD",
+         "elig": ["UTIL"], "skill": {"hem_plus": 168}, "ros": {"pa": 260, "hr": 28}},
+        {"mlbam": 694973, "name": "Paul Skenes", "side": "pit", "pos": "SP", "team": "PIT",
+         "elig": ["P"], "skill": {"sem_plus": 146}, "ros": {"role": "SP", "ip": 62, "k": 78}},
+    ],
+    "sections": {
+        "team_next7": {
+            "LAD": [
+                {"d": "2026-08-17", "opp": "SD", "home": True, "opp_off": 108, "opp_bp": 99},
+                {"d": "2026-08-18", "opp": "SD", "home": True, "opp_off": 108, "opp_bp": 99},
+                {"d": "2026-08-19", "opp": "COL", "home": False, "opp_off": 92, "opp_bp": 104},
+                {"d": "2026-08-20", "opp": "COL", "home": False, "opp_off": 92, "opp_bp": 104},
+                {"d": "2026-08-21", "opp": "SF", "home": False, "opp_off": 100, "opp_bp": 100},
+                {"d": "2026-08-22", "opp": "SF", "home": False, "opp_off": None, "opp_bp": None},
+                {"d": "2026-08-23", "opp": "SF", "home": False, "opp_off": 100, "opp_bp": 100},
+            ],
+        },
+    },
+}
+
+HIT_HIST = {"generated_at": "2026-07-07", "seasons": [2023, 2024, 2025],
+            "history": {"2023": {"hitters": [{"mlbam": 660271, "hem_plus": 142}]},
+                        "2024": {"hitters": [{"mlbam": 660271, "hem_plus": 155}]},
+                        "2025": {"hitters": [{"mlbam": 660271, "hem_plus": 149}]}}}
+PIT_HIST = {"generated_at": "2026-07-07", "seasons": [2024, 2025],
+            "history": {"2024": {"starters": [{"mlbam": 694973, "sem_plus": 138}]},
+                        "2025": {"starters": [{"mlbam": 694973, "sem_plus": 152}]}}}
+
+FCARD_PRELUDE = r"""
+var __html = {};
+var __fetches = [];
+function __el(id) {
+  return new Proxy(function () { return __el(id); }, {
+    get: function (t, k) {
+      if (k === 'innerHTML') return __html[id] || '';
+      if (k === 'classList') return {add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}};
+      if (k === 'querySelectorAll') return function () { return []; };
+      if (k === 'querySelector') return function () { return null; };
+      if (k === 'getAttribute') return function () { return null; };
+      if (k === 'setAttribute' || k === 'removeAttribute' || k === 'addEventListener'
+          || k === 'removeEventListener' || k === 'focus' || k === 'appendChild'
+          || k === 'insertBefore') return function () {};
+      if (k === 'value' || k === 'textContent') return '';
+      if (k === 'nextSibling' || k === 'files') return null;
+      return __el(id);
+    },
+    set: function (t, k, v) { if (k === 'innerHTML') __html[id] = v; return true; },
+    apply: function () { return __el(id); }
+  });
+}
+function FT(val) { return { then: function (cb) { var r = cb(val); return (r && r.then) ? r : FT(r); },
+                            catch: function () { return FT(val); } }; }
+function FR(err) { return { then: function () { return FR(err); },
+                            catch: function (cb) { var r = cb(err); return (r && r.then) ? r : FT(r); } }; }
+var __PAYLOADS = __PAYLOADS__;
+var fetch = function (u) {
+  __fetches.push(u);
+  var p = __PAYLOADS[u];
+  if (p === undefined) return FR(new Error('HTTP 404'));
+  return FT({ ok: true, json: function () { return FT(p); } });
+};
+var location = { href: '', hash: '', pathname: '/fantasy/' };
+var document = { readyState: 'complete',
+  getElementById: function (id) { return __el(id); },
+  querySelector: function () { return null; },
+  querySelectorAll: function () { return []; },
+  createElement: function () { return __el('c'); },
+  addEventListener: function () {},
+  head: __el('head'), body: __el('body') };
+var EEPHUS_GL = { wire: function () {} };
+var EEPHUS_HUB = { teamLogo: function (t) { return '<i>' + t + '</i>'; } };
+var window = { location: location, document: document, fetch: fetch,
+               EEPHUS_HUB: EEPHUS_HUB, EEPHUS_GL: EEPHUS_GL,
+               addEventListener: function () {} };
+"""
+
+
+def _fcard_ctx(payloads: dict, corpus: dict) -> "MiniRacer":
+    c = MiniRacer()
+    c.eval(FCARD_PRELUDE.replace("__PAYLOADS__", json.dumps(payloads)))
+    c.eval(FCARD_JS)
+    c.eval("var CORPUS = %s;" % json.dumps(corpus))
+    c.eval("window.EEPHUS_FANTASY_CARD.attach({"
+           " payload: function () { return CORPUS; },"
+           " links: function () { return null; } });")
+    return c
+
+
+def _fcard_html(c) -> str:
+    return c.eval("__html['c'] || ''")
+
+
+def _fcard_payloads() -> dict:
+    return {"/data/dfs.json": {}, "/data/hitter_history.json": HIT_HIST,
+            "/data/starter_history.json": PIT_HIST}
+
+
+def test_card_renders_the_next7_strip_keyed_by_the_players_club():
+    """sections.team_next7 is keyed by the CLUB and the card must read the
+    player's own club out of it: 7 chips, hard weeks red, soft weeks green,
+    and an unmeasured opponent NEUTRAL rather than scored as average."""
+    c = _fcard_ctx(_fcard_payloads(), FC_CORPUS)
+    c.eval("window.EEPHUS_FANTASY_CARD.open(660271)")
+    html = _fcard_html(c)
+    assert "LAD, next 7 days" in html, html[:400]
+    assert html.count('class="fc-chip fc-n7') == 7, html.count('class="fc-chip fc-n7')
+    assert "fc-n7 fc-bad" in html and "fc-n7 fc-good" in html
+    assert "Off+ 108" in html and "Off+ 92" in html
+    assert "Opponent offense unmeasured" in html
+    # Skenes is PIT and PIT has no baked schedule: no strip, not a wrong one.
+    c2 = _fcard_ctx(_fcard_payloads(), FC_CORPUS)
+    c2.eval("window.EEPHUS_FANTASY_CARD.open(694973)")
+    assert "next 7 days" not in _fcard_html(c2)
+
+
+def test_card_lazy_loads_history_and_renders_the_sparkline_with_asof():
+    """The history fetch follows the dfs.json lazy pattern: taken on the first
+    card that needs the side, once per session, cached whatever the outcome.
+    The sparkline is inline SVG and carries the artifact's own as-of date."""
+    c = _fcard_ctx(_fcard_payloads(), FC_CORPUS)
+    c.eval("window.EEPHUS_FANTASY_CARD.open(660271)")
+    html = _fcard_html(c)
+    assert "HEM+" in html and 'class="fc-spark"' in html and "<path d=" in html
+    assert "as of 2026-07-07" in html, "the sparkline lost its as-of label"
+    assert "142" in html and "149" in html          # the first-to-last range line
+    fetches = json.loads(c.eval("JSON.stringify(__fetches)"))
+    assert fetches == ["/data/dfs.json", "/data/hitter_history.json"], fetches
+    # A second open costs no new fetch: the session cache is the contract.
+    c.eval("window.EEPHUS_FANTASY_CARD.close();"
+           "window.EEPHUS_FANTASY_CARD.open(660271)")
+    assert json.loads(c.eval("JSON.stringify(__fetches)")) == fetches
+
+
+def test_card_pitcher_sparkline_reads_the_starter_board():
+    c = _fcard_ctx(_fcard_payloads(), FC_CORPUS)
+    c.eval("window.EEPHUS_FANTASY_CARD.open(694973)")
+    html = _fcard_html(c)
+    assert "SEM+" in html and 'class="fc-spark"' in html
+    assert "as of 2026-07-07" in html
+    fetches = json.loads(c.eval("JSON.stringify(__fetches)"))
+    assert fetches == ["/data/dfs.json", "/data/starter_history.json"], fetches
+
+
+def test_card_without_history_renders_no_trend_block():
+    """A 404 history renders NOTHING rather than an empty chart: a missing
+    sparkline claims nothing, which is the honest treatment for the majority
+    of the pool that never made a qualified board. The next-7 strip still
+    renders, because it is baked into the corpus and needs no fetch."""
+    c = _fcard_ctx({"/data/dfs.json": {}}, FC_CORPUS)
+    c.eval("window.EEPHUS_FANTASY_CARD.open(660271)")
+    html = _fcard_html(c)
+    assert "fc-spark" not in html and "as of" not in html
+    assert "LAD, next 7 days" in html

@@ -57,7 +57,9 @@ Each client keeps its whole router; it just stops reaching for `location` and
 to the plain browser one, which is not dead code: `test_fantasy_split` drives
 `redraft.js` standalone in a JS engine against the frozen `assets/fantasy.js`.
 
-**The payload.** `data/fantasy.json` is 576KB and `data/dfs.json` is 253KB.
+**The payload.** `data/fantasy.json` is ~585KB (561KB before the `team_next7`
+bake of 2026-08-16; `test_fantasy_split` budgets it at 600KB and pins the new
+section under 20KB at the 30-org worst case) and `data/dfs.json` is ~380KB.
 Only the active client is downloaded, on first activation, off the `data-src`
 stamps on the module bar, so a reader who opens the ROS board pays for neither
 of the other two. The corpus load goes through one memoized loader, so Redraft
@@ -105,6 +107,12 @@ the cheap schedule-only refresh at 9d), and nothing about it changed here.
 | Dynasty | `assets/dynasty.js` | `data/fantasy.json` | `dynasty`, `callup_watch` |
 | Redraft | `assets/redraft.js` | `data/fantasy.json` | `daily_streamers`, `two_start`, `ros_sp`, `ros_rp`, `ros_hitter`, `buy_low`, `sell_high`, `closer_depth` |
 | DFS | `assets/dfs.js` | `data/dfs.json` | the daily slate (`dfs_export.py`) |
+| the player card | `assets/fantasy-card.js` | the host's corpus | `team_next7` (2026-08-16) |
+
+Eleven sections in `fantasy.json` as of 2026-08-16 (the ten above plus
+`team_next7`). An earlier revision of this doc and the exporter docstring both
+said "the 9 sections" while ten were being baked; count the keys in
+`build_sections`, not a number in prose.
 
 `assets/fantasy.js` stays in the tree, frozen. It is the pre-split parity
 reference that `test_fantasy_split` drives `redraft.js` against, and no page
@@ -179,6 +187,46 @@ player card shows the two identical totals side by side, so a reader who
 switches formats there knows why nothing moved. The two category formats do
 re-rank the hitters.
 
+## Search and filters (2026-08-16)
+
+Every board's data is already client-side, so filtering is a VIEW, never a
+refetch and never a re-score. Each client carries its own small filter bar
+(duplicated per client, the same trade the sort and card machinery already
+made; a shared asset would be a fourth script tag on the shell):
+
+* **Redraft**: name search, position chips off the served `elig` field (which
+  was display-only until now) and a team dropdown, above the sort bar on the
+  three ROS card boards. The SP and RP boards are all `P`, so they drop the
+  chips rather than render a one-chip dead control. Buy/Sell and the Closer
+  Grid take name search; a closer search keeps the WHOLE team card when the
+  club or any arm matches, because a depth chart with its middle rung filtered
+  out would misrepresent the pecking order. Roto values are pooled z-scores,
+  so the pool scores FIRST and the filter narrows what renders; a test pins
+  that a filtered board shows the same value as the unfiltered one.
+* **Dynasty**: name search, org dropdown, ETA-year chips and a tier filter on
+  the board; Keeper and Call-up Watch take name search (the keeper search
+  narrows BEFORE the 150-row cap). The rank diamond keeps the model rank
+  through any filter.
+* **DFS**: name search, position (through `eligOf`, so the reader's own CSV
+  positions count) and team, one bar above BOTH slate boards and on the value
+  board. The OPTIMIZER POOL honors the active filters, and the panel says so:
+  filtering shrinks the pool, and a filtered-out player cannot be drafted. A
+  filter change resets the hitter page and invalidates a solved lineup.
+
+URL state rides each client's existing validated-hash grammar: `q=` (percent-
+encoded substring, capped at 40 chars), `pos=` and `team=` (validated against
+the SERVED pool, the same rule `#sys=` follows against the served scoring
+catalog), plus dynasty's `eta=` and `tier=` (a slug derived from the served
+tier label). An invalid value degrades to no filter and is normalized out of
+the address bar; the keys are read unconditionally, so a hash without them
+clears the filter and the Back button undoes one. The coordinator's `#m=`
+namespace and the legacy `#section=` table are untouched.
+
+**DFS pagination.** The ~508-row hitter table renders its first 100 rows and a
+"Show 100 more" control (the sticky-header `.mlbstats-scroll` dialect is
+unchanged); filters reset the page. The pitcher board is ~30 rows and never
+pages.
+
 ## The player card
 
 `assets/fantasy-card.js`, loaded by the `/fantasy/` shell before any client
@@ -209,11 +257,34 @@ browser. There is no new exporter and no page-per-player build.
 | projected line | `ros`, with the exporter's own `_est` legs marked |
 | HEM+ / SEM+ / REM+ / gmLI | `skill`, wrapped in glossary terms |
 | luck gap, buy / sell, Swing+ trend | `skill` plus `buy_low` / `sell_high` membership |
+| HEM+/SEM+ season trend (2026-08-16) | `data/hitter_history.json` / `data/starter_history.json`, lazy |
 | upcoming starts | `daily_streamers` rows, then `two_start` legs |
 | bullpen role | the index into `closer_depth[org]` |
+| next-7 schedule strip (2026-08-16) | `sections.team_next7`, baked into the corpus |
 | dynasty block | the `dynasty` row, plus `callup_watch` membership |
-| tonight's line | `data/dfs.json`, the one lazy fetch |
+| tonight's line | `data/dfs.json`, lazy |
 | Full MLB card | `player_links.byMlbam` |
+
+The two 2026-08-16 blocks:
+
+* **Next-7 strip.** `fantasy_export.build_sections` bakes
+  `sections.team_next7` as `{org: [{d, opp, home, opp_off, opp_bp}]}` for the
+  next 7 days, off the 7-day probables fetch `_attach_schedule` used to
+  DISCARD once two-start legs were derived (it now keeps a compact
+  `schedule.team_sched7` view, ~9KB, and the baked section measures ~15KB at
+  the 30-org worst case). Opponent context joins from the same
+  `_teams_context` the streamer boards price against; an unresolvable
+  opponent carries `null`, never a fabricated 100. The card renders 7 chips
+  colored by opponent Offense+ (105 or tougher red, 95 or softer green,
+  unmeasured neutral), in theme tokens only.
+* **Season-trend sparkline.** On first card open per side, the card lazily
+  fetches the committed per-season history board (the same pattern as the
+  dfs.json fetch: once per session, cached whatever the outcome) and renders
+  an inline-SVG HEM+/SEM+ sparkline with the artifact's own as-of date. The
+  series is one point per QUALIFIED season, because that is what the artifact
+  carries; there is no monthly series in any committed artifact, no game log
+  and no L/R splits, and the card does not invent them. A player with fewer
+  than two qualified seasons gets no block, which is the honest absence.
 
 Two rules it inherits. The score line is NOT reimplemented here: the port lives
 in `assets/redraft.js`, which `test_fantasy_split.py` drives against the frozen
@@ -223,10 +294,13 @@ POOL, so a player the served board does not carry gets no roto row rather than a
 z-score against a pool of one.
 
 `data/dfs.json` is fetched once per session, on the first card a reader opens,
-and cached whatever the outcome. A slate that will not load is a note on that
-block, because a reader who knows the player is on tonight's slate and sees
-nothing would read the silence as "not playing". A slate dated before the
-viewer's own today is labelled with its date instead of "Tonight".
+and cached whatever the outcome; the history boards follow the same rule, per
+side, through one shared lazy loader (`test_fantasy_split` pins the single
+fetch call site). A slate that will not load is a note on that block, because
+a reader who knows the player is on tonight's slate and sees nothing would
+read the silence as "not playing". A slate dated before the viewer's own today
+is labelled with its date instead of "Tonight". A history that will not load
+renders no trend block, because a missing sparkline claims nothing.
 
 Every name on both boards now opens the card rather than linking straight out.
 That resolves for every row, where the outbound link only resolved for the 1,234
@@ -246,6 +320,16 @@ Call-up Watch read `xfv_grade` while the Dynasty column read the retired
 
 Display conventions, unchanged: eFV and plus-stats round to nearest, scouting
 FV grades display as a ceiling.
+
+The dynasty RANKING drives on that same board grade since 2026-08-16. Until
+then the blend's primary term was the retired `xfv_grade_quantile`, a scale the
+site displays nowhere, while the row displayed the board grade beside it;
+measured on the live board, swapping the driver with unchanged weights cut
+visible adjacent inversions and lifted Spearman(rank, shown eFV) from 0.848 to
+0.951 (`tools/dynasty_basis_probe.py` reproduces it). The blend weights and the
+ETA-proximity decay live in the shared `dynasty_blend` module, one importable
+copy for this exporter and `card_market_export.talent_score`, after the card
+clone was caught decaying ETA at 0.25 against this module's 0.18.
 
 ## Keeper value calculator (Dynasty)
 
@@ -282,6 +366,16 @@ Inputs:
   and the opposing probable's SEM+ off the fantasy pool itself
 * lineup eligibility: `data/mlb_fielding_positions.json` through
   `fantasy_export._elig_positions` (one definition of the rule, site-wide)
+* park factors: the Savant MLB park index off `fa_meta` through the venue map,
+  with the MiLB table (`data/milb_park_factors.json`) behind it; every game
+  labels its `park_source`, out-of-range factors are clamped and say so
+* Vegas legs: game total and de-vigged implied team totals, read from the odds
+  snapshots the betting module already pays for (`betting_ingest.latest_snapshot`);
+  a snapshot from a different day's board is refused on first pitch, and a slate
+  with no snapshot shows no total rather than an estimated one
+* confirmed lineups: posted cards set a hitter's spot and turn his start rate
+  into a fact (the projection it replaced rides beside it); a posted card he is
+  NOT on marks him `out`. Both joins are context and neither moves `pts`.
 
 Re-pricing:
 
@@ -297,10 +391,14 @@ Re-pricing:
   hand a pitcher strikeouts or innings.
 * Relievers are not on the slate. Save and hold chances are not knowable before
   first pitch.
-* Park factors are neutral today. The committed artifact
-  (`data/milb_park_factors.json`) covers sportIds 11 to 16, so no MLB venue
-  resolves. The lookup is interface-shaped and the payload labels every row
-  `park_source: "none"`, which is the honest version of a leg we cannot fill.
+* Park factors are LIVE for MLB parks since 2026-08-07 (an earlier revision of
+  this doc said they were neutral, which outlived the thing it described). The
+  Savant run index resolves 29 of 30 clubs through the venue map; the park leg
+  multiplies OUTSIDE the matchup clamp, a factor outside the plausible range is
+  clamped with an `_out_of_range` suffix on its source, and every kind of miss
+  keeps its own label (`neutral_site`, `no_factor_for_park`, `none`). The
+  client derives its park sentence from the payload's own `park_sources`
+  counts rather than hard-coding one.
 
 What is a model and what is an estimate: the skill line rides the
 Gate-1-validated FA projection engine through `fantasy.json`. Per-game playing
@@ -323,7 +421,8 @@ page renders it loudly.
 
 * **Today's Slate**: the games with both probables, then the starter board, then
   the hitter board. Each board carries its own sort state, named on the control,
-  because both render on one tab.
+  because both render on one tab. One filter bar sits above both boards, and the
+  hitter board pages at 100 rows (see Search and filters above).
 * **Value Plays**: points per thousand dollars over everyone the reader has a
   price for, with the salary import form on top. Without an import it says so
   and shows the importer rather than an empty table.
@@ -413,3 +512,15 @@ about whether the board is today's.
    instead of quietly re-ranking somebody's league.
 4. The DFS optimizer and CSV import, driven through the shipped client.
 5. The dynasty board, its lenses, and the keeper calculator's arithmetic.
+6. Filters, pagination and the filter half of the hash grammar (2026-08-16):
+   the bar renders and narrows on all three clients, the filter never
+   re-scores the roto pool, the optimizer pool honors the filters, the hitter
+   board pages at 100 and a filter resets the page, the filter keys round-trip
+   through the coordinator and an invalid value is normalized out of the URL,
+   `_team_next7` bakes the right shape under its 20KB fixture bound, and
+   `data/fantasy.json` stays under its 600KB budget.
+
+`test_fantasy_cards.py` additionally drives `assets/fantasy-card.js` directly:
+the next-7 strip is keyed by the player's club and colors by opponent Offense+,
+the sparkline lazy-loads the right history board once per session and carries
+its as-of label, and a missing history renders no trend block.

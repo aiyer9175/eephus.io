@@ -21,7 +21,8 @@
 (function () {
   "use strict";
   var DATA_URL = "/data/fantasy.json";
-  var S = { data: null, section: "dynasty", lens: "board", keeper: null, player: null };
+  var S = { data: null, section: "dynasty", lens: "board", keeper: null, player: null,
+            q: "", org: null, eta: null, tier: null };
   var SORT = { dynasty: { key: "rank", asc: true } };
   var SORT_DEFAULTS = { dynasty: { key: "rank", asc: true } };
   var LINKS = null;
@@ -60,7 +61,8 @@
   // On /fantasy/ this file shares one document with assets/redraft.js and
   // assets/dfs.js, so assets/fantasy-hub.js owns the address bar and hands
   // this module only its own half of the hash. The corpus load goes through
-  // the host too: data/fantasy.json is 576KB and Redraft reads the same file,
+  // the host too: data/fantasy.json is ~585KB (budgeted under 600KB by
+  // test_fantasy_split) and Redraft reads the same file,
   // so a reader who opens both tabs downloads and parses it once.
   //
   // No host means the plain browser call, which keeps this file drivable
@@ -133,6 +135,115 @@
     return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && team) ? EEPHUS_HUB.teamLogo(team) : "";
   }
   function sections() { return (S.data && S.data.sections) || {}; }
+
+  // ---- filter bar (2026-08-16) ----------------------------------------------
+  // A VIEW over the served rows, never a re-rank: the diamond keeps the model
+  // rank whatever survives the filter. Name is a case-insensitive substring;
+  // org, ETA year and tier all validate against the SERVED board, so a stale
+  // hash degrades to no filter rather than to an empty board. Duplicated per
+  // client on purpose, the same trade the card machinery already made.
+  function normQ(s) { return String(s == null ? "" : s).toLowerCase(); }
+  function decodeQ(s) {
+    try { return decodeURIComponent(s); } catch (e) { return ""; }
+  }
+  function filtersOn() { return !!(S.q || S.org || S.eta || S.tier); }
+  // "Tier 1" -> "t1", "Elite" -> "elite": a hash-safe slug DERIVED from the
+  // served label, so a new tier needs no change here.
+  function tierSlug(t) {
+    return normQ(t).replace("tier ", "t").replace(/[^a-z0-9]/g, "");
+  }
+  function passFilter(d) {
+    if (!d) return false;
+    if (S.q && normQ(d.name).indexOf(normQ(S.q)) < 0) return false;
+    if (S.org && String(d.org || "").toUpperCase() !== S.org) return false;
+    if (S.eta && String(d.eta || "") !== S.eta) return false;
+    if (S.tier && tierSlug(d.tier) !== S.tier) return false;
+    return true;
+  }
+  function filterRows(list) {
+    return filtersOn() ? (list || []).filter(passFilter) : (list || []);
+  }
+  // full=false is the name-search-only bar (Keeper, Call-up Watch).
+  function filterBar(list, full, shown) {
+    var out = '<input type="search" id="dyn-f-q" class="dyn-f-q" placeholder="Filter by name"' +
+      ' aria-label="Filter by prospect name" maxlength="40" value="' + esc(S.q) + '">';
+    if (full) {
+      var orgs = {}, etas = {}, tiers = {};
+      (list || []).forEach(function (d) {
+        if (d.org) orgs[d.org] = 1;
+        if (d.eta != null) etas[String(d.eta)] = 1;
+        if (d.tier) tiers[d.tier] = tiers[d.tier] || tierSlug(d.tier);
+      });
+      var orgList = Object.keys(orgs).sort();
+      if (orgList.length > 1) {
+        out += '<select id="dyn-f-org" aria-label="Filter by org"><option value="">All orgs</option>' +
+          orgList.map(function (o) {
+            return '<option value="' + esc(o) + '"' + (o === S.org ? " selected" : "") + ">" +
+              esc(o) + "</option>";
+          }).join("") + "</select>";
+      }
+      out += Object.keys(etas).sort().map(function (y) {
+        var on = y === S.eta;
+        return '<button type="button" class="dyn-f-chip' + (on ? " active" : "") +
+          '" data-dynfeta="' + esc(y) + '" aria-pressed="' + (on ? "true" : "false") + '">' +
+          esc(y) + "</button>";
+      }).join("");
+      var tierList = Object.keys(tiers);
+      if (tierList.length > 1) {
+        out += '<select id="dyn-f-tier" aria-label="Filter by tier"><option value="">All tiers</option>' +
+          tierList.map(function (t) {
+            return '<option value="' + esc(tiers[t]) + '"' + (tiers[t] === S.tier ? " selected" : "") +
+              ">" + esc(t) + "</option>";
+          }).join("") + "</select>";
+      }
+    }
+    if (filtersOn()) {
+      out += '<button type="button" class="dyn-f-chip" id="dyn-f-clear">Clear</button>';
+      if (shown != null && list) {
+        out += '<span class="dyn-f-count">' + shown + " of " + (list || []).length + " rows</span>";
+      }
+    }
+    return '<div class="dyn-filterbar">' + out + "</div>";
+  }
+  function wireFilterBar(r) {
+    var q = r.querySelector ? r.querySelector("#dyn-f-q") : null;
+    if (q) q.addEventListener("input", function () {
+      S.q = String(q.value || "").slice(0, 40);
+      renderSection();
+      writeHash();
+      var again = r.querySelector("#dyn-f-q");
+      if (again && again.focus) {
+        again.focus();
+        try { again.setSelectionRange(again.value.length, again.value.length); } catch (e) { /* fine */ }
+      }
+    });
+    r.querySelectorAll("[data-dynfeta]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var v = b.getAttribute("data-dynfeta");
+        S.eta = (S.eta === v) ? null : v;
+        renderSection();
+        writeHash();
+      });
+    });
+    var o = r.querySelector ? r.querySelector("#dyn-f-org") : null;
+    if (o) o.addEventListener("change", function () {
+      S.org = o.value ? String(o.value).toUpperCase() : null;
+      renderSection();
+      writeHash();
+    });
+    var t = r.querySelector ? r.querySelector("#dyn-f-tier") : null;
+    if (t) t.addEventListener("change", function () {
+      S.tier = t.value || null;
+      renderSection();
+      writeHash();
+    });
+    var c = r.querySelector ? r.querySelector("#dyn-f-clear") : null;
+    if (c) c.addEventListener("click", function () {
+      S.q = ""; S.org = null; S.eta = null; S.tier = null;
+      renderSection();
+      writeHash();
+    });
+  }
 
   // ---- board columns --------------------------------------------------------
   // Ported verbatim from the retired /fantasy/ Dynasty board so the split moved
@@ -376,12 +487,14 @@
       "surplus. Outlook is the 10th to 90th percentile career-value band. This is a display ranking over served eFV " +
       "numbers, not a second model. Keep by is the earliest keeper round the pick pays for itself in your league, " +
       "using the settings in the Keeper Calculator tab.</div>";
-    return intro + inlineLens +
-      renderCards(list, DYN_COLS, SORT.dynasty, {
+    var rows = filterRows(list);
+    return intro + inlineLens + filterBar(list, true, rows.length) +
+      renderCards(rows, DYN_COLS, SORT.dynasty, {
         rankOf: function (d) { return d.rank; },
         stripeOf: dynStripe,
         hrefOf: function (d) { return hashFor(d.mlbam); },
-        empty: "The dynasty board populates from the eFV model on the nightly build."
+        empty: filtersOn() ? "No prospect matches the current filter."
+          : "The dynasty board populates from the eFV model on the nightly build."
       });
   }
   function renderCallups() {
@@ -389,6 +502,13 @@
     if (!list.length) {
       return '<div class="dyn-note">Call-up Watch populates from the prospect board on the nightly build ' +
         "(prospects near their ETA with fantasy upside).</div>";
+    }
+    if (S.q) {
+      list = list.filter(function (c) { return normQ(c.name).indexOf(normQ(S.q)) >= 0; });
+      if (!list.length) {
+        return filterBar(null, false) +
+          '<div class="dyn-note">No call-up candidate matches the name filter.</div>';
+      }
     }
     var shown = capRows(list);
     var rows = shown.map(function (c) {
@@ -400,7 +520,8 @@
       return '<tr><td class="dyn-nm">' + nameLink(c.mlbam, c.name) + "</td><td>" + esc(c.org) +
         "</td><td>" + esc(c.pos) + "</td><td>" + esc(c.eta) + '</td><td class="dyn-sc">' + grade + "</td></tr>";
     }).join("");
-    return '<div class="dyn-note">Prospects close to the majors with fantasy upside. Stash before the call.</div>' +
+    return filterBar(null, false) +
+      '<div class="dyn-note">Prospects close to the majors with fantasy upside. Stash before the call.</div>' +
       '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
       '<thead><tr><th class="dyn-nm">Prospect</th><th>Org</th><th>Pos</th>' +
       "<th>" + glossLbl({ label: "ETA", term: "eta" }) + "</th>" +
@@ -436,6 +557,15 @@
       return explain + form + '<div class="dyn-note">The board has no rows yet, so there is nothing to price. ' +
         "The calculator still works: the pick math above updates as you type.</div>";
     }
+    // Name search narrows BEFORE the 150-row cap, so a keeper deep on the
+    // board is findable rather than cut off by the cap.
+    if (S.q) {
+      list = list.filter(function (d) { return normQ(d.name).indexOf(normQ(S.q)) >= 0; });
+      if (!list.length) {
+        return explain + form + filterBar(null, false) +
+          '<div class="dyn-note">No prospect matches the name filter.</div>';
+      }
+    }
     var shown = capRows(list.slice(0, 150));
     var rows = shown.map(function (d) {
       var v = keeperVerdict(d);
@@ -458,7 +588,7 @@
         (v.keep ? "keep" : "let go") + " (" + (v.edge >= 0 ? "+" : "") + esc(v.edge) + ")</td>" +
         "</tr>";
     }).join("");
-    return explain + form +
+    return explain + form + filterBar(null, false) +
       '<div class="dyn-note">Edge is the pick you spend minus his board rank. Positive means the board ranks him ' +
       "ahead of what the keeper costs. Keep by is the earliest round where that flips positive.</div>" +
       '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
@@ -475,7 +605,8 @@
 
   // ---- share card -----------------------------------------------------------
   function shareSpec() {
-    var list = sortRowsBy(sections().dynasty || [], DYN_COLS, SORT.dynasty);
+    // The graphic follows the board ON SCREEN, filter included (2026-08-16).
+    var list = sortRowsBy(filterRows(sections().dynasty || []), DYN_COLS, SORT.dynasty);
     return {
       kind: "board", module: "Dynasty", accentToken: "--accent-cyan",
       title: "Dynasty Prospect Board",
@@ -534,6 +665,7 @@
   }
   function wireSection(r) {
     wireLens(r);
+    wireFilterBar(r);
     r.querySelectorAll("[data-dynsort]").forEach(function (h) {
       function fire(refocus) {
         var st = SORT.dynasty;
@@ -624,6 +756,9 @@
   //   #section=dynasty|callups|keeper   ("board" is accepted as an alias)
   //   #lens=board|contend|rebuild
   //   #sort=<column>.<a|d>
+  //   #q= #team= #eta= #tier=   the filter bar (2026-08-16); team is the org
+  //                             code, and org / eta / tier all validate against
+  //                             the SERVED board rows
   //   #player=<mlbam>   the fantasy player card, over whatever board is under it
   // Every key is optional and validated; a stale or hand-edited URL degrades to
   // the default rather than to a broken board.
@@ -661,6 +796,20 @@
         SORT.dynasty.asc = (v.slice(i + 1) === "a");
       }
     }
+    // The filter half, validated against the SERVED board rows so a stale hash
+    // degrades to no filter. Read unconditionally: a hash WITHOUT the key
+    // clears the filter, which is what makes the Back button undo one.
+    var rows = sections().dynasty || [];
+    var q = hashParam(h, "q", "[^&]+");
+    S.q = q ? decodeQ(q).slice(0, 40) : "";
+    var org = hashParam(h, "team", "[A-Za-z]{2,3}");
+    S.org = (org && rows.some(function (d) {
+      return String(d.org || "").toUpperCase() === org.toUpperCase();
+    })) ? org.toUpperCase() : null;
+    var eta = hashParam(h, "eta", "\\d{4}");
+    S.eta = (eta && rows.some(function (d) { return String(d.eta || "") === eta; })) ? eta : null;
+    var tier = hashParam(h, "tier", "[a-z0-9]{1,8}");
+    S.tier = (tier && rows.some(function (d) { return tierSlug(d.tier) === tier; })) ? tier : null;
     S.player = hashParam(h, "player", "\\d+");
   }
   // The BOARD half of the hash, card left out: hashFor() builds a card link
@@ -673,6 +822,10 @@
     if (st.key && !(st.key === d.key && !!st.asc === !!d.asc)) {
       parts.push("sort=" + st.key + "." + (st.asc ? "a" : "d"));
     }
+    if (S.q) parts.push("q=" + encodeURIComponent(S.q));
+    if (S.org) parts.push("team=" + S.org);
+    if (S.eta) parts.push("eta=" + S.eta);
+    if (S.tier) parts.push("tier=" + S.tier);
     return "#" + parts.join("&");
   }
   // The module's OWN hash. hashFor() is the same string routed through the
@@ -768,6 +921,12 @@
     ".dyn-lensbtn,.dyn-btn{font:600 12px/1 var(--font-retro,monospace);padding:6px 11px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer}",
     ".dyn-lensbtn.active{background:var(--accent-cyan);color:var(--text-on-accent);border-color:transparent}",
     ".dyn-tools{display:flex;justify-content:flex-end;margin:6px 0}",
+    ".dyn-filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 2px}",
+    ".dyn-f-q{padding:6px 8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font:600 12px/1 var(--font-retro,monospace);min-width:170px}",
+    ".dyn-f-chip{font:600 11px/1 var(--font-retro,monospace);padding:6px 9px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer}",
+    ".dyn-f-chip.active{background:var(--accent-cyan);color:var(--text-on-accent);border-color:transparent}",
+    ".dyn-filterbar select{padding:6px 8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font:600 12px/1 var(--font-retro,monospace)}",
+    ".dyn-f-count{font-size:11px;color:var(--text-tertiary)}",
     ".dyn-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}",
     ".dyn-table th{text-align:right;font:600 11px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border)}",
     ".dyn-table td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--border-light);color:var(--text-primary)}",

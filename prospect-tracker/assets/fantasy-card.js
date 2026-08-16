@@ -36,8 +36,16 @@
   //   keeperRound(rank)  optional: the break-even keeper round for a rank
   //   onClose()          optional: the host drops #player= from its own hash
   var HOST = null;
-  var S = { id: null, dfs: null, dfsState: "idle", lastFocus: null, node: null };
+  var S = { id: null, dfs: null, dfsState: "idle", lastFocus: null, node: null,
+            hist: { hit: null, pit: null },
+            histState: { hit: "idle", pit: "idle" } };
   var DFS_URL = "/data/dfs.json";
+  // The season-history boards behind the trend sparkline (2026-08-16). Fetched
+  // through the same lazy pattern as the slate: on the first card that needs
+  // the side, once per session, cached whatever the outcome. These literals
+  // live HERE and not in a board client: test_fantasy_split pins one /data/
+  // literal per client, and the card is the one surface that reads history.
+  var HIST_URL = { hit: "/data/hitter_history.json", pit: "/data/starter_history.json" };
 
   function attach(host) {
     HOST = host || null;
@@ -151,23 +159,63 @@
     return (e && e.key) ? ("/projections/#player=" + e.key) : null;
   }
 
-  // ---- the tonight line (the one lazy fetch) --------------------------------
-  // Fetched once per session, on the first card the reader opens, and cached
-  // whatever the outcome. A slate we could not get is a NOTE on this block, not
-  // a silent omission: a reader who knows the player is on tonight's slate and
-  // sees nothing here would read that as "not playing".
+  // ---- the lazy sidecars (tonight's slate + the season history) -------------
+  // Each is fetched once per session, on the first card that needs it, and
+  // cached whatever the outcome. ONE fetch call site serves both, so the
+  // source contract in test_fantasy_split stays a one-line pin. A slate we
+  // could not get is a NOTE on its block, not a silent omission: a reader who
+  // knows the player is on tonight's slate and sees nothing here would read
+  // that as "not playing". A history we could not get simply renders no trend,
+  // because a missing sparkline claims nothing.
+  function getJson(url, ok, bad) {
+    fetch(url, { cache: "no-cache" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(ok).catch(bad);
+  }
   function loadDfs(then) {
     if (S.dfsState === "done" || S.dfsState === "failed") { then(); return; }
     if (S.dfsState === "loading") return;
     S.dfsState = "loading";
-    fetch(DFS_URL, { cache: "no-cache" }).then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
-    }).then(function (d) {
+    getJson(DFS_URL, function (d) {
       S.dfs = d || null; S.dfsState = "done"; then();
-    }).catch(function () {
+    }, function () {
       S.dfs = null; S.dfsState = "failed"; then();
     });
+  }
+  function loadHist(side, then) {
+    var st = S.histState[side];
+    if (st === "done" || st === "failed") { then(); return; }
+    if (st === "loading") return;
+    S.histState[side] = "loading";
+    getJson(HIST_URL[side], function (d) {
+      S.hist[side] = d || null; S.histState[side] = "done"; then();
+    }, function () {
+      S.hist[side] = null; S.histState[side] = "failed"; then();
+    });
+  }
+  // {points: [{s: season, v: index}], asof} for a player, or null. The
+  // artifacts are the PER-SEASON qualified boards (history[year].hitters /
+  // .starters), so the series is one point per qualified season; most of the
+  // pool never qualified and gets no block, which is the honest absence.
+  function histSeriesFor(side, mlbam) {
+    var d = S.hist[side];
+    var h = d && d.history;
+    if (!h || typeof h !== "object") return null;
+    var listKey = side === "hit" ? "hitters" : "starters";
+    var valKey = side === "hit" ? "hem_plus" : "sem_plus";
+    var want = String(mlbam), pts = [];
+    Object.keys(h).sort().forEach(function (y) {
+      var rows = (h[y] || {})[listKey] || [];
+      for (var i = 0; i < rows.length; i++) {
+        if (String(rows[i].mlbam) === want && rows[i][valKey] != null) {
+          pts.push({ s: y, v: Number(rows[i][valKey]) });
+          return;
+        }
+      }
+    });
+    if (pts.length < 2) return null;
+    return { points: pts, asof: d.generated_at || null };
   }
   function dfsRowsFor(mlbam) {
     var d = S.dfs, want = String(mlbam), out = [];
@@ -300,6 +348,84 @@
       '<div class="fc-fine">Pecking order by average leverage, not by a named role. The club has ' +
       "not told anyone who closes; this is where the manager has been using him.</div></div>";
   }
+  // ---- the season-trend sparkline (2026-08-16) ------------------------------
+  // The cards.js precedent: inline SVG, theme tokens only, no canvas and no
+  // library. Strokes ride var() through a style attribute because presentation
+  // ATTRIBUTES cannot carry var() but the CSS property can. One point per
+  // qualified season; the plan asked for a monthly series, but no committed
+  // artifact carries one (hitter_history/starter_history are yearly boards),
+  // and this card does not invent data it does not have.
+  function sparkSvg(pts) {
+    var W = 220, H = 44, pad = 4;
+    var vals = pts.map(function (p) { return p.v; });
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    if (hi <= lo) hi = lo + 1;
+    var up = vals[vals.length - 1] >= vals[0];
+    var tone = "var(--accent-" + (up ? "green" : "red") + ")";
+    var d = pts.map(function (p, i) {
+      var x = pad + (i / (pts.length - 1)) * (W - pad * 2);
+      var y = H - pad - ((p.v - lo) / (hi - lo)) * (H - pad * 2);
+      return (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+    }).join(" ");
+    var lastY = H - pad - ((vals[vals.length - 1] - lo) / (hi - lo)) * (H - pad * 2);
+    return '<svg class="fc-spark" viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H +
+      '" role="img" aria-label="season index trend, ' + pts.length + ' seasons">' +
+      '<path d="' + d + '" fill="none" style="stroke:' + tone + ';stroke-width:1.5"/>' +
+      '<circle cx="' + (W - pad).toFixed(1) + '" cy="' + lastY.toFixed(1) +
+      '" r="2" style="fill:' + tone + '"/></svg>';
+  }
+  function histBlock(rec) {
+    var side = rec.side === "hit" ? "hit" : "pit";
+    var label = side === "hit" ? "HEM+" : "SEM+";
+    var term = side === "hit" ? "hem_plus" : "sem_plus";
+    if (S.histState[side] === "loading") {
+      return '<div class="fc-sec"><div class="fc-sec-h">' + gl(label, term) + " trend</div>" +
+        '<div class="fc-fine">Loading the season history.</div></div>';
+    }
+    var series = histSeriesFor(side, rec.mlbam);
+    if (!series) return "";
+    var pts = series.points;
+    var first = pts[0], last = pts[pts.length - 1];
+    return '<div class="fc-sec"><div class="fc-sec-h">' + gl(label, term) + " trend</div>" +
+      '<div class="fc-sparkrow">' + sparkSvg(pts) +
+      '<span class="fc-spark-range">' + esc(first.s) + " " + num(first.v, 0) +
+      ' <span class="fc-dim">to</span> ' + esc(last.s) + " " + num(last.v, 0) + "</span></div>" +
+      '<div class="fc-fine">One point per qualified season on the ' + label +
+      " history board" + (series.asof ? ", as of " + esc(series.asof) : "") +
+      ". A season he did not qualify for is a gap, not a zero.</div></div>";
+  }
+
+  // ---- the next-7 schedule strip (2026-08-16) -------------------------------
+  // sections.team_next7 is baked by fantasy_export off the same 7-day slate the
+  // two-start board rides. Chips color by opponent Offense+: 105 or tougher
+  // reads hard, 95 or softer reads soft, anything else (a missing measurement
+  // included) stays neutral, which is the same "missing is not average" rule
+  // the DFS matchup mark enforces.
+  function next7Block(recs) {
+    var team = (recs[0] || {}).team;
+    if (!team) return "";
+    var sched = (sections().team_next7 || {})[team];
+    if (!sched || !sched.length) return "";
+    var chips = sched.map(function (g) {
+      var cls = "";
+      if (g.opp_off != null) {
+        if (g.opp_off >= 105) cls = " fc-bad";
+        else if (g.opp_off <= 95) cls = " fc-good";
+      }
+      var title = (g.home ? "vs " : "@ ") + (g.opp || "?") +
+        (g.opp_off != null ? ". Opponent Offense+ " + g.opp_off : ". Opponent offense unmeasured") +
+        (g.opp_bp != null ? ", Bullpen+ " + g.opp_bp : "") + ".";
+      return '<span class="fc-chip fc-n7' + cls + '" title="' + esc(title) + '"><b>' +
+        esc(dayLabel(g.d)) + "</b>" + esc((g.home ? "vs " : "@ ") + (g.opp || "?")) +
+        (g.opp_off != null ? '<span class="fc-n7-off">Off+ ' + esc(g.opp_off) + "</span>" : "") +
+        "</span>";
+    }).join("");
+    return '<div class="fc-sec"><div class="fc-sec-h">' + esc(team) + ", next 7 days</div>" +
+      '<div class="fc-chips">' + chips + "</div>" +
+      '<div class="fc-fine">Colored by opponent Offense+: a soft week reads green, a hard one red. ' +
+      "An unmeasured opponent stays neutral rather than being scored as average.</div></div>";
+  }
+
   function dynastyBlock(mlbam) {
     var d = dynastyRow(mlbam), cw = callupRow(mlbam);
     if (!d && !cw) return "";
@@ -386,9 +512,10 @@
     }
     var out = head(mlbam, recs);
     recs.forEach(function (rec) {
-      out += scoreBlock(rec) + tapeBlock(rec) + skillBlock(rec) + startsBlock(rec) + roleBlock(rec);
+      out += scoreBlock(rec) + tapeBlock(rec) + skillBlock(rec) + histBlock(rec) +
+        startsBlock(rec) + roleBlock(rec);
     });
-    return out + dyn + dfsBlock(mlbam);
+    return out + next7Block(recs) + dyn + dfsBlock(mlbam);
   }
   // A dynasty-only row is enough to name a player, so the head is built from it
   // rather than rendering a card with a blank name.
@@ -432,11 +559,16 @@
     try { S.lastFocus = document.activeElement; } catch (e) { S.lastFocus = null; }
     paint();
     focusCard();
-    // The lazy leg. Fetched on the first card of the session, then cached, so
-    // the second card costs nothing and a reader who never opens one never
-    // downloads the slate at all. Its repaint REPLACES the panel, so focus is
-    // taken back deliberately instead of being dropped on the document.
-    loadDfs(function () { if (S.id == null) return; paint(); focusCard(); });
+    // The lazy legs. Each is fetched on the first card of the session that
+    // needs it, then cached, so the second card costs nothing and a reader who
+    // never opens one never downloads the slate or the history at all. A
+    // repaint REPLACES the panel, so focus is taken back deliberately instead
+    // of being dropped on the document.
+    function repaint() { if (S.id == null) return; paint(); focusCard(); }
+    loadDfs(repaint);
+    recsFor(mlbam).forEach(function (rec) {
+      loadHist(rec.side === "hit" ? "hit" : "pit", repaint);
+    });
   }
   function focusCard() {
     var n = S.node;
@@ -504,6 +636,11 @@
       ".fc-chip b{display:block;font:600 9px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}",
       ".fc-chip.fc-good{border-color:var(--accent-green)}",
       ".fc-chip.fc-bad{border-color:var(--accent-red)}",
+      ".fc-n7{display:inline-flex;flex-direction:column;gap:2px}",
+      ".fc-n7-off{font:600 9px/1 var(--font-retro,monospace);color:var(--text-tertiary);margin-top:2px}",
+      ".fc-sparkrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
+      ".fc-spark{max-width:100%;height:auto}",
+      ".fc-spark-range{font:600 11px/1.3 var(--font-retro,monospace);color:var(--text-secondary);white-space:nowrap}",
       ".fc-rows{display:flex;flex-direction:column;gap:3px}",
       ".fc-row{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--text-primary);border-bottom:1px solid var(--border-light);padding:3px 0}",
       ".fc-dim{color:var(--text-tertiary)}",
