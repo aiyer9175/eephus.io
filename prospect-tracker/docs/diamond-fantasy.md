@@ -496,6 +496,66 @@ would fire the banner a day early every North American evening.
 The header chip and the banner read the same predicate, so they cannot disagree
 about whether the board is today's.
 
+## Evidence accumulators (2026-08-16)
+
+Two instruments started recording on 2026-08-16. Neither moves a served
+number; both exist because a question kept being asked that no data on this
+box could answer. Both live under `.cache/` because they are durable per-box
+state and the deploy box runs `git checkout -- .` nightly.
+
+**The two-start ledger** (`.cache/two_start_ledger.jsonl`,
+`fantasy_export.update_two_start_ledger`). The two-start section serves
+PROJECTED second legs, a rest-cycle guess (`fsched.projected_two_start`), and
+nothing ever measured whether the guesses come true. Every daily refresh now
+appends the projected legs it served (idempotent per pitcher, leg date and
+day) and grades earlier projections against the real probable postings the
+same fetch sees: `started` when a probable posts on the projected date,
+`pushed` when it posts within 2 days of it, `skipped` when the date passes
+with no matching posting. The grading basis is the POSTING, not the game
+result, because the posting is what the projection claimed would happen. The
+announced-starts view rides the payload as `schedule.announced7` (~2KB), kept
+under the empty-fetch guard like the rest of the schedule so an outage day
+cannot mis-grade a leg as skipped. Bounded by a documented compaction (120
+days, then a hard line cap). `fantasy_export.two_start_ledger_summary()` is
+the readout (distinct legs, outcomes, strict and with-pushed hit rates) for a
+future page lane. After about four weeks the hit rate decides whether a
+rotation-order model is worth building; until then nothing reads the ledger
+at serve time.
+
+**The DFS slate archive** (`.cache/dfs_history/<slate_date>.json`,
+`dfs_export._archive_slate`). `data/dfs.json` is overwritten daily, so no
+slate this module ever priced could be graded afterwards, and the registry
+row for `dfs_slate_pricing` says so in its metric field. Every SUCCESSFUL
+publish now archives a compact copy of the board as served: per player the
+grading keys (mlbam, side, game_pk, team, opp) plus the served price
+(`pts` in both systems) and the start-rate leg; per game the park and Vegas
+context. Empty, refused and kept-previous payloads are never archived (the
+kept board was archived on its own day; a same-day rebuild overwrites its own
+file, keeping the last board a reader saw). Retention is ~120 days (~10MB, a
+full season of gradeable history), pruned in the same write pass. This is
+what makes the registry's planned-archive language truthful from the day it
+runs; the matchup-multiplier backtest it enables is future work, not a claim.
+
+## The closer save-share gate: RED (2026-08-16)
+
+A save-share model (per-team share of forward saves from a trailing 30-day
+window of saves and gmLI, fixed weights 0.65/0.35) was pre-registered against
+the shipped pace rule in `docs/fantasy-closer-gate-2026-08-16.md` and run
+once by `tools/fantasy_closer_lab.py` over 22 replayed 2026 window starts
+(220 team-windows, 2,389 RP rows). It FAILED all three ship conditions:
+pooled next-14-day saves MAE 9.1% WORSE than pace, mean within-team Spearman
+worse (0.389 vs 0.416), and it won both metrics in 3 of 22 starts against a
+70% bar. So the pace rule stays in `build_players`, the Closer Depth Chart
+keeps its hand score, and no served number moved.
+
+The instructive part: the non-decisive saves-only reference arm (w_sv = 1.0)
+beat BOTH arms on both metrics. The gmLI term over-spreads the team's saves
+across setup arms, whose entry leverage is also high. That is evidence a
+better champion exists AND it is not shippable from this run: promoting the
+reference after seeing the numbers would be fitting the champion to the test
+set. A future wave may re-register a saves-only champion on data this run
+never scored. Full numbers: `.cache/closer_lab/fantasy_closer_gate_eval.json`.
+
 ## Tests
 
 `test_fantasy_split.py`:
@@ -524,3 +584,13 @@ about whether the board is today's.
 the next-7 strip is keyed by the player's club and colors by opponent Offense+,
 the sparkline lazy-loads the right history board once per session and carries
 its as-of label, and a missing history renders no trend block.
+
+`test_fantasy_two_start.py` also covers the two-start ledger (2026-08-16):
+append shape, per-day idempotency, all three grade outcomes, grade
+idempotency, the first-leg-cannot-confirm-itself guard, compaction, corrupt
+line tolerance and the summary readout. `test_dfs_history.py` covers the
+slate archive: compact shape, refusal of empty and refused payloads, same-day
+overwrite, retention pruning (standalone and in the write pass) and the
+`refresh()` wiring. Both were mutation-checked in memory on 2026-08-16:
+dropping the ledger dedupe, neutralizing the grader and neutralizing either
+retention each fail their tests.

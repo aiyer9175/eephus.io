@@ -118,6 +118,163 @@ def test_first_slate_day_in_rest_window_wins():
     assert two[10][1]["opp_org"] == "CCC"
 
 
+# ---- two-start projection ledger (2026-08-16) ------------------------------
+# The instrument that grades projected second legs against the real probable
+# postings (fantasy_export.update_two_start_ledger). Fixture-driven, temp file,
+# no network. Covers: append, per-day idempotency, all three grade outcomes,
+# grade idempotency, compaction, and the summary readout.
+import json as _json
+import tempfile as _tempfile
+from pathlib import Path as _Path
+
+import fantasy_export as _fe
+
+
+def _ledger_path():
+    return _Path(_tempfile.mkdtemp()) / "two_start_ledger.jsonl"
+
+
+def _two_start_fixture(mid=10, first="2026-07-01", leg="2026-07-06"):
+    return {str(mid): [
+        {"mlbam": mid, "name": "P%d" % mid, "date": first, "team_org": "AAA",
+         "opp_org": "BBB"},
+        {"mlbam": mid, "name": "P%d" % mid, "date": leg, "team_org": "AAA",
+         "opp_org": "CCC", "is_home": True, "venue": "Park", "projected": True},
+    ]}
+
+
+def _rows(path):
+    return [_json.loads(l) for l in path.read_text(encoding="utf-8").splitlines()]
+
+
+def test_ledger_appends_projected_leg_with_shape():
+    p = _ledger_path()
+    res = _fe.update_two_start_ledger(_two_start_fixture(), [], today="2026-07-01",
+                                      path=p)
+    assert res["projected_added"] == 1 and res["grades_added"] == 0
+    rows = _rows(p)
+    assert len(rows) == 1
+    r = rows[0]
+    assert r["kind"] == "projected" and r["mlbam"] == 10
+    assert r["date_projected"] == "2026-07-01" and r["leg_date"] == "2026-07-06"
+    assert r["leg_date_window"] == ["2026-07-05", "2026-07-07"]
+    assert r["org"] == "AAA" and r["source_row"]["opp_org"] == "CCC"
+    # announced legs are never ledgered: only the projected guess is a claim.
+    assert all(row["leg_date"] != "2026-07-01" for row in rows)
+
+
+def test_ledger_idempotent_per_day_and_appends_next_day():
+    p = _ledger_path()
+    two = _two_start_fixture()
+    _fe.update_two_start_ledger(two, [], today="2026-07-01", path=p)
+    res = _fe.update_two_start_ledger(two, [], today="2026-07-01", path=p)
+    assert res["projected_added"] == 0, "same-day rerun must dedupe"
+    assert len(_rows(p)) == 1
+    # The same leg re-served the NEXT day is a new dated observation.
+    res = _fe.update_two_start_ledger(two, [], today="2026-07-02", path=p)
+    assert res["projected_added"] == 1
+    assert len([r for r in _rows(p) if r["kind"] == "projected"]) == 2
+
+
+def test_ledger_grades_started_and_never_regrades():
+    p = _ledger_path()
+    _fe.update_two_start_ledger(_two_start_fixture(), [], today="2026-07-01", path=p)
+    ann = [{"mlbam": 10, "d": "2026-07-06"}]
+    res = _fe.update_two_start_ledger({}, ann, today="2026-07-03", path=p)
+    assert res["grades_added"] == 1
+    g = [r for r in _rows(p) if r["kind"] == "grade"]
+    assert len(g) == 1 and g[0]["resolved"] == "started"
+    assert g[0]["projected_date"] == "2026-07-06" and g[0]["resolved_date"] == "2026-07-06"
+    # A graded leg stays graded: rerunning with the same posting adds nothing.
+    res = _fe.update_two_start_ledger({}, ann, today="2026-07-04", path=p)
+    assert res["grades_added"] == 0
+    assert len([r for r in _rows(p) if r["kind"] == "grade"]) == 1
+
+
+def test_ledger_grades_pushed_on_slid_posting():
+    p = _ledger_path()
+    _fe.update_two_start_ledger(_two_start_fixture(), [], today="2026-07-01", path=p)
+    # Posted a day late: same start, calendar slid. Slack is 2 days.
+    res = _fe.update_two_start_ledger({}, [{"mlbam": 10, "d": "2026-07-07"}],
+                                      today="2026-07-04", path=p)
+    assert res["grades_added"] == 1
+    g = [r for r in _rows(p) if r["kind"] == "grade"][0]
+    assert g["resolved"] == "pushed" and g["resolved_date"] == "2026-07-07"
+
+
+def test_ledger_grades_skipped_after_date_passes():
+    p = _ledger_path()
+    _fe.update_two_start_ledger(_two_start_fixture(), [], today="2026-07-01", path=p)
+    # While the leg date is ahead and nothing posted, it stays PENDING.
+    res = _fe.update_two_start_ledger({}, [], today="2026-07-05", path=p)
+    assert res["grades_added"] == 0
+    # Once the date passes with no matching posting ever seen, it is a skip.
+    res = _fe.update_two_start_ledger({}, [], today="2026-07-09", path=p)
+    assert res["grades_added"] == 1
+    g = [r for r in _rows(p) if r["kind"] == "grade"][0]
+    assert g["resolved"] == "skipped" and g["resolved_date"] == "2026-07-09"
+
+
+def test_ledger_first_leg_cannot_confirm_itself():
+    p = _ledger_path()
+    # The announced FIRST leg (07-01) sits 5 days from the projected second
+    # (07-06), outside the 2-day slack, so it never grades the projection.
+    _fe.update_two_start_ledger(_two_start_fixture(),
+                                [{"mlbam": 10, "d": "2026-07-01"}],
+                                today="2026-07-01", path=p)
+    assert [r for r in _rows(p) if r["kind"] == "grade"] == []
+
+
+def test_ledger_compaction_bounds_the_file():
+    p = _ledger_path()
+    _fe.update_two_start_ledger(_two_start_fixture(mid=10), [],
+                                today="2026-01-01", path=p)
+    old = _rows(p)
+    assert len(old) == 1
+    # 200+ days later, the stale projection row is compacted away on write.
+    res = _fe.update_two_start_ledger(
+        _two_start_fixture(mid=11, first="2026-08-01", leg="2026-08-06"), [],
+        today="2026-08-01", path=p)
+    assert res["compacted_away"] == 1, res
+    rows = _rows(p)
+    assert all(r.get("date_projected", "2026-08-01") >= "2026-04-03" for r in rows)
+    assert any(r["mlbam"] == 11 for r in rows)
+    assert not any(r.get("mlbam") == 10 and r["kind"] == "projected" for r in rows)
+
+
+def test_ledger_summary_counts_and_hit_rates():
+    p = _ledger_path()
+    two = {}
+    two.update(_two_start_fixture(mid=10))
+    two.update(_two_start_fixture(mid=11))
+    two.update(_two_start_fixture(mid=12))
+    _fe.update_two_start_ledger(two, [], today="2026-07-01", path=p)
+    # Re-serve next day: distinct legs must stay 3, not 6.
+    _fe.update_two_start_ledger(two, [], today="2026-07-02", path=p)
+    # 10 starts as projected, 11 slides a day, 12 never posts and passes.
+    _fe.update_two_start_ledger({}, [{"mlbam": 10, "d": "2026-07-06"},
+                                     {"mlbam": 11, "d": "2026-07-07"}],
+                                today="2026-07-09", path=p)
+    s = _fe.two_start_ledger_summary(p)
+    assert s["n_distinct_legs"] == 3 and s["n_projected_rows"] == 6
+    assert s["n_graded"] == 3 and s["n_pending"] == 0
+    assert s["by_outcome"] == {"started": 1, "pushed": 1, "skipped": 1}
+    assert s["hit_rate_strict"] == round(1 / 3, 3)
+    assert s["hit_rate_with_pushed"] == round(2 / 3, 3)
+    assert s["first_projected"] == "2026-07-01"
+    assert s["last_projected"] == "2026-07-02"
+
+
+def test_ledger_tolerates_corrupt_line():
+    p = _ledger_path()
+    _fe.update_two_start_ledger(_two_start_fixture(), [], today="2026-07-01", path=p)
+    with p.open("a", encoding="utf-8") as fh:
+        fh.write("{torn write\n")
+    res = _fe.update_two_start_ledger({}, [{"mlbam": 10, "d": "2026-07-06"}],
+                                      today="2026-07-03", path=p)
+    assert res["grades_added"] == 1
+
+
 if __name__ == "__main__":
     import sys
     mod = sys.modules[__name__]

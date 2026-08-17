@@ -33,7 +33,7 @@ from __future__ import annotations
 import functools
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import dynasty_blend
@@ -988,10 +988,19 @@ def _attach_schedule(payload: dict) -> None:
                                    "home": bool(g.get("is_home"))}
                                   for g in lst[:7]]
                             for org, lst in team_sched.items()},
+            # Every ANNOUNCED probable start in the 7-day window, compacted to
+            # (mlbam, date). ~2KB. The two-start ledger grades yesterday's
+            # projected legs against these postings (2026-08-16); a projected
+            # leg is by construction absent from this list on the day it is
+            # projected, so a leg can never confirm itself.
+            "announced7": [{"mlbam": s["mlbam"], "d": s.get("date")}
+                           for s in starts7
+                           if s.get("mlbam") and s.get("date")],
         }
     except Exception:
         log.exception("fantasy: schedule attach failed — continuing without probables")
-        payload["schedule"] = {"games": [], "two_start": {}, "team_sched7": {}}
+        payload["schedule"] = {"games": [], "two_start": {}, "team_sched7": {},
+                               "announced7": []}
 
 
 def _record_schedule_anomaly(n_prev: int) -> None:
@@ -1006,6 +1015,249 @@ def _record_schedule_anomaly(n_prev: int) -> None:
         message=(f"probables fetch returned 0 game days; kept the previous "
                  f"{n_prev}-day schedule. Streamers, two-start, DFS and the "
                  f"betting slate all read this schedule."))
+
+
+# ---------------------------------------------------------------------------
+# Two-start projection ledger (2026-08-16). AN INSTRUMENT, NOT A MODEL.
+#
+# The two-start section serves PROJECTED second legs (a rest-cycle guess, see
+# fsched.projected_two_start) and nothing ever measured whether those guesses
+# come true. This ledger is the measurement: every projected leg served by the
+# daily refresh is recorded, and when the real probable postings later confirm
+# or refute it, a grade row is appended. After a few weeks the hit rate decides
+# whether a rotation-order model is worth building at all; until then no served
+# number moves and nothing reads this file at serve time.
+#
+# Durable per-box state, so it lives under .cache/ (the deploy box runs
+# `git checkout -- .` nightly and would revert anything under data/).
+# Append-only jsonl in the normal case; the file is BOUNDED by a documented
+# compaction (rows older than _LEDGER_RETENTION_DAYS dropped, then a hard line
+# cap), applied in the same write pass, so it cannot grow without limit.
+# ---------------------------------------------------------------------------
+LEDGER_PATH = Path(__file__).parent / ".cache" / "two_start_ledger.jsonl"
+_LEDGER_RETENTION_DAYS = 120     # projections older than this have been graded
+                                 # or never will be; drop them on write
+_LEDGER_MAX_LINES = 50000        # hard cap behind the retention window, so a
+                                 # clock bug cannot produce an unbounded file
+# A posting within this many days of the projected leg is the SAME start moved,
+# not a different one: rotations slide a day around off days and openers. The
+# announced first leg sits >= 4 days from the projected second (the projection
+# window is D+4..D+6), so it can never fall inside this slack.
+_LEDGER_GRADE_SLACK_DAYS = 2
+
+
+def _ledger_rows(path: Path) -> list[dict]:
+    """Every parseable row of the ledger, oldest first. A corrupt line is
+    skipped rather than fatal: the ledger is an instrument and a torn write
+    (the box lost power mid-append) must not brick the daily refresh."""
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except OSError:
+        return []
+    rows: list[dict] = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            r = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(r, dict):
+            rows.append(r)
+    return rows
+
+
+def _rest_window(first_date: str | None) -> list | None:
+    """[D+4, D+6] for an announced first leg on D: the window the projection
+    was drawn from (fsched.projected_two_start's rest cycle)."""
+    try:
+        d0 = date.fromisoformat(first_date or "")
+    except ValueError:
+        return None
+    return [(d0 + timedelta(days=4)).isoformat(), (d0 + timedelta(days=6)).isoformat()]
+
+
+def _grade_pending(pending: list, ann_by_pid: dict, today: str) -> list:
+    """Grade rows for the pending projected legs the announced postings can now
+    confirm or refute. Pure. Three outcomes, graded on the POSTING (which is
+    what the projection claimed would happen), not on the game result:
+
+      * started: a probable is posted for the pitcher ON the projected date;
+      * pushed: a probable is posted within _LEDGER_GRADE_SLACK_DAYS of it but
+        on a different date (the start moved, the rotation-order guess held);
+      * skipped: the projected date has passed and no posting ever matched
+        while it was in view.
+
+    Anything else stays pending: probables post ~4-5 days out, so a projected
+    leg is UNGRADEABLE on the day it is made and that is not a miss."""
+    out: list = []
+    for (mid, leg_date) in pending:
+        dates = ann_by_pid.get(mid) or set()
+        resolved = resolved_date = None
+        if leg_date in dates:
+            resolved, resolved_date = "started", leg_date
+        else:
+            near = []
+            for d in dates:
+                try:
+                    gap = abs((date.fromisoformat(d)
+                               - date.fromisoformat(leg_date)).days)
+                except ValueError:
+                    continue
+                if gap <= _LEDGER_GRADE_SLACK_DAYS:
+                    near.append(d)
+            if near:
+                resolved, resolved_date = "pushed", min(near)
+            elif leg_date < today:
+                resolved, resolved_date = "skipped", today
+        if resolved:
+            out.append({"kind": "grade", "mlbam": mid, "projected_date": leg_date,
+                        "resolved": resolved, "resolved_date": resolved_date,
+                        "graded_on": today})
+    return out
+
+
+def _compact_ledger(rows: list, today: str) -> tuple[list, int]:
+    """(kept rows, dropped count) under the documented bound: a row's anchor
+    date (date_projected for projections, graded_on for grades) must be within
+    _LEDGER_RETENTION_DAYS of today, and the survivors are hard-capped at
+    _LEDGER_MAX_LINES newest."""
+    try:
+        cutoff = (date.fromisoformat(today)
+                  - timedelta(days=_LEDGER_RETENTION_DAYS)).isoformat()
+    except ValueError:
+        return rows, 0
+    kept = [r for r in rows
+            if str(r.get("date_projected") or r.get("graded_on") or today) >= cutoff]
+    if len(kept) > _LEDGER_MAX_LINES:
+        kept = kept[-_LEDGER_MAX_LINES:]
+    return kept, len(rows) - len(kept)
+
+
+def update_two_start_ledger(two_start: dict, announced: list, *, today: str,
+                            path: Path | None = None) -> dict:
+    """One daily pass over the ledger: record today's served projected legs,
+    grade whatever the announced postings now resolve, compact, write.
+
+    `two_start` is the payload's schedule.two_start ({mlbam_str: [legs]}, legs
+    carrying `projected` on the guessed ones); `announced` is the compact
+    schedule.announced7 list ([{mlbam, d}]). Idempotent per (mlbam, projected
+    leg date) per day for projections and per (mlbam, projected leg date)
+    forever for grades, so re-running a refresh appends nothing new. Returns
+    {projected_added, grades_added, compacted_away, n_rows} for the caller's
+    log line. Never raises past its caller's try (refresh_live wraps it): the
+    ledger must never be the reason a refresh fails."""
+    path = Path(path) if path is not None else LEDGER_PATH
+    rows = _ledger_rows(path)
+    proj_seen = {(r.get("date_projected"), r.get("mlbam"), r.get("leg_date"))
+                 for r in rows if r.get("kind") == "projected"}
+    graded = {(r.get("mlbam"), r.get("projected_date"))
+              for r in rows if r.get("kind") == "grade"}
+
+    new_rows: list = []
+    for mid_s, legs in (two_start or {}).items():
+        try:
+            mid = int(mid_s)
+        except (TypeError, ValueError):
+            continue
+        legs = legs or []
+        first = legs[0] if legs else {}
+        for leg in legs:
+            leg = leg or {}
+            if not leg.get("projected"):
+                continue
+            leg_date = leg.get("date")
+            if not leg_date:
+                continue
+            key = (today, mid, leg_date)
+            if key in proj_seen:
+                continue
+            proj_seen.add(key)
+            new_rows.append({
+                "kind": "projected", "date_projected": today, "mlbam": mid,
+                "name": leg.get("name") or first.get("name"),
+                "org": leg.get("team_org") or first.get("team_org"),
+                "leg_date": leg_date,
+                "leg_date_window": _rest_window(first.get("date")),
+                "source_row": {"opp_org": leg.get("opp_org"),
+                               "is_home": leg.get("is_home"),
+                               "venue": leg.get("venue")},
+            })
+
+    ann_by_pid: dict = {}
+    for a in announced or []:
+        m, d0 = (a or {}).get("mlbam"), (a or {}).get("d")
+        if m and d0:
+            ann_by_pid.setdefault(int(m), set()).add(d0)
+    pending: dict = {}
+    for r in rows + new_rows:
+        if r.get("kind") != "projected":
+            continue
+        k = (r.get("mlbam"), r.get("leg_date"))
+        if None in k or k in graded:
+            continue
+        pending[k] = True
+    grades = _grade_pending(list(pending), ann_by_pid, today)
+    new_rows.extend(grades)
+
+    kept, dropped = _compact_ledger(rows, today)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if dropped:
+        # Compaction rewrites; the normal day is a pure append.
+        text = "".join(json.dumps(r, separators=(",", ":")) + "\n"
+                       for r in kept + new_rows)
+        tmp = path.with_suffix(".jsonl.tmp")
+        tmp.write_text(text, encoding="utf-8")
+        tmp.replace(path)
+    elif new_rows:
+        with path.open("a", encoding="utf-8") as fh:
+            for r in new_rows:
+                fh.write(json.dumps(r, separators=(",", ":")) + "\n")
+    return {"projected_added": sum(1 for r in new_rows if r["kind"] == "projected"),
+            "grades_added": len(grades),
+            "compacted_away": dropped,
+            "n_rows": len(kept) + len(new_rows)}
+
+
+def two_start_ledger_summary(path: Path | None = None) -> dict:
+    """The instrument's readout: how the projected second legs have graded so
+    far. Readable by a future page lane; nothing served reads it today. Legs
+    are counted DISTINCT by (mlbam, projected leg date), because the same leg
+    is legitimately re-served on consecutive days while it stays in the window
+    and that is one guess, not several."""
+    rows = _ledger_rows(Path(path) if path is not None else LEDGER_PATH)
+    legs = {(r.get("mlbam"), r.get("leg_date")) for r in rows
+            if r.get("kind") == "projected"}
+    grades = [r for r in rows if r.get("kind") == "grade"]
+    by_outcome: dict = {}
+    for g in grades:
+        by_outcome[str(g.get("resolved"))] = by_outcome.get(str(g.get("resolved")), 0) + 1
+    n_graded = len(grades)
+    started = by_outcome.get("started", 0)
+    pushed = by_outcome.get("pushed", 0)
+    graded_pairs = {(g.get("mlbam"), g.get("projected_date")) for g in grades}
+    days = sorted({r.get("date_projected") for r in rows
+                   if r.get("kind") == "projected" and r.get("date_projected")})
+    return {
+        "n_rows": len(rows),
+        "n_projected_rows": sum(1 for r in rows if r.get("kind") == "projected"),
+        "n_distinct_legs": len(legs),
+        "n_graded": n_graded,
+        # Counted over the legs still on file, not len(legs) - len(grades): a
+        # compacted projection can leave a grade behind, and subtraction would
+        # let that orphan hide a genuinely pending leg.
+        "n_pending": sum(1 for k in legs if k not in graded_pairs),
+        "by_outcome": by_outcome,
+        # started alone is the strict read; started+pushed is the generous one
+        # (the rotation-order guess held, the calendar slid). Both are served
+        # so nobody has to re-derive them from the raw rows.
+        "hit_rate_strict": round(started / n_graded, 3) if n_graded else None,
+        "hit_rate_with_pushed": (round((started + pushed) / n_graded, 3)
+                                 if n_graded else None),
+        "first_projected": days[0] if days else None,
+        "last_projected": days[-1] if days else None,
+    }
 
 
 def refresh_live(log=print) -> int:
@@ -1023,6 +1275,7 @@ def refresh_live(log=print) -> int:
     # a genuinely empty slate (see the guard below).
     _prev_games = ((payload.get("schedule") or {}).get("games") or {})
     _prev_sched7 = ((payload.get("schedule") or {}).get("team_sched7") or {})
+    _prev_ann7 = ((payload.get("schedule") or {}).get("announced7") or [])
     _attach_schedule(payload)
     _new_games = ((payload.get("schedule") or {}).get("games") or {})
     # EMPTY-FETCH GUARD (2026-08-05). A StatsAPI hiccup during the daily refresh
@@ -1042,6 +1295,11 @@ def refresh_live(log=print) -> int:
         # streamer board still shows yesterday's slate (2026-08-16).
         if _prev_sched7 and not payload["schedule"].get("team_sched7"):
             payload["schedule"]["team_sched7"] = _prev_sched7
+        # The announced-starts view rides the same fetch; keeping it with the
+        # kept schedule stops the two-start ledger from mis-grading a leg as
+        # skipped on a day the feed was simply down (2026-08-16).
+        if _prev_ann7 and not payload["schedule"].get("announced7"):
+            payload["schedule"]["announced7"] = _prev_ann7
         payload["schedule"]["stale_schedule"] = True
         if callable(log):
             log("fantasy: schedule fetch returned NO game days but the previous "
@@ -1056,6 +1314,20 @@ def refresh_live(log=print) -> int:
     if blob is None:
         return 0                    # already logged + RED; the old file stands
     OUT_PATH.write_text(blob, encoding="utf-8")
+    # The two-start ledger records what was ACTUALLY served, so it runs only
+    # after the write above succeeds. Best-effort by the same doctrine as the
+    # ingest ledger: an instrument must never be the reason a refresh fails.
+    try:
+        sched = payload.get("schedule") or {}
+        res = update_two_start_ledger(sched.get("two_start") or {},
+                                      sched.get("announced7") or [],
+                                      today=date.today().isoformat())
+        if callable(log) and (res["projected_added"] or res["grades_added"]):
+            log(f"fantasy: two-start ledger +{res['projected_added']} projected, "
+                f"+{res['grades_added']} graded ({res['n_rows']} rows)")
+    except Exception:
+        logging.getLogger("fantasy_export").exception(
+            "fantasy: two-start ledger update failed - continuing")
     if callable(log):
         n = len((payload.get("sections") or {}).get("daily_streamers") or [])
         log(f"fantasy: daily schedule refresh — {n} streamer starts")

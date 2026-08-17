@@ -74,7 +74,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import fantasy_export as fe
@@ -1295,6 +1295,104 @@ def _slate_integrity(day: str, slate_games: list, rows: list, ctx: dict, *,
     return out
 
 
+# ---------------------------------------------------------------------------
+# Slate archive (2026-08-16). data/dfs.json is overwritten by every daily
+# export, so until today NO slate this module ever priced could be graded
+# afterwards: the registry row says so in its metric field ("none yet; no
+# scored slate history exists AND NONE IS BEING ARCHIVED"). This archive is
+# what makes the planned-archive language truthful from the day it runs: one
+# compact file per slate date, holding exactly what a later backtest needs to
+# grade the pricing (the per-player projected points with their join keys, the
+# per-game context legs) and nothing a backtest cannot use. Salaries are NOT
+# here because they are not in the payload: they live in the reader's browser
+# by design (see _SALARY_BLOCK), and archiving would not change that.
+#
+# Durable per-box state, so it lives under .cache/ (the deploy box runs
+# `git checkout -- .` nightly and would revert anything under data/).
+# Bounded by _ARCHIVE_KEEP_DAYS: at ~60-90KB a slate, ~120 days is ~10MB, a
+# full season of gradeable history, and the prune runs in the same write pass
+# so the bound cannot rot.
+# ---------------------------------------------------------------------------
+ARCHIVE_DIR = Path(__file__).parent / ".cache" / "dfs_history"
+_ARCHIVE_KEEP_DAYS = 120
+
+# The player fields a later grading pass needs: identity + join keys (mlbam,
+# side, game_pk), the served price (pts in both systems), and the playing-time
+# leg that conditions it (start_rate). `line` itself is recoverable from pts
+# only lossily, so the compact row keeps the price, not the whole vector.
+_ARCHIVE_PLAYER_FIELDS = ("mlbam", "side", "name", "team", "opp", "game_pk",
+                          "is_home", "start_rate", "games_today", "pts")
+_ARCHIVE_GAME_FIELDS = ("game_pk", "date", "datetime", "venue_id",
+                        "park_run_pf", "park_source", "vegas")
+
+
+def _archive_slate(payload: dict, archive_dir: Path | None = None) -> Path | None:
+    """Write the compact slate archive for a SUCCESSFUL build, prune, return
+    the path (None when the payload does not qualify or the write refused).
+
+    Only a healthy published board is archived: an empty or refused payload has
+    no priced rows to grade, and the keep-previous path re-serves a slate that
+    was archived on its own day. Idempotent per slate date: a same-day rebuild
+    overwrites its own file, which keeps the LAST board served for that date,
+    the one a reader actually saw at lock."""
+    if not isinstance(payload, dict) or payload.get("empty_reason"):
+        return None
+    if not payload.get("n_players"):
+        return None
+    day = payload.get("slate_date")
+    try:
+        date.fromisoformat(str(day))
+    except (TypeError, ValueError):
+        return None
+    compact = {
+        "slate_date": day,
+        "generated_at": payload.get("generated_at"),
+        "archived_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "season": payload.get("season"),
+        "season_fraction": payload.get("season_fraction"),
+        "fantasy_generated_at": payload.get("fantasy_generated_at"),
+        "n_games": payload.get("n_games"),
+        "n_players": payload.get("n_players"),
+        "games": [{k: (g or {}).get(k) for k in _ARCHIVE_GAME_FIELDS}
+                  for g in (payload.get("games") or [])],
+        "players": [{k: (p or {}).get(k) for k in _ARCHIVE_PLAYER_FIELDS}
+                    for p in (payload.get("players") or [])],
+    }
+    d = Path(archive_dir) if archive_dir is not None else ARCHIVE_DIR
+    d.mkdir(parents=True, exist_ok=True)
+    blob = fe._json_blob(compact, "dfs_history")
+    if blob is None:
+        return None
+    p = d / f"{day}.json"
+    p.write_text(blob, encoding="utf-8")
+    _prune_archive(d, today=str(day))
+    return p
+
+
+def _prune_archive(archive_dir: Path, *, today: str,
+                   keep_days: int = _ARCHIVE_KEEP_DAYS) -> int:
+    """Delete archive files older than `keep_days` before `today`; returns the
+    count removed. Non-date filenames are left alone rather than guessed at."""
+    try:
+        cutoff = (date.fromisoformat(today)
+                  - timedelta(days=keep_days)).isoformat()
+    except (TypeError, ValueError):
+        return 0
+    n = 0
+    for f in sorted(Path(archive_dir).glob("*.json")):
+        try:
+            date.fromisoformat(f.stem)
+        except ValueError:
+            continue
+        if f.stem < cutoff:
+            try:
+                f.unlink()
+                n += 1
+            except OSError:
+                _log.warning("dfs: could not prune archive file %s", f)
+    return n
+
+
 def _read_previous(path: Path) -> dict | None:
     """The payload currently on disk, or None. Used to decide whether a bad
     build is worth publishing over a good one."""
@@ -1354,7 +1452,8 @@ def _carry_age_days(prev: dict, day: str | None) -> int | None:
 
 
 def refresh(log=print, *, day: str | None = None, games: list | None = None,
-            out_path: Path | None = None) -> int:
+            out_path: Path | None = None,
+            archive_dir: Path | None = None) -> int:
     """DAILY best-effort build of data/dfs.json. Returns the player count of
     what is now SERVED (which is the previous payload's count on the keep paths
     below). Never raises: a build that raises is converted into a `build_failed`
@@ -1452,6 +1551,15 @@ def refresh(log=print, *, day: str | None = None, games: list | None = None,
     if blob is None:
         return 0                    # already logged + RED; the old file stands
     path.write_text(blob, encoding="utf-8")
+    # Archive the slate as served (best-effort, never the reason a publish
+    # fails). _archive_slate itself refuses empty and refused payloads, so
+    # this line is safe on every path that reaches the write above; the
+    # keep-previous branch returned earlier and re-archives nothing, because
+    # its board was archived on its own day.
+    try:
+        _archive_slate(payload, archive_dir)
+    except Exception:
+        _log.exception("dfs: slate archive failed - continuing")
     integ = payload.get("integrity") or {}
     if callable(log):
         if payload.get("empty_reason"):
