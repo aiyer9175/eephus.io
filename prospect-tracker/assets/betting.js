@@ -1059,8 +1059,183 @@
   }
 
   // ===========================================================================
-  // SECTION: VALIDATION
+  // INLINE SVG CHARTS (A6, 2026-08-16). No chart library: every mark is a
+  // hand-written SVG element, every colour is a theme token via a CSS class
+  // (the same dialect the .bt-bar histogram set), lines are 2px, dots are 8px
+  // across, grid and references are recessive, and text wears text tokens.
+  // Native <title> elements give every data mark a browser tooltip with no
+  // event wiring. Every chart has an absence branch that names WHY it is not
+  // drawable, because a blank plot reads as a broken page.
   // ===========================================================================
+  function chartAbsent(title, why) {
+    return '<div class="bt-chart-absent"><strong>' + esc(title) +
+      ": not measured yet.</strong> " + esc(why) + "</div>";
+  }
+
+  // The reliability curve: predicted vs actual per decile, the diagonal as
+  // the reference, one dot per non-empty bin. Bin n rides in each dot's
+  // tooltip AND as a fine-print row, and the full table stays right below,
+  // so the picture never replaces the numbers.
+  function reliabilitySVG(bins, label) {
+    var pts = [];
+    (bins || []).forEach(function (b) {
+      if (b && b.pred != null && b.actual != null) pts.push(b);
+    });
+    if (!pts.length) {
+      return chartAbsent("Reliability curve",
+        "every calibration bin is empty, so there is no point to plot; the " +
+        "bins fill as settled sides accumulate in the calibration ledger.");
+    }
+    var W = 320, H = 240, L = 34, B = 22, T = 8, R = 10;
+    var pw = W - L - R, ph = H - T - B;
+    function X(v) { return L + v * pw; }
+    function Y(v) { return T + (1 - v) * ph; }
+    var s = ['<svg class="bt-svg bt-svg-rel" viewBox="0 0 ' + W + " " + H +
+             '" role="img" aria-label="' +
+             esc("Reliability curve" + (label ? ", " + label : "")) + '">'];
+    [0, 0.5, 1].forEach(function (v) {
+      s.push('<line class="bt-svg-grid" x1="' + X(0) + '" y1="' + Y(v) +
+             '" x2="' + X(1) + '" y2="' + Y(v) + '"/>');
+      s.push('<line class="bt-svg-grid" x1="' + X(v) + '" y1="' + Y(0) +
+             '" x2="' + X(v) + '" y2="' + Y(1) + '"/>');
+      s.push('<text class="bt-svg-axis" x="' + (L - 4) + '" y="' + (Y(v) + 3) +
+             '" text-anchor="end">' + v + "</text>");
+      s.push('<text class="bt-svg-axis" x="' + X(v) + '" y="' + (H - 8) +
+             '" text-anchor="middle">' + v + "</text>");
+    });
+    s.push('<line class="bt-svg-ref" x1="' + X(0) + '" y1="' + Y(0) +
+           '" x2="' + X(1) + '" y2="' + Y(1) + '"><title>perfect calibration: ' +
+           "predicted equals actual</title></line>");
+    var path = pts.map(function (b, i) {
+      return (i ? "L" : "M") + X(b.pred).toFixed(1) + " " + Y(b.actual).toFixed(1);
+    }).join(" ");
+    if (pts.length > 1) s.push('<path class="bt-svg-line" d="' + path + '"/>');
+    pts.forEach(function (b) {
+      s.push('<circle class="bt-svg-dot" r="4" cx="' + X(b.pred).toFixed(1) +
+             '" cy="' + Y(b.actual).toFixed(1) + '"><title>' +
+             esc("bin " + b.bin + ": n " + b.n + ", predicted " + num(b.pred, 3) +
+                 ", actual " + num(b.actual, 3)) + "</title></circle>");
+    });
+    s.push('<text class="bt-svg-axis" x="' + (L + pw / 2) + '" y="' + (H - 0.5) +
+           '" text-anchor="middle">predicted</text>');
+    s.push('<text class="bt-svg-axis" transform="rotate(-90 9 ' + (T + ph / 2) +
+           ')" x="9" y="' + (T + ph / 2) + '" text-anchor="middle">actual</text>');
+    s.push("</svg>");
+    var ns = (bins || []).map(function (b) { return b ? (b.n || 0) : 0; }).join(", ");
+    return '<div class="bt-chart">' + s.join("") +
+      '<div class="bt-clock-fine">Dots above the diagonal resolved more often ' +
+      "than predicted; below it, less. Bin n, low bin to high: " + esc(ns) +
+      ". Hover a dot for its bin.</div></div>";
+  }
+
+  // The per-market branch exists so the day the learning artifact grows
+  // per-market bins the curves appear with no client change; today it does
+  // not carry them and the pooled curve says so out loud.
+  function reliabilityBlock(L) {
+    var cal = (L || {}).calibration || null;
+    if (!cal) {
+      return chartAbsent("Reliability curve", auxMissing("learning"));
+    }
+    var bym = (L || {}).by_market || {};
+    var withBins = Object.keys(bym).filter(function (k) {
+      return ((bym[k] || {}).bins || []).length;
+    });
+    if (withBins.length) {
+      return withBins.map(function (k) {
+        return '<div class="bt-panel-sub">' + esc(k) + "</div>" +
+          reliabilitySVG(bym[k].bins, k);
+      }).join("");
+    }
+    return reliabilitySVG(cal.bins, "pooled") +
+      note("Pooled across the three markets: data/betting_learning.json " +
+        "carries per-market summaries without per-market bins, so a " +
+        "per-market curve is not drawable yet. The day the artifact grows " +
+        "them, this panel splits on its own.");
+  }
+
+  // The Brier trend against the 0.25 coin line, from the learning history.
+  // Rendered here for the first time anywhere: the history rows have carried
+  // calibration_brier since the artifact existed and nothing plotted them.
+  function brierTrendSVG(history) {
+    var pts = [];
+    (history || []).forEach(function (h) {
+      if (h && h.calibration_brier != null) {
+        pts.push({ date: h.date || "", v: Number(h.calibration_brier),
+                   n: h.calibration_n_settled });
+      }
+    });
+    if (pts.length < 2) {
+      return chartAbsent("Brier trend",
+        "the learning history holds " + pts.length + " usable nightly row(s) " +
+        "and a trend needs at least 2; the nightly build appends one per day.");
+    }
+    var W = 320, H = 150, L = 40, B = 20, T = 8, R = 10;
+    var pw = W - L - R, ph = H - T - B;
+    var vals = pts.map(function (p) { return p.v; }).concat([0.25]);
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var pad = Math.max(0.005, (hi - lo) * 0.15);
+    lo -= pad; hi += pad;
+    function X(i) { return L + (pts.length === 1 ? 0 : (i / (pts.length - 1)) * pw); }
+    function Y(v) { return T + (1 - (v - lo) / (hi - lo)) * ph; }
+    var s = ['<svg class="bt-svg bt-svg-trend" viewBox="0 0 ' + W + " " + H +
+             '" role="img" aria-label="calibration Brier by night against the ' +
+             '0.25 coin line">'];
+    s.push('<line class="bt-svg-goldref" x1="' + L + '" y1="' + Y(0.25) +
+           '" x2="' + (W - R) + '" y2="' + Y(0.25) +
+           '"><title>0.25: a coin scores this</title></line>');
+    s.push('<text class="bt-svg-axis" x="' + (W - R) + '" y="' + (Y(0.25) - 3) +
+           '" text-anchor="end">coin 0.25</text>');
+    var path = pts.map(function (p, i) {
+      return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(p.v).toFixed(1);
+    }).join(" ");
+    s.push('<path class="bt-svg-line" d="' + path + '"/>');
+    pts.forEach(function (p, i) {
+      s.push('<circle class="bt-svg-dot" r="4" cx="' + X(i).toFixed(1) +
+             '" cy="' + Y(p.v).toFixed(1) + '"><title>' +
+             esc(p.date + ": Brier " + num(p.v, 5) +
+                 (p.n != null ? " on " + p.n + " settled sides" : "")) +
+             "</title></circle>");
+    });
+    s.push('<text class="bt-svg-axis" x="' + (L - 4) + '" y="' + (Y(hi - 0) + 3) +
+           '" text-anchor="end">' + num(hi, 3) + "</text>");
+    s.push('<text class="bt-svg-axis" x="' + (L - 4) + '" y="' + (Y(lo) + 3) +
+           '" text-anchor="end">' + num(lo, 3) + "</text>");
+    s.push('<text class="bt-svg-axis" x="' + L + '" y="' + (H - 6) + '">' +
+           esc(pts[0].date) + "</text>");
+    s.push('<text class="bt-svg-axis" x="' + (W - R) + '" y="' + (H - 6) +
+           '" text-anchor="end">' + esc(pts[pts.length - 1].date) + "</text>");
+    s.push("</svg>");
+    return '<div class="bt-chart">' + s.join("") +
+      '<div class="bt-clock-fine">Every priced side, both sides of every ' +
+      "market, scored on the binary outcome. Below the gold line is better " +
+      "than a coin; above it is worse. Hover a dot for its night.</div></div>";
+  }
+
+  function brierTrendBlock() {
+    var art = aux("learning");
+    if (!art) {
+      return chartAbsent("Brier trend", auxMissing("learning"));
+    }
+    return brierTrendSVG(art.history);
+  }
+
+  // One SVG progress bar, the shared mark for the three clocks. The track
+  // and fill are 14px tall with the percentage as text beside them, so the
+  // bar never has to be read by eye alone.
+  function svgProgress(have, need, cls) {
+    if (have == null || !need) return "";
+    var f = Math.max(0, Math.min(1, Number(have) / Number(need)));
+    var W = 220, H = 14;
+    return '<svg class="bt-svg bt-svg-meter" viewBox="0 0 ' + (W + 54) + " " + H +
+      '" role="img" aria-label="' + esc(have + " of " + need) + '">' +
+      '<rect class="bt-svg-track" x="0.5" y="0.5" width="' + (W - 1) +
+      '" height="' + (H - 1) + '"/>' +
+      '<rect class="' + (cls || "bt-svg-fill") + '" x="1" y="1" width="' +
+      Math.max(0, (W - 2) * f).toFixed(1) + '" height="' + (H - 2) +
+      '"><title>' + esc(have + " of " + need) + "</title></rect>" +
+      '<text class="bt-svg-axis" x="' + (W + 6) + '" y="' + (H - 3) + '">' +
+      esc(pct(f, 1)) + "</text></svg>";
+  }
   // Everything here used to be buried under a <details> on the pick tab or
   // absent entirely. It is the trust surface, so it gets its own tab and it
   // LEADS with the result rather than with the method.
@@ -1165,13 +1340,17 @@
     var keys = Object.keys(tags).sort();
     rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
       '<thead><tr><th class="bt-l">Tag</th><th>Settled</th><th>Need</th>' +
+      '<th class="bt-l">Progress</th>' +
       "<th>Per day</th><th>Days at that rate</th><th>State</th></tr></thead><tbody>" +
       keys.map(function (k) {
         var t = tags[k] || {};
         var r = t.rate || {}, e = t.eta || {};
+        var need = (t.need == null ? c.need_per_tag : t.need);
         return '<tr><td class="bt-l">' + esc(k) + "</td><td>" +
           (t.have == null ? "-" : t.have) + "</td><td>" +
-          (t.need == null ? (c.need_per_tag == null ? "-" : c.need_per_tag) : t.need) +
+          (need == null ? "-" : need) +
+          '</td><td class="bt-l bt-cell-meter">' +
+          (svgProgress(t.have, need) || '<span class="bt-dim">-</span>') +
           "</td><td>" + num(r.per_day, 3) + "</td><td>" +
           (e.days == null ? "-" : e.days) + "</td><td>" +
           '<span class="bt-tag ' + (t.ready ? "bt-tag-ok" : "bt-tag-warn") + '">' +
@@ -1182,15 +1361,64 @@
     return '<div class="bt-clock">' + rows.join("") + "</div>";
   }
 
-  // A bar, not a chart library. Width is a percentage of the served need, and
-  // it is clamped at 100 so an overshoot cannot render past its own box.
+  // The clock meter, an SVG progress bar since A6 (2026-08-16). Clamped at
+  // 100 so an overshoot cannot render past its own box; the percentage rides
+  // as text beside the bar so nothing is read by eye alone.
   function meter(have, need) {
-    if (have == null || !need) return "";
+    var bar = svgProgress(have, need);
+    if (!bar) return "";
     var f = Math.max(0, Math.min(1, Number(have) / Number(need)));
-    return '<div class="bt-meter" role="img" aria-label="' +
-      esc(have + " of " + need) + '"><span class="bt-meter-fill" style="width:' +
-      (f * 100).toFixed(1) + '%"></span></div>' +
+    return '<div class="bt-meter">' + bar + "</div>" +
       '<div class="bt-clock-fine">' + pct(f, 1) + " of the way there</div>";
+  }
+
+  // Clock C: the GRADABLE pool behind Clock A. Not a third gate: it counts
+  // completed games a dated snapshot can price at all, which is the ceiling
+  // on what Clock A can ever grade. The learning artifact carries no clock
+  // for it, so the rate and ETA say so instead of being invented.
+  function clockGradable() {
+    var L = ((aux("learning") || {}).latest) || {};
+    var c = (L.clocks || {}).gradable_games || null;
+    var vs = (L.clocks || {}).vintage_sample || null;
+    var v = vstate();
+    var vin = (v || {}).vintage || {};
+    // A fallback CHAIN, not a pick: the learning artifact's own clock first,
+    // its vintage_sample block second, the payload's vintage block last, so a
+    // count that exists anywhere served still draws.
+    var have = c && c.have != null ? c.have : null;
+    if (have == null && vs && vs.n_gradable != null) have = vs.n_gradable;
+    if (have == null && vin.n_gradable != null) have = vin.n_gradable;
+    var need = c && c.need != null ? c.need : null;
+    if (need == null && vs && vs.need != null) need = vs.need;
+    if (need == null && vin.min_graded_games_for_min_edge != null) {
+      need = vin.min_graded_games_for_min_edge;
+    }
+    var rows = ['<div class="bt-clock-hd">Clock C &middot; gradable games (the pool)</div>',
+      '<div class="bt-clock-q">How many completed games does a dated snapshot ' +
+      "cover at all? Clock A can never grade past this.</div>"];
+    if (have == null) {
+      rows.push(chartAbsent("Gradable pool",
+        "neither the learning artifact nor the payload reports n_gradable, " +
+        "so there is no count to draw; it appears once either carries the " +
+        "vintage block."));
+      return '<div class="bt-clock">' + rows.join("") + "</div>";
+    }
+    rows.push('<div class="bt-clock-n">' + have +
+      ' <span class="bt-clock-need">of ' + (need == null ? "-" : need) + "</span></div>");
+    rows.push(meter(have, need));
+    var rate = (c || {}).rate || null;
+    var eta = (c || {}).eta || null;
+    rows.push('<div class="bt-kv">' +
+      kv("Measured arrivals per day", rate ? num(rate.per_day, 2)
+        : "not measured yet, because the learning artifact carries no " +
+          "gradable_games clock; the count above rides on the vintage_sample " +
+          "block") +
+      kv("Days at that rate", eta && eta.days != null ? eta.days : "not projected") +
+      "</div>");
+    rows.push('<div class="bt-clock-fine">Not a gate: gates read Clock A and ' +
+      "Clock B. This is the supply line, and a pool below the Clock A bar " +
+      "caps the graded count no matter how fast grading runs.</div>");
+    return '<div class="bt-clock">' + rows.join("") + "</div>";
   }
 
   function clocksPanel() {
@@ -1199,8 +1427,9 @@
       "<p>One counts GAMES the model was graded on out of sample. The other counts " +
       "SETTLED PAPER BETS, one row per selection rule. They open different gates and " +
       "they may never be added together: nobody is waiting on 600 bets, and nobody is " +
-      "waiting on 100 games.</p>" +
-      '<div class="bt-clocks">' + clockA() + clockB() + "</div></div>";
+      "waiting on 100 games. The third card is the gradable POOL behind Clock A, " +
+      "shown because it is the ceiling on the first clock and belongs beside it.</p>" +
+      '<div class="bt-clocks">' + clockA() + clockB() + clockGradable() + "</div></div>";
   }
 
   function calibrationPanel() {
@@ -1218,6 +1447,11 @@
       kv("Slate days", cal.n_slate_days == null ? "-" : cal.n_slate_days) +
       kv("Brier", num(cal.brier, 6)) +
       kv("Log loss", num(cal.log_loss, 6)) + "</div>");
+    // A6 (2026-08-16): the picture beside the numbers, never instead of them.
+    rows.push('<div class="bt-panel-sub">Reliability curve</div>');
+    rows.push(reliabilityBlock(L));
+    rows.push('<div class="bt-panel-sub">Brier by night, against the coin</div>');
+    rows.push(brierTrendBlock());
     rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
       '<thead><tr><th class="bt-l">Bin</th><th>n</th><th>Predicted</th><th>Actual</th>' +
       "<th>|pred - actual|</th></tr></thead><tbody>" +
@@ -1256,6 +1490,68 @@
         "shape error is visible. n is " + (any.n == null ? "-" : any.n) +
         " canonical rows per market, which is not enough to conclude anything from."));
     }
+    return '<div class="bt-panel">' + rows.join("") + "</div>";
+  }
+
+  // THE BENCHMARK LADDER (A6, 2026-08-16), read off the eval artifact's
+  // benchmarks block. Sorted by measured Brier, best first, over the tiers
+  // graded on the FULL window, so the order is data, not authorship; on the
+  // current artifact the model sits LAST and the panel says so rather than
+  // burying it. The subsample tier renders apart with its same_games block
+  // (the only comparison a subsample may appear in) and an unmeasured tier
+  // renders its own status sentence instead of a number it does not have.
+  function benchmarkPanel() {
+    var e = aux("evald") || {};
+    var b = e.benchmarks || null;
+    var rows = ['<div class="bt-panel-hd">The benchmark ladder</div>'];
+    if (!b || !b.tiers) {
+      rows.push(chartAbsent("Benchmark ladder",
+        (auxState("evald") === "ok"
+          ? "data/betting_model_eval.json carries no benchmarks block; it " +
+            "appears the first time the nightly eval runs with the ladder lane in."
+          : auxMissing("evald"))));
+      return '<div class="bt-panel">' + rows.join("") + "</div>";
+    }
+    var w = b.window || {};
+    var full = [], sub = [], unmeasured = [];
+    Object.keys(b.tiers).forEach(function (k) {
+      var t = b.tiers[k] || {};
+      var row = { key: k, n: t.n, brier: t.brier, t: t };
+      if (!t.n || t.brier == null) unmeasured.push(row);
+      else if (w.n != null && t.n < w.n) sub.push(row);
+      else full.push(row);
+    });
+    full.sort(function (a, c) { return a.brier - c.brier; });
+    var modelLast = full.length && full[full.length - 1].key === "model_vintage";
+    rows.push("<p>Every tier scored on the same " + (w.n == null ? "-" : w.n) +
+      "-game vintage eval window (from " + esc(w.first_date || "-") + " to " +
+      esc(w.last_date || "-") + "). Lower Brier is better." +
+      (modelLast ? " <strong>The model is last on this window, and that is " +
+        "the point of publishing the ladder.</strong>" : "") + "</p>");
+    rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
+      '<thead><tr><th class="bt-l">Tier</th><th>Games</th><th>Brier</th>' +
+      '<th class="bt-l">Basis</th></tr></thead><tbody>' +
+      full.map(function (r) {
+        var isModel = r.key === "model_vintage";
+        return '<tr' + (isModel ? ' class="bt-bestrow"' : "") + '><td class="bt-l">' +
+          esc(r.key) + (isModel ? ' <span class="bt-tag bt-tag-warn">the model</span>' : "") +
+          "</td><td>" + r.n + "</td><td>" + num(r.brier, 5) +
+          '</td><td class="bt-l bt-gate-need">' + esc(r.t.source || "") + "</td></tr>";
+      }).join("") + "</tbody></table></div>");
+    sub.forEach(function (r) {
+      var sg = r.t.same_games || {};
+      rows.push('<div class="bt-panel-sub">' + esc(r.key) + ", a subsample (" +
+        r.n + " of " + (w.n == null ? "-" : w.n) + " games)</div>");
+      rows.push("<p>" + esc(r.t.subsample_note || "") + " Its Brier (" +
+        num(r.brier, 5) + ") may only be compared inside its own same-games " +
+        "block: model " + num(sg.model, 5) + ", home constant " +
+        num(sg.home_constant, 5) + ", elo " + num(sg.elo_literature, 5) + ".</p>");
+    });
+    unmeasured.forEach(function (r) {
+      rows.push(chartAbsent(r.key,
+        r.t.status || "n is 0, so this tier has no number and no claim."));
+    });
+    if (b.claim_rule) rows.push(note(esc(b.claim_rule)));
     return '<div class="bt-panel">' + rows.join("") + "</div>";
   }
 
@@ -1355,6 +1651,7 @@
       "</div>");
     out.push(validationPanel());
     out.push(calibrationPanel());
+    out.push(benchmarkPanel());
     out.push(dispersionPanel());
     if (v && v.generated_at) {
       out.push('<div class="bt-asof">Validation state read from ' +
@@ -1370,9 +1667,79 @@
   // moved to its own tab. What is here is the record itself, the closing-line
   // grade on the positions in it, and the pre-registered list of conditions a
   // pick has to clear before it may enter the record at all.
+  // ROI BY TAG (A6, 2026-08-16), horizontal SVG bars off the learning
+  // artifact's shadow_by_tag block, on the Record tab BECAUSE that is where a
+  // reader hunts for a track record, labelled "paper bets, not the record" in
+  // the heading so the placement cannot mislead. Polarity encoding: the
+  // page's own green/red for positive/negative, with the tag name and the
+  // number as text on every bar, never colour alone. The tags stay separate
+  // for the section 7a reason: a pooled ROI measures a mixture nobody bet.
+  function roiByTagPanel() {
+    var L = ((aux("learning") || {}).latest) || {};
+    var byTag = L.shadow_by_tag || null;
+    var rows = ['<div class="bt-panel-hd">ROI by selection rule (paper bets, ' +
+                "not the record)</div>"];
+    if (!byTag) {
+      rows.push(chartAbsent("ROI by tag",
+        (auxState("learning") === "ok"
+          ? "data/betting_learning.json carries no shadow_by_tag block yet; " +
+            "it appears once the nightly build runs with the shadow summary in."
+          : auxMissing("learning"))));
+      return '<div class="bt-panel">' + rows.join("") + "</div>";
+    }
+    var keys = Object.keys(byTag).sort();
+    var meas = keys.filter(function (k) { return (byTag[k] || {}).roi != null; });
+    if (!meas.length) {
+      rows.push(chartAbsent("ROI by tag",
+        "no tag has a settled paper row yet, so no ROI is computable; the " +
+        "ledger settles as games finish."));
+      return '<div class="bt-panel">' + rows.join("") + "</div>";
+    }
+    var maxAbs = 0;
+    meas.forEach(function (k) {
+      maxAbs = Math.max(maxAbs, Math.abs(byTag[k].roi));
+    });
+    maxAbs = maxAbs || 1;
+    var W = 340, RH = 22, LBL = 96, MID = LBL + (W - LBL) / 2;
+    var H = meas.length * RH + 16;
+    var s = ['<svg class="bt-svg bt-svg-roi" viewBox="0 0 ' + (W + 60) + " " + H +
+             '" role="img" aria-label="paper-bet ROI per selection rule">'];
+    s.push('<line class="bt-svg-grid" x1="' + MID + '" y1="2" x2="' + MID +
+           '" y2="' + (H - 14) + '"/>');
+    s.push('<text class="bt-svg-axis" x="' + MID + '" y="' + (H - 4) +
+           '" text-anchor="middle">0%</text>');
+    meas.forEach(function (k, i) {
+      var t = byTag[k];
+      var y = i * RH + 3;
+      var half = (W - LBL) / 2 - 2;
+      var w = Math.min(half, Math.abs(t.roi) / maxAbs * half);
+      var x = t.roi < 0 ? MID - w : MID;
+      var tip = k + ": " + t.won + "-" + t.lost + (t.push ? "-" + t.push : "") +
+        ", " + signed(t.net_units, 2) + "u, ROI " + pct(t.roi, 1) +
+        " on " + t.n_settled + " settled paper bets";
+      s.push('<text class="bt-svg-axis" x="' + (LBL - 4) + '" y="' + (y + RH / 2 + 2) +
+             '" text-anchor="end">' + esc(k) + "</text>");
+      s.push('<rect class="' + (t.roi < 0 ? "bt-svg-neg" : "bt-svg-pos") +
+             '" x="' + x.toFixed(1) + '" y="' + y + '" width="' +
+             Math.max(1, w).toFixed(1) + '" height="' + (RH - 5) +
+             '"><title>' + esc(tip) + "</title></rect>");
+      s.push('<text class="bt-svg-axis" x="' + (W + 4) + '" y="' + (y + RH / 2 + 2) +
+             '">' + esc(pct(t.roi, 1)) + "</text>");
+    });
+    s.push("</svg>");
+    rows.push('<div class="bt-chart">' + s.join("") + "</div>");
+    rows.push(note("<strong>Paper bets, not the record.</strong> These are the " +
+      "shadow ledger's settled paper rows per selection rule, at the prices " +
+      "actually on the board, and nothing here was ever a published " + selNoun() +
+      ". The tags are never pooled: each rule selects on a different quantity, " +
+      "so a combined ROI would measure a mixture nobody bet."));
+    return '<div class="bt-panel">' + rows.join("") + "</div>";
+  }
+
   function renderRecord() {
     var d = S.data;
-    return recordPanel(d ? d.record : null) + clvPanel() + publishBlockerPanel() +
+    return recordPanel(d ? d.record : null) + clvPanel() + roiByTagPanel() +
+      publishBlockerPanel() +
       '<div class="bt-panel"><div class="bt-panel-hd">How a ' + selNoun() +
       " gets graded</div>" +
       "<p>Every published " + selNoun() + " carries the timestamp, the book, the " +
@@ -1617,7 +1984,12 @@
       }
       rows.push(note("CLV is unrecoverable after the fact. A slate whose close was never " +
         "captured can never be graded, whatever runs tomorrow, which is why the feed strip " +
-        "at the top of this page leads with it."));
+        "at the top of this page leads with it. The repair is concrete: install the close " +
+        "cron (deploy/betting-crontab.example via crontab -e on the box, or " +
+        "deploy\\betting-close-task.ps1 -Register on Windows) and verify the scheduler " +
+        "reaches it with <code>python tools/betting_close_job.py --selfcheck</code>; " +
+        "NEVER RUN from that command means no cron or task is installed, however " +
+        "finished the code is."));
     }
     return '<div class="bt-panel">' + rows.join("") + "</div>";
   }
@@ -1911,6 +2283,95 @@
   }
 
   // ---- section: props -------------------------------------------------------
+  // THE VALUE SUB-TABLE (A5b, 2026-08-16). Lives INSIDE the existing props
+  // tab: the eight-tab contract is untouched. It reads the served props_value
+  // block and renders one of three honest states: value rows under the same
+  // provisional treatment as the team slots, a priced-but-nothing-cleared
+  // census, or the unarmed state naming BOTH environment variables the pull
+  // is gated on, so an empty section always says which switch is off.
+  var PROPS_MARKET_LABELS = {
+    props_pitcher_strikeouts: "pitcher strikeouts",
+    props_batter_total_bases: "batter total bases",
+    props_batter_hits: "batter hits",
+    props_batter_home_runs: "batter home runs"
+  };
+
+  function propsValueBlock() {
+    var d = S.data || {};
+    var pv = d.props_value || null;
+    var out = ['<div class="bt-panel-sub" id="bt-props-value">Value against the books</div>'];
+    if (!pv) {
+      out.push(note("This payload predates the props value lane, so there is " +
+        "no props_value block to read. It appears on the next build."));
+      return out.join("");
+    }
+    var floor = pv.floor || {};
+    var floorTxt = floorText({ min_edge: floor.min_edge,
+                               provisional: floor.provisional === false ? false : true });
+    var nPriced = (pv.rows || []).length || pv.n_rows || 0;
+    if (!nPriced && !(pv.value_rows || []).length) {
+      if (!pv.armed && pv.inert_reason) {
+        out.push(note("<strong>No book side exists to compare against.</strong> " +
+          esc(pv.inert_reason) + " Until then this section prices nothing, " +
+          "spends nothing, and the fair lines below stand on their own."));
+      } else {
+        out.push(note("Armed, but no per-event props snapshot is cached for " +
+          "this slate, so there is nothing to price. The pull selects " +
+          esc(String(pv.max_games_per_day)) + " game(s) a day: " +
+          esc(pv.selection_rule || "") + "."));
+      }
+      return out.join("");
+    }
+    var rows = pv.value_rows || [];
+    if (!rows.length) {
+      out.push(note("<strong>" + pv.n_rows + " props side(s) priced and none " +
+        "cleared " + floorTxt + ".</strong> The floor is the same one the " +
+        "team slots clear, never a lower one invented so this table has " +
+        "something in it. An empty table is the honest answer."));
+      return out.join("");
+    }
+    out.push(note("Watch-frame rows, same treatment as the team slots: each " +
+      "cleared " + floorTxt + " against a real book price. " +
+      gl("Edge", "bet_edge") + " is model minus the de-vigged fair from the " +
+      "minimum-hold book on the consensus line. Nothing here is advice."));
+    out.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
+      '<thead><tr><th class="bt-l">Player</th><th class="bt-l">Market</th>' +
+      "<th>Line</th><th class=\"bt-l\">Side</th><th>Price</th><th>Model</th>" +
+      "<th>Fair</th><th>Edge</th><th>EV/u</th><th>&frac14; Kelly</th></tr></thead><tbody>" +
+      rows.map(function (r) {
+        var cls = r.edge == null ? "" : (r.edge > 0 ? " bt-pos" : " bt-neg");
+        return '<tr><td class="bt-l">' + esc(r.player || "") +
+          ' <span class="bt-tag bt-tag-warn bt-prov">provisional</span></td>' +
+          '<td class="bt-l">' + esc(PROPS_MARKET_LABELS[r.market] || r.market || "") +
+          "</td><td>" + (r.line == null ? "-" : esc(String(r.line))) + "</td>" +
+          '<td class="bt-l">' + esc(r.side || "") + "</td>" +
+          "<td>" + fmtOdds(r.odds) + (r.book ? ' <span class="bt-dim">' +
+            esc(r.book) + "</span>" : "") + "</td>" +
+          "<td>" + pct(r.model_prob) + "</td>" +
+          "<td>" + pct(r.market_fair_prob) + "</td>" +
+          '<td class="' + cls + '">' + (r.edge == null ? "-"
+            : signed(r.edge * 100, 1) + "%") + "</td>" +
+          '<td class="' + cls + '">' + (r.ev_per_unit == null ? "-"
+            : signed(r.ev_per_unit, 3)) + "</td>" +
+          "<td>" + (r.kelly_quarter == null ? "-" : pct(r.kelly_quarter, 1)) +
+          "</td></tr>";
+      }).join("") + "</tbody></table></div>");
+    if (r0Push(rows)) {
+      out.push('<div class="bt-hold">' + r0Push(rows) + "</div>");
+    }
+    return out.join("");
+  }
+
+  // The first whole-number props line's push sentence, through the same
+  // pushText the team board uses, so the two surfaces cannot phrase it apart.
+  function r0Push(rows) {
+    for (var i = 0; i < rows.length; i++) {
+      var t = pushText(rows[i], "the Model column", "the EV/u column");
+      if (t) return t;
+    }
+    return "";
+  }
+
   function renderProps() {
     var d = S.data;
     if (!d) return empty("No props loaded", "The betting payload has not been built yet.");
@@ -1918,7 +2379,10 @@
     var head = note("<strong>Model fair lines, no book comparison.</strong> " +
       esc(pf.no_book_comparison_reason || ""));
     if (!(pf.pitchers || []).length && !(pf.hitters || []).length) {
-      return head + empty("No props to price", "No slate is loaded.");
+      // The value block still renders: its unarmed state names the two
+      // environment variables, and that answer holds on an empty slate too.
+      return head + empty("No props to price", "No slate is loaded.") +
+        '<div class="bt-panel">' + propsValueBlock() + "</div>";
     }
     var meth = pf.method || {};
     var out = [head];
@@ -1926,7 +2390,8 @@
       kv("Pitchers", esc(meth.pitchers || "-")) +
       kv("Hitters", esc(meth.hitters || "-")) +
       kv("Lineups", esc(meth.lineup_assumption || "-")) +
-      kv("Distribution", esc(meth.distribution || "-")) + "</div></div>");
+      kv("Distribution", esc(meth.distribution || "-")) + "</div>" +
+      propsValueBlock() + "</div>");
 
     out.push('<div class="bt-subhd">Starting pitchers</div>');
     out.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr><th class="bt-l">Pitcher</th><th>Opp</th>' +
@@ -2833,9 +3298,31 @@
     ".bt-clock-n{font:700 26px/1 var(--font-retro,monospace);color:var(--text-primary)}",
     ".bt-clock-need{font-size:13px;color:var(--text-tertiary);font-weight:400}",
     ".bt-clock-fine{font-size:11px;color:var(--text-tertiary);margin-top:4px}",
-    ".bt-meter{height:8px;border:1px solid var(--border,#333);margin:8px 0 2px;background:var(--bg-secondary)}",
+    ".bt-meter{margin:8px 0 2px;max-width:280px}",
     ".bt-meter-fill{display:block;height:100%;background:var(--accent-cyan,#2a7)}",
     ".bt-bar{display:inline-block;height:9px;min-width:1px;background:var(--accent-cyan,#2a7)}",
+    // ---- the inline SVG charts (A6) ----------------------------------------
+    // Tokens only, through classes, in the page's own dialect: cyan is the
+    // one data series, green/red is the polarity pair the tables already use,
+    // gold is the reference the reader must not miss, and grid/axis text wear
+    // the recessive tokens. Marks are 2px lines and 8px dots.
+    ".bt-chart{margin:8px 0}",
+    ".bt-svg{display:block;max-width:100%;height:auto}",
+    ".bt-svg-rel,.bt-svg-trend{max-width:360px}",
+    ".bt-svg-roi{max-width:420px}",
+    ".bt-svg-line{stroke:var(--accent-cyan,#2a7);stroke-width:2;fill:none;stroke-linejoin:round}",
+    ".bt-svg-dot{fill:var(--accent-cyan,#2a7);stroke:var(--bg-secondary,#111);stroke-width:2}",
+    ".bt-svg-ref{stroke:var(--text-tertiary,#888);stroke-width:1;stroke-dasharray:4 3}",
+    ".bt-svg-goldref{stroke:var(--accent-gold,#a80);stroke-width:1.5;stroke-dasharray:5 3}",
+    ".bt-svg-grid{stroke:var(--border-light,#222);stroke-width:1}",
+    ".bt-svg-axis{fill:var(--text-tertiary,#888);font:600 9px var(--font-retro,monospace)}",
+    ".bt-svg-track{fill:var(--bg-primary,transparent);stroke:var(--border,#333)}",
+    ".bt-svg-fill{fill:var(--accent-cyan,#2a7)}",
+    ".bt-svg-pos{fill:var(--accent-green,#3a9)}",
+    ".bt-svg-neg{fill:var(--accent-red,#c55)}",
+    ".bt-cell-meter .bt-svg{max-width:130px;display:inline-block;vertical-align:middle}",
+    ".bt-chart-absent{border:1px dashed var(--border,#333);padding:8px 10px;margin:8px 0;font-size:12px;color:var(--text-secondary)}",
+    ".bt-chart-absent strong{color:var(--text-primary)}",
     ".bt-sha{font:600 10px/1 var(--font-retro-mono,var(--font-retro,monospace));color:var(--text-secondary);word-break:break-all}",
     ".bt-unpriced{white-space:normal}",
     // ---- <= 640px ----------------------------------------------------------

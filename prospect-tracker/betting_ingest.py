@@ -17,11 +17,21 @@ CREDIT ARITHMETIC (this is why the shape of the call is fixed):
     total                       ~186 of 500, with headroom for retries and
                                 for the odd manual pull.
 
-Player props are NOT pulled. They live behind the per-event endpoint
-(/v4/sports/{sport}/events/{eventId}/odds), which costs credits PER EVENT: a
-15-game slate with two prop markets is 30 credits a day, which burns the free
-tier in about two weeks. The module ships MODEL FAIR LINES for props instead,
-with no book comparison, until a paid tier is approved (see docs/diamond-betting.md).
+Player props are NOT pulled on the daily snapshot. They live behind the
+per-event endpoint (/v4/sports/{sport}/events/{eventId}/odds), which costs
+credits PER EVENT: a 15-game slate with two prop markets is 30 credits a day,
+which burns the free tier in about two weeks. The module ships MODEL FAIR
+LINES for props instead, with no book comparison, until a paid tier is
+approved (see docs/diamond-betting.md).
+
+PROPS MODE (2026-08-16, docs/diamond-betting.md section 7c, pre-registered).
+`run("props", event_ids=[...])` pulls the four owner-approved prop markets for
+a HAND-PICKED few events, and it is DOUBLE-ARMED: it fires only when BOTH
+EEPHUS_ODDS_API_KEY and EEPHUS_PROPS_CREDITS (the owner's monthly props
+credit cap) are set. Either one absent leaves the machinery inert with the
+reason in the status sidecar. Spend is metered in
+.cache/odds/props_spend.json per calendar month and the guard runs BEFORE
+every request: a pull that would breach the cap is refused, not reconciled.
 
 WHAT THIS MODULE DOES
     * With EEPHUS_ODDS_API_KEY set: one snapshot of the MLB board, written
@@ -78,6 +88,30 @@ KINDS = ("open", "close")
 
 _SNAP_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})-(\d{4})\.json$")
 
+# ---------------------------------------------------------------------------
+# props mode (2026-08-16, docs/diamond-betting.md section 7c)
+# ---------------------------------------------------------------------------
+#: The four owner-approved prop markets. Key names verified against The Odds
+#: API market list (the-odds-api.com/sports-odds-data/betting-markets.html) on
+#: 2026-08-16; they are the documented MLB player-prop keys, not guesses.
+PROPS_MARKETS = ("pitcher_strikeouts", "batter_total_bases",
+                 "batter_hits", "batter_home_runs")
+
+#: The SECOND arming variable. The team key alone is the 500-credit team
+#: budget; props bill per event against a SEPARATE owner-approved monthly
+#: number, and the machinery never assumes one.
+ENV_PROPS_CREDITS = "EEPHUS_PROPS_CREDITS"
+
+#: The props snapshot kind. Deliberately NOT in KINDS: write_snapshot's
+#: date-time filename and latest_snapshot's resolution are the team feed's,
+#: and a props capture must never be resolvable as a board snapshot.
+PROPS_KIND = "props"
+
+#: The calendar-month spend ledger the hard guard reads and writes.
+PROPS_SPEND_PATH = CACHE_DIR / "props_spend.json"
+
+_PROPS_SNAP_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})-props-(.+)\.json$")
+
 
 # ---------------------------------------------------------------------------
 # configuration
@@ -98,6 +132,52 @@ def credits_for(markets=MARKETS, regions=REGIONS) -> int:
     """The Odds API bills markets x regions per request. This is the whole
     reason the daily call is 3 credits and not 1."""
     return max(1, len(tuple(markets))) * max(1, len(tuple(regions)))
+
+
+def props_credits_cap() -> int | None:
+    """The owner's monthly props credit cap, or None while it is unset.
+
+    None is a STATE, not a default: docs/diamond-betting.md 7c pre-registers
+    that the machinery never assumes a budget, so an unparseable value is
+    treated as unset (and logged) rather than rounded to anything."""
+    raw = (os.environ.get(ENV_PROPS_CREDITS) or "").strip()
+    if not raw:
+        return None
+    try:
+        cap = int(raw)
+    except ValueError:
+        log.warning("betting_ingest: %s=%r is not an integer; props stay inert",
+                    ENV_PROPS_CREDITS, raw)
+        return None
+    return cap if cap > 0 else None
+
+
+def props_armed() -> bool:
+    """BOTH variables or nothing. See section 7c: the key alone is the team
+    budget, and a cap with no key has nothing to spend."""
+    return configured() and props_credits_cap() is not None
+
+
+def props_disarmed_reason() -> str | None:
+    """The exact sentence the payload carries while props are inert, naming
+    every missing variable so the page never renders an unexplained blank."""
+    missing = []
+    if not configured():
+        missing.append(ENV_KEY)
+    if props_credits_cap() is None:
+        missing.append(ENV_PROPS_CREDITS)
+    if not missing:
+        return None
+    return ("props machinery is inert: " + " and ".join(missing) +
+            (" are" if len(missing) > 1 else " is") + " not set. Both "
+            f"{ENV_KEY} and {ENV_PROPS_CREDITS} must be set before a "
+            "per-event props pull can spend a credit.")
+
+
+def props_credits_for(markets=PROPS_MARKETS, regions=REGIONS) -> int:
+    """Markets x regions PER EVENT: 4 x 1 = 4 credits for every event pulled,
+    which is the whole reason the monthly cap and the hard guard exist."""
+    return credits_for(markets, regions)
 
 
 # ---------------------------------------------------------------------------
@@ -244,6 +324,132 @@ def write_snapshot(payload: list | dict, *, kind: str, when: datetime | None = N
 
 
 # ---------------------------------------------------------------------------
+# props snapshots + the monthly spend ledger (2026-08-16, section 7c)
+# ---------------------------------------------------------------------------
+def props_snapshot_path(event_id: str, when: datetime | None = None) -> Path:
+    when = when or datetime.now(timezone.utc)
+    safe = re.sub(r"[^A-Za-z0-9_-]", "_", str(event_id))
+    return CACHE_DIR / f"{when.strftime('%Y-%m-%d')}-props-{safe}.json"
+
+
+def list_props_snapshots(on_date: str | None = None) -> list[dict]:
+    """[{path, date, event_id}] for every cached props capture, oldest first.
+    A separate walk from list_snapshots on purpose: the team name pattern does
+    not match these files and must never start to."""
+    if not CACHE_DIR.exists():
+        return []
+    out = []
+    for p in sorted(CACHE_DIR.glob("*-props-*.json")):
+        m = _PROPS_SNAP_NAME.match(p.name)
+        if not m:
+            continue
+        if on_date and m.group(1) != on_date:
+            continue
+        out.append({"path": p, "date": m.group(1), "event_id": m.group(2)})
+    return out
+
+
+def write_props_snapshot(payload: dict, *, event_id: str,
+                         when: datetime | None = None,
+                         credits: dict | None = None) -> Path:
+    """One per-event props capture, immutable like every other snapshot: an
+    existing file is a hard stop because it is odds-at-post evidence, and for
+    props it is also SPENT MONEY that a rewrite would double-charge."""
+    when = when or datetime.now(timezone.utc)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    path = props_snapshot_path(event_id, when)
+    if path.exists():
+        raise FileExistsError(
+            f"props snapshot {path.name} already exists; snapshots are "
+            "immutable and this event's credits are already spent today")
+    wrapper = {
+        "captured_at": when.replace(microsecond=0).isoformat(),
+        "kind": PROPS_KIND,
+        "sport": SPORT_KEY,
+        "event_id": str(event_id),
+        "markets": list(PROPS_MARKETS),
+        "regions": list(REGIONS),
+        "odds_format": ODDS_FORMAT,
+        "credits": credits or {},
+        "event": payload,
+    }
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(wrapper), encoding="utf-8")
+    tmp.replace(path)
+    return path
+
+
+def _props_month(when: datetime | None = None) -> str:
+    return (when or datetime.now(timezone.utc)).strftime("%Y-%m")
+
+
+def load_props_spend(path: Path | None = None,
+                     when: datetime | None = None) -> dict:
+    """The CURRENT month's spend row. A new month starts at zero; the old
+    months stay in `history` so the arithmetic can be audited later."""
+    p = Path(path or PROPS_SPEND_PATH)
+    month = _props_month(when)
+    obj = None
+    if p.exists():
+        try:
+            obj = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            log.warning("betting_ingest: unreadable %s; the props spend ledger "
+                        "restarts at zero for %s, which is the LOOSE direction, "
+                        "so the monthly cap should be re-checked by hand",
+                        p.name, month)
+    if not isinstance(obj, dict):
+        obj = {"month": month, "spent": 0, "pulls": [], "history": []}
+    if obj.get("month") != month:
+        hist = obj.get("history") or []
+        if obj.get("month"):
+            hist.append({"month": obj.get("month"), "spent": obj.get("spent", 0)})
+        obj = {"month": month, "spent": 0, "pulls": [], "history": hist}
+    obj.setdefault("spent", 0)
+    obj.setdefault("pulls", [])
+    obj.setdefault("history", [])
+    return obj
+
+
+def save_props_spend(ledger: dict, path: Path | None = None) -> None:
+    p = Path(path or PROPS_SPEND_PATH)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(ledger, indent=1), encoding="utf-8")
+    tmp.replace(p)
+
+
+def props_budget_check(next_cost: int, *, cap: int | None = None,
+                       ledger: dict | None = None, path: Path | None = None,
+                       when: datetime | None = None) -> tuple[bool, str]:
+    """(ok, reason) BEFORE a request. The refusal carries the arithmetic,
+    because a guard that only says no cannot be argued with or audited."""
+    cap = cap if cap is not None else props_credits_cap()
+    if cap is None:
+        return False, (f"{ENV_PROPS_CREDITS} is not set; no props budget "
+                       "exists to spend against")
+    led = ledger if ledger is not None else load_props_spend(path, when)
+    spent = int(led.get("spent") or 0)
+    if spent + int(next_cost) > cap:
+        return False, (f"refused BEFORE the request: {spent} of {cap} monthly "
+                       f"props credits are spent and this pull costs "
+                       f"{int(next_cost)}, which would breach the cap")
+    return True, (f"{spent} of {cap} spent this month; this pull costs "
+                  f"{int(next_cost)}")
+
+
+def record_props_spend(cost: int, *, event_id: str, path: Path | None = None,
+                       when: datetime | None = None) -> dict:
+    led = load_props_spend(path, when)
+    led["spent"] = int(led.get("spent") or 0) + int(cost)
+    led["pulls"].append({
+        "at": (when or datetime.now(timezone.utc)).replace(microsecond=0).isoformat(),
+        "event_id": str(event_id), "cost": int(cost)})
+    save_props_spend(led, path)
+    return led
+
+
+# ---------------------------------------------------------------------------
 # the one network call
 # ---------------------------------------------------------------------------
 def fetch_snapshot(*, session=None, timeout: int = 30) -> tuple[list, dict]:
@@ -281,6 +487,39 @@ def _as_int(v):
         return int(v)
     except (TypeError, ValueError):
         return None
+
+
+def fetch_props_event(event_id: str, *, session=None, timeout: int = 30
+                      ) -> tuple[dict, dict]:
+    """(event, credits) from the per-event odds endpoint, PROPS_MARKETS only.
+
+    Raises without a key exactly as fetch_snapshot does. The BUDGET guard is
+    NOT here: it belongs to run("props", ...), before this is ever called,
+    because a fetch function that silently consults a ledger is a fetch
+    function whose cost depends on hidden state."""
+    key = api_key()
+    if not key:
+        raise RuntimeError(f"{ENV_KEY} is not set; refusing to call the odds API")
+    if session is None:
+        import feed_cache
+        session = feed_cache.SESSION
+    url = f"{API_BASE}/sports/{SPORT_KEY}/events/{event_id}/odds"
+    resp = session.get(url, params={
+        "apiKey": key,
+        "regions": ",".join(REGIONS),
+        "markets": ",".join(PROPS_MARKETS),
+        "oddsFormat": ODDS_FORMAT,
+        "dateFormat": "iso",
+    }, timeout=timeout)
+    resp.raise_for_status()
+    headers = getattr(resp, "headers", {}) or {}
+    credits = {
+        "cost": props_credits_for(),
+        "used": _as_int(headers.get("x-requests-used")),
+        "remaining": _as_int(headers.get("x-requests-remaining")),
+        "last": _as_int(headers.get("x-requests-last")),
+    }
+    return resp.json(), credits
 
 
 # ---------------------------------------------------------------------------
@@ -398,6 +637,58 @@ def parse_events(raw) -> list[dict]:
     return out
 
 
+def parse_props_snapshot(raw) -> dict | None:
+    """A per-event props response (or its snapshot wrapper) -> one normalized
+    record. PURE function of bytes, like parse_events, so every test runs on a
+    fixture and never touches the network.
+
+        {event_id, commence_time, home_team, away_team, home_org, away_org,
+         books: {book_key: {title, last_update,
+                            markets: {market_key: {player_name:
+                                {over: {price, point}, under: {price, point}}}}}}}
+
+    The Odds API shapes a props market as Over/Under outcomes whose
+    `description` is the player's name; grouping by that name is what turns a
+    flat outcome list into one two-sided quote per player. A player with only
+    one side at a book is kept as-is; the market-view stage decides what an
+    incomplete quote is worth, exactly as it does for the team markets."""
+    if isinstance(raw, dict) and "event" in raw:
+        raw = raw.get("event")
+    if not isinstance(raw, dict):
+        return None
+    rec = {
+        "event_id": raw.get("id"),
+        "commence_time": raw.get("commence_time"),
+        "home_team": raw.get("home_team"),
+        "away_team": raw.get("away_team"),
+        "home_org": _org(raw.get("home_team")),
+        "away_org": _org(raw.get("away_team")),
+        "books": {},
+    }
+    for bk in raw.get("bookmakers") or []:
+        if not isinstance(bk, dict) or not bk.get("key"):
+            continue
+        entry = {"title": bk.get("title"), "last_update": bk.get("last_update"),
+                 "markets": {}}
+        for mk in bk.get("markets") or []:
+            mkey = (mk or {}).get("key")
+            if mkey not in PROPS_MARKETS:
+                continue
+            players: dict = {}
+            for o in (mk or {}).get("outcomes") or []:
+                side = (o.get("name") or "").lower()
+                player = o.get("description")
+                if side not in ("over", "under") or not player:
+                    continue
+                players.setdefault(player, {})[side] = {
+                    "price": o.get("price"), "point": o.get("point")}
+            if players:
+                entry["markets"][mkey] = players
+        if entry["markets"]:
+            rec["books"][bk["key"]] = entry
+    return rec
+
+
 def best_price(event: dict, market: str, side: str) -> dict | None:
     """The best available American price for one side of one market across the
     books in the snapshot, with the book that posted it.
@@ -456,7 +747,14 @@ def write_status(extra: dict | None = None) -> dict:
         "latest_snapshot": (latest or {}).get("captured_at"),
         "latest_kind": (latest or {}).get("kind"),
         "latest_credits": (latest or {}).get("credits") or {},
-        "props": "model fair lines only; the per-event props endpoint is not on the free-tier budget",
+        "props": ("model fair lines plus the per-event value machinery (section 7c); "
+                  "armed" if props_armed() else
+                  props_disarmed_reason() or "props state unknown"),
+        "props_armed": props_armed(),
+        "props_credits_cap": props_credits_cap(),
+        "props_credits_per_event": props_credits_for(),
+        "props_spent_this_month": (load_props_spend().get("spent")
+                                   if PROPS_SPEND_PATH.exists() else 0),
         "note": ("odds feed not configured: set EEPHUS_ODDS_API_KEY on the build box"
                  if not configured() else "odds feed configured"),
     }
@@ -466,12 +764,22 @@ def write_status(extra: dict | None = None) -> dict:
     return status
 
 
-def run(kind: str = "open", *, session=None, when: datetime | None = None) -> dict:
+def run(kind: str = "open", *, session=None, when: datetime | None = None,
+        event_ids: list | None = None, spend_path: Path | None = None) -> dict:
     """One ingest pass. Returns the status dict it wrote.
 
     Best-effort by construction: an unset key, a dead API, or a duplicate
     snapshot path all degrade to a status sidecar and a log line. This never
-    raises into the pipeline."""
+    raises into the pipeline.
+
+    kind="props" is the per-event mode (2026-08-16, section 7c): one request
+    per event in `event_ids`, PROPS_MARKETS only, DOUBLE-ARMED on
+    EEPHUS_ODDS_API_KEY and EEPHUS_PROPS_CREDITS, and the monthly budget
+    guard runs BEFORE every single request. `spend_path` is injectable so the
+    guard is testable without touching the real ledger."""
+    if kind == PROPS_KIND:
+        return _run_props(event_ids or [], session=session, when=when,
+                          spend_path=spend_path)
     if not configured():
         log.warning("betting_ingest: %s not set - no odds pulled (page will say so)", ENV_KEY)
         return write_status({"last_run": "no-op (no api key)"})
@@ -490,16 +798,74 @@ def run(kind: str = "open", *, session=None, when: datetime | None = None) -> di
     return write_status({"last_run": f"ok: {path.name}"})
 
 
+def _run_props(event_ids: list, *, session=None, when: datetime | None = None,
+               spend_path: Path | None = None) -> dict:
+    """The props pass. Every refusal is a status line, never an exception into
+    the pipeline, and the budget guard runs before EACH request so a list of
+    events cannot ride one approval past the cap."""
+    if not props_armed():
+        why = props_disarmed_reason()
+        log.warning("betting_ingest: %s", why)
+        return write_status({"last_run": f"props no-op: {why}"})
+    if not event_ids:
+        return write_status({"last_run": "props no-op: no event_ids given"})
+    cap = props_credits_cap()
+    cost = props_credits_for()
+    pulled, refused, results = 0, 0, []
+    for eid in event_ids:
+        ok, reason = props_budget_check(cost, cap=cap, path=spend_path, when=when)
+        if not ok:
+            refused += 1
+            results.append({"event_id": str(eid), "ok": False, "reason": reason})
+            log.warning("betting_ingest: props pull for %s %s", eid, reason)
+            continue
+        try:
+            event, credits = fetch_props_event(eid, session=session)
+        except Exception as exc:                              # noqa: BLE001
+            # The request FAILED but it was SENT, so the credits are spent on
+            # the provider's meter whatever came back; the ledger charges it
+            # so the guard can never under-count against the cap.
+            record_props_spend(cost, event_id=eid, path=spend_path, when=when)
+            results.append({"event_id": str(eid), "ok": False,
+                            "reason": f"fetch failed: {exc}"})
+            log.exception("betting_ingest: props fetch failed for %s", eid)
+            continue
+        record_props_spend(credits.get("cost") or cost, event_id=eid,
+                           path=spend_path, when=when)
+        try:
+            path = write_props_snapshot(event, event_id=eid, when=when,
+                                        credits=credits)
+            results.append({"event_id": str(eid), "ok": True, "path": path.name})
+            pulled += 1
+        except FileExistsError as exc:
+            results.append({"event_id": str(eid), "ok": False,
+                            "reason": str(exc)})
+            log.warning("betting_ingest: %s", exc)
+    led = load_props_spend(spend_path, when)
+    return write_status({
+        "last_run": (f"props: pulled {pulled} of {len(event_ids)} event(s), "
+                     f"{refused} refused by the budget guard"),
+        "props_pulls": results,
+        "props_spent_this_month": led.get("spent"),
+    })
+
+
 if __name__ == "__main__":                                       # pragma: no cover
     import argparse
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     ap = argparse.ArgumentParser(description="MLB odds snapshot (The Odds API free tier).")
     ap.add_argument("--snapshot", choices=KINDS, help="pull one snapshot (costs credits)")
+    ap.add_argument("--props-events", default=None, dest="props_events",
+                    help="comma-separated event ids for a per-event props pull "
+                         "(needs BOTH arming variables; see section 7c)")
     ap.add_argument("--status", action="store_true", help="write/print the status sidecar only")
     args = ap.parse_args()
 
-    if args.snapshot:
+    if args.props_events:
+        ids = [e.strip() for e in args.props_events.split(",") if e.strip()]
+        print(json.dumps(run(PROPS_KIND, event_ids=ids), indent=1))
+    elif args.snapshot:
         print(json.dumps(run(args.snapshot), indent=1))
     else:
         st = write_status()

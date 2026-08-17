@@ -2779,7 +2779,34 @@ def _poisson_over(lam: float, line: float) -> float:
     return sum(pmf[need:])
 
 
-def props_fair_lines(games: list[dict], *, starters=None) -> dict:
+def _slate_season(games) -> int:
+    """The season the slate belongs to, off the first dated game, so the
+    pitch-hand join asks StatsAPI for the right year without a second config."""
+    for g in games or []:
+        d = str(g.get("date") or "")[:4]
+        if d.isdigit():
+            return int(d)
+    return date.today().year
+
+
+def _pitch_hands(games) -> dict:
+    """{mlbam: 'L'|'R'} for every MLB pitcher, ONE bulk call (2026-08-16, A5a).
+
+    pal_export.load_pitch_hand is lru_cached per season, so the whole slate
+    costs one StatsAPI request however many probables it carries. An offline
+    box (or a failed fetch) returns {}, which every caller treats as "hand
+    unknown, vs-RHP assumed" and LABELS rather than hiding."""
+    try:
+        import pal_export
+        return pal_export.load_pitch_hand(_slate_season(games)) or {}
+    except Exception:                                          # noqa: BLE001
+        log.warning("betting_export: pitch-hand join unavailable; every props "
+                    "order falls back to the vs-RHP assumption", exc_info=True)
+        return {}
+
+
+def props_fair_lines(games: list[dict], *, starters=None,
+                     pitch_hands: dict | None = None) -> dict:
     """Model fair lines for the core props, with NO book comparison.
 
     The Odds API free tier prices props through a per-EVENT endpoint that bills
@@ -2787,7 +2814,18 @@ def props_fair_lines(games: list[dict], *, starters=None) -> dict:
     than the plan holds in a month. Rather than show a half-slate of stale
     comparisons, the module publishes its own fair number and labels it
     model-only. When a paid tier lands, the book side drops in beside these
-    rows without touching the math."""
+    rows without touching the math.
+
+    THE ORDER IS PICKED BY THE OPPOSING PROBABLE'S HAND (2026-08-16, A5a).
+    hitter_leaderboards publishes BOTH projected orders (`orders.vr` and
+    `orders.vl`) and this function read `vr` alone while its published
+    assumption said "against a right-handed starter" for every game, including
+    the ones whose announced probable throws left. The hand is resolved for
+    the whole slate in ONE bulk call (`pal_export.load_pitch_hand`), the order
+    set follows it, and every hitter row now carries `vs_hand` plus
+    `vs_hand_basis` so the assumption is on the row, not in a footnote. An
+    unknown hand (no probable announced, or the bulk join unavailable) falls
+    back to the vs-RHP order and SAYS SO in `vs_hand_basis`."""
     starters = starters if starters is not None else bm.starter_inputs()
     fx = _fantasy_index()
     hit_lb = _load("hitter_leaderboards.json") or {}
@@ -2795,7 +2833,10 @@ def props_fair_lines(games: list[dict], *, starters=None) -> dict:
     for t in hit_lb.get("teams") or []:
         o = bm._org(t.get("team"))
         if o:
-            orders[o] = (t.get("orders") or {}).get("vr") or []
+            ords = t.get("orders") or {}
+            orders[o] = {"vr": ords.get("vr") or [], "vl": ords.get("vl") or []}
+    if pitch_hands is None:
+        pitch_hands = _pitch_hands(games)
 
     pitchers, hitters = [], []
     for g in games:
@@ -2829,12 +2870,30 @@ def props_fair_lines(games: list[dict], *, starters=None) -> dict:
                          "note": "fair number only; outs props are priced off the same expected length"},
                     ],
                 })
-        # Hitters: the projected order against a right-hander, because no
-        # lineup card exists this far out. Both the assumption and the PA
-        # table are published so the number can be argued with.
-        for side in ("home", "away"):
+        # Hitters: the projected order AGAINST THE OPPOSING PROBABLE'S HAND,
+        # because no lineup card exists this far out; vs-RHP is the fallback
+        # when the hand is unknown, and the row says which one it got. Both
+        # the assumption and the PA table are published so the number can be
+        # argued with.
+        for side, opp in (("home", "away"), ("away", "home")):
             org = (g.get(side) or {}).get("org")
-            for slot_row in (orders.get(org) or [])[:5]:
+            opp_pp = ((g.get(opp) or {}).get("probable") or {})
+            opp_mid = opp_pp.get("mlbam")
+            hand = pitch_hands.get(int(opp_mid)) if opp_mid else None
+            if hand == "L":
+                vs_hand, vs_basis = "L", "opposing probable throws L"
+            elif hand == "R":
+                vs_hand, vs_basis = "R", "opposing probable throws R"
+            else:
+                vs_hand, vs_basis = "R", "hand unknown, vs-RHP assumed"
+            order_set = orders.get(org) or {}
+            order = order_set.get("vl" if vs_hand == "L" else "vr") or []
+            if vs_hand == "L" and not order:
+                # A leaderboard built before the vl order existed still prices,
+                # off the only order it has, and the basis says which one.
+                order = order_set.get("vr") or []
+                vs_basis += "; no vs-LHP order published, vs-RHP order used"
+            for slot_row in order[:5]:
                 key = slot_row.get("key")
                 try:
                     mid = int(key)
@@ -2854,6 +2913,11 @@ def props_fair_lines(games: list[dict], *, starters=None) -> dict:
                     "mlbam": mid, "name": slot_row.get("name"), "org": org,
                     "game_pk": g.get("game_pk"), "slot": slot_row.get("slot"),
                     "expected_pa": exp_pa,
+                    # WHICH order priced this row, and why. The assumption
+                    # rides the row so a reader (and the props value machinery)
+                    # never has to guess which platoon rates these are.
+                    "vs_hand": vs_hand,
+                    "vs_hand_basis": vs_basis,
                     "props": [
                         {"prop": "Total bases", "fair_line": round(tb / pa * exp_pa, 2),
                          "lam": round(tb / pa * exp_pa, 2), "over_line": 1.5,
@@ -2877,7 +2941,11 @@ def props_fair_lines(games: list[dict], *, starters=None) -> dict:
             "hitters": "rest-of-season rate per plate appearance times expected PA for the "
                        "projected lineup slot",
             "slot_pa": SLOT_PA,
-            "lineup_assumption": "projected order against a right-handed starter; a posted "
+            "lineup_assumption": "projected order against the opposing probable's throwing "
+                                 "hand: the vs-LHP order when the probable throws left, the "
+                                 "vs-RHP order otherwise, resolved for the whole slate in one "
+                                 "bulk StatsAPI call. An unknown hand falls back to the vs-RHP "
+                                 "order and each hitter row says so in vs_hand_basis. A posted "
                                  "lineup card beats this every time",
             "distribution": "Poisson for counting props, which understates the tails of a "
                             "clumped scoring distribution",
@@ -2894,6 +2962,269 @@ def _prop_row(name: str, lam: float) -> dict:
         line += 0.5
     return {"prop": name, "fair_line": round(lam, 2), "lam": round(lam, 2),
             "over_line": line, "p_over": round(_poisson_over(lam, line), 4)}
+
+
+# ===========================================================================
+# props VALUE bets (2026-08-16, docs/diamond-betting.md section 7c;
+# pre-registered there BEFORE this code, ships INERT without both arming vars)
+# ===========================================================================
+#: Games a day the props pull may price. Owner band is 2 to 3; 3 is
+#: pre-registered in section 7c's table and changing it is this one edit.
+PROPS_MAX_GAMES_PER_DAY = 3
+
+#: The Odds API market key -> the props_fair_lines prop name whose lambda
+#: prices it. The lambdas already exist (section 4's fair lines, on the A5a
+#: vs-hand order); the value machinery evaluates them at the BOOK's line.
+PROPS_MARKET_LAMBDAS = {
+    "pitcher_strikeouts": ("pitchers", "Strikeouts"),
+    "batter_total_bases": ("hitters", "Total bases"),
+    "batter_hits": ("hitters", "1+ hits"),
+    "batter_home_runs": ("hitters", "1+ home runs"),
+}
+
+
+def props_value_games(bets: list[dict], *, slots: dict | None = None,
+                      cap: int = PROPS_MAX_GAMES_PER_DAY) -> list[dict]:
+    """The games a props pull would price, DETERMINISTIC (section 7c): the
+    watch-slot game first, then the remaining games by their largest
+    team-market edge, descending, ties to the lower game_pk. Two identical
+    boards select identical games, so the credit spend is reviewable before
+    it happens."""
+    rows = [b for b in bets or [] if b.get("game_pk") is not None]
+
+    def _best_edge(b):
+        best = None
+        for rws in (b.get("moneyline") or [], b.get("runline") or [],
+                    ((b.get("total") or {}).get("sides") or [])):
+            for r in rws or []:
+                e = r.get("edge")
+                if e is not None and (best is None or e > best):
+                    best = e
+        return best
+
+    picked, seen = [], set()
+    slot_row = (slots or {}).get("pick_of_the_day")
+    slot_pk = (slot_row or {}).get("game_pk")
+    if slot_pk is not None:
+        for b in rows:
+            if b["game_pk"] == slot_pk:
+                picked.append({**b, "_selection_basis": "watch-slot game"})
+                seen.add(slot_pk)
+                break
+    ranked = sorted((b for b in rows if b["game_pk"] not in seen),
+                    key=lambda b: (_best_edge(b) is None,
+                                   -(_best_edge(b) or 0.0),
+                                   b.get("game_pk") or 0))
+    for b in ranked:
+        if len(picked) >= cap:
+            break
+        picked.append({**b, "_selection_basis": "largest team-market edge"})
+    return picked[:cap]
+
+
+def _props_side_probabilities(lam: float, line: float) -> dict | None:
+    """Over, Under and PUSH for one posted props line, Poisson at `lam`.
+
+    The same push discipline betting_model.total_side_probabilities carries
+    for totals: on a whole-number line the sides are CONDITIONED on the bet
+    resolving and `p_push` rides beside them, so `_priced_side` can scale the
+    EV by (1 - p_push) exactly as it does for a whole-number total."""
+    try:
+        lam, line = float(lam), float(line)
+    except (TypeError, ValueError):
+        return None
+    if lam <= 0 or line < 0:
+        return None
+    pmf = bm._poisson_pmf(lam, max(30, int(line) + 20))
+    if abs(line - round(line)) < 1e-9:
+        k = int(round(line))
+        p_push = pmf[k] if 0 <= k < len(pmf) else 0.0
+        denom = 1.0 - p_push
+        if denom <= 0:
+            return None
+        return {"p_over": sum(pmf[k + 1:]) / denom,
+                "p_under": sum(pmf[:k]) / denom,
+                "p_push": p_push}
+    p_over = sum(pmf[int(line) + 1:])
+    return {"p_over": p_over, "p_under": 1.0 - p_over, "p_push": None}
+
+
+def _props_lambda_index(props_fair: dict) -> dict:
+    """{(org, casefolded name, market_key): lam} out of the fair-lines block,
+    so the value pass prices the SAME lambdas the props tab already shows.
+    The org is in the key because two rosters can carry the same name."""
+    idx = {}
+    pf = props_fair or {}
+    for mkey, (section, prop_name) in PROPS_MARKET_LAMBDAS.items():
+        for rec in pf.get(section) or []:
+            nm = (rec.get("name") or "").casefold().strip()
+            if not nm:
+                continue
+            for pr in rec.get("props") or []:
+                if pr.get("prop") == prop_name and pr.get("lam") is not None:
+                    idx[(rec.get("org"), nm, mkey)] = float(pr["lam"])
+    return idx
+
+
+def _load_props_snapshots(on_date: str | None) -> dict:
+    """{event_id: parsed props record} off the cache, pure reads."""
+    out = {}
+    for meta in bi.list_props_snapshots(on_date):
+        wrap = bi.load_snapshot(meta["path"])
+        rec = bi.parse_props_snapshot(wrap) if wrap else None
+        if rec is None:
+            continue
+        rec.setdefault("event_id", meta["event_id"])
+        rec["_captured_at"] = (wrap or {}).get("captured_at")
+        out[str(rec.get("event_id") or meta["event_id"])] = rec
+    return out
+
+
+def props_value_bets(bets: list[dict], props_fair: dict, *,
+                     slots: dict | None = None, snapshots: dict | None = None,
+                     on_date: str | None = None, evald: dict | None = None,
+                     market_table: dict | None = None) -> dict:
+    """The props value block: fixture-verified machinery, inert without the
+    two arming variables (section 7c).
+
+    PRICING IS A PURE FUNCTION OF CACHED BYTES. Arming gates the PULL (the
+    thing that spends credits); anything already in `.cache/odds/` or handed
+    in as `snapshots` is priced whether or not the env is armed, which is what
+    lets every test run on fixtures with no key in the environment.
+
+    The market discipline is `_market_view` ITSELF, not a copy: each
+    (market, player) pair is folded into a one-market pseudo event and priced
+    through the same consensus-line, min-hold-fair-book, rejection-ledger path
+    the team board uses, then `_priced_side` builds the row with the same
+    edge / EV / Kelly / push arithmetic byte for byte."""
+    armed = bi.props_armed()
+    inert_reason = bi.props_disarmed_reason()
+    thr, basis, prov = resolve_min_edge(evald)
+    sel = props_value_games(bets, slots=slots)
+    if snapshots is None:
+        snapshots = _load_props_snapshots(on_date)
+
+    table = ((market_table or {}).get("markets") or {})
+    publishability = {}
+    for mkey in bi.PROPS_MARKETS:
+        row = table.get(f"props_{mkey}") or {}
+        publishability[f"props_{mkey}"] = {
+            "publishable": row.get("publishable"),
+            "reason": row.get("reason") or ("not in this build's "
+                                            "market_publishability table"),
+        }
+
+    lam_idx = _props_lambda_index(props_fair)
+    rows_out, rejections = [], Counter()
+    selected_meta = []
+    for b in sel:
+        eid = str(b.get("odds_event_id") or "")
+        matchup = (f"{(b.get('away') or {}).get('org')} at "
+                   f"{(b.get('home') or {}).get('org')}")
+        selected_meta.append({"game_pk": b.get("game_pk"), "matchup": matchup,
+                              "basis": b.get("_selection_basis"),
+                              "has_props_snapshot": eid in snapshots})
+        snap = snapshots.get(eid)
+        if not snap:
+            rejections["no_props_snapshot_for_game"] += 1
+            continue
+        orgs = ((b.get("home") or {}).get("org"), (b.get("away") or {}).get("org"))
+        for mkey in bi.PROPS_MARKETS:
+            players = sorted({p for bk in (snap.get("books") or {}).values()
+                              for p in (bk.get("markets") or {}).get(mkey, {})})
+            for player in players:
+                pev = {"books": {}}
+                for bkey, bk in (snap.get("books") or {}).items():
+                    cell = ((bk.get("markets") or {}).get(mkey) or {}).get(player)
+                    if not cell:
+                        continue
+                    pev["books"][bkey] = {"title": bk.get("title"),
+                                          "last_update": bk.get("last_update"),
+                                          "prop": cell}
+                mv = _market_view(pev, "prop", ("over", "under"))
+                if not mv:
+                    rejections["no_two_sided_market"] += 1
+                    continue
+                line = ((mv.get("best") or {}).get("over") or {}).get("point")
+                if line is None:
+                    rejections["no_consensus_line"] += 1
+                    continue
+                lam = None
+                nm = player.casefold().strip()
+                for org in orgs:
+                    lam = lam_idx.get((org, nm, mkey))
+                    if lam is not None:
+                        break
+                if lam is None:
+                    rejections["player_not_in_model_index"] += 1
+                    continue
+                ps = _props_side_probabilities(lam, line)
+                if not ps:
+                    rejections["no_model_probability"] += 1
+                    continue
+                p_push = (round(ps["p_push"], 5)
+                          if ps.get("p_push") is not None else None)
+                common = {
+                    "market": f"props_{mkey}", "player": player,
+                    "game_pk": b.get("game_pk"), "matchup": matchup,
+                    "start": b.get("start"), "lam": round(lam, 3),
+                    "line": line, "vs_hand_source": "props_fair_lines (A5a)",
+                    "captured_at": snap.get("_captured_at"),
+                    "provisional": prov, "min_edge_used": thr,
+                    "fair_book": mv.get("fair_book"),
+                    "hold_pct": mv.get("hold_pct"),
+                    "fair_book_rule": mv.get("fair_book_rule"),
+                    "n_books_on_line": mv.get("n_books_on_line"),
+                    "n_books_hold_rejected": mv.get("n_books_hold_rejected"),
+                    "n_books_stale_rejected": mv.get("n_books_stale_rejected"),
+                    "n_books_consensus_rejected":
+                        mv.get("n_books_consensus_rejected"),
+                }
+                for side, p_model in (("over", ps["p_over"]),
+                                      ("under", ps["p_under"])):
+                    label = f"{player} {side.capitalize()} {line}"
+                    row = _priced_side(side, label, p_model, mv, p_push=p_push)
+                    k = row.get("kelly_full")
+                    row["kelly_quarter"] = (round(float(k) / 4.0, 5)
+                                            if k is not None else None)
+                    rows_out.append({**common, **row})
+
+    value_rows = [r for r in rows_out
+                  if r.get("edge") is not None and r["edge"] >= thr]
+    return {
+        "armed": armed,
+        "inert_reason": (None if armed else inert_reason),
+        "arming": {"key_env": bi.ENV_KEY, "cap_env": bi.ENV_PROPS_CREDITS,
+                   "rule": "the pull fires only when BOTH are set; either one "
+                           "absent leaves the machinery inert (section 7c)"},
+        "slate_date": on_date,
+        "max_games_per_day": PROPS_MAX_GAMES_PER_DAY,
+        "credits_per_event": bi.props_credits_for(),
+        "selection_rule": ("the watch-slot game first, then the remaining "
+                           "games by largest team-market edge, capped at "
+                           f"{PROPS_MAX_GAMES_PER_DAY} a day"),
+        "selected_games": selected_meta,
+        "markets": list(bi.PROPS_MARKETS),
+        "floor": {"min_edge": thr, "basis": basis, "provisional": prov,
+                  "note": "the SAME floor the team slots clear; no props "
+                          "floor exists and none may be invented"},
+        "rows": rows_out,
+        "value_rows": value_rows,
+        "n_rows": len(rows_out),
+        "n_value_rows": len(value_rows),
+        "rejections": dict(rejections),
+        "publishability": publishability,
+        "method": {
+            "market_view": "the team board's _market_view verbatim: consensus "
+                           "line by book count, prices shopped on that line "
+                           "only, fair probabilities from the minimum-hold "
+                           "book, staleness / hold / consensus-distance "
+                           "rejections counted per pair",
+            "model_prob": "the props fair-line Poisson lambda (vs-hand order, "
+                          "A5a) evaluated at the BOOK's consensus line, "
+                          "push-conditioned on whole numbers",
+        },
+    }
 
 
 # ===========================================================================
@@ -3266,6 +3597,15 @@ MARKET_GATE_TRAILING = 200
 
 BOARD_MARKETS = ("moneyline", "runline", "total")
 
+#: THE PROPS MARKETS IN THE SAME FRAMEWORK (2026-08-16, section 7c). Each
+#: props market is its own row in the publishability table with the same
+#: ledger-evidence leg and dwell as the three board markets, so the framework
+#: is uniform rather than props being quietly exempt. They are NOT board
+#: markets: _floor_clearing_sides never sees them and no props row can fill a
+#: team slot or reach the public record.
+PROPS_GATED_MARKETS = tuple(f"props_{m}" for m in bi.PROPS_MARKETS)
+GATED_MARKETS = BOARD_MARKETS + PROPS_GATED_MARKETS
+
 
 def _fresh_market_gate_state() -> dict:
     return {
@@ -3275,7 +3615,7 @@ def _fresh_market_gate_state() -> dict:
         "markets": {m: {"status": "open", "consecutive_worse": 0,
                         "consecutive_recovered": 0,
                         "closed_at": None, "reopened_at": None}
-                    for m in BOARD_MARKETS},
+                    for m in GATED_MARKETS},
         "what": ("dwell state for the section 7b market-level publishability "
                  "gate. The statistics are recomputed every build; these "
                  "consecutive-evaluation counters move at most once per UTC "
@@ -3308,7 +3648,7 @@ def load_market_gate_state(path: Path | None = None) -> dict:
                     "market-gate dwell restarts from all-open", p.name)
         return _fresh_market_gate_state()
     fresh = _fresh_market_gate_state()
-    for m in BOARD_MARKETS:
+    for m in GATED_MARKETS:
         merged = {**fresh["markets"][m], **(obj["markets"].get(m) or {})}
         obj["markets"][m] = merged
     for k in ("last_evaluation_date", "updated_at", "what", "schema"):
@@ -3351,23 +3691,35 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
     z = next(iter(full.values()))["z"] if full else 1.645
 
     markets = {}
-    for m in BOARD_MARKETS:
+    for m in GATED_MARKETS:
         f = full.get(m) or {}
         tr = trailing.get(m) or {}
         ms = (st.get("markets") or {}).get(m) or {}
         status = ms.get("status") or "open"
         disp_ok = bm.market_is_publishable(m)
-        disp_reason = ("the margin-shape exclusion does not bar this market"
-                       if disp_ok else
-                       "excluded while the dispersion correction is unserved "
-                       "(section 11a): the margin model that prices this market "
-                       "did not clear its pre-registered gate")
+        if m in PROPS_GATED_MARKETS:
+            # Props are not priced by the margin model, so the theory leg has
+            # nothing to say about them; the ledger leg is the whole gate.
+            disp_reason = ("props are not in DISPERSION_SENSITIVE_MARKETS: the "
+                           "margin model does not price this market, so the "
+                           "dispersion leg cannot bar it (section 7c)")
+        else:
+            disp_reason = ("the margin-shape exclusion does not bar this market"
+                           if disp_ok else
+                           "excluded while the dispersion correction is unserved "
+                           "(section 11a): the margin model that prices this market "
+                           "did not clear its pre-registered gate")
         n = f.get("n_games") or 0
         if n < n_min:
             verdict = "unresolved"
             ledger_reason = (f"{n} canonical settled game(s) against the "
                              f"{n_min}-game floor; the ledger leg is unresolved "
                              "and closes nothing")
+            if m in PROPS_GATED_MARKETS:
+                ledger_reason += (". Props calibration rows cannot settle until "
+                                  "a box-score grader exists (section 7c), so "
+                                  "this leg stays unresolved by construction "
+                                  "for now")
         elif f.get("worse_than_coin_95"):
             verdict = "worse_than_coin"
             ledger_reason = (f"mean Brier {f.get('brier')} on {n} canonical games "
@@ -3417,12 +3769,12 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
         }
 
     under = [f"{m} {(full.get(m) or {}).get('n_games') or 0}"
-             for m in BOARD_MARKETS
+             for m in GATED_MARKETS
              if ((full.get(m) or {}).get("n_games") or 0) < n_min]
     today_note = (f"no market reaches the {n_min}-game canonical floor yet "
                   f"({', '.join(under)}), so the ledger leg closes nothing on "
                   "this build"
-                  if len(under) == len(BOARD_MARKETS) else None)
+                  if len(under) == len(GATED_MARKETS) else None)
     return {
         "policy": {
             "n_min": n_min, "z": z, "dwell": MARKET_GATE_DWELL,
@@ -3461,13 +3813,16 @@ def market_gate_evaluate(*, cal_path: Path | None = None,
     today = (now or datetime.now(timezone.utc)).date().isoformat()
     advanced = state.get("last_evaluation_date") != today
 
-    for m in BOARD_MARKETS:
+    for m in GATED_MARKETS:
         ms = state["markets"][m]
+        fm = full.get(m) or {"worse_than_coin_95": False,
+                             "n_games": 0, "brier": None}
+        tm = trail.get(m) or {"worse_than_coin_95": False}
         if not advanced:
             continue
         if ms.get("status") != "ledger_closed":
             ms["consecutive_worse"] = (ms.get("consecutive_worse", 0) + 1
-                                       if full[m]["worse_than_coin_95"] else 0)
+                                       if fm["worse_than_coin_95"] else 0)
             if ms["consecutive_worse"] >= MARKET_GATE_DWELL:
                 ms["status"] = "ledger_closed"
                 ms["closed_at"] = _now()
@@ -3475,13 +3830,13 @@ def market_gate_evaluate(*, cal_path: Path | None = None,
                 if log_fn:
                     log_fn(f"betting_export: MARKET LEDGER-CLOSED {m} "
                            f"(worse than a coin {MARKET_GATE_DWELL} evaluations "
-                           f"running, n={full[m]['n_games']}, "
-                           f"brier={full[m]['brier']})")
+                           f"running, n={fm['n_games']}, "
+                           f"brier={fm['brier']})")
                 log.warning("betting_export: market %s is LEDGER-CLOSED "
                             "(section 7b)", m)
         else:
             ms["consecutive_recovered"] = (ms.get("consecutive_recovered", 0) + 1
-                                           if not trail[m]["worse_than_coin_95"]
+                                           if not tm["worse_than_coin_95"]
                                            else 0)
             if ms["consecutive_recovered"] >= MARKET_GATE_DWELL:
                 ms["status"] = "open"
@@ -4039,6 +4394,9 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         else:
             empty_reasons.append(status.get("note") or "no odds snapshot cached")
 
+    props_fair = (props_fair_lines(games, starters=starters) if games else
+                  {"model_only": True, "pitchers": [], "hitters": [],
+                   "no_book_comparison_reason": "no slate loaded"})
     payload = {
         "generated_at": _now(),
         "slate_date": (slate_date or on_date or date.today().isoformat()),
@@ -4130,9 +4488,12 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         # cannot hold the site to.
         "market_publishability": market_table,
         "team_bets": bets,
-        "props_fair_lines": props_fair_lines(games, starters=starters) if games else
-                            {"model_only": True, "pitchers": [], "hitters": [],
-                             "no_book_comparison_reason": "no slate loaded"},
+        "props_fair_lines": props_fair,
+        # The section 7c value block: inert without both arming variables and
+        # it SAYS so, priced off cached per-event snapshots when any exist.
+        "props_value": props_value_bets(bets, props_fair, slots=slots,
+                                        on_date=slate_date, evald=evald,
+                                        market_table=market_table),
         "parlay_context": parlay_context(bets),
         "record": record_summary(record),
         "record_url": "/data/betting_record.json",

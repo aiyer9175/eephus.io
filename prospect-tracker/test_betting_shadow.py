@@ -374,3 +374,90 @@ def test_a_second_pass_on_one_slate_cannot_buy_a_second_budget(led):
     assert "already logged" in again["reason"], (
         "a spent budget must not report as a board where nothing cleared: "
         f"got {again['reason']!r}")
+
+
+# ---------------------------------------------------------------------------
+# props tags (2026-08-16, docs/diamond-betting.md section 7c)
+# ---------------------------------------------------------------------------
+def _props_value(n_hits=1):
+    rows = [{
+        "market": "props_pitcher_strikeouts", "player": "Some Arm",
+        "game_pk": 900, "matchup": "WSN at PHI", "side": "over",
+        "label": "Some Arm Over 5.5", "point": 5.5, "book": "mgm",
+        "odds": -120, "decimal": 1.8333, "edge": 0.07, "model_prob": 0.6,
+        "market_fair_prob": 0.53, "ev_per_unit": 0.1, "min_edge_used": 0.06}]
+    for i in range(n_hits):
+        rows.append({
+            "market": "props_batter_hits", "player": f"Hitter {i}",
+            "game_pk": 900, "matchup": "WSN at PHI", "side": "over",
+            "label": f"Hitter {i} Over 0.5", "point": 0.5, "book": "dk",
+            "odds": -200, "decimal": 1.5, "edge": 0.08 - i * 0.001,
+            "model_prob": 0.75, "market_fair_prob": 0.67,
+            "ev_per_unit": 0.12 - i * 0.01, "min_edge_used": 0.06})
+    return {"slate_date": "2026-08-06", "value_rows": rows}
+
+
+def test_props_tags_are_known_and_budgeted():
+    """One tag per props market, each with its own per-slate budget, never a
+    shared pool. KNOWN_TAGS is what summary() and the sweep readiness walk."""
+    for t in bs.PROPS_TAGS:
+        assert t in bs.KNOWN_TAGS
+        assert bs.MAX_PER_SLATE_BY_TAG[t] == 3
+        assert t.startswith(bs.PROPS_TAG_PREFIX)
+
+
+def test_a_props_row_can_never_enter_a_team_tags_sweep(led):
+    """THE ISOLATION PIN. A props row settles, and: the pooled read (the shape
+    betting_model's gate has always consumed) excludes it, every team tag's
+    conditioned read excludes it, and only its OWN tag returns it.
+
+    MUTATION PROOF: removing the props exclusion from graded_bets' pooled
+    branch fails the pooled assert; tagging props rows with a team slot fails
+    the per-tag asserts."""
+    bs.record_props_slate(_props_value(), path=led)
+    rows = bs.load(led)
+    settled = [{**r, "result": "won", "settled_at": "x", "profit_units": 0.8}
+               for r in rows]
+    bs.write(settled, path=led)
+    assert bs.graded_bets(path=led) == [], (
+        "a props row leaked into the POOLED read; that silently changes what "
+        "betting_model's existing gate caller measures")
+    for team_tag in ("potd_band", "longshot", "ev_rank", "board_all", "untagged"):
+        assert bs.graded_bets(slot=team_tag, path=led) == [], team_tag
+    own = bs.graded_bets(slot="props_pitcher_strikeouts", path=led)
+    assert len(own) == 1
+    assert own[0]["won"] is True
+
+
+def test_props_budget_is_per_tag_per_slate_and_deterministic(led):
+    """Five batter-hits candidates against a budget of 3: the three best by
+    EV are taken, a re-run adds nothing, and the K tag's own budget is
+    untouched by the hits overflow."""
+    res = bs.record_props_slate(_props_value(n_hits=5), path=led)
+    assert res["by_slot"] == {"props_batter_hits": 3,
+                              "props_pitcher_strikeouts": 1}
+    again = bs.record_props_slate(_props_value(n_hits=5), path=led)
+    assert again["written"] == 0
+    kept = sorted(r["player"] for r in bs.load(led)
+                  if r["slot"] == "props_batter_hits")
+    assert kept == ["Hitter 0", "Hitter 1", "Hitter 2"], kept
+
+
+def test_props_rows_do_not_eat_the_team_slate_budget(led):
+    """A slate that already logged props rows still has its FULL team budget:
+    the two ledgers share a file, never a budget."""
+    bs.record_props_slate(_props_value(n_hits=5), path=led)
+    res = bs.record_slate(_payload(), min_edge=0.05, path=led)
+    assert res["written"] == 3, (
+        f"the team pass wrote {res['written']} rows; props rows are eating "
+        "the team MAX_PER_SLATE room")
+
+
+def test_props_rows_appear_in_summary_and_sweep_readiness(led):
+    bs.record_props_slate(_props_value(), path=led)
+    s = bs.summary(path=led)
+    assert "props_pitcher_strikeouts" in s["by_tag"]
+    assert "props_batter_hits" in s["by_tag"]
+    sr = bs.sweep_readiness(path=led)
+    assert sr["props_pitcher_strikeouts"]["need"] == bs.MIN_BETS_FOR_SWEEP
+    assert sr["props_pitcher_strikeouts"]["ready"] is False

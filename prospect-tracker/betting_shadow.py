@@ -139,20 +139,42 @@ DEFAULT_SLOT_TAG = "ev_rank"
 #: day needs 34 and each single-pick slot needs about 100.
 BOARD_ALL_TAG = "board_all"
 
+#: THE PROPS TAGS (2026-08-16, docs/diamond-betting.md section 7c). One tag
+#: per props market, because the four markets are four different selection
+#: populations and pooling them would repeat the exact defect the team tags
+#: exist to prevent, one level down. The names are the props market names so
+#: a row's tag and its market can never disagree.
+#:
+#: NEVER POOLED WITH THE TEAM TAGS. A props row is a different instrument on
+#: a different bet against a different budget; a min-edge sweep conditions on
+#: ONE tag or it measures a mixture nobody bet. The pooled team read
+#: (`graded_bets(slot=None)`) EXCLUDES props rows outright, because that
+#: shape is the team gate's historical instrument and a props row entering it
+#: would silently change what an existing caller measures.
+PROPS_TAG_PREFIX = "props_"
+PROPS_TAGS = tuple(PROPS_TAG_PREFIX + m for m in (
+    "pitcher_strikeouts", "batter_total_bases", "batter_hits",
+    "batter_home_runs"))
+
 #: How many rows a slate may contribute PER TAG. None means uncapped.
 #:
 #: The three capped budgets sum to MAX_PER_SLATE and are exactly the split the
 #: shipped selector already applied (two slot picks, then the top three by EV),
 #: written down so it can be read instead of inferred from the loop below.
+#: The props budgets (3 a slate per tag, mirroring the section 7c games/day
+#: cap) are enforced in record_props_slate and are OUTSIDE the team
+#: MAX_PER_SLATE arithmetic: a props row must never eat a team row's budget.
 MAX_PER_SLATE_BY_TAG = {
     "potd_band": 1,
     "longshot": 1,
     DEFAULT_SLOT_TAG: 3,
     BOARD_ALL_TAG: None,
+    **{t: 3 for t in PROPS_TAGS},
 }
 
 #: Every tag a row may be a member of, plus the pre-tag era's bucket.
-KNOWN_TAGS = (*sorted(SLOT_TAGS.values()), DEFAULT_SLOT_TAG, BOARD_ALL_TAG)
+KNOWN_TAGS = (*sorted(SLOT_TAGS.values()), DEFAULT_SLOT_TAG, BOARD_ALL_TAG,
+              *PROPS_TAGS)
 UNTAGGED = "untagged"
 
 #: The sweep's sample-size floor, per tag. Named here because the per-tag rule
@@ -527,8 +549,14 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
     remaining = {t: (None if MAX_PER_SLATE_BY_TAG.get(t) is None
                      else max(0, MAX_PER_SLATE_BY_TAG[t] - used.get(t, 0)))
                  for t in MAX_PER_SLATE_BY_TAG}
+    # Props tags are OUTSIDE the team MAX_PER_SLATE arithmetic (2026-08-16,
+    # section 7c): they are capped, but against their own budgets, and a props
+    # row counted here would shrink the team room by rows that never competed
+    # for it.
     room = MAX_PER_SLATE - sum(
-        n for t, n in used.items() if MAX_PER_SLATE_BY_TAG.get(t) is not None)
+        n for t, n in used.items()
+        if MAX_PER_SLATE_BY_TAG.get(t) is not None
+        and not str(t).startswith(PROPS_TAG_PREFIX))
 
     cands = candidates_from_board(payload, min_edge=min_edge, slots=slots,
                                   include_board_all=include_board_all,
@@ -592,6 +620,95 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
                f"({', '.join(f'{k} {v}' for k, v in sorted(by_slot.items()))})")
     return {"written": len(new), "slate_date": slate, "reason": "ok",
             "by_slot": by_slot, "rows": new}
+
+
+def record_props_slate(props_value: dict, *, gate_state: dict | None = None,
+                       path: Path | None = None, log_fn=None) -> dict:
+    """Append this slate's PROPS paper bets (2026-08-16, section 7c).
+
+    Reads the served `props_value` block's floor-clearing sides, the same
+    discipline as the team ledger: the board the page shows, a real captured
+    price or nothing, idempotent per (slate, game, market, side, point,
+    player). Each row's `slot` is its props tag (the market name), so the
+    future per-tag sweep conditions on it exactly as it does on the team
+    tags, and never across them. The per-tag budget is 3 a slate."""
+    pv = props_value or {}
+    slate = pv.get("slate_date")
+    if not slate:
+        return {"written": 0, "reason": "props_value carries no slate_date"}
+    cands = [r for r in (pv.get("value_rows") or [])
+             if r.get("odds") is not None and r.get("book")
+             and str(r.get("market") or "").startswith(PROPS_TAG_PREFIX)]
+    if not cands:
+        return {"written": 0, "slate_date": slate,
+                "reason": "no props side cleared the floor on this build"}
+
+    existing = load(path)
+    used: dict[str, int] = {}
+    for r in existing:
+        if r.get("slate_date") != slate:
+            continue
+        tag = str(r.get("slot") or "")
+        if tag.startswith(PROPS_TAG_PREFIX):
+            used[tag] = used.get(tag, 0) + 1
+    seen = {r.get("shadow_id") for r in existing}
+    posted = _now()
+    new = []
+    # Deterministic order: best EV first inside each tag, so the budget takes
+    # the same rows on every rebuild of the same board.
+    cands.sort(key=lambda r: (r.get("market"),
+                              r.get("ev_per_unit") is None,
+                              -(r.get("ev_per_unit") or 0)))
+    for c in cands:
+        tag = c["market"]
+        cap = MAX_PER_SLATE_BY_TAG.get(tag)
+        if cap is not None and used.get(tag, 0) >= cap:
+            continue
+        sid = shadow_id(slate, c.get("game_pk"), tag, c.get("side"),
+                        c.get("point"), c.get("player"))
+        if sid in seen:
+            continue
+        seen.add(sid)
+        used[tag] = used.get(tag, 0) + 1
+        new.append({
+            "shadow_id": sid,
+            "posted_at": posted,
+            "provisional": True,
+            "stake_units": STAKE_UNITS,
+            "min_edge_used": round(float(c.get("min_edge_used") or 0.0), 5),
+            "gate_state": gate_state or {},
+            "result": None, "settled_at": None, "profit_units": None,
+            "slate_date": slate,
+            "game_pk": c.get("game_pk"),
+            "matchup": c.get("matchup"),
+            "market": tag,
+            "player": c.get("player"),
+            "side": c.get("side"),
+            "selection": c.get("label"),
+            "point": c.get("point"),
+            "book": c.get("book"),
+            "odds_at_post": c.get("odds"),
+            "decimal": c.get("decimal"),
+            "edge": (round(float(c["edge"]), 5)
+                     if c.get("edge") is not None else None),
+            "model_prob": c.get("model_prob"),
+            "market_fair_prob": c.get("market_fair_prob"),
+            "ev_per_unit": c.get("ev_per_unit"),
+            "slot": tag,
+        })
+    if not new:
+        return {"written": 0, "slate_date": slate,
+                "reason": "every qualifying props side is already logged or "
+                          "its per-tag budget is spent"}
+    write(existing + new, path=path)
+    by_tag = {}
+    for r in new:
+        by_tag[r["slot"]] = by_tag.get(r["slot"], 0) + 1
+    if log_fn:
+        log_fn(f"betting_shadow: logged {len(new)} props paper bet(s) for "
+               f"{slate} ({', '.join(f'{k} {v}' for k, v in sorted(by_tag.items()))})")
+    return {"written": len(new), "slate_date": slate, "reason": "ok",
+            "by_slot": by_tag, "rows": new}
 
 
 # ---------------------------------------------------------------------------
@@ -716,12 +833,22 @@ def graded_bets(*, slot: str | None = None, path: Path | None = None) -> list[di
 
     Pushes are EXCLUDED rather than scored as losses. A push returns the stake,
     so counting it as a loss would understate every threshold's ROI and make the
-    gate harder to clear for a reason that has nothing to do with skill."""
+    gate harder to clear for a reason that has nothing to do with skill.
+
+    PROPS ROWS NEVER ENTER THE POOLED SET (2026-08-16, section 7c). The
+    slot=None shape is the team gate's historical instrument, and a props row
+    riding into it would silently change what betting_model's existing caller
+    measures without that caller's code moving. A props tag is reachable the
+    only honest way: by naming it in `slot`."""
     out = []
     for r in load(path):
         if r.get("result") not in ("won", "lost"):
             continue
-        if slot is not None and slot not in row_tags(r):
+        tags = row_tags(r)
+        if slot is None:
+            if any(str(t).startswith(PROPS_TAG_PREFIX) for t in tags):
+                continue
+        elif slot not in tags:
             continue
         dec = r.get("decimal")
         if not dec:

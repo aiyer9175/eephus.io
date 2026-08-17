@@ -1926,6 +1926,209 @@ def test_client_renders_a_redacted_pick_without_inventing_a_selection():
     assert "Census." not in text            # a redacted slot is a pick, not an empty one
 
 
+# ---- 7g. the charts package (A6, 2026-08-16) -------------------------------
+# Inline SVG, no chart library, tokens only through classes, and every chart
+# has an absence branch that names WHY it is not drawable. The fixtures below
+# extend the section 7 artifacts with the two series the charts read (the
+# learning history and shadow_by_tag), because the committed fixtures predate
+# both.
+def _learning_with_series() -> str:
+    art = json.loads(LEARNING_ARTIFACT)
+    art["history"] = [
+        {"date": "2026-08-13", "calibration_brier": 0.2921,
+         "calibration_n_settled": 120},
+        {"date": "2026-08-14", "calibration_brier": 0.2812,
+         "calibration_n_settled": 180},
+        {"date": "2026-08-15", "calibration_brier": None},
+        {"date": "2026-08-16", "calibration_brier": 0.2736,
+         "calibration_n_settled": 310},
+    ]
+    art["latest"]["shadow_by_tag"] = {
+        "board_all": {"n_rows": 83, "n_settled": 73, "won": 33, "lost": 39,
+                      "push": 1, "net_units": -8.555, "roi": -0.1188},
+        "potd_band": {"n_rows": 7, "n_settled": 6, "won": 4, "lost": 2,
+                      "push": 0, "net_units": 1.2, "roi": 0.2},
+        "longshot": {"n_rows": 2, "n_settled": 0, "won": 0, "lost": 0,
+                     "push": 0, "net_units": None, "roi": None},
+    }
+    return json.dumps(art)
+
+
+EVAL_WITH_BENCHMARKS = json.dumps({
+    **json.loads(EVAL_ARTIFACT),
+    "benchmarks": {
+        "claim_rule": "never claim an unmeasured tier",
+        "status": "ran",
+        "window": {"split_date": "2026-07-28", "n": 269,
+                   "first_date": "2026-07-28", "last_date": "2026-08-16"},
+        "tiers": {
+            "model_vintage": {"n": 269, "brier": 0.25053,
+                              "source": "the vintage block's own eval window"},
+            "home_constant": {"n": 269, "brier": 0.24875,
+                              "source": "home win rate as a constant"},
+            "elo_literature": {"n": 269, "brier": 0.24556,
+                               "source": "literature-prior Elo"},
+            "market_open_devig": {"n": 122, "brier": 0.24254,
+                                  "subsample_note": "122 of 269 games have a "
+                                                    "cached open capture",
+                                  "same_games": {"model": 0.25356,
+                                                 "home_constant": 0.24671,
+                                                 "elo_literature": 0.24347},
+                                  "source": "de-vig of the open snapshot"},
+            "market_close_devig": {"n": 0, "brier": None,
+                                   "status": "no close capture matched a "
+                                             "graded eval game; this tier is "
+                                             "unmeasured and claims nothing"},
+        }}})
+
+
+@pytest.fixture(scope="module")
+def charts_ctx():
+    return _ctx(_fetch_js(main=LIVE_PAYLOAD, learning=_learning_with_series(),
+                          evald=EVAL_WITH_BENCHMARKS, clv=CLV_EMPTY))
+
+
+def test_reliability_curve_draws_one_dot_per_populated_bin(charts_ctx):
+    """Six of the fixture's ten bins carry pred and actual, so the curve is
+    six dots, a connecting path, and the dashed diagonal. The bin-n row and
+    the table stay beside it: the picture never replaces the numbers.
+
+    MUTATION PROOF: nulling one bin's actual in the fixture drops the dot
+    count to five and fails the count; deleting the bt-svg-ref line from
+    reliabilitySVG fails the diagonal assert."""
+    html = charts_ctx.eval("__show('validation')")
+    i = html.index("bt-svg-rel")
+    rel = html[i:html.index("</svg>", i)]
+    assert rel.count("<circle") == 6
+    assert 'class="bt-svg-ref"' in rel
+    assert "<path" in rel
+    text = _visible_text(html)
+    assert "Bin n, low bin to high: 0, 0, 2, 2, 8, 8, 2, 2, 0, 0" in text
+    # per-market bins do not exist in the artifact, and the panel says so
+    assert "per-market summaries without per-market bins" in text
+
+
+def test_brier_trend_draws_the_history_against_the_coin_line(charts_ctx):
+    """Three usable nightly rows (the null one is dropped, not drawn as zero)
+    against the dashed 0.25 reference. First render of this series anywhere.
+
+    MUTATION PROOF: corrupting the fixture series (nulling a second row)
+    drops the dot count; dropping the goldref line kills the coin assert."""
+    html = charts_ctx.eval("__show('validation')")
+    i = html.index("bt-svg-trend")
+    tr = html[i:html.index("</svg>", i)]
+    assert tr.count("<circle") == 3
+    assert 'class="bt-svg-goldref"' in tr
+    assert "coin 0.25" in tr
+    assert "2026-08-13" in tr and "2026-08-16" in tr
+
+
+def test_clocks_panel_carries_three_svg_metered_clocks(charts_ctx):
+    """Clock A, Clock B (a bar per tag) and Clock C, all on SVG progress
+    bars. Clock C has no clock in the learning artifact, so its rate cell
+    NAMES that instead of inventing a rate."""
+    html = charts_ctx.eval("__show('validation')")
+    text = _visible_text(html)
+    assert "Clock C" in text
+    assert "gradable games (the pool)" in text
+    assert "419" in text                       # the payload's n_gradable
+    assert "carries no gradable_games clock" in text
+    assert html.count("bt-svg-meter") >= 4     # A + two tag rows + C
+    assert "Not a gate" in text
+
+
+def test_benchmark_ladder_order_matches_the_fixture_and_model_shows_last(charts_ctx):
+    """The full-window tiers sort by measured Brier, best first, so the order
+    is elo, home constant, model, and the model row is LAST and labelled. The
+    subsample renders apart inside its same-games block and the unmeasured
+    tier renders its status sentence, never a number.
+
+    MUTATION PROOF: sorting descending, or pinning the model first, breaks
+    the index ordering; dropping the unmeasured branch kills its sentence."""
+    html = charts_ctx.eval("__show('validation')")
+    text = _visible_text(html)
+    i_elo = text.index("elo_literature")
+    i_home = text.index("home_constant")
+    i_model = text.index("model_vintage")
+    assert i_elo < i_home < i_model
+    assert "The model is last on this window" in text
+    assert "0.25053" in text and "0.24556" in text
+    assert "market_open_devig, a subsample (122 of 269 games)" in text
+    assert "no close capture matched a graded eval game" in text
+
+
+def test_benchmark_ladder_absent_state_names_the_missing_block(live_ctx):
+    """The section 7 eval fixture has no benchmarks block, and the ladder
+    names that rather than rendering an empty table."""
+    text = _visible_text(live_ctx.eval("__show('validation')"))
+    assert "Benchmark ladder: not measured yet" in text
+    assert "carries no benchmarks block" in text
+
+
+def test_roi_by_tag_bars_are_labelled_paper_bets_not_the_record(charts_ctx):
+    """Horizontal bars off shadow_by_tag, polarity red/green, tag name and
+    number as text on every bar, on the Record tab under a heading that says
+    what they are NOT. The tag with no settled rows draws no bar."""
+    html = charts_ctx.eval("__show('record')")
+    text = _visible_text(html)
+    assert "ROI by selection rule (paper bets, not the record)" in text
+    i = html.index("bt-svg-roi")
+    roi = html[i:html.index("</svg>", i)]
+    assert roi.count("bt-svg-neg") == 1        # board_all, -11.9%
+    assert roi.count("bt-svg-pos") == 1        # potd_band, +20%
+    assert "board_all" in roi and "potd_band" in roi
+    assert "longshot" not in roi               # roi null, nothing to draw
+    assert "never pooled" in text
+
+
+def test_roi_by_tag_absent_state_names_the_reason(live_ctx):
+    """The committed learning fixture has no shadow_by_tag: the panel says
+    which block is missing instead of drawing an empty axis.
+
+    MUTATION PROOF: dropping the absence branch (returning the bare panel)
+    kills this and the chartAbsent phrasing assert."""
+    text = _visible_text(live_ctx.eval("__show('record')"))
+    assert "ROI by tag: not measured yet" in text
+    assert "carries no shadow_by_tag block" in text
+
+
+def test_every_chart_absence_branch_survives_a_missing_artifact():
+    """No learning artifact at all: reliability, trend and ROI all name the
+    file they are missing, and the page still renders."""
+    c = _ctx(_fetch_js(main=LIVE_PAYLOAD))
+    vtext = _visible_text(c.eval("__show('validation')"))
+    assert vtext.count("/data/betting_learning.json") >= 2
+    rtext = _visible_text(c.eval("__show('record')"))
+    assert "ROI by tag: not measured yet" in rtext
+
+
+def test_clv_absent_state_names_the_crontab_and_the_selfcheck(live_ctx):
+    """The A6 item 6 check: the empty CLV panel names the CONCRETE repair,
+    both the crontab install and the selfcheck command, not just the
+    symptom."""
+    text = _visible_text(live_ctx.eval("__show('record')"))
+    assert "deploy/betting-crontab.example" in text
+    assert "crontab -e" in text
+    assert "python tools/betting_close_job.py --selfcheck" in text
+    assert "NEVER RUN" in text
+
+
+def test_chart_colors_are_theme_tokens_only():
+    """Every SVG chart class in the injected sheet resolves through a CSS
+    custom property; no literal hex is the FIRST value of any chart rule."""
+    css = JS.split("var css = document.createElement", 1)[1]
+    for cls in ("bt-svg-line", "bt-svg-dot", "bt-svg-ref", "bt-svg-goldref",
+                "bt-svg-grid", "bt-svg-axis", "bt-svg-track", "bt-svg-fill",
+                "bt-svg-pos", "bt-svg-neg"):
+        i = css.index("." + cls + "{")
+        rule = css[i:css.index("}", i)]
+        for decl in ("fill:", "stroke:"):
+            j = rule.find(decl)
+            if j >= 0:
+                val = rule[j + len(decl):].split(";", 1)[0]
+                assert val.startswith("var(") or val in ("none",), (cls, val)
+
+
 # ===========================================================================
 # 8. D13: THE CLIENT MATH IS PINNED TO THE PYTHON MATH
 # ===========================================================================

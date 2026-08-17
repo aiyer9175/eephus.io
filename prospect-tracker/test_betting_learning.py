@@ -195,10 +195,21 @@ def test_sweep_readiness_is_per_tag_and_each_tag_needs_its_own_hundred(led):
 # 2. board_all does not widen an existing tag
 # ---------------------------------------------------------------------------
 def test_the_capped_budgets_still_sum_to_the_shipped_slate_budget():
-    """Adding a fourth tag may not change what the three capped tags mean."""
-    capped = [v for k, v in bs.MAX_PER_SLATE_BY_TAG.items() if v is not None]
-    assert sum(capped) == bs.MAX_PER_SLATE == 5
+    """Adding a tag may not change what the TEAM capped tags mean.
+
+    Since 2026-08-16 the props_* tags carry their own per-slate caps and sit
+    OUTSIDE the team room arithmetic (record_props_slate never consumes team
+    room, pinned in test_betting_shadow), so the invariant this test always
+    protected, that the team caps sum to the team slate budget, is asserted
+    over the team tags alone. The props caps get their own pin."""
+    props = set(getattr(bs, "PROPS_TAGS", ()) or ())
+    team_capped = [v for k, v in bs.MAX_PER_SLATE_BY_TAG.items()
+                   if v is not None and k not in props]
+    assert sum(team_capped) == bs.MAX_PER_SLATE == 5
     assert bs.MAX_PER_SLATE_BY_TAG[bs.BOARD_ALL_TAG] is None, "board_all is uncapped"
+    for t in props:
+        assert bs.MAX_PER_SLATE_BY_TAG.get(t) == 3, (
+            f"{t}: the props per-slate budget is 3 per doc section 7c")
 
 
 def test_board_all_is_off_by_default_and_changes_nothing_when_off(led):

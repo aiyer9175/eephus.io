@@ -87,6 +87,9 @@ OPEN_FIELDS = frozenset({
     "matchup", "market", "side", "label", "point", "model_prob", "p_push",
     "market_fair_prob", "fair_book", "hold_pct", "best_odds", "best_book",
     "best_decimal", "n_books_on_line", "inputs_vintage_date",
+    # 2026-08-16, section 7c: props rows name their player. Team rows never
+    # carry the key, which is what keeps the two populations separable.
+    "player",
 })
 CLOSE_FIELDS = frozenset({
     "cal_id", "phase", "written_at", "close_odds", "close_decimal",
@@ -327,6 +330,60 @@ def record_slate(payload: dict, *, path: Path | None = None,
             "reason": "ok" if n else "every priced side for this slate is already logged"}
 
 
+def record_props_slate(props_value: dict, *, path: Path | None = None,
+                       log_fn=None) -> dict:
+    """One open row per priced PROPS side (2026-08-16, section 7c).
+
+    Same discipline as record_slate: NO floor (both sides of every priced
+    pair, liked or not), idempotent on the cal_id, and the market name is the
+    props_<key> form so these rows can never pool into a team market's
+    statistic by key collision. betting_settle cannot grade a player count
+    off a run score, so these rows stay OPEN rather than being guessed; the
+    section 7b table says so wherever their n appears."""
+    pv = props_value or {}
+    slate = pv.get("slate_date")
+    if not slate:
+        return {"written": 0, "reason": "props_value carries no slate_date"}
+    rows_in = pv.get("rows") or []
+    if not rows_in:
+        return {"written": 0, "slate_date": slate,
+                "reason": "no priced props sides on this build"}
+    known = {r.get("cal_id") for r in rows(path=path)}
+    written_at = _now()
+    events = []
+    for r in rows_in:
+        if r.get("model_prob") is None:
+            continue
+        if r.get("odds") is None or not r.get("book"):
+            continue
+        market = r.get("market")
+        if market not in PROPS_CAL_MARKETS:
+            continue
+        cid = cal_id(slate, r.get("game_pk"), market, r.get("player"),
+                     r.get("side"), r.get("point"))
+        if cid in known:
+            continue
+        known.add(cid)
+        events.append({
+            "cal_id": cid, "phase": PHASE_OPEN, "written_at": written_at,
+            "slate_date": slate, "captured_at": r.get("captured_at"),
+            "game_pk": r.get("game_pk"), "matchup": r.get("matchup"),
+            "market": market, "side": r.get("side"), "player": r.get("player"),
+            "label": r.get("label"), "point": r.get("point"),
+            "model_prob": r.get("model_prob"), "p_push": r.get("p_push"),
+            "market_fair_prob": r.get("market_fair_prob"),
+            "fair_book": r.get("fair_book"), "hold_pct": r.get("hold_pct"),
+            "best_odds": r.get("odds"), "best_book": r.get("book"),
+            "best_decimal": r.get("decimal"),
+            "n_books_on_line": r.get("n_books_on_line"),
+        })
+    n = append(events, path=path)
+    if log_fn and n:
+        log_fn(f"betting_calibration: logged {n} priced props side(s) for {slate}")
+    return {"written": n, "slate_date": slate,
+            "reason": "ok" if n else "every priced props side is already logged"}
+
+
 def append_close(events_by_key: dict, *, path: Path | None = None,
                  log_fn=None) -> dict:
     """Attach the closing price to every open row that has one.
@@ -422,14 +479,24 @@ def settle(*, games=None, path: Path | None = None, log_fn=None) -> dict:
 #: with a label on it.
 N_BINS = 10
 
+#: The props market names this ledger logs as DISTINCT markets (2026-08-16,
+#: section 7c). Restated from betting_ingest.PROPS_MARKETS with the props_
+#: prefix rather than imported, for the same reason GATE_MIN_GAMES is
+#: restated: this module keeps its single betting_settle dependency, and the
+#: props tests pin the correspondence so the copies cannot drift.
+PROPS_CAL_MARKETS = ("props_pitcher_strikeouts", "props_batter_total_bases",
+                     "props_batter_hits", "props_batter_home_runs")
+
 #: One side per market, for the statistics that both sides make degenerate.
 #: BOTH sides of every market are in this ledger on purpose - that is what makes
 #: it a calibration ledger and not a bet ledger - and the price of it is that a
 #: pooled mean probability and a pooled hit rate are 0.5 by arithmetic. Scoring
 #: the home side, the home runline and the over recovers a real measurement,
 #: and the choice is fixed rather than data dependent so it cannot be picked
-#: after the fact to flatter the number.
-CANONICAL_SIDES = {"moneyline": "home", "runline": "home", "total": "over"}
+#: after the fact to flatter the number. Props markets score the OVER, fixed
+#: here 2026-08-16 before any props row existed.
+CANONICAL_SIDES = {"moneyline": "home", "runline": "home", "total": "over",
+                   **{m: "over" for m in PROPS_CAL_MARKETS}}
 
 
 def _mean(vals):
@@ -558,7 +625,7 @@ def summary(*, path: Path | None = None) -> dict:
 GATE_MIN_GAMES = 100
 GATE_Z = 1.645
 
-GATE_MARKETS = ("moneyline", "runline", "total")
+GATE_MARKETS = ("moneyline", "runline", "total") + PROPS_CAL_MARKETS
 
 
 def canonical_settled_games(rws: list[dict]) -> dict:
@@ -569,7 +636,13 @@ def canonical_settled_games(rws: list[dict]) -> dict:
     twice: a gate that counted per-side rows would reach any n-floor at half
     the games it claims. One row per (market, game_pk), the CANONICAL_SIDES
     side only, first occurrence kept so a second priced line on the same game
-    cannot count the game again."""
+    cannot count the game again.
+
+    Props rows (2026-08-16, section 7c) add the PLAYER to the key: ten
+    batter_hits players in one game are ten pieces of evidence, while one
+    player at two lines is one, the same rationale that counts one team game
+    at two totals once. Team rows carry no player key, so their dedup is
+    byte-identical to what it was."""
     out: dict[str, list[dict]] = {m: [] for m in GATE_MARKETS}
     seen: set[tuple] = set()
     for r in rws:
@@ -580,7 +653,7 @@ def canonical_settled_games(rws: list[dict]) -> dict:
             continue
         if CANONICAL_SIDES.get(m) != r.get("side"):
             continue
-        key = (m, r.get("game_pk"))
+        key = (m, r.get("game_pk"), r.get("player"))
         if key in seen:
             continue
         seen.add(key)
