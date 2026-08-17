@@ -4,7 +4,7 @@
  "basis": {
   "seed": 20260812,
   "bootstrap_B": 4000,
-  "source": "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker\\.cache\\betting\\calibration.jsonl"
+  "source": ".cache/betting/calibration.jsonl"
  },
  "verdict": "UNDERPOWERED",
  "n_rows": 140,

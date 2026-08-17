@@ -940,6 +940,16 @@ def _age_distribution(cutoffs: list[tuple[str, str | None]], targets: list[str],
     }
 
 
+def _relative_or_verbatim(p: Path) -> str:
+    """POSIX path relative to the checkout root, or the verbatim string for a
+    path outside it (test fixtures only). Published fields must not name the
+    build machine."""
+    try:
+        return Path(p).resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return str(p)
+
+
 def coverage(*, vintage_dir: Path | None = None,
              game_dates: list[str] | None = None) -> dict:
     """How much history the store holds, where the holes are, and how stale the
@@ -992,7 +1002,12 @@ def coverage(*, vintage_dir: Path | None = None,
         else:
             n_unknown += 1
     out = {
-        "dir": str(vdir),
+        # Checkout-relative when the store lives under the checkout (it does in
+        # every deployment); the absolute form published the build machine's
+        # filesystem layout and OS username into the eval artifact
+        # (payload-hygiene sweep, 2026-08-16). A store outside the checkout is
+        # echoed as-is, which only ever happens in test fixtures.
+        "dir": _relative_or_verbatim(vdir),
         "schema": SCHEMA,
         "n_vintages": len(dates),
         # Three clocks, never blended. See the docstring.

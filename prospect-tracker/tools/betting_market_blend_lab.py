@@ -158,7 +158,11 @@ def main() -> int:
     payload = {
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "model_id": "betting_market_blend",
-        "basis": {"seed": SEED, "bootstrap_B": args.boot, "source": str(LEDGER)},
+        # Checkout-relative, not str(LEDGER): the absolute form published the
+        # build machine's filesystem layout and OS username (payload-hygiene
+        # sweep, 2026-08-16).
+        "basis": {"seed": SEED, "bootstrap_B": args.boot,
+                  "source": ".cache/betting/calibration.jsonl"},
         **res,
     }
     OUT.write_text(json.dumps(payload, indent=1) + "\n", encoding="utf-8")

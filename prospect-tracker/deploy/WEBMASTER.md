@@ -156,7 +156,10 @@ PROSPX footer (`data_freshness` stamp) and in `timeseries.json` `generated_at`.
 
 nginx (full block in deploy/README.md): `gzip_static on;` (without it the boot
 JSON ships uncompressed), `error_page 404 /404.html`, `location /data/` ->
-`max-age=604800` (safe: payloads are `?v=<stamp>` cache-busted), `/assets/` and
+`max-age=604800` (safe for the stamped payloads: glossary and the Diamond
+build-time artifacts ride `?v=<stamp>` cache-busting since 2026-08-16; the
+betting payloads deliberately stay `no-cache` fetches because the close job
+mutates them intra-day, and revalidation is a cheap 304), `/assets/` and
 `*.html` -> `no-cache` (ETag + gzip_static make revalidation a cheap 304), and
 Range requests must stay enabled (the PROSPX boot probe reads bytes 0-2048 of
 `timeseries.json` for its version stamp). After edits: `sudo nginx -t &&

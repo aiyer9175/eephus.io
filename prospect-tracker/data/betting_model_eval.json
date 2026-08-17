@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-16T22:54:36+00:00",
+ "generated_at": "2026-08-17T01:05:10+00:00",
  "model_version": "betting_runs_v1",
  "season": null,
  "validated": false,
@@ -7,14 +7,14 @@
  "contamination": "team inputs are season-to-date leaderboards, so every graded game is inside its own features; this measures calibration, not out-of-sample skill",
  "gates_picks": false,
  "min_edge": null,
- "n_games": 1865,
+ "n_games": 1868,
  "modes": [
   "contaminated",
   "vintage"
  ],
  "headline_mode": "contaminated",
  "vintage_coverage": {
-  "dir": "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker\\.cache\\leaderboard_vintages",
+  "dir": ".cache/leaderboard_vintages",
   "schema": 3,
   "n_vintages": 21,
   "n_vintages_backfilled": 10,
@@ -52,11 +52,11 @@
   "earliest_gradable_game_date": "2026-07-06",
   "vintage_age_days": {
    "basis": "graded game dates",
-   "n": 518,
+   "n": 521,
    "median_days": 2,
    "p90_days": 10,
    "max_days": 13,
-   "mean_days": 3.51
+   "mean_days": 3.5
   },
   "span_days": 43,
   "latest_cutoff": "2026-08-16",
@@ -66,81 +66,81 @@
   "label": "in-sample (coefficients and features both leak)",
   "mode": "contaminated",
   "honest": false,
-  "n": 1865,
+  "n": 1868,
   "coefficients": {
-   "b0": 4.475809234790546,
-   "b1": 0.27675273054168154,
-   "b2": -0.3164407924880102,
-   "b3": 3.479290847243517,
-   "b4": 0.02855974507164108,
+   "b0": 4.482123814373289,
+   "b1": 0.27542444004664024,
+   "b2": -0.3178469585115442,
+   "b3": 3.444993118429896,
+   "b4": 0.020832717781441093,
    "source": "fitted",
-   "n_rows": 3730,
-   "rmse": 3.1498077129929336,
-   "r2": 0.04337823830129073
+   "n_rows": 3736,
+   "rmse": 3.1517131996732206,
+   "r2": 0.04334499563963179
   },
-  "home_field_runs_adj": 0.2437,
+  "home_field_runs_adj": 0.2429,
   "diff_shrink": 0.72,
   "run_dispersion_alpha": null,
   "extra_inning_home_rate": 0.4808,
-  "brier": 0.24294,
+  "brier": 0.24296,
   "brier_flat_500": 0.25,
-  "brier_home_base": 0.24943,
-  "log_loss": 0.6789,
+  "brier_home_base": 0.24947,
+  "log_loss": 0.67895,
   "log_loss_flat_500": 0.69315,
-  "accuracy": 0.5576,
-  "home_win_rate": 0.5239,
-  "mean_p_home": 0.5239,
-  "total_mae": 3.509,
+  "accuracy": 0.5578,
+  "home_win_rate": 0.523,
+  "mean_p_home": 0.523,
+  "total_mae": 3.512,
   "skill_vs_home_base": {
-   "delta": 0.006491,
-   "sd": 0.07865,
-   "t": 3.564,
+   "delta": 0.006506,
+   "sd": 0.07881,
+   "t": 3.568,
    "beats_baseline_95": true,
    "n_for_95": 397,
-   "baseline": 0.5239,
+   "baseline": 0.523,
    "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
   },
   "calibration": [
    {
     "bin": "0.2-0.3",
     "n": 11,
-    "pred": 0.2696,
+    "pred": 0.268,
     "actual": 0.4545
    },
    {
     "bin": "0.3-0.4",
-    "n": 99,
-    "pred": 0.3674,
-    "actual": 0.3939
+    "n": 100,
+    "pred": 0.3666,
+    "actual": 0.4
    },
    {
     "bin": "0.4-0.5",
-    "n": 609,
-    "pred": 0.4601,
-    "actual": 0.4663
+    "n": 618,
+    "pred": 0.4598,
+    "actual": 0.4644
    },
    {
     "bin": "0.5-0.6",
-    "n": 839,
-    "pred": 0.5477,
-    "actual": 0.5364
+    "n": 837,
+    "pred": 0.5478,
+    "actual": 0.5341
    },
    {
     "bin": "0.6-0.7",
-    "n": 273,
+    "n": 268,
     "pred": 0.6316,
-    "actual": 0.641
+    "actual": 0.6493
    },
    {
     "bin": "0.7-0.8",
     "n": 29,
-    "pred": 0.7373,
+    "pred": 0.7371,
     "actual": 0.6897
    },
    {
     "bin": "0.8-0.9",
     "n": 5,
-    "pred": 0.813,
+    "pred": 0.8129,
     "actual": 0.8
    }
   ]
@@ -150,7 +150,7 @@
   "label": "forward from 2026-07-02 (coefficient leakage removed, feature leakage remains)",
   "mode": "contaminated",
   "honest": false,
-  "n": 570,
+  "n": 573,
   "coefficients": {
    "b0": 4.499167936213671,
    "b1": 0.28721331425132324,
@@ -166,22 +166,22 @@
   "diff_shrink": 0.72,
   "run_dispersion_alpha": null,
   "extra_inning_home_rate": 0.4929,
-  "brier": 0.24551,
+  "brier": 0.24558,
   "brier_flat_500": 0.25,
-  "brier_home_base": 0.24969,
-  "log_loss": 0.68395,
+  "brier_home_base": 0.24978,
+  "log_loss": 0.68409,
   "log_loss_flat_500": 0.69315,
-  "accuracy": 0.5561,
-  "home_win_rate": 0.5175,
-  "mean_p_home": 0.5264,
-  "total_mae": 3.565,
+  "accuracy": 0.5567,
+  "home_win_rate": 0.5148,
+  "mean_p_home": 0.5262,
+  "total_mae": 3.571,
   "skill_vs_home_base": {
-   "delta": 0.004186,
-   "sd": 0.08109,
-   "t": 1.233,
+   "delta": 0.004205,
+   "sd": 0.08139,
+   "t": 1.237,
    "beats_baseline_95": false,
-   "n_for_95": 1015,
-   "baseline": 0.5175,
+   "n_for_95": 1014,
+   "baseline": 0.5148,
    "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
   },
   "calibration": [
@@ -199,9 +199,9 @@
    },
    {
     "bin": "0.4-0.5",
-    "n": 165,
-    "pred": 0.4616,
-    "actual": 0.4485
+    "n": 167,
+    "pred": 0.4615,
+    "actual": 0.4431
    },
    {
     "bin": "0.5-0.6",
@@ -211,9 +211,9 @@
    },
    {
     "bin": "0.6-0.7",
-    "n": 79,
-    "pred": 0.6319,
-    "actual": 0.6329
+    "n": 80,
+    "pred": 0.6315,
+    "actual": 0.625
    },
    {
     "bin": "0.7-0.8",
@@ -237,13 +237,13 @@
   "criteria": "fit {coefficients, alpha, diff_shrink, home_field_runs_adj} on the fit half of a 70% date split; on the HELD-OUT half all four must hold: (1) home win, paired Brier, non-inferiority, one-sided 95% lower bound on delta >= -0.001; (2) THE RUNLINE, BOTH SIDES, scored as the per-game SUM of the log loss on home margin >= 2 and the log loss on home margin <= -2 (equivalently home -1.5 and away -1.5; the +1.5 sides are their complements and score identically), paired, delta > 0 at t >= 1.645; (3) total over 9.0, paired log loss, delta > 0 at t >= 1.645; (4) runs both sides, out-of-sample log-likelihood per row, NB > Poisson. Moneyline is non-inferiority because diff_shrink already absorbs its calibration and NB must not be credited for beating it there. AMENDED 2026-08-09: V1 said only 'margin >= 2' and did not name a side, the first run scored the home side alone, and the side changes the verdict; see RUNLINE_SIDE_AMENDMENT. The verdict is taken from `dispersion_gate_sensitivity`, which requires the amended criterion to hold at split quantiles 0.6, 0.7 and 0.8, not from any single split.",
   "criteria_v1": "fit {coefficients, alpha, diff_shrink, home_field_runs_adj} on the fit half of a 70% date split; on the HELD-OUT half all four must hold: (1) home win, paired Brier, non-inferiority, one-sided 95% lower bound on delta >= -0.001; (2) margin >= 2, paired log loss, delta > 0 at t >= 1.645; (3) total over 9.0, paired log loss, delta > 0 at t >= 1.645; (4) runs both sides, out-of-sample log-likelihood per row, NB > Poisson. Moneyline is non-inferiority because diff_shrink already absorbs its calibration and NB must not be credited for beating it there.",
   "n_fit": 1295,
-  "n_eval_games": 570,
+  "n_eval_games": 573,
   "passed": true,
   "checks": [
    {
     "criterion": "moneyline (home win), paired Brier, non-inferiority",
     "test": "lb95(poisson - nb) >= -0.001",
-    "value": -0.000501,
+    "value": -0.000498,
     "threshold": -0.001,
     "pass": true
    },
@@ -251,23 +251,23 @@
     "criterion": "runline (both sides, per-game sum of the two log losses), paired log loss, superiority",
     "test": "delta > 0 and t >= 1.645",
     "side": "both",
-    "value": 0.011033,
-    "t": 2.679,
+    "value": 0.011386,
+    "t": 2.775,
     "threshold": 0.0,
     "pass": true
    },
    {
     "criterion": "total (over 9.0), paired log loss, superiority",
     "test": "delta > 0 and t >= 1.645",
-    "value": 0.007299,
-    "t": 1.873,
+    "value": 0.007121,
+    "t": 1.835,
     "threshold": 0.0,
     "pass": true
    },
    {
     "criterion": "runs, both scoring sides, out-of-sample log-likelihood per row",
     "test": "nb > poisson",
-    "value": 0.213496,
+    "value": 0.215297,
     "threshold": 0.0,
     "pass": true
    }
@@ -276,80 +276,80 @@
   "poisson_arm": {
    "diff_shrink": 0.72,
    "home_field_runs_adj": 0.2764,
-   "runs_ll_per_row": -2.669553189099164,
-   "n_runs_rows": 1140,
-   "n_eval": 570,
+   "runs_ll_per_row": -2.6733919110772044,
+   "n_runs_rows": 1146,
+   "n_eval": 573,
    "base_rates": {
-    "home_win": 0.5175,
-    "home_minus_1_5": 0.3509,
-    "away_minus_1_5": 0.3684,
-    "over_9": 0.386
+    "home_win": 0.5148,
+    "home_minus_1_5": 0.349,
+    "away_minus_1_5": 0.3717,
+    "over_9": 0.3857
    }
   },
   "nb2_arm": {
    "alpha": 0.27133,
    "diff_shrink": 1.12,
    "home_field_runs_adj": 0.266,
-   "runs_ll_per_row": -2.456057214478145,
-   "n_runs_rows": 1140,
-   "n_eval": 570,
+   "runs_ll_per_row": -2.458094842520928,
+   "n_runs_rows": 1146,
+   "n_eval": 573,
    "base_rates": {
-    "home_win": 0.5175,
-    "home_minus_1_5": 0.3509,
-    "away_minus_1_5": 0.3684,
-    "over_9": 0.386
+    "home_win": 0.5148,
+    "home_minus_1_5": 0.349,
+    "away_minus_1_5": 0.3717,
+    "over_9": 0.3857
    }
   },
   "moneyline_brier": {
-   "n": 570,
-   "delta": -0.000177,
-   "sd": 0.004703,
-   "t": -0.899,
-   "lb95": -0.000501
+   "n": 573,
+   "delta": -0.000175,
+   "sd": 0.004705,
+   "t": -0.889,
+   "lb95": -0.000498
   },
   "runline_logloss": {
-   "n": 570,
-   "delta": 0.011033,
-   "sd": 0.098338,
-   "t": 2.679,
-   "lb95": 0.004257,
+   "n": 573,
+   "delta": 0.011386,
+   "sd": 0.098207,
+   "t": 2.775,
+   "lb95": 0.004637,
    "passes_criterion_2": true
   },
   "runline_by_side": {
    "home": {
-    "n": 570,
-    "delta": -0.001971,
-    "sd": 0.100333,
-    "t": -0.469,
-    "lb95": -0.008884,
+    "n": 573,
+    "delta": -0.002308,
+    "sd": 0.10019,
+    "t": -0.551,
+    "lb95": -0.009193,
     "passes_criterion_2": false
    },
    "away": {
-    "n": 570,
-    "delta": 0.013004,
-    "sd": 0.104289,
-    "t": 2.977,
-    "lb95": 0.005818,
+    "n": 573,
+    "delta": 0.013694,
+    "sd": 0.104452,
+    "t": 3.138,
+    "lb95": 0.006516,
     "passes_criterion_2": true
    },
    "both": {
-    "n": 570,
-    "delta": 0.011033,
-    "sd": 0.098338,
-    "t": 2.679,
-    "lb95": 0.004257,
+    "n": 573,
+    "delta": 0.011386,
+    "sd": 0.098207,
+    "t": 2.775,
+    "lb95": 0.004637,
     "passes_criterion_2": true
    }
   },
   "runline_side_note": "criterion 2's estimand. `home` is the log loss on home margin >= 2 (home -1.5, equivalently away +1.5), `away` the log loss on home margin <= -2 (away -1.5, equivalently home +1.5), `both` their per-game sum. The board publishes all four prices and they are these two events; V1 of the pre-registration named no side and the first run scored `home` alone. See betting_model.RUNLINE_SIDE_AMENDMENT",
   "total_logloss": {
-   "n": 570,
-   "delta": 0.007299,
-   "sd": 0.093037,
-   "t": 1.873,
-   "lb95": 0.000888
+   "n": 573,
+   "delta": 0.007121,
+   "sd": 0.092878,
+   "t": 1.835,
+   "lb95": 0.000738
   },
-  "runs_loglik_per_row_delta": 0.213496,
+  "runs_loglik_per_row_delta": 0.215297,
   "mode": "contaminated",
   "mode_note": "forward split on season-to-date features. Both arms see the identical features and the identical fit window, so the contamination cannot favour one distribution over the other; this gate asks about SHAPE, not about skill",
   "sensitivity": {
@@ -365,23 +365,23 @@
      "split_q": 0.6,
      "split_date": "2026-06-18",
      "n_fit": 1107,
-     "n_eval_games": 758,
+     "n_eval_games": 761,
      "alpha": 0.27667,
      "other_three_pass": true,
      "by_side": {
       "home": {
-       "delta": -0.003466,
-       "t": -0.952,
+       "delta": -0.003723,
+       "t": -1.026,
        "pass": false
       },
       "away": {
-       "delta": 0.013866,
-       "t": 3.689,
+       "delta": 0.014379,
+       "t": 3.829,
        "pass": true
       },
       "both": {
-       "delta": 0.0104,
-       "t": 2.933,
+       "delta": 0.010656,
+       "t": 3.014,
        "pass": true
       }
      },
@@ -395,23 +395,23 @@
      "split_q": 0.7,
      "split_date": "2026-07-02",
      "n_fit": 1295,
-     "n_eval_games": 570,
+     "n_eval_games": 573,
      "alpha": 0.27133,
      "other_three_pass": true,
      "by_side": {
       "home": {
-       "delta": -0.001971,
-       "t": -0.469,
+       "delta": -0.002308,
+       "t": -0.551,
        "pass": false
       },
       "away": {
-       "delta": 0.013004,
-       "t": 2.977,
+       "delta": 0.013694,
+       "t": 3.138,
        "pass": true
       },
       "both": {
-       "delta": 0.011033,
-       "t": 2.679,
+       "delta": 0.011386,
+       "t": 2.775,
        "pass": true
       }
      },
@@ -425,23 +425,23 @@
      "split_q": 0.8,
      "split_date": "2026-07-19",
      "n_fit": 1474,
-     "n_eval_games": 391,
+     "n_eval_games": 394,
      "alpha": 0.28043,
      "other_three_pass": false,
      "by_side": {
       "home": {
-       "delta": -0.001315,
-       "t": -0.252,
+       "delta": -0.001817,
+       "t": -0.35,
        "pass": false
       },
       "away": {
-       "delta": 0.010193,
-       "t": 1.935,
+       "delta": 0.011214,
+       "t": 2.131,
        "pass": true
       },
       "both": {
-       "delta": 0.008878,
-       "t": 1.778,
+       "delta": 0.009396,
+       "t": 1.892,
        "pass": true
       }
      },
@@ -473,15 +473,15 @@
   "honest": true,
   "status": "graded",
   "n_vintages": 21,
-  "n_gradable": 518,
-  "n_graded": 269,
+  "n_gradable": 521,
+  "n_graded": 272,
   "n_skipped_no_vintage": 1347,
   "min_fit_games": 100,
   "min_eval_games": 50,
   "min_graded_games_for_min_edge": 600,
   "park_basis": {
    "source": "mixed",
-   "n_games_vintage_park": 507,
+   "n_games_vintage_park": 510,
    "n_games_neutral_park": 11,
    "n_eval_games_neutral_park": 11,
    "n_dates_neutral_park": 1,
@@ -494,12 +494,12 @@
     "n_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 518
+     "predates_column": 521
     },
     "n_eval_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 269
+     "predates_column": 272
     },
     "bases": [
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
@@ -510,12 +510,12 @@
     "n_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 518
+     "predates_column": 521
     },
     "n_eval_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 269
+     "predates_column": 272
     },
     "bases": [
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
@@ -526,12 +526,12 @@
     "n_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 518
+     "predates_column": 521
     },
     "n_eval_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 269
+     "predates_column": 272
     },
     "bases": [
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
@@ -542,12 +542,12 @@
     "n_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 518
+     "predates_column": 521
     },
     "n_eval_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 269
+     "predates_column": 272
     },
     "bases": [
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
@@ -558,12 +558,12 @@
     "n_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 518
+     "predates_column": 521
     },
     "n_eval_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 269
+     "predates_column": 272
     },
     "bases": [
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
@@ -574,12 +574,12 @@
     "n_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 518
+     "predates_column": 521
     },
     "n_eval_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 269
+     "predates_column": 272
     },
     "bases": [
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
@@ -590,12 +590,12 @@
     "n_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 518
+     "predates_column": 521
     },
     "n_eval_games": {
      "populated": 0,
      "null_stated": 0,
-     "predates_column": 269
+     "predates_column": 272
     },
     "bases": [
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
@@ -604,10 +604,10 @@
    },
    "note": "schema-3 dark capture only: counts of gradable and eval games whose vintage record carried each column, said why it was null, or predates it (docs/diamond-betting.md section 5c). Nothing served reads these columns; a null is never filled from live files"
   },
-  "note": "269 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season",
+  "note": "272 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season",
   "first_graded_date": "2026-07-06",
   "last_graded_date": "2026-08-16",
-  "n": 269,
+  "n": 272,
   "coefficients": {
    "b0": 4.433771423242494,
    "b1": -0.06169339063999956,
@@ -623,22 +623,22 @@
   "diff_shrink": 1.02,
   "run_dispersion_alpha": null,
   "extra_inning_home_rate": 0.4958,
-  "brier": 0.25053,
+  "brier": 0.25055,
   "brier_flat_500": 0.25,
-  "brier_home_base": 0.24875,
-  "log_loss": 0.69421,
+  "brier_home_base": 0.24913,
+  "log_loss": 0.69425,
   "log_loss_flat_500": 0.69315,
-  "accuracy": 0.5093,
-  "home_win_rate": 0.5353,
-  "mean_p_home": 0.5128,
-  "total_mae": 3.504,
+  "accuracy": 0.5074,
+  "home_win_rate": 0.5294,
+  "mean_p_home": 0.5127,
+  "total_mae": 3.52,
   "skill_vs_home_base": {
-   "delta": -0.001781,
-   "sd": 0.04648,
-   "t": -0.629,
+   "delta": -0.001419,
+   "sd": 0.04393,
+   "t": -0.533,
    "beats_baseline_95": false,
    "n_for_95": null,
-   "baseline": 0.5353,
+   "baseline": 0.5294,
    "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
   },
   "calibration": [
@@ -650,15 +650,15 @@
    },
    {
     "bin": "0.4-0.5",
-    "n": 98,
-    "pred": 0.476,
-    "actual": 0.5306
+    "n": 99,
+    "pred": 0.4757,
+    "actual": 0.5253
    },
    {
     "bin": "0.5-0.6",
-    "n": 160,
-    "pred": 0.5326,
-    "actual": 0.5312
+    "n": 162,
+    "pred": 0.5325,
+    "actual": 0.5247
    },
    {
     "bin": "0.6-0.7",
@@ -680,31 +680,31 @@
   "serving_scope": "moneyline only; the runline and the total stay behind the dispersion gate (section 11a) whatever this block says",
   "status": "ran",
   "vintage_arm": {
-   "n_gradable": 518,
+   "n_gradable": 521,
    "grid": [
     {
      "split_q": 0.6,
      "split_date": "2026-08-01",
      "n_fit": 305,
-     "n_eval": 213,
+     "n_eval": 216,
      "diff_shrink": 1.28,
      "home_field_runs_adj": -0.0443,
      "status": "ran",
      "a": 1.13656,
      "b": -0.00981,
      "brier_delta": {
-      "n": 213,
-      "delta": -0.000505,
-      "sd": 0.005197,
-      "t": -1.418,
-      "lb95": -0.001091
+      "n": 216,
+      "delta": -0.000474,
+      "sd": 0.005193,
+      "t": -1.343,
+      "lb95": -0.001056
      },
      "logloss_delta": {
-      "n": 213,
-      "delta": -0.001024,
-      "sd": 0.010689,
-      "t": -1.399,
-      "lb95": -0.002229
+      "n": 216,
+      "delta": -0.000962,
+      "sd": 0.010678,
+      "t": -1.325,
+      "lb95": -0.002158
      },
      "brier_pass": false,
      "logloss_pass": false,
@@ -714,25 +714,25 @@
      "split_q": 0.7,
      "split_date": "2026-08-05",
      "n_fit": 358,
-     "n_eval": 160,
+     "n_eval": 163,
      "diff_shrink": 1.28,
      "home_field_runs_adj": -0.0098,
      "status": "ran",
      "a": 1.04816,
      "b": -0.0048,
      "brier_delta": {
-      "n": 160,
-      "delta": -0.000115,
-      "sd": 0.001693,
-      "t": -0.862,
-      "lb95": -0.000335
+      "n": 163,
+      "delta": -0.000105,
+      "sd": 0.001688,
+      "t": -0.792,
+      "lb95": -0.000322
      },
      "logloss_delta": {
-      "n": 160,
-      "delta": -0.000232,
-      "sd": 0.003467,
-      "t": -0.846,
-      "lb95": -0.000683
+      "n": 163,
+      "delta": -0.000211,
+      "sd": 0.003457,
+      "t": -0.778,
+      "lb95": -0.000656
      },
      "brier_pass": false,
      "logloss_pass": false,
@@ -742,25 +742,25 @@
      "split_q": 0.8,
      "split_date": "2026-08-09",
      "n_fit": 414,
-     "n_eval": 104,
+     "n_eval": 107,
      "diff_shrink": 1.22,
      "home_field_runs_adj": -0.0007,
      "status": "ran",
      "a": 1.00536,
      "b": -0.00067,
      "brier_delta": {
-      "n": 104,
-      "delta": -4e-06,
-      "sd": 0.000143,
-      "t": -0.292,
-      "lb95": -2.7e-05
+      "n": 107,
+      "delta": -3e-06,
+      "sd": 0.000142,
+      "t": -0.192,
+      "lb95": -2.5e-05
      },
      "logloss_delta": {
-      "n": 104,
-      "delta": -8e-06,
-      "sd": 0.00029,
-      "t": -0.282,
-      "lb95": -5.5e-05
+      "n": 107,
+      "delta": -5e-06,
+      "sd": 0.000289,
+      "t": -0.184,
+      "lb95": -5.1e-05
      },
      "brier_pass": false,
      "logloss_pass": false,
@@ -794,25 +794,25 @@
   "status": "ran",
   "window": {
    "split_date": "2026-07-28",
-   "n": 269,
+   "n": 272,
    "first_date": "2026-07-28",
    "last_date": "2026-08-16"
   },
   "tiers": {
    "model_vintage": {
-    "n": 269,
-    "brier": 0.25053,
+    "n": 272,
+    "brier": 0.25055,
     "source": "the vintage block's own graded eval window"
    },
    "home_constant": {
-    "n": 269,
-    "brier": 0.24875,
-    "p_constant": 0.5353,
+    "n": 272,
+    "brier": 0.24913,
+    "p_constant": 0.5294,
     "source": "the eval window's home win rate as a constant, the identical base brier_home_base uses"
    },
    "elo_literature": {
-    "n": 269,
-    "brier": 0.24556,
+    "n": 272,
+    "brier": 0.24584,
     "config": {
      "k": 4.0,
      "home_adv_elo": 24.0,
@@ -822,16 +822,16 @@
     "source": "tools/betting_elo.py walking this season's results only"
    },
    "market_open_devig": {
-    "n": 122,
-    "brier": 0.24254,
+    "n": 125,
+    "brier": 0.24418,
     "n_slates_with_capture": 10,
     "same_games": {
-     "model": 0.25356,
-     "home_constant": 0.24671,
-     "elo_literature": 0.24347,
+     "model": 0.25353,
+     "home_constant": 0.24806,
+     "elo_literature": 0.24413,
      "note": "the only comparison a subsample may appear in: every tier recomputed on exactly these games"
     },
-    "subsample_note": "122 of the window's 269 games have a cached open capture; a doubleheader's two games read the same capture",
+    "subsample_note": "125 of the window's 272 games have a cached open capture; a doubleheader's two games read the same capture",
     "source": "proportional de-vig of the earliest open snapshot per slate, home fair probability averaged across books posting a two-sided h2h market"
    },
    "market_close_devig": {
@@ -850,14 +850,14 @@
    {
     "id": "vintage_sample",
     "need": "600 vintage-graded games",
-    "have": 269,
+    "have": 272,
     "open": false,
     "why": "the contaminated forward margin over the home-field baseline is +0.005794 Brier with a paired sd of 0.08647, so a margin that size needs 603 games to clear one-sided 95%; 600 is that number, and a clean margin will be smaller, so this is a floor and not a pass"
    },
    {
     "id": "out_of_sample_skill",
     "need": "paired Brier vs the home-field baseline, t >= 1.645",
-    "have": -0.629,
+    "have": -0.533,
     "open": false,
     "why": "sample size is not evidence; the model has to actually beat 'always take the home team' on games it could not see"
    },
@@ -1426,5 +1426,5 @@
   "policy": "min_edge stays null until all three gates are open. A threshold invented to make a pick appear is the single most dishonest number this module could publish."
  },
  "status": "ran",
- "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 269 games. A pick threshold is set from the vintage mode or from nothing."
+ "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 272 games. A pick threshold is set from the vintage mode or from nothing."
 }
