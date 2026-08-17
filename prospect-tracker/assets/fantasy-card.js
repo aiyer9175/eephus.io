@@ -167,8 +167,26 @@
   // knows the player is on tonight's slate and sees nothing here would read
   // that as "not playing". A history we could not get simply renders no trend,
   // because a missing sparkline claims nothing.
+  // Content stamps: the slate and BOTH history boards are build-time
+  // artifacts, so the /fantasy/ shell emits window.EEPHUS_DATA_VERS entries
+  // for all three and the reads ride content-versioned URLs under DEFAULT
+  // caching. The histories are the two heaviest lazy payloads this overlay
+  // owns, which is exactly the transfer the stamp exists to save. No stamp
+  // (hand-served page, missing emission) keeps the no-cache revalidation
+  // below unchanged. Betting payloads never enter the map: the close job
+  // mutates them intra-day with no rebuild.
+  function stampedURL(url) {
+    try {
+      var vers = (typeof window !== "undefined" && window.EEPHUS_DATA_VERS) || null;
+      var v = vers && vers[url.split("/").pop()];
+      return v ? url + "?v=" + encodeURIComponent(v) : null;
+    } catch (e) { return null; }
+  }
   function getJson(url, ok, bad) {
-    fetch(url, { cache: "no-cache" }).then(function (r) {
+    var stamped = stampedURL(url);
+    var opts = stamped ? undefined : { cache: "no-cache" };
+    if (stamped) url = stamped;
+    fetch(url, opts).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     }).then(ok).catch(bad);

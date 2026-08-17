@@ -149,6 +149,58 @@ DIAMOND_CONFIG_SCRIPT = (
     f'<script src="/assets/eephus-diamond.js?v={_DIAMOND_HELPER_VER}" defer></script>'
 )
 
+
+# CONTENT stamps for the Diamond section's BUILD-TIME-ONLY data payloads, the
+# same trade _GL_DATA_VER made for the glossary corpus. These payloads are
+# written by the pipeline and only change when the site rebuilds, yet every
+# client fetched them with cache:"no-cache", a forced revalidation on multi
+# hundred KB files on every page view. Each consuming page now carries a tiny
+# inline global, window.EEPHUS_DATA_VERS = {"<file>": "<8-hex>"}, and the
+# clients append ?v=<stamp> and fetch under DEFAULT caching: nginx serves
+# /data/ with max-age=604800, so the browser keeps the payload until the
+# content hash moves and the new file lands under a URL no cache has seen.
+# Same freshness, one transfer per version.
+def _data_vers_script(names: tuple[str, ...]) -> str:
+    """The inline EEPHUS_DATA_VERS block for one page's payload list.
+
+    THE DO-NOT-STAMP RULE, which this helper enforces rather than documents:
+    data/betting.json, data/betting_record.json and the settlement/CLV
+    sidecars are mutated INTRA-DAY by the close job with no page rebuild in
+    between, so a build-time stamp on any of them would pin a week-stale copy
+    under that same /data/ max-age. They keep the no-cache revalidation, and
+    a betting name in a stamp list is refused loudly here instead of shipping
+    a stale betting record.
+
+    A missing file is simply omitted (no stamp, never a crash): the client
+    sees no entry for it and falls back to the exact no-cache read it always
+    had. An empty map emits no script tag at all."""
+    stamps: dict[str, str] = {}
+    for name in names:
+        if name.startswith("betting"):
+            raise ValueError(
+                f"{name} is a close-job payload and must never be content-stamped: "
+                "it mutates intra-day without a rebuild, and a build-time stamp "
+                "would serve a week-stale copy under the /data/ max-age.")
+        try:
+            stamps[name] = hashlib.md5((ROOT / "data" / name).read_bytes()).hexdigest()[:8]
+        except OSError:
+            continue
+    if not stamps:
+        return ""
+    return f"<script>window.EEPHUS_DATA_VERS={json.dumps(stamps, sort_keys=True)};</script>"
+
+
+# The per-page payload lists. Per page rather than one site-wide map so each
+# page's consumption set sits next to its builder and a betting name showing
+# up in one is a visible one-line diff. hitter_history.json and
+# starter_history.json are the fantasy card's season-history boards: monthly
+# build-time artifacts like the rest, and the two heaviest lazy fetches in
+# the module, which is exactly the transfer the stamp exists to save.
+FANTASY_DATA_STAMPS = ("fantasy.json", "dfs.json",
+                       "hitter_history.json", "starter_history.json")
+CARDS_DATA_STAMPS = ("card_market.json",)
+DIAMOND_DATA_STAMPS = ("xfv_scoreboard_eval.json",)
+
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
 # the public tree, so its <script> 404s harmlessly and window.EEPHUS_SUPABASE stays
@@ -4107,6 +4159,11 @@ def build_fantasy() -> str:
         f'{_partof_diamond()}</div>'
         f'{modbar}{redraft}{dynasty}{dfs}'
         '</div>'
+        # Inline (non-defer), so it runs at parse time and is guaranteed to be
+        # set before any deferred client below reads it: the corpus, the DFS
+        # slate and the card's two history boards fetch under content-stamped
+        # URLs instead of forced revalidation. See _data_vers_script.
+        f'{_data_vers_script(FANTASY_DATA_STAMPS)}'
         f'{DIAMOND_CONFIG_SCRIPT}'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
@@ -4389,6 +4446,10 @@ def build_cards() -> str:
         # URL satisfies, so the injection becomes a no-op rather than a double
         # load. Placement mirrors build_trademachine().
         f'<link rel="stylesheet" href="/assets/cards.css?v={_CARDS_CSS_VER}">'
+        # Content stamp for data/card_market.json (see _data_vers_script):
+        # cards.js fetches it versioned under default caching when this global
+        # carries its hash.
+        f'{_data_vers_script(CARDS_DATA_STAMPS)}'
         f'{DIAMOND_CONFIG_SCRIPT}'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
@@ -4655,6 +4716,11 @@ def build_diamond() -> str:
         '21+. Sports betting is not legal in every state. No affiliate links. '
         'If betting stops being fun, call 1-800-GAMBLER.</p>'
         '</div>'
+        # Content stamp for data/xfv_scoreboard_eval.json only. The betting
+        # record is deliberately ABSENT from this map: betting_record.json is
+        # a close-job payload and stays on no-cache revalidation (see
+        # _data_vers_script for the rule this enforces).
+        f'{_data_vers_script(DIAMOND_DATA_STAMPS)}'
         f'{DIAMOND_CONFIG_SCRIPT}'
         f'<script src="/assets/diamond.js?v={_DIAMOND_VER}" defer></script>'
     )

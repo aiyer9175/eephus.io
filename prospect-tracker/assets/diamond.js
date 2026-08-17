@@ -66,8 +66,29 @@
     catch (e) { /* the glossary is enrichment; the page reads fine without it */ }
   }
 
-  function getJSON(url) {
-    return fetch(url, { cache: "no-cache" }).then(function (r) {
+  // Content stamp lookup. build_site emits window.EEPHUS_DATA_VERS on
+  // /diamond/ with the scoreboard artifact's content hash; with a stamp the
+  // read rides a versioned URL under DEFAULT caching, and without one the
+  // no-cache revalidation stays exactly as it was.
+  function stampedURL(url) {
+    try {
+      var vers = (typeof window !== "undefined" && window.EEPHUS_DATA_VERS) || null;
+      var v = vers && vers[url.split("/").pop()];
+      return v ? url + "?v=" + encodeURIComponent(v) : null;
+    } catch (e) { return null; }
+  }
+  // `fresh` forces the revalidating read even on a page that emits stamps.
+  // The betting record is the one caller: betting_record.json is mutated
+  // INTRA-DAY by the close job with no page rebuild in between, so a
+  // build-time stamp would pin a week-stale copy under the /data/ max-age.
+  // It must never enter EEPHUS_DATA_VERS (build_site's _data_vers_script
+  // refuses betting names outright), and this flag keeps the record read
+  // honest even if the map ever grew a rogue entry.
+  function getJSON(url, fresh) {
+    var stamped = fresh ? null : stampedURL(url);
+    var opts = stamped ? undefined : { cache: "no-cache" };
+    if (stamped) url = stamped;
+    return fetch(url, opts).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     });
@@ -449,7 +470,8 @@
     getJSON(SCOREBOARD_URL).then(renderReceipts).catch(function (e) {
       receiptsFailed(String((e && e.message) || e));
     });
-    getJSON(RECORD_URL).then(renderRecord).catch(function () {
+    // fresh:true - the record mutates intra-day and keeps no-cache; see getJSON.
+    getJSON(RECORD_URL, true).then(renderRecord).catch(function () {
       // 404 is the expected state before the first pick. Anything else lands
       // in the same honest card: there is no record to show.
       emptyRecord("");

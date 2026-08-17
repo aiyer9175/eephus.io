@@ -175,6 +175,23 @@
     if (ONCHANGE[ACTIVE]) ONCHANGE[ACTIVE]();
   }
 
+  // ---- content-stamped payload URLs -----------------------------------------
+  // build_site emits window.EEPHUS_DATA_VERS = {"<file>": "<8-hex>"} on pages
+  // whose data payloads are build-time artifacts. With a stamp the fetch rides
+  // a versioned URL under DEFAULT caching, so the browser serves the payload
+  // from cache until the content hash moves. Returns null when the page emits
+  // no stamp for the file (hand-served page, missing emission), and the caller
+  // keeps its no-cache revalidation exactly as before. The betting payloads
+  // never enter the map: the close job mutates them intra-day with no rebuild,
+  // so a build-time stamp would pin a stale copy for up to a week.
+  function stampedURL(url) {
+    try {
+      var vers = (typeof window !== "undefined" && window.EEPHUS_DATA_VERS) || null;
+      var v = vers && vers[url.split("/").pop()];
+      return v ? url + "?v=" + encodeURIComponent(v) : null;
+    } catch (e) { return null; }
+  }
+
   // ---- the host API the clients bind to -------------------------------------
   // Each client keeps its own router; it just stops reaching for `location` and
   // `window` directly. With no host on the page (the JS-engine harness, or a
@@ -205,7 +222,11 @@
     // other module's board.
     json: function (url) {
       if (!LOADS[url]) {
-        LOADS[url] = fetch(url, { cache: "no-cache" }).then(function (r) {
+        // Memoized under the BARE url (the clients' one shared key); the
+        // stamp is applied at fetch time only. Stamped: default caching on a
+        // content-versioned URL. Unstamped: the forced revalidation stays.
+        var stamped = stampedURL(url);
+        LOADS[url] = fetch(stamped || url, stamped ? undefined : { cache: "no-cache" }).then(function (r) {
           if (!r.ok) throw new Error("HTTP " + r.status);
           return r.json();
         }).catch(function (e) { delete LOADS[url]; throw e; });

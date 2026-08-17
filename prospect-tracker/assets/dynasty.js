@@ -81,10 +81,26 @@
     if (H) H.onChange(MODULE, fn);
     else window.addEventListener("hashchange", fn);
   }
+  // Content stamp lookup for the standalone read. build_site emits
+  // window.EEPHUS_DATA_VERS on pages whose payloads are build-time artifacts;
+  // with a stamp the fetch rides a versioned URL under DEFAULT caching, and
+  // without one (hand-served page, missing emission) the no-cache
+  // revalidation below stays exactly as it was. The betting payloads never
+  // enter the map: the close job mutates them intra-day with no rebuild.
+  function stampedURL(url) {
+    try {
+      var vers = (typeof window !== "undefined" && window.EEPHUS_DATA_VERS) || null;
+      var v = vers && vers[url.split("/").pop()];
+      return v ? url + "?v=" + encodeURIComponent(v) : null;
+    } catch (e) { return null; }
+  }
   function load(url) {
     var H = host();
     if (H) return H.json(url);
-    return fetch(url, { cache: "no-cache" }).then(function (r) {
+    var stamped = stampedURL(url);
+    var opts = stamped ? undefined : { cache: "no-cache" };
+    if (stamped) url = stamped;
+    return fetch(url, opts).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     });

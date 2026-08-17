@@ -823,7 +823,22 @@
   function writeHash() {
     try { history.replaceState(null, "", "#" + section); } catch (e) { /* file:// */ }
   }
+  // Content stamp lookup. build_site emits window.EEPHUS_DATA_VERS on
+  // /cards/ with the card_market.json content hash; with a stamp the read
+  // rides a versioned URL under DEFAULT caching, and without one the
+  // no-cache revalidation stays exactly as it was. Betting payloads never
+  // enter the map: the close job mutates them intra-day with no rebuild.
+  function stampedURL(url) {
+    try {
+      var vers = (typeof window !== "undefined" && window.EEPHUS_DATA_VERS) || null;
+      var v = vers && vers[url.split("/").pop()];
+      return v ? url + "?v=" + encodeURIComponent(v) : null;
+    } catch (e) { return null; }
+  }
   function loadLinks() {
+    // Not stamped on purpose: player_links.json is not on this page's
+    // emitted stamp list (the /cards/ map carries only the page's own
+    // payload), so this stays the revalidating read it always was.
     fetch("/data/player_links.json", { cache: "no-cache" })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) { LINKS = j; if (DATA) render(); })
@@ -831,7 +846,8 @@
   }
   function load() {
     LOAD_ERROR = false;
-    fetch(DATA_URL, { cache: "no-cache" })
+    var stamped = stampedURL(DATA_URL);
+    fetch(stamped || DATA_URL, stamped ? undefined : { cache: "no-cache" })
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function (j) { DATA = j; render(); })
       .catch(function () { DATA = null; LOAD_ERROR = true; render(); });
