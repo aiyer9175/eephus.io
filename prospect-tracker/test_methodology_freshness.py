@@ -369,6 +369,14 @@ MODEL_GLOSSARY = {
     "betting_game_prob": "internal",
     "dfs_slate_pricing": "internal",
     "card_market_index": "internal",
+    # 2026-08-16 betting-model lane. Neither is user-facing: the Platt
+    # calibration is an UNSERVED seam behind SERVE_PROB_CALIBRATION whose
+    # pre-registration lives in docs/diamond-betting.md section 11b, and the
+    # Elo row is a validation-ladder baseline that no page renders. If the
+    # calibration ever serves, the /betting/ methodology copy documents it
+    # then, on the page, the same decision as betting_game_prob above.
+    "betting_prob_calibration": "internal",
+    "betting_elo_benchmark": "internal",
     # 2026-08-16 registry-hygiene wave: the five published fantasy surfaces
     # that had no registry row. Same documentation decision as the Diamond
     # trio above: each ships on a page that carries its method and its limits

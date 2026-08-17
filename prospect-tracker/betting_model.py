@@ -372,6 +372,44 @@ DISPERSION_GATE_CRITERIA = (
     "to hold at split quantiles 0.6, 0.7 and 0.8, not from any single split."
 )
 
+# --- probability calibration (B5, Platt) -----------------------------------
+# p' = sigmoid(a * logit(p) + b), two parameters, order-preserving. The gate it
+# must clear was pre-registered in docs/diamond-betting.md section 11b BEFORE
+# this code existed and before any number was looked at, and the criteria ride
+# here verbatim so the artifact never depends on the doc staying honest.
+#
+# THE PRE-REGISTERED EXPECTATION, written before the first fit: Platt repairs
+# RESPONSE SCALE (overconfidence, inversion at the extremes). It cannot
+# manufacture discrimination and it is NOT expected to open the skill gate;
+# a model whose ordering carries nothing converges TOWARD the constant
+# baseline under a scale repair, and converging toward the baseline is a
+# finding. diff_shrink is already fitted on the fit half by log loss, so most
+# of the response scale is absorbed before Platt sees a probability, and a
+# fitted (a, b) near (1, 0) is the honest likely outcome.
+#
+# TO FLIP THIS FLAG: both arms of `prob_calibration_gate` must pass, and the
+# flag, the persisted `prob_calibration` block in betting_model_eval.json and
+# the tripwire in test_betting_platt.py change in the SAME commit - the
+# SERVE_RUN_DISPERSION three-move-together pattern. The ledger arm cannot
+# count before PROB_CALIBRATION_LEDGER_MIN_GAMES settled canonical moneyline
+# games exist (49 on 2026-08-16), so the flag cannot flip today whatever the
+# vintage arm returns. Serving scope is the MONEYLINE ONLY; the runline and
+# the total stay behind the dispersion gate (section 11a) regardless.
+SERVE_PROB_CALIBRATION = False
+PROB_CALIBRATION_SPLIT_QUANTILES = (0.6, 0.7, 0.8)
+PROB_CALIBRATION_LEDGER_MIN_GAMES = 100
+PROB_CALIBRATION_GATE_CRITERIA = (
+    "fit (a, b) of p' = sigmoid(a*logit(p) + b) by MLE on the fit half only; on the "
+    "held-out half BOTH must hold: (1) paired per-game Brier delta, identity minus "
+    "Platt, > 0 at one-sided t >= 1.645; (2) paired log loss delta not worse on the "
+    "point estimate (>= 0). Splits at date quantiles 0.6, 0.7 and 0.8, ALL THREE or "
+    "nothing, fit half >= 100 games and eval half >= 50 or the split cannot pass. "
+    "Arm 1 is the vintage-gradable sample with {coefficients, tie, diff_shrink, "
+    "home_adj} refit on each fit half; arm 2 is the calibration ledger's settled "
+    "canonical-side moneyline games, ACTIVE only at n >= 100, same splits and "
+    "criteria in settled order. Ship requires BOTH arms; serving is moneyline only."
+)
+
 # --- the vintage gate ------------------------------------------------------
 # How many games the VINTAGE-mode backtest must grade before `min_edge` may be
 # fitted at all. This number is measured, not picked to look serious.
@@ -481,14 +519,36 @@ def _mean_sd(xs: list[float]) -> tuple[float, float]:
 # ---------------------------------------------------------------------------
 # team + pitcher inputs off the committed leaderboards
 # ---------------------------------------------------------------------------
+# THE SCHEMA-3 DARK CAPTURE COLUMNS (2026-08-16), named here so the assembly
+# has a stable key set even before any record carries them. Pinned equal to
+# leaderboard_vintages.SCHEMA3_* by test_leaderboard_vintages, which is the
+# one-source-of-truth guard the lazy import cannot give.
+#
+# DARK MEANS DARK. These reach the assembled team inputs and their z-scores are
+# computed by the same standardization as everything else, and then NOTHING
+# served reads them: not expected_runs, not game_prevention_z, not a slot, not
+# a record row. A candidate wanting a price goes through the protocol in
+# docs/diamond-betting.md section 5c, gate section first.
+DARK_TEAM_COLUMNS = ("xwoba_14", "xwoba_30", "off_vs_lhp", "off_vs_rhp",
+                     "lineup_strength", "star_out")
+DARK_PITCHER_COLUMNS = ("throws",)
+
+
 def _assemble_team_inputs(off: dict, rots: dict, pens: dict,
-                          starter_ip: dict, relief_ip: dict) -> dict:
+                          starter_ip: dict, relief_ip: dict,
+                          extras: dict | None = None) -> dict:
     """The standardization, written ONCE.
 
     The live path and the vintage path both land here, which is the point: a
     z-score computed one way on today's leaderboards and another way on a
     stored snapshot would make the backtest incomparable to the served model
-    for a reason nobody would ever see."""
+    for a reason nobody would ever see.
+
+    `extras` is the schema-3 dark capture, {org: {column: value | None}} over
+    DARK_TEAM_COLUMNS. Every assembled row carries every dark column (None when
+    absent, never zero) plus its z, standardized over the teams that HAVE the
+    value; the served model reads none of them. Both paths hand the same shape
+    in, so the live and vintage key sets cannot drift."""
     orgs = sorted(set(off) & set(pens) & set(rots))
     if not orgs:
         # LOG THE COUNTS, not the outcome. The board published "team
@@ -514,10 +574,21 @@ def _assemble_team_inputs(off: dict, rots: dict, pens: dict,
 
     off_mu, off_sd = _mean_sd([off[o] for o in orgs])
     prev_mu, prev_sd = _mean_sd([prev[o] for o in orgs])
+    # Dark-column scales, one per column, over the teams that carry a value.
+    # A column that is null everywhere (the xwOBA pair tonight) simply has no
+    # scale and every z comes back None; nothing is imputed.
+    ex = extras or {}
+    ex_scale: dict[str, dict] = {}
+    for col in DARK_TEAM_COLUMNS:
+        vals = [ex[o][col] for o in orgs
+                if isinstance(ex.get(o), dict) and ex[o].get(col) is not None]
+        if len(vals) >= 2:
+            mu, sd = _mean_sd(vals)
+            ex_scale[col] = {"mu": mu, "sd": sd, "n": len(vals)}
     out = {}
     for o in orgs:
         sip, rip = starter_ip.get(o, 0.0), relief_ip.get(o, 0.0)
-        out[o] = {
+        row = {
             "org": o,
             "offense_plus": off[o],
             "rotation_plus": rots[o],
@@ -527,8 +598,17 @@ def _assemble_team_inputs(off: dict, rots: dict, pens: dict,
             "z_off": (off[o] - off_mu) / off_sd,
             "z_prev": (prev[o] - prev_mu) / prev_sd,
         }
+        eo = ex.get(o) if isinstance(ex.get(o), dict) else {}
+        for col in DARK_TEAM_COLUMNS:
+            v = eo.get(col)
+            row[col] = v
+            sc = ex_scale.get(col)
+            row["z_" + col] = ((v - sc["mu"]) / sc["sd"]
+                               if (v is not None and sc) else None)
+        out[o] = row
     out["_scale"] = {"off_mu": off_mu, "off_sd": off_sd,
-                     "prev_mu": prev_mu, "prev_sd": prev_sd}
+                     "prev_mu": prev_mu, "prev_sd": prev_sd,
+                     "extras": ex_scale}
     return out
 
 
@@ -547,11 +627,20 @@ def team_inputs_detail() -> dict:
              "bullpen": "bullpen_leaderboards.json"}
     blobs = {k: _data(v) for k, v in files.items()}
 
-    off = {}
+    lv = _vintage_module()
+    off, extras = {}, {}
     for t in (blobs["offense"] or {}).get("teams") or []:
         o = _org(t.get("team"))
         if o and t.get("offense_plus") is not None:
             off[o] = float(t["offense_plus"])
+            # The dark capture on the LIVE path, reduced by the SAME helper the
+            # vintage write side uses so the two cannot drift. The columns with
+            # no committed builder (the xwOBA pair, lineup_strength, star_out)
+            # stay None here too: the live read states absence exactly the way
+            # the stored record does, and never invents a number.
+            vl, vr = (lv.off_splits_from_hitter_team(t) if lv else (None, None))
+            extras[o] = {c: None for c in DARK_TEAM_COLUMNS}
+            extras[o]["off_vs_lhp"], extras[o]["off_vs_rhp"] = vl, vr
     pens, relief_ip = {}, {}
     for t in (blobs["bullpen"] or {}).get("teams") or []:
         o = _org(t.get("team"))
@@ -573,7 +662,7 @@ def team_inputs_detail() -> dict:
             "as_of": (blobs[k] or {}).get("as_of")}
         for k in files
     }
-    teams = _assemble_team_inputs(off, rots, pens, starter_ip, relief_ip)
+    teams = _assemble_team_inputs(off, rots, pens, starter_ip, relief_ip, extras)
     sources["n_orgs_joined"] = len([o for o in teams if not o.startswith("_")])
     return {"teams": teams, "sources": sources}
 
@@ -594,6 +683,10 @@ def starter_inputs() -> dict:
     average. Relievers are folded in too (openers, bulk relief)."""
     out = {}
     rot = _data("starter_leaderboards.json") or {}
+    # `throws` is None on the LIVE path by design: the hand is captured by the
+    # nightly vintage snapshot's one bulk StatsAPI join, and the live read does
+    # not repeat that network call per build. A None here is a stated absence,
+    # and nothing served reads the key (DARK_PITCHER_COLUMNS).
     for r in rot.get("starters") or []:
         mid = r.get("mlbam")
         if not mid or r.get("sem_plus") is None:
@@ -602,7 +695,7 @@ def starter_inputs() -> dict:
                          "org": _org(r.get("team")),
                          "sem_plus": float(r["sem_plus"]),
                          "ip_per_gs": float(r.get("ip_per_gs") or 0.0) or None,
-                         "role": r.get("role") or "SP"}
+                         "role": r.get("role") or "SP", "throws": None}
     pen = _data("bullpen_leaderboards.json") or {}
     for r in pen.get("relievers") or []:
         mid = r.get("mlbam")
@@ -611,7 +704,7 @@ def starter_inputs() -> dict:
         out[int(mid)] = {"mlbam": int(mid), "name": r.get("name"),
                          "org": _org(r.get("team")),
                          "sem_plus": float(r["rem_plus"]),   # same 100/10z scale
-                         "ip_per_gs": None, "role": "RP"}
+                         "ip_per_gs": None, "role": "RP", "throws": None}
     return out
 
 
@@ -683,7 +776,11 @@ def team_inputs_from_vintage(rec: dict) -> dict:
         i_rip = cols.index("relief_ip")
     except ValueError:                                           # pragma: no cover
         return {}
-    off, rots, pens, sip, rip = {}, {}, {}, {}, {}
+    # The schema-3 columns, by the RECORD'S OWN positions. A schema-2 record
+    # simply lacks the names, so every dark column reads None: the explicit
+    # stated fallback, never a silent zero, and never a fill from live files.
+    dark_pos = {c: cols.index(c) for c in DARK_TEAM_COLUMNS if c in cols}
+    off, rots, pens, sip, rip, extras = {}, {}, {}, {}, {}, {}
     for org, row in (rec.get("teams") or {}).items():
         if not isinstance(row, list) or len(row) <= max(i_off, i_rot, i_pen, i_sip, i_rip):
             continue
@@ -694,7 +791,10 @@ def team_inputs_from_vintage(rec: dict) -> dict:
         pens[org] = float(row[i_pen])
         sip[org] = float(row[i_sip] or 0.0)
         rip[org] = float(row[i_rip] or 0.0)
-    return _assemble_team_inputs(off, rots, pens, sip, rip)
+        extras[org] = {c: (row[dark_pos[c]]
+                           if c in dark_pos and dark_pos[c] < len(row) else None)
+                       for c in DARK_TEAM_COLUMNS}
+    return _assemble_team_inputs(off, rots, pens, sip, rip, extras)
 
 
 def starter_inputs_from_vintage(rec: dict) -> dict:
@@ -709,6 +809,8 @@ def starter_inputs_from_vintage(rec: dict) -> dict:
         i_role = cols.index("role")
     except ValueError:                                           # pragma: no cover
         return {}
+    # Schema-3 dark column; a record written before it reads None, stated.
+    i_thr = cols.index("throws") if "throws" in cols else None
     out = {}
     for mid, row in (rec.get("pitchers") or {}).items():
         if not isinstance(row, list) or len(row) <= max(i_plus, i_ip, i_org, i_role):
@@ -722,7 +824,9 @@ def starter_inputs_from_vintage(rec: dict) -> dict:
         out[key] = {"mlbam": key, "name": None, "org": row[i_org],
                     "sem_plus": float(row[i_plus]),
                     "ip_per_gs": float(row[i_ip]) if row[i_ip] else None,
-                    "role": row[i_role] or "SP"}
+                    "role": row[i_role] or "SP",
+                    "throws": (row[i_thr] if (i_thr is not None
+                                              and i_thr < len(row)) else None)}
     return out
 
 
@@ -796,13 +900,22 @@ def inputs_as_of(game_date: str | None, *, allow_fallback: bool = True) -> dict:
         if parks is None:
             note += ("; that record carries no park column, so the park term must be "
                      "taken as neutral rather than from the live index")
+        # Which basis every dark-capture column rides on for this record
+        # (populated, stated null, or predates-the-column). Read off the
+        # record itself; the live files are never consulted to fill a column
+        # the vintage lacks, which would be the exact leak this store closes.
+        try:
+            fb = lv.feature_basis(rec) if lv else None
+        except Exception:                                        # pragma: no cover
+            fb = None
         return {"teams": teams, "starters": starters, "parks": parks,
                 "parks_resolved": parks is not None, "source": "vintage",
                 "vintage_date": vd, "covers_through": rec.get("covers_through"),
+                "feature_basis": fb,
                 "contaminated": False, "note": note}
     if not allow_fallback:
         return {"teams": {}, "starters": {}, "parks": None, "parks_resolved": False,
-                "source": "none",
+                "source": "none", "feature_basis": None,
                 "vintage_date": None, "covers_through": None, "contaminated": False,
                 "note": f"no leaderboard vintage exists strictly before {game_date}"}
     if not _VINTAGE_FALLBACK_WARNED:
@@ -814,6 +927,7 @@ def inputs_as_of(game_date: str | None, *, allow_fallback: bool = True) -> dict:
     return {"teams": team_inputs(), "starters": starter_inputs(),
             "parks": park_index(), "parks_resolved": True,
             "source": "live-leaderboards", "vintage_date": None,
+            "feature_basis": None,
             "covers_through": None, "contaminated": True,
             "note": ("no vintage exists strictly before this date, so the live "
                      "season-to-date leaderboards and the live park index were used; "
@@ -841,7 +955,7 @@ def _vintage_resolver():
     keyed by date too; per-GAME counts are derived by the caller, which is the
     only place that knows the fit/eval split."""
     by_date: dict[str, tuple | None] = {}
-    stats: dict = {"park_source_by_date": {}}
+    stats: dict = {"park_source_by_date": {}, "feature_basis_by_date": {}}
 
     def _resolve(g):
         d = g.get("date")
@@ -854,6 +968,10 @@ def _vintage_resolver():
                     stats["park_source_by_date"][d] = "neutral"
                 else:
                     stats["park_source_by_date"][d] = "vintage"
+                # The dark-capture marking, per date (a slate shares a vintage,
+                # exactly like the park). Per-GAME counts are derived by the
+                # caller, which knows the fit/eval split; see _feature_basis.
+                stats["feature_basis_by_date"][d] = b.get("feature_basis") or {}
                 by_date[d] = (b["teams"], b["starters"], parks)
             else:
                 by_date[d] = None
@@ -915,6 +1033,97 @@ def _alpha_to_r(alpha: float | None) -> float | None:
     except (TypeError, ValueError):
         return None
     return (1.0 / a) if a > 0 else None
+
+
+# ---------------------------------------------------------------------------
+# probability calibration (B5, docs/diamond-betting.md section 11b)
+# ---------------------------------------------------------------------------
+_PROB_EPS = 1e-6
+
+
+def _sigmoid(x: float) -> float:
+    if x >= 0:
+        return 1.0 / (1.0 + math.exp(-x))
+    e = math.exp(x)
+    return e / (1.0 + e)
+
+
+def _logit(p: float) -> float:
+    p = min(max(float(p), _PROB_EPS), 1.0 - _PROB_EPS)
+    return math.log(p / (1.0 - p))
+
+
+def fit_platt(ps: list[float], ys: list, *, max_iter: int = 60,
+              tol: float = 1e-10) -> tuple[float, float] | None:
+    """(a, b) for p' = sigmoid(a*logit(p) + b), by MLE. None when it cannot
+    be fitted honestly.
+
+    Newton-Raphson on the two-parameter logistic likelihood: deterministic (a
+    fixed start at the identity (1, 0), a fixed iteration budget, no RNG), no
+    library, and the exact gradient/Hessian, so two runs on the same rows
+    return the same digits. `ys` may be fractional: the minimizer of expected
+    log loss under fractional targets is the exact (a, b) that generated them,
+    which is what makes the recovery test in test_betting_platt.py exact
+    rather than statistical.
+
+    Returns None on: fewer than 2 rows, a singular Hessian (all inputs equal),
+    a non-finite step, or a solution walking past |a| or |b| of 50, which is
+    the separable-data regime where the MLE does not exist and serving the
+    diverging iterate would be serving an artifact of the iteration cap."""
+    n = len(ps or [])
+    if n < 2 or len(ys) != n:
+        return None
+    xs = [_logit(p) for p in ps]
+    a, b = 1.0, 0.0
+    for _ in range(max_iter):
+        g_a = g_b = h_aa = h_ab = h_bb = 0.0
+        for x, y in zip(xs, ys):
+            q = _sigmoid(a * x + b)
+            d = q - float(y)
+            w = max(q * (1.0 - q), 1e-12)
+            g_a += d * x
+            g_b += d
+            h_aa += w * x * x
+            h_ab += w * x
+            h_bb += w
+        det = h_aa * h_bb - h_ab * h_ab
+        if not math.isfinite(det) or abs(det) < 1e-12:
+            return None
+        da = (h_bb * g_a - h_ab * g_b) / det
+        db = (h_aa * g_b - h_ab * g_a) / det
+        a -= da
+        b -= db
+        if not (math.isfinite(a) and math.isfinite(b)) or abs(a) > 50 or abs(b) > 50:
+            return None
+        if abs(da) < tol and abs(db) < tol:
+            break
+    return a, b
+
+
+def apply_platt(p: float, a: float, b: float) -> float:
+    """One probability through the map, clipped inside (0, 1) so a downstream
+    log loss can never meet an exact 0 or 1."""
+    q = _sigmoid(a * _logit(p) + b)
+    return min(max(q, _PROB_EPS), 1.0 - _PROB_EPS)
+
+
+def served_platt() -> tuple[float, float] | None:
+    """The SERVED calibration map, or None for identity.
+
+    The flag is checked FIRST, before any file is read: while
+    SERVE_PROB_CALIBRATION is False this returns None unconditionally, so a
+    stray `prob_calibration` key in an old context file cannot calibrate a
+    price, and the hot solver loops pay no extra file read."""
+    if not SERVE_PROB_CALIBRATION:
+        return None
+    ctx = _load_json(CONTEXT_PATH) or {}
+    pc = ctx.get("prob_calibration")
+    if not isinstance(pc, dict):
+        return None
+    try:
+        return float(pc["a"]), float(pc["b"])
+    except (KeyError, TypeError, ValueError):
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -1262,7 +1471,8 @@ def total_side_probabilities(total_pmf: list[float], line: float) -> dict:
 def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=None,
                        teams=None, parks=None, coeffs=None, tie_home=None,
                        home_adj=None, diff_shrink=None,
-                       run_alpha: float | None = None) -> dict | None:
+                       run_alpha: float | None = None,
+                       platt_ab: tuple | None = None) -> dict | None:
     """The full model view of one game: moneyline, runline, fair total.
 
     Ties do not exist in MLB, so the P(margin = 0) mass is split by the
@@ -1272,7 +1482,16 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
     `run_alpha` is the NB2 run dispersion. None reads the served value out of
     the context file (`run_dispersion_alpha`, absent until the section 11 gate
     opened it); 0.0 forces Poisson. Both markets are priced off ONE joint pass
-    so the margin and the total cannot disagree about the same game."""
+    so the margin and the total cannot disagree about the same game.
+
+    `platt_ab` is the B5 response-scale calibration seam (section 11b). None
+    resolves the SERVED map, which is None-for-identity until
+    SERVE_PROB_CALIBRATION flips; an explicit (a, b) applies that map, which
+    is what the gate lab uses. It touches the MONEYLINE ONLY: p_home and
+    p_away move together, and the runline, the total and the fair total are
+    computed from the uncalibrated margin distribution, because a scale repair
+    on p_home says nothing about a mis-shaped margin (the dispersion gate owns
+    those two markets)."""
     er = expected_runs(home_org, away_org, home_sp=home_sp, away_sp=away_sp,
                        teams=teams, parks=parks, coeffs=coeffs, home_adj=home_adj,
                        diff_shrink=diff_shrink)
@@ -1288,6 +1507,12 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
                                                or LITERATURE_TIE_HOME)
     p_home_reg = sum(p for d, p in dist.items() if d > 0)
     p_home = p_home_reg + p_tie * th
+    # The B5 calibration seam, moneyline only. Identity while the serve flag
+    # is off; see served_platt for why an old context key cannot leak through.
+    if platt_ab is None:
+        platt_ab = served_platt()
+    if platt_ab:
+        p_home = apply_platt(p_home, platt_ab[0], platt_ab[1])
     # Runline. A -1.5 favourite must win by 2+. The +1.5 dog needs the game
     # inside one run OR an outright win, which is 1 - P(margin >= 2).
     p_home_minus15 = sum(p for d, p in dist.items() if d >= 2)
@@ -1312,6 +1537,9 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
         "fair_total": round(fair_total, 2),
         "run_dispersion_alpha": (round(float(run_alpha), 5)
                                  if r is not None else None),
+        "prob_calibration_ab": ([round(float(platt_ab[0]), 5),
+                                 round(float(platt_ab[1]), 5)]
+                                if platt_ab else None),
         "over": over,                      # callable; the export resolves a line
         # callable; over/under/push on ONE line, push-conditioned. `over` alone
         # cannot price the Under of a whole number: see total_side_probabilities.
@@ -1981,6 +2209,7 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
     # in the third decimal.
     adj, shrink, shrink_ll = 0.0, 1.0, None
     alpha, ll_nb, ll_pois, n_disp_rows = None, None, None, 0
+    platt_fit = None
     if n and coeffs:
         for i in range(2):
             rows = _lambda_rows(games, teams, parks, starters, coeffs, adj, shrink)
@@ -1991,6 +2220,19 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
                                                    tie_shrunk, adj, None, serve_alpha)
             adj = _solve_home_adj(games, teams, parks, starters, coeffs, tie_shrunk,
                                   home_rate, shrink, None, serve_alpha)
+        # The B5 Platt MEASUREMENT (section 11b), fitted on the full in-sample
+        # p_home series under the solved corrections. Published whether or not
+        # it is served, the run_dispersion_alpha_fitted convention. Expect a
+        # near-identity: diff_shrink was just fitted on the same rows by log
+        # loss, so the response scale is already absorbed, and that showing up
+        # here as (a, b) near (1, 0) is the instrument agreeing with itself.
+        _ps, _ys = _p_home_series(games, teams, parks, starters, coeffs,
+                                  tie_shrunk, adj, shrink, None,
+                                  alpha if SERVE_RUN_DISPERSION else None)
+        _ab = fit_platt(_ps, _ys)
+        if _ab:
+            platt_fit = {"a": round(_ab[0], 5), "b": round(_ab[1], 5),
+                         "n": len(_ps)}
     ctx = {
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "model_version": MODEL_VERSION,
@@ -2013,6 +2255,18 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
         # The MEASUREMENT, published whether or not it is served, so a reader
         # can always see how far the served distribution is from the fitted one.
         "run_dispersion_alpha_fitted": alpha,
+        # The B5 calibration seam (section 11b). `prob_calibration` is the
+        # SERVED map and stays null until the pre-registered two-arm gate
+        # passes and SERVE_PROB_CALIBRATION flips; `prob_calibration_fitted`
+        # is the full-sample measurement, published either way.
+        "prob_calibration": (platt_fit if SERVE_PROB_CALIBRATION else None),
+        "prob_calibration_fitted": platt_fit,
+        "prob_calibration_note": ("Platt p' = sigmoid(a*logit(p) + b) on the "
+                                  "moneyline only, docs/diamond-betting.md "
+                                  "section 11b; served null until both gate "
+                                  "arms pass, and the fitted pair is expected "
+                                  "near identity because diff_shrink already "
+                                  "absorbs the response scale in-sample"),
         "run_dispersion_rows": n_disp_rows,
         "run_dispersion_loglik_nb2": round(ll_nb, 3) if ll_nb is not None else None,
         "run_dispersion_loglik_poisson": round(ll_pois, 3) if ll_pois is not None else None,
@@ -2421,6 +2675,247 @@ def dispersion_gate_sensitivity(games=None, *, teams=None, parks=None, starters=
     }
 
 
+def _platt_split_verdict(brier_delta: dict, logloss_delta: dict) -> dict:
+    """The 11b criteria applied to one split's paired stats. Factored out so
+    the arithmetic is testable on fixtures without a model run.
+
+    Both deltas are identity-minus-Platt, so positive means Platt is better.
+    Criterion 1 is superiority on Brier (delta > 0 at one-sided t >= 1.645);
+    criterion 2 is non-inferiority on log loss at the point estimate."""
+    b_ok = bool(brier_delta.get("delta") is not None and brier_delta["delta"] > 0
+                and brier_delta.get("t") is not None
+                and brier_delta["t"] >= Z_95_ONE_SIDED)
+    l_ok = bool(logloss_delta.get("delta") is not None
+                and logloss_delta["delta"] >= 0)
+    return {"brier_pass": b_ok, "logloss_pass": l_ok, "pass": b_ok and l_ok}
+
+
+def _arm_verdict(rows: list[dict]) -> str:
+    """pass / fail / indeterminate over one arm's split grid, under the ALL
+    THREE OR NOTHING rule: the arm passes only when every split passes. The
+    fail/indeterminate distinction is reporting, not policy; neither ships."""
+    verdicts = [bool(r.get("pass")) for r in rows]
+    if not verdicts:
+        return "not run"
+    if all(verdicts):
+        return "pass"
+    if not any(verdicts):
+        return "fail"
+    return "indeterminate"
+
+
+def _per_game_losses(ps: list[float], ys: list[int]) -> tuple[list[float], list[float]]:
+    """(brier per game, log loss per game), the paired series both criteria read."""
+    eps = 1e-9
+    briers = [(p - y) ** 2 for p, y in zip(ps, ys)]
+    lls = [-(math.log(max(p, eps)) if y else math.log(max(1.0 - p, eps)))
+           for p, y in zip(ps, ys)]
+    return briers, lls
+
+
+def _platt_score_split(ps_fit, ys_fit, ps_ev, ys_ev) -> dict:
+    """Fit (a, b) on the fit half's pairs, score identity against Platt on the
+    eval half. Pure function of the four series, shared by both arms so the
+    ledger arm cannot quietly run different arithmetic than the vintage arm."""
+    ab = fit_platt(ps_fit, ys_fit)
+    if not ab:
+        return {"status": "fit failed", "pass": False}
+    id_b, id_l = _per_game_losses(ps_ev, ys_ev)
+    cal = [apply_platt(p, ab[0], ab[1]) for p in ps_ev]
+    pl_b, pl_l = _per_game_losses(cal, ys_ev)
+    brier_d = _paired_delta(id_b, pl_b)
+    ll_d = _paired_delta(id_l, pl_l)
+    out = {
+        "status": "ran",
+        "a": round(ab[0], 5), "b": round(ab[1], 5),
+        "brier_delta": brier_d,
+        "logloss_delta": ll_d,
+    }
+    out.update(_platt_split_verdict(brier_d, ll_d))
+    return out
+
+
+def _ledger_moneyline_rows() -> list[dict]:
+    """The calibration ledger's settled canonical-side moneyline games, in
+    ledger (settled) order: one row per game, each carrying the SERVED model
+    probability and the outcome. [] when the ledger is absent, which is the
+    normal state on a fresh checkout."""
+    try:
+        from tools import betting_calibration as bc
+        return list(bc.canonical_settled_games(bc.rows()).get("moneyline") or [])
+    except Exception:                                         # noqa: BLE001
+        log.debug("betting_model: calibration ledger unavailable", exc_info=True)
+        return []
+
+
+def prob_calibration_gate(games=None, *, teams=None, parks=None, starters=None,
+                          quantiles=PROB_CALIBRATION_SPLIT_QUANTILES,
+                          ledger_rows: list[dict] | None = None) -> dict:
+    """The B5 gate, pre-registered in docs/diamond-betting.md section 11b
+    before this function existed. Two arms, both required.
+
+    ARM 1, VINTAGE: on the vintage-gradable games, split the gradable dates at
+    each quantile, refit {coefficients, tie, diff_shrink, home_adj} on the fit
+    half on vintage features (the same discipline the honest mode's _grade
+    uses), fit (a, b) on the fit half's own (p_home, home win) pairs, and
+    score identity against Platt on the held-out half. ALL THREE quantiles or
+    nothing, floors VINTAGE_MIN_FIT_GAMES / VINTAGE_MIN_EVAL_GAMES.
+
+    ARM 2, LEDGER: the settled canonical-side moneyline games, ACTIVE only at
+    PROB_CALIBRATION_LEDGER_MIN_GAMES. Below that it is "cannot count yet" and
+    the arm cannot pass, which blocks the ship whatever arm 1 says.
+    `ledger_rows` exists for tests; production reads the real ledger.
+
+    This function measures and records. It never flips SERVE_PROB_CALIBRATION;
+    the flag, this block persisted in the eval artifact and the tripwire in
+    test_betting_platt.py move in one commit or not at all."""
+    games = games if games is not None else completed_games()
+    teams = teams if teams is not None else team_inputs()
+    parks = parks if parks is not None else park_index()
+    starters = starters if starters is not None else starter_inputs()
+    out = {
+        "criteria": PROB_CALIBRATION_GATE_CRITERIA,
+        "expectation": ("pre-registered: Platt repairs response scale, cannot "
+                        "manufacture discrimination, and is not expected to open "
+                        "the skill gate; converging toward the constant baseline "
+                        "is a finding. diff_shrink already absorbs most of the "
+                        "response scale, so a near-identity (a, b) is the honest "
+                        "likely outcome"),
+        "quantiles": [round(float(q), 3) for q in quantiles],
+        "serving_scope": ("moneyline only; the runline and the total stay behind "
+                          "the dispersion gate (section 11a) whatever this block "
+                          "says"),
+    }
+
+    # --- arm 1: vintage -----------------------------------------------------
+    reset_vintage_cache()
+    resolve, _ = _vintage_resolver()
+    gradable = [g for g in games if resolve(g)]
+    dates = sorted({g.get("date") for g in gradable if g.get("date")})
+    grid = []
+    for q in quantiles:
+        row = {"split_q": round(float(q), 3)}
+        if len(dates) < 4:
+            row.update(status="insufficient dates", **{"pass": False})
+            grid.append(row)
+            continue
+        cut = dates[min(len(dates) - 1, max(1, int(len(dates) * q)))]
+        fit_g = [g for g in gradable if (g.get("date") or "") < cut]
+        ev_g = [g for g in gradable if (g.get("date") or "") >= cut]
+        row.update(split_date=cut, n_fit=len(fit_g), n_eval=len(ev_g))
+        if len(fit_g) < VINTAGE_MIN_FIT_GAMES or len(ev_g) < VINTAGE_MIN_EVAL_GAMES:
+            row.update(status="below floors", **{"pass": False})
+            grid.append(row)
+            continue
+        coeffs = fit_coefficients(fit_g, teams=teams, parks=parks,
+                                  starters=starters, resolve=resolve)
+        if not coeffs:
+            row.update(status="no coefficients", **{"pass": False})
+            grid.append(row)
+            continue
+        tie = _fit_tie_home(fit_g)
+        fit_home_rate = (sum(1 for g in fit_g if g["home_runs"] > g["away_runs"])
+                         / max(1, len(fit_g)))
+        alpha = None            # dispersion is not served; see section 11a
+        shrink, _sll = _solve_diff_shrink(fit_g, teams, parks, starters, coeffs,
+                                          tie, 0.0, resolve, alpha)
+        adj = _solve_home_adj(fit_g, teams, parks, starters, coeffs, tie,
+                              fit_home_rate, shrink, resolve, alpha)
+        ps_fit, ys_fit = _p_home_series(fit_g, teams, parks, starters, coeffs,
+                                        tie, adj, shrink, resolve, alpha)
+        ps_ev, ys_ev = _p_home_series(ev_g, teams, parks, starters, coeffs,
+                                      tie, adj, shrink, resolve, alpha)
+        if len(ps_ev) < VINTAGE_MIN_EVAL_GAMES:
+            row.update(status="below floors after pricing", **{"pass": False})
+            grid.append(row)
+            continue
+        row.update(diff_shrink=shrink, home_field_runs_adj=adj)
+        row.update(_platt_score_split(ps_fit, ys_fit, ps_ev, ys_ev))
+        grid.append(row)
+    vintage_arm = {
+        "n_gradable": len(gradable),
+        "grid": grid,
+        "verdict": _arm_verdict(grid),
+        "pass": _arm_verdict(grid) == "pass",
+        "mode": "vintage",
+        "note": ("features dated strictly before each game; the model is refit "
+                 "on each fit half, so nothing later than a split reaches "
+                 "either half"),
+    }
+
+    # --- arm 2: ledger ------------------------------------------------------
+    rows = list(ledger_rows) if ledger_rows is not None else _ledger_moneyline_rows()
+    usable = [r for r in rows
+              if isinstance(r.get("model_prob"), (int, float))
+              and r.get("result") in ("won", "lost")]
+    n_led = len(usable)
+    ledger_arm: dict = {
+        "n_games": n_led,
+        "need": PROB_CALIBRATION_LEDGER_MIN_GAMES,
+        "active": n_led >= PROB_CALIBRATION_LEDGER_MIN_GAMES,
+        "basis": ("settled canonical-side moneyline games, one per game, from "
+                  "tools/betting_calibration; the model probabilities are the "
+                  "SERVED ones, priced from season-to-date inputs, which is "
+                  "exactly the scale the serve seam would apply to"),
+    }
+    if not ledger_arm["active"]:
+        ledger_arm.update({
+            "status": "cannot count yet",
+            "pass": False,
+            "verdict": "cannot count yet",
+            "note": (f"{n_led} of {PROB_CALIBRATION_LEDGER_MIN_GAMES} settled "
+                     "canonical moneyline games; below the pre-registered floor "
+                     "this arm counts in NEITHER direction, and the ship is "
+                     "blocked whatever the vintage arm says"),
+        })
+    else:
+        led_grid = []
+        for q in quantiles:
+            k = min(len(usable) - 1, max(1, int(len(usable) * q)))
+            fit_rows, ev_rows = usable[:k], usable[k:]
+            row = {"split_q": round(float(q), 3),
+                   "n_fit": len(fit_rows), "n_eval": len(ev_rows)}
+            if len(ev_rows) < 2 or len(fit_rows) < 2:
+                row.update(status="degenerate split", **{"pass": False})
+                led_grid.append(row)
+                continue
+            row.update(_platt_score_split(
+                [float(r["model_prob"]) for r in fit_rows],
+                [1 if r["result"] == "won" else 0 for r in fit_rows],
+                [float(r["model_prob"]) for r in ev_rows],
+                [1 if r["result"] == "won" else 0 for r in ev_rows]))
+            led_grid.append(row)
+        ledger_arm.update({
+            "status": "ran",
+            "grid": led_grid,
+            "verdict": _arm_verdict(led_grid),
+            "pass": _arm_verdict(led_grid) == "pass",
+        })
+
+    ship = bool(vintage_arm["pass"] and ledger_arm["pass"])
+    if vintage_arm["verdict"] in ("fail", "indeterminate") or \
+            ledger_arm.get("verdict") == "fail":
+        verdict = "fail" if (vintage_arm["verdict"] == "fail"
+                             or ledger_arm.get("verdict") == "fail") else "indeterminate"
+    elif ship:
+        verdict = "pass"
+    else:
+        verdict = "indeterminate"
+    out.update({
+        "status": "ran" if any(r.get("status") == "ran" for r in grid) else "not run",
+        "vintage_arm": vintage_arm,
+        "ledger_arm": ledger_arm,
+        "ship": ship,
+        "verdict": verdict,
+        "rule": ("both arms must pass, each at ALL THREE split quantiles, or the "
+                 "flag stays off; a green vintage arm alone is recorded, never "
+                 "served"),
+        "served": SERVE_PROB_CALIBRATION,
+        "served_ab": (list(served_platt()) if served_platt() else None),
+    })
+    return out
+
+
 def _calibration(ps: list[float], ys: list[int], bins: int = 10) -> list[dict]:
     out = []
     for i in range(bins):
@@ -2778,6 +3273,8 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                           "betting_model.build_game_cache() on a box that has "
                           ".cache/game_feeds")
         result["vintage"] = _empty_vintage_block(cov, len(games))
+        result["benchmarks"] = {"status": "no data",
+                                "claim_rule": BENCHMARK_CLAIM_RULE}
         result["min_edge_gate"] = min_edge_gate(result["vintage"])
         if write:
             EVAL_PATH.write_text(json.dumps(result, indent=1), encoding="utf-8")
@@ -2810,6 +3307,7 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
         adj = _solve_home_adj(fit_games, teams, parks, starters, coeffs, tie,
                               fit_home_rate, shrink, resolve, alpha)
         ps, ys, tot_err, n_tot = [], [], 0.0, 0
+        per_game_p: dict = {}
         for g in eval_games:
             gt, gs, gpk = teams, starters, parks
             if resolve is not None:
@@ -2829,12 +3327,19 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                 continue
             ps.append(gp["p_home"])
             ys.append(1 if g["home_runs"] > g["away_runs"] else 0)
+            if g.get("game_pk") is not None:
+                per_game_p[g["game_pk"]] = gp["p_home"]
             tot_err += abs(gp["fair_total"] - (g["home_runs"] + g["away_runs"]))
             n_tot += 1
         if not ps:
             return None
         base_home = sum(ys) / len(ys)
         return {
+            # Working state for the benchmark ladder, popped by backtest()
+            # before the artifact is written: the ladder must score every tier
+            # on the model's own graded window, and re-pricing the window to
+            # get these back would be a second clock.
+            "_per_game_p": per_game_p,
             "label": label,
             "mode": mode,
             "honest": mode == "vintage",
@@ -2903,6 +3408,26 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
 
     # --- mode 2: vintage --------------------------------------------------
     result["vintage"] = _grade_vintage(games, cov, _grade, log_fn=log_fn)
+
+    # --- the B5 calibration gate (section 11b) ----------------------------
+    # Lives inside this artifact for the same reason the dispersion gate does:
+    # it is a property of the same vintage sample this function already
+    # grades, and a second eval file would be a second clock to keep in sync.
+    result["prob_calibration"] = prob_calibration_gate(
+        games, teams=teams, parks=parks, starters=starters)
+
+    # --- the benchmark ladder (B6, section 6, dark) -----------------------
+    # `_per_game_p` is working state, never artifact content: the ladder needs
+    # the model's own graded probabilities to recompute tiers on identical
+    # games, and it is popped from every graded block before the write.
+    per_game = {}
+    if isinstance(result.get("vintage"), dict):
+        per_game = result["vintage"].pop("_per_game_p", None) or {}
+    for k in ("in_sample", "forward"):
+        if isinstance(result.get(k), dict):
+            result[k].pop("_per_game_p", None)
+    result["benchmarks"] = _benchmarks_block(games, result["vintage"], per_game)
+
     result["min_edge_gate"] = min_edge_gate(result["vintage"])
     result["min_edge"] = result["min_edge_gate"]["min_edge"]
     result["gates_picks"] = bool(result["min_edge"] is not None)
@@ -2943,6 +3468,8 @@ def _empty_vintage_block(cov: dict, n_games: int) -> dict:
         # on a neutral park" are different facts and the reader gets to tell them
         # apart. `_grade_vintage` replaces this the moment anything resolves.
         "park_basis": None,
+        # Same contract for the schema-3 dark capture (section 5c).
+        "feature_basis": None,
         "note": ("no completed game has a leaderboard vintage dated strictly before it, "
                  "so the honest sample is empty; run leaderboard_vintages.snapshot() "
                  "nightly and this number starts climbing"),
@@ -2998,6 +3525,7 @@ def _grade_vintage(games: list[dict], cov: dict, grade_fn, *, log_fn=None) -> di
                          f"least {need} to split into a fit and an eval window, and "
                          f"{VINTAGE_MIN_GRADED_GAMES} graded before min_edge may be fitted")
         block["park_basis"] = _park_basis(rstats, gradable, [])
+        block["feature_basis"] = _feature_basis(rstats, gradable, [])
         return block
     cut = dates[_vintage_cut_index(gradable, dates)]
     fit_g = [g for g in gradable if (g.get("date") or "") < cut]
@@ -3008,8 +3536,10 @@ def _grade_vintage(games: list[dict], cov: dict, grade_fn, *, log_fn=None) -> di
                          f"eval games, below the {VINTAGE_MIN_FIT_GAMES}/"
                          f"{VINTAGE_MIN_EVAL_GAMES} floors")
         block["park_basis"] = _park_basis(rstats, gradable, ev_g)
+        block["feature_basis"] = _feature_basis(rstats, gradable, ev_g)
         return block
     park_basis = _park_basis(rstats, gradable, ev_g)
+    featb = _feature_basis(rstats, gradable, ev_g)
     # THE MODE LABEL SAYS WHAT IS ACTUALLY DATED. It used to read "features dated
     # strictly before each game; no leakage", which was false for the park index
     # in every build, and would go on being false for any game whose vintage
@@ -3028,12 +3558,14 @@ def _grade_vintage(games: list[dict], cov: dict, grade_fn, *, log_fn=None) -> di
         block["status"] = "insufficient vintage coverage"
         block["note"] = "the vintage split produced no gradable rows"
         block["park_basis"] = park_basis
+        block["feature_basis"] = featb
         return block
     block.update(graded)
     block["status"] = "graded"
     block["split_date"] = cut
     block["n_graded"] = graded["n"]
     block["park_basis"] = park_basis
+    block["feature_basis"] = featb
     block["note"] = (f"{graded['n']} games graded on vintage features; "
                      f"{VINTAGE_MIN_GRADED_GAMES} are needed before min_edge may be "
                      "fitted, and the paired-Brier gate must also clear")
@@ -3088,6 +3620,237 @@ def _park_basis(rstats: dict, gradable: list[dict], eval_games: list[dict]) -> d
     }
 
 
+def _feature_basis(rstats: dict, gradable: list[dict], eval_games: list[dict]) -> dict:
+    """Which basis each schema-3 dark-capture column rode on, in game counts.
+    The park_basis pattern, generalized; park_basis itself is unchanged beside
+    this for back-compat.
+
+    Three statuses per (feature, game), and they are different facts a reader
+    must be able to tell apart:
+      populated        the game's vintage record carries at least one value
+      null_stated      the record is schema 3 and says WHY the column is null
+      predates_column  the record was written before the column existed
+    Counts are over the gradable set and the eval window separately, since the
+    eval window is the one any published claim would read. Basis strings are
+    collected verbatim off the records, never summarized into a guess."""
+    by_date = (rstats or {}).get("feature_basis_by_date") or {}
+    features = DARK_TEAM_COLUMNS + DARK_PITCHER_COLUMNS
+    out: dict = {}
+    for f in features:
+        counts = {"populated": 0, "null_stated": 0, "predates_column": 0}
+        eval_counts = {"populated": 0, "null_stated": 0, "predates_column": 0}
+        bases: set[str] = set()
+
+        def _status(d):
+            ent = (by_date.get(d) or {}).get(f)
+            if not isinstance(ent, dict):
+                return "predates_column"
+            basis = str(ent.get("basis") or "")
+            if basis:
+                bases.add(basis)
+            if (ent.get("n") or 0) > 0:
+                return "populated"
+            if "predates the column" in basis:
+                return "predates_column"
+            return "null_stated"
+
+        for g in gradable:
+            counts[_status(g.get("date"))] += 1
+        for g in eval_games:
+            eval_counts[_status(g.get("date"))] += 1
+        out[f] = {"n_games": counts, "n_eval_games": eval_counts,
+                  "bases": sorted(bases)}
+    out["note"] = ("schema-3 dark capture only: counts of gradable and eval games "
+                   "whose vintage record carried each column, said why it was null, "
+                   "or predates it (docs/diamond-betting.md section 5c). Nothing "
+                   "served reads these columns; a null is never filled from live "
+                   "files")
+    return out
+
+
+# ---------------------------------------------------------------------------
+# the benchmark ladder (B6, docs/diamond-betting.md section 6, dark)
+# ---------------------------------------------------------------------------
+BENCHMARK_CLAIM_RULE = (
+    "never claim an unmeasured tier: a tier with n = 0 has no number and no claim, "
+    "and a tier whose n is below the window's n is a SUBSAMPLE comparable only "
+    "against the other tiers recomputed on those same games (its same_games block). "
+    "The subsample is never the headline")
+
+
+def _market_fair_probs(dates_needed: set, kind: str) -> dict:
+    """{slate_date: {(home_org, away_org): mean de-vigged home probability}}
+    from the cached odds snapshots of one kind.
+
+    The EARLIEST capture per slate wins, because for the "open" tier the first
+    snapshot is the open; a later re-capture of the same slate is closer to
+    first pitch and scoring it as the open would flatter the market tier with
+    information the open did not have. Per event, per book: a two-sided h2h
+    market is de-vigged proportionally (`devig`) and the home fair
+    probabilities are averaged across the books posting one."""
+    try:
+        import betting_ingest as bi
+    except Exception:                                         # noqa: BLE001
+        return {}
+    out: dict = {}
+    for meta in bi.list_snapshots():                          # oldest first
+        wrap = bi.load_snapshot(meta["path"])
+        if not wrap or wrap.get("kind") != kind:
+            continue
+        slate = wrap.get("slate_date") or meta["date"]
+        if slate not in dates_needed or slate in out:
+            continue
+        ev_map: dict = {}
+        for ev in wrap.get("events") or []:
+            ho = _org(ev.get("home_team"))
+            ao = _org(ev.get("away_team"))
+            if not ho or not ao:
+                continue
+            fairs = []
+            for bk in ev.get("bookmakers") or []:
+                for mk in bk.get("markets") or []:
+                    if mk.get("key") != "h2h":
+                        continue
+                    decs = {}
+                    for o in mk.get("outcomes") or []:
+                        d = bi.american_to_decimal(o.get("price"))
+                        if d:
+                            decs[o.get("name")] = d
+                    if len(decs) != 2:
+                        continue
+                    fair = devig(decs)
+                    p = fair.get(ev.get("home_team"))
+                    if p is not None:
+                        fairs.append(p)
+            if fairs:
+                ev_map[(ho, ao)] = sum(fairs) / len(fairs)
+        out[slate] = ev_map
+    return out
+
+
+def _benchmarks_block(games: list[dict], vintage_block: dict,
+                      model_per_game: dict) -> dict:
+    """The pre-registered four-tier ladder on the vintage EVAL window
+    (docs/diamond-betting.md section 6, written before this function existed).
+    VALIDATION SURFACE ONLY: dark, no served probability reads any tier.
+
+    Every tier is scored on the model's own graded window (`model_per_game`,
+    the per-game p_home the vintage grade produced), so `home_constant` here
+    reproduces the vintage block's brier_home_base by construction. Tiers that
+    can only cover a subsample (the market captures) carry a `same_games`
+    block with the OTHER tiers recomputed on exactly those games, which is the
+    only comparison the claim rule allows a subsample to appear in."""
+    out = {
+        "claim_rule": BENCHMARK_CLAIM_RULE,
+        "surface": ("validation ladder only, dark: no slot, no record row and "
+                    "no exported edge reads a tier"),
+    }
+    if (vintage_block or {}).get("status") != "graded" or not model_per_game:
+        out["status"] = "no vintage eval window"
+        out["note"] = ("the ladder scores the vintage eval window and there is "
+                       "none to score; it appears when the honest mode grades")
+        return out
+    ys = {g["game_pk"]: (1 if g["home_runs"] > g["away_runs"] else 0)
+          for g in games if g.get("game_pk") in model_per_game}
+    window = [g for g in games if g.get("game_pk") in ys]
+    pks = [g["game_pk"] for g in window]
+    n = len(pks)
+    if n < 2:
+        out["status"] = "window too small"
+        return out
+
+    def _brier_on(pmap: dict, sub) -> float:
+        return round(sum((pmap[pk] - ys[pk]) ** 2 for pk in sub) / len(sub), 5)
+
+    home_rate = sum(ys[pk] for pk in pks) / n
+    home_map = {pk: home_rate for pk in pks}
+    tiers: dict = {
+        "model_vintage": {
+            "n": n, "brier": _brier_on(model_per_game, pks),
+            "source": "the vintage block's own graded eval window",
+        },
+        "home_constant": {
+            "n": n, "brier": _brier_on(home_map, pks),
+            "p_constant": round(home_rate, 4),
+            "source": ("the eval window's home win rate as a constant, the "
+                       "identical base brier_home_base uses"),
+        },
+    }
+    # Tier 4: Elo from results only, literature constants, never fitted here.
+    elo_map: dict = {}
+    try:
+        from tools import betting_elo
+        elo_map = betting_elo.elo_probabilities(games)
+        e_pks = [pk for pk in pks if pk in elo_map]
+        tiers["elo_literature"] = {
+            "n": len(e_pks),
+            "brier": _brier_on(elo_map, e_pks) if e_pks else None,
+            "config": {"k": betting_elo.LITERATURE_K,
+                       "home_adv_elo": betting_elo.LITERATURE_HOME_ADV_ELO,
+                       "base": betting_elo.BASE_RATING,
+                       "standing": ("literature priors, never fitted on the eval "
+                                    "window or anywhere else; season starts flat, "
+                                    "no carryover")},
+            "source": "tools/betting_elo.py walking this season's results only",
+        }
+    except Exception:                                         # noqa: BLE001
+        log.warning("betting_model: Elo ladder tier unavailable", exc_info=True)
+        tiers["elo_literature"] = {"n": 0, "brier": None,
+                                   "status": "unavailable: tools/betting_elo "
+                                             "failed to run, so this tier is "
+                                             "unmeasured and claims nothing"}
+    # Tiers 2 and 3: the de-vigged market, open and close captures.
+    dates_needed = {g.get("date") for g in window if g.get("date")}
+    for kind, name in (("open", "market_open_devig"), ("close", "market_close_devig")):
+        fair_by_slate = _market_fair_probs(dates_needed, kind)
+        matched: dict = {}
+        for g in window:
+            p = (fair_by_slate.get(g.get("date")) or {}).get(
+                (g["home_org"], g["away_org"]))
+            if p is not None:
+                matched[g["game_pk"]] = p
+        m_pks = sorted(matched)
+        if not m_pks:
+            tiers[name] = {
+                "n": 0, "brier": None,
+                "status": (f"no {kind} capture matched a graded eval game; this "
+                           "tier is unmeasured and claims nothing" +
+                           ("" if kind == "open" else
+                            ". It auto-appears as close captures accrue; the "
+                            "close job runbook is section 3")),
+            }
+            continue
+        sub_rate = sum(ys[pk] for pk in m_pks) / len(m_pks)
+        tiers[name] = {
+            "n": len(m_pks),
+            "brier": _brier_on(matched, m_pks),
+            "n_slates_with_capture": len([s for s, m in fair_by_slate.items() if m]),
+            "same_games": {
+                "model": _brier_on(model_per_game, m_pks),
+                "home_constant": _brier_on({pk: sub_rate for pk in m_pks}, m_pks),
+                "elo_literature": (_brier_on(elo_map, [pk for pk in m_pks if pk in elo_map])
+                                   if elo_map and any(pk in elo_map for pk in m_pks)
+                                   else None),
+                "note": ("the only comparison a subsample may appear in: every "
+                         "tier recomputed on exactly these games"),
+            },
+            "subsample_note": (f"{len(m_pks)} of the window's {n} games have a "
+                               f"cached {kind} capture; a doubleheader's two games "
+                               "read the same capture"),
+            "source": (f"proportional de-vig of the earliest {kind} snapshot per "
+                       "slate, home fair probability averaged across books "
+                       "posting a two-sided h2h market"),
+        }
+    out.update({
+        "status": "ran",
+        "window": {"split_date": vintage_block.get("split_date"), "n": n,
+                   "first_date": min(dates_needed) if dates_needed else None,
+                   "last_date": max(dates_needed) if dates_needed else None},
+        "tiers": tiers,
+    })
+    return out
+
+
 if __name__ == "__main__":                                       # pragma: no cover
     import argparse
 
@@ -3119,6 +3882,22 @@ if __name__ == "__main__":                                       # pragma: no co
         print(f"  vintage coverage: {v.get('n_vintages', 0)} snapshots, "
               f"{v.get('n_graded', 0)} of {r.get('n_games', 0)} games gradable "
               f"({v.get('status')})")
+        pc = r.get("prob_calibration") or {}
+        print(f"  prob_calibration (11b): verdict={pc.get('verdict')} "
+              f"ship={pc.get('ship')} served={pc.get('served')}")
+        for row in ((pc.get("vintage_arm") or {}).get("grid") or []):
+            bd = row.get("brier_delta") or {}
+            print(f"    platt q={row.get('split_q')} n_eval={row.get('n_eval')} "
+                  f"a={row.get('a')} b={row.get('b')} "
+                  f"brier_delta={bd.get('delta')} t={bd.get('t')} "
+                  f"pass={row.get('pass')}")
+        la = pc.get("ledger_arm") or {}
+        print(f"    ledger arm: {la.get('verdict')} "
+              f"(n={la.get('n_games')} of {la.get('need')})")
+        bmk = r.get("benchmarks") or {}
+        if bmk.get("status") == "ran":
+            for tname, row in (bmk.get("tiers") or {}).items():
+                print(f"    ladder {tname}: n={row.get('n')} brier={row.get('brier')}")
         print(f"  min_edge: {r.get('min_edge')}")
         for g in (r.get("min_edge_gate") or {}).get("gates") or []:
             print(f"    gate {g['id']}: {'OPEN' if g['open'] else 'closed'} "

@@ -127,14 +127,58 @@ VINTAGE_DIR = ROOT / ".cache" / "leaderboard_vintages"
 # SCHEMA 2 (2026-08-05) added the `parks` block. See PARK_SOURCE below for why:
 # schema 1 records carry no park column at all, and a reader must fall back to a
 # NEUTRAL park for them rather than to the live index.
-SCHEMA = 2
+#
+# SCHEMA 3 (2026-08-16) added the DARK CAPTURE columns, pre-registered in
+# docs/diamond-betting.md section 5c BEFORE this bump existed: six team columns
+# (xwoba_14, xwoba_30, off_vs_lhp, off_vs_rhp, lineup_strength, star_out) and
+# one pitcher column (throws). Nothing served reads any of them; they accrue so
+# that a candidate feature can one day be measured on DATED history instead of
+# being reconstructed from live season-to-date files, which is the leak this
+# store exists to close. The park precedent governs every one of them: an old
+# record returns None for a column it predates, a populated record says where
+# the value came from, and an unpopulated one says why it is null, in the
+# `feature_basis` block. Absent is a stated fact, never a silent zero.
+SCHEMA = 3
 
-# The reduced record keeps only what betting_model actually consumes. Column
-# order is part of the on-disk contract; a reader must go through
-# team_row()/pitcher_row() rather than index into the arrays by hand.
+# The reduced record keeps only what betting_model actually consumes (plus the
+# schema-3 dark capture). Column order is part of the on-disk contract; a
+# reader must go through team_row()/pitcher_row() rather than index into the
+# arrays by hand.
 TEAM_COLUMNS = ("offense_plus", "rotation_plus", "bullpen_plus",
-                "starter_ip", "relief_ip")
-PITCHER_COLUMNS = ("plus", "ip_per_gs", "org", "role")
+                "starter_ip", "relief_ip",
+                "xwoba_14", "xwoba_30", "off_vs_lhp", "off_vs_rhp",
+                "lineup_strength", "star_out")
+PITCHER_COLUMNS = ("plus", "ip_per_gs", "org", "role", "throws")
+
+# The schema-3 additions by name, so a reader can ask "which columns might an
+# older record lack" without diffing tuples by hand.
+SCHEMA3_TEAM_COLUMNS = ("xwoba_14", "xwoba_30", "off_vs_lhp", "off_vs_rhp",
+                        "lineup_strength", "star_out")
+SCHEMA3_PITCHER_COLUMNS = ("throws",)
+
+# The stated basis for each schema-3 column, written into every record's
+# `feature_basis` block. These strings are the honesty mechanism: a column that
+# is null carries the reason, and a reader never has to guess whether null
+# means "the builder failed tonight" or "the builder does not exist".
+FEATURE_SOURCES = {
+    "off_vs_lhp": ("hitter_leaderboards.json teams[].orders.vl, PA-weighted "
+                   "mean of per-slot hem_plus"),
+    "off_vs_rhp": ("hitter_leaderboards.json teams[].orders.vr, PA-weighted "
+                   "mean of per-slot hem_plus"),
+    "xwoba_14": ("ABSENT: no committed team-level rolling-xwOBA builder exists "
+                 "on any pipeline path (checked 2026-08-16; hitter_export "
+                 "carries per-hitter season xwOBA only). Captured null until "
+                 "one does; the value is never invented from a live file"),
+    "xwoba_30": ("ABSENT: no committed team-level rolling-xwOBA builder exists "
+                 "on any pipeline path (checked 2026-08-16). Captured null "
+                 "until one does"),
+    "lineup_strength": ("ABSENT: builder is a later lane (docs/diamond-betting.md "
+                        "section 5c). Captured null until it exists"),
+    "star_out": ("ABSENT: builder is a later lane (docs/diamond-betting.md "
+                 "section 5c). Captured null until it exists"),
+    "throws": ("pal_export.load_pitch_hand(season), one bulk StatsAPI call at "
+               "assembly, never a per-game lookup"),
+}
 
 SOURCES = ("hitter_leaderboards.json", "starter_leaderboards.json",
            "bullpen_leaderboards.json")
@@ -313,6 +357,110 @@ def archive_feature_date(rec: dict | None) -> str | None:
     return None
 
 
+def _pa_weighted_hem(order: list | None) -> float | None:
+    """One batting order (teams[].orders.vl or .vr) -> the PA-weighted mean of
+    its slots' hem_plus, or None when the order carries nothing usable.
+
+    PA weighting rather than a flat mean because the artifact carries each
+    slot's season PA and a nine-hole bat is not a leadoff bat. A slot missing
+    either number is skipped, never counted as zero: zero is a value on the
+    HEM+ scale (it is a hundred points below average) and treating absence as
+    zero would silently crater a team's split the night one slot lost its PA
+    column. Verified on the 2026-08-16 artifact: 540 slots, 0 missing."""
+    tot_pa, acc = 0.0, 0.0
+    for s in (order or []):
+        if not isinstance(s, dict):
+            continue
+        hem, pa = s.get("hem_plus"), s.get("pa")
+        if hem is None or pa is None:
+            continue
+        try:
+            hem, pa = float(hem), float(pa)
+        except (TypeError, ValueError):
+            continue
+        if pa <= 0:
+            continue
+        tot_pa += pa
+        acc += hem * pa
+    return round(acc / tot_pa, 3) if tot_pa > 0 else None
+
+
+def off_splits_from_hitter_team(team_blob: dict | None) -> tuple[float | None, float | None]:
+    """(off_vs_lhp, off_vs_rhp) for one hitter-leaderboard team row.
+
+    vl is the order the team runs AGAINST A LEFT-HANDED starter and vr against
+    a right-handed one (hitter_export's _ORDER_KEY_CONTRACT). On a night the
+    batSide lens was down the two orders are byte-identical and the two values
+    come out equal; that is a fact about the source, recorded in the artifact's
+    own platoon block, and the capture stores what the artifact said.
+
+    Shared by the WRITE side (reduce_current) and the LIVE side
+    (betting_model.team_inputs_detail) so the reduction exists exactly once and
+    the live/vintage key sets cannot drift."""
+    orders = (team_blob or {}).get("orders")
+    if not isinstance(orders, dict):
+        return None, None
+    return _pa_weighted_hem(orders.get("vl")), _pa_weighted_hem(orders.get("vr"))
+
+
+def team_row(rec: dict | None, org: str) -> dict | None:
+    """One stored team as {column: value}, over the CURRENT TEAM_COLUMNS.
+
+    THE EXPLICIT STATED FALLBACK for the schema seam: a column the record was
+    written without (a schema-2 record read under the schema-3 reader) comes
+    back None, never a silent zero. Zero is a value on every one of these
+    scales; None is the absence of one, and `feature_basis` says why. The
+    record's OWN column list decides where each stored value sits, so a reader
+    never indexes the array by today's positions."""
+    row = ((rec or {}).get("teams") or {}).get(org)
+    if not isinstance(row, list):
+        return None
+    cols = list((rec or {}).get("team_columns") or ())
+    pos = {c: i for i, c in enumerate(cols)}
+    return {c: (row[pos[c]] if c in pos and pos[c] < len(row) else None)
+            for c in TEAM_COLUMNS}
+
+
+def pitcher_row(rec: dict | None, mlbam) -> dict | None:
+    """One stored pitcher as {column: value}, over the CURRENT PITCHER_COLUMNS.
+    Same contract as team_row: a column the record predates reads None."""
+    row = ((rec or {}).get("pitchers") or {}).get(str(mlbam))
+    if not isinstance(row, list):
+        return None
+    cols = list((rec or {}).get("pitcher_columns") or ())
+    pos = {c: i for i, c in enumerate(cols)}
+    return {c: (row[pos[c]] if c in pos and pos[c] < len(row) else None)
+            for c in PITCHER_COLUMNS}
+
+
+def feature_basis(rec: dict | None) -> dict:
+    """Where each dark-capture column's values came from, or why there are
+    none. {column: {"basis": str, "n": int}}.
+
+    A schema-3 record carries the block it was written with. An OLDER record
+    gets a synthesized one naming the schema seam, so the marking exists for
+    every record a reader can hold and 'predates the column' is a stated basis
+    rather than a missing key. The park rides along under the same shape
+    because it is the precedent the block generalizes; park_source/park_note
+    on the record are unchanged for back-compat."""
+    r = rec or {}
+    fb = r.get("feature_basis")
+    if isinstance(fb, dict) and fb:
+        return dict(fb)
+    schema = r.get("schema")
+    reason = (f"ABSENT: schema {schema} record predates the column "
+              "(added in schema 3, 2026-08-16)")
+    out = {c: {"basis": reason, "n": 0}
+           for c in SCHEMA3_TEAM_COLUMNS + SCHEMA3_PITCHER_COLUMNS}
+    parks = r.get("parks")
+    n_parks = len(parks) if isinstance(parks, dict) else 0
+    out["park"] = {"basis": (r.get("park_source") or
+                             "ABSENT: record carries no park column; price on a "
+                             "NEUTRAL park, never the live index"),
+                   "n": n_parks}
+    return out
+
+
 def park_snapshot(data_dir: Path | None = None) -> dict | None:
     """{canonical org: runs index / 100} for the record, or None.
 
@@ -384,10 +532,16 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
     def _slot(org: str) -> list:
         return teams.setdefault(org, [None] * len(TEAM_COLUMNS))
 
+    i_vl, i_vr = TEAM_COLUMNS.index("off_vs_lhp"), TEAM_COLUMNS.index("off_vs_rhp")
     for t in hit.get("teams") or []:
         o = _org(t.get("team"))
         if o and t.get("offense_plus") is not None:
-            _slot(o)[0] = round(float(t["offense_plus"]), 3)
+            row = _slot(o)
+            row[0] = round(float(t["offense_plus"]), 3)
+            # Schema 3 dark capture: the two order splits, reduced by the same
+            # helper the live path uses. None when the artifact carries no
+            # usable order, which is a stated fact, never a zero.
+            row[i_vl], row[i_vr] = off_splits_from_hitter_team(t)
     for t in rot.get("teams") or []:
         o = _org(t.get("team"))
         if o and t.get("rotation_plus") is not None:
@@ -421,6 +575,7 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
             round(float(ipgs), 3) if ipgs else None,
             _org(r.get("team")),
             r.get("role") or "SP",
+            None,                     # throws, filled by the bulk join below
         ]
     for r in pen.get("relievers") or []:
         mid, plus = r.get("mlbam"), r.get("rem_plus")
@@ -429,7 +584,29 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
         # REM+ is on the same 100/10z scale as SEM+, which is what lets the
         # prevention blend treat an opener the same way it treats a starter.
         pitchers[str(int(mid))] = [round(float(plus), 3), None,
-                                   _org(r.get("team")), "RP"]
+                                   _org(r.get("team")), "RP", None]
+
+    # Schema 3 dark capture: throwing hand, ONE bulk call at assembly, never a
+    # per-game lookup. `load_pitch_hand` is lru-cached per season and returns
+    # {} on any fetch failure, so a bad network night costs a null column with
+    # its basis stated below, never an aborted snapshot.
+    i_throws = PITCHER_COLUMNS.index("throws")
+    throws_map: dict = {}
+    try:
+        import pal_export
+        season_s = src_meta["hitter_leaderboards.json"]["season"] or vintage_date[:4]
+        throws_map = pal_export.load_pitch_hand(int(season_s)) or {}
+    except Exception:                                            # noqa: BLE001
+        log.warning("leaderboard_vintages: pitch-hand bulk join unavailable; "
+                    "the %s vintage stores throws as null", vintage_date)
+        throws_map = {}
+    n_throws = 0
+    if throws_map:
+        for mid, row in pitchers.items():
+            hand = throws_map.get(int(mid))
+            if hand in ("L", "R"):
+                row[i_throws] = hand
+                n_throws += 1
 
     as_ofs = [m["as_of"] for m in src_meta.values() if m["as_of"]]
     covers_through = max(as_ofs + [vintage_date])
@@ -445,6 +622,29 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
                     "vintage is stored WITHOUT a park column and games priced on it "
                     "will use a neutral park", dd, vintage_date)
 
+    # The dark-capture marking (docs/diamond-betting.md section 5c). Every
+    # schema-3 column carries its basis and its populated count, so a null is
+    # always a stated fact: "the builder does not exist" and "the bulk join
+    # returned nothing tonight" are different sentences and both are written.
+    def _n_teams_with(col: str) -> int:
+        i = TEAM_COLUMNS.index(col)
+        return sum(1 for r in teams.values() if r[i] is not None)
+
+    fb = {c: {"basis": FEATURE_SOURCES[c], "n": _n_teams_with(c)}
+          for c in SCHEMA3_TEAM_COLUMNS}
+    fb["throws"] = {
+        "basis": (FEATURE_SOURCES["throws"] if n_throws else
+                  "ABSENT: the bulk pitchHand call returned nothing tonight; "
+                  "the column is null, never guessed"),
+        "n": n_throws,
+    }
+    fb["park"] = {
+        "basis": (PARK_SOURCE if parks else
+                  "ABSENT: fa_meta.json was unreadable tonight; games priced on "
+                  "this record use a NEUTRAL park, never the live index"),
+        "n": len(parks) if parks else 0,
+    }
+
     return {
         "schema": SCHEMA,
         "vintage_date": vintage_date,
@@ -458,6 +658,7 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
         "n_teams": len(teams),
         "n_pitchers": len(pitchers),
         "n_parks": len(parks) if parks else 0,
+        "feature_basis": fb,
         "teams": teams,
         "pitchers": pitchers,
         "parks": parks,

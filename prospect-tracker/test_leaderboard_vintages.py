@@ -49,7 +49,12 @@ def _record(vintage_date: str, *, covers_through: str | None = None,
     """A minimal but SHAPE-EXACT vintage record. Written by hand rather than
     through reduce_current so the on-disk contract is pinned independently of
     the producer: if the column order ever changes, this test fails and the
-    stored archive is not silently reinterpreted."""
+    stored archive is not silently reinterpreted.
+
+    Schema 3 shape: eleven team columns and five pitcher columns. The two
+    order splits carry values, the xwOBA pair and the two availability columns
+    are the stated nulls the live capture writes tonight, and `throws` is
+    populated the way the bulk join populates it."""
     return {
         "schema": lv.SCHEMA,
         "vintage_date": vintage_date,
@@ -62,10 +67,56 @@ def _record(vintage_date: str, *, covers_through: str | None = None,
         "sources": {},
         "n_teams": len(ORGS),
         "n_pitchers": 4,
+        "feature_basis": {
+            **{c: {"basis": lv.FEATURE_SOURCES[c],
+                   "n": (len(ORGS) if c in ("off_vs_lhp", "off_vs_rhp") else 0)}
+               for c in lv.SCHEMA3_TEAM_COLUMNS},
+            "throws": {"basis": lv.FEATURE_SOURCES["throws"], "n": 4},
+            "park": {"basis": "ABSENT: no park block in this fixture", "n": 0},
+        },
+        # columns 0-4 are the schema-1 core; 5-10 are the schema-3 dark capture
+        # (xwoba_14, xwoba_30, off_vs_lhp, off_vs_rhp, lineup_strength, star_out)
         "teams": {
-            "NYM": [108.0 + bump, 104.0, 103.0, 560.0, 380.0],
-            "PHI": [104.0, 108.0 + bump, 99.0, 590.0, 350.0],
-            "ATL": [99.0, 97.0, 106.0 + bump, 540.0, 400.0],
+            "NYM": [108.0 + bump, 104.0, 103.0, 560.0, 380.0,
+                    None, None, 106.5, 109.0, None, None],
+            "PHI": [104.0, 108.0 + bump, 99.0, 590.0, 350.0,
+                    None, None, 102.0, 105.5, None, None],
+            "ATL": [99.0, 97.0, 106.0 + bump, 540.0, 400.0,
+                    None, None, 98.5, 100.0, None, None],
+            "WSN": [93.0, 92.0, 94.0, 520.0, 410.0,
+                    None, None, 91.0, 94.5, None, None],
+        },
+        "pitchers": {
+            "101": [118.0, 5.9, "NYM", "SP", "L"],
+            "102": [109.0, 5.4, "PHI", "SP", "R"],
+            "103": [96.0, 5.1, "ATL", "SP", "R"],
+            "104": [88.0, 4.6, "WSN", "SP", "L"],
+        },
+    }
+
+
+def _schema2_record(vintage_date: str, *, covers_through: str | None = None) -> dict:
+    """The archive as it existed BEFORE the schema-3 bump: five team columns,
+    four pitcher columns, no feature_basis block. Ten of these are real files
+    on the production box, so the reader's behaviour on them is a contract,
+    not a hypothetical."""
+    return {
+        "schema": 2,
+        "vintage_date": vintage_date,
+        "covers_through": covers_through or vintage_date,
+        "captured_at": f"{vintage_date}T07:10:00+00:00",
+        "season": "2026",
+        "org_codes": "canonical (trades.canonical_org)",
+        "team_columns": ["offense_plus", "rotation_plus", "bullpen_plus",
+                         "starter_ip", "relief_ip"],
+        "pitcher_columns": ["plus", "ip_per_gs", "org", "role"],
+        "sources": {},
+        "n_teams": len(ORGS),
+        "n_pitchers": 4,
+        "teams": {
+            "NYM": [108.0, 104.0, 103.0, 560.0, 380.0],
+            "PHI": [104.0, 108.0, 99.0, 590.0, 350.0],
+            "ATL": [99.0, 97.0, 106.0, 540.0, 400.0],
             "WSN": [93.0, 92.0, 94.0, 520.0, 410.0],
         },
         "pitchers": {
@@ -75,6 +126,17 @@ def _record(vintage_date: str, *, covers_through: str | None = None,
             "104": [88.0, 4.6, "WSN", "SP"],
         },
     }
+
+
+@pytest.fixture(autouse=True)
+def _no_network_pitch_hand(monkeypatch):
+    """The schema-3 throws join is ONE bulk StatsAPI call at assembly. No test
+    here touches the network: the hand map is stubbed for every test, and the
+    bulk-join test overrides this stub with a counting one."""
+    import pal_export
+    monkeypatch.setattr(pal_export, "load_pitch_hand",
+                        lambda season: {101: "L", 102: "R", 103: "R", 104: "L",
+                                        201: "R", 202: "R", 203: "L", 204: "R"})
 
 
 @pytest.fixture()
@@ -255,8 +317,11 @@ def test_a_vintage_read_is_not_contaminated(store):
 def test_vintage_inputs_go_through_the_same_standardization(store):
     """The vintage path and the live path share `_assemble_team_inputs`. If
     they ever diverge, a backtest stops being comparable to the served model
-    for a reason nobody would see. Same raw numbers in, same z out."""
+    for a reason nobody would see. Same raw numbers in, same z out. The
+    schema-3 dark columns ride the same call: one standardization, not two."""
     rec = _record("2026-06-01")
+    cols = rec["team_columns"]
+    dark_pos = {c: cols.index(c) for c in bm.DARK_TEAM_COLUMNS}
     from_vintage = bm.team_inputs_from_vintage(rec)
     direct = bm._assemble_team_inputs(
         {o: rec["teams"][o][0] for o in ORGS},
@@ -264,9 +329,13 @@ def test_vintage_inputs_go_through_the_same_standardization(store):
         {o: rec["teams"][o][2] for o in ORGS},
         {o: rec["teams"][o][3] for o in ORGS},
         {o: rec["teams"][o][4] for o in ORGS},
+        {o: {c: rec["teams"][o][i] for c, i in dark_pos.items()} for o in ORGS},
     )
     assert from_vintage == direct
     assert from_vintage["NYM"]["z_off"] > from_vintage["WSN"]["z_off"]
+    # The dark capture is standardized by the same seam, and stays dark: the
+    # z exists on the row and nothing served consumes it.
+    assert from_vintage["NYM"]["z_off_vs_lhp"] > from_vintage["WSN"]["z_off_vs_lhp"]
 
 
 def test_vintage_pitchers_keep_the_shape_starter_inputs_returns(store):
@@ -285,6 +354,128 @@ def test_two_vintages_produce_different_prices(store):
     early = bm.inputs_as_of("2026-06-05")["teams"]
     late = bm.inputs_as_of("2026-06-25")["teams"]
     assert early["NYM"]["offense_plus"] != late["NYM"]["offense_plus"]
+
+
+# ===========================================================================
+# 3a. SCHEMA 3: THE DARK CAPTURE (docs/diamond-betting.md section 5c)
+# ===========================================================================
+def test_dark_column_names_are_pinned_between_the_two_modules():
+    """betting_model carries its own copy of the schema-3 column names so the
+    assembly has a stable key set without an import cycle. The copies must be
+    the same tuple or the two modules quietly capture different features."""
+    assert bm.DARK_TEAM_COLUMNS == lv.SCHEMA3_TEAM_COLUMNS
+    assert bm.DARK_PITCHER_COLUMNS == lv.SCHEMA3_PITCHER_COLUMNS
+    assert set(lv.SCHEMA3_TEAM_COLUMNS) < set(lv.TEAM_COLUMNS)
+    assert set(lv.SCHEMA3_PITCHER_COLUMNS) < set(lv.PITCHER_COLUMNS)
+
+
+def test_a_schema2_record_reads_none_for_schema3_columns_with_marking(store):
+    """The park precedent, applied: an old record returns None for a column it
+    predates, through an explicit stated fallback, and the marking says WHY.
+    A silent zero here would hand a dark feature a real-looking value exactly
+    on the rows where it was never measured."""
+    rec = _schema2_record("2026-08-01")
+    # Reader helpers: None, never zero, for every schema-3 column.
+    tr = lv.team_row(rec, "NYM")
+    assert tr["offense_plus"] == 108.0
+    for c in lv.SCHEMA3_TEAM_COLUMNS:
+        assert tr[c] is None, f"{c} must read None off a schema-2 record"
+    pr = lv.pitcher_row(rec, 101)
+    assert pr["plus"] == 118.0 and pr["throws"] is None
+    # The marking: a synthesized feature_basis that names the schema seam.
+    fb = lv.feature_basis(rec)
+    for c in lv.SCHEMA3_TEAM_COLUMNS + lv.SCHEMA3_PITCHER_COLUMNS:
+        assert fb[c]["n"] == 0
+        assert "predates the column" in fb[c]["basis"]
+    # The model-side read routes the same Nones through the one assembly.
+    teams = bm.team_inputs_from_vintage(rec)
+    for c in bm.DARK_TEAM_COLUMNS:
+        assert teams["NYM"][c] is None
+        assert teams["NYM"]["z_" + c] is None
+    assert teams["_scale"]["extras"] == {}
+    assert bm.starter_inputs_from_vintage(rec)[101]["throws"] is None
+    # And the bundle a game would be priced on carries the marking too.
+    (store / "2026-08-01.json").write_text(json.dumps(rec), encoding="utf-8")
+    lv.reset_cache()
+    bm.reset_vintage_cache()
+    b = bm.inputs_as_of("2026-08-05")
+    assert b["source"] == "vintage"
+    assert "predates the column" in b["feature_basis"]["throws"]["basis"]
+
+
+def test_live_and_vintage_team_inputs_have_the_same_key_set(store, tmp_path, monkeypatch):
+    """Key-set parity: a consumer that works on the live read works on the
+    vintage read, dark columns included. Divergence here is how a candidate
+    feature ends up measurable in one mode and silently absent in the other."""
+    data = tmp_path / "data"
+    data.mkdir()
+    _write_fake_leaderboards(data, offense=110.0, with_orders=True)
+    monkeypatch.setattr(bm, "DATA_DIR", data)
+    rec = lv.snapshot(on_date="2026-08-05", vintage_dir=store, data_dir=data)["record"]
+    live = bm.team_inputs()
+    vint = bm.team_inputs_from_vintage(rec)
+    org = ORGS[0]
+    assert set(live[org].keys()) == set(vint[org].keys())
+    assert set(live["_scale"].keys()) == set(vint["_scale"].keys())
+    for c in bm.DARK_TEAM_COLUMNS:
+        assert c in live[org] and ("z_" + c) in live[org]
+    # The two order splits carry the same values through both doors: same
+    # reduction helper, same artifact.
+    assert live[org]["off_vs_lhp"] == vint[org]["off_vs_lhp"]
+    assert live[org]["off_vs_rhp"] == vint[org]["off_vs_rhp"]
+    # Pitcher rows: same key set; the hand is captured by the snapshot and
+    # stated absent on the live read, never fetched per build.
+    live_sp = bm.starter_inputs()
+    vint_sp = bm.starter_inputs_from_vintage(rec)
+    k = sorted(vint_sp)[0]
+    assert set(live_sp[k].keys()) == set(vint_sp[k].keys())
+    assert live_sp[k]["throws"] is None
+    assert vint_sp[k]["throws"] in ("L", "R")
+
+
+def test_throws_is_one_bulk_join_at_assembly(store, tmp_path, monkeypatch):
+    """The hand join is ONE call to pal_export.load_pitch_hand per snapshot,
+    never a per-pitcher or per-game lookup, and a pitcher the bulk map does
+    not know stays None rather than being guessed."""
+    import pal_export
+    calls = []
+
+    def counting_hand(season):
+        calls.append(season)
+        return {101: "L", 102: "R", 201: "R"}     # 103/104/202-204 unknown
+
+    monkeypatch.setattr(pal_export, "load_pitch_hand", counting_hand)
+    data = tmp_path / "data"
+    data.mkdir()
+    _write_fake_leaderboards(data, offense=110.0)
+    rec = lv.reduce_current(on_date="2026-08-05", data_dir=data)
+    assert calls == [2026], "exactly one bulk call, with the season"
+    i_thr = rec["pitcher_columns"].index("throws")
+    assert rec["pitchers"]["101"][i_thr] == "L"
+    assert rec["pitchers"]["103"][i_thr] is None
+    assert rec["feature_basis"]["throws"]["n"] == 3
+
+
+def test_the_absent_columns_are_stated_facts_not_zeros(store, tmp_path):
+    """xwoba_14/xwoba_30 have no committed builder and lineup_strength /
+    star_out have none yet: the columns exist, hold None, and the record says
+    why. The night a builder appears, the basis string changes and this test
+    is the reminder to update it deliberately."""
+    data = tmp_path / "data"
+    data.mkdir()
+    _write_fake_leaderboards(data, offense=110.0, with_orders=True)
+    rec = lv.reduce_current(on_date="2026-08-05", data_dir=data)
+    cols = rec["team_columns"]
+    for c in ("xwoba_14", "xwoba_30", "lineup_strength", "star_out"):
+        i = cols.index(c)
+        assert all(row[i] is None for row in rec["teams"].values())
+        assert rec["feature_basis"][c]["n"] == 0
+        assert "ABSENT" in rec["feature_basis"][c]["basis"]
+    assert "rolling-xwOBA builder" in rec["feature_basis"]["xwoba_14"]["basis"]
+    # The populated pair really is populated, and PA-weighted.
+    i_vl = cols.index("off_vs_lhp")
+    assert all(row[i_vl] is not None for row in rec["teams"].values())
+    assert rec["feature_basis"]["off_vs_lhp"]["n"] == len(ORGS)
 
 
 # ===========================================================================
@@ -513,12 +704,26 @@ def test_paired_skill_is_signed_the_way_the_gate_reads_it():
 # helpers
 # ===========================================================================
 def _write_fake_leaderboards(data_dir, *, offense: float, as_of: str = "2026-08-04",
-                             statsapi_codes: bool = False):
-    """Three leaderboard files in the real shape, small enough to reason about."""
+                             statsapi_codes: bool = False, with_orders: bool = False):
+    """Three leaderboard files in the real shape, small enough to reason about.
+    `with_orders` adds the teams[].orders.vl/.vr blocks the schema-3 capture
+    reduces; without it the split columns read None, which is itself a case
+    the capture must survive."""
     orgs = ("WSH", "CWS", "TB", "SD") if statsapi_codes else ORGS
+
+    def _orders(i):
+        if not with_orders:
+            return {}
+        return {"orders": {
+            "vl": [{"slot": s, "hem_plus": 100 + 2 * i + s, "pa": 400 + s}
+                   for s in range(1, 10)],
+            "vr": [{"slot": s, "hem_plus": 98 + 2 * i + s, "pa": 380 + s}
+                   for s in range(1, 10)],
+        }}
+
     (data_dir / "hitter_leaderboards.json").write_text(json.dumps({
         "season": "2026", "as_of": as_of,
-        "teams": [{"team": o, "offense_plus": offense - 2 * i}
+        "teams": [{"team": o, "offense_plus": offense - 2 * i, **_orders(i)}
                   for i, o in enumerate(orgs)],
         "hitters": [],
     }), encoding="utf-8")
