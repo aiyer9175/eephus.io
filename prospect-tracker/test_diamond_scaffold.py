@@ -323,13 +323,26 @@ def test_gate_flag_ships_off():
 
 
 def test_every_diamond_page_loads_the_config_before_its_app():
-    """Both tags are deferred, so order in the document IS execution order. A
-    module app that ran before the flag existed would read undefined."""
+    """All tags are deferred, so order in the document IS execution order. A
+    module app that ran before the flag existed would read undefined.
+
+    TWO TAGS since 2026-08-16: the config (pure data) and then
+    assets/eephus-diamond.js, the one gating contract every module client
+    routes through. Config first, because the helper reads the flag; both
+    stamped with the same content-hash scheme every other asset URL carries,
+    or a helper update never reaches a browser that cached the old one."""
     import inspect
     for fn_name in ("build_fantasy", "build_betting", "build_cards", "build_diamond"):
         src = inspect.getsource(getattr(build_site, fn_name))
         assert "DIAMOND_CONFIG_SCRIPT" in src, f"{fn_name} does not load diamond-config.js"
-        assert "diamond-config.js" in build_site.DIAMOND_CONFIG_SCRIPT
+    block = build_site.DIAMOND_CONFIG_SCRIPT
+    tags = re.findall(r"<script[^>]*>", block)
+    assert len(tags) == 2, f"DIAMOND_CONFIG_SCRIPT is not the two-tag shape: {block}"
+    assert "diamond-config.js" in tags[0], "config must load before the helper"
+    assert "eephus-diamond.js" in tags[1], "the gating helper tag is missing"
+    for tag in tags:
+        assert "defer" in tag, f"un-deferred Diamond tag: {tag}"
+        assert re.search(r"\?v=[0-9a-f]{8}", tag), f"unstamped Diamond tag: {tag}"
 
 
 def test_account_layer_exposes_the_diamond_and_bets_api():

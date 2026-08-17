@@ -136,11 +136,18 @@ _CARDS_VER = _asset_ver("assets/cards.js")
 _CARDS_CSS_VER = _asset_ver("assets/cards.css")
 _DIAMOND_VER = _asset_ver("assets/diamond.js")
 # The gate switch lives in ONE file (assets/diamond-config.js:
-# window.EEPHUS_DIAMOND = {gating:false, ...}). Every Diamond page loads it
-# BEFORE its module app so the app can read the flag on first paint. Both are
-# deferred, and deferred scripts run in document order, so config wins the race
-# by position rather than by luck.
-DIAMOND_CONFIG_SCRIPT = f'<script src="/assets/diamond-config.js?v={_DIAMOND_CFG_VER}" defer></script>'
+# window.EEPHUS_DIAMOND = {gating:false, ...}) and the ONE reader of it is
+# assets/eephus-diamond.js (window.EephusDiamond, 2026-08-16), which folds the
+# account layer's answer into the flag so a paying member is never capped by a
+# client that guessed at membership. Every Diamond page loads config then
+# helper BEFORE its module app. All three are deferred, and deferred scripts
+# run in document order, so the config wins the race by position rather than
+# by luck and the helper reads a flag that already exists.
+_DIAMOND_HELPER_VER = _asset_ver("assets/eephus-diamond.js")
+DIAMOND_CONFIG_SCRIPT = (
+    f'<script src="/assets/diamond-config.js?v={_DIAMOND_CFG_VER}" defer></script>'
+    f'<script src="/assets/eephus-diamond.js?v={_DIAMOND_HELPER_VER}" defer></script>'
+)
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
@@ -4189,6 +4196,14 @@ def _diamond_cfg(src: str | None = None) -> dict:
                 f"assets/diamond-config.js carries no {key}; /diamond/ prices "
                 "itself off that file and refuses to guess")
         out[key] = conv(m.group(1))
+    # The per-module preview caps (2026-08-16), OPTIONAL where the three price
+    # keys are not: no build reads them yet (the client-side reader is
+    # EephusDiamond.previewRows), so a config without the map parses fine and
+    # the older config fixtures in the tests stay valid.
+    m = re.search(r"preview_rows:\s*\{([^}]*)\}", src)
+    if m is not None:
+        out["preview_rows"] = {
+            k: int(v) for k, v in re.findall(r"(\w+):\s*(\d+)", m.group(1))}
     return out
 
 

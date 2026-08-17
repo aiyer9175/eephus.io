@@ -112,21 +112,21 @@
   function selNounCap() { return watchMode() ? "Selection" : "Pick"; }
 
   // ---- the Diamond gate, wired and OFF -------------------------------------
-  // assets/diamond-config.js (owned by the diamond-core lane) sets
-  // window.EEPHUS_DIAMOND = { gating: false, ... }. While gating is off, and
-  // while the file is absent entirely, every reader gets the full payload;
-  // this preview build is fully public by owner decision. The seam exists now
-  // so that flipping the flag later is a config change rather than a rewrite:
-  // a non-member would then read the preview slice betting_export already
-  // writes. Genuinely gated data cannot live in /data/ on a static site, so
-  // the honest paywall is a Supabase-served path, not this.
-  function diamondCfg() { return window.EEPHUS_DIAMOND || {}; }
-  function gatingOn() { return !!diamondCfg().gating; }
-  function isDiamond() {
-    var a = window.EephusAccount;
-    try { return !!(a && a.isDiamond && a.isDiamond()); } catch (e) { return false; }
+  // Routed through window.EephusDiamond (assets/eephus-diamond.js) since
+  // 2026-08-16, the one authoritative contract. The block that lived here
+  // probed the account layer's membership SYNCHRONOUSLY at boot, before the
+  // deferred account layer could resolve a session, so a paying member's
+  // first paint would have been the preview slice with no way back. The
+  // helper's onEntitlement callback (wired beside boot below) re-fetches the
+  // full payload the moment membership resolves the other way. While gating
+  // is off, and while the helper is absent entirely, every reader gets the
+  // full payload; this preview build is fully public by owner decision.
+  // Genuinely gated data cannot live in /data/ on a static site, so the
+  // honest paywall is a Supabase-served path, not this.
+  function gated() {
+    var D = window.EephusDiamond;
+    try { return !!(D && D.gated()); } catch (e) { return false; }
   }
-  function gated() { return gatingOn() && !isDiamond(); }
   function dataUrl() { return gated() ? PREVIEW_URL : DATA_URL; }
 
   // One request per artifact, ever. Returns the parsed file or null; a null
@@ -2597,12 +2597,19 @@
     ensureTabs(); wireTabs(); syncTabs(); renderSection();
   }
 
+  // Which payload URL the last boot() actually fetched. The entitlement
+  // callback compares it against dataUrl() NOW: a difference means the answer
+  // to "who is this reader" changed after the fetch went out, and the page is
+  // painted off the wrong file until it re-fetches.
+  var LOADED_URL = null;
   function boot() {
     // The legal block goes up FIRST, before any fetch can fail, so it is on
     // screen even if nothing else ever arrives.
     if (!readHash()) writeHash();
     renderLegal();
-    fetch(dataUrl(), { cache: "no-cache" }).then(function (r) {
+    var url = dataUrl();
+    LOADED_URL = url;
+    fetch(url, { cache: "no-cache" }).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     }).then(function (d) {
@@ -2620,6 +2627,18 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
+  // THE MEMBER-FIRST-PAINT FIX (2026-08-16). Entitlement resolves after boot:
+  // the account layer is deferred and its session read is async, so the boot
+  // fetch necessarily goes out on a guess. When the resolved answer changes
+  // which payload this reader should see (preview vs full, either direction),
+  // re-run boot against the correct URL. When it does not, nothing happens,
+  // so with gating off this whole seam is inert.
+  (function () {
+    var D = window.EephusDiamond;
+    if (D && D.onEntitlement) D.onEntitlement(function () {
+      if (LOADED_URL !== null && dataUrl() !== LOADED_URL) boot();
+    });
+  })();
 
   // ---- styles ---------------------------------------------------------------
   // Injected here rather than in a separate stylesheet, matching the fantasy.js

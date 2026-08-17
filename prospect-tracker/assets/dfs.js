@@ -104,16 +104,18 @@
   }
 
   // ---- Diamond gate (wired, OFF) -------------------------------------------
-  function dcfg() { return window.EEPHUS_DIAMOND || {}; }
-  function isMember() {
-    var c = dcfg();
-    if (typeof c.isMember === "function") { try { return !!c.isMember(); } catch (e) { return false; } }
-    return !!c.isMember;
+  // Routed through window.EephusDiamond (assets/eephus-diamond.js) since
+  // 2026-08-16; the private dcfg()/isMember() copy that lived here read config
+  // keys that never exist, so a flipped flag would have capped paying members.
+  // Absent helper means the gate is open.
+  function gate() { return window.EephusDiamond || null; }
+  function gated() {
+    var D = gate();
+    try { return !!(D && D.gated()); } catch (e) { return false; }
   }
-  function gated() { return !!dcfg().gating && !isMember(); }
   function capRows(rows) {
     if (!gated()) return rows;
-    return (rows || []).slice(0, dcfg().previewRows || 25);
+    return (rows || []).slice(0, gate().previewRows("dfs"));
   }
   // The conversion line is a LINK. It was plain text on every Diamond page, so
   // the only route to the pricing page was the last item of a nav dropdown.
@@ -1658,6 +1660,12 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
+  // Membership resolves after first paint; re-render when the answer changes
+  // (2026-08-16). Guarded on S.data: nothing to cap before the payload.
+  (function () {
+    var D = gate();
+    if (D && D.onEntitlement) D.onEntitlement(function () { if (S.data) renderSection(); });
+  })();
 
   // ---- module styles (theme tokens only) ------------------------------------
   var css = document.createElement("style");

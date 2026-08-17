@@ -133,6 +133,31 @@
     catch (e) { /* the glossary is enrichment; the board works without it */ }
   }
 
+  // ---- Diamond gate (2026-08-16) --------------------------------------------
+  // cards.js shipped with no gate at all, the only Diamond module client that
+  // ignored the flag. The read goes through window.EephusDiamond
+  // (assets/eephus-diamond.js), the one authoritative contract; absent helper
+  // means the gate is open, so the standalone test drives are unchanged. When
+  // gated, the cap lands on the two priced boards (Buy screen, Movers) while
+  // Watchlist and Method stay open: the tracked list and the method prose are
+  // the free tier, the priced screen is the member product.
+  function gated() {
+    var D = window.EephusDiamond;
+    try { return !!(D && D.gated()); } catch (e) { return false; }
+  }
+  function capRows(rows) {
+    if (!gated()) return rows;
+    return (rows || []).slice(0, window.EephusDiamond.previewRows("cards"));
+  }
+  // The conversion line is a LINK, matching the other Diamond clients: the
+  // pricing page must be reachable from the note itself.
+  function gateNote(total, shown) {
+    if (!gated() || shown >= total) return "";
+    return '<div class="mlbstats-note">Diamond preview: showing the top ' + shown +
+      " of " + total + ' rows. <a class="cards-name-link" href="/diamond/">Diamond ' +
+      "funds the free site</a>.</div>";
+  }
+
   // ---- sparkline ------------------------------------------------------------
   // Inline SVG on resolved CSS tokens, the same shape EEPHUS_HUB.histogram /
   // scatter use (_chartTokens -> var() strings inside the markup), so it is
@@ -395,24 +420,30 @@
   function renderBuy() {
     var rows = filtered().filter(function (c) { return c.gap !== null && c.gap !== undefined; })
                          .sort(byDesc("gap"));
+    var total = rows.length;
+    rows = capRows(rows);
     return screenBanner() + filterBar(rows.length) +
       '<p class="mlbstats-note">Ranked by the gap between where the player sits on talent and ' +
       'where the card sits on price, inside its own tier. Cards with no index are in Watchlist.</p>' +
       renderList(rows, emptyBoardCopy(
         "No card carries a priced index yet, so there is no gap to rank. Every tracked " +
         "card is in Watchlist in the meantime.",
-        "The screen fills in as sold comps land in the window."));
+        "The screen fills in as sold comps land in the window.")) +
+      gateNote(total, rows.length);
   }
 
   function renderMovers() {
     var rows = filtered().filter(function (c) { return c.trend_pct !== null && c.trend_pct !== undefined; })
                          .sort(absDesc("trend_pct"));
+    var total = rows.length;
+    rows = capRows(rows);
     return screenBanner() + filterBar(rows.length) +
       '<p class="mlbstats-note">Biggest index change against the prior window. A mover needs ' +
       'both windows priced, so a card can be tracked and still not appear here.</p>' +
       renderList(rows, emptyBoardCopy(
         "No card has two priced windows yet.",
-        "Movers fill in as history accumulates."));
+        "Movers fill in as history accumulates.")) +
+      gateNote(total, rows.length);
   }
 
   function renderWatchlist() {
@@ -821,6 +852,11 @@
     load();
     loadLinks();
     window.addEventListener("hashchange", onHashChange);
+    // Membership resolves after first paint; re-render the open board when the
+    // answer lands or changes (2026-08-16). Guarded on DATA: before the
+    // payload there is nothing to cap.
+    var D = window.EephusDiamond;
+    if (D && D.onEntitlement) D.onEntitlement(function () { if (DATA) render(); });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

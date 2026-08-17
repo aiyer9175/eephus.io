@@ -1077,15 +1077,28 @@ def test_shell_section_ids_match_the_client():
 
 
 def test_client_wires_the_diamond_gate_but_defaults_open():
-    """The flag is wired and OFF. With no diamond-config.js at all, and with
-    gating false, every reader must get the FULL payload: this preview ships
-    public by owner decision."""
-    assert "EEPHUS_DIAMOND" in JS
+    """The flag is wired and OFF. With no gating helper on the page at all,
+    every reader must get the FULL payload: this preview ships public by owner
+    decision.
+
+    PIN UPDATED 2026-08-16 (gating-contract lane): the gate read routes
+    through window.EephusDiamond (assets/eephus-diamond.js) now. The block
+    this test used to pin read EEPHUS_DIAMOND directly and probed
+    EephusAccount.isDiamond() synchronously at boot, before the deferred
+    account layer could resolve, so a paying member's first paint would have
+    been the preview slice. Both reads are banned here; the refetch seam that
+    replaces the sync probe is pinned alongside."""
+    assert "EEPHUS_DIAMOND" not in JS, "betting.js reads the raw config again"
+    assert "isDiamond" not in JS, (
+        "betting.js probes the account layer itself again; membership goes "
+        "through EephusDiamond.gated()")
     assert "betting_preview.json" in JS
     body = JS.split("function gated()", 1)[1].split("\n  function ", 1)[0]
-    assert "gatingOn()" in body and "isDiamond()" in body
-    cfg = JS.split("function diamondCfg()", 1)[1].split("\n  function ", 1)[0]
-    assert "window.EEPHUS_DIAMOND || {}" in cfg      # absent config reads as open
+    assert "window.EephusDiamond" in body, "gated() no longer routes through the helper"
+    # The member-first-paint fix: entitlement resolving to a different payload
+    # URL re-runs boot. Both halves must exist or the bug is back.
+    assert "onEntitlement" in JS
+    assert "dataUrl() !== LOADED_URL" in JS
 
 
 def test_client_section_router_uses_an_alternation_not_a_map():

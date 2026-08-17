@@ -91,21 +91,20 @@
   }
 
   // ---- Diamond gate (wired, OFF) -------------------------------------------
-  // assets/diamond-config.js publishes window.EEPHUS_DIAMOND. While gating is
-  // off every row renders for everyone. When it is turned on, a non-member sees
-  // the top slice and a line telling him what the rest is. Read defensively:
-  // the config file may not be on the page at all.
-  function dcfg() { return window.EEPHUS_DIAMOND || {}; }
-  function isMember() {
-    var c = dcfg();
-    if (typeof c.isMember === "function") { try { return !!c.isMember(); } catch (e) { return false; } }
-    return !!c.isMember;
+  // The gate is read through window.EephusDiamond (assets/eephus-diamond.js),
+  // the one authoritative contract, since 2026-08-16. The private copy that
+  // lived here read EEPHUS_DIAMOND.isMember and .previewRows, keys the config
+  // never defines, so flipping the flag would have capped PAYING members at 25
+  // rows. Read defensively: the helper may be off the page (standalone test
+  // drives), and its absence means the gate is open.
+  function gate() { return window.EephusDiamond || null; }
+  function gated() {
+    var D = gate();
+    try { return !!(D && D.gated()); } catch (e) { return false; }
   }
-  function gated() { return !!dcfg().gating && !isMember(); }
   function capRows(rows) {
     if (!gated()) return rows;
-    var n = dcfg().previewRows || 25;
-    return (rows || []).slice(0, n);
+    return (rows || []).slice(0, gate().previewRows("dynasty"));
   }
   // The conversion line is a LINK. It was plain text on every Diamond page, so
   // the only route to the pricing page was the last item of a nav dropdown.
@@ -911,6 +910,15 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
+  // Membership resolves AFTER first paint (the account layer is deferred and
+  // async), so the helper's entitlement callback re-renders whichever board is
+  // up when the answer lands or changes. Guarded on S.data: before the payload
+  // there is nothing to cap. With gating off this fires once and re-renders
+  // an identical board, which is cheap and keeps the seam exercised.
+  (function () {
+    var D = gate();
+    if (D && D.onEntitlement) D.onEntitlement(function () { if (S.data) renderSection(); });
+  })();
 
   // ---- module styles (theme tokens only, corners already sharpened site-wide)
   var css = document.createElement("style");

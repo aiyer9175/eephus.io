@@ -637,11 +637,23 @@ def test_dynasty_rounds_efv_to_nearest_and_consensus_to_ceiling():
 
 
 def test_diamond_gate_is_read_but_never_asserted():
-    """Every client reads window.EEPHUS_DIAMOND defensively and treats a
-    missing config as gating OFF. Nothing here may turn gating on."""
+    """Every board client treats a missing gate as gating OFF, and nothing
+    here may turn gating on.
+
+    PIN UPDATED 2026-08-16 (gating-contract lane): the old pin required each
+    client to read window.EEPHUS_DIAMOND itself, and the private copies that
+    satisfied it read EEPHUS_DIAMOND.isMember / .previewRows, keys the config
+    never defines, so a flipped flag would have capped PAYING members at 25
+    rows. The clients now route through window.EephusDiamond
+    (assets/eephus-diamond.js, the one authoritative contract), so the raw
+    config global is banned from client CODE and the helper call is required
+    instead. Comments may still name the killed ghost read; that is the
+    documentation working, which is what _code() exists to allow."""
     for name in JS_FILES:
-        src = _src(name)
-        assert "EEPHUS_DIAMOND" in src, name
+        src, code = _src(name), _code(name)
+        assert "EephusDiamond" in code, f"{name}.js no longer calls the gating helper"
+        assert "EEPHUS_DIAMOND" not in code, f"{name}.js reads the raw config again"
+        assert "isMember" not in code, f"{name}.js grew a private membership read"
         assert "gating: true" not in src and "gating:true" not in src, name
 
 
