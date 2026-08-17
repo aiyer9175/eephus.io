@@ -40,3 +40,11 @@ data/external/*
 # Coverage artifacts
 .coverage
 htmlcov/
+
+# eephus.io's root .gitignore blanket-ignores *.csv (data hygiene for the
+# production repo). That rule reaches in here too, since a nested .gitignore
+# only adds to the parent's rules. These specific fixture CSVs are small,
+# deliberately-committed test data for the Part BV deliberate-failure
+# harness, not research data -- carve them back out the same way the root
+# .gitignore already carves out prospect-tracker/manual_rankings.csv.
+!tests/fixtures/**/*.csv

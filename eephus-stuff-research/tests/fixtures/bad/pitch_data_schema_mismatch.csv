@@ -1,0 +1,4 @@
+pitch_id,pitcher_id,game_id,velocity,season
+1,101,9001,92.4,2026
+2,101,9001,93.1,unknown
+3,102,9001,88.7,2026
