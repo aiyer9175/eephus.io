@@ -302,6 +302,7 @@ exactly what the model reads, and nothing else:
 | per team `bullpen_plus`, `relief_ip` | `bullpen_leaderboards.json` teams[] |
 | per pitcher `sem_plus` (or `rem_plus`), `ip_per_gs`, org, role | `starters[]` + `relievers[]` |
 | per park runs index (schema 2 and later) | `fa_meta.json` park_factors[org].runs |
+| dark capture columns (schema 3 and later): team `off_vs_lhp` / `off_vs_rhp` / `xwoba_14` / `xwoba_30` / `lineup_strength` / `star_out`, pitcher `throws` | section 5c; nothing served reads them |
 
 Measured size: 30 teams and about 690 pitchers, **25 KB per night**, roughly
 4.4 MB for a 180-night season.
@@ -845,6 +846,103 @@ attach result the close job persists to
 
 ---
 
+## 5c. Schema 3: the dark feature capture (pre-registered 2026-08-16)
+
+**This section is written before the schema bump it describes exists in code
+and before any captured number has been looked at**, in the same discipline as
+5a, 7b and 11a. The columns below start accruing tonight; nothing served reads
+them, and nothing served changes.
+
+### Why capture columns nobody prices on
+
+Every candidate feature this module might ever test needs the same thing the
+core inputs needed: a dated archive, accrued BEFORE anyone looks at whether the
+feature helps. A column added to the vintage record tonight is measurable in
+four to six weeks; a column added the day somebody wants it is measurable never,
+because its history would have to be reconstructed from live season-to-date
+files, which is the leak this whole store exists to close. So the schema is
+bumped once, the columns accrue dark, and the measurement protocol (below) is
+already on the record.
+
+### The columns and where each one comes from
+
+Team columns added (`TEAM_COLUMNS` grows from 5 to 11):
+
+| Column | Source tonight | Basis |
+|---|---|---|
+| `off_vs_lhp` | `hitter_leaderboards.json` teams[].orders.vl, PA-weighted mean of per-slot `hem_plus` | populated. Verified on the 2026-08-16 artifact: 30 teams, 540 order slots, 0 missing `pa` or `hem_plus` |
+| `off_vs_rhp` | teams[].orders.vr, same reduction | populated, same verification |
+| `xwoba_14` | **no committed source exists.** No team-level rolling-xwOBA builder is on any pipeline path (checked 2026-08-16: `hitter_export` carries per-hitter season xwOBA only) | captured as null with the basis naming the missing builder. The schema is ready; the number is not invented |
+| `xwoba_30` | same | same |
+| `lineup_strength` | builder is a later lane | null with a stated basis |
+| `star_out` | builder is a later lane | null with a stated basis |
+
+Pitcher column added (`PITCHER_COLUMNS` grows from 4 to 5):
+
+| Column | Source tonight | Basis |
+|---|---|---|
+| `throws` | `pal_export.load_pitch_hand(season)`, **one bulk StatsAPI call at assembly**, never a per-game lookup | populated when the fetch succeeds; null with the fetch failure named in the basis when it does not |
+
+One caveat rides with the two order splits and it is a fact about the source,
+not about the capture: on nights the batSide lens is down, `platoon_applied` is
+false and the vl and vr orders are byte-identical (see `hitter_export`'s
+platoon availability block), so the two captured values are the same number.
+The capture stores what the artifact said; the stored basis is how a reader
+finds out which kind of night it was.
+
+### The rules, which are the park precedent applied verbatim
+
+- **Old records return None for the new columns.** A schema-2 record read under
+  the schema-3 reader yields None for every new column, through an explicit
+  stated fallback, never a silent zero. Zero is a value on every one of these
+  scales; None is the absence of one.
+- **Per-record marking.** Every schema-3 record carries a `feature_basis` block
+  naming, per new column, where the value came from or why it is null. The
+  existing `park_basis` reporting in the backtest is KEPT unchanged for
+  back-compat and the new block generalizes it: the backtest's vintage block
+  reports, per feature, how many graded games carried a dated value, how many
+  carried a stated null, and how many rode a record that predates the column.
+- **`inputs_as_of` never fills a new column from live files.** A vintage that
+  lacks a column serves None for it. Filling it from tonight's leaderboards
+  would put the exact leak back that the store exists to remove.
+- **One standardization.** Everything that reaches the model goes through
+  `betting_model._assemble_team_inputs`, the same seam the five core columns
+  use, so the day a candidate is measured its z-scores are computed by the
+  identical code on the live path and the vintage path.
+- **Dark means dark.** No served price, no slot, no record row and no exported
+  edge reads any of these columns. They exist in the record, in the assembled
+  team inputs, and nowhere else, until a candidate clears the protocol below.
+
+### The B3/B4 candidate protocol (rolling form, availability)
+
+Pre-registered now so the first measurement cannot shape its own rules:
+
+1. **Each candidate gets its own gate section in this document before any
+   number is computed on it.** The section names the estimand, the split, the
+   criteria and the thresholds, the way 11a and 11b do. A candidate measured
+   before its section exists is disqualified, whatever it measured.
+2. **The clock: 4 to 6 weeks of schema-3 vintages minimum** before the first
+   measurement. Schema 3 landing tonight starts that clock; the earliest
+   admissible first look is 2026-09-13, and a candidate whose column was null
+   over the accrual window (the xwOBA pair, until a builder exists) has not
+   started its clock at all.
+3. **The B3 permuted-team control.** Every rolling-form candidate is scored
+   against its own permuted twin: the same fit with the candidate column
+   permuted across teams within each date. Rolling form is partly team quality
+   wearing a trend costume, and the twin is what separates "the feature helps"
+   from "the feature smuggles offense_plus in again". A candidate that does not
+   beat its twin is a null whatever its headline delta says.
+4. **Serve requires BOTH legs**: the contaminated-forward diagnostic (the cheap
+   large-n screen on season-to-date features, labelled contaminated, which can
+   only ever DISQUALIFY a candidate, never qualify one) AND calibration
+   non-degradation on the vintage eval half, under the same two-criterion form
+   the 11b gate uses (paired Brier improvement at one-sided t >= 1.645, paired
+   log loss not worse on the point estimate). Availability candidates (B4:
+   `star_out`, `lineup_strength`) carry the additional burden that their
+   builder must be on the nightly path before their clock starts.
+
+---
+
 ## 6. The backtest: two modes, both labelled
 
 ```
@@ -910,6 +1008,63 @@ When none does it returns the LIVE leaderboards with `source:
 Nothing in the module silently looks forward. The vintage backtest calls it
 with `allow_fallback=False`, which returns an empty bundle instead, so it
 cannot accidentally grade a game on contaminated features.
+
+### The benchmark ladder on the vintage eval window (pre-registered 2026-08-16)
+
+**Written before the ladder existed in code and before any tier's number was
+computed.** A Brier score with no ladder under it reads however the reader
+wants it to; the honest frame is the ordered set of things a model of this
+class must beat. The ladder is a VALIDATION SURFACE ONLY: it is dark, no
+served probability reads any tier, and no tier ever fills a slot.
+
+`backtest()` gains a `benchmarks` block computed on the vintage EVAL window
+(the same games gate 2 grades), with four tiers:
+
+| Tier | What it is | Standing |
+|---|---|---|
+| `home_constant` | the eval window's own home win rate as a constant probability, the identical base `brier_home_base` already uses | always measurable |
+| `market_open_devig` | the de-vigged (proportional) home probability from the cached OPEN snapshot for the game's slate, averaged across the books posting a two-sided h2h market in it | a SUBSAMPLE: only slates with a cached open capture. n is reported, and the tiers it is compared against are recomputed on the SAME games. The subsample is never the headline |
+| `market_close_devig` | the same statistic off close-kind snapshots | auto-appears as close captures accrue. Today n = 0 and the block says so rather than omitting the row |
+| `elo_literature` | Elo from game results ONLY (`tools/betting_elo.py`): base rating 1500, K = 4, home advantage 24 Elo points, the standard published MLB configuration | the constants are LITERATURE PRIORS, labelled so, and are never fitted on the eval window or anywhere else. Ratings start flat at 1500 each season, no carryover, and every prediction uses only strictly-prior results (a game's probability is computed before its own update) |
+
+**The claim rule, which is the point of pre-registering a display block:**
+never claim an unmeasured tier. A tier with n = 0 has no number and no claim. A
+tier whose n is below the window's n is a subsample and may be compared only
+against the other tiers recomputed on those same games; "the model beats the
+market" and "the market beats the model" are both unsayable from a subsample
+row unless the same-games column says so. A doubleheader's two games read the
+same open capture, which is stated on the block rather than silently averaged
+away.
+
+What each tier is FOR: `home_constant` is the floor the module already grades
+against; `market_open_devig` is the number that decides whether the model
+knows anything the market did not know at open; `market_close_devig` is the
+sharper version of that question and the one CLV ultimately answers;
+`elo_literature` is the results-only floor a feature model must clear to
+justify carrying features at all. A model losing to tier 4 while carrying six
+leaderboards is a finding about the features, not about Elo.
+
+**First measurement (run 2026-08-16, after the pre-registration above).** On
+the n=269 vintage eval window, 2026-07-28 to 2026-08-16:
+
+| Tier | n | Brier |
+|---|---|---|
+| market open, de-vigged | 122 (subsample) | **0.24254** |
+| Elo, literature config | 269 | 0.24556 |
+| home constant | 269 | 0.24875 |
+| **the model (vintage)** | 269 | **0.25053** |
+| market close | 0 | unmeasured, no claim |
+
+On the 122-game subsample, recomputed on identical games as the claim rule
+requires: market 0.24254, Elo 0.24347, home constant 0.24671, model 0.25356.
+**The model is last on every comparison the window allows.** A six-leaderboard
+feature model behind a zero-parameter results-only Elo is the finding tier 4
+exists to expose: the features are not currently paying for their complexity.
+That is consistent with the vintage mode's standing null against the
+home-field baseline (skill t -0.629 this run) and with B1's boundary result
+(the blend optimum at w = 1). None of these orderings is a resolved verdict
+at 269 games, 45% of the 600-game gate; the ladder's job is to keep the
+ordering in view while the sample accrues.
 
 ---
 
@@ -1697,6 +1852,111 @@ The caveat text on those rows is replaced. The old one said the probabilities
 markets", which understates a 2.15x tail error by about 5x and names no number.
 The replacement names the size, names the market, and says the row is not
 bettable here.
+
+### 11b. B5: Platt response-scale calibration, the pre-registered gate (2026-08-16)
+
+**This section is written before the calibration lab exists in code and before
+any number has been looked at**, in the discipline of 7b and 11a: the rule goes
+on the record first, so neither the threshold nor the estimand can be chosen
+after the data has been seen.
+
+**The candidate.** p' = sigmoid(a * logit(p) + b), two parameters, fitted by
+maximum likelihood. Platt scaling is monotone in p, so it is order-preserving:
+it cannot change which side the model prefers on any game, only how sure the
+model claims to be. That bounds what it can fix.
+
+**The pre-registered expectation, stated before the first fit:** Platt repairs
+RESPONSE SCALE, overconfidence and inversion at the extremes. It cannot
+manufacture discrimination, and it is NOT expected to open the skill gate:
+gate 2 reads a paired Brier against a constant baseline, and a model whose
+ordering carries no information converges TOWARD that baseline under a scale
+repair rather than past it. Converging toward the baseline is a finding about
+the model, not a failure of the method. One more reason to expect a null is
+already in the module: `diff_shrink` is fitted on the fit half by minimizing
+log loss, so most of the response scale is absorbed before Platt ever sees a
+probability, and a fitted (a, b) near (1, 0) is the honest likely outcome.
+
+**Arm 1, the vintage arm.** On the vintage-gradable sample (games with a
+vintage strictly before them), split the gradable DATES at quantiles 0.6, 0.7
+and 0.8, the same fixed grid the dispersion gate uses and for the same reason:
+a verdict that moves with the split point is a verdict about the split point.
+At each split:
+
+- fit {coefficients, tie rate, diff_shrink, home_field_runs_adj} on the fit
+  half, on vintage features, exactly as the honest mode's `_grade` does;
+- fit (a, b) by MLE on the fit half's own per-game (p_home, home win) pairs.
+  Nothing from the eval half reaches the fit, and nothing later than the split
+  date reaches either half's features;
+- on the HELD-OUT half, BOTH must hold:
+  1. paired per-game Brier delta, identity minus Platt, > 0 at one-sided
+     t >= 1.645;
+  2. paired log loss delta not worse on the point estimate (>= 0).
+
+**ALL THREE quantiles or nothing.** Floors: the fit half must carry at least
+`VINTAGE_MIN_FIT_GAMES` (100) games and the eval half at least
+`VINTAGE_MIN_EVAL_GAMES` (50); a split that cannot meet its floors cannot pass,
+so an arm with an unrunnable split cannot pass either.
+
+**Arm 2, the ledger arm.** The calibration ledger's settled CANONICAL-SIDE
+moneyline games, one row per game
+(`tools/betting_calibration.canonical_settled_games`), which carry the SERVED
+model probability and the outcome. This arm ACTIVATES at n >= 100 settled
+canonical moneyline games. On 2026-08-16 the ledger holds 49, so **this arm
+cannot count yet, in either direction**, and that is being written down before
+any number is computed on it. When it activates: rows in chronological settled
+order, the same three split quantiles, (a, b) fitted on the fit segment, the
+same two criteria on the held-out segment, all three quantiles or nothing. One
+honesty note rides with it: the ledger's model probabilities are priced from
+season-to-date inputs, which favours the model, but a scale repair measured on
+the served probabilities is a repair of exactly the scale the serve seam would
+apply to, so this arm is the one closest to the deployed question.
+
+**The ship rule.** `SERVE_PROB_CALIBRATION` flips to True only when BOTH arms
+pass. Today that is impossible by construction, whatever arm 1 returns,
+because arm 2 cannot count before ~100 settled canonical moneyline games
+exist. A green arm 1 alone is recorded, not served. The flag, the
+`prob_calibration` block in the eval artifact, and the tripwire in
+`test_betting_platt.py` move in ONE commit or not at all, the
+`SERVE_RUN_DISPERSION` three-move-together pattern.
+
+**Serving scope: moneyline only.** The runline and the total stay behind the
+dispersion gate (11a) and the market gate (7b) whatever this section returns;
+a response-scale repair on p_home says nothing about a mis-shaped margin
+distribution.
+
+**What the artifacts carry.** `betting_model_eval.json` gains a
+`prob_calibration` block: the per-quantile grid (n_fit, n_eval, fitted a and
+b, both criteria's paired deltas and t), both arms' status, the verdict, and
+`served` / `served_ab` beside it. `betting_model_context.json` carries
+`prob_calibration` (the served (a, b), null while the flag is off) and
+`prob_calibration_fitted` (the full-sample measurement, published whether or
+not it is served, the same convention `run_dispersion_alpha_fitted` set).
+
+#### Result (run 2026-08-16, after the pre-registration above): FAIL, and the expectation is confirmed
+
+The vintage arm, on the 518-gradable sample:
+
+| split | date | n_fit | n_eval | fitted (a, b) | Brier delta / t | log loss delta | verdict |
+|---|---|---|---|---|---|---|---|
+| 0.6 | 2026-08-01 | 305 | 213 | (1.137, -0.010) | -0.000505 / -1.418 | -0.001024 | FAIL |
+| 0.7 | 2026-08-05 | 358 | 160 | (1.048, -0.005) | -0.000115 / -0.862 | -0.000232 | FAIL |
+| 0.8 | 2026-08-09 | 414 | 104 | (1.005, -0.001) | -0.000004 / -0.292 | -0.000008 | FAIL |
+
+**Fail at all three splits, on both criteria.** Platt is not merely short of
+the t bar; it is slightly WORSE than identity out of sample at every split.
+The ledger arm holds 49 of its 100-game floor and cannot count, so the ship
+rule was unsatisfiable today whatever this arm returned; it returned a fail
+anyway. `SERVE_PROB_CALIBRATION` stays False and identity is served.
+
+The pre-registered expectation is what the table shows. The fitted maps
+converge to identity as the fit window grows (a: 1.137 to 1.048 to 1.005),
+because `diff_shrink` is fitted on each fit half by minimizing log loss and
+absorbs the response scale before Platt sees a probability; the residual two
+parameters fit noise and pay for it held out. The moneyline's problem is
+DISCRIMINATION, not scale, and no monotone recalibration touches
+discrimination. Re-run `backtest()` and read both arms when the ledger
+reaches 100 settled canonical moneyline games; do not fit anything by hand
+before then.
 
 ---
 
