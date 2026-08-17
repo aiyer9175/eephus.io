@@ -2307,6 +2307,36 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     _hb.record("betting_board_export", ok=False, result=str(_e)[:120])
                 except Exception:
                     pass
+            # --- props pull (armed only), then a re-export to price it -------
+            # DOUBLE-ARMED on EEPHUS_ODDS_API_KEY + EEPHUS_PROPS_CREDITS, both
+            # owner-set; inert otherwise and the payload names both variables.
+            # Game selection is deterministic (betting_export.props_value_games,
+            # doc section 7c), so the credit spend is reviewable from the board
+            # alone. The second export exists because props pricing is a pure
+            # read of cached snapshot bytes: pull first, then price. Wired
+            # 2026-08-16; the hard monthly guard lives in betting_ingest and
+            # refuses BEFORE any request that would breach the owner's cap.
+            try:
+                import betting_ingest as _bi
+                if _bi.props_armed():
+                    import json as _json
+                    _pl = _json.loads(
+                        (out_dir / "betting.json").read_text(encoding="utf-8"))
+                    _games = __import__("betting_export").props_value_games(
+                        _pl.get("team_bets") or [],
+                        slots={"pick_of_the_day": _pl.get("pick_of_the_day")})
+                    _eids = [g.get("odds_event_id") for g in _games
+                             if g.get("odds_event_id")]
+                    if _eids:
+                        _pst = _bi.run("props", event_ids=_eids)
+                        log.info("props pull: %s", (_pst or {}).get("last_run"))
+                        from betting_export import refresh_live as _reprice
+                        _reprice(log=log.info)
+                else:
+                    log.info("props pull: not armed "
+                             "(EEPHUS_ODDS_API_KEY + EEPHUS_PROPS_CREDITS), skipped")
+            except Exception:
+                log.exception("daily: props pull failed - continuing")
             # --- close-capture health, off the cache that survives the night ---
             # NOT a heartbeat. data/job_heartbeat.json is git-tracked and
             # `git checkout -- .` reverts it before this pipeline runs, so a

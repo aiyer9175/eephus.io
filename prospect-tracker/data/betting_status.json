@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-08-16T22:12:40+00:00",
- "configured": false,
+ "generated_at": "2026-08-17T01:48:40+00:00",
+ "configured": true,
  "provider": "The Odds API (free tier)",
  "sport": "baseball_mlb",
  "markets": [
@@ -14,15 +14,27 @@
  "credits_per_snapshot": 3,
  "monthly_budget": 500,
  "planned_monthly_credits": 186,
- "n_snapshots_cached": 10,
- "latest_snapshot": "2026-08-16T18:09:02+00:00",
- "latest_kind": "open",
- "latest_credits": {
-  "cost": 3,
-  "used": 33,
-  "remaining": 467,
-  "last": 3
- },
- "props": "model fair lines only; the per-event props endpoint is not on the free-tier budget",
- "note": "odds feed not configured: set EEPHUS_ODDS_API_KEY on the build box"
+ "n_snapshots_cached": 0,
+ "latest_snapshot": null,
+ "latest_kind": null,
+ "latest_credits": {},
+ "props": "model fair lines plus the per-event value machinery (section 7c); armed",
+ "props_armed": true,
+ "props_credits_cap": 6,
+ "props_credits_per_event": 4,
+ "props_spent_this_month": 4,
+ "note": "odds feed configured",
+ "last_run": "props: pulled 1 of 2 event(s), 1 refused by the budget guard",
+ "props_pulls": [
+  {
+   "event_id": "ev9",
+   "ok": true,
+   "path": "2026-08-17-props-ev9.json"
+  },
+  {
+   "event_id": "ev10",
+   "ok": false,
+   "reason": "refused BEFORE the request: 4 of 6 monthly props credits are spent and this pull costs 4, which would breach the cap"
+  }
+ ]
 }
