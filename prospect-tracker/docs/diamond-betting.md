@@ -1417,6 +1417,101 @@ alone.
 
 ---
 
+## 7c. Props value bets (pre-registered 2026-08-16; ships INERT)
+
+**This section was written before any of the code existed**, in the same
+discipline as 7b: the shape, the caps, the arming mechanism and the tag rules
+go on the record first, so none of them can be tuned after the first pull.
+Everything below builds and verifies against fixtures; on this repo's boxes
+the machinery is INERT because neither arming variable is set.
+
+### The owner-approved shape
+
+| Parameter | Value | Standing |
+|---|---|---|
+| games per day | `PROPS_MAX_GAMES_PER_DAY = 3` | owner band is 2 to 3; 3 is pre-registered here and changing it is one constant edit, recorded in this table |
+| monthly credit cap | `EEPHUS_PROPS_CREDITS` (env) | the owner's number, inside 60 to 180. The machinery NEVER assumes one: an unset cap means no pull, however the key is set |
+| markets | `PROPS_MARKETS`: `pitcher_strikeouts`, `batter_total_bases`, `batter_hits`, `batter_home_runs` | key names verified against The Odds API market list on 2026-08-16 |
+| shadow tags | `props_<market>`, one per props market, per-tag budget 3 rows a slate | NEVER pooled with the team tags, and never with each other; section 7a's rule, one level down |
+| min_edge | swept PER TAG, same 100-settled-row floor as every team tag | a props threshold fitted to team-market evidence would be wrong for both |
+
+### The arming mechanism, and what inert means
+
+The per-event pull fires only when BOTH are set:
+
+- `EEPHUS_ODDS_API_KEY`, the same key the team feed uses, and
+- `EEPHUS_PROPS_CREDITS`, the owner's monthly props budget.
+
+Either one absent leaves the machinery INERT: `betting_ingest.run("props",
+event_ids=[...])` refuses without spending, and the payload's `props_value`
+block says exactly which of the two variables is missing, by name, so the
+page can state why the section is empty instead of rendering a blank. The
+key alone must not arm props, because the key alone is the 500-credit team
+budget and props bill against a SEPARATE owner-approved number.
+
+### The credit arithmetic, per event this time
+
+The per-event endpoint bills markets x regions PER EVENT: 4 markets x 1
+region = 4 credits per event, so a full 3-game day is 12 credits and a month
+of daily use is ~372, which is why the cap is the owner's call and not a
+default. The guard is HARD and it sits BEFORE the request:
+`.cache/odds/props_spend.json` is the calendar-month ledger, and any request
+whose cost would push the month's spend past `EEPHUS_PROPS_CREDITS` is
+refused with the arithmetic in the refusal. A guard that reconciles after
+the response has already spent the credits it was guarding.
+
+Snapshots land at `.cache/odds/<date>-props-<event_id>.json` with kind
+`props`, immutable exactly like the team snapshots, and invisible to
+`list_snapshots()` (the team snapshot name pattern does not match them), so
+nothing about the open/close resolution changes.
+
+### Game selection, deterministic
+
+The watch-slot game first (the published `pick_of_the_day` row's game, when
+one exists), then the remaining games ranked by their largest team-market
+edge, descending, ties to the lower game_pk, capped at
+`PROPS_MAX_GAMES_PER_DAY`. Both inputs are already on the payload, so two
+identical boards select identical props games.
+
+### Pricing: the team-market discipline, reused verbatim
+
+`betting_export.props_value_bets()` prices each (market, player) pair through
+the SAME `_market_view` function the team board uses, not a copy: consensus
+point first by book count, prices shopped only among books posting it, fair
+probabilities from the minimum-hold book on that line, and the
+staleness / hold / consensus-distance rejection ledger published per pair.
+The model probability is the EXISTING Poisson props lambda (section 4's fair
+lines, on the A5a vs-hand order) evaluated at the BOOK's line, with
+whole-number lines push-conditioned exactly as `total_side_probabilities`
+does for totals. Edge, EV per unit, quarter Kelly and the provisional
+labelling are the team rows' own fields, byte for byte the same builder
+(`_priced_side`).
+
+### Publishability: uniform, not exempt
+
+Props markets are NOT in `DISPERSION_SENSITIVE_MARKETS` (the margin model
+does not price them), so the theory leg does not bar them. Each props market
+enters `market_publishability` as its own market with the same ledger
+evidence leg as section 7b: n >= 100 settled canonical rows, canonical side
+`over`, deduplicated per (market, game, player) so two books, or one player
+at two lines, count once, exactly the way one team game at two totals counts
+once, the same z, the same dwell. The calibration ledger logs
+props sides as distinct markets (`props_<key>`); `betting_settle.grade_side`
+cannot grade a player count off a run score, so props calibration rows stay
+OPEN rather than being guessed, the props ledger legs read `unresolved`, and
+the table says so. A props grader against box scores is the named unlock and
+is NOT part of this lane.
+
+### What may ship while everything is unresolved
+
+The `props_value` block is fixture-verified machinery plus an inert state
+sentence. When armed and priced it publishes watch-frame rows under the same
+floor and the same provisional labels as the team slots; nothing props-shaped
+reaches the public record, and no props row may enter a team tag's sweep
+(`test_betting_props.py` and `test_betting_shadow.py` pin both).
+
+---
+
 ## 8. The append-only record
 
 `data/betting_record.json` is an array. `betting_export.write_record` proves
