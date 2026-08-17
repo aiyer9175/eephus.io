@@ -1,0 +1,42 @@
+# Secrets -- never commit these
+.env
+.env.*
+*.pem
+*.key
+credentials*
+secrets*
+config/paths.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large / private / raw data: handled deliberately, not by blanket exclusion.
+# Small fixtures and manifests under tests/fixtures/ and data/manifests/ ARE
+# meant to be versioned -- do not add a blanket data/ ignore here without a
+# decision recorded in registry/decisions/ (Part H).
+data/raw/*
+!data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
+data/external/*
+!data/external/.gitkeep
+
+# Coverage artifacts
+.coverage
+htmlcov/

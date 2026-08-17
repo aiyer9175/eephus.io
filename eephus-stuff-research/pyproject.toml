@@ -1,0 +1,48 @@
+[project]
+name = "eephus-research"
+version = "0.1.0"
+description = "Eephus quantitative research infrastructure (Program 0: infrastructure only, no fitted models)."
+requires-python = ">=3.11"
+readme = "README.md"
+
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "scipy>=1.12",
+    "scikit-learn>=1.4",
+    "statsmodels>=0.14",
+    "pyarrow>=15.0",
+    "pydantic>=2.6",
+    "pyyaml>=6.0",
+    "joblib>=1.3",
+    "matplotlib>=3.8",
+    "jsonschema>=4.21",  # added post-baseline: needed to validate registry/ entries against schemas/*.schema.json (Parts L-O)
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "hypothesis>=6.98",
+]
+
+# Deliberately NOT included yet, per Part I ("do not install speculatively"):
+# polars, duckdb, xgboost, lightgbm, shap, optuna, pymc, arviz, numba.
+# Add one of these only when a concrete, preregistered need names it.
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.eephus_research]
+# Central seed registry default. Individual experiments must record their own
+# seed in the experiment registry (registry/experiments/) rather than relying
+# on this value implicitly -- see docs/STATISTICAL_GOVERNANCE.md Part Z.
+default_seed = 20260816

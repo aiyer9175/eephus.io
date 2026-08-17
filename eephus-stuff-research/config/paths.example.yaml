@@ -1,0 +1,16 @@
+# Template for machine-specific paths. Copy this file to paths.yaml (which is
+# gitignored) and fill in real values. Never commit paths.yaml -- it may
+# point at licensed data, private export targets, or machine-specific
+# absolute paths that don't make sense on another machine.
+#
+#   cp config/paths.example.yaml config/paths.yaml
+#
+# Then edit config/paths.yaml with real locations.
+
+external_data_root: "/path/to/external/data"  # e.g. an immutable source cache
+private_export_root: "/path/to/private/export/target"  # for PRIVATE_EXPORT_REQUIRED artifacts, if any ever exist here
+raw_data_root: "data/raw"          # usually fine to leave relative
+interim_data_root: "data/interim"
+processed_data_root: "data/processed"
+manifest_root: "data/manifests"
+artifact_root: "artifacts"

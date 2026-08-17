@@ -1,0 +1,7 @@
+dataset_id: DS-998
+logical_name: "synthetic fixture dataset missing required provenance fields"
+grain: "one row per pitch"
+row_count: 6
+column_count: 5
+unique_key: ["pitch_id"]
+duplicate_count: 0

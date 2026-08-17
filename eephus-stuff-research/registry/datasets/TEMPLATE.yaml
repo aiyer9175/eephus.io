@@ -1,0 +1,18 @@
+# Copy to DS-NNN.yaml (next unused number, 3+ digits) and fill in.
+dataset_id: DS-000
+logical_name: ""
+source: ""
+acquisition_method: ""
+acquisition_timestamp: ""   # ISO 8601 date-time
+raw_parent: []               # list of DS-NNN this was derived from, if any
+transformations: []
+grain: ""                    # e.g. "one row per pitch", "one row per pitcher-season"
+seasons: []
+row_count: 0
+column_count: 0
+unique_key: []
+duplicate_count: 0
+missingness_summary: {}
+checksum: ""                 # sha256 of the artifact, from src/eephus_research/provenance
+schema_version: ""
+licensing_restrictions: ""

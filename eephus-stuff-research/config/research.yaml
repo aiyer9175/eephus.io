@@ -1,0 +1,47 @@
+# Research-level configuration visible to every experiment.
+# These are choices, not code. Change them here, not by editing constants
+# buried in src/. Every field that materially affects a scientific
+# conclusion if changed should be registered as a decision in
+# registry/decisions/ before (or at the moment) it is changed here.
+
+seed:
+  default: 20260816  # must match pyproject.toml [tool.eephus_research].default_seed
+  note: >
+    This is a fallback only. Every experiment in registry/experiments/ must
+    record its own seed explicitly; do not rely on this default implicitly
+    for anything consequential (Part Z).
+
+numerical_tolerance:
+  exact_identity: 0.0          # accounting identities: must be exact
+  float_default: 1.0e-9        # generic floating-point comparisons
+  float_aggregation: 1.0e-6    # sums/means over large row counts
+  note: >
+    Do not scatter ad hoc tolerances through tests. Add a new named
+    tolerance here with a one-line justification instead (Part BO).
+
+paths:
+  config_example: config/paths.example.yaml
+  note: >
+    Real, machine-specific paths (external data locations, private export
+    targets) belong in a local, gitignored paths.yaml copied from
+    paths.example.yaml -- never commit a real paths.yaml.
+
+logging:
+  config: config/logging.yaml
+
+production_boundary:
+  frozen_paths:
+    - "../defense-plus"
+    - "../swing-plus"
+    - "../milb-decision-plus"
+    - "../playing-time-model"
+    - "../xRV models"
+    - "../advancement_pace"
+    - "../milb-projections"
+    - "../prospect-tracker"
+    - "../xwoba_model.pkl"
+    - "../NCAA 26 Averages S+.csv"
+  note: >
+    These paths (relative to this file's parent, i.e. the eephus.io repo
+    root) are production. Nothing in eephus-stuff-research/ may write to
+    them. See docs/DATA_GOVERNANCE.md.

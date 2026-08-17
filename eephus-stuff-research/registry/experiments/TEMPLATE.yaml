@@ -1,0 +1,24 @@
+# Copy to E-NNN.yaml (next unused number, 3+ digits) and fill in BEFORE running
+# the experiment. Every field is required by schemas/experiment.schema.json
+# except where noted. status starts at NOT_ATTEMPTED.
+experiment_id: E-000
+question: ""
+hypothesis: ""
+estimand: ""
+unit_of_analysis: ""
+population: ""
+inclusion_rules: []
+exclusion_rules: []
+features: []
+target: ""
+training_period: ""      # optional but recommended
+validation_period: ""    # optional but recommended
+grouping: RANDOM_ROW      # RANDOM_ROW | GAME_GROUPED | PITCHER_GROUPED | TEMPORAL | PITCHER_GROUPED_TEMPORAL
+primary_metric: RMSE      # see schemas/experiment.schema.json for the full enum
+secondary_metrics: []
+benchmark: NOT_APPLICABLE  # TRAINING_TARGET | FEATURE | VALIDATION_ONLY | DESCRIPTIVE_COMPARATOR | PROHIBITED_FROM_MODEL | NOT_APPLICABLE
+falsification_rule: ""    # what observation would prove this wrong
+promotion_rule: ""        # what result would justify promoting this beyond RESEARCH state
+seed: 20260816
+status: NOT_ATTEMPTED
+post_hoc_amendments: []

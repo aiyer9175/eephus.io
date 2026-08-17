@@ -1,0 +1,151 @@
+{
+  "recorded_at": "2026-08-16",
+  "recorded_by": "Program 0 (Claude Code Bootstrap)",
+  "scan_type": "read_only_partial",
+  "scan_scope": "current worktree, sibling worktrees, parent directory structure; not an exhaustive whole-filesystem crawl",
+  "repositories": [
+    {
+      "id": "eephus-io-main",
+      "absolute_path": "C:/Users/ciaci/New folder/codex/eephus.io",
+      "git_status": "clean_at_time_of_writing",
+      "branch": "main",
+      "remotes": {
+        "origin": "https://github.com/aiyer9175/eephus.io.git",
+        "upstream": "https://github.com/arkhdji/eephus.io.git"
+      },
+      "last_commit": {
+        "sha": "d63eb7b9",
+        "date": "2026-08-07",
+        "message": "Close the last plan item: three UI suspects, one reproduces, and it has one pixel of room"
+      },
+      "purpose": "Production application (PROSPX / prospect-tracker and related tools).",
+      "is_production": true,
+      "contains_research": true,
+      "contains_datasets": true,
+      "contains_pitching_infrastructure": true,
+      "notes": "Multiple model directories (defense-plus, swing-plus, milb-decision-plus, playing-time-model, xRV models, advancement_pace, milb-projections) started as branch-based research and were merged here."
+    },
+    {
+      "id": "eephus-io-program0-worktree",
+      "absolute_path": "C:/Users/ciaci/New folder/codex/eephus.io/.claude/worktrees/milb-pitch-quality-research-e53bba",
+      "git_status": "untracked_dir_present",
+      "branch": "claude/eephus-research-infrastructure-47aa1e",
+      "remotes": {
+        "origin": "https://github.com/aiyer9175/eephus.io.git",
+        "upstream": "https://github.com/arkhdji/eephus.io.git"
+      },
+      "last_commit": {
+        "sha": "d63eb7b9",
+        "date": "2026-08-07",
+        "message": "Close the last plan item: three UI suspects, one reproduces, and it has one pixel of room"
+      },
+      "purpose": "This Program 0 session. eephus-stuff-research/ is created here.",
+      "is_production": false,
+      "contains_research": true,
+      "contains_datasets": false,
+      "contains_pitching_infrastructure": false,
+      "notes": "Worktree directory name (milb-pitch-quality-research-e53bba) does not match the checked-out branch (claude/eephus-research-infrastructure-47aa1e). See MACHINE_STATE.md naming trap."
+    },
+    {
+      "id": "eephus-io-sibling-worktree",
+      "absolute_path": "C:/Users/ciaci/New folder/codex/eephus.io/.claude/worktrees/project-structure-setup-ad3fd2",
+      "git_status": "NOT_MEASURED",
+      "branch": "detached_HEAD_71ea151f",
+      "remotes": {
+        "origin": "https://github.com/aiyer9175/eephus.io.git",
+        "upstream": "https://github.com/arkhdji/eephus.io.git"
+      },
+      "last_commit": {
+        "sha": "71ea151f",
+        "date": "NOT_MEASURED",
+        "message": "prospx: preserve sort-header keyboard focus across board re-renders (a11y fix) + doc sync"
+      },
+      "purpose": "Unrelated concurrent session doing PROSPX site-restructuring/a11y work.",
+      "is_production": false,
+      "contains_research": false,
+      "contains_datasets": false,
+      "contains_pitching_infrastructure": false,
+      "notes": "Not touched by Program 0."
+    }
+  ],
+  "orphaned_prior_work": [
+    {
+      "id": "milb-pitch-quality-research-e53bba-branch",
+      "type": "abandoned_branch_with_local_leftover_files",
+      "branch_ref": "origin/claude/milb-pitch-quality-research-e53bba",
+      "head_commit": {
+        "sha": "4c5de9d8",
+        "date": "2026-07-20",
+        "message": "MiLB pitch-quality research: Engineering Charter (architecture freeze, interfaces, Module 1 readiness)"
+      },
+      "tracked_files_in_branch_tree": 84,
+      "physically_present_in_current_worktree": [
+        "milb-pitch-quality-research/data_cache/AA/",
+        "milb-pitch-quality-research/data_cache/AAA/",
+        "milb-pitch-quality-research/data_cache/High-A/",
+        "milb-pitch-quality-research/data_cache/Low-A/",
+        "milb-pitch-quality-research/data_cache/derived/",
+        "milb-pitch-quality-research/data_cache/schedules/",
+        "milb-pitch-quality-research/data_cache/samples/",
+        "milb-pitch-quality-research/scripts/"
+      ],
+      "physically_present_size_bytes_approx": 1071000000,
+      "not_physically_present_but_in_git_history": [
+        "milb-pitch-quality-research/README.md",
+        "milb-pitch-quality-research/DECISION_LEDGER.md",
+        "milb-pitch-quality-research/PILOT_SCOPE.md",
+        "milb-pitch-quality-research/reports/**"
+      ],
+      "action_taken": "none",
+      "decision_ref": "D-002"
+    },
+    {
+      "id": "milb-projections-handoff-package",
+      "type": "merged_governance_package_not_a_model",
+      "path_on_main": "milb-projections/",
+      "original_name": "milb_pitch_quality_handoff/",
+      "renamed_commit": {
+        "sha": "9b888b71",
+        "date": "2026-07-18",
+        "message": "Rename milb_pitch_quality_handoff/ to milb-projections/"
+      },
+      "phases_completed": 15,
+      "contains_fitted_model": false,
+      "key_docs": [
+        "milb-projections/PITCH_QUALITY_RESEARCH_CONTRACT.md",
+        "milb-projections/DECISION_LEDGER.md",
+        "milb-projections/KNOWN_GAPS.md",
+        "milb-projections/BENCHMARK_REQUIREMENTS.md"
+      ],
+      "action_taken": "referenced_in_docs_only_not_incorporated",
+      "decision_ref": "D-003"
+    }
+  ],
+  "datasets_found": [
+    {
+      "name": "NCAA 26 Averages S+.csv",
+      "location": "eephus.io/ (root)",
+      "size_bytes_approx": 6124241,
+      "production": true
+    },
+    {
+      "name": "xwoba_model.pkl",
+      "location": "eephus.io/ (root)",
+      "size_bytes_approx": 1792562,
+      "production": true
+    },
+    {
+      "name": "MiLB game-feed JSON cache",
+      "location": "milb-pitch-quality-research/data_cache/ (this worktree, untracked)",
+      "size_bytes_approx": 1071000000,
+      "production": false
+    }
+  ],
+  "no_stuff_model_found": true,
+  "secrets_scan": {
+    "performed": true,
+    "scope": "top_level_of_main_worktree_only",
+    "exhaustive": false,
+    "findings": []
+  }
+}

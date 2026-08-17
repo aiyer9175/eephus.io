@@ -1,0 +1,30 @@
+decision_id: D-001
+question: >
+  Should the Program 0 research workbench (eephus-stuff-research/) live
+  inside the eephus.io repository, or as a fully separate standalone git
+  repository, as the generic Program 0 specification literally describes?
+decision: >
+  Inside the eephus.io repository, as a new top-level directory on the
+  current research branch (claude/eephus-research-infrastructure-47aa1e),
+  matching the pattern already used by defense-plus/, swing-plus/,
+  milb-decision-plus/, playing-time-model/, and milb-projections/.
+status: DECIDED
+rationale: >
+  Archaeology (docs/REPOSITORY_INVENTORY.md) found that every existing
+  Eephus model/research effort already lives inside this same repository as
+  a top-level folder created on a branch and later merged to main. A
+  standalone repository would break that convention, duplicate governance
+  machinery that milb-projections/ already partly built, and add friction
+  (a second repo to clone, a second place to look for context) without a
+  concrete benefit specific to this codebase. Asked directly via
+  AskUserQuestion; operator chose this option.
+alternatives_considered:
+  - option: Fully separate standalone repository, per the literal Program 0 wording
+    why_not_chosen: >
+      Breaks from the established convention in this specific codebase and
+      duplicates governance already partly present in milb-projections/;
+      offers cleaner production isolation in the abstract, but eephus.io's
+      existing convention already achieves isolation via branches, and
+      research code here never touches main without a separate merge.
+decided_by: operator (via AskUserQuestion, 2026-08-16)
+created_at: "2026-08-16"

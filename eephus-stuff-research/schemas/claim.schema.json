@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://eephus.internal/schemas/claim.schema.json",
+  "title": "Claim registry entry",
+  "type": "object",
+  "required": [
+    "claim_id", "statement", "claim_type", "status", "evidence",
+    "created_at", "updated_at"
+  ],
+  "properties": {
+    "claim_id": { "type": "string", "pattern": "^C-[0-9]{3,}$" },
+    "statement": { "type": "string", "minLength": 1 },
+    "claim_type": {
+      "type": "string",
+      "enum": ["DEFINITIONAL", "MATHEMATICAL", "EMPIRICAL", "INTERPRETIVE", "OPERATIONAL"]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PASS", "PASS_WITH_FINDINGS", "FAIL", "BLOCKED", "NOT_ATTEMPTED",
+        "NOT_IDENTIFIED", "NOT_MEASURED", "NOT_APPLICABLE",
+        "INSUFFICIENT_EVIDENCE", "NEEDS_REVIEW"
+      ]
+    },
+    "evidence": { "type": "string", "minLength": 1 },
+    "artifact_refs": { "type": "array", "items": { "type": "string" } },
+    "code_refs": { "type": "array", "items": { "type": "string" } },
+    "dataset_refs": { "type": "array", "items": { "type": "string", "pattern": "^DS-[0-9]{3,}$" } },
+    "experiment_refs": { "type": "array", "items": { "type": "string", "pattern": "^E-[0-9]{3,}$" } },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "uncertainty": { "type": "string" },
+    "limitations": { "type": "array", "items": { "type": "string" } },
+    "created_at": { "type": "string", "format": "date" },
+    "updated_at": { "type": "string", "format": "date" }
+  },
+  "additionalProperties": false,
+  "if": {
+    "properties": { "status": { "enum": ["PASS", "PASS_WITH_FINDINGS", "FAIL"] } },
+    "required": ["status"]
+  },
+  "then": {
+    "description": "A claim asserted PASS/PASS_WITH_FINDINGS/FAIL must point at real evidence, not just prose (Part L: no important conclusion without evidence linkage).",
+    "anyOf": [
+      { "properties": { "artifact_refs": { "minItems": 1 } }, "required": ["artifact_refs"] },
+      { "properties": { "code_refs": { "minItems": 1 } }, "required": ["code_refs"] },
+      { "properties": { "dataset_refs": { "minItems": 1 } }, "required": ["dataset_refs"] },
+      { "properties": { "experiment_refs": { "minItems": 1 } }, "required": ["experiment_refs"] }
+    ]
+  }
+}
