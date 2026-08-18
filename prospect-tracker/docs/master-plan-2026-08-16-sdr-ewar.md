@@ -349,9 +349,16 @@ stages incl. 05_skill_composites + 25_catcher_components, so the metric is
 genuinely SDR-class under the re-open clause; milb-projections contracts +
 adapters + fixtures) and his DATA is not (no parquet anywhere, no raw
 inputs, no handoff dir, and NO export adapter exists for the defense card).
-The recommendations for D1, D2, D3, D4, D6, D7 are ADOPTED as written. D5
+The recommendations for D1, D2, D3, D4, D7 are ADOPTED as written. D5
 stays an owner checkpoint exactly as section 2 states: the W3 measurement is
 pre-authorized, the flip is not.
+
+**D6 RESOLVED 2026-08-18, superseding the recommendation's two-week trigger:
+WAIT FOR THE MERGED eWAR.** No display work ships until Will's drop passes
+the preflight and the merge gate (G-B) returns, however long that takes. One
+display transition, not two; the site stays bWAR everywhere meanwhile. If
+the wait changes the owner's mind, the v2 pitching-swap fallback in section
+2 remains available and would need only this line superseded.
 
 W0 EXECUTED 2026-08-18: sdr_intake.py (drop seam validated against Will's
 own pitcher_ewar contract and fixture; declared defense-card contract with

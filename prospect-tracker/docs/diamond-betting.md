@@ -1307,6 +1307,13 @@ existed**, in the same discipline as 5a and 11a: the rule goes on the record
 before the first number is computed, so the threshold cannot be picked after
 the data has been seen.
 
+**OWNER SIGN-OFF 2026-08-18.** The constants stand as registered (n >= 100
+canonical games, one-sided 95%, dwell 3, trailing-200 re-open), with the
+consequence accepted in the same breath: if the moneyline still grades worse
+than a coin when its canonical count reaches 100, the gate closes it and
+BOTH Model Watch slots go empty until the re-open test clears. No slot
+renders a disagreement on a market the gate has called unpriceable.
+
 ### Why a second leg
 
 The dispersion exclusion (section 11a, `betting_model.market_is_publishable`)
@@ -1424,6 +1431,15 @@ discipline as 7b: the shape, the caps, the arming mechanism and the tag rules
 go on the record first, so none of them can be tuned after the first pull.
 Everything below builds and verifies against fixtures; on this repo's boxes
 the machinery is INERT because neither arming variable is set.
+
+**OWNER ARMING DECISION 2026-08-18: 120 credits a month, 3 games a day, all
+four registered markets.** The box action is one line in the same root-owned
+environment file that carries the odds key: `EEPHUS_PROPS_CREDITS=120`. At
+~4 credits per event and 12 a day the ceiling is ~370 a month SHARED with
+the ~186 the team snapshots already spend, inside the 500 tier; the hard
+guard refuses before any request that would cross 120 on the props ledger
+alone. Until that line lands on the box the machinery stays inert and the
+page says so.
 
 ### The owner-approved shape
 
