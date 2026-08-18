@@ -377,6 +377,11 @@ MODEL_GLOSSARY = {
     # then, on the page, the same decision as betting_game_prob above.
     "betting_prob_calibration": "internal",
     "betting_elo_benchmark": "internal",
+    # 2026-08-18 SDR W0: registered-and-waiting rows (data-blocked intake).
+    # They gain real glossary terms in the W2 display wave, where the copy
+    # ships; until a surface exists there is nothing for a reader to look up.
+    "sdr_mlb": "internal",
+    "sdr_milb": "internal",
     # 2026-08-16 registry-hygiene wave: the five published fantasy surfaces
     # that had no registry row. Same documentation decision as the Diamond
     # trio above: each ships on a page that carries its method and its limits

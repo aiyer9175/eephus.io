@@ -1,0 +1,7 @@
+{
+ "generated_at": "2026-08-18",
+ "status": "pre-registered, data-blocked",
+ "note": "Pre-registration stub, the card_market eval_stub precedent: the gate exists before the data so the clauses cannot be tuned to the result. This file is REPLACED by the real eval the day the gate runs; until then every cell is absent on purpose.",
+ "registration": "docs/sdr-2026-08-18/SDR_EVAL_GATE.md",
+ "question": "MLB SDR vs rfield vs OAA/FRP on forward legs (self-persistence, next-season team runs allowed)"
+}
