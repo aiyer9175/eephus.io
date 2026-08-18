@@ -1,12 +1,12 @@
 {
- "generated_at": "2026-08-14T06:45:31Z",
+ "generated_at": "2026-08-18T17:43:46Z",
  "summary": {
-  "board_rows": 9721,
-  "active_board_rows": 4657,
-  "roster_rows": 10703,
+  "board_rows": 9748,
+  "active_board_rows": 4677,
+  "roster_rows": 10707,
   "colliding_slugs": 198,
-  "critical_player_keys": 22,
-  "critical_active_player_keys": 1,
+  "critical_player_keys": 21,
+  "critical_active_player_keys": 0,
   "c1_shared_key": 0,
   "c1_unattributed": 0,
   "c1_shadowed": 157,
@@ -14,13 +14,13 @@
   "c1_untracked": 33,
   "c2_double_bound": 0,
   "c3_unresolved_active": 0,
-  "c4_side_conflicts": 11,
+  "c4_side_conflicts": 10,
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
   "c7_name_variant_splits": 22,
   "c7_name_variant_open": 11,
   "frankenstein_records": 0,
-  "unassigned_null_id_rows": 23
+  "unassigned_null_id_rows": 22
  },
  "critical_player_keys": [
   "aaron_brown",
@@ -32,23 +32,20 @@
   "david_rodriguez",
   "dennis_colleran",
   "dennis_colleran__noid",
-  "dominic_keegan",
   "enmanuel_rodriguez",
   "jared_jones__sa3034881",
   "javi_vaz",
   "jay_allen",
-  "jesus_lopez",
   "jose_gomez",
   "jose_rondon",
   "junior_garcia",
   "leonardo_bernal__noid",
+  "lonnie_jr_white",
   "michael_perez",
   "miguel_gomez",
   "zach_thornton__noid"
  ],
- "critical_active_player_keys": [
-  "jesus_lopez"
- ],
+ "critical_active_player_keys": [],
  "frankenstein_records": [],
  "unsplit_collisions": [],
  "shadowed_slugs": [
@@ -1001,7 +998,7 @@
   },
   {
    "slug": "kyle_jones",
-   "board_key": null,
+   "board_key": "kyle_jones",
    "n_humans": 2,
    "mlbam_ids": [
     675781,
@@ -1568,7 +1565,7 @@
    "board_position": "C",
    "claimed_side": "H",
    "fielded_side": "P",
-   "fielded_games": 82,
+   "fielded_games": 84,
    "mlbam_id": 805872,
    "scope": "inactive",
    "overall_rank": null
@@ -1579,7 +1576,7 @@
    "board_position": "C",
    "claimed_side": "H",
    "fielded_side": "P",
-   "fielded_games": 65,
+   "fielded_games": 66,
    "mlbam_id": 815095,
    "scope": "inactive",
    "overall_rank": null
@@ -1601,7 +1598,7 @@
    "board_position": "CF",
    "claimed_side": "H",
    "fielded_side": "P",
-   "fielded_games": 13,
+   "fielded_games": 14,
    "mlbam_id": 840917,
    "scope": "inactive",
    "overall_rank": null
@@ -1627,17 +1624,6 @@
    "mlbam_id": 831791,
    "scope": "inactive",
    "overall_rank": null
-  },
-  {
-   "check": "C4",
-   "player_key": "jesus_lopez",
-   "board_position": "C",
-   "claimed_side": "H",
-   "fielded_side": "P",
-   "fielded_games": 10,
-   "mlbam_id": 805052,
-   "scope": "active",
-   "overall_rank": 3571
   }
  ],
  "birthdate_conflicts": [],
@@ -1691,29 +1677,6 @@
   },
   {
    "pair": [
-    "dom_keegan",
-    "dominic_keegan"
-   ],
-   "player_key": "dominic_keegan",
-   "names": [
-    "Dom Keegan",
-    "Dominic Keegan"
-   ],
-   "birth_date": "2000-08-01",
-   "org": "TBR",
-   "mlbam_ids": [
-    681371,
-    null
-   ],
-   "status": "unadjudicated",
-   "last_snapshot_dates": [
-    "2026-08-02",
-    "2026-02-15"
-   ],
-   "resolved_by_alias": false
-  },
-  {
-   "pair": [
     "javi_vaz",
     "javier_vaz"
    ],
@@ -1754,7 +1717,7 @@
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
     "2022-08-02",
-    "2026-08-13"
+    "2026-08-16"
    ],
    "resolved_by_alias": false
   },
@@ -1852,6 +1815,29 @@
   },
   {
    "pair": [
+    "lonnie_jr_white",
+    "lonnie_white_jr"
+   ],
+   "player_key": "lonnie_jr_white",
+   "names": [
+    "Lonnie, Jr. White",
+    "Lonnie White Jr."
+   ],
+   "birth_date": "2002-12-31",
+   "org": "PIT",
+   "mlbam_ids": [
+    null,
+    696145
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2022-08-02",
+    "2026-01-22"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
     "josh_kurodagrauer",
     "joshua_kurodagrauer"
    ],
@@ -1869,7 +1855,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-02-12",
-    "2026-08-13"
+    "2026-08-10"
    ],
    "resolved_by_alias": true
   },
@@ -1914,7 +1900,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-13",
+    "2026-08-16",
     "2025-07-31"
    ],
    "resolved_by_alias": false
@@ -1983,7 +1969,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-13",
+    "2026-08-10",
     "2026-08-02"
    ],
    "resolved_by_alias": true
@@ -2006,7 +1992,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-13",
+    "2026-08-10",
     "2026-02-12"
    ],
    "resolved_by_alias": true
@@ -2029,7 +2015,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-13",
+    "2026-08-10",
     "2021-02-26"
    ],
    "resolved_by_alias": false
@@ -2053,7 +2039,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-08-02",
-    "2026-08-13"
+    "2026-08-10"
    ],
    "resolved_by_alias": true
   },
@@ -2075,7 +2061,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    null,
+    "2026-01-22",
     "2026-08-10"
    ],
    "resolved_by_alias": true
@@ -2099,7 +2085,7 @@
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
     "2025-02-15",
-    "2026-08-13"
+    "2026-08-16"
    ],
    "resolved_by_alias": false
   },
@@ -2144,8 +2130,8 @@
    ],
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
-    "2026-08-13",
-    "2026-08-13"
+    "2026-08-16",
+    "2026-08-16"
    ],
    "resolved_by_alias": false
   }

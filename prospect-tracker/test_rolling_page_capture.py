@@ -198,10 +198,21 @@ class JBRollingCapture(unittest.TestCase):
         rows = scrapers.scrape_just_baseball(
             scrapers.JB_ROLLING_URL, "probe", "2026-07-31")
         fp = scrapers.board_fingerprint(rows)
-        stored_fp, _ = scrapers.stored_board_fingerprint(
-            scrapers.JB_SOURCE, "JustBaseball 2026 Midseason Top 100")
-        if stored_fp != fp:
-            self.skipTest("cached page no longer matches the stored June board")
+        # The gate dedupes against the NEWEST stored interval for the source
+        # (latest_stored_board), never a fixed label, so the guard must ask
+        # the same question. The old guard checked the fixed Midseason label
+        # and went stale the day a real JB Live capture outran the cached
+        # fixture page (2026-08-18: prev_label JB Live 2026-08-18 vs the
+        # 2026-07-31 cached page): the unchanged branch legitimately cannot
+        # fire when the newest stored board differs from the fixture. That
+        # is fixture staleness, not a dedupe defect, and it skips with the
+        # reason named. The dedupe itself stays pinned by the stubbed-write
+        # tests above, which carry their own boards.
+        _, _, newest_fp = scrapers.latest_stored_board(scrapers.JB_SOURCE)
+        if newest_fp != fp:
+            self.skipTest("this box's newest stored JB board no longer "
+                          "matches the cached fixture page; the unchanged "
+                          "branch cannot fire here")
         with _StubbedWrites() as w:
             res = scrapers.run_just_baseball_live(snap_date="2026-07-31")
         self.assertIn("unchanged", res, res)
