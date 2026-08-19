@@ -245,6 +245,48 @@ def _reach(b: dict, guar: float) -> float:
     return (len(gs) - bisect.bisect_left(gs, guar)) / float(len(gs))
 
 
+# ============================================================================
+# TEAMFIT CONDITIONAL GATE (2026-08-19) — frozen constants
+# ============================================================================
+# docs/fa-2026-08-19/TEAMFIT_CONDITIONAL_GATE.md froze these BEFORE the lab
+# ran. Candidate C conditions recent/rich on the PLAYER's price band so cheap
+# relievers stop inheriting mega-deal behavior; reach is untouched (already
+# player-conditional since F4). One lever, no weight moves, no retunes.
+TEAMFIT_COND_BAND_FACTOR = 2.5
+TEAMFIT_COND_GATE = {
+    "mrr_floor_anchor": 0.1669,      # registered live_analog MRR (artifact)
+    "top3_floor_anchor": 0.145,      # registered live_analog top3 (artifact)
+    "max_top1_share": 0.25,
+    "min_distinct_top1": 12,
+    "min_distinct_top3": 20,
+    "lad_behavior_majority": 0.50,   # clause 3: LAD behavior_cond top-1 < 50%
+    "bootstrap_B": 2000,
+    "bootstrap_seed": 7,
+}
+
+
+def _cond_band(guar: float) -> tuple[float, float]:
+    """The player's price band: [g/F, g*F], multiplicative, symmetric in log
+    space. F frozen at 2.5 in the gate doc."""
+    return guar / TEAMFIT_COND_BAND_FACTOR, guar * TEAMFIT_COND_BAND_FACTOR
+
+
+def _cond_terms(events: list[tuple[int, float]], guar: float,
+                y_recent_min: int) -> tuple[float, int]:
+    """(recent band outlay, career band deal count) for ONE club's prior
+    signing events [(class_year, guarantee), ...]. Pure; unit-tested in
+    test_fa_teamfit_conditional.py. Callers normalize outlay by the league
+    max across clubs for the SAME player (0 league max -> 0.0 everywhere)."""
+    lo, hi = _cond_band(guar)
+    outlay, n_band = 0.0, 0
+    for y, g in events:
+        if lo <= g <= hi:
+            n_band += 1
+            if y >= y_recent_min:
+                outlay += g
+    return outlay, n_band
+
+
 def _park_score(pf: dict, org: str, is_pitcher: bool) -> float:
     f = pf.get(org)
     if not f:
@@ -270,7 +312,8 @@ def build_rows() -> list[dict]:
         if len({s["class_year"] for s in prior}) < 3 or not by_winter.get(Y):
             continue
         beh: dict[str, dict] = defaultdict(lambda: {"max": 0, "n100": 0,
-                                                   "recent": 0, "guars": []})
+                                                   "recent": 0, "guars": [],
+                                                   "events": []})
         for s in prior:
             t = s.get("to_team")
             if t not in ORGS:
@@ -278,6 +321,7 @@ def build_rows() -> list[dict]:
             g = fm._npv_of(s)
             beh[t]["max"] = max(beh[t]["max"], g)
             beh[t]["guars"].append(g)
+            beh[t]["events"].append((s["class_year"], g))
             if g >= 100_000_000:
                 beh[t]["n100"] += 1
             if s["class_year"] >= Y - 3:
@@ -307,6 +351,11 @@ def build_rows() -> list[dict]:
             aav = npv / max(int(s["years"]), 1)
             grp = fm._pos_group(s.get("position"))
             is_pit = grp in ("SP", "RP")
+            # TEAMFIT CONDITIONAL (2026-08-19): band terms per club for THIS
+            # player's price, normalized by the league max within the band.
+            cond = {org: _cond_terms((beh.get(org) or {}).get("events") or [],
+                                     npv, Y - 3) for org in ORGS}
+            max_band_outlay = max(v[0] for v in cond.values())
             for org in ORGS:
                 b = beh.get(org) or {"max": 0, "n100": 0, "recent": 0,
                                      "guars": []}
@@ -334,6 +383,13 @@ def build_rows() -> list[dict]:
                     "behavior_clipped": (0.5 * min(1.0, b["max"] / max(npv, 1)) ** 0.5
                                          + 0.3 * min(1.0, b["recent"] / max_recent)
                                          + 0.2 * min(1.0, b["n100"] / 5.0)),
+                    # TEAMFIT CONDITIONAL candidate: reach unchanged,
+                    # recent/rich confined to the player's price band.
+                    "behavior_cond": (
+                        0.5 * _reach(b, npv)
+                        + 0.3 * (cond[org][0] / max_band_outlay
+                                 if max_band_outlay > 0 else 0.0)
+                        + 0.2 * min(1.0, cond[org][1] / 5.0)),
                     "incumbent": 1.0 if s.get("from_team") == org else 0.0,
                 })
     return rows
@@ -1080,6 +1136,156 @@ def _repair_verdict(decomp: dict, sweep: dict | None, live: dict) -> dict:
     }
 
 
+def _served_cond_measure(matrix: dict) -> dict:
+    """Served-class half of the TEAMFIT CONDITIONAL gate. Recomputes the
+    behavior term player-conditionally from the SAME corpus behavior_priors
+    reads, swaps it into the composite at shipped weights, and measures
+    concentration. Fail-soft: {"available": False} without a class matrix."""
+    if not matrix:
+        return {"available": False,
+                "note": "fa_class.json unavailable - served half unmeasured"}
+    import fa_fit
+    orgs, mem = matrix["orgs"], matrix["members"]
+    signings = storage.load_fa_signings()
+    last_winter = max((y for (_k, y) in signings), default=0)
+    events: dict[str, list] = {o: [] for o in orgs}
+    for (_k, y), s in signings.items():
+        t, g = s.get("to_team"), s.get("guarantee_usd") or 0
+        if t in events and s.get("mlb_deal"):
+            events[t].append((y, g))
+    priors = fa_fit.behavior_priors()
+    max_recent = max((b.get("recent_spend_usd") or 0)
+                     for b in priors.values()) or 1
+    w_beh = LIVE_WEIGHTS["behavior"]
+    base4_cells, cand_cells, inc_cells, beh_cond_cells = [], [], [], []
+    recompose_max_dev = 0.0
+    for m in mem:
+        guar = float(m.get("proj_guar") or 20_000_000)
+        cond = {o: _cond_terms(events[o], guar, last_winter - 2) for o in orgs}
+        mx = max(v[0] for v in cond.values())
+        base4, cand, inc, bcs = {}, {}, {}, {}
+        for o in orgs:
+            b = priors.get(o) or {}
+            reach = fa_fit._spend_reach(b, guar)
+            bc = (0.5 * reach
+                  + 0.3 * (cond[o][0] / mx if mx > 0 else 0.0)
+                  + 0.2 * min(1.0, cond[o][1] / 5.0))
+            binc = (0.5 * reach
+                    + 0.3 * min(1.0, (b.get("recent_spend_usd") or 0) / max_recent)
+                    + 0.2 * min(1.0, (b.get("n_100m") or 0) / 5.0))
+            recompose_max_dev = max(recompose_max_dev,
+                                    abs(binc - m["orgs"][o]["behavior"]))
+            b4 = sum(LIVE_WEIGHTS[f] * m["orgs"][o][f]
+                     for f in ("need", "window", "afford", "park"))
+            base4[o] = b4
+            cand[o] = b4 + w_beh * bc
+            inc[o] = b4 + w_beh * binc
+            bcs[o] = bc
+        base4_cells.append(base4)
+        cand_cells.append(cand)
+        inc_cells.append(inc)
+        beh_cond_cells.append(bcs)
+    lad_beh_top1 = sum(
+        1 for sc in beh_cond_cells
+        if sorted(orgs, key=lambda o: (-sc[o], o))[0] == "LAD")
+    lad_comp_top1 = sum(
+        1 for sc in cand_cells
+        if sorted(orgs, key=lambda o: (-sc[o], o))[0] == "LAD")
+    return {
+        "available": True, "n_members": len(mem),
+        "corpus_last_winter": last_winter,
+        "recompose_max_abs_dev_vs_matrix_behavior": round(recompose_max_dev, 4),
+        "candidate_composite": _conc_from_scores(cand_cells, orgs),
+        "behavior_cond_term": _conc_from_scores(beh_cond_cells, orgs),
+        "incumbent_recomposed": _conc_from_scores(inc_cells, orgs),
+        "behavior_deleted": _conc_from_scores(base4_cells, orgs),
+        "lad_behavior_cond_top1_share": round(lad_beh_top1 / len(mem), 4),
+        "lad_candidate_composite_top1_share": round(lad_comp_top1 / len(mem), 4),
+    }
+
+
+def teamfit_conditional_gate(pooled: dict, matrix: dict) -> dict:
+    """THE TEAMFIT CONDITIONAL GATE (2026-08-19). Clauses frozen in
+    docs/fa-2026-08-19/TEAMFIT_CONDITIONAL_GATE.md BEFORE this ran:
+      1 accuracy floor  mrr_cond >= 0.1669 - MDE95 and top3_cond >= 0.145 -
+        MDE95, MDE95 from a cluster bootstrap (signing = unit, B=2000, seed 7)
+        of the paired candidate-minus-incumbent MRR delta
+      2 concentration   candidate composite on the served class:
+        max_top1_share < 0.25, distinct_top1 >= 12, distinct_top3 >= 20
+      3 sanity          LAD behavior_cond top-1 for < 50% of members
+      4 zero-slack      if accuracy and concentration trade again, refuse and
+        STOP - no band/clip/weight retune."""
+    import numpy as np
+    g = TEAMFIT_COND_GATE
+
+    def inc_score(r):
+        return sum(LIVE_WEIGHTS[f] * r[f] for f in FEATS)
+
+    def cand_score(r):
+        return (sum(LIVE_WEIGHTS[f] * r[f]
+                    for f in ("need", "window", "afford", "park"))
+                + LIVE_WEIGHTS["behavior"] * r["behavior_cond"])
+
+    inc = _rank_metrics(pooled, inc_score)
+    cand = _rank_metrics(pooled, cand_score)
+    # paired reciprocal ranks per signing, aligned for the bootstrap
+    rr_inc, rr_cand = [], []
+    for _key, group in pooled.items():
+        for fn, acc in ((inc_score, rr_inc), (cand_score, rr_cand)):
+            ranked = sorted(group, key=lambda r: -fn(r))
+            rank = next((i + 1 for i, r in enumerate(ranked) if r["signed"]),
+                        None)
+            if rank is None:
+                break
+            acc.append(1.0 / rank)
+    a_inc = np.asarray(rr_inc)
+    a_cand = np.asarray(rr_cand)
+    rng = np.random.default_rng(g["bootstrap_seed"])
+    n = len(a_inc)
+    deltas = np.empty(g["bootstrap_B"])
+    for i in range(g["bootstrap_B"]):
+        idx = rng.integers(0, n, n)
+        deltas[i] = a_cand[idx].mean() - a_inc[idx].mean()
+    mde95 = round(1.96 * float(np.std(deltas, ddof=1)), 4)
+    ci = (round(float(np.quantile(deltas, 0.025)), 4),
+          round(float(np.quantile(deltas, 0.975)), 4))
+    served = _served_cond_measure(matrix)
+
+    clause1 = (cand["mrr"] >= g["mrr_floor_anchor"] - mde95
+               and cand["top3"] >= g["top3_floor_anchor"] - mde95)
+    if served.get("available"):
+        cc = served["candidate_composite"]
+        clause2 = (cc["max_top1_share"] < g["max_top1_share"]
+                   and cc["distinct_top1"] >= g["min_distinct_top1"]
+                   and cc["distinct_top3"] >= g["min_distinct_top3"])
+        clause3 = (served["lad_behavior_cond_top1_share"]
+                   < g["lad_behavior_majority"])
+    else:
+        clause2 = clause3 = False
+    trade_fired = (clause2 and not clause1) or (clause1 and not clause2)
+    shipped = clause1 and clause2 and clause3
+    return {
+        "gate_doc": "docs/fa-2026-08-19/TEAMFIT_CONDITIONAL_GATE.md",
+        "measured_at": date.today().isoformat(),
+        "band_factor": TEAMFIT_COND_BAND_FACTOR,
+        "thresholds": dict(g),
+        "chain_n": n,
+        "chain_incumbent": inc,
+        "chain_candidate": cand,
+        "mrr_delta": round(cand["mrr"] - inc["mrr"], 4),
+        "mde95": mde95,
+        "delta_ci95": ci,
+        "served": served,
+        "clauses": {
+            "1_accuracy_floor": clause1,
+            "2_concentration": clause2,
+            "3_lad_sanity": clause3,
+            "4_trade_refusal_fired": trade_fired,
+        },
+        "shipped": shipped,
+    }
+
+
 def run_fit_gate(persist: bool = True) -> dict:
     rows = build_rows()
     winters = sorted({r["winter"] for r in rows})
@@ -1206,6 +1412,8 @@ def run_fit_gate(persist: bool = True) -> dict:
         "concentration_reweight_sweep": sweep,
         "concentration_repair_verdict": _repair_verdict(decomp, sweep,
                                                         results["live_analog"]),
+        "teamfit_conditional_gate": teamfit_conditional_gate(
+            pooled_groups["live_analog"], matrix),
         "fitted_transfer_weight_candidate": candidate,
         "fitted_transfer_coefs_final_winter": transfer_coefs_last,
         "notes": [
@@ -1216,6 +1424,7 @@ def run_fit_gate(persist: bool = True) -> dict:
             "CONCENTRATION TRIPWIRE (registered 2026-07-30): MRR/top-k are blind to a fit vector that ranks the SAME club first for everyone - a model can score well on signing prediction while being useless as a product. The concentration block measures that directly on the served class.",
             "CONCENTRATION DECOMPOSITION (R6, 2026-08-04): concentration_decomposition scores each component as if it were the whole fit and splits every component into player / CLUB / interaction variance. It REFUTES the standing premise that need is the saturated term: need is the most player-specific component, and BEHAVIOR is the saturated one. concentration_repair_verdict carries the candidate results and the recommendation.",
             "CONCENTRATION AND MRR MEASURE OPPOSITE HALVES OF ONE VARIANCE SPLIT: the club main effect is both the monopoly and the signing signal, so every de-monopolizer that works by a per-club offset trades MRR for concentration one-for-one. That is a property of the decomposition, not a tuning failure.",
+            "TEAMFIT CONDITIONAL GATE (2026-08-19): the behavior term's recent/rich confined to the player's price band (band factor 2.5, reach untouched). Clauses frozen in docs/fa-2026-08-19/TEAMFIT_CONDITIONAL_GATE.md before the lab ran; the teamfit_conditional_gate block carries the verbatim result.",
         ],
     }
     if persist:
@@ -1268,6 +1477,23 @@ if __name__ == "__main__":
         for r in s["best_by_mrr"][:3]:
             print(f"   mrr {r['chain']['mrr']:.4f} slack {r['slack']:>6.3f} "
                   f"share {r['concentration']['max_top1_share']:.4f} {r['weights']}")
+    t = rep.get("teamfit_conditional_gate") or {}
+    if t:
+        print(f"\n==== TEAMFIT CONDITIONAL GATE (band x{t['band_factor']}) ====")
+        print(f"chain n={t['chain_n']} incumbent mrr {t['chain_incumbent']['mrr']:.4f} "
+              f"candidate mrr {t['chain_candidate']['mrr']:.4f} "
+              f"delta {t['mrr_delta']:+.4f} MDE95 {t['mde95']:.4f} "
+              f"CI95 {t['delta_ci95']}")
+        sv = t.get("served") or {}
+        if sv.get("available"):
+            cc = sv["candidate_composite"]
+            print(f"served n={sv['n_members']} candidate share "
+                  f"{cc['max_top1_share']:.4f} ({cc['max_top1_club']}) "
+                  f"d1 {cc['distinct_top1']} d3 {cc['distinct_top3']} "
+                  f"LAD beh_cond top1 {sv['lad_behavior_cond_top1_share']:.4f} "
+                  f"behavior-deleted share "
+                  f"{sv['behavior_deleted']['max_top1_share']:.4f}")
+        print(f"clauses {t['clauses']}  shipped={t['shipped']}")
     v = rep.get("concentration_repair_verdict") or {}
     for f in (v.get("findings") or []):
         print(f"\n* {f}")

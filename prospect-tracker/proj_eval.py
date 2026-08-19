@@ -33,9 +33,12 @@ dict ({war_by_year, war_by_year_p10, war_by_year_p90}) from listing-time
 inputs, and champion/challenger share this one harness. Default = the
 incumbent fa_market.contract_war_path.
 
-Run: python proj_eval.py [--bases 2017-2021]
+Run: python proj_eval.py [--bases 2017-2021] [--rowmatch]
 Persists data/proj_horizon_eval.json (rendered nowhere yet — a model-dev
-artifact with the same honesty rules as the gates).
+artifact with the same honesty rules as the gates). --rowmatch adds the
+row-matched champion-vs-proj_lgbm_v1 block (identical rows, both models,
+one n per cell): the challenger_blocks ride different base sets than the
+champion cells, and cross-base MAE reads invite false win claims.
 
 HOLDOUT DISCIPLINE: bases 2017-2021 are the DEV loop (they overlap Gate 1
 targets). Bases 2022-2024 (h1-h3 resolvable) are the touched-once
@@ -48,6 +51,7 @@ import argparse
 import json
 import logging
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 import fa_market as fm
@@ -57,6 +61,29 @@ log = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parent / "data"
 HORIZONS = 5
+
+
+def _utc_stamp() -> str:
+    """UTC timestamp for the artifact's generated_at (the freshness bar ages
+    undated artifacts by mtime, which the deploy box rewrites nightly)."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _assemble(corpus: dict):
+    """(league, by_player, war_actual) from the corpus. war_actual sums WAR
+    across sides per (mlbam, season), matching the label the harness scores."""
+    league = corpus["league"]
+    by_player: dict[str, dict[int, dict[int, dict]]] = {
+        "hit": defaultdict(dict), "pit": defaultdict(dict)}
+    war_actual: dict[tuple, float] = {}
+    for side in ("hit", "pit"):
+        for r in corpus[side]:
+            if r.get("mlbam"):
+                by_player[side][r["mlbam"]][r["season"]] = r
+                if r.get("war") is not None:
+                    key = (r["mlbam"], r["season"])
+                    war_actual[key] = war_actual.get(key, 0.0) + r["war"]
+    return league, by_player, war_actual
 
 
 def _pinball(q: float, actual: float, pred_q: float) -> float:
@@ -77,17 +104,7 @@ def run(bases: list[int], persist: bool = True, predict_fn=None,
         model_label: str = "marcel_decay_v2") -> dict:
     predict_fn = predict_fn or default_predict_fn
     corpus = fp.build_corpus()
-    league = corpus["league"]
-    by_player: dict[str, dict[int, dict[int, dict]]] = {
-        "hit": defaultdict(dict), "pit": defaultdict(dict)}
-    war_actual: dict[tuple, float] = {}
-    for side in ("hit", "pit"):
-        for r in corpus[side]:
-            if r.get("mlbam"):
-                by_player[side][r["mlbam"]][r["season"]] = r
-                if r.get("war") is not None:
-                    key = (r["mlbam"], r["season"])
-                    war_actual[key] = war_actual.get(key, 0.0) + r["war"]
+    league, by_player, war_actual = _assemble(corpus)
 
     stats = {h: {"pairs": [], "star_pairs": [], "tail_pred": 0, "tail_act": 0,
                  "cov_hit": 0, "cov_n": 0, "cov_hit_sv": 0, "cov_n_sv": 0,
@@ -172,6 +189,113 @@ def run(bases: list[int], persist: bool = True, predict_fn=None,
     return out
 
 
+def run_rowmatch(bases: list[int]) -> dict:
+    """Row-matched champion-vs-challenger cut. MEASUREMENT ONLY: no ship
+    decision rides on this block; it exists so nobody reads a win off
+    mismatched bases.
+
+    The challenger_blocks sit on DIFFERENT base sets than the champion
+    top-level cells (gate1_targets h1 MAE 0.5569 pools 10 bases against the
+    champion's 0.647 on 4, which invites a false win claim). This cut scores
+    BOTH models on the identical (player, horizon) rows: a row enters a cell
+    only when the champion AND the challenger each produce a path for it, so
+    both models carry the same n in every cell by construction.
+
+    Champion: marcel_decay_v2 via default_predict_fn (use_ml=False pinned).
+    Challenger: proj_lgbm_v1 point-in-time bundles (proj_ml.train_cached,
+    labels <= B-1, full quantile set, no blend lambdas in bundle meta), the
+    same raw forward-chained basis as challenger_blocks.dev; the point
+    prediction is the monotone-sorted q50. The champion path rides into the
+    challenger features via champ= (no recomputation, no recursion)."""
+    import proj_ml
+    corpus = fp.build_corpus()
+    league, by_player, war_actual = _assemble(corpus)
+    cells = {h: {"pairs_c": [], "pairs_x": [], "star_c": [], "star_x": [],
+                 "tp_c": 0, "tp_x": 0, "ta": 0}
+             for h in range(1, HORIZONS + 1)}
+    n_matched = 0
+    for B in bases:
+        curves, war_map = fp.fitted_models(corpus, B - 1)
+        bundle = proj_ml.train_cached(corpus, B - 1, quantiles=proj_ml.QUANTILES)
+        for side in ("hit", "pit"):
+            for mlbam, seasons in by_player[side].items():
+                hist = [seasons[t] for t in (B - 1, B - 2, B - 3) if t in seasons]
+                if not hist:
+                    continue
+                age = proj_ml.age_from_history(hist, B)
+                if age is None:
+                    continue
+                champ = default_predict_fn(hist, side, B, age, curves,
+                                           war_map, league)
+                if champ is None:
+                    continue
+                feats = proj_ml.build_features(hist, side, B, age, curves,
+                                               war_map, league, champ=champ)
+                chal = (proj_ml.predict_path(bundle, feats, side)
+                        if feats is not None else None)
+                if chal is None:
+                    continue                     # row must be scoreable by BOTH
+                n_matched += 1
+                base_actual = war_actual.get((mlbam, B - 1))
+                is_star = base_actual is not None and base_actual >= 4.0
+                for h in range(1, HORIZONS + 1):
+                    target = B + h - 1
+                    if target > corpus["last"] - 1:        # complete seasons only
+                        continue
+                    act = war_actual.get((mlbam, target), 0.0)
+                    pc = champ["war_by_year"][h - 1]
+                    px = chal["war_by_year"][h - 1]
+                    s = cells[h]
+                    s["pairs_c"].append((pc, act))
+                    s["pairs_x"].append((px, act))
+                    if is_star:
+                        s["star_c"].append((pc, act))
+                        s["star_x"].append((px, act))
+                    if pc >= 3.0:
+                        s["tp_c"] += 1
+                    if px >= 3.0:
+                        s["tp_x"] += 1
+                    if act >= 3.0:
+                        s["ta"] += 1
+
+    def _mae(pairs):
+        return (round(sum(abs(p - a) for p, a in pairs) / len(pairs), 4)
+                if pairs else None)
+
+    out = {
+        "generated_at": _utc_stamp(),
+        "champion_model": "marcel_decay_v2",
+        "challenger_model": "proj_lgbm_v1",
+        "basis": ("row-matched: identical (player, horizon) rows scored by both "
+                  "models; challenger = forward-chained point-in-time bundles "
+                  "(labels <= B-1, full quantiles, no blend lambdas), champion = "
+                  "use_ml=False decay path; measurement only, no ship decision"),
+        "bases": bases, "n_players_matched": n_matched, "horizons": {}}
+    for h, s in cells.items():
+        n = len(s["pairs_c"])
+        if not n:
+            continue
+        # row-matched by construction; a mismatch here is a harness bug
+        if n != len(s["pairs_x"]):
+            raise AssertionError(f"rowmatch h{h}: champion n {n} != "
+                                 f"challenger n {len(s['pairs_x'])}")
+        ta = s["ta"]
+        out["horizons"][h] = {
+            "n": n, "tail_act_ge3": ta,
+            "champion": {
+                "n": n, "mae": _mae(s["pairs_c"]),
+                "n_star": len(s["star_c"]), "mae_star": _mae(s["star_c"]),
+                "tail_pred_ge3": s["tp_c"],
+                "tail_ratio": round(s["tp_c"] / ta, 3) if ta else None},
+            "challenger": {
+                "n": n, "mae": _mae(s["pairs_x"]),
+                "n_star": len(s["star_x"]), "mae_star": _mae(s["star_x"]),
+                "tail_pred_ge3": s["tp_x"],
+                "tail_ratio": round(s["tp_x"] / ta, 3) if ta else None},
+        }
+    return out
+
+
 def _parse_bases(spec: str) -> list[int]:
     """Expand a --bases spec into an explicit, sorted, de-duplicated season
     list. A 'lo-hi' token is an INCLUSIVE range: '2017-2021' -> [2017, 2018,
@@ -200,6 +324,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--bases", default="2017,2018,2019,2021")
     ap.add_argument("--no-persist", action="store_true")
+    ap.add_argument("--rowmatch", action="store_true",
+                    help="also score the row-matched champion-vs-proj_lgbm_v1 "
+                         "cut on the same bases (identical rows, both models)")
     args = ap.parse_args()
     bases = _parse_bases(args.bases)
     res = run(bases, persist=not args.no_persist)
@@ -215,6 +342,22 @@ def main() -> None:
               f"{s['coverage_survived'] if s['coverage_survived'] is not None else float('nan'):>6.3f} "
               f"{s['pinball_q10'] if s['pinball_q10'] is not None else float('nan'):>6.3f} "
               f"{s['pinball_q90'] if s['pinball_q90'] is not None else float('nan'):>6.3f}")
+    rm = None
+    if args.rowmatch:
+        rm = run_rowmatch(bases)
+        print(f"\n==== ROW-MATCHED {rm['champion_model']} vs "
+              f"{rm['challenger_model']} (bases {bases}, "
+              f"n_matched {rm['n_players_matched']}) ====")
+        print(f"{'h':>2} {'n':>6} {'cMAE':>7} {'xMAE':>7} {'n*':>4} "
+              f"{'cMAE*':>7} {'xMAE*':>7} {'tailAct':>8} {'cRatio':>7} {'xRatio':>7}")
+        for h, s in rm["horizons"].items():
+            c, x = s["champion"], s["challenger"]
+            print(f"{h:>2} {s['n']:>6} {c['mae']:>7.3f} {x['mae']:>7.3f} "
+                  f"{c['n_star']:>4} "
+                  f"{c['mae_star'] if c['mae_star'] is not None else float('nan'):>7.3f} "
+                  f"{x['mae_star'] if x['mae_star'] is not None else float('nan'):>7.3f} "
+                  f"{s['tail_act_ge3']:>8} {c['tail_ratio'] or 0:>7.3f} "
+                  f"{x['tail_ratio'] or 0:>7.3f}")
     if not args.no_persist:
         # Read-modify-write. run() computes only the champion top-level keys
         # (model/bases/n_players/horizons); the artifact also carries a
@@ -230,6 +373,11 @@ def main() -> None:
         except (OSError, ValueError):
             merged = {}
         merged.update(res)
+        if rm is not None:
+            merged["rowmatch_champion_vs_challenger"] = rm
+        # top-level date stamp: the freshness map ages undated artifacts by
+        # mtime, which the deploy box's nightly checkout rewrites
+        merged["generated_at"] = _utc_stamp()
         path.write_text(json.dumps(merged, indent=1), encoding="utf-8")
         print("wrote data/proj_horizon_eval.json")
 

@@ -215,7 +215,8 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
       • status diffs vs the previously stored rows:
           pending_option re-listed as a locked UFA                      → option_declined
           pending_option gone from the page without a signing           → option_exercised
-          QO flag newly published on an available row (early November)  → qo_offered
+          QO flag newly published on an available row (early November,
+          Oct-Jan gated like the option branches)                       → qo_offered
     ``signed_rows`` is injectable for tests; production scrapes the page.
     The option_exercised branch is a documented v1 heuristic (same status
     as the exercise-probability heuristic): page variance can momentarily
@@ -230,6 +231,16 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
     option_declined / option_exercised inference only runs Oct 1 - Jan 31
     (``as_of`` injectable for tests). An empty available page additionally
     skips option inference outright - no page, no observation.
+
+    QO-WINDOW GATE (post-mortem 2026-08-12): qo_offered stamping had NO
+    such guard, so 16 prior-QO-recipient flags surfacing on the August
+    available page fired as fresh offers (Verlander, Scherzer, Springer -
+    players who by rule cannot receive another QO). QOs are offerable ~5
+    days after the World Series and expire mid-November, inside the same
+    Oct-Jan window, so qo_offered stamping now rides the identical gate.
+    A genuine in-window observation for a key whose stored qo_offered row
+    was quarantined (see quarantine_out_of_window_qo_events) re-stamps
+    that row to the valid first-seen date and clears the invalidation.
     """
     as_of = as_of or date.today()
     option_window = as_of.month in (10, 11, 12, 1)
@@ -285,15 +296,32 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
                 events.append({"player_key": key, "event_type": "option_exercised",
                                "payload": base})
 
+    qo_flips = []
     for key, now in avail_by_key.items():
         was = prior.get(key) or {}
         if ((now.get("qo") or now.get("qo_offered"))
                 and not (was.get("qo") or was.get("qo_offered"))):
+            qo_flips.append((key, now))
+    if option_window:
+        for key, now in qo_flips:
             events.append({"player_key": key, "event_type": "qo_offered",
                            "payload": {"player_name": now.get("player_name"),
                                        "position": now.get("position")}})
+    elif qo_flips:
+        log.info("fa events %d: %d qo flag flip(s) ignored - %s is outside "
+                 "the Oct-Jan QO window (offers open ~5 days post-World "
+                 "Series; the 2026-08-12 defect stamped 16 prior-winter "
+                 "flags as fresh offers)",
+                 class_year, len(qo_flips), as_of.isoformat())
 
     inserted = storage.insert_fa_events_first_seen(class_year, events)
+    revalidated = 0
+    if option_window:
+        qo_keys = [e["player_key"] for e in events
+                   if e["event_type"] == "qo_offered"]
+        if qo_keys:
+            revalidated = _revalidate_quarantined_qo_events(
+                class_year, qo_keys, as_of)
     # Reconcile the queryable status column: payload keeps the raw scrape;
     # status is the pipeline's view (board dims signed/exercised members).
     for e in events:
@@ -303,7 +331,109 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
             storage.set_fa_class_player_status(class_year, e["player_key"],
                                                "option_exercised")
     return {"observed": len(events), "inserted": inserted,
-            "signed_rows": len(signed_rows)}
+            "revalidated": revalidated, "signed_rows": len(signed_rows)}
+
+
+# --------------------------------------------------------------------------- #
+# Event quarantine (post-mortem 2026-08-12: 16 out-of-window qo_offered rows)
+# --------------------------------------------------------------------------- #
+
+QO_WINDOW_MONTHS = (10, 11, 12, 1)
+QO_INVALID_REASON = ("qo_offered stamped outside the Oct-Jan QO window "
+                     "(no window guard at stamp time; guard shipped "
+                     "2026-08-19). Prior-winter QO flag misread as a fresh "
+                     "offer.")
+
+
+def quarantine_out_of_window_qo_events(class_year: int | None = None) -> dict:
+    """Mark qo_offered events first-seen OUTSIDE the Oct-Jan window as
+    invalidated. Rows are UPDATED in place (payload gains invalidated /
+    invalid_reason / invalidated_at), never deleted - the ledger stays
+    append-only and auditable. Idempotent; safe to re-run any day.
+
+    One-off target: the 16 events of 2026-08-12 (class 2027), all
+    prior-QO recipients whose historical flag the detector misread.
+    Serving surfaces must read served_fa_events (or equivalently skip
+    e["invalidated"]) so the nightly fa_class.json events block stops
+    carrying quarantined rows."""
+    import json as _json
+    where = "WHERE event_type='qo_offered'"
+    args: tuple = ()
+    if class_year:
+        where += " AND class_year=?"
+        args = (class_year,)
+    marked = already = 0
+    with storage.connect() as con:
+        rows = con.execute(
+            f"SELECT class_year, player_key, event_date, payload_json "
+            f"FROM fa_events {where}", args).fetchall()
+        for yr, key, ev_date, pj in rows:
+            try:
+                month = int(str(ev_date)[5:7])
+            except ValueError:
+                month = 0
+            if month in QO_WINDOW_MONTHS:
+                continue
+            payload = _json.loads(pj or "{}")
+            if payload.get("invalidated"):
+                already += 1
+                continue
+            payload["invalidated"] = True
+            payload["invalid_reason"] = QO_INVALID_REASON
+            payload["invalidated_at"] = date.today().isoformat()
+            con.execute(
+                "UPDATE fa_events SET payload_json=? "
+                "WHERE class_year=? AND player_key=? AND event_type='qo_offered'",
+                (_json.dumps(payload), yr, key))
+            marked += 1
+    if marked:
+        log.info("fa events: quarantined %d out-of-window qo_offered row(s)"
+                 " (%d already marked)", marked, already)
+    return {"marked": marked, "already_marked": already}
+
+
+def served_fa_events(class_year: int | None = None) -> list[dict]:
+    """The event ledger AS IT SHOULD BE SERVED: load_fa_events minus
+    invalidated rows. Quarantined rows stay in the DB (append-only) but
+    never reach the wire, the Signing Tracker, or fa_class.json."""
+    return [e for e in storage.load_fa_events(class_year)
+            if not e.get("invalidated")]
+
+
+def _revalidate_quarantined_qo_events(class_year: int, keys: list[str],
+                                      as_of: date) -> int:
+    """A genuine IN-WINDOW qo observation supersedes a quarantined
+    out-of-window stamp. The fabricated first-seen date never became a
+    valid observation, so the row re-dates to the first VALID one and the
+    invalidation clears; the superseded date is kept in the payload for
+    audit. Without this, INSERT OR IGNORE would silently pin the winter's
+    real QO event to the quarantined August date forever."""
+    import json as _json
+    n = 0
+    with storage.connect() as con:
+        for key in keys:
+            row = con.execute(
+                "SELECT event_date, payload_json FROM fa_events "
+                "WHERE class_year=? AND player_key=? AND event_type='qo_offered'",
+                (class_year, key)).fetchone()
+            if not row:
+                continue
+            payload = _json.loads(row[1] or "{}")
+            if not payload.get("invalidated"):
+                continue
+            payload.pop("invalidated", None)
+            payload.pop("invalid_reason", None)
+            payload.pop("invalidated_at", None)
+            payload["superseded_invalid_first_seen"] = row[0]
+            con.execute(
+                "UPDATE fa_events SET event_date=?, payload_json=? "
+                "WHERE class_year=? AND player_key=? AND event_type='qo_offered'",
+                (as_of.isoformat(), _json.dumps(payload), class_year, key))
+            n += 1
+    if n:
+        log.info("fa events %d: %d quarantined qo_offered row(s) re-stamped "
+                 "on genuine in-window observation", class_year, n)
+    return n
 
 
 def refresh_payroll(seasons: list[int] | None = None, force: bool = False) -> int:

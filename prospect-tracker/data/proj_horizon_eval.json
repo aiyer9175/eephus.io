@@ -10,83 +10,83 @@
  "horizons": {
   "1": {
    "n": 8053,
-   "mae": 0.647,
-   "bias": -0.0073,
+   "mae": 0.5988,
+   "bias": -0.0738,
    "n_star": 201,
-   "mae_star": 2.0276,
-   "bias_star": -0.8206,
-   "tail_pred_ge3": 111,
+   "mae_star": 1.8677,
+   "bias_star": -0.3878,
+   "tail_pred_ge3": 136,
    "tail_act_ge3": 499,
-   "tail_ratio": 0.222,
-   "coverage": 0.6562,
-   "coverage_survived": 0.4204,
+   "tail_ratio": 0.273,
+   "coverage": 0.6615,
+   "coverage_survived": 0.4285,
    "n_survived": 4719,
-   "pinball_q10": 0.154,
-   "pinball_q90": 0.2244
+   "pinball_q10": 0.1518,
+   "pinball_q90": 0.216
   },
   "2": {
    "n": 8053,
-   "mae": 0.5553,
-   "bias": 0.0398,
+   "mae": 0.5188,
+   "bias": -0.0122,
    "n_star": 201,
-   "mae_star": 1.7252,
-   "bias_star": 0.0707,
-   "tail_pred_ge3": 94,
+   "mae_star": 1.8093,
+   "bias_star": 0.502,
+   "tail_pred_ge3": 103,
    "tail_act_ge3": 328,
-   "tail_ratio": 0.287,
-   "coverage": 0.7154,
-   "coverage_survived": 0.4179,
+   "tail_ratio": 0.314,
+   "coverage": 0.7298,
+   "coverage_survived": 0.4406,
    "n_survived": 3838,
-   "pinball_q10": 0.1211,
-   "pinball_q90": 0.2048
+   "pinball_q10": 0.1153,
+   "pinball_q90": 0.2004
   },
   "3": {
    "n": 8053,
-   "mae": 0.4891,
-   "bias": 0.0066,
+   "mae": 0.4635,
+   "bias": -0.0317,
    "n_star": 201,
-   "mae_star": 1.8364,
-   "bias_star": -0.0119,
-   "tail_pred_ge3": 67,
+   "mae_star": 1.9265,
+   "bias_star": 0.4065,
+   "tail_pred_ge3": 79,
    "tail_act_ge3": 306,
-   "tail_ratio": 0.219,
-   "coverage": 0.7523,
-   "coverage_survived": 0.4032,
+   "tail_ratio": 0.258,
+   "coverage": 0.7615,
+   "coverage_survived": 0.4161,
    "n_survived": 3264,
-   "pinball_q10": 0.102,
-   "pinball_q90": 0.189
+   "pinball_q10": 0.0969,
+   "pinball_q90": 0.19
   },
   "4": {
    "n": 8053,
-   "mae": 0.4173,
-   "bias": -0.0102,
+   "mae": 0.3957,
+   "bias": -0.0367,
    "n_star": 201,
-   "mae_star": 1.7716,
-   "bias_star": -0.1811,
-   "tail_pred_ge3": 48,
+   "mae_star": 1.8657,
+   "bias_star": 0.2171,
+   "tail_pred_ge3": 57,
    "tail_act_ge3": 257,
-   "tail_ratio": 0.187,
-   "coverage": 0.7823,
-   "coverage_survived": 0.3725,
+   "tail_ratio": 0.222,
+   "coverage": 0.7962,
+   "coverage_survived": 0.3979,
    "n_survived": 2714,
-   "pinball_q10": 0.0846,
-   "pinball_q90": 0.1707
+   "pinball_q10": 0.081,
+   "pinball_q90": 0.1719
   },
   "5": {
    "n": 8053,
-   "mae": 0.3854,
-   "bias": -0.0694,
+   "mae": 0.3692,
+   "bias": -0.0861,
    "n_star": 201,
-   "mae_star": 1.8194,
-   "bias_star": -0.6814,
-   "tail_pred_ge3": 36,
+   "mae_star": 1.7834,
+   "bias_star": -0.3077,
+   "tail_pred_ge3": 48,
    "tail_act_ge3": 283,
-   "tail_ratio": 0.127,
-   "coverage": 0.8024,
-   "coverage_survived": 0.3245,
+   "tail_ratio": 0.17,
+   "coverage": 0.8147,
+   "coverage_survived": 0.354,
    "n_survived": 2308,
-   "pinball_q10": 0.0792,
-   "pinball_q90": 0.1704
+   "pinball_q10": 0.0778,
+   "pinball_q90": 0.1663
   }
  },
  "challenger_blocks": {
@@ -1011,5 +1011,121 @@
    ],
    "verdict": "FAIL 2026-07-24 (W-STAR, one attempt, frozen thresholds in tools/mean_head_backtest.py header): star-slice-only mean-head recenter (target swap, shipped lambdas, all horizons; non-star rows untouched). Clause A |star bias| improves: dev 0.0649 -> 0.2755 (FAIL), holdout -0.6351 -> -0.2956 (ok). Clause B pooled MAE within +0.005: dev 0.466 -> 0.4682 (ok), holdout 0.5069 -> 0.5086 (ok). Prior art: distinct from challenger_blocks.star_mean_head (additional fitted-lambda top-up, 2026-06-29); this arm is the target-swap variant that ledger named unexplored. Live seam: proj_ml.predict_path EEPHUS_STAR_MEAN_HEAD (default OFF, OFF path byte-identical, inert on quantile-only bundles)."
   }
- }
+ },
+ "rowmatch_champion_vs_challenger": {
+  "generated_at": "2026-08-19T22:08:36Z",
+  "champion_model": "marcel_decay_v2",
+  "challenger_model": "proj_lgbm_v1",
+  "basis": "row-matched: identical (player, horizon) rows scored by both models; challenger = forward-chained point-in-time bundles (labels <= B-1, full quantiles, no blend lambdas), champion = use_ml=False decay path; measurement only, no ship decision",
+  "bases": [
+   2017,
+   2018,
+   2019,
+   2021
+  ],
+  "n_players_matched": 8053,
+  "horizons": {
+   "1": {
+    "n": 8053,
+    "tail_act_ge3": 499,
+    "champion": {
+     "n": 8053,
+     "mae": 0.5988,
+     "n_star": 201,
+     "mae_star": 1.8677,
+     "tail_pred_ge3": 136,
+     "tail_ratio": 0.273
+    },
+    "challenger": {
+     "n": 8053,
+     "mae": 0.5846,
+     "n_star": 201,
+     "mae_star": 1.8302,
+     "tail_pred_ge3": 175,
+     "tail_ratio": 0.351
+    }
+   },
+   "2": {
+    "n": 8053,
+    "tail_act_ge3": 328,
+    "champion": {
+     "n": 8053,
+     "mae": 0.5188,
+     "n_star": 201,
+     "mae_star": 1.8093,
+     "tail_pred_ge3": 103,
+     "tail_ratio": 0.314
+    },
+    "challenger": {
+     "n": 8053,
+     "mae": 0.4917,
+     "n_star": 201,
+     "mae_star": 1.8465,
+     "tail_pred_ge3": 135,
+     "tail_ratio": 0.412
+    }
+   },
+   "3": {
+    "n": 8053,
+    "tail_act_ge3": 306,
+    "champion": {
+     "n": 8053,
+     "mae": 0.4635,
+     "n_star": 201,
+     "mae_star": 1.9265,
+     "tail_pred_ge3": 79,
+     "tail_ratio": 0.258
+    },
+    "challenger": {
+     "n": 8053,
+     "mae": 0.4356,
+     "n_star": 201,
+     "mae_star": 1.9143,
+     "tail_pred_ge3": 93,
+     "tail_ratio": 0.304
+    }
+   },
+   "4": {
+    "n": 8053,
+    "tail_act_ge3": 257,
+    "champion": {
+     "n": 8053,
+     "mae": 0.3957,
+     "n_star": 201,
+     "mae_star": 1.8657,
+     "tail_pred_ge3": 57,
+     "tail_ratio": 0.222
+    },
+    "challenger": {
+     "n": 8053,
+     "mae": 0.3758,
+     "n_star": 201,
+     "mae_star": 1.8675,
+     "tail_pred_ge3": 64,
+     "tail_ratio": 0.249
+    }
+   },
+   "5": {
+    "n": 8053,
+    "tail_act_ge3": 283,
+    "champion": {
+     "n": 8053,
+     "mae": 0.3692,
+     "n_star": 201,
+     "mae_star": 1.7834,
+     "tail_pred_ge3": 48,
+     "tail_ratio": 0.17
+    },
+    "challenger": {
+     "n": 8053,
+     "mae": 0.3586,
+     "n_star": 201,
+     "mae_star": 1.7911,
+     "tail_pred_ge3": 44,
+     "tail_ratio": 0.155
+    }
+   }
+  }
+ },
+ "generated_at": "2026-08-19T22:08:36Z"
 }

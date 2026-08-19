@@ -1605,6 +1605,159 @@
   ],
   "recommendation": "Do not flip fa_config.fit.weights on this evidence. (1) SHIP candidate (b) as a DISPLAY-side relative-fit view with a disclosure line, model untouched, tripwire left red and honest - the view's own implied signing accuracy is recorded above and is materially worse than the model's, which is exactly what the disclosure must say. (2) The real repair is inside BEHAVIOR, not in the composite weights: `recent` and `rich` are player-independent club constants and `recent`'s league-max normalizer guarantees the monopolist a 1.0. Re-deriving them as player-conditional terms (or dropping them into a separate club-propensity display axis) attacks the measured cause instead of the symptom. (3) Re-measure the sweep's passing region on a SECOND class year before treating any of it as real - every passer here has near-zero slack and the served class moved under the shipped weights between two regenerations of the same code."
  },
+ "teamfit_conditional_gate": {
+  "gate_doc": "docs/fa-2026-08-19/TEAMFIT_CONDITIONAL_GATE.md",
+  "measured_at": "2026-08-19",
+  "band_factor": 2.5,
+  "thresholds": {
+   "mrr_floor_anchor": 0.1669,
+   "top3_floor_anchor": 0.145,
+   "max_top1_share": 0.25,
+   "min_distinct_top1": 12,
+   "min_distinct_top3": 20,
+   "lad_behavior_majority": 0.5,
+   "bootstrap_B": 2000,
+   "bootstrap_seed": 7
+  },
+  "chain_n": 1173,
+  "chain_incumbent": {
+   "n": 1173,
+   "top1": 0.052,
+   "top3": 0.1449,
+   "top5": 0.2293,
+   "mrr": 0.1669
+  },
+  "chain_candidate": {
+   "n": 1173,
+   "top1": 0.0546,
+   "top3": 0.1338,
+   "top5": 0.2097,
+   "mrr": 0.1628
+  },
+  "mrr_delta": -0.0041,
+  "mde95": 0.0139,
+  "delta_ci95": [
+   -0.0184,
+   0.0091
+  ],
+  "served": {
+   "available": true,
+   "n_members": 230,
+   "corpus_last_winter": 2026,
+   "recompose_max_abs_dev_vs_matrix_behavior": 0.0005,
+   "candidate_composite": {
+    "max_top1_share": 0.2174,
+    "max_top1_club": "WSN",
+    "distinct_top1": 16,
+    "distinct_top3": 25,
+    "median_gap": 0.0163,
+    "mean_clubs_tied_at_top": 1.0,
+    "top1_counts": {
+     "WSN": 50,
+     "NYM": 43,
+     "NYY": 40,
+     "CHW": 37,
+     "PHI": 19,
+     "SFG": 14,
+     "COL": 6,
+     "LAD": 5
+    },
+    "gate": {
+     "max_top1_share": true,
+     "distinct_top1": true,
+     "distinct_top3": true,
+     "median_gap": true
+    },
+    "pass_3_criterion": true,
+    "pass": true
+   },
+   "behavior_cond_term": {
+    "max_top1_share": 0.3826,
+    "max_top1_club": "LAD",
+    "distinct_top1": 6,
+    "distinct_top3": 13,
+    "median_gap": 0.0516,
+    "mean_clubs_tied_at_top": 1.0,
+    "top1_counts": {
+     "LAD": 88,
+     "NYM": 83,
+     "CHW": 41,
+     "WSN": 15,
+     "SFG": 2,
+     "NYY": 1
+    },
+    "gate": {
+     "max_top1_share": false,
+     "distinct_top1": false,
+     "distinct_top3": false,
+     "median_gap": true
+    },
+    "pass_3_criterion": false,
+    "pass": false
+   },
+   "incumbent_recomposed": {
+    "max_top1_share": 0.3261,
+    "max_top1_club": "LAD",
+    "distinct_top1": 7,
+    "distinct_top3": 14,
+    "median_gap": 0.0369,
+    "mean_clubs_tied_at_top": 1.0,
+    "top1_counts": {
+     "LAD": 75,
+     "NYY": 63,
+     "NYM": 56,
+     "PHI": 28,
+     "STL": 4,
+     "CHC": 3,
+     "DET": 1
+    },
+    "gate": {
+     "max_top1_share": false,
+     "distinct_top1": false,
+     "distinct_top3": false,
+     "median_gap": true
+    },
+    "pass_3_criterion": false,
+    "pass": false
+   },
+   "behavior_deleted": {
+    "max_top1_share": 0.2913,
+    "max_top1_club": "MIA",
+    "distinct_top1": 8,
+    "distinct_top3": 19,
+    "median_gap": 0.0036,
+    "mean_clubs_tied_at_top": 1.0,
+    "top1_counts": {
+     "MIA": 67,
+     "CLE": 61,
+     "DET": 32,
+     "BOS": 22,
+     "NYY": 21,
+     "MIL": 19,
+     "CHC": 7,
+     "PIT": 1
+    },
+    "gate": {
+     "max_top1_share": false,
+     "distinct_top1": false,
+     "distinct_top3": false,
+     "median_gap": false
+    },
+    "pass_3_criterion": false,
+    "pass": false
+   },
+   "lad_behavior_cond_top1_share": 0.3826,
+   "lad_candidate_composite_top1_share": 0.0217
+  },
+  "clauses": {
+   "1_accuracy_floor": true,
+   "2_concentration": true,
+   "3_lad_sanity": true,
+   "4_trade_refusal_fired": false
+  },
+  "shipped": true,
+  "frame_note": "chain frame identical to the registered 2026-08-04 run (n=1173, incumbent metrics reproduce bit-exact); served class is TODAY'S fa_class.json (n=230 vs the registered 228) - the concentration/decomposition blocks above still carry the 2026-08-04 class until the next full regen, which now emits this block too (run_fit_gate)."
+ },
  "fitted_transfer_weight_candidate": {
   "need": 0.596,
   "window": 0.0,
@@ -1626,6 +1779,7 @@
   "mystery-team realism: top-5 is the headline metric; top-1 on 30 clubs is genuinely hard",
   "CONCENTRATION TRIPWIRE (registered 2026-07-30): MRR/top-k are blind to a fit vector that ranks the SAME club first for everyone - a model can score well on signing prediction while being useless as a product. The concentration block measures that directly on the served class.",
   "CONCENTRATION DECOMPOSITION (R6, 2026-08-04): concentration_decomposition scores each component as if it were the whole fit and splits every component into player / CLUB / interaction variance. It REFUTES the standing premise that need is the saturated term: need is the most player-specific component, and BEHAVIOR is the saturated one. concentration_repair_verdict carries the candidate results and the recommendation.",
-  "CONCENTRATION AND MRR MEASURE OPPOSITE HALVES OF ONE VARIANCE SPLIT: the club main effect is both the monopoly and the signing signal, so every de-monopolizer that works by a per-club offset trades MRR for concentration one-for-one. That is a property of the decomposition, not a tuning failure."
+  "CONCENTRATION AND MRR MEASURE OPPOSITE HALVES OF ONE VARIANCE SPLIT: the club main effect is both the monopoly and the signing signal, so every de-monopolizer that works by a per-club offset trades MRR for concentration one-for-one. That is a property of the decomposition, not a tuning failure.",
+  "TEAMFIT CONDITIONAL GATE (2026-08-19): the behavior term's recent/rich confined to the player's price band (band factor 2.5, reach untouched). Clauses frozen in docs/fa-2026-08-19/TEAMFIT_CONDITIONAL_GATE.md before the lab ran; the teamfit_conditional_gate block carries the verbatim result."
  ]
 }
