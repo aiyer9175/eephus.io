@@ -590,6 +590,92 @@ PLAYER_KEY_ALIASES = {
         "player_key": "lamar_king_jr",
         "player_name": "Lamar King Jr.",
     },
+
+    # 2026-08-19 - the C7 name-variant residue batch, routed by
+    # tools/repair_identity_residue_2026_08_19.py. Each pair shares an
+    # identical stored (birth_date, org, side) and NO pair carries the same
+    # source on the same date on both keys (one list cannot rank one human
+    # twice; the script verifies both bars before calling a route safe).
+    # Canonical key = the member holding the MLBAM photo binding and the
+    # fresher snapshot history. dom_keegan / dominic_keegan is deliberately
+    # ABSENT: the dom_keegan key's own 2026 snapshots flip org BAL/TBR
+    # inside one cycle, so it may itself hold two humans and stays open.
+    "bj_murray_jr": {
+        # The Cubs 3B, b. 2000-01-05. The bare key binds 681230 and runs
+        # current (FG 2026 + Pipeline 2026-08-19); the suffixed key is the
+        # FG 2024-2025 form.
+        "player_key": "bj_murray",
+        "player_name": "BJ Murray",
+    },
+    "ben_cowles": {
+        # The Cubs INF, b. 2000-02-15. "Benjamin" binds 701496 and holds
+        # FG + BA; "Ben" is a single Pipeline 2025-01-22 row.
+        "player_key": "benjamin_cowles",
+        "player_name": "Benjamin Cowles",
+    },
+    "javi_vaz": {
+        # The Royals 2B, b. 2000-09-22. "Javier" binds 805834 and holds
+        # eight FG/BA rows; "Javi" is the Pipeline 2024-2025 form.
+        "player_key": "javier_vaz",
+        "player_name": "Javier Vaz",
+    },
+    "zach_thornton__noid": {
+        # The __noid twin of the zach_thornton key routed 2026-08-10; one
+        # stale FG 2023-08-01 row. Same human, the Mets LHP b. 2002-01-17.
+        "player_key": "zac_thornton",
+        "player_name": "Zac Thornton",
+    },
+    "alex_santos": {
+        # The Astros RHP, b. 2002-02-10. The suffixed key binds 691012 and
+        # runs 2021-2025; the bare key is the FG 2020-2021 form.
+        "player_key": "alex_santos_ii",
+        "player_name": "Alex Santos II",
+    },
+    "jay_allen": {
+        # The Reds CF, b. 2002-11-22. The suffixed key binds 695481 and
+        # runs current to 2026-08-19; the bare key is the 2021-2023 form.
+        "player_key": "jay_allen_ii",
+        "player_name": "Jay Allen II",
+    },
+    "lonnie_jr_white": {
+        # The Pirates OF, b. 2002-12-31. The stale key is a comma-mangled
+        # parse ("Lonnie, Jr. White") of the 2021-2022 FG rows.
+        "player_key": "lonnie_white_jr",
+        "player_name": "Lonnie White Jr.",
+    },
+    "jared_jones__sa3034881": {
+        # The Pirates 1B, b. 2003-08-01, LSU. The CollegeSavant interim key
+        # holds his FG 2025-07-31 row; his own mlbam key binds 702262. The
+        # OTHER Jared Jones keys (683003) are untouched.
+        "player_key": "jared_jones_702262",
+        "player_name": "Jared Jones",
+    },
+    "dennis_colleran": {
+        # The Royals RHP, b. 2003-08-20. The suffixed key binds 701207 and
+        # runs current (FG 2026 + Pipeline 2026-08-12).
+        "player_key": "dennis_colleran_jr",
+        "player_name": "Dennis Colleran Jr.",
+    },
+    "dennis_colleran__noid": {
+        # The same human's __noid fork, a single FG 2024-08-01 row.
+        "player_key": "dennis_colleran_jr",
+        "player_name": "Dennis Colleran Jr.",
+    },
+    "leonardo_bernal__noid": {
+        # The __noid twin of the leonardo_bernal route above; one stale FG
+        # 2021-02-26 row. The Cardinals C, b. 2004-02-13.
+        "player_key": "leo_bernal",
+        "player_name": "Leo Bernal",
+    },
+    "junior_garcia_815010": {
+        # The Braves OF, b. 2005-07-13. The ingest forked this key while
+        # the bare slug was mis-bound to mlbam 642371 (a 2012 HOU IFA LHP,
+        # another human); the same repair moved 642371's rows to
+        # junior_garcia_642371 and re-bound 815010, the OF's own id, to the
+        # bare key. This entry folds the fork back onto his board history.
+        "player_key": "junior_garcia",
+        "player_name": "Junior Garcia",
+    },
 }
 
 CANONICAL_PLAYER_NAMES = {

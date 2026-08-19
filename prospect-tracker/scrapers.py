@@ -615,6 +615,31 @@ _SPLIT_KEYS: dict[tuple[str, int], str] = {
     # tools/repair_jesus_lopez_collision.py. The tell was one players row
     # holding the catcher's C/TEX with the pitcher's date of birth.
     ("jesus_lopez", 838819): "jesus_lopez_bos",
+    # 2026-08-19 - the C4 side-conflict residue batch, repaired by
+    # tools/repair_identity_residue_2026_08_19.py. All eight are the same
+    # shape: a pre-vintage-guard name-search binding handed an OLD board
+    # record (earliest snapshot years below) the mlbam id of a young
+    # same-name PITCHER, and the 2026-08-19 ingest then wrote the pitcher's
+    # acquisition, transaction log and roster status onto the incumbent's
+    # key. Two-humans proof per case: the stored birth_date implied an age
+    # UNDER 16.0 at the key's earliest snapshot (the IFA signing-age floor
+    # makes that categorically impossible), and the roster cache confirmed
+    # the dob as the young pitcher's within 0.1y. The incumbents keep their
+    # keys; each pin routes the pitcher's id to his split key so the next
+    # ingest cannot re-merge (the carlos_castillo lesson).
+    ("michael_perez", 805872): "michael_perez_805872",        # 2012 board C vs MIA AA RHP b.2002
+    ("david_rodriguez", 815095): "david_rodriguez_815095",    # 2017 board C vs ATL A+ RHP b.2001
+    ("alexander_campos", 814226): "alexander_campos_814226",  # 2018 board SS vs TBR CPX RHP b.2003
+    ("enmanuel_rodriguez", 840917): "enmanuel_rodriguez_840917",  # 2019 board CF vs BAL DSL RHP b.2006
+    ("jose_gomez", 823845): "jose_gomez_823845",              # 2017 board INF vs NYM DSL LHP b.2006
+    ("jose_rondon", 831791): "jose_rondon_831791",            # 2013 board SS vs PIT DSL RHP b.2005
+    ("aaron_brown", 676345): "aaron_brown_676345",            # 2015 board OF vs HOU AAA RHP b.1999
+    # The ninth is the inverse twist: the bare junior_garcia key holds the
+    # ATL OF's board history (b.2005-07-13) but was bound to 642371, a 2012
+    # HOU IFA LHP. The LHP's rows moved to junior_garcia_642371 and the
+    # OF's own id 815010 was re-bound to the bare key; consensus.
+    # PLAYER_KEY_ALIASES folds the ingest fork junior_garcia_815010 back.
+    ("junior_garcia", 642371): "junior_garcia_642371",
 }
 
 
