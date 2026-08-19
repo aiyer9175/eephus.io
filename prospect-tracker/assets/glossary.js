@@ -6,10 +6,14 @@
 // =============================================================================
 // eephus.io unified Glossary & Methodology app (/glossary/)
 // =============================================================================
-// Four views: Terms (search + group nav + A-Z index + entry cards) ·
+// Seven views: Terms (search + group nav + A-Z index + entry cards) ·
 // How to Read (annotated anatomy guide) · Methodology (derivations +
 // interactive teaching widgets + PDF export) · Source Comparison (the
-// empirical source-vs-source backtest). The guide/methodology/backtest
+// empirical source-vs-source backtest) · Source Accuracy (the
+// who-grades-which-cohort measurement) · Models & Proofs (the model
+// registry ledger) · Library (index of every standalone page). The
+// authoritative list is the view whitelist in syncFromURL below.
+// The guide/methodology/backtest
 // renderers are PORTED from the retired PROSPX Glossary/Methodology tab
 // (owner decision 2026-06-10); the data source for every definition is
 // data/glossary.json via window.EEPHUS_GLOSSARY (assets/eephus-gl.js).
@@ -380,11 +384,19 @@ function _methProseHTML() {
     and the farm-system rankings, surplus, DvM+, and movement engine all run on it. Players with no
     pro track record (recent draftees, int'l signs) fall back to the consensus prior until they
     play.</p>
-    <p class="meth-verdict is-good">On out-of-sample, leakage-free, forward-chained tests of how
-    well each grade ordered what prospects became, eFV out-predicts every public source: the PROSPX
-    consensus, MLB Pipeline, and FanGraphs. The Source Comparison tab has the head-to-head numbers.
-    eFV is <strong>provisional</strong> and near the data's rank ceiling; its historical track is a
-    current-model retrospective, not the grade we showed at the time.</p>
+<!-- NO ACCURACY CLAIM HERE, BY DESIGN (2026-08-19). This paragraph used to
+    assert, in is-good styling, that eFV led every public source while the
+    artifact's own head_to_head_verdict said not resolvable (xfv_beats:false)
+    and, on the vintage-matched basis, MLB Pipeline led eFV on both Spearman
+    and AUC. This view does not load source_backtest.json, so the honest fix
+    is to make no claim and point at the surfaces that derive theirs from the
+    artifact at render time (the Source Comparison hero + _methEfvVerdict). -->
+    <p class="meth-verdict">How eFV compares with the public sources is measured, not asserted:
+    the Source Comparison tab runs the out-of-sample, leakage-free, forward-chained backtest
+    against the PROSPX consensus, MLB Pipeline, and FanGraphs, and derives its verdict from the
+    artifact at render time, noise floors included. eFV is <strong>provisional</strong> and near
+    the data's rank ceiling; its historical track is a current-model retrospective, not the grade
+    we showed at the time.</p>
 
     <h2 class="meth-h">How the consensus FV (eFV's prior) is built</h2>
     <p>The consensus FV is the scout-grade aggregate eFV anchors on, and the reference shown
@@ -551,7 +563,7 @@ function _methProseHTML() {
       <li><span class="mc-date">2026-07-29/30</span> Valuation recalibration: sub-45 anchors repaired, the board-scale re-expression turned off, and <code>clemens_2026</code> (the published FanGraphs / Ben Clemens 2026 framework, checksummed anchors, <code>fa_implied</code> disabled) made the default production valuation set.</li>
       <li><span class="mc-date">2026-07-25</span> Consensus source weighting REVERTED to equal. The June accuracy weights (Pipeline 1.06 / FanGraphs 0.94) failed a hardened forward-chained re-measurement: d&rho; -0.0012 against a minimum detectable effect of 0.0068, so the weighted blend's win was inside the noise floor and unearned. Every source votes 1.0 again; the revert is committed in data/source_weights.json.</li>
       <li><span class="mc-date">2026-07</span> Cross-source scale normalization: each source's grades are quantile-mapped onto the FanGraphs scale over the players both grade before blending, so a hot or cold outlet is de-biased by the shape of its whole distribution. Per-source grades on the card are unchanged; only the consensus scale is.</li>
-      <li><span class="mc-date">2026-06</span> Historical backfill: ingested FanGraphs 2017-2020 boards (new-format CSVs) + MLB Pipeline 2017-2020 Top 100, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021-2023 (3 base years) to 2017-2023 (7), and the common scored set grew with it. On the larger, further-resolved sample the consensus still outranks its best individual source (current common-set size and margins are in Source Comparison below).</li>
+      <li><span class="mc-date">2026-06</span> Historical backfill: ingested FanGraphs 2017-2020 boards (new-format CSVs) + MLB Pipeline 2017-2020 Top 100, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021-2023 (3 base years) to 2017-2023 (7), and the common scored set grew with it. On the larger, further-resolved sample the blend's edge over its best single input is two-legged: it separates future contributors better (the AUC leg resolves), while the ordering gap (Spearman) sits inside the noise floor the backtest can resolve. The live legs, floors, and common-set size render in Source Comparison below.</li>
       <li><span class="mc-date">2026-06</span> Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat 6-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.</li>
       <li><span class="mc-date">2026-06</span> Glossary reorganized into Glossary / Methodology / Source Comparison; taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
       <li><span class="mc-date">2026-06</span> Farm grade tree v40: value-tracking reweight. The org letter is now primarily driven by aggregate risk-adjusted controlled surplus (the Value branch, 65%); Development drops from the top weight to a secondary controllable-skill signal (9%), MLB Production 18%, Acquisition Strategy 8%. This stops the grade from reading as a per-prospect tool-development index decoupled from aggregate farm value.</li>
@@ -565,7 +577,7 @@ function _methProseHTML() {
     <h2 class="meth-h">FAQ</h2>
     <dl class="meth-dl">
       <dt>Why a consensus instead of one source?</dt>
-      <dd>Averaging cancels idiosyncratic source error: the pooled consensus modestly but consistently beats its best individual input on resolved cohorts (see Source Comparison). Per-source edges exist but are small and unstable year to year, which is why the blend stays at equal weights rather than chasing them.</dd>
+      <dd>Averaging cancels idiosyncratic source error, and the measured edge is two-legged: on resolved cohorts the blend separates future contributors from non-contributors better than any single input (the AUC leg clears its floor), while on ordering realized WAR the gap to its best input sits inside the noise floor the backtest can resolve. Blending buys discrimination, not ordering; the live legs and floors render in Source Comparison. Per-source edges are small and unstable year to year, which is why the blend stays at equal weights rather than chasing them.</dd>
       <dt>How are sources weighted?</dt>
       <dd>Equally: every source votes at exactly 1.0. An accuracy-weighted blend (per-source weights from measured track records, shrunk toward equal and clamped) shipped in June 2026 and was reverted on 2026-07-25, when a hardened forward-chained re-measurement showed its edge was smaller than the test could resolve (d&rho; -0.0012 vs a minimum detectable effect of 0.0068) - the weights were unearned, so they came off. Only two of eight outlets even have resolvable outcome history. The interactive below lets you test any weighting yourself.</dd>
       <dt>How often does it update?</dt>
@@ -706,18 +718,21 @@ function _methAccuracyChart(bt) {
 
 // THE VERDICT UNDER THE eFV CHARTS IS DERIVED, NEVER ASSERTED (2026-08-14).
 //
-// This paragraph used to read "eFV out-ranks consensus FV out-of-sample on both sides,
-// and the edge holds on the recent 2019-2023 cohorts" as FIXED PROSE, styled is-good,
+// This paragraph used to claim, as FIXED PROSE styled is-good, that eFV led consensus
+// FV out-of-sample on both sides and that the edge held on the recent 2019-2023 cohorts,
 // sitting directly beneath two charts whose own artifact fields say xfv_beats:false and
 // verdict:"not resolvable at this power" on BOTH sides (hitters +0.0112, pitchers
 // +0.0061, both against an MDE95 of 0.044). The bars and the star were already honest;
 // only the sentence under them was not.
 //
 // The hero banner was moved onto derived copy on 2026-08-13 (see _methHeroBanner) and
-// this sibling claim was missed, along with three others off-page. Hard-coded accuracy
-// NUMBERS in copy were already banned; a hard-coded accuracy CLAIM is the same defect
-// wearing prose, and it is worse here because the artifact carries a machine-readable
-// verdict field that contradicts it.
+// this sibling claim was missed, along with three others off-page. The last of those
+// siblings, the every-public-source claim paragraph in _methProseHTML, was
+// fixed on 2026-08-19: the Methodology view does not load the backtest artifact, so it
+// now makes no accuracy claim at all and defers to the derived hero + Source Comparison.
+// Hard-coded accuracy NUMBERS in copy were already banned; a hard-coded accuracy CLAIM
+// is the same defect wearing prose, and it is worse here because the artifact carries a
+// machine-readable verdict field that contradicts it.
 function _methEfvVerdict(xc) {
   const sides = [["hitters", xc.sides.hitters], ["pitchers", xc.sides.pitchers]]
     .filter(p => p[1]);
@@ -754,9 +769,9 @@ function _methEfvVerdict(xc) {
     eraClause = ` eFV leads in every debut era measured (${up.join(", ")}).`;
   }
   const head = all
-    ? "eFV out-ranks consensus FV out-of-sample on both sides by a margin this eval can resolve."
+    ? "eFV ranks ahead of consensus FV out-of-sample on both sides by a margin this eval can resolve."
     : beat.length
-      ? `eFV out-ranks consensus FV by a resolvable margin on ${beat.map(p => p[0]).join(" and ")} only; on the other side the gap is inside the noise floor.`
+      ? `eFV ranks ahead of consensus FV by a resolvable margin on ${beat.map(p => p[0]).join(" and ")} only; on the other side the gap is inside the noise floor.`
       : "eFV and consensus FV are statistically indistinguishable on eFV's own out-of-sample protocol: on both sides the gap is smaller than the margin this eval can resolve.";
   return `<p class="meth-verdict${all ? " is-good" : ""}">${head}${eraClause} eFV is the primary grade; consensus FV remains a reference input. (This is eFV's own out-of-sample protocol, a more conservative test than the in-sample common-set bars above.)</p>`;
 }
@@ -1136,6 +1151,31 @@ function _methArchetypeNote(bt) {
     ? ` It trails only on ${losses.map(l => `${escapeHtml(l.label)} (${escapeHtml(_raterMeta(l.rater).label)} ${l.auc.toFixed(3)} vs eFV ${l.xa.toFixed(3)})`).join(", ")} - the youngest, lowest-track-record cohorts, where scouting projection still reads best and eFV leans on the consensus prior.`
     : ` It leads every archetype on the board.`;
   return `<p class="meth-note">${lead}${lose}</p>`;
+}
+
+// The archetype clause of the honesty caveat is DERIVED (2026-08-19), the same
+// rule as _methArchetypeNote above. The static sentence it replaces claimed eFV
+// led the Spearman column in all six archetypes and the AUC column in only a minority;
+// recounted on the current artifact's same-rows basis (raters_efv_common) eFV
+// posts the row-best Spearman in 2 of 6 archetypes and the row-best AUC in 3
+// of 6, so BOTH halves of the hand-written sentence had drifted false. Counts
+// are row maxima on identical rows, never significance claims.
+function _methCaveatArchetypeClause(bt) {
+  const ba = (bt.accuracy && bt.accuracy.by_archetype) || [];
+  let total = 0, spWins = 0, aucWins = 0;
+  ba.forEach(a => {
+    const rs = a.raters_efv_common || a.raters || {};
+    const entries = Object.values(rs).filter(v => v && v.spearman != null && v.auc != null);
+    const x = rs.xfv;
+    if (!x || x.spearman == null || x.auc == null || entries.length < 2) return;
+    total++;
+    const bestSp = Math.max(...entries.map(v => v.spearman));
+    const bestAuc = Math.max(...entries.map(v => v.auc));
+    if (x.spearman >= bestSp - 1e-9) spWins++;
+    if (x.auc >= bestAuc - 1e-9) aucWins++;
+  });
+  if (!total) return "";
+  return ` Ordering and discrimination also split by archetype: on identical rows eFV posts the row-best Spearman in ${spWins} of ${total} archetypes and the row-best AUC in ${aucWins} of ${total} - row maxima, not significance claims - which is why the two tables below can look like different stories.`;
 }
 
 // "How to Read the Site" (Part 1 anchor) - annotated anatomy of a player card,
@@ -2450,7 +2490,7 @@ function renderSourceComparison() {
           <li><strong>Short track record.</strong> Only ${bt.window.years.length} preseason base years (${bt.window.years.join(", ")}) are old enough to have resolved outcomes. The newer sources have <em>zero</em> resolved cohorts.</li>
           <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40-60 across all years - a handful of hits or misses moves its rates a lot.</li>
           <li><strong>Censoring.</strong> Outcomes are cumulative WAR as of ${escapeHtml(bt.as_of_date || "today")}; the 2023 cohort has had ~3 seasons, the 2021 cohort ~5. Rate metrics mitigate but don't erase this.</li>
-          <li><strong>eFV's edge is a point estimate, and the pooled one does not clear its floor.</strong> eFV leads the pooled ordering comparison, but by less than the noise floor of that comparison, so we report it as unresolved rather than as a win. Ordering and discrimination also disagree by archetype: eFV grades ahead on Spearman in every archetype and on AUC in only a minority of them, which is why the two tables below can look like different stories. The margins are a few Spearman points either way: a calibrated grade, not a perfect predictor.</li>
+          <li><strong>eFV's edge is a point estimate, and the pooled one does not clear its floor.</strong> eFV leads the pooled ordering comparison, but by less than the noise floor of that comparison, so we report it as unresolved rather than as a win.${_methCaveatArchetypeClause(bt)} The margins are a few Spearman points either way: a calibrated grade, not a perfect predictor.</li>
           <li><strong>eFV is in-the-loop, not infallible.</strong> Its grades come from production we have; for the youngest prospects (recent draftees, int'l signs with no pro reps) it leans on the consensus prior, and where richer data exists (Statcast, Stuff+) it is only a live overlay, not yet historical. The lead grows when the data does.</li>
         </ul>
       </div>`;
