@@ -18,12 +18,19 @@ _restore_committed_build_artifacts snapshots dirty tracked files at session star
 and git-checkouts anything the suite dirtied at the end, so an edit made DURING a
 run is silently reverted. Run between edit batches, never alongside them.
 
-Expected baseline on this tree is exactly three reds, all needing a real box
-rebuild_only and none a regression. KNOWN_BASELINE_REDS below is the canonical
+Expected baseline on this tree is exactly two reds, both needing a real box
+rebuild_only and neither a regression. KNOWN_BASELINE_REDS below is the canonical
 list; keep this docstring in step with it:
     test_efv_export.py::test_xfv_golden_fingerprint
     test_proj_export.py::test_vet_surplus_only_on_contracted_seasons
-    test_identity_collisions.py::test_no_new_merged_identity_on_the_active_board
+The identity-collision entry came OUT 2026-08-19: its corrected leave condition
+(positions_played.json regenerated with the invalidated_by stamp gone) was
+verified met (generated_at 2026-08-16, stamp absent) and the test ran green on
+the 2026-08-19 baseline suite.
+test_identity_collisions.py::test_committed_report_matches_a_fresh_run reads the
+WORKING-TREE data/identity_collisions.json against a fresh run over the DB; when
+the owner's nightly churn lags the DB it goes red and the fix is regenerating
+the report (python identity_audit.py), never a baseline entry.
 test_atomic_artifact_write is a known load-dependent flake (its reader thread
 starves the os.replace writer only on an idle fast box); re-run it in a fresh
 process before calling it a regression.
@@ -52,6 +59,10 @@ CHUNK = 8
 KNOWN_BASELINE_REDS = (
     "test_efv_export.py::test_xfv_golden_fingerprint",
     "test_proj_export.py::test_vet_surplus_only_on_contracted_seasons",
+)
+
+# REMOVED 2026-08-19 (kept for the record, do not re-add without a NEW defect):
+_REMOVED_BASELINE_REDS_LEDGER = (
     # Added 2026-08-12, and it is a STALE-ARTIFACT red, not a suppressed defect.
     # The underlying collision (a Boston DSL RHP merged onto a Texas catcher's
     # key) IS repaired in prospects.db by tools/repair_jesus_lopez_collision.py
