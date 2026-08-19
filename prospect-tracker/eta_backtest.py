@@ -589,6 +589,18 @@ def run(persist: bool = True) -> dict:
         },
     }
     if persist:
+        # CARRY-FORWARD (2026-08-19): registered gate blocks are written into
+        # this artifact by their own labs (read-modify-write) and must survive
+        # the monthly rebuild, same pattern as team_outlook_eval preserving
+        # retro_backtest. Without this, the next run() silently drops the
+        # empirical-table gate record and its pin test goes red.
+        try:
+            prev = json.loads(OUT_PATH.read_text(encoding="utf-8"))
+            for k, v in prev.items():
+                if k.startswith("empirical_table_gate_") and k not in out:
+                    out[k] = v
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
         OUT_PATH.write_text(json.dumps(out, indent=1), encoding="utf-8")
         log.info("wrote %s", OUT_PATH)
     return out

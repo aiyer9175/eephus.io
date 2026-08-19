@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-13",
+ "generated_at": "2026-08-19",
  "vintage_years": [
   2018,
   2019,
@@ -12,13 +12,13 @@
   "listed": 9056,
   "excluded_post_debut": 647,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3405,
-  "level_from_statsapi": 3472,
-  "level_from_career_stats": 1532,
-  "debuted": 4180,
-  "censored_active": 2317,
+  "no_level_age_fallback": 3403,
+  "level_from_statsapi": 3476,
+  "level_from_career_stats": 1530,
+  "debuted": 4186,
+  "censored_active": 2311,
   "washed_out": 725,
-  "overdue": 905
+  "overdue": 902
  },
  "conventions": {
   "vintage_fv": "median of each source's earliest same-year snapshot",
@@ -28,44 +28,44 @@
   "selection": "MAE conditions on debuted players (shared by champion/baseline/challenger); overdue + washed-out rates carry the unconditional signal"
  },
  "champion_heuristic": {
-  "n": 4180,
+  "n": 4186,
   "mae": 1.422,
-  "bias": 0.992,
+  "bias": 0.99,
   "within_1y": 0.589,
   "exact": 0.218
  },
  "baseline_naive_level_table": {
-  "n": 3484,
-  "mae": 1.972,
-  "bias": 1.744,
+  "n": 3488,
+  "mae": 1.971,
+  "bias": 1.743,
   "within_1y": 0.381,
   "exact": 0.169
  },
  "champion_on_baseline_rows": {
-  "n": 3484,
-  "mae": 1.432,
-  "bias": 1.072,
+  "n": 3488,
+  "mae": 1.431,
+  "bias": 1.07,
   "within_1y": 0.583,
   "exact": 0.214
  },
  "challenger_empirical_table_forward_chained": {
-  "n": 2940,
-  "mae": 0.868,
-  "bias": 0.171,
-  "within_1y": 0.812,
-  "exact": 0.368
+  "n": 2944,
+  "mae": 0.869,
+  "bias": 0.168,
+  "within_1y": 0.811,
+  "exact": 0.367
  },
  "challenger_km_recalibrated_heuristic": {
-  "n": 2846,
-  "mae": 1.466,
-  "bias": 1.131,
+  "n": 2850,
+  "mae": 1.465,
+  "bias": 1.129,
   "within_1y": 0.572,
-  "exact": 0.2
+  "exact": 0.201
  },
  "v38_frozen_on_km_rows": {
-  "n": 2846,
-  "mae": 1.987,
-  "bias": 1.815,
+  "n": 2850,
+  "mae": 1.986,
+  "bias": 1.814,
   "within_1y": 0.414,
   "exact": 0.14
  },
@@ -93,9 +93,9 @@
   "DSL": 7.5
  },
  "overdue_v38_vs_km": {
-  "v38": 799,
-  "km_recalibrated": 891,
-  "censored_n": 2317
+  "v38": 797,
+  "km_recalibrated": 888,
+  "censored_n": 2311
  },
  "ship_decision": {
   "date": "2026-06-11",
@@ -127,17 +127,17 @@
    "exact": 0.033
   },
   "CPX": {
-   "n": 333,
-   "mae": 1.583,
+   "n": 334,
+   "mae": 1.581,
    "bias": 1.156,
-   "within_1y": 0.541,
+   "within_1y": 0.542,
    "exact": 0.222
   },
   "A": {
-   "n": 931,
-   "mae": 1.576,
-   "bias": 1.165,
-   "within_1y": 0.534,
+   "n": 933,
+   "mae": 1.573,
+   "bias": 1.162,
+   "within_1y": 0.535,
    "exact": 0.186
   },
   "A+": {
@@ -148,10 +148,10 @@
    "exact": 0.161
   },
   "AA": {
-   "n": 918,
-   "mae": 1.223,
-   "bias": 0.868,
-   "within_1y": 0.656,
+   "n": 919,
+   "mae": 1.224,
+   "bias": 0.865,
+   "within_1y": 0.655,
    "exact": 0.224
   },
   "AAA": {
@@ -185,25 +185,25 @@
    "exact": 0.251
   },
   "2021": {
-   "n": 712,
-   "mae": 1.928,
+   "n": 713,
+   "mae": 1.927,
    "bias": 1.647,
-   "within_1y": 0.409,
+   "within_1y": 0.41,
    "exact": 0.104
   },
   "2022": {
-   "n": 714,
-   "mae": 1.459,
-   "bias": 1.193,
-   "within_1y": 0.576,
+   "n": 717,
+   "mae": 1.456,
+   "bias": 1.191,
+   "within_1y": 0.577,
    "exact": 0.213
   },
   "2023": {
-   "n": 596,
-   "mae": 1.374,
-   "bias": 1.196,
+   "n": 598,
+   "mae": 1.375,
+   "bias": 1.187,
    "within_1y": 0.607,
-   "exact": 0.218
+   "exact": 0.217
   }
  },
  "residual_by_level": {
@@ -213,13 +213,13 @@
    "median": 3.5
   },
   "CPX": {
-   "n": 333,
+   "n": 334,
    "mean": 1.156,
-   "median": 1
+   "median": 1.0
   },
   "A": {
-   "n": 931,
-   "mean": 1.165,
+   "n": 933,
+   "mean": 1.162,
    "median": 1
   },
   "A+": {
@@ -228,9 +228,9 @@
    "median": 1
   },
   "AA": {
-   "n": 918,
-   "mean": 0.868,
-   "median": 1.0
+   "n": 919,
+   "mean": 0.865,
+   "median": 1
   },
   "AAA": {
    "n": 515,
@@ -240,30 +240,30 @@
  },
  "bias_corrected_forward_chained": {
   "champion_rescore": {
-   "n": 3484,
-   "mae": 1.432,
-   "bias": 1.072,
+   "n": 3488,
+   "mae": 1.431,
+   "bias": 1.07,
    "within_1y": 0.583,
    "exact": 0.214
   },
   "bias_corrected": {
-   "n": 3484,
+   "n": 3488,
    "mae": 1.23,
-   "bias": 0.707,
+   "bias": 0.704,
    "within_1y": 0.661,
    "exact": 0.264
   },
   "overdue": {
-   "champion": 349,
-   "bias_corrected": 453
+   "champion": 347,
+   "bias_corrected": 451
   },
   "shippable_level_bias_adj": {
-   "DSL": 0.5,
    "A": 0.5,
    "AAA": 0.5,
+   "DSL": 0.5,
    "CPX": 0.5,
-   "A+": 0.5,
-   "AA": 0.5
+   "AA": 0.5,
+   "A+": 0.5
   },
   "cap": 0.5,
   "shrink_k": 10,
@@ -271,8 +271,8 @@
   "note": "conservative -0.5 final shave at every minor level (eta.LEVEL_BIAS_ADJ), applied by the live caller (storage.py); champion backtest UNtouched. MAE/within-1y improve; overdue +~99 (in line with the accepted KM +101)."
  },
  "censoring": {
-  "censored_active": 2317,
-  "overdue_rate": 0.391,
+  "censored_active": 2311,
+  "overdue_rate": 0.39,
   "washed_out": 725,
   "washed_out_share_of_listed": 0.1
  },
@@ -310,10 +310,10 @@
    "DSL": 4
   },
   "2023": {
-   "A": 2,
+   "A": 2.0,
    "A+": 1.0,
    "AA": 1,
-   "CPX": 3,
+   "CPX": 3.0,
    "AAA": 0.0,
    "DSL": 3.0
   }
@@ -334,12 +334,12 @@
    0.6516,
    0.3702,
    0.2622,
-   0.2178,
-   0.2048,
-   0.1983,
-   0.1897,
-   0.1878,
-   0.1878
+   0.2169,
+   0.204,
+   0.1975,
+   0.1889,
+   0.1871,
+   0.1871
   ],
   "A+": [
    0.9032,
@@ -354,25 +354,25 @@
   ],
   "A": [
    0.9698,
-   0.8223,
-   0.6158,
-   0.4513,
-   0.3316,
-   0.2729,
-   0.2474,
-   0.2346,
-   0.2346
+   0.8224,
+   0.6161,
+   0.451,
+   0.3306,
+   0.2721,
+   0.2467,
+   0.2339,
+   0.2339
   ],
   "CPX": [
    0.9899,
-   0.9331,
-   0.8012,
-   0.6045,
-   0.3409,
-   0.2142,
-   0.1428,
-   0.1373,
-   0.1316
+   0.9332,
+   0.8016,
+   0.6053,
+   0.3397,
+   0.2134,
+   0.1423,
+   0.1368,
+   0.1311
   ],
   "DSL": [
    0.9951,
@@ -385,5 +385,68 @@
    0.5633,
    0.5477
   ]
+ },
+ "empirical_table_gate_2026_08_19": {
+  "gate": "docs/eta-2026-08-19/ETA_EMPIRICAL_TABLE_GATE.md",
+  "date": "2026-08-19",
+  "seed": 20260819,
+  "B": 2000,
+  "candidate": "eta v40: forward-chained empirical table where defined, champion fallback",
+  "row_matched": {
+   "n": 2944,
+   "champion": {
+    "mae": 1.471,
+    "within_1y": 0.57
+   },
+   "challenger": {
+    "mae": 0.869,
+    "within_1y": 0.811
+   },
+   "d_mae": 0.602,
+   "mde95_mae": 0.05,
+   "d_mae_ci95": [
+    0.552,
+    0.651
+   ],
+   "d_within_1y": 0.241,
+   "d_within_1y_ci95": [
+    0.22,
+    0.263
+   ]
+  },
+  "pooled_system": {
+   "n": 4186,
+   "n_challenger_defined": 2944,
+   "pooled_mae": 0.998,
+   "champion_mae": 1.422
+  },
+  "overdue_guardrail": {
+   "censored_n": 2311,
+   "champion": 902,
+   "shipped_system": 1355,
+   "delta": 453,
+   "limit": 110
+  },
+  "leak_check": {
+   "forward_chained": true,
+   "rederived_tables_match_artifact": true
+  },
+  "full_window_ship_table": {
+   "A": 2,
+   "A+": 1,
+   "AA": 1,
+   "AAA": 0,
+   "CPX": 3.0,
+   "DSL": 3.0
+  },
+  "clauses": {
+   "C1": "PASS",
+   "C2": "PASS",
+   "C3": "PASS",
+   "C4": "FAIL",
+   "C5": "PASS"
+  },
+  "decision": "NO_SHIP",
+  "note": "NO SHIP (2026-08-19). C1/C2/C3/C5 pass, C4 FAILS 4x over: the forward-chained empirical table is a survivor median (fit on debuted rows only), and as the shipped system it marks 1,355 of 2,311 censored-active players overdue vs the champion's 902 (+453 against the +110 limit; v39 precedent +101). Row-matched debuted frame: champion MAE 1.471 vs challenger 0.869 (dMAE +0.602, MDE95 0.050); pooled system 0.998 vs champion 1.422. Conditional accuracy bought by dropping the bust mass; the KM v39 bases stay champion. eta.py untouched. Do not re-run without a cure-aware refit. Gate doc: docs/eta-2026-08-19/ETA_EMPIRICAL_TABLE_GATE.md."
  }
 }
