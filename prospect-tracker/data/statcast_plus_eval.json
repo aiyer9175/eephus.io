@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-11",
+ "generated_at": "2026-08-19",
  "seasons": [
   2023,
   2024,
@@ -12,27 +12,27 @@
   "live_trail": "per-season statcast_metrics/zone_metrics rows began accumulating 2026 \u2014 the literal composite becomes forward-scoreable as those cohorts debut"
  },
  "cohort_n": {
-  "2023->2024": 41,
+  "2023->2024": 43,
   "2024->2025": 46,
-  "2025->2026": 12
+  "2025->2026": 30
  },
  "hitters": {
-  "n_ops": 49,
-  "r_sc_vs_mlb_ops": 0.1541,
-  "rho_sc_vs_mlb_ops": 0.1249,
+  "n_ops": 58,
+  "r_sc_vs_mlb_ops": 0.1316,
+  "rho_sc_vs_mlb_ops": 0.1129,
   "n_war": 100,
-  "r_sc_vs_war2y": 0.1417,
-  "rho_sc_vs_war2y": -0.0154
+  "r_sc_vs_war2y": 0.0844,
+  "rho_sc_vs_war2y": -0.0343
  },
  "pitchers": {
-  "n_era": 50,
-  "r_sc_vs_mlb_era_inv": 0.1206,
-  "rho_sc_vs_mlb_era_inv": 0.1693,
+  "n_era": 61,
+  "r_sc_vs_mlb_era_inv": 0.098,
+  "rho_sc_vs_mlb_era_inv": 0.0977,
   "n_war": 102,
-  "r_sc_vs_war2y": 0.0629,
-  "rho_sc_vs_war2y": 0.0633
+  "r_sc_vs_war2y": 0.1135,
+  "rho_sc_vs_war2y": 0.0911
  },
  "verdict": {
-  "summary": "WEAK forward signal, published per the audit's publish-the-r rule: final-AAA contact analog vs first-MLB rate outcomes r ~ 0.12-0.17; vs 2y bWAR ~ 0 (hitters). Consistent with the known ISO+ -> MLB ISO r=0.24 prior. SC+ remains descriptive \u2014 downstream consumers (breakout gate, ETA modifier, spotlight boost) should treat it as a tiebreaker, never a driver; the ETA backtest scores the core heuristic WITHOUT the SC+ nudge."
+  "summary": "WEAK forward signal, published per the audit's publish-the-r rule: final-AAA contact analog vs first-MLB rate outcomes r ~ 0.10-0.13; hitter 2y-bWAR r 0.08. Consistent with the known ISO+ -> MLB ISO r=0.24 prior. SC+ remains descriptive - downstream consumers (breakout gate, ETA modifier, spotlight boost) should treat it as a tiebreaker, never a driver; the ETA backtest scores the core heuristic WITHOUT the SC+ nudge."
  }
 }

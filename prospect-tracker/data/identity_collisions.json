@@ -1,24 +1,24 @@
 {
- "generated_at": "2026-08-18T17:43:46Z",
+ "generated_at": "2026-08-19T19:36:23Z",
  "summary": {
-  "board_rows": 9748,
-  "active_board_rows": 4677,
-  "roster_rows": 10707,
-  "colliding_slugs": 198,
-  "critical_player_keys": 21,
+  "board_rows": 9763,
+  "active_board_rows": 4690,
+  "roster_rows": 10715,
+  "colliding_slugs": 199,
+  "critical_player_keys": 22,
   "critical_active_player_keys": 0,
   "c1_shared_key": 0,
   "c1_unattributed": 0,
   "c1_shadowed": 157,
-  "c1_split": 8,
+  "c1_split": 9,
   "c1_untracked": 33,
   "c2_double_bound": 0,
   "c3_unresolved_active": 0,
   "c4_side_conflicts": 10,
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
-  "c7_name_variant_splits": 22,
-  "c7_name_variant_open": 11,
+  "c7_name_variant_splits": 23,
+  "c7_name_variant_open": 12,
   "frankenstein_records": 0,
   "unassigned_null_id_rows": 22
  },
@@ -32,6 +32,7 @@
   "david_rodriguez",
   "dennis_colleran",
   "dennis_colleran__noid",
+  "dominic_keegan",
   "enmanuel_rodriguez",
   "jared_jones__sa3034881",
   "javi_vaz",
@@ -355,15 +356,6 @@
    "mlbam_ids": [
     703330,
     815095
-   ]
-  },
-  {
-   "slug": "deivi_garcia",
-   "board_key": "deivi_garcia",
-   "n_humans": 2,
-   "mlbam_ids": [
-    665620,
-    835491
    ]
   },
   {
@@ -1295,6 +1287,15 @@
    ]
   },
   {
+   "slug": "nathan_hall",
+   "board_key": "nathan_hall",
+   "n_humans": 2,
+   "mlbam_ids": [
+    703449,
+    807937
+   ]
+  },
+  {
    "slug": "noah_miller",
    "board_key": "noah_miller",
    "n_humans": 2,
@@ -1647,7 +1648,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-02",
+    "2026-08-19",
     "2025-07-31"
    ],
    "resolved_by_alias": false
@@ -1672,6 +1673,29 @@
    "last_snapshot_dates": [
     "2025-01-22",
     "2025-07-31"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "dom_keegan",
+    "dominic_keegan"
+   ],
+   "player_key": "dominic_keegan",
+   "names": [
+    "Dom Keegan",
+    "Dominic Keegan"
+   ],
+   "birth_date": "2000-08-01",
+   "org": "TBR",
+   "mlbam_ids": [
+    681371,
+    null
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-02",
+    "2026-02-15"
    ],
    "resolved_by_alias": false
   },
@@ -1717,7 +1741,7 @@
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
     "2022-08-02",
-    "2026-08-16"
+    "2026-08-19"
    ],
    "resolved_by_alias": false
   },
@@ -1739,7 +1763,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-10",
+    "2026-08-18",
     "2026-05-20"
    ],
    "resolved_by_alias": true
@@ -1762,7 +1786,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-10",
+    "2026-08-18",
     "2023-08-01"
    ],
    "resolved_by_alias": false
@@ -1809,7 +1833,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2023-08-01",
-    "2026-08-02"
+    "2026-08-19"
    ],
    "resolved_by_alias": false
   },
@@ -1832,7 +1856,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2022-08-02",
-    "2026-01-22"
+    "2026-08-19"
    ],
    "resolved_by_alias": false
   },
@@ -1855,7 +1879,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-02-12",
-    "2026-08-10"
+    "2026-08-19"
    ],
    "resolved_by_alias": true
   },
@@ -1900,7 +1924,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-16",
+    "2026-08-19",
     "2025-07-31"
    ],
    "resolved_by_alias": false
@@ -1969,7 +1993,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-10",
+    "2026-08-19",
     "2026-08-02"
    ],
    "resolved_by_alias": true
@@ -1992,7 +2016,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-10",
+    "2026-08-19",
     "2026-02-12"
    ],
    "resolved_by_alias": true
@@ -2015,7 +2039,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-10",
+    "2026-08-19",
     "2021-02-26"
    ],
    "resolved_by_alias": false
@@ -2039,7 +2063,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-08-02",
-    "2026-08-10"
+    "2026-08-19"
    ],
    "resolved_by_alias": true
   },
@@ -2048,7 +2072,7 @@
     "jack_natili",
     "jackson_natili"
    ],
-   "player_key": "jack_natili",
+   "player_key": "jackson_natili",
    "names": [
     "Jack Natili",
     "Jackson Natili"
@@ -2061,7 +2085,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-01-22",
+    "2026-08-19",
     "2026-08-10"
    ],
    "resolved_by_alias": true
@@ -2085,7 +2109,7 @@
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
     "2025-02-15",
-    "2026-08-16"
+    "2026-08-19"
    ],
    "resolved_by_alias": false
   },
@@ -2107,7 +2131,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-10",
+    "2026-08-19",
     "2025-07-31"
    ],
    "resolved_by_alias": true
@@ -2130,8 +2154,8 @@
    ],
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
-    "2026-08-16",
-    "2026-08-16"
+    "2026-08-19",
+    "2026-08-19"
    ],
    "resolved_by_alias": false
   }

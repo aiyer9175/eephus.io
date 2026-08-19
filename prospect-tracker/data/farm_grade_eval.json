@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-11",
+ "generated_at": "2026-08-19",
  "vintage_years": [
   2018,
   2019,
@@ -18,59 +18,59 @@
   "2018": {
    "n_orgs": 30,
    "spearman": {
-    "sum_surplus_mm": 0.7478,
-    "sum_expected_war": 0.7083,
-    "count": 0.4286,
-    "count_fv50plus": 0.7191
+    "sum_surplus_mm": 0.7567,
+    "sum_expected_war": 0.6995,
+    "count": 0.4096,
+    "count_fv50plus": 0.7359
    },
-   "realized_total_war": 432.1
+   "realized_total_war": 432.2
   },
   "2019": {
    "n_orgs": 30,
    "spearman": {
-    "sum_surplus_mm": 0.5226,
-    "sum_expected_war": 0.555,
-    "count": 0.2976,
-    "count_fv50plus": 0.5272
+    "sum_surplus_mm": 0.5221,
+    "sum_expected_war": 0.5805,
+    "count": 0.2962,
+    "count_fv50plus": 0.5344
    },
-   "realized_total_war": 555.0
+   "realized_total_war": 555.1
   },
   "2020": {
    "n_orgs": 30,
    "spearman": {
-    "sum_surplus_mm": 0.3604,
-    "sum_expected_war": 0.2777,
-    "count": 0.0522,
-    "count_fv50plus": 0.4112
+    "sum_surplus_mm": 0.3573,
+    "sum_expected_war": 0.2753,
+    "count": 0.0518,
+    "count_fv50plus": 0.4087
    },
-   "realized_total_war": 532.9
+   "realized_total_war": 532.1
   },
   "2021": {
    "n_orgs": 30,
    "spearman": {
-    "sum_surplus_mm": 0.429,
-    "sum_expected_war": 0.3308,
-    "count": 0.248,
-    "count_fv50plus": 0.4201
+    "sum_surplus_mm": 0.4441,
+    "sum_expected_war": 0.3798,
+    "count": 0.1844,
+    "count_fv50plus": 0.3494
    },
-   "realized_total_war": 644.5
+   "realized_total_war": 673.4
   },
   "2022": {
    "n_orgs": 30,
    "spearman": {
-    "sum_surplus_mm": 0.4821,
-    "sum_expected_war": 0.4042,
-    "count": 0.1744,
-    "count_fv50plus": 0.3995
+    "sum_surplus_mm": 0.4665,
+    "sum_expected_war": 0.4218,
+    "count": 0.1931,
+    "count_fv50plus": 0.2948
    },
-   "realized_total_war": 766.5
+   "realized_total_war": 788.5
   }
  },
  "mean_spearman": {
-  "sum_surplus_mm": 0.5084,
-  "sum_expected_war": 0.4552,
-  "count": 0.2402,
-  "count_fv50plus": 0.4954
+  "sum_surplus_mm": 0.5093,
+  "sum_expected_war": 0.4714,
+  "count": 0.227,
+  "count_fv50plus": 0.4646
  },
  "verdict": {
   "financial_core_beats_count": true,

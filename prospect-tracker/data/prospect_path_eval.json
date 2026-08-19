@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-11",
+ "generated_at": "2026-08-19",
  "debut_years": [
   2017,
   2018,
@@ -13,11 +13,11 @@
   2021
  ],
  "accounting": {
-  "debuts": 661,
-  "no_pre_debut_fv": 31,
+  "debuts": 686,
+  "no_pre_debut_fv": 35,
   "no_war_rows": 24,
-  "no_milb_features": 11,
-  "scored": 595
+  "no_milb_features": 13,
+  "scored": 614
  },
  "conventions": {
   "vintage_fv": "median of each source's latest strictly-pre-debut snapshot",
@@ -27,171 +27,171 @@
   "model": "per-side ridge (closed form), alpha tuned inside training folds only"
  },
  "challenger_pooled_oos": {
-  "n": 477,
-  "mae": 1.541,
-  "spearman": 0.1495,
+  "n": 487,
+  "mae": 1.509,
+  "spearman": 0.1539,
   "calibration": {
-   "slope": 0.649,
-   "bias": -0.095
+   "slope": 0.776,
+   "bias": -0.057
   }
  },
  "baseline_pooled_oos": {
-  "n": 477,
-  "mae": 1.587,
-  "spearman": 0.2099,
+  "n": 487,
+  "mae": 1.548,
+  "spearman": 0.1931,
   "calibration": {
-   "slope": 0.78,
-   "bias": 0.29
+   "slope": 0.683,
+   "bias": 0.189
   }
  },
  "lgbm_challenger_pooled_oos": {
-  "n": 410,
-  "mae": 1.475,
-  "spearman": 0.1556,
+  "n": 487,
+  "mae": 1.625,
+  "spearman": 0.164,
   "calibration": {
-   "slope": 0.354,
-   "bias": 0.11
+   "slope": 0.453,
+   "bias": 0.122
   }
  },
  "baseline_calibrated_pooled_oos": {
-  "n": 477,
-  "mae": 1.51,
-  "spearman": 0.1733,
+  "n": 487,
+  "mae": 1.499,
+  "spearman": 0.1673,
   "calibration": {
-   "slope": 0.642,
-   "bias": 0.04
+   "slope": 0.624,
+   "bias": 0.006
   }
  },
  "baseline_intercept_only_pooled_oos": {
-  "n": 338,
-  "mae": 1.384,
-  "spearman": 0.1777,
+  "n": 345,
+  "mae": 1.362,
+  "spearman": 0.17,
   "calibration": {
-   "slope": 0.726,
-   "bias": 0.11
+   "slope": 0.633,
+   "bias": 0.037
   }
  },
  "baseline_on_intercept_rows": {
-  "n": 338,
-  "mae": 1.469,
-  "spearman": 0.1923,
+  "n": 345,
+  "mae": 1.422,
+  "spearman": 0.1749,
   "calibration": {
-   "slope": 0.738,
-   "bias": 0.341
+   "slope": 0.631,
+   "bias": 0.224
   }
  },
  "per_year": {
   "2019": {
    "challenger": {
-    "n": 139,
-    "mae": 1.768,
-    "spearman": 0.256,
+    "n": 142,
+    "mae": 1.723,
+    "spearman": 0.2382,
     "calibration": {
-     "slope": 0.732,
-     "bias": -0.353
+     "slope": 1.33,
+     "bias": -0.142
     }
    },
    "baseline": {
-    "n": 139,
-    "mae": 1.875,
-    "spearman": 0.1937,
+    "n": 142,
+    "mae": 1.853,
+    "spearman": 0.1791,
     "calibration": {
-     "slope": 0.811,
-     "bias": 0.165
+     "slope": 0.741,
+     "bias": 0.105
     }
    },
    "lgbm": {
-    "n": 72,
-    "mae": 1.255,
-    "spearman": 0.0343,
+    "n": 142,
+    "mae": 1.815,
+    "spearman": 0.1644,
     "calibration": {
-     "slope": 0.052,
-     "bias": 0.107
+     "slope": 0.711,
+     "bias": 0.016
     }
    },
    "baseline_calibrated": {
-    "n": 139,
-    "mae": 1.824,
-    "spearman": 0.1913,
+    "n": 142,
+    "mae": 1.816,
+    "spearman": 0.1777,
     "calibration": {
-     "slope": 0.566,
-     "bias": -0.132
+     "slope": 0.565,
+     "bias": -0.143
     }
    }
   },
   "2020": {
    "challenger": {
-    "n": 159,
-    "mae": 1.502,
-    "spearman": 0.1715,
+    "n": 161,
+    "mae": 1.477,
+    "spearman": 0.1914,
     "calibration": {
-     "slope": 0.582,
-     "bias": 0.209
+     "slope": 0.658,
+     "bias": 0.228
     }
    },
    "baseline": {
-    "n": 159,
-    "mae": 1.564,
-    "spearman": 0.283,
+    "n": 161,
+    "mae": 1.51,
+    "spearman": 0.2729,
     "calibration": {
-     "slope": 0.639,
-     "bias": 0.49
+     "slope": 0.569,
+     "bias": 0.404
     }
    },
    "lgbm": {
-    "n": 159,
-    "mae": 1.581,
-    "spearman": 0.2004,
+    "n": 161,
+    "mae": 1.637,
+    "spearman": 0.1956,
     "calibration": {
-     "slope": 0.421,
-     "bias": 0.333
+     "slope": 0.369,
+     "bias": 0.412
     }
    },
    "baseline_calibrated": {
-    "n": 159,
-    "mae": 1.472,
-    "spearman": 0.284,
+    "n": 161,
+    "mae": 1.451,
+    "spearman": 0.2721,
     "calibration": {
-     "slope": 0.595,
-     "bias": 0.302
+     "slope": 0.573,
+     "bias": 0.258
     }
    }
   },
   "2021": {
    "challenger": {
-    "n": 179,
-    "mae": 1.398,
-    "spearman": 0.0416,
+    "n": 184,
+    "mae": 1.373,
+    "spearman": 0.0228,
     "calibration": {
-     "slope": 0.596,
-     "bias": -0.164
+     "slope": 0.591,
+     "bias": -0.241
     }
    },
    "baseline": {
-    "n": 179,
-    "mae": 1.385,
-    "spearman": 0.1068,
+    "n": 184,
+    "mae": 1.346,
+    "spearman": 0.0831,
     "calibration": {
-     "slope": 0.874,
-     "bias": 0.209
+     "slope": 0.73,
+     "bias": 0.066
     }
    },
    "lgbm": {
-    "n": 179,
-    "mae": 1.47,
-    "spearman": 0.1567,
+    "n": 184,
+    "mae": 1.468,
+    "spearman": 0.1302,
     "calibration": {
-     "slope": 0.356,
-     "bias": -0.087
+     "slope": 0.309,
+     "bias": -0.049
     }
    },
    "baseline_calibrated": {
-    "n": 179,
-    "mae": 1.3,
-    "spearman": 0.1063,
+    "n": 184,
+    "mae": 1.296,
+    "spearman": 0.0832,
     "calibration": {
-     "slope": 0.916,
-     "bias": -0.059
+     "slope": 0.845,
+     "bias": -0.101
     }
    }
   }
@@ -204,24 +204,24 @@
  "calibration": {
   "rule": "linear recentering of the live mean path (rank-preserving): held-out slope must move toward 1 and |bias| shrink, MAE not degraded (+0.02 tolerance)",
   "forward_chained": {
-   "n": 477,
-   "mae": 1.51,
-   "spearman": 0.1733,
+   "n": 487,
+   "mae": 1.499,
+   "spearman": 0.1673,
    "calibration": {
-    "slope": 0.642,
-    "bias": 0.04
+    "slope": 0.624,
+    "bias": 0.006
    }
   },
   "baseline_uncalibrated": {
    "calibration": {
-    "slope": 0.78,
-    "bias": 0.29
+    "slope": 0.683,
+    "bias": 0.189
    }
   },
   "full_window_fit": {
-   "a": -0.175,
-   "b": 0.9338,
-   "n": 595
+   "a": 0.0302,
+   "b": 0.826,
+   "n": 614
   },
   "ship": false,
   "applies_to": "proj_export._prospect_rows mean paths (display layer only - surplus has its own isotonic calibration, never double-corrected)"
@@ -229,15 +229,15 @@
  "calibration_intercept_only": {
   "rule": "PRE-REGISTERED candidate #2 (2026-06-11): intercept-only shift, min-train-n 250 (skips the thin 2019 fold). Held-out |bias| must shrink, slope not worsen by >0.02, MAE not degrade by >0.02.",
   "forward_chained": {
-   "n": 338,
-   "mae": 1.384,
-   "spearman": 0.1777,
+   "n": 345,
+   "mae": 1.362,
+   "spearman": 0.17,
    "calibration": {
-    "slope": 0.726,
-    "bias": 0.11
+    "slope": 0.633,
+    "bias": 0.037
    }
   },
-  "full_window_shift": 0.2673,
+  "full_window_shift": 0.1924,
   "ship": true
  }
 }

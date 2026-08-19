@@ -1,15 +1,15 @@
 {
- "generated_at": "2026-06-11",
+ "generated_at": "2026-08-19",
  "conventions": {
   "cohort": "curated NPB/KBO -> MLB transitions 2015-2026 (returnees flagged); foreign side = last qualifying season pre-entry (B-Ref register); MLB side = first season >= entry with min exposure (StatsAPI)",
   "era_factor": "IP-weighted ratio of means, shrunk k=8.0 toward incumbent",
   "k_pct_delta": "PA-weighted mean delta, shrunk k=8.0",
-  "not_shipped": "hitter_wrc_factor (needs per-season foreign league context — raw OPS ratio reported as analog), fb_velo_delta (no source), CPBL/CUBA/NPBF (n too small, stay prior)",
-  "exclusions": "players whose pages fail to resolve/parse are excluded and counted — the ledger is owner-extendable"
+  "not_shipped": "hitter_wrc_factor (needs per-season foreign league context \u2014 raw OPS ratio reported as analog), fb_velo_delta (no source), CPBL/CUBA/NPBF (n too small, stay prior)",
+  "exclusions": "players whose pages fail to resolve/parse are excluded and counted \u2014 the ledger is owner-extendable"
  },
  "accounting": {
-  "listed": 34,
-  "resolved": 28,
+  "listed": 35,
+  "resolved": 29,
   "no_register_page": 0,
   "no_foreign_line": 3,
   "no_mlb_line": 3
@@ -19,24 +19,24 @@
    "n_pitchers": 15,
    "n_hitters": 6,
    "measured_era_ratio": 1.696,
-   "incumbent_era_factor": 1.25,
-   "shipped_era_factor": 1.541,
-   "measured_k_pct_delta": 0.0475,
-   "incumbent_k_pct_delta": 0.04,
-   "shipped_k_pct_delta": 0.043,
-   "measured_raw_ops_ratio_NOT_SHIPPED": 0.802,
+   "incumbent_era_factor": 1.54,
+   "shipped_era_factor": 1.642,
+   "measured_k_pct_delta": 0.0483,
+   "incumbent_k_pct_delta": 0.043,
+   "shipped_k_pct_delta": 0.045,
+   "measured_raw_ops_ratio_NOT_SHIPPED": 0.798,
    "incumbent_wrc_factor_retained": 0.87
   },
   "KBO": {
    "n_pitchers": 6,
-   "n_hitters": 1,
+   "n_hitters": 2,
    "measured_era_ratio": 1.215,
-   "incumbent_era_factor": 1.32,
-   "shipped_era_factor": 1.275,
-   "measured_k_pct_delta": 0.0474,
+   "incumbent_era_factor": 1.275,
+   "shipped_era_factor": 1.249,
+   "measured_k_pct_delta": 0.0965,
    "incumbent_k_pct_delta": 0.05,
-   "shipped_k_pct_delta": 0.05,
-   "measured_raw_ops_ratio_NOT_SHIPPED": 0.819,
+   "shipped_k_pct_delta": 0.059,
+   "measured_raw_ops_ratio_NOT_SHIPPED": 0.823,
    "incumbent_wrc_factor_retained": 0.749
   }
  },
@@ -491,10 +491,10 @@
    },
    "mlb": {
     "season": 2026,
-    "ops": 0.938,
-    "pa": 246.0,
-    "so": 80.0,
-    "k_pct": 0.3252032520325203
+    "ops": 0.912,
+    "pa": 395.0,
+    "so": 131.0,
+    "k_pct": 0.33164556962025316
    }
   },
   {
@@ -689,6 +689,7 @@
    "league": "KBO",
    "side": "hit",
    "entry": 2021,
+   "fg_id": "27506",
    "status": "no_foreign_line"
   },
   {
@@ -696,7 +697,30 @@
    "league": "KBO",
    "side": "hit",
    "entry": 2024,
+   "fg_id": "33824",
    "status": "no_foreign_line"
+  },
+  {
+   "name": "Hyeseong Kim",
+   "league": "KBO",
+   "side": "hit",
+   "entry": 2025,
+   "fg_id": "kr3012639",
+   "status": "resolved",
+   "foreign": {
+    "season": 2024,
+    "ops": 0.841,
+    "pa": 567.0,
+    "so": 62.0,
+    "k_pct": 0.10934744268077601
+   },
+   "mlb": {
+    "season": 2025,
+    "ops": 0.699,
+    "pa": 170.0,
+    "so": 52.0,
+    "k_pct": 0.3058823529411765
+   }
   }
  ],
  "hitter_wrc_factor": {
@@ -759,16 +783,16 @@
    "KBO": {
     "n_resolved": 3,
     "min_required": 3,
-    "incumbent_prior": 0.81,
+    "incumbent_prior": 0.749,
     "measured_raw_ratio": 0.5857,
-    "shipped_if_pass": 0.7488,
-    "loo_mae_fitted": 23.547,
-    "loo_mae_prior": 27.16,
+    "shipped_if_pass": 0.7045,
+    "loo_mae_fitted": 20.879,
+    "loo_mae_prior": 21.279,
     "loo_factor_swing": 0.0307,
     "bootstrap_seed": 8,
     "bootstrap_95_band": [
-     0.7236,
-     0.8015
+     0.6792,
+     0.7571
     ],
     "gate": {
      "coverage_ok": true,

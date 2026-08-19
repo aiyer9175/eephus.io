@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-10",
+ "generated_at": "2026-08-19",
  "basis": "npv_deferral_adjusted signings-implied series",
  "test_winters": [
   2018,
@@ -15,167 +15,167 @@
  "per_winter": [
   {
    "winter": 2018,
-   "actual_usd": 8443544,
+   "actual_usd": 10138710,
    "flat5": {
-    "pred_usd": 9454031,
-    "ape": 0.1197
+    "pred_usd": 11911865,
+    "ape": 0.1749
    },
    "trend": {
-    "pred_usd": 9454031,
-    "ape": 0.1197
+    "pred_usd": 11911865,
+    "ape": 0.1749
    },
    "trend_cbt": {
-    "pred_usd": 9454031,
-    "ape": 0.1197
+    "pred_usd": 11911865,
+    "ape": 0.1749
    }
   },
   {
    "winter": 2019,
-   "actual_usd": 9123461,
+   "actual_usd": 11275292,
    "flat5": {
-    "pred_usd": 8865721,
-    "ape": 0.0283
+    "pred_usd": 10645645,
+    "ape": 0.0558
    },
    "trend": {
-    "pred_usd": 8334099,
-    "ape": 0.0865
+    "pred_usd": 9823715,
+    "ape": 0.1287
    },
    "trend_cbt": {
-    "pred_usd": 5506884,
-    "ape": 0.3964
+    "pred_usd": 7164135,
+    "ape": 0.3646
    }
   },
   {
    "winter": 2020,
-   "actual_usd": 9125942,
+   "actual_usd": 10964553,
    "flat5": {
-    "pred_usd": 9579634,
-    "ape": 0.0497
+    "pred_usd": 11839057,
+    "ape": 0.0798
    },
    "trend": {
-    "pred_usd": 8596106,
-    "ape": 0.0581
+    "pred_usd": 10400510,
+    "ape": 0.0514
    },
    "trend_cbt": {
-    "pred_usd": 8812469,
-    "ape": 0.0343
+    "pred_usd": 10846488,
+    "ape": 0.0108
    }
   },
   {
    "winter": 2021,
-   "actual_usd": 11268392,
+   "actual_usd": 15224598,
    "flat5": {
-    "pred_usd": 9582239,
-    "ape": 0.1496
+    "pred_usd": 11512780,
+    "ape": 0.2438
    },
    "trend": {
-    "pred_usd": 8739400,
-    "ape": 0.2244
+    "pred_usd": 10500576,
+    "ape": 0.3103
    },
    "trend_cbt": {
-    "pred_usd": 8784587,
-    "ape": 0.2204
+    "pred_usd": 10581440,
+    "ape": 0.305
    }
   },
   {
    "winter": 2022,
-   "actual_usd": 12861674,
+   "actual_usd": 14123671,
    "flat5": {
-    "pred_usd": 11831812,
-    "ape": 0.0801
+    "pred_usd": 15985828,
+    "ape": 0.1318
    },
    "trend": {
-    "pred_usd": 9957023,
-    "ape": 0.2258
+    "pred_usd": 12751095,
+    "ape": 0.0972
    },
    "trend_cbt": {
-    "pred_usd": 11875658,
-    "ape": 0.0767
+    "pred_usd": 16559127,
+    "ape": 0.1724
    }
   },
   {
    "winter": 2023,
-   "actual_usd": 13589089,
+   "actual_usd": 14503154,
    "flat5": {
-    "pred_usd": 13504757,
-    "ape": 0.0062
+    "pred_usd": 14829855,
+    "ape": 0.0225
    },
    "trend": {
-    "pred_usd": 11458120,
-    "ape": 0.1568
+    "pred_usd": 13714420,
+    "ape": 0.0544
    },
    "trend_cbt": {
-    "pred_usd": 12852085,
-    "ape": 0.0542
+    "pred_usd": 14638558,
+    "ape": 0.0093
    }
   },
   {
    "winter": 2024,
-   "actual_usd": 11414697,
+   "actual_usd": 14639529,
    "flat5": {
-    "pred_usd": 14268543,
-    "ape": 0.25
+    "pred_usd": 15228312,
+    "ape": 0.0402
    },
    "trend": {
-    "pred_usd": 12784988,
-    "ape": 0.12
+    "pred_usd": 14491078,
+    "ape": 0.0101
    },
    "trend_cbt": {
-    "pred_usd": 13516360,
-    "ape": 0.1841
+    "pred_usd": 14911641,
+    "ape": 0.0186
    }
   },
   {
    "winter": 2025,
-   "actual_usd": 14078154,
+   "actual_usd": 16985356,
    "flat5": {
-    "pred_usd": 11985432,
-    "ape": 0.1487
+    "pred_usd": 15371506,
+    "ape": 0.095
    },
    "trend": {
-    "pred_usd": 12782278,
-    "ape": 0.092
+    "pred_usd": 15052900,
+    "ape": 0.1138
    },
    "trend_cbt": {
-    "pred_usd": 12909183,
-    "ape": 0.083
+    "pred_usd": 15136398,
+    "ape": 0.1089
    }
   },
   {
    "winter": 2026,
-   "actual_usd": 13582610,
+   "actual_usd": 16284780,
    "flat5": {
-    "pred_usd": 14782061,
-    "ape": 0.0883
+    "pred_usd": 17834623,
+    "ape": 0.0952
    },
    "trend": {
-    "pred_usd": 13764960,
-    "ape": 0.0134
+    "pred_usd": 16281143,
+    "ape": 0.0002
    },
    "trend_cbt": {
-    "pred_usd": 13359483,
-    "ape": 0.0164
+    "pred_usd": 16006515,
+    "ape": 0.0171
    }
   }
  ],
  "summary": {
   "flat5": {
-   "mape": 0.1023,
+   "mape": 0.1043,
    "n": 9
   },
   "trend": {
-   "mape": 0.1219,
+   "mape": 0.1046,
    "n": 9
   },
   "trend_cbt": {
-   "mape": 0.1317,
+   "mape": 0.1313,
    "n": 9
   }
  },
  "winner": "flat5",
  "notes": [
   "forward-chained one-winter-ahead; each method sees only prior winters",
-  "tiny n by nature \u2014 the eval justifies a config choice, not a model claim",
+  "tiny n by nature - the eval justifies a config choice, not a model claim",
   "active method lives in fa_config market_model.dpw_forecast.method"
  ]
 }

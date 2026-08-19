@@ -157,12 +157,13 @@ LEAGUE_CONTEXT = {
         "season_window": "March to October",
         "split_note":    "Central + Pacific Leagues; Pacific runs slightly hotter (about +5 OPS pts)",
         "hitter_wrc_factor": 0.87, # PRIOR retained - wRC+ refit needs per-season league context (measured raw OPS ratio 0.802, see eval)
-        # REFIT (model-audit Phase 4b WS-8, data/overseas_translation_eval.json):
+        # REFIT (model-audit Phase 4b WS-8, data/overseas_translation_eval.json;
+        # refreshed 2026-08-19 freshness wave, ledger 34 -> 35 transitions):
         # measured IP-weighted ERA ratio 1.696 over the n=15 2016-25
-        # transition cohort (Maeda...Sasaki), shrunk k=8 toward the old
-        # 1.25 prior -> 1.54. The hand-set haircut was badly optimistic.
-        "pitcher_era_factor": 1.54,   # NPB ERA  × 1.54 ≈ MLB ERA
-        "hitter_k_pct_delta": +0.043, # REFIT: measured +0.0475 (n=6), shrunk
+        # transition cohort (Maeda...Sasaki), shrunk toward the old
+        # 1.25 prior -> 1.642. The hand-set haircut was badly optimistic.
+        "pitcher_era_factor": 1.642,  # NPB ERA  × 1.64 ≈ MLB ERA
+        "hitter_k_pct_delta": +0.045, # REFIT 2026-08-19: shrunk, tracks the eval
         "fb_velo_delta": -1.0, # PRIOR retained - no historical velo source
         "citation":           "Phase-4b transition refit (overseas_translation_eval) / Longenhagen 2024 priors where unmeasured",
     },
@@ -189,11 +190,11 @@ LEAGUE_CONTEXT = {
         # Elite-selection caveat disclosed in the eval. NPB stayed prior
         # (0 cached transitions, coverage-blocked). See hitter_wrc_factor block.
         "hitter_wrc_factor": 0.749,
-        # REFIT (Phase 4b WS-8): measured ERA ratio 1.215 (n=6, incl.
-        # MLB returnees Kelly/Flexen/Fedde - flagged in the eval),
-        # shrunk toward 1.32 -> 1.275. KBO prior was slightly harsh.
-        "pitcher_era_factor": 1.275,
-        "hitter_k_pct_delta": +0.05,  # measured +0.0474 ≈ prior; retained
+        # REFIT (Phase 4b WS-8; refreshed 2026-08-19 freshness wave):
+        # measured ERA ratio 1.215 (n=6, incl. MLB returnees
+        # Kelly/Flexen/Fedde - flagged in the eval), shrunk -> 1.249.
+        "pitcher_era_factor": 1.249,
+        "hitter_k_pct_delta": +0.059, # REFIT 2026-08-19: measured +0.0965 (n=2), shrunk
         "fb_velo_delta": -1.5, # PRIOR retained - no historical velo source
         "citation":           "Phase-4b transition refit (overseas_translation_eval) / Longenhagen 2024 priors where unmeasured",
     },

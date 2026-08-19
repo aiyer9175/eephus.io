@@ -281,6 +281,17 @@ def run(persist: bool = True) -> dict:
                         pairs["pit"]["war"].append(w)
         cohort_n[f"{season}->{debut_year}"] = n
 
+    _rate_rs = [v for v in (
+        _pearson(pairs["hit"]["sc"], pairs["hit"]["ops"]),
+        _spearman(pairs["hit"]["sc"], pairs["hit"]["ops"]),
+        _pearson(pairs["pit"]["sc"], pairs["pit"]["era"]),
+        _spearman(pairs["pit"]["sc"], pairs["pit"]["era"]),
+    ) if v is not None]
+    _rate_range = (f"{min(_rate_rs):.2f}-{max(_rate_rs):.2f}"
+                   if _rate_rs else "n/a")
+    _hw = _pearson(pairs["hit"]["war_sc"], pairs["hit"]["war"])
+    _hit_war_r = f"{_hw:.2f}" if _hw is not None else "n/a"
+
     out = {
         "generated_at": date.today().isoformat(),
         "seasons": list(SEASONS),
@@ -317,14 +328,16 @@ def run(persist: bool = True) -> dict:
             "rho_sc_vs_war2y": _spearman(pairs["pit"]["war_sc"], pairs["pit"]["war"]),
         },
         "verdict": {
+            # the rate-outcome range derives from the measured r values -
+            # a hardcoded range went stale here once (banned defect class)
             "summary": "WEAK forward signal, published per the audit's "
                        "publish-the-r rule: final-AAA contact analog vs "
-                       "first-MLB rate outcomes r ~ 0.12-0.17; vs 2y bWAR "
-                       "~ 0 (hitters). Consistent with the known ISO+ -> "
-                       "MLB ISO r=0.24 prior. SC+ remains descriptive — "
-                       "downstream consumers (breakout gate, ETA "
-                       "modifier, spotlight boost) should treat it as a "
-                       "tiebreaker, never a driver; the ETA backtest "
+                       f"first-MLB rate outcomes r ~ {_rate_range}; hitter "
+                       f"2y-bWAR r {_hit_war_r}. Consistent with the known "
+                       "ISO+ -> MLB ISO r=0.24 prior. SC+ remains "
+                       "descriptive - downstream consumers (breakout gate, "
+                       "ETA modifier, spotlight boost) should treat it as "
+                       "a tiebreaker, never a driver; the ETA backtest "
                        "scores the core heuristic WITHOUT the SC+ nudge.",
         },
     }
