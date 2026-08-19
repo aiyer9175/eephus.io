@@ -1,0 +1,274 @@
+{
+ "gate_doc": "docs/fantasy-closer-gate-2026-08-16.md",
+ "computed_at": "2026-08-16",
+ "config": {
+  "season": 2026,
+  "w_sv": 0.65,
+  "w_gmli": 0.35,
+  "trail_days": 30,
+  "horizon_days": 14,
+  "base_start": "2026-04-24",
+  "group_offsets": [
+   0,
+   5,
+   10
+  ],
+  "spacing_days": 14,
+  "min_apps_pool": 2,
+  "ship_consistency": 0.7
+ },
+ "frame": {
+  "season_start": "2026-03-25",
+  "data_end": "2026-08-16",
+  "coverage": {
+   "games_final": 1885,
+   "games_with_win_prob": 1876,
+   "games_missing_win_prob": 9
+  },
+  "n_save_decisions": 966,
+  "n_orgs": 30,
+  "n_window_starts": 22,
+  "n_team_windows": 220,
+  "n_rp_rows": 2389,
+  "n_rank_cells": 212,
+  "n_rank_cells_skipped": 8
+ },
+ "pooled": {
+  "mae_champion": 0.3104,
+  "mae_baseline": 0.2845,
+  "mae_sv_only": 0.2737,
+  "rho_champion": 0.3894,
+  "rho_baseline": 0.4155,
+  "rho_sv_only": 0.4914
+ },
+ "per_start": [
+  {
+   "start": "2026-04-24",
+   "n_rows": 103,
+   "n_cells": 9,
+   "mae_champion": 0.3803,
+   "mae_baseline": 0.3599,
+   "rho_champion": 0.3322,
+   "rho_baseline": 0.3624,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-04-29",
+   "n_rows": 99,
+   "n_cells": 10,
+   "mae_champion": 0.3204,
+   "mae_baseline": 0.299,
+   "rho_champion": 0.3247,
+   "rho_baseline": 0.4785,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-05-04",
+   "n_rows": 112,
+   "n_cells": 10,
+   "mae_champion": 0.3565,
+   "mae_baseline": 0.3116,
+   "rho_champion": 0.3999,
+   "rho_baseline": 0.4395,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-05-08",
+   "n_rows": 109,
+   "n_cells": 10,
+   "mae_champion": 0.2863,
+   "mae_baseline": 0.294,
+   "rho_champion": 0.3617,
+   "rho_baseline": 0.3623,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-05-13",
+   "n_rows": 109,
+   "n_cells": 10,
+   "mae_champion": 0.316,
+   "mae_baseline": 0.2857,
+   "rho_champion": 0.3102,
+   "rho_baseline": 0.4503,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-05-18",
+   "n_rows": 118,
+   "n_cells": 9,
+   "mae_champion": 0.3804,
+   "mae_baseline": 0.317,
+   "rho_champion": 0.4564,
+   "rho_baseline": 0.3943,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-05-22",
+   "n_rows": 106,
+   "n_cells": 9,
+   "mae_champion": 0.3081,
+   "mae_baseline": 0.2869,
+   "rho_champion": 0.3739,
+   "rho_baseline": 0.4462,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-05-27",
+   "n_rows": 107,
+   "n_cells": 9,
+   "mae_champion": 0.2871,
+   "mae_baseline": 0.3032,
+   "rho_champion": 0.3079,
+   "rho_baseline": 0.3098,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-06-01",
+   "n_rows": 108,
+   "n_cells": 9,
+   "mae_champion": 0.3697,
+   "mae_baseline": 0.3173,
+   "rho_champion": 0.4044,
+   "rho_baseline": 0.3926,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-06-05",
+   "n_rows": 112,
+   "n_cells": 10,
+   "mae_champion": 0.2373,
+   "mae_baseline": 0.2396,
+   "rho_champion": 0.3597,
+   "rho_baseline": 0.374,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-06-10",
+   "n_rows": 118,
+   "n_cells": 10,
+   "mae_champion": 0.2795,
+   "mae_baseline": 0.2296,
+   "rho_champion": 0.4373,
+   "rho_baseline": 0.5219,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-06-15",
+   "n_rows": 99,
+   "n_cells": 9,
+   "mae_champion": 0.4077,
+   "mae_baseline": 0.3254,
+   "rho_champion": 0.4318,
+   "rho_baseline": 0.5298,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-06-19",
+   "n_rows": 116,
+   "n_cells": 10,
+   "mae_champion": 0.292,
+   "mae_baseline": 0.3134,
+   "rho_champion": 0.3732,
+   "rho_baseline": 0.3,
+   "champion_wins_both": true
+  },
+  {
+   "start": "2026-06-24",
+   "n_rows": 107,
+   "n_cells": 10,
+   "mae_champion": 0.3004,
+   "mae_baseline": 0.2279,
+   "rho_champion": 0.3477,
+   "rho_baseline": 0.3764,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-06-29",
+   "n_rows": 105,
+   "n_cells": 10,
+   "mae_champion": 0.2667,
+   "mae_baseline": 0.2835,
+   "rho_champion": 0.5507,
+   "rho_baseline": 0.526,
+   "champion_wins_both": true
+  },
+  {
+   "start": "2026-07-03",
+   "n_rows": 109,
+   "n_cells": 9,
+   "mae_champion": 0.3022,
+   "mae_baseline": 0.2598,
+   "rho_champion": 0.422,
+   "rho_baseline": 0.3254,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-07-08",
+   "n_rows": 106,
+   "n_cells": 10,
+   "mae_champion": 0.2608,
+   "mae_baseline": 0.2019,
+   "rho_champion": 0.4176,
+   "rho_baseline": 0.5354,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-07-13",
+   "n_rows": 121,
+   "n_cells": 9,
+   "mae_champion": 0.2531,
+   "mae_baseline": 0.2376,
+   "rho_champion": 0.3374,
+   "rho_baseline": 0.3369,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-07-17",
+   "n_rows": 106,
+   "n_cells": 10,
+   "mae_champion": 0.2596,
+   "mae_baseline": 0.2605,
+   "rho_champion": 0.4467,
+   "rho_baseline": 0.4788,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-07-22",
+   "n_rows": 106,
+   "n_cells": 10,
+   "mae_champion": 0.3903,
+   "mae_baseline": 0.3141,
+   "rho_champion": 0.3878,
+   "rho_baseline": 0.4477,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-07-27",
+   "n_rows": 111,
+   "n_cells": 10,
+   "mae_champion": 0.3044,
+   "mae_baseline": 0.2652,
+   "rho_champion": 0.4059,
+   "rho_baseline": 0.4346,
+   "champion_wins_both": false
+  },
+  {
+   "start": "2026-07-31",
+   "n_rows": 102,
+   "n_cells": 10,
+   "mae_champion": 0.2841,
+   "mae_baseline": 0.3428,
+   "rho_champion": 0.372,
+   "rho_baseline": 0.2948,
+   "champion_wins_both": true
+  }
+ ],
+ "conditions": {
+  "1_pooled_mae": false,
+  "2_mean_rho": false,
+  "3_consistency": false,
+  "wins_both": 3,
+  "win_share": 0.136
+ },
+ "verdict": "RED"
+}

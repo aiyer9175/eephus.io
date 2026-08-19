@@ -941,6 +941,18 @@ Pre-registered now so the first measurement cannot shape its own rules:
    `star_out`, `lineup_strength`) carry the additional burden that their
    builder must be on the nightly path before their clock starts.
 
+### Correction (2026-08-19): the clock started 2026-08-18, not 2026-08-16
+
+The pre-registration above is left as written; this note corrects the clock
+against what is actually on disk. The first schema-3 vintage in
+`.cache/leaderboard_vintages/` is `2026-08-18.json` (`schema: 3`). The
+`2026-08-16.json` vintage exists but carries `schema: 2`, so the columns did
+not accrue that night, and two nights have no vintage file at all: 2026-08-15
+and 2026-08-17. Rule 2's clock therefore starts 2026-08-18, and under the
+strict 4-week floor the earliest admissible first B3/B4 look moves from
+2026-09-13 to ~2026-09-15. Nothing else in the protocol changes; a null-column
+candidate still has no clock at all.
+
 ---
 
 ## 6. The backtest: two modes, both labelled

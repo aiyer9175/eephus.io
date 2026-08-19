@@ -176,7 +176,9 @@ saves-only share as the named champion on windows this run never scored
 until that gate passes.
 
 Per-window detail, coverage counts and the full config echo are in
-`.cache/closer_lab/fantasy_closer_gate_eval.json`. The registry row
+`.cache/closer_lab/fantasy_closer_gate_eval.json`; a byte-identical durable
+copy lives at `docs/fantasy-closer-2026-08-16/fantasy_closer_gate_eval.json`
+(the .cache original is box-local and unversioned). The registry row
 (`fantasy_closer_depth`) still carries the pre-registered gate language; the
 orchestrator records this RED outcome there, since data/model_registry.json
 is outside this lane's file ownership.

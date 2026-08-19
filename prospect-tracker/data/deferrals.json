@@ -10,7 +10,8 @@
   "higher than the CBT's ~4.4% statutory rate, so our NPVs read lower than",
   "league-reported figures (e.g. Ohtani ~$197M here vs ~$460M at CBT rates).",
   "Coverage rule (ship gate): every guarantee >= $200M must have an entry;",
-  "data/deferral_coverage.json audits this on every export."
+  "fa_market.deferral_coverage_audit checks it on every export and writes",
+  "the result to the deferral_coverage block of data/fa_gate2_eval.json."
  ],
  "players": {
   "shohei_ohtani:2024": {
