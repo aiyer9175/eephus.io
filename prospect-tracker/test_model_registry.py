@@ -297,6 +297,49 @@ def test_freshness_prefers_the_artifacts_own_stamp_over_mtime():
         "checkout resets")
 
 
+def test_retired_basis_stamps_are_documented():
+    """Retired-basis stamps (2026-08-19). Rows whose eval artifacts were
+    generated 2026-07-01..2026-08-05 on the 4-fold SCORED_YEARS (2020-2023)
+    chain carry basis "retired-4fold-2020-2023": that chain was retired
+    2026-08-06 by owner promotion to the 11-fold chain (recorded in
+    data/xfv_scoreboard_eval.json legacy_4fold_footnote) and cannot be
+    reproduced, so their numbers are archaeology, not the served basis.
+
+    (a) any basis starting "retired" must be one of the documented retired
+    bases, so the retirement is readable off the row itself; a new retired
+    basis gets added here together with what retired it.
+    (b) the SPECIFIC guard: xfv_dispersion_repair carries the C-7 reverted
+    stamp. Its correction passed all three originally pre-registered clauses
+    and was STILL reverted to identity on the owner's decision (C-7,
+    2026-08-14); accidentally re-applying the retired coefficients is the
+    exact failure this pins.
+    """
+    reg = mr.load()
+    documented = {"retired-4fold-2020-2023",
+                  "retired-correction-reverted-C7-2026-08-14"}
+    for m in reg["models"]:
+        basis = m.get("basis")
+        if basis and basis.startswith("retired"):
+            assert basis in documented, (
+                f"{m['model_id']}: undocumented retired basis {basis!r}; add it "
+                "to this test's documented set together with what retired it")
+    by_id = {m["model_id"]: m for m in reg["models"]}
+    dr = by_id["xfv_dispersion_repair"]
+    assert dr.get("basis") == "retired-correction-reverted-C7-2026-08-14", (
+        "xfv_dispersion_repair must carry the C-7 reverted-basis stamp")
+    assert "reverted to identity" in (dr.get("notes") or ""), (
+        "xfv_dispersion_repair notes must state the C-7 revert to identity")
+
+
+def test_provisional_kind_enum_when_present():
+    """provisional_kind is OPTIONAL and enum-checked only when present
+    (model_registry.PROVISIONAL_KINDS); it never changes a verdict."""
+    for m in mr.load()["models"]:
+        pk = m.get("provisional_kind")
+        if pk is not None:
+            assert pk in mr.PROVISIONAL_KINDS, (m["model_id"], pk)
+
+
 def test_surplus_real_backtest_artifact_shape():
     """WS-0d artifact contract: accounting + both slices with the verdict
     metrics; exclusions counted, never guessed; no calibration applied."""

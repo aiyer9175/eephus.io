@@ -40,6 +40,18 @@ REGISTRY_PATH = DATA_DIR / "model_registry.json"
 VERDICTS = ("validated", "provisional", "unvalidated", "deprecated")
 REQUIRED_KEYS = ("model_id", "surface", "predicts", "champion", "baseline",
                  "metric", "eval_artifact", "verdict")
+# OPTIONAL row field `provisional_kind`: the sub-state the four-word verdict
+# enum cannot express, populated only where the row's notes already state it
+# unambiguously (2026-08-19). Never required; validate() checks the enum only
+# when the field is present.
+#   shipped_partial_measurement  serving, but only part of the claim is measured
+#   measured_not_adopted         a real gate ran and the candidate did NOT ship
+#   measurement_only             descriptive by design; no forward claim to gate
+#   data_blocked_stub            registered and waiting on data that does not exist yet
+#   inherits_parent_gate         composition/re-expression of an already-gated parent
+PROVISIONAL_KINDS = ("shipped_partial_measurement", "measured_not_adopted",
+                     "measurement_only", "data_blocked_stub",
+                     "inherits_parent_gate")
 # Evals older than this (vs today) get a stale flag at refresh time —
 # advisory only; expensive gates run pre-merge, not on a clock.
 #
@@ -73,6 +85,9 @@ def validate(reg: dict | None = None) -> list[str]:
                 problems.append(f"{mid}: missing key {k}")
         if m.get("verdict") not in VERDICTS:
             problems.append(f"{mid}: bad verdict {m.get('verdict')!r}")
+        pk = m.get("provisional_kind")
+        if pk is not None and pk not in PROVISIONAL_KINDS:
+            problems.append(f"{mid}: bad provisional_kind {pk!r}")
         art = m.get("eval_artifact")
         if m.get("verdict") == "validated" and not art:
             problems.append(f"{mid}: validated without an eval artifact")

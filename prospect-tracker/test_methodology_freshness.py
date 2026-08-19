@@ -707,6 +707,25 @@ MODEL_GLOSSARY = {
     # ships a glossary entry and this line changes with it.
     "position_observed": "internal",
     "pitcher_role_usage": "internal",
+
+    # 2026-08-19 registry census: ten previously off-ledger served models.
+    # Documentation decisions verified against data/glossary.json entry ids
+    # the same date.
+    "mock_draft": "internal",          # no glossary entry; the draft view labels its own basis
+    # The stock / stock_arrow entries document the consensus-FV stock delta,
+    # NOT the de-noised rank-movement engine these two rows register, so
+    # neither may claim them; a movement entry would have to be written first.
+    "farm_movement": "internal",
+    "rank_movement": "internal",
+    "versa_positions": ["versa"],      # the versa entry states the same 10-game / 5-start rule
+    "multiposition_bonus": "internal",
+    "fa_aging_curves": "internal",     # engine internals; the FA methodology copy covers the projection, not the curve fits
+    "milb_translation": ["milb_translation"],
+    "grpo_prospect": ["breakout_indicator"],  # the badge the score serves is documented there
+    # stuff_grade_plus documents FVStuff+ only; no Cmd+ entry exists, so the
+    # command half of the same cohort pass stays internal until one is written.
+    "composite_cmd_plus": "internal",
+    "org_sur_plus": ["sur_plus"],      # the sur_plus entry IS OrgSur+ (scale + financial-branch role)
 }
 
 
