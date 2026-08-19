@@ -752,11 +752,18 @@ def _build_league(league: str,
             "points":          points,
         })
 
-    # v31.12 - Cohort-normalized Tool+ and RPS+ for the overseas
+    # v31.12 - Cohort-normalized Tool+ and RPS-Intl+ for the overseas
     # league. Tool+ is the league-z-normalized average of per-source
-    # tool composites. RPS+ uses the latest-season wRC+ (hitters) or
-    # FIP inverted to wRC+-style positive scale (pitchers), then
-    # league-z-normalized.
+    # tool composites. RPS-Intl+ (`rps_intl_plus`) uses the latest-season
+    # wRC+ (hitters) or FIP sign-flipped to a positive scale (pitchers),
+    # then league-z-normalized: 100 + 15z, clamp 60-140.
+    #
+    # 2026-08-19 three-scales resolution (owner default): renamed from the
+    # shared `rps_plus`. Three surfaces served three different scales under
+    # one name (active board: in-browser cohort RATIO, clamp 0-250; draft:
+    # 100+15z off college perf; overseas: this one). Each surface now
+    # serves its own key. All consumers are in-repo (the prospx TBS
+    # overseas branch), so no alias key is served.
     def _ovs_tool_composite(tg: dict) -> float | None:
         if not tg: return None
         per_source = []
@@ -819,9 +826,9 @@ def _build_league(league: str,
         ps_raw = p.pop("_perf_signal_raw", None)
         is_pit = p.pop("_is_pitcher_hint", False)
         if is_pit:
-            p["rps_plus"] = _cohort_plus(raw_perf_pit, ps_raw, lower_better=True)
+            p["rps_intl_plus"] = _cohort_plus(raw_perf_pit, ps_raw, lower_better=True)
         else:
-            p["rps_plus"] = _cohort_plus(raw_perf_hit, ps_raw, lower_better=False)
+            p["rps_intl_plus"] = _cohort_plus(raw_perf_hit, ps_raw, lower_better=False)
 
     # v26 - Sort by (FV desc, '+' tiebreaker desc) so 42+ ranks above
     # 42 but below 43. None FVs sink to the bottom of the list.

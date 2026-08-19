@@ -704,8 +704,16 @@ def _build_class(year: int,
     # grades (skipping the `_extras` metadata sub-dict). Players with
     # no tool data on file get `tool_plus = None`.
     #
-    # RPS+ = 100 + 15*cperf_z (already a z-score from college perf).
-    # Clipped to [60, 140] so an outlier season doesn't dominate.
+    # RPS-Draft+ (`rps_draft_plus`) = 100 + 15*cperf_z (already a z-score
+    # from college perf). Clipped to [60, 140] so an outlier season doesn't
+    # dominate.
+    #
+    # 2026-08-19 three-scales resolution (owner default): renamed from the
+    # shared `rps_plus`. Three surfaces served three different scales under
+    # one name (active board: in-browser cohort RATIO, clamp 0-250; draft:
+    # this 100+15z, clamp 60-140; overseas: 100+15z, pitcher sign-flipped).
+    # Each surface now serves its own key. All consumers are in-repo (the
+    # prospx TBS draft branch), so no alias key is served.
     def _draft_tool_composite(tg: dict) -> float | None:
         if not tg: return None
         per_source = []
@@ -742,9 +750,9 @@ def _build_class(year: int,
         cstats = p.get("college_stats")
         cperf_z_p = _college_perf_z(cstats) if cstats else None
         if cperf_z_p is None:
-            p["rps_plus"] = None
+            p["rps_draft_plus"] = None
         else:
-            p["rps_plus"] = max(60, min(140, int(round(100 + 15 * cperf_z_p))))
+            p["rps_draft_plus"] = max(60, min(140, int(round(100 + 15 * cperf_z_p))))
 
     # Sort by continuous consensus_rank ascending, with FV (desc) +
     # player name as deterministic tiebreakers. Then assign sequential

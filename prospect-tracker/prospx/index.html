@@ -9046,7 +9046,7 @@
     <button class="section-tab" data-section="debuts">Debuted</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects - isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses. High School Details maps where prep talent comes from.">MLB Draft/HS</button>
     <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes - signing bonuses, signing teams, prospects signed, and org spending by year (2021-present).">International Amateurs</button>
-    <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort - no shared RPS+ with MiLB.">Overseas</button>
+    <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort with its own performance index, RPS-Intl+ (100+15z within the league cohort) - not the MiLB board's ratio RPS+.">Overseas</button>
     <button class="section-tab" data-section="timemachine" title="Time-travel the board - view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates.">Time Machine</button>
     <button class="section-tab" data-section="charts" title="Build your own scatterplot - pick X/Y axes and a prospect group (MiLB, Debuted, Draft, International Amateurs, Overseas, or Farm systems).">Scatterplots</button>
     <!-- Glossary lives on its own surface (/glossary/) - a real link styled
@@ -9635,8 +9635,9 @@
        MLB. Mirrors the Draft section pattern: per-league chips at top,
        sub-tab strip for Rankings / Season Stats / Posting Tracker /
        Recently Signed / Leaderboard. Reuses .draft-grid / .draft-card /
-       .draft-table styles. RPS+ never appears here - different league
-       cohorts. -->
+       .draft-table styles. The active board's ratio RPS+ never appears
+       here - different league cohorts. The payload's own index is
+       rps_intl_plus (100+15z, TBS input only). -->
   <div id="overseas-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Overseas Professionals</span>
@@ -10045,7 +10046,7 @@
           <button class="chip"        data-lb-stat="hr"      title="Home runs">HR</button>
           <button class="chip"        data-lb-stat="sb"      title="Stolen bases">SB</button>
           <button class="chip" data-lb-stat="hit_level_plus" title="OPS vs level mean - surfaces hitters whose OPS is great BECAUSE the level is hard">OPS+ lvl</button>
-          <button class="chip" data-lb-stat="rps_plus" title="RPS+ - level-anchored rate performance score, re-anchored to the player's age x position-group cohort. 100 = cohort mean; it is a RATIO index like wRC+, so +10 means 10% above the cohort mean, not one standard deviation. Hitters only.">RPS+</button>
+          <button class="chip" data-lb-stat="rps_plus" title="RPS+ - level-anchored rate performance score, re-anchored to the player's age x position-group cohort. 100 = cohort mean; it is a RATIO index like wRC+, so +10 means 10% above the cohort mean, not one standard deviation. Active-board scale only: the Draft and Overseas sections carry their own 100+15z indexes (RPS-Draft+, RPS-Intl+). Hitters only.">RPS+</button>
           <button class="chip" data-lb-stat="iso_plus" title="ISO+ - isolated power indexed to level-average ISO (100 = league-average power). Hitters only.">ISO+</button>
           <button class="chip" data-lb-stat="pow_plus" title="POW+ - power index: ISO+ (the performance axis, HR-rate retired as collinear) + Statcast hard-hit/barrel + Power grade (100 = average). Hitters only.">POW+</button>
           <button class="chip" data-lb-stat="pd_plus" title="PD+ - plate-discipline index: BB%−K% vs level (100 = level average, 10 points = 1 std-dev of the differential) blended 70/30 with the Pitch-Selection grade. Hitters only.">PD+</button>
@@ -11375,7 +11376,13 @@ function _tiebreakerScoreRaw(p, opts) {
   const tool = _toolComposite(p);                                  // 20-80
   const tmax = _perToolMax(p);                                     // 20-80
   const toolPlus = (p.tool_plus != null) ? p.tool_plus : null;
-  const rpsPlusCohort = (p.rps_plus != null) ? p.rps_plus : null;
+  // 2026-08-19 three-scales resolution (owner default): the shared payload key
+  // `rps_plus` is retired. Each surface serves its own name and scale:
+  //   draft    -> rps_draft_plus (100+15z vs the draft class, clamp 60-140)
+  //   overseas -> rps_intl_plus  (100+15z vs the league cohort, pitcher sign-flipped)
+  //   actives  -> browser cohort RATIO (getRpsPlus, clamp 0-250; no baked field)
+  const rpsDraftPlus = (p.rps_draft_plus != null) ? p.rps_draft_plus : null;
+  const rpsIntlPlus  = (p.rps_intl_plus  != null) ? p.rps_intl_plus  : null;
   const dsPlus = (p.draft_stock_plus != null) ? p.draft_stock_plus : null;
   const ageBoost = _ageVsLevelBoostTBS(p);
   const moveBoost = _movementBoostTBS(p);
@@ -11386,13 +11393,13 @@ function _tiebreakerScoreRaw(p, opts) {
   // only the talent/performance signal; modifiers multiply the renormalized base.
   let parts;
   if (dsPlus != null) {
-    // DRAFT TBS - DS+ anchors the rank-based projection; Tool+ and RPS+
+    // DRAFT TBS - DS+ anchors the rank-based projection; Tool+ and RPS-Draft+
     // (college perf, a "+" performance metric - up-weighted) confirm; Tool /
     // per-tool max round out scouting; age modulates.
     parts = [
       [_tbsNorm(dsPlus,        70, 130), 0.27],
       [_tbsNorm(toolPlus,      80, 130), 0.18],
-      [_tbsNorm(rpsPlusCohort, 80, 130), 0.21],   // perf ↑ (was 0.17)
+      [_tbsNorm(rpsDraftPlus,  80, 130), 0.21],   // perf ↑ (was 0.17)
       [_tbsNorm(tool,          40, 70),  0.10],
       [_tbsNorm(tmax,          40, 70),  0.10],
       [ageBoost,                         0.10],    // was 0.08 (absorbs removed health term)
@@ -11401,12 +11408,12 @@ function _tiebreakerScoreRaw(p, opts) {
   } else if (_isOverseasProspect(p)) {
     const { wrc, fip } = _translatedOverseasPerf(p);
     const fipNorm = (fip != null) ? Math.max(0, Math.min(1, (4.50 - Number(fip)) / 2.00)) : null;
-    // OVERSEAS TBS - Tool+ + cohort RPS+ + translation-adjusted wRC+ (hitter
+    // OVERSEAS TBS - Tool+ + cohort RPS-Intl+ + translation-adjusted wRC+ (hitter
     // side, via hitter_wrc_factor) and raw FIP
     // (performance) carry the headline. Tool depth + age modulate.
     parts = [
       [_tbsNorm(toolPlus,      80, 130), 0.22],
-      [_tbsNorm(rpsPlusCohort, 80, 130), 0.20],   // perf ↑ (was 0.18)
+      [_tbsNorm(rpsIntlPlus,   80, 130), 0.20],   // perf ↑ (was 0.18)
       [_tbsNorm(wrc,           80, 160), 0.20],   // perf ↑ (translation-adjusted)
       [fipNorm,                          0.18],   // pitcher perf (only one of wrc/fip present)
       [_tbsNorm(tool,          40, 70),  0.08],
@@ -11415,22 +11422,19 @@ function _tiebreakerScoreRaw(p, opts) {
       [moveBoost,                        0.04],
     ];
   } else {
-    // ACTIVE MiLB TBS - performance (RPS+ rate-vs-level + SC+ tracked-data
-    // composite, both "+" metrics) is now weighted alongside the Tool
-    // composite rather than well below it; Stuff+ adds pitcher arsenal signal.
-    // 2026-07-29 correctness fix: this read `p.statline.rps_plus`, a field the
-    // exporter populates for 0 of 4,505 active players. It always resolved
-    // null, the part was filtered out and the remaining weights renormalized,
-    // so the "perf up (was 0.16)" reweight below was a NO-OP on the entire
-    // active board. Repointed at getRpsPlus(), the RPS+ that actually exists:
-    // it is computed client-side from the same payload (OPS+ vs level for
-    // hitters, ERA- vs level for pitchers, plus the age-vs-level adjustment,
-    // re-anchored to the player's age x position-group cohort) and is the SAME
-    // number the RPS+ pill and the RPS+ leaderboard already display. Covers
-    // 3,642 of 4,505 rows (1,724 hitters + 1,918 pitchers) vs 0 before.
-    // The baked field stays first in the chain so a future export that fills
-    // it in wins; it is not a silent second definition.
-    const rps = (typeof _rpsPlusValue === "function") ? _rpsPlusValue(p) : null;
+    // ACTIVE MiLB TBS - performance (SC+ tracked-data composite) is weighted
+    // alongside the Tool composite rather than well below it; Stuff+ adds
+    // pitcher arsenal signal.
+    // History of the RPS+ term, in order:
+    //   2026-07-29: the term read `statline.rps_plus`, a field the exporter
+    //   populates for 0 of 4,505 active players, so it always resolved null,
+    //   was filtered out, and the weights renormalized. The weighted read was
+    //   removed then (see the block below); a leftover local kept calling
+    //   _rpsPlusValue(p) without ever being used.
+    //   2026-08-14 audit finding: the term was confirmed silently inert on the
+    //   entire active board for its whole life. 2026-08-19 (three-scales
+    //   resolution): the dead unused local is deleted. No value or weight
+    //   changes; TBS output on actives is byte-identical (test_rps_scales.py).
     const sc  = getStatcastPlus(p);
     const stf = _stuffPlusTBS(p);
     parts = [
@@ -23074,6 +23078,9 @@ function makeWarChart(g) {
 // Reads from `DATA.draft` (loaded lazily from data/draft_timeseries.json).
 // Never touches DATA.prospects / DATA.debuts / DATA.farms - the schema
 // firewall is on the Python side; this is just the rendering counterpart.
+// The active board's ratio RPS+ never appears here - amateurs share no
+// cohort with MiLB. The payload's own index is rps_draft_plus (100+15z off
+// college perf, clamp 60-140); it feeds the draft TBS branch only.
 // =============================================================================
 
 // Format USD as compact (e.g. $8.95M, $675K). Returns " - " for missing.
@@ -25488,8 +25495,10 @@ function _renderSigningTrends(host, classes, year) {
 // Leaderboard). Reads from `DATA.overseas` (lazy-loaded from
 // data/overseas_timeseries.json). Reuses the .draft-card / .draft-grid
 // / .draft-table styles so the visual language stays consistent.
-// RPS+ never appears - NPB/KBO are different league environments and
-// share no cohort with MiLB.
+// The active board's ratio RPS+ never appears - NPB/KBO are different
+// league environments and share no cohort with MiLB. The payload's own
+// index is rps_intl_plus (100+15z within the league cohort, pitcher
+// sign-flipped); it feeds the overseas TBS branch only.
 // =============================================================================
 
 // League badge palette - keeps the visual signal tight (NPB green,
@@ -53832,16 +53841,19 @@ function getRpsPlus(p) {
   return _rpsPlusCache.byKey.get(p.player_key) || null;
 }
 
-// THE single RPS+ number for any surface that wants a bare integer (chips,
-// pills, the tiebreaker). Prefers a server-baked `statline.rps_plus` if a
-// future export ever populates it (it is populated for 0 of 4,505 players
-// today), then falls back to the client-computed cohort RPS+ that the RPS+
-// pill and the RPS+ leaderboard already display. Added 2026-07-29 so the
-// chip surfaces stop reading only the dead baked field and silently
-// rendering nothing. Null when the player has no qualifying sample.
+// THE single RPS+ number for any ACTIVE-board surface that wants a bare
+// integer (chips, pills, leaderboard). This is the active scale: a cohort
+// RATIO index (100 * (raw+100) / (cohort mean+100), position-adjusted,
+// clamp 0-250). It is NOT the 100+15z indexes the draft (rps_draft_plus)
+// and overseas (rps_intl_plus) payloads serve; those never flow through
+// here. Null when the player has no qualifying sample.
+// 2026-08-19 (three-scales resolution): the `statline.rps_plus` preference
+// that used to sit first in this chain is REMOVED. Nothing ever wrote it
+// (0 of 4,505 rows; 2026-08-14 audit confirmed the read was inert for its
+// whole life), and after the per-surface split a future baked field on a
+// different scale must not silently replace the browser ratio. If a baked
+// active RPS+ ever ships, it gets its own key and a deliberate switchover.
 function _rpsPlusValue(p) {
-  const baked = p && p.statline ? p.statline.rps_plus : null;
-  if (baked != null && isFinite(Number(baked))) return Number(baked);
   const row = getRpsPlus(p);
   return (row && row.plus != null && isFinite(row.plus)) ? row.plus : null;
 }

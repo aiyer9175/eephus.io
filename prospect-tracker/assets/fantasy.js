@@ -486,8 +486,13 @@
       return '<div class="fantasy-half"><h3>' + label + '</h3><table class="fantasy-table"><thead><tr><th>Player</th><th>Pos</th><th>Luck gap</th></tr></thead><tbody>' + rows + "</tbody></table></div>";
     }
     var sec = S.data.sections || {};
-    return '<div class="fantasy-note">Regression candidates from our expected-stat gaps (hitters: xHEM+ − HEM+; pitchers: xERA/xwOBA vs actual). A positive gap means the player has been UNLUCKY and is due to improve (buy); negative means overperforming (sell). A mech trend chip flags a 5+ point move in per-season Swing+ (Will Cahoon) - swing-mechanics context only, never part of the ranking.</div>' +
-      '<div class="fantasy-cols">' + col(sec.buy_low, "Buy-Low (unlucky)", "ff-pos") + col(sec.sell_high, "Sell-High (overperforming)", "ff-neg") + "</div>";
+    // Copy contract (2026-08-19, test_fantasy_claims.py): the registry row
+    // fantasy_buy_sell records that NO committed measurement exists that a
+    // large luck gap regresses rather than persists. So this note states the
+    // gap direction and stops: no "due to improve", no luck causality in the
+    // column headers. The screen posture line mirrors the registry row.
+    return '<div class="fantasy-note">Regression screen from the expected-stat gaps (hitters: xHEM+ − HEM+; pitchers: xERA/xwOBA vs actual). A positive gap means results sit behind the expected stats (buy-low screen); negative means results sit ahead (sell-high screen). Whether a gap closes or persists is unmeasured: this is a screen, it reorders nothing served elsewhere and prices nothing. A mech trend chip flags a 5+ point move in per-season Swing+ (Will Cahoon) - swing-mechanics context only, never part of the ranking.</div>' +
+      '<div class="fantasy-cols">' + col(sec.buy_low, "Buy-Low (behind x-stats)", "ff-pos") + col(sec.sell_high, "Sell-High (ahead of x-stats)", "ff-neg") + "</div>";
   }
   // ALREADY A CARD GRID: 30 team cards of 5 arms each. Untouched.
   function renderClosers() {
@@ -503,7 +508,11 @@
       }).join("");
       return '<div class="fantasy-team-card"><div class="ff-team-hd">' + teamLogo(tm) + " " + esc(tm) + "</div>" + lst + "</div>";
     }).join("");
-    return '<div class="fantasy-note">Bullpen pecking order by average leverage (gmLI) - the top arm is the likely closer, the rest are save handcuffs. Grab the next-in-line before the save chance opens.</div><div class="fantasy-grid">' + cards + "</div>";
+    // Copy contract (2026-08-19, test_fantasy_claims.py): fantasy_closer_depth
+    // is a role-ORDER display and the save-share model LOST to the pace rule
+    // (gate RED 2026-08-16). The note may describe the ordering rule; it may
+    // not call the top arm "likely" anything or imply a model picks saves.
+    return '<div class="fantasy-note">Bullpen pecking order: gmLI carries the ordering, saves and REM+ break ties. A role-order read, not a saves projection - nothing here prices saves. The top arm holds the closer slot in this order, the rest are save handcuffs. Grab the next-in-line before the save chance opens.</div><div class="fantasy-grid">' + cards + "</div>";
   }
   // STAYS A TABLE: 60 rows, five narrow columns, nothing a card would help.
   function renderCallups() {
