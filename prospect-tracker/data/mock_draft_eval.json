@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-08-19T20:39:41Z",
+  "draft_year": 2026,
+  "provenance": {
+    "mock_commit": "725143899a5a80d4ffc0f590012c54e5aa7bee20",
+    "mock_commit_date": "2026-07-07T19:01:42-04:00",
+    "mock_artifact": "prospect-tracker/data/draft_timeseries.json",
+    "results_source": "prospects.db draft_results (mlb_stats_api)",
+    "results_ingest_commit": "689c10d0 (2026-07-15)",
+    "gate_doc": "docs/draft-2026-08-19/MOCK_DRAFT_SCORE_GATE.md",
+    "key_aliases_applied": {
+      "draft_2026_christopher_hacopian": "draft_2026_chris_hacopian",
+      "draft_2026_kaeden_waechter": "draft_2026_kaden_waechter"
+    }
+  },
+  "n_actual_pool": 613,
+  "mock": {
+    "n_predicted": 75,
+    "n_matched": 70,
+    "n_matched_by_key": 70,
+    "n_matched_by_name": 0,
+    "unmatched_names": [
+      "Braydon Wisener",
+      "James Clark",
+      "Archer Horn",
+      "Joseph Contreras",
+      "Carson Bailey"
+    ],
+    "top10_exact": 0.4,
+    "top30_exact": 0.16666666666666666,
+    "mae_pick": 33.27142857142857,
+    "spearman_rho": 0.7412649811914969,
+    "spearman_p": 2.1659475424314307e-13
+  },
+  "baseline_consensus": {
+    "n_predicted": 75,
+    "n_matched": 70,
+    "n_matched_by_key": 70,
+    "n_matched_by_name": 0,
+    "unmatched_names": [
+      "Braydon Wisener",
+      "James Clark",
+      "Archer Horn",
+      "Joseph Contreras",
+      "Carson Bailey"
+    ],
+    "top10_exact": 0.4,
+    "top30_exact": 0.13333333333333333,
+    "mae_pick": 33.3,
+    "spearman_rho": 0.7407051001662146,
+    "spearman_p": 2.3074336440707627e-13
+  },
+  "baseline_random_analytic": {
+    "top10_exact": 0.013333333333333334,
+    "top30_exact": 0.013333333333333334,
+    "mae_pick": 47.40723809523809,
+    "spearman_rho": 0.0
+  },
+  "mock_minus_consensus": {
+    "top10_exact": 0.0,
+    "top30_exact": 0.033333333333333326,
+    "mae_pick": -0.028571428571424917,
+    "spearman_rho": 0.0005598810252822606
+  },
+  "clauses": {
+    "C1_validity": "PASS",
+    "C2_skill_vs_random": "PASS",
+    "C3_tendency_vs_board": "BEAT"
+  }
+}
