@@ -46,3 +46,21 @@ floors to the projected pool sizes (current resolved pools plus the 2025 cohort'
 debuted counts). The projection adjudicates NOTHING; it exists to size expectations and is
 labeled a projection in its artifact. Its artifact: data/xfv_epoch2026_power_projection.json
 (registered as a companion on the conviction program's ledger row when created).
+
+## Projection results note (2026-08-19, projection only, adjudicates nothing)
+
+Ran as tools/efv_epoch_power_projection.py, artifact data/xfv_epoch2026_power_projection.json
+(projection_only: true). Cohort: 243 tracked 2025 debuts (110 hit, 133 pit) against 2,208
+tracked 2011-2024 debuts; per-cell increments derived from the pools' own historical entry
+rates (C3 +68 of 645, C4 +88 of 766; C1/C2 per-side split constructed from the pooled
+vintage-matched n=802, an assumption stated in the artifact). Refit component held fixed,
+sampling component sqrt-n scaled; the head-to-head refit share was recomputed from stored
+components, 1 - (0.01956/0.02095)^2 = 0.1283 vs 0.128 stored, match. Projected E_cond floors:
+C1 0.0411 to 0.0391, C2 0.0391 to 0.0370, C3 0.0131 to 0.0125, C4 0.0205 to 0.0194, a 4.9-5.3
+pct reduction. Honest read: NO cell plausibly resolves on labels alone. C1/C2 sit at a
+NEGATIVE pooled delta vs the best rater (-0.0021 vs mlb_pipeline) and a floor cut cannot clear
+a negative delta; C3 is closest but its stored 0.00965 margin stays under even the most
+favorable Holm slot (0.0125); C4 sits near 0.21x. Central expectation for the V1 unlock is the
+prereg's "no cell clears" branch; the lever's value is the floor reduction plus the first
+pitcher-stuff fold. These numbers size expectations only; measurement-time floors on the new
+frame are the only floors that adjudicate.

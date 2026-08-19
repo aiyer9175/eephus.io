@@ -1,0 +1,195 @@
+{
+ "projection_only": true,
+ "adjudicates": "NOTHING. Floors are derived on the measurement frame at measurement time (EPOCH_2026_PREREGISTRATION.md protocol step 1); these numbers exist to size expectations for the V1 label advance and may not be cited as floors, margins, or verdicts.",
+ "generated_at": "2026-08-19",
+ "produced_by": "tools/efv_epoch_power_projection.py",
+ "registration": "docs/efv-2026-08-19/EPOCH_2026_PREREGISTRATION.md (Power projection section); companion on the conviction program V1 lane",
+ "claim_frame": "CONVICTION_PROGRAM.md V5, C1-C4, Holm across four, E_cond primary",
+ "method": {
+  "scaling": "sd^2 split into refit component (held fixed) and sampling component (scaled by n_cur/n_proj); MDE95 = 1.645 * sd one-sided",
+  "holm_z_one_sided": {
+   "rank1_alpha_.0125": 2.2414,
+   "rank2_alpha_.0167": 2.128,
+   "rank3_alpha_.025": 1.96,
+   "rank4_alpha_.05": 1.6449
+  },
+  "direction_of_error": [
+   "refit component held fixed: more training labels should shrink refit noise, so E_refit projections are conservative (too high)",
+   "sqrt-n on headcount ignores censoring: 2025-cohort rows carry 2 observed seasons (weight 1/3 in pair-weighted rho, noisier KM labels in AUC), so projected reductions are OVERSTATED, especially for the weighted Spearman cells",
+   "entry rates are 14-year averages; recent cohorts are covered more densely, so headcount increments are modestly understated",
+   "C1/C2 may also gain earlier-debut players whose decision year is 2025 (new fold); not counted, increments understated there"
+  ]
+ },
+ "cohort": {
+  "debuts_2025_total": 243,
+  "debuts_2025_hit": 110,
+  "debuts_2025_pit": 133,
+  "tracked_debuts_2011_2024": {
+   "hit": 1049,
+   "pit": 1159
+  },
+  "side_rule": "position all pitcher tokens (P/SP/RP/SIRP/MIRP/LHP/RHP) -> pit, else hit"
+ },
+ "headtohead_refit_share_verification": {
+  "stored": 0.128,
+  "recomputed_from_components": 0.128295,
+  "components": {
+   "sd_E_refit": 0.02095,
+   "sd_E_cond": 0.01956
+  },
+  "formula": "1 - (sd_E_cond / sd_E_refit)^2",
+  "match": true
+ },
+ "context_floors_not_projected": {
+  "pooled_rho_legacy_mde95": 0.0524,
+  "note": "xfv_mde_floor.json is the 11-fold pooled-rho floor (0.044 convention); it is not a claim-frame cell and is listed for orientation only"
+ },
+ "cells": [
+  {
+   "cell": "C1",
+   "frame": "hitters, vintage-matched common set, Spearman vs best rater",
+   "estimator": "E_cond primary (constructed), E_refit beside",
+   "n_current": 381.0,
+   "n_increment_projected": 40.0,
+   "n_projected": 421.0,
+   "sd_current": 0.02498,
+   "sd_projected": 0.02376,
+   "floor_current_mde95": 0.04109,
+   "floor_projected_mde95": 0.03909,
+   "floor_reduction_pct": 4.86,
+   "refit_share_held_fixed": 0.0,
+   "delta_current": -0.0021,
+   "delta_current_basis": "pooled vintage-matched xfv 0.3948 minus best rater mlb_pipeline 0.3969 (source_backtest.json); PROXY, not the per-side cell delta",
+   "delta_needed_holm4": {
+    "worst_rank_z2.2414": 0.05326,
+    "rank2_z2.128": 0.05057,
+    "rank3_z1.96": 0.04658,
+    "best_rank_z1.645": 0.03909
+   },
+   "margin_x_projected_floor": -0.054,
+   "notes": [
+    "per-side vintage-matched floors are CONSTRUCTED here from the pooled sd 0.01844 (xfv_headtohead_frame_eval.json, refit-inside-draw cluster bootstrap); no per-side floor is stored anywhere",
+    "per-side n split assumed proportional to tracked-debut side shares (1049 hit / 1159 pit over 2011-2024)",
+    "refit share 0.1283 transferred from the headtohead_common cell (verified from stored sds, stored value 0.128); assumption: it transfers from the all-vintages frame to the vintage-matched frame",
+    "delta_current is the POOLED vintage-matched delta vs the best rater (mlb_pipeline 0.3969); per-side deltas vs best rater are NOT stored and the pooled read is NEGATIVE: no floor reduction clears a negative delta"
+   ],
+   "E_refit_beside": {
+    "sd_current": 0.02584,
+    "sd_projected": 0.02466,
+    "floor_projected_mde95": 0.04057
+   }
+  },
+  {
+   "cell": "C2",
+   "frame": "pitchers, vintage-matched common set, Spearman vs best rater",
+   "estimator": "E_cond primary (constructed), E_refit beside",
+   "n_current": 421.0,
+   "n_increment_projected": 48.3,
+   "n_projected": 469.3,
+   "sd_current": 0.02376,
+   "sd_projected": 0.02251,
+   "floor_current_mde95": 0.03909,
+   "floor_projected_mde95": 0.03702,
+   "floor_reduction_pct": 5.29,
+   "refit_share_held_fixed": 0.0,
+   "delta_current": -0.0021,
+   "delta_current_basis": "pooled vintage-matched xfv 0.3948 minus best rater mlb_pipeline 0.3969 (source_backtest.json); PROXY, not the per-side cell delta",
+   "delta_needed_holm4": {
+    "worst_rank_z2.2414": 0.05045,
+    "rank2_z2.128": 0.04789,
+    "rank3_z1.96": 0.04411,
+    "best_rank_z1.645": 0.03702
+   },
+   "margin_x_projected_floor": -0.057,
+   "notes": [
+    "per-side vintage-matched floors are CONSTRUCTED here from the pooled sd 0.01844 (xfv_headtohead_frame_eval.json, refit-inside-draw cluster bootstrap); no per-side floor is stored anywhere",
+    "per-side n split assumed proportional to tracked-debut side shares (1049 hit / 1159 pit over 2011-2024)",
+    "refit share 0.1283 transferred from the headtohead_common cell (verified from stored sds, stored value 0.128); assumption: it transfers from the all-vintages frame to the vintage-matched frame",
+    "delta_current is the POOLED vintage-matched delta vs the best rater (mlb_pipeline 0.3969); per-side deltas vs best rater are NOT stored and the pooled read is NEGATIVE: no floor reduction clears a negative delta"
+   ],
+   "E_refit_beside": {
+    "sd_current": 0.02466,
+    "sd_projected": 0.02346,
+    "floor_projected_mde95": 0.03859
+   }
+  },
+  {
+   "cell": "C3",
+   "frame": "hitters, debuted_km, contributor AUC vs best rater",
+   "estimator": "E_cond primary (stored)",
+   "n_current": 645,
+   "n_increment_projected": 67.6,
+   "n_projected": 712.6,
+   "sd_current": 0.00798,
+   "sd_projected": 0.00759,
+   "floor_current_mde95": 0.01313,
+   "floor_projected_mde95": 0.01249,
+   "floor_reduction_pct": 4.86,
+   "refit_share_held_fixed": 0.0,
+   "delta_current": 0.00965,
+   "delta_current_basis": "stored margin vs consensus baseline (xfv_auc_floor_eval.json)",
+   "delta_needed_holm4": {
+    "worst_rank_z2.2414": 0.01702,
+    "rank2_z2.128": 0.01616,
+    "rank3_z1.96": 0.01488,
+    "best_rank_z1.645": 0.01249
+   },
+   "margin_x_projected_floor": 0.773,
+   "notes": [
+    "increment = 2025 hitters debuts (110) x historical entry rate 0.615 (= cell n 645 / tracked hitters debuts 2011-2024 1049)",
+    "delta_current is vs the CONSENSUS baseline (stored cell margin); the claim frame compares vs the BEST rater, which can only tighten it",
+    "prevalence of the contributor label among new rows assumed equal to the pool's; new rows carry only 2 observed seasons, so their KM labels are noisier and pure sqrt-n scaling OVERSTATES the reduction"
+   ],
+   "E_refit_beside": {
+    "sd_current": 0.01568,
+    "sd_projected": 0.01548,
+    "floor_projected_mde95": 0.02547,
+    "refit_share_implied": 0.7409
+   }
+  },
+  {
+   "cell": "C4",
+   "frame": "pitchers, debuted_km, contributor AUC vs best rater",
+   "estimator": "E_cond primary (stored)",
+   "n_current": 766,
+   "n_increment_projected": 87.9,
+   "n_projected": 853.9,
+   "sd_current": 0.01247,
+   "sd_projected": 0.01182,
+   "floor_current_mde95": 0.02052,
+   "floor_projected_mde95": 0.01944,
+   "floor_reduction_pct": 5.29,
+   "refit_share_held_fixed": 0.0,
+   "delta_current": 0.00403,
+   "delta_current_basis": "stored margin vs consensus baseline (xfv_auc_floor_eval.json)",
+   "delta_needed_holm4": {
+    "worst_rank_z2.2414": 0.02648,
+    "rank2_z2.128": 0.02514,
+    "rank3_z1.96": 0.02316,
+    "best_rank_z1.645": 0.01944
+   },
+   "margin_x_projected_floor": 0.207,
+   "notes": [
+    "increment = 2025 pitchers debuts (133) x historical entry rate 0.661 (= cell n 766 / tracked pitchers debuts 2011-2024 1159)",
+    "delta_current is vs the CONSENSUS baseline (stored cell margin); the claim frame compares vs the BEST rater, which can only tighten it",
+    "prevalence of the contributor label among new rows assumed equal to the pool's; new rows carry only 2 observed seasons, so their KM labels are noisier and pure sqrt-n scaling OVERSTATES the reduction"
+   ],
+   "E_refit_beside": {
+    "sd_current": 0.01715,
+    "sd_projected": 0.01668,
+    "floor_projected_mde95": 0.02744,
+    "refit_share_implied": 0.471
+   }
+  }
+ ],
+ "honest_read": {
+  "any_cell_plausibly_resolves_on_labels_alone": false,
+  "per_cell": {
+   "C1": "NO. Pooled vintage-matched delta vs best rater is negative; a 4-5 pct floor reduction cannot clear a negative delta. Resolution requires the delta itself to move (V2/V3), or the per-side measurement to land far from the pooled read.",
+   "C2": "NO. Same structure as C1.",
+   "C3": "CLOSEST BUT NO at the stored margin. Projected E_cond floor stays above the stored 0.00965 consensus-baseline margin even in the most favorable Holm slot, and the best-rater comparator can only tighten the margin.",
+   "C4": "NO. Stored margin sits near 0.2x of the projected floor."
+  },
+  "expected_value_of_V1": "a 4-8 pct floor reduction across the four cells plus the first pitcher-stuff fold; the label-pool lever alone does not resolve the claim frame at current deltas, matching the prereg's 'no cell clears' pre-committed interpretation as the central expectation."
+ }
+}
