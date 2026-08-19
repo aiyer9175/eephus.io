@@ -1,5 +1,5 @@
 {
-  "generated_at": "",
+  "generated_at": "2026-08-19",
   "model": "trade_machine_surplus",
   "conventions": {
     "predictor": "trade_values.json trade_value_mm = apply_platform_surplus (xfv.surplus_mm for prospects, mlb_projections surNpv/1e6 for MLB, xfv backgrade fallback)",
@@ -84,5 +84,66 @@
     }
   },
   "ship": false,
-  "honest_note": "NOT a forward backtest: trade_values.json was never snapshotted, so we cannot measure what the board said then vs what happened. Slice A uses CURRENT grades on ALREADY-graduated players (survivorship + hindsight) and a career-vs-control-window unit mismatch, so it proves ORDERING only, never live trade-price accuracy. The displayed surplus is a passthrough of xfv (xfv_eval, provisional) and projections (proj_horizon_eval), so this validates the ORDERING + the apply_platform_surplus join/fallback, not new model machinery. Verdict stays provisional until a genuine forward cohort accrues - start snapshotting trade_values.json now. Slice B (bounded-window calibration via surplus_backtest_real on 2017-2019 resolved cohorts) is the documented next extension."
+  "honest_note": "NOT a forward backtest: trade_values.json was never snapshotted, so we cannot measure what the board said then vs what happened. Slice A uses CURRENT grades on ALREADY-graduated players (survivorship + hindsight) and a career-vs-control-window unit mismatch, so it proves ORDERING only, never live trade-price accuracy. The displayed surplus is a passthrough of xfv (xfv_eval, provisional) and projections (proj_horizon_eval), so this validates the ORDERING + the apply_platform_surplus join/fallback, not new model machinery. Verdict stays provisional until a genuine forward cohort accrues - start snapshotting trade_values.json now. Slice B (bounded-window calibration via surplus_backtest_real on 2017-2019 resolved cohorts) is the documented next extension.",
+  "forward_backtest": {
+    "generated_at": "2026-08-19",
+    "kind": "instrument_maturation",
+    "gate_doc": "docs/trade-2026-08-19/TRADE_FORWARD_GATE.md",
+    "source": "prospects.db trade_value_history",
+    "horizon_days": [
+      25,
+      35
+    ],
+    "no_win_claims": true,
+    "s3_coverage": {
+      "snapshot_dates_total": 43,
+      "snapshot_date_range": [
+        "2026-06-25",
+        "2026-08-19"
+      ],
+      "origin_dates_with_partner": 22,
+      "origin_date_range": [
+        "2026-06-25",
+        "2026-07-25"
+      ],
+      "origin_dates_without_partner": 21,
+      "rows_at_unpartnered_dates": 130460,
+      "candidate_rows_at_partnered_dates": 123881,
+      "dropped_player_absent_at_t2": 1073,
+      "dropped_null_value_at_t": 0,
+      "dropped_null_value_at_t2": 0,
+      "n_pairs": 122808,
+      "n_players": 5975,
+      "retained_fraction": 0.9913
+    },
+    "s1_value_stability": {
+      "spearman": 0.598952,
+      "ci95_player_clustered_bootstrap": [
+        0.583303,
+        0.614502
+      ],
+      "bootstrap_B": 1000,
+      "seed": 20260819,
+      "n_pairs": 122808,
+      "n_players": 5975,
+      "n_origin_dates": 22,
+      "interpretation": "Stability reading of the instrument, not an accuracy reading. High rho means the board's value ordering is not churning noise at 30d. Neither outcome says trade values are right or wrong."
+    },
+    "s2_movement_signal": {
+      "spearman_value_vs_delta": -0.263542,
+      "abs_rho": 0.263542,
+      "control": {
+        "design": "within-date shuffle of value(T), same pairing; delta recomputed off the shuffled value so the mechanical -value(T) coupling stays in the null",
+        "B": 1000,
+        "seed": 20260819,
+        "rho_mean": -0.630321,
+        "rho_pct_2_5": -0.633463,
+        "rho_pct_97_5": -0.627163,
+        "abs_rho_pct_97_5": 0.633463
+      },
+      "observed_abs_rho_exceeds_control": false,
+      "n_pairs": 122808,
+      "interpretation": "No evidence surplus predicts short-horizon movement; horizon too short or instrument too young. NOT 'trade values are wrong'. Expected at 30d."
+    }
+  }
 }
