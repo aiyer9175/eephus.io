@@ -191,6 +191,13 @@ def _realized_calibration() -> dict:
 
 
 def build_calibration_eval() -> dict:
+    # DIAGNOSTIC DEMOTION (2026-08-19, verified): the gate FAIL below grades the
+    # INTERNAL model odds, not anything served. Served per-player star odds =
+    # surplus.star_odds = published_star_odds (the FG table, exact by
+    # construction). storage._build_surplus_payload also writes star_odds_model
+    # into payloads but NO frontend reads that field (assets/, prospx/,
+    # build_site.py all grep-clean); prospx reads only realized_calibration from
+    # this artifact. Do not read the FAIL as a served defect.
     import value_framework as vf
     cal = vf.star_odds_calibration("clemens_2026")
     surplus_cal = vf.surplus_tier_calibration("clemens_2026")
@@ -226,6 +233,11 @@ def build_calibration_eval() -> dict:
             "max_abs_dev": max_dev,
             "pass": passed,
             "verdict": "provisional",
+            "diagnostic_only": True,
+            "diagnostic_note": "This gate grades the internal model odds only; no "
+                               "surface serves them (served star odds = the published "
+                               "FG table, exact; the payload star_odds_model field has "
+                               "no frontend reader). Verified 2026-08-19.",
             "reason": "Displayed odds = published table (exact). Model odds are a diagnostic; at "
                       "the production anchor the deviation exceeds tolerance. The reconciliation "
                       "block characterizes the gap as a best-fit anchor multiplier (k_h, k_p) plus "

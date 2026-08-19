@@ -36,10 +36,12 @@ class TranslationFactors(unittest.TestCase):
         # Hitter: 145 wRC+ → 145 * 0.87 = 126
         hit = _mlb_translate({"wrc_plus": 145}, ctx, is_pitcher=False)
         self.assertEqual(hit["wrc_plus_mlbe"], 126)
-        # Pitcher: 1.61 ERA → 1.61 * 1.54 = 2.48 (Phase-4b refit factor,
-        # data/overseas_translation_eval.json)
+        # Pitcher: 1.61 ERA → 1.61 * 1.642 = 2.64 (Phase-4b refit factor,
+        # refreshed 2026-08-19 with the ledger at 35 transitions; the
+        # config-with-eval sync test in test_phase4b_evals is the authority
+        # and this worked example moves with it, never independently)
         pit = _mlb_translate({"era": 1.61}, ctx, is_pitcher=True)
-        self.assertEqual(pit["era_mlbe"], 2.48)
+        self.assertEqual(pit["era_mlbe"], 2.64)
 
     def test_kbo_factors(self):
         ctx = LEAGUE_CONTEXT["KBO"]

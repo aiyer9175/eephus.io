@@ -40,6 +40,7 @@ Writes data/total_band_eval.json.  SEED documented below; fully determinstic.
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import json
 import logging
 import sys
@@ -67,7 +68,7 @@ HORIZONS = proj_eval.HORIZONS   # 5
 # imports this module, so this value is inert. It is the estimated AR(1) rho
 # from the last fit run, kept only so a future re-run under a redesigned gate
 # starts from the measured value rather than a guess.
-AR1_RHO = 0.3451                # estimated AR(1) copula rho; UNUSED (gate failed)
+AR1_RHO = 0.3165                # estimated AR(1) copula rho (2026-08-19 re-run); UNUSED (gate failed)
 
 Q_LO, Q_HI = 0.10, 0.90
 _Z_LO, _Z_HI = norm.ppf(Q_LO), norm.ppf(Q_HI)   # +/-1.2816
@@ -455,8 +456,19 @@ def run(fit_bases, holdout_bases, persist=True):
             "replacement is narrower and therefore covers even less.")
 
     artifact = {
+        "generated_at": _dt.date.today().isoformat(),
         "experiment": "R-BAND (F-01): simulated path-total quantile bands",
         "generated_by": "tools/fit_total_band.py",
+        # Registry row war_total_band_calibration is deprecated FAIL. No export
+        # imports this module (simulated_total_band has zero callers outside this
+        # file), so no served band derives from this configuration. Re-runs keep
+        # the artifact honest against the current tree; they do NOT resurrect it.
+        "status_note": (
+            "Config DEPRECATED and UNSERVED. Registry row war_total_band_calibration "
+            "is deprecated FAIL; no export imports tools/fit_total_band.py, so no "
+            "served band derives from this configuration. The shipped FA band is a "
+            "different arm (fa_gate1). This re-run only restamps the diagnostic "
+            "against the current projection tree; it does not resurrect the config."),
         "seed": SEED, "n_sim": N_SIM, "horizons": HORIZONS,
         "method": (
             "Per-year predictive marginal = piecewise-linear quantile function "

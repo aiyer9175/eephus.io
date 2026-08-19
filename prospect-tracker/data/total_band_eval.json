@@ -1,6 +1,8 @@
 {
+ "generated_at": "2026-08-19",
  "experiment": "R-BAND (F-01): simulated path-total quantile bands",
  "generated_by": "tools/fit_total_band.py",
+ "status_note": "Config DEPRECATED and UNSERVED. Registry row war_total_band_calibration is deprecated FAIL; no export imports tools/fit_total_band.py, so no served band derives from this configuration. The shipped FA band is a different arm (fa_gate1). This re-run only restamps the diagnostic against the current projection tree; it does not resurrect the config.",
  "seed": 20260702,
  "n_sim": 20000,
  "horizons": 5,
@@ -23,47 +25,47 @@
  "dependence": {
   "n_lag1_pairs": 45840,
   "n_lag2_pairs": 34380,
-  "ar1_rho_pearson_z": 0.3451,
-  "lag2_rho_pearson_z": 0.2744,
-  "lag1_spearman_u": 0.4103,
-  "implied_ar1_from_lag2": 0.5239
+  "ar1_rho_pearson_z": 0.3165,
+  "lag2_rho_pearson_z": 0.2494,
+  "lag1_spearman_u": 0.3712,
+  "implied_ar1_from_lag2": 0.4994
  },
- "applied_ar1_rho": 0.3451,
+ "applied_ar1_rho": 0.3165,
  "coverage_vs_rho": [
   {
    "rho": 0.0,
-   "coverage": 0.2901,
-   "mean_width": 2.156
+   "coverage": 0.4011,
+   "mean_width": 2.352
   },
   {
    "rho": 0.2,
-   "coverage": 0.3486,
-   "mean_width": 2.495
+   "coverage": 0.4433,
+   "mean_width": 2.73
   },
   {
    "rho": 0.3451,
-   "coverage": 0.4084,
-   "mean_width": 2.787
+   "coverage": 0.4827,
+   "mean_width": 3.054
   },
   {
    "rho": 0.5,
-   "coverage": 0.4461,
-   "mean_width": 3.133
+   "coverage": 0.5169,
+   "mean_width": 3.447
   },
   {
    "rho": 0.7,
-   "coverage": 0.507,
-   "mean_width": 3.621
+   "coverage": 0.5618,
+   "mean_width": 3.995
   },
   {
    "rho": 0.9,
-   "coverage": 0.5852,
-   "mean_width": 4.254
+   "coverage": 0.6169,
+   "mean_width": 4.705
   },
   {
    "rho": 0.99,
-   "coverage": 0.6335,
-   "mean_width": 4.621
+   "coverage": 0.6472,
+   "mean_width": 5.123
   }
  ],
  "gate": {
@@ -74,90 +76,90 @@
   },
   "metrics": {
    "n_holdout_full_window": 6136,
-   "coverage_simulated": 0.4055,
-   "coverage_summed_incumbent": 0.6314,
-   "mean_width_simulated": 2.793,
-   "mean_width_summed_incumbent": 4.69,
-   "width_ratio_sim_over_sum": 0.5955,
+   "coverage_simulated": 0.4682,
+   "coverage_summed_incumbent": 0.6483,
+   "mean_width_simulated": 2.991,
+   "mean_width_summed_incumbent": 5.203,
+   "width_ratio_sim_over_sum": 0.575,
    "coverage_by_side": {
     "hit": [
-     0.3345,
+     0.4798,
      2568
     ],
     "pit": [
-     0.4566,
+     0.4599,
      3568
     ]
    },
-   "summed_frac_below_p10": 0.259,
-   "summed_frac_above_p90": 0.1097,
-   "simulated_frac_below_p10": 0.4521,
-   "simulated_frac_above_p90": 0.1424,
+   "summed_frac_below_p10": 0.2415,
+   "summed_frac_above_p90": 0.1102,
+   "simulated_frac_below_p10": 0.3864,
+   "simulated_frac_above_p90": 0.1454,
    "n_survived_all_window": 1338,
-   "coverage_summed_survived_all": 0.5508,
-   "coverage_simulated_survived_all": 0.3685
+   "coverage_summed_survived_all": 0.5845,
+   "coverage_simulated_survived_all": 0.3909
   },
   "verdict": "FAIL"
  },
  "examples_top_projected": [
   {
-   "mlbam": 665742,
-   "side": "hit",
-   "base": 2020,
-   "point_warTotal": 32.0,
-   "summed_band": [
-    20.1,
-    48.1
-   ],
-   "summed_width": 28.0,
-   "simulated_band": [
-    25.6,
-    41.2
-   ],
-   "simulated_width": 15.6,
-   "realized_total": 28.3
-  },
-  {
-   "mlbam": 665742,
+   "mlbam": 545361,
    "side": "hit",
    "base": 2019,
-   "point_warTotal": 26.3,
+   "point_warTotal": 30.0,
    "summed_band": [
-    13.3,
-    43.6
+    0.0,
+    73.1
    ],
-   "summed_width": 30.2,
+   "summed_width": 73.1,
    "simulated_band": [
-    19.2,
-    36.2
+    14.4,
+    54.3
    ],
-   "simulated_width": 17.0,
-   "realized_total": 25.4
+   "simulated_width": 39.9,
+   "realized_total": 20.6
   },
   {
-   "mlbam": 660670,
+   "mlbam": 596019,
    "side": "hit",
-   "base": 2020,
-   "point_warTotal": 25.6,
+   "base": 2019,
+   "point_warTotal": 26.9,
    "summed_band": [
-    14.2,
-    40.7
+    0.0,
+    82.3
    ],
-   "summed_width": 26.5,
+   "summed_width": 82.3,
    "simulated_band": [
-    19.4,
-    34.2
+    13.8,
+    58.9
    ],
-   "simulated_width": 14.8,
-   "realized_total": 16.6
+   "simulated_width": 45.1,
+   "realized_total": 20.7
+  },
+  {
+   "mlbam": 605141,
+   "side": "hit",
+   "base": 2019,
+   "point_warTotal": 26.6,
+   "summed_band": [
+    0.0,
+    70.2
+   ],
+   "summed_width": 70.2,
+   "simulated_band": [
+    13.1,
+    51.4
+   ],
+   "simulated_width": 38.3,
+   "realized_total": 30.2
   }
  ],
  "scope_note": "Dependence measured on the MLB vet corpus; applied to the continuous aging-quantile paths (vets + FA) produced by the same aging model. Prospect bucket paths (proj_export _prospect_rows) are a discrete career-trait mixture, a different statistical object with no realized FV->outcome corpus join; handling documented in the export change.",
  "loss_ledger": [
-  "C1 FAIL: simulated coverage 0.4055 is outside the [0.75,0.85] gate band. Root cause is NOT band width: the incumbent COMONOTONIC summed band (the widest admissible, rho->1) already covers only 0.6314 of realized multi-year totals, well below the 0.75 floor. It UNDER-covers, so the F-01 premise that the displayed band is 'too wide' does not hold against realized totals.",
-  "The summed band's misses are downside-dominated: 0.259 of realized totals fall BELOW its p10 (attrition -- players who leave the league realize ~0 WAR, below a strictly-positive decayed p10 path) vs 0.1097 above p90. The per-year quantile marginals carry no full-dropout zero floor, so the total band is MIS-CENTERED (too high), not too wide.",
-  "Coverage is monotone increasing in the copula rho and tops out at the comonotonic band: [(0.0, 0.2901), (0.2, 0.3486), (0.3451, 0.4084), (0.5, 0.4461), (0.7, 0.507), (0.9, 0.5852), (0.99, 0.6335)]. No admissible rho (<1) reaches 0.75; the mathematically-correct dependence fix (narrowing) moves coverage AWAY from the 0.80 target.",
-  "Even on the survived-all-window subset (n=1338, dropout-0 mass removed), the summed band covers only 0.5508 and the simulated 0.3685: the marginals undercover on rostered players too, so this is not solely an attrition artifact.",
+  "C1 FAIL: simulated coverage 0.4682 is outside the [0.75,0.85] gate band. Root cause is NOT band width: the incumbent COMONOTONIC summed band (the widest admissible, rho->1) already covers only 0.6483 of realized multi-year totals, well below the 0.75 floor. It UNDER-covers, so the F-01 premise that the displayed band is 'too wide' does not hold against realized totals.",
+  "The summed band's misses are downside-dominated: 0.2415 of realized totals fall BELOW its p10 (attrition -- players who leave the league realize ~0 WAR, below a strictly-positive decayed p10 path) vs 0.1102 above p90. The per-year quantile marginals carry no full-dropout zero floor, so the total band is MIS-CENTERED (too high), not too wide.",
+  "Coverage is monotone increasing in the copula rho and tops out at the comonotonic band: [(0.0, 0.4011), (0.2, 0.4433), (0.3451, 0.4827), (0.5, 0.5169), (0.7, 0.5618), (0.9, 0.6169), (0.99, 0.6472)]. No admissible rho (<1) reaches 0.75; the mathematically-correct dependence fix (narrowing) moves coverage AWAY from the 0.80 target.",
+  "Even on the survived-all-window subset (n=1338, dropout-0 mass removed), the summed band covers only 0.5845 and the simulated 0.3909: the marginals undercover on rostered players too, so this is not solely an attrition artifact.",
   "Disposition per R-BAND pre-registration: FAIL -> touch NO export code. The owner-approved fallback (drop the total P10-P90 bands from display) is a separate decision; the summed bands remain in the payloads unchanged. This gate result is evidence FOR that fallback: the displayed total bands are miscalibrated (undercover, mis-centered), and the dependence-correct replacement is narrower and therefore covers even less."
  ]
 }
