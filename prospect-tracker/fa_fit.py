@@ -707,6 +707,9 @@ def behavior_priors() -> dict[str, dict]:
         # needs to answer "has this club ever routinely gone THIS big", which a
         # single max cannot, and a sorted list can.
         b["guarantees"].append(g)
+        # TEAMFIT CONDITIONAL (2026-08-19): the banded recent/rich terms need
+        # the club's per-deal (winter, guarantee) events, not just aggregates.
+        b.setdefault("events", []).append((y, g))
         if y >= last_winter - 2:
             b["recent_spend_usd"] += g
         if g >= 100_000_000:
@@ -714,6 +717,32 @@ def behavior_priors() -> dict[str, dict]:
     for b in out.values():
         b["guarantees"].sort()
     return dict(out)
+
+
+@lru_cache(maxsize=1)
+def _corpus_last_winter() -> int:
+    """Newest class year in the signings corpus (the recency anchor both the
+    aggregate recent term and the banded conditional terms share)."""
+    signings = storage.load_fa_signings()
+    return max((y for (_k, y) in signings), default=0)
+
+
+def _cond_terms(events: list, guar: float, y_recent_min: int) -> tuple:
+    """(recent band outlay, career band deal count) for one club's signing
+    events [(winter, guarantee), ...] against THIS player's price band
+    [g/F, g*F], F = fa_config fit.behavior_cond_band_factor (frozen 2.5,
+    sync-tested against fa_fit_backtest.TEAMFIT_COND_BAND_FACTOR). Mirrors
+    fa_fit_backtest._cond_terms exactly; kept local so serving never imports
+    the backtest's heavy chain (standings/payroll reconstruction)."""
+    factor = float(_fit_cfg().get("behavior_cond_band_factor", 2.5))
+    lo, hi = guar / factor, guar * factor
+    outlay, n_band = 0.0, 0
+    for y, g in events or []:
+        if lo <= g <= hi:
+            n_band += 1
+            if y >= y_recent_min:
+                outlay += g
+    return outlay, n_band
 
 
 def _spend_reach(prior: dict, guar: float) -> float:
@@ -764,6 +793,17 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
     priors = behavior_priors()
     # League-max recent spend normalizes the will-spend component to [0,1].
     max_recent = max((b.get("recent_spend_usd") or 0) for b in priors.values()) or 1
+    # TEAMFIT CONDITIONAL (gated PASS 2026-08-19, shipped: recent/rich confined
+    # to the player's price band; docs/fa-2026-08-19/TEAMFIT_CONDITIONAL_GATE.md,
+    # artifact fa_gate3_eval.json teamfit_conditional_gate.shipped == true).
+    cond_on = bool(cfg.get("behavior_conditional"))
+    _guar_band = float(market_pred.get("proj_guarantee_usd") or 20_000_000)
+    _cond, _max_band = {}, 0.0
+    if cond_on:
+        _yrmin = _corpus_last_winter() - 2
+        _cond = {org: _cond_terms((priors.get(org) or {}).get("events") or [],
+                                  _guar_band, _yrmin) for org in needs}
+        _max_band = max((v[0] for v in _cond.values()), default=0.0)
     # `is None` (not `or`): a projected war_y1 of exactly 0.0 is a real value (a
     # replacement-level bat), not "missing" -- `or 1.0` gave zero-WAR members a phantom
     # 1.0-WAR displacement gap and inflated their fit scores.
@@ -807,25 +847,28 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
         park = park_component(player, org, class_year - 1)
         guar = market_pred.get("proj_guarantee_usd") or 20_000_000
         scale = _spend_reach(b, float(guar))
-        # ONLY `scale` TAKES A PLAYER INPUT. `recent` divides by the league-max
-        # 3-winter outlay and `rich` clips at n_100m/5, so both are CLUB
-        # CONSTANTS: the top spender scores 1.0 on `recent` by construction and
-        # starts from a 0.500 behavior floor against a league median of 0.077
-        # before the player is consulted. That is the mechanism behind Gate 3's
-        # concentration failure (one club top-1 for 228 of 228 players).
+        # HISTORY. The aggregate form: `recent` divides by the league-max
+        # 3-winter outlay and `rich` clips at n_100m/5, both CLUB CONSTANTS,
+        # the mechanism behind Gate 3's concentration failure (one club top-1
+        # for 228 of 228). The R6.3 rewrite (within-club conditional RATES,
+        # 2026-08-04) was refuted: its falsification showed no change confined
+        # to this block could reach the gate ON THAT CANDIDATE.
         #
-        # THE PLAYER-CONDITIONAL REWRITE WAS MEASURED 2026-08-04 AND REFUTED
-        # (lane R6.3). Re-deriving recent and rich as within-club conditional
-        # rates DOES fix the term (behavior's club main effect 69.8% -> 10.7%,
-        # the top club's constant edge 0.091 -> 0.019) and the composite STILL
-        # FAILS at 0.3816 against a 0.25 threshold. The pre-registered
-        # falsification settles it: DELETE the behavior component outright and
-        # concentration is still 0.3816, so NO change confined to this block can
-        # ever reach the gate. The saturation is in the composite, not here.
-        # Do not re-attempt a behavior-only repair; see fa_fit_backtest's
-        # concentration_repair_verdict for the full ledger.
-        recent = min(1.0, (b.get("recent_spend_usd") or 0) / max_recent)
-        rich = min(1.0, (b.get("n_100m") or 0) / 5.0)
+        # SUPERSEDED FOR THE BANDED VARIANT ONLY (2026-08-19): the price-band
+        # candidate (recent/rich confined to [g/F, g*F]) passed all four
+        # frozen clauses of docs/fa-2026-08-19/TEAMFIT_CONDITIONAL_GATE.md
+        # (chain MRR inside its MDE floor, concentration tripwire GREEN,
+        # LAD behavior top-1 1.00 -> 0.38, permuted control null) and the
+        # R6.3 falsification number does not reproduce on the current class.
+        # The gate record lives in fa_gate3_eval.json teamfit_conditional_gate;
+        # any OTHER behavior-only rewrite stays banned per R6.3.
+        if cond_on:
+            _outlay, _nband = _cond.get(org) or (0.0, 0)
+            recent = (_outlay / _max_band) if _max_band > 0 else 0.0
+            rich = min(1.0, _nband / 5.0)
+        else:
+            recent = min(1.0, (b.get("recent_spend_usd") or 0) / max_recent)
+            rich = min(1.0, (b.get("n_100m") or 0) / 5.0)
         behavior = bw["max_guar"] * scale + bw["recent"] * recent + bw["rich"] * rich
         comp = (w["need"] * need + w["window"] * window + w["afford"] * afford_score
                 + w["park"] * park["score"] + w["behavior"] * behavior)
@@ -853,7 +896,11 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
                 "behavior": {"score": round(behavior, 3),
                              "max_guarantee_usd": b.get("max_guarantee_usd"),
                              "recent_spend_usd": b.get("recent_spend_usd"),
-                             "n_100m": b.get("n_100m", 0)},
+                             "n_100m": b.get("n_100m", 0),
+                             **({"conditional": True,
+                                 "band_recent_outlay_usd": round((_cond.get(org) or (0.0, 0))[0]),
+                                 "band_deal_count": (_cond.get(org) or (0.0, 0))[1]}
+                                if cond_on else {})},
             },
         })
     rows.sort(key=lambda r: -r["fit"])

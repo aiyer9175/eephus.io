@@ -161,12 +161,12 @@ fit:
   # n_100m club constants. Measured on the frozen gate: chain MRR 0.1628 vs
   # 0.1669 (inside MDE95 0.0139); served-class concentration 0.2174/16/25
   # (tripwire GREEN) vs incumbent 0.3261/7/14; LAD behavior top-1 1.00 ->
-  # 0.38. The flag ships FALSE until fa_fit.fit_scores wires the band terms
-  # behind it; flipping it before the wiring lands would claim a live change
-  # that does not exist. Band factor is the gate's frozen constant and is
+  # 0.38. FLIPPED TRUE 2026-08-19 in the same change that wired the band
+  # terms into fa_fit.fit_scores (the artifact block already carried
+  # shipped: true). Band factor is the gate's frozen constant and is
   # sync-tested against fa_fit_backtest.TEAMFIT_COND_BAND_FACTOR and the
   # artifact block (test_fa_teamfit_conditional.py).
-  behavior_conditional: false
+  behavior_conditional: true
   behavior_cond_band_factor: 2.5
   # Habitual taxpayers (payor status + >= 3 nine-figure deals) keep at
   # least this afford score — CBT space is not their binding constraint.
