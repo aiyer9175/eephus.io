@@ -778,6 +778,131 @@ def export_grpo_scores(
 
 
 # ---------------------------------------------------------------------------
+# Score history archive
+# ---------------------------------------------------------------------------
+
+# One row per (snapshot_date, player_key): the served breakout score on that
+# date. grpo_scores.json is overwritten in place by every monthly retrain, so
+# before this table existed NO forward eval of the breakout badge could ever
+# be built (the model retrains and the old scores are gone). Append-only:
+# INSERT OR IGNORE on the composite primary key makes a same-day re-run a
+# no-op (first write of the day wins; prior dates are never rewritten or
+# deleted). Cannot be back-filled: history begins 2026-08-19. Sibling in
+# spirit to storage.py farm_grade_history, kept here because grpo_prospect
+# owns the artifact being archived. Forward-gate registration:
+# docs/grpo-2026-08-19/GRPO_FORWARD_GATE.md.
+_GRPO_HISTORY_SCHEMA = """
+CREATE TABLE IF NOT EXISTS grpo_score_history (
+    snapshot_date TEXT NOT NULL,        -- 'YYYY-MM-DD' of the run
+    player_key    TEXT NOT NULL,        -- board identity key (all_scores key)
+    score         REAL NOT NULL,        -- breakout_score in [0,1]
+    inserted_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (snapshot_date, player_key)
+);
+CREATE INDEX IF NOT EXISTS idx_grpo_score_hist_date   ON grpo_score_history(snapshot_date);
+CREATE INDEX IF NOT EXISTS idx_grpo_score_hist_player ON grpo_score_history(player_key);
+"""
+
+
+def snapshot_grpo_scores(scores_path: Path | str | None = None,
+                          db_path: Path | str | None = None,
+                          snapshot_date: str | None = None) -> int:
+    """Append the BUILT grpo_scores.json to the grpo_score_history table.
+
+    Reads the artifact, never recomputes: the archive must record exactly what
+    the badge served, not a re-derivation that could drift from it. Applies
+    its own schema (CREATE TABLE IF NOT EXISTS) so a pre-existing DB self
+    heals, and inserts with OR IGNORE keyed on (snapshot_date, player_key) so
+    a same-day re-run is a no-op. Returns the number of rows actually
+    inserted (0 on a same-day repeat or a missing/empty artifact).
+    """
+    import sqlite3
+
+    scores_path = Path(scores_path) if scores_path else _HERE / "data" / "grpo_scores.json"
+    if db_path is None:
+        try:
+            import storage as _storage
+            db_path = _storage.DB_PATH
+        except Exception:
+            db_path = _HERE / "prospects.db"
+    db_path = Path(db_path)
+
+    try:
+        payload = json.loads(scores_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        _log.warning("grpo history: %s missing or unreadable; nothing archived",
+                     scores_path)
+        return 0
+
+    snap = snapshot_date or date.today().isoformat()
+    rows: list[tuple[str, str, float]] = []
+    for key, s in (payload.get("all_scores") or {}).items():
+        if not key or not isinstance(s, dict):
+            continue
+        try:
+            sc = float(s.get("breakout_score"))
+        except (TypeError, ValueError):
+            continue
+        if not math.isfinite(sc):
+            continue
+        rows.append((snap, str(key), sc))
+    if not rows:
+        _log.warning("grpo history: no scorable rows in %s; nothing archived",
+                     scores_path)
+        return 0
+
+    con = sqlite3.connect(db_path, timeout=30)
+    try:
+        con.executescript(_GRPO_HISTORY_SCHEMA)
+        cur = con.executemany(
+            "INSERT OR IGNORE INTO grpo_score_history "
+            "(snapshot_date, player_key, score) VALUES (?, ?, ?)", rows)
+        con.commit()
+        inserted = max(cur.rowcount, 0)
+    finally:
+        con.close()
+    _log.info("grpo history: %d of %d scores archived for %s (dupes ignored)",
+              inserted, len(rows), snap)
+    return inserted
+
+
+def load_grpo_score_history(player_key: str | None = None,
+                             db_path: Path | str | None = None) -> list[dict]:
+    """Load grpo_score_history rows oldest-first, optionally for one player.
+
+    Returns [] when the table (or the DB) does not exist yet, so a consumer
+    can probe the archive without special-casing a fresh install.
+    """
+    import sqlite3
+
+    if db_path is None:
+        try:
+            import storage as _storage
+            db_path = _storage.DB_PATH
+        except Exception:
+            db_path = _HERE / "prospects.db"
+    db_path = Path(db_path)
+    if not db_path.exists():
+        return []
+    con = sqlite3.connect(db_path, timeout=30)
+    try:
+        sql = ("SELECT snapshot_date, player_key, score FROM grpo_score_history")
+        args: tuple = ()
+        if player_key:
+            sql += " WHERE player_key = ?"
+            args = (player_key,)
+        sql += " ORDER BY snapshot_date, player_key"
+        try:
+            cur = con.execute(sql, args)
+        except sqlite3.OperationalError:
+            return []
+        return [{"snapshot_date": r[0], "player_key": r[1], "score": r[2]}
+                for r in cur.fetchall()]
+    finally:
+        con.close()
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 

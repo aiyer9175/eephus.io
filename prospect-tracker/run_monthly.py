@@ -1354,6 +1354,22 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     except Exception:
         log.exception("grpo scoring failed in rebuild_only — continuing")
 
+    # GRPO score archive (2026-08-19): grpo_scores.json is overwritten in place
+    # by every retrain, so before this step no forward eval of the breakout
+    # badge could ever be built. Append today's scores to grpo_score_history,
+    # reading the JUST-WRITTEN artifact (never recomputing) so the archive
+    # records exactly what the badge serves. INSERT OR IGNORE keyed on
+    # (snapshot_date, player_key) makes a same-day re-run a no-op. Best-effort
+    # like every neighbour in this block: an archive failure must not abort
+    # the rebuild or the trade-value export below. Gate registration:
+    # docs/grpo-2026-08-19/GRPO_FORWARD_GATE.md.
+    try:
+        from grpo_prospect import snapshot_grpo_scores
+        _n_grpo_hist = snapshot_grpo_scores(scores_path=out_dir / "grpo_scores.json")
+        log.info("grpo_score_history: archived %d new rows", _n_grpo_hist)
+    except Exception:
+        log.exception("grpo_score_history snapshot failed in rebuild_only - continuing")
+
     # Bayesian trade values — runs after GRPO scores so priors are GRPO-informed.
     # Includes active prospects (timeseries.json), debuted players (debuts.json),
     # and full graduates (graduates.json) so the Trade Board is comprehensive.
