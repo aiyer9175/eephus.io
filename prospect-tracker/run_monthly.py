@@ -32,7 +32,7 @@ import os
 import sys
 import time
 from contextlib import contextmanager
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import concurrent.futures
 from pathlib import Path
 
@@ -288,6 +288,16 @@ SCHEDULED_EXPORTS = (
     # The row is filed off .cache/odds/ (which survives `git checkout -- .`),
     # never off a heartbeat (data/job_heartbeat.json does not).
     "betting_close_capture",
+    # THE NIGHTLY-GAP SENTINEL (2026-08-19). The 2026-08-15 and 2026-08-17
+    # nightlies never ran and NOTHING said so: two leaderboard vintage nights,
+    # a DFS slate and two days of schema-3 dark-capture accrual are gone, and
+    # the loss is permanent because a vintage is evidence about what was
+    # knowable that night and cannot be rewritten later. Same design as
+    # betting_close_capture: the row is filed off the two .cache/ archives
+    # that survive `git checkout -- .` (leaderboard_vintages/, dfs_history/),
+    # never off a heartbeat, because a heartbeat cannot witness a night the
+    # pipeline did not run at all. See _vintage_capture_gap.
+    "vintage_capture_gap",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -373,6 +383,161 @@ def _record_card_ingest(res: dict, scope: str = "",
                         f"{scrape.get('cards_fetched') or 0} fetched, "
                         f"{scrape.get('cards_zero_rows') or 0} parsed nothing")),
                    scope=scope, log=log)
+
+
+# ===========================================================================
+# THE NIGHTLY-GAP SENTINEL (2026-08-19)
+# ===========================================================================
+# WHY: the 2026-08-15 and 2026-08-17 nightlies missed silently. Every existing
+# watch fires INSIDE a run (a step that ran and produced nothing), so a night
+# on which the pipeline never started produced no ledger row, no RED line and
+# no ingest_health.json at all - absence read as success, the TJStats shape
+# again, one level up. The cost is permanent: a leaderboard vintage is
+# evidence about what was knowable that night, so a missed capture cannot be
+# backfilled from a fresher file without manufacturing the leak the archive
+# exists to close.
+#
+# The sentinel therefore runs on the NEXT night that does run, off the two
+# .cache/ per-date archives (the same stores the incident holed), and lists
+# the missing dates by name. Severity is graded:
+#   red    - the newest vintage is >= VINTAGE_GAP_STALE_DAYS calendar days
+#            back (an ONGOING outage, ~36h+ old at the nightly hour), or two
+#            or more dates are missing inside the window (the exact 08-15 +
+#            08-17 shape);
+#   yellow - one missing date, or the DFS archive tail is stale while the
+#            vintage tail is current (a DFS-only miss; an off day or a
+#            no-slate stretch can legitimately look like this and the message
+#            says so).
+# The window is short ON PURPOSE: a hole is permanent, so an unbounded window
+# would print the same red every night until the season ended, which is how a
+# reader learns to skip the line. Three nights of shouting per hole, then the
+# frozen count in coverage()'s missing_dates remains the durable record.
+#
+# SEASON FENCE, two conditions and both must hold before anything can fire:
+# the month is March..November AND the archive holds a current-year entry.
+# Off-season the boards freeze and the newest vintage goes stale legitimately;
+# a sentinel that fired all winter would be dead by opening day.
+VINTAGE_GAP_WINDOW_DAYS = 3
+VINTAGE_GAP_STALE_DAYS = 2   # newest entry 2+ calendar days back is ~36h+ old
+                             # at the nightly hour: two straight missed nights
+
+
+def _archive_dates(dirpath: Path, year: int) -> list[date]:
+    """Sorted date-stemmed *.json entries from one per-date archive, current
+    year only. Filenames only, nothing parsed: the sentinel asks WHEN capture
+    happened, not whether the capture was any good."""
+    p = Path(dirpath)
+    if not p.exists():
+        return []
+    out = []
+    for f in p.glob("*.json"):
+        try:
+            d = date.fromisoformat(f.stem)
+        except ValueError:
+            continue
+        if d.year == year:
+            out.append(d)
+    return sorted(out)
+
+
+def _vintage_capture_gap(*, today: date | None = None,
+                         vintage_dir: Path | None = None,
+                         dfs_dir: Path | None = None) -> dict:
+    """The nightly-gap verdict: {ok, severity, message, newest_vintage,
+    newest_dfs, missing_vintage_dates, missing_dfs_dates, n_vintages_in_window}.
+
+    Pure read, injectable dirs and clock for tests, never raises past its
+    caller's try. `today` is INCLUDED in the window because the daily path
+    records this row AFTER step 9e-pre wrote tonight's vintage, so a missing
+    today means tonight's own capture failed, not that it has not run yet."""
+    root = Path(__file__).parent
+    t = today or date.today()
+    vdir = Path(vintage_dir) if vintage_dir else (root / ".cache" / "leaderboard_vintages")
+    ddir = Path(dfs_dir) if dfs_dir else (root / ".cache" / "dfs_history")
+
+    quiet = {"ok": True, "severity": "ok", "newest_vintage": None,
+             "newest_dfs": None, "missing_vintage_dates": [],
+             "missing_dfs_dates": [], "n_vintages_in_window": 0}
+    if not (3 <= t.month <= 11):
+        quiet["severity"] = "off_season"
+        quiet["message"] = (f"month {t.month} is outside March..November; the "
+                            "vintage-gap sentinel is quiet in the offseason")
+        return quiet
+
+    v_dates = _archive_dates(vdir, t.year)
+    if not v_dates:
+        quiet["severity"] = "no_archive"
+        quiet["message"] = ("no current-season leaderboard vintage exists yet; "
+                            "the sentinel starts watching at the first capture")
+        return quiet
+
+    newest_v = v_dates[-1]
+    have_v = set(v_dates)
+    window_start = max(v_dates[0], t - timedelta(days=VINTAGE_GAP_WINDOW_DAYS))
+    missing_v, cur = [], window_start
+    while cur <= t:
+        if cur not in have_v:
+            missing_v.append(cur.isoformat())
+        cur += timedelta(days=1)
+    stale_v = (t - newest_v).days >= VINTAGE_GAP_STALE_DAYS
+    n_in_window = sum(1 for d in v_dates if d >= window_start)
+
+    # The DFS leg. dfs_history/ only gains a file on a day a priced slate
+    # published, so a hole here is AMBIGUOUS in a way a vintage hole is not:
+    # an off day, the All-Star break and a legitimately empty board all leave
+    # no file. It can therefore raise YELLOW at most, and only off its own
+    # stale tail while the vintage tail is current (pipeline running, DFS not
+    # archiving) - the shape of a dead _archive_slate rather than a dark park.
+    d_dates = _archive_dates(ddir, t.year)
+    newest_d = d_dates[-1] if d_dates else None
+    missing_d, stale_d = [], False
+    if d_dates:
+        dstart = max(d_dates[0], window_start)
+        have_d, cur = set(d_dates), dstart
+        while cur <= t:
+            if cur not in have_d:
+                missing_d.append(cur.isoformat())
+            cur += timedelta(days=1)
+        stale_d = (t - newest_d).days >= VINTAGE_GAP_STALE_DAYS
+
+    if stale_v or len(missing_v) >= 2:
+        severity = "red"
+    elif missing_v or (stale_d and not stale_v):
+        severity = "yellow"
+    else:
+        severity = "ok"
+
+    bits = []
+    if stale_v:
+        bits.append(f"newest leaderboard vintage is {newest_v.isoformat()}, "
+                    f"{(t - newest_v).days} day(s) back (>= "
+                    f"{VINTAGE_GAP_STALE_DAYS} days is an ongoing outage)")
+    if missing_v:
+        bits.append(f"vintage night(s) MISSING: {', '.join(missing_v)} - a "
+                    "missed capture cannot be backfilled and the night is lost")
+    if stale_d:
+        bits.append(f"newest DFS slate archive is {newest_d.isoformat()} while "
+                    "the vintage tail is current; an off day or empty slate "
+                    "can look like this, a dead _archive_slate also does"
+                    if not stale_v else
+                    f"newest DFS slate archive is {newest_d.isoformat()}")
+    if missing_d and severity != "ok":
+        bits.append(f"DFS archive day(s) without a file in the window: "
+                    f"{', '.join(missing_d)} (off days are legitimate here)")
+    if severity == "ok":
+        msg = (f"capture current: newest vintage {newest_v.isoformat()}, "
+               f"newest DFS slate "
+               f"{newest_d.isoformat() if newest_d else 'none this season'}, "
+               f"no gap inside the {VINTAGE_GAP_WINDOW_DAYS}-day window")
+    else:
+        msg = f"!!! VINTAGE GAP {severity.upper()}: " + "; ".join(bits)
+
+    return {"ok": severity == "ok", "severity": severity, "message": msg,
+            "newest_vintage": newest_v.isoformat(),
+            "newest_dfs": newest_d.isoformat() if newest_d else None,
+            "missing_vintage_dates": missing_v,
+            "missing_dfs_dates": missing_d,
+            "n_vintages_in_window": n_in_window}
 
 
 def write_ingest_health(out_dir: Path, mode: str,
@@ -2372,6 +2537,22 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception as _e:
                 _record_ingest("betting_close_capture", False, 0,
                                f"!!! BETTING RED: snapshot_health crashed: {_e}", log=log)
+            # --- the nightly-gap sentinel, off the two per-date archives -----
+            # Runs AFTER step 9e-pre (tonight's vintage) and the DFS export, so
+            # a missing today means tonight's own capture failed. A night the
+            # whole pipeline skips cannot report itself; this is the next
+            # night's run noticing, which is the only place that can.
+            try:
+                _vg = _vintage_capture_gap()
+                _record_ingest("vintage_capture_gap", _vg["ok"],
+                               _vg.get("n_vintages_in_window", 0),
+                               _vg["message"], log=log)
+                if not _vg["ok"]:
+                    log.error("%s", _vg["message"])
+            except Exception as _e:
+                _record_ingest("vintage_capture_gap", False, 0,
+                               f"!!! VINTAGE GAP RED: sentinel crashed: {_e}",
+                               log=log)
             # --- the two ledgers: settle yesterday, then log today -----------
             # This is the loop that breaks gate 3. sweep_min_edge needs 100+
             # settled bets carrying a taken price PER TAG, and nothing produced

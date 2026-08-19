@@ -29,17 +29,45 @@ understate every threshold's ROI and make gate 3 harder to clear for a reason
 that has nothing to do with skill. On the calibration side a push is not a
 binary outcome at all: the bet did not resolve, so it carries no Brier and no
 log loss rather than carrying a zero.
+
+PROPS GRADE OFF THE BOX SCORE, NOT THE RUN SCORE (2026-08-19). A player count
+cannot be read out of a final score, which is why every props row stayed OPEN
+until this grader existed (docs/diamond-betting.md section 7c calls it the
+named unlock). `grade_props` reads the player's statline out of the cached
+StatsAPI game feed (.cache/game_feeds/<game_pk>.json), the same bytes the rest
+of the pipeline already trusts, and `settle_props` walks both ledgers' open
+props rows in the same pass `run` already makes for the team markets.
+
+THE VOID IS NOT A PUSH AND NEITHER IS A LOSS. A player who never appears in
+the box score of a FINAL game, or appears with no statline in the market's
+facet (a listed batter who never batted, a pitcher who never threw), is a
+voided bet: the stake comes back, exactly like a push, and the row settles as
+"void" so it can never be re-graded or counted as evidence. A name the feed
+cannot match unambiguously stays OPEN instead: an ambiguous or missing match
+could be a normalization failure, and grading it void would quietly discard
+evidence.
 """
 from __future__ import annotations
 
+import json
 import logging
 import math
+import re
+import unicodedata
 from datetime import datetime, timezone
+from pathlib import Path
 
 log = logging.getLogger("betting_settle")
 
+ROOT = Path(__file__).resolve().parent
+
 #: Results a graded side may take. "push" is a real outcome, not a failure.
 RESULTS = ("won", "lost", "push")
+
+#: Results a graded PROPS side may take. "void" is the book convention for a
+#: player with no action in a finished game: stake returned, no evidence
+#: created. Team sides never void, so the tuple is separate on purpose.
+PROPS_RESULTS = ("won", "lost", "push", "void")
 
 #: Clamp for the log loss. A model probability of exactly 0 or 1 on a side that
 #: lost would be an infinite penalty, which would make the mean unreadable and
@@ -97,13 +125,301 @@ def grade_side(*, market: str | None, side: str | None, point=None,
     return None
 
 
+# ---------------------------------------------------------------------------
+# props: box-score grading (2026-08-19, the section 7c named unlock)
+# ---------------------------------------------------------------------------
+#: Where the StatsAPI game feeds already live. The props grader reads the SAME
+#: cache betting_model's completed-game walk reads, so a props result and a
+#: team result on one game come out of one set of bytes.
+PROPS_FEED_DIR = ROOT / ".cache" / "game_feeds"
+
+PROPS_PREFIX = "props_"
+
+#: The four registered props markets (docs/diamond-betting.md section 7c,
+#: betting_ingest.PROPS_MARKETS with the props_ prefix) -> which box-score
+#: facet and which StatsAPI stat key settles them. Restated rather than
+#: imported so this module keeps zero heavy dependencies; test_props_grader.py
+#: pins the correspondence against betting_ingest.PROPS_MARKETS so the copies
+#: cannot drift. A market not in this table is a market this module does not
+#: understand, and it grades None, never a guess.
+PROPS_STAT_KEYS = {
+    "props_pitcher_strikeouts": ("pitching", "strikeOuts"),
+    "props_batter_total_bases": ("batting", "totalBases"),
+    "props_batter_hits": ("batting", "hits"),
+    "props_batter_home_runs": ("batting", "homeRuns"),
+}
+
+#: Generational suffixes the odds feed and StatsAPI disagree about carrying.
+_NAME_SUFFIXES = frozenset({"jr", "sr", "ii", "iii", "iv", "v"})
+
+
+def norm_player(name) -> str:
+    """One casefolded, accent-stripped, punctuation-free key for a player name.
+
+    The odds feed writes "Ronald Acuna Jr." where StatsAPI writes "Ronald
+    Acuña Jr."; NFKD plus dropping the combining marks makes those the same
+    key. Periods and commas go too (J.D. vs JD). This is a MATCHING key, never
+    a display string."""
+    if not name:
+        return ""
+    s = unicodedata.normalize("NFKD", str(name))
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
+    s = s.replace(".", "").replace(",", "").casefold()
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _strip_suffix(norm: str) -> str:
+    parts = norm.split(" ")
+    if len(parts) > 2 and parts[-1] in _NAME_SUFFIXES:
+        return " ".join(parts[:-1])
+    return norm
+
+
+def load_boxscore(game_pk, *, feed_dir=None) -> dict | None:
+    """The per-player statlines of one cached game feed, or None.
+
+    None covers a missing feed and an unparseable one, both of which mean the
+    row stays open and the next pass retries: the feed cache fills as its own
+    job runs, and "not cached yet" must never grade anything.
+
+    `final` is carried rather than filtered on, so the caller can distinguish
+    "the feed says the game is still live" (stay open) from "no feed at all"
+    with one read. Player keys are `norm_player` keys mapped to LISTS: two
+    players with one normalized name in one game is a real (rare) state, and
+    collapsing them would grade one man's bet on another man's night."""
+    p = Path(feed_dir or PROPS_FEED_DIR) / f"{game_pk}.json"
+    if not p.exists():
+        return None
+    try:
+        feed = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        log.warning("betting_settle: game feed %s will not parse (%s); props "
+                    "rows on it stay open", p.name, exc)
+        return None
+    status = ((feed.get("gameData") or {}).get("status") or {})
+    live = feed.get("liveData") or {}
+    ls_teams = ((live.get("linescore") or {}).get("teams") or {})
+    players: dict[str, list] = {}
+    stripped: dict[str, list] = {}
+    for side in ("home", "away"):
+        team = (((live.get("boxscore") or {}).get("teams") or {}).get(side) or {})
+        for pl in (team.get("players") or {}).values():
+            nm = norm_player((pl.get("person") or {}).get("fullName"))
+            if not nm:
+                continue
+            stats = pl.get("stats") or {}
+            entry = {"name": (pl.get("person") or {}).get("fullName"),
+                     "batting": stats.get("batting") or {},
+                     "pitching": stats.get("pitching") or {}}
+            players.setdefault(nm, []).append(entry)
+            stripped.setdefault(_strip_suffix(nm), []).append(entry)
+    return {
+        "game_pk": game_pk,
+        "final": status.get("abstractGameState") == "Final",
+        "home_runs": (ls_teams.get("home") or {}).get("runs"),
+        "away_runs": (ls_teams.get("away") or {}).get("runs"),
+        "players": players,
+        "players_stripped": stripped,
+    }
+
+
+def props_actual(box: dict, *, market: str, player) -> tuple:
+    """("ok", count) | ("void", reason) | ("open", reason) for one player.
+
+    void  the game is final and the book's rule says no action: the player is
+          not in the box score at all (scratched, not on the roster), or is
+          there with an EMPTY statline in the market's facet (a bench bat who
+          never hit, a listed arm that never threw).
+    open  this function cannot say: an empty or ambiguous name key, two
+          players whose names normalize identically, or a statline missing
+          the market's key. Every one of those could be a matching failure,
+          and a matching failure graded as void would silently discard
+          evidence, so the row waits for a human instead."""
+    group, key = PROPS_STAT_KEYS[market]
+    nm = norm_player(player)
+    if not nm:
+        return ("open", "row carries no player name")
+    hits = (box.get("players") or {}).get(nm)
+    if not hits:
+        hits = (box.get("players_stripped") or {}).get(_strip_suffix(nm))
+    if not hits:
+        return ("void", "player is not in the final box score (no action)")
+    if len(hits) > 1:
+        return ("open", f"{len(hits)} box-score players normalize to {nm!r}; "
+                        "refusing to guess which one was bet")
+    stats = hits[0].get(group) or {}
+    if not stats:
+        return ("void", f"player has no {group} line in the final box score "
+                        "(no action in this market's facet)")
+    val = stats.get(key)
+    if val is None:
+        return ("open", f"the {group} statline carries no {key!r} key")
+    try:
+        return ("ok", int(val))
+    except (TypeError, ValueError):
+        return ("open", f"{key} is not a count: {val!r}")
+
+
+def grade_props(*, market: str | None, side: str | None, point=None,
+                player=None, box: dict | None = None) -> str | None:
+    """"won" / "lost" / "push" / "void", or None when this cannot be graded.
+
+    The same contract as `grade_side`, one level down: None is a real answer
+    (no feed, a live game, an unknown market, a missing line, an ambiguous
+    name) and every None leaves the row OPEN. The push is the whole-number
+    line landing exactly, the same convention `total` uses. The void is the
+    no-action case, and only a FINAL game may void: a scratch is only a
+    scratch once the game it was scratched from is over."""
+    if not box or not box.get("final"):
+        return None
+    if market not in PROPS_STAT_KEYS or side not in ("over", "under"):
+        return None
+    if point is None:
+        return None
+    try:
+        line = float(point)
+    except (TypeError, ValueError):
+        return None
+    status, actual = props_actual(box, market=market, player=player)
+    if status == "open":
+        return None
+    if status == "void":
+        return "void"
+    diff = float(actual) - line
+    if abs(diff) < 1e-9:
+        return "push"
+    over = diff > 0
+    won = over if side == "over" else (not over)
+    return "won" if won else "lost"
+
+
+def settle_props(*, shadow_path=None, cal_path=None, feed_dir=None,
+                 log_fn=None) -> dict:
+    """Grade every open props row in both ledgers against the box scores.
+
+    INERT-SAFE BY CONSTRUCTION: with zero props rows stored (the state on
+    2026-08-19) this reads the two ledgers it was going to read anyway, finds
+    no open props row, and returns without touching a feed file, writing a
+    byte, or logging a line. The min_edge clocks per props tag start ONLY
+    when rows exist AND settle here; nothing about this function can start
+    them early.
+
+    Both ledgers settle through the ONE grader above, the same rule that put
+    the team markets' grading in this module: two graders drift, and drift
+    shows up as two ledgers disagreeing about the same statline. The shadow
+    write goes through betting_shadow.write, so its append-or-settle check
+    still proves only settlement fields moved; the calibration write goes
+    through betting_calibration.append as PHASE_SETTLED events, so its phase
+    field discipline still holds."""
+    import betting_shadow
+    out = {"shadow": {"settled": 0, "open": 0, "void": 0},
+           "calibration": {"settled": 0, "open": 0, "void": 0},
+           "reason": "ok"}
+
+    sh_rows = betting_shadow.load(shadow_path)
+    sh_open = [r for r in sh_rows
+               if str(r.get("market") or "").startswith(PROPS_PREFIX)
+               and not r.get("result")]
+
+    try:
+        from tools import betting_calibration
+    except Exception as exc:                                    # noqa: BLE001
+        betting_calibration = None
+        cal_open = []
+        out["calibration"] = {"settled": 0, "open": 0, "void": 0,
+                              "reason": f"unavailable: {exc}"}
+    if betting_calibration is not None:
+        cal_rows = betting_calibration.rows(path=cal_path)
+        cal_open = [r for r in cal_rows
+                    if str(r.get("market") or "").startswith(PROPS_PREFIX)
+                    and not r.get("result")]
+
+    if not sh_open and not cal_open:
+        out["reason"] = "no open props rows in any ledger"
+        return out
+
+    # One feed read per game, shared by both ledgers, the same one-read rule
+    # `run` applies to the schedule.
+    boxes: dict = {}
+    for r in sh_open + cal_open:
+        pk = r.get("game_pk")
+        if pk is not None and pk not in boxes:
+            boxes[pk] = load_boxscore(pk, feed_dir=feed_dir)
+
+    # --- shadow ledger ---
+    updated, n_sh, n_sh_void = [], 0, 0
+    for r in sh_rows:
+        if (not str(r.get("market") or "").startswith(PROPS_PREFIX)
+                or r.get("result") or r.get("game_pk") is None):
+            updated.append(r)
+            continue
+        box = boxes.get(r["game_pk"])
+        res = grade_props(market=r.get("market"), side=r.get("side"),
+                          point=r.get("point"), player=r.get("player"),
+                          box=box)
+        if not res:
+            updated.append(r)
+            continue
+        updated.append({**r, "result": res, "settled_at": _now(),
+                        "profit_units": profit_units(
+                            result=res, decimal=r.get("decimal"),
+                            odds=r.get("odds_at_post"),
+                            stake_units=float(r.get("stake_units") or 1.0)),
+                        "final_home_runs": box.get("home_runs"),
+                        "final_away_runs": box.get("away_runs")})
+        n_sh += 1
+        n_sh_void += 1 if res == "void" else 0
+    if n_sh:
+        betting_shadow.write(updated, path=shadow_path)
+    out["shadow"] = {"settled": n_sh, "void": n_sh_void,
+                     "open": sum(1 for r in updated
+                                 if str(r.get("market") or "").startswith(PROPS_PREFIX)
+                                 and not r.get("result"))}
+
+    # --- calibration ledger ---
+    if betting_calibration is not None:
+        events, n_cal_void = [], 0
+        written_at = _now()
+        for r in cal_open:
+            box = boxes.get(r.get("game_pk"))
+            res = grade_props(market=r.get("market"), side=r.get("side"),
+                              point=r.get("point"), player=r.get("player"),
+                              box=box)
+            if not res:
+                continue
+            scores = binary_scores(r.get("model_prob"), res)
+            events.append({
+                "cal_id": r["cal_id"],
+                "phase": betting_calibration.PHASE_SETTLED,
+                "written_at": written_at, "result": res,
+                "brier": scores["brier"], "log_loss": scores["log_loss"],
+                "final_home_runs": (box or {}).get("home_runs"),
+                "final_away_runs": (box or {}).get("away_runs"),
+                "settled_at": written_at,
+            })
+            n_cal_void += 1 if res == "void" else 0
+        n_cal = betting_calibration.append(events, path=cal_path)
+        out["calibration"] = {"settled": n_cal, "void": n_cal_void,
+                              "open": len(cal_open) - n_cal}
+
+    if log_fn and (n_sh or out["calibration"].get("settled")):
+        log_fn(f"betting_settle: settled {n_sh} props paper bet(s) and "
+               f"{out['calibration'].get('settled', 0)} props calibration "
+               "side(s) off the box scores")
+    return out
+
+
 def profit_units(*, result: str, decimal=None, odds=None,
                  stake_units: float = 1.0):
     """Net units on a settled side, or None when no price can be recovered.
 
     A row with no usable price is NOT worth zero: zero is a graded break-even
-    and would be counted as evidence. None keeps it out of every rate."""
-    if result == "push":
+    and would be counted as evidence. None keeps it out of every rate.
+
+    A VOID RETURNS THE STAKE, exactly like a push. It is listed separately
+    because it is a different fact (the bet never had action, rather than the
+    line being hit exactly), but the money is the same money."""
+    if result in ("push", "void"):
         return 0.0
     dec = decimal
     if not dec and odds is not None:
@@ -163,10 +479,24 @@ def run(*, games=None, log_fn=None) -> dict:
     ONE READ OF THE SCHEDULE for both ledgers, which is not an optimisation:
     two reads a few seconds apart can straddle a feed update and grade the same
     game two ways. Each ledger is settled inside its own try, so a calibration
-    failure cannot stop the paper bets from settling and vice versa."""
+    failure cannot stop the paper bets from settling and vice versa.
+
+    PROPS SETTLE FIRST (2026-08-19), in the same pass, off the box scores.
+    First because the two team legs below skip any row that already carries a
+    result: a props row graded here is invisible to them, while a props row
+    graded after them would have already tripped the shadow leg's "finished
+    game, ungradeable market" warning on every nightly. With zero props rows
+    stored the leg is a silent no-op and the output says so."""
     if games is None:
         games = load_completed()
-    out: dict = {"n_games": len(games or []), "shadow": None, "calibration": None}
+    out: dict = {"n_games": len(games or []), "props": None, "shadow": None,
+                 "calibration": None}
+
+    try:
+        out["props"] = settle_props(log_fn=log_fn)
+    except Exception as exc:                                    # noqa: BLE001
+        log.exception("betting_settle: props settlement failed")
+        out["props"] = {"settled": 0, "reason": f"failed: {exc}"}
 
     try:
         import betting_shadow

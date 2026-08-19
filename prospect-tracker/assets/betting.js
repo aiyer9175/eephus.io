@@ -790,6 +790,44 @@
       "which puts too little mass in the tails. The full grid is on the Validation tab.");
   }
 
+  // THE BOTH-LEGS COPY STATE (2026-08-19, pre-decided). A market can be
+  // watch-only twice over: the theory leg (the margin-shape exclusion, its
+  // gate indeterminate) and the evidence leg (the market's own graded record
+  // resolved worse than a coin at the canonical-game floor). When the payload
+  // says both legs closed a market, the page states ONE combined state with
+  // BOTH numbers, every one of them read off market_publishability. Nothing
+  // here is hand-written: the t, the bar, the Brier, the game count and the
+  // floor all ride the payload, so the copy moves the night the numbers do.
+  function marketGateNotes() {
+    var mp = (S.data || {}).market_publishability || null;
+    if (!mp || !mp.markets) return "";
+    var pol = mp.policy || {};
+    var out = [];
+    Object.keys(mp.markets).forEach(function (k) {
+      var m = mp.markets[k] || {};
+      if (!m.both_legs) return;
+      var lg = m.ledger_leg || {};
+      var floor = (pol.n_min == null) ? "the canonical-game floor"
+        : ("the n of " + pol.n_min + " floor");
+      var bar = (pol.z == null) ? "the one-sided 95% bar"
+        : ("the " + num(pol.z, 3) + " one-sided bar");
+      out.push(note("<strong>The " + esc(k) +
+        " market is watch-only for two independent reasons.</strong>" +
+        " Theory leg: " +
+        esc((m.dispersion_leg || {}).reason ||
+            "the margin-shape exclusion bars this market") +
+        ". Evidence leg: its own graded record resolved worse than a coin at " +
+        floor + ", mean Brier " + num(lg.brier, 5) + " on " +
+        (lg.n_games == null ? "an unreported count of" : lg.n_games) +
+        " canonical games, t " + num(lg.t, 3) + " against " + bar +
+        ". The two closes are independent: clearing either leg alone does " +
+        "not reopen the market, and the shadow and calibration ledgers keep " +
+        "recording it because they are the only instruments that can " +
+        "accumulate the evidence to reopen it."));
+    });
+    return out.join("");
+  }
+
   // THE SLOT'S OWN SETTLED RECORD (2026-08-16). The watch framing is only
   // honest if the card carries what this selection rule has actually done:
   // the server reads betting_shadow.summary() by tag and serves it on the
@@ -996,6 +1034,9 @@
     }
     var any = SLOTS.some(function (s) { return !!d[s.key]; });
     out.push(SLOTS.map(pickCard).join(""));
+    // A market closed by BOTH legs never reaches a slot card, so its copy
+    // state renders here at market level or nowhere.
+    out.push(marketGateNotes());
 
     if (!any) out.push(pickCensus());
     if (!any) {
@@ -2089,6 +2130,10 @@
         "clear it, and that absence is information: it means the model and the " +
         "market agree about that game.");
     }
+    // The both-legs copy state renders above the board too: the closed
+    // market's rows stay priced below (the ledgers keep recording it), and a
+    // reader of this tab is owed the same two reasons the watch tab states.
+    head += marketGateNotes();
     return head + bets.map(gameCard).join("");
   }
 

@@ -3749,6 +3749,14 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
             "market": m,
             "publishable": publishable,
             "reason": reason,
+            # THE BOTH-LEGS COPY STATE (2026-08-19, pre-decided). True exactly
+            # when the evidence leg has CLOSED a market the theory leg already
+            # bars, so the page can say "watch-only for two independent
+            # reasons" with both numbers read off this table instead of a
+            # reader inferring one exclusion from a sentence about the other.
+            # Derived from the two fields beside it, never stored: the flag
+            # cannot drift from the legs it summarizes.
+            "both_legs": bool((not disp_ok) and status == "ledger_closed"),
             "dispersion_leg": {"publishable": disp_ok, "reason": disp_reason},
             "ledger_leg": {
                 "status": status,
