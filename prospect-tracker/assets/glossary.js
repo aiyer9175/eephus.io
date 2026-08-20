@@ -6,9 +6,11 @@
 // =============================================================================
 // eephus.io unified Glossary & Methodology app (/glossary/)
 // =============================================================================
-// Seven views: Terms (search + group nav + A-Z index + entry cards) ·
+// Seven views: Terms (search + group nav + A-Z index + entry cards, with
+// artifact-derived receipt blocks on model entries via _receiptSpecs) ·
 // How to Read (annotated anatomy guide) · Methodology (derivations +
-// interactive teaching widgets + PDF export) · Source Comparison (the
+// the industry-comparison section at #industry-comparison + interactive
+// teaching widgets + PDF export) · Source Comparison (the
 // empirical source-vs-source backtest) · Source Accuracy (the
 // who-grades-which-cohort measurement) · Models & Proofs (the model
 // registry ledger) · Library (index of every standalone page). The
@@ -42,6 +44,14 @@
   let _SACC = null;            // cached source_cohort_accuracy.json (or {__error:true})
   let _SACC_LOADING = false;   // in-flight guard against a double fetch
   let _SACC_TAB = "read-first"; // active sub-tab in the Source Accuracy view
+  // Receipt-block + industry-comparison artifact cache (2026-08-19). One map
+  // keyed by fetch path, shared by the Terms-view receipt blocks and the
+  // Methodology "Our tables vs the industry's" section, so an artifact two
+  // consumers read is fetched exactly once. Declared here, module scope above
+  // every renderer, for the same TDZ reason _SACC is.
+  let _RCPT = {};          // fetch path -> parsed payload (or {__error:true})
+  let _RCPT_LOADING = {};  // fetch path -> in-flight guard
+  let _RCPT_SPECS = null;  // entry id -> receipt spec, built lazily by _receiptSpecs()
 
   function escapeHtml(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -117,6 +127,13 @@
     if (typeof _GLOSSARY_VIZ !== "undefined" && _GLOSSARY_VIZ[slug]) {
       let viz = ""; try { viz = _GLOSSARY_VIZ[slug](); } catch (err) { viz = ""; }
       if (viz) more.push(`<div class="gl-microlabel" style="margin-top:8px;">Visualization</div><div class="glossary-visual">${viz}</div>`);
+    }
+    // Receipt block (2026-08-19): model entries seeded in _receiptSpecs carry
+    // an artifact-derived receipt inside the +methodology fold. The slot is
+    // empty here on purpose: the artifact is fetched lazily on the FIRST
+    // expand (_wireReceipts), so a page of collapsed cards costs zero fetches.
+    if (_receiptSpecs()[slug]) {
+      more.push(`<div class="gl-receipt-slot" data-receipt="${escapeHtml(slug)}"></div>`);
     }
     const rel = (e.related || []).filter(r => GL[r]).map(r =>
       `<a class="gl-rel" href="#g=${escapeHtml(r)}">${escapeHtml(GL[r].name)}</a>`).join("");
@@ -201,6 +218,7 @@
       parts.push(entryCard(slug, e, _S.term === slug));
     }
     root.innerHTML = parts.join("") || `<div class="state-message">No glossary terms match.</div>`;
+    _wireReceipts(root);
     if (_S.term) {
       const card = document.getElementById("g-" + _S.term);
       if (card) {
@@ -211,6 +229,514 @@
       }
       _S.term = null;
     }
+  }
+
+  // ==== RECEIPT BLOCKS (2026-08-19) ==========================================
+  // Artifact-derived receipts on model entries: the estimand in one plain
+  // sentence, the named baseline, the measured number with its floor or CI,
+  // and a three-valued verdict chip (clears floor / inside floor / trails).
+  // Every figure is read from the committed eval artifact at expand time and
+  // passes through ONE formatter (_rn); no measured number is typed by hand.
+  // Ledger notes, recorded rather than approximated:
+  //   - milb_park_factor: intentionally left as-is (its entry copy already
+  //     stands on data/milb_park_factors_eval.json; no receipt spec added).
+  //   - war_pa_plus_3yr / _adj and the war_ip_plus_* 3yr/adj variants: the
+  //     committed eval (war_rate_plus_eval.json) scores only the base
+  //     single-season indexes, so the variants get NO receipt (no clean key).
+  //   - the IFA $1M step prior has no glossary entry of its own; its receipt
+  //     rides the `ifa` entry. The pWOBA gate (phem_marcel_lite_eval.json,
+  //     where fa_projection's projected wOBA won) rides the `pwoba` entry.
+  //   - hem_plus_3yr / sem_plus_3yr / rem_plus_3yr / fwdhem_plus / xrem_plus /
+  //     xsem_plus: no per-variant eval cell; skipped, not approximated.
+
+  // The single number formatter every receipt figure passes through.
+  function _rn(v, dp) {
+    return (v == null || isNaN(Number(v))) ? "-" : Number(v).toFixed(dp == null ? 3 : dp);
+  }
+  function _rns(v, dp) { return (Number(v) > 0 ? "+" : "") + _rn(v, dp); }
+  function _rnp(v, dp) { return (v == null || isNaN(Number(v))) ? "-" : _rn(Number(v) * 100, dp == null ? 1 : dp) + "%"; }
+
+  // Three-valued call from a CI on a (higher-is-better) gap.
+  function _rcptCI(lo, hi) {
+    if (lo == null || hi == null || isNaN(Number(lo)) || isNaN(Number(hi))) return "inside";
+    if (Number(lo) > 0) return "clears";
+    if (Number(hi) < 0) return "trails";
+    return "inside";
+  }
+
+  function _rcptChip(verdict, title) {
+    const M = { clears: ["clears floor", "var(--up)"],
+                inside: ["inside floor", "var(--text-secondary)"],
+                trails: ["trails", "var(--down)"] };
+    const m = M[verdict];
+    if (!m) return "";
+    return `<span title="${escapeHtml(title || "")}" style="font-weight:700;font-size:0.85em;color:${m[1]};white-space:nowrap;">${m[0]}</span>`;
+  }
+
+  // Shared artifact cache: one fetch per path no matter how many receipts or
+  // methodology blocks read it. Callbacks queue while a fetch is in flight.
+  function _rcptLoad(path, cb) {
+    if (_RCPT[path]) { cb(); return; }
+    if (_RCPT_LOADING[path]) { _RCPT_LOADING[path].push(cb); return; }
+    _RCPT_LOADING[path] = [cb];
+    const done = j => {
+      _RCPT[path] = j || { __error: true };
+      const q = _RCPT_LOADING[path] || [];
+      delete _RCPT_LOADING[path];
+      q.forEach(f => { try { f(); } catch (err) { /* one bad consumer never strands the rest */ } });
+    };
+    fetch(path, { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(done)
+      .catch(() => done(null));
+  }
+
+  // Entry id -> receipt spec. Built once, lazily. Each spec:
+  //   art      - artifact path (fetched once, shared via _RCPT)
+  //   cache    - optional: reuse a payload another view already loaded
+  //   estimand - one plain sentence: what the model claims to measure
+  //   baseline - the named baseline the number is scored against
+  //   read(j)  - rows [{label, mv, bname, bv, band, verdict, title}] or null
+  //              (null = the artifact lacks the key; the receipt SKIPS, it
+  //              never approximates)
+  //   note     - optional fn(j) -> one extra honesty sentence
+  function _receiptSpecs() {
+    if (_RCPT_SPECS) return _RCPT_SPECS;
+
+    // hem/sem/rem/xhem share one shape: forward Spearman vs named baselines
+    // with a bootstrap CI on each gap.
+    const rateRows = (f, pk, pn, cells, n, nUnit) => {
+      if (!f || f[pk] == null) return null;
+      const rows = [];
+      cells.forEach(c => {
+        const g = c.ci || {};
+        if (f[c.bk] == null || g.lo95 == null) return;
+        rows.push({
+          label: c.label + " (n=" + _rn(n, 0) + " " + nUnit + ")",
+          mv: _rn(f[pk]), mname: pn, bname: c.bname, bv: _rn(f[c.bk]),
+          band: "gap " + _rns(g.mean) + ", 95% CI " + _rns(g.lo95) + " to " + _rns(g.hi95),
+          verdict: _rcptCI(g.lo95, g.hi95),
+        });
+      });
+      return rows.length ? rows : null;
+    };
+
+    const g2Read = j => {
+      const p = j.pooled || {}, gates = j.gates || {};
+      const mk = (k, label, dp, unit) => (p[k] && p[k].mae_model != null && p[k].mae_base != null) ? {
+        label: label + " (n=" + _rn(p[k].n, 0) + " signings)",
+        mv: unit + _rn(p[k].mae_model, dp), bname: "5-nearest-comps median", bv: unit + _rn(p[k].mae_base, dp),
+        band: "lower is better",
+        verdict: gates[k] === true ? "clears"
+          : (Number(p[k].mae_model) < Number(p[k].mae_base) ? "inside" : "trails"),
+        title: "gate flag `" + k + "` as recorded in the artifact",
+      } : null;
+      const rows = [mk("guarantee", "Guarantee MAE, NPV $M", 1, "$"),
+                    mk("aav", "AAV MAE, $M", 2, "$"),
+                    mk("years", "Years MAE", 2, "")].filter(Boolean);
+      return rows.length ? rows : null;
+    };
+
+    const surplusRead = j => {
+      const fp = j.full_pool || {};
+      const rc = fp.raw_calibration || {}, ci = fp.raw_calibration_slope_ci90;
+      if (rc.slope == null || !Array.isArray(ci) || ci.length !== 2) return null;
+      const yrs = j.listing_years || [];
+      const span = yrs.length ? yrs[0] + "-" + yrs[yrs.length - 1] : "";
+      const rows = [{
+        label: "Realized-on-predicted calibration slope (n=" + _rn(fp.n_players, 0) + " listed prospects, " + span + " lists)",
+        mv: _rn(rc.slope, 2), bname: "a no-signal slope of", bv: _rn(0, 0),
+        band: "90% CI " + _rn(ci[0], 2) + " to " + _rn(ci[1], 2),
+        verdict: _rcptCI(ci[0], ci[1]),
+        title: "slope CI excludes zero: predicted dollars carry real information about realized dollars",
+      }];
+      const bc = fp.binned_calibration || {};
+      if (bc.r2 != null) rows.push({
+        label: "Binned predicted-vs-realized fit, r-squared",
+        mv: _rn(bc.r2, 2),
+      });
+      return rows;
+    };
+
+    const wrSpec = (pool, poolLabel) => ({
+      art: "/data/war_rate_plus_eval.json",
+      estimand: "Does the " + poolLabel + " rate index forward-predict the next season's WAR rate better than the season WAR total it re-expresses?",
+      baseline: "plain season bWAR, the simplest baseline in the set",
+      read: j => {
+        const p = (j.pools || {})[pool] || {};
+        const v2 = (p.results_by_convention || {}).v2 || {};
+        const b = v2.rho_baselines || {};
+        const g = (v2.gap_ci_primary_minus_baseline || {}).war_total || {};
+        if (v2.rho_primary == null || b.war_total == null || g.lo95 == null) return null;
+        const rows = [{
+          label: "Spearman rho, next-season WAR rate (n=" + _rn(p.n_forward_pairs, 0) + " forward pairs)",
+          mv: _rn(v2.rho_primary), bname: "plain season bWAR", bv: _rn(b.war_total),
+          band: "gap " + _rns(g.mean) + ", 95% CI " + _rns(g.lo95) + " to " + _rns(g.hi95),
+          verdict: _rcptCI(g.lo95, g.hi95),
+        }];
+        if (b.placebo != null) rows.push({
+          label: "Same read vs a zero-information placebo",
+          mv: _rn(v2.rho_primary), bname: "placebo", bv: _rn(b.placebo),
+          verdict: ((j.verdict || {}).g1_beats_zero_information_control_by_pool || {})[pool] === true ? "clears" : "inside",
+        });
+        return rows;
+      },
+      note: () => "The index carries real signal but does not beat the season WAR total it is built from. It ships as a display index, not a validated forecaster, and the loss stays on this card.",
+    });
+
+    _RCPT_SPECS = {
+      // ---- WINS -----------------------------------------------------------
+      hem_plus: {
+        art: "/data/hem_plus_eval.json",
+        estimand: "Does HEM+ predict a hitter's next-season wOBA, forward-chained and out of sample?",
+        baseline: "batting average, with raw wOBA as the no-worse check",
+        read: j => rateRows(j.forward_spearman_vs_wOBA_next, "hem_plus", "HEM+", [
+          { label: "Spearman rho, next-season wOBA", bk: "avg", bname: "AVG", ci: j.gap_ci_vs_avg },
+          { label: "Same read vs raw wOBA itself", bk: "raw_woba", bname: "raw wOBA", ci: j.gap_ci_vs_raw_woba },
+        ], j.n_forward_pairs, "forward pairs"),
+      },
+      sem_plus: {
+        art: "/data/sem_plus_eval.json",
+        estimand: "Does SEM+ predict a starter's next-season run prevention (RA9)?",
+        baseline: "ERA, with raw FIP as the harder check",
+        read: j => rateRows(j.forward_spearman_vs_RA9_next, "sem_plus", "SEM+", [
+          { label: "Spearman rho, next-season RA9", bk: "era", bname: "ERA", ci: j.gap_ci_vs_era },
+          { label: "Same read vs raw FIP", bk: "raw_fip", bname: "raw FIP", ci: j.gap_ci_vs_raw_fip },
+        ], j.n_forward_pairs, "forward pairs"),
+      },
+      rem_plus: {
+        art: "/data/rem_plus_eval.json",
+        estimand: "Does REM+ predict a reliever's next-season run prevention (RA9)?",
+        baseline: "raw FIP; ERA as the softer check",
+        read: j => {
+          const g = j.gap_ci_vs_RA9_next || {};
+          return rateRows(j.forward_spearman_vs_RA9_next, "rem_plus", "REM+", [
+            { label: "Spearman rho, next-season RA9", bk: "raw_fip", bname: "raw FIP", ci: g.vs_raw_fip },
+            { label: "Same read vs ERA", bk: "era", bname: "ERA", ci: g.vs_era },
+          ], j.n_forward_pairs, "forward pairs");
+        },
+      },
+      xhem_plus: {
+        art: "/data/xhem_plus_eval.json",
+        estimand: "Does the deserved (xwOBA-based) read predict next-season wOBA better than the actual line?",
+        baseline: "actual wOBA, same forward pairs",
+        read: j => rateRows(j.forward_spearman_vs_wOBA_next, "xwoba", "xwOBA", [
+          { label: "Spearman rho, next-season wOBA", bk: "actual_woba", bname: "actual wOBA", ci: j.gap_ci_xwoba_minus_woba },
+        ], j.n_forward_pairs, "forward pairs"),
+      },
+      pwoba: {
+        art: "/data/phem_marcel_lite_eval.json",
+        estimand: "Does the served projected wOBA order hitters' next-season wOBA better than the best flat multiyear read?",
+        baseline: "flat 3-year HEM+, the best incumbent at the gate",
+        read: j => {
+          const h = j.hitters || {};
+          const r = h.gate_rhos_v1 || {};
+          const g = (h.gate || {}).gap_ci_winner_minus_best_incumbent_v1 || {};
+          if (r.fa_projection == null || r.incumbent_3yr_flat == null || g.lo95 == null) return null;
+          return [{
+            label: "Spearman rho, next-season wOBA, held-out gate years (n=" + _rn(h.n_gate, 0) + ")",
+            mv: _rn(r.fa_projection), bname: "flat 3-year HEM+", bv: _rn(r.incumbent_3yr_flat),
+            band: "gap " + _rns(g.mean) + ", 95% CI " + _rns(g.lo95) + " to " + _rns(g.hi95),
+            verdict: _rcptCI(g.lo95, g.hi95),
+          }];
+        },
+        note: j => (((j.verdict || {}).pitchers || {}).status || "").indexOf("FAIL") === 0
+          ? "The pitcher-side twin failed its gate and did not ship; that loss is committed in the same artifact."
+          : "",
+      },
+      eta: {
+        art: "/data/eta_eval.json",
+        estimand: "Does the served ETA call the year a prospect debuts better than a naive level table would?",
+        baseline: "a naive years-per-level table, scored on identical rows",
+        read: j => {
+          const c = j.champion_on_baseline_rows || {}, b = j.baseline_naive_level_table || {};
+          if (c.mae == null || b.mae == null) return null;
+          const rows = [{
+            label: "Years-to-debut MAE, debuted players, identical rows (n=" + _rn(b.n, 0) + ")",
+            mv: _rn(c.mae, 2) + " yr", bname: "naive level table", bv: _rn(b.mae, 2) + " yr",
+            band: "lower is better; the artifact publishes no CI for this pair",
+            verdict: Number(c.mae) < Number(b.mae) ? "clears" : "trails",
+            title: "ship rule recorded in the artifact: beat the incumbent bases on identical rows",
+          }];
+          if (c.within_1y != null && b.within_1y != null) rows.push({
+            label: "Called within one year of the actual debut",
+            mv: _rnp(c.within_1y), bname: "naive level table", bv: _rnp(b.within_1y),
+            verdict: Number(c.within_1y) > Number(b.within_1y) ? "clears" : "trails",
+          });
+          return rows;
+        },
+        note: () => "Scored on debuted players only; the overdue and washed-out rates carry the unconditional signal and are published in the same artifact.",
+      },
+      farm_report_card: {
+        art: "/data/farm_grade_eval.json",
+        estimand: "Does the farm grade's financial core (surplus mass over the vintage board) rank orgs by the graduate WAR they went on to produce?",
+        baseline: "a plain prospect-count ranking on the same vintage boards",
+        read: j => {
+          const m = j.mean_spearman || {};
+          if (m.sum_surplus_mm == null || m.count == null) return null;
+          const vy = j.vintage_years || [];
+          const first = (j.per_vintage || {})[vy[0]] || {};
+          const rows = [{
+            label: "Mean Spearman vs realized 3-year graduate WAR (" + _rn(vy.length, 0) + " vintages, " + _rn(first.n_orgs, 0) + " orgs each)",
+            mv: _rn(m.sum_surplus_mm, 2), bname: "prospect count", bv: _rn(m.count, 2),
+            verdict: (j.verdict || {}).financial_core_beats_count === true ? "clears" : "inside",
+            title: "verdict boolean recorded in the artifact",
+          }];
+          if (m.count_fv50plus != null) rows.push({
+            label: "Same read vs an FV 50+ count baseline",
+            mv: _rn(m.sum_surplus_mm, 2), bname: "FV 50+ count", bv: _rn(m.count_fv50plus, 2),
+            verdict: Number(m.sum_surplus_mm) > Number(m.count_fv50plus) ? "clears" : "inside",
+          });
+          return rows;
+        },
+        note: () => "Reduced analog: letters were never snapshotted, so the backtest scores the tree's financial core on vintage FVs, as the artifact's conventions state.",
+      },
+      spotlights: {
+        art: "/data/editorial_eval.json",
+        estimand: "Do the editorial flags predict real consensus movement, or just narrate it?",
+        baseline: "matched unflagged players in the same FV band and window",
+        read: j => {
+          const t = j.by_flag_type || {};
+          const rows = [];
+          [["faller", "Faller flags: consensus drop within 30 days"],
+           ["rebound", "Rebound flags: recovery within 30 days"],
+           ["riser", "Riser flags: further rise within 30 days"]].forEach(pair => {
+            const f = ((t[pair[0]] || {}).horizons || {}).h30;
+            if (!f || f.hit_rate == null || !Array.isArray(f.ci)) return;
+            rows.push({
+              label: pair[1] + " (n=" + _rn(f.n, 0) + " flags)",
+              mv: _rnp(f.hit_rate), bname: "control (n=" + _rn(f.control_n, 0) + ")", bv: _rnp(f.control_rate),
+              band: "95% CI " + _rnp(f.ci[0]) + " to " + _rnp(f.ci[1]) + "; control " + _rnp((f.control_ci || [])[0]) + " to " + _rnp((f.control_ci || [])[1]),
+              verdict: f.clears_control === true ? "clears" : "inside",
+              title: "clears_control as recorded in the artifact",
+            });
+          });
+          return rows.length ? rows : null;
+        },
+      },
+      fa_projection_engine: {
+        art: "/data/fa_gate1_eval.json",
+        estimand: "Does the FA projection engine forecast next-season WAR better than carrying a player's own recent record forward?",
+        baseline: "a 5/4/3 weighted average of actual finals, no regression, no aging",
+        read: j => {
+          const p = (j.pooled || {}).war;
+          if (!p || p.mae_model == null || p.mae_base == null) return null;
+          return [{
+            label: "Next-season WAR MAE (n=" + _rn(p.n, 0) + " player-seasons, forward-chained)",
+            mv: _rn(p.mae_model, 2), bname: "5/4/3 carry-forward", bv: _rn(p.mae_base, 2),
+            band: "lower is better",
+            verdict: ((j.gates || {}).war === true && j.pass === true) ? "clears"
+              : (Number(p.mae_model) < Number(p.mae_base) ? "inside" : "trails"),
+            title: "gate flags recorded in the artifact",
+          }];
+        },
+      },
+      rational_value: {
+        art: "/data/fa_gate2_eval.json",
+        estimand: "The pricing legs under rational value are gate-checked through the market backtest: predicted guarantee, AAV, and years against what free agents then signed for.",
+        baseline: "the median of the 5 nearest comps from prior winters, $/WAR-trend inflated, NPV basis",
+        read: g2Read,
+      },
+      m_guarantee: {
+        art: "/data/fa_gate2_eval.json",
+        estimand: "Does the market model predict the contract a free agent actually signs?",
+        baseline: "the median of the 5 nearest comps from prior winters, $/WAR-trend inflated, NPV basis",
+        read: g2Read,
+      },
+      fit_components: {
+        art: "/data/fa_gate3_eval.json",
+        estimand: "Does the team-fit score put a free agent's actual signing club near the top of its 30-team ranking?",
+        baseline: "random team, payroll-only, and behavior-only rankings on the same signings",
+        read: j => {
+          const r = j.results || {}, v = j.verdicts || {};
+          const la = r.live_analog;
+          if (!la || la.mrr == null) return null;
+          const mk = (bk, bl, flag) => (r[bk] && r[bk].mrr != null) ? {
+            label: "Mean reciprocal rank of the signing club vs " + bl + " (n=" + _rn(la.n, 0) + ")",
+            mv: _rn(la.mrr), bname: bl, bv: _rn(r[bk].mrr),
+            verdict: v[flag] === true ? "clears" : "inside",
+            title: "verdict boolean recorded in the artifact",
+          } : null;
+          const rows = [mk("random", "a random team", "live_analog_beats_random"),
+                        mk("payroll_only", "payroll only", "live_analog_beats_payroll_only"),
+                        mk("behavior_only", "behavior only", "live_analog_beats_behavior_only")].filter(Boolean);
+          return rows.length ? rows : null;
+        },
+        note: j => ((j.verdicts || {}).fitted_transfer_beats_live_analog === false)
+          ? "A fitted challenger lost to this hand-built analog on the same forward chain; the losing run is committed in the same artifact."
+          : "",
+      },
+      surplus_value: {
+        art: "/data/surplus_backtest_real.json",
+        estimand: "Do predicted surplus dollars track the dollars prospects actually returned?",
+        baseline: "a flat pricing with no player information (slope 0)",
+        read: surplusRead,
+        note: j => {
+          const sp = (((j.full_pool || {}).raw_errors) || {}).spearman;
+          return sp == null ? "" : "Honest limit: per-player ordering inside the pool is far weaker (Spearman " + _rn(sp, 2) + "); the calibration holds at the bin level, where prices are set.";
+        },
+      },
+      tvi: {
+        art: "/data/surplus_backtest_real.json",
+        estimand: "TVI prices off the same engine: do its predicted dollars track realized dollars?",
+        baseline: "a flat pricing with no player information (slope 0)",
+        read: surplusRead,
+      },
+      ifa: {
+        art: "/data/ifa_step_prior_eval.json",
+        estimand: "Do IFA signees at or above the $1M bonus step go on to produce more than signees below it (the step prior eFV consumes)?",
+        baseline: "signees below the $1M step, same matched classes",
+        read: j => {
+          const s = j.step_boundary_first6 || {};
+          if (s.hi_mean == null || s.lo_mean == null || !Array.isArray(s.diff_ci95)) return null;
+          return [{
+            label: "Mean first-6-year WAR, signees at or above the step (n=" + _rn(s.n_hi, 0) + ") vs below (n=" + _rn(s.n_lo, 0) + ")",
+            mv: _rn(s.hi_mean, 2), bname: "below the step", bv: _rn(s.lo_mean, 2),
+            band: "gap " + _rns(s.diff, 2) + ", 95% CI " + _rns(s.diff_ci95[0], 2) + " to " + _rns(s.diff_ci95[1], 2),
+            verdict: _rcptCI(s.diff_ci95[0], s.diff_ci95[1]),
+          }];
+        },
+        note: () => "Direction held in all six leave-one-class-out folds; the posted-pro-excluded sensitivity is committed in the same artifact.",
+      },
+      // ---- TIES, rendered as the ties they are ------------------------------
+      xfv: {
+        art: "/data/source_backtest.json",
+        cache: () => (_S.backtest && !_S.backtest.__error ? _S.backtest : null),
+        estimand: "Does eFV order realized 6-year WAR better than the consensus it is built to upgrade, vintage-matched so neither side holds a timing edge?",
+        baseline: "the PROSPX consensus, identical rows and identical vintages",
+        read: j => {
+          const hh = (j.accuracy || {}).head_to_head_verdict;
+          if (!hh || hh.xfv_spearman == null || hh.consensus_spearman == null) return null;
+          return [{
+            label: "Spearman rho vs realized WAR, vintage-matched (n=" + _rn(hh.n, 0) + ")",
+            mv: _rn(hh.xfv_spearman, 4), bname: "consensus", bv: _rn(hh.consensus_spearman, 4),
+            band: "gap " + _rns(hh.delta, 4) + " vs a floor of " + _rn(hh.mde95, 4),
+            verdict: hh.resolvable === true ? (hh.xfv_beats === true ? "clears" : "trails") : "inside",
+            title: "head_to_head_verdict as recorded in the artifact",
+          }];
+        },
+        note: () => "The honest reading is a tie: the gap sits inside the floor this backtest can resolve, so eFV and the consensus are statistically indistinguishable on ordering. The full derived verdict renders in Source Comparison.",
+      },
+      consensus_fv: {
+        art: "/data/source_backtest.json",
+        cache: () => (_S.backtest && !_S.backtest.__error ? _S.backtest : null),
+        estimand: "Is the equal-weight blend better than its best single input?",
+        baseline: "the best single input, re-picked inside every bootstrap draw",
+        read: j => {
+          const c = (j.accuracy || {}).consensus_vs_inputs;
+          if (!c || !c.spearman || !c.auc) return null;
+          const leg = (b, label) => (b.consensus == null ? null : {
+            label: label,
+            mv: _rn(b.consensus, 4), bname: "best input", bv: _rn(b.best_input, 4),
+            band: "gap " + _rns(b.delta, 4) + " vs a floor of " + _rn(b.mde95, 4),
+            verdict: b.resolvable === true ? (b.consensus_wins === true ? "clears" : "trails") : "inside",
+          });
+          return [leg(c.spearman, "Ordering realized WAR (Spearman rho)"),
+                  leg(c.auc, "Separating future contributors (AUC)")].filter(Boolean);
+        },
+        note: () => "Two legs, two answers: blending buys discrimination, and the ordering gap sits inside the floor. Both are printed rather than the better one.",
+      },
+      // ---- LOSSES, rendered honestly ---------------------------------------
+      war_pa_plus: wrSpec("hit", "hitter (WAR/PA+)"),
+      war_ip_plus_sp: wrSpec("SP", "starter (WAR/IP+)"),
+      war_ip_plus_rp: wrSpec("RP", "reliever (WAR/IP+)"),
+      statcast_plus: {
+        art: "/data/statcast_plus_eval.json",
+        estimand: "Does a prospect's final-AAA Statcast composite forward-predict his first MLB season?",
+        baseline: "none: a forward correlation published as measured, per the publish-the-r rule",
+        read: j => {
+          const h = j.hitters || {}, p = j.pitchers || {};
+          const rows = [];
+          if (h.r_sc_vs_mlb_ops != null) rows.push({
+            label: "Final-AAA analog vs first-MLB OPS, r (n=" + _rn(h.n_ops, 0) + ")",
+            mv: _rn(h.r_sc_vs_mlb_ops, 2), verdict: "trails",
+            title: "weak forward correlation; SC+ stays descriptive",
+          });
+          if (p.r_sc_vs_mlb_era_inv != null) rows.push({
+            label: "Final-AAA analog vs first-MLB ERA (inverted), r (n=" + _rn(p.n_era, 0) + ")",
+            mv: _rn(p.r_sc_vs_mlb_era_inv, 2), verdict: "trails",
+            title: "weak forward correlation; SC+ stays descriptive",
+          });
+          return rows.length ? rows : null;
+        },
+        note: () => "SC+ is a descriptive index of what the tracking says today, not a forecaster. Downstream consumers treat it as a tiebreaker, never a driver.",
+      },
+      arb_award_model: {
+        art: "/data/arbitration_eval.json",
+        estimand: "Does the arbitration award model price the salary a tendered player actually receives?",
+        baseline: "its class-appropriate naive bar, and the published MLBTR / Matt Swartz projection",
+        read: j => {
+          const r1 = ((j.results || {}).arb1) || {}, a6 = j.a6_swartz || {};
+          const rows = [];
+          if (r1.mdape_champion != null && r1.mdape_bar != null) rows.push({
+            label: "First-trip MdAPE vs the naive bar (n=" + _rn(r1.n_paired, 0) + ")",
+            mv: _rnp(r1.mdape_champion), bname: "naive bar", bv: _rnp(r1.mdape_bar),
+            band: "gain " + _rnp(r1.mdape_gain) + " vs floor " + _rnp(r1.mde95_onesided) + " (" + _rn(r1.gain_over_floor, 1) + "x)",
+            verdict: r1.resolvable === true ? "clears" : "inside",
+          });
+          if (a6.ours_mdape != null && a6.swartz_mdape != null) rows.push({
+            label: "MdAPE vs the published Swartz projection, identical rows (n=" + _rn(a6.n, 0) + ")",
+            mv: _rnp(a6.ours_mdape), bname: "MLBTR / Swartz", bv: _rnp(a6.swartz_mdape),
+            band: _rn(a6.ratio_ours_over_swartz, 2) + "x their error",
+            verdict: Number(a6.ours_mdape) > Number(a6.swartz_mdape) ? "trails" : "inside",
+          });
+          return rows.length ? rows : null;
+        },
+        note: () => "The loss has a mechanism: Swartz prices the counting stats arbitration panels reward, and this model excludes them because nothing in the pipeline projects them forward. The comparison stays on the card.",
+      },
+    };
+    return _RCPT_SPECS;
+  }
+
+  // Render one receipt block from its spec + loaded artifact.
+  function _receiptHTML(spec, j) {
+    let rows;
+    try { rows = spec.read(j); } catch (err) { rows = null; }
+    if (!rows || !rows.length) return "";
+    const rr = rows.map(r => {
+      const base = (r.bname && r.bv != null)
+        ? ` <span style="color:var(--text-tertiary);">vs</span> ${escapeHtml(r.bname)} <b style="color:var(--text-secondary);">${escapeHtml(r.bv)}</b>` : "";
+      return `<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin:3px 0;">
+        <span style="flex:1 1 220px;">${escapeHtml(r.label)}</span>
+        <span><b>${escapeHtml(r.mv)}</b>${base}</span>
+        ${r.band ? `<span style="color:var(--text-tertiary);font-size:0.85em;">${escapeHtml(r.band)}</span>` : ""}
+        ${r.verdict ? _rcptChip(r.verdict, r.title) : ""}
+      </div>`;
+    }).join("");
+    let note = "";
+    if (spec.note) { try { note = spec.note(j) || ""; } catch (err) { note = ""; } }
+    const fname = spec.art.split("/").pop();
+    return `<div style="margin-top:10px;border-top:1px dashed var(--border-light);padding-top:8px;">
+      <div class="gl-microlabel">Receipt · read live from the committed eval artifact</div>
+      <div style="margin:4px 0 6px;">${escapeHtml(spec.estimand)} Baseline: ${escapeHtml(spec.baseline)}.</div>
+      ${rr}
+      ${note ? `<div class="meth-note" style="margin-top:4px;">${escapeHtml(note)}</div>` : ""}
+      <div class="meth-note" style="margin-top:4px;">Artifact: <a href="${escapeHtml(spec.art)}" target="_blank" rel="noopener">${escapeHtml(fname)}</a></div>
+    </div>`;
+  }
+
+  function _fillReceipt(slot, spec) {
+    const cached = spec.cache ? spec.cache() : null;
+    const j = cached || _RCPT[spec.art];
+    if (j && !j.__error) { slot.innerHTML = _receiptHTML(spec, j); return; }
+    if (j && j.__error) { slot.innerHTML = ""; return; }
+    _rcptLoad(spec.art, () => { if (slot.isConnected) _fillReceipt(slot, spec); });
+  }
+
+  // Wire the empty receipt slots: fetch on the FIRST expand of the entry's
+  // +methodology fold (or immediately when it rendered already open via a
+  // direct #g= anchor), so a page of collapsed cards costs zero fetches.
+  function _wireReceipts(root) {
+    root.querySelectorAll(".gl-receipt-slot").forEach(slot => {
+      const spec = _receiptSpecs()[slot.dataset.receipt];
+      if (!spec) return;
+      const det = slot.closest("details");
+      const fill = () => _fillReceipt(slot, spec);
+      if (!det || det.open) { fill(); return; }
+      det.addEventListener("toggle", function h() {
+        if (det.open) { det.removeEventListener("toggle", h); fill(); }
+      });
+    });
   }
 
   // ---- router ----------------------------------------------------------------
@@ -1604,6 +2130,141 @@ function _methAdGfxSpec() {
   };
 }
 
+// ==== INDUSTRY COMPARISON (2026-08-19) =======================================
+// Methodology-view section "Our tables vs the industry's" (#industry-comparison).
+// Each block is one casual paragraph, then the arithmetic shape, then the
+// artifact or doc pointer. Every number is derived at render time: from
+// window.VALUE_FRAMEWORK (already loaded on this page), from artifacts pulled
+// through the shared _RCPT cache, or from _S.sideCal (fetch reused from
+// _loadScoreboard). An absent artifact drops its numeric clause, never the
+// block: the mechanism prose and the pointer always render.
+const _IND_FITTED = "/data/value_framework_fitted.json";
+const _IND_BA = "/data/ba_consensus_eval.json";
+const _IND_DPW = "/data/fa_dpw_series.json";
+function _indLoad() {
+  const rerender = () => { if (_S.view === "methodology") renderMethodology(); };
+  [_IND_FITTED, _IND_BA, _IND_DPW].forEach(p => {
+    // Two guards: a cached payload would fire the callback synchronously
+    // (renderMethodology recursion), and an in-flight fetch already carries a
+    // rerender in its queue (every re-render calls back in here).
+    if (!_RCPT[p] && !_RCPT_LOADING[p]) _rcptLoad(p, rerender);
+  });
+}
+
+function _methIndustryHTML() {
+  const vf = window.VALUE_FRAMEWORK || {};
+  const six = vf.fv_to_6yr_avg_war || {}, prime = vf.fv_to_prime_war || {};
+  const srcs = vf.sources || {};
+  const fitted = _RCPT[_IND_FITTED];
+  const ba = _RCPT[_IND_BA];
+  const dpw = _RCPT[_IND_DPW];
+
+  // (a) Five tables, five quantities: the FV 50 worked example, derived from
+  // the live framework snapshot (the _dpwTxt pattern in _methProseHTML).
+  let fiveMath = "";
+  if (six["50"] != null && prime["50"] != null && Number(six["50"]) > 0) {
+    const ratio = Number(prime["50"]) / Number(six["50"]);
+    fiveMath = `<p class="meth-eq">FV 50, our current framework: ${_rn(prime["50"], 2)} WAR in a prime year if he hits, ${_rn(six["50"], 2)} WAR per controlled year once the busts are priced in. Same grade, ${_rn(ratio, 1)}x apart.</p>`;
+  }
+  const blockA = `<div class="meth-table-wrap">
+    <div class="meth-table-title">One grade, five tables <span class="meth-sub">the per-year-if-he-arrives trap</span></div>
+    <p class="meth-note">Every public FV-to-WAR table answers a different question. Some price a single season if the prospect arrives. Some price a prime season. Some price the whole six controlled years with the busts folded in. They all get published under the same name, so reading one as another is a silent unit error, and it is the most common way a prospect gets mispriced in public trade math.</p>
+    ${fiveMath}
+    <p class="meth-note">Our fix is a hard two-table split: a conditional shape inside the outcome mixture (what a hit looks like) and a bust-inclusive per-year table that the dollars actually ride. The served snapshot is <a href="/data/value_framework.js" target="_blank" rel="noopener">value_framework.js</a>; the industry anchor it is checked against is the FanGraphs outcome-buckets study${srcs.outcome_buckets ? ` (<a href="${escapeHtml(srcs.outcome_buckets)}" target="_blank" rel="noopener noreferrer">source</a>)` : ""}.</p>
+  </div>`;
+
+  // (b) Sub-45 anchors: fitted vs published constants, derived from the
+  // fitted artifact when it loads; mechanism-only when it does not.
+  let blockB;
+  const ea = (fitted && !fitted.__error) ? fitted.empirical_anchors : null;
+  if (ea && ea.anchors) {
+    const d = ea.diagnostics || {};
+    const rows = ["35", "40", "45"].map(k => {
+      if (ea.anchors[k] == null) return "";
+      const dk = d[k] || {};
+      return `<tr><td class="meth-td-tier">FV ${k}</td>
+        <td>${_rn(ea.anchors[k], 2)}</td>
+        <td>${dk.reference_war_yr != null ? _rn(dk.reference_war_yr, 2) : " - "}</td>
+        <td>${dk.bust_pct != null ? _rn(dk.bust_pct, 1) + "%" : " - "}</td>
+        <td>${dk.n != null ? _rn(dk.n, 0) : " - "}</td></tr>`;
+    }).join("");
+    const win = ea.cohort_window || [];
+    blockB = `<div class="meth-table-wrap">
+      <div class="meth-table-title">The bottom of the scale is fitted, not assumed <span class="meth-sub">sub-45 anchors vs published constants</span></div>
+      <p class="meth-note">Public tables get thin below FV 45, so the low anchors tend to be constants someone chose. Most of a board lives down there, and most of it busts, so a hand-set constant misprices the largest population on the sheet. Our sub-45 anchors are fitted on the resolved cohort${win.length === 2 ? ` (${_rn(win[0], 0)}-${_rn(win[1], 0)} listings)` : ""}, busts carried at zero.</p>
+      <div class="table-scroll-x"><table class="meth-table">
+        <thead><tr><th>Grade</th><th>Fitted WAR/yr</th><th>Published constant</th><th>Bust share</th><th>n</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+      <p class="meth-note">Fit: <a href="${_IND_FITTED}" target="_blank" rel="noopener">value_framework_fitted.json</a>.</p>
+    </div>`;
+  } else {
+    blockB = `<div class="meth-table-wrap">
+      <div class="meth-table-title">The bottom of the scale is fitted, not assumed <span class="meth-sub">sub-45 anchors vs published constants</span></div>
+      <p class="meth-note">Public tables get thin below FV 45, so the low anchors tend to be constants someone chose. Ours are fitted on the resolved cohort with busts carried at zero, and they sit well under the published constants because most sub-45 prospects never return a win. The fitted values live in <a href="${_IND_FITTED}" target="_blank" rel="noopener">value_framework_fitted.json</a>.</p>
+    </div>`;
+  }
+
+  // (c) Cross-side: one public table, two sides that do not repay it equally.
+  // Reads the binding resolved cell from the already-fetched side-calibration
+  // artifact (_loadScoreboard's fetch, reused).
+  let blockCNum = "";
+  const sc = _S.sideCal;
+  const c55 = (sc && !sc.__error && sc.m1_realized_war_by_band)
+    ? (((sc.m1_realized_war_by_band.consensus || {}).cells || {})["55"]) : null;
+  if (c55 && c55.resolvable && c55.mean_war_hit != null && Number(c55.mean_war_pit) > 0) {
+    const r = Number(c55.mean_war_hit) / Number(c55.mean_war_pit);
+    blockCNum = `<p class="meth-eq">Consensus FV 55, resolved outcomes: hitters ${_rn(c55.mean_war_hit, 1)} WAR (n=${_rn(c55.n_hit, 0)}), pitchers ${_rn(c55.mean_war_pit, 1)} (n=${_rn(c55.n_pit, 0)}). Same grade, ${_rn(r, 1)}x the production${Array.isArray(c55.ci95) ? `; pitcher-minus-hitter gap 95% CI ${_rn(c55.ci95[0], 1)} to ${_rn(c55.ci95[1], 1)}` : ""}.</p>`;
+  }
+  const blockC = `<div class="meth-table-wrap">
+    <div class="meth-table-title">One table, two sides <span class="meth-sub">a grade does not buy the same WAR from a pitcher</span></div>
+    <p class="meth-note">The industry publishes one FV-to-WAR mapping and hands it to both sides. Measured against what graded prospects actually produced, the top consensus band pays out very differently by side.</p>
+    ${blockCNum}
+    <p class="meth-note">Our engine spends that difference: the per-side forecast and the position multiplier price a pitcher's grade off pitcher outcomes. The full band-by-band table, unresolved cells included, renders in Source Comparison; artifact: <a href="/data/xfv_side_calibration_eval.json" target="_blank" rel="noopener">xfv_side_calibration_eval.json</a>.</p>
+  </div>`;
+
+  // (d) The BA era break: a source re-scaled itself and a single flat offset
+  // cannot absorb that. Numbers from the committed BA eval when loaded.
+  let blockDNum = "";
+  const sb = (ba && !ba.__error) ? ba.step1b_scale_break : null;
+  if (sb && Array.isArray(sb.consecutive_board_delta) && sb.consecutive_board_delta.length) {
+    const parts = sb.consecutive_board_delta.map(p =>
+      `${escapeHtml(p.pair)}: ${_rns(p.mean, 1)} FV`).join(" · ");
+    const bmf = Array.isArray(sb.ba_minus_fangraphs) ? sb.ba_minus_fangraphs : [];
+    const first = bmf[0], last = bmf[bmf.length - 1];
+    blockDNum = `<p class="meth-eq">BA year-over-year mean re-grade, same players: ${parts}.${(first && last && first.year !== last.year) ? ` Against FanGraphs it flipped from ${_rns(first.mean, 1)} FV in ${_rn(first.year, 0)} to ${_rns(last.mean, 1)} in ${_rn(last.year, 0)}.` : ""}</p>`;
+  }
+  const blockD = `<div class="meth-table-wrap">
+    <div class="meth-table-title">When a source changes its own scale <span class="meth-sub">the Baseball America era break</span></div>
+    <p class="meth-note">Baseball America re-based its grade scale for 2026. A consensus that corrected BA with one flat offset would smear that break across every year: the old boards would come in shifted and the new ones would too, just wrong in opposite directions.</p>
+    ${blockDNum}
+    <p class="meth-note">The fix is cycle-keyed normalization: each source-role-cycle gets its own fitted offset against the shared scale, so the 2023-25 raw era and the 2026+ adjusted era are each recovered exactly rather than averaged into a compromise neither published. Ledger: <a href="${_IND_BA}" target="_blank" rel="noopener">ba_consensus_eval.json</a>.</p>
+  </div>`;
+
+  // (e) The economics layer: expectation pricing, NPV deferrals, $/WAR drift.
+  let dpwLine = "";
+  const byW = (dpw && !dpw.__error) ? dpw.usd_per_war_by_winter : null;
+  if (byW) {
+    const winters = Object.keys(byW).sort();
+    const w = winters[winters.length - 1];
+    if (w && byW[w] != null) dpwLine = ` The signings-implied series reads $${_rn(Number(byW[w]) / 1e6, 1)}M per WAR for the ${escapeHtml(w)} winter (<a href="${_IND_DPW}" target="_blank" rel="noopener">fa_dpw_series.json</a>).`;
+  }
+  const drate = (vf.discount_rate != null) ? `${_rn(Number(vf.discount_rate) * 100, 0)}%/yr` : "the platform rate";
+  const blockE = `<div class="meth-table-wrap">
+    <div class="meth-table-title">The economics layer <span class="meth-sub">expectations, NPV, and a moving $/WAR</span></div>
+    <p class="meth-note"><strong>A price is an expectation, not a median.</strong> The median outcome of a low-tier prospect is a bust worth nothing, so a median-target price floors at $0 and calls every lottery ticket free. The trade engine consumes surplus as a price, and a price is a mean: since the EV reframe the correction map targets the conditional mean and the $0 floor is gone. The calibration receipt is <a href="/data/surplus_backtest_real.json" target="_blank" rel="noopener">surplus_backtest_real.json</a>, also rendered on the Surplus value entry in Terms.</p>
+    <p class="meth-note"><strong>A deferred dollar is not a dollar.</strong> Contract legs are compared on NPV at ${drate}, so a heavily deferred sticker deflates to the liability it actually is before any comparison runs. The schedules live in the deferral ledger (<a href="/data/deferrals.json" target="_blank" rel="noopener">deferrals.json</a>); the Ohtani contract is its canonical entry.</p>
+    <p class="meth-note"><strong>The market re-prices a win every winter.</strong>${dpwLine} Served prospect dollars ride the checksummed <code>clemens_2026</code> valuation set with the FA-implied re-anchor disabled, so a single hot winter cannot silently reflate every board.</p>
+  </div>`;
+
+  return `<div class="source-comp-wrap" id="industry-comparison">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Our tables vs the industry's · same names, different quantities</div>
+    <h2 class="meth-h">Our tables vs the industry's</h2>
+    <p class="meth-note">Public prospect math mostly fails on units, not opinions. Each block below names one trap, shows the arithmetic shape, and points at the committed artifact; the per-model numbers live in the entry receipts under Terms.</p>
+    <div class="meth-tables">${blockA}${blockB}${blockC}${blockD}${blockE}</div>
+  </div>`;
+}
+
 function renderMethodology() {
   const el = document.getElementById("methodology-body");
   if (!el) return;
@@ -1634,13 +2295,17 @@ function renderMethodology() {
         if (_S.view === "methodology") renderMethodology(); });
   }
   // Scoreboard artifact: feeds the ad-card GFX spec (numbers at click time).
+  // Its sideCal fetch also feeds the industry-comparison cross-side block.
   _loadScoreboard();
+  // Industry-comparison artifacts (fitted anchors, BA scale break, $/WAR
+  // series): shared _RCPT cache, re-renders this view on arrival.
+  _indLoad();
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const printHead = `<div id="methodology-print-head">eephus.io - Methodology · eephus.io/glossary · ${escapeHtml(today)}</div>`;
   const gfxChip = (window.EEPHUS_GFX && window.EEPHUS_GFX.chipHTML)
     ? window.EEPHUS_GFX.chipHTML("gl-meth-gfx", "Generate GFX") : "";
   const toolbar = `<div class="meth-toolbar"><button class="meth-export-btn" type="button" onclick="_printMethodology()" title="Print or save the methodology as a PDF">⎙ Export methodology (PDF)</button>${gfxChip}</div>`;
-  el.innerHTML = printHead + toolbar + _methProseHTML() + _methRegistryHTML() + _methReliabilityHTML() + _methValuationCurveHTML() + _methInteractivesHTML();
+  el.innerHTML = printHead + toolbar + _methProseHTML() + _methIndustryHTML() + _methRegistryHTML() + _methReliabilityHTML() + _methValuationCurveHTML() + _methInteractivesHTML();
   if (window.EEPHUS_GL) window.EEPHUS_GL.wire(el);
   // Ad-card GFX: spec built at click time from the loaded artifacts; a click
   // before the scoreboard resolves (or with the engine absent) is a clean no-op.
@@ -2168,8 +2833,12 @@ function _loadScoreboard() {
   // rather than the view.
   if (!_S.sideCal && !_S.sideCalLoading) {
     _S.sideCalLoading = true;
+    // Methodology re-renders too (2026-08-19): the industry-comparison
+    // section's cross-side block reads this same artifact, reusing this one
+    // fetch rather than opening a second one.
     const rerender2 = () => {
       if (_S.view === "source-comparison") renderSourceComparison();
+      else if (_S.view === "methodology") renderMethodology();
     };
     fetch("/data/xfv_side_calibration_eval.json", { cache: "no-cache" })
       .then(r => (r.ok ? r.json() : null))

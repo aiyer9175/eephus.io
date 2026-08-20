@@ -239,7 +239,7 @@
   // number the export has always carried and the table never showed.
   var DYN_COLS = [
     { key: "rank", label: "#", where: "head", track: "38px", kind: "rank", asc: true,
-      title: "Served dynasty rank from the eFV blend. The diamond always shows the MODEL rank, never the position under an ad-hoc sort, so re-sorting the board cannot renumber the model.",
+      title: "Served dynasty rank from the eFV display blend. The diamond always shows the SERVED rank, never the position under an ad-hoc sort, so re-sorting the board cannot renumber the served order.",
       get: function (d) { return d.rank; } },
     { key: "name", label: "Prospect", where: "head", track: "minmax(0,1.7fr)", kind: "name", text: true, asc: true,
       title: "Sort by name", get: function (d) { return d.name; },
