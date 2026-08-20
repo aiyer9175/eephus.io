@@ -160,22 +160,32 @@ SCHEMA3_PITCHER_COLUMNS = ("throws",)
 # `feature_basis` block. These strings are the honesty mechanism: a column that
 # is null carries the reason, and a reader never has to guess whether null
 # means "the builder failed tonight" or "the builder does not exist".
+#
+# The four builder-backed columns (2026-08-19) override these strings at
+# capture with a DYNAMIC basis carrying that night's facts (anchor commit,
+# join counts, cache age). The static strings below are the registry
+# description of the populated case; the record's own feature_basis is always
+# the authority for what a given night actually stored.
 FEATURE_SOURCES = {
     "off_vs_lhp": ("hitter_leaderboards.json teams[].orders.vl, PA-weighted "
                    "mean of per-slot hem_plus"),
     "off_vs_rhp": ("hitter_leaderboards.json teams[].orders.vr, PA-weighted "
                    "mean of per-slot hem_plus"),
-    "xwoba_14": ("ABSENT: no committed team-level rolling-xwOBA builder exists "
-                 "on any pipeline path (checked 2026-08-16; hitter_export "
-                 "carries per-hitter season xwOBA only). Captured null until "
-                 "one does; the value is never invented from a live file"),
-    "xwoba_30": ("ABSENT: no committed team-level rolling-xwOBA builder exists "
-                 "on any pipeline path (checked 2026-08-16). Captured null "
-                 "until one does"),
-    "lineup_strength": ("ABSENT: builder is a later lane (docs/diamond-betting.md "
-                        "section 5c). Captured null until it exists"),
-    "star_out": ("ABSENT: builder is a later lane (docs/diamond-betting.md "
-                 "section 5c). Captured null until it exists"),
+    "xwoba_14": ("rolling-xwOBA builder (build_xwoba_windows, 2026-08-19): "
+                 "trailing-14d team xwOBA by cumulative difference, tonight's "
+                 "hitter_leaderboards.json hitters[].xwoba*pa minus the newest "
+                 "git-committed board on or before D-14; null with the reason "
+                 "stated whenever the anchor is absent or too old"),
+    "xwoba_30": ("rolling-xwOBA builder (build_xwoba_windows, 2026-08-19): "
+                 "same construction over a trailing 30d window"),
+    "lineup_strength": ("lineup builder (build_lineup_strength, 2026-08-19): "
+                        "mean projected year-1 wOBA (mlb_projections.json "
+                        "vets[].woba[0]) over the day's captured order slots, "
+                        "vl and vr sides averaged"),
+    "star_out": ("availability builder (build_star_out, 2026-08-19): of each "
+                 "club's top-5 projected players (mlb_projections.json "
+                 "vets[].warY1Champ), how many sit on the IL per the cached "
+                 "StatsAPI 40-man roster status codes"),
     "throws": ("pal_export.load_pitch_hand(season), one bulk StatsAPI call at "
                "assembly, never a per-game lookup"),
 }
@@ -403,6 +413,414 @@ def off_splits_from_hitter_team(team_blob: dict | None) -> tuple[float | None, f
     return _pa_weighted_hem(orders.get("vl")), _pa_weighted_hem(orders.get("vr"))
 
 
+# ---------------------------------------------------------------------------
+# schema-3 dark-capture builders (docs/diamond-betting.md section 5c, B3/B4)
+# ---------------------------------------------------------------------------
+# Four columns shipped 2026-08-16 as stated nulls because no builder existed.
+# The builders below exist as of 2026-08-19. Every one of them reads ONLY what
+# is knowable at capture time, and every null they emit carries its reason.
+# Nothing served reads any of these columns; they accrue dark, per section 5c.
+#
+# THE xwOBA PAIR is a cumulative-difference construction. There is no dated
+# team-xwOBA source anywhere on disk (checked 2026-08-19: .cache/game_feeds
+# box lines carry no Statcast expected stats; .cache/savant_mlb CSVs are
+# season-aggregate files overwritten in place; data/leaderboard_gamelogs.json
+# is 182 prospects, not MLB teams). What DOES exist is the tracked board:
+# data/hitter_leaderboards.json carries per-hitter season-to-date Savant
+# xwOBA and PA, and its git history is a dated archive on the same
+# leak-free-by-construction argument the backfill runs on (a blob committed at
+# time T contains nothing after T). So the trailing-W-day team xwOBA is
+#
+#   sum over hitters (xwoba_now*pa_now - xwoba_anchor*pa_anchor)
+#   / sum over hitters (pa_now - pa_anchor)
+#
+# with the anchor read from the newest board commit dated on or before D-W.
+# Stated approximations, carried in the basis: the board rounds xwoba to 3
+# decimals (order .005 team noise over a 14d window); hitters below the Savant
+# PA floor at the anchor are excluded entirely (they carry no anchor xwoba);
+# a hitter traded inside the window credits his whole window to his current
+# club; the anchor commit can trail D-W by up to XWOBA_ANCHOR_TOLERANCE_DAYS,
+# so the true window is W to W+tolerance days and the basis records which.
+XWOBA_WINDOWS = {"xwoba_14": 14, "xwoba_30": 30}
+XWOBA_ANCHOR_TOLERANCE_DAYS = 7
+# Window-PA floors, per column. Observed on 2026-08-19: min team window PA was
+# 189 (14d) and 625 (30d), so these floors only fire on a degenerate window
+# (season opening weeks, or a board whose xwoba coverage collapsed).
+XWOBA_MIN_WINDOW_PA = {"xwoba_14": 100.0, "xwoba_30": 200.0}
+BOARD_FILE = "hitter_leaderboards.json"
+
+# lineup_strength: the day's captured orders, joined to the projections
+# already on disk. Season-to-date offense is already captured (off_vs_lhp/rhp
+# on HEM+); this column is the FORWARD-LOOKING read of the same nine names:
+# mean projected year-1 wOBA (mlb_projections.json vets[].woba[0]) over the
+# order slots, each side needing LINEUP_MIN_JOINED_SLOTS of its nine bats to
+# join, the vl and vr side means averaged. Projected wOBA rather than rosWar
+# because it is a rate on the wOBA scale (comparable across dates), while
+# rest-of-season WAR shrinks mechanically as the season runs out.
+LINEUP_MIN_JOINED_SLOTS = 7
+
+# star_out: availability of each club's stars. Top STAR_OUT_TOP_N projected
+# players per org by mlb_projections.json vets[].warY1Champ (the year-1
+# champion WAR: a scalar on every vet row, and less depressed by a current IL
+# stint than rest-of-season WAR, which would hide the exact player this column
+# wants to flag), counted against the cached StatsAPI 40-man roster status
+# codes (.cache/statsapi_roster_40man_{teamId}_{season}.json, refreshed by the
+# nightly projections step via proj_export._il_out60). Codes D7/D10/D15/D60
+# and compounds are the IL set. 0 is a real value (all stars healthy); null
+# means the org's roster cache was absent or older than the freshness window.
+STAR_OUT_TOP_N = 5
+IL_CACHE_MAX_AGE_HOURS = 48.0
+
+
+def _hitter_xwoba_map(hit_blob: dict | None) -> dict[int, tuple[float, float, str | None]]:
+    """mlbam -> (season xwOBA, season PA, canonical org) for every hitter row
+    carrying both numbers. Hitters below the Savant PA floor carry xwoba None
+    on the board and are absent here, which is what makes the anchor-side
+    exclusion below explicit rather than accidental."""
+    out: dict[int, tuple[float, float, str | None]] = {}
+    for h in (hit_blob or {}).get("hitters") or []:
+        if not isinstance(h, dict):
+            continue
+        mid, xw, pa = h.get("mlbam"), h.get("xwoba"), h.get("pa")
+        if not mid or xw is None or not pa:
+            continue
+        try:
+            out[int(mid)] = (float(xw), float(pa), _org(h.get("team")))
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+def xwoba_window_from_boards(cur_blob: dict | None, anchor_blob: dict | None,
+                             *, min_window_pa: float = 0.0) -> tuple[dict[str, float], dict]:
+    """({org: window xwOBA}, diagnostics) by cumulative difference between two
+    board states. Pure function of its two inputs so the arithmetic is testable
+    without git.
+
+    Per hitter on TONIGHT'S board with xwoba and pa:
+      * absent from the anchor board -> his whole season is inside the window
+        (a call-up or a new acquisition), full cum counts;
+      * present with xwoba and pa at the anchor -> the difference counts;
+      * present at the anchor WITHOUT an xwoba (below the Savant floor then)
+        -> excluded entirely, because his anchor cum is unknowable and
+        treating it as zero would invent window production;
+      * a non-positive window PA (data revision) -> excluded.
+    A team lands in the output only when its summed window PA clears
+    `min_window_pa`; zero teams is a valid, stated outcome."""
+    cur = _hitter_xwoba_map(cur_blob)
+    anchor = _hitter_xwoba_map(anchor_blob)
+    # The anchor map above only holds rows WITH xwoba; rows present without it
+    # need to be told apart from rows absent entirely.
+    anchor_pa_only = set()
+    for h in (anchor_blob or {}).get("hitters") or []:
+        if isinstance(h, dict) and h.get("mlbam") and h.get("xwoba") is None:
+            try:
+                anchor_pa_only.add(int(h["mlbam"]))
+            except (TypeError, ValueError):
+                pass
+    acc: dict[str, list[float]] = {}
+    n_used = n_skipped = 0
+    for mid, (xw, pa, org) in cur.items():
+        if not org:
+            continue
+        old = anchor.get(mid)
+        if old is not None:
+            dnum, dpa = xw * pa - old[0] * old[1], pa - old[1]
+        elif mid in anchor_pa_only:
+            n_skipped += 1
+            continue
+        else:
+            dnum, dpa = xw * pa, pa
+        if dpa <= 0:
+            continue
+        a = acc.setdefault(org, [0.0, 0.0])
+        a[0] += dnum
+        a[1] += dpa
+        n_used += 1
+    vals = {org: round(num / dpa, 4) for org, (num, dpa) in acc.items()
+            if dpa >= max(min_window_pa, 1.0)}
+    return vals, {"n_hitters": n_used, "n_skipped_no_anchor_xwoba": n_skipped,
+                  "n_below_pa_floor": len(acc) - len(vals)}
+
+
+def _git_board_anchor(target_date: str, season: str | None,
+                      *, repo_dir: Path | None = None):
+    """(board blob, anchor commit date, note) for the newest committed
+    data/hitter_leaderboards.json whose COMMIT DATE is on or before
+    `target_date`, or (None, None, why) when git cannot produce one.
+
+    The commit date is the cutoff, never the blob's own as_of, the same rule
+    of construction the backfill runs on (module docstring): a blob committed
+    at T provably contains nothing after T. The caller enforces the gap
+    tolerance and the season fence; this function only finds and reads."""
+    import subprocess
+    rd = Path(repo_dir) if repo_dir else ROOT
+    rel = "data/" + BOARD_FILE
+    try:
+        lg = subprocess.run(["git", "log", "--format=%H %cI", "--", rel],
+                            cwd=rd, capture_output=True, text=True, timeout=60)
+        if lg.returncode != 0:
+            return None, None, f"git log failed ({(lg.stderr or '').strip()[:120]})"
+        pick = None
+        for line in lg.stdout.splitlines():
+            parts = line.strip().split()
+            if len(parts) != 2:
+                continue
+            h, ciso = parts
+            cdate = _iso_date(ciso)
+            if cdate and cdate <= target_date:
+                pick = (h, cdate)
+                break
+        if not pick:
+            return None, None, f"no board commit on or before {target_date}"
+        pfx = subprocess.run(["git", "rev-parse", "--show-prefix"],
+                             cwd=rd, capture_output=True, text=True, timeout=30)
+        if pfx.returncode != 0:
+            return None, None, "git rev-parse --show-prefix failed"
+        full = (pfx.stdout.strip().replace("\\", "/") + rel)
+        show = subprocess.run(["git", "show", f"{pick[0]}:{full}"],
+                              cwd=rd, capture_output=True, timeout=120)
+        if show.returncode != 0:
+            return None, None, f"git show failed for {pick[0][:10]}"
+        blob = json.loads(show.stdout.decode("utf-8"))
+    except Exception as e:                                       # noqa: BLE001
+        return None, None, f"anchor read raised {type(e).__name__}"
+    if not isinstance(blob, dict):
+        return None, None, "anchor blob is not a JSON object"
+    if season and str(blob.get("season") or "") not in ("", str(season)):
+        return None, None, (f"anchor commit {pick[1]} is a {blob.get('season')} "
+                            f"board, season fence forbids crossing into {season}")
+    return blob, pick[1], None
+
+
+def build_xwoba_windows(cur_blob: dict | None, on_date: str, season: str | None,
+                        *, anchor_loader=None) -> dict:
+    """{column: {"values": {org: v}, "basis": str}} for the xwOBA pair.
+    `anchor_loader(target_date, season)` is injectable for tests and defaults
+    to the git reader. Empty board short-circuits WITHOUT touching git."""
+    loader = anchor_loader or _git_board_anchor
+    out: dict[str, dict] = {}
+    if not _hitter_xwoba_map(cur_blob):
+        basis = ("ABSENT: the rolling-xwOBA builder found no hitter with a "
+                 "Savant xwoba and pa on tonight's board; nothing to difference")
+        return {c: {"values": {}, "basis": basis} for c in XWOBA_WINDOWS}
+    for col, days in XWOBA_WINDOWS.items():
+        try:
+            target = (date.fromisoformat(on_date) - timedelta(days=days)).isoformat()
+            blob, anchor_date, note = loader(target, season)
+            if blob is None or not anchor_date:
+                out[col] = {"values": {}, "basis": (
+                    "ABSENT: the rolling-xwOBA builder has no committed board "
+                    f"anchor for {target} ({note or 'no anchor'}); captured "
+                    "null, never filled from a live file")}
+                continue
+            gap = (date.fromisoformat(target) - date.fromisoformat(anchor_date)).days
+            if gap > XWOBA_ANCHOR_TOLERANCE_DAYS:
+                out[col] = {"values": {}, "basis": (
+                    f"ABSENT: the rolling-xwOBA builder's nearest board anchor "
+                    f"({anchor_date}) trails the {days}d target {target} by "
+                    f"{gap}d, past the {XWOBA_ANCHOR_TOLERANCE_DAYS}d tolerance; "
+                    "a window that stale is a different feature")}
+                continue
+            vals, diag = xwoba_window_from_boards(
+                cur_blob, blob, min_window_pa=XWOBA_MIN_WINDOW_PA.get(col, 0.0))
+            out[col] = {"values": vals, "basis": (
+                f"team rolling xwOBA, trailing {days}d by cumulative "
+                f"difference: tonight's {BOARD_FILE} hitters[].xwoba*pa minus "
+                f"the git anchor committed {anchor_date} (true window "
+                f"{days + gap}d; {diag['n_hitters']} hitters differenced, "
+                f"{diag['n_skipped_no_anchor_xwoba']} excluded lacking an "
+                "anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; "
+                "a traded hitter's window rides his current club)")}
+        except Exception as e:                                   # noqa: BLE001
+            out[col] = {"values": {}, "basis": (
+                f"ABSENT: the rolling-xwOBA builder raised "
+                f"{type(e).__name__} tonight; captured null")}
+    return out
+
+
+def _proj_year1_woba_map(data_dir: Path | None = None) -> tuple[dict[str, float], str | None]:
+    """{mlbam as str: projected year-1 wOBA} off mlb_projections.json
+    vets[].woba[0], plus the artifact's generated_at for the basis."""
+    dd = Path(data_dir) if data_dir else DATA_DIR
+    proj = _load_json(dd / "mlb_projections.json")
+    if not isinstance(proj, dict):
+        return {}, None
+    out: dict[str, float] = {}
+    for v in proj.get("vets") or []:
+        if not isinstance(v, dict) or not v.get("mlbam"):
+            continue
+        w = v.get("woba")
+        if isinstance(w, list) and w and isinstance(w[0], (int, float)):
+            out[str(int(v["mlbam"]))] = float(w[0])
+    return out, _iso_date(proj.get("generated_at"))
+
+
+def lineup_strength_from_orders(team_blob: dict | None,
+                                woba_map: dict[str, float]) -> float | None:
+    """One hitter-leaderboard team row -> mean projected year-1 wOBA of the
+    day's captured orders, or None. Each side (vl, vr) must join at least
+    LINEUP_MIN_JOINED_SLOTS of its nine bats or that side is dropped; the
+    value is the mean of the side means that survive. A missing slot is
+    SKIPPED, never counted as zero: zero is not a wOBA a lineup runs."""
+    orders = (team_blob or {}).get("orders")
+    if not isinstance(orders, dict):
+        return None
+    side_means = []
+    for side in ("vl", "vr"):
+        joined = []
+        for s in orders.get(side) or []:
+            if isinstance(s, dict) and str(s.get("key")) in woba_map:
+                joined.append(woba_map[str(s.get("key"))])
+        if len(joined) >= LINEUP_MIN_JOINED_SLOTS:
+            side_means.append(sum(joined) / len(joined))
+    if not side_means:
+        return None
+    return round(sum(side_means) / len(side_means), 4)
+
+
+def build_lineup_strength(hit_blob: dict | None,
+                          data_dir: Path | None = None) -> dict:
+    """{"values": {org: v}, "basis": str} for lineup_strength."""
+    try:
+        woba_map, gen = _proj_year1_woba_map(data_dir)
+        if not woba_map:
+            return {"values": {}, "basis": (
+                "ABSENT: the lineup builder found mlb_projections.json absent "
+                "or carrying no vets[].woba year-1 path; captured null")}
+        vals: dict[str, float] = {}
+        for t in (hit_blob or {}).get("teams") or []:
+            o = _org(t.get("team")) if isinstance(t, dict) else None
+            if not o:
+                continue
+            v = lineup_strength_from_orders(t, woba_map)
+            if v is not None:
+                vals[o] = v
+        return {"values": vals, "basis": (
+            "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], "
+            f"generated {gen or 'undated'}) over the day's captured order "
+            f"slots, vl and vr side means averaged; a side joins only at "
+            f">= {LINEUP_MIN_JOINED_SLOTS} of 9 bats")}
+    except Exception as e:                                       # noqa: BLE001
+        return {"values": {}, "basis": (
+            f"ABSENT: the lineup builder raised {type(e).__name__} tonight; "
+            "captured null")}
+
+
+def _il_by_org(season: str | int, cache_dir: Path | None = None,
+               *, max_age_hours: float = IL_CACHE_MAX_AGE_HOURS
+               ) -> tuple[dict[str, set[int]], str]:
+    """{org: set of mlbam on the IL} for every org whose cached StatsAPI
+    40-man roster file is present AND fresher than `max_age_hours`, plus a
+    note describing coverage. An org missing from the dict had no fresh cache;
+    an org present with an empty set has a fresh cache and nobody on the IL.
+    Reads the caches the nightly projections step already writes; no fetch."""
+    import time
+    cd = Path(cache_dir) if cache_dir else ROOT / ".cache"
+    teams_path = cd / f"statsapi_teams_{season}.json"
+    teams_blob = _load_json(teams_path)
+    if not isinstance(teams_blob, dict):
+        return {}, f"no readable statsapi_teams_{season} cache"
+    now = time.time()
+    out: dict[str, set[int]] = {}
+    n_stale = n_missing = 0
+    for t in teams_blob.get("teams") or []:
+        tid, name = t.get("id"), t.get("name")
+        org = _org(name or "")
+        if not tid or not org or len(org) > 3:
+            continue
+        rp = cd / f"statsapi_roster_40man_{tid}_{season}.json"
+        try:
+            age_h = (now - rp.stat().st_mtime) / 3600.0
+        except OSError:
+            n_missing += 1
+            continue
+        if age_h > max_age_hours:
+            n_stale += 1
+            continue
+        roster = _load_json(rp)
+        if not isinstance(roster, dict):
+            n_missing += 1
+            continue
+        ils = set()
+        for p in roster.get("roster") or []:
+            code = str(((p or {}).get("status") or {}).get("code") or "")
+            mid = ((p or {}).get("person") or {}).get("id")
+            if mid and code.startswith("D"):
+                ils.add(int(mid))
+        out[org] = ils
+    note = (f"{len(out)} orgs with a fresh roster cache, {n_stale} stale "
+            f"(> {max_age_hours:.0f}h), {n_missing} missing/unreadable")
+    return out, note
+
+
+def star_out_from_projections(vets: list, il_by_org: dict[str, set[int]],
+                              *, top_n: int = STAR_OUT_TOP_N) -> dict[str, int]:
+    """{org: count of its top-N projected players on the IL}, only for orgs
+    with a fresh IL read AND at least N rankable vets. Ranking is
+    warY1Champ descending among vets with a numeric value and an mlbam."""
+    ranked: dict[str, list[tuple[float, int]]] = {}
+    for v in vets or []:
+        if not isinstance(v, dict) or not v.get("mlbam"):
+            continue
+        org = _org(v.get("team"))
+        w = v.get("warY1Champ")
+        if not org or not isinstance(w, (int, float)):
+            continue
+        ranked.setdefault(org, []).append((float(w), int(v["mlbam"])))
+    out: dict[str, int] = {}
+    for org, rows in ranked.items():
+        if org not in il_by_org or len(rows) < top_n:
+            continue
+        rows.sort(key=lambda r: (-r[0], r[1]))
+        ils = il_by_org[org]
+        out[org] = sum(1 for _, mid in rows[:top_n] if mid in ils)
+    return out
+
+
+def build_star_out(season: str | int, data_dir: Path | None = None,
+                   cache_dir: Path | None = None) -> dict:
+    """{"values": {org: n}, "basis": str} for star_out. 0 is a value (all
+    stars healthy); an org is null when its roster cache was absent or stale."""
+    try:
+        dd = Path(data_dir) if data_dir else DATA_DIR
+        proj = _load_json(dd / "mlb_projections.json")
+        vets = (proj or {}).get("vets") if isinstance(proj, dict) else None
+        if not vets:
+            return {"values": {}, "basis": (
+                "ABSENT: the availability builder found mlb_projections.json "
+                "absent or carrying no vets; captured null")}
+        il_map, il_note = _il_by_org(season, cache_dir)
+        if not il_map:
+            return {"values": {}, "basis": (
+                f"ABSENT: the availability builder had no fresh 40-man roster "
+                f"cache ({il_note}); captured null, never fetched live")}
+        vals = star_out_from_projections(vets, il_map)
+        return {"values": vals, "basis": (
+            f"of each club's top-{STAR_OUT_TOP_N} projected players "
+            "(mlb_projections.json vets[].warY1Champ), how many carry a "
+            "StatsAPI 40-man IL status code (D*) in the cached roster files "
+            f"({il_note}); 0 means all stars available")}
+    except Exception as e:                                       # noqa: BLE001
+        return {"values": {}, "basis": (
+            f"ABSENT: the availability builder raised {type(e).__name__} "
+            "tonight; captured null")}
+
+
+def build_dark_team_columns(hit_blob: dict | None, *, on_date: str,
+                            season: str | None, data_dir: Path | None = None,
+                            cache_dir: Path | None = None,
+                            anchor_loader=None) -> dict:
+    """All four builder-backed schema-3 team columns in one pass:
+    {column: {"values": {org: v}, "basis": str}}. Each builder is isolated;
+    one failing costs its own column a stated null, never the snapshot."""
+    out = build_xwoba_windows(hit_blob, on_date, season,
+                              anchor_loader=anchor_loader)
+    out["lineup_strength"] = build_lineup_strength(hit_blob, data_dir)
+    out["star_out"] = build_star_out(season or on_date[:4], data_dir, cache_dir)
+    return out
+
+
 def team_row(rec: dict | None, org: str) -> dict | None:
     """One stored team as {column: value}, over the CURRENT TEAM_COLUMNS.
 
@@ -564,6 +982,20 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
     if not teams:
         return None
 
+    # Schema 3 dark capture, builder-backed columns (2026-08-19): the xwOBA
+    # pair, lineup_strength and star_out. Values land only on clubs the
+    # three-side intersection kept; every basis is dynamic, carrying that
+    # night's anchor commit, join counts, or cache-age facts.
+    season_str = src_meta["hitter_leaderboards.json"]["season"] or vintage_date[:4]
+    dark = build_dark_team_columns(hit, on_date=vintage_date, season=season_str,
+                                   data_dir=dd)
+    for col, blk in dark.items():
+        i_col = TEAM_COLUMNS.index(col)
+        for org, row in teams.items():
+            v = (blk.get("values") or {}).get(org)
+            if v is not None:
+                row[i_col] = v
+
     pitchers: dict[str, list] = {}
     for r in rot.get("starters") or []:
         mid, plus = r.get("mlbam"), r.get("sem_plus")
@@ -630,7 +1062,12 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
         i = TEAM_COLUMNS.index(col)
         return sum(1 for r in teams.values() if r[i] is not None)
 
-    fb = {c: {"basis": FEATURE_SOURCES[c], "n": _n_teams_with(c)}
+    # Builder-backed columns carry the builder's own basis for THIS night
+    # (anchor commit, join counts, cache freshness); the two order splits keep
+    # the static registry string. n is always counted off the stored rows, so
+    # the marking cannot claim more fills than the record holds.
+    fb = {c: {"basis": (dark[c]["basis"] if c in dark else FEATURE_SOURCES[c]),
+              "n": _n_teams_with(c)}
           for c in SCHEMA3_TEAM_COLUMNS}
     fb["throws"] = {
         "basis": (FEATURE_SOURCES["throws"] if n_throws else
@@ -1075,6 +1512,38 @@ def coverage(*, vintage_dir: Path | None = None,
     return out
 
 
+def dark_capture_dry_run(*, on_date: str | None = None,
+                         data_dir: Path | None = None) -> dict:
+    """Capture-shaped rehearsal of the schema-3 dark columns: runs the exact
+    reduction the nightly snapshot runs, reports per-column fill counts and
+    bases, and WRITES NOTHING. First-write-wins makes a rehearsal against a
+    date that already has a file otherwise unobservable; this is how a builder
+    change is checked before its first real vintage lands."""
+    d = on_date or _today()
+    rec = reduce_current(on_date=d, data_dir=data_dir)
+    if not rec:
+        return {"ok": False, "date": d,
+                "reason": "leaderboards absent or incomplete"}
+    cols = rec["team_columns"]
+    n_teams = rec["n_teams"]
+    fills = {}
+    for c in SCHEMA3_TEAM_COLUMNS:
+        i = cols.index(c)
+        fills[c] = {
+            "filled": sum(1 for r in rec["teams"].values() if r[i] is not None),
+            "of": n_teams,
+            "basis": (rec.get("feature_basis") or {}).get(c, {}).get("basis"),
+        }
+    fills["throws"] = {
+        "filled": (rec.get("feature_basis") or {}).get("throws", {}).get("n", 0),
+        "of": rec["n_pitchers"],
+        "basis": (rec.get("feature_basis") or {}).get("throws", {}).get("basis"),
+    }
+    return {"ok": True, "date": d, "written": False,
+            "covers_through": rec["covers_through"], "n_teams": n_teams,
+            "n_pitchers": rec["n_pitchers"], "columns": fills}
+
+
 def run(*, log_fn=None) -> dict:
     """Pipeline entry point. Never raises; the daily step wraps it anyway."""
     try:
@@ -1096,7 +1565,13 @@ if __name__ == "__main__":                                       # pragma: no co
     ap.add_argument("--coverage", action="store_true", help="how much history exists")
     ap.add_argument("--as-of", dest="as_of", default=None,
                     help="show the vintage a game on this date would be priced on")
+    ap.add_argument("--dry-run-dark", action="store_true",
+                    help="rehearse the schema-3 dark capture against today's "
+                         "data and print per-column fill counts; writes nothing")
     args = ap.parse_args()
+
+    if args.dry_run_dark:
+        print(json.dumps(dark_capture_dry_run(on_date=args.date), indent=1))
 
     if args.snapshot:
         r = snapshot(on_date=args.date, force=args.force, log_fn=print)

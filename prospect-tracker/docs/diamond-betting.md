@@ -953,6 +953,21 @@ strict 4-week floor the earliest admissible first B3/B4 look moves from
 2026-09-13 to ~2026-09-15. Nothing else in the protocol changes; a null-column
 candidate still has no clock at all.
 
+### Correction (2026-08-19b): the four null columns got their builders
+
+The table above that says "no committed source exists" / "builder is a later
+lane" for xwoba_14, xwoba_30, lineup_strength, and star_out is superseded:
+all four dark-capture builders shipped 2026-08-19 in leaderboard_vintages.py
+(xwoba pair by cumulative difference against the newest git-committed hitter
+board on or before D-14/D-30, 7d anchor tolerance, window-PA floors 100/200;
+lineup_strength from the day's captured orders joined to projected year-1
+wOBA, >= 7 of 9 slots per side; star_out from the roster IL cache over the
+top projected players). The 2026-08-19 vintage predates the builders and
+first-write-wins keeps it, so BY RULE 2 those four columns' clocks start with
+the 2026-08-20 vintage, and their strict 4-week earliest look is ~2026-09-17.
+A source gap still degrades a column to a stated null with its basis, never a
+silent zero.
+
 ---
 
 ## 6. The backtest: two modes, both labelled
