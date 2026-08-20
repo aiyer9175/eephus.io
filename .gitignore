@@ -33,3 +33,7 @@ ncaa_statsapi_2026_summary.json
 # milb-value carve-out: the certified MiLB SDR + eWAR release is tracked data.
 # See milb-value/README.md and milb-value/MANIFEST.json.
 !milb-value/data/*.csv
+
+# mlb-value carve-out: the certified MLB SDR + eWAR release is tracked data.
+# Mirrors the milb-value rule above. See mlb-value/README.md and mlb-value/MANIFEST.json.
+!mlb-value/data/*.csv

@@ -1,9 +1,9 @@
 {
   "release": "milb_sdr_ewar_2021_2025",
-  "dataset_version": "milb-value-2026.08.14",
+  "dataset_version": "milb-value-2026.08.20",
   "schema_version": "milb-public-1.0.0",
-  "data_through": "statsapi-2026-07-20",
-  "ingested_at": "2026-08-16",
+  "data_through": "2026-08-19",
+  "ingested_at": "2026-08-20",
   "ingestion_method": "byte-for-byte copy of the certified release candidate; no recomputation, no rounding, no schema change",
   "grain": "player_id x season x level",
   "seasons": [
@@ -11,7 +11,8 @@
     2022,
     2023,
     2024,
-    2025
+    2025,
+    2026
   ],
   "levels": [
     "AAA",
@@ -20,18 +21,21 @@
     "Low-A"
   ],
   "excluded": {
-    "2026": "no rows \u2014 the 2026 defensive substrate (SDR era refit, d02, league environment, park) does not exist; not certified",
     "Rookie/CPX (sportId 16)": "not supported by the canonical model; research only, deliberately unpromoted",
-    "DSL (sportId 17)": "not supported by the canonical model"
+    "DSL (sportId 17)": "not supported by the canonical model",
+    "2026 catchers": "withheld from milb_hitter_ewar.csv and milb_sdr.csv (681 player-seasons). Their defensive value covers spatial balls in play only -- framing, blocking and throwing are unobserved -- and final catcher SDR is not certified. 2021-2025 catcher rows remain as previously published, with the limitation declared per row in unobserved_defense_components; historical scope is deliberately unchanged."
   },
   "producer_versions": {
     "hitter_ewar": "milb-hitter-ewar-1.3.0",
     "defense_runs": "milb-defense-runs-1.3.0",
-    "sdr": "sdr-era-refit-2026-07-20",
+    "sdr": "SDR-ERA-REFIT-D007SAFE-1.0.0",
     "positional_adjustment": "posadj-noah-ladder-2.0.0",
     "positional_spec": "POSADJ-EEPHUS-2.0.0",
     "pitcher_ewar": "milb-pitcher-ewar-1.2.0",
-    "run_currency": "run-currency-1.0.0"
+    "run_currency": "run-currency-1.0.0",
+    "sdr_generation": "E-E04-D007-1.2.0+daily.2026-08-20T020943",
+    "park_factors": "MILB-PF-GAMELEDGER-1.0.0",
+    "software_release": "eephus-metrics-2026.08.6"
   },
   "provenance": {
     "producer_repo": "~/ewar_production",
@@ -250,24 +254,70 @@
   ],
   "files": [
     {
-      "filename": "milb_sdr.csv",
-      "sha256": "b6aaa24cfd3b738cb29ffa4d0012d2222bdcda02575499f93cb156a914deb374",
-      "bytes": 6658601
+      "filename": "milb_hitter_ewar.csv",
+      "sha256": "81f24dd7aac1031ad1eca2198cbc33762e7add86461b76bdac0b694838e6c937",
+      "bytes": 5262511,
+      "rows": 20515,
+      "seasons": [
+        2021,
+        2026
+      ],
+      "rows_2026": 2682
     },
     {
-      "filename": "milb_hitter_ewar.csv",
-      "sha256": "54810275adf77cf64a5d68aceeeaa5e120ef247adcfb088b16fa35ee03861262",
-      "bytes": 4567806
+      "filename": "milb_sdr.csv",
+      "sha256": "7f7b55e01d19f109a4d73ce269445de37642fa34660e2cbd84b82c94960cde2e",
+      "bytes": 7991468,
+      "rows": 19462,
+      "seasons": [
+        2021,
+        2026
+      ],
+      "rows_2026": 2638
     },
     {
       "filename": "milb_pitcher_ewar.csv",
       "sha256": "d74747ccaff6a7ff30669a8140c7734b255a179ebec58f58f590893c874eed10",
-      "bytes": 8224863
+      "bytes": 8224863,
+      "rows": 22076,
+      "seasons": [
+        2021,
+        2025
+      ],
+      "rows_2026": 0
     },
     {
       "filename": "metadata.json",
-      "sha256": "0d8f37717642665a84e3be63cb6c566c8fc862e1385cfc6e716f2809a54e80fb",
-      "bytes": 1704
+      "sha256": "f9e8d05a39d105fc887795fc3bd4216be4a8bc864fac461b091d679de1e9c122",
+      "bytes": 1720
     }
-  ]
+  ],
+  "season_status": {
+    "2021-2025": "CERTIFIED COMPLETED SEASONS",
+    "2026": "CERTIFIED SEASON-TO-DATE through 2026-08-19"
+  },
+  "park_factor_transport": {
+    "2021-2025": "legacy league home/away splits (unchanged; not restated)",
+    "2026": "MILB-PF-GAMELEDGER-1.0.0 game ledger, after the legacy endpoint became unavailable",
+    "overlap_validation": {
+      "team_seasons": 600,
+      "pearson": 0.9982,
+      "spearman": 0.9977,
+      "mae": 0.0023,
+      "median_abs_delta": 0.0,
+      "home_games_exact_pct": 88.5,
+      "season_2023": "120/120 exact"
+    },
+    "consumed_by_position_player_ewar": "run_pf",
+    "not_published_for_2026": [
+      "hr_pf",
+      "run_park_factor"
+    ]
+  },
+  "forward_calibration": "Calibration parameters estimated on the certified historical window are frozen for forward scoring. Adding 2026 did not refit prior seasons or restate previously certified player values.",
+  "historical_restatement": {
+    "present": true,
+    "change_id": "C-SDR-E-E04-D007-1.2.0",
+    "note": "2021-2025 SDR-derived values differ from the 2026-08-16 ingestion because the D-007 SDR correction was certified on 2026-08-18. batting_runs is unchanged (0 cells). The 2026 extension itself changed no historical value: max |delta| 0.0."
+  }
 }

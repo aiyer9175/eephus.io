@@ -1,0 +1,72 @@
+{
+  "release": "mlb_sdr_ewar_public",
+  "dataset_version": "mlb-value-2026.08.20",
+  "schema_version": "mlb-public-1.0.0",
+  "ingested_at": "2026-08-20",
+  "ingestion_method": "byte-for-byte export of the certified release candidate; no recomputation, no rounding, no schema change",
+  "grain": {
+    "mlb_sdr.csv": "player_id x season x pos",
+    "mlb_position_player_ewar.csv": "player_id x season",
+    "mlb_pitcher_ewar.csv": "player_id x season x role"
+  },
+  "freshness_is_per_file": true,
+  "freshness": {
+    "mlb_sdr.csv": "2026-08-19",
+    "mlb_position_player_ewar.csv": "2026-07-30",
+    "mlb_pitcher_ewar.csv": "season 2025 (no 2026)"
+  },
+  "excluded": {
+    "catchers": "MLB SDR contains no catcher rows at all -- the model's MLB scope is 1B, 2B, 3B, SS, LF, CF, RF. Final catcher SDR is not certified.",
+    "2026 pitcher eWAR": "0 rows; the substrate ends at 2025 and is not manufactured"
+  },
+  "producer_versions": {
+    "sdr": "SDR-ERA-REFIT-D007SAFE-1.0.0",
+    "sdr_generation": "E-E04-D007-1.2.0+daily.2026-08-20T020943",
+    "software_release": "eephus-metrics-2026.08.6"
+  },
+  "important": {
+    "mlb_position_player_ewar_fielding_component": "Defense+, NOT SDR. Refreshing MLB SDR does not make MLB eWAR fielding current by that route. Its 2026 rows carry ~108 team games against a league median of 127 at 2026-08-19.",
+    "forward_calibration": "Calibration estimated on the certified historical window is frozen for forward scoring; adding a season does not restate prior ones."
+  },
+  "files": [
+    {
+      "filename": "mlb_sdr.csv",
+      "sha256": "385e6d02a5b323324d15210e3637745a9745e1fc40a95d4a1e8eee7b5f294afc",
+      "bytes": 3646525,
+      "rows": 24669,
+      "seasons": [
+        2006,
+        2026
+      ],
+      "rows_2026": 1178,
+      "data_through": "2026-08-19",
+      "freshness_note": "current through the daily build"
+    },
+    {
+      "filename": "mlb_position_player_ewar.csv",
+      "sha256": "e3aeb56bf2bb7c085c7e21a95bf2819e679804ceef9ad69f283012d68264931f",
+      "bytes": 1955704,
+      "rows": 8818,
+      "seasons": [
+        2016,
+        2026
+      ],
+      "rows_2026": 609,
+      "data_through": "2026-07-30",
+      "freshness_note": "limited by its own offence substrate"
+    },
+    {
+      "filename": "mlb_pitcher_ewar.csv",
+      "sha256": "a50051fb6471494ed90b6d7c460b150e52dd13c0be5d54cdce1d86371f7871d5",
+      "bytes": 1010252,
+      "rows": 4066,
+      "seasons": [
+        2021,
+        2025
+      ],
+      "rows_2026": 0,
+      "data_through": "season 2025",
+      "freshness_note": "upstream substrate ends at 2025"
+    }
+  ]
+}
