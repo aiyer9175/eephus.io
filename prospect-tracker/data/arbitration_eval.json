@@ -122,5 +122,73 @@
    "verdict": "NULL",
    "statement": "The arb-2-and-later model is a NULL. Its margin over a median step multiplier off the prior salary is below the floor measured for this basis. The A3 control shows the production block does carry signal there - permuting it makes the model WORSE than the baseline - so this is a power limit, not an absence of information, and it is still reported as a null."
   }
- ]
+ ],
+ "gate_c_verification": {
+  "scored_at": "2026-08-19",
+  "produced_by": "scratchpad gate_c_verify_lab.py (protocol: docs/ARBITRATION_GATE.md section 9b, registered before the lab ran)",
+  "population": {
+   "served_arb_projection_rows_today": 95,
+   "ship_day_count": 103,
+   "ship_commit": "ea9cb564",
+   "note": "data/mlb_projections.json regenerates nightly; both counts recorded, not reconciled"
+  },
+  "c1_per_player_vs_ladders": {
+   "pool_players": 269,
+   "n_paired": 264,
+   "dropped_chain_incomplete": 5,
+   "metric": "MAE of the discounted arbitration-window salary total, nominal USD, discount 0.07",
+   "mae_usd": {
+    "served": 2214802.508574709,
+    "fitted": 5372489.717428472,
+    "clemens_2026": 4926803.732740597
+   },
+   "gain_vs_clemens_usd": 2712001.224165888,
+   "gain_vs_fitted_usd": 3157687.208853763,
+   "mde95_onesided_usd": {
+    "vs_clemens": 544528.9410479306,
+    "vs_fitted": 900203.4608094168
+   },
+   "gain_over_floor": {
+    "vs_clemens": 4.980453782578972,
+    "vs_fitted": 3.5077483550380184
+   },
+   "B": 1000,
+   "seed": 20260819,
+   "verdict": "PASS"
+  },
+  "c2_surplus_backtest_no_degrade": {
+   "artifact_generated_at": "2026-07-31",
+   "resolved_n": 2236,
+   "resolved_mae_pre": 10.477094771606316,
+   "resolved_mae_post": 10.477094771606316,
+   "basis": "producer reads storage/value_framework/backtest/consensus only; never reads mlb_projections.json, never calls _apply_arbitration_paths; artifact predates the ship",
+   "verdict": "PASS"
+  },
+  "c3_blast_radius": {
+   "M_usd": 2214802.508574709,
+   "E_const_usd": 4926803.732740597,
+   "ratio": 0.449541452982276,
+   "bound": 1.25,
+   "verdict": "PASS"
+  },
+  "c4_spearman": {
+   "n_common": 981,
+   "spearman_pre_post": 1.0,
+   "criterion": 0.97,
+   "note": "1.0 by the runs-last invariant; a regression guard, not evidence for the swap (section 0a rule)",
+   "verdict": "PASS"
+  },
+  "c5_monotone_paths": {
+   "priced_rows": 95,
+   "steps_checked": 190,
+   "violations": 0,
+   "verdict": "PASS"
+  },
+  "c6_prospect_clamps": {
+   "prospect_rows": 194,
+   "arb_priced_prospects": 0,
+   "verdict": "PASS"
+  },
+  "verdict": "PASS"
+ }
 }

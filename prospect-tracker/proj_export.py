@@ -1666,6 +1666,29 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
             "orgs whose farm carries no positive-surplus prospect fall back to "
             "a count-weighted center and report no arrival curve"],
     }
+    # Serve-vector tripwire (W3.9): the eval's own question, answered at every
+    # refresh. retro_backtest (proj_backtest.py, preserved across re-exports)
+    # scores the vector this exporter actually serves (served_recentered)
+    # beside plain recentering. If served ever reads WORSE than plain on the
+    # holdout fold, the serve vector is actively costing wins and the artifact
+    # flags itself rather than waiting for a reader to notice.
+    _hm = (((payload.get("retro_backtest") or {}).get("ship_decision") or {})
+           .get("holdout_mae") or {})
+    _srv, _plain = _hm.get("served_recentered"), _hm.get("recentered")
+    _flag = (bool(_srv > _plain)
+             if isinstance(_srv, (int, float)) and isinstance(_plain, (int, float))
+             else None)
+    payload["serve_vector_flag"] = _flag
+    payload["serve_vector_tripwire"] = {
+        "question": ("does the served vector read worse than plain "
+                     "recentering on the holdout retro fold"),
+        "holdout_mae_served_recentered": _srv,
+        "holdout_mae_recentered": _plain,
+        "flag": _flag,
+        "source": ("retro_backtest.ship_decision.holdout_mae "
+                   "(proj_backtest.py; preserved across re-exports; "
+                   "flag is None when the block is absent)"),
+    }
     (DATA_DIR / "team_outlook_eval.json").write_text(
         json.dumps(payload, indent=1), encoding="utf-8")
 

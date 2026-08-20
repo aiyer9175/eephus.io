@@ -499,8 +499,14 @@ CONTRACT_TABLE_IDS = ("dataTable-active", "dataTable-injured", "dataTable-dead")
 # arbitration question. So the arbitration module reads these tables for their
 # ARB / PRE-ARB tokens and the contract set stays byte-identical.
 #
-# OPEN, for a future session: those two AAVs may be wrong TODAY on the narrow
-# set. The retained-salary semantics were never adjudicated.
+# ADJUDICATED 2026-08-19 (docs/ARBITRATION_GATE.md section 10): the narrow set
+# is CORRECT. The retained row is the RETAINING club's obligation and stays
+# with that club under MLB rules; the active/dead row is the employing club's,
+# which is what the surplus/trade consumers must price (an acquirer of
+# Arenado's contract owes the $5.5M schedule, never the $27.36M retained
+# portion). Caveat that stays recorded: aav_usd is an employing-club
+# obligation AAV, not the player's income AAV, so retained-salary players
+# under-read against market comps by construction.
 STATUS_TABLE_IDS = ("table", "dataTable-retained", "dataTable-restricted",
                     "dataTable-reserve-personal")
 

@@ -458,3 +458,142 @@ small win, not a directional signal, not a fringe gain.
   the modelling lane. That is still a complete deliverable.
 - **Both win.** They ship as two artifacts with two evidence trails, and neither
   may cite the other's gate.
+
+---
+
+## 9. GATE C verification record (registered 2026-08-19, before the lab ran)
+
+### 9a. Census: C1-C6 never ran
+
+Commit `ea9cb564` (2026-08-09) shipped the pricing pass: the Spotrac STATUS
+tables were split out (`STATUS_TABLE_IDS`, read for ARB / PRE-ARB tokens only),
+the arbitration board grew 641 -> 909 rows, and `_apply_arbitration_paths`
+priced **103 of the 356** unpriced veterans, adding ~$0.16B of surplus. Four
+invariants were pinned in `test_arb_export.py`. **The C1-C6 battery was never
+scored on that population**: no `tools/arb_gate_c.py` exists, no commit after
+`ea9cb564` touches `data/arbitration_eval.json` or this document, and the eval
+artifact carries no `gate_c` block. Section 6's "registered next step" reached
+step (1) and stopped. This section closes the debt.
+
+### 9b. Protocol, frozen before any number was read
+
+Population: served rows with `salSrc == "arb_projection"` in
+`data/mlb_projections.json`, counted at scoring time (the artifact regenerates
+nightly, so the count can drift from the ship-day 103; both are reported).
+
+- **C1** scores the SERVED per-player configuration - champion arb-1 +
+  banded step multiplier arb-2+, chained so each rung's prediction is the next
+  rung's prior, exactly `arb_export.build_board`'s estimator selection - against
+  the fitted ladder and the `clemens_2026` incumbent, on the GATE B pool
+  (players with an observed arbitration window), MAE of the discounted window
+  total in nominal dollars, discount 0.07. All fitted estimators (stage 1,
+  banded multipliers, deflator, fitted ladder) are fit in-sample on the pool,
+  the same convention GATE B used for the fitted ladder; `clemens_2026` is a
+  constant. Players where the served chain cannot produce a prediction for
+  every window step are dropped from ALL arms (paired comparison) and counted.
+  Floor: paired bootstrap clustered on PLAYER, refit every draw, B = 1000,
+  one-sided MDE95, seed 20260819. PASS requires the served configuration to
+  beat BOTH ladders by more than the floor of each contrast.
+- **C2** `surplus_backtest_real.py` reads storage / value_framework / backtest /
+  consensus; it never reads `data/mlb_projections.json` and never calls
+  `_apply_arbitration_paths`, and `data/surplus_backtest_real.json` predates
+  the ship (generated 2026-07-31, last commit `30054667`). No-degrade is
+  established by pipeline independence plus the byte-unchanged artifact; the
+  resolved-cohort MAE is recorded verbatim as both the pre and post value.
+- **C3** M = the served configuration's per-player window MAE from C1;
+  `E_const` = `clemens_2026`'s window MAE on the same players. Criterion:
+  `M <= 1.25 * E_const`.
+- **C4** Spearman(pre, post) of `surTotal` on the served vet board; pre is the
+  board with the `arb_projection` rows removed (they carried no surplus before
+  the ship), scored on the rows priced in both. `>= 0.97`, expected 1.0 by
+  the runs-last invariant; retained as a regression guard.
+- **C5** ladder-step violations (`usd < 0.80 * prev`) across the priced rows'
+  served paths in `data/arbitration.json`; must be **0**.
+- **C6** prospect rows carrying `salSrc == "arb_projection"` (or any arb
+  pricing) in `data/mlb_projections.json`; must be **0**.
+
+### 9c. Results
+
+Scored 2026-08-19 (seed 20260819, B = 1000). Verbatim lab output. The panel
+regenerates nightly, so the GATE B pool reads 269 players today against 285 on
+2026-08-09, and the served population reads 95 rows against the ship-day 103;
+both counts are recorded rather than reconciled. 5 of 269 pool players were
+dropped because the served chain could not produce every rung (paired
+comparison, all arms).
+
+```
+pool players with an observed arbitration window: 269
+paired players (served chain complete): 264  dropped: 5
+fitted ladder (in-sample, GATE B convention): [0.1554, 0.346, 0.5923, 0.5923]
+  window MAE served   $   2.215M
+  window MAE fitted   $   5.372M
+  window MAE clemens  $   4.927M
+  gain vs clemens $+2.712M   gain vs fitted $+3.158M
+  B (successful draws): clemens 1000  fitted 1000
+  MDE95 vs clemens $0.545M -> 4.98x  resolvable=True
+  MDE95 vs fitted  $0.900M -> 3.51x  resolvable=True
+C1: PASS
+C3: M $2.215M vs 1.25*E_const $6.159M  ratio 0.450  PASS
+C4: served vets 1337  priced post 1076  arb_projection rows 95  common 981  Spearman(pre, post) = 1.0000  PASS
+C5: priced rows 95  ladder steps checked 190  violations 0  PASS
+C6: prospects 194  arb-priced prospects 0  PASS
+C2: surplus_backtest_real generated_at 2026-07-31  resolved n 2236  mae 10.477094771606316  (pre == post; producer independent of the gate C serve path)  PASS
+POPULATION: served arb_projection rows today 95 (ship-day count 103, commit ea9cb564)
+```
+
+**All six clauses PASS.** Two reading notes, both anticipated by the
+registration: C4's 1.0000 is the runs-last invariant doing its job and is a
+regression guard, not evidence for the swap (section 0a's rule applies
+unchanged); and C1's margin is the per-player salary anchor doing the work the
+WAR-fraction ladders cannot, which is exactly why section 6 keeps the ladder
+for never-debuted prospects - the anchor does not exist there. The
+`gate_c_verification` block in `data/arbitration_eval.json` carries these
+numbers; `test_arb_gatec_verify.py` pins them.
+
+---
+
+## 10. Retained-salary AAV adjudication (2026-08-19)
+
+`spotrac.py` flagged, at the 2026-08-09 ship: "those two AAVs may be wrong
+TODAY on the narrow set. The retained-salary semantics were never adjudicated."
+Adjudicated here, from the cached pages, `_parse_team_contract_table` output
+verbatim:
+
+| player | table | club | per-year (USD) | AAV |
+|---|---|---|---|---|
+| Nolan Arenado | `dataTable-active` | ARI | 2026: 5,000,000 / 2027: 6,000,000 | **5,500,000 (served)** |
+| Nolan Arenado | `dataTable-retained` | STL | 2026: 30,166,668 / 2027: 24,555,555 | 27,361,111 |
+| Nick Castellanos | `dataTable-dead` | SD | 2026: 304,492 | **304,492 (served)** |
+| Nick Castellanos | `dataTable-retained` | PHI | 2026: 19,695,508 | 19,695,508 |
+
+The rows PARTITION the contract by paying club: Arenado's two rows sum to
+$35.17M / $30.56M per year and Castellanos's to $20.0M, each player's actual
+contract-year salary. Spotrac's retained table is the RETAINING club's
+obligation; the active/dead row is the EMPLOYING (or releasing) club's.
+
+**Verdict: the current read is CORRECT, and the narrow `CONTRACT_TABLE_IDS`
+set is the fix, not the bug.** The consumers of `build_contracts_by_key` -
+surplus on /projections/ and the trade board - price the obligation of the
+club that controls the player. Under MLB rules a retained-salary obligation
+stays with the retaining club and does not travel in a subsequent trade, so an
+acquiring club assumes only the employing club's schedule: $5.5M AAV for
+Arenado is exactly what an acquirer of his contract owes. Folding the STATUS
+tables into the contract set (the counterfactual measured at the ship) would
+have let the retained rows win the highest-AAV tiebreak and charged an
+acquirer $27.36M/yr it would never owe - a $21.9M/yr error in the wrong
+direction on a served trade value.
+
+Two recorded caveats, neither a defect in the current serve:
+1. `aav_usd` is an EMPLOYING-CLUB OBLIGATION AAV, not the player's income AAV.
+   A future consumer wanting the player's market salary level (comps, FA
+   anchoring) must not read this field as contract AAV for retained-salary
+   players.
+2. Castellanos serves off a dead-money row because he is on no active table in
+   this cache; the $304,492 is SD's remaining obligation, not an employment
+   contract. Harmless to the surplus consumers (the row is not a tradeable
+   asset), recorded so nobody "fixes" it into the $19.7M retained row.
+
+The `spotrac.py` OPEN flag is resolved to this section, and
+`test_arb_gatec_verify.py` pins the semantics: the retained/status tables
+never enter the contract set, and the served rows are the employing-club
+rows.
