@@ -133,15 +133,25 @@ def test_pending_player_who_signed_is_not_exercised(fa_db):
 
 
 def test_qo_offered_fires_once_on_publication(fa_db):
+    # WINDOW GUARD (2026-08-19 penter hardening): qo_offered stamping rides
+    # the same Oct-Jan window as option inference, because the August 2026
+    # incident showed Spotrac's prior-recipient marker transiently reading as
+    # a live offer pre-offseason (16 contaminated rows). This scenario runs
+    # at a legitimate in-window date; the out-of-window refusal is pinned in
+    # test_fa_penter_guard.py.
+    import datetime as _dt
     import fa_pipeline
+    in_window = _dt.date(YEAR - 1, 11, 5)
     prior = {"qo_man": _member("qo_man", "Qo Man", "locked")}
     avail = [_member("qo_man", "Qo Man", "locked", qo_offered=True)]
-    out = fa_pipeline.track_winter_events(YEAR, prior, avail, signed_rows=[])
+    out = fa_pipeline.track_winter_events(YEAR, prior, avail, signed_rows=[],
+                                          as_of=in_window)
     assert out["inserted"] == 1
     assert fa_db.load_fa_events(YEAR)[0]["event_type"] == "qo_offered"
     # Already-offered prior state → no duplicate.
     prior2 = {"qo_man": _member("qo_man", "Qo Man", "locked", qo_offered=True)}
-    out2 = fa_pipeline.track_winter_events(YEAR, prior2, avail, signed_rows=[])
+    out2 = fa_pipeline.track_winter_events(YEAR, prior2, avail, signed_rows=[],
+                                           as_of=in_window)
     assert out2["inserted"] == 0
 
 

@@ -83,7 +83,11 @@ def test_qo_offered_fires_inside_window(fa_db):
     assert out["inserted"] == 1
     ev = fa_db.load_fa_events(YEAR)
     assert len(ev) == 1 and ev[0]["event_type"] == "qo_offered"
-    assert ev[0]["event_date"] == datetime.date.today().isoformat()
+    # storage.insert_fa_events_first_seen stamps with SQLite date('now'),
+    # which is UTC; asserting the LOCAL date here flip-flopped by hour of
+    # day (caught 2026-08-19 at 20:xx local when UTC had rolled to 08-20).
+    assert ev[0]["event_date"] == (
+        datetime.datetime.now(datetime.timezone.utc).date().isoformat())
 
 
 def test_quarantine_marks_without_deleting(fa_db):

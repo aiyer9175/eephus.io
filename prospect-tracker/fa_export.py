@@ -594,7 +594,13 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     # the first-seen event ledger. Both empty preseason.
     signings = {k: v for (k, yr), v in storage.load_fa_signings(class_year).items()
                 if yr == class_year}
-    events = storage.load_fa_events(class_year)
+    # SERVED ledger, not the raw table: served_fa_events filters quarantined
+    # rows (the 16 suspect pre-offseason qo_offered stamps of 2026-08-12).
+    # Reading storage.load_fa_events here was the one remaining carrier of
+    # quarantined rows into fa_class.json (found by the 2026-08-19 penter
+    # hardening; fa_pipeline.py:356 states the serving contract).
+    from fa_pipeline import served_fa_events
+    events = served_fa_events(class_year)
     ev_date = {(e["player_key"], e["event_type"]): e["event_date"] for e in events}
     fv_hist = _prospect_fv_history({p.get("player_key") for p in cls})
     if fm.X_FEATURES.get("supply_pop"):

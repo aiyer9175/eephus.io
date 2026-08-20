@@ -114,3 +114,14 @@ the window closes).
   labels come from the curated qo_history, not from that flag alone.
 - Tests: prospect-tracker/test_fa_penter_guard.py pins the guard, the
   quarantine, the served filter, and the in-window revalidation.
+- Serving verification addendum (2026-08-19, later the same day, post-freeze;
+  touches no frozen parameter): quarantine confirmed EXECUTED in prospects.db,
+  16 of 16 qo_offered rows carry invalidated=true and
+  fa_pipeline.served_fa_events(2027) returns 0 vs 16 raw. The export path is
+  NOT yet wired: fa_export.py:597 still reads storage.load_fa_events raw, so
+  the data/fa_class.json events block generated 2026-08-19 STILL carries all
+  16 quarantined rows (verified against the artifact), and the homepage wire
+  inherits them via build_site._load_fa_events_for_wire. Followup filed: route
+  the export read through fa_pipeline.served_fa_events (one line). Until that
+  lands, the served-block exclusion claim above holds at the ledger view only,
+  not yet on the nightly artifact.
