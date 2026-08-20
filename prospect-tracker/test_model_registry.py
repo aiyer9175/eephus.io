@@ -220,13 +220,11 @@ UNDATED_EVAL_ARTIFACTS = frozenset({
     "data/_am_crossmodel_agelevel_eval.json",
     "data/college_translation_eval.json",
     "data/fa_gate1_eval.json",
-    "data/fa_gate2_eval.json",
+    # fa_gate2_eval, proj_horizon_eval, total_band_eval, trade_machine_eval:
+    # removed 2026-08-19, all four now self-date via their writers.
     "data/proj_def_feature_eval.json",
-    "data/proj_horizon_eval.json",
     "data/prospect_def_value_eval.json",
     "data/surplus_sensitivity.json",
-    "data/total_band_eval.json",
-    "data/trade_machine_eval.json",
     "data/value_framework_fitted.json",
     "data/xfv_cap_sweep_eval.json",
     "data/xfv_generality_eval.json",

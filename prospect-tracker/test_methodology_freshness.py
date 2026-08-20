@@ -120,6 +120,7 @@ MODEL_GLOSSARY = {
     "xfv_dist_calibration": "internal",
     "xfv_feature_leak": "internal",
     "ba_consensus_integration": "internal",
+    "ba_risk": "internal",  # dark feature on a revival clock; no served surface
     "ba_tool_grade_weight": "internal",
     # BA3 changes the /sources/ classification copy, and C-1 changes the served
     # avg_rank and the spotlight driver text, so both reach a reader.
@@ -553,6 +554,7 @@ MODEL_GLOSSARY = {
     # arms (both all-NO-SHIP with 2024-fold keep-alives) and the FA Gate-2
     # feature-arm harness (rate_line SHIPPED into fa_market; regime/age_pos/
     # qo_tier ledgered losses). All rendered nowhere.
+    "xfv_model_class_readjudication": "internal",  # loss ledger; rendered nowhere
     "xfv_model_class_sweep": "internal",
     "xfv_feature_arms_2026_07": "internal",
     "fa_market_feature_arms": "internal",
