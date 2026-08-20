@@ -646,9 +646,25 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
     if persist:
         storage.upsert_fa_model_eval(GATE2_MODEL_VERSION, "market", summary)
         import json as _json
+        from datetime import datetime as _dt, timezone as _tz
         from pathlib import Path as _Path
-        (_Path(__file__).parent / "data" / "fa_gate2_eval.json").write_text(
-            _json.dumps(summary, indent=1), encoding="utf-8")
+        _out = _Path(__file__).parent / "data" / "fa_gate2_eval.json"
+        # CARRY-FORWARD (2026-08-19): the artifact self-dates, and blocks
+        # written into it by their own labs (verdict_edges, the ptier gate
+        # record) must survive a wholesale re-persist. Same pattern as
+        # eta_backtest / team_outlook_eval; without this, the next persist
+        # strips them and test_fa_ptier_gate.py goes red on purpose.
+        summary["generated_at"] = _dt.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        try:
+            _prev = _json.loads(_out.read_text(encoding="utf-8"))
+            for _k, _v in _prev.items():
+                if _k not in summary and (_k == "verdict_edges"
+                                          or _k.endswith("_gate")
+                                          or _k.startswith("ptier_")):
+                    summary[_k] = _v
+        except (FileNotFoundError, _json.JSONDecodeError):
+            pass
+        _out.write_text(_json.dumps(summary, indent=1), encoding="utf-8")
     if persist and persist_dpw:
         import json as _json
         from pathlib import Path as _Path

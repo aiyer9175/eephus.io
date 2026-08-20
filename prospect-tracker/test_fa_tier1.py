@@ -263,12 +263,19 @@ def test_verdict_edges_were_re_derived_with_the_pricing_change(monkeypatch):
     is forced here so this test measures the arithmetic it is named for rather than
     whichever banding mode happens to ship."""
     monkeypatch.setattr(fm, "VERDICT_BAND_MODE", "pooled")
-    assert fm.VERDICT_OVERPAY_MAX == 109
-    assert fm.VERDICT_VALUE_MIN == 223
-    assert fm.deal_verdict(108) == "overpay"
-    assert fm.deal_verdict(109) == "market"
-    assert fm.deal_verdict(222) == "market"
-    assert fm.deal_verdict(223) == "value"
+    # RE-CUT 2026-08-19 (owner default of the holistic plan): corpus terciles
+    # on the current pricing basis read p33 88.8 / p67 197.8 (n=1,300), so the
+    # pooled edges moved 109/223 -> 89/198. The full record, including the 180
+    # historical flips this implies on the pooled ledger, lives at
+    # fa_gate2_eval.json verdict_edges.recut_2026_08_19. Served verdicts did
+    # NOT move: band_mode is 'group' and VERDICT_GROUP_EDGES awaits its own
+    # owner-checkpointed re-cut on the same basis.
+    assert fm.VERDICT_OVERPAY_MAX == 89
+    assert fm.VERDICT_VALUE_MIN == 198
+    assert fm.deal_verdict(88) == "overpay"
+    assert fm.deal_verdict(89) == "market"
+    assert fm.deal_verdict(197) == "market"
+    assert fm.deal_verdict(198) == "value"
     assert fm.deal_verdict(None) is None
 
 

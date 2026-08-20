@@ -138,6 +138,18 @@ AAV_CONSISTENT = False                      # measured NULL/loss twice - see E5b
 # directions and must not be cited as an accuracy win.
 # GOLDEN RESTAMP OWED: every served FA price rises by the constant exp(a).
 RECAL_MODE = "shift"
+# P-1 (2026-08-19, docs/fa-2026-08-19/PTIER_LEVEL_GATE.md): "shift_ptier" is the
+# intercept-only shift fit PER PREDICTED-GUARANTEE TIER (lt10/10to20/20to50/ge50,
+# the Gate-2 ptier bins) on the same inner forward chain "shift" uses. Slope is
+# pinned 1.0 everywhere; slope forms are twice-refuted and are not re-attempted.
+# A tier gets its own intercept iff its inner-chain sample holds at least
+# RECAL_TIER_MIN_ROWS rows, else it rides the pooled shift.
+# RECAL_TIER_PERMUTE_SEED is the zero-information control (tier labels shuffled
+# at fit time); RECAL_FIT_LOG, when set to a list, collects every fitted recal
+# object so the lab can check fold stability. Both are lab-only knobs.
+RECAL_TIER_MIN_ROWS = 30
+RECAL_TIER_PERMUTE_SEED = 0
+RECAL_FIT_LOG: list | None = None
 LAB_TJ_PERMUTE_SEED = 0
 NOISE_FEATURES = 0
 NOISE_SEED = 0
@@ -188,6 +200,7 @@ _LAB_DEFAULTS = {
     # MUST track the shipped defaults above - LAB_RESET() restores the CHAMPION,
     # so a stale entry here makes every future lab score the wrong baseline.
     "AAV_CONSISTENT": False, "RECAL_MODE": "shift", "LAB_TJ_PERMUTE_SEED": 0,
+    "RECAL_TIER_MIN_ROWS": 30, "RECAL_TIER_PERMUTE_SEED": 0,
     "NOISE_FEATURES": 0, "NOISE_SEED": 0,
     "BAND_SCALE_GUAR": False, "BAND_PERMUTE_SEED": 0, "BAND_RIDGE_GUAR": 3.0,
 }
@@ -630,6 +643,33 @@ def _guar_tier(usd: float) -> str:
     if usd < 100e6:
         return "$50-100M"
     return "$100M+"
+
+
+def _guar_ptier(usd: float) -> str:
+    """The Gate-2 PREDICTED-guarantee tier bins (fa_backtest ptier slices):
+    the decision-relevant conditioning for the level recalibration. NOT the
+    display bins in _guar_tier above."""
+    if usd < 10e6:
+        return "lt10"
+    if usd < 20e6:
+        return "10to20"
+    if usd < 50e6:
+        return "20to50"
+    return "ge50"
+
+
+def _select_recal(rc, guar_raw: float, pos_group: str):
+    """Resolve a fitted recal object to one (a, b) line for a row.
+
+    Tuples pass through. "fit_group" dicts key on the position group.
+    "shift_ptier" dicts key on the ptier of the RAW (pre-recal) predicted
+    guarantee, the same conditioning the intercepts were fit under; a tier
+    without its own intercept rides the pooled shift."""
+    if not isinstance(rc, dict):
+        return rc
+    if rc.get("_mode") == "shift_ptier":
+        return rc.get(_guar_ptier(guar_raw)) or rc.get("_pooled")
+    return rc.get(pos_group) or rc.get("_pooled")
 
 
 def _dpw_cell(rows: list[dict]) -> dict:
@@ -1497,14 +1537,23 @@ def _fit_recal(train: list[dict], dpw_series: dict[int, float]):
     standing in for any group whose inner chain holds fewer than
     _RECAL_MIN_ROWS rows. One pooled slope cannot correct both sides at once
     (E1 measured the board under-pricing hitters by $7.52M against pitchers'
-    $4.02M), and per-group is the smallest surface that can."""
+    $4.02M), and per-group is the smallest surface that can.
+
+    RECAL_MODE "shift_ptier" (P-1, docs/fa-2026-08-19/PTIER_LEVEL_GATE.md)
+    returns {"_mode": "shift_ptier", "_pooled": (a, 1.0), tier: (a_t, 1.0)}:
+    the intercept-only shift fit per PREDICTED-guarantee tier (the Gate-2
+    ptier bins, keyed on the RAW inner prediction), slope pinned 1.0, with
+    the pooled shift standing in for any tier under RECAL_TIER_MIN_ROWS
+    inner rows. One pooled intercept cannot hold four tiers at zero when
+    the de-staling basis moves non-uniformly across the price scale, and
+    per-tier intercepts are the smallest LEVEL-family surface that can."""
     global _recal_depth
     if _recal_depth or len(train) < _RECAL_MIN_ROWS:
         return None
     years = sorted({s["class_year"] for s in train})
     if len(years) < 5:
         return None
-    X, Y, G = [], [], []
+    X, Y, G, T = [], [], [], []
     _recal_depth = 1                       # inner models must not recurse
     try:
         for W in years[4:]:
@@ -1519,6 +1568,7 @@ def _fit_recal(train: list[dict], dpw_series: dict[int, float]):
                     X.append(math.log(g))
                     Y.append(math.log(_npv_of(s)))
                     G.append(_pos_group(s.get("position")))
+                    T.append(_guar_ptier(g))
     except Exception:                       # noqa: BLE001 -- fail-soft to no-op
         log.warning("fa_market: recalibration inner chain failed; no-op")
         return None
@@ -1527,7 +1577,26 @@ def _fit_recal(train: list[dict], dpw_series: dict[int, float]):
     if len(X) < _RECAL_MIN_ROWS:
         return None
     if RECAL_MODE == "shift":              # intercept only (level, no slope)
-        return (statistics.mean(y - x for x, y in zip(X, Y)), 1.0)
+        out = (statistics.mean(y - x for x, y in zip(X, Y)), 1.0)
+        if RECAL_FIT_LOG is not None:
+            RECAL_FIT_LOG.append(out)
+        return out
+    if RECAL_MODE == "shift_ptier":        # per-predicted-tier intercepts (P-1)
+        shifts = [y - x for x, y in zip(X, Y)]
+        labels = T
+        if RECAL_TIER_PERMUTE_SEED:        # zero-information control, lab only
+            import random
+            labels = list(T)
+            random.Random(RECAL_TIER_PERMUTE_SEED).shuffle(labels)
+        outd: dict = {"_mode": "shift_ptier",
+                      "_pooled": (statistics.mean(shifts), 1.0)}
+        for t in ("lt10", "10to20", "20to50", "ge50"):
+            d = [sh for sh, tt in zip(shifts, labels) if tt == t]
+            if len(d) >= RECAL_TIER_MIN_ROWS:
+                outd[t] = (statistics.mean(d), 1.0)
+        if RECAL_FIT_LOG is not None:
+            RECAL_FIT_LOG.append(dict(outd))
+        return outd
     pooled = _recal_line(X, Y)
     if RECAL_MODE != "fit_group" or pooled is None:
         return pooled
@@ -1740,9 +1809,8 @@ class MarketModel:
                                 + alpha * math.log(mega_anchor))
         # Level recalibration LAST: the clamp and the mega blend are part of
         # what is being calibrated, so the correction has to sit outside them.
-        rc = getattr(self, "recal", None)
-        if isinstance(rc, dict):           # RECAL_MODE "fit_group"
-            rc = rc.get(_pos_group(s.get("position"))) or rc.get("_pooled")
+        rc = _select_recal(getattr(self, "recal", None), guar,
+                           _pos_group(s.get("position")))
         if rc and guar > 0:
             guar = math.exp(rc[0] + rc[1] * math.log(guar))
         return years, guar
@@ -1830,8 +1898,25 @@ class MarketModel:
 # contracts (15.5%) into a different verdict overnight for no reason other
 # than the arithmetic fix, i.e. the site would have looked like it changed its
 # mind about a sixth of every winter it has ever graded.
-VERDICT_VALUE_MIN = 223     # Deal+ >= 223 -> "value"   (corpus top tercile)
-VERDICT_OVERPAY_MAX = 109   # Deal+ <  109 -> "overpay" (corpus bottom tercile)
+#
+# RE-CUT 2026-08-19 (owner default adopted; docs/fa-2026-08-19/
+# PTIER_LEVEL_GATE.md section 4). The pricing basis moved again under the
+# 2026-07-31 WAR-input ships and the 2026-08-06 F-DEF pricing pin, the same
+# staleness-by-construction: on the CURRENT NPV corpus (n=1,300, winters
+# 2017-2026, basis A: expected rational value / ACTUAL NPV price, ex-ante
+# $/WAR) the 109/223 edges delivered 548/385/367 (42/30/28) against the
+# 33/33/33 design. Interpolated terciles p33 88.80 / p67 197.77 -> edges
+# 89/198, restoring 434/433/433 exactly; 180 of 1,300 historical corpus rows
+# (13.8%) flip POOLED verdict. The registry's ~85/189 was the 2026-07-30
+# reading of the same staleness on the pre-08-06 basis; verified and
+# superseded by this cut. NOTE: VERDICT_BAND_MODE is "group" (owner
+# 2026-07-30), so these pooled edges are the fallback constants and the
+# historical-corpus banding basis; served verdicts are banded per group and
+# do not move until VERDICT_GROUP_EDGES is re-cut on the same basis (owed,
+# flagged in the gate doc - own terciles measured there run SP 89/180,
+# RP 67/144, C 120/279, POS 116/256).
+VERDICT_VALUE_MIN = 198     # Deal+ >= 198 -> "value"   (corpus top tercile)
+VERDICT_OVERPAY_MAX = 89    # Deal+ <  89  -> "overpay" (corpus bottom tercile)
 
 # ============================================================================
 # E6 (2026-07-30): per-position-group verdict bands. OWNER DECISION, DEFAULT OFF
