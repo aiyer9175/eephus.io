@@ -1,7 +1,8 @@
 # V3: model-class re-adjudication on the 11-fold basis (registered 2026-08-19)
 
-STATUS: REGISTERED, clauses frozen BEFORE the lab exists. Results section is PENDING and is
-filled only with verbatim lab output.
+STATUS: COMPLETE 2026-08-19. Clauses were frozen BEFORE the lab existed and were not
+edited. Results below are filled only with verbatim lab output (the lab-written artifact).
+Outcome: A0 passed, all controls held, ALL FOUR CELLS NULL, permanent close invoked.
 
 ## Why this is admissible
 
@@ -66,4 +67,73 @@ alongside the feature frontier, and the combined reopen burden is the LABEL POOL
 
 ## Results
 
-PENDING.
+Filled 2026-08-19 from data/xfv_model_class_readjudication_eval.json, the artifact the lab
+(tools/efv_model_class_gate.py, seed 20260819) wrote incrementally during the run. The run
+completed in 11.0 min; the session that launched it died before this section was filled, so
+the record quoted below is the lab-written artifact, verbatim, not a reconstructed console
+transcript. Every number below is copied from that artifact.
+
+### A0 reproduction (C-a): PASSED, both sides
+
+Binding comparison = the in-process shipped chain (efv_model._run_eval on identical rows).
+- hit: legs_equal_run_eval ridge/lgbm/ensemble all true; per_year_ridge_equal true;
+  replica_pooled_rho_gap 0.0 (rowwise 0.3897278764977821 vs replica 0.3897278764977821);
+  replica_max_abs_pred_gap 3.552713678800501e-15; lgbm_batch_max_abs_pred_gap 0.0.
+- pit: legs_equal_run_eval all true; per_year_ridge_equal true; replica_pooled_rho_gap 0.0
+  (0.24255761612303628 both paths); replica_max_abs_pred_gap 3.552713678800501e-15;
+  lgbm_batch_max_abs_pred_gap 0.0.
+- Disk-artifact disclosure: data/xfv_eval.json (hit) matches exactly (n 755, rho 0.3897,
+  MAE 4.434). data/xfv_eval_pitcher.json (generated 2026-08-14) does NOT match: disk n 891 /
+  rho 0.2428 / MAE 3.008 vs lab n 892 / 0.2426 / 3.006. The pit matrix gained one row since
+  08-14 (the W2 identity merges). The frozen frame is the current basis and the binding A0
+  leg (in-process shipped chain, same rows) is bit-exact, so A0 stands; the drift is
+  disclosed here rather than hidden behind the pass flag.
+
+### Controls: C-c PASSED, C-b PASSED
+
+- C-c fold coverage: 11 folds scored per side (2014-2024), folds_missing_an_arm [] on both.
+- C-b zero-information twin: hit twin delta -0.38972 vs floor +0.03564; pit -0.24996 vs
+  +0.04208. Neither cleared. Harness clean.
+
+### Floors (E_cond, B=2000, derived on this frame before any arm was read)
+
+- hit_A1 MDE95 0.03564 (sd 0.021668), hit_A2 0.01474 (sd 0.008959),
+  pit_A1 0.04208 (sd 0.025581), pit_A2 0.02231 (sd 0.013562).
+- Frame: hit n_scored 755 (pool 845, 14 keys, lambda 0.70 pinned), pit n_scored 892
+  (pool 983, 9 keys, lambda 0.57 pinned). player_key unique on both sides, so row
+  resampling is player-clustered resampling.
+
+### Cells (primary, E_cond, Holm over {hit,pit} x {A1,A2})
+
+| cell   | delta rho | floor   | x_floor | E_cond | p (one-sided win) | Holm thr | reject | S3 pass | ship |
+|--------|-----------|---------|---------|--------|-------------------|----------|--------|---------|------|
+| hit_A1 | -0.03545  | 0.03564 | 0.995   | NULL   | 0.949064          | 0.05     | no     | yes     | no   |
+| hit_A2 | -0.00419  | 0.01474 | 0.284   | NULL   | 0.679888          | 0.025    | no     | yes     | no   |
+| pit_A1 | +0.00811  | 0.04208 | 0.193   | NULL   | 0.375566          | 0.016667 | no     | yes     | no   |
+| pit_A2 | +0.01857  | 0.02231 | 0.833   | NULL   | 0.085401          | 0.0125   | no     | yes     | no   |
+
+Holm survivors: none. S3 note: MAE actually IMPROVES under A2 on both sides (hit -0.1109,
+pit -0.1412, both CIs below 0) and pit tail MAE improves (-0.3556, CI [-0.616, -0.117]),
+but S3 is ship-blocking only, never ship-granting, and no cell cleared its rho floor.
+
+### E_refit (secondary, B=200 as registered, 10.5 min)
+
+All four cells NULL here too: hit_A1 sd 0.034944 / point -0.03545; hit_A2 0.016536 /
+-0.00419; pit_A1 0.035205 / +0.00811; pit_A2 0.019900 / +0.01857. Reported beside the
+registered E_cond primary, never substituted.
+
+### Verdict (verbatim from the artifact)
+
+"ALL FOUR CELLS ARE NULL UNDER THE REGISTERED PRIMARY. Per the frozen permanent-close
+pre-commitment: the model class on the current feature set and label pool is CLOSED
+alongside the feature frontier. The combined reopen burden is the LABEL POOL
+(RESOLVED_THROUGH 2026), not another architecture. No third adjudication on these labels.
+No cell that failed Holm or its E_cond floor may be quoted as a win."
+
+The 2026-08-14 planning number (pitcher ensemble 0.2612 vs blend 0.2584) is hereby
+adjudicated: on the registered frame the pit_A2 read is +0.01857 at 0.833x its floor,
+p 0.085 vs Holm threshold 0.0125. It is NULL. It must not be cited as a pending win again.
+
+Tests: prospect-tracker/test_model_class_readjudication.py pins artifact existence, A0
+pass, controls, floor arithmetic, Holm re-derivation from stored p-values, ship-flag
+conjunction, and verdict-cell agreement (7 checks, all green on this artifact).

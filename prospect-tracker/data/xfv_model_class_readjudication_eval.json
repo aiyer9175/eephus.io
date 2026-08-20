@@ -1,0 +1,771 @@
+{
+ "generated_at": "2026-08-19T22:21:42Z",
+ "gate_doc": "docs/efv-2026-08-19/MODEL_CLASS_READJUDICATION_GATE.md",
+ "registered": "2026-08-19, clauses frozen before the lab existed",
+ "produced_by": "tools/efv_model_class_gate.py",
+ "seed": 20260819,
+ "purpose": "V3: one registered re-adjudication of the model class (monotone LightGBM and ridge+lgbm ensemble vs the shipped ridge) on the current 11-fold pair-weighted debuted_km basis. The prior model-class close lived on the retired 4-fold basis.",
+ "started_at": "2026-08-19T22:10:41Z",
+ "B_cond": 2000,
+ "frame": {
+  "basis": "current 11-fold pair-weighted chain, debuted_km, model leg only",
+  "sides": {
+   "hit": {
+    "n_pool": 845,
+    "n_keys": 14,
+    "lambda_pinned_untouched": 0.7,
+    "player_key_unique": true,
+    "n_scored": 755,
+    "folds": [
+     {
+      "yr": 2014,
+      "n_train": 90,
+      "n_test": 48,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2015,
+      "n_train": 138,
+      "n_test": 62,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2016,
+      "n_train": 200,
+      "n_test": 39,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2017,
+      "n_train": 239,
+      "n_test": 46,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2018,
+      "n_train": 285,
+      "n_test": 44,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2019,
+      "n_train": 329,
+      "n_test": 72,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2020,
+      "n_train": 401,
+      "n_test": 59,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2021,
+      "n_train": 460,
+      "n_test": 74,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2022,
+      "n_train": 534,
+      "n_test": 127,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2023,
+      "n_train": 661,
+      "n_test": 93,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2024,
+      "n_train": 754,
+      "n_test": 91,
+      "ridge": true,
+      "lgbm": true
+     }
+    ]
+   },
+   "pit": {
+    "n_pool": 983,
+    "n_keys": 9,
+    "lambda_pinned_untouched": 0.57,
+    "player_key_unique": true,
+    "n_scored": 892,
+    "folds": [
+     {
+      "yr": 2014,
+      "n_train": 91,
+      "n_test": 53,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2015,
+      "n_train": 144,
+      "n_test": 72,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2016,
+      "n_train": 216,
+      "n_test": 49,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2017,
+      "n_train": 265,
+      "n_test": 30,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2018,
+      "n_train": 295,
+      "n_test": 53,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2019,
+      "n_train": 348,
+      "n_test": 76,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2020,
+      "n_train": 424,
+      "n_test": 104,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2021,
+      "n_train": 528,
+      "n_test": 107,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2022,
+      "n_train": 635,
+      "n_test": 101,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2023,
+      "n_train": 736,
+      "n_test": 128,
+      "ridge": true,
+      "lgbm": true
+     },
+     {
+      "yr": 2024,
+      "n_train": 864,
+      "n_test": 119,
+      "ridge": true,
+      "lgbm": true
+     }
+    ]
+   }
+  }
+ },
+ "updated_at": "2026-08-19T22:21:42Z",
+ "A0": {
+  "tolerance_pooled_rho": 1e-09,
+  "sides": {
+   "hit": {
+    "n_scored": 755,
+    "lab_pooled": {
+     "ridge": {
+      "n": 755,
+      "n_effective": 594.0,
+      "weighted": true,
+      "mae": 4.434,
+      "spearman": 0.3897,
+      "calibration": {
+       "slope": 0.749,
+       "bias": 0.42
+      }
+     },
+     "lgbm": {
+      "n": 755,
+      "n_effective": 594.0,
+      "weighted": true,
+      "mae": 4.423,
+      "spearman": 0.3543,
+      "calibration": {
+       "slope": 0.748,
+       "bias": 0.406
+      }
+     },
+     "ensemble": {
+      "n": 755,
+      "n_effective": 594.0,
+      "weighted": true,
+      "mae": 4.324,
+      "spearman": 0.3855,
+      "calibration": {
+       "slope": 0.808,
+       "bias": 0.413
+      }
+     }
+    },
+    "run_eval_pooled": {
+     "ridge": {
+      "n": 755,
+      "n_effective": 594.0,
+      "weighted": true,
+      "mae": 4.434,
+      "spearman": 0.3897,
+      "calibration": {
+       "slope": 0.749,
+       "bias": 0.42
+      }
+     },
+     "lgbm": {
+      "n": 755,
+      "n_effective": 594.0,
+      "weighted": true,
+      "mae": 4.423,
+      "spearman": 0.3543,
+      "calibration": {
+       "slope": 0.748,
+       "bias": 0.406
+      }
+     },
+     "ensemble": {
+      "n": 755,
+      "n_effective": 594.0,
+      "weighted": true,
+      "mae": 4.324,
+      "spearman": 0.3855,
+      "calibration": {
+       "slope": 0.808,
+       "bias": 0.413
+      }
+     }
+    },
+    "legs_equal_run_eval": {
+     "ridge": true,
+     "lgbm": true,
+     "ensemble": true
+    },
+    "per_year_ridge_equal": true,
+    "pooled_rho_rowwise_unrounded": 0.3897278764977821,
+    "pooled_rho_replica_unrounded": 0.3897278764977821,
+    "replica_pooled_rho_gap": 0.0,
+    "replica_max_abs_pred_gap": 3.552713678800501e-15,
+    "lgbm_batch_max_abs_pred_gap": 0.0,
+    "disk_artifact_comparison": {
+     "artifact": "data/xfv_eval.json",
+     "generated_at": "2026-08-14",
+     "disk_ridge": {
+      "n": 755,
+      "spearman": 0.3897,
+      "mae": 4.434
+     },
+     "lab_ridge": {
+      "n": 755,
+      "spearman": 0.3897,
+      "mae": 4.434
+     },
+     "match": true
+    },
+    "passed": true
+   },
+   "pit": {
+    "n_scored": 892,
+    "lab_pooled": {
+     "ridge": {
+      "n": 892,
+      "n_effective": 697.8,
+      "weighted": true,
+      "mae": 3.006,
+      "spearman": 0.2426,
+      "calibration": {
+       "slope": 0.588,
+       "bias": -0.141
+      }
+     },
+     "lgbm": {
+      "n": 892,
+      "n_effective": 697.8,
+      "weighted": true,
+      "mae": 2.934,
+      "spearman": 0.2507,
+      "calibration": {
+       "slope": 0.62,
+       "bias": 0.246
+      }
+     },
+     "ensemble": {
+      "n": 892,
+      "n_effective": 697.8,
+      "weighted": true,
+      "mae": 2.865,
+      "spearman": 0.2611,
+      "calibration": {
+       "slope": 0.734,
+       "bias": 0.053
+      }
+     }
+    },
+    "run_eval_pooled": {
+     "ridge": {
+      "n": 892,
+      "n_effective": 697.8,
+      "weighted": true,
+      "mae": 3.006,
+      "spearman": 0.2426,
+      "calibration": {
+       "slope": 0.588,
+       "bias": -0.141
+      }
+     },
+     "lgbm": {
+      "n": 892,
+      "n_effective": 697.8,
+      "weighted": true,
+      "mae": 2.934,
+      "spearman": 0.2507,
+      "calibration": {
+       "slope": 0.62,
+       "bias": 0.246
+      }
+     },
+     "ensemble": {
+      "n": 892,
+      "n_effective": 697.8,
+      "weighted": true,
+      "mae": 2.865,
+      "spearman": 0.2611,
+      "calibration": {
+       "slope": 0.734,
+       "bias": 0.053
+      }
+     }
+    },
+    "legs_equal_run_eval": {
+     "ridge": true,
+     "lgbm": true,
+     "ensemble": true
+    },
+    "per_year_ridge_equal": true,
+    "pooled_rho_rowwise_unrounded": 0.24255761612303628,
+    "pooled_rho_replica_unrounded": 0.24255761612303628,
+    "replica_pooled_rho_gap": 0.0,
+    "replica_max_abs_pred_gap": 3.552713678800501e-15,
+    "lgbm_batch_max_abs_pred_gap": 0.0,
+    "disk_artifact_comparison": {
+     "artifact": "data/xfv_eval_pitcher.json",
+     "generated_at": "2026-08-14",
+     "disk_ridge": {
+      "n": 891,
+      "spearman": 0.2428,
+      "mae": 3.008
+     },
+     "lab_ridge": {
+      "n": 892,
+      "spearman": 0.2426,
+      "mae": 3.006
+     },
+     "match": false
+    },
+    "passed": true
+   }
+  },
+  "passed": true
+ },
+ "C_c_fold_coverage": {
+  "rule": "every fold contributes OOS rows for every arm (no silent drops)",
+  "sides": {
+   "hit": {
+    "folds_scored": [
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024
+    ],
+    "folds_missing_an_arm": []
+   },
+   "pit": {
+    "folds_scored": [
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024
+    ],
+    "folds_missing_an_arm": []
+   }
+  },
+  "passed": true
+ },
+ "floors_E_cond": {
+  "estimator": "E_cond (fits held, scored players resampled, paired)",
+  "B": 2000,
+  "seed": 20260819,
+  "clustering": "player_key; one row per player on the scored frame (uniqueness verified below), so row resampling is player-clustered resampling",
+  "cells": {
+   "hit_A1": {
+    "B_used": 2000,
+    "sd": 0.021668,
+    "mde95_onesided": 0.03564,
+    "tail_threshold_war": 13.449,
+    "n_tail": 76
+   },
+   "hit_A2": {
+    "B_used": 2000,
+    "sd": 0.008959,
+    "mde95_onesided": 0.01474,
+    "tail_threshold_war": 13.449,
+    "n_tail": 76
+   },
+   "pit_A1": {
+    "B_used": 2000,
+    "sd": 0.025581,
+    "mde95_onesided": 0.04208,
+    "tail_threshold_war": 7.62,
+    "n_tail": 91
+   },
+   "pit_A2": {
+    "B_used": 2000,
+    "sd": 0.013562,
+    "mde95_onesided": 0.02231,
+    "tail_threshold_war": 7.62,
+    "n_tail": 91
+   }
+  },
+  "derived_before_arms_read": true
+ },
+ "C_b_zero_information_twin": {
+  "rule": "twin delta must be < +MDE95(side A1); a clearing twin voids the run",
+  "sides": {
+   "hit": {
+    "twin_delta_rho": -0.38972,
+    "floor_A1": 0.03564,
+    "cleared_floor": false
+   },
+   "pit": {
+    "twin_delta_rho": -0.24996,
+    "floor_A1": 0.04208,
+    "cleared_floor": false
+   }
+  },
+  "passed": true
+ },
+ "cells": {
+  "hit_A1": {
+   "side": "hit",
+   "arm": "A1",
+   "arm_desc": "monotone LightGBM, _fit_lgbm_mono config untouched",
+   "n": 755,
+   "rho_ridge": 0.38973,
+   "rho_arm": 0.35428,
+   "delta_rho": -0.03545,
+   "E_cond": {
+    "sd": 0.021668,
+    "mde95_onesided": 0.03564,
+    "ci95_delta": [
+     -0.07856,
+     0.00691
+    ],
+    "x_floor": 0.995,
+    "resolvable": false,
+    "verdict": "NULL"
+   },
+   "p_one_sided_win": 0.949064,
+   "S3": {
+    "mae_ridge": 4.4344,
+    "mae_arm": 4.423,
+    "mae_delta": -0.0114,
+    "mae_delta_ci95": [
+     -0.18003,
+     0.15307
+    ],
+    "mae_worse_beyond_ci": false,
+    "tail_mae_delta": 0.6312,
+    "tail_mae_delta_ci95": [
+     -0.01164,
+     1.27748
+    ],
+    "tail_worse_beyond_ci": false,
+    "tail_definition": "top decile of realized WAR on the scored frame",
+    "pass": true
+   },
+   "holm_reject": false,
+   "ship": false
+  },
+  "hit_A2": {
+   "side": "hit",
+   "arm": "A2",
+   "arm_desc": "mean(ridge, monotone-lgbm) OOS predictions",
+   "n": 755,
+   "rho_ridge": 0.38973,
+   "rho_arm": 0.38554,
+   "delta_rho": -0.00419,
+   "E_cond": {
+    "sd": 0.008959,
+    "mde95_onesided": 0.01474,
+    "ci95_delta": [
+     -0.02142,
+     0.01361
+    ],
+    "x_floor": 0.284,
+    "resolvable": false,
+    "verdict": "NULL"
+   },
+   "p_one_sided_win": 0.679888,
+   "S3": {
+    "mae_ridge": 4.4344,
+    "mae_arm": 4.3235,
+    "mae_delta": -0.1109,
+    "mae_delta_ci95": [
+     -0.19752,
+     -0.02642
+    ],
+    "mae_worse_beyond_ci": false,
+    "tail_mae_delta": 0.2979,
+    "tail_mae_delta_ci95": [
+     -0.02422,
+     0.62196
+    ],
+    "tail_worse_beyond_ci": false,
+    "tail_definition": "top decile of realized WAR on the scored frame",
+    "pass": true
+   },
+   "holm_reject": false,
+   "ship": false
+  },
+  "pit_A1": {
+   "side": "pit",
+   "arm": "A1",
+   "arm_desc": "monotone LightGBM, _fit_lgbm_mono config untouched",
+   "n": 892,
+   "rho_ridge": 0.24256,
+   "rho_arm": 0.25067,
+   "delta_rho": 0.00811,
+   "E_cond": {
+    "sd": 0.025581,
+    "mde95_onesided": 0.04208,
+    "ci95_delta": [
+     -0.04318,
+     0.0586
+    ],
+    "x_floor": 0.193,
+    "resolvable": false,
+    "verdict": "NULL"
+   },
+   "p_one_sided_win": 0.375566,
+   "S3": {
+    "mae_ridge": 3.0061,
+    "mae_arm": 2.9338,
+    "mae_delta": -0.0723,
+    "mae_delta_ci95": [
+     -0.19091,
+     0.03893
+    ],
+    "mae_worse_beyond_ci": false,
+    "tail_mae_delta": -0.6026,
+    "tail_mae_delta_ci95": [
+     -1.08251,
+     -0.13967
+    ],
+    "tail_worse_beyond_ci": false,
+    "tail_definition": "top decile of realized WAR on the scored frame",
+    "pass": true
+   },
+   "holm_reject": false,
+   "ship": false
+  },
+  "pit_A2": {
+   "side": "pit",
+   "arm": "A2",
+   "arm_desc": "mean(ridge, monotone-lgbm) OOS predictions",
+   "n": 892,
+   "rho_ridge": 0.24256,
+   "rho_arm": 0.26113,
+   "delta_rho": 0.01857,
+   "E_cond": {
+    "sd": 0.013562,
+    "mde95_onesided": 0.02231,
+    "ci95_delta": [
+     -0.00825,
+     0.04463
+    ],
+    "x_floor": 0.833,
+    "resolvable": false,
+    "verdict": "NULL"
+   },
+   "p_one_sided_win": 0.085401,
+   "S3": {
+    "mae_ridge": 3.0061,
+    "mae_arm": 2.8649,
+    "mae_delta": -0.1412,
+    "mae_delta_ci95": [
+     -0.21445,
+     -0.07358
+    ],
+    "mae_worse_beyond_ci": false,
+    "tail_mae_delta": -0.3556,
+    "tail_mae_delta_ci95": [
+     -0.61629,
+     -0.11737
+    ],
+    "tail_worse_beyond_ci": false,
+    "tail_definition": "top decile of realized WAR on the scored frame",
+    "pass": true
+   },
+   "holm_reject": false,
+   "ship": false
+  }
+ },
+ "holm": {
+  "family": [
+   "hit_A1",
+   "hit_A2",
+   "pit_A1",
+   "pit_A2"
+  ],
+  "alpha": 0.05,
+  "procedure": "Holm step-down, one-sided win p = 1-Phi(delta/sd_cond)",
+  "steps": [
+   {
+    "cell": "pit_A2",
+    "p": 0.085401,
+    "threshold": 0.0125,
+    "reject": false
+   },
+   {
+    "cell": "pit_A1",
+    "p": 0.375566,
+    "threshold": 0.016667,
+    "reject": false
+   },
+   {
+    "cell": "hit_A2",
+    "p": 0.679888,
+    "threshold": 0.025,
+    "reject": false
+   },
+   {
+    "cell": "hit_A1",
+    "p": 0.949064,
+    "threshold": 0.05,
+    "reject": false
+   }
+  ],
+  "survivors": []
+ },
+ "E_refit": {
+  "estimator": "E_refit (pool resampled, ridge+lgbm refit per draw)",
+  "B_registered": 200,
+  "reduced_B_penalty": "bootstrap sd carries ~1/sqrt(2B) relative error, ~5% at B=200, ~7% at B=100",
+  "seed": 20260819,
+  "cells": {
+   "hit_A1": {
+    "B_used": 200,
+    "sd": 0.034944,
+    "mde95_onesided": 0.05748,
+    "point_delta": -0.03545,
+    "resolvable": false,
+    "verdict": "NULL",
+    "role": "secondary, reported beside the registered E_cond primary, never substituted"
+   },
+   "hit_A2": {
+    "B_used": 200,
+    "sd": 0.016536,
+    "mde95_onesided": 0.0272,
+    "point_delta": -0.00419,
+    "resolvable": false,
+    "verdict": "NULL",
+    "role": "secondary, reported beside the registered E_cond primary, never substituted"
+   },
+   "pit_A1": {
+    "B_used": 200,
+    "sd": 0.035205,
+    "mde95_onesided": 0.05791,
+    "point_delta": 0.00811,
+    "resolvable": false,
+    "verdict": "NULL",
+    "role": "secondary, reported beside the registered E_cond primary, never substituted"
+   },
+   "pit_A2": {
+    "B_used": 200,
+    "sd": 0.0199,
+    "mde95_onesided": 0.03274,
+    "point_delta": 0.01857,
+    "resolvable": false,
+    "verdict": "NULL",
+    "role": "secondary, reported beside the registered E_cond primary, never substituted"
+   }
+  },
+  "B_used": 200,
+  "B_disclosure": "B=200 as registered",
+  "elapsed_min": 10.5
+ },
+ "verdict": {
+  "ships": [],
+  "all_null": true,
+  "cells_summary": {
+   "hit_A1": {
+    "delta_rho": -0.03545,
+    "E_cond": "NULL",
+    "holm_reject": false,
+    "S3_pass": true,
+    "ship": false
+   },
+   "hit_A2": {
+    "delta_rho": -0.00419,
+    "E_cond": "NULL",
+    "holm_reject": false,
+    "S3_pass": true,
+    "ship": false
+   },
+   "pit_A1": {
+    "delta_rho": 0.00811,
+    "E_cond": "NULL",
+    "holm_reject": false,
+    "S3_pass": true,
+    "ship": false
+   },
+   "pit_A2": {
+    "delta_rho": 0.01857,
+    "E_cond": "NULL",
+    "holm_reject": false,
+    "S3_pass": true,
+    "ship": false
+   }
+  },
+  "statement": "ALL FOUR CELLS ARE NULL UNDER THE REGISTERED PRIMARY. Per the frozen permanent-close pre-commitment: the model class on the current feature set and label pool is CLOSED alongside the feature frontier. The combined reopen burden is the LABEL POOL (RESOLVED_THROUGH 2026), not another architecture. No third adjudication on these labels. No cell that failed Holm or its E_cond floor may be quoted as a win."
+ },
+ "elapsed_min": 11.0
+}
