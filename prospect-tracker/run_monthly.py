@@ -2911,7 +2911,7 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 _record_ingest(
                     "espn_article_probe", not _esp.get("error"),
                     len(_esp.get("candidates") or []),
-                    _esp.get("error") or "; ".join(
+                    _esp.get("error") or _esp.get("summary") or "; ".join(
                         f"{c['id']} {c['headline']}"
                         for c in (_esp.get("candidates") or [])),
                     log=log)
@@ -3364,6 +3364,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             with _step("1. Scrape MiLB rankings + insert snapshots", log):
                 snapshots, csv_birth_dates = scrape_all(force=force_refetch)
                 log.info("scraped %d total snapshot rows", len(snapshots))
+                # One ingest_health row per wired ESPN interval: a refused
+                # fetch or a 0-row parse of a list that exists is a miss,
+                # not "nothing published" (see scrapers.espn_interval_outcomes).
+                try:
+                    from scrapers import espn_interval_outcomes
+                    for _label, _n in espn_interval_outcomes(snapshots):
+                        _record_ingest(
+                            "espn", _n > 0, _n,
+                            f"{_label}: {_n} rows" if _n else
+                            f"{_label}: 0 rows (fetch refused or parser found nothing; see log)",
+                            scope=_label, log=log)
+                except Exception:                            # noqa: BLE001
+                    log.exception("espn per-interval health record failed - continuing")
                 _new = insert_snapshots(snapshots)
                 log.info("inserted %d new snapshot rows", _new)
                 ingest_source_article_drops(out_dir, log)
@@ -3454,7 +3467,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 _record_ingest(
                     "espn_article_probe", not _esp.get("error"),
                     len(_esp.get("candidates") or []),
-                    _esp.get("error") or "; ".join(
+                    _esp.get("error") or _esp.get("summary") or "; ".join(
                         f"{c['id']} {c['headline']}"
                         for c in (_esp.get("candidates") or [])),
                     log=log)

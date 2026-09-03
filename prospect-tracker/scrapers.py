@@ -756,14 +756,48 @@ ESPN_TOOL_KEY: dict[str, str] = {
     # lines look like "Fastball: 60/70" rather than the hitter Hit/Power
     # block but the helper handles both shapes.
     "fastball":     "fb",
+    # The 2026 preseason article prints the pitch by name: "Four-Seam
+    # Fastball: 55/60", "Sweeper: 55/65", "Splitter: 70/70", "Cutter: 50/55".
+    # Sinker and the seam variants ride the fb slot, sweeper the sl slot and
+    # splitter the ch slot (the JB_TOOL_KEY convention); cutter has its own
+    # canonical key. Measured 2026-08-30 before this map existed: 4 of 5
+    # preseason pitchers with a structured block lost their fastball grade.
+    "four-seam fastball": "fb",
+    "two-seam fastball":  "fb",
+    "sinker":       "fb",
+    "cutter":       "ct",
     "slider":       "sl",
+    "sweeper":      "sl",
     "curveball":    "cb",
     "curve":        "cb",
     "changeup":     "ch",
     "change":       "ch",
+    "splitter":     "ch",
     "command":      "cmd",
     "control":      "cmd",
 }
+
+# Structured "Label: PV/FV" lines. The label is captured generically (hyphens
+# allowed, so "Four-Seam Fastball" is one label), then normalised and looked
+# up WHOLE in ESPN_TOOL_KEY. Two failure modes shaped this:
+#   * after tag-stripping, the bio line's last token runs straight into the
+#     first tool label ("Throws: Right   Hit: 45/50"), so the capture reads
+#     "Right   Hit"; the old code looked that up, found nothing and dropped
+#     the Hit grade for 14 of the 15 preseason-2026 hitters with a block.
+#     _espn_tool_key_for_label strips that bio token first.
+#   * a known-label alternation anchored only on the left graded "Body
+#     Control: 30/40" as Command and "Bat Speed: 70/70" as Speed. Requiring
+#     the WHOLE normalised label to be known rejects both.
+_ESPN_TOOL_LINE_RE = re.compile(
+    r"([A-Za-z][A-Za-z\- ]{0,40}?)\s*:\s*(?:(\d+)\s*/\s*(\d+)|(\d+))(?![\d/])"
+)
+_ESPN_LABEL_BIO_PREFIX = re.compile(r"^(?:right|left|switch|both)\b\s*", re.IGNORECASE)
+
+
+def _espn_tool_key_for_label(raw_label: str) -> str | None:
+    label = re.sub(r"\s+", " ", (raw_label or "").strip().lower())
+    label = _ESPN_LABEL_BIO_PREFIX.sub("", label).strip()
+    return ESPN_TOOL_KEY.get(label)
 
 
 def _parse_espn_tools(commentary_text: str) -> dict[str, float] | None:
@@ -778,18 +812,16 @@ def _parse_espn_tools(commentary_text: str) -> dict[str, float] | None:
     if not commentary_text:
         return None
     tools: dict[str, float] = {}
-    # Match 'Label: 45/50' (capture FV = group 2) OR 'Label: 50'
-    # (capture FV = group 3). Trailing (?![\d/]) prevents "55/6" inside
-    # "55/60" from being interpreted as FV=6.
-    pattern = re.compile(
-        r"([A-Za-z][A-Za-z ]+?):\s*(?:\d+\s*/\s*(\d+)|(\d+))(?![\d/])"
-    )
-    for m in pattern.finditer(commentary_text):
-        label = m.group(1).strip().lower()
-        key = ESPN_TOOL_KEY.get(label)
+    # Match 'Label: 45/50' (FV = group 3, the right-hand future grade) OR
+    # 'Label: 50' (group 4). Trailing (?![\d/]) prevents "55/6" inside
+    # "55/60" from being interpreted as FV=6. First occurrence of a
+    # canonical key wins, so "Game Power" is never overwritten by the
+    # ambiguous bare "Power" fallback further down the block.
+    for m in _ESPN_TOOL_LINE_RE.finditer(commentary_text):
+        key = _espn_tool_key_for_label(m.group(1))
         if not key:
             continue
-        fv_str = m.group(2) or m.group(1) and m.group(3)
+        fv_str = m.group(3) or m.group(4)
         if not fv_str:
             continue
         try:
@@ -798,7 +830,7 @@ def _parse_espn_tools(commentary_text: str) -> dict[str, float] | None:
             continue
         if grade < 20 or grade > 80:
             continue
-        tools[key] = grade
+        tools.setdefault(key, grade)
     if tools:
         return tools
     # Fall through: ESPN now publishes tools as prose. Try the prose
@@ -1116,6 +1148,12 @@ def _cache_ttl_for_key(cache_key: str) -> int:
         m_dr = _re_local.search(r"(20\d{2})", cache_key)
         if m_dr and int(m_dr.group(1)) >= _date_local.today().year:
             return 0
+    # The ESPN probe's feed/search caches: cheap JSON whose whole point is
+    # TODAY's index. A 24h TTL against a fixed nightly cron lands the cache
+    # age a few minutes under 24h on roughly every other night and skips the
+    # network; 6h keeps every nightly probe live and a same-day re-run cached.
+    if cache_key.startswith(("espn_news_feed", "espn_search_")):
+        return 6 * 3600
     m = _re_local.search(r"(20\d{2})", cache_key)
     if m:
         try:
@@ -1128,8 +1166,13 @@ def _cache_ttl_for_key(cache_key: str) -> int:
 
 
 def _fetch(url: str, cache_key: str, force: bool = False,
-           accept_json: bool = False) -> FetchResult:
-    """Fetch a URL with on-disk caching and rate limiting."""
+           accept_json: bool = False,
+           headers: dict | None = None) -> FetchResult:
+    """Fetch a URL with on-disk caching and rate limiting.
+
+    `headers` replaces the project HEADERS wholesale for hosts whose bot
+    filter keys on the User-Agent (see ESPN_FEED_HEADERS); `accept_json`
+    still overrides Accept on top of whichever set is in use."""
     cache_path = CACHE_DIR / f"{cache_key}.{'json' if accept_json else 'html'}"
     if cache_path.exists() and not force:
         # v23 — Year-aware TTL gate. Prior to v23 these caches were
@@ -1149,7 +1192,7 @@ def _fetch(url: str, cache_key: str, force: bool = False,
 
     log.info("fetching: %s", url)
     time.sleep(RATE_LIMIT_SECONDS)
-    headers = dict(HEADERS)
+    headers = dict(HEADERS if headers is None else headers)
     if accept_json:
         headers["Accept"] = "application/json"
     try:
@@ -1318,6 +1361,19 @@ ESPN_INTERVALS = [
     ("https://www.espn.com/mlb/story/_/id/48825315/top-50-2026-mlb-prospects-rankings-update-"
      "jesus-made-leo-de-vries-colt-emerson",
      "ESPN 2026 In-Season", "2026-05-22"),
+    # 2026 midseason top-100 update, published 2026-08-20 (wired 2026-08-30).
+    # Fourth layout: every rank line reads "<rank>. <name>, <pos>, <team>,
+    # Age: <x.y>, Level: <lvl>" with the team (sometimes the name) wrapped in
+    # an <a>; ranks 1-19 are <p><strong> lines under a "60 FV tier" <h2>
+    # with commentary for 1-16 only, ranks 20-100 are <br/>-packed list
+    # paragraphs under the 55 and 50 tier headers, and an "Editor's Picks"
+    # <aside> sits inside the body between rank 7 and its prose. The parser
+    # splits the Age/Level tail off the team (parsed, not persisted), strips
+    # the asides, and finds the header in the prose whitespace-tolerantly;
+    # test_scraper_writeups.py::test_espn_2026_midseason_layout pins it.
+    ("https://www.espn.com/mlb/story/_/id/49659961/2026-mlb-prospect-rankings-update-top-100-"
+     "jesus-made-franklin-arias-kade-anderson",
+     "ESPN 2026 Midseason", "2026-08-20"),
 ]
 
 # ESPN publishes each McDaniel prospect list as a NEW dated article at a new
@@ -1333,6 +1389,76 @@ ESPN_INTERVALS = [
 # prompt and lands in data/ingest_health.json for a human to action.
 ESPN_NEWS_FEED = ("https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/"
                   "news?limit=50")
+# The feed sits behind Akamai, whose rule is the INVERSE of CloudFront's on
+# the article pages. Measured 2026-08-30: every request carrying a Mozilla/*
+# User-Agent (the project HEADERS, the ESPN_HEADERS Safari UA, a full Chrome
+# header set) came back 403 "Access Denied", while requests' own default UA,
+# curl's UA and no User-Agent header at all returned the JSON. That is the
+# whole story of the probe's "HTTP 403" in ingest_health from 2026-08-04 on;
+# the article scrape (ESPN_HEADERS, CloudFront) was never affected. So the
+# probe sends a header set with NO User-Agent override. The feed also caps
+# itself at 50 stories regardless of limit/offset/dates (all measured to
+# return the same 50), which is about 17 hours of ESPN's MLB output: a
+# ranking article published the morning before an evening run can already
+# have scrolled out, which is how the 2026-08-20 top 100 went unflagged.
+ESPN_FEED_HEADERS = {"Accept": "application/json"}
+# The long-window index. ESPN's site search returns McDaniel's ranking stories
+# months back (2026-08-30: the 2026-08-20 top 100, the 2026-05-21 top 50 and
+# the 2026-01-29 pieces all on page 1 of "prospect rankings"), with a byline,
+# a publish date, a story/headlinenews type and a web link. It answers with
+# either header set; the UA-less one is used for symmetry with the feed.
+# Two queries, because ESPN's search scores on headline keywords and
+# McDaniel's flagship lists are headlined both ways: "Updated 2026 MLB top 100
+# prospect rankings" (2026-08) but "Top 100 MLB prospects for 2026" (2026-01)
+# and "2025 in-season top 100 MLB prospects update" (2025-08), which the
+# first query never returns (checked live 2026-08-30). Each is its own cache
+# key; the probe unions them and dedupes by article id.
+ESPN_SEARCH_QUERIES = (
+    ("espn_search_prospect_rankings",
+     "https://site.web.api.espn.com/apis/search/v2"
+     "?region=us&lang=en&limit=25&page=1&query=prospect%20rankings"),
+    ("espn_search_top100_prospects",
+     "https://site.web.api.espn.com/apis/search/v2"
+     "?region=us&lang=en&limit=25&page=1&query=top%20100%20mlb%20prospects"),
+)
+ESPN_SEARCH_API = ESPN_SEARCH_QUERIES[0][1]
+# McDaniel pieces the headline filter accepts that were REVIEWED and
+# deliberately not wired: the parser ingests his global top-100/top-50 lists
+# only, and these are org top-10s, farm-system rankings, 101-200 superlatives
+# or draft boards. Without this ledger the search leg re-flags all of them
+# every run (7 of 7 candidates on 2026-08-30) and the probe turns into noise
+# the owner learns to ignore. Reviewed ids stay silent; a NEW id still fires.
+# When one of these becomes wanted, wire it and delete the line. Each entry
+# STARTS WITH THE PUBLISH DATE OF THE EDITION REVIEWED: ESPN rewrites articles
+# in place under the same id (47684227 moved 2026-01 -> 2026-08-11 in the
+# search index), so a later date on a reviewed id fires the probe again.
+ESPN_PROBE_REVIEWED_IDS: dict[str, str] = {
+    "49734496": "2026-08-27 updated 2026 farm-system rankings (org level, not a prospect list)",
+    "47684227": "2026-08-11 updated top-10 prospects for all 30 teams (org lists; Jan article rewritten)",
+    "47684209": "2026-01-29 top-100 superlatives for 101-200 (no ranks or FVs)",
+    "43639138": "2025-08-20 updated 2025 top-10 prospects for all 30 teams (org lists)",
+    "47684217": "2026-01-29 2026 farm-system rankings (org level)",
+    "46070464": "2025-08-26 updated 2025 farm-system rankings (org level)",
+    "44669785": "2025-04-16 2025 draft midseason rankings (draft board, Insider)",
+    # Surfaced by the second search query on 2026-08-30:
+    "43549082": "2025-02-11 'Top 100 MLB prospects for 2025' LANDING PAGE of a multi-article rollout (11 KB body, no ranks; the lists are separate ids)",
+    "49464501": "2026-08-04 trade-deadline ranking of prospects who changed teams (subset, no tiers)",
+    "49297819": "2026-07-08 final 2026 draft rankings top 250 (draft board)",
+    "49209657": "2026-06-29 comparing 2026/2025/2024 draft prospects (feature)",
+}
+
+
+def _espn_reviewed_covers(entry: str | None, published) -> bool:
+    """True when a reviewed-ledger entry silences this sighting. An entry with
+    no leading date silences the id outright; a dated entry silences only
+    editions published on or before that date, so an in-place rewrite that
+    moves the publish date past it is flagged again."""
+    if not entry:
+        return False
+    m = re.match(r"\s*(\d{4}-\d{2}-\d{2})", entry)
+    if not m or not published:
+        return True
+    return str(published)[:10] <= m.group(1)
 # Headline must look like a RANKING publication, not a mailbag or a prospect
 # feature. Both halves must hit.
 _ESPN_RANKING_HEADLINE = re.compile(
@@ -1351,51 +1477,144 @@ def known_espn_article_ids() -> set[str]:
     return out
 
 
+def espn_interval_outcomes(snapshots) -> list[tuple[str, int]]:
+    """(label, n_rows) for every WIRED, already-published ESPN interval, from
+    the snapshot list scrape_all returned. ESPN is not a scheduled source (it
+    publishes twice a year) so nothing else records it in ingest_health, but
+    a wired interval always has an article behind it: a fetch the box's
+    CloudFront edge refuses, or a page that parses to 0 rows, used to be a
+    log.warning only, and since 2026-08-30 the probe treats every wired id as
+    known. run_monthly records one ingest_health row per entry."""
+    from collections import Counter
+    by_label = Counter(getattr(s, "interval_label", None)
+                       for s in snapshots if getattr(s, "source", None) == "espn")
+    out: list[tuple[str, int]] = []
+    for _url, label, snap in ESPN_INTERVALS:
+        try:
+            if date.fromisoformat(snap) > date.today():
+                continue
+        except ValueError:
+            pass
+        out.append((label, int(by_label.get(label, 0))))
+    return out
+
+
 def probe_espn_new_prospect_article(force: bool = False) -> dict:
     """Detect a McDaniel prospect-ranking article we have NOT wired up.
 
-    Returns {"candidates": [{id, headline, url, published}], "checked": n}.
+    Returns {"candidates": [{id, headline, url, published, byline}],
+    "checked": n unique ids, "legs": {"feed": n | "HTTP 403",
+    "search:<query>": n | ...}, "summary": one line for ingest_health}.
     Never raises, never ingests, never edits ESPN_INTERVALS. An empty
-    candidate list means "nothing new that looks like a ranking list"."""
+    candidate list means "nothing new that looks like a ranking list";
+    "error" is present only when EVERY leg failed, and "summary" always
+    names the legs so a single failed leg still reaches the ledger."""
     known = known_espn_article_ids()
-    try:
-        fr = _fetch(ESPN_NEWS_FEED, "espn_news_feed", force=force, accept_json=True)
-        if fr.status != 200 or not fr.body:
-            return {"error": f"HTTP {fr.status}", "candidates": [], "checked": 0}
-        payload = json.loads(fr.body)
-    except Exception as e:                                    # noqa: BLE001
-        return {"error": str(e), "candidates": [], "checked": 0}
+    # Two legs, each normalised to {id, headline, url, published, byline}.
+    # The news feed is a ~17-hour window of everything ESPN files on MLB;
+    # the site search is the months-deep index of ranking stories. One
+    # working leg is a working probe: "error" is set only when BOTH fail.
+    legs: dict[str, str | int] = {}
+    seen: list[dict] = []
 
-    articles = payload.get("articles") or []
+    def _leg(name: str, url: str, cache_key: str, extract) -> None:
+        try:
+            fr = _fetch(url, cache_key, force=force, accept_json=True,
+                        headers=ESPN_FEED_HEADERS)
+            if fr.status != 200 or not fr.body:
+                legs[name] = f"HTTP {fr.status}"
+                return
+            items = extract(json.loads(fr.body))
+        except Exception as e:                                # noqa: BLE001
+            legs[name] = str(e) or e.__class__.__name__
+            return
+        legs[name] = len(items)
+        seen.extend(items)
+
+    def _from_feed(payload: dict) -> list[dict]:
+        out = []
+        for a in payload.get("articles") or []:
+            links = a.get("links") or {}
+            url = ((links.get("web") or {}).get("href")
+                   or (links.get("api") or {}).get("news", {}).get("href") or "")
+            out.append({"id": str(a.get("id") or ""),
+                        "headline": str(a.get("headline") or a.get("title") or ""),
+                        "url": url, "published": a.get("published"),
+                        "byline": a.get("byline")})
+        return out
+
+    def _from_search(payload: dict) -> list[dict]:
+        out = []
+        for group in payload.get("results") or []:
+            if group.get("type") != "article":
+                continue
+            for c in group.get("contents") or []:
+                url = str((c.get("link") or {}).get("web") or "")
+                # Search spans every sport and mixes wire headlines
+                # ("Twins call up top prospect ...") with the stories;
+                # only MLB stories can be a McDaniel list.
+                if "/mlb/" not in url or c.get("type") != "story":
+                    continue
+                out.append({"id": str(c.get("id") or ""),
+                            "headline": str(c.get("displayName") or "").strip(),
+                            "url": url, "published": c.get("date"),
+                            "byline": c.get("byline")})
+        return out
+
+    _leg("feed", ESPN_NEWS_FEED, "espn_news_feed", _from_feed)
+    for cache_key, url in ESPN_SEARCH_QUERIES:
+        _leg("search:" + cache_key.replace("espn_search_", "", 1), url, cache_key,
+             _from_search)
+    failed = {k: v for k, v in legs.items() if isinstance(v, str)}
+    legs_txt = ", ".join(f"{k}={v}" for k, v in legs.items())
+    if len(failed) == len(legs):
+        return {"error": "; ".join(f"{k}: {v}" for k, v in failed.items()),
+                "candidates": [], "checked": 0, "legs": legs,
+                "summary": "all legs failed: " + legs_txt}
+    for name, err in failed.items():
+        log.warning("ESPN probe: %s leg failed (%s); continuing on the other leg",
+                    name, err)
+
     candidates: list[dict] = []
-    for a in articles:
-        headline = str(a.get("headline") or a.get("title") or "")
+    seen_ids: set[str] = set()
+    for a in seen:
+        headline = a["headline"]
         if not (_ESPN_PROSPECT_HEADLINE.search(headline)
                 and _ESPN_RANKING_HEADLINE.search(headline)):
             continue
-        links = a.get("links") or {}
-        url = ((links.get("web") or {}).get("href")
-               or (links.get("api") or {}).get("news", {}).get("href") or "")
-        aid = str(a.get("id") or "")
+        url = a["url"]
+        aid = a["id"]
         if not aid:
             m = _ESPN_ARTICLE_ID_RE.search(url)
             aid = m.group(1) if m else ""
-        if not aid or aid in known:
+        if not aid or aid in known or aid in seen_ids:
             continue
+        if _espn_reviewed_covers(ESPN_PROBE_REVIEWED_IDS.get(aid), a.get("published")):
+            continue
+        seen_ids.add(aid)
         candidates.append({"id": aid, "headline": headline,
                            "url": url.split("?")[0],
-                           "published": a.get("published")})
+                           "published": a.get("published"),
+                           "byline": a.get("byline")})
+    n_checked = len({a["id"] for a in seen if a.get("id")} | {
+        _ESPN_ARTICLE_ID_RE.search(a["url"]).group(1)
+        for a in seen if not a.get("id") and _ESPN_ARTICLE_ID_RE.search(a.get("url") or "")})
+    summary = (f"{len(candidates)} candidate(s)"
+               + ("".join(f"; {c['id']} {c['headline']}" for c in candidates))
+               + f" | {n_checked} unique id(s) checked; legs {legs_txt}")
     if candidates:
-        log.warning("ESPN: %d prospect-ranking article(s) on the news feed are "
-                    "NOT in ESPN_INTERVALS. Add the URL + label + publish date "
-                    "to scrapers.ESPN_INTERVALS to ingest:", len(candidates))
+        log.warning("ESPN: %d prospect-ranking article(s) on the feed/search legs "
+                    "are NOT in ESPN_INTERVALS. Add the URL + label + publish date "
+                    "to scrapers.ESPN_INTERVALS to ingest, or the id to "
+                    "ESPN_PROBE_REVIEWED_IDS to dismiss:", len(candidates))
         for c in candidates:
             log.warning("  ESPN candidate id=%s %r %s", c["id"], c["headline"],
                         c["url"])
     else:
-        log.info("ESPN: news feed carries no unwired prospect-ranking article "
-                 "(%d headlines checked)", len(articles))
-    return {"candidates": candidates, "checked": len(articles)}
+        log.info("ESPN: feed + search carry no unwired prospect-ranking article "
+                 "(%d unique ids checked; legs %s)", n_checked, legs_txt)
+    return {"candidates": candidates, "checked": n_checked, "legs": legs,
+            "summary": summary}
 
 # Stripper for the structured preamble ESPN ships before the writeup
 # prose. Each prospect's article block looks like:
@@ -1409,14 +1628,68 @@ def probe_espn_new_prospect_article(force: bool = False) -> dict:
 # rank line + Age/Bats/Throws + tool-grade pairs in order. "Reminds me
 # of:" and "Type:" carry meaningful prose (comp + tier) so they stay.
 _ESPN_BIO_HEADER = re.compile(
-    r"^\s*(?:Age|Bats|Throws)\s*:\s*\S+\s*\|?\s*", re.IGNORECASE
+    r"^\s*(?:Age|Bats|Throws|Level)\s*:\s*\S+\s*[|,]?\s*", re.IGNORECASE
 )
 _ESPN_TOOL_LABEL = re.compile(
-    r"^\s*(?:Hit|Game\s+Power|Raw\s+Power|Power|Speed|Run|Fielding|"
-    r"Field|Throwing|Arm|Fastball|Curveball|Slider|Changeup|Splitter|"
-    r"Sweeper|Cutter|Sinker|Command|Control)\s*:\s*\d+(?:\s*/\s*\d+)?\s*\|?\s*",
+    r"^\s*(?:" + "|".join(
+        re.escape(k) for k in sorted(ESPN_TOOL_KEY, key=len, reverse=True))
+    + r")\s*:\s*\d+(?:\s*/\s*\d+)?\s*\|?\s*",
     re.IGNORECASE,
 )
+
+
+# The trailing bio ESPN appends to a rank line differs by edition:
+#   2026-08 Midseason:  "..., Milwaukee Brewers, Age: 19.3, Level: Double-A"
+#   2026-05 In-Season:  "..., Seattle Mariners (Previous: 6)"
+#   2026-01 / 2025-08:  bare team (Age/Bats/Throws on the next line)
+# The rank-line regex's team group swallows all of it. canonical_org happened
+# to tolerate that (substring match), but the stored org fell back to the raw
+# string whenever it did not, and the prefix stripper could never find the
+# header in the prose. Split the tail off here. The returned extras are
+# namespaced (TJStats and BA ship a bare `age`) but the scraper does not
+# persist them; see the note above rows.append in scrape_espn_top100.
+_ESPN_RANK_TAIL_AGE_LEVEL = re.compile(
+    r",\s*Age:\s*(?P<age>\d+(?:\.\d+)?)\s*(?:,\s*Level:\s*(?P<level>[^,]+?))?\s*$",
+    re.IGNORECASE,
+)
+_ESPN_RANK_TAIL_PREVIOUS = re.compile(
+    r"\s*\((?:Previous|Prev\.?)\s*:\s*(?P<prev>[^)]*)\)\s*$", re.IGNORECASE
+)
+
+
+def _split_espn_rank_tail(team_raw: str) -> tuple[str, dict]:
+    """Split "<team>[ (Previous: N)][, Age: x.y[, Level: lvl]]" into the bare
+    team string and an extras dict ({espn_previous_rank, espn_age,
+    espn_level}, each present only when the line carried it)."""
+    extras: dict = {}
+    team = (team_raw or "").strip()
+    m = _ESPN_RANK_TAIL_AGE_LEVEL.search(team)
+    if m:
+        try:
+            extras["espn_age"] = float(m.group("age"))
+        except ValueError:
+            pass
+        if m.group("level"):
+            extras["espn_level"] = m.group("level").strip()
+        team = team[:m.start()].rstrip()
+    m = _ESPN_RANK_TAIL_PREVIOUS.search(team)
+    if m:
+        prev = m.group("prev").strip()
+        # "NR" / "unranked": a newcomer. Keep the fact, not a number.
+        extras["espn_previous_rank"] = int(prev) if prev.isdigit() else None
+        team = team[:m.start()].rstrip()
+    return team, extras
+
+
+# Loose "N. Name" probe used only to count rank-looking lines around the
+# aside strip; the real rank-line regex lives inside scrape_espn_top100.
+_ESPN_RANK_PROBE = re.compile(r"(?:^|>)\s*\d{1,3}\.\s+[A-Z]")
+
+
+def _ws_tolerant_pattern(s: str) -> str:
+    """Regex source matching `s` with any run of whitespace (or none)
+    between its non-space characters."""
+    return r"\s*".join(re.escape(ch) for ch in s if not ch.isspace())
 
 
 def scrape_espn_top100(url: str, label: str, snap_date: str,
@@ -1483,6 +1756,27 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
         log.warning("espn %s: article-body div not found", label)
         return []
     body = body[start:]
+    # Inline modules ESPN drops INSIDE the article body: "Editor's Picks"
+    # (<aside class="inline editorial">), promo/tracking blocks (<aside
+    # class="inline float-r inline-track">) and photo figures (<aside
+    # class="inline inline-photo">). They sit between a rank line and its
+    # commentary, so the prose slice below carried "Editor's Picks Updated
+    # top 10 prospect rankings ..." into the stored report (one leak per
+    # article across all four cached lists, measured 2026-08-30). None of
+    # them ever holds a rank line or a tier header, so dropping them whole
+    # loses nothing the parse wants.
+    # Tempered: an <aside> that ESPN's CMS never closed must not swallow
+    # everything up to the NEXT module's </aside> (rank lines included), so
+    # the match may not cross another <aside. A rank-line census before and
+    # after makes any loss loud instead of silent.
+    n_rank_before = len(_ESPN_RANK_PROBE.findall(body))
+    body = re.sub(r"<aside\b(?:(?!<aside\b).)*?</aside>", " ", body,
+                  flags=re.DOTALL | re.IGNORECASE)
+    n_rank_after = len(_ESPN_RANK_PROBE.findall(body))
+    if n_rank_after < n_rank_before:
+        log.warning("espn %s: stripping <aside> modules removed %d rank-looking "
+                    "line(s); check the cached HTML for an unclosed <aside>",
+                    label, n_rank_before - n_rank_after)
 
     # ESPN ships three layouts across these articles:
     #   * Preseason — every block is an <h2>, including FV-tier headers
@@ -1532,15 +1826,17 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
         r"^\s*(\d{1,3})\.\s+([^,]+?),\s*([^,]+?),\s*(.+?)\s*$"
     )
 
-    # First pass: identify which candidates are rank lines, so the
-    # commentary slice can use ONLY rank-line offsets as boundaries
+    # First pass: identify which candidates are rank lines or tier headers,
+    # so the commentary slice can use ONLY those offsets as boundaries
     # (inline-bolded fragments inside body paragraphs were truncating
-    # commentary to a few chars, starving the prose parser).
+    # commentary to a few chars, starving the prose parser). Tier headers
+    # count too: the last player of a tier used to carry "55 FV tier" as
+    # the tail of his report (six stored rows, 2026-08-30).
     rank_offsets: list[int] = []
     for (off, h) in candidates:
         text = re.sub(r"<[^>]+>", "", h)
         text = fix_mojibake(text)
-        if rank_line.match(text):
+        if rank_line.match(text) or fv_header.match(text):
             rank_offsets.append(off)
     rank_offsets.append(len(body))  # sentinel for the last player
 
@@ -1566,7 +1862,7 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
         seen_ranks.add(rank)
         name = rm.group(2).strip()
         pos  = rm.group(3).strip() or None
-        team = rm.group(4).strip()
+        team, _tail = _split_espn_rank_tail(rm.group(4))   # parsed, not stored
         org  = canonical_org(team) or team
         # Tool-grade capture: the article body between this rank line's
         # offset and the NEXT RANK LINE's offset is the player's full
@@ -1595,10 +1891,33 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
         #      wants the narrative.
         #   3. Collapse the runs of whitespace tag-stripping left behind.
         prose = re.sub(r"\s+", " ", commentary).strip()
-        rank_prefix = f"{rank}. {name}, {pos}, {team}" if pos else f"{rank}. {name}, {team}"
-        idx = prose.find(rank_prefix)
-        if idx >= 0:
-            prose = prose[idx + len(rank_prefix):]
+        # The header as parsed (`text`, tags deleted) and the header as it
+        # reads in the prose (tags replaced by a space) differ only in
+        # whitespace, but that was enough: an <a> around the team or the
+        # name reads "Brewers , Age" / "Clark , CF" in the prose, so the
+        # literal find() below never matched and 15 of the 18 Midseason
+        # 2026 reports kept their header line (#17's "report" was nothing
+        # but its header). A whitespace-tolerant pattern built from the
+        # parsed header finds it either way and takes the Age/Level or
+        # (Previous: N) tail with it.
+        hm = re.search(_ws_tolerant_pattern(html.unescape(text)), prose)
+        if hm:
+            prose = prose[hm.end():]
+        else:
+            rank_prefix = f"{rank}. {name}, {pos}, {team}" if pos else f"{rank}. {name}, {team}"
+            idx = prose.find(rank_prefix)
+            if idx >= 0:
+                prose = prose[idx + len(rank_prefix):]
+        # Tag-to-space replacement leaves a space before the punctuation
+        # that followed every closed <a>/<strong> ("in May , but", "Reminds
+        # me of : Fernando"). Close those gaps; the strippers below use
+        # \s*:\s* so they read either form.
+        # (?!\d) keeps McDaniel's leading-dot stat lines intact: "hit .250"
+        # and ".301/.405/.471" must not become "hit.250" (20 stored reports
+        # were glued that way by the first cut of this rule).
+        prose = re.sub(r"\s+([,.;:!?])(?!\d)", r"\1", prose)
+        prose = re.sub(r"\(\s+", "(", prose)
+        prose = re.sub(r"\s+\)", ")", prose)
         # Loop the front-strippers — each .sub() peels off at most one
         # leading label/pair, so iterate until a pass produces no change.
         while True:
@@ -1613,6 +1932,14 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
             cleaned = _clean_report_prose(prose)
             if cleaned:
                 tools.setdefault("_extras", {})["report"] = cleaned[:8000]
+        # The rank-line tail (espn_age / espn_level / espn_previous_rank) is
+        # parsed so the team string is clean but deliberately NOT persisted.
+        # An _extras-only tools dict reads as "this source published tool
+        # grades" to storage.py publishing_sources (~10046), the prospx
+        # per-source Tools panel (index.html ~49403, Object.keys(v.tools))
+        # and org_tendencies.tool_dev_panel (tools_json IS NOT NULL, ~632):
+        # persisting the tail on all 100 midseason rows listed ESPN as a tool
+        # publisher for 98 players with no ESPN grade. Nothing reads the tail.
         rows.append(Snapshot(
             source="espn", snapshot_date=snap_date, interval_label=label,
             player_key=normalize_key(name), player_name=name,

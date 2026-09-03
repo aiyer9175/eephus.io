@@ -35,6 +35,8 @@ rows (not players), `fv` is the subset carrying an explicit FV.
   tjstats                      4,702   4,698   2026-01-22   2026-08-09
   baseballamerica              1,635   1,535   2023-02-15   2026-06-03
   espn                           252     252   2025-08-20   2026-05-22
+    (+100 on 2026-08-30: the 2026-08-20 "ESPN 2026 Midseason" top 100, 352 rows,
+     last 2026-08-20; the census above is left as counted)
   mlb_pipeline_international     246     246   2021-01-15   2026-08-09
   draft_signing                  138     138   2026-07-23   2026-08-09
   just_baseball                  126     126   2026-03-04   2026-06-04

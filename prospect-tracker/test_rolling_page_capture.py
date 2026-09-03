@@ -129,7 +129,7 @@ class JBRollingCapture(unittest.TestCase):
             self.skipTest("no cached Just Baseball page")
         body = (CACHE / JB_CACHE).read_text(encoding="utf-8")
         self._real_fetch = scrapers._fetch
-        scrapers._fetch = lambda url, key, force=False, accept_json=False: \
+        scrapers._fetch = lambda url, key, force=False, accept_json=False, headers=None: \
             scrapers.FetchResult(body=body, status=200, from_cache=True, url=url)
 
     def tearDown(self):
@@ -260,7 +260,7 @@ class ESPNArticleProbe(unittest.TestCase):
 
     def test_probe_never_raises_on_a_bad_payload(self):
         real = scrapers._fetch
-        scrapers._fetch = lambda url, key, force=False, accept_json=False: \
+        scrapers._fetch = lambda url, key, force=False, accept_json=False, headers=None: \
             scrapers.FetchResult(body="not json", status=200,
                                  from_cache=True, url=url)
         try:
@@ -284,7 +284,7 @@ class ESPNArticleProbe(unittest.TestCase):
              "links": {"web": {"href": "https://espn.com/pr"}}},         # not prospects
         ]}
         real = scrapers._fetch
-        scrapers._fetch = lambda url, key, force=False, accept_json=False: \
+        scrapers._fetch = lambda url, key, force=False, accept_json=False, headers=None: \
             scrapers.FetchResult(body=_json.dumps(payload), status=200,
                                  from_cache=True, url=url)
         try:
@@ -301,7 +301,7 @@ class ESPNArticleProbe(unittest.TestCase):
             {"id": "99999999", "headline": "Top 100 MLB prospect rankings",
              "links": {"web": {"href": "https://espn.com/new"}}}]}
         real = scrapers._fetch
-        scrapers._fetch = lambda url, key, force=False, accept_json=False: \
+        scrapers._fetch = lambda url, key, force=False, accept_json=False, headers=None: \
             scrapers.FetchResult(body=_json.dumps(payload), status=200,
                                  from_cache=True, url=url)
         with _StubbedWrites() as w:
