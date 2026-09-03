@@ -120,6 +120,18 @@
       b.classList.toggle("is-needed", overflows);
     });
   }
+  // The measurement above depends on the face the text is set in. Since
+  // 2026-09-03 PixelMplus12 leads the copy stack on every platform, so the
+  // first paint uses the swap-in system face and the webfont lands later with
+  // wider glyphs: a subtitle that fit its two lines at load can overflow after
+  // the swap (fa/ at 390px hid 19px with a control that had already been judged
+  // unnecessary). Re-measure when the fonts settle and on any later font load.
+  if (document.fonts && typeof document.fonts.addEventListener === "function") {
+    if (document.fonts.ready && typeof document.fonts.ready.then === "function") {
+      document.fonts.ready.then(syncSubToggles);
+    }
+    document.fonts.addEventListener("loadingdone", syncSubToggles);
+  }
 
   // ---- phone hamburger (<=640px) --------------------------------------------
   function navHeader() { return document.querySelector("header.eephus-nav"); }

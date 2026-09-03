@@ -80,9 +80,11 @@ ROOT = Path(__file__).parent
 SITE_CSS = ROOT / "assets" / "site.css"
 PROSPX = ROOT / "prospx" / "index.html"
 
-# The two faces that must lead every copy stack, in order: Windows first (so a
-# Windows reader never downloads a webfont), then the self-hosted stand-in.
-_EXPECTED_HEAD = ["MS UI Gothic", "MS Gothic", "PixelMplus12"]
+# The faces that must lead every copy stack, in order: the self-hosted face first
+# (owner decision 2026-09-03: one letterform on every platform, Windows included;
+# until then the Windows system faces led so a Windows reader never downloaded a
+# copy webfont), then the Windows system faces as the swap-in fallback.
+_EXPECTED_HEAD = ["PixelMplus12", "MS UI Gothic", "MS Gothic"]
 
 # Every file that repeats the logo stack somewhere a var() cannot reach.
 _LOGO_COPIES = [
@@ -136,15 +138,15 @@ def test_pixelmplus_declared_with_both_weights():
 
 
 @pytest.mark.parametrize("token", ["--font-retro", "--font-retro-mono"])
-def test_copy_stacks_lead_with_windows_then_the_selfhosted_face(token):
+def test_copy_stacks_lead_with_the_selfhosted_face_then_windows(token):
     css = _families(_token(SITE_CSS.read_text(encoding="utf-8"), token))
     head = css[: len(_EXPECTED_HEAD)]
+    assert head[0] == "PixelMplus12", f"{token} must lead with PixelMplus12, got {head}"
     if token == "--font-retro-mono":
-        # the mono token leads MS Gothic before MS UI Gothic
-        assert head[0] == "MS Gothic" and head[1] == "MS UI Gothic"
+        # the mono token keeps MS Gothic before MS UI Gothic behind the face
+        assert head[1] == "MS Gothic" and head[2] == "MS UI Gothic"
     else:
-        assert head[0] == "MS UI Gothic" and head[1] == "MS Gothic"
-    assert head[2] == "PixelMplus12", f"{token} must fall to PixelMplus12, got {head}"
+        assert head[1] == "MS UI Gothic" and head[2] == "MS Gothic"
     assert "monospace" in css[-1], "the monospace ladder must remain as last resort"
 
 

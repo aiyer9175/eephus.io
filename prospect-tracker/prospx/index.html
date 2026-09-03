@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=c5583299">
+  <link rel="stylesheet" href="/assets/site.css?v=32179f18">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -234,28 +234,29 @@
          Long-form prose (scouting reports, glossary entries) keeps
          its readability tuning via per-element line-height + size
          tokens rather than a separate font family. */
-      /* On Windows the brand pixel-gothic (MS UI Gothic / MS Gothic) still leads
-         and nothing changes. Where it is ABSENT (Mac / iPhone / Linux), copy now
-         falls to PixelMplus12, a self-hosted 12px-native Japanese screen-gothic
-         with a real bold, declared via @font-face in assets/site.css (which this
-         page loads, so the face is available here without redeclaring it).
+      /* PixelMplus12 leads copy on EVERY platform, Windows included (owner
+         decision 2026-09-03; until then MS UI Gothic / MS Gothic led on Windows
+         so the system face rendered there). It is a self-hosted 12px-native
+         Japanese screen-gothic with a real bold, declared via @font-face in
+         assets/site.css (which this page loads, so the face is available here
+         without redeclaring it). The Windows faces sit directly behind it as the
+         swap-in fallback, then the monospace ladder, which still renders the
+         handful of symbols the Latin subset does not carry.
          HISTORY: a 16px-native pixel face once held this slot and was pulled,
-         because this app's copy is 12-14px, i.e. under its pixel grid.
-         PixelMplus12 is on-grid at those sizes. The monospace ladder below it is
-         retained and still renders the handful of symbols the Latin subset does
-         not carry.
-         The logo token is the OPPOSITE rule: --font-logo (site.css) leads with
-         PixelMplus12 on every platform, Windows included, so the wordmark is one
-         letterform everywhere. Do not "fix" this stack to match it.
+         because this app's copy is 12-14px, i.e. under its pixel grid; Nintendo
+         DS BIOS (16px native, non-commercial) was tried and reverted 2026-09-03.
+         PixelMplus12 is on-grid at those sizes.
+         --font-logo (site.css) leads with PixelMplus12 as well, so the wordmark
+         and the copy now share one letterform everywhere.
          MIRRORS assets/site.css - edit both or Apple renders PROSPX and the
          editorial pages in two different faces. */
-      --font-retro: "MS UI Gothic", "MS Gothic", "PixelMplus12",
+      --font-retro: "PixelMplus12", "MS UI Gothic", "MS Gothic",
                     ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas,
                     "Liberation Mono", "DejaVu Sans Mono", "Roboto Mono", monospace;
       /* Blockier monospace variant - used on the iconic chrome
          elements (FV badges, farm-grade letters) where the strict
          monospace baseball-card look is the point. */
-      --font-retro-mono: "MS Gothic", "MS UI Gothic", "PixelMplus12",
+      --font-retro-mono: "PixelMplus12", "MS Gothic", "MS UI Gothic",
                          ui-monospace, "SF Mono", "SFMono-Regular", Consolas, Menlo,
                          "Liberation Mono", "DejaVu Sans Mono", "Roboto Mono", monospace;
       --font-serif: var(--font-retro);
@@ -10360,7 +10361,7 @@
      module self-injects the Supabase SDK and lights up the account UI. -->
 <script src="/assets/eephus-config.js?v=5e092777" defer></script>
 <script src="/assets/eephus-account.js?v=22deb404" defer></script>
-<script src="/assets/eephus-nav.js?v=621caae0" defer></script>
+<script src="/assets/eephus-nav.js?v=b9476935" defer></script>
 <script src="/assets/eephus-ui.js?v=d1d01ba2" defer></script>
   <script src="/assets/eephus-gl.js?v=7b97df51" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->

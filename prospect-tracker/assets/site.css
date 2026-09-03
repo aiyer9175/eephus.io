@@ -141,25 +141,28 @@
   --paper-dot:        rgba(14,43,77,.055);   /* navy newsprint halftone ink   */
   --paper-dot2:       rgba(178,75,40,.035);  /* warm registration-offset dot  */
   --paper-pinstripe:  rgba(14,43,77,.028);   /* faint baseball pinstripe / column rule */
-  /* COPY tokens. MS UI Gothic / MS Gothic MUST keep leading these two: Windows
-     then renders every body/table/heading run from a system face, exactly as it
-     always has. PixelMplus12 (self-hosted, @font-face above) sits directly
-     behind them, so Apple and Linux get a real Japanese-screen-gothic pixel face
-     instead of dropping all the way to SF Mono. That ordering is pinned by
-     test_board_card_typography.py; --font-logo below deliberately does NOT
-     follow it, because the logo has to look identical on every platform.
+  /* COPY tokens. PixelMplus12 (self-hosted, @font-face above) LEADS both of
+     these on every platform, Windows included, by owner decision 2026-09-03.
+     Until that date MS UI Gothic / MS Gothic led so a Windows reader kept the
+     system face and never downloaded a copy webfont; the owner chose one
+     letterform everywhere over that saving (the face is already fetched for
+     the logo, so it costs no extra request). The Windows system faces sit
+     directly behind it as the swap-in fallback while the woff2 loads, then the
+     monospace ladder, which still renders the six symbols the subset does not
+     carry. Pinned by test_board_card_typography.py; --font-logo below already
+     followed this rule, so wordmark and copy now share one letterform.
      HISTORY, so the earlier fix is not misread as a reversal: a 16px-native
-     pixel face was once put in this position and pulled, because the site's copy
-     is 12-14px, which renders it at 0.75-0.8x of its pixel grid and turns body
-     text to mush. PixelMplus12 is 12px-native, so the same copy sits ON its grid
+     pixel face was once put in this position and pulled, because the site's
+     copy is 12-14px, which renders it at 0.75-0.8x of its pixel grid and turns
+     body text to mush. Nintendo DS BIOS (16px native, non-commercial license)
+     was tried in this slot on 2026-09-03 and reverted the same day for both
+     reasons. PixelMplus12 is 12px-native, so the same copy sits ON its grid
      rather than under it, and it ships a real bold.
-     The monospace ladder is kept intact behind PixelMplus12 - it is still what
-     renders the six symbols the subset does not carry. Mirrors prospx/index.html;
-     the two definitions must be edited together. */
-  --font-retro: "MS UI Gothic","MS Gothic","PixelMplus12",
+     Mirrors prospx/index.html; the two definitions must be edited together. */
+  --font-retro: "PixelMplus12","MS UI Gothic","MS Gothic",
                 ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,
                 "Liberation Mono","DejaVu Sans Mono","Roboto Mono",monospace;
-  --font-retro-mono: "MS Gothic","MS UI Gothic","PixelMplus12",
+  --font-retro-mono: "PixelMplus12","MS Gothic","MS UI Gothic",
                      ui-monospace,"SF Mono","SFMono-Regular",Consolas,Menlo,
                      "Liberation Mono","DejaVu Sans Mono","Roboto Mono",monospace;
   /* The eephus.io wordmark + headings. Self-hosted PixelMplus12 leads so the
