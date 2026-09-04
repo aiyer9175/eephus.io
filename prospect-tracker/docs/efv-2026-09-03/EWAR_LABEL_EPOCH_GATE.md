@@ -366,9 +366,9 @@ and `EPOCH_2026_PREREGISTRATION.md`'s same-commit checklist:
 
 ## 6. Appendix A: audit label-definition fixes carried by this epoch
 
-PROPOSED 2026-09-03 from `ARKMETRIC_DESIGN_AUDIT.md`, NOT YET FROZEN: the owner answers
-question 1 of that report's section 9 and the answer freezes this table. Nothing is
-rebuilt until it is frozen. Each entry: the fix, the file it lands in, the pre-registered
+**FROZEN 2026-09-04 on the owner's answer to question 1 of `ARKMETRIC_DESIGN_AUDIT.md`
+section 9: BOTH fixes, each as its own matrix arm.** Nothing may be added to this table
+now; a fix that is not below is out of the epoch. Each entry: the fix, the file it lands in, the pre-registered
 expected effect on each side, and whether it is separable from the eWAR flip in the
 cross-label matrix (a fix that is not separable is measured jointly and the copy says so).
 
@@ -388,6 +388,40 @@ reads the WAR basis, each fix, and their interaction.
 Both entries inherit clause (a): floors are derived on the final frame AFTER all frozen
 fixes are applied, and the hitter regen control in clause (a) is read against the eWAR-only
 arm, never against the fixed arm, or the control loses its meaning.
+
+### Arm plan (frozen with the table)
+
+Four matrices per side, built from one code path with two flags, so every arm is the same
+build with a named difference:
+
+| arm | label window | milb_unavailable imputation | what it isolates |
+| --- | --- | --- | --- |
+| E0 | calendar (incumbent) | floor (incumbent) | the eWAR basis alone, and the hitter regen control |
+| E1 | service-aligned (A1) | floor | A1 |
+| E2 | calendar | neutral (A2) | A2 |
+| E3 | service-aligned | neutral | the interaction |
+
+E0 is the arm the cross-label matrix and clause (a) read; E3 is the candidate served frame.
+An arm ships only if E3 is non-inferior to E0 on the rank TOST at 0.02 per side AND each
+fix's own level clause passes on its own arm. If A1 and A2 disagree in sign on the same
+side, neither ships and both are recorded as a loss with the interaction cell published.
+
+### Owner decisions taken 2026-09-04, and where each one lands
+
+Recorded here because three of them touch served numbers and must NOT ride this epoch, or
+clause (f)'s blast radius stops being attributable to the WAR basis.
+
+| decision | disposition | lands |
+| --- | --- | --- |
+| Appendix A: both fixes, separate arms | IN this epoch | the table above |
+| C-7: re-apply the level correction at the grade seam from a leave-one-fold-out affine | AFTER, own grade-basis epoch | audit F02; coefficients re-fitted on the finished eWAR frame, elite table to the owner first |
+| Abstention grade: decide after the anchor fix | AFTER, sequenced behind audit F01 | audit F19 |
+| Age ramp: run the serve-rule gate first | AFTER, measurement lane | audit F11 |
+| Statcast lean: restore the 4 FV / 40 rank ceiling, size the coefficient from the interval lower bound | AFTER, own registered change | audit F30 |
+| Fabricated FV 35: serve an explicit ungraded state | AFTER, consensus-basis change with its own two-pass rebuild | audit F32 |
+| Star odds: measured rates where n >= 30, truncate the served scale at 70 | AFTER, sequenced behind audit F07 | audit F42 and F07 |
+| Delta chip computed on displayed values | NOW, display only, no served number | audit F43 |
+
 
 NOT carried by this epoch, and each for a stated reason: F01 (the `B(fv)` ridge feature) and
 F02 (the out-of-fold affine) change the served grade mechanism rather than the label and are
