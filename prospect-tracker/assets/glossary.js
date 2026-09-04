@@ -986,27 +986,29 @@ function _methProseHTML() {
 
     <div class="meth-eg-card">
       <div class="meth-eg-title">Worked example · how a grade becomes a dollar figure</div>
-      <div class="meth-eg-row">An <b>${gTermLink("fv", "FV")} 60</b> shortstop: the FV→WAR anchor maps the grade to a per-year WAR expectation, the position multiplier nudges it for the up-the-middle profile, and the six cost-controlled years are priced at the tiered ${gTermLink("dpw_tier", "$/WAR")}${_dpwTxt} minus the league-min-plus-arb cost basis, then probability-weighted across debut and bust outcomes and discounted to present value.</div>
+      <div class="meth-eg-row">An <b>${gTermLink("fv", "FV")} 60</b> shortstop: the FV→WAR anchor maps the grade to a per-year WAR expectation, the position multiplier nudges it for the up-the-middle profile, and the seven cost-controlled years are priced at the tiered ${gTermLink("dpw_tier", "$/WAR")}${_dpwTxt} minus the league-min-plus-arb cost basis, then probability-weighted across debut and bust outcomes and discounted to present value.</div>
       <div class="meth-eg-row">The result is the published ${gTermLink("surplus_value", "surplus value")} on that player's card. A higher ${gTermLink("dvm_plus", "$DvM+")} (faster-than-mean development) and stronger underlying rates (${gTermLink("k_pct", "K%")} / ${gTermLink("bb_pct", "BB%")}, ${gTermLink("ops_plus", "OPS+ vs lvl")}) lift the expectation within the FV band.</div>
       <div class="meth-eg-note">Illustrative - each player's card carries their own current figure, which moves with the FV→WAR table and the $/WAR market.</div>
     </div>
 
     <h2 class="meth-h">Surplus value - the economic model</h2>
-    <p>A prospect is an asset because the six years of team control after debut are paid below
+    <p>A prospect is an asset because the seven years of team control after debut are paid below
     market. Surplus value is the dollar production those controlled years are expected to deliver
     above what they cost. The grade priced here is <strong>eFV</strong> (the consensus FV is the
     fallback where eFV abstains); the pricing engine below is grade-agnostic - it takes whatever
     grade leads and converts it to dollars:</p>
     <p class="meth-eq">surplus = (expected WAR × $/WAR) − cost basis, probability-weighted across outcomes and discounted to present value</p>
     <p>The build, in order: (1) the <strong>FV→WAR anchor</strong> converts the scouting grade to an
-    expected ${gTermLink("war", "WAR")}/year over six controlled seasons (${gTermLink("fv_to_war_table", "the FV→WAR table")}).
+    expected ${gTermLink("war", "WAR")}/year over seven controlled seasons (${gTermLink("fv_to_war_table", "the FV→WAR table")}).
     (2) WAR is priced at a non-linear, tiered <strong>${gTermLink("dpw_tier", "$/WAR")}</strong> (a win on a star is worth more
     than a win on a replacement-level filler). (3) The <strong>cost basis</strong> is the three pre-arbitration
-    years at the league minimum plus three arbitration years at an escalating fraction of free-agent
+    years at the league minimum plus four arbitration years at an escalating fraction of free-agent
     value (${gTermLink("service_time", "service-time")} schedule). (4) Because a prospect is a <em>distribution</em>
     of outcomes, not a point, the engine probability-weights the five-bucket outcome set (bust → bench
     → regular → good → star) rather than trusting the FV midpoint, then discounts future years to present value
-    at 9%/yr. The published number is an <strong>expected value</strong>, not a median: since the EV
+    at the shipped net 7%/yr (config/valuation_sets/clemens_2026.yaml: control.years 7, discount.net_rate 0.07,
+    a 10% discount rate minus 3% annual win-cost growth; the base config's 6 years / 9% are the legacy
+    prospx_current values and are overridden in production). The published number is an <strong>expected value</strong>, not a median: since the EV
     reframe (calibration version isotonic-real-v6-evframe, 2026-07-31) the raw expectation is corrected
     by a count-weighted isotonic (PAVA) map fit on resolved-cohort bin means, and the old $0 floor on
     low-tier prospects is gone - a bottom-tier player's price is his small positive expectation, because
@@ -1223,16 +1225,35 @@ function _methAccuracyChart(bt) {
     const f3 = v => (v == null ? "-" : v.toFixed(3));
     const n = (bt.accuracy.common_n_efv_vintage_matched
       || bt.accuracy.common_n_efv || 0).toLocaleString();
-    const gap = x.spearman - c.spearman;
-    // A bare inequality is not a result. The gap is reported against the floor
-    // this backtest can actually resolve, so a lead inside the floor reads as
-    // the tie it is.
-    const resolvable = hh && hh.resolvable === true;
-    const cls = resolvable ? "is-good" : "";
-    const call = resolvable
-      ? `That gap clears the ${f3(hh.mde95)} this backtest can resolve at 95%, so it is a real lead.`
-      : `That gap sits under the ${f3(hh && hh.mde95)} this backtest can resolve at 95%, so read it as a tie that leans eFV, not a win.`;
-    verdict = `<p class="meth-verdict ${cls}">Out of sample and leakage-free, on the ${n} players eFV and the boards both grade, eFV orders realized WAR ahead of the field: Spearman ${f3(x.spearman)}, against ${f3(c.spearman)} for the PROSPX consensus, ${f3(mlb && mlb.spearman)} for MLB Pipeline and ${f3(fg && fg.spearman)} for FanGraphs, a margin of ${gap >= 0 ? "+" : ""}${f3(gap)} over the consensus. ${call} Broken out by prospect group it is closer still. A wider gap you may have seen quoted compares eFV on its own rows against the boards on all of theirs, and about half of that one is the row difference rather than the ordering.</p>`;
+    // DERIVED, NEVER ASSERTED (2026-09-04, design audit F46). This template used
+    // to open with fixed prose asserting eFV ordered realized WAR ahead of every
+    // rater, and then print MLB Pipeline ABOVE eFV in the same sentence: on
+    // accuracy.pooled_efv_common_vintage_matched the artifact reads eFV 0.3983
+    // against Pipeline 0.3990. A hard-coded accuracy CLAIM is the same banned
+    // defect as a hard-coded accuracy NUMBER, and _methHeroBanner two functions
+    // down already derives this exact call from the same block. Same rule here:
+    // take the max over the raters, difference against it, and let the
+    // artifact's own floor decide whether the difference may be called a lead.
+    // The fragment is ratcheted in test_claims_freshness.BANNED_CLAIM_FRAGMENTS.
+    const pubs = [["PROSPX consensus", c], ["MLB Pipeline", mlb], ["FanGraphs", fg]]
+      .filter(pr => pr[1] && pr[1].spearman != null);
+    const bestPub = pubs.length
+      ? pubs.reduce((a, b) => (b[1].spearman > a[1].spearman ? b : a)) : null;
+    const lead = bestPub ? (x.spearman - bestPub[1].spearman) : null;
+    const ahead = (lead != null && lead > 0);
+    const resolvable = !!(hh && hh.resolvable === true);
+    const cls = (ahead && resolvable) ? "is-good" : "";
+    const bestTxt = bestPub
+      ? `${f3(bestPub[1].spearman)} for the best of them, ${escapeHtml(bestPub[0])}` : "";
+    const head = (lead == null)
+      ? `eFV orders realized WAR at Spearman ${f3(x.spearman)}`
+      : (ahead && resolvable)
+        ? `eFV orders realized WAR ahead of every source measured here, by a margin this backtest can resolve: Spearman ${f3(x.spearman)} against ${bestTxt}, a lead of +${lead.toFixed(3)} against a floor of ${f3(hh && hh.mde95)}`
+        : ahead
+          ? `eFV orders realized WAR ahead of every source measured here, but not by enough to call it: Spearman ${f3(x.spearman)} against ${bestTxt}, a lead of +${lead.toFixed(3)} that sits inside the ${f3(hh && hh.mde95)} this backtest can resolve at 95%`
+          : `eFV and the best source measured here are indistinguishable: Spearman ${f3(x.spearman)} for eFV against ${bestTxt}, a ${lead.toFixed(3)} point estimate, so no ordering claim is made in either direction`;
+    const rowTxt = pubs.map(pr => `${f3(pr[1].spearman)} ${escapeHtml(pr[0])}`).join(", ");
+    verdict = `<p class="meth-verdict ${cls}">Out of sample and leakage-free, on the ${n} players eFV and the boards both grade, ${head}. The full row: eFV ${f3(x.spearman)}, ${rowTxt}. A wider gap you may have seen quoted compares eFV on its own rows against the boards on all of theirs, and about half of that one is the row difference rather than the ordering.</p>`;
   } else {
     verdict = `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric (reported as measured, not cherry-picked).</p>`;
   }

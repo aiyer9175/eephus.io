@@ -289,6 +289,45 @@ def route_floor_grade(player_key, flagship_grade, constant_only: bool):
     return _provisional_grades().get(player_key)
 
 
+def route_healthy_grade(player_key, healthy_grade, healthy_uncorrected,
+                        served_routed: bool):
+    """The healthy counterfactual ON THE SERVED GRADE'S BASIS, or None.
+
+    Pure, and the only predicate run_live uses, so the tests exercise the shipped
+    one (the lesson route_floor_grade's docstring records).
+
+    audit F12, fixed 2026-09-04. xfv_grade_healthy used to be the flagship outcome
+    map on every row while the served grade beside it was the provisional map on the
+    routed cohort. The two maps disagree by -7.0 FV at WAR 0.0, so the card compared
+    two scales: measured on data/xfv.json by_player (kind=="active"), 218 rows carried
+    both grade_basis=="provisional_capped" and a non-null xfv_grade_healthy, and 192
+    of them rendered a "healthy" grade BELOW the served grade, which no dropped
+    penalty can produce.
+
+    Three cases, and the invariant is that a non-null return is on the same basis as
+    the served grade and is >= it:
+
+      not routed        the served grade is the flagship map and so is this. Both are
+                        monotone maps of a WAR the injury tilt only lowered, so
+                        healthy >= served holds by construction.
+      routed, floored   the counterfactual is still on the floor knot, so it routes to
+                        the SAME provisional grade the served number took. The
+                        provisional map (_provisional_grades, from efv_ungraded)
+                        applies no injury tilt at all, so equality is the correct
+                        answer, not a degenerate one: on these rows the penalty does
+                        not reach the served grade.
+      routed, lifted    dropping the penalty carries the row off the knot, where the
+                        provisional map has no value for it. Null, because a number
+                        from the other scale is what this fix exists to stop.
+    """
+    if healthy_grade is None:
+        return None
+    if not served_routed:
+        return healthy_grade
+    routed = route_floor_grade(player_key, healthy_uncorrected, True)
+    return float(routed) if routed is not None else None
+
+
 # CONSENSUS DELTA HONESTY (C-6, 2026-08-14).
 # Pre-registration: docs/efv-2026-08-13/CONSENSUS_DELTA_HONESTY_GATE.md.
 #
@@ -996,9 +1035,16 @@ def _age_at(birth_date, year):
 # The slope and floor are deliberately HELD FIXED while the onset moves, so the dial
 # has exactly one meaning ("how early does age start costing a prospect"). Measured
 # board effect of each candidate onset is tabled in docs/efv-2026-07-30/EFV_LANE_GATES.md.
-# Do not pick an onset here from an accuracy metric: the debuted-only eval pool is
-# survivorship-censored against the never-debut old-prospect class this ramp exists to
-# price, which is why it shipped owner-directed rather than fitted in the first place.
+# Do not pick an onset here from an accuracy metric WITHOUT registering the sweep first.
+# CORRECTED 2026-09-04 (audit F11): the sentence that stood here said the pool is
+# "debuted-only" and therefore could not adjudicate the ramp. That is false. The training
+# pool carries 1,054 hitter and 1,051 pitcher BUST rows beside 845 / 983 debuted ones, and
+# the eval has a full_pool_km cut, so an accuracy read IS available on the 23 to 25.5 band
+# where this ramp's mass sits. The class the pool genuinely cannot see is the never-LISTED
+# old prospect, which is where the ramp is already at its floor. The owner authorised a
+# serve-rule gate 2026-09-04 (onset 23/24/25 x slope 0.05/0.10, full-pool frame, floors
+# derived first, Holm); until it runs this stays a policy dial, but it is no longer
+# described as unmeasurable.
 # OWNER DECISION TAKEN 2026-07-30: onset 23.0. The owner was shown the measured table
 # (22.0 / 23.0 / 24.0 / 25.0) and chose 23.0 to move enrique_bradfield_jr out of the
 # top 100 - a 24.7-year-old repeating AAA on a .664 OPS who paid NOTHING under the old
@@ -1031,11 +1077,19 @@ def _age_factor(r) -> float:
     haircut on the eFV WAR projection for OLD active prospects, mirroring the
     injury-penalty overlay: LIVE board only, never the resolved eval.
 
-    Why an overlay and not a bigger model coefficient: the trained age
-    coefficient is honest but small because the debuted-only training pool is
-    survivorship-censored - the 26yo org arms who never got a shot are not in
-    it, so the data cannot support the penalty the owner (correctly) wants
-    priced. Ramp: 1.0 through _AGE_PENALTY_ONSET, -_AGE_PENALTY_PER_YR/yr after,
+    Why an overlay and not a bigger model coefficient, RESTATED 2026-09-04
+    (audit F11, the old wording was factually wrong): the trained age coefficient
+    is not merely small, it is POSITIVE conditional on FV (+0.203 hit / +0.123
+    pit standardized), while this ramp subtracts 10 percent of E[WAR] per year,
+    about three times larger and opposite in sign. The old note blamed a
+    "debuted-only training pool"; the pool in fact carries 1,054 hitter and 1,051
+    pitcher bust rows. What the pool cannot see is the never-LISTED old prospect,
+    the 26yo org arm who never appeared on a board at all, and that is the class
+    the owner wants priced. Two quantities are being conflated and only one is in
+    the ridge: E[WAR | reaches MLB], which rises with age at fixed FV because an
+    older prospect at the same grade is closer, and P(reaches MLB | age), which
+    the ramp is really about. The registered serve-rule gate decides whether this
+    stays in the grade or becomes a labelled age-risk indicator. Ramp: 1.0 through _AGE_PENALTY_ONSET, -_AGE_PENALTY_PER_YR/yr after,
     floored at _AGE_PENALTY_FLOOR. Transparent via the "Prospect age penalty" chip."""
     age = r.get("age_now")
     if age is None:
@@ -1700,6 +1754,17 @@ def run(persist: bool = True, side: str = "hit") -> dict:
             "player_key": pk, "kind": src["kind"], "position": pos,
             "consensus_fv": round(cons_fv, 1),
             "xfv_grade": round(xfv_grade, 1),
+            # THE ODDS KEY (audit F09 step 1; owner decision S-3 of 2026-08-13).
+            # Every odds and dollar figure on this row (p_bucket, p_bust,
+            # surplus_mm, the band, and dist where the seam emits one) is read at
+            # THIS grade (vf.realized_implied_fv), never at xfv_grade, and
+            # until 2026-09-04 it reached no artifact, so nobody holding
+            # data/xfv.json could reproduce a served probability. Exported only:
+            # no consumer reads it, no served number moves.
+            # 3dp, not 1dp: the inversion plateau is median 0.050 FV wide at 3dp
+            # (efv_export._entry), so a 1dp key does not identify the point the
+            # probabilities were taken at.
+            "xfv_grade_odds": round(_odds_grade, 3),
             "xfv_minus_consensus": round(xfv_grade - cons_fv, 1),
             "xfv_war_6yr": round(xfv_war, 2),
             "rank_war": round(rank_war, 3),
@@ -2278,6 +2343,13 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             factors.insert(0, {"label": "Level calibration",
                                "dir": "up" if _corr_delta > 0 else "down",
                                "mag": round(abs(_corr_delta), 2)})
+        # ROUTING PARITY, part 1 (audit F12). The served grade's routing decision
+        # reads the UNCORRECTED grade (see the block above), so the counterfactual's
+        # routing decision has to read the uncorrected counterfactual or the two
+        # answer different questions on the same row.
+        _healthy_uncorrected = (vf.outcome_implied_fv(xfv_war_healthy,
+                                                      exposure_seasons=TARGET_SEASONS)
+                                if xfv_war_healthy is not None else None)
         if xfv_war_healthy is not None:                    # keep the counterfactual on one basis
             xfv_war_healthy = apply_dispersion_correction(xfv_war_healthy, is_pit)
         xfv_grade = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
@@ -2285,8 +2357,10 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
                                              exposure_seasons=TARGET_SEASONS)
         if xfv_grade is None or _odds_grade is None or _grade_uncorrected is None:
             continue
-        # Mirrors xfv_grade's basis exactly (same map, same exposure), so the
-        # healthy figure is comparable to the badge it is displayed beside.
+        # The flagship-map counterfactual. NOT yet on the served basis: on a routed
+        # row the served grade is replaced below and this is re-based with it. The
+        # old comment here claimed "mirrors xfv_grade's basis exactly", which was
+        # false on exactly the rows the routing touches (audit F12).
         xfv_grade_healthy = (vf.outcome_implied_fv(xfv_war_healthy,
                                                    exposure_seasons=TARGET_SEASONS)
                              if xfv_war_healthy is not None else None)
@@ -2303,6 +2377,15 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         if _routed is not None:
             xfv_grade = float(_routed)
             _grade_basis = "provisional_capped"
+        # ROUTING PARITY, part 2 (audit F12, fixed 2026-09-04). The counterfactual
+        # takes the SAME path as the grade it is displayed beside, or it is null.
+        # Predicate and full statement in route_healthy_grade. Post-fix count on the
+        # live artifact (data/xfv.json, kind=="active"): of the 218 routed rows
+        # carrying a counterfactual, 217 route (191 of them change value, 26 already
+        # read 20.0 on both sides) and 1 goes null.
+        xfv_grade_healthy = route_healthy_grade(r["player_key"], xfv_grade_healthy,
+                                                _healthy_uncorrected,
+                                                _routed is not None)
         probs = vf.p_bucket_given_fv(_odds_grade, is_pit) or []
         # ODDS DISPERSION CALIBRATION, wired 2026-07-31 after the lane cleared its
         # pre-registered gate (docs/efv-2026-07-30/ODDS_CALIBRATION_SLOPE_GATE.md;
@@ -2348,9 +2431,26 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         entry = {
             "player_key": r["player_key"], "kind": "active", "position": pos,
             "consensus_fv": round(cons_fv, 1),
-            "xfv_grade": round(xfv_grade, 1),                 # realized-implied (deflated)
-            # Same basis as xfv_grade, injury tilt removed. Present ONLY on rows
-            # actually carrying a penalty, so a null means "not hurt", not "unknown".
+            # OUTCOME-implied, not realized-implied: the comment here said
+            # "realized-implied (deflated)" until 2026-09-04, naming the map that
+            # produces xfv_grade_odds below rather than the one that produces this.
+            "xfv_grade": round(xfv_grade, 1),
+            # THE ODDS KEY (audit F09 step 1; owner decision S-3 of 2026-08-13).
+            # Every odds and dollar figure on this row (p_bucket, p_bust,
+            # surplus_mm, the band, and dist where the seam emits one) is read at
+            # THIS grade (vf.realized_implied_fv), never at xfv_grade, and
+            # until 2026-09-04 it reached no artifact, so nobody holding
+            # data/xfv.json could reproduce a served probability. Exported only:
+            # no consumer reads it, no served number moves.
+            # 3dp, not 1dp: the inversion plateau is median 0.050 FV wide at 3dp
+            # (efv_export._entry), so a 1dp key does not identify the point the
+            # probabilities were taken at.
+            "xfv_grade_odds": round(_odds_grade, 3),
+            # The served grade's own basis (flagship map, or the provisional map on
+            # a routed row), injury tilt removed, and >= xfv_grade by construction
+            # because both are monotone maps of a WAR the tilt only lowered. Null
+            # means either "not hurt" or "the routed basis cannot express it"
+            # (audit F12); it never means "unknown penalty".
             "xfv_grade_healthy": (round(xfv_grade_healthy, 1)
                                   if xfv_grade_healthy is not None else None),
             # NULL means "no comparison exists", never "they agree". The two markers
@@ -2915,6 +3015,17 @@ def run_backgrade(persist: bool = True) -> dict:
                                       exposure_seasons=TARGET_SEASONS), 1),
             "consensus_fv": round(cons_fv, 1),
             "xfv_grade": round(xfv_grade, 1),
+            # THE ODDS KEY (audit F09 step 1; owner decision S-3 of 2026-08-13).
+            # Every odds and dollar figure on this row (p_bucket, p_bust,
+            # surplus_mm, the band, and dist where the seam emits one) is read at
+            # THIS grade (vf.realized_implied_fv), never at xfv_grade, and
+            # until 2026-09-04 it reached no artifact, so nobody holding
+            # data/xfv.json could reproduce a served probability. Exported only:
+            # no consumer reads it, no served number moves.
+            # 3dp, not 1dp: the inversion plateau is median 0.050 FV wide at 3dp
+            # (efv_export._entry), so a 1dp key does not identify the point the
+            # probabilities were taken at.
+            "xfv_grade_odds": round(_odds_grade, 3),
             "xfv_grade_display": round(disp, 1),
             "xfv_minus_consensus_display": round(disp - cons_fv, 1),
             "xfv_minus_consensus": round(xfv_grade - cons_fv, 1),

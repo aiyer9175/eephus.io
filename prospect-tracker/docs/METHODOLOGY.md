@@ -94,6 +94,16 @@ checksum-validated by `valuation_sets._validate_checksums`):
 - **Residence time**: 2.0 years central (1.9 to 2.5 band), used only for the
   sub-50 aggregate stock-to-flow reconciliation, never for per-player pricing.
 
+**Base-config override, stated because copy kept quoting the wrong file.**
+`value_framework_config.yaml` still carries the legacy `service_time.control_years: 6`,
+`discount_rate: 0.09` and `dollars_per_war_inflation: 0.05`. Those are `prospx_current`
+values. The `clemens_2026` overlay replaces all three on the production path, so the
+LOADED config reads control_years 7, discount_rate 0.07, inflation 0.0
+(`config/valuation_sets/clemens_2026.yaml` params.control.years / params.discount.net_rate;
+read back through `value_framework._config()`). Quote the loaded values, never the base
+file. Copy that quoted the base file is now pinned by
+`test_claims_freshness.test_control_window_and_discount_copy_match_valuation_set`.
+
 Checksums that passed on load: 50 FV hitter $45.0M / 13.5%; 50 FV pitcher $33.5M /
 7.0%; 45 FV hitter $14.5M; 45+ FV hitter $18.5M; 40 FV hitter $5.5M; 70 FV in
 $150M-$200M.

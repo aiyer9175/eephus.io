@@ -356,3 +356,157 @@ def test_surplus_real_backtest_artifact_shape():
         assert "slope" in blk["raw_calibration"]
         assert "coverage_p10_p90" in blk["raw_pit"]
         assert "explained_by_war_bias" in blk["decomposition"]
+
+
+# --------------------------------------------------------------------------
+# Post-audit wave, 2026-09-04 (docs/efv-2026-09-03/ARKMETRIC_DESIGN_AUDIT.md).
+# Four rows carried claims their own artifacts do not support. These pin the
+# corrections so the ledger cannot silently drift back.
+# --------------------------------------------------------------------------
+
+
+def _by_id() -> dict:
+    return {m["model_id"]: m for m in mr.load()["models"]}
+
+
+def test_the_board_floor_routing_has_a_row():
+    """AUDIT F18. The routing shipped 2026-08-07 and moved 2,434 served grades,
+    its ship doc named a registry row, and the row did not exist: a served-grade
+    change lived outside the ledger. The row is provisional and must stay that
+    way until a routed grade is scored against realized WAR, because every gate
+    it passed measures scope, fidelity and blast radius, never accuracy."""
+    row = _by_id().get("efv_board_floor_routing")
+    assert row is not None, (
+        "the constant-anchor floor routing serves the majority of graded board "
+        "rows and has no registry row; docs/efv-2026-08-07/"
+        "BOARD_FLOOR_ROUTING_SHIP.md section 7 names it")
+    assert row["eval_artifact"] == "docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_SIM.json"
+    assert (ROOT / row["eval_artifact"]).exists()
+    assert row["verdict"] == "provisional", (
+        "no routed grade has ever been scored against realized WAR; the G1-G6 "
+        "gates measure scope and blast radius only")
+    notes = row["notes"]
+    assert "G6" in notes and "PARTIAL FAIL" in notes, (
+        "G6 failed on the routed-at-floor population (tie block cut 21.5 "
+        "percent, not the >= 50 percent the gate required) and the row must "
+        "say so")
+    assert "NOT OUTCOME-VALIDATED" in notes.upper()
+
+
+def test_the_routing_row_agrees_with_the_flag_that_ships_it():
+    """The row describes a LIVE routing. If the flag is ever turned back off,
+    the row's champion string becomes a false statement about the board."""
+    row = _by_id()["efv_board_floor_routing"]
+    src = (ROOT / "efv_score.py").read_text(encoding="utf-8")
+    assert "SERVE_PROVISIONAL_FOR_CONSTANT_COHORT = True" in src, (
+        "efv_score no longer routes the constant-anchor cohort; the "
+        "efv_board_floor_routing row still claims routing is ON")
+    assert "SERVE_PROVISIONAL_FOR_CONSTANT_COHORT = True" in row["champion"]
+
+
+def test_wag_is_not_validated_against_an_artifact_with_no_wag_evidence():
+    """AUDIT F27. The row read `validated` on "PIT uniformity + coverage" while
+    pointing at data/value_framework_fitted.json, which holds the fitted FV to
+    WAR bucket curve and nothing about WAG at all. The artifact is kept as
+    provenance for the baseline curve; the verdict is not.
+
+    This test is deliberately conditional on the artifact's CONTENT, so it goes
+    green the day a real WAG measurement is written into it (or the row is
+    re-pointed at one) and red the moment the verdict is promoted without one.
+    """
+    row = _by_id()["wag"]
+    art = ROOT / (row.get("eval_artifact") or "")
+    has_wag_evidence = False
+    if art.exists() and art.suffix == ".json":
+        has_wag_evidence = "wag" in art.read_text(encoding="utf-8").lower()
+    if not has_wag_evidence:
+        assert row["verdict"] != "validated", (
+            f"wag claims `validated` against {row.get('eval_artifact')!r}, which "
+            "contains no WAG evidence; a realized-PIT artifact does not exist "
+            "(the only PIT test on record samples outcomes from the model "
+            "itself). Measure it, or leave the row provisional.")
+        assert "realized-pit artifact does not exist" in row["notes"].lower()
+
+
+def test_consensus_fv_points_at_the_experiment_its_baseline_names():
+    """AUDIT F27 / F46. The row's baseline is "best single input", but its
+    eval_artifact was data/consensus_weight_eval.json, which measures
+    weighted-vs-equal SOURCE WEIGHTING (ship = False). The blend-vs-inputs
+    evidence lives in data/source_backtest.json, and it resolves ONE leg: AUC.
+    The Spearman leg is inside the floor the backtest can resolve, so the row
+    must not be read as an ordering win."""
+    row = _by_id()["consensus_fv"]
+    assert row["eval_artifact"] == "data/source_backtest.json"
+    doc = json.loads((ROOT / row["eval_artifact"]).read_text(encoding="utf-8"))
+    blk = doc["accuracy"]["consensus_vs_inputs"]
+    assert blk["auc"]["resolvable"] and blk["auc"]["consensus_wins"], (
+        "the AUC leg is the only thing holding this row's validated verdict")
+    assert not blk["spearman"]["resolvable"], (
+        "the Spearman leg became resolvable; re-read the row's metric string, "
+        "which states it is not")
+    assert "not resolvable" in row["metric"].lower(), (
+        "consensus_fv's metric must say the Spearman leg is unresolved; the "
+        "blend buys discrimination, not ordering")
+
+
+def test_the_injury_history_row_retracts_its_coverage_starved_premise():
+    """AUDIT F13. The lane was closed on `il_history` (2 of 845 hitter rows),
+    but `player_transactions` is already parsed into `injury_history` for the
+    live board and clears the row's own revival trigger of 100 pre-cutoff
+    stints several times over. The verdict stays `deprecated` because nothing
+    is served, not because the substrate is exhausted, and the row has to say
+    which."""
+    notes = _by_id()["xfv_injury_history"]["notes"]
+    assert "coverage-starved" in notes, "the history is retained, not deleted"
+    assert "CLOSURE PREMISE RETRACTED" in notes, (
+        "the row still closes the lane as coverage-starved with no retraction; "
+        "the revival trigger is met on player_transactions (audit F13)")
+    assert "player_transactions" in notes and "injury_history" in notes
+    assert "NO LIFT IS CLAIMED" in notes, (
+        "the measured prospect-side signal is -0.90 WAR at permutation p 0.044 "
+        "and confounded three ways; the row must not read as a lift")
+
+
+def test_the_flagship_rows_lead_with_current_state_not_a_retired_win():
+    """AUDIT F46. Both eFV rows opened with 2026-06 headline wins ("BEATS
+    consensus", "lambda is None") against artifacts whose honest_note says
+    every out-of-sample cut is a NULL under both estimators and whose lambdas
+    have been pinned since 2026-08-04. The old paragraphs are retained as
+    HISTORY, so what this pins is that a dated CURRENT STATE block leads and
+    names each retired claim."""
+    retired = {
+        "xfv_hitter": ("0.341 vs 0.295", "every FV tier"),
+        "xfv_pitcher": ("BEATING consensus on OOS rank", "['pit'] is None"),
+    }
+    for mid, claims in retired.items():
+        notes = _by_id()[mid]["notes"]
+        assert notes.startswith("CURRENT STATE 2026-09-04"), (
+            f"{mid} leads with something other than its current state")
+        marker = "\n\nHISTORY (2026-06 to 2026-08"
+        assert marker in notes, f"{mid}: no HISTORY marker"
+        head = notes[:notes.index(marker)]
+        assert "honest_note" in head, (
+            f"{mid}: the current-state block states no artifact key")
+        assert "NULL UNDER BOTH ESTIMATORS" in head.upper(), (
+            f"{mid}: the current state must say every cut is a null")
+        for c in claims:
+            assert c in notes, f"{mid}: history paragraph {c!r} was deleted"
+        assert "RETIRED" in head, f"{mid}: nothing is marked retired"
+
+
+def test_the_lambda_pin_the_flagship_rows_quote_is_the_one_in_the_code():
+    """The corrected xfv_pitcher block asserts _BLEND_LAMBDA_RESELECT['pit'] is
+    NOT None (it is 0.57). That is a statement about product code, so it is
+    checked against the product code: unpin either side and the registry prose
+    goes stale silently otherwise."""
+    import re
+    src = (ROOT / "efv_model.py").read_text(encoding="utf-8")
+    line = next(ln for ln in src.splitlines()
+                if ln.startswith("_BLEND_LAMBDA_RESELECT"))
+    pins = dict(re.findall(r'"(hit|pit)":\s*([0-9.]+|None)', line))
+    assert pins == {"hit": "0.70", "pit": "0.57"}, (
+        f"the shipped blend-lambda pins are {pins}; the xfv_hitter and "
+        "xfv_pitcher CURRENT STATE blocks quote hit 0.70 / pit 0.57 and the "
+        "prose is now wrong")
+    for mid in ("xfv_hitter", "xfv_pitcher"):
+        assert "'hit': 0.70, 'pit': 0.57" in _by_id()[mid]["notes"]

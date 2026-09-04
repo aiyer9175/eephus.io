@@ -60,6 +60,12 @@ BANNED_CLAIM_FRAGMENTS = (
     # older hero variant of fragment 1; already scrubbed before 2026-08-19,
     # ratcheted here so it cannot be reintroduced from stale drafts.
     "out-predicts the consensus",
+    # glossary.js _methAccuracyChart opened with this as FIXED prose and then
+    # printed MLB Pipeline ABOVE eFV in the same sentence: on
+    # accuracy.pooled_efv_common_vintage_matched the artifact reads eFV 0.3983
+    # against Pipeline 0.3990. Derived on 2026-09-04 (design audit F46) to the
+    # same three branches _methHeroBanner already uses.
+    "ahead of the field",
 )
 
 # Copy surfaces the ratchet scans. content/*.json is globbed at test time.
@@ -117,6 +123,14 @@ GLOSSARY_CLAIMS = (
      "data/ewar_eval.json", ("gate_2_pitcher_persistence", "self_r_ewar_fip"), "abs", 0.0005),
     ("ewar", "gate 2 persistence (bWAR RA)", r"\(min 50 IP\), 0\.\d+ against (0\.\d+)",
      "data/ewar_eval.json", ("gate_2_pitcher_persistence", "self_r_bwar_ra"), "abs", 0.0005),
+    # bust_prob names its training size because the provenance IS the claim
+    # (design audit F07): the curve is fitted on the Clemens 2025 published
+    # percentage tables, not on our resolved cohorts. Integer counts, so the
+    # tolerance is sub-unit.
+    ("bust_prob", "training_n hitter", r"training_n is (\d+) hitter",
+     "data/value_framework_fitted.json", ("training_n", "hitter"), "abs", 0.5),
+    ("bust_prob", "training_n pitcher", r"training_n is \d+ hitter and (\d+) pitcher",
+     "data/value_framework_fitted.json", ("training_n", "pitcher"), "abs", 0.5),
 )
 
 # ---------------------------------------------------------------------------
@@ -309,3 +323,160 @@ def test_stable_gate_figures_match_artifacts():
                     f"= {actual} (abs tol {tol})"
                 )
     assert not problems, "stable gate figure drift: " + "; ".join(problems)
+
+
+# ---------------------------------------------------------------------------
+# Part 4: code-constant pins (2026-09-04, design audit section 6).
+# Layer 2 pins copy to ARTIFACTS. These pin copy to SHIPPED CODE CONSTANTS,
+# which is where the two worst stale claims lived: a retired calibration
+# described as live, and a borrowed training set described as our own.
+
+# Phrases that only make sense while the served dispersion correction is a LIVE
+# affine map. efv_score._DISPERSION_CORRECTION has been identity since
+# 2026-08-14 (C-7 revert), so while it is identity none of these may appear on a
+# copy surface, and the retirement must be disclosed instead.
+LIVE_SLOPE_CLAIMS = (
+    "brings the calibration slope to about 1.0",
+    "an affine correction fitted out of fold",
+    "the affine dispersion correction now",
+)
+RETIRED_SLOPE_DISCLOSURES = (
+    "level calibration, retired 2026-08-14",
+    "the served war is the model's war",
+)
+
+
+# The three surfaces that state the valuation conventions in prose.
+_VALUATION_COPY_SURFACES = ("data/glossary.json", "assets/glossary.js",
+                            "docs/METHODOLOGY.md")
+
+
+def _copy_text_lower():
+    """The valuation copy surfaces, lowercased, one blob."""
+    return ("\n".join(_read_text(rel)
+                      for rel in _VALUATION_COPY_SURFACES)).lower()
+
+
+def test_glossary_dispersion_claim_matches_served_constant():
+    """The glossary may not describe a live slope correction while
+    efv_score._DISPERSION_CORRECTION is identity, and may not describe the
+    correction as retired while it is armed. Reads the CONSTANT, not a doc."""
+    import efv_score
+
+    corr = efv_score._DISPERSION_CORRECTION
+    assert set(corr) == {"hit", "pit"}, f"unexpected correction keys: {sorted(corr)}"
+    identity = all(abs(float(a)) <= 1e-12 and abs(float(b) - 1.0) <= 1e-12
+                   for a, b in corr.values())
+    text = _copy_text_lower()
+    live_hits = [f for f in LIVE_SLOPE_CLAIMS if f in text]
+    retired_hits = [f for f in RETIRED_SLOPE_DISCLOSURES if f in text]
+    if identity:
+        assert not live_hits, (
+            "efv_score._DISPERSION_CORRECTION is identity "
+            f"({corr}) but copy still describes a live slope correction: "
+            + "; ".join(repr(f) for f in live_hits)
+        )
+        assert retired_hits, (
+            "efv_score._DISPERSION_CORRECTION is identity but no copy surface "
+            "discloses the retirement; one of "
+            + "; ".join(repr(f) for f in RETIRED_SLOPE_DISCLOSURES)
+            + " must be present so the reader is not left with the pre-revert story"
+        )
+    else:
+        assert not retired_hits, (
+            f"efv_score._DISPERSION_CORRECTION is armed ({corr}) but copy still "
+            "says the correction is retired / identity: "
+            + "; ".join(repr(f) for f in retired_hits)
+        )
+
+
+def test_glossary_platt_constants_match_module():
+    """bust_prob quotes the served odds Platt map. Pin it to the module the
+    scoring seams actually call."""
+    import efv_odds_calibration
+
+    text = _entry_text(_glossary_entry("bust_prob"))
+    m = re.search(r"A/B (\d\.\d+)/(\d\.\d+) hitter and (\d\.\d+)/(\d\.\d+) pitcher", text)
+    assert m, ("bust_prob no longer quotes the Platt map in the pinned shape; "
+               "update this test with the copy")
+    claimed = {"hit": (float(m.group(1)), float(m.group(2))),
+               "pit": (float(m.group(3)), float(m.group(4)))}
+    for side, (a, b) in claimed.items():
+        act_a, act_b = efv_odds_calibration._PLATT[side]
+        assert abs(a - act_a) <= 5e-4 and abs(b - act_b) <= 5e-4, (
+            f"bust_prob quotes {side} Platt ({a}, {b}) but "
+            f"efv_odds_calibration._PLATT[{side!r}] = ({act_a}, {act_b})"
+        )
+
+
+# The accuracy verdict under the head-to-head bars is DERIVED from the backtest
+# artifact at render time. A hard-coded accuracy NUMBER in that template is the
+# defect that produced "eFV orders realized WAR ahead of the field" printed
+# beside a Pipeline figure above eFV, so the guard is structural: no literal
+# with three or more decimals may appear inside the function.
+_ACC_FN_RE = re.compile(
+    r"function _methAccuracyChart\(bt\) \{(.*?)\n\}\n", re.S)
+_HARDCODED_DECIMAL_RE = re.compile(r"\b\d+\.\d{3,}\b")
+
+
+def test_accuracy_chart_verdict_is_derived():
+    js = _read_text("assets/glossary.js")
+    m = _ACC_FN_RE.search(js.replace("\r\n", "\n"))
+    assert m, "_methAccuracyChart not found in assets/glossary.js (renamed?)"
+    body = m.group(1)
+    # Strip comments: the block comment ABOVE the copy is allowed to cite the
+    # measurement that motivated the fix; the rendered copy is not.
+    code = "\n".join(ln for ln in body.split("\n")
+                     if not ln.lstrip().startswith("//"))
+    bad = _HARDCODED_DECIMAL_RE.findall(code)
+    assert not bad, (
+        "_methAccuracyChart carries hard-coded accuracy constant(s) "
+        f"{bad}; the verdict must be derived from the backtest artifact "
+        "(banned-experiment ledger item 9)"
+    )
+    assert "bestPub" in code and "reduce(" in code, (
+        "_methAccuracyChart no longer derives the best public rater by "
+        "max over the rater list; the three-branch verdict depends on it"
+    )
+
+
+# Control-window and discount copy must track the ACTIVE valuation set, not the
+# base config. The shipped set is clemens_2026 (7 control years, net 7%); the
+# base config still carries the legacy 6 / 9% and copy kept quoting those.
+_CONTROL_PHRASES = (
+    "control years", "controlled seasons", "years of team control",
+    "cost-controlled years",
+)
+_NUMWORD = {2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven",
+            8: "eight", 9: "nine", 10: "ten"}
+
+
+def test_control_window_and_discount_copy_match_valuation_set():
+    import value_framework
+
+    cfg = value_framework._config()
+    control_years = int(cfg["service_time"]["control_years"])
+    discount_pct = round(float(cfg["discount_rate"]) * 100)
+    text = _copy_text_lower()
+
+    wrong = []
+    for n, word in _NUMWORD.items():
+        if n == control_years:
+            continue
+        for phrase in _CONTROL_PHRASES:
+            if f"{word} {phrase}" in text:
+                wrong.append(f"{word} {phrase}")
+    assert not wrong, (
+        f"the active valuation set serves {control_years} control years "
+        f"(value_framework._config service_time.control_years) but copy says: "
+        + "; ".join(sorted(set(wrong)))
+    )
+
+    nets = [int(v) for v in re.findall(r"net (\d+)\s*(?:%|percent)", text)]
+    assert nets, ("no copy surface states the net discount rate; the surplus "
+                  "copy must name it so this pin has something to check")
+    off = sorted({v for v in nets if v != discount_pct})
+    assert not off, (
+        f"the active valuation set discounts at net {discount_pct} percent "
+        f"(value_framework._config discount_rate) but copy quotes net {off}"
+    )

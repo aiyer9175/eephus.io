@@ -29,6 +29,9 @@ Design (per docs/xfv-phase1-plan.md, owner sign-off 2026-06-21):
              pick/bonus and pre-decision IL history. NO Statcast (no historical depth;
              Tier-2 overlay is a later pass).
   TARGET     first-6-MLB-season summed bWAR (career_war seasons debut..debut+5).
+             ARM A1 (SERVICE_ALIGNED_WINDOW, default False, audit F03): with the flag
+             on, a debut after the mid-April service cut takes debut+1..debut+6 with the
+             debut season added as a stub. Off = this line, unchanged.
   CENSORING  OBSERVED-RATE TAIL PROJECTION WITH AN EXPOSURE WEIGHT (owner call). Debuts
              whose window ends <= RESOLVED_THROUGH resolve fully; later debuts are
              right-censored -- carried with a FLAT per-season rate projection of the
@@ -268,6 +271,19 @@ REPORT_PATH = DATA_DIR / "xfv_dataset_report.json"
 
 RESOLVED_THROUGH = 2025                      # last fully-played season
 TARGET_SEASONS = 6
+
+# ARM A1, the service-aligned label window (audit F03, frozen in Appendix A of
+# docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md as arms E1 and E3).
+#
+# DEFAULT FALSE, and off is the incumbent calendar window to the byte: _label_6yr does
+# not read `debut_date` at all while this is False, so a matrix built today reproduces
+# the shipped one exactly (pinned by test_label_arms.py). The rebuild wave turns it on
+# through tools/build_label_arms.py, never by editing this line.
+#
+# The full statement of the rule, the convention behind the cut and the count of rows it
+# moves live on _service_window_shifts below.
+SERVICE_ALIGNED_WINDOW = False
+_SERVICE_YEAR_CUT_MMDD = "04-15"
 
 # 2011 through RESOLVED_THROUGH - 1. (2011-2016 arrive via the MLB Pipeline
 # backfill, now in debuts.json after the rebuild, captured directly with no
@@ -918,23 +934,86 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
     return base
 
 
-def _label_6yr(seasons: dict, debut_year: int):
+def _service_window_shifts(debut_date: str | None) -> bool:
+    """True when the debut is late enough that the debut season is NOT service year 1.
+
+    ARM A1 predicate, and it does NOT read SERVICE_ALIGNED_WINDOW: the census in
+    tools/build_label_arms.py counts the affected rows with the arm off, so the
+    predicate has to answer the same way whatever the flag says. _label_6yr is the
+    one place the flag is read.
+
+    CONVENTION, not a derived constant. Opening day is not a constant anywhere in this
+    repo and the season opener moves several days year to year, so the service-year cut
+    is the fixed calendar day _SERVICE_YEAR_CUT_MMDD = 04-15, which is roughly opening
+    day plus 14 days over the 2011-2024 cohorts. A debut on or before it spends service
+    year 1 on the debut season; a later debut does not.
+
+    Rows with no usable debut date never shift. Two callers rely on that: the rerouted
+    bust rows carry a fabricated Jan-1 cutoff (the true debut date is unknown, so a
+    shift decision would be fabricated too), and a row the debuted loop already re-dated
+    past a postseason-only debut has had its window moved once already, so shifting it
+    again would double-count.
+
+    BLAST RADIUS at this cut, counted 2026-09-04 off the shipped matrices
+    (data/xfv_hitter_matrix.json and data/xfv_pitcher_matrix.json, kind == debuted,
+    none of them rerouted): 504 of 845 hitter rows and 613 of 983 pitcher rows shift.
+    That is far wider than the audit F03 census implies (209 hitter / 254 pitcher rows
+    debut on or after 1 August), because the census measured the August tail while the
+    rule frozen in Appendix A cuts at mid-April. Sensitivity of the count to the
+    convention: 04-01 gives 545 / 676, 04-08 gives 522 / 650, 04-22 gives 483 / 593,
+    05-01 gives 457 / 562."""
+    if not debut_date or len(debut_date) < 10:
+        return False
+    return debut_date[5:10] > _SERVICE_YEAR_CUT_MMDD
+
+
+def _label_6yr(seasons: dict, debut_year: int, debut_date: str | None = None):
     """(target_resolved, target_censored, censored_flag, weight, observed_seasons).
     seasons: {int year: war}.
 
     The censored branch is an OBSERVED-RATE TAIL PROJECTION WITH AN EXPOSURE WEIGHT,
     not a Kaplan-Meier estimator (naming corrected 2026-08-07b, plan Lane B4). It
     assumes a FLAT per-season WAR rate, which is measurably wrong in one direction:
-    see the module header's CENSORING note and data/xfv_label_censoring_eval.json."""
-    window = [debut_year + i for i in range(TARGET_SEASONS)]
+    see the module header's CENSORING note and data/xfv_label_censoring_eval.json.
+
+    ARM A1 (SERVICE_ALIGNED_WINDOW, default False). With the flag off the window is
+    debut_year..debut_year+5 whatever the debut date is, `debut_date` is unread, and
+    every returned number is identical to the incumbent label. With the flag on and a
+    debut after the _SERVICE_YEAR_CUT_MMDD convention, the window becomes
+    debut_year+1..debut_year+6 and the debut season's WAR is carried as a STUB added to
+    the label (Clemens's construction: a September call-up does not burn a service
+    year, but the WAR he banked is still his).
+
+    CENSORING ON A SHIFTED WINDOW. The shifted window ends one year later, so
+    RESOLVED_THROUGH admits one fewer observed season for those rows and n_obs, the
+    weight and the resolved/censored split are all recomputed on the SHIFTED window.
+    The tail rate is the observed per-SERVICE-season rate, i.e. the stub is excluded
+    from the numerator and from n_obs; the stub is a partial season carried for its
+    WAR, not a service season, and dividing by it would inflate the projection."""
+    start = debut_year
+    stub = 0.0
+    if SERVICE_ALIGNED_WINDOW and _service_window_shifts(debut_date):
+        start = debut_year + 1
+        stub = float(seasons.get(debut_year, 0.0) or 0.0)
+    window = [start + i for i in range(TARGET_SEASONS)]
     observed = [y for y in window if y <= RESOLVED_THROUGH]
-    obs_sum = round(sum(seasons.get(y, 0.0) for y in observed), 3)
+    in_window = sum(seasons.get(y, 0.0) for y in observed)
+    obs_sum = round(stub + in_window, 3)
     n_obs = len(observed)
-    full_resolved = (debut_year + TARGET_SEASONS - 1) <= RESOLVED_THROUGH
+    if not n_obs:
+        # A row with no observed season has no label and no weight to carry. Unreachable
+        # while DEBUT_YEARS stops at RESOLVED_THROUGH - 1 (a shifted 2024 debut still
+        # observes 2025); raised rather than returned as a 0-weight row so a future move
+        # of either bound is a build failure instead of a silent zero.
+        raise ValueError(f"_label_6yr: no observed season for debut_year={debut_year} "
+                         f"start={start} RESOLVED_THROUGH={RESOLVED_THROUGH}")
+    full_resolved = (start + TARGET_SEASONS - 1) <= RESOLVED_THROUGH
     if full_resolved:
         return obs_sum, obs_sum, False, 1.0, n_obs
-    # right-censored: project the unobserved tail at the observed per-season rate
-    rate = obs_sum / n_obs if n_obs else 0.0
+    # right-censored: project the unobserved tail at the observed per-season rate.
+    # (obs_sum - stub), not in_window, so the flag-off path divides the ROUNDED sum
+    # exactly as the incumbent did; stub is 0.0 there, so the subtraction is exact.
+    rate = (obs_sum - stub) / n_obs
     n_missing = TARGET_SEASONS - n_obs
     censored_target = round(obs_sum + n_missing * rate, 3)
     weight = round(n_obs / TARGET_SEASONS, 3)
@@ -1134,14 +1213,23 @@ def build_matrix(side: str = "hit"):
         #     season - re-date a Sept/Oct debut to the first WAR season.
         #     A gap of MORE than one year is a data hole (e.g. the
         #     career_war sliding-window decay), not a postseason debut: drop.
+        label_date = dd
         if min(seasons) == dy + 1 and dd[5:7] >= "09":
             dy = min(seasons)
             if dy not in DEBUT_YEARS:
                 continue
+            # ARM A1: this row's window has already moved forward one year and its stub
+            # season has no WAR line by construction, which is exactly what the
+            # service-aligned rule would do to it. Pass no date so the arm cannot
+            # shift it a second time.
+            label_date = None
         elif min(seasons) > dy:
             acct["debuted_war_gap_dropped"] = acct.get("debuted_war_gap_dropped", 0) + 1
             continue
-        t_res, t_cens, cflag, w, n_obs = _label_6yr(seasons, dy)
+        if SERVICE_ALIGNED_WINDOW and _service_window_shifts(label_date):
+            # counted only while the arm is on, so the flag-off report is byte-identical
+            acct["debuted_window_shifted"] = acct.get("debuted_window_shifted", 0) + 1
+        t_res, t_cens, cflag, w, n_obs = _label_6yr(seasons, dy, label_date)
         row = {"player_key": pk, "kind": "debuted", "debut_year": dy,
                "is_pitcher": is_pit, "cutoff": dd,
                "target_resolved": t_res, "target_censored": t_cens,
@@ -1155,7 +1243,10 @@ def build_matrix(side: str = "hit"):
         # backfills mostly lack mlbam ids, so 100% of 2011-2014 debut rows
         # fired milb_missing for availability reasons, diluting the
         # coefficient whose job is spotting imputed-zero production.
-        # milb_unavailable rows stay NEUTRAL in efv_model._vec.
+        # These rows get milb_missing 0.0 in efv_model._vec. They do NOT "stay
+        # NEUTRAL" there, which is what this line used to claim (audit F04,
+        # corrected 2026-09-04): every other MiLB key still lands on its raw
+        # default. efv_model.NEUTRAL_MILB_IMPUTE is the arm that fixes that.
         if row["milb"] is None and (dy <= 2015 or not mlbam):
             row["milb_unavailable"] = True
         acct["debuted_kept"] += 1
@@ -1196,7 +1287,10 @@ def build_matrix(side: str = "hit"):
                 cutoff = f"{dy}-01-01"    # true debut date unknown: anchor pre-debut-season
                 rpt = _asof_point(rec, cutoff)
                 if rpt is not None and _f(rpt.get("consensus_fv_raw")) is not None:
-                    t_res, t_cens, cflag, w, n_obs = _label_6yr(cw_seasons, dy)
+                    # ARM A1: no debut DATE exists for a rerouted bust (the cutoff above
+                    # is a fabricated Jan 1), so this row never shifts. Passing the
+                    # fabricated date would fabricate the shift decision with it.
+                    t_res, t_cens, cflag, w, n_obs = _label_6yr(cw_seasons, dy, None)
                     row = {"player_key": pk, "kind": "debuted", "debut_year": dy,
                            "is_pitcher": is_pit, "cutoff": cutoff,
                            "target_resolved": t_res, "target_censored": t_cens,

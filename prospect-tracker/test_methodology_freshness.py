@@ -285,6 +285,11 @@ MODEL_GLOSSARY = {
     # eFV ungraded = the provisional production-only leading indicator for source-ungraded
     # roster players (DSL/CPX sleepers); its own glossary entry documents the methodology.
     "xfv_ungraded": ["xfv_ungraded"],
+    # The board grade for the constant-anchor floor cohort is SERVED from the
+    # provisional map (efv_score.route_floor_grade), so the two entries that
+    # document the two scales are what a reader needs: xfv for the flagship
+    # outcome grade and xfv_ungraded for the provisional map that replaces it.
+    "efv_board_floor_routing": ["xfv", "xfv_ungraded"],
     # eFV backgrade = the eFV family applied retroactively so DEBUTED players keep a locked
     # eFV grade (frozen at their final pre-debut snapshot); user-facing on graduate cards +
     # the trade-machine backgrade surplus source, documented under the eFV glossary entry.

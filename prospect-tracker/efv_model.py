@@ -49,8 +49,8 @@ import statistics
 from datetime import date
 from pathlib import Path
 
-from prospect_path import (_spearman, _calibration, _score, _fit_ridge, _predict,
-                           _fit_linear_calibration)
+from prospect_path import (_spearman, _calibration, _score, _fit_linear_calibration,
+                           _fit_ridge as _fit_ridge_base, _predict as _predict_base)
 
 log = logging.getLogger(__name__)
 
@@ -1171,6 +1171,104 @@ _N_MILB_SEASONS_CAP = 8.0
 _SHAPE_IMPUTE = 38.9
 _DEPTH_IMPUTE = 1.6
 
+# ---------------------------------------------------------------------------
+# ARM A2: neutral imputation for milb_unavailable rows (audit F04, frozen in
+# Appendix A of docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md as arms E2 and E3)
+# ---------------------------------------------------------------------------
+# DEFAULT FALSE, and off is a pass-through: _fit_ridge and _predict below call
+# prospect_path's functions with the same arguments and no copy, so a fit today is the
+# fit shipped yesterday (pinned by test_label_arms.py). The rebuild wave turns it on
+# through tools/build_label_arms.py, never by editing this line.
+NEUTRAL_MILB_IMPUTE = False
+
+# The keys a milb_unavailable row takes off the MiLB block it does not have. Every one
+# of them lands at raw 0.0 today except seasons_at_level, which lands at its modal 1.0
+# (audit F04's text says 0.0 for that key; the code says 1.0, and 1.0 is what the arm
+# replaces). age / age_missing / milb_missing are NOT here: age is already mean-imputed
+# at 22.5 behind its own indicator, and the two indicators are the missingness signal
+# itself, so imputing them would erase what the model uses to price the block.
+_MILB_IMPUTE_KEYS = frozenset((
+    # both sides
+    "age_rel_level", "level_rank", "k_rel", "bb_rel", "n_milb_seasons",
+    "seasons_at_level", "prod_trend",
+    # hitters
+    "obp_rel", "ops_rel", "iso_rel", "peak_obp_rel", "peak_iso_rel", "peak_ops_rel",
+    "peak_k_rel",
+    # pitchers
+    "era_rel", "peak_bb_rel", "x_era_k",
+))
+
+
+def _has_milb_block(feats: dict) -> bool:
+    """True for a row whose features came off a real MiLB block, i.e. a row eligible to
+    contribute to the has-MiLB mean. Both no-block populations are excluded: the
+    milb_unavailable era block (no data could exist) and the milb_missing block (no pro
+    track record), which the model prices separately through its indicator."""
+    return not feats.get("milb_unavailable") and not feats.get("milb_missing")
+
+
+def _has_milb_impute_means(train: list[dict]) -> dict:
+    """{key: mean} over the TRAIN rows that carry a MiLB block. Unweighted: the ridge's
+    sample weights price censoring exposure, not how representative a row's MiLB block
+    is, and a weighted mean here would make the imputed value a function of the label
+    window as well as of the feature."""
+    sums, cnt = {}, {}
+    for r in train:
+        f = r.get("feats") or {}
+        if not _has_milb_block(f):
+            continue
+        for k in _MILB_IMPUTE_KEYS:
+            v = f.get(k)
+            if v is None:
+                continue
+            sums[k] = sums.get(k, 0.0) + float(v)
+            cnt[k] = cnt.get(k, 0) + 1
+    return {k: sums[k] / cnt[k] for k in sums if cnt[k]}
+
+
+def _impute_feats(feats: dict, means: dict) -> dict:
+    """A copy of `feats` with the ARM A2 keys moved to the has-MiLB means, for a
+    milb_unavailable row only. Every other row is returned unchanged, by identity, so a
+    has-block row is byte-identical whatever the flag says."""
+    if not means or not feats.get("milb_unavailable"):
+        return feats
+    out = dict(feats)
+    for k, v in means.items():
+        if k in out:
+            out[k] = v
+    return out
+
+
+def _fit_ridge(train: list[dict], keys: list[str]):
+    """prospect_path._fit_ridge, plus ARM A2's imputation while NEUTRAL_MILB_IMPUTE.
+
+    WHERE THE MEAN LIVES, AND WHY IT DOES NOT LEAK. The means are computed from `train`
+    and only from `train`, which is exactly the set of rows this fit is allowed to see;
+    they are then stored ON THE FITTED MODEL under `milb_impute`, and _predict below
+    applies that same table to whatever row it is asked to score. So a fold's test rows
+    never enter a mean, no fold borrows another fold's mean, and train and test are
+    imputed identically. _vec cannot do this: it runs once in _prep, before any fold
+    exists, so a mean taken there would be the whole matrix's.
+
+    SCOPE: the ridge only. _fit_lgbm_mono and _fit_comps read r['feats'] directly and
+    are unchanged, so the arm measures what audit F04 is about (the level_rank slope in
+    the served linear leg) and nothing else."""
+    if not NEUTRAL_MILB_IMPUTE:
+        return _fit_ridge_base(train, keys)
+    means = _has_milb_impute_means(train)
+    model = _fit_ridge_base(
+        [{**r, "feats": _impute_feats(r["feats"], means)} for r in train], keys)
+    if model is not None:
+        model["milb_impute"] = means
+    return model
+
+
+def _predict(model: dict, feats: dict) -> float:
+    """prospect_path._predict against the imputation the FITTED MODEL carries. A model
+    fitted with the arm off has no `milb_impute` key and this is a pass-through."""
+    means = model.get("milb_impute")
+    return _predict_base(model, _impute_feats(feats, means) if means else feats)
+
 
 def _vec(r, side: str = "hit") -> dict:
     m = r.get("milb") or {}
@@ -1179,7 +1277,19 @@ def _vec(r, side: str = "hit") -> dict:
     # 2015 debut rows fired it for DATA-AVAILABILITY reasons (no mlbam id /
     # StatsAPI cache floor 2014) - real-WAR debuts flagged as imputed-zero
     # production, diluting the coefficient. Rows the dataset marks
-    # milb_unavailable stay NEUTRAL (0.0) instead.
+    # milb_unavailable get milb_missing 0.0.
+    #
+    # WHAT THAT DOES AND DOES NOT DO (corrected 2026-09-04, audit F04). This line
+    # used to claim those rows "stay NEUTRAL (0.0)". Only the INDICATOR is zeroed,
+    # and `age` is mean-imputed behind its own indicator. Every other MiLB key
+    # falls through to the `g()` default: raw 0.0 for level_rank, n_milb_seasons
+    # and the rate keys, 1.0 for seasons_at_level. Raw 0 is neutral only at the
+    # pool mean, and it is not. Counted 2026-09-04 off milb.level_rank in
+    # data/xfv_hitter_matrix.json: pool mean 1.910, sd 1.939, so raw 0 reads as
+    # -0.99 sd, and the rows that DO have a block sit at 3.248. The block is 740 of
+    # 1,899 hitter rows (39.0%) and 951 of 2,034 pitcher rows (46.8%), where audit
+    # F04 reports 38.8% and 46.4% off its own vintage. NEUTRAL_MILB_IMPUTE above is
+    # the arm that imputes them at the has-MiLB TRAIN mean instead.
     if r.get("milb"):
         milb_missing = 0.0
     elif r.get("milb_unavailable"):
@@ -1211,6 +1321,10 @@ def _vec(r, side: str = "hit") -> dict:
         "k_rel": g(m.get("k_rel")),
         "bb_rel": g(m.get("bb_rel")),
         "milb_missing": milb_missing,
+        # ARM A2 marker, INERT: never in _FEATURES_HIT/_FEATURES_PIT, so it reaches no
+        # model. It is here because the imputation happens per fit (see _fit_ridge) and
+        # the fit only ever sees `feats`, not the matrix row it came from.
+        "milb_unavailable": 1.0 if r.get("milb_unavailable") else 0.0,
         "n_milb_seasons": min(g(m.get("n_milb_seasons")), _N_MILB_SEASONS_CAP),
         # E1 candidate: consecutive seasons on the CURRENT level (1 = arrived this
         # year). Emitted unconditionally so every consumer of `feats` has the key

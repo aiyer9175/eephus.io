@@ -68,11 +68,24 @@ snapshot from every source* up to D. New snapshots overwrite stale ones
 from the same source; sources that have never graded the player simply
 don't contribute.
 
-Bayesian shrinkage (v5)
------------------------
-Low-information FVs get pulled toward the prospect-pool mean, with the
-prior fading to zero as coverage approaches the maximum number of
-FV-publishing sources:
+Bayesian shrinkage (v5) -- INERT SINCE 2026-05, KEPT AS PROVENANCE
+------------------------------------------------------------------
+CORRECTED 2026-09-04 (audit F48). The scheme described in this section is NOT
+what runs. `apply_shrinkage` and `compute_prior_mean_fv` have no production
+caller: `build_timeseries` stopped calling them in 2026-05 and DEFAULT_SHRINKAGE_K
+/ DEFAULT_N_FULL / FALLBACK_PRIOR_FV are defaults on dead keyword arguments, so
+changing any of them changes nothing on the board. THE LIVE RULE is the
+single-instance pull in `compute_consensus_point`: when a player has exactly one
+explicit-FV instance in his whole history, the consensus is pulled one third of
+the way to FV 35 (SINGLE_SOURCE_K 0.5, SINGLE_SOURCE_PRIOR 35.0, weight
+1/(1+K) = 2/3). A multi-source player and a player graded repeatedly by one
+source are both untouched. The k_eff scheme below is kept because the constants
+are still referenced in tests and because a future coverage-aware shrink would
+start from it, not because it describes the served number.
+
+The retired scheme, for reference: low-information FVs pulled toward the
+prospect-pool mean, with the prior fading to zero as coverage approaches the
+maximum number of FV-publishing sources:
 
     k_eff       = k * max(0, (N_full - n) / N_full)
     adjusted_fv = (n / (n + k_eff)) * raw_fv
@@ -763,9 +776,13 @@ def _alias_grade_sources(day_snaps: list[Snapshot]) -> dict:
 # ---------------------------------------------------------------------------
 # Snap helper — consensus FV is always a whole number on the 20-80 scale.
 # ---------------------------------------------------------------------------
-# Sources may publish "+" tiers (e.g. "55+" → 57.5 on ingest, see
-# scrapers._parse_fv), but once aggregated we round to the nearest whole
-# integer. An average of 58.75 becomes 59, not "60+".
+# Sources may publish "+" tiers. CORRECTED 2026-09-04 (audit F10): this comment
+# said "55+" becomes 57.5 on ingest. It has not since v26. scrapers._parse_fv
+# returns the BARE TIER (55+ -> 55) and the "+" survives only as the boolean
+# fv_plus, so the numeric consensus and eFV's dominant feature read a 45+ as a 45
+# while value_framework_config.yaml's plus_grade_axis places 45+ at 47.5 for the
+# outcome-bucket fit. That disagreement is audit finding F10 and is open; it is
+# recorded here so nobody reads this comment as describing the ingest.
 
 def snap_to_grade(raw_fv: float) -> tuple[float, str]:
     """Ceiling-round a raw averaged FV to a whole number on the 20-80 scale.

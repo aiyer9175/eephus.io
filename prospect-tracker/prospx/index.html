@@ -32863,11 +32863,20 @@ function efvMinusConsensus(x) {
 // all, so suppressing the artifact field alone would have changed nothing on screen.
 // It subtracts the two displayed integers, which is still the right rule when a
 // comparison exists; the guard is what decides whether one exists.
+// F43 2026-09-04 (owner decision, EWAR_LABEL_EPOCH_GATE.md Appendix A): the two
+// display rules stay as they are and the chip is the subtraction of the two PRINTED
+// integers. The one number a render site may print for consensus beside this chip is
+// efvConsensusDisplay(x); the chip below reads the same helper, so "consensus printed
+// here" and "consensus differenced there" cannot drift apart by call site. Anything
+// that SORTS or filters on magnitude keeps efvMinusConsensus (raw, one decimal).
+function efvConsensusDisplay(x) {
+  return (x && x.consensus_fv != null) ? fvCeil(x.consensus_fv) : null;
+}
 function efvMinusConsensusDisplay(x) {
   if (!x || x.consensus_fv == null) return null;
   if (efvComparisonSuppressed(x)) return null;
-  const g = efvGradeDisplay(x);
-  const c = fvCeil(x.consensus_fv);
+  const g = efvGradeDisplay(x);          // DISPLAY eFV: round to nearest
+  const c = efvConsensusDisplay(x);      // DISPLAY consensus: round up (fvCeil)
   return (g != null && c != null) ? g - c : null;
 }
 // Signed integer for the chip ("+1", "0", "-2").
@@ -32906,7 +32915,7 @@ function efvTooltip(x) {
     : `eFV ${efvGradeDisplay(x)} - our outcome-grounded grade (provisional)`];
   if (x.consensus_fv != null) {
     const d = efvMinusConsensusDisplay(x);
-    parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${efvDeltaText(d)})` : ""}`);
+    parts.push(`Consensus FV ${efvConsensusDisplay(x)}${d != null ? ` (${efvDeltaText(d)})` : ""}`);
   }
   if (x.xfv_provisional && !x.xfv_ungraded)
     parts.push("Prior-anchored: no pro track record yet - the grade starts at the consensus prior, and any small gap vs consensus FV is 20-80 rank placement, not a penalty");
@@ -32968,12 +32977,11 @@ function _syncDebutGradeToggle() {
 function _gradeSub(prefix, val, title) {
   return `<div class="grade-sub" title="${escapeHtml(title)}" style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);line-height:1;margin-top:2px;letter-spacing:0.02em;cursor:help;white-space:nowrap;"><span style="opacity:0.65;">${prefix}</span> ${val}</div>`;
 }
-// Small colored delta: how far eFV sits above/below consensus FV (the disagreement).
-function efvDeltaMark(d) {
-  if (d == null || Math.abs(d) < 0.5) return "";
-  const up = d > 0, col = up ? "var(--up)" : "var(--down)";
-  return `<span title="eFV is ${Math.abs(d).toFixed(1)} grade points ${up ? "above" : "below"} consensus FV" style="font-family:var(--font-mono);font-size:9px;font-weight:700;color:${col};">${up ? "▲" : "▼"}${Math.abs(Math.round(d))}</span>`;
-}
+// F43 2026-09-04: efvDeltaMark was removed here. It was the file's last delta chip
+// built on the RAW value (it printed Math.abs(Math.round(d)) beside a tooltip reading
+// "eFV is 2.2 grade points above consensus FV") and it had no call sites, so it was a
+// raw-basis chip waiting to be wired to a card. The chip a reader sees is
+// efvMinusConsensusDisplay, which subtracts the two printed integers.
 // Board grade cell: leading grade (big badge) + the other grade as a muted subscript.
 // eFV leads by default; the toggle can make consensus lead. Two lines, no overflow.
 function efvBadgeHTML(p, opts) {
@@ -33118,10 +33126,10 @@ function efvDetailHeaderHTML(p, fvBadge) {
         ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;" title="${escapeHtml("No source published an FV for this player. The consensus point is a last-resort placeholder constant, so there is no industry grade to compare against.")}">no source grade published</div>`
         : gb.priorAnchored
         ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;" title="No pro track record yet: eFV starts at the consensus prior. Any small gap vs consensus FV is placement on the 20-80 scale when ranked among graded prospects, not a model penalty.">`
-          + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
+          + `Consensus FV <b style="color:var(--text-secondary);">${efvConsensusDisplay(x)}</b>`
           + ` · prior-anchored · awaiting pro debut</div>`
         : `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">`
-          + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
+          + `Consensus FV <b style="color:var(--text-secondary);">${efvConsensusDisplay(x)}</b>`
           + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">eFV ${dtxt}</span>` : "") + `</div>`);
 }
 // S-XLINE measurement annotation (xline_note on the xfv.json entry): covered
@@ -33187,7 +33195,7 @@ function efvDetailCard(p) {
   // Each factor is a model contribution (signal that pushed the grade up/down); the bar
   // scales with magnitude. Directional model contributions, NOT a decomposition: they
   // do not sum to the eFV-minus-consensus delta (efv_score._factors contract).
-  const cons = x.consensus_fv != null ? fvCeil(x.consensus_fv) : null;
+  const cons = efvConsensusDisplay(x);   // same integer the chip differences (F43)
   const xg = efvGradeDisplay(x);
   const d = efvMinusConsensusDisplay(x);
   const xlineHTML = efvXlineNoteHTML(x);

@@ -114,25 +114,26 @@ def _entry(s, side, kind):
         # THAT LINE USED TO SAY "which still drives p_bucket / p_bust (validated
         # odds)". IT IS FALSE and was corrected 2026-08-07b (audit lane C2, two
         # verifiers confirming at source). The odds are keyed on `_odds_grade`,
-        # which efv_score.py:1480 sets from vf.realized_implied_fv and reads at
-        # :1488. This field is set from the OUTCOME-implied grade at
-        # efv_score.py:1473. They are different maps and NEITHER odds key is
-        # exported here, so nothing in this artifact identifies the grade the
-        # published odds were computed on.
+        # which efv_score sets from vf.realized_implied_fv; this field is set from
+        # the OUTCOME-implied grade. They are different maps.
         #
-        # Measured disagreement between the two, broken out by display grade:
-        # 76.8 percent agreement below FV40, 1.6 percent in (40,45), and 0.0
-        # percent above FV45. So they agree exactly where the board is dense and
-        # dull, and disagree totally at the top, which is where an odds claim
-        # matters. A verifier tested whether the ~50 percent pooled agreement
-        # was an artifact of an unidentifiable inversion and it is not: the
-        # plateau width at 3dp is median 0.050 FV, p95 0.091, max 0.170.
+        # SINCE 2026-09-04 BOTH ARE HERE: `xfv_grade_odds` below carries
+        # `_odds_grade` itself (audit F09 step 1, owner decision S-3 of
+        # 2026-08-13), so p_bucket, p_bust, surplus_mm and the band are now
+        # reproducible from this file. Read the odds at THAT field, never at
+        # xfv_grade or xfv_grade_quantile.
         #
-        # Consequence for whoever audits served odds next: do NOT read p_bucket
-        # or p_bust off any grade in this file. Recompute _odds_grade from
-        # vf.realized_implied_fv, or export it.
+        # HISTORY, measured 2026-08-07b, kept because it sizes the gap the new
+        # field closes: agreement between the two maps, broken out by display
+        # grade, was 76.8 percent below FV40, 1.6 percent in (40,45) and 0.0
+        # percent above FV45. They agree where the board is dense and dull and
+        # disagree totally at the top, which is where an odds claim matters. A
+        # verifier tested whether the ~50 percent pooled agreement was an artifact
+        # of an unidentifiable inversion and it is not: the plateau width at 3dp
+        # is median 0.050 FV, p95 0.091, max 0.170. That measurement is why
+        # xfv_grade_odds is emitted at 3dp.
         # The artifact shape (xfv_grade == realized alias) is test-pinned.
-        "xfv_grade": s.get("xfv_grade"),                 # realized (pure model) reference
+        "xfv_grade": s.get("xfv_grade"),                 # outcome-implied (pure model) reference
         "xfv_grade_realized": s.get("xfv_grade"),        # alias (identical; kept for back-compat reads)
         "xfv_grade_quantile": s.get("xfv_grade_display"),# RETIRED as the display 2026-07-25; prices surplus only
         "consensus_fv": s.get("consensus_fv"),
@@ -172,7 +173,12 @@ def _entry(s, side, kind):
         e["consensus_surplus_mm"] = s["consensus_surplus_mm"]
     if s.get("injury_factor") is not None:               # live injury penalty (<1.0 = hurt)
         e["injury_factor"] = s["injury_factor"]
-    if s.get("xfv_grade_healthy") is not None:           # same basis as xfv_grade, injury removed
+    # xfv_grade_healthy is on the SERVED grade's basis (audit F12, fixed
+    # 2026-09-04 in efv_score.run_live): the flagship map on a normal row, the
+    # provisional map on a routed one, null where the routed basis cannot express
+    # the counterfactual. Before that fix it was always the flagship map, so on
+    # 192 routed cards it rendered BELOW the grade it sits beside.
+    if s.get("xfv_grade_healthy") is not None:
         e["xfv_grade_healthy"] = s["xfv_grade_healthy"]
     if s.get("statcast_factor") is not None:             # live Statcast+ tilt (!=1.0)
         e["statcast_factor"] = s["statcast_factor"]
@@ -198,6 +204,13 @@ def _entry(s, side, kind):
         e["xfv_grade_at_debut"] = s["xfv_grade_at_debut"]
     if s.get("xfv_rookie_window"):
         e["xfv_rookie_window"] = s["xfv_rookie_window"]
+    # THE ODDS KEY, whitelisted 2026-09-04 (audit F09 step 1; owner decision S-3 of
+    # 2026-08-13). vf.realized_implied_fv(xfv_war), the grade p_bucket, p_bust,
+    # surplus_mm, dist and the band were actually read at. Emitted only where the
+    # scorer wrote it, so a pre-2026-09-04 scored file still serializes; adding a
+    # field moves no existing number.
+    if s.get("xfv_grade_odds") is not None:
+        e["xfv_grade_odds"] = s["xfv_grade_odds"]
     # ── THE WHITELIST GAP, closed 2026-08-07 (Lane F2) ─────────────────────────
     # This function is a field WHITELIST, so anything efv_score writes and this does not
     # name reaches data/xfv_scored_live_*.json and stops there. Both fields below were

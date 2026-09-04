@@ -382,8 +382,63 @@ reads the WAR basis, each fix, and their interaction.
 
 | # | fix | lands in | expected hit effect | expected pit effect | separable |
 | --- | --- | --- | --- | --- | --- |
-| A1 | service-aligned label window: the debut season is season 1 only if the debut is on or before roughly opening day plus 14 days, else the window shifts and the stub WAR is added (audit F03) | `efv_dataset._label_6yr` plus a rebuild of `fv_outcome_curves_pooled.json` on the same label | level only: +1.0 WAR on the 55 resolved rows debuting on or after 1 August, about 1.5 FV at the 50 level; rank equivalent (Spearman between labels 0.9992, rho vs consensus +0.0004) | same shape, smaller: +0.72 WAR on 23 rows debuting on or after 1 September | YES, the moved rows are identifiable by debut date |
+| A1 | service-aligned label window: the debut season is season 1 only if the debut is on or before the 04-15 convention (roughly opening day plus 14, the 172-of-186-day service rule), else the window shifts to dy+1..dy+6 and the debut-season stub WAR is added (audit F03) | `efv_dataset._label_6yr` plus a rebuild of `fv_outcome_curves_pooled.json` on the same label | see the CORRECTED expectation below | see below | YES, the moved rows are identifiable by debut date |
 | A2 | neutral imputation for `milb_unavailable` rows: `level_rank`, `n_milb_seasons` and the rate keys imputed at the has-MiLB pool mean (or the two-stage fit), so raw 0 stops being a -0.99 sd input on 39 to 46 percent of the pool (audit F04) | `efv_model._vec` plus the docstring correction | ordering: the `level_rank` raw-scale slope moves 0.154 to 0.209-0.253 WAR per rung, so the AAA-versus-A gap widens from 0.46 to 0.63-0.76 WAR before calibration | same direction, larger block (46.4 percent of the pool is imputed) | YES, the moved rows carry `milb_unavailable` |
+
+### A1 expectation, CORRECTED 2026-09-04 BEFORE any measurement
+
+The cells above originally read "+1.0 WAR on the 55 resolved rows debuting on or after
+1 August". That was the expected effect of a DIFFERENT rule: the audit's F03 evidence was
+computed on the 1-August tail, while the rule frozen here cuts at the service-year boundary
+and therefore moves far more rows. The implementing lane caught the mismatch. The
+expectation is corrected here rather than quietly, because a pre-registered expectation
+exists to be compared against the result, and a wrong one is worse than none. No arm has
+been built and no margin has been read.
+
+Measured read-only 2026-09-04 on the current matrices joined to `career_war`, applying the
+shipped censoring treatment to both windows (scratchpad w0/a1_cut_sweep.py):
+
+| cut | hit rows shifted | hit resolved n / mean dLabel | hit resolved -> censored | pit rows shifted | pit resolved n / mean dLabel | pit resolved -> censored |
+| --- | --- | --- | --- | --- | --- | --- |
+| 04-15 (FROZEN) | 504 of 845 (59.6%) | 129 / +1.047 WAR | 57 | 613 of 983 (62.4%) | 136 / +0.496 WAR | 101 |
+| 06-15 | 356 (42.1%) | 79 / +1.048 | 57 | 431 (43.8%) | 89 / +0.539 | 101 |
+| 08-01 | 204 (24.1%) | 51 / +1.093 | 38 | 249 (25.3%) | 52 / +0.528 | 59 |
+| 09-01 | 90 (10.7%) | 26 / +1.019 | 14 | 113 (11.5%) | 18 / +0.723 | 21 |
+
+**The per-row effect is the same at every cut** (about +1.05 WAR for hitters, +0.5 to +0.7
+for pitchers, which is the seventh year of value the shift admits). Only the number of rows
+treated and the censoring cost move. So the cut is a question about WHICH ROWS deserve the
+treatment, not about effect size, and it must be answered on the estimand.
+
+**Why the 04-15 cut stays.** Clemens's quantity is total team-control WAR and control is
+roster-day based, spanning six to seven-plus calendar years precisely because a partial
+debut season does not accrue a service year (framework 7.4, 1648-1655). A June debut does
+not start service year 1 any more than a September debut does; the 1-August tail is where
+the defect is most VISIBLE, not where it begins. Choosing a later cut because it moves fewer
+rows would be tuning the estimand to its blast radius.
+
+**An exposure-based cut was considered and rejected on data, not on principle.** Shifting
+only when the debut season fell short of the repo's own rookie-eligibility thresholds
+(`stats.ROOKIE_AB_THRESHOLD` 130, `ROOKIE_IP_THRESHOLD` 50) is the better question, but
+`career_stats` carries no debut-season row for 464 of 845 hitter and 482 of 983 pitcher
+debuted rows (55% and 49%), concentrated in exactly the older cohorts whose windows are
+resolved. The rule would fall back to "no shift" on the majority of the rows that carry the
+evidence, which is worse than a date convention applied uniformly.
+
+**Pre-registered clauses that ride with A1, added with this correction:**
+
+1. **Censoring cost is REPORTED, per side, before the level clause is read**: the count of
+   rows moving from resolved to censored (expected 57 hit / 101 pit), the change in the
+   pooled extrapolated-label share, and the weight distribution before and after. This is a
+   real cost of the fix and it must not surface as a surprise in the margin.
+2. **STOP if the extrapolated share moves more than 10 points** on either side. At that
+   point the arm is changing the censoring regime more than the estimand, and the honest
+   report is that the fix cannot be measured on this frame.
+3. The level clause reads the RESOLVED rows (129 hit / 136 pit), because only there is the
+   seventh year observed rather than projected. The full-pool number is reported beside it
+   and is expected to be smaller, since a shifted recent row gains projection, not WAR.
+4. Percentage-of-label figures are NOT a clause: the denominator is near zero on late-debut
+   rows and the mean percentage is unstable across cuts (+2.3% to +180% on the same effect).
 
 Both entries inherit clause (a): floors are derived on the final frame AFTER all frozen
 fixes are applied, and the hitter regen control in clause (a) is read against the eWAR-only
@@ -421,6 +476,8 @@ clause (f)'s blast radius stops being attributable to the WAR basis.
 | Fabricated FV 35: serve an explicit ungraded state | AFTER, consensus-basis change with its own two-pass rebuild | audit F32 |
 | Star odds: measured rates where n >= 30, truncate the served scale at 70 | AFTER, sequenced behind audit F07 | audit F42 and F07 |
 | Delta chip computed on displayed values | NOW, display only, no served number | audit F43 |
+| Healthy-counterfactual routing bug | NOW, display field only | audit F12. `xfv_grade_healthy` is computed through the flagship map while the served grade for a routed row comes from the provisional map, so it renders BELOW the served grade on 192 of 580 rows that carry it. The fix routes the counterfactual on the served grade's own basis. It is outside clause (f)'s blast-radius set (grades, dollars, ranks, WAG, star labels, arb, projections) and the current value is wrong, so it rides now; the 192 displayed numbers move at the next regen |
+| Odds key exported | NOW, adds a field, moves nothing | audit F09 step 1, owner decision S-3 of 2026-08-13 |
 
 
 NOT carried by this epoch, and each for a stated reason: F01 (the `B(fv)` ridge feature) and
