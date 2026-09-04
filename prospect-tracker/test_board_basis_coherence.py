@@ -31,7 +31,8 @@ it to storage.board_basis_fingerprint in the same commit or this file is lying a
 The side-mix PIN below is deliberately a pin and not a quota. Do not read it as a
 target pitcher share. The reason a low pitcher share is defensible at all is measured
 in docs/efv-2026-07-30/CROSS_SIDE_WAR_FINDING.md: at consensus FV 55+ a hitter has
-historically returned about 2.2x the first-6-year bWAR of a pitcher at the SAME grade
+historically returned about 2.2x the first-6-year WAR of a pitcher at the SAME grade
+(bWAR series at that 2026-07-30 measurement; the hitter side is identical under eWAR)
 (11.653 vs 5.270, n=75/53), so consensus FV is not cross-side comparable and the
 consensus top-100 share of 0.28 is the mis-scaled number, not the truth. The share
 that is WRONG is therefore unknown within a wide band, which is exactly why this is a

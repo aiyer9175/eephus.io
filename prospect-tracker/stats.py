@@ -3353,11 +3353,20 @@ def fetch_sabermetrics(player_key: str, mlbam_id: int,
 
 
 # ---------------------------------------------------------------------------
-# Career WAR — bulk bWAR pull via pybaseball (Baseball-Reference war_daily)
+# Career WAR - bulk bWAR pull via pybaseball (Baseball-Reference war_daily)
 # ---------------------------------------------------------------------------
-# bWAR is the ONE WAR source site-wide (career totals, per-season columns,
-# current-season pills — every display reads this per-season series). The
-# MLB Stats API only returns WAR inside the `stats=sabermetrics` endpoint
+# This is the bWAR FRAME feed, not the served series. eWAR epoch (owner
+# decision 2026-09-03): the site serves and labels on eWAR v2 (ewar.py), which
+# is this same Baseball-Reference run frame with pitching re-priced on FIP
+# (centred per season x role) and fielding left at B-Ref's rfield (swap
+# weight 0.0, measured). bWAR stays the INPUT: run_monthly calls
+# war_source.career_war_bulk (default provider), and the 'bwar' provider
+# delegates here verbatim (pinned byte-exact by test_war_source.py). The
+# career_war sqlite table keeps the frame beside the served series as
+# `seasons_bwar` (storage.upsert_career_war). For position players the two
+# series are equal until the SDR defense drop lands.
+#
+# The MLB Stats API only returns WAR inside the `stats=sabermetrics` endpoint
 # and only one season at a time, so a per-player loop would be 2-4k extra
 # requests on a cold cache; B-Ref's war_daily tables arrive as two static
 # CSVs covering every player-season in one shot.
@@ -3368,7 +3377,7 @@ def fetch_sabermetrics(player_key: str, mlbam_id: int,
 #    "war_per_yr": 2.15,
 #    "war_seasons_count": 2,
 #    "source": "bbref"}
-# `seasons` is sparse — only years the player actually appeared in MLB.
+# `seasons` is sparse - only years the player actually appeared in MLB.
 
 def fetch_career_war_bulk(
     targets: list[tuple[str, int, bool]],

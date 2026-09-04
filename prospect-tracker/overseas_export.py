@@ -447,7 +447,7 @@ def _load_mlb_career_index() -> dict[str, dict]:
 def _signing_performance(entry: dict | None, position, consensus_fv) -> dict:
     """Realized career value for a signing: {career_war, war_per_yr, wag}.
 
-    career_war = total bWAR; war_per_yr = career WAR / MLB seasons (the same
+    career_war = total eWAR (the career_war funnel's served series); war_per_yr = career WAR / MLB seasons (the same
     per-season rate the WAG engine compares against - intentionally simpler
     than the playing-time-weighted variant so the two columns stay
     internally coherent). wag runs through the shared storage._grad_wag so it

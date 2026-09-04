@@ -375,7 +375,7 @@
     // reliever banks more WAR per inning than a starter of equal talent, so the
     // two are never pooled. remCell, not hemCell: 100 + 10z has SD exactly 10.
     { key: "war_ip_plus", label: "WAR/IP+", term: "war_ip_plus_rp", num: true, desc: true, isRem: true,
-      title: "Pitching bWAR per inning, indexed over RELIEVERS with 20+ IP: 100 is the average reliever and every 10 points is one standard deviation of that pool. Anchored on relievers only, so it is not comparable with the starter board's WAR/IP+. Needs 30 IP to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
+      title: "Pitching eWAR (FIP re-priced within role) per inning, indexed over RELIEVERS with 20+ IP: 100 is the average reliever and every 10 points is one standard deviation of that pool. Anchored on relievers only, so it is not comparable with the starter board's WAR/IP+. Needs 30 IP to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
       get: function (r) { return r.war_ip_plus; },
       cell: function (r) {
         if (r.war_ip_plus == null) return "";
@@ -384,7 +384,7 @@
         return s;
       } },
     { key: "war_ip_plus_adj", label: "WAR/IP+ adj", term: "war_ip_plus_rp_adj", num: true, desc: true, isRem: true,
-      title: "WAR/IP+ regressed for sample size: the rate is pulled toward the pool rate by innings before indexing, so a short hot stretch does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season bWAR does.",
+      title: "WAR/IP+ regressed for sample size: the rate is pulled toward the pool rate by innings before indexing, so a short hot stretch does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season WAR does.",
       get: function (r) { return r.war_ip_plus_adj; },
       cell: function (r) { return r.war_ip_plus_adj == null ? "" : remCell(r.war_ip_plus_adj); } },
     { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_rp_3yr", num: true, desc: true, isRem: true,
@@ -397,8 +397,8 @@
         if (r.war_ip_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 40 IP in the trailing window">*</span>';
         return s;
       } },
-    { key: "war", label: "bWAR", term: "war", fmt: f1, num: true,
-      title: "Pitching bWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column)" },
+    { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true,
+      title: "Pitching eWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today." },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "g", label: "G", fmt: fInt, num: true },
     { key: "k_pct", label: "K%", fmt: fPct, num: true },
@@ -1259,7 +1259,7 @@
     // banks more WAR per inning than a starter of equal talent). Both ride
     // remCell: 100 + 10z has SD exactly 10, which is what remClass bands for.
     { key: "war_ip_plus", label: "WAR/IP+", term: "war_ip_plus_sp", num: true, desc: true, isRem: true,
-      title: "Pitching bWAR per inning, indexed over STARTERS with 20+ IP: 100 is the average starter and every 10 points is one standard deviation of that pool. Anchored on starters only, so it is not comparable with the reliever board's WAR/IP+. Needs 40 IP to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
+      title: "Pitching eWAR (FIP re-priced within role) per inning, indexed over STARTERS with 20+ IP: 100 is the average starter and every 10 points is one standard deviation of that pool. Anchored on starters only, so it is not comparable with the reliever board's WAR/IP+. Needs 40 IP to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
       get: function (r) { return r.war_ip_plus; },
       cell: function (r) {
         if (r.war_ip_plus == null) return "";
@@ -1268,7 +1268,7 @@
         return s;
       } },
     { key: "war_ip_plus_adj", label: "WAR/IP+ adj", term: "war_ip_plus_sp_adj", num: true, desc: true, isRem: true,
-      title: "WAR/IP+ regressed for sample size: the rate is pulled toward the pool rate by innings before indexing, so a short hot stretch does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season bWAR does.",
+      title: "WAR/IP+ regressed for sample size: the rate is pulled toward the pool rate by innings before indexing, so a short hot stretch does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season WAR does.",
       get: function (r) { return r.war_ip_plus_adj; },
       cell: function (r) { return r.war_ip_plus_adj == null ? "" : remCell(r.war_ip_plus_adj); } },
     { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_sp_3yr", num: true, desc: true, isRem: true,
@@ -1281,8 +1281,8 @@
         if (r.war_ip_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 120 IP in the trailing window">*</span>';
         return s;
       } },
-    { key: "war", label: "bWAR", term: "war", fmt: f1, num: true,
-      title: "Pitching bWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column)" },
+    { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true,
+      title: "Pitching eWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today." },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "gs", label: "GS", fmt: fInt, num: true },
     { key: "ip_per_gs", label: "IP/GS", fmt: f1, num: true, title: "Average start length (innings per game started)" },
@@ -1779,7 +1779,7 @@
     // bands at. Recoloring it with hemCell would call a 1.2-sigma hitter
     // average. Do not "fix" this to match the neighbouring columns.
     { key: "war_pa_plus", label: "WAR/PA+", term: "war_pa_plus", num: true, desc: true, isRem: true,
-      title: "Batting bWAR per plate appearance, indexed over hitters with 50+ PA: 100 is average and every 10 points is one standard deviation of that pool (not the wRC+-width scale HEM+ uses). Whole-player batting value per trip, so it carries fielding, baserunning and the positional adjustment, which HEM+ deliberately leaves out. Needs 100 PA to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
+      title: "Batting eWAR (equal to bWAR on the batting side) per plate appearance, indexed over hitters with 50+ PA: 100 is average and every 10 points is one standard deviation of that pool (not the wRC+-width scale HEM+ uses). Whole-player batting value per trip, so it carries fielding, baserunning and the positional adjustment, which HEM+ deliberately leaves out. Needs 100 PA to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
       get: function (r) { return r.war_pa_plus; },
       cell: function (r) {
         if (r.war_pa_plus == null) return "";
@@ -1788,7 +1788,7 @@
         return s;
       } },
     { key: "war_pa_plus_adj", label: "WAR/PA+ adj", term: "war_pa_plus_adj", num: true, desc: true, isRem: true,
-      title: "WAR/PA+ regressed for sample size: the rate is pulled toward the league rate by playing time before indexing, so a hot 110-PA line does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season bWAR does.",
+      title: "WAR/PA+ regressed for sample size: the rate is pulled toward the league rate by playing time before indexing, so a hot 110-PA line does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season WAR does.",
       get: function (r) { return r.war_pa_plus_adj; },
       cell: function (r) { return r.war_pa_plus_adj == null ? "" : remCell(r.war_pa_plus_adj); } },
     { key: "war_pa_plus_3yr", label: "WAR/PA+ 3yr", term: "war_pa_plus_3yr", num: true, desc: true, isRem: true,
@@ -1801,8 +1801,8 @@
         if (r.war_pa_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 600 PA in the trailing window">*</span>';
         return s;
       } },
-    { key: "war", label: "bWAR", term: "war", fmt: f1, num: true,
-      title: "Batting bWAR this season, the numerator of WAR/PA+ (shown so the rate is checkable against the PA column)" },
+    { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true,
+      title: "Batting eWAR this season, the numerator of WAR/PA+ (shown so the rate is checkable against the PA column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today." },
     { key: "pa", label: "PA", fmt: fInt, num: true },
     { key: "hr", label: "HR", fmt: fInt, num: true },
     { key: "sb", label: "SB", fmt: fInt, num: true },
@@ -1821,7 +1821,7 @@
   // the current-season Savant xHEM+ / xHEM+ Blend / Luck joins, or the
   // current-projection-only pWOBA column (a past board has no "next season").
   // The WAR-rate columns are joined only on the live board (the history export
-  // carries no bWAR join), so they drop out of a past-season board rather than
+  // carries no WAR join), so they drop out of a past-season board rather than
   // rendering as a blank column. Published wRC+ drops for the same reason: the
   // league feed serves it for every history season, but hitter_export joins it
   // on the live board only, so a past board would render the column empty.

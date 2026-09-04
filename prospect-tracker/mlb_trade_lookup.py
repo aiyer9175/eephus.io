@@ -441,6 +441,13 @@ def _ensure_bwar_loaded(is_pitcher: bool, timeout_seconds: float = 30.0) -> bool
     # return_all=True), a different column set from the stint frame the other
     # ten WAR sites use, so it goes through war_source.condensed_frame rather
     # than stint_frame. Swapping the two silently KeyErrors downstream.
+    #
+    # PROVIDER: the facade DEFAULT, deliberately unpinned, so the career_war a
+    # trade card backfills follows the served basis (eWAR v2 since 2026-09-03:
+    # a pitcher's seasons sum FIP-repriced WAR, split equally across stints on
+    # this exposure-less frame; a hitter's equal bWAR until the SDR drop). The
+    # _BWAR_* names below are the cache's historical names: they hold whatever
+    # the default serves, and WAR_bwar rides the frame for the input series.
     import threading
     result: dict[str, object] = {}
     def _worker():

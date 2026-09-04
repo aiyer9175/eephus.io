@@ -10518,7 +10518,7 @@ function formatMetric(value, type = "int") {
 // =============================================================================
 // JS mirror of build_site.py::display_metric_for (keep the two in sync). The
 // metric ESCALATES with on-field information:
-//   graduated to MLB          -> WAR  (career-since-debut bWAR + WAR/yr)
+//   graduated to MLB          -> WAR  (career-since-debut eWAR + WAR/yr)
 //   prospect, settled sample  -> WAG  (regressed WAR-above-grade)
 //   prospect / no real sample -> FV   (the scouting-consensus projection)
 // WAG (WAR Above Grade) is only meaningful once a real sample stabilizes, so a
@@ -15149,8 +15149,12 @@ function _debutFvCohortBlock(p) {
     </div>`;
 }
 
-// ONE WAR SOURCE SITE-WIDE: bWAR (Baseball-Reference, via pybaseball's
-// war_daily tables - see stats.fetch_career_war_bulk). Every WAR a user sees
+// ONE WAR SOURCE SITE-WIDE: eWAR (eephus WAR), the Baseball-Reference run
+// frame with pitching re-priced on FIP; fielding unchanged pending SDR;
+// position players match bWAR today.
+// Served through war_source (default provider ewar_v2, 2026-09 epoch) into
+// career_war.seasons - see stats.fetch_career_war_bulk; bWAR stays the input
+// frame (war_daily via pybaseball). Every WAR a user sees
 // - career totals, per-season column, current-season pill, WAR sorts - reads
 // the same career_war.seasons map so two surfaces can never disagree.
 // sabermetrics.war (the MLB-API number) is deliberately NOT displayed.
@@ -15160,7 +15164,7 @@ function currentSeasonBwar(p, year) {
   return v == null ? null : Number(v);
 }
 
-// Career bWAR aggregate. Returns a small mono block with cumulative career
+// Career eWAR aggregate. Returns a small mono block with cumulative career
 // WAR, the per-season average, and the underlying season count so a reader
 // can see how the average was built. The `career_war` payload is populated
 // server-side by stats.fetch_career_war_bulk; empty dict when no MLB time
@@ -15176,8 +15180,8 @@ function gradCareerWarHTML(p) {
   const seasons = cw.seasons || {};
   const years = Object.keys(seasons).sort();
   const tip = years.length
-    ? `Career WAR · bWAR (Baseball-Reference)\n` + years.map(y => `${y}: ${seasons[y] >= 0 ? "+" : ""}${seasons[y]}`).join("\n")
-    : "Career WAR · bWAR (Baseball-Reference)";
+    ? `Career WAR · eWAR (B-Ref frame, pitching on FIP; hitters match bWAR)\n` + years.map(y => `${y}: ${seasons[y] >= 0 ? "+" : ""}${seasons[y]}`).join("\n")
+    : "Career WAR · eWAR (B-Ref frame, pitching on FIP; hitters match bWAR)";
   return `<div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">
     <span style="color:${totColor};font-weight:700;">${tot >= 0 ? "+" : ""}${tot.toFixed(1)} WAR</span>
     <span style="color:var(--text-tertiary);"> · </span><span style="color:${perColor};">${per >= 0 ? "+" : ""}${per.toFixed(2)}/yr</span>
@@ -15185,7 +15189,7 @@ function gradCareerWarHTML(p) {
   </div>`;
 }
 
-// Always-on current-season WAR pill for graduate rows. Reads the bWAR
+// Always-on current-season WAR pill for graduate rows. Reads the eWAR
 // seasons map (currentSeasonBwar) - the same source the career table, the
 // WAR/season column, and the "sort by current-season WAR" chip key off, so
 // the badge and the sort always agree.
@@ -15194,7 +15198,7 @@ function gradCurrentWarHTML(p) {
   if (w == null) return "";
   const yr = new Date().getUTCFullYear();
   const color = w >= 3 ? "var(--up)" : w <= 0 ? "var(--down)" : "var(--text-primary)";
-  return `<span class="grad-war-current" style="display:inline-block;font-family:var(--font-mono);font-size:var(--fs-xs);font-variant-numeric:tabular-nums;font-weight:700;color:${color};padding:1px 6px;border:1px solid ${color};border-radius:999px;margin-right:6px;" title="${yr} season bWAR (Baseball-Reference)">${yr} bWAR ${w >= 0 ? "+" : ""}${w.toFixed(1)}</span>`;
+  return `<span class="grad-war-current" style="display:inline-block;font-family:var(--font-mono);font-size:var(--fs-xs);font-variant-numeric:tabular-nums;font-weight:700;color:${color};padding:1px 6px;border:1px solid ${color};border-radius:999px;margin-right:6px;" title="${yr} season eWAR (B-Ref frame, pitching on FIP; hitters match bWAR)">${yr} eWAR ${w >= 0 ? "+" : ""}${w.toFixed(1)}</span>`;
 }
 
 function makeGradMilbCell(p) {
@@ -20731,8 +20735,8 @@ function _boardAsOf(dateStr) {
     if (!best) continue;
     const cw = p.career_war || {};
     // Hindsight outcomes (only meaningful for since-debuted players). All three
-    // share the same WAR flavor the rest of the site uses - career_war is bWAR
-    // (source:"bbref"), WAG's observed_war is that same career WAR, and WAR/yr
+    // share the same WAR flavor the rest of the site uses - career_war is eWAR
+    // (source:"ewar_v2" from the 2026-09 epoch, "bbref" before it), WAG's observed_war is that same career WAR, and WAR/yr
     // is the canonical full-season-normalized rate (gradWarPerYr) - so WAR,
     // WAR/yr, and WAG never mix WAR sources.
     const wpyObj = (typeof gradWarPerYr === "function" && p.debut_date) ? gradWarPerYr(p) : null;
@@ -20875,7 +20879,7 @@ function _tmOutcomeHTML(r) {
   if (!r.debutDate) return "";
   const bits = [`<span class="tm-grad" title="Debuted ${_tmFmtDate(r.debutDate)} - shown on this board because it predates the debut">▸ ${_tmFmtDate(r.debutDate)}</span>`];
   if (r.war != null)
-    bits.push(`<span class="tm-stat tm-stat-war" title="Career MLB WAR (bWAR) since debut">${(+r.war).toFixed(1)}<em>WAR</em></span>`);
+    bits.push(`<span class="tm-stat tm-stat-war" title="Career MLB WAR (eWAR) since debut">${(+r.war).toFixed(1)}<em>WAR</em></span>`);
   if (r.warPerYr != null)
     bits.push(`<span class="tm-stat tm-stat-rate" title="WAR per MLB season played${r.warSeasons ? ` (${r.warSeasons} season${r.warSeasons === 1 ? "" : "s"})` : ""} - the length-fair signal">${(+r.warPerYr).toFixed(1)}<em>/yr</em></span>`);
   if (r.wag != null) {
@@ -20937,7 +20941,7 @@ function _tmHindRowHTML(r) {
     ? `<span class="tm-grad" title="Debuted ${_tmFmtDate(r.debutDate)} - shown on this board because it predates the debut">▸ ${_tmFmtDate(r.debutDate)}</span>`
     : "";
   const war = r.war != null
-    ? `<span class="tm-stat tm-stat-war" title="Career MLB WAR (bWAR) since debut">${(+r.war).toFixed(1)}<em>WAR</em></span>`
+    ? `<span class="tm-stat tm-stat-war" title="Career MLB WAR (eWAR) since debut">${(+r.war).toFixed(1)}<em>WAR</em></span>`
     : "";
   const yr = r.warPerYr != null
     ? `<span class="tm-stat tm-stat-rate" title="WAR per MLB season played${r.warSeasons ? ` (${r.warSeasons} season${r.warSeasons === 1 ? "" : "s"})` : ""} - the length-fair signal">${(+r.warPerYr).toFixed(1)}<em>/yr</em></span>`
@@ -26922,7 +26926,7 @@ function _renderDraftOverperformers(host, classes, year) {
         <th style="text-align:center;" title="Latest prospect FV (current grade)">FV now</th>
         <th style="text-align:center;" title="Median FV for that pick band">Exp</th>
         ${_sortableOP("delta", "ΔFV", "right", "FV now minus expected-for-pick")}
-        ${_sortableOP("war", "WAR", "right", "Career MLB bWAR (where they've reached the majors)")}</tr></thead>
+        ${_sortableOP("war", "WAR", "right", "Career MLB eWAR (where they've reached the majors)")}</tr></thead>
       <tbody>${rows}</tbody></table>` : _emptyLens("No qualifying players for the realized-outcome lens yet.");
   } else {
     let ranked = pool.map(p => ({ p, slide: (p.drafted_pick != null && _consPick(p) != null) ? (p.drafted_pick - _consPick(p)) : null }))
@@ -29782,7 +29786,7 @@ function _renderOverseasSigned(host, signings) {
             <th>Player</th>
             <th>League</th>
             <th>Signed by</th>
-            <th style="text-align:right;" title="Total career bWAR since reaching MLB.">Career WAR</th>
+            <th style="text-align:right;" title="Total career eWAR since reaching MLB.">Career WAR</th>
             <th style="text-align:right;" title="Career WAR per MLB season. Requires ≥1 full-season sample (else ' - ').">WAR/yr</th>
             <th style="text-align:right;" title="WAR Above Grade - career WAR per season minus FV-implied expectation. Requires ≥1 full-season MLB sample (else ' - ').">WAG</th>
           </tr></thead>
@@ -29977,11 +29981,11 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
         <ul class="draft-list">${bonusRows || "<li style='color:var(--text-tertiary);'>No projected bonuses on file yet.</li>"}</ul>
       </div>
       <div class="draft-panel">
-        <h3 title="Total career bWAR since reaching MLB, for players who already came over.">Career MLB WAR (graduates)</h3>
+        <h3 title="Total career eWAR since reaching MLB, for players who already came over.">Career MLB WAR (graduates)</h3>
         <ul class="draft-list">${careerWarRows || warEmpty}</ul>
       </div>
       <div class="draft-panel">
-        <h3 title="Career bWAR per MLB season, for players who already came over.">WAR per season (graduates)</h3>
+        <h3 title="Career eWAR per MLB season, for players who already came over.">WAR per season (graduates)</h3>
         <ul class="draft-list">${warPerSeasonRows || warEmpty}</ul>
       </div>
       <div class="draft-panel" style="grid-column:1/-1;">
@@ -30799,9 +30803,9 @@ function renderDebuts() {
     <span class="debut-date-cell sort-header" data-debut-sort="date" title="Sort by debut date (newest first)">Debut</span>
     <span class="sort-header" data-debut-sort="fv_close" title="Sort by FV at debut (high to low)" style="text-align:center;">FV</span>
     <span class="desktop-only sort-header" data-debut-sort="vs_fv_proj" title="Sort by WAG - WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG / season</span>
-    <span class="desktop-only" style="text-align:center;" title="Raw bWAR per MLB season - hover any bar for the year-by-year value">WAR / season</span>
+    <span class="desktop-only" style="text-align:center;" title="Raw eWAR per MLB season - hover any bar for the year-by-year value">WAR / season</span>
     <span class="debut-level-cell">Level</span>
-    <span class="sort-header" data-debut-sort="war" title="Sort by current-season bWAR (high to low)">MLB stats</span>
+    <span class="sort-header" data-debut-sort="war" title="Sort by current-season eWAR (high to low)">MLB stats</span>
   </div>`;
 
   // Build the iteration order based on the active sort.
@@ -30936,7 +30940,7 @@ function renderDebuts() {
     let warTag = "";
     const curWar = currentSeasonBwar(g);
     if (sortMode === "war" && curWar != null) {
-      warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);">${curWar > 0 ? '+' : ''}${curWar.toFixed(2)} bWAR</span>`;
+      warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);">${curWar > 0 ? '+' : ''}${curWar.toFixed(2)} eWAR</span>`;
     } else if (sortMode === "career_war" && cw.career_war != null) {
       warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="Career WAR · ${cw.war_seasons_count ?? "?"} season${cw.war_seasons_count === 1 ? "" : "s"} (${cw.source || "bbref"})">${cw.career_war > 0 ? '+' : ''}${cw.career_war.toFixed(1)} career WAR</span>`;
     } else if (sortMode === "war_per_yr") {
@@ -34435,7 +34439,7 @@ function _gfxFooterNote(kind) {
   const _badge = _gfxBadgeLegend(kind);
   return {
     prospect: `$M = engine expected surplus value · $DvM+ = surplus-development index (100 = FV-tier avg) · badge = ${_badge}`,
-    graduate: `WAR = career MLB WAR since debut (bWAR) · $DvM+ = surplus-development index · badge = ${_badge}`,
+    graduate: `WAR = career MLB WAR since debut (eWAR) · $DvM+ = surplus-development index · badge = ${_badge}`,
     draftee: `Stk+ = Draft Stock+ (100 = class median) · badge = ${_badge}`,
     overseas: `badge = ${_badge}`,
     leader: `value = the selected stat · badge = ${_badge}`,
@@ -44626,7 +44630,7 @@ function makeLevelPercentileBlock(p) {
 
 // Advanced-stats composer for the player detail page. Surfaces, in tiers and
 // only when the underlying data exists: real MLB sabermetrics (wRC+/wOBA or
-// xFIP/FIP/FIP-/ERA- + bWAR); Statcast contact quality at ANY tracked level
+// xFIP/FIP/FIP-/ERA- + eWAR); Statcast contact quality at ANY tracked level
 // (Hawk-Eye game-feed reaches AAA and increasingly below, not just MLB); the
 // rolling-xwOBA trend; Swing+ (MLB bat tracking); and, when none of those are
 // available, nothing advanced is shown here. The level-relative "+" index
@@ -44660,13 +44664,13 @@ function makeSabermetricsBlock(player) {
   if (!isP && sm && (sm.wrc_plus != null || sm.woba != null || sm.war != null)) {
     if (sm.wrc_plus != null) { const v = Math.round(sm.wrc_plus); saberTiles.push(tile("wRC+", v, colorize(v >= 110, v <= 90), "Weighted Runs Created+ · 100 = league avg, higher is better")); }
     if (sm.woba != null) saberTiles.push(tile("wOBA", f3(sm.woba), colorize(sm.woba >= 0.340, sm.woba <= 0.300), "Weighted On-Base Average · linear-weights scale, .320 ≈ avg"));
-    const w = currentSeasonBwar(player); if (w != null) saberTiles.push(tile("WAR", w.toFixed(1), colorize(w >= 2.0, w <= 0), "Current-season bWAR (Baseball-Reference) - the one WAR source site-wide"));
+    const w = currentSeasonBwar(player); if (w != null) saberTiles.push(tile("WAR", w.toFixed(1), colorize(w >= 2.0, w <= 0), "Current-season eWAR, the one WAR source site-wide. eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today."));
   } else if (isP && sm && (sm.xfip != null || sm.fip != null || sm.fip_minus != null || sm.era_minus != null || sm.war != null)) {
     if (sm.xfip != null) saberTiles.push(tile("xFIP", f2(sm.xfip), colorize(sm.xfip <= 3.50, sm.xfip >= 4.50), "Expected FIP · neutralizes HR/FB rate · league avg ≈ 4.00"));
     if (sm.fip != null) saberTiles.push(tile("FIP", f2(sm.fip), colorize(sm.fip <= 3.50, sm.fip >= 4.50), "Fielding-Independent Pitching · same scale as ERA"));
     if (sm.fip_minus != null) { const v = Math.round(sm.fip_minus); saberTiles.push(tile("FIP-", v, colorize(v <= 90, v >= 110), "FIP- · 100 = league avg, lower is better")); }
     if (sm.era_minus != null) { const v = Math.round(sm.era_minus); saberTiles.push(tile("ERA-", v, colorize(v <= 90, v >= 110), "ERA- · 100 = league avg, lower is better")); }
-    const w = currentSeasonBwar(player); if (w != null) saberTiles.push(tile("WAR", w.toFixed(1), colorize(w >= 2.0, w <= 0), "Current-season bWAR (Baseball-Reference) - the one WAR source site-wide"));
+    const w = currentSeasonBwar(player); if (w != null) saberTiles.push(tile("WAR", w.toFixed(1), colorize(w >= 2.0, w <= 0), "Current-season eWAR, the one WAR source site-wide. eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today."));
   }
   if (saberTiles.length) groups.push({ label: "MLB sabermetrics", html: tileGrid(saberTiles) });
 

@@ -3,22 +3,27 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""war_source facade pin (lane B1, 2026-08-04d).
+"""war_source facade pin (lane B1, 2026-08-04d; eWAR epoch 2026-09-03 L2).
 
 Provider 'bwar' must be a NO-OP refactor: the same payload, byte for byte,
 whether a site calls the underlying stats/fa_ident/mlb_player_export function
-directly (the OLD path) or goes through the facade (the NEW path). If someone
-later reimplements a facade function instead of delegating, these fail.
+directly over the raw bWAR frames (the OLD path) or goes through the facade
+with provider='bwar' (the NEW path). If someone later reimplements a facade
+function instead of delegating, these fail.
 
-Also pinned: 'bwar' is the default provider everywhere; an unknown provider
-raises ValueError before any work; the declared-but-absent providers
-('ewar_v2', 'ewar_merged') raise DataUnavailable with a message NAMING the
-missing input, so nothing can silently fall back to bWAR.
+Also pinned: 'ewar_v2' is the DEFAULT provider everywhere (owner decision
+2026-09-03); 'bwar' stays first in PROVIDERS as the input frame; an unknown
+provider raises ValueError before any work; 'ewar_merged' raises
+DataUnavailable NAMING the missing input; 'ewar_v2' raises DataUnavailable
+only when data/ewar.json is missing, and then names the build command.
 
 Offline: the frame-equivalence tests inject a synthetic pybaseball module
-into sys.modules (real mlbams, fabricated rows) and clear every downstream
-memo on the way in AND out, so no fake data can leak into other tests. The
-full-table digest reads the career_war sqlite table already on disk through
+into sys.modules (real mlbams, fabricated rows) AND a synthetic, EMPTY eWAR
+payload into ewar._CACHE, so the default provider's transform is a value
+no-op on these fixtures (the real artifact covers Trout, Ohtani and Skenes
+and would move the numbers). Every downstream memo is cleared on the way in
+AND out, so no fake data can leak into other tests. The full-table digest
+reads the career_war sqlite table already on disk through
 storage.load_career_war on both paths. Nothing fetches.
 """
 from __future__ import annotations
@@ -33,6 +38,7 @@ import types
 
 import pandas as pd
 
+import ewar
 import fa_ident
 import mlb_player_export
 import stats
@@ -79,6 +85,10 @@ _TARGETS = [
     ("nobody_in_mlb", 999999, False),   # must be silently absent
 ]
 
+#: An artifact with no blocks: the ewar_v2 transform is a value no-op on it.
+_EMPTY_EWAR = {"model": "ewar_v2", "generated_at": "2026-09-03T00:00:00",
+               "seasons": [2016, 2026], "players": {}, "n_player_seasons": 0}
+
 
 def _fake_pybaseball() -> types.ModuleType:
     mod = types.ModuleType("pybaseball")
@@ -113,11 +123,13 @@ def _clear_memos() -> None:
     with contextlib.suppress(Exception):
         import pal_export
         pal_export.load_bref_pitcher_war.cache_clear()
+    war_source._EWAR_FRAME_DIAG.clear()
 
 
 @contextlib.contextmanager
-def _patched_pybaseball():
-    """Fake pybaseball AND redirect the last-good cache to a throwaway dir.
+def _patched_pybaseball(payload: dict | None = None):
+    """Fake pybaseball, inject an eWAR payload (default: the EMPTY artifact),
+    AND redirect the last-good cache to a throwaway dir.
 
     THE CACHE REDIRECT IS NOT HYGIENE, IT IS A PRODUCTION GUARD. stint_frame
     writes every successful read to .cache/war_daily/<side>.parquet as the
@@ -128,11 +140,17 @@ def _patched_pybaseball():
     since the deploy gate runs the suite ON THE BOX, the next real download
     failure there would fall back to a frame containing Trout, Ohtani and
     Skenes and quietly price the entire class off it.
-    Measured 2026-08-07: the real cache held exactly those fixtures."""
+    Measured 2026-08-07: the real cache held exactly those fixtures.
+
+    THE PAYLOAD INJECTION IS THE SAME KIND OF GUARD in the other direction:
+    ewar.load() is memoised in ewar._CACHE, so whatever this test leaves there
+    is what the next test serves. Saved and restored."""
     import tempfile
     saved = sys.modules.get("pybaseball")
     sys.modules["pybaseball"] = _fake_pybaseball()
     saved_cache_dir = war_source._cache_dir
+    saved_ewar = ewar._CACHE
+    ewar._CACHE = _EMPTY_EWAR if payload is None else payload
     tmp = tempfile.TemporaryDirectory()
     war_source._cache_dir = lambda: pathlib.Path(tmp.name)
     _clear_memos()
@@ -140,6 +158,7 @@ def _patched_pybaseball():
         yield
     finally:
         war_source._cache_dir = saved_cache_dir
+        ewar._CACHE = saved_ewar
         tmp.cleanup()
         if saved is None:
             sys.modules.pop("pybaseball", None)
@@ -167,8 +186,10 @@ def _digest(payload) -> str:
 # --------------------------------------------------------------------------- #
 def test_career_war_bulk_byte_identical_to_stats():
     with _patched_pybaseball():
-        old = stats.fetch_career_war_bulk(_TARGETS, 2000, 2026)
-        new = war_source.career_war_bulk(_TARGETS, 2000, 2026)
+        # the OLD path: stats over the raw bWAR frames (pre-epoch behaviour)
+        with war_source._frames_pinned("bwar"):
+            old = stats.fetch_career_war_bulk(_TARGETS, 2000, 2026)
+        new = war_source.career_war_bulk(_TARGETS, 2000, 2026, provider="bwar")
     assert old == new
     old_bytes = json.dumps(old, sort_keys=True).encode()
     new_bytes = json.dumps(new, sort_keys=True).encode()
@@ -179,27 +200,33 @@ def test_career_war_bulk_byte_identical_to_stats():
     assert new["mike_trout"]["seasons"]["2024"] == 2.5         # stints summed
     assert new["paul_skenes"]["war_seasons_count"] == 2
     assert new["paul_skenes"]["source"] == "bbref"
+    # and the bwar payload carries NONE of the eWAR epoch keys
+    for row in new.values():
+        assert "seasons_bwar" not in row and "ewar_coverage" not in row
 
 
 def test_career_war_table_full_digest_identical_to_storage():
     """The full-table pin on the REAL career_war sqlite table: row count plus
-    a stable hash over sorted rows, old path vs facade."""
+    a stable hash over sorted rows, old path vs facade, BOTH providers (the
+    table is served as stored; see career_war_table's docstring)."""
     old = storage.load_career_war()
-    new = war_source.career_war_table()
-    assert len(old) == len(new)
-    assert len(new) > 0, "career_war table is empty; the digest pin would be vacuous"
-    assert _digest(old) == _digest(new)
-    # spot-check a sample of real players end to end (sorted = deterministic)
-    for key in sorted(new)[:25]:
-        assert new[key] == old[key]
-        assert set(new[key]) >= {"seasons", "career_war"}
+    assert len(old) > 0, "career_war table is empty; the digest pin would be vacuous"
+    for provider in ("bwar", "ewar_v2"):
+        new = war_source.career_war_table(provider=provider)
+        assert len(old) == len(new), provider
+        assert _digest(old) == _digest(new), provider
+        # spot-check a sample of real players end to end (sorted = deterministic)
+        for key in sorted(new)[:25]:
+            assert new[key] == old[key]
+            assert set(new[key]) >= {"seasons", "career_war"}
+    assert war_source.career_war_table() == old      # the default, too
 
 
 def test_name_index_identical_to_fa_ident():
     with _patched_pybaseball():
         old = fa_ident.war_daily_index()
         fa_ident.war_daily_index.cache_clear()   # force a genuine rebuild
-        new = war_source.name_index()
+        new = war_source.name_index(provider="bwar")
     assert old is not new                        # two builds, not one memo
     assert old == new
     assert _digest(old) == _digest(new)
@@ -209,8 +236,9 @@ def test_name_index_identical_to_fa_ident():
 
 def test_side_war_by_season_identical_to_mlb_player_export():
     with _patched_pybaseball():
-        old = mlb_player_export._war_daily()
-        new = war_source.side_war_by_season()
+        with war_source._frames_pinned("bwar"):
+            old = mlb_player_export._war_daily()
+        new = war_source.side_war_by_season(provider="bwar")
     assert old == new
     assert _digest(old) == _digest(new)
     # the side split survives (the two-way rule war_rate_plus depends on)
@@ -220,12 +248,16 @@ def test_side_war_by_season_identical_to_mlb_player_export():
 def test_stint_and_run_value_frames_are_the_raw_frames():
     with _patched_pybaseball():
         import pybaseball as pyb
-        assert war_source.stint_frame("bat").equals(pyb.bwar_bat(return_all=True))
-        assert war_source.stint_frame("pit").equals(pyb.bwar_pitch(return_all=True))
-        rv = war_source.run_value_frame()
+        assert war_source.stint_frame("bat", provider="bwar").equals(
+            pyb.bwar_bat(return_all=True))
+        assert war_source.stint_frame("pit", provider="bwar").equals(
+            pyb.bwar_pitch(return_all=True))
+        rv = war_source.run_value_frame(provider="bwar")
         assert rv.equals(pyb.bwar_bat(return_all=True))
         # the decomposition columns build_def_history reads are present
         assert {"WAR_def", "runs_position", "PA", "pitcher"} <= set(rv.columns)
+        # and the raw frame carries no epoch column
+        assert "WAR_bwar" not in rv.columns
 
 
 def test_condensed_frame_is_the_narrow_frame_and_not_the_stint_frame():
@@ -235,11 +267,12 @@ def test_condensed_frame_is_the_narrow_frame_and_not_the_stint_frame():
     with _patched_pybaseball():
         import pybaseball as pyb
         for side, fn in (("bat", pyb.bwar_bat), ("pit", pyb.bwar_pitch)):
-            cond = war_source.condensed_frame(side)
+            cond = war_source.condensed_frame(side, provider="bwar")
             assert cond.equals(fn())
             # narrow by construction: the decomposition columns are ABSENT
             assert "WAR_def" not in cond.columns
-            assert set(cond.columns) < set(war_source.stint_frame(side).columns)
+            assert set(cond.columns) < set(
+                war_source.stint_frame(side, provider="bwar").columns)
             # and it still carries what the backfill joins on
             assert {"mlb_ID", "year_ID", "WAR"} <= set(cond.columns)
 
@@ -267,12 +300,14 @@ def _call(fn, provider):
     return fn(**kwargs)
 
 
-def test_bwar_is_the_default_provider_everywhere():
-    assert war_source.DEFAULT_PROVIDER == "bwar"
-    assert war_source.PROVIDERS[0] == "bwar"
+def test_ewar_v2_is_the_default_provider_everywhere():
+    """Owner decision 2026-09-03: the served and label WAR is eWAR v2. 'bwar'
+    stays first in PROVIDERS because it is the input frame."""
+    assert war_source.DEFAULT_PROVIDER == "ewar_v2"
+    assert war_source.PROVIDERS == ("bwar", "ewar_v2", "ewar_merged")
     for fn in _PUBLIC_FNS:
         sig = inspect.signature(fn)
-        assert sig.parameters["provider"].default == "bwar", fn.__name__
+        assert sig.parameters["provider"].default == "ewar_v2", fn.__name__
         assert sig.parameters["provider"].kind is inspect.Parameter.KEYWORD_ONLY, \
             f"{fn.__name__}: provider must be keyword-only"
 
@@ -287,21 +322,39 @@ def test_unknown_provider_raises_before_any_work():
             raise AssertionError(f"{fn.__name__} accepted an unknown provider")
 
 
-def test_declared_providers_raise_loud_dataunavailable():
+def test_ewar_merged_raises_loud_dataunavailable():
     assert issubclass(war_source.DataUnavailable, RuntimeError)
-    for provider, must_name in (
-        ("ewar_v2", ("ewar.json", "Stage-2")),
-        ("ewar_merged", ("parquet", "BENCHMARK_MANIFEST")),
-    ):
-        for fn in _PUBLIC_FNS:
-            try:
-                _call(fn, provider)
-            except war_source.DataUnavailable as e:
-                msg = str(e)
-                for token in must_name:
-                    assert token in msg, (fn.__name__, provider, token)
-            else:
-                raise AssertionError(f"{fn.__name__} served provider {provider!r}")
+    for fn in _PUBLIC_FNS:
+        try:
+            _call(fn, "ewar_merged")
+        except war_source.DataUnavailable as e:
+            msg = str(e)
+            for token in ("parquet", "BENCHMARK_MANIFEST"):
+                assert token in msg, (fn.__name__, token)
+        else:
+            raise AssertionError(f"{fn.__name__} served provider 'ewar_merged'")
+
+
+def test_ewar_v2_raises_dataunavailable_only_when_the_artifact_is_missing(
+        tmp_path, monkeypatch):
+    """With no data/ewar.json and nothing memoised, every public function
+    refuses BEFORE any work and names the build command. Nothing falls back
+    to bWAR on its own."""
+    monkeypatch.setattr(ewar, "OUT", tmp_path / "absent" / "ewar.json")
+    monkeypatch.setattr(ewar, "_CACHE", None)
+    for fn in _PUBLIC_FNS:
+        try:
+            _call(fn, "ewar_v2")
+        except war_source.DataUnavailable as e:
+            msg = str(e)
+            for token in ("ewar.json", "build_ewar.py", "--write"):
+                assert token in msg, (fn.__name__, token)
+        else:
+            raise AssertionError(
+                f"{fn.__name__} served 'ewar_v2' with the artifact missing")
+    # and a memoised payload alone makes it servable again (the test seam)
+    monkeypatch.setattr(ewar, "_CACHE", _EMPTY_EWAR)
+    war_source._require("ewar_v2")
 
 
 def test_stint_frame_rejects_unknown_side():

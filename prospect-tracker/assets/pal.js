@@ -597,7 +597,7 @@
     if (h.success === false) return '<span class="pal-miss">Miss</span>';
     return '<span class="pal-pending">pending</span>';
   }
-  // WAR produced by the conversion: realized bWAR before and after the switch,
+  // WAR produced by the conversion: realized eWAR before and after the switch,
   // with the delta colored (a gain reads as a hit, a drop as a miss).
   function warCell(h) {
     if (h.post_war == null && h.pre_war == null) return '<span class="pal-pending">-</span>';

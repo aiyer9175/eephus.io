@@ -1365,7 +1365,7 @@ def display_metric_for(p: dict) -> dict:
     """Single source of truth for which realized metric a player's shared
     "value" slot shows. The metric ESCALATES with on-field information:
 
-      graduated to MLB          -> WAR  (career-since-debut bWAR + WAR/yr)
+      graduated to MLB          -> WAR  (career-since-debut eWAR + WAR/yr)
       prospect, settled sample  -> WAG  (regressed WAR-above-grade)
       prospect / no real sample -> FV   (the scouting-consensus projection)
 
@@ -1389,14 +1389,15 @@ def display_metric_for(p: dict) -> dict:
     cw = p.get("career_war") or {}
     is_grad = (p.get("status") == "debuted") or (cw.get("career_war") is not None)
 
-    # 1) Graduated -> raw MLB WAR (career-since-debut bWAR). WAR/yr stays in
+    # 1) Graduated -> raw MLB WAR (career-since-debut eWAR: B-Ref frame, FIP
+    #    pitching; hitters match bWAR). WAR/yr stays in
     # the hover tooltip only - as a visible suffix it was noise on the
     #    homepage grad rows, where most players have one partial MLB season
     #    and the per-year rate is just the WAR number echoed back.
     if is_grad:
         war = cw.get("career_war")
         if war is None:
-            # bWAR hasn't posted yet (brand-new debut) - keep it a WAR slot and be
+            # WAR hasn't posted yet (brand-new debut) - keep it a WAR slot and be
             # honest the sample hasn't landed; never fabricate a number.
             return {"metric": "WAR", "cls": "flat",
                     "html": '<span class="row-meta" title="MLB WAR not yet posted"> - WAR</span>'}
@@ -1404,7 +1405,7 @@ def display_metric_for(p: dict) -> dict:
         cls = "up" if war_r > 0 else ("down" if war_r < 0 else "flat")
         wpy = cw.get("war_per_yr")
         nseas = cw.get("war_seasons_count")
-        title = f"{war_r:.1f} career bWAR"
+        title = f"{war_r:.1f} career eWAR"
         if isinstance(wpy, (int, float)):
             title += f" · {wpy:.2f}/yr"
         if nseas:
@@ -2872,7 +2873,7 @@ def _cross_module_strip() -> str:
             for v in top)
         if rows:
             cards.append(('Δ MLB Projections', '/projections/',
-                          'five-year bWAR leaders', rows))
+                          'five-year eWAR leaders', rows))
     except (OSError, ValueError, KeyError):
         pass
     # Trade Machine - top surplus trade values (prospects + MLB, one currency).
@@ -3691,7 +3692,7 @@ def build_projections() -> str:
         '<div class="fa-app proj-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Projections '
         f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">β beta</span></h1></div>'
-        '<span class="section-sub">five-year bWAR paths for every MLB player · floor / mean / ceiling '
+        '<span class="section-sub">five-year eWAR paths for every MLB player · floor / mean / ceiling '
         'probability buckets · contract surplus on salary-known seasons · prospects join at their PROSPX ETA</span></div>'
         '<div id="proj-view-projections">'
         '<div id="proj-banner"></div>'
@@ -3705,7 +3706,7 @@ def build_projections() -> str:
         + _PROJ_TM_REDIRECT
     )
     return page("MLB Projections - eephus.io", "projections", body,
-                "Five-year bWAR projections for every MLB player - floor/mean/ceiling probability "
+                "Five-year eWAR projections for every MLB player - floor/mean/ceiling probability "
                 "buckets, aging-curve decay, contract surplus on salary-known seasons, and PROSPX "
                 "prospects joining at their projected ETA.",
                 url=f"{SITE_ORIGIN}/projections/")
@@ -5218,7 +5219,7 @@ def build_glossary() -> str:
         "platform keeps two independently derived numbers - what the production is worth "
         "(rational value, surplus) and what the market pays (predicted or actual contract) - and "
         "never blends them, because the gap between them is the entire point.</p>"
-        "<p>WAR site-wide is Baseball-Reference's bWAR: one source, every surface. Where samples "
+        "<p>WAR site-wide is eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today. One series, every surface. Where samples "
         "are thin the models shrink toward the mean and say so; where data is missing the site "
         "shows a plain dash, never a guess.</p>"
         "<p>Model derivations and the interactive teaching widgets live under Methodology; the "
@@ -5727,7 +5728,7 @@ def build_sources() -> str:
          "Game logs, transactions, rosters, Statcast tracking data (pitch, batted-ball, "
          "and zone metrics), and player headshots via MLB static media."),
         ("Baseball-Reference", "https://www.baseball-reference.com/",
-         "bWAR - the WAR framework used site-wide - plus historical player pages."),
+         "war_daily (bWAR): the run frame the served eWAR is built on, plus historical player pages."),
         ("pybaseball", "https://github.com/jldbc/pybaseball",
          "Open-source Python toolkit used to pull Statcast, FanGraphs, and "
          "Baseball-Reference data programmatically."),

@@ -571,16 +571,18 @@ def _join_pwoba(hitters: list[dict], season: int) -> int:
 
 
 def _join_war_pa_plus(hitters: list[dict], season: int) -> dict:
-    """HITTER-anchored WAR/PA+: 100 = the average hitter's BATTING bWAR per plate
+    """HITTER-anchored WAR/PA+: 100 = the average hitter's BATTING eWAR per plate
     appearance, on the 100 + 10z scale (convention 3, ten points per pool sigma,
     NOT the HEM+ ratio scale that the columns around it use).
 
-    Batting bWAR only. The reader is a whole-player value rate, not a rate skill:
+    Batting WAR only, on the eWAR basis, whose batting side equals bWAR until the
+    SDR defense drop (so this index did not move at the 2026-09 epoch). The reader
+    is a whole-player value rate, not a rate skill:
     unlike HEM+, which is offensive rate alone, WAR/PA+ carries fielding,
     baserunning and the positional adjustment, which is exactly why it is noisier
     and why it sits behind a 100-PA display gate.
 
-    TWO-WAY PLAYERS need no discount here. The bWAR reader keeps the batting and
+    TWO-WAY PLAYERS need no discount here. The WAR reader keeps the batting and
     pitching sides on separate keys, so a two-way player's BATTING WAR is divided
     by his plate appearances on this board while his PITCHING WAR is divided by
     his innings on a pitcher board. Two indexes, two denominators, both correct;
@@ -588,7 +590,7 @@ def _join_war_pa_plus(hitters: list[dict], season: int) -> dict:
     exists for a display path where one denominator has to carry both sides, and
     it does not apply.
 
-    Best-effort: bWAR unavailable or degenerate -> nothing stamped, column blank."""
+    Best-effort: WAR unavailable or degenerate -> nothing stamped, column blank."""
     return score_war_rate(
         hitters, season, side="bat", denom_key="pa",
         pool_min=WAR_RATE_POOL_MIN_PA, display_min=WAR_RATE_DISPLAY_MIN_PA,

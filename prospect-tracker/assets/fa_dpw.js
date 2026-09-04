@@ -15,7 +15,7 @@
 // TWO SERIES, NEVER CONFLATED - the single most important thing on the page:
 //   IMPLIED   NPV guarantee / PROJECTED discounted WAR. Ex ante. The headline,
 //             and what every future season's price escalates against.
-//   REALIZED  paid to date / bWAR to date, off the signings ledger. Ex post.
+//   REALIZED  paid to date / eWAR to date, off the signings ledger. Ex post.
 //             A recent winter has banked little money and little WAR, so its
 //             realized number is NOT comparable to an old one. Every realized
 //             point carries its elapsed share and anything under 90% elapsed is
@@ -263,7 +263,9 @@
       <div class="dpw-panel">
         <h3>Implied against realized</h3>
         <p class="dpw-note">The realized line is the same winters priced after the fact -
-          money actually paid over bWAR actually banked. It is the more honest number and
+          money actually paid over WAR actually banked, on the eWAR basis (Baseball-Reference run
+          frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players
+          match bWAR today). It is the more honest number and
           the less comparable one: a winter whose deals are half finished has banked half
           its money and only some of its wins, so the recent end of that line is not a
           market signal. Points whose terms are under 90% elapsed are drawn hollow.</p>

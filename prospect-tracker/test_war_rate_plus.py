@@ -11,16 +11,19 @@ Pins the parts of the design that a later reader is most likely to break:
     per sigma. This is the aStuff+ defect class (an index advertising ten points
     per sigma while delivering 7.16 because mu/sd came from a different pool),
     so it gets a direct test rather than a comment.
-  * batting and pitching bWAR stay on SEPARATE keys, so a two-way player's
+  * batting and pitching WAR stay on SEPARATE keys, so a two-way player's
     pitching WAR is never divided by his plate appearances.
-  * a silent bWAR failure is REFUSED, never served as a board of zeros.
-  * a player with no bWAR row gets NO field, not a zero.
+  * a silent WAR failure is REFUSED, never served as a board of zeros.
+  * a player with no WAR row gets NO field, not a zero.
   * two-tier volume floors: the pool floor anchors, the display gate publishes.
   * no clamp (true-to-model policy): a real outlier prints past 160.
   * the 3-year companion is a FROZEN vintage read verbatim, carrying its
     generated_at disclosure, and it is dropped from the history boards.
 
-Offline: every test builds its own rows and its own bWAR map. Nothing fetches.
+Offline: every test builds its own rows and its own WAR map. Nothing fetches.
+The map is basis-agnostic: since the 2026-09-03 epoch the exporters read the
+war_source default (eWAR v2), and this file pins the scale, the side split and
+the refusal rules, none of which depend on which series fills the map.
 """
 from __future__ import annotations
 
@@ -65,7 +68,7 @@ def test_anchor_pool_delivers_exactly_ten_points_per_sigma(monkeypatch):
     assert meta["available"] and meta["n_stamped"] == n
     # *_raw is serialized at one decimal (the rem_plus_raw / hem_plus_raw house
     # convention), so the tolerance is the serialization step, not slack in the
-    # scale. The lab never reads this field: it recomputes from bWAR, which is how
+    # scale. The lab never reads this field: it recomputes from the WAR frame, which is how
     # the harness-v2 unrounded-predictor rule is satisfied.
     vals = [r["war_pa_plus_raw"] for r in rows]
     mu = sum(vals) / n
@@ -196,10 +199,10 @@ def test_two_way_player_keeps_the_sides_apart(monkeypatch):
 
 
 def test_missing_bwar_row_leaves_the_field_absent(monkeypatch):
-    """Absent is not zero. A player with no bWAR row must render blank, never as
+    """Absent is not zero. A player with no WAR row must render blank, never as
     a real replacement-level season."""
     rows = [{"mlbam": 500 + i, "pa": 400.0} for i in range(40)]
-    rows.append({"mlbam": 999999, "pa": 400.0})       # no bWAR row
+    rows.append({"mlbam": 999999, "pa": 400.0})       # no WAR row
     rows.append({"pa": 400.0})                        # no mlbam at all
     bat = {500 + i: 1.0 + i * 0.05 for i in range(40)}
     _patch_war(monkeypatch, _war_map(2026, bat=bat))
@@ -210,7 +213,7 @@ def test_missing_bwar_row_leaves_the_field_absent(monkeypatch):
 
 
 def test_degenerate_bwar_fetch_is_refused(monkeypatch):
-    """A silent bwar failure must be DETECTED and refused, never served as a
+    """A silent WAR-fetch failure must be DETECTED and refused, never served as a
     board of zeros (the fa_projection.py:191-201 pattern)."""
     rows = [{"mlbam": 500 + i, "pa": 400.0} for i in range(40)]
     _patch_war(monkeypatch, {})                     # empty map = failed fetch
@@ -380,7 +383,7 @@ def test_glossary_entries_name_their_anchor_pool():
 
 
 def test_war_rate_columns_are_dropped_from_history_boards():
-    """History rows carry no bWAR join, so the columns must drop rather than
+    """History rows carry no WAR join, so the columns must drop rather than
     render as a blank column."""
     hit = _JS.split("var HITTER_HISTORY_DROP =")[1].split(";")[0]
     sp = _JS.split("var STARTER_HISTORY_DROP =")[1].split(";")[0]

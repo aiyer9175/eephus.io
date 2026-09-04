@@ -754,7 +754,6 @@ from consensus import (build_timeseries, ADOPT_NORMALIZED_CONSENSUS,
                        CONSTANT_ANCHOR_SOURCES)
 from stats import (fetch_statlines_for, derive_statlines_from_career,
                    fetch_pitch_arsenal, fetch_sabermetrics,
-                   fetch_career_war_bulk,
                    fetch_career_stats,
                    bulk_fetch_season_stats, merge_bulk_into_career_cache,
                    bulk_resolve_ids,
@@ -4361,7 +4360,14 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         # 2026 refetch), and the label builder counted the
                         # missing years as 0 WAR - progressive label decay.
                         try:
-                            war_data = fetch_career_war_bulk(
+                            # eWAR epoch (2026-09-03): the funnel goes through
+                            # the war_source facade on its DEFAULT provider, so
+                            # the payload the table stores is whatever the site
+                            # serves (eWAR v2 once the provider lands; bWAR
+                            # payloads until then, merged as before). Never pass
+                            # provider= here: the default IS the served basis.
+                            import war_source
+                            war_data = war_source.career_war_bulk(
                                 war_targets,
                                 start_year=min(season - 10, 2011),
                                 end_year=season,

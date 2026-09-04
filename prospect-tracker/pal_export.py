@@ -190,10 +190,12 @@ def load_pitch_hand(season: int) -> dict:
 
 @functools.lru_cache(maxsize=1)
 def load_bref_pitcher_war() -> dict:
-    """{year: {mlbam: bWAR}} - Baseball-Reference pitcher WAR by season, summed
-    across in-season stints (traded pitchers), for the "WAR produced by
-    conversion" read. One bulk pull (war_source.stint_frame('pit'), provider
-    'bwar' = pybaseball.bwar_pitch); best-effort, {} on any failure so the
+    """{year: {mlbam: WAR}} - pitcher WAR by season on the war_source default
+    provider (eWAR v2 from the 2026-09 epoch: Baseball-Reference run frame with
+    pitching re-priced on FIP within role), summed across in-season stints
+    (traded pitchers), for the "WAR produced by conversion" read. One bulk pull
+    (war_source.stint_frame('pit'); the explicit 'bwar' provider would be the raw
+    pybaseball.bwar_pitch input); best-effort, {} on any failure so the
     history still renders without the WAR column."""
     try:
         import war_source
@@ -781,7 +783,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     platoon_rows.sort(key=lambda x: x["reverse_index"], reverse=True)
 
     # ---- conversion history + backtest -------------------------------------
-    war_by_year = load_bref_pitcher_war()   # {year: {mlbam: bWAR}}, best-effort
+    war_by_year = load_bref_pitcher_war()   # {year: {mlbam: WAR}}, best-effort
     history, mix_changes = [], []
     pre_fits, labels = [], []           # legacy pooled read (REPORTING ONLY)
     per_dir = {d: {"fit_war": [], "war": [], "fit_held": [], "held": []}
@@ -809,7 +811,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         succ = pc.label_success(e)
         h = dict(e); h["pre_fit"] = pre_fit
         h["success"] = succ
-        # WAR produced by the conversion: bWAR in the pre-role season vs the
+        # WAR produced by the conversion: WAR (eWAR basis) in the pre-role season vs the
         # post-role season, plus the delta. Keyed by the seasons the detector
         # recorded. Absent (older season or no bref row) renders as a dash.
         pre_season = (e.get("pre") or {}).get("season", py)
@@ -843,7 +845,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # PRIMARY continuous outcome (T1-6): war_delta, PER DIRECTION (the two
         # fit scores are different 0-100 scales - pooling them was never
         # meaningful), closed post seasons only (a partial in-progress post
-        # season deflates bWAR mechanically).
+        # season deflates WAR mechanically).
         if (pre_fit is not None and h["war_delta"] is not None
                 and post_season < season and e["direction"] in per_dir):
             per_dir[e["direction"]]["fit_war"].append(pre_fit)
@@ -870,7 +872,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         "n_labeled": len(pre_fits),
         "spearman_prefit_vs_held": None if rho is None else round(rho, 3),
         "per_direction": per_direction,
-        "primary_outcome": ("war_delta (bWAR post-season minus pre-season), per direction, "
+        "primary_outcome": ("war_delta (eWAR post-season minus pre-season), per direction, "
                             "closed post seasons only; the pooled held rho above is a legacy "
                             "reporting field (two different 0-100 scales)"),
         "relief_k_bump_measured": relief_k_bump,
@@ -880,7 +882,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                        "priors from the literature. The gated evaluation (per-direction rho vs same-event "
                        "baselines, bootstrap CI) lives in tools/pal_backtest_lab.py -> data/pal_eval.json; "
                        "the rhos here are the live stamp of the same repaired harness. Held labels read "
-                       "closed >=20 IP follow-up seasons only."),
+                       "closed >=20 IP follow-up seasons only. WAR outcomes are on the served eWAR basis: "
+                       "Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged "
+                       "pending SDR; position players match bWAR today."),
     }
 
     # pitch-add lab: RP->SP candidates with a recommended weapon to add

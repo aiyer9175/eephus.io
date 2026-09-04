@@ -4,75 +4,127 @@
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
 """The pluggable WAR facade (the D0 spec from
-docs/master-plan-2026-08-03-eight-asks.md, built 2026-08-04d lane B1).
+docs/master-plan-2026-08-03-eight-asks.md, built 2026-08-04d lane B1; eWAR
+epoch 2026-09-03, wave 1 lane L2).
 
-One module wraps every WAR read the sites make today, behind a provider id:
+One module wraps every WAR read the sites make, behind a provider id:
 
-  * per-season WAR by mlbam/player_key -- the career_war sqlite table,
-    written by stats.fetch_career_war_bulk (career_war_bulk / career_war_table)
-  * the stint frame -- Baseball-Reference war_daily rows via pybaseball
+  * per-season WAR by player_key - the career_war sqlite table, written by
+    the funnel run_monthly -> career_war_bulk -> storage.upsert_career_war
+    (career_war_bulk / career_war_table / coverage_report)
+  * the stint frame - Baseball-Reference war_daily rows via pybaseball
     (stint_frame), one row per player-stint-season
-  * the run-value decomposition -- WAR_def / runs_position / runs_bat etc.,
+  * the run-value decomposition - WAR_def / runs_position / runs_bat etc.,
     columns that ride the stint frame (run_value_frame)
-  * the name index -- normalized name -> {mlb_ID: {years, war}}
+  * the condensed frame - pybaseball's narrow default column set
+    (condensed_frame)
+  * the name index - normalized name -> {mlb_ID: {years, war}}
     (name_index, delegating to fa_ident.war_daily_index)
-  * the per-season side split -- {mlbam: {season: {"bat": w, "pit": w}}}
-    (side_war_by_season, delegating to mlb_player_export._war_daily)
+  * the per-season side split - {mlbam: {season: {"bat": w, "pit": w}}}
+    (side_war_by_season)
 
-PROVIDER CONTRACT. 'bwar' is the default and the only servable provider; it
-is a pure delegation layer over the existing stats.py / fa_ident.py /
-mlb_player_export.py functions, so routing through this module is a no-op
-refactor (pinned byte-exact by test_war_source.py). 'ewar_v2' and
-'ewar_merged' are DECLARED so call sites can name them today, but they raise
-DataUnavailable loudly until their inputs exist; nothing silently falls back.
+PROVIDER CONTRACT (eWAR epoch, owner decision 2026-09-03, locked).
 
-The per-(player, season) call shape a future provider must satisfy is
-ewar.ewar_for (ewar.py) -- read it before wiring a new provider; do not
-reimplement its artifact read here.
+  'ewar_v2'  THE DEFAULT and the served/label series site-wide. eWAR v2
+             (ewar.py) is the Baseball-Reference run frame with ONE component
+             replaced: pitching re-priced on FIP, centred per season x role so
+             role totals match B-Ref. Fielding swap weight is 0.0 (measured,
+             see ewar.build), offense/baserunning/positional untouched. So:
+               - position players: eWAR == bWAR exactly, season by season,
+                 until the SDR defense drop lands (0 of the batting-side
+                 numbers move);
+               - pitchers: runs are redistributed WITHIN role; league sum per
+                 season is preserved by the re-derived replacement scale.
+             Servable whenever data/ewar.json exists; it is read through
+             ewar.load / ewar.ewar_for and never re-derived here. Where the
+             artifact has no block for a (mlbam, season) the bWAR value is
+             served and the fallback is RECORDED (ewar_coverage on the
+             aggregate, ewar_frame_diagnostics() on the frames), never
+             silent. DataUnavailable only when the artifact is missing,
+             naming the build command (EWAR_BUILD_CMD).
+  'bwar'     The INPUT frame. Still servable on explicit request and still a
+             pure delegation over stats.py / fa_ident.py / mlb_player_export.py
+             (pinned byte-exact by test_war_source.py). bWAR is what eWAR is
+             built on (war_daily via pybaseball); what changed is the SERVED
+             and LABEL series, not the input.
+  'ewar_merged'  Declared, not servable (Will's pitcher eWAR + SDR fielding);
+             raises DataUnavailable naming the missing handoff.
 
-KNOWN TRAP (do not "just flip the default"): bWAR is pinned beyond the ten
-call sites this facade absorbed -- the empirical FV curve, FV_EXPECTED_WAR
-and the survivor anchors, the draft slot curve, war_rate_plus frozen
-vintages, and copy gates literally asserting "bWAR" in user-facing prose.
-A provider swap is the coordinated Stage-2 runbook
-(docs/master-plan-2026-08-03-eight-asks.md D3, an OWNER CHECKPOINT) or
-nothing; a partial re-anchor desyncs fingerprinted artifacts.
+THE BASIS DECISION IS NOT AN ACCURACY CLAIM. The eval record
+(data/ewar_eval.json) is: gate 1 team wins r 0.8595 vs bWAR 0.8803 (a
+descriptive loss, by construction for any FIP WAR); gate 2 pitcher
+persistence 0.3617 vs 0.1768 (2.0x). The eFV label swap (R3a, 2026-08-04)
+moved the margin over consensus by -0.0011 hit / -0.0115 pit, a floor-sized
+effect that is UNEXCLUDED. Copy must say the flip is a basis choice.
+
+THE RE-ENTRANCY TRAP AND THE FRAME PIN. Legacy readers (stats.py,
+mlb_player_export.py, fa_ident.py, fa_projection.py, proj_export.py, ...)
+call stint_frame(side) on the DEFAULT provider, which now means eWAR. That is
+the intent for served numbers, but two transforms in this module need the
+raw bWAR frame underneath a legacy reader: career_war_bulk (the aggregate it
+transforms must be bWAR so `seasons_bwar` is bWAR) and side_war_by_season
+(the map it fills from must be bWAR). They wrap the call in
+_frames_pinned('bwar'), a process-global pin that every stint_frame /
+condensed_frame call inside the window honours, whatever provider it names.
+The pin is visible to worker threads on purpose (stats fetches both sides on
+a ThreadPoolExecutor) and is not safe against two providers pinned
+concurrently; the pipeline is a single writer.
+
+FRESHNESS. Covered player-seasons are pinned to the ARTIFACT (its ewp/ewb
+side totals), so the served WAR of a covered pitcher-season moves only when
+data/ewar.json is rebuilt. In season, war_daily advances daily while the
+artifact holds its generated_at. Rebuild the artifact (EWAR_BUILD_CMD, add
+--force-fetch to bypass ewar.bwar_frames' 7-day cache) before the monthly WAR
+reads, or the pitcher side serves the build date. ewar_frame_diagnostics()
+counts the player-seasons whose frame bWAR sum no longer matches the
+artifact's bwp/bwb (a B-Ref revision or an in-season update since the build).
+
+THE RE-ANCHOR CASCADE IS A LATER WAVE. Flipping this default lands eWAR in
+every default reader; the bWAR-pinned artifacts (empirical FV outcome curve,
+FV_EXPECTED_WAR / survivor anchors, draft slot curve, war_rate_plus vintages,
+eFV matrices / evals / floors, fingerprint label term, projections retrain)
+are rebuilt by the wave that owns them. Until it runs, a not-yet-rebased
+career_war table serves bWAR under source 'bbref' and career_war_table()
+says so (it does not re-transform; read its docstring).
 """
 
 from __future__ import annotations
 
+import contextlib
 import logging
+from pathlib import Path
 
 log = logging.getLogger(__name__)
 
 
 class DataUnavailable(RuntimeError):
-    """A declared WAR provider whose input data does not exist yet.
+    """A declared WAR provider whose input data does not exist.
 
     Deliberately loud: callers must never catch this to fall back silently
-    to 'bwar' -- the caller that wants bwar asks for bwar."""
+    to another provider - the caller that wants bwar asks for bwar."""
 
 
-#: Every provider id this facade recognises. Declared != servable.
+#: Every provider id this facade recognises. Declared != servable. 'bwar'
+#: stays first: it is the INPUT frame the other two are built on.
 PROVIDERS: tuple[str, ...] = ("bwar", "ewar_v2", "ewar_merged")
 
-#: The one servable provider. bWAR is the ONE WAR source site-wide.
-DEFAULT_PROVIDER: str = "bwar"
+#: The served and label WAR site-wide (owner decision 2026-09-03).
+DEFAULT_PROVIDER: str = "ewar_v2"
+
+#: How to (re)build the artifact 'ewar_v2' serves from. The 2011 floor is the
+#: first season the eFV first-6yr label pool reaches; the FIP corpus prices
+#: 2011-2015 in full (707/707 .. 808/810 pitcher rows, tools/build_ewar.py).
+EWAR_BUILD_CMD: str = "python tools/build_ewar.py --first 2011 --last 2026 --write"
 
 _SIDES = ("bat", "pit")
 
-# Why each non-servable provider refuses, naming the missing input. Kept as
+#: Exposure column the pitching/batting delta is spread over within a
+#: player-season, per side. Absent (the condensed frame) -> equal split.
+_EXPOSURE_COL = {"bat": "PA", "pit": "IPouts"}
+
+# Why the non-servable provider refuses, naming the missing input. Kept as
 # module data so test_war_source.py can pin the wording without duplicating it.
 _UNAVAILABLE: dict[str, str] = {
-    "ewar_v2": (
-        "WAR provider 'ewar_v2' is declared but not servable: data/ewar.json "
-        "(ewar.py) is a gated EVAL artifact on the bWAR frame, not an "
-        "approved serving series. Missing input: the Stage-2 coordinated "
-        "re-anchor runbook (docs/master-plan-2026-08-03-eight-asks.md D3, an "
-        "owner checkpoint) covering the bWAR-pinned artifacts (empirical FV "
-        "curve, FV_EXPECTED_WAR, draft slot curve, war_rate_plus vintages, "
-        "copy gates)."
-    ),
     "ewar_merged": (
         "WAR provider 'ewar_merged' is declared but not servable: the merged "
         "series is Will's pitcher eWAR plus SDR-bearing fielding on the "
@@ -85,14 +137,77 @@ _UNAVAILABLE: dict[str, str] = {
 }
 
 
+def _ewar_artifact_path() -> Path:
+    import ewar
+    return ewar.OUT
+
+
+def _ewar_available() -> bool:
+    """True when 'ewar_v2' can serve: an in-memory payload (ewar._CACHE, which
+    is also how tests inject a synthetic artifact) or data/ewar.json on disk."""
+    import ewar
+    return ewar._CACHE is not None or Path(ewar.OUT).exists()
+
+
+def _ewar_missing_message() -> str:
+    return (
+        f"WAR provider 'ewar_v2' is the default but its artifact is missing: "
+        f"{_ewar_artifact_path()} (data/ewar.json, written by ewar.export_payload). "
+        f"Build it: {EWAR_BUILD_CMD}. Nothing falls back to bWAR on its own; a "
+        f"caller that wants bWAR passes provider='bwar'."
+    )
+
+
 def _require(provider: str) -> None:
     """Validate a provider id. ValueError on an unknown id; DataUnavailable
     (with the missing input named) on a declared-but-absent one."""
     if provider not in PROVIDERS:
         raise ValueError(
             f"unknown WAR provider {provider!r}; known providers: {PROVIDERS}")
-    if provider != "bwar":
+    if provider == "ewar_merged":
         raise DataUnavailable(_UNAVAILABLE[provider])
+    if provider == "ewar_v2" and not _ewar_available():
+        raise DataUnavailable(_ewar_missing_message())
+
+
+def _check_side(side: str, what: str = "frame") -> None:
+    if side not in _SIDES:
+        raise ValueError(f"unknown {what} side {side!r}; use one of {_SIDES}")
+
+
+def _payload() -> dict:
+    """The eWAR artifact, through ewar.load (memoised there)."""
+    import ewar
+    return ewar.load()
+
+
+# ---------------------------------------------------------------------------
+# the frame pin (see the module docstring, THE RE-ENTRANCY TRAP)
+# ---------------------------------------------------------------------------
+
+_FRAME_PIN: str | None = None
+
+
+@contextlib.contextmanager
+def _frames_pinned(provider: str):
+    """Force every stint_frame / condensed_frame read inside the window onto
+    ``provider``, regardless of the provider those calls name. Restores the
+    previous pin on exit (nesting is fine). Process-global by design: the
+    legacy readers this exists for run their fetches on worker threads."""
+    global _FRAME_PIN
+    if provider not in PROVIDERS:
+        raise ValueError(
+            f"unknown WAR provider {provider!r}; known providers: {PROVIDERS}")
+    prev = _FRAME_PIN
+    _FRAME_PIN = provider
+    try:
+        yield
+    finally:
+        _FRAME_PIN = prev
+
+
+def _frame_provider(provider: str) -> str:
+    return _FRAME_PIN if _FRAME_PIN is not None else provider
 
 
 # ---------------------------------------------------------------------------
@@ -102,33 +217,206 @@ def _require(provider: str) -> None:
 def career_war_bulk(targets: list[tuple[str, int, bool]],
                     start_year: int, end_year: int,
                     *, provider: str = DEFAULT_PROVIDER) -> dict[str, dict]:
-    """Per-player {seasons, career_war, war_per_yr, war_seasons_count, source}
-    aggregates for a (player_key, mlbam_id, is_pitcher) cohort.
+    """Per-player {seasons, career_war, war_per_yr, war_seasons_count, source,
+    ...} aggregates for a (player_key, mlbam_id, is_pitcher) cohort. This is
+    the payload storage.upsert_career_war stores and every label / WAG /
+    anchor / surplus reader prices off.
 
-    Provider 'bwar' delegates verbatim to stats.fetch_career_war_bulk (the
-    sole writer feed of the career_war sqlite table)."""
+    Provider 'bwar' delegates verbatim to stats.fetch_career_war_bulk over the
+    raw bWAR frames (byte-exact; test_war_source.py).
+
+    Provider 'ewar_v2' fetches the SAME bWAR aggregate (stats, with the frames
+    pinned to bwar so the aggregate really is bWAR), then transforms each row:
+
+        seasons[year]     := ewar_for(mlbam, year)["ewar"] where the artifact
+                             has the block, else the bWAR value (recorded)
+        seasons_bwar      := the untouched bWAR seasons
+        career_war        := round(sum(seasons), 2)
+        war_per_yr        := round(career_war / n, 2)
+        war_seasons_count := n
+        source            := "ewar_v2"
+        ewar_coverage     := {"covered": k, "total": n,
+                              "fallback_years": [years served as bWAR]}
+
+    Rounding is 2dp like the incumbent (the artifact's `ew` is already 2dp).
+    A row whose target mlbam is missing or unknown to the artifact is served
+    as bWAR in full, with every year in fallback_years: identity, not the
+    model, is the binding constraint (69 debuted players have no id anywhere,
+    2026-09-03 census).
+    """
     _require(provider)
     import stats
-    return stats.fetch_career_war_bulk(targets, start_year, end_year)
+    # Both providers fetch the aggregate over the RAW bWAR frames: stats reads
+    # stint_frame on the default provider, so without the pin a 'bwar' request
+    # would sum eWAR-replaced stints and 'seasons_bwar' would not be bWAR.
+    with _frames_pinned("bwar"):
+        base = stats.fetch_career_war_bulk(targets, start_year, end_year)
+    if provider == "bwar" or not base:
+        return base
+    # last target wins per key, mirroring stats' result[player_key] overwrite
+    mlbam_by_key = {key: mid for key, mid, _ in targets}
+    blob = _payload()
+    return {key: _ewar_aggregate(agg, mlbam_by_key.get(key), blob)
+            for key, agg in base.items()}
+
+
+def _ewar_aggregate(agg: dict, mlbam, blob: dict) -> dict:
+    """One bWAR aggregate -> its eWAR v2 payload (see career_war_bulk)."""
+    import ewar
+    seasons_bwar = dict(agg.get("seasons") or {})
+    seasons: dict[str, float] = {}
+    fallback: list[int] = []
+    for yr_s, bw in seasons_bwar.items():
+        yr = int(yr_s)
+        rec = ewar.ewar_for(int(mlbam), yr, payload=blob) if mlbam else None
+        ew = rec.get("ewar") if rec else None
+        if ew is None:
+            seasons[yr_s] = bw
+            fallback.append(yr)
+        else:
+            seasons[yr_s] = round(float(ew), 2)
+    career = round(sum(seasons.values()), 2)
+    n = len(seasons)
+    out = dict(agg)
+    out.update({
+        "seasons": seasons,
+        "career_war": career,
+        "war_per_yr": round(career / n, 2) if n else 0.0,
+        "war_seasons_count": n,
+        "source": "ewar_v2",
+        "seasons_bwar": seasons_bwar,
+        "ewar_coverage": {"covered": n - len(fallback), "total": n,
+                          "fallback_years": fallback},
+    })
+    return out
 
 
 def career_war_table(*, provider: str = DEFAULT_PROVIDER) -> dict[str, dict]:
-    """The persisted per-player aggregate the sites read today:
+    """The persisted per-player aggregate the sites read:
     {player_key: aggregate} from the career_war sqlite table
-    (storage.load_career_war). {} when the table is absent."""
+    (storage.load_career_war). {} when the table is absent.
+
+    Both servable providers return the table AS STORED. This function does not
+    re-transform: the funnel (run_monthly -> career_war_bulk on the default
+    provider -> storage.upsert_career_war) and tools/rebase_career_war_to_ewar
+    write ewar_v2 payloads, and each row's `source` field says which basis it
+    carries ('ewar_v2' with `seasons_bwar` beside it, or 'bbref' = bWAR on a
+    row the rebase has not reached). A not-yet-rebased table therefore serves
+    bWAR under provider 'ewar_v2' and SAYS SO per row; coverage_report()
+    totals it. Re-transforming here would hide that state behind a read."""
     _require(provider)
     import storage
     return storage.load_career_war()
+
+
+def coverage_report(table: dict[str, dict] | None = None) -> dict:
+    """What basis the stored career_war table actually carries.
+
+    Reads the table (or the one passed in) and returns
+      rows               row count
+      by_source          {source: rows}  ('bbref' = bWAR, 'ewar_v2', ...)
+      season_values      total (player, season) cells across all rows
+      season_values_ewar cells served from the eWAR artifact (the sum of the
+                         rows' ewar_coverage.covered; a row without the
+                         receipt contributes 0, whatever its source says)
+      share_ewar         season_values_ewar / season_values (4dp; None if 0)
+      fallback_years     {year: rows served as bWAR for that year} over the
+                         ewar_v2 rows' fallback_years
+      artifact           {model, generated_at, seasons} of data/ewar.json,
+                         or None when it is not available
+    """
+    from collections import Counter
+    if table is None:
+        import storage
+        table = storage.load_career_war()
+    by_source: Counter = Counter()
+    fallback: Counter = Counter()
+    total = 0
+    covered = 0
+    for row in table.values():
+        by_source[str(row.get("source") or "unknown")] += 1
+        total += len(row.get("seasons") or {})
+        cov = row.get("ewar_coverage") or {}
+        covered += int(cov.get("covered") or 0)
+        for yr in cov.get("fallback_years") or []:
+            fallback[int(yr)] += 1
+    artifact = None
+    if _ewar_available():
+        try:
+            blob = _payload()
+            artifact = {"model": blob.get("model"),
+                        "generated_at": blob.get("generated_at"),
+                        "seasons": blob.get("seasons")}
+        except (OSError, ValueError):
+            artifact = None
+    return {
+        "rows": len(table),
+        "by_source": dict(sorted(by_source.items())),
+        "season_values": total,
+        "season_values_ewar": covered,
+        "share_ewar": round(covered / total, 4) if total else None,
+        "fallback_years": {k: fallback[k] for k in sorted(fallback)},
+        "artifact": artifact,
+    }
 
 
 def side_war_by_season(*, provider: str = DEFAULT_PROVIDER
                        ) -> dict[int, dict[int, dict[str, float]]]:
     """{mlbam: {season: {"bat": WAR, "pit": WAR}}} with batting and pitching
     kept on SEPARATE keys (two-way players; position-player pitching cameos).
-    Provider 'bwar' delegates to mlb_player_export._war_daily."""
+
+    Provider 'bwar' delegates to mlb_player_export._war_daily over the raw
+    bWAR frames.
+
+    Provider 'ewar_v2' starts from that bWAR map (frames pinned to bwar) and
+    overlays the artifact: for every (mlbam, season) block, "bat" := ewb when
+    the block carries a batting side and "pit" := ewp when it carries a
+    pitching side. Blocks carry a side only where a war_daily row of that
+    side exists (ewar.export_payload): 11,801 blocks both sides, 9,653
+    bat-only, 706 pit-only in the 2026-09-03T12:35 build (22,160 blocks,
+    2011-2026). Seasons absent from the artifact keep the bWAR cell, so
+    coverage never shrinks.
+
+    ONE EXCEPTION, so the key structure mirrors bWAR's. A side B-Ref left
+    BLANK (WAR NaN: 12,023 batting rows and 196 pitching rows in the
+    2026-09-03 frames, mostly pitchers' batting lines) is 0.0 in the artifact
+    (ewar._num coerces blank to 0; 4,617 batting blocks in the current build,
+    every one of them 0.0) and absent from the bWAR map, which drops NaN
+    rows. A zero-valued side the map lacks is NOT added, so a pitcher's blank
+    batting line does not become a 0.0 batting WAR on a hitter surface.
+
+    Batting-side values equal bWAR by construction today (fielding swap
+    weight 0.0); only their float representation changes (the artifact
+    stores 2dp sums, the map sums raw stints)."""
     _require(provider)
     import mlb_player_export
-    return mlb_player_export._war_daily()
+    # pinned for both providers: _war_daily reads stint_frame on the default
+    with _frames_pinned("bwar"):
+        out = mlb_player_export._war_daily()
+    if provider == "bwar":
+        return out
+    import ewar
+    blob = _payload()
+    for mid_s, seasons in (blob.get("players") or {}).items():
+        mid = int(mid_s)
+        for season_s in seasons:
+            season = int(season_s)
+            rec = ewar.ewar_for(mid, season, payload=blob)
+            if rec is None:
+                continue
+            cell = out.setdefault(mid, {}).setdefault(season, {})
+            for key, val in (("bat", rec.get("ewar_bat")),
+                             ("pit", rec.get("ewar_pit"))):
+                if val is None:
+                    continue
+                if key not in cell and float(val) == 0.0:
+                    continue          # the blank-row rule (docstring)
+                cell[key] = float(val)
+            if not cell:              # nothing landed, nothing was there
+                out[mid].pop(season, None)
+                if not out[mid]:
+                    out.pop(mid, None)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -143,13 +431,20 @@ def condensed_frame(side: str, *, provider: str = DEFAULT_PROVIDER):
 
     Kept separate on purpose: a caller written against one column set will
     KeyError on the other, so the two frames must never be silently swapped.
-    Provider semantics and exception policy match stint_frame()."""
+    Provider semantics match stint_frame(): 'bwar' is the raw pybaseball
+    frame; 'ewar_v2' is that frame with WAR replaced per (mlb_ID, year_ID)
+    (see _ewar_frame) plus a WAR_bwar column. The condensed pitching frame has
+    no IPouts and the batting one keeps PA, so a multi-stint pitcher-season's
+    delta is split EQUALLY across its stints here (the exposure-weighted split
+    needs the stint frame)."""
     _require(provider)
-    if side not in _SIDES:
-        raise ValueError(f"unknown frame side {side!r}; use one of {_SIDES}")
+    _check_side(side)
     import pybaseball as pyb
     fn = pyb.bwar_bat if side == "bat" else pyb.bwar_pitch
-    return fn()
+    raw = fn()
+    if _frame_provider(provider) == "bwar":
+        return raw
+    return _ewar_frame(raw, side, door="condensed")
 
 
 def stint_frame(side: str, *, provider: str = DEFAULT_PROVIDER,
@@ -159,7 +454,20 @@ def stint_frame(side: str, *, provider: str = DEFAULT_PROVIDER,
     ``side`` is 'bat' or 'pit'.
 
     Provider 'bwar' is pybaseball.bwar_bat / bwar_pitch with return_all=True,
-    two static Baseball-Reference CSV downloads.
+    two static Baseball-Reference CSV downloads (the body below, unchanged).
+
+    Provider 'ewar_v2' is the SAME frame (fetched and cached exactly as bwar:
+    the last-good cache always holds the raw bWAR download) with the WAR
+    column replaced so that, per (mlb_ID, year_ID), the stint WARs sum to the
+    artifact's side total (ewp on the pitching frame, ewb on the batting
+    frame). The (side total - frame sum) delta is spread across that
+    player-season's stints in proportion to IPouts (pit) or PA (bat); rows
+    with no artifact block keep bWAR. Every other column (salary, the runs
+    decomposition, WAA, WAR_rep, ...) is untouched and WAR_bwar carries the
+    original. Batting values do not move today (ewb == bwb at fielding swap
+    weight 0.0) but the same distribution runs so the frame stays correct if
+    fielding ever does. Note the decomposition columns still describe the
+    bWAR row: WAR is FIP-repriced, WAA / runs_above_avg are not.
 
     THE ASYMMETRY THIS GUARDS (2026-08-04, root-caused 2026-08-06). The
     docstring here used to say both calls were "cached by pybaseball". Only one
@@ -186,8 +494,15 @@ def stint_frame(side: str, *, provider: str = DEFAULT_PROVIDER,
     fresh-checkout behaviour, and the per-site try/except policy stays where it
     always lived, at the call sites."""
     _require(provider)
-    if side not in _SIDES:
-        raise ValueError(f"unknown stint-frame side {side!r}; use one of {_SIDES}")
+    _check_side(side, "stint-frame")
+    raw = _bwar_stint_frame(side, allow_stale)
+    if _frame_provider(provider) == "bwar":
+        return raw
+    return _ewar_frame(raw, side, door="stint")
+
+
+def _bwar_stint_frame(side: str, allow_stale: bool):
+    """Provider 'bwar' body of stint_frame, verbatim from lane B1."""
     import pybaseball as pyb
     fn = pyb.bwar_bat if side == "bat" else pyb.bwar_pitch
     try:
@@ -216,10 +531,134 @@ def stint_frame(side: str, *, provider: str = DEFAULT_PROVIDER,
     return df
 
 
+# --- the eWAR frame transform ----------------------------------------------
+
+#: {side: receipt} for the last _ewar_frame call per side in this process.
+_EWAR_FRAME_DIAG: dict[str, dict] = {}
+
+
+def ewar_frame_diagnostics() -> dict[str, dict]:
+    """Receipts from the last ewar_v2 frame transform per side:
+      rows                     frame rows
+      covered_rows             rows whose (mlb_ID, year_ID) has an artifact
+                               block with this side
+      covered_player_seasons   distinct such (mlb_ID, year_ID)
+      artifact_player_seasons  blocks with this side in the artifact
+      bwar_revised             covered player-seasons whose frame bWAR sum
+                               differs from the artifact's bwp/bwb by more
+                               than 0.005: B-Ref revised the row, or the
+                               season advanced since generated_at. The
+                               artifact's eWAR is served either way.
+      delta_sum                sum over covered rows of (WAR - WAR_bwar):
+                               the league-level move this transform made
+      artifact_generated_at
+    Empty until a frame has been read on provider 'ewar_v2'."""
+    return {k: dict(v) for k, v in _EWAR_FRAME_DIAG.items()}
+
+
+def _artifact_side_targets(blob: dict, side: str
+                           ) -> dict[tuple[int, int], tuple[float, float | None]]:
+    """{(mlbam, season): (ewar_side, bwar_side)} for every block carrying the
+    side, read through ewar.ewar_for so the field semantics live in one place."""
+    import ewar
+    ek, bk = (("ewar_bat", "bwar_bat") if side == "bat"
+              else ("ewar_pit", "bwar_pit"))
+    out: dict[tuple[int, int], tuple[float, float | None]] = {}
+    for mid_s, seasons in (blob.get("players") or {}).items():
+        mid = int(mid_s)
+        for season_s in seasons:
+            rec = ewar.ewar_for(mid, int(season_s), payload=blob)
+            if rec is None or rec.get(ek) is None:
+                continue
+            bw = rec.get(bk)
+            out[(mid, int(season_s))] = (float(rec[ek]),
+                                         None if bw is None else float(bw))
+    return out
+
+
+def _ewar_frame(df, side: str, *, door: str):
+    """Replace WAR on a war_daily frame with the eWAR v2 series (stint_frame
+    docstring). Adds WAR_bwar (the original). Keeps every other column and
+    the row order. Rows without an artifact block keep bWAR."""
+    import numpy as np
+    import pandas as pd
+
+    blob = _payload()
+    targets = _artifact_side_targets(blob, side)
+    out = df.copy()
+    out["WAR_bwar"] = out["WAR"]
+    receipt = {
+        "door": door, "rows": int(len(out)), "covered_rows": 0,
+        "covered_player_seasons": 0, "artifact_player_seasons": len(targets),
+        "bwar_revised": 0, "delta_sum": 0.0,
+        "artifact_generated_at": blob.get("generated_at"),
+    }
+    if not len(out) or not targets:
+        _EWAR_FRAME_DIAG[side] = receipt
+        return out
+
+    mid = pd.to_numeric(out["mlb_ID"], errors="coerce")
+    yr = pd.to_numeric(out["year_ID"], errors="coerce")
+    war = pd.to_numeric(out["WAR"], errors="coerce")
+    ok = mid.notna() & yr.notna() & war.notna()
+    ok_idx = ok[ok].index
+    keys = list(zip(mid[ok_idx].astype("int64").tolist(),
+                    yr[ok_idx].astype("int64").tolist()))
+    hit = [targets.get(k) for k in keys]
+    cov_pos = [i for i, h in enumerate(hit) if h is not None]
+    if not cov_pos:
+        _EWAR_FRAME_DIAG[side] = receipt
+        return out
+    cov_idx = ok_idx[cov_pos]
+    expo_col = _EXPOSURE_COL[side]
+    if expo_col in out.columns:
+        expo = pd.to_numeric(out.loc[cov_idx, expo_col], errors="coerce")
+        expo = expo.fillna(0.0).clip(lower=0.0).astype("float64")
+    else:
+        expo = pd.Series(1.0, index=cov_idx)
+    w = pd.DataFrame({
+        "war": war[cov_idx].astype("float64"),
+        "expo": expo,
+        # one int64 group id per (mlbam, season); mlbams are < 10**6
+        "g": np.asarray([keys[i][0] * 10000 + keys[i][1] for i in cov_pos],
+                        dtype="int64"),
+        "tgt": np.asarray([hit[i][0] for i in cov_pos], dtype="float64"),
+        "bart": np.asarray([np.nan if hit[i][1] is None else hit[i][1]
+                            for i in cov_pos], dtype="float64"),
+    }, index=cov_idx)
+    grp = w.groupby("g", sort=False)
+    fsum = grp["war"].transform("sum")
+    esum = grp["expo"].transform("sum")
+    n = grp["war"].transform("count").astype("float64")   # no NaN here: == size
+    weight = np.where(esum.values > 0,
+                      w["expo"].values / np.where(esum.values > 0, esum.values, 1.0),
+                      1.0 / n.values)
+    new_war = w["war"].values + (w["tgt"].values - fsum.values) * weight
+    out.loc[cov_idx, "WAR"] = new_war
+
+    per = grp.agg(fsum=("war", "sum"), bart=("bart", "first"))
+    revised = per["bart"].notna() & ((per["fsum"] - per["bart"]).abs() > 0.005)
+    receipt.update({
+        "covered_rows": int(len(cov_idx)),
+        "covered_player_seasons": int(len(per)),
+        "bwar_revised": int(revised.sum()),
+        "delta_sum": float(np.sum(new_war - w["war"].values)),
+    })
+    _EWAR_FRAME_DIAG[side] = receipt
+    if receipt["bwar_revised"]:
+        log.info("war_source: %s %s frame: %d of %d covered player-seasons have "
+                 "a bWAR sum that no longer matches the artifact (built %s); "
+                 "serving the artifact's eWAR. Rebuild: %s",
+                 side, door, receipt["bwar_revised"], len(per),
+                 blob.get("generated_at"), EWAR_BUILD_CMD)
+    return out
+
+
 # --- last-good cache -------------------------------------------------------
 # Deliberately this module's own cache rather than a patch to pybaseball's:
 # the failure it covers is a network read, and we want a copy we control, in a
-# format we can date, with a record of when we fell back to it.
+# format we can date, with a record of when we fell back to it. It always
+# holds the RAW bWAR download; the eWAR transform runs on top of it.
 
 #: {side: {"age_days": float|None, "rows": int, "error": str}} for any side
 #: currently being served from disk. Empty when everything is live.
@@ -237,7 +676,6 @@ def served_stale() -> dict[str, dict]:
 
 
 def _cache_dir():
-    from pathlib import Path
     d = Path(__file__).resolve().parent / ".cache" / "war_daily"
     return d
 
@@ -298,7 +736,10 @@ def run_value_frame(side: str = "bat", *, provider: str = DEFAULT_PROVIDER):
     """The run-value decomposition read: the stint frame selected for its
     component columns (WAR_def, runs_position, runs_bat, runs_br, runs_dp,
     PA, pitcher, ...). Defaults to the batting frame, which carries the
-    fielding/positional decomposition tools/build_def_history.py consumes."""
+    fielding/positional decomposition tools/build_def_history.py consumes.
+    Under 'ewar_v2' the decomposition columns are the bWAR row's (only WAR is
+    replaced, WAR_bwar added); on the batting frame WAR itself does not move
+    today (fielding swap weight 0.0)."""
     return stint_frame(side, provider=provider)
 
 
@@ -308,9 +749,88 @@ def run_value_frame(side: str = "bat", *, provider: str = DEFAULT_PROVIDER):
 
 def name_index(*, provider: str = DEFAULT_PROVIDER) -> dict[str, dict[int, dict]]:
     """{normalized_name: {mlb_ID: {"years": set[int], "war": {year: WAR}}}}
-    across both war_daily sides -- the veteran identity index. Provider
-    'bwar' delegates to fa_ident.war_daily_index (lru-cached there; use
-    fa_ident.resolve for windowed disambiguation, never guess here)."""
+    across both war_daily sides - the veteran identity index. Delegates to
+    fa_ident.war_daily_index (lru-cached there; use fa_ident.resolve for
+    windowed disambiguation, never guess here).
+
+    PROVIDER-INVARIANT ON PURPOSE. This index is identity (names, ids, the
+    seasons a player appeared), not a served WAR: the facade applies no
+    transform here and every servable provider returns the same object. Its
+    "war" values ride whatever frame the process default serves (fa_ident
+    reads stint_frame on the default provider), which is eWAR on covered
+    pitcher-seasons and bWAR elsewhere; nothing prices off them, and the
+    seasons a row exists in are the same under either series. Served WAR
+    comes from career_war_table / side_war_by_season / stint_frame, never
+    from here."""
     _require(provider)
     import fa_ident
     return fa_ident.war_daily_index()
+
+
+# ---------------------------------------------------------------------------
+# player_key -> mlbam (the join the artifact needs)
+# ---------------------------------------------------------------------------
+
+_ROOT = Path(__file__).resolve().parent
+
+#: Fallback bindings after the canonical table, in resolution order.
+MLBAM_OVERRIDE_FILES: tuple[Path, ...] = (
+    _ROOT / "data" / "sources" / "mlbam_id_overrides.json",
+    _ROOT / "data" / "sources" / "mlbam_id_overrides_busts.json",
+)
+
+_MLBAM_INDEX: dict[str, int] | None = None
+
+
+def mlbam_index(refresh: bool = False) -> dict[str, int]:
+    """{player_key: mlbam}, memoised per process. Not a fourth resolver: a
+    router over the bindings the repo already keeps, in this order, and a key
+    already bound is never re-pointed by a later source:
+
+      1. storage.load_mlbam_player_keys() inverted - player_photos, the
+         canonical durable mlbam <-> player_key table (storage.bind_player_ids
+         guards it in both directions). 7,763 bindings, 0 keys on two ids,
+         2026-09-03.
+      2. data/sources/mlbam_id_overrides.json (735 keys, the old-cohort
+         resolve, tools/efv_oldcohort_id_resolve.py).
+      3. data/sources/mlbam_id_overrides_busts.json (283 keys).
+
+    Measured 2026-09-03: 38 override keys are also in player_photos and 3 of
+    them disagree (tyler_wilson, jose_alvarez, kyle_mcpherson: two humans per
+    slug), which is why the binding table wins. Merged 8,460 keys; 2,524 of
+    2,666 career_war rows resolve. The 142 that do not are the identity gap
+    the rebase tool must report, not guess."""
+    global _MLBAM_INDEX
+    if _MLBAM_INDEX is not None and not refresh:
+        return _MLBAM_INDEX
+    import json
+    out: dict[str, int] = {}
+    try:
+        import storage
+        for mid_s, key in storage.load_mlbam_player_keys().items():
+            try:
+                out.setdefault(key, int(mid_s))
+            except (TypeError, ValueError):
+                continue
+    except Exception:
+        log.warning("war_source.mlbam_index: player_photos unreadable; "
+                    "falling through to the override files", exc_info=True)
+    for path in MLBAM_OVERRIDE_FILES:
+        try:
+            blob = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for key, mid in (blob or {}).items():
+            try:
+                out.setdefault(str(key), int(mid))
+            except (TypeError, ValueError):
+                continue
+    _MLBAM_INDEX = out
+    return out
+
+
+def mlbam_for(player_key: str) -> int | None:
+    """The mlbam a player_key resolves to under mlbam_index(), or None."""
+    if not player_key:
+        return None
+    return mlbam_index().get(str(player_key))

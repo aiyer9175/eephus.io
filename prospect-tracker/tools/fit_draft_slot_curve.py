@@ -88,12 +88,19 @@ def draft_picks(year: int) -> list[dict]:
     return out
 
 
-def war_by_player() -> dict[int, dict[int, float]]:
-    """{mlbam: {season: bWAR}} from war_daily (bat + pitch summed)."""
-    import pybaseball as pyb
+def war_by_player(provider: str | None = None) -> dict[int, dict[int, float]]:
+    """{mlbam: {season: WAR}} from the war_daily stint frames (bat + pitch
+    summed), read through the war_source facade on ``provider`` (None = the
+    facade DEFAULT, eWAR v2 since 2026-09-03), so the slot curve prices picks
+    on the served basis; provider='bwar' reproduces the shipped fit's inputs.
+    Under eWAR only pitcher-seasons move (FIP re-pricing within role); the
+    batting side equals bWAR until the SDR defense drop. The refit itself is
+    the rebuild wave's (re-anchor cascade), not this lane's."""
+    import war_source
+    provider = provider or war_source.DEFAULT_PROVIDER
     out: dict[int, dict[int, float]] = {}
-    for fn in (pyb.bwar_bat, pyb.bwar_pitch):
-        df = fn(return_all=True)
+    for side in ("bat", "pit"):
+        df = war_source.stint_frame(side, provider=provider)
         sub = df[df["mlb_ID"].notna() & df["WAR"].notna()]
         for row in sub.itertuples(index=False):
             try:
@@ -186,7 +193,9 @@ def run(persist: bool = True) -> dict:
     for y, picks in picks_by_year.items():
         for p in picks:
             last_drafted[p["mlbam"]] = max(last_drafted.get(p["mlbam"], 0), y)
-    wars = war_by_player()
+    import war_source
+    war_provider = war_source.DEFAULT_PROVIDER
+    wars = war_by_player(war_provider)
 
     rows = {"career": [], "first6": [], "first8": [], "first8_holdout": []}
     acct = {"picks_seen": 0, "unsigned_excluded": 0, "scored": 0}
@@ -233,7 +242,9 @@ def run(persist: bool = True) -> dict:
         "career_fit_years": [min(CAREER_FIT_YEARS), max(CAREER_FIT_YEARS)],
         "accounting": acct,
         "conventions": {
-            "war_basis": "bWAR (war_daily, bat+pitch summed), the platform basis",
+            "war_basis": (f"war_source provider {war_provider} (war_daily stint frames, "
+                          "bat+pitch summed), the platform basis; eWAR v2 = FIP-repriced "
+                          "pitching within role, position players equal bWAR until the SDR drop"),
             "unsigned": "excluded when the person reappears in a later draft",
             "never_mlb": "scores 0 (the expectation includes busts)",
             "fit": "weighted decreasing isotonic (PAVA) on per-pick means, picks 1-500",

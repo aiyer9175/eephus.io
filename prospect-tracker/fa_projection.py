@@ -84,18 +84,29 @@ def _ip_to_float(raw) -> float:
     return _f(s)
 
 
-def _war_age_maps() -> tuple[dict, dict]:
+def _war_age_maps(provider: str | None = None) -> tuple[dict, dict]:
     """{(mlbam, season): war} (bat+pit summed) and {(mlbam, season): age}
-    from the war_daily tables — the corpus's WAR + age source."""
+    from the war_daily stint frames, read through the war_source facade on
+    ``provider`` (None = the facade DEFAULT, eWAR v2 since 2026-09-03).
+
+    The corpus's WAR labels, the fitted WAR map and proj_ml's label frames
+    therefore follow the served basis: pitcher-seasons carry FIP-repriced
+    WAR (redistributed within role, league sum preserved per season) and
+    position players equal bWAR until the SDR defense drop. Age rides the
+    same rows and is basis-invariant. provider='bwar' reproduces the
+    pre-epoch corpus. This is a basis decision, not an accuracy claim:
+    data/ewar_eval.json gate 1 team wins r 0.8595 vs bWAR 0.8803, gate 2
+    pitcher persistence 0.3617 vs 0.1768."""
     import pybaseball  # noqa: F401 - availability probe; frames come via war_source
     import war_source
+    provider = provider or war_source.DEFAULT_PROVIDER
     war: dict[tuple[int, int], float] = {}
     age: dict[tuple[int, int], int] = {}
-    for side, label in (("bat", "bwar_bat"), ("pit", "bwar_pitch")):
+    for side in ("bat", "pit"):
         try:
-            df = war_source.stint_frame(side)
+            df = war_source.stint_frame(side, provider=provider)
         except Exception as e:                                # noqa: BLE001
-            log.warning("%s unavailable: %s", label, e)
+            log.warning("war_daily %s frame (%s) unavailable: %s", side, provider, e)
             continue
         sub = df[df["mlb_ID"].notna() & df["WAR"].notna()]
         for row in sub.itertuples(index=False):
@@ -155,6 +166,30 @@ def _corpus_stale_reason(cached: dict, last: int) -> str | None:
     return None
 
 
+def _war_provider() -> str:
+    """The WAR basis a corpus built now is labelled on: the facade default."""
+    import war_source
+    return war_source.DEFAULT_PROVIDER
+
+
+def _corpus_provider_stale(cached: dict) -> str | None:
+    """Why a cached corpus must be rebuilt on WAR BASIS grounds, or None.
+
+    A corpus pickled before the 2026-09-03 epoch carries no 'war_provider'
+    and was built on bWAR; one pickled after carries the facade default it
+    was built under. Either is stale the moment the default differs, whatever
+    its data age: the WAR column IS the label, so an accepted mismatch would
+    fit the aging curves, the WAR map, proj_ml's frames and every free-agent
+    price on the other series and nothing downstream could tell (the P-CTTL
+    triggers see only mtimes). Kept apart from _corpus_stale_reason, which
+    is about data age and lets a completed-season corpus live forever."""
+    want = _war_provider()
+    have = cached.get("war_provider") or "bwar"
+    if have != want:
+        return f"WAR provider {have} != facade default {want}"
+    return None
+
+
 def build_corpus(first_season: int | None = None, last_season: int | None = None,
                  force: bool = False) -> dict:
     """{"hit": [rows], "pit": [rows], "league": {season: {...}}}.
@@ -173,7 +208,8 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
         with open(CORPUS_CACHE, "rb") as fh:
             cached = pickle.load(fh)
         if cached.get("first") == first and cached.get("last") >= last - 0:
-            reason = _corpus_stale_reason(cached, last)
+            reason = (_corpus_provider_stale(cached)
+                      or _corpus_stale_reason(cached, last))
             if reason is None:
                 return cached
             log.info("fa corpus cache stale (%s) - rebuilding", reason)
@@ -186,7 +222,9 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
         # DOWN that a stale-but-usable pickle would have served. Any source
         # failure (pybaseball / network) falls back to the cached corpus.
         if cached is not None:
-            log.warning("fa corpus rebuild failed (%s) — serving the STALE cache", e)
+            mismatch = _corpus_provider_stale(cached)
+            log.warning("fa corpus rebuild failed (%s) - serving the STALE cache%s", e,
+                        f"; WAR BASIS MISMATCH, {mismatch}" if mismatch else "")
             return cached
         raise
     # P-CTTL guard: _war_age_maps is fail-SOFT (a bwar fetch failure logs and
@@ -305,7 +343,10 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
         league[season] = lg
         pit_rows.extend(season_pit)
     corpus = {"hit": hit_rows, "pit": pit_rows, "league": league,
-              "first": first, "last": last}
+              "first": first, "last": last,
+              # the WAR basis the rows were labelled on (_war_age_maps read
+              # the facade default); _corpus_provider_stale invalidates on it
+              "war_provider": _war_provider()}
     CACHE_DIR.mkdir(exist_ok=True)
     with open(CORPUS_CACHE, "wb") as fh:
         pickle.dump(corpus, fh)
@@ -391,6 +432,8 @@ def fitted_models(corpus: dict, max_season: int, use_cache: bool = True,
     # suffix, so the two fits coexist on disk.
     _use_def = _def_enabled() if use_def is None else bool(use_def)
     _suffix = "_def" if _use_def else ""
+    # No WAR-provider tag needed here: _corpus_sig digests every row's `war`,
+    # so the eWAR epoch (pitcher labels move) re-keys this cache on its own.
     cache = (CACHE_DIR /
              f"fa_fits_{max_season}_{corpus['first']}_{corpus['last']}"
              f"_{_corpus_sig(corpus)}{_suffix}.pkl")

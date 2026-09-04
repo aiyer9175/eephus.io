@@ -25,6 +25,10 @@ are asserted here rather than assumed:
 If either endpoint drifts, every w in between is measuring something nobody
 chose, and the grid search that picks w would be selecting on a broken axis.
 
+Since the 2026-09-03 epoch eWAR v2 is the SERVED series (war_source default
+provider), so the w = 0.0 endpoint is also the served-copy statement
+'position players match bWAR today': a drift here would make that copy false.
+
 These tests exercise the arithmetic directly rather than running build(), which
 needs the war_daily frames and several minutes; the arithmetic under test is a
 closed-form expression and is reproduced here from the shipped source so a

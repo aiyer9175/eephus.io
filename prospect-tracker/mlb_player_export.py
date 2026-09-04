@@ -9,7 +9,7 @@
 Prospects have full PROSPX detail pages; until now MLB players only had
 board rows. This sidecar gives every projections veteran and every
 FA-class member a real page: identity + contract chips, the projection
-path with bands, season-by-season career lines with bWAR, Savant
+path with bands, season-by-season career lines with eWAR, Savant
 percentile sliders, pitch arsenal (pitchers), and Swing+ (hitters,
 Will Cahoon's model via data/swing_plus.json).
 
@@ -18,8 +18,11 @@ Will Cahoon's model via data/swing_plus.json).
              mlbam: vets carry it (proj_export emits it); FA members
              resolve through fa_ident's war_daily identity index.
   CAREER     MLB season lines 2014+ from the cached StatsAPI ladder
-             (milb_history sport 1) + per-season bWAR from war_daily
-             (pybaseball cache), joined on mlbam.
+             (milb_history sport 1) + per-season WAR from war_daily
+             (pybaseball cache) through the war_source facade on its
+             default provider (eWAR v2; bWAR is the input frame and rides
+             beside the served number as war_bwar where the two differ),
+             joined on mlbam.
   STATCAST   Savant MLB leaderboards per season (statcast + expected_
              statistics + pitch-arsenal-stats), cached under
              .cache/savant_mlb/. Percentiles computed within the
@@ -208,7 +211,9 @@ def _arsenal_block(mlbam: int, year: int) -> list[dict] | None:
 
 
 def _career_rows(mlbam: int, is_pitcher: bool,
-                 war_by: dict[int, dict[int, dict[str, float]]]) -> list[dict]:
+                 war_by: dict[int, dict[int, dict[str, float]]],
+                 war_bwar_by: dict[int, dict[int, dict[str, float]]] | None = None
+                 ) -> list[dict]:
     group = "pitching" if is_pitcher else "hitting"
     out = []
     for season in range(CAREER_FROM, date.today().year + 1):
@@ -221,13 +226,24 @@ def _career_rows(mlbam: int, is_pitcher: bool,
         # position player's mop-up inning doesn't fold pitching WAR into the hitting row.
         _sw = (war_by.get(mlbam) or {}).get(season) or {}
         war = _sw.get("pit" if is_pitcher else "bat")
+        # war_bwar: the bWAR input beside the served WAR, carried only where
+        # the two differ at display precision (1dp). That is pitcher rows
+        # under the FIP re-pricing; a position player's row never carries it
+        # until the SDR defense drop (eWAR == bWAR there). Absent means equal.
+        _ref = ((war_bwar_by or {}).get(mlbam) or {}).get(season) or {}
+        war_bwar = _ref.get("pit" if is_pitcher else "bat")
+        extra = {}
+        if (war is not None and war_bwar is not None
+                and round(war, 1) != round(war_bwar, 1)):
+            extra["war_bwar"] = round(war_bwar, 1)
         if is_pitcher:
             bf = _f(r.get("bf")) or 0
             so, bb = _f(r.get("so")), _f(r.get("bb"))
             out.append({"y": season, "ip": r.get("ip"), "era": _f(r.get("era")),
                         "kPct": round(so / bf * 100, 1) if so is not None and bf else None,
                         "bbPct": round(bb / bf * 100, 1) if bb is not None and bf else None,
-                        "war": round(war, 1) if war is not None else None})
+                        "war": round(war, 1) if war is not None else None,
+                        **extra})
         else:
             pa = _f(r.get("pa")) or 0
             so, bb = _f(r.get("so")), _f(r.get("bb"))
@@ -238,18 +254,24 @@ def _career_rows(mlbam: int, is_pitcher: bool,
                         "kPct": round(so / pa * 100, 1) if so is not None and pa else None,
                         "bbPct": round(bb / pa * 100, 1) if bb is not None and pa else None,
                         "iso": round(slg - avg, 3) if slg is not None and avg is not None else None,
-                        "war": round(war, 1) if war is not None else None})
+                        "war": round(war, 1) if war is not None else None,
+                        **extra})
     return out
 
 
 def _war_daily() -> dict[int, dict[int, dict[str, float]]]:
-    """{mlbam: {season: {"bat": bWAR, "pit": bWAR}}} -- batting and pitching bWAR kept
+    """{mlbam: {season: {"bat": WAR, "pit": WAR}}} -- batting and pitching WAR kept
     on SEPARATE keys (they used to be summed onto one number and attached to both the
     hitting and pitching career rows, distorting two-way players and position-player
     pitching cameos).
 
-    war_source.side_war_by_season is the facade route to this map; the raw
-    frames below come through war_source.stint_frame (provider 'bwar')."""
+    THE FACADE'S DELEGATE, NOT A SURFACE READ. war_source.side_war_by_season
+    calls this under _frames_pinned('bwar') for BOTH providers, so here the
+    stint frames are raw bWAR and this is the bWAR map the facade overlays
+    eWAR on. Called bare it sums whatever stint_frame serves on the process
+    default (eWAR v2 since 2026-09-03: per (mlb_ID, year_ID) the stint WARs
+    sum to the artifact's side total). build_payload reads the facade
+    (_war_maps), never this directly."""
     import pybaseball  # noqa: F401 - availability probe; frames come via war_source
     import war_source
     out: dict[int, dict[int, dict[str, float]]] = {}
@@ -267,6 +289,26 @@ def _war_daily() -> dict[int, dict[int, dict[str, float]]]:
             cell = out.setdefault(mid, {}).setdefault(yr, {})
             cell[side] = cell.get(side, 0.0) + war
     return out
+
+
+def _war_maps() -> tuple[dict, dict]:
+    """(served, reference): two side maps from the war_source facade.
+
+    served     side_war_by_season() on the DEFAULT provider: eWAR v2 since the
+               2026-09-03 basis decision (pitching re-priced on FIP within
+               role; the batting side equals bWAR until the SDR defense drop).
+    reference  side_war_by_season(provider='bwar'), the input frame, so a card
+               can show bWAR beside the served WAR (tooltip). The same object
+               as `served` when the default IS bwar, so the reference costs a
+               second war_daily read only under a non-bwar default.
+
+    Both are {mlbam: {season: {"bat": w, "pit": w}}}; the facade keeps the
+    served key set a superset of the reference's (coverage never shrinks)."""
+    import war_source
+    served = war_source.side_war_by_season()
+    if war_source.DEFAULT_PROVIDER == "bwar":
+        return served, served
+    return served, war_source.side_war_by_season(provider="bwar")
 
 
 def _ident_mlbams(keys: list[str]) -> dict[str, int]:
@@ -532,7 +574,7 @@ def build_payload() -> dict:
 
     all_keys = [v["key"] for v in proj.get("vets") or []] + list(members)
     fa_ids = _ident_mlbams(all_keys)
-    war_by = _war_daily()
+    war_by, war_bwar_by = _war_maps()
     year = date.today().year
     players: dict[str, dict] = {}
 
@@ -628,7 +670,7 @@ def build_payload() -> dict:
                 block["pitch"] = sk["pitch"]
             if block:
                 p["skills"] = block
-        p["career"] = _career_rows(int(mlbam), p["isPit"], war_by)
+        p["career"] = _career_rows(int(mlbam), p["isPit"], war_by, war_bwar_by)
         n_car += 1 if p["career"] else 0
         sc = _statcast_block(int(mlbam), p["isPit"], year)
         if sc:
@@ -638,7 +680,7 @@ def build_payload() -> dict:
         # the hitting line (isPit forced False for two-way); the pitching
         # line + arsenal ride alongside.
         if p.get("twoWay"):
-            p["careerPit"] = _career_rows(int(mlbam), True, war_by)
+            p["careerPit"] = _career_rows(int(mlbam), True, war_by, war_bwar_by)
             scp = _statcast_block(int(mlbam), True, year)
             if scp:
                 p["scPit"] = scp
@@ -674,7 +716,7 @@ def build_payload() -> dict:
                      "skills": sum(1 for p in players.values() if p.get("skills")),
                      "scout": sum(1 for p in players.values() if p.get("scout"))},
         "notes": [
-            "career: MLB season lines (StatsAPI) + per-season bWAR (war_daily)",
+            "career: MLB season lines (StatsAPI) + per-season WAR on the war_source default provider (eWAR v2: FIP-repriced pitching within role; batting side equal to bWAR until the SDR defense drop); war_bwar = the bWAR input where it differs at 1dp, absent means equal",
             "statcast: Savant leaderboard percentiles within the season's qualified pool; pitcher contact metrics invert (suppression = good)",
             "swing_plus: Will Cahoon's model, MLB bat tracking 2024+ only; swingPlusSeasons = per-season slices (low_n under 180 swings)",
             "aaa_stuff_plus: in-house AAA pitch-quality model (stuff_plus_aaa.py), ex-PROSPX pitchers' latest tracked AAA season",

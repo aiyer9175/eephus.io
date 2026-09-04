@@ -143,7 +143,10 @@ MODEL_GLOSSARY = {
     "fa_war_paths_decay": ["fa_projection_engine"],
     "proj_def_prior": "internal",   # a hit feature of fa_war_paths_decay; gate-artifact row
     "prospect_def_value": "internal",  # Will Cahoon def model (local reconstruction); eFV-swap loss ledger
-    "ewar": "internal",   # eephus WAR: measured, consumed by nothing, not a served metric
+    # eephus WAR: the served WAR series from the 2026-09-03 epoch (war_source
+    # default provider ewar_v2); the glossary entry carries the frame disclosure
+    # and the gate record, so it is reader-facing and no longer internal.
+    "ewar": ["ewar"],
     # 2026-08-04 gated experiments, all three measured NO-SHIP (loss ledgers).
     "xfv_pace_from_entry": "internal",   # pre-registered kill criterion fired on the hitter weight sign
     "xfv_level_blend_arms": "internal",  # 17 of 18 cells negative; the anchor arm is a measured loss
@@ -654,7 +657,8 @@ MODEL_GLOSSARY = {
     "archetype_search": ["archetype_comps"],
     # --- WAR/PA+ and WAR/IP+ (2026-07-29 Arkmetric lane, master plan Phase G).
     # Descriptive display indexes: the forward gate was run and LOST to plain
-    # season bWAR on all three pools, so every row is honestly `unvalidated` with
+    # season WAR (the bWAR series, 2026-07 lab run; the lab re-runs on eWAR at the
+    # 2026-09 epoch's rebuild wave) on all three pools, so every row is honestly `unvalidated` with
     # a null eval artifact and the ledger cited in its notes. Each maps to its own
     # glossary entry plus the trailing-window companion, because the entry text is
     # where a reader is told both what the number means AND that it is not a

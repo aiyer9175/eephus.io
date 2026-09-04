@@ -616,7 +616,7 @@
     // rebuilt in render()), so Generate GFX exports the team board you're on.
     if (banner) {
       const bControl = rows.some(r => r.lockedPct != null);
-      const frame = `Current-season (${DATA.first_season}) roster bWAR &rarr; projected wins`
+      const frame = `Current-season (${DATA.first_season}) roster eWAR &rarr; projected wins`
         + (bControl ? ` &middot; core control = cost-controlled WAR locked up for the future` : "");
       banner.innerHTML = `<div class="fa-note fa-sources">
         ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${frame}
@@ -854,7 +854,7 @@
     }).join("");
     const note = nowMode
       ? `Current (${curSeason}) slate <span class="eephus-beta" title="Newly launched; blend + odds may shift">β beta</span>: a Bayesian blend of the roster-talent prior, actual record, and Pythagorean expectation (RS/RA). Prior acts as ~40 pseudo-games, so it leads early and fades toward the in-season signals as the season progresses. Playoff odds are a ${DATA.mc_schedule_source === "balanced_fallback" ? "Monte Carlo over a balanced-schedule ESTIMATE (live schedule unavailable)" : "Monte Carlo over the live remaining schedule"}; SOS is the log5 average opponent talent over unplayed games (rank 1 = hardest). This view is additive and does not change the projection board.`
-      : `Current-season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline (forward-gated against actual standings).${hasControl ? ` Core control measures organizational strength for the FUTURE: the WAR-weighted share of each org's projected 2027-${DATA.first_season + (DATA.horizon || 5) - 1} production that is cost-controlled (under contract or club control) - 100% means the whole core is locked through the horizon, a low % means it leaks to free agency. The sparkline is controlled WAR per season; the drop-off is the control cliff.` : ""}${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}`;
+      : `Current-season (${DATA.first_season}) roster eWAR -> projected wins at the 47.7 replacement baseline (forward-gated against actual standings). WAR basis: eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today.${hasControl ? ` Core control measures organizational strength for the FUTURE: the WAR-weighted share of each org's projected 2027-${DATA.first_season + (DATA.horizon || 5) - 1} production that is cost-controlled (under contract or club control) - 100% means the whole core is locked through the horizon, a low % means it leaks to free agency. The sparkline is controlled WAR per season; the drop-off is the control cliff.` : ""}${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}`;
     // Sortable header: click to sort by it, click again to flip direction.
     // The active column shows a ▲/▼ arrow reflecting the effective direction.
     const _arrow = (key) => state.teamSort === key
@@ -1135,7 +1135,7 @@
         }
         const lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
         return chip("proj-war" + warClass(w), fmtWar(w),
-          `${s}: ${fmtWar(w)} bWAR (playing-time-held / if-healthy path)${lo != null ? ` &middot; floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10-P90 outcomes)` : ""}`);
+          `${s}: ${fmtWar(w)} eWAR (playing-time-held / if-healthy path)${lo != null ? ` &middot; floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10-P90 outcomes)` : ""}`);
       }).join("");
       // For prospects the per-season cells render only the fixed calendar window,
       // which can drop ETA-shifted prime seasons; sum the SHOWN cells so the Total
@@ -1203,7 +1203,7 @@
           <span class="mlb-name">${teamLogo(m.team)}${link}</span>
           <span class="mlb-sub">${esc(m.pos || "")}${m.team ? "" : " &middot; FA"}${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>${cmpBtn}</span>
         </div>
-        <span class="mlb-metric" title="Projected bWAR over the window on the playing-time-held (if-healthy) path. The peak-age rate is a separate number.">
+        <span class="mlb-metric" title="Projected eWAR over the window on the playing-time-held (if-healthy) path. The peak-age rate is a separate number.">
           <span class="mlb-metric-label">${DATA.horizon}y WAR</span>${tot}</span>
         <span class="mlb-metric" title="Average annual value of the guaranteed contract on file. Prospects and players without a multi-year deal carry none."><span class="mlb-metric-label">AAV</span>${aavCell}</span>
         <span class="mlb-metric" title="Player age as carried on the projection row (the aging curves run forward from it)"><span class="mlb-metric-label">Age</span>${m.age != null ? Math.floor(m.age) : "?"}</span>
@@ -1251,7 +1251,7 @@
       const warTot = m => warShown(m) ?? -99;   // same windowed 5yr total the board sorts + shows
       const topWar = curr.slice().sort((a, b) => warTot(b) - warTot(a)).slice(0, 6);
       const warRow = m => `<div class="fa-rail-row"><a class="fa-player-link" href="${m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`}">${esc(m.name)}</a><span class="fa-rail-num">${fmtWar(warTot(m))}</span></div>`;
-      const warMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Top ${DATA.horizon}-year projected bWAR among the current filters (if-healthy path)">Top projected WAR</div>
+      const warMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Top ${DATA.horizon}-year projected eWAR among the current filters (if-healthy path)">Top projected WAR</div>
         ${topWar.map(warRow).join("")}</div>`;
       const surList = curr.filter(m => surOf(m) != null).sort((a, b) => (surOf(b) || 0) - (surOf(a) || 0)).slice(0, 6);
       const surRow = m => `<div class="fa-rail-row"><a class="fa-player-link" href="${m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`}">${esc(m.name)}</a><span class="fa-rail-num ${surOf(m) >= 0 ? "proj-pos" : "proj-neg"}">${money(surOf(m))}</span></div>`;
@@ -1317,13 +1317,13 @@
     // board and its window, so the two modules open the same way.
     const boardHead = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">${DATA.horizon}-Year Projection Board</span>
-      <span class="newsprint-eyebrow-meta">${seasons[0]}&ndash;${seasons[seasons.length - 1]} &middot; ${list.length} shown &middot; mean bWAR on the playing-time-held path</span>
+      <span class="newsprint-eyebrow-meta">${seasons[0]}&ndash;${seasons[seasons.length - 1]} &middot; ${list.length} shown &middot; mean eWAR on the playing-time-held path</span>
     </div>`;
     root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main">` + boardHead + warMap + tapeSortbar + `
       <div class="mlb-card-head" style="${_trackStyle}">
         ${cardHead("#", "rank", "Board position under the current sort")}
         ${cardHead("Player", "name", "Sort by name")}
-        ${cardHead(`${DATA.horizon}y WAR`, "warTotal", "Projected bWAR over the window, playing-time-held (if-healthy) path, with the P10-P90 outcome band. Surplus prices the attrition-discounted expected value, not this path.")}
+        ${cardHead(`${DATA.horizon}y WAR`, "warTotal", "Projected eWAR over the window, playing-time-held (if-healthy) path, with the P10-P90 outcome band. Surplus prices the attrition-discounted expected value, not this path.")}
         ${cardHead("AAV", "aav", "Average annual value of the guaranteed contract on file. Prospects and players without a multi-year deal carry none.")}
         ${cardHead("Age", "age", "Sort by age - the aging curves run forward from it")}
         ${cardHead("Surplus", "sur", "Veterans: production value minus salary, salary-known seasons only. Prospects: platform surplus value.")}
@@ -1453,7 +1453,7 @@
     const yTicks = [mx, (mn + mx) / 2, mn].map(v =>
       `<text x="${PX - 6}" y="${y(v) + 3.5}" text-anchor="end" class="mlbp-fan-tick">${v.toFixed(1)}</text>`
     ).join("");
-    const chart = `<svg class="mlbp-fan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected WAR comparison, ${esc(a.name)} and ${esc(b.name)}, ${seasons[0]} to ${seasons[seasons.length - 1]}, vertical axis ${mn.toFixed(1)} to ${mx.toFixed(1)} bWAR">
+    const chart = `<svg class="mlbp-fan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected WAR comparison, ${esc(a.name)} and ${esc(b.name)}, ${seasons[0]} to ${seasons[seasons.length - 1]}, vertical axis ${mn.toFixed(1)} to ${mx.toFixed(1)} eWAR">
       ${yTicks}${zero}${line(wA, CA)}${line(wB, CB)}${dots(wA, CA, a.name)}${dots(wB, CB, b.name)}${ticks}</svg>`;
     // Only the per-side SERIES COLOUR is inline, twice: on the name, and on the
     // stripe the head borrowed from .mlb-card. The ellipsizing box lives on
@@ -1494,7 +1494,7 @@
       <div class="mlbp-section proj-cmp-section">
         <div class="newsprint-eyebrow">
           <span class="newsprint-eyebrow-label">Head-to-Head</span>
-          <span class="newsprint-eyebrow-meta">projected mean bWAR, season-aligned ${seasons[0]}&ndash;${seasons[seasons.length - 1]}${(a.src === "prospect" || b.src === "prospect") ? " &middot; prospects join at their PROSPX ETA" : ""}</span>
+          <span class="newsprint-eyebrow-meta">projected mean eWAR, season-aligned ${seasons[0]}&ndash;${seasons[seasons.length - 1]}${(a.src === "prospect" || b.src === "prospect") ? " &middot; prospects join at their PROSPX ETA" : ""}</span>
         </div>
         <div class="proj-cmp-heads">${head(a, CA)}${head(b, CB)}</div>
         ${chart}
@@ -1519,10 +1519,10 @@
         module: "MLB Projections",
         accentToken: "--accent-cyan",
         name: `${a.name} vs ${b.name}`,
-        meta: `head-to-head · projected ${DATA.horizon}y bWAR ${fmtWar(warShown(a))} vs ${fmtWar(warShown(b))}`,
+        meta: `head-to-head · projected ${DATA.horizon}y eWAR ${fmtWar(warShown(a))} vs ${fmtWar(warShown(b))}`,
         url: "eephus.io/projections",
         filename: `eephus-cmp-${a.key}-${b.key}.png`,
-        caption: "eephus projection engine (proj_lgbm_v1) · season-aligned mean bWAR",
+        caption: "eephus projection engine (proj_lgbm_v1) · season-aligned mean eWAR",
       });
     };
     // Same async well fill the board rows use, so a compare opened on two
@@ -1535,7 +1535,7 @@
   // MLB player page (#player={key}) - the per-player detail surface
   // (data/mlb_player_detail.json, mlb_player_export.py). Parity goal with
   // prospect detail: hero + tiles, projection fan, Savant percentile
-  // sliders, pitch arsenal, season-by-season career with bWAR, FA market
+  // sliders, pitch arsenal, season-by-season career with eWAR, FA market
   // block for class members.
   // ===========================================================================
   // The player page's own headshotURL is GONE (2026-08-05). It duplicated the
@@ -1573,7 +1573,7 @@
       ? `<polygon points="${pts(hi)} ${lo.map((v, t) => `${x(lo.length - 1 - t)},${y(lo[lo.length - 1 - t])}`).join(" ")}" class="mlbp-fan-band"/>` : "";
     const ticks = war.map((v, t) => `<text x="${x(t)}" y="${H - 6}" text-anchor="middle" class="mlbp-fan-tick">${first + t}</text>`).join("");
     const zero = (mn < 0) ? `<line x1="${PX}" x2="${W - 8}" y1="${y(0)}" y2="${y(0)}" class="mlbp-fan-zero"/>` : "";
-    return `<div class="mlbp-section"><div class="mlbp-section-title">Projected bWAR <span class="fa-sub">mean + P10-P90 band · expected (attrition-discounted) path, the one surplus prices</span></div>
+    return `<div class="mlbp-section"><div class="mlbp-section-title">Projected eWAR <span class="fa-sub">mean + P10-P90 band · expected (attrition-discounted) path, the one surplus prices</span></div>
       <svg class="mlbp-fan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected WAR path">${band}
         <polyline points="${pts(war)}" class="mlbp-fan-line"/>
         ${war.map((v, t) => `<circle cx="${x(t)}" cy="${y(v)}" r="3" class="mlbp-fan-dot"><title>${first + t}: ${fmtWar(v)}${lo[t] != null ? ` (${fmtWar(lo[t])}-${fmtWar(hi[t])})` : ""}</title></circle>`).join("")}
@@ -1603,12 +1603,12 @@
     const c = p.career || [];
     if (!c.length) return "";
     const head = p.isPit
-      ? "<th>Year</th><th>IP</th><th>ERA</th><th>K%</th><th>BB%</th><th>bWAR</th>"
-      : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th><th>bWAR</th>";
+      ? "<th>Year</th><th>IP</th><th>ERA</th><th>K%</th><th>BB%</th><th>eWAR</th>"
+      : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th><th>eWAR</th>";
     const rows = c.slice().reverse().map(r => p.isPit
       ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.war != null ? r.war.toFixed(1) : EM_DASH}</td></tr>`
       : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.iso != null ? String(r.iso).replace(/^0(?=\.)/, "") : EM_DASH}</td><td>${r.war != null ? r.war.toFixed(1) : EM_DASH}</td></tr>`).join("");
-    return `<div class="mlbp-section"><div class="mlbp-section-title">Career <span class="fa-sub">MLB seasons · bWAR (Baseball-Reference)</span></div>
+    return `<div class="mlbp-section"><div class="mlbp-section-title">Career <span class="fa-sub">MLB seasons · eWAR (B-Ref frame, pitching on FIP; hitters match bWAR)</span></div>
       <table class="detail-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
   function faBlock(p) {
@@ -1760,7 +1760,7 @@
       `<div class="mlbp-tile"${title ? ` title="${esc(title)}"` : ""}><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val ${val >= 120 ? "proj-pos" : val <= 80 ? "proj-neg" : ""}">${val}</span></div>`);
     const raw = (label, val, title) => (val == null ? "" :
       `<div class="mlbp-tile"${title ? ` title="${esc(title)}"` : ""}><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val">${val}</span></div>`);
-    const WAR_IP_TIP = "Pitching bWAR per inning, indexed so 100 is average and every TEN points is one standard deviation of the pool. Anchored on this pitcher's own role pool, so a starter's value and a reliever's are not comparable.";
+    const WAR_IP_TIP = "Pitching eWAR (FIP re-priced within role) per inning, indexed so 100 is average and every TEN points is one standard deviation of the pool. Anchored on this pitcher's own role pool, so a starter's value and a reliever's are not comparable.";
     let tiles = "", n = "";
     if (kind === "rel") {
       tiles = plus("REM+", remPlus) + plus("RIV+", rivPlus)
@@ -1998,7 +1998,7 @@
     if (p.proj && p.proj.warTotal != null)
       // Total-WAR band dropped (F-01, miscalibrated); per-year bands stay in the fan chart + upside strip.
       tile(`${(p.proj.war || []).length}y WAR`, `${fmtWar(p.proj.warTotal)}`,
-        null, "Expected (attrition-discounted) bWAR over the projection window - the same path surplus prices. The board headline uses the if-healthy path, which reads a little higher.");
+        null, "Expected (attrition-discounted) eWAR over the projection window - the same path surplus prices. The board headline uses the if-healthy path, which reads a little higher.");
     if (p.proj && surOf(p.proj) != null) {
       const _pv = surOf(p.proj);
       // Name the basis when the only priced months are the rest of this season,
@@ -2023,11 +2023,11 @@
       if (h.warPaPlus != null)
         tile("WAR/PA+", `${h.warPaPlus}${h.warPaPlusPct != null ? `<span class="fa-band"> p${h.warPaPlusPct}</span>` : ""}`,
           h.warPaPlus >= 120 ? "proj-pos" : h.warPaPlus <= 80 ? "proj-neg" : "",
-          "Batting bWAR per plate appearance, indexed so 100 is average and every TEN points is one standard deviation of the hitter pool. That is a wider ruler than HEM+: a 113 is the 91st percentile, not 13 percent above average. Carries fielding, baserunning and the positional adjustment, which HEM+ leaves out. The p-number is the percentile.");
+          "Batting eWAR (equal to bWAR on the batting side) per plate appearance, indexed so 100 is average and every TEN points is one standard deviation of the hitter pool. That is a wider ruler than HEM+: a 113 is the 91st percentile, not 13 percent above average. Carries fielding, baserunning and the positional adjustment, which HEM+ leaves out. The p-number is the percentile.");
       if (h.warPaPlusAdj != null)
         tile("WAR/PA+ adj", `${h.warPaPlusAdj}`,
           h.warPaPlusAdj >= 120 ? "proj-pos" : h.warPaPlusAdj <= 80 ? "proj-neg" : "",
-          "The same index with the rate regressed toward league average by playing time, so a hot short sample does not outrank a full season. A readability aid, not a forecast: neither WAR rate predicts next season better than plain season bWAR.");
+          "The same index with the rate regressed toward league average by playing time, so a hot short sample does not outrank a full season. A readability aid, not a forecast: neither WAR rate predicts next season better than plain season WAR.");
     }
     if (p.swingPlus != null) tile("Swing+", `${p.swingPlus}<span class="fa-band"> n=${p.swingN}</span>`, p.swingPlus >= 105 ? "proj-pos" : p.swingPlus <= 95 ? "proj-neg" : "");
     // W6 display-only: per-season Swing+ trend. swingPlusSeasons rides the
@@ -2049,10 +2049,10 @@
     // Two-way: surface the hitting vs pitching WAR split (the path above sums both).
     if (p.twoWay && p.proj && p.proj.warHit)
       tile("Hitting WAR", fmtWar((p.proj.warHit || []).reduce((a, b) => a + b, 0)), null,
-        "Projected bWAR from the hitting side over the window (the headline path sums both sides).");
+        "Projected eWAR from the hitting side over the window (the headline path sums both sides).");
     if (p.twoWay && p.proj && p.proj.warPit)
       tile("Pitching WAR", fmtWar((p.proj.warPit || []).reduce((a, b) => a + b, 0)), null,
-        "Projected bWAR from the pitching side over the window (the headline path sums both sides).");
+        "Projected eWAR from the pitching side over the window (the headline path sums both sides).");
     const contract = p.proj && p.proj.thru
       ? `signed thru ${p.proj.thru}${p.proj.aav ? ` · ${money(p.proj.aav)}/y` : ""}`
       : (p.fa ? `free agent${p.fa.type ? ` · ${esc(p.fa.type)}` : ""}` : "arb / pre-arb");
@@ -2096,7 +2096,7 @@
   // direct shareCard download).
 
   // Board spec for the Generate GFX modal: the league projection board as a
-  // column leaderboard (projected 5y bWAR, P10-P90 range, contract surplus).
+  // column leaderboard (projected 5y eWAR, P10-P90 range, contract surplus).
   function _projBoardSpec(top) {
     // Same HORIZON-windowed total the on-site board shows and sorts by
     // (warShown), so the shared graphic never disagrees with the board row.
@@ -2120,7 +2120,7 @@
     });
     return {
       kind: "board", module: "MLB Projections", accentToken: "--accent-cyan",
-      title: "MLB Projections · Five-Year bWAR Leaders",
+      title: "MLB Projections · Five-Year eWAR Leaders",
       subtitle: `${DATA.n_vets} veterans + ${DATA.n_prospects} prospects · seasons ${DATA.first_season}-${DATA.first_season + DATA.horizon - 1}`,
       url: "eephus.io/projections", filenameBase: "eephus-projections-board",
       caption: "Gate-validated engine · floor / mean / ceiling buckets · prospects join at their PROSPX ETA",
@@ -2173,7 +2173,7 @@
     return {
       kind: "board", module: "MLB Projections", accentToken: "--accent-cyan",
       title: "MLB Projections · Team Outlook",
-      subtitle: `${DATA.first_season} roster bWAR → projected wins${hasControl ? " · core control" : ""} · ${rows.length} teams`,
+      subtitle: `${DATA.first_season} roster eWAR → projected wins${hasControl ? " · core control" : ""} · ${rows.length} teams`,
       url: "eephus.io/projections", filenameBase: "eephus-projections-team-outlook",
       caption: "Roster WAR at the 47.7 replacement baseline · league-recentered"
         + (hasControl ? " · core control = cost-controlled WAR locked up for the future" : "")

@@ -296,6 +296,19 @@ def build_features(hist: list[dict], side: str, base: int, age: float | None,
     return feats
 
 
+def _war_tag(corpus: dict) -> str:
+    """Cache-key suffix for the WAR basis the corpus was labelled on
+    (fa_projection.build_corpus stamps 'war_provider'; an unstamped corpus
+    predates the 2026-09-03 epoch and is bWAR). '' for bWAR so no historical
+    filename moves; '_ewar_v2' otherwise. The frame and point-in-time bundle
+    keys below carry corpus.first / corpus.last and nothing about the ROWS,
+    and the epoch moves pitcher labels without moving either, so without
+    this a frame cached under bWAR would feed bWAR labels to a retrain on
+    the eWAR corpus (tools/train_proj_models.py --final)."""
+    prov = corpus.get("war_provider") or "bwar"
+    return "" if prov == "bwar" else f"_{prov}"
+
+
 def build_training_frame(corpus: dict, first_base: int, max_label_season: int,
                          use_cache: bool = True) -> dict:
     """{side: {"X": ndarray, "y": {h: ndarray}, "label_season": {h: ndarray}}}
@@ -306,7 +319,7 @@ def build_training_frame(corpus: dict, first_base: int, max_label_season: int,
     requiring all five). Disk-cached per (first_base, max_label_season,
     corpus span) since assembly walks the full corpus."""
     cache = (fp.CACHE_DIR /
-             f"proj_ml_frame_{_SCHEMA_TAG}_{first_base}_{max_label_season}_{corpus['first']}_{corpus['last']}.pkl")
+             f"proj_ml_frame_{_SCHEMA_TAG}_{first_base}_{max_label_season}_{corpus['first']}_{corpus['last']}{_war_tag(corpus)}.pkl")
     if use_cache and cache.exists():
         import pickle
         with open(cache, "rb") as fh:
@@ -560,7 +573,7 @@ def train_cached(corpus: dict, max_label_season: int,
         return _PIT_CACHE[max_label_season]
     import joblib
     qtag = "".join(str(int(q * 100)) for q in quantiles)
-    cache = fp.CACHE_DIR / f"proj_ml_pit_{MODEL_VERSION}_{_SCHEMA_TAG}_{max_label_season}_{qtag}.joblib"
+    cache = fp.CACHE_DIR / f"proj_ml_pit_{MODEL_VERSION}_{_SCHEMA_TAG}_{max_label_season}_{qtag}{_war_tag(corpus)}.joblib"
     if cache.exists():
         _PIT_CACHE[max_label_season] = joblib.load(cache)
         return _PIT_CACHE[max_label_season]

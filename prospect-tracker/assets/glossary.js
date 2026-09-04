@@ -361,7 +361,7 @@
     const wrSpec = (pool, poolLabel) => ({
       art: "/data/war_rate_plus_eval.json",
       estimand: "Does the " + poolLabel + " rate index forward-predict the next season's WAR rate better than the season WAR total it re-expresses?",
-      baseline: "plain season bWAR, the simplest baseline in the set",
+      baseline: "plain season WAR total, the simplest baseline in the set",
       read: j => {
         const p = (j.pools || {})[pool] || {};
         const v2 = (p.results_by_convention || {}).v2 || {};
@@ -370,7 +370,7 @@
         if (v2.rho_primary == null || b.war_total == null || g.lo95 == null) return null;
         const rows = [{
           label: "Spearman rho, next-season WAR rate (n=" + _rn(p.n_forward_pairs, 0) + " forward pairs)",
-          mv: _rn(v2.rho_primary), bname: "plain season bWAR", bv: _rn(b.war_total),
+          mv: _rn(v2.rho_primary), bname: "plain season WAR total", bv: _rn(b.war_total),
           band: "gap " + _rns(g.mean) + ", 95% CI " + _rns(g.lo95) + " to " + _rns(g.hi95),
           verdict: _rcptCI(g.lo95, g.hi95),
         }];
@@ -1075,7 +1075,7 @@ function _methProseHTML() {
         ["Just Baseball", "https://www.justbaseball.com/", "Prospect rankings (consensus input)."],
         ["TJStats", "https://x.com/TJStats", "Prospect rankings (consensus input) and movers wire."],
         ["MLB Stats API / Baseball Savant", "https://baseballsavant.mlb.com/", "Game logs, transactions, rosters, Statcast tracking data, and player headshots."],
-        ["Baseball-Reference", "https://www.baseball-reference.com/", "bWAR - the WAR framework used site-wide - plus historical player pages."],
+        ["Baseball-Reference", "https://www.baseball-reference.com/", "war_daily (bWAR): the run frame the served eWAR is built on, plus historical player pages."],
         ["pybaseball", "https://github.com/jldbc/pybaseball", "Open-source Python toolkit used to pull Statcast, FanGraphs, and Baseball-Reference data programmatically."],
         ["Spotrac", "https://www.spotrac.com/", "Contracts, payrolls, free-agent classes, and international signing trackers."],
       ].map(([nm, url, use]) => `<div class="card source-card"><h3><a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(nm)}</a></h3><p>${escapeHtml(use)}</p></div>`).join("")}

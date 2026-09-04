@@ -2745,12 +2745,30 @@ def load_career_stats() -> dict[str, list[dict]]:
 def upsert_career_war(by_key: dict[str, dict]) -> int:
     """Upsert one career-WAR aggregate per graduate. Skips empty payloads.
 
-    Caller is expected to wrap each aggregate as:
-      {"seasons": {"2023": 1.5, "2024": 2.8, ...},
-       "career_war": 4.3,
-       "war_per_yr": 2.15,
+    Payload shape (the war_source.career_war_bulk / stats.fetch_career_war_bulk
+    contract; "fangraphs" was never a real source here, the feed has been
+    Baseball-Reference war_daily since FG 403'd pybaseball):
+      {"seasons": {"2023": 1.5, "2024": 2.8, ...},   # the SERVED series
+       "career_war": 4.3,                             # sum(seasons)
+       "war_per_yr": 2.15,                            # career_war / n
        "war_seasons_count": 2,
-       "source": "fangraphs"}
+       "source": "bbref" | "ewar_v2",
+       # eWAR epoch (2026-09-03) only, written by the ewar_v2 provider and by
+       # tools/rebase_career_war_to_ewar.py:
+       "seasons_bwar": {"2023": 1.4, "2024": 2.9, ...},   # the bWAR frame
+       "ewar_coverage": {...}}                             # transform receipt
+    `seasons` is the series every reader prices off (labels, WAG, anchors,
+    surplus). `seasons_bwar` is the input frame kept beside it so the transform
+    can be re-derived (rebase idempotency) and audited. For position players
+    the two are equal season by season until the SDR defense drop lands; for
+    pitchers eWAR re-prices runs on FIP within role (ewar.py).
+
+    MERGE RULES. `seasons` unions old-then-new (new wins per year), and so does
+    `seasons_bwar` when either side carries it; the aggregates are recomputed
+    over the merged `seasons`. A legacy payload (no seasons_bwar) merges as it
+    always did and drops nothing: an old seasons_bwar on file survives the
+    merge untouched. `source` and `ewar_coverage` come from the NEW payload,
+    never from the stored row.
     """
     n = 0
     with connect() as con:
@@ -2768,8 +2786,10 @@ def upsert_career_war(by_key: dict[str, dict]) -> int:
             try:
                 old = json.loads(stored.get(key) or "{}") or {}
                 old_seasons = old.get("seasons") or {}
+                old_bwar = old.get("seasons_bwar") or {}
             except ValueError:
                 old_seasons = {}
+                old_bwar = {}
             if old_seasons:
                 merged = dict(old_seasons)
                 merged.update(rec.get("seasons") or {})
@@ -2780,6 +2800,24 @@ def upsert_career_war(by_key: dict[str, dict]) -> int:
                     rec["career_war"] = round(sum(vals), 2)
                     rec["war_seasons_count"] = len(vals)
                     rec["war_per_yr"] = round(sum(vals) / len(vals), 3) if vals else 0.0
+            # eWAR epoch: the bWAR frame merges by the same union rule, so a
+            # narrow-window refetch cannot delete an early-career bWAR season
+            # any more than it can delete the served one. A legacy payload
+            # (no seasons_bwar) on a row that already carries a frame: its
+            # `seasons` ARE bWAR (source bbref), so they refresh the frame
+            # too, and tools/rebase_career_war_to_ewar.py --reapply can
+            # re-derive the served series from it. A legacy payload on a
+            # legacy row touches nothing here (byte-identical to the
+            # pre-epoch behaviour).
+            new_bwar = rec.get("seasons_bwar") or {}
+            if not new_bwar and old_bwar and rec.get("source") == "bbref":
+                new_bwar = rec.get("seasons") or {}
+            if old_bwar or new_bwar:
+                merged_bwar = dict(old_bwar)
+                merged_bwar.update(new_bwar)
+                if merged_bwar != (rec.get("seasons_bwar") or {}):
+                    rec = dict(rec)
+                    rec["seasons_bwar"] = merged_bwar
             con.execute(
                 """INSERT INTO career_war (player_key, payload_json, fetched_at)
                    VALUES (?, ?, datetime('now'))

@@ -9,7 +9,8 @@ The joint band reassigns display grades by expected WAR read off each side's
 PAVA crosswalk. A curve ENDPOINT backed by a single player therefore decides
 which side owns the top of the board. Measured 2026-07-31 on the live
 artifacts: the pitcher terminal block was n=1 (shohei_ohtani, whose stored
-first-6yr bWAR is his TWO-WAY total because career WAR carries no
+first-6yr WAR (the bWAR series at that measurement) is his TWO-WAY total
+because career WAR carries no
 pitching/batting split), reading 34.59 against 5.63 one knot below, while the
 hitter side's terminal block naturally covered 7 players. Whichever pitcher
 ranked first inherited that cliff and was promoted above every hitter.

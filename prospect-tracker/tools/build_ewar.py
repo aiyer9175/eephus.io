@@ -3,7 +3,7 @@
 
     python tools/build_ewar.py                 # build + gates, print, write nothing
     python tools/build_ewar.py --write         # ...and commit both artifacts
-    python tools/build_ewar.py --first 2016 --last 2026 --write
+    python tools/build_ewar.py --first 2011 --last 2026 --write
     python tools/build_ewar.py --no-sensitivity --write
 
 The only network call is pybaseball's cached bwar_bat / bwar_pitch static CSV
@@ -11,7 +11,29 @@ pull (--force-fetch to bypass the local 7-day pickle cache). Everything else -
 the FIP corpus, Statcast OAA, fielding innings, the k_inn constants, the
 standings used by the team-wins gate - is read from disk.
 
-NOTHING CONSUMES eWAR. This writes a module artifact and a measurement.
+TWO WINDOWS, on purpose, since 2026-09-03.
+  * BUILD window (--first/--last, default 2011..current year): the seasons the
+    artifact carries. 2011 is the first season the eFV first-6yr label pool
+    reaches (debuts.json backfill), and the FIP corpus prices it in full:
+    707/707, 721/723, 724/729, 743/748, 808/810 war_daily pitcher rows FIP-
+    priced for 2011..2015, ip_share 1.0000 each season (build 2026-09-03).
+    Fielding is all-fallback before 2016 (no Statcast OAA), which at the
+    shipped fielding_blend_w of 0.0 changes nothing: position players carry
+    bWAR exactly in EVERY season until the SDR defense drop lands.
+  * GATE window (--eval-first/--eval-last, default 2016..last completed
+    season): the seasons the validity gates score. It stays 2016-2025 so the
+    gate record (team wins r 0.8595 vs 0.8803, persistence 0.3617 vs 0.1768)
+    remains comparable across rebuilds; extending the BUILD window must not
+    silently move the GATE window, which is what evaluate()'s default (first =
+    the model's first season) would do.
+  The full-build accounting (league sum per season over EVERY built season) is
+  printed and written beside the windowed block so the pre-2016 seasons are
+  still checked, just not scored.
+
+OWNER DECISION 2026-09-03: eWAR v2 becomes the SERVED and LABEL WAR site-wide
+(the basis shift). bWAR remains the INPUT frame this is built on. The build is
+arithmetic on inputs, so that decision changes nothing here except that the
+artifact must now cover the label window; the consumer wiring is other lanes.
 """
 from __future__ import annotations
 
@@ -24,6 +46,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import ewar                              # noqa: E402
+
+# First season the served artifact must carry. The eFV first-6yr label pool
+# reaches back to 2011 debuts, and the label series has to exist for every
+# season a label sums over, so the artifact starts where the labels start.
+# ewar.DEFAULT_FIRST_SEASON (2016) stays the GATE anchor: it is the OAA era
+# the shipped gate record was measured on, not the label window.
+LABEL_FIRST_SEASON = 2011
 
 
 def _fmt_gate1(g: dict) -> str:
@@ -67,8 +96,26 @@ def _fmt_gate3(g: dict) -> str:
     return "\n".join(lines)
 
 
-def _fmt_sum(g: dict) -> str:
-    lines = ["  ACCOUNTING  league WAR sum per season"]
+def _fmt_build(model: dict, payload: dict) -> str:
+    """Per built season: player-seasons in the artifact, pitcher rows and the
+    FIP-priced share. This is the coverage table for the WHOLE build, printed
+    because gate 3 only reports the gate window."""
+    per: dict[int, int] = {}
+    for by_year in payload["players"].values():
+        for s in by_year:
+            per[int(s)] = per.get(int(s), 0) + 1
+    pit = model["meta"]["pitching"]["by_season"]
+    lines = ["  BUILD  player-seasons and FIP coverage per season"]
+    for season in sorted(per):
+        p = pit.get(season) or pit.get(str(season)) or {}
+        lines.append(f"    {season}  player-seasons {per[season]:>5}   "
+                     f"pitcher rows FIP-priced {p.get('n_covered', 0):>4}/"
+                     f"{p.get('n_rows', 0):<4}  ip_share {p.get('ip_share', 0.0):.4f}")
+    return "\n".join(lines)
+
+
+def _fmt_sum(g: dict, title: str = "league WAR sum per season") -> str:
+    lines = [f"  ACCOUNTING  {title}"]
     for season, blk in g["by_season"].items():
         lines.append(f"    {season}  target {blk['target']:>7.1f}   "
                      f"bWAR {blk['bwar_sum']:>7.1f}   "
@@ -81,16 +128,23 @@ def _fmt_sum(g: dict) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--first", type=int, default=ewar.DEFAULT_FIRST_SEASON)
+    ap.add_argument("--first", type=int, default=LABEL_FIRST_SEASON,
+                    help="first BUILT season (default 2011, the label window)")
     ap.add_argument("--last", type=int, default=None)
     ap.add_argument("--write", action="store_true", help="write both artifacts")
     ap.add_argument("--force-fetch", action="store_true",
                     help="bypass the local bwar pickle cache")
     ap.add_argument("--no-sensitivity", action="store_true",
                     help="skip the unshrunk-fielding sensitivity build")
+    ap.add_argument("--eval-first", type=int, default=ewar.DEFAULT_FIRST_SEASON,
+                    help="first season the GATES score (default 2016, the OAA "
+                         "era the shipped gate record was measured on)")
     ap.add_argument("--eval-last", type=int, default=None,
                     help="last COMPLETED season for the gates (default: last year)")
     args = ap.parse_args()
+    if args.eval_first < args.first:
+        ap.error(f"--eval-first {args.eval_first} precedes --first {args.first}; "
+                 f"the gates cannot score seasons that were not built")
 
     model = ewar.build(first=args.first, last=args.last,
                        shrink=True, force_fetch=args.force_fetch)
@@ -125,11 +179,31 @@ def main() -> int:
                                              swap_fielding=False),
         }
 
-    ev = ewar.evaluate(model, unshrunk, last=args.eval_last, arms=arms)
+    ev = ewar.evaluate(model, unshrunk, first=args.eval_first,
+                       last=args.eval_last, arms=arms)
+    # The gates are windowed (eval_window). The accounting identity has to hold
+    # on every season the artifact SERVES, so it is also run on the whole build
+    # and written beside the windowed block under its own key.
+    ev["accounting_league_sum_build_window"] = {
+        "build_window": list(model["meta"]["seasons"]),
+        "why": "eval_window scores the gates; this block checks the league-sum "
+               "identity on every built season, including the pre-2016 label "
+               "seasons the gates do not score. The in-progress last season "
+               "is scaled against season-to-date team-games, so its "
+               "replacement_scale reads near 1.0 only when the war_daily pull "
+               "and the standings blob are from the same day (2026-09-03: "
+               "0.9997 fresh, 1.2672 with an Aug 4 pull against a Sep 3 "
+               "blob). A scale far from 1.0 there says refresh the pull; it "
+               "is not a break in the identity.",
+        **ewar.gate_league_sum(model),
+    }
     print(_fmt_gate1(ev["gate_1_team_wins"]))
     print(_fmt_gate2(ev["gate_2_pitcher_persistence"]))
     print(_fmt_gate3(ev["gate_3_coverage_identity"]))
-    print(_fmt_sum(ev["accounting_league_sum"]))
+    print(_fmt_sum(ev["accounting_league_sum"],
+                   f"league WAR sum per season, gate window {ev['eval_window']}"))
+    print(_fmt_sum(ev["accounting_league_sum_build_window"],
+                   f"league WAR sum per season, build window {model['meta']['seasons']}"))
     if "attribution_gate_1" in ev:
         a = ev["attribution_gate_1"]
         print("  ATTRIBUTION (gate 1, same rows)")
@@ -154,6 +228,7 @@ def main() -> int:
         print(f"    FAILED  {line}")
 
     payload = ewar.export_payload(model)
+    print(_fmt_build(model, payload))
     print(f"  artifact: {payload['n_player_seasons']} player-seasons")
     if args.write:
         ewar.OUT.write_text(json.dumps(payload, separators=(",", ":")),

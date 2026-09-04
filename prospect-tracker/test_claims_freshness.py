@@ -80,8 +80,9 @@ CLAIM_SURFACES = (
 # tol_mode "rel": |claim - actual| <= tol * |actual| (copy rounds).
 GLOSSARY_CLAIMS = (
     # war_pa_plus quotes its own honest loss: forward Spearman 0.3711 for
-    # the rate index vs 0.4058 for plain season bWAR (v2 convention, hit
-    # pool). Tight abs tolerance: these are quoted to four decimals.
+    # the rate index vs 0.4058 for plain season WAR (v2 convention, hit
+    # pool; measured on the bWAR series, identical on the batting side under
+    # eWAR). Tight abs tolerance: these are quoted to four decimals.
     ("war_pa_plus", "hit rho_primary (v2)", r"Spearman correlation of (0\.\d+)",
      "data/war_rate_plus_eval.json",
      ("pools", "hit", "results_by_convention", "v2", "rho_primary"), "abs", 0.005),
@@ -105,6 +106,17 @@ GLOSSARY_CLAIMS = (
      "data/milb_translation.json", ("validation", "hit_bb", "mae"), "rel", 0.15),
     ("milb_translation", "hit_bb r2", r"BB% MAE [^;(]*?r2 ~?(0\.\d+)",
      "data/milb_translation.json", ("validation", "hit_bb", "r2"), "abs", 0.02),
+    # ewar quotes its gate record (eWAR epoch 2026-09-03). The four numbers
+    # are the basis-decision record: the descriptive loss and the persistence
+    # gain must always be printed together, so both sides of each are pinned.
+    ("ewar", "gate 1 team wins r (eWAR)", r"team wins over 300 team-seasons, r (0\.\d+)",
+     "data/ewar_eval.json", ("gate_1_team_wins", "ewar", "r"), "abs", 0.0005),
+    ("ewar", "gate 1 team wins r (bWAR)", r"team-seasons, r 0\.\d+ against bWAR (0\.\d+)",
+     "data/ewar_eval.json", ("gate_1_team_wins", "bwar", "r"), "abs", 0.0005),
+    ("ewar", "gate 2 persistence (eWAR FIP)", r"\(min 50 IP\), (0\.\d+)",
+     "data/ewar_eval.json", ("gate_2_pitcher_persistence", "self_r_ewar_fip"), "abs", 0.0005),
+    ("ewar", "gate 2 persistence (bWAR RA)", r"\(min 50 IP\), 0\.\d+ against (0\.\d+)",
+     "data/ewar_eval.json", ("gate_2_pitcher_persistence", "self_r_bwar_ra"), "abs", 0.0005),
 )
 
 # ---------------------------------------------------------------------------

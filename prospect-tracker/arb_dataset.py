@@ -12,8 +12,24 @@ this tree and every downstream lane consumes it.
 THE SPINE IS .cache/war_daily/{bat,pit}.parquet, not data/ewar.json. Only the
 war_daily frames carry (a) a `salary` column, (b) `player_ID`, the bbref id that
 is the join key for MLB Trade Rumors hrefs and the ONLY place bbref ids exist in
-this tree, and (c) coverage back to 2005. data/ewar.json starts at 2016 and
-cannot span the window; it joins on as a feature block.
+this tree, and (c) coverage back to 2005. data/ewar.json (2011-2026 in the
+2026-09-03 build) cannot span the window, so it does not replace the spine.
+
+THE WAR COLUMN FOLLOWS THE war_source DEFAULT (eWAR v2 since 2026-09-03).
+The parquet frames stay the raw bWAR download (salary, ids and exposure are
+read from them unchanged); the WAR column alone is rebased through the
+facade's frame transform before the stints collapse, so a covered
+player-season's `war` is the artifact's side total (pitching re-priced on
+FIP within role, league sum per season preserved; position players equal
+bWAR until the SDR defense drop) and every uncovered season (pre-2011, or
+no artifact block) stays bWAR. war_daily_spine(provider='bwar') reproduces
+the pre-epoch panel exactly.
+
+THE ARB MODEL WAS FIT ON bWAR FEATURES. arb_model's `war` / `war3` /
+`career_war` columns and its war_ols coefficients were fit on the bWAR
+spine, and data/arb_panel.json predates the flip; the rebuild wave must
+re-build the panel and re-fit the model on this spine before the served
+arbitration numbers and the spine agree on pitcher WAR.
 
 MEASURED FACTS THIS MODULE IS BUILT AROUND
   * A naive "season 3-7 since debut, salary above the minimum" filter returns
@@ -116,17 +132,45 @@ def _collapse(df, pt_col: str, side: str):
     return out
 
 
-def war_daily_spine(first: int = FIRST_SEASON, last: int = LAST_SEASON):
+def _war_provider() -> str:
+    """The WAR basis the spine's `war` column is served on: the facade default."""
+    import war_source
+    return war_source.DEFAULT_PROVIDER
+
+
+def _rebase_war(df, side: str, provider: str | None):
+    """Replace the raw parquet frame's WAR column with ``provider``'s series
+    (None = the facade default). 'bwar' returns the frame untouched.
+    'ewar_v2' runs war_source's stint transform, the same one stint_frame
+    serves online: per (mlb_ID, year_ID) the stint WARs sum to the artifact's
+    side total, the delta split IPouts / PA proportional, WAR_bwar appended,
+    every other column and row untouched. The parquet door is used so the
+    panel stays a pure offline read; the last-good parquet always holds raw
+    bWAR (war_source._store_last_good), so the transform never stacks."""
+    import war_source
+    provider = provider or war_source.DEFAULT_PROVIDER
+    war_source._require(provider)
+    if provider == "bwar":
+        return df
+    return war_source._ewar_frame(df, side, door="arb_spine")
+
+
+def war_daily_spine(first: int = FIRST_SEASON, last: int = LAST_SEASON,
+                    *, provider: str | None = None):
     """One row per (mlbam, season) across BOTH sides.
 
     The bat/pit merge is an OUTER join, not a concat: a two-way player has a row
     in each frame carrying the SAME season salary, so concatenating would enter
     Ohtani's salary twice. WAR sums across sides (it is additive); salary takes
     the max (it is one contract).
+
+    ``provider`` selects the WAR series (module docstring): None = the
+    war_source default, 'bwar' = the raw frames. Salary, ids and exposure do
+    not depend on it.
     """
     import pandas as pd
-    b = pd.read_parquet(WAR_DAILY / "bat.parquet")
-    p = pd.read_parquet(WAR_DAILY / "pit.parquet")
+    b = _rebase_war(pd.read_parquet(WAR_DAILY / "bat.parquet"), "bat", provider)
+    p = _rebase_war(pd.read_parquet(WAR_DAILY / "pit.parquet"), "pit", provider)
     cb = _collapse(b, "PA", "bat")
     cp = _collapse(p, "IPouts", "pit")
     m = cb.merge(cp, on=["mlb_ID", "year_ID"], how="outer",
@@ -576,6 +620,10 @@ def write_panel(doc: dict, audit: dict) -> Path:
         "super_two_verified": doc["super_two_verified"],
         "conventions": {
             "spine": "war_daily bat+pit parquet, stints collapsed, salary MAX not SUM, two-way merge OUTER",
+            "war": (f"WAR column on war_source provider {_war_provider()} "
+                    "(eWAR v2: FIP-repriced pitching within role, position players equal bWAR "
+                    "until the SDR defense drop, uncovered seasons bWAR); salary/ids/exposure raw; "
+                    "arb_model coefficients were fit on bWAR until the rebuild wave re-fits"),
             "label": "Baseball Reference season salary, fused with the MLBTR settled figure where present",
             "arb_step": "fused from mlbtr_service > spotrac_backprop(>=2024) > fa_class_backcount > debut_heuristic",
             "max_cut": "CBA Article VI: a ratio below 0.80 is not an award, so those rows are EXCLUDED by definition",

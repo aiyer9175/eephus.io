@@ -125,7 +125,8 @@ def test_the_divergence_is_disclosed_to_readers():
 
 def test_the_fits_cache_key_carries_the_corpus_content():
     """PLAN ITEM F1.5. The key was (max_season, first, last) and nothing else,
-    so it said nothing about the ROWS. bWAR gets revised, signings land in a
+    so it said nothing about the ROWS. The war_daily (bWAR) input gets revised,
+    the eWAR artifact gets rebuilt on it, signings land in a
     winter already inside the span, identity repairs move players between rows.
     Each changes the fit; none changed the key. The cache went on serving the
     previous vintage and the only symptom was numbers that refused to move."""
@@ -143,7 +144,8 @@ def test_the_signature_moves_when_the_data_moves():
 
     revised = dict(corpus, hit=[{"mlbam": 1, "season": 2020, "war": 2.5, "pa": 500}])
     assert fp._corpus_sig(revised) != a, (
-        "a revised bWAR must change the signature; this is the exact case that "
+        "a revised WAR label (a war_daily revision or an eWAR rebuild) must change "
+        "the signature; this is the exact case that "
         "kept serving a stale WAR map")
 
     added = dict(corpus, hit=corpus["hit"] + [

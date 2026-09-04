@@ -263,7 +263,10 @@ A player's headline value slot escalates with on-field information, enforced
 by one shared helper (`display_metric_for` in `build_site.py`; its JS mirror
 `displayMetricFor` in `prospx/index.html` - keep the two in sync):
 
-- Graduated to MLB: WAR (career bWAR since debut, plus WAR/yr). New debuts
+- Graduated to MLB: WAR (career eWAR since debut, plus WAR/yr). eWAR is the
+  served WAR series from the 2026-09 epoch: Baseball-Reference run frame with
+  pitching re-priced on FIP; fielding unchanged pending SDR; position players
+  match bWAR today (glossary entry `ewar`). New debuts
   with no WAR posted yet show "WAR pending" rather than a fabricated number.
 - Prospect with a settled sample: WAG (WAR Above Grade).
 - Prospect with no meaningful sample: FV.

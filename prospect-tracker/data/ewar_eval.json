@@ -1,6 +1,6 @@
 {
  "model": "ewar_v2",
- "generated_at": "2026-08-04T18:52:48",
+ "generated_at": "2026-09-03T12:35:13",
  "eval_window": [
   2016,
   2025
@@ -853,8 +853,8 @@
    }
   },
   "pitching": {
-   "n_rows": 10094,
-   "n_fip_priced": 10027,
+   "n_rows": 13946,
+   "n_fip_priced": 13866,
    "ip_share_fip_priced": 1.0,
    "by_season": {
     "2016": {
@@ -1871,5 +1871,144 @@
    "gate 1 re-run against team RUNS ALLOWED and RUNS SCORED separately instead of wins, which separates component accuracy from the Pythagorean noise both series inherit"
   ],
   "safe_to_use_today": "The pitching component. It reproduces the known bWAR/fWAR divergences by name (Aaron Nola 2018 9.69 -> 6.15, Mike Minor 2019 7.99 -> 4.68, both toward their published fWAR), it persists 2.1x better, and it forecasts next-year run prevention better than actual run prevention does. NOTHING consumes eWAR yet. v2 already took the second of the two exits named here: the Statcast fielding swap was DROPPED (w=0.0) rather than repaired, so what remains is a one-component model. Two consumer gates have since been measured and both said no: the eFV first-6yr label swap (lane R3a) and fa_backtest Gate 1 (lane R3b). Read those before wiring eWAR into anything."
+ },
+ "accounting_league_sum_build_window": {
+  "build_window": [
+   2011,
+   2026
+  ],
+  "why": "eval_window scores the gates; this block checks the league-sum identity on every built season, including the pre-2016 label seasons the gates do not score. The in-progress last season is scaled against season-to-date team-games, so its replacement_scale reads near 1.0 only when the war_daily pull and the standings blob are from the same day (2026-09-03: 0.9997 fresh, 1.2672 with an Aug 4 pull against a Sep 3 blob). A scale far from 1.0 there says refresh the pull; it is not a break in the identity.",
+  "by_season": {
+   "2011": {
+    "team_games": 4858,
+    "target": 998.59,
+    "bwar_sum": 999.09,
+    "ewar_sum_pre_rescale": 998.8,
+    "ewar_sum": 998.59,
+    "replacement_scale": 0.99979
+   },
+   "2012": {
+    "team_games": 4860,
+    "target": 999.0,
+    "bwar_sum": 999.62,
+    "ewar_sum_pre_rescale": 998.88,
+    "ewar_sum": 999.0,
+    "replacement_scale": 1.00012
+   },
+   "2013": {
+    "team_games": 4862,
+    "target": 999.41,
+    "bwar_sum": 999.34,
+    "ewar_sum_pre_rescale": 1000.02,
+    "ewar_sum": 999.41,
+    "replacement_scale": 0.99939
+   },
+   "2014": {
+    "team_games": 4860,
+    "target": 999.0,
+    "bwar_sum": 998.71,
+    "ewar_sum_pre_rescale": 997.59,
+    "ewar_sum": 999.0,
+    "replacement_scale": 1.00141
+   },
+   "2015": {
+    "team_games": 4858,
+    "target": 998.59,
+    "bwar_sum": 998.31,
+    "ewar_sum_pre_rescale": 998.07,
+    "ewar_sum": 998.59,
+    "replacement_scale": 1.00051
+   },
+   "2016": {
+    "team_games": 4854,
+    "target": 997.77,
+    "bwar_sum": 998.06,
+    "ewar_sum_pre_rescale": 998.07,
+    "ewar_sum": 997.77,
+    "replacement_scale": 0.99969
+   },
+   "2017": {
+    "team_games": 4860,
+    "target": 999.0,
+    "bwar_sum": 997.54,
+    "ewar_sum_pre_rescale": 997.3,
+    "ewar_sum": 999.0,
+    "replacement_scale": 1.0017
+   },
+   "2018": {
+    "team_games": 4862,
+    "target": 999.41,
+    "bwar_sum": 997.42,
+    "ewar_sum_pre_rescale": 997.6,
+    "ewar_sum": 999.41,
+    "replacement_scale": 1.00181
+   },
+   "2019": {
+    "team_games": 4858,
+    "target": 998.59,
+    "bwar_sum": 996.81,
+    "ewar_sum_pre_rescale": 997.35,
+    "ewar_sum": 998.59,
+    "replacement_scale": 1.00124
+   },
+   "2020": {
+    "team_games": 1796,
+    "target": 369.18,
+    "bwar_sum": 370.59,
+    "ewar_sum_pre_rescale": 370.44,
+    "ewar_sum": 369.18,
+    "replacement_scale": 0.99661
+   },
+   "2021": {
+    "team_games": 4858,
+    "target": 998.59,
+    "bwar_sum": 998.35,
+    "ewar_sum_pre_rescale": 997.24,
+    "ewar_sum": 998.59,
+    "replacement_scale": 1.00135
+   },
+   "2022": {
+    "team_games": 4860,
+    "target": 999.0,
+    "bwar_sum": 1000.56,
+    "ewar_sum_pre_rescale": 1000.57,
+    "ewar_sum": 999.0,
+    "replacement_scale": 0.99843
+   },
+   "2023": {
+    "team_games": 4860,
+    "target": 999.0,
+    "bwar_sum": 1000.35,
+    "ewar_sum_pre_rescale": 999.99,
+    "ewar_sum": 999.0,
+    "replacement_scale": 0.99901
+   },
+   "2024": {
+    "team_games": 4858,
+    "target": 998.59,
+    "bwar_sum": 999.79,
+    "ewar_sum_pre_rescale": 998.58,
+    "ewar_sum": 998.59,
+    "replacement_scale": 1.00001
+   },
+   "2025": {
+    "team_games": 4860,
+    "target": 999.0,
+    "bwar_sum": 1000.44,
+    "ewar_sum_pre_rescale": 999.55,
+    "ewar_sum": 999.0,
+    "replacement_scale": 0.99945
+   },
+   "2026": {
+    "team_games": 4198,
+    "target": 862.92,
+    "bwar_sum": 863.93,
+    "ewar_sum_pre_rescale": 863.2,
+    "ewar_sum": 862.92,
+    "replacement_scale": 0.99968
+   }
+  },
+  "max_abs_deviation_from_target": 0.0,
+  "convention": "REPLACEMENT_WINS 47.7 on a .294 baseline; league target = (0.5 - 47.7/162) x team-games"
  }
 }

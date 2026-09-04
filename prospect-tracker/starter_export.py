@@ -197,8 +197,8 @@ def _join_xsem_plus(starters: list[dict], season: int) -> int:
 
 
 def _join_war_ip_plus(starters: list[dict], season: int) -> dict:
-    """STARTER-anchored WAR/IP+: 100 = the average starter's pitching bWAR per
-    inning, on the 100 + 10z scale (convention 3, ten points per pool sigma).
+    """STARTER-anchored WAR/IP+: 100 = the average starter's pitching eWAR per
+    inning (FIP re-priced within role from the 2026-09 epoch), on the 100 + 10z scale (convention 3, ten points per pool sigma).
 
     Deliberately a SEPARATE metric from the reliever-anchored WAR/IP+ in
     bullpen_export, exactly as SEM+ and REM+ are separate rather than one pooled
@@ -208,7 +208,7 @@ def _join_war_ip_plus(starters: list[dict], season: int) -> dict:
     above every number-three starter (ARKMETRIC_SCALE_CONVENTIONS.md:77). The
     anchor pool is named in the column title and in the glossary entry.
 
-    Best-effort: bWAR unavailable or degenerate -> nothing stamped, column
+    Best-effort: WAR unavailable or degenerate -> nothing stamped, column
     blank."""
     return score_war_rate(
         starters, season, side="pit", denom_key="ip",

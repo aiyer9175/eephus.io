@@ -832,7 +832,7 @@ WAR_RATE_DISPLAY_MIN_PA = 100.0
 WAR_RATE_POOL_MIN_IP = 20.0
 WAR_RATE_DISPLAY_MIN_SP_IP = 40.0
 WAR_RATE_DISPLAY_MIN_RP_IP = 30.0
-# A silent bWAR fetch failure must never be served as a board of zeros, so the
+# A silent WAR fetch failure must never be served as a board of zeros, so the
 # join refuses when it cannot see a WAR value for at least this share of the
 # pool-eligible rows (the fa_projection.py:191-201 degenerate-fetch pattern).
 WAR_RATE_MIN_COVERAGE = 0.50
@@ -840,9 +840,12 @@ WAR_RATE_MIN_COVERAGE = 0.50
 
 @functools.lru_cache(maxsize=1)
 def _side_war_by_season() -> dict:
-    """{mlbam: {season: {"bat": bWAR, "pit": bWAR}}} with the two sides kept on
-    SEPARATE keys, via war_source.side_war_by_season (provider 'bwar', which
-    delegates to mlb_player_export._war_daily).
+    """{mlbam: {season: {"bat": WAR, "pit": WAR}}} with the two sides kept on
+    SEPARATE keys, via war_source.side_war_by_season on the facade DEFAULT
+    provider (eWAR v2 from the 2026-09 epoch: the pitching side is FIP re-priced
+    within role, the batting side equals bWAR until the SDR defense drop; the
+    explicit 'bwar' provider is the input frame, delegating to
+    mlb_player_export._war_daily).
 
     The side split is the whole point. fa_projection._war_age_maps SUMS the two
     sides onto one number, which would divide a two-way player's PITCHING WAR by
@@ -861,12 +864,12 @@ def _side_war_by_season() -> dict:
 def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
                    pool_min: float, display_min: float, out_key: str,
                    anchor: str) -> dict:
-    """Stamp `out_key` (100 + 10z of side bWAR per denominator) onto `rows`.
+    """Stamp `out_key` (100 + 10z of side WAR per denominator) onto `rows`.
 
     `rows` are already-scored board dicts; `denom_key` is the field holding the
     denominator ('pa' or 'ip'); `side` is 'bat' or 'pit'. Rows at or above
-    `pool_min` with a bWAR value set mu/sd; rows at or above `display_min` get a
-    value. A row with no bWAR row of its own gets NO field (not a zero), so the
+    `pool_min` with a WAR value set mu/sd; rows at or above `display_min` get a
+    value. A row with no WAR row of its own gets NO field (not a zero), so the
     column renders blank rather than reading as a real replacement-level season.
 
     Returns a meta block for the payload: the anchor description, the two floors,
@@ -880,8 +883,8 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
     try:
         war_by = _side_war_by_season()
     except Exception as e:   # noqa: BLE001 - best-effort join, never aborts a board
-        _log.warning("%s unavailable (bWAR fetch failed: %s)", out_key, e)
-        meta["refused"] = f"bWAR fetch failed: {e}"
+        _log.warning("%s unavailable (WAR fetch failed: %s)", out_key, e)
+        meta["refused"] = f"WAR fetch failed: {e}"
         return meta
 
     def _war(r):
@@ -896,9 +899,9 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
     if not elig or len(covered) < WAR_RATE_MIN_COVERAGE * len(elig):
         # Degenerate fetch: pybaseball came back empty or stale, so almost nobody
         # has a WAR row. Refuse rather than anchor a board on a handful of rows.
-        _log.warning("%s REFUSED: bWAR covers %d of %d pool-eligible rows for %s",
+        _log.warning("%s REFUSED: WAR covers %d of %d pool-eligible rows for %s",
                      out_key, len(covered), len(elig), season)
-        meta["refused"] = (f"bWAR covered {len(covered)} of {len(elig)} "
+        meta["refused"] = (f"WAR covered {len(covered)} of {len(elig)} "
                            f"pool-eligible rows (floor {WAR_RATE_MIN_COVERAGE:.0%})")
         meta["pool_n"] = len(covered)
         return meta
@@ -944,7 +947,7 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
         raw = 100.0 + WAR_RATE_PER_SIGMA * ((w / d) - mu) / sd
         r[out_key] = int(round(raw))          # "+" stats round to nearest
         # pre-display core at the rem_plus_raw / hem_plus_raw precision. The lab
-        # never reads this field (it recomputes from bWAR), so the harness-v2
+        # never reads this field (it recomputes from the WAR frame), so the harness-v2
         # unrounded-predictor rule is satisfied upstream, not here.
         r[f"{out_key}_raw"] = round(raw, 1)
         if sd_s:
@@ -975,7 +978,8 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
         "pool_mean_rate": round(mu, 6), "pool_sd_rate": round(sd, 6),
         "shrink_K": round(K, 1), "pool_rate": round(pool_rate, 6),
         "adj_mean_rate": round(mu_s, 6), "adj_sd_rate": round(sd_s, 6),
-        "note": (f"100 + 10z of bWAR per {denom_key.upper()} over {anchor}. Ten "
+        "note": (f"100 + 10z of eWAR per {denom_key.upper()} over {anchor}. "
+                 f"eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today. Ten "
                  f"points is one standard deviation of that pool, not one "
                  f"percent: this is not the HEM+/REM+/SEM+ ratio scale. No "
                  f"shrink and no clamp. Rows under {display_min:g} "
@@ -992,7 +996,7 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
 
 
 def _join_war_ip_plus(relievers: list[dict], season: int) -> dict:
-    """RELIEVER-anchored WAR/IP+: 100 = the average reliever's pitching bWAR per
+    """RELIEVER-anchored WAR/IP+: 100 = the average reliever's pitching eWAR per
     inning. The starter board ships its own starter-anchored WAR/IP+; the two are
     separate metrics that happen to share a field name across two different
     payload files, never one pooled column."""

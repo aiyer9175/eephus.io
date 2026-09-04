@@ -757,8 +757,8 @@
       // Tape order runs production -> value -> risk -> shape, and every chip in
       // it has a matching button in the sort bar above the board (see FA_SORTBAR).
       const tape = `<div class="mlb-tape"><div class="mlb-tape-inner">
-        ${chip("WAR y1", m.warY1 != null ? formatMetric(m.warY1, "war") : null, "Projected year-1 bWAR")}
-        ${chip("deal WAR", dealWar, "Projected bWAR over the predicted term (floor-ceiling from the Gate-1 probability buckets)")}
+        ${chip("WAR y1", m.warY1 != null ? formatMetric(m.warY1, "war") : null, "Projected year-1 WAR (eWAR basis)")}
+        ${chip("deal WAR", dealWar, "Projected WAR (eWAR basis) over the predicted term (floor-ceiling from the Gate-1 probability buckets)")}
         ${chip("rational", m.rational != null ? money(m.rational) : null, "Convex-priced NPV of the projected production: what the deal is worth if you pay for value rather than for name")}
         ${risk}
         ${chip("yrs P10-P90", yearsBand, "The predicted term's P10-P90 range. The point estimate is in the Yrs / Guar column.")}
@@ -792,8 +792,8 @@
     // pattern. This is what restores every sort the table had, plus the ones it
     // never exposed, WITHOUT re-widening row 1 back into a twelve-column table.
     const FA_SORTBAR = `<div class="mlb-sortbar"><span class="mlb-sortbar-lbl">Sort tape</span>
-      ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}
-      ${sHead("deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor-ceiling buckets")}
+      ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 WAR (eWAR basis)")}
+      ${sHead("deal WAR", "warTotal", "Projected WAR over the predicted term, with floor-ceiling buckets. eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today.")}
       ${sHead(`<span data-gl="rational_value">rational</span>`, "rational", "Convex-priced NPV of the projected production")}
       ${sHead("downside WAR", "warCvar10", "Mean of the worst 10 percent of outcome paths - what the deal looks like when it goes wrong")}
       ${sHead("star odds", "pAnyStar", "Probability of at least one star-level season over the predicted term")}
@@ -1052,7 +1052,7 @@
       .sort((a, b) => dir * (get(a) - get(b))).slice(0, 6);
     const warRows = sign(w.signings || [], s => s.warTd, -1).map(s =>
       `<div class="fa-rail-row">${teamLogo(s.to)}<span>${esc(s.name)}</span>
-        <span class="fa-rail-num" title="Realized bWAR over the contract's elapsed seasons">${formatMetric(s.warTd, "war")}</span></div>`).join("");
+        <span class="fa-rail-num" title="Realized eWAR over the contract's elapsed seasons">${formatMetric(s.warTd, "war")}</span></div>`).join("");
     const surRows = sign(w.signings || [], s => s.surplusTd, -1).map(s =>
       `<div class="fa-rail-row">${teamLogo(s.to)}<span>${esc(s.name)}</span>
         <span class="fa-rail-num ${s.surplusTd >= 0 ? "fa-pos" : "fa-neg"}">${formatMetric(s.surplusTd / 1e6, "surplusM")}</span></div>`).join("");
@@ -1062,7 +1062,7 @@
     // width, which is exactly what that winter looked like before.
     if (!warRows && !surRows) return "";
     return `<aside class="fa-board-rail">
-      ${railMod("Realized WAR leaders", warRows, "Most bWAR actually delivered on this winter's contracts so far - realized, not projected")}
+      ${railMod("Realized WAR leaders", warRows, "Most eWAR actually delivered on this winter's contracts so far - realized, not projected")}
       ${railMod("Best realized surplus", surRows, "Realized surplus to date: WAR delivered x that season's estimated $/WAR, minus the money prorated to date")}
     </aside>`;
   }
@@ -1251,7 +1251,7 @@
     const band = (v, p10, p90, fmt) => v == null ? EM_DASH
       : `${fmt(v)}<span class="fa-band"> (${fmt(p10)}&ndash;${fmt(p90)})</span>`;
     // Year-by-year projection table: calendar season, age, floor/mean/
-    // ceiling bWAR, and that season's escalated $/WAR level. The mean bars
+    // ceiling eWAR, and that season's escalated $/WAR level. The mean bars
     // ride below as the visual.
     const infl = cls.dpw_infl ?? 0.05;
     const yearRows = (m.warPath || []).map((w, i) => {
@@ -1270,17 +1270,17 @@
       </tr>`;
     }).join("");
     const wp = (m.warPath || []).map((w, i) =>
-      `<div class="fa-warbar" title="${cls.class_year + i}: ${formatMetric(w, "war")} bWAR${(m.warPathP10 || [])[i] != null ? ` (floor ${formatMetric(m.warPathP10[i], "war")} / ceiling ${formatMetric(m.warPathP90[i], "war")})` : ""}"><div style="height:${Math.max(4, Math.min(100, w / 6 * 100)).toFixed(0)}%"></div><span>${String(cls.class_year + i).slice(2)}</span></div>`).join("");
+      `<div class="fa-warbar" title="${cls.class_year + i}: ${formatMetric(w, "war")} eWAR${(m.warPathP10 || [])[i] != null ? ` (floor ${formatMetric(m.warPathP10[i], "war")} / ceiling ${formatMetric(m.warPathP90[i], "war")})` : ""}"><div style="height:${Math.max(4, Math.min(100, w / 6 * 100)).toFixed(0)}%"></div><span>${String(cls.class_year + i).slice(2)}</span></div>`).join("");
     // The same endpoint-labelled trend the $/WAR rail uses, over the projected
     // WAR path. The bars beside it are a shape; this is the shape WITH numbers
     // on both ends, which is what a decline curve actually needs to be read.
     const wpPath = m.warPath || [];
     const warTrend = miniTrendSVG(
-      wpPath.map((w, i) => ({ v: w, t: `${cls.class_year + i}: ${formatMetric(w, "war")} bWAR` })),
+      wpPath.map((w, i) => ({ v: w, t: `${cls.class_year + i}: ${formatMetric(w, "war")} eWAR` })),
       { w: 300, h: 66, color: "var(--accent-cyan)", fmt: v => formatMetric(v, "war"),
         style: "display:block;width:100%;max-width:340px;height:auto;margin:2px 0 0;",
         xFirst: String(cls.class_year), xLast: String(cls.class_year + wpPath.length - 1),
-        aria: `Projected bWAR by season, ${cls.class_year} through ${cls.class_year + wpPath.length - 1}` });
+        aria: `Projected eWAR by season, ${cls.class_year} through ${cls.class_year + wpPath.length - 1}` });
     const comps = (m.comps || []).map(c => `<tr><td>${esc(c.name)}</td><td>${c.yr}</td><td>${teamLogo(c.to)}${esc(c.to || "")}</td><td>${c.years ?? "?"}y / ${c.guar ? money(c.guar) : "?"}</td></tr>`).join("");
     const fits = (m.fits || []).map(f =>
       `<span class="chip" title="need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " - blocked by " + esc(blockedText(f.blockedBy)) : ""}">${teamLogo(f.org)}${f.org}${f.blockedBy ? "*" : ""} &middot; ${f.fit}</span>`).join(" ");
@@ -1325,8 +1325,8 @@
       <table class="detail-table fa-year-table">
       <thead><tr><th>Season</th><th>Age</th><th title="P10 of the Gate-1 probability bucket, decayed along the aging curves">Floor</th><th>Mean</th><th title="P90 of the Gate-1 probability bucket, decayed along the aging curves">Ceiling</th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
       <tbody>${yearRows}</tbody></table>` : ""}
-      ${warTrend ? `<div class="fa-war-trend" title="Projected bWAR by season, labelled at both ends (hover any point for its season)">${warTrend}</div>` : ""}
-      ${wp ? `<div class="fa-warpath" title="Aging-curve-decayed projected bWAR by season (hover bars for the floor/ceiling band)">${wp}</div>` : ""}
+      ${warTrend ? `<div class="fa-war-trend" title="Projected eWAR by season, labelled at both ends (hover any point for its season)">${warTrend}</div>` : ""}
+      ${wp ? `<div class="fa-warpath" title="Aging-curve-decayed projected eWAR by season (hover bars for the floor/ceiling band)">${wp}</div>` : ""}
       <div id="fa-current-line"></div>`;
     const compsPanel = `${arcBlock}
       ${comps ? `<h3>Nearest real comps</h3><table class="detail-table">
@@ -1406,7 +1406,7 @@
   // WHAT IS NOT HERE, deliberately: this site computes no wRC+ and no xFIP, so
   // neither is shown. HEM+ is the offense-rate index the site actually has (100
   // = league average hitter), SEM+/REM+ and FIP are the run-prevention numbers,
-  // and season bWAR lives on the MLB player card rather than the leaderboards.
+  // and season eWAR lives on the MLB player card rather than the leaderboards.
   // Inventing either number to fill the row would be worse than its absence.
   function currentLineHTML(line, meta) {
     if (!line) return "";
@@ -1562,7 +1562,7 @@
         <td>${s.years ?? EM_DASH}</td>
         <td>${s.milb ? "MiLB deal" : money(s.guar)}</td>
         <td>${money(s.aav)}</td>
-        <td title="Realized bWAR over the contract's elapsed seasons">${s.warTd != null ? formatMetric(s.warTd, "war") : EM_DASH}</td>
+        <td title="Realized eWAR over the contract's elapsed seasons">${s.warTd != null ? formatMetric(s.warTd, "war") : EM_DASH}</td>
         <td title="Realized surplus to date: WAR delivered x that season's estimated $/WAR minus prorated money paid">${s.surplusTd != null ? formatMetric(s.surplusTd / 1e6, "surplusM") : EM_DASH}</td>
         <td>${s.done ? "complete" : (s.warTd != null ? "running" : EM_DASH)}</td>
       </tr>`).join("");

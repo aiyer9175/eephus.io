@@ -94,7 +94,8 @@ def test_no_history_returns_none():
 
 def test_fitted_models_cache_key_invalidates_on_corpus_refresh(tmp_path, monkeypatch):
     """A corpus refresh (corpus['last'] rolls forward: annual rollover, the
-    in-progress season going partial->full, or bWAR revisions) must force a refit
+    in-progress season going partial->full, war_daily revisions or an eWAR
+    rebuild) must force a refit
     at the SAME max_season -- not serve the previous vintage's stale aging curves +
     WAR map from the disk cache. The fits cache key therefore includes
     corpus['last'] (mirrors proj_ml's frame-cache key)."""

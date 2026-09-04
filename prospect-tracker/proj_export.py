@@ -1412,7 +1412,14 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
     REPLACEMENT_WINS comes from rate_stabilization (shared with the retro
     backtest in proj_backtest.py)."""
     # bWAR is calibrated so the league's players sum to ~1000 WAR every
-    # season (verified 1000/1000/1000 for 2023-25 in war_daily). The
+    # season (verified 1000/1000/1000 for 2023-25 in war_daily). eWAR v2,
+    # the served basis since 2026-09-03, keeps that identity by construction:
+    # its per-season replacement scale is re-derived so the league sum equals
+    # (0.5 - 47.7/162) x team-games; data/ewar_eval.json accounting_league_sum
+    # reads max_abs_deviation_from_target 0.0, with 2023/2024/2025 ewar_sum
+    # 999.0 / 998.59 / 999.0 against bwar_sum 1000.35 / 999.79 / 1000.44
+    # (build window 2011-2026). The 1000 benchmark below stands under either
+    # basis; it is not a constant the rebase re-derives. The
     # rostered universe captures ~56% of that pool (Marcel regression +
     # shrunk playing time + exposure floors), which read as a ~15-win
     # negative bias on every team (the best team projected 83 wins).

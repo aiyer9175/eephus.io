@@ -11,6 +11,16 @@
 > Companion reports: `reports/validation.md`, `reports/sensitivity.md`,
 > `reports/diff.md`. Engine: `value_framework.py`; sets: `config/valuation_sets/`.
 
+> **WAR basis (2026-09-03):** every WAR in this document and on the site, including the
+> realized WAR the anchors and star labels are fit on, is eWAR (eephus WAR):
+> Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending
+> SDR; position players match bWAR today. The flip is a basis decision, not an accuracy
+> claim: eWAR loses the descriptive team-wins gate (r 0.8595 vs bWAR 0.8803 over 300
+> team-seasons, by construction for any FIP WAR) and wins pitcher persistence (0.3617 vs
+> 0.1768 on 1,677 pairs; `data/ewar_eval.json`). The anchors quoted below were fit on bWAR
+> labels and are refit on eWAR in the epoch's rebuild wave; position-player cohorts are
+> identical under both. Glossary entry `ewar` carries the full frame.
+
 This document has two parts, mirroring the two FanGraphs source posts: a
 plain-language introduction, then the details with the sensitivity table. Only
 numbers we computed are filled in; anything not yet computed is marked TODO.
@@ -256,8 +266,13 @@ LIVE consensus scale: `consensus.build_timeseries` applies the remapper per sour
 before aggregation (gated by `ADOPT_NORMALIZED_CONSENSUS`), preserving the source
 weights, single-source pull, dropped-off shrinkage and forward-fill; the per-source
 published grades on the card are untouched, only the consensus scale moves. The 2026
-cycle flags mlb_pipeline and espn as grading materially higher than FanGraphs on
-shared players. Report: `reports/grade_normalization.md`; eval:
+cycle's July run flagged mlb_pipeline and espn as grading materially higher than
+FanGraphs on shared players; once the 2026-08-20 ESPN top 100 landed (65 of its 100
+rows at FV 50, wired 2026-08-30) the espn hitter cell's median shift is 0.0 on 98
+shared players and only the mlb_pipeline hitter flag (-5.0 on 538) stands. Because the
+map is a per-(source, role, cycle) offset, every 2026 ESPN grade in the consensus moved
+with that vintage (hitters a further -0.45 FV, pitchers -0.28), including January-only
+graders. Report: `reports/grade_normalization.md` (the 2026-07-04 snapshot); eval:
 `data/grade_normalization_eval.json`.
 
 ## Resolved (2026-07-05 followups)

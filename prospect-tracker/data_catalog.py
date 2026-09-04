@@ -244,7 +244,7 @@ ARTIFACTS = (
     {
         "file": "mlb_projections.json", "group": "mlb",
         "title": "MLB projections",
-        "what": ("Five-year bWAR paths for every MLB player with floor / mean / ceiling buckets, "
+        "what": ("Five-year eWAR paths for every MLB player with floor / mean / ceiling buckets, "
                  "contract surplus on salary-known seasons, and prospects joining at their ETA."),
         "cadence": "daily", "stability": STABLE, "pinned_by": "test_proj_export.py",
         "note": "",
