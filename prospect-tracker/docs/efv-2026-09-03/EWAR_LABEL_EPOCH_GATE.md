@@ -366,15 +366,36 @@ and `EPOCH_2026_PREREGISTRATION.md`'s same-commit checklist:
 
 ## 6. Appendix A: audit label-definition fixes carried by this epoch
 
-EMPTY AT REGISTRATION. To be filled from the design audit's report BEFORE the first
-matrix is rebuilt, then frozen. Each entry: the fix, the file and line it lands in, the
-pre-registered expected effect on each side, and whether it is separable from the eWAR
-flip in the cross-label matrix (a fix that is not separable is measured jointly and the
-copy says so).
+PROPOSED 2026-09-03 from `ARKMETRIC_DESIGN_AUDIT.md`, NOT YET FROZEN: the owner answers
+question 1 of that report's section 9 and the answer freezes this table. Nothing is
+rebuilt until it is frozen. Each entry: the fix, the file it lands in, the pre-registered
+expected effect on each side, and whether it is separable from the eWAR flip in the
+cross-label matrix (a fix that is not separable is measured jointly and the copy says so).
+
+The recommendation is TWO entries, and the reason is attribution rather than economy. Every
+other audit finding wants its own measurement, and a fix that lands inside this rebuild
+without its own arm is a fix whose effect can never be separated from the WAR basis. These
+two are separable because each touches a disjoint, identifiable row set: A1 moves only
+late-debut rows, A2 moves only rows with no MiLB block. Both are built as their own matrix
+arms in the same rebuild (four matrices per side instead of two), so the cross-label matrix
+reads the WAR basis, each fix, and their interaction.
 
 | # | fix | lands in | expected hit effect | expected pit effect | separable |
 | --- | --- | --- | --- | --- | --- |
-| (none yet) | | | | | |
+| A1 | service-aligned label window: the debut season is season 1 only if the debut is on or before roughly opening day plus 14 days, else the window shifts and the stub WAR is added (audit F03) | `efv_dataset._label_6yr` plus a rebuild of `fv_outcome_curves_pooled.json` on the same label | level only: +1.0 WAR on the 55 resolved rows debuting on or after 1 August, about 1.5 FV at the 50 level; rank equivalent (Spearman between labels 0.9992, rho vs consensus +0.0004) | same shape, smaller: +0.72 WAR on 23 rows debuting on or after 1 September | YES, the moved rows are identifiable by debut date |
+| A2 | neutral imputation for `milb_unavailable` rows: `level_rank`, `n_milb_seasons` and the rate keys imputed at the has-MiLB pool mean (or the two-stage fit), so raw 0 stops being a -0.99 sd input on 39 to 46 percent of the pool (audit F04) | `efv_model._vec` plus the docstring correction | ordering: the `level_rank` raw-scale slope moves 0.154 to 0.209-0.253 WAR per rung, so the AAA-versus-A gap widens from 0.46 to 0.63-0.76 WAR before calibration | same direction, larger block (46.4 percent of the pool is imputed) | YES, the moved rows carry `milb_unavailable` |
+
+Both entries inherit clause (a): floors are derived on the final frame AFTER all frozen
+fixes are applied, and the hitter regen control in clause (a) is read against the eWAR-only
+arm, never against the fixed arm, or the control loses its meaning.
+
+NOT carried by this epoch, and each for a stated reason: F01 (the `B(fv)` ridge feature) and
+F02 (the out-of-fold affine) change the served grade mechanism rather than the label and are
+grade-basis epochs of their own; F36 (tool-scale normalization into the matrix) is admissible
+in principle but has no measured prior and would spend the rebuild's attribution budget on a
+third arm; every consensus-side fix (F10, F14, F16, F32, F34, F35) changes `consensus_fv_raw`,
+which is simultaneously eFV's dominant feature and its baseline, so each is its own
+consensus-basis change with its own two-pass rebuild.
 
 ## 7. Abort conditions (for the rebuild, not the decision)
 
