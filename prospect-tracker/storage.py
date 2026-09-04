@@ -4916,7 +4916,11 @@ _NO_BOARD_SORT_KEY = -1e9
 # to a post-epoch rank would report the one-time re-rank as real player movement.
 # Every reader of metric_snapshots.overall_rank filters on this date; rank
 # movement and the rank-trend arrow read empty until post-epoch history accrues.
-BOARD_RANK_BASIS_EPOCH = "2026-08-13"   # STRICTLY-AFTER gate: see load_rank_history.
+BOARD_RANK_BASIS_EPOCH = "2026-09-04"   # STRICTLY-AFTER gate: see load_rank_history.
+# Bumped 2026-09-04 for the eWAR LABEL EPOCH. career_war was rebased from bWAR to
+# eWAR v2, which re-labels the eFV training target for every debuted row, so the
+# board re-ranks once for a reason that is not player movement. That is the only
+# job this constant has. Gate docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md.
 # Bumped 2026-08-12 with the rookie-window unlock, which re-anchors every
 # still-eligible graduate onto his latest board point. Rank history from
 # before this date is on the debut-anchored basis and must not be differenced
@@ -5040,11 +5044,20 @@ BOARD_RANK_BASIS_EPOCH = "2026-08-13"   # STRICTLY-AFTER gate: see load_rank_his
 # fires when it is convenient is not one. The alternative - leaving the two inputs
 # unnamed to protect one night of chips - is the exact trade that produced the
 # 2026-07-29 incident.
-BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
+BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd"
                            "|roles=usage_both|feats=b747e1d3|stale=source"
                            "|floorroute=on@ff60a349|gradanchor=rookie_window"
                            "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
-                           "|gradenorm=asof@ref2017")
+                           "|gradenorm=asof@ref2017"
+                           "|label=ewar_v2@2026-09-03T12:35:09")
+# grademap 6dbe8353f3bb -> 1f3fa0a970bd and the NEW label= term, both on 2026-09-04:
+# THE eWAR LABEL EPOCH. Gate docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md, runbook
+# docs/efv-2026-09-03/WAR_BASIS_RUNBOOK.md step U. career_war was rebased from bWAR to
+# eWAR v2 (2,531 of 2,666 rows; the other 135 resolve to no mlbam and stay on bWAR), so
+# the first-6yr label moved, the pooled FV outcome curve was refit on the new label and
+# its hash moved with it. The label= term is what makes the SECOND of those visible: the
+# curve hash would have moved on any refit, but nothing in this string could see that the
+# training target itself changed basis.
 # disp 0.470359/0.663929 -> 0.000000/1.000000 on 2026-08-14: THE C-7 REVERT, on the
 # owner's decision. Gate docs/efv-2026-08-13/DISPERSION_REVERT_GATE.md. The identity
 # map is written as coefficients rather than as the word "identity" on purpose: the
@@ -5229,9 +5242,26 @@ def board_basis_fingerprint() -> str:
         gradenorm += f"@ref{getattr(_gn, '_REFERENCE_FIRST_YEAR', '?')}"
     except Exception:
         gradenorm = "unavailable"
+    # LABEL BASIS, added 2026-09-04 with the eWAR label epoch, and it is the same hole
+    # one more time. Every term above identifies how a PREDICTION is turned into a served
+    # grade; not one of them can see which WAR series the model was TRAINED on. Rebasing
+    # career_war from bWAR to eWAR v2 re-labels the training target for every debuted row
+    # and moves the served grade, and without this term the fingerprint would have stayed
+    # byte-identical to its pin while it happened. The term names the provider and the
+    # BUILD identity of the label series, so a rebuild of ewar.json moves it too: a
+    # provider name alone would go stale the first time the artifact was refit.
+    try:
+        import war_source as _ws
+        label = str(getattr(_ws, "DEFAULT_PROVIDER", "unknown"))
+        if label != "bwar":
+            import ewar as _ew
+            _p = _ew.load()
+            label += f"@{str(_p.get('generated_at') or 'nobuild')[:19]}"
+    except Exception:
+        label = "unavailable"
     return (f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
             f"|feats={feats}|stale={stale}|floorroute={floorroute}|gradanchor={anchor}"
-            f"|disp={disp}|gradenorm={gradenorm}")
+            f"|disp={disp}|gradenorm={gradenorm}|label={label}")
 
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /

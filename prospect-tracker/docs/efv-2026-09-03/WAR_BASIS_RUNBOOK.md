@@ -173,7 +173,10 @@ later. WRITES: `data/xfv_hitter_matrix.json`, `data/xfv_pitcher_matrix.json`,
 ### G. Floors FIRST
 
     python tools/efv_mde_lab.py mde 2000
-    python tools/efv_power_lab.py all 2000
+    python tools/efv_power_lab.py all 2000     # part A: repro, decomp, detect, coverage, power, verdict
+    python tools/efv_power_lab.py partb        # part B: partb_floors + detect_classes + coverage_h2h + x4_sign + adjudicate
+
+BOTH COMMANDS ARE REQUIRED and the order matters. `all` calls run_all, which writes the WHOLE artifact in one shot and therefore ERASES the part-B blocks, `partb_floors` among them. That is the incident `merge_artifact` exists to prevent and it is exactly what happened on 2026-09-04 when this step ran with `all` alone: the E_cond floors the gate's clause (a) reads had to be regenerated with `partb` afterwards. Run `all` first, then `partb`, never the other way round.
 
 Why: clause (a). The bWAR-frame floors (E_cond 0.0206 / 0.0212 / 0.0209 / 0.0290)
 adjudicate nothing on the new frame. Seed 20260807 is the standard's; do not change it.
@@ -269,7 +272,7 @@ prices off the projections on disk), `proj_export`'s league benchmark note
 ### N. Star odds artifacts and the shadow constant
 
     grep -n "_RESOLVED_THROUGH = " tools/build_star_odds_artifacts.py   # 27: 2025, must equal efv_dataset.RESOLVED_THROUGH
-    python tools/build_star_odds_artifacts.py
+    python -m tools.build_star_odds_artifacts   # the -m form is the tool's documented entry
 
 Why: `data/star_label_view.json` is the Clemens star label (>= 2 control seasons of 4+
 WAR); a pitcher whose FIP-priced season crosses 4.0 flips. The tool carries its own copy

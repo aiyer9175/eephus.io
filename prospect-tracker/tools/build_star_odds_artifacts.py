@@ -14,10 +14,21 @@ from __future__ import annotations
 import datetime as _dt
 import json
 import sqlite3
+import sys
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent
 _DATA = _ROOT / "data"
+
+# The docstring says to run this with `python -m tools.build_star_odds_artifacts` from the
+# repo root, which puts the root on sys.path for free. Run the other way, as
+# `python tools/build_star_odds_artifacts.py`, sys.path[0] is tools/ instead and the late
+# `import value_framework` inside build_calibration_eval raises ModuleNotFoundError AFTER
+# star_label_view.json has already been written, leaving the pair of artifacts
+# half-updated. Both invocations are in use (WAR_BASIS_RUNBOOK step N used the second),
+# so the module makes itself importable either way rather than relying on the caller.
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 
 # Star window: the clemens_2026 control window (7 seasons) is the star definition
 # window. The label counts seasons of >= 4 WAR within [debut_year .. debut_year+6].

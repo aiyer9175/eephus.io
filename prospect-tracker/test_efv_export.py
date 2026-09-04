@@ -553,7 +553,21 @@ def test_committed_artifact_headline_alias_contract():
 #   C-6b the same suppression applied at the export funnel, closing the run_backgrade
 #        path that reached the board without the seam.
 #        docs/efv-2026-08-13/CONSENSUS_DELTA_HONESTY_GATE.md.
-_GOLDEN_XFV_SHA256 = "687aab4b420f0b550848714deb6b565880b77622b0a9983b2bd40dfe97777c31"
+# 2026-09-04 RESTAMP: THE eWAR LABEL EPOCH. Stamped from the production
+#   `run_monthly.py --rebuild-only` output of the rebuild wave (WAR_BASIS_RUNBOOK steps O
+#   through R), read BEFORE pytest touched the tree, per the standing convention above.
+#   What moved: career_war was rebased from bWAR to eWAR v2, so the eFV first-6yr training
+#   label moved for every debuted row; the pooled FV outcome curve was refit on that label
+#   and its hash went outcome_pooled@6dbe8353f3bb -> @1f3fa0a970bd, which changes every
+#   served grade because xfv_grade is that curve inverted; the empirical anchors and the
+#   survivor curve were refit on the same table. BOARD_RANK_BASIS_EPOCH bumped to
+#   2026-09-04 and BOARD_BASIS_FINGERPRINT gained a `label=` term in the same commit, so
+#   the movement engine will not publish the one-time re-rank as player movement.
+#   Gate: docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md section 9. The swap is an OWNER
+#   BASIS decision and NOT an accuracy claim: the measured effect on the eFV margin is
+#   +0.00006 on hitters (ruled out as equivalent) and -0.01823 on pitchers (undecided).
+#   Rowcount 9379 -> 9502.
+_GOLDEN_XFV_SHA256 = "323a424d0adc409d095aa1484ca01d179858e728d481f5b6a69e5e556f3abed0"
 # OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
 # whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
 # factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which
@@ -571,7 +585,7 @@ _GOLDEN_XFV_SHA256 = "687aab4b420f0b550848714deb6b565880b77622b0a9983b2bd40dfe97
 # (data/xfv.json by_player, read 2026-07-16 post-DB-repair regen). The +/-20%
 # band tolerates ordinary roster churn while still catching a gross
 # truncation / empty-artifact regression.
-_GOLDEN_XFV_ROWCOUNT = 9379
+_GOLDEN_XFV_ROWCOUNT = 9502
 
 
 def test_efv_grade_map_inverts_on_model_window():

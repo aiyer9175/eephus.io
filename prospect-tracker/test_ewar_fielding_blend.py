@@ -27,7 +27,17 @@ chose, and the grid search that picks w would be selecting on a broken axis.
 
 Since the 2026-09-03 epoch eWAR v2 is the SERVED series (war_source default
 provider), so the w = 0.0 endpoint is also the served-copy statement
-'position players match bWAR today': a drift here would make that copy false.
+'position players match bWAR except in seasons they also pitched': a drift here
+would make that copy false.
+
+The exception clause is not hedging. Measured 2026-09-04 during the label epoch:
+107 of 1,899 hitter rows on the eFV board carry a season where the player also
+took the mound, 183 of those 187 seasons under 10 IP, and the pitching swap
+re-prices them. The FIP re-pricing strips the balls in play that are most of the
+damage in a blowout inning, so it can hand a position player +0.68 WAR for 1.0 IP.
+The fielding endpoint asserted below is untouched by that; the copy is what had to
+change, because the old wording claimed an identity the pitching arm does not
+promise. See docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md section 7.
 
 These tests exercise the arithmetic directly rather than running build(), which
 needs the war_daily frames and several minutes; the arithmetic under test is a

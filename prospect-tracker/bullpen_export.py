@@ -979,7 +979,7 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
         "shrink_K": round(K, 1), "pool_rate": round(pool_rate, 6),
         "adj_mean_rate": round(mu_s, 6), "adj_sd_rate": round(sd_s, 6),
         "note": (f"100 + 10z of eWAR per {denom_key.upper()} over {anchor}. "
-                 f"eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today. Ten "
+                 f"eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched. Ten "
                  f"points is one standard deviation of that pool, not one "
                  f"percent: this is not the HEM+/REM+/SEM+ ratio scale. No "
                  f"shrink and no clamp. Rows under {display_min:g} "

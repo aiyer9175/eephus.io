@@ -793,7 +793,7 @@
     // never exposed, WITHOUT re-widening row 1 back into a twelve-column table.
     const FA_SORTBAR = `<div class="mlb-sortbar"><span class="mlb-sortbar-lbl">Sort tape</span>
       ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 WAR (eWAR basis)")}
-      ${sHead("deal WAR", "warTotal", "Projected WAR over the predicted term, with floor-ceiling buckets. eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today.")}
+      ${sHead("deal WAR", "warTotal", "Projected WAR over the predicted term, with floor-ceiling buckets. eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched.")}
       ${sHead(`<span data-gl="rational_value">rational</span>`, "rational", "Convex-priced NPV of the projected production")}
       ${sHead("downside WAR", "warCvar10", "Mean of the worst 10 percent of outcome paths - what the deal looks like when it goes wrong")}
       ${sHead("star odds", "pAnyStar", "Probability of at least one star-level season over the predicted term")}

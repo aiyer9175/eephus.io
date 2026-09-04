@@ -10365,7 +10365,7 @@
 <script src="/assets/eephus-ui.js?v=d1d01ba2" defer></script>
   <script src="/assets/eephus-gl.js?v=7b97df51" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
-  <script src="/assets/eephus-hub.js?v=48f6afe9" defer></script>
+  <script src="/assets/eephus-hub.js?v=b5b494bc" defer></script>
 <!-- Dark-theme phosphor-starfield background - shared with the editorial
      pages (single component + token set in assets/site.css [data-theme=dark]).
      Mounts only while the dark theme is active; render() feeds it the
@@ -15151,7 +15151,7 @@ function _debutFvCohortBlock(p) {
 
 // ONE WAR SOURCE SITE-WIDE: eWAR (eephus WAR), the Baseball-Reference run
 // frame with pitching re-priced on FIP; fielding unchanged pending SDR;
-// position players match bWAR today.
+// position players match bWAR except in seasons they also pitched.
 // Served through war_source (default provider ewar_v2, 2026-09 epoch) into
 // career_war.seasons - see stats.fetch_career_war_bulk; bWAR stays the input
 // frame (war_daily via pybaseball). Every WAR a user sees
@@ -15180,8 +15180,8 @@ function gradCareerWarHTML(p) {
   const seasons = cw.seasons || {};
   const years = Object.keys(seasons).sort();
   const tip = years.length
-    ? `Career WAR · eWAR (B-Ref frame, pitching on FIP; hitters match bWAR)\n` + years.map(y => `${y}: ${seasons[y] >= 0 ? "+" : ""}${seasons[y]}`).join("\n")
-    : "Career WAR · eWAR (B-Ref frame, pitching on FIP; hitters match bWAR)";
+    ? `Career WAR · eWAR (B-Ref frame, pitching on FIP; hitters match bWAR unless they pitched)\n` + years.map(y => `${y}: ${seasons[y] >= 0 ? "+" : ""}${seasons[y]}`).join("\n")
+    : "Career WAR · eWAR (B-Ref frame, pitching on FIP; hitters match bWAR unless they pitched)";
   return `<div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">
     <span style="color:${totColor};font-weight:700;">${tot >= 0 ? "+" : ""}${tot.toFixed(1)} WAR</span>
     <span style="color:var(--text-tertiary);"> · </span><span style="color:${perColor};">${per >= 0 ? "+" : ""}${per.toFixed(2)}/yr</span>
@@ -15198,7 +15198,7 @@ function gradCurrentWarHTML(p) {
   if (w == null) return "";
   const yr = new Date().getUTCFullYear();
   const color = w >= 3 ? "var(--up)" : w <= 0 ? "var(--down)" : "var(--text-primary)";
-  return `<span class="grad-war-current" style="display:inline-block;font-family:var(--font-mono);font-size:var(--fs-xs);font-variant-numeric:tabular-nums;font-weight:700;color:${color};padding:1px 6px;border:1px solid ${color};border-radius:999px;margin-right:6px;" title="${yr} season eWAR (B-Ref frame, pitching on FIP; hitters match bWAR)">${yr} eWAR ${w >= 0 ? "+" : ""}${w.toFixed(1)}</span>`;
+  return `<span class="grad-war-current" style="display:inline-block;font-family:var(--font-mono);font-size:var(--fs-xs);font-variant-numeric:tabular-nums;font-weight:700;color:${color};padding:1px 6px;border:1px solid ${color};border-radius:999px;margin-right:6px;" title="${yr} season eWAR (B-Ref frame, pitching on FIP; hitters match bWAR unless they pitched)">${yr} eWAR ${w >= 0 ? "+" : ""}${w.toFixed(1)}</span>`;
 }
 
 function makeGradMilbCell(p) {
@@ -44672,13 +44672,13 @@ function makeSabermetricsBlock(player) {
   if (!isP && sm && (sm.wrc_plus != null || sm.woba != null || sm.war != null)) {
     if (sm.wrc_plus != null) { const v = Math.round(sm.wrc_plus); saberTiles.push(tile("wRC+", v, colorize(v >= 110, v <= 90), "Weighted Runs Created+ · 100 = league avg, higher is better")); }
     if (sm.woba != null) saberTiles.push(tile("wOBA", f3(sm.woba), colorize(sm.woba >= 0.340, sm.woba <= 0.300), "Weighted On-Base Average · linear-weights scale, .320 ≈ avg"));
-    const w = currentSeasonBwar(player); if (w != null) saberTiles.push(tile("WAR", w.toFixed(1), colorize(w >= 2.0, w <= 0), "Current-season eWAR, the one WAR source site-wide. eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today."));
+    const w = currentSeasonBwar(player); if (w != null) saberTiles.push(tile("WAR", w.toFixed(1), colorize(w >= 2.0, w <= 0), "Current-season eWAR, the one WAR source site-wide. eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched."));
   } else if (isP && sm && (sm.xfip != null || sm.fip != null || sm.fip_minus != null || sm.era_minus != null || sm.war != null)) {
     if (sm.xfip != null) saberTiles.push(tile("xFIP", f2(sm.xfip), colorize(sm.xfip <= 3.50, sm.xfip >= 4.50), "Expected FIP · neutralizes HR/FB rate · league avg ≈ 4.00"));
     if (sm.fip != null) saberTiles.push(tile("FIP", f2(sm.fip), colorize(sm.fip <= 3.50, sm.fip >= 4.50), "Fielding-Independent Pitching · same scale as ERA"));
     if (sm.fip_minus != null) { const v = Math.round(sm.fip_minus); saberTiles.push(tile("FIP-", v, colorize(v <= 90, v >= 110), "FIP- · 100 = league avg, lower is better")); }
     if (sm.era_minus != null) { const v = Math.round(sm.era_minus); saberTiles.push(tile("ERA-", v, colorize(v <= 90, v >= 110), "ERA- · 100 = league avg, lower is better")); }
-    const w = currentSeasonBwar(player); if (w != null) saberTiles.push(tile("WAR", w.toFixed(1), colorize(w >= 2.0, w <= 0), "Current-season eWAR, the one WAR source site-wide. eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today."));
+    const w = currentSeasonBwar(player); if (w != null) saberTiles.push(tile("WAR", w.toFixed(1), colorize(w >= 2.0, w <= 0), "Current-season eWAR, the one WAR source site-wide. eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched."));
   }
   if (saberTiles.length) groups.push({ label: "MLB sabermetrics", html: tileGrid(saberTiles) });
 

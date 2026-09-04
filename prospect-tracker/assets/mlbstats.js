@@ -398,7 +398,7 @@
         return s;
       } },
     { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true,
-      title: "Pitching eWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today." },
+      title: "Pitching eWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched." },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "g", label: "G", fmt: fInt, num: true },
     { key: "k_pct", label: "K%", fmt: fPct, num: true },
@@ -1282,7 +1282,7 @@
         return s;
       } },
     { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true,
-      title: "Pitching eWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today." },
+      title: "Pitching eWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched." },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "gs", label: "GS", fmt: fInt, num: true },
     { key: "ip_per_gs", label: "IP/GS", fmt: f1, num: true, title: "Average start length (innings per game started)" },
@@ -1802,7 +1802,7 @@
         return s;
       } },
     { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true,
-      title: "Batting eWAR this season, the numerator of WAR/PA+ (shown so the rate is checkable against the PA column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today." },
+      title: "Batting eWAR this season, the numerator of WAR/PA+ (shown so the rate is checkable against the PA column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched." },
     { key: "pa", label: "PA", fmt: fInt, num: true },
     { key: "hr", label: "HR", fmt: fInt, num: true },
     { key: "sb", label: "SB", fmt: fInt, num: true },

@@ -884,7 +884,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                        "the rhos here are the live stamp of the same repaired harness. Held labels read "
                        "closed >=20 IP follow-up seasons only. WAR outcomes are on the served eWAR basis: "
                        "Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged "
-                       "pending SDR; position players match bWAR today."),
+                       "pending SDR; position players match bWAR except in seasons they also pitched."),
     }
 
     # pitch-add lab: RP->SP candidates with a recommended weapon to add

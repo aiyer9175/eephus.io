@@ -1733,6 +1733,18 @@ def _r4(v):
 
 
 if __name__ == "__main__":
+    # The summary below prints Greek rho and an en dash. On Windows the console encoding
+    # is cp1252, which cannot encode either, so the print raised UnicodeEncodeError and
+    # the process exited 1 AFTER data/source_backtest.json had already been written
+    # correctly. A non-zero exit on a successful run is worse than a mangled glyph: it
+    # fails any caller that checks the return code, and the WAR_BASIS_RUNBOOK step Q does.
+    # Reconfigure rather than de-Unicode the strings, so the display stays right wherever
+    # the console can take it and degrades to a replacement character where it cannot.
+    import sys as _sys
+    try:
+        _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     r = run_source_backtest()
     import pprint

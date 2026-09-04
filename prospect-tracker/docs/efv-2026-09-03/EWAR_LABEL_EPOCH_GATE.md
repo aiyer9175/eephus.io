@@ -492,6 +492,20 @@ consensus-basis change with its own two-pass rebuild.
 
 - ABORT the rebuild if the hitter same-label margin moves past its E_cond floor before
   any Appendix A fix is applied (the hitter label is byte-identical; a move is a defect).
+  **PREMISE FALSIFIED 2026-09-04, recorded BEFORE the margins were read.** The hitter
+  label is NOT byte-identical. 107 of 1,899 hitter rows move, and the trace is complete:
+  every one of the 187 moved player-seasons carries pitching innings, 183 of them under
+  10 IP. These are position players mopping up in blowouts. eWAR re-prices those innings
+  on FIP, which strips the balls in play that are most of the damage, so the swap credits
+  back the run-based penalty: leo_rivas +0.68 WAR for 1.0 IP, matt_mervis +0.60 for 0.7 IP.
+  The censored-tail projection then multiplies it, so the label moves up to +1.71 WAR.
+  The identity `eWAR = bWAR + delta_pitch/RPW` is doing exactly what it says; the premise
+  that "hitters have no pitching" is what was wrong. The abort condition is therefore
+  RESTATED: abort if the hitter margin moves past its floor for any reason OTHER than
+  position-player pitching, and the lab's `nopp` basis is what separates the two.
+  The model's own conservation argument does not cover these rows: the centring is
+  IP-weighted per (season, role), so a 1-IP position player contributes nothing to the
+  constant and still receives the redistribution.
 - ABORT if the `career_war` rebase leaves any season of any player with NEITHER an eWAR
   nor a bWAR value (the merge-preserving upsert should make this impossible; assert it).
 - ABORT if the post-rescale league eWAR sum for any season in 2011-2015 misses its
@@ -503,6 +517,58 @@ consensus-basis change with its own two-pass rebuild.
 - ABORT if top-10 board membership changes (the 2026-08-13 tripwire, kept). Not a gate on
   size, a tripwire on the flip doing something other than what part 1 describes.
 
+## 7.1 Execution record: what the nightly did before the rebuild wave started
+
+Recorded 2026-09-04, before any margin was read.
+
+The facade default flip (runbook step D) was committed in wave 1 on 2026-09-03. The
+nightly `run_monthly` then ran 2026-09-04 13:46 to 15:21 local, BEFORE the rebase (step C).
+Its own refetch goes through `war_source.career_war_bulk` on the default provider, so it
+wrote 1,817 rows on the eWAR basis and left the other 849 on bWAR, then rebuilt the served
+artifacts on that MIXED basis: `xfv.json` 15:08, `timeseries.json` 15:21,
+`xfv_hitter_matrix.json` 15:01, `trade_values.json` 15:11, `debuts.json` 15:00,
+`source_backtest.json` 14:52. This is the ordering hazard step C names in its own text,
+arriving from the other direction than the one it warned about.
+
+Consequences, stated plainly:
+
+- The clause (f) pre-epoch snapshot could no longer be taken from the working tree. It was
+  taken anyway at 15:30 (`../_pre_epoch_2026-09/`, database plus 16 artifacts) so the rest
+  of the epoch is measurable, and the honest baseline for the board diff is the last
+  COMMITTED board (af01ece7, generated 2026-08-14), which also carries three weeks of
+  unrelated data change. The blast-radius numbers are reported against that baseline with
+  this caveat attached; they are an upper bound on the epoch's own effect, not a clean read.
+- The bWAR label survives regardless, which is what clause (b) required: `seasons_bwar`
+  is written beside `seasons` on every rebased row, and the lab reads the bWAR label from
+  the table itself. Clause (b) is unaffected.
+- One genuine piece of luck: `data/xfv_hitter_matrix__E0.json` was built at 13:48, seven
+  minutes before the refetch, so a true pre-nightly hitter label exists on disk and is
+  what the 107-row hitter trace above was measured against.
+
+The rebase was then applied with `--reapply` (the flag step C names for exactly this case)
+at 15:30, taking `prospects.db.bak-ewar-2026-09-04` first. Post-state: 2,666 rows, 2,531 on
+`ewar_v2` and 135 left on `bbref`, no season carrying neither value, no `ewar_v2` row
+missing its `seasons_bwar` frame, 10,893 of 10,983 receipted seasons served by eWAR (99.2
+percent, 90 in-window fallbacks). The 135 are the identity floor: no mlbam by any route.
+
+Two smaller findings, recorded so they are not rediscovered:
+
+- **Three slugs are two humans each.** `jose_alvarez`, `kyle_mcpherson` and `tyler_wilson`
+  resolve one way through `player_photos` and another through the override files.
+  `war_source.mlbam_index` prefers the binding table on purpose and says so. Measured here:
+  for all three, the photos identity has ZERO eWAR records across the row's season frame
+  while the override identity covers every season, because the career_war row belongs to
+  the older major-leaguer and photos points at a younger namesake. Cost is 14 seasons on
+  the bWAR fallback, which is the conservative path. The remedy is an identity split of the
+  kind `tools/repair_jesus_lopez_collision.py` performs, NOT a precedence flip, which would
+  re-point a canonical binding to suit one consumer.
+- **Two receipt shapes.** The rebase tool stamps `ewar_coverage` as
+  `{n_ewar, n_fallback_pre, n_fallback_post, n_seasons, mlbam, model, artifact_generated_at}`
+  on 2,524 rows; the nightly facade stamps `{covered, total, fallback_years}` on 7. Both
+  shapes are pinned by their own tests and neither is served, so this is untidy rather than
+  wrong. Anything that reads the field must handle both, or the two writers must be
+  reconciled in a later pass.
+
 ## 8. Registry and artifacts this gate creates
 
 - `data/xfv_ewar_label_epoch_eval.json`: the matrix (b), coverage (c), TOST (d),
@@ -513,5 +579,175 @@ consensus-basis change with its own two-pass rebuild.
 
 ## 9. Results
 
-EMPTY. Filled by the rebuild wave, after every step of the runbook has run and after
-the margins are re-read from the regenerated artifacts. Nothing above this line changes.
+Measured 2026-09-04 by `tools/efv_ewar_label_epoch_lab.py`, artifact
+`data/xfv_ewar_label_epoch_eval.json`, seed 20260807, B = 2,000 for every leg. Floors were
+re-derived on the eWAR frame FIRST (clause a): `data/xfv_mde_floor.json` regenerated
+2026-09-04, E_refit MDE95 hit 0.0532, pit 0.0507, block 0.0373.
+
+### The headline, stated as the gate requires
+
+**The WAR basis swap did not improve eFV.** On the hitter side the effect on the decision
+quantity is nil; on the pitcher side the point estimate is a small LOSS that does not clear
+its own null. The flip ships anyway, because part 0 registered it as an owner basis
+decision and not an accuracy claim. What this section governs is the COPY.
+
+### (b) The cross-label matrix, margins (blend rho minus consensus rho)
+
+| side | fit / score | score bWAR | score eWAR |
+| --- | --- | --- | --- |
+| hit | fit bWAR | +0.01000 | +0.00983 |
+| hit | fit eWAR | +0.01023 | **+0.01006** |
+| pit | fit bWAR | **+0.00538** | -0.00996 |
+| pit | fit eWAR | -0.00008 | **-0.01285** |
+
+Diagonal difference (eWAR same-label minus bWAR same-label): hit **+0.00006**, pit
+**-0.01823**. n = 755 hit, 892 pit, identical rows in every cell.
+
+The pitcher off-diagonals are the informative part. Scoring on the eWAR label costs about
+0.015 whichever label the model was fitted on, while fitting on eWAR costs about 0.005
+whichever label it is scored against. The dominant term is therefore the SCORE label, and
+the direction is that the eWAR pitcher label rewards the consensus FV relatively more than
+it rewards the ridge. That is the honest cell and it leads.
+
+### (d) TOST at the registered 0.02 margin, E_cond primary
+
+| side | point | E_cond CI95 | E_refit CI95 | disposition |
+| --- | --- | --- | --- | --- |
+| hit | +0.00006 | [-0.00148, +0.00182] | [-0.00263, +0.00351] | **RULED OUT** (equivalent) |
+| pit | -0.01823 | [-0.04747, +0.00962] | [-0.05283, +0.02282] | **UNDECIDED** |
+
+The hitter cell is the tightest result in the epoch: the interval is an order of magnitude
+inside the margin. The pitcher cell is undecided exactly as part (d) predicted it would be
+for most cells at a 0.02 margin against floors of this size.
+
+### (e) Controls
+
+| side | observed | zero-information twin | permutation band (B=2,000) | p |
+| --- | --- | --- | --- | --- |
+| hit | +0.00006 | +0.00346 | [-0.01006, +0.01131] | 0.9905 |
+| pit | -0.01823 | +0.00253 | [-0.01921, +0.01843] | 0.0635 |
+
+The twin does NOT reproduce the pitcher effect (+0.0025 against an observed -0.0182), so
+what the swap does is not merely eWAR's marginal distribution. But the observed value sits
+just inside the permutation band and p = 0.0635 does not clear 0.05. Both sides ran 11
+forward-chained folds, over the 4-fold rule; the per-fold signs are split (hit 6 positive
+to 5 negative, pit 5 to 6), which is what a null looks like and is recorded as such.
+
+### (c) Coverage, label seasons served by eWAR
+
+| side | 2011-2015 | 2016-2019 | 2020-2025 |
+| --- | --- | --- | --- |
+| hit | 949/957 = 99.2% | 900/912 = 98.7% | 1350/1360 = 99.3% |
+| pit | 885/918 = 96.4% | 874/895 = 97.7% | 1580/1593 = 99.2% |
+
+Every band on every side clears the clause's 90 percent line, pitchers included, so the
+pre-committed remedy path (read 2014 and 2015 separately) is not needed. This is better
+than the registration's second census predicted because that census pooled all debuts
+including the no-id players, while these are the matrix rows the folds actually score.
+
+### The position-player pitching artifact, measured
+
+The falsified premise recorded in section 7 costs the decision quantity almost nothing:
+
+| side | rows affected | mean label inflation | max | margin cost |
+| --- | --- | --- | --- | --- |
+| hit | 90 of 845 | +0.071 WAR | +1.71 WAR | +0.00020 |
+| pit | 1 of 983 | +0.390 WAR | +0.39 WAR | -0.00099 |
+
+Across the whole `career_war` table the rule catches 273 seasons on 179 players. So this is
+a LABEL-VALUE defect, not a ranking defect: it is two orders of magnitude below any floor
+here, and it does not block the epoch. It is still wrong, and it propagates to quantities
+this table does not measure, namely the pooled FV outcome curve that prices grades, the WAG
+survivor anchors and surplus dollars. Disposition: NOT fixed in this epoch, because
+changing the eWAR transform is a model-definition change with its own gate record and would
+require rebuilding `ewar.json` and re-rebasing. The `nopp` basis in the lab is the
+ready-made measurement for whoever takes that decision.
+
+### (a) The standard's own cells, re-derived on the eWAR frame
+
+`data/xfv_power_eval.json` part B, regenerated 2026-09-04T21:01:59Z against the pre-epoch
+build of 2026-08-09T22:12:01Z. E_cond is primary.
+
+| cell | pre point | pre floor | pre verdict | post point | post floor | post verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| pooled_rho hit full_pool_km | -0.01859 | 0.0208 | NULL | -0.01639 | 0.0214 | NULL |
+| pooled_rho pit full_pool_km | +0.01491 | 0.0207 | NULL | +0.01116 | 0.0197 | NULL |
+| pooled_rho hit debuted_km | +0.01121 | 0.0204 | NULL | +0.01045 | 0.0206 | NULL |
+| pooled_rho pit debuted_km | +0.00702 | 0.0295 | NULL | **-0.01290** | 0.0251 | NULL |
+| headtohead_common | +0.03318 | 0.0322 | RESOLVABLE WIN | +0.03609 | 0.0308 | RESOLVABLE WIN |
+| block_rho | +0.00912 | 0.0203 | NULL | +0.00294 | 0.0182 | NULL |
+
+NO VERDICT MOVED. Five cells stay NULL and the head-to-head common set stays a resolvable
+win on both estimators, so the epoch changes no published claim. The one material movement
+is the pitcher debuted cell flipping sign, +0.00702 to -0.01290, which is the same story the
+cross-label matrix tells from the other direction and is still comfortably inside its floor.
+
+A procedural note, recorded because it cost a re-run. Runbook step G said
+`python tools/efv_power_lab.py all 2000`, and `all` calls `run_all`, which writes the WHOLE
+artifact in one shot and therefore ERASED the part-B blocks including `partb_floors`. That
+is precisely the incident the lab's own `merge_artifact` docstring pre-registers against.
+The floors above come from a follow-up `partb` run and the runbook has been corrected to
+require both commands, in that order.
+
+### A caveat on the pitcher cell, found 2026-09-04 after the measurement
+
+`war_source` reports that 461 of 12,507 covered pitcher-seasons (3.7 percent) now have a
+bWAR sum that no longer matches the eWAR artifact built 2026-09-03T12:35:09. The cause is
+ordinary: B-Ref revises WAR as park and league adjustments update, the nightly refreshed
+`war_daily` at 15:11 today, and the artifact is a fixed snapshot taken the day before. The
+facade handles it explicitly, serves the artifact's eWAR and writes a receipt.
+
+It matters here because of WHERE the two label arms come from. The eWAR arm reads the
+artifact; the bWAR arm reads `seasons_bwar`, which the rebase preserved from the frame the
+row already carried. For those 3.7 percent of pitcher-seasons the two arms are therefore on
+slightly different VINTAGES of bWAR, so a sliver of the pitcher diagonal difference is
+vintage drift rather than the FIP swap. This does not rescue the pitcher cell, it degrades
+it further, and the cell was already UNDECIDED with a negative point estimate. The hitter
+cell is untouched: hitter bWAR is not re-priced and its diagonal difference is +0.00006.
+
+NOT remedied by rebuilding `ewar.json`, and the reason is structural rather than lazy: the
+frame moves every day, so a rebuild would be stale again tomorrow and would restart the
+whole measurement chain for a permanent condition. The fingerprint's `label=` term pins the
+artifact's build timestamp, so the served basis names its own vintage. Anyone who wants the
+pitcher cell measured without this term must rebuild the artifact and the bWAR frame in the
+same pass and re-run the lab immediately after.
+
+### (f) Blast radius, measured
+
+`data/xfv_ewar_label_epoch_blast.json`, the final served artifacts against
+`../_pre_epoch_2026-09/`. Read the caveat in section 7.1 first: the nightly rebuilt on a
+mixed basis before the snapshot could be taken, so the board baseline here is the last
+committed board and carries three weeks of unrelated change. These are an upper bound on
+the epoch's own effect.
+
+| quantity | value |
+| --- | --- |
+| rows compared | 9,502 |
+| rows whose rank moved | 8,819 |
+| median, p90, max absolute rank delta | 6, 38, 709 |
+| rows whose grade moved | 5,573 |
+| mean absolute grade delta | 0.19 FV |
+| membership change, top 10 / 25 / 100 | **0 / 0 / 0** |
+| membership change, top 250 | 2 |
+| star-label flag flips | 6 of 2,592 |
+
+The top-10 tripwire in section 7 is SATISFIED: zero change, and zero at top 25 and top 100
+as well. So the epoch is a broad, shallow re-rank with a still top of board, which is the
+shape a label-basis change should have and the same shape the 2026-08-13 epoch had. The six
+star-label flips are pitchers whose FIP-priced seasons cross the 4.0 WAR line in one
+direction or the other, which clause (f) named in advance as the mechanism to expect.
+
+One defect in the measurement itself, found and fixed before this table was written: the
+first blast run read `star_label_view.json`'s `players` as a dict when it is a LIST, so it
+compared the eight top-level metadata keys and reported "2 changed". That looked like a
+star-label result and was not one. The lab now keys the list by `player_key` and reports the
+star flag flips separately from any-field changes.
+
+### What the copy may and may not say (clause g)
+
+MAY: eWAR v2 is the site WAR by owner basis decision; the eFV label is built on it; the
+frame is B-Ref with pitching re-priced on FIP and fielding unchanged pending SDR.
+MUST NOT: any claim that the swap made eFV more accurate. On the hitter side the effect is
+ruled out as equivalent, and on the pitcher side the point estimate is negative and
+undecided. The served three-branch accuracy copy is unchanged in mechanism and re-derives
+from the regenerated eval artifacts.

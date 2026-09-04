@@ -1390,7 +1390,7 @@ def display_metric_for(p: dict) -> dict:
     is_grad = (p.get("status") == "debuted") or (cw.get("career_war") is not None)
 
     # 1) Graduated -> raw MLB WAR (career-since-debut eWAR: B-Ref frame, FIP
-    #    pitching; hitters match bWAR). WAR/yr stays in
+    #    pitching; hitters match bWAR unless they pitched). WAR/yr stays in
     # the hover tooltip only - as a visible suffix it was noise on the
     #    homepage grad rows, where most players have one partial MLB season
     #    and the per-year rate is just the WAR number echoed back.
@@ -5219,7 +5219,7 @@ def build_glossary() -> str:
         "platform keeps two independently derived numbers - what the production is worth "
         "(rational value, surplus) and what the market pays (predicted or actual contract) - and "
         "never blends them, because the gap between them is the entire point.</p>"
-        "<p>WAR site-wide is eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR today. One series, every surface. Where samples "
+        "<p>WAR site-wide is eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched. One series, every surface. Where samples "
         "are thin the models shrink toward the mean and say so; where data is missing the site "
         "shows a plain dash, never a guess.</p>"
         "<p>Model derivations and the interactive teaching widgets live under Methodology; the "
