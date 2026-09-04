@@ -54,6 +54,12 @@ from pathlib import Path
 
 import value_framework as vf
 import efv_factor_groups as _fgroups
+# DELIBERATELY prospect_path's pair, not efv_model's. ARM A2 (neutral imputation for
+# rows with no MiLB block) is about the FLAGSHIP ridge's treatment of that block; this
+# is a different model on a different feature set (_NOFV_HIT / _NOFV_PIT, no fv anchor)
+# fitted on production-bearing rows only, so a milb_unavailable row is out of its pool
+# by construction and the imputation has nothing to act on. Repointing would be a no-op
+# that implied the arm was measured here. See the arms-lane handoff, 2026-09-04.
 from prospect_path import _fit_ridge, _predict, _fit_linear_calibration, _spearman
 from efv_model import _vec
 from efv_dataset import matrix_path, _milb_features, _f, CURRENT_SEASON

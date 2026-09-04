@@ -163,7 +163,11 @@ def _oof_rows(side: str) -> list[dict]:
     from efv_dataset import matrix_path, TARGET_SEASONS
     from efv_model import _prep, _feature_spec
     from efv_score import _age_at, _grade_map_age
-    from prospect_path import _fit_ridge, _predict, _fit_linear_calibration
+    from prospect_path import _fit_linear_calibration
+    # Same rule as efv_score: this module reproduces the scorer's path up to the
+    # grade inversion, so it must fit through efv_model's wrappers or the monitor
+    # would grade a distribution the site does not serve under ARM A2.
+    from efv_model import _fit_ridge, _predict
 
     is_pit = side == "pit"
     keys, _mono = _feature_spec(side)

@@ -45,8 +45,15 @@ from pathlib import Path
 import value_framework as vf
 import efv_odds_calibration as _odds_cal
 import efv_factor_groups as _fgroups
-from prospect_path import _fit_ridge, _predict, _fit_linear_calibration, _spearman
-from efv_model import _prep, _vec, _feature_spec, _fit_ols_fv, _pred_ols, blend_lambda
+from prospect_path import _fit_linear_calibration, _spearman
+# _fit_ridge / _predict come from efv_model, NOT from prospect_path, so the SERVED
+# scorer sees ARM A2 (efv_model.NEUTRAL_MILB_IMPUTE) when it is on. efv_model's pair
+# are exact pass-throughs to prospect_path's while the arm is off, pinned by
+# test_label_arms.py::test_flag_off_fit_and_predict_are_pass_through. Importing them
+# from prospect_path here is what kept E2/E3 out of the served frame (arms-lane
+# handoff, 2026-09-04).
+from efv_model import (_prep, _vec, _feature_spec, _fit_ols_fv, _pred_ols, blend_lambda,
+                       _fit_ridge, _predict)
 from efv_dataset import matrix_path, live_matrix_path, CURRENT_SEASON, TARGET_SEASONS
 # Shared no-ETA fallback timing (bughunt F3): both surplus writers (this module +
 # storage's consensus payload) must assume the SAME years-to-debut for a prospect

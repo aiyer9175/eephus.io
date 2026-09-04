@@ -377,3 +377,41 @@ def test_census_counts_the_label_move_the_shift_and_the_imputation():
     assert c2["census_level_rank_has_milb_mean"] == 4.0
     # E0 has nothing to compare against and says so instead of printing zeros
     assert d.census(arm, {}, "hit", "E0")["vs_E0"].startswith("unavailable")
+
+# ---------------------------------------------------------------------------
+# ARM A2 reaches the SERVED scorer (arms-lane handoff, closed 2026-09-04)
+# ---------------------------------------------------------------------------
+# efv_score, efv_reliability and efv_sign_audit imported _fit_ridge / _predict
+# DIRECTLY from prospect_path, so the arm reached only the eval folds inside
+# efv_model and E2 / E3 could never have been a candidate SERVED frame. These pin
+# the binding so a future import cleanup cannot silently unbind it again.
+
+def test_the_served_scorer_fits_through_the_arm_aware_wrapper():
+    import efv_model as em
+    import efv_score as es
+    assert es._fit_ridge is em._fit_ridge, (
+        "efv_score must fit through efv_model's wrapper or ARM A2 never reaches the "
+        "served board; see the 2026-09-04 handoff")
+    assert es._predict is em._predict
+
+
+def test_the_reliability_monitor_and_the_sign_audit_share_that_binding():
+    import efv_model as em
+    import efv_sign_audit as sa
+    assert sa._fit_ridge is em._fit_ridge, (
+        "the sign audit reports SERVED weights; it must see the same fit the board does")
+    import inspect
+    import efv_reliability as er
+    src = inspect.getsource(er)
+    assert "from efv_model import _fit_ridge, _predict" in src, (
+        "efv_reliability reproduces efv_score's path and must fit through the same wrapper")
+    assert "from prospect_path import _fit_ridge" not in src
+
+
+def test_the_provisional_model_is_deliberately_not_repointed():
+    # efv_ungraded is a DIFFERENT model (no-FV production ridge, no fv anchor) fitted on
+    # production-bearing rows, so a milb_unavailable row is out of its pool by
+    # construction. Binding it to the wrapper would imply the arm was measured there.
+    import prospect_path as pp
+    import efv_ungraded as eu
+    assert eu._fit_ridge is pp._fit_ridge

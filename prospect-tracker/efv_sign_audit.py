@@ -80,7 +80,9 @@ from pathlib import Path
 
 from efv_model import _feature_spec, _prep, _FEATURES_HIT, _FEATURES_PIT, SCORED_YEARS
 from efv_dataset import matrix_path
-from prospect_path import _fit_ridge
+# efv_model's wrapper, so the audit reports the weights the board is SERVED from
+# under ARM A2 rather than an un-imputed refit (pass-through while the arm is off).
+from efv_model import _fit_ridge
 
 LEDGER_PATH = Path(__file__).resolve().parent / "data" / "xfv_sign_audit.json"
 
