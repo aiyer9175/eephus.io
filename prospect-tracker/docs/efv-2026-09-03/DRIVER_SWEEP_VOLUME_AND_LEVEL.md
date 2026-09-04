@@ -198,62 +198,131 @@ So the answer is no, and it is a clean no. The flat additive term is the better 
 > of X days on the Injured List during their time as a prospect and their eventual
 > outcomes?"
 
-### The data question comes first, and it binds
+This lane was run twice. The first pass was blocked by data and the second pass fixed the
+data, corrected the population, and produced an answer that is the opposite of the naive one.
 
-`il_history` is not a history. 1,415 of its 1,662 placements are 2026 and the table was
-first populated on 2026-06-06, so it is forward-collected. The usable source is
-`player_transactions`, which carries 27,255 injured-list events on 4,887 players with both
-placements and activations, so cumulative days really are computable. It starts in 2019.
+### The archive was our limit, not the source's
 
-That gives pre-decision injury coverage of zero for debut years 2016 to 2018 and 39 to 79
-percent for 2020 to 2024. Roughly half of each side is observable, and only 311 hitter and
-455 pitcher rows can be scored. A feature built on the full pool would read "no injuries"
-for every pre-2019 row and would therefore encode debut era, not health. Every gated arm
-below runs on the observable cohort only.
+`il_history` is not a history: 1,415 of its 1,662 placements are 2026 and it was first
+populated on 2026-06-06. The real source is `player_transactions`, which carries both
+placements and activations so cumulative days are computable. It started in 2019 because
+`stats.TRANSACTIONS_LOOKBACK_SEASONS` was 7, not because the endpoint stopped there. Probed
+with an explicit start year, the API returns injured-list events back to 2014 for Byron
+Buxton and 2016 for Aaron Nola.
 
-### Descriptively, the instinct is right
+Backfilled with a superset guard: **16,678 pre-2019 events recovered across 1,684 players**,
+no refusals. Pre-decision coverage went from 33.8 percent to 49.3 (hitters) and 46.0
+(pitchers), and the observable cohort roughly doubled. The constant is now 16 so it does not
+regress.
 
-| cohort | n | mean WAR inside | outside | star inside | outside | bust inside | outside |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| hitters, no IL placement | 174 | 4.08 | 2.62 | 16.1% | 9.6% | 44.8% | 52.6% |
-| hitters, 4+ stints | 34 | 1.42 | 3.34 | 5.9% | 12.7% | 58.8% | 48.8% |
-| pitchers, no IL placement | 254 | 2.15 | 1.40 | 5.9% | 2.9% | 50.8% | 54.1% |
-| pitchers, 2+ stints | 151 | 1.19 | 1.95 | 1.3% | 5.4% | 52.3% | 52.7% |
-| pitchers, 30+ cumulative days | 224 | 1.22 | 2.09 | 2.7% | 5.4% | 57.6% | 49.2% |
+Archive reliability is now measured rather than assumed. The injured-list rate per ACTIVE
+player-year plateaus near 27 percent from 2017 and is clearly thin before it:
 
-Cumulative injured-list days correlate negatively with outcomes on both sides, most
-strongly for pitchers, where longest single stint reads -0.083 and cumulative days -0.080.
-Durability is worth roughly a doubling of the star rate on the pitcher side.
+| 2013 | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 | 2021 | 2024 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 6.4% | 13.6% | 16.8% | 15.9% | 21.9% | 23.7% | 24.2% | 28.2% | 27.2% |
 
-### Gated, nothing survives, but this family came closest
+So a missing stint before 2017 is more likely a missing record than a healthy player, and
+observability is now a coverage share of each player's own window against that floor.
 
-No candidate ships. The best cell is pitcher 90-or-more cumulative injured-list days at
-+0.0172, which does clear its own 0.0153 floor with a permutation p of 0.005, but lands at
-Holm 0.10 in a family of twenty. That is nearer to shipping than anything else measured on
-2026-09-04, and the reason it falls short is sample size, not effect size.
+### The exposure confound, which is the actual finding
 
-### The finding that bears on the current penalty
+**A player cannot be placed on an injured list unless he is on a roster.** So "no IL record"
+conflates a healthy prospect with one who never had enough rostered time to be placed on
+one. On the full pool, 576 of 1,127 observable hitters have no record at all, and:
 
-The signal the existing haircut uses, being on the injured list at the decision date, points
-the WRONG WAY in this cohort. Hitters carrying it average 3.80 WAR against 3.10, with a star
-rate of 17.5 percent against 11.4; pitchers carrying it star at 7.7 percent against 3.9. The
-samples are 57 and 52 and the cohort is selected, so this is not a verdict. It is enough to
-say that penalising current injured-list status is unsupported by outcomes and may be
-backwards, most likely because a prospect who stays highly ranked while hurt is one the
-industry believes in.
+| cohort | n | mean WAR | star | **bust** |
+| --- | --- | --- | --- | --- |
+| hitters with NO IL record | 576 | 1.25 | 5.0% | **83.7%** |
+| hitters with any IL record | 551 | 1.92 | 7.4% | **68.6%** |
 
-The honest disposition: do not remove the haircut on this evidence alone, and do not defend
-it on outcomes either. What would change the verdict is a longer injury archive, not a
-better model.
+Read raw, the data says injuries are good for you. They are not; being rostered is.
+
+The pool choice flips the sign on its own. Hitter `il_stints` correlates **-0.084** with the
+label on debuted rows and **+0.014** on the full pool. Scoring debuted-only conditions on the
+outcome an injury is most likely to prevent, so it is the wrong population for this question
+even though it is the right one everywhere else in this program.
+
+### Exposure-controlled, the answer is side-asymmetric
+
+Partialling out the scouting grade, age and the best available proxies for rostered time:
+
+| burden feature | hitters raw | hitters controlled | pitchers raw (debuted) | pitchers controlled |
+| --- | --- | --- | --- | --- |
+| cumulative IL days | +0.039 | **+0.165** | -0.071 | **-0.119** |
+| longest single stint | +0.041 | **+0.173** | -0.064 | **-0.110** |
+| 2+ stints | +0.006 | +0.087 | -0.093 | **-0.112** |
+| 60-day placements | +0.015 | **+0.203** | -0.045 | -0.124 |
+| on the IL at the decision | +0.033 | +0.065 | -0.026 | **-0.166** (full pool) |
+
+**For hitters, injury burden is not a negative signal once exposure is controlled; it is
+positive.** Among hitters of equal grade, age and rostered time, the ones who missed time did
+better, which most plausibly reads as organizations investing rehab time in players they
+rate. **For pitchers the control makes the harm larger, not smaller**, and being on the IL at
+the decision date is the strongest negative in the table.
+
+### What that means for the penalty you asked to replace
+
+The shipped rule is `efv_score._injury_factor`: a multiplicative haircut on eFV WAR, gated on
+`il_on`, applied identically to both sides on the live board. The outcome evidence
+**supports it for pitchers and does not support it for hitters**, where the controlled sign
+points the other way.
+
+The narrow change this licenses is to make the haircut pitcher-only, or materially weaker for
+hitters. It is descriptive evidence about a live-board rule rather than a gated driver
+result, so it is your decision rather than an automatic one.
+
+### As a driver: nothing ships
+
+Every candidate, including a stacked forward-chained health submodel over stints, days,
+longest stint and the 60-day and full-season counts, was added to the shipped feature set and
+scored with an E_cond floor, a permutation null and Holm across the family.
+
+| cell | observable | scored | SHIPPABLE | best positive delta |
+| --- | --- | --- | --- | --- |
+| hit, full pool | 1,127 | 1,024 | **none** | il_days_ge_30 +0.0133 (floor 0.0149) |
+| hit, debuted only | 516 | 444 | **none** | cat_wrist +0.0128 |
+| pit, full pool | 1,220 | 1,081 | **none** | durable_zero_il +0.0050 |
+| pit, debuted only | 635 | 559 | **none** | il_days +0.0079 |
+
+The submodel is negative in all four cells (-0.003 to -0.057) and never clears its floor.
+The first pass's most promising cell, pitcher 90-or-more IL days at +0.0172, **collapsed to
++0.0037** once the archive was repaired. It was a small-sample artifact, which is exactly
+what the repair was for.
+
+One instrument defect is worth recording because it was mine. The first submodel build
+scored -0.174 with a permutation p of 0.000, which looked like a dramatic result. The raw
+out-of-fold score is a WAR-scale prediction whose level drifts by fold (per-fold means 4.08,
+5.03, 4.36, 3.81, 4.06, 3.63) and whose first fold has no prior data at all, so it was
+encoding cohort year rather than health. Standardised within decision year it reads -0.003,
+a clean null.
+
+### Tommy John cannot be answered on the prospect window
+
+Not for want of an archive. **Minor-league placements name the injury 3.2 percent of the
+time** (319 of 10,039) against 54.5 percent in the majors, because affiliate transactions
+are usually bare. The prospect-window Tommy John cell is n=1 before the backfill and still
+too thin after it. Answering the question properly means asking it on the major-league side,
+where the naming rate supports it, and that is a different question from the one a prospect
+driver asks.
 
 ## What none of these lanes change
 
 No feature was added, no weight was shipped, no copy moved. The do-not-reopen ledger gains
-three closed families rather than losing any: volume and cumulative counts, per-level or
-per-league weighting of MiLB rates, and age-by-production interactions. The health family
-stays OPEN as provisional, because it is the only one whose failure is sample size rather
-than absence of signal, and because its incidental finding about the current injured-list
-penalty deserves a decision rather than a filing.
+FOUR closed families rather than losing any: volume and cumulative counts, per-level or
+per-league weighting of MiLB rates, age-by-production interactions, and the health profile.
+
+The health family closes differently from the other three, and the distinction matters. The
+first three are null because the signal is already priced. Health is null because the signal
+that looked like health was mostly ROSTERED EXPOSURE, and once that is partialled out what
+remains is real but side-asymmetric and still inside every floor. It closes as a DRIVER while
+leaving one live question behind it: the shipped injured-list haircut is applied to both
+sides identically, and the outcome evidence supports it for pitchers only.
+
+One thing did change outside the models. The injury archive was widened from 7 seasons to 16
+and backfilled, which is a permanent data improvement that outlives this null: the lane can
+be re-run as cohorts mature, and any future work touching injuries starts from 2011 instead
+of 2019.
 
 All four were opened legitimately: the eWAR label epoch replaced the label, which is the
 registered condition for a re-sweep. All four are recorded with their numbers so the next

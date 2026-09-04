@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-09-04**. `validate()` at generation time: **clean**.
 
-**280 models.** Verdicts: validated: 51, provisional: 104, unvalidated: 42, deprecated: 83.
+**280 models.** Verdicts: validated: 51, provisional: 103, unvalidated: 42, deprecated: 84.
 
 ## Instrument boundary
 
@@ -298,7 +298,7 @@ can be measured.
 | `xfv_volume_drivers` | not served: a swept and gated candidate family, none shipped | whether MiLB VOLUME and CUMULATIVE counts (peak-season hits, home runs, steals, plate appearances, total bases, innings, strike... | the shipped feature set plus one candidate column | the shipped feature set | incremental forward-chained pooled-rho margin, E_cond bootstrap floor, permut... | **deprecated** | `data/xfv_volume_driver_eval.json` | 0 | no |
 | `xfv_level_weights` | not served: measured per-level and per-league weights, no... | the predictive strength of level-relative MiLB performance at each rung (DSL, CPX, A, A+, AA, AAA) and whether a residual LEAGU... | per-level weights derived from measured correlation strength | the shipped treatment, which is level-relative rates with no level weighting | raw weighted Spearman against first-6yr WAR, and INCREMENTAL Spearman with co... | **deprecated** | `data/xfv_level_weight_eval.json` | 0 | no |
 | `xfv_age_level_interaction` | not served: a gated candidate family, nothing shipped | whether age-relative-to-level works better as a WEIGHT on the production rates than as the flat additive feature it is today | the shipped feature set with age_rel_level additive | the same set plus (or with age_rel_level replaced by) interaction columns | incremental forward-chained pooled-rho margin, E_cond floor, permutation null... | **deprecated** | `data/xfv_age_interaction_eval.json` | 0 | no |
-| `xfv_health_profile` | not served: measured, and the closest of the 2026-09-04 f... | whether an outcome-grounded health profile built from IL stints, cumulative IL days, 60-day and full-season placements, longest... | the shipped feature set plus one health column | the shipped feature set | descriptive star and bust rates by IL burden bucket, then incremental forward... | **provisional** | `data/xfv_health_profile_eval.json` | 0 | no |
+| `xfv_health_profile` | not served: measured on a repaired archive and returned n... | whether an outcome-grounded health profile built from IL stints, cumulative IL days, 60-day and full-season placements, longest... | the shipped feature set plus one health column | the shipped feature set | descriptive star and bust rates by IL burden bucket on BOTH pools, EXPOSURE-C... | **deprecated** | `data/xfv_health_profile_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

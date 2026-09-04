@@ -14,42 +14,50 @@
 > is there between players who spent a cumulative number of X days on the Injured List
 > during their time as a prospect and their eventual outcomes?"
 
-READ THE COVERAGE SECTION FIRST. The idea is sound and the arithmetic below is real, but
-the archive does not reach the cohort the label needs, and no amount of modelling fixes
-that. Measured before anything was fitted:
+READ THE EXPOSURE SECTION FIRST. The idea is sound and the arithmetic is real, but the
+naive reading of it is BACKWARDS, and the reason is not statistical subtlety.
 
-  * `il_history` is NOT a history. 1,415 of its 1,662 placements are 2026 and it was first
-    populated 2026-06-06, so it is a forward-collected table.
-  * `player_transactions` IS the historical source: 27,255 IL events on 4,887 players,
-    with both placements and activations, so cumulative DAYS are computable. It starts in
-    2019.
-  * Consequently PRE-DECISION IL coverage is exactly 0 percent for debut years 2016-2018,
-    18-20 percent for 2019, and 39-79 percent for 2020-2024. Overall 33.8 percent of
-    debuted rows on both sides.
+THE ARCHIVE WAS THE FIRST PROBLEM AND IS NOW FIXED. `il_history` is not a history: 1,415 of
+its 1,662 placements are 2026 and it was first populated 2026-06-06. The usable source is
+`player_transactions`, which carries placements AND activations so cumulative days are
+computable. It used to start in 2019 because `stats.TRANSACTIONS_LOOKBACK_SEASONS` was 7,
+not because the endpoint stopped there. `tools/backfill_player_transactions.py` widened the
+stored window and recovered 16,678 pre-2019 events across 1,684 players, lifting
+pre-decision coverage from 33.8 percent to about 60 percent of each side.
 
-That last line is the whole constraint. A health feature built naively would read "no IL
-history" for every pre-2019 row, and since those are the cohorts with the most fully
-resolved labels, the feature would encode DEBUT ERA and be scored as though it encoded
-health. So this lab never scores the full pool. It carries an explicit `il_observable`
-flag, restricts the gated arm to rows whose pre-decision window the archive actually
-covers, and reports the descriptive tables on that cohort only.
+THE EXPOSURE CONFOUND IS THE REAL PROBLEM AND IT IS SEVERE. A player cannot be placed on an
+injured list unless he is on a roster, so "no IL record" conflates a healthy prospect with
+one who never had enough rostered time to be placed on one. On the full pool, 576 of 1,127
+observable hitters have no record at all and they BUST 83.7 percent of the time against
+68.6 percent for those with a record. Read raw, the data says injuries are GOOD.
+
+That is also why the POOL matters more here than anywhere else in this program. Scoring
+debuted rows only conditions on the outcome an injury is most likely to prevent, and it
+flips the sign: hitter `il_stints` reads -0.084 on debuted rows and +0.014 on the full pool.
+This lab therefore reports BOTH pools and an exposure-controlled correlation beside them,
+and the controlled number is the one to read.
 
 WHAT IS MEASURED
-  Part 1  descriptive: IL burden buckets (stints, cumulative days, 60-day and full-season
-          placements, longest single stint) against mean first-6yr WAR, star rate and bust
-          rate, on the observable cohort.
-  Part 2  the Tommy John question, asked as the owner asked it: pitchers carrying a
-          UCL or Tommy John event before the decision date, against those who do not.
-  Part 3  injury CATEGORY effects from the description text (elbow, shoulder, back,
-          hamstring, oblique, knee, wrist, forearm, lat, hip).
-  Part 4  gated: each candidate added to the shipped feature set and scored as an
-          incremental forward-chained margin, E_cond floor, permutation null, Holm across
-          the family. Reported with its fold count, which is small by construction.
+  Part 1  descriptive: IL burden buckets against mean first-6yr WAR, star rate and bust
+          rate, on BOTH pools.
+  Part 2  exposure-controlled correlations, partialling out the scouting grade and the best
+          available proxies for rostered time. THIS IS THE ONE THAT ANSWERS THE ASK.
+  Part 3  the health SUBMODEL: a forward-chained out-of-fold ridge over the burden features,
+          standardised within decision year, added to the main model as one column.
+  Part 4  gated: every candidate including the submodel, scored as an incremental
+          forward-chained margin with an E_cond floor, a permutation null and Holm across
+          the family.
 
-NOTHING HERE REPLACES THE IL PENALTY YET. Replacing it is a serving-path change and the
-serving path has a different data situation from the training path: current IL status is
-densely covered for today's board, while the TRAINING cohort is not. The two must not be
-conflated, and this lab measures only the training side.
+INJURY SPECIFICATION IS NOT AVAILABLE FOR PROSPECTS and no model can recover it. Minor
+league placements name the injury in 3.2 percent of cases (319 of 10,039) against 54.5
+percent in the majors, so the Tommy John question cannot be answered on the prospect window:
+it resolves to n=1 before the archive fix and stays too thin after it. The category flags
+are kept so the artifact shows their support rather than implying they were tested.
+
+NOTHING HERE REPLACES THE IL PENALTY BY ITSELF. Replacing it is a serving-path decision and
+the serving path sees today's board, where current IL status is densely covered. What this
+lab can say is what the OUTCOMES say about the signal the penalty uses, and they say it is
+side-asymmetric.
 
 Run:
     python tools/efv_health_profile_lab.py
@@ -90,8 +98,28 @@ SIDES = ("hit", "pit")
 STAR_WAR = 10.0
 BUST_WAR = 0.5
 
-#: the archive's first usable year; before this a row has no observable IL window
-ARCHIVE_FIRST_YEAR = 2019
+#: The archive's first RELIABLE year, measured rather than assumed (2026-09-04, after
+#: tools/backfill_player_transactions.py widened the stored window from 2019 back to 2011).
+#: The test is the injured-list rate per ACTIVE player-year, where a player-year counts only
+#: if that player has some transaction that year, so the denominator is "tracked and
+#: playing" rather than "exists":
+#:
+#:   2013  6.4%   2014 13.6%   2015 16.8%   2016 15.9%   2017 21.9%   2018 23.7%
+#:   2019 24.2%   2020  7.8%   2021 28.2%   2022 26.5%   2023 26.8%   2024 27.2%
+#:
+#: The rate plateaus around 27 percent from 2017 on and is materially depressed before it,
+#: so a missing stint before 2017 is more likely a missing RECORD than a healthy player.
+#: 2020 is the COVID season and is genuinely low, not thin.
+ARCHIVE_FIRST_YEAR = 2017
+
+#: A row is observable when at least this share of its pre-decision window falls inside the
+#: reliable era. Absence of a stint is only evidence of health where a stint would have been
+#: recorded, and a prospect's window spans several years, so a single cutoff on the decision
+#: year alone would admit players whose formative seasons predate the archive.
+WINDOW_COVERED_MIN = 0.5
+
+#: The window this lab treats as "his time as a prospect", ending at the decision date.
+PROSPECT_WINDOW_YEARS = 5
 
 IL_RE = re.compile(r"injured list|disabled list", re.I)
 PLACE_RE = re.compile(r"\bplaced\b|\btransferred\b", re.I)
@@ -184,17 +212,35 @@ def profile(events: list[dict], cutoff, first_seen=None) -> dict:
     # OBSERVABILITY IS A PROPERTY OF THE ARCHIVE, NOT OF THE PLAYER. Keying this off
     # "did this player have an IL event" would keep only injured players and drop every
     # healthy one, which destroys the contrast the whole lab exists to measure and would
-    # have made `durable_zero_il` unmeasurable by construction. The archive starts in
-    # 2019, so a decision taken in 2020 or later has at least one full prior year of
-    # coverage behind it and the ABSENCE of a stint is then real evidence of health.
-    p["il_observable"] = 1.0 if cutoff.year >= ARCHIVE_FIRST_YEAR + 1 else 0.0
+    # have made `durable_zero_il` unmeasurable by construction.
+    #
+    # The rule is the SHARE OF THE PROSPECT WINDOW that falls in the reliable era, not a
+    # cutoff on the decision year. A player deciding in 2019 whose formative seasons were
+    # 2015-2018 is only half observed, and reading his clean sheet as durability would be
+    # reading the archive's gap as the player's health.
+    yrs = [cutoff.year - i for i in range(PROSPECT_WINDOW_YEARS)]
+    covered = sum(1 for y in yrs if y >= ARCHIVE_FIRST_YEAR)
+    share = covered / len(yrs)
+    p["window_covered_share"] = round(share, 3)
+    p["il_observable"] = 1.0 if share >= WINDOW_COVERED_MIN else 0.0
     return p
 
 
-def build_pool(side: str, ev: dict) -> dict:
+def build_pool(side: str, ev: dict, full_pool: bool = False) -> dict:
+    """The scored pool. `full_pool` keeps the BUST rows.
+
+    THE DEFAULT IS WRONG FOR THIS QUESTION AND THE FULL POOL IS WHY IT EXISTS. Every other
+    lane in this program scores debuted rows, which is right when the question is "how much
+    WAR did he produce". It is wrong here: an injury's most important consequence is that a
+    prospect never reaches the majors at all, and a debuted-only pool conditions on exactly
+    the outcome the health signal is supposed to predict. A player who was hurt and washed
+    out is in the bust pool carrying a label of 0, and dropping him makes injuries look
+    survivable by construction. The full pool is the honest population for the ask, and the
+    debuted pool is kept beside it because the two answer different questions.
+    """
     from efv_dataset import matrix_path
     raw = json.loads(matrix_path(side).read_text(encoding="utf-8"))
-    deb = [r for r in raw if r["kind"] == "debuted"]
+    deb = raw if full_pool else [r for r in raw if r["kind"] == "debuted"]
     prep = E._prep(deb, "target_censored", side)
     keys, _m = E._feature_spec(side)
     by_key = {r["player_key"]: r for r in raw}
@@ -247,6 +293,114 @@ def candidates(side: str) -> list[dict]:
     for c in CATEGORIES:
         add(f"cat_{c}", (lambda p, c=c: p[f"cat_{c}"]), f"an IL event naming the {c}")
     return C
+
+
+#: The burden features the health SUBMODEL sees. Deliberately excludes the injury-category
+#: flags: minor-league placements name the injury only 3.2 percent of the time (319 of
+#: 10,039 measured 2026-09-04) against 54.5 percent in the majors, so a category feature on
+#: a prospect window is almost all zeros and the one it is not would be noise. It also
+#: excludes il_open_at_decision, which is the INCUMBENT signal and is scored separately so
+#: the submodel can be compared against it rather than absorbing it.
+HEALTH_KEYS = ("il_stints", "il_days", "il_max_stint_days", "il_60day", "il_fullseason")
+
+
+def oof_health_index(P: dict, mask: np.ndarray) -> np.ndarray:
+    """A forward-chained out-of-fold health score, one number per observable row.
+
+    This is the "health profile submodel" the ask describes, built the only way a driver
+    may be built here: every row's score comes from a ridge fitted on STRICTLY EARLIER
+    decision years, so no row contributes to its own score and the score can be handed to
+    the main model as a feature for train and test rows alike. A score fitted in-sample
+    would grade the burden features against outcomes they helped choose, which is the
+    stacking mistake that makes a submodel look like a driver.
+
+    Sign convention: the ridge predicts WAR, so a HIGH score is a durable profile and a LOW
+    score is a fragile one. Boost and drop are the same coefficient with opposite signs, not
+    two rules.
+    """
+    prof = [p for p, m in zip(P["profs"], mask) if m]
+    H = np.array([[float(p.get(k, 0.0)) for k in HEALTH_KEYS] for p in prof], dtype=float)
+    y, w, dy = P["y"][mask], P["w"][mask], P["dy"][mask]
+    out = np.zeros(len(y), dtype=float)
+    for yr in sorted(set(int(v) for v in dy)):
+        tr = np.flatnonzero(dy < yr)
+        te = np.flatnonzero(dy == yr)
+        if len(te) == 0:
+            continue
+        if len(tr) < 40:
+            out[te] = np.nan          # no prior data: no score, filled below
+            continue
+        m = M.ridge_fit(H[tr], y[tr], w[tr])
+        if m is None:
+            out[te] = np.nan
+            continue
+        out[te] = M.ridge_pred(m, H[te])
+    # STANDARDISED WITHIN DECISION YEAR, and this is load-bearing rather than cosmetic.
+    # The raw score is a WAR-scale prediction whose LEVEL drifts by fold: measured on the
+    # hitter side the per-fold means ran 4.08, 5.03, 4.36, 3.81, 4.06, 3.63 while the
+    # within-fold sd was 0.00 to 1.36, so between-fold movement was as large as the signal
+    # and the feature encoded COHORT YEAR at least as much as health. The first fold is
+    # worse than that: it has no prior data at all, so every row in it took one identical
+    # filled value, which is a constant masquerading as a measurement. Centring inside the
+    # year keeps only the thing the ask actually wants, which is whether this player is
+    # more or less durable than his own cohort, and it sends a fold with no information to
+    # exactly zero instead of to a number.
+    fin = np.isfinite(out)
+    out[~fin] = np.nan
+    for yr in sorted(set(int(v) for v in dy)):
+        te = np.flatnonzero(dy == yr)
+        v = out[te]
+        ok = np.isfinite(v)
+        if ok.sum() < 2 or not np.isfinite(v[ok].std()) or v[ok].std() <= 0:
+            out[te] = 0.0
+            continue
+        z = np.zeros(len(v))
+        z[ok] = (v[ok] - v[ok].mean()) / v[ok].std()
+        out[te] = z
+    return out
+
+
+#: Columns partialled out of the exposure-controlled read. `fv` because eFV already carries
+#: the scouting grade, and the rest because they are the best available proxies for HOW MUCH
+#: ROSTERED TIME a prospect had, which is the confound that makes an injury record look good.
+EXPOSURE_CONTROLS = ("fv", "n_milb_seasons", "level_rank", "seasons_at_level", "age")
+
+
+def _resid(y: np.ndarray, Z: np.ndarray) -> np.ndarray:
+    A = np.column_stack([np.ones(len(y)), Z]) if Z.size else np.ones((len(y), 1))
+    beta, *_ = np.linalg.lstsq(A, y, rcond=None)
+    return y - A @ beta
+
+
+def exposure_controlled(P: dict, cands: list[dict], mask: np.ndarray) -> dict:
+    """The burden-to-outcome correlation with rostered exposure partialled out.
+
+    THIS IS THE CONTROL THE WHOLE LANE TURNS ON. You cannot be placed on an injured list
+    unless you are on a roster, so "no IL record" conflates a healthy player with one who
+    never had enough exposure to be placed on one. Measured on the full pool: 576 of 1,127
+    observable hitters have no record at all and they BUST 83.7 percent of the time against
+    68.6 percent for those with a record, which reverses the debuted-only reading entirely.
+    An uncontrolled correlation here measures roster tenure wearing an injury label.
+    """
+    keys = P["keys"]
+    cols = [keys.index(k) for k in EXPOSURE_CONTROLS if k in keys]
+    X = P["X"][mask]
+    Z = X[:, cols] if cols else np.empty((int(mask.sum()), 0))
+    y = _resid(P["y"][mask], Z)
+    w = P["w"][mask]
+    prof = [p for p, m in zip(P["profs"], mask) if m]
+    out = {"controls": [k for k in EXPOSURE_CONTROLS if k in keys], "rows": []}
+    for c in cands:
+        v = np.array([c["fn"](p) for p in prof], dtype=float)
+        if np.allclose(v, v[0]) or (v > 0).sum() < 20:
+            continue
+        out["rows"].append({
+            "name": c["name"],
+            "support": int((v > 0).sum()),
+            "raw_rho": round(float(M.wrho(v, P["y"][mask], w)), 4),
+            "exposure_controlled_rho": round(float(M.wrho(_resid(v, Z), y, w)), 4),
+        })
+    return out
 
 
 def describe(P: dict, cands: list[dict], mask: np.ndarray) -> dict:
@@ -339,9 +493,18 @@ def gate(P, cands, mask, b_cond, b_perm):
     base = margin(base_parts)
     n_te = len(base_parts[3])
     prof = [p for p, m in zip(P["profs"], mask) if m]
+    # THE SUBMODEL IS THE HEADLINE CANDIDATE and it goes in the same family as the singles,
+    # not beside it: a composite scored against a Holm family it is not part of would be
+    # the search getting a free pass on the multiplicity its own breadth created.
+    idx = oof_health_index(P, mask)
+    cands = [{"name": "health_index_oof",
+              "fn": None, "precomputed": idx,
+              "why": "the forward-chained stacked health submodel over "
+                     + ", ".join(HEALTH_KEYS)}] + list(cands)
     res, pv = [], {}
     for i, c in enumerate(cands):
-        v = np.array([c["fn"](p) for p in prof], dtype=float)
+        v = (c["precomputed"] if c.get("precomputed") is not None
+             else np.array([c["fn"](p) for p in prof], dtype=float))
         if np.allclose(v, v[0]):
             res.append({"name": c["name"], "skipped": "constant on this cohort"})
             continue
@@ -419,18 +582,27 @@ def main() -> int:
         "sides": {},
     }
     for side in (SIDES if a.side == "both" else (a.side,)):
-        t0 = time.time()
-        P = build_pool(side, ev)
-        mask = observable_mask(P)
         cands = candidates(side)
-        print(f"=== {side}: {P['n']} rows, observable cohort {int(mask.sum())} "
-              f"({mask.mean():.1%}), {len(cands)} candidates ({time.time()-t0:.0f}s)",
-              flush=True)
-        blk = {"n_rows": P["n"], "observable_rows": int(mask.sum()),
-               "observable_share": round(float(mask.mean()), 4),
-               "descriptive": describe(P, cands, mask)}
-        if not a.describe_only:
-            blk["gated"] = gate(P, cands, mask, a.b_cond, a.b_perm)
+        blk = {}
+        for pool_name, full in (("full_pool", True), ("debuted_only", False)):
+            t0 = time.time()
+            P = build_pool(side, ev, full_pool=full)
+            mask = observable_mask(P)
+            print(f"=== {side} / {pool_name}: {P['n']} rows, observable cohort "
+                  f"{int(mask.sum())} ({mask.mean():.1%}), {len(cands)} candidates "
+                  f"({time.time()-t0:.0f}s)", flush=True)
+            b = {"n_rows": P["n"], "observable_rows": int(mask.sum()),
+                 "observable_share": round(float(mask.mean()), 4),
+                 "descriptive": describe(P, cands, mask),
+                 "exposure_controlled": exposure_controlled(P, cands, mask)}
+            if not a.describe_only:
+                b["gated"] = gate(P, cands, mask, a.b_cond, a.b_perm)
+            blk[pool_name] = b
+        blk["pool_note"] = (
+            "full_pool is the HONEST population for an injury question: it keeps the bust "
+            "rows, whose label is 0, so a prospect who was hurt and never reached the "
+            "majors still counts. debuted_only conditions on the outcome the health signal "
+            "is meant to predict and will make injuries look survivable.")
         out["sides"][side] = blk
     if not a.no_write:
         OUT_PATH.write_text(json.dumps(out, indent=1), encoding="utf-8")

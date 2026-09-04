@@ -2190,10 +2190,22 @@ def merge_bulk_into_career_cache(
 # options / debut-date / service-time heuristics.
 # ---------------------------------------------------------------------------
 
-# How many seasons of transaction history to pull. Six covers the full
-# pre-arb + arbitration window for any active prospect; older rows aren't
-# load-bearing for any downstream derivation.
-TRANSACTIONS_LOOKBACK_SEASONS = 7
+# How many seasons of transaction history to pull.
+#
+# WAS 7, RAISED 2026-09-04. The old comment said six covers the pre-arb plus arbitration
+# window and that "older rows aren't load-bearing for any downstream derivation". That was
+# true when it was written and stopped being true when the health-profile lane started
+# reading injured-list history off this table: the eFV label window opens at debut year
+# 2011, so a 7-season window left pre-decision injury coverage at exactly 0 percent for
+# every 2016-2018 debut and about 34 percent overall. The endpoint was never the limit;
+# probed with an explicit start_year it returns injured-list events back to 2014 for Byron
+# Buxton and 2016 for Aaron Nola. Widening it recovered 16,678 pre-2019 events across 1,684
+# players and took coverage to about 60 percent per side.
+#
+# The cost is payload SIZE, not request count: it is still one request per player, and the
+# fetch is already TTL-gated. Keep this at or above the span between the eFV label window's
+# first debut year and today, or the health lane silently loses its early cohorts again.
+TRANSACTIONS_LOOKBACK_SEASONS = 16
 
 
 def fetch_player_transactions(player_key: str, mlbam_id: int,
