@@ -13,7 +13,12 @@ WHY THIS EXISTS
     around fetch_career_war_bulk), so this module BUILDS the better WAR out of
     inputs already on disk instead of importing one.
 
-    NOTHING CONSUMES THIS YET. It is a module, an artifact and a measurement.
+    SERVED SINCE THE 2026-09-03 EPOCH: war_source.DEFAULT_PROVIDER is ewar_v2, so
+    the career_war funnel, MLB player cards, the WAR-rate boards, PAL, the arb
+    spine and the FA corpus labels read this series (eFV labels, anchors, surplus
+    and projections follow at the label epoch, docs/efv-2026-09-03/). That is an
+    OWNER BASIS DECISION, not an accuracy claim: the gate record below is
+    unchanged and R3a/R3b remain the accuracy statement.
 
     THE OWNER'S HYPOTHESIS WAS "a better WAR label makes eFV more accurate."
     Both consumer gates have now been run and neither supports a swap.
@@ -1084,10 +1089,10 @@ def export_payload(model: dict) -> dict:
         "model": MODEL,
         "generated_at": meta["generated_at"],
         "seasons": meta["seasons"],
-        "consumers": "NONE - eWAR v2 is not wired into any surface. Two "
-                     "consumer gates were measured 2026-08-04 and both said "
-                     "no: eFV first-6yr label swap (R3a) and fa_backtest "
-                     "Gate 1 (R3b).",
+        "consumers": "SERVED: war_source DEFAULT_PROVIDER ewar_v2 since the "
+                     "2026-09-03 epoch (owner basis decision; gates unchanged). "
+                     "The two consumer gates measured 2026-08-04 (R3a eFV label "
+                     "swap, R3b fa_backtest Gate 1) remain the accuracy record.",
         "field_key": {
             "ew": "eWAR (wins)", "bw": "Baseball-Reference bWAR (wins)",
             "ewb": "eWAR batting side", "bwb": "bWAR batting side",
@@ -1773,8 +1778,9 @@ def _reading(ev: dict) -> dict:
         "verdict": "provisional - eWAR v2 (FIP pitching ONLY, the Statcast "
                    "fielding swap was measured and REMOVED) LOSES the "
                    "descriptive gate, WINS the pitcher persistence gate, and "
-                   "is a NULL against bWAR on team forward-looking wins; it is "
-                   "not ready to replace bWAR site-wide",
+                   "is a NULL against bWAR on team forward-looking wins; it "
+                   "serves as the site WAR by owner basis decision (2026-09-03), "
+                   "which these gates neither support nor oppose on accuracy",
         "headline": (
             f"Gate 1 (team wins, {g1['n_team_seasons']} team-seasons): eWAR r "
             f"{e['r']} vs bWAR {b['r']}, zero-parameter MAE {e['mae_zero_param']} "
@@ -1865,11 +1871,12 @@ def _reading(ev: dict) -> dict:
             "divergences by name (Aaron Nola 2018 9.69 -> 6.15, Mike Minor 2019 "
             "7.99 -> 4.68, both toward their published fWAR), it persists 2.1x "
             "better, and it forecasts next-year run prevention better than "
-            "actual run prevention does. NOTHING consumes eWAR yet. v2 already "
+            "actual run prevention does. Since 2026-09-03 the whole site reads it "
+            "through war_source (owner basis decision). v2 already "
             "took the second of the two exits named here: the Statcast fielding "
             "swap was DROPPED (w=0.0) rather than repaired, so what remains is "
             "a one-component model. Two consumer gates have since been measured "
-            "and both said no: the eFV first-6yr label swap (lane R3a) and "
-            "fa_backtest Gate 1 (lane R3b). Read those before wiring eWAR into "
-            "anything."),
+            "and neither supports a swap on accuracy grounds: the eFV first-6yr "
+            "label swap (lane R3a) and fa_backtest Gate 1 (lane R3b). The flip "
+            "is a basis decision made with that record in view."),
     }
