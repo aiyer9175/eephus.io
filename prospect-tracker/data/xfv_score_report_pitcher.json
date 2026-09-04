@@ -1,75 +1,75 @@
 {
- "generated_at": "2026-08-14",
+ "generated_at": "2026-09-04",
  "scope": "PITCHERS",
- "n_scored": 1974,
+ "n_scored": 1973,
  "calibration_scale": {
-  "a": -0.021,
-  "b": 1.073
+  "a": -0.008,
+  "b": 1.07
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 0.59,
-  "max_up": 5.6,
+  "mean_abs_delta": 0.53,
+  "max_up": 4.9,
   "max_down": -4.6,
-  "share_within_2_grades": 0.926
+  "share_within_2_grades": 0.94
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 4.97,
-  "max_up": 9.2,
+  "mean_abs_delta": 4.94,
+  "max_up": 8.6,
   "max_down": -20.5
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1308,
+  "spearman_adj_vs_consensus_miss": 0.1516,
   "n": 530,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 13502.7,
-  "consensus": 13904.8
+  "xfv": 13786.8,
+  "consensus": 14109.9
  },
  "example_up_adjustments": [
   {
    "player_key": "kevin_ginkel",
    "consensus_fv": 35.2,
-   "xfv_grade": 43.5,
-   "delta": 8.2,
-   "realized_war_6yr": 1.94
+   "xfv_grade": 43.3,
+   "delta": 8.0,
+   "realized_war_6yr": 3.44
   },
   {
    "player_key": "colin_poche",
    "consensus_fv": 40.4,
-   "xfv_grade": 47.6,
-   "delta": 7.2,
-   "realized_war_6yr": 2.16
+   "xfv_grade": 47.7,
+   "delta": 7.3,
+   "realized_war_6yr": 0.78
   },
   {
    "player_key": "demarcus_evans",
    "consensus_fv": 40.1,
-   "xfv_grade": 46.5,
-   "delta": 6.4,
-   "realized_war_6yr": -0.01
+   "xfv_grade": 46.4,
+   "delta": 6.3,
+   "realized_war_6yr": 0.04
   },
   {
    "player_key": "james_karinchak",
    "consensus_fv": 40.2,
-   "xfv_grade": 46.4,
-   "delta": 6.1,
-   "realized_war_6yr": 3.02
+   "xfv_grade": 46.0,
+   "delta": 5.7,
+   "realized_war_6yr": 2.55
   },
   {
-   "player_key": "ryan_burr",
-   "consensus_fv": 38.8,
-   "xfv_grade": 44.7,
-   "delta": 5.9,
-   "realized_war_6yr": 0.75
+   "player_key": "angel_perdomo",
+   "consensus_fv": 38.0,
+   "xfv_grade": 43.6,
+   "delta": 5.6,
+   "realized_war_6yr": 0.53
   },
   {
-   "player_key": "kyle_cody",
-   "consensus_fv": 37.8,
-   "xfv_grade": 43.5,
-   "delta": 5.8,
-   "realized_war_6yr": 0.47
+   "player_key": "connor_brogdon",
+   "consensus_fv": 38.3,
+   "xfv_grade": 43.8,
+   "delta": 5.5,
+   "realized_war_6yr": -0.51
   }
  ],
  "example_down_adjustments": [
@@ -78,42 +78,42 @@
    "consensus_fv": 38.3,
    "xfv_grade": 20.0,
    "delta": -18.3,
-   "realized_war_6yr": -1.06
+   "realized_war_6yr": -0.34
   },
   {
    "player_key": "dillon_tate",
    "consensus_fv": 37.8,
    "xfv_grade": 20.0,
    "delta": -17.8,
-   "realized_war_6yr": 2.2
-  },
-  {
-   "player_key": "aaron_civale",
-   "consensus_fv": 37.8,
-   "xfv_grade": 20.0,
-   "delta": -17.8,
-   "realized_war_6yr": 6.72
+   "realized_war_6yr": 1.87
   },
   {
    "player_key": "elvis_luciano",
    "consensus_fv": 37.8,
    "xfv_grade": 20.0,
    "delta": -17.8,
-   "realized_war_6yr": 0.06
-  },
-  {
-   "player_key": "ljay_newsome",
-   "consensus_fv": 37.6,
-   "xfv_grade": 20.0,
-   "delta": -17.6,
-   "realized_war_6yr": -0.35
+   "realized_war_6yr": -0.17
   },
   {
    "player_key": "sterling_sharp",
    "consensus_fv": 37.6,
    "xfv_grade": 20.0,
    "delta": -17.6,
-   "realized_war_6yr": -0.3
+   "realized_war_6yr": -0.12
+  },
+  {
+   "player_key": "foster_griffin",
+   "consensus_fv": 37.4,
+   "xfv_grade": 20.0,
+   "delta": -17.4,
+   "realized_war_6yr": 0.25
+  },
+  {
+   "player_key": "arnold_leon",
+   "consensus_fv": 35.9,
+   "xfv_grade": 20.0,
+   "delta": -15.9,
+   "realized_war_6yr": -0.13
   }
  ],
  "note": "xfv_grade is monotone in the model prediction, so it inherits the OOS rank edge over consensus FV in data/xfv_eval.json. Surplus reuses the engine's isotonic calibration (no double-correction)."

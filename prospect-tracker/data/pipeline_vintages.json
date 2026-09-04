@@ -2,7 +2,7 @@
   "_meta": {
     "source": "https://data-graph.mlb.com/graphql",
     "query": "getPlayerRankingsFromSelection(slug=sel-pr-YYYY-top100)",
-    "generated": "2026-08-13T21:53:44Z",
+    "generated": "2026-09-04T17:53:19Z",
     "years": [
       2015,
       2016,
@@ -9391,7 +9391,7 @@
         "mlbam": 807739,
         "name": "Kade Anderson",
         "pos": "LHP",
-        "eta": "2027"
+        "eta": "2026"
       },
       {
         "rank": 6,
@@ -9517,7 +9517,7 @@
         "mlbam": 806956,
         "name": "Ethan Salas",
         "pos": "C",
-        "eta": "2027"
+        "eta": "2026"
       },
       {
         "rank": 24,
@@ -9748,7 +9748,7 @@
         "mlbam": 703155,
         "name": "Lazaro Montes",
         "pos": "OF",
-        "eta": "2027"
+        "eta": "2026"
       },
       {
         "rank": 57,
@@ -9976,86 +9976,86 @@
       },
       {
         "rank": 89,
-        "mlbam": 800325,
-        "name": "Luis Lara",
-        "pos": "OF",
-        "eta": "2026"
-      },
-      {
-        "rank": 90,
         "mlbam": 804530,
         "name": "Joseph Dzierwa",
         "pos": "LHP",
         "eta": "2027"
       },
       {
-        "rank": 91,
+        "rank": 90,
         "mlbam": 815156,
         "name": "Derek Curiel",
         "pos": "OF",
         "eta": "2028"
       },
       {
-        "rank": 92,
+        "rank": 91,
         "mlbam": 829162,
         "name": "Steele Hall",
         "pos": "SS",
         "eta": "2029"
       },
       {
-        "rank": 93,
+        "rank": 92,
         "mlbam": 689196,
         "name": "Owen Ayers",
         "pos": "C/1B",
         "eta": "2027"
       },
       {
-        "rank": 94,
+        "rank": 93,
         "mlbam": 815832,
         "name": "Xavier Neyens",
         "pos": "3B/SS",
         "eta": "2029"
       },
       {
-        "rank": 95,
+        "rank": 94,
         "mlbam": 809092,
         "name": "Murf Gray",
         "pos": "3B",
         "eta": "2027"
       },
       {
-        "rank": 96,
+        "rank": 95,
         "mlbam": 804526,
         "name": "Nolan Perry",
         "pos": "RHP",
         "eta": "2027"
       },
       {
-        "rank": 97,
+        "rank": 96,
         "mlbam": 826061,
         "name": "Gio Rojas",
         "pos": "LHP",
         "eta": "2029"
       },
       {
-        "rank": 98,
+        "rank": 97,
         "mlbam": 827267,
         "name": "Caden Hunter",
         "pos": "LHP",
         "eta": "2027"
       },
       {
-        "rank": 99,
+        "rank": 98,
         "mlbam": 815816,
         "name": "Brady Ebel",
         "pos": "SS",
         "eta": "2029"
       },
       {
-        "rank": 100,
+        "rank": 99,
         "mlbam": 827408,
         "name": "Ramon Marquez",
         "pos": "RHP",
+        "eta": "2028"
+      },
+      {
+        "rank": 100,
+        "mlbam": 702610,
+        "name": "Ike Irish",
+        "pos": "OF/1B",
         "eta": "2028"
       }
     ]

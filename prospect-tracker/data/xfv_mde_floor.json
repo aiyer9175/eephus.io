@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-07T16:20:22Z",
+ "generated_at": "2026-09-04T19:38:07Z",
  "produced_by": "tools/efv_mde_lab.py mde",
  "purpose": "Minimum detectable effect for the model-vs-consensus pooled-rho gate, re-derived under the 11-fold pair-weighted protocol that ships today. Feeds source_backtest.XFV_VS_CONSENSUS_MDE95 and docs/EFV_GATE_STANDARD.md section 1.",
  "basis": {
@@ -25,98 +25,98 @@
   },
   "matrix_rows": {
    "hit": 845,
-   "pit": 981
+   "pit": 983
   }
  },
  "protocol": "paired bootstrap over the WHOLE pool (train AND test resampled together, one draw per side per replicate), refitting consensus OLS and the weighted ridge on every draw; blend and baseline scored on identical rows. MDE95 = 1.96 * sd(delta).",
  "B_requested": 2000,
  "seed": 20260807,
- "elapsed_s": 50.0,
+ "elapsed_s": 137.5,
  "weighted": {
   "hit": {
    "B_used": 2000,
-   "point_delta": 0.0074,
-   "boot_mean_delta": -0.01895,
-   "sd": 0.02675,
-   "mde95": 0.0524,
-   "mde95_onesided": 0.044,
+   "point_delta": 0.01045,
+   "boot_mean_delta": -0.01641,
+   "sd": 0.02712,
+   "mde95": 0.0532,
+   "mde95_onesided": 0.0446,
    "ci95": [
-    -0.0735,
-    0.02808
+    -0.07352,
+    0.03441
    ],
-   "p_gt_0": 0.2525,
+   "p_gt_0": 0.2775,
    "resolvable": false
   },
   "pit": {
    "B_used": 2000,
-   "point_delta": 0.00669,
-   "boot_mean_delta": -0.00856,
-   "sd": 0.02648,
-   "mde95": 0.0519,
-   "mde95_onesided": 0.0436,
+   "point_delta": -0.0129,
+   "boot_mean_delta": -0.02097,
+   "sd": 0.02585,
+   "mde95": 0.0507,
+   "mde95_onesided": 0.0425,
    "ci95": [
-    -0.06325,
-    0.0414
+    -0.07273,
+    0.02837
    ],
-   "p_gt_0": 0.3875,
+   "p_gt_0": 0.2095,
    "resolvable": false
   },
   "block": {
    "B_used": 2000,
-   "point_delta": 0.01204,
-   "boot_mean_delta": -0.01063,
-   "sd": 0.01975,
-   "mde95": 0.0387,
-   "mde95_onesided": 0.0325,
+   "point_delta": 0.00294,
+   "boot_mean_delta": -0.01676,
+   "sd": 0.01903,
+   "mde95": 0.0373,
+   "mde95_onesided": 0.0313,
    "ci95": [
-    -0.05117,
-    0.02722
+    -0.05802,
+    0.01827
    ],
-   "p_gt_0": 0.302,
+   "p_gt_0": 0.188,
    "resolvable": false
   }
  },
  "unweighted": {
   "hit": {
    "B_used": 2000,
-   "point_delta": 0.01127,
-   "boot_mean_delta": -0.01206,
+   "point_delta": 0.01582,
+   "boot_mean_delta": -0.00848,
    "sd": 0.02283,
    "mde95": 0.0447,
    "mde95_onesided": 0.0376,
    "ci95": [
-    -0.05763,
-    0.02831
+    -0.05532,
+    0.03393
    ],
-   "p_gt_0": 0.3165,
+   "p_gt_0": 0.362,
    "resolvable": false
   },
   "pit": {
    "B_used": 2000,
-   "point_delta": 0.01076,
-   "boot_mean_delta": -0.00268,
-   "sd": 0.02285,
-   "mde95": 0.0448,
-   "mde95_onesided": 0.0376,
+   "point_delta": -0.00861,
+   "boot_mean_delta": -0.01603,
+   "sd": 0.02193,
+   "mde95": 0.043,
+   "mde95_onesided": 0.0361,
    "ci95": [
-    -0.04985,
-    0.04113
+    -0.05932,
+    0.02702
    ],
-   "p_gt_0": 0.466,
+   "p_gt_0": 0.2255,
    "resolvable": false
   },
   "block": {
    "B_used": 2000,
-   "point_delta": 0.01419,
-   "boot_mean_delta": -0.00572,
-   "sd": 0.01695,
-   "mde95": 0.0332,
-   "mde95_onesided": 0.0279,
+   "point_delta": 0.00348,
+   "boot_mean_delta": -0.01338,
+   "sd": 0.01626,
+   "mde95": 0.0319,
+   "mde95_onesided": 0.0267,
    "ci95": [
-    -0.04042,
-    0.02772
+    -0.04761,
+    0.01747
    ],
-   "p_gt_0": 0.373,
+   "p_gt_0": 0.207,
    "resolvable": false
   }
  },
@@ -124,41 +124,41 @@
   "weighted": {
    "hit": {
     "n": 755,
-    "consensus": 0.39192,
-    "blend": 0.39932,
-    "delta": 0.0074
+    "consensus": 0.3821,
+    "blend": 0.39255,
+    "delta": 0.01045
    },
    "pit": {
-    "n": 890,
-    "consensus": 0.24948,
-    "blend": 0.25617,
-    "delta": 0.00669
+    "n": 892,
+    "consensus": 0.2957,
+    "blend": 0.28279,
+    "delta": -0.0129
    },
    "block": {
-    "n": 1645,
-    "consensus": 0.31074,
-    "blend": 0.32278,
-    "delta": 0.01204
+    "n": 1647,
+    "consensus": 0.32974,
+    "blend": 0.33268,
+    "delta": 0.00294
    }
   },
   "unweighted": {
    "hit": {
     "n": 755,
-    "consensus": 0.37972,
-    "blend": 0.39098,
-    "delta": 0.01127
+    "consensus": 0.36827,
+    "blend": 0.38409,
+    "delta": 0.01582
    },
    "pit": {
-    "n": 890,
-    "consensus": 0.24041,
-    "blend": 0.25117,
-    "delta": 0.01076
+    "n": 892,
+    "consensus": 0.28228,
+    "blend": 0.27368,
+    "delta": -0.00861
    },
    "block": {
-    "n": 1645,
-    "consensus": 0.29495,
-    "blend": 0.30914,
-    "delta": 0.01419
+    "n": 1647,
+    "consensus": 0.31095,
+    "blend": 0.31443,
+    "delta": 0.00348
    }
   }
  }

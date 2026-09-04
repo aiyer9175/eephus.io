@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-15",
+ "generated_at": "2026-08-30",
  "seasons": [
   2012,
   2013,
@@ -144,7 +144,7 @@
   "pass": true,
   "pass_under_v2": true
  },
- "runtime_seconds": 68.0,
+ "runtime_seconds": 198.6,
  "verdict": {
   "status": "validated",
   "summary": "Forward-chained OOS over 12 seasons (3372 Y->Y+1 pairs): HEM+ predicts next-year wOBA at rho 0.4119 vs raw wOBA 0.4087, OPS 0.4108, AVG 0.2347. CI on the rho gap vs AVG {'mean': 0.1771, 'lo95': 0.1451, 'hi95': 0.2087}, vs raw wOBA {'mean': 0.0033, 'lo95': -0.0096, 'hi95': 0.0166}. Shipped VALIDATED: HEM+ beats the naive rate baselines and holds even-or-ahead of its raw-wOBA parent out of sample, so the component empirical-Bayes shrinkage + hitter-pool anchoring earn their place. Volume/baserunning ride separate context columns."

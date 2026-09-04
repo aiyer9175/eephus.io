@@ -1,0 +1,24 @@
+{
+ "snapshot": "_pre_epoch_2026-09",
+ "snapshot_note": "a sibling directory of the repo root, not published",
+ "board": {
+  "rows_compared": 9502,
+  "rows_moved": 8819,
+  "rank_delta_median": 6.0,
+  "rank_delta_p90": 38.0,
+  "rank_delta_max": 709.0,
+  "grade_moved_rows": 5573,
+  "grade_delta_mean": 0.1931,
+  "membership_change_top10": 0,
+  "membership_change_top25": 0,
+  "membership_change_top100": 0,
+  "membership_change_top250": 2
+ },
+ "star_label": {
+  "compared": 2592,
+  "star_flag_flips": 6,
+  "rows_changed_any_field": 413,
+  "added": 1,
+  "dropped": 0
+ }
+}

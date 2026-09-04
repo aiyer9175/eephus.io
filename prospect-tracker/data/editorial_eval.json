@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-13",
+ "generated_at": "2026-09-04",
  "hit_rules": {
   "riser": {
    "fv_delta": 5.0,
@@ -18,40 +18,40 @@
   30,
   60
  ],
- "flags_logged": 4920,
- "flags_matured": 2495,
- "flags_pending": 2425,
+ "flags_logged": 5997,
+ "flags_matured": 4258,
+ "flags_pending": 1739,
  "by_flag_type": {
   "faller": {
-   "matured_cohorts": 25,
+   "matured_cohorts": 45,
    "horizons": {
     "h30": {
-     "n": 668,
-     "hit_rate": 0.2126,
+     "n": 954,
+     "hit_rate": 0.2002,
      "ci": [
-      0.1832,
-      0.2452
+      0.176,
+      0.2268
      ],
-     "control_n": 3249,
+     "control_n": 4138,
      "control_rate": 0.0,
      "control_ci": [
       0.0,
-      0.0012
+      0.0009
      ],
      "clears_control": true
     },
     "h60": {
-     "n": 87,
-     "hit_rate": 0.2299,
+     "n": 620,
+     "hit_rate": 0.279,
      "ci": [
-      0.154,
-      0.3286
+      0.2452,
+      0.3156
      ],
-     "control_n": 435,
+     "control_n": 3100,
      "control_rate": 0.0,
      "control_ci": [
       0.0,
-      0.0088
+      0.0012
      ],
      "clears_control": true
     }
@@ -63,75 +63,75 @@
    }
   },
   "rebound": {
-   "matured_cohorts": 25,
+   "matured_cohorts": 45,
    "horizons": {
     "h30": {
-     "n": 278,
-     "hit_rate": 0.0647,
+     "n": 479,
+     "hit_rate": 0.2067,
      "ci": [
-      0.0413,
-      0.1
+      0.1728,
+      0.2452
      ],
-     "control_n": 1265,
-     "control_rate": 0.0206,
+     "control_n": 1969,
+     "control_rate": 0.2351,
      "control_ci": [
-      0.0141,
-      0.0299
+      0.2169,
+      0.2544
      ],
-     "clears_control": true
+     "clears_control": false
     },
     "h60": {
-     "n": 30,
-     "hit_rate": 0.1667,
+     "n": 254,
+     "hit_rate": 0.1496,
      "ci": [
-      0.0734,
-      0.3356
+      0.111,
+      0.1987
      ],
-     "control_n": 147,
-     "control_rate": 0.0204,
+     "control_n": 1203,
+     "control_rate": 0.148,
      "control_ci": [
-      0.007,
-      0.0583
+      0.129,
+      0.1691
      ],
-     "clears_control": true
+     "clears_control": false
     }
    },
    "kill_rule": {
     "eligible": true,
-    "fails_to_clear": false,
-    "verdict_recommendation": "keep-measuring"
+    "fails_to_clear": true,
+    "verdict_recommendation": "deprecated"
    }
   },
   "riser": {
-   "matured_cohorts": 25,
+   "matured_cohorts": 45,
    "horizons": {
     "h30": {
-     "n": 1549,
-     "hit_rate": 0.0439,
+     "n": 2825,
+     "hit_rate": 0.1473,
      "ci": [
-      0.0348,
-      0.0553
+      0.1347,
+      0.1608
      ],
-     "control_n": 7286,
-     "control_rate": 0.0251,
+     "control_n": 12010,
+     "control_rate": 0.2098,
      "control_ci": [
-      0.0218,
-      0.029
+      0.2026,
+      0.2172
      ],
-     "clears_control": true
+     "clears_control": false
     },
     "h60": {
-     "n": 189,
-     "hit_rate": 0.0847,
+     "n": 1427,
+     "hit_rate": 0.2186,
      "ci": [
-      0.0528,
-      0.1331
+      0.198,
+      0.2408
      ],
-     "control_n": 936,
-     "control_rate": 0.0192,
+     "control_n": 6878,
+     "control_rate": 0.1503,
      "control_ci": [
-      0.0122,
-      0.0302
+      0.1421,
+      0.159
      ],
      "clears_control": true
     }

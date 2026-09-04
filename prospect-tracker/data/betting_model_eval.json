@@ -1,13 +1,13 @@
 {
- "generated_at": "2026-08-17T01:05:10+00:00",
+ "generated_at": "2026-09-04T19:13:05+00:00",
  "model_version": "betting_runs_v1",
- "season": null,
+ "season": "2026",
  "validated": false,
  "contaminated": true,
  "contamination": "team inputs are season-to-date leaderboards, so every graded game is inside its own features; this measures calibration, not out-of-sample skill",
  "gates_picks": false,
  "min_edge": null,
- "n_games": 1868,
+ "n_games": 2108,
  "modes": [
   "contaminated",
   "vintage"
@@ -16,15 +16,15 @@
  "vintage_coverage": {
   "dir": ".cache/leaderboard_vintages",
   "schema": 3,
-  "n_vintages": 21,
+  "n_vintages": 32,
   "n_vintages_backfilled": 10,
-  "n_vintages_live": 11,
+  "n_vintages_live": 22,
   "n_vintages_unknown_provenance": 0,
-  "n_vintages_with_parks": 20,
+  "n_vintages_with_parks": 31,
   "n_vintages_neutral_park": 1,
   "first": "2026-07-05",
-  "last": "2026-08-16",
-  "bytes": 552016,
+  "last": "2026-09-04",
+  "bytes": 910512,
   "missing_dates": [
    "2026-07-06",
    "2026-07-08",
@@ -47,203 +47,211 @@
    "2026-07-28",
    "2026-08-02",
    "2026-08-03",
-   "2026-08-15"
+   "2026-08-15",
+   "2026-08-17",
+   "2026-08-22",
+   "2026-08-25",
+   "2026-08-26",
+   "2026-08-28",
+   "2026-08-29",
+   "2026-09-01",
+   "2026-09-02"
   ],
   "earliest_gradable_game_date": "2026-07-06",
   "vintage_age_days": {
    "basis": "graded game dates",
-   "n": 521,
+   "n": 761,
    "median_days": 2,
-   "p90_days": 10,
+   "p90_days": 8,
    "max_days": 13,
-   "mean_days": 3.5
+   "mean_days": 2.89
   },
-  "span_days": 43,
-  "latest_cutoff": "2026-08-16",
-  "note": "21 vintages (10 backfilled, 11 live), 22 missing days inside the span; a game is gradable when a vintage cutoff of the SAME SEASON is strictly before it"
+  "span_days": 62,
+  "latest_cutoff": "2026-09-04",
+  "note": "32 vintages (10 backfilled, 22 live), 30 missing days inside the span; a game is gradable when a vintage cutoff of the SAME SEASON is strictly before it"
  },
  "in_sample": {
   "label": "in-sample (coefficients and features both leak)",
   "mode": "contaminated",
   "honest": false,
-  "n": 1868,
+  "n": 2108,
   "coefficients": {
-   "b0": 4.482123814373289,
-   "b1": 0.27542444004664024,
-   "b2": -0.3178469585115442,
-   "b3": 3.444993118429896,
-   "b4": 0.020832717781441093,
+   "b0": 4.476931124284586,
+   "b1": 0.259439778265719,
+   "b2": -0.31440206946803845,
+   "b3": 3.4848499283132024,
+   "b4": 0.04752388465469039,
    "source": "fitted",
-   "n_rows": 3736,
-   "rmse": 3.1517131996732206,
-   "r2": 0.04334499563963179
+   "n_rows": 4216,
+   "rmse": 3.1677146883659093,
+   "r2": 0.04214631470210872
   },
-  "home_field_runs_adj": 0.2429,
-  "diff_shrink": 0.72,
+  "home_field_runs_adj": 0.2192,
+  "diff_shrink": 0.78,
   "run_dispersion_alpha": null,
-  "extra_inning_home_rate": 0.4808,
-  "brier": 0.24296,
+  "extra_inning_home_rate": 0.4859,
+  "brier": 0.2415,
   "brier_flat_500": 0.25,
-  "brier_home_base": 0.24947,
-  "log_loss": 0.67895,
+  "brier_home_base": 0.24929,
+  "log_loss": 0.67589,
   "log_loss_flat_500": 0.69315,
-  "accuracy": 0.5578,
-  "home_win_rate": 0.523,
-  "mean_p_home": 0.523,
-  "total_mae": 3.512,
+  "accuracy": 0.5626,
+  "home_win_rate": 0.5266,
+  "mean_p_home": 0.5266,
+  "total_mae": 3.524,
   "skill_vs_home_base": {
-   "delta": 0.006506,
-   "sd": 0.07881,
-   "t": 3.568,
+   "delta": 0.007799,
+   "sd": 0.08479,
+   "t": 4.223,
    "beats_baseline_95": true,
-   "n_for_95": 397,
-   "baseline": 0.523,
+   "n_for_95": 320,
+   "baseline": 0.5266,
    "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
   },
   "calibration": [
    {
     "bin": "0.2-0.3",
-    "n": 11,
-    "pred": 0.268,
-    "actual": 0.4545
+    "n": 24,
+    "pred": 0.2647,
+    "actual": 0.375
    },
    {
     "bin": "0.3-0.4",
-    "n": 100,
-    "pred": 0.3666,
-    "actual": 0.4
+    "n": 124,
+    "pred": 0.3668,
+    "actual": 0.3548
    },
    {
     "bin": "0.4-0.5",
-    "n": 618,
-    "pred": 0.4598,
-    "actual": 0.4644
+    "n": 644,
+    "pred": 0.4585,
+    "actual": 0.4736
    },
    {
     "bin": "0.5-0.6",
-    "n": 837,
-    "pred": 0.5478,
-    "actual": 0.5341
+    "n": 908,
+    "pred": 0.5486,
+    "actual": 0.533
    },
    {
     "bin": "0.6-0.7",
-    "n": 268,
-    "pred": 0.6316,
-    "actual": 0.6493
+    "n": 353,
+    "pred": 0.6333,
+    "actual": 0.6487
    },
    {
     "bin": "0.7-0.8",
-    "n": 29,
-    "pred": 0.7371,
-    "actual": 0.6897
+    "n": 46,
+    "pred": 0.7359,
+    "actual": 0.6957
    },
    {
     "bin": "0.8-0.9",
-    "n": 5,
-    "pred": 0.8129,
-    "actual": 0.8
+    "n": 9,
+    "pred": 0.8161,
+    "actual": 0.7778
    }
   ]
  },
- "split_date": "2026-07-02",
+ "split_date": "2026-07-18",
  "forward": {
-  "label": "forward from 2026-07-02 (coefficient leakage removed, feature leakage remains)",
+  "label": "forward from 2026-07-18 (coefficient leakage removed, feature leakage remains)",
   "mode": "contaminated",
   "honest": false,
-  "n": 573,
+  "n": 649,
   "coefficients": {
-   "b0": 4.499167936213671,
-   "b1": 0.28721331425132324,
-   "b2": -0.3320482075521789,
-   "b3": 3.384122807569239,
-   "b4": 0.007984871319917772,
+   "b0": 4.536652066938749,
+   "b1": 0.27673855871321634,
+   "b2": -0.3118254870319486,
+   "b3": 3.8268241196891744,
+   "b4": -0.017373132783800118,
    "source": "fitted",
-   "n_rows": 2590,
-   "rmse": 3.137514156953744,
-   "r2": 0.04728893875226081
+   "n_rows": 2918,
+   "rmse": 3.18428317223264,
+   "r2": 0.04397660025726691
   },
-  "home_field_runs_adj": 0.2764,
-  "diff_shrink": 0.72,
+  "home_field_runs_adj": 0.2103,
+  "diff_shrink": 0.78,
   "run_dispersion_alpha": null,
-  "extra_inning_home_rate": 0.4929,
-  "brier": 0.24558,
+  "extra_inning_home_rate": 0.4977,
+  "brier": 0.24159,
   "brier_flat_500": 0.25,
-  "brier_home_base": 0.24978,
-  "log_loss": 0.68409,
+  "brier_home_base": 0.24833,
+  "log_loss": 0.67573,
   "log_loss_flat_500": 0.69315,
-  "accuracy": 0.5567,
-  "home_win_rate": 0.5148,
-  "mean_p_home": 0.5262,
-  "total_mae": 3.571,
+  "accuracy": 0.5532,
+  "home_win_rate": 0.5408,
+  "mean_p_home": 0.5217,
+  "total_mae": 3.518,
   "skill_vs_home_base": {
-   "delta": 0.004205,
-   "sd": 0.08139,
-   "t": 1.237,
-   "beats_baseline_95": false,
-   "n_for_95": 1014,
-   "baseline": 0.5148,
+   "delta": 0.006743,
+   "sd": 0.08587,
+   "t": 2.0,
+   "beats_baseline_95": true,
+   "n_for_95": 439,
+   "baseline": 0.5408,
    "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
   },
   "calibration": [
    {
     "bin": "0.2-0.3",
-    "n": 3,
-    "pred": 0.2458,
-    "actual": 0.6667
+    "n": 7,
+    "pred": 0.2539,
+    "actual": 0.2857
    },
    {
     "bin": "0.3-0.4",
-    "n": 38,
-    "pred": 0.3691,
-    "actual": 0.4211
+    "n": 46,
+    "pred": 0.3656,
+    "actual": 0.4348
    },
    {
     "bin": "0.4-0.5",
-    "n": 167,
-    "pred": 0.4615,
-    "actual": 0.4431
+    "n": 201,
+    "pred": 0.4588,
+    "actual": 0.5025
    },
    {
     "bin": "0.5-0.6",
-    "n": 272,
-    "pred": 0.5491,
-    "actual": 0.5257
+    "n": 285,
+    "pred": 0.549,
+    "actual": 0.5404
    },
    {
     "bin": "0.6-0.7",
-    "n": 80,
-    "pred": 0.6315,
-    "actual": 0.625
+    "n": 97,
+    "pred": 0.6334,
+    "actual": 0.6495
    },
    {
     "bin": "0.7-0.8",
     "n": 11,
-    "pred": 0.7434,
-    "actual": 0.7273
+    "pred": 0.7448,
+    "actual": 0.8182
    },
    {
     "bin": "0.8-0.9",
     "n": 2,
-    "pred": 0.8262,
+    "pred": 0.8208,
     "actual": 1.0
    }
   ]
  },
  "run_dispersion": {
   "status": "ran",
-  "split_date": "2026-07-02",
+  "split_date": "2026-07-18",
   "split_q": 0.7,
   "runline_side": "both",
   "criteria": "fit {coefficients, alpha, diff_shrink, home_field_runs_adj} on the fit half of a 70% date split; on the HELD-OUT half all four must hold: (1) home win, paired Brier, non-inferiority, one-sided 95% lower bound on delta >= -0.001; (2) THE RUNLINE, BOTH SIDES, scored as the per-game SUM of the log loss on home margin >= 2 and the log loss on home margin <= -2 (equivalently home -1.5 and away -1.5; the +1.5 sides are their complements and score identically), paired, delta > 0 at t >= 1.645; (3) total over 9.0, paired log loss, delta > 0 at t >= 1.645; (4) runs both sides, out-of-sample log-likelihood per row, NB > Poisson. Moneyline is non-inferiority because diff_shrink already absorbs its calibration and NB must not be credited for beating it there. AMENDED 2026-08-09: V1 said only 'margin >= 2' and did not name a side, the first run scored the home side alone, and the side changes the verdict; see RUNLINE_SIDE_AMENDMENT. The verdict is taken from `dispersion_gate_sensitivity`, which requires the amended criterion to hold at split quantiles 0.6, 0.7 and 0.8, not from any single split.",
   "criteria_v1": "fit {coefficients, alpha, diff_shrink, home_field_runs_adj} on the fit half of a 70% date split; on the HELD-OUT half all four must hold: (1) home win, paired Brier, non-inferiority, one-sided 95% lower bound on delta >= -0.001; (2) margin >= 2, paired log loss, delta > 0 at t >= 1.645; (3) total over 9.0, paired log loss, delta > 0 at t >= 1.645; (4) runs both sides, out-of-sample log-likelihood per row, NB > Poisson. Moneyline is non-inferiority because diff_shrink already absorbs its calibration and NB must not be credited for beating it there.",
-  "n_fit": 1295,
-  "n_eval_games": 573,
-  "passed": true,
+  "n_fit": 1459,
+  "n_eval_games": 649,
+  "passed": false,
   "checks": [
    {
     "criterion": "moneyline (home win), paired Brier, non-inferiority",
     "test": "lb95(poisson - nb) >= -0.001",
-    "value": -0.000498,
+    "value": -0.0001,
     "threshold": -0.001,
     "pass": true
    },
@@ -251,105 +259,105 @@
     "criterion": "runline (both sides, per-game sum of the two log losses), paired log loss, superiority",
     "test": "delta > 0 and t >= 1.645",
     "side": "both",
-    "value": 0.011386,
-    "t": 2.775,
+    "value": 0.011245,
+    "t": 2.919,
     "threshold": 0.0,
     "pass": true
    },
    {
     "criterion": "total (over 9.0), paired log loss, superiority",
     "test": "delta > 0 and t >= 1.645",
-    "value": 0.007121,
-    "t": 1.835,
+    "value": 0.004829,
+    "t": 1.378,
     "threshold": 0.0,
-    "pass": true
+    "pass": false
    },
    {
     "criterion": "runs, both scoring sides, out-of-sample log-likelihood per row",
     "test": "nb > poisson",
-    "value": 0.215297,
+    "value": 0.20017,
     "threshold": 0.0,
     "pass": true
    }
   ],
-  "alpha": 0.27133,
+  "alpha": 0.28109,
   "poisson_arm": {
-   "diff_shrink": 0.72,
-   "home_field_runs_adj": 0.2764,
-   "runs_ll_per_row": -2.6733919110772044,
-   "n_runs_rows": 1146,
-   "n_eval": 573,
+   "diff_shrink": 0.78,
+   "home_field_runs_adj": 0.2103,
+   "runs_ll_per_row": -2.6431172949865616,
+   "n_runs_rows": 1298,
+   "n_eval": 649,
    "base_rates": {
-    "home_win": 0.5148,
-    "home_minus_1_5": 0.349,
-    "away_minus_1_5": 0.3717,
-    "over_9": 0.3857
+    "home_win": 0.5408,
+    "home_minus_1_5": 0.3652,
+    "away_minus_1_5": 0.3513,
+    "over_9": 0.3837
    }
   },
   "nb2_arm": {
-   "alpha": 0.27133,
-   "diff_shrink": 1.12,
-   "home_field_runs_adj": 0.266,
-   "runs_ll_per_row": -2.458094842520928,
-   "n_runs_rows": 1146,
-   "n_eval": 573,
+   "alpha": 0.28109,
+   "diff_shrink": 1.18,
+   "home_field_runs_adj": 0.2114,
+   "runs_ll_per_row": -2.442946899559157,
+   "n_runs_rows": 1298,
+   "n_eval": 649,
    "base_rates": {
-    "home_win": 0.5148,
-    "home_minus_1_5": 0.349,
-    "away_minus_1_5": 0.3717,
-    "over_9": 0.3857
+    "home_win": 0.5408,
+    "home_minus_1_5": 0.3652,
+    "away_minus_1_5": 0.3513,
+    "over_9": 0.3837
    }
   },
   "moneyline_brier": {
-   "n": 573,
-   "delta": -0.000175,
-   "sd": 0.004705,
-   "t": -0.889,
-   "lb95": -0.000498
+   "n": 649,
+   "delta": 8.5e-05,
+   "sd": 0.002876,
+   "t": 0.756,
+   "lb95": -0.0001
   },
   "runline_logloss": {
-   "n": 573,
-   "delta": 0.011386,
-   "sd": 0.098207,
-   "t": 2.775,
-   "lb95": 0.004637,
+   "n": 649,
+   "delta": 0.011245,
+   "sd": 0.098143,
+   "t": 2.919,
+   "lb95": 0.004908,
    "passes_criterion_2": true
   },
   "runline_by_side": {
    "home": {
-    "n": 573,
-    "delta": -0.002308,
-    "sd": 0.10019,
-    "t": -0.551,
-    "lb95": -0.009193,
+    "n": 649,
+    "delta": 0.002574,
+    "sd": 0.10349,
+    "t": 0.634,
+    "lb95": -0.004108,
     "passes_criterion_2": false
    },
    "away": {
-    "n": 573,
-    "delta": 0.013694,
-    "sd": 0.104452,
-    "t": 3.138,
-    "lb95": 0.006516,
+    "n": 649,
+    "delta": 0.008671,
+    "sd": 0.103487,
+    "t": 2.135,
+    "lb95": 0.001989,
     "passes_criterion_2": true
    },
    "both": {
-    "n": 573,
-    "delta": 0.011386,
-    "sd": 0.098207,
-    "t": 2.775,
-    "lb95": 0.004637,
+    "n": 649,
+    "delta": 0.011245,
+    "sd": 0.098143,
+    "t": 2.919,
+    "lb95": 0.004908,
     "passes_criterion_2": true
    }
   },
   "runline_side_note": "criterion 2's estimand. `home` is the log loss on home margin >= 2 (home -1.5, equivalently away +1.5), `away` the log loss on home margin <= -2 (away -1.5, equivalently home +1.5), `both` their per-game sum. The board publishes all four prices and they are these two events; V1 of the pre-registration named no side and the first run scored `home` alone. See betting_model.RUNLINE_SIDE_AMENDMENT",
   "total_logloss": {
-   "n": 573,
-   "delta": 0.007121,
-   "sd": 0.092878,
-   "t": 1.835,
-   "lb95": 0.000738
+   "n": 649,
+   "delta": 0.004829,
+   "sd": 0.089266,
+   "t": 1.378,
+   "lb95": -0.000935
   },
-  "runs_loglik_per_row_delta": 0.215297,
+  "runs_loglik_per_row_delta": 0.20017,
   "mode": "contaminated",
   "mode_note": "forward split on season-to-date features. Both arms see the identical features and the identical fit window, so the contamination cannot favour one distribution over the other; this gate asks about SHAPE, not about skill",
   "sensitivity": {
@@ -363,25 +371,25 @@
    "grid": [
     {
      "split_q": 0.6,
-     "split_date": "2026-06-18",
-     "n_fit": 1107,
-     "n_eval_games": 761,
-     "alpha": 0.27667,
+     "split_date": "2026-06-29",
+     "n_fit": 1253,
+     "n_eval_games": 855,
+     "alpha": 0.27345,
      "other_three_pass": true,
      "by_side": {
       "home": {
-       "delta": -0.003723,
-       "t": -1.026,
+       "delta": 0.000806,
+       "t": 0.234,
        "pass": false
       },
       "away": {
-       "delta": 0.014379,
-       "t": 3.829,
+       "delta": 0.01385,
+       "t": 3.911,
        "pass": true
       },
       "both": {
-       "delta": 0.010656,
-       "t": 3.014,
+       "delta": 0.014656,
+       "t": 4.483,
        "pass": true
       }
      },
@@ -393,55 +401,55 @@
     },
     {
      "split_q": 0.7,
-     "split_date": "2026-07-02",
-     "n_fit": 1295,
-     "n_eval_games": 573,
-     "alpha": 0.27133,
-     "other_three_pass": true,
+     "split_date": "2026-07-18",
+     "n_fit": 1459,
+     "n_eval_games": 649,
+     "alpha": 0.28109,
+     "other_three_pass": false,
      "by_side": {
       "home": {
-       "delta": -0.002308,
-       "t": -0.551,
+       "delta": 0.002574,
+       "t": 0.634,
        "pass": false
       },
       "away": {
-       "delta": 0.013694,
-       "t": 3.138,
+       "delta": 0.008671,
+       "t": 2.135,
        "pass": true
       },
       "both": {
-       "delta": 0.011386,
-       "t": 2.775,
+       "delta": 0.011245,
+       "t": 2.919,
        "pass": true
       }
      },
      "gate_by_side": {
       "home": false,
-      "away": true,
-      "both": true
+      "away": false,
+      "both": false
      }
     },
     {
      "split_q": 0.8,
-     "split_date": "2026-07-19",
-     "n_fit": 1474,
-     "n_eval_games": 394,
-     "alpha": 0.28043,
+     "split_date": "2026-08-03",
+     "n_fit": 1682,
+     "n_eval_games": 426,
+     "alpha": 0.28374,
      "other_three_pass": false,
      "by_side": {
       "home": {
-       "delta": -0.001817,
-       "t": -0.35,
+       "delta": 0.006182,
+       "t": 1.213,
        "pass": false
       },
       "away": {
-       "delta": 0.011214,
-       "t": 2.131,
-       "pass": true
+       "delta": 0.007679,
+       "t": 1.526,
+       "pass": false
       },
       "both": {
-       "delta": 0.009396,
-       "t": 1.892,
+       "delta": 0.013861,
+       "t": 2.928,
        "pass": true
       }
      },
@@ -468,20 +476,20 @@
   "served_alpha": null
  },
  "vintage": {
-  "label": "vintage forward from 2026-07-28 (team, pitcher and park inputs dated strictly before each game, except 11 games whose vintage predates the park column and are priced on a NEUTRAL park)",
+  "label": "vintage forward from 2026-08-01 (team, pitcher and park inputs dated strictly before each game, except 11 games whose vintage predates the park column and are priced on a NEUTRAL park)",
   "mode": "vintage",
   "honest": true,
   "status": "graded",
-  "n_vintages": 21,
-  "n_gradable": 521,
-  "n_graded": 272,
+  "n_vintages": 32,
+  "n_gradable": 761,
+  "n_graded": 456,
   "n_skipped_no_vintage": 1347,
   "min_fit_games": 100,
   "min_eval_games": 50,
   "min_graded_games_for_min_edge": 600,
   "park_basis": {
    "source": "mixed",
-   "n_games_vintage_park": 510,
+   "n_games_vintage_park": 750,
    "n_games_neutral_park": 11,
    "n_eval_games_neutral_park": 11,
    "n_dates_neutral_park": 1,
@@ -492,182 +500,211 @@
   "feature_basis": {
    "xwoba_14": {
     "n_games": {
-     "populated": 0,
-     "null_stated": 0,
-     "predates_column": 521
+     "populated": 189,
+     "null_stated": 24,
+     "predates_column": 548
     },
     "n_eval_games": {
-     "populated": 0,
-     "null_stated": 0,
-     "predates_column": 272
+     "populated": 189,
+     "null_stated": 24,
+     "predates_column": 243
     },
     "bases": [
+     "ABSENT: no committed team-level rolling-xwOBA builder exists on any pipeline path (checked 2026-08-16; hitter_export carries per-hitter season xwOBA only). Captured null until one does; the value is never invented from a live file",
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
-     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)"
+     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)",
+     "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-06 (true window 14d; 340 hitters differenced, 14 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
+     "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-06 (true window 15d; 340 hitters differenced, 14 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
+     "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-06 (true window 17d; 343 hitters differenced, 17 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
+     "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-10 (true window 14d; 340 hitters differenced, 11 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
+     "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-13 (true window 14d; 345 hitters differenced, 9 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
+     "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-13 (true window 17d; 352 hitters differenced, 10 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
+     "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-13 (true window 18d; 352 hitters differenced, 10 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)"
     ]
    },
    "xwoba_30": {
     "n_games": {
-     "populated": 0,
-     "null_stated": 0,
-     "predates_column": 521
+     "populated": 96,
+     "null_stated": 117,
+     "predates_column": 548
     },
     "n_eval_games": {
-     "populated": 0,
-     "null_stated": 0,
-     "predates_column": 272
+     "populated": 96,
+     "null_stated": 117,
+     "predates_column": 243
     },
     "bases": [
+     "ABSENT: no committed team-level rolling-xwOBA builder exists on any pipeline path (checked 2026-08-16). Captured null until one does",
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
-     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)"
+     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)",
+     "ABSENT: the rolling-xwOBA builder's nearest board anchor (2026-07-16) trails the 30d target 2026-07-24 by 8d, past the 7d tolerance; a window that stale is a different feature",
+     "ABSENT: the rolling-xwOBA builder's nearest board anchor (2026-07-16) trails the 30d target 2026-07-25 by 9d, past the 7d tolerance; a window that stale is a different feature",
+     "ABSENT: the rolling-xwOBA builder's nearest board anchor (2026-07-16) trails the 30d target 2026-07-28 by 12d, past the 7d tolerance; a window that stale is a different feature",
+     "team rolling xwOBA, trailing 30d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-07-16 (true window 35d; 350 hitters differenced, 41 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
+     "team rolling xwOBA, trailing 30d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-07-16 (true window 36d; 350 hitters differenced, 41 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
+     "team rolling xwOBA, trailing 30d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-07-31 (true window 30d; 365 hitters differenced, 24 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
+     "team rolling xwOBA, trailing 30d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-01 (true window 30d; 362 hitters differenced, 24 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)"
     ]
    },
    "off_vs_lhp": {
     "n_games": {
-     "populated": 0,
+     "populated": 213,
      "null_stated": 0,
-     "predates_column": 521
+     "predates_column": 548
     },
     "n_eval_games": {
-     "populated": 0,
+     "populated": 213,
      "null_stated": 0,
-     "predates_column": 272
+     "predates_column": 243
     },
     "bases": [
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
-     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)"
+     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)",
+     "hitter_leaderboards.json teams[].orders.vl, PA-weighted mean of per-slot hem_plus"
     ]
    },
    "off_vs_rhp": {
     "n_games": {
-     "populated": 0,
+     "populated": 213,
      "null_stated": 0,
-     "predates_column": 521
+     "predates_column": 548
     },
     "n_eval_games": {
-     "populated": 0,
+     "populated": 213,
      "null_stated": 0,
-     "predates_column": 272
+     "predates_column": 243
     },
     "bases": [
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
-     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)"
+     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)",
+     "hitter_leaderboards.json teams[].orders.vr, PA-weighted mean of per-slot hem_plus"
     ]
    },
    "lineup_strength": {
     "n_games": {
-     "populated": 0,
-     "null_stated": 0,
-     "predates_column": 521
+     "populated": 189,
+     "null_stated": 24,
+     "predates_column": 548
     },
     "n_eval_games": {
-     "populated": 0,
-     "null_stated": 0,
-     "predates_column": 272
+     "populated": 189,
+     "null_stated": 24,
+     "predates_column": 243
     },
     "bases": [
+     "ABSENT: builder is a later lane (docs/diamond-betting.md section 5c). Captured null until it exists",
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
-     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)"
+     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)",
+     "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-20) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+     "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-21) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+     "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-23) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+     "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-24) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+     "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-27) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+     "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-30) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+     "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-31) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats"
     ]
    },
    "star_out": {
     "n_games": {
-     "populated": 0,
-     "null_stated": 0,
-     "predates_column": 521
+     "populated": 189,
+     "null_stated": 24,
+     "predates_column": 548
     },
     "n_eval_games": {
-     "populated": 0,
-     "null_stated": 0,
-     "predates_column": 272
+     "populated": 189,
+     "null_stated": 24,
+     "predates_column": 243
     },
     "bases": [
+     "ABSENT: builder is a later lane (docs/diamond-betting.md section 5c). Captured null until it exists",
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
-     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)"
+     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)",
+     "of each club's top-5 projected players (mlb_projections.json vets[].warY1Champ), how many carry a StatsAPI 40-man IL status code (D*) in the cached roster files (30 orgs with a fresh roster cache, 0 stale (> 48h), 0 missing/unreadable); 0 means all stars available"
     ]
    },
    "throws": {
     "n_games": {
-     "populated": 0,
+     "populated": 213,
      "null_stated": 0,
-     "predates_column": 521
+     "predates_column": 548
     },
     "n_eval_games": {
-     "populated": 0,
+     "populated": 213,
      "null_stated": 0,
-     "predates_column": 272
+     "predates_column": 243
     },
     "bases": [
      "ABSENT: schema 1 record predates the column (added in schema 3, 2026-08-16)",
-     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)"
+     "ABSENT: schema 2 record predates the column (added in schema 3, 2026-08-16)",
+     "pal_export.load_pitch_hand(season), one bulk StatsAPI call at assembly, never a per-game lookup"
     ]
    },
    "note": "schema-3 dark capture only: counts of gradable and eval games whose vintage record carried each column, said why it was null, or predates it (docs/diamond-betting.md section 5c). Nothing served reads these columns; a null is never filled from live files"
   },
-  "note": "272 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season",
+  "note": "456 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season",
   "first_graded_date": "2026-07-06",
-  "last_graded_date": "2026-08-16",
-  "n": 272,
+  "last_graded_date": "2026-09-03",
+  "n": 456,
   "coefficients": {
-   "b0": 4.433771423242494,
-   "b1": -0.06169339063999956,
-   "b2": -0.12735700153132642,
-   "b3": 0.8720697132698213,
-   "b4": 0.1768073508508218,
+   "b0": 4.345387129359371,
+   "b1": -0.037205338068223445,
+   "b2": -0.0964785277760496,
+   "b3": 0.5947710191055489,
+   "b4": 0.14936005730776325,
    "source": "fitted",
-   "n_rows": 498,
-   "rmse": 3.326687783495365,
-   "r2": 0.005270266039527405
+   "n_rows": 610,
+   "rmse": 3.288483622465682,
+   "r2": 0.003049434187520128
   },
-  "home_field_runs_adj": -0.057,
-  "diff_shrink": 1.02,
+  "home_field_runs_adj": -0.0443,
+  "diff_shrink": 1.28,
   "run_dispersion_alpha": null,
-  "extra_inning_home_rate": 0.4958,
-  "brier": 0.25055,
+  "extra_inning_home_rate": 0.4921,
+  "brier": 0.24417,
   "brier_flat_500": 0.25,
-  "brier_home_base": 0.24913,
-  "log_loss": 0.69425,
+  "brier_home_base": 0.24808,
+  "log_loss": 0.68141,
   "log_loss_flat_500": 0.69315,
-  "accuracy": 0.5074,
-  "home_win_rate": 0.5294,
-  "mean_p_home": 0.5127,
-  "total_mae": 3.52,
+  "accuracy": 0.5658,
+  "home_win_rate": 0.5439,
+  "mean_p_home": 0.5158,
+  "total_mae": 3.523,
   "skill_vs_home_base": {
-   "delta": -0.001419,
-   "sd": 0.04393,
-   "t": -0.533,
-   "beats_baseline_95": false,
-   "n_for_95": null,
-   "baseline": 0.5294,
+   "delta": 0.003905,
+   "sd": 0.04586,
+   "t": 1.818,
+   "beats_baseline_95": true,
+   "n_for_95": 373,
+   "baseline": 0.5439,
    "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
   },
   "calibration": [
    {
     "bin": "0.3-0.4",
-    "n": 3,
-    "pred": 0.3801,
-    "actual": 0.6667
+    "n": 4,
+    "pred": 0.3852,
+    "actual": 0.5
    },
    {
     "bin": "0.4-0.5",
-    "n": 99,
-    "pred": 0.4757,
-    "actual": 0.5253
+    "n": 142,
+    "pred": 0.4782,
+    "actual": 0.4648
    },
    {
     "bin": "0.5-0.6",
-    "n": 162,
-    "pred": 0.5325,
-    "actual": 0.5247
+    "n": 305,
+    "pred": 0.5334,
+    "actual": 0.577
    },
    {
     "bin": "0.6-0.7",
-    "n": 8,
-    "pred": 0.6186,
-    "actual": 0.625
+    "n": 5,
+    "pred": 0.6187,
+    "actual": 0.8
    }
   ],
-  "split_date": "2026-07-28"
+  "split_date": "2026-08-01"
  },
  "prob_calibration": {
   "criteria": "fit (a, b) of p' = sigmoid(a*logit(p) + b) by MLE on the fit half only; on the held-out half BOTH must hold: (1) paired per-game Brier delta, identity minus Platt, > 0 at one-sided t >= 1.645; (2) paired log loss delta not worse on the point estimate (>= 0). Splits at date quantiles 0.6, 0.7 and 0.8, ALL THREE or nothing, fit half >= 100 games and eval half >= 50 or the split cannot pass. Arm 1 is the vintage-gradable sample with {coefficients, tie, diff_shrink, home_adj} refit on each fit half; arm 2 is the calibration ledger's settled canonical-side moneyline games, ACTIVE only at n >= 100, same splits and criteria in settled order. Ship requires BOTH arms; serving is moneyline only.",
@@ -680,31 +717,31 @@
   "serving_scope": "moneyline only; the runline and the total stay behind the dispersion gate (section 11a) whatever this block says",
   "status": "ran",
   "vintage_arm": {
-   "n_gradable": 521,
+   "n_gradable": 761,
    "grid": [
     {
      "split_q": 0.6,
-     "split_date": "2026-08-01",
-     "n_fit": 305,
-     "n_eval": 216,
-     "diff_shrink": 1.28,
-     "home_field_runs_adj": -0.0443,
+     "split_date": "2026-08-12",
+     "n_fit": 454,
+     "n_eval": 307,
+     "diff_shrink": 1.04,
+     "home_field_runs_adj": 0.0548,
      "status": "ran",
-     "a": 1.13656,
-     "b": -0.00981,
+     "a": 0.75911,
+     "b": 0.03391,
      "brier_delta": {
-      "n": 216,
-      "delta": -0.000474,
-      "sd": 0.005193,
-      "t": -1.343,
-      "lb95": -0.001056
+      "n": 307,
+      "delta": -0.001525,
+      "sd": 0.006763,
+      "t": -3.952,
+      "lb95": -0.00216
      },
      "logloss_delta": {
-      "n": 216,
-      "delta": -0.000962,
-      "sd": 0.010678,
-      "t": -1.325,
-      "lb95": -0.002158
+      "n": 307,
+      "delta": -0.003087,
+      "sd": 0.01368,
+      "t": -3.954,
+      "lb95": -0.004372
      },
      "brier_pass": false,
      "logloss_pass": false,
@@ -712,27 +749,27 @@
     },
     {
      "split_q": 0.7,
-     "split_date": "2026-08-05",
-     "n_fit": 358,
-     "n_eval": 163,
-     "diff_shrink": 1.28,
-     "home_field_runs_adj": -0.0098,
+     "split_date": "2026-08-17",
+     "n_fit": 522,
+     "n_eval": 239,
+     "diff_shrink": 0.72,
+     "home_field_runs_adj": 0.1516,
      "status": "ran",
-     "a": 1.04816,
-     "b": -0.0048,
+     "a": 0.78648,
+     "b": 0.0196,
      "brier_delta": {
-      "n": 163,
-      "delta": -0.000105,
-      "sd": 0.001688,
-      "t": -0.792,
-      "lb95": -0.000322
+      "n": 239,
+      "delta": -0.001585,
+      "sd": 0.005108,
+      "t": -4.797,
+      "lb95": -0.002128
      },
      "logloss_delta": {
-      "n": 163,
-      "delta": -0.000211,
-      "sd": 0.003457,
-      "t": -0.778,
-      "lb95": -0.000656
+      "n": 239,
+      "delta": -0.003204,
+      "sd": 0.010303,
+      "t": -4.809,
+      "lb95": -0.004301
      },
      "brier_pass": false,
      "logloss_pass": false,
@@ -740,27 +777,27 @@
     },
     {
      "split_q": 0.8,
-     "split_date": "2026-08-09",
-     "n_fit": 414,
-     "n_eval": 107,
-     "diff_shrink": 1.22,
-     "home_field_runs_adj": -0.0007,
+     "split_date": "2026-08-23",
+     "n_fit": 602,
+     "n_eval": 159,
+     "diff_shrink": 1.14,
+     "home_field_runs_adj": 0.0688,
      "status": "ran",
-     "a": 1.00536,
-     "b": -0.00067,
+     "a": 0.87732,
+     "b": 0.01942,
      "brier_delta": {
-      "n": 107,
-      "delta": -3e-06,
-      "sd": 0.000142,
-      "t": -0.192,
-      "lb95": -2.5e-05
+      "n": 159,
+      "delta": -0.001173,
+      "sd": 0.005541,
+      "t": -2.669,
+      "lb95": -0.001896
      },
      "logloss_delta": {
-      "n": 107,
-      "delta": -5e-06,
-      "sd": 0.000289,
-      "t": -0.184,
-      "lb95": -5.1e-05
+      "n": 159,
+      "delta": -0.002441,
+      "sd": 0.011372,
+      "t": -2.707,
+      "lb95": -0.003925
      },
      "brier_pass": false,
      "logloss_pass": false,
@@ -773,14 +810,90 @@
    "note": "features dated strictly before each game; the model is refit on each fit half, so nothing later than a split reaches either half"
   },
   "ledger_arm": {
-   "n_games": 49,
+   "n_games": 134,
    "need": 100,
-   "active": false,
+   "active": true,
    "basis": "settled canonical-side moneyline games, one per game, from tools/betting_calibration; the model probabilities are the SERVED ones, priced from season-to-date inputs, which is exactly the scale the serve seam would apply to",
-   "status": "cannot count yet",
-   "pass": false,
-   "verdict": "cannot count yet",
-   "note": "49 of 100 settled canonical moneyline games; below the pre-registered floor this arm counts in NEITHER direction, and the ship is blocked whatever the vintage arm says"
+   "status": "ran",
+   "grid": [
+    {
+     "split_q": 0.6,
+     "n_fit": 80,
+     "n_eval": 54,
+     "status": "ran",
+     "a": 0.31905,
+     "b": 0.0102,
+     "brier_delta": {
+      "n": 54,
+      "delta": -0.009638,
+      "sd": 0.049598,
+      "t": -1.428,
+      "lb95": -0.020741
+     },
+     "logloss_delta": {
+      "n": 54,
+      "delta": -0.020011,
+      "sd": 0.101691,
+      "t": -1.446,
+      "lb95": -0.042776
+     },
+     "brier_pass": false,
+     "logloss_pass": false,
+     "pass": false
+    },
+    {
+     "split_q": 0.7,
+     "n_fit": 93,
+     "n_eval": 41,
+     "status": "ran",
+     "a": 0.427,
+     "b": 0.14242,
+     "brier_delta": {
+      "n": 41,
+      "delta": -0.00933,
+      "sd": 0.046299,
+      "t": -1.29,
+      "lb95": -0.021225
+     },
+     "logloss_delta": {
+      "n": 41,
+      "delta": -0.019392,
+      "sd": 0.094416,
+      "t": -1.315,
+      "lb95": -0.043648
+     },
+     "brier_pass": false,
+     "logloss_pass": false,
+     "pass": false
+    },
+    {
+     "split_q": 0.8,
+     "n_fit": 107,
+     "n_eval": 27,
+     "status": "ran",
+     "a": 0.84212,
+     "b": 0.03136,
+     "brier_delta": {
+      "n": 27,
+      "delta": 0.000118,
+      "sd": 0.011405,
+      "t": 0.054,
+      "lb95": -0.003493
+     },
+     "logloss_delta": {
+      "n": 27,
+      "delta": 5.8e-05,
+      "sd": 0.023706,
+      "t": 0.013,
+      "lb95": -0.007447
+     },
+     "brier_pass": false,
+     "logloss_pass": true,
+     "pass": false
+    }
+   ],
+   "verdict": "fail",
+   "pass": false
   },
   "ship": false,
   "verdict": "fail",
@@ -793,26 +906,26 @@
   "surface": "validation ladder only, dark: no slot, no record row and no exported edge reads a tier",
   "status": "ran",
   "window": {
-   "split_date": "2026-07-28",
-   "n": 272,
-   "first_date": "2026-07-28",
-   "last_date": "2026-08-16"
+   "split_date": "2026-08-01",
+   "n": 456,
+   "first_date": "2026-08-01",
+   "last_date": "2026-09-03"
   },
   "tiers": {
    "model_vintage": {
-    "n": 272,
-    "brier": 0.25055,
+    "n": 456,
+    "brier": 0.24417,
     "source": "the vintage block's own graded eval window"
    },
    "home_constant": {
-    "n": 272,
-    "brier": 0.24913,
-    "p_constant": 0.5294,
+    "n": 456,
+    "brier": 0.24808,
+    "p_constant": 0.5439,
     "source": "the eval window's home win rate as a constant, the identical base brier_home_base uses"
    },
    "elo_literature": {
-    "n": 272,
-    "brier": 0.24584,
+    "n": 456,
+    "brier": 0.24483,
     "config": {
      "k": 4.0,
      "home_adv_elo": 24.0,
@@ -822,16 +935,16 @@
     "source": "tools/betting_elo.py walking this season's results only"
    },
    "market_open_devig": {
-    "n": 125,
-    "brier": 0.24418,
-    "n_slates_with_capture": 10,
+    "n": 223,
+    "brier": 0.23248,
+    "n_slates_with_capture": 20,
     "same_games": {
-     "model": 0.25353,
-     "home_constant": 0.24806,
-     "elo_literature": 0.24413,
+     "model": 0.24505,
+     "home_constant": 0.24819,
+     "elo_literature": 0.24429,
      "note": "the only comparison a subsample may appear in: every tier recomputed on exactly these games"
     },
-    "subsample_note": "125 of the window's 272 games have a cached open capture; a doubleheader's two games read the same capture",
+    "subsample_note": "223 of the window's 456 games have a cached open capture; a doubleheader's two games read the same capture",
     "source": "proportional de-vig of the earliest open snapshot per slate, home fair probability averaged across books posting a two-sided h2h market"
    },
    "market_close_devig": {
@@ -850,65 +963,65 @@
    {
     "id": "vintage_sample",
     "need": "600 vintage-graded games",
-    "have": 272,
+    "have": 456,
     "open": false,
     "why": "the contaminated forward margin over the home-field baseline is +0.005794 Brier with a paired sd of 0.08647, so a margin that size needs 603 games to clear one-sided 95%; 600 is that number, and a clean margin will be smaller, so this is a floor and not a pass"
    },
    {
     "id": "out_of_sample_skill",
     "need": "paired Brier vs the home-field baseline, t >= 1.645",
-    "have": -0.533,
-    "open": false,
+    "have": 1.818,
+    "open": true,
     "why": "sample size is not evidence; the model has to actually beat 'always take the home team' on games it could not see"
    },
    {
     "id": "graded_price_history",
     "need": "settled bets with a taken price, enough that some edge threshold clears an ROI lower bound of zero on at least 100 of them, WITHIN ONE TAG",
-    "have": 78,
+    "have": 212,
     "have_by_tag": {
-     "board_all": 72,
-     "ev_rank": 18,
-     "longshot": 1,
-     "potd_band": 6
+     "board_all": 206,
+     "ev_rank": 42,
+     "longshot": 4,
+     "potd_band": 14
     },
     "open": false,
     "by_tag": {
      "board_all": {
-      "n": 72,
+      "n": 206,
       "min_edge": null,
       "open": false,
       "may_set_a_threshold": true,
       "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
      },
      "ev_rank": {
-      "n": 18,
+      "n": 42,
       "min_edge": null,
       "open": false,
       "may_set_a_threshold": true,
       "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
      },
      "longshot": {
-      "n": 1,
+      "n": 4,
       "min_edge": null,
       "open": false,
       "may_set_a_threshold": true,
       "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
      },
      "potd_band": {
-      "n": 6,
+      "n": 14,
       "min_edge": null,
       "open": false,
       "may_set_a_threshold": true,
       "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
      }
     },
-    "why": "an edge threshold is a claim about EV against real prices; 9 dates of odds snapshots are cached. The sweep runs per tag and a tag opens only if it individually clears - a pooled ROI measures a mixture nobody bet",
+    "why": "an edge threshold is a claim about EV against real prices; 20 dates of odds snapshots are cached. The sweep runs per tag and a tag opens only if it individually clears - a pooled ROI measures a mixture nobody bet",
     "pooled_is_not_sweepable": "`have` is the union of every tag and is never swept; see by_tag for the four clocks that are"
    }
   ],
-  "odds_snapshot_dates": 9,
+  "odds_snapshot_dates": 20,
   "sweep": {
-   "n_rows": 78,
+   "n_rows": 212,
    "reason": "no tag cleared: 4 tag(s) present and none of them produced an ROI lower bound above zero on 100+ of its own settled rows",
    "n_tags": 4,
    "n_tags_cleared": 0
@@ -916,252 +1029,272 @@
   "sweep_by_tag": {
    "board_all": {
     "min_edge": null,
-    "n_rows": 72,
+    "n_rows": 206,
     "candidates": [
      {
       "edge": 0.005,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.01,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.015,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.02,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.025,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.03,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.035,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.04,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.045,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.05,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.055,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.06,
-      "n": 72,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 206,
+      "roi": -0.13992,
+      "roi_lower_95": -0.24926,
+      "qualified": false
      },
      {
       "edge": 0.065,
-      "n": 66,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 192,
+      "roi": -0.14247,
+      "roi_lower_95": -0.25621,
+      "qualified": false
      },
      {
       "edge": 0.07,
-      "n": 59,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 173,
+      "roi": -0.11146,
+      "roi_lower_95": -0.23188,
+      "qualified": false
      },
      {
       "edge": 0.075,
-      "n": 49,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 150,
+      "roi": -0.09101,
+      "roi_lower_95": -0.22019,
+      "qualified": false
      },
      {
       "edge": 0.08,
-      "n": 47,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 137,
+      "roi": -0.13071,
+      "roi_lower_95": -0.2653,
+      "qualified": false
      },
      {
       "edge": 0.085,
-      "n": 45,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 127,
+      "roi": -0.10826,
+      "roi_lower_95": -0.24824,
+      "qualified": false
      },
      {
       "edge": 0.09,
-      "n": 41,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 117,
+      "roi": -0.11178,
+      "roi_lower_95": -0.25752,
+      "qualified": false
      },
      {
       "edge": 0.095,
-      "n": 38,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 111,
+      "roi": -0.10534,
+      "roi_lower_95": -0.25352,
+      "qualified": false
      },
      {
       "edge": 0.1,
-      "n": 34,
-      "qualified": false,
-      "reason": "n < 100"
+      "n": 104,
+      "roi": -0.13556,
+      "roi_lower_95": -0.2884,
+      "qualified": false
      }
     ],
     "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
    },
    "ev_rank": {
     "min_edge": null,
-    "n_rows": 18,
+    "n_rows": 42,
     "candidates": [
      {
       "edge": 0.005,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.01,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.015,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.02,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.025,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.03,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.035,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.04,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.045,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.05,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.055,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.06,
-      "n": 18,
+      "n": 42,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.065,
-      "n": 17,
+      "n": 41,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.07,
-      "n": 17,
+      "n": 41,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.075,
-      "n": 17,
+      "n": 41,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.08,
-      "n": 15,
+      "n": 39,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.085,
-      "n": 15,
+      "n": 39,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.09,
-      "n": 15,
+      "n": 39,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.095,
-      "n": 15,
+      "n": 39,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.1,
-      "n": 14,
+      "n": 38,
       "qualified": false,
       "reason": "n < 100"
      }
@@ -1170,125 +1303,125 @@
    },
    "longshot": {
     "min_edge": null,
-    "n_rows": 1,
+    "n_rows": 4,
     "candidates": [
      {
       "edge": 0.005,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.01,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.015,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.02,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.025,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.03,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.035,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.04,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.045,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.05,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.055,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.06,
-      "n": 1,
+      "n": 4,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.065,
-      "n": 0,
+      "n": 3,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.07,
-      "n": 0,
+      "n": 3,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.075,
-      "n": 0,
+      "n": 3,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.08,
-      "n": 0,
+      "n": 3,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.085,
-      "n": 0,
+      "n": 2,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.09,
-      "n": 0,
+      "n": 2,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.095,
-      "n": 0,
+      "n": 1,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.1,
-      "n": 0,
+      "n": 1,
       "qualified": false,
       "reason": "n < 100"
      }
@@ -1297,125 +1430,125 @@
    },
    "potd_band": {
     "min_edge": null,
-    "n_rows": 6,
+    "n_rows": 14,
     "candidates": [
      {
       "edge": 0.005,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.01,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.015,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.02,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.025,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.03,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.035,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.04,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.045,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.05,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.055,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.06,
-      "n": 6,
+      "n": 14,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.065,
-      "n": 6,
+      "n": 13,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.07,
-      "n": 5,
+      "n": 11,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.075,
-      "n": 4,
+      "n": 8,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.08,
-      "n": 4,
+      "n": 6,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.085,
-      "n": 3,
+      "n": 5,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.09,
-      "n": 3,
+      "n": 5,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.095,
-      "n": 3,
+      "n": 5,
       "qualified": false,
       "reason": "n < 100"
      },
      {
       "edge": 0.1,
-      "n": 3,
+      "n": 5,
       "qualified": false,
       "reason": "n < 100"
      }
@@ -1426,5 +1559,5 @@
   "policy": "min_edge stays null until all three gates are open. A threshold invented to make a pick appear is the single most dishonest number this module could publish."
  },
  "status": "ran",
- "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 272 games. A pick threshold is set from the vintage mode or from nothing."
+ "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 456 games. A pick threshold is set from the vintage mode or from nothing."
 }

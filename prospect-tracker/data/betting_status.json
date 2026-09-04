@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-17T01:48:40+00:00",
+ "generated_at": "2026-09-04T21:58:46+00:00",
  "configured": true,
  "provider": "The Odds API (free tier)",
  "sport": "baseball_mlb",
@@ -29,7 +29,7 @@
   {
    "event_id": "ev9",
    "ok": true,
-   "path": "2026-08-17-props-ev9.json"
+   "path": "2026-09-04-props-ev9.json"
   },
   {
    "event_id": "ev10",

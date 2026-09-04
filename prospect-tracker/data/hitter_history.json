@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-07",
+ "generated_at": "2026-08-21",
  "seasons": [
   2021,
   2022,
@@ -16,7 +16,7 @@
     {
      "mlbam": 665742,
      "name": "Juan Soto",
-     "team": "WSH",
+     "team": "NYM",
      "hem_plus": 160,
      "tier": "Elite",
      "pa": 654,
@@ -236,7 +236,7 @@
     {
      "mlbam": 660271,
      "name": "Shohei Ohtani",
-     "team": "LAA",
+     "team": "LAD",
      "hem_plus": 140,
      "tier": "Elite",
      "pa": 639,
@@ -324,7 +324,7 @@
     {
      "mlbam": 621566,
      "name": "Matt Olson",
-     "team": "ATH",
+     "team": "ATL",
      "hem_plus": 133,
      "tier": "Above-avg",
      "pa": 673,
@@ -368,7 +368,7 @@
     {
      "mlbam": 641933,
      "name": "Tyler O'Neill",
-     "team": "STL",
+     "team": "BAL",
      "hem_plus": 131,
      "tier": "Above-avg",
      "pa": 537,
@@ -610,7 +610,7 @@
     {
      "mlbam": 646240,
      "name": "Rafael Devers",
-     "team": "BOS",
+     "team": "SF",
      "hem_plus": 126,
      "tier": "Above-avg",
      "pa": 664,
@@ -632,7 +632,7 @@
     {
      "mlbam": 608369,
      "name": "Corey Seager",
-     "team": "LAD",
+     "team": "TEX",
      "hem_plus": 126,
      "tier": "Above-avg",
      "pa": 409,
@@ -654,7 +654,7 @@
     {
      "mlbam": 664040,
      "name": "Brandon Lowe",
-     "team": "TB",
+     "team": "PIT",
      "hem_plus": 126,
      "tier": "Above-avg",
      "pa": 615,
@@ -808,7 +808,7 @@
     {
      "mlbam": 663656,
      "name": "Kyle Tucker",
-     "team": "HOU",
+     "team": "LAD",
      "hem_plus": 125,
      "tier": "Above-avg",
      "pa": 567,
@@ -874,7 +874,7 @@
     {
      "mlbam": 624413,
      "name": "Pete Alonso",
-     "team": "NYM",
+     "team": "BAL",
      "hem_plus": 124,
      "tier": "Above-avg",
      "pa": 637,
@@ -962,7 +962,7 @@
     {
      "mlbam": 656775,
      "name": "Cedric Mullins",
-     "team": "BAL",
+     "team": "TB",
      "hem_plus": 121,
      "tier": "Above-avg",
      "pa": 675,
@@ -1094,7 +1094,7 @@
     {
      "mlbam": 614177,
      "name": "Franmil Reyes",
-     "team": "CLE",
+     "team": "WSH",
      "hem_plus": 120,
      "tier": "Above-avg",
      "pa": 466,
@@ -1204,7 +1204,7 @@
     {
      "mlbam": 663697,
      "name": "Jonathan India",
-     "team": "CIN",
+     "team": "KC",
      "hem_plus": 119,
      "tier": "Above-avg",
      "pa": 631,
@@ -1358,7 +1358,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "CWS",
+     "team": "NYM",
      "hem_plus": 118,
      "tier": "Above-avg",
      "pa": 296,
@@ -1424,7 +1424,7 @@
     {
      "mlbam": 666182,
      "name": "Bo Bichette",
-     "team": "TOR",
+     "team": "NYM",
      "hem_plus": 116,
      "tier": "Above-avg",
      "pa": 690,
@@ -1666,7 +1666,7 @@
     {
      "mlbam": 641584,
      "name": "Jake Fraley",
-     "team": "SEA",
+     "team": "TB",
      "hem_plus": 113,
      "tier": "Above-avg",
      "pa": 265,
@@ -1710,7 +1710,7 @@
     {
      "mlbam": 642715,
      "name": "Willy Adames",
-     "team": "MIL",
+     "team": "SF",
      "hem_plus": 112,
      "tier": "Above-avg",
      "pa": 555,
@@ -1732,7 +1732,7 @@
     {
      "mlbam": 664034,
      "name": "Ty France",
-     "team": "SEA",
+     "team": "SD",
      "hem_plus": 112,
      "tier": "Above-avg",
      "pa": 650,
@@ -1864,7 +1864,7 @@
     {
      "mlbam": 649966,
      "name": "Luis Ur\u00edas",
-     "team": "MIL",
+     "team": "TOR",
      "hem_plus": 112,
      "tier": "Above-avg",
      "pa": 570,
@@ -1886,7 +1886,7 @@
     {
      "mlbam": 660162,
      "name": "Yo\u00e1n Moncada",
-     "team": "CWS",
+     "team": "LAA",
      "hem_plus": 111,
      "tier": "Average",
      "pa": 616,
@@ -2084,7 +2084,7 @@
     {
      "mlbam": 668227,
      "name": "Randy Arozarena",
-     "team": "TB",
+     "team": "SEA",
      "hem_plus": 110,
      "tier": "Average",
      "pa": 604,
@@ -2128,7 +2128,7 @@
     {
      "mlbam": 663993,
      "name": "Nathaniel Lowe",
-     "team": "TEX",
+     "team": "CLE",
      "hem_plus": 109,
      "tier": "Average",
      "pa": 642,
@@ -2150,7 +2150,7 @@
     {
      "mlbam": 608348,
      "name": "Carson Kelly",
-     "team": "AZ",
+     "team": "CHC",
      "hem_plus": 109,
      "tier": "Average",
      "pa": 359,
@@ -2194,7 +2194,7 @@
     {
      "mlbam": 660821,
      "name": "Jes\u00fas S\u00e1nchez",
-     "team": "MIA",
+     "team": "TOR",
      "hem_plus": 109,
      "tier": "Average",
      "pa": 251,
@@ -2260,7 +2260,7 @@
     {
      "mlbam": 664774,
      "name": "LaMonte Wade Jr.",
-     "team": "SF",
+     "team": "HOU",
      "hem_plus": 108,
      "tier": "Average",
      "pa": 381,
@@ -2414,7 +2414,7 @@
     {
      "mlbam": 608324,
      "name": "Alex Bregman",
-     "team": "HOU",
+     "team": "CHC",
      "hem_plus": 107,
      "tier": "Average",
      "pa": 400,
@@ -2524,7 +2524,7 @@
     {
      "mlbam": 676801,
      "name": "Chas McCormick",
-     "team": "HOU",
+     "team": "CHC",
      "hem_plus": 105,
      "tier": "Average",
      "pa": 320,
@@ -2546,7 +2546,7 @@
     {
      "mlbam": 602104,
      "name": "Ram\u00f3n Ur\u00edas",
-     "team": "BAL",
+     "team": "STL",
      "hem_plus": 105,
      "tier": "Average",
      "pa": 296,
@@ -2612,7 +2612,7 @@
     {
      "mlbam": 641857,
      "name": "Ryan McMahon",
-     "team": "COL",
+     "team": "NYY",
      "hem_plus": 105,
      "tier": "Average",
      "pa": 596,
@@ -2810,7 +2810,7 @@
     {
      "mlbam": 621438,
      "name": "Tyrone Taylor",
-     "team": "MIL",
+     "team": "CHC",
      "hem_plus": 104,
      "tier": "Average",
      "pa": 271,
@@ -2942,7 +2942,7 @@
     {
      "mlbam": 640457,
      "name": "Austin Meadows",
-     "team": "TB",
+     "team": "DET",
      "hem_plus": 103,
      "tier": "Average",
      "pa": 591,
@@ -2964,7 +2964,7 @@
     {
      "mlbam": 666915,
      "name": "Bobby Dalbec",
-     "team": "BOS",
+     "team": "KC",
      "hem_plus": 103,
      "tier": "Average",
      "pa": 453,
@@ -2986,7 +2986,7 @@
     {
      "mlbam": 666185,
      "name": "Dylan Carlson",
-     "team": "STL",
+     "team": "PHI",
      "hem_plus": 103,
      "tier": "Average",
      "pa": 619,
@@ -3096,7 +3096,7 @@
     {
      "mlbam": 643376,
      "name": "Danny Jansen",
-     "team": "TOR",
+     "team": "TEX",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 205,
@@ -3228,7 +3228,7 @@
     {
      "mlbam": 650559,
      "name": "Bryan De La Cruz",
-     "team": "MIA",
+     "team": "PHI",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 219,
@@ -3272,7 +3272,7 @@
     {
      "mlbam": 663898,
      "name": "Brendan Rodgers",
-     "team": "COL",
+     "team": "BOS",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 415,
@@ -3492,7 +3492,7 @@
     {
      "mlbam": 621433,
      "name": "Brett Phillips",
-     "team": "TB",
+     "team": "NYY",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 292,
@@ -3514,7 +3514,7 @@
     {
      "mlbam": 657041,
      "name": "Lane Thomas",
-     "team": "WSH",
+     "team": "ATL",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 264,
@@ -3536,7 +3536,7 @@
     {
      "mlbam": 657077,
      "name": "Alex Verdugo",
-     "team": "BOS",
+     "team": "SD",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 604,
@@ -3602,7 +3602,7 @@
     {
      "mlbam": 664056,
      "name": "Harrison Bader",
-     "team": "STL",
+     "team": "SF",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 401,
@@ -3668,7 +3668,7 @@
     {
      "mlbam": 650391,
      "name": "Eloy Jim\u00e9nez",
-     "team": "CWS",
+     "team": "TOR",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 231,
@@ -3756,7 +3756,7 @@
     {
      "mlbam": 621020,
      "name": "Dansby Swanson",
-     "team": "ATL",
+     "team": "CHC",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 653,
@@ -3778,7 +3778,7 @@
     {
      "mlbam": 643217,
      "name": "Andrew Benintendi",
-     "team": "KC",
+     "team": "CWS",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 538,
@@ -3800,7 +3800,7 @@
     {
      "mlbam": 669289,
      "name": "Santiago Espinal",
-     "team": "TOR",
+     "team": "AZ",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 246,
@@ -3822,7 +3822,7 @@
     {
      "mlbam": 669720,
      "name": "Austin Hays",
-     "team": "BAL",
+     "team": "SD",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 529,
@@ -3954,7 +3954,7 @@
     {
      "mlbam": 657656,
      "name": "Ram\u00f3n Laureano",
-     "team": "ATH",
+     "team": "SD",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 378,
@@ -4064,7 +4064,7 @@
     {
      "mlbam": 668731,
      "name": "Akil Baddoo",
-     "team": "DET",
+     "team": "MIL",
      "hem_plus": 97,
      "tier": "Average",
      "pa": 461,
@@ -4218,7 +4218,7 @@
     {
      "mlbam": 668942,
      "name": "Josh Rojas",
-     "team": "AZ",
+     "team": "KC",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 550,
@@ -4262,7 +4262,7 @@
     {
      "mlbam": 662139,
      "name": "Daulton Varsho",
-     "team": "AZ",
+     "team": "HOU",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 315,
@@ -4306,7 +4306,7 @@
     {
      "mlbam": 663757,
      "name": "Trent Grisham",
-     "team": "SD",
+     "team": "NYY",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 527,
@@ -4328,7 +4328,7 @@
     {
      "mlbam": 670032,
      "name": "Nicky Lopez",
-     "team": "KC",
+     "team": "TEX",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 565,
@@ -4350,7 +4350,7 @@
     {
      "mlbam": 647351,
      "name": "Abraham Toro",
-     "team": "SEA",
+     "team": "KC",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 375,
@@ -4372,7 +4372,7 @@
     {
      "mlbam": 669221,
      "name": "Sean Murphy",
-     "team": "ATH",
+     "team": "ATL",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 448,
@@ -4438,7 +4438,7 @@
     {
      "mlbam": 640449,
      "name": "Clint Frazier",
-     "team": "NYY",
+     "team": "CWS",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 218,
@@ -4504,7 +4504,7 @@
     {
      "mlbam": 620443,
      "name": "Luis Torrens",
-     "team": "SEA",
+     "team": "NYM",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 378,
@@ -4548,7 +4548,7 @@
     {
      "mlbam": 624641,
      "name": "Edmundo Sosa",
-     "team": "STL",
+     "team": "PHI",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 326,
@@ -4592,7 +4592,7 @@
     {
      "mlbam": 624415,
      "name": "Cavan Biggio",
-     "team": "TOR",
+     "team": "HOU",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 294,
@@ -4614,7 +4614,7 @@
     {
      "mlbam": 667670,
      "name": "Brent Rooker",
-     "team": "MIN",
+     "team": "ATH",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 213,
@@ -4746,7 +4746,7 @@
     {
      "mlbam": 665862,
      "name": "Jazz Chisholm Jr.",
-     "team": "MIA",
+     "team": "NYY",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 507,
@@ -4790,7 +4790,7 @@
     {
      "mlbam": 683734,
      "name": "Andrew Vaughn",
-     "team": "CWS",
+     "team": "MIL",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 469,
@@ -4856,7 +4856,7 @@
     {
      "mlbam": 641470,
      "name": "Zack Collins",
-     "team": "CWS",
+     "team": "CLE",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 231,
@@ -4988,7 +4988,7 @@
     {
      "mlbam": 650402,
      "name": "Gleyber Torres",
-     "team": "NYY",
+     "team": "DET",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 516,
@@ -5054,7 +5054,7 @@
     {
      "mlbam": 650333,
      "name": "Luis Arraez",
-     "team": "MIN",
+     "team": "PHI",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 479,
@@ -5230,7 +5230,7 @@
     {
      "mlbam": 664702,
      "name": "Myles Straw",
-     "team": "CLE",
+     "team": "TOR",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 638,
@@ -5296,7 +5296,7 @@
     {
      "mlbam": 624513,
      "name": "Dom Nu\u00f1ez",
-     "team": "COL",
+     "team": "CLE",
      "hem_plus": 90,
      "tier": "Average",
      "pa": 263,
@@ -5318,7 +5318,7 @@
     {
      "mlbam": 623993,
      "name": "Anthony Santander",
-     "team": "BAL",
+     "team": "TOR",
      "hem_plus": 90,
      "tier": "Average",
      "pa": 438,
@@ -5340,7 +5340,7 @@
     {
      "mlbam": 666158,
      "name": "Gavin Lux",
-     "team": "LAD",
+     "team": "TB",
      "hem_plus": 90,
      "tier": "Average",
      "pa": 381,
@@ -5362,7 +5362,7 @@
     {
      "mlbam": 642133,
      "name": "Rowdy Tellez",
-     "team": "MIL",
+     "team": "ATL",
      "hem_plus": 90,
      "tier": "Average",
      "pa": 325,
@@ -5472,7 +5472,7 @@
     {
      "mlbam": 663611,
      "name": "Nick Madrigal",
-     "team": "CWS",
+     "team": "TB",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 215,
@@ -5494,7 +5494,7 @@
     {
      "mlbam": 642708,
      "name": "Amed Rosario",
-     "team": "CLE",
+     "team": "NYY",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 588,
@@ -5516,7 +5516,7 @@
     {
      "mlbam": 666198,
      "name": "Carter Kieboom",
-     "team": "WSH",
+     "team": "PHI",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 249,
@@ -5560,7 +5560,7 @@
     {
      "mlbam": 642336,
      "name": "Francisco Mej\u00eda",
-     "team": "TB",
+     "team": "WSH",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 277,
@@ -5648,7 +5648,7 @@
     {
      "mlbam": 640458,
      "name": "\u00d3scar Mercado",
-     "team": "CLE",
+     "team": "PHI",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 238,
@@ -5670,7 +5670,7 @@
     {
      "mlbam": 669256,
      "name": "Nick Solak",
-     "team": "TEX",
+     "team": "SD",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 511,
@@ -5736,7 +5736,7 @@
     {
      "mlbam": 641432,
      "name": "Willie Calhoun",
-     "team": "TEX",
+     "team": "LAA",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 284,
@@ -5758,7 +5758,7 @@
     {
      "mlbam": 647304,
      "name": "Josh Naylor",
-     "team": "CLE",
+     "team": "SEA",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 250,
@@ -5780,7 +5780,7 @@
     {
      "mlbam": 622534,
      "name": "Manuel Margot",
-     "team": "TB",
+     "team": "DET",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 464,
@@ -5978,7 +5978,7 @@
     {
      "mlbam": 642727,
      "name": "Sergio Alc\u00e1ntara",
-     "team": "CHC",
+     "team": "PHI",
      "hem_plus": 86,
      "tier": "Below-avg",
      "pa": 255,
@@ -6264,7 +6264,7 @@
     {
      "mlbam": 664057,
      "name": "Andrew Stevenson",
-     "team": "WSH",
+     "team": "TB",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 213,
@@ -6286,7 +6286,7 @@
     {
      "mlbam": 606132,
      "name": "Raimel Tapia",
-     "team": "COL",
+     "team": "TB",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 533,
@@ -6308,7 +6308,7 @@
     {
      "mlbam": 663647,
      "name": "Ke'Bryan Hayes",
-     "team": "PIT",
+     "team": "CIN",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 396,
@@ -6352,7 +6352,7 @@
     {
      "mlbam": 642086,
      "name": "Dominic Smith",
-     "team": "NYM",
+     "team": "ATL",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 493,
@@ -6506,7 +6506,7 @@
     {
      "mlbam": 672284,
      "name": "Jarred Kelenic",
-     "team": "SEA",
+     "team": "TEX",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 377,
@@ -6550,7 +6550,7 @@
     {
      "mlbam": 641856,
      "name": "Billy McKinney",
-     "team": "LAD",
+     "team": "TEX",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 300,
@@ -6704,7 +6704,7 @@
     {
      "mlbam": 642165,
      "name": "Josh VanMeter",
-     "team": "AZ",
+     "team": "NYY",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 310,
@@ -6726,7 +6726,7 @@
     {
      "mlbam": 665926,
      "name": "Andr\u00e9s Gim\u00e9nez",
-     "team": "CLE",
+     "team": "TOR",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 210,
@@ -6748,7 +6748,7 @@
     {
      "mlbam": 624503,
      "name": "Nick Gordon",
-     "team": "MIN",
+     "team": "KC",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 216,
@@ -6770,7 +6770,7 @@
     {
      "mlbam": 623912,
      "name": "Harold Ram\u00edrez",
-     "team": "CLE",
+     "team": "ATL",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 361,
@@ -6792,7 +6792,7 @@
     {
      "mlbam": 669016,
      "name": "Brandon Marsh",
-     "team": "LAA",
+     "team": "PHI",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 260,
@@ -6814,7 +6814,7 @@
     {
      "mlbam": 644374,
      "name": "Yu Chang",
-     "team": "CLE",
+     "team": "TB",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 251,
@@ -6836,7 +6836,7 @@
     {
      "mlbam": 622761,
      "name": "Jorge Mateo",
-     "team": "BAL",
+     "team": "TB",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 209,
@@ -6880,7 +6880,7 @@
     {
      "mlbam": 642201,
      "name": "Eli White",
-     "team": "TEX",
+     "team": "BOS",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 220,
@@ -6902,7 +6902,7 @@
     {
      "mlbam": 643396,
      "name": "Isiah Kiner-Falefa",
-     "team": "TEX",
+     "team": "BOS",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 677,
@@ -6946,7 +6946,7 @@
     {
      "mlbam": 669242,
      "name": "Tommy Edman",
-     "team": "STL",
+     "team": "LAD",
      "hem_plus": 79,
      "tier": "Below-avg",
      "pa": 691,
@@ -7056,7 +7056,7 @@
     {
      "mlbam": 622682,
      "name": "Victor Reyes",
-     "team": "DET",
+     "team": "CWS",
      "hem_plus": 79,
      "tier": "Below-avg",
      "pa": 220,
@@ -7144,7 +7144,7 @@
     {
      "mlbam": 621446,
      "name": "Lewis Brinson",
-     "team": "MIA",
+     "team": "SF",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 290,
@@ -7166,7 +7166,7 @@
     {
      "mlbam": 641343,
      "name": "Jake Bauers",
-     "team": "SEA",
+     "team": "MIL",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 315,
@@ -7232,7 +7232,7 @@
     {
      "mlbam": 673490,
      "name": "Ha-Seong Kim",
-     "team": "SD",
+     "team": "ATL",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 298,
@@ -7254,7 +7254,7 @@
     {
      "mlbam": 656371,
      "name": "Isan D\u00edaz",
-     "team": "MIA",
+     "team": "KC",
      "hem_plus": 77,
      "tier": "Below-avg",
      "pa": 278,
@@ -7298,7 +7298,7 @@
     {
      "mlbam": 641658,
      "name": "Garrett Hampson",
-     "team": "COL",
+     "team": "CIN",
      "hem_plus": 77,
      "tier": "Below-avg",
      "pa": 494,
@@ -7320,7 +7320,7 @@
     {
      "mlbam": 624512,
      "name": "Reese McGuire",
-     "team": "TOR",
+     "team": "CWS",
      "hem_plus": 77,
      "tier": "Below-avg",
      "pa": 217,
@@ -7364,7 +7364,7 @@
     {
      "mlbam": 671277,
      "name": "Luis Garc\u00eda Jr.",
-     "team": "WSH",
+     "team": "NYY",
      "hem_plus": 74,
      "tier": "Below-avg",
      "pa": 247,
@@ -7386,7 +7386,7 @@
     {
      "mlbam": 641680,
      "name": "Jonah Heim",
-     "team": "TEX",
+     "team": "ATH",
      "hem_plus": 74,
      "tier": "Below-avg",
      "pa": 285,
@@ -7452,7 +7452,7 @@
     {
      "mlbam": 645302,
      "name": "Victor Robles",
-     "team": "WSH",
+     "team": "SEA",
      "hem_plus": 72,
      "tier": "Below-avg",
      "pa": 369,
@@ -7518,7 +7518,7 @@
     {
      "mlbam": 650489,
      "name": "Willi Castro",
-     "team": "DET",
+     "team": "COL",
      "hem_plus": 70,
      "tier": "Below-avg",
      "pa": 450,
@@ -7540,7 +7540,7 @@
     {
      "mlbam": 680911,
      "name": "Owen Miller",
-     "team": "CLE",
+     "team": "CHC",
      "hem_plus": 70,
      "tier": "Below-avg",
      "pa": 202,
@@ -7694,7 +7694,7 @@
     {
      "mlbam": 641355,
      "name": "Cody Bellinger",
-     "team": "LAD",
+     "team": "NYY",
      "hem_plus": 69,
      "tier": "Below-avg",
      "pa": 350,
@@ -7738,7 +7738,7 @@
     {
      "mlbam": 621311,
      "name": "David Dahl",
-     "team": "TEX",
+     "team": "PHI",
      "hem_plus": 68,
      "tier": "Below-avg",
      "pa": 220,
@@ -7782,7 +7782,7 @@
     {
      "mlbam": 664058,
      "name": "David Fletcher",
-     "team": "LAA",
+     "team": "ATL",
      "hem_plus": 68,
      "tier": "Below-avg",
      "pa": 665,
@@ -7892,7 +7892,7 @@
     {
      "mlbam": 642423,
      "name": "Magneuris Sierra",
-     "team": "MIA",
+     "team": "ATL",
      "hem_plus": 66,
      "tier": "Below-avg",
      "pa": 225,
@@ -8074,7 +8074,7 @@
     {
      "mlbam": 665742,
      "name": "Juan Soto",
-     "team": "SD",
+     "team": "NYM",
      "hem_plus": 143,
      "tier": "Elite",
      "pa": 664,
@@ -8184,7 +8184,7 @@
     {
      "mlbam": 624413,
      "name": "Pete Alonso",
-     "team": "NYM",
+     "team": "BAL",
      "hem_plus": 133,
      "tier": "Above-avg",
      "pa": 685,
@@ -8250,7 +8250,7 @@
     {
      "mlbam": 661388,
      "name": "William Contreras",
-     "team": "ATL",
+     "team": "MIL",
      "hem_plus": 131,
      "tier": "Above-avg",
      "pa": 376,
@@ -8316,7 +8316,7 @@
     {
      "mlbam": 650391,
      "name": "Eloy Jim\u00e9nez",
-     "team": "CWS",
+     "team": "TOR",
      "hem_plus": 129,
      "tier": "Above-avg",
      "pa": 327,
@@ -8338,7 +8338,7 @@
     {
      "mlbam": 660271,
      "name": "Shohei Ohtani",
-     "team": "LAA",
+     "team": "LAD",
      "hem_plus": 129,
      "tier": "Above-avg",
      "pa": 666,
@@ -8360,7 +8360,7 @@
     {
      "mlbam": 663993,
      "name": "Nathaniel Lowe",
-     "team": "TEX",
+     "team": "CLE",
      "hem_plus": 129,
      "tier": "Above-avg",
      "pa": 645,
@@ -8426,7 +8426,7 @@
     {
      "mlbam": 621043,
      "name": "Carlos Correa",
-     "team": "MIN",
+     "team": "HOU",
      "hem_plus": 128,
      "tier": "Above-avg",
      "pa": 590,
@@ -8514,7 +8514,7 @@
     {
      "mlbam": 643376,
      "name": "Danny Jansen",
-     "team": "TOR",
+     "team": "TEX",
      "hem_plus": 126,
      "tier": "Above-avg",
      "pa": 248,
@@ -8624,7 +8624,7 @@
     {
      "mlbam": 608324,
      "name": "Alex Bregman",
-     "team": "HOU",
+     "team": "CHC",
      "hem_plus": 125,
      "tier": "Above-avg",
      "pa": 656,
@@ -8690,7 +8690,7 @@
     {
      "mlbam": 646240,
      "name": "Rafael Devers",
-     "team": "BOS",
+     "team": "SF",
      "hem_plus": 124,
      "tier": "Above-avg",
      "pa": 614,
@@ -8844,7 +8844,7 @@
     {
      "mlbam": 641584,
      "name": "Jake Fraley",
-     "team": "CIN",
+     "team": "TB",
      "hem_plus": 121,
      "tier": "Above-avg",
      "pa": 247,
@@ -8954,7 +8954,7 @@
     {
      "mlbam": 665926,
      "name": "Andr\u00e9s Gim\u00e9nez",
-     "team": "CLE",
+     "team": "TOR",
      "hem_plus": 121,
      "tier": "Above-avg",
      "pa": 557,
@@ -8976,7 +8976,7 @@
     {
      "mlbam": 663656,
      "name": "Kyle Tucker",
-     "team": "HOU",
+     "team": "LAD",
      "hem_plus": 121,
      "tier": "Above-avg",
      "pa": 609,
@@ -9042,7 +9042,7 @@
     {
      "mlbam": 665862,
      "name": "Jazz Chisholm Jr.",
-     "team": "MIA",
+     "team": "NYY",
      "hem_plus": 119,
      "tier": "Above-avg",
      "pa": 241,
@@ -9130,7 +9130,7 @@
     {
      "mlbam": 623993,
      "name": "Anthony Santander",
-     "team": "BAL",
+     "team": "TOR",
      "hem_plus": 118,
      "tier": "Above-avg",
      "pa": 647,
@@ -9196,7 +9196,7 @@
     {
      "mlbam": 680977,
      "name": "Brendan Donovan",
-     "team": "STL",
+     "team": "SEA",
      "hem_plus": 117,
      "tier": "Above-avg",
      "pa": 468,
@@ -9306,7 +9306,7 @@
     {
      "mlbam": 663457,
      "name": "Lars Nootbaar",
-     "team": "STL",
+     "team": "AZ",
      "hem_plus": 116,
      "tier": "Above-avg",
      "pa": 347,
@@ -9394,7 +9394,7 @@
     {
      "mlbam": 669374,
      "name": "Keston Hiura",
-     "team": "MIL",
+     "team": "LAD",
      "hem_plus": 116,
      "tier": "Above-avg",
      "pa": 266,
@@ -9416,7 +9416,7 @@
     {
      "mlbam": 642133,
      "name": "Rowdy Tellez",
-     "team": "MIL",
+     "team": "ATL",
      "hem_plus": 115,
      "tier": "Above-avg",
      "pa": 599,
@@ -9460,7 +9460,7 @@
     {
      "mlbam": 668939,
      "name": "Adley Rutschman",
-     "team": "BAL",
+     "team": "BOS",
      "hem_plus": 115,
      "tier": "Above-avg",
      "pa": 470,
@@ -9548,7 +9548,7 @@
     {
      "mlbam": 650333,
      "name": "Luis Arraez",
-     "team": "MIN",
+     "team": "PHI",
      "hem_plus": 113,
      "tier": "Above-avg",
      "pa": 603,
@@ -9570,7 +9570,7 @@
     {
      "mlbam": 670623,
      "name": "Isaac Paredes",
-     "team": "TB",
+     "team": "HOU",
      "hem_plus": 113,
      "tier": "Above-avg",
      "pa": 381,
@@ -9636,7 +9636,7 @@
     {
      "mlbam": 621020,
      "name": "Dansby Swanson",
-     "team": "ATL",
+     "team": "CHC",
      "hem_plus": 113,
      "tier": "Above-avg",
      "pa": 696,
@@ -9658,7 +9658,7 @@
     {
      "mlbam": 666182,
      "name": "Bo Bichette",
-     "team": "TOR",
+     "team": "NYM",
      "hem_plus": 112,
      "tier": "Above-avg",
      "pa": 697,
@@ -9746,7 +9746,7 @@
     {
      "mlbam": 676801,
      "name": "Chas McCormick",
-     "team": "HOU",
+     "team": "CHC",
      "hem_plus": 112,
      "tier": "Above-avg",
      "pa": 407,
@@ -9768,7 +9768,7 @@
     {
      "mlbam": 649966,
      "name": "Luis Ur\u00edas",
-     "team": "MIL",
+     "team": "TOR",
      "hem_plus": 112,
      "tier": "Above-avg",
      "pa": 472,
@@ -9856,7 +9856,7 @@
     {
      "mlbam": 664034,
      "name": "Ty France",
-     "team": "SEA",
+     "team": "SD",
      "hem_plus": 111,
      "tier": "Average",
      "pa": 613,
@@ -9900,7 +9900,7 @@
     {
      "mlbam": 669261,
      "name": "Jack Suwinski",
-     "team": "PIT",
+     "team": "TB",
      "hem_plus": 111,
      "tier": "Average",
      "pa": 372,
@@ -9988,7 +9988,7 @@
     {
      "mlbam": 643217,
      "name": "Andrew Benintendi",
-     "team": "NYY",
+     "team": "CWS",
      "hem_plus": 110,
      "tier": "Average",
      "pa": 521,
@@ -10076,7 +10076,7 @@
     {
      "mlbam": 641857,
      "name": "Ryan McMahon",
-     "team": "COL",
+     "team": "NYY",
      "hem_plus": 109,
      "tier": "Average",
      "pa": 597,
@@ -10142,7 +10142,7 @@
     {
      "mlbam": 642715,
      "name": "Willy Adames",
-     "team": "MIL",
+     "team": "SF",
      "hem_plus": 108,
      "tier": "Average",
      "pa": 617,
@@ -10252,7 +10252,7 @@
     {
      "mlbam": 662139,
      "name": "Daulton Varsho",
-     "team": "AZ",
+     "team": "HOU",
      "hem_plus": 107,
      "tier": "Average",
      "pa": 592,
@@ -10296,7 +10296,7 @@
     {
      "mlbam": 606115,
      "name": "Orlando Arcia",
-     "team": "ATL",
+     "team": "MIN",
      "hem_plus": 107,
      "tier": "Average",
      "pa": 234,
@@ -10362,7 +10362,7 @@
     {
      "mlbam": 650402,
      "name": "Gleyber Torres",
-     "team": "NYY",
+     "team": "DET",
      "hem_plus": 107,
      "tier": "Average",
      "pa": 572,
@@ -10384,7 +10384,7 @@
     {
      "mlbam": 647304,
      "name": "Josh Naylor",
-     "team": "CLE",
+     "team": "SEA",
      "hem_plus": 107,
      "tier": "Average",
      "pa": 498,
@@ -10516,7 +10516,7 @@
     {
      "mlbam": 669221,
      "name": "Sean Murphy",
-     "team": "ATH",
+     "team": "ATL",
      "hem_plus": 105,
      "tier": "Average",
      "pa": 612,
@@ -10537,8 +10537,8 @@
     },
     {
      "mlbam": 669304,
-     "name": "Jose Miranda",
-     "team": "MIN",
+     "name": "Jose F Miranda",
+     "team": "SD",
      "hem_plus": 105,
      "tier": "Average",
      "pa": 483,
@@ -10560,7 +10560,7 @@
     {
      "mlbam": 641933,
      "name": "Tyler O'Neill",
-     "team": "STL",
+     "team": "BAL",
      "hem_plus": 105,
      "tier": "Average",
      "pa": 383,
@@ -10604,7 +10604,7 @@
     {
      "mlbam": 668942,
      "name": "Josh Rojas",
-     "team": "AZ",
+     "team": "KC",
      "hem_plus": 104,
      "tier": "Average",
      "pa": 510,
@@ -10648,7 +10648,7 @@
     {
      "mlbam": 668227,
      "name": "Randy Arozarena",
-     "team": "TB",
+     "team": "SEA",
      "hem_plus": 104,
      "tier": "Average",
      "pa": 645,
@@ -10692,7 +10692,7 @@
     {
      "mlbam": 664983,
      "name": "Jake McCarthy",
-     "team": "AZ",
+     "team": "COL",
      "hem_plus": 104,
      "tier": "Average",
      "pa": 354,
@@ -10714,7 +10714,7 @@
     {
      "mlbam": 683734,
      "name": "Andrew Vaughn",
-     "team": "CWS",
+     "team": "MIL",
      "hem_plus": 103,
      "tier": "Average",
      "pa": 555,
@@ -10758,7 +10758,7 @@
     {
      "mlbam": 663743,
      "name": "Nick Fortes",
-     "team": "MIA",
+     "team": "TB",
      "hem_plus": 103,
      "tier": "Average",
      "pa": 240,
@@ -10780,7 +10780,7 @@
     {
      "mlbam": 666624,
      "name": "Christopher Morel",
-     "team": "CHC",
+     "team": "NYM",
      "hem_plus": 103,
      "tier": "Average",
      "pa": 425,
@@ -10868,7 +10868,7 @@
     {
      "mlbam": 660766,
      "name": "Juan Yepez",
-     "team": "STL",
+     "team": "TOR",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 274,
@@ -10890,7 +10890,7 @@
     {
      "mlbam": 669004,
      "name": "MJ Melendez",
-     "team": "KC",
+     "team": "NYM",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 534,
@@ -10912,7 +10912,7 @@
     {
      "mlbam": 663698,
      "name": "Joey Bart",
-     "team": "SF",
+     "team": "CWS",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 291,
@@ -11000,7 +11000,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "CWS",
+     "team": "NYM",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 401,
@@ -11066,7 +11066,7 @@
     {
      "mlbam": 602104,
      "name": "Ram\u00f3n Ur\u00edas",
-     "team": "BAL",
+     "team": "STL",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 445,
@@ -11088,7 +11088,7 @@
     {
      "mlbam": 666801,
      "name": "Rodolfo Castro",
-     "team": "PIT",
+     "team": "TOR",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 278,
@@ -11198,7 +11198,7 @@
     {
      "mlbam": 664774,
      "name": "LaMonte Wade Jr.",
-     "team": "SF",
+     "team": "HOU",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 251,
@@ -11264,7 +11264,7 @@
     {
      "mlbam": 642731,
      "name": "Thairo Estrada",
-     "team": "SF",
+     "team": "BAL",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 541,
@@ -11330,7 +11330,7 @@
     {
      "mlbam": 660757,
      "name": "Oscar Gonzalez",
-     "team": "CLE",
+     "team": "SD",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 382,
@@ -11352,7 +11352,7 @@
     {
      "mlbam": 666158,
      "name": "Gavin Lux",
-     "team": "LAD",
+     "team": "TB",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 471,
@@ -11374,7 +11374,7 @@
     {
      "mlbam": 663697,
      "name": "Jonathan India",
-     "team": "CIN",
+     "team": "KC",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 431,
@@ -11396,7 +11396,7 @@
     {
      "mlbam": 664040,
      "name": "Brandon Lowe",
-     "team": "TB",
+     "team": "PIT",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 266,
@@ -11418,7 +11418,7 @@
     {
      "mlbam": 663898,
      "name": "Brendan Rodgers",
-     "team": "COL",
+     "team": "BOS",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 581,
@@ -11550,7 +11550,7 @@
     {
      "mlbam": 641680,
      "name": "Jonah Heim",
-     "team": "TEX",
+     "team": "ATH",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 450,
@@ -11682,7 +11682,7 @@
     {
      "mlbam": 641645,
      "name": "Luis Guillorme",
-     "team": "NYM",
+     "team": "HOU",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 335,
@@ -11726,7 +11726,7 @@
     {
      "mlbam": 657757,
      "name": "Gavin Sheets",
-     "team": "CWS",
+     "team": "SD",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 410,
@@ -11748,7 +11748,7 @@
     {
      "mlbam": 623912,
      "name": "Harold Ram\u00edrez",
-     "team": "TB",
+     "team": "ATL",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 435,
@@ -11858,7 +11858,7 @@
     {
      "mlbam": 669242,
      "name": "Tommy Edman",
-     "team": "STL",
+     "team": "LAD",
      "hem_plus": 97,
      "tier": "Average",
      "pa": 630,
@@ -11902,7 +11902,7 @@
     {
      "mlbam": 656775,
      "name": "Cedric Mullins",
-     "team": "BAL",
+     "team": "TB",
      "hem_plus": 97,
      "tier": "Average",
      "pa": 672,
@@ -11924,7 +11924,7 @@
     {
      "mlbam": 650559,
      "name": "Bryan De La Cruz",
-     "team": "MIA",
+     "team": "PHI",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 355,
@@ -11946,7 +11946,7 @@
     {
      "mlbam": 621438,
      "name": "Tyrone Taylor",
-     "team": "MIL",
+     "team": "CHC",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 405,
@@ -12034,7 +12034,7 @@
     {
      "mlbam": 673490,
      "name": "Ha-Seong Kim",
-     "team": "SD",
+     "team": "ATL",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 582,
@@ -12122,7 +12122,7 @@
     {
      "mlbam": 657041,
      "name": "Lane Thomas",
-     "team": "WSH",
+     "team": "ATL",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 548,
@@ -12144,7 +12144,7 @@
     {
      "mlbam": 657077,
      "name": "Alex Verdugo",
-     "team": "BOS",
+     "team": "SD",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 644,
@@ -12430,7 +12430,7 @@
     {
      "mlbam": 650859,
      "name": "Luis Rengifo",
-     "team": "LAA",
+     "team": "SD",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 511,
@@ -12496,7 +12496,7 @@
     {
      "mlbam": 624415,
      "name": "Cavan Biggio",
-     "team": "TOR",
+     "team": "HOU",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 303,
@@ -12518,7 +12518,7 @@
     {
      "mlbam": 666915,
      "name": "Bobby Dalbec",
-     "team": "BOS",
+     "team": "KC",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 353,
@@ -12562,7 +12562,7 @@
     {
      "mlbam": 656896,
      "name": "Emmanuel Rivera",
-     "team": "AZ",
+     "team": "BAL",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 359,
@@ -12584,7 +12584,7 @@
     {
      "mlbam": 669720,
      "name": "Austin Hays",
-     "team": "BAL",
+     "team": "SD",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 582,
@@ -12606,7 +12606,7 @@
     {
      "mlbam": 614173,
      "name": "Franchy Cordero",
-     "team": "BOS",
+     "team": "WSH",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 275,
@@ -12628,7 +12628,7 @@
     {
      "mlbam": 660821,
      "name": "Jes\u00fas S\u00e1nchez",
-     "team": "MIA",
+     "team": "TOR",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 343,
@@ -12694,7 +12694,7 @@
     {
      "mlbam": 624414,
      "name": "Christian Arroyo",
-     "team": "BOS",
+     "team": "NYM",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 300,
@@ -12738,7 +12738,7 @@
     {
      "mlbam": 663845,
      "name": "Alfonso Rivas III",
-     "team": "CHC",
+     "team": "STL",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 287,
@@ -12826,7 +12826,7 @@
     {
      "mlbam": 676369,
      "name": "Nelson Vel\u00e1zquez",
-     "team": "CHC",
+     "team": "HOU",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 206,
@@ -12848,7 +12848,7 @@
     {
      "mlbam": 657656,
      "name": "Ram\u00f3n Laureano",
-     "team": "ATH",
+     "team": "SD",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 383,
@@ -12870,7 +12870,7 @@
     {
      "mlbam": 669289,
      "name": "Santiago Espinal",
-     "team": "TOR",
+     "team": "AZ",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 491,
@@ -13046,7 +13046,7 @@
     {
      "mlbam": 663757,
      "name": "Trent Grisham",
-     "team": "SD",
+     "team": "NYY",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 524,
@@ -13178,7 +13178,7 @@
     {
      "mlbam": 642708,
      "name": "Amed Rosario",
-     "team": "CLE",
+     "team": "NYY",
      "hem_plus": 90,
      "tier": "Average",
      "pa": 670,
@@ -13200,7 +13200,7 @@
     {
      "mlbam": 624503,
      "name": "Nick Gordon",
-     "team": "MIN",
+     "team": "KC",
      "hem_plus": 90,
      "tier": "Average",
      "pa": 443,
@@ -13222,7 +13222,7 @@
     {
      "mlbam": 622534,
      "name": "Manuel Margot",
-     "team": "TB",
+     "team": "DET",
      "hem_plus": 90,
      "tier": "Average",
      "pa": 363,
@@ -13376,7 +13376,7 @@
     {
      "mlbam": 670768,
      "name": "Luis Gonz\u00e1lez",
-     "team": "SF",
+     "team": "NYY",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 350,
@@ -13398,7 +13398,7 @@
     {
      "mlbam": 669701,
      "name": "Josh Smith",
-     "team": "TEX",
+     "team": "TOR",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 253,
@@ -13464,7 +13464,7 @@
     {
      "mlbam": 666185,
      "name": "Dylan Carlson",
-     "team": "STL",
+     "team": "PHI",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 488,
@@ -13508,7 +13508,7 @@
     {
      "mlbam": 665750,
      "name": "Leody Taveras",
-     "team": "TEX",
+     "team": "BAL",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 341,
@@ -13552,7 +13552,7 @@
     {
      "mlbam": 663647,
      "name": "Ke'Bryan Hayes",
-     "team": "PIT",
+     "team": "CIN",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 560,
@@ -13618,7 +13618,7 @@
     {
      "mlbam": 661531,
      "name": "Brian Serven",
-     "team": "COL",
+     "team": "ATH",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 205,
@@ -13640,7 +13640,7 @@
     {
      "mlbam": 668751,
      "name": "Cal Mitchell",
-     "team": "PIT",
+     "team": "SF",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 232,
@@ -13662,7 +13662,7 @@
     {
      "mlbam": 668800,
      "name": "Andrew Knizner",
-     "team": "STL",
+     "team": "SF",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 293,
@@ -13838,7 +13838,7 @@
     {
      "mlbam": 663837,
      "name": "Matt Vierling",
-     "team": "PHI",
+     "team": "DET",
      "hem_plus": 86,
      "tier": "Below-avg",
      "pa": 357,
@@ -13882,7 +13882,7 @@
     {
      "mlbam": 546991,
      "name": "Albert Almora Jr.",
-     "team": "CIN",
+     "team": "AZ",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 235,
@@ -13904,7 +13904,7 @@
     {
      "mlbam": 668709,
      "name": "JJ Bleday",
-     "team": "MIA",
+     "team": "CIN",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 238,
@@ -13926,7 +13926,7 @@
     {
      "mlbam": 665482,
      "name": "Gilberto Celestino",
-     "team": "MIN",
+     "team": "TEX",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 347,
@@ -13992,7 +13992,7 @@
     {
      "mlbam": 614177,
      "name": "Franmil Reyes",
-     "team": "CHC",
+     "team": "WSH",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 473,
@@ -14014,7 +14014,7 @@
     {
      "mlbam": 668731,
      "name": "Akil Baddoo",
-     "team": "DET",
+     "team": "MIL",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 225,
@@ -14080,7 +14080,7 @@
     {
      "mlbam": 643396,
      "name": "Isiah Kiner-Falefa",
-     "team": "NYY",
+     "team": "BOS",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 531,
@@ -14168,7 +14168,7 @@
     {
      "mlbam": 660636,
      "name": "Diego Castillo",
-     "team": "PIT",
+     "team": "TEX",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 283,
@@ -14190,7 +14190,7 @@
     {
      "mlbam": 624512,
      "name": "Reese McGuire",
-     "team": "BOS",
+     "team": "CWS",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 274,
@@ -14212,7 +14212,7 @@
     {
      "mlbam": 664056,
      "name": "Harrison Bader",
-     "team": "NYY",
+     "team": "SF",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 313,
@@ -14256,7 +14256,7 @@
     {
      "mlbam": 656308,
      "name": "Michael Chavis",
-     "team": "PIT",
+     "team": "CIN",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 426,
@@ -14300,7 +14300,7 @@
     {
      "mlbam": 642727,
      "name": "Sergio Alc\u00e1ntara",
-     "team": "AZ",
+     "team": "PHI",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 224,
@@ -14322,7 +14322,7 @@
     {
      "mlbam": 641355,
      "name": "Cody Bellinger",
-     "team": "LAD",
+     "team": "NYY",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 550,
@@ -14432,7 +14432,7 @@
     {
      "mlbam": 669222,
      "name": "Nick Senzel",
-     "team": "CIN",
+     "team": "LAD",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 420,
@@ -14498,7 +14498,7 @@
     {
      "mlbam": 660162,
      "name": "Yo\u00e1n Moncada",
-     "team": "CWS",
+     "team": "LAA",
      "hem_plus": 82,
      "tier": "Below-avg",
      "pa": 433,
@@ -14542,7 +14542,7 @@
     {
      "mlbam": 671277,
      "name": "Luis Garc\u00eda Jr.",
-     "team": "WSH",
+     "team": "NYY",
      "hem_plus": 82,
      "tier": "Below-avg",
      "pa": 377,
@@ -14564,7 +14564,7 @@
     {
      "mlbam": 596059,
      "name": "Rougned Odor",
-     "team": "BAL",
+     "team": "NYY",
      "hem_plus": 82,
      "tier": "Below-avg",
      "pa": 472,
@@ -14586,7 +14586,7 @@
     {
      "mlbam": 608348,
      "name": "Carson Kelly",
-     "team": "AZ",
+     "team": "CHC",
      "hem_plus": 82,
      "tier": "Below-avg",
      "pa": 354,
@@ -14608,7 +14608,7 @@
     {
      "mlbam": 606132,
      "name": "Raimel Tapia",
-     "team": "TOR",
+     "team": "TB",
      "hem_plus": 82,
      "tier": "Below-avg",
      "pa": 433,
@@ -14652,7 +14652,7 @@
     {
      "mlbam": 669450,
      "name": "Cooper Hummel",
-     "team": "AZ",
+     "team": "TB",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 201,
@@ -14696,7 +14696,7 @@
     {
      "mlbam": 666176,
      "name": "Jo Adell",
-     "team": "LAA",
+     "team": "CLE",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 285,
@@ -14718,7 +14718,7 @@
     {
      "mlbam": 650489,
      "name": "Willi Castro",
-     "team": "DET",
+     "team": "COL",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 392,
@@ -14740,7 +14740,7 @@
     {
      "mlbam": 663611,
      "name": "Nick Madrigal",
-     "team": "CHC",
+     "team": "TB",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 228,
@@ -14762,7 +14762,7 @@
     {
      "mlbam": 680911,
      "name": "Owen Miller",
-     "team": "CLE",
+     "team": "CHC",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 472,
@@ -14784,7 +14784,7 @@
     {
      "mlbam": 641658,
      "name": "Garrett Hampson",
-     "team": "COL",
+     "team": "CIN",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 226,
@@ -14960,7 +14960,7 @@
     {
      "mlbam": 677950,
      "name": "Alek Thomas",
-     "team": "AZ",
+     "team": "LAD",
      "hem_plus": 79,
      "tier": "Below-avg",
      "pa": 411,
@@ -14982,7 +14982,7 @@
     {
      "mlbam": 642350,
      "name": "Jose Siri",
-     "team": "TB",
+     "team": "LAA",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 325,
@@ -15048,7 +15048,7 @@
     {
      "mlbam": 664058,
      "name": "David Fletcher",
-     "team": "LAA",
+     "team": "ATL",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 228,
@@ -15202,7 +15202,7 @@
     {
      "mlbam": 640492,
      "name": "Jos\u00e9 Az\u00f3car",
-     "team": "SD",
+     "team": "ATL",
      "hem_plus": 76,
      "tier": "Below-avg",
      "pa": 216,
@@ -15246,7 +15246,7 @@
     {
      "mlbam": 622761,
      "name": "Jorge Mateo",
-     "team": "BAL",
+     "team": "TB",
      "hem_plus": 76,
      "tier": "Below-avg",
      "pa": 533,
@@ -15312,7 +15312,7 @@
     {
      "mlbam": 645302,
      "name": "Victor Robles",
-     "team": "WSH",
+     "team": "SEA",
      "hem_plus": 76,
      "tier": "Below-avg",
      "pa": 407,
@@ -15356,7 +15356,7 @@
     {
      "mlbam": 643289,
      "name": "Mauricio Dub\u00f3n",
-     "team": "HOU",
+     "team": "ATL",
      "hem_plus": 75,
      "tier": "Below-avg",
      "pa": 265,
@@ -15422,7 +15422,7 @@
     {
      "mlbam": 622682,
      "name": "Victor Reyes",
-     "team": "DET",
+     "team": "CWS",
      "hem_plus": 74,
      "tier": "Below-avg",
      "pa": 336,
@@ -15444,7 +15444,7 @@
     {
      "mlbam": 621512,
      "name": "Tom\u00e1s Nido",
-     "team": "NYM",
+     "team": "DET",
      "hem_plus": 74,
      "tier": "Below-avg",
      "pa": 313,
@@ -15510,7 +15510,7 @@
     {
      "mlbam": 642336,
      "name": "Francisco Mej\u00eda",
-     "team": "TB",
+     "team": "WSH",
      "hem_plus": 73,
      "tier": "Below-avg",
      "pa": 299,
@@ -15532,7 +15532,7 @@
     {
      "mlbam": 623205,
      "name": "Andrew Velazquez",
-     "team": "LAA",
+     "team": "KC",
      "hem_plus": 73,
      "tier": "Below-avg",
      "pa": 349,
@@ -15554,7 +15554,7 @@
     {
      "mlbam": 647351,
      "name": "Abraham Toro",
-     "team": "SEA",
+     "team": "KC",
      "hem_plus": 73,
      "tier": "Below-avg",
      "pa": 352,
@@ -15598,7 +15598,7 @@
     {
      "mlbam": 621433,
      "name": "Brett Phillips",
-     "team": "BAL",
+     "team": "NYY",
      "hem_plus": 71,
      "tier": "Below-avg",
      "pa": 225,
@@ -15620,7 +15620,7 @@
     {
      "mlbam": 669397,
      "name": "Nick Allen",
-     "team": "ATH",
+     "team": "HOU",
      "hem_plus": 70,
      "tier": "Below-avg",
      "pa": 326,
@@ -15664,7 +15664,7 @@
     {
      "mlbam": 664702,
      "name": "Myles Straw",
-     "team": "CLE",
+     "team": "TOR",
      "hem_plus": 69,
      "tier": "Below-avg",
      "pa": 596,
@@ -15730,7 +15730,7 @@
     {
      "mlbam": 670032,
      "name": "Nicky Lopez",
-     "team": "KC",
+     "team": "TEX",
      "hem_plus": 67,
      "tier": "Below-avg",
      "pa": 480,
@@ -15796,7 +15796,7 @@
     {
      "mlbam": 665506,
      "name": "Cristian Pache",
-     "team": "ATH",
+     "team": "NYM",
      "hem_plus": 61,
      "tier": "Below-avg",
      "pa": 260,
@@ -15868,7 +15868,7 @@
     {
      "mlbam": 660271,
      "name": "Shohei Ohtani",
-     "team": "LAA",
+     "team": "LAD",
      "hem_plus": 159,
      "tier": "Elite",
      "pa": 599,
@@ -15978,7 +15978,7 @@
     {
      "mlbam": 665742,
      "name": "Juan Soto",
-     "team": "SD",
+     "team": "NYM",
      "hem_plus": 146,
      "tier": "Elite",
      "pa": 708,
@@ -16132,7 +16132,7 @@
     {
      "mlbam": 666134,
      "name": "Nolan Jones",
-     "team": "COL",
+     "team": "SEA",
      "hem_plus": 132,
      "tier": "Above-avg",
      "pa": 424,
@@ -16264,7 +16264,7 @@
     {
      "mlbam": 666397,
      "name": "Edouard Julien",
-     "team": "MIN",
+     "team": "COL",
      "hem_plus": 127,
      "tier": "Above-avg",
      "pa": 408,
@@ -16286,7 +16286,7 @@
     {
      "mlbam": 670623,
      "name": "Isaac Paredes",
-     "team": "TB",
+     "team": "HOU",
      "hem_plus": 127,
      "tier": "Above-avg",
      "pa": 571,
@@ -16484,7 +16484,7 @@
     {
      "mlbam": 663656,
      "name": "Kyle Tucker",
-     "team": "HOU",
+     "team": "LAD",
      "hem_plus": 123,
      "tier": "Above-avg",
      "pa": 674,
@@ -16528,7 +16528,7 @@
     {
      "mlbam": 624413,
      "name": "Pete Alonso",
-     "team": "NYM",
+     "team": "BAL",
      "hem_plus": 123,
      "tier": "Above-avg",
      "pa": 658,
@@ -16550,7 +16550,7 @@
     {
      "mlbam": 641355,
      "name": "Cody Bellinger",
-     "team": "CHC",
+     "team": "NYY",
      "hem_plus": 122,
      "tier": "Above-avg",
      "pa": 556,
@@ -16572,7 +16572,7 @@
     {
      "mlbam": 676801,
      "name": "Chas McCormick",
-     "team": "HOU",
+     "team": "CHC",
      "hem_plus": 122,
      "tier": "Above-avg",
      "pa": 457,
@@ -16594,7 +16594,7 @@
     {
      "mlbam": 646240,
      "name": "Rafael Devers",
-     "team": "BOS",
+     "team": "SF",
      "hem_plus": 121,
      "tier": "Above-avg",
      "pa": 656,
@@ -16682,7 +16682,7 @@
     {
      "mlbam": 664774,
      "name": "LaMonte Wade Jr.",
-     "team": "SF",
+     "team": "HOU",
      "hem_plus": 120,
      "tier": "Above-avg",
      "pa": 519,
@@ -16792,7 +16792,7 @@
     {
      "mlbam": 668227,
      "name": "Randy Arozarena",
-     "team": "TB",
+     "team": "SEA",
      "hem_plus": 119,
      "tier": "Above-avg",
      "pa": 654,
@@ -16814,7 +16814,7 @@
     {
      "mlbam": 608324,
      "name": "Alex Bregman",
-     "team": "HOU",
+     "team": "CHC",
      "hem_plus": 118,
      "tier": "Above-avg",
      "pa": 724,
@@ -16924,7 +16924,7 @@
     {
      "mlbam": 681546,
      "name": "James Outman",
-     "team": "LAD",
+     "team": "DET",
      "hem_plus": 118,
      "tier": "Above-avg",
      "pa": 567,
@@ -16968,7 +16968,7 @@
     {
      "mlbam": 668939,
      "name": "Adley Rutschman",
-     "team": "BAL",
+     "team": "BOS",
      "hem_plus": 117,
      "tier": "Above-avg",
      "pa": 687,
@@ -16990,7 +16990,7 @@
     {
      "mlbam": 669261,
      "name": "Jack Suwinski",
-     "team": "PIT",
+     "team": "TB",
      "hem_plus": 117,
      "tier": "Above-avg",
      "pa": 534,
@@ -17034,7 +17034,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "CWS",
+     "team": "NYM",
      "hem_plus": 117,
      "tier": "Above-avg",
      "pa": 595,
@@ -17056,7 +17056,7 @@
     {
      "mlbam": 666624,
      "name": "Christopher Morel",
-     "team": "CHC",
+     "team": "NYM",
      "hem_plus": 116,
      "tier": "Above-avg",
      "pa": 429,
@@ -17100,7 +17100,7 @@
     {
      "mlbam": 669394,
      "name": "Jake Burger",
-     "team": "MIA",
+     "team": "TEX",
      "hem_plus": 115,
      "tier": "Above-avg",
      "pa": 540,
@@ -17232,7 +17232,7 @@
     {
      "mlbam": 676116,
      "name": "Ryan Noda",
-     "team": "ATH",
+     "team": "BAL",
      "hem_plus": 115,
      "tier": "Above-avg",
      "pa": 495,
@@ -17320,7 +17320,7 @@
     {
      "mlbam": 650402,
      "name": "Gleyber Torres",
-     "team": "NYY",
+     "team": "DET",
      "hem_plus": 114,
      "tier": "Above-avg",
      "pa": 672,
@@ -17342,7 +17342,7 @@
     {
      "mlbam": 687952,
      "name": "Christian Encarnacion-Strand",
-     "team": "CIN",
+     "team": "BAL",
      "hem_plus": 114,
      "tier": "Above-avg",
      "pa": 241,
@@ -17364,7 +17364,7 @@
     {
      "mlbam": 650333,
      "name": "Luis Arraez",
-     "team": "MIA",
+     "team": "PHI",
      "hem_plus": 114,
      "tier": "Above-avg",
      "pa": 617,
@@ -17430,7 +17430,7 @@
     {
      "mlbam": 664040,
      "name": "Brandon Lowe",
-     "team": "TB",
+     "team": "PIT",
      "hem_plus": 114,
      "tier": "Above-avg",
      "pa": 436,
@@ -17474,7 +17474,7 @@
     {
      "mlbam": 663457,
      "name": "Lars Nootbaar",
-     "team": "STL",
+     "team": "AZ",
      "hem_plus": 113,
      "tier": "Above-avg",
      "pa": 503,
@@ -17518,7 +17518,7 @@
     {
      "mlbam": 666310,
      "name": "Bo Naylor",
-     "team": "CLE",
+     "team": "MIL",
      "hem_plus": 113,
      "tier": "Above-avg",
      "pa": 230,
@@ -17540,7 +17540,7 @@
     {
      "mlbam": 680977,
      "name": "Brendan Donovan",
-     "team": "STL",
+     "team": "SEA",
      "hem_plus": 113,
      "tier": "Above-avg",
      "pa": 371,
@@ -17804,7 +17804,7 @@
     {
      "mlbam": 670042,
      "name": "Luke Raley",
-     "team": "TB",
+     "team": "SEA",
      "hem_plus": 110,
      "tier": "Average",
      "pa": 406,
@@ -17870,7 +17870,7 @@
     {
      "mlbam": 643376,
      "name": "Danny Jansen",
-     "team": "TOR",
+     "team": "TEX",
      "hem_plus": 109,
      "tier": "Average",
      "pa": 301,
@@ -17892,7 +17892,7 @@
     {
      "mlbam": 641584,
      "name": "Jake Fraley",
-     "team": "CIN",
+     "team": "TB",
      "hem_plus": 109,
      "tier": "Average",
      "pa": 380,
@@ -17958,7 +17958,7 @@
     {
      "mlbam": 650859,
      "name": "Luis Rengifo",
-     "team": "LAA",
+     "team": "SD",
      "hem_plus": 109,
      "tier": "Average",
      "pa": 445,
@@ -18024,7 +18024,7 @@
     {
      "mlbam": 673490,
      "name": "Ha-Seong Kim",
-     "team": "SD",
+     "team": "ATL",
      "hem_plus": 109,
      "tier": "Average",
      "pa": 626,
@@ -18112,7 +18112,7 @@
     {
      "mlbam": 666182,
      "name": "Bo Bichette",
-     "team": "TOR",
+     "team": "NYM",
      "hem_plus": 108,
      "tier": "Average",
      "pa": 601,
@@ -18156,7 +18156,7 @@
     {
      "mlbam": 647304,
      "name": "Josh Naylor",
-     "team": "CLE",
+     "team": "SEA",
      "hem_plus": 108,
      "tier": "Average",
      "pa": 495,
@@ -18200,7 +18200,7 @@
     {
      "mlbam": 663993,
      "name": "Nathaniel Lowe",
-     "team": "TEX",
+     "team": "CLE",
      "hem_plus": 108,
      "tier": "Average",
      "pa": 724,
@@ -18222,7 +18222,7 @@
     {
      "mlbam": 666139,
      "name": "Josh Lowe",
-     "team": "TB",
+     "team": "LAA",
      "hem_plus": 108,
      "tier": "Average",
      "pa": 501,
@@ -18266,7 +18266,7 @@
     {
      "mlbam": 623912,
      "name": "Harold Ram\u00edrez",
-     "team": "TB",
+     "team": "ATL",
      "hem_plus": 107,
      "tier": "Average",
      "pa": 434,
@@ -18310,7 +18310,7 @@
     {
      "mlbam": 623993,
      "name": "Anthony Santander",
-     "team": "BAL",
+     "team": "TOR",
      "hem_plus": 107,
      "tier": "Average",
      "pa": 656,
@@ -18442,7 +18442,7 @@
     {
      "mlbam": 665862,
      "name": "Jazz Chisholm Jr.",
-     "team": "MIA",
+     "team": "NYY",
      "hem_plus": 106,
      "tier": "Average",
      "pa": 383,
@@ -18486,7 +18486,7 @@
     {
      "mlbam": 668670,
      "name": "Jake Rogers",
-     "team": "DET",
+     "team": "CWS",
      "hem_plus": 106,
      "tier": "Average",
      "pa": 365,
@@ -18552,7 +18552,7 @@
     {
      "mlbam": 663697,
      "name": "Jonathan India",
-     "team": "CIN",
+     "team": "KC",
      "hem_plus": 105,
      "tier": "Average",
      "pa": 529,
@@ -18640,7 +18640,7 @@
     {
      "mlbam": 642350,
      "name": "Jose Siri",
-     "team": "TB",
+     "team": "LAA",
      "hem_plus": 105,
      "tier": "Average",
      "pa": 364,
@@ -18794,7 +18794,7 @@
     {
      "mlbam": 624415,
      "name": "Cavan Biggio",
-     "team": "TOR",
+     "team": "HOU",
      "hem_plus": 104,
      "tier": "Average",
      "pa": 338,
@@ -18970,7 +18970,7 @@
     {
      "mlbam": 657041,
      "name": "Lane Thomas",
-     "team": "WSH",
+     "team": "ATL",
      "hem_plus": 103,
      "tier": "Average",
      "pa": 682,
@@ -19146,7 +19146,7 @@
     {
      "mlbam": 641857,
      "name": "Ryan McMahon",
-     "team": "COL",
+     "team": "NYY",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 627,
@@ -19190,7 +19190,7 @@
     {
      "mlbam": 666023,
      "name": "Freddy Fermin",
-     "team": "KC",
+     "team": "SD",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 235,
@@ -19256,7 +19256,7 @@
     {
      "mlbam": 660821,
      "name": "Jes\u00fas S\u00e1nchez",
-     "team": "MIA",
+     "team": "TOR",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 402,
@@ -19322,7 +19322,7 @@
     {
      "mlbam": 650391,
      "name": "Eloy Jim\u00e9nez",
-     "team": "CWS",
+     "team": "TOR",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 489,
@@ -19410,7 +19410,7 @@
     {
      "mlbam": 642136,
      "name": "Matt Thaiss",
-     "team": "LAA",
+     "team": "HOU",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 307,
@@ -19476,7 +19476,7 @@
     {
      "mlbam": 606115,
      "name": "Orlando Arcia",
-     "team": "ATL",
+     "team": "MIN",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 533,
@@ -19542,7 +19542,7 @@
     {
      "mlbam": 641680,
      "name": "Jonah Heim",
-     "team": "TEX",
+     "team": "ATH",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 501,
@@ -19564,7 +19564,7 @@
     {
      "mlbam": 668709,
      "name": "JJ Bleday",
-     "team": "ATH",
+     "team": "CIN",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 303,
@@ -19718,7 +19718,7 @@
     {
      "mlbam": 641933,
      "name": "Tyler O'Neill",
-     "team": "STL",
+     "team": "BAL",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 266,
@@ -19740,7 +19740,7 @@
     {
      "mlbam": 669222,
      "name": "Nick Senzel",
-     "team": "CIN",
+     "team": "LAD",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 330,
@@ -19784,7 +19784,7 @@
     {
      "mlbam": 666165,
      "name": "Blake Sabol",
-     "team": "SF",
+     "team": "TB",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 344,
@@ -19828,7 +19828,7 @@
     {
      "mlbam": 642715,
      "name": "Willy Adames",
-     "team": "MIL",
+     "team": "SF",
      "hem_plus": 97,
      "tier": "Average",
      "pa": 638,
@@ -19850,7 +19850,7 @@
     {
      "mlbam": 683734,
      "name": "Andrew Vaughn",
-     "team": "CWS",
+     "team": "MIL",
      "hem_plus": 97,
      "tier": "Average",
      "pa": 615,
@@ -20026,7 +20026,7 @@
     {
      "mlbam": 666160,
      "name": "Mickey Moniak",
-     "team": "LAA",
+     "team": "COL",
      "hem_plus": 97,
      "tier": "Average",
      "pa": 323,
@@ -20048,7 +20048,7 @@
     {
      "mlbam": 669720,
      "name": "Austin Hays",
-     "team": "BAL",
+     "team": "SD",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 566,
@@ -20092,7 +20092,7 @@
     {
      "mlbam": 650489,
      "name": "Willi Castro",
-     "team": "MIN",
+     "team": "COL",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 409,
@@ -20290,7 +20290,7 @@
     {
      "mlbam": 668731,
      "name": "Akil Baddoo",
-     "team": "DET",
+     "team": "MIL",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 357,
@@ -20312,7 +20312,7 @@
     {
      "mlbam": 641658,
      "name": "Garrett Hampson",
-     "team": "MIA",
+     "team": "CIN",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 252,
@@ -20334,7 +20334,7 @@
     {
      "mlbam": 676609,
      "name": "Jos\u00e9 Caballero",
-     "team": "SEA",
+     "team": "NYY",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 280,
@@ -20422,7 +20422,7 @@
     {
      "mlbam": 668800,
      "name": "Andrew Knizner",
-     "team": "STL",
+     "team": "SF",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 241,
@@ -20444,7 +20444,7 @@
     {
      "mlbam": 641343,
      "name": "Jake Bauers",
-     "team": "NYY",
+     "team": "MIL",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 272,
@@ -20466,7 +20466,7 @@
     {
      "mlbam": 672284,
      "name": "Jarred Kelenic",
-     "team": "SEA",
+     "team": "TEX",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 416,
@@ -20488,7 +20488,7 @@
     {
      "mlbam": 664034,
      "name": "Ty France",
-     "team": "SEA",
+     "team": "SD",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 665,
@@ -20532,7 +20532,7 @@
     {
      "mlbam": 642133,
      "name": "Rowdy Tellez",
-     "team": "MIL",
+     "team": "ATL",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 351,
@@ -20554,7 +20554,7 @@
     {
      "mlbam": 658668,
      "name": "Edward Olivares",
-     "team": "KC",
+     "team": "TB",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 385,
@@ -20576,7 +20576,7 @@
     {
      "mlbam": 642086,
      "name": "Dominic Smith",
-     "team": "WSH",
+     "team": "ATL",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 586,
@@ -20598,7 +20598,7 @@
     {
      "mlbam": 621043,
      "name": "Carlos Correa",
-     "team": "MIN",
+     "team": "HOU",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 580,
@@ -20620,7 +20620,7 @@
     {
      "mlbam": 656775,
      "name": "Cedric Mullins",
-     "team": "BAL",
+     "team": "TB",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 455,
@@ -20730,7 +20730,7 @@
     {
      "mlbam": 666185,
      "name": "Dylan Carlson",
-     "team": "STL",
+     "team": "PHI",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 255,
@@ -20752,7 +20752,7 @@
     {
      "mlbam": 669701,
      "name": "Josh Smith",
-     "team": "TEX",
+     "team": "TOR",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 232,
@@ -20818,7 +20818,7 @@
     {
      "mlbam": 642731,
      "name": "Thairo Estrada",
-     "team": "SF",
+     "team": "BAL",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 530,
@@ -20862,7 +20862,7 @@
     {
      "mlbam": 650559,
      "name": "Bryan De La Cruz",
-     "team": "MIA",
+     "team": "PHI",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 626,
@@ -20884,7 +20884,7 @@
     {
      "mlbam": 660162,
      "name": "Yo\u00e1n Moncada",
-     "team": "CWS",
+     "team": "LAA",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 357,
@@ -20928,7 +20928,7 @@
     {
      "mlbam": 669004,
      "name": "MJ Melendez",
-     "team": "KC",
+     "team": "NYM",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 602,
@@ -20950,7 +20950,7 @@
     {
      "mlbam": 670097,
      "name": "Zack Short",
-     "team": "DET",
+     "team": "NYM",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 253,
@@ -20972,7 +20972,7 @@
     {
      "mlbam": 657077,
      "name": "Alex Verdugo",
-     "team": "BOS",
+     "team": "SD",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 602,
@@ -21038,7 +21038,7 @@
     {
      "mlbam": 665750,
      "name": "Leody Taveras",
-     "team": "TEX",
+     "team": "BAL",
      "hem_plus": 90,
      "tier": "Average",
      "pa": 554,
@@ -21060,7 +21060,7 @@
     {
      "mlbam": 678894,
      "name": "Liover Peguero",
-     "team": "PIT",
+     "team": "WSH",
      "hem_plus": 90,
      "tier": "Average",
      "pa": 213,
@@ -21126,7 +21126,7 @@
     {
      "mlbam": 663647,
      "name": "Ke'Bryan Hayes",
-     "team": "PIT",
+     "team": "CIN",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 525,
@@ -21214,7 +21214,7 @@
     {
      "mlbam": 656413,
      "name": "Stuart Fairchild",
-     "team": "CIN",
+     "team": "SEA",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 255,
@@ -21258,7 +21258,7 @@
     {
      "mlbam": 663757,
      "name": "Trent Grisham",
-     "team": "SD",
+     "team": "NYY",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 555,
@@ -21368,7 +21368,7 @@
     {
      "mlbam": 665155,
      "name": "Nick Maton",
-     "team": "DET",
+     "team": "CWS",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 293,
@@ -21390,7 +21390,7 @@
     {
      "mlbam": 666801,
      "name": "Rodolfo Castro",
-     "team": "PHI",
+     "team": "TOR",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 256,
@@ -21456,7 +21456,7 @@
     {
      "mlbam": 665926,
      "name": "Andr\u00e9s Gim\u00e9nez",
-     "team": "CLE",
+     "team": "TOR",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 616,
@@ -21522,7 +21522,7 @@
     {
      "mlbam": 655316,
      "name": "Andruw Monasterio",
-     "team": "MIL",
+     "team": "BOS",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 315,
@@ -21676,7 +21676,7 @@
     {
      "mlbam": 669242,
      "name": "Tommy Edman",
-     "team": "STL",
+     "team": "LAD",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 528,
@@ -21698,7 +21698,7 @@
     {
      "mlbam": 668472,
      "name": "Nick Pratto",
-     "team": "KC",
+     "team": "SD",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 345,
@@ -21720,7 +21720,7 @@
     {
      "mlbam": 678246,
      "name": "Miguel Vargas",
-     "team": "LAD",
+     "team": "CWS",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 304,
@@ -21742,7 +21742,7 @@
     {
      "mlbam": 662139,
      "name": "Daulton Varsho",
-     "team": "TOR",
+     "team": "HOU",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 581,
@@ -21764,7 +21764,7 @@
     {
      "mlbam": 656896,
      "name": "Emmanuel Rivera",
-     "team": "AZ",
+     "team": "BAL",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 283,
@@ -21852,7 +21852,7 @@
     {
      "mlbam": 669743,
      "name": "Alex Call",
-     "team": "WSH",
+     "team": "LAD",
      "hem_plus": 86,
      "tier": "Below-avg",
      "pa": 439,
@@ -21918,7 +21918,7 @@
     {
      "mlbam": 643289,
      "name": "Mauricio Dub\u00f3n",
-     "team": "HOU",
+     "team": "ATL",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 492,
@@ -21940,7 +21940,7 @@
     {
      "mlbam": 686894,
      "name": "Joey Wiemer",
-     "team": "MIL",
+     "team": "CWS",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 410,
@@ -21962,7 +21962,7 @@
     {
      "mlbam": 657656,
      "name": "Ram\u00f3n Laureano",
-     "team": "CLE",
+     "team": "SD",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 404,
@@ -21984,7 +21984,7 @@
     {
      "mlbam": 643396,
      "name": "Isiah Kiner-Falefa",
-     "team": "NYY",
+     "team": "BOS",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 361,
@@ -22050,7 +22050,7 @@
     {
      "mlbam": 602104,
      "name": "Ram\u00f3n Ur\u00edas",
-     "team": "BAL",
+     "team": "STL",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 396,
@@ -22094,7 +22094,7 @@
     {
      "mlbam": 670032,
      "name": "Nicky Lopez",
-     "team": "ATL",
+     "team": "TEX",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 262,
@@ -22116,7 +22116,7 @@
     {
      "mlbam": 621438,
      "name": "Tyrone Taylor",
-     "team": "MIL",
+     "team": "CHC",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 243,
@@ -22204,7 +22204,7 @@
     {
      "mlbam": 671277,
      "name": "Luis Garc\u00eda Jr.",
-     "team": "WSH",
+     "team": "NYY",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 482,
@@ -22226,7 +22226,7 @@
     {
      "mlbam": 667452,
      "name": "Corey Julks",
-     "team": "HOU",
+     "team": "DET",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 323,
@@ -22248,7 +22248,7 @@
     {
      "mlbam": 682641,
      "name": "Luis Matos",
-     "team": "SF",
+     "team": "MIL",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 253,
@@ -22270,7 +22270,7 @@
     {
      "mlbam": 664983,
      "name": "Jake McCarthy",
-     "team": "AZ",
+     "team": "COL",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 312,
@@ -22336,7 +22336,7 @@
     {
      "mlbam": 672356,
      "name": "Gabriel Arias",
-     "team": "CLE",
+     "team": "CHC",
      "hem_plus": 82,
      "tier": "Below-avg",
      "pa": 345,
@@ -22578,7 +22578,7 @@
     {
      "mlbam": 680911,
      "name": "Owen Miller",
-     "team": "MIL",
+     "team": "CHC",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 314,
@@ -22666,7 +22666,7 @@
     {
      "mlbam": 657757,
      "name": "Gavin Sheets",
-     "team": "CWS",
+     "team": "SD",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 344,
@@ -22710,7 +22710,7 @@
     {
      "mlbam": 668942,
      "name": "Josh Rojas",
-     "team": "SEA",
+     "team": "KC",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 350,
@@ -22732,7 +22732,7 @@
     {
      "mlbam": 622534,
      "name": "Manuel Margot",
-     "team": "TB",
+     "team": "DET",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 336,
@@ -22798,7 +22798,7 @@
     {
      "mlbam": 669289,
      "name": "Santiago Espinal",
-     "team": "TOR",
+     "team": "AZ",
      "hem_plus": 79,
      "tier": "Below-avg",
      "pa": 254,
@@ -22886,7 +22886,7 @@
     {
      "mlbam": 624512,
      "name": "Reese McGuire",
-     "team": "BOS",
+     "team": "CWS",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 206,
@@ -22952,7 +22952,7 @@
     {
      "mlbam": 672275,
      "name": "Patrick Bailey",
-     "team": "SF",
+     "team": "CLE",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 353,
@@ -23018,7 +23018,7 @@
     {
      "mlbam": 665923,
      "name": "Esteury Ruiz",
-     "team": "ATH",
+     "team": "MIA",
      "hem_plus": 77,
      "tier": "Below-avg",
      "pa": 497,
@@ -23040,7 +23040,7 @@
     {
      "mlbam": 663611,
      "name": "Nick Madrigal",
-     "team": "CHC",
+     "team": "TB",
      "hem_plus": 77,
      "tier": "Below-avg",
      "pa": 294,
@@ -23084,7 +23084,7 @@
     {
      "mlbam": 642708,
      "name": "Amed Rosario",
-     "team": "LAD",
+     "team": "NYY",
      "hem_plus": 77,
      "tier": "Below-avg",
      "pa": 545,
@@ -23128,7 +23128,7 @@
     {
      "mlbam": 664056,
      "name": "Harrison Bader",
-     "team": "CIN",
+     "team": "SF",
      "hem_plus": 76,
      "tier": "Below-avg",
      "pa": 344,
@@ -23216,7 +23216,7 @@
     {
      "mlbam": 686823,
      "name": "Will Brennan",
-     "team": "CLE",
+     "team": "SF",
      "hem_plus": 75,
      "tier": "Below-avg",
      "pa": 455,
@@ -23304,7 +23304,7 @@
     {
      "mlbam": 622761,
      "name": "Jorge Mateo",
-     "team": "BAL",
+     "team": "TB",
      "hem_plus": 73,
      "tier": "Below-avg",
      "pa": 350,
@@ -23326,7 +23326,7 @@
     {
      "mlbam": 672779,
      "name": "Tucupita Marcano",
-     "team": "PIT",
+     "team": "SD",
      "hem_plus": 73,
      "tier": "Below-avg",
      "pa": 220,
@@ -23348,7 +23348,7 @@
     {
      "mlbam": 677950,
      "name": "Alek Thomas",
-     "team": "AZ",
+     "team": "LAD",
      "hem_plus": 73,
      "tier": "Below-avg",
      "pa": 402,
@@ -23391,8 +23391,8 @@
     },
     {
      "mlbam": 678225,
-     "name": "Ji Hwan Bae",
-     "team": "PIT",
+     "name": "Jihwan Bae",
+     "team": "MIL",
      "hem_plus": 73,
      "tier": "Below-avg",
      "pa": 371,
@@ -23436,7 +23436,7 @@
     {
      "mlbam": 663743,
      "name": "Nick Fortes",
-     "team": "MIA",
+     "team": "TB",
      "hem_plus": 72,
      "tier": "Below-avg",
      "pa": 323,
@@ -23480,7 +23480,7 @@
     {
      "mlbam": 693049,
      "name": "Oscar Col\u00e1s",
-     "team": "CWS",
+     "team": "LAA",
      "hem_plus": 72,
      "tier": "Below-avg",
      "pa": 263,
@@ -23502,7 +23502,7 @@
     {
      "mlbam": 664702,
      "name": "Myles Straw",
-     "team": "CLE",
+     "team": "TOR",
      "hem_plus": 71,
      "tier": "Below-avg",
      "pa": 518,
@@ -23524,7 +23524,7 @@
     {
      "mlbam": 624414,
      "name": "Christian Arroyo",
-     "team": "BOS",
+     "team": "NYM",
      "hem_plus": 71,
      "tier": "Below-avg",
      "pa": 206,
@@ -23546,7 +23546,7 @@
     {
      "mlbam": 669397,
      "name": "Nick Allen",
-     "team": "ATH",
+     "team": "HOU",
      "hem_plus": 70,
      "tier": "Below-avg",
      "pa": 329,
@@ -23678,7 +23678,7 @@
     {
      "mlbam": 686668,
      "name": "Brenton Doyle",
-     "team": "COL",
+     "team": "CWS",
      "hem_plus": 66,
      "tier": "Below-avg",
      "pa": 431,
@@ -23816,7 +23816,7 @@
     {
      "mlbam": 665742,
      "name": "Juan Soto",
-     "team": "NYY",
+     "team": "NYM",
      "hem_plus": 165,
      "tier": "Elite",
      "pa": 713,
@@ -23860,7 +23860,7 @@
     {
      "mlbam": 663656,
      "name": "Kyle Tucker",
-     "team": "HOU",
+     "team": "LAD",
      "hem_plus": 158,
      "tier": "Elite",
      "pa": 339,
@@ -24124,7 +24124,7 @@
     {
      "mlbam": 641933,
      "name": "Tyler O'Neill",
-     "team": "BOS",
+     "team": "BAL",
      "hem_plus": 132,
      "tier": "Above-avg",
      "pa": 473,
@@ -24212,7 +24212,7 @@
     {
      "mlbam": 621043,
      "name": "Carlos Correa",
-     "team": "MIN",
+     "team": "HOU",
      "hem_plus": 128,
      "tier": "Above-avg",
      "pa": 367,
@@ -24410,7 +24410,7 @@
     {
      "mlbam": 623993,
      "name": "Anthony Santander",
-     "team": "BAL",
+     "team": "TOR",
      "hem_plus": 123,
      "tier": "Above-avg",
      "pa": 665,
@@ -24498,7 +24498,7 @@
     {
      "mlbam": 646240,
      "name": "Rafael Devers",
-     "team": "BOS",
+     "team": "SF",
      "hem_plus": 121,
      "tier": "Above-avg",
      "pa": 601,
@@ -24542,7 +24542,7 @@
     {
      "mlbam": 681146,
      "name": "Jonah Bride",
-     "team": "MIA",
+     "team": "TEX",
      "hem_plus": 120,
      "tier": "Above-avg",
      "pa": 272,
@@ -24630,7 +24630,7 @@
     {
      "mlbam": 663993,
      "name": "Nathaniel Lowe",
-     "team": "TEX",
+     "team": "CLE",
      "hem_plus": 119,
      "tier": "Above-avg",
      "pa": 565,
@@ -24652,7 +24652,7 @@
     {
      "mlbam": 642715,
      "name": "Willy Adames",
-     "team": "MIL",
+     "team": "SF",
      "hem_plus": 119,
      "tier": "Above-avg",
      "pa": 688,
@@ -24674,7 +24674,7 @@
     {
      "mlbam": 624413,
      "name": "Pete Alonso",
-     "team": "NYM",
+     "team": "BAL",
      "hem_plus": 119,
      "tier": "Above-avg",
      "pa": 695,
@@ -24718,7 +24718,7 @@
     {
      "mlbam": 663698,
      "name": "Joey Bart",
-     "team": "PIT",
+     "team": "CWS",
      "hem_plus": 117,
      "tier": "Above-avg",
      "pa": 282,
@@ -24806,7 +24806,7 @@
     {
      "mlbam": 669911,
      "name": "Michael Toglia",
-     "team": "COL",
+     "team": "CIN",
      "hem_plus": 116,
      "tier": "Above-avg",
      "pa": 458,
@@ -24828,7 +24828,7 @@
     {
      "mlbam": 664774,
      "name": "LaMonte Wade Jr.",
-     "team": "SF",
+     "team": "HOU",
      "hem_plus": 116,
      "tier": "Above-avg",
      "pa": 401,
@@ -24960,7 +24960,7 @@
     {
      "mlbam": 687462,
      "name": "Spencer Horwitz",
-     "team": "TOR",
+     "team": "PIT",
      "hem_plus": 114,
      "tier": "Above-avg",
      "pa": 381,
@@ -25070,7 +25070,7 @@
     {
      "mlbam": 647304,
      "name": "Josh Naylor",
-     "team": "CLE",
+     "team": "SEA",
      "hem_plus": 114,
      "tier": "Above-avg",
      "pa": 633,
@@ -25136,7 +25136,7 @@
     {
      "mlbam": 666149,
      "name": "Tyler Fitzgerald",
-     "team": "SF",
+     "team": "LAD",
      "hem_plus": 113,
      "tier": "Above-avg",
      "pa": 341,
@@ -25334,7 +25334,7 @@
     {
      "mlbam": 663697,
      "name": "Jonathan India",
-     "team": "CIN",
+     "team": "KC",
      "hem_plus": 112,
      "tier": "Above-avg",
      "pa": 637,
@@ -25422,7 +25422,7 @@
     {
      "mlbam": 670623,
      "name": "Isaac Paredes",
-     "team": "CHC",
+     "team": "HOU",
      "hem_plus": 111,
      "tier": "Average",
      "pa": 641,
@@ -25466,7 +25466,7 @@
     {
      "mlbam": 671218,
      "name": "Heliot Ramos",
-     "team": "SF",
+     "team": "NYY",
      "hem_plus": 111,
      "tier": "Average",
      "pa": 518,
@@ -25620,7 +25620,7 @@
     {
      "mlbam": 664040,
      "name": "Brandon Lowe",
-     "team": "TB",
+     "team": "PIT",
      "hem_plus": 110,
      "tier": "Average",
      "pa": 425,
@@ -25752,7 +25752,7 @@
     {
      "mlbam": 663457,
      "name": "Lars Nootbaar",
-     "team": "STL",
+     "team": "AZ",
      "hem_plus": 108,
      "tier": "Average",
      "pa": 405,
@@ -25796,7 +25796,7 @@
     {
      "mlbam": 669394,
      "name": "Jake Burger",
-     "team": "MIA",
+     "team": "TEX",
      "hem_plus": 108,
      "tier": "Average",
      "pa": 579,
@@ -25840,7 +25840,7 @@
     {
      "mlbam": 608324,
      "name": "Alex Bregman",
-     "team": "HOU",
+     "team": "CHC",
      "hem_plus": 108,
      "tier": "Average",
      "pa": 634,
@@ -25950,7 +25950,7 @@
     {
      "mlbam": 686668,
      "name": "Brenton Doyle",
-     "team": "COL",
+     "team": "CWS",
      "hem_plus": 107,
      "tier": "Average",
      "pa": 603,
@@ -25994,7 +25994,7 @@
     {
      "mlbam": 602104,
      "name": "Ram\u00f3n Ur\u00edas",
-     "team": "BAL",
+     "team": "STL",
      "hem_plus": 107,
      "tier": "Average",
      "pa": 301,
@@ -26500,7 +26500,7 @@
     {
      "mlbam": 680977,
      "name": "Brendan Donovan",
-     "team": "STL",
+     "team": "SEA",
      "hem_plus": 104,
      "tier": "Average",
      "pa": 652,
@@ -26566,7 +26566,7 @@
     {
      "mlbam": 671277,
      "name": "Luis Garc\u00eda Jr.",
-     "team": "WSH",
+     "team": "NYY",
      "hem_plus": 104,
      "tier": "Average",
      "pa": 528,
@@ -26610,7 +26610,7 @@
     {
      "mlbam": 641857,
      "name": "Ryan McMahon",
-     "team": "COL",
+     "team": "NYY",
      "hem_plus": 104,
      "tier": "Average",
      "pa": 645,
@@ -26808,7 +26808,7 @@
     {
      "mlbam": 641355,
      "name": "Cody Bellinger",
-     "team": "CHC",
+     "team": "NYY",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 569,
@@ -26852,7 +26852,7 @@
     {
      "mlbam": 650859,
      "name": "Luis Rengifo",
-     "team": "LAA",
+     "team": "SD",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 304,
@@ -26874,7 +26874,7 @@
     {
      "mlbam": 664983,
      "name": "Jake McCarthy",
-     "team": "AZ",
+     "team": "COL",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 495,
@@ -26896,7 +26896,7 @@
     {
      "mlbam": 681351,
      "name": "Logan O'Hoppe",
-     "team": "LAA",
+     "team": "TEX",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 522,
@@ -26962,7 +26962,7 @@
     {
      "mlbam": 668709,
      "name": "JJ Bleday",
-     "team": "ATH",
+     "team": "CIN",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 642,
@@ -26984,7 +26984,7 @@
     {
      "mlbam": 650402,
      "name": "Gleyber Torres",
-     "team": "NYY",
+     "team": "DET",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 665,
@@ -27050,7 +27050,7 @@
     {
      "mlbam": 669701,
      "name": "Josh Smith",
-     "team": "TEX",
+     "team": "TOR",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 592,
@@ -27094,7 +27094,7 @@
     {
      "mlbam": 668939,
      "name": "Adley Rutschman",
-     "team": "BAL",
+     "team": "BOS",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 638,
@@ -27116,7 +27116,7 @@
     {
      "mlbam": 656775,
      "name": "Cedric Mullins",
-     "team": "BAL",
+     "team": "TB",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 499,
@@ -27182,7 +27182,7 @@
     {
      "mlbam": 660821,
      "name": "Jes\u00fas S\u00e1nchez",
-     "team": "MIA",
+     "team": "TOR",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 537,
@@ -27226,7 +27226,7 @@
     {
      "mlbam": 660766,
      "name": "Juan Yepez",
-     "team": "WSH",
+     "team": "TOR",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 249,
@@ -27270,7 +27270,7 @@
     {
      "mlbam": 673490,
      "name": "Ha-Seong Kim",
-     "team": "SD",
+     "team": "ATL",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 470,
@@ -27336,7 +27336,7 @@
     {
      "mlbam": 608348,
      "name": "Carson Kelly",
-     "team": "TEX",
+     "team": "CHC",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 313,
@@ -27358,7 +27358,7 @@
     {
      "mlbam": 657656,
      "name": "Ram\u00f3n Laureano",
-     "team": "ATL",
+     "team": "SD",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 309,
@@ -27578,7 +27578,7 @@
     {
      "mlbam": 624415,
      "name": "Cavan Biggio",
-     "team": "ATL",
+     "team": "HOU",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 224,
@@ -27600,7 +27600,7 @@
     {
      "mlbam": 643376,
      "name": "Danny Jansen",
-     "team": "BOS",
+     "team": "TEX",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 324,
@@ -27622,7 +27622,7 @@
     {
      "mlbam": 669234,
      "name": "Justyn-Henry Malloy",
-     "team": "DET",
+     "team": "TB",
      "hem_plus": 98,
      "tier": "Average",
      "pa": 230,
@@ -27754,7 +27754,7 @@
     {
      "mlbam": 666176,
      "name": "Jo Adell",
-     "team": "LAA",
+     "team": "CLE",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 451,
@@ -27842,7 +27842,7 @@
     {
      "mlbam": 650489,
      "name": "Willi Castro",
-     "team": "MIN",
+     "team": "COL",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 635,
@@ -28084,7 +28084,7 @@
     {
      "mlbam": 642133,
      "name": "Rowdy Tellez",
-     "team": "PIT",
+     "team": "ATL",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 421,
@@ -28106,7 +28106,7 @@
     {
      "mlbam": 650333,
      "name": "Luis Arraez",
-     "team": "SD",
+     "team": "PHI",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 672,
@@ -28128,7 +28128,7 @@
     {
      "mlbam": 656413,
      "name": "Stuart Fairchild",
-     "team": "CIN",
+     "team": "SEA",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 233,
@@ -28150,7 +28150,7 @@
     {
      "mlbam": 666158,
      "name": "Gavin Lux",
-     "team": "LAD",
+     "team": "TB",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 487,
@@ -28194,7 +28194,7 @@
     {
      "mlbam": 657041,
      "name": "Lane Thomas",
-     "team": "CLE",
+     "team": "ATL",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 528,
@@ -28216,7 +28216,7 @@
     {
      "mlbam": 663898,
      "name": "Brendan Rodgers",
-     "team": "COL",
+     "team": "BOS",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 539,
@@ -28414,7 +28414,7 @@
     {
      "mlbam": 677870,
      "name": "Leo Jim\u00e9nez",
-     "team": "TOR",
+     "team": "MIA",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 210,
@@ -28546,7 +28546,7 @@
     {
      "mlbam": 662139,
      "name": "Daulton Varsho",
-     "team": "TOR",
+     "team": "HOU",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 513,
@@ -28590,7 +28590,7 @@
     {
      "mlbam": 666397,
      "name": "Edouard Julien",
-     "team": "MIN",
+     "team": "COL",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 301,
@@ -28634,7 +28634,7 @@
     {
      "mlbam": 683734,
      "name": "Andrew Vaughn",
-     "team": "CWS",
+     "team": "MIL",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 619,
@@ -28744,7 +28744,7 @@
     {
      "mlbam": 641584,
      "name": "Jake Fraley",
-     "team": "CIN",
+     "team": "TB",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 382,
@@ -28766,7 +28766,7 @@
     {
      "mlbam": 666023,
      "name": "Freddy Fermin",
-     "team": "KC",
+     "team": "SD",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 368,
@@ -28809,8 +28809,8 @@
     },
     {
      "mlbam": 669304,
-     "name": "Jose Miranda",
-     "team": "MIN",
+     "name": "Jose F Miranda",
+     "team": "SD",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 429,
@@ -28854,7 +28854,7 @@
     {
      "mlbam": 666624,
      "name": "Christopher Morel",
-     "team": "TB",
+     "team": "NYM",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 611,
@@ -28876,7 +28876,7 @@
     {
      "mlbam": 676369,
      "name": "Nelson Vel\u00e1zquez",
-     "team": "KC",
+     "team": "HOU",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 230,
@@ -28920,7 +28920,7 @@
     {
      "mlbam": 666152,
      "name": "David Hamilton",
-     "team": "BOS",
+     "team": "MIL",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 317,
@@ -28986,7 +28986,7 @@
     {
      "mlbam": 686823,
      "name": "Will Brennan",
-     "team": "CLE",
+     "team": "SF",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 353,
@@ -29030,7 +29030,7 @@
     {
      "mlbam": 664034,
      "name": "Ty France",
-     "team": "CIN",
+     "team": "SD",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 535,
@@ -29052,7 +29052,7 @@
     {
      "mlbam": 672284,
      "name": "Jarred Kelenic",
-     "team": "ATL",
+     "team": "TEX",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 449,
@@ -29140,7 +29140,7 @@
     {
      "mlbam": 663368,
      "name": "Blake Perkins",
-     "team": "MIL",
+     "team": "CLE",
      "hem_plus": 90,
      "tier": "Average",
      "pa": 434,
@@ -29162,7 +29162,7 @@
     {
      "mlbam": 642086,
      "name": "Dominic Smith",
-     "team": "CIN",
+     "team": "ATL",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 307,
@@ -29206,7 +29206,7 @@
     {
      "mlbam": 680474,
      "name": "Max Schuemann",
-     "team": "ATH",
+     "team": "NYY",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 459,
@@ -29250,7 +29250,7 @@
     {
      "mlbam": 666139,
      "name": "Josh Lowe",
-     "team": "TB",
+     "team": "LAA",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 387,
@@ -29294,7 +29294,7 @@
     {
      "mlbam": 609280,
      "name": "Miguel Andujar",
-     "team": "ATH",
+     "team": "SD",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 319,
@@ -29316,7 +29316,7 @@
     {
      "mlbam": 669289,
      "name": "Santiago Espinal",
-     "team": "CIN",
+     "team": "AZ",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 391,
@@ -29360,7 +29360,7 @@
     {
      "mlbam": 666134,
      "name": "Nolan Jones",
-     "team": "COL",
+     "team": "SEA",
      "hem_plus": 89,
      "tier": "Below-avg",
      "pa": 297,
@@ -29448,7 +29448,7 @@
     {
      "mlbam": 669222,
      "name": "Nick Senzel",
-     "team": "CWS",
+     "team": "LAD",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 267,
@@ -29514,7 +29514,7 @@
     {
      "mlbam": 666163,
      "name": "Ben Rortvedt",
-     "team": "TB",
+     "team": "LAD",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 328,
@@ -29668,7 +29668,7 @@
     {
      "mlbam": 669004,
      "name": "MJ Melendez",
-     "team": "KC",
+     "team": "NYM",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 451,
@@ -29690,7 +29690,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "CWS",
+     "team": "NYM",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 425,
@@ -29756,7 +29756,7 @@
     {
      "mlbam": 657757,
      "name": "Gavin Sheets",
-     "team": "CWS",
+     "team": "SD",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 501,
@@ -29800,7 +29800,7 @@
     {
      "mlbam": 669261,
      "name": "Jack Suwinski",
-     "team": "PIT",
+     "team": "TB",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 277,
@@ -29822,7 +29822,7 @@
     {
      "mlbam": 671289,
      "name": "Tyler Freeman",
-     "team": "CLE",
+     "team": "COL",
      "hem_plus": 86,
      "tier": "Below-avg",
      "pa": 383,
@@ -29910,7 +29910,7 @@
     {
      "mlbam": 643396,
      "name": "Isiah Kiner-Falefa",
-     "team": "PIT",
+     "team": "BOS",
      "hem_plus": 86,
      "tier": "Below-avg",
      "pa": 496,
@@ -29932,7 +29932,7 @@
     {
      "mlbam": 668942,
      "name": "Josh Rojas",
-     "team": "SEA",
+     "team": "KC",
      "hem_plus": 86,
      "tier": "Below-avg",
      "pa": 476,
@@ -29954,7 +29954,7 @@
     {
      "mlbam": 672275,
      "name": "Patrick Bailey",
-     "team": "SF",
+     "team": "CLE",
      "hem_plus": 86,
      "tier": "Below-avg",
      "pa": 448,
@@ -29976,7 +29976,7 @@
     {
      "mlbam": 665750,
      "name": "Leody Taveras",
-     "team": "TEX",
+     "team": "BAL",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 529,
@@ -29998,7 +29998,7 @@
     {
      "mlbam": 664056,
      "name": "Harrison Bader",
-     "team": "NYM",
+     "team": "SF",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 437,
@@ -30064,7 +30064,7 @@
     {
      "mlbam": 665839,
      "name": "Enmanuel Valdez",
-     "team": "BOS",
+     "team": "PIT",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 223,
@@ -30086,7 +30086,7 @@
     {
      "mlbam": 650559,
      "name": "Bryan De La Cruz",
-     "team": "PIT",
+     "team": "PHI",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 622,
@@ -30130,7 +30130,7 @@
     {
      "mlbam": 666310,
      "name": "Bo Naylor",
-     "team": "CLE",
+     "team": "MIL",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 389,
@@ -30174,7 +30174,7 @@
     {
      "mlbam": 642350,
      "name": "Jose Siri",
-     "team": "TB",
+     "team": "LAA",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 448,
@@ -30218,7 +30218,7 @@
     {
      "mlbam": 669720,
      "name": "Austin Hays",
-     "team": "PHI",
+     "team": "SD",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 255,
@@ -30240,7 +30240,7 @@
     {
      "mlbam": 666160,
      "name": "Mickey Moniak",
-     "team": "LAA",
+     "team": "COL",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 418,
@@ -30262,7 +30262,7 @@
     {
      "mlbam": 621438,
      "name": "Tyrone Taylor",
-     "team": "NYM",
+     "team": "CHC",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 345,
@@ -30284,7 +30284,7 @@
     {
      "mlbam": 657077,
      "name": "Alex Verdugo",
-     "team": "NYY",
+     "team": "SD",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 621,
@@ -30350,7 +30350,7 @@
     {
      "mlbam": 672820,
      "name": "Lenyn Sosa",
-     "team": "CWS",
+     "team": "TOR",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 369,
@@ -30438,7 +30438,7 @@
     {
      "mlbam": 650391,
      "name": "Eloy Jim\u00e9nez",
-     "team": "BAL",
+     "team": "TOR",
      "hem_plus": 82,
      "tier": "Below-avg",
      "pa": 349,
@@ -30460,7 +30460,7 @@
     {
      "mlbam": 666185,
      "name": "Dylan Carlson",
-     "team": "TB",
+     "team": "PHI",
      "hem_plus": 82,
      "tier": "Below-avg",
      "pa": 265,
@@ -30526,7 +30526,7 @@
     {
      "mlbam": 665926,
      "name": "Andr\u00e9s Gim\u00e9nez",
-     "team": "CLE",
+     "team": "TOR",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 633,
@@ -30614,7 +30614,7 @@
     {
      "mlbam": 647351,
      "name": "Abraham Toro",
-     "team": "ATH",
+     "team": "KC",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 364,
@@ -30636,7 +30636,7 @@
     {
      "mlbam": 606115,
      "name": "Orlando Arcia",
-     "team": "ATL",
+     "team": "MIN",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 602,
@@ -30702,7 +30702,7 @@
     {
      "mlbam": 676801,
      "name": "Chas McCormick",
-     "team": "HOU",
+     "team": "CHC",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 267,
@@ -30724,7 +30724,7 @@
     {
      "mlbam": 670032,
      "name": "Nicky Lopez",
-     "team": "CWS",
+     "team": "TEX",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 445,
@@ -30746,7 +30746,7 @@
     {
      "mlbam": 624503,
      "name": "Nick Gordon",
-     "team": "MIA",
+     "team": "KC",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 275,
@@ -30790,7 +30790,7 @@
     {
      "mlbam": 641680,
      "name": "Jonah Heim",
-     "team": "TEX",
+     "team": "ATH",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 491,
@@ -30834,7 +30834,7 @@
     {
      "mlbam": 642708,
      "name": "Amed Rosario",
-     "team": "CIN",
+     "team": "NYY",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 346,
@@ -30944,7 +30944,7 @@
     {
      "mlbam": 622761,
      "name": "Jorge Mateo",
-     "team": "BAL",
+     "team": "TB",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 208,
@@ -31032,7 +31032,7 @@
     {
      "mlbam": 660644,
      "name": "Vidal Bruj\u00e1n",
-     "team": "MIA",
+     "team": "NYM",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 278,
@@ -31054,7 +31054,7 @@
     {
      "mlbam": 622534,
      "name": "Manuel Margot",
-     "team": "MIN",
+     "team": "DET",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 343,
@@ -31076,7 +31076,7 @@
     {
      "mlbam": 676609,
      "name": "Jos\u00e9 Caballero",
-     "team": "TB",
+     "team": "NYY",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 483,
@@ -31098,7 +31098,7 @@
     {
      "mlbam": 668670,
      "name": "Jake Rogers",
-     "team": "DET",
+     "team": "CWS",
      "hem_plus": 77,
      "tier": "Below-avg",
      "pa": 337,
@@ -31164,7 +31164,7 @@
     {
      "mlbam": 643289,
      "name": "Mauricio Dub\u00f3n",
-     "team": "HOU",
+     "team": "ATL",
      "hem_plus": 77,
      "tier": "Below-avg",
      "pa": 428,
@@ -31186,7 +31186,7 @@
     {
      "mlbam": 689172,
      "name": "Brett Wisely",
-     "team": "SF",
+     "team": "ATL",
      "hem_plus": 77,
      "tier": "Below-avg",
      "pa": 272,
@@ -31274,7 +31274,7 @@
     {
      "mlbam": 663647,
      "name": "Ke'Bryan Hayes",
-     "team": "PIT",
+     "team": "CIN",
      "hem_plus": 76,
      "tier": "Below-avg",
      "pa": 396,
@@ -31296,7 +31296,7 @@
     {
      "mlbam": 672279,
      "name": "Michael Siani",
-     "team": "STL",
+     "team": "DET",
      "hem_plus": 76,
      "tier": "Below-avg",
      "pa": 334,
@@ -31318,7 +31318,7 @@
     {
      "mlbam": 623912,
      "name": "Harold Ram\u00edrez",
-     "team": "WSH",
+     "team": "ATL",
      "hem_plus": 75,
      "tier": "Below-avg",
      "pa": 246,
@@ -31516,7 +31516,7 @@
     {
      "mlbam": 666182,
      "name": "Bo Bichette",
-     "team": "TOR",
+     "team": "NYM",
      "hem_plus": 73,
      "tier": "Below-avg",
      "pa": 336,
@@ -31582,7 +31582,7 @@
     {
      "mlbam": 694388,
      "name": "Joey Loperfido",
-     "team": "TOR",
+     "team": "HOU",
      "hem_plus": 71,
      "tier": "Below-avg",
      "pa": 262,
@@ -31626,7 +31626,7 @@
     {
      "mlbam": 642731,
      "name": "Thairo Estrada",
-     "team": "SF",
+     "team": "BAL",
      "hem_plus": 70,
      "tier": "Below-avg",
      "pa": 381,
@@ -31648,7 +31648,7 @@
     {
      "mlbam": 641658,
      "name": "Garrett Hampson",
-     "team": "KC",
+     "team": "CIN",
      "hem_plus": 68,
      "tier": "Below-avg",
      "pa": 231,
@@ -31692,7 +31692,7 @@
     {
      "mlbam": 663743,
      "name": "Nick Fortes",
-     "team": "MIA",
+     "team": "TB",
      "hem_plus": 68,
      "tier": "Below-avg",
      "pa": 335,
@@ -31736,7 +31736,7 @@
     {
      "mlbam": 666150,
      "name": "Dominic Fletcher",
-     "team": "CWS",
+     "team": "PIT",
      "hem_plus": 65,
      "tier": "Below-avg",
      "pa": 241,
@@ -32292,7 +32292,7 @@
     {
      "mlbam": 624413,
      "name": "Pete Alonso",
-     "team": "NYM",
+     "team": "BAL",
      "hem_plus": 126,
      "tier": "Above-avg",
      "pa": 709,
@@ -32402,7 +32402,7 @@
     {
      "mlbam": 663656,
      "name": "Kyle Tucker",
-     "team": "CHC",
+     "team": "LAD",
      "hem_plus": 125,
      "tier": "Above-avg",
      "pa": 597,
@@ -32930,7 +32930,7 @@
     {
      "mlbam": 608324,
      "name": "Alex Bregman",
-     "team": "BOS",
+     "team": "CHC",
      "hem_plus": 117,
      "tier": "Above-avg",
      "pa": 495,
@@ -33172,7 +33172,7 @@
     {
      "mlbam": 666176,
      "name": "Jo Adell",
-     "team": "LAA",
+     "team": "CLE",
      "hem_plus": 115,
      "tier": "Above-avg",
      "pa": 573,
@@ -33260,7 +33260,7 @@
     {
      "mlbam": 664040,
      "name": "Brandon Lowe",
-     "team": "TB",
+     "team": "PIT",
      "hem_plus": 115,
      "tier": "Above-avg",
      "pa": 553,
@@ -33414,7 +33414,7 @@
     {
      "mlbam": 662139,
      "name": "Daulton Varsho",
-     "team": "TOR",
+     "team": "HOU",
      "hem_plus": 113,
      "tier": "Above-avg",
      "pa": 271,
@@ -33480,7 +33480,7 @@
     {
      "mlbam": 666182,
      "name": "Bo Bichette",
-     "team": "TOR",
+     "team": "NYM",
      "hem_plus": 112,
      "tier": "Above-avg",
      "pa": 628,
@@ -33502,7 +33502,7 @@
     {
      "mlbam": 664056,
      "name": "Harrison Bader",
-     "team": "PHI",
+     "team": "SF",
      "hem_plus": 112,
      "tier": "Above-avg",
      "pa": 501,
@@ -33920,7 +33920,7 @@
     {
      "mlbam": 643376,
      "name": "Danny Jansen",
-     "team": "MIL",
+     "team": "TEX",
      "hem_plus": 110,
      "tier": "Average",
      "pa": 337,
@@ -33942,7 +33942,7 @@
     {
      "mlbam": 686555,
      "name": "Isaac Collins",
-     "team": "MIL",
+     "team": "KC",
      "hem_plus": 110,
      "tier": "Average",
      "pa": 441,
@@ -34118,7 +34118,7 @@
     {
      "mlbam": 609280,
      "name": "Miguel Andujar",
-     "team": "CIN",
+     "team": "SD",
      "hem_plus": 108,
      "tier": "Average",
      "pa": 341,
@@ -34580,7 +34580,7 @@
     {
      "mlbam": 671218,
      "name": "Heliot Ramos",
-     "team": "SF",
+     "team": "NYY",
      "hem_plus": 103,
      "tier": "Average",
      "pa": 695,
@@ -34712,7 +34712,7 @@
     {
      "mlbam": 641584,
      "name": "Jake Fraley",
-     "team": "ATL",
+     "team": "TB",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 217,
@@ -34734,7 +34734,7 @@
     {
      "mlbam": 680977,
      "name": "Brendan Donovan",
-     "team": "STL",
+     "team": "SEA",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 515,
@@ -34910,7 +34910,7 @@
     {
      "mlbam": 642133,
      "name": "Rowdy Tellez",
-     "team": "TEX",
+     "team": "ATL",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 312,
@@ -34932,7 +34932,7 @@
     {
      "mlbam": 663698,
      "name": "Joey Bart",
-     "team": "PIT",
+     "team": "CWS",
      "hem_plus": 101,
      "tier": "Average",
      "pa": 332,
@@ -34998,7 +34998,7 @@
     {
      "mlbam": 669720,
      "name": "Austin Hays",
-     "team": "CIN",
+     "team": "SD",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 416,
@@ -35042,7 +35042,7 @@
     {
      "mlbam": 689414,
      "name": "Liam Hicks",
-     "team": "MIA",
+     "team": "TB",
      "hem_plus": 100,
      "tier": "Average",
      "pa": 390,
@@ -35416,7 +35416,7 @@
     {
      "mlbam": 672820,
      "name": "Lenyn Sosa",
-     "team": "CWS",
+     "team": "TOR",
      "hem_plus": 97,
      "tier": "Average",
      "pa": 544,
@@ -35482,7 +35482,7 @@
     {
      "mlbam": 702332,
      "name": "Caleb Durbin",
-     "team": "MIL",
+     "team": "BOS",
      "hem_plus": 97,
      "tier": "Average",
      "pa": 506,
@@ -35548,7 +35548,7 @@
     {
      "mlbam": 642086,
      "name": "Dominic Smith",
-     "team": "SF",
+     "team": "ATL",
      "hem_plus": 97,
      "tier": "Average",
      "pa": 225,
@@ -35592,7 +35592,7 @@
     {
      "mlbam": 649966,
      "name": "Luis Ur\u00edas",
-     "team": "ATH",
+     "team": "TOR",
      "hem_plus": 97,
      "tier": "Average",
      "pa": 330,
@@ -35658,7 +35658,7 @@
     {
      "mlbam": 677942,
      "name": "Blaze Alexander",
-     "team": "AZ",
+     "team": "BAL",
      "hem_plus": 97,
      "tier": "Average",
      "pa": 266,
@@ -35790,7 +35790,7 @@
     {
      "mlbam": 668709,
      "name": "JJ Bleday",
-     "team": "ATH",
+     "team": "CIN",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 344,
@@ -35856,7 +35856,7 @@
     {
      "mlbam": 666158,
      "name": "Gavin Lux",
-     "team": "CIN",
+     "team": "TB",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 503,
@@ -35966,7 +35966,7 @@
     {
      "mlbam": 665966,
      "name": "Carlos Narv\u00e1ez",
-     "team": "BOS",
+     "team": "BAL",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 446,
@@ -36010,7 +36010,7 @@
     {
      "mlbam": 669701,
      "name": "Josh Smith",
-     "team": "TEX",
+     "team": "TOR",
      "hem_plus": 96,
      "tier": "Average",
      "pa": 563,
@@ -36208,7 +36208,7 @@
     {
      "mlbam": 663457,
      "name": "Lars Nootbaar",
-     "team": "STL",
+     "team": "AZ",
      "hem_plus": 95,
      "tier": "Average",
      "pa": 583,
@@ -36274,7 +36274,7 @@
     {
      "mlbam": 656775,
      "name": "Cedric Mullins",
-     "team": "NYM",
+     "team": "TB",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 498,
@@ -36428,7 +36428,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "CWS",
+     "team": "NYM",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 431,
@@ -36450,7 +36450,7 @@
     {
      "mlbam": 663993,
      "name": "Nathaniel Lowe",
-     "team": "BOS",
+     "team": "CLE",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 609,
@@ -36538,7 +36538,7 @@
     {
      "mlbam": 666624,
      "name": "Christopher Morel",
-     "team": "TB",
+     "team": "NYM",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 305,
@@ -36648,7 +36648,7 @@
     {
      "mlbam": 650489,
      "name": "Willi Castro",
-     "team": "CHC",
+     "team": "COL",
      "hem_plus": 92,
      "tier": "Average",
      "pa": 454,
@@ -36670,7 +36670,7 @@
     {
      "mlbam": 668939,
      "name": "Adley Rutschman",
-     "team": "BAL",
+     "team": "BOS",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 365,
@@ -36758,7 +36758,7 @@
     {
      "mlbam": 660821,
      "name": "Jes\u00fas S\u00e1nchez",
-     "team": "HOU",
+     "team": "TOR",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 497,
@@ -36868,7 +36868,7 @@
     {
      "mlbam": 650333,
      "name": "Luis Arraez",
-     "team": "SD",
+     "team": "PHI",
      "hem_plus": 90,
      "tier": "Average",
      "pa": 675,
@@ -37132,7 +37132,7 @@
     {
      "mlbam": 666397,
      "name": "Edouard Julien",
-     "team": "MIN",
+     "team": "COL",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 208,
@@ -37176,7 +37176,7 @@
     {
      "mlbam": 602104,
      "name": "Ram\u00f3n Ur\u00edas",
-     "team": "HOU",
+     "team": "STL",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 391,
@@ -37264,7 +37264,7 @@
     {
      "mlbam": 666310,
      "name": "Bo Naylor",
-     "team": "CLE",
+     "team": "MIL",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 414,
@@ -37308,7 +37308,7 @@
     {
      "mlbam": 663968,
      "name": "Jake Mangum",
-     "team": "TB",
+     "team": "PIT",
      "hem_plus": 88,
      "tier": "Below-avg",
      "pa": 428,
@@ -37506,7 +37506,7 @@
     {
      "mlbam": 681351,
      "name": "Logan O'Hoppe",
-     "team": "LAA",
+     "team": "TEX",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 451,
@@ -37594,7 +37594,7 @@
     {
      "mlbam": 681393,
      "name": "Connor Norby",
-     "team": "MIA",
+     "team": "COL",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 337,
@@ -37616,7 +37616,7 @@
     {
      "mlbam": 642201,
      "name": "Eli White",
-     "team": "ATL",
+     "team": "BOS",
      "hem_plus": 86,
      "tier": "Below-avg",
      "pa": 271,
@@ -37638,7 +37638,7 @@
     {
      "mlbam": 671277,
      "name": "Luis Garc\u00eda Jr.",
-     "team": "WSH",
+     "team": "NYY",
      "hem_plus": 86,
      "tier": "Below-avg",
      "pa": 526,
@@ -37682,7 +37682,7 @@
     {
      "mlbam": 664034,
      "name": "Ty France",
-     "team": "TOR",
+     "team": "SD",
      "hem_plus": 86,
      "tier": "Below-avg",
      "pa": 490,
@@ -37836,7 +37836,7 @@
     {
      "mlbam": 666185,
      "name": "Dylan Carlson",
-     "team": "BAL",
+     "team": "PHI",
      "hem_plus": 85,
      "tier": "Below-avg",
      "pa": 241,
@@ -37924,7 +37924,7 @@
     {
      "mlbam": 647351,
      "name": "Abraham Toro",
-     "team": "BOS",
+     "team": "KC",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 284,
@@ -37968,7 +37968,7 @@
     {
      "mlbam": 667472,
      "name": "Dane Myers",
-     "team": "MIA",
+     "team": "CIN",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 333,
@@ -37990,7 +37990,7 @@
     {
      "mlbam": 680474,
      "name": "Max Schuemann",
-     "team": "ATH",
+     "team": "NYY",
      "hem_plus": 84,
      "tier": "Below-avg",
      "pa": 213,
@@ -38056,7 +38056,7 @@
     {
      "mlbam": 670224,
      "name": "Kameron Misner",
-     "team": "TB",
+     "team": "PHI",
      "hem_plus": 82,
      "tier": "Below-avg",
      "pa": 217,
@@ -38166,7 +38166,7 @@
     {
      "mlbam": 666139,
      "name": "Josh Lowe",
-     "team": "TB",
+     "team": "LAA",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 435,
@@ -38232,7 +38232,7 @@
     {
      "mlbam": 678554,
      "name": "Curtis Mead",
-     "team": "CWS",
+     "team": "BOS",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 264,
@@ -38276,7 +38276,7 @@
     {
      "mlbam": 686668,
      "name": "Brenton Doyle",
-     "team": "COL",
+     "team": "CWS",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 538,
@@ -38298,7 +38298,7 @@
     {
      "mlbam": 676572,
      "name": "Eric Wagaman",
-     "team": "MIA",
+     "team": "NYM",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 514,
@@ -38320,7 +38320,7 @@
     {
      "mlbam": 677950,
      "name": "Alek Thomas",
-     "team": "AZ",
+     "team": "LAD",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 469,
@@ -38342,7 +38342,7 @@
     {
      "mlbam": 641680,
      "name": "Jonah Heim",
-     "team": "TEX",
+     "team": "ATH",
      "hem_plus": 80,
      "tier": "Below-avg",
      "pa": 433,
@@ -38408,7 +38408,7 @@
     {
      "mlbam": 666149,
      "name": "Tyler Fitzgerald",
-     "team": "SF",
+     "team": "LAD",
      "hem_plus": 79,
      "tier": "Below-avg",
      "pa": 243,
@@ -38452,7 +38452,7 @@
     {
      "mlbam": 643289,
      "name": "Mauricio Dub\u00f3n",
-     "team": "HOU",
+     "team": "ATL",
      "hem_plus": 79,
      "tier": "Below-avg",
      "pa": 398,
@@ -38540,7 +38540,7 @@
     {
      "mlbam": 805373,
      "name": "Nacho Alvarez Jr.",
-     "team": "ATL",
+     "team": "LAA",
      "hem_plus": 79,
      "tier": "Below-avg",
      "pa": 208,
@@ -38562,7 +38562,7 @@
     {
      "mlbam": 669911,
      "name": "Michael Toglia",
-     "team": "COL",
+     "team": "CIN",
      "hem_plus": 79,
      "tier": "Below-avg",
      "pa": 337,
@@ -38584,7 +38584,7 @@
     {
      "mlbam": 666134,
      "name": "Nolan Jones",
-     "team": "CLE",
+     "team": "SEA",
      "hem_plus": 79,
      "tier": "Below-avg",
      "pa": 403,
@@ -38650,7 +38650,7 @@
     {
      "mlbam": 650859,
      "name": "Luis Rengifo",
-     "team": "LAA",
+     "team": "SD",
      "hem_plus": 78,
      "tier": "Below-avg",
      "pa": 541,
@@ -38870,7 +38870,7 @@
     {
      "mlbam": 672356,
      "name": "Gabriel Arias",
-     "team": "CLE",
+     "team": "CHC",
      "hem_plus": 75,
      "tier": "Below-avg",
      "pa": 471,
@@ -38892,7 +38892,7 @@
     {
      "mlbam": 657077,
      "name": "Alex Verdugo",
-     "team": "ATL",
+     "team": "SD",
      "hem_plus": 75,
      "tier": "Below-avg",
      "pa": 213,
@@ -39002,7 +39002,7 @@
     {
      "mlbam": 810938,
      "name": "Ben Williamson",
-     "team": "SEA",
+     "team": "TB",
      "hem_plus": 74,
      "tier": "Below-avg",
      "pa": 295,
@@ -39046,7 +39046,7 @@
     {
      "mlbam": 664774,
      "name": "LaMonte Wade Jr.",
-     "team": "LAA",
+     "team": "HOU",
      "hem_plus": 73,
      "tier": "Below-avg",
      "pa": 242,
@@ -39090,7 +39090,7 @@
     {
      "mlbam": 690987,
      "name": "Robert Hassell III",
-     "team": "WSH",
+     "team": "PIT",
      "hem_plus": 72,
      "tier": "Below-avg",
      "pa": 206,
@@ -39112,7 +39112,7 @@
     {
      "mlbam": 643396,
      "name": "Isiah Kiner-Falefa",
-     "team": "TOR",
+     "team": "BOS",
      "hem_plus": 72,
      "tier": "Below-avg",
      "pa": 459,
@@ -39156,7 +39156,7 @@
     {
      "mlbam": 669289,
      "name": "Santiago Espinal",
-     "team": "CIN",
+     "team": "AZ",
      "hem_plus": 72,
      "tier": "Below-avg",
      "pa": 328,
@@ -39200,7 +39200,7 @@
     {
      "mlbam": 672275,
      "name": "Patrick Bailey",
-     "team": "SF",
+     "team": "CLE",
      "hem_plus": 71,
      "tier": "Below-avg",
      "pa": 452,
@@ -39266,7 +39266,7 @@
     {
      "mlbam": 668942,
      "name": "Josh Rojas",
-     "team": "CWS",
+     "team": "KC",
      "hem_plus": 71,
      "tier": "Below-avg",
      "pa": 211,
@@ -39310,7 +39310,7 @@
     {
      "mlbam": 664983,
      "name": "Jake McCarthy",
-     "team": "AZ",
+     "team": "COL",
      "hem_plus": 69,
      "tier": "Below-avg",
      "pa": 222,
@@ -39354,7 +39354,7 @@
     {
      "mlbam": 669397,
      "name": "Nick Allen",
-     "team": "ATL",
+     "team": "HOU",
      "hem_plus": 68,
      "tier": "Below-avg",
      "pa": 416,
@@ -39376,7 +39376,7 @@
     {
      "mlbam": 606115,
      "name": "Orlando Arcia",
-     "team": "COL",
+     "team": "MIN",
      "hem_plus": 68,
      "tier": "Below-avg",
      "pa": 214,
@@ -39420,7 +39420,7 @@
     {
      "mlbam": 621438,
      "name": "Tyrone Taylor",
-     "team": "NYM",
+     "team": "CHC",
      "hem_plus": 65,
      "tier": "Below-avg",
      "pa": 341,

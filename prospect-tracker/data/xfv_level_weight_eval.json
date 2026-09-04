@@ -1,0 +1,2243 @@
+{
+ "generated_at": "2026-09-04T19:58:07Z",
+ "produced_by": "tools/efv_level_weight_lab.py",
+ "asked_by": "owner, 2026-09-04: per-level and per-league weights for MiLB performance",
+ "label_basis": "eWAR v2 (the 2026-09-04 label epoch)",
+ "owner_expectation": "AA > A+ > A > AAA > CPX > DSL",
+ "two_quantities": {
+  "raw": "rho(level-relative performance at L, first-6yr WAR), selected pool",
+  "incremental": "the same with consensus FV and age partialled out; this is the quantity an eFV driver needs, because eFV already has the grade"
+ },
+ "environment_note": "every rate is already level-relative to CONTEMPORANEOUS season-and-level norms, so a hitter-friendly league such as the PCL is normalised by its own league median before anything is compared. Part 3 asks whether a RESIDUAL league effect survives that; a second hand penalty on top would double-count.",
+ "min_cell": 40,
+ "bootstrap_B": 2000,
+ "seed": 20260807,
+ "sides": {
+  "hit": {
+   "n_rows": 845,
+   "n_records": 2128,
+   "by_level": {
+    "DSL": {
+     "n": 71,
+     "reported": true,
+     "mean_age": 17.69,
+     "mean_fv": 44.36,
+     "keys": {
+      "ops_rel": {
+       "raw_rho": 0.1112,
+       "raw_ci95": [
+        -0.1547,
+        0.3535
+       ],
+       "incremental_rho": -0.1828,
+       "incremental_ci95": [
+        -0.4411,
+        0.0808
+       ]
+      },
+      "obp_rel": {
+       "raw_rho": 0.1142,
+       "raw_ci95": [
+        -0.1751,
+        0.3823
+       ],
+       "incremental_rho": -0.0179,
+       "incremental_ci95": [
+        -0.2811,
+        0.2311
+       ]
+      },
+      "iso_rel": {
+       "raw_rho": -0.0104,
+       "raw_ci95": [
+        -0.2733,
+        0.2564
+       ],
+       "incremental_rho": -0.3042,
+       "incremental_ci95": [
+        -0.537,
+        -0.0406
+       ]
+      },
+      "k_rel": {
+       "raw_rho": -0.1605,
+       "raw_ci95": [
+        -0.3762,
+        0.0896
+       ],
+       "incremental_rho": -0.1474,
+       "incremental_ci95": [
+        -0.3871,
+        0.1189
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": -0.0145,
+       "raw_ci95": [
+        -0.2963,
+        0.2747
+       ],
+       "incremental_rho": 0.0095,
+       "incremental_ci95": [
+        -0.246,
+        0.268
+       ]
+      }
+     },
+     "headline_key": "iso_rel",
+     "headline_incremental_rho": -0.3042,
+     "headline_raw_rho": -0.0104,
+     "headline_key_is_max_of": 5,
+     "headline_raw_excludes_zero": false,
+     "headline_incremental_excludes_zero": true,
+     "derived_weight_incremental": 0.0,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 0.0,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    },
+    "CPX": {
+     "n": 287,
+     "reported": true,
+     "mean_age": 19.05,
+     "mean_fv": 44.57,
+     "keys": {
+      "ops_rel": {
+       "raw_rho": 0.1437,
+       "raw_ci95": [
+        0.0224,
+        0.2629
+       ],
+       "incremental_rho": 0.0369,
+       "incremental_ci95": [
+        -0.0864,
+        0.1634
+       ]
+      },
+      "obp_rel": {
+       "raw_rho": 0.1374,
+       "raw_ci95": [
+        0.0192,
+        0.2554
+       ],
+       "incremental_rho": 0.0828,
+       "incremental_ci95": [
+        -0.0463,
+        0.202
+       ]
+      },
+      "iso_rel": {
+       "raw_rho": 0.0625,
+       "raw_ci95": [
+        -0.0531,
+        0.1875
+       ],
+       "incremental_rho": -0.0459,
+       "incremental_ci95": [
+        -0.1639,
+        0.0694
+       ]
+      },
+      "k_rel": {
+       "raw_rho": -0.155,
+       "raw_ci95": [
+        -0.2707,
+        -0.0324
+       ],
+       "incremental_rho": -0.0608,
+       "incremental_ci95": [
+        -0.1812,
+        0.0614
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": 0.0276,
+       "raw_ci95": [
+        -0.0982,
+        0.1425
+       ],
+       "incremental_rho": 0.0961,
+       "incremental_ci95": [
+        -0.0187,
+        0.2037
+       ]
+      }
+     },
+     "headline_key": "bb_rel",
+     "headline_incremental_rho": 0.0961,
+     "headline_raw_rho": 0.0276,
+     "headline_key_is_max_of": 5,
+     "headline_raw_excludes_zero": false,
+     "headline_incremental_excludes_zero": false,
+     "derived_weight_incremental": 0.0,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 0.0,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    },
+    "A": {
+     "n": 515,
+     "reported": true,
+     "mean_age": 20.63,
+     "mean_fv": 44.28,
+     "keys": {
+      "ops_rel": {
+       "raw_rho": 0.1409,
+       "raw_ci95": [
+        0.0485,
+        0.231
+       ],
+       "incremental_rho": 0.0052,
+       "incremental_ci95": [
+        -0.0923,
+        0.1041
+       ]
+      },
+      "obp_rel": {
+       "raw_rho": 0.1605,
+       "raw_ci95": [
+        0.0666,
+        0.2519
+       ],
+       "incremental_rho": 0.0687,
+       "incremental_ci95": [
+        -0.0258,
+        0.163
+       ]
+      },
+      "iso_rel": {
+       "raw_rho": 0.0437,
+       "raw_ci95": [
+        -0.0489,
+        0.1388
+       ],
+       "incremental_rho": -0.0419,
+       "incremental_ci95": [
+        -0.1358,
+        0.0503
+       ]
+      },
+      "k_rel": {
+       "raw_rho": -0.1377,
+       "raw_ci95": [
+        -0.2274,
+        -0.0466
+       ],
+       "incremental_rho": -0.0608,
+       "incremental_ci95": [
+        -0.1513,
+        0.0311
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": 0.0973,
+       "raw_ci95": [
+        0.0077,
+        0.188
+       ],
+       "incremental_rho": 0.0981,
+       "incremental_ci95": [
+        0.0077,
+        0.1863
+       ]
+      }
+     },
+     "headline_key": "bb_rel",
+     "headline_incremental_rho": 0.0981,
+     "headline_raw_rho": 0.0973,
+     "headline_key_is_max_of": 5,
+     "headline_raw_excludes_zero": true,
+     "headline_incremental_excludes_zero": true,
+     "derived_weight_incremental": 1.0,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 0.514,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    },
+    "A+": {
+     "n": 525,
+     "reported": true,
+     "mean_age": 21.68,
+     "mean_fv": 44.11,
+     "keys": {
+      "ops_rel": {
+       "raw_rho": 0.1231,
+       "raw_ci95": [
+        0.0318,
+        0.2157
+       ],
+       "incremental_rho": 0.001,
+       "incremental_ci95": [
+        -0.0898,
+        0.0881
+       ]
+      },
+      "obp_rel": {
+       "raw_rho": 0.1184,
+       "raw_ci95": [
+        0.03,
+        0.2026
+       ],
+       "incremental_rho": 0.0338,
+       "incremental_ci95": [
+        -0.0517,
+        0.1213
+       ]
+      },
+      "iso_rel": {
+       "raw_rho": 0.066,
+       "raw_ci95": [
+        -0.0249,
+        0.1573
+       ],
+       "incremental_rho": -0.0251,
+       "incremental_ci95": [
+        -0.1177,
+        0.0679
+       ]
+      },
+      "k_rel": {
+       "raw_rho": -0.1016,
+       "raw_ci95": [
+        -0.1872,
+        -0.0113
+       ],
+       "incremental_rho": -0.0141,
+       "incremental_ci95": [
+        -0.1002,
+        0.0803
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": 0.049,
+       "raw_ci95": [
+        -0.0454,
+        0.1354
+       ],
+       "incremental_rho": 0.0887,
+       "incremental_ci95": [
+        -0.0077,
+        0.1803
+       ]
+      }
+     },
+     "headline_key": "bb_rel",
+     "headline_incremental_rho": 0.0887,
+     "headline_raw_rho": 0.049,
+     "headline_key_is_max_of": 5,
+     "headline_raw_excludes_zero": false,
+     "headline_incremental_excludes_zero": false,
+     "derived_weight_incremental": 0.0,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 0.0,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    },
+    "AA": {
+     "n": 491,
+     "reported": true,
+     "mean_age": 22.71,
+     "mean_fv": 44.04,
+     "keys": {
+      "ops_rel": {
+       "raw_rho": 0.167,
+       "raw_ci95": [
+        0.0752,
+        0.2582
+       ],
+       "incremental_rho": 0.0221,
+       "incremental_ci95": [
+        -0.0706,
+        0.1155
+       ]
+      },
+      "obp_rel": {
+       "raw_rho": 0.1546,
+       "raw_ci95": [
+        0.0614,
+        0.2459
+       ],
+       "incremental_rho": 0.0811,
+       "incremental_ci95": [
+        -0.0092,
+        0.1727
+       ]
+      },
+      "iso_rel": {
+       "raw_rho": 0.0865,
+       "raw_ci95": [
+        -0.0053,
+        0.1777
+       ],
+       "incremental_rho": -0.0053,
+       "incremental_ci95": [
+        -0.1046,
+        0.0941
+       ]
+      },
+      "k_rel": {
+       "raw_rho": -0.1057,
+       "raw_ci95": [
+        -0.1963,
+        -0.0145
+       ],
+       "incremental_rho": -0.025,
+       "incremental_ci95": [
+        -0.1186,
+        0.0708
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": 0.0454,
+       "raw_ci95": [
+        -0.0474,
+        0.1421
+       ],
+       "incremental_rho": 0.0682,
+       "incremental_ci95": [
+        -0.032,
+        0.1627
+       ]
+      }
+     },
+     "headline_key": "obp_rel",
+     "headline_incremental_rho": 0.0811,
+     "headline_raw_rho": 0.1546,
+     "headline_key_is_max_of": 5,
+     "headline_raw_excludes_zero": true,
+     "headline_incremental_excludes_zero": false,
+     "derived_weight_incremental": 0.0,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 0.816,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    },
+    "AAA": {
+     "n": 239,
+     "reported": true,
+     "mean_age": 23.76,
+     "mean_fv": 42.99,
+     "keys": {
+      "ops_rel": {
+       "raw_rho": 0.1735,
+       "raw_ci95": [
+        0.0299,
+        0.3151
+       ],
+       "incremental_rho": 0.1158,
+       "incremental_ci95": [
+        -0.0323,
+        0.2506
+       ]
+      },
+      "obp_rel": {
+       "raw_rho": 0.1894,
+       "raw_ci95": [
+        0.051,
+        0.3231
+       ],
+       "incremental_rho": 0.1175,
+       "incremental_ci95": [
+        -0.0258,
+        0.2571
+       ]
+      },
+      "iso_rel": {
+       "raw_rho": 0.0612,
+       "raw_ci95": [
+        -0.0768,
+        0.1989
+       ],
+       "incremental_rho": 0.0318,
+       "incremental_ci95": [
+        -0.1179,
+        0.1773
+       ]
+      },
+      "k_rel": {
+       "raw_rho": -0.129,
+       "raw_ci95": [
+        -0.2562,
+        0.0033
+       ],
+       "incremental_rho": -0.0623,
+       "incremental_ci95": [
+        -0.1989,
+        0.0793
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": 0.0196,
+       "raw_ci95": [
+        -0.1265,
+        0.159
+       ],
+       "incremental_rho": 0.0518,
+       "incremental_ci95": [
+        -0.0813,
+        0.1872
+       ]
+      }
+     },
+     "headline_key": "obp_rel",
+     "headline_incremental_rho": 0.1175,
+     "headline_raw_rho": 0.1894,
+     "headline_key_is_max_of": 5,
+     "headline_raw_excludes_zero": true,
+     "headline_incremental_excludes_zero": false,
+     "derived_weight_incremental": 0.0,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 1.0,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    }
+   },
+   "by_league": {
+    "A|MID": {
+     "n": 202,
+     "mean_label": 3.781,
+     "mean_fv": 43.7,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": -0.0016,
+       "incremental_ci95": [
+        -0.1573,
+        0.1585
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.1207,
+       "incremental_ci95": [
+        -0.0338,
+        0.2679
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": -0.0449,
+       "incremental_ci95": [
+        -0.1962,
+        0.1033
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": -0.0621,
+       "incremental_ci95": [
+        -0.2118,
+        0.0824
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.1594,
+       "incremental_ci95": [
+        0.0148,
+        0.305
+       ],
+       "excludes_zero": true
+      }
+     }
+    },
+    "A|NYP": {
+     "n": 53,
+     "mean_label": 4.301,
+     "mean_fv": 43.99,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.2261,
+       "incremental_ci95": [
+        -0.0546,
+        0.4988
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.2224,
+       "incremental_ci95": [
+        -0.0646,
+        0.4845
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": 0.1647,
+       "incremental_ci95": [
+        -0.1148,
+        0.4188
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": -0.1774,
+       "incremental_ci95": [
+        -0.4371,
+        0.1199
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.3258,
+       "incremental_ci95": [
+        0.0481,
+        0.5513
+       ],
+       "excludes_zero": true
+      }
+     }
+    },
+    "A|SAL": {
+     "n": 128,
+     "mean_label": 2.969,
+     "mean_fv": 44.6,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.0938,
+       "incremental_ci95": [
+        -0.0799,
+        0.2717
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.0973,
+       "incremental_ci95": [
+        -0.0794,
+        0.2627
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": -0.0078,
+       "incremental_ci95": [
+        -0.2049,
+        0.1857
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": -0.087,
+       "incremental_ci95": [
+        -0.2552,
+        0.0907
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0128,
+       "incremental_ci95": [
+        -0.1506,
+        0.1769
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "A+|A+ E": {
+     "n": 42,
+     "mean_label": 4.263,
+     "mean_fv": 44.49,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.038,
+       "incremental_ci95": [
+        -0.263,
+        0.3272
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.2033,
+       "incremental_ci95": [
+        -0.1148,
+        0.4953
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": -0.0081,
+       "incremental_ci95": [
+        -0.3359,
+        0.2968
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": 0.0026,
+       "incremental_ci95": [
+        -0.3146,
+        0.3368
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.2532,
+       "incremental_ci95": [
+        -0.0678,
+        0.5411
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "A+|CAL": {
+     "n": 98,
+     "mean_label": 4.166,
+     "mean_fv": 44.25,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.1094,
+       "incremental_ci95": [
+        -0.088,
+        0.3022
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.1777,
+       "incremental_ci95": [
+        -0.0279,
+        0.3674
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": 0.0173,
+       "incremental_ci95": [
+        -0.1939,
+        0.24
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": 0.0852,
+       "incremental_ci95": [
+        -0.1365,
+        0.2903
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.153,
+       "incremental_ci95": [
+        -0.0703,
+        0.356
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "A+|CAR": {
+     "n": 96,
+     "mean_label": 3.108,
+     "mean_fv": 44.03,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": -0.097,
+       "incremental_ci95": [
+        -0.2936,
+        0.124
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": -0.0067,
+       "incremental_ci95": [
+        -0.2079,
+        0.2027
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": -0.2046,
+       "incremental_ci95": [
+        -0.3921,
+        0.0097
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": -0.2567,
+       "incremental_ci95": [
+        -0.4503,
+        -0.0486
+       ],
+       "excludes_zero": true
+      },
+      "bb_rel": {
+       "incremental_rho": -0.0487,
+       "incremental_ci95": [
+        -0.2687,
+        0.1644
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "A+|FSL": {
+     "n": 151,
+     "mean_label": 3.451,
+     "mean_fv": 44.02,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.0204,
+       "incremental_ci95": [
+        -0.1386,
+        0.1778
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": -0.0054,
+       "incremental_ci95": [
+        -0.1581,
+        0.1512
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": 0.1101,
+       "incremental_ci95": [
+        -0.0571,
+        0.2654
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": 0.0899,
+       "incremental_ci95": [
+        -0.0712,
+        0.2401
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.1756,
+       "incremental_ci95": [
+        0.0078,
+        0.3332
+       ],
+       "excludes_zero": true
+      }
+     }
+    },
+    "AA|AA C": {
+     "n": 46,
+     "mean_label": 3.657,
+     "mean_fv": 44.11,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.039,
+       "incremental_ci95": [
+        -0.2607,
+        0.343
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.1429,
+       "incremental_ci95": [
+        -0.1995,
+        0.449
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": -0.0874,
+       "incremental_ci95": [
+        -0.3794,
+        0.231
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": 0.1111,
+       "incremental_ci95": [
+        -0.2149,
+        0.4197
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.072,
+       "incremental_ci95": [
+        -0.2539,
+        0.3639
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "AA|EAS": {
+     "n": 146,
+     "mean_label": 3.411,
+     "mean_fv": 44.41,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.0429,
+       "incremental_ci95": [
+        -0.1396,
+        0.2196
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.1081,
+       "incremental_ci95": [
+        -0.076,
+        0.2825
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": 0.0004,
+       "incremental_ci95": [
+        -0.1747,
+        0.1727
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": -0.0454,
+       "incremental_ci95": [
+        -0.2075,
+        0.1143
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0815,
+       "incremental_ci95": [
+        -0.0818,
+        0.2531
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "AA|SOU": {
+     "n": 128,
+     "mean_label": 3.669,
+     "mean_fv": 44.48,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": -0.0801,
+       "incremental_ci95": [
+        -0.2657,
+        0.0956
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": -0.0125,
+       "incremental_ci95": [
+        -0.2,
+        0.1784
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": -0.1126,
+       "incremental_ci95": [
+        -0.2884,
+        0.0683
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": 0.0003,
+       "incremental_ci95": [
+        -0.185,
+        0.1839
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": -0.0535,
+       "incremental_ci95": [
+        -0.2314,
+        0.1326
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "AA|TEX": {
+     "n": 115,
+     "mean_label": 3.991,
+     "mean_fv": 43.27,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.0887,
+       "incremental_ci95": [
+        -0.1134,
+        0.2821
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.0824,
+       "incremental_ci95": [
+        -0.1006,
+        0.2669
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": 0.1541,
+       "incremental_ci95": [
+        -0.0542,
+        0.3505
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": 0.0084,
+       "incremental_ci95": [
+        -0.1787,
+        0.2006
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.2174,
+       "incremental_ci95": [
+        0.0287,
+        0.3899
+       ],
+       "excludes_zero": true
+      }
+     }
+    },
+    "AAA|INT": {
+     "n": 117,
+     "mean_label": 3.177,
+     "mean_fv": 43.42,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.0848,
+       "incremental_ci95": [
+        -0.1228,
+        0.2762
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.1385,
+       "incremental_ci95": [
+        -0.0581,
+        0.3249
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": -0.0632,
+       "incremental_ci95": [
+        -0.2621,
+        0.1325
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": 0.0076,
+       "incremental_ci95": [
+        -0.1999,
+        0.1938
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0974,
+       "incremental_ci95": [
+        -0.098,
+        0.2964
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "AAA|PCL": {
+     "n": 67,
+     "mean_label": 3.255,
+     "mean_fv": 41.94,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.2399,
+       "incremental_ci95": [
+        -0.0166,
+        0.5112
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.1295,
+       "incremental_ci95": [
+        -0.1583,
+        0.4158
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": 0.2469,
+       "incremental_ci95": [
+        -0.0395,
+        0.5133
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": -0.1653,
+       "incremental_ci95": [
+        -0.4127,
+        0.105
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0966,
+       "incremental_ci95": [
+        -0.1579,
+        0.3559
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "CPX|APP": {
+     "n": 68,
+     "mean_label": 3.839,
+     "mean_fv": 44.84,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.1201,
+       "incremental_ci95": [
+        -0.1178,
+        0.349
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.1889,
+       "incremental_ci95": [
+        -0.0486,
+        0.4185
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": 0.0363,
+       "incremental_ci95": [
+        -0.2109,
+        0.2857
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": -0.0738,
+       "incremental_ci95": [
+        -0.3089,
+        0.1814
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.2821,
+       "incremental_ci95": [
+        0.0602,
+        0.4784
+       ],
+       "excludes_zero": true
+      }
+     }
+    },
+    "CPX|AZL": {
+     "n": 72,
+     "mean_label": 3.463,
+     "mean_fv": 44.85,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": -0.1204,
+       "incremental_ci95": [
+        -0.398,
+        0.1433
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": -0.0992,
+       "incremental_ci95": [
+        -0.3601,
+        0.189
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": -0.1228,
+       "incremental_ci95": [
+        -0.3599,
+        0.1273
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": -0.1317,
+       "incremental_ci95": [
+        -0.367,
+        0.1139
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": -0.0254,
+       "incremental_ci95": [
+        -0.2551,
+        0.208
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "CPX|GCL": {
+     "n": 70,
+     "mean_label": 3.975,
+     "mean_fv": 44.47,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.1641,
+       "incremental_ci95": [
+        -0.0933,
+        0.3989
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.1889,
+       "incremental_ci95": [
+        -0.0804,
+        0.4224
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": 0.0054,
+       "incremental_ci95": [
+        -0.2541,
+        0.2481
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": 0.0122,
+       "incremental_ci95": [
+        -0.2495,
+        0.2788
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0542,
+       "incremental_ci95": [
+        -0.1584,
+        0.2657
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "CPX|PIO": {
+     "n": 63,
+     "mean_label": 3.001,
+     "mean_fv": 43.27,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": 0.0407,
+       "incremental_ci95": [
+        -0.1977,
+        0.2982
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.0677,
+       "incremental_ci95": [
+        -0.1968,
+        0.3391
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": -0.0038,
+       "incremental_ci95": [
+        -0.2421,
+        0.2463
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": -0.0848,
+       "incremental_ci95": [
+        -0.3127,
+        0.1702
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0306,
+       "incremental_ci95": [
+        -0.2374,
+        0.2851
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "DSL|DSL": {
+     "n": 66,
+     "mean_label": 5.008,
+     "mean_fv": 44.76,
+     "keys": {
+      "ops_rel": {
+       "incremental_rho": -0.125,
+       "incremental_ci95": [
+        -0.3911,
+        0.1361
+       ],
+       "excludes_zero": false
+      },
+      "obp_rel": {
+       "incremental_rho": 0.0411,
+       "incremental_ci95": [
+        -0.2401,
+        0.2919
+       ],
+       "excludes_zero": false
+      },
+      "iso_rel": {
+       "incremental_rho": -0.22,
+       "incremental_ci95": [
+        -0.4835,
+        0.0618
+       ],
+       "excludes_zero": false
+      },
+      "k_rel": {
+       "incremental_rho": -0.1061,
+       "incremental_ci95": [
+        -0.3652,
+        0.1495
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0137,
+       "incremental_ci95": [
+        -0.2611,
+        0.2791
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "_family": {
+     "league_cells": 18,
+     "key_tests": 90,
+     "intervals_excluding_zero": 6,
+     "expected_by_chance_at_95pct": 4.5,
+     "reading": "compare intervals_excluding_zero against expected_by_chance. These intervals are UNCORRECTED and the per-cell headline is a max over five keys, so a count near the chance line is a null, not a set of league effects. No cell here is a finding on its own."
+    }
+   }
+  },
+  "pit": {
+   "n_rows": 983,
+   "n_records": 2223,
+   "by_level": {
+    "DSL": {
+     "n": 88,
+     "reported": true,
+     "mean_age": 18.24,
+     "mean_fv": 40.06,
+     "keys": {
+      "k_rel": {
+       "raw_rho": 0.2099,
+       "raw_ci95": [
+        -0.0112,
+        0.408
+       ],
+       "incremental_rho": 0.2113,
+       "incremental_ci95": [
+        -0.0123,
+        0.4063
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": -0.053,
+       "raw_ci95": [
+        -0.258,
+        0.1574
+       ],
+       "incremental_rho": -0.0806,
+       "incremental_ci95": [
+        -0.2876,
+        0.1391
+       ]
+      },
+      "era_rel": {
+       "raw_rho": -0.1295,
+       "raw_ci95": [
+        -0.3393,
+        0.0964
+       ],
+       "incremental_rho": -0.1184,
+       "incremental_ci95": [
+        -0.3167,
+        0.0909
+       ]
+      }
+     },
+     "headline_key": "k_rel",
+     "headline_incremental_rho": 0.2113,
+     "headline_raw_rho": 0.2099,
+     "headline_key_is_max_of": 3,
+     "headline_raw_excludes_zero": false,
+     "headline_incremental_excludes_zero": false,
+     "derived_weight_incremental": 0.0,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 0.0,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    },
+    "CPX": {
+     "n": 287,
+     "reported": true,
+     "mean_age": 19.84,
+     "mean_fv": 40.86,
+     "keys": {
+      "k_rel": {
+       "raw_rho": 0.0779,
+       "raw_ci95": [
+        -0.0462,
+        0.195
+       ],
+       "incremental_rho": 0.0053,
+       "incremental_ci95": [
+        -0.115,
+        0.12
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": -0.0464,
+       "raw_ci95": [
+        -0.1644,
+        0.0714
+       ],
+       "incremental_rho": 0.0014,
+       "incremental_ci95": [
+        -0.1177,
+        0.1236
+       ]
+      },
+      "era_rel": {
+       "raw_rho": 0.0346,
+       "raw_ci95": [
+        -0.0905,
+        0.1521
+       ],
+       "incremental_rho": 0.0368,
+       "incremental_ci95": [
+        -0.0846,
+        0.154
+       ]
+      }
+     },
+     "headline_key": "era_rel",
+     "headline_incremental_rho": 0.0368,
+     "headline_raw_rho": 0.0346,
+     "headline_key_is_max_of": 3,
+     "headline_raw_excludes_zero": false,
+     "headline_incremental_excludes_zero": false,
+     "derived_weight_incremental": 0.0,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 0.0,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    },
+    "A": {
+     "n": 552,
+     "reported": true,
+     "mean_age": 21.39,
+     "mean_fv": 41.2,
+     "keys": {
+      "k_rel": {
+       "raw_rho": 0.0999,
+       "raw_ci95": [
+        0.0132,
+        0.1869
+       ],
+       "incremental_rho": 0.0623,
+       "incremental_ci95": [
+        -0.0251,
+        0.1446
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": 0.0358,
+       "raw_ci95": [
+        -0.0573,
+        0.1217
+       ],
+       "incremental_rho": 0.0428,
+       "incremental_ci95": [
+        -0.0495,
+        0.131
+       ]
+      },
+      "era_rel": {
+       "raw_rho": -0.022,
+       "raw_ci95": [
+        -0.1089,
+        0.0651
+       ],
+       "incremental_rho": -0.0075,
+       "incremental_ci95": [
+        -0.0905,
+        0.0773
+       ]
+      }
+     },
+     "headline_key": "k_rel",
+     "headline_incremental_rho": 0.0623,
+     "headline_raw_rho": 0.0999,
+     "headline_key_is_max_of": 3,
+     "headline_raw_excludes_zero": true,
+     "headline_incremental_excludes_zero": false,
+     "derived_weight_incremental": 0.0,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 0.556,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    },
+    "A+": {
+     "n": 570,
+     "reported": true,
+     "mean_age": 22.41,
+     "mean_fv": 41.35,
+     "keys": {
+      "k_rel": {
+       "raw_rho": 0.1796,
+       "raw_ci95": [
+        0.0927,
+        0.2605
+       ],
+       "incremental_rho": 0.0915,
+       "incremental_ci95": [
+        0.0074,
+        0.1783
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": -0.0601,
+       "raw_ci95": [
+        -0.1416,
+        0.0288
+       ],
+       "incremental_rho": -0.0298,
+       "incremental_ci95": [
+        -0.112,
+        0.0576
+       ]
+      },
+      "era_rel": {
+       "raw_rho": -0.1299,
+       "raw_ci95": [
+        -0.2116,
+        -0.037
+       ],
+       "incremental_rho": -0.0798,
+       "incremental_ci95": [
+        -0.1617,
+        0.0112
+       ]
+      }
+     },
+     "headline_key": "k_rel",
+     "headline_incremental_rho": 0.0915,
+     "headline_raw_rho": 0.1796,
+     "headline_key_is_max_of": 3,
+     "headline_raw_excludes_zero": true,
+     "headline_incremental_excludes_zero": true,
+     "derived_weight_incremental": 0.524,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 1.0,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    },
+    "AA": {
+     "n": 512,
+     "reported": true,
+     "mean_age": 23.3,
+     "mean_fv": 41.35,
+     "keys": {
+      "k_rel": {
+       "raw_rho": 0.0871,
+       "raw_ci95": [
+        -0.0099,
+        0.1767
+       ],
+       "incremental_rho": 0.0636,
+       "incremental_ci95": [
+        -0.0303,
+        0.1546
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": -0.0556,
+       "raw_ci95": [
+        -0.1404,
+        0.0372
+       ],
+       "incremental_rho": -0.0397,
+       "incremental_ci95": [
+        -0.1302,
+        0.0548
+       ]
+      },
+      "era_rel": {
+       "raw_rho": -0.0915,
+       "raw_ci95": [
+        -0.1819,
+        -0.0009
+       ],
+       "incremental_rho": -0.0338,
+       "incremental_ci95": [
+        -0.123,
+        0.0553
+       ]
+      }
+     },
+     "headline_key": "k_rel",
+     "headline_incremental_rho": 0.0636,
+     "headline_raw_rho": 0.0871,
+     "headline_key_is_max_of": 3,
+     "headline_raw_excludes_zero": false,
+     "headline_incremental_excludes_zero": false,
+     "derived_weight_incremental": 0.0,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 0.0,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    },
+    "AAA": {
+     "n": 214,
+     "reported": true,
+     "mean_age": 24.1,
+     "mean_fv": 40.69,
+     "keys": {
+      "k_rel": {
+       "raw_rho": 0.0648,
+       "raw_ci95": [
+        -0.073,
+        0.1981
+       ],
+       "incremental_rho": 0.1745,
+       "incremental_ci95": [
+        0.0376,
+        0.3047
+       ]
+      },
+      "bb_rel": {
+       "raw_rho": -0.0139,
+       "raw_ci95": [
+        -0.1481,
+        0.1285
+       ],
+       "incremental_rho": 0.086,
+       "incremental_ci95": [
+        -0.05,
+        0.2293
+       ]
+      },
+      "era_rel": {
+       "raw_rho": -0.0334,
+       "raw_ci95": [
+        -0.1768,
+        0.1143
+       ],
+       "incremental_rho": -0.0253,
+       "incremental_ci95": [
+        -0.1701,
+        0.1115
+       ]
+      }
+     },
+     "headline_key": "k_rel",
+     "headline_incremental_rho": 0.1745,
+     "headline_raw_rho": 0.0648,
+     "headline_key_is_max_of": 3,
+     "headline_raw_excludes_zero": false,
+     "headline_incremental_excludes_zero": true,
+     "derived_weight_incremental": 1.0,
+     "weight_note_incremental": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it.",
+     "derived_weight_raw": 0.0,
+     "weight_note_raw": "0.0 means the interval spans zero or the point estimate is negative, so this level buys nothing on this leg. It does NOT mean the level is worthless, only that this pool cannot resolve it."
+    }
+   },
+   "by_league": {
+    "A|MID": {
+     "n": 197,
+     "mean_label": 2.115,
+     "mean_fv": 41.24,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.0897,
+       "incremental_ci95": [
+        -0.0373,
+        0.2233
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0962,
+       "incremental_ci95": [
+        -0.0501,
+        0.2505
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": -0.0534,
+       "incremental_ci95": [
+        -0.19,
+        0.0885
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "A|NYP": {
+     "n": 54,
+     "mean_label": 1.618,
+     "mean_fv": 41.02,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": -0.0075,
+       "incremental_ci95": [
+        -0.2925,
+        0.2683
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0427,
+       "incremental_ci95": [
+        -0.2293,
+        0.3013
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": 0.2531,
+       "incremental_ci95": [
+        -0.0241,
+        0.4922
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "A|SAL": {
+     "n": 168,
+     "mean_label": 1.756,
+     "mean_fv": 41.23,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.032,
+       "incremental_ci95": [
+        -0.1252,
+        0.1898
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0031,
+       "incremental_ci95": [
+        -0.1468,
+        0.153
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": -0.0236,
+       "incremental_ci95": [
+        -0.1775,
+        0.1314
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "A+|A+ E": {
+     "n": 43,
+     "mean_label": 2.184,
+     "mean_fv": 40.16,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": -0.1313,
+       "incremental_ci95": [
+        -0.4543,
+        0.2178
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": -0.0007,
+       "incremental_ci95": [
+        -0.2725,
+        0.2682
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": 0.0172,
+       "incremental_ci95": [
+        -0.2982,
+        0.3319
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "A+|CAL": {
+     "n": 96,
+     "mean_label": 2.073,
+     "mean_fv": 41.71,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.2298,
+       "incremental_ci95": [
+        0.0232,
+        0.4033
+       ],
+       "excludes_zero": true
+      },
+      "bb_rel": {
+       "incremental_rho": 0.1106,
+       "incremental_ci95": [
+        -0.0966,
+        0.3077
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": -0.2241,
+       "incremental_ci95": [
+        -0.406,
+        -0.0344
+       ],
+       "excludes_zero": true
+      }
+     }
+    },
+    "A+|CAR": {
+     "n": 115,
+     "mean_label": 1.715,
+     "mean_fv": 40.82,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": -0.0035,
+       "incremental_ci95": [
+        -0.188,
+        0.1859
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0443,
+       "incremental_ci95": [
+        -0.1524,
+        0.237
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": 0.0335,
+       "incremental_ci95": [
+        -0.1401,
+        0.2084
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "A+|FSL": {
+     "n": 171,
+     "mean_label": 2.244,
+     "mean_fv": 41.67,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.1171,
+       "incremental_ci95": [
+        -0.0376,
+        0.2597
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": -0.1372,
+       "incremental_ci95": [
+        -0.2826,
+        0.0178
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": -0.1045,
+       "incremental_ci95": [
+        -0.2601,
+        0.0482
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "A+|MID": {
+     "n": 42,
+     "mean_label": 2.026,
+     "mean_fv": 42.06,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.4061,
+       "incremental_ci95": [
+        0.0885,
+        0.6548
+       ],
+       "excludes_zero": true
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0486,
+       "incremental_ci95": [
+        -0.2733,
+        0.3739
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": -0.3254,
+       "incremental_ci95": [
+        -0.5753,
+        -0.0094
+       ],
+       "excludes_zero": true
+      }
+     }
+    },
+    "AA|EAS": {
+     "n": 161,
+     "mean_label": 2.256,
+     "mean_fv": 41.38,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": -0.0268,
+       "incremental_ci95": [
+        -0.1947,
+        0.1476
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": -0.1231,
+       "incremental_ci95": [
+        -0.2849,
+        0.0482
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": -0.0751,
+       "incremental_ci95": [
+        -0.2232,
+        0.0796
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "AA|SOU": {
+     "n": 130,
+     "mean_label": 1.927,
+     "mean_fv": 41.73,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.2058,
+       "incremental_ci95": [
+        0.0263,
+        0.3795
+       ],
+       "excludes_zero": true
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0493,
+       "incremental_ci95": [
+        -0.1385,
+        0.2317
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": 0.0243,
+       "incremental_ci95": [
+        -0.159,
+        0.2205
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "AA|TEX": {
+     "n": 131,
+     "mean_label": 1.606,
+     "mean_fv": 41.49,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.0818,
+       "incremental_ci95": [
+        -0.1033,
+        0.2485
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": -0.0417,
+       "incremental_ci95": [
+        -0.2196,
+        0.1532
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": 0.0134,
+       "incremental_ci95": [
+        -0.1605,
+        0.1992
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "AAA|INT": {
+     "n": 101,
+     "mean_label": 1.753,
+     "mean_fv": 40.93,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.032,
+       "incremental_ci95": [
+        -0.1698,
+        0.2352
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": -0.0447,
+       "incremental_ci95": [
+        -0.2533,
+        0.1804
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": -0.0425,
+       "incremental_ci95": [
+        -0.2544,
+        0.1916
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "AAA|PCL": {
+     "n": 72,
+     "mean_label": 1.448,
+     "mean_fv": 40.33,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.3616,
+       "incremental_ci95": [
+        0.127,
+        0.5706
+       ],
+       "excludes_zero": true
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0546,
+       "incremental_ci95": [
+        -0.1787,
+        0.2901
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": -0.0496,
+       "incremental_ci95": [
+        -0.2808,
+        0.1842
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "CPX|APP": {
+     "n": 73,
+     "mean_label": 1.408,
+     "mean_fv": 41.06,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": -0.0885,
+       "incremental_ci95": [
+        -0.3092,
+        0.1344
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0941,
+       "incremental_ci95": [
+        -0.1543,
+        0.3226
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": 0.126,
+       "incremental_ci95": [
+        -0.1127,
+        0.3541
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "CPX|AZL": {
+     "n": 74,
+     "mean_label": 1.99,
+     "mean_fv": 41.04,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.0282,
+       "incremental_ci95": [
+        -0.1924,
+        0.2677
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": -0.1112,
+       "incremental_ci95": [
+        -0.3375,
+        0.1306
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": 0.0739,
+       "incremental_ci95": [
+        -0.1916,
+        0.3403
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "CPX|GCL": {
+     "n": 89,
+     "mean_label": 1.376,
+     "mean_fv": 40.87,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.0621,
+       "incremental_ci95": [
+        -0.1471,
+        0.2588
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": 0.0348,
+       "incremental_ci95": [
+        -0.2023,
+        0.2602
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": -0.0401,
+       "incremental_ci95": [
+        -0.2731,
+        0.1799
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "CPX|PIO": {
+     "n": 42,
+     "mean_label": 2.035,
+     "mean_fv": 40.41,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.113,
+       "incremental_ci95": [
+        -0.1882,
+        0.4276
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": -0.0789,
+       "incremental_ci95": [
+        -0.3879,
+        0.243
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": -0.1508,
+       "incremental_ci95": [
+        -0.4564,
+        0.1611
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "DSL|DSL": {
+     "n": 86,
+     "mean_label": 1.393,
+     "mean_fv": 40.03,
+     "keys": {
+      "k_rel": {
+       "incremental_rho": 0.2184,
+       "incremental_ci95": [
+        -0.0101,
+        0.4243
+       ],
+       "excludes_zero": false
+      },
+      "bb_rel": {
+       "incremental_rho": -0.0309,
+       "incremental_ci95": [
+        -0.2395,
+        0.1747
+       ],
+       "excludes_zero": false
+      },
+      "era_rel": {
+       "incremental_rho": -0.0881,
+       "incremental_ci95": [
+        -0.2947,
+        0.1373
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "_family": {
+     "league_cells": 18,
+     "key_tests": 54,
+     "intervals_excluding_zero": 6,
+     "expected_by_chance_at_95pct": 2.7,
+     "reading": "compare intervals_excluding_zero against expected_by_chance. These intervals are UNCORRECTED and the per-cell headline is a max over five keys, so a count near the chance line is a null, not a set of league effects. No cell here is a finding on its own."
+    }
+   }
+  }
+ }
+}

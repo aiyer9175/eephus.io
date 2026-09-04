@@ -1,20 +1,20 @@
 {
- "generated_at": "2026-08-19T21:10:39Z",
+ "generated_at": "2026-09-04T20:36:47Z",
  "summary": {
-  "board_rows": 9763,
-  "active_board_rows": 4690,
-  "roster_rows": 10715,
-  "colliding_slugs": 199,
-  "critical_player_keys": 11,
+  "board_rows": 9782,
+  "active_board_rows": 4687,
+  "roster_rows": 10730,
+  "colliding_slugs": 200,
+  "critical_player_keys": 6,
   "critical_active_player_keys": 0,
   "c1_shared_key": 0,
-  "c1_unattributed": 0,
-  "c1_shadowed": 157,
+  "c1_unattributed": 3,
+  "c1_shadowed": 155,
   "c1_split": 9,
   "c1_untracked": 33,
   "c2_double_bound": 0,
   "c3_unresolved_active": 0,
-  "c4_side_conflicts": 10,
+  "c4_side_conflicts": 2,
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
   "c7_name_variant_splits": 23,
@@ -23,21 +23,113 @@
   "unassigned_null_id_rows": 22
  },
  "critical_player_keys": [
-  "aaron_brown",
   "adrian_hernandez",
-  "alexander_campos",
   "david_rodriguez",
   "dominic_keegan",
   "enmanuel_rodriguez",
-  "jose_gomez",
-  "jose_rondon",
-  "junior_garcia",
   "michael_perez",
   "miguel_gomez"
  ],
  "critical_active_player_keys": [],
  "frankenstein_records": [],
- "unsplit_collisions": [],
+ "unsplit_collisions": [
+  {
+   "check": "C1",
+   "slug": "david_rodriguez",
+   "status": "unattributed",
+   "n_humans": 2,
+   "board_key": "david_rodriguez",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "C",
+   "board_level": null,
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 703330,
+     "name": "David Rodriguez",
+     "player_key": null,
+     "position": "P",
+     "org": "KCR",
+     "level": "CPX",
+     "age": 22.9
+    },
+    {
+     "mlbam_id": 815095,
+     "name": "David Rodriguez",
+     "player_key": null,
+     "position": "P",
+     "org": "ATL",
+     "level": "A+",
+     "age": 24.7
+    }
+   ]
+  },
+  {
+   "check": "C1",
+   "slug": "enmanuel_rodriguez",
+   "status": "unattributed",
+   "n_humans": 2,
+   "board_key": "enmanuel_rodriguez",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "CF",
+   "board_level": null,
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 838010,
+     "name": "Enmanuel Rodriguez",
+     "player_key": null,
+     "position": "P",
+     "org": "CHW",
+     "level": "DSL",
+     "age": 17.1
+    },
+    {
+     "mlbam_id": 840917,
+     "name": "Enmanuel Rodriguez",
+     "player_key": null,
+     "position": "P",
+     "org": "BAL",
+     "level": "DSL",
+     "age": 19.7
+    }
+   ]
+  },
+  {
+   "check": "C1",
+   "slug": "michael_perez",
+   "status": "unattributed",
+   "n_humans": 2,
+   "board_key": "michael_perez",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "C",
+   "board_level": null,
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 605421,
+     "name": "Michael Pérez",
+     "player_key": null,
+     "position": "C",
+     "org": "ARI",
+     "level": "AAA",
+     "age": 34.1
+    },
+    {
+     "mlbam_id": 805872,
+     "name": "Michael Perez",
+     "player_key": null,
+     "position": "P",
+     "org": "MIA",
+     "level": "AA",
+     "age": 24.0
+    }
+   ]
+  }
+ ],
  "shadowed_slugs": [
   {
    "slug": "adrian_bello",
@@ -339,15 +431,6 @@
    ]
   },
   {
-   "slug": "david_rodriguez",
-   "board_key": "david_rodriguez",
-   "n_humans": 2,
-   "mlbam_ids": [
-    703330,
-    815095
-   ]
-  },
-  {
    "slug": "diego_castillo",
    "board_key": "diego_castillo",
    "n_humans": 2,
@@ -417,15 +500,6 @@
    "mlbam_ids": [
     825639,
     830026
-   ]
-  },
-  {
-   "slug": "enmanuel_rodriguez",
-   "board_key": "enmanuel_rodriguez",
-   "n_humans": 2,
-   "mlbam_ids": [
-    838010,
-    840917
    ]
   },
   {
@@ -1230,12 +1304,12 @@
    ]
   },
   {
-   "slug": "michael_perez",
-   "board_key": "michael_perez",
+   "slug": "michael_massey",
+   "board_key": "michael_massey",
    "n_humans": 2,
    "mlbam_ids": [
-    605421,
-    805872
+    686681,
+    695602
    ]
   },
   {
@@ -1507,17 +1581,6 @@
  "side_conflicts": [
   {
    "check": "C4",
-   "player_key": "junior_garcia",
-   "board_position": "RF",
-   "claimed_side": "H",
-   "fielded_side": "P",
-   "fielded_games": 195,
-   "mlbam_id": 642371,
-   "scope": "inactive",
-   "overall_rank": null
-  },
-  {
-   "check": "C4",
    "player_key": "adrian_hernandez",
    "board_position": "CF",
    "claimed_side": "H",
@@ -1537,83 +1600,6 @@
    "mlbam_id": 685777,
    "scope": "inactive",
    "overall_rank": null
-  },
-  {
-   "check": "C4",
-   "player_key": "aaron_brown",
-   "board_position": "OF",
-   "claimed_side": "H",
-   "fielded_side": "P",
-   "fielded_games": 104,
-   "mlbam_id": 676345,
-   "scope": "inactive",
-   "overall_rank": null
-  },
-  {
-   "check": "C4",
-   "player_key": "michael_perez",
-   "board_position": "C",
-   "claimed_side": "H",
-   "fielded_side": "P",
-   "fielded_games": 84,
-   "mlbam_id": 805872,
-   "scope": "inactive",
-   "overall_rank": null
-  },
-  {
-   "check": "C4",
-   "player_key": "david_rodriguez",
-   "board_position": "C",
-   "claimed_side": "H",
-   "fielded_side": "P",
-   "fielded_games": 66,
-   "mlbam_id": 815095,
-   "scope": "inactive",
-   "overall_rank": null
-  },
-  {
-   "check": "C4",
-   "player_key": "alexander_campos",
-   "board_position": "2B",
-   "claimed_side": "H",
-   "fielded_side": "P",
-   "fielded_games": 62,
-   "mlbam_id": 814226,
-   "scope": "inactive",
-   "overall_rank": null
-  },
-  {
-   "check": "C4",
-   "player_key": "enmanuel_rodriguez",
-   "board_position": "CF",
-   "claimed_side": "H",
-   "fielded_side": "P",
-   "fielded_games": 14,
-   "mlbam_id": 840917,
-   "scope": "inactive",
-   "overall_rank": null
-  },
-  {
-   "check": "C4",
-   "player_key": "jose_gomez",
-   "board_position": "UTIL",
-   "claimed_side": "H",
-   "fielded_side": "P",
-   "fielded_games": 11,
-   "mlbam_id": 823845,
-   "scope": "inactive",
-   "overall_rank": null
-  },
-  {
-   "check": "C4",
-   "player_key": "jose_rondon",
-   "board_position": "SS",
-   "claimed_side": "H",
-   "fielded_side": "P",
-   "fielded_games": 11,
-   "mlbam_id": 831791,
-   "scope": "inactive",
-   "overall_rank": null
   }
  ],
  "birthdate_conflicts": [],
@@ -1624,7 +1610,7 @@
     "bj_murray",
     "bj_murray_jr"
    ],
-   "player_key": "bj_murray_jr",
+   "player_key": "bj_murray",
    "names": [
     "BJ Murray",
     "BJ Murray Jr."
@@ -1637,8 +1623,8 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-19",
-    "2025-07-31"
+    "2026-09-01",
+    "2026-09-04"
    ],
    "resolved_by_alias": true
   },
@@ -1730,7 +1716,7 @@
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
     "2022-08-02",
-    "2026-08-19"
+    "2026-09-04"
    ],
    "resolved_by_alias": false
   },
@@ -1822,7 +1808,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2023-08-01",
-    "2026-08-19"
+    "2026-09-04"
    ],
    "resolved_by_alias": true
   },
@@ -1845,7 +1831,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2022-08-02",
-    "2026-08-19"
+    "2026-09-04"
    ],
    "resolved_by_alias": true
   },
@@ -1868,7 +1854,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-02-12",
-    "2026-08-19"
+    "2026-09-04"
    ],
    "resolved_by_alias": true
   },
@@ -1913,7 +1899,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-19",
+    "2026-09-04",
     "2025-07-31"
    ],
    "resolved_by_alias": true
@@ -1982,7 +1968,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-19",
+    "2026-09-04",
     "2026-08-02"
    ],
    "resolved_by_alias": true
@@ -2005,7 +1991,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-19",
+    "2026-09-04",
     "2026-02-12"
    ],
    "resolved_by_alias": true
@@ -2028,7 +2014,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-19",
+    "2026-09-04",
     "2021-02-26"
    ],
    "resolved_by_alias": true
@@ -2052,7 +2038,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-08-02",
-    "2026-08-19"
+    "2026-09-04"
    ],
    "resolved_by_alias": true
   },
@@ -2074,7 +2060,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-19",
+    "2026-09-04",
     "2026-08-10"
    ],
    "resolved_by_alias": true
@@ -2120,7 +2106,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-19",
+    "2026-09-04",
     "2025-07-31"
    ],
    "resolved_by_alias": true
@@ -2143,8 +2129,8 @@
    ],
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
-    "2026-08-19",
-    "2026-08-19"
+    "2026-09-04",
+    "2026-09-04"
    ],
    "resolved_by_alias": false
   }

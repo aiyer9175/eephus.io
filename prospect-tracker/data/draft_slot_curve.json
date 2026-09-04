@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-19",
+ "generated_at": "2026-09-04",
  "draft_years": [
   2005,
   2018
@@ -14,7 +14,7 @@
   "scored": 6596
  },
  "conventions": {
-  "war_basis": "bWAR (war_daily, bat+pitch summed), the platform basis",
+  "war_basis": "war_source provider ewar_v2 (war_daily stint frames, bat+pitch summed), the platform basis; eWAR v2 = FIP-repriced pitching within role, position players equal bWAR until the SDR drop",
   "unsigned": "excluded when the person reappears in a later draft",
   "never_mlb": "scores 0 (the expectation includes busts)",
   "fit": "weighted decreasing isotonic (PAVA) on per-pick means, picks 1-500",
@@ -43,51 +43,51 @@
  "realized_career_by_bucket_2005_14": {
   "1": {
    "n": 9,
-   "mean_war": 28.369
+   "mean_war": 29.511
   },
   "5": {
    "n": 40,
-   "mean_war": 14.134
+   "mean_war": 14.451
   },
   "10": {
    "n": 46,
-   "mean_war": 12.915
+   "mean_war": 12.781
   },
   "20": {
    "n": 98,
-   "mean_war": 7.502
+   "mean_war": 7.312
   },
   "35": {
    "n": 145,
-   "mean_war": 4.218
+   "mean_war": 4.326
   },
   "50": {
    "n": 147,
-   "mean_war": 3.259
+   "mean_war": 3.256
   },
   "75": {
    "n": 243,
-   "mean_war": 1.988
+   "mean_war": 2.055
   },
   "100": {
    "n": 240,
-   "mean_war": 1.854
+   "mean_war": 1.899
   },
   "150": {
    "n": 476,
-   "mean_war": 1.207
+   "mean_war": 1.25
   },
   "200": {
    "n": 473,
-   "mean_war": 0.926
+   "mean_war": 0.953
   },
   "300": {
    "n": 941,
-   "mean_war": 0.911
+   "mean_war": 0.904
   },
   "500": {
    "n": 1770,
-   "mean_war": 0.291
+   "mean_war": 0.286
   }
  },
  "incumbent_step_table": {
@@ -106,223 +106,223 @@
   "10000": 0.03
  },
  "fitted_career_by_bucket": {
-  "1": 28.369,
-  "5": 15.3,
-  "10": 13.239,
-  "20": 7.466,
-  "35": 4.128,
-  "50": 3.167,
-  "75": 2.317,
-  "100": 1.574,
-  "150": 1.213,
-  "200": 1.147,
-  "300": 0.758,
-  "500": 0.282
+  "1": 29.511,
+  "5": 15.415,
+  "10": 13.143,
+  "20": 7.476,
+  "35": 4.146,
+  "50": 3.2,
+  "75": 2.363,
+  "100": 1.631,
+  "150": 1.236,
+  "200": 1.181,
+  "300": 0.75,
+  "500": 0.278
  },
  "fitted_first6_by_bucket": {
-  "1": 13.44,
-  "5": 8.492,
-  "10": 7.622,
-  "20": 4.545,
-  "35": 2.573,
-  "50": 1.976,
-  "75": 1.482,
-  "100": 1.073,
-  "150": 0.776,
-  "200": 0.65,
-  "300": 0.553,
-  "500": 0.203
+  "1": 14.447,
+  "5": 8.54,
+  "10": 7.465,
+  "20": 4.505,
+  "35": 2.579,
+  "50": 1.989,
+  "75": 1.494,
+  "100": 1.108,
+  "150": 0.822,
+  "200": 0.694,
+  "300": 0.537,
+  "500": 0.207
  },
  "fitted_first8_by_bucket": {
-  "1": 19.756,
-  "5": 11.284,
-  "10": 9.603,
-  "20": 5.843,
-  "35": 3.298,
-  "50": 2.57,
-  "75": 1.888,
-  "100": 1.365,
-  "150": 1.0,
-  "200": 0.859,
-  "300": 0.676,
+  "1": 20.796,
+  "5": 11.518,
+  "10": 9.599,
+  "20": 5.826,
+  "35": 3.317,
+  "50": 2.605,
+  "75": 1.933,
+  "100": 1.401,
+  "150": 1.03,
+  "200": 0.898,
+  "300": 0.665,
   "500": 0.244
  },
  "holdout_2015_18_first8": {
   "1": {
-   "realized_first8": 7.268,
+   "realized_first8": 7.158,
    "n": 4,
-   "fitted_first8_2005_14": 19.756,
+   "fitted_first8_2005_14": 20.796,
    "incumbent_career_step": 9.0
   },
   "5": {
-   "realized_first8": 6.921,
+   "realized_first8": 6.739,
    "n": 16,
-   "fitted_first8_2005_14": 11.284,
+   "fitted_first8_2005_14": 11.518,
    "incumbent_career_step": 6.0
   },
   "10": {
-   "realized_first8": 2.823,
+   "realized_first8": 2.713,
    "n": 20,
-   "fitted_first8_2005_14": 9.603,
+   "fitted_first8_2005_14": 9.599,
    "incumbent_career_step": 4.0
   },
   "20": {
-   "realized_first8": 2.859,
+   "realized_first8": 2.973,
    "n": 40,
-   "fitted_first8_2005_14": 5.843,
+   "fitted_first8_2005_14": 5.826,
    "incumbent_career_step": 2.5
   },
   "35": {
-   "realized_first8": 2.608,
+   "realized_first8": 2.701,
    "n": 58,
-   "fitted_first8_2005_14": 3.298,
+   "fitted_first8_2005_14": 3.317,
    "incumbent_career_step": 1.8
   },
   "50": {
-   "realized_first8": 1.06,
+   "realized_first8": 1.118,
    "n": 60,
-   "fitted_first8_2005_14": 2.57,
+   "fitted_first8_2005_14": 2.605,
    "incumbent_career_step": 1.2
   },
   "75": {
-   "realized_first8": 1.246,
+   "realized_first8": 1.273,
    "n": 98,
-   "fitted_first8_2005_14": 1.888,
+   "fitted_first8_2005_14": 1.933,
    "incumbent_career_step": 0.8
   },
   "100": {
-   "realized_first8": 1.337,
+   "realized_first8": 1.418,
    "n": 100,
-   "fitted_first8_2005_14": 1.365,
+   "fitted_first8_2005_14": 1.401,
    "incumbent_career_step": 0.55
   },
   "150": {
-   "realized_first8": 0.69,
+   "realized_first8": 0.72,
    "n": 200,
-   "fitted_first8_2005_14": 1.0,
+   "fitted_first8_2005_14": 1.03,
    "incumbent_career_step": 0.35
   },
   "200": {
-   "realized_first8": 0.53,
+   "realized_first8": 0.537,
    "n": 200,
-   "fitted_first8_2005_14": 0.859,
+   "fitted_first8_2005_14": 0.898,
    "incumbent_career_step": 0.22
   },
   "300": {
-   "realized_first8": 0.364,
+   "realized_first8": 0.357,
    "n": 398,
-   "fitted_first8_2005_14": 0.676,
+   "fitted_first8_2005_14": 0.665,
    "incumbent_career_step": 0.13
   },
   "500": {
-   "realized_first8": 0.198,
+   "realized_first8": 0.196,
    "n": 774,
    "fitted_first8_2005_14": 0.244,
    "incumbent_career_step": 0.07
   }
  },
  "holdout_mae": {
-  "fitted_first8": 2.54,
-  "incumbent_career_steps_as_first8_proxy": 0.615
+  "fitted_first8": 2.664,
+  "incumbent_career_steps_as_first8_proxy": 0.642
  },
  "career_step_curve": [
   [
    1,
-   28.369
+   29.511
   ],
   [
    5,
-   15.3
+   15.415
   ],
   [
    10,
-   13.239
+   13.143
   ],
   [
    20,
-   7.466
+   7.476
   ],
   [
    35,
-   4.128
+   4.146
   ],
   [
    50,
-   3.167
+   3.2
   ],
   [
    75,
-   2.317
+   2.363
   ],
   [
    100,
-   1.574
+   1.631
   ],
   [
    150,
-   1.213
+   1.236
   ],
   [
    200,
-   1.147
+   1.181
   ],
   [
    300,
-   0.758
+   0.75
   ],
   [
    500,
-   0.282
+   0.278
   ]
  ],
  "first6_step_curve": [
   [
    1,
-   13.44
+   14.447
   ],
   [
    5,
-   8.492
+   8.54
   ],
   [
    10,
-   7.622
+   7.465
   ],
   [
    20,
-   4.545
+   4.505
   ],
   [
    35,
-   2.573
+   2.579
   ],
   [
    50,
-   1.976
+   1.989
   ],
   [
    75,
-   1.482
+   1.494
   ],
   [
    100,
-   1.073
+   1.108
   ],
   [
    150,
-   0.776
+   0.822
   ],
   [
    200,
-   0.65
+   0.694
   ],
   [
    300,
-   0.553
+   0.537
   ],
   [
    500,
-   0.203
+   0.207
   ]
  ]
 }

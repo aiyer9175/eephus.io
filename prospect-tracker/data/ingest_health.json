@@ -1,17 +1,17 @@
 {
- "generated_at": "2026-08-13T23:20:54+00:00",
+ "generated_at": "2026-09-04T19:21:30+00:00",
  "mode": "monthly",
  "sources": [
   {
    "source": "arbitration_export",
    "scope": "mlb",
    "ok": true,
-   "n_rows": 910,
+   "n_rows": 856,
    "message": "arbitration board",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 22:34:57",
-   "last_ok_rows": 910
+   "last_ok_at": "2026-09-04 18:42:59",
+   "last_ok_rows": 856
   },
   {
    "source": "betting_close_capture",
@@ -19,7 +19,7 @@
    "ok": false,
    "n_rows": 0,
    "message": "!!! BETTING RED: no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "export",
    "last_ok_at": null,
    "last_ok_rows": null
@@ -30,9 +30,9 @@
    "ok": true,
    "n_rows": 30,
    "message": "bullpen: 30 teams",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 22:27:52",
+   "last_ok_at": "2026-09-04 18:35:48",
    "last_ok_rows": 30
   },
   {
@@ -41,7 +41,7 @@
    "ok": false,
    "n_rows": 0,
    "message": "0 file(s), 0 rows parsed",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "unwatched",
    "last_ok_at": null,
    "last_ok_rows": null
@@ -52,7 +52,7 @@
    "ok": false,
    "n_rows": 0,
    "message": "0 file(s), 0 rows parsed",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "unwatched",
    "last_ok_at": null,
    "last_ok_rows": null
@@ -63,7 +63,7 @@
    "ok": false,
    "n_rows": 0,
    "message": "EEPHUS_CARD_SCRAPE is not 1",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "unwatched",
    "last_ok_at": null,
    "last_ok_rows": null
@@ -74,7 +74,7 @@
    "ok": false,
    "n_rows": 0,
    "message": "card scrape attempted 22 cards on 2026-08-06 and every request failed (22 errors, 0 pages fetched); the source is refusing the fetcher, so this is a SOURCE problem and no parser or watchlist change can clear it",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "unwatched",
    "last_ok_at": null,
    "last_ok_rows": null
@@ -85,7 +85,7 @@
    "ok": false,
    "n_rows": 0,
    "message": "card scrape attempted 22 cards on 2026-08-06 and every request failed (22 errors, 0 pages fetched); the source is refusing the fetcher, so this is a SOURCE problem and no parser or watchlist change can clear it",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "unwatched",
    "last_ok_at": null,
    "last_ok_rows": null
@@ -96,7 +96,7 @@
    "ok": false,
    "n_rows": 0,
    "message": "EEPHUS_CARD_SCRAPE is not 1",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "unwatched",
    "last_ok_at": null,
    "last_ok_rows": null
@@ -105,44 +105,88 @@
    "source": "efv_regen_tripwire",
    "scope": "",
    "ok": true,
-   "n_rows": 0,
-   "message": "0 alert(s); hit cov 0.590121 (+0.0000), set-churn 0.065; pit cov 0.502705 (+0.0000), set-churn 0.029",
-   "date": "2026-08-13",
+   "n_rows": 5,
+   "message": "5 alert(s); hit cov 0.588204 (+0.0000), set-churn 0.051; pit cov 0.503194 (+0.0002), set-churn 0.125",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 23:07:01",
+   "last_ok_at": "2026-09-04 19:09:04",
+   "last_ok_rows": 5
+  },
+  {
+   "source": "espn",
+   "scope": "ESPN 2025 In-Season",
+   "ok": true,
+   "n_rows": 100,
+   "message": "ESPN 2025 In-Season: 100 rows",
+   "date": "2026-09-04",
+   "kind": "unwatched",
+   "last_ok_at": "2026-09-04 17:49:07",
+   "last_ok_rows": 100
+  },
+  {
+   "source": "espn",
+   "scope": "ESPN 2026 In-Season",
+   "ok": true,
+   "n_rows": 50,
+   "message": "ESPN 2026 In-Season: 50 rows",
+   "date": "2026-09-04",
+   "kind": "unwatched",
+   "last_ok_at": "2026-09-04 17:49:07",
+   "last_ok_rows": 50
+  },
+  {
+   "source": "espn",
+   "scope": "ESPN 2026 Midseason",
+   "ok": true,
+   "n_rows": 100,
+   "message": "ESPN 2026 Midseason: 100 rows",
+   "date": "2026-09-04",
+   "kind": "unwatched",
+   "last_ok_at": "2026-09-04 17:49:07",
+   "last_ok_rows": 100
+  },
+  {
+   "source": "espn",
+   "scope": "ESPN 2026 Preseason",
+   "ok": true,
+   "n_rows": 100,
+   "message": "ESPN 2026 Preseason: 100 rows",
+   "date": "2026-09-04",
+   "kind": "unwatched",
+   "last_ok_at": "2026-09-04 17:49:07",
+   "last_ok_rows": 100
+  },
+  {
+   "source": "espn_article_probe",
+   "scope": "",
+   "ok": true,
+   "n_rows": 0,
+   "message": "0 candidate(s) | 70 unique id(s) checked; legs feed=50, search:prospect_rankings=12, search:top100_prospects=12",
+   "date": "2026-09-04",
+   "kind": "unwatched",
+   "last_ok_at": "2026-09-04 19:21:18",
    "last_ok_rows": 0
   },
   {
    "source": "espn_article_probe",
    "scope": "",
-   "ok": false,
+   "ok": true,
    "n_rows": 0,
-   "message": "HTTP 403",
-   "date": "2026-08-13",
+   "message": "0 candidate(s) | 70 unique id(s) checked; legs feed=50, search:prospect_rankings=12, search:top100_prospects=12",
+   "date": "2026-09-04",
    "kind": "unwatched",
-   "last_ok_at": "2026-08-04 18:21:19",
-   "last_ok_rows": 1
-  },
-  {
-   "source": "espn_article_probe",
-   "scope": "",
-   "ok": false,
-   "n_rows": 0,
-   "message": "HTTP 403",
-   "date": "2026-08-13",
-   "kind": "unwatched",
-   "last_ok_at": "2026-08-04 18:21:19",
-   "last_ok_rows": 1
+   "last_ok_at": "2026-09-04 19:21:18",
+   "last_ok_rows": 0
   },
   {
    "source": "fa_prospect_arc",
    "scope": "",
    "ok": true,
-   "n_rows": 109,
-   "message": "109 of 228 FA class members resolved an FV arc from 2/2 boot export(s)",
-   "date": "2026-08-13",
+   "n_rows": 111,
+   "message": "111 of 236 FA class members resolved an FV arc from 2/2 boot export(s)",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 23:20:24",
+   "last_ok_at": "2026-09-04 19:21:04",
    "last_ok_rows": 110
   },
   {
@@ -151,9 +195,9 @@
    "ok": true,
    "n_rows": 101,
    "message": "101 of 189 FA class members resolved an FV arc from 2/2 boot export(s)",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 23:20:24",
+   "last_ok_at": "2026-09-04 19:21:04",
    "last_ok_rows": 110
   },
   {
@@ -162,20 +206,20 @@
    "ok": true,
    "n_rows": 110,
    "message": "110 of 153 FA class members resolved an FV arc from 2/2 boot export(s)",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 23:20:24",
+   "last_ok_at": "2026-09-04 19:21:04",
    "last_ok_rows": 110
   },
   {
    "source": "fa_prospect_arc",
    "scope": "",
    "ok": true,
-   "n_rows": 109,
-   "message": "109 of 228 FA class members resolved an FV arc from 2/2 boot export(s)",
-   "date": "2026-08-13",
+   "n_rows": 111,
+   "message": "111 of 236 FA class members resolved an FV arc from 2/2 boot export(s)",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 23:20:24",
+   "last_ok_at": "2026-09-04 19:21:04",
    "last_ok_rows": 110
   },
   {
@@ -184,9 +228,9 @@
    "ok": true,
    "n_rows": 101,
    "message": "101 of 189 FA class members resolved an FV arc from 2/2 boot export(s)",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 23:20:24",
+   "last_ok_at": "2026-09-04 19:21:04",
    "last_ok_rows": 110
   },
   {
@@ -195,9 +239,9 @@
    "ok": true,
    "n_rows": 110,
    "message": "110 of 153 FA class members resolved an FV arc from 2/2 boot export(s)",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 23:20:24",
+   "last_ok_at": "2026-09-04 19:21:04",
    "last_ok_rows": 110
   },
   {
@@ -206,32 +250,32 @@
    "ok": true,
    "n_rows": 30,
    "message": "hitters: 30 teams",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 22:28:35",
+   "last_ok_at": "2026-09-04 18:36:36",
    "last_ok_rows": 30
   },
   {
    "source": "ifa_efv_join",
    "scope": "",
    "ok": true,
-   "n_rows": 2073,
-   "message": "2073 of 2074 tracked IFA signings resolved a board eFV grade from 9437 xfv.json rows",
-   "date": "2026-08-13",
+   "n_rows": 2101,
+   "message": "2101 of 2102 tracked IFA signings resolved a board eFV grade from 9501 xfv.json rows",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 22:55:12",
-   "last_ok_rows": 2073
+   "last_ok_at": "2026-09-04 19:01:20",
+   "last_ok_rows": 2101
   },
   {
    "source": "ifa_efv_join",
    "scope": "",
    "ok": true,
-   "n_rows": 2073,
-   "message": "2073 of 2081 tracked IFA signings resolved a board eFV grade from 9437 xfv.json rows",
-   "date": "2026-08-13",
+   "n_rows": 2101,
+   "message": "2101 of 2101 tracked IFA signings resolved a board eFV grade from 9501 xfv.json rows",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 22:55:12",
-   "last_ok_rows": 2073
+   "last_ok_at": "2026-09-04 19:01:20",
+   "last_ok_rows": 2101
   },
   {
    "source": "just_baseball",
@@ -239,32 +283,32 @@
    "ok": true,
    "n_rows": 100,
    "message": "unchanged",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "unwatched",
-   "last_ok_at": "2026-08-13 21:43:54",
+   "last_ok_at": "2026-09-04 17:49:19",
    "last_ok_rows": 100
   },
   {
    "source": "leverage_batters",
    "scope": "",
    "ok": true,
-   "n_rows": 631,
-   "message": "leverage: 631 batters",
-   "date": "2026-08-13",
+   "n_rows": 650,
+   "message": "leverage: 650 batters",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 22:29:56",
-   "last_ok_rows": 631
+   "last_ok_at": "2026-09-04 18:37:58",
+   "last_ok_rows": 650
   },
   {
    "source": "leverage_starters",
    "scope": "",
    "ok": true,
-   "n_rows": 334,
-   "message": "leverage: 334 starters",
-   "date": "2026-08-13",
+   "n_rows": 352,
+   "message": "leverage: 352 starters",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 22:29:56",
-   "last_ok_rows": 334
+   "last_ok_at": "2026-09-04 18:37:58",
+   "last_ok_rows": 352
   },
   {
    "source": "mlb_pipeline_live",
@@ -272,9 +316,9 @@
    "ok": true,
    "n_rows": 100,
    "message": "",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "grade_source",
-   "last_ok_at": "2026-08-13 22:46:13",
+   "last_ok_at": "2026-09-04 18:56:22",
    "last_ok_rows": 100
   },
   {
@@ -283,9 +327,9 @@
    "ok": true,
    "n_rows": 900,
    "message": "",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "grade_source",
-   "last_ok_at": "2026-08-13 22:46:21",
+   "last_ok_at": "2026-09-04 18:56:28",
    "last_ok_rows": 900
   },
   {
@@ -294,9 +338,9 @@
    "ok": true,
    "n_rows": 30,
    "message": "starters: 30 teams",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "export",
-   "last_ok_at": "2026-08-13 22:28:15",
+   "last_ok_at": "2026-09-04 18:36:08",
    "last_ok_rows": 30
   },
   {
@@ -305,9 +349,9 @@
    "ok": true,
    "n_rows": 100,
    "message": "",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "grade_source",
-   "last_ok_at": "2026-08-13 23:20:39",
+   "last_ok_at": "2026-09-04 19:21:18",
    "last_ok_rows": 100
   },
   {
@@ -316,13 +360,25 @@
    "ok": true,
    "n_rows": 100,
    "message": "",
-   "date": "2026-08-13",
+   "date": "2026-09-04",
    "kind": "grade_source",
-   "last_ok_at": "2026-08-13 21:43:51",
+   "last_ok_at": "2026-09-04 17:49:17",
    "last_ok_rows": 100
+  },
+  {
+   "source": "vintage_capture_gap",
+   "scope": "",
+   "ok": false,
+   "n_rows": 2,
+   "message": "!!! VINTAGE GAP RED: vintage night(s) MISSING: 2026-09-01, 2026-09-02 - a missed capture cannot be backfilled and the night is lost; DFS archive day(s) without a file in the window: 2026-09-01, 2026-09-02 (off days are legitimate here)",
+   "date": "2026-09-04",
+   "kind": "export",
+   "last_ok_at": "2026-08-21 22:39:55",
+   "last_ok_rows": 4
   }
  ],
  "red": [
-  "betting_close_capture"
+  "betting_close_capture",
+  "vintage_capture_gap"
  ]
 }

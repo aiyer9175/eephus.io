@@ -186,32 +186,32 @@
  "bucket_midpoints": {
   "hitter": [
    0.0,
-   0.6000000000000006,
-   1.1999999999999995,
-   1.7999999999999987,
-   2.608541824944103
+   0.6000000000000001,
+   1.1999999999999997,
+   1.7999999999999994,
+   2.791160518251502
   ],
   "pitcher": [
    0.0,
-   0.5999999999999998,
-   1.2000000000000006,
-   1.800000000000001,
-   4.798967597871142
+   0.5999999999999999,
+   1.2000000000000002,
+   1.8,
+   4.906328547767275
   ]
  },
  "empirical_anchors": {
   "anchors": {
-   "20": 0.012,
-   "25": 0.014,
-   "30": 0.016,
-   "35": 0.019,
-   "40": 0.086,
-   "45": 0.31,
-   "50": 0.67,
+   "20": 0.0044,
+   "25": 0.0051,
+   "30": 0.0058,
+   "35": 0.0069,
+   "40": 0.071,
+   "45": 0.32,
+   "50": 0.68,
    "55": 0.98,
    "60": 1.44,
-   "65": 2.0,
-   "70": 2.52,
+   "65": 2.01,
+   "70": 2.49,
    "80": 3.5
   },
   "cohort_window": [
@@ -221,50 +221,50 @@
   "diagnostics": {
    "40": {
     "blend_w_public": 0.5,
-    "bust_pct": 85.7,
-    "empirical_war_yr": 0.071,
+    "bust_pct": 85.9,
+    "empirical_war_yr": 0.08,
     "n": 1123,
     "reference_war_yr": 0.3
    },
    "45": {
     "blend_w_public": 0.5,
-    "bust_pct": 81.7,
-    "empirical_war_yr": 0.126,
-    "n": 1415,
+    "bust_pct": 80.8,
+    "empirical_war_yr": 0.132,
+    "n": 1417,
     "reference_war_yr": 0.5
    },
    "50": {
     "blend_w_public": 0.5,
-    "bust_pct": 52.2,
-    "empirical_war_yr": 0.494,
+    "bust_pct": 51.9,
+    "empirical_war_yr": 0.51,
     "n": 337,
     "reference_war_yr": 0.85
    },
    "55": {
     "blend_w_public": 0.5,
-    "bust_pct": 37.7,
-    "empirical_war_yr": 0.808,
+    "bust_pct": 38.5,
+    "empirical_war_yr": 0.817,
     "n": 122,
     "reference_war_yr": 1.15
    },
    "60": {
     "blend_w_public": 0.5,
-    "bust_pct": 16.0,
-    "empirical_war_yr": 1.38,
+    "bust_pct": 14.0,
+    "empirical_war_yr": 1.384,
     "n": 50,
     "reference_war_yr": 1.5
    },
    "65": {
     "blend_w_public": 0.71,
     "bust_pct": 0.0,
-    "empirical_war_yr": 2.483,
+    "empirical_war_yr": 2.512,
     "n": 19,
     "reference_war_yr": 1.8
    },
    "70": {
     "blend_w_public": 0.82,
     "bust_pct": 12.5,
-    "empirical_war_yr": 3.061,
+    "empirical_war_yr": 2.913,
     "n": 8,
     "reference_war_yr": 2.4
    },
@@ -276,15 +276,15 @@
     "reference_war_yr": 3.5
    }
   },
-  "generated_at": "2026-06-21T23:34:13",
-  "n_cohort": 3460,
+  "generated_at": "2026-09-04T15:43:29",
+  "n_cohort": 3462,
   "policy_digest": {
    "blend_thin_extra": 0.4,
    "blend_weight_public": 0.5,
    "min_n_robust": 40
   },
   "reference_year": 2026,
-  "anchors_provenance": "SUB-45 KNOTS AMENDED 2026-07-29. Before this the table began at '40' and fv_to_6yr_avg_war returned the single constant 0.19 WAR/yr across the entire integer grid 20..40, i.e. one value for 72.1% of served rows: a 20-FV org player and a 40-FV bench bat were declared to be worth the same production. The 35 and 40 knots are MEASURED on target_censored (efv_dataset._label_6yr), the same label the gate scores, over the resolved matrix pool: FV35 0.0188 WAR/yr CI95 [0.0087,0.0308] n=909; FV40 0.0862 CI95 [0.0706,0.1030] n=2083. Shipped 0.19 over-stated FV40 by 2.2x and FV35 by about 10x. Corroborated out-of-fold by the lane-B leave-one-fold-out sign test, 17 of 17 cells, p=7.6e-6. The 20/25/30 knots are EXTRAPOLATION, not measurement: the resolved pool has zero rows below FV32.5, so they are a minimal monotone ramp under the measured FV35 value, chosen to avoid inventing structure the data cannot support. Treat them as a floor, not a finding. 45 through 80 are DELIBERATELY UNCHANGED. Their evidence is a coin flip (14 of 25 cells, sign test p=0.345, role-opposite between sides) and they carry 100% of the dollar movement, so they are not shipped on that evidence. KNOWN DEVIATION from the pre-registered gate in docs/efv-2026-07-29/CALIBRATION_FINDINGS.md: that gate asked for per-tier bias CI95 to cover zero at FV35, FV40 and FV50 simultaneously. This amendment satisfies 35 and 40 by construction and does NOT satisfy 50 (measured 0.9107 CI95 [0.7695,1.0621] against an unchanged 0.67). Leaving 50 wrong-but-untouched is the deliberate choice: moving it is a dollar change resting on a coin flip. Recorded rather than hidden. NOT REPRODUCIBLE BY THE FIT MACHINERY: value_framework.py derive_empirical_war_anchors cannot emit this table (anchor_calibration.tiers starts at 40; the public_reference fallback hands tiers 20/25/30 the FV35 reference 0.20; blend_w_public is a flat 0.50 above min_n_robust so the n=2075 FV40 cell stays half-prior, which is the actual mechanism of the defect; and round(v,2) collapses every sub-45 value). Running value_framework --fit WILL revert this key. Guarded by test_value_framework::test_low_end_anchors_are_present_and_measured."
+  "anchors_provenance": "SUB-45 KNOTS RE-AMENDED 2026-09-04 for the eWAR LABEL EPOCH, by the same construction as the 2026-07-29 amendment and for the same reason. `value_framework --fit` cannot emit these knots (its tier list starts at 40, its public-reference fallback hands 20/25/30 the FV35 reference, its flat 0.50 public blend keeps FV40 half-prior, and its round(v, 2) collapses every sub-45 value), so the epoch's routine refit silently reverted the table to a single 0.19 constant across FV20..40 again, which is one declared production value for 72 percent of served rows. test_empirical_anchors.test_low_end_anchors_are_present_and_measured caught it, which is exactly what that tripwire is for.\nRE-MEASURED ON THE eWAR LABEL, resolved matrix pool, both sides, target_censored over 6: FV35 0.0069 WAR/yr CI95 [0.0012, 0.0149] n=704; FV40 0.0710 CI95 [0.0530, 0.0906] n=1201. Both are LOWER than the bWAR-label measurement they replace (0.0188 n=909 and 0.0862 n=2083); the FV40 intervals overlap, the FV35 intervals barely do. The reverted 0.19 seed over-states FV40 by 2.7x on this label.\nThe 20/25/30 knots remain EXTRAPOLATION, not measurement: the resolved pool still has no rows below FV32.5, so they are the minimal monotone ramp under the measured FV35, holding the 2026-07-29 ramp SHAPE and rescaling it to the new knot. Treat them as a floor, not a finding. 45 through 80 are the epoch refit's own output and are not touched here.\nSTANDING TRAP: any future `value_framework --fit` reverts this again. Re-apply after every fit; docs/efv-2026-09-03/WAR_BASIS_RUNBOOK.md step J now says so."
  },
  "framework_version": "v2.0",
  "generated_by": "value_framework.py --fit",
@@ -375,46 +375,46 @@
  "reconciliation": {
   "hitter": {
    "45.0": {
-    "resid": 0.2091,
+    "resid": 0.2111,
     "target": 0.31,
-    "weighted_avg_war": 0.5191
+    "weighted_avg_war": 0.5211
    },
    "50.0": {
-    "resid": 0.236,
-    "target": 0.6,
-    "weighted_avg_war": 0.836
+    "resid": 0.1705,
+    "target": 0.67,
+    "weighted_avg_war": 0.8405
    },
    "55.0": {
-    "resid": 0.2115,
-    "target": 0.97,
-    "weighted_avg_war": 1.1815
+    "resid": 0.2121,
+    "target": 0.98,
+    "weighted_avg_war": 1.1921
    },
    "60.0": {
-    "resid": 0.1014,
-    "target": 1.41,
-    "weighted_avg_war": 1.5114
+    "resid": 0.0949,
+    "target": 1.44,
+    "weighted_avg_war": 1.5349
    }
   },
   "pitcher": {
    "45.0": {
-    "resid": 0.1806,
+    "resid": 0.1809,
     "target": 0.31,
-    "weighted_avg_war": 0.4906
+    "weighted_avg_war": 0.4909
    },
    "50.0": {
-    "resid": 0.1698,
-    "target": 0.6,
-    "weighted_avg_war": 0.7698
+    "resid": 0.1005,
+    "target": 0.67,
+    "weighted_avg_war": 0.7705
    },
    "55.0": {
-    "resid": 0.113,
-    "target": 0.97,
-    "weighted_avg_war": 1.083
+    "resid": 0.1045,
+    "target": 0.98,
+    "weighted_avg_war": 1.0845
    },
    "60.0": {
-    "resid": -0.0078,
-    "target": 1.41,
-    "weighted_avg_war": 1.4022
+    "resid": -0.0343,
+    "target": 1.44,
+    "weighted_avg_war": 1.4057
    }
   }
  },

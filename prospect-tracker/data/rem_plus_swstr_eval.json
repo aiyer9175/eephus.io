@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-15",
+ "generated_at": "2026-08-30",
  "seasons": [
   2018,
   2019,
@@ -14,7 +14,7 @@
   "predictor_year": "year Y qualified (TBF>=100)",
   "target": "-RA9 in year Y+1 (TBF>=60)",
   "excluded": "2020 (60-game COVID season)",
-  "n_partial_outcome_pairs_dropped": 162
+  "n_partial_outcome_pairs_dropped": 176
  },
  "harness": {
   "harness_version": 2,
@@ -118,5 +118,5 @@
   "reading": "the incumbent already regresses K% by sample size; at reliever volumes the observed K% is a strong enough K estimate that a SwStr-implied prior does not add out-of-sample forward signal",
   "do_not_retry_without": "a pitch-level CSW% / xwOBAcon feed or a multi-year xK prior that materially beats single-season K%"
  },
- "runtime_seconds": 229.6
+ "runtime_seconds": 359.0
 }

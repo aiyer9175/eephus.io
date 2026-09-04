@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-07",
+ "generated_at": "2026-08-21",
  "seasons": [
   2021,
   2022,
@@ -21,7 +21,7 @@
     {
      "mlbam": 660271,
      "name": "Shohei Ohtani",
-     "team": "LAA",
+     "team": "LAD",
      "pa": 640,
      "wpa": 5.14,
      "pli": 0.89,
@@ -54,7 +54,7 @@
     {
      "mlbam": 665742,
      "name": "Juan Soto",
-     "team": "WSH",
+     "team": "NYM",
      "pa": 654,
      "wpa": 4.276,
      "pli": 1.01,
@@ -142,7 +142,7 @@
     {
      "mlbam": 646240,
      "name": "Rafael Devers",
-     "team": "BOS",
+     "team": "SF",
      "pa": 664,
      "wpa": 3.236,
      "pli": 1.05,
@@ -164,7 +164,7 @@
     {
      "mlbam": 642715,
      "name": "Willy Adames",
-     "team": "MIL",
+     "team": "SF",
      "pa": 556,
      "wpa": 3.071,
      "pli": 0.97,
@@ -175,7 +175,7 @@
     {
      "mlbam": 664774,
      "name": "LaMonte Wade Jr.",
-     "team": "SF",
+     "team": "HOU",
      "pa": 381,
      "wpa": 2.965,
      "pli": 0.97,
@@ -208,7 +208,7 @@
     {
      "mlbam": 608369,
      "name": "Corey Seager",
-     "team": "LAD",
+     "team": "TEX",
      "pa": 409,
      "wpa": 2.906,
      "pli": 1.0,
@@ -230,7 +230,7 @@
     {
      "mlbam": 621566,
      "name": "Matt Olson",
-     "team": "ATH",
+     "team": "ATL",
      "pa": 674,
      "wpa": 2.685,
      "pli": 1.03,
@@ -241,7 +241,7 @@
     {
      "mlbam": 664040,
      "name": "Brandon Lowe",
-     "team": "TB",
+     "team": "PIT",
      "pa": 616,
      "wpa": 2.672,
      "pli": 0.94,
@@ -373,7 +373,7 @@
     {
      "mlbam": 666182,
      "name": "Bo Bichette",
-     "team": "TOR",
+     "team": "NYM",
      "pa": 690,
      "wpa": 2.289,
      "pli": 0.95,
@@ -406,7 +406,7 @@
     {
      "mlbam": 657077,
      "name": "Alex Verdugo",
-     "team": "BOS",
+     "team": "SD",
      "pa": 605,
      "wpa": 2.167,
      "pli": 1.03,
@@ -461,7 +461,7 @@
     {
      "mlbam": 640457,
      "name": "Austin Meadows",
-     "team": "TB",
+     "team": "DET",
      "pa": 592,
      "wpa": 2.008,
      "pli": 1.06,
@@ -505,7 +505,7 @@
     {
      "mlbam": 664034,
      "name": "Ty France",
-     "team": "SEA",
+     "team": "SD",
      "pa": 650,
      "wpa": 1.802,
      "pli": 1.03,
@@ -527,7 +527,7 @@
     {
      "mlbam": 676801,
      "name": "Chas McCormick",
-     "team": "HOU",
+     "team": "CHC",
      "pa": 323,
      "wpa": 1.783,
      "pli": 0.98,
@@ -549,7 +549,7 @@
     {
      "mlbam": 641857,
      "name": "Ryan McMahon",
-     "team": "COL",
+     "team": "NYY",
      "pa": 598,
      "wpa": 1.723,
      "pli": 1.02,
@@ -560,7 +560,7 @@
     {
      "mlbam": 663697,
      "name": "Jonathan India",
-     "team": "CIN",
+     "team": "KC",
      "pa": 634,
      "wpa": 1.705,
      "pli": 0.98,
@@ -582,7 +582,7 @@
     {
      "mlbam": 669720,
      "name": "Austin Hays",
-     "team": "BAL",
+     "team": "SD",
      "pa": 530,
      "wpa": 1.674,
      "pli": 0.93,
@@ -593,7 +593,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "CWS",
+     "team": "NYM",
      "pa": 296,
      "wpa": 1.663,
      "pli": 0.9,
@@ -604,7 +604,7 @@
     {
      "mlbam": 668227,
      "name": "Randy Arozarena",
-     "team": "TB",
+     "team": "SEA",
      "pa": 604,
      "wpa": 1.662,
      "pli": 1.04,
@@ -637,7 +637,7 @@
     {
      "mlbam": 656775,
      "name": "Cedric Mullins",
-     "team": "BAL",
+     "team": "TB",
      "pa": 675,
      "wpa": 1.597,
      "pli": 0.93,
@@ -659,7 +659,7 @@
     {
      "mlbam": 663656,
      "name": "Kyle Tucker",
-     "team": "HOU",
+     "team": "LAD",
      "pa": 567,
      "wpa": 1.557,
      "pli": 0.97,
@@ -670,7 +670,7 @@
     {
      "mlbam": 641933,
      "name": "Tyler O'Neill",
-     "team": "STL",
+     "team": "BAL",
      "pa": 537,
      "wpa": 1.533,
      "pli": 0.93,
@@ -758,7 +758,7 @@
     {
      "mlbam": 649966,
      "name": "Luis Ur\u00edas",
-     "team": "MIL",
+     "team": "TOR",
      "pa": 570,
      "wpa": 1.402,
      "pli": 0.99,
@@ -846,7 +846,7 @@
     {
      "mlbam": 662139,
      "name": "Daulton Varsho",
-     "team": "AZ",
+     "team": "HOU",
      "pa": 315,
      "wpa": 1.264,
      "pli": 0.96,
@@ -923,7 +923,7 @@
     {
      "mlbam": 663993,
      "name": "Nathaniel Lowe",
-     "team": "TEX",
+     "team": "CLE",
      "pa": 644,
      "wpa": 1.197,
      "pli": 1.03,
@@ -967,7 +967,7 @@
     {
      "mlbam": 643217,
      "name": "Andrew Benintendi",
-     "team": "KC",
+     "team": "CWS",
      "pa": 542,
      "wpa": 1.099,
      "pli": 0.99,
@@ -1011,7 +1011,7 @@
     {
      "mlbam": 668731,
      "name": "Akil Baddoo",
-     "team": "DET",
+     "team": "MIL",
      "pa": 461,
      "wpa": 1.002,
      "pli": 1.03,
@@ -1033,7 +1033,7 @@
     {
      "mlbam": 602104,
      "name": "Ram\u00f3n Ur\u00edas",
-     "team": "BAL",
+     "team": "STL",
      "pa": 297,
      "wpa": 0.975,
      "pli": 0.96,
@@ -1088,7 +1088,7 @@
     {
      "mlbam": 657656,
      "name": "Ram\u00f3n Laureano",
-     "team": "ATH",
+     "team": "SD",
      "pa": 378,
      "wpa": 0.84,
      "pli": 1.05,
@@ -1099,7 +1099,7 @@
     {
      "mlbam": 660821,
      "name": "Jes\u00fas S\u00e1nchez",
-     "team": "MIA",
+     "team": "TOR",
      "pa": 251,
      "wpa": 0.84,
      "pli": 1.05,
@@ -1121,7 +1121,7 @@
     {
      "mlbam": 663898,
      "name": "Brendan Rodgers",
-     "team": "COL",
+     "team": "BOS",
      "pa": 417,
      "wpa": 0.815,
      "pli": 0.99,
@@ -1132,7 +1132,7 @@
     {
      "mlbam": 657041,
      "name": "Lane Thomas",
-     "team": "WSH",
+     "team": "ATL",
      "pa": 264,
      "wpa": 0.807,
      "pli": 1.1,
@@ -1143,7 +1143,7 @@
     {
      "mlbam": 621438,
      "name": "Tyrone Taylor",
-     "team": "MIL",
+     "team": "CHC",
      "pa": 271,
      "wpa": 0.795,
      "pli": 0.99,
@@ -1165,7 +1165,7 @@
     {
      "mlbam": 641584,
      "name": "Jake Fraley",
-     "team": "SEA",
+     "team": "TB",
      "pa": 265,
      "wpa": 0.783,
      "pli": 1.03,
@@ -1209,7 +1209,7 @@
     {
      "mlbam": 663757,
      "name": "Trent Grisham",
-     "team": "SD",
+     "team": "NYY",
      "pa": 529,
      "wpa": 0.729,
      "pli": 1.02,
@@ -1231,7 +1231,7 @@
     {
      "mlbam": 624413,
      "name": "Pete Alonso",
-     "team": "NYM",
+     "team": "BAL",
      "pa": 638,
      "wpa": 0.721,
      "pli": 1.17,
@@ -1242,7 +1242,7 @@
     {
      "mlbam": 670032,
      "name": "Nicky Lopez",
-     "team": "KC",
+     "team": "TEX",
      "pa": 568,
      "wpa": 0.709,
      "pli": 0.95,
@@ -1352,7 +1352,7 @@
     {
      "mlbam": 660162,
      "name": "Yo\u00e1n Moncada",
-     "team": "CWS",
+     "team": "LAA",
      "pa": 616,
      "wpa": 0.476,
      "pli": 0.95,
@@ -1374,7 +1374,7 @@
     {
      "mlbam": 620443,
      "name": "Luis Torrens",
-     "team": "SEA",
+     "team": "NYM",
      "pa": 380,
      "wpa": 0.44,
      "pli": 1.06,
@@ -1440,7 +1440,7 @@
     {
      "mlbam": 669242,
      "name": "Tommy Edman",
-     "team": "STL",
+     "team": "LAD",
      "pa": 692,
      "wpa": 0.385,
      "pli": 0.87,
@@ -1473,7 +1473,7 @@
     {
      "mlbam": 644374,
      "name": "Yu Chang",
-     "team": "CLE",
+     "team": "TB",
      "pa": 251,
      "wpa": 0.348,
      "pli": 0.93,
@@ -1627,7 +1627,7 @@
     {
      "mlbam": 642165,
      "name": "Josh VanMeter",
-     "team": "AZ",
+     "team": "NYY",
      "pa": 310,
      "wpa": 0.182,
      "pli": 1.01,
@@ -1660,7 +1660,7 @@
     {
      "mlbam": 650402,
      "name": "Gleyber Torres",
-     "team": "NYY",
+     "team": "DET",
      "pa": 517,
      "wpa": 0.153,
      "pli": 1.1,
@@ -1682,7 +1682,7 @@
     {
      "mlbam": 623912,
      "name": "Harold Ram\u00edrez",
-     "team": "CLE",
+     "team": "ATL",
      "pa": 363,
      "wpa": 0.139,
      "pli": 1.02,
@@ -1792,7 +1792,7 @@
     {
      "mlbam": 642336,
      "name": "Francisco Mej\u00eda",
-     "team": "TB",
+     "team": "WSH",
      "pa": 279,
      "wpa": -0.007,
      "pli": 1.01,
@@ -1814,7 +1814,7 @@
     {
      "mlbam": 650333,
      "name": "Luis Arraez",
-     "team": "MIN",
+     "team": "PHI",
      "pa": 480,
      "wpa": -0.034,
      "pli": 0.97,
@@ -1891,7 +1891,7 @@
     {
      "mlbam": 666915,
      "name": "Bobby Dalbec",
-     "team": "BOS",
+     "team": "KC",
      "pa": 453,
      "wpa": -0.075,
      "pli": 0.94,
@@ -1913,7 +1913,7 @@
     {
      "mlbam": 624641,
      "name": "Edmundo Sosa",
-     "team": "STL",
+     "team": "PHI",
      "pa": 327,
      "wpa": -0.126,
      "pli": 0.82,
@@ -1946,7 +1946,7 @@
     {
      "mlbam": 614177,
      "name": "Franmil Reyes",
-     "team": "CLE",
+     "team": "WSH",
      "pa": 467,
      "wpa": -0.163,
      "pli": 1.07,
@@ -2023,7 +2023,7 @@
     {
      "mlbam": 664056,
      "name": "Harrison Bader",
-     "team": "STL",
+     "team": "SF",
      "pa": 402,
      "wpa": -0.214,
      "pli": 0.95,
@@ -2045,7 +2045,7 @@
     {
      "mlbam": 666158,
      "name": "Gavin Lux",
-     "team": "LAD",
+     "team": "TB",
      "pa": 381,
      "wpa": -0.245,
      "pli": 0.92,
@@ -2089,7 +2089,7 @@
     {
      "mlbam": 666185,
      "name": "Dylan Carlson",
-     "team": "STL",
+     "team": "PHI",
      "pa": 619,
      "wpa": -0.284,
      "pli": 0.91,
@@ -2166,7 +2166,7 @@
     {
      "mlbam": 672284,
      "name": "Jarred Kelenic",
-     "team": "SEA",
+     "team": "TEX",
      "pa": 378,
      "wpa": -0.414,
      "pli": 1.05,
@@ -2199,7 +2199,7 @@
     {
      "mlbam": 642708,
      "name": "Amed Rosario",
-     "team": "CLE",
+     "team": "NYY",
      "pa": 588,
      "wpa": -0.45,
      "pli": 0.99,
@@ -2210,7 +2210,7 @@
     {
      "mlbam": 641680,
      "name": "Jonah Heim",
-     "team": "TEX",
+     "team": "ATH",
      "pa": 286,
      "wpa": -0.454,
      "pli": 1.08,
@@ -2265,7 +2265,7 @@
     {
      "mlbam": 622534,
      "name": "Manuel Margot",
-     "team": "TB",
+     "team": "DET",
      "pa": 465,
      "wpa": -0.482,
      "pli": 1.1,
@@ -2276,7 +2276,7 @@
     {
      "mlbam": 606132,
      "name": "Raimel Tapia",
-     "team": "COL",
+     "team": "TB",
      "pa": 533,
      "wpa": -0.507,
      "pli": 0.99,
@@ -2342,7 +2342,7 @@
     {
      "mlbam": 647304,
      "name": "Josh Naylor",
-     "team": "CLE",
+     "team": "SEA",
      "pa": 251,
      "wpa": -0.537,
      "pli": 0.9,
@@ -2375,7 +2375,7 @@
     {
      "mlbam": 621433,
      "name": "Brett Phillips",
-     "team": "TB",
+     "team": "NYY",
      "pa": 292,
      "wpa": -0.55,
      "pli": 1.02,
@@ -2452,7 +2452,7 @@
     {
      "mlbam": 608324,
      "name": "Alex Bregman",
-     "team": "HOU",
+     "team": "CHC",
      "pa": 400,
      "wpa": -0.624,
      "pli": 0.98,
@@ -2562,7 +2562,7 @@
     {
      "mlbam": 624513,
      "name": "Dom Nu\u00f1ez",
-     "team": "COL",
+     "team": "CLE",
      "pa": 263,
      "wpa": -0.732,
      "pli": 1.01,
@@ -2584,7 +2584,7 @@
     {
      "mlbam": 668942,
      "name": "Josh Rojas",
-     "team": "AZ",
+     "team": "KC",
      "pa": 551,
      "wpa": -0.741,
      "pli": 1.07,
@@ -2595,7 +2595,7 @@
     {
      "mlbam": 665862,
      "name": "Jazz Chisholm Jr.",
-     "team": "MIA",
+     "team": "NYY",
      "pa": 507,
      "wpa": -0.747,
      "pli": 1.07,
@@ -2628,7 +2628,7 @@
     {
      "mlbam": 621020,
      "name": "Dansby Swanson",
-     "team": "ATL",
+     "team": "CHC",
      "pa": 653,
      "wpa": -0.775,
      "pli": 0.98,
@@ -2639,7 +2639,7 @@
     {
      "mlbam": 643396,
      "name": "Isiah Kiner-Falefa",
-     "team": "TEX",
+     "team": "BOS",
      "pa": 679,
      "wpa": -0.787,
      "pli": 0.96,
@@ -2650,7 +2650,7 @@
     {
      "mlbam": 683734,
      "name": "Andrew Vaughn",
-     "team": "CWS",
+     "team": "MIL",
      "pa": 469,
      "wpa": -0.811,
      "pli": 0.99,
@@ -2749,7 +2749,7 @@
     {
      "mlbam": 663647,
      "name": "Ke'Bryan Hayes",
-     "team": "PIT",
+     "team": "CIN",
      "pa": 396,
      "wpa": -0.967,
      "pli": 1.05,
@@ -2771,7 +2771,7 @@
     {
      "mlbam": 608348,
      "name": "Carson Kelly",
-     "team": "AZ",
+     "team": "CHC",
      "pa": 360,
      "wpa": -0.975,
      "pli": 1.1,
@@ -2782,7 +2782,7 @@
     {
      "mlbam": 624415,
      "name": "Cavan Biggio",
-     "team": "TOR",
+     "team": "HOU",
      "pa": 298,
      "wpa": -0.977,
      "pli": 0.93,
@@ -2793,7 +2793,7 @@
     {
      "mlbam": 669221,
      "name": "Sean Murphy",
-     "team": "ATH",
+     "team": "ATL",
      "pa": 449,
      "wpa": -0.995,
      "pli": 1.04,
@@ -2848,7 +2848,7 @@
     {
      "mlbam": 642133,
      "name": "Rowdy Tellez",
-     "team": "MIL",
+     "team": "ATL",
      "pa": 325,
      "wpa": -1.091,
      "pli": 0.93,
@@ -2859,7 +2859,7 @@
     {
      "mlbam": 669016,
      "name": "Brandon Marsh",
-     "team": "LAA",
+     "team": "PHI",
      "pa": 260,
      "wpa": -1.113,
      "pli": 0.92,
@@ -2881,7 +2881,7 @@
     {
      "mlbam": 647351,
      "name": "Abraham Toro",
-     "team": "SEA",
+     "team": "KC",
      "pa": 376,
      "wpa": -1.129,
      "pli": 1.02,
@@ -2914,7 +2914,7 @@
     {
      "mlbam": 621446,
      "name": "Lewis Brinson",
-     "team": "MIA",
+     "team": "SF",
      "pa": 291,
      "wpa": -1.166,
      "pli": 1.07,
@@ -2980,7 +2980,7 @@
     {
      "mlbam": 641343,
      "name": "Jake Bauers",
-     "team": "SEA",
+     "team": "MIL",
      "pa": 315,
      "wpa": -1.345,
      "pli": 1.02,
@@ -3002,7 +3002,7 @@
     {
      "mlbam": 641432,
      "name": "Willie Calhoun",
-     "team": "TEX",
+     "team": "LAA",
      "pa": 286,
      "wpa": -1.357,
      "pli": 1.03,
@@ -3013,7 +3013,7 @@
     {
      "mlbam": 641856,
      "name": "Billy McKinney",
-     "team": "LAD",
+     "team": "TEX",
      "pa": 301,
      "wpa": -1.39,
      "pli": 0.99,
@@ -3035,7 +3035,7 @@
     {
      "mlbam": 641355,
      "name": "Cody Bellinger",
-     "team": "LAD",
+     "team": "NYY",
      "pa": 350,
      "wpa": -1.461,
      "pli": 1.01,
@@ -3046,7 +3046,7 @@
     {
      "mlbam": 673490,
      "name": "Ha-Seong Kim",
-     "team": "SD",
+     "team": "ATL",
      "pa": 300,
      "wpa": -1.473,
      "pli": 1.0,
@@ -3068,7 +3068,7 @@
     {
      "mlbam": 641658,
      "name": "Garrett Hampson",
-     "team": "COL",
+     "team": "CIN",
      "pa": 494,
      "wpa": -1.501,
      "pli": 1.0,
@@ -3079,7 +3079,7 @@
     {
      "mlbam": 642727,
      "name": "Sergio Alc\u00e1ntara",
-     "team": "CHC",
+     "team": "PHI",
      "pa": 256,
      "wpa": -1.502,
      "pli": 0.99,
@@ -3123,7 +3123,7 @@
     {
      "mlbam": 664702,
      "name": "Myles Straw",
-     "team": "CLE",
+     "team": "TOR",
      "pa": 638,
      "wpa": -1.558,
      "pli": 0.89,
@@ -3167,7 +3167,7 @@
     {
      "mlbam": 664058,
      "name": "David Fletcher",
-     "team": "LAA",
+     "team": "ATL",
      "pa": 666,
      "wpa": -1.68,
      "pli": 0.92,
@@ -3178,7 +3178,7 @@
     {
      "mlbam": 645302,
      "name": "Victor Robles",
-     "team": "WSH",
+     "team": "SEA",
      "pa": 370,
      "wpa": -1.685,
      "pli": 0.97,
@@ -3222,7 +3222,7 @@
     {
      "mlbam": 642086,
      "name": "Dominic Smith",
-     "team": "NYM",
+     "team": "ATL",
      "pa": 495,
      "wpa": -1.808,
      "pli": 1.22,
@@ -3244,7 +3244,7 @@
     {
      "mlbam": 669256,
      "name": "Nick Solak",
-     "team": "TEX",
+     "team": "SD",
      "pa": 512,
      "wpa": -1.872,
      "pli": 1.02,
@@ -3255,7 +3255,7 @@
     {
      "mlbam": 656371,
      "name": "Isan D\u00edaz",
-     "team": "MIA",
+     "team": "KC",
      "pa": 279,
      "wpa": -1.88,
      "pli": 1.02,
@@ -3387,7 +3387,7 @@
     {
      "mlbam": 650489,
      "name": "Willi Castro",
-     "team": "DET",
+     "team": "COL",
      "pa": 450,
      "wpa": -2.76,
      "pli": 0.99,
@@ -3398,7 +3398,7 @@
     {
      "mlbam": 623993,
      "name": "Anthony Santander",
-     "team": "BAL",
+     "team": "TOR",
      "pa": 438,
      "wpa": -2.768,
      "pli": 1.02,
@@ -3455,7 +3455,7 @@
     {
      "mlbam": 621111,
      "name": "Walker Buehler",
-     "team": "LAD",
+     "team": "SD",
      "starts": 33,
      "wpa": 4.339,
      "wpa_per_start": 0.131,
@@ -3499,7 +3499,7 @@
     {
      "mlbam": 669203,
      "name": "Corbin Burnes",
-     "team": "MIL",
+     "team": "AZ",
      "starts": 28,
      "wpa": 3.684,
      "wpa_per_start": 0.132,
@@ -3609,7 +3609,7 @@
     {
      "mlbam": 642547,
      "name": "Freddy Peralta",
-     "team": "MIL",
+     "team": "TB",
      "starts": 27,
      "wpa": 2.761,
      "wpa_per_start": 0.102,
@@ -3675,7 +3675,7 @@
     {
      "mlbam": 624133,
      "name": "Ranger Suarez",
-     "team": "PHI",
+     "team": "BOS",
      "starts": 12,
      "wpa": 2.347,
      "wpa_per_start": 0.196,
@@ -3697,7 +3697,7 @@
     {
      "mlbam": 608337,
      "name": "Lucas Giolito",
-     "team": "CWS",
+     "team": "SD",
      "starts": 31,
      "wpa": 2.305,
      "wpa_per_start": 0.074,
@@ -3708,7 +3708,7 @@
     {
      "mlbam": 669432,
      "name": "Trevor Rogers",
-     "team": "MIA",
+     "team": "BAL",
      "starts": 25,
      "wpa": 2.259,
      "wpa_per_start": 0.09,
@@ -3763,7 +3763,7 @@
     {
      "mlbam": 677651,
      "name": "Luis Garcia",
-     "team": "HOU",
+     "team": "NYY",
      "starts": 28,
      "wpa": 1.876,
      "wpa_per_start": 0.067,
@@ -3774,7 +3774,7 @@
     {
      "mlbam": 641154,
      "name": "Pablo L\u00f3pez",
-     "team": "MIA",
+     "team": "MIN",
      "starts": 20,
      "wpa": 1.847,
      "wpa_per_start": 0.092,
@@ -3796,7 +3796,7 @@
     {
      "mlbam": 641816,
      "name": "Tyler Mahle",
-     "team": "CIN",
+     "team": "ATL",
      "starts": 33,
      "wpa": 1.751,
      "wpa_per_start": 0.053,
@@ -3818,7 +3818,7 @@
     {
      "mlbam": 615698,
      "name": "Cal Quantrill",
-     "team": "CLE",
+     "team": "TEX",
      "starts": 22,
      "wpa": 1.702,
      "wpa_per_start": 0.077,
@@ -3829,7 +3829,7 @@
     {
      "mlbam": 608331,
      "name": "Max Fried",
-     "team": "ATL",
+     "team": "NYY",
      "starts": 28,
      "wpa": 1.674,
      "wpa_per_start": 0.06,
@@ -3862,7 +3862,7 @@
     {
      "mlbam": 641482,
      "name": "Nestor Cortes",
-     "team": "NYY",
+     "team": "PHI",
      "starts": 15,
      "wpa": 1.538,
      "wpa_per_start": 0.103,
@@ -3884,7 +3884,7 @@
     {
      "mlbam": 669456,
      "name": "Shane Bieber",
-     "team": "CLE",
+     "team": "TOR",
      "starts": 16,
      "wpa": 1.429,
      "wpa_per_start": 0.089,
@@ -3906,7 +3906,7 @@
     {
      "mlbam": 663554,
      "name": "Casey Mize",
-     "team": "DET",
+     "team": "SD",
      "starts": 30,
      "wpa": 1.339,
      "wpa_per_start": 0.045,
@@ -3917,7 +3917,7 @@
     {
      "mlbam": 656427,
      "name": "Jack Flaherty",
-     "team": "STL",
+     "team": "DET",
      "starts": 15,
      "wpa": 1.306,
      "wpa_per_start": 0.087,
@@ -3928,7 +3928,7 @@
     {
      "mlbam": 623167,
      "name": "Chris Flexen",
-     "team": "SEA",
+     "team": "CHC",
      "starts": 31,
      "wpa": 1.29,
      "wpa_per_start": 0.042,
@@ -3950,7 +3950,7 @@
     {
      "mlbam": 641778,
      "name": "Eric Lauer",
-     "team": "MIL",
+     "team": "LAD",
      "starts": 20,
      "wpa": 1.189,
      "wpa_per_start": 0.059,
@@ -3972,7 +3972,7 @@
     {
      "mlbam": 664353,
      "name": "Jos\u00e9 Urquidy",
-     "team": "HOU",
+     "team": "CWS",
      "starts": 20,
      "wpa": 1.131,
      "wpa_per_start": 0.057,
@@ -4016,7 +4016,7 @@
     {
      "mlbam": 663776,
      "name": "Patrick Sandoval",
-     "team": "LAA",
+     "team": "BOS",
      "starts": 14,
      "wpa": 0.959,
      "wpa_per_start": 0.069,
@@ -4071,7 +4071,7 @@
     {
      "mlbam": 664062,
      "name": "Tony Gonsolin",
-     "team": "LAD",
+     "team": "KC",
      "starts": 13,
      "wpa": 0.902,
      "wpa_per_start": 0.069,
@@ -4082,7 +4082,7 @@
     {
      "mlbam": 656302,
      "name": "Dylan Cease",
-     "team": "CWS",
+     "team": "TOR",
      "starts": 32,
      "wpa": 0.876,
      "wpa_per_start": 0.027,
@@ -4093,7 +4093,7 @@
     {
      "mlbam": 650644,
      "name": "Aaron Civale",
-     "team": "CLE",
+     "team": "CHC",
      "starts": 21,
      "wpa": 0.875,
      "wpa_per_start": 0.042,
@@ -4170,7 +4170,7 @@
     {
      "mlbam": 666205,
      "name": "Kyle Muller",
-     "team": "ATL",
+     "team": "ATH",
      "starts": 8,
      "wpa": 0.781,
      "wpa_per_start": 0.098,
@@ -4181,7 +4181,7 @@
     {
      "mlbam": 641302,
      "name": "Tyler Alexander",
-     "team": "DET",
+     "team": "TEX",
      "starts": 15,
      "wpa": 0.748,
      "wpa_per_start": 0.05,
@@ -4203,7 +4203,7 @@
     {
      "mlbam": 621076,
      "name": "James Kaprielian",
-     "team": "ATH",
+     "team": "TOR",
      "starts": 21,
      "wpa": 0.739,
      "wpa_per_start": 0.035,
@@ -4236,7 +4236,7 @@
     {
      "mlbam": 672578,
      "name": "Carlos Hern\u00e1ndez",
-     "team": "KC",
+     "team": "CLE",
      "starts": 11,
      "wpa": 0.662,
      "wpa_per_start": 0.06,
@@ -4291,7 +4291,7 @@
     {
      "mlbam": 642028,
      "name": "Josh Rogers",
-     "team": "WSH",
+     "team": "COL",
      "starts": 6,
      "wpa": 0.557,
      "wpa_per_start": 0.093,
@@ -4335,7 +4335,7 @@
     {
      "mlbam": 666201,
      "name": "Alek Manoah",
-     "team": "TOR",
+     "team": "LAA",
      "starts": 20,
      "wpa": 0.516,
      "wpa_per_start": 0.026,
@@ -4456,7 +4456,7 @@
     {
      "mlbam": 643290,
      "name": "Justin Dunn",
-     "team": "SEA",
+     "team": "LAA",
      "starts": 11,
      "wpa": 0.34,
      "wpa_per_start": 0.031,
@@ -4467,7 +4467,7 @@
     {
      "mlbam": 621107,
      "name": "Zach Eflin",
-     "team": "PHI",
+     "team": "BAL",
      "starts": 18,
      "wpa": 0.337,
      "wpa_per_start": 0.019,
@@ -4478,7 +4478,7 @@
     {
      "mlbam": 660761,
      "name": "Jos\u00e9 Suarez",
-     "team": "LAA",
+     "team": "ATH",
      "starts": 14,
      "wpa": 0.302,
      "wpa_per_start": 0.022,
@@ -4555,7 +4555,7 @@
     {
      "mlbam": 660623,
      "name": "Huascar Ynoa",
-     "team": "ATL",
+     "team": "LAA",
      "starts": 17,
      "wpa": 0.259,
      "wpa_per_start": 0.015,
@@ -4588,7 +4588,7 @@
     {
      "mlbam": 669160,
      "name": "Dustin May",
-     "team": "LAD",
+     "team": "MIL",
      "starts": 5,
      "wpa": 0.23,
      "wpa_per_start": 0.046,
@@ -4621,7 +4621,7 @@
     {
      "mlbam": 641540,
      "name": "Dane Dunning",
-     "team": "TEX",
+     "team": "SEA",
      "starts": 25,
      "wpa": 0.2,
      "wpa_per_start": 0.008,
@@ -4665,7 +4665,7 @@
     {
      "mlbam": 642545,
      "name": "Jaime Barria",
-     "team": "LAA",
+     "team": "CLE",
      "starts": 11,
      "wpa": 0.176,
      "wpa_per_start": 0.016,
@@ -4698,7 +4698,7 @@
     {
      "mlbam": 661269,
      "name": "Vladimir Gutierrez",
-     "team": "CIN",
+     "team": "BOS",
      "starts": 22,
      "wpa": 0.12,
      "wpa_per_start": 0.005,
@@ -4720,7 +4720,7 @@
     {
      "mlbam": 666129,
      "name": "Braxton Garrett",
-     "team": "MIA",
+     "team": "CHC",
      "starts": 7,
      "wpa": 0.109,
      "wpa_per_start": 0.016,
@@ -4753,7 +4753,7 @@
     {
      "mlbam": 663765,
      "name": "Jake Woodford",
-     "team": "STL",
+     "team": "TB",
      "starts": 9,
      "wpa": 0.047,
      "wpa_per_start": 0.005,
@@ -4786,7 +4786,7 @@
     {
      "mlbam": 625643,
      "name": "Reynaldo L\u00f3pez",
-     "team": "CWS",
+     "team": "ATL",
      "starts": 9,
      "wpa": 0.011,
      "wpa_per_start": 0.001,
@@ -4830,7 +4830,7 @@
     {
      "mlbam": 663734,
      "name": "Nick Neidert",
-     "team": "MIA",
+     "team": "CHC",
      "starts": 7,
      "wpa": -0.019,
      "wpa_per_start": -0.003,
@@ -4885,7 +4885,7 @@
     {
      "mlbam": 624522,
      "name": "Keegan Thompson",
-     "team": "CHC",
+     "team": "COL",
      "starts": 6,
      "wpa": -0.078,
      "wpa_per_start": -0.013,
@@ -4896,7 +4896,7 @@
     {
      "mlbam": 642203,
      "name": "Taylor Widener",
-     "team": "AZ",
+     "team": "ATL",
      "starts": 13,
      "wpa": -0.092,
      "wpa_per_start": -0.007,
@@ -4907,7 +4907,7 @@
     {
      "mlbam": 663474,
      "name": "Triston McKenzie",
-     "team": "CLE",
+     "team": "SD",
      "starts": 24,
      "wpa": -0.103,
      "wpa_per_start": -0.004,
@@ -4918,7 +4918,7 @@
     {
      "mlbam": 622694,
      "name": "Elieser Hern\u00e1ndez",
-     "team": "MIA",
+     "team": "ATL",
      "starts": 11,
      "wpa": -0.108,
      "wpa_per_start": -0.01,
@@ -4973,7 +4973,7 @@
     {
      "mlbam": 547001,
      "name": "Cody Poteet",
-     "team": "MIA",
+     "team": "BAL",
      "starts": 7,
      "wpa": -0.212,
      "wpa_per_start": -0.03,
@@ -4984,7 +4984,7 @@
     {
      "mlbam": 663753,
      "name": "Reiss Knehr",
-     "team": "SD",
+     "team": "MIL",
      "starts": 5,
      "wpa": -0.213,
      "wpa_per_start": -0.043,
@@ -5006,7 +5006,7 @@
     {
      "mlbam": 676596,
      "name": "Josh Fleming",
-     "team": "TB",
+     "team": "STL",
      "starts": 12,
      "wpa": -0.216,
      "wpa_per_start": -0.018,
@@ -5017,7 +5017,7 @@
     {
      "mlbam": 608566,
      "name": "Germ\u00e1n M\u00e1rquez",
-     "team": "COL",
+     "team": "MIN",
      "starts": 32,
      "wpa": -0.222,
      "wpa_per_start": -0.007,
@@ -5028,7 +5028,7 @@
     {
      "mlbam": 621368,
      "name": "Taylor Hearn",
-     "team": "TEX",
+     "team": "KC",
      "starts": 12,
      "wpa": -0.227,
      "wpa_per_start": -0.019,
@@ -5050,7 +5050,7 @@
     {
      "mlbam": 650633,
      "name": "Michael King",
-     "team": "NYY",
+     "team": "SD",
      "starts": 6,
      "wpa": -0.246,
      "wpa_per_start": -0.041,
@@ -5061,7 +5061,7 @@
     {
      "mlbam": 641743,
      "name": "Anthony Kay",
-     "team": "TOR",
+     "team": "CWS",
      "starts": 6,
      "wpa": -0.249,
      "wpa_per_start": -0.041,
@@ -5072,7 +5072,7 @@
     {
      "mlbam": 663460,
      "name": "Kris Bubic",
-     "team": "KC",
+     "team": "LAD",
      "starts": 20,
      "wpa": -0.249,
      "wpa_per_start": -0.012,
@@ -5116,7 +5116,7 @@
     {
      "mlbam": 672715,
      "name": "Luis Pati\u00f1o",
-     "team": "TB",
+     "team": "SD",
      "starts": 15,
      "wpa": -0.324,
      "wpa_per_start": -0.022,
@@ -5171,7 +5171,7 @@
     {
      "mlbam": 669212,
      "name": "Eli Morgan",
-     "team": "CLE",
+     "team": "KC",
      "starts": 18,
      "wpa": -0.449,
      "wpa_per_start": -0.025,
@@ -5182,7 +5182,7 @@
     {
      "mlbam": 676050,
      "name": "Packy Naughton",
-     "team": "LAA",
+     "team": "STL",
      "starts": 5,
      "wpa": -0.455,
      "wpa_per_start": -0.091,
@@ -5226,7 +5226,7 @@
     {
      "mlbam": 657053,
      "name": "Touki Toussaint",
-     "team": "ATL",
+     "team": "LAA",
      "starts": 10,
      "wpa": -0.467,
      "wpa_per_start": -0.047,
@@ -5237,7 +5237,7 @@
     {
      "mlbam": 656212,
      "name": "Charlie Barnes",
-     "team": "MIN",
+     "team": "LAD",
      "starts": 8,
      "wpa": -0.47,
      "wpa_per_start": -0.059,
@@ -5325,7 +5325,7 @@
     {
      "mlbam": 669373,
      "name": "Tarik Skubal",
-     "team": "DET",
+     "team": "LAD",
      "starts": 29,
      "wpa": -0.582,
      "wpa_per_start": -0.02,
@@ -5369,7 +5369,7 @@
     {
      "mlbam": 669145,
      "name": "Bruce Zimmermann",
-     "team": "BAL",
+     "team": "STL",
      "starts": 13,
      "wpa": -0.62,
      "wpa_per_start": -0.048,
@@ -5391,7 +5391,7 @@
     {
      "mlbam": 676840,
      "name": "Matt Peacock",
-     "team": "AZ",
+     "team": "TOR",
      "starts": 8,
      "wpa": -0.649,
      "wpa_per_start": -0.081,
@@ -5402,7 +5402,7 @@
     {
      "mlbam": 666159,
      "name": "Matt Manning",
-     "team": "DET",
+     "team": "PHI",
      "starts": 18,
      "wpa": -0.649,
      "wpa_per_start": -0.036,
@@ -5435,7 +5435,7 @@
     {
      "mlbam": 677976,
      "name": "Randy Dobnak",
-     "team": "MIN",
+     "team": "KC",
      "starts": 6,
      "wpa": -0.708,
      "wpa_per_start": -0.118,
@@ -5479,7 +5479,7 @@
     {
      "mlbam": 657248,
      "name": "Glenn Otto Jr.",
-     "team": "TEX",
+     "team": "HOU",
      "starts": 6,
      "wpa": -0.76,
      "wpa_per_start": -0.127,
@@ -5512,7 +5512,7 @@
     {
      "mlbam": 670912,
      "name": "Johan Oviedo",
-     "team": "STL",
+     "team": "BOS",
      "starts": 13,
      "wpa": -0.83,
      "wpa_per_start": -0.064,
@@ -5534,7 +5534,7 @@
     {
      "mlbam": 664045,
      "name": "Thomas Eshelman",
-     "team": "BAL",
+     "team": "SD",
      "starts": 6,
      "wpa": -0.832,
      "wpa_per_start": -0.139,
@@ -5545,7 +5545,7 @@
     {
      "mlbam": 656849,
      "name": "David Peterson",
-     "team": "NYM",
+     "team": "CHC",
      "starts": 15,
      "wpa": -0.842,
      "wpa_per_start": -0.056,
@@ -5578,7 +5578,7 @@
     {
      "mlbam": 656529,
      "name": "Sam Hentges",
-     "team": "CLE",
+     "team": "SF",
      "starts": 12,
      "wpa": -0.881,
      "wpa_per_start": -0.073,
@@ -5589,7 +5589,7 @@
     {
      "mlbam": 668820,
      "name": "Max Kranick",
-     "team": "PIT",
+     "team": "WSH",
      "starts": 9,
      "wpa": -0.89,
      "wpa_per_start": -0.099,
@@ -5611,7 +5611,7 @@
     {
      "mlbam": 622608,
      "name": "Antonio Senzatela",
-     "team": "COL",
+     "team": "MIL",
      "starts": 28,
      "wpa": -0.898,
      "wpa_per_start": -0.032,
@@ -5633,7 +5633,7 @@
     {
      "mlbam": 650668,
      "name": "Humberto Mej\u00eda",
-     "team": "AZ",
+     "team": "NYM",
      "starts": 5,
      "wpa": -0.933,
      "wpa_per_start": -0.187,
@@ -5644,7 +5644,7 @@
     {
      "mlbam": 669060,
      "name": "Bryse Wilson",
-     "team": "PIT",
+     "team": "MIL",
      "starts": 16,
      "wpa": -0.941,
      "wpa_per_start": -0.059,
@@ -5655,7 +5655,7 @@
     {
      "mlbam": 663465,
      "name": "Kolby Allard",
-     "team": "TEX",
+     "team": "PHI",
      "starts": 17,
      "wpa": -0.945,
      "wpa_per_start": -0.056,
@@ -5666,7 +5666,7 @@
     {
      "mlbam": 640470,
      "name": "Adbert Alzolay",
-     "team": "CHC",
+     "team": "NYM",
      "starts": 21,
      "wpa": -0.948,
      "wpa_per_start": -0.045,
@@ -5677,7 +5677,7 @@
     {
      "mlbam": 656288,
      "name": "Griffin Canning",
-     "team": "LAA",
+     "team": "SD",
      "starts": 13,
      "wpa": -0.957,
      "wpa_per_start": -0.074,
@@ -5699,7 +5699,7 @@
     {
      "mlbam": 665795,
      "name": "Edward Cabrera",
-     "team": "MIA",
+     "team": "CHC",
      "starts": 7,
      "wpa": -0.987,
      "wpa_per_start": -0.141,
@@ -5710,7 +5710,7 @@
     {
      "mlbam": 608344,
      "name": "Cole Irvin",
-     "team": "ATH",
+     "team": "LAD",
      "starts": 32,
      "wpa": -1.003,
      "wpa_per_start": -0.031,
@@ -5743,7 +5743,7 @@
     {
      "mlbam": 663978,
      "name": "Chris Paddack",
-     "team": "SD",
+     "team": "TEX",
      "starts": 22,
      "wpa": -1.079,
      "wpa_per_start": -0.049,
@@ -5765,7 +5765,7 @@
     {
      "mlbam": 677960,
      "name": "Ryan Weathers",
-     "team": "SD",
+     "team": "NYY",
      "starts": 18,
      "wpa": -1.098,
      "wpa_per_start": -0.061,
@@ -5831,7 +5831,7 @@
     {
      "mlbam": 643377,
      "name": "Griffin Jax",
-     "team": "MIN",
+     "team": "TB",
      "starts": 14,
      "wpa": -1.265,
      "wpa_per_start": -0.09,
@@ -5853,7 +5853,7 @@
     {
      "mlbam": 675921,
      "name": "Spencer Howard",
-     "team": "TEX",
+     "team": "SF",
      "starts": 15,
      "wpa": -1.302,
      "wpa_per_start": -0.087,
@@ -5875,7 +5875,7 @@
     {
      "mlbam": 665152,
      "name": "Dean Kremer",
-     "team": "BAL",
+     "team": "MIN",
      "starts": 13,
      "wpa": -1.346,
      "wpa_per_start": -0.104,
@@ -5919,7 +5919,7 @@
     {
      "mlbam": 666200,
      "name": "Jes\u00fas Luzardo",
-     "team": "MIA",
+     "team": "PHI",
      "starts": 18,
      "wpa": -1.404,
      "wpa_per_start": -0.078,
@@ -5952,7 +5952,7 @@
     {
      "mlbam": 656954,
      "name": "Justus Sheffield",
-     "team": "SEA",
+     "team": "CIN",
      "starts": 15,
      "wpa": -1.498,
      "wpa_per_start": -0.1,
@@ -5963,7 +5963,7 @@
     {
      "mlbam": 663903,
      "name": "Brady Singer",
-     "team": "KC",
+     "team": "CIN",
      "starts": 27,
      "wpa": -1.573,
      "wpa_per_start": -0.058,
@@ -5985,7 +5985,7 @@
     {
      "mlbam": 641745,
      "name": "Brad Keller",
-     "team": "KC",
+     "team": "PHI",
      "starts": 26,
      "wpa": -1.699,
      "wpa_per_start": -0.065,
@@ -6029,7 +6029,7 @@
     {
      "mlbam": 663804,
      "name": "Jackson Kowar",
-     "team": "KC",
+     "team": "BAL",
      "starts": 8,
      "wpa": -1.925,
      "wpa_per_start": -0.241,
@@ -6040,7 +6040,7 @@
     {
      "mlbam": 650496,
      "name": "J.C. Mej\u00eda",
-     "team": "CLE",
+     "team": "MIL",
      "starts": 11,
      "wpa": -1.929,
      "wpa_per_start": -0.175,
@@ -6051,7 +6051,7 @@
     {
      "mlbam": 640444,
      "name": "Wil Crowe",
-     "team": "PIT",
+     "team": "PHI",
      "starts": 25,
      "wpa": -1.954,
      "wpa_per_start": -0.078,
@@ -6216,7 +6216,7 @@
     {
      "mlbam": 665926,
      "name": "Andr\u00e9s Gim\u00e9nez",
-     "team": "CLE",
+     "team": "TOR",
      "pa": 557,
      "wpa": 2.946,
      "pli": 1.08,
@@ -6227,7 +6227,7 @@
     {
      "mlbam": 646240,
      "name": "Rafael Devers",
-     "team": "BOS",
+     "team": "SF",
      "pa": 614,
      "wpa": 2.602,
      "pli": 0.99,
@@ -6282,7 +6282,7 @@
     {
      "mlbam": 647304,
      "name": "Josh Naylor",
-     "team": "CLE",
+     "team": "SEA",
      "pa": 501,
      "wpa": 2.319,
      "pli": 1.09,
@@ -6359,7 +6359,7 @@
     {
      "mlbam": 663656,
      "name": "Kyle Tucker",
-     "team": "HOU",
+     "team": "LAD",
      "pa": 611,
      "wpa": 2.122,
      "pli": 0.99,
@@ -6392,7 +6392,7 @@
     {
      "mlbam": 624413,
      "name": "Pete Alonso",
-     "team": "NYM",
+     "team": "BAL",
      "pa": 685,
      "wpa": 1.995,
      "pli": 0.97,
@@ -6414,7 +6414,7 @@
     {
      "mlbam": 657077,
      "name": "Alex Verdugo",
-     "team": "BOS",
+     "team": "SD",
      "pa": 645,
      "wpa": 1.906,
      "pli": 1.07,
@@ -6436,7 +6436,7 @@
     {
      "mlbam": 660271,
      "name": "Shohei Ohtani",
-     "team": "LAA",
+     "team": "LAD",
      "pa": 666,
      "wpa": 1.734,
      "pli": 0.93,
@@ -6469,7 +6469,7 @@
     {
      "mlbam": 642731,
      "name": "Thairo Estrada",
-     "team": "SF",
+     "team": "BAL",
      "pa": 543,
      "wpa": 1.655,
      "pli": 1.04,
@@ -6568,7 +6568,7 @@
     {
      "mlbam": 668942,
      "name": "Josh Rojas",
-     "team": "AZ",
+     "team": "KC",
      "pa": 511,
      "wpa": 1.478,
      "pli": 1.0,
@@ -6579,7 +6579,7 @@
     {
      "mlbam": 663993,
      "name": "Nathaniel Lowe",
-     "team": "TEX",
+     "team": "CLE",
      "pa": 646,
      "wpa": 1.459,
      "pli": 1.02,
@@ -6590,7 +6590,7 @@
     {
      "mlbam": 666182,
      "name": "Bo Bichette",
-     "team": "TOR",
+     "team": "NYM",
      "pa": 698,
      "wpa": 1.409,
      "pli": 1.01,
@@ -6634,7 +6634,7 @@
     {
      "mlbam": 622682,
      "name": "Victor Reyes",
-     "team": "DET",
+     "team": "CWS",
      "pa": 338,
      "wpa": 1.313,
      "pli": 1.05,
@@ -6656,7 +6656,7 @@
     {
      "mlbam": 642715,
      "name": "Willy Adames",
-     "team": "MIL",
+     "team": "SF",
      "pa": 617,
      "wpa": 1.257,
      "pli": 1.09,
@@ -6667,7 +6667,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "CWS",
+     "team": "NYM",
      "pa": 401,
      "wpa": 1.254,
      "pli": 1.07,
@@ -6678,7 +6678,7 @@
     {
      "mlbam": 680977,
      "name": "Brendan Donovan",
-     "team": "STL",
+     "team": "SEA",
      "pa": 471,
      "wpa": 1.246,
      "pli": 0.99,
@@ -6689,7 +6689,7 @@
     {
      "mlbam": 668939,
      "name": "Adley Rutschman",
-     "team": "BAL",
+     "team": "BOS",
      "pa": 470,
      "wpa": 1.221,
      "pli": 0.96,
@@ -6700,7 +6700,7 @@
     {
      "mlbam": 665742,
      "name": "Juan Soto",
-     "team": "SD",
+     "team": "NYM",
      "pa": 666,
      "wpa": 1.193,
      "pli": 0.93,
@@ -6744,7 +6744,7 @@
     {
      "mlbam": 650391,
      "name": "Eloy Jim\u00e9nez",
-     "team": "CWS",
+     "team": "TOR",
      "pa": 328,
      "wpa": 1.143,
      "pli": 1.06,
@@ -6755,7 +6755,7 @@
     {
      "mlbam": 621020,
      "name": "Dansby Swanson",
-     "team": "ATL",
+     "team": "CHC",
      "pa": 699,
      "wpa": 1.072,
      "pli": 0.91,
@@ -6799,7 +6799,7 @@
     {
      "mlbam": 683734,
      "name": "Andrew Vaughn",
-     "team": "CWS",
+     "team": "MIL",
      "pa": 555,
      "wpa": 1.003,
      "pli": 1.03,
@@ -6810,7 +6810,7 @@
     {
      "mlbam": 661388,
      "name": "William Contreras",
-     "team": "ATL",
+     "team": "MIL",
      "pa": 376,
      "wpa": 0.951,
      "pli": 0.88,
@@ -6832,7 +6832,7 @@
     {
      "mlbam": 669374,
      "name": "Keston Hiura",
-     "team": "MIL",
+     "team": "LAD",
      "pa": 266,
      "wpa": 0.857,
      "pli": 1.06,
@@ -6843,7 +6843,7 @@
     {
      "mlbam": 623912,
      "name": "Harold Ram\u00edrez",
-     "team": "TB",
+     "team": "ATL",
      "pa": 435,
      "wpa": 0.855,
      "pli": 1.05,
@@ -6898,7 +6898,7 @@
     {
      "mlbam": 664983,
      "name": "Jake McCarthy",
-     "team": "AZ",
+     "team": "COL",
      "pa": 356,
      "wpa": 0.785,
      "pli": 0.95,
@@ -6931,7 +6931,7 @@
     {
      "mlbam": 608324,
      "name": "Alex Bregman",
-     "team": "HOU",
+     "team": "CHC",
      "pa": 657,
      "wpa": 0.752,
      "pli": 0.97,
@@ -6975,7 +6975,7 @@
     {
      "mlbam": 621043,
      "name": "Carlos Correa",
-     "team": "MIN",
+     "team": "HOU",
      "pa": 594,
      "wpa": 0.669,
      "pli": 0.99,
@@ -7019,7 +7019,7 @@
     {
      "mlbam": 664034,
      "name": "Ty France",
-     "team": "SEA",
+     "team": "SD",
      "pa": 614,
      "wpa": 0.567,
      "pli": 1.09,
@@ -7041,7 +7041,7 @@
     {
      "mlbam": 660757,
      "name": "Oscar Gonzalez",
-     "team": "CLE",
+     "team": "SD",
      "pa": 382,
      "wpa": 0.531,
      "pli": 1.11,
@@ -7074,7 +7074,7 @@
     {
      "mlbam": 650333,
      "name": "Luis Arraez",
-     "team": "MIN",
+     "team": "PHI",
      "pa": 603,
      "wpa": 0.48,
      "pli": 0.98,
@@ -7107,7 +7107,7 @@
     {
      "mlbam": 669261,
      "name": "Jack Suwinski",
-     "team": "PIT",
+     "team": "TB",
      "pa": 373,
      "wpa": 0.469,
      "pli": 1.0,
@@ -7228,7 +7228,7 @@
     {
      "mlbam": 663457,
      "name": "Lars Nootbaar",
-     "team": "STL",
+     "team": "AZ",
      "pa": 347,
      "wpa": 0.258,
      "pli": 0.91,
@@ -7250,7 +7250,7 @@
     {
      "mlbam": 641933,
      "name": "Tyler O'Neill",
-     "team": "STL",
+     "team": "BAL",
      "pa": 383,
      "wpa": 0.253,
      "pli": 0.99,
@@ -7272,7 +7272,7 @@
     {
      "mlbam": 663697,
      "name": "Jonathan India",
-     "team": "CIN",
+     "team": "KC",
      "pa": 431,
      "wpa": 0.21,
      "pli": 1.02,
@@ -7294,7 +7294,7 @@
     {
      "mlbam": 642133,
      "name": "Rowdy Tellez",
-     "team": "MIL",
+     "team": "ATL",
      "pa": 601,
      "wpa": 0.159,
      "pli": 1.04,
@@ -7338,7 +7338,7 @@
     {
      "mlbam": 669242,
      "name": "Tommy Edman",
-     "team": "STL",
+     "team": "LAD",
      "pa": 630,
      "wpa": 0.102,
      "pli": 0.96,
@@ -7393,7 +7393,7 @@
     {
      "mlbam": 643217,
      "name": "Andrew Benintendi",
-     "team": "NYY",
+     "team": "CWS",
      "pa": 523,
      "wpa": 0.052,
      "pli": 1.06,
@@ -7437,7 +7437,7 @@
     {
      "mlbam": 670623,
      "name": "Isaac Paredes",
-     "team": "TB",
+     "team": "HOU",
      "pa": 382,
      "wpa": -0.008,
      "pli": 1.06,
@@ -7448,7 +7448,7 @@
     {
      "mlbam": 602104,
      "name": "Ram\u00f3n Ur\u00edas",
-     "team": "BAL",
+     "team": "STL",
      "pa": 445,
      "wpa": -0.014,
      "pli": 1.14,
@@ -7503,7 +7503,7 @@
     {
      "mlbam": 664056,
      "name": "Harrison Bader",
-     "team": "NYY",
+     "team": "SF",
      "pa": 314,
      "wpa": -0.099,
      "pli": 0.95,
@@ -7536,7 +7536,7 @@
     {
      "mlbam": 622534,
      "name": "Manuel Margot",
-     "team": "TB",
+     "team": "DET",
      "pa": 363,
      "wpa": -0.126,
      "pli": 1.11,
@@ -7547,7 +7547,7 @@
     {
      "mlbam": 641857,
      "name": "Ryan McMahon",
-     "team": "COL",
+     "team": "NYY",
      "pa": 600,
      "wpa": -0.126,
      "pli": 1.06,
@@ -7613,7 +7613,7 @@
     {
      "mlbam": 664040,
      "name": "Brandon Lowe",
-     "team": "TB",
+     "team": "PIT",
      "pa": 267,
      "wpa": -0.261,
      "pli": 1.04,
@@ -7646,7 +7646,7 @@
     {
      "mlbam": 614173,
      "name": "Franchy Cordero",
-     "team": "BOS",
+     "team": "WSH",
      "pa": 275,
      "wpa": -0.285,
      "pli": 0.98,
@@ -7668,7 +7668,7 @@
     {
      "mlbam": 657757,
      "name": "Gavin Sheets",
-     "team": "CWS",
+     "team": "SD",
      "pa": 410,
      "wpa": -0.32,
      "pli": 1.07,
@@ -7701,7 +7701,7 @@
     {
      "mlbam": 662139,
      "name": "Daulton Varsho",
-     "team": "AZ",
+     "team": "HOU",
      "pa": 593,
      "wpa": -0.349,
      "pli": 0.99,
@@ -7712,7 +7712,7 @@
     {
      "mlbam": 663837,
      "name": "Matt Vierling",
-     "team": "PHI",
+     "team": "DET",
      "pa": 357,
      "wpa": -0.384,
      "pli": 0.97,
@@ -7723,7 +7723,7 @@
     {
      "mlbam": 596059,
      "name": "Rougned Odor",
-     "team": "BAL",
+     "team": "NYY",
      "pa": 473,
      "wpa": -0.402,
      "pli": 1.1,
@@ -7756,7 +7756,7 @@
     {
      "mlbam": 666158,
      "name": "Gavin Lux",
-     "team": "LAD",
+     "team": "TB",
      "pa": 472,
      "wpa": -0.423,
      "pli": 0.97,
@@ -7844,7 +7844,7 @@
     {
      "mlbam": 669221,
      "name": "Sean Murphy",
-     "team": "ATH",
+     "team": "ATL",
      "pa": 614,
      "wpa": -0.462,
      "pli": 0.97,
@@ -7866,7 +7866,7 @@
     {
      "mlbam": 676801,
      "name": "Chas McCormick",
-     "team": "HOU",
+     "team": "CHC",
      "pa": 408,
      "wpa": -0.5,
      "pli": 0.88,
@@ -7921,7 +7921,7 @@
     {
      "mlbam": 643396,
      "name": "Isiah Kiner-Falefa",
-     "team": "NYY",
+     "team": "BOS",
      "pa": 532,
      "wpa": -0.573,
      "pli": 1.11,
@@ -7932,7 +7932,7 @@
     {
      "mlbam": 656896,
      "name": "Emmanuel Rivera",
-     "team": "AZ",
+     "team": "BAL",
      "pa": 362,
      "wpa": -0.579,
      "pli": 0.91,
@@ -7976,7 +7976,7 @@
     {
      "mlbam": 624512,
      "name": "Reese McGuire",
-     "team": "BOS",
+     "team": "CWS",
      "pa": 274,
      "wpa": -0.608,
      "pli": 1.05,
@@ -8053,7 +8053,7 @@
     {
      "mlbam": 623993,
      "name": "Anthony Santander",
-     "team": "BAL",
+     "team": "TOR",
      "pa": 649,
      "wpa": -0.663,
      "pli": 1.08,
@@ -8075,7 +8075,7 @@
     {
      "mlbam": 669720,
      "name": "Austin Hays",
-     "team": "BAL",
+     "team": "SD",
      "pa": 583,
      "wpa": -0.664,
      "pli": 1.07,
@@ -8086,7 +8086,7 @@
     {
      "mlbam": 666624,
      "name": "Christopher Morel",
-     "team": "CHC",
+     "team": "NYM",
      "pa": 426,
      "wpa": -0.668,
      "pli": 1.06,
@@ -8108,7 +8108,7 @@
     {
      "mlbam": 642336,
      "name": "Francisco Mej\u00eda",
-     "team": "TB",
+     "team": "WSH",
      "pa": 299,
      "wpa": -0.679,
      "pli": 1.03,
@@ -8119,7 +8119,7 @@
     {
      "mlbam": 624414,
      "name": "Christian Arroyo",
-     "team": "BOS",
+     "team": "NYM",
      "pa": 300,
      "wpa": -0.683,
      "pli": 1.06,
@@ -8130,7 +8130,7 @@
     {
      "mlbam": 670768,
      "name": "Luis Gonz\u00e1lez",
-     "team": "SF",
+     "team": "NYY",
      "pa": 352,
      "wpa": -0.692,
      "pli": 1.03,
@@ -8196,7 +8196,7 @@
     {
      "mlbam": 650402,
      "name": "Gleyber Torres",
-     "team": "NYY",
+     "team": "DET",
      "pa": 575,
      "wpa": -0.77,
      "pli": 1.18,
@@ -8251,7 +8251,7 @@
     {
      "mlbam": 666801,
      "name": "Rodolfo Castro",
-     "team": "PIT",
+     "team": "TOR",
      "pa": 278,
      "wpa": -0.81,
      "pli": 1.0,
@@ -8262,7 +8262,7 @@
     {
      "mlbam": 624503,
      "name": "Nick Gordon",
-     "team": "MIN",
+     "team": "KC",
      "pa": 443,
      "wpa": -0.812,
      "pli": 1.04,
@@ -8317,7 +8317,7 @@
     {
      "mlbam": 666185,
      "name": "Dylan Carlson",
-     "team": "STL",
+     "team": "PHI",
      "pa": 489,
      "wpa": -0.846,
      "pli": 0.93,
@@ -8328,7 +8328,7 @@
     {
      "mlbam": 660636,
      "name": "Diego Castillo",
-     "team": "PIT",
+     "team": "TEX",
      "pa": 283,
      "wpa": -0.848,
      "pli": 1.0,
@@ -8339,7 +8339,7 @@
     {
      "mlbam": 624415,
      "name": "Cavan Biggio",
-     "team": "TOR",
+     "team": "HOU",
      "pa": 303,
      "wpa": -0.859,
      "pli": 0.91,
@@ -8350,7 +8350,7 @@
     {
      "mlbam": 606132,
      "name": "Raimel Tapia",
-     "team": "TOR",
+     "team": "TB",
      "pa": 434,
      "wpa": -0.864,
      "pli": 0.99,
@@ -8361,7 +8361,7 @@
     {
      "mlbam": 645302,
      "name": "Victor Robles",
-     "team": "WSH",
+     "team": "SEA",
      "pa": 408,
      "wpa": -0.896,
      "pli": 0.89,
@@ -8416,7 +8416,7 @@
     {
      "mlbam": 665750,
      "name": "Leody Taveras",
-     "team": "TEX",
+     "team": "BAL",
      "pa": 341,
      "wpa": -0.951,
      "pli": 1.01,
@@ -8460,7 +8460,7 @@
     {
      "mlbam": 650559,
      "name": "Bryan De La Cruz",
-     "team": "MIA",
+     "team": "PHI",
      "pa": 355,
      "wpa": -1.019,
      "pli": 1.06,
@@ -8471,7 +8471,7 @@
     {
      "mlbam": 664774,
      "name": "LaMonte Wade Jr.",
-     "team": "SF",
+     "team": "HOU",
      "pa": 251,
      "wpa": -1.033,
      "pli": 1.16,
@@ -8482,7 +8482,7 @@
     {
      "mlbam": 671277,
      "name": "Luis Garc\u00eda Jr.",
-     "team": "WSH",
+     "team": "NYY",
      "pa": 377,
      "wpa": -1.042,
      "pli": 1.03,
@@ -8526,7 +8526,7 @@
     {
      "mlbam": 647351,
      "name": "Abraham Toro",
-     "team": "SEA",
+     "team": "KC",
      "pa": 354,
      "wpa": -1.096,
      "pli": 1.12,
@@ -8548,7 +8548,7 @@
     {
      "mlbam": 621438,
      "name": "Tyrone Taylor",
-     "team": "MIL",
+     "team": "CHC",
      "pa": 405,
      "wpa": -1.118,
      "pli": 1.04,
@@ -8570,7 +8570,7 @@
     {
      "mlbam": 660821,
      "name": "Jes\u00fas S\u00e1nchez",
-     "team": "MIA",
+     "team": "TOR",
      "pa": 344,
      "wpa": -1.149,
      "pli": 1.11,
@@ -8625,7 +8625,7 @@
     {
      "mlbam": 669004,
      "name": "MJ Melendez",
-     "team": "KC",
+     "team": "NYM",
      "pa": 537,
      "wpa": -1.227,
      "pli": 0.97,
@@ -8636,7 +8636,7 @@
     {
      "mlbam": 650489,
      "name": "Willi Castro",
-     "team": "DET",
+     "team": "COL",
      "pa": 393,
      "wpa": -1.258,
      "pli": 0.98,
@@ -8647,7 +8647,7 @@
     {
      "mlbam": 657041,
      "name": "Lane Thomas",
-     "team": "WSH",
+     "team": "ATL",
      "pa": 549,
      "wpa": -1.281,
      "pli": 0.96,
@@ -8658,7 +8658,7 @@
     {
      "mlbam": 642708,
      "name": "Amed Rosario",
-     "team": "CLE",
+     "team": "NYY",
      "pa": 671,
      "wpa": -1.289,
      "pli": 1.04,
@@ -8680,7 +8680,7 @@
     {
      "mlbam": 641645,
      "name": "Luis Guillorme",
-     "team": "NYM",
+     "team": "HOU",
      "pa": 336,
      "wpa": -1.337,
      "pli": 0.86,
@@ -8691,7 +8691,7 @@
     {
      "mlbam": 657656,
      "name": "Ram\u00f3n Laureano",
-     "team": "ATH",
+     "team": "SD",
      "pa": 383,
      "wpa": -1.347,
      "pli": 1.0,
@@ -8702,7 +8702,7 @@
     {
      "mlbam": 656308,
      "name": "Michael Chavis",
-     "team": "PIT",
+     "team": "CIN",
      "pa": 429,
      "wpa": -1.354,
      "pli": 1.1,
@@ -8713,7 +8713,7 @@
     {
      "mlbam": 669304,
      "name": "Jose Miranda",
-     "team": "MIN",
+     "team": "SD",
      "pa": 483,
      "wpa": -1.362,
      "pli": 1.11,
@@ -8724,7 +8724,7 @@
     {
      "mlbam": 668227,
      "name": "Randy Arozarena",
-     "team": "TB",
+     "team": "SEA",
      "pa": 647,
      "wpa": -1.367,
      "pli": 1.03,
@@ -8735,7 +8735,7 @@
     {
      "mlbam": 663845,
      "name": "Alfonso Rivas III",
-     "team": "CHC",
+     "team": "STL",
      "pa": 289,
      "wpa": -1.383,
      "pli": 1.01,
@@ -8757,7 +8757,7 @@
     {
      "mlbam": 665482,
      "name": "Gilberto Celestino",
-     "team": "MIN",
+     "team": "TEX",
      "pa": 347,
      "wpa": -1.398,
      "pli": 0.96,
@@ -8768,7 +8768,7 @@
     {
      "mlbam": 666915,
      "name": "Bobby Dalbec",
-     "team": "BOS",
+     "team": "KC",
      "pa": 353,
      "wpa": -1.407,
      "pli": 1.05,
@@ -8823,7 +8823,7 @@
     {
      "mlbam": 656775,
      "name": "Cedric Mullins",
-     "team": "BAL",
+     "team": "TB",
      "pa": 672,
      "wpa": -1.44,
      "pli": 1.07,
@@ -8834,7 +8834,7 @@
     {
      "mlbam": 680911,
      "name": "Owen Miller",
-     "team": "CLE",
+     "team": "CHC",
      "pa": 473,
      "wpa": -1.462,
      "pli": 1.03,
@@ -8856,7 +8856,7 @@
     {
      "mlbam": 641680,
      "name": "Jonah Heim",
-     "team": "TEX",
+     "team": "ATH",
      "pa": 451,
      "wpa": -1.518,
      "pli": 1.08,
@@ -8867,7 +8867,7 @@
     {
      "mlbam": 643289,
      "name": "Mauricio Dub\u00f3n",
-     "team": "HOU",
+     "team": "ATL",
      "pa": 266,
      "wpa": -1.52,
      "pli": 0.9,
@@ -8889,7 +8889,7 @@
     {
      "mlbam": 614177,
      "name": "Franmil Reyes",
-     "team": "CHC",
+     "team": "WSH",
      "pa": 475,
      "wpa": -1.56,
      "pli": 0.95,
@@ -8933,7 +8933,7 @@
     {
      "mlbam": 663647,
      "name": "Ke'Bryan Hayes",
-     "team": "PIT",
+     "team": "CIN",
      "pa": 563,
      "wpa": -1.578,
      "pli": 1.03,
@@ -8944,7 +8944,7 @@
     {
      "mlbam": 665506,
      "name": "Cristian Pache",
-     "team": "ATH",
+     "team": "NYM",
      "pa": 260,
      "wpa": -1.608,
      "pli": 0.99,
@@ -8966,7 +8966,7 @@
     {
      "mlbam": 677950,
      "name": "Alek Thomas",
-     "team": "AZ",
+     "team": "LAD",
      "pa": 412,
      "wpa": -1.619,
      "pli": 0.97,
@@ -8977,7 +8977,7 @@
     {
      "mlbam": 660766,
      "name": "Juan Yepez",
-     "team": "STL",
+     "team": "TOR",
      "pa": 275,
      "wpa": -1.648,
      "pli": 1.0,
@@ -8988,7 +8988,7 @@
     {
      "mlbam": 669289,
      "name": "Santiago Espinal",
-     "team": "TOR",
+     "team": "AZ",
      "pa": 493,
      "wpa": -1.661,
      "pli": 0.97,
@@ -8999,7 +8999,7 @@
     {
      "mlbam": 649966,
      "name": "Luis Ur\u00edas",
-     "team": "MIL",
+     "team": "TOR",
      "pa": 474,
      "wpa": -1.672,
      "pli": 1.08,
@@ -9043,7 +9043,7 @@
     {
      "mlbam": 642350,
      "name": "Jose Siri",
-     "team": "TB",
+     "team": "LAA",
      "pa": 325,
      "wpa": -1.774,
      "pli": 0.84,
@@ -9054,7 +9054,7 @@
     {
      "mlbam": 663698,
      "name": "Joey Bart",
-     "team": "SF",
+     "team": "CWS",
      "pa": 292,
      "wpa": -1.794,
      "pli": 0.92,
@@ -9065,7 +9065,7 @@
     {
      "mlbam": 663757,
      "name": "Trent Grisham",
-     "team": "SD",
+     "team": "NYY",
      "pa": 525,
      "wpa": -1.797,
      "pli": 0.97,
@@ -9098,7 +9098,7 @@
     {
      "mlbam": 673490,
      "name": "Ha-Seong Kim",
-     "team": "SD",
+     "team": "ATL",
      "pa": 586,
      "wpa": -1.854,
      "pli": 0.96,
@@ -9131,7 +9131,7 @@
     {
      "mlbam": 666176,
      "name": "Jo Adell",
-     "team": "LAA",
+     "team": "CLE",
      "pa": 287,
      "wpa": -1.92,
      "pli": 0.91,
@@ -9142,7 +9142,7 @@
     {
      "mlbam": 669397,
      "name": "Nick Allen",
-     "team": "ATH",
+     "team": "HOU",
      "pa": 326,
      "wpa": -1.921,
      "pli": 0.94,
@@ -9153,7 +9153,7 @@
     {
      "mlbam": 660162,
      "name": "Yo\u00e1n Moncada",
-     "team": "CWS",
+     "team": "LAA",
      "pa": 435,
      "wpa": -1.927,
      "pli": 1.05,
@@ -9164,7 +9164,7 @@
     {
      "mlbam": 621512,
      "name": "Tom\u00e1s Nido",
-     "team": "NYM",
+     "team": "DET",
      "pa": 314,
      "wpa": -1.935,
      "pli": 0.95,
@@ -9186,7 +9186,7 @@
     {
      "mlbam": 669222,
      "name": "Nick Senzel",
-     "team": "CIN",
+     "team": "LAD",
      "pa": 422,
      "wpa": -1.959,
      "pli": 0.93,
@@ -9219,7 +9219,7 @@
     {
      "mlbam": 663898,
      "name": "Brendan Rodgers",
-     "team": "COL",
+     "team": "BOS",
      "pa": 581,
      "wpa": -2.025,
      "pli": 1.08,
@@ -9230,7 +9230,7 @@
     {
      "mlbam": 669701,
      "name": "Josh Smith",
-     "team": "TEX",
+     "team": "TOR",
      "pa": 256,
      "wpa": -2.026,
      "pli": 1.09,
@@ -9285,7 +9285,7 @@
     {
      "mlbam": 641355,
      "name": "Cody Bellinger",
-     "team": "LAD",
+     "team": "NYY",
      "pa": 551,
      "wpa": -2.177,
      "pli": 0.92,
@@ -9307,7 +9307,7 @@
     {
      "mlbam": 623205,
      "name": "Andrew Velazquez",
-     "team": "LAA",
+     "team": "KC",
      "pa": 350,
      "wpa": -2.234,
      "pli": 0.89,
@@ -9417,7 +9417,7 @@
     {
      "mlbam": 650859,
      "name": "Luis Rengifo",
-     "team": "LAA",
+     "team": "SD",
      "pa": 514,
      "wpa": -2.386,
      "pli": 1.02,
@@ -9439,7 +9439,7 @@
     {
      "mlbam": 608348,
      "name": "Carson Kelly",
-     "team": "AZ",
+     "team": "CHC",
      "pa": 354,
      "wpa": -2.531,
      "pli": 1.0,
@@ -9538,7 +9538,7 @@
     {
      "mlbam": 668800,
      "name": "Andrew Knizner",
-     "team": "STL",
+     "team": "SF",
      "pa": 293,
      "wpa": -2.779,
      "pli": 0.89,
@@ -9549,7 +9549,7 @@
     {
      "mlbam": 670032,
      "name": "Nicky Lopez",
-     "team": "KC",
+     "team": "TEX",
      "pa": 483,
      "wpa": -3.101,
      "pli": 1.04,
@@ -9571,7 +9571,7 @@
     {
      "mlbam": 622761,
      "name": "Jorge Mateo",
-     "team": "BAL",
+     "team": "TB",
      "pa": 534,
      "wpa": -3.174,
      "pli": 1.03,
@@ -9626,7 +9626,7 @@
     {
      "mlbam": 664702,
      "name": "Myles Straw",
-     "team": "CLE",
+     "team": "TOR",
      "pa": 597,
      "wpa": -4.527,
      "pli": 1.08,
@@ -9661,7 +9661,7 @@
     {
      "mlbam": 608331,
      "name": "Max Fried",
-     "team": "ATL",
+     "team": "NYY",
      "starts": 30,
      "wpa": 4.554,
      "wpa_per_start": 0.152,
@@ -9694,7 +9694,7 @@
     {
      "mlbam": 666201,
      "name": "Alek Manoah",
-     "team": "TOR",
+     "team": "LAA",
      "starts": 31,
      "wpa": 4.323,
      "wpa_per_start": 0.139,
@@ -9727,7 +9727,7 @@
     {
      "mlbam": 641482,
      "name": "Nestor Cortes",
-     "team": "NYY",
+     "team": "PHI",
      "starts": 28,
      "wpa": 3.97,
      "wpa_per_start": 0.142,
@@ -9749,7 +9749,7 @@
     {
      "mlbam": 669203,
      "name": "Corbin Burnes",
-     "team": "MIL",
+     "team": "AZ",
      "starts": 33,
      "wpa": 3.801,
      "wpa_per_start": 0.115,
@@ -9760,7 +9760,7 @@
     {
      "mlbam": 664062,
      "name": "Tony Gonsolin",
-     "team": "LAD",
+     "team": "KC",
      "starts": 24,
      "wpa": 3.793,
      "wpa_per_start": 0.158,
@@ -9771,7 +9771,7 @@
     {
      "mlbam": 657140,
      "name": "Kyle Wright",
-     "team": "ATL",
+     "team": "CHC",
      "starts": 30,
      "wpa": 3.762,
      "wpa_per_start": 0.125,
@@ -9782,7 +9782,7 @@
     {
      "mlbam": 656302,
      "name": "Dylan Cease",
-     "team": "CWS",
+     "team": "TOR",
      "starts": 32,
      "wpa": 3.653,
      "wpa_per_start": 0.114,
@@ -9804,7 +9804,7 @@
     {
      "mlbam": 669456,
      "name": "Shane Bieber",
-     "team": "CLE",
+     "team": "TOR",
      "starts": 31,
      "wpa": 3.311,
      "wpa_per_start": 0.107,
@@ -9936,7 +9936,7 @@
     {
      "mlbam": 641154,
      "name": "Pablo L\u00f3pez",
-     "team": "MIA",
+     "team": "MIN",
      "starts": 32,
      "wpa": 2.514,
      "wpa_per_start": 0.079,
@@ -10002,7 +10002,7 @@
     {
      "mlbam": 663474,
      "name": "Triston McKenzie",
-     "team": "CLE",
+     "team": "SD",
      "starts": 30,
      "wpa": 2.211,
      "wpa_per_start": 0.074,
@@ -10013,7 +10013,7 @@
     {
      "mlbam": 622663,
      "name": "Luis Severino",
-     "team": "NYY",
+     "team": "ATH",
      "starts": 19,
      "wpa": 2.209,
      "wpa_per_start": 0.116,
@@ -10046,7 +10046,7 @@
     {
      "mlbam": 663903,
      "name": "Brady Singer",
-     "team": "KC",
+     "team": "CIN",
      "starts": 24,
      "wpa": 2.154,
      "wpa_per_start": 0.09,
@@ -10057,7 +10057,7 @@
     {
      "mlbam": 663776,
      "name": "Patrick Sandoval",
-     "team": "LAA",
+     "team": "BOS",
      "starts": 27,
      "wpa": 2.064,
      "wpa_per_start": 0.076,
@@ -10145,7 +10145,7 @@
     {
      "mlbam": 665152,
      "name": "Dean Kremer",
-     "team": "BAL",
+     "team": "MIN",
      "starts": 21,
      "wpa": 1.737,
      "wpa_per_start": 0.083,
@@ -10156,7 +10156,7 @@
     {
      "mlbam": 665795,
      "name": "Edward Cabrera",
-     "team": "MIA",
+     "team": "CHC",
      "starts": 14,
      "wpa": 1.637,
      "wpa_per_start": 0.117,
@@ -10178,7 +10178,7 @@
     {
      "mlbam": 624133,
      "name": "Ranger Suarez",
-     "team": "PHI",
+     "team": "BOS",
      "starts": 29,
      "wpa": 1.553,
      "wpa_per_start": 0.054,
@@ -10200,7 +10200,7 @@
     {
      "mlbam": 666200,
      "name": "Jes\u00fas Luzardo",
-     "team": "MIA",
+     "team": "PHI",
      "starts": 18,
      "wpa": 1.465,
      "wpa_per_start": 0.081,
@@ -10255,7 +10255,7 @@
     {
      "mlbam": 664353,
      "name": "Jos\u00e9 Urquidy",
-     "team": "HOU",
+     "team": "CWS",
      "starts": 28,
      "wpa": 1.394,
      "wpa_per_start": 0.05,
@@ -10266,7 +10266,7 @@
     {
      "mlbam": 677651,
      "name": "Luis Garcia",
-     "team": "HOU",
+     "team": "NYY",
      "starts": 28,
      "wpa": 1.379,
      "wpa_per_start": 0.049,
@@ -10277,7 +10277,7 @@
     {
      "mlbam": 642547,
      "name": "Freddy Peralta",
-     "team": "MIL",
+     "team": "TB",
      "starts": 17,
      "wpa": 1.359,
      "wpa_per_start": 0.08,
@@ -10299,7 +10299,7 @@
     {
      "mlbam": 656629,
      "name": "Michael Kopech",
-     "team": "CWS",
+     "team": "LAD",
      "starts": 25,
      "wpa": 1.298,
      "wpa_per_start": 0.052,
@@ -10365,7 +10365,7 @@
     {
      "mlbam": 641816,
      "name": "Tyler Mahle",
-     "team": "MIN",
+     "team": "ATL",
      "starts": 23,
      "wpa": 1.085,
      "wpa_per_start": 0.047,
@@ -10431,7 +10431,7 @@
     {
      "mlbam": 669022,
      "name": "MacKenzie Gore",
-     "team": "SD",
+     "team": "TEX",
      "starts": 13,
      "wpa": 0.938,
      "wpa_per_start": 0.072,
@@ -10464,7 +10464,7 @@
     {
      "mlbam": 666159,
      "name": "Matt Manning",
-     "team": "DET",
+     "team": "PHI",
      "starts": 12,
      "wpa": 0.832,
      "wpa_per_start": 0.069,
@@ -10475,7 +10475,7 @@
     {
      "mlbam": 615698,
      "name": "Cal Quantrill",
-     "team": "CLE",
+     "team": "TEX",
      "starts": 32,
      "wpa": 0.816,
      "wpa_per_start": 0.026,
@@ -10497,7 +10497,7 @@
     {
      "mlbam": 641778,
      "name": "Eric Lauer",
-     "team": "MIL",
+     "team": "LAD",
      "starts": 29,
      "wpa": 0.788,
      "wpa_per_start": 0.027,
@@ -10508,7 +10508,7 @@
     {
      "mlbam": 623167,
      "name": "Chris Flexen",
-     "team": "SEA",
+     "team": "CHC",
      "starts": 22,
      "wpa": 0.768,
      "wpa_per_start": 0.035,
@@ -10541,7 +10541,7 @@
     {
      "mlbam": 608344,
      "name": "Cole Irvin",
-     "team": "ATH",
+     "team": "LAD",
      "starts": 30,
      "wpa": 0.745,
      "wpa_per_start": 0.025,
@@ -10563,7 +10563,7 @@
     {
      "mlbam": 669373,
      "name": "Tarik Skubal",
-     "team": "DET",
+     "team": "LAD",
      "starts": 21,
      "wpa": 0.681,
      "wpa_per_start": 0.032,
@@ -10574,7 +10574,7 @@
     {
      "mlbam": 621076,
      "name": "James Kaprielian",
-     "team": "ATH",
+     "team": "TOR",
      "starts": 26,
      "wpa": 0.603,
      "wpa_per_start": 0.023,
@@ -10618,7 +10618,7 @@
     {
      "mlbam": 672710,
      "name": "Roansy Contreras",
-     "team": "PIT",
+     "team": "COL",
      "starts": 18,
      "wpa": 0.53,
      "wpa_per_start": 0.029,
@@ -10662,7 +10662,7 @@
     {
      "mlbam": 656970,
      "name": "Devin Smeltzer",
-     "team": "MIN",
+     "team": "DET",
      "starts": 12,
      "wpa": 0.476,
      "wpa_per_start": 0.04,
@@ -10717,7 +10717,7 @@
     {
      "mlbam": 676664,
      "name": "JP Sears",
-     "team": "ATH",
+     "team": "SD",
      "starts": 11,
      "wpa": 0.454,
      "wpa_per_start": 0.041,
@@ -10783,7 +10783,7 @@
     {
      "mlbam": 666129,
      "name": "Braxton Garrett",
-     "team": "MIA",
+     "team": "CHC",
      "starts": 17,
      "wpa": 0.373,
      "wpa_per_start": 0.022,
@@ -10794,7 +10794,7 @@
     {
      "mlbam": 670912,
      "name": "Johan Oviedo",
-     "team": "PIT",
+     "team": "BOS",
      "starts": 8,
      "wpa": 0.352,
      "wpa_per_start": 0.044,
@@ -10816,7 +10816,7 @@
     {
      "mlbam": 660761,
      "name": "Jos\u00e9 Suarez",
-     "team": "LAA",
+     "team": "ATH",
      "starts": 20,
      "wpa": 0.342,
      "wpa_per_start": 0.017,
@@ -10827,7 +10827,7 @@
     {
      "mlbam": 663559,
      "name": "Bailey Falter",
-     "team": "PHI",
+     "team": "ATL",
      "starts": 16,
      "wpa": 0.341,
      "wpa_per_start": 0.021,
@@ -10838,7 +10838,7 @@
     {
      "mlbam": 666214,
      "name": "Joey Wentz",
-     "team": "DET",
+     "team": "ATL",
      "starts": 7,
      "wpa": 0.328,
      "wpa_per_start": 0.047,
@@ -10849,7 +10849,7 @@
     {
      "mlbam": 663752,
      "name": "Cody Morris",
-     "team": "CLE",
+     "team": "NYY",
      "starts": 5,
      "wpa": 0.296,
      "wpa_per_start": 0.059,
@@ -10904,7 +10904,7 @@
     {
      "mlbam": 669358,
      "name": "Shane Baz",
-     "team": "TB",
+     "team": "BAL",
      "starts": 6,
      "wpa": 0.231,
      "wpa_per_start": 0.039,
@@ -10948,7 +10948,7 @@
     {
      "mlbam": 686610,
      "name": "Ken Waldichuk",
-     "team": "ATH",
+     "team": "WSH",
      "starts": 7,
      "wpa": 0.173,
      "wpa_per_start": 0.025,
@@ -10981,7 +10981,7 @@
     {
      "mlbam": 686973,
      "name": "Louis Varland",
-     "team": "MIN",
+     "team": "TOR",
      "starts": 5,
      "wpa": 0.099,
      "wpa_per_start": 0.02,
@@ -11003,7 +11003,7 @@
     {
      "mlbam": 656849,
      "name": "David Peterson",
-     "team": "NYM",
+     "team": "CHC",
      "starts": 19,
      "wpa": 0.09,
      "wpa_per_start": 0.005,
@@ -11014,7 +11014,7 @@
     {
      "mlbam": 669330,
      "name": "Tyler Wells",
-     "team": "BAL",
+     "team": "TB",
      "starts": 23,
      "wpa": 0.084,
      "wpa_per_start": 0.004,
@@ -11058,7 +11058,7 @@
     {
      "mlbam": 663978,
      "name": "Chris Paddack",
-     "team": "MIN",
+     "team": "TEX",
      "starts": 5,
      "wpa": 0.014,
      "wpa_per_start": 0.003,
@@ -11102,7 +11102,7 @@
     {
      "mlbam": 686752,
      "name": "Ryan Pepiot",
-     "team": "LAD",
+     "team": "TB",
      "starts": 7,
      "wpa": -0.031,
      "wpa_per_start": -0.004,
@@ -11124,7 +11124,7 @@
     {
      "mlbam": 682051,
      "name": "Garrett Hill",
-     "team": "DET",
+     "team": "SEA",
      "starts": 8,
      "wpa": -0.056,
      "wpa_per_start": -0.007,
@@ -11157,7 +11157,7 @@
     {
      "mlbam": 621111,
      "name": "Walker Buehler",
-     "team": "LAD",
+     "team": "SD",
      "starts": 12,
      "wpa": -0.096,
      "wpa_per_start": -0.008,
@@ -11212,7 +11212,7 @@
     {
      "mlbam": 669160,
      "name": "Dustin May",
-     "team": "LAD",
+     "team": "MIL",
      "starts": 6,
      "wpa": -0.149,
      "wpa_per_start": -0.025,
@@ -11267,7 +11267,7 @@
     {
      "mlbam": 680739,
      "name": "Josh Winder",
-     "team": "MIN",
+     "team": "AZ",
      "starts": 11,
      "wpa": -0.183,
      "wpa_per_start": -0.017,
@@ -11289,7 +11289,7 @@
     {
      "mlbam": 656427,
      "name": "Jack Flaherty",
-     "team": "STL",
+     "team": "DET",
      "starts": 8,
      "wpa": -0.211,
      "wpa_per_start": -0.026,
@@ -11300,7 +11300,7 @@
     {
      "mlbam": 641712,
      "name": "Dakota Hudson",
-     "team": "STL",
+     "team": "LAA",
      "starts": 26,
      "wpa": -0.226,
      "wpa_per_start": -0.009,
@@ -11322,7 +11322,7 @@
     {
      "mlbam": 650644,
      "name": "Aaron Civale",
-     "team": "CLE",
+     "team": "CHC",
      "starts": 20,
      "wpa": -0.244,
      "wpa_per_start": -0.012,
@@ -11410,7 +11410,7 @@
     {
      "mlbam": 657248,
      "name": "Glenn Otto Jr.",
-     "team": "TEX",
+     "team": "HOU",
      "starts": 27,
      "wpa": -0.289,
      "wpa_per_start": -0.011,
@@ -11421,7 +11421,7 @@
     {
      "mlbam": 608337,
      "name": "Lucas Giolito",
-     "team": "CWS",
+     "team": "SD",
      "starts": 30,
      "wpa": -0.292,
      "wpa_per_start": -0.01,
@@ -11465,7 +11465,7 @@
     {
      "mlbam": 663855,
      "name": "Jordan Hicks",
-     "team": "STL",
+     "team": "CWS",
      "starts": 8,
      "wpa": -0.304,
      "wpa_per_start": -0.038,
@@ -11476,7 +11476,7 @@
     {
      "mlbam": 641540,
      "name": "Dane Dunning",
-     "team": "TEX",
+     "team": "SEA",
      "starts": 29,
      "wpa": -0.325,
      "wpa_per_start": -0.011,
@@ -11487,7 +11487,7 @@
     {
      "mlbam": 666142,
      "name": "Cole Ragans",
-     "team": "TEX",
+     "team": "KC",
      "starts": 9,
      "wpa": -0.325,
      "wpa_per_start": -0.036,
@@ -11520,7 +11520,7 @@
     {
      "mlbam": 675627,
      "name": "Michael Grove",
-     "team": "LAD",
+     "team": "TB",
      "starts": 6,
      "wpa": -0.397,
      "wpa_per_start": -0.066,
@@ -11553,7 +11553,7 @@
     {
      "mlbam": 621107,
      "name": "Zach Eflin",
-     "team": "PHI",
+     "team": "BAL",
      "starts": 13,
      "wpa": -0.403,
      "wpa_per_start": -0.031,
@@ -11564,7 +11564,7 @@
     {
      "mlbam": 624522,
      "name": "Keegan Thompson",
-     "team": "CHC",
+     "team": "COL",
      "starts": 17,
      "wpa": -0.417,
      "wpa_per_start": -0.025,
@@ -11586,7 +11586,7 @@
     {
      "mlbam": 672715,
      "name": "Luis Pati\u00f1o",
-     "team": "TB",
+     "team": "SD",
      "starts": 6,
      "wpa": -0.426,
      "wpa_per_start": -0.071,
@@ -11641,7 +11641,7 @@
     {
      "mlbam": 656412,
      "name": "Alex Faedo",
-     "team": "DET",
+     "team": "LAA",
      "starts": 12,
      "wpa": -0.477,
      "wpa_per_start": -0.04,
@@ -11652,7 +11652,7 @@
     {
      "mlbam": 676265,
      "name": "Cory Abbott",
-     "team": "WSH",
+     "team": "TEX",
      "starts": 9,
      "wpa": -0.478,
      "wpa_per_start": -0.053,
@@ -11707,7 +11707,7 @@
     {
      "mlbam": 656353,
      "name": "Tucker Davidson",
-     "team": "LAA",
+     "team": "PHI",
      "starts": 11,
      "wpa": -0.515,
      "wpa_per_start": -0.047,
@@ -11729,7 +11729,7 @@
     {
      "mlbam": 641745,
      "name": "Brad Keller",
-     "team": "KC",
+     "team": "PHI",
      "starts": 22,
      "wpa": -0.561,
      "wpa_per_start": -0.025,
@@ -11740,7 +11740,7 @@
     {
      "mlbam": 669952,
      "name": "Mitch White",
-     "team": "TOR",
+     "team": "MIL",
      "starts": 18,
      "wpa": -0.641,
      "wpa_per_start": -0.036,
@@ -11773,7 +11773,7 @@
     {
      "mlbam": 666721,
      "name": "Max Castillo",
-     "team": "KC",
+     "team": "PHI",
      "starts": 6,
      "wpa": -0.67,
      "wpa_per_start": -0.112,
@@ -11784,7 +11784,7 @@
     {
      "mlbam": 663455,
      "name": "Konnor Pilkington",
-     "team": "CLE",
+     "team": "WSH",
      "starts": 11,
      "wpa": -0.675,
      "wpa_per_start": -0.061,
@@ -11806,7 +11806,7 @@
     {
      "mlbam": 643290,
      "name": "Justin Dunn",
-     "team": "CIN",
+     "team": "LAA",
      "starts": 7,
      "wpa": -0.755,
      "wpa_per_start": -0.108,
@@ -11817,7 +11817,7 @@
     {
      "mlbam": 681217,
      "name": "Chase Silseth",
-     "team": "LAA",
+     "team": "TEX",
      "starts": 7,
      "wpa": -0.769,
      "wpa_per_start": -0.11,
@@ -11839,7 +11839,7 @@
     {
      "mlbam": 670174,
      "name": "Josh Winckowski",
-     "team": "BOS",
+     "team": "TOR",
      "starts": 14,
      "wpa": -0.814,
      "wpa_per_start": -0.058,
@@ -11850,7 +11850,7 @@
     {
      "mlbam": 641726,
      "name": "Daulton Jefferies",
-     "team": "ATH",
+     "team": "PIT",
      "starts": 8,
      "wpa": -0.819,
      "wpa_per_start": -0.102,
@@ -11872,7 +11872,7 @@
     {
      "mlbam": 621368,
      "name": "Taylor Hearn",
-     "team": "TEX",
+     "team": "KC",
      "starts": 13,
      "wpa": -0.821,
      "wpa_per_start": -0.063,
@@ -11905,7 +11905,7 @@
     {
      "mlbam": 669145,
      "name": "Bruce Zimmermann",
-     "team": "BAL",
+     "team": "STL",
      "starts": 13,
      "wpa": -0.873,
      "wpa_per_start": -0.067,
@@ -11916,7 +11916,7 @@
     {
      "mlbam": 661269,
      "name": "Vladimir Gutierrez",
-     "team": "CIN",
+     "team": "BOS",
      "starts": 8,
      "wpa": -0.978,
      "wpa_per_start": -0.122,
@@ -11927,7 +11927,7 @@
     {
      "mlbam": 669169,
      "name": "Jonathan Heasley",
-     "team": "KC",
+     "team": "TB",
      "starts": 21,
      "wpa": -1.049,
      "wpa_per_start": -0.05,
@@ -11938,7 +11938,7 @@
     {
      "mlbam": 622608,
      "name": "Antonio Senzatela",
-     "team": "COL",
+     "team": "MIL",
      "starts": 19,
      "wpa": -1.071,
      "wpa_per_start": -0.056,
@@ -11949,7 +11949,7 @@
     {
      "mlbam": 660730,
      "name": "Elvin Rodr\u00edguez",
-     "team": "DET",
+     "team": "AZ",
      "starts": 6,
      "wpa": -1.074,
      "wpa_per_start": -0.179,
@@ -11960,7 +11960,7 @@
     {
      "mlbam": 675921,
      "name": "Spencer Howard",
-     "team": "TEX",
+     "team": "SF",
      "starts": 8,
      "wpa": -1.084,
      "wpa_per_start": -0.135,
@@ -11971,7 +11971,7 @@
     {
      "mlbam": 657756,
      "name": "Connor Seabold",
-     "team": "BOS",
+     "team": "KC",
      "starts": 5,
      "wpa": -1.103,
      "wpa_per_start": -0.221,
@@ -12015,7 +12015,7 @@
     {
      "mlbam": 608566,
      "name": "Germ\u00e1n M\u00e1rquez",
-     "team": "COL",
+     "team": "MIN",
      "starts": 31,
      "wpa": -1.272,
      "wpa_per_start": -0.041,
@@ -12037,7 +12037,7 @@
     {
      "mlbam": 656657,
      "name": "Zach Logue",
-     "team": "ATH",
+     "team": "LAD",
      "starts": 10,
      "wpa": -1.313,
      "wpa_per_start": -0.131,
@@ -12059,7 +12059,7 @@
     {
      "mlbam": 670124,
      "name": "Adam Oller",
-     "team": "ATH",
+     "team": "MIA",
      "starts": 14,
      "wpa": -1.366,
      "wpa_per_start": -0.098,
@@ -12081,7 +12081,7 @@
     {
      "mlbam": 672578,
      "name": "Carlos Hern\u00e1ndez",
-     "team": "KC",
+     "team": "CLE",
      "starts": 7,
      "wpa": -1.48,
      "wpa_per_start": -0.211,
@@ -12092,7 +12092,7 @@
     {
      "mlbam": 622694,
      "name": "Elieser Hern\u00e1ndez",
-     "team": "MIA",
+     "team": "ATL",
      "starts": 10,
      "wpa": -1.485,
      "wpa_per_start": -0.148,
@@ -12114,7 +12114,7 @@
     {
      "mlbam": 669432,
      "name": "Trevor Rogers",
-     "team": "MIA",
+     "team": "BAL",
      "starts": 23,
      "wpa": -1.534,
      "wpa_per_start": -0.067,
@@ -12136,7 +12136,7 @@
     {
      "mlbam": 641302,
      "name": "Tyler Alexander",
-     "team": "DET",
+     "team": "TEX",
      "starts": 17,
      "wpa": -1.611,
      "wpa_per_start": -0.095,
@@ -12169,7 +12169,7 @@
     {
      "mlbam": 663460,
      "name": "Kris Bubic",
-     "team": "KC",
+     "team": "LAD",
      "starts": 27,
      "wpa": -1.666,
      "wpa_per_start": -0.062,
@@ -12191,7 +12191,7 @@
     {
      "mlbam": 669060,
      "name": "Bryse Wilson",
-     "team": "PIT",
+     "team": "MIL",
      "starts": 21,
      "wpa": -1.908,
      "wpa_per_start": -0.091,
@@ -12345,7 +12345,7 @@
     {
      "mlbam": 663656,
      "name": "Kyle Tucker",
-     "team": "HOU",
+     "team": "LAD",
      "pa": 674,
      "wpa": 4.218,
      "pli": 1.02,
@@ -12367,7 +12367,7 @@
     {
      "mlbam": 660271,
      "name": "Shohei Ohtani",
-     "team": "LAA",
+     "team": "LAD",
      "pa": 599,
      "wpa": 4.079,
      "pli": 1.03,
@@ -12378,7 +12378,7 @@
     {
      "mlbam": 665742,
      "name": "Juan Soto",
-     "team": "SD",
+     "team": "NYM",
      "pa": 710,
      "wpa": 3.935,
      "pli": 0.96,
@@ -12422,7 +12422,7 @@
     {
      "mlbam": 676801,
      "name": "Chas McCormick",
-     "team": "HOU",
+     "team": "CHC",
      "pa": 457,
      "wpa": 3.179,
      "pli": 0.97,
@@ -12433,7 +12433,7 @@
     {
      "mlbam": 666134,
      "name": "Nolan Jones",
-     "team": "COL",
+     "team": "SEA",
      "pa": 424,
      "wpa": 3.145,
      "pli": 0.94,
@@ -12466,7 +12466,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "CWS",
+     "team": "NYM",
      "pa": 596,
      "wpa": 2.72,
      "pli": 0.99,
@@ -12499,7 +12499,7 @@
     {
      "mlbam": 668939,
      "name": "Adley Rutschman",
-     "team": "BAL",
+     "team": "BOS",
      "pa": 688,
      "wpa": 2.446,
      "pli": 0.96,
@@ -12521,7 +12521,7 @@
     {
      "mlbam": 623993,
      "name": "Anthony Santander",
-     "team": "BAL",
+     "team": "TOR",
      "pa": 656,
      "wpa": 2.381,
      "pli": 0.92,
@@ -12554,7 +12554,7 @@
     {
      "mlbam": 641355,
      "name": "Cody Bellinger",
-     "team": "CHC",
+     "team": "NYY",
      "pa": 556,
      "wpa": 2.331,
      "pli": 1.02,
@@ -12576,7 +12576,7 @@
     {
      "mlbam": 666139,
      "name": "Josh Lowe",
-     "team": "TB",
+     "team": "LAA",
      "pa": 504,
      "wpa": 2.206,
      "pli": 0.98,
@@ -12587,7 +12587,7 @@
     {
      "mlbam": 646240,
      "name": "Rafael Devers",
-     "team": "BOS",
+     "team": "SF",
      "pa": 657,
      "wpa": 2.189,
      "pli": 1.04,
@@ -12609,7 +12609,7 @@
     {
      "mlbam": 670042,
      "name": "Luke Raley",
-     "team": "TB",
+     "team": "SEA",
      "pa": 408,
      "wpa": 1.994,
      "pli": 0.95,
@@ -12631,7 +12631,7 @@
     {
      "mlbam": 666160,
      "name": "Mickey Moniak",
-     "team": "LAA",
+     "team": "COL",
      "pa": 324,
      "wpa": 1.985,
      "pli": 1.03,
@@ -12664,7 +12664,7 @@
     {
      "mlbam": 641584,
      "name": "Jake Fraley",
-     "team": "CIN",
+     "team": "TB",
      "pa": 380,
      "wpa": 1.912,
      "pli": 1.18,
@@ -12730,7 +12730,7 @@
     {
      "mlbam": 668227,
      "name": "Randy Arozarena",
-     "team": "TB",
+     "team": "SEA",
      "pa": 655,
      "wpa": 1.721,
      "pli": 0.97,
@@ -12774,7 +12774,7 @@
     {
      "mlbam": 647304,
      "name": "Josh Naylor",
-     "team": "CLE",
+     "team": "SEA",
      "pa": 496,
      "wpa": 1.653,
      "pli": 1.2,
@@ -12785,7 +12785,7 @@
     {
      "mlbam": 608324,
      "name": "Alex Bregman",
-     "team": "HOU",
+     "team": "CHC",
      "pa": 724,
      "wpa": 1.577,
      "pli": 0.95,
@@ -12807,7 +12807,7 @@
     {
      "mlbam": 657041,
      "name": "Lane Thomas",
-     "team": "WSH",
+     "team": "ATL",
      "pa": 684,
      "wpa": 1.495,
      "pli": 1.05,
@@ -12917,7 +12917,7 @@
     {
      "mlbam": 680977,
      "name": "Brendan Donovan",
-     "team": "STL",
+     "team": "SEA",
      "pa": 372,
      "wpa": 1.288,
      "pli": 1.04,
@@ -12950,7 +12950,7 @@
     {
      "mlbam": 641680,
      "name": "Jonah Heim",
-     "team": "TEX",
+     "team": "ATH",
      "pa": 501,
      "wpa": 1.1,
      "pli": 0.99,
@@ -12983,7 +12983,7 @@
     {
      "mlbam": 666182,
      "name": "Bo Bichette",
-     "team": "TOR",
+     "team": "NYM",
      "pa": 603,
      "wpa": 1.078,
      "pli": 1.0,
@@ -12994,7 +12994,7 @@
     {
      "mlbam": 650859,
      "name": "Luis Rengifo",
-     "team": "LAA",
+     "team": "SD",
      "pa": 446,
      "wpa": 1.064,
      "pli": 1.0,
@@ -13027,7 +13027,7 @@
     {
      "mlbam": 681546,
      "name": "James Outman",
-     "team": "LAD",
+     "team": "DET",
      "pa": 568,
      "wpa": 0.967,
      "pli": 0.93,
@@ -13049,7 +13049,7 @@
     {
      "mlbam": 670623,
      "name": "Isaac Paredes",
-     "team": "TB",
+     "team": "HOU",
      "pa": 574,
      "wpa": 0.931,
      "pli": 1.01,
@@ -13115,7 +13115,7 @@
     {
      "mlbam": 650333,
      "name": "Luis Arraez",
-     "team": "MIA",
+     "team": "PHI",
      "pa": 617,
      "wpa": 0.809,
      "pli": 1.05,
@@ -13148,7 +13148,7 @@
     {
      "mlbam": 666165,
      "name": "Blake Sabol",
-     "team": "SF",
+     "team": "TB",
      "pa": 344,
      "wpa": 0.78,
      "pli": 1.0,
@@ -13192,7 +13192,7 @@
     {
      "mlbam": 624413,
      "name": "Pete Alonso",
-     "team": "NYM",
+     "team": "BAL",
      "pa": 660,
      "wpa": 0.743,
      "pli": 1.04,
@@ -13214,7 +13214,7 @@
     {
      "mlbam": 664040,
      "name": "Brandon Lowe",
-     "team": "TB",
+     "team": "PIT",
      "pa": 437,
      "wpa": 0.69,
      "pli": 1.09,
@@ -13225,7 +13225,7 @@
     {
      "mlbam": 664774,
      "name": "LaMonte Wade Jr.",
-     "team": "SF",
+     "team": "HOU",
      "pa": 519,
      "wpa": 0.683,
      "pli": 0.96,
@@ -13258,7 +13258,7 @@
     {
      "mlbam": 672284,
      "name": "Jarred Kelenic",
-     "team": "SEA",
+     "team": "TEX",
      "pa": 418,
      "wpa": 0.652,
      "pli": 0.96,
@@ -13346,7 +13346,7 @@
     {
      "mlbam": 606115,
      "name": "Orlando Arcia",
-     "team": "ATL",
+     "team": "MIN",
      "pa": 533,
      "wpa": 0.563,
      "pli": 0.93,
@@ -13368,7 +13368,7 @@
     {
      "mlbam": 643376,
      "name": "Danny Jansen",
-     "team": "TOR",
+     "team": "TEX",
      "pa": 301,
      "wpa": 0.546,
      "pli": 1.1,
@@ -13379,7 +13379,7 @@
     {
      "mlbam": 669394,
      "name": "Jake Burger",
-     "team": "MIA",
+     "team": "TEX",
      "pa": 541,
      "wpa": 0.542,
      "pli": 1.09,
@@ -13390,7 +13390,7 @@
     {
      "mlbam": 650402,
      "name": "Gleyber Torres",
-     "team": "NYY",
+     "team": "DET",
      "pa": 674,
      "wpa": 0.539,
      "pli": 0.96,
@@ -13445,7 +13445,7 @@
     {
      "mlbam": 650489,
      "name": "Willi Castro",
-     "team": "MIN",
+     "team": "COL",
      "pa": 409,
      "wpa": 0.486,
      "pli": 1.02,
@@ -13467,7 +13467,7 @@
     {
      "mlbam": 623912,
      "name": "Harold Ram\u00edrez",
-     "team": "TB",
+     "team": "ATL",
      "pa": 435,
      "wpa": 0.474,
      "pli": 1.0,
@@ -13588,7 +13588,7 @@
     {
      "mlbam": 663993,
      "name": "Nathaniel Lowe",
-     "team": "TEX",
+     "team": "CLE",
      "pa": 724,
      "wpa": 0.314,
      "pli": 0.94,
@@ -13610,7 +13610,7 @@
     {
      "mlbam": 666624,
      "name": "Christopher Morel",
-     "team": "CHC",
+     "team": "NYM",
      "pa": 430,
      "wpa": 0.293,
      "pli": 0.93,
@@ -13621,7 +13621,7 @@
     {
      "mlbam": 656775,
      "name": "Cedric Mullins",
-     "team": "BAL",
+     "team": "TB",
      "pa": 456,
      "wpa": 0.268,
      "pli": 1.04,
@@ -13654,7 +13654,7 @@
     {
      "mlbam": 670032,
      "name": "Nicky Lopez",
-     "team": "ATL",
+     "team": "TEX",
      "pa": 262,
      "wpa": 0.235,
      "pli": 0.99,
@@ -13687,7 +13687,7 @@
     {
      "mlbam": 673490,
      "name": "Ha-Seong Kim",
-     "team": "SD",
+     "team": "ATL",
      "pa": 627,
      "wpa": 0.196,
      "pli": 0.94,
@@ -13698,7 +13698,7 @@
     {
      "mlbam": 660821,
      "name": "Jes\u00fas S\u00e1nchez",
-     "team": "MIA",
+     "team": "TOR",
      "pa": 403,
      "wpa": 0.192,
      "pli": 1.04,
@@ -13720,7 +13720,7 @@
     {
      "mlbam": 669004,
      "name": "MJ Melendez",
-     "team": "KC",
+     "team": "NYM",
      "pa": 603,
      "wpa": 0.159,
      "pli": 1.01,
@@ -13775,7 +13775,7 @@
     {
      "mlbam": 663647,
      "name": "Ke'Bryan Hayes",
-     "team": "PIT",
+     "team": "CIN",
      "pa": 526,
      "wpa": 0.112,
      "pli": 1.02,
@@ -13786,7 +13786,7 @@
     {
      "mlbam": 686823,
      "name": "Will Brennan",
-     "team": "CLE",
+     "team": "SF",
      "pa": 456,
      "wpa": 0.098,
      "pli": 1.09,
@@ -13797,7 +13797,7 @@
     {
      "mlbam": 663457,
      "name": "Lars Nootbaar",
-     "team": "STL",
+     "team": "AZ",
      "pa": 507,
      "wpa": 0.095,
      "pli": 1.04,
@@ -13830,7 +13830,7 @@
     {
      "mlbam": 676116,
      "name": "Ryan Noda",
-     "team": "ATH",
+     "team": "BAL",
      "pa": 496,
      "wpa": 0.045,
      "pli": 1.03,
@@ -13841,7 +13841,7 @@
     {
      "mlbam": 664983,
      "name": "Jake McCarthy",
-     "team": "AZ",
+     "team": "COL",
      "pa": 313,
      "wpa": 0.032,
      "pli": 0.89,
@@ -13929,7 +13929,7 @@
     {
      "mlbam": 655316,
      "name": "Andruw Monasterio",
-     "team": "MIL",
+     "team": "BOS",
      "pa": 315,
      "wpa": -0.057,
      "pli": 1.07,
@@ -13951,7 +13951,7 @@
     {
      "mlbam": 650391,
      "name": "Eloy Jim\u00e9nez",
-     "team": "CWS",
+     "team": "TOR",
      "pa": 490,
      "wpa": -0.083,
      "pli": 1.05,
@@ -13973,7 +13973,7 @@
     {
      "mlbam": 622534,
      "name": "Manuel Margot",
-     "team": "TB",
+     "team": "DET",
      "pa": 336,
      "wpa": -0.111,
      "pli": 0.94,
@@ -13995,7 +13995,7 @@
     {
      "mlbam": 602104,
      "name": "Ram\u00f3n Ur\u00edas",
-     "team": "BAL",
+     "team": "STL",
      "pa": 397,
      "wpa": -0.128,
      "pli": 0.85,
@@ -14006,7 +14006,7 @@
     {
      "mlbam": 624415,
      "name": "Cavan Biggio",
-     "team": "TOR",
+     "team": "HOU",
      "pa": 339,
      "wpa": -0.129,
      "pli": 0.97,
@@ -14017,7 +14017,7 @@
     {
      "mlbam": 641658,
      "name": "Garrett Hampson",
-     "team": "MIA",
+     "team": "CIN",
      "pa": 252,
      "wpa": -0.135,
      "pli": 0.99,
@@ -14039,7 +14039,7 @@
     {
      "mlbam": 669720,
      "name": "Austin Hays",
-     "team": "BAL",
+     "team": "SD",
      "pa": 566,
      "wpa": -0.152,
      "pli": 0.95,
@@ -14061,7 +14061,7 @@
     {
      "mlbam": 643289,
      "name": "Mauricio Dub\u00f3n",
-     "team": "HOU",
+     "team": "ATL",
      "pa": 492,
      "wpa": -0.172,
      "pli": 1.03,
@@ -14072,7 +14072,7 @@
     {
      "mlbam": 650559,
      "name": "Bryan De La Cruz",
-     "team": "MIA",
+     "team": "PHI",
      "pa": 627,
      "wpa": -0.173,
      "pli": 1.03,
@@ -14083,7 +14083,7 @@
     {
      "mlbam": 666397,
      "name": "Edouard Julien",
-     "team": "MIN",
+     "team": "COL",
      "pa": 409,
      "wpa": -0.192,
      "pli": 0.97,
@@ -14094,7 +14094,7 @@
     {
      "mlbam": 642136,
      "name": "Matt Thaiss",
-     "team": "LAA",
+     "team": "HOU",
      "pa": 307,
      "wpa": -0.215,
      "pli": 0.99,
@@ -14138,7 +14138,7 @@
     {
      "mlbam": 641857,
      "name": "Ryan McMahon",
-     "team": "COL",
+     "team": "NYY",
      "pa": 628,
      "wpa": -0.234,
      "pli": 1.03,
@@ -14160,7 +14160,7 @@
     {
      "mlbam": 669222,
      "name": "Nick Senzel",
-     "team": "CIN",
+     "team": "LAD",
      "pa": 331,
      "wpa": -0.273,
      "pli": 1.04,
@@ -14171,7 +14171,7 @@
     {
      "mlbam": 668670,
      "name": "Jake Rogers",
-     "team": "DET",
+     "team": "CWS",
      "pa": 367,
      "wpa": -0.321,
      "pli": 0.92,
@@ -14193,7 +14193,7 @@
     {
      "mlbam": 669242,
      "name": "Tommy Edman",
-     "team": "STL",
+     "team": "LAD",
      "pa": 528,
      "wpa": -0.327,
      "pli": 0.97,
@@ -14204,7 +14204,7 @@
     {
      "mlbam": 669743,
      "name": "Alex Call",
-     "team": "WSH",
+     "team": "LAD",
      "pa": 439,
      "wpa": -0.328,
      "pli": 1.03,
@@ -14226,7 +14226,7 @@
     {
      "mlbam": 668731,
      "name": "Akil Baddoo",
-     "team": "DET",
+     "team": "MIL",
      "pa": 358,
      "wpa": -0.342,
      "pli": 1.04,
@@ -14237,7 +14237,7 @@
     {
      "mlbam": 656896,
      "name": "Emmanuel Rivera",
-     "team": "AZ",
+     "team": "BAL",
      "pa": 285,
      "wpa": -0.343,
      "pli": 1.05,
@@ -14259,7 +14259,7 @@
     {
      "mlbam": 677950,
      "name": "Alek Thomas",
-     "team": "AZ",
+     "team": "LAD",
      "pa": 402,
      "wpa": -0.379,
      "pli": 0.94,
@@ -14281,7 +14281,7 @@
     {
      "mlbam": 642350,
      "name": "Jose Siri",
-     "team": "TB",
+     "team": "LAA",
      "pa": 364,
      "wpa": -0.396,
      "pli": 0.93,
@@ -14325,7 +14325,7 @@
     {
      "mlbam": 657757,
      "name": "Gavin Sheets",
-     "team": "CWS",
+     "team": "SD",
      "pa": 344,
      "wpa": -0.437,
      "pli": 1.02,
@@ -14336,7 +14336,7 @@
     {
      "mlbam": 658668,
      "name": "Edward Olivares",
-     "team": "KC",
+     "team": "TB",
      "pa": 386,
      "wpa": -0.466,
      "pli": 1.02,
@@ -14347,7 +14347,7 @@
     {
      "mlbam": 669261,
      "name": "Jack Suwinski",
-     "team": "PIT",
+     "team": "TB",
      "pa": 536,
      "wpa": -0.474,
      "pli": 1.0,
@@ -14369,7 +14369,7 @@
     {
      "mlbam": 678225,
      "name": "Ji Hwan Bae",
-     "team": "PIT",
+     "team": "MIL",
      "pa": 371,
      "wpa": -0.487,
      "pli": 0.97,
@@ -14446,7 +14446,7 @@
     {
      "mlbam": 672275,
      "name": "Patrick Bailey",
-     "team": "SF",
+     "team": "CLE",
      "pa": 353,
      "wpa": -0.556,
      "pli": 1.17,
@@ -14457,7 +14457,7 @@
     {
      "mlbam": 683734,
      "name": "Andrew Vaughn",
-     "team": "CWS",
+     "team": "MIL",
      "pa": 616,
      "wpa": -0.56,
      "pli": 1.01,
@@ -14479,7 +14479,7 @@
     {
      "mlbam": 682641,
      "name": "Luis Matos",
-     "team": "SF",
+     "team": "MIL",
      "pa": 253,
      "wpa": -0.575,
      "pli": 1.02,
@@ -14490,7 +14490,7 @@
     {
      "mlbam": 660162,
      "name": "Yo\u00e1n Moncada",
-     "team": "CWS",
+     "team": "LAA",
      "pa": 359,
      "wpa": -0.579,
      "pli": 0.97,
@@ -14501,7 +14501,7 @@
     {
      "mlbam": 642715,
      "name": "Willy Adames",
-     "team": "MIL",
+     "team": "SF",
      "pa": 640,
      "wpa": -0.58,
      "pli": 1.0,
@@ -14523,7 +14523,7 @@
     {
      "mlbam": 671277,
      "name": "Luis Garc\u00eda Jr.",
-     "team": "WSH",
+     "team": "NYY",
      "pa": 485,
      "wpa": -0.601,
      "pli": 1.04,
@@ -14534,7 +14534,7 @@
     {
      "mlbam": 663697,
      "name": "Jonathan India",
-     "team": "CIN",
+     "team": "KC",
      "pa": 531,
      "wpa": -0.606,
      "pli": 1.03,
@@ -14567,7 +14567,7 @@
     {
      "mlbam": 665923,
      "name": "Esteury Ruiz",
-     "team": "ATH",
+     "team": "MIA",
      "pa": 497,
      "wpa": -0.635,
      "pli": 1.11,
@@ -14578,7 +14578,7 @@
     {
      "mlbam": 665155,
      "name": "Nick Maton",
-     "team": "DET",
+     "team": "CWS",
      "pa": 294,
      "wpa": -0.64,
      "pli": 1.07,
@@ -14611,7 +14611,7 @@
     {
      "mlbam": 668709,
      "name": "JJ Bleday",
-     "team": "ATH",
+     "team": "CIN",
      "pa": 304,
      "wpa": -0.678,
      "pli": 1.07,
@@ -14655,7 +14655,7 @@
     {
      "mlbam": 670097,
      "name": "Zack Short",
-     "team": "DET",
+     "team": "NYM",
      "pa": 254,
      "wpa": -0.717,
      "pli": 1.02,
@@ -14677,7 +14677,7 @@
     {
      "mlbam": 663611,
      "name": "Nick Madrigal",
-     "team": "CHC",
+     "team": "TB",
      "pa": 294,
      "wpa": -0.761,
      "pli": 0.95,
@@ -14754,7 +14754,7 @@
     {
      "mlbam": 622761,
      "name": "Jorge Mateo",
-     "team": "BAL",
+     "team": "TB",
      "pa": 352,
      "wpa": -0.805,
      "pli": 0.9,
@@ -14787,7 +14787,7 @@
     {
      "mlbam": 680911,
      "name": "Owen Miller",
-     "team": "MIL",
+     "team": "CHC",
      "pa": 314,
      "wpa": -0.855,
      "pli": 1.06,
@@ -14809,7 +14809,7 @@
     {
      "mlbam": 657077,
      "name": "Alex Verdugo",
-     "team": "BOS",
+     "team": "SD",
      "pa": 602,
      "wpa": -0.882,
      "pli": 1.0,
@@ -14820,7 +14820,7 @@
     {
      "mlbam": 641933,
      "name": "Tyler O'Neill",
-     "team": "STL",
+     "team": "BAL",
      "pa": 266,
      "wpa": -0.882,
      "pli": 1.0,
@@ -14853,7 +14853,7 @@
     {
      "mlbam": 656413,
      "name": "Stuart Fairchild",
-     "team": "CIN",
+     "team": "SEA",
      "pa": 257,
      "wpa": -0.927,
      "pli": 1.04,
@@ -14864,7 +14864,7 @@
     {
      "mlbam": 686894,
      "name": "Joey Wiemer",
-     "team": "MIL",
+     "team": "CWS",
      "pa": 412,
      "wpa": -0.93,
      "pli": 1.01,
@@ -14908,7 +14908,7 @@
     {
      "mlbam": 643396,
      "name": "Isiah Kiner-Falefa",
-     "team": "NYY",
+     "team": "BOS",
      "pa": 363,
      "wpa": -0.998,
      "pli": 0.89,
@@ -14952,7 +14952,7 @@
     {
      "mlbam": 641343,
      "name": "Jake Bauers",
-     "team": "NYY",
+     "team": "MIL",
      "pa": 273,
      "wpa": -1.015,
      "pli": 0.9,
@@ -14963,7 +14963,7 @@
     {
      "mlbam": 657656,
      "name": "Ram\u00f3n Laureano",
-     "team": "CLE",
+     "team": "SD",
      "pa": 407,
      "wpa": -1.024,
      "pli": 1.07,
@@ -15018,7 +15018,7 @@
     {
      "mlbam": 666185,
      "name": "Dylan Carlson",
-     "team": "STL",
+     "team": "PHI",
      "pa": 257,
      "wpa": -1.065,
      "pli": 0.99,
@@ -15073,7 +15073,7 @@
     {
      "mlbam": 678246,
      "name": "Miguel Vargas",
-     "team": "LAD",
+     "team": "CWS",
      "pa": 304,
      "wpa": -1.119,
      "pli": 1.04,
@@ -15084,7 +15084,7 @@
     {
      "mlbam": 676609,
      "name": "Jos\u00e9 Caballero",
-     "team": "SEA",
+     "team": "NYY",
      "pa": 280,
      "wpa": -1.12,
      "pli": 1.01,
@@ -15117,7 +15117,7 @@
     {
      "mlbam": 664056,
      "name": "Harrison Bader",
-     "team": "CIN",
+     "team": "SF",
      "pa": 346,
      "wpa": -1.153,
      "pli": 1.07,
@@ -15128,7 +15128,7 @@
     {
      "mlbam": 668472,
      "name": "Nick Pratto",
-     "team": "KC",
+     "team": "SD",
      "pa": 346,
      "wpa": -1.171,
      "pli": 1.01,
@@ -15150,7 +15150,7 @@
     {
      "mlbam": 669289,
      "name": "Santiago Espinal",
-     "team": "TOR",
+     "team": "AZ",
      "pa": 254,
      "wpa": -1.193,
      "pli": 1.11,
@@ -15172,7 +15172,7 @@
     {
      "mlbam": 667452,
      "name": "Corey Julks",
-     "team": "HOU",
+     "team": "DET",
      "pa": 326,
      "wpa": -1.241,
      "pli": 0.91,
@@ -15183,7 +15183,7 @@
     {
      "mlbam": 666801,
      "name": "Rodolfo Castro",
-     "team": "PHI",
+     "team": "TOR",
      "pa": 257,
      "wpa": -1.31,
      "pli": 0.98,
@@ -15205,7 +15205,7 @@
     {
      "mlbam": 665750,
      "name": "Leody Taveras",
-     "team": "TEX",
+     "team": "BAL",
      "pa": 555,
      "wpa": -1.317,
      "pli": 0.91,
@@ -15216,7 +15216,7 @@
     {
      "mlbam": 665862,
      "name": "Jazz Chisholm Jr.",
-     "team": "MIA",
+     "team": "NYY",
      "pa": 384,
      "wpa": -1.323,
      "pli": 0.99,
@@ -15326,7 +15326,7 @@
     {
      "mlbam": 642133,
      "name": "Rowdy Tellez",
-     "team": "MIL",
+     "team": "ATL",
      "pa": 352,
      "wpa": -1.452,
      "pli": 0.98,
@@ -15337,7 +15337,7 @@
     {
      "mlbam": 642086,
      "name": "Dominic Smith",
-     "team": "WSH",
+     "team": "ATL",
      "pa": 586,
      "wpa": -1.457,
      "pli": 1.0,
@@ -15348,7 +15348,7 @@
     {
      "mlbam": 668942,
      "name": "Josh Rojas",
-     "team": "SEA",
+     "team": "KC",
      "pa": 353,
      "wpa": -1.472,
      "pli": 1.0,
@@ -15436,7 +15436,7 @@
     {
      "mlbam": 665926,
      "name": "Andr\u00e9s Gim\u00e9nez",
-     "team": "CLE",
+     "team": "TOR",
      "pa": 616,
      "wpa": -1.591,
      "pli": 1.09,
@@ -15480,7 +15480,7 @@
     {
      "mlbam": 669397,
      "name": "Nick Allen",
-     "team": "ATH",
+     "team": "HOU",
      "pa": 330,
      "wpa": -1.672,
      "pli": 0.91,
@@ -15546,7 +15546,7 @@
     {
      "mlbam": 686668,
      "name": "Brenton Doyle",
-     "team": "COL",
+     "team": "CWS",
      "pa": 431,
      "wpa": -1.866,
      "pli": 0.94,
@@ -15579,7 +15579,7 @@
     {
      "mlbam": 642708,
      "name": "Amed Rosario",
-     "team": "LAD",
+     "team": "NYY",
      "pa": 547,
      "wpa": -1.917,
      "pli": 1.03,
@@ -15601,7 +15601,7 @@
     {
      "mlbam": 663757,
      "name": "Trent Grisham",
-     "team": "SD",
+     "team": "NYY",
      "pa": 555,
      "wpa": -2.0,
      "pli": 0.99,
@@ -15667,7 +15667,7 @@
     {
      "mlbam": 642731,
      "name": "Thairo Estrada",
-     "team": "SF",
+     "team": "BAL",
      "pa": 530,
      "wpa": -2.081,
      "pli": 1.03,
@@ -15678,7 +15678,7 @@
     {
      "mlbam": 663743,
      "name": "Nick Fortes",
-     "team": "MIA",
+     "team": "TB",
      "pa": 325,
      "wpa": -2.089,
      "pli": 0.95,
@@ -15711,7 +15711,7 @@
     {
      "mlbam": 664034,
      "name": "Ty France",
-     "team": "SEA",
+     "team": "SD",
      "pa": 666,
      "wpa": -2.243,
      "pli": 1.06,
@@ -15744,7 +15744,7 @@
     {
      "mlbam": 693049,
      "name": "Oscar Col\u00e1s",
-     "team": "CWS",
+     "team": "LAA",
      "pa": 263,
      "wpa": -2.351,
      "pli": 1.02,
@@ -15755,7 +15755,7 @@
     {
      "mlbam": 662139,
      "name": "Daulton Varsho",
-     "team": "TOR",
+     "team": "HOU",
      "pa": 583,
      "wpa": -2.398,
      "pli": 1.03,
@@ -15766,7 +15766,7 @@
     {
      "mlbam": 672356,
      "name": "Gabriel Arias",
-     "team": "CLE",
+     "team": "CHC",
      "pa": 345,
      "wpa": -2.405,
      "pli": 1.11,
@@ -15821,7 +15821,7 @@
     {
      "mlbam": 621043,
      "name": "Carlos Correa",
-     "team": "MIN",
+     "team": "HOU",
      "pa": 581,
      "wpa": -2.786,
      "pli": 1.1,
@@ -15876,7 +15876,7 @@
     {
      "mlbam": 664702,
      "name": "Myles Straw",
-     "team": "CLE",
+     "team": "TOR",
      "pa": 518,
      "wpa": -4.322,
      "pli": 1.12,
@@ -16021,7 +16021,7 @@
     {
      "mlbam": 666129,
      "name": "Braxton Garrett",
-     "team": "MIA",
+     "team": "CHC",
      "starts": 30,
      "wpa": 2.303,
      "wpa_per_start": 0.077,
@@ -16109,7 +16109,7 @@
     {
      "mlbam": 641540,
      "name": "Dane Dunning",
-     "team": "TEX",
+     "team": "SEA",
      "starts": 26,
      "wpa": 1.926,
      "wpa_per_start": 0.074,
@@ -16153,7 +16153,7 @@
     {
      "mlbam": 621107,
      "name": "Zach Eflin",
-     "team": "TB",
+     "team": "BAL",
      "starts": 31,
      "wpa": 1.908,
      "wpa_per_start": 0.062,
@@ -16197,7 +16197,7 @@
     {
      "mlbam": 669203,
      "name": "Corbin Burnes",
-     "team": "MIL",
+     "team": "AZ",
      "starts": 32,
      "wpa": 1.82,
      "wpa_per_start": 0.057,
@@ -16219,7 +16219,7 @@
     {
      "mlbam": 608331,
      "name": "Max Fried",
-     "team": "ATL",
+     "team": "NYY",
      "starts": 14,
      "wpa": 1.753,
      "wpa_per_start": 0.125,
@@ -16263,7 +16263,7 @@
     {
      "mlbam": 650644,
      "name": "Aaron Civale",
-     "team": "TB",
+     "team": "CHC",
      "starts": 23,
      "wpa": 1.684,
      "wpa_per_start": 0.073,
@@ -16274,7 +16274,7 @@
     {
      "mlbam": 642547,
      "name": "Freddy Peralta",
-     "team": "MIL",
+     "team": "TB",
      "starts": 30,
      "wpa": 1.679,
      "wpa_per_start": 0.056,
@@ -16296,7 +16296,7 @@
     {
      "mlbam": 666200,
      "name": "Jes\u00fas Luzardo",
-     "team": "MIA",
+     "team": "PHI",
      "starts": 32,
      "wpa": 1.618,
      "wpa_per_start": 0.051,
@@ -16351,7 +16351,7 @@
     {
      "mlbam": 669373,
      "name": "Tarik Skubal",
-     "team": "DET",
+     "team": "LAD",
      "starts": 15,
      "wpa": 1.399,
      "wpa_per_start": 0.093,
@@ -16439,7 +16439,7 @@
     {
      "mlbam": 665152,
      "name": "Dean Kremer",
-     "team": "BAL",
+     "team": "MIN",
      "starts": 32,
      "wpa": 1.101,
      "wpa_per_start": 0.034,
@@ -16472,7 +16472,7 @@
     {
      "mlbam": 669160,
      "name": "Dustin May",
-     "team": "LAD",
+     "team": "MIL",
      "starts": 9,
      "wpa": 1.063,
      "wpa_per_start": 0.118,
@@ -16483,7 +16483,7 @@
     {
      "mlbam": 669456,
      "name": "Shane Bieber",
-     "team": "CLE",
+     "team": "TOR",
      "starts": 21,
      "wpa": 1.057,
      "wpa_per_start": 0.05,
@@ -16560,7 +16560,7 @@
     {
      "mlbam": 650633,
      "name": "Michael King",
-     "team": "NYY",
+     "team": "SD",
      "starts": 9,
      "wpa": 0.828,
      "wpa_per_start": 0.092,
@@ -16571,7 +16571,7 @@
     {
      "mlbam": 680570,
      "name": "Grayson Rodriguez",
-     "team": "BAL",
+     "team": "LAA",
      "starts": 23,
      "wpa": 0.809,
      "wpa_per_start": 0.035,
@@ -16615,7 +16615,7 @@
     {
      "mlbam": 676130,
      "name": "Jos\u00e9 Butt\u00f3",
-     "team": "NYM",
+     "team": "SF",
      "starts": 7,
      "wpa": 0.738,
      "wpa_per_start": 0.105,
@@ -16659,7 +16659,7 @@
     {
      "mlbam": 641585,
      "name": "J.P. France",
-     "team": "HOU",
+     "team": "SD",
      "starts": 23,
      "wpa": 0.711,
      "wpa_per_start": 0.031,
@@ -16670,7 +16670,7 @@
     {
      "mlbam": 669330,
      "name": "Tyler Wells",
-     "team": "BAL",
+     "team": "TB",
      "starts": 20,
      "wpa": 0.703,
      "wpa_per_start": 0.035,
@@ -16758,7 +16758,7 @@
     {
      "mlbam": 656288,
      "name": "Griffin Canning",
-     "team": "LAA",
+     "team": "SD",
      "starts": 22,
      "wpa": 0.53,
      "wpa_per_start": 0.024,
@@ -16769,7 +16769,7 @@
     {
      "mlbam": 681217,
      "name": "Chase Silseth",
-     "team": "LAA",
+     "team": "TEX",
      "starts": 8,
      "wpa": 0.502,
      "wpa_per_start": 0.063,
@@ -16802,7 +16802,7 @@
     {
      "mlbam": 670912,
      "name": "Johan Oviedo",
-     "team": "PIT",
+     "team": "BOS",
      "starts": 32,
      "wpa": 0.48,
      "wpa_per_start": 0.015,
@@ -16813,7 +16813,7 @@
     {
      "mlbam": 681190,
      "name": "Randy V\u00e1squez",
-     "team": "NYY",
+     "team": "SD",
      "starts": 5,
      "wpa": 0.462,
      "wpa_per_start": 0.092,
@@ -16835,7 +16835,7 @@
     {
      "mlbam": 666159,
      "name": "Matt Manning",
-     "team": "DET",
+     "team": "PHI",
      "starts": 15,
      "wpa": 0.435,
      "wpa_per_start": 0.029,
@@ -16868,7 +16868,7 @@
     {
      "mlbam": 665795,
      "name": "Edward Cabrera",
-     "team": "MIA",
+     "team": "CHC",
      "starts": 20,
      "wpa": 0.396,
      "wpa_per_start": 0.02,
@@ -16901,7 +16901,7 @@
     {
      "mlbam": 641793,
      "name": "Zack Littell",
-     "team": "TB",
+     "team": "AZ",
      "starts": 14,
      "wpa": 0.35,
      "wpa_per_start": 0.025,
@@ -16934,7 +16934,7 @@
     {
      "mlbam": 641482,
      "name": "Nestor Cortes",
-     "team": "NYY",
+     "team": "PHI",
      "starts": 12,
      "wpa": 0.262,
      "wpa_per_start": 0.022,
@@ -17011,7 +17011,7 @@
     {
      "mlbam": 695243,
      "name": "Mason Miller",
-     "team": "ATH",
+     "team": "SD",
      "starts": 6,
      "wpa": 0.169,
      "wpa_per_start": 0.028,
@@ -17033,7 +17033,7 @@
     {
      "mlbam": 677651,
      "name": "Luis Garcia",
-     "team": "HOU",
+     "team": "NYY",
      "starts": 6,
      "wpa": 0.153,
      "wpa_per_start": 0.026,
@@ -17055,7 +17055,7 @@
     {
      "mlbam": 624133,
      "name": "Ranger Suarez",
-     "team": "PHI",
+     "team": "BOS",
      "starts": 22,
      "wpa": 0.109,
      "wpa_per_start": 0.005,
@@ -17066,7 +17066,7 @@
     {
      "mlbam": 641816,
      "name": "Tyler Mahle",
-     "team": "MIN",
+     "team": "ATL",
      "starts": 5,
      "wpa": 0.086,
      "wpa_per_start": 0.017,
@@ -17121,7 +17121,7 @@
     {
      "mlbam": 664353,
      "name": "Jos\u00e9 Urquidy",
-     "team": "HOU",
+     "team": "CWS",
      "starts": 10,
      "wpa": 0.056,
      "wpa_per_start": 0.006,
@@ -17187,7 +17187,7 @@
     {
      "mlbam": 681882,
      "name": "Colin Selby",
-     "team": "PIT",
+     "team": "BAL",
      "starts": 5,
      "wpa": 0.021,
      "wpa_per_start": 0.004,
@@ -17209,7 +17209,7 @@
     {
      "mlbam": 641745,
      "name": "Brad Keller",
-     "team": "KC",
+     "team": "PHI",
      "starts": 9,
      "wpa": -0.01,
      "wpa_per_start": -0.001,
@@ -17231,7 +17231,7 @@
     {
      "mlbam": 658648,
      "name": "Pedro Avila",
-     "team": "SD",
+     "team": "CLE",
      "starts": 6,
      "wpa": -0.046,
      "wpa_per_start": -0.008,
@@ -17264,7 +17264,7 @@
     {
      "mlbam": 676664,
      "name": "JP Sears",
-     "team": "ATH",
+     "team": "SD",
      "starts": 32,
      "wpa": -0.071,
      "wpa_per_start": -0.002,
@@ -17297,7 +17297,7 @@
     {
      "mlbam": 656302,
      "name": "Dylan Cease",
-     "team": "CWS",
+     "team": "TOR",
      "starts": 33,
      "wpa": -0.109,
      "wpa_per_start": -0.003,
@@ -17341,7 +17341,7 @@
     {
      "mlbam": 690986,
      "name": "Kyle Harrison",
-     "team": "SF",
+     "team": "MIL",
      "starts": 7,
      "wpa": -0.126,
      "wpa_per_start": -0.018,
@@ -17363,7 +17363,7 @@
     {
      "mlbam": 615698,
      "name": "Cal Quantrill",
-     "team": "CLE",
+     "team": "TEX",
      "starts": 19,
      "wpa": -0.157,
      "wpa_per_start": -0.008,
@@ -17374,7 +17374,7 @@
     {
      "mlbam": 657571,
      "name": "Caleb Ferguson",
-     "team": "LAD",
+     "team": "STL",
      "starts": 7,
      "wpa": -0.158,
      "wpa_per_start": -0.023,
@@ -17418,7 +17418,7 @@
     {
      "mlbam": 663362,
      "name": "Matt Waldron",
-     "team": "SD",
+     "team": "TOR",
      "starts": 6,
      "wpa": -0.176,
      "wpa_per_start": -0.029,
@@ -17440,7 +17440,7 @@
     {
      "mlbam": 664062,
      "name": "Tony Gonsolin",
-     "team": "LAD",
+     "team": "KC",
      "starts": 20,
      "wpa": -0.215,
      "wpa_per_start": -0.011,
@@ -17451,7 +17451,7 @@
     {
      "mlbam": 663567,
      "name": "Peter Lambert",
-     "team": "COL",
+     "team": "HOU",
      "starts": 11,
      "wpa": -0.229,
      "wpa_per_start": -0.021,
@@ -17462,7 +17462,7 @@
     {
      "mlbam": 686973,
      "name": "Louis Varland",
-     "team": "MIN",
+     "team": "TOR",
      "starts": 10,
      "wpa": -0.23,
      "wpa_per_start": -0.023,
@@ -17495,7 +17495,7 @@
     {
      "mlbam": 608344,
      "name": "Cole Irvin",
-     "team": "BAL",
+     "team": "LAD",
      "starts": 12,
      "wpa": -0.254,
      "wpa_per_start": -0.021,
@@ -17517,7 +17517,7 @@
     {
      "mlbam": 669022,
      "name": "MacKenzie Gore",
-     "team": "WSH",
+     "team": "TEX",
      "starts": 27,
      "wpa": -0.261,
      "wpa_per_start": -0.01,
@@ -17539,7 +17539,7 @@
     {
      "mlbam": 642545,
      "name": "Jaime Barria",
-     "team": "LAA",
+     "team": "CLE",
      "starts": 6,
      "wpa": -0.332,
      "wpa_per_start": -0.055,
@@ -17605,7 +17605,7 @@
     {
      "mlbam": 672710,
      "name": "Roansy Contreras",
-     "team": "PIT",
+     "team": "COL",
      "starts": 11,
      "wpa": -0.393,
      "wpa_per_start": -0.036,
@@ -17627,7 +17627,7 @@
     {
      "mlbam": 663773,
      "name": "Bryan Hoeing",
-     "team": "MIA",
+     "team": "SD",
      "starts": 8,
      "wpa": -0.412,
      "wpa_per_start": -0.051,
@@ -17638,7 +17638,7 @@
     {
      "mlbam": 685410,
      "name": "Peyton Battenfield",
-     "team": "CLE",
+     "team": "COL",
      "starts": 6,
      "wpa": -0.414,
      "wpa_per_start": -0.069,
@@ -17649,7 +17649,7 @@
     {
      "mlbam": 657053,
      "name": "Touki Toussaint",
-     "team": "CWS",
+     "team": "LAA",
      "starts": 17,
      "wpa": -0.43,
      "wpa_per_start": -0.025,
@@ -17704,7 +17704,7 @@
     {
      "mlbam": 656629,
      "name": "Michael Kopech",
-     "team": "CWS",
+     "team": "LAD",
      "starts": 27,
      "wpa": -0.476,
      "wpa_per_start": -0.018,
@@ -17770,7 +17770,7 @@
     {
      "mlbam": 669713,
      "name": "Hayden Wesneski",
-     "team": "CHC",
+     "team": "HOU",
      "starts": 11,
      "wpa": -0.532,
      "wpa_per_start": -0.048,
@@ -17781,7 +17781,7 @@
     {
      "mlbam": 675540,
      "name": "Xzavion Curry",
-     "team": "CLE",
+     "team": "NYM",
      "starts": 9,
      "wpa": -0.534,
      "wpa_per_start": -0.059,
@@ -17803,7 +17803,7 @@
     {
      "mlbam": 686610,
      "name": "Ken Waldichuk",
-     "team": "ATH",
+     "team": "WSH",
      "starts": 22,
      "wpa": -0.54,
      "wpa_per_start": -0.025,
@@ -17858,7 +17858,7 @@
     {
      "mlbam": 641712,
      "name": "Dakota Hudson",
-     "team": "STL",
+     "team": "LAA",
      "starts": 14,
      "wpa": -0.62,
      "wpa_per_start": -0.044,
@@ -17869,7 +17869,7 @@
     {
      "mlbam": 656412,
      "name": "Alex Faedo",
-     "team": "DET",
+     "team": "LAA",
      "starts": 12,
      "wpa": -0.625,
      "wpa_per_start": -0.052,
@@ -17880,7 +17880,7 @@
     {
      "mlbam": 663562,
      "name": "Noah Davis",
-     "team": "COL",
+     "team": "PIT",
      "starts": 6,
      "wpa": -0.63,
      "wpa_per_start": -0.105,
@@ -17913,7 +17913,7 @@
     {
      "mlbam": 680723,
      "name": "Drew Rom",
-     "team": "STL",
+     "team": "ATH",
      "starts": 8,
      "wpa": -0.673,
      "wpa_per_start": -0.084,
@@ -17935,7 +17935,7 @@
     {
      "mlbam": 621076,
      "name": "James Kaprielian",
-     "team": "ATH",
+     "team": "TOR",
      "starts": 11,
      "wpa": -0.703,
      "wpa_per_start": -0.064,
@@ -17946,7 +17946,7 @@
     {
      "mlbam": 663765,
      "name": "Jake Woodford",
-     "team": "STL",
+     "team": "TB",
      "starts": 8,
      "wpa": -0.708,
      "wpa_per_start": -0.088,
@@ -17957,7 +17957,7 @@
     {
      "mlbam": 694363,
      "name": "Jared Shuster",
-     "team": "ATL",
+     "team": "STL",
      "starts": 11,
      "wpa": -0.709,
      "wpa_per_start": -0.064,
@@ -17968,7 +17968,7 @@
     {
      "mlbam": 642216,
      "name": "Allan Winans",
-     "team": "ATL",
+     "team": "NYY",
      "starts": 6,
      "wpa": -0.732,
      "wpa_per_start": -0.122,
@@ -17990,7 +17990,7 @@
     {
      "mlbam": 656427,
      "name": "Jack Flaherty",
-     "team": "BAL",
+     "team": "DET",
      "starts": 27,
      "wpa": -0.796,
      "wpa_per_start": -0.029,
@@ -18001,7 +18001,7 @@
     {
      "mlbam": 647336,
      "name": "Michael Soroka",
-     "team": "ATL",
+     "team": "AZ",
      "starts": 6,
      "wpa": -0.801,
      "wpa_per_start": -0.133,
@@ -18023,7 +18023,7 @@
     {
      "mlbam": 682847,
      "name": "Luis Ortiz",
-     "team": "PIT",
+     "team": "CLE",
      "starts": 15,
      "wpa": -0.845,
      "wpa_per_start": -0.056,
@@ -18056,7 +18056,7 @@
     {
      "mlbam": 657140,
      "name": "Kyle Wright",
-     "team": "ATL",
+     "team": "CHC",
      "starts": 7,
      "wpa": -0.886,
      "wpa_per_start": -0.127,
@@ -18111,7 +18111,7 @@
     {
      "mlbam": 666745,
      "name": "Jhony Brito",
-     "team": "NYY",
+     "team": "SD",
      "starts": 13,
      "wpa": -0.981,
      "wpa_per_start": -0.075,
@@ -18155,7 +18155,7 @@
     {
      "mlbam": 663776,
      "name": "Patrick Sandoval",
-     "team": "LAA",
+     "team": "BOS",
      "starts": 28,
      "wpa": -0.999,
      "wpa_per_start": -0.036,
@@ -18188,7 +18188,7 @@
     {
      "mlbam": 660761,
      "name": "Jos\u00e9 Suarez",
-     "team": "LAA",
+     "team": "ATH",
      "starts": 7,
      "wpa": -1.038,
      "wpa_per_start": -0.148,
@@ -18199,7 +18199,7 @@
     {
      "mlbam": 656849,
      "name": "David Peterson",
-     "team": "NYM",
+     "team": "CHC",
      "starts": 21,
      "wpa": -1.042,
      "wpa_per_start": -0.05,
@@ -18243,7 +18243,7 @@
     {
      "mlbam": 682990,
      "name": "Quinn Priester",
-     "team": "PIT",
+     "team": "MIL",
      "starts": 8,
      "wpa": -1.147,
      "wpa_per_start": -0.143,
@@ -18254,7 +18254,7 @@
     {
      "mlbam": 671737,
      "name": "Taj Bradley",
-     "team": "TB",
+     "team": "MIN",
      "starts": 21,
      "wpa": -1.171,
      "wpa_per_start": -0.056,
@@ -18309,7 +18309,7 @@
     {
      "mlbam": 660261,
      "name": "Shintaro Fujinami",
-     "team": "BAL",
+     "team": "SEA",
      "starts": 7,
      "wpa": -1.244,
      "wpa_per_start": -0.178,
@@ -18342,7 +18342,7 @@
     {
      "mlbam": 677960,
      "name": "Ryan Weathers",
-     "team": "MIA",
+     "team": "NYY",
      "starts": 12,
      "wpa": -1.261,
      "wpa_per_start": -0.105,
@@ -18353,7 +18353,7 @@
     {
      "mlbam": 622663,
      "name": "Luis Severino",
-     "team": "NYY",
+     "team": "ATH",
      "starts": 18,
      "wpa": -1.32,
      "wpa_per_start": -0.073,
@@ -18375,7 +18375,7 @@
     {
      "mlbam": 663903,
      "name": "Brady Singer",
-     "team": "KC",
+     "team": "CIN",
      "starts": 29,
      "wpa": -1.35,
      "wpa_per_start": -0.047,
@@ -18386,7 +18386,7 @@
     {
      "mlbam": 675627,
      "name": "Michael Grove",
-     "team": "LAD",
+     "team": "TB",
      "starts": 13,
      "wpa": -1.361,
      "wpa_per_start": -0.105,
@@ -18430,7 +18430,7 @@
     {
      "mlbam": 608337,
      "name": "Lucas Giolito",
-     "team": "CLE",
+     "team": "SD",
      "starts": 33,
      "wpa": -1.453,
      "wpa_per_start": -0.044,
@@ -18452,7 +18452,7 @@
     {
      "mlbam": 669947,
      "name": "Jesse Scholtens",
-     "team": "CWS",
+     "team": "TB",
      "starts": 11,
      "wpa": -1.479,
      "wpa_per_start": -0.134,
@@ -18463,7 +18463,7 @@
     {
      "mlbam": 666201,
      "name": "Alek Manoah",
-     "team": "TOR",
+     "team": "LAA",
      "starts": 19,
      "wpa": -1.521,
      "wpa_per_start": -0.08,
@@ -18485,7 +18485,7 @@
     {
      "mlbam": 641778,
      "name": "Eric Lauer",
-     "team": "MIL",
+     "team": "LAD",
      "starts": 9,
      "wpa": -1.593,
      "wpa_per_start": -0.177,
@@ -18507,7 +18507,7 @@
     {
      "mlbam": 657756,
      "name": "Connor Seabold",
-     "team": "COL",
+     "team": "KC",
      "starts": 13,
      "wpa": -1.778,
      "wpa_per_start": -0.137,
@@ -18551,7 +18551,7 @@
     {
      "mlbam": 663559,
      "name": "Bailey Falter",
-     "team": "PIT",
+     "team": "ATL",
      "starts": 15,
      "wpa": -1.911,
      "wpa_per_start": -0.127,
@@ -18584,7 +18584,7 @@
     {
      "mlbam": 623167,
      "name": "Chris Flexen",
-     "team": "COL",
+     "team": "CHC",
      "starts": 16,
      "wpa": -2.218,
      "wpa_per_start": -0.139,
@@ -18617,7 +18617,7 @@
     {
      "mlbam": 666214,
      "name": "Joey Wentz",
-     "team": "DET",
+     "team": "ATL",
      "starts": 20,
      "wpa": -2.63,
      "wpa_per_start": -0.131,
@@ -18694,7 +18694,7 @@
     {
      "mlbam": 665742,
      "name": "Juan Soto",
-     "team": "NYY",
+     "team": "NYM",
      "pa": 714,
      "wpa": 5.574,
      "pli": 0.89,
@@ -18925,7 +18925,7 @@
     {
      "mlbam": 663656,
      "name": "Kyle Tucker",
-     "team": "HOU",
+     "team": "LAD",
      "pa": 340,
      "wpa": 1.924,
      "pli": 1.0,
@@ -18958,7 +18958,7 @@
     {
      "mlbam": 621043,
      "name": "Carlos Correa",
-     "team": "MIN",
+     "team": "HOU",
      "pa": 368,
      "wpa": 1.831,
      "pli": 1.09,
@@ -19024,7 +19024,7 @@
     {
      "mlbam": 680977,
      "name": "Brendan Donovan",
-     "team": "STL",
+     "team": "SEA",
      "pa": 652,
      "wpa": 1.484,
      "pli": 1.05,
@@ -19035,7 +19035,7 @@
     {
      "mlbam": 687462,
      "name": "Spencer Horwitz",
-     "team": "TOR",
+     "team": "PIT",
      "pa": 382,
      "wpa": 1.427,
      "pli": 1.0,
@@ -19057,7 +19057,7 @@
     {
      "mlbam": 623993,
      "name": "Anthony Santander",
-     "team": "BAL",
+     "team": "TOR",
      "pa": 665,
      "wpa": 1.371,
      "pli": 0.96,
@@ -19123,7 +19123,7 @@
     {
      "mlbam": 641933,
      "name": "Tyler O'Neill",
-     "team": "BOS",
+     "team": "BAL",
      "pa": 476,
      "wpa": 1.2,
      "pli": 0.94,
@@ -19156,7 +19156,7 @@
     {
      "mlbam": 671277,
      "name": "Luis Garc\u00eda Jr.",
-     "team": "WSH",
+     "team": "NYY",
      "pa": 528,
      "wpa": 1.126,
      "pli": 1.01,
@@ -19200,7 +19200,7 @@
     {
      "mlbam": 646240,
      "name": "Rafael Devers",
-     "team": "BOS",
+     "team": "SF",
      "pa": 601,
      "wpa": 1.035,
      "pli": 1.0,
@@ -19255,7 +19255,7 @@
     {
      "mlbam": 662139,
      "name": "Daulton Varsho",
-     "team": "TOR",
+     "team": "HOU",
      "pa": 513,
      "wpa": 0.999,
      "pli": 0.91,
@@ -19299,7 +19299,7 @@
     {
      "mlbam": 671218,
      "name": "Heliot Ramos",
-     "team": "SF",
+     "team": "NYY",
      "pa": 518,
      "wpa": 0.967,
      "pli": 1.09,
@@ -19321,7 +19321,7 @@
     {
      "mlbam": 641857,
      "name": "Ryan McMahon",
-     "team": "COL",
+     "team": "NYY",
      "pa": 649,
      "wpa": 0.914,
      "pli": 0.95,
@@ -19332,7 +19332,7 @@
     {
      "mlbam": 641355,
      "name": "Cody Bellinger",
-     "team": "CHC",
+     "team": "NYY",
      "pa": 570,
      "wpa": 0.912,
      "pli": 1.01,
@@ -19354,7 +19354,7 @@
     {
      "mlbam": 642715,
      "name": "Willy Adames",
-     "team": "MIL",
+     "team": "SF",
      "pa": 691,
      "wpa": 0.848,
      "pli": 1.09,
@@ -19387,7 +19387,7 @@
     {
      "mlbam": 664040,
      "name": "Brandon Lowe",
-     "team": "TB",
+     "team": "PIT",
      "pa": 425,
      "wpa": 0.736,
      "pli": 1.06,
@@ -19431,7 +19431,7 @@
     {
      "mlbam": 686823,
      "name": "Will Brennan",
-     "team": "CLE",
+     "team": "SF",
      "pa": 354,
      "wpa": 0.673,
      "pli": 0.94,
@@ -19442,7 +19442,7 @@
     {
      "mlbam": 660821,
      "name": "Jes\u00fas S\u00e1nchez",
-     "team": "MIA",
+     "team": "TOR",
      "pa": 538,
      "wpa": 0.644,
      "pli": 1.02,
@@ -19508,7 +19508,7 @@
     {
      "mlbam": 689172,
      "name": "Brett Wisely",
-     "team": "SF",
+     "team": "ATL",
      "pa": 273,
      "wpa": 0.57,
      "pli": 1.07,
@@ -19519,7 +19519,7 @@
     {
      "mlbam": 664983,
      "name": "Jake McCarthy",
-     "team": "AZ",
+     "team": "COL",
      "pa": 495,
      "wpa": 0.567,
      "pli": 0.9,
@@ -19530,7 +19530,7 @@
     {
      "mlbam": 663457,
      "name": "Lars Nootbaar",
-     "team": "STL",
+     "team": "AZ",
      "pa": 405,
      "wpa": 0.533,
      "pli": 1.05,
@@ -19552,7 +19552,7 @@
     {
      "mlbam": 663698,
      "name": "Joey Bart",
-     "team": "PIT",
+     "team": "CWS",
      "pa": 283,
      "wpa": 0.517,
      "pli": 1.09,
@@ -19596,7 +19596,7 @@
     {
      "mlbam": 670623,
      "name": "Isaac Paredes",
-     "team": "CHC",
+     "team": "HOU",
      "pa": 644,
      "wpa": 0.443,
      "pli": 1.04,
@@ -19607,7 +19607,7 @@
     {
      "mlbam": 663993,
      "name": "Nathaniel Lowe",
-     "team": "TEX",
+     "team": "CLE",
      "pa": 568,
      "wpa": 0.419,
      "pli": 1.02,
@@ -19618,7 +19618,7 @@
     {
      "mlbam": 664774,
      "name": "LaMonte Wade Jr.",
-     "team": "SF",
+     "team": "HOU",
      "pa": 401,
      "wpa": 0.413,
      "pli": 0.99,
@@ -19662,7 +19662,7 @@
     {
      "mlbam": 663697,
      "name": "Jonathan India",
-     "team": "CIN",
+     "team": "KC",
      "pa": 638,
      "wpa": 0.357,
      "pli": 0.94,
@@ -19750,7 +19750,7 @@
     {
      "mlbam": 602104,
      "name": "Ram\u00f3n Ur\u00edas",
-     "team": "BAL",
+     "team": "STL",
      "pa": 301,
      "wpa": 0.276,
      "pli": 0.84,
@@ -19772,7 +19772,7 @@
     {
      "mlbam": 650489,
      "name": "Willi Castro",
-     "team": "MIN",
+     "team": "COL",
      "pa": 638,
      "wpa": 0.263,
      "pli": 1.01,
@@ -19827,7 +19827,7 @@
     {
      "mlbam": 669394,
      "name": "Jake Burger",
-     "team": "MIA",
+     "team": "TEX",
      "pa": 579,
      "wpa": 0.221,
      "pli": 1.02,
@@ -19871,7 +19871,7 @@
     {
      "mlbam": 666158,
      "name": "Gavin Lux",
-     "team": "LAD",
+     "team": "TB",
      "pa": 489,
      "wpa": 0.173,
      "pli": 0.99,
@@ -19904,7 +19904,7 @@
     {
      "mlbam": 669701,
      "name": "Josh Smith",
-     "team": "TEX",
+     "team": "TOR",
      "pa": 593,
      "wpa": 0.156,
      "pli": 1.0,
@@ -19970,7 +19970,7 @@
     {
      "mlbam": 673490,
      "name": "Ha-Seong Kim",
-     "team": "SD",
+     "team": "ATL",
      "pa": 471,
      "wpa": 0.114,
      "pli": 0.97,
@@ -20080,7 +20080,7 @@
     {
      "mlbam": 681146,
      "name": "Jonah Bride",
-     "team": "MIA",
+     "team": "TEX",
      "pa": 273,
      "wpa": -0.063,
      "pli": 1.0,
@@ -20135,7 +20135,7 @@
     {
      "mlbam": 669004,
      "name": "MJ Melendez",
-     "team": "KC",
+     "team": "NYM",
      "pa": 451,
      "wpa": -0.105,
      "pli": 0.95,
@@ -20168,7 +20168,7 @@
     {
      "mlbam": 647304,
      "name": "Josh Naylor",
-     "team": "CLE",
+     "team": "SEA",
      "pa": 637,
      "wpa": -0.126,
      "pli": 1.04,
@@ -20201,7 +20201,7 @@
     {
      "mlbam": 656775,
      "name": "Cedric Mullins",
-     "team": "BAL",
+     "team": "TB",
      "pa": 499,
      "wpa": -0.152,
      "pli": 0.92,
@@ -20223,7 +20223,7 @@
     {
      "mlbam": 686668,
      "name": "Brenton Doyle",
-     "team": "COL",
+     "team": "CWS",
      "pa": 604,
      "wpa": -0.197,
      "pli": 0.97,
@@ -20278,7 +20278,7 @@
     {
      "mlbam": 657656,
      "name": "Ram\u00f3n Laureano",
-     "team": "ATL",
+     "team": "SD",
      "pa": 309,
      "wpa": -0.262,
      "pli": 0.93,
@@ -20300,7 +20300,7 @@
     {
      "mlbam": 650859,
      "name": "Luis Rengifo",
-     "team": "LAA",
+     "team": "SD",
      "pa": 307,
      "wpa": -0.272,
      "pli": 1.05,
@@ -20322,7 +20322,7 @@
     {
      "mlbam": 669261,
      "name": "Jack Suwinski",
-     "team": "PIT",
+     "team": "TB",
      "pa": 277,
      "wpa": -0.284,
      "pli": 1.09,
@@ -20366,7 +20366,7 @@
     {
      "mlbam": 609280,
      "name": "Miguel Andujar",
-     "team": "ATH",
+     "team": "SD",
      "pa": 319,
      "wpa": -0.331,
      "pli": 0.95,
@@ -20388,7 +20388,7 @@
     {
      "mlbam": 668939,
      "name": "Adley Rutschman",
-     "team": "BAL",
+     "team": "BOS",
      "pa": 640,
      "wpa": -0.385,
      "pli": 0.95,
@@ -20432,7 +20432,7 @@
     {
      "mlbam": 642133,
      "name": "Rowdy Tellez",
-     "team": "PIT",
+     "team": "ATL",
      "pa": 421,
      "wpa": -0.433,
      "pli": 1.01,
@@ -20498,7 +20498,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "CWS",
+     "team": "NYM",
      "pa": 425,
      "wpa": -0.499,
      "pli": 1.07,
@@ -20531,7 +20531,7 @@
     {
      "mlbam": 624413,
      "name": "Pete Alonso",
-     "team": "NYM",
+     "team": "BAL",
      "pa": 696,
      "wpa": -0.524,
      "pli": 0.98,
@@ -20542,7 +20542,7 @@
     {
      "mlbam": 650333,
      "name": "Luis Arraez",
-     "team": "SD",
+     "team": "PHI",
      "pa": 672,
      "wpa": -0.536,
      "pli": 0.98,
@@ -20597,7 +20597,7 @@
     {
      "mlbam": 643289,
      "name": "Mauricio Dub\u00f3n",
-     "team": "HOU",
+     "team": "ATL",
      "pa": 428,
      "wpa": -0.614,
      "pli": 0.91,
@@ -20619,7 +20619,7 @@
     {
      "mlbam": 666149,
      "name": "Tyler Fitzgerald",
-     "team": "SF",
+     "team": "LAD",
      "pa": 341,
      "wpa": -0.628,
      "pli": 0.97,
@@ -20641,7 +20641,7 @@
     {
      "mlbam": 666176,
      "name": "Jo Adell",
-     "team": "LAA",
+     "team": "CLE",
      "pa": 452,
      "wpa": -0.635,
      "pli": 1.0,
@@ -20652,7 +20652,7 @@
     {
      "mlbam": 663898,
      "name": "Brendan Rodgers",
-     "team": "COL",
+     "team": "BOS",
      "pa": 541,
      "wpa": -0.635,
      "pli": 0.95,
@@ -20685,7 +20685,7 @@
     {
      "mlbam": 642708,
      "name": "Amed Rosario",
-     "team": "CIN",
+     "team": "NYY",
      "pa": 347,
      "wpa": -0.656,
      "pli": 1.12,
@@ -20707,7 +20707,7 @@
     {
      "mlbam": 672284,
      "name": "Jarred Kelenic",
-     "team": "ATL",
+     "team": "TEX",
      "pa": 450,
      "wpa": -0.676,
      "pli": 0.96,
@@ -20729,7 +20729,7 @@
     {
      "mlbam": 666152,
      "name": "David Hamilton",
-     "team": "BOS",
+     "team": "MIL",
      "pa": 320,
      "wpa": -0.708,
      "pli": 0.85,
@@ -20740,7 +20740,7 @@
     {
      "mlbam": 642731,
      "name": "Thairo Estrada",
-     "team": "SF",
+     "team": "BAL",
      "pa": 382,
      "wpa": -0.709,
      "pli": 1.04,
@@ -20773,7 +20773,7 @@
     {
      "mlbam": 608348,
      "name": "Carson Kelly",
-     "team": "TEX",
+     "team": "CHC",
      "pa": 315,
      "wpa": -0.733,
      "pli": 1.01,
@@ -20795,7 +20795,7 @@
     {
      "mlbam": 657041,
      "name": "Lane Thomas",
-     "team": "CLE",
+     "team": "ATL",
      "pa": 531,
      "wpa": -0.776,
      "pli": 0.98,
@@ -20806,7 +20806,7 @@
     {
      "mlbam": 650402,
      "name": "Gleyber Torres",
-     "team": "NYY",
+     "team": "DET",
      "pa": 667,
      "wpa": -0.798,
      "pli": 0.9,
@@ -20894,7 +20894,7 @@
     {
      "mlbam": 657757,
      "name": "Gavin Sheets",
-     "team": "CWS",
+     "team": "SD",
      "pa": 502,
      "wpa": -0.838,
      "pli": 0.99,
@@ -20938,7 +20938,7 @@
     {
      "mlbam": 647351,
      "name": "Abraham Toro",
-     "team": "ATH",
+     "team": "KC",
      "pa": 365,
      "wpa": -0.884,
      "pli": 1.09,
@@ -20949,7 +20949,7 @@
     {
      "mlbam": 660766,
      "name": "Juan Yepez",
-     "team": "WSH",
+     "team": "TOR",
      "pa": 252,
      "wpa": -0.906,
      "pli": 0.92,
@@ -20982,7 +20982,7 @@
     {
      "mlbam": 669304,
      "name": "Jose Miranda",
-     "team": "MIN",
+     "team": "SD",
      "pa": 431,
      "wpa": -0.943,
      "pli": 0.91,
@@ -21015,7 +21015,7 @@
     {
      "mlbam": 666397,
      "name": "Edouard Julien",
-     "team": "MIN",
+     "team": "COL",
      "pa": 302,
      "wpa": -1.026,
      "pli": 0.92,
@@ -21026,7 +21026,7 @@
     {
      "mlbam": 666185,
      "name": "Dylan Carlson",
-     "team": "TB",
+     "team": "PHI",
      "pa": 266,
      "wpa": -1.047,
      "pli": 1.09,
@@ -21037,7 +21037,7 @@
     {
      "mlbam": 624503,
      "name": "Nick Gordon",
-     "team": "MIA",
+     "team": "KC",
      "pa": 276,
      "wpa": -1.055,
      "pli": 1.03,
@@ -21059,7 +21059,7 @@
     {
      "mlbam": 666139,
      "name": "Josh Lowe",
-     "team": "TB",
+     "team": "LAA",
      "pa": 388,
      "wpa": -1.065,
      "pli": 1.1,
@@ -21081,7 +21081,7 @@
     {
      "mlbam": 664056,
      "name": "Harrison Bader",
-     "team": "NYM",
+     "team": "SF",
      "pa": 437,
      "wpa": -1.07,
      "pli": 0.97,
@@ -21092,7 +21092,7 @@
     {
      "mlbam": 665926,
      "name": "Andr\u00e9s Gim\u00e9nez",
-     "team": "CLE",
+     "team": "TOR",
      "pa": 634,
      "wpa": -1.073,
      "pli": 1.0,
@@ -21103,7 +21103,7 @@
     {
      "mlbam": 668709,
      "name": "JJ Bleday",
-     "team": "ATH",
+     "team": "CIN",
      "pa": 644,
      "wpa": -1.083,
      "pli": 1.02,
@@ -21114,7 +21114,7 @@
     {
      "mlbam": 668942,
      "name": "Josh Rojas",
-     "team": "SEA",
+     "team": "KC",
      "pa": 476,
      "wpa": -1.091,
      "pli": 0.94,
@@ -21147,7 +21147,7 @@
     {
      "mlbam": 669911,
      "name": "Michael Toglia",
-     "team": "COL",
+     "team": "CIN",
      "pa": 458,
      "wpa": -1.109,
      "pli": 0.98,
@@ -21158,7 +21158,7 @@
     {
      "mlbam": 681351,
      "name": "Logan O'Hoppe",
-     "team": "LAA",
+     "team": "TEX",
      "pa": 523,
      "wpa": -1.122,
      "pli": 1.02,
@@ -21169,7 +21169,7 @@
     {
      "mlbam": 643396,
      "name": "Isiah Kiner-Falefa",
-     "team": "PIT",
+     "team": "BOS",
      "pa": 498,
      "wpa": -1.141,
      "pli": 0.93,
@@ -21202,7 +21202,7 @@
     {
      "mlbam": 642086,
      "name": "Dominic Smith",
-     "team": "CIN",
+     "team": "ATL",
      "pa": 307,
      "wpa": -1.177,
      "pli": 0.91,
@@ -21213,7 +21213,7 @@
     {
      "mlbam": 666023,
      "name": "Freddy Fermin",
-     "team": "KC",
+     "team": "SD",
      "pa": 369,
      "wpa": -1.178,
      "pli": 0.91,
@@ -21224,7 +21224,7 @@
     {
      "mlbam": 621438,
      "name": "Tyrone Taylor",
-     "team": "NYM",
+     "team": "CHC",
      "pa": 345,
      "wpa": -1.188,
      "pli": 1.04,
@@ -21235,7 +21235,7 @@
     {
      "mlbam": 668670,
      "name": "Jake Rogers",
-     "team": "DET",
+     "team": "CWS",
      "pa": 337,
      "wpa": -1.201,
      "pli": 0.88,
@@ -21290,7 +21290,7 @@
     {
      "mlbam": 608324,
      "name": "Alex Bregman",
-     "team": "HOU",
+     "team": "CHC",
      "pa": 637,
      "wpa": -1.234,
      "pli": 1.02,
@@ -21301,7 +21301,7 @@
     {
      "mlbam": 622534,
      "name": "Manuel Margot",
-     "team": "MIN",
+     "team": "DET",
      "pa": 345,
      "wpa": -1.239,
      "pli": 0.97,
@@ -21312,7 +21312,7 @@
     {
      "mlbam": 641680,
      "name": "Jonah Heim",
-     "team": "TEX",
+     "team": "ATH",
      "pa": 491,
      "wpa": -1.26,
      "pli": 1.03,
@@ -21367,7 +21367,7 @@
     {
      "mlbam": 671289,
      "name": "Tyler Freeman",
-     "team": "CLE",
+     "team": "COL",
      "pa": 385,
      "wpa": -1.304,
      "pli": 0.94,
@@ -21378,7 +21378,7 @@
     {
      "mlbam": 669720,
      "name": "Austin Hays",
-     "team": "PHI",
+     "team": "SD",
      "pa": 255,
      "wpa": -1.328,
      "pli": 0.84,
@@ -21444,7 +21444,7 @@
     {
      "mlbam": 666163,
      "name": "Ben Rortvedt",
-     "team": "TB",
+     "team": "LAD",
      "pa": 329,
      "wpa": -1.393,
      "pli": 1.12,
@@ -21455,7 +21455,7 @@
     {
      "mlbam": 641584,
      "name": "Jake Fraley",
-     "team": "CIN",
+     "team": "TB",
      "pa": 382,
      "wpa": -1.399,
      "pli": 0.88,
@@ -21488,7 +21488,7 @@
     {
      "mlbam": 694388,
      "name": "Joey Loperfido",
-     "team": "TOR",
+     "team": "HOU",
      "pa": 262,
      "wpa": -1.43,
      "pli": 0.9,
@@ -21532,7 +21532,7 @@
     {
      "mlbam": 650559,
      "name": "Bryan De La Cruz",
-     "team": "PIT",
+     "team": "PHI",
      "pa": 623,
      "wpa": -1.474,
      "pli": 1.05,
@@ -21554,7 +21554,7 @@
     {
      "mlbam": 666134,
      "name": "Nolan Jones",
-     "team": "COL",
+     "team": "SEA",
      "pa": 297,
      "wpa": -1.495,
      "pli": 1.02,
@@ -21576,7 +21576,7 @@
     {
      "mlbam": 666160,
      "name": "Mickey Moniak",
-     "team": "LAA",
+     "team": "COL",
      "pa": 418,
      "wpa": -1.503,
      "pli": 1.0,
@@ -21587,7 +21587,7 @@
     {
      "mlbam": 670032,
      "name": "Nicky Lopez",
-     "team": "CWS",
+     "team": "TEX",
      "pa": 447,
      "wpa": -1.513,
      "pli": 0.99,
@@ -21609,7 +21609,7 @@
     {
      "mlbam": 676609,
      "name": "Jos\u00e9 Caballero",
-     "team": "TB",
+     "team": "NYY",
      "pa": 484,
      "wpa": -1.546,
      "pli": 1.11,
@@ -21620,7 +21620,7 @@
     {
      "mlbam": 643376,
      "name": "Danny Jansen",
-     "team": "BOS",
+     "team": "TEX",
      "pa": 324,
      "wpa": -1.574,
      "pli": 0.95,
@@ -21631,7 +21631,7 @@
     {
      "mlbam": 669289,
      "name": "Santiago Espinal",
-     "team": "CIN",
+     "team": "AZ",
      "pa": 393,
      "wpa": -1.631,
      "pli": 1.02,
@@ -21642,7 +21642,7 @@
     {
      "mlbam": 666182,
      "name": "Bo Bichette",
-     "team": "TOR",
+     "team": "NYM",
      "pa": 336,
      "wpa": -1.633,
      "pli": 0.97,
@@ -21664,7 +21664,7 @@
     {
      "mlbam": 660644,
      "name": "Vidal Bruj\u00e1n",
-     "team": "MIA",
+     "team": "NYM",
      "pa": 278,
      "wpa": -1.659,
      "pli": 1.05,
@@ -21708,7 +21708,7 @@
     {
      "mlbam": 666310,
      "name": "Bo Naylor",
-     "team": "CLE",
+     "team": "MIL",
      "pa": 392,
      "wpa": -1.711,
      "pli": 1.04,
@@ -21741,7 +21741,7 @@
     {
      "mlbam": 657077,
      "name": "Alex Verdugo",
-     "team": "NYY",
+     "team": "SD",
      "pa": 621,
      "wpa": -1.744,
      "pli": 0.96,
@@ -21774,7 +21774,7 @@
     {
      "mlbam": 664034,
      "name": "Ty France",
-     "team": "CIN",
+     "team": "SD",
      "pa": 536,
      "wpa": -1.77,
      "pli": 0.97,
@@ -21807,7 +21807,7 @@
     {
      "mlbam": 676801,
      "name": "Chas McCormick",
-     "team": "HOU",
+     "team": "CHC",
      "pa": 267,
      "wpa": -1.787,
      "pli": 0.96,
@@ -21840,7 +21840,7 @@
     {
      "mlbam": 672275,
      "name": "Patrick Bailey",
-     "team": "SF",
+     "team": "CLE",
      "pa": 448,
      "wpa": -1.854,
      "pli": 1.12,
@@ -21873,7 +21873,7 @@
     {
      "mlbam": 663368,
      "name": "Blake Perkins",
-     "team": "MIL",
+     "team": "CLE",
      "pa": 434,
      "wpa": -1.901,
      "pli": 1.09,
@@ -21884,7 +21884,7 @@
     {
      "mlbam": 642350,
      "name": "Jose Siri",
-     "team": "TB",
+     "team": "LAA",
      "pa": 449,
      "wpa": -1.923,
      "pli": 1.09,
@@ -21939,7 +21939,7 @@
     {
      "mlbam": 672279,
      "name": "Michael Siani",
-     "team": "STL",
+     "team": "DET",
      "pa": 334,
      "wpa": -1.976,
      "pli": 0.98,
@@ -21950,7 +21950,7 @@
     {
      "mlbam": 669222,
      "name": "Nick Senzel",
-     "team": "CWS",
+     "team": "LAD",
      "pa": 268,
      "wpa": -2.009,
      "pli": 0.91,
@@ -21972,7 +21972,7 @@
     {
      "mlbam": 663743,
      "name": "Nick Fortes",
-     "team": "MIA",
+     "team": "TB",
      "pa": 336,
      "wpa": -2.062,
      "pli": 1.01,
@@ -22038,7 +22038,7 @@
     {
      "mlbam": 663647,
      "name": "Ke'Bryan Hayes",
-     "team": "PIT",
+     "team": "CIN",
      "pa": 396,
      "wpa": -2.267,
      "pli": 1.03,
@@ -22049,7 +22049,7 @@
     {
      "mlbam": 680474,
      "name": "Max Schuemann",
-     "team": "ATH",
+     "team": "NYY",
      "pa": 461,
      "wpa": -2.32,
      "pli": 0.97,
@@ -22093,7 +22093,7 @@
     {
      "mlbam": 650391,
      "name": "Eloy Jim\u00e9nez",
-     "team": "BAL",
+     "team": "TOR",
      "pa": 349,
      "wpa": -2.544,
      "pli": 1.03,
@@ -22104,7 +22104,7 @@
     {
      "mlbam": 683734,
      "name": "Andrew Vaughn",
-     "team": "CWS",
+     "team": "MIL",
      "pa": 621,
      "wpa": -2.612,
      "pli": 1.08,
@@ -22126,7 +22126,7 @@
     {
      "mlbam": 665750,
      "name": "Leody Taveras",
-     "team": "TEX",
+     "team": "BAL",
      "pa": 529,
      "wpa": -2.694,
      "pli": 1.01,
@@ -22137,7 +22137,7 @@
     {
      "mlbam": 672820,
      "name": "Lenyn Sosa",
-     "team": "CWS",
+     "team": "TOR",
      "pa": 369,
      "wpa": -2.745,
      "pli": 1.06,
@@ -22203,7 +22203,7 @@
     {
      "mlbam": 666624,
      "name": "Christopher Morel",
-     "team": "TB",
+     "team": "NYM",
      "pa": 614,
      "wpa": -3.395,
      "pli": 1.09,
@@ -22236,7 +22236,7 @@
     {
      "mlbam": 606115,
      "name": "Orlando Arcia",
-     "team": "ATL",
+     "team": "MIN",
      "pa": 603,
      "wpa": -3.669,
      "pli": 0.94,
@@ -22249,7 +22249,7 @@
     {
      "mlbam": 669373,
      "name": "Tarik Skubal",
-     "team": "DET",
+     "team": "LAD",
      "starts": 31,
      "wpa": 4.883,
      "wpa_per_start": 0.158,
@@ -22370,7 +22370,7 @@
     {
      "mlbam": 669203,
      "name": "Corbin Burnes",
-     "team": "BAL",
+     "team": "AZ",
      "starts": 32,
      "wpa": 2.637,
      "wpa_per_start": 0.082,
@@ -22469,7 +22469,7 @@
     {
      "mlbam": 676979,
      "name": "Garrett Crochet",
-     "team": "CWS",
+     "team": "BOS",
      "starts": 31,
      "wpa": 2.2,
      "wpa_per_start": 0.071,
@@ -22513,7 +22513,7 @@
     {
      "mlbam": 608331,
      "name": "Max Fried",
-     "team": "ATL",
+     "team": "NYY",
      "starts": 29,
      "wpa": 2.038,
      "wpa_per_start": 0.07,
@@ -22524,7 +22524,7 @@
     {
      "mlbam": 656427,
      "name": "Jack Flaherty",
-     "team": "LAD",
+     "team": "DET",
      "starts": 28,
      "wpa": 2.037,
      "wpa_per_start": 0.073,
@@ -22535,7 +22535,7 @@
     {
      "mlbam": 656302,
      "name": "Dylan Cease",
-     "team": "SD",
+     "team": "TOR",
      "starts": 33,
      "wpa": 1.977,
      "wpa_per_start": 0.06,
@@ -22722,7 +22722,7 @@
     {
      "mlbam": 680570,
      "name": "Grayson Rodriguez",
-     "team": "BAL",
+     "team": "LAA",
      "starts": 20,
      "wpa": 1.523,
      "wpa_per_start": 0.076,
@@ -22733,7 +22733,7 @@
     {
      "mlbam": 656849,
      "name": "David Peterson",
-     "team": "NYM",
+     "team": "CHC",
      "starts": 21,
      "wpa": 1.5,
      "wpa_per_start": 0.071,
@@ -22799,7 +22799,7 @@
     {
      "mlbam": 642547,
      "name": "Freddy Peralta",
-     "team": "MIL",
+     "team": "TB",
      "starts": 32,
      "wpa": 1.387,
      "wpa_per_start": 0.043,
@@ -22854,7 +22854,7 @@
     {
      "mlbam": 682847,
      "name": "Luis Ortiz",
-     "team": "PIT",
+     "team": "CLE",
      "starts": 15,
      "wpa": 1.264,
      "wpa_per_start": 0.084,
@@ -22865,7 +22865,7 @@
     {
      "mlbam": 680573,
      "name": "Simeon Woods Richardson",
-     "team": "MIN",
+     "team": "TOR",
      "starts": 28,
      "wpa": 1.239,
      "wpa_per_start": 0.044,
@@ -22931,7 +22931,7 @@
     {
      "mlbam": 641793,
      "name": "Zack Littell",
-     "team": "TB",
+     "team": "AZ",
      "starts": 29,
      "wpa": 1.074,
      "wpa_per_start": 0.037,
@@ -22942,7 +22942,7 @@
     {
      "mlbam": 624133,
      "name": "Ranger Suarez",
-     "team": "PHI",
+     "team": "BOS",
      "starts": 27,
      "wpa": 1.073,
      "wpa_per_start": 0.04,
@@ -22964,7 +22964,7 @@
     {
      "mlbam": 669358,
      "name": "Shane Baz",
-     "team": "TB",
+     "team": "BAL",
      "starts": 14,
      "wpa": 1.05,
      "wpa_per_start": 0.075,
@@ -23074,7 +23074,7 @@
     {
      "mlbam": 668964,
      "name": "Tobias Myers",
-     "team": "MIL",
+     "team": "NYM",
      "starts": 25,
      "wpa": 0.895,
      "wpa_per_start": 0.036,
@@ -23118,7 +23118,7 @@
     {
      "mlbam": 677960,
      "name": "Ryan Weathers",
-     "team": "MIA",
+     "team": "NYY",
      "starts": 16,
      "wpa": 0.837,
      "wpa_per_start": 0.052,
@@ -23173,7 +23173,7 @@
     {
      "mlbam": 667755,
      "name": "Jos\u00e9 Soriano",
-     "team": "LAA",
+     "team": "TOR",
      "starts": 20,
      "wpa": 0.745,
      "wpa_per_start": 0.037,
@@ -23206,7 +23206,7 @@
     {
      "mlbam": 663903,
      "name": "Brady Singer",
-     "team": "KC",
+     "team": "CIN",
      "starts": 32,
      "wpa": 0.701,
      "wpa_per_start": 0.022,
@@ -23305,7 +23305,7 @@
     {
      "mlbam": 641482,
      "name": "Nestor Cortes",
-     "team": "NYY",
+     "team": "PHI",
      "starts": 30,
      "wpa": 0.535,
      "wpa_per_start": 0.018,
@@ -23316,7 +23316,7 @@
     {
      "mlbam": 676130,
      "name": "Jos\u00e9 Butt\u00f3",
-     "team": "NYM",
+     "team": "SF",
      "starts": 7,
      "wpa": 0.526,
      "wpa_per_start": 0.075,
@@ -23338,7 +23338,7 @@
     {
      "mlbam": 669022,
      "name": "MacKenzie Gore",
-     "team": "WSH",
+     "team": "TEX",
      "starts": 32,
      "wpa": 0.509,
      "wpa_per_start": 0.016,
@@ -23371,7 +23371,7 @@
     {
      "mlbam": 681867,
      "name": "Cooper Criswell",
-     "team": "BOS",
+     "team": "SEA",
      "starts": 18,
      "wpa": 0.476,
      "wpa_per_start": 0.026,
@@ -23382,7 +23382,7 @@
     {
      "mlbam": 670174,
      "name": "Josh Winckowski",
-     "team": "BOS",
+     "team": "TOR",
      "starts": 6,
      "wpa": 0.469,
      "wpa_per_start": 0.078,
@@ -23393,7 +23393,7 @@
     {
      "mlbam": 676664,
      "name": "JP Sears",
-     "team": "ATH",
+     "team": "SD",
      "starts": 32,
      "wpa": 0.463,
      "wpa_per_start": 0.014,
@@ -23415,7 +23415,7 @@
     {
      "mlbam": 622663,
      "name": "Luis Severino",
-     "team": "NYM",
+     "team": "ATH",
      "starts": 31,
      "wpa": 0.414,
      "wpa_per_start": 0.013,
@@ -23426,7 +23426,7 @@
     {
      "mlbam": 663362,
      "name": "Matt Waldron",
-     "team": "SD",
+     "team": "TOR",
      "starts": 26,
      "wpa": 0.41,
      "wpa_per_start": 0.016,
@@ -23448,7 +23448,7 @@
     {
      "mlbam": 663855,
      "name": "Jordan Hicks",
-     "team": "SF",
+     "team": "CWS",
      "starts": 20,
      "wpa": 0.367,
      "wpa_per_start": 0.018,
@@ -23459,7 +23459,7 @@
     {
      "mlbam": 641302,
      "name": "Tyler Alexander",
-     "team": "TB",
+     "team": "TEX",
      "starts": 10,
      "wpa": 0.354,
      "wpa_per_start": 0.035,
@@ -23503,7 +23503,7 @@
     {
      "mlbam": 663559,
      "name": "Bailey Falter",
-     "team": "PIT",
+     "team": "ATL",
      "starts": 28,
      "wpa": 0.32,
      "wpa_per_start": 0.011,
@@ -23536,7 +23536,7 @@
     {
      "mlbam": 669062,
      "name": "Erik Miller",
-     "team": "SF",
+     "team": "BOS",
      "starts": 10,
      "wpa": 0.301,
      "wpa_per_start": 0.03,
@@ -23569,7 +23569,7 @@
     {
      "mlbam": 656412,
      "name": "Alex Faedo",
-     "team": "DET",
+     "team": "LAA",
      "starts": 6,
      "wpa": 0.272,
      "wpa_per_start": 0.045,
@@ -23591,7 +23591,7 @@
     {
      "mlbam": 678368,
      "name": "Valente Bellozo",
-     "team": "MIA",
+     "team": "COL",
      "starts": 13,
      "wpa": 0.23,
      "wpa_per_start": 0.018,
@@ -23613,7 +23613,7 @@
     {
      "mlbam": 681293,
      "name": "Spencer Arrighetti",
-     "team": "HOU",
+     "team": "TOR",
      "starts": 28,
      "wpa": 0.169,
      "wpa_per_start": 0.006,
@@ -23690,7 +23690,7 @@
     {
      "mlbam": 666200,
      "name": "Jes\u00fas Luzardo",
-     "team": "MIA",
+     "team": "PHI",
      "starts": 12,
      "wpa": 0.08,
      "wpa_per_start": 0.007,
@@ -23701,7 +23701,7 @@
     {
      "mlbam": 690986,
      "name": "Kyle Harrison",
-     "team": "SF",
+     "team": "MIL",
      "starts": 24,
      "wpa": 0.08,
      "wpa_per_start": 0.003,
@@ -23723,7 +23723,7 @@
     {
      "mlbam": 608344,
      "name": "Cole Irvin",
-     "team": "MIN",
+     "team": "LAD",
      "starts": 16,
      "wpa": 0.072,
      "wpa_per_start": 0.005,
@@ -23756,7 +23756,7 @@
     {
      "mlbam": 666159,
      "name": "Matt Manning",
-     "team": "DET",
+     "team": "PHI",
      "starts": 5,
      "wpa": 0.024,
      "wpa_per_start": 0.005,
@@ -23789,7 +23789,7 @@
     {
      "mlbam": 641540,
      "name": "Dane Dunning",
-     "team": "TEX",
+     "team": "SEA",
      "starts": 15,
      "wpa": -0.003,
      "wpa_per_start": -0.0,
@@ -23811,7 +23811,7 @@
     {
      "mlbam": 671737,
      "name": "Taj Bradley",
-     "team": "TB",
+     "team": "MIN",
      "starts": 25,
      "wpa": -0.063,
      "wpa_per_start": -0.003,
@@ -23822,7 +23822,7 @@
     {
      "mlbam": 694363,
      "name": "Jared Shuster",
-     "team": "CWS",
+     "team": "STL",
      "starts": 5,
      "wpa": -0.069,
      "wpa_per_start": -0.014,
@@ -23833,7 +23833,7 @@
     {
      "mlbam": 682990,
      "name": "Quinn Priester",
-     "team": "BOS",
+     "team": "MIL",
      "starts": 7,
      "wpa": -0.087,
      "wpa_per_start": -0.012,
@@ -23910,7 +23910,7 @@
     {
      "mlbam": 663978,
      "name": "Chris Paddack",
-     "team": "MIN",
+     "team": "TEX",
      "starts": 17,
      "wpa": -0.116,
      "wpa_per_start": -0.007,
@@ -23954,7 +23954,7 @@
     {
      "mlbam": 675540,
      "name": "Xzavion Curry",
-     "team": "MIA",
+     "team": "NYM",
      "starts": 5,
      "wpa": -0.163,
      "wpa_per_start": -0.033,
@@ -24009,7 +24009,7 @@
     {
      "mlbam": 666129,
      "name": "Braxton Garrett",
-     "team": "MIA",
+     "team": "CHC",
      "starts": 7,
      "wpa": -0.223,
      "wpa_per_start": -0.032,
@@ -24130,7 +24130,7 @@
     {
      "mlbam": 669713,
      "name": "Hayden Wesneski",
-     "team": "CHC",
+     "team": "HOU",
      "starts": 7,
      "wpa": -0.319,
      "wpa_per_start": -0.046,
@@ -24152,7 +24152,7 @@
     {
      "mlbam": 666201,
      "name": "Alek Manoah",
-     "team": "TOR",
+     "team": "LAA",
      "starts": 5,
      "wpa": -0.33,
      "wpa_per_start": -0.066,
@@ -24163,7 +24163,7 @@
     {
      "mlbam": 663554,
      "name": "Casey Mize",
-     "team": "DET",
+     "team": "SD",
      "starts": 20,
      "wpa": -0.354,
      "wpa_per_start": -0.018,
@@ -24196,7 +24196,7 @@
     {
      "mlbam": 663474,
      "name": "Triston McKenzie",
-     "team": "CLE",
+     "team": "SD",
      "starts": 16,
      "wpa": -0.396,
      "wpa_per_start": -0.025,
@@ -24218,7 +24218,7 @@
     {
      "mlbam": 667725,
      "name": "Kyle Tyler",
-     "team": "MIA",
+     "team": "CWS",
      "starts": 7,
      "wpa": -0.433,
      "wpa_per_start": -0.062,
@@ -24251,7 +24251,7 @@
     {
      "mlbam": 671212,
      "name": "Joe Boyle",
-     "team": "ATH",
+     "team": "TB",
      "starts": 10,
      "wpa": -0.462,
      "wpa_per_start": -0.046,
@@ -24262,7 +24262,7 @@
     {
      "mlbam": 670766,
      "name": "Darren McCaughan",
-     "team": "MIA",
+     "team": "CIN",
      "starts": 5,
      "wpa": -0.464,
      "wpa_per_start": -0.093,
@@ -24284,7 +24284,7 @@
     {
      "mlbam": 650644,
      "name": "Aaron Civale",
-     "team": "MIL",
+     "team": "CHC",
      "starts": 31,
      "wpa": -0.472,
      "wpa_per_start": -0.015,
@@ -24295,7 +24295,7 @@
     {
      "mlbam": 696131,
      "name": "Mason Black",
-     "team": "SF",
+     "team": "KC",
      "starts": 8,
      "wpa": -0.501,
      "wpa_per_start": -0.063,
@@ -24328,7 +24328,7 @@
     {
      "mlbam": 665152,
      "name": "Dean Kremer",
-     "team": "BAL",
+     "team": "MIN",
      "starts": 24,
      "wpa": -0.55,
      "wpa_per_start": -0.023,
@@ -24339,7 +24339,7 @@
     {
      "mlbam": 687765,
      "name": "Mitch Spence",
-     "team": "ATH",
+     "team": "KC",
      "starts": 24,
      "wpa": -0.558,
      "wpa_per_start": -0.023,
@@ -24350,7 +24350,7 @@
     {
      "mlbam": 687134,
      "name": "Bradley Blalock",
-     "team": "COL",
+     "team": "MIA",
      "starts": 6,
      "wpa": -0.569,
      "wpa_per_start": -0.095,
@@ -24361,7 +24361,7 @@
     {
      "mlbam": 669721,
      "name": "Davis Daniel",
-     "team": "LAA",
+     "team": "CIN",
      "starts": 6,
      "wpa": -0.581,
      "wpa_per_start": -0.097,
@@ -24383,7 +24383,7 @@
     {
      "mlbam": 615698,
      "name": "Cal Quantrill",
-     "team": "COL",
+     "team": "TEX",
      "starts": 29,
      "wpa": -0.609,
      "wpa_per_start": -0.021,
@@ -24394,7 +24394,7 @@
     {
      "mlbam": 641585,
      "name": "J.P. France",
-     "team": "HOU",
+     "team": "SD",
      "starts": 5,
      "wpa": -0.645,
      "wpa_per_start": -0.129,
@@ -24482,7 +24482,7 @@
     {
      "mlbam": 663969,
      "name": "Tyler Phillips",
-     "team": "PHI",
+     "team": "MIA",
      "starts": 7,
      "wpa": -0.756,
      "wpa_per_start": -0.108,
@@ -24493,7 +24493,7 @@
     {
      "mlbam": 665795,
      "name": "Edward Cabrera",
-     "team": "MIA",
+     "team": "CHC",
      "starts": 20,
      "wpa": -0.764,
      "wpa_per_start": -0.038,
@@ -24504,7 +24504,7 @@
     {
      "mlbam": 663776,
      "name": "Patrick Sandoval",
-     "team": "LAA",
+     "team": "BOS",
      "starts": 16,
      "wpa": -0.813,
      "wpa_per_start": -0.051,
@@ -24515,7 +24515,7 @@
     {
      "mlbam": 677944,
      "name": "Slade Cecconi",
-     "team": "AZ",
+     "team": "CLE",
      "starts": 13,
      "wpa": -0.831,
      "wpa_per_start": -0.064,
@@ -24526,7 +24526,7 @@
     {
      "mlbam": 686973,
      "name": "Louis Varland",
-     "team": "MIN",
+     "team": "TOR",
      "starts": 7,
      "wpa": -0.86,
      "wpa_per_start": -0.123,
@@ -24559,7 +24559,7 @@
     {
      "mlbam": 647336,
      "name": "Michael Soroka",
-     "team": "CWS",
+     "team": "AZ",
      "starts": 9,
      "wpa": -0.915,
      "wpa_per_start": -0.102,
@@ -24592,7 +24592,7 @@
     {
      "mlbam": 800049,
      "name": "Adam Mazur",
-     "team": "SD",
+     "team": "MIA",
      "starts": 8,
      "wpa": -0.972,
      "wpa_per_start": -0.121,
@@ -24614,7 +24614,7 @@
     {
      "mlbam": 680897,
      "name": "Nick Nastrini",
-     "team": "CWS",
+     "team": "LAD",
      "starts": 8,
      "wpa": -0.992,
      "wpa_per_start": -0.124,
@@ -24636,7 +24636,7 @@
     {
      "mlbam": 663765,
      "name": "Jake Woodford",
-     "team": "PIT",
+     "team": "TB",
      "starts": 7,
      "wpa": -1.034,
      "wpa_per_start": -0.148,
@@ -24691,7 +24691,7 @@
     {
      "mlbam": 623167,
      "name": "Chris Flexen",
-     "team": "CWS",
+     "team": "CHC",
      "starts": 31,
      "wpa": -1.217,
      "wpa_per_start": -0.039,
@@ -24801,7 +24801,7 @@
     {
      "mlbam": 621111,
      "name": "Walker Buehler",
-     "team": "LAD",
+     "team": "SD",
      "starts": 16,
      "wpa": -1.619,
      "wpa_per_start": -0.101,
@@ -24845,7 +24845,7 @@
     {
      "mlbam": 656288,
      "name": "Griffin Canning",
-     "team": "LAA",
+     "team": "SD",
      "starts": 31,
      "wpa": -1.813,
      "wpa_per_start": -0.058,
@@ -24889,7 +24889,7 @@
     {
      "mlbam": 641712,
      "name": "Dakota Hudson",
-     "team": "COL",
+     "team": "LAA",
      "starts": 18,
      "wpa": -2.279,
      "wpa_per_start": -0.127,
@@ -24900,7 +24900,7 @@
     {
      "mlbam": 682610,
      "name": "Roddery Mu\u00f1oz",
-     "team": "MIA",
+     "team": "HOU",
      "starts": 17,
      "wpa": -2.409,
      "wpa_per_start": -0.142,
@@ -24966,7 +24966,7 @@
     {
      "mlbam": 624413,
      "name": "Pete Alonso",
-     "team": "NYM",
+     "team": "BAL",
      "pa": 709,
      "wpa": 3.445,
      "pli": 1.06,
@@ -25010,7 +25010,7 @@
     {
      "mlbam": 666182,
      "name": "Bo Bichette",
-     "team": "TOR",
+     "team": "NYM",
      "pa": 630,
      "wpa": 3.012,
      "pli": 1.04,
@@ -25186,7 +25186,7 @@
     {
      "mlbam": 663656,
      "name": "Kyle Tucker",
-     "team": "CHC",
+     "team": "LAD",
      "pa": 597,
      "wpa": 1.869,
      "pli": 0.95,
@@ -25274,7 +25274,7 @@
     {
      "mlbam": 666176,
      "name": "Jo Adell",
-     "team": "LAA",
+     "team": "CLE",
      "pa": 573,
      "wpa": 1.622,
      "pli": 1.09,
@@ -25439,7 +25439,7 @@
     {
      "mlbam": 686555,
      "name": "Isaac Collins",
-     "team": "MIL",
+     "team": "KC",
      "pa": 443,
      "wpa": 1.148,
      "pli": 1.05,
@@ -25527,7 +25527,7 @@
     {
      "mlbam": 664056,
      "name": "Harrison Bader",
-     "team": "PHI",
+     "team": "SF",
      "pa": 503,
      "wpa": 0.967,
      "pli": 0.98,
@@ -25626,7 +25626,7 @@
     {
      "mlbam": 702332,
      "name": "Caleb Durbin",
-     "team": "MIL",
+     "team": "BOS",
      "pa": 508,
      "wpa": 0.773,
      "pli": 1.07,
@@ -25758,7 +25758,7 @@
     {
      "mlbam": 609280,
      "name": "Miguel Andujar",
-     "team": "CIN",
+     "team": "SD",
      "pa": 341,
      "wpa": 0.504,
      "pli": 1.04,
@@ -25791,7 +25791,7 @@
     {
      "mlbam": 664040,
      "name": "Brandon Lowe",
-     "team": "TB",
+     "team": "PIT",
      "pa": 556,
      "wpa": 0.478,
      "pli": 1.03,
@@ -25868,7 +25868,7 @@
     {
      "mlbam": 666310,
      "name": "Bo Naylor",
-     "team": "CLE",
+     "team": "MIL",
      "pa": 414,
      "wpa": 0.37,
      "pli": 1.08,
@@ -25945,7 +25945,7 @@
     {
      "mlbam": 649966,
      "name": "Luis Ur\u00edas",
-     "team": "ATH",
+     "team": "TOR",
      "pa": 331,
      "wpa": 0.263,
      "pli": 0.96,
@@ -25978,7 +25978,7 @@
     {
      "mlbam": 662139,
      "name": "Daulton Varsho",
-     "team": "TOR",
+     "team": "HOU",
      "pa": 271,
      "wpa": 0.214,
      "pli": 1.07,
@@ -26022,7 +26022,7 @@
     {
      "mlbam": 680977,
      "name": "Brendan Donovan",
-     "team": "STL",
+     "team": "SEA",
      "pa": 518,
      "wpa": 0.141,
      "pli": 0.99,
@@ -26231,7 +26231,7 @@
     {
      "mlbam": 677942,
      "name": "Blaze Alexander",
-     "team": "AZ",
+     "team": "BAL",
      "pa": 266,
      "wpa": -0.047,
      "pli": 1.01,
@@ -26374,7 +26374,7 @@
     {
      "mlbam": 642133,
      "name": "Rowdy Tellez",
-     "team": "TEX",
+     "team": "ATL",
      "pa": 313,
      "wpa": -0.23,
      "pli": 1.13,
@@ -26396,7 +26396,7 @@
     {
      "mlbam": 663993,
      "name": "Nathaniel Lowe",
-     "team": "BOS",
+     "team": "CLE",
      "pa": 612,
      "wpa": -0.259,
      "pli": 1.04,
@@ -26440,7 +26440,7 @@
     {
      "mlbam": 608324,
      "name": "Alex Bregman",
-     "team": "BOS",
+     "team": "CHC",
      "pa": 496,
      "wpa": -0.297,
      "pli": 1.1,
@@ -26539,7 +26539,7 @@
     {
      "mlbam": 643376,
      "name": "Danny Jansen",
-     "team": "MIL",
+     "team": "TEX",
      "pa": 340,
      "wpa": -0.374,
      "pli": 1.05,
@@ -26605,7 +26605,7 @@
     {
      "mlbam": 664034,
      "name": "Ty France",
-     "team": "TOR",
+     "team": "SD",
      "pa": 492,
      "wpa": -0.406,
      "pli": 0.94,
@@ -26627,7 +26627,7 @@
     {
      "mlbam": 689414,
      "name": "Liam Hicks",
-     "team": "MIA",
+     "team": "TB",
      "pa": 392,
      "wpa": -0.419,
      "pli": 1.0,
@@ -26715,7 +26715,7 @@
     {
      "mlbam": 671218,
      "name": "Heliot Ramos",
-     "team": "SF",
+     "team": "NYY",
      "pa": 696,
      "wpa": -0.513,
      "pli": 1.06,
@@ -26748,7 +26748,7 @@
     {
      "mlbam": 666158,
      "name": "Gavin Lux",
-     "team": "CIN",
+     "team": "TB",
      "pa": 505,
      "wpa": -0.545,
      "pli": 1.03,
@@ -26792,7 +26792,7 @@
     {
      "mlbam": 672356,
      "name": "Gabriel Arias",
-     "team": "CLE",
+     "team": "CHC",
      "pa": 472,
      "wpa": -0.583,
      "pli": 0.97,
@@ -26825,7 +26825,7 @@
     {
      "mlbam": 650333,
      "name": "Luis Arraez",
-     "team": "SD",
+     "team": "PHI",
      "pa": 677,
      "wpa": -0.624,
      "pli": 1.05,
@@ -26913,7 +26913,7 @@
     {
      "mlbam": 671277,
      "name": "Luis Garc\u00eda Jr.",
-     "team": "WSH",
+     "team": "NYY",
      "pa": 529,
      "wpa": -0.695,
      "pli": 0.96,
@@ -26968,7 +26968,7 @@
     {
      "mlbam": 663698,
      "name": "Joey Bart",
-     "team": "PIT",
+     "team": "CWS",
      "pa": 334,
      "wpa": -0.751,
      "pli": 1.13,
@@ -26979,7 +26979,7 @@
     {
      "mlbam": 665966,
      "name": "Carlos Narv\u00e1ez",
-     "team": "BOS",
+     "team": "BAL",
      "pa": 447,
      "wpa": -0.768,
      "pli": 0.99,
@@ -27001,7 +27001,7 @@
     {
      "mlbam": 660821,
      "name": "Jes\u00fas S\u00e1nchez",
-     "team": "HOU",
+     "team": "TOR",
      "pa": 499,
      "wpa": -0.783,
      "pli": 0.99,
@@ -27056,7 +27056,7 @@
     {
      "mlbam": 656775,
      "name": "Cedric Mullins",
-     "team": "NYM",
+     "team": "TB",
      "pa": 498,
      "wpa": -0.815,
      "pli": 0.94,
@@ -27122,7 +27122,7 @@
     {
      "mlbam": 647351,
      "name": "Abraham Toro",
-     "team": "BOS",
+     "team": "KC",
      "pa": 285,
      "wpa": -0.913,
      "pli": 0.96,
@@ -27232,7 +27232,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "CWS",
+     "team": "NYM",
      "pa": 431,
      "wpa": -1.035,
      "pli": 1.08,
@@ -27276,7 +27276,7 @@
     {
      "mlbam": 621438,
      "name": "Tyrone Taylor",
-     "team": "NYM",
+     "team": "CHC",
      "pa": 341,
      "wpa": -1.117,
      "pli": 0.9,
@@ -27287,7 +27287,7 @@
     {
      "mlbam": 669720,
      "name": "Austin Hays",
-     "team": "CIN",
+     "team": "SD",
      "pa": 417,
      "wpa": -1.117,
      "pli": 1.07,
@@ -27320,7 +27320,7 @@
     {
      "mlbam": 668939,
      "name": "Adley Rutschman",
-     "team": "BAL",
+     "team": "BOS",
      "pa": 367,
      "wpa": -1.14,
      "pli": 0.94,
@@ -27397,7 +27397,7 @@
     {
      "mlbam": 663968,
      "name": "Jake Mangum",
-     "team": "TB",
+     "team": "PIT",
      "pa": 429,
      "wpa": -1.179,
      "pli": 0.94,
@@ -27408,7 +27408,7 @@
     {
      "mlbam": 643396,
      "name": "Isiah Kiner-Falefa",
-     "team": "TOR",
+     "team": "BOS",
      "pa": 460,
      "wpa": -1.181,
      "pli": 1.08,
@@ -27430,7 +27430,7 @@
     {
      "mlbam": 681393,
      "name": "Connor Norby",
-     "team": "MIA",
+     "team": "COL",
      "pa": 337,
      "wpa": -1.237,
      "pli": 1.02,
@@ -27485,7 +27485,7 @@
     {
      "mlbam": 641680,
      "name": "Jonah Heim",
-     "team": "TEX",
+     "team": "ATH",
      "pa": 435,
      "wpa": -1.327,
      "pli": 1.01,
@@ -27518,7 +27518,7 @@
     {
      "mlbam": 602104,
      "name": "Ram\u00f3n Ur\u00edas",
-     "team": "HOU",
+     "team": "STL",
      "pa": 392,
      "wpa": -1.357,
      "pli": 0.97,
@@ -27551,7 +27551,7 @@
     {
      "mlbam": 678554,
      "name": "Curtis Mead",
-     "team": "CWS",
+     "team": "BOS",
      "pa": 267,
      "wpa": -1.38,
      "pli": 1.04,
@@ -27628,7 +27628,7 @@
     {
      "mlbam": 810938,
      "name": "Ben Williamson",
-     "team": "SEA",
+     "team": "TB",
      "pa": 295,
      "wpa": -1.511,
      "pli": 0.98,
@@ -27694,7 +27694,7 @@
     {
      "mlbam": 672275,
      "name": "Patrick Bailey",
-     "team": "SF",
+     "team": "CLE",
      "pa": 453,
      "wpa": -1.587,
      "pli": 1.14,
@@ -27705,7 +27705,7 @@
     {
      "mlbam": 666624,
      "name": "Christopher Morel",
-     "team": "TB",
+     "team": "NYM",
      "pa": 306,
      "wpa": -1.623,
      "pli": 1.09,
@@ -27760,7 +27760,7 @@
     {
      "mlbam": 686668,
      "name": "Brenton Doyle",
-     "team": "COL",
+     "team": "CWS",
      "pa": 540,
      "wpa": -1.699,
      "pli": 1.01,
@@ -27771,7 +27771,7 @@
     {
      "mlbam": 666139,
      "name": "Josh Lowe",
-     "team": "TB",
+     "team": "LAA",
      "pa": 436,
      "wpa": -1.699,
      "pli": 0.99,
@@ -27815,7 +27815,7 @@
     {
      "mlbam": 669911,
      "name": "Michael Toglia",
-     "team": "COL",
+     "team": "CIN",
      "pa": 339,
      "wpa": -1.731,
      "pli": 1.07,
@@ -27859,7 +27859,7 @@
     {
      "mlbam": 667472,
      "name": "Dane Myers",
-     "team": "MIA",
+     "team": "CIN",
      "pa": 335,
      "wpa": -1.8,
      "pli": 1.07,
@@ -27903,7 +27903,7 @@
     {
      "mlbam": 663457,
      "name": "Lars Nootbaar",
-     "team": "STL",
+     "team": "AZ",
      "pa": 583,
      "wpa": -1.858,
      "pli": 1.06,
@@ -27936,7 +27936,7 @@
     {
      "mlbam": 666134,
      "name": "Nolan Jones",
-     "team": "CLE",
+     "team": "SEA",
      "pa": 407,
      "wpa": -1.941,
      "pli": 1.04,
@@ -28013,7 +28013,7 @@
     {
      "mlbam": 677950,
      "name": "Alek Thomas",
-     "team": "AZ",
+     "team": "LAD",
      "pa": 470,
      "wpa": -2.031,
      "pli": 0.98,
@@ -28046,7 +28046,7 @@
     {
      "mlbam": 643289,
      "name": "Mauricio Dub\u00f3n",
-     "team": "HOU",
+     "team": "ATL",
      "pa": 398,
      "wpa": -2.071,
      "pli": 0.96,
@@ -28068,7 +28068,7 @@
     {
      "mlbam": 650489,
      "name": "Willi Castro",
-     "team": "CHC",
+     "team": "COL",
      "pa": 454,
      "wpa": -2.233,
      "pli": 0.98,
@@ -28112,7 +28112,7 @@
     {
      "mlbam": 642201,
      "name": "Eli White",
-     "team": "ATL",
+     "team": "BOS",
      "pa": 272,
      "wpa": -2.34,
      "pli": 1.13,
@@ -28134,7 +28134,7 @@
     {
      "mlbam": 650859,
      "name": "Luis Rengifo",
-     "team": "LAA",
+     "team": "SD",
      "pa": 543,
      "wpa": -2.381,
      "pli": 1.08,
@@ -28178,7 +28178,7 @@
     {
      "mlbam": 668709,
      "name": "JJ Bleday",
-     "team": "ATH",
+     "team": "CIN",
      "pa": 344,
      "wpa": -2.634,
      "pli": 0.96,
@@ -28211,7 +28211,7 @@
     {
      "mlbam": 672820,
      "name": "Lenyn Sosa",
-     "team": "CWS",
+     "team": "TOR",
      "pa": 544,
      "wpa": -2.715,
      "pli": 1.03,
@@ -28222,7 +28222,7 @@
     {
      "mlbam": 669397,
      "name": "Nick Allen",
-     "team": "ATL",
+     "team": "HOU",
      "pa": 416,
      "wpa": -2.774,
      "pli": 0.92,
@@ -28244,7 +28244,7 @@
     {
      "mlbam": 669289,
      "name": "Santiago Espinal",
-     "team": "CIN",
+     "team": "AZ",
      "pa": 330,
      "wpa": -2.792,
      "pli": 0.96,
@@ -28255,7 +28255,7 @@
     {
      "mlbam": 676572,
      "name": "Eric Wagaman",
-     "team": "MIA",
+     "team": "NYM",
      "pa": 515,
      "wpa": -2.854,
      "pli": 1.03,
@@ -28277,7 +28277,7 @@
     {
      "mlbam": 669701,
      "name": "Josh Smith",
-     "team": "TEX",
+     "team": "TOR",
      "pa": 565,
      "wpa": -3.074,
      "pli": 0.99,
@@ -28299,7 +28299,7 @@
     {
      "mlbam": 681351,
      "name": "Logan O'Hoppe",
-     "team": "LAA",
+     "team": "TEX",
      "pa": 454,
      "wpa": -3.235,
      "pli": 1.1,
@@ -28378,7 +28378,7 @@
     {
      "mlbam": 642547,
      "name": "Freddy Peralta",
-     "team": "MIL",
+     "team": "TB",
      "starts": 33,
      "wpa": 4.148,
      "wpa_per_start": 0.126,
@@ -28389,7 +28389,7 @@
     {
      "mlbam": 669373,
      "name": "Tarik Skubal",
-     "team": "DET",
+     "team": "LAD",
      "starts": 31,
      "wpa": 4.074,
      "wpa_per_start": 0.131,
@@ -28543,7 +28543,7 @@
     {
      "mlbam": 641816,
      "name": "Tyler Mahle",
-     "team": "TEX",
+     "team": "ATL",
      "starts": 16,
      "wpa": 2.381,
      "wpa_per_start": 0.149,
@@ -28576,7 +28576,7 @@
     {
      "mlbam": 624133,
      "name": "Ranger Suarez",
-     "team": "PHI",
+     "team": "BOS",
      "starts": 26,
      "wpa": 2.285,
      "wpa_per_start": 0.088,
@@ -28664,7 +28664,7 @@
     {
      "mlbam": 665795,
      "name": "Edward Cabrera",
-     "team": "MIA",
+     "team": "CHC",
      "starts": 26,
      "wpa": 1.926,
      "wpa_per_start": 0.074,
@@ -28686,7 +28686,7 @@
     {
      "mlbam": 663460,
      "name": "Kris Bubic",
-     "team": "KC",
+     "team": "LAD",
      "starts": 20,
      "wpa": 1.737,
      "wpa_per_start": 0.087,
@@ -28774,7 +28774,7 @@
     {
      "mlbam": 608337,
      "name": "Lucas Giolito",
-     "team": "BOS",
+     "team": "SD",
      "starts": 26,
      "wpa": 1.488,
      "wpa_per_start": 0.057,
@@ -29071,7 +29071,7 @@
     {
      "mlbam": 669022,
      "name": "MacKenzie Gore",
-     "team": "WSH",
+     "team": "TEX",
      "starts": 30,
      "wpa": 0.861,
      "wpa_per_start": 0.029,
@@ -29082,7 +29082,7 @@
     {
      "mlbam": 681347,
      "name": "Mike Burrows",
-     "team": "PIT",
+     "team": "HOU",
      "starts": 19,
      "wpa": 0.853,
      "wpa_per_start": 0.045,
@@ -29170,7 +29170,7 @@
     {
      "mlbam": 656288,
      "name": "Griffin Canning",
-     "team": "NYM",
+     "team": "SD",
      "starts": 16,
      "wpa": 0.754,
      "wpa_per_start": 0.047,
@@ -29236,7 +29236,7 @@
     {
      "mlbam": 665152,
      "name": "Dean Kremer",
-     "team": "BAL",
+     "team": "MIN",
      "starts": 29,
      "wpa": 0.67,
      "wpa_per_start": 0.023,
@@ -29280,7 +29280,7 @@
     {
      "mlbam": 670912,
      "name": "Johan Oviedo",
-     "team": "PIT",
+     "team": "BOS",
      "starts": 9,
      "wpa": 0.548,
      "wpa_per_start": 0.061,
@@ -29335,7 +29335,7 @@
     {
      "mlbam": 663559,
      "name": "Bailey Falter",
-     "team": "KC",
+     "team": "ATL",
      "starts": 24,
      "wpa": 0.488,
      "wpa_per_start": 0.02,
@@ -29368,7 +29368,7 @@
     {
      "mlbam": 667755,
      "name": "Jos\u00e9 Soriano",
-     "team": "LAA",
+     "team": "TOR",
      "starts": 31,
      "wpa": 0.476,
      "wpa_per_start": 0.015,
@@ -29390,7 +29390,7 @@
     {
      "mlbam": 641793,
      "name": "Zack Littell",
-     "team": "CIN",
+     "team": "AZ",
      "starts": 32,
      "wpa": 0.447,
      "wpa_per_start": 0.014,
@@ -29412,7 +29412,7 @@
     {
      "mlbam": 656849,
      "name": "David Peterson",
-     "team": "NYM",
+     "team": "CHC",
      "starts": 30,
      "wpa": 0.411,
      "wpa_per_start": 0.014,
@@ -29500,7 +29500,7 @@
     {
      "mlbam": 663554,
      "name": "Casey Mize",
-     "team": "DET",
+     "team": "SD",
      "starts": 28,
      "wpa": 0.267,
      "wpa_per_start": 0.01,
@@ -29522,7 +29522,7 @@
     {
      "mlbam": 680573,
      "name": "Simeon Woods Richardson",
-     "team": "MIN",
+     "team": "TOR",
      "starts": 22,
      "wpa": 0.238,
      "wpa_per_start": 0.011,
@@ -29566,7 +29566,7 @@
     {
      "mlbam": 677960,
      "name": "Ryan Weathers",
-     "team": "MIA",
+     "team": "NYY",
      "starts": 8,
      "wpa": 0.211,
      "wpa_per_start": 0.026,
@@ -29588,7 +29588,7 @@
     {
      "mlbam": 672782,
      "name": "Yoendrys G\u00f3mez",
-     "team": "CWS",
+     "team": "MIN",
      "starts": 9,
      "wpa": 0.205,
      "wpa_per_start": 0.023,
@@ -29665,7 +29665,7 @@
     {
      "mlbam": 647336,
      "name": "Michael Soroka",
-     "team": "CHC",
+     "team": "AZ",
      "starts": 17,
      "wpa": 0.14,
      "wpa_per_start": 0.008,
@@ -29676,7 +29676,7 @@
     {
      "mlbam": 641778,
      "name": "Eric Lauer",
-     "team": "TOR",
+     "team": "LAD",
      "starts": 15,
      "wpa": 0.13,
      "wpa_per_start": 0.009,
@@ -29709,7 +29709,7 @@
     {
      "mlbam": 622503,
      "name": "Nabil Crismatt",
-     "team": "AZ",
+     "team": "TEX",
      "starts": 5,
      "wpa": 0.068,
      "wpa_per_start": 0.014,
@@ -29731,7 +29731,7 @@
     {
      "mlbam": 678368,
      "name": "Valente Bellozo",
-     "team": "MIA",
+     "team": "COL",
      "starts": 6,
      "wpa": 0.042,
      "wpa_per_start": 0.007,
@@ -29764,7 +29764,7 @@
     {
      "mlbam": 690928,
      "name": "Hunter Dobbins",
-     "team": "BOS",
+     "team": "STL",
      "starts": 11,
      "wpa": -0.002,
      "wpa_per_start": -0.0,
@@ -29852,7 +29852,7 @@
     {
      "mlbam": 669358,
      "name": "Shane Baz",
-     "team": "TB",
+     "team": "BAL",
      "starts": 31,
      "wpa": -0.086,
      "wpa_per_start": -0.003,
@@ -29863,7 +29863,7 @@
     {
      "mlbam": 641302,
      "name": "Tyler Alexander",
-     "team": "CWS",
+     "team": "TEX",
      "starts": 5,
      "wpa": -0.092,
      "wpa_per_start": -0.018,
@@ -29918,7 +29918,7 @@
     {
      "mlbam": 690986,
      "name": "Kyle Harrison",
-     "team": "BOS",
+     "team": "MIL",
      "starts": 6,
      "wpa": -0.155,
      "wpa_per_start": -0.026,
@@ -29951,7 +29951,7 @@
     {
      "mlbam": 681293,
      "name": "Spencer Arrighetti",
-     "team": "HOU",
+     "team": "TOR",
      "starts": 7,
      "wpa": -0.183,
      "wpa_per_start": -0.026,
@@ -29973,7 +29973,7 @@
     {
      "mlbam": 690916,
      "name": "Richard Fitts",
-     "team": "BOS",
+     "team": "STL",
      "starts": 10,
      "wpa": -0.188,
      "wpa_per_start": -0.019,
@@ -30039,7 +30039,7 @@
     {
      "mlbam": 621111,
      "name": "Walker Buehler",
-     "team": "PHI",
+     "team": "SD",
      "starts": 24,
      "wpa": -0.242,
      "wpa_per_start": -0.01,
@@ -30116,7 +30116,7 @@
     {
      "mlbam": 641482,
      "name": "Nestor Cortes",
-     "team": "SD",
+     "team": "PHI",
      "starts": 8,
      "wpa": -0.345,
      "wpa_per_start": -0.043,
@@ -30160,7 +30160,7 @@
     {
      "mlbam": 678906,
      "name": "Kai-Wei Teng",
-     "team": "SF",
+     "team": "HOU",
      "starts": 7,
      "wpa": -0.363,
      "wpa_per_start": -0.052,
@@ -30182,7 +30182,7 @@
     {
      "mlbam": 669060,
      "name": "Bryse Wilson",
-     "team": "CWS",
+     "team": "MIL",
      "starts": 5,
      "wpa": -0.372,
      "wpa_per_start": -0.074,
@@ -30215,7 +30215,7 @@
     {
      "mlbam": 664062,
      "name": "Tony Gonsolin",
-     "team": "LAD",
+     "team": "KC",
      "starts": 7,
      "wpa": -0.404,
      "wpa_per_start": -0.058,
@@ -30270,7 +30270,7 @@
     {
      "mlbam": 663978,
      "name": "Chris Paddack",
-     "team": "DET",
+     "team": "TEX",
      "starts": 28,
      "wpa": -0.433,
      "wpa_per_start": -0.015,
@@ -30292,7 +30292,7 @@
     {
      "mlbam": 668964,
      "name": "Tobias Myers",
-     "team": "MIL",
+     "team": "NYM",
      "starts": 6,
      "wpa": -0.468,
      "wpa_per_start": -0.078,
@@ -30457,7 +30457,7 @@
     {
      "mlbam": 687362,
      "name": "Connor Gillispie",
-     "team": "MIA",
+     "team": "PHI",
      "starts": 6,
      "wpa": -0.72,
      "wpa_per_start": -0.12,
@@ -30479,7 +30479,7 @@
     {
      "mlbam": 687765,
      "name": "Mitch Spence",
-     "team": "ATH",
+     "team": "KC",
      "starts": 8,
      "wpa": -0.73,
      "wpa_per_start": -0.091,
@@ -30545,7 +30545,7 @@
     {
      "mlbam": 656302,
      "name": "Dylan Cease",
-     "team": "SD",
+     "team": "TOR",
      "starts": 32,
      "wpa": -0.79,
      "wpa_per_start": -0.025,
@@ -30578,7 +30578,7 @@
     {
      "mlbam": 676467,
      "name": "Colton Gordon",
-     "team": "HOU",
+     "team": "MIL",
      "starts": 14,
      "wpa": -0.801,
      "wpa_per_start": -0.057,
@@ -30611,7 +30611,7 @@
     {
      "mlbam": 615698,
      "name": "Cal Quantrill",
-     "team": "ATL",
+     "team": "TEX",
      "starts": 26,
      "wpa": -0.826,
      "wpa_per_start": -0.032,
@@ -30677,7 +30677,7 @@
     {
      "mlbam": 663855,
      "name": "Jordan Hicks",
-     "team": "BOS",
+     "team": "CWS",
      "starts": 10,
      "wpa": -0.971,
      "wpa_per_start": -0.097,
@@ -30798,7 +30798,7 @@
     {
      "mlbam": 687223,
      "name": "Carson Palmquist",
-     "team": "COL",
+     "team": "WSH",
      "starts": 8,
      "wpa": -1.289,
      "wpa_per_start": -0.161,
@@ -30831,7 +30831,7 @@
     {
      "mlbam": 669160,
      "name": "Dustin May",
-     "team": "BOS",
+     "team": "MIL",
      "starts": 23,
      "wpa": -1.367,
      "wpa_per_start": -0.059,
@@ -30897,7 +30897,7 @@
     {
      "mlbam": 687134,
      "name": "Bradley Blalock",
-     "team": "COL",
+     "team": "MIA",
      "starts": 12,
      "wpa": -1.766,
      "wpa_per_start": -0.147,
@@ -30985,7 +30985,7 @@
     {
      "mlbam": 622608,
      "name": "Antonio Senzatela",
-     "team": "COL",
+     "team": "MIL",
      "starts": 24,
      "wpa": -2.738,
      "wpa_per_start": -0.114,
@@ -30996,7 +30996,7 @@
     {
      "mlbam": 608566,
      "name": "Germ\u00e1n M\u00e1rquez",
-     "team": "COL",
+     "team": "MIN",
      "starts": 26,
      "wpa": -3.153,
      "wpa_per_start": -0.121,

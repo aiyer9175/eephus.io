@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-07",
+ "generated_at": "2026-08-21",
  "seasons": [
   2021,
   2022,
@@ -37,7 +37,7 @@
     {
      "mlbam": 669203,
      "name": "Corbin Burnes",
-     "team": "MIL",
+     "team": "AZ",
      "sem_plus": 186,
      "role": "Ace",
      "ip": 167.0,
@@ -142,7 +142,7 @@
     {
      "mlbam": 669432,
      "name": "Trevor Rogers",
-     "team": "MIA",
+     "team": "BAL",
      "sem_plus": 135,
      "role": "Ace",
      "ip": 133.0,
@@ -310,7 +310,7 @@
     {
      "mlbam": 669456,
      "name": "Shane Bieber",
-     "team": "CLE",
+     "team": "TOR",
      "sem_plus": 126,
      "role": "Ace",
      "ip": 96.7,
@@ -331,7 +331,7 @@
     {
      "mlbam": 642547,
      "name": "Freddy Peralta",
-     "team": "MIL",
+     "team": "TB",
      "sem_plus": 125,
      "role": "Ace",
      "ip": 144.3,
@@ -373,7 +373,7 @@
     {
      "mlbam": 621111,
      "name": "Walker Buehler",
-     "team": "LAD",
+     "team": "SD",
      "sem_plus": 124,
      "role": "Ace",
      "ip": 207.7,
@@ -499,7 +499,7 @@
     {
      "mlbam": 656302,
      "name": "Dylan Cease",
-     "team": "CWS",
+     "team": "TOR",
      "sem_plus": 119,
      "role": "Ace",
      "ip": 165.7,
@@ -562,7 +562,7 @@
     {
      "mlbam": 641154,
      "name": "Pablo L\u00f3pez",
-     "team": "MIA",
+     "team": "MIN",
      "sem_plus": 117,
      "role": "Ace",
      "ip": 102.7,
@@ -583,7 +583,7 @@
     {
      "mlbam": 608331,
      "name": "Max Fried",
-     "team": "ATL",
+     "team": "NYY",
      "sem_plus": 117,
      "role": "Ace",
      "ip": 165.7,
@@ -751,7 +751,7 @@
     {
      "mlbam": 677651,
      "name": "Luis Garcia",
-     "team": "HOU",
+     "team": "NYY",
      "sem_plus": 112,
      "role": "Mid-rotation",
      "ip": 155.3,
@@ -835,7 +835,7 @@
     {
      "mlbam": 608337,
      "name": "Lucas Giolito",
-     "team": "CWS",
+     "team": "SD",
      "sem_plus": 111,
      "role": "Mid-rotation",
      "ip": 178.7,
@@ -898,7 +898,7 @@
     {
      "mlbam": 641482,
      "name": "Nestor Cortes",
-     "team": "NYY",
+     "team": "PHI",
      "sem_plus": 110,
      "role": "Mid-rotation",
      "ip": 93.0,
@@ -982,7 +982,7 @@
     {
      "mlbam": 621107,
      "name": "Zach Eflin",
-     "team": "PHI",
+     "team": "BAL",
      "sem_plus": 109,
      "role": "Mid-rotation",
      "ip": 105.7,
@@ -1024,7 +1024,7 @@
     {
      "mlbam": 641816,
      "name": "Tyler Mahle",
-     "team": "CIN",
+     "team": "ATL",
      "sem_plus": 109,
      "role": "Mid-rotation",
      "ip": 180.0,
@@ -1108,7 +1108,7 @@
     {
      "mlbam": 660623,
      "name": "Huascar Ynoa",
-     "team": "ATL",
+     "team": "LAA",
      "sem_plus": 107,
      "role": "Mid-rotation",
      "ip": 91.0,
@@ -1129,7 +1129,7 @@
     {
      "mlbam": 663978,
      "name": "Chris Paddack",
-     "team": "SD",
+     "team": "TEX",
      "sem_plus": 107,
      "role": "Mid-rotation",
      "ip": 108.3,
@@ -1150,7 +1150,7 @@
     {
      "mlbam": 666201,
      "name": "Alek Manoah",
-     "team": "TOR",
+     "team": "LAA",
      "sem_plus": 107,
      "role": "Mid-rotation",
      "ip": 111.7,
@@ -1192,7 +1192,7 @@
     {
      "mlbam": 622608,
      "name": "Antonio Senzatela",
-     "team": "COL",
+     "team": "MIL",
      "sem_plus": 106,
      "role": "Mid-rotation",
      "ip": 156.7,
@@ -1213,7 +1213,7 @@
     {
      "mlbam": 608566,
      "name": "Germ\u00e1n M\u00e1rquez",
-     "team": "COL",
+     "team": "MIN",
      "sem_plus": 105,
      "role": "Mid-rotation",
      "ip": 180.0,
@@ -1276,7 +1276,7 @@
     {
      "mlbam": 623167,
      "name": "Chris Flexen",
-     "team": "SEA",
+     "team": "CHC",
      "sem_plus": 103,
      "role": "Mid-rotation",
      "ip": 179.7,
@@ -1360,7 +1360,7 @@
     {
      "mlbam": 641778,
      "name": "Eric Lauer",
-     "team": "MIL",
+     "team": "LAD",
      "sem_plus": 103,
      "role": "Mid-rotation",
      "ip": 118.7,
@@ -1402,7 +1402,7 @@
     {
      "mlbam": 663776,
      "name": "Patrick Sandoval",
-     "team": "LAA",
+     "team": "BOS",
      "sem_plus": 103,
      "role": "Mid-rotation",
      "ip": 87.0,
@@ -1444,7 +1444,7 @@
     {
      "mlbam": 664353,
      "name": "Jos\u00e9 Urquidy",
-     "team": "HOU",
+     "team": "CWS",
      "sem_plus": 102,
      "role": "Mid-rotation",
      "ip": 107.0,
@@ -1465,7 +1465,7 @@
     {
      "mlbam": 641540,
      "name": "Dane Dunning",
-     "team": "TEX",
+     "team": "SEA",
      "sem_plus": 102,
      "role": "Mid-rotation",
      "ip": 117.7,
@@ -1486,7 +1486,7 @@
     {
      "mlbam": 656427,
      "name": "Jack Flaherty",
-     "team": "STL",
+     "team": "DET",
      "sem_plus": 102,
      "role": "Mid-rotation",
      "ip": 78.3,
@@ -1633,7 +1633,7 @@
     {
      "mlbam": 615698,
      "name": "Cal Quantrill",
-     "team": "CLE",
+     "team": "TEX",
      "sem_plus": 100,
      "role": "Mid-rotation",
      "ip": 149.7,
@@ -1717,7 +1717,7 @@
     {
      "mlbam": 663903,
      "name": "Brady Singer",
-     "team": "KC",
+     "team": "CIN",
      "sem_plus": 100,
      "role": "Mid-rotation",
      "ip": 128.3,
@@ -1801,7 +1801,7 @@
     {
      "mlbam": 621076,
      "name": "James Kaprielian",
-     "team": "ATH",
+     "team": "TOR",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 119.3,
@@ -1822,7 +1822,7 @@
     {
      "mlbam": 660761,
      "name": "Jos\u00e9 Suarez",
-     "team": "LAA",
+     "team": "ATH",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 98.3,
@@ -2032,7 +2032,7 @@
     {
      "mlbam": 664062,
      "name": "Tony Gonsolin",
-     "team": "LAD",
+     "team": "KC",
      "sem_plus": 97,
      "role": "Back-end",
      "ip": 55.7,
@@ -2074,7 +2074,7 @@
     {
      "mlbam": 640470,
      "name": "Adbert Alzolay",
-     "team": "CHC",
+     "team": "NYM",
      "sem_plus": 96,
      "role": "Back-end",
      "ip": 125.7,
@@ -2095,7 +2095,7 @@
     {
      "mlbam": 608344,
      "name": "Cole Irvin",
-     "team": "ATH",
+     "team": "LAD",
      "sem_plus": 96,
      "role": "Back-end",
      "ip": 178.3,
@@ -2137,7 +2137,7 @@
     {
      "mlbam": 672715,
      "name": "Luis Pati\u00f1o",
-     "team": "TB",
+     "team": "SD",
      "sem_plus": 95,
      "role": "Back-end",
      "ip": 77.3,
@@ -2200,7 +2200,7 @@
     {
      "mlbam": 663474,
      "name": "Triston McKenzie",
-     "team": "CLE",
+     "team": "SD",
      "sem_plus": 95,
      "role": "Back-end",
      "ip": 120.0,
@@ -2368,7 +2368,7 @@
     {
      "mlbam": 656849,
      "name": "David Peterson",
-     "team": "NYM",
+     "team": "CHC",
      "sem_plus": 93,
      "role": "Back-end",
      "ip": 66.7,
@@ -2473,7 +2473,7 @@
     {
      "mlbam": 650644,
      "name": "Aaron Civale",
-     "team": "CLE",
+     "team": "CHC",
      "sem_plus": 92,
      "role": "Back-end",
      "ip": 124.3,
@@ -2515,7 +2515,7 @@
     {
      "mlbam": 663554,
      "name": "Casey Mize",
-     "team": "DET",
+     "team": "SD",
      "sem_plus": 92,
      "role": "Back-end",
      "ip": 150.3,
@@ -2536,7 +2536,7 @@
     {
      "mlbam": 675921,
      "name": "Spencer Howard",
-     "team": "TEX",
+     "team": "SF",
      "sem_plus": 91,
      "role": "Back-end",
      "ip": 49.7,
@@ -2557,7 +2557,7 @@
     {
      "mlbam": 622694,
      "name": "Elieser Hern\u00e1ndez",
-     "team": "MIA",
+     "team": "ATL",
      "sem_plus": 91,
      "role": "Back-end",
      "ip": 51.7,
@@ -2578,7 +2578,7 @@
     {
      "mlbam": 643290,
      "name": "Justin Dunn",
-     "team": "SEA",
+     "team": "LAA",
      "sem_plus": 91,
      "role": "Back-end",
      "ip": 50.3,
@@ -2662,7 +2662,7 @@
     {
      "mlbam": 669212,
      "name": "Eli Morgan",
-     "team": "CLE",
+     "team": "KC",
      "sem_plus": 90,
      "role": "Back-end",
      "ip": 89.3,
@@ -2683,7 +2683,7 @@
     {
      "mlbam": 669373,
      "name": "Tarik Skubal",
-     "team": "DET",
+     "team": "LAD",
      "sem_plus": 90,
      "role": "Back-end",
      "ip": 149.3,
@@ -2746,7 +2746,7 @@
     {
      "mlbam": 641745,
      "name": "Brad Keller",
-     "team": "KC",
+     "team": "PHI",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 133.7,
@@ -2767,7 +2767,7 @@
     {
      "mlbam": 666159,
      "name": "Matt Manning",
-     "team": "DET",
+     "team": "PHI",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 85.3,
@@ -2893,7 +2893,7 @@
     {
      "mlbam": 642545,
      "name": "Jaime Barria",
-     "team": "LAA",
+     "team": "CLE",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 56.7,
@@ -2914,7 +2914,7 @@
     {
      "mlbam": 656288,
      "name": "Griffin Canning",
-     "team": "LAA",
+     "team": "SD",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 62.7,
@@ -2935,7 +2935,7 @@
     {
      "mlbam": 669145,
      "name": "Bruce Zimmermann",
-     "team": "BAL",
+     "team": "STL",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 64.3,
@@ -3040,7 +3040,7 @@
     {
      "mlbam": 663460,
      "name": "Kris Bubic",
-     "team": "KC",
+     "team": "LAD",
      "sem_plus": 86,
      "role": "Spot",
      "ip": 130.0,
@@ -3082,7 +3082,7 @@
     {
      "mlbam": 663465,
      "name": "Kolby Allard",
-     "team": "TEX",
+     "team": "PHI",
      "sem_plus": 85,
      "role": "Spot",
      "ip": 124.7,
@@ -3103,7 +3103,7 @@
     {
      "mlbam": 657053,
      "name": "Touki Toussaint",
-     "team": "ATL",
+     "team": "LAA",
      "sem_plus": 85,
      "role": "Spot",
      "ip": 50.0,
@@ -3187,7 +3187,7 @@
     {
      "mlbam": 677960,
      "name": "Ryan Weathers",
-     "team": "SD",
+     "team": "NYY",
      "sem_plus": 85,
      "role": "Spot",
      "ip": 94.7,
@@ -3208,7 +3208,7 @@
     {
      "mlbam": 661269,
      "name": "Vladimir Gutierrez",
-     "team": "CIN",
+     "team": "BOS",
      "sem_plus": 85,
      "role": "Spot",
      "ip": 114.0,
@@ -3271,7 +3271,7 @@
     {
      "mlbam": 642203,
      "name": "Taylor Widener",
-     "team": "AZ",
+     "team": "ATL",
      "sem_plus": 84,
      "role": "Spot",
      "ip": 70.3,
@@ -3292,7 +3292,7 @@
     {
      "mlbam": 666200,
      "name": "Jes\u00fas Luzardo",
-     "team": "MIA",
+     "team": "PHI",
      "sem_plus": 84,
      "role": "Spot",
      "ip": 95.3,
@@ -3355,7 +3355,7 @@
     {
      "mlbam": 669060,
      "name": "Bryse Wilson",
-     "team": "PIT",
+     "team": "MIL",
      "sem_plus": 83,
      "role": "Spot",
      "ip": 74.0,
@@ -3376,7 +3376,7 @@
     {
      "mlbam": 670912,
      "name": "Johan Oviedo",
-     "team": "STL",
+     "team": "BOS",
      "sem_plus": 83,
      "role": "Spot",
      "ip": 62.3,
@@ -3502,7 +3502,7 @@
     {
      "mlbam": 650496,
      "name": "J.C. Mej\u00eda",
-     "team": "CLE",
+     "team": "MIL",
      "sem_plus": 81,
      "role": "Spot",
      "ip": 52.3,
@@ -3565,7 +3565,7 @@
     {
      "mlbam": 640444,
      "name": "Wil Crowe",
-     "team": "PIT",
+     "team": "PHI",
      "sem_plus": 81,
      "role": "Spot",
      "ip": 116.7,
@@ -3607,7 +3607,7 @@
     {
      "mlbam": 656954,
      "name": "Justus Sheffield",
-     "team": "SEA",
+     "team": "CIN",
      "sem_plus": 79,
      "role": "Spot",
      "ip": 80.3,
@@ -3691,7 +3691,7 @@
     {
      "mlbam": 643377,
      "name": "Griffin Jax",
-     "team": "MIN",
+     "team": "TB",
      "sem_plus": 77,
      "role": "Spot",
      "ip": 82.0,
@@ -3712,7 +3712,7 @@
     {
      "mlbam": 665152,
      "name": "Dean Kremer",
-     "team": "BAL",
+     "team": "MIN",
      "sem_plus": 76,
      "role": "Spot",
      "ip": 53.7,
@@ -3949,7 +3949,7 @@
     {
      "mlbam": 608331,
      "name": "Max Fried",
-     "team": "ATL",
+     "team": "NYY",
      "sem_plus": 130,
      "role": "Ace",
      "ip": 185.3,
@@ -3991,7 +3991,7 @@
     {
      "mlbam": 669456,
      "name": "Shane Bieber",
-     "team": "CLE",
+     "team": "TOR",
      "sem_plus": 128,
      "role": "Ace",
      "ip": 200.0,
@@ -4117,7 +4117,7 @@
     {
      "mlbam": 669203,
      "name": "Corbin Burnes",
-     "team": "MIL",
+     "team": "AZ",
      "sem_plus": 123,
      "role": "Ace",
      "ip": 202.0,
@@ -4222,7 +4222,7 @@
     {
      "mlbam": 656302,
      "name": "Dylan Cease",
-     "team": "CWS",
+     "team": "TOR",
      "sem_plus": 121,
      "role": "Ace",
      "ip": 184.0,
@@ -4243,7 +4243,7 @@
     {
      "mlbam": 641482,
      "name": "Nestor Cortes",
-     "team": "NYY",
+     "team": "PHI",
      "sem_plus": 120,
      "role": "Ace",
      "ip": 158.3,
@@ -4285,7 +4285,7 @@
     {
      "mlbam": 669373,
      "name": "Tarik Skubal",
-     "team": "DET",
+     "team": "LAD",
      "sem_plus": 120,
      "role": "Ace",
      "ip": 117.7,
@@ -4306,7 +4306,7 @@
     {
      "mlbam": 666200,
      "name": "Jes\u00fas Luzardo",
-     "team": "MIA",
+     "team": "PHI",
      "sem_plus": 119,
      "role": "Ace",
      "ip": 100.3,
@@ -4453,7 +4453,7 @@
     {
      "mlbam": 642547,
      "name": "Freddy Peralta",
-     "team": "MIL",
+     "team": "TB",
      "sem_plus": 116,
      "role": "Ace",
      "ip": 78.0,
@@ -4474,7 +4474,7 @@
     {
      "mlbam": 663776,
      "name": "Patrick Sandoval",
-     "team": "LAA",
+     "team": "BOS",
      "sem_plus": 115,
      "role": "Ace",
      "ip": 148.7,
@@ -4558,7 +4558,7 @@
     {
      "mlbam": 664062,
      "name": "Tony Gonsolin",
-     "team": "LAD",
+     "team": "KC",
      "sem_plus": 113,
      "role": "Mid-rotation",
      "ip": 130.3,
@@ -4579,7 +4579,7 @@
     {
      "mlbam": 666201,
      "name": "Alek Manoah",
-     "team": "TOR",
+     "team": "LAA",
      "sem_plus": 112,
      "role": "Mid-rotation",
      "ip": 196.7,
@@ -4684,7 +4684,7 @@
     {
      "mlbam": 663474,
      "name": "Triston McKenzie",
-     "team": "CLE",
+     "team": "SD",
      "sem_plus": 110,
      "role": "Mid-rotation",
      "ip": 191.3,
@@ -4768,7 +4768,7 @@
     {
      "mlbam": 663903,
      "name": "Brady Singer",
-     "team": "KC",
+     "team": "CIN",
      "sem_plus": 108,
      "role": "Mid-rotation",
      "ip": 153.3,
@@ -4789,7 +4789,7 @@
     {
      "mlbam": 622663,
      "name": "Luis Severino",
-     "team": "NYY",
+     "team": "ATH",
      "sem_plus": 108,
      "role": "Mid-rotation",
      "ip": 102.0,
@@ -4831,7 +4831,7 @@
     {
      "mlbam": 657140,
      "name": "Kyle Wright",
-     "team": "ATL",
+     "team": "CHC",
      "sem_plus": 108,
      "role": "Mid-rotation",
      "ip": 180.3,
@@ -4915,7 +4915,7 @@
     {
      "mlbam": 666129,
      "name": "Braxton Garrett",
-     "team": "MIA",
+     "team": "CHC",
      "sem_plus": 106,
      "role": "Mid-rotation",
      "ip": 88.0,
@@ -4936,7 +4936,7 @@
     {
      "mlbam": 656849,
      "name": "David Peterson",
-     "team": "NYM",
+     "team": "CHC",
      "sem_plus": 106,
      "role": "Mid-rotation",
      "ip": 105.7,
@@ -5020,7 +5020,7 @@
     {
      "mlbam": 641154,
      "name": "Pablo L\u00f3pez",
-     "team": "MIA",
+     "team": "MIN",
      "sem_plus": 105,
      "role": "Mid-rotation",
      "ip": 180.0,
@@ -5062,7 +5062,7 @@
     {
      "mlbam": 621107,
      "name": "Zach Eflin",
-     "team": "PHI",
+     "team": "BAL",
      "sem_plus": 105,
      "role": "Mid-rotation",
      "ip": 75.7,
@@ -5188,7 +5188,7 @@
     {
      "mlbam": 650644,
      "name": "Aaron Civale",
-     "team": "CLE",
+     "team": "CHC",
      "sem_plus": 103,
      "role": "Mid-rotation",
      "ip": 97.0,
@@ -5272,7 +5272,7 @@
     {
      "mlbam": 641816,
      "name": "Tyler Mahle",
-     "team": "MIN",
+     "team": "ATL",
      "sem_plus": 103,
      "role": "Mid-rotation",
      "ip": 120.7,
@@ -5293,7 +5293,7 @@
     {
      "mlbam": 677651,
      "name": "Luis Garcia",
-     "team": "HOU",
+     "team": "NYY",
      "sem_plus": 102,
      "role": "Mid-rotation",
      "ip": 157.3,
@@ -5335,7 +5335,7 @@
     {
      "mlbam": 621111,
      "name": "Walker Buehler",
-     "team": "LAD",
+     "team": "SD",
      "sem_plus": 102,
      "role": "Mid-rotation",
      "ip": 65.0,
@@ -5398,7 +5398,7 @@
     {
      "mlbam": 660761,
      "name": "Jos\u00e9 Suarez",
-     "team": "LAA",
+     "team": "ATH",
      "sem_plus": 101,
      "role": "Mid-rotation",
      "ip": 109.0,
@@ -5545,7 +5545,7 @@
     {
      "mlbam": 665152,
      "name": "Dean Kremer",
-     "team": "BAL",
+     "team": "MIN",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 125.3,
@@ -5566,7 +5566,7 @@
     {
      "mlbam": 608337,
      "name": "Lucas Giolito",
-     "team": "CWS",
+     "team": "SD",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 161.7,
@@ -5608,7 +5608,7 @@
     {
      "mlbam": 624133,
      "name": "Ranger Suarez",
-     "team": "PHI",
+     "team": "BOS",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 155.3,
@@ -5650,7 +5650,7 @@
     {
      "mlbam": 666159,
      "name": "Matt Manning",
-     "team": "DET",
+     "team": "PHI",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 63.0,
@@ -5776,7 +5776,7 @@
     {
      "mlbam": 669952,
      "name": "Mitch White",
-     "team": "TOR",
+     "team": "MIL",
      "sem_plus": 97,
      "role": "Back-end",
      "ip": 99.0,
@@ -5881,7 +5881,7 @@
     {
      "mlbam": 669022,
      "name": "MacKenzie Gore",
-     "team": "SD",
+     "team": "TEX",
      "sem_plus": 95,
      "role": "Back-end",
      "ip": 70.0,
@@ -5923,7 +5923,7 @@
     {
      "mlbam": 615698,
      "name": "Cal Quantrill",
-     "team": "CLE",
+     "team": "TEX",
      "sem_plus": 95,
      "role": "Back-end",
      "ip": 186.3,
@@ -5944,7 +5944,7 @@
     {
      "mlbam": 608344,
      "name": "Cole Irvin",
-     "team": "ATH",
+     "team": "LAD",
      "sem_plus": 95,
      "role": "Back-end",
      "ip": 181.0,
@@ -5986,7 +5986,7 @@
     {
      "mlbam": 676664,
      "name": "JP Sears",
-     "team": "ATH",
+     "team": "SD",
      "sem_plus": 94,
      "role": "Back-end",
      "ip": 70.0,
@@ -6091,7 +6091,7 @@
     {
      "mlbam": 669432,
      "name": "Trevor Rogers",
-     "team": "MIA",
+     "team": "BAL",
      "sem_plus": 93,
      "role": "Back-end",
      "ip": 107.0,
@@ -6112,7 +6112,7 @@
     {
      "mlbam": 665795,
      "name": "Edward Cabrera",
-     "team": "MIA",
+     "team": "CHC",
      "sem_plus": 93,
      "role": "Back-end",
      "ip": 71.7,
@@ -6133,7 +6133,7 @@
     {
      "mlbam": 672710,
      "name": "Roansy Contreras",
-     "team": "PIT",
+     "team": "COL",
      "sem_plus": 93,
      "role": "Back-end",
      "ip": 95.0,
@@ -6154,7 +6154,7 @@
     {
      "mlbam": 624522,
      "name": "Keegan Thompson",
-     "team": "CHC",
+     "team": "COL",
      "sem_plus": 93,
      "role": "Back-end",
      "ip": 115.0,
@@ -6175,7 +6175,7 @@
     {
      "mlbam": 663559,
      "name": "Bailey Falter",
-     "team": "PHI",
+     "team": "ATL",
      "sem_plus": 93,
      "role": "Back-end",
      "ip": 84.0,
@@ -6196,7 +6196,7 @@
     {
      "mlbam": 622608,
      "name": "Antonio Senzatela",
-     "team": "COL",
+     "team": "MIL",
      "sem_plus": 93,
      "role": "Back-end",
      "ip": 92.3,
@@ -6259,7 +6259,7 @@
     {
      "mlbam": 641778,
      "name": "Eric Lauer",
-     "team": "MIL",
+     "team": "LAD",
      "sem_plus": 92,
      "role": "Back-end",
      "ip": 158.7,
@@ -6385,7 +6385,7 @@
     {
      "mlbam": 669330,
      "name": "Tyler Wells",
-     "team": "BAL",
+     "team": "TB",
      "sem_plus": 91,
      "role": "Back-end",
      "ip": 103.7,
@@ -6490,7 +6490,7 @@
     {
      "mlbam": 656629,
      "name": "Michael Kopech",
-     "team": "CWS",
+     "team": "LAD",
      "sem_plus": 91,
      "role": "Back-end",
      "ip": 119.3,
@@ -6532,7 +6532,7 @@
     {
      "mlbam": 664353,
      "name": "Jos\u00e9 Urquidy",
-     "team": "HOU",
+     "team": "CWS",
      "sem_plus": 90,
      "role": "Back-end",
      "ip": 164.3,
@@ -6553,7 +6553,7 @@
     {
      "mlbam": 641540,
      "name": "Dane Dunning",
-     "team": "TEX",
+     "team": "SEA",
      "sem_plus": 90,
      "role": "Back-end",
      "ip": 153.3,
@@ -6658,7 +6658,7 @@
     {
      "mlbam": 663455,
      "name": "Konnor Pilkington",
-     "team": "CLE",
+     "team": "WSH",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 58.0,
@@ -6679,7 +6679,7 @@
     {
      "mlbam": 623167,
      "name": "Chris Flexen",
-     "team": "SEA",
+     "team": "CHC",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 137.7,
@@ -6742,7 +6742,7 @@
     {
      "mlbam": 656412,
      "name": "Alex Faedo",
-     "team": "DET",
+     "team": "LAA",
      "sem_plus": 88,
      "role": "Back-end",
      "ip": 53.7,
@@ -6784,7 +6784,7 @@
     {
      "mlbam": 641745,
      "name": "Brad Keller",
-     "team": "KC",
+     "team": "PHI",
      "sem_plus": 88,
      "role": "Back-end",
      "ip": 139.7,
@@ -6826,7 +6826,7 @@
     {
      "mlbam": 641712,
      "name": "Dakota Hudson",
-     "team": "STL",
+     "team": "LAA",
      "sem_plus": 88,
      "role": "Back-end",
      "ip": 139.7,
@@ -6847,7 +6847,7 @@
     {
      "mlbam": 608566,
      "name": "Germ\u00e1n M\u00e1rquez",
-     "team": "COL",
+     "team": "MIN",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 181.7,
@@ -6868,7 +6868,7 @@
     {
      "mlbam": 680739,
      "name": "Josh Winder",
-     "team": "MIN",
+     "team": "AZ",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 67.0,
@@ -6889,7 +6889,7 @@
     {
      "mlbam": 621076,
      "name": "James Kaprielian",
-     "team": "ATH",
+     "team": "TOR",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 134.0,
@@ -7015,7 +7015,7 @@
     {
      "mlbam": 663460,
      "name": "Kris Bubic",
-     "team": "KC",
+     "team": "LAD",
      "sem_plus": 85,
      "role": "Spot",
      "ip": 129.0,
@@ -7057,7 +7057,7 @@
     {
      "mlbam": 641302,
      "name": "Tyler Alexander",
-     "team": "DET",
+     "team": "TEX",
      "sem_plus": 85,
      "role": "Spot",
      "ip": 101.0,
@@ -7120,7 +7120,7 @@
     {
      "mlbam": 656970,
      "name": "Devin Smeltzer",
-     "team": "MIN",
+     "team": "DET",
      "sem_plus": 84,
      "role": "Spot",
      "ip": 70.3,
@@ -7141,7 +7141,7 @@
     {
      "mlbam": 670174,
      "name": "Josh Winckowski",
-     "team": "BOS",
+     "team": "TOR",
      "sem_plus": 83,
      "role": "Spot",
      "ip": 70.3,
@@ -7183,7 +7183,7 @@
     {
      "mlbam": 669060,
      "name": "Bryse Wilson",
-     "team": "PIT",
+     "team": "MIL",
      "sem_plus": 83,
      "role": "Spot",
      "ip": 115.7,
@@ -7309,7 +7309,7 @@
     {
      "mlbam": 656657,
      "name": "Zach Logue",
-     "team": "ATH",
+     "team": "LAD",
      "sem_plus": 80,
      "role": "Spot",
      "ip": 57.0,
@@ -7330,7 +7330,7 @@
     {
      "mlbam": 657248,
      "name": "Glenn Otto Jr.",
-     "team": "TEX",
+     "team": "HOU",
      "sem_plus": 80,
      "role": "Spot",
      "ip": 135.7,
@@ -7414,7 +7414,7 @@
     {
      "mlbam": 669145,
      "name": "Bruce Zimmermann",
-     "team": "BAL",
+     "team": "STL",
      "sem_plus": 79,
      "role": "Spot",
      "ip": 73.7,
@@ -7435,7 +7435,7 @@
     {
      "mlbam": 622694,
      "name": "Elieser Hern\u00e1ndez",
-     "team": "MIA",
+     "team": "ATL",
      "sem_plus": 78,
      "role": "Spot",
      "ip": 62.3,
@@ -7498,7 +7498,7 @@
     {
      "mlbam": 669169,
      "name": "Jonathan Heasley",
-     "team": "KC",
+     "team": "TB",
      "sem_plus": 76,
      "role": "Spot",
      "ip": 104.0,
@@ -7519,7 +7519,7 @@
     {
      "mlbam": 656353,
      "name": "Tucker Davidson",
-     "team": "LAA",
+     "team": "PHI",
      "sem_plus": 75,
      "role": "Spot",
      "ip": 52.0,
@@ -7561,7 +7561,7 @@
     {
      "mlbam": 670124,
      "name": "Adam Oller",
-     "team": "ATH",
+     "team": "MIA",
      "sem_plus": 71,
      "role": "Spot",
      "ip": 74.3,
@@ -7588,7 +7588,7 @@
     {
      "mlbam": 669373,
      "name": "Tarik Skubal",
-     "team": "DET",
+     "team": "LAD",
      "sem_plus": 151,
      "role": "Ace",
      "ip": 80.3,
@@ -7672,7 +7672,7 @@
     {
      "mlbam": 621107,
      "name": "Zach Eflin",
-     "team": "TB",
+     "team": "BAL",
      "sem_plus": 133,
      "role": "Ace",
      "ip": 177.7,
@@ -7882,7 +7882,7 @@
     {
      "mlbam": 608331,
      "name": "Max Fried",
-     "team": "ATL",
+     "team": "NYY",
      "sem_plus": 120,
      "role": "Ace",
      "ip": 77.7,
@@ -7924,7 +7924,7 @@
     {
      "mlbam": 666200,
      "name": "Jes\u00fas Luzardo",
-     "team": "MIA",
+     "team": "PHI",
      "sem_plus": 118,
      "role": "Ace",
      "ip": 178.7,
@@ -8071,7 +8071,7 @@
     {
      "mlbam": 642547,
      "name": "Freddy Peralta",
-     "team": "MIL",
+     "team": "TB",
      "sem_plus": 114,
      "role": "Mid-rotation",
      "ip": 165.7,
@@ -8113,7 +8113,7 @@
     {
      "mlbam": 666129,
      "name": "Braxton Garrett",
-     "team": "MIA",
+     "team": "CHC",
      "sem_plus": 114,
      "role": "Mid-rotation",
      "ip": 159.7,
@@ -8155,7 +8155,7 @@
     {
      "mlbam": 650644,
      "name": "Aaron Civale",
-     "team": "TB",
+     "team": "CHC",
      "sem_plus": 113,
      "role": "Mid-rotation",
      "ip": 122.3,
@@ -8239,7 +8239,7 @@
     {
      "mlbam": 656302,
      "name": "Dylan Cease",
-     "team": "CWS",
+     "team": "TOR",
      "sem_plus": 112,
      "role": "Mid-rotation",
      "ip": 177.0,
@@ -8281,7 +8281,7 @@
     {
      "mlbam": 669203,
      "name": "Corbin Burnes",
-     "team": "MIL",
+     "team": "AZ",
      "sem_plus": 111,
      "role": "Mid-rotation",
      "ip": 193.7,
@@ -8596,7 +8596,7 @@
     {
      "mlbam": 680570,
      "name": "Grayson Rodriguez",
-     "team": "BAL",
+     "team": "LAA",
      "sem_plus": 108,
      "role": "Mid-rotation",
      "ip": 122.0,
@@ -8764,7 +8764,7 @@
     {
      "mlbam": 669456,
      "name": "Shane Bieber",
-     "team": "CLE",
+     "team": "TOR",
      "sem_plus": 107,
      "role": "Mid-rotation",
      "ip": 128.0,
@@ -8848,7 +8848,7 @@
     {
      "mlbam": 624133,
      "name": "Ranger Suarez",
-     "team": "PHI",
+     "team": "BOS",
      "sem_plus": 106,
      "role": "Mid-rotation",
      "ip": 125.0,
@@ -8932,7 +8932,7 @@
     {
      "mlbam": 641793,
      "name": "Zack Littell",
-     "team": "TB",
+     "team": "AZ",
      "sem_plus": 105,
      "role": "Mid-rotation",
      "ip": 90.0,
@@ -9016,7 +9016,7 @@
     {
      "mlbam": 656288,
      "name": "Griffin Canning",
-     "team": "LAA",
+     "team": "SD",
      "sem_plus": 104,
      "role": "Mid-rotation",
      "ip": 127.0,
@@ -9121,7 +9121,7 @@
     {
      "mlbam": 675627,
      "name": "Michael Grove",
-     "team": "LAD",
+     "team": "TB",
      "sem_plus": 102,
      "role": "Mid-rotation",
      "ip": 69.0,
@@ -9205,7 +9205,7 @@
     {
      "mlbam": 641482,
      "name": "Nestor Cortes",
-     "team": "NYY",
+     "team": "PHI",
      "sem_plus": 101,
      "role": "Mid-rotation",
      "ip": 63.3,
@@ -9268,7 +9268,7 @@
     {
      "mlbam": 656849,
      "name": "David Peterson",
-     "team": "NYM",
+     "team": "CHC",
      "sem_plus": 101,
      "role": "Mid-rotation",
      "ip": 111.0,
@@ -9289,7 +9289,7 @@
     {
      "mlbam": 641540,
      "name": "Dane Dunning",
-     "team": "TEX",
+     "team": "SEA",
      "sem_plus": 100,
      "role": "Mid-rotation",
      "ip": 172.7,
@@ -9373,7 +9373,7 @@
     {
      "mlbam": 663903,
      "name": "Brady Singer",
-     "team": "KC",
+     "team": "CIN",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 159.7,
@@ -9457,7 +9457,7 @@
     {
      "mlbam": 663776,
      "name": "Patrick Sandoval",
-     "team": "LAA",
+     "team": "BOS",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 144.7,
@@ -9478,7 +9478,7 @@
     {
      "mlbam": 671737,
      "name": "Taj Bradley",
-     "team": "TB",
+     "team": "MIN",
      "sem_plus": 98,
      "role": "Back-end",
      "ip": 104.7,
@@ -9499,7 +9499,7 @@
     {
      "mlbam": 656427,
      "name": "Jack Flaherty",
-     "team": "BAL",
+     "team": "DET",
      "sem_plus": 98,
      "role": "Back-end",
      "ip": 144.3,
@@ -9562,7 +9562,7 @@
     {
      "mlbam": 665795,
      "name": "Edward Cabrera",
-     "team": "MIA",
+     "team": "CHC",
      "sem_plus": 98,
      "role": "Back-end",
      "ip": 99.7,
@@ -9583,7 +9583,7 @@
     {
      "mlbam": 608344,
      "name": "Cole Irvin",
-     "team": "BAL",
+     "team": "LAD",
      "sem_plus": 98,
      "role": "Back-end",
      "ip": 77.3,
@@ -9604,7 +9604,7 @@
     {
      "mlbam": 665152,
      "name": "Dean Kremer",
-     "team": "BAL",
+     "team": "MIN",
      "sem_plus": 97,
      "role": "Back-end",
      "ip": 172.7,
@@ -9646,7 +9646,7 @@
     {
      "mlbam": 686973,
      "name": "Louis Varland",
-     "team": "MIN",
+     "team": "TOR",
      "sem_plus": 97,
      "role": "Back-end",
      "ip": 68.0,
@@ -9772,7 +9772,7 @@
     {
      "mlbam": 656412,
      "name": "Alex Faedo",
-     "team": "DET",
+     "team": "LAA",
      "sem_plus": 97,
      "role": "Back-end",
      "ip": 64.7,
@@ -9877,7 +9877,7 @@
     {
      "mlbam": 681217,
      "name": "Chase Silseth",
-     "team": "LAA",
+     "team": "TEX",
      "sem_plus": 95,
      "role": "Back-end",
      "ip": 52.3,
@@ -9919,7 +9919,7 @@
     {
      "mlbam": 670912,
      "name": "Johan Oviedo",
-     "team": "PIT",
+     "team": "BOS",
      "sem_plus": 95,
      "role": "Back-end",
      "ip": 177.7,
@@ -9940,7 +9940,7 @@
     {
      "mlbam": 669330,
      "name": "Tyler Wells",
-     "team": "BAL",
+     "team": "TB",
      "sem_plus": 95,
      "role": "Back-end",
      "ip": 118.7,
@@ -9982,7 +9982,7 @@
     {
      "mlbam": 666745,
      "name": "Jhony Brito",
-     "team": "NYY",
+     "team": "SD",
      "sem_plus": 94,
      "role": "Back-end",
      "ip": 90.3,
@@ -10003,7 +10003,7 @@
     {
      "mlbam": 669022,
      "name": "MacKenzie Gore",
-     "team": "WSH",
+     "team": "TEX",
      "sem_plus": 94,
      "role": "Back-end",
      "ip": 136.3,
@@ -10087,7 +10087,7 @@
     {
      "mlbam": 641585,
      "name": "J.P. France",
-     "team": "HOU",
+     "team": "SD",
      "sem_plus": 93,
      "role": "Back-end",
      "ip": 136.3,
@@ -10213,7 +10213,7 @@
     {
      "mlbam": 666159,
      "name": "Matt Manning",
-     "team": "DET",
+     "team": "PHI",
      "sem_plus": 92,
      "role": "Back-end",
      "ip": 78.0,
@@ -10381,7 +10381,7 @@
     {
      "mlbam": 663559,
      "name": "Bailey Falter",
-     "team": "PIT",
+     "team": "ATL",
      "sem_plus": 90,
      "role": "Back-end",
      "ip": 80.7,
@@ -10486,7 +10486,7 @@
     {
      "mlbam": 676664,
      "name": "JP Sears",
-     "team": "ATH",
+     "team": "SD",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 172.3,
@@ -10507,7 +10507,7 @@
     {
      "mlbam": 621076,
      "name": "James Kaprielian",
-     "team": "ATH",
+     "team": "TOR",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 61.0,
@@ -10549,7 +10549,7 @@
     {
      "mlbam": 615698,
      "name": "Cal Quantrill",
-     "team": "CLE",
+     "team": "TEX",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 99.7,
@@ -10570,7 +10570,7 @@
     {
      "mlbam": 657053,
      "name": "Touki Toussaint",
-     "team": "CWS",
+     "team": "LAA",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 87.0,
@@ -10612,7 +10612,7 @@
     {
      "mlbam": 608337,
      "name": "Lucas Giolito",
-     "team": "CLE",
+     "team": "SD",
      "sem_plus": 88,
      "role": "Back-end",
      "ip": 184.3,
@@ -10675,7 +10675,7 @@
     {
      "mlbam": 672710,
      "name": "Roansy Contreras",
-     "team": "PIT",
+     "team": "COL",
      "sem_plus": 88,
      "role": "Back-end",
      "ip": 68.3,
@@ -10717,7 +10717,7 @@
     {
      "mlbam": 664353,
      "name": "Jos\u00e9 Urquidy",
-     "team": "HOU",
+     "team": "CWS",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 63.0,
@@ -10759,7 +10759,7 @@
     {
      "mlbam": 664062,
      "name": "Tony Gonsolin",
-     "team": "LAD",
+     "team": "KC",
      "sem_plus": 86,
      "role": "Spot",
      "ip": 103.0,
@@ -10780,7 +10780,7 @@
     {
      "mlbam": 641712,
      "name": "Dakota Hudson",
-     "team": "STL",
+     "team": "LAA",
      "sem_plus": 86,
      "role": "Spot",
      "ip": 81.3,
@@ -10822,7 +10822,7 @@
     {
      "mlbam": 686610,
      "name": "Ken Waldichuk",
-     "team": "ATH",
+     "team": "WSH",
      "sem_plus": 85,
      "role": "Spot",
      "ip": 141.0,
@@ -10906,7 +10906,7 @@
     {
      "mlbam": 694363,
      "name": "Jared Shuster",
-     "team": "ATL",
+     "team": "STL",
      "sem_plus": 84,
      "role": "Spot",
      "ip": 52.7,
@@ -11032,7 +11032,7 @@
     {
      "mlbam": 666214,
      "name": "Joey Wentz",
-     "team": "DET",
+     "team": "ATL",
      "sem_plus": 82,
      "role": "Spot",
      "ip": 105.7,
@@ -11053,7 +11053,7 @@
     {
      "mlbam": 677960,
      "name": "Ryan Weathers",
-     "team": "MIA",
+     "team": "NYY",
      "sem_plus": 82,
      "role": "Spot",
      "ip": 57.7,
@@ -11074,7 +11074,7 @@
     {
      "mlbam": 682847,
      "name": "Luis Ortiz",
-     "team": "PIT",
+     "team": "CLE",
      "sem_plus": 81,
      "role": "Spot",
      "ip": 86.7,
@@ -11137,7 +11137,7 @@
     {
      "mlbam": 622663,
      "name": "Luis Severino",
-     "team": "NYY",
+     "team": "ATH",
      "sem_plus": 80,
      "role": "Spot",
      "ip": 89.3,
@@ -11200,7 +11200,7 @@
     {
      "mlbam": 666201,
      "name": "Alek Manoah",
-     "team": "TOR",
+     "team": "LAA",
      "sem_plus": 78,
      "role": "Spot",
      "ip": 87.3,
@@ -11221,7 +11221,7 @@
     {
      "mlbam": 623167,
      "name": "Chris Flexen",
-     "team": "COL",
+     "team": "CHC",
      "sem_plus": 78,
      "role": "Spot",
      "ip": 102.3,
@@ -11284,7 +11284,7 @@
     {
      "mlbam": 682990,
      "name": "Quinn Priester",
-     "team": "PIT",
+     "team": "MIL",
      "sem_plus": 76,
      "role": "Spot",
      "ip": 50.0,
@@ -11347,7 +11347,7 @@
     {
      "mlbam": 656629,
      "name": "Michael Kopech",
-     "team": "CWS",
+     "team": "LAD",
      "sem_plus": 74,
      "role": "Spot",
      "ip": 129.3,
@@ -11395,7 +11395,7 @@
     {
      "mlbam": 669373,
      "name": "Tarik Skubal",
-     "team": "DET",
+     "team": "LAD",
      "sem_plus": 145,
      "role": "Ace",
      "ip": 192.0,
@@ -11437,7 +11437,7 @@
     {
      "mlbam": 676979,
      "name": "Garrett Crochet",
-     "team": "CWS",
+     "team": "BOS",
      "sem_plus": 141,
      "role": "Ace",
      "ip": 146.0,
@@ -11584,7 +11584,7 @@
     {
      "mlbam": 656302,
      "name": "Dylan Cease",
-     "team": "SD",
+     "team": "TOR",
      "sem_plus": 124,
      "role": "Ace",
      "ip": 189.3,
@@ -11710,7 +11710,7 @@
     {
      "mlbam": 656427,
      "name": "Jack Flaherty",
-     "team": "LAD",
+     "team": "DET",
      "sem_plus": 117,
      "role": "Ace",
      "ip": 162.0,
@@ -11920,7 +11920,7 @@
     {
      "mlbam": 608331,
      "name": "Max Fried",
-     "team": "ATL",
+     "team": "NYY",
      "sem_plus": 114,
      "role": "Mid-rotation",
      "ip": 174.3,
@@ -11983,7 +11983,7 @@
     {
      "mlbam": 624133,
      "name": "Ranger Suarez",
-     "team": "PHI",
+     "team": "BOS",
      "sem_plus": 113,
      "role": "Mid-rotation",
      "ip": 150.7,
@@ -12067,7 +12067,7 @@
     {
      "mlbam": 669203,
      "name": "Corbin Burnes",
-     "team": "BAL",
+     "team": "AZ",
      "sem_plus": 111,
      "role": "Mid-rotation",
      "ip": 194.3,
@@ -12214,7 +12214,7 @@
     {
      "mlbam": 669022,
      "name": "MacKenzie Gore",
-     "team": "WSH",
+     "team": "TEX",
      "sem_plus": 109,
      "role": "Mid-rotation",
      "ip": 166.3,
@@ -12256,7 +12256,7 @@
     {
      "mlbam": 680570,
      "name": "Grayson Rodriguez",
-     "team": "BAL",
+     "team": "LAA",
      "sem_plus": 109,
      "role": "Mid-rotation",
      "ip": 116.7,
@@ -12508,7 +12508,7 @@
     {
      "mlbam": 641482,
      "name": "Nestor Cortes",
-     "team": "NYY",
+     "team": "PHI",
      "sem_plus": 106,
      "role": "Mid-rotation",
      "ip": 174.3,
@@ -12634,7 +12634,7 @@
     {
      "mlbam": 641793,
      "name": "Zack Littell",
-     "team": "TB",
+     "team": "AZ",
      "sem_plus": 104,
      "role": "Mid-rotation",
      "ip": 156.3,
@@ -12781,7 +12781,7 @@
     {
      "mlbam": 668964,
      "name": "Tobias Myers",
-     "team": "MIL",
+     "team": "NYM",
      "sem_plus": 103,
      "role": "Mid-rotation",
      "ip": 138.0,
@@ -12823,7 +12823,7 @@
     {
      "mlbam": 656849,
      "name": "David Peterson",
-     "team": "NYM",
+     "team": "CHC",
      "sem_plus": 103,
      "role": "Mid-rotation",
      "ip": 121.0,
@@ -12844,7 +12844,7 @@
     {
      "mlbam": 671737,
      "name": "Taj Bradley",
-     "team": "TB",
+     "team": "MIN",
      "sem_plus": 102,
      "role": "Mid-rotation",
      "ip": 138.0,
@@ -12886,7 +12886,7 @@
     {
      "mlbam": 663903,
      "name": "Brady Singer",
-     "team": "KC",
+     "team": "CIN",
      "sem_plus": 102,
      "role": "Mid-rotation",
      "ip": 179.7,
@@ -12991,7 +12991,7 @@
     {
      "mlbam": 667755,
      "name": "Jos\u00e9 Soriano",
-     "team": "LAA",
+     "team": "TOR",
      "sem_plus": 101,
      "role": "Mid-rotation",
      "ip": 113.0,
@@ -13012,7 +13012,7 @@
     {
      "mlbam": 663776,
      "name": "Patrick Sandoval",
-     "team": "LAA",
+     "team": "BOS",
      "sem_plus": 101,
      "role": "Mid-rotation",
      "ip": 79.7,
@@ -13054,7 +13054,7 @@
     {
      "mlbam": 642547,
      "name": "Freddy Peralta",
-     "team": "MIL",
+     "team": "TB",
      "sem_plus": 101,
      "role": "Mid-rotation",
      "ip": 173.7,
@@ -13096,7 +13096,7 @@
     {
      "mlbam": 681293,
      "name": "Spencer Arrighetti",
-     "team": "HOU",
+     "team": "TOR",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 145.0,
@@ -13138,7 +13138,7 @@
     {
      "mlbam": 669358,
      "name": "Shane Baz",
-     "team": "TB",
+     "team": "BAL",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 79.3,
@@ -13180,7 +13180,7 @@
     {
      "mlbam": 677960,
      "name": "Ryan Weathers",
-     "team": "MIA",
+     "team": "NYY",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 86.7,
@@ -13201,7 +13201,7 @@
     {
      "mlbam": 663978,
      "name": "Chris Paddack",
-     "team": "MIN",
+     "team": "TEX",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 88.3,
@@ -13222,7 +13222,7 @@
     {
      "mlbam": 663554,
      "name": "Casey Mize",
-     "team": "DET",
+     "team": "SD",
      "sem_plus": 98,
      "role": "Back-end",
      "ip": 102.3,
@@ -13285,7 +13285,7 @@
     {
      "mlbam": 680573,
      "name": "Simeon Woods Richardson",
-     "team": "MIN",
+     "team": "TOR",
      "sem_plus": 98,
      "role": "Back-end",
      "ip": 133.7,
@@ -13306,7 +13306,7 @@
     {
      "mlbam": 666200,
      "name": "Jes\u00fas Luzardo",
-     "team": "MIA",
+     "team": "PHI",
      "sem_plus": 97,
      "role": "Back-end",
      "ip": 66.7,
@@ -13369,7 +13369,7 @@
     {
      "mlbam": 622663,
      "name": "Luis Severino",
-     "team": "NYM",
+     "team": "ATH",
      "sem_plus": 97,
      "role": "Back-end",
      "ip": 182.0,
@@ -13390,7 +13390,7 @@
     {
      "mlbam": 663362,
      "name": "Matt Waldron",
-     "team": "SD",
+     "team": "TOR",
      "sem_plus": 97,
      "role": "Back-end",
      "ip": 146.7,
@@ -13453,7 +13453,7 @@
     {
      "mlbam": 687765,
      "name": "Mitch Spence",
-     "team": "ATH",
+     "team": "KC",
      "sem_plus": 97,
      "role": "Back-end",
      "ip": 151.3,
@@ -13537,7 +13537,7 @@
     {
      "mlbam": 690986,
      "name": "Kyle Harrison",
-     "team": "SF",
+     "team": "MIL",
      "sem_plus": 96,
      "role": "Back-end",
      "ip": 124.3,
@@ -13579,7 +13579,7 @@
     {
      "mlbam": 665152,
      "name": "Dean Kremer",
-     "team": "BAL",
+     "team": "MIN",
      "sem_plus": 96,
      "role": "Back-end",
      "ip": 129.7,
@@ -13642,7 +13642,7 @@
     {
      "mlbam": 681867,
      "name": "Cooper Criswell",
-     "team": "BOS",
+     "team": "SEA",
      "sem_plus": 95,
      "role": "Back-end",
      "ip": 99.3,
@@ -13726,7 +13726,7 @@
     {
      "mlbam": 663559,
      "name": "Bailey Falter",
-     "team": "PIT",
+     "team": "ATL",
      "sem_plus": 94,
      "role": "Back-end",
      "ip": 142.3,
@@ -13873,7 +13873,7 @@
     {
      "mlbam": 663855,
      "name": "Jordan Hicks",
-     "team": "SF",
+     "team": "CWS",
      "sem_plus": 93,
      "role": "Back-end",
      "ip": 109.7,
@@ -13936,7 +13936,7 @@
     {
      "mlbam": 665795,
      "name": "Edward Cabrera",
-     "team": "MIA",
+     "team": "CHC",
      "sem_plus": 92,
      "role": "Back-end",
      "ip": 96.3,
@@ -13999,7 +13999,7 @@
     {
      "mlbam": 650644,
      "name": "Aaron Civale",
-     "team": "MIL",
+     "team": "CHC",
      "sem_plus": 90,
      "role": "Back-end",
      "ip": 161.0,
@@ -14230,7 +14230,7 @@
     {
      "mlbam": 676664,
      "name": "JP Sears",
-     "team": "ATH",
+     "team": "SD",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 180.7,
@@ -14251,7 +14251,7 @@
     {
      "mlbam": 677944,
      "name": "Slade Cecconi",
-     "team": "AZ",
+     "team": "CLE",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 77.0,
@@ -14314,7 +14314,7 @@
     {
      "mlbam": 671212,
      "name": "Joe Boyle",
-     "team": "ATH",
+     "team": "TB",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 47.7,
@@ -14461,7 +14461,7 @@
     {
      "mlbam": 608344,
      "name": "Cole Irvin",
-     "team": "MIN",
+     "team": "LAD",
      "sem_plus": 88,
      "role": "Back-end",
      "ip": 111.0,
@@ -14503,7 +14503,7 @@
     {
      "mlbam": 623167,
      "name": "Chris Flexen",
-     "team": "CWS",
+     "team": "CHC",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 160.0,
@@ -14671,7 +14671,7 @@
     {
      "mlbam": 641540,
      "name": "Dane Dunning",
-     "team": "TEX",
+     "team": "SEA",
      "sem_plus": 86,
      "role": "Spot",
      "ip": 95.0,
@@ -14734,7 +14734,7 @@
     {
      "mlbam": 621111,
      "name": "Walker Buehler",
-     "team": "LAD",
+     "team": "SD",
      "sem_plus": 82,
      "role": "Spot",
      "ip": 75.3,
@@ -14755,7 +14755,7 @@
     {
      "mlbam": 656288,
      "name": "Griffin Canning",
-     "team": "LAA",
+     "team": "SD",
      "sem_plus": 82,
      "role": "Spot",
      "ip": 171.7,
@@ -14776,7 +14776,7 @@
     {
      "mlbam": 678368,
      "name": "Valente Bellozo",
-     "team": "MIA",
+     "team": "COL",
      "sem_plus": 81,
      "role": "Spot",
      "ip": 68.7,
@@ -14818,7 +14818,7 @@
     {
      "mlbam": 615698,
      "name": "Cal Quantrill",
-     "team": "COL",
+     "team": "TEX",
      "sem_plus": 80,
      "role": "Spot",
      "ip": 148.3,
@@ -14860,7 +14860,7 @@
     {
      "mlbam": 641712,
      "name": "Dakota Hudson",
-     "team": "COL",
+     "team": "LAA",
      "sem_plus": 77,
      "role": "Spot",
      "ip": 89.0,
@@ -14881,7 +14881,7 @@
     {
      "mlbam": 663474,
      "name": "Triston McKenzie",
-     "team": "CLE",
+     "team": "SD",
      "sem_plus": 76,
      "role": "Spot",
      "ip": 75.7,
@@ -14965,7 +14965,7 @@
     {
      "mlbam": 682610,
      "name": "Roddery Mu\u00f1oz",
-     "team": "MIA",
+     "team": "HOU",
      "sem_plus": 69,
      "role": "Spot",
      "ip": 82.7,
@@ -14992,7 +14992,7 @@
     {
      "mlbam": 669373,
      "name": "Tarik Skubal",
-     "team": "DET",
+     "team": "LAD",
      "sem_plus": 152,
      "role": "Ace",
      "ip": 195.3,
@@ -15370,7 +15370,7 @@
     {
      "mlbam": 663460,
      "name": "Kris Bubic",
-     "team": "KC",
+     "team": "LAD",
      "sem_plus": 122,
      "role": "Ace",
      "ip": 116.3,
@@ -15454,7 +15454,7 @@
     {
      "mlbam": 624133,
      "name": "Ranger Suarez",
-     "team": "PHI",
+     "team": "BOS",
      "sem_plus": 119,
      "role": "Ace",
      "ip": 157.3,
@@ -15622,7 +15622,7 @@
     {
      "mlbam": 656302,
      "name": "Dylan Cease",
-     "team": "SD",
+     "team": "TOR",
      "sem_plus": 114,
      "role": "Mid-rotation",
      "ip": 168.0,
@@ -15706,7 +15706,7 @@
     {
      "mlbam": 642547,
      "name": "Freddy Peralta",
-     "team": "MIL",
+     "team": "TB",
      "sem_plus": 112,
      "role": "Mid-rotation",
      "ip": 176.7,
@@ -15811,7 +15811,7 @@
     {
      "mlbam": 656849,
      "name": "David Peterson",
-     "team": "NYM",
+     "team": "CHC",
      "sem_plus": 110,
      "role": "Mid-rotation",
      "ip": 168.7,
@@ -15874,7 +15874,7 @@
     {
      "mlbam": 669022,
      "name": "MacKenzie Gore",
-     "team": "WSH",
+     "team": "TEX",
      "sem_plus": 109,
      "role": "Mid-rotation",
      "ip": 159.7,
@@ -15958,7 +15958,7 @@
     {
      "mlbam": 641816,
      "name": "Tyler Mahle",
-     "team": "TEX",
+     "team": "ATL",
      "sem_plus": 108,
      "role": "Mid-rotation",
      "ip": 86.7,
@@ -16126,7 +16126,7 @@
     {
      "mlbam": 641778,
      "name": "Eric Lauer",
-     "team": "TOR",
+     "team": "LAD",
      "sem_plus": 107,
      "role": "Mid-rotation",
      "ip": 104.7,
@@ -16168,7 +16168,7 @@
     {
      "mlbam": 665795,
      "name": "Edward Cabrera",
-     "team": "MIA",
+     "team": "CHC",
      "sem_plus": 107,
      "role": "Mid-rotation",
      "ip": 137.7,
@@ -16252,7 +16252,7 @@
     {
      "mlbam": 663554,
      "name": "Casey Mize",
-     "team": "DET",
+     "team": "SD",
      "sem_plus": 106,
      "role": "Mid-rotation",
      "ip": 149.0,
@@ -16294,7 +16294,7 @@
     {
      "mlbam": 667755,
      "name": "Jos\u00e9 Soriano",
-     "team": "LAA",
+     "team": "TOR",
      "sem_plus": 105,
      "role": "Mid-rotation",
      "ip": 169.0,
@@ -16399,7 +16399,7 @@
     {
      "mlbam": 681347,
      "name": "Mike Burrows",
-     "team": "PIT",
+     "team": "HOU",
      "sem_plus": 103,
      "role": "Mid-rotation",
      "ip": 96.0,
@@ -16420,7 +16420,7 @@
     {
      "mlbam": 665152,
      "name": "Dean Kremer",
-     "team": "BAL",
+     "team": "MIN",
      "sem_plus": 103,
      "role": "Mid-rotation",
      "ip": 171.7,
@@ -16777,7 +16777,7 @@
     {
      "mlbam": 690928,
      "name": "Hunter Dobbins",
-     "team": "BOS",
+     "team": "STL",
      "sem_plus": 100,
      "role": "Mid-rotation",
      "ip": 61.0,
@@ -16840,7 +16840,7 @@
     {
      "mlbam": 647336,
      "name": "Michael Soroka",
-     "team": "CHC",
+     "team": "AZ",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 89.7,
@@ -16882,7 +16882,7 @@
     {
      "mlbam": 656288,
      "name": "Griffin Canning",
-     "team": "NYM",
+     "team": "SD",
      "sem_plus": 99,
      "role": "Back-end",
      "ip": 76.3,
@@ -17050,7 +17050,7 @@
     {
      "mlbam": 608337,
      "name": "Lucas Giolito",
-     "team": "BOS",
+     "team": "SD",
      "sem_plus": 98,
      "role": "Back-end",
      "ip": 145.0,
@@ -17155,7 +17155,7 @@
     {
      "mlbam": 669358,
      "name": "Shane Baz",
-     "team": "TB",
+     "team": "BAL",
      "sem_plus": 97,
      "role": "Back-end",
      "ip": 166.3,
@@ -17449,7 +17449,7 @@
     {
      "mlbam": 680573,
      "name": "Simeon Woods Richardson",
-     "team": "MIN",
+     "team": "TOR",
      "sem_plus": 95,
      "role": "Back-end",
      "ip": 111.3,
@@ -17911,7 +17911,7 @@
     {
      "mlbam": 641793,
      "name": "Zack Littell",
-     "team": "CIN",
+     "team": "AZ",
      "sem_plus": 89,
      "role": "Back-end",
      "ip": 186.7,
@@ -18037,7 +18037,7 @@
     {
      "mlbam": 669160,
      "name": "Dustin May",
-     "team": "BOS",
+     "team": "MIL",
      "sem_plus": 88,
      "role": "Back-end",
      "ip": 132.3,
@@ -18079,7 +18079,7 @@
     {
      "mlbam": 663559,
      "name": "Bailey Falter",
-     "team": "KC",
+     "team": "ATL",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 125.3,
@@ -18100,7 +18100,7 @@
     {
      "mlbam": 663978,
      "name": "Chris Paddack",
-     "team": "DET",
+     "team": "TEX",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 158.0,
@@ -18142,7 +18142,7 @@
     {
      "mlbam": 676467,
      "name": "Colton Gordon",
-     "team": "HOU",
+     "team": "MIL",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 86.0,
@@ -18268,7 +18268,7 @@
     {
      "mlbam": 690916,
      "name": "Richard Fitts",
-     "team": "BOS",
+     "team": "STL",
      "sem_plus": 86,
      "role": "Spot",
      "ip": 45.0,
@@ -18415,7 +18415,7 @@
     {
      "mlbam": 615698,
      "name": "Cal Quantrill",
-     "team": "ATL",
+     "team": "TEX",
      "sem_plus": 85,
      "role": "Spot",
      "ip": 117.7,
@@ -18604,7 +18604,7 @@
     {
      "mlbam": 608566,
      "name": "Germ\u00e1n M\u00e1rquez",
-     "team": "COL",
+     "team": "MIN",
      "sem_plus": 79,
      "role": "Spot",
      "ip": 126.3,
@@ -18646,7 +18646,7 @@
     {
      "mlbam": 622608,
      "name": "Antonio Senzatela",
-     "team": "COL",
+     "team": "MIL",
      "sem_plus": 78,
      "role": "Spot",
      "ip": 130.0,
@@ -18667,7 +18667,7 @@
     {
      "mlbam": 621111,
      "name": "Walker Buehler",
-     "team": "PHI",
+     "team": "SD",
      "sem_plus": 78,
      "role": "Spot",
      "ip": 126.0,
@@ -18751,7 +18751,7 @@
     {
      "mlbam": 687134,
      "name": "Bradley Blalock",
-     "team": "COL",
+     "team": "MIA",
      "sem_plus": 69,
      "role": "Spot",
      "ip": 58.7,

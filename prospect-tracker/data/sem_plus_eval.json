@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-15",
+ "generated_at": "2026-08-30",
  "seasons": [
   2018,
   2019,
@@ -14,7 +14,7 @@
   "predictor_year": "year Y qualified (IP>=50)",
   "target": "-RA9 in year Y+1 (IP>=40)",
   "excluded": "2020 (60-game COVID season)",
-  "n_partial_outcome_pairs_dropped": 111
+  "n_partial_outcome_pairs_dropped": 118
  },
  "harness": {
   "harness_version": 2,
@@ -37,7 +37,7 @@
    "X-R2 / X-S2 flips are not promised"
   ]
  },
- "runtime_seconds": 22.9,
+ "runtime_seconds": 89.5,
  "experiment": "X-S1 (+ X-S3)",
  "model": "sem_plus",
  "n_forward_pairs": 592,

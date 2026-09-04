@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-19",
+ "generated_at": "2026-09-04",
  "vintage_years": [
   2018,
   2019,
@@ -9,16 +9,16 @@
   2023
  ],
  "accounting": {
-  "listed": 9056,
+  "listed": 9059,
   "excluded_post_debut": 647,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3403,
-  "level_from_statsapi": 3476,
-  "level_from_career_stats": 1530,
-  "debuted": 4186,
-  "censored_active": 2311,
-  "washed_out": 725,
-  "overdue": 902
+  "no_level_age_fallback": 3406,
+  "level_from_statsapi": 3483,
+  "level_from_career_stats": 1523,
+  "debuted": 4200,
+  "censored_active": 2304,
+  "washed_out": 711,
+  "overdue": 906
  },
  "conventions": {
   "vintage_fv": "median of each source's earliest same-year snapshot",
@@ -28,45 +28,45 @@
   "selection": "MAE conditions on debuted players (shared by champion/baseline/challenger); overdue + washed-out rates carry the unconditional signal"
  },
  "champion_heuristic": {
-  "n": 4186,
-  "mae": 1.422,
-  "bias": 0.99,
-  "within_1y": 0.589,
+  "n": 4200,
+  "mae": 1.424,
+  "bias": 0.993,
+  "within_1y": 0.588,
   "exact": 0.218
  },
  "baseline_naive_level_table": {
-  "n": 3488,
-  "mae": 1.971,
-  "bias": 1.743,
+  "n": 3495,
+  "mae": 1.973,
+  "bias": 1.746,
   "within_1y": 0.381,
-  "exact": 0.169
+  "exact": 0.168
  },
  "champion_on_baseline_rows": {
-  "n": 3488,
-  "mae": 1.431,
-  "bias": 1.07,
+  "n": 3495,
+  "mae": 1.433,
+  "bias": 1.072,
   "within_1y": 0.583,
   "exact": 0.214
  },
  "challenger_empirical_table_forward_chained": {
-  "n": 2944,
-  "mae": 0.869,
-  "bias": 0.168,
-  "within_1y": 0.811,
+  "n": 2951,
+  "mae": 0.868,
+  "bias": 0.167,
+  "within_1y": 0.812,
   "exact": 0.367
  },
  "challenger_km_recalibrated_heuristic": {
-  "n": 2850,
-  "mae": 1.465,
-  "bias": 1.129,
+  "n": 2857,
+  "mae": 1.466,
+  "bias": 1.13,
   "within_1y": 0.572,
   "exact": 0.201
  },
  "v38_frozen_on_km_rows": {
-  "n": 2850,
-  "mae": 1.986,
-  "bias": 1.814,
-  "within_1y": 0.414,
+  "n": 2857,
+  "mae": 1.987,
+  "bias": 1.815,
+  "within_1y": 0.413,
   "exact": 0.14
  },
  "km_base_years_full_window": {
@@ -93,9 +93,9 @@
   "DSL": 7.5
  },
  "overdue_v38_vs_km": {
-  "v38": 797,
-  "km_recalibrated": 888,
-  "censored_n": 2311
+  "v38": 802,
+  "km_recalibrated": 892,
+  "censored_n": 2304
  },
  "ship_decision": {
   "date": "2026-06-11",
@@ -120,11 +120,11 @@
  },
  "by_level": {
   "DSL": {
-   "n": 60,
-   "mae": 3.517,
-   "bias": 3.483,
-   "within_1y": 0.133,
-   "exact": 0.033
+   "n": 63,
+   "mae": 3.54,
+   "bias": 3.508,
+   "within_1y": 0.127,
+   "exact": 0.032
   },
   "CPX": {
    "n": 334,
@@ -134,11 +134,11 @@
    "exact": 0.222
   },
   "A": {
-   "n": 933,
-   "mae": 1.573,
-   "bias": 1.162,
-   "within_1y": 0.535,
-   "exact": 0.186
+   "n": 937,
+   "mae": 1.569,
+   "bias": 1.157,
+   "within_1y": 0.537,
+   "exact": 0.188
   },
   "A+": {
    "n": 727,
@@ -178,39 +178,39 @@
    "exact": 0.25
   },
   "2020": {
-   "n": 733,
-   "mae": 1.228,
-   "bias": 0.731,
-   "within_1y": 0.662,
+   "n": 734,
+   "mae": 1.229,
+   "bias": 0.733,
+   "within_1y": 0.661,
    "exact": 0.251
   },
   "2021": {
-   "n": 713,
+   "n": 714,
    "mae": 1.927,
    "bias": 1.647,
-   "within_1y": 0.41,
+   "within_1y": 0.409,
    "exact": 0.104
   },
   "2022": {
-   "n": 717,
-   "mae": 1.456,
-   "bias": 1.191,
-   "within_1y": 0.577,
-   "exact": 0.213
+   "n": 720,
+   "mae": 1.462,
+   "bias": 1.196,
+   "within_1y": 0.576,
+   "exact": 0.212
   },
   "2023": {
-   "n": 598,
-   "mae": 1.375,
-   "bias": 1.187,
-   "within_1y": 0.607,
-   "exact": 0.217
+   "n": 607,
+   "mae": 1.384,
+   "bias": 1.196,
+   "within_1y": 0.606,
+   "exact": 0.219
   }
  },
  "residual_by_level": {
   "DSL": {
-   "n": 60,
-   "mean": 3.483,
-   "median": 3.5
+   "n": 63,
+   "mean": 3.508,
+   "median": 4
   },
   "CPX": {
    "n": 334,
@@ -218,8 +218,8 @@
    "median": 1.0
   },
   "A": {
-   "n": 933,
-   "mean": 1.162,
+   "n": 937,
+   "mean": 1.157,
    "median": 1
   },
   "A+": {
@@ -240,30 +240,30 @@
  },
  "bias_corrected_forward_chained": {
   "champion_rescore": {
-   "n": 3488,
-   "mae": 1.431,
-   "bias": 1.07,
+   "n": 3495,
+   "mae": 1.433,
+   "bias": 1.072,
    "within_1y": 0.583,
    "exact": 0.214
   },
   "bias_corrected": {
-   "n": 3488,
-   "mae": 1.23,
-   "bias": 0.704,
+   "n": 3495,
+   "mae": 1.231,
+   "bias": 0.706,
    "within_1y": 0.661,
    "exact": 0.264
   },
   "overdue": {
-   "champion": 347,
-   "bias_corrected": 451
+   "champion": 350,
+   "bias_corrected": 452
   },
   "shippable_level_bias_adj": {
-   "A": 0.5,
    "AAA": 0.5,
+   "A+": 0.5,
    "DSL": 0.5,
-   "CPX": 0.5,
    "AA": 0.5,
-   "A+": 0.5
+   "A": 0.5,
+   "CPX": 0.5
   },
   "cap": 0.5,
   "shrink_k": 10,
@@ -271,10 +271,10 @@
   "note": "conservative -0.5 final shave at every minor level (eta.LEVEL_BIAS_ADJ), applied by the live caller (storage.py); champion backtest UNtouched. MAE/within-1y improve; overdue +~99 (in line with the accepted KM +101)."
  },
  "censoring": {
-  "censored_active": 2311,
-  "overdue_rate": 0.39,
-  "washed_out": 725,
-  "washed_out_share_of_listed": 0.1
+  "censored_active": 2304,
+  "overdue_rate": 0.393,
+  "washed_out": 711,
+  "washed_out_share_of_listed": 0.099
  },
  "empirical_tables_by_vintage": {
   "2019": {
@@ -315,7 +315,7 @@
    "AA": 1,
    "CPX": 3.0,
    "AAA": 0.0,
-   "DSL": 3.0
+   "DSL": 3
   }
  },
  "km_survival_by_level": {
@@ -335,33 +335,33 @@
    0.3702,
    0.2622,
    0.2169,
-   0.204,
-   0.1975,
-   0.1889,
-   0.1871,
-   0.1871
+   0.2039,
+   0.1974,
+   0.1887,
+   0.1869,
+   0.1869
   ],
   "A+": [
-   0.9032,
-   0.6928,
-   0.5175,
-   0.4391,
-   0.4006,
-   0.3821,
-   0.3779,
-   0.3779,
-   0.3779
+   0.9031,
+   0.6926,
+   0.5171,
+   0.4386,
+   0.4001,
+   0.3815,
+   0.3773,
+   0.3773,
+   0.3773
   ],
   "A": [
    0.9698,
    0.8224,
    0.6161,
-   0.451,
-   0.3306,
-   0.2721,
-   0.2467,
-   0.2339,
-   0.2339
+   0.448,
+   0.3284,
+   0.2703,
+   0.2451,
+   0.2324,
+   0.2324
   ],
   "CPX": [
    0.9899,
@@ -375,15 +375,15 @@
    0.1311
   ],
   "DSL": [
-   0.9951,
-   0.9806,
-   0.932,
-   0.8447,
-   0.6829,
-   0.6197,
-   0.5633,
-   0.5633,
-   0.5477
+   0.9952,
+   0.9807,
+   0.9324,
+   0.8357,
+   0.6686,
+   0.6067,
+   0.5515,
+   0.5515,
+   0.5362
   ]
  },
  "empirical_table_gate_2026_08_19": {

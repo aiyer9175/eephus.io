@@ -1,28 +1,28 @@
 {
-"generated_at": "2026-08-14",
+"generated_at": "2026-09-04",
 "artifact": "data/advancement_pace.json",
 "kind": "descriptive QC only - no predictive claim is made or permitted anywhere for this statistic",
 "methodology_version": "1.0.0-eephus",
-"n_scored_latest_asof": 9620,
-"n_asof_rows_fit": 27542,
+"n_scored_latest_asof": 9743,
+"n_asof_rows_fit": 27674,
 "distribution_ap_plus_display_latest": {
-"mean": 99.28,
-"sd": 7.69,
-"p5": 88.4,
+"mean": 99.32,
+"sd": 7.68,
+"p5": 88.5,
 "p25": 94.8,
-"p50": 98.9,
-"p75": 103.2,
+"p50": 99.0,
+"p75": 103.1,
 "p95": 113.9,
 "n_at_low_clip": 2,
-"n_at_high_clip": 27
+"n_at_high_clip": 30
 },
 "distribution_ap_plus_model_latest": {
-"mean": 99.29,
-"sd": 7.78,
+"mean": 99.34,
+"sd": 7.77,
 "min": 63.0,
-"max": 161.8,
-"p5": 88.4,
-"p50": 98.9,
+"max": 160.7,
+"p5": 88.5,
+"p50": 99.0,
 "p95": 113.9
 },
 "margin_flatness_fit_pool": {
@@ -34,102 +34,102 @@
 },
 "2017-19": {
 "mean_ap_plus": 99.45,
-"n": 8302
+"n": 8303
 },
 "2021+": {
 "mean_ap_plus": 100.43,
-"n": 13347
+"n": 13478
 }
 },
 "position_group": {
 "C": {
-"mean_ap_plus": 100.26,
-"n": 1378
+"mean_ap_plus": 100.27,
+"n": 1399
 },
 "CIF": {
-"mean_ap_plus": 100.22,
-"n": 1569
+"mean_ap_plus": 100.23,
+"n": 1583
 },
 "MIF": {
-"mean_ap_plus": 100.02,
-"n": 2121
+"mean_ap_plus": 100.01,
+"n": 2122
 },
 "OF": {
-"mean_ap_plus": 100.09,
-"n": 2611
+"mean_ap_plus": 100.1,
+"n": 2627
 },
 "UNK": {
-"mean_ap_plus": 99.93,
-"n": 18853
+"mean_ap_plus": 99.92,
+"n": 18907
 },
 "UT": {
 "mean_ap_plus": 100.39,
-"n": 1010
+"n": 1036
 }
 },
 "entry_pathway": {
 "draft_college": {
-"mean_ap_plus": 99.57,
-"n": 1328
+"mean_ap_plus": 99.54,
+"n": 1368
 },
 "draft_hs": {
-"mean_ap_plus": 98.81,
-"n": 756
+"mean_ap_plus": 98.83,
+"n": 764
 },
 "intl_amateur": {
-"mean_ap_plus": 100.72,
-"n": 15862
+"mean_ap_plus": 100.71,
+"n": 15875
 },
 "undrafted_other": {
-"mean_ap_plus": 98.97,
-"n": 9596
+"mean_ap_plus": 98.99,
+"n": 9667
 }
 },
 "entry_age_bucket": {
 "18": {
 "mean_ap_plus": 100.02,
-"n": 4747
+"n": 4756
 },
 "19-20": {
-"mean_ap_plus": 99.52,
-"n": 2549
+"mean_ap_plus": 99.54,
+"n": 2565
 },
 "21-22": {
-"mean_ap_plus": 98.91,
-"n": 7105
+"mean_ap_plus": 98.92,
+"n": 7189
 },
 "23+": {
-"mean_ap_plus": 99.34,
-"n": 2313
+"mean_ap_plus": 99.36,
+"n": 2325
 },
 "<=17": {
 "mean_ap_plus": 100.96,
-"n": 10828
+"n": 10839
 }
 }
 },
 "threshold_stability": {
-"raw_pace_spearman_T20_vs_T30": 0.9942,
-"n_common_players": 9620
+"raw_pace_spearman_T20_vs_T30": 0.9946,
+"n_common_players": 9743
 },
 "named_riser_sanity": [
 {
 "name": "Dayson Croes",
-"ap_plus": 161.8,
+"ap_plus": 160.7,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AAA in 2 active seasons"
 },
 {
 "name": "Sam Petersen",
-"ap_plus": 146.2,
+"ap_plus": 147.6,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AAA in 2 active seasons"
 },
 {
 "name": "Dub Gleed",
-"ap_plus": 139.9,
+"ap_plus": 141.2,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AA in 2 active seasons"
@@ -142,11 +142,11 @@
 "path": "Rk -> AAA in 4 active seasons"
 },
 {
-"name": "Chase DeLauter",
-"ap_plus": 136.1,
+"name": "Konnor Griffin",
+"ap_plus": 138.6,
 "ap_percentile": 100,
-"ap_tier": "Established",
-"path": "Rk -> AAA in 3 active seasons"
+"ap_tier": "Developing",
+"path": "A -> AAA in 2 active seasons"
 }
 ]
 }

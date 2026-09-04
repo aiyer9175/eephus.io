@@ -1,46 +1,46 @@
 {
- "generated_at": "2026-08-14",
+ "generated_at": "2026-09-04",
  "scope": "HITTERS",
  "n_scored": 1869,
  "calibration_scale": {
-  "a": 0.032,
+  "a": 0.033,
   "b": 1.044
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 0.64,
+  "mean_abs_delta": 0.66,
   "max_up": 5.9,
-  "max_down": -2.9,
-  "share_within_2_grades": 0.908
+  "max_down": -3.8,
+  "share_within_2_grades": 0.905
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
   "mean_abs_delta": 6.04,
-  "max_up": 7.6,
+  "max_up": 8.0,
   "max_down": -20.7
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.0693,
-  "n": 462,
+  "spearman_adj_vs_consensus_miss": 0.0606,
+  "n": 463,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 23634.2,
-  "consensus": 23103.3
+  "xfv": 23919.1,
+  "consensus": 23474.3
  },
  "example_up_adjustments": [
   {
    "player_key": "zach_mckinstry",
    "consensus_fv": 40.5,
-   "xfv_grade": 47.4,
-   "delta": 6.9,
-   "realized_war_6yr": 4.57
+   "xfv_grade": 47.7,
+   "delta": 7.3,
+   "realized_war_6yr": 4.5
   },
   {
    "player_key": "tommy_edman",
    "consensus_fv": 40.4,
-   "xfv_grade": 47.2,
-   "delta": 6.8,
+   "xfv_grade": 47.7,
+   "delta": 7.2,
    "realized_war_6yr": 18.03
   },
   {
@@ -53,23 +53,23 @@
   {
    "player_key": "brent_rooker",
    "consensus_fv": 40.5,
-   "xfv_grade": 46.3,
-   "delta": 5.8,
+   "xfv_grade": 46.4,
+   "delta": 5.9,
    "realized_war_6yr": 8.27
   },
   {
    "player_key": "andrew_young",
    "consensus_fv": 38.0,
-   "xfv_grade": 43.8,
+   "xfv_grade": 43.7,
    "delta": 5.8,
    "realized_war_6yr": -0.86
   },
   {
-   "player_key": "myles_straw",
-   "consensus_fv": 38.8,
-   "xfv_grade": 44.5,
-   "delta": 5.8,
-   "realized_war_6yr": 7.55
+   "player_key": "daniel_johnson",
+   "consensus_fv": 43.0,
+   "xfv_grade": 48.5,
+   "delta": 5.6,
+   "realized_war_6yr": -0.21
   }
  ],
  "example_down_adjustments": [
