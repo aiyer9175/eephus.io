@@ -147,7 +147,19 @@ def test_clemens_default_applies_and_context_restores():
         # is false), so its whole tier grid lifts about 10.5% and FV50 hit is
         # the grid point this test happens to pin. ctrl_war did not move: the
         # anchors are unchanged, only what a win costs.
-        assert vf.surplus_value_mm(50.0, False) == pytest.approx(47.4, abs=0.1)
+        # RESTAMPED 2026-09-04 for the eWAR LABEL EPOCH, 47.4 -> 48.2. career_war was
+        # rebased to eWAR v2 and `value_framework --fit` re-derived the empirical WAR
+        # anchors on the new label, so the FV-to-WAR map moved and the whole tier grid
+        # moved with it. This is an ANCHOR move, not a win-cost move: FV45 goes 0.31 to
+        # 0.32 WAR/yr and FV50 0.67 to 0.68, while FV70 goes 2.52 to 2.49, which is why
+        # the top of the grid is the only place that falls (hit FV70 226.7 -> 223.2).
+        # The prospx_current tier grid was re-captured INSIDE this set in the same change.
+        # ctrl_war DID move at the bottom this time, and for a separate reason recorded in
+        # data/value_framework_fitted.json anchors_provenance: the routine --fit reverted
+        # the sub-45 knots to a single 0.19 constant across FV20..40, they were re-measured
+        # on the eWAR label (FV35 0.0069, FV40 0.0710) and re-applied, so 35+ ctrl_war goes
+        # 0.32 -> 0.23 and 40 goes 0.52 -> 0.43.
+        assert vf.surplus_value_mm(50.0, False) == pytest.approx(48.2, abs=0.1)
     assert vf.active_valuation_set() == "clemens_2026"
     assert vf.surplus_value_mm(50.0, False) == pytest.approx(base_50, abs=0.01)
     assert vf._config()["_valuation_set"] == "clemens_2026"

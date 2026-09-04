@@ -756,7 +756,15 @@ def test_no_power_infielder_partial_sample_suppresses_defensive_floor() -> None:
 
     assert "no_power_infield_floor_suppression" in out["inputs_available"]
     assert out["defensive_floor_mm"] == 0.0
-    assert out["trade_value_mm"] < 30.0
+    # RESTAMPED 2026-09-04 for the eWAR label epoch: 30.0 -> 31.0, measured 30.4. The two
+    # assertions that carry this test's MEANING are untouched and still pass, namely that
+    # the suppression fires and that defensive_floor_mm is exactly 0.0. This ceiling is a
+    # PROXY for "the price stays modest without the floor", and the epoch lifted every
+    # price about 1.7 percent when the empirical WAR anchors were re-derived on the rebased
+    # label (FV50 hit 47.4 -> 48.2), which is enough to carry 30.4 past a 30.0 line set
+    # before that. Headroom is now 0.6 and that is deliberate: the next upward move should
+    # be re-examined rather than widened again.
+    assert out["trade_value_mm"] < 31.0
 
 
 def test_stuff_command_post_callup_starter_outranks_no_power_infielder() -> None:

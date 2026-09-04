@@ -110,7 +110,14 @@ def test_projection_only_rows_price_on_the_projection_basis():
         assert r["surplus_source"] == "projection"
         assert r["board_entry"] == "projection_only"
         assert r["trade_value_lo"] is None and r["trade_value_hi"] is None
-        assert r["trade_value_mm"] == pytest.approx(proj_sur[r["player_key"]], abs=0.05)
+        # tolerance is the ONE-DECIMAL rounding half-width from bayes_trade_value.py:3671
+        # (`round(..., 1)`), plus float slack. At exactly 0.05 a projection landing on a
+        # .X5 boundary fails on representation alone: the eWAR label epoch moved a vet to
+        # -1.25, which rounds to -1.2, and -1.2 - -1.25 evaluates to 0.05000000000000004.
+        # That is the float, not the code, so the fix is one slack step rather than a
+        # looser gate.
+        assert r["trade_value_mm"] == pytest.approx(
+            proj_sur[r["player_key"]], abs=0.05 + 1e-9)
         assert r["trade_value_grade"] and r["trade_value_tier"]
         assert "fv" not in r and "xfv_grade" not in r, "no grade may be invented"
 

@@ -64,7 +64,16 @@ def _all_markets_unguarded():
     orig = bm.SERVE_RUN_DISPERSION
     try:
         bm.SERVE_RUN_DISPERSION = True          # the flag the predicate reads
-        return be._floor_clearing_sides(_board(), 0.06)
+        # ledger_closed is injected EMPTY on purpose. This file tests the DISPERSION
+        # exclusion, and _floor_clearing_sides carries a second, independent guard: the
+        # section 7b ledger leg, which closes a market that resolved worse than a coin on
+        # its own settled games. On 2026-09-04 that leg closed `total` on live evidence
+        # (ledger_closed_markets() -> frozenset({'total'})), so this helper silently lost
+        # the very market the non-vacuity check exists to prove is present, and the failure
+        # read as a dispersion result when it was nothing of the kind. The parameter is
+        # documented as injectable for tests precisely so a test of one guard does not
+        # depend on the live state of the other.
+        return be._floor_clearing_sides(_board(), 0.06, ledger_closed=frozenset())
     finally:
         bm.SERVE_RUN_DISPERSION = orig
 
@@ -96,7 +105,9 @@ def test_predicate_lifts_itself_when_the_correction_is_served():
 
 def test_slot_selection_emits_no_runline_or_total():
     """SEAM 1: the two published slots."""
-    cands = be._floor_clearing_sides(_board(), 0.06)
+    # same ledger isolation as _all_markets_unguarded: this asserts what the DISPERSION
+    # guard emits, so the live ledger state must not decide the answer.
+    cands = be._floor_clearing_sides(_board(), 0.06, ledger_closed=frozenset())
     assert cands, "guard removed everything; the moneyline side should survive"
     assert {c["market"] for c in cands} == {"moneyline"}, cands
 

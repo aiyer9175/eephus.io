@@ -51,7 +51,12 @@ def test_surplus_50_hitter_stays_model_scale_not_table():
     # test exists to pin is the model/table SEPARATION, so the guard is re-expressed below
     # as that separation instead of an absolute dollar ceiling, which was only ever a
     # proxy for it and one that any re-price would trip.
-    assert vf.surplus_value_mm(50.0, False) == pytest.approx(40.5, abs=0.6)
+    # 2026-09-04: RESTAMPED for the eWAR label epoch, 40.5 -> 41.2. career_war was rebased
+    # to eWAR v2 and the empirical WAR anchors were re-derived on the new label, which moves
+    # the FV-to-WAR map and every price with it. The SEPARATION invariant this test actually
+    # exists to pin is unchanged and still checked below: the model FV50 price 41.2 stays
+    # clearly under the prospx_current TABLE price 48.2, a gap of 7.0.
+    assert vf.surplus_value_mm(50.0, False) == pytest.approx(41.2, abs=0.6)
     with vf.valuation_set("prospx_current"):
         table_50 = vf.surplus_value_mm(50.0, False)
     assert vf.surplus_value_mm(50.0, False) < table_50 - 1.0, (
@@ -134,7 +139,10 @@ def test_cache_cleared_on_set_switch():
         # 14.92M -> 17.29M, +15.9%) and prospx_current leaves the FA-implied
         # rescale ON, so its tier grid lifts about 10.5% on win cost alone.
         base_50 = vf.surplus_value_mm(50.0, False)
-        assert base_50 == pytest.approx(47.4, abs=0.1)
+        # Re-stamped 2026-09-04: 47.4 -> 48.2 for the eWAR label epoch. Same cause as the
+        # model-scale move above, an anchor re-derivation on the rebased label, and the
+        # prospx_current tier grid was re-captured inside its own set in the same change.
+        assert base_50 == pytest.approx(48.2, abs=0.1)
     # The CACHE-CLEARING fact this test exists for, stated scale-free so a future
     # re-price restamps one literal instead of silently voiding the guard: the two
     # contexts must price differently, and leaving must restore the clemens price.

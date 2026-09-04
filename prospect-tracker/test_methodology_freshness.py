@@ -21,6 +21,20 @@ ROOT = Path(__file__).parent
 # models with no user-facing methodology surface). EVERY registry row
 # must appear; a new model ships with its documentation decision.
 MODEL_GLOSSARY = {
+    # The 2026-09-04 eWAR label epoch and the four driver families swept beside it.
+    # ALL FIVE ARE INTERNAL, and on a single consistent reason: not one of them moved a
+    # served number or a line of page copy. The epoch lab measures the label swap and its
+    # verdict is that the swap changed nothing a reader can see (hit equivalent, pit
+    # undecided), which is why the eWAR frame disclosure on the served surfaces is a BASIS
+    # statement and not an accuracy claim. The four driver families shipped no feature:
+    # volume and cumulative counts, per-level and per-league weights, age-by-production
+    # interactions and the health profile are all recorded nulls. If any of them is ever
+    # promoted, the mapping graduates to the xfv entry with it.
+    "xfv_ewar_label_epoch": "internal",
+    "xfv_volume_drivers": "internal",
+    "xfv_level_weights": "internal",
+    "xfv_age_level_interaction": "internal",
+    "xfv_health_profile": "internal",
     "arb_award": ["arb_award_model", "arb_market_residual"],
     "arb_label_set": "internal",
     "arb_fa_link": "internal",

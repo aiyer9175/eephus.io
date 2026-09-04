@@ -79,11 +79,16 @@ def test_odds_grade_is_monotone_in_expected_war(is_pit, age, pos):
 # site-wide "grades display the ceiling" rule.
 def test_display_grade_rounds_to_nearest_not_up():
     oiv = efv_score.vf.outcome_implied_fv
-    raw = oiv(2.0)                              # lands at ~44.535 (a clean non-integer)
+    # RESTAMPED 2026-09-04 for the eWAR label epoch: the pooled FV outcome curve was refit
+    # on the rebased label, so oiv(2.0) moved 44.535 -> 44.333. The test's POINT is intact
+    # and re-verified rather than assumed: 44.333 is still a clean non-integer, 0.33 from
+    # the nearest whole grade, and 44.3 is still a round DOWN, which a ceiling rule could
+    # never produce. Only the pinned value moved.
+    raw = oiv(2.0)                              # lands at ~44.333 (a clean non-integer)
     assert raw is not None and abs(raw - round(raw)) > 0.05, "need a fractional raw grade"
     efv_display = round(raw, 1)                 # the convention efv_score applies
     # rounds to the nearest tenth -- here DOWN, which the ceiling rule could never do
-    assert efv_display == pytest.approx(44.5, abs=1e-9)
+    assert efv_display == pytest.approx(44.3, abs=1e-9)
     assert efv_display < raw                    # rounded down -> definitively not a ceiling
     assert efv_display != math.ceil(raw)        # grades-round-UP would give 45; eFV does not
 

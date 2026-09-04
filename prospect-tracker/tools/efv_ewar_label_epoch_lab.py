@@ -526,7 +526,13 @@ def blast(write: bool = True) -> dict:
         return (json.loads(a.read_text(encoding="utf-8")),
                 json.loads(b.read_text(encoding="utf-8")))
 
-    out: dict = {"snapshot": str(SNAP_DIR)}
+    # The snapshot lives OUTSIDE the repo, so its absolute path names the build machine and
+    # the operator's home directory. data/*.json is published, and
+    # test_published_payload_hygiene refuses absolute build-machine paths in published
+    # payloads for exactly that reason. Record the directory NAME, which is the part a
+    # reader needs in order to know which snapshot this was diffed against.
+    out: dict = {"snapshot": SNAP_DIR.name,
+                 "snapshot_note": "a sibling directory of the repo root, not published"}
     old, new = _load("xfv.json")
     if old and new:
         ob, nb = old.get("by_player", {}), new.get("by_player", {})

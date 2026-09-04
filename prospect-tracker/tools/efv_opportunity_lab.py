@@ -203,16 +203,26 @@ def _id_overrides() -> dict:
 
 def _accrual_frame():
     """{(mlbam, season): (pa, ipouts, war)} collapsed over stints, the SAME spine
-    arb_dataset.war_daily_spine uses (arb_dataset.py:119)."""
+    arb_dataset.war_daily_spine uses (arb_dataset.py:119).
+
+    READS THROUGH war_source (2026-09-04), not the parquet directly. It used to read
+    .cache/war_daily/*.parquet, which is the raw bWAR download, while the eFV label it is
+    joined against moved to eWAR v2 in the label epoch. The two bases then disagreed
+    wholesale on the pitcher side: the synthetic-censoring leg's join reproduced
+    target_resolved on 0.0557 of pitcher rows and 0.8828 of hitter rows, against the 0.95
+    the leg needs, so it was measuring the basis gap rather than the label fill. The
+    facade returns the same stint shape with WAR on the SERVED provider, which is what
+    `the SAME spine arb_dataset uses` was always supposed to mean, since arb_dataset
+    itself was moved onto the facade in the same wave.
+    """
     import pandas as pd
+    import war_source
     if not (WAR_DAILY / "bat.parquet").exists():
         raise SystemExit(
             "missing .cache/war_daily/bat.parquet. It is GITIGNORED and rebuilt from "
             "pybaseball; see OPPORTUNITY_DECOMP_GATE.md section 4.")
-    b = pd.read_parquet(WAR_DAILY / "bat.parquet",
-                        columns=["mlb_ID", "year_ID", "PA", "WAR"])
-    p = pd.read_parquet(WAR_DAILY / "pit.parquet",
-                        columns=["mlb_ID", "year_ID", "IPouts", "WAR"])
+    b = war_source.stint_frame("bat")[["mlb_ID", "year_ID", "PA", "WAR"]].copy()
+    p = war_source.stint_frame("pit")[["mlb_ID", "year_ID", "IPouts", "WAR"]].copy()
     for d, cols in ((b, ("mlb_ID", "year_ID", "PA", "WAR")),
                     (p, ("mlb_ID", "year_ID", "IPouts", "WAR"))):
         for c in cols:
@@ -991,18 +1001,35 @@ def _synthetic_censoring(side: str, rows_oof):
                 "reason": "too few fully-resolved joined rows"}
     n = len(series)
     within = sum(1 for d in agree if d < 0.05)
+    join_block = {
+        "n": len(agree), "within_0.05_of_target_resolved": within,
+        "share": round(within / len(agree), 4) if agree else None,
+        "max_abs_diff": round(max(agree), 3) if agree else None,
+        "why": "an instrument built on a label the matrix does not recognise would "
+               "measure the join, not the fill."}
+    # THE LAB ENFORCES ITS OWN PRECONDITION (2026-09-04). This share was computed and
+    # REPORTED here but never acted on: the leg was marked identified whenever 40 rows
+    # joined, and only test_opportunity_lab refused a bad join. That is the wrong place
+    # for it. A published artifact should not carry `identified: True` beside a share its
+    # own `why` string says invalidates the instrument. The eWAR label epoch is what
+    # exposed it: career_war now holds values from a FIXED ewar.json snapshot while
+    # war_daily keeps moving underneath it, so the join reproduces target_resolved on
+    # 0.8828 of hitter rows instead of the 0.95 the leg needs.
+    JOIN_MIN = 0.95
+    share = join_block["share"]
+    if share is None or share <= JOIN_MIN:
+        return {"n": n, "identified": False,
+                "reason": (f"war_daily join reproduces target_resolved on only {share} of "
+                           f"rows, under the {JOIN_MIN} the leg needs; it would measure "
+                           f"the join rather than the label fill"),
+                "join_label_agreement": join_block}
     base = [{"cohort": r["cohort"], "pred": r["pred"], "obs": sum(per)}
             for r, per in series.values()]
     true_slope, _ = _within_cohort_slope(base)
     true_sd = math.sqrt(sum((b["obs"] - sum(x["obs"] for x in base) / n) ** 2
                             for b in base) / n)
     out = {"n": n, "identified": True,
-           "join_label_agreement": {
-               "n": len(agree), "within_0.05_of_target_resolved": within,
-               "share": round(within / len(agree), 4) if agree else None,
-               "max_abs_diff": round(max(agree), 3) if agree else None,
-               "why": "an instrument built on a label the matrix does not recognise would "
-                      "measure the join, not the fill."},
+           "join_label_agreement": join_block,
            "true_label": {"within_cohort_slope": _r4(true_slope), "label_sd": round(true_sd, 3)},
            "by_observed_seasons": {}}
     for k in (2, 3, 4, 5):

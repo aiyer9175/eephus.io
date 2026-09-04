@@ -216,6 +216,17 @@ ship the artifact (the curve is committed, not nightly).
     #   import value_framework as vf
     #   with vf.valuation_set("prospx_current"): <the capture the 2026-08-13 epoch used>
 
+RE-APPLY THE SUB-45 KNOTS AFTER THE FIT, every time. `derive_empirical_war_anchors`
+CANNOT emit them (its tier list starts at 40, its public-reference fallback hands 20/25/30
+the FV35 reference, and its round(v, 2) collapses every sub-45 value), so a routine `--fit`
+silently reverts the table to one 0.19 constant across FV20 to FV40, which is a single
+declared production value for 72 percent of served rows. It did exactly that on 2026-09-04
+and `test_empirical_anchors.test_low_end_anchors_are_present_and_measured` caught it. The
+remedy is to re-measure FV35 and FV40 on the CURRENT label over the resolved matrix pool
+(target_censored over 6, both sides) and write them back with the 20/25/30 ramp rescaled
+under the new FV35 knot, then record the numbers in `anchors_provenance`. On the eWAR label
+that is FV35 0.0069 and FV40 0.0710.
+
 Why: `--fit` calls `empirical_anchors.derive_empirical_war_anchors` (`value_framework.py:3544`),
 which reads `career_war`, and writes the fitted ordered-logit plus the anchors into
 `data/value_framework_fitted.json`; `survivor_expected_war` (WAG's FV -> WAR/yr basis) and
