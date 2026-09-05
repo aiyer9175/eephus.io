@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-04T22:33:24Z",
+ "generated_at": "2026-09-04T23:39:46Z",
  "produced_by": "tools/efv_health_profile_lab.py",
  "asked_by": "owner, 2026-09-04: an outcome-grounded health profile driver",
  "label_basis": "eWAR v2 (the 2026-09-04 label epoch)",
@@ -346,332 +346,53 @@
       }
      ]
     },
-    "gated": {
-     "baseline_margin": -0.01568,
-     "n_scored_rows": 1024,
-     "family_size": 24,
-     "results": [
-      {
-       "name": "health_index_oof",
-       "why": "the forward-chained stacked health submodel over il_stints, il_days, il_max_stint_days, il_60day, il_fullseason",
-       "margin_base": -0.01568,
-       "margin_with": -0.05578,
-       "delta": -0.0401,
-       "E_cond_floor_mde95": 0.06251,
-       "clears_own_floor": false,
-       "permutation_p": 0.0,
-       "permutation_B": 400,
-       "holm_p": 0.0,
-       "SHIPPABLE": false
+    "penalty_verdict": {
+     "controls": [
+      "fv",
+      "n_milb_seasons",
+      "level_rank",
+      "age"
+     ],
+     "B": 4000,
+     "terms": {
+      "il_on_gate": {
+       "n": 1127,
+       "rho": 0.0651,
+       "ci95": [
+        0.0021,
+        0.1282
+       ],
+       "verdict": "PENALTY CONTRAINDICATED (interval above zero)"
       },
-      {
-       "name": "il_stints",
-       "why": "count of IL placements before the decision",
-       "margin_base": -0.01568,
-       "margin_with": -0.01462,
-       "delta": 0.00106,
-       "E_cond_floor_mde95": 0.00389,
-       "clears_own_floor": false,
-       "permutation_p": 0.5825,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
+      "il_days_given_on_il": {
+       "n": 132,
+       "rho": 0.0395,
+       "ci95": [
+        -0.1306,
+        0.2219
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       },
-      {
-       "name": "il_days",
-       "why": "cumulative IL days before the decision",
-       "margin_base": -0.01568,
-       "margin_with": -0.0137,
-       "delta": 0.00198,
-       "E_cond_floor_mde95": 0.00368,
-       "clears_own_floor": false,
-       "permutation_p": 0.37,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
+      "il_stints_given_on_il": {
+       "n": 132,
+       "rho": -0.0897,
+       "ci95": [
+        -0.2539,
+        0.0795
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       },
-      {
-       "name": "il_max_stint_days",
-       "why": "longest single stint",
-       "margin_base": -0.01568,
-       "margin_with": -0.01312,
-       "delta": 0.00256,
-       "E_cond_floor_mde95": 0.00498,
-       "clears_own_floor": false,
-       "permutation_p": 0.2925,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_60day",
-       "why": "count of 60-day placements",
-       "margin_base": -0.01568,
-       "margin_with": -0.01844,
-       "delta": -0.00276,
-       "E_cond_floor_mde95": 0.00813,
-       "clears_own_floor": false,
-       "permutation_p": 0.2625,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_fullseason",
-       "skipped": "constant on this cohort"
-      },
-      {
-       "name": "il_open_at_decision",
-       "why": "on the IL at the decision date: the INCUMBENT signal, included so the new features are measured against it rather than beside it",
-       "margin_base": -0.01568,
-       "margin_with": -0.01513,
-       "delta": 0.00055,
-       "E_cond_floor_mde95": 0.00758,
-       "clears_own_floor": false,
-       "permutation_p": 0.74,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_30",
-       "why": "30+ cumulative IL days as a prospect",
-       "margin_base": -0.01568,
-       "margin_with": -0.00242,
-       "delta": 0.01326,
-       "E_cond_floor_mde95": 0.01494,
-       "clears_own_floor": false,
-       "permutation_p": 0.02,
-       "permutation_B": 400,
-       "holm_p": 0.44,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_60",
-       "why": "60+ cumulative IL days as a prospect",
-       "margin_base": -0.01568,
-       "margin_with": -0.01043,
-       "delta": 0.00525,
-       "E_cond_floor_mde95": 0.00685,
-       "clears_own_floor": false,
-       "permutation_p": 0.07,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_90",
-       "why": "90+ cumulative IL days as a prospect",
-       "margin_base": -0.01568,
-       "margin_with": -0.01283,
-       "delta": 0.00285,
-       "E_cond_floor_mde95": 0.00469,
-       "clears_own_floor": false,
-       "permutation_p": 0.255,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_120",
-       "why": "120+ cumulative IL days as a prospect",
-       "margin_base": -0.01568,
-       "margin_with": -0.01359,
-       "delta": 0.00209,
-       "E_cond_floor_mde95": 0.00412,
-       "clears_own_floor": false,
-       "permutation_p": 0.3175,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_180",
-       "why": "180+ cumulative IL days as a prospect",
-       "margin_base": -0.01568,
-       "margin_with": -0.01366,
-       "delta": 0.00202,
-       "E_cond_floor_mde95": 0.00447,
-       "clears_own_floor": false,
-       "permutation_p": 0.345,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_2",
-       "why": "2+ separate IL stints as a prospect",
-       "margin_base": -0.01568,
-       "margin_with": -0.01486,
-       "delta": 0.00082,
-       "E_cond_floor_mde95": 0.00352,
-       "clears_own_floor": false,
-       "permutation_p": 0.6375,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_3",
-       "why": "3+ separate IL stints as a prospect",
-       "margin_base": -0.01568,
-       "margin_with": -0.01588,
-       "delta": -0.00021,
-       "E_cond_floor_mde95": 0.00185,
-       "clears_own_floor": false,
-       "permutation_p": 0.905,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_4",
-       "why": "4+ separate IL stints as a prospect",
-       "margin_base": -0.01568,
-       "margin_with": -0.01591,
-       "delta": -0.00023,
-       "E_cond_floor_mde95": 0.00083,
-       "clears_own_floor": false,
-       "permutation_p": 0.9025,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "durable_zero_il",
-       "why": "NO IL placement in an observable window: the durability side of the ask",
-       "margin_base": -0.01568,
-       "margin_with": -0.01336,
-       "delta": 0.00232,
-       "E_cond_floor_mde95": 0.00572,
-       "clears_own_floor": false,
-       "permutation_p": 0.33,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_elbow",
-       "why": "an IL event naming the elbow",
-       "margin_base": -0.01568,
-       "margin_with": -0.01545,
-       "delta": 0.00023,
-       "E_cond_floor_mde95": 0.00161,
-       "clears_own_floor": false,
-       "permutation_p": 0.915,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_shoulder",
-       "why": "an IL event naming the shoulder",
-       "margin_base": -0.01568,
-       "margin_with": -0.01654,
-       "delta": -0.00086,
-       "E_cond_floor_mde95": 0.00167,
-       "clears_own_floor": false,
-       "permutation_p": 0.585,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_back",
-       "why": "an IL event naming the back",
-       "margin_base": -0.01568,
-       "margin_with": -0.02066,
-       "delta": -0.00498,
-       "E_cond_floor_mde95": 0.00988,
-       "clears_own_floor": false,
-       "permutation_p": 0.0075,
-       "permutation_B": 400,
-       "holm_p": 0.1725,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_hamstring",
-       "why": "an IL event naming the hamstring",
-       "margin_base": -0.01568,
-       "margin_with": -0.01196,
-       "delta": 0.00372,
-       "E_cond_floor_mde95": 0.00615,
-       "clears_own_floor": false,
-       "permutation_p": 0.11,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_oblique",
-       "why": "an IL event naming the oblique",
-       "margin_base": -0.01568,
-       "margin_with": -0.0158,
-       "delta": -0.00012,
-       "E_cond_floor_mde95": 0.00074,
-       "clears_own_floor": false,
-       "permutation_p": 0.9275,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_knee",
-       "why": "an IL event naming the knee",
-       "margin_base": -0.01568,
-       "margin_with": -0.01341,
-       "delta": 0.00227,
-       "E_cond_floor_mde95": 0.00213,
-       "clears_own_floor": true,
-       "permutation_p": 0.15,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_wrist",
-       "why": "an IL event naming the wrist",
-       "margin_base": -0.01568,
-       "margin_with": -0.01007,
-       "delta": 0.00561,
-       "E_cond_floor_mde95": 0.00967,
-       "clears_own_floor": false,
-       "permutation_p": 0.04,
-       "permutation_B": 400,
-       "holm_p": 0.84,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_forearm",
-       "why": "an IL event naming the forearm",
-       "margin_base": -0.01568,
-       "margin_with": -0.01498,
-       "delta": 0.0007,
-       "E_cond_floor_mde95": 0.00151,
-       "clears_own_floor": false,
-       "permutation_p": 0.6125,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_lat",
-       "skipped": "constant on this cohort"
-      },
-      {
-       "name": "cat_hip",
-       "why": "an IL event naming the hip",
-       "margin_base": -0.01568,
-       "margin_with": -0.0149,
-       "delta": 0.00078,
-       "E_cond_floor_mde95": 0.00144,
-       "clears_own_floor": false,
-       "permutation_p": 0.4775,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
+      "il_max_stint_days_given_on_il": {
+       "n": 132,
+       "rho": 0.0572,
+       "ci95": [
+        -0.1177,
+        0.232
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       }
-     ]
+     },
+     "side_verdict": "CONTRAINDICATED"
     }
    },
    "debuted_only": {
@@ -1011,332 +732,53 @@
       }
      ]
     },
-    "gated": {
-     "baseline_margin": 0.00624,
-     "n_scored_rows": 444,
-     "family_size": 24,
-     "results": [
-      {
-       "name": "health_index_oof",
-       "why": "the forward-chained stacked health submodel over il_stints, il_days, il_max_stint_days, il_60day, il_fullseason",
-       "margin_base": 0.00624,
-       "margin_with": 0.00372,
-       "delta": -0.00252,
-       "E_cond_floor_mde95": 0.0096,
-       "clears_own_floor": false,
-       "permutation_p": 0.55,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
+    "penalty_verdict": {
+     "controls": [
+      "fv",
+      "n_milb_seasons",
+      "level_rank",
+      "age"
+     ],
+     "B": 4000,
+     "terms": {
+      "il_on_gate": {
+       "n": 516,
+       "rho": 0.0649,
+       "ci95": [
+        -0.0347,
+        0.1631
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       },
-      {
-       "name": "il_stints",
-       "why": "count of IL placements before the decision",
-       "margin_base": 0.00624,
-       "margin_with": 0.00505,
-       "delta": -0.00119,
-       "E_cond_floor_mde95": 0.00924,
-       "clears_own_floor": false,
-       "permutation_p": 0.77,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
+      "il_days_given_on_il": {
+       "n": 68,
+       "rho": 0.0482,
+       "ci95": [
+        -0.1966,
+        0.291
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       },
-      {
-       "name": "il_days",
-       "why": "cumulative IL days before the decision",
-       "margin_base": 0.00624,
-       "margin_with": 0.00718,
-       "delta": 0.00094,
-       "E_cond_floor_mde95": 0.00498,
-       "clears_own_floor": false,
-       "permutation_p": 0.7875,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
+      "il_stints_given_on_il": {
+       "n": 68,
+       "rho": -0.0859,
+       "ci95": [
+        -0.3228,
+        0.1532
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       },
-      {
-       "name": "il_max_stint_days",
-       "why": "longest single stint",
-       "margin_base": 0.00624,
-       "margin_with": 0.00666,
-       "delta": 0.00042,
-       "E_cond_floor_mde95": 0.00492,
-       "clears_own_floor": false,
-       "permutation_p": 0.875,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_60day",
-       "why": "count of 60-day placements",
-       "margin_base": 0.00624,
-       "margin_with": 0.0065,
-       "delta": 0.00026,
-       "E_cond_floor_mde95": 0.00798,
-       "clears_own_floor": false,
-       "permutation_p": 0.9575,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_fullseason",
-       "skipped": "constant on this cohort"
-      },
-      {
-       "name": "il_open_at_decision",
-       "why": "on the IL at the decision date: the INCUMBENT signal, included so the new features are measured against it rather than beside it",
-       "margin_base": 0.00624,
-       "margin_with": 0.00721,
-       "delta": 0.00097,
-       "E_cond_floor_mde95": 0.01139,
-       "clears_own_floor": false,
-       "permutation_p": 0.78,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_30",
-       "why": "30+ cumulative IL days as a prospect",
-       "margin_base": 0.00624,
-       "margin_with": 0.01399,
-       "delta": 0.00775,
-       "E_cond_floor_mde95": 0.02205,
-       "clears_own_floor": false,
-       "permutation_p": 0.14,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_60",
-       "why": "60+ cumulative IL days as a prospect",
-       "margin_base": 0.00624,
-       "margin_with": 0.00915,
-       "delta": 0.00291,
-       "E_cond_floor_mde95": 0.01208,
-       "clears_own_floor": false,
-       "permutation_p": 0.54,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_90",
-       "why": "90+ cumulative IL days as a prospect",
-       "margin_base": 0.00624,
-       "margin_with": 0.00551,
-       "delta": -0.00073,
-       "E_cond_floor_mde95": 0.00893,
-       "clears_own_floor": false,
-       "permutation_p": 0.8675,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_120",
-       "why": "120+ cumulative IL days as a prospect",
-       "margin_base": 0.00624,
-       "margin_with": 0.0078,
-       "delta": 0.00156,
-       "E_cond_floor_mde95": 0.00783,
-       "clears_own_floor": false,
-       "permutation_p": 0.7275,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_180",
-       "why": "180+ cumulative IL days as a prospect",
-       "margin_base": 0.00624,
-       "margin_with": 0.00659,
-       "delta": 0.00035,
-       "E_cond_floor_mde95": 0.00819,
-       "clears_own_floor": false,
-       "permutation_p": 0.915,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_2",
-       "why": "2+ separate IL stints as a prospect",
-       "margin_base": 0.00624,
-       "margin_with": 0.00319,
-       "delta": -0.00305,
-       "E_cond_floor_mde95": 0.00835,
-       "clears_own_floor": false,
-       "permutation_p": 0.5175,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_3",
-       "why": "3+ separate IL stints as a prospect",
-       "margin_base": 0.00624,
-       "margin_with": 0.00521,
-       "delta": -0.00103,
-       "E_cond_floor_mde95": 0.00267,
-       "clears_own_floor": false,
-       "permutation_p": 0.755,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_4",
-       "why": "4+ separate IL stints as a prospect",
-       "margin_base": 0.00624,
-       "margin_with": 0.00636,
-       "delta": 0.00011,
-       "E_cond_floor_mde95": 0.00245,
-       "clears_own_floor": false,
-       "permutation_p": 0.9775,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "durable_zero_il",
-       "why": "NO IL placement in an observable window: the durability side of the ask",
-       "margin_base": 0.00624,
-       "margin_with": 0.0036,
-       "delta": -0.00264,
-       "E_cond_floor_mde95": 0.01233,
-       "clears_own_floor": false,
-       "permutation_p": 0.525,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_elbow",
-       "why": "an IL event naming the elbow",
-       "margin_base": 0.00624,
-       "margin_with": 0.00072,
-       "delta": -0.00552,
-       "E_cond_floor_mde95": 0.01022,
-       "clears_own_floor": false,
-       "permutation_p": 0.21,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_shoulder",
-       "why": "an IL event naming the shoulder",
-       "margin_base": 0.00624,
-       "margin_with": 0.00502,
-       "delta": -0.00122,
-       "E_cond_floor_mde95": 0.00308,
-       "clears_own_floor": false,
-       "permutation_p": 0.7125,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_back",
-       "why": "an IL event naming the back",
-       "margin_base": 0.00624,
-       "margin_with": -0.0075,
-       "delta": -0.01374,
-       "E_cond_floor_mde95": 0.02709,
-       "clears_own_floor": false,
-       "permutation_p": 0.03,
-       "permutation_B": 400,
-       "holm_p": 0.72,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_hamstring",
-       "why": "an IL event naming the hamstring",
-       "margin_base": 0.00624,
-       "margin_with": 0.01314,
-       "delta": 0.0069,
-       "E_cond_floor_mde95": 0.01083,
-       "clears_own_floor": false,
-       "permutation_p": 0.265,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_oblique",
-       "why": "an IL event naming the oblique",
-       "margin_base": 0.00624,
-       "margin_with": 0.00514,
-       "delta": -0.0011,
-       "E_cond_floor_mde95": 0.00133,
-       "clears_own_floor": false,
-       "permutation_p": 0.7425,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_knee",
-       "why": "an IL event naming the knee",
-       "margin_base": 0.00624,
-       "margin_with": 0.0099,
-       "delta": 0.00366,
-       "E_cond_floor_mde95": 0.00645,
-       "clears_own_floor": false,
-       "permutation_p": 0.39,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_wrist",
-       "why": "an IL event naming the wrist",
-       "margin_base": 0.00624,
-       "margin_with": 0.01908,
-       "delta": 0.01284,
-       "E_cond_floor_mde95": 0.02307,
-       "clears_own_floor": false,
-       "permutation_p": 0.035,
-       "permutation_B": 400,
-       "holm_p": 0.805,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_forearm",
-       "why": "an IL event naming the forearm",
-       "margin_base": 0.00624,
-       "margin_with": 0.00713,
-       "delta": 0.00089,
-       "E_cond_floor_mde95": 0.00107,
-       "clears_own_floor": false,
-       "permutation_p": 0.755,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_lat",
-       "skipped": "constant on this cohort"
-      },
-      {
-       "name": "cat_hip",
-       "why": "an IL event naming the hip",
-       "margin_base": 0.00624,
-       "margin_with": 0.00313,
-       "delta": -0.00311,
-       "E_cond_floor_mde95": 0.00618,
-       "clears_own_floor": false,
-       "permutation_p": 0.395,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
+      "il_max_stint_days_given_on_il": {
+       "n": 68,
+       "rho": 0.0474,
+       "ci95": [
+        -0.19,
+        0.2841
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       }
-     ]
+     },
+     "side_verdict": "NOT PROVEN"
     }
    },
    "pool_note": "full_pool is the HONEST population for an injury question: it keeps the bust rows, whose label is 0, so a prospect who was hurt and never reached the majors still counts. debuted_only conditions on the outcome the health signal is meant to predict and will make injuries look survivable."
@@ -1693,336 +1135,52 @@
       }
      ]
     },
-    "gated": {
-     "baseline_margin": 0.01112,
-     "n_scored_rows": 1081,
-     "family_size": 24,
-     "results": [
-      {
-       "name": "health_index_oof",
-       "why": "the forward-chained stacked health submodel over il_stints, il_days, il_max_stint_days, il_60day, il_fullseason",
-       "margin_base": 0.01112,
-       "margin_with": -0.00607,
-       "delta": -0.01719,
-       "E_cond_floor_mde95": 0.07022,
-       "clears_own_floor": false,
-       "permutation_p": 0.0,
-       "permutation_B": 400,
-       "holm_p": 0.0,
-       "SHIPPABLE": false
+    "penalty_verdict": {
+     "controls": [
+      "fv",
+      "seasons_at_level",
+      "age"
+     ],
+     "B": 4000,
+     "terms": {
+      "il_on_gate": {
+       "n": 1220,
+       "rho": -0.1664,
+       "ci95": [
+        -0.2228,
+        -0.1087
+       ],
+       "verdict": "PENALTY SUPPORTED (interval below zero)"
       },
-      {
-       "name": "il_stints",
-       "why": "count of IL placements before the decision",
-       "margin_base": 0.01112,
-       "margin_with": 0.00928,
-       "delta": -0.00183,
-       "E_cond_floor_mde95": 0.00362,
-       "clears_own_floor": false,
-       "permutation_p": 0.365,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
+      "il_days_given_on_il": {
+       "n": 144,
+       "rho": -0.0716,
+       "ci95": [
+        -0.23,
+        0.096
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       },
-      {
-       "name": "il_days",
-       "why": "cumulative IL days before the decision",
-       "margin_base": 0.01112,
-       "margin_with": 0.01186,
-       "delta": 0.00074,
-       "E_cond_floor_mde95": 0.0065,
-       "clears_own_floor": false,
-       "permutation_p": 0.7025,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
+      "il_stints_given_on_il": {
+       "n": 144,
+       "rho": 0.0171,
+       "ci95": [
+        -0.1557,
+        0.1851
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       },
-      {
-       "name": "il_max_stint_days",
-       "why": "longest single stint",
-       "margin_base": 0.01112,
-       "margin_with": 0.01216,
-       "delta": 0.00104,
-       "E_cond_floor_mde95": 0.00578,
-       "clears_own_floor": false,
-       "permutation_p": 0.605,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_60day",
-       "why": "count of 60-day placements",
-       "margin_base": 0.01112,
-       "margin_with": 0.00759,
-       "delta": -0.00353,
-       "E_cond_floor_mde95": 0.00954,
-       "clears_own_floor": false,
-       "permutation_p": 0.1525,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_fullseason",
-       "why": "count of full-season placements",
-       "margin_base": 0.01112,
-       "margin_with": 0.01142,
-       "delta": 0.00031,
-       "E_cond_floor_mde95": 0.00087,
-       "clears_own_floor": false,
-       "permutation_p": 0.9375,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_open_at_decision",
-       "why": "on the IL at the decision date: the INCUMBENT signal, included so the new features are measured against it rather than beside it",
-       "margin_base": 0.01112,
-       "margin_with": 0.00999,
-       "delta": -0.00112,
-       "E_cond_floor_mde95": 0.00206,
-       "clears_own_floor": false,
-       "permutation_p": 0.5225,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_30",
-       "why": "30+ cumulative IL days as a prospect",
-       "margin_base": 0.01112,
-       "margin_with": 0.01292,
-       "delta": 0.0018,
-       "E_cond_floor_mde95": 0.00394,
-       "clears_own_floor": false,
-       "permutation_p": 0.38,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_60",
-       "why": "60+ cumulative IL days as a prospect",
-       "margin_base": 0.01112,
-       "margin_with": 0.00935,
-       "delta": -0.00176,
-       "E_cond_floor_mde95": 0.00377,
-       "clears_own_floor": false,
-       "permutation_p": 0.35,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_90",
-       "why": "90+ cumulative IL days as a prospect",
-       "margin_base": 0.01112,
-       "margin_with": 0.00995,
-       "delta": -0.00117,
-       "E_cond_floor_mde95": 0.00396,
-       "clears_own_floor": false,
-       "permutation_p": 0.505,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_120",
-       "why": "120+ cumulative IL days as a prospect",
-       "margin_base": 0.01112,
-       "margin_with": 0.01004,
-       "delta": -0.00107,
-       "E_cond_floor_mde95": 0.00741,
-       "clears_own_floor": false,
-       "permutation_p": 0.47,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_180",
-       "why": "180+ cumulative IL days as a prospect",
-       "margin_base": 0.01112,
-       "margin_with": 0.00979,
-       "delta": -0.00132,
-       "E_cond_floor_mde95": 0.00768,
-       "clears_own_floor": false,
-       "permutation_p": 0.44,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_2",
-       "why": "2+ separate IL stints as a prospect",
-       "margin_base": 0.01112,
-       "margin_with": 0.00449,
-       "delta": -0.00662,
-       "E_cond_floor_mde95": 0.008,
-       "clears_own_floor": false,
-       "permutation_p": 0.02,
-       "permutation_B": 400,
-       "holm_p": 0.44,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_3",
-       "why": "3+ separate IL stints as a prospect",
-       "margin_base": 0.01112,
-       "margin_with": 0.0038,
-       "delta": -0.00731,
-       "E_cond_floor_mde95": 0.00728,
-       "clears_own_floor": true,
-       "permutation_p": 0.015,
-       "permutation_B": 400,
-       "holm_p": 0.345,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_4",
-       "why": "4+ separate IL stints as a prospect",
-       "margin_base": 0.01112,
-       "margin_with": 0.01159,
-       "delta": 0.00047,
-       "E_cond_floor_mde95": 0.00384,
-       "clears_own_floor": false,
-       "permutation_p": 0.795,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "durable_zero_il",
-       "why": "NO IL placement in an observable window: the durability side of the ask",
-       "margin_base": 0.01112,
-       "margin_with": 0.01609,
-       "delta": 0.00498,
-       "E_cond_floor_mde95": 0.006,
-       "clears_own_floor": false,
-       "permutation_p": 0.0625,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "tommy_john",
-       "why": "a Tommy John or UCL event before the decision",
-       "margin_base": 0.01112,
-       "margin_with": 0.01368,
-       "delta": 0.00256,
-       "E_cond_floor_mde95": 0.00406,
-       "clears_own_floor": false,
-       "permutation_p": 0.165,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_elbow",
-       "why": "an IL event naming the elbow",
-       "margin_base": 0.01112,
-       "margin_with": 0.00981,
-       "delta": -0.0013,
-       "E_cond_floor_mde95": 0.00335,
-       "clears_own_floor": false,
-       "permutation_p": 0.51,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_shoulder",
-       "why": "an IL event naming the shoulder",
-       "margin_base": 0.01112,
-       "margin_with": 0.01174,
-       "delta": 0.00062,
-       "E_cond_floor_mde95": 0.00124,
-       "clears_own_floor": false,
-       "permutation_p": 0.7725,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_back",
-       "why": "an IL event naming the back",
-       "margin_base": 0.01112,
-       "margin_with": 0.01396,
-       "delta": 0.00285,
-       "E_cond_floor_mde95": 0.00451,
-       "clears_own_floor": false,
-       "permutation_p": 0.0875,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_hamstring",
-       "skipped": "constant on this cohort"
-      },
-      {
-       "name": "cat_oblique",
-       "why": "an IL event naming the oblique",
-       "margin_base": 0.01112,
-       "margin_with": 0.01136,
-       "delta": 0.00025,
-       "E_cond_floor_mde95": 0.00193,
-       "clears_own_floor": false,
-       "permutation_p": 0.8075,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_knee",
-       "skipped": "constant on this cohort"
-      },
-      {
-       "name": "cat_wrist",
-       "why": "an IL event naming the wrist",
-       "margin_base": 0.01112,
-       "margin_with": 0.01029,
-       "delta": -0.00083,
-       "E_cond_floor_mde95": 0.00212,
-       "clears_own_floor": false,
-       "permutation_p": 0.48,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_forearm",
-       "why": "an IL event naming the forearm",
-       "margin_base": 0.01112,
-       "margin_with": 0.01573,
-       "delta": 0.00461,
-       "E_cond_floor_mde95": 0.00853,
-       "clears_own_floor": false,
-       "permutation_p": 0.1475,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_lat",
-       "why": "an IL event naming the lat",
-       "margin_base": 0.01112,
-       "margin_with": 0.01276,
-       "delta": 0.00164,
-       "E_cond_floor_mde95": 0.00284,
-       "clears_own_floor": false,
-       "permutation_p": 0.2775,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_hip",
-       "skipped": "constant on this cohort"
+      "il_max_stint_days_given_on_il": {
+       "n": 144,
+       "rho": -0.0521,
+       "ci95": [
+        -0.2075,
+        0.1094
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       }
-     ]
+     },
+     "side_verdict": "SUPPORTED"
     }
    },
    "debuted_only": {
@@ -2369,318 +1527,52 @@
       }
      ]
     },
-    "gated": {
-     "baseline_margin": -0.00124,
-     "n_scored_rows": 559,
-     "family_size": 22,
-     "results": [
-      {
-       "name": "health_index_oof",
-       "why": "the forward-chained stacked health submodel over il_stints, il_days, il_max_stint_days, il_60day, il_fullseason",
-       "margin_base": -0.00124,
-       "margin_with": -0.05814,
-       "delta": -0.0569,
-       "E_cond_floor_mde95": 0.07566,
-       "clears_own_floor": false,
-       "permutation_p": 0.0,
-       "permutation_B": 400,
-       "holm_p": 0.0,
-       "SHIPPABLE": false
+    "penalty_verdict": {
+     "controls": [
+      "fv",
+      "seasons_at_level",
+      "age"
+     ],
+     "B": 4000,
+     "terms": {
+      "il_on_gate": {
+       "n": 635,
+       "rho": -0.0765,
+       "ci95": [
+        -0.1555,
+        0.006
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       },
-      {
-       "name": "il_stints",
-       "why": "count of IL placements before the decision",
-       "margin_base": -0.00124,
-       "margin_with": 0.00051,
-       "delta": 0.00176,
-       "E_cond_floor_mde95": 0.01361,
-       "clears_own_floor": false,
-       "permutation_p": 0.635,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
+      "il_days_given_on_il": {
+       "n": 65,
+       "rho": -0.1621,
+       "ci95": [
+        -0.3956,
+        0.0934
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       },
-      {
-       "name": "il_days",
-       "why": "cumulative IL days before the decision",
-       "margin_base": -0.00124,
-       "margin_with": 0.00663,
-       "delta": 0.00787,
-       "E_cond_floor_mde95": 0.01545,
-       "clears_own_floor": false,
-       "permutation_p": 0.125,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
+      "il_stints_given_on_il": {
+       "n": 65,
+       "rho": 0.0947,
+       "ci95": [
+        -0.1679,
+        0.3433
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       },
-      {
-       "name": "il_max_stint_days",
-       "why": "longest single stint",
-       "margin_base": -0.00124,
-       "margin_with": 0.00638,
-       "delta": 0.00762,
-       "E_cond_floor_mde95": 0.01436,
-       "clears_own_floor": false,
-       "permutation_p": 0.12,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_60day",
-       "why": "count of 60-day placements",
-       "margin_base": -0.00124,
-       "margin_with": -0.00994,
-       "delta": -0.0087,
-       "E_cond_floor_mde95": 0.01974,
-       "clears_own_floor": false,
-       "permutation_p": 0.105,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_fullseason",
-       "skipped": "constant on this cohort"
-      },
-      {
-       "name": "il_open_at_decision",
-       "why": "on the IL at the decision date: the INCUMBENT signal, included so the new features are measured against it rather than beside it",
-       "margin_base": -0.00124,
-       "margin_with": -0.00314,
-       "delta": -0.0019,
-       "E_cond_floor_mde95": 0.00574,
-       "clears_own_floor": false,
-       "permutation_p": 0.5675,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_30",
-       "why": "30+ cumulative IL days as a prospect",
-       "margin_base": -0.00124,
-       "margin_with": 0.00427,
-       "delta": 0.00551,
-       "E_cond_floor_mde95": 0.00757,
-       "clears_own_floor": false,
-       "permutation_p": 0.21,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_60",
-       "why": "60+ cumulative IL days as a prospect",
-       "margin_base": -0.00124,
-       "margin_with": 0.00081,
-       "delta": 0.00205,
-       "E_cond_floor_mde95": 0.01418,
-       "clears_own_floor": false,
-       "permutation_p": 0.5725,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_90",
-       "why": "90+ cumulative IL days as a prospect",
-       "margin_base": -0.00124,
-       "margin_with": 0.00246,
-       "delta": 0.0037,
-       "E_cond_floor_mde95": 0.01396,
-       "clears_own_floor": false,
-       "permutation_p": 0.3875,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_120",
-       "why": "120+ cumulative IL days as a prospect",
-       "margin_base": -0.00124,
-       "margin_with": 0.00524,
-       "delta": 0.00648,
-       "E_cond_floor_mde95": 0.01798,
-       "clears_own_floor": false,
-       "permutation_p": 0.175,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_days_ge_180",
-       "why": "180+ cumulative IL days as a prospect",
-       "margin_base": -0.00124,
-       "margin_with": 0.00577,
-       "delta": 0.00701,
-       "E_cond_floor_mde95": 0.01664,
-       "clears_own_floor": false,
-       "permutation_p": 0.13,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_2",
-       "why": "2+ separate IL stints as a prospect",
-       "margin_base": -0.00124,
-       "margin_with": 0.00018,
-       "delta": 0.00142,
-       "E_cond_floor_mde95": 0.02056,
-       "clears_own_floor": false,
-       "permutation_p": 0.7025,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_3",
-       "why": "3+ separate IL stints as a prospect",
-       "margin_base": -0.00124,
-       "margin_with": -0.0117,
-       "delta": -0.01046,
-       "E_cond_floor_mde95": 0.01717,
-       "clears_own_floor": false,
-       "permutation_p": 0.07,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "il_stints_ge_4",
-       "why": "4+ separate IL stints as a prospect",
-       "margin_base": -0.00124,
-       "margin_with": 0.0008,
-       "delta": 0.00204,
-       "E_cond_floor_mde95": 0.0101,
-       "clears_own_floor": false,
-       "permutation_p": 0.59,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "durable_zero_il",
-       "why": "NO IL placement in an observable window: the durability side of the ask",
-       "margin_base": -0.00124,
-       "margin_with": 0.00072,
-       "delta": 0.00197,
-       "E_cond_floor_mde95": 0.00838,
-       "clears_own_floor": false,
-       "permutation_p": 0.615,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "tommy_john",
-       "why": "a Tommy John or UCL event before the decision",
-       "margin_base": -0.00124,
-       "margin_with": 0.00147,
-       "delta": 0.00271,
-       "E_cond_floor_mde95": 0.00802,
-       "clears_own_floor": false,
-       "permutation_p": 0.4875,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_elbow",
-       "why": "an IL event naming the elbow",
-       "margin_base": -0.00124,
-       "margin_with": -0.00235,
-       "delta": -0.00111,
-       "E_cond_floor_mde95": 0.00545,
-       "clears_own_floor": false,
-       "permutation_p": 0.7725,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_shoulder",
-       "why": "an IL event naming the shoulder",
-       "margin_base": -0.00124,
-       "margin_with": -0.00895,
-       "delta": -0.00771,
-       "E_cond_floor_mde95": 0.01074,
-       "clears_own_floor": false,
-       "permutation_p": 0.09,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_back",
-       "why": "an IL event naming the back",
-       "margin_base": -0.00124,
-       "margin_with": -0.0045,
-       "delta": -0.00326,
-       "E_cond_floor_mde95": 0.00576,
-       "clears_own_floor": false,
-       "permutation_p": 0.335,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_hamstring",
-       "skipped": "constant on this cohort"
-      },
-      {
-       "name": "cat_oblique",
-       "why": "an IL event naming the oblique",
-       "margin_base": -0.00124,
-       "margin_with": -0.00022,
-       "delta": 0.00102,
-       "E_cond_floor_mde95": 0.00495,
-       "clears_own_floor": false,
-       "permutation_p": 0.6825,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_knee",
-       "skipped": "constant on this cohort"
-      },
-      {
-       "name": "cat_wrist",
-       "skipped": "constant on this cohort"
-      },
-      {
-       "name": "cat_forearm",
-       "why": "an IL event naming the forearm",
-       "margin_base": -0.00124,
-       "margin_with": 0.00377,
-       "delta": 0.00501,
-       "E_cond_floor_mde95": 0.00946,
-       "clears_own_floor": false,
-       "permutation_p": 0.205,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_lat",
-       "why": "an IL event naming the lat",
-       "margin_base": -0.00124,
-       "margin_with": -0.00058,
-       "delta": 0.00066,
-       "E_cond_floor_mde95": 0.00391,
-       "clears_own_floor": false,
-       "permutation_p": 0.78,
-       "permutation_B": 400,
-       "holm_p": 1.0,
-       "SHIPPABLE": false
-      },
-      {
-       "name": "cat_hip",
-       "skipped": "constant on this cohort"
+      "il_max_stint_days_given_on_il": {
+       "n": 65,
+       "rho": -0.185,
+       "ci95": [
+        -0.4172,
+        0.0822
+       ],
+       "verdict": "NOT PROVEN (interval spans zero)"
       }
-     ]
+     },
+     "side_verdict": "NOT PROVEN"
     }
    },
    "pool_note": "full_pool is the HONEST population for an injury question: it keeps the bust rows, whose label is 0, so a prospect who was hurt and never reached the majors still counts. debuted_only conditions on the outcome the health signal is meant to predict and will make injuries look survivable."

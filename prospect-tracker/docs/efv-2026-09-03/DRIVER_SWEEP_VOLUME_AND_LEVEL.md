@@ -261,16 +261,45 @@ better, which most plausibly reads as organizations investing rehab time in play
 rate. **For pitchers the control makes the harm larger, not smaller**, and being on the IL at
 the decision date is the strongest negative in the table.
 
-### What that means for the penalty you asked to replace
+### The penalty decision, taken and shipped
 
 The shipped rule is `efv_score._injury_factor`: a multiplicative haircut on eFV WAR, gated on
-`il_on`, applied identically to both sides on the live board. The outcome evidence
-**supports it for pitchers and does not support it for hitters**, where the controlled sign
-points the other way.
+`il_on`, and it used to apply to both sides on the live board.
 
-The narrow change this licenses is to make the haircut pitcher-only, or materially weaker for
-hitters. It is descriptive evidence about a live-board rule rather than a gated driver
-result, so it is your decision rather than an automatic one.
+Before changing it, the rule was tested as the rule, on the full pool, with the grade, age
+and rostered-exposure proxies partialled out, and with bootstrap intervals rather than point
+estimates. The bar was the owner's: a penalty stays only if it is PROVEN, so the interval has
+to exclude zero on the negative side.
+
+| side | n | rho | CI95 | verdict |
+| --- | --- | --- | --- | --- |
+| pitchers | 1,220 | -0.1664 | [-0.2228, -0.1087] | **SUPPORTED**, interval below zero |
+| hitters | 1,127 | +0.0651 | [+0.0021, +0.1282] | **CONTRAINDICATED**, interval above zero |
+
+The hitter cell does not say "unproven". It says the sign is the other way. An unproven
+penalty is not a neutral default: it is a live subtraction from a real player's grade, rank
+and dollars, and this one was subtracting against the evidence on 225 served hitters at a
+median multiplier of 0.738.
+
+**SHIPPED**: `efv_score.INJURY_PENALTY_SIDES = frozenset({"pit"})`. The board effect on those
+225 hitters is 74 grades up, 150 flat and 1 down, mean +0.31 FV, largest +4.6 (leo_de_vries
+55.5 to 60.1). The 150 flat rows sit at the FV20 floor, where the outcome curve is constant
+below 0 WAR, so lifting a penalty cannot move them. The single row that falls is
+cameron_nelson, whose `grade_basis` flips from `provisional_capped` to `outcome_pooled` as
+his model WAR crosses zero: that is the floor-routing discontinuity the design audit already
+records, not a new defect. 360 pitchers keep their haircut unchanged.
+
+`BOARD_BASIS_FINGERPRINT` gained an `injsides=` term in the same commit as the change, so the
+coordination device can see a live overlay it previously could not. It rides the same
+`BOARD_RANK_BASIS_EPOCH` 2026-09-04 as the label epoch, since both are one-time basis moves
+on the same day.
+
+**NOT changed, and the distinction is deliberate**: the severity dispatch by IL type and the
+deepening modifiers on trailing days and stints. Those could only be measured on the players
+the gate actually taxes (n=144 pitchers) and every interval spans zero. At that width it is
+low power, not evidence of absence, so removing them would be acting on the absence of
+evidence rather than on evidence. They keep their behaviour for pitchers and are the obvious
+thing to re-read when the cohort grows.
 
 ### As a driver: nothing ships
 

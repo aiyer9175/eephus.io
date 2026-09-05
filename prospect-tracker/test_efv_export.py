@@ -567,7 +567,17 @@ def test_committed_artifact_headline_alias_contract():
 #   BASIS decision and NOT an accuracy claim: the measured effect on the eFV margin is
 #   +0.00006 on hitters (ruled out as equivalent) and -0.01823 on pitchers (undecided).
 #   Rowcount 9379 -> 9502.
-_GOLDEN_XFV_SHA256 = "323a424d0adc409d095aa1484ca01d179858e728d481f5b6a69e5e556f3abed0"
+# 2026-09-04b RESTAMP: THE INJURY HAIRCUT WENT PITCHER-ONLY (efv_score.INJURY_PENALTY_SIDES,
+#   owner decision on measured outcomes; the constant carries the numbers). It lifts the
+#   haircut off 225 served hitters at a median x0.738 and leaves 360 pitchers untouched.
+#   Grade effect on those 225: 74 up, 150 flat and 1 down, mean +0.31 FV, max +4.6
+#   (leo_de_vries 55.5 -> 60.1). The 150 flat are pinned at the FV20 floor, where
+#   outcome_implied_fv is constant below 0 WAR. The 1 down is cameron_nelson, whose
+#   grade_basis flips provisional_capped -> outcome_pooled as his model WAR crosses zero:
+#   pre-existing floor-routing behaviour at a boundary, not a new defect.
+#   BOARD_BASIS_FINGERPRINT gained an injsides= term in the same commit, and this rides the
+#   SAME BOARD_RANK_BASIS_EPOCH 2026-09-04 as the label epoch.
+_GOLDEN_XFV_SHA256 = "d5f889aab14b4635060dbfc829502e2776054a2ddcf4666d90328b95217f6d73"
 # OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
 # whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
 # factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which

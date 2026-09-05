@@ -5049,7 +5049,14 @@ BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a9
                            "|floorroute=on@ff60a349|gradanchor=rookie_window"
                            "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
                            "|gradenorm=asof@ref2017"
-                           "|label=ewar_v2@2026-09-03T12:35:09")
+                           "|label=ewar_v2@2026-09-03T12:35:09"
+                           "|injsides=pit")
+# injsides added 2026-09-04: THE INJURY HAIRCUT WENT PITCHER-ONLY, on the owner's decision
+# and on measured outcomes (efv_score.INJURY_PENALTY_SIDES carries the numbers). It lifts
+# the haircut off 225 served hitters at a median x0.738 and leaves 360 pitchers untouched,
+# so grades, ranks and surplus all move on the hitter side. Rides the SAME
+# BOARD_RANK_BASIS_EPOCH 2026-09-04 as the label epoch: both are one-time basis moves on
+# one day, and the movement engine's strictly-after gate covers them together.
 # grademap 6dbe8353f3bb -> 1f3fa0a970bd and the NEW label= term, both on 2026-09-04:
 # THE eWAR LABEL EPOCH. Gate docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md, runbook
 # docs/efv-2026-09-03/WAR_BASIS_RUNBOOK.md step U. career_war was rebased from bWAR to
@@ -5259,9 +5266,20 @@ def board_basis_fingerprint() -> str:
             label += f"@{str(_p.get('generated_at') or 'nobuild')[:19]}"
     except Exception:
         label = "unavailable"
+    # INJURY-PENALTY SIDES, added 2026-09-04 when the haircut went pitcher-only. Same hole
+    # as every term above it: the device could see which map produced a grade and which
+    # label trained it, but not the multiplicative live OVERLAYS applied on top. Restricting
+    # the injury haircut to pitchers lifts it off 225 served hitters at a median x0.738, and
+    # without this term the fingerprint would have stayed byte-identical while their grades,
+    # ranks and dollars all moved. Sorted so the string is order-stable.
+    try:
+        import efv_score as _es4
+        injsides = ",".join(sorted(_es4.INJURY_PENALTY_SIDES)) or "none"
+    except Exception:
+        injsides = "unavailable"
     return (f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
             f"|feats={feats}|stale={stale}|floorroute={floorroute}|gradanchor={anchor}"
-            f"|disp={disp}|gradenorm={gradenorm}|label={label}")
+            f"|disp={disp}|gradenorm={gradenorm}|label={label}|injsides={injsides}")
 
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /

@@ -1218,12 +1218,47 @@ def _il_mild_factor(days: float) -> float:
     return _IL_MILD_DAY0 - (_IL_MILD_DAY0 - _IL_MILD_FLOOR) * frac
 
 
-def _injury_factor(r) -> float:
+#: Sides the live injury haircut applies to. MEASURED, not chosen.
+#:
+#: Owner decision 2026-09-04, on the evidence in data/xfv_health_profile_eval.json
+#: (`penalty_verdict`) and docs/efv-2026-09-03/DRIVER_SWEEP_VOLUME_AND_LEVEL.md: keep the
+#: penalty where the outcomes support it, drop it where they do not. The test is the rule
+#: this function actually implements, on the full pool including busts, with the scouting
+#: grade, age and rostered-exposure proxies partialled out:
+#:
+#:   PITCHERS  n=1,220  rho -0.1664  CI95 [-0.2228, -0.1087]  interval BELOW zero -> SUPPORTED
+#:   HITTERS   n=1,127  rho +0.0651  CI95 [+0.0021, +0.1282]  interval ABOVE zero -> CONTRAINDICATED
+#:
+#: The hitter cell is the reason this is a frozenset and not a comment. It does not say
+#: "unproven", it says the sign is the other way: among hitters of equal grade, age and
+#: rostered time, the ones carrying an active injury at the decision point did BETTER, most
+#: plausibly because a club that keeps rehabbing a hitter is telling you it rates him. An
+#: unproven penalty is not a neutral default; it is a live subtraction from a real player's
+#: grade, rank and dollars, and this one was subtracting against the evidence.
+#:
+#: THE EXPOSURE CONTROL IS LOAD-BEARING and the raw numbers are actively misleading without
+#: it: a player cannot be placed on an injured list unless he is rostered, so "no IL record"
+#: means never-exposed as often as it means healthy. Read raw on the full pool, hitters with
+#: NO record bust 83.7 percent against 68.6 percent for those with one.
+#:
+#: NOT tested and therefore NOT changed: the severity dispatch by IL type, and the deepening
+#: modifiers on trailing days and stints. Those were measured only on the players the gate
+#: actually taxes (n=144 pitchers) and every interval spans zero, which at that width is low
+#: power rather than evidence of absence. They keep their behaviour for pitchers.
+INJURY_PENALTY_SIDES: frozenset[str] = frozenset({"pit"})
+
+
+def _injury_factor(r, is_pit: bool | None = None) -> float:
     """Owner-directed live injury penalty: a multiplicative haircut on the eFV WAR
     projection (so it flows to the grade, the rank, AND surplus) for prospects who
     are CURRENTLY on the IL. An active injury costs near-term WAR and carries
     setback risk that scout FV under-prices; eFV penalizes it harder. Applied
     only to the LIVE board (resolved players' outcomes already embed their injuries).
+
+    Owner directive 2026-09-04: PITCHERS ONLY. See INJURY_PENALTY_SIDES above for the
+    measurement. `is_pit` is passed explicitly by both call sites because the row dicts do
+    not both carry a side flag; the `is_pitcher` fallback exists so a future caller cannot
+    silently get the hitter behaviour for a pitcher by forgetting the argument.
 
     Owner directive 2026-07-15: post-TJ STATUS alone is NOT an injury and carries
     no penalty. The old unconditional is_post_tj x0.85 taxed fully recovered arms
@@ -1241,6 +1276,10 @@ def _injury_factor(r) -> float:
     carry no severity information (the MiLB 7-day, and anything unrecognized), and
     the MiLB full-season IL is classified as severe instead of falling to the mild
     else-branch. See the _IL_* block above for the mechanism and the measured case."""
+    if is_pit is None:
+        is_pit = bool(r.get("is_pitcher"))
+    if ("pit" if is_pit else "hit") not in INJURY_PENALTY_SIDES:
+        return 1.0
     if not r.get("il_on"):
         return 1.0
     t = str(r.get("il_type") or "").lower()
@@ -2245,7 +2284,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             # grade sits under a stale consensus (the Hickey complaint).
             factors.insert(0, {"label": "Stale list coverage", "dir": "down",
                                "mag": round(_stale_shown / 2.0, 2)})
-        inj = _injury_factor(r)                           # owner-directed live injury penalty
+        inj = _injury_factor(r, is_pit=is_pit)             # owner-directed live injury penalty (pitchers only)
         agef = _age_factor(r)                              # owner-directed live prospect-age penalty
         rolef = _role_factor(r, xfv_war)                   # owner-directed reliever-ceiling penalty
         # S-XLINE-4 "A-ball Statcast lean" (docs/efv-2026-07-23/GATES.md): a
@@ -2927,7 +2966,7 @@ def run_backgrade(persist: bool = True) -> dict:
         #    i.e. the entire top of the 2026 draft class, whose only defect is not
         #    having played a pro game yet. A no-track-record row is already flagged
         #    xfv_provisional for every consumer that wants to treat it differently.
-        inj = _injury_factor(row) if kind == "active" else 1.0   # graduate prospect-era IL is moot
+        inj = _injury_factor(row, is_pit=is_pit) if kind == "active" else 1.0   # graduate prospect-era IL is moot
         agef = rolef = 1.0
         if kind == "active":
             _prow = {"age_now": rec.get("age_now") or _age_at(rec.get("birth_date"), CURRENT_SEASON),

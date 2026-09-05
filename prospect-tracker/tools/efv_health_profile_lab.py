@@ -403,6 +403,72 @@ def exposure_controlled(P: dict, cands: list[dict], mask: np.ndarray) -> dict:
     return out
 
 
+def penalty_verdict(P: dict, mask: np.ndarray, b: int = 4000) -> dict:
+    """Does the SHIPPED injury penalty point the right way, per side?
+
+    `efv_score._injury_factor` is a multiplicative haircut on eFV WAR, gated on `il_on` and
+    deepened by trailing days and stints. This tests the rule it implements rather than the
+    features around it: conditional on the scouting grade, age and rostered exposure, does
+    being ON THE INJURED LIST at the decision point predict a LOWER outcome, and do the
+    deepening terms point the same way?
+
+    The bar is the one the owner set: a penalty stays only if it is PROVEN, so the interval
+    must exclude zero ON THE NEGATIVE SIDE. Positive or straddling zero means the haircut is
+    taxing something the outcomes do not punish, and an unproven penalty is not a neutral
+    default, it is a live subtraction from every affected player's grade, rank and dollars.
+    """
+    keys = P["keys"]
+    cols = [keys.index(k) for k in EXPOSURE_CONTROLS if k in keys]
+    X = P["X"][mask]
+    Z = X[:, cols] if cols else np.empty((int(mask.sum()), 0))
+    y_raw = P["y"][mask]
+    w = P["w"][mask]
+    y = _resid(y_raw, Z)
+    prof = [p for p, m in zip(P["profs"], mask) if m]
+    rng = np.random.default_rng(SEED)
+    out = {"controls": [k for k in EXPOSURE_CONTROLS if k in keys], "B": b, "terms": {}}
+
+    def leg(name, v, sub=None):
+        idx = np.arange(len(v)) if sub is None else np.flatnonzero(sub)
+        if len(idx) < 30 or np.allclose(v[idx], v[idx][0]):
+            return {"n": int(len(idx)), "verdict": "TOO THIN TO READ"}
+        vr = _resid(v[idx], Z[idx]) if Z.size else v[idx] - v[idx].mean()
+        yr = _resid(y_raw[idx], Z[idx]) if Z.size else y_raw[idx] - y_raw[idx].mean()
+        point = float(M.wrho(vr, yr, w[idx]))
+        draws = []
+        for _ in range(b):
+            s = rng.integers(0, len(idx), len(idx))
+            val = M.wrho(vr[s], yr[s], w[idx][s])
+            if np.isfinite(val):
+                draws.append(float(val))
+        a = np.array(draws)
+        lo, hi = (float(np.percentile(a, 2.5)), float(np.percentile(a, 97.5))) if len(a) else (None, None)
+        if lo is None:
+            verdict = "TOO THIN TO READ"
+        elif hi < 0:
+            verdict = "PENALTY SUPPORTED (interval below zero)"
+        elif lo > 0:
+            verdict = "PENALTY CONTRAINDICATED (interval above zero)"
+        else:
+            verdict = "NOT PROVEN (interval spans zero)"
+        return {"n": int(len(idx)), "rho": round(point, 4),
+                "ci95": [round(lo, 4), round(hi, 4)], "verdict": verdict}
+
+    on_il = np.array([p["il_open_at_decision"] for p in prof], dtype=float)
+    out["terms"]["il_on_gate"] = leg("il_on", on_il)
+    # the deepening terms, read ONLY on the players the gate would actually tax
+    sub = on_il > 0.5
+    for k in ("il_days", "il_stints", "il_max_stint_days"):
+        v = np.array([p[k] for p in prof], dtype=float)
+        out["terms"][f"{k}_given_on_il"] = leg(k, v, sub=sub)
+    verdicts = [t.get("verdict", "") for t in out["terms"].values()]
+    out["side_verdict"] = (
+        "SUPPORTED" if any(v.startswith("PENALTY SUPPORTED") for v in verdicts)
+        else ("CONTRAINDICATED" if any(v.startswith("PENALTY CONTRA") for v in verdicts)
+              else "NOT PROVEN"))
+    return out
+
+
 def describe(P: dict, cands: list[dict], mask: np.ndarray) -> dict:
     y, prof = P["y"][mask], [p for p, m in zip(P["profs"], mask) if m]
     pool_star = float((y >= STAR_WAR).mean()) if len(y) else 0.0
@@ -594,7 +660,8 @@ def main() -> int:
             b = {"n_rows": P["n"], "observable_rows": int(mask.sum()),
                  "observable_share": round(float(mask.mean()), 4),
                  "descriptive": describe(P, cands, mask),
-                 "exposure_controlled": exposure_controlled(P, cands, mask)}
+                 "exposure_controlled": exposure_controlled(P, cands, mask),
+                 "penalty_verdict": penalty_verdict(P, mask)}
             if not a.describe_only:
                 b["gated"] = gate(P, cands, mask, a.b_cond, a.b_perm)
             blk[pool_name] = b

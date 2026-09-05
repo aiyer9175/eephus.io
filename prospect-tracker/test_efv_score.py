@@ -112,26 +112,26 @@ def test_injury_factor_bounds():
     # every LIVE multiplier stacked at its worst -> bounded, never above 1.0
     worst = {"il_on": True, "il_type": "60-day IL", "il_days_12mo": 400.0,
              "il_stints_12mo": 9.0, "is_post_tj": True}
-    f = efv_score._injury_factor(worst)
+    f = efv_score._injury_factor(worst, is_pit=True)
     assert 0.5 <= f <= 1.0
     # 0.70 * 0.82 * 0.92 (post-TJ no longer multiplies - owner 2026-07-15)
     assert f == round(0.70 * 0.82 * 0.92, 3), \
         "stacked worst case must be the three LIVE components only"
     # a healthy record is a no-op
-    assert efv_score._injury_factor({}) == 1.0
+    assert efv_score._injury_factor({}, is_pit=True) == 1.0
     # Owner directive 2026-07-15: post-TJ STATUS alone (fully recovered, zero
     # IL time - the Kade Anderson case) is NOT an injury and carries NO penalty.
-    assert efv_score._injury_factor({"is_post_tj": True}) == 1.0
+    assert efv_score._injury_factor({"is_post_tj": True}, is_pit=True) == 1.0
     # Owner directive 2026-07-17: a currently-HEALTHY player carries NO penalty
     # regardless of trailing-12mo IL time (the Josue Briceno case: activated off
     # a 60-day stint with ~108 trailing IL days must clear to exactly 1.0).
-    assert efv_score._injury_factor({"il_on": 0, "il_days_12mo": 108.0}) == 1.0
-    assert efv_score._injury_factor({"il_days_12mo": 400.0, "il_stints_12mo": 9.0}) == 1.0
+    assert efv_score._injury_factor({"il_on": 0, "il_days_12mo": 108.0}, is_pit=True) == 1.0
+    assert efv_score._injury_factor({"il_days_12mo": 400.0, "il_stints_12mo": 9.0}, is_pit=True) == 1.0
     # missing / None fields (the only non-numeric the live board ever produces)
     # never throw or escape the band
     for r in ({"il_days_12mo": None}, {"il_on": True, "il_type": None},
               {"il_stints_12mo": None}, {"is_post_tj": True}):
-        assert 0.5 <= efv_score._injury_factor(r) <= 1.0
+        assert 0.5 <= efv_score._injury_factor(r, is_pit=True) <= 1.0
 
 
 def test_injury_factor_short_il_is_days_aware():
@@ -143,7 +143,7 @@ def test_injury_factor_short_il_is_days_aware():
     '7-day', FOUR trailing IL days, one stint -> 0.90 -> -1.25 FV -> 18 board spots.
     """
     def f(**kw):
-        return efv_score._injury_factor({"il_on": 1, **kw})
+        return efv_score._injury_factor({"il_on": 1, **kw}, is_pit=True)
 
     # 1. A handful of IL days cannot cost anywhere near 10% of projected WAR.
     #    The measured seth_hernandez row: 4 days, 1 stint on the 7-day IL.
@@ -193,8 +193,8 @@ def test_injury_factor_short_il_is_days_aware():
         pytest.approx(efv_score._IL_MILD_DAY0, abs=1e-9)
     # 6. The two standing owner directives are untouched by the days-awareness.
     assert efv_score._injury_factor({"il_on": 0, "il_type": "7-day",
-                                     "il_days_12mo": 118.0}) == 1.0   # healthy = no penalty
-    assert efv_score._injury_factor({"is_post_tj": True}) == 1.0       # post-TJ status alone
+                                     "il_days_12mo": 118.0}, is_pit=True) == 1.0   # healthy = no penalty
+    assert efv_score._injury_factor({"is_post_tj": True}, is_pit=True) == 1.0       # post-TJ status alone
 
 
 def test_injury_factor_matches_the_committed_live_board():
@@ -226,9 +226,9 @@ def test_injury_factor_matches_the_committed_live_board():
             pytest.skip(f"{fn} not built")
         for r in json.loads(p.read_text(encoding="utf-8")):
             if not r.get("il_on"):
-                assert efv_score._injury_factor(r) == 1.0
+                assert efv_score._injury_factor(r, is_pit=True) == 1.0
                 continue
-            new, old = efv_score._injury_factor(r), retired(r)
+            new, old = efv_score._injury_factor(r, is_pit=True), retired(r)
             assert 0.5 <= new <= 1.0
             t = str(r.get("il_type") or "").lower()
             if any(k in t for k in efv_score._IL_FULL_SEASON_TYPES):
@@ -318,3 +318,59 @@ def test_a_short_ledger_reports_no_remainder_at_all():
     uncut = efv_score._factors(ridge, feats, top=None, side="hit")
     assert len(uncut) == 2
     assert uncut[efv_score._EXPLAINER_TOP:] == []
+
+
+def test_injury_penalty_is_pitcher_only_and_says_why():
+    """Owner decision 2026-09-04: the live IL haircut applies to PITCHERS ONLY.
+
+    This is not a preference, it is a measured sign. On the full pool including busts,
+    with the scouting grade, age and rostered-exposure proxies partialled out, being on
+    the injured list at the decision point predicts:
+
+        pitchers  n=1,220  rho -0.1664  CI95 [-0.2228, -0.1087]  -> penalty SUPPORTED
+        hitters   n=1,127  rho +0.0651  CI95 [+0.0021, +0.1282]  -> CONTRAINDICATED
+
+    The hitter interval sits ABOVE zero, so the old both-sides haircut was subtracting
+    grade, rank and dollars from 225 served hitters against the evidence, at a median
+    x0.738. Exposure control is what makes the number readable at all: a player cannot be
+    placed on an injured list unless he is rostered, so "no IL record" means never-exposed
+    as often as it means healthy. Artifact: data/xfv_health_profile_eval.json,
+    penalty_verdict. Ship record: docs/efv-2026-09-03/DRIVER_SWEEP_VOLUME_AND_LEVEL.md.
+
+    If this test goes red because the constant changed, the question to answer first is
+    whether the MEASUREMENT moved, not whether the constant should be widened back.
+    """
+    hurt = {"il_on": 1, "il_type": "60-day", "il_days_12mo": 130.0, "il_stints_12mo": 3.0}
+
+    assert efv_score.INJURY_PENALTY_SIDES == frozenset({"pit"})
+
+    # the pitcher path is untouched: the severity machinery still bites
+    pit = efv_score._injury_factor(hurt, is_pit=True)
+    assert 0.5 <= pit < 1.0, "the pitcher haircut must still apply"
+
+    # the hitter path is a hard no-op, on every shape the live board produces
+    assert efv_score._injury_factor(hurt, is_pit=False) == 1.0
+    for extra in ({}, {"is_post_tj": True}, {"il_days_12mo": 400.0},
+                  {"il_type": "full-season"}, {"il_stints_12mo": 9.0}):
+        assert efv_score._injury_factor({**hurt, **extra}, is_pit=False) == 1.0
+
+    # the side may be carried on the row instead of passed, and must give the same answer
+    assert efv_score._injury_factor({**hurt, "is_pitcher": True}) == pit
+    assert efv_score._injury_factor({**hurt, "is_pitcher": False}) == 1.0
+
+    # a caller that forgets the argument entirely gets the SAFE side. An unproven penalty
+    # is a live subtraction, so defaulting to "no haircut" fails toward not taxing someone
+    # the evidence does not convict.
+    assert efv_score._injury_factor(hurt) == 1.0
+
+
+def test_injury_penalty_sides_is_in_the_board_fingerprint():
+    """The haircut is a multiplicative overlay on the served grade, so the coordination
+    device has to be able to see it. Every other term in that string was added AFTER
+    something moved every served grade while the fingerprint stayed byte-identical; this
+    one was added in the same commit as the change it guards."""
+    import storage
+    fp = storage.board_basis_fingerprint()
+    assert "injsides=" in fp
+    assert "injsides=pit" in fp
+    assert fp == storage.BOARD_BASIS_FINGERPRINT

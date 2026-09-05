@@ -902,9 +902,12 @@ function _methProseHTML() {
     distribution, so it can and does disagree with the industry, and on the current board it
     disagrees by a full 5-point rung or more on most of the hitters. A separate grade on the older
     consensus-anchored scale still prices the surplus dollars and the 5-bucket outcome mix, because
-    those value curves were fitted on that scale. Live prospects also get two bounded tilts: an
-    injury penalty (current IL + recent IL load + post-TJ) and a Statcast+ quality tilt on
-    upper-level prospects.</p>
+    those value curves were fitted on that scale. Live prospects also get two bounded tilts: a
+    Statcast+ quality tilt on upper-level prospects, and an injury penalty that applies to
+    <em>pitchers only</em> (current IL status, deepened by recent IL load). The penalty is
+    pitcher-only because that is what the outcomes support: holding the scouting grade, age and
+    rostered time equal, a pitcher carrying an active injury goes on to produce less, while a
+    hitter does not. Post-TJ status by itself is not treated as an injury.</p>
     <p><strong>Everywhere, frozen at debut.</strong> Every graded prospect carries an eFV: the
     active boards, graduates (backgraded at their final pre-debut snapshot, then <em>locked</em>),
     and the farm-system rankings, surplus, DvM+, and movement engine all run on it. Players with no
