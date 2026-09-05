@@ -57,10 +57,10 @@
    "note": "rank_calibration selects lambda in rank_gate_band by argmax of pooled + within-tier + FV45-fringe Spearman. composite_at_shipped = those decisive components recomputed AT shipped_lambda (the value actually served); composite_at_selected = the same components at the selector's own argmax. They differ whenever a _BLEND_LAMBDA_RESELECT pin overrides the selector, which is the live case on both sides."
   },
   "wag": {
-   "lambda": 0.433,
-   "slope_wobs": 0.433,
-   "slope_unweighted": 0.265,
-   "spearman": 0.033,
+   "lambda": 0.434,
+   "slope_wobs": 0.434,
+   "slope_unweighted": 0.266,
+   "spearman": 0.0324,
    "n": 755
   },
   "rank_gate": {
@@ -906,21 +906,21 @@
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_call_E_refit": {
       "delta": 0.0104,
-      "mde95": 0.045,
+      "mde95": 0.0458,
       "mde95_estimator": "E_refit",
       "mde95_source": "data/xfv_power_eval.json partb_floors.cells.pooled_rho.hit.debuted_km",
-      "margin_over_floor": 0.231,
+      "margin_over_floor": 0.227,
       "resolvable": false,
-      "verdict": "not resolvable at this power (E_refit, MDE95 0.045)"
+      "verdict": "not resolvable at this power (E_refit, MDE95 0.0458)"
      },
      "spearman_call_E_cond": {
       "delta": 0.0104,
-      "mde95": 0.0204,
+      "mde95": 0.0206,
       "mde95_estimator": "E_cond",
       "mde95_source": "data/xfv_power_eval.json partb_floors.cells.pooled_rho.hit.debuted_km",
-      "margin_over_floor": 0.51,
+      "margin_over_floor": 0.505,
       "resolvable": false,
-      "verdict": "not resolvable at this power (E_cond, MDE95 0.0204)"
+      "verdict": "not resolvable at this power (E_cond, MDE95 0.0206)"
      },
      "both_estimators_agree": true
     },
@@ -2560,21 +2560,21 @@
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_call_E_refit": {
       "delta": -0.0164,
-      "mde95": 0.0295,
+      "mde95": 0.0298,
       "mde95_estimator": "E_refit",
       "mde95_source": "data/xfv_power_eval.json partb_floors.cells.pooled_rho.hit.full_pool_km",
-      "margin_over_floor": 0.556,
+      "margin_over_floor": 0.55,
       "resolvable": false,
-      "verdict": "not resolvable at this power (E_refit, MDE95 0.0295)"
+      "verdict": "not resolvable at this power (E_refit, MDE95 0.0298)"
      },
      "spearman_call_E_cond": {
       "delta": -0.0164,
-      "mde95": 0.0208,
+      "mde95": 0.0214,
       "mde95_estimator": "E_cond",
       "mde95_source": "data/xfv_power_eval.json partb_floors.cells.pooled_rho.hit.full_pool_km",
-      "margin_over_floor": 0.788,
+      "margin_over_floor": 0.766,
       "resolvable": false,
-      "verdict": "not resolvable at this power (E_cond, MDE95 0.0208)"
+      "verdict": "not resolvable at this power (E_cond, MDE95 0.0214)"
      },
      "both_estimators_agree": true
     },
@@ -2943,17 +2943,17 @@
   "note": "identical block on both side artifacts; the instrument is joint by construction. Reported BESIDE the pooled rho, not instead of it.",
   "call_E_cond": {
    "delta": 0.003,
-   "mde95": 0.0203,
+   "mde95": 0.0182,
    "mde95_estimator": "E_cond",
    "mde95_source": "data/xfv_power_eval.json partb_floors.cells.block_rho",
-   "margin_over_floor": 0.148,
+   "margin_over_floor": 0.165,
    "resolvable": false,
-   "verdict": "not resolvable at this power (E_cond, MDE95 0.0203)"
+   "verdict": "not resolvable at this power (E_cond, MDE95 0.0182)"
   },
   "both_estimators_agree": true,
-  "estimator_note": "MDE95_BLOCK_RHO 0.0325 is E_refit (train and test resampled, refit per draw). B-L1 re-measured the same class at 0.0317 E_refit / 0.0203 E_cond; the shipped constant is the more conservative of the two E_refit reads and is kept, so this lane changes labels and not floors."
+  "estimator_note": "MDE95_BLOCK_RHO 0.0325 is E_refit (train and test resampled, refit per draw). B-L1 re-measured the same class at 0.0307 E_refit / 0.0182 E_cond; the shipped constant is the more conservative of the two E_refit reads and is kept, so this lane changes labels and not floors."
  },
- "honest_note": "eFV does not beat consensus FV on out-of-sample rank on every cut (debuted_km +0.0104, full_pool_km -0.0164), and no gap reaches the 0.044 this eval can resolve either way under E_refit. E_cond, which holds the fit and resamples the scored rows only, is tighter and does not change that (debuted_km 0.51x of 0.0204, full_pool_km 0.79x of 0.0208), so every cut is a NULL under both estimators. The higher-SNR block-rho leg reads +0.0030: not resolvable at this power (E_refit, MDE95 0.0325), and not resolvable at this power (E_cond, MDE95 0.0203). By era the edge concentrates in recent cohorts (+0.0422 on 2022-2023 vs -0.0104 on <=2018), so what edge exists is not an artifact of older, less accurate scouting. eFV also sits above consensus on MAE by +0.1370 WAR (it predicts more spread; consensus regresses to the mean). That leg is UNFLOORED and stays a diagnostic: no MDE95 exists for any MAE statistic here, and on a label whose conditional median is zero MAE is minimized by predicting the median, so it cannot arbitrate a board in either direction. The flagship case is the package: rank + calibrated distribution + uncertainty + surplus + power-correction, not a resolved rank win.",
+ "honest_note": "eFV does not beat consensus FV on out-of-sample rank on every cut (debuted_km +0.0104, full_pool_km -0.0164), and no gap reaches the 0.044 this eval can resolve either way under E_refit. E_cond, which holds the fit and resamples the scored rows only, is tighter and does not change that (debuted_km 0.50x of 0.0206, full_pool_km 0.77x of 0.0214), so every cut is a NULL under both estimators. The higher-SNR block-rho leg reads +0.0030: not resolvable at this power (E_refit, MDE95 0.0325), and not resolvable at this power (E_cond, MDE95 0.0182). By era the edge concentrates in recent cohorts (+0.0422 on 2022-2023 vs -0.0104 on <=2018), so what edge exists is not an artifact of older, less accurate scouting. eFV also sits above consensus on MAE by +0.1370 WAR (it predicts more spread; consensus regresses to the mean). That leg is UNFLOORED and stays a diagnostic: no MDE95 exists for any MAE statistic here, and on a label whose conditional median is zero MAE is minimized by predicting the median, so it cannot arbitrate a board in either direction. The flagship case is the package: rank + calibrated distribution + uncertainty + surplus + power-correction, not a resolved rank win.",
  "side_fairness": {
   "eval_line": "eFV 3.4 F-SIDE joint side-fairness (measurement-only; standing)",
   "artifact": "data/xfv_side_fairness_eval.json",

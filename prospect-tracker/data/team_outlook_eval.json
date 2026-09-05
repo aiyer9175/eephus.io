@@ -2,13 +2,13 @@
  "generated_at": "2026-09-04",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 936.6,
-  "remainder_recenter_wins_per_team": -0.01,
-  "roster_war_sum_y1": 936.6,
+  "roster_war_sum": 936.5,
+  "remainder_recenter_wins_per_team": 0.0,
+  "roster_war_sum_y1": 936.5,
   "league_war_benchmark": 1000,
   "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-  "raw_wins_sum": 2367.7,
-  "raw_wins_sum_y1": 2367.7,
+  "raw_wins_sum": 2367.5,
+  "raw_wins_sum_y1": 2367.5,
   "target_wins_sum": 2430,
   "depth_pool": {
    "n_depth_players": 423,
@@ -21,33 +21,33 @@
   "by_season": [
    {
     "season": 2027,
-    "roster_war_sum": 936.6,
+    "roster_war_sum": 936.5,
     "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": -0.01
+    "remainder_recenter_wins_per_team": 0.0
    },
    {
     "season": 2028,
-    "roster_war_sum": 548.1,
-    "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 13.37
+    "roster_war_sum": 547.5,
+    "wins_sum": 2429.8,
+    "remainder_recenter_wins_per_team": 13.38
    },
    {
     "season": 2029,
-    "roster_war_sum": 435.0,
-    "wins_sum": 2430.2,
-    "remainder_recenter_wins_per_team": 17.33
+    "roster_war_sum": 434.4,
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": 17.34
    },
    {
     "season": 2030,
-    "roster_war_sum": 362.4,
-    "wins_sum": 2429.8,
-    "remainder_recenter_wins_per_team": 20.02
+    "roster_war_sum": 361.9,
+    "wins_sum": 2429.9,
+    "remainder_recenter_wins_per_team": 20.03
    },
    {
     "season": 2031,
-    "roster_war_sum": 286.6,
+    "roster_war_sum": 286.1,
     "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 22.87
+    "remainder_recenter_wins_per_team": 22.88
    }
   ],
   "coverage_decomposition_2025": {
@@ -312,12 +312,12 @@
   "eta_coverage_orgs": 30,
   "align_coverage_orgs": 30,
   "eta_mean_range": [
-   2027.5,
+   2027.49,
    2029.12
   ],
   "align_median": -0.35,
   "align_range": [
-   -1.04,
+   -1.06,
    0.85
   ],
   "aligned_org_count": 27,

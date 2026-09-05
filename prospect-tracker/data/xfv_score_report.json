@@ -1,7 +1,7 @@
 {
  "generated_at": "2026-09-04",
  "scope": "HITTERS",
- "n_scored": 1869,
+ "n_scored": 1867,
  "calibration_scale": {
   "a": 0.033,
   "b": 1.044
@@ -11,29 +11,29 @@
   "mean_abs_delta": 0.66,
   "max_up": 5.9,
   "max_down": -3.8,
-  "share_within_2_grades": 0.905
+  "share_within_2_grades": 0.906
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 6.04,
-  "max_up": 8.0,
+  "mean_abs_delta": 6.05,
+  "max_up": 8.1,
   "max_down": -20.7
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.0606,
+  "spearman_adj_vs_consensus_miss": 0.0575,
   "n": 463,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 23919.1,
-  "consensus": 23474.3
+  "xfv": 23896.0,
+  "consensus": 23451.6
  },
  "example_up_adjustments": [
   {
    "player_key": "zach_mckinstry",
    "consensus_fv": 40.5,
    "xfv_grade": 47.7,
-   "delta": 7.3,
+   "delta": 7.2,
    "realized_war_6yr": 4.5
   },
   {
@@ -44,18 +44,18 @@
    "realized_war_6yr": 18.03
   },
   {
+   "player_key": "brent_rooker",
+   "consensus_fv": 40.5,
+   "xfv_grade": 46.5,
+   "delta": 6.0,
+   "realized_war_6yr": 8.27
+  },
+  {
    "player_key": "jake_alu",
    "consensus_fv": 37.9,
    "xfv_grade": 43.8,
    "delta": 5.9,
    "realized_war_6yr": -0.11
-  },
-  {
-   "player_key": "brent_rooker",
-   "consensus_fv": 40.5,
-   "xfv_grade": 46.4,
-   "delta": 5.9,
-   "realized_war_6yr": 8.27
   },
   {
    "player_key": "andrew_young",
