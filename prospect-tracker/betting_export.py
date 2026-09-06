@@ -2843,11 +2843,31 @@ PROPS_MODEL_ID = "betting_props_pmf"
 PROPS_DISTRIBUTIONS = {
     "Strikeouts": {
         "dist": "binomial", "trials": "expected batters faced",
+        # THE DISPERSION HALF OF THIS REASON WAS BACKWARDS AND IS NOW MEASURED.
+        # It used to say Poisson "over-disperses" as a reason to reject it.
+        # Arithmetically that is true against the binomial, and as a
+        # JUSTIFICATION it is the wrong way round: measured on 3,376 starts of
+        # 20 or more batters faced, the real strikeout count has a variance of
+        # 5.635 against the binomial's 4.025 and Poisson's 5.147. The data
+        # over-disperses relative to BOTH, by 1.400x against the binomial and
+        # only 1.095x against Poisson, so Poisson's extra variance moves toward
+        # the truth rather than away from it.
+        #
+        # The binomial is still the served choice, and now for a reason that
+        # survives measurement: on the line this module actually prices, over
+        # 5.5, it beats Poisson by a paired Brier of 0.001045 with a
+        # game-clustered interval that excludes zero. It fits the shape worse
+        # and prices the line better, and those are different questions.
+        # data/betting_props_dark_eval.json carries both legs.
         "reason": "a batter faced is struck out or is not, so the count is a "
                   "sum of Bernoulli trials with support capped at batters "
-                  "faced. Poisson puts mass on more strikeouts than batters, "
-                  "which cannot happen, and over-disperses (variance lam "
-                  "against the binomial's n p (1 - p))",
+                  "faced, and Poisson puts mass on more strikeouts than "
+                  "batters, which cannot happen. On the served 5.5 line the "
+                  "binomial also prices better than Poisson, by a paired Brier "
+                  "of 0.001045 with an interval excluding zero. It does NOT fit "
+                  "the shape better: the real count over-disperses against the "
+                  "binomial by 1.400x and against Poisson by only 1.095x. "
+                  "Measured in data/betting_props_dark_eval.json",
     },
     "Hits allowed": {
         "dist": "binomial", "trials": "expected batters faced",

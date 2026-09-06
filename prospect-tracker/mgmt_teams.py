@@ -5,6 +5,12 @@ plays table has game_pk, inning, half, the base-out state and the participants, 
 that says who was playing. The source cache is no better. `.cache/win_prob` payloads are a
 bare play list with no `gameData` block, so the teams were never fetched, not merely dropped.
 
+AND FOR ONE SEASON IN EIGHT IT IS ON DISK ANYWAY, which is worth stating precisely rather than
+overclaiming. `.cache/game_feeds/` holds full StatsAPI feeds with `gameData.teams` for 2,124 of
+the 2,124 corpus games in 2026, and for ZERO of the 17,008 games in 2018, 2019 and 2021-2025.
+So a direct read covers an eighth of the corpus and this derivation covers the rest. That split
+is also exactly why the ground-truth check below can validate one season and not eight.
+
 Every In-Game Management number needs an AGENT to attribute to, and without a team there is no
 agent at any resolution. This module recovers it without a single network call.
 

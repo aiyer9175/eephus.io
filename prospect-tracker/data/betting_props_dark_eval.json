@@ -1,0 +1,222 @@
+{
+ "generated_at": "2026-09-06T18:50:31+00:00",
+ "produced_by": "betting_props_dark.py",
+ "burn_in_cut_date": "2026-05-12",
+ "lines": {
+  "home_runs": 0.5,
+  "strikeouts": 5.5
+ },
+ "bootstrap": {
+  "n": 2000,
+  "seed": 20260906,
+  "resampling_unit": "game_pk",
+  "why": "batter-games inside one game share the park, the weather, the opposing pitcher and the umpire; an independent row bootstrap understates the interval by roughly the square root of the rows per game"
+ },
+ "coverage": {
+  "completed_games": 2139,
+  "skipped": {
+   "no_feed": 0,
+   "no_boxscore": 0,
+   "game_pks_missing": []
+  },
+  "batter_games": 43608,
+  "starter_games": 4278,
+  "park_factor_orgs": 29,
+  "park_factor_default": "orgs absent from data/fa_meta.json price at a NEUTRAL 100 index. ATH is absent and owns real home games in this window; a KeyError would drop them and a zero would invert them."
+ },
+ "what_this_is_not": "NOT a grade against a market. Zero prop odds have ever been captured: all 22 snapshots in .cache/odds are kind 'open' with markets h2h, spreads and totals, no props snapshot exists, and EEPHUS_PROPS_CREDITS is unset. Owner decision 6's accuracy leg is defined against the market and is therefore UNREACHABLE for every prop market. Beating a league constant is the lowest bar there is and clears nothing for publication: no slot, no record row, no exported edge, no served number.",
+ "home_runs": {
+  "n_eval": 31181,
+  "n_burn_in": 12427,
+  "base_rate": 0.108912,
+  "frozen_constants": {
+   "batter_prior_pa": 200
+  },
+  "burn_in_sweep": {
+   "label": "batter prior strength, in plate appearances",
+   "grid": [
+    {
+     "prior": 50,
+     "n_burn_in": 12409,
+     "brier": 0.086289
+    },
+    {
+     "prior": 100,
+     "n_burn_in": 12409,
+     "brier": 0.085933
+    },
+    {
+     "prior": 200,
+     "n_burn_in": 12409,
+     "brier": 0.085909
+    },
+    {
+     "prior": 400,
+     "n_burn_in": 12409,
+     "brier": 0.086064
+    }
+   ],
+   "chosen": 200,
+   "flatness_note": "the spread across this grid is the honest measure of how much the fitted constant matters. A flat grid means the choice is close to arbitrary and the arm's result does not rest on it.",
+   "spread": 0.00038
+  },
+  "comparator": "A0_league",
+  "arms": {
+   "A0_league": {
+    "n": 31181,
+    "brier": 0.095119,
+    "log_score": -0.332999,
+    "mean_predicted": 0.105228
+   },
+   "A1_unshrunk": {
+    "n": 31181,
+    "brier": 0.096533,
+    "log_score": -0.42388,
+    "mean_predicted": 0.106123,
+    "paired_delta_vs_A0_league": 0.001414,
+    "ci95": [
+     0.000889,
+     0.001943
+    ],
+    "n_paired": 31181,
+    "clears": false,
+    "verdict": "does NOT clear: the interval lies on the WRONG side, so this arm is measurably worse than its comparator"
+   },
+   "A2_eb": {
+    "n": 31181,
+    "brier": 0.094434,
+    "log_score": -0.329762,
+    "mean_predicted": 0.107482,
+    "paired_delta_vs_A0_league": -0.000684,
+    "ci95": [
+     -0.000923,
+     -0.000437
+    ],
+    "n_paired": 31181,
+    "clears": true,
+    "verdict": "clears: the whole interval favours this arm"
+   },
+   "A3_eb_park": {
+    "n": 31181,
+    "brier": 0.094432,
+    "log_score": -0.329679,
+    "mean_predicted": 0.107557,
+    "paired_delta_vs_A0_league": -0.000687,
+    "ci95": [
+     -0.00096,
+     -0.000416
+    ],
+    "n_paired": 31181,
+    "clears": true,
+    "verdict": "clears: the whole interval favours this arm"
+   }
+  },
+  "structure_leg": {
+   "A2_eb": {
+    "n": 31181,
+    "brier": 0.094434,
+    "log_score": -0.329762,
+    "mean_predicted": 0.107482
+   },
+   "A3_eb_park": {
+    "n": 31181,
+    "brier": 0.094432,
+    "log_score": -0.329679,
+    "mean_predicted": 0.107557,
+    "paired_delta_vs_A2_eb": -3e-06,
+    "ci95": [
+     -9.8e-05,
+     9.4e-05
+    ],
+    "n_paired": 31181,
+    "clears": false,
+    "verdict": "does NOT clear: the interval contains zero, so on this evidence the arm is not distinguishable from its comparator"
+   }
+  },
+  "structure_leg_note": "the park index scored against the batter rate it extends, not against the league constant. An arm can clear the league bar purely on the strength of the component it inherits, so a park arm that clears A0 says nothing about the park."
+ },
+ "strikeouts": {
+  "n_eval": 3052,
+  "n_burn_in": 1226,
+  "base_rate": 0.349279,
+  "frozen_constants": {
+   "pitcher_prior_bf": 300,
+   "bf_prior_starts": 8,
+   "nb2_alpha_fitted_on_burn_in": 0.053862
+  },
+  "comparator": "B0_league",
+  "arms": {
+   "B0_league": {
+    "n": 3052,
+    "brier": 0.22734,
+    "log_score": -0.647124,
+    "mean_predicted": 0.348239
+   },
+   "B1_unshrunk": {
+    "n": 3052,
+    "brier": 0.218202,
+    "log_score": -0.646093,
+    "mean_predicted": 0.365076,
+    "paired_delta_vs_B0_league": -0.009137,
+    "ci95": [
+     -0.015889,
+     -0.002429
+    ],
+    "n_paired": 3052,
+    "clears": true,
+    "verdict": "clears: the whole interval favours this arm"
+   },
+   "B2_eb": {
+    "n": 3052,
+    "brier": 0.204447,
+    "log_score": -0.596525,
+    "mean_predicted": 0.357251,
+    "paired_delta_vs_B0_league": -0.022893,
+    "ci95": [
+     -0.026671,
+     -0.019356
+    ],
+    "n_paired": 3052,
+    "clears": true,
+    "verdict": "clears: the whole interval favours this arm"
+   }
+  },
+  "pmf_line_leg": {
+   "B2_binom": {
+    "n": 3052,
+    "brier": 0.204447,
+    "log_score": -0.596525,
+    "mean_predicted": 0.357251
+   },
+   "B2_poisson": {
+    "n": 3052,
+    "brier": 0.205492,
+    "log_score": -0.599171,
+    "mean_predicted": 0.359109,
+    "paired_delta_vs_B2_binom": 0.001045,
+    "ci95": [
+     0.000497,
+     0.001572
+    ],
+    "n_paired": 3052,
+    "clears": false,
+    "verdict": "does NOT clear: the interval lies on the WRONG side, so this arm is measurably worse than its comparator"
+   },
+   "B2_nb2": {
+    "n": 3052,
+    "brier": 0.206958,
+    "log_score": -0.602575,
+    "mean_predicted": 0.359928,
+    "paired_delta_vs_B2_binom": 0.002511,
+    "ci95": [
+     0.001725,
+     0.003317
+    ],
+    "n_paired": 3052,
+    "clears": false,
+    "verdict": "does NOT clear: the interval lies on the WRONG side, so this arm is measurably worse than its comparator"
+   }
+  },
+  "pmf_leg_note": "the LINE leg only: which distribution prices P(K > 5.5) better at the champion's mean. It is not a verdict on which distribution FITS the strikeout count, which is a different question with a different answer, and collapsing the two is how a shipped reason string ends up describing the wrong thing."
+ }
+}

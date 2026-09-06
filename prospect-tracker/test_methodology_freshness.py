@@ -776,6 +776,13 @@ MODEL_GLOSSARY = {
     # served row publishes the chosen distribution per market, which is the honest
     # place for it while the verdict is still open.
     "betting_props_pmf": "internal",
+    # The two dark grades. Internal for the same reason every other betting
+    # row is: the site glossary documents baseball metrics, and a prop
+    # sub-model graded against a base rate is gambling machinery whose
+    # limits belong in the /betting/ page copy. They serve nothing at all
+    # today, so there is not even a number for a reader to look up.
+    "betting_props_hr_dark": "internal",
+    "betting_props_k_dark": "internal",
     # betting_shadow_subledger is measurement infrastructure. Nothing renders it;
     # it exists so a per-market verdict can be read later without re-deriving the
     # ledger, and its rows are unpriced by construction.
