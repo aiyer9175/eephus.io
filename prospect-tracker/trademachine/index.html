@@ -79,7 +79,8 @@
     </div>
     <div class="filter-group"><span class="filter-label">Sort</span>
       <select class="chip" id="tb-sort-select" title="Sort Trade Board">
-        <option value="trade_desc">Trade value</option>
+        <option value="trade_desc">eFV grade</option>
+        <option value="surplus_desc">Surplus ($)</option>
         <option value="age_asc">Youngest</option>
         <option value="age_desc">Oldest</option>
         <option value="fv_desc">FV</option>
@@ -98,7 +99,7 @@
     </div>
     <div id="tb-group-body"></div>
   </div>
-  <div id="tradeboard-content" data-csv-export="trade-board"><div class="spinner-wrap"><span class="spinner"></span></div></div></div><link rel="stylesheet" href="/assets/trademachine.css?v=7501dd3b"><script src="/assets/eephus-hub.js?v=b5b494bc" defer></script><script src="/assets/eephus-gfx.js?v=9cca59bc" defer></script><script src="/assets/trademachine.js?v=f5e53397" defer></script><script>
+  <div id="tradeboard-content" data-csv-export="trade-board"><div class="spinner-wrap"><span class="spinner"></span></div></div></div><link rel="stylesheet" href="/assets/trademachine.css?v=7501dd3b"><script src="/assets/eephus-hub.js?v=b5b494bc" defer></script><script src="/assets/eephus-gfx.js?v=9cca59bc" defer></script><script src="/assets/trademachine.js?v=d11eaaac" defer></script><script>
 (function(){
   function mount(){ if(window.TradeMachine && window.TradeMachine.mount) window.TradeMachine.mount(); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount); else mount();

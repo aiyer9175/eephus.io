@@ -538,9 +538,18 @@ function _tbPrimaryPos(pos) {
   const order = ["C","SS","CF","2B","3B","1B","LF","RF","OF","SP","RP","CL","RHP","LHP","P","DH"];
   return order.find(x => parts.includes(x)) || parts[0] || "";
 }
-// Parse the _tbSort string into [column, direction]. "trade_desc" (the legacy
-// default + dropdown value) maps to the surplus column so header clicks and the
-// dropdown share one model.
+// Parse the _tbSort string into [column, direction]. "trade_desc" is the LEGACY
+// value of the default option and maps to the GRADE column, which is what it has
+// always done; the option is now labelled "eFV grade" to match, and Surplus ($)
+// is a separate option on trade_value_mm.
+//
+// THE LABEL USED TO SAY "Trade value" while this returned "grade". The ordering
+// is the deliberate one (data/trade_machine_eval.json: grade rho 0.3433 against
+// surplus 0.3289, and grade wins inside every tier), but the name was not: on
+// the served board eleven negative-surplus contracts sat inside the first fifty
+// rows, Carlos Correa at minus $58.0M in the sixth, while the largest surplus on
+// the board sat at rank 87. The value the string carries is kept so a bookmarked
+// or remembered selection still resolves.
 function _tbSortParts() {
   if (_tbSort === "trade_desc" || !_tbSort) return ["grade", "desc"];
   const i = _tbSort.lastIndexOf("_");
@@ -638,7 +647,16 @@ function _tbSortByCol(col) {
             : (["name", "org", "pos", "age"].includes(col) ? "asc" : "desc");
   _tbSort = `${col}_${dir}`;
   const sel = document.getElementById("tb-sort-select");
-  if (sel) { const opt = (_tbSort === "grade_desc" || _tbSort === "surplus_desc") ? "trade_desc" : _tbSort; sel.value = opt; if (sel.value !== opt) sel.selectedIndex = -1; }
+  // THE DROPDOWN MUST NAME THE ORDERING IT IS SHOWING. This used to snap BOTH
+  // grade_desc and surplus_desc back to the single "trade_desc" option, so
+  // clicking the Surplus header left the control reading the grade option and a
+  // reader had no way to tell the two orderings apart. Only the grade default
+  // aliases now; surplus is its own option and selects itself.
+  if (sel) {
+    const opt = (_tbSort === "grade_desc") ? "trade_desc" : _tbSort;
+    sel.value = opt;
+    if (sel.value !== opt) sel.selectedIndex = -1;
+  }
   resetPage("tradeboard");
   _renderTBRows();
 }

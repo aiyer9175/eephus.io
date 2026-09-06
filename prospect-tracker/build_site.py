@@ -3643,7 +3643,8 @@ _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
     </div>
     <div class="filter-group"><span class="filter-label">Sort</span>
       <select class="chip" id="tb-sort-select" title="Sort Trade Board">
-        <option value="trade_desc">Trade value</option>
+        <option value="trade_desc">eFV grade</option>
+        <option value="surplus_desc">Surplus ($)</option>
         <option value="age_asc">Youngest</option>
         <option value="age_desc">Oldest</option>
         <option value="fv_desc">FV</option>

@@ -187,3 +187,44 @@ def test_no_served_team_outlook_row_has_a_null_current_block():
         "overlay is the resolver-drop signature: the club was skipped by the "
         "len<=3 guard while its neighbours resolved. Repair with "
         "`python tools/repair_team_outlook_overlay.py`.")
+
+
+# --------------------------------------------------------------------------
+# The same defect, one module away
+# --------------------------------------------------------------------------
+
+def test_the_park_factor_cache_uses_the_savant_override_map():
+    """SAVANT LABELS ARIZONA'S VENUE "D-backs" AND canonical_org HAS NO ALIAS.
+
+    fa_fit._park_factors has handled this since it was written, through
+    _SAVANT_CLUB_OVERRIDES. fa_fit_backtest built its own cache one module away
+    with canonical_org alone, so every Arizona row landed under the key
+    "D-backs" and every ARI lookup missed.
+
+    A miss returns _park_score's neutral 0.5, which is INDISTINGUISHABLE from a
+    measured neutral park, so Arizona was scored park-neutral in every test
+    winter of the published team-fit gate artifact and nothing looked wrong.
+    """
+    src = (ROOT / "fa_fit_backtest.py").read_text(encoding="utf-8")
+    i = src.index("park_cache[Y - 1]")
+    seg = src[max(0, i - 1400):i + 700]
+    assert "_SAVANT_CLUB_OVERRIDES" in seg, (
+        "the backtest builds its park cache without the override map, so "
+        "Arizona keys as 'D-backs' and every lookup falls to neutral")
+
+
+def test_the_override_map_actually_resolves_arizona():
+    import fa_fit
+    assert fa_fit._SAVANT_CLUB_OVERRIDES.get("D-backs") == "ARI"
+    assert canonical_org("D-backs") != "ARI", (
+        "canonical_org now handles D-backs on its own, so the override map is "
+        "redundant and this whole class of defect is closed at the source")
+
+
+def test_a_missing_park_and_a_neutral_park_are_the_same_number():
+    """The property that hid the defect, pinned so the next reader knows. It is
+    not a bug to fix here: a fit score has to be a number. It is the reason the
+    caller has to key correctly rather than rely on the score looking wrong."""
+    import fa_fit_backtest as fb
+    assert fb._park_score({}, "ARI", False) == 0.5
+    assert fb._park_score({"ARI": {"woba": 100, "hr": 100}}, "ARI", False) == 0.5

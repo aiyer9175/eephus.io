@@ -297,6 +297,14 @@ def _cond_terms(events: list[tuple[int, float]], guar: float,
 
 
 def _park_score(pf: dict, org: str, is_pitcher: bool) -> float:
+    """0 to 1, with 0.5 meaning neutral.
+
+    A MISS AND A NEUTRAL PARK RETURN THE SAME NUMBER, which is why the Arizona
+    key defect above went unnoticed for as long as it did: a club whose park was
+    never found scores exactly like a club whose park is genuinely average, and
+    nothing downstream can tell them apart. The caller counts misses now; this
+    function keeps returning 0.5 because a fit score has to be a number.
+    """
     f = pf.get(org)
     if not f:
         return 0.5
@@ -342,11 +350,23 @@ def build_rows() -> list[dict]:
         wins = standings_wins(Y - 1)
         if (Y - 1) not in park_cache:
             try:
-                park_cache[Y - 1] = {
-                    canonical_org(r.get("name_display_club") or "") or "?":
-                        {"woba": int(r.get("index_woba") or 100),
-                         "hr": int(r.get("index_hr") or 100)}
-                    for r in fa_sources.fetch_savant_park_factors(Y - 1)}
+                # THE OVERRIDE MAP, NOT canonical_org ALONE. Savant labels
+                # Arizona's venue "D-backs", canonical_org has no alias for it
+                # and returns the input unchanged, so the row landed under the
+                # key "D-backs" and every ARI lookup missed. _park_score returns
+                # the NEUTRAL 0.5 on a miss, which is indistinguishable from a
+                # measured neutral park, so Arizona was silently scored as
+                # park-neutral in every test winter of the published gate
+                # artifact. fa_fit._park_factors has handled this since it was
+                # written; this function is one module away and did not.
+                import fa_fit as _ff
+                park_cache[Y - 1] = {}
+                for r in fa_sources.fetch_savant_park_factors(Y - 1):
+                    club = r.get("name_display_club") or ""
+                    org = _ff._SAVANT_CLUB_OVERRIDES.get(club) or canonical_org(club)
+                    park_cache[Y - 1][org or "?"] = {
+                        "woba": int(r.get("index_woba") or 100),
+                        "hr": int(r.get("index_hr") or 100)}
             except Exception:                               # noqa: BLE001
                 park_cache[Y - 1] = {}
         thr = fm._cbt_threshold_or_earliest(Y - 1)
