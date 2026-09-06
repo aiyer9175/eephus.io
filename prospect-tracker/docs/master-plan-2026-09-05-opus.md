@@ -502,9 +502,311 @@ cell clears under Holm on the registered instrument.
 
 ## Part 2. Betting on resolved games, new metrics, and the module lanes
 
-(Filled from the modules-betting-audit workflow synthesis below.)
+Source: the modules-betting-audit workflow (9 census lanes, a completeness critic, adversarial verification of every new model and new metric proposal, and a synthesis stage that completed with all 72 agents green). Every number below is measured from a committed artifact, a gate document or code read during the census; anything marked PROPOSED is design, not measurement.
 
-PENDING_SYNTHESIS_B
+Basis note: every number below is MEASURED from a `data/*.json` artifact, a `docs/*.md` gate document, or code read during the census, with the citation attached. Everything labelled PROPOSED is design, not measurement. No claim in this document has been re-derived; the executor should not re-run the census.
+
+---
+
+### 1. State of each module
+
+#### 1.1 Betting: the honest vintage numbers
+
+MEASURED, `data/betting_model_eval.json` generated 2026-09-05.
+
+The honest (vintage) mode graded 472 games over 2026-08-01 to 2026-09-04 and, for the first time, beats the home-constant baseline: Brier 0.24398 vs 0.2482, log loss 0.68104, accuracy 0.5678, total_mae 3.546, paired skill delta +0.004221, sd 0.04457, t 2.058, `beats_baseline_95` true (`betting_model.py:2310` `_paired_brier_skill`). Benchmark ladder on the same window: literature Elo 0.2442 (`tools/betting_elo.py:40-51`), home constant 0.2482 at p 0.5424. On the 239-game subsample with a cached open capture, market open de-vig reads 0.23175, Elo 0.24307, model 0.24462, home 0.24842. `market_close_devig` n 0.
+
+Three qualifications the plan is built around.
+
+1. The skill is carried by a near-constant predictor. 463 of 472 predictions lie inside 0.4-0.6; the model under-predicts home (mean_p_home 0.5162 vs a 0.5424 rate) and is under-confident in the 0.5-0.6 bin (pred 0.5336, actual 0.5773). Paired sd is 0.0446 against the contaminated mode's 0.0865.
+2. The coefficients it grades with are wrong-signed. Vintage fit on 610 design rows: b1 (offense) -0.0372, b2 -0.0965, b3 0.5948, b4 0.1494, r2 0.0030, `diff_shrink` 1.28 (an EXPANSION), `home_field_runs_adj` -0.0443. The contaminated 4,248-row fit reads b1 +0.2603, b2 -0.3146, b3 3.4387, `diff_shrink` 0.78. Split sensitivity moves `diff_shrink` 0.76 to 1.28. Fit is unregularized `lstsq` with no sign constraint, window pinned at `VINTAGE_FIT_TARGET_GAMES = 300` (`betting_model.py:471`, `:1979-2010`).
+3. The model is 0.0129 Brier behind the open market on the same games. No positive-EV moneyline claim is available from accuracy alone.
+
+Gate states (`data/betting_model_eval.json -> min_edge_gate.gates`): `vintage_sample` 472/600, closed; `out_of_sample_skill` OPEN (t 2.058); `graded_price_history` closed, board_all n 214, ROI -0.12649, lower-95 -0.23428 at every threshold 0.005-0.06. The vintage clock ticks 8.81 graded games/day, ETA 15 days to 600 (`data/betting_learning.json latest.clocks.vintage_sample`).
+
+Ledgers. Shadow: 255 rows, 223 settled, net -29.257 units, ROI -13.1%; moneyline 44 settled ROI -27.4%, runline 74 ROI -3.2%, total 105 ROI -14.1%; by slot board_all -15.3%, ev_rank -4.6%, potd_band -14.0%, longshot -22.5%. Model Brier on settled non-push rows 0.2706 vs market-fair 0.2461. Side skew: totals 102 over vs 19 under. Calibration ledger: 996 priced rows folding from 1,894 events, 890 settled, zero close prices, 15 slate days. Market gate on canonical sides: moneyline n 143 Brier 0.243233 t -0.987; runline 141, 0.268314, t +1.388; total 139, 0.269161, t +2.057, `worse_than_coin_95` TRUE, `ledger_closed` since 2026-09-03T15:21. The total's canonical OVER model probability is 0.5674 against a market 0.4993 and a 0.4654 hit rate, bias +0.102.
+
+The level defect is separately visible on the live board: model fair total exceeds the posted consensus by +0.854 runs on average (n 15, median +0.92), with b0 4.4777 against `lg_rpg` 4.4809 and no calendar, weather, day/night, roof or umpire term anywhere in `expected_runs` (`betting_model.py:1160-1230`).
+
+Dispersion (`run_dispersion`, alpha 0.2812-0.28413): moneyline lb95 -0.000231 PASS, runline both sides +0.009502 t 2.431 PASS, total +0.004875 t 1.41 FAIL, runs +0.198285 PASS, verdict INDETERMINATE, unserved. Shape facts: P(|margin|=1) observed 0.2721 vs Poisson 0.2503 vs NB2 0.1917; P(|margin|>=5) 0.2986 vs 0.1390 vs 0.2897; home -1.5 covers 0.3442 vs away -1.5 0.3768.
+
+Plumbing. 22 odds snapshots, all `open`, 15 of 29 calendar days, capture times 15:16-23:19 UTC, 9 of 500 credits used this month, planned 186 (`data/betting_status.json`). Props machinery complete and INERT (`betting_export.py:2808`, `betting_settle.py:263`, `betting_ingest.py:97`), zero props rows anywhere. Public record empty: `record.jsonl` 0 lines, `betting_record.json` [].
+
+#### 1.2 MLB Stats
+
+MEASURED forward-chained Y to Y+1 Spearman: REM+ 0.2363 vs FIP 0.211 vs ERA 0.0901 (n 878, gap lo95 +0.0013); SEM+ 0.4167 vs FIP 0.3821 (n 592, lo95 +0.0177); HEM+ 0.4119 vs OPS 0.4108 and raw wOBA 0.4087 (n 3,372, gap lo95 -0.0126, i.e. HEM+ TIES the public-shaped baselines and beats only AVG); xHEM+ 0.4543 (n 1,871, lo95 +0.0173); fwdHEM+ 0.4658; pWOBA 0.5189 vs best incumbent 0.4939; gmLI Y to Y+1 0.4683, split-half 0.5294; aStuff+ pitcher-level r 0.2797. REM+ split-half by TBF bin 0.179 / 0.342 / 0.424 (`data/rem_plus_eval.json`, `sem_plus_eval.json`, `hem_plus_eval.json`, `xhem_plus_eval.json`, `phem_marcel_lite_eval.json`, `leverage_consistency_eval.json`, `stuff_plus_aaa_eval.json`).
+
+Registry hygiene defects: WAR/IP+ (SP) 3yr serves while its gate is false (`data/war_rate_plus_multiyear_eval.json gates`); `war_pa_plus`, `war_ip_plus_sp`, `war_ip_plus_rp`, `xrem_plus`, `xsem_plus` are `unvalidated` with `eval_artifact` None; HEM+ has never been compared with the published wRC+ it displays beside.
+
+What betting actually consumes: three team columns (`offense_plus`, `rotation_plus`, `bullpen_plus`), per-pitcher `sem_plus` and `ip_per_gs`, and a Savant park runs index (`betting_model.py:537-612`, `:1132-1158`, `:711`). Nothing else on the boards reaches a price. On honest features the offense term is null to negative (b1 -0.0372).
+
+#### 1.3 PAL
+
+Two frozen-prior weighted blends, no fitted weights (`pal_conversion.py:57-75`). Gate record: SP to RP PASSES (rho 0.2916 vs best baseline -0.097, gap lo95 +0.0745, n 61); RP to SP FAILS sign-wrong (-0.2062, n 25). Expanded game-log cohort: SP to RP 0.3607 (n 100, lo95 +0.4647), RP to SP -0.1736 (n 35). `docs/e3-rp-sp-closure.md` bans re-gating RP to SP by expanding the event set (MDE +0.356 at n 35; n 100 arrives ~2037).
+
+Live defect: `pal_export.load_bref_pitcher_war` now reads eWAR v2, and `data/pal.json backtest.per_direction` reads RP to SP 0.025 and SP to RP 0.278, while `data/pal_eval.json`, the registry, the glossary and the closure doc all cite -0.2062 / 0.2916. The served scorecard copy is hard-coded (`assets/pal.js:632-660`), so it prints "does not validate ranking" regardless of payload. The failed direction is also the homepage teaser and the default tab (`build_site.py:2965-2980`, `assets/pal.js:27`).
+
+#### 1.4 FA
+
+Gate 1 (`data/fa_gate1_eval.json`): pooled WAR MAE 0.5736 vs 0.7279 baseline, n 20,721, all four gates true, but hitter bias -0.132 and the star cells LOSE to the naive 5/4/3 baseline (hitters actual >= 4 WAR: 2.96 vs 2.37, bias -2.93, n 424; pitchers 3.27 vs 2.94, n 186). Gate 2 (`fa_gate2_eval.json`, 2026-08-19): guarantee MAE 9.690 vs comps 11.120, AAV 2.909 vs 3.249, years 0.4329 vs 0.4871, megadeal slice 79.81 vs 95.27, n 1,199; loses to comps on guarantee in 2021 and 2022 and on the mega slice in five winters. Guarantee bias by predicted tier: lt10 -2.18, 10to20 -7.50, 20to50 -12.88, ge50 -23.46; by ACTUAL tier ge50 -43.0 (n 102). The twelve largest misses are all megadeal under-predictions (Seager -254.9, Cole -201.8, Harper -196.2). Gate 3 (`fa_gate3_eval.json`): live_analog MRR 0.1669 vs payroll_only 0.1350, fitted_full with incumbency 0.2679 (excluded by design); TEAMFIT CONDITIONAL is LIVE. Noise floor: pooled guarantee MAE ~0.16 $M; feature arms unresolvable below ~0.07 $M, level arms below ~0.33 $M (`data/fa_lane_eval.json noise_floor`).
+
+Live defect: the committed gate-3 `concentration` block still carries the 2026-08-04 class (max_top1_share 0.5746 LAD, tripwire RED) while the served board reads 0.2371 with distinct_top1 15, GREEN on all four criteria. That is a regen, not model work.
+
+#### 1.5 Projections and Trade Machine
+
+Projections: `team_outlook_eval.json forward_gate` is pending, first scoreable end of 2027. A current-season simulator already ships: `proj_current.simulate_playoffs` (MC_SIMS 2000, MC_HOME_EDGE 0, seed 12345) over `remaining_pairs`, fed by `_attach_current_season` with a k = 40 pseudo-game blend (`proj_export.py:1715`, `:1807-1900`). It stops at the playoff field: no bracket, no pennant, no win-total PMF. It is fed the PURE talent prior (`proj_export.py:1887`) while the record-and-pythag blend computed at `proj_export.py:1784-1786` is a local that is thrown away. LAD `playoffPct` reads 1.001, a rounding artifact. `proj_lgbm` is the live challenger, row-matched edge h1 +0.014.
+
+Trade Machine: `data/trade_machine_eval.json slice_a` pooled Spearman 0.3289 vs `baseline_consensus_fv` 0.3312, i.e. the board surplus does not beat consensus FV on rank; `docs/trade-2026-08-19/TRADE_FORWARD_GATE.md:146` records S2 |rho| 0.2635 BELOW a zero-information control band of about 0.63. `data/mlb_trade_players.json` prices 26 of 939 rows (`surplus_mm` non-null), `resolve_status == "found"` on 0. The veteran leg is effectively unpriced, which is why both market-implied lanes were killed.
+
+---
+
+### 2. The betting program
+
+#### 2.0 Objective definition (lane B-OBJ, from bet_model-P01)
+
+Owner decision 2 says accuracy AND ROI. Give it a definition the gates can read, per market, BEFORE any sub-model is fitted. Pre-register as section 7d of `docs/diamond-betting.md`, then compute a `per_market` block in `betting_model_eval.json`:
+
+- ACCURACY leg: paired Brier and log loss on the vintage eval window against three ladder tiers, always including the same-games market-open tier (`benchmarks.tiers`, n 239 today).
+- ROI leg: flat-stake ROI with the existing one-sided 95% lower bound (`sweep_min_edge` form), plus expected log growth at quarter-Kelly on the recorded price. CLV is written as a single key `clv_unavailable` with the reason "close job never installed; 0 of 898 settled ledger rows carry close_decimal", not as a null column.
+- COMBINATION rule: a market may set a threshold only if its accuracy leg is non-inferior to the market-open tier on same games (paired Brier lb95 >= -0.002) AND its ROI leg clears lb95 > 0 at n >= 100 within one (market, rule) cell.
+- FLOORS: 100 canonical games per market for the calibration leg (mirrors `GATE_MIN_GAMES`), 100 settled rows per (market, rule) for ROI.
+
+Effort M, measurement only, no served number moves. It is the prerequisite for every other betting lane because it stops a totals-heavy pooled ROI standing in for the moneyline's.
+
+#### 2.1 Wave 0, plumbing that starts clocks (do first, in parallel)
+
+**B-CORPUS (bet_model-P11 merged with props_futures-01), effort M.** One pass over `.cache/win_prob` (19,132 files, 20.02 GB) emitting three durable tables: per-PA rows (game, date, inning, half, batter, pitcher, batSide, pitchHand, menOnBase, outs, score state, eventType, TB, earned flag, EV/LA/trajectory/spray, LI, times-through-order, inferred slot), per-game per-player lines (PA/H/TB/HR/K/BB; BF/outs/K/BB/H/HR/ER plus starter flag), and per-game rows (final score, per-inning runs for the F5 and NRFI labels, starters, first pitch). Join home/away org and venue from one cached StatsAPI schedule call per season. Acceptance: per-season counts match the census (2431/2429/2429/2430/2430/2429/2430/2124, no 2017 or 2020), and per-game K and HR totals reconcile exactly against box scores for every game that has both a feed and a play stream. TRAP, from `tools/prune_cache.py:52-56` and `run_monthly.py:955-975`: `win_prob` and `game_feeds` are both in `SAFE_CACHES` and can be pressure-pruned. The output must live outside `SAFE_CACHES` with a coverage manifest, and nothing served may depend on the raw cache surviving. This unblocks B-RUNLINE, B-TOTAL, B-F5, B-FORM, all props sub-models and the futures backtest.
+
+**B-VERIFY-FEEDS, effort S, do before B-CORPUS finishes.** The census and two verifiers disagree about `.cache/game_feeds`. Census F06/F13 report MLB sportId 1 only for 2026 (2,108 games); one verifier's 150-file sample found MLB feeds in 2023 (19), 2024 (24), 2025 (20), 2026 (87) with a named Home Plate official in 150 of 150; another verifier's 60-file sample found NO `officials` key at all and a 400-file sample found every MLB feed dated 2026. Run one deterministic census (sportId and season per file, presence of `gameData.weather`, `boxscore.officials`, `battingOrder`) and write the counts into the corpus manifest. Every weather, umpire and lineup lane downstream is scoped by that answer, and no lane may assume a season the census does not show.
+
+**B-CADENCE (bet_model-P14), effort S.** Register the open snapshot as its own daily job at a fixed early UTC time (before the earliest first pitch), with the nightly build's capture demoted to a same-day no-op fallback, and extend the `vintage_capture_gap` sentinel to count missing odds days. MEASURED motivation: 15 captured days of 29, capture times spread 15:16-23:19 UTC, in-progress events dropped from pricing. Cost 3 credits/day, 93/month, inside the 500 budget with 9 used. This roughly doubles the accrual rate of every gate clock and every sub-ledger.
+
+**B-SUBLEDGERS (bet_model-P03), effort M.** Add a first-class market dimension to the existing append-or-settle store: `summary()` gains `by_market` and `by_market_by_tag`; `graded_bets_by_market_tag` feeds `sweep_min_edge` keyed (market, tag); `MAX_PER_SLATE_BY_TAG` becomes per market so totals cannot absorb the `ev_rank` budget (today 121 of 255 rows are totals); `min_edge_gate` reports a per-market table; `resolve_min_edge` returns `{market: threshold}` with the 0.06 provisional floor per market. Rows are never retagged, so the cap change date-splits the series and the artifact must print the split date. Tests pin that pooled or cross-market rows can never set a threshold.
+
+**B-MODELID (props_futures-13), effort S.** Stamp `model_id` on every props shadow and calibration row at write time, and make the fair-line block and the value block read ONE PMF, which closes the F02 defect where `props_fair_lines` prices 1+ hits as `1 - (1-p)^exp_pa` while `props_value_bets` prices the same market as a Poisson (`betting_export.py:2925-2930` vs `:3025-3049`). Zero props rows exist, so no migration is needed. Do this before any props sub-model.
+
+**B-SORT (bet_model-P15 / props_futures-16), effort S. SHIPPED 2026-09-06, in a different
+form than this lane proposed; what remains is optional.** Owner decision 5 is satisfied:
+`wireSortableTables` in `assets/betting.js` makes every table the client renders sortable
+with `aria-sort`, `role=button` headers, tabindex and Enter or Space activation, a
+sorted-column mark, nulls sinking in both directions, per-table persistence in
+`localStorage` inside try/catch, and idempotent wiring so a re-paint cannot double-bind.
+The parser and comparator are exported as `window.EEPHUS_BETTING_SORT` and pinned by unit
+tests plus a browser test that clicks a real header twice.
+
+The difference from the proposal, stated so nobody re-does the work: this helper sorts the
+RENDERED cells (with a `data-sort` attribute as the override) rather than refactoring the
+nine string-built tables to build from row arrays. One generic wiring covers twelve tables
+built from a dozen payload shapes, where twelve column specs would drift. The array
+refactor remains worth doing on the two tables that will gain server-side sorting anyway
+(the props value block and the per-market ledger views in B-SUBLEDGERS), and only there.
+
+#### 2.2 Wave 1, repairs and the selection rule
+
+**B-ML-FIT (bet_model-P04), effort S, highest accuracy leverage per hour.** Replace plain `lstsq` with a ridge fit shrunk toward `LITERATURE_COEFFS` with sign constraints b1 > 0, b2 < 0, b3 > 0, penalty chosen on the fit half by log loss, and let the vintage FIT window grow (all gradable games before the eval cut) instead of anchoring at 300. Report coefficient and `diff_shrink` stability at 0.6 / 0.7 / 0.8 in the artifact. Gate: paired Brier on the vintage eval window, non-inferiority lb95 >= -0.001 AND superiority over the Elo tier at t >= 1.645, at all three splits, log loss not worse; ship only if the tripwire test, the persisted block and the flag move in one commit. Not Platt (no response-scale map), not a market blend.
+
+**B-TOTAL-LEVEL (bet_model-P06 stage 0), effort S, do BEFORE any totals feature work.** Refit the total intercept and level on the vintage fit half alone and re-measure the canonical total bias. A board-wide +0.854 run gap is a constant, and month, weather and umpire terms are each second-order. If the intercept closes most of it, the totals feature stack is unnecessary. Report the canonical over bias (+0.102 today) and the shadow over/under skew (102/19) after the refit.
+
+**B-BAKEOFF (bet_model-P02), effort M.** Four rules become three: R1 prob-max inside `POTD_ODDS_BAND` (incumbent), R2 EV-max any market, R4 quarter-Kelly expected-log-growth rank. R3 (shrink toward the market fair probability) is DROPPED: the calibration ledger holds 143 distinct game_pk, under the 150-distinct-game blend threshold, so a selection-only shrink is the closed lane at insufficient n. Replay bases: the calibration ledger (898 settled rows, all carrying `model_prob`, `market_fair_prob` and `best_decimal`, markets total 326 / moneyline 286 / runline 286, props 0) and, for a leak-free accuracy read, the vintage window joined to open captures, restricted to the moneyline leg unless the captures are verified to carry runline and total lines. The n >= 100 picks gate is UNREACHABLE (one pick per slate, 14 settled slate dates 2026-08-09 to 2026-09-03); replace it with a paired per-slate design: score every rule on the same slates, report the paired per-slate ROI difference and one-sided t, and ship only at t >= 1.645 across at least 40 slates with chosen-side Brier not worse. Print a slates-to-gate countdown and label the lab NO-VERDICT below that. The ledger's model probabilities are season-to-date, so chosen-side Brier is a rule-vs-rule RELATIVE statistic only. The -4.6% ev_rank vs -14.0% potd_band comparison is cross-tag motivation, never evidence (`docs/diamond-betting.md:1323-1330` forbids pooling slot tags).
+
+**B-LOGGROWTH (bet_model-P16), effort S.** Ship `log_growth_expected = p*ln(1 + f*(dec-1)) + (1-p)*ln(1 - f)` at f = the already-served `kelly_quarter` (`betting_export.py:3195-3196`), computed on the RAW served probability. No market shrink, no fitted reliability slope: Platt failed at all three splits and `diff_shrink` already absorbs the response scale (`docs/diamond-betting.md:2137-2138`), and the ledger's `model_prob` is range-truncated by the 0.06 edge floor so an outcome-on-probability slope fitted there is not identified. Any reliability term is gated behind 150 settled rows in that market plus an explicit selection correction. Stake stays flat on every ledger and the record; a test pins that no stake reads these fields.
+
+**B-DARK4 (bet_model-P08), effort M.** Schema-4 dark capture, nothing served: (a) bullpen availability per club from feeds (pitches and appearances on D-1 and D-2, rolled to available high-leverage REM+ innings); (b) starter inputs already on the board (`k_pct`, `bb_pct`, `gb_pct`, `xwoba_against`, `fip`, `strike_pct`); (c) `high_lev_core_rem` and `leverage_deploy_plus`; (d) per-slot vl/vr orders with `hem_plus` and `platoon_adv`; (e) weather, dayNight and roof from a nightly schedule hydrate. Each column carries a `feature_basis` string. Every candidate then runs the 5c protocol verbatim: own runbook section written first, permuted-team twin, contaminated screen that can only disqualify, two-criterion vintage gate. Weather carries a stated observed-vs-forecast bias note and may not serve until pregame-captured rows score it on their own.
+
+#### 2.3 Wave 2, per-market sub-models
+
+**B-RUNLINE (bet_model-P05), effort L.** Keep expected runs from the moneyline model, replace the independent-Poisson margin with a conditional kernel p(d | lam_h, lam_a, home): a multinomial over margin bands with an explicit home walk-off redistribution, moving home margin >= 2 mass into +1 when the home team scores to win in the ninth or later. Recover p_home from the same kernel so the two markets cannot disagree. This is the successor `docs/diamond-betting.md:1979-1983` names ("a bivariate model with a one-run atom"), not the closed symmetric NB2. Four binding constraints: (1) FIT ON PRE-2026 FINALS ONLY, because 2026 rows are both the honest eval set and the 141-game canonical runline ledger arm; a 2026 refit is a sensitivity arm scored on a season split it did not see. (2) Moneyline non-inferiority is scored on the vintage-honest rows with lb95 >= -0.001 plus a tripwire test that fails if `beats_baseline_95` flips false. (3) Re-solve `diff_shrink` inside the challenger arm; holding it fixed double-shrinks the challenger and fails it for the wrong reason (`docs/diamond-betting.md:1988-1993`, 0.70 to 1.08). (4) Report the one-run band as a diagnostic row against the observed 0.2721. Gate: held-out runline both-sides log loss vs served Poisson, delta > 0 at t >= 1.645 at ALL of 0.6/0.7/0.8, plus the ledger arm on the 141 canonical games. Ship flips `market_is_publishable` for the runline ONLY, with the tripwire test in the same commit, and runline rows keep accruing throughout.
+
+**B-TOTAL (bet_model-P06 stages 1-2 plus props_futures-06), effort L, only after B-TOTAL-LEVEL.** Stage 1a: calendar-month EB offset fitted on pre-2026 finals, the one dated-results feature that is vintage-safe by construction. Stage 1b: weather as dark capture only. The umpire leg is REMOVED from this lane into its own S-effort re-fetch lane, gated on B-VERIFY-FEEDS actually landing named officials for a counted number of games. Stage 2: do NOT pre-scope NB2 to the total; fit alpha and run the criterion PER MARKET at all three split quantiles, because the current artifact says the total leg FAILS (t 1.41) and the runline leg PASSES (t 2.431), the inverse of the 2026-08-09 reading. If a direct total-runs model is built instead of an offset, score P(over) at FIXED canonical lines (8.5, 9.5, and a 7.5-10.5 grid), never at the model's own median, with the shipped Poisson `total_distribution` as the primary comparator and the coin as a secondary floor; state that no historical book total exists before 2026-08, so no historical CLV, ROI or edge claim is admissible. Re-open of publication runs the existing 7b rule: canonical total bias inside +/- 0.03 and `worse_than_coin_95` false on three consecutive evaluations. Keep the market id `total`; do not introduce `total_v2` as a way around `market_is_publishable`.
+
+**B-PROPS (props_futures-02/03/04, bet_model-P10), effort L, HR first.** Build `betting_props_models.py` as the single PMF source for both surfaces (via B-MODELID).
+
+- HR: per-PA Bernoulli mixture over an integer expected-PA distribution. p_HR = sigmoid(EB-shrunk batter HR/PA + barrel% and pull-air from hitData + pitcher HR/FB and FB% + platoon + park HR index BY BAT SIDE (`fa_sources.py:532` already returns `index_hr` per venue by bat side) + bullpen share of PA), then P(HR >= 1) = 1 - E_PA[prod(1-p_i)]. Restate the incumbent honestly: it is `1 - (1-p)^exp_pa` with a FRACTIONAL exponent (`betting_export.py:2932`), not a Poisson, so the integer-PA mixture must be scored as its OWN ablation arm. The pitcher HR/FB term enters as a pre-declared ablation arm citing the X-R5 null (`data/model_registry.json:1008-1016`, gap -0.0025, lo95 -0.0228). Baselines: the incumbent formula and a league-mean per-PA constant. There is no market baseline for props.
+- K: expected BF distribution (fitted per start, keyed on ROLE so openers and bulk arms do not break the prior) times per-BF K probability from pitcher K% shrunk toward CSW-implied K%, opposing lineup K% vs hand, platoon, park. K | BF ~ Binomial, marginal by convolution, priced at every half point with push conditioning. All historical rates must be recomputed as-of from play-by-play with a cutoff timestamp and a leakage fence test; leaderboard vintages start 2026-07 and are TEAM level, so no per-player vintage basis exists.
+- Hits and TB: per-PA multinomial (1B/2B/3B/HR/BB-HBP/K/other out), TB by convolution, sharing the HR head so the three hitter markets cannot disagree about one player's night. OAA enters only as PRIOR-season team values in a pre-registered ablation arm.
+
+Splits: fit 2018-2019 and 2021-2023 (2020 absent from cache), tune 2024, hold out 2025 once, sourced from `.cache/win_prob`. The K lane's window is bounded by whatever B-VERIFY-FEEDS says about `game_feeds` seasons. Live legs are BLOCKED on the owner setting `EEPHUS_PROPS_CREDITS`; register them as blocked, not as passable gates. The 100-canonical-game publishability floor is reachable within a month of arming for hitter markets (~10 players x 3 games x 10 pull days) and about two months for `pitcher_strikeouts`.
+
+**B-PA-DIST (props_futures-14), effort S, prerequisite to the hitter props.** Fit PA per game by slot 1-9 from the corpus, split by home/away (ninth-inning censoring), run environment and extra innings; replace `SLOT_PA = 4.65 - 0.10*(slot-1)` (`betting_export.py:230`) only if the fitted table beats it on PA MAE. Start probability from the posted card when present (`fantasy_schedule.fetch_lineups`, 3 of 30 sides posted at today's build), else the DFS `start_rate`.
+
+**B-PROPS-HARNESS (props_futures-15), effort M.** One backtest harness scoring any per-prop PMF the same way: log loss and Brier of P(over) at the line grid, CRPS on the count, reliability deciles, per-season sign check, paired bootstrap vs the incumbent, which is itself registered as `props_fair_lines_v0` so the baseline has a number. Artifact `data/props_model_eval.json` with mode labels and split dates; it must refuse to score a model whose split dates are missing, and it must state that "vs book" is live-only.
+
+**B-MARKETSPEC (props_futures-05), effort M.** A new market currently requires six declarations, three test-pinned (`betting_ingest.PROPS_MARKETS`, `betting_export.PROPS_MARKET_LAMBDAS`, `betting_settle.PROPS_STAT_KEYS`, `betting_calibration.PROPS_CAL_MARKETS`/`CANONICAL_SIDES`/`GATE_MARKETS`, `betting_shadow.PROPS_TAGS`/`MAX_PER_SLATE_BY_TAG`). Introduce one `MARKET_SPECS` table from which all six derive, keeping the pins on the derived copies. Then add outs, earned runs, hitter K and hitter BB (box keys already exist). Re-register the credit arithmetic: at 8 markets x 1 region x 4 credits per event, the owner's 120/month cap buys about 5 pull-days instead of 10. That trade is an owner decision (section 6).
+
+**B-F5 (bet_model-P07), effort M, dark, sequenced after a provider probe.** Price F5 moneyline and F5 total from the starter-only leg (no bullpen term). Labels from `linescore.innings` and from plays with inning <= 5. Two corrections: F5 ends TIED in 12.33% of games, so the market is three-way or push-on-tie and a binary paired Brier is ill-posed until the outcome space is declared; and the honest features are the same <= 777-game 2026 vintage window the full-game model occupies, so the F5 dark gate OVERLAPS and must not be counted as a second clock. Historical feeds may calibrate the F5 outcome base rate only. Add F5 to `grade_side` and update the pin at `test_betting_learning.py:590` to the new refusal boundary rather than deleting the guard.
+
+**B-NRFI (props_futures-07), effort M, measurement first.** P(0 runs) per half from starter TTO1 quality and the top three hitters vs hand, park, home/away, month; NRFI as the product with one scalar correlation term fitted on train only and a pre-registered no-ship fallback to the independent product. Labels 2018-2026 minus 2020. TTO1 inputs must be recomputed on a trailing, prior-games-only basis; `tools/win_prob_walker.py:96` aggregates per pitcher-SEASON and is therefore contaminated for in-season games. First-inning markets are per-event additional markets in the same budget class as props (`betting_ingest.py:429`), so this does NOT ride the 3-credit daily call and ships model-only with no POTD eligibility until keys and budget exist. Settlement rules for suspended and shortened games are written before the first row, with a unit test on a truncated feed.
+
+**B-POTD (bet_model-P13 / props_futures-08), effort M.** Owner decision 1. Candidates = every side on every market that clears its own (market, rule) threshold and whose market passes both publishability legs; rank on a cross-market comparable statistic chosen by B-BAKEOFF (EV lower confidence bound, or quarter-Kelly log growth), ties by price nearest -110. Props and F5 enter the same pool once their markets pass. The binding constraint is NOT the rank, it is the two exclusions at `betting_export.py:3871-3915`: the runline and total sub-models must clear their gates before an any-market slot can ever pick them. The new rule gets a NEW tag `potd_any`; `potd_band` is never retagged and keeps accruing as the old rule's record. `pick_meta` publishes the rule text, the per-market candidate census and the score basis. Model Watch framing and JSON key names are unchanged.
+
+#### 2.4 Wave 3, futures
+
+**F-A, modelled board (props_futures-09 arm 1 plus bet_model-P12 F-A), effort L.** Upgrade the EXISTING simulator; do not build a second one. (1) Return `forward_pct` from `_current_blend` (`proj_export.py:1784-1786`) and feed it at `proj_export.py:1887` in place of the pure talent prior, behind a stamped switch, publishing the served-vs-new `playoffPct` delta. (2) Set the home edge from a 2026 home win rate DERIVED from the corpus and stamped in the artifact, applied as a log-odds shift, not the current additive form at `proj_current.py:246`. (3) Add the bracket: wild-card best-of-3, LDS best-of-5, LCS and WS best-of-7, home field by seed, head-to-head tiebreaks stated as coin flips. (4) Emit a full win-total PMF (P(W > k) for every k) rather than two percentiles. (5) Raise sim count above 2000 or publish Monte Carlo standard errors: 2000 sims cannot resolve a 2% WS probability. (6) Fix `playoffPct` 1.001 by computing it unrounded and deriving `wildcardPct = playoffPct - divisionPct`, keeping `test_proj_current.py:104-106` green. DEFERRED to arm 2, behind the backtest: the rotation overlay and the availability draw. `ilOut60` is contractually display-only (`proj_export.py:1717`) and there is no calibrated IL-to-WAR map; an invented haircut is exactly the failure the 2026-09-04 health lane had to reverse.
+
+**F-B, backtest (props_futures-10), effort L.** Replay 2018-2019 and 2021-2025 at six cutoffs per season (Apr 15 through Sep 1) on the actual remaining schedule. Four required corrections to the design: (a) build the game and postseason tables from the free StatsAPI schedule endpoint (`betting_model.py:1723`) and freeze them as a committed fixture, dropping the hand-entered results table; (b) the Elo baseline must be OFFSEASON-CARRIED and regressed, because the shipped ladder Elo starts flat each season by design (`tools/betting_elo.py:25-30`) and beating it in April buys no information; (c) any shrink constant is fitted leave-one-season-out or pinned as a literature prior; (d) n is 7 seasons, not 1,260 independent rows: cluster by season, use a season-block bootstrap, demote the WS gate to descriptive (7 positive events), and widen or drop the 0.9-1.1 reliability-slope gate. Gate on division-winner Brier (210 club-seasons) and P10-P90 win-total coverage. State plainly that this validates the bracket and blend machinery under a results-only prior and does NOT validate k = 40 or the roster prior.
+
+**F-C, outrights ingest (props_futures-11), effort M, blocked on a probe.** Verify which MLB outright keys exist (world series winner is documented; pennant, division, season win totals, awards, first-inning periods are UNVERIFIED anywhere in the repo). Weekly snapshots, one credit per key per call, about 20 credits/month inside the 500 budget, with a monthly guard modelled on `props_spend`. De-vig proportional over the full field (the module's `devig` raises on any other method); a logit-shrink field de-vig is a diagnostic column only. The hold band `DEVIG_HOLD_MAX_PCT` must be re-registered per market or every book is rejected on 20-40% field holds. Fixture-verified parser; no test spends a credit.
+
+**F-D, futures ledger (props_futures-12), effort M.** Append-only rows keyed (season, market, club, line, snapshot date), flat 1u, settled once at season end from final standings and postseason `gameType`, with a weekly mark-to-market column explicitly labelled as such and no CLV claim. Tests pin append-only, per-tag budgets, no pooling with team or props tags, and that nothing settles before the season's final day. The 2026 vintage yields roughly 150 settled calibration rows and 15-30 shadow rows, so no tag can reach n 100 before 2027-11: the section is Model Watch for its whole first season by construction, and the docs table says so.
+
+**F-E, awards (props_futures-18), effort M, defer behind F-A/F-C.** Ship an UNFITTED monotone rule: rank by (WAR to date + projected rest-of-season WAR), convert the WAR gap to P(award) with a fixed, pre-registered softmax temperature chosen a priori. A fitted logit on 14 positive labels per award with three-plus features is unfalsifiable and repeats the in-sample calibration failure already on the record. The 2018-2025 winner set is a display-side sanity count ("ranked the winner first in k of 14 seasons"), never a coefficient. No edge column without a captured market. Registry row `awards_futures`, verdict unvalidated, stop clause: no ledger rows until 30 settled season-awards, and no fitted parameters on award labels below that.
+
+#### 2.5 Credit budget
+
+MEASURED: 500/month plan, 9 used, 186 planned, 491 remaining (`data/betting_status.json`). PROPOSED allocation: daily open at 3 credits = 93; close job, if the owner installs it, +93 = 186; futures weekly at about 5 keys = 20; props at the owner's 120 cap. Total 326 of 500 with the props cap intact. Adding three F5 or alternate-line keys to both captures costs about 372/month on its own and does not fit beside props and futures. That is the owner decision in 6.2.
+
+---
+
+### 3. New MLB Stats metrics, ranked
+
+Ranked by (betting or valuation consumer) x (evidence available now) / effort.
+
+**M1. PA and pitch fact table (mlbstats_metrics.P01), plumbing, effort M.** Same artifact as B-CORPUS; build once, serve both lanes. Acceptance gates: byte-identical reliever gmLI/WPA vs `mlb_leverage.accumulate` on 200 sampled games; season K/BB/HBP/HR/PA per pitcher within 0.5% of `load_season_pitching` for 2024-2025; per-game pitch counts within 1 pitch MAE of 2026 box `numberOfPitches`; a coverage table per season published as `data/mlb_pa_archive_eval.json`. Consumers: everything below, plus every betting sub-model.
+
+**M2. xwOBAcon fitted on the archive (P02), new model, effort M as MLB-only.** Replace the hand-set KNN cloud (`statcast_metrics.py:560-601`, EV and LA only, no spray, hand or season) with a fitted per-BBE model. Ship as its OWN labelled column, never coalesced into the Savant column where Savant is absent, plus a fourth gate: per-player-season mean bias vs Savant within +/- 0.005 wOBA on the overlap so the two columns are readable side by side. Coverage argument is the payoff: Savant covers 436/649 hitters, 274/504 relievers, 180/226 starters. DROP the prospect and S-XLINE consumer swap entirely: the measurement-upgrade-into-eFV mechanism is already a measured null at AAA and at A-ball (`docs/efv-2026-07-23/GATES.md:196-231`, M-A delta -0.0035, CI95 [-0.0502, +0.0440]). Fix the data premise before pre-registering: the local MLB game-feed history may be 2026-only, so either restate the corpus as MLB 2023-2026 with disclosed reduced power or make the 2018-2022 feed backfill an explicit prerequisite and re-bump effort to L.
+
+**M3. dRA, deserved runs allowed, with 14/30-day rolling form (P03), new metric, effort L.** K and BB as events with observed-K shrink-to-pool (the ONLY treatment the closed K-prior ledger allows), contact valued by M2, converted through an archive-derived run-expectancy table and recentred so the league sums to actual RA. Rolling forms EB-shrunk toward season then pool. IMPORTANT CORRECTION to the standalone claim: the season-level headline duplicates X-S4, already TESTED and REJECTED (xwOBA-allowed 0.377 vs FIP 0.382 on the same n 592 pool, gap lo95 -0.053), so the standalone gate should be stated as non-inferiority, not as a win. What is genuinely new and unmeasured is GAME-LEVEL RESOLUTION: SEM+ and REM+ are season-only by construction, and the betting model consumes the probable's season-to-date SEM+ (`betting_model.py:1189-1191`). That is the claim to gate, through the 5c protocol with a permuted-pitcher twin. Consumer: the pitcher term is where the vintage model's skill lives (b2 -0.0965 while b1 is negative), so this is the highest-leverage feature swap in the tree.
+
+**M4. Archive-derived daily rolling team form (P04), improvement, effort M.** Replace the git-anchor differencing in `build_xwoba_windows`, which produced a NULL `xwoba_14` on 2026-09-05 and populated only 205 of 777 gradable games. Plumbing gate: on nights where the git builder produced a value, the archive builder matches within 0.010 wOBA on 90% of orgs. Feature gate: the pre-registered B3 protocol verbatim. Blocked on owner ruling 6.5 (whether archive-reconstructed columns may be written into existing vintage records with provenance).
+
+**M5. Margin and clumping structure measurement (P17), measurement only, effort S.** Extra-innings home win rate by era, P(home bats in the ninth), bottom-ninth censoring share, inning-level run distribution, within-game run autocorrelation, empirical margin distribution by expected-run gap. Feeds B-RUNLINE and B-TOTAL with era-correct structure instead of literature constants and an era-aware tie rate instead of the 100-game prior. No gate; the consumer carries it.
+
+**M6. Plate-discipline board for MLB, new descriptive surface, effort S, PROPOSED.** The feed's native `pitchData.zone` and call codes need no classifier, yet no MLB board carries CSW%, whiff%, chase%, z-contact% or in-zone%; the only MLB whiff figure served is reliever SwStr% from a bref pull. SwStr% is already sanctioned as a displayed peripheral, so these ship descriptive. Consumers: the K-prop sub-model and the player pages. Constraint: they may NOT enter the REM+/SEM+ skill cores (X-R1/X-R1b closed the K-prior lane permanently).
+
+**M7. Bullpen availability index, new metric, effort S, PROPOSED.** No usage, fatigue, days-rest or pitch-count field exists anywhere in the tree. Reweight tonight's pen toward arms who can actually pitch, using per-appearance dates and pitch counts. This is a NEW estimand, distinct from the closed leverage-in-skill question (`data/rem_plus_eval.json leverage_variant_bakeoff`, best damping d = 0.0). Captured dark under B-DARK4 (a).
+
+**M8. Park factors by hand, improvement, effort S, PROPOSED.** Today park is one Savant three-year rolling RUNS index per home org, 29 orgs, applied identically to both sides, no handedness and no HR-vs-runs distinction. `fa_sources.fetch_savant_park_factors(year, bat_side)` already returns `index_hr` by bat side and is already consumed by `fa_fit.py:136-160`. Consumers: the HR prop and the totals model. This does NOT reopen the park-shrink lane, which closed only the use of park as a SKILL-CORE shrink target.
+
+**M9. HEM+ vs published wRC+ head-to-head, plus registry hygiene (P18), measurement only, effort S.** Add wRC+ as a baseline in the X-H1 harness (2021-2024 predictor seasons, the feed's coverage), re-gate or relabel WAR/IP+ (SP) 3yr, and give `xrem_plus`, `xsem_plus`, `war_pa_plus` real eval artifacts or explicit descriptive labels. HEM+ may lose; publish it either way. The EV/LA-by-age table is display-only and carries the loss-ledger note; the age hinge and EV residual arms stay closed.
+
+---
+
+### 4. PAL, FA, Projections, Trade Machine
+
+#### 4.1 PAL
+
+**PAL-1, epoch re-stamp (pal-01), effort S, do first.** Re-run the pre-registered gate on the served eWAR v2 label with identical events, seeds and baselines, plus a role-neutral RA9 sensitivity arm because eWAR centres FIP within role and a cross-role `war_delta` is a difference of two role-centred scales. Emit gate pass, best-baseline rho and n_gate into `data/pal.json backtest.per_direction`, and make the scorecard READ them (`assets/pal.js:632-660` currently hard-codes both verdicts). Reconcile the registry metric text, the glossary and an addendum to `docs/e3-rp-sp-closure.md`. Expected under eWAR, from the live stamp: SP to RP 0.278 (n 61) still passes, RP to SP moves from -0.2062 to 0.025, i.e. from sign-wrong to null, and still fails against an MDE of +0.356.
+
+**PAL-2, serve the recovered cohort (pal-10), effort S.** Call `pal_gamelogs.recover_events` inside `export()` and concatenate the 89 recovered events as TAGGED rows (mid_year, swing_bridge), keeping the legacy set byte-identical under the existing `_identity_check`, and serve both n. History grows 115 to about 204; Burnes 2019 to 2021, King 2023 and Suarez 2021 stop being absent. Labelled a tagged sensitivity cohort until PAL-1 decides whether it becomes the gate set.
+
+**PAL-3, gate document (pal-14), effort S, precedes any new PAL measurement.** Season-out folds (train <= T-1, score T, T in 2022-2025), sign check first, player-clustered bootstrap, v1 and v2 conventions, labels per direction, the loss-ledger rule, and the RP-to-SP FIT-vs-`war_delta` re-gate by event expansion listed explicitly as BANNED.
+
+**PAL-4, serving fixes (pal-13), effort S.** Gate-derived copy, the validated direction as the homepage teaser and default tab (owner decision 6.7), sortable card grids reusing the existing helper, `generated_at` and cadence printed.
+
+**PAL-5, measured priors (pal-09, pal-11), effort S each.** Replace the 1.0-2.2 mph role velocity prior with a within-pitcher, shape-conditioned measurement with player-clustered CIs, shipping the measured value only if its CI excludes the prior (precedent: the relief K bump measured 0.0167 against a 0.025 prior). Shrink the platoon read toward the league platoon mean by min-side TBF and move the 100 TBF gate from the client into the model; the raw unshrunk OPS split currently enters RP-to-SP at weight 0.12 and is one plausible source of the anti-signal.
+
+**PAL-6, prospect watch confirmer (pal-12), effort S.** Join `prospects.db pitch_arsenals` (653 rows) and `stuff_plus_aaa.json by_type` (1,379) as an independent usage-based depth read with a "confirmed by tracking" chip and a published agreement matrix by FV band. Report-only, no ranking claim. Coverage on FV <= 44 arms will be thin and must be shown as such.
+
+**PAL-7, display columns on the validated direction (pal-04), effort M, flagged.** Measured TTO leakage and shape-based platoon as COLUMNS. Any scored component swap is pre-registered against a held-the-role target, never against the FIT-vs-`war_delta` rank, and the pre-registration text must name the ban. Expect nulls at n 13-25 and report them as underpowered.
+
+#### 4.2 FA
+
+**FA-1, re-establish baselines on the eWAR label (fa-P01), effort M, prerequisite.** Gate 1 and Gate 2 numbers above were computed before the 2026-09-04 label epoch. Nothing else in FA may be compared until both are re-persisted on the served label, with the deltas published. Losses committed.
+
+**FA-2, gate-3 concentration regen, effort S, defect.** The committed tripwire block reads the 2026-08-04 class (LAD 0.5746, RED) while the served board reads 0.2371 with distinct_top1 15, GREEN on all four criteria. Re-run `run_fit_gate` and update the `fa_team_fit` registry note, which still narrates the 68% LAD failure. This is a regen, not model work.
+
+**FA-3, term and tier structure by partial pooling, effort L, PROPOSED.** The market model is a pooled two-stage OLS whose only group structure is three position dummies (`fa_market.py:1396-1470`, `:1628-1700`). Hard splits already lost (`fit_group` 10.72, `POS_GROUP_MODE` v2 +0.392, both wrong-signed) BECAUSE they thin every neighbourhood, which is what partial pooling avoids, so a hierarchical model is a genuinely new class rather than a costume. Target: the ge50 tier, bias -23.46 by predicted tier and -43.0 by actual tier, and the years tail (Correa +11, Harper -8). Re-open terms are already written in `docs/fa-2026-08-19/PTIER_LEVEL_GATE.md`: paired bootstrap B >= 200, clauses stated against the bootstrap null band, and the ge50 sparsity (fitted in 3 of 9 outer folds) confronted head-on. Guardrails: the noise floor is ~0.16 $M pooled and ~0.33 $M for level arms, so any headline below that is a coin flip, and every arm needs the permuted-label control that caught P-1 (its control also improved mean|bias|).
+
+**FA-4, hitter level regression, effort M, PROPOSED.** Gate 1 hitter bias -0.132 (mean pred 0.503 vs actual 0.635) is the disclosed level regression that has never been gated, and it flows into every served price through `war_y1`. Gate: pooled MAE not worse, hitter bias inside +/- 0.05, star-cell MAE not worse than the current 2.96.
+
+#### 4.3 Projections
+
+**PR-1, expose the blend seam, effort S.** Return `forward_pct` from `_current_blend` so the shared engine can consume the record-and-pythag blend instead of the pure talent prior. Publish the served-vs-new `playoffPct` delta.
+
+**PR-2, the simulator upgrade** is F-A above; it belongs to the shared engine, not to a projections-only lane.
+
+**PR-3, discipline unchanged.** Never sum ML quantile heads; team roll-ups sum champion means; star-blend h2 stays forbidden; `team_outlook_eval` forward gate remains pending and first scoreable end of 2027, so nothing in the futures section may claim it validates the projection prior.
+
+#### 4.4 Trade Machine
+
+**TM-1, price the veteran leg, effort M, prerequisite to everything else.** `data/mlb_trade_players.json` prices 26 of 939 rows and resolves 0. Until that is fixed, no two-sided package arithmetic is computable, which is why both market-implied lanes were killed. Deliverable: a resolution and pricing pass with a published coverage number, no new model.
+
+**TM-2, state the rank verdict honestly, effort S.** `slice_a` pooled Spearman 0.3289 vs `baseline_consensus_fv` 0.3312, and the forward instrument reads S2 |rho| 0.2635 below a ~0.63 control band. The surplus board's rank claim should be labelled accordingly wherever it appears. No new TM model this cycle.
+
+---
+
+### 5. Cross-module shared engine
+
+One team-strength and season-simulation engine, one artifact, three consumers.
+
+Inputs: club strength = the `_current_blend` forward rate (talent prior at k = 40, actual record, Pythagenpat), the live remaining schedule from `proj_current.remaining_pairs`, and a home edge derived from the corpus and applied in log-odds. Outputs: per-game p, per-club win-total PMF, division, wildcard, playoff, pennant and World Series probabilities, and a seed distribution, at a sim count high enough to resolve 1-2% events, with Monte Carlo standard errors published.
+
+Consumers:
+1. Projections `team_outlook[].current`, which today reads a MC fed by the pure talent prior.
+2. Futures F-A, F-C and F-D, which need the same numbers plus the bracket.
+3. DFS, which already derives book-implied team totals per game (`data/dfs.json games[].vegas`) and can carry the engine's per-game p as a free cross-check tier.
+4. Betting, as a benchmark tier only: the engine's per-game p is NOT a served price and must never enter `game_probabilities`. The honest betting model's offense coefficient is near zero, so the two objects are measuring different things and pooling them would launder a projection prior into a market price.
+
+The failure mode to design against is two simulators disagreeing about the same club on the same night. Enforce it structurally: one module owns `simulate_playoffs`, one artifact carries the numbers, and any surface showing a playoff percentage reads that artifact. When F-A changes the served `playoffPct`, publish the delta rather than letting two versions coexist.
+
+---
+
+### 6. Owner decision queue, with defaults
+
+**6.1 Capture set and credits.** Adding first-5-innings or alternate-line keys to both captures costs about 372 of 500 credits a month on its own. DEFAULT: do not add them; run the daily open at 3 credits (93/month), keep props at the 120 cap when armed, and take futures weekly at about 20. Revisit after the provider probe.
+
+**6.2 Props arming.** `EEPHUS_PROPS_CREDITS` is unset on every box, so no props evidence can accrue and the props ROI leg is unscoreable. With the expanded market set at 8 markets, the 120 cap buys about 5 pull-days a month instead of 10. DEFAULT: arm at the existing 4 markets and 120/month first, add markets only after the HR model clears its dark gate.
+
+**6.3 CLV.** The close cron has never been installed anywhere; it is an owner action and a closed lane. DEFAULT: treat CLV as optional in every ROI gate and print `clv_unavailable` with the reason, rather than a null column.
+
+**6.4 Corpus location.** The reduced tables must not live in `tools/prune_cache.SAFE_CACHES`. DEFAULT: a new non-prunable cache directory plus a committed coverage manifest, not `data/` (size), and the prune list updated in the same commit.
+
+**6.5 Archive-reconstructed dark columns.** 5c rule 2 counts accrual NIGHTS, but a column reconstructed from dated plays is leak-free by the same construction argument 5a used for the git backfill. DEFAULT: allow reconstruction into existing vintage records with provenance `archive-reconstruct` and `covers_through` = last play date, so the B3 and B4 first looks are not gated by the 2026-08-20 clock. If refused, M4 ships as a forward-only builder and the B3 look slips.
+
+**6.6 Runline and total exclusion bar. ALREADY DECIDED BY THE OWNER AND SHIPPED, and the
+analyst dissent is recorded rather than presented as a live default.** The owner's
+instruction on 2026-09-05 was explicit: the Pick of the Day is not locked to the
+moneyline, spread, moneyline, overs and unders and player props are all allowed, find the
+best pick. That is implemented as `betting_model.SLOT_MARKET_POLICY = "any"` (Part 0.2,
+docs/diamond-betting.md section 7d): no market is barred, and the dispersion caveat and
+the section 7b ledger evidence ride the published row as disclosure.
+
+THE DISSENT, worth having on the record because it is a real cost and not a quibble. The
+markets now eligible are the ones with the worst measured evidence: the total's own
+canonical settled games resolve worse than a coin (Brier 0.269161, t 2.057,
+`worse_than_coin_95` true, ledger-closed since 2026-09-03) and carry a +0.102 over bias,
+the runline sits at 0.268314, and the margin model that prices both is the underdispersed
+Skellam whose correction is INDETERMINATE. The headline slot still selects on model
+probability, and an underdispersed model is systematically over-confident near the middle,
+so a runline or total can win that comparison on confidence it has not earned. The row
+says so; the selection rule does not yet know it.
+
+WHAT WOULD RESOLVE IT, and this is the plan's actual recommendation rather than a reversal:
+ship B-SELECT (the reliability-adjusted selection rule) so the rule discounts a market's
+probability by that market's own measured calibration, at which point the eligible pool
+stays wide and the ranking stops being naive. Until B-SELECT lands, the caveats on the row
+are the whole mitigation. Reverting to `"dispersion_gated"` is one constant and is pinned
+by tests in both directions, so the owner can take that back at any time without a code
+change beyond the flag.
+
+**6.7 PAL emphasis.** DEFAULT: the homepage teaser and the default tab follow the validated SP-to-RP direction after PAL-1 restamps the verdicts.
+
+**6.8 PAL label.** DEFAULT: report eWAR `war_delta` as primary with a role-neutral RA9 arm as sensitivity, and let the sensitivity decide if the two disagree on sign.
+
+**6.9 Role value delta into surplus.** DEFAULT: display-only. Surplus is an expected value under the v6 evframe and a role delta assembled from FA $/WAR constants is not an EV.
+
+**6.10 Feed backfill.** Umpire, weather, posted lineups and catcher identity for 2018-2025 need roughly 12,000-17,000 StatsAPI feed fetches. DEFAULT: run it in the background on the local machine after B-VERIFY-FEEDS says what is actually missing, respecting `feed_cache` throttling, and treat every column it produces as dark.
+
+**6.11 Awards.** DEFAULT: defer behind F-A, F-B and F-C, then ship the unfitted monotone rule with the evidence gap stated.
+
+**6.12 Catcher framing.** No source exists (`framing_2024.csv` is 0 bytes, OAA pos=2 returns zero rows). DEFAULT: the defense board ships without catchers and says so.
+
+**6.13 HEM+ vs wRC+.** DEFAULT: measure it before the accuracy page or the glossary makes any claim about HEM+ improving on the public index, and publish whichever way it lands.
+
+---
+
+### 7. Do-not-reopen appendix
+
+Killed this cycle, with the reason, so they are not re-proposed in another costume.
+
+- **pal-03, SP-to-RP FIT v2 (outcome-fitted).** The direction already PASSES its gate; the proposal re-fits the one thing that works. The feature claim is false locally: tjStuff+ scores from MLB live feeds and the cached feed range does not cover the 2018-2021 pre-years, and TTO leakage has no implementation anywhere. Events with both a closed post-season label and a pre-year inside the feed cache number about 18, not 61 or 100. A ~7-feature ridge on 18 events cannot be scored honestly, and the need gate already dominates the rank.
+- **fa-P16, agent and agency effects.** The data does not exist (0 of 1,615 rows carry an agent field; no `agent_name` or `agency` anywhere in `fa_*.py`), it is an L-effort manual curation feeding the ge50 slice that already failed its 5-fold sufficiency bar (`PTIER_LEVEL_GATE.md:160-182`, NO SHIP, loss-record), and agency effect is confounded with the talent the anchors already carry, on a signed-deals-only corpus. If wanted, it is a hand-curated display chip on the served class, with no lab arm, no gate and no registry row.
+- **projections-P7, graduate bridge.** The translation module's own artifact states production-level rates do not survive the MiLB to MLB jump (r2 ~0.02) because of selection, and the stat-line challenger already lost on rank (0.1539 vs 0.1931). The map would be fitted on >= 40 G / >= 40 IP survivors and applied to < 100 PA / < 30 IP non-survivors. `_depth_pool` already serves those rows.
+- **trade_surplus_P02, market-implied values.** The veteran leg is 2.8% priced (26 of 939), no as-of veteran vintage exists (`trade_value_history` starts 2026-06-25 and is board rows only), only 54 two-sided events postdate the epoch, and the objective (minimize |log sum_A - log sum_B|) is degenerate: a global shrink clears the 10% bar with zero economic content, and there is no permuted-partner placebo.
+- **trade_surplus_P11, package non-linearity.** Two-sided trades are 1,214 all-time and 107 in 2026, of which about 18 sides are multi-piece on both sides; `n_side` counts TRACKED players only and 81.8% of rows are snapshot-inferred with a NULL description, so the regressor is "how much of this package we happen to track" and a null coefficient is indistinguishable from a truncation artifact.
+- **trade_surplus_P12, deadline vs offseason regimes.** `proj_export.py:625-633` carries a written pre-registration BLOCKING this premium constant below 40 usable deadline trades; the proposal self-selects a floor of 20. `trade_value_history` covers one deadline and zero offseasons; deadline urgency is already a shipped priced term (`bayes_trade_value.py:2665-2705`); and the buyer/seller flag from a current or final-standings outlook is outcome knowledge injected into the trade date.
+
+Standing closed lanes, unchanged and not re-opened by anything above: Platt calibration for the moneyline; market blend before 150 distinct games (the calibration ledger holds 143 distinct game_pk, so the bake-off's R3 arm is dropped); git vintage backfill of leaderboard columns; the symmetric NB2 margin correction (INDETERMINATE, and the runline successor here is the one-run-atom kernel the doc names, not the symmetric arm); the 600-game vintage gate opening by pooling 2026 with 2027; the close cron as anything but an owner action; dynasty weight re-derivation and the closer save-share model; the REM+ K-prior family (X-R1, X-R1b) permanently, including any CSW or whiff proxy as a season skill-core prior (descriptive peripherals and betting sub-model components are different estimands and are allowed); park as a skill-core shrink target; GB-adjusted SEM+; xwOBA-allowed as the REM+/SEM+ core; the HEM+ age hinge and the pWOBA EV/barrel arm; the RP-to-SP re-gate by event-set expansion; PAL stamina features; the FA recal `fit` and `fit_group` modes, `POS_GROUP_MODE` v2, ridge, TJ flags in the market stage, `BAND_SCALE_GUAR`, per-decile band widths, the LightGBM market challenger, and ML WAR paths as market-model inputs; summing ML quantile heads anywhere; star-blend h2; Statcast into projections (re-gate 2026-11-15 only); and the eFV feature frontier, which is out of scope for this document entirely.
 
 ---
 
@@ -919,6 +1221,133 @@ wave plan accordingly.
 
 ---
 
-## Part 4. Sequencing, decisions, do-not-reopen
+## Part 4. Sequencing, owner decision queue, do-not-reopen
 
-PENDING_PART_4
+### 4.1 Binding rules for the executor
+
+1. **One served-number change per rebuild epoch** until the per-row basis ledger
+   (A-SERVE-7) ships. Without it the blast radius of a change cannot be attributed and
+   clause (f) of every gate is void. The queue holds at least nine served-number changes,
+   so this is the binding constraint on the whole eFV follow-through and A-SERVE-7 is
+   worth doing early for that reason alone.
+2. **Measurement before model, on the same object.** A-CLAIM-1 through A-CLAIM-14 before
+   any eFV driver or class arm; A-CLAIM-5 (the served-leg block) is the only legitimate
+   trigger for A-SERVE-2; the betting selection bake-off before any staking change; the
+   futures backtest before any futures value flag; the In-Game Management placebo before
+   any management plus metric is served.
+3. **Shared plumbing first.** The play and pitch corpus (M-CORPUS-1) is consumed by the
+   betting props and totals models, the new MLB Stats metrics, the Alchemy Lab pitch-type
+   work and both new modules. The historical game-context sidecar, the close job, the
+   per-market sub-ledgers and the Lahman drop are the same shape: they unlock several
+   lanes each and block nothing.
+4. **Every lane carries**: a gate doc with clauses and floors fixed before measurement, a
+   permanent-close pre-commitment, a registry row plus a committed eval artifact, the test
+   that pins the ship, and copy derived from the artifact rather than hand written.
+   Losses are committed with the same care as wins.
+5. **Never run pytest while an edit is in flight.** `conftest.py` git-checkouts anything
+   the suite dirtied at session end, so a concurrent edit is silently reverted. The runner
+   is `tools/run_suite.py` (8 files per subprocess; the chunk size is not negotiable). The
+   baseline is two documented reds plus `test_betting_dispersion` pending owner decision 10.
+6. **Credits.** The odds tier is 500 a month. Close (about 93), props (120) and futures
+   (about 20) go through one credit ledger with a pre-request guard before any of them is
+   armed, or the tier is exhausted mid-month by whichever job runs first.
+7. **Do not fetch what is already on disk.** 20.02 GB of full play data is cached in
+   `.cache/win_prob` and is prunable by the current nightly. Protect it (M-CORPUS-3)
+   before building anything on it.
+
+### 4.2 Waves
+
+**Wave 0, hygiene and instruments (no served number moves).** eFV: A-CLAIM-1, A-CLAIM-11,
+A-CLAIM-12, A-CLAIM-14, plus the floor-first regen tests. Betting: the objective frame,
+per-market sub-ledger tags, the close-job install, the capture-cadence repair and the
+credit ledger. Corpus: M-CORPUS-1 (offline, no network), M-CORPUS-3 (protect it before it
+is deleted), M-CORPUS-7. Hall of Fame: H-DATA-1 contract and fixture so the Lahman drop
+can be parsed the day it arrives. Also the eFV program arm ledger and the reserved 2025
+confirmation fold (A-CLAIM-15), which changes what a future survivor is worth.
+
+**Wave 1, measurement.** eFV: A-CLAIM-2 through A-CLAIM-10, A-SERVE-5, A-DRIVER-8.
+Betting: the selection-rule bake-off on the settled ledger, the props backtest harness,
+the futures fixed-date backtest on 2018-2025. Modules: M-CORPUS-2 (the context backfill,
+one season at a time), M-CORPUS-5, M-ENG-1 and M-ENG-2 with their pins. Hall of Fame:
+H-DATA-2 through H-DATA-4 and the benchmark bake-off (H-PRED-11), which sets the bar
+every later model is judged against. Other modules: the PAL epoch re-stamp, the FA
+baselines on the eWAR basis, the trade-events corpus.
+
+**Wave 2, model arms, each in its own epoch.** eFV in order: A-LABEL-1 (A2 arm first),
+A-LABEL-2, A-DRIVER-7, then E1 and E3 if A2 passes; A-SERVE-1 then A-SERVE-2 if it
+resolves; A-SERVE-3, A-SERVE-4; A-SEAM-1, A-SEAM-2, then A-SEAM-3 and A-SEAM-4;
+A-DRIVER-1 through A-DRIVER-6 inside the label epoch's frame, one family per Holm.
+Betting: the moneyline coefficient repair, the runline and totals sub-models, the HR and
+strikeout prop models graded dark, schema-4 capture. Other modules: the hierarchical FA
+market model, the playing-time model, the shared team-season simulator, market-implied
+trade values.
+
+**Wave 3, the new modules.** In-Game Management: M-MWAR-2 (the manager entity, which
+everything attributes through), then the lineup, pitching and running-game families in
+that order, then M-MWAR-1 and the M-MWAR-4 battery. Hall of Fame: H-DATA-5 and H-DATA-6,
+H-PRED-1 through H-PRED-4, H-LEAD-1 through H-LEAD-6, then the rest. Ship each module's
+page only when its first family has passed its own gate, so neither launches with a
+number nothing has scored.
+
+**Wave 4, the epoch reads.** The 2027 `RESOLVED_THROUGH` unlock with the reserved-fold
+confirmation, the first pitcher-stuff fold, and the V6 claim family read under the
+alpha-spending clause.
+
+### 4.3 Owner decision queue (defaults in parentheses)
+
+1. **Claim family V6**: define "every public source" as externally published raters scored
+   pairwise on each rater's own rows, register the block-normalized and bust-inclusive
+   frames as the successor family, retire C4 and record C2 as undecidable at its negative
+   point (default: yes, registered before the 2027 read, never as a post-hoc replacement).
+2. **Serve the evaluated object for pitchers** if A-SERVE-1 resolves (default: yes, in its
+   own grade-basis epoch, with the honest note that the blend-graded pitcher board still
+   trails plain consensus by 0.0129).
+3. **Age ramp** after its serve-rule gate (default: follow the gate; a labelled age-risk
+   indicator on a null, which removes a 10 percent per year haircut from 1,937 rows).
+4. **Fabricated FV 35 to an explicit UNGRADED state** (default: yes, own two-pass
+   rebuild, after the anchor fix).
+5. **Valuation unification epoch** (default: yes, sequenced behind the anchor fix; the
+   elite table goes to the owner before it ships).
+6. **Betting objective**: accuracy and ROI measured separately and gated
+   lexicographically per market, accuracy floor first then an ROI lower bound (default:
+   yes).
+7. **Selection rule**: replace the in-band probability rule with the bake-off winner
+   (default: yes, but only after the bake-off clears on the settled ledger; until then the
+   current rule stands with the per-market caveats now on the row).
+8. **Prop market set**: extend to outs, earned runs, hitter strikeouts and walks at the
+   cost of fewer pulled games per month (default: extend after the HR and strikeout models
+   have graded dark).
+9. **Futures**: ship the section with model win totals and division odds now, value flags
+   only after the backtest and a futures snapshot line exist (default: yes).
+10. **`test_betting_dispersion`**: the total-over-9.0 criterion no longer passes on
+    refreshed data (t 1.378 against a 1.645 bar). Retire the hard assertion to a dated
+    reading (default: retire; the gate verdict is unchanged and the artifact still carries
+    the grid).
+11. **In-Game Management**: MWAR's headline baseline (default: the written-down heuristic
+    manager, with league-average and replacement served beside it, because a heuristic is
+    the only baseline a reader can argue with).
+12. **Hall of Fame**: primary label BBWAA induction with any-route secondary; the
+    character-clause and performance-enhancing-drug flags stay out of the merit model and
+    appear only in the voter model (default: yes to both). Negro Leagues and pre-1901
+    seasons are IN the frame with an era factor and a disclosure (default: in).
+13. **The push**: the branch is far ahead of origin and every session has ended unpushed
+    (default: push once this session's suite state is accepted).
+
+### 4.4 Do-not-reopen additions from this session
+
+In addition to the standing ledger (the 39 eFV feature arms, model class on squared loss,
+lambda, the hitter serve basis, AUC floors, correction families, consensus weighting, BA
+into SCORED_SOURCES, pre-Statcast stuff proxies, Statcast into eFV, volume, level weights,
+age interactions, health as a driver, scout-report text traits, Platt for the moneyline,
+the market blend below 150 games, the git vintage backfill, the closer share model, the
+RP-to-SP expansion):
+
+- The homepage re-sort on (primary FV, '+') as a rank source. Replaced by the baked rank;
+  no surface may add a second ordering.
+- Any slot-market lock by market type. `SLOT_MARKET_POLICY` is the only switch.
+- The hit-and-run proxy as a management metric (it cannot separate a called hit-and-run
+  from a straight steal with a swinging batter).
+- The two-way simultaneous league-strength fit for era-neutral WAR (unidentified).
+- Savant catcher framing as a fetched leaderboard (the endpoint ignores every year
+  parameter and returns the current season only; framing must be modelled from pitches).
+- The 60 eFV proposals the verifier killed, each with its citation in the Part 1 appendix.
