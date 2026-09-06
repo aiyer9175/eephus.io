@@ -324,6 +324,18 @@ ARTIFACTS = (
                  "zero by construction and the other does not."),
     },
     {
+        "file": "futures.json", "group": "diamond",
+        "title": "Futures board",
+        "what": ("Season-long outright probabilities per club: division, playoffs, "
+                 "bye, pennant and World Series, with Monte Carlo intervals and the "
+                 "win-total band."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_futures_board.py",
+        "note": ("Model side only. NO futures price has ever been captured, so "
+                 "there is no edge column and the payload names the missing "
+                 "capture instead of estimating one."),
+    },
+    {
         "file": "management_board.json", "group": "mlb",
         "title": "In-Game Management board",
         "what": ("Stolen-base decision values by target base and season, the club "

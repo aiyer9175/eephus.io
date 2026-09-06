@@ -38,7 +38,7 @@
   // attributes), not this file's preference. The shell is the contract; a
   // module that invents its own ids renders a page whose tabs do nothing.
   var SECTIONS = ["potd", "teams", "props", "parlays", "calculators", "record",
-                  "validation", "mybets"];
+                  "validation", "futures", "mybets"];
   var SECTION_PAT = SECTIONS.join("|");
   // The potd label follows the SERVED frame (2026-08-16 Model Watch ruling):
   // "Model Watch" while the gates are closed, "Pick of the Day" when the
@@ -1813,6 +1813,82 @@
       num(vr.runs_var_over_mean, 4) + "x per scoring side";
   }
 
+  // ---- Futures -------------------------------------------------------------
+  // THE SEASON-LONG OUTRIGHT BOARD, MODEL SIDE ONLY. There is no market here:
+  // no futures price has ever been captured by this platform, so there is no
+  // edge column, no value flag and no expected return. The tab says which
+  // capture is missing rather than estimating one.
+  //
+  // THE PRICE COLUMN IS NOT CALLED FAIR. "Fair" asserts zero expected value,
+  // which requires the probability to be right, and the simulator behind these
+  // numbers has no validated forward record. It is the price IMPLIED by the
+  // model's own probability, labelled that way, and it is BLANK at the rails
+  // because p = 0 and p = 1 are both live in the artifact and an infinity
+  // rendered into a price cell looks like a number.
+  var FUT = null;
+  var FUT_ERR = "";
+
+  function loadFutures() {
+    if (FUT || FUT_ERR) { paintAll(); return; }
+    fetch("/data/futures.json", { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) { FUT = d; paintAll(); })
+      .catch(function () {
+        FUT_ERR = "The futures board could not be loaded.";
+        paintAll();
+      });
+  }
+
+  function futPrice(v) {
+    // A blank, not an infinity and not a zero. btSortValue already treats a
+    // dash as null, and the row still sorts on the probability.
+    if (v === null || v === undefined) return '<span class="bt-dim">.</span>';
+    return (v > 0 ? "+" : "") + v;
+  }
+
+  function renderFutures() {
+    if (FUT_ERR) return '<p class="bt-note">' + esc(FUT_ERR) + "</p>";
+    if (!FUT) { loadFutures(); return '<p class="bt-note">Loading.</p>'; }
+    if (!FUT.clubs || !FUT.clubs.length) {
+      return '<p class="bt-note">' + esc(FUT.empty_reason || "No board.") + "</p>";
+    }
+    var nm = FUT.no_market;
+    var rows = FUT.clubs.map(function (c) {
+      function p3(v) { return (v === null || v === undefined) ? "" : (v * 100).toFixed(1) + "%"; }
+      var mc = c.mcWs || {};
+      return "<tr>" +
+        '<td class="bt-l">' + esc(c.team) + "</td>" +
+        "<td>" + esc(c.record || "") + "</td>" +
+        "<td>" + (c.projWins === null ? "" : c.projWins.toFixed(1)) + "</td>" +
+        "<td>" + esc(c.winTotalP10) + " to " + esc(c.winTotalP90) + "</td>" +
+        "<td>" + p3(c.divisionPct) + "</td>" +
+        "<td>" + p3(c.playoffPct) + "</td>" +
+        "<td>" + p3(c.byePct) + "</td>" +
+        "<td>" + p3(c.pennantPct) + "</td>" +
+        "<td>" + p3(c.wsPct) + "</td>" +
+        '<td>' + ((mc.lo95 === undefined || mc.lo95 === null) ? "" :
+          (mc.lo95 * 100).toFixed(1) + " to " + (mc.hi95 * 100).toFixed(1)) + "</td>" +
+        '<td>' + futPrice(c.impliedAmericanWS) + "</td>" +
+        "</tr>";
+    }).join("");
+
+    return '<div class="bt-panel"><div class="bt-panel-hd">Futures</div>' +
+      '<p class="bt-note"><strong>There is no market on this board.</strong> ' +
+      esc(nm.what_is_missing) + "</p>" +
+      '<p class="bt-note">' + esc(nm.what_would_have_to_happen) + " " +
+      esc(nm.and_then_still_not_an_edge) + "</p>" +
+      '<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr>' +
+      '<th class="bt-l">Club</th><th>Record</th><th>Proj W</th><th>Win band</th>' +
+      "<th>Division</th><th>Playoffs</th><th>Bye</th><th>Pennant</th>" +
+      "<th>World Series</th><th>WS interval</th><th>Model price (implied)</th>" +
+      "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      '<p class="bt-note">' + esc(FUT.why_the_price_column_is_not_called_fair) + "</p>" +
+      '<p class="bt-note">' + esc(FUT.what_the_intervals_are) + "</p>" +
+      '<p class="bt-note">' + esc(FUT.win_total_basis) + "</p>" +
+      '<p class="bt-dim">' + esc(FUT.sims) + " simulations, board hash " +
+      esc(FUT.content_hash) + ".</p></div>";
+  }
+
   function renderValidation() {
     var v = vstate();
     var out = [honestResult(), clocksPanel()];
@@ -3135,6 +3211,7 @@
       case "calculators": html = renderCalc(); break;
       case "record": html = renderRecord(); break;
       case "validation": html = renderValidation(); break;
+      case "futures": html = renderFutures(); break;
       case "mybets": html = renderMyBets(); break;
       default: html = renderPick();
     }

@@ -92,6 +92,18 @@ def repair(*, path: Path | None = None, write: bool = True) -> dict:
         doc["mc_schedule_source"] = sched
     if write:
         p.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
+        # THE SECOND CALLER MUST RE-EMIT THE SIDECAR TOO. This tool re-runs the
+        # simulation and rewrites mlb_projections.json in place, so a futures
+        # board written by the last full export would go on describing a
+        # different simulation while its own date stamp still matched. The
+        # content hash on data/futures.json is what makes that detectable, and
+        # re-emitting here is what makes detecting it unnecessary.
+        try:
+            import proj_export as _pe
+            n = _pe.write_futures(doc.get("team_outlook") or [])
+            print(f"futures sidecar re-emitted ({n} bytes)")
+        except Exception as exc:                       # noqa: BLE001
+            print(f"futures sidecar NOT re-emitted: {exc}")
     return {"ok": True, "stamp": stamp, "moved": moved, "schedule_source": sched}
 
 

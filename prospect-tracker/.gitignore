@@ -204,3 +204,8 @@ data/_artifact_fingerprints/
 tools/bucket_age_head/results.json
 tools/bucket_age_head/eval_rows_ckpt.json
 tools/bucket_age_head/verify_sandbox/
+
+# The futures board is a build product of proj_export, like every other
+# data/*.json sidecar. It was NOT ignored, which would have committed a
+# 30-club simulation snapshot on every rebuild.
+data/futures.json

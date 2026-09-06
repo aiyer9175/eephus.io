@@ -4366,7 +4366,15 @@ def build_betting() -> str:
     unreachable except by hash.
 
     Section keys: potd | teams | props | parlays | calculators | record |
-    validation | mybets."""
+    validation | futures | mybets.
+
+    FUTURES IS A TAB AND NOT A PAGE, deliberately. It renders the season-long
+    outright board off data/futures.json and there is NO MARKET beside it: no
+    futures price has ever been captured, so there is no edge column and the
+    tab says which capture is missing rather than estimating one. A tab costs
+    two lines here and one in the client; a page would cost the nav, the three
+    hand-authored nav copies, the sitemap, the deploy list, the dash stripper
+    and the route notes, for a surface that cannot yet make a betting claim."""
     body = (
         '<div class="fa-app mlbstats-app betting-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
@@ -4393,6 +4401,7 @@ def build_betting() -> str:
         '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="calculators" role="tab" aria-selected="false">Calculators</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="record" role="tab" aria-selected="false">The Record</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="validation" role="tab" aria-selected="false">Validation</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="futures" role="tab" aria-selected="false">Futures</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="mybets" role="tab" aria-selected="false">My Bets</button>'
         '</div>'
         '<div id="betting-section" class="mlbstats-section">'

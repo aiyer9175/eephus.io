@@ -831,6 +831,11 @@ MODEL_GLOSSARY = {
     # every sentence explaining them is derived into the payload rather than
     # written as a definition. If a management plus metric is ever gated in, it
     # earns a glossary entry then and this mapping graduates with it.
+    # The playoff simulator. NOT internal: its numbers render on two surfaces,
+    # the /projections/ team outlook and the Futures tab. It points at the
+    # entries that carry the reader-facing method behind what it consumes and
+    # what it emits.
+    "playoff_odds_sim": ["mlb_projections", "fa_projection_engine"],
     "mgmt_running_game": "internal",
     "mgmt_board_export": "internal",
     # The public benchmark bake-off. NOT internal: its panel RENDERS on /hof/,

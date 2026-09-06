@@ -1893,10 +1893,143 @@ def _attach_current_season(rows: list[dict], standings: dict[str, dict],
         if o:
             cur.update(o)
         else:
+            # EVERY KEY THE BRACKET CAN EMIT, or a club that degraded carries
+            # some of them and not others and every downstream reader has to
+            # guess which. The postseason block only exists on a complete
+            # thirty-club field, so this is the shape the futures export reads
+            # to decide whether it has anything to publish at all.
             for kf in ("playoffPct", "divisionPct", "wildcardPct",
-                       "projWinsMean", "projWinsP10", "projWinsP90"):
+                       "projWinsMean", "projWinsP10", "projWinsP90",
+                       "byePct", "wcRoundPct", "ldsPct", "lcsPct",
+                       "pennantPct", "wsPct", "winTotal", "mc"):
                 cur.setdefault(kf, None)
     return sched_source
+
+
+def _fair_american(p, *, lo: float = 0.005, hi: float = 0.995):
+    """American odds implied by a probability, or None outside a stated band.
+
+    THE RAILS ARE THE POINT. `divisionPct == 1.0` and `playoffPct == 0.0` are
+    both live in the served artifact right now, and this is the one column a
+    reader is most likely to carry to a book. p = 1 gives minus infinity and
+    p = 0 gives plus infinity, and an infinity rendered into a price cell is
+    worse than a blank because it looks like a number.
+
+    Outside the band the cell is empty and the row still sorts on the
+    probability, which is the quantity the model actually produced.
+    """
+    try:
+        p = float(p)
+    except (TypeError, ValueError):
+        return None
+    if not (lo <= p <= hi):
+        return None
+    return round(-100.0 * p / (1.0 - p)) if p >= 0.5 else round(100.0 * (1.0 - p) / p)
+
+
+def build_futures(rows: list) -> dict:
+    """data/futures.json: the season-long outright board, model side only.
+
+    THERE IS NO MARKET HERE AND THEREFORE NO EDGE. No futures price has ever
+    been captured by this platform, so every value column a reader might expect
+    is absent rather than estimated, and the payload says which one is missing
+    and what would have to happen first.
+
+    THE PRICE COLUMN IS NOT CALLED FAIR. "Fair" asserts zero expected value,
+    which requires the probability to be right, and the model behind these
+    numbers carries no validated forward record. It is an IMPLIED price: what
+    the model's own probability would be worth if it were correct.
+
+    DEGRADES TO AN EMPTY BOARD WITH A REASON. `simulate_playoffs` returns
+    nothing on a partial standings read, the overlay then sets every postseason
+    key to None, and a board of thirty nulls is worse than a board of none.
+    """
+    import datetime as _dt
+
+    clubs = []
+    for r in rows:
+        cur = r.get("current") or {}
+        if cur.get("wsPct") is None:
+            continue
+        mc = cur.get("mc") or {}
+        wt = cur.get("winTotal") or {}
+        clubs.append({
+            "team": r.get("team"),
+            "record": cur.get("record"),
+            "projWins": cur.get("projWinsMean"),
+            "winTotalP10": cur.get("projWinsP10"),
+            "winTotalP90": cur.get("projWinsP90"),
+            "winTotalSd": wt.get("sd"),
+            "divisionPct": cur.get("divisionPct"),
+            "playoffPct": cur.get("playoffPct"),
+            "byePct": cur.get("byePct"),
+            "pennantPct": cur.get("pennantPct"),
+            "wsPct": cur.get("wsPct"),
+            "impliedAmericanWS": _fair_american(cur.get("wsPct")),
+            "impliedAmericanPennant": _fair_american(cur.get("pennantPct")),
+            "impliedAmericanDivision": _fair_american(cur.get("divisionPct")),
+            "mcWs": (mc.get("ws") or {}),
+            "mcPennant": (mc.get("pennant") or {}),
+            "mcPlayoff": (mc.get("playoff") or {}),
+        })
+    clubs.sort(key=lambda c: -(c["wsPct"] or 0))
+
+    import hashlib
+    key = "|".join(f"{c['team']}:{c['divisionPct']}:{c['playoffPct']}:{c['byePct']}:"
+                   f"{c['pennantPct']}:{c['wsPct']}:{c['projWins']}"
+                   for c in sorted(clubs, key=lambda x: str(x["team"])))
+    digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:12] if clubs else None
+
+    sims = None
+    for r in rows:
+        mc = ((r.get("current") or {}).get("mc") or {})
+        if mc.get("sims"):
+            sims = mc["sims"]
+            break
+
+    return {
+        "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+        "produced_by": "proj_export.build_futures",
+        "content_hash": digest,
+        "sims": sims,
+        "clubs": clubs,
+        "empty_reason": (None if clubs else
+                         "the season simulator returned no postseason block, "
+                         "which happens when the standings read is partial or "
+                         "the field is not a complete thirty-club league. A "
+                         "board of thirty nulls is worse than a board of none."),
+        "no_market": {
+            "captured": False,
+            "what_is_missing": (
+                "no futures price has ever been captured by this platform. "
+                "There is no book number beside any of these, so there is no "
+                "edge column, no value flag and no expected return."),
+            "what_would_have_to_happen": (
+                "an outrights capture against the odds provider, weekly, at "
+                "about twenty credits a month, which is an owner decision "
+                "because it comes out of the same 500-credit monthly tier as "
+                "the daily game odds and the props."),
+            "and_then_still_not_an_edge": (
+                "a captured price would give a comparison, not a validated "
+                "one. The futures backtest has not been run, so nothing here "
+                "may be published as value until it has."),
+        },
+        "why_the_price_column_is_not_called_fair": (
+            "a FAIR price asserts zero expected value, which requires the "
+            "probability to be right. These probabilities come from a "
+            "simulator with no validated forward record, so the column is the "
+            "price IMPLIED by the model's own number and is labelled that way."),
+        "what_the_intervals_are": (
+            "Monte Carlo error only. They say how far the number would move if "
+            "the simulation were run again, and nothing about whether the "
+            "talent estimate underneath it is right. The second question is "
+            "much the larger one and this page does not answer it."),
+        "win_total_basis": (
+            "the win-total band is schedule noise at a fixed talent estimate. "
+            "It carries no uncertainty about the estimate itself, no in-season "
+            "drift, no injuries and no trades, so it is narrower than a real "
+            "forecast interval by an amount this page has not measured."),
+    }
 
 
 def _pairs_from_sched(sched: dict[str, list[str]]) -> list[tuple[str, str]]:
@@ -2177,6 +2310,20 @@ def export() -> int:
     (DATA_DIR / "mlb_projections.json").write_text(raw, encoding="utf-8")
     log.info("mlb projections export: %dKB, %d vets + %d prospects",
              len(raw) // 1024, payload["n_vets"], payload["n_prospects"])
+    # THE FUTURES BOARD RIDES THE SAME PAYLOAD, from export() rather than from
+    # inside _attach_current_season. The overlay is called directly by tests on
+    # two-club synthetic universes, and writing an untracked artifact from there
+    # would leave a file conftest's revert cannot restore.
+    write_futures(payload.get("team_outlook") or [])
+    return len(raw)
+
+
+def write_futures(rows: list) -> int:
+    fut = build_futures(rows)
+    raw = json.dumps(fut, separators=(",", ":"))
+    (DATA_DIR / "futures.json").write_text(raw, encoding="utf-8")
+    log.info("futures export: %d clubs, hash %s",
+             len(fut["clubs"]), fut["content_hash"])
     return len(raw)
 
 
