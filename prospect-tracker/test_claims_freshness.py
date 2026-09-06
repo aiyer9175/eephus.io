@@ -66,6 +66,31 @@ BANNED_CLAIM_FRAGMENTS = (
     # against Pipeline 0.3990. Derived on 2026-09-04 (design audit F46) to the
     # same three branches _methHeroBanner already uses.
     "ahead of the field",
+    # A-CLAIM-9, added 2026-09-06 as a FORWARD ban rather than a repair: none of
+    # the five below has ever appeared on a surface, and the point is that they
+    # never do.
+    #
+    # A Bayesian companion artifact is registered for this claim family, and the
+    # moment one exists somebody will want to write the sentence it appears to
+    # license: "there is an 85 percent probability that eFV is better than the
+    # consensus". That is a posterior over a parameter, and a served surface
+    # cannot carry it honestly, for two reasons that hold no matter how good the
+    # posterior is.
+    #
+    # First, the number is only as good as its prior, and this platform has no
+    # defensible prior on a rank-correlation gap: every prior it could pick is a
+    # choice a reader cannot see and cannot argue with. Second, the whole claim
+    # frame here is frequentist and pre-registered, with detection floors and an
+    # alpha-spending clause, and mixing a posterior probability into copy written
+    # against that frame invites a reader to read one as the other. The measured
+    # position on 2026-09-06 is that THREE instruments put eFV and the consensus
+    # apart by -0.0071, +0.0145 and -0.0001 and NONE of them resolves, which is
+    # the sentence the page is entitled to.
+    "probability that efv is better",
+    "probability efv is better",
+    "chance that efv is better",
+    "posterior probability that efv",
+    "odds that efv beats",
 )
 
 # Copy surfaces the ratchet scans. content/*.json is globbed at test time.
@@ -480,3 +505,35 @@ def test_control_window_and_discount_copy_match_valuation_set():
         f"the active valuation set discounts at net {discount_pct} percent "
         f"(value_framework._config discount_rate) but copy quotes net {off}"
     )
+
+
+def test_the_forward_bans_actually_fire(tmp_path, monkeypatch):
+    """A ratchet nobody has tripped is a ratchet nobody has tested, and the five
+    A-CLAIM-9 fragments are FORWARD bans: none has ever appeared on a surface, so
+    unlike the rest of the tuple they have no history proving they match.
+
+    This writes each one into a scratch surface and asserts the scan catches it.
+    """
+    surf = tmp_path / "fake_surface.js"
+    forward = ("probability that eFV is better",
+               "probability eFV is better",
+               "chance that eFV is better",
+               "posterior probability that eFV",
+               "odds that eFV beats")
+    for frag in forward:
+        surf.write_text(f"var hero = 'There is an 85% {frag} the consensus';",
+                        encoding="utf-8")
+        text = surf.read_text(encoding="utf-8").lower()
+        hits = [f for f in BANNED_CLAIM_FRAGMENTS if f.lower() in text]
+        assert hits, f"the ratchet does not catch {frag!r}"
+
+
+def test_a_posterior_claim_is_banned_even_though_no_posterior_exists_yet():
+    """The ban is deliberately AHEAD of the artifact it constrains. The Bayesian
+    companion is registered and unbuilt, and the sentence it appears to license
+    is the one a served surface must never carry: the number is only as good as
+    a prior a reader cannot see, and the rest of this claim frame is
+    pre-registered and frequentist."""
+    joined = " ".join(BANNED_CLAIM_FRAGMENTS).lower()
+    assert "probability that efv is better" in joined
+    assert "posterior probability that efv" in joined
