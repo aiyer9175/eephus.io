@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-09-06**. `validate()` at generation time: **clean**.
 
-**299 models.** Verdicts: validated: 51, provisional: 122, unvalidated: 41, deprecated: 85.
+**300 models.** Verdicts: validated: 51, provisional: 123, unvalidated: 41, deprecated: 85.
 
 ## Instrument boundary
 
@@ -318,6 +318,7 @@ can be measured.
 | `betting_props_k_dark` | NOTHING SERVED. data/betting_props_dark_eval.json. Measur... | P(strikeouts > 5.5) for one starter-game. | empirical-Bayes pitcher K/BF times an empirical-Bayes expected batters faced,... | the walk-forward league K/BF over an EXPECTED batters faced. A baseline hande... | paired Brier delta with the same game-clustered bootstrap. | **provisional** | `data/betting_props_dark_eval.json` | 0 | no |
 | `claim_bust_inclusive` | NOTHING SERVED. accuracy.claim_instruments.bust_inclusive... | nothing. It scores the same raters on a pool that INCLUDES the prospects who never reached the majors, which the flagship frame... | raw out-of-sample eFV on both halves, over the combined pool of 812 debuted r... | FanGraphs and MLB Pipeline, each on its own rows. The consensus is excluded b... | Spearman against realized WAR, with an in-run player-clustered E_cond floor p... | **provisional** | `data/source_backtest.json` | - | - |
 | `claim_rater_scale_view` | NOTHING SERVED. accuracy.per_year_scale_view in data/sour... | nothing. It measures how much of each rater's published Spearman is BLOCK SCALE rather than within-cohort ordering, by percenti... | block rho on side x year percentile-normalized columns, against the same rate... | the rater's own pooled rho, plus a 200-draw permutation placebo at fixed bloc... | delta = block rho minus pooled rho, floored by a player-clustered E_cond boot... | **provisional** | `data/source_backtest.json` | - | - |
+| `claim_exposure_matched_label` | NOTHING SERVED. accuracy.claim_instruments.exposure_match... | nothing. It re-scores the published head-to-head against an EXPOSURE-MATCHED outcome, first-six-season eWAR, instead of career... | raw out-of-sample eFV against efv_dataset._label_6yr, the same label the eFV... | FanGraphs, MLB Pipeline and the PROSPX consensus on the same rows, in two cut... | Spearman against the six-season label, player-clustered in-run E_cond floor p... | **provisional** | `data/source_backtest.json` | - | - |
 
 Stored problems at last refresh: none.
 

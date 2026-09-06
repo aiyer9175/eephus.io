@@ -294,6 +294,109 @@ def _load_universe(data_dir: Path = DATA_DIR) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# A-CLAIM-3: THE PUBLISHED LABEL IS NOT EXPOSURE MATCHED.
+#
+# Every head-to-head cell scores grades against CAREER WAR TO DATE. A player who
+# debuted in 2014 has had eleven seasons to accumulate it and a 2022 debut has had
+# three, so the label rewards being older, and "being older" is a property of the
+# base year rather than of the grade. A-CLAIM-13 measured exactly that as a
+# resolvable base-year effect in three of four raters.
+#
+# The exposure-matched alternative already exists and is the label the eFV model
+# itself trains on: `efv_dataset._label_6yr`, first six seasons from debut, with a
+# flat-rate tail projection and an exposure weight for the rows that are not yet
+# resolved. Scoring the same head-to-head on it is the receipt.
+def _censoring_bias_note(data_dir: Path) -> dict:
+    """The measured direction of the six-season label's tail projection, read
+    from the artifact that measured it rather than restated from memory.
+
+    STATED, NOT CORRECTED FOR. The bias is a property of the shipped label the
+    eFV model trains on. Correcting it here would score the raters against a
+    label the model was never fitted to, which is a different and less useful
+    comparison than the one this cut is for.
+    """
+    p = data_dir / "xfv_label_censoring_eval.json"
+    if not p.exists():
+        return {"status": "data/xfv_label_censoring_eval.json is not present"}
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return {"status": f"unreadable: {exc}"}
+    cells = d.get("by_n_obs_and_side") or {}
+    out = {"source": "data/xfv_label_censoring_eval.json",
+           "generated_at": d.get("generated_at"),
+           "what": d.get("what"),
+           "materiality_rule": d.get("materiality_rule"),
+           "by_n_obs_and_side": {}}
+    for k, v in cells.items():
+        if isinstance(v, dict):
+            out["by_n_obs_and_side"][k] = {
+                "n": v.get("n"), "mean_bias": v.get("mean_bias"),
+                "ci95": v.get("ci95")}
+    biases = [v["mean_bias"] for v in out["by_n_obs_and_side"].values()
+              if isinstance(v.get("mean_bias"), (int, float))]
+    if biases:
+        out["direction"] = ("the projection UNDERSTATES the six-season total"
+                            if sum(biases) / len(biases) < 0
+                            else "the projection OVERSTATES the six-season total")
+        out["mean_bias_across_cells"] = round(sum(biases) / len(biases), 4)
+    return out
+
+
+def _six_year_label_map(universe: list[dict]):
+    """{player_key: label row} from `efv_dataset._label_6yr`, plus a receipt.
+
+    Imported lazily and defensively. `efv_dataset` is a heavier module than this
+    one needs at import time, and a backtest that cannot run at all because an
+    optional receipt could not import is worse than a backtest that reports the
+    receipt as unavailable.
+    """
+    receipt = {"considered": 0, "no_debut_year": 0, "no_seasons": 0,
+               "outside_debut_years": 0, "raised": 0, "kept": 0}
+    try:
+        import efv_dataset as _ed
+    except Exception as exc:                       # noqa: BLE001
+        return {}, {"status": f"efv_dataset unavailable: {exc}"}
+    out = {}
+    debut_years = set(getattr(_ed, "DEBUT_YEARS", ()) or ())
+    for pl in universe:
+        cw = pl.get("career_war") or {}
+        seasons = cw.get("seasons") or {}
+        dd = str(pl.get("debut_date") or "")
+        receipt["considered"] += 1
+        if not dd[:4].isdigit():
+            receipt["no_debut_year"] += 1
+            continue
+        dy = int(dd[:4])
+        if debut_years and dy not in debut_years:
+            receipt["outside_debut_years"] += 1
+            continue
+        if not seasons:
+            receipt["no_seasons"] += 1
+            continue
+        try:
+            t_res, t_cens, cflag, w, n_obs = _ed._label_6yr(
+                {int(k): float(v) for k, v in seasons.items()}, dy, dd)
+        except Exception:                          # noqa: BLE001
+            receipt["raised"] += 1
+            continue
+        key = pl.get("player_key")
+        if key is None:
+            continue
+        out[key] = {"resolved": t_res, "censored": t_cens, "censored_flag": bool(cflag),
+                    "weight": w, "n_obs": n_obs, "debut_year": dy}
+        receipt["kept"] += 1
+    receipt["resolved_through"] = getattr(_ed, "RESOLVED_THROUGH", None)
+    receipt["target_seasons"] = getattr(_ed, "TARGET_SEASONS", None)
+    receipt["n_fully_resolved"] = sum(1 for v in out.values() if not v["censored_flag"])
+    receipt["n_censored"] = sum(1 for v in out.values() if v["censored_flag"])
+    receipt["last_fully_resolved_debut_year"] = (
+        None if receipt["resolved_through"] is None or receipt["target_seasons"] is None
+        else receipt["resolved_through"] - receipt["target_seasons"] + 1)
+    return out, receipt
+
+
+# ---------------------------------------------------------------------------
 # A-CLAIM-4: THE FRAME IS 100% SURVIVORS, BY CONSTRUCTION.
 #
 # `_is_vintage_matched` requires `debut_year is not None`. A prospect who never
@@ -2251,6 +2354,14 @@ def _scale_view_pass(usable, raters, block_of, *, floor=True, label=""):
             "n": len(blk), "mean_war": round(sum(wars) / len(blk), 3),
             "rho": {r: _r4(_spearman([c["grades"][r] for c in blk], wars))
                     for r in raters},
+            # THE MEAN GRADE PER BLOCK, published because the exposure
+            # explanation for the block effect was tested and refuted and the
+            # next candidate is drift: if a rater's grade level moves across
+            # base years while realized WAR does not move with it, pooling
+            # collects concordant pairs that are not ordering skill. A reader
+            # cannot check that without these numbers.
+            "mean_grade": {r: round(sum(c["grades"][r] for c in blk) / len(blk), 3)
+                           for r in raters},
         }
         for r in raters:
             vals = [c["grades"][r] for c in blk]
@@ -2730,7 +2841,7 @@ def _h2h_claim_cell(name, rows, side_of, stored_floor, stored_source, power_cell
 
 def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
                        served, bust_rows=None, bust_receipt=None,
-                       raw_xfv=None) -> dict:
+                       raw_xfv=None, six_year=None, six_year_receipt=None) -> dict:
     """Assemble the four V6 receipts and compare each against the frozen V5 call.
 
     Every block here is computed on the rows the V5 cell above was computed on, so
@@ -2877,6 +2988,136 @@ def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
                 "to the common set. The eFV remap re-derives its grid from "
                 "whatever population it is handed, so admitting them would "
                 "re-bin the ties for every existing row."),
+        }
+
+    # (a3) A-CLAIM-3, THE EXPOSURE-MATCHED LABEL. Two cuts, as registered: the
+    # fully resolved rows as the clean receipt, and the full cut on the censored
+    # label with the censoring bias stated beside it rather than corrected for.
+    exposure = {}
+    if six_year:
+        frame = frames.get("vintage_matched") or []
+
+        def _relabel(rows, field):
+            out = []
+            for c in rows:
+                lab = six_year.get(c.get("key"))
+                if lab is None:
+                    continue
+                m = dict(c)
+                m["outcome"] = {**(c.get("outcome") or {}), "war": lab[field]}
+                m["_label"] = lab
+                out.append(m)
+            return out
+
+        full = _relabel(frame, "censored")
+        clean = [c for c in full if not c["_label"]["censored_flag"]]
+        cuts = {}
+        for tag, rows, why in (
+                ("fully_resolved", clean,
+                 "every row's six-season window closed on or before RESOLVED_THROUGH, "
+                 "so the label is observed rather than projected. This is the clean "
+                 "receipt."),
+                ("censored_full", full,
+                 "every row that carries a label, with the unresolved tail projected "
+                 "at the observed per-season rate. The projection is biased and the "
+                 "direction is stated beside the cells, not corrected for."),
+        ):
+            if len(rows) < _CLAIM_MIN_ROWS:
+                cuts[tag] = {"n": len(rows), "status": "too few rows to score"}
+                continue
+            cells = {}
+            for comp in list(SCORED_SOURCES) + [CONSENSUS_KEY]:
+                usable = [r for r in rows if r["grades"].get(comp) is not None]
+                if len(usable) < _CLAIM_MIN_ROWS:
+                    continue
+                cells[comp] = _h2h_claim_cell(
+                    f"exposure_matched.{tag}.{comp}", usable, side_of, None,
+                    "no stored V5 floor: the V5 cells are on career WAR to date",
+                    None, data_dir, comparator=comp)
+            wts = [c["_label"]["weight"] for c in rows]
+            cuts[tag] = {
+                "n": len(rows),
+                "why": why,
+                "n_censored": sum(1 for c in rows if c["_label"]["censored_flag"]),
+                "mean_exposure_weight": round(sum(wts) / len(wts), 4),
+                "min_exposure_weight": round(min(wts), 4),
+                "debut_years": sorted({c["_label"]["debut_year"] for c in rows}),
+                "cells": cells,
+            }
+
+        # THE FALSIFICATION. A-CLAIM-13 found a resolvable base-year block effect
+        # in three of four raters and wrote down EXPOSURE as the leading
+        # explanation, explicitly as an untested hypothesis. This is the test: if
+        # the effect is exposure, then re-running the same scale view against an
+        # exposure-MATCHED label should shrink it toward nothing. If it does not,
+        # the hypothesis is wrong and the doc says so.
+        hyp = {"status": "not run: too few fully resolved rows"}
+        if len(clean) >= _CLAIM_MIN_ROWS:
+            rlist = list(SCORED_SOURCES) + [CONSENSUS_KEY, "xfv"]
+            on6 = _scale_view_pass(
+                [c for c in clean if all(c["grades"].get(r) is not None for r in rlist)],
+                rlist, lambda c: ((side_of.get(c.get("key")) or "unknown"), c.get("year")),
+                label="exposure_matched.side_year")
+            if not on6.get("status"):
+                for k in ("_cols", "_ntgt", "_keys"):
+                    on6.pop(k, None)
+                hyp = {
+                    "label": "A-CLAIM-13 block effect, re-measured on the six-season label",
+                    "on_exposure_matched_label": on6,
+                    "what_it_tests": (
+                        "A-CLAIM-13 measured a resolvable base-year block effect in "
+                        "FanGraphs, MLB Pipeline and the consensus, and none in eFV, and "
+                        "recorded EXPOSURE as the leading explanation while marking it "
+                        "untested. Career WAR to date rewards an older cohort for having "
+                        "had longer to accumulate it. The six-season label gives every "
+                        "player the same window. If exposure is the mechanism, the block "
+                        "effect must shrink toward nothing here. If it does not, the "
+                        "explanation is wrong and the doc is corrected."),
+                    "caveat": (
+                        "this cut is the fully resolved rows only, so it is a SMALLER and "
+                        "OLDER-debut population than A-CLAIM-13's frame. Some shrinkage "
+                        "would be expected from the narrower vintage span alone, which is "
+                        "why the comparison below reports both the career-WAR and the "
+                        "six-season delta ON THIS SAME POPULATION."),
+                }
+                # the control that makes the comparison fair: career WAR on the
+                # SAME rows, so the only thing that changes is the label.
+                same_rows_career = _scale_view_pass(
+                    [c for c in frame
+                     if six_year.get(c.get("key")) is not None
+                     and not six_year[c.get("key")]["censored_flag"]
+                     and all(c["grades"].get(r) is not None for r in rlist)],
+                    rlist,
+                    lambda c: ((side_of.get(c.get("key")) or "unknown"), c.get("year")),
+                    label="career_war.same_rows.side_year")
+                if not same_rows_career.get("status"):
+                    for k in ("_cols", "_ntgt", "_keys"):
+                        same_rows_career.pop(k, None)
+                    hyp["on_career_war_same_rows"] = same_rows_career
+                    hyp["shrinkage"] = {
+                        r: {
+                            "career_war_delta": (same_rows_career["per_rater"][r]
+                                                 ["delta_block_minus_pooled"]),
+                            "six_season_delta": (on6["per_rater"][r]
+                                                 ["delta_block_minus_pooled"]),
+                        } for r in rlist if r in on6["per_rater"]
+                        and r in same_rows_career["per_rater"]
+                    }
+
+        exposure = {
+            "registered_on": CLAIM_REGISTERED_ON,
+            "receipt": six_year_receipt or {},
+            "label": "efv_dataset._label_6yr, first six seasons from debut",
+            "why_this_frame_exists": (
+                "every published head-to-head cell scores grades against CAREER WAR "
+                "TO DATE. A 2014 debut has had eleven seasons to accumulate it and a "
+                "2022 debut has had three, so the label rewards being older, and "
+                "being older is a property of the base year rather than of the "
+                "grade."),
+            "cuts": cuts,
+            "censoring_bias_direction": _censoring_bias_note(data_dir),
+            "exposure_hypothesis_test": hyp,
+            "changes_no_published_number": True,
         }
 
     # (b) BEST-RATER RESAMPLING on the cell whose comparator is an argmax.
@@ -3054,6 +3295,7 @@ def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
                       "engine": ("numpy" if _numpy() is not None else "unavailable")},
         "head_to_head_floors": h2h,
         "bust_inclusive": bust,
+        "exposure_matched_label": exposure,
         "best_rater_resampling": best,
         "within_base_year_block": block,
         "auc_coverage_certificate": cert,
@@ -3489,6 +3731,10 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     _bust_receipt["read_from_inactive_json"] = len(_busts) + len(_bust_excl)
     _bust_receipt["excluded_by_screen"] = len(_bust_excl)
     _bust_receipt["exclusions"] = _bust_excl[:40]
+    # A-CLAIM-3. Built from the SAME universe the frames were built from, so a
+    # row that has a label here is the same human as the row that has a grade
+    # there; keying on anything else would join two populations by name.
+    _six, _six_receipt = _six_year_label_map(universe)
     accuracy["claim_instruments"] = _claim_instruments(
         data_dir=data_dir,
         pooled_common=pooled_common,
@@ -3500,7 +3746,9 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         served=accuracy,
         bust_rows=_bust_rows,
         bust_receipt=_bust_receipt,
-        raw_xfv=_xfv_by_key)
+        raw_xfv=_xfv_by_key,
+        six_year=_six,
+        six_year_receipt=_six_receipt)
     # OBS-1 (L4 bughunt-2, 2026-07-24e measurement fix): score archetypes on ONE row
     # per player (latest pre-debut read), matching _xfv_vs_consensus_detail's dedup.
     # pooled_common counts a stable player once per base YEAR (intl_bat ~2.4x), which

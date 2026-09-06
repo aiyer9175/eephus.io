@@ -809,6 +809,14 @@ MODEL_GLOSSARY = {
     # disagreeing head-to-head. A test in test_rater_scale_view.py pins that no
     # page and no other module reads the artifact key at all.
     "claim_rater_scale_view": "internal",
+    # A-CLAIM-3, the exposure-matched label. Internal, and this one is the most
+    # tempting of the three to surface, because "eFV and the consensus differ by
+    # 0.0001 on a like-for-like label" is a sentence anybody would want to
+    # publish. It stays internal until the confirmatory read declared in the
+    # alpha-spending clause, because a receipt taken at a time of our choosing
+    # is not the same object as a pre-declared read, and the accuracy page
+    # already states the tie from the frame it is entitled to.
+    "claim_exposure_matched_label": "internal",
     # pbp_corpus_base_state is a data substrate under .cache/. No page reads it. It
     # earns a registry row because a reconstruction that is WRONG would silently
     # poison every In-Game Management number built on top of it, so its agreement

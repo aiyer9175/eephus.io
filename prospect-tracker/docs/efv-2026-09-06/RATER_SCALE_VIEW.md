@@ -57,11 +57,32 @@ Delta over its own floor. Every side-only cell sits inside its floor; every rate
 cell clears it. The side scale, which was the half of this lane anybody would have guessed
 was doing the work, buys nothing measurable. The base year does all of it.
 
-The leading explanation is exposure: older base years have had more seasons to accumulate
+The leading explanation was exposure: older base years have had more seasons to accumulate
 WAR, so pooling across vintages rewards a rater for the age of the cohort rather than for
 ordering inside it, and eFV is an expected-WAR model that already prices exposure. **That
-mechanism is a hypothesis and has not been tested here.** It is written down as the thing to
+mechanism is a hypothesis and has not been tested here.** It was written down as the thing to
 falsify next, not as a result.
+
+### It was falsified the same day, by A-CLAIM-3
+
+`EXPOSURE_MATCHED_LABEL.md` re-ran this exact view on the same 356 fully-resolved rows with
+only the label changed, from career WAR to first-six-season WAR. **Not one rater's block
+effect shrank. All four grew slightly** (FanGraphs -0.0338 to -0.0370, MLB Pipeline -0.0300
+to -0.0319, consensus -0.0452 to -0.0468, eFV -0.0222 to -0.0337).
+
+The label did what it was asked to do: the spread of block-mean outcome fell from sd 2.611 to
+sd 1.575 and the range from 7.45 to 4.86 WAR, so about forty percent of the between-block
+dispersion in the outcome was removed and the effect did not move. At 356 rows the block
+effect is not itself resolvable on that cut, so what is refuted is the mechanism's predicted
+DIRECTION, not the existence of some exposure component too small to see. The point estimates
+were free to shrink and did not.
+
+The next candidate is drift rather than exposure: the per-block mean GRADE is now published
+beside the per-block mean outcome, and both decline across base years for every rater, with
+the outcome decline surviving exposure matching because it is cohort quality rather than
+calendar exposure. Between-block co-movement of grade level and outcome level would be
+collected by the pooled statistic as ordering skill. That is where to look next and it is not
+measured here.
 
 ## The gaps this view displays, floored
 

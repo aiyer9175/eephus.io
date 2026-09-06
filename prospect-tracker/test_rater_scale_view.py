@@ -252,8 +252,14 @@ def test_the_gate_document_records_the_one_draw_placebo_mistake():
     assert "single-draw placebo is not a placebo" in txt
 
 
-def test_the_mechanism_is_marked_untested():
+def test_the_mechanism_was_marked_untested_and_then_corrected():
+    """It was written down as a hypothesis, which is why A-CLAIM-3 could go and
+    kill it. The doc has to carry BOTH halves: a reader who finds only the
+    hypothesis would take it for a live explanation."""
     txt = DOC.read_text(encoding="utf-8")
     assert "hypothesis and has not been tested" in txt, (
         "the exposure explanation is a story about the numbers, not a "
         "measurement, and must be labelled as one")
+    assert "falsified the same day" in txt, (
+        "A-CLAIM-3 tested the exposure explanation and it lost; the correction "
+        "belongs in this doc, not only in the one that ran the test")
