@@ -1293,45 +1293,131 @@ number nothing has scored.
 confirmation, the first pitcher-stuff fold, and the V6 claim family read under the
 alpha-spending clause.
 
-### 4.3 Owner decision queue (defaults in parentheses)
+### 4.3 Owner decision queue: ANSWERED 2026-09-06
 
-1. **Claim family V6**: define "every public source" as externally published raters scored
-   pairwise on each rater's own rows, register the block-normalized and bust-inclusive
-   frames as the successor family, retire C4 and record C2 as undecidable at its negative
-   point (default: yes, registered before the 2027 read, never as a post-hoc replacement).
-2. **Serve the evaluated object for pitchers** if A-SERVE-1 resolves (default: yes, in its
-   own grade-basis epoch, with the honest note that the blend-graded pitcher board still
-   trails plain consensus by 0.0129).
-3. **Age ramp** after its serve-rule gate (default: follow the gate; a labelled age-risk
-   indicator on a null, which removes a 10 percent per year haircut from 1,937 rows).
-4. **Fabricated FV 35 to an explicit UNGRADED state** (default: yes, own two-pass
-   rebuild, after the anchor fix).
-5. **Valuation unification epoch** (default: yes, sequenced behind the anchor fix; the
-   elite table goes to the owner before it ships).
-6. **Betting objective**: accuracy and ROI measured separately and gated
-   lexicographically per market, accuracy floor first then an ROI lower bound (default:
-   yes).
-7. **Selection rule**: replace the in-band probability rule with the bake-off winner
-   (default: yes, but only after the bake-off clears on the settled ledger; until then the
-   current rule stands with the per-market caveats now on the row).
-8. **Prop market set**: extend to outs, earned runs, hitter strikeouts and walks at the
-   cost of fewer pulled games per month (default: extend after the HR and strikeout models
-   have graded dark).
-9. **Futures**: ship the section with model win totals and division odds now, value flags
-   only after the backtest and a futures snapshot line exist (default: yes).
-10. **`test_betting_dispersion`**: the total-over-9.0 criterion no longer passes on
-    refreshed data (t 1.378 against a 1.645 bar). Retire the hard assertion to a dated
-    reading (default: retire; the gate verdict is unchanged and the artifact still carries
-    the grid).
-11. **In-Game Management**: MWAR's headline baseline (default: the written-down heuristic
-    manager, with league-average and replacement served beside it, because a heuristic is
-    the only baseline a reader can argue with).
-12. **Hall of Fame**: primary label BBWAA induction with any-route secondary; the
-    character-clause and performance-enhancing-drug flags stay out of the merit model and
-    appear only in the voter model (default: yes to both). Negro Leagues and pre-1901
-    seasons are IN the frame with an era factor and a disclosure (default: in).
-13. **The push**: the branch is far ahead of origin and every session has ended unpushed
-    (default: push once this session's suite state is accepted).
+The owner answered sixteen items on 2026-09-06. Each is recorded with the ANSWER FIRST so
+the executor reads a decision rather than a default. Where an answer differs from the
+plan's recommendation that is stated plainly, because a plan that quietly relabels its own
+advice as the owner's choice is worthless as a record.
+**1. Claim family V6. DECIDED: REGISTER V6 NOW.** Score eFV pairwise against each rater on
+that rater's own rows, add the block-normalized and bust-inclusive frames, retire C4 and
+record C2 as undecidable at its negative point. Registered before the 2027 read, never as
+a post-hoc swap. This promotes A-CLAIM-2, A-CLAIM-3, A-CLAIM-4 and A-CLAIM-9 from optional
+receipts to load-bearing lanes, and the registration must be signed and dated BEFORE any
+V6 number is read.
+
+**2. Pitcher serve basis. DECIDED: SWAP IF THE GATE RESOLVES.** Run A-SERVE-1 on the eWAR
+frame under the pre-registered S2 rule; if the served ridge leg resolvably trails the
+blend, serve rank_war as the pitcher board grade in its own grade-basis epoch. The honest
+caveat travels with it: even after the swap the blend-graded pitcher board still trails
+plain consensus by 0.0129. This closes a serve-versus-evaluate gap; it does not make the
+pitcher board a winner.
+
+**3. Age ramp. DECIDED: FOLLOW THE GATE.** Run the serve-rule sweep (onset 23, 24, 25 by
+slope 0.05 and 0.10, full-pool frame, Holm, E_cond floors derived first, the equivalence
+margin fixed to that side's own floor BEFORE measurement). The ramp stays inside the grade
+only if the no-harm test PASSES; on a null it moves to a labelled age-risk indicator,
+removing a 10 percent per year haircut from 1,937 live rows, 1,378 of them above the
+floor. The gate decides, not the prior.
+
+**4. Fabricated FV 35. DECIDED: SERVE AN EXPLICIT UNGRADED STATE.** After the anchor fix,
+in its own two-pass rebuild. consensus_fv_raw stays 35 inside the live matrix so the
+flagship's abstention behaviour is unchanged; only the SERVED consensus becomes an
+explicit state, with the provisional grade as the sort key so rows stay alive and ordered.
+Freeze the blast-radius set by key from the post-anchor snapshot and assert that rank_war
+order, the quantile grade, the odds, surplus, p_bucket and p_bust are byte-identical.
+
+**5. Valuation unification. DECIDED: UNIFY, ELITE TABLE TO THE OWNER FIRST.** One
+expected-WAR curve, one population-consistent outcome distribution, then re-key odds and
+dollars together, sequenced behind the anchor fix. The elite-band table (bias and MAE at
+consensus 50-plus and 55-plus per side, with n) goes to the owner before anything ships.
+Board grade Spearman and AUC are unaffected by construction: this is a dollars, odds, WAG
+and star-display epoch.
+
+**6. Betting objective. DECIDED: LEXICOGRAPHIC, ACCURACY FIRST.** A market must be
+non-inferior on accuracy (paired Brier lb95 at or above -0.002 against the market-open
+tier on the same games) before its ROI leg is read at all; then ROI needs lb95 above zero
+at n of at least 100 within one (market, rule) cell. This stops a lucky ROI run opening a
+market the model cannot price, and it is the definition every per-market sub-model is
+gated against.
+
+**7. Selection rule. DECIDED: BAKE-OFF, THEN REPLACE.** Run the pre-registered bake-off
+(prob-max in band, EV-max, reliability-adjusted EV, fractional-Kelly-weighted) on the
+settled ledger and the vintage-plus-odds join, and replace the rule with the winner. Until
+it clears, the current prob-max rule stands with the per-market caveats now riding the
+published row. This is the lane that answers the 6.6 dissent, and it is the reason that
+dissent was recorded rather than acted on.
+
+**8. Prop market set. DECIDED: EXTEND AFTER THE DARK GATES.** Stay at the four
+owner-approved markets and the 120-a-month cap; add outs recorded, earned runs, hitter
+strikeouts and walks only after the HR and strikeout sub-models have graded dark against
+base rates. On the record: at eight markets the same cap buys about five pull-days a month
+instead of ten.
+
+**9. Futures. DECIDED: MODEL NUMBERS NOW, VALUE LATER.** Ship win totals and division odds
+as model output with no value claim, start the weekly outright capture (about 20 credits a
+month), and add value flags only after the 2018-2025 fixed-date backtest and a real price
+archive exist. The section must say plainly which of pennant, World Series and awards is
+not modelled yet.
+
+**10. test_betting_dispersion. DECIDED AND DONE 2026-09-06: RETIRED TO A DATED READING.**
+The test now requires the total criterion to be present, scored, and self-consistent with
+its own stated test, and records the reading (pass False, value 0.004875, t 1.41 against
+the 1.645 bar) rather than asserting a pass. The sweep still decides the verdict and the
+served flag still follows the sweep, both asserted. The suite is back to exactly two
+baseline reds.
+
+**11. MWAR baseline. DECIDED: THE HEURISTIC MANAGER.** A written-down policy (closer in the
+ninth with a lead, no pinch hit for a regular before the seventh, steal only past
+break-even by a stated margin, hook at 100 pitches or the third time through the order) is
+the headline baseline, with league-average and replacement served beside it. Chosen because
+it is the only baseline a reader can argue with. The policy text is frozen in the gate doc
+before any number is computed, so it cannot be tuned to flatter a manager.
+
+**12. Hall of Fame label. DECIDED: ANY-ROUTE PRIMARY. THIS DIFFERS FROM THE PLAN'S
+RECOMMENDATION, which was BBWAA primary, and the difference has consequences the executor
+must handle rather than absorb.** Induction by any route (the writers or the veterans
+committees) is the primary label; the writers-only label becomes the secondary. What it
+buys: the positive class matches who is actually in the Hall, which is the honest target
+for a question phrased as "who belongs". What it costs: two very different selection
+processes are pooled into one label, and the committees resolve on a different and much
+longer clock. Three requirements follow and are binding. (a) H-PRED-1's censoring rule is
+stated PER ROUTE, and a player whose committee window is still open is censored, never a
+zero. (b) The eval publishes a per-route breakdown, so a fold whose positives are mostly
+committee inductions cannot masquerade as model skill. (c) The forward chain is by
+election year for the writers and by induction year for the committees, and the artifact
+says which rows came from which. THE FLAGS DECISION IS UNCHANGED: the
+performance-enhancing-drug, Mitchell, banned and posthumous flags stay OUT of the merit
+model and appear only in the voter model, quantified as a discount in vote points. That
+option was offered separately and was not chosen.
+
+**13. Hall of Fame eras. DECIDED: INCLUDE NEGRO LEAGUES AND PRE-1901 WITH AN ERA FACTOR.**
+Both are in the frame (8,072 Negro Leagues batting rows over 2,263 players) with the
+league-strength factor from the identified dispersion estimator and an explicit disclosure
+of what that factor can and cannot do. The two-way simultaneous fit stays refused as
+unidentified and the sign checks stay pre-registered.
+
+**14. Play corpus location. DECIDED: A NEW NON-PRUNABLE CACHE DIRECTORY.** The reduced
+tables live outside tools/prune_cache.SAFE_CACHES with a committed coverage manifest, and
+the prune list is updated in the same commit. Not data/ (roughly a gigabyte). This must
+land BEFORE anything is built on the corpus, because the 20 GB source cache is itself
+prunable by the nightly disk preflight today.
+
+**15. Props arming. DECIDED: ARM AT FOUR MARKETS, 120 A MONTH.** The 2026-08-18 config.
+OWNER ACTION, not an executor action: EEPHUS_PROPS_CREDITS=120 goes in the root-owned env
+file beside the odds key on the serving box. Until it is set the props machinery stays
+inert by design, and under the new any-market policy a props selection can fill a slot
+with nothing grading it, which is the gap this closes.
+
+**16. Close job. DECIDED: INSTALL IT.** OWNER ACTION on the serving box:
+deploy/betting-crontab.example, or deploy/betting-close-task.ps1 -Register on Windows,
+then python tools/betting_close_job.py --selfcheck (it exits 1 until installed). Costs 3
+credits a day, about 93 a month, inside the 500 budget with 9 used. It alone unblocks
+closing-line value, the market_close_devig ladder tier (n of 0 today) and any ROI claim
+with a CLV leg. The attach bug that would have made it silently useless was fixed on
+2026-08-16; the job has simply never run.
+
+**17. The push. DECIDED AND DONE 2026-09-06.** See the push record below.
 
 ### 4.4 Do-not-reopen additions from this session
 

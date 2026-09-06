@@ -437,7 +437,27 @@ def test_eval_artifact_carries_the_dispersion_block_and_its_verdict():
     rl = [c for c in rd["checks"] if c["criterion"].startswith("runline")]
     assert len(rl) == 1 and rl[0]["side"] == bm.RUNLINE_SIDE_AMENDMENT
     by = {c["criterion"].split(",")[0]: c for c in rd["checks"]}
-    assert by["total (over 9.0)"]["pass"] is True
+    # THE TOTAL CRITERION IS A DATED READING, NOT AN ASSERTION (owner decision
+    # 2026-09-06). This line used to assert `pass is True`. On the 2026-09-04
+    # nightly's refreshed data the criterion stopped passing on live evidence
+    # (delta 0.007121 -> 0.004829, t 1.835 -> 1.378 against the 1.645 bar) and
+    # the suite carried a permanent red for a MEASUREMENT that moved, not for a
+    # defect: the gate's own verdict is INDETERMINATE either way, the sweep is
+    # what decides it, and the served flag follows the sweep (asserted below).
+    # So the criterion must be PRESENT, scored, and self-describing; whether it
+    # passes this week is a reading the artifact reports and this file records.
+    tot = by["total (over 9.0)"]
+    assert set(tot) >= {"pass", "value", "t", "threshold"}, tot
+    assert isinstance(tot["pass"], bool)
+    assert tot["t"] is not None and tot["value"] is not None
+    # Reading on 2026-09-06: pass False, value 0.004875, t 1.41 against the
+    # 1.645 one-sided bar. Criterion 3 was the strongest evidence FOR the
+    # correction when the gate first ran (t 2.545), so a fall below the bar is
+    # worth SEEING in the artifact rather than asserted away in either
+    # direction. What is still enforced is internal consistency: the flag has
+    # to agree with the criterion's own stated test.
+    assert tot["pass"] is (tot["value"] > tot["threshold"] and tot["t"] >= 1.645), \
+        f"the total criterion's pass flag disagrees with its own test: {tot}"
     # All three readings are published on every run, so the one the gate did not
     # headline is never hidden.
     assert set(rd["runline_by_side"]) == set(bm.RUNLINE_SIDES)
