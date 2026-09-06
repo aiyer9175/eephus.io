@@ -174,7 +174,23 @@ def _served():
 
 def test_served_overall_rank_is_on_the_served_efv_file():
     """A dry re-bake of the served payload on the served eFV file must move nothing:
-    that is the statement 'the baked rank and the board agree'."""
+    that is the statement 'the baked rank and the board agree'.
+
+    WHEN THIS GOES RED AFTER A SUITE RUN, IT IS USUALLY POLLUTION, NOT A BUG IN
+    THE PIPELINE. data/timeseries.json is GITIGNORED, so conftest's end-of-session
+    revert cannot see it: that guard works off `git diff --name-only`, and an
+    ignored file never appears there. Any test that regenerates the payload
+    without calling storage.rebake_board_ranks afterwards leaves the baked ranks
+    stale, permanently, and this test is the thing that notices.
+
+    Observed 2026-09-06: a suite run rewrote the payload and 429 of 4,686 served
+    ranks fell out of agreement with the served eFV file. The repair is
+    `python tools/rebake_board_ranks.py`, which is exactly what run_monthly does
+    after its eFV regen. Do NOT relax this assertion to absorb the drift: it is
+    the only check standing between a regenerated payload and a board whose
+    displayed order disagrees with the file it claims to be ranked on, which is
+    the defect the whole re-bake seam was built to fix.
+    """
     _served()
     out = storage.rebake_board_ranks(ROOT / "data" / "timeseries.json", write=False,
                                      update_metric_snapshots=False, rank_history={})

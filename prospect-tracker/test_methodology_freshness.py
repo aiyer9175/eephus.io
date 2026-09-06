@@ -844,6 +844,11 @@ MODEL_GLOSSARY = {
     # all.
     "win_expectancy_state": "internal",
     "mwar_running_game": "internal",
+    # The gate battery is machinery, not a term a reader looks up. It stays
+    # internal even when /management/ ships, because what a reader needs is
+    # the VERDICT, and the verdict rides the page copy beside the board it
+    # governs rather than sitting in a glossary they would have to go find.
+    "mwar_running_gate": "internal",
 
     # --- 2026-09-06: the Hall of Fame data shelf ---
     #

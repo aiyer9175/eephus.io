@@ -1,0 +1,183 @@
+{
+ "generated_at": "2026-09-06T18:22:08+00:00",
+ "produced_by": "tools/mgmt_gate.py",
+ "gate_doc": "docs/IN_GAME_MANAGEMENT_GATE.md",
+ "gate_doc_frozen_at": "2026-09-06",
+ "seed": 20260906,
+ "population": {
+  "attempts_priced": 13971,
+  "attempts_attributed": 13971,
+  "agent_seasons": 240,
+  "mean_attempts_per_agent_season": 58.2125,
+  "median_attempts_per_agent_season": 54.0
+ },
+ "team_attribution": {
+  "games": 19130,
+  "ground_truth": {
+   "checked": 2122,
+   "home_correct": 2122,
+   "away_correct": 2122,
+   "agreement": 1.0,
+   "misses": [],
+   "coverage_note": "ground truth exists for 2026 only, so this checks one season of eight. The other seasons rest on internal consistency (thirty clubs per season at a plausible game count), not on an external label."
+  },
+  "season_shape": {
+   "2018": {
+    "clubs": 30,
+    "games_min": 161,
+    "games_max": 163,
+    "games_median": 162
+   },
+   "2019": {
+    "clubs": 30,
+    "games_min": 161,
+    "games_max": 162,
+    "games_median": 162
+   },
+   "2021": {
+    "clubs": 30,
+    "games_min": 161,
+    "games_max": 162,
+    "games_median": 162
+   },
+   "2022": {
+    "clubs": 30,
+    "games_min": 162,
+    "games_max": 162,
+    "games_median": 162
+   },
+   "2023": {
+    "clubs": 30,
+    "games_min": 162,
+    "games_max": 162,
+    "games_median": 162
+   },
+   "2024": {
+    "clubs": 30,
+    "games_min": 161,
+    "games_max": 162,
+    "games_median": 162
+   },
+   "2025": {
+    "clubs": 30,
+    "games_min": 162,
+    "games_max": 162,
+    "games_median": 162
+   },
+   "2026": {
+    "clubs": 30,
+    "games_min": 140,
+    "games_max": 143,
+    "games_median": 141
+   }
+  }
+ },
+ "why_the_published_series_is_season_controlled": {
+  "variance_of_agent_summed_dv_explained_by_season": 0.7961192869263959,
+  "variance_of_agent_summed_dv_explained_by_team": 0.0222759182611747,
+  "note": "both halves of an agent-season sit in the same season, so a league-wide year effect reads as split-half agreement while saying nothing about the agent. A prior design note guessed the driver was target mix; that guess was wrong and the correlation between an agent's summed decision value and its share of steals of second is near zero."
+ },
+ "gate_1_split_half": {
+  "published": {
+   "series": "season-controlled (PUBLISHED)",
+   "column": "dv_resid",
+   "n_agent_seasons": 238,
+   "pearson_mean_dv": 0.06909133449676552,
+   "spearman_mean_dv": 0.16372023095557806,
+   "pearson_sum_dv": 0.09405644872171015,
+   "icc_one_way": 0.005380688492308016,
+   "null_band_lo95": -0.15039840445408487,
+   "null_band_hi95": 0.12425799880742538,
+   "clears_null": false
+  },
+  "raw_for_comparison": {
+   "series": "raw (NOT the agent, see decomposition)",
+   "column": "dv",
+   "n_agent_seasons": 238,
+   "pearson_mean_dv": 0.7789106495576215,
+   "spearman_mean_dv": 0.8054920713055098,
+   "pearson_sum_dv": 0.7900964132185707,
+   "icc_one_way": 0.11225591513085692
+  },
+  "null": {
+   "n_perm": 2000,
+   "lo95": -0.15039840445408487,
+   "hi95": 0.12425799880742538,
+   "mean": -0.015899722822784144,
+   "construction": "decision value permuted WITHIN season, holding every agent-season's attempt count and every season mean fixed. A null that reassigns attempt counts destroys the structure under test and yields a band anything clears."
+  }
+ },
+ "gate_2_persistence": {
+  "n_pairs": 179,
+  "is_a_team_proxy_and_an_upper_bound": "managers change and teams do not, so team-season persistence is an upper bound on manager persistence. A null here cannot be rescued by attributing to managers instead.",
+  "spearman_n": 0.4985341999096038,
+  "spearman_sum_dv": 0.13436277279099448,
+  "spearman_mean_dv": -0.10294394576611637
+ },
+ "gate_3_placebo": {
+  "n_perm": 400,
+  "placebo_mean_r": 0.029965391906612213,
+  "placebo_lo95": -0.048581299439415596,
+  "placebo_hi95": 0.09724086197026148,
+  "n_cells": 641,
+  "median_cell_size": 8,
+  "degeneracy_warning": "a cell of size 1 cannot be shuffled, so at a thin cell resolution this test approaches an identity and its band understates the false-positive rate. The median cell size is published so the reader can judge that rather than take the band on trust."
+ },
+ "gate_4_captured_share": {
+  "n_opportunities": 211191,
+  "n_attempts_actual": 11977,
+  "attempt_rate": 0.0567116969946636,
+  "actual_dv_wins": -0.18561553476448278,
+  "optimal_dv_wins_budget_matched": 32.999176463045764,
+  "optimal_dv_wins_unlimited": 165.19701093447236,
+  "which_optimum_the_share_uses": "the BUDGET-MATCHED one. The unlimited optimum attempts on every positive-value opportunity, which is about eight times the real attempt volume, and dividing a budget-matched numerator by it compares two different games. The unlimited figure is published because it bounds the family's total headroom, and it is not the denominator.",
+  "policies": {
+   "random_among_qualifying": {
+    "policy": "attempt at the league rate, chosen at random among opportunities whose break-even p* is at or below the season league success rate. THE FROZEN HEADLINE.",
+    "heuristic_dv_wins": 13.039979451578354,
+    "captured_share": -0.6626316168302848
+   },
+   "random_among_all": {
+    "policy": "attempt at the league rate, chosen at random among ALL opportunities, ignoring p*",
+    "heuristic_dv_wins": 1.5630797893225647,
+    "captured_share": -0.05562698646199122
+   },
+   "margin_5pct": {
+    "policy": "attempt only where p* is cleared by 5 percentage points",
+    "heuristic_dv_wins": 11.522693336003567,
+    "captured_share": -0.5451688156533174
+   }
+  },
+  "reading": "a NEGATIVE captured share means the observed attempts produced less decision value than the heuristic policy would have. Read it as a bound on available value, not as a verdict on managers: the heuristic is allowed to see p* exactly and is credited with the league-average success rate in every spot it picks, while a real manager sends runners on matchup information this model cannot see (a slow delivery, a weak throwing arm) and would not achieve the league rate in an arbitrary spot. The heuristic is a fantasy baseline in that specific sense, and it is still the right baseline, because it is the only one a reader can argue with.",
+  "sign_warning": "the heuristic term appears in both numerator and denominator, so the captured share can change SIGN between policies. All three frozen policies are published with their policy strings; a captured share quoted without its policy is meaningless."
+ },
+ "detection_floor": {
+  "grid": [
+   {
+    "per_attempt_effect_sd": 0.0001,
+    "power": 0.06666666666666667
+   },
+   {
+    "per_attempt_effect_sd": 0.0002,
+    "power": 0.2833333333333333
+   },
+   {
+    "per_attempt_effect_sd": 0.0003,
+    "power": 0.7666666666666667
+   },
+   {
+    "per_attempt_effect_sd": 0.0005,
+    "power": 1.0
+   }
+  ],
+  "smallest_detectable_per_attempt_sd": 0.0005,
+  "reading": "the smallest true per-agent per-attempt effect this battery would have detected at 80 percent power. A null without this number is unbounded and says nothing; with it, the null is a ceiling."
+ },
+ "headline": {
+  "implied_true_between_agent_sd_of_summed_dv_wins": 0.012982677364222518,
+  "net_dv_all_seasons_wins": 1.791562179620498,
+  "redistributable_pool_abs_dv_wins": 30.963635488437966
+ },
+ "verdict": "DESCRIPTIVE ONLY. The season-controlled split-half correlation of 0.0691 sits INSIDE its permutation null band [-0.1504, 0.1243], so per-agent decision value in the running game is not a repeatable property of the agent. The board may render and be sorted by attempt VOLUME, which is a style axis; the plus metric is WITHHELD, exactly as leverage_board does today.",
+ "what_a_null_decides_about_the_manager_entity": "a team-season is an UPPER BOUND on a manager: managers change and teams do not. If a team-season carries no repeatable decision signal in this family, fetching the manager entity to attribute that signal is not worth building FOR THIS FAMILY. It says nothing about the bullpen or the pinch hit, which have more room and have not been measured."
+}
