@@ -106,6 +106,8 @@ _CSV_VER = _asset_ver("assets/eephus-csv.js")
 _PARKS_VER = _asset_ver("assets/parks.js")
 _PARKS_CSS_VER = _asset_ver("assets/parks.css")
 _HOF_VER = _asset_ver("assets/hof.js")
+_MGMT_VER = _asset_ver("assets/management.js")
+_MGMT_CSS_VER = _asset_ver("assets/management.css")
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /models/ - the model accountability hub. Client is filter-only: every row,
 # count and date on that page is server-rendered here at build time, so the
@@ -502,6 +504,7 @@ MODULE_STAGE = {
     "arbitration": ("β", "Arbitration Predictor is in beta - newly launched; the arb-1 model is gated, the arb-2-and-later projection is a population multiplier"),
     "forums": ("β", "Forums is in beta - newly launched"),
     "parks": ("β", "MiLB Park Factors is in beta - newly launched; the factors are a measured artifact, the surface is new"),
+    "management": ("β", "In-Game Management is in beta - the running-game family is measured and its gate returned a bounded null, so the page publishes the league result and withholds any per-club plus metric"),
     "hof": ("β", "Hall of Fame is in beta - the leaderboards reproduce a public shelf and four of the eight sections are dark, each naming its blocker"),
     # Diamond section (2026-08-05). These rows carry the FULL chip text in
     # slot [0] and render through _stage_chip(); the older rows above predate
@@ -4727,6 +4730,60 @@ def build_parks() -> str:
                 "and sample-shrunk. Display only, no model reads them.",
                 url=f"{SITE_ORIGIN}/parks/")
 
+def build_management() -> str:
+    """The /management/ In-Game Management module.
+
+    THERE IS NO PLUS METRIC HERE AND THAT IS THE FINDING. The gate battery in
+    docs/IN_GAME_MANAGEMENT_GATE.md was frozen before it ran and came back a
+    BOUNDED null: the season-controlled split-half correlation of a club's
+    decision value in the running game is 0.069 against a permutation band of
+    -0.150 to 0.124, and the battery would have detected a true per-club effect
+    of 0.0005 wins per attempt. So no club is ranked by decision quality, and
+    the club board carries volume, success rate and target mix only.
+
+    What the null makes sayable is worth a page on its own. Over 13,971 priced
+    attempts across eight seasons the league steals second at 75.00 percent
+    against a swing-weighted break-even of 75.03 percent, which is minus a fifth
+    of a win for the entire league. Steals of third pay, steals of home do not,
+    and the whole running game is worth about one and a half wins to everybody
+    who plays it.
+
+    The run-expectancy matrix and the measured half-inning-start table ship as a
+    reference surface, because they need no gate: they are what every break-even
+    on the page is computed from.
+
+    Not in NAV_ITEMS, on the /parks/ and /hof/ precedent."""
+    body = (
+        '<div class="fa-app mlbstats-app mgmt-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>In-Game Management <span class="eephus-beta" title="{html.escape(MODULE_STAGE["management"][1])}">β beta</span></h1></div>'
+        '<span class="section-sub">Every stolen-base attempt since 2018, priced against the win '
+        'probability the club gave up to try it. The decision is scored with a league-average '
+        'runner, because having a fast team is a roster fact and not a managerial one. There is '
+        'no plus metric on this page: the gate came back a bounded null, and what a null of that '
+        'kind buys is the right to say what the league as a whole is doing.</span></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Management sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-mgmtsection="running" role="tab" aria-selected="true">The Running Game</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="teams" role="tab" aria-selected="false">Club Style</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="reference" role="tab" aria-selected="false">Run Expectancy</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="gate" role="tab" aria-selected="false">Is Anyone Better?</button>'
+        '</div>'
+        '<div id="mgmt-section" class="mlbstats-section">'
+        f'<div id="mgmt-app-root"{_csv_optin("in-game-management")}></div>'
+        '</div>'
+        '</div>'
+        f'<link rel="stylesheet" href="/assets/management.css?v={_MGMT_CSS_VER}">'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/management.js?v={_MGMT_VER}" defer></script>'
+    )
+    return page("In-Game Management - eephus.io", "management", body,
+                "Every stolen-base attempt since 2018 priced against win probability, with a "
+                "league-average runner so a fast roster cannot flatter a manager. The league "
+                "steals second at almost exactly its own break-even. No per-club plus metric: "
+                "the gate returned a bounded null and the page says so.",
+                url=f"{SITE_ORIGIN}/management/")
+
+
 def build_hof() -> str:
     """The /hof/ Hall of Fame module.
 
@@ -5868,6 +5925,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/diamond/", "monthly", "0.6"),
         ("/parks/", "weekly", "0.6"),
         ("/hof/", "weekly", "0.6"),
+        ("/management/", "weekly", "0.6"),
         ("/models/", "daily", "0.6"),
         ("/articles/", "weekly", "0.7"),
         ("/forums/", "daily", "0.6"),
@@ -6474,6 +6532,7 @@ def main() -> None:
     _write("diamond/index.html", build_diamond())
     _write("parks/index.html", build_parks())
     _write("hof/index.html", build_hof())
+    _write("management/index.html", build_management())
     _write("models/index.html", build_models())
     _write("glossary/index.html", build_glossary())
     _write("teams/index.html", build_teams_redirect())

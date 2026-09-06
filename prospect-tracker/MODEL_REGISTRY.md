@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-09-06**. `validate()` at generation time: **clean**.
 
-**302 models.** Verdicts: validated: 53, provisional: 123, unvalidated: 41, deprecated: 85.
+**304 models.** Verdicts: validated: 53, provisional: 125, unvalidated: 41, deprecated: 85.
 
 ## Instrument boundary
 
@@ -321,6 +321,8 @@ can be measured.
 | `claim_exposure_matched_label` | NOTHING SERVED. accuracy.claim_instruments.exposure_match... | nothing. It re-scores the published head-to-head against an EXPOSURE-MATCHED outcome, first-six-season eWAR, instead of career... | raw out-of-sample eFV against efv_dataset._label_6yr, the same label the eFV... | FanGraphs, MLB Pipeline and the PROSPX consensus on the same rows, in two cut... | Spearman against the six-season label, player-clustered in-run E_cond floor p... | **provisional** | `data/source_backtest.json` | - | - |
 | `hof_induction_ledger` | NOTHING SERVED YET. data/hof_ledger_eval.json. It is the... | nothing. It repairs the induction ledger: StatsAPI names inductees by MLBAM id and Baseball-Reference names ballot rows by bbre... | a one-to-one crosswalk read off the two war_daily parquets, which both carry... | the unrepaired ledger, reproducible at any time with ballots(crosswalk={}). | counts, not scores: ledger resolution, label census before and after, and thr... | **validated** | `data/hof_ledger_eval.json` | - | - |
 | `hof_public_bakeoff` | /hof/, the Bake-off panel. data/hof_bakeoff_eval.json, su... | Hall of Fame induction by the writers, from a single score. It is a BAKE-OFF and not a model: no arm is fitted, every arm is a... | Baseball-Reference's HoF Monitor, which wins. Our six in-house columns are ca... | two comparator families: the pre-designated reference JAWS, kept for the pre-... | AUC by Mann-Whitney with the full pair decomposition, player-clustered in-run... | **validated** | `data/hof_bakeoff_eval.json` | - | - |
+| `mgmt_running_game` | /management/, the Running Game section. data/management_r... | the win-probability cost of a stolen-base decision, scored with a LEAGUE-AVERAGE runner so that having a fast roster cannot fla... | decision value = the win-probability difference between attempting with the l... | holding the runner. The swing-weighted break-even p* rides every attempt, bec... | summed decision value in wins, by target base and season, with the decision-p... | **provisional** | `data/management_running.json` | - | - |
+| `mgmt_board_export` | /management/. data/management_board.json, built by mgmt_e... | nothing. It is the rendering payload, registered because what it WITHHOLDS is the load-bearing decision: no per-club plus metric. | the league running-game result, the club STYLE board (attempts, success rate,... | not applicable. | not applicable. The gate verdict, the split-half correlation, the permutation... | **provisional** | `data/management_gate_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 

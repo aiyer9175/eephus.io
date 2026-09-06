@@ -324,6 +324,19 @@ ARTIFACTS = (
                  "zero by construction and the other does not."),
     },
     {
+        "file": "management_board.json", "group": "mlb",
+        "title": "In-Game Management board",
+        "what": ("Stolen-base decision values by target base and season, the club "
+                 "style board, the run-expectancy matrix and the measured "
+                 "half-inning-start table."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mgmt_export.py",
+        "note": ("Rendering payload for /management/. Carries NO per-club plus "
+                 "metric: the gate battery returned a bounded null and the "
+                 "payload states the verdict rather than leaving the omission to "
+                 "be noticed."),
+    },
+    {
         "file": "hof_board.json", "group": "mlb",
         "title": "Hall of Fame board",
         "what": ("Career WAR, WAR7, JAWS, WAR ink and the public HoF Monitor and "

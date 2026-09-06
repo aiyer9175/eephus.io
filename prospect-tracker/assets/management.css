@@ -1,0 +1,66 @@
+/* Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Noah J. Dengler (@ARKNDJL), 2026 */
+
+/* /management/ - In-Game Management. Shares site.css for type and chrome. */
+
+.mgmt-block { margin: 20px 0; }
+.mgmt-block h2 { font-size: 17px; margin: 18px 0 6px; }
+.mgmt-block h3 { font-size: 14px; margin: 16px 0 4px; }
+
+.mgmt-lede { font-size: 15px; line-height: 1.55; margin: 6px 0 14px; max-width: 74ch; }
+.mgmt-note { font-size: 13px; line-height: 1.5; opacity: .85; margin: 8px 0; max-width: 78ch; }
+.mgmt-count { font-size: 12px; opacity: .6; margin: 8px 0; }
+
+.mgmt-cards { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
+.mgmt-card {
+  border: 1px solid var(--line, #d8d8d8); border-radius: 10px;
+  padding: 12px 16px; min-width: 220px; flex: 1 1 220px;
+  background: var(--card, #fff);
+}
+.mgmt-card-title { font-size: 13px; opacity: .7; }
+.mgmt-card-big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 2px 0; }
+.mgmt-card-sub { font-size: 12px; opacity: .6; margin-bottom: 8px; }
+.mgmt-pos { color: #1F7A3A; }
+.mgmt-neg { color: #B91C1C; }
+
+.mgmt-mini { width: 100%; border-collapse: collapse; font-size: 12px; }
+.mgmt-mini td { padding: 2px 0; }
+.mgmt-mini td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.mgmt-mini--wide { max-width: 520px; font-size: 13px; }
+.mgmt-mini--wide td { padding: 4px 0; border-bottom: 1px solid var(--line-soft, #eee); }
+
+.mgmt-controls { margin: 10px 0; }
+.mgmt-controls select {
+  font: inherit; font-size: 13px; padding: 6px 8px;
+  border: 1px solid var(--line, #d8d8d8); border-radius: 6px;
+  background: var(--card, #fff); color: inherit;
+}
+
+.mgmt-tablewrap { overflow-x: auto; margin: 8px 0; }
+.mgmt-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mgmt-table th, .mgmt-table td { padding: 5px 10px; white-space: nowrap; text-align: right; }
+.mgmt-table th:first-child, .mgmt-table td:first-child { text-align: left; }
+.mgmt-table thead th {
+  cursor: pointer; background: var(--card, #fff);
+  border-bottom: 2px solid var(--line, #d8d8d8); font-weight: 600;
+}
+.mgmt-table thead th:focus { outline: 2px solid #C9A227; outline-offset: -2px; }
+.mgmt-table td { border-bottom: 1px solid var(--line-soft, #eee); font-variant-numeric: tabular-nums; }
+.mgmt-table tbody tr:nth-child(even) { background: rgba(0, 0, 0, .025); }
+.mgmt-table--re td:first-child { font-weight: 600; }
+
+.mgmt-dark { border-left: 3px solid var(--line, #d8d8d8); padding-left: 12px; }
+.mgmt-darktag {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  border: 1px solid var(--line, #d8d8d8); border-radius: 999px;
+  padding: 1px 8px; opacity: .7; vertical-align: middle;
+}
+.mgmt-dark-why { font-size: 13px; font-weight: 600; margin: 4px 0; }
+
+@media (max-width: 720px) {
+  .mgmt-table { font-size: 12px; }
+  .mgmt-table th, .mgmt-table td { padding: 4px 6px; }
+  .mgmt-card-big { font-size: 22px; }
+}

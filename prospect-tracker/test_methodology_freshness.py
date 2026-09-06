@@ -825,6 +825,14 @@ MODEL_GLOSSARY = {
     # sentence belongs to the page, and it is derived from
     # data/hof_ledger_eval.json rather than typed.
     "hof_induction_ledger": "internal",
+    # The In-Game Management pair. BOTH internal, and the reason is the same one
+    # that keeps the plus metric off the page: there is no reader-facing METRIC
+    # here to look up. What renders is a league result and a style board, and
+    # every sentence explaining them is derived into the payload rather than
+    # written as a definition. If a management plus metric is ever gated in, it
+    # earns a glossary entry then and this mapping graduates with it.
+    "mgmt_running_game": "internal",
+    "mgmt_board_export": "internal",
     # The public benchmark bake-off. NOT internal: its panel RENDERS on /hof/,
     # and it is the one comparison that page publishes. It points at the two
     # glossary entries that carry the reader-facing method behind the columns it

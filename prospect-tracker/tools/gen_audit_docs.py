@@ -198,6 +198,7 @@ _ROUTE_NOTES = {
     "diamond/index.html": "Diamond Pass page; server-rendered structure, live receipt numbers filled by assets/diamond.js",
     "parks/index.html": "MiLB Park Factors reference table (display only; the eFV park-line lane stays gated off)",
     "hof/index.html": "Hall of Fame: career WAR / WAR7 / JAWS for every ten-season player, reproduced from Baseball-Reference's own daily WAR file, in three bands (eligible, active, not yet eligible) with the ballot record joined. No Hall line and no snub list: four of the eight sections are dark and each names its blocker.",
+    "management/index.html": "In-Game Management: every stolen-base attempt since 2018 priced against win probability with a league-average runner. NO per-club plus metric, because the gate battery returned a BOUNDED null (split-half 0.069 inside a permutation band, detection floor 0.0005 wins per attempt). Ships the league result, the club STYLE board, and the run-expectancy and half-inning-start reference tables.",
     "models/index.html": "Model Accountability hub: data/model_registry.json rendered server-side, with freshness and the ledger's own gaps counted; assets/accountability.js only filters what is already in the DOM",
     "glossary/index.html": "Unified glossary + methodology / model accountability",
     "teams/index.html": "redirect stub: the old Teams module now lives in /projections/ Team Outlook",

@@ -263,6 +263,8 @@ SCHEDULED_EXPORTS = (
     # 'unwatched' and dropped, which is exactly what happened to
     # fa_class_identity for a day.
     "efv_regen_tripwire",
+    # The /management/ board, watched on the same reasoning as /hof/ below.
+    "mgmt_export",
     # The /hof/ board. Watched for the same reason as the arbitration board
     # below: the page paints an empty state on a missing payload, so a silent
     # failure is invisible to a reader and to an operator alike.
@@ -5496,6 +5498,33 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 _record_ingest("arbitration_export", False, 0,
                                "arbitration export raised", "mlb", log)
 
+        # --- 6b7c. In-Game Management board (management_board.json) ------
+        # The /management/ payload. Reads the three committed artifacts and,
+        # when the play corpus is present, recomputes the club STYLE board from
+        # it. No per-club plus metric is written: the gate battery returned a
+        # bounded null and the payload says so.
+        #
+        # Additive; never aborts. The club board is the only part that needs the
+        # corpus, and mgmt_export degrades to a status string without it rather
+        # than failing the step.
+        with _step("6b7c. In-Game Management board (management_board.json)", log):
+            try:
+                import mgmt_export as _mg
+                _mgd = _mg.build()
+                _mg.OUT.write_text(
+                    json.dumps(_mgd, ensure_ascii=False, separators=(",", ":")),
+                    encoding="utf-8")
+                _mg_n = (_mgd.get("teams") or {}).get("n_rows", 0)
+                log.info("management: %d attempts priced, %d club-seasons",
+                         _mgd["running_game"]["n_attempts_priced"], _mg_n)
+                _record_ingest("mgmt_export", True,
+                               _mgd["running_game"]["n_attempts_priced"],
+                               "in-game management board", "mlb", log)
+            except Exception:
+                log.exception("management export failed - continuing")
+                _record_ingest("mgmt_export", False, 0,
+                               "management export raised", "mlb", log)
+
         # --- 6b7b. Hall of Fame board (hof_board.json) -------------------
         # The /hof/ payload: career WAR, WAR7, JAWS, WAR ink and the public HoF
         # Monitor and Standards columns for every ten-season player, in three
@@ -5512,8 +5541,14 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         with _step("6b7b. Hall of Fame board (hof_board.json)", log):
             try:
                 import hof_export as _hof
+                # THE MODULE'S OWN PATH CONSTANT, not a second copy of it. The
+                # first version wrote to a path spelled out here against a `ROOT`
+                # that is not a run_monthly global, which raised NameError inside
+                # a best-effort try/except: the step would have reported failure
+                # every night and written nothing. test_no_undefined_names caught
+                # it, which is the whole reason that test exists.
                 _hofd = _hof.build()
-                (ROOT / "data" / "hof_board.json").write_text(
+                _hof.OUT.write_text(
                     json.dumps(_hofd, ensure_ascii=False, separators=(",", ":")),
                     encoding="utf-8")
                 _hof_n = len(_hofd.get("leaderboard") or [])

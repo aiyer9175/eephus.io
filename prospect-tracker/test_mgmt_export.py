@@ -1,0 +1,308 @@
+"""The /management/ payload and the page that renders it.
+
+THE POINT OF THIS PAGE IS THAT IT HAS NO PLUS METRIC. The gate battery was frozen before
+it ran, it came back a BOUNDED null, and the verdict set the scope: a club's decision value
+in the running game does not repeat between halves of its own season, so no club may be
+ranked by it.
+
+What the null buys is the right to say what the league is doing, and the league result is
+the page: 13,971 priced attempts, second stolen at almost exactly its own break-even, third
+worth having and home not.
+
+THE SIX MISTAKES THESE TESTS EXIST FOR:
+
+  1. SHIPPING A PLUS METRIC ANYWAY. Summed decision value per club is the obvious column and
+     it is a ranking of noise. It must not reach the payload, let alone the page.
+  2. QUOTING THE RAW SPLIT-HALF. It is 0.7789 and it looks like a strong repeatable skill.
+     Both halves of a club-season sit in the same season, so a league-wide year effect reads
+     as agreement: season explains 79.6 percent of the variance and the club 2.2 percent.
+  3. PUBLISHING AN UNBOUNDED NULL. A null with no detection floor says nothing. This one
+     would have seen 0.0005 wins per attempt, which makes it a ceiling.
+  4. LOSING THE EXCLUSIONS. Two-out attempts are excluded because the caught-stealing case
+     crosses the half-inning boundary where two estimators meet and nothing calibrates them;
+     9,328 attempts leave that way and the count belongs on the page.
+  5. TYPING A FIGURE INTO THE HTML OR JS.
+  6. LETTING THE MANAGER SECTION LOOK DEFERRED RATHER THAN DECIDED. It is not "coming soon":
+     the null says building the manager entity to attribute this family is not worth doing.
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+
+ART = ROOT / "data" / "management_board.json"
+PAGE = ROOT / "management" / "index.html"
+JS = ROOT / "assets" / "management.js"
+GATE = ROOT / "docs" / "IN_GAME_MANAGEMENT_GATE.md"
+
+
+@pytest.fixture(scope="module")
+def d():
+    if not ART.exists():
+        pytest.skip("run python mgmt_export.py")
+    return json.loads(ART.read_text(encoding="utf-8"))
+
+
+# --------------------------------------------------------------------------
+# No plus metric, anywhere
+# --------------------------------------------------------------------------
+
+def test_the_club_board_carries_no_decision_value_column(d):
+    """MISTAKE 1. The gate allows volume and refuses the plus metric."""
+    t = d["teams"]
+    if t.get("status") != "built":
+        pytest.skip(f"club board not built: {t.get('status')}")
+    for r in t["rows"]:
+        for k in r:
+            assert "dv" not in k and "decision" not in k, (
+                f"the club board carries {k}, which is the plus metric the gate "
+                "withheld")
+
+
+def test_the_payload_says_why_there_is_no_plus_metric(d):
+    s = d["sections"]["team_style"]
+    assert s["plus_metric"] is False
+    assert "ranking of noise" in s["why_no_plus_metric"]
+
+
+def test_the_gate_verdict_travels_with_the_payload(d):
+    assert "DESCRIPTIVE ONLY" in d["gate_verdict"]
+    assert d["gate_doc"] == "docs/IN_GAME_MANAGEMENT_GATE.md"
+    assert d["gate_frozen_at"]
+
+
+def test_the_page_states_what_it_does_not_claim(d):
+    txt = d["what_this_page_does_not_claim"]
+    assert "bounded null" in txt and "0.0005" in txt
+
+
+# --------------------------------------------------------------------------
+# The gate, reported honestly
+# --------------------------------------------------------------------------
+
+def test_the_split_half_sits_inside_its_null_band(d):
+    g = d["gate"]
+    lo, hi = g["null_band"]
+    assert lo < g["split_half_r"] < hi, (
+        "the season-controlled split-half now CLEARS its permutation band, which "
+        "would mean club decision value repeats after all. That is a real finding "
+        "and the whole page scope changes with it")
+    assert g["clears_null"] is False
+
+
+def test_the_raw_number_is_published_beside_the_controlled_one(d):
+    """MISTAKE 2. Publishing only the controlled number invites a reader who finds
+    the raw one elsewhere to think it was hidden."""
+    g = d["gate"]
+    assert g["raw_split_half_r_for_comparison"] > 0.7
+    assert g["split_half_r"] < 0.2
+    why = g["why_the_raw_number_is_not_the_finding"]
+    assert "same season" in why and "79.6" in why
+
+
+def test_the_null_is_bounded_by_a_detection_floor(d):
+    """MISTAKE 3."""
+    g = d["gate"]
+    assert g["smallest_detectable_per_attempt_sd"] > 0
+    assert "ceiling" in g["detection_floor_reading"]
+
+
+def test_the_null_construction_is_published(d):
+    c = d["gate"]["null_construction"]
+    assert "WITHIN season" in c
+    assert "attempt count" in c
+
+
+def test_variance_attribution_is_published(d):
+    g = d["gate"]
+    assert g["variance_explained_by_season"] > 0.5
+    assert g["variance_explained_by_team"] < 0.1
+
+
+# --------------------------------------------------------------------------
+# The league result
+# --------------------------------------------------------------------------
+
+def test_the_headline_numbers_come_from_the_running_artifact(d):
+    h, bt = d["headline"], d["running_game"]["by_target"]
+    assert h["league_steals_second_at"] == bt["2B"]["success_rate"]
+    assert h["against_a_breakeven_of"] == bt["2B"]["swing_weighted_breakeven_p"]
+    assert h["sum_dv_wins_second"] == bt["2B"]["sum_dv_wins"]
+
+
+def test_second_is_a_coin_and_third_pays_and_home_does_not(d):
+    """The finding, pinned. If any of the three flips sign the page's whole lede
+    changes and a human should look at it."""
+    bt = d["running_game"]["by_target"]
+    assert abs(bt["2B"]["success_rate"] - bt["2B"]["swing_weighted_breakeven_p"]) < 0.01
+    assert bt["3B"]["sum_dv_wins"] > 0
+    assert bt["HOME"]["sum_dv_wins"] < 0
+
+
+def test_the_swing_weighted_breakeven_is_the_one_that_predicts_the_sign(d):
+    """Three break-evens are published and only one determines the verdict. A
+    reader comparing the success rate against the MEDIAN would get the sign
+    wrong on steals of second."""
+    txt = d["running_game"]["which_breakeven_predicts_the_sign"]
+    assert "swing-weighted" in txt
+    bt = d["running_game"]["by_target"]["2B"]
+    assert bt["median_breakeven_p"] != bt["swing_weighted_breakeven_p"]
+
+
+def test_the_exclusions_are_published_with_their_counts(d):
+    """MISTAKE 4."""
+    ex = d["running_game"]["excluded"]
+    assert ex["two_outs_crosses_the_boundary"] > 1000
+    txt = d["running_game"]["why_two_out_attempts_are_excluded"]
+    assert "half-inning" in txt and "boundary" in txt
+
+
+def test_the_decision_execution_identity_is_exact(d):
+    dec = d["running_game"]["decomposition"]
+    assert dec["identity_max_abs_error"] == 0.0
+    assert "DV + ER" in dec["identity"]
+
+
+def test_the_league_average_runner_is_deliberate_and_said_so(d):
+    txt = d["running_game"]["why_the_league_average_runner"]
+    assert "roster fact" in txt
+
+
+# --------------------------------------------------------------------------
+# The reference tables
+# --------------------------------------------------------------------------
+
+def test_the_run_expectancy_matrix_has_all_twenty_four_cells(d):
+    re = d["reference"]["run_expectancy"]
+    assert len(re) == 24
+    assert {r["outs"] for r in re} == {0, 1, 2}
+    assert len({r["base_code"] for r in re}) == 8
+
+
+def test_run_expectancy_falls_with_outs_in_every_base_state(d):
+    """The one property a reader would notice if it broke."""
+    re = d["reference"]["run_expectancy"]
+    by = {}
+    for r in re:
+        by.setdefault(r["base_code"], {})[r["outs"]] = r["runs"]
+    for base, cells in by.items():
+        assert cells[0] > cells[1] > cells[2], (
+            f"base state {base} does not fall monotonically with outs")
+
+
+def test_the_bases_are_labelled_and_not_left_as_a_bit_code(d):
+    re = d["reference"]["run_expectancy"]
+    labels = {r["bases"] for r in re}
+    assert "loaded" in labels and "empty" in labels and "1B 3B" in labels
+
+
+def test_the_win_model_disclosures_travel(d):
+    """Three things a reader has to be told about a win model built to be
+    differenced: that the base state enters only through run expectancy (which
+    is what makes differencing safe), that smoothing costs the ninth-inning
+    tails, and that the state deliberately excludes everything that would let a
+    manager's roster leak into his grade."""
+    ref = d["reference"]
+    assert "run expectancy" in ref["monotone_by_construction"]
+    assert "positive coefficient" in ref["monotone_by_construction"]
+    assert "less sharp" in ref["smoothing_costs_the_tails"]
+    assert "ninth" in ref["smoothing_costs_the_tails"]
+    assert "park" in ref["state_excludes"] and "batter" in ref["state_excludes"]
+
+
+def test_every_run_expectancy_cell_carries_its_sample_size(d):
+    """A run-expectancy cell is only as good as the plays behind it, and
+    bases-loaded-two-out is an order of magnitude thinner than
+    bases-empty-none-out."""
+    for r in d["reference"]["run_expectancy"]:
+        assert r["runs"] is not None, (
+            f"base {r['base_code']} outs {r['outs']} came back null; the cells "
+            "are dicts and reading one as a scalar gives a matrix of nulls")
+        assert r["n"] and r["n"] > 100
+
+
+# --------------------------------------------------------------------------
+# The dark sections
+# --------------------------------------------------------------------------
+
+def test_the_manager_section_is_decided_and_not_merely_deferred(d):
+    """MISTAKE 6. The null says building the manager entity to attribute THIS
+    family is not worth doing. That is a decision, not a queue position."""
+    s = d["sections"]["manager_attribution"]
+    assert s["live"] is False
+    assert "UPPER BOUND" in s["why"]
+    assert "not there" in s["why"] or "is not there" in s["why"]
+
+
+def test_the_other_families_are_explicitly_not_covered(d):
+    s = d["sections"]["bullpen_and_lineup"]
+    assert s["live"] is False
+    assert "have not been measured" in s["why"] or "not been measured" in s["why"]
+
+
+# --------------------------------------------------------------------------
+# Nothing is typed, and the page is reachable
+# --------------------------------------------------------------------------
+
+def test_no_figure_is_typed_into_the_page_html(d):
+    """MISTAKE 5."""
+    h = PAGE.read_text(encoding="utf-8")
+    for n in (d["running_game"]["n_attempts_priced"],
+              d["gate"]["agent_seasons"],
+              d["headline"]["games"]):
+        assert str(n) not in h, f"{n} is typed into the page and will go stale"
+
+
+def test_the_js_reads_its_copy_from_the_payload():
+    js = JS.read_text(encoding="utf-8")
+    for key in ("why_no_plus_metric", "why_the_raw_number_is_not_the_finding",
+                "detection_floor_reading", "why_two_out_attempts_are_excluded",
+                "columns_are_style_not_skill", "what_this_page_does_not_claim"):
+        assert key in js, f"the page does not render the payload's {key}"
+    assert "NOT ONE FIGURE IN THIS FILE IS TYPED" in js
+
+
+def test_the_page_has_no_banned_dash():
+    for f in (PAGE, JS, ROOT / "assets" / "management.css", ROOT / "mgmt_export.py"):
+        txt = f.read_text(encoding="utf-8")
+        assert "—" not in txt and "–" not in txt, f"banned dash in {f.name}"
+
+
+def test_management_is_in_the_deploy_publish_list():
+    lines = (ROOT / "deploy" / "publish_paths.txt").read_text(
+        encoding="utf-8").splitlines()
+    assert "management" in lines, (
+        "omit this and every test stays green while /management/ 404s in "
+        "production")
+
+
+def test_management_is_in_the_sitemap():
+    assert "/management/" in (ROOT / "sitemap.xml").read_text(encoding="utf-8")
+
+
+def test_management_is_excluded_from_pytest_collection():
+    assert "\n    management\n" in (ROOT / "pytest.ini").read_text(encoding="utf-8")
+
+
+def test_the_export_is_a_watched_scheduled_export():
+    src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    i = src.index("SCHEDULED_EXPORTS = (")
+    assert '"mgmt_export"' in src[i:i + 3200]
+    assert "6b7c. In-Game Management board" in src
+
+
+def test_the_board_is_in_the_data_catalog():
+    assert '"management_board.json"' in (ROOT / "data_catalog.py").read_text(
+        encoding="utf-8")
+
+
+def test_the_gate_doc_exists_and_is_frozen():
+    assert GATE.exists()
+    txt = GATE.read_text(encoding="utf-8")
+    assert "2026-09-06" in txt
