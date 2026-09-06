@@ -825,6 +825,12 @@ MODEL_GLOSSARY = {
     # sentence belongs to the page, and it is derived from
     # data/hof_ledger_eval.json rather than typed.
     "hof_induction_ledger": "internal",
+    # The public benchmark bake-off. NOT internal: its panel RENDERS on /hof/,
+    # and it is the one comparison that page publishes. It points at the two
+    # glossary entries that carry the reader-facing method behind the columns it
+    # scores, because what a reader needs when they see "HoF Monitor beats our
+    # WAR shelf" is what JAWS and WAR7 actually are.
+    "hof_public_bakeoff": ["jaws", "war7"],
     # pbp_corpus_base_state is a data substrate under .cache/. No page reads it. It
     # earns a registry row because a reconstruction that is WRONG would silently
     # poison every In-Game Management number built on top of it, so its agreement

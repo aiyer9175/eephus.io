@@ -1,9 +1,14 @@
 """The /hof/ payload and the page that renders it.
 
-WHAT THE PAGE IS ALLOWED TO SAY, pinned. Four sections live, four dark, and the dark ones
+WHAT THE PAGE IS ALLOWED TO SAY, pinned. Five sections live, three dark, and the dark ones
 are dark for DATA reasons rather than modelling ones. The tests below exist because every
-one of those four is easy to ship anyway by quietly substituting a number that looks close
+one of those three is easy to ship anyway by quietly substituting a number that looks close
 enough.
+
+THE BAKE-OFF IS LIVE AND IT REPORTS A LOSS, which is its own kind of discipline: a
+benchmark panel that only ships on a win is not a benchmark. Tests pin that every in-house
+arm loses to the best public rule, that the loss is attributed to missing awards data
+rather than to modelling, and that only the primary label reaches the page.
 
 THE FIVE MISTAKES THESE TESTS EXIST FOR:
 
@@ -302,3 +307,65 @@ def test_hof_export_is_a_watched_scheduled_export():
 def test_the_board_is_in_the_data_catalog():
     src = (ROOT / "data_catalog.py").read_text(encoding="utf-8")
     assert '"hof_board.json"' in src
+
+
+# --------------------------------------------------------------------------
+# The bake-off panel, which is live and reports a loss
+# --------------------------------------------------------------------------
+
+def test_the_bakeoff_panel_is_live_and_says_it_lost(d):
+    """A benchmark panel that only ships on a win is not a benchmark."""
+    b = d["sections"]["bakeoff"]
+    if not b.get("live"):
+        pytest.skip("the bake-off has not been run")
+    assert "better than our WAR shelf" in b["headline"]
+    assert b["best_public"] == "hof_monitor"
+
+
+def test_every_in_house_arm_loses_above_its_own_floor(d):
+    b = d["sections"]["bakeoff"]
+    if not b.get("live"):
+        pytest.skip("the bake-off has not been run")
+    inhouse = [r for r in b["rows"] if not r["is_public"]]
+    assert len(inhouse) >= 5
+    for r in inhouse:
+        assert r["delta_vs_best_public"] is not None
+        assert r["delta_vs_best_public"] < 0, (
+            f"{r['arm']} now beats the best public rule, which contradicts the "
+            "gate's first prediction and must be confirmed before it is shown")
+
+
+def test_the_loss_is_attributed_to_missing_data_not_to_modelling(d):
+    b = d["sections"]["bakeoff"]
+    if not b.get("live"):
+        pytest.skip("the bake-off has not been run")
+    assert "batting titles" in b["why_it_loses"]
+    assert "is in our feature set" in b["why_it_loses"]
+    assert "orders Hall of Fame outcomes less well" in b["what_it_does_not_show"], (
+        "the panel must separate 'our shelf is wrong' from 'WAR alone orders "
+        "these outcomes less well than a rule that also counts awards'")
+
+
+def test_only_the_primary_label_reaches_the_page(d):
+    """label_any's shelf hole is seventeen positives and zero negatives, so its
+    pooled comparison is refused upstream. A refused comparison has no business
+    on a page."""
+    b = d["sections"]["bakeoff"]
+    if not b.get("live"):
+        pytest.skip("the bake-off has not been run")
+    assert b["label"] == "bbwaa"
+
+
+def test_the_panel_carries_the_population_caveat(d):
+    b = d["sections"]["bakeoff"]
+    if not b.get("live"):
+        pytest.skip("the bake-off has not been run")
+    assert "screening committee" in b["population_note"]
+
+
+def test_the_panel_names_its_frozen_gate(d):
+    b = d["sections"]["bakeoff"]
+    if not b.get("live"):
+        pytest.skip("the bake-off has not been run")
+    assert b["gate_doc"] == "docs/HOF_BAKEOFF_GATE.md"
+    assert b["gate_frozen"]

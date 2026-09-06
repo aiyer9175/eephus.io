@@ -4765,7 +4765,7 @@ def build_hof() -> str:
         'footnote.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Hall of Fame sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-hofsection="board" role="tab" aria-selected="true">Leaderboards</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-hofsection="blocked" role="tab" aria-selected="false">Not Published</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-hofsection="blocked" role="tab" aria-selected="false">Bake-off &amp; What Is Not Published</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-hofsection="method" role="tab" aria-selected="false">Method &amp; Sample</button>'
         '</div>'
         '<div id="hof-section" class="mlbstats-section">'

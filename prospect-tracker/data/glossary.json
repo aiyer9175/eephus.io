@@ -6720,6 +6720,92 @@
    "example": "A player awarded $5.5M whom the model expected at $4.8M reads +$0.7M: the system paid him above comparable cases. It does not say he is overpaid against the open market; arbitration pays below that market systematically.",
    "shelf": "ark",
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "jaws",
+   "term": "JAWS",
+   "category": "industry",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "JAWS",
+    "Jaffe WAR Score",
+    "Jaffe WAR Score System"
+   ],
+   "priority": 20,
+   "definition": "The mean of a player's career WAR and his WAR7, so a long good career and a short great one meet in the middle. Jay Jaffe's, not ours: we reproduce it from the same daily WAR file Baseball-Reference publishes from, and the /hof/ leaderboards are that reproduction.",
+   "methodology": "JAWS = (career WAR + WAR7) / 2, where WAR7 is the sum of the player's seven best seasons by WAR, not necessarily consecutive. Both halves come from Baseball-Reference bWAR. On the five players checked by hand the reproduction is exact on all fifteen published figures, and across the 1,322 players who have appeared on a Hall of Fame ballot page it agrees exactly on career WAR for 1,251 and within a tenth for 1,262. The disagreements sit almost entirely in the Negro Leagues and pre-1901 population, where the two sources count different seasons. WHAT IT IS NOT: an opinion about who belongs. It is a positional yardstick, and the /hof/ page publishes a JAWS quantile ladder rather than a Hall-sized line, because a Hall-sized line needs the count of players inducted AS PLAYERS and no field in the source data says what a plaque says.",
+   "formula": "JAWS = (career WAR + WAR7) / 2",
+   "seeAlso": [
+    "war7",
+    "war_ink"
+   ],
+   "origin": "Jay Jaffe, Baseball Prospectus and FanGraphs",
+   "shelf": "industry"
+  },
+  {
+   "id": "war7",
+   "term": "WAR7",
+   "category": "industry",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "WAR7",
+    "peak WAR",
+    "seven-year peak"
+   ],
+   "priority": 20,
+   "definition": "The sum of a player's seven best seasons by WAR. The peak half of JAWS, and the reason a great short career is not simply a small long one.",
+   "methodology": "Take every season's bWAR, sort descending, sum the top seven. The seasons need not be consecutive, which is the usual point of confusion: WAR7 is a BEST-SEVEN and not a best-consecutive-seven. A player with fewer than seven seasons sums what he has, which is why WAR7 and career WAR converge for short careers.",
+   "formula": "WAR7 = sum of the seven largest single-season WAR values",
+   "seeAlso": [
+    "jaws"
+   ],
+   "origin": "Jay Jaffe, as the peak component of JAWS",
+   "shelf": "industry"
+  },
+  {
+   "id": "war_ink",
+   "term": "WAR ink",
+   "category": "custom-index",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "WAR ink",
+    "ink"
+   ],
+   "priority": 30,
+   "definition": "Ours, and NOT Bill James's Black Ink or Gray Ink. Four points for a league-leading WAR season and one for a top-ten WAR season, ranking hitters and pitchers in a single pool per league-season. Do not read it next to a published Black Ink number.",
+   "methodology": "Within each league-season, rank every player by WAR in ONE pool, hitters and pitchers together. Award 4 points for rank 1 and 1 point for ranks 2 through 10, and sum over a career. WHY IT IS NOT BLACK INK: Black Ink counts league-leading finishes in traditional counting categories, home runs, RBI, wins, strikeouts and so on, and Gray Ink counts top-ten finishes in the same. This counts ONE thing, WAR. It answers a narrower question and it answers it about a different quantity. MEASURED CONSEQUENCE: on the Hall of Fame bake-off it is the weakest of the eleven arms, AUC 0.8907 against HoF Monitor's 0.9697, and it carries the highest tie share on the board because it has only 30 distinct values.",
+   "formula": "ink = 4 x (league-leading WAR seasons) + 1 x (top-ten WAR seasons)",
+   "seeAlso": [
+    "jaws",
+    "war7"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io. It is NOT Bill James's Black Ink or Gray Ink, which count traditional counting categories; this counts league-leading and top-ten WAR seasons only."
+  },
+  {
+   "id": "committee_horizon",
+   "term": "Committee horizon",
+   "category": "method",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "committee horizon",
+    "COMMITTEE_HORIZON_YEARS"
+   ],
+   "priority": 40,
+   "definition": "How long after the writers are finished with a player we wait before calling a non-induction final. Twenty-five years by default, because the era committees never formally close and a player can be elected decades later.",
+   "methodology": "A player's writers' window closes by election, by falling off the ballot, or by exhausting it. If he is not in the Hall by that close plus the horizon, the any-route label reads a resolved zero; before that it reads CENSORED, never zero. WHY IT MATTERS AND WHY IT IS DISCLOSED RATHER THAN SOLVED: the label is NON-MONOTONE in the year you ask. A player enshrined by a committee more than a horizon after his window closed reads a resolved zero for decades and then flips to one. Forty-four players in the eligible universe do exactly that, Joe Gordon most widely: his window closed in 1945 and he was inducted in 2009. The sensitivity table at 15, 20, 25, 30 and 40 years ships beside the label so the choice is visible rather than assumed.",
+   "seeAlso": [
+    "jaws"
+   ],
+   "shelf": "foundation"
   }
  ]
 }

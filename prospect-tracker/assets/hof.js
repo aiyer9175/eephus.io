@@ -14,14 +14,20 @@
 // be the exact failure the page exists to avoid. If a string here looks like
 // prose, check where it comes from: it is a payload key.
 //
-// FOUR SECTIONS ARE LIVE AND FOUR ARE DARK. The dark ones render a card that
+// FIVE SECTIONS ARE LIVE AND THREE ARE DARK. The dark ones render a card that
 // names their blocker and says nothing else. They are dark for data reasons,
 // not modelling reasons:
 //   deserved    a Hall-SIZED line needs the count of PLAYER inductions, and no
 //               field in the source says what a plaque says
-//   bakeoff     the public benchmark bake-off has not been run under its gate
 //   predictor   no merit model has passed its ship rule
 //   franchises  no franchise spine, and no frozen attribution rule
+//
+// THE BAKE-OFF IS LIVE AND IT REPORTS A LOSS. Baseball-Reference's own HoF
+// Monitor separates the Hall better than our WAR shelf does, on every one of
+// our columns, by more than the sample can resolve. It renders because the
+// point of benchmarking against the public work rather than asserting over it
+// is that the answer is allowed to be "theirs is better", and a panel that
+// only ships on a win is not a benchmark.
 //
 // THE THREE BANDS ARE A PARTITION. Eligible, Watch and Not Yet Eligible cover
 // the ten-plus-season population exactly once each. Without the third band
@@ -234,6 +240,40 @@
       '<div class="hof-ladder">' + out.join("") + "</div></section>";
   }
 
+  // THE BAKE-OFF PANEL, AND IT REPORTS A LOSS. It ships live only because the
+  // answer to "is our shelf better than the public one" is allowed to be no.
+  // Every string here is a payload key.
+  function renderBakeoff() {
+    var b = DATA.sections.bakeoff;
+    if (!b || !b.live) return renderDark("bakeoff", "Benchmark bake-off");
+    var rows = b.rows.map(function (r) {
+      var d = (r.delta_vs_best_public === null || r.delta_vs_best_public === undefined)
+        ? "" : (r.delta_vs_best_public > 0 ? "+" : "") + num(r.delta_vs_best_public, 4);
+      return "<tr" + (r.is_public ? ' class="hof-pubarm"' : "") + ">" +
+        '<td class="hof-c-name">' + esc(r.arm) + (r.is_public ? " (public)" : "") + "</td>" +
+        '<td class="hof-c-n">' + num(r.auc, 4) + "</td>" +
+        '<td class="hof-c-n">' + d + "</td>" +
+        '<td class="hof-c-n">' + (r.mde95 === null || r.mde95 === undefined ? "" : num(r.mde95, 4)) + "</td>" +
+        '<td class="hof-c-ind">' + esc(r.verdict || "") + "</td></tr>";
+    }).join("");
+    return '<section class="hof-block"><h2>Benchmark bake-off</h2>' +
+      '<p class="hof-note"><strong>' + esc(b.headline) + "</strong></p>" +
+      '<p class="hof-note">' + esc(b.why_it_loses) + "</p>" +
+      '<div class="hof-tablewrap"><table class="hof-table"><thead><tr>' +
+      '<th class="hof-c-name">Rule</th><th class="hof-c-n">AUC</th>' +
+      '<th class="hof-c-n">vs ' + esc(b.best_public) + "</th>" +
+      '<th class="hof-c-n">Floor</th><th class="hof-c-ind">Verdict</th>' +
+      "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      '<p class="hof-note">Scored on ' + esc(b.n) + " players with a resolved writers' " +
+      "verdict, " + esc(b.n_positive) + " of them elected. " + esc(b.population_note) + "</p>" +
+      '<p class="hof-note">On calibration, ' + esc(b.calibration.n_cells_clearing_holm) +
+      " of " + esc(b.calibration.n_cells) + " cells clear a multiplicity correction, and " +
+      esc(b.calibration.note) + "</p>" +
+      '<p class="hof-note">' + esc(b.what_it_does_not_show) + "</p>" +
+      '<p class="hof-count">Clauses frozen in ' + esc(b.gate_doc) + ", " +
+      esc(b.gate_frozen || "") + "</p></section>";
+  }
+
   function renderDark(key, title) {
     var s = DATA.sections[key];
     return '<section class="hof-block hof-dark"><h2>' + esc(title) +
@@ -286,8 +326,8 @@
     if (!DATA) { root.innerHTML = '<p class="hof-note">Loading.</p>'; return; }
     if (state.section === "method") { root.innerHTML = renderMethod(); return; }
     if (state.section === "blocked") {
-      root.innerHTML = renderDark("deserved", "Deserved vs Inducted") +
-        renderDark("bakeoff", "Benchmark bake-off") +
+      root.innerHTML = renderBakeoff() +
+        renderDark("deserved", "Deserved vs Inducted") +
         renderDark("predictor", "Induction predictor") +
         renderDark("franchises", "Franchises");
       return;

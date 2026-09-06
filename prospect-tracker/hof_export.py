@@ -6,6 +6,14 @@ eventually say. Four sections ship live and four ship dark, and the dark ones
 are dark for reasons that are data problems rather than modelling problems.
 
 LIVE:
+  The public benchmark bake-off, AND IT IS A LOSS. Baseball-Reference's own HoF
+    Monitor separates the Hall better than our WAR shelf does, by more than this
+    sample can resolve, on every one of our columns, surviving a multiplicity
+    correction. It ships because the point of benchmarking against the public
+    work rather than asserting over it is that the answer is allowed to be
+    "theirs is better". The reason is missing data, not modelling: HoF Monitor
+    counts batting titles, MVP shares, All-Star selections and postseason play,
+    and none of that is in our feature set.
   Cooperstown Leaderboards. Baseball-Reference's own career WAR, WAR7 and JAWS,
     reproduced from the same daily WAR file they publish from. This is a
     REPRODUCTION OF A PUBLIC SHELF, not an improvement on it, and the page says
@@ -30,7 +38,6 @@ DARK, each with its blocker named on the page:
     publish that Joe Torre is above the line and not in the Hall of Fame.
   The by-class line, additionally, because position_class misfiles every catcher
     who retired before roughly 1930.
-  The benchmark bake-off, until its gate doc is read.
   The predictor, until H-PRED-3 passes its ship rule.
   Franchises, because there is no franchise spine and no frozen attribution rule
     for a multi-team career.
@@ -55,6 +62,7 @@ OUT = ROOT / "data" / "hof_board.json"
 SHELF = ROOT / "data" / "hof_public_benchmarks.json"
 REPRO = ROOT / "data" / "hof_benchmark_repro.json"
 LEDGER = ROOT / "data" / "hof_ledger_eval.json"
+BAKEOFF = ROOT / "data" / "hof_bakeoff_eval.json"
 
 AS_OF = 2026
 ACTIVE_FROM = 2025           # last_season at or after this is "active"
@@ -170,6 +178,81 @@ def _shelf_agreement(cf, shelf) -> dict:
         "largest_disagreements": [
             {"id": w[1], "name": w[2], "ours": w[3], "published": w[4],
              "difference": _R(w[0], 1)} for w in worst[:12]],
+    }
+
+
+def _bakeoff_panel() -> dict:
+    """The public benchmark bake-off, reduced to what a reader needs.
+
+    IT IS A LOSS AND IT SHIPS AS ONE. The point of benchmarking against the
+    public work rather than asserting over it is that the answer is allowed to
+    be "their column is better", and this panel says so in the first sentence.
+    Only the primary label reaches the page: label_any's shelf hole is seventeen
+    positives and zero negatives, so its pooled comparison is refused upstream
+    and a refused comparison has no business on a page.
+    """
+    if not BAKEOFF.exists():
+        return {"live": False, "blocked_on": "docs/HOF_BAKEOFF_GATE.md",
+                "why": ("the public benchmark bake-off has not been run under its "
+                        "gate. Until it has, this page makes no claim about whether "
+                        "our shelf separates the Hall better or worse than "
+                        "Baseball-Reference's own HoF Monitor.")}
+    d = json.loads(BAKEOFF.read_text(encoding="utf-8"))
+    b = d["labels"][d["primary_label"]]
+    disc = b["discrimination_full_frame"]
+    fam = disc["families"]["resampled_public_argmax"]
+    arms = sorted(disc["per_arm"].items(), key=lambda kv: -kv[1]["auc"])
+    rows = []
+    for a, c in arms:
+        cell = fam["cells"].get(a) or {}
+        fl = cell.get("floor_E_cond_in_run") or {}
+        rows.append({
+            "arm": a,
+            "is_public": a in ("hof_monitor", "hof_standard", "WAR_career",
+                               "WAR_peak7", "JAWS"),
+            "auc": c["auc"],
+            "tied_pair_share": c.get("tied_pair_share"),
+            "delta_vs_best_public": fl.get("point_delta"),
+            "mde95": fl.get("mde95"),
+            "verdict": cell.get("verdict"),
+        })
+    cal = b["calibration"]
+    return {
+        "live": True,
+        "gate_doc": "docs/HOF_BAKEOFF_GATE.md",
+        "gate_frozen": d.get("gate_frozen"),
+        "label": d["primary_label"],
+        "n": b["frame"]["n_scored"],
+        "n_positive": b["frame"]["n_positive"],
+        "base_rate": b["frame"]["base_rate"],
+        "best_public": disc["public_argmax"],
+        "best_public_auc": disc["per_arm"][disc["public_argmax"]]["auc"],
+        "rows": rows,
+        "headline": (
+            "Baseball-Reference's Hall of Fame Monitor separates the Hall better "
+            "than our WAR shelf does. Every one of our columns loses to it by more "
+            "than the margin this sample can resolve, and the loss survives a "
+            "multiplicity correction. That is the finding, and it is published "
+            "because the point of this panel was to benchmark the shelf against the "
+            "public work instead of asserting over it."),
+        "why_it_loses": (
+            "HoF Monitor is built from batting titles, MVP shares, All-Star "
+            "selections and postseason play. None of that is in our feature set, so "
+            "this is a statement about missing data rather than about modelling."),
+        "population_note": b["frame"]["population_note"],
+        "calibration": {
+            "n_cells_clearing_holm": cal.get("n_cells_clearing_holm"),
+            "n_cells": cal.get("n_cells"),
+            "note": (
+                "the same column also carries the lowest pooled Brier. The "
+                "calibration-error leg resolves nothing at all; Brier and log loss "
+                "resolve, and every resolved cell points the same way."),
+        },
+        "what_it_does_not_show": (
+            "that our shelf is wrong. It reproduces the public WAR shelf almost "
+            "exactly, which is what the leaderboard claims. It shows that WAR alone "
+            "orders Hall of Fame outcomes less well than a rule that also counts "
+            "awards and postseason play."),
     }
 
 
@@ -356,12 +439,7 @@ def build() -> dict:
                                      "active board.")},
             "deserved": {"live": False, "blocked_on": "H-DATA-PLAQUE",
                          "why": blocked},
-            "bakeoff": {"live": False, "blocked_on": "docs/HOF_BAKEOFF_GATE.md",
-                        "why": ("the public benchmark bake-off has not been run "
-                                "under its gate. Until it has, this page makes no "
-                                "claim about whether our shelf separates the Hall "
-                                "better or worse than Baseball-Reference's own "
-                                "HoF Monitor.")},
+            "bakeoff": _bakeoff_panel(),
             "predictor": {"live": False, "blocked_on": "H-PRED-3",
                           "why": ("no induction probability is published until a "
                                   "merit model has passed its own gate against "

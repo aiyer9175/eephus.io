@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-09-06**. `validate()` at generation time: **clean**.
 
-**301 models.** Verdicts: validated: 52, provisional: 123, unvalidated: 41, deprecated: 85.
+**302 models.** Verdicts: validated: 53, provisional: 123, unvalidated: 41, deprecated: 85.
 
 ## Instrument boundary
 
@@ -320,6 +320,7 @@ can be measured.
 | `claim_rater_scale_view` | NOTHING SERVED. accuracy.per_year_scale_view in data/sour... | nothing. It measures how much of each rater's published Spearman is BLOCK SCALE rather than within-cohort ordering, by percenti... | block rho on side x year percentile-normalized columns, against the same rate... | the rater's own pooled rho, plus a 200-draw permutation placebo at fixed bloc... | delta = block rho minus pooled rho, floored by a player-clustered E_cond boot... | **provisional** | `data/source_backtest.json` | - | - |
 | `claim_exposure_matched_label` | NOTHING SERVED. accuracy.claim_instruments.exposure_match... | nothing. It re-scores the published head-to-head against an EXPOSURE-MATCHED outcome, first-six-season eWAR, instead of career... | raw out-of-sample eFV against efv_dataset._label_6yr, the same label the eFV... | FanGraphs, MLB Pipeline and the PROSPX consensus on the same rows, in two cut... | Spearman against the six-season label, player-clustered in-run E_cond floor p... | **provisional** | `data/source_backtest.json` | - | - |
 | `hof_induction_ledger` | NOTHING SERVED YET. data/hof_ledger_eval.json. It is the... | nothing. It repairs the induction ledger: StatsAPI names inductees by MLBAM id and Baseball-Reference names ballot rows by bbre... | a one-to-one crosswalk read off the two war_daily parquets, which both carry... | the unrepaired ledger, reproducible at any time with ballots(crosswalk={}). | counts, not scores: ledger resolution, label census before and after, and thr... | **validated** | `data/hof_ledger_eval.json` | - | - |
+| `hof_public_bakeoff` | /hof/, the Bake-off panel. data/hof_bakeoff_eval.json, su... | Hall of Fame induction by the writers, from a single score. It is a BAKE-OFF and not a model: no arm is fitted, every arm is a... | Baseball-Reference's HoF Monitor, which wins. Our six in-house columns are ca... | two comparator families: the pre-designated reference JAWS, kept for the pre-... | AUC by Mann-Whitney with the full pair decomposition, player-clustered in-run... | **validated** | `data/hof_bakeoff_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 
