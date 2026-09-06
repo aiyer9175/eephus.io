@@ -828,6 +828,22 @@ MODEL_GLOSSARY = {
     # carries. If its provisional-grade finding ever changes what the board
     # serves, that change ships with its own copy and this line moves with it.
     "xfv_tilt_census": "internal",
+
+    # --- 2026-09-06: the In-Game Management substrate ---
+    #
+    # Both internal, and both will STAY internal even after /management/ ships,
+    # on the same rule the Diamond rows settled: the site glossary documents
+    # baseball metrics, and a win-expectancy engine is machinery rather than a
+    # term a reader looks up. What the reader will need is what a decision value
+    # MEANS, and that belongs in the module's own page copy beside the numbers,
+    # not in a glossary entry they would have to go and find.
+    #
+    # If MWAR itself ever ships as a named metric, THAT gets a glossary entry
+    # and this line changes with it. Neither of these two is MWAR: one is the
+    # engine, the other is one decision family with no manager attribution at
+    # all.
+    "win_expectancy_state": "internal",
+    "mwar_running_game": "internal",
 }
 
 

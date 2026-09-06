@@ -4173,6 +4173,32 @@
    "owner": "eFV claim program",
    "last_validated": "2026-09-06",
    "notes": "2026-09-06 (A-CLAIM-7). THE ORDER IS FINE: the sort key inverts against the evaluated object on 3.3% of untied hitter pairs and 3.9% of pitcher pairs, rho 0.9876 and 0.9855, reproducing the figures the 2026-09-05 plan projected. THE FLAGSHIP MAP IS EXACTLY MONOTONE: zero inversions over ~880,000 untied pairs across both sides, so efv_score.py's monotonicity docstring is true where it applies. THE PROVISIONAL MAP IS NOT: served to 1,091 hitters (51% of the side) and 1,386 pitchers (58%), it inverts against the model's own predicted WAR on 25.4% and 48.8% of untied pairs, and half is what independence looks like. Every provisional row carries consensus FV exactly 35.0, so this basis IS the no-published-opinion population A-CLAIM-12 counts, reached from the other direction. Routing (pairs graded through different maps) accounts for 57.9% of all hitter grade discordance and 37.8% of pitcher. NOT NECESSARILY A DEFECT: a player with no professional track record is graded off a prior rather than off a ridge prediction nobody should trust yet. It had never been measured, and it bounds what the head-to-head result covers."
+  },
+  {
+   "model_id": "win_expectancy_state",
+   "surface": "NOTHING SERVED YET. data/win_expectancy.json, built offline by win_expectancy.py from the play corpus. It is the engine every In-Game Management number will be a difference of.",
+   "predicts": "P(the team at bat wins), from inning, half, score difference, outs and base state, league-average and team-blind.",
+   "champion": "a logistic model in the BATTING team's frame, where the base-out state enters ONLY through its run expectancy as a single positive covariate, plus a MEASURED half-inning-start table for the boundary a third out crosses.",
+   "baseline": "the home-win base rate, and separately MLB's own live wp_home_before from the same plays.",
+   "metric": "Brier, Brier skill score against the base rate, and expected calibration error; plus an exhaustive monotonicity check that no runner advance and no out ever moves the batting team the wrong way.",
+   "eval_artifact": "data/win_expectancy.json",
+   "verdict": "provisional",
+   "owner": "In-Game Management",
+   "last_validated": "2026-09-06",
+   "notes": "2026-09-06 (M-ENG-1). Brier 0.1559 against a 0.2498 base rate, skill 0.377, expected calibration error 0.0066, fit on 1,448,965 plays. MLB's own live number scores 0.1577 on the same plays, so this team-blind model is very slightly ahead; that is not a claim to have beaten MLB at win probability, it settles that insisting on a team-blind valuation costs nothing measurable. THREE DESIGNS WERE TRIED AND THE FIRST TWO ARE ON THE RECORD BECAUSE THEY LOOKED FINE. (1) Raw cell means: advancing a runner from first to second LOWERED the batting team's win expectancy in 42.6% of cells, pure estimation noise at 318 observations per cell. (2) A smooth model with a separate bottom-half term: monotone in the base state but discontinuous across the half-inning boundary, pricing 19.2% of steal attempts so that being caught stealing HELPED. (3) The batting-team frame plus a measured boundary table: zero violations on the population that is actually priced. Two further defects fixed en route, both silent: base occupancy read with astype(bool) on a runner-id column made every base look occupied (bool(NaN) is True), and per-cell masking dropped a different six-figure run-expectancy cell on every build."
+  },
+  {
+   "model_id": "mwar_running_game",
+   "surface": "NOTHING SERVED. data/management_running.json. The /management/ page does not exist and must not ship before the gate battery runs.",
+   "predicts": "the win probability a stolen-base attempt buys against not attempting, split into the DECISION (priced at the league success rate) and the EXECUTION RESIDUAL (realized minus expected). The two sum to the realized change exactly.",
+   "champion": "decision value at the pre-decision state, DV = E[WP | attempt] minus WP(hold), with the league-average success rate for that season and target base.",
+   "baseline": "the break-even success rate implied by the win-expectancy model, p* = (WE_hold - WE_fail) / (WE_success - WE_fail). The SWING-WEIGHTED mean of p* is the summary that determines the sign; the median and plain mean are published and decide nothing.",
+   "metric": "summed and mean decision value in wins, per target base and season, with the DV plus ER identity checked to machine precision.",
+   "eval_artifact": "data/management_running.json",
+   "verdict": "provisional",
+   "owner": "In-Game Management",
+   "last_validated": "2026-09-06",
+   "notes": "2026-09-06. 13,971 priced attempts over 2018-2026. THE FINDING: the league steals second at a 75.00% success rate against a swing-weighted break-even of 75.03%, so eight seasons of decision value sum to -0.19 wins. Managers collectively run the stolen base at almost exactly the point of indifference. Stealing third is worth +4.31 wins (76.1% against 72.8%); stealing home is worth -2.33 (25.8% against 55.8%). TWO-OUT ATTEMPTS ARE EXCLUDED, 9,328 of them, about 40%: with two down a caught stealing ends the inning, so the alternative is priced by a different estimator from the hold, and that mismatch valued up to 19.2% of attempts so that being caught stealing HELPED. AN OPEN QUESTION WAS CLOSED BY THE SAME EXCLUSION: failed attempts appeared to carry 1.5 times the win-probability swing of successful ones, which invited a reading about defences bearing down; it was mechanical, and with the inning-ending attempts removed the ratio is 1.00. PROVISIONAL AND NOT ATTRIBUTED: no number here is assigned to a manager, because the manager entity and the gate battery (split-half stability, placebo, persistence, captured share) have not been built."
   }
  ],
  "problems": []
