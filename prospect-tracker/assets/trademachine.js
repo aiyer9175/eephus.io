@@ -545,7 +545,7 @@ function _tbPrimaryPos(pos) {
 //
 // THE LABEL USED TO SAY "Trade value" while this returned "grade". The ordering
 // is the deliberate one (data/trade_machine_eval.json: grade rho 0.3433 against
-// surplus 0.3289, and grade wins inside every tier), but the name was not: on
+// surplus 0.3289 pooled), but the name was not: on
 // the served board eleven negative-surplus contracts sat inside the first fifty
 // rows, Carlos Correa at minus $58.0M in the sixth, while the largest surplus on
 // the board sat at rank 87. The value the string carries is kept so a bookmarked
@@ -559,8 +559,20 @@ function _tbSortParts() {
 // Per-column accessor (numeric -> null when absent so nulls always sort last;
 // text -> string). The default Grade column ranks by the raw eFV grade
 // (xfv_grade), which orders realized WAR better than the $-surplus transform
-// (data/trade_machine_eval.json: grade rho 0.3433 vs surplus 0.3289, and grade
-// wins within every tier). Note: since the 2026-07-06 quantile flip, surplus
+// POOLED (data/trade_machine_eval.json: 0.3433 vs 0.3289).
+//
+// "AND WINS WITHIN EVERY TIER" WAS FALSE AND SAT HERE FOR MONTHS. The eval's own
+// by_tier block: elite 0.2328 against 0.1490, high 0.2485 against 0.1507, mid
+// 0.2536 against 0.0820, and low 0.0683 against 0.0816, where GRADE LOSES. Low
+// holds 1,301 of the 2,333 scored rows, more than the other three tiers
+// combined, so the claim was wrong about the majority of the board it existed
+// to justify.
+//
+// The pooled figure carries no interval and no floor either, so "better" there
+// is a point estimate and not a resolved result. The default stays on grade: it
+// is the better pooled orderer and it is what this column has always done. What
+// changes is that the justification now matches the artifact.
+// Note: since the 2026-07-06 quantile flip, surplus
 // dollars are priced on the DISPLAYED quantile grade, not this raw grade -
 // they are related but distinct orderers. Surplus stays on trade_value_mm.
 function _tbSortVal(p, col) {
@@ -865,7 +877,7 @@ function _renderTBRows() {
     ${_tbTh("Pos", "pos")}
     ${_tbTh("Org", "org")}
     ${_tbTh("FV", "fv", "tm-num", "Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)", false, "fv")}
-    ${_tbTh("Grade", "grade", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale. The board ranks by the model's raw eFV grade, which orders realized value better than the dollar transform; the letter is the coarse display.", true)}
+    ${_tbTh("Grade", "grade", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale. The board ranks by the model's raw eFV grade, which orders realized value better than the dollar transform POOLED and in the top three tiers, but NOT in the low tier, which holds most of the board. The letter is the coarse display.", true)}
     ${_tbTh("Surplus", "surplus", "tm-num", "Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use", false, "surplus_value")}
     ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside risk (higher is safer). Tooltip carries the risk-adjusted surplus and bust probability.", false, "risk_adjusted_surplus") : ""}
     ${_tbTh("Contract", "contract", "", "Contract: phase · salary · FA year (MLB) or remaining controlled seasons (MiLB)", false, "service_time")}

@@ -200,3 +200,62 @@ class TestDetectTrades:
 
     def test_empty_snapshots_no_trades(self):
         assert detect_trades([], tracked_players=None, skip_api=True) == []
+
+
+def test_the_tier_claim_matches_the_eval_it_cites():
+    """"Grade wins within every tier" sat in the code, the registry and the
+    Grade column tooltip for months, and the eval it cites contradicts it.
+
+    Measured in slice_a.by_tier: elite 0.2328 against 0.1490, high 0.2485
+    against 0.1507, mid 0.2536 against 0.0820, and low 0.0683 against 0.0816,
+    where GRADE LOSES. Low holds 1,301 of the 2,333 scored rows, more than the
+    other three tiers combined, so the claim was wrong about the majority of the
+    board it existed to justify.
+
+    This reads the ARTIFACT rather than the prose, so it stays correct if the
+    eval is ever re-run: if grade does come to win everywhere, this passes and
+    the copy can be changed back deliberately rather than by drift.
+    """
+    import json
+    import pytest
+    root = Path(__file__).resolve().parent
+    p = root / "data" / "trade_machine_eval.json"
+    if not p.exists():
+        pytest.skip("trade_machine_eval.json not built")
+    by_tier = ((json.loads(p.read_text(encoding="utf-8")).get("slice_a") or {})
+               .get("by_tier") or {})
+    if not by_tier:
+        pytest.skip("no by_tier block")
+    losing = [t for t, v in by_tier.items()
+              if v.get("xfv_grade_spearman") is not None
+              and v.get("spearman") is not None
+              and v["xfv_grade_spearman"] < v["spearman"]]
+    src = (root / "assets" / "trademachine.js").read_text(encoding="utf-8")
+    reg = (root / "data" / "model_registry.json").read_text(encoding="utf-8")
+    if losing:
+        for where, text in (("trademachine.js", src), ("model_registry.json", reg)):
+            assert "wins within every tier" not in text, (
+                f"{where} claims grade wins in every tier while the eval has it "
+                f"losing in {losing}")
+            assert "wins inside every tier" not in text, where
+
+
+def test_the_tier_the_claim_was_wrong_about_is_the_biggest_one():
+    """Recorded because it is what makes the correction material rather than
+    pedantic: the tier where the claim fails holds more rows than the rest of
+    the board put together."""
+    import json
+    import pytest
+    root = Path(__file__).resolve().parent
+    p = root / "data" / "trade_machine_eval.json"
+    if not p.exists():
+        pytest.skip("trade_machine_eval.json not built")
+    by_tier = ((json.loads(p.read_text(encoding="utf-8")).get("slice_a") or {})
+               .get("by_tier") or {})
+    if not by_tier:
+        pytest.skip("no by_tier block")
+    biggest = max(by_tier, key=lambda t: by_tier[t].get("n") or 0)
+    others = sum(v.get("n") or 0 for t, v in by_tier.items() if t != biggest)
+    assert (by_tier[biggest].get("n") or 0) > others, (
+        "the largest tier no longer outweighs the rest, so the materiality "
+        "argument in the correction needs re-reading")
