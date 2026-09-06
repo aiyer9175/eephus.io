@@ -177,6 +177,11 @@ _NON_RATER_SOURCES = frozenset({"performance_ingest", "draft_signing", "auto_det
 # mirror is asserted against the source of truth in test_served_population.py.
 _CONSTANT_ANCHOR_SOURCES = frozenset({"performance_ingest", "auto_detect"})
 
+#: A "disagreement" is a gap of at least this many percentile points between the
+#: eFV and consensus placements. Module scope since 2026-09-06 so the bootstrap
+#: floor and the tests name the same constant the cohort was cut with.
+DISAGREE_GAP = 0.15
+
 # Outcome thresholds (cumulative career WAR, censored at run date).
 CONTRIBUTOR_WAR = 3.0
 STAR_WAR = 10.0
@@ -927,8 +932,28 @@ def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
     def _pct(vals):
         order = sorted(range(len(vals)), key=lambda i: vals[i])
         pr = [0.0] * len(vals)
-        for p, i in enumerate(order):
-            pr[i] = p / (len(vals) - 1) if len(vals) > 1 else 0.5
+        # AVERAGE RANKS FOR TIES (A-CLAIM-10, 2026-09-06). This used to assign
+        # each element its position in the sorted list, which gives tied values
+        # DIFFERENT percentiles decided by nothing but their index. That is not
+        # a rounding detail here: consensus FV lives on the 20-80 scale in
+        # 5-point steps and a large block of rows sits on the FV 35 constant
+        # anchor, so the old code spread one grade across a wide percentile band
+        # and manufactured "disagreement" between two players the consensus had
+        # graded identically. Ties now share the mean of the positions they
+        # occupy, which is the standard convention and the one _rankdata above
+        # already uses.
+        n = len(vals)
+        if n == 1:
+            return [0.5]
+        i = 0
+        while i < n:
+            j = i
+            while j + 1 < n and vals[order[j + 1]] == vals[order[i]]:
+                j += 1
+            avg = (i + j) / 2.0 / (n - 1)
+            for k in range(i, j + 1):
+                pr[order[k]] = avg
+            i = j + 1
         return pr
     cons_pct = _pct([c["grades"][CONSENSUS_KEY] for c in rows])
     xfv_pct = _pct([c["grades"]["xfv"] for c in rows])
@@ -951,15 +976,92 @@ def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
     # signal, so the share-who-was-right is taken over real disagreements, not the
     # whole cohort. On these, eFV is closer on the majority, consistent with its
     # stronger overall ordering. n reported alongside so the share is transparent.
-    DISAGREE_GAP = 0.15
     disag = sorted((r for r in recs if r["disagree"] >= DISAGREE_GAP),
                    key=lambda r: -r["disagree"])
     right_share = (round(sum(1 for r in disag if r["xfv_right"]) / len(disag), 3)
                    if disag else None)
     receipts = [{k: r[k] for k in ("name", "consensus_fv", "war", "dir", "xfv_right")}
                 for r in disag[:8]]
-    return {"n": len(rows), "n_disagreements": len(disag), "per_tier": per_tier,
-            "receipts": receipts, "xfv_right_share_on_disagreements": right_share}
+    out = {"n": len(rows), "n_disagreements": len(disag), "per_tier": per_tier,
+           "receipts": receipts, "xfv_right_share_on_disagreements": right_share}
+    out.update(_disagreement_floor(disag))
+    return out
+
+
+#: B and seed for the disagreement-share bootstrap. Fixed so the published
+#: interval is reproducible; the seed is this lane's date.
+_DISAGREE_BOOT = 2000
+_DISAGREE_SEED = 20260906
+
+
+def _disagreement_floor(disag: list[dict]) -> dict:
+    """A confidence interval on "eFV was closer on X% of the disagreements",
+    and the verdict that follows from it.
+
+    WHY THIS IS NOT OPTIONAL. That share is rendered in three places, twice in
+    bold and once as a headline tile, and it has always been published as a bare
+    percentage. On the current cohort it is about 54% on fewer than 300 rows,
+    which is close enough to a coin flip that the reader cannot tell whether
+    they are being shown a skill or a sample. A percentage without an interval
+    invites exactly one reading, and it is the flattering one.
+
+    ONE ROW PER PLAYER, so a plain resample IS the clustered resample: the
+    caller deduplicates to the latest pre-debut read before this is reached, and
+    a player therefore appears at most once. If that dedup is ever removed, this
+    function needs a cluster argument and the interval it returns until then is
+    too narrow.
+
+    The null is 0.5 exactly. "Closer" is a two-way comparison decided per row,
+    so a model with no skill at picking its spots lands at half by construction.
+    """
+    n = len(disag)
+    base = {
+        "disagreement_gap": DISAGREE_GAP,
+        "disagreement_null": 0.5,
+        "disagreement_bootstrap": {"B": _DISAGREE_BOOT, "seed": _DISAGREE_SEED,
+                                   "unit": "player (one row per player)"},
+    }
+    if n < 30:
+        base["xfv_right_share_ci95"] = None
+        base["xfv_right_share_resolvable"] = False
+        base["xfv_right_share_verdict"] = (
+            f"only {n} resolved disagreements; too few to say anything")
+        return base
+    try:
+        import numpy as np
+    except Exception:                                          # noqa: BLE001
+        base["xfv_right_share_ci95"] = None
+        base["xfv_right_share_resolvable"] = None
+        base["xfv_right_share_verdict"] = (
+            "numpy is unavailable, so no interval was derived; the share must "
+            "not be published as a finding without one")
+        return base
+    wins = np.array([1.0 if r["xfv_right"] else 0.0 for r in disag])
+    rng = np.random.default_rng(_DISAGREE_SEED)
+    idx = rng.integers(0, n, size=(_DISAGREE_BOOT, n))
+    draws = wins[idx].mean(axis=1)
+    lo, hi = (float(np.percentile(draws, 2.5)),
+              float(np.percentile(draws, 97.5)))
+    point = float(wins.mean())
+    # A one-sided p against the coin: how often a draw fails to beat the null.
+    p_le_half = float((draws <= 0.5).mean())
+    resolvable = lo > 0.5
+    base.update({
+        "xfv_right_share_ci95": [round(lo, 4), round(hi, 4)],
+        "xfv_right_share_point": round(point, 4),
+        "xfv_right_share_p_le_null": round(p_le_half, 4),
+        "xfv_right_share_resolvable": bool(resolvable),
+        "xfv_right_share_verdict": (
+            f"eFV is closer on {100 * point:.0f}% of the {n} resolved "
+            f"disagreements, 95% CI {100 * lo:.0f}% to {100 * hi:.0f}%. "
+            + ("The interval clears the 50% coin, so the edge is resolvable at "
+               "this sample size."
+               if resolvable else
+               "The interval CONTAINS 50%, so on this sample the share is not "
+               "distinguishable from a coin flip and must not be presented as "
+               "an edge.")),
+    })
+    return base
 
 
 # --------------------------------------------------------------------------

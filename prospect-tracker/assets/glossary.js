@@ -1378,12 +1378,18 @@ function _methEfvPanel(bt) {
       return `<tr><td>${escapeHtml(r.name)}</td><td>${r.consensus_fv}</td><td>eFV ${escapeHtml(r.dir)}</td><td>${r.war}</td>
         <td style="color:${ok ? "var(--up)" : "var(--down)"};font-weight:700;">${ok ? "eFV ✓" : "consensus ✓"}</td></tr>`;
     }).join("");
-    const share = det.xfv_right_share_on_disagreements;
+    const dr = _disagreementRead(det);
     // Lead stat + "called shots" cards: the resolved receipts promoted above
     // the scroll table (which stays). Share and count computed from the
     // artifact fields, never hardcoded. FV grades display CEILING (owner rule).
-    const lead = (share != null && det.n_disagreements)
-      ? `<p class="meth-note"><strong>eFV was closer on ${Math.round(share * 100)}% of the ${det.n_disagreements} biggest disagreements</strong> - resolved players where eFV and the consensus were at least 15 percentiles apart. The called shots below are the largest of them.</p>`
+    //
+    // THE BOLD IS NOW ON THE HONEST HALF. This used to bold the percentage
+    // alone, which is the one number in the sentence that does not survive its
+    // own interval: 55% over 283 rows has a 95% CI that contains the coin. The
+    // count and the interval carry the emphasis instead, and when the interval
+    // clears the coin the sentence says that in the same place.
+    const lead = (dr && dr.n)
+      ? `<p class="meth-note">eFV was closer on ${dr.stat} of the <strong>${dr.n}</strong> biggest disagreements, <strong>${escapeHtml(dr.band)}</strong> - resolved players where eFV and the consensus were at least 15 percentiles apart. ${dr.resolvable ? "That interval clears the 50% coin." : "That interval contains 50%, so on this sample it is not distinguishable from a coin flip and is reported as a description rather than an edge."} The called shots below are the largest of them.</p>`
       : "";
     const shots = det.receipts.slice(0, 8).map(r => {
       const ok = !!r.xfv_right;
@@ -1433,9 +1439,13 @@ function _methEfvFindings(bt) {
   // (Removed the per-tier "Sharpest edge" card: on the current cohort the best tier
   // margin is a fraction of a Spearman point -- e.g. 0.44 -> 0.45 -- which does not read
   // as a "sharp edge" and overstated a within-noise gap.)
-  if (det && det.xfv_right_share_on_disagreements != null)
-    cards.push({ stat: `${Math.round(det.xfv_right_share_on_disagreements * 100)}%`,
-      label: "eFV closer on the biggest disagreements", sub: "resolved players where eFV & consensus most diverged" });
+  const _dr2 = _disagreementRead(det);
+  if (_dr2)
+    cards.push({ stat: _dr2.stat,
+      label: _dr2.resolvable
+        ? "eFV closer on the biggest disagreements"
+        : "eFV closer on the biggest disagreements (inside the noise)",
+      sub: _dr2.sub });
   if (x.auc != null)
     cards.push({ stat: f3(x.auc), label: "eFV AUC (predicts “becomes a contributor”)",
       sub: `consensus ${f3(c && c.auc)} &middot; FanGraphs ${f3(fg && fg.auc)} &middot; MLB ${f3(mlb && mlb.auc)}` });
@@ -2620,6 +2630,49 @@ function _hhPopulationClause(bt) {
   return " " + escapeHtml(String(sp.sentence));
 }
 
+// A-CLAIM-10. THE DISAGREEMENT SHARE, WITH ITS INTERVAL.
+//
+// "eFV was closer on 55% of the biggest disagreements" was rendered in three
+// places, twice in bold and once as a headline tile, as a bare percentage. It
+// is not one. Measured on 2026-09-06 the share is 54.8% over 283 resolved
+// disagreements with a 95% CI of 49.1% to 60.8%, which CONTAINS the 50% coin,
+// at a one-sided p of 0.058. The site was publishing a coin flip as a finding.
+//
+// "Closer" is a two-way comparison decided per row, so a model with no skill at
+// picking its spots lands at 50% by construction. That is the null, and it is
+// why the interval rather than the point is the thing a reader needs.
+//
+// Every caller goes through this one function so the three surfaces cannot
+// drift apart, and so that the day the interval DOES clear the coin, all three
+// start saying so together without anyone editing copy.
+function _disagreementRead(det) {
+  if (!det || det.xfv_right_share_on_disagreements == null) return null;
+  const share = Number(det.xfv_right_share_on_disagreements);
+  const n = det.n_disagreements;
+  const ci = det.xfv_right_share_ci95;
+  const resolvable = det.xfv_right_share_resolvable === true;
+  const pct = v => Math.round(Number(v) * 100) + "%";
+  // No interval in the artifact means an older build. Say the share is
+  // unfloored rather than silently reprinting the old bare claim.
+  const band = (ci && ci.length === 2)
+    ? "95% CI " + pct(ci[0]) + " to " + pct(ci[1])
+    : "no interval in this build";
+  return {
+    share: share,
+    n: n,
+    resolvable: resolvable,
+    stat: pct(share),
+    band: band,
+    // The one-line reading. Derived, never typed.
+    verdict: det.xfv_right_share_verdict || (resolvable
+      ? "clears the 50% coin"
+      : "not distinguishable from a coin flip on this sample"),
+    sub: (n != null ? n + " resolved splits, " : "") + band
+         + (resolvable ? ", clears the 50% coin"
+                       : ", which contains the 50% coin"),
+  };
+}
+
 function _hhFloorClause(bt) {
   const hh = bt && bt.accuracy && bt.accuracy.head_to_head_verdict;
   if (!hh || hh.mde95 == null) return ".";
@@ -3015,7 +3068,17 @@ function _methScoreboardHTML() {
   const rec = j.disagreement_receipts || {};
   const extras = [];
   if (cap && cap.efv != null) extras.push(`top-20% WAR capture ${Number(cap.efv).toFixed(3)} vs ${Number(cap.consensus).toFixed(3)}${cap.win ? " (win)" : " (loss)"}`);
-  if (rec.efv_right_share != null) extras.push(`closer on ${(rec.efv_right_share * 100).toFixed(0)}% of the ${rec.n_disagreements} biggest resolved disagreements`);
+  // The share card sentence. Same rule as everywhere else, and DERIVED rather
+  // than typed: a share card is the surface most likely to be screenshotted
+  // away from its context, so the qualifier has to travel with the number. The
+  // scoreboard artifact now carries `efv_right_share_resolvable`, so the day
+  // the interval clears the coin this sentence drops the qualifier by itself.
+  if (rec.efv_right_share != null) {
+    const _q = rec.efv_right_share_resolvable === true ? ""
+      : rec.efv_right_share_resolvable === false ? " (inside the noise)"
+      : " (unfloored)";
+    extras.push(`closer on ${(rec.efv_right_share * 100).toFixed(0)}% of the ${rec.n_disagreements} biggest resolved disagreements${_q}`);
+  }
   const extraLine = extras.length
     ? `<p class="meth-note">Also on the card: ${escapeHtml(extras.join("; "))}. Full detail, receipts included, in <a href="/data/xfv_scoreboard_eval.json" target="_blank" rel="noopener">xfv_scoreboard_eval.json</a>.</p>`
     : `<p class="meth-note">Full detail in <a href="/data/xfv_scoreboard_eval.json" target="_blank" rel="noopener">xfv_scoreboard_eval.json</a>.</p>`;
@@ -3083,15 +3146,25 @@ function _scxGfxSpec() {
   });
   const det = bt.accuracy.xfv_vs_consensus_detail;
   const sbRec = sb && sb.disagreement_receipts;
-  const share = (det && det.xfv_right_share_on_disagreements != null)
-    ? det.xfv_right_share_on_disagreements
+  const _dr3 = _disagreementRead(det);
+  const share = _dr3 ? _dr3.share
     : (sbRec && sbRec.efv_right_share != null ? sbRec.efv_right_share : null);
   const nDis = (det && det.n_disagreements != null) ? det.n_disagreements
     : (sbRec ? sbRec.n_disagreements : null);
-  if (share != null) tiles.push({
+  if (_dr3) tiles.push({
+    stat: _dr3.stat,
+    label: _dr3.resolvable
+      ? "closer on the biggest disagreements"
+      : "closer on the biggest disagreements (inside the noise)",
+    sub: _dr3.sub,
+  });
+  else if (share != null) tiles.push({
+    // The scoreboard fallback carries no interval at all, so it is labelled as
+    // the unfloored number it is rather than borrowing the floored one's voice.
     stat: Math.round(share * 100) + "%",
-    label: "closer on the biggest disagreements",
-    sub: nDis != null ? nDis + " resolved eFV vs consensus splits" : "resolved disagreements",
+    label: "closer on the biggest disagreements (unfloored)",
+    sub: nDis != null ? nDis + " resolved eFV vs consensus splits, no interval available"
+                      : "resolved disagreements, no interval available",
   });
 
   // Bar panels share the page chart's scales (_methAccuracyChart lo/hi).

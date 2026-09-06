@@ -408,6 +408,17 @@ def _receipts(sb):
     if not det:
         return None
     share = det.get("xfv_right_share_on_disagreements")
+    ci = det.get("xfv_right_share_ci95")
+    resolvable = det.get("xfv_right_share_resolvable")
+    # A POINT ABOVE 0.5 IS NOT A WIN (A-CLAIM-10, 2026-09-06). This field used
+    # to be `share > 0.5`, which called 54.8% over 283 rows a win when its 95%
+    # interval runs 49.1% to 60.8% and contains the coin. "Closer" is a two-way
+    # comparison decided per row, so no skill at all lands at 0.5 by
+    # construction; the point estimate alone can never distinguish the two.
+    # `win` now requires the interval to clear the null, and is None rather than
+    # False when no interval was derived, because "we did not measure it" and
+    # "we measured it and it lost" are different states.
+    win = None if resolvable is None else bool(resolvable)
     return {"protocol": ("resolved players where eFV and consensus placed the player "
                          ">= 15 percentile points apart, pre-debut vintage grades only; "
                          "'right' = whose placement sat closer to the realized-WAR "
@@ -415,7 +426,14 @@ def _receipts(sb):
             "n_pool": det.get("n"),
             "n_disagreements": det.get("n_disagreements"),
             "efv_right_share": share,
-            "win": (share is not None and share > 0.5),
+            "efv_right_share_ci95": ci,
+            "efv_right_share_resolvable": resolvable,
+            "efv_right_share_verdict": det.get("xfv_right_share_verdict"),
+            "null": 0.5,
+            "win": win,
+            "win_basis": ("the 95% interval clears 0.5, not the point estimate; "
+                          "a point above 0.5 with an interval that contains it "
+                          "is a description of this sample and not an edge"),
             "biggest": det.get("receipts") or []}
 
 
