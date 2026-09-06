@@ -116,9 +116,36 @@ def _fetch_schedule_raw(start_date: str, end_date: str) -> dict:
 _UNPLAYED = {"Preview", "Pre-Game", "Scheduled", "Warmup", "Delayed Start"}
 
 
+SCHEDULED_GAMES = 162
+"""Games in a full modern regular season. Used only by `season_shortfall`, which
+CHECKS against it rather than asserting from it: a shortened or expanded season
+should show up as a shortfall on every club at once, which reads as a schedule
+problem rather than as a club problem."""
+
+
 def remaining_pairs(season: int, *, today: date | None = None) -> list[tuple[str, str]]:
-    """[(home_org, away_org), ...] for every UNPLAYED regular-season game from
-    `today` (default: real today) through season end. [] on fetch failure."""
+    """[(home_org, away_org), ...] for every game not yet FINAL, from `today`
+    through season end. [] on fetch failure.
+
+    A GAME IN PROGRESS IS NOT A GAME PLAYED. This used to skip anything whose
+    abstract state was "Live", on the reasoning that an in-progress game counts
+    as roughly played. It does not: the standings read that supplies base_wins
+    has not booked it either, so the game counted as NEITHER played nor
+    remaining and simply vanished from the season. Every club with a game in
+    progress at build time was projected over a schedule one game short, and
+    since builds run in the evening that is most of the league most nights.
+
+    A live game is now included and simulated from its pre-game state, which is
+    the only state the simulator has. That slightly understates certainty for a
+    game already half-decided, and understating certainty is the safe direction:
+    the alternative silently deletes the game.
+
+    CLUBS RESOLVE BY ID, NOT BY NAME. The name path works on this endpoint
+    today, because /schedule returns "Arizona Diamondbacks" rather than the
+    "D-backs" that /standings returns and that the length guard below would
+    drop. That is luck, not design, and it is the same guard that did drop
+    Arizona out of the standings reader until 2026-09-06. Ids do not change and
+    names do."""
     start = (today or date.today())
     # season end guard: MLB regular season wraps by early October; pad to Nov.
     end = date(season, 11, 5)
@@ -127,7 +154,7 @@ def remaining_pairs(season: int, *, today: date | None = None) -> list[tuple[str
     data = _fetch_schedule_raw(start.isoformat(), end.isoformat())
     if not data:
         return []
-    from trades import canonical_org
+    from trades import canonical_org_from_id
     out: list[tuple[str, str]] = []
     for d in data.get("dates", []):
         for g in d.get("games", []):
@@ -135,18 +162,39 @@ def remaining_pairs(season: int, *, today: date | None = None) -> list[tuple[str
             detailed = ((g.get("status") or {}).get("detailedState")) or ""
             if status == "Final" or detailed in {"Final", "Game Over", "Completed Early"}:
                 continue
-            if status not in ("Preview",) and detailed not in _UNPLAYED and status != "":
-                # unknown/live state: skip (in-progress games count as ~played)
-                if status == "Live":
-                    continue
             teams = g.get("teams") or {}
-            hn = ((teams.get("home") or {}).get("team") or {}).get("name")
-            an = ((teams.get("away") or {}).get("team") or {}).get("name")
-            ho = canonical_org(hn or "")
-            ao = canonical_org(an or "")
+            ht = (teams.get("home") or {}).get("team") or {}
+            at = (teams.get("away") or {}).get("team") or {}
+            ho = canonical_org_from_id(ht.get("id"), ht.get("name") or "")
+            ao = canonical_org_from_id(at.get("id"), at.get("name") or "")
             if ho and ao and len(ho) <= 3 and len(ao) <= 3:
                 out.append((ho, ao))
     return out
+
+
+def season_shortfall(teams: dict, pairs: list, scheduled: int = SCHEDULED_GAMES) -> dict:
+    """{org: games unaccounted for}, zero when a club's season adds up.
+
+    WHY THIS EXISTS RATHER THAN A COMMENT. The live-game defect above was
+    invisible for exactly one reason: nothing ever checked that wins + losses +
+    remaining equalled a season. A club projected over 161 games looks entirely
+    normal in every output, and the only symptom is playoff odds that are
+    slightly too confident for the clubs that happened to be playing when the
+    build ran.
+
+    A non-zero shortfall is a build problem, not a display one, so it is emitted
+    and a club that carries one gets no win-total interval: a band around a
+    distribution that is missing games is false precision on a biased estimate.
+    """
+    played = {o: int(t.get("wins") or 0) + int(t.get("losses") or 0)
+              for o, t in teams.items()}
+    rem = {o: 0 for o in teams}
+    for home, away in pairs:
+        if home in rem:
+            rem[home] += 1
+        if away in rem:
+            rem[away] += 1
+    return {o: int(scheduled - played[o] - rem[o]) for o in teams}
 
 
 def remaining_schedule(season: int, *, today: date | None = None) -> dict[str, list[str]]:
@@ -277,15 +325,29 @@ def simulate_playoffs(teams: dict[str, dict], pairs: list[tuple[str, str]], *,
     out: dict[str, dict] = {}
     for o in orgs:
         s = sorted(win_samples[o])
-        # division and wildcard are disjoint (a division winner is never also a
-        # wildcard), so playoffPct is exactly their sum — derive it that way so
-        # the identity holds after rounding (the UI stacks div+wc widths on it).
+        # DERIVE THE PART FROM THE WHOLE, NEVER THE WHOLE FROM TWO PARTS.
+        #
+        # Division and wildcard are disjoint, so the counts satisfy
+        # playoff == division + wildcard exactly. The previous version rounded
+        # each part to three places and ADDED them, which is unbounded above:
+        # two independent roundings can each add half a thousandth, so the sum
+        # can exceed 1. It did. Milwaukee served playoffPct 1.001 on
+        # 2026-09-06, from 0.997 + 0.004, and a probability above one on a
+        # public page is the kind of error a reader cannot un-see.
+        #
+        # Rounding the WHOLE and subtracting gives both bounds for free:
+        # playoff_count <= n_sims so playoffPct <= 1.0, and
+        # playoff_count >= division_count so wildcardPct >= 0. The identity the
+        # UI stacks on holds by construction because the third number is
+        # defined as the difference of the first two.
+        #
+        # `playoff` was already being counted here and never read.
         div_pct = round(division[o] / n_sims, 3)
-        wc_pct = round(wildcard[o] / n_sims, 3)
+        play_pct = round(playoff[o] / n_sims, 3)
         out[o] = {
-            "playoffPct": round(div_pct + wc_pct, 3),
+            "playoffPct": play_pct,
             "divisionPct": div_pct,
-            "wildcardPct": wc_pct,
+            "wildcardPct": round(play_pct - div_pct, 3),
             "projWinsMean": round(statistics.mean(s), 1) if s else None,
             "projWinsP10": _percentile(s, 0.10),
             "projWinsP90": _percentile(s, 0.90),

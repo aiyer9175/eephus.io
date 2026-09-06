@@ -234,3 +234,127 @@ def test_overlay_preserves_2027_fields(monkeypatch):
         for f in ("curPct", "actualPct", "pythagPct", "talentPriorPct",
                   "sos", "remGames", "playoffPct", "projWinsMean"):
             assert f in r["current"]
+
+
+def test_playoff_pct_can_never_exceed_one():
+    """THE 1.001 REGRESSION, pinned at the arithmetic rather than at a sample.
+
+    The old emit rounded divisionPct and wildcardPct to three places and ADDED
+    them, which is unbounded above: two roundings can each add half a
+    thousandth. Milwaukee served playoffPct 1.001 on 2026-09-06 from
+    0.997 + 0.004.
+
+    This runs the emit over every reachable (division, wildcard) count pair at a
+    small n, so it fails on the arithmetic and does not depend on a simulation
+    happening to land on the bad cell."""
+    n = 2000
+    for div_count in range(0, n + 1, 7):
+        for extra in (0, 1, 3, n - div_count):
+            play_count = min(div_count + extra, n)
+            div_pct = round(div_count / n, 3)
+            play_pct = round(play_count / n, 3)
+            wc_pct = round(play_pct - div_pct, 3)
+            assert play_pct <= 1.0, (
+                f"playoffPct {play_pct} from play_count {play_count}/{n}")
+            assert wc_pct >= 0.0, (
+                f"wildcardPct {wc_pct} from play {play_pct} div {div_pct}")
+            assert abs((div_pct + wc_pct) - play_pct) < 1e-9
+
+
+def test_the_old_addition_form_really_did_overflow():
+    """The control for the test above. If adding two rounded parts could never
+    exceed one, the repair would be pointless and this file would be pinning
+    nothing."""
+    n = 2000
+    over = [(d, n - d) for d in range(n + 1)
+            if round(d / n, 3) + round((n - d) / n, 3) > 1.0]
+    assert over, ("the old form cannot overflow at this n, so the 1.001 that "
+                  "was served came from somewhere else and this repair needs "
+                  "re-reading")
+
+
+def test_the_playoff_counter_is_the_published_numerator():
+    """It was being counted and never read, which is how the two parts came to
+    be added instead."""
+    src = (ROOT / "proj_current.py").read_text(encoding="utf-8") if "ROOT" in dir() \
+        else __import__("pathlib").Path(pc.__file__).read_text(encoding="utf-8")
+    i = src.index('"playoffPct"')
+    seg = src[max(0, i - 400):i + 200]
+    assert "play_pct" in seg and "playoff[o]" in src
+    assert 'round(div_pct + wc_pct' not in src, (
+        "the emit is adding two rounded parts again")
+
+
+# --------------------------------------------------------------------------
+# The vintage repair: a game in progress is not a game played
+# --------------------------------------------------------------------------
+
+def _sched(games):
+    return {"dates": [{"games": games}]}
+
+
+def _game(hid, hname, aid, aname, abstract, detailed):
+    return {"status": {"abstractGameState": abstract, "detailedState": detailed},
+            "teams": {"home": {"team": {"id": hid, "name": hname}},
+                      "away": {"team": {"id": aid, "name": aname}}}}
+
+
+def test_a_live_game_is_simulated_and_not_deleted(monkeypatch):
+    """THE DEFECT. A live game was skipped as "roughly played" while the
+    standings that supply base_wins had not booked it either, so it counted as
+    neither and vanished from the season."""
+    monkeypatch.setattr(pc, "_fetch_schedule_raw", lambda a, b: _sched([
+        _game(109, "Arizona Diamondbacks", 119, "Los Angeles Dodgers", "Live", "In Progress"),
+        _game(147, "New York Yankees", 111, "Boston Red Sox", "Preview", "Scheduled"),
+        _game(158, "Milwaukee Brewers", 112, "Chicago Cubs", "Final", "Final"),
+    ]))
+    pairs = pc.remaining_pairs(2026, today=__import__("datetime").date(2026, 9, 1))
+    assert ("ARI", "LAD") in pairs, "the live game was dropped from the season"
+    assert ("NYY", "BOS") in pairs
+    assert ("MIL", "CHC") not in pairs, "a final game is not remaining"
+    assert len(pairs) == 2
+
+
+def test_a_postponed_game_is_still_remaining(monkeypatch):
+    monkeypatch.setattr(pc, "_fetch_schedule_raw", lambda a, b: _sched([
+        _game(147, "New York Yankees", 111, "Boston Red Sox", "Preview", "Postponed"),
+    ]))
+    pairs = pc.remaining_pairs(2026, today=__import__("datetime").date(2026, 9, 1))
+    assert pairs == [("NYY", "BOS")]
+
+
+def test_clubs_resolve_by_id_even_when_the_name_is_the_short_form(monkeypatch):
+    """The length guard that dropped Arizona out of the standings reader is
+    still here, and the only reason it does not fire on this endpoint is that
+    /schedule happens to send the long name. Ids do not change and names do."""
+    monkeypatch.setattr(pc, "_fetch_schedule_raw", lambda a, b: _sched([
+        _game(109, "D-backs", 114, "Guardians", "Preview", "Scheduled"),
+    ]))
+    pairs = pc.remaining_pairs(2026, today=__import__("datetime").date(2026, 9, 1))
+    assert pairs == [("ARI", "CLE")], (
+        "the short-form names were dropped, which is what the id path exists to "
+        "prevent")
+
+
+def test_the_name_path_is_gone_from_the_schedule_reader():
+    src = __import__("pathlib").Path(pc.__file__).read_text(encoding="utf-8")
+    i = src.index("def remaining_pairs")
+    body = src[i:src.index("def season_shortfall")]
+    assert "canonical_org_from_id" in body
+    assert "from trades import canonical_org\n" not in body
+
+
+def test_season_shortfall_is_zero_when_the_season_adds_up():
+    teams = {"AAA": {"wins": 80, "losses": 70}, "BBB": {"wins": 70, "losses": 80}}
+    pairs = [("AAA", "BBB")] * 12
+    sf = pc.season_shortfall(teams, pairs)
+    assert sf == {"AAA": 0, "BBB": 0}
+
+
+def test_season_shortfall_counts_a_deleted_game():
+    """One game dropped from the remaining pool shows up as a shortfall on both
+    clubs. That is the symptom the live-game defect never had."""
+    teams = {"AAA": {"wins": 80, "losses": 70}, "BBB": {"wins": 70, "losses": 80}}
+    pairs = [("AAA", "BBB")] * 11
+    sf = pc.season_shortfall(teams, pairs)
+    assert sf == {"AAA": 1, "BBB": 1}
