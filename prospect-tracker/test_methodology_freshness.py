@@ -805,6 +805,23 @@ MODEL_GLOSSARY = {
     # process from the daily WAR cache rather than writing a file, which is why the
     # verdict is provisional and not validated.
     "hof_benchmark_shelf": "internal",
+
+    # --- 2026-09-06 Wave 1, the claim program's two instruments ---
+    #
+    # xfv_program_arm_ledger is a COUNT of what this program has tested. It is
+    # internal because a reader looking up a metric is not the audience: the
+    # audience is whoever reads the NEXT survivor and needs to know it was found
+    # against a 48-arm denominator. If a survivor ever ships, the count travels
+    # with it in that claim's own copy, not as a glossary term.
+    "xfv_program_arm_ledger": "internal",
+    # xfv_disagreement_floor DOES change reader-facing copy on four Source
+    # Comparison surfaces, and it is still internal for the same reason the eFV
+    # entry already covers the head-to-head: the glossary documents the METRIC,
+    # and this lane put an interval around a number the xfv entry already owns.
+    # The qualifier now rides the rendered sentence itself, derived from the
+    # artifact, which is the honest place for it: a share card gets screenshotted
+    # away from any glossary a reader might otherwise consult.
+    "xfv_disagreement_floor": "internal",
 }
 
 

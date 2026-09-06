@@ -1,0 +1,571 @@
+{
+ "generated_at": "2026-09-06T07:41:40+00:00",
+ "produced_by": "tools/efv_arm_ledger.py",
+ "n_arms": 48,
+ "by_lane": {
+  "free _vec keys (D-1)": 26,
+  "tools_json _extras arms (D-2)": 13,
+  "pre-registered pairs": 5,
+  "handedness sidecar": 2,
+  "stolen-base rate": 1,
+  "wRC+ add arm": 1
+ },
+ "by_verdict": {
+  "NO_STORED_VERDICT": 48
+ },
+ "n_without_stored_verdict": 48,
+ "sweeps": [
+  {
+   "lane": "blend-lambda sweep",
+   "artifact": "xfv_driver_lambda_sweep.json",
+   "settings": 12,
+   "generated_at": "2026-08-07T18:23:46Z"
+  },
+  {
+   "lane": "elite-band raise sweep",
+   "artifact": "xfv_driver_elite_band.json",
+   "settings": 8,
+   "generated_at": "2026-08-07T18:21:56Z"
+  }
+ ],
+ "sweeps_are_not_arms": "a sweep over a continuous knob is not the same multiplicity object as an independent feature arm; the two are reported apart and must not be summed",
+ "arms": [
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:bb_rel:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00043,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:bonus_log:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.01127,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:fv_stddev:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00359,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:fv_trend:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.01195,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:il_stints_pre:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.00096,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:iso_rel:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00639,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:n_sources:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.01096,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:peak_obp_rel:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.00218,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:pick_overall:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00171,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:pos_prem:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00173,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:prod_trend:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.0002,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:tool_field:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00206,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:tool_game_pwr:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.0047,
+   "side": "hit",
+   "floor_rho": 0.0194,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:arsenal_depth:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.01476,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:bonus_log:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00347,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:era_rel:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.00218,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:fv_stddev:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.01052,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:fv_trend:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.01028,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:n_sources:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00505,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:pick_overall:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00759,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:pos_prem:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00366,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:prod_trend:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -8e-05,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:starter_shape:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.01319,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:tool_ch:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.00498,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:tool_cmd:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.00288,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "free _vec keys (D-1)",
+   "artifact": "xfv_driver_freekeys.json",
+   "arm": "D-1:tool_sl:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00195,
+   "side": "pit",
+   "floor_rho": 0.0172,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:eta_delta:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00051,
+   "side": "hit",
+   "floor_rho": 0.0161,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:height_in:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00093,
+   "side": "hit",
+   "floor_rho": 0.0161,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:risk_ord:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00317,
+   "side": "hit",
+   "floor_rho": 0.0161,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:tool_gap:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.00087,
+   "side": "hit",
+   "floor_rho": 0.0161,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:weight:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00076,
+   "side": "hit",
+   "floor_rho": 0.0161,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:eta_delta:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00546,
+   "side": "pit",
+   "floor_rho": 0.0142,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:height_in:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.00302,
+   "side": "pit",
+   "floor_rho": 0.0142,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:risk_ord:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.0151,
+   "side": "pit",
+   "floor_rho": 0.0142,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:rpm_fb:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00567,
+   "side": "pit",
+   "floor_rho": 0.0142,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:sits_mid:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00648,
+   "side": "pit",
+   "floor_rho": 0.0142,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:tool_gap:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00012,
+   "side": "pit",
+   "floor_rho": 0.0142,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:tops:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00645,
+   "side": "pit",
+   "floor_rho": 0.0142,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "tools_json _extras arms (D-2)",
+   "artifact": "xfv_driver_extras.json",
+   "arm": "D-2:weight:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.00258,
+   "side": "pit",
+   "floor_rho": 0.0142,
+   "cleared_own_floor": false,
+   "generated_at": null
+  },
+  {
+   "lane": "pre-registered pairs",
+   "artifact": "xfv_driver_gated_pairs.json",
+   "arm": "C3:P1:pwr60_x_contact:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00395,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-08-07T18:19:48Z"
+  },
+  {
+   "lane": "pre-registered pairs",
+   "artifact": "xfv_driver_gated_pairs.json",
+   "arm": "C3:P2:hit60_x_obp:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00151,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-08-07T18:19:48Z"
+  },
+  {
+   "lane": "pre-registered pairs",
+   "artifact": "xfv_driver_gated_pairs.json",
+   "arm": "C3:P3:pwr60_x_hit55:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.00291,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-08-07T18:19:48Z"
+  },
+  {
+   "lane": "pre-registered pairs",
+   "artifact": "xfv_driver_gated_pairs.json",
+   "arm": "C3:P4:fb60_x_k:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00683,
+   "side": "pit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-08-07T18:19:48Z"
+  },
+  {
+   "lane": "pre-registered pairs",
+   "artifact": "xfv_driver_gated_pairs.json",
+   "arm": "C3:P5:fb60_x_cmd55:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.00338,
+   "side": "pit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-08-07T18:19:48Z"
+  },
+  {
+   "lane": "handedness sidecar",
+   "artifact": "xfv_driver_handedness.json",
+   "arm": "C2a:is_lhp:pit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.01958,
+   "side": "pit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-08-07T18:17:26Z"
+  },
+  {
+   "lane": "handedness sidecar",
+   "artifact": "xfv_driver_handedness.json",
+   "arm": "C2b:bats_side:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00068,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-08-07T18:17:26Z"
+  },
+  {
+   "lane": "stolen-base rate",
+   "artifact": "xfv_driver_sb_rate.json",
+   "arm": "C1a:sb_rate_rel:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": 0.00268,
+   "generated_at": "2026-08-07T18:14:09Z"
+  },
+  {
+   "lane": "wRC+ add arm",
+   "artifact": "xfv_driver_wrc.json",
+   "arm": "C6:wrc_rel_add:hit",
+   "verdict": "NO_STORED_VERDICT",
+   "delta_rho": -0.00143,
+   "generated_at": "2026-08-07T18:24:56Z"
+  }
+ ],
+ "sources_missing": [],
+ "expected_spurious_passes_at_nominal_5pct": 2.4,
+ "n_scoreable_against_a_floor": 39,
+ "n_cleared_own_floor": 0,
+ "cleared_own_floor": [],
+ "cleared_is_the_weakest_bar": "`cleared_own_floor` compares the point delta to the lane's recorded rho floor and nothing else. It is not a verdict: a verdict needs the Holm correction across that lane's family, and for anything gated after 2026-09-06 the co-primary contributor-AUC leg as well. It is published because the count of arms that reached even this bar is the honest way to describe the program's yield.",
+ "reading": "48 arms have been adjudicated across 6 lanes, 39 of them scoreable against a recorded floor, and 0 reached that floor on the point estimate. At a nominal 5% per arm, pure noise alone would be expected to produce about 2.4 passes across 48 arms. Fewer arms cleared than noise alone would produce, which says the per-lane floors are, if anything, conservative, and that the program's run of nulls is a real result rather than a reporting artifact. Every lane's own Holm correction is correct and controls the error rate WITHIN that lane; nothing has ever controlled it across lanes, because until now nothing counted them. Read any survivor against this denominator.",
+ "this_is_not_a_correction": "no program-wide Holm is applied and none should be. The arms were gated on different frames, pools and label definitions, so a retrospective joint family would imply a structure that never existed. The count makes the denominator visible; the reserved 2025 fold is what actually buys confirmation.",
+ "reserved_fold": {
+  "cohort": "2025 base year",
+  "status": "not yet resolvable",
+  "enters_at_run_year": 2028,
+  "rule": "held out of every exploratory read so the confirmatory read has rows the exploration never touched. A survivor found and confirmed on the same rows is worth nothing.",
+  "registered_in": "docs/efv-2026-08-19/EPOCH_2026_PREREGISTRATION.md"
+ }
+}

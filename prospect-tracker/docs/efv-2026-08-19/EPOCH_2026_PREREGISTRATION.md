@@ -31,6 +31,54 @@ STATUS: REGISTERED AND DATA-BLOCKED by the calendar. Runs when the 2026 season r
    refit share (0.128 recorded at EFV_GATE_STANDARD power ceiling); verify that figure on the
    new frame rather than reusing it.
 
+## Alpha spending: one confirmatory read, everything else is a receipt
+
+Added 2026-09-06 (A-CLAIM-8). This clause is not a method, it is a count, and it exists
+because the claim frame C1-C4 has already been read three times.
+
+**The reads already taken.** The four cells were read on 2026-08-14 (holistic W0-W4),
+on 2026-08-19 (the conviction program that froze them) and on 2026-09-05 (the design
+audit and the V6 instrument rebuild). Every one of those reads is hereby recorded as
+DESCRIPTIVE. None of them may be cited as a confirmatory test of C1-C4, and no verdict
+in this repo rests on one.
+
+**Why this has to be written down.** A cell tested repeatedly and reported when it looks
+best is not tested at all. Three prior looks at a four-cell family is not a rounding
+error against a nominal 5%: even under Holm within each read, the family-wise error rate
+across independent looks compounds, and nothing in the artifacts distinguished a look
+from a test. The honest repair is not to discard the earlier reads, which were useful
+and are what the current nulls rest on. It is to say plainly which of them was ever
+allowed to decide anything, and the answer is none.
+
+**The one confirmatory read.** Exactly ONE confirmatory read of the C1-C4 family is
+declared, and it happens at the `RESOLVED_THROUGH` advance this document registers, on
+the frame this document freezes, under the Holm correction across the four cells. That
+read adjudicates. It is the only read that does.
+
+**Everything else is a receipt.** Every other measurement of these cells, before or
+after, is a receipt: it may be published, it must be labelled as descriptive, and it may
+not upgrade a claim on the site. That includes every V6 instrument in
+`accuracy.claim_instruments`, which is why that block carries
+`changes_no_published_number: true` and why `CLAIM_V6_SIGNED_ON` is null until the owner
+signs it.
+
+**What this is NOT.** This is not Lan-DeMets and not an alpha-spending function in the
+sequential-trials sense. Nobody is allocating alpha across interim analyses on a
+pre-planned schedule, and pretending otherwise would be a second kind of dishonesty:
+the prior reads were not planned interims, they were exploratory looks that happened.
+The clause does the one thing that is actually available after the fact, which is to
+refuse them the authority to decide.
+
+**The reserved fold (A-CLAIM-15).** The 2025 decision cohort is held out of every
+exploratory read so that the confirmatory read has something the exploration never
+touched. A survivor that was found on the exploratory pool and confirmed on the reserved
+fold is worth something; a survivor found and confirmed on the same rows is worth
+nothing, however many times it is bootstrapped.
+
+**If this clause is violated.** If a fifth read is taken and reported as adjudicating,
+the correct disclosure is that the family's error rate is unknown and the cell is
+UNDECIDED, not that it passed. Retiring the clause requires retiring the claim.
+
 ## Pre-committed interpretations (so the answer cannot be argued after the fact)
 
 - All four cells clear under Holm: the site claim upgrades through the derived three-branch
