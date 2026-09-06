@@ -375,13 +375,23 @@ def _bust_frame(busts: list[dict], years: list[int], raters: list[str],
     """
     rows, receipt = [], {"considered": len(busts), "no_points": 0,
                          "not_graded_by_all_raters": 0, "no_efv": 0,
-                         "out_of_window_years": 0}
+                         "out_of_window_years": 0,
+                         "final_point_preseason": 0, "final_point_in_season": 0}
     for b in busts:
         pts = [pt for pt in (b.get("points") or []) if pt.get("snapshot_date")]
         if not pts:
             receipt["no_points"] += 1
             continue
-        last_year = int(max(pt["snapshot_date"] for pt in pts)[:4])
+        last_point = max(pt["snapshot_date"] for pt in pts)
+        last_year = int(last_point[:4])
+        # WAS THE RATERS' LAST WORD ON HIM A PRESEASON BOARD OR AN IN-SEASON ONE?
+        # Both groups are scored on the same preseason grades, so the grade
+        # vintage is symmetric across raters either way. What differs is how long
+        # the raters held him: an in-season final point means they were still
+        # ranking him in June of the year they gave up. The registered design
+        # asks for the split as an asymmetry control, and it is a control rather
+        # than a headline because neither subgroup is the population.
+        final_preseason = (_WINDOW_START_MMDD <= last_point[4:] < _WINDOW_END_MMDD)
         if last_year not in years:
             receipt["out_of_window_years"] += 1
             continue
@@ -407,7 +417,10 @@ def _bust_frame(busts: list[dict], years: list[int], raters: list[str],
                         "war_per_yr": None, "regular_pace": False,
                         "allstar_pace": False},
             "archetype": _archetype(b),
+            "final_point_in_preseason": final_preseason,
         })
+        receipt["final_point_preseason" if final_preseason
+                else "final_point_in_season"] += 1
     receipt["kept"] = len(rows)
     return rows, receipt
 
@@ -2453,17 +2466,44 @@ def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
             merged["grades"] = {**c["grades"], "xfv": raw}
             combined.append(merged)
         combined.extend(bust_rows)
-        cells = {}
-        for comp in SCORED_SOURCES:
-            usable = [r for r in combined
-                      if r["grades"].get(comp) is not None
-                      and r["grades"].get("xfv") is not None]
-            if len(usable) < _CLAIM_MIN_ROWS:
+
+        def _cells(pool, tag):
+            out = {}
+            for comp in SCORED_SOURCES:
+                usable = [r for r in pool
+                          if r["grades"].get(comp) is not None
+                          and r["grades"].get("xfv") is not None]
+                if len(usable) < _CLAIM_MIN_ROWS:
+                    continue
+                out[comp] = _h2h_claim_cell(
+                    f"{tag}.{comp}", usable, side_of, None,
+                    "no stored V5 floor: this frame did not exist under V5",
+                    None, data_dir, comparator=comp)
+            return out
+
+        cells = _cells(combined, "bust_inclusive")
+
+        # THE ASYMMETRY CONTROL the registration asked for. Same debuted half,
+        # bust half split on whether the raters' LAST word was a preseason board
+        # or an in-season one. Each subgroup is smaller than the headline pool,
+        # so each has a WIDER floor, and a subgroup crossing its floor while the
+        # headline does not would be the interesting outcome rather than a
+        # contradiction. It is published as a control, and no claim is made from
+        # a subgroup alone.
+        debuted_half = [r for r in combined if (r.get("outcome") or {}).get("debuted")]
+        control = {}
+        for tag, want in (("preseason_final", True), ("in_season_final", False)):
+            half = [r for r in bust_rows if r.get("final_point_in_preseason") is want]
+            if len(half) < _CLAIM_MIN_ROWS:
+                control[tag] = {"n_bust_half": len(half),
+                                "status": "too few rows to score"}
                 continue
-            cells[comp] = _h2h_claim_cell(
-                f"bust_inclusive.{comp}", usable, side_of, None,
-                "no stored V5 floor: this frame did not exist under V5",
-                None, data_dir, comparator=comp)
+            control[tag] = {
+                "n_bust_half": len(half),
+                "n_combined": len(debuted_half) + len(half),
+                "cells": _cells(debuted_half + half, f"bust_inclusive.{tag}"),
+            }
+
         bust = {
             "registered_on": CLAIM_REGISTERED_ON,
             "receipt": bust_receipt or {},
@@ -2494,6 +2534,16 @@ def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
                 "every row here scores zero WAR because the screen dropped "
                 "anybody who accumulated any. Exactly one row was dropped on "
                 "that ground and it is a real major-league reliever."),
+            "final_point_vintage_control": control,
+            "what_the_control_asks": (
+                "both subgroups are scored on the same preseason grades, so the "
+                "grade vintage is symmetric across raters in both. What differs "
+                "is how long the raters held the player: an in-season final "
+                "point means they were still ranking him in June of the year "
+                "they gave up on him. If the null holds in both, the headline "
+                "is not an artifact of one group. Each subgroup carries a wider "
+                "floor than the headline pool and no claim is made from one "
+                "alone."),
             "changes_no_published_number": True,
             "blast_radius": (
                 "these rows are scored in their own frame and are never added "

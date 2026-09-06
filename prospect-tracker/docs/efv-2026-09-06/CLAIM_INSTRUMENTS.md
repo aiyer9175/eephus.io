@@ -116,3 +116,35 @@ it. Same code, same method, one extra player, opposite verdicts.
 Nothing in this lane depends on which side that lands, and its own result is a null with
 room to spare. It is recorded here because any future reader comparing two runs of this
 artifact needs to know that the population underneath it is not pinned by git.
+
+## The asymmetry control, added 2026-09-06 after the first build
+
+The registration asked for one thing the first build did not deliver: score the busts "at
+the preseason point of the last list year (or restrict to busts whose final list point is
+itself preseason, 375 of 794, publishing the 419 in-season-final rows as an asymmetry
+control)". The build took the first branch and skipped the control, which left the lane
+unable to say whether its null holds in both subgroups or is carried by one.
+
+Both groups are scored on the same preseason grades, so the grade vintage is symmetric
+across raters in both. What differs is how long the raters held the player: an in-season
+final point means somebody was still ranking him in June of the year they gave up on him.
+
+The split is 374 preseason-final and 413 in-season-final of the 787 kept, against the
+registration's predicted 375 and 419. That is close enough to treat the registration's
+census as confirmed rather than merely restated.
+
+| subgroup | comparator | n | delta | in-run E_cond MDE95 | verdict |
+|---|---|---|---|---|---|
+| preseason final | FanGraphs | 1,186 | +0.02613 | 0.0306 | inside the floor |
+| preseason final | MLB Pipeline | 1,186 | -0.00095 | 0.0255 | inside the floor |
+| in-season final | FanGraphs | 1,225 | +0.01899 | 0.0281 | inside the floor |
+| in-season final | MLB Pipeline | 1,225 | +0.00416 | 0.0240 | inside the floor |
+
+Each subgroup is smaller than the headline pool and therefore carries a wider floor, so a
+subgroup crossing while the headline does not would have been the interesting outcome
+rather than a contradiction. Nothing crosses. The closest cell is FanGraphs on the
+preseason-final subgroup at 0.85 of its own floor, and the eFV-vs-Pipeline sign flips
+between the two subgroups, which is what a null looks like.
+
+No claim is made from a subgroup alone. The control exists so the headline null can be
+said to hold in both halves rather than asserted over their average.

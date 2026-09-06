@@ -219,3 +219,79 @@ def test_the_gate_document_records_the_cohort_drift():
     future reader comparing two runs needs to know that."""
     txt = GATE.read_text(encoding="utf-8").lower()
     assert "gitignored" in txt and "timeseries" in txt
+
+
+# --------------------------------------------------------------------------
+# The asymmetry control the registration asked for
+# --------------------------------------------------------------------------
+
+def test_the_final_point_split_is_recorded_for_every_kept_row(bust):
+    r = bust["receipt"]
+    assert r["final_point_preseason"] + r["final_point_in_season"] == r["kept"], (
+        "a kept bust was not classified as preseason-final or in-season-final, "
+        "so the control is scored on a subset of the pool it claims to split")
+
+
+def test_both_subgroups_are_large_enough_to_score(bust):
+    ctl = bust["final_point_vintage_control"]
+    for tag in ("preseason_final", "in_season_final"):
+        assert ctl[tag].get("cells"), (
+            f"{tag} came back unscored ({ctl[tag].get('status')}). A control "
+            "that cannot be measured is not a control.")
+
+
+def test_each_subgroup_carries_the_same_debuted_half(bust):
+    """The bust half is what varies. If the debuted half moved too, the two
+    cells would differ for a second reason and neither would isolate anything."""
+    ctl = bust["final_point_vintage_control"]
+    pre, ins = ctl["preseason_final"], ctl["in_season_final"]
+    debuted_pre = pre["n_combined"] - pre["n_bust_half"]
+    debuted_ins = ins["n_combined"] - ins["n_bust_half"]
+    assert debuted_pre == debuted_ins == bust["n_debuted_half"]
+
+
+def test_the_two_subgroups_partition_the_bust_half(bust):
+    ctl = bust["final_point_vintage_control"]
+    total = (ctl["preseason_final"]["n_bust_half"]
+             + ctl["in_season_final"]["n_bust_half"])
+    assert total == bust["n_bust_half"], (
+        "the subgroups do not add up to the pool, so a row is either counted "
+        "twice or dropped")
+
+
+def test_the_null_holds_in_both_subgroups(bust):
+    """The point of the control. A subgroup crossing its own floor while the
+    headline does not would be a real finding, and it would have to be confirmed
+    before anything was said."""
+    ctl = bust["final_point_vintage_control"]
+    for tag in ("preseason_final", "in_season_final"):
+        for comp, cell in ctl[tag]["cells"].items():
+            d = abs(cell["point_delta"])
+            m = (cell["floor_E_cond_in_run"] or {}).get("mde95")
+            assert m is not None, f"{tag}/{comp}: no floor was derived"
+            assert d <= m, (
+                f"{tag} vs {comp} CLEARS its floor ({d:.5f} against {m}) while "
+                "the headline pool does not. That is a real result and it "
+                "contradicts the registration; confirm it before anything is "
+                "claimed from it.")
+
+
+def test_a_subgroup_floor_is_wider_than_the_headline_floor(bust):
+    """Arithmetic sanity on the control. Each subgroup is a strict subset of the
+    pool, so it cannot resolve a SMALLER effect than the whole. A subgroup floor
+    that came back tighter would mean the floor is not being derived on the rows
+    it claims."""
+    ctl = bust["final_point_vintage_control"]
+    for tag in ("preseason_final", "in_season_final"):
+        for comp, cell in ctl[tag]["cells"].items():
+            sub = (cell["floor_E_cond_in_run"] or {}).get("mde95")
+            head = (bust["cells"][comp]["floor_E_cond_in_run"] or {}).get("mde95")
+            assert sub >= head, (
+                f"{tag}/{comp} floor {sub} is tighter than the headline {head} "
+                "on strictly fewer rows")
+
+
+def test_the_control_says_what_it_is_for(bust):
+    txt = bust["what_the_control_asks"].lower()
+    assert "same preseason grades" in txt
+    assert "no claim is made from one" in txt
