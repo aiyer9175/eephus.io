@@ -4199,6 +4199,32 @@
    "owner": "In-Game Management",
    "last_validated": "2026-09-06",
    "notes": "2026-09-06. 13,971 priced attempts over 2018-2026. THE FINDING: the league steals second at a 75.00% success rate against a swing-weighted break-even of 75.03%, so eight seasons of decision value sum to -0.19 wins. Managers collectively run the stolen base at almost exactly the point of indifference. Stealing third is worth +4.31 wins (76.1% against 72.8%); stealing home is worth -2.33 (25.8% against 55.8%). TWO-OUT ATTEMPTS ARE EXCLUDED, 9,328 of them, about 40%: with two down a caught stealing ends the inning, so the alternative is priced by a different estimator from the hold, and that mismatch valued up to 19.2% of attempts so that being caught stealing HELPED. AN OPEN QUESTION WAS CLOSED BY THE SAME EXCLUSION: failed attempts appeared to carry 1.5 times the win-probability swing of successful ones, which invited a reading about defences bearing down; it was mechanical, and with the inning-ending attempts removed the ratio is 1.00. PROVISIONAL AND NOT ATTRIBUTED: no number here is assigned to a manager, because the manager entity and the gate battery (split-half stability, placebo, persistence, captured share) have not been built."
+  },
+  {
+   "model_id": "hof_ballot_panel",
+   "surface": "NOTHING SERVED. data/hof_ballots.json and data/hof_public_benchmarks.json, built offline by tools/hof_ballot_ingest.py. The /hof/ page does not exist.",
+   "predicts": "nothing. It is the LABEL SOURCE: every candidate, every year, 1936 to the present, with vote counts and shares for the people who were NOT elected, which is most of the label's information.",
+   "champion": "Baseball-Reference election pages for the full writers' ballot, joined to StatsAPI /awards/MLBHOF/recipients for inductees by any route. Routes are DERIVED from the ballot tables, never from StatsAPI's notes field.",
+   "baseline": "descriptive by design: an ingest, not an estimator. Its own correctness bar is the join rate and the route resolution rate, both published.",
+   "metric": "election years covered, ballot rows, share carrying a Baseball-Reference id, and the share of inductees whose route resolved.",
+   "eval_artifact": "data/hof_ballots.json",
+   "verdict": "provisional",
+   "owner": "Hall of Fame",
+   "last_validated": "2026-09-06",
+   "notes": "2026-09-06 (H-DATA-2). 4,440 ballot rows over 86 election years, 96.6% carrying a bbref id; five years carried no election and are listed apart from failures so nobody tries to fill them. THE ROUTE SPLIT WAS 342-TO-12 WRONG BEFORE IT WAS CHECKED: StatsAPI's notes field is EMPTY on 333 of 354 recipients and several of the 21 that carry one say things like 'No cap logo on plaque', so defaulting an empty note to the writers reported twelve committee inductees when the committees have elected more players than the writers. Routes now come from the ballot tables, with a committee-only adjacent-year rule because the era committees vote in December for the following summer's class; 80.2% resolved, and the remainder are the 1930s-40s committee era and the 2006 Negro Leagues election, none of whom appeared on a player ballot. FOUR PARSER DEFECTS, each found against the live page: a dotted player id (sabatc.01), a non-breaking space inside every marked name, an enshrinement marker that is a perfect outcome leak and is now named bref_hof_marker_as_of_scrape so nobody uses it as a feature, and a latin-1 double-decode that silently broke the join for every accented player. Baseball-Reference's own HoF Monitor, Standards and JAWS columns are captured in the same pass as the H-DATA-4 answer key."
+  },
+  {
+   "model_id": "hof_label_ledger",
+   "surface": "NOTHING SERVED. hof_data.label_bbwaa / label_any / label_frame / label_sensitivity.",
+   "predicts": "nothing. It RESOLVES the two Hall of Fame labels: elected by the writers inside the player's own ballot window, and inducted by any route (the primary, per owner decision 12).",
+   "champion": "three resolution routes for the writers' label (elected, fell under five percent, exhausted the ballot) and a stated committee horizon for the any-route label.",
+   "baseline": "descriptive by design: a label definition, not an estimator. The thing that can be wrong is the CENSORING, and that is what the sensitivity table and the invariant test are for.",
+   "metric": "positives, negatives and censored rows per label, and the same at committee horizons of 15, 20, 25, 30 and 40 years.",
+   "eval_artifact": "data/hof_ballots.json",
+   "verdict": "provisional",
+   "owner": "Hall of Fame",
+   "last_validated": "2026-09-06",
+   "notes": "2026-09-06 (H-PRED-1). A CENSORED PLAYER NEVER CARRIES A ZERO, asserted by assert_no_censored_zero over the real frame rather than by prose: a zero there says the voters decided no about somebody they have not finished deciding on, it biases every recent cohort toward zero, it does it hardest to the best candidates, and it is silent. A player who NEVER APPEARED on a ballot is also censored, not zero, because the screening committee's decision not to list him is a different event from the writers voting him down and this panel cannot tell them apart. THE ONE ARBITRARY CONSTANT is COMMITTEE_HORIZON_YEARS, default 25: the era committees never formally close and have elected players fifty years after retirement, so on a strict reading no non-inductee is ever a resolved zero and the negative class is empty. The horizon is marked an assumption where it is defined and label_sensitivity() publishes what 15, 20, 30 and 40 would do instead."
   }
  ],
  "problems": []

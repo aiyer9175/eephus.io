@@ -32,11 +32,14 @@ from __future__ import annotations
 
 import decimal
 import inspect
+from pathlib import Path
 
 import pytest
 
 import hof_data
 import war_source
+
+ROOT = Path(hof_data.__file__).resolve().parent
 
 
 # ---------------------------------------------------------------------------
@@ -215,13 +218,31 @@ def test_side_is_validated():
 # ---------------------------------------------------------------------------
 
 def test_eligible_universe_count(career):
-    """TRIPWIRE. 3,620 measured 2026-09-06 at as_of_year 2026: 10 or more
-    seasons with a WAR row and a last season at or before 2021. If this moves,
-    B-Ref revised history (or the parquet was rebuilt) and every class count,
-    quantile and line in this module needs re-measuring before it is quoted."""
+    """TRIPWIRE. 3,620 eligible players measured 2026-09-06 at as_of_year 2026:
+    10 or more seasons with a WAR row and a last season at or before 2021. If
+    THIS moves, B-Ref revised history and every class count, quantile and line
+    in this module needs re-measuring before it is quoted.
+
+    THE TOTAL POPULATION IS A BAND, NOT A PIN, and that distinction was learned
+    the hard way. It was pinned at 23,786 and went red at 23,787 within hours,
+    because .cache/war_daily is a LIVE cache: it refreshed mid-session and one
+    more player appeared in it. That is the cache working, not history being
+    revised. The eligible count did not move, which is the point: eligibility
+    requires a last season at or before 2021, so an in-season debut cannot enter
+    it, and nothing downstream depends on the raw row count.
+
+    A pinned total would go red on any day the cache refreshes during a season,
+    which trains a reader to ignore the tripwire that DOES matter. The band is
+    wide enough to absorb a season of debuts and narrow enough that a rebuilt or
+    truncated parquet still trips it.
+    """
     E = career[career["eligible"]]
     assert len(E) == 3620
-    assert len(career) == 23786
+    assert 23_700 <= len(career) <= 24_400, (
+        f"the career frame holds {len(career)} players, outside the band "
+        "recorded on 2026-09-06 (23,786 and growing with in-season debuts). "
+        "That is too big a move for the daily cache and suggests the parquet "
+        "was rebuilt or truncated.")
 
 
 def test_eligibility_rules_hold(career):
@@ -348,15 +369,28 @@ def test_relievers_split_at_the_stated_share(career):
 # 5. The label contract.
 # ---------------------------------------------------------------------------
 
-def test_labels_refuse_rather_than_inventing_a_hall():
-    for fn, arg in ((hof_data.label_bbwaa, "ruthba01"),
-                    (hof_data.label_any, "ruthba01")):
-        with pytest.raises(hof_data.BallotSourceMissing) as exc:
-            fn(arg)
-        assert hof_data.BALLOT_SOURCE in str(exc.value)
-        assert "H-DATA-2" in str(exc.value)
-    with pytest.raises(hof_data.BallotSourceMissing):
-        hof_data.label_frame()
+def test_labels_refuse_rather_than_inventing_a_hall(tmp_path):
+    """THE PANEL NOW EXISTS (H-DATA-2 shipped 2026-09-06), so the labels resolve
+    instead of raising. The property that still has to hold, and the reason this
+    test was written, is that they refuse when the panel is ABSENT rather than
+    falling back to a hand-typed membership list. A list typed from memory would
+    be an unversioned answer key silently training the merit model, and it would
+    look exactly like a working label."""
+    missing = tmp_path / "no_such_panel.json"
+    with pytest.raises(hof_data.BallotSourceMissing) as exc:
+        hof_data._load_ballots(missing)
+    assert hof_data.BALLOT_SOURCE in str(exc.value)
+    assert "H-DATA-2" in str(exc.value)
+    assert "hand-typed" in str(exc.value), (
+        "the refusal no longer says WHY a membership list is not an acceptable "
+        "substitute, which is the whole point of refusing")
+
+
+def test_the_labels_resolve_now_that_the_panel_exists():
+    if not (ROOT / "data" / "hof_ballots.json").exists():
+        pytest.skip("the ballot panel has not been built")
+    assert hof_data.label_bbwaa("ruthba01", as_of_year=2026) == 1
+    assert hof_data.label_any("ruthba01", as_of_year=2026) == 1
 
 
 def test_ballot_source_missing_is_a_not_implemented_error():

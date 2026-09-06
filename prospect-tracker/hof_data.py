@@ -130,11 +130,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Sequence
 
-#: The repo root, for the one artifact this module writes.
-ROOT = Path(__file__).resolve().parent
-
 import numpy as np
 import pandas as pd
+
+#: The repo root, for the artifacts this module writes and the ballot panel it
+#: reads.
+ROOT = Path(__file__).resolve().parent
 
 
 def round_half_up(x, ndigits: int = 1) -> float:
@@ -965,39 +966,246 @@ def hall_line(cls: str, *, n_enshrined=None, offline: bool = False,
 # assert_no_censored_zero and by test_hof_data.
 
 
-def label_bbwaa(player_id: str, *, as_of_year=None, ballots=None):
+#: How many years the writers' ballot runs. Ten since the 2014 rule change,
+#: fifteen before it. This is a FALLBACK ONLY: `bbwaa_window_close_year` infers
+#: the window from the panel itself (a candidate appears every year until he is
+#: resolved, so vanishing from the ballot IS the resolution), and the counts here
+#: are consulted only when the panel ends mid-window and that inference cannot be
+#: made. Counting appearances against a rule was the first implementation and it
+#: was wrong: the 2014 change shortened the window for players already on the
+#: ballot too, so a fifteen-year count left Barry Bonds censored.
+BBWAA_WINDOW_YEARS_MODERN = 10
+BBWAA_WINDOW_YEARS_LEGACY = 15
+BBWAA_WINDOW_RULE_CHANGE_YEAR = 2015
+
+#: THE COMMITTEE HORIZON, and it is a MODELLING ASSUMPTION rather than a fact.
+#:
+#: The writers' ballot closes. The era and veterans committees never formally do:
+#: they have elected players fifty and sixty years after retirement, and on a
+#: strict reading no non-inducted player is EVER a resolved zero for the
+#: any-route label. A strict reading also makes the label useless, because the
+#: negative class would be empty.
+#:
+#: So a player is scored zero for L_any only once this many years have passed
+#: since his writers' window closed, and censored before that. The default is 25.
+#: It is arbitrary, it is stated, and `label_sensitivity()` publishes how many
+#: labels flip at 15, 20, 25, 30 and 40 so a reader can see what it costs.
+COMMITTEE_HORIZON_YEARS = 25
+
+
+def _load_ballots(path=None) -> dict:
+    """The ballot panel, indexed for lookup. Raises BallotSourceMissing when the
+    artifact is absent, which is still the honest answer on a fresh checkout."""
+    p = Path(path or (ROOT / BALLOT_SOURCE))
+    if not p.exists():
+        raise BallotSourceMissing(
+            f"the ballot panel {BALLOT_SOURCE} does not exist. Build it with "
+            "`python tools/hof_ballot_ingest.py` (plan lane H-DATA-2). It is "
+            "NOT optional and must not be replaced by a hand-typed membership "
+            "list: that would be an unversioned answer key silently training "
+            "the merit model.")
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    by_pid: dict = {}
+    for r in doc.get("rows") or []:
+        pid = r.get("player_id")
+        if pid:
+            by_pid.setdefault(pid, []).append(r)
+    inducted: dict = {}
+    for r in doc.get("statsapi_inductees") or []:
+        pid = r.get("player_id")
+        if pid:
+            inducted[pid] = r
+    # A player elected by the writers appears in the ballot table with
+    # elected=True; that is an induction too, and StatsAPI's ids do not resolve
+    # for everyone, so both sources feed the any-route ledger.
+    for pid, rows in by_pid.items():
+        if pid in inducted:
+            continue
+        won = [r for r in rows if r.get("elected")]
+        if won:
+            inducted[pid] = {"player_id": pid, "route": "BBWAA",
+                             "election_year": min(r["election_year"] for r in won),
+                             "route_source": "ballot table, elected"}
+    return {"by_pid": by_pid, "inducted": inducted, "doc": doc}
+
+
+_BALLOT_CACHE: dict = {}
+
+
+def ballots(path=None) -> dict:
+    key = str(path or "")
+    if key not in _BALLOT_CACHE:
+        _BALLOT_CACHE[key] = _load_ballots(path)
+    return _BALLOT_CACHE[key]
+
+
+def _window_years(first_year: int) -> int:
+    return (BBWAA_WINDOW_YEARS_MODERN
+            if int(first_year) >= BBWAA_WINDOW_RULE_CHANGE_YEAR
+            else BBWAA_WINDOW_YEARS_LEGACY)
+
+
+def _panel_last_election(b: dict) -> int | None:
+    """The most recent BBWAA election year the panel covers."""
+    yrs = [r["election_year"] for rows in b["by_pid"].values() for r in rows
+           if r["route"] == "BBWAA"]
+    return max(yrs) if yrs else None
+
+
+def bbwaa_window_close_year(player_id: str, *, ballots_=None) -> int | None:
+    """The year the writers' window closed for this player, or None if it is
+    still open or he never appeared.
+
+    THE WINDOW IS INFERRED FROM THE PANEL, NOT FROM A RULE, and the first
+    version got that wrong. It counted appearances against a fifteen-year window
+    for anybody whose first ballot predated the 2015 rule change, which is not
+    what happened: the change shortened the window for players ALREADY on the
+    ballot too, with three named exceptions. Barry Bonds, who appeared ten times
+    from 2013 to 2022 and was never elected, came back CENSORED under that rule
+    when he is the most-discussed resolved non-inductee in the game.
+
+    The panel already knows the answer without any rule at all. A candidate
+    stays on the ballot every year until he is resolved, so a player whose LAST
+    appearance is before the panel's most recent election, and who was neither
+    elected nor recorded as falling under five percent, has left the ballot. The
+    year he left it is the year his window closed.
+    """
+    b = ballots_ or ballots()
+    rows = [r for r in b["by_pid"].get(player_id, []) if r["route"] == "BBWAA"]
+    if not rows:
+        return None
+    if any(r.get("elected") for r in rows):
+        return min(r["election_year"] for r in rows if r.get("elected"))
+    if any(r.get("dropped_off") for r in rows):
+        return min(r["election_year"] for r in rows if r.get("dropped_off"))
+    last = max(r["election_year"] for r in rows)
+    latest = _panel_last_election(b)
+    if latest is not None and last < latest:
+        return last
+    # He is on the most recent ballot the panel covers, so the window is open.
+    # The appearance count is kept as a second check for a panel that ends
+    # mid-window, where "did not appear last year" cannot be observed.
+    first = min(r["election_year"] for r in rows)
+    nums = [r.get("ballot_number") for r in rows if r.get("ballot_number")]
+    if nums and max(nums) >= _window_years(first):
+        return last
+    return None
+
+
+def label_bbwaa(player_id: str, *, as_of_year=None, ballots_=None,
+                ballots=None):
     """L_bbwaa for one bbref player_ID. Returns 1, 0 or CENSORED (None).
 
-    Raises BallotSourceMissing until the ballot source exists. It does not fall
-    back to a hand-typed list of Hall of Famers, and it must not be made to: a
-    membership list typed from memory would be an unversioned answer key
-    silently training the merit model."""
-    raise BallotSourceMissing(
-        "L_bbwaa needs the ballot panel and there is no ballot source in this "
-        f"repo. Missing artifact: {BALLOT_SOURCE} (plan lane H-DATA-2), which "
-        f"must carry the fields {BALLOT_SOURCE_FIELDS}. Upstreams named by "
-        "the plan: StatsAPI /awards/MLBHOF/recipients for inductees, and the "
-        "Baseball-Reference /awards/hof_<year>.shtml pages for the vote "
-        "shares of everybody who was NOT elected. Neither has been ingested.")
+    RESOLVED BY THREE ROUTES, and only these: elected, fell under five percent,
+    or exhausted the ballot. A player still inside his window is CENSORED and
+    NEVER zero, because a zero there says the writers decided no about somebody
+    they have not finished deciding on, and it does that hardest to the best
+    recent candidates.
+
+    A player who NEVER APPEARED on a ballot is also censored, not zero. The
+    screening committee's decision not to list somebody is a different event
+    from the writers voting him down, this panel cannot tell one from the other,
+    and treating absence as rejection would silently label thousands of
+    marginal players as considered-and-refused.
+    """
+    b = ballots_ or (ballots if isinstance(ballots, dict) else None) or globals()["ballots"]()
+    year = int(as_of_year or current_year())
+    rows = [r for r in b["by_pid"].get(player_id, [])
+            if r["route"] == "BBWAA" and r["election_year"] <= year]
+    if not rows:
+        return CENSORED
+    if any(r.get("elected") for r in rows):
+        return 1
+    close = bbwaa_window_close_year(player_id, ballots_=b)
+    if close is not None and close <= year:
+        return 0
+    return CENSORED
 
 
-def label_any(player_id: str, *, as_of_year=None, ballots=None):
+def label_any(player_id: str, *, as_of_year=None, ballots_=None, ballots=None,
+              horizon_years: int | None = None):
     """L_any for one bbref player_ID. Returns 1, 0 or CENSORED (None).
 
-    Raises BallotSourceMissing until the ballot source exists."""
-    raise BallotSourceMissing(
-        "L_any needs the induction ledger across every route and there is no "
-        f"ballot source in this repo. Missing artifact: {BALLOT_SOURCE} (plan "
-        "lane H-DATA-2), specifically the 'route' field, without which a "
-        "veterans-committee induction cannot be told from a BBWAA one.")
+    Induction by ANY route is the primary label (owner decision 12, 2026-09-06),
+    because it matches who is actually in the Hall, which is the honest target
+    for a question phrased as "who belongs".
+
+    THE ZERO IS THE HARD PART. The committees never formally close, so a strict
+    reading censors every non-inductee forever and leaves the negative class
+    empty. `COMMITTEE_HORIZON_YEARS` is the stated assumption that closes it:
+    zero only once that many years have passed since the writers' window shut.
+    `label_sensitivity()` publishes what other horizons would do.
+    """
+    b = ballots_ or (ballots if isinstance(ballots, dict) else None) or globals()["ballots"]()
+    year = int(as_of_year or current_year())
+    h = COMMITTEE_HORIZON_YEARS if horizon_years is None else int(horizon_years)
+    ind = b["inducted"].get(player_id)
+    if ind and int(ind.get("election_year") or 9999) <= year:
+        return 1
+    close = bbwaa_window_close_year(player_id, ballots_=b)
+    if close is None:
+        return CENSORED
+    return 0 if (year - close) >= h else CENSORED
 
 
-def label_frame(*, offline: bool = False, as_of_year=None):
-    """The eligible universe joined to both labels. Raises."""
-    raise BallotSourceMissing(
-        f"label_frame needs {BALLOT_SOURCE} (plan lane H-DATA-2). "
-        "eligible_universe() runs today and returns the feature half; the "
-        "label half does not exist.")
+def label_frame(*, offline: bool = False, as_of_year=None, ballots_=None):
+    """The eligible universe joined to both labels.
+
+    Returns the feature half with `label_bbwaa`, `label_any`, `censored_bbwaa`
+    and `censored_any` columns. A censored row carries None, never 0, and
+    `assert_no_censored_zero` is run over the result before it is returned.
+    """
+    b = ballots_ or ballots()
+    uni = eligible_universe(offline=offline, as_of_year=as_of_year)
+    yr = int(as_of_year or current_year())
+    lb = [label_bbwaa(pid, as_of_year=yr, ballots_=b) for pid in uni["player_ID"]]
+    la = [label_any(pid, as_of_year=yr, ballots_=b) for pid in uni["player_ID"]]
+    out = uni.copy()
+    out["label_bbwaa"] = lb
+    out["label_any"] = la
+    out["censored_bbwaa"] = [v is CENSORED for v in lb]
+    out["censored_any"] = [v is CENSORED for v in la]
+    assert_no_censored_zero(
+        [{"player_id": pid, "label": v, "censored": c}
+         for pid, v, c in zip(out["player_ID"], lb, out["censored_bbwaa"])])
+    assert_no_censored_zero(
+        [{"player_id": pid, "label": v, "censored": c}
+         for pid, v, c in zip(out["player_ID"], la, out["censored_any"])])
+    return out
+
+
+def label_sensitivity(*, offline: bool = False, as_of_year=None,
+                      horizons=(15, 20, 25, 30, 40)) -> dict:
+    """What the committee horizon costs, published rather than argued.
+
+    The horizon is the one arbitrary constant in the label. This reports how
+    many players are positive, negative and censored at each candidate value, so
+    a reader can see whether a result depends on it.
+    """
+    b = ballots()
+    uni = eligible_universe(offline=offline, as_of_year=as_of_year)
+    yr = int(as_of_year or current_year())
+    out = {}
+    for h in horizons:
+        vals = [label_any(pid, as_of_year=yr, ballots_=b, horizon_years=h)
+                for pid in uni["player_ID"]]
+        out[str(h)] = {
+            "positive": sum(1 for v in vals if v == 1),
+            "negative": sum(1 for v in vals if v == 0),
+            "censored": sum(1 for v in vals if v is CENSORED),
+        }
+    return {
+        "as_of_year": yr,
+        "default_horizon_years": COMMITTEE_HORIZON_YEARS,
+        "by_horizon": out,
+        "what_the_horizon_is": (
+            "a MODELLING ASSUMPTION, not a fact. The writers' ballot closes; the "
+            "era and veterans committees never formally do, and they have "
+            "elected players fifty years after retirement. On a strict reading "
+            "no non-inducted player is ever a resolved zero for the any-route "
+            "label and the negative class is empty. The horizon closes it, and "
+            "this table is what it costs."),
+    }
 
 
 def assert_no_censored_zero(rows: Iterable) -> int:

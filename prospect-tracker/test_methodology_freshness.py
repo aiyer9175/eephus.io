@@ -844,6 +844,19 @@ MODEL_GLOSSARY = {
     # all.
     "win_expectancy_state": "internal",
     "mwar_running_game": "internal",
+
+    # --- 2026-09-06: the Hall of Fame data shelf ---
+    #
+    # Internal for now and NOT permanently. Neither is a metric a reader looks
+    # up: one is an ingest and the other is a label definition. But the label's
+    # censoring rule IS something a reader of the eventual /hof/ page will need,
+    # because "we do not score a player the voters have not finished deciding
+    # on" is the difference between an honest Hall of Fame model and one that
+    # quietly says every recent candidate is a no. When that page ships, the
+    # rule ships with it in the page's own copy, and if a named metric comes out
+    # of the predictor it gets a glossary entry and these lines move.
+    "hof_ballot_panel": "internal",
+    "hof_label_ledger": "internal",
 }
 
 

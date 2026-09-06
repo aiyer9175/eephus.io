@@ -102,6 +102,141 @@ and the skills it used.
 
 ---
 
+## Part 0b. EXECUTION RECORD, 2026-09-06
+
+Everything below is committed. Read this before starting any lane: several items the
+plan lists as open are now closed, two of the plan's own stated figures were measured
+and refuted, and one engine was rebuilt three times before it was fit to use.
+
+### Wave 0, closed
+
+**Registry and hygiene.** 292 rows, `validate()` clean, every new row carrying a
+documentation decision. Five rows had prose in `eval_artifact` where a path belongs; a
+named-but-absent artifact now demotes the row and says so rather than validating.
+
+**The credit ledger** (`betting_credits.py`). Four jobs bill the same 500-credit month
+and until now none could see the others, so whichever ran first could exhaust the tier
+while every later job collected provider errors on a budget the code believed was fine.
+Every paid call site checks a shared ledger BEFORE its request, which is the only place
+it can be, since `betting_ingest.run()` fetches before it writes. The provider's own
+meter overrides our count wherever it is lower: on first run it reported 491 remaining
+against our 500, the nine credits spent before the ledger existed. Failed requests are
+booked too, because the provider bills on the request.
+
+**The capture hour** (B-CADENCE). 11 of 22 cached snapshots landed after their own
+slate's first pitch. `run_monthly.py --odds-open` moves the same one paid call to 13:10
+UTC; the nightly step demotes to a guarded fallback on the same allocation. No new
+spend. The crontab example gains the line, loses its description of the removed card
+job, and gains the ledger's selfcheck.
+
+**The play corpus.** Full build over all 19,132 cached games: 1,448,967 plays, base
+occupancy agreement 1.000000, identity 0.999984, zero runs and outs mismatches. Excluded
+from `prune_cache.SAFE_CACHES` in the same commit that creates it.
+
+**The driver lab's AUC leg.** A missing contributor-AUC floor no longer falls through to
+PASS, and no verdict can be stored without passing through the jointly sized Holm family.
+Neither defect was banked in a shipped artifact. Floors regenerated: contributor AUC
+0.0091 hit, 0.0068 pit; the rho floors moved DOWN (0.0194 to 0.0170 hit, 0.0172 to 0.0121
+pit), which is NOT a licence to re-read old arms, each of which is scored against the
+floor recorded in its own artifact.
+
+### The eFV claim lanes, closed
+
+**A-CLAIM-1 and A-CLAIM-2 were already shipped** and their verdict is an honest null: the
+vintage-matched block leg reads eFV +0.0072 against a floor of 0.0216, about a third of
+what would be resolvable. The all-vintages leg clears at 1.43x its floor and is NOT a
+fair comparison, because eFV holds a timing edge there.
+
+**A-CLAIM-7, the tilt census.** THE ORDER IS FINE: the board's sort key inverts against
+the evaluated object on 3.3% of untied hitter pairs and 3.9% of pitcher pairs, rho 0.9876
+and 0.9855, reproducing the figures this plan projected. THE FLAGSHIP MAP IS EXACTLY
+MONOTONE, zero inversions over about 880,000 untied pairs. THE PROVISIONAL MAP IS NOT:
+served to 51% of hitters and 58% of pitchers, it inverts against the model's own
+predicted WAR on 25.4% and 48.8% of untied pairs, and half is what independence looks
+like. Every one of those rows carries consensus FV exactly 35.0, so this basis IS the
+no-published-opinion population A-CLAIM-12 counts, found twice by two lanes that were not
+looking for each other. Not filed as a defect: a player with no professional record is
+graded off a prior by design. It had simply never been measured, and it bounds what the
+head-to-head covers.
+
+**A-CLAIM-8, the alpha-spending clause.** The C1-C4 family has been read three times. All
+three are recorded as DESCRIPTIVE, one confirmatory read is declared at the registered
+advance, and the clause states plainly that it is NOT Lan-DeMets, because those were
+exploratory looks that happened rather than planned interims.
+
+**A-CLAIM-10, and the site was publishing a coin flip in bold.** "eFV was closer on 55% of
+the biggest disagreements" ran in four places as a bare percentage. Measured: 54.8% over
+283 disagreements, 95% CI 49.1% to 60.8%, one-sided p 0.058. The interval contains the
+50% coin, which is the null by construction. The scoreboard artifact recorded
+`win: true` for it. All four surfaces now read one shared helper, the qualifier is
+DERIVED and disappears by itself if the interval ever clears, and the scoreboard's win
+flag requires the interval. A second defect found in the same lane: the percentile helper
+gave TIED grades different percentiles by list order, which matters because 38% of the
+board sits on the FV 35 anchor.
+
+**A-CLAIM-12, the served population statement.** 38.6% of the live board rests on NO
+published opinion. The scored rows are the opposite, 98.5% multi-source and 0%
+placeholder, because a row reaches the common set only if every rater graded it. So the
+accuracy claim is internally clean AND does not describe most of the board. The sentence
+and its reading are derived from the counts and rendered in the Source Comparison hero.
+
+**A-CLAIM-14 RETRACTS ITS OWN EXAMPLE.** This plan asserted the ESPN x Pipeline 2026
+overlap was 11 rows and could never clear the 100-row minimum. Measured: 102 rows, which
+clears it; the pair is blocked by the CANDIDATE_YEARS tuple and would resolve at the 2029
+run if extended. Seven pairs ARE blocked on overlap permanently; five only by the tuple.
+
+**A-CLAIM-15, the arm ledger.** 48 arms across 6 lanes, 39 scoreable against a recorded
+floor, and NONE reached it, against about 2.4 expected from noise alone. That
+independently reproduces the "39 gated arms, zero survivors" figure from 2026-08-14 and
+says the per-lane floors are, if anything, conservative. No retrospective correction is
+applied and none should be.
+
+### In-Game Management, first family shipped, no page
+
+**The engine took three designs.** Raw cell means: monotone in the base state 57% of the
+time, pure estimation noise at 318 observations per cell. A smooth model with a
+bottom-half term: monotone in the base state and discontinuous across the half-inning
+boundary, which is what a third out crosses, pricing 19.2% of steal attempts so that
+being CAUGHT STEALING raised the batting team's win probability. What shipped: the
+batting team's frame with base-out entering only through run expectancy, plus a MEASURED
+half-inning-start table for the boundary. Brier 0.1559 against a 0.2498 base rate, ECE
+0.0066; MLB's own live number scores 0.1577 on the same plays.
+
+**The finding.** The league steals second at a 75.00% success rate against a
+swing-weighted break-even of 75.03%. Eight seasons and 11,977 attempts sum to -0.19 wins.
+Managers collectively run the stolen base at almost exactly the point of indifference.
+Stealing third is worth +4.31 wins, stealing home -2.33.
+
+**Two-out attempts are excluded**, 40% of the sample, because the hold and the alternative
+would come from different estimators. The exclusion also CLOSED an open question: failed
+attempts appeared to carry 1.5 times the swing of successful ones, inviting a story about
+defences bearing down. It was mechanical, and the ratio is 1.00 once inning-ending
+attempts are removed.
+
+### Hall of Fame, the data shelf
+
+**H-DATA-2 shipped**, which lifts `hof_data.py`'s refusal to invent a label. 4,440 ballot
+rows over 86 election years, 96.6% carrying a bbref id, plus Baseball-Reference's own
+Monitor, Standards and JAWS columns as the H-DATA-4 answer key. Four parser defects, each
+found against the live page, including a latin-1 double-decode that silently broke the
+join for every accented player.
+
+**The route split was 342-to-12 wrong before it was checked.** StatsAPI's `notes` is empty
+on 333 of 354 recipients, so defaulting an empty note to the writers reported twelve
+committee inductees when the committees have elected more players than the writers.
+Routes are derived from the ballot tables instead, with a committee-only adjacent-year
+rule because the era committees vote in December for the following summer's class. 80.2%
+resolved; the rest are the 1930s-40s committee era and the 2006 Negro Leagues election.
+
+### What did NOT happen, and why
+
+No page shipped for either new module. Both are gated on their first family passing its
+own battery, and neither battery has run. No MWAR number is attributed to a manager,
+because the manager entity does not exist. The futures section, the per-market betting
+sub-models beyond the props PMF and sub-ledgers, the new MLB Stats metrics, and the FA,
+Projections and Trade Machine lanes are untouched. A-CLAIM-3 through A-CLAIM-6,
+A-CLAIM-9 and A-CLAIM-13 are untouched.
+
 ## Part 1. eFV: the conviction program
 
 Sources: the efv-conviction-audit workflow (10 census lanes, 117 of 131 proposals
