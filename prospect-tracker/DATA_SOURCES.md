@@ -99,7 +99,8 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4g. Hitter Leaderboards (hitter_leaderboards.json) | hitter_history.json, hitter_leaderboards.json, leverage_leaderboards.json |
 | 6b4h. Leverage Leaderboards (leverage_leaderboards.json) | leverage_history.json, leverage_leaderboards.json |
 | 6b5. Alchemy Lab (pal.json) | arbitration.json, pal.json |
-| 6b7. Arbitration Predictor (arbitration.json) | arbitration.json |
+| 6b7. Arbitration Predictor (arbitration.json) | arbitration.json, hof_board.json |
+| 6b7b. Hall of Fame board (hof_board.json) | hof_board.json |
 | 6b6. Fantasy Tools (fantasy.json) | fantasy.json |
 | 6f. Betting model context refit | - |
 | 6c. Organization Tendencies (farm-detail Tendencies tab) (no _step wrapper) | - |

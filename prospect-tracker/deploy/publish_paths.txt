@@ -42,6 +42,7 @@ fantasy
 forums
 glossary
 history
+hof
 mlbstats
 models
 news

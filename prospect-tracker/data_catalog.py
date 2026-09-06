@@ -324,6 +324,18 @@ ARTIFACTS = (
                  "zero by construction and the other does not."),
     },
     {
+        "file": "hof_board.json", "group": "mlb",
+        "title": "Hall of Fame board",
+        "what": ("Career WAR, WAR7, JAWS, WAR ink and the public HoF Monitor and "
+                 "Standards columns for every ten-season player, in three bands, "
+                 "with the induction ledger joined in three states."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_hof_export.py",
+        "note": ("Rendering payload for /hof/. Carries its own disclosure copy, "
+                 "because four of the page's eight sections are dark and each one "
+                 "states its blocker in the payload rather than in the HTML."),
+    },
+    {
         "file": "milb_park_factors.json", "group": "mlb",
         "title": "MiLB park factors",
         "what": "Per-venue offensive park factors for the minor league parks, with sample sizes.",

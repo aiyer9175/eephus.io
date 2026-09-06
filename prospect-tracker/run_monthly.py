@@ -263,6 +263,10 @@ SCHEDULED_EXPORTS = (
     # 'unwatched' and dropped, which is exactly what happened to
     # fa_class_identity for a day.
     "efv_regen_tripwire",
+    # The /hof/ board. Watched for the same reason as the arbitration board
+    # below: the page paints an empty state on a missing payload, so a silent
+    # failure is invisible to a reader and to an operator alike.
+    "hof_export",
     # The /arbitration/ board. Watched because a silent failure
     # here empties a whole module rather than erroring.
     "arbitration_export",
@@ -5491,6 +5495,37 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.exception("arbitration export failed - continuing")
                 _record_ingest("arbitration_export", False, 0,
                                "arbitration export raised", "mlb", log)
+
+        # --- 6b7b. Hall of Fame board (hof_board.json) -------------------
+        # The /hof/ payload: career WAR, WAR7, JAWS, WAR ink and the public HoF
+        # Monitor and Standards columns for every ten-season player, in three
+        # bands, with the induction ledger joined in three states.
+        #
+        # OFFLINE BY CONSTRUCTION. hof_export reads war_source's last-good
+        # parquet by path, never through pybaseball, because the pitching side
+        # carries no disk cache and would be a live download on every run. It
+        # also reads the committed ballot panel. Nothing here fetches.
+        #
+        # Additive; never aborts. Four of the page's eight sections are dark,
+        # and a failure here leaves the previous board in place rather than
+        # publishing a page with no numbers on it.
+        with _step("6b7b. Hall of Fame board (hof_board.json)", log):
+            try:
+                import hof_export as _hof
+                _hofd = _hof.build()
+                (ROOT / "data" / "hof_board.json").write_text(
+                    json.dumps(_hofd, ensure_ascii=False, separators=(",", ":")),
+                    encoding="utf-8")
+                _hof_n = len(_hofd.get("leaderboard") or [])
+                log.info("hof: %d eligible, %d watch, %d not yet eligible",
+                         _hof_n, len(_hofd.get("watch") or []),
+                         len(_hofd.get("not_yet_eligible") or []))
+                _record_ingest("hof_export", True, _hof_n,
+                               "hall of fame board", "mlb", log)
+            except Exception:
+                log.exception("hall of fame export failed - continuing")
+                _record_ingest("hof_export", False, 0,
+                               "hall of fame export raised", "mlb", log)
 
         # --- 6b6. Fantasy Tools (the /fantasy/ surface) -----------------
         # ROS fantasy projections (reuse the FA/Projections engine) scored in the

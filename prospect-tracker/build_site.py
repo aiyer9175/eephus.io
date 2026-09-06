@@ -105,6 +105,8 @@ _EXPORT_VER = _asset_ver("assets/eephus-export.js")
 _CSV_VER = _asset_ver("assets/eephus-csv.js")
 _PARKS_VER = _asset_ver("assets/parks.js")
 _PARKS_CSS_VER = _asset_ver("assets/parks.css")
+_HOF_VER = _asset_ver("assets/hof.js")
+_HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /models/ - the model accountability hub. Client is filter-only: every row,
 # count and date on that page is server-rendered here at build time, so the
 # surface still tells the truth with JavaScript off.
@@ -500,6 +502,7 @@ MODULE_STAGE = {
     "arbitration": ("β", "Arbitration Predictor is in beta - newly launched; the arb-1 model is gated, the arb-2-and-later projection is a population multiplier"),
     "forums": ("β", "Forums is in beta - newly launched"),
     "parks": ("β", "MiLB Park Factors is in beta - newly launched; the factors are a measured artifact, the surface is new"),
+    "hof": ("β", "Hall of Fame is in beta - the leaderboards reproduce a public shelf and four of the eight sections are dark, each naming its blocker"),
     # Diamond section (2026-08-05). These rows carry the FULL chip text in
     # slot [0] and render through _stage_chip(); the older rows above predate
     # the helper and their call sites still write "β beta" literally, using
@@ -4724,6 +4727,63 @@ def build_parks() -> str:
                 "and sample-shrunk. Display only, no model reads them.",
                 url=f"{SITE_ORIGIN}/parks/")
 
+def build_hof() -> str:
+    """The /hof/ Hall of Fame module.
+
+    Static shell + assets/hof.js, which fetches data/hof_board.json
+    (hof_export.py). FOUR SECTIONS LIVE, FOUR DARK, and the dark ones each name
+    their blocker on the page.
+
+    WHAT IT IS NOT. It is not a Hall-of-Fame predictor and it does not tell a
+    reader who belongs. The Hall-sized line is dark because a Hall-SIZED line
+    needs the count of players inducted AS PLAYERS, and no field in this data
+    says what a plaque says: the source records which ELECTORATE voted, and
+    manager and executive plaques reach the eligible universe. The page ships
+    the JAWS quantile ladder instead, which is honest without knowing the size
+    of the Hall.
+
+    THE THIRD BAND IS THE ONE THAT MATTERS FOR A 2026 READER. Eligible and
+    Cooperstown Watch leave out everybody who last played in 2022 through 2024
+    and has not cleared the five-year wait, which is Albert Pujols, Zack
+    Greinke, Robinson Cano, Miguel Cabrera, Joey Votto and 136 others. Not Yet
+    Eligible carries them, and the exporter refuses to write a payload whose
+    three bands do not partition the ten-plus-season population exactly.
+
+    Not in NAV_ITEMS on purpose, the same decision /parks/ took: the nav
+    definition is mirrored by three hand-maintained static copies that
+    test_collegesavant_nav_in_sync pins, so a nav row lands with those copies.
+    Discovery rides the footer link, the homepage strip and sitemap.xml."""
+    body = (
+        '<div class="fa-app mlbstats-app hof-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>Hall of Fame <span class="eephus-beta" title="{html.escape(MODULE_STAGE["hof"][1])}">β beta</span></h1></div>'
+        '<span class="section-sub">Career WAR, WAR7 and JAWS for every player with ten seasons or more, '
+        'reproduced from the same daily WAR file Baseball-Reference publishes from, with the writers\' '
+        'ballot record joined to it. Three bands: the eligible universe, the active players, and the '
+        'ones who last played in 2022 through 2024 and are still inside the five-year wait. This page '
+        'publishes no Hall line and no snub list, and it says why on the page rather than in a '
+        'footnote.</span></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Hall of Fame sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-hofsection="board" role="tab" aria-selected="true">Leaderboards</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-hofsection="blocked" role="tab" aria-selected="false">Not Published</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-hofsection="method" role="tab" aria-selected="false">Method &amp; Sample</button>'
+        '</div>'
+        '<div id="hof-section" class="mlbstats-section">'
+        f'<div id="hof-app-root"{_csv_optin("hall-of-fame")}></div>'
+        '</div>'
+        '</div>'
+        f'<link rel="stylesheet" href="/assets/hof.css?v={_HOF_CSS_VER}">'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/hof.js?v={_HOF_VER}" defer></script>'
+    )
+    return page("Hall of Fame - eephus.io", "hof", body,
+                "Career WAR, WAR7 and JAWS for every ten-season player, reproduced from "
+                "Baseball-Reference's own daily WAR file, with the ballot record joined to it. "
+                "Eligible, active and not-yet-eligible boards, a JAWS quantile ladder, and four "
+                "sections held dark with their blockers named. No Hall line, no snub list.",
+                url=f"{SITE_ORIGIN}/hof/")
+
+
 # --------------------------------------------------------------------------- #
 # /models/ - the model accountability hub
 # --------------------------------------------------------------------------- #
@@ -5807,6 +5867,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/betting/", "daily", "0.8"),
         ("/diamond/", "monthly", "0.6"),
         ("/parks/", "weekly", "0.6"),
+        ("/hof/", "weekly", "0.6"),
         ("/models/", "daily", "0.6"),
         ("/articles/", "weekly", "0.7"),
         ("/forums/", "daily", "0.6"),
@@ -6412,6 +6473,7 @@ def main() -> None:
     _write("betting/index.html", build_betting())
     _write("diamond/index.html", build_diamond())
     _write("parks/index.html", build_parks())
+    _write("hof/index.html", build_hof())
     _write("models/index.html", build_models())
     _write("glossary/index.html", build_glossary())
     _write("teams/index.html", build_teams_redirect())

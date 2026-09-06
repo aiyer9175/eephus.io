@@ -89,6 +89,7 @@ TARGETS: list[str] = [
     "fantasy/index.html",
     "history/index.html",
     "parks/index.html",
+    "hof/index.html",
     "player/index.html",
     # /models/ renders registry `notes` prose verbatim, so its copy is only ever
     # as clean as the registry's, and it inherits any dash a future row carries.

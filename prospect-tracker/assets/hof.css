@@ -1,0 +1,89 @@
+/* Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Noah J. Dengler (@ARKNDJL), 2026 */
+
+/* /hof/ - the Hall of Fame board. Shares site.css for type, colour and chrome;
+   this file carries only what the board itself needs. */
+
+.hof-bands { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 6px; }
+.hof-bandbtn {
+  font: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer;
+  border: 1px solid var(--line, #d8d8d8); background: var(--card, #fff);
+  color: inherit; border-radius: 999px;
+}
+.hof-bandbtn.active { border-color: #0E2B4D; background: #0E2B4D; color: #fff; }
+.hof-bandn { opacity: .65; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.hof-bandbtn.active .hof-bandn { opacity: .8; }
+
+.hof-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.hof-controls input, .hof-controls select {
+  font: inherit; font-size: 13px; padding: 6px 8px;
+  border: 1px solid var(--line, #d8d8d8); border-radius: 6px;
+  background: var(--card, #fff); color: inherit;
+}
+.hof-controls input { min-width: 220px; flex: 1 1 220px; }
+
+.hof-tablewrap { overflow-x: auto; }
+.hof-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.hof-table th, .hof-table td { padding: 5px 8px; white-space: nowrap; }
+.hof-table thead th {
+  position: sticky; top: 0; z-index: 1; cursor: pointer; text-align: right;
+  background: var(--card, #fff); border-bottom: 2px solid var(--line, #d8d8d8);
+  font-weight: 600;
+}
+.hof-table thead th:focus { outline: 2px solid #C9A227; outline-offset: -2px; }
+.hof-table tbody tr:nth-child(even) { background: rgba(0, 0, 0, .025); }
+.hof-table td { border-bottom: 1px solid var(--line-soft, #eee); text-align: right; }
+.hof-c-name, .hof-c-pos, .hof-c-ind { text-align: left !important; }
+.hof-c-name { font-weight: 600; }
+.hof-c-rank { text-align: right; opacity: .55; font-variant-numeric: tabular-nums; }
+.hof-c-n, .hof-c-yr { font-variant-numeric: tabular-nums; }
+.hof-c-jaws { font-weight: 700; }
+
+/* A blank public cell is NOT a zero. It is drawn as a dimmed marker with a
+   title, so the difference between "no published value" and "scored zero" is
+   visible on the row rather than only in the method note. */
+.hof-blank { opacity: .3; }
+
+.hof-ind { font-size: 12px; padding: 1px 6px; border-radius: 999px; }
+.hof-ind--player_bbwaa { background: rgba(31, 122, 58, .12); color: #1F7A3A; }
+.hof-ind--route_unverified { background: rgba(201, 162, 39, .16); color: #7a5f00; }
+
+.hof-note { font-size: 13px; line-height: 1.5; opacity: .85; margin: 8px 0; max-width: 74ch; }
+.hof-count { font-size: 12px; opacity: .6; margin: 8px 0; }
+.hof-empty { text-align: center !important; opacity: .6; padding: 18px !important; }
+.hof-more { margin: 10px 0; }
+.hof-more button {
+  font: inherit; font-size: 13px; padding: 6px 14px; cursor: pointer;
+  border: 1px solid var(--line, #d8d8d8); border-radius: 6px;
+  background: var(--card, #fff); color: inherit;
+}
+
+.hof-block { margin: 22px 0; }
+.hof-block h2 { font-size: 17px; margin: 0 0 6px; }
+.hof-block h3 { font-size: 14px; margin: 14px 0 4px; }
+
+.hof-ladder { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.hof-ladder-cell {
+  border: 1px solid var(--line, #d8d8d8); border-radius: 8px;
+  padding: 8px 14px; min-width: 78px; text-align: center;
+  background: var(--card, #fff);
+}
+.hof-ladder-q { font-size: 12px; opacity: .6; }
+.hof-ladder-v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* A dark section is deliberately plain. It carries a blocker and a reason and
+   nothing that could be mistaken for a result. */
+.hof-dark { border-left: 3px solid var(--line, #d8d8d8); padding-left: 12px; }
+.hof-darktag {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  border: 1px solid var(--line, #d8d8d8); border-radius: 999px;
+  padding: 1px 8px; opacity: .7; vertical-align: middle;
+}
+.hof-dark-why { font-size: 13px; font-weight: 600; margin: 4px 0; }
+
+@media (max-width: 720px) {
+  .hof-table { font-size: 12px; }
+  .hof-table th, .hof-table td { padding: 4px 6px; }
+}
