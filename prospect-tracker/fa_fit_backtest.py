@@ -60,7 +60,7 @@ import fa_market as fm
 import fa_sources
 import storage
 from scrapers import _fetch
-from trades import canonical_org
+from trades import canonical_org, canonical_org_from_id
 
 log = logging.getLogger(__name__)
 
@@ -119,7 +119,12 @@ def standings_wins(season: int) -> dict[str, int]:
         d = json.loads(fr.body)
         for rec in d.get("records") or []:
             for tr in rec.get("teamRecords") or []:
-                org = canonical_org((tr.get("team") or {}).get("name") or "")
+                team = tr.get("team") or {}
+                # BY ID, NOT BY NAME. StatsAPI has called Arizona "D-backs"
+                # since 2008; the alias table returns that unchanged and the
+                # len<=3 guard below then drops the club silently. 46
+                # club-seasons were being lost this way.
+                org = canonical_org_from_id(team.get("id"), team.get("name") or "")
                 if org and len(org) <= 3:
                     out[org] = int(tr.get("wins") or 0)
     except (ValueError, TypeError):
@@ -174,7 +179,11 @@ def standings_now(season: int) -> dict[str, dict]:
             league = (rec.get("league") or {}).get("id")
             div = (rec.get("division") or {}).get("id")
             for tr in rec.get("teamRecords") or []:
-                org = canonical_org((tr.get("team") or {}).get("name") or "")
+                team = tr.get("team") or {}
+                # BY ID, NOT BY NAME. See standings_wins above: this is the
+                # read whose failure put a null current-season block on Arizona
+                # in the served team_outlook.
+                org = canonical_org_from_id(team.get("id"), team.get("name") or "")
                 if not org or len(org) > 3:
                     continue
                 rs = _sn_int(tr.get("runsScored"))

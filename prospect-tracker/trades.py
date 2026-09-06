@@ -319,6 +319,59 @@ _CODE_REMAP = {
 }
 
 
+#: MLB club ids never change; club NAMES do. StatsAPI has called Arizona
+#: "D-backs" since 2008, Cleveland "Indians" through 2021 and Montreal "Expos"
+#: through 2004, and none of the three resolves through the name aliases. Every
+#: one of them was being silently dropped by callers that resolve a club by name
+#: and then guard on `len(org) <= 3`: the alias table returns the input
+#: unchanged, the guard sees a 7-character string and skips the row.
+#:
+#: Measured 2026-09-06 across the 27 cached standings files: 46 club-seasons
+#: lost this way, and Arizona was the only one of 30 rows in the served
+#: team_outlook carrying a null current-season block, which is a 75-68 contender
+#: missing from the live wild-card picture.
+#:
+#: Built from tjstats.MLBAM_TEAM_ID_TO_ABBR, whose keys are STRINGS while every
+#: StatsAPI teamRecord id is an int, so the cast is load-bearing.
+_ORG_BY_MLBAM_ID: dict | None = None
+
+
+def _org_by_id() -> dict:
+    global _ORG_BY_MLBAM_ID
+    if _ORG_BY_MLBAM_ID is None:
+        try:
+            import tjstats
+            raw = getattr(tjstats, "MLBAM_TEAM_ID_TO_ABBR", {}) or {}
+        except Exception:                                   # noqa: BLE001
+            raw = {}
+        out = {}
+        for k, v in raw.items():
+            try:
+                out[int(k)] = canonical_org(v) or v
+            except (TypeError, ValueError):
+                continue
+        _ORG_BY_MLBAM_ID = out
+    return _ORG_BY_MLBAM_ID
+
+
+def canonical_org_from_id(team_id, fallback_name: str | None = None) -> str | None:
+    """A 3-letter org code from a StatsAPI club id, falling back to the name.
+
+    PREFER THIS over `canonical_org(name)` anywhere a StatsAPI payload is being
+    read, because ids are stable and names are not. The fallback exists for
+    fixtures and for payloads that carry a name and no id; it is not a reason to
+    skip the id when one is present.
+    """
+    if team_id is not None:
+        try:
+            got = _org_by_id().get(int(team_id))
+        except (TypeError, ValueError):
+            got = None
+        if got:
+            return got
+    return canonical_org(fallback_name) if fallback_name else None
+
+
 def canonical_org(raw: str | None) -> str | None:
     """Normalize any org string to a 3-letter code. Pass-through if already short.
 
