@@ -4085,6 +4085,27 @@ def _roster_seasons_index(data_dir: Path) -> dict:
     return out
 
 
+def _has_control_window(row: dict) -> bool:
+    """Does this row have seasons a club actually controls?
+
+    THE PRODUCT OF THIS MODULE IS SURPLUS OVER A CONTROL WINDOW, so a row whose
+    window has length zero has no surplus to publish. A free agent is the clear
+    case: there is no contract to trade and nothing to integrate production over.
+
+    None is treated as UNKNOWN and allowed through, because a missing field is a
+    coverage gap rather than a statement that the window is empty, and this
+    predicate must not silently drop rows whose control years simply were not
+    resolved.
+    """
+    yrs = row.get("remaining_control_years")
+    if yrs is None:
+        return True
+    try:
+        return float(yrs) > 0
+    except (TypeError, ValueError):
+        return True
+
+
 def _backgrade_realized_factor(age, realized_war, proj_war_6yr, n_seasons) -> float:
     """Discount-only factor in [0,1] that tempers a DEBUTED player's prospect-era
     backgrade surplus toward his realized MLB performance. The backgrade prices
@@ -4784,6 +4805,7 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     career_last = _career_war_seasons_index(dd)               # pk -> last career-WAR season
 
     stats = {"xfv": 0, "projection": 0, "xfv_backgrade": 0, "unchanged": 0,
+             "no_control_window": 0,
              "age_backfilled": 0, "inactive_dropped": 0, "backgrade_tempered": 0,
              "excluded_unpriceable": 0, _PREARB_SOURCE: 0}
     for r in records:
@@ -4838,7 +4860,7 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
         else:
             if pk in proj_sur:
                 new, src = proj_sur[pk], "projection"
-            elif x_sur is not None:
+            elif x_sur is not None and _has_control_window(r):
                 # Temper the prospect-era backgrade toward realized MLB outcomes
                 # for established debuted players (a busted former top prospect
                 # otherwise carries the value of the prospect he never became).
@@ -4849,6 +4871,29 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
                 new, src = x_sur * factor, "xfv_backgrade"
                 if factor < 0.999:
                     stats["backgrade_tempered"] += 1
+            elif x_sur is not None:
+                # NO CONTROL WINDOW, NO SURPLUS. Surplus is production above cost
+                # over the seasons a club controls the player, so a free agent
+                # with zero remaining controlled seasons has nothing to integrate
+                # over and nothing to trade. This branch used to price him
+                # anyway, off a prospect-era eFV backgrade: 61 rows, 43 of them
+                # positive, $482.7M in total, with Victor Robles reading $80.0M
+                # and a Trade Value Grade of A in a row whose own Contract cell
+                # said "Free Agent".
+                #
+                # THE ROW KEEPS ITS OWN BAYES PRICE; only the BACKGRADE is
+                # withheld, which is why the key says so. Measured on the
+                # rebuild: the 61 rows fall from $482.7M in total to $24.0M, and
+                # Victor Robles goes from $80.0M at grade A to $0.7M at grade D.
+                # The remaining number is this module's own primary model rather
+                # than a prospect-era grade for a player who is no longer a
+                # prospect.
+                #
+                # It is stamped and counted rather than left silent, on the same
+                # reasoning as the exclusion ledger beside it: a row that quietly
+                # changes basis is indistinguishable from one that never did.
+                r["efv_backgrade_withheld"] = "no_control_window"
+                stats["no_control_window"] += 1
         if new is not None:
             mm = round(float(new), 1)
             r["trade_value_mm"] = mm

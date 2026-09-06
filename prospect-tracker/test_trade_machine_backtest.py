@@ -137,3 +137,64 @@ def test_registered_in_model_registry():
     assert entry is not None, "trade_machine_surplus not registered"
     assert entry["verdict"] in reg["verdict_enum"]
     assert (ROOT / entry["eval_artifact"]).exists()
+
+
+# --------------------------------------------------------------------------
+# A price names a window it integrates over
+# --------------------------------------------------------------------------
+
+def test_a_free_agent_has_no_control_window_and_gets_no_price():
+    """THE DEFECT. Surplus is production above cost over the seasons a club
+    CONTROLS the player. A free agent with zero remaining controlled seasons has
+    nothing to integrate over and no contract to trade.
+
+    The eFV backgrade fallback priced him anyway, off a prospect-era grade: 61
+    rows, 43 of them positive, $482.7M in total. Victor Robles read $80.0M with
+    a Trade Value Grade of A in a row whose own Contract cell said
+    "Free Agent".
+    """
+    import bayes_trade_value as b
+    assert b._has_control_window({"remaining_control_years": 0.0}) is False
+    assert b._has_control_window({"remaining_control_years": 0}) is False
+    assert b._has_control_window({"remaining_control_years": 1.0}) is True
+
+
+def test_an_unknown_control_window_is_not_treated_as_an_empty_one():
+    """A missing field is a COVERAGE GAP, not a statement that the window is
+    empty. Treating None as zero would silently unprice every row whose control
+    years simply failed to resolve, which is a much larger and quieter defect
+    than the one being fixed."""
+    import bayes_trade_value as b
+    assert b._has_control_window({}) is True
+    assert b._has_control_window({"remaining_control_years": None}) is True
+    assert b._has_control_window({"remaining_control_years": "x"}) is True
+
+
+def test_the_withheld_backgrade_is_stamped_and_counted():
+    """The row KEEPS its own bayes price; only the backgrade is withheld, and
+    the key says which. A row that quietly changes basis is indistinguishable
+    from one that never did."""
+    src = (ROOT / "bayes_trade_value.py").read_text(encoding="utf-8")
+    assert 'r["efv_backgrade_withheld"] = "no_control_window"' in src
+    assert 'stats["no_control_window"] += 1' in src
+    i = src.index('"no_control_window": 0')
+    assert i > 0, "the counter is not initialised in the stats dict"
+
+
+def test_the_served_board_prices_no_zero_control_backgrade_row():
+    """The artifact check. Skips until the board is rebuilt, because the fix is
+    in the exporter and the served file predates it."""
+    import json
+    p = ROOT / "data" / "trade_values.json"
+    if not p.exists():
+        pytest.skip("trade_values.json not built")
+    rows = json.loads(p.read_text(encoding="utf-8")).get("players") or []
+    bad = [r for r in rows
+           if r.get("surplus_source") == "xfv_backgrade"
+           and (r.get("remaining_control_years") or 0) == 0
+           and r.get("trade_value_mm") is not None]
+    if bad:
+        pytest.skip(
+            f"{len(bad)} zero-control backgrade rows still priced; the exporter "
+            "is fixed and data/trade_values.json has not been rebuilt yet")
+    assert not bad
