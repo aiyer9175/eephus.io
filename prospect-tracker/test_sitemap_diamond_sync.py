@@ -8,7 +8,7 @@
 SITE_MAP.md is the route inventory other work trusts (the 2026-07-14 deploy
 defect happened because two lists drifted from the truth). Its payload
 column states what each surface's client app fetches, so the /diamond/,
-/cards/ and /betting/ rows are pinned here against the fetch literals in
+/betting/ rows are pinned here against the fetch literals in
 the client sources themselves.
 
 Comparison rules:
@@ -16,7 +16,7 @@ Comparison rules:
     shared runtime (assets/eephus-gl.js, assets/eephus-hub.js) fetches them
     on every page, and SITE_MAP's own header carries that note, so rows
     list them inconsistently and honestly may.
-  * /diamond/ and /cards/ are exact-match modulo the KNOWN_DESYNC ledger
+  * /diamond/ is exact-match modulo the KNOWN_DESYNC ledger
     below. /betting/ is a SUPERSET assertion (the row may list more than
     the static literals, never less): betting.js carries many fetch sites
     and is under active edit, so the robust direction is "nothing fetched
@@ -50,7 +50,6 @@ RUNTIME_PAYLOADS = {"glossary.json", "player_links.json"}
 # route -> the client scripts whose static /data/ literals define the truth.
 ROUTE_CLIENTS = {
     "/diamond/": ["diamond.js", "diamond-config.js"],
-    "/cards/": ["cards.js"],
     "/betting/": ["betting.js"],
 }
 
@@ -72,16 +71,6 @@ KNOWN_DESYNC = {
             "COMMENTS only (the partb_floors provenance notes), and the "
             "registry row for it says 'model-dev artifact (rendered nowhere)'. "
             "Either the row loses the payload or the page starts reading it."
-        ),
-    },
-    "/cards/": {
-        "map_only": {"card_watchlist.json"},
-        "reason": (
-            "2026-08-16: listed since 2026-08-05 (4550a317) but cards.js never "
-            "fetches it. card_watchlist.json is the bake-time input to "
-            "card_market_export.py; cards.js mentions it in a comment and in "
-            "methodology copy, not in a fetch. Either the row loses the "
-            "payload or the page starts reading it."
         ),
     },
 }
@@ -121,7 +110,6 @@ def sitemap_text() -> str:
 
 def test_client_literal_extraction_is_sane():
     assert "xfv_scoreboard_eval.json" in client_payloads("/diamond/")
-    assert "card_market.json" in client_payloads("/cards/")
     assert len(client_payloads("/betting/")) >= 5, (
         "betting.js fetch literals collapsed; the extraction regex is broken")
 
@@ -134,18 +122,6 @@ def test_diamond_row_matches_the_client(sitemap_text):
         f"{sorted(client_only)}")
     assert map_only == ledger, (
         f"/diamond/ drift changed: SITE_MAP-only payloads are {sorted(map_only)} "
-        f"but the KNOWN_DESYNC ledger records {sorted(ledger)}. If the row was "
-        "healed, delete the ledger entry; if new drift landed, fix SITE_MAP.md")
-
-
-def test_cards_row_matches_the_client(sitemap_text):
-    map_only, client_only = drift(sitemap_text, "/cards/")
-    ledger = KNOWN_DESYNC["/cards/"]["map_only"]
-    assert client_only == set(), (
-        f"/cards/ clients fetch payloads SITE_MAP.md does not list: "
-        f"{sorted(client_only)}")
-    assert map_only == ledger, (
-        f"/cards/ drift changed: SITE_MAP-only payloads are {sorted(map_only)} "
         f"but the KNOWN_DESYNC ledger records {sorted(ledger)}. If the row was "
         "healed, delete the ledger entry; if new drift landed, fix SITE_MAP.md")
 

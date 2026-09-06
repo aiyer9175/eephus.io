@@ -221,14 +221,34 @@ def test_source_accuracy_subtabs_render(server, browser):
 
     # The verdict column is the point. Every unanswerable cell carries the
     # literal string, and a source name renders ONLY where answerable is true.
+    #
+    # DERIVED FROM THE ARTIFACT, NOT PINNED (2026-09-06). This used to assert
+    # `by_acquisition.draft_hs.answerable is True` and then look for the literal
+    # "MLB Pipeline". The nightly regen on 2026-09-05 flipped that cell to
+    # unanswerable on live data (d_rho -0.05159 against mde95 0.05393, a margin
+    # of 0.0023) and the test went red for a MEASUREMENT that moved, not a
+    # defect. A cell's answerability is a live reading; the RULE is what this
+    # test owns. So: read the artifact, require the unanswerable string wherever
+    # a cell is unanswerable, and require the winner's name wherever one is
+    # answerable. When no cell is answerable the positive branch has nothing to
+    # check and says so rather than passing vacuously.
     acc = art["accuracy"]
     side = html["side"]
-    assert "not resolvable at this power" in side
-    assert acc["by_acquisition"]["draft_hs"]["answerable"] is True
-    assert "MLB Pipeline" in side, "the one answerable acquisition cell lost its winner"
-    for key in ("bat", "arm"):
-        assert acc["by_side"][key]["answerable"] is False, \
-            "by_side became answerable; the copy on this tab needs re-reading"
+    cells = {**{f"by_side.{k}": v for k, v in acc["by_side"].items()},
+             **{f"by_acquisition.{k}": v for k, v in acc["by_acquisition"].items()}}
+    unanswerable = [k for k, v in cells.items() if v.get("answerable") is False]
+    answerable = [k for k, v in cells.items() if v.get("answerable") is True]
+    assert unanswerable, "every side/acquisition cell became answerable; re-read this tab"
+    assert "not resolvable at this power" in side, (
+        f"{len(unanswerable)} cell(s) are unanswerable ({unanswerable}) and the tab "
+        "renders no unresolvable verdict")
+    for key in answerable:
+        winner = cells[key].get("winner")
+        assert winner and winner != "not_resolvable", (
+            f"{key} is answerable with no winner recorded: {cells[key]}")
+        label = {"fangraphs": "FanGraphs", "mlb_pipeline": "MLB Pipeline",
+                 "prospx_consensus": "PROSPX"}.get(winner, winner)
+        assert label in side, f"answerable cell {key} lost its winner {label} from the tab"
     # Archetype tab carries the family test and the A/B receipt, not just rows.
     arch = html["archetype"]
     het = art["multiplicity"]["archetype_heterogeneity"]

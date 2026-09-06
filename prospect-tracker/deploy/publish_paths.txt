@@ -33,7 +33,6 @@ arbitration
 articles
 assets
 betting
-cards
 collegesavant
 dfs
 diamond

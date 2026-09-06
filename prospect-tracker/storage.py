@@ -5300,6 +5300,187 @@ def _load_xfv_join() -> tuple[dict, dict]:
     return _read("xfv.json"), _read("xfv_history.json")
 
 
+#: A player whose exact board grade is shared with more than this many others is ranked by
+#: the TIEBREAK chain, not by his grade (export_timeseries_json._rank_meaningful and
+#: rebake_board_ranks both read this). Module scope so the two cannot disagree.
+RANK_TIE_BLOCK_MAX = 50
+
+
+def board_rank_key(grade, sort_key, upside, tbs_proxy, rank_key) -> tuple:
+    """THE board ordering tuple. export_timeseries_json._active_key and rebake_board_ranks
+    both build it HERE, so the baked rank and the re-baked rank cannot drift: a term that
+    one reader applies and the other does not is the rendered-order-vs-baked-rank
+    divergence BOARD_GRADE_FIELD exists to prevent. Mirrors prospx fvCmpDesc term for term:
+    board grade desc (decimal) -> board_sort_key desc (the model's sub-decimal order inside
+    an exact tie; the sentinel sorts LAST) -> '+' flag -> Tiebreaker Score (the proxy here,
+    the JS TBS on the client) -> avg_rank asc."""
+    return (
+        -float(grade if grade is not None else 0.0),
+        -float(sort_key if sort_key is not None else _NO_BOARD_SORT_KEY),
+        -int(1 if upside else 0),
+        -float(tbs_proxy if tbs_proxy is not None else 0.0),
+        float(rank_key) if rank_key is not None else 999.0,
+    )
+
+
+def _payload_bytes(obj) -> bytes:
+    """Compact JSON bytes in the export's own format (orjson when installed)."""
+    try:
+        import orjson as _orjson
+        return _orjson.dumps(obj, option=_orjson.OPT_NON_STR_KEYS)
+    except ImportError:
+        return json.dumps(obj, separators=(",", ":")).encode("utf-8")
+
+
+def rebake_board_ranks(out_path: Path, *, xfv_by_key: dict | None = None,
+                       rank_history: dict | None = None, write: bool = True,
+                       update_metric_snapshots: bool = True, log=None) -> dict:
+    """Re-rank the served board on the CURRENT data/xfv.json and rewrite the rank fields
+    (overall_rank, org_rank, org_rank_total, prev_overall_rank, rank_movement) in place.
+
+    WHY THIS EXISTS (2026-09-05). run_monthly.rebuild_only exports timeseries.json, which
+    bakes overall_rank off the eFV file ON DISK, and only THEN runs efv_export.regen_all,
+    which rewrites that file from the just-exported timeseries (the eFV live matrix needs
+    the fresh stats, so the order cannot flip). The baked rank was therefore always ONE
+    RUN STALE against the grades the board displays and sorts on, and every surface that
+    reads the baked number (the homepage Top Prospects module, org ranks, the news
+    tooltip, the GFX eyebrow) could disagree with the board. Measured 2026-09-05: Josue
+    De Paula and Theo Gillen sat on an exact 58.3 tie with board_sort_key 9.617 vs 9.670;
+    the previous file had them 58.2 vs 58.1, so the homepage said #4 / #5 and the board
+    said #5 / #4. Three earlier incidents of the same class are recorded at
+    BOARD_GRADE_FIELD; this was the fourth, by a different route.
+
+    HOW. Every NON-MODEL term of the ordering (consensus fallback grade, '+' flag, the
+    TBS proxy, avg_rank, the org key) is serialized per active row as `board_key_tail`
+    at export time. This function re-applies THE ordering (board_rank_key) with only the
+    two model terms refreshed from the eFV file: the board grade through
+    efv_board_scale.board_value (consensus fallback where eFV abstains, as the export
+    does) and board_sort_key (sentinel where absent). It is a pure function of the two
+    files, so it can run standalone (tools/rebake_board_ranks.py) and be tested on a
+    synthetic payload.
+
+    Rows without a tail (an export that predates this field) are left untouched and
+    counted in `n_without_tail`. `rank_movement` and `prev_overall_rank` are recomputed on
+    the same rules the export uses (RANK_TIE_BLOCK_MAX gating, post-epoch history only).
+    When today's metric_snapshots rows exist (the monthly snapshot is taken from the
+    intermediate export, before the chained rebuild) their overall_rank is updated so the
+    rank history stays on the served basis. Writes go through _atomic_replace.
+    """
+    import logging as _logging
+    lg = log or _logging.getLogger("storage.rebake")
+    out_path = Path(out_path)
+    payload = json.loads(out_path.read_text(encoding="utf-8"))
+    players = payload.get("players") or []
+    xfv = xfv_by_key if xfv_by_key is not None else _load_xfv_join()[0]
+    try:
+        from efv_board_scale import board_value as _board_value
+    except Exception:                                       # pragma: no cover
+        def _board_value(rec):
+            return (rec or {}).get(BOARD_GRADE_FIELD)
+
+    rows: list[tuple] = []
+    n_without_tail = 0
+    for p in players:
+        tail = p.get("board_key_tail")
+        if tail is None:
+            if p.get("overall_rank") is not None:
+                n_without_tail += 1
+            continue
+        fallback_fv, upside, tbs, rank_key, org_key = (list(tail) + [None] * 5)[:5]
+        rec = xfv.get(p.get("player_key")) or {}
+        g = _board_value(rec)
+        grade = float(g) if g is not None else float(fallback_fv or 0.0)
+        sk = rec.get("board_sort_key")
+        try:
+            sk = float(sk) if sk is not None else _NO_BOARD_SORT_KEY
+        except (TypeError, ValueError):
+            sk = _NO_BOARD_SORT_KEY
+        rows.append((board_rank_key(grade, sk, upside, tbs, rank_key), p, grade,
+                     str(org_key or "?")))
+    if not rows:
+        msg = ("no active row carries board_key_tail (the export predates 2026-09-05); "
+               "nothing re-baked")
+        lg.warning("rebake_board_ranks: %s", msg)
+        return {"written": False, "n_active": 0, "n_moved": 0,
+                "n_without_tail": n_without_tail, "message": msg, "top": []}
+    rows.sort(key=lambda t: t[0])
+
+    tie_count: dict[float, int] = {}
+    org_totals: dict[str, int] = {}
+    for _, _, grade, org in rows:
+        tie_count[grade] = tie_count.get(grade, 0) + 1
+        org_totals[org] = org_totals.get(org, 0) + 1
+    hist = rank_history if rank_history is not None else load_rank_history()
+    today = date.today().isoformat()
+    from movement import compute_rank_movement
+    org_counters: dict[str, int] = {}
+    moved = 0
+    top: list = []
+    for i, (_, p, grade, org) in enumerate(rows, start=1):
+        if p.get("overall_rank") != i:
+            moved += 1
+        p["overall_rank"] = i
+        org_counters[org] = org_counters.get(org, 0) + 1
+        p["org_rank"] = org_counters[org]
+        p["org_rank_total"] = org_totals[org]
+        meaningful = tie_count.get(grade, 0) <= RANK_TIE_BLOCK_MAX
+        pk = p.get("player_key")
+        prior = sorted((h for h in (hist.get(pk) or [])
+                        if h.get("rank") is not None and h.get("snapshot_date") != today),
+                       key=lambda h: str(h.get("snapshot_date") or ""))
+        p["prev_overall_rank"] = int(prior[-1]["rank"]) if (prior and meaningful) else None
+        mv = None
+        if meaningful and prior:
+            m = compute_rank_movement(list(prior) + [{"snapshot_date": today, "rank": i}])
+            mv = m if m.get("basis") == "rank_step" else None
+        p["rank_movement"] = mv
+        if i <= 10:
+            top.append((i, pk, grade))
+
+    from datetime import datetime as _dt, timezone as _tz
+    payload["board_rank_rebake"] = {
+        "at": _dt.now(_tz.utc).isoformat(timespec="seconds"),
+        "n_active": len(rows), "n_moved": moved, "n_without_tail": n_without_tail,
+        "basis": board_basis_fingerprint(),
+        "what": ("overall_rank / org_rank re-baked on the eFV file current at this stamp "
+                 "(storage.rebake_board_ranks); before this stamp the baked rank reflected "
+                 "the previous run's eFV file"),
+    }
+    written = False
+    if write:
+        tmp = out_path.with_name(out_path.name + f".rebake{os.getpid()}")
+        try:
+            tmp.write_bytes(_payload_bytes(payload))
+            _atomic_replace(tmp, out_path)
+            written = True
+        finally:
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
+        if update_metric_snapshots:
+            try:
+                with connect() as con:
+                    n_today = con.execute(
+                        "SELECT COUNT(*) FROM metric_snapshots WHERE snapshot_date = ?",
+                        (today,)).fetchone()[0]
+                    if n_today:
+                        con.executemany(
+                            "UPDATE metric_snapshots SET overall_rank = ? "
+                            "WHERE player_key = ? AND snapshot_date = ?",
+                            [(p["overall_rank"], p["player_key"], today)
+                             for _, p, _, _ in rows if p.get("player_key")])
+                        lg.info("rebake_board_ranks: refreshed overall_rank on %d "
+                                "metric_snapshots rows dated %s", n_today, today)
+            except sqlite3.OperationalError as e:           # pragma: no cover
+                lg.warning("rebake_board_ranks: metric_snapshots not updated (%s)", e)
+    msg = (f"{len(rows)} active rows re-ranked on the current eFV file, {moved} moved"
+           + (f", {n_without_tail} rows without a tail left alone" if n_without_tail else ""))
+    lg.info("rebake_board_ranks: %s", msg)
+    return {"written": written, "n_active": len(rows), "n_moved": moved,
+            "n_without_tail": n_without_tail, "message": msg, "top": top}
+
+
 def xfv_history_basis() -> str | None:
     """The board basis data/xfv_history.json was BUILT on, or None if it is unstamped.
 
@@ -8273,7 +8454,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # it cannot absorb a 3,100-player block, where a 0.1 grade nudge vaults a player
     # thousands of spots. Rank movement is withheld for those players rather than
     # published as a marquee move that no grade change supports.
-    _RANK_TIE_BLOCK_MAX = 50
+    _RANK_TIE_BLOCK_MAX = RANK_TIE_BLOCK_MAX
     _board_grade_tie_count: dict[float, int] = {}
 
     def _rank_meaningful(grade) -> bool:
@@ -10542,6 +10723,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                                   if _rank_meaningful(_ser_board_grade) else None),
             "org_rank": org_rank_by_key.get(p.player_key),
             "org_rank_total": org_size_by_key.get(p.player_key),
+            # The non-model terms of THE board ordering for this row (consensus fallback
+            # grade, '+' flag, TBS proxy, avg_rank, org key). Read by storage.rebake_board_ranks
+            # only, never displayed; None for graduated / inactive rows.
+            "board_key_tail": board_key_tail_by_key.get(p.player_key),
             "age_vs_level": {"tier": avl.tier, "diff": avl.diff},
             "fv_high": p.fv_high,
             "fv_high_label": p.fv_high_label,
@@ -11297,18 +11482,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # provisional floor (accepted, see BOARD_GRADE_FIELD), so the tiebreak chain
         # below is what gives the floor block a stable, meaningful internal order.
         _bg = _board_grade(p.player_key, latest.consensus_fv_raw)
-        surfaced_fv = (_bg if _bg is not None
-                       else (latest.consensus_fv if latest.consensus_fv is not None
-                             else (latest.consensus_fv_raw
-                                   if latest.consensus_fv_raw is not None else 0)))
+        _fallback_fv = (latest.consensus_fv if latest.consensus_fv is not None
+                        else (latest.consensus_fv_raw
+                              if latest.consensus_fv_raw is not None else 0))
+        surfaced_fv = _bg if _bg is not None else _fallback_fv
         upside = 1 if getattr(latest, "consensus_fv_plus", False) else 0
-        return (
-            -surfaced_fv,        # RAW eFV grade desc (decimal) — the board number
-            -_board_sort_key(p.player_key),   # sub-decimal model order INSIDE a tie block
-            -upside,             # '+' upside flag — ranks above same-grade non-'+'
-            -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on exact ties
-            rank_key,            # avg_rank asc — final stable separator
-        )
+        _tbs = _tbs_proxy(p)
+        # THE NON-MODEL TAIL OF THE ORDERING, kept per row (serialized as `board_key_tail`)
+        # so rebake_board_ranks can re-apply this exact chain after efv_export.regen_all
+        # rewrites data/xfv.json, refreshing only the two model terms. Without it the
+        # baked rank is one run stale against the board (2026-09-05, De Paula / Gillen).
+        board_key_tail_by_key[p.player_key] = [
+            float(_fallback_fv), upside, round(float(_tbs), 6),
+            (float(rank_key) if rank_key is not None else 999.0),
+            _active_display_org(p) or "?",
+        ]
+        # ONE ordering: board_rank_key is the tuple the re-bake builds too.
+        #   grade desc -> board_sort_key desc (sub-decimal model order INSIDE a tie block)
+        #   -> '+' upside flag -> Tiebreaker Score proxy -> avg_rank asc
+        return board_rank_key(surfaced_fv, _board_sort_key(p.player_key), upside,
+                              _tbs, rank_key)
+    board_key_tail_by_key: dict[str, list] = {}
     actives.sort(key=_active_key)
     if top_n_active is not None:
         actives = actives[:top_n_active]

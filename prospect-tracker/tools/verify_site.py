@@ -32,7 +32,6 @@ ROUTES = [
     ("/projections/#view=teams",       "tbody tr, .mlb-card"),
     ("/fa/",                           ".fa-card, .mlb-card"),
     ("/betting/",                      ".bt-pick, .bt-panel"),
-    ("/cards/",                        ".section-sub, .card, tbody tr"),
     ("/pal/",                          "tbody tr, .pal-tier"),
     ("/glossary/",                     ".gl-app, .g-term, tbody tr"),
     ("/glossary/#view=methodology",    ".meth-table, .meth-chart"),

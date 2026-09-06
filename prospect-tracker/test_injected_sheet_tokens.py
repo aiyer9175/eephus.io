@@ -52,13 +52,12 @@ CLIENTS = [
     "dfs.js",
     "fantasy-hub.js",
     "fantasy-card.js",
-    "cards.js",
 ]
 
 # Files known to carry exactly one injected sheet today (2026-08-16). If the
 # extractor rots and starts finding zero sheets, every downstream assertion
 # would pass vacuously, so the census is pinned.
-SHEET_CARRIERS = [c for c in CLIENTS if c != "cards.js"]
+SHEET_CARRIERS = list(CLIENTS)   # cards.js left the list with the module (2026-09-05)
 
 CREATE_STYLE = re.compile(r"createElement\(\s*[\"']style[\"']\s*\)")
 VAR_REF = re.compile(r"var\(\s*--([A-Za-z0-9-]+)\s*([^)]*)\)")

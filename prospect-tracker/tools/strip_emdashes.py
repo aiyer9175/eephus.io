@@ -82,7 +82,6 @@ TARGETS: list[str] = [
     # copy rather than a cleanup; a page nobody scans is one bad paste away from
     # shipping a dash the owner's rule forbids.
     "betting/index.html",
-    "cards/index.html",
     "dfs/index.html",
     "diamond/index.html",
     "dynasty/index.html",

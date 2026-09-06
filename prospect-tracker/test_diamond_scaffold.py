@@ -54,13 +54,12 @@ ROOT = Path(__file__).parent
 DIAMOND_LEAVES = [
     ("fantasy", "Fantasy", "/fantasy/"),
     ("betting", "Sports Betting", "/betting/"),
-    ("cards", "Card Market", "/cards/"),
     ("diamond", "Diamond Pass", "/diamond/"),
 ]
 # The page DIRS are still six, and that is the point: /dynasty/, /redraft/ and
 # /dfs/ were public addresses for two days, so they still build and still ship
 # as hash-preserving redirect stubs.
-DIAMOND_DIRS = ["betting", "cards", "dfs", "diamond", "dynasty", "fantasy", "redraft"]
+DIAMOND_DIRS = ["betting", "dfs", "diamond", "dynasty", "fantasy", "redraft"]
 MERGED_DIRS = ["dynasty", "redraft", "dfs"]
 
 
@@ -166,7 +165,7 @@ def test_the_three_content_modules_are_labeled_diamond_preview():
     is the honest part of that arrangement, so it is pinned. One row for
     Fantasy since the merge: three sub-modules under one masthead carry one
     chip, not three."""
-    for key in ("fantasy", "betting", "cards"):
+    for key in ("fantasy", "betting"):
         assert "Diamond preview" in MODULE_STAGE[key][0]
 
 
@@ -176,7 +175,6 @@ def test_the_three_content_modules_are_labeled_diamond_preview():
     ("redraft/index.html", "build_redraft"),
     ("dfs/index.html", "build_dfs"),
     ("betting/index.html", "build_betting"),
-    ("cards/index.html", "build_cards"),
     ("diamond/index.html", "build_diamond"),
 ])
 def test_builder_is_registered_in_main(rel: str, fn: str):
@@ -332,7 +330,7 @@ def test_every_diamond_page_loads_the_config_before_its_app():
     stamped with the same content-hash scheme every other asset URL carries,
     or a helper update never reaches a browser that cached the old one."""
     import inspect
-    for fn_name in ("build_fantasy", "build_betting", "build_cards", "build_diamond"):
+    for fn_name in ("build_fantasy", "build_betting", "build_diamond"):
         src = inspect.getsource(getattr(build_site, fn_name))
         assert "DIAMOND_CONFIG_SCRIPT" in src, f"{fn_name} does not load diamond-config.js"
     block = build_site.DIAMOND_CONFIG_SCRIPT
@@ -684,7 +682,7 @@ def test_member_gets_list_is_fantasy_and_betting_only():
     assert '<h3><a href="/prospx/">' not in out
     assert '<h3><a href="/cards/">' not in out
     assert "two modules" in out, "the section-sub count no longer follows the list"
-    assert "returns to the pass when a licensed price source is wired" in out, (
+    assert "Removed on 2026-09-05" in out and "licensed price source" in out, (
         "the honest Card Market line is gone")
 
 
@@ -716,14 +714,10 @@ def test_homepage_strip_carries_the_static_diamond_card():
 
 
 def test_diamond_module_mastheads_carry_the_part_of_line():
-    """One server-rendered line under the fantasy, betting and cards
-    mastheads. The cards line carries the frozen-index status in plain
-    words; the free-preview clause is gating-aware and ships because the
-    pinned flag is off."""
-    for fn in ("build_fantasy", "build_betting", "build_cards"):
+    """One server-rendered line under the fantasy and betting mastheads (the
+    cards masthead went with the module on 2026-09-05); the free-preview
+    clause is gating-aware and ships because the pinned flag is off."""
+    for fn in ("build_fantasy", "build_betting"):
         out = getattr(build_site, fn)()
         assert PARTOF_LINE in out, f"{fn} lost the Part of Diamond line"
         assert "Free during the founding preview." in out, fn
-    cards = build_site.build_cards()
-    assert "The card index is frozen until a licensed price source is wired" in cards
-    assert "the screen stays public" in cards

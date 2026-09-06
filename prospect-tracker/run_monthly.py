@@ -225,18 +225,6 @@ SCHEDULED_GRADE_SOURCES = ("tjstats", "mlb_pipeline_live", "mlb_pipeline_org")
 # that array and a dark board deserves the same shout as a dead ingest. They
 # stay TELLABLE APART in the payload through each row's `kind`.
 #
-# DELIBERATELY EXCLUDED: "card_drops" and "card_scrape" (steps 6g-pre and 9f,
-# filed by _record_card_ingest). Both file ok=False whenever tonight's tap
-# parsed nothing, which is the NORMAL state on a box with EEPHUS_CARD_SCRAPE
-# unset and no CSV drop - watching them would print `!!! INGEST RED` every
-# single night until the reader stopped reading the line. They stay 'unwatched'
-# and report through three other channels instead: an ERROR from scrape_cards
-# the moment a whole batch parses nothing, an ERROR from card_market_export and
-# from step 9f, and their own FAIL rows plus a frozen `last OK` in the table
-# below, which is the number that answers "when did the card tap last work".
-# The genuinely broken cases (the scrape ran and parsed nothing; a CSV drop
-# parsed nothing) are published in data/card_market.json's meta.ingest, which
-# is where a reader of the PAGE can see them. See docs/diamond-cards.md 4c.
 SCHEDULED_EXPORTS = (
     # /mlbstats/ leaderboards: the team-rollup guard behind the Offense+ outage
     "hitter_leaderboards", "starter_leaderboards", "bullpen_leaderboards",
@@ -347,42 +335,6 @@ def _record_ingest(source: str, ok: bool, n_rows: int = 0, message: str = "",
                      f" - {message}" if message else "")
         else:
             log.error("ingest health: %s FAILED (%d rows) %s", source, n_rows, message)
-
-
-def _record_card_ingest(res: dict, scope: str = "",
-                        log: logging.Logger | None = None) -> None:
-    """Stamp the card comp taps into the ingest ledger. See docs/diamond-cards.md.
-
-    TWO ROWS, NOT ONE, and that is the whole point. `card_prices_ingest`
-    re-parses every drop file on every run (the ledger there is for auditing,
-    not for skipping), so a single drop dropped in March keeps a combined
-    "card_comps" row green forever and would hide a scraper that died in April.
-    Split, `card_scrape`'s last_ok_at answers the only question worth asking of
-    it: when did the scraper last actually parse a sale.
-
-    ok KEYS ON ROWS PARSED, NOT ROWS STORED. A re-read of the same 90-day sold
-    window stores zero new rows and is perfectly healthy, so keying on stored
-    would report a working ingest as a failure every night after the first.
-
-    A scrape that is not armed, or that was skipped as a duplicate of a pass
-    earlier in this same process, records ok=False with the reason stated. That
-    reads as loud, and it should: an unarmed scraper with no scheduled caller is
-    exactly the condition that left /cards/ at 0 priced for its whole first
-    life, and nothing anywhere said so."""
-    drops = res.get("drops") or {}
-    scrape = res.get("scrape") or {}
-    _record_ingest("card_drops", (drops.get("parsed") or 0) > 0,
-                   drops.get("stored") or 0,
-                   f"{len(drops.get('files') or [])} file(s), "
-                   f"{drops.get('parsed') or 0} rows parsed",
-                   scope=scope, log=log)
-    _record_ingest("card_scrape", (scrape.get("parsed") or 0) > 0,
-                   scrape.get("stored") or 0,
-                   (scrape.get("reason")
-                    or (f"scope={res.get('scope')} "
-                        f"{scrape.get('cards_fetched') or 0} fetched, "
-                        f"{scrape.get('cards_zero_rows') or 0} parsed nothing")),
-                   scope=scope, log=log)
 
 
 # ===========================================================================
@@ -1301,6 +1253,76 @@ def rebuild_only(out_dir: Path = Path("data"), *,
         player_ids={},
     )
 
+    # eFV — our outcome-grounded grade. Regenerates the labeled training matrix +
+    # the CURRENT active-board feature matrix from the just-written timeseries.json,
+    # fits the model, scores both cohorts (live board gated on a pro track record),
+    # and consolidates data/xfv.json (the site sidecar shown next to consensus FV).
+    # The forward-chained backtest eval (registry artifact) is stable -> not re-run
+    # here. Best-effort; a failure must not abort the run. Provisional grade.
+    try:
+        from efv_export import regen_all as _regen_xfv
+        _xfv = _regen_xfv()
+        log.info("eFV (rebuild): %d players (%d live board) -> data/xfv.json",
+                 _xfv["meta"]["n_players"], _xfv["meta"]["n_active"])
+    except Exception:
+        log.exception("eFV regen crashed in rebuild_only — continuing")
+
+    # eFV REGEN TRIPWIRES (lane T, 2026-08-07). Records, per regen, the training
+    # pool's MiLB coverage, the SERVED ridge weights, and how much of the live
+    # board's explainer output changed, into data/xfv_regen_ledger.json.
+    #
+    # WHY IT SITS HERE. The 2026-08-04 regen took hitter coverage from 48.0 to
+    # 59.2 percent and the refit moved the whole production weight block (level
+    # premium down 32 percent, on-base down 36, age-for-level up 46). Nothing
+    # gated it, because a refit is not a ship, and nothing connected the two, so
+    # the owner found it by noticing a prospect had moved.
+    # docs/ARIAS_ATTRIBUTION_2026-08-07.md is the session that cost.
+    #
+    # Immediately after regen_all on purpose: it reads the matrices and
+    # data/xfv.json this step just wrote, in this process, before anything else
+    # can touch them.
+    #
+    # REPORTS, NEVER GATES. It cannot fail the run: run() swallows its own
+    # exceptions, and the try here is belt and braces. ok=False is filed ONLY
+    # when the instrument could not observe at all, which is the one condition
+    # worth a RED - a watch that has silently stopped watching is the exact
+    # failure class it exists to catch. A tripwire FIRING leaves ok True and
+    # rides log.warning plus the ledger: the measured base rate is about one
+    # regen in three, and a RED at that rate is a RED nobody reads.
+    try:
+        from tools.efv_regen_tripwire import run as _regen_tripwire
+        _tw = _regen_tripwire(log)
+        _record_ingest("efv_regen_tripwire", bool(_tw.get("observed")),
+                       int(_tw.get("n_alerts") or 0),
+                       _tw.get("message") or "", scope="", log=log)
+    except Exception as e:                                # noqa: BLE001
+        log.exception("eFV regen tripwire crashed in rebuild_only - continuing")
+        _record_ingest("efv_regen_tripwire", False, 0, f"crashed: {e}", log=log)
+
+    # BOARD RANK RE-BAKE (2026-09-05). export_timeseries_json above baked overall_rank /
+    # org_rank off the eFV file ON DISK, which regen_all has just REPLACED, so until this
+    # step the baked rank was one run stale against the grades the board displays and
+    # sorts on. Measured 2026-09-05: Josue De Paula and Theo Gillen tied at 58.3 with
+    # board_sort_key 9.617 vs 9.670; the homepage (baked rank) said #4 / #5 and the board
+    # (fresh file) said #5 / #4. The re-bake re-applies THE ordering (storage.board_rank_key)
+    # with only the two model terms refreshed, rewrites the payload atomically and updates
+    # today's metric_snapshots rows when the monthly snapshot was already taken. It sits
+    # directly after the regen and BEFORE every sidecar that reads overall_rank (ifa_export,
+    # identity_audit, org_tendencies), which is why the eFV block moved up to here on the
+    # same date. Reports through ingest health; never aborts the run.
+    try:
+        from storage import rebake_board_ranks as _rebake_ranks
+        _rb = _rebake_ranks(out_path, log=log)
+        log.info("board ranks re-baked on the fresh eFV file: %d active rows, %d moved "
+                 "(top 5: %s)", _rb.get("n_active") or 0, _rb.get("n_moved") or 0,
+                 ", ".join(f"#{i} {pk}" for i, pk, _g in (_rb.get("top") or [])[:5]))
+        _record_ingest("board_rank_rebake", bool(_rb.get("written")),
+                       int(_rb.get("n_moved") or 0), _rb.get("message") or "",
+                       scope="", log=log)
+    except Exception as e:                                # noqa: BLE001
+        log.exception("board rank re-bake crashed in rebuild_only - continuing")
+        _record_ingest("board_rank_rebake", False, 0, f"crashed: {e}", log=log)
+
     # International Amateurs sidecar — IFA signing classes (2021–current)
     # from the cached Spotrac tracker, enriched against the freshly-written
     # timeseries.json. Best-effort; a failure here must not abort the run.
@@ -1349,52 +1371,6 @@ def rebuild_only(out_dir: Path = Path("data"), *,
         _export_ot()
     except Exception:
         log.exception("org tendencies export crashed in rebuild_only — continuing")
-
-    # eFV — our outcome-grounded grade. Regenerates the labeled training matrix +
-    # the CURRENT active-board feature matrix from the just-written timeseries.json,
-    # fits the model, scores both cohorts (live board gated on a pro track record),
-    # and consolidates data/xfv.json (the site sidecar shown next to consensus FV).
-    # The forward-chained backtest eval (registry artifact) is stable -> not re-run
-    # here. Best-effort; a failure must not abort the run. Provisional grade.
-    try:
-        from efv_export import regen_all as _regen_xfv
-        _xfv = _regen_xfv()
-        log.info("eFV (rebuild): %d players (%d live board) -> data/xfv.json",
-                 _xfv["meta"]["n_players"], _xfv["meta"]["n_active"])
-    except Exception:
-        log.exception("eFV regen crashed in rebuild_only — continuing")
-
-    # eFV REGEN TRIPWIRES (lane T, 2026-08-07). Records, per regen, the training
-    # pool's MiLB coverage, the SERVED ridge weights, and how much of the live
-    # board's explainer output changed, into data/xfv_regen_ledger.json.
-    #
-    # WHY IT SITS HERE. The 2026-08-04 regen took hitter coverage from 48.0 to
-    # 59.2 percent and the refit moved the whole production weight block (level
-    # premium down 32 percent, on-base down 36, age-for-level up 46). Nothing
-    # gated it, because a refit is not a ship, and nothing connected the two, so
-    # the owner found it by noticing a prospect had moved.
-    # docs/ARIAS_ATTRIBUTION_2026-08-07.md is the session that cost.
-    #
-    # Immediately after regen_all on purpose: it reads the matrices and
-    # data/xfv.json this step just wrote, in this process, before anything else
-    # can touch them.
-    #
-    # REPORTS, NEVER GATES. It cannot fail the run: run() swallows its own
-    # exceptions, and the try here is belt and braces. ok=False is filed ONLY
-    # when the instrument could not observe at all, which is the one condition
-    # worth a RED - a watch that has silently stopped watching is the exact
-    # failure class it exists to catch. A tripwire FIRING leaves ok True and
-    # rides log.warning plus the ledger: the measured base rate is about one
-    # regen in three, and a RED at that rate is a RED nobody reads.
-    try:
-        from tools.efv_regen_tripwire import run as _regen_tripwire
-        _tw = _regen_tripwire(log)
-        _record_ingest("efv_regen_tripwire", bool(_tw.get("observed")),
-                       int(_tw.get("n_alerts") or 0),
-                       _tw.get("message") or "", scope="", log=log)
-    except Exception as e:                                # noqa: BLE001
-        log.exception("eFV regen tripwire crashed in rebuild_only - continuing")
-        _record_ingest("efv_regen_tripwire", False, 0, f"crashed: {e}", log=log)
 
     # MiLB -> first-MLB rate translation (K% / BB%; matched-pair, LOO-validated).
     # Needs the eFV matrices (built above) + debuts.json. Best-effort.
@@ -2738,63 +2714,6 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     _hb.record("betting_learning", ok=False, result=str(_e)[:120])
                 except Exception:
                     pass
-
-        # --- 9f. Card comps ingest + market index (card_market.json) ------
-        # THE CADENCE THE MODULE ALWAYS DOCUMENTED AND NEVER HAD. Before this,
-        # the only card step in the pipeline was the monthly export, so a comp
-        # ingested on the 3rd could not reach the page until the 1st of the next
-        # month, and no ingest was scheduled at all. Comps move daily; the index
-        # that summarizes them has to move with them, which is why the export
-        # runs here and not only at monthly 6g.
-        #
-        # ORDER IS LOAD-BEARING. This sits after d9 (rebuild_only re-runs
-        # efv_export.regen_all), so the talent side of the buy signal reads the
-        # SAME data/xfv.json the rest of tonight's site serves. Running it before
-        # the regen would screen tonight's prices against yesterday's board.
-        #
-        # run_scheduled_ingest owns the cadence: drops every night, the hot list
-        # daily, a full sweep on Sunday. On a monthly night step 6g-pre already
-        # ran it in this process, and the card_scrape_runs guard makes this call
-        # skip the fetch instead of hitting the marketplace twice. With
-        # EEPHUS_CARD_SCRAPE unset the whole thing is drops-only and silent.
-        # Additive; never aborts. Runbook: docs/diamond-cards.md.
-        with _step("9f. Card comps ingest + market index (card_market.json)", log):
-            try:
-                import card_prices_ingest
-                _cards = card_prices_ingest.run_scheduled_ingest(log_fn=log.info)
-                # scope="daily" keeps this row distinct from 6g-pre's on a
-                # monthly night, where the scrape here is a deliberate skip: two
-                # rows that say what each pass did beats one row that overwrites
-                # the pass that actually fetched.
-                _record_card_ingest(_cards, scope="daily", log=log)
-            except Exception as e:                # noqa: BLE001
-                log.exception("daily: card comps ingest failed - continuing")
-                _record_ingest("card_scrape", False, 0, f"crashed: {e}",
-                               scope="daily", log=log)
-            try:
-                import card_market_export
-                # write_eval also writes data/card_market_eval.json, the
-                # pre-registration the runbook and registry row have cited
-                # since 2026-08-07 while no caller ever passed the flag, so
-                # the file did not exist (found 2026-08-16).
-                _cm = card_market_export.export(write_eval=True)
-                _cm_meta = _cm.get("meta") or {}
-                _cm_ing = _cm_meta.get("ingest") or {}
-                log.info("card market: %d cards, %d priced, ingest=%s",
-                         _cm_meta.get("n_cards"), _cm_meta.get("n_priced"),
-                         _cm_ing.get("state"))
-                # The export already filed the RED and logged at ERROR; this
-                # repeats the verdict in the DAILY step log because the card
-                # sources are deliberately NOT in SCHEDULED_GRADE_SOURCES (they
-                # write comps, not grade rows, and a source that is legitimately
-                # off would otherwise print `!!! INGEST RED` every single night
-                # until somebody stopped reading the line). The nightly log is
-                # therefore where a parse regression has to be visible.
-                if _cm_ing.get("red"):
-                    log.error("daily: card ingest %s - %s",
-                              _cm_ing.get("state"), _cm_ing.get("why"))
-            except Exception:
-                log.exception("daily: card market export failed - continuing")
 
         # --- 9g. eFV scoreboard refresh (xfv_scoreboard_eval.json) --------
         # The /diamond/ receipts read this artifact and NOTHING regenerated it:
@@ -5176,56 +5095,6 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 betting_model.backtest(season=_season6f, log_fn=log.info)
             except Exception:
                 log.exception("betting model refit failed - continuing")
-
-        # --- 6g-pre. Card comps ingest (the tap /cards/ never had) --------
-        # THE DEFECT THIS CLOSES (2026-08-05): card_prices_ingest had no
-        # scheduled caller ANYWHERE. Step 6g below ran only the export, so
-        # /cards/ served 40 tracked cards and 0 priced forever, and
-        # EEPHUS_CARD_SCRAPE=1 in /etc/eephus.env armed a scraper that nothing
-        # invoked. The export was doing its job perfectly on an empty store.
-        #
-        # run_scheduled_ingest owns the cadence (card_prices_ingest.CADENCE:
-        # drops every run, the hot list daily, a full sweep on Sunday) so this
-        # step stays a dumb "run tonight's ingest" and cannot encode a second
-        # opinion. It is SAFE that the chained daily tail (step 9f) calls it
-        # again fifteen minutes from now: drops are idempotent at the row and
-        # file level, and the scrape is guarded by card_scrape_runs, so a scope
-        # already fetched today is skipped rather than re-fetched.
-        #
-        # NO-OPS WITH THE FLAG UNSET, which is every box today: the drop path
-        # needs no network and the scrape reports a stated reason instead of
-        # running. Additive; never aborts. Runbook: docs/diamond-cards.md.
-        with _step("6g-pre. Card comps ingest (drops + gated scrape)", log):
-            try:
-                import card_prices_ingest
-                _cards = card_prices_ingest.run_scheduled_ingest(log_fn=log.info)
-                _record_card_ingest(_cards, log=log)
-            except Exception as e:                # noqa: BLE001
-                log.exception("card comps ingest failed - continuing")
-                _record_ingest("card_scrape", False, 0, f"crashed: {e}", log=log)
-
-        # --- 6g. Card market index (the /cards/ screen) ------------------
-        # Joins stored sold comps to the eFV board and republishes the derived
-        # index ONLY (raw comps never leave the DB). Ingest is 6g-pre above:
-        # the scraper needs EEPHUS_CARD_SCRAPE=1, and a CSV drop under
-        # data/drops/ is an equal first-class input. A zero-comp run publishes
-        # an honest empty screen and says in meta.ingest WHICH kind of empty it
-        # is. Additive; never aborts. Runbook: docs/diamond-cards.md.
-        #
-        # Kept here as well as in the daily tail (step 9f) on purpose: this pass
-        # makes a bare `run_monthly.py` self-publish, and the chained daily
-        # re-exports ~15 min later against the POST-regen data/xfv.json, so the
-        # served file ends the night on the fresher board either way. The file
-        # is ~40 rows, so the duplicate write costs nothing worth avoiding.
-        with _step("6g. Card market index (card_market.json)", log):
-            try:
-                import card_market_export
-                # write_eval keeps data/card_market_eval.json in existence; no
-                # caller passed the flag before 2026-08-16 and the cited
-                # pre-registration artifact never existed.
-                card_market_export.export(write_eval=True)
-            except Exception:
-                log.exception("card market export failed - continuing")
 
         # --- 6c. Organization Tendencies (farm-detail Tendencies tab) ---
         # Pure aggregation over the DB + just-written sidecars; additive.

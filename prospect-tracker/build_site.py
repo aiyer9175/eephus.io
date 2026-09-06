@@ -132,8 +132,6 @@ _FANTASY_HUB_VER = _asset_ver("assets/fantasy-hub.js")
 # attaches to. There is no page-per-player build behind it.
 _FANTASY_CARD_VER = _asset_ver("assets/fantasy-card.js")
 _BETTING_VER = _asset_ver("assets/betting.js")
-_CARDS_VER = _asset_ver("assets/cards.js")
-_CARDS_CSS_VER = _asset_ver("assets/cards.css")
 _DIAMOND_VER = _asset_ver("assets/diamond.js")
 # The gate switch lives in ONE file (assets/diamond-config.js:
 # window.EEPHUS_DIAMOND = {gating:false, ...}) and the ONE reader of it is
@@ -198,7 +196,6 @@ def _data_vers_script(names: tuple[str, ...]) -> str:
 # the module, which is exactly the transfer the stamp exists to save.
 FANTASY_DATA_STAMPS = ("fantasy.json", "dfs.json",
                        "hitter_history.json", "starter_history.json")
-CARDS_DATA_STAMPS = ("card_market.json",)
 DIAMOND_DATA_STAMPS = ("xfv_scoreboard_eval.json",)
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
@@ -342,7 +339,6 @@ NAV_ITEMS = [
     {"group": "Diamond", "key": "diamondgrp", "children": [
         ("fantasy",  "Fantasy",        "/fantasy/"),
         ("betting",  "Sports Betting", "/betting/"),
-        ("cards",    "Card Market",    "/cards/"),
         ("diamond",  "Diamond Pass",   "/diamond/"),
     ]},
     ("articles", "Articles",         "/articles/"),
@@ -513,7 +509,6 @@ MODULE_STAGE = {
     # sub-modules under one masthead now, so there is one chip, not three.
     "fantasy": ("◆ Diamond preview", "Fantasy is a Diamond preview - free and public while the Diamond section is built out"),
     "betting": ("◆ Diamond preview", "Sports Betting is a Diamond preview - free and public while the Diamond section is built out"),
-    "cards": ("◆ Diamond preview", "Card Market is a Diamond preview - free and public while the Diamond section is built out"),
     "diamond": ("◆ Diamond preview", "Diamond Pass is not selling anything yet - everything on the site is free today"),
 }
 
@@ -3293,7 +3288,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
                      # 2026-08-07 merge; Dynasty / Redraft / DFS are its
                      # sub-modules and are reached by the module bar, not here.
                      "fantasy": "◈",
-                     "betting": "⌁", "cards": "▧", "diamond": "◆"}
+                     "betting": "⌁", "diamond": "◆"}
     def _sb_link(key, label, href, grouped=False):
         classes = []
         if key == "home":
@@ -3436,8 +3431,20 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     def _top_key(p):
         return (_primary_fv(p) if _primary_fv(p) is not None else -1,
                 1 if p.get("fv_close_plus") else 0)
-    topN = sorted(players, key=_top_key, reverse=True)[:5]
-    top_body = "".join(_row_top(p, i) for i, p in enumerate(topN, 1))
+    # ONE ORDERING, READ NOT RE-DERIVED (2026-09-05). Top Prospects are the first five rows
+    # of THE board rank, `overall_rank`, which storage bakes from one ordering
+    # (BOARD_GRADE_FIELD -> board_sort_key -> '+' -> TBS proxy -> avg_rank) and re-bakes on
+    # the fresh eFV file after the regen (storage.rebake_board_ranks). This module used to
+    # re-sort on (primary FV, '+') and label rows by position: that chain carried no
+    # sub-decimal term, so an exact-grade tie fell through to list order, which was the
+    # rank baked from the PREVIOUS run's eFV file. Josue De Paula and Theo Gillen (58.3,
+    # keys 9.617 vs 9.670) rendered #4 / #5 here and #5 / #4 on the board. The old key stays
+    # only as the fallback for a payload that carries no ranks at all.
+    ranked = sorted((p for p in players if p.get("overall_rank")),
+                    key=lambda p: int(p["overall_rank"]))
+    topN = ranked[:5] or sorted(players, key=_top_key, reverse=True)[:5]
+    top_body = "".join(_row_top(p, int(p.get("overall_rank") or i))
+                       for i, p in enumerate(topN, 1))
     topp = _home_module("Top Prospects", "/prospx/", "Full board", top_body) if top_body else ""
 
     gr = sorted((g for g in graduates if g.get("debut_date")), key=lambda g: g["debut_date"], reverse=True)[:5]
@@ -4275,8 +4282,8 @@ def _partof_diamond(extra: str = "") -> str:
     """One masthead line under each Diamond module naming the pass it belongs
     to. Gating-aware so the line cannot promise a free preview after the flag
     flips: the free clause renders only while diamond-config.js ships
-    gating false. `extra` is a plain-words status tail (the cards masthead
-    carries its frozen-index note through it)."""
+    gating false. `extra` is a plain-words status tail (the retired /cards/
+    masthead carried its frozen-index note through it)."""
     free = "" if _diamond_cfg()["gating"] else " Free during the founding preview."
     tail = f" {html.escape(extra)}" if extra else ""
     return (f'<span class="section-sub">Part of <a href="/diamond/">Diamond</a>.'
@@ -4399,69 +4406,6 @@ def build_betting() -> str:
                 url=f"{SITE_ORIGIN}/betting/")
 
 
-def build_cards() -> str:
-    """/cards/ - the baseball card market screen. assets/cards.js reads
-    data/card_market.json (card_market_export.py): a derived per-player card
-    index, its trend, and the gap between what the market pays and what eFV
-    says the player is worth.
-
-    WHAT THIS PUBLISHES: derived index values only. Raw sold-listing comps are
-    stored privately and are never republished. v1 is a SCREEN, not a
-    validated signal: there is no price-history backtest yet, and the page says
-    so rather than implying a track record it does not have.
-
-    Section keys: screen | movers | watchlist | method."""
-    body = (
-        '<div class="fa-app mlbstats-app cards-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Card Market {_stage_chip("cards")}</h1></div>'
-        '<span class="section-sub">What the hobby pays for a player against what our prospect model thinks '
-        'he is worth. The card index is a derived, grade-adjusted value built from public sold prices, '
-        'published as an index rather than a comp sheet. Treat this as a screen, not a forecast: it has no '
-        'price-history backtest behind it yet, and it will not get one until the module has collected enough '
-        'of its own history to test.</span>'
-        # The cards line carries its status tail: this screen is public but the
-        # index is frozen, and the pass page's FAQ says the same thing.
-        + _partof_diamond("The card index is frozen until a licensed price source "
-                          "is wired; the screen stays public.") + '</div>'
-        # data-cardsection, SINGULAR. This shell shipped data-cardssection (a
-        # doubled s) while cards.js was written against data-cardsection, and
-        # rendered in a real browser on 2026-08-05 that one letter meant the
-        # tab wiring matched nothing: three of the four boards were
-        # unreachable. The client grew a shim that accepts both spellings;
-        # normalized here 2026-08-16 to the name the client expects. The shim
-        # stays as backward armor for any cached copy of this shell.
-        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Card Market sections">'
-        '<button type="button" class="mlbstats-sectionbtn active" data-cardsection="screen" role="tab" aria-selected="true">Buy Screen</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-cardsection="movers" role="tab" aria-selected="false">Movers</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-cardsection="watchlist" role="tab" aria-selected="false">Watchlist</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-cardsection="method" role="tab" aria-selected="false">Method</button>'
-        '</div>'
-        '<div id="cards-section" class="mlbstats-section">'
-        '<div id="cards-banner"></div>'
-        f'<div id="cards-app-root"{_csv_optin("card-market")}></div>'
-        '</div>'
-        '</div>'
-        # The module stylesheet's permanent, cache-busted home. cards.js also
-        # self-loads it behind a href*="cards.css" guard, which this versioned
-        # URL satisfies, so the injection becomes a no-op rather than a double
-        # load. Placement mirrors build_trademachine().
-        f'<link rel="stylesheet" href="/assets/cards.css?v={_CARDS_CSS_VER}">'
-        # Content stamp for data/card_market.json (see _data_vers_script):
-        # cards.js fetches it versioned under default caching when this global
-        # carries its hash.
-        f'{_data_vers_script(CARDS_DATA_STAMPS)}'
-        f'{DIAMOND_CONFIG_SCRIPT}'
-        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
-        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
-        f'<script src="/assets/cards.js?v={_CARDS_VER}" defer></script>'
-    )
-    return page("Card Market - eephus.io", "cards", body,
-                "Baseball card market screen from eephus.io: a derived card index for top prospects and "
-                "notable big leaguers, its trend, and where the market price sits against the eFV "
-                "prospect model. A screen, not a validated signal.",
-                url=f"{SITE_ORIGIN}/cards/")
-
 
 def build_diamond() -> str:
     """/diamond/ - the Diamond Pass page.
@@ -4519,8 +4463,9 @@ def build_diamond() -> str:
     gets = [
         # TWO cards (owner de-list 2026-08-16). /prospx/ came off because it is
         # a free page, and a free page on a "what members get" list was the one
-        # dishonest card here. Card Market came off because its price source is
-        # not licensed for a paid product; the FAQ carries the honest line.
+        # dishonest card here. The Card Market module was REMOVED on 2026-09-05
+        # (owner decision: no feasible price source with the current data); the
+        # FAQ carries the honest line about where it went.
         ("Fantasy", "/fantasy/",
          "Three surfaces on one board set. Redraft: rest-of-season ranks in your scoring format, "
          "daily streamers, two-start pitchers, buy and sell. Dynasty: the full keeper board with "
@@ -4593,9 +4538,10 @@ def build_diamond() -> str:
          f"months. If the price ever moves above ${price}, founding members are not moved with it during "
          "that year."),
         ("Where is the Card Market?",
-         "Still on the site, still free, at /cards/. It is not on the member list: the screen runs on "
-         "public sold prices with no licensed feed behind it, and it returns to the pass when a licensed "
-         "price source is wired. Until then it is a public screen, not a member benefit."),
+         "Removed on 2026-09-05. The screen ran on public sold prices with no licensed feed behind it, "
+         "no feasible source turned up, and the module came off the site and the nightly pipeline. It "
+         "is not a member benefit and will not be described as one unless a licensed price source is "
+         "wired."),
         ("Do you guarantee I will make money betting?",
          "No, and anyone who does is lying to you. What we promise instead is a record you can audit: every "
          "pick posted with its timestamp, book and odds, a flat one-unit stake, nothing deleted after the "
@@ -5859,7 +5805,6 @@ def build_sitemap(articles: list[dict]) -> str:
         # treatment as /teams/). Their content is one crawlable page.
         ("/fantasy/", "daily", "0.8"),
         ("/betting/", "daily", "0.8"),
-        ("/cards/", "daily", "0.7"),
         ("/diamond/", "monthly", "0.6"),
         ("/parks/", "weekly", "0.6"),
         ("/models/", "daily", "0.6"),
@@ -6465,7 +6410,6 @@ def main() -> None:
     _write("redraft/index.html", build_redraft())
     _write("dfs/index.html", build_dfs())
     _write("betting/index.html", build_betting())
-    _write("cards/index.html", build_cards())
     _write("diamond/index.html", build_diamond())
     _write("parks/index.html", build_parks())
     _write("models/index.html", build_models())

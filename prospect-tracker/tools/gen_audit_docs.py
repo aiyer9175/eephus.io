@@ -195,7 +195,6 @@ _ROUTE_NOTES = {
     "redraft/index.html": "redirect stub: Redraft is a sub-module of /fantasy/ (hash-preserving)",
     "dfs/index.html": "redirect stub: DFS is a sub-module of /fantasy/ (hash-preserving)",
     "betting/index.html": "Diamond: model win probabilities against book prices; the disclaimer renders ABOVE the boards",
-    "cards/index.html": "Diamond: card market screen; publishes a derived per-player index, never a listing price",
     "diamond/index.html": "Diamond Pass page; server-rendered structure, live receipt numbers filled by assets/diamond.js",
     "parks/index.html": "MiLB Park Factors reference table (display only; the eFV park-line lane stays gated off)",
     "models/index.html": "Model Accountability hub: data/model_registry.json rendered server-side, with freshness and the ledger's own gaps counted; assets/accountability.js only filters what is already in the DOM",

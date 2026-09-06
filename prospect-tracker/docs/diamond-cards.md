@@ -1,3 +1,5 @@
+> RETIRED 2026-09-05. The Card Market module was removed from the site and the nightly pipeline (owner decision: not feasible with the current data; no licensed or feasible price source). This document stays as the historical record; nothing below is live.
+
 # Baseball Card Market runbook (/cards/)
 
 Module owner files: `card_prices_ingest.py`, `card_market_export.py`,

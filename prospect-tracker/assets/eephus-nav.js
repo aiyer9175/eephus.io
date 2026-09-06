@@ -66,9 +66,9 @@
   // site.css clamps .section-head .section-sub to 2 lines on phones. The old
   // mitigation put the full text in a `title` attribute, which is a HOVER
   // tooltip: on the one device class where the clamp fires, that affordance
-  // does not exist. Measured 2026-08-07 at 390px, 5 of 7 lines hidden on
-  // /cards/, 6 of 8 on /mlbstats/, 7 of 9 on /pal/ - and on /cards/ the hidden
-  // run is the "Treat this as a screen, not a forecast" disclaimer. So the
+  // does not exist. Measured 2026-08-07 at 390px, 5 of 7 lines hidden on the
+  // since-retired /cards/ screen, 6 of 8 on /mlbstats/, 7 of 9 on /pal/ - and
+  // the hidden run there was the module's own disclaimer. So the
   // clamp now hangs off [data-sub-collapsed] and comes with a real button.
   var subSeq = 0;
 

@@ -300,10 +300,10 @@ def test_nav_link_strip_fits_without_scrolling(server, route, width):
 
 # --------------------------------------------- 4b. the clamped phone subtitle
 
-# Every surface that emits a .section-head .section-sub. /cards/ is the one that
-# matters most (its hidden text IS the disclaimer) but the guard is the rule,
-# not the instance, so it sweeps the lot.
-_SUB_PAGES = ["cards/", "mlbstats/", "pal/", "betting/", "models/",
+# Every surface that emits a .section-head .section-sub. The retired /cards/ screen
+# was the one that mattered most (its hidden text WAS the disclaimer) but the guard
+# is the rule, not the instance, so it sweeps the lot.
+_SUB_PAGES = ["mlbstats/", "pal/", "betting/", "models/",
               "trademachine/", "projections/", "fa/", "glossary/"]
 
 

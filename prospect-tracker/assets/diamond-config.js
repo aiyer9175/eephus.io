@@ -31,5 +31,5 @@ window.EEPHUS_DIAMOND = {
   gating: false,
   price_usd_month: 15,
   founding_rate_usd: 9.99,
-  preview_rows: { dynasty: 25, redraft: 25, dfs: 25, cards: 40 }
+  preview_rows: { dynasty: 25, redraft: 25, dfs: 25 }
 };

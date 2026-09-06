@@ -679,7 +679,7 @@ def _callup_watch(ts: dict | None = None) -> list:
 
 
 # The blend weights and the ETA-proximity decay live in dynasty_blend (shared
-# with card_market_export.talent_score). This module carried its own copies
+# with the card market exporter until that module was removed 2026-09-05). This module carried its own copies
 # until 2026-08-16, when the card clone was found decaying ETA at 0.25 against
 # this module's 0.18; one importable module is the only shape that cannot
 # re-diverge.

@@ -391,6 +391,8 @@ MODEL_GLOSSARY = {
     # three ship deliberately unvalidated and say so on the page.
     "betting_game_prob": "internal",
     "dfs_slate_pricing": "internal",
+    # Card Market: module REMOVED 2026-09-05 (owner decision); the deprecated
+    # registry row stays as the record and keeps its internal mapping.
     "card_market_index": "internal",
     # 2026-08-16 betting-model lane. Neither is user-facing: the Platt
     # calibration is an UNSERVED seam behind SERVE_PROB_CALIBRATION whose

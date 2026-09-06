@@ -73,7 +73,7 @@ DATA_BASE_URL = "/data/"
 GROUPS = (
     ("prospects", "Prospects and the eFV model"),
     ("mlb", "MLB players, projections and free agency"),
-    ("diamond", "Fantasy, DFS, betting and cards"),
+    ("diamond", "Fantasy, DFS and betting"),
     ("reference", "Reference and model accountability"),
 )
 
@@ -430,13 +430,6 @@ ARTIFACTS = (
                  "and the extra-inning rate the live board prices with."),
         "cadence": "daily", "stability": EXPERIMENTAL, "pinned_by": "",
         "note": "Model internals. No test pins this shape, so treat the field names as habit.",
-    },
-    {
-        "file": "card_market.json", "group": "diamond",
-        "title": "Card market screen",
-        "what": "The hobby price screen: card index, movers, and price against the prospect model.",
-        "cadence": "daily", "stability": EXPERIMENTAL, "pinned_by": "test_card_market.py",
-        "note": "A screen, not a validated signal. It says so on the page too.",
     },
     # ---- reference -------------------------------------------------------
     {

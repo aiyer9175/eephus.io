@@ -47,7 +47,8 @@ HELPER_PATH = ASSETS / "eephus-diamond.js"
 CONFIG_PATH = ASSETS / "diamond-config.js"
 HELPER = HELPER_PATH.read_text(encoding="utf-8")
 
-# The five module clients on the Diamond pass surfaces. diamond.js (the pass
+# The four module clients on the Diamond pass surfaces (cards.js left with its
+# module on 2026-09-05). diamond.js (the pass
 # page itself) is deliberately NOT in this list: it belongs to another lane,
 # renders copy about the gate rather than capping any rows, and reads only the
 # flag; its exemption is pinned separately below.
@@ -55,7 +56,6 @@ CLIENTS = {
     "dynasty": ASSETS / "dynasty.js",
     "redraft": ASSETS / "redraft.js",
     "dfs": ASSETS / "dfs.js",
-    "cards": ASSETS / "cards.js",
     "betting": ASSETS / "betting.js",
 }
 
@@ -98,7 +98,7 @@ def test_ghost_keys_are_dead_in_every_client_and_in_the_pass_page():
     any module client. The only surviving spelling of previewRows outside the
     helper is the helper CALL with a literal module name, so a client can
     neither read the config key nor pass a variable that drifts."""
-    call = re.compile(r'\.previewRows\("(dynasty|redraft|dfs|cards)"\)')
+    call = re.compile(r'\.previewRows\("(dynasty|redraft|dfs)"\)')
     for name, path in sorted(CLIENTS.items()):
         code = _code(path)
         assert "isMember" not in code, f"{name}.js grew a membership read of its own"
@@ -148,7 +148,7 @@ def test_config_carries_the_preview_caps_and_build_site_parses_them():
     import build_site
     cfg = build_site._diamond_cfg()
     assert cfg.get("preview_rows") == {
-        "dynasty": 25, "redraft": 25, "dfs": 25, "cards": 40}
+        "dynasty": 25, "redraft": 25, "dfs": 25}
     # A config without the map still parses (the three price keys stay the
     # only hard requirement, pinned in test_diamond_scaffold).
     bare = build_site._diamond_cfg(
@@ -191,7 +191,7 @@ def _helper_ctx(setup_js: str, ready: str = "complete"):
 CFG_OFF = 'window.EEPHUS_DIAMOND = { gating: false, price_usd_month: 15, founding_rate_usd: 9.99 };\n'
 CFG_ON = ('window.EEPHUS_DIAMOND = { gating: true, price_usd_month: 15, '
           'founding_rate_usd: 9.99, '
-          'preview_rows: { dynasty: 25, redraft: 25, dfs: 25, cards: 40 } };\n')
+          'preview_rows: { dynasty: 25, redraft: 25, dfs: 30 } };\n')
 ACCT_TMPL = """
 var __member = %s;
 var __auth = [];
@@ -256,7 +256,7 @@ def test_preview_rows_map_and_fallback():
     module name would then hand back a function), or change the 25 default."""
     c = _helper_ctx(CFG_ON + ACCT_TMPL % ("false", "true"))
     assert c.eval('window.EephusDiamond.previewRows("dynasty")') == 25
-    assert c.eval('window.EephusDiamond.previewRows("cards")') == 40
+    assert c.eval('window.EephusDiamond.previewRows("dfs")') == 30
     assert c.eval('window.EephusDiamond.previewRows("parks")') == 25
     assert c.eval('window.EephusDiamond.previewRows("constructor")') == 25
     bare = _helper_ctx(CFG_OFF)  # config with no map at all

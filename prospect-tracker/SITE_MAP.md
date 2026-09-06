@@ -22,12 +22,11 @@ fetch strings.
 | 9 | `arbitration` | Arbitration | `/arbitration/` | MLB Modules |
 | 10 | `fantasy` | Fantasy | `/fantasy/` | Diamond |
 | 11 | `betting` | Sports Betting | `/betting/` | Diamond |
-| 12 | `cards` | Card Market | `/cards/` | Diamond |
-| 13 | `diamond` | Diamond Pass | `/diamond/` | Diamond |
-| 14 | `articles` | Articles | `/articles/` | - |
-| 15 | `forums` | Forums | `/forums/` | - |
-| 16 | `glossary` | Glossary | `/glossary/` | - |
-| 17 | `team` | Developers | `/team/` | - |
+| 12 | `diamond` | Diamond Pass | `/diamond/` | Diamond |
+| 13 | `articles` | Articles | `/articles/` | - |
+| 14 | `forums` | Forums | `/forums/` | - |
+| 15 | `glossary` | Glossary | `/glossary/` | - |
+| 16 | `team` | Developers | `/team/` | - |
 
 ## PROSPX sub-sections (`build_site.PROSPX_SUBNAV`)
 
@@ -77,7 +76,6 @@ payloads are real page traffic and are attributed to every page loading it).
 | `/redraft/` | `build_site.build_redraft()` | server-rendered | - | redirect stub: Redraft is a sub-module of /fantasy/ (hash-preserving) |
 | `/dfs/` | `build_site.build_dfs()` | server-rendered | - | redirect stub: DFS is a sub-module of /fantasy/ (hash-preserving) |
 | `/betting/` | `build_site.build_betting()` | `assets/betting.js` | `betting.json`, `betting_clv.json`, `betting_learning.json`, `betting_model_eval.json`, `betting_preview.json`, `betting_record.json`, `betting_settlement.json`, `glossary.json`, `player_links.json` | Diamond: model win probabilities against book prices; the disclaimer renders ABOVE the boards |
-| `/cards/` | `build_site.build_cards()` | `assets/cards.js` | `card_market.json`, `card_watchlist.json`, `glossary.json`, `player_links.json` | Diamond: card market screen; publishes a derived per-player index, never a listing price |
 | `/diamond/` | `build_site.build_diamond()` | `assets/diamond-config.js`, `assets/diamond.js` | `betting_record.json`, `glossary.json`, `xfv_power_eval.json`, `xfv_scoreboard_eval.json` | Diamond Pass page; server-rendered structure, live receipt numbers filled by assets/diamond.js |
 | `/parks/` | `build_site.build_parks()` | `assets/parks.js` | `milb_park_factors.json`, `player_links.json`, `xfv_park_line_eval.json` | MiLB Park Factors reference table (display only; the eFV park-line lane stays gated off) |
 | `/models/` | `build_site.build_models()` | `assets/accountability.js` | - | Model Accountability hub: data/model_registry.json rendered server-side, with freshness and the ledger's own gaps counted; assets/accountability.js only filters what is already in the DOM |

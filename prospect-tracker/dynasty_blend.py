@@ -5,7 +5,7 @@
 """dynasty_blend.py - THE dynasty talent composite. One copy, two consumers.
 
 WHY THIS MODULE EXISTS (2026-08-16). fantasy_export._dynasty_prospects and
-card_market_export.talent_score each carried a private copy of this arithmetic.
+the since-removed card market exporter each carried a private copy of this arithmetic.
 The card copy was introduced as a "structural clone, same weights, same inputs"
 of the fantasy blend, and then the two silently diverged: fantasy decayed ETA
 proximity at 0.18 per year while cards decayed it at 0.25, so the same prospect

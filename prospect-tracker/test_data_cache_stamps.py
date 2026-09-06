@@ -10,7 +10,7 @@ client used to fetch its payload with cache:"no-cache": a forced revalidation
 round trip per page view, on files that only ever change when the site
 rebuilds (data/fantasy.json alone is ~585KB). build_site._data_vers_script now
 emits window.EEPHUS_DATA_VERS = {"<file>": "<8-hex content hash>"} on the
-pages that consume these payloads (/fantasy/, /cards/, /diamond/), and the
+pages that consume these payloads (/fantasy/, /diamond/), and the
 clients append ?v=<stamp> and fetch under DEFAULT caching, exactly the trade
 _GL_DATA_VER made for the glossary corpus. Same freshness, one transfer per
 version.
@@ -63,7 +63,6 @@ ASSETS = ROOT / "assets"
 SHIPPED_LISTS = {
     "build_fantasy": ("fantasy.json", "dfs.json",
                       "hitter_history.json", "starter_history.json"),
-    "build_cards": ("card_market.json",),
     "build_diamond": ("xfv_scoreboard_eval.json",),
 }
 
@@ -133,7 +132,6 @@ def test_no_shipped_list_carries_a_betting_name():
     for fn, names in SHIPPED_LISTS.items():
         assert not any(n.startswith("betting") for n in names), (fn, names)
     assert build_site.FANTASY_DATA_STAMPS == SHIPPED_LISTS["build_fantasy"]
-    assert build_site.CARDS_DATA_STAMPS == SHIPPED_LISTS["build_cards"]
     assert build_site.DIAMOND_DATA_STAMPS == SHIPPED_LISTS["build_diamond"]
 
 
@@ -263,17 +261,6 @@ def test_board_client_standalone_load_unchanged_without_a_stamp(name, path):
     assert fetches == [{"url": path, "opts": {"cache": "no-cache"}}], fetches
 
 
-def test_cards_stamps_its_own_payload_and_leaves_player_links_alone():
-    by = _by_path(_run_client(
-        "cards.js", pre='window.EEPHUS_DATA_VERS = {"card_market.json": "0a1b2c3d"};'))
-    assert by["/data/card_market.json"] == {
-        "url": "/data/card_market.json?v=0a1b2c3d", "opts": None}
-    # player_links.json is not on the /cards/ stamp list; its read must stay
-    # the revalidating one it always was.
-    assert by["/data/player_links.json"] == {
-        "url": "/data/player_links.json", "opts": {"cache": "no-cache"}}
-
-
 def test_diamond_stamps_the_scoreboard_and_never_the_record():
     by = _by_path(_run_client(
         "diamond.js",
@@ -347,7 +334,7 @@ def test_diamond_record_call_site_passes_fresh():
 
 
 @pytest.mark.parametrize("name", ["fantasy-hub.js", "dynasty.js", "redraft.js",
-                                  "dfs.js", "cards.js", "diamond.js",
+                                  "dfs.js", "diamond.js",
                                   "fantasy-card.js"])
 def test_every_stamped_client_keeps_the_no_cache_fallback(name):
     """The fallback is load-bearing: a hand-served page emits no global, and
