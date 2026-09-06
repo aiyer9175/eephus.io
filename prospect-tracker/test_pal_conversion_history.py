@@ -91,3 +91,65 @@ def test_the_in_progress_rows_are_flagged(hist):
     assert any(r.get("in_progress") for r in hist), (
         "no row is flagged in_progress, so a partial season is being coloured "
         "as a completed result")
+
+
+# --------------------------------------------------------------------------
+# The published rho, its basis, and the sign that changes between them
+# --------------------------------------------------------------------------
+
+def _entry(gid):
+    import json
+    g = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    for e in g["entries"]:
+        if e["id"] == gid:
+            return e
+    pytest.skip(f"glossary entry {gid} is absent")
+
+
+def test_the_glossary_names_both_bases_wherever_it_quotes_a_rho():
+    """THE DEFECT. These entries named the eWAR basis in their own methodology
+    sentence and then quoted the bWAR gate figures. On the RP to SP direction
+    that published MINUS 0.21 for a statistic that is PLUS 0.024 on the series
+    named beside it: opposite signs, wrong attribution.
+
+    Neither figure is wrong in itself. The gate really was run on bWAR and that
+    is the registered gate; the page really does serve eWAR v2. Only the
+    attribution was wrong, so the fix is to name both.
+    """
+    for gid in ("pal_conversion", "rp_sp_fit", "sp_rp_fit"):
+        m = _entry(gid).get("methodology") or ""
+        assert "bWAR" in m and "eWAR" in m, (
+            f"{gid} quotes a correlation without naming which WAR series it was "
+            "measured on")
+
+
+def test_the_reliever_to_starter_entry_says_the_sign_changes():
+    m = _entry("rp_sp_fit").get("methodology") or ""
+    assert "+0.024" in m, "the eWAR value is not published beside the bWAR one"
+    assert "SIGN" in m or "sign" in m
+
+
+def test_the_two_bases_really_do_disagree_in_sign():
+    """The artifact check behind the copy. If a re-run ever brings the two into
+    agreement, this fails and the wording can be simplified deliberately."""
+    import json
+    d = json.loads((ROOT / "data" / "pal.json").read_text(encoding="utf-8"))
+    bt = d.get("backtest") or {}
+    live = ((bt.get("per_direction") or {}).get("RP->SP") or {}).get(
+        "rho_prefit_vs_war_delta")
+    gate = (((bt.get("gate") or {}).get("per_direction") or {}).get("RP->SP") or {}).get(
+        "rho_fit_war_delta")
+    if live is None or gate is None:
+        pytest.skip("one of the two rhos is absent")
+    assert live * gate < 0, (
+        f"the two bases now agree in sign (live {live}, gate {gate}); the "
+        "glossary wording about a sign change should be revisited")
+
+
+def test_the_module_records_that_the_bases_differ():
+    import json
+    d = json.loads((ROOT / "data" / "pal.json").read_text(encoding="utf-8"))
+    gate = (d.get("backtest") or {}).get("gate") or {}
+    assert gate.get("same_basis_as_live") is False, (
+        "the gate and the live series now share a basis, which would make the "
+        "two-basis disclosure unnecessary")
