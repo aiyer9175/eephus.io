@@ -293,6 +293,125 @@ def _load_universe(data_dir: Path = DATA_DIR) -> list[dict]:
     return players
 
 
+# ---------------------------------------------------------------------------
+# A-CLAIM-4: THE FRAME IS 100% SURVIVORS, BY CONSTRUCTION.
+#
+# `_is_vintage_matched` requires `debut_year is not None`. A prospect who never
+# reached the majors therefore CANNOT enter the flagship head-to-head frame, not
+# because anybody filtered him out but because the frame is keyed on a debut he
+# does not have. Every accuracy cell this artifact publishes is measured on 796
+# rows that all made it.
+#
+# That is survivorship, and it is the single most common way a forecasting claim
+# flatters itself: the players a grade got most wrong are exactly the ones who
+# vanished. data/inactive.json holds 2,346 of them, none carrying a debut date.
+#
+# This lane scores the same raters on that pool as an ADDITIONAL frame. It is a
+# COVERAGE RECEIPT, not a correction: no published cell moves, and the blast
+# radius rule in _claim_instruments is what keeps that true.
+def _load_bust_universe(data_dir: Path, universe: list[dict]):
+    """(kept, exclusions) from inactive.json, with every drop named.
+
+    TWO SCREENS, both of which fire on real rows:
+
+      REAL MLB VALUE. A player carrying career WAR is not a bust however he got
+      into this file. Measured: exactly one, Zack Britton at 11.73 over twelve
+      seasons. Scoring him as a never-debuted failure would be a straightforward
+      lie about a player a reader may well remember.
+
+      IDENTITY COLLISION. A bust whose player_key or MLBAM id already appears in
+      the debuted universe is the SAME HUMAN reached by two routes, and counting
+      him on both sides would let one player be his own control.
+    """
+    p = Path(data_dir) / "inactive.json"
+    if not p.exists():
+        return [], [{"player_key": None, "reason": f"{p} does not exist"}]
+    try:
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return [], [{"player_key": None, "reason": f"unreadable: {exc}"}]
+    rows = doc if isinstance(doc, list) else (doc.get("players") or [])
+
+    uni_keys = {u.get("player_key") for u in universe if u.get("player_key")}
+    uni_ids = {str(u.get("mlbam_id")) for u in universe if u.get("mlbam_id")}
+
+    kept, excluded = [], []
+    for r in rows:
+        key = r.get("player_key")
+        war = ((r.get("career_war") or {}).get("career_war")) or 0
+        if r.get("debut_date"):
+            excluded.append({"player_key": key, "reason": "carries a debut date"})
+            continue
+        if war and float(war) > 0:
+            excluded.append({"player_key": key,
+                             "reason": f"carries {war} career WAR, so not a bust"})
+            continue
+        if key in uni_keys:
+            excluded.append({"player_key": key,
+                             "reason": "player_key already in the debuted universe"})
+            continue
+        mid = r.get("mlbam_id")
+        if mid and str(mid) in uni_ids:
+            excluded.append({"player_key": key,
+                             "reason": f"mlbam id {mid} already in the debuted "
+                                       "universe: the same human by two routes"})
+            continue
+        kept.append(r)
+    return kept, excluded
+
+
+def _bust_frame(busts: list[dict], years: list[int], raters: list[str],
+                xfv_by_key: dict):
+    """Rows for the bust-inclusive frame, at each bust's LAST LIST YEAR.
+
+    THE VINTAGE RULE. A bust's grade is scored at the last year anybody still
+    ranked him, which is the latest point at which the raters were all still
+    making a claim about him. Scoring an earlier year would ask what they thought
+    before the evidence arrived; scoring every year would weight a
+    long-lingering prospect more heavily than a quick failure.
+
+    The outcome is ZERO WAR, and that is a fact rather than an imputation: the
+    screen above removed everybody who accumulated any.
+    """
+    rows, receipt = [], {"considered": len(busts), "no_points": 0,
+                         "not_graded_by_all_raters": 0, "no_efv": 0,
+                         "out_of_window_years": 0}
+    for b in busts:
+        pts = [pt for pt in (b.get("points") or []) if pt.get("snapshot_date")]
+        if not pts:
+            receipt["no_points"] += 1
+            continue
+        last_year = int(max(pt["snapshot_date"] for pt in pts)[:4])
+        if last_year not in years:
+            receipt["out_of_window_years"] += 1
+            continue
+        grades = _rater_grades_for_year(b, last_year)
+        if not all(r in grades for r in raters):
+            receipt["not_graded_by_all_raters"] += 1
+            continue
+        key = b.get("player_key")
+        x = xfv_by_key.get(key)
+        if x is None:
+            receipt["no_efv"] += 1
+            continue
+        g = {r: grades[r] for r in raters}
+        g["xfv"] = x
+        rows.append({
+            "key": key, "name": b.get("player_name"), "year": last_year,
+            "grades": g,
+            # NEVER DEBUTED, so the realized outcome is zero and `debuted` is
+            # False. This is measured, not imputed: the screen dropped anybody
+            # who accumulated WAR.
+            "outcome": {"war": 0.0, "debuted": False, "debut_year": None,
+                        "contributor": False, "star": False,
+                        "war_per_yr": None, "regular_pace": False,
+                        "allstar_pace": False},
+            "archetype": _archetype(b),
+        })
+    receipt["kept"] = len(rows)
+    return rows, receipt
+
+
 def _outcome(p: dict) -> dict:
     """Resolved outcome for a player: cumulative WAR (0 if never debuted),
     debut flag, and the contributor/star flags."""
@@ -2202,7 +2321,7 @@ def _floored_call(delta, mde95, estimator, source, *,
 
 
 def _h2h_claim_cell(name, rows, side_of, stored_floor, stored_source, power_cell,
-                    data_dir):
+                    data_dir, *, comparator: str = CONSENSUS_KEY):
     """One head-to-head frame under the V6 instruments: an in-run E_cond floor for
     the pooled frame and for EACH SIDE, the stored V5 floor beside it, and an
     explicit statement of whether the verdict would change.
@@ -2215,7 +2334,10 @@ def _h2h_claim_cell(name, rows, side_of, stored_floor, stored_source, power_cell
     """
     keys = [c.get("key") for c in rows]
     x = [c["grades"]["xfv"] for c in rows]
-    cn = [c["grades"][CONSENSUS_KEY] for c in rows]
+    # The COMPARATOR is a parameter so the new frame can be scored against
+    # FanGraphs and MLB Pipeline as the plan requires. The default preserves
+    # byte-identical behaviour for the three existing frames.
+    cn = [c["grades"][comparator] for c in rows]
     war = [(c["outcome"] or {}).get("war") or 0.0 for c in rows]
     pooled = _econd_floor(f"{name}.pooled", keys, x, cn, war)
     by_side = {}
@@ -2233,6 +2355,7 @@ def _h2h_claim_cell(name, rows, side_of, stored_floor, stored_source, power_cell
     pw = _power_floor_cell(data_dir, power_cell) if power_cell else {}
     out = {
         "frame": name,
+        "comparator": comparator,
         "n": pooled.get("n"), "n_clusters": pooled.get("n_clusters"),
         "point_delta": delta,
         "floor_E_cond_in_run": pooled,
@@ -2266,7 +2389,8 @@ def _h2h_claim_cell(name, rows, side_of, stored_floor, stored_source, power_cell
 
 
 def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
-                       served) -> dict:
+                       served, bust_rows=None, bust_receipt=None,
+                       raw_xfv=None) -> dict:
     """Assemble the four V6 receipts and compare each against the frozen V5 call.
 
     Every block here is computed on the rows the V5 cell above was computed on, so
@@ -2291,8 +2415,92 @@ def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
     for name, rows in frames.items():
         if len(rows) < _CLAIM_MIN_ROWS:
             continue
-        floor, src, pcell = stored[name]
+        # .get, not [], so a frame registered after this dict was written
+        # degrades to "no stored V5 floor" instead of raising.
+        floor, src, pcell = stored.get(
+            name, (None, "no stored V5 floor: this frame was registered after "
+                         "the V5 constants were frozen, so only the in-run "
+                         "E_cond floor adjudicates it", None))
         h2h[name] = _h2h_claim_cell(name, rows, side_of, floor, src, pcell, data_dir)
+
+    # (a2) A-CLAIM-4, THE BUST-INCLUSIVE FRAME. Scored against EACH scored rater
+    # rather than against the consensus, because the plan registers the
+    # FanGraphs and Pipeline legs only: the consensus bust cell is the already
+    # measured full_pool_km and re-deriving it here would be a second read of a
+    # cell that has one.
+    bust = {}
+    if bust_rows and len(bust_rows) >= _CLAIM_MIN_ROWS:
+        # THE FRAME IS THE COMBINED POOL, NOT THE BUSTS ALONE, and the first
+        # build got this wrong in a way worth recording. Scored on their own,
+        # every bust has the SAME outcome (zero WAR), so a rank correlation
+        # against it is undefined and every bootstrap draw comes back NaN. The
+        # floor reported "not derived: too few usable draws", which is correct
+        # and useless. The question was never "how well does a grade order the
+        # failures among themselves"; it is "does the grade still order outcomes
+        # once the failures are in the pool", and that needs both halves.
+        vintage = frames.get("vintage_matched") or []
+        combined = []
+        for c in vintage:
+            # RAW out-of-sample eFV, not the remapped grade. The common set's
+            # xfv values were rewritten IN PLACE onto the consensus-FV
+            # distribution, so reading them here would put a remapped number on
+            # the debuted half and a raw one on the bust half.
+            k = c.get("key")
+            raw = raw_xfv.get(k) if raw_xfv else None
+            if raw is None:
+                continue
+            merged = dict(c)
+            merged["grades"] = {**c["grades"], "xfv": raw}
+            combined.append(merged)
+        combined.extend(bust_rows)
+        cells = {}
+        for comp in SCORED_SOURCES:
+            usable = [r for r in combined
+                      if r["grades"].get(comp) is not None
+                      and r["grades"].get("xfv") is not None]
+            if len(usable) < _CLAIM_MIN_ROWS:
+                continue
+            cells[comp] = _h2h_claim_cell(
+                f"bust_inclusive.{comp}", usable, side_of, None,
+                "no stored V5 floor: this frame did not exist under V5",
+                None, data_dir, comparator=comp)
+        bust = {
+            "registered_on": CLAIM_REGISTERED_ON,
+            "receipt": bust_receipt or {},
+            "n_debuted_half": sum(1 for r in combined if (r.get("outcome") or {}).get("debuted")),
+            "n_bust_half": len(bust_rows),
+            "n_combined": len(combined),
+            "cells": cells,
+            "why_the_pool_is_combined": (
+                "scored on their own every bust has the same outcome, zero WAR, "
+                "so a rank correlation against it is undefined and the "
+                "bootstrap returns nothing. The question is not how a grade "
+                "orders the failures among themselves; it is whether it still "
+                "orders outcomes once the failures are in the pool."),
+            "both_halves_use_the_same_grade": (
+                "raw out-of-sample eFV on BOTH halves. The common set's stored "
+                "xfv values were remapped in place onto the consensus-FV "
+                "distribution, so using them for the debuted half would compare "
+                "a remapped number against a raw one."),
+            "why_this_frame_exists": (
+                "the flagship head-to-head frame requires a debut year, so a "
+                "prospect who never reached the majors CANNOT enter it. Not "
+                "because anybody filtered him out, but because the frame is "
+                "keyed on a debut he does not have. Every accuracy cell this "
+                "artifact publishes is therefore measured on players who all "
+                "made it, and the ones a grade got most wrong are exactly the "
+                "ones who vanished."),
+            "outcome_is_measured_not_imputed": (
+                "every row here scores zero WAR because the screen dropped "
+                "anybody who accumulated any. Exactly one row was dropped on "
+                "that ground and it is a real major-league reliever."),
+            "changes_no_published_number": True,
+            "blast_radius": (
+                "these rows are scored in their own frame and are never added "
+                "to the common set. The eFV remap re-derives its grid from "
+                "whatever population it is handed, so admitting them would "
+                "re-bin the ties for every existing row."),
+        }
 
     # (b) BEST-RATER RESAMPLING on the cell whose comparator is an argmax.
     inputs = [s for s in SCORED_SOURCES
@@ -2468,6 +2676,7 @@ def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
                       "convention": "MDE95 = 1.645 * sd(delta), one-sided",
                       "engine": ("numpy" if _numpy() is not None else "unavailable")},
         "head_to_head_floors": h2h,
+        "bust_inclusive": bust,
         "best_rater_resampling": best,
         "within_base_year_block": block,
         "auc_coverage_certificate": cert,
@@ -2873,6 +3082,27 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     # decided and when, which no other block in this artifact answers.
     accuracy["candidate_year_ledger"] = _candidate_year_ledger(
         universe, years, as_of.year)
+    # A-CLAIM-4. THE BLAST-RADIUS RULE, and it is the one thing here that could
+    # silently move a published number. The bust rows are assembled and scored
+    # in their OWN frame and are NEVER added to common_by_year, pooled_common,
+    # efv_common or efv_common_vintage. The in-place eFV remap above re-derives
+    # its grid from whatever population it is handed, so enlarging that
+    # population would re-bin the ties for every existing row and move cells
+    # this lane is not entitled to touch.
+    _busts, _bust_excl = _load_bust_universe(data_dir, universe)
+    # THE SAME OUT-OF-SAMPLE OBJECT THE FLAGSHIP FRAME SCORES, not the
+    # backgraded value on the served board. `xfv_oos` is the leakage-clean grade
+    # `efv_common` is built from, so a bust and a debuted player are compared on
+    # the same footing. Reading the served `xfv_grade` instead would put a
+    # post-hoc number on one side of the comparison and an out-of-sample one on
+    # the other, which is the exact asymmetry this lane exists to remove.
+    # Measured 2026-09-06: 1,994 of 2,337 screened busts carry one.
+    _xfv_by_key = dict(xfv_oos)
+    _bust_rows, _bust_receipt = _bust_frame(
+        _busts, years, list(SCORED_SOURCES) + [CONSENSUS_KEY], _xfv_by_key)
+    _bust_receipt["read_from_inactive_json"] = len(_busts) + len(_bust_excl)
+    _bust_receipt["excluded_by_screen"] = len(_bust_excl)
+    _bust_receipt["exclusions"] = _bust_excl[:40]
     accuracy["claim_instruments"] = _claim_instruments(
         data_dir=data_dir,
         pooled_common=pooled_common,
@@ -2881,7 +3111,10 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                 "all_vintages": efv_common},
         side_of=m_side,
         disp_raters=disp_raters,
-        served=accuracy)
+        served=accuracy,
+        bust_rows=_bust_rows,
+        bust_receipt=_bust_receipt,
+        raw_xfv=_xfv_by_key)
     # OBS-1 (L4 bughunt-2, 2026-07-24e measurement fix): score archetypes on ONE row
     # per player (latest pre-debut read), matching _xfv_vs_consensus_detail's dedup.
     # pooled_common counts a stable player once per base YEAR (intl_bat ~2.4x), which

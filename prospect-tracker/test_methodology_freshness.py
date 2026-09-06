@@ -796,6 +796,11 @@ MODEL_GLOSSARY = {
     # the V5 frame, and the V5 claim cells are what the xfv entry documents. When V6
     # is read this mapping graduates to the xfv entry with it.
     "claim_instruments_v6": "internal",
+    # A-CLAIM-4, the bust-inclusive frame. Internal on the same reasoning as
+    # claim_instruments_v6 above: it is a receipt about the REACH of a claim
+    # the xfv entry already documents, not a metric a reader looks up. If it
+    # ever changes what the accuracy page says, that copy ships with it.
+    "claim_bust_inclusive": "internal",
     # pbp_corpus_base_state is a data substrate under .cache/. No page reads it. It
     # earns a registry row because a reconstruction that is WRONG would silently
     # poison every In-Game Management number built on top of it, so its agreement

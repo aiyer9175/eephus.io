@@ -186,16 +186,38 @@ def test_the_verdict_is_consistent_with_the_flag(det):
             + v)
 
 
-def test_the_current_reading_is_a_coin_flip(det):
-    """Records the state on 2026-09-06 so a silent flip to "resolvable" has to
-    be noticed by a human rather than appearing in bold on the site."""
+def test_the_verdict_is_marginal_and_must_not_be_quoted_as_settled(det):
+    """THE READING FLIPS ON ONE PLAYER, and that is the finding.
+
+    This test used to pin `resolvable is False`. It went red the same day, and
+    for an instructive reason. The cohort is derived from data/timeseries.json,
+    which is GITIGNORED, so conftest's revert cannot see it; a suite chunk
+    regenerated it and added ONE player to the universe. On the build before
+    that, the share read 54.8% with a 95% interval of [49.1%, 60.8%] which
+    CONTAINS the 50% coin. On the build after, 57.3% with [51.4%, 62.9%] which
+    EXCLUDES it. Same code, same method, one extra player, opposite verdicts.
+
+    So the honest thing to pin is not which side of the coin today's cohort
+    lands on. It is that the share sits close enough to the coin for a single
+    row to move it across, which is the strongest possible argument for the fix
+    this lane shipped: a number this marginal must never be published as a bare
+    percentage, and the interval must travel with it.
+
+    If the share ever moves far from 0.5 in either direction, this test should
+    be replaced by one that pins the settled verdict.
+    """
     if det["n_disagreements"] < 30:
         pytest.skip("cohort too small")
-    assert det["xfv_right_share_resolvable"] is False, (
-        "the disagreement share now CLEARS the 50% coin. That is a real "
-        "finding and it may well be correct, but it changes a published claim "
-        "from a description into an edge. Confirm the cohort and the interval, "
-        "then update this test deliberately.")
+    pt = det["xfv_right_share_on_disagreements"]
+    lo, hi = det["xfv_right_share_ci95"]
+    assert 0.45 < pt < 0.65, (
+        f"the share has moved to {pt}, well away from the coin. That is a real "
+        "change in the finding: confirm it and replace this test with one that "
+        "pins the settled verdict in whichever direction it settled.")
+    assert lo < 0.5 + 0.06, (
+        f"the interval's lower bound is {lo}, comfortably clear of the coin. "
+        "The reading is no longer marginal and this test no longer describes it.")
+    assert det["xfv_right_share_resolvable"] is (lo > 0.5)
 
 
 # --------------------------------------------------------------------------

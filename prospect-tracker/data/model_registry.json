@@ -4301,6 +4301,19 @@
    "last_checked": "2026-09-06",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "claim_bust_inclusive",
+   "surface": "NOTHING SERVED. accuracy.claim_instruments.bust_inclusive in data/source_backtest.json (gitignored, a build product). No page renders it; it exists so the REACH of every published head-to-head cell can be stated.",
+   "predicts": "nothing. It scores the same raters on a pool that INCLUDES the prospects who never reached the majors, which the flagship frame cannot contain.",
+   "champion": "raw out-of-sample eFV on both halves, over the combined pool of 812 debuted rows and 787 never-debuted ones.",
+   "baseline": "FanGraphs and MLB Pipeline, each on its own rows. The consensus is excluded because its bust cell is the already-measured full_pool_km.",
+   "metric": "Spearman against realized WAR, with an in-run player-clustered E_cond floor per pool and per side.",
+   "eval_artifact": "data/source_backtest.json",
+   "verdict": "provisional",
+   "owner": "eFV claim program",
+   "last_validated": "2026-09-06",
+   "notes": "2026-09-06 (A-CLAIM-4). THE DEFECT: _is_vintage_matched requires a debut year, so a prospect who never reached the majors CANNOT enter the flagship frame. Every published accuracy cell is measured on players who all made it, and the ones a grade got most wrong are exactly the ones who vanished. RESULT, a clean null as pre-registered: eFV vs FanGraphs +0.01564 against a floor of 0.0268, vs MLB Pipeline +0.00231 against 0.0229. Nominally ahead of both, inside the floor on both, and inside on all four per-side cells. TWO SCREENS FIRE: one player carrying 11.73 career WAR is not a bust, and eight MLBAM collisions are the same human reached by two routes. THE POOL MUST BE COMBINED, and the first build got that wrong: scored alone every bust has the same outcome, so the rank correlation is undefined and the bootstrap returns nothing. BLAST RADIUS VERIFIED by running the backtest with the lane stashed: every published cell was byte-identical with and without it. COHORT DRIFT: data/timeseries.json is gitignored so conftest cannot revert it, and a suite chunk regenerating it moved the vintage frame from 796 rows to 812 mid-session. This lane's null has room to spare either way; A-CLAIM-10's verdict did not, and flipped."
   }
  ],
  "problems": []
