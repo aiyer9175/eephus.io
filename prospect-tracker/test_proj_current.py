@@ -358,3 +358,158 @@ def test_season_shortfall_counts_a_deleted_game():
     pairs = [("AAA", "BBB")] * 11
     sf = pc.season_shortfall(teams, pairs)
     assert sf == {"AAA": 1, "BBB": 1}
+
+
+# --------------------------------------------------------------------------
+# Monte Carlo honesty and the postseason bracket
+# --------------------------------------------------------------------------
+
+def _full_league():
+    """A complete 30-club, 2-league, 6-division field, which is the only shape
+    the bracket is defined on."""
+    out = {}
+    for lg, divs in ((103, ("AL_E", "AL_C", "AL_W")), (104, ("NL_E", "NL_C", "NL_W"))):
+        for dv in divs:
+            for i in range(5):
+                out[f"{dv}{i}"] = {"wins": 80, "losses": 70,
+                                   "p": 0.46 + 0.02 * i, "league": lg, "div": dv}
+    return out
+
+
+def test_no_probability_is_published_with_zero_uncertainty():
+    """THE RULE. The Wald standard error is identically zero at count 0 and at
+    count n, and those are exactly the cells a World Series column is full of.
+    Publishing 'World Series 0.0 percent, plus or minus 0.00' asserts the
+    simulator has ruled a club out with no sampling noise."""
+    for count in (0, 20000):
+        iv = pc.mc_interval(count, 20000)
+        assert iv["waldSE"] == 0.0 and iv["waldIsDegenerate"] is True
+        assert iv["hi95"] > iv["lo95"], (
+            "the published interval has zero width at a rail, which is the "
+            "false-precision claim this method exists to avoid")
+    zero = pc.mc_interval(0, 20000)
+    assert 0.0 < zero["hi95"] < 0.001
+    # the rule-of-three bound agrees to the same order
+    assert abs(zero["hi95"] - 3 / 20000) < 5e-5
+
+
+def test_the_interval_is_wilson_on_counts_not_wald_on_a_rounded_p():
+    iv = pc.mc_interval(1, 20000)
+    assert iv["method"] == "wilson"
+    assert iv["lo95"] >= 0.0 and iv["hi95"] <= 1.0
+    assert iv["lo95"] < iv["p"] < iv["hi95"]
+
+
+def test_the_pmf_sums_to_one_at_a_count_that_does_not_divide():
+    """The largest-remainder branch is dead at any n dividing 100000, and both
+    2000 and 20000 do. Exercise it where it actually runs or it never runs."""
+    pmf = pc._pmf_from_counts([7, 11, 13], 31)
+    assert abs(sum(pmf) - 1.0) < 1e-9
+    assert len(pmf) == 3
+
+
+def test_the_pmf_normalises_on_the_counts_and_not_on_n():
+    """The bug this catches was made: normalising on n while the counts summed
+    to something else returned a distribution summing to 0.001."""
+    assert abs(sum(pc._pmf_from_counts([1, 1, 1], 3000)) - 1.0) < 1e-9
+
+
+def test_the_win_total_distribution_is_contiguous_and_sums(): 
+    odds = pc.simulate_playoffs(_full_league(), [], n_sims=500)
+    wt = list(odds.values())[0]["winTotal"]
+    assert abs(sum(wt["pmf"]) - 1.0) < 1e-9
+    assert wt["sfScheduleOnly"][-1] == 0.0, "the last suffix sum must be zero"
+    assert all(a >= b for a, b in zip(wt["sfScheduleOnly"], wt["sfScheduleOnly"][1:]))
+
+
+def test_the_win_total_quantiles_are_the_same_objects_as_the_published_ones():
+    """Reading them off the CDF instead would disagree by one win whenever an
+    order statistic lands on a support boundary."""
+    odds = pc.simulate_playoffs(_full_league(), [], n_sims=500)
+    for o in odds.values():
+        assert o["winTotal"]["quantiles"]["p10"] == o["projWinsP10"]
+        assert o["winTotal"]["quantiles"]["p90"] == o["projWinsP90"]
+
+
+def test_the_win_total_basis_states_what_it_conditions_on():
+    odds = pc.simulate_playoffs(_full_league(), [], n_sims=200)
+    basis = list(odds.values())[0]["winTotal"]["basis"]
+    assert "SAMPLING" in basis and "talent" in basis
+    assert "wider than this one" in basis
+
+
+def test_the_bracket_conserves_pennants_and_champions():
+    """Two pennants and one champion per simulation, exactly. If either sum
+    drifts the bracket is double-counting or dropping a series."""
+    n = 2000
+    odds = pc.simulate_playoffs(_full_league(), [], n_sims=n)
+    assert abs(sum(o["pennantPct"] for o in odds.values()) - 2.0) < 0.02
+    assert abs(sum(o["wsPct"] for o in odds.values()) - 1.0) < 0.02
+    assert abs(sum(o["byePct"] for o in odds.values()) - 4.0) < 0.02
+    assert abs(sum(o["playoffPct"] for o in odds.values()) - 12.0) < 0.02
+
+
+def test_the_rounds_are_nested():
+    """A club cannot reach the championship series without reaching the division
+    series, and cannot win the pennant without reaching the championship
+    series."""
+    odds = pc.simulate_playoffs(_full_league(), [], n_sims=2000)
+    for org, o in odds.items():
+        assert o["ldsPct"] >= o["lcsPct"] - 1e-9, org
+        assert o["lcsPct"] >= o["pennantPct"] - 1e-9, org
+        assert o["pennantPct"] >= o["wsPct"] - 1e-9, org
+        assert abs((o["byePct"] + o["wcRoundPct"]) - o["playoffPct"]) < 0.011, org
+
+
+def test_a_best_of_seven_gives_the_higher_seed_four_home_games():
+    """2-3-2 is HHAAAHH. Five would be a different sport."""
+    assert pc.L7_PATTERN.count("H") == 4 and len(pc.L7_PATTERN) == 7
+    assert pc.LDS_PATTERN.count("H") == 3 and len(pc.LDS_PATTERN) == 5
+    # THE WILD-CARD ROUND IS THE DELIBERATE EXCEPTION and is not a bug in the
+    # pattern: all three games really are at the higher seed, which is the
+    # reward for winning the division race or finishing higher in the wild-card
+    # order. Every other round is balanced within one game.
+    assert pc.WC_PATTERN == "HHH"
+    for pat, best_of in ((pc.LDS_PATTERN, 5), (pc.L7_PATTERN, 7)):
+        assert pat.count("H") <= best_of // 2 + 1
+        assert pat.count("A") <= best_of // 2 + 1
+        assert abs(pat.count("H") - pat.count("A")) <= 1
+
+
+def test_the_bracket_degrades_rather_than_raising_on_a_partial_field():
+    """MANDATORY, not defensive. Two orgs in one division reach this function
+    through the overlay, and an IndexError there is swallowed by the exporter
+    and blanks the slate for all thirty clubs."""
+    two = {"AAA": {"wins": 0, "losses": 0, "p": 0.6, "league": 103, "div": "AL_E"},
+           "BBB": {"wins": 0, "losses": 0, "p": 0.4, "league": 103, "div": "AL_E"}}
+    odds = pc.simulate_playoffs(two, [("AAA", "BBB")] * 10, n_sims=50)
+    assert set(odds) == {"AAA", "BBB"}
+    for o in odds.values():
+        assert "playoffPct" in o
+        assert "wsPct" not in o and "winTotal" not in o and "mc" not in o
+
+
+def test_the_bracket_can_be_turned_off_without_changing_the_six_original_keys():
+    a = pc.simulate_playoffs(_full_league(), [], n_sims=300, bracket=False)
+    b = pc.simulate_playoffs(_full_league(), [], n_sims=300, bracket=True)
+    for org in a:
+        for k in ("playoffPct", "divisionPct", "wildcardPct",
+                  "projWinsMean", "projWinsP10", "projWinsP90"):
+            assert a[org][k] == b[org][k], (
+                f"{org}.{k} moved when the bracket was switched on, so the "
+                "postseason is drawing from the regular-season stream")
+
+
+def test_the_home_edge_form_is_an_odds_ratio_and_keeps_the_rails():
+    m = pc.home_odds_multiplier(0.5245441795231417)
+    assert abs(m - 1.1032448377581123) < 1e-12
+    assert pc.home_odds_multiplier(0.5) == 1.0
+    assert pc.apply_home_edge(0.0, m) == 0.0
+    assert pc.apply_home_edge(1.0, m) == 1.0
+    assert abs(pc.apply_home_edge(0.5, m) - 0.5245441795231417) < 1e-12
+    # strictly monotone, and no clamp needed anywhere
+    prev = -1.0
+    for i in range(0, 101):
+        v = pc.apply_home_edge(i / 100.0, m)
+        assert v > prev
+        prev = v
