@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-04",
+ "generated_at": "2026-09-05",
  "artifact": "xFV star-label training view (Phase 4)",
  "definition": {
   "min_seasons": 2,
@@ -10,10 +10,10 @@
  "source": "REAL realized MLB WAR: prospects.db career_war (per-season bWAR) joined to data/debuts.json debut years. No synthesized outcomes.",
  "control_note": "No true MLB service-time field exists; 'control seasons' is the debut+0..+6 proxy (existing efv_dataset convention). Windows with debut_year > 2019 are not fully resolved through 2025 (window_resolved=false) and may undercount stars.",
  "counts": {
-  "n_players": 2593,
+  "n_players": 2592,
   "n_star_window": 105,
   "n_star_career": 118,
-  "n_window_resolved": 1079,
+  "n_window_resolved": 1074,
   "base_rate_window": 0.0405,
   "base_rate_career": 0.0455
  },
@@ -7440,46 +7440,6 @@
    "window_resolved": true
   },
   {
-   "player_key": "austin_meadows",
-   "name": "Austin Meadows",
-   "debut_year": 2018,
-   "control_window": [
-    2018,
-    2024
-   ],
-   "control_seasons": [
-    [
-     2018,
-     -0.32
-    ],
-    [
-     2019,
-     4.0
-    ],
-    [
-     2020,
-     0.31
-    ],
-    [
-     2021,
-     2.0
-    ],
-    [
-     2022,
-     0.57
-    ],
-    [
-     2023,
-     -0.15
-    ]
-   ],
-   "n_seasons_ge4_window": 1,
-   "n_seasons_ge4_career": 1,
-   "star": false,
-   "star_career": false,
-   "window_resolved": true
-  },
-  {
    "player_key": "tyler_oneill",
    "name": "Tyler O'Neill",
    "debut_year": 2018,
@@ -7647,6 +7607,42 @@
     [
      2025,
      0.06
+    ]
+   ],
+   "n_seasons_ge4_window": 1,
+   "n_seasons_ge4_career": 1,
+   "star": false,
+   "star_career": false,
+   "window_resolved": true
+  },
+  {
+   "player_key": "austin_meadows",
+   "name": "Austin Meadows",
+   "debut_year": 2019,
+   "control_window": [
+    2019,
+    2025
+   ],
+   "control_seasons": [
+    [
+     2019,
+     4.0
+    ],
+    [
+     2020,
+     0.31
+    ],
+    [
+     2021,
+     2.0
+    ],
+    [
+     2022,
+     0.57
+    ],
+    [
+     2023,
+     -0.15
     ]
    ],
    "n_seasons_ge4_window": 1,
@@ -24460,6 +24456,46 @@
    "window_resolved": true
   },
   {
+   "player_key": "adalberto_mondesi",
+   "name": "Adalberto Mondesi",
+   "debut_year": 2015,
+   "control_window": [
+    2015,
+    2021
+   ],
+   "control_seasons": [
+    [
+     2016,
+     -0.44
+    ],
+    [
+     2017,
+     -0.74
+    ],
+    [
+     2018,
+     2.14
+    ],
+    [
+     2019,
+     2.03
+    ],
+    [
+     2020,
+     1.25
+    ],
+    [
+     2021,
+     0.34
+    ]
+   ],
+   "n_seasons_ge4_window": 0,
+   "n_seasons_ge4_career": 0,
+   "star": false,
+   "star_career": false,
+   "window_resolved": true
+  },
+  {
    "player_key": "jefry_marte",
    "name": "Jefry Marte",
    "debut_year": 2015,
@@ -28944,50 +28980,6 @@
    "window_resolved": true
   },
   {
-   "player_key": "adalberto_mondesi",
-   "name": "Adalberto Mondesi",
-   "debut_year": 2016,
-   "control_window": [
-    2016,
-    2022
-   ],
-   "control_seasons": [
-    [
-     2016,
-     -0.44
-    ],
-    [
-     2017,
-     -0.74
-    ],
-    [
-     2018,
-     2.14
-    ],
-    [
-     2019,
-     2.03
-    ],
-    [
-     2020,
-     1.25
-    ],
-    [
-     2021,
-     0.34
-    ],
-    [
-     2022,
-     -0.22
-    ]
-   ],
-   "n_seasons_ge4_window": 0,
-   "n_seasons_ge4_career": 0,
-   "star": false,
-   "star_career": false,
-   "window_resolved": true
-  },
-  {
    "player_key": "aaron_blair",
    "name": "Aaron Blair",
    "debut_year": 2016,
@@ -31164,38 +31156,6 @@
    "window_resolved": true
   },
   {
-   "player_key": "franklin_barreto",
-   "name": "Franklin Barreto",
-   "debut_year": 2017,
-   "control_window": [
-    2017,
-    2023
-   ],
-   "control_seasons": [
-    [
-     2017,
-     -0.13
-    ],
-    [
-     2018,
-     0.04
-    ],
-    [
-     2019,
-     -0.51
-    ],
-    [
-     2020,
-     -0.47
-    ]
-   ],
-   "n_seasons_ge4_window": 0,
-   "n_seasons_ge4_career": 0,
-   "star": false,
-   "star_career": false,
-   "window_resolved": true
-  },
-  {
    "player_key": "francisco_mejia",
    "name": "Francisco Mej\u00eda",
    "debut_year": 2017,
@@ -31951,42 +31911,6 @@
     [
      2023,
      3.04
-    ]
-   ],
-   "n_seasons_ge4_window": 0,
-   "n_seasons_ge4_career": 0,
-   "star": false,
-   "star_career": false,
-   "window_resolved": true
-  },
-  {
-   "player_key": "daniel_robertson",
-   "name": "Daniel Robertson",
-   "debut_year": 2017,
-   "control_window": [
-    2017,
-    2023
-   ],
-   "control_seasons": [
-    [
-     2017,
-     0.02
-    ],
-    [
-     2018,
-     2.83
-    ],
-    [
-     2019,
-     -0.3
-    ],
-    [
-     2020,
-     0.13
-    ],
-    [
-     2021,
-     -0.28
     ]
    ],
    "n_seasons_ge4_window": 0,
@@ -33364,6 +33288,34 @@
    "window_resolved": true
   },
   {
+   "player_key": "franklin_barreto",
+   "name": "Franklin Barreto",
+   "debut_year": 2018,
+   "control_window": [
+    2018,
+    2024
+   ],
+   "control_seasons": [
+    [
+     2018,
+     0.04
+    ],
+    [
+     2019,
+     -0.51
+    ],
+    [
+     2020,
+     -0.47
+    ]
+   ],
+   "n_seasons_ge4_window": 0,
+   "n_seasons_ge4_career": 0,
+   "star": false,
+   "star_career": false,
+   "window_resolved": true
+  },
+  {
    "player_key": "scott_kingery",
    "name": "Scott Kingery",
    "debut_year": 2018,
@@ -33931,46 +33883,6 @@
     [
      2024,
      1.27
-    ]
-   ],
-   "n_seasons_ge4_window": 0,
-   "n_seasons_ge4_career": 0,
-   "star": false,
-   "star_career": false,
-   "window_resolved": true
-  },
-  {
-   "player_key": "jaime_barria",
-   "name": "Jaime Barria",
-   "debut_year": 2018,
-   "control_window": [
-    2018,
-    2024
-   ],
-   "control_seasons": [
-    [
-     2018,
-     0.69
-    ],
-    [
-     2019,
-     -0.74
-    ],
-    [
-     2020,
-     0.69
-    ],
-    [
-     2021,
-     0.22
-    ],
-    [
-     2022,
-     0.06
-    ],
-    [
-     2023,
-     -1.1
     ]
    ],
    "n_seasons_ge4_window": 0,
@@ -35207,46 +35119,6 @@
     [
      2019,
      -0.59
-    ]
-   ],
-   "n_seasons_ge4_window": 0,
-   "n_seasons_ge4_career": 0,
-   "star": false,
-   "star_career": false,
-   "window_resolved": true
-  },
-  {
-   "player_key": "duane_underwood_jr",
-   "name": "Duane Underwood Jr.",
-   "debut_year": 2018,
-   "control_window": [
-    2018,
-    2024
-   ],
-   "control_seasons": [
-    [
-     2018,
-     -0.09
-    ],
-    [
-     2019,
-     0.1
-    ],
-    [
-     2020,
-     0.13
-    ],
-    [
-     2021,
-     0.31
-    ],
-    [
-     2022,
-     0.85
-    ],
-    [
-     2023,
-     -0.09
     ]
    ],
    "n_seasons_ge4_window": 0,
@@ -38592,42 +38464,6 @@
    "window_resolved": true
   },
   {
-   "player_key": "yu_chang",
-   "name": "Yu Chang",
-   "debut_year": 2019,
-   "control_window": [
-    2019,
-    2025
-   ],
-   "control_seasons": [
-    [
-     2019,
-     -0.31
-    ],
-    [
-     2020,
-     0.14
-    ],
-    [
-     2021,
-     0.2
-    ],
-    [
-     2022,
-     0.24
-    ],
-    [
-     2023,
-     0.12
-    ]
-   ],
-   "n_seasons_ge4_window": 0,
-   "n_seasons_ge4_career": 0,
-   "star": false,
-   "star_career": false,
-   "window_resolved": true
-  },
-  {
    "player_key": "willi_castro",
    "name": "Willi Castro",
    "debut_year": 2019,
@@ -39088,38 +38924,6 @@
    "window_resolved": true
   },
   {
-   "player_key": "austin_allen",
-   "name": "Austin Allen",
-   "debut_year": 2019,
-   "control_window": [
-    2019,
-    2025
-   ],
-   "control_seasons": [
-    [
-     2019,
-     -0.35
-    ],
-    [
-     2020,
-     -0.18
-    ],
-    [
-     2021,
-     0.17
-    ],
-    [
-     2022,
-     0.03
-    ]
-   ],
-   "n_seasons_ge4_window": 0,
-   "n_seasons_ge4_career": 0,
-   "star": false,
-   "star_career": false,
-   "window_resolved": true
-  },
-  {
    "player_key": "richard_lovelady",
    "name": "Richard Lovelady",
    "debut_year": 2019,
@@ -39231,6 +39035,34 @@
     [
      2025,
      -0.62
+    ]
+   ],
+   "n_seasons_ge4_window": 0,
+   "n_seasons_ge4_career": 0,
+   "star": false,
+   "star_career": false,
+   "window_resolved": true
+  },
+  {
+   "player_key": "daniel_robertson",
+   "name": "Daniel Robertson",
+   "debut_year": 2019,
+   "control_window": [
+    2019,
+    2025
+   ],
+   "control_seasons": [
+    [
+     2019,
+     -0.3
+    ],
+    [
+     2020,
+     0.13
+    ],
+    [
+     2021,
+     -0.28
     ]
    ],
    "n_seasons_ge4_window": 0,
@@ -40343,46 +40175,6 @@
     [
      2022,
      0.48
-    ]
-   ],
-   "n_seasons_ge4_window": 0,
-   "n_seasons_ge4_career": 0,
-   "star": false,
-   "star_career": false,
-   "window_resolved": true
-  },
-  {
-   "player_key": "harold_ramirez",
-   "name": "Harold Ram\u00edrez",
-   "debut_year": 2019,
-   "control_window": [
-    2019,
-    2025
-   ],
-   "control_seasons": [
-    [
-     2019,
-     0.17
-    ],
-    [
-     2020,
-     -0.07
-    ],
-    [
-     2021,
-     0.25
-    ],
-    [
-     2022,
-     1.29
-    ],
-    [
-     2023,
-     2.03
-    ],
-    [
-     2024,
-     -0.1
     ]
    ],
    "n_seasons_ge4_window": 0,
@@ -44464,42 +44256,6 @@
    "window_resolved": false
   },
   {
-   "player_key": "luis_garcia__23735",
-   "name": "Luis Garcia",
-   "debut_year": 2020,
-   "control_window": [
-    2020,
-    2026
-   ],
-   "control_seasons": [
-    [
-     2020,
-     0.16
-    ],
-    [
-     2021,
-     2.74
-    ],
-    [
-     2022,
-     1.58
-    ],
-    [
-     2023,
-     0.52
-    ],
-    [
-     2025,
-     -0.05
-    ]
-   ],
-   "n_seasons_ge4_window": 0,
-   "n_seasons_ge4_career": 0,
-   "star": false,
-   "star_career": false,
-   "window_resolved": false
-  },
-  {
    "player_key": "keegan_akin",
    "name": "Keegan Akin",
    "debut_year": 2020,
@@ -44932,6 +44688,38 @@
    "window_resolved": false
   },
   {
+   "player_key": "jaime_barria",
+   "name": "Jaime Barria",
+   "debut_year": 2020,
+   "control_window": [
+    2020,
+    2026
+   ],
+   "control_seasons": [
+    [
+     2020,
+     0.69
+    ],
+    [
+     2021,
+     0.22
+    ],
+    [
+     2022,
+     0.06
+    ],
+    [
+     2023,
+     -1.1
+    ]
+   ],
+   "n_seasons_ge4_window": 0,
+   "n_seasons_ge4_career": 0,
+   "star": false,
+   "star_career": false,
+   "window_resolved": false
+  },
+  {
    "player_key": "david_peterson",
    "name": "David Peterson",
    "debut_year": 2020,
@@ -45031,6 +44819,38 @@
     [
      2020,
      0.09
+    ]
+   ],
+   "n_seasons_ge4_window": 0,
+   "n_seasons_ge4_career": 0,
+   "star": false,
+   "star_career": false,
+   "window_resolved": false
+  },
+  {
+   "player_key": "yu_chang",
+   "name": "Yu Chang",
+   "debut_year": 2020,
+   "control_window": [
+    2020,
+    2026
+   ],
+   "control_seasons": [
+    [
+     2020,
+     0.14
+    ],
+    [
+     2021,
+     0.2
+    ],
+    [
+     2022,
+     0.24
+    ],
+    [
+     2023,
+     0.12
     ]
    ],
    "n_seasons_ge4_window": 0,
@@ -45191,6 +45011,34 @@
     [
      2020,
      -0.36
+    ]
+   ],
+   "n_seasons_ge4_window": 0,
+   "n_seasons_ge4_career": 0,
+   "star": false,
+   "star_career": false,
+   "window_resolved": false
+  },
+  {
+   "player_key": "austin_allen",
+   "name": "Austin Allen",
+   "debut_year": 2020,
+   "control_window": [
+    2020,
+    2026
+   ],
+   "control_seasons": [
+    [
+     2020,
+     -0.18
+    ],
+    [
+     2021,
+     0.17
+    ],
+    [
+     2022,
+     0.03
     ]
    ],
    "n_seasons_ge4_window": 0,
@@ -45752,6 +45600,38 @@
    "window_resolved": false
   },
   {
+   "player_key": "duane_underwood_jr",
+   "name": "Duane Underwood Jr.",
+   "debut_year": 2020,
+   "control_window": [
+    2020,
+    2026
+   ],
+   "control_seasons": [
+    [
+     2020,
+     0.13
+    ],
+    [
+     2021,
+     0.31
+    ],
+    [
+     2022,
+     0.85
+    ],
+    [
+     2023,
+     -0.09
+    ]
+   ],
+   "n_seasons_ge4_window": 0,
+   "n_seasons_ge4_career": 0,
+   "star": false,
+   "star_career": false,
+   "window_resolved": false
+  },
+  {
    "player_key": "tyler_zuber",
    "name": "Tyler Zuber",
    "debut_year": 2020,
@@ -45779,6 +45659,42 @@
     [
      2026,
      -0.13
+    ]
+   ],
+   "n_seasons_ge4_window": 0,
+   "n_seasons_ge4_career": 0,
+   "star": false,
+   "star_career": false,
+   "window_resolved": false
+  },
+  {
+   "player_key": "harold_ramirez",
+   "name": "Harold Ram\u00edrez",
+   "debut_year": 2020,
+   "control_window": [
+    2020,
+    2026
+   ],
+   "control_seasons": [
+    [
+     2020,
+     -0.07
+    ],
+    [
+     2021,
+     0.25
+    ],
+    [
+     2022,
+     1.29
+    ],
+    [
+     2023,
+     2.03
+    ],
+    [
+     2024,
+     -0.1
     ]
    ],
    "n_seasons_ge4_window": 0,
@@ -72077,7 +71993,7 @@
   },
   {
    "player_key": "rolddy_munoz",
-   "name": "Rolddy Mu\u00f1oz",
+   "name": "Rolddy Munoz",
    "debut_year": 2025,
    "control_window": [
     2025,
@@ -75989,7 +75905,7 @@
   },
   {
    "player_key": "elmer_rodriguez",
-   "name": "Elmer Rodr\u00edguez",
+   "name": "Elmer Rodriguez",
    "debut_year": 2026,
    "control_window": [
     2026,
@@ -79189,7 +79105,7 @@
   },
   {
    "player_key": "hector_rodriguez",
-   "name": "H\u00e9ctor Rodr\u00edguez",
+   "name": "Hector Rodriguez",
    "debut_year": 2026,
    "control_window": [
     2026,
@@ -79409,7 +79325,7 @@
   },
   {
    "player_key": "joshua_baez",
-   "name": "Joshua B\u00e1ez",
+   "name": "Joshua Baez",
    "debut_year": 2026,
    "control_window": [
     2026,

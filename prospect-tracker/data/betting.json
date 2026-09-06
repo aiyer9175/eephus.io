@@ -1,11 +1,11 @@
 {
- "generated_at": "2026-09-04T19:19:47+00:00",
+ "generated_at": "2026-09-05T17:24:37+00:00",
  "slate_date": "2026-09-05",
  "n_games": 15,
  "status": {
   "odds_feed": "ok",
   "odds_note": "odds feed configured",
-  "odds_captured_at": "2026-09-04T19:12:06+00:00",
+  "odds_captured_at": "2026-09-05T17:18:49+00:00",
   "odds_kind": "open",
   "model": "unvalidated",
   "model_registry_verdict": "provisional",
@@ -16,34 +16,27 @@
     "file": "hitter_leaderboards.json",
     "present": true,
     "n_orgs": 30,
-    "as_of": "2026-09-04"
+    "as_of": "2026-09-05"
    },
    "rotation": {
     "file": "starter_leaderboards.json",
     "present": true,
     "n_orgs": 30,
-    "as_of": "2026-09-04"
+    "as_of": "2026-09-05"
    },
    "bullpen": {
     "file": "bullpen_leaderboards.json",
     "present": true,
     "n_orgs": 30,
-    "as_of": "2026-09-04"
+    "as_of": "2026-09-05"
    },
    "n_orgs_joined": 30
   },
   "n_slate_games": 15,
-  "n_events_dropped_in_progress": 1,
-  "n_games_unpriced_time_mismatch": 3,
+  "n_events_dropped_in_progress": 0,
+  "n_games_unpriced_time_mismatch": 0,
   "slate_rule": "first_open_slate",
   "slate_candidates": [
-   {
-    "date": "2026-09-04",
-    "n_games": 16,
-    "n_bettable": 16,
-    "open": false,
-    "why_not": "2026-09-04 holds 16 game(s) and 1 have already started or finished, so what is left of it is a fragment rather than a board"
-   },
    {
     "date": "2026-09-05",
     "n_games": 15,
@@ -57,25 +50,32 @@
     "n_bettable": 15,
     "open": true,
     "why_not": null
+   },
+   {
+    "date": "2026-09-07",
+    "n_games": 11,
+    "n_bettable": 11,
+    "open": true,
+    "why_not": null
    }
   ],
   "partial_slate": null,
   "odds_slate": {
    "board_slate": "2026-09-05",
-   "snapshot_slate": "2026-09-04",
-   "snapshot_captured_at": "2026-09-04T19:12:06+00:00",
+   "snapshot_slate": "2026-09-05",
+   "snapshot_captured_at": "2026-09-05T17:18:49+00:00",
    "snapshot_age_hours": 0.1,
    "matched": true,
-   "match_rule": "carries_slate_events",
-   "n_pregame_events_on_board_slate": 12,
+   "match_rule": "slate_label",
+   "n_pregame_events_on_board_slate": 15,
    "mismatch": false,
-   "reason": "the newest snapshot is stamped for the 2026-09-04 slate and carries 12 game(s) on the 2026-09-05 board that have not started; a capture is labelled by its earliest event, so this is the normal shape of an evening board"
+   "reason": "the cached snapshot is stamped for the 2026-09-05 slate"
   },
   "odds_slate_mismatch": false,
   "odds_snapshot_age_hours": 0.1,
   "stale_board": false,
   "feed_health": {
-   "generated_at": "2026-09-04T19:19:46+00:00",
+   "generated_at": "2026-09-05T17:24:37+00:00",
    "window_days": 14,
    "source": ".cache/odds",
    "n_slates": 9,
@@ -84,7 +84,7 @@
    "n_unreadable_files": 0,
    "ever_captured_close": false,
    "hours_since_last_close": null,
-   "hours_since_last_open": 0.13,
+   "hours_since_last_open": 0.1,
    "close_stale_hours": 36.0,
    "close_job_last_run": null,
    "close_job_last_reason": null,
@@ -92,15 +92,6 @@
    "close_job_ever_ran": false,
    "red": true,
    "slates": [
-    {
-     "slate_date": "2026-08-20",
-     "open": 1,
-     "close": 0,
-     "unknown": 0,
-     "first_capture": "2026-08-20T20:13:20+00:00",
-     "last_capture": "2026-08-20T20:13:20+00:00",
-     "clv_gradable": false
-    },
     {
      "slate_date": "2026-08-21",
      "open": 1,
@@ -172,6 +163,15 @@
      "first_capture": "2026-09-04T19:12:06+00:00",
      "last_capture": "2026-09-04T19:12:06+00:00",
      "clv_gradable": false
+    },
+    {
+     "slate_date": "2026-09-05",
+     "open": 1,
+     "close": 0,
+     "unknown": 0,
+     "first_capture": "2026-09-05T17:18:49+00:00",
+     "last_capture": "2026-09-05T17:18:49+00:00",
+     "clv_gradable": false
     }
    ],
    "diagnosis": "no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above",
@@ -191,25 +191,25 @@
    "home field"
   ],
   "coefficients": {
-   "b0": 4.476931124284586,
-   "b1": 0.259439778265719,
-   "b2": -0.31440206946803845,
-   "b3": 3.4848499283132024,
-   "b4": 0.04752388465469039,
+   "b0": 4.477706275355034,
+   "b1": 0.26031839075212787,
+   "b2": -0.31457772826220753,
+   "b3": 3.4386666602642526,
+   "b4": 0.04329460445715174,
    "source": "fitted",
-   "n_rows": 4216,
-   "rmse": 3.1677146883659093,
-   "r2": 0.04214631470210872
+   "n_rows": 4248,
+   "rmse": 3.1652531110418995,
+   "r2": 0.041926482892225114
   },
   "league_context": {
    "season": "2026",
-   "n_games": 2108,
-   "lg_rpg": 4.4815,
-   "home_win_rate": 0.5266,
-   "extra_inning_home_rate": 0.4859,
+   "n_games": 2124,
+   "lg_rpg": 4.4809,
+   "home_win_rate": 0.5264,
+   "extra_inning_home_rate": 0.4895,
    "home_logit_offset": 0.0,
    "run_dispersion_alpha": null,
-   "generated_at": "2026-09-04T19:13:05+00:00",
+   "generated_at": "2026-09-05T17:19:27+00:00",
    "source": "fitted"
   },
   "devig_method": "proportional",
@@ -220,9 +220,9 @@
    "no weather, no umpire, no travel, no injury news beyond what the leaderboards already absorb"
   ],
   "backtest": {
-   "generated_at": "2026-09-04T19:13:05+00:00",
+   "generated_at": "2026-09-05T17:19:27+00:00",
    "model_version": "betting_runs_v1",
-   "n_games": 2108,
+   "n_games": 2124,
    "validated": false,
    "contaminated": true,
    "contamination": "team inputs are season-to-date leaderboards, so every graded game is inside its own features; this measures calibration, not out-of-sample skill",
@@ -235,82 +235,82 @@
     "label": "in-sample (coefficients and features both leak)",
     "mode": "contaminated",
     "honest": false,
-    "n": 2108,
+    "n": 2124,
     "coefficients": {
-     "b0": 4.476931124284586,
-     "b1": 0.259439778265719,
-     "b2": -0.31440206946803845,
-     "b3": 3.4848499283132024,
-     "b4": 0.04752388465469039,
+     "b0": 4.477706275355034,
+     "b1": 0.26031839075212787,
+     "b2": -0.31457772826220753,
+     "b3": 3.4386666602642526,
+     "b4": 0.04329460445715174,
      "source": "fitted",
-     "n_rows": 4216,
-     "rmse": 3.1677146883659093,
-     "r2": 0.04214631470210872
+     "n_rows": 4248,
+     "rmse": 3.1652531110418995,
+     "r2": 0.041926482892225114
     },
-    "home_field_runs_adj": 0.2192,
+    "home_field_runs_adj": 0.2165,
     "diff_shrink": 0.78,
     "run_dispersion_alpha": null,
-    "extra_inning_home_rate": 0.4859,
-    "brier": 0.2415,
+    "extra_inning_home_rate": 0.4895,
+    "brier": 0.24142,
     "brier_flat_500": 0.25,
-    "brier_home_base": 0.24929,
-    "log_loss": 0.67589,
+    "brier_home_base": 0.2493,
+    "log_loss": 0.67576,
     "log_loss_flat_500": 0.69315,
-    "accuracy": 0.5626,
-    "home_win_rate": 0.5266,
-    "mean_p_home": 0.5266,
-    "total_mae": 3.524,
+    "accuracy": 0.5654,
+    "home_win_rate": 0.5264,
+    "mean_p_home": 0.5264,
+    "total_mae": 3.529,
     "skill_vs_home_base": {
-     "delta": 0.007799,
-     "sd": 0.08479,
-     "t": 4.223,
+     "delta": 0.007881,
+     "sd": 0.08469,
+     "t": 4.289,
      "beats_baseline_95": true,
-     "n_for_95": 320,
-     "baseline": 0.5266,
+     "n_for_95": 312,
+     "baseline": 0.5264,
      "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
     },
     "calibration": [
      {
       "bin": "0.2-0.3",
       "n": 24,
-      "pred": 0.2647,
+      "pred": 0.264,
       "actual": 0.375
      },
      {
       "bin": "0.3-0.4",
-      "n": 124,
-      "pred": 0.3668,
-      "actual": 0.3548
+      "n": 122,
+      "pred": 0.3665,
+      "actual": 0.3607
      },
      {
       "bin": "0.4-0.5",
-      "n": 644,
-      "pred": 0.4585,
-      "actual": 0.4736
+      "n": 653,
+      "pred": 0.4581,
+      "actual": 0.4671
      },
      {
       "bin": "0.5-0.6",
-      "n": 908,
-      "pred": 0.5486,
-      "actual": 0.533
+      "n": 921,
+      "pred": 0.5489,
+      "actual": 0.5364
      },
      {
       "bin": "0.6-0.7",
-      "n": 353,
-      "pred": 0.6333,
-      "actual": 0.6487
+      "n": 352,
+      "pred": 0.6341,
+      "actual": 0.6477
      },
      {
       "bin": "0.7-0.8",
-      "n": 46,
-      "pred": 0.7359,
-      "actual": 0.6957
+      "n": 45,
+      "pred": 0.7408,
+      "actual": 0.7333
      },
      {
       "bin": "0.8-0.9",
-      "n": 9,
-      "pred": 0.8161,
-      "actual": 0.7778
+      "n": 7,
+      "pred": 0.8243,
+      "actual": 0.7143
      }
     ]
    },
@@ -318,81 +318,81 @@
     "label": "forward from 2026-07-18 (coefficient leakage removed, feature leakage remains)",
     "mode": "contaminated",
     "honest": false,
-    "n": 649,
+    "n": 665,
     "coefficients": {
-     "b0": 4.536652066938749,
-     "b1": 0.27673855871321634,
-     "b2": -0.3118254870319486,
-     "b3": 3.8268241196891744,
-     "b4": -0.017373132783800118,
+     "b0": 4.53524429133432,
+     "b1": 0.2780402820973653,
+     "b2": -0.31143515485705864,
+     "b3": 3.847729489067618,
+     "b4": -0.01651263031622195,
      "source": "fitted",
      "n_rows": 2918,
-     "rmse": 3.18428317223264,
-     "r2": 0.04397660025726691
+     "rmse": 3.184720395387679,
+     "r2": 0.04371404555261571
     },
-    "home_field_runs_adj": 0.2103,
-    "diff_shrink": 0.78,
+    "home_field_runs_adj": 0.2155,
+    "diff_shrink": 0.76,
     "run_dispersion_alpha": null,
     "extra_inning_home_rate": 0.4977,
-    "brier": 0.24159,
+    "brier": 0.2412,
     "brier_flat_500": 0.25,
-    "brier_home_base": 0.24833,
-    "log_loss": 0.67573,
+    "brier_home_base": 0.24841,
+    "log_loss": 0.67494,
     "log_loss_flat_500": 0.69315,
-    "accuracy": 0.5532,
-    "home_win_rate": 0.5408,
-    "mean_p_home": 0.5217,
-    "total_mae": 3.518,
+    "accuracy": 0.5489,
+    "home_win_rate": 0.5398,
+    "mean_p_home": 0.5219,
+    "total_mae": 3.534,
     "skill_vs_home_base": {
-     "delta": 0.006743,
-     "sd": 0.08587,
-     "t": 2.0,
+     "delta": 0.00721,
+     "sd": 0.08346,
+     "t": 2.228,
      "beats_baseline_95": true,
-     "n_for_95": 439,
-     "baseline": 0.5408,
+     "n_for_95": 363,
+     "baseline": 0.5398,
      "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
     },
     "calibration": [
      {
       "bin": "0.2-0.3",
       "n": 7,
-      "pred": 0.2539,
+      "pred": 0.2615,
       "actual": 0.2857
      },
      {
       "bin": "0.3-0.4",
-      "n": 46,
-      "pred": 0.3656,
-      "actual": 0.4348
+      "n": 45,
+      "pred": 0.3693,
+      "actual": 0.4222
      },
      {
       "bin": "0.4-0.5",
-      "n": 201,
-      "pred": 0.4588,
-      "actual": 0.5025
+      "n": 208,
+      "pred": 0.4596,
+      "actual": 0.5096
      },
      {
       "bin": "0.5-0.6",
-      "n": 285,
-      "pred": 0.549,
-      "actual": 0.5404
+      "n": 306,
+      "pred": 0.5507,
+      "actual": 0.5294
      },
      {
       "bin": "0.6-0.7",
-      "n": 97,
-      "pred": 0.6334,
-      "actual": 0.6495
+      "n": 85,
+      "pred": 0.6354,
+      "actual": 0.6824
      },
      {
       "bin": "0.7-0.8",
-      "n": 11,
-      "pred": 0.7448,
-      "actual": 0.8182
+      "n": 12,
+      "pred": 0.7374,
+      "actual": 0.8333
      },
      {
       "bin": "0.8-0.9",
       "n": 2,
-      "pred": 0.8208,
+      "pred": 0.8206,
       "actual": 1.0
      }
     ]
@@ -402,16 +402,16 @@
     "mode": "vintage",
     "honest": true,
     "status": "graded",
-    "n_vintages": 32,
-    "n_gradable": 761,
-    "n_graded": 456,
+    "n_vintages": 33,
+    "n_gradable": 777,
+    "n_graded": 472,
     "n_skipped_no_vintage": 1347,
     "min_fit_games": 100,
     "min_eval_games": 50,
     "min_graded_games_for_min_edge": 600,
     "park_basis": {
      "source": "mixed",
-     "n_games_vintage_park": 750,
+     "n_games_vintage_park": 766,
      "n_games_neutral_park": 11,
      "n_eval_games_neutral_park": 11,
      "n_dates_neutral_park": 1,
@@ -422,12 +422,12 @@
     "feature_basis": {
      "xwoba_14": {
       "n_games": {
-       "populated": 189,
+       "populated": 205,
        "null_stated": 24,
        "predates_column": 548
       },
       "n_eval_games": {
-       "populated": 189,
+       "populated": 205,
        "null_stated": 24,
        "predates_column": 243
       },
@@ -441,17 +441,18 @@
        "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-10 (true window 14d; 340 hitters differenced, 11 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
        "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-13 (true window 14d; 345 hitters differenced, 9 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
        "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-13 (true window 17d; 352 hitters differenced, 10 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
-       "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-13 (true window 18d; 352 hitters differenced, 10 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)"
+       "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-13 (true window 18d; 352 hitters differenced, 10 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
+       "team rolling xwOBA, trailing 14d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-13 (true window 21d; 361 hitters differenced, 13 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)"
       ]
      },
      "xwoba_30": {
       "n_games": {
-       "populated": 96,
+       "populated": 112,
        "null_stated": 117,
        "predates_column": 548
       },
       "n_eval_games": {
-       "populated": 96,
+       "populated": 112,
        "null_stated": 117,
        "predates_column": 243
       },
@@ -465,17 +466,18 @@
        "team rolling xwOBA, trailing 30d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-07-16 (true window 35d; 350 hitters differenced, 41 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
        "team rolling xwOBA, trailing 30d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-07-16 (true window 36d; 350 hitters differenced, 41 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
        "team rolling xwOBA, trailing 30d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-07-31 (true window 30d; 365 hitters differenced, 24 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
-       "team rolling xwOBA, trailing 30d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-01 (true window 30d; 362 hitters differenced, 24 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)"
+       "team rolling xwOBA, trailing 30d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-01 (true window 30d; 362 hitters differenced, 24 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)",
+       "team rolling xwOBA, trailing 30d by cumulative difference: tonight's hitter_leaderboards.json hitters[].xwoba*pa minus the git anchor committed 2026-08-04 (true window 30d; 363 hitters differenced, 25 excluded lacking an anchor xwoba; Savant per-hitter season xwOBA, PA-weighted; a traded hitter's window rides his current club)"
       ]
      },
      "off_vs_lhp": {
       "n_games": {
-       "populated": 213,
+       "populated": 229,
        "null_stated": 0,
        "predates_column": 548
       },
       "n_eval_games": {
-       "populated": 213,
+       "populated": 229,
        "null_stated": 0,
        "predates_column": 243
       },
@@ -487,12 +489,12 @@
      },
      "off_vs_rhp": {
       "n_games": {
-       "populated": 213,
+       "populated": 229,
        "null_stated": 0,
        "predates_column": 548
       },
       "n_eval_games": {
-       "populated": 213,
+       "populated": 229,
        "null_stated": 0,
        "predates_column": 243
       },
@@ -504,12 +506,12 @@
      },
      "lineup_strength": {
       "n_games": {
-       "populated": 189,
+       "populated": 205,
        "null_stated": 24,
        "predates_column": 548
       },
       "n_eval_games": {
-       "populated": 189,
+       "populated": 205,
        "null_stated": 24,
        "predates_column": 243
       },
@@ -523,17 +525,18 @@
        "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-24) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
        "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-27) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
        "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-30) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
-       "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-31) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats"
+       "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-08-31) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+       "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-03) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats"
       ]
      },
      "star_out": {
       "n_games": {
-       "populated": 189,
+       "populated": 205,
        "null_stated": 24,
        "predates_column": 548
       },
       "n_eval_games": {
-       "populated": 189,
+       "populated": 205,
        "null_stated": 24,
        "predates_column": 243
       },
@@ -546,12 +549,12 @@
      },
      "throws": {
       "n_games": {
-       "populated": 213,
+       "populated": 229,
        "null_stated": 0,
        "predates_column": 548
       },
       "n_eval_games": {
-       "populated": 213,
+       "populated": 229,
        "null_stated": 0,
        "predates_column": 243
       },
@@ -563,10 +566,10 @@
      },
      "note": "schema-3 dark capture only: counts of gradable and eval games whose vintage record carried each column, said why it was null, or predates it (docs/diamond-betting.md section 5c). Nothing served reads these columns; a null is never filled from live files"
     },
-    "note": "456 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season",
+    "note": "472 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season",
     "first_graded_date": "2026-07-06",
-    "last_graded_date": "2026-09-03",
-    "n": 456,
+    "last_graded_date": "2026-09-04",
+    "n": 472,
     "coefficients": {
      "b0": 4.345387129359371,
      "b1": -0.037205338068223445,
@@ -582,22 +585,22 @@
     "diff_shrink": 1.28,
     "run_dispersion_alpha": null,
     "extra_inning_home_rate": 0.4921,
-    "brier": 0.24417,
+    "brier": 0.24398,
     "brier_flat_500": 0.25,
-    "brier_home_base": 0.24808,
-    "log_loss": 0.68141,
+    "brier_home_base": 0.2482,
+    "log_loss": 0.68104,
     "log_loss_flat_500": 0.69315,
-    "accuracy": 0.5658,
-    "home_win_rate": 0.5439,
-    "mean_p_home": 0.5158,
-    "total_mae": 3.523,
+    "accuracy": 0.5678,
+    "home_win_rate": 0.5424,
+    "mean_p_home": 0.5162,
+    "total_mae": 3.546,
     "skill_vs_home_base": {
-     "delta": 0.003905,
-     "sd": 0.04586,
-     "t": 1.818,
+     "delta": 0.004221,
+     "sd": 0.04457,
+     "t": 2.058,
      "beats_baseline_95": true,
-     "n_for_95": 373,
-     "baseline": 0.5439,
+     "n_for_95": 302,
+     "baseline": 0.5424,
      "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
     },
     "calibration": [
@@ -609,15 +612,15 @@
      },
      {
       "bin": "0.4-0.5",
-      "n": 142,
-      "pred": 0.4782,
-      "actual": 0.4648
+      "n": 146,
+      "pred": 0.4784,
+      "actual": 0.4589
      },
      {
       "bin": "0.5-0.6",
-      "n": 305,
-      "pred": 0.5334,
-      "actual": 0.577
+      "n": 317,
+      "pred": 0.5336,
+      "actual": 0.5773
      },
      {
       "bin": "0.6-0.7",
@@ -629,12 +632,12 @@
     "split_date": "2026-08-01"
    },
    "split_date": "2026-07-18",
-   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 456 games. A pick threshold is set from the vintage mode or from nothing."
+   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 472 games. A pick threshold is set from the vintage mode or from nothing."
   },
   "validation": {
    "available": true,
    "artifact": "data/betting_model_eval.json",
-   "generated_at": "2026-09-04T19:13:05+00:00",
+   "generated_at": "2026-09-05T17:19:27+00:00",
    "model_version": "betting_runs_v1",
    "validated": false,
    "gates_picks": false,
@@ -653,38 +656,38 @@
      "label": "in-sample (coefficients and features both leak)",
      "mode": "contaminated",
      "honest": false,
-     "n": 2108,
-     "brier": 0.2415,
+     "n": 2124,
+     "brier": 0.24142,
      "brier_flat_500": 0.25,
-     "brier_home_base": 0.24929,
-     "accuracy": 0.5626,
+     "brier_home_base": 0.2493,
+     "accuracy": 0.5654,
      "key": "in_sample",
      "skill_vs_home_base": {
-      "delta": 0.007799,
-      "sd": 0.08479,
-      "t": 4.223,
+      "delta": 0.007881,
+      "sd": 0.08469,
+      "t": 4.289,
       "beats_baseline_95": true,
-      "n_for_95": 320,
-      "baseline": 0.5266
+      "n_for_95": 312,
+      "baseline": 0.5264
      }
     },
     {
      "label": "forward from 2026-07-18 (coefficient leakage removed, feature leakage remains)",
      "mode": "contaminated",
      "honest": false,
-     "n": 649,
-     "brier": 0.24159,
+     "n": 665,
+     "brier": 0.2412,
      "brier_flat_500": 0.25,
-     "brier_home_base": 0.24833,
-     "accuracy": 0.5532,
+     "brier_home_base": 0.24841,
+     "accuracy": 0.5489,
      "key": "forward",
      "skill_vs_home_base": {
-      "delta": 0.006743,
-      "sd": 0.08587,
-      "t": 2.0,
+      "delta": 0.00721,
+      "sd": 0.08346,
+      "t": 2.228,
       "beats_baseline_95": true,
-      "n_for_95": 439,
-      "baseline": 0.5408
+      "n_for_95": 363,
+      "baseline": 0.5398
      }
     },
     {
@@ -692,38 +695,38 @@
      "mode": "vintage",
      "honest": true,
      "status": "graded",
-     "n": 456,
-     "n_graded": 456,
-     "brier": 0.24417,
+     "n": 472,
+     "n_graded": 472,
+     "brier": 0.24398,
      "brier_flat_500": 0.25,
-     "brier_home_base": 0.24808,
-     "accuracy": 0.5658,
-     "note": "456 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season",
+     "brier_home_base": 0.2482,
+     "accuracy": 0.5678,
+     "note": "472 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season",
      "key": "vintage",
      "skill_vs_home_base": {
-      "delta": 0.003905,
-      "sd": 0.04586,
-      "t": 1.818,
+      "delta": 0.004221,
+      "sd": 0.04457,
+      "t": 2.058,
       "beats_baseline_95": true,
-      "n_for_95": 373,
-      "baseline": 0.5439
+      "n_for_95": 302,
+      "baseline": 0.5424
      }
     }
    ],
    "vintage": {
     "status": "graded",
-    "n_vintages": 32,
-    "n_gradable": 761,
-    "n_graded": 456,
+    "n_vintages": 33,
+    "n_gradable": 777,
+    "n_graded": 472,
     "n_skipped_no_vintage": 1347,
     "min_fit_games": 100,
     "min_eval_games": 50,
     "min_graded_games_for_min_edge": 600,
     "first_graded_date": "2026-07-06",
-    "last_graded_date": "2026-09-03",
+    "last_graded_date": "2026-09-04",
     "park_basis": {
      "source": "mixed",
-     "n_games_vintage_park": 750,
+     "n_games_vintage_park": 766,
      "n_games_neutral_park": 11,
      "n_eval_games_neutral_park": 11,
      "n_dates_neutral_park": 1,
@@ -731,18 +734,18 @@
      "neutral_park_last_date": "2026-08-06",
      "note": "the park index is read from each game's own vintage record; a record written before the park column existed prices its games on a NEUTRAL park (the park term drops out) rather than on the live index, which is the in-progress season and would leak the eval window into its own features"
     },
-    "note": "456 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season"
+    "note": "472 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season"
    },
    "coverage": {
     "schema": 3,
-    "n_vintages": 32,
+    "n_vintages": 33,
     "n_vintages_backfilled": 10,
-    "n_vintages_live": 22,
+    "n_vintages_live": 23,
     "n_vintages_unknown_provenance": 0,
-    "n_vintages_with_parks": 31,
+    "n_vintages_with_parks": 32,
     "n_vintages_neutral_park": 1,
     "first": "2026-07-05",
-    "last": "2026-09-04",
+    "last": "2026-09-05",
     "missing_dates": [
      "2026-07-06",
      "2026-07-08",
@@ -775,58 +778,58 @@
      "2026-09-01",
      "2026-09-02"
     ],
-    "span_days": 62,
-    "latest_cutoff": "2026-09-04",
+    "span_days": 63,
+    "latest_cutoff": "2026-09-05",
     "earliest_gradable_game_date": "2026-07-06",
     "vintage_age_days": {
      "basis": "graded game dates",
-     "n": 761,
-     "median_days": 2,
+     "n": 777,
+     "median_days": 1,
      "p90_days": 8,
      "max_days": 13,
-     "mean_days": 2.89
+     "mean_days": 2.85
     },
-    "note": "32 vintages (10 backfilled, 22 live), 30 missing days inside the span; a game is gradable when a vintage cutoff of the SAME SEASON is strictly before it"
+    "note": "33 vintages (10 backfilled, 23 live), 30 missing days inside the span; a game is gradable when a vintage cutoff of the SAME SEASON is strictly before it"
    },
-   "n_games_completed": 2108,
+   "n_games_completed": 2124,
    "gate": {
     "all_gates_open": false,
     "gates": [
      {
       "id": "vintage_sample",
       "need": "600 vintage-graded games",
-      "have": 456,
+      "have": 472,
       "open": false,
       "why": "the contaminated forward margin over the home-field baseline is +0.005794 Brier with a paired sd of 0.08647, so a margin that size needs 603 games to clear one-sided 95%; 600 is that number, and a clean margin will be smaller, so this is a floor and not a pass"
      },
      {
       "id": "out_of_sample_skill",
       "need": "paired Brier vs the home-field baseline, t >= 1.645",
-      "have": 1.818,
+      "have": 2.058,
       "open": true,
       "why": "sample size is not evidence; the model has to actually beat 'always take the home team' on games it could not see"
      },
      {
       "id": "graded_price_history",
       "need": "settled bets with a taken price, enough that some edge threshold clears an ROI lower bound of zero on at least 100 of them, WITHIN ONE TAG",
-      "have": 212,
+      "have": 220,
       "have_by_tag": {
-       "board_all": 206,
-       "ev_rank": 42,
+       "board_all": 214,
+       "ev_rank": 45,
        "longshot": 4,
-       "potd_band": 14
+       "potd_band": 15
       },
       "open": false,
       "by_tag": {
        "board_all": {
-        "n": 206,
+        "n": 214,
         "min_edge": null,
         "open": false,
         "may_set_a_threshold": true,
         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
        },
        "ev_rank": {
-        "n": 42,
+        "n": 45,
         "min_edge": null,
         "open": false,
         "may_set_a_threshold": true,
@@ -840,29 +843,29 @@
         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
        },
        "potd_band": {
-        "n": 14,
+        "n": 15,
         "min_edge": null,
         "open": false,
         "may_set_a_threshold": true,
         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
        }
       },
-      "why": "an edge threshold is a claim about EV against real prices; 20 dates of odds snapshots are cached. The sweep runs per tag and a tag opens only if it individually clears - a pooled ROI measures a mixture nobody bet",
+      "why": "an edge threshold is a claim about EV against real prices; 21 dates of odds snapshots are cached. The sweep runs per tag and a tag opens only if it individually clears - a pooled ROI measures a mixture nobody bet",
       "pooled_is_not_sweepable": "`have` is the union of every tag and is never swept; see by_tag for the four clocks that are"
      }
     ],
     "n_open": 1,
     "n_gates": 3,
-    "odds_snapshot_dates": 20,
+    "odds_snapshot_dates": 21,
     "sweep": {
-     "n_rows": 212,
+     "n_rows": 220,
      "reason": "no tag cleared: 4 tag(s) present and none of them produced an ROI lower bound above zero on 100+ of its own settled rows",
      "n_tags": 4,
      "n_tags_cleared": 0
     },
     "policy": "min_edge stays null until all three gates are open. A threshold invented to make a pick appear is the single most dishonest number this module could publish."
    },
-   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 456 games. A pick threshold is set from the vintage mode or from nothing."
+   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 472 games. A pick threshold is set from the vintage mode or from nothing."
   },
   "min_edge": null
  },
@@ -878,19 +881,19 @@
  "pick_of_the_day": {
   "side": "home",
   "label": "COL",
-  "model_prob": 0.5318,
+  "model_prob": 0.53376,
   "fair_odds": -114,
   "p_push": null,
-  "book": "betonlineag",
-  "odds": 109,
-  "decimal": 2.09,
-  "implied_prob": 0.47847,
-  "market_fair_prob": 0.46729,
-  "edge": 0.06451,
-  "ev_per_unit": 0.11146,
-  "ev_per_unit_if_no_push": 0.11146,
-  "kelly_full": 0.10226,
-  "book_title": "BetOnline.ag",
+  "book": "betus",
+  "odds": 110,
+  "decimal": 2.1,
+  "implied_prob": 0.47619,
+  "market_fair_prob": 0.46517,
+  "edge": 0.06859,
+  "ev_per_unit": 0.1209,
+  "ev_per_unit_if_no_push": 0.1209,
+  "kelly_full": 0.10991,
+  "book_title": "BetUS",
   "point": null,
   "market": "moneyline",
   "game_pk": 824310,
@@ -903,23 +906,66 @@
   "suggested_units": 1.0,
   "provisional": true,
   "min_edge_used": 0.06,
-  "kelly_quarter": 0.02557,
+  "kelly_quarter": 0.02748,
   "tag_record": {
    "available": true,
    "tag": "potd_band",
-   "n_settled": 14,
-   "won": 6,
+   "n_settled": 15,
+   "won": 7,
    "lost": 8,
    "push": 0,
-   "net_units": -3.914,
-   "roi": -0.2796,
+   "net_units": -2.094,
+   "roi": -0.1396,
    "small_n": true,
    "sweep_floor": 100,
    "source": "betting_shadow.summary() by_tag"
   },
-  "provisional_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 456 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. This row is in the public record because a claim that is not written down before the result is not a claim."
+  "provisional_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 472 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. This row is in the public record because a claim that is not written down before the result is not a claim."
  },
- "longshot_of_the_day": null,
+ "longshot_of_the_day": {
+  "side": "away",
+  "label": "ATH",
+  "model_prob": 0.38925,
+  "fair_odds": 157,
+  "p_push": null,
+  "book": "betonlineag",
+  "odds": 206,
+  "decimal": 3.06,
+  "implied_prob": 0.3268,
+  "market_fair_prob": 0.31921,
+  "edge": 0.07004,
+  "ev_per_unit": 0.1911,
+  "ev_per_unit_if_no_push": 0.1911,
+  "kelly_full": 0.09277,
+  "book_title": "BetOnline.ag",
+  "point": null,
+  "market": "moneyline",
+  "game_pk": 823094,
+  "matchup": "ATH at SEA",
+  "start": "2026-09-06T01:40:00Z",
+  "slot": "longshot_of_the_day",
+  "slot_label": "Model Watch: long-price disagreement",
+  "slot_frame": "watch",
+  "stake_units": 1.0,
+  "suggested_units": 0.5,
+  "provisional": true,
+  "min_edge_used": 0.06,
+  "kelly_quarter": 0.02319,
+  "tag_record": {
+   "available": true,
+   "tag": "longshot",
+   "n_settled": 4,
+   "won": 1,
+   "lost": 3,
+   "push": 0,
+   "net_units": -0.9,
+   "roi": -0.225,
+   "small_n": true,
+   "sweep_floor": 100,
+   "source": "betting_shadow.summary() by_tag"
+  },
+  "provisional_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 472 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. This row is in the public record because a claim that is not written down before the result is not a claim."
+ },
  "pick_reason": "highest model win probability among sides clearing the provisional floor, restricted to american odds from -199 to +199; ties go to the price nearest -110, then to the higher expected value",
  "pick_meta": {
   "provisional": true,
@@ -948,12 +994,12 @@
     "tag_record": {
      "available": true,
      "tag": "potd_band",
-     "n_settled": 14,
-     "won": 6,
+     "n_settled": 15,
+     "won": 7,
      "lost": 8,
      "push": 0,
-     "net_units": -3.914,
-     "roi": -0.2796,
+     "net_units": -2.094,
+     "roi": -0.1396,
      "small_n": true,
      "sweep_floor": 100,
      "source": "betting_shadow.summary() by_tag"
@@ -966,9 +1012,9 @@
     "slot_frame": "watch",
     "rule": "highest expected value per unit among sides clearing the provisional floor at american odds of +200 or longer",
     "band": "american odds of +200 or longer",
-    "present": false,
-    "reason": "2 side(s) cleared the 6.0% provisional floor on this slate and none of them are priced at american odds of +200 or longer",
-    "n_candidates": 0,
+    "present": true,
+    "reason": "highest expected value per unit among sides clearing the provisional floor at american odds of +200 or longer",
+    "n_candidates": 1,
     "provisional": true,
     "min_edge": 0.06,
     "basis": "provisional_policy_floor",
@@ -989,21 +1035,21 @@
     }
    }
   },
-  "n_floor_clearing_sides": 2
+  "n_floor_clearing_sides": 3
  },
  "pick_blockers": [
   {
    "id": "min_edge",
    "open": false,
    "need": "600 vintage-graded games",
-   "have": 456,
+   "have": 472,
    "gates_closed": [
     "vintage_sample",
     "graded_price_history"
    ],
    "n_closed": 2,
    "n_gates": 3,
-   "reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 2 are closed, starting with 600 vintage-graded games against 456 in hand"
+   "reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 2 are closed, starting with 600 vintage-graded games against 472 in hand"
   }
  ],
  "market_publishability": {
@@ -1014,14 +1060,14 @@
    "trailing": 200,
    "basis": "n_min mirrors betting_shadow.MIN_BETS_FOR_SWEEP and z is betting_model.Z_95_ONE_SIDED; the dwell of 3 and the trailing 200 are POLICY chosen for hysteresis, not measured (docs/diamond-betting.md section 7b)"
   },
-  "last_evaluation_date": "2026-09-04",
+  "last_evaluation_date": "2026-09-05",
   "today_note": null,
   "note": "a market must clear BOTH legs to fill a slot or reach the public record. The shadow and calibration ledgers keep recording closed markets, because they are the only instruments that can ever accumulate the evidence to re-open one.",
   "markets": {
    "moneyline": {
     "market": "moneyline",
     "publishable": true,
-    "reason": "publishable: the margin-shape exclusion does not bar this market, and mean Brier 0.244763 on 134 canonical games does not resolve worse than a coin",
+    "reason": "publishable: the margin-shape exclusion does not bar this market, and mean Brier 0.243233 on 143 canonical games does not resolve worse than a coin",
     "both_legs": false,
     "dispersion_leg": {
      "publishable": true,
@@ -1030,23 +1076,23 @@
     "ledger_leg": {
      "status": "open",
      "verdict": "not_worse_than_coin",
-     "n_games": 134,
-     "brier": 0.244763,
-     "delta_vs_coin": -0.005237,
-     "t": -0.7377,
+     "n_games": 143,
+     "brier": 0.243233,
+     "delta_vs_coin": -0.006767,
+     "t": -0.9871,
      "worse_than_coin_95": false,
      "trailing": {
-      "n_games": 134,
-      "brier": 0.244763,
-      "delta_vs_coin": -0.005237,
-      "t": -0.7377,
+      "n_games": 143,
+      "brier": 0.243233,
+      "delta_vs_coin": -0.006767,
+      "t": -0.9871,
       "worse_than_coin_95": false,
       "window": 200
      },
      "consecutive_worse": 0,
      "consecutive_recovered": 0,
      "dwell_need": 3,
-     "reason": "mean Brier 0.244763 on 134 canonical games does not resolve worse than a coin"
+     "reason": "mean Brier 0.243233 on 143 canonical games does not resolve worse than a coin"
     }
    },
    "runline": {
@@ -1061,29 +1107,29 @@
     "ledger_leg": {
      "status": "open",
      "verdict": "not_worse_than_coin",
-     "n_games": 132,
-     "brier": 0.270499,
-     "delta_vs_coin": 0.020499,
-     "t": 1.5004,
+     "n_games": 141,
+     "brier": 0.268314,
+     "delta_vs_coin": 0.018314,
+     "t": 1.3879,
      "worse_than_coin_95": false,
      "trailing": {
-      "n_games": 132,
-      "brier": 0.270499,
-      "delta_vs_coin": 0.020499,
-      "t": 1.5004,
+      "n_games": 141,
+      "brier": 0.268314,
+      "delta_vs_coin": 0.018314,
+      "t": 1.3879,
       "worse_than_coin_95": false,
       "window": 200
      },
      "consecutive_worse": 0,
      "consecutive_recovered": 0,
      "dwell_need": 3,
-     "reason": "mean Brier 0.270499 on 132 canonical games does not resolve worse than a coin"
+     "reason": "mean Brier 0.268314 on 141 canonical games does not resolve worse than a coin"
     }
    },
    "total": {
     "market": "total",
     "publishable": false,
-    "reason": "excluded by both legs: excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate; LEDGER-CLOSED: resolved worse than a coin for 3 consecutive evaluations (closed 2026-09-03T15:21:47+00:00); re-opens when the trailing 200 games fail the same test for 3 consecutive evaluations. Today: mean Brier 0.269844 on 130 canonical games resolves worse than a coin (t 2.0421 at the one-sided 95% bar of 1.645)",
+    "reason": "excluded by both legs: excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate; LEDGER-CLOSED: resolved worse than a coin for 3 consecutive evaluations (closed 2026-09-03T15:21:47+00:00); re-opens when the trailing 200 games fail the same test for 3 consecutive evaluations. Today: mean Brier 0.269161 on 139 canonical games resolves worse than a coin (t 2.0567 at the one-sided 95% bar of 1.645)",
     "both_legs": true,
     "dispersion_leg": {
      "publishable": false,
@@ -1092,23 +1138,23 @@
     "ledger_leg": {
      "status": "ledger_closed",
      "verdict": "worse_than_coin",
-     "n_games": 130,
-     "brier": 0.269844,
-     "delta_vs_coin": 0.019844,
-     "t": 2.0421,
+     "n_games": 139,
+     "brier": 0.269161,
+     "delta_vs_coin": 0.019161,
+     "t": 2.0567,
      "worse_than_coin_95": true,
      "trailing": {
-      "n_games": 130,
-      "brier": 0.269844,
-      "delta_vs_coin": 0.019844,
-      "t": 2.0421,
+      "n_games": 139,
+      "brier": 0.269161,
+      "delta_vs_coin": 0.019161,
+      "t": 2.0567,
       "worse_than_coin_95": true,
       "window": 200
      },
      "consecutive_worse": 3,
      "consecutive_recovered": 0,
      "dwell_need": 3,
-     "reason": "LEDGER-CLOSED: resolved worse than a coin for 3 consecutive evaluations (closed 2026-09-03T15:21:47+00:00); re-opens when the trailing 200 games fail the same test for 3 consecutive evaluations. Today: mean Brier 0.269844 on 130 canonical games resolves worse than a coin (t 2.0421 at the one-sided 95% bar of 1.645)"
+     "reason": "LEDGER-CLOSED: resolved worse than a coin for 3 consecutive evaluations (closed 2026-09-03T15:21:47+00:00); re-opens when the trailing 200 games fail the same test for 3 consecutive evaluations. Today: mean Brier 0.269161 on 139 canonical games resolves worse than a coin (t 2.0567 at the one-sided 95% bar of 1.645)"
     }
    },
    "props_pitcher_strikeouts": {
@@ -1265,27 +1311,27 @@
      "name": "Anthony Molina"
     },
     "offense_plus": 97.0,
-    "bullpen_plus": 93.0
+    "bullpen_plus": 92.0
    },
    "model": {
-    "p_home": 0.54503,
-    "p_away": 0.45497,
-    "lam_home": 4.485,
-    "lam_away": 4.133,
-    "fair_total": 8.62,
+    "p_home": 0.55119,
+    "p_away": 0.44881,
+    "lam_home": 4.504,
+    "lam_away": 4.11,
+    "fair_total": 8.61,
     "park_index": 0.96,
     "home_prevention": {
-     "starter_plus": 101.0,
+     "starter_plus": 102.0,
      "bullpen_plus": 100.0,
      "starter_share": 0.62,
-     "blend_plus": 100.6,
+     "blend_plus": 101.2,
      "source": "probable"
     },
     "away_prevention": {
      "starter_plus": 100.0,
-     "bullpen_plus": 93.0,
-     "starter_share": 0.59,
-     "blend_plus": 97.1,
+     "bullpen_plus": 92.0,
+     "starter_share": 0.572,
+     "blend_plus": 96.6,
      "source": "rotation-average"
     }
    },
@@ -1293,37 +1339,37 @@
     {
      "side": "home",
      "label": "NYM",
-     "model_prob": 0.54503,
-     "fair_odds": -120,
+     "model_prob": 0.55119,
+     "fair_odds": -123,
      "p_push": null,
-     "book": "betonlineag",
-     "odds": -175,
-     "decimal": 1.5714,
-     "implied_prob": 0.63638,
-     "market_fair_prob": 0.62147,
-     "edge": -0.07644,
-     "ev_per_unit": -0.14354,
-     "ev_per_unit_if_no_push": -0.14354,
+     "book": "betus",
+     "odds": -156,
+     "decimal": 1.641,
+     "implied_prob": 0.60938,
+     "market_fair_prob": 0.59491,
+     "edge": -0.04372,
+     "ev_per_unit": -0.0955,
+     "ev_per_unit_if_no_push": -0.0955,
      "kelly_full": 0.0,
-     "book_title": "BetOnline.ag",
+     "book_title": "BetUS",
      "point": null
     },
     {
      "side": "away",
      "label": "SFG",
-     "model_prob": 0.45497,
-     "fair_odds": 120,
+     "model_prob": 0.44881,
+     "fair_odds": 123,
      "p_push": null,
-     "book": "lowvig",
-     "odds": 158,
-     "decimal": 2.58,
-     "implied_prob": 0.3876,
-     "market_fair_prob": 0.37853,
-     "edge": 0.07644,
-     "ev_per_unit": 0.17382,
-     "ev_per_unit_if_no_push": 0.17382,
-     "kelly_full": 0.11001,
-     "book_title": "LowVig.ag",
+     "book": "betrivers",
+     "odds": 145,
+     "decimal": 2.45,
+     "implied_prob": 0.40816,
+     "market_fair_prob": 0.40509,
+     "edge": 0.04372,
+     "ev_per_unit": 0.09958,
+     "ev_per_unit_if_no_push": 0.09958,
+     "kelly_full": 0.06868,
+     "book_title": "BetRivers",
      "point": null
     }
    ],
@@ -1331,37 +1377,37 @@
     {
      "side": "home",
      "label": "NYM -1.5",
-     "model_prob": 0.34419,
-     "fair_odds": 191,
+     "model_prob": 0.34951,
+     "fair_odds": 186,
      "p_push": null,
-     "book": "fanduel",
-     "odds": 126,
-     "decimal": 2.26,
-     "implied_prob": 0.44248,
-     "market_fair_prob": 0.42316,
-     "edge": -0.07897,
-     "ev_per_unit": -0.22213,
-     "ev_per_unit_if_no_push": -0.22213,
+     "book": "lowvig",
+     "odds": 136,
+     "decimal": 2.36,
+     "implied_prob": 0.42373,
+     "market_fair_prob": 0.41138,
+     "edge": -0.06187,
+     "ev_per_unit": -0.17516,
+     "ev_per_unit_if_no_push": -0.17516,
      "kelly_full": 0.0,
-     "book_title": "FanDuel",
+     "book_title": "LowVig.ag",
      "point": -1.5
     },
     {
      "side": "away",
      "label": "SFG +1.5",
-     "model_prob": 0.65581,
-     "fair_odds": -191,
+     "model_prob": 0.65049,
+     "fair_odds": -186,
      "p_push": null,
-     "book": "fanduel",
-     "odds": -152,
-     "decimal": 1.6579,
-     "implied_prob": 0.60317,
-     "market_fair_prob": 0.57684,
-     "edge": 0.07897,
-     "ev_per_unit": 0.08727,
-     "ev_per_unit_if_no_push": 0.08727,
-     "kelly_full": 0.13265,
-     "book_title": "FanDuel",
+     "book": "betrivers",
+     "odds": -148,
+     "decimal": 1.6757,
+     "implied_prob": 0.59677,
+     "market_fair_prob": 0.58862,
+     "edge": 0.06187,
+     "ev_per_unit": 0.09003,
+     "ev_per_unit_if_no_push": 0.09003,
+     "kelly_full": 0.13323,
+     "book_title": "BetRivers",
      "point": 1.5
     }
    ],
@@ -1371,84 +1417,84 @@
      {
       "side": "over",
       "label": "Over 8.0",
-      "model_prob": 0.57104,
+      "model_prob": 0.57048,
       "fair_odds": -133,
-      "p_push": 0.13645,
+      "p_push": 0.13648,
       "book": "lowvig",
       "odds": -102,
       "decimal": 1.9804,
       "implied_prob": 0.50495,
       "market_fair_prob": 0.48765,
-      "edge": 0.08339,
-      "ev_per_unit": 0.11303,
-      "ev_per_unit_if_no_push": 0.1309,
-      "kelly_full": 0.13351,
+      "edge": 0.08283,
+      "ev_per_unit": 0.11206,
+      "ev_per_unit_if_no_push": 0.12978,
+      "kelly_full": 0.13237,
       "book_title": "LowVig.ag",
       "point": 8.0
      },
      {
       "side": "under",
       "label": "Under 8.0",
-      "model_prob": 0.42896,
+      "model_prob": 0.42952,
       "fair_odds": 133,
-      "p_push": 0.13645,
-      "book": "lowvig",
-      "odds": -113,
-      "decimal": 1.885,
-      "implied_prob": 0.5305,
+      "p_push": 0.13648,
+      "book": "bovada",
+      "odds": -110,
+      "decimal": 1.9091,
+      "implied_prob": 0.52381,
       "market_fair_prob": 0.51235,
-      "edge": -0.08339,
-      "ev_per_unit": -0.1653,
-      "ev_per_unit_if_no_push": -0.19142,
+      "edge": -0.08283,
+      "ev_per_unit": -0.15543,
+      "ev_per_unit_if_no_push": -0.18,
       "kelly_full": 0.0,
-      "book_title": "LowVig.ag",
+      "book_title": "Bovada",
       "point": 8.0
      }
     ],
-    "p_push": 0.13645
+    "p_push": 0.13648
    },
    "market": {
-    "moneyline_hold_pct": 2.396,
+    "moneyline_hold_pct": 2.431,
     "total_hold_pct": 3.547,
     "moneyline_fair_book": "betonlineag",
     "moneyline_hold_range": [
-     2.396,
-     3.968
+     2.431,
+     4.715
     ],
-    "moneyline_n_books_on_line": 3,
+    "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
      3.547,
-     4.727
+     8.872
     ],
-    "total_n_books_on_line": 3,
-    "runline_fair_book": "fanduel",
-    "runline_hold_pct": 4.565,
+    "total_n_books_on_line": 9,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.003,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 3
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 1
+      "on_line": 9
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 3
+      "on_line": 9
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.017,
-     "runline": 0.0,
-     "total": 0.017
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 3.0
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -1461,8 +1507,8 @@
    "start": "2026-09-05T20:10:00Z",
    "status": "Preview",
    "double_header": false,
-   "odds_event_id": null,
-   "odds_commence_time": null,
+   "odds_event_id": "c3af289a1433ac426961691deab41154",
+   "odds_commence_time": "2026-09-05T20:11:00Z",
    "venue": "loanDepot park",
    "home": {
     "org": "MIA",
@@ -1477,15 +1523,18 @@
    "away": {
     "org": "CHC",
     "team": "Chicago Cubs",
-    "probable": null,
+    "probable": {
+     "mlbam": 665871,
+     "name": "Javier Assad"
+    },
     "offense_plus": 109.0,
     "bullpen_plus": 95.0
    },
    "model": {
-    "p_home": 0.46984,
-    "p_away": 0.53016,
-    "lam_home": 4.891,
-    "lam_away": 5.119,
+    "p_home": 0.46931,
+    "p_away": 0.53069,
+    "lam_home": 4.887,
+    "lam_away": 5.123,
     "fair_total": 10.01,
     "park_index": 1.0,
     "home_prevention": {
@@ -1498,7 +1547,7 @@
     "away_prevention": {
      "starter_plus": 97.0,
      "bullpen_plus": 95.0,
-     "starter_share": 0.682,
+     "starter_share": 0.684,
      "blend_plus": 96.4,
      "source": "rotation-average"
     }
@@ -1507,44 +1556,167 @@
     {
      "side": "home",
      "label": "MIA",
-     "model_prob": 0.46984,
+     "model_prob": 0.46931,
      "fair_odds": 113,
      "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
+     "book": "betrivers",
+     "odds": 112,
+     "decimal": 2.12,
+     "implied_prob": 0.4717,
+     "market_fair_prob": 0.46517,
+     "edge": 0.00414,
+     "ev_per_unit": -0.00506,
+     "ev_per_unit_if_no_push": -0.00506,
+     "kelly_full": 0.0,
+     "book_title": "BetRivers",
+     "point": null
     },
     {
      "side": "away",
      "label": "CHC",
-     "model_prob": 0.53016,
+     "model_prob": 0.53069,
      "fair_odds": -113,
      "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
+     "book": "betonlineag",
+     "odds": -120,
+     "decimal": 1.8333,
+     "implied_prob": 0.54546,
+     "market_fair_prob": 0.53483,
+     "edge": -0.00414,
+     "ev_per_unit": -0.02709,
+     "ev_per_unit_if_no_push": -0.02709,
+     "kelly_full": 0.0,
+     "book_title": "BetOnline.ag",
+     "point": null
     }
    ],
-   "runline": null,
+   "runline": [
+    {
+     "side": "home",
+     "label": "MIA +1.5",
+     "model_prob": 0.65814,
+     "fair_odds": -193,
+     "p_push": null,
+     "book": "bovada",
+     "odds": -150,
+     "decimal": 1.6667,
+     "implied_prob": 0.59999,
+     "market_fair_prob": 0.58862,
+     "edge": 0.06952,
+     "ev_per_unit": 0.09692,
+     "ev_per_unit_if_no_push": 0.09692,
+     "kelly_full": 0.14538,
+     "book_title": "Bovada",
+     "point": 1.5
+    },
+    {
+     "side": "away",
+     "label": "CHC -1.5",
+     "model_prob": 0.34186,
+     "fair_odds": 193,
+     "p_push": null,
+     "book": "lowvig",
+     "odds": 136,
+     "decimal": 2.36,
+     "implied_prob": 0.42373,
+     "market_fair_prob": 0.41138,
+     "edge": -0.06952,
+     "ev_per_unit": -0.19321,
+     "ev_per_unit_if_no_push": -0.19321,
+     "kelly_full": 0.0,
+     "book_title": "LowVig.ag",
+     "point": -1.5
+    }
+   ],
    "total": {
-    "line": null,
-    "sides": null,
-    "p_push": null,
-    "fair_total": 10.01
+    "line": 8.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 8.5",
+      "model_prob": 0.66822,
+      "fair_odds": -201,
+      "p_push": null,
+      "book": "bovada",
+      "odds": 100,
+      "decimal": 2.0,
+      "implied_prob": 0.5,
+      "market_fair_prob": 0.47826,
+      "edge": 0.18996,
+      "ev_per_unit": 0.33643,
+      "ev_per_unit_if_no_push": 0.33643,
+      "kelly_full": 0.33643,
+      "book_title": "Bovada",
+      "point": 8.5
+     },
+     {
+      "side": "under",
+      "label": "Under 8.5",
+      "model_prob": 0.33178,
+      "fair_odds": 201,
+      "p_push": null,
+      "book": "fanduel",
+      "odds": -112,
+      "decimal": 1.8929,
+      "implied_prob": 0.52829,
+      "market_fair_prob": 0.52174,
+      "edge": -0.18996,
+      "ev_per_unit": -0.37197,
+      "ev_per_unit_if_no_push": -0.37197,
+      "kelly_full": 0.0,
+      "book_title": "FanDuel",
+      "point": 8.5
+     }
+    ],
+    "p_push": 0.0
    },
-   "market": null
+   "market": {
+    "moneyline_hold_pct": 2.37,
+    "total_hold_pct": 4.545,
+    "moneyline_fair_book": "betus",
+    "moneyline_hold_range": [
+     2.37,
+     5.302
+    ],
+    "moneyline_n_books_on_line": 9,
+    "total_fair_book": "bovada",
+    "total_hold_range": [
+     4.545,
+     5.109
+    ],
+    "total_n_books_on_line": 5,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.003,
+    "fair_book_rule": "min_hold",
+    "n_books_rejected": {
+     "moneyline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "runline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "total": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 5
+     }
+    },
+    "max_book_lag_minutes": {
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 2.5
+    },
+    "stale_book_max_lag_minutes": 15.0,
+    "consensus_fair_max_distance": 0.05,
+    "devig_method": "proportional"
+   }
   },
   {
    "game_pk": 823419,
@@ -1576,11 +1748,11 @@
     "bullpen_plus": 113.0
    },
    "model": {
-    "p_home": 0.54755,
-    "p_away": 0.45245,
-    "lam_home": 4.616,
-    "lam_away": 4.241,
-    "fair_total": 8.86,
+    "p_home": 0.54711,
+    "p_away": 0.45289,
+    "lam_home": 4.611,
+    "lam_away": 4.243,
+    "fair_total": 8.85,
     "park_index": 1.04,
     "home_prevention": {
      "starter_plus": 113.0,
@@ -1601,7 +1773,7 @@
     {
      "side": "home",
      "label": "PHI",
-     "model_prob": 0.54755,
+     "model_prob": 0.54711,
      "fair_odds": -121,
      "p_push": null,
      "book": "lowvig",
@@ -1609,9 +1781,9 @@
      "decimal": 1.6452,
      "implied_prob": 0.60783,
      "market_fair_prob": 0.5933,
-     "edge": -0.04575,
-     "ev_per_unit": -0.09917,
-     "ev_per_unit_if_no_push": -0.09917,
+     "edge": -0.04619,
+     "ev_per_unit": -0.09989,
+     "ev_per_unit_if_no_push": -0.09989,
      "kelly_full": 0.0,
      "book_title": "LowVig.ag",
      "point": null
@@ -1619,7 +1791,7 @@
     {
      "side": "away",
      "label": "ATL",
-     "model_prob": 0.45245,
+     "model_prob": 0.45289,
      "fair_odds": 121,
      "p_push": null,
      "book": "lowvig",
@@ -1627,10 +1799,10 @@
      "decimal": 2.4,
      "implied_prob": 0.41667,
      "market_fair_prob": 0.4067,
-     "edge": 0.04575,
-     "ev_per_unit": 0.08588,
-     "ev_per_unit_if_no_push": 0.08588,
-     "kelly_full": 0.06134,
+     "edge": 0.04619,
+     "ev_per_unit": 0.08694,
+     "ev_per_unit_if_no_push": 0.08694,
+     "kelly_full": 0.0621,
      "book_title": "LowVig.ag",
      "point": null
     }
@@ -1639,17 +1811,17 @@
     {
      "side": "home",
      "label": "PHI -1.5",
-     "model_prob": 0.34922,
-     "fair_odds": 186,
+     "model_prob": 0.34831,
+     "fair_odds": 187,
      "p_push": null,
      "book": "fanduel",
-     "odds": 140,
-     "decimal": 2.4,
-     "implied_prob": 0.41667,
-     "market_fair_prob": 0.40091,
-     "edge": -0.05169,
-     "ev_per_unit": -0.16187,
-     "ev_per_unit_if_no_push": -0.16187,
+     "odds": 138,
+     "decimal": 2.38,
+     "implied_prob": 0.42017,
+     "market_fair_prob": 0.41469,
+     "edge": -0.06638,
+     "ev_per_unit": -0.17102,
+     "ev_per_unit_if_no_push": -0.17102,
      "kelly_full": 0.0,
      "book_title": "FanDuel",
      "point": -1.5
@@ -1657,19 +1829,19 @@
     {
      "side": "away",
      "label": "ATL +1.5",
-     "model_prob": 0.65078,
-     "fair_odds": -186,
+     "model_prob": 0.65169,
+     "fair_odds": -187,
      "p_push": null,
-     "book": "bovada",
-     "odds": -165,
-     "decimal": 1.6061,
-     "implied_prob": 0.62263,
-     "market_fair_prob": 0.59909,
-     "edge": 0.05169,
-     "ev_per_unit": 0.04522,
-     "ev_per_unit_if_no_push": 0.04522,
-     "kelly_full": 0.0746,
-     "book_title": "Bovada",
+     "book": "lowvig",
+     "odds": -152,
+     "decimal": 1.6579,
+     "implied_prob": 0.60317,
+     "market_fair_prob": 0.58531,
+     "edge": 0.06638,
+     "ev_per_unit": 0.08044,
+     "ev_per_unit_if_no_push": 0.08044,
+     "kelly_full": 0.12226,
+     "book_title": "LowVig.ag",
      "point": 1.5
     }
    ],
@@ -1679,84 +1851,84 @@
      {
       "side": "over",
       "label": "Over 8.0",
-      "model_prob": 0.60642,
+      "model_prob": 0.60592,
       "fair_odds": -154,
-      "p_push": 0.13373,
+      "p_push": 0.13378,
       "book": "lowvig",
-      "odds": -113,
-      "decimal": 1.885,
-      "implied_prob": 0.5305,
-      "market_fair_prob": 0.51235,
-      "edge": 0.09407,
-      "ev_per_unit": 0.12397,
-      "ev_per_unit_if_no_push": 0.14311,
-      "kelly_full": 0.16171,
+      "odds": -118,
+      "decimal": 1.8475,
+      "implied_prob": 0.54127,
+      "market_fair_prob": 0.52354,
+      "edge": 0.08238,
+      "ev_per_unit": 0.10345,
+      "ev_per_unit_if_no_push": 0.11943,
+      "kelly_full": 0.14092,
       "book_title": "LowVig.ag",
       "point": 8.0
      },
      {
       "side": "under",
       "label": "Under 8.0",
-      "model_prob": 0.39358,
+      "model_prob": 0.39408,
       "fair_odds": 154,
-      "p_push": 0.13373,
+      "p_push": 0.13378,
       "book": "lowvig",
-      "odds": -102,
-      "decimal": 1.9804,
-      "implied_prob": 0.50495,
-      "market_fair_prob": 0.48765,
-      "edge": -0.09407,
-      "ev_per_unit": -0.19107,
-      "ev_per_unit_if_no_push": -0.22056,
+      "odds": 103,
+      "decimal": 2.03,
+      "implied_prob": 0.49261,
+      "market_fair_prob": 0.47646,
+      "edge": -0.08238,
+      "ev_per_unit": -0.17325,
+      "ev_per_unit_if_no_push": -0.20001,
       "kelly_full": 0.0,
       "book_title": "LowVig.ag",
       "point": 8.0
      }
     ],
-    "p_push": 0.13373
+    "p_push": 0.13378
    },
    "market": {
     "moneyline_hold_pct": 2.451,
-    "total_hold_pct": 3.547,
+    "total_hold_pct": 3.39,
     "moneyline_fair_book": "betonlineag",
     "moneyline_hold_range": [
      2.451,
-     4.274
+     4.53
     ],
-    "moneyline_n_books_on_line": 4,
+    "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
-     3.547,
-     5.109
+     3.39,
+     8.872
     ],
-    "total_n_books_on_line": 4,
-    "runline_fair_book": "bovada",
-    "runline_hold_pct": 3.931,
+    "total_n_books_on_line": 5,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.053,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 2
+      "on_line": 8
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 5
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.383,
-     "runline": 0.367,
-     "total": 0.383
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 1.033
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -1769,8 +1941,8 @@
    "start": "2026-09-05T22:10:00Z",
    "status": "Preview",
    "double_header": false,
-   "odds_event_id": null,
-   "odds_commence_time": null,
+   "odds_event_id": "9bff8c9d21336a9f547bec785afbb238",
+   "odds_commence_time": "2026-09-05T22:11:00Z",
    "venue": "Progressive Field",
    "home": {
     "org": "CLE",
@@ -1780,7 +1952,7 @@
      "name": "Parker Messick"
     },
     "offense_plus": 95.0,
-    "bullpen_plus": 105.0
+    "bullpen_plus": 106.0
    },
    "away": {
     "org": "DET",
@@ -1793,17 +1965,17 @@
     "bullpen_plus": 96.0
    },
    "model": {
-    "p_home": 0.62415,
-    "p_away": 0.37585,
-    "lam_home": 4.455,
-    "lam_away": 3.533,
-    "fair_total": 7.99,
+    "p_home": 0.62537,
+    "p_away": 0.37463,
+    "lam_home": 4.448,
+    "lam_away": 3.522,
+    "fair_total": 7.97,
     "park_index": 0.98,
     "home_prevention": {
      "starter_plus": 124.0,
-     "bullpen_plus": 105.0,
+     "bullpen_plus": 106.0,
      "starter_share": 0.662,
-     "blend_plus": 117.6,
+     "blend_plus": 117.9,
      "source": "probable"
     },
     "away_prevention": {
@@ -1818,44 +1990,167 @@
     {
      "side": "home",
      "label": "CLE",
-     "model_prob": 0.62415,
-     "fair_odds": -166,
+     "model_prob": 0.62537,
+     "fair_odds": -167,
      "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
+     "book": "betonlineag",
+     "odds": -152,
+     "decimal": 1.6579,
+     "implied_prob": 0.60317,
+     "market_fair_prob": 0.58942,
+     "edge": 0.03595,
+     "ev_per_unit": 0.0368,
+     "ev_per_unit_if_no_push": 0.0368,
+     "kelly_full": 0.05594,
+     "book_title": "BetOnline.ag",
+     "point": null
     },
     {
      "side": "away",
      "label": "DET",
-     "model_prob": 0.37585,
-     "fair_odds": 166,
+     "model_prob": 0.37463,
+     "fair_odds": 167,
      "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
+     "book": "betonlineag",
+     "odds": 138,
+     "decimal": 2.38,
+     "implied_prob": 0.42017,
+     "market_fair_prob": 0.41058,
+     "edge": -0.03595,
+     "ev_per_unit": -0.10838,
+     "ev_per_unit_if_no_push": -0.10838,
+     "kelly_full": 0.0,
+     "book_title": "BetOnline.ag",
+     "point": null
     }
    ],
-   "runline": null,
+   "runline": [
+    {
+     "side": "home",
+     "label": "CLE -1.5",
+     "model_prob": 0.41499,
+     "fair_odds": 141,
+     "p_push": null,
+     "book": "fanduel",
+     "odds": 150,
+     "decimal": 2.5,
+     "implied_prob": 0.4,
+     "market_fair_prob": 0.40974,
+     "edge": 0.00525,
+     "ev_per_unit": 0.03748,
+     "ev_per_unit_if_no_push": 0.03748,
+     "kelly_full": 0.02498,
+     "book_title": "FanDuel",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "DET +1.5",
+     "model_prob": 0.58501,
+     "fair_odds": -141,
+     "p_push": null,
+     "book": "lowvig",
+     "odds": -155,
+     "decimal": 1.6452,
+     "implied_prob": 0.60783,
+     "market_fair_prob": 0.59026,
+     "edge": -0.00525,
+     "ev_per_unit": -0.03754,
+     "ev_per_unit_if_no_push": -0.03754,
+     "kelly_full": 0.0,
+     "book_title": "LowVig.ag",
+     "point": 1.5
+    }
+   ],
    "total": {
-    "line": null,
-    "sides": null,
-    "p_push": null,
-    "fair_total": 7.99
+    "line": 7.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 7.0",
+      "model_prob": 0.63135,
+      "fair_odds": -171,
+      "p_push": 0.1401,
+      "book": "bovada",
+      "odds": 105,
+      "decimal": 2.05,
+      "implied_prob": 0.4878,
+      "market_fair_prob": 0.47646,
+      "edge": 0.15489,
+      "ev_per_unit": 0.25305,
+      "ev_per_unit_if_no_push": 0.29427,
+      "kelly_full": 0.28026,
+      "book_title": "Bovada",
+      "point": 7.0
+     },
+     {
+      "side": "under",
+      "label": "Under 7.0",
+      "model_prob": 0.36865,
+      "fair_odds": 171,
+      "p_push": 0.1401,
+      "book": "lowvig",
+      "odds": -118,
+      "decimal": 1.8475,
+      "implied_prob": 0.54127,
+      "market_fair_prob": 0.52354,
+      "edge": -0.15489,
+      "ev_per_unit": -0.27424,
+      "ev_per_unit_if_no_push": -0.31892,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 7.0
+     }
+    ],
+    "p_push": 0.1401
    },
-   "market": null
+   "market": {
+    "moneyline_hold_pct": 2.334,
+    "total_hold_pct": 3.39,
+    "moneyline_fair_book": "betonlineag",
+    "moneyline_hold_range": [
+     2.334,
+     4.567
+    ],
+    "moneyline_n_books_on_line": 9,
+    "total_fair_book": "lowvig",
+    "total_hold_range": [
+     3.39,
+     8.903
+    ],
+    "total_n_books_on_line": 9,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 2.978,
+    "fair_book_rule": "min_hold",
+    "n_books_rejected": {
+     "moneyline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "runline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "total": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     }
+    },
+    "max_book_lag_minutes": {
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 3.0
+    },
+    "stale_book_max_lag_minutes": 15.0,
+    "consensus_fair_max_distance": 0.05,
+    "devig_method": "proportional"
+   }
   },
   {
    "game_pk": 823335,
@@ -1884,14 +2179,14 @@
      "name": "Yusei Kikuchi"
     },
     "offense_plus": 94.0,
-    "bullpen_plus": 98.0
+    "bullpen_plus": 99.0
    },
    "model": {
-    "p_home": 0.67721,
-    "p_away": 0.32279,
-    "lam_home": 5.064,
-    "lam_away": 3.674,
-    "fair_total": 8.74,
+    "p_home": 0.67491,
+    "p_away": 0.32509,
+    "lam_home": 5.038,
+    "lam_away": 3.672,
+    "fair_total": 8.71,
     "park_index": 1.02,
     "home_prevention": {
      "starter_plus": 114.0,
@@ -1902,9 +2197,9 @@
     },
     "away_prevention": {
      "starter_plus": 96.0,
-     "bullpen_plus": 98.0,
+     "bullpen_plus": 99.0,
      "starter_share": 0.531,
-     "blend_plus": 96.9,
+     "blend_plus": 97.4,
      "source": "probable"
     }
    },
@@ -1912,35 +2207,35 @@
     {
      "side": "home",
      "label": "PIT",
-     "model_prob": 0.67721,
-     "fair_odds": -210,
+     "model_prob": 0.67491,
+     "fair_odds": -208,
      "p_push": null,
-     "book": "lowvig",
-     "odds": -173,
-     "decimal": 1.578,
-     "implied_prob": 0.63371,
-     "market_fair_prob": 0.61865,
-     "edge": 0.05856,
-     "ev_per_unit": 0.06864,
-     "ev_per_unit_if_no_push": 0.06864,
-     "kelly_full": 0.11875,
-     "book_title": "LowVig.ag",
+     "book": "betus",
+     "odds": -175,
+     "decimal": 1.5714,
+     "implied_prob": 0.63638,
+     "market_fair_prob": 0.62425,
+     "edge": 0.05066,
+     "ev_per_unit": 0.06055,
+     "ev_per_unit_if_no_push": 0.06055,
+     "kelly_full": 0.10597,
+     "book_title": "BetUS",
      "point": null
     },
     {
      "side": "away",
      "label": "LAA",
-     "model_prob": 0.32279,
-     "fair_odds": 210,
+     "model_prob": 0.32509,
+     "fair_odds": 208,
      "p_push": null,
      "book": "betonlineag",
-     "odds": 156,
-     "decimal": 2.56,
-     "implied_prob": 0.39062,
-     "market_fair_prob": 0.38135,
-     "edge": -0.05856,
-     "ev_per_unit": -0.17366,
-     "ev_per_unit_if_no_push": -0.17366,
+     "odds": 160,
+     "decimal": 2.6,
+     "implied_prob": 0.38462,
+     "market_fair_prob": 0.37575,
+     "edge": -0.05066,
+     "ev_per_unit": -0.15477,
+     "ev_per_unit_if_no_push": -0.15477,
      "kelly_full": 0.0,
      "book_title": "BetOnline.ag",
      "point": null
@@ -1950,37 +2245,37 @@
     {
      "side": "home",
      "label": "PIT -1.5",
-     "model_prob": 0.48102,
-     "fair_odds": 108,
+     "model_prob": 0.47763,
+     "fair_odds": 109,
      "p_push": null,
-     "book": "bovada",
-     "odds": 130,
-     "decimal": 2.3,
-     "implied_prob": 0.43478,
-     "market_fair_prob": 0.42017,
-     "edge": 0.06085,
-     "ev_per_unit": 0.10635,
-     "ev_per_unit_if_no_push": 0.10635,
-     "kelly_full": 0.0818,
-     "book_title": "Bovada",
+     "book": "lowvig",
+     "odds": 125,
+     "decimal": 2.25,
+     "implied_prob": 0.44444,
+     "market_fair_prob": 0.43171,
+     "edge": 0.04592,
+     "ev_per_unit": 0.07467,
+     "ev_per_unit_if_no_push": 0.07467,
+     "kelly_full": 0.05973,
+     "book_title": "LowVig.ag",
      "point": -1.5
     },
     {
      "side": "away",
      "label": "LAA +1.5",
-     "model_prob": 0.51898,
-     "fair_odds": -108,
+     "model_prob": 0.52237,
+     "fair_odds": -109,
      "p_push": null,
-     "book": "bovada",
-     "odds": -150,
-     "decimal": 1.6667,
-     "implied_prob": 0.59999,
-     "market_fair_prob": 0.57983,
-     "edge": -0.06085,
-     "ev_per_unit": -0.13502,
-     "ev_per_unit_if_no_push": -0.13502,
+     "book": "betrivers",
+     "odds": -137,
+     "decimal": 1.7299,
+     "implied_prob": 0.57807,
+     "market_fair_prob": 0.56829,
+     "edge": -0.04592,
+     "ev_per_unit": -0.09635,
+     "ev_per_unit_if_no_push": -0.09635,
      "kelly_full": 0.0,
-     "book_title": "Bovada",
+     "book_title": "BetRivers",
      "point": 1.5
     }
    ],
@@ -1990,35 +2285,35 @@
      {
       "side": "over",
       "label": "Over 7.5",
-      "model_prob": 0.6445,
-      "fair_odds": -181,
+      "model_prob": 0.64104,
+      "fair_odds": -179,
       "p_push": null,
-      "book": "lowvig",
-      "odds": -118,
-      "decimal": 1.8475,
-      "implied_prob": 0.54127,
+      "book": "betrivers",
+      "odds": -112,
+      "decimal": 1.8929,
+      "implied_prob": 0.52829,
       "market_fair_prob": 0.52354,
-      "edge": 0.12096,
-      "ev_per_unit": 0.19071,
-      "ev_per_unit_if_no_push": 0.19071,
-      "kelly_full": 0.22502,
-      "book_title": "LowVig.ag",
+      "edge": 0.1175,
+      "ev_per_unit": 0.21343,
+      "ev_per_unit_if_no_push": 0.21343,
+      "kelly_full": 0.23902,
+      "book_title": "BetRivers",
       "point": 7.5
      },
      {
       "side": "under",
       "label": "Under 7.5",
-      "model_prob": 0.3555,
-      "fair_odds": 181,
+      "model_prob": 0.35896,
+      "fair_odds": 179,
       "p_push": null,
       "book": "lowvig",
       "odds": 103,
       "decimal": 2.03,
       "implied_prob": 0.49261,
       "market_fair_prob": 0.47646,
-      "edge": -0.12096,
-      "ev_per_unit": -0.27833,
-      "ev_per_unit_if_no_push": -0.27833,
+      "edge": -0.1175,
+      "ev_per_unit": -0.27131,
+      "ev_per_unit_if_no_push": -0.27131,
       "kelly_full": 0.0,
       "book_title": "LowVig.ag",
       "point": 7.5
@@ -2027,47 +2322,47 @@
     "p_push": 0.0
    },
    "market": {
-    "moneyline_hold_pct": 2.432,
+    "moneyline_hold_pct": 2.36,
     "total_hold_pct": 3.39,
     "moneyline_fair_book": "betonlineag",
     "moneyline_hold_range": [
-     2.432,
-     4.715
+     2.36,
+     4.887
     ],
-    "moneyline_n_books_on_line": 4,
+    "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
      3.39,
-     4.955
+     5.109
     ],
-    "total_n_books_on_line": 4,
-    "runline_fair_book": "bovada",
-    "runline_hold_pct": 3.478,
+    "total_n_books_on_line": 9,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 2.951,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 2
+      "on_line": 9
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.383,
-     "runline": 0.367,
-     "total": 0.383
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 3.0
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -2091,7 +2386,7 @@
      "name": "Andrew Abbott"
     },
     "offense_plus": 100.0,
-    "bullpen_plus": 93.0
+    "bullpen_plus": 94.0
    },
    "away": {
     "org": "MIL",
@@ -2101,27 +2396,27 @@
      "name": "Dustin May"
     },
     "offense_plus": 104.0,
-    "bullpen_plus": 108.0
+    "bullpen_plus": 110.0
    },
    "model": {
-    "p_home": 0.39797,
-    "p_away": 0.60203,
-    "lam_home": 4.471,
-    "lam_away": 5.274,
-    "fair_total": 9.75,
+    "p_home": 0.39516,
+    "p_away": 0.60484,
+    "lam_home": 4.423,
+    "lam_away": 5.25,
+    "fair_total": 9.67,
     "park_index": 1.02,
     "home_prevention": {
      "starter_plus": 87.0,
-     "bullpen_plus": 93.0,
+     "bullpen_plus": 94.0,
      "starter_share": 0.589,
-     "blend_plus": 89.5,
+     "blend_plus": 89.9,
      "source": "probable"
     },
     "away_prevention": {
      "starter_plus": 109.0,
-     "bullpen_plus": 108.0,
+     "bullpen_plus": 110.0,
      "starter_share": 0.55,
-     "blend_plus": 108.5,
+     "blend_plus": 109.4,
      "source": "probable"
     }
    },
@@ -2129,36 +2424,36 @@
     {
      "side": "home",
      "label": "CIN",
-     "model_prob": 0.39797,
-     "fair_odds": 151,
+     "model_prob": 0.39516,
+     "fair_odds": 153,
      "p_push": null,
-     "book": "betonlineag",
-     "odds": 140,
-     "decimal": 2.4,
-     "implied_prob": 0.41667,
-     "market_fair_prob": 0.4067,
-     "edge": -0.00873,
-     "ev_per_unit": -0.04487,
-     "ev_per_unit_if_no_push": -0.04487,
+     "book": "lowvig",
+     "odds": 136,
+     "decimal": 2.36,
+     "implied_prob": 0.42373,
+     "market_fair_prob": 0.41391,
+     "edge": -0.01875,
+     "ev_per_unit": -0.06742,
+     "ev_per_unit_if_no_push": -0.06742,
      "kelly_full": 0.0,
-     "book_title": "BetOnline.ag",
+     "book_title": "LowVig.ag",
      "point": null
     },
     {
      "side": "away",
      "label": "MIL",
-     "model_prob": 0.60203,
-     "fair_odds": -151,
+     "model_prob": 0.60484,
+     "fair_odds": -153,
      "p_push": null,
      "book": "betonlineag",
-     "odds": -155,
-     "decimal": 1.6452,
-     "implied_prob": 0.60783,
-     "market_fair_prob": 0.5933,
-     "edge": 0.00873,
-     "ev_per_unit": -0.00954,
-     "ev_per_unit_if_no_push": -0.00954,
-     "kelly_full": 0.0,
+     "odds": -150,
+     "decimal": 1.6667,
+     "implied_prob": 0.59999,
+     "market_fair_prob": 0.58609,
+     "edge": 0.01875,
+     "ev_per_unit": 0.00809,
+     "ev_per_unit_if_no_push": 0.00809,
+     "kelly_full": 0.01213,
      "book_title": "BetOnline.ag",
      "point": null
     }
@@ -2167,124 +2462,124 @@
     {
      "side": "home",
      "label": "CIN +1.5",
-     "model_prob": 0.59163,
-     "fair_odds": -145,
+     "model_prob": 0.58905,
+     "fair_odds": -143,
      "p_push": null,
-     "book": "fanduel",
-     "odds": -125,
-     "decimal": 1.8,
-     "implied_prob": 0.55556,
-     "market_fair_prob": 0.53247,
-     "edge": 0.05916,
-     "ev_per_unit": 0.06493,
-     "ev_per_unit_if_no_push": 0.06493,
-     "kelly_full": 0.08117,
-     "book_title": "FanDuel",
+     "book": "lowvig",
+     "odds": -119,
+     "decimal": 1.8403,
+     "implied_prob": 0.54339,
+     "market_fair_prob": 0.52695,
+     "edge": 0.0621,
+     "ev_per_unit": 0.08403,
+     "ev_per_unit_if_no_push": 0.08403,
+     "kelly_full": 0.1,
+     "book_title": "LowVig.ag",
      "point": 1.5
     },
     {
      "side": "away",
      "label": "MIL -1.5",
-     "model_prob": 0.40837,
-     "fair_odds": 145,
+     "model_prob": 0.41095,
+     "fair_odds": 143,
      "p_push": null,
-     "book": "bovada",
-     "odds": 105,
-     "decimal": 2.05,
-     "implied_prob": 0.4878,
-     "market_fair_prob": 0.46753,
-     "edge": -0.05916,
-     "ev_per_unit": -0.16284,
-     "ev_per_unit_if_no_push": -0.16284,
+     "book": "betrivers",
+     "odds": 106,
+     "decimal": 2.06,
+     "implied_prob": 0.48544,
+     "market_fair_prob": 0.47305,
+     "edge": -0.0621,
+     "ev_per_unit": -0.15344,
+     "ev_per_unit_if_no_push": -0.15344,
      "kelly_full": 0.0,
-     "book_title": "Bovada",
+     "book_title": "BetRivers",
      "point": -1.5
     }
    ],
    "total": {
-    "line": 9.5,
+    "line": 9.0,
     "sides": [
      {
       "side": "over",
-      "label": "Over 9.5",
-      "model_prob": 0.50984,
-      "fair_odds": -104,
-      "p_push": null,
+      "label": "Over 9.0",
+      "model_prob": 0.57442,
+      "fair_odds": -135,
+      "p_push": 0.12864,
       "book": "lowvig",
-      "odds": 107,
-      "decimal": 2.07,
-      "implied_prob": 0.48309,
-      "market_fair_prob": 0.46691,
-      "edge": 0.04293,
-      "ev_per_unit": 0.05538,
-      "ev_per_unit_if_no_push": 0.05538,
-      "kelly_full": 0.05175,
+      "odds": -113,
+      "decimal": 1.885,
+      "implied_prob": 0.5305,
+      "market_fair_prob": 0.51235,
+      "edge": 0.06207,
+      "ev_per_unit": 0.07213,
+      "ev_per_unit_if_no_push": 0.08278,
+      "kelly_full": 0.09354,
       "book_title": "LowVig.ag",
-      "point": 9.5
+      "point": 9.0
      },
      {
       "side": "under",
-      "label": "Under 9.5",
-      "model_prob": 0.49016,
-      "fair_odds": 104,
-      "p_push": null,
+      "label": "Under 9.0",
+      "model_prob": 0.42558,
+      "fair_odds": 135,
+      "p_push": 0.12864,
       "book": "lowvig",
-      "odds": -123,
-      "decimal": 1.813,
-      "implied_prob": 0.55157,
-      "market_fair_prob": 0.53309,
-      "edge": -0.04293,
-      "ev_per_unit": -0.11135,
-      "ev_per_unit_if_no_push": -0.11135,
+      "odds": -102,
+      "decimal": 1.9804,
+      "implied_prob": 0.50495,
+      "market_fair_prob": 0.48765,
+      "edge": -0.06207,
+      "ev_per_unit": -0.13696,
+      "ev_per_unit_if_no_push": -0.15718,
       "kelly_full": 0.0,
       "book_title": "LowVig.ag",
-      "point": 9.5
+      "point": 9.0
      }
     ],
-    "p_push": 0.0
+    "p_push": 0.12864
    },
    "market": {
-    "moneyline_hold_pct": 2.451,
-    "total_hold_pct": 3.466,
+    "moneyline_hold_pct": 2.373,
+    "total_hold_pct": 3.547,
     "moneyline_fair_book": "betonlineag",
     "moneyline_hold_range": [
-     2.451,
-     4.205
+     2.373,
+     4.568
     ],
-    "moneyline_n_books_on_line": 4,
+    "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
-     3.466,
-     4.862
+     3.547,
+     8.628
     ],
-    "total_n_books_on_line": 4,
-    "runline_fair_book": "bovada",
-    "runline_hold_pct": 4.336,
+    "total_n_books_on_line": 9,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.118,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 2
+      "on_line": 9
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.383,
-     "runline": 0.367,
-     "total": 0.383
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 3.0
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -2318,14 +2613,14 @@
      "name": "Sonny Gray"
     },
     "offense_plus": 100.0,
-    "bullpen_plus": 109.0
+    "bullpen_plus": 108.0
    },
    "model": {
-    "p_home": 0.42105,
-    "p_away": 0.57895,
-    "lam_home": 4.31,
+    "p_home": 0.42302,
+    "p_away": 0.57698,
+    "lam_home": 4.322,
     "lam_away": 4.909,
-    "fair_total": 9.22,
+    "fair_total": 9.23,
     "park_index": 1.04,
     "home_prevention": {
      "starter_plus": 88.0,
@@ -2336,9 +2631,9 @@
     },
     "away_prevention": {
      "starter_plus": 110.0,
-     "bullpen_plus": 109.0,
+     "bullpen_plus": 108.0,
      "starter_share": 0.639,
-     "blend_plus": 109.6,
+     "blend_plus": 109.3,
      "source": "probable"
     }
    },
@@ -2346,37 +2641,37 @@
     {
      "side": "home",
      "label": "BAL",
-     "model_prob": 0.42105,
-     "fair_odds": 138,
+     "model_prob": 0.42302,
+     "fair_odds": 136,
      "p_push": null,
-     "book": "betonlineag",
-     "odds": 125,
-     "decimal": 2.25,
-     "implied_prob": 0.44444,
-     "market_fair_prob": 0.43391,
-     "edge": -0.01286,
-     "ev_per_unit": -0.05264,
-     "ev_per_unit_if_no_push": -0.05264,
+     "book": "fanduel",
+     "odds": 112,
+     "decimal": 2.12,
+     "implied_prob": 0.4717,
+     "market_fair_prob": 0.46517,
+     "edge": -0.04215,
+     "ev_per_unit": -0.1032,
+     "ev_per_unit_if_no_push": -0.1032,
      "kelly_full": 0.0,
-     "book_title": "BetOnline.ag",
+     "book_title": "FanDuel",
      "point": null
     },
     {
      "side": "away",
      "label": "BOS",
-     "model_prob": 0.57895,
-     "fair_odds": -138,
+     "model_prob": 0.57698,
+     "fair_odds": -136,
      "p_push": null,
-     "book": "lowvig",
-     "odds": -138,
-     "decimal": 1.7246,
-     "implied_prob": 0.57984,
-     "market_fair_prob": 0.56609,
-     "edge": 0.01286,
-     "ev_per_unit": -0.00154,
-     "ev_per_unit_if_no_push": -0.00154,
-     "kelly_full": 0.0,
-     "book_title": "LowVig.ag",
+     "book": "betus",
+     "odds": -121,
+     "decimal": 1.8264,
+     "implied_prob": 0.54753,
+     "market_fair_prob": 0.53483,
+     "edge": 0.04215,
+     "ev_per_unit": 0.0538,
+     "ev_per_unit_if_no_push": 0.0538,
+     "kelly_full": 0.0651,
+     "book_title": "BetUS",
      "point": null
     }
    ],
@@ -2384,37 +2679,37 @@
     {
      "side": "home",
      "label": "BAL +1.5",
-     "model_prob": 0.62017,
-     "fair_odds": -163,
+     "model_prob": 0.6215,
+     "fair_odds": -164,
      "p_push": null,
-     "book": "bovada",
-     "odds": -135,
-     "decimal": 1.7407,
-     "implied_prob": 0.57448,
-     "market_fair_prob": 0.55259,
-     "edge": 0.06758,
-     "ev_per_unit": 0.07953,
-     "ev_per_unit_if_no_push": 0.07953,
-     "kelly_full": 0.10737,
-     "book_title": "Bovada",
+     "book": "fanduel",
+     "odds": -150,
+     "decimal": 1.6667,
+     "implied_prob": 0.59999,
+     "market_fair_prob": 0.59727,
+     "edge": 0.02423,
+     "ev_per_unit": 0.03585,
+     "ev_per_unit_if_no_push": 0.03585,
+     "kelly_full": 0.05378,
+     "book_title": "FanDuel",
      "point": 1.5
     },
     {
      "side": "away",
      "label": "BOS -1.5",
-     "model_prob": 0.37983,
-     "fair_odds": 163,
+     "model_prob": 0.3785,
+     "fair_odds": 164,
      "p_push": null,
-     "book": "bovada",
-     "odds": 115,
-     "decimal": 2.15,
-     "implied_prob": 0.46512,
-     "market_fair_prob": 0.44741,
-     "edge": -0.06758,
-     "ev_per_unit": -0.18337,
-     "ev_per_unit_if_no_push": -0.18337,
+     "book": "lowvig",
+     "odds": 141,
+     "decimal": 2.41,
+     "implied_prob": 0.41494,
+     "market_fair_prob": 0.40273,
+     "edge": -0.02423,
+     "ev_per_unit": -0.08781,
+     "ev_per_unit_if_no_push": -0.08781,
      "kelly_full": 0.0,
-     "book_title": "Bovada",
+     "book_title": "LowVig.ag",
      "point": -1.5
     }
    ],
@@ -2424,84 +2719,84 @@
      {
       "side": "over",
       "label": "Over 8.0",
-      "model_prob": 0.65712,
-      "fair_odds": -192,
-      "p_push": 0.12829,
-      "book": "lowvig",
-      "odds": -113,
-      "decimal": 1.885,
-      "implied_prob": 0.5305,
+      "model_prob": 0.65883,
+      "fair_odds": -193,
+      "p_push": 0.12807,
+      "book": "bovada",
+      "odds": -110,
+      "decimal": 1.9091,
+      "implied_prob": 0.52381,
       "market_fair_prob": 0.51235,
-      "edge": 0.14477,
-      "ev_per_unit": 0.20805,
-      "ev_per_unit_if_no_push": 0.23866,
-      "kelly_full": 0.26968,
-      "book_title": "LowVig.ag",
+      "edge": 0.14648,
+      "ev_per_unit": 0.22477,
+      "ev_per_unit_if_no_push": 0.25778,
+      "kelly_full": 0.28356,
+      "book_title": "Bovada",
       "point": 8.0
      },
      {
       "side": "under",
       "label": "Under 8.0",
-      "model_prob": 0.34288,
-      "fair_odds": 192,
-      "p_push": 0.12829,
+      "model_prob": 0.34117,
+      "fair_odds": 193,
+      "p_push": 0.12807,
       "book": "lowvig",
       "odds": -102,
       "decimal": 1.9804,
       "implied_prob": 0.50495,
       "market_fair_prob": 0.48765,
-      "edge": -0.14477,
-      "ev_per_unit": -0.27978,
-      "ev_per_unit_if_no_push": -0.32095,
+      "edge": -0.14648,
+      "ev_per_unit": -0.28282,
+      "ev_per_unit_if_no_push": -0.32436,
       "kelly_full": 0.0,
       "book_title": "LowVig.ag",
       "point": 8.0
      }
     ],
-    "p_push": 0.12829
+    "p_push": 0.12807
    },
    "market": {
-    "moneyline_hold_pct": 2.428,
+    "moneyline_hold_pct": 2.37,
     "total_hold_pct": 3.547,
     "moneyline_fair_book": "betonlineag",
     "moneyline_hold_range": [
-     2.428,
-     4.34
+     2.37,
+     4.599
     ],
-    "moneyline_n_books_on_line": 4,
+    "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
      3.547,
-     5.109
+     8.607
     ],
-    "total_n_books_on_line": 4,
-    "runline_fair_book": "bovada",
-    "runline_hold_pct": 3.958,
+    "total_n_books_on_line": 9,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.032,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 2
+      "on_line": 9
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.383,
-     "runline": 0.367,
-     "total": 0.383
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 3.0
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -2535,14 +2830,14 @@
      "name": "Drew Rasmussen"
     },
     "offense_plus": 103.0,
-    "bullpen_plus": 108.0
+    "bullpen_plus": 107.0
    },
    "model": {
-    "p_home": 0.46588,
-    "p_away": 0.53412,
-    "lam_home": 3.196,
-    "lam_away": 3.406,
-    "fair_total": 6.6,
+    "p_home": 0.46803,
+    "p_away": 0.53197,
+    "lam_home": 3.219,
+    "lam_away": 3.419,
+    "fair_total": 6.64,
     "park_index": 0.88,
     "home_prevention": {
      "starter_plus": 127.0,
@@ -2553,9 +2848,9 @@
     },
     "away_prevention": {
      "starter_plus": 128.0,
-     "bullpen_plus": 108.0,
+     "bullpen_plus": 107.0,
      "starter_share": 0.626,
-     "blend_plus": 120.5,
+     "blend_plus": 120.1,
      "source": "probable"
     }
    },
@@ -2563,17 +2858,17 @@
     {
      "side": "home",
      "label": "TEX",
-     "model_prob": 0.46588,
-     "fair_odds": 115,
+     "model_prob": 0.46803,
+     "fair_odds": 114,
      "p_push": null,
      "book": "betonlineag",
      "odds": -105,
      "decimal": 1.9524,
      "implied_prob": 0.51219,
      "market_fair_prob": 0.5,
-     "edge": -0.03412,
-     "ev_per_unit": -0.09042,
-     "ev_per_unit_if_no_push": -0.09042,
+     "edge": -0.03197,
+     "ev_per_unit": -0.08622,
+     "ev_per_unit_if_no_push": -0.08622,
      "kelly_full": 0.0,
      "book_title": "BetOnline.ag",
      "point": null
@@ -2581,18 +2876,18 @@
     {
      "side": "away",
      "label": "TBR",
-     "model_prob": 0.53412,
-     "fair_odds": -115,
+     "model_prob": 0.53197,
+     "fair_odds": -114,
      "p_push": null,
      "book": "betonlineag",
      "odds": -105,
      "decimal": 1.9524,
      "implied_prob": 0.51219,
      "market_fair_prob": 0.5,
-     "edge": 0.03412,
-     "ev_per_unit": 0.04282,
-     "ev_per_unit_if_no_push": 0.04282,
-     "kelly_full": 0.04496,
+     "edge": 0.03197,
+     "ev_per_unit": 0.03862,
+     "ev_per_unit_if_no_push": 0.03862,
+     "kelly_full": 0.04055,
      "book_title": "BetOnline.ag",
      "point": null
     }
@@ -2601,37 +2896,37 @@
     {
      "side": "home",
      "label": "TEX +1.5",
-     "model_prob": 0.69732,
-     "fair_odds": -230,
+     "model_prob": 0.69814,
+     "fair_odds": -231,
      "p_push": null,
-     "book": "bovada",
-     "odds": -185,
-     "decimal": 1.5405,
-     "implied_prob": 0.64914,
-     "market_fair_prob": 0.62794,
-     "edge": 0.06938,
-     "ev_per_unit": 0.07422,
-     "ev_per_unit_if_no_push": 0.07422,
-     "kelly_full": 0.13732,
-     "book_title": "Bovada",
+     "book": "draftkings",
+     "odds": -189,
+     "decimal": 1.5291,
+     "implied_prob": 0.65398,
+     "market_fair_prob": 0.6354,
+     "edge": 0.06274,
+     "ev_per_unit": 0.06753,
+     "ev_per_unit_if_no_push": 0.06753,
+     "kelly_full": 0.12762,
+     "book_title": "DraftKings",
      "point": 1.5
     },
     {
      "side": "away",
      "label": "TBR -1.5",
-     "model_prob": 0.30268,
-     "fair_odds": 230,
+     "model_prob": 0.30186,
+     "fair_odds": 231,
      "p_push": null,
-     "book": "bovada",
-     "odds": 160,
-     "decimal": 2.6,
-     "implied_prob": 0.38462,
-     "market_fair_prob": 0.37206,
-     "edge": -0.06938,
-     "ev_per_unit": -0.21303,
-     "ev_per_unit_if_no_push": -0.21303,
+     "book": "lowvig",
+     "odds": 166,
+     "decimal": 2.66,
+     "implied_prob": 0.37594,
+     "market_fair_prob": 0.3646,
+     "edge": -0.06274,
+     "ev_per_unit": -0.19705,
+     "ev_per_unit_if_no_push": -0.19705,
      "kelly_full": 0.0,
-     "book_title": "Bovada",
+     "book_title": "LowVig.ag",
      "point": -1.5
     }
    ],
@@ -2641,17 +2936,17 @@
      {
       "side": "over",
       "label": "Over 7.0",
-      "model_prob": 0.40135,
-      "fair_odds": 149,
-      "p_push": 0.14726,
+      "model_prob": 0.4076,
+      "fair_odds": 145,
+      "p_push": 0.14756,
       "book": "lowvig",
-      "odds": -102,
-      "decimal": 1.9804,
-      "implied_prob": 0.50495,
-      "market_fair_prob": 0.48765,
-      "edge": -0.0863,
-      "ev_per_unit": -0.17495,
-      "ev_per_unit_if_no_push": -0.20516,
+      "odds": 103,
+      "decimal": 2.03,
+      "implied_prob": 0.49261,
+      "market_fair_prob": 0.47646,
+      "edge": -0.06886,
+      "ev_per_unit": -0.1471,
+      "ev_per_unit_if_no_push": -0.17257,
       "kelly_full": 0.0,
       "book_title": "LowVig.ag",
       "point": 7.0
@@ -2659,66 +2954,66 @@
      {
       "side": "under",
       "label": "Under 7.0",
-      "model_prob": 0.59865,
-      "fair_odds": -149,
-      "p_push": 0.14726,
-      "book": "lowvig",
-      "odds": -113,
-      "decimal": 1.885,
-      "implied_prob": 0.5305,
-      "market_fair_prob": 0.51235,
-      "edge": 0.0863,
-      "ev_per_unit": 0.10953,
-      "ev_per_unit_if_no_push": 0.12845,
-      "kelly_full": 0.14514,
-      "book_title": "LowVig.ag",
+      "model_prob": 0.5924,
+      "fair_odds": -145,
+      "p_push": 0.14756,
+      "book": "mybookieag",
+      "odds": -118,
+      "decimal": 1.8475,
+      "implied_prob": 0.54127,
+      "market_fair_prob": 0.52354,
+      "edge": 0.06886,
+      "ev_per_unit": 0.08052,
+      "ev_per_unit_if_no_push": 0.09445,
+      "kelly_full": 0.11145,
+      "book_title": "MyBookie.ag",
       "point": 7.0
      }
     ],
-    "p_push": 0.14726
+    "p_push": 0.14756
    },
    "market": {
     "moneyline_hold_pct": 2.439,
-    "total_hold_pct": 3.547,
+    "total_hold_pct": 3.39,
     "moneyline_fair_book": "betonlineag",
     "moneyline_hold_range": [
      2.439,
      4.762
     ],
-    "moneyline_n_books_on_line": 4,
+    "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
-     3.547,
-     4.708
+     3.39,
+     5.109
     ],
-    "total_n_books_on_line": 4,
-    "runline_fair_book": "bovada",
-    "runline_hold_pct": 3.374,
+    "total_n_books_on_line": 5,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.111,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 2
+      "on_line": 9
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 5
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.383,
-     "runline": 0.367,
-     "total": 0.383
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 1.033
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -2742,7 +3037,7 @@
      "name": "Seth Lugo"
     },
     "offense_plus": 95.0,
-    "bullpen_plus": 90.0
+    "bullpen_plus": 88.0
    },
    "away": {
     "org": "TOR",
@@ -2755,17 +3050,17 @@
     "bullpen_plus": 107.0
    },
    "model": {
-    "p_home": 0.53907,
-    "p_away": 0.46093,
-    "lam_home": 4.695,
-    "lam_away": 4.38,
-    "fair_total": 9.07,
+    "p_home": 0.53475,
+    "p_away": 0.46525,
+    "lam_home": 4.691,
+    "lam_away": 4.414,
+    "fair_total": 9.1,
     "park_index": 1.04,
     "home_prevention": {
      "starter_plus": 97.0,
-     "bullpen_plus": 90.0,
+     "bullpen_plus": 88.0,
      "starter_share": 0.611,
-     "blend_plus": 94.3,
+     "blend_plus": 93.5,
      "source": "probable"
     },
     "away_prevention": {
@@ -2780,35 +3075,35 @@
     {
      "side": "home",
      "label": "KCR",
-     "model_prob": 0.53907,
-     "fair_odds": -117,
+     "model_prob": 0.53475,
+     "fair_odds": -115,
      "p_push": null,
-     "book": "betonlineag",
-     "odds": -108,
-     "decimal": 1.9259,
-     "implied_prob": 0.51924,
-     "market_fair_prob": 0.50697,
-     "edge": 0.0321,
-     "ev_per_unit": 0.03819,
-     "ev_per_unit_if_no_push": 0.03819,
-     "kelly_full": 0.04125,
-     "book_title": "BetOnline.ag",
+     "book": "lowvig",
+     "odds": -105,
+     "decimal": 1.9524,
+     "implied_prob": 0.51219,
+     "market_fair_prob": 0.5,
+     "edge": 0.03475,
+     "ev_per_unit": 0.04405,
+     "ev_per_unit_if_no_push": 0.04405,
+     "kelly_full": 0.04625,
+     "book_title": "LowVig.ag",
      "point": null
     },
     {
      "side": "away",
      "label": "TOR",
-     "model_prob": 0.46093,
-     "fair_odds": 117,
+     "model_prob": 0.46525,
+     "fair_odds": 115,
      "p_push": null,
      "book": "lowvig",
-     "odds": -102,
-     "decimal": 1.9804,
-     "implied_prob": 0.50495,
-     "market_fair_prob": 0.49303,
-     "edge": -0.0321,
-     "ev_per_unit": -0.08717,
-     "ev_per_unit_if_no_push": -0.08717,
+     "odds": -105,
+     "decimal": 1.9524,
+     "implied_prob": 0.51219,
+     "market_fair_prob": 0.5,
+     "edge": -0.03475,
+     "ev_per_unit": -0.09165,
+     "ev_per_unit_if_no_push": -0.09165,
      "kelly_full": 0.0,
      "book_title": "LowVig.ag",
      "point": null
@@ -2818,37 +3113,37 @@
     {
      "side": "home",
      "label": "KCR +1.5",
-     "model_prob": 0.72961,
-     "fair_odds": -270,
+     "model_prob": 0.72523,
+     "fair_odds": -264,
      "p_push": null,
-     "book": "bovada",
-     "odds": -165,
-     "decimal": 1.6061,
-     "implied_prob": 0.62263,
-     "market_fair_prob": 0.59909,
-     "edge": 0.13052,
-     "ev_per_unit": 0.17183,
-     "ev_per_unit_if_no_push": 0.17183,
-     "kelly_full": 0.2835,
-     "book_title": "Bovada",
+     "book": "fanduel",
+     "odds": -170,
+     "decimal": 1.5882,
+     "implied_prob": 0.62964,
+     "market_fair_prob": 0.61406,
+     "edge": 0.11117,
+     "ev_per_unit": 0.15181,
+     "ev_per_unit_if_no_push": 0.15181,
+     "kelly_full": 0.25809,
+     "book_title": "FanDuel",
      "point": 1.5
     },
     {
      "side": "away",
      "label": "TOR -1.5",
-     "model_prob": 0.27039,
-     "fair_odds": 270,
+     "model_prob": 0.27477,
+     "fair_odds": 264,
      "p_push": null,
-     "book": "fanduel",
-     "odds": 140,
-     "decimal": 2.4,
-     "implied_prob": 0.41667,
-     "market_fair_prob": 0.40091,
-     "edge": -0.13052,
-     "ev_per_unit": -0.35106,
-     "ev_per_unit_if_no_push": -0.35106,
+     "book": "mybookieag",
+     "odds": 149,
+     "decimal": 2.49,
+     "implied_prob": 0.40161,
+     "market_fair_prob": 0.38594,
+     "edge": -0.11117,
+     "ev_per_unit": -0.31582,
+     "ev_per_unit_if_no_push": -0.31582,
      "kelly_full": 0.0,
-     "book_title": "FanDuel",
+     "book_title": "MyBookie.ag",
      "point": -1.5
     }
    ],
@@ -2858,36 +3153,36 @@
      {
       "side": "over",
       "label": "Over 9.5",
-      "model_prob": 0.42246,
-      "fair_odds": 137,
+      "model_prob": 0.42639,
+      "fair_odds": 135,
+      "p_push": null,
+      "book": "bovada",
+      "odds": 100,
+      "decimal": 2.0,
+      "implied_prob": 0.5,
+      "market_fair_prob": 0.48765,
+      "edge": -0.06126,
+      "ev_per_unit": -0.14723,
+      "ev_per_unit_if_no_push": -0.14723,
+      "kelly_full": 0.0,
+      "book_title": "Bovada",
+      "point": 9.5
+     },
+     {
+      "side": "under",
+      "label": "Under 9.5",
+      "model_prob": 0.57361,
+      "fair_odds": -135,
       "p_push": null,
       "book": "lowvig",
       "odds": -113,
       "decimal": 1.885,
       "implied_prob": 0.5305,
       "market_fair_prob": 0.51235,
-      "edge": -0.08989,
-      "ev_per_unit": -0.20367,
-      "ev_per_unit_if_no_push": -0.20367,
-      "kelly_full": 0.0,
-      "book_title": "LowVig.ag",
-      "point": 9.5
-     },
-     {
-      "side": "under",
-      "label": "Under 9.5",
-      "model_prob": 0.57754,
-      "fair_odds": -137,
-      "p_push": null,
-      "book": "lowvig",
-      "odds": -102,
-      "decimal": 1.9804,
-      "implied_prob": 0.50495,
-      "market_fair_prob": 0.48765,
-      "edge": 0.08989,
-      "ev_per_unit": 0.14377,
-      "ev_per_unit_if_no_push": 0.14377,
-      "kelly_full": 0.14664,
+      "edge": 0.06126,
+      "ev_per_unit": 0.08126,
+      "ev_per_unit_if_no_push": 0.08126,
+      "kelly_full": 0.09182,
       "book_title": "LowVig.ag",
       "point": 9.5
      }
@@ -2895,47 +3190,47 @@
     "p_push": 0.0
    },
    "market": {
-    "moneyline_hold_pct": 2.418,
+    "moneyline_hold_pct": 2.439,
     "total_hold_pct": 3.547,
     "moneyline_fair_book": "betonlineag",
     "moneyline_hold_range": [
-     2.418,
-     4.753
+     2.439,
+     4.762
     ],
-    "moneyline_n_books_on_line": 4,
+    "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
      3.547,
-     4.708
+     4.975
     ],
-    "total_n_books_on_line": 4,
-    "runline_fair_book": "bovada",
-    "runline_hold_pct": 3.931,
+    "total_n_books_on_line": 9,
+    "runline_fair_book": "mybookieag",
+    "runline_hold_pct": 4.06,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 2
+      "on_line": 5
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.383,
-     "runline": 0.367,
-     "total": 0.383
+     "moneyline": 3.0,
+     "runline": 1.517,
+     "total": 3.0
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -2959,7 +3254,7 @@
      "name": "Anthony Kay"
     },
     "offense_plus": 102.0,
-    "bullpen_plus": 105.0
+    "bullpen_plus": 104.0
    },
    "away": {
     "org": "MIN",
@@ -2972,17 +3267,17 @@
     "bullpen_plus": 99.0
    },
    "model": {
-    "p_home": 0.48807,
-    "p_away": 0.51193,
+    "p_home": 0.48586,
+    "p_away": 0.51414,
     "lam_home": 4.677,
-    "lam_away": 4.756,
-    "fair_total": 9.43,
+    "lam_away": 4.777,
+    "fair_total": 9.45,
     "park_index": 0.98,
     "home_prevention": {
      "starter_plus": 87.0,
-     "bullpen_plus": 105.0,
+     "bullpen_plus": 104.0,
      "starter_share": 0.584,
-     "blend_plus": 94.5,
+     "blend_plus": 94.1,
      "source": "probable"
     },
     "away_prevention": {
@@ -2997,37 +3292,37 @@
     {
      "side": "home",
      "label": "CHW",
-     "model_prob": 0.48807,
-     "fair_odds": 105,
+     "model_prob": 0.48586,
+     "fair_odds": 106,
      "p_push": null,
-     "book": "lowvig",
-     "odds": -120,
-     "decimal": 1.8333,
-     "implied_prob": 0.54546,
-     "market_fair_prob": 0.53271,
-     "edge": -0.04464,
-     "ev_per_unit": -0.10522,
-     "ev_per_unit_if_no_push": -0.10522,
+     "book": "betonlineag",
+     "odds": -116,
+     "decimal": 1.8621,
+     "implied_prob": 0.53703,
+     "market_fair_prob": 0.52523,
+     "edge": -0.03937,
+     "ev_per_unit": -0.09528,
+     "ev_per_unit_if_no_push": -0.09528,
      "kelly_full": 0.0,
-     "book_title": "LowVig.ag",
+     "book_title": "BetOnline.ag",
      "point": null
     },
     {
      "side": "away",
      "label": "MIN",
-     "model_prob": 0.51193,
-     "fair_odds": -105,
+     "model_prob": 0.51414,
+     "fair_odds": -106,
      "p_push": null,
-     "book": "betonlineag",
-     "odds": 109,
-     "decimal": 2.09,
-     "implied_prob": 0.47847,
-     "market_fair_prob": 0.46729,
-     "edge": 0.04464,
-     "ev_per_unit": 0.06993,
-     "ev_per_unit_if_no_push": 0.06993,
-     "kelly_full": 0.06416,
-     "book_title": "BetOnline.ag",
+     "book": "fanduel",
+     "odds": 106,
+     "decimal": 2.06,
+     "implied_prob": 0.48544,
+     "market_fair_prob": 0.47477,
+     "edge": 0.03937,
+     "ev_per_unit": 0.05913,
+     "ev_per_unit_if_no_push": 0.05913,
+     "kelly_full": 0.05578,
+     "book_title": "FanDuel",
      "point": null
     }
    ],
@@ -3035,17 +3330,17 @@
     {
      "side": "home",
      "label": "CHW -1.5",
-     "model_prob": 0.30061,
-     "fair_odds": 233,
+     "model_prob": 0.29844,
+     "fair_odds": 235,
      "p_push": null,
      "book": "bovada",
      "odds": 175,
      "decimal": 2.75,
      "implied_prob": 0.36364,
-     "market_fair_prob": 0.3493,
-     "edge": -0.04869,
-     "ev_per_unit": -0.17332,
-     "ev_per_unit_if_no_push": -0.17332,
+     "market_fair_prob": 0.35825,
+     "edge": -0.05981,
+     "ev_per_unit": -0.17929,
+     "ev_per_unit_if_no_push": -0.17929,
      "kelly_full": 0.0,
      "book_title": "Bovada",
      "point": -1.5
@@ -3053,106 +3348,106 @@
     {
      "side": "away",
      "label": "MIN +1.5",
-     "model_prob": 0.69939,
-     "fair_odds": -233,
+     "model_prob": 0.70156,
+     "fair_odds": -235,
      "p_push": null,
      "book": "fanduel",
-     "odds": -210,
-     "decimal": 1.4762,
-     "implied_prob": 0.67741,
-     "market_fair_prob": 0.6507,
-     "edge": 0.04869,
-     "ev_per_unit": 0.03244,
-     "ev_per_unit_if_no_push": 0.03244,
-     "kelly_full": 0.06812,
+     "odds": -192,
+     "decimal": 1.5208,
+     "implied_prob": 0.65755,
+     "market_fair_prob": 0.64175,
+     "edge": 0.05981,
+     "ev_per_unit": 0.06693,
+     "ev_per_unit_if_no_push": 0.06693,
+     "kelly_full": 0.12852,
      "book_title": "FanDuel",
      "point": 1.5
     }
    ],
    "total": {
-    "line": 8.5,
+    "line": 8.0,
     "sides": [
      {
       "side": "over",
-      "label": "Over 8.5",
-      "model_prob": 0.59982,
-      "fair_odds": -150,
-      "p_push": null,
-      "book": "lowvig",
-      "odds": 103,
-      "decimal": 2.03,
-      "implied_prob": 0.49261,
-      "market_fair_prob": 0.47646,
-      "edge": 0.12336,
-      "ev_per_unit": 0.21764,
-      "ev_per_unit_if_no_push": 0.21764,
-      "kelly_full": 0.2113,
-      "book_title": "LowVig.ag",
-      "point": 8.5
+      "label": "Over 8.0",
+      "model_prob": 0.68782,
+      "fair_odds": -220,
+      "p_push": 0.12405,
+      "book": "mybookieag",
+      "odds": -115,
+      "decimal": 1.8696,
+      "implied_prob": 0.53487,
+      "market_fair_prob": 0.52174,
+      "edge": 0.16608,
+      "ev_per_unit": 0.25047,
+      "ev_per_unit_if_no_push": 0.28595,
+      "kelly_full": 0.32882,
+      "book_title": "MyBookie.ag",
+      "point": 8.0
      },
      {
       "side": "under",
-      "label": "Under 8.5",
-      "model_prob": 0.40018,
-      "fair_odds": 150,
-      "p_push": null,
-      "book": "lowvig",
-      "odds": -118,
-      "decimal": 1.8475,
-      "implied_prob": 0.54127,
-      "market_fair_prob": 0.52354,
-      "edge": -0.12336,
-      "ev_per_unit": -0.26068,
-      "ev_per_unit_if_no_push": -0.26068,
+      "label": "Under 8.0",
+      "model_prob": 0.31218,
+      "fair_odds": 220,
+      "p_push": 0.12405,
+      "book": "betmgm",
+      "odds": 100,
+      "decimal": 2.0,
+      "implied_prob": 0.5,
+      "market_fair_prob": 0.47826,
+      "edge": -0.16608,
+      "ev_per_unit": -0.32904,
+      "ev_per_unit_if_no_push": -0.37564,
       "kelly_full": 0.0,
-      "book_title": "LowVig.ag",
-      "point": 8.5
+      "book_title": "BetMGM",
+      "point": 8.0
      }
     ],
-    "p_push": 0.0
+    "p_push": 0.12405
    },
    "market": {
-    "moneyline_hold_pct": 2.392,
-    "total_hold_pct": 3.39,
-    "moneyline_fair_book": "betonlineag",
+    "moneyline_hold_pct": 2.247,
+    "total_hold_pct": 4.545,
+    "moneyline_fair_book": "betus",
     "moneyline_hold_range": [
-     2.392,
-     4.296
+     2.247,
+     4.662
     ],
-    "moneyline_n_books_on_line": 4,
-    "total_fair_book": "lowvig",
+    "moneyline_n_books_on_line": 9,
+    "total_fair_book": "betmgm",
     "total_hold_range": [
-     3.39,
-     5.041
+     4.545,
+     8.872
     ],
-    "total_n_books_on_line": 4,
-    "runline_fair_book": "bovada",
-    "runline_hold_pct": 4.106,
+    "total_n_books_on_line": 5,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.002,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 2
+      "on_line": 7
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 5
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.383,
-     "runline": 0.367,
-     "total": 0.383
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 1.517
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -3191,9 +3486,9 @@
    "model": {
     "p_home": 0.53448,
     "p_away": 0.46552,
-    "lam_home": 4.855,
+    "lam_home": 4.851,
     "lam_away": 4.571,
-    "fair_total": 9.43,
+    "fair_total": 9.42,
     "park_index": 1.0,
     "home_prevention": {
      "starter_plus": 82.0,
@@ -3217,16 +3512,16 @@
      "model_prob": 0.53448,
      "fair_odds": -115,
      "p_push": null,
-     "book": "betonlineag",
-     "odds": -107,
-     "decimal": 1.9346,
-     "implied_prob": 0.5169,
+     "book": "betus",
+     "odds": -105,
+     "decimal": 1.9524,
+     "implied_prob": 0.51219,
      "market_fair_prob": 0.50465,
      "edge": 0.02983,
-     "ev_per_unit": 0.03401,
-     "ev_per_unit_if_no_push": 0.03401,
-     "kelly_full": 0.03638,
-     "book_title": "BetOnline.ag",
+     "ev_per_unit": 0.04352,
+     "ev_per_unit_if_no_push": 0.04352,
+     "kelly_full": 0.04569,
+     "book_title": "BetUS",
      "point": null
     },
     {
@@ -3252,37 +3547,37 @@
     {
      "side": "home",
      "label": "HOU +1.5",
-     "model_prob": 0.72235,
+     "model_prob": 0.72199,
      "fair_odds": -260,
      "p_push": null,
-     "book": "bovada",
-     "odds": -160,
-     "decimal": 1.625,
-     "implied_prob": 0.61538,
-     "market_fair_prob": 0.59119,
-     "edge": 0.13116,
-     "ev_per_unit": 0.17382,
-     "ev_per_unit_if_no_push": 0.17382,
-     "kelly_full": 0.27811,
-     "book_title": "Bovada",
+     "book": "fanduel",
+     "odds": -176,
+     "decimal": 1.5682,
+     "implied_prob": 0.63767,
+     "market_fair_prob": 0.62111,
+     "edge": 0.10088,
+     "ev_per_unit": 0.13222,
+     "ev_per_unit_if_no_push": 0.13222,
+     "kelly_full": 0.23271,
+     "book_title": "FanDuel",
      "point": 1.5
     },
     {
      "side": "away",
      "label": "ARI -1.5",
-     "model_prob": 0.27765,
+     "model_prob": 0.27801,
      "fair_odds": 260,
      "p_push": null,
-     "book": "fanduel",
-     "odds": 136,
-     "decimal": 2.36,
-     "implied_prob": 0.42373,
-     "market_fair_prob": 0.40881,
-     "edge": -0.13116,
-     "ev_per_unit": -0.34475,
-     "ev_per_unit_if_no_push": -0.34475,
+     "book": "bovada",
+     "odds": 155,
+     "decimal": 2.55,
+     "implied_prob": 0.39216,
+     "market_fair_prob": 0.37889,
+     "edge": -0.10088,
+     "ev_per_unit": -0.29107,
+     "ev_per_unit_if_no_push": -0.29107,
      "kelly_full": 0.0,
-     "book_title": "FanDuel",
+     "book_title": "Bovada",
      "point": -1.5
     }
    ],
@@ -3292,35 +3587,35 @@
      {
       "side": "over",
       "label": "Over 8.5",
-      "model_prob": 0.59904,
+      "model_prob": 0.59846,
       "fair_odds": -149,
       "p_push": null,
-      "book": "lowvig",
-      "odds": -107,
-      "decimal": 1.9346,
-      "implied_prob": 0.5169,
-      "market_fair_prob": 0.5,
-      "edge": 0.09904,
-      "ev_per_unit": 0.1589,
-      "ev_per_unit_if_no_push": 0.1589,
-      "kelly_full": 0.17002,
-      "book_title": "LowVig.ag",
+      "book": "betrivers",
+      "odds": -118,
+      "decimal": 1.8475,
+      "implied_prob": 0.54127,
+      "market_fair_prob": 0.53309,
+      "edge": 0.06537,
+      "ev_per_unit": 0.10566,
+      "ev_per_unit_if_no_push": 0.10566,
+      "kelly_full": 0.12467,
+      "book_title": "BetRivers",
       "point": 8.5
      },
      {
       "side": "under",
       "label": "Under 8.5",
-      "model_prob": 0.40096,
+      "model_prob": 0.40154,
       "fair_odds": 149,
       "p_push": null,
       "book": "lowvig",
-      "odds": -107,
-      "decimal": 1.9346,
-      "implied_prob": 0.5169,
-      "market_fair_prob": 0.5,
-      "edge": -0.09904,
-      "ev_per_unit": -0.2243,
-      "ev_per_unit_if_no_push": -0.2243,
+      "odds": 107,
+      "decimal": 2.07,
+      "implied_prob": 0.48309,
+      "market_fair_prob": 0.46691,
+      "edge": -0.06537,
+      "ev_per_unit": -0.16882,
+      "ev_per_unit_if_no_push": -0.16882,
       "kelly_full": 0.0,
       "book_title": "LowVig.ag",
       "point": 8.5
@@ -3330,46 +3625,46 @@
    },
    "market": {
     "moneyline_hold_pct": 2.43,
-    "total_hold_pct": 3.382,
+    "total_hold_pct": 3.466,
     "moneyline_fair_book": "betonlineag",
     "moneyline_hold_range": [
      2.43,
      4.762
     ],
-    "moneyline_n_books_on_line": 4,
+    "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
-     3.382,
-     4.762
+     3.466,
+     4.955
     ],
-    "total_n_books_on_line": 4,
+    "total_n_books_on_line": 6,
     "runline_fair_book": "bovada",
-    "runline_hold_pct": 4.092,
+    "runline_hold_pct": 3.501,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 2
+      "on_line": 6
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 6
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.383,
-     "runline": 0.367,
-     "total": 0.383
+     "moneyline": 3.0,
+     "runline": 2.95,
+     "total": 1.567
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -3393,7 +3688,7 @@
      "name": "Robbie Ray"
     },
     "offense_plus": 96.0,
-    "bullpen_plus": 118.0
+    "bullpen_plus": 119.0
    },
    "away": {
     "org": "NYY",
@@ -3406,17 +3701,17 @@
     "bullpen_plus": 103.0
    },
    "model": {
-    "p_home": 0.4652,
-    "p_away": 0.5348,
-    "lam_home": 4.088,
-    "lam_away": 4.331,
-    "fair_total": 8.42,
+    "p_home": 0.46685,
+    "p_away": 0.53315,
+    "lam_home": 4.085,
+    "lam_away": 4.319,
+    "fair_total": 8.4,
     "park_index": 0.94,
     "home_prevention": {
      "starter_plus": 91.0,
-     "bullpen_plus": 118.0,
+     "bullpen_plus": 119.0,
      "starter_share": 0.637,
-     "blend_plus": 100.8,
+     "blend_plus": 101.2,
      "source": "probable"
     },
     "away_prevention": {
@@ -3431,76 +3726,76 @@
     {
      "side": "home",
      "label": "SDP",
-     "model_prob": 0.4652,
-     "fair_odds": 115,
+     "model_prob": 0.46685,
+     "fair_odds": 114,
      "p_push": null,
-     "book": "betonlineag",
-     "odds": -105,
-     "decimal": 1.9524,
-     "implied_prob": 0.51219,
-     "market_fair_prob": 0.5,
-     "edge": -0.0348,
-     "ev_per_unit": -0.09174,
-     "ev_per_unit_if_no_push": -0.09174,
+     "book": "betrivers",
+     "odds": -124,
+     "decimal": 1.8065,
+     "implied_prob": 0.55356,
+     "market_fair_prob": 0.54518,
+     "edge": -0.07833,
+     "ev_per_unit": -0.15664,
+     "ev_per_unit_if_no_push": -0.15664,
      "kelly_full": 0.0,
-     "book_title": "BetOnline.ag",
+     "book_title": "BetRivers",
      "point": null
     },
     {
      "side": "away",
      "label": "NYY",
-     "model_prob": 0.5348,
-     "fair_odds": -115,
+     "model_prob": 0.53315,
+     "fair_odds": -114,
      "p_push": null,
-     "book": "fanduel",
-     "odds": -102,
-     "decimal": 1.9804,
-     "implied_prob": 0.50495,
-     "market_fair_prob": 0.5,
-     "edge": 0.0348,
-     "ev_per_unit": 0.05912,
-     "ev_per_unit_if_no_push": 0.05912,
-     "kelly_full": 0.0603,
-     "book_title": "FanDuel",
+     "book": "betonlineag",
+     "odds": 115,
+     "decimal": 2.15,
+     "implied_prob": 0.46512,
+     "market_fair_prob": 0.45482,
+     "edge": 0.07833,
+     "ev_per_unit": 0.14627,
+     "ev_per_unit_if_no_push": 0.14627,
+     "kelly_full": 0.12719,
+     "book_title": "BetOnline.ag",
      "point": null
     }
    ],
    "runline": [
     {
      "side": "home",
-     "label": "SDP +1.5",
-     "model_prob": 0.67127,
-     "fair_odds": -204,
+     "label": "SDP -1.5",
+     "model_prob": 0.27139,
+     "fair_odds": 268,
      "p_push": null,
      "book": "fanduel",
-     "odds": -194,
-     "decimal": 1.5155,
-     "implied_prob": 0.65985,
-     "market_fair_prob": 0.63659,
-     "edge": 0.03468,
-     "ev_per_unit": 0.01731,
-     "ev_per_unit_if_no_push": 0.01731,
-     "kelly_full": 0.03358,
+     "odds": 180,
+     "decimal": 2.8,
+     "implied_prob": 0.35714,
+     "market_fair_prob": 0.3646,
+     "edge": -0.09321,
+     "ev_per_unit": -0.24011,
+     "ev_per_unit_if_no_push": -0.24011,
+     "kelly_full": 0.0,
      "book_title": "FanDuel",
-     "point": 1.5
+     "point": -1.5
     },
     {
      "side": "away",
-     "label": "NYY -1.5",
-     "model_prob": 0.32873,
-     "fair_odds": 204,
+     "label": "NYY +1.5",
+     "model_prob": 0.72861,
+     "fair_odds": -268,
      "p_push": null,
-     "book": "bovada",
-     "odds": 165,
-     "decimal": 2.65,
-     "implied_prob": 0.37736,
-     "market_fair_prob": 0.36341,
-     "edge": -0.03468,
-     "ev_per_unit": -0.12887,
-     "ev_per_unit_if_no_push": -0.12887,
-     "kelly_full": 0.0,
-     "book_title": "Bovada",
-     "point": -1.5
+     "book": "lowvig",
+     "odds": -190,
+     "decimal": 1.5263,
+     "implied_prob": 0.65518,
+     "market_fair_prob": 0.6354,
+     "edge": 0.09321,
+     "ev_per_unit": 0.11208,
+     "ev_per_unit_if_no_push": 0.11208,
+     "kelly_full": 0.21295,
+     "book_title": "LowVig.ag",
+     "point": 1.5
     }
    ],
    "total": {
@@ -3509,35 +3804,35 @@
      {
       "side": "over",
       "label": "Over 7.5",
-      "model_prob": 0.60394,
-      "fair_odds": -152,
+      "model_prob": 0.60187,
+      "fair_odds": -151,
       "p_push": null,
-      "book": "lowvig",
-      "odds": -123,
-      "decimal": 1.813,
-      "implied_prob": 0.55157,
-      "market_fair_prob": 0.53309,
-      "edge": 0.07085,
-      "ev_per_unit": 0.09494,
-      "ev_per_unit_if_no_push": 0.09494,
-      "kelly_full": 0.11678,
-      "book_title": "LowVig.ag",
+      "book": "betrivers",
+      "odds": -110,
+      "decimal": 1.9091,
+      "implied_prob": 0.52381,
+      "market_fair_prob": 0.51685,
+      "edge": 0.08502,
+      "ev_per_unit": 0.14904,
+      "ev_per_unit_if_no_push": 0.14904,
+      "kelly_full": 0.16394,
+      "book_title": "BetRivers",
       "point": 7.5
      },
      {
       "side": "under",
       "label": "Under 7.5",
-      "model_prob": 0.39606,
-      "fair_odds": 152,
+      "model_prob": 0.39813,
+      "fair_odds": 151,
       "p_push": null,
       "book": "lowvig",
-      "odds": 107,
-      "decimal": 2.07,
-      "implied_prob": 0.48309,
-      "market_fair_prob": 0.46691,
-      "edge": -0.07085,
-      "ev_per_unit": -0.18015,
-      "ev_per_unit_if_no_push": -0.18015,
+      "odds": 100,
+      "decimal": 2.0,
+      "implied_prob": 0.5,
+      "market_fair_prob": 0.48315,
+      "edge": -0.08502,
+      "ev_per_unit": -0.20375,
+      "ev_per_unit_if_no_push": -0.20375,
       "kelly_full": 0.0,
       "book_title": "LowVig.ag",
       "point": 7.5
@@ -3546,47 +3841,47 @@
     "p_push": 0.0
    },
    "market": {
-    "moneyline_hold_pct": 2.439,
-    "total_hold_pct": 3.466,
-    "moneyline_fair_book": "betonlineag",
+    "moneyline_hold_pct": 2.264,
+    "total_hold_pct": 3.488,
+    "moneyline_fair_book": "betus",
     "moneyline_hold_range": [
-     2.439,
-     4.656
+     2.264,
+     4.557
     ],
-    "moneyline_n_books_on_line": 4,
+    "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
-     3.466,
-     4.862
+     3.488,
+     5.16
     ],
-    "total_n_books_on_line": 4,
-    "runline_fair_book": "bovada",
-    "runline_hold_pct": 3.838,
+    "total_n_books_on_line": 9,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.111,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 2
+      "on_line": 8
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.383,
-     "runline": 0.367,
-     "total": 0.383
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 3.0
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -3620,14 +3915,14 @@
      "name": "Matthew Liberatore"
     },
     "offense_plus": 98.0,
-    "bullpen_plus": 95.0
+    "bullpen_plus": 94.0
    },
    "model": {
-    "p_home": 0.5318,
-    "p_away": 0.4682,
-    "lam_home": 5.762,
-    "lam_away": 5.477,
-    "fair_total": 11.24,
+    "p_home": 0.53376,
+    "p_away": 0.46624,
+    "lam_home": 5.766,
+    "lam_away": 5.468,
+    "fair_total": 11.23,
     "park_index": 1.25,
     "home_prevention": {
      "starter_plus": 98.0,
@@ -3638,9 +3933,9 @@
     },
     "away_prevention": {
      "starter_plus": 95.0,
-     "bullpen_plus": 95.0,
+     "bullpen_plus": 94.0,
      "starter_share": 0.554,
-     "blend_plus": 95.0,
+     "blend_plus": 94.6,
      "source": "probable"
     }
    },
@@ -3648,37 +3943,37 @@
     {
      "side": "home",
      "label": "COL",
-     "model_prob": 0.5318,
+     "model_prob": 0.53376,
      "fair_odds": -114,
      "p_push": null,
-     "book": "betonlineag",
-     "odds": 109,
-     "decimal": 2.09,
-     "implied_prob": 0.47847,
-     "market_fair_prob": 0.46729,
-     "edge": 0.06451,
-     "ev_per_unit": 0.11146,
-     "ev_per_unit_if_no_push": 0.11146,
-     "kelly_full": 0.10226,
-     "book_title": "BetOnline.ag",
+     "book": "betus",
+     "odds": 110,
+     "decimal": 2.1,
+     "implied_prob": 0.47619,
+     "market_fair_prob": 0.46517,
+     "edge": 0.06859,
+     "ev_per_unit": 0.1209,
+     "ev_per_unit_if_no_push": 0.1209,
+     "kelly_full": 0.10991,
+     "book_title": "BetUS",
      "point": null
     },
     {
      "side": "away",
      "label": "STL",
-     "model_prob": 0.4682,
+     "model_prob": 0.46624,
      "fair_odds": 114,
      "p_push": null,
-     "book": "fanduel",
-     "odds": -118,
-     "decimal": 1.8475,
-     "implied_prob": 0.54127,
-     "market_fair_prob": 0.53271,
-     "edge": -0.06451,
-     "ev_per_unit": -0.135,
-     "ev_per_unit_if_no_push": -0.135,
+     "book": "betrivers",
+     "odds": -120,
+     "decimal": 1.8333,
+     "implied_prob": 0.54546,
+     "market_fair_prob": 0.53483,
+     "edge": -0.06859,
+     "ev_per_unit": -0.14524,
+     "ev_per_unit_if_no_push": -0.14524,
      "kelly_full": 0.0,
-     "book_title": "FanDuel",
+     "book_title": "BetRivers",
      "point": null
     }
    ],
@@ -3686,37 +3981,37 @@
     {
      "side": "home",
      "label": "COL +1.5",
-     "model_prob": 0.70513,
-     "fair_odds": -239,
+     "model_prob": 0.7065,
+     "fair_odds": -241,
      "p_push": null,
      "book": "bovada",
-     "odds": -150,
-     "decimal": 1.6667,
-     "implied_prob": 0.59999,
-     "market_fair_prob": 0.57983,
-     "edge": 0.1253,
-     "ev_per_unit": 0.17524,
-     "ev_per_unit_if_no_push": 0.17524,
-     "kelly_full": 0.26285,
+     "odds": -140,
+     "decimal": 1.7143,
+     "implied_prob": 0.58333,
+     "market_fair_prob": 0.57189,
+     "edge": 0.13461,
+     "ev_per_unit": 0.21115,
+     "ev_per_unit_if_no_push": 0.21115,
+     "kelly_full": 0.29561,
      "book_title": "Bovada",
      "point": 1.5
     },
     {
      "side": "away",
      "label": "STL -1.5",
-     "model_prob": 0.29487,
-     "fair_odds": 239,
+     "model_prob": 0.2935,
+     "fair_odds": 241,
      "p_push": null,
-     "book": "fanduel",
+     "book": "betrivers",
      "odds": 130,
      "decimal": 2.3,
      "implied_prob": 0.43478,
-     "market_fair_prob": 0.42017,
-     "edge": -0.1253,
-     "ev_per_unit": -0.3218,
-     "ev_per_unit_if_no_push": -0.3218,
+     "market_fair_prob": 0.42811,
+     "edge": -0.13461,
+     "ev_per_unit": -0.32495,
+     "ev_per_unit_if_no_push": -0.32495,
      "kelly_full": 0.0,
-     "book_title": "FanDuel",
+     "book_title": "BetRivers",
      "point": -1.5
     }
    ],
@@ -3726,84 +4021,84 @@
      {
       "side": "over",
       "label": "Over 11.0",
-      "model_prob": 0.51,
+      "model_prob": 0.50939,
       "fair_odds": -104,
-      "p_push": 0.11907,
+      "p_push": 0.11908,
       "book": "lowvig",
-      "odds": 103,
-      "decimal": 2.03,
-      "implied_prob": 0.49261,
-      "market_fair_prob": 0.47646,
-      "edge": 0.03354,
-      "ev_per_unit": 0.03109,
-      "ev_per_unit_if_no_push": 0.03529,
-      "kelly_full": 0.03426,
+      "odds": 107,
+      "decimal": 2.07,
+      "implied_prob": 0.48309,
+      "market_fair_prob": 0.46691,
+      "edge": 0.04248,
+      "ev_per_unit": 0.04796,
+      "ev_per_unit_if_no_push": 0.05444,
+      "kelly_full": 0.05088,
       "book_title": "LowVig.ag",
       "point": 11.0
      },
      {
       "side": "under",
       "label": "Under 11.0",
-      "model_prob": 0.49,
+      "model_prob": 0.49061,
       "fair_odds": 104,
-      "p_push": 0.11907,
-      "book": "bovada",
-      "odds": -115,
-      "decimal": 1.8696,
-      "implied_prob": 0.53487,
-      "market_fair_prob": 0.52354,
-      "edge": -0.03354,
-      "ev_per_unit": -0.0739,
-      "ev_per_unit_if_no_push": -0.08389,
+      "p_push": 0.11908,
+      "book": "fanduel",
+      "odds": -118,
+      "decimal": 1.8475,
+      "implied_prob": 0.54127,
+      "market_fair_prob": 0.53309,
+      "edge": -0.04248,
+      "ev_per_unit": -0.08245,
+      "ev_per_unit_if_no_push": -0.0936,
       "kelly_full": 0.0,
-      "book_title": "Bovada",
+      "book_title": "FanDuel",
       "point": 11.0
      }
     ],
-    "p_push": 0.11907
+    "p_push": 0.11908
    },
    "market": {
-    "moneyline_hold_pct": 2.392,
-    "total_hold_pct": 3.39,
-    "moneyline_fair_book": "betonlineag",
+    "moneyline_hold_pct": 2.37,
+    "total_hold_pct": 3.466,
+    "moneyline_fair_book": "betus",
     "moneyline_hold_range": [
-     2.392,
-     4.587
+     2.37,
+     4.772
     ],
-    "moneyline_n_books_on_line": 4,
+    "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
-     3.39,
+     3.466,
      5.109
     ],
-    "total_n_books_on_line": 4,
-    "runline_fair_book": "bovada",
-    "runline_hold_pct": 3.478,
+    "total_n_books_on_line": 7,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 2.901,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 2
+      "on_line": 9
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 7
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.383,
-     "runline": 0.367,
-     "total": 0.383
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 3.0
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -3840,10 +4135,10 @@
     "bullpen_plus": 90.0
    },
    "model": {
-    "p_home": 0.63885,
-    "p_away": 0.36115,
-    "lam_home": 4.788,
-    "lam_away": 3.722,
+    "p_home": 0.63849,
+    "p_away": 0.36151,
+    "lam_home": 4.785,
+    "lam_away": 3.727,
     "fair_total": 8.51,
     "park_index": 1.02,
     "home_prevention": {
@@ -3865,36 +4160,36 @@
     {
      "side": "home",
      "label": "LAD",
-     "model_prob": 0.63885,
+     "model_prob": 0.63849,
      "fair_odds": -177,
      "p_push": null,
-     "book": "lowvig",
-     "odds": -218,
-     "decimal": 1.4587,
-     "implied_prob": 0.68554,
-     "market_fair_prob": 0.66913,
-     "edge": -0.03028,
-     "ev_per_unit": -0.06811,
-     "ev_per_unit_if_no_push": -0.06811,
+     "book": "betus",
+     "odds": -215,
+     "decimal": 1.4651,
+     "implied_prob": 0.68255,
+     "market_fair_prob": 0.67126,
+     "edge": -0.03277,
+     "ev_per_unit": -0.06455,
+     "ev_per_unit_if_no_push": -0.06455,
      "kelly_full": 0.0,
-     "book_title": "LowVig.ag",
+     "book_title": "BetUS",
      "point": null
     },
     {
      "side": "away",
      "label": "WSN",
-     "model_prob": 0.36115,
+     "model_prob": 0.36151,
      "fair_odds": 177,
      "p_push": null,
      "book": "betonlineag",
-     "odds": 195,
-     "decimal": 2.95,
-     "implied_prob": 0.33898,
-     "market_fair_prob": 0.33087,
-     "edge": 0.03028,
-     "ev_per_unit": 0.06539,
-     "ev_per_unit_if_no_push": 0.06539,
-     "kelly_full": 0.03353,
+     "odds": 197,
+     "decimal": 2.97,
+     "implied_prob": 0.3367,
+     "market_fair_prob": 0.32874,
+     "edge": 0.03277,
+     "ev_per_unit": 0.07368,
+     "ev_per_unit_if_no_push": 0.07368,
+     "kelly_full": 0.0374,
      "book_title": "BetOnline.ag",
      "point": null
     }
@@ -3903,124 +4198,124 @@
     {
      "side": "home",
      "label": "LAD -1.5",
-     "model_prob": 0.43657,
-     "fair_odds": 129,
+     "model_prob": 0.43572,
+     "fair_odds": 130,
      "p_push": null,
-     "book": "bovada",
-     "odds": 105,
-     "decimal": 2.05,
-     "implied_prob": 0.4878,
-     "market_fair_prob": 0.46753,
-     "edge": -0.03096,
-     "ev_per_unit": -0.10503,
-     "ev_per_unit_if_no_push": -0.10503,
+     "book": "fanduel",
+     "odds": 106,
+     "decimal": 2.06,
+     "implied_prob": 0.48544,
+     "market_fair_prob": 0.47305,
+     "edge": -0.03733,
+     "ev_per_unit": -0.10242,
+     "ev_per_unit_if_no_push": -0.10242,
      "kelly_full": 0.0,
-     "book_title": "Bovada",
+     "book_title": "FanDuel",
      "point": -1.5
     },
     {
      "side": "away",
      "label": "WSN +1.5",
-     "model_prob": 0.56343,
-     "fair_odds": -129,
+     "model_prob": 0.56428,
+     "fair_odds": -130,
      "p_push": null,
-     "book": "fanduel",
-     "odds": -125,
-     "decimal": 1.8,
-     "implied_prob": 0.55556,
-     "market_fair_prob": 0.53247,
-     "edge": 0.03096,
-     "ev_per_unit": 0.01417,
-     "ev_per_unit_if_no_push": 0.01417,
-     "kelly_full": 0.01772,
-     "book_title": "FanDuel",
+     "book": "bovada",
+     "odds": -115,
+     "decimal": 1.8696,
+     "implied_prob": 0.53487,
+     "market_fair_prob": 0.52695,
+     "edge": 0.03733,
+     "ev_per_unit": 0.05498,
+     "ev_per_unit_if_no_push": 0.05498,
+     "kelly_full": 0.06322,
+     "book_title": "Bovada",
      "point": 1.5
     }
    ],
    "total": {
-    "line": 8.0,
+    "line": 7.0,
     "sides": [
      {
       "side": "over",
-      "label": "Over 8.0",
-      "model_prob": 0.55448,
-      "fair_odds": -124,
-      "p_push": 0.13743,
+      "label": "Over 7.0",
+      "model_prob": 0.70731,
+      "fair_odds": -242,
+      "p_push": 0.12914,
       "book": "lowvig",
-      "odds": -102,
-      "decimal": 1.9804,
-      "implied_prob": 0.50495,
-      "market_fair_prob": 0.48765,
-      "edge": 0.06683,
-      "ev_per_unit": 0.08461,
-      "ev_per_unit_if_no_push": 0.09809,
-      "kelly_full": 0.10005,
+      "odds": -109,
+      "decimal": 1.9174,
+      "implied_prob": 0.52154,
+      "market_fair_prob": 0.50452,
+      "edge": 0.20279,
+      "ev_per_unit": 0.31019,
+      "ev_per_unit_if_no_push": 0.35619,
+      "kelly_full": 0.38826,
       "book_title": "LowVig.ag",
-      "point": 8.0
+      "point": 7.0
      },
      {
       "side": "under",
-      "label": "Under 8.0",
-      "model_prob": 0.44552,
-      "fair_odds": 124,
-      "p_push": 0.13743,
-      "book": "lowvig",
-      "odds": -113,
-      "decimal": 1.885,
-      "implied_prob": 0.5305,
-      "market_fair_prob": 0.51235,
-      "edge": -0.06683,
-      "ev_per_unit": -0.13818,
-      "ev_per_unit_if_no_push": -0.16019,
+      "label": "Under 7.0",
+      "model_prob": 0.29269,
+      "fair_odds": 242,
+      "p_push": 0.12914,
+      "book": "draftkings",
+      "odds": -103,
+      "decimal": 1.9709,
+      "implied_prob": 0.50738,
+      "market_fair_prob": 0.49548,
+      "edge": -0.20279,
+      "ev_per_unit": -0.36849,
+      "ev_per_unit_if_no_push": -0.42313,
       "kelly_full": 0.0,
-      "book_title": "LowVig.ag",
-      "point": 8.0
+      "book_title": "DraftKings",
+      "point": 7.0
      }
     ],
-    "p_push": 0.13743
+    "p_push": 0.12914
    },
    "market": {
-    "moneyline_hold_pct": 2.452,
-    "total_hold_pct": 3.547,
+    "moneyline_hold_pct": 2.42,
+    "total_hold_pct": 3.373,
     "moneyline_fair_book": "betonlineag",
     "moneyline_hold_range": [
-     2.452,
-     4.318
+     2.42,
+     4.566
     ],
-    "moneyline_n_books_on_line": 4,
+    "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
-     3.547,
+     3.373,
      5.109
     ],
-    "total_n_books_on_line": 4,
-    "runline_fair_book": "bovada",
-    "runline_hold_pct": 4.336,
+    "total_n_books_on_line": 7,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.118,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 9
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 2
+      "on_line": 9
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 4
+      "on_line": 7
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.383,
-     "runline": 0.367,
-     "total": 0.383
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 3.0
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -4033,8 +4328,8 @@
    "start": "2026-09-06T01:40:00Z",
    "status": "Preview",
    "double_header": false,
-   "odds_event_id": null,
-   "odds_commence_time": null,
+   "odds_event_id": "e048c681c46e42165449e02fe8f9aac8",
+   "odds_commence_time": "2026-09-06T01:41:00Z",
    "venue": "T-Mobile Park",
    "home": {
     "org": "SEA",
@@ -4049,16 +4344,19 @@
    "away": {
     "org": "ATH",
     "team": "Athletics",
-    "probable": null,
+    "probable": {
+     "mlbam": 605488,
+     "name": "Jeffrey Springs"
+    },
     "offense_plus": 102.0,
     "bullpen_plus": 96.0
    },
    "model": {
-    "p_home": 0.56606,
-    "p_away": 0.43394,
-    "lam_home": 4.52,
-    "lam_away": 4.012,
-    "fair_total": 8.53,
+    "p_home": 0.61075,
+    "p_away": 0.38925,
+    "lam_home": 4.94,
+    "lam_away": 4.073,
+    "fair_total": 9.01,
     "park_index": 0.85,
     "home_prevention": {
      "starter_plus": 105.0,
@@ -4068,55 +4366,178 @@
      "source": "probable"
     },
     "away_prevention": {
-     "starter_plus": 90.0,
+     "starter_plus": 74.0,
      "bullpen_plus": 96.0,
-     "starter_share": 0.517,
-     "blend_plus": 92.9,
-     "source": "rotation-average"
+     "starter_share": 0.547,
+     "blend_plus": 84.0,
+     "source": "probable"
     }
    },
    "moneyline": [
     {
      "side": "home",
      "label": "SEA",
-     "model_prob": 0.56606,
-     "fair_odds": -130,
+     "model_prob": 0.61075,
+     "fair_odds": -157,
      "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
+     "book": "betonlineag",
+     "odds": -230,
+     "decimal": 1.4348,
+     "implied_prob": 0.69696,
+     "market_fair_prob": 0.68079,
+     "edge": -0.07004,
+     "ev_per_unit": -0.1237,
+     "ev_per_unit_if_no_push": -0.1237,
+     "kelly_full": 0.0,
+     "book_title": "BetOnline.ag",
+     "point": null
     },
     {
      "side": "away",
      "label": "ATH",
-     "model_prob": 0.43394,
-     "fair_odds": 130,
+     "model_prob": 0.38925,
+     "fair_odds": 157,
      "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
+     "book": "betonlineag",
+     "odds": 206,
+     "decimal": 3.06,
+     "implied_prob": 0.3268,
+     "market_fair_prob": 0.31921,
+     "edge": 0.07004,
+     "ev_per_unit": 0.1911,
+     "ev_per_unit_if_no_push": 0.1911,
+     "kelly_full": 0.09277,
+     "book_title": "BetOnline.ag",
+     "point": null
     }
    ],
-   "runline": null,
+   "runline": [
+    {
+     "side": "home",
+     "label": "SEA -1.5",
+     "model_prob": 0.41272,
+     "fair_odds": 142,
+     "p_push": null,
+     "book": "mybookieag",
+     "odds": -104,
+     "decimal": 1.9615,
+     "implied_prob": 0.50981,
+     "market_fair_prob": 0.5,
+     "edge": -0.08728,
+     "ev_per_unit": -0.19045,
+     "ev_per_unit_if_no_push": -0.19045,
+     "kelly_full": 0.0,
+     "book_title": "MyBookie.ag",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "ATH +1.5",
+     "model_prob": 0.58728,
+     "fair_odds": -142,
+     "p_push": null,
+     "book": "fanduel",
+     "odds": -105,
+     "decimal": 1.9524,
+     "implied_prob": 0.51219,
+     "market_fair_prob": 0.5,
+     "edge": 0.08728,
+     "ev_per_unit": 0.14661,
+     "ev_per_unit_if_no_push": 0.14661,
+     "kelly_full": 0.15393,
+     "book_title": "FanDuel",
+     "point": 1.5
+    }
+   ],
    "total": {
-    "line": null,
-    "sides": null,
-    "p_push": null,
-    "fair_total": 8.53
+    "line": 7.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 7.5",
+      "model_prob": 0.67762,
+      "fair_odds": -210,
+      "p_push": null,
+      "book": "lowvig",
+      "odds": -107,
+      "decimal": 1.9346,
+      "implied_prob": 0.5169,
+      "market_fair_prob": 0.5,
+      "edge": 0.17762,
+      "ev_per_unit": 0.31092,
+      "ev_per_unit_if_no_push": 0.31092,
+      "kelly_full": 0.33267,
+      "book_title": "LowVig.ag",
+      "point": 7.5
+     },
+     {
+      "side": "under",
+      "label": "Under 7.5",
+      "model_prob": 0.32238,
+      "fair_odds": 210,
+      "p_push": null,
+      "book": "betrivers",
+      "odds": -103,
+      "decimal": 1.9709,
+      "implied_prob": 0.50738,
+      "market_fair_prob": 0.5,
+      "edge": -0.17762,
+      "ev_per_unit": -0.36461,
+      "ev_per_unit_if_no_push": -0.36461,
+      "kelly_full": 0.0,
+      "book_title": "BetRivers",
+      "point": 7.5
+     }
+    ],
+    "p_push": 0.0
    },
-   "market": null
+   "market": {
+    "moneyline_hold_pct": 2.377,
+    "total_hold_pct": 3.382,
+    "moneyline_fair_book": "betonlineag",
+    "moneyline_hold_range": [
+     2.377,
+     4.762
+    ],
+    "moneyline_n_books_on_line": 9,
+    "total_fair_book": "lowvig",
+    "total_hold_range": [
+     3.382,
+     4.975
+    ],
+    "total_n_books_on_line": 9,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.382,
+    "fair_book_rule": "min_hold",
+    "n_books_rejected": {
+     "moneyline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "runline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "total": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     }
+    },
+    "max_book_lag_minutes": {
+     "moneyline": 3.0,
+     "runline": 3.0,
+     "total": 3.0
+    },
+    "stale_book_max_lag_minutes": 15.0,
+    "consensus_fair_max_distance": 0.05,
+    "devig_method": "proportional"
+   }
   }
  ],
  "props_fair_lines": {
@@ -4212,6 +4633,45 @@
       "prop": "Outs recorded",
       "fair_line": 14.5,
       "lam": 14.49,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 665871,
+    "name": "Javier Assad",
+    "org": "CHC",
+    "opp": "MIA",
+    "game_pk": 823823,
+    "expected_ip": 5.2,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 3.79,
+      "lam": 3.79,
+      "over_line": 4.5,
+      "p_over": 0.3296
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.83,
+      "lam": 2.83,
+      "over_line": 3.5,
+      "p_over": 0.3139
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.37,
+      "lam": 5.37,
+      "over_line": 5.5,
+      "p_over": 0.4486
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 15.6,
+      "lam": 15.6,
       "over_line": null,
       "p_over": null,
       "note": "fair number only; outs props are priced off the same expected length"
@@ -5114,6 +5574,45 @@
       "note": "fair number only; outs props are priced off the same expected length"
      }
     ]
+   },
+   {
+    "mlbam": 605488,
+    "name": "Jeffrey Springs",
+    "org": "ATH",
+    "opp": "SEA",
+    "game_pk": 823094,
+    "expected_ip": 4.92,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 3.9,
+      "lam": 3.9,
+      "over_line": 4.5,
+      "p_over": 0.3518
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.91,
+      "lam": 2.91,
+      "over_line": 3.5,
+      "p_over": 0.3329
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.12,
+      "lam": 5.12,
+      "over_line": 5.5,
+      "p_over": 0.4057
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 14.8,
+      "lam": 14.76,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
    }
   ],
   "hitters": [
@@ -5455,7 +5954,7 @@
     "slot": 1,
     "expected_pa": 4.65,
     "vs_hand": "R",
-    "vs_hand_basis": "hand unknown, vs-RHP assumed",
+    "vs_hand_basis": "opposing probable throws R",
     "props": [
      {
       "prop": "Total bases",
@@ -5488,7 +5987,7 @@
     "slot": 2,
     "expected_pa": 4.55,
     "vs_hand": "R",
-    "vs_hand_basis": "hand unknown, vs-RHP assumed",
+    "vs_hand_basis": "opposing probable throws R",
     "props": [
      {
       "prop": "Total bases",
@@ -5521,7 +6020,7 @@
     "slot": 3,
     "expected_pa": 4.45,
     "vs_hand": "R",
-    "vs_hand_basis": "hand unknown, vs-RHP assumed",
+    "vs_hand_basis": "opposing probable throws R",
     "props": [
      {
       "prop": "Total bases",
@@ -5554,7 +6053,7 @@
     "slot": 4,
     "expected_pa": 4.35,
     "vs_hand": "R",
-    "vs_hand_basis": "hand unknown, vs-RHP assumed",
+    "vs_hand_basis": "opposing probable throws R",
     "props": [
      {
       "prop": "Total bases",
@@ -5587,7 +6086,7 @@
     "slot": 5,
     "expected_pa": 4.25,
     "vs_hand": "R",
-    "vs_hand_basis": "hand unknown, vs-RHP assumed",
+    "vs_hand_basis": "opposing probable throws R",
     "props": [
      {
       "prop": "Total bases",
@@ -9738,35 +10237,35 @@
     ]
    },
    {
-    "mlbam": 641487,
-    "name": "J.P. Crawford",
+    "mlbam": 621493,
+    "name": "Taylor Ward",
     "org": "SEA",
     "game_pk": 823094,
     "slot": 1,
     "expected_pa": 4.65,
-    "vs_hand": "R",
-    "vs_hand_basis": "hand unknown, vs-RHP assumed",
+    "vs_hand": "L",
+    "vs_hand_basis": "opposing probable throws L",
     "props": [
      {
       "prop": "Total bases",
-      "fair_line": 1.43,
-      "lam": 1.43,
+      "fair_line": 1.51,
+      "lam": 1.51,
       "over_line": 1.5,
-      "p_over": 0.4171
+      "p_over": 0.4471
      },
      {
       "prop": "1+ hits",
-      "fair_line": 0.93,
-      "lam": 0.93,
+      "fair_line": 0.91,
+      "lam": 0.91,
       "over_line": 0.5,
-      "p_over": 0.6457
+      "p_over": 0.6349
      },
      {
       "prop": "1+ home runs",
-      "fair_line": 0.097,
-      "lam": 0.097,
+      "fair_line": 0.134,
+      "lam": 0.134,
       "over_line": 0.5,
-      "p_over": 0.0938
+      "p_over": 0.1276
      }
     ]
    },
@@ -9777,8 +10276,8 @@
     "game_pk": 823094,
     "slot": 2,
     "expected_pa": 4.55,
-    "vs_hand": "R",
-    "vs_hand_basis": "hand unknown, vs-RHP assumed",
+    "vs_hand": "L",
+    "vs_hand_basis": "opposing probable throws L",
     "props": [
      {
       "prop": "Total bases",
@@ -9804,35 +10303,35 @@
     ]
    },
    {
-    "mlbam": 670042,
-    "name": "Luke Raley",
+    "mlbam": 663728,
+    "name": "Cal Raleigh",
     "org": "SEA",
     "game_pk": 823094,
     "slot": 3,
     "expected_pa": 4.45,
-    "vs_hand": "R",
-    "vs_hand_basis": "hand unknown, vs-RHP assumed",
+    "vs_hand": "L",
+    "vs_hand_basis": "opposing probable throws L",
     "props": [
      {
       "prop": "Total bases",
-      "fair_line": 1.64,
-      "lam": 1.64,
+      "fair_line": 1.72,
+      "lam": 1.72,
       "over_line": 1.5,
-      "p_over": 0.4885
+      "p_over": 0.5115
      },
      {
       "prop": "1+ hits",
-      "fair_line": 0.9,
-      "lam": 0.9,
+      "fair_line": 0.83,
+      "lam": 0.83,
       "over_line": 0.5,
-      "p_over": 0.6361
+      "p_over": 0.6002
      },
      {
       "prop": "1+ home runs",
-      "fair_line": 0.167,
-      "lam": 0.167,
+      "fair_line": 0.249,
+      "lam": 0.249,
       "over_line": 0.5,
-      "p_over": 0.1561
+      "p_over": 0.2263
      }
     ]
    },
@@ -9843,8 +10342,8 @@
     "game_pk": 823094,
     "slot": 4,
     "expected_pa": 4.35,
-    "vs_hand": "R",
-    "vs_hand_basis": "hand unknown, vs-RHP assumed",
+    "vs_hand": "L",
+    "vs_hand_basis": "opposing probable throws L",
     "props": [
      {
       "prop": "Total bases",
@@ -9870,35 +10369,35 @@
     ]
    },
    {
-    "mlbam": 663728,
-    "name": "Cal Raleigh",
+    "mlbam": 677594,
+    "name": "Julio Rodr\u00edguez",
     "org": "SEA",
     "game_pk": 823094,
     "slot": 5,
     "expected_pa": 4.25,
-    "vs_hand": "R",
-    "vs_hand_basis": "hand unknown, vs-RHP assumed",
+    "vs_hand": "L",
+    "vs_hand_basis": "opposing probable throws L",
     "props": [
      {
       "prop": "Total bases",
-      "fair_line": 1.64,
-      "lam": 1.64,
+      "fair_line": 1.67,
+      "lam": 1.67,
       "over_line": 1.5,
-      "p_over": 0.4874
+      "p_over": 0.4975
      },
      {
       "prop": "1+ hits",
-      "fair_line": 0.79,
-      "lam": 0.79,
+      "fair_line": 0.97,
+      "lam": 0.97,
       "over_line": 0.5,
-      "p_over": 0.5833
+      "p_over": 0.6666
      },
      {
       "prop": "1+ home runs",
-      "fair_line": 0.238,
-      "lam": 0.238,
+      "fair_line": 0.159,
+      "lam": 0.159,
       "over_line": 0.5,
-      "p_over": 0.2173
+      "p_over": 0.1499
      }
     ]
    },
@@ -10089,14 +10588,14 @@
     "has_props_snapshot": false
    },
    {
-    "game_pk": 824795,
-    "matchup": "BOS at BAL",
+    "game_pk": 823904,
+    "matchup": "WSN at LAD",
     "basis": "largest team-market edge",
     "has_props_snapshot": false
    },
    {
-    "game_pk": 824145,
-    "matchup": "ARI at HOU",
+    "game_pk": 823823,
+    "matchup": "CHC at MIA",
     "basis": "largest team-market edge",
     "has_props_snapshot": false
    }
@@ -10182,25 +10681,25 @@
     "game_pk": 823577,
     "label": "NYM moneyline",
     "market": "h2h",
-    "model_prob": 0.54503,
-    "odds": -175,
-    "book": "betonlineag"
+    "model_prob": 0.55119,
+    "odds": -156,
+    "book": "betus"
    },
    {
     "leg_id": "823577:ml:away",
     "game_pk": 823577,
     "label": "SFG moneyline",
     "market": "h2h",
-    "model_prob": 0.45497,
-    "odds": 158,
-    "book": "lowvig"
+    "model_prob": 0.44881,
+    "odds": 145,
+    "book": "betrivers"
    },
    {
     "leg_id": "823577:tot:over",
     "game_pk": 823577,
     "label": "SFG at NYM Over 8.0",
     "market": "totals",
-    "model_prob": 0.57104,
+    "model_prob": 0.57048,
     "odds": -102,
     "book": "lowvig"
    },
@@ -10209,34 +10708,52 @@
     "game_pk": 823577,
     "label": "SFG at NYM Under 8.0",
     "market": "totals",
-    "model_prob": 0.42896,
-    "odds": -113,
-    "book": "lowvig"
+    "model_prob": 0.42952,
+    "odds": -110,
+    "book": "bovada"
    },
    {
     "leg_id": "823823:ml:home",
     "game_pk": 823823,
     "label": "MIA moneyline",
     "market": "h2h",
-    "model_prob": 0.46984,
-    "odds": null,
-    "book": null
+    "model_prob": 0.46931,
+    "odds": 112,
+    "book": "betrivers"
    },
    {
     "leg_id": "823823:ml:away",
     "game_pk": 823823,
     "label": "CHC moneyline",
     "market": "h2h",
-    "model_prob": 0.53016,
-    "odds": null,
-    "book": null
+    "model_prob": 0.53069,
+    "odds": -120,
+    "book": "betonlineag"
+   },
+   {
+    "leg_id": "823823:tot:over",
+    "game_pk": 823823,
+    "label": "CHC at MIA Over 8.5",
+    "market": "totals",
+    "model_prob": 0.66822,
+    "odds": 100,
+    "book": "bovada"
+   },
+   {
+    "leg_id": "823823:tot:under",
+    "game_pk": 823823,
+    "label": "CHC at MIA Under 8.5",
+    "market": "totals",
+    "model_prob": 0.33178,
+    "odds": -112,
+    "book": "fanduel"
    },
    {
     "leg_id": "823419:ml:home",
     "game_pk": 823419,
     "label": "PHI moneyline",
     "market": "h2h",
-    "model_prob": 0.54755,
+    "model_prob": 0.54711,
     "odds": -155,
     "book": "lowvig"
    },
@@ -10245,7 +10762,7 @@
     "game_pk": 823419,
     "label": "ATL moneyline",
     "market": "h2h",
-    "model_prob": 0.45245,
+    "model_prob": 0.45289,
     "odds": 140,
     "book": "lowvig"
    },
@@ -10254,8 +10771,8 @@
     "game_pk": 823419,
     "label": "ATL at PHI Over 8.0",
     "market": "totals",
-    "model_prob": 0.60642,
-    "odds": -113,
+    "model_prob": 0.60592,
+    "odds": -118,
     "book": "lowvig"
    },
    {
@@ -10263,8 +10780,8 @@
     "game_pk": 823419,
     "label": "ATL at PHI Under 8.0",
     "market": "totals",
-    "model_prob": 0.39358,
-    "odds": -102,
+    "model_prob": 0.39408,
+    "odds": 103,
     "book": "lowvig"
    },
    {
@@ -10272,35 +10789,53 @@
     "game_pk": 824389,
     "label": "CLE moneyline",
     "market": "h2h",
-    "model_prob": 0.62415,
-    "odds": null,
-    "book": null
+    "model_prob": 0.62537,
+    "odds": -152,
+    "book": "betonlineag"
    },
    {
     "leg_id": "824389:ml:away",
     "game_pk": 824389,
     "label": "DET moneyline",
     "market": "h2h",
-    "model_prob": 0.37585,
-    "odds": null,
-    "book": null
+    "model_prob": 0.37463,
+    "odds": 138,
+    "book": "betonlineag"
+   },
+   {
+    "leg_id": "824389:tot:over",
+    "game_pk": 824389,
+    "label": "DET at CLE Over 7.0",
+    "market": "totals",
+    "model_prob": 0.63135,
+    "odds": 105,
+    "book": "bovada"
+   },
+   {
+    "leg_id": "824389:tot:under",
+    "game_pk": 824389,
+    "label": "DET at CLE Under 7.0",
+    "market": "totals",
+    "model_prob": 0.36865,
+    "odds": -118,
+    "book": "lowvig"
    },
    {
     "leg_id": "823335:ml:home",
     "game_pk": 823335,
     "label": "PIT moneyline",
     "market": "h2h",
-    "model_prob": 0.67721,
-    "odds": -173,
-    "book": "lowvig"
+    "model_prob": 0.67491,
+    "odds": -175,
+    "book": "betus"
    },
    {
     "leg_id": "823335:ml:away",
     "game_pk": 823335,
     "label": "LAA moneyline",
     "market": "h2h",
-    "model_prob": 0.32279,
-    "odds": 156,
+    "model_prob": 0.32509,
+    "odds": 160,
     "book": "betonlineag"
    },
    {
@@ -10308,16 +10843,16 @@
     "game_pk": 823335,
     "label": "LAA at PIT Over 7.5",
     "market": "totals",
-    "model_prob": 0.6445,
-    "odds": -118,
-    "book": "lowvig"
+    "model_prob": 0.64104,
+    "odds": -112,
+    "book": "betrivers"
    },
    {
     "leg_id": "823335:tot:under",
     "game_pk": 823335,
     "label": "LAA at PIT Under 7.5",
     "market": "totals",
-    "model_prob": 0.3555,
+    "model_prob": 0.35896,
     "odds": 103,
     "book": "lowvig"
    },
@@ -10326,35 +10861,35 @@
     "game_pk": 824468,
     "label": "CIN moneyline",
     "market": "h2h",
-    "model_prob": 0.39797,
-    "odds": 140,
-    "book": "betonlineag"
+    "model_prob": 0.39516,
+    "odds": 136,
+    "book": "lowvig"
    },
    {
     "leg_id": "824468:ml:away",
     "game_pk": 824468,
     "label": "MIL moneyline",
     "market": "h2h",
-    "model_prob": 0.60203,
-    "odds": -155,
+    "model_prob": 0.60484,
+    "odds": -150,
     "book": "betonlineag"
    },
    {
     "leg_id": "824468:tot:over",
     "game_pk": 824468,
-    "label": "MIL at CIN Over 9.5",
+    "label": "MIL at CIN Over 9.0",
     "market": "totals",
-    "model_prob": 0.50984,
-    "odds": 107,
+    "model_prob": 0.57442,
+    "odds": -113,
     "book": "lowvig"
    },
    {
     "leg_id": "824468:tot:under",
     "game_pk": 824468,
-    "label": "MIL at CIN Under 9.5",
+    "label": "MIL at CIN Under 9.0",
     "market": "totals",
-    "model_prob": 0.49016,
-    "odds": -123,
+    "model_prob": 0.42558,
+    "odds": -102,
     "book": "lowvig"
    },
    {
@@ -10362,34 +10897,34 @@
     "game_pk": 824795,
     "label": "BAL moneyline",
     "market": "h2h",
-    "model_prob": 0.42105,
-    "odds": 125,
-    "book": "betonlineag"
+    "model_prob": 0.42302,
+    "odds": 112,
+    "book": "fanduel"
    },
    {
     "leg_id": "824795:ml:away",
     "game_pk": 824795,
     "label": "BOS moneyline",
     "market": "h2h",
-    "model_prob": 0.57895,
-    "odds": -138,
-    "book": "lowvig"
+    "model_prob": 0.57698,
+    "odds": -121,
+    "book": "betus"
    },
    {
     "leg_id": "824795:tot:over",
     "game_pk": 824795,
     "label": "BOS at BAL Over 8.0",
     "market": "totals",
-    "model_prob": 0.65712,
-    "odds": -113,
-    "book": "lowvig"
+    "model_prob": 0.65883,
+    "odds": -110,
+    "book": "bovada"
    },
    {
     "leg_id": "824795:tot:under",
     "game_pk": 824795,
     "label": "BOS at BAL Under 8.0",
     "market": "totals",
-    "model_prob": 0.34288,
+    "model_prob": 0.34117,
     "odds": -102,
     "book": "lowvig"
    },
@@ -10398,7 +10933,7 @@
     "game_pk": 822850,
     "label": "TEX moneyline",
     "market": "h2h",
-    "model_prob": 0.46588,
+    "model_prob": 0.46803,
     "odds": -105,
     "book": "betonlineag"
    },
@@ -10407,7 +10942,7 @@
     "game_pk": 822850,
     "label": "TBR moneyline",
     "market": "h2h",
-    "model_prob": 0.53412,
+    "model_prob": 0.53197,
     "odds": -105,
     "book": "betonlineag"
    },
@@ -10416,8 +10951,8 @@
     "game_pk": 822850,
     "label": "TBR at TEX Over 7.0",
     "market": "totals",
-    "model_prob": 0.40135,
-    "odds": -102,
+    "model_prob": 0.4076,
+    "odds": 103,
     "book": "lowvig"
    },
    {
@@ -10425,26 +10960,26 @@
     "game_pk": 822850,
     "label": "TBR at TEX Under 7.0",
     "market": "totals",
-    "model_prob": 0.59865,
-    "odds": -113,
-    "book": "lowvig"
+    "model_prob": 0.5924,
+    "odds": -118,
+    "book": "mybookieag"
    },
    {
     "leg_id": "824066:ml:home",
     "game_pk": 824066,
     "label": "KCR moneyline",
     "market": "h2h",
-    "model_prob": 0.53907,
-    "odds": -108,
-    "book": "betonlineag"
+    "model_prob": 0.53475,
+    "odds": -105,
+    "book": "lowvig"
    },
    {
     "leg_id": "824066:ml:away",
     "game_pk": 824066,
     "label": "TOR moneyline",
     "market": "h2h",
-    "model_prob": 0.46093,
-    "odds": -102,
+    "model_prob": 0.46525,
+    "odds": -105,
     "book": "lowvig"
    },
    {
@@ -10452,17 +10987,17 @@
     "game_pk": 824066,
     "label": "TOR at KCR Over 9.5",
     "market": "totals",
-    "model_prob": 0.42246,
-    "odds": -113,
-    "book": "lowvig"
+    "model_prob": 0.42639,
+    "odds": 100,
+    "book": "bovada"
    },
    {
     "leg_id": "824066:tot:under",
     "game_pk": 824066,
     "label": "TOR at KCR Under 9.5",
     "market": "totals",
-    "model_prob": 0.57754,
-    "odds": -102,
+    "model_prob": 0.57361,
+    "odds": -113,
     "book": "lowvig"
    },
    {
@@ -10470,36 +11005,36 @@
     "game_pk": 824553,
     "label": "CHW moneyline",
     "market": "h2h",
-    "model_prob": 0.48807,
-    "odds": -120,
-    "book": "lowvig"
+    "model_prob": 0.48586,
+    "odds": -116,
+    "book": "betonlineag"
    },
    {
     "leg_id": "824553:ml:away",
     "game_pk": 824553,
     "label": "MIN moneyline",
     "market": "h2h",
-    "model_prob": 0.51193,
-    "odds": 109,
-    "book": "betonlineag"
+    "model_prob": 0.51414,
+    "odds": 106,
+    "book": "fanduel"
    },
    {
     "leg_id": "824553:tot:over",
     "game_pk": 824553,
-    "label": "MIN at CHW Over 8.5",
+    "label": "MIN at CHW Over 8.0",
     "market": "totals",
-    "model_prob": 0.59982,
-    "odds": 103,
-    "book": "lowvig"
+    "model_prob": 0.68782,
+    "odds": -115,
+    "book": "mybookieag"
    },
    {
     "leg_id": "824553:tot:under",
     "game_pk": 824553,
-    "label": "MIN at CHW Under 8.5",
+    "label": "MIN at CHW Under 8.0",
     "market": "totals",
-    "model_prob": 0.40018,
-    "odds": -118,
-    "book": "lowvig"
+    "model_prob": 0.31218,
+    "odds": 100,
+    "book": "betmgm"
    },
    {
     "leg_id": "824145:ml:home",
@@ -10507,8 +11042,8 @@
     "label": "HOU moneyline",
     "market": "h2h",
     "model_prob": 0.53448,
-    "odds": -107,
-    "book": "betonlineag"
+    "odds": -105,
+    "book": "betus"
    },
    {
     "leg_id": "824145:ml:away",
@@ -10524,17 +11059,17 @@
     "game_pk": 824145,
     "label": "ARI at HOU Over 8.5",
     "market": "totals",
-    "model_prob": 0.59904,
-    "odds": -107,
-    "book": "lowvig"
+    "model_prob": 0.59846,
+    "odds": -118,
+    "book": "betrivers"
    },
    {
     "leg_id": "824145:tot:under",
     "game_pk": 824145,
     "label": "ARI at HOU Under 8.5",
     "market": "totals",
-    "model_prob": 0.40096,
-    "odds": -107,
+    "model_prob": 0.40154,
+    "odds": 107,
     "book": "lowvig"
    },
    {
@@ -10542,35 +11077,35 @@
     "game_pk": 823257,
     "label": "SDP moneyline",
     "market": "h2h",
-    "model_prob": 0.4652,
-    "odds": -105,
-    "book": "betonlineag"
+    "model_prob": 0.46685,
+    "odds": -124,
+    "book": "betrivers"
    },
    {
     "leg_id": "823257:ml:away",
     "game_pk": 823257,
     "label": "NYY moneyline",
     "market": "h2h",
-    "model_prob": 0.5348,
-    "odds": -102,
-    "book": "fanduel"
+    "model_prob": 0.53315,
+    "odds": 115,
+    "book": "betonlineag"
    },
    {
     "leg_id": "823257:tot:over",
     "game_pk": 823257,
     "label": "NYY at SDP Over 7.5",
     "market": "totals",
-    "model_prob": 0.60394,
-    "odds": -123,
-    "book": "lowvig"
+    "model_prob": 0.60187,
+    "odds": -110,
+    "book": "betrivers"
    },
    {
     "leg_id": "823257:tot:under",
     "game_pk": 823257,
     "label": "NYY at SDP Under 7.5",
     "market": "totals",
-    "model_prob": 0.39606,
-    "odds": 107,
+    "model_prob": 0.39813,
+    "odds": 100,
     "book": "lowvig"
    },
    {
@@ -10578,26 +11113,26 @@
     "game_pk": 824310,
     "label": "COL moneyline",
     "market": "h2h",
-    "model_prob": 0.5318,
-    "odds": 109,
-    "book": "betonlineag"
+    "model_prob": 0.53376,
+    "odds": 110,
+    "book": "betus"
    },
    {
     "leg_id": "824310:ml:away",
     "game_pk": 824310,
     "label": "STL moneyline",
     "market": "h2h",
-    "model_prob": 0.4682,
-    "odds": -118,
-    "book": "fanduel"
+    "model_prob": 0.46624,
+    "odds": -120,
+    "book": "betrivers"
    },
    {
     "leg_id": "824310:tot:over",
     "game_pk": 824310,
     "label": "STL at COL Over 11.0",
     "market": "totals",
-    "model_prob": 0.51,
-    "odds": 103,
+    "model_prob": 0.50939,
+    "odds": 107,
     "book": "lowvig"
    },
    {
@@ -10605,63 +11140,81 @@
     "game_pk": 824310,
     "label": "STL at COL Under 11.0",
     "market": "totals",
-    "model_prob": 0.49,
-    "odds": -115,
-    "book": "bovada"
+    "model_prob": 0.49061,
+    "odds": -118,
+    "book": "fanduel"
    },
    {
     "leg_id": "823904:ml:home",
     "game_pk": 823904,
     "label": "LAD moneyline",
     "market": "h2h",
-    "model_prob": 0.63885,
-    "odds": -218,
-    "book": "lowvig"
+    "model_prob": 0.63849,
+    "odds": -215,
+    "book": "betus"
    },
    {
     "leg_id": "823904:ml:away",
     "game_pk": 823904,
     "label": "WSN moneyline",
     "market": "h2h",
-    "model_prob": 0.36115,
-    "odds": 195,
+    "model_prob": 0.36151,
+    "odds": 197,
     "book": "betonlineag"
    },
    {
     "leg_id": "823904:tot:over",
     "game_pk": 823904,
-    "label": "WSN at LAD Over 8.0",
+    "label": "WSN at LAD Over 7.0",
     "market": "totals",
-    "model_prob": 0.55448,
-    "odds": -102,
+    "model_prob": 0.70731,
+    "odds": -109,
     "book": "lowvig"
    },
    {
     "leg_id": "823904:tot:under",
     "game_pk": 823904,
-    "label": "WSN at LAD Under 8.0",
+    "label": "WSN at LAD Under 7.0",
     "market": "totals",
-    "model_prob": 0.44552,
-    "odds": -113,
-    "book": "lowvig"
+    "model_prob": 0.29269,
+    "odds": -103,
+    "book": "draftkings"
    },
    {
     "leg_id": "823094:ml:home",
     "game_pk": 823094,
     "label": "SEA moneyline",
     "market": "h2h",
-    "model_prob": 0.56606,
-    "odds": null,
-    "book": null
+    "model_prob": 0.61075,
+    "odds": -230,
+    "book": "betonlineag"
    },
    {
     "leg_id": "823094:ml:away",
     "game_pk": 823094,
     "label": "ATH moneyline",
     "market": "h2h",
-    "model_prob": 0.43394,
-    "odds": null,
-    "book": null
+    "model_prob": 0.38925,
+    "odds": 206,
+    "book": "betonlineag"
+   },
+   {
+    "leg_id": "823094:tot:over",
+    "game_pk": 823094,
+    "label": "ATH at SEA Over 7.5",
+    "market": "totals",
+    "model_prob": 0.67762,
+    "odds": -107,
+    "book": "lowvig"
+   },
+   {
+    "leg_id": "823094:tot:under",
+    "game_pk": 823094,
+    "label": "ATH at SEA Under 7.5",
+    "market": "totals",
+    "model_prob": 0.32238,
+    "odds": -103,
+    "book": "betrivers"
    }
   ],
   "featured_parlay": null,
@@ -10686,7 +11239,7 @@
  },
  "record_url": "/data/betting_record.json",
  "record_policy": "Append only. Rows are never edited or deleted; a correction is a new row. betting_export.write_record refuses any other write and test_betting.py pins it.",
- "record_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 456 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. This row is in the public record because a claim that is not written down before the result is not a claim.",
+ "record_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 472 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. This row is in the public record because a claim that is not written down before the result is not a claim.",
  "record_storage": {
   "backend": "jsonl",
   "authoritative_path": ".cache/betting/record.jsonl",
@@ -10698,7 +11251,7 @@
   "why": "the append-only log under .cache/ is untracked, so the nightly `git checkout -- .` cannot revert it; data/betting_record.json is re-rendered from it every build"
  },
  "honest_backtest": {
-  "n_graded": 456,
+  "n_graded": 472,
   "n_needed": 600,
   "source": "data/betting_model_eval.json vintage block"
  },
@@ -10709,8 +11262,8 @@
    "close_snapshot"
   ],
   "ok": false,
-  "n_candidates": 1,
-  "n_new": 1,
+  "n_candidates": 2,
+  "n_new": 2,
   "written": 0,
   "policy": "a selection enters the public record only when every blocker is open; the first row is written by the first nightly that clears all of them, and nothing else arms it",
   "reason": "blocked: close_snapshot (no close snapshot for this slate, so the selection could never be CLV-graded and the only honest read on an unvalidated model's decisions would be missing. no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above)"
@@ -10735,7 +11288,7 @@
    "open": true,
    "need": "betting_model's run-dispersion gate to have RUN (not to have passed)",
    "have": "ran",
-   "reason": "the dispersion gate ran on 649 held-out games and reported passed=False, so the margin model behind the published probability is known"
+   "reason": "the dispersion gate ran on 665 held-out games and reported passed=False, so the margin model behind the published probability is known"
   },
   {
    "id": "record_storage",
@@ -10769,7 +11322,7 @@
   "source": ".cache/betting/published_chain.json",
   "durable": true,
   "armed": true,
-  "published_at": "2026-09-03T15:21:47+00:00",
+  "published_at": "2026-09-04T19:19:47+00:00",
   "n_rows": 0
  },
  "settlement_url": "/data/betting_settlement.json",

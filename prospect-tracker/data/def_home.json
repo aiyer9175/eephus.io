@@ -1,5 +1,5 @@
 {
-"generated_at": "2026-09-04",
+"generated_at": "2026-09-05",
 "source": "data/prospect_def_value.json (deploy-excluded model internal; this sidecar reshapes it, no model re-run)",
 "meta": {
 "contract": "risk-context display only; never a grade, rank, or sort input anywhere on the site",
@@ -36,11 +36,11 @@
 },
 "entropy_cuts": [
 1.2015,
-1.4214
+1.4215
 ],
-"n": 2620,
+"n": 2621,
 "n_by_basis": {
-"live_listed": 2620,
+"live_listed": 2621,
 "artifact_asof": 0
 },
 "basis_note": "live_listed = current listed position + age + games shares + frame through the model's pure def_value() function (the training-cohort artifact holds zero current prospects); artifact_asof = as-of-decision pass-through"
@@ -75,7 +75,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7661,
+"entropy": 1.7662,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -86,7 +86,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6701,
+"entropy": 1.6702,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -119,7 +119,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6789,
+"entropy": 1.679,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -163,7 +163,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.73,
+"entropy": 0.7301,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -174,7 +174,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7145,
+"entropy": 0.7146,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -251,14 +251,14 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4053,
+"entropy": 1.4054,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
 "620439": {
 "player_key": "franklin_barreto",
 "listed_pos": "2B",
-"p_hold": 0.383,
+"p_hold": 0.382,
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
@@ -284,7 +284,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.667,
+"entropy": 0.6671,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -295,7 +295,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.672,
+"entropy": 1.6721,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -306,7 +306,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.662,
+"entropy": 1.6621,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -324,11 +324,11 @@
 "621043": {
 "player_key": "carlos_correa",
 "listed_pos": "SS",
-"p_hold": 0.377,
+"p_hold": 0.376,
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6765,
+"entropy": 1.6766,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -350,7 +350,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4304,
+"entropy": 1.4305,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -361,7 +361,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.438,
+"entropy": 1.4381,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -372,7 +372,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4384,
+"entropy": 1.4385,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -394,7 +394,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7384,
+"entropy": 0.7385,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -405,7 +405,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6666,
+"entropy": 1.6667,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -449,7 +449,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6799,
+"entropy": 1.68,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -460,7 +460,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4244,
+"entropy": 1.4245,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -471,7 +471,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4218,
+"entropy": 1.4219,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -489,7 +489,7 @@
 "624415": {
 "player_key": "cavan_biggio",
 "listed_pos": "2B",
-"p_hold": 0.309,
+"p_hold": 0.308,
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
@@ -515,7 +515,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7471,
+"entropy": 1.7472,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -526,7 +526,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7086,
+"entropy": 0.7087,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -537,7 +537,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7128,
+"entropy": 0.7129,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -548,7 +548,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6602,
+"entropy": 1.6603,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -559,7 +559,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4244,
+"entropy": 1.4245,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -570,7 +570,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4095,
+"entropy": 1.4096,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -581,7 +581,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6723,
+"entropy": 1.6724,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -592,7 +592,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7145,
+"entropy": 0.7146,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -603,7 +603,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4242,
+"entropy": 1.4243,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -614,7 +614,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3847,
+"entropy": 1.3848,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -636,7 +636,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 1.0237,
+"entropy": 1.0238,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -647,7 +647,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.671,
+"entropy": 1.6711,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -658,7 +658,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7081,
+"entropy": 0.7082,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -669,7 +669,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7036,
+"entropy": 0.7037,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -691,7 +691,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7633,
+"entropy": 1.7634,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -713,7 +713,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6975,
+"entropy": 0.6976,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -724,7 +724,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4162,
+"entropy": 1.4163,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -735,7 +735,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4049,
+"entropy": 1.405,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -746,7 +746,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4014,
+"entropy": 1.4015,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -757,7 +757,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4253,
+"entropy": 1.4254,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -768,7 +768,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7079,
+"entropy": 0.708,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -801,7 +801,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4038,
+"entropy": 1.4039,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -812,7 +812,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6585,
+"entropy": 1.6586,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -834,7 +834,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7092,
+"entropy": 0.7093,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -867,7 +867,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6533,
+"entropy": 1.6534,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -889,7 +889,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.4381,
+"entropy": 1.4382,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -911,7 +911,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 1.4242,
+"entropy": 1.4243,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -922,7 +922,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4043,
+"entropy": 1.4044,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -944,7 +944,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3945,
+"entropy": 1.3946,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -955,7 +955,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6541,
+"entropy": 1.6542,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -966,7 +966,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7494,
+"entropy": 1.7495,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -988,7 +988,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6403,
+"entropy": 1.6404,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -999,7 +999,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7416,
+"entropy": 1.7417,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1010,7 +1010,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.7563,
+"entropy": 1.7564,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1021,7 +1021,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4282,
+"entropy": 1.4283,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1043,7 +1043,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.711,
+"entropy": 0.7111,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1054,7 +1054,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7045,
+"entropy": 0.7046,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1065,7 +1065,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7068,
+"entropy": 0.7069,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1076,7 +1076,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.7375,
+"entropy": 1.7376,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1087,7 +1087,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3582,
+"entropy": 1.3583,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1098,7 +1098,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6399,
+"entropy": 0.64,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1109,7 +1109,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6362,
+"entropy": 0.6363,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1131,7 +1131,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6738,
+"entropy": 1.6739,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1175,7 +1175,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6242,
+"entropy": 0.6243,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1230,7 +1230,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6372,
+"entropy": 0.6373,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1241,7 +1241,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6288,
+"entropy": 1.6289,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1252,7 +1252,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6482,
+"entropy": 0.6483,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1263,7 +1263,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6245,
+"entropy": 0.6246,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1274,7 +1274,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6192,
+"entropy": 1.6193,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1285,7 +1285,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6536,
+"entropy": 0.6537,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1296,7 +1296,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7391,
+"entropy": 0.7392,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1318,7 +1318,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4077,
+"entropy": 1.4078,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1329,7 +1329,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6402,
+"entropy": 1.6403,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1362,7 +1362,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4204,
+"entropy": 1.4205,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1384,7 +1384,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4031,
+"entropy": 1.4032,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1395,7 +1395,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3867,
+"entropy": 1.3868,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1406,7 +1406,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3937,
+"entropy": 1.3938,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1424,11 +1424,11 @@
 "656577": {
 "player_key": "alex_jackson",
 "listed_pos": "C",
-"p_hold": 0.777,
+"p_hold": 0.776,
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6798,
+"entropy": 0.6799,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1439,7 +1439,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4673,
+"entropy": 1.4674,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1450,7 +1450,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6908,
+"entropy": 0.6909,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1461,7 +1461,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6555,
+"entropy": 0.6556,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1494,7 +1494,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4229,
+"entropy": 1.423,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1516,7 +1516,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.679,
+"entropy": 0.6791,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1527,7 +1527,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.4131,
+"entropy": 1.4132,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1560,7 +1560,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.382,
+"entropy": 1.3821,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1593,7 +1593,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7063,
+"entropy": 1.7064,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1604,7 +1604,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3781,
+"entropy": 1.3782,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1615,7 +1615,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6653,
+"entropy": 0.6654,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1648,7 +1648,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.646,
+"entropy": 1.6461,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1659,7 +1659,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3916,
+"entropy": 1.3917,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1670,7 +1670,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3892,
+"entropy": 1.3893,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1681,7 +1681,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6084,
+"entropy": 1.6085,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1692,7 +1692,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6541,
+"entropy": 1.6542,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1703,7 +1703,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6082,
+"entropy": 0.6083,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1725,7 +1725,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6028,
+"entropy": 1.6029,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1736,7 +1736,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5945,
+"entropy": 1.5946,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1758,7 +1758,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3422,
+"entropy": 1.3423,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1769,7 +1769,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5801,
+"entropy": 0.5802,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1791,7 +1791,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5971,
+"entropy": 0.5972,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1802,7 +1802,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3404,
+"entropy": 1.3405,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1824,7 +1824,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3477,
+"entropy": 1.3478,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1846,7 +1846,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6035,
+"entropy": 0.6036,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1857,7 +1857,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3403,
+"entropy": 1.3404,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1879,7 +1879,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.39,
+"entropy": 1.3901,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -1890,7 +1890,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6373,
+"entropy": 1.6374,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1901,7 +1901,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6608,
+"entropy": 0.6609,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1912,7 +1912,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.8803,
+"entropy": 1.8804,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -1952,11 +1952,11 @@
 "663503": {
 "player_key": "elih_marrero",
 "listed_pos": "C",
-"p_hold": 0.805,
+"p_hold": 0.804,
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6238,
+"entropy": 0.6239,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -1978,7 +1978,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6322,
+"entropy": 0.6323,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2011,7 +2011,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3631,
+"entropy": 1.3632,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2066,7 +2066,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3651,
+"entropy": 1.3652,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2088,7 +2088,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3671,
+"entropy": 1.3672,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2132,7 +2132,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6322,
+"entropy": 1.6323,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2176,7 +2176,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3726,
+"entropy": 1.3727,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2187,7 +2187,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7923,
+"entropy": 1.7924,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2209,7 +2209,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6367,
+"entropy": 1.6368,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2220,7 +2220,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6562,
+"entropy": 0.6563,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2242,7 +2242,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.7437,
+"entropy": 1.7438,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2264,7 +2264,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6718,
+"entropy": 0.6719,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2275,7 +2275,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3891,
+"entropy": 1.3892,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2308,7 +2308,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.4402,
+"entropy": 1.4403,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2330,7 +2330,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4285,
+"entropy": 1.4286,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2352,7 +2352,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4302,
+"entropy": 1.4303,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2363,7 +2363,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4303,
+"entropy": 1.4304,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2385,7 +2385,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 1.0354,
+"entropy": 1.0355,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2407,7 +2407,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3223,
+"entropy": 1.3224,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2462,7 +2462,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4278,
+"entropy": 1.4279,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2484,7 +2484,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6656,
+"entropy": 0.6657,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2506,18 +2506,18 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7428,
+"entropy": 0.7429,
 "entropy_band": "low",
 "basis": "live_listed"
 },
 "664966": {
 "player_key": "jonathan_morales",
 "listed_pos": "C",
-"p_hold": 0.76,
+"p_hold": 0.759,
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7116,
+"entropy": 0.7117,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2528,7 +2528,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3841,
+"entropy": 1.3842,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2539,7 +2539,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4222,
+"entropy": 1.4223,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2550,7 +2550,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7416,
+"entropy": 0.7417,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2572,7 +2572,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6111,
+"entropy": 1.6112,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2583,7 +2583,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4166,
+"entropy": 1.4167,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2594,7 +2594,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3083,
+"entropy": 1.3084,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2616,7 +2616,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3675,
+"entropy": 1.3676,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2624,10 +2624,10 @@
 "player_key": "cristian_pache",
 "listed_pos": "CF",
 "p_hold": 0.504,
-"band": "Split risk",
+"band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3155,
+"entropy": 1.3156,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2638,7 +2638,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3156,
+"entropy": 1.3157,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2649,7 +2649,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5544,
+"entropy": 0.5546,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2660,7 +2660,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5451,
+"entropy": 0.5452,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2682,7 +2682,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3175,
+"entropy": 1.3176,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2693,7 +2693,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3214,
+"entropy": 1.3215,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2704,7 +2704,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.553,
+"entropy": 0.5531,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2726,7 +2726,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5824,
+"entropy": 1.5825,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2759,7 +2759,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.584,
+"entropy": 1.5841,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2770,7 +2770,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5393,
+"entropy": 0.5395,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2781,7 +2781,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7043,
+"entropy": 1.7044,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2792,7 +2792,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5609,
+"entropy": 1.561,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2814,7 +2814,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3123,
+"entropy": 1.3124,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2825,7 +2825,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3082,
+"entropy": 1.3083,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2836,18 +2836,18 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5848,
+"entropy": 1.5849,
 "entropy_band": "high",
 "basis": "live_listed"
 },
 "665966": {
 "player_key": "carlos_narvaez",
 "listed_pos": "C",
-"p_hold": 0.832,
+"p_hold": 0.831,
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5651,
+"entropy": 0.5653,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2858,7 +2858,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3025,
+"entropy": 1.3026,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2869,18 +2869,18 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5587,
+"entropy": 1.5588,
 "entropy_band": "high",
 "basis": "live_listed"
 },
 "665989": {
 "player_key": "shervyen_newton",
 "listed_pos": "SS",
-"p_hold": 0.42,
+"p_hold": 0.419,
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5654,
+"entropy": 1.5655,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -2891,7 +2891,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.318,
+"entropy": 1.3181,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -2913,7 +2913,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7015,
+"entropy": 0.7016,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2946,7 +2946,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5658,
+"entropy": 0.566,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -2979,7 +2979,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3273,
+"entropy": 1.3274,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3001,7 +3001,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3848,
+"entropy": 1.3849,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3045,7 +3045,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3308,
+"entropy": 1.3309,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3067,7 +3067,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6134,
+"entropy": 0.6135,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3078,7 +3078,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3595,
+"entropy": 1.3596,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3089,7 +3089,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3391,
+"entropy": 1.3392,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3100,7 +3100,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3281,
+"entropy": 1.3282,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3111,7 +3111,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5991,
+"entropy": 1.5992,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3122,7 +3122,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3528,
+"entropy": 1.3529,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3133,7 +3133,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3177,
+"entropy": 1.3178,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3151,11 +3151,11 @@
 "666198": {
 "player_key": "carter_kieboom",
 "listed_pos": "SS",
-"p_hold": 0.304,
+"p_hold": 0.303,
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.713,
+"entropy": 1.7131,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3166,7 +3166,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5782,
+"entropy": 1.5783,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3177,7 +3177,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3495,
+"entropy": 1.3496,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3199,7 +3199,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5103,
+"entropy": 0.5104,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3210,7 +3210,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5601,
+"entropy": 0.5602,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3243,7 +3243,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2972,
+"entropy": 1.2973,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3254,7 +3254,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5552,
+"entropy": 1.5553,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3265,7 +3265,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.5815,
+"entropy": 1.5816,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3276,7 +3276,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5361,
+"entropy": 0.5362,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3294,7 +3294,7 @@
 "666906": {
 "player_key": "jake_alu",
 "listed_pos": "3B",
-"p_hold": 0.377,
+"p_hold": 0.376,
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
@@ -3320,7 +3320,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3959,
+"entropy": 1.396,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3331,7 +3331,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4566,
+"entropy": 1.4567,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3342,7 +3342,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6227,
+"entropy": 1.6228,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3353,7 +3353,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6248,
+"entropy": 0.625,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3408,7 +3408,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6471,
+"entropy": 0.6472,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3441,18 +3441,18 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5927,
+"entropy": 1.5928,
 "entropy_band": "high",
 "basis": "live_listed"
 },
 "668663": {
 "player_key": "tres_barrera",
 "listed_pos": "C",
-"p_hold": 0.753,
+"p_hold": 0.752,
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7243,
+"entropy": 0.7244,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3463,7 +3463,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.706,
+"entropy": 1.7061,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3474,7 +3474,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3216,
+"entropy": 1.3217,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3485,7 +3485,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7042,
+"entropy": 0.7043,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3507,7 +3507,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4094,
+"entropy": 1.4095,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3518,7 +3518,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6234,
+"entropy": 0.6236,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3529,7 +3529,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3079,
+"entropy": 1.308,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3540,7 +3540,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3232,
+"entropy": 1.3233,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3551,7 +3551,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3064,
+"entropy": 1.3065,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3562,7 +3562,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.34,
+"entropy": 1.3401,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3573,7 +3573,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3694,
+"entropy": 1.3695,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3584,7 +3584,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3555,
+"entropy": 1.3556,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3595,7 +3595,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7112,
+"entropy": 0.7113,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3628,7 +3628,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3582,
+"entropy": 1.3583,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3639,7 +3639,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.7236,
+"entropy": 1.7237,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3661,7 +3661,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6118,
+"entropy": 0.612,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3672,7 +3672,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.8548,
+"entropy": 1.8549,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3705,7 +3705,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5617,
+"entropy": 1.5618,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3771,7 +3771,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2879,
+"entropy": 1.288,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3793,7 +3793,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5648,
+"entropy": 0.5649,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3804,7 +3804,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3422,
+"entropy": 1.3423,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3815,7 +3815,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.624,
+"entropy": 1.6241,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3826,7 +3826,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.406,
+"entropy": 1.4061,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -3837,7 +3837,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.7251,
+"entropy": 1.7252,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3855,11 +3855,11 @@
 "669127": {
 "player_key": "shea_langeliers",
 "listed_pos": "C",
-"p_hold": 0.759,
+"p_hold": 0.758,
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7135,
+"entropy": 0.7136,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3870,7 +3870,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7834,
+"entropy": 0.7835,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3903,7 +3903,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6838,
+"entropy": 1.6839,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3914,7 +3914,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7225,
+"entropy": 0.7226,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3936,7 +3936,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6503,
+"entropy": 0.6504,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -3947,7 +3947,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.571,
+"entropy": 1.5711,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3980,7 +3980,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4542,
+"entropy": 1.4543,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -3991,18 +3991,18 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.8871,
+"entropy": 1.8872,
 "entropy_band": "high",
 "basis": "live_listed"
 },
 "669257": {
 "player_key": "will_smith",
 "listed_pos": "C",
-"p_hold": 0.763,
+"p_hold": 0.762,
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7062,
+"entropy": 0.7063,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -4013,7 +4013,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3247,
+"entropy": 1.3248,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4031,7 +4031,7 @@
 "669289": {
 "player_key": "santiago_espinal",
 "listed_pos": "2B",
-"p_hold": 0.371,
+"p_hold": 0.37,
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
@@ -4042,11 +4042,11 @@
 "669304": {
 "player_key": "jose_f_miranda",
 "listed_pos": "3B",
-"p_hold": 0.372,
+"p_hold": 0.371,
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.5645,
+"entropy": 1.5646,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4064,7 +4064,7 @@
 "669327": {
 "player_key": "tanner_allen",
 "listed_pos": "CF",
-"p_hold": 0.448,
+"p_hold": 0.447,
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
@@ -4079,7 +4079,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2739,
+"entropy": 1.274,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4090,7 +4090,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3287,
+"entropy": 1.3288,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4119,11 +4119,11 @@
 "669364": {
 "player_key": "xavier_edwards",
 "listed_pos": "2B",
-"p_hold": 0.342,
+"p_hold": 0.341,
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.8526,
+"entropy": 1.8527,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4134,7 +4134,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.398,
+"entropy": 1.3981,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4156,7 +4156,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3906,
+"entropy": 1.3907,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4167,7 +4167,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5334,
+"entropy": 1.5335,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4211,7 +4211,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6889,
+"entropy": 1.689,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4233,7 +4233,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5628,
+"entropy": 1.5629,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4244,7 +4244,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5712,
+"entropy": 1.5713,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4255,7 +4255,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.8916,
+"entropy": 1.8917,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4266,7 +4266,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5746,
+"entropy": 1.5747,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4299,7 +4299,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6469,
+"entropy": 1.647,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4321,7 +4321,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5884,
+"entropy": 1.5885,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4332,7 +4332,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4054,
+"entropy": 1.4055,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4365,7 +4365,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4231,
+"entropy": 1.4232,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4387,7 +4387,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3545,
+"entropy": 1.3546,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4409,7 +4409,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6638,
+"entropy": 1.6639,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4453,7 +4453,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4053,
+"entropy": 1.4054,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4464,7 +4464,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4562,
+"entropy": 1.4563,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4475,7 +4475,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5683,
+"entropy": 0.5684,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -4497,7 +4497,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3761,
+"entropy": 1.3762,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4508,7 +4508,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3553,
+"entropy": 1.3554,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4530,7 +4530,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6403,
+"entropy": 1.6404,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4552,7 +4552,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4028,
+"entropy": 1.4029,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4563,7 +4563,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3,
+"entropy": 1.3001,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4574,7 +4574,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.6543,
+"entropy": 1.6544,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4585,7 +4585,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5244,
+"entropy": 0.5245,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -4596,7 +4596,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6444,
+"entropy": 1.6445,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4618,7 +4618,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6651,
+"entropy": 1.6652,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4629,7 +4629,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4975,
+"entropy": 0.4976,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -4640,7 +4640,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3757,
+"entropy": 1.3758,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4651,7 +4651,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3101,
+"entropy": 1.3102,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4673,7 +4673,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.7533,
+"entropy": 1.7534,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4684,7 +4684,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3117,
+"entropy": 1.3118,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4695,7 +4695,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3121,
+"entropy": 1.3122,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4706,7 +4706,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3683,
+"entropy": 1.3684,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4717,7 +4717,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2867,
+"entropy": 1.2868,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4728,7 +4728,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5122,
+"entropy": 0.5123,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -4739,7 +4739,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2863,
+"entropy": 1.2864,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4750,7 +4750,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6473,
+"entropy": 1.6474,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4761,7 +4761,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2855,
+"entropy": 1.2856,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4772,7 +4772,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5934,
+"entropy": 0.5936,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -4783,7 +4783,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6739,
+"entropy": 1.674,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4794,7 +4794,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2506,
+"entropy": 1.2507,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4805,7 +4805,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2393,
+"entropy": 1.2394,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4823,7 +4823,7 @@
 "671913": {
 "player_key": "damiano_palmegiani",
 "listed_pos": "3B",
-"p_hold": 0.369,
+"p_hold": 0.368,
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
@@ -4838,7 +4838,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.275,
+"entropy": 1.2751,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4849,7 +4849,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3747,
+"entropy": 1.3748,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4860,7 +4860,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2184,
+"entropy": 1.2185,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4871,7 +4871,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.558,
+"entropy": 0.5581,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -4882,7 +4882,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2953,
+"entropy": 1.2954,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4904,7 +4904,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6599,
+"entropy": 1.66,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4915,7 +4915,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.274,
+"entropy": 1.2741,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4926,7 +4926,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2892,
+"entropy": 1.2893,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -4937,7 +4937,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5675,
+"entropy": 0.5676,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -4948,7 +4948,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5112,
+"entropy": 0.5113,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -4959,7 +4959,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5647,
+"entropy": 1.5648,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4970,7 +4970,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5224,
+"entropy": 1.5225,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -4981,7 +4981,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6139,
+"entropy": 0.614,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -4992,7 +4992,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5365,
+"entropy": 1.5366,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5003,7 +5003,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5291,
+"entropy": 0.5292,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -5014,7 +5014,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3518,
+"entropy": 1.3519,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5036,7 +5036,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2988,
+"entropy": 1.2989,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5047,7 +5047,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5401,
+"entropy": 1.5402,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5058,7 +5058,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.5507,
+"entropy": 1.5508,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5069,7 +5069,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5491,
+"entropy": 1.5492,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5080,7 +5080,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5414,
+"entropy": 1.5415,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5091,7 +5091,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5448,
+"entropy": 1.5449,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5102,7 +5102,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.645,
+"entropy": 1.6451,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5113,7 +5113,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5501,
+"entropy": 1.5502,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5124,7 +5124,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2687,
+"entropy": 1.2688,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5135,7 +5135,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.7245,
+"entropy": 1.7246,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5157,7 +5157,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.505,
+"entropy": 0.5051,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -5179,7 +5179,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3526,
+"entropy": 1.3527,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5190,7 +5190,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3487,
+"entropy": 1.3488,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5223,7 +5223,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5192,
+"entropy": 0.5193,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -5256,7 +5256,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3319,
+"entropy": 1.332,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5267,7 +5267,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3427,
+"entropy": 1.3428,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5278,7 +5278,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3314,
+"entropy": 1.3315,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5311,7 +5311,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5967,
+"entropy": 0.5968,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -5322,7 +5322,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5237,
+"entropy": 1.5238,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5333,7 +5333,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.567,
+"entropy": 0.5671,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -5344,7 +5344,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3153,
+"entropy": 1.3154,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5366,7 +5366,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6407,
+"entropy": 1.6408,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5377,7 +5377,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.8196,
+"entropy": 1.8197,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5399,7 +5399,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6515,
+"entropy": 0.6516,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -5410,7 +5410,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5691,
+"entropy": 1.5692,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5432,7 +5432,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3019,
+"entropy": 1.302,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5443,7 +5443,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4194,
+"entropy": 1.4195,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5476,7 +5476,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7173,
+"entropy": 0.7174,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -5531,7 +5531,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3638,
+"entropy": 1.3639,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5542,7 +5542,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3124,
+"entropy": 1.3125,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5553,7 +5553,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.647,
+"entropy": 1.6471,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5564,7 +5564,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6255,
+"entropy": 0.6256,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -5597,7 +5597,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3199,
+"entropy": 1.32,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5619,7 +5619,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5967,
+"entropy": 1.5968,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5630,7 +5630,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5639,
+"entropy": 0.564,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -5641,7 +5641,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6087,
+"entropy": 1.6088,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5663,7 +5663,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5282,
+"entropy": 0.5284,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -5685,7 +5685,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2961,
+"entropy": 1.2962,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5707,7 +5707,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5502,
+"entropy": 1.5503,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5751,7 +5751,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3322,
+"entropy": 1.3323,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5784,7 +5784,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3696,
+"entropy": 1.3697,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5806,7 +5806,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4739,
+"entropy": 0.4741,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -5828,7 +5828,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2531,
+"entropy": 1.2532,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5839,7 +5839,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4302,
+"entropy": 1.4303,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5850,7 +5850,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6005,
+"entropy": 1.6006,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5861,7 +5861,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5514,
+"entropy": 1.5515,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5872,7 +5872,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4987,
+"entropy": 1.4988,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5883,7 +5883,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2479,
+"entropy": 1.248,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5894,7 +5894,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6809,
+"entropy": 1.681,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5905,7 +5905,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5166,
+"entropy": 1.5167,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5916,7 +5916,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2482,
+"entropy": 1.2483,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5927,7 +5927,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6276,
+"entropy": 1.6277,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5938,7 +5938,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4966,
+"entropy": 1.4967,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5949,7 +5949,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2359,
+"entropy": 1.236,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5960,7 +5960,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2461,
+"entropy": 1.2462,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -5971,7 +5971,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.8085,
+"entropy": 1.8086,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5982,7 +5982,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5175,
+"entropy": 1.5176,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -5993,7 +5993,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6384,
+"entropy": 1.6385,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6004,7 +6004,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5126,
+"entropy": 1.5127,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6026,7 +6026,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2443,
+"entropy": 1.2444,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6059,7 +6059,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2972,
+"entropy": 1.2973,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6070,7 +6070,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6168,
+"entropy": 1.6169,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6081,7 +6081,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.287,
+"entropy": 1.2871,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6092,7 +6092,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5612,
+"entropy": 1.5613,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6103,7 +6103,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6917,
+"entropy": 0.6918,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -6114,7 +6114,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2695,
+"entropy": 1.2696,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6125,7 +6125,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7037,
+"entropy": 1.7038,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6136,7 +6136,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.6803,
+"entropy": 1.6804,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6169,7 +6169,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2857,
+"entropy": 1.2858,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6180,7 +6180,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2725,
+"entropy": 1.2726,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6191,7 +6191,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6568,
+"entropy": 0.6569,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -6202,7 +6202,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3629,
+"entropy": 1.363,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6213,7 +6213,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5151,
+"entropy": 0.5152,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -6224,7 +6224,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.4649,
+"entropy": 1.465,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6235,7 +6235,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4816,
+"entropy": 0.4817,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -6246,7 +6246,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.8532,
+"entropy": 1.8533,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6257,7 +6257,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.6646,
+"entropy": 1.6647,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6279,7 +6279,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2837,
+"entropy": 1.2838,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6290,7 +6290,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2629,
+"entropy": 1.263,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6312,7 +6312,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2411,
+"entropy": 1.2412,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6323,7 +6323,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.5613,
+"entropy": 1.5614,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6334,7 +6334,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2271,
+"entropy": 1.2272,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6345,7 +6345,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5396,
+"entropy": 1.5397,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6356,7 +6356,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3375,
+"entropy": 1.3376,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6367,7 +6367,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4811,
+"entropy": 1.4813,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6389,7 +6389,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5403,
+"entropy": 1.5404,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6400,7 +6400,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2498,
+"entropy": 1.2499,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6411,7 +6411,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2573,
+"entropy": 1.2574,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6422,7 +6422,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4821,
+"entropy": 1.4822,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6433,7 +6433,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2261,
+"entropy": 1.2262,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6455,7 +6455,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.6888,
+"entropy": 1.6889,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6466,7 +6466,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.7576,
+"entropy": 1.7577,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6477,7 +6477,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5053,
+"entropy": 1.5054,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6499,7 +6499,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5074,
+"entropy": 0.5075,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -6510,18 +6510,18 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2594,
+"entropy": 1.2595,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
 "679553": {
 "player_key": "johnabiell_laureano",
 "listed_pos": "CF",
-"p_hold": 0.526,
+"p_hold": 0.525,
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2538,
+"entropy": 1.2539,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6543,7 +6543,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2459,
+"entropy": 1.246,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6554,7 +6554,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3514,
+"entropy": 1.3515,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6565,7 +6565,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2257,
+"entropy": 1.2258,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6576,7 +6576,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2543,
+"entropy": 1.2544,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6598,7 +6598,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3882,
+"entropy": 1.3883,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6609,7 +6609,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4497,
+"entropy": 0.4499,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -6620,7 +6620,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3693,
+"entropy": 1.3694,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6675,7 +6675,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7013,
+"entropy": 1.7014,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6686,7 +6686,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3894,
+"entropy": 1.3895,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6697,7 +6697,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.8289,
+"entropy": 1.829,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6708,7 +6708,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3382,
+"entropy": 1.3383,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6763,7 +6763,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2857,
+"entropy": 1.2858,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6774,7 +6774,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7018,
+"entropy": 0.7019,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -6785,7 +6785,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.8829,
+"entropy": 1.883,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6796,7 +6796,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.4245,
+"entropy": 1.4246,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6807,7 +6807,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4029,
+"entropy": 1.403,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6829,7 +6829,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2583,
+"entropy": 1.2584,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6840,7 +6840,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7958,
+"entropy": 1.7959,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6873,7 +6873,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7318,
+"entropy": 0.7319,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -6906,7 +6906,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5594,
+"entropy": 0.5595,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -6917,7 +6917,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3855,
+"entropy": 1.3856,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6928,7 +6928,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.4429,
+"entropy": 1.443,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6939,7 +6939,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5222,
+"entropy": 1.5223,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -6950,7 +6950,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3766,
+"entropy": 1.3767,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -6972,7 +6972,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5809,
+"entropy": 0.581,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -6994,7 +6994,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3284,
+"entropy": 1.3285,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7016,18 +7016,18 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.4411,
+"entropy": 1.4412,
 "entropy_band": "high",
 "basis": "live_listed"
 },
 "680846": {
 "player_key": "pablo_aliendo",
 "listed_pos": "C",
-"p_hold": 0.879,
+"p_hold": 0.878,
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4496,
+"entropy": 0.4497,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7045,22 +7045,22 @@
 "680868": {
 "player_key": "patrick_winkel",
 "listed_pos": "C",
-"p_hold": 0.854,
+"p_hold": 0.853,
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5135,
+"entropy": 0.5136,
 "entropy_band": "low",
 "basis": "live_listed"
 },
 "680869": {
 "player_key": "zack_gelof",
 "listed_pos": "2B",
-"p_hold": 0.437,
+"p_hold": 0.436,
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6479,
+"entropy": 1.648,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7089,7 +7089,7 @@
 "680890": {
 "player_key": "jax_biggers",
 "listed_pos": "2B",
-"p_hold": 0.452,
+"p_hold": 0.451,
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
@@ -7104,7 +7104,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6263,
+"entropy": 1.6264,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7115,7 +7115,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4313,
+"entropy": 1.4314,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7126,7 +7126,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5503,
+"entropy": 0.5504,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7148,7 +7148,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5565,
+"entropy": 1.5566,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7159,7 +7159,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5003,
+"entropy": 0.5004,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7170,7 +7170,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6101,
+"entropy": 1.6102,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7181,18 +7181,18 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2919,
+"entropy": 1.292,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
 "681114": {
 "player_key": "michael_trautwein",
 "listed_pos": "C",
-"p_hold": 0.847,
+"p_hold": 0.846,
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5303,
+"entropy": 0.5304,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7203,18 +7203,18 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6693,
+"entropy": 0.6694,
 "entropy_band": "low",
 "basis": "live_listed"
 },
 "681132": {
 "player_key": "max_ferguson",
 "listed_pos": "SS",
-"p_hold": 0.318,
+"p_hold": 0.317,
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6673,
+"entropy": 1.6674,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7236,7 +7236,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2629,
+"entropy": 1.263,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7258,7 +7258,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4917,
+"entropy": 0.4918,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7280,7 +7280,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2731,
+"entropy": 1.2732,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7302,7 +7302,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2729,
+"entropy": 1.273,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7313,7 +7313,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5118,
+"entropy": 0.5119,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7346,7 +7346,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3466,
+"entropy": 1.3467,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7357,7 +7357,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4896,
+"entropy": 0.4898,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7368,7 +7368,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5225,
+"entropy": 1.5226,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7390,7 +7390,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5301,
+"entropy": 1.5302,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7401,7 +7401,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5307,
+"entropy": 0.5308,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7412,7 +7412,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6687,
+"entropy": 1.6688,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7423,7 +7423,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2888,
+"entropy": 1.2889,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7434,7 +7434,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6872,
+"entropy": 0.6873,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7445,7 +7445,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.565,
+"entropy": 0.5651,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7456,7 +7456,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3586,
+"entropy": 1.3587,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7478,7 +7478,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.4042,
+"entropy": 1.4043,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7489,7 +7489,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5166,
+"entropy": 0.5167,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7500,7 +7500,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2481,
+"entropy": 1.2482,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7511,7 +7511,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2554,
+"entropy": 1.2555,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7522,7 +7522,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2818,
+"entropy": 1.2819,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7533,7 +7533,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6833,
+"entropy": 0.6834,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7544,14 +7544,14 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2666,
+"entropy": 1.2667,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
 "681852": {
 "player_key": "sean_roby",
 "listed_pos": "3B",
-"p_hold": 0.509,
+"p_hold": 0.508,
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
@@ -7566,7 +7566,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5774,
+"entropy": 1.5775,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7577,7 +7577,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3701,
+"entropy": 1.3702,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7588,7 +7588,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.7047,
+"entropy": 1.7048,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7599,7 +7599,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6405,
+"entropy": 1.6406,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7621,7 +7621,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6426,
+"entropy": 1.6427,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7654,7 +7654,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5735,
+"entropy": 0.5736,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7720,7 +7720,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5155,
+"entropy": 0.5156,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7731,7 +7731,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.696,
+"entropy": 0.6961,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7742,7 +7742,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4357,
+"entropy": 0.4358,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7753,7 +7753,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4763,
+"entropy": 1.4765,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7764,7 +7764,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1949,
+"entropy": 1.195,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7797,7 +7797,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4263,
+"entropy": 0.4264,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7808,7 +7808,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4254,
+"entropy": 0.4256,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7819,7 +7819,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5949,
+"entropy": 1.595,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7830,7 +7830,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2157,
+"entropy": 1.2158,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7841,7 +7841,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2124,
+"entropy": 1.2125,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7852,7 +7852,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4372,
+"entropy": 1.4373,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7863,7 +7863,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1859,
+"entropy": 1.1861,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7874,7 +7874,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1935,
+"entropy": 1.1936,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7885,7 +7885,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2048,
+"entropy": 1.2049,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7896,7 +7896,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2603,
+"entropy": 1.2604,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7907,7 +7907,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.22,
+"entropy": 1.2201,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -7929,7 +7929,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1981,
+"entropy": 1.1982,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -7940,7 +7940,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4674,
+"entropy": 1.4675,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7962,7 +7962,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.739,
+"entropy": 1.7391,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7973,7 +7973,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.5339,
+"entropy": 1.534,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7984,7 +7984,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4393,
+"entropy": 1.4394,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -7995,7 +7995,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4712,
+"entropy": 1.4714,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8006,7 +8006,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.9265,
+"entropy": 0.9266,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8017,7 +8017,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2061,
+"entropy": 1.2062,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8028,7 +8028,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4674,
+"entropy": 1.4675,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8039,7 +8039,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.6398,
+"entropy": 1.6399,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8050,7 +8050,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1918,
+"entropy": 1.1919,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8061,7 +8061,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3129,
+"entropy": 1.313,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8072,7 +8072,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1936,
+"entropy": 1.1937,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8083,7 +8083,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6612,
+"entropy": 1.6613,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8105,7 +8105,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.303,
+"entropy": 1.3031,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8116,7 +8116,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5374,
+"entropy": 1.5375,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8127,7 +8127,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6762,
+"entropy": 1.6763,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8138,7 +8138,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5149,
+"entropy": 1.515,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8160,7 +8160,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2458,
+"entropy": 1.2459,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8171,7 +8171,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2552,
+"entropy": 1.2553,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8182,7 +8182,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2551,
+"entropy": 1.2552,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8193,7 +8193,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2972,
+"entropy": 1.2973,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8204,7 +8204,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2587,
+"entropy": 1.2588,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8215,7 +8215,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7777,
+"entropy": 0.7778,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8226,7 +8226,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.6501,
+"entropy": 1.6502,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8237,7 +8237,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5434,
+"entropy": 1.5435,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8248,7 +8248,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2255,
+"entropy": 1.2256,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8270,7 +8270,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4704,
+"entropy": 1.4705,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8281,7 +8281,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4445,
+"entropy": 0.4447,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8292,7 +8292,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6399,
+"entropy": 1.64,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8303,7 +8303,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2329,
+"entropy": 1.233,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8347,7 +8347,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2485,
+"entropy": 1.2486,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8369,7 +8369,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4489,
+"entropy": 0.449,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8380,7 +8380,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5498,
+"entropy": 1.5499,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8391,7 +8391,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6433,
+"entropy": 0.6434,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8402,7 +8402,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5048,
+"entropy": 1.5049,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8413,7 +8413,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4596,
+"entropy": 0.4598,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8424,7 +8424,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1769,
+"entropy": 1.177,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8435,7 +8435,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2165,
+"entropy": 1.2166,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8446,7 +8446,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3956,
+"entropy": 0.3958,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8457,7 +8457,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4225,
+"entropy": 0.4226,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8468,7 +8468,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1845,
+"entropy": 1.1846,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8490,7 +8490,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1899,
+"entropy": 1.19,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8512,7 +8512,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4199,
+"entropy": 0.4201,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8523,7 +8523,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.6392,
+"entropy": 1.6393,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8534,7 +8534,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4421,
+"entropy": 1.4423,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8545,7 +8545,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3128,
+"entropy": 1.3129,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8556,7 +8556,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2102,
+"entropy": 1.2103,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8567,7 +8567,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.293,
+"entropy": 1.2931,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8578,7 +8578,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3132,
+"entropy": 1.3133,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8589,7 +8589,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4505,
+"entropy": 1.4506,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8600,7 +8600,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4625,
+"entropy": 0.4626,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8611,7 +8611,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2186,
+"entropy": 1.2187,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8622,7 +8622,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4753,
+"entropy": 1.4754,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8633,7 +8633,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2913,
+"entropy": 1.2914,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8644,7 +8644,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 1.2244,
+"entropy": 1.2245,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8655,7 +8655,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6311,
+"entropy": 1.6312,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8666,7 +8666,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2202,
+"entropy": 1.2203,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8688,7 +8688,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6304,
+"entropy": 1.6305,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8699,7 +8699,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4435,
+"entropy": 1.4436,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8710,7 +8710,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4327,
+"entropy": 0.4329,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8721,7 +8721,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4558,
+"entropy": 1.456,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8732,7 +8732,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3464,
+"entropy": 1.3465,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8750,11 +8750,11 @@
 "684976": {
 "player_key": "johnathon_thomas",
 "listed_pos": "CF",
-"p_hold": 0.519,
+"p_hold": 0.518,
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2749,
+"entropy": 1.275,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8765,7 +8765,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4209,
+"entropy": 1.421,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8787,7 +8787,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4023,
+"entropy": 1.4024,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8798,7 +8798,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2702,
+"entropy": 1.2703,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8809,7 +8809,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3105,
+"entropy": 1.3106,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8831,7 +8831,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3419,
+"entropy": 1.342,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8864,7 +8864,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3851,
+"entropy": 0.3853,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8875,7 +8875,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5926,
+"entropy": 1.5927,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -8886,7 +8886,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4274,
+"entropy": 0.4275,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8897,7 +8897,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.273,
+"entropy": 1.2731,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8908,7 +8908,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5265,
+"entropy": 0.5266,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8930,7 +8930,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1926,
+"entropy": 1.1927,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8941,18 +8941,18 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3383,
+"entropy": 1.3384,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
 "686445": {
 "player_key": "sammy_siani",
 "listed_pos": "CF",
-"p_hold": 0.528,
+"p_hold": 0.527,
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2476,
+"entropy": 1.2477,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -8985,7 +8985,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.711,
+"entropy": 0.7111,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -8996,7 +8996,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3342,
+"entropy": 1.3343,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9018,7 +9018,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6573,
+"entropy": 1.6574,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9051,7 +9051,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4856,
+"entropy": 1.4857,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9062,7 +9062,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5445,
+"entropy": 1.5446,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9073,7 +9073,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.7387,
+"entropy": 1.7388,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9084,7 +9084,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.7945,
+"entropy": 1.7946,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9095,7 +9095,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3502,
+"entropy": 1.3503,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9106,7 +9106,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4094,
+"entropy": 1.4095,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9139,7 +9139,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7834,
+"entropy": 0.7835,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9150,7 +9150,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5386,
+"entropy": 1.5387,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9161,7 +9161,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6501,
+"entropy": 0.6502,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9194,7 +9194,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6183,
+"entropy": 1.6184,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9205,7 +9205,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4793,
+"entropy": 1.4795,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9216,7 +9216,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4119,
+"entropy": 1.412,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9227,7 +9227,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3713,
+"entropy": 1.3714,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9238,7 +9238,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4537,
+"entropy": 0.4538,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9249,7 +9249,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4738,
+"entropy": 0.4739,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9271,7 +9271,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4512,
+"entropy": 0.4514,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9293,7 +9293,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5576,
+"entropy": 1.5577,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9304,7 +9304,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2789,
+"entropy": 1.279,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9315,7 +9315,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.36,
+"entropy": 1.3601,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9326,7 +9326,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2399,
+"entropy": 1.24,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9337,7 +9337,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7037,
+"entropy": 0.7038,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9348,7 +9348,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.692,
+"entropy": 1.6921,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9359,7 +9359,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6677,
+"entropy": 1.6678,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9370,7 +9370,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.502,
+"entropy": 1.5022,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9381,7 +9381,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2407,
+"entropy": 1.2408,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9392,7 +9392,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5048,
+"entropy": 1.5049,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9410,11 +9410,11 @@
 "687152": {
 "player_key": "darrien_miller",
 "listed_pos": "C",
-"p_hold": 0.875,
+"p_hold": 0.874,
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4604,
+"entropy": 0.4606,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9425,7 +9425,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5922,
+"entropy": 0.5923,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9436,7 +9436,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2494,
+"entropy": 1.2495,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9447,7 +9447,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2545,
+"entropy": 1.2546,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9458,7 +9458,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7948,
+"entropy": 0.7949,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9480,7 +9480,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4809,
+"entropy": 1.481,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9491,7 +9491,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5394,
+"entropy": 1.5395,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9502,7 +9502,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4842,
+"entropy": 0.4843,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9513,7 +9513,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5976,
+"entropy": 1.5977,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9524,7 +9524,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4242,
+"entropy": 1.4243,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9535,7 +9535,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3213,
+"entropy": 1.3214,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9546,7 +9546,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2416,
+"entropy": 1.2417,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9568,7 +9568,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2361,
+"entropy": 1.2362,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9590,7 +9590,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6224,
+"entropy": 1.6225,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9601,7 +9601,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3351,
+"entropy": 1.3352,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9612,7 +9612,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6416,
+"entropy": 1.6417,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9623,7 +9623,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4626,
+"entropy": 1.4627,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9634,7 +9634,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2482,
+"entropy": 1.2483,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9663,11 +9663,11 @@
 "687554": {
 "player_key": "dj_gladney",
 "listed_pos": "3B",
-"p_hold": 0.544,
+"p_hold": 0.543,
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3189,
+"entropy": 1.319,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9678,7 +9678,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5536,
+"entropy": 1.5537,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9700,7 +9700,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4032,
+"entropy": 1.4033,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9711,7 +9711,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.629,
+"entropy": 1.6291,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9722,7 +9722,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4961,
+"entropy": 0.4962,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9733,7 +9733,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 1.2606,
+"entropy": 1.2607,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9766,7 +9766,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6311,
+"entropy": 1.6312,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9788,7 +9788,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.338,
+"entropy": 1.3381,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9799,7 +9799,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2993,
+"entropy": 1.2994,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9810,7 +9810,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5296,
+"entropy": 1.5297,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9821,7 +9821,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4615,
+"entropy": 0.4617,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -9843,7 +9843,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3127,
+"entropy": 1.3128,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9854,7 +9854,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.4142,
+"entropy": 1.4143,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9865,18 +9865,18 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5058,
+"entropy": 1.5059,
 "entropy_band": "high",
 "basis": "live_listed"
 },
 "687930": {
 "player_key": "tyresse_turner",
 "listed_pos": "2B",
-"p_hold": 0.481,
+"p_hold": 0.48,
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5768,
+"entropy": 1.5769,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9887,7 +9887,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.6996,
+"entropy": 1.6997,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9898,7 +9898,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4234,
+"entropy": 1.4235,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9909,7 +9909,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5484,
+"entropy": 1.5485,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -9920,7 +9920,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3635,
+"entropy": 1.3636,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9931,7 +9931,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2496,
+"entropy": 1.2497,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9975,7 +9975,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3539,
+"entropy": 1.354,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9986,7 +9986,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2707,
+"entropy": 1.2708,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -9997,7 +9997,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3282,
+"entropy": 1.3283,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10008,7 +10008,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4484,
+"entropy": 0.4485,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10019,7 +10019,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3601,
+"entropy": 1.3602,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10030,7 +10030,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3382,
+"entropy": 1.3383,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10041,7 +10041,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4883,
+"entropy": 1.4884,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10052,7 +10052,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5428,
+"entropy": 0.543,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10063,7 +10063,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4764,
+"entropy": 0.4766,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10074,7 +10074,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2328,
+"entropy": 1.2329,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10085,7 +10085,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5025,
+"entropy": 1.5026,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10096,7 +10096,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5538,
+"entropy": 1.5539,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10107,7 +10107,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4923,
+"entropy": 0.4925,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10129,7 +10129,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6521,
+"entropy": 0.6522,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10162,7 +10162,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3309,
+"entropy": 1.331,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10173,7 +10173,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3641,
+"entropy": 1.3642,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10184,7 +10184,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6457,
+"entropy": 0.6458,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10195,7 +10195,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5448,
+"entropy": 1.5449,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10206,7 +10206,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6173,
+"entropy": 0.6174,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10217,7 +10217,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5226,
+"entropy": 1.5227,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10228,7 +10228,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5636,
+"entropy": 0.5637,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10239,7 +10239,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3043,
+"entropy": 1.3044,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10250,7 +10250,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2598,
+"entropy": 1.2599,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10272,7 +10272,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.211,
+"entropy": 1.2112,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10283,7 +10283,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5265,
+"entropy": 1.5266,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10294,7 +10294,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4609,
+"entropy": 1.461,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10305,7 +10305,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5971,
+"entropy": 1.5972,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10316,7 +10316,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4499,
+"entropy": 1.4501,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10327,7 +10327,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1914,
+"entropy": 1.1915,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10338,7 +10338,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2659,
+"entropy": 1.266,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10349,7 +10349,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3207,
+"entropy": 1.3208,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10371,7 +10371,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4589,
+"entropy": 1.4591,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10382,7 +10382,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.5672,
+"entropy": 1.5673,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10393,7 +10393,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6622,
+"entropy": 1.6623,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10404,7 +10404,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.593,
+"entropy": 0.5932,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10415,7 +10415,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6812,
+"entropy": 0.6813,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10437,18 +10437,18 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4129,
+"entropy": 0.4131,
 "entropy_band": "low",
 "basis": "live_listed"
 },
 "691020": {
 "player_key": "carson_tucker",
 "listed_pos": "SS",
-"p_hold": 0.446,
+"p_hold": 0.445,
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4594,
+"entropy": 1.4596,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10459,7 +10459,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3069,
+"entropy": 1.307,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10492,7 +10492,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5674,
+"entropy": 1.5675,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10503,7 +10503,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1602,
+"entropy": 1.1603,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10514,7 +10514,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1585,
+"entropy": 1.1587,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10525,7 +10525,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1575,
+"entropy": 1.1576,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10536,7 +10536,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.4945,
+"entropy": 1.4946,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10547,7 +10547,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4285,
+"entropy": 1.4286,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10558,7 +10558,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4214,
+"entropy": 1.4215,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10569,7 +10569,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4214,
+"entropy": 1.4215,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10580,7 +10580,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4282,
+"entropy": 1.4283,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10591,7 +10591,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4283,
+"entropy": 1.4285,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10602,7 +10602,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1689,
+"entropy": 1.169,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10613,7 +10613,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1763,
+"entropy": 1.1764,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10624,7 +10624,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4282,
+"entropy": 1.4283,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10635,7 +10635,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.6056,
+"entropy": 1.6057,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10646,7 +10646,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1634,
+"entropy": 1.1635,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10657,7 +10657,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4275,
+"entropy": 1.4276,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10668,7 +10668,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5899,
+"entropy": 1.59,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10679,7 +10679,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3558,
+"entropy": 0.356,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10690,7 +10690,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4253,
+"entropy": 1.4254,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10701,7 +10701,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1463,
+"entropy": 1.1464,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10712,7 +10712,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1684,
+"entropy": 1.1685,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10723,18 +10723,18 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1675,
+"entropy": 1.1677,
 "entropy_band": "low",
 "basis": "live_listed"
 },
 "691405": {
 "player_key": "juan_benjamin",
 "listed_pos": "2B",
-"p_hold": 0.516,
+"p_hold": 0.515,
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.4933,
+"entropy": 1.4934,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10745,7 +10745,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.5021,
+"entropy": 1.5022,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10756,7 +10756,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.4914,
+"entropy": 1.4915,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10767,7 +10767,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3632,
+"entropy": 0.3634,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10778,7 +10778,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1708,
+"entropy": 1.1709,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10789,7 +10789,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1434,
+"entropy": 1.1435,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10800,7 +10800,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3434,
+"entropy": 0.3436,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10811,7 +10811,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5065,
+"entropy": 1.5066,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10833,7 +10833,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 1.2666,
+"entropy": 1.2667,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10844,7 +10844,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1505,
+"entropy": 1.1507,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10855,7 +10855,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5024,
+"entropy": 1.5025,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10866,7 +10866,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5924,
+"entropy": 1.5925,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10877,7 +10877,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.721,
+"entropy": 1.7211,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10888,7 +10888,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3609,
+"entropy": 0.3611,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10899,7 +10899,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1529,
+"entropy": 1.1531,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10910,7 +10910,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3784,
+"entropy": 0.3786,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10921,7 +10921,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.492,
+"entropy": 1.4921,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -10932,7 +10932,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 1.2516,
+"entropy": 1.2517,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10943,7 +10943,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3556,
+"entropy": 0.3558,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10954,7 +10954,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1985,
+"entropy": 1.1986,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -10965,7 +10965,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2935,
+"entropy": 1.2936,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10987,7 +10987,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.21,
+"entropy": 1.2101,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -10998,7 +10998,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5004,
+"entropy": 0.5005,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11009,7 +11009,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4307,
+"entropy": 1.4309,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11020,7 +11020,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3004,
+"entropy": 1.3005,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11031,7 +11031,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6084,
+"entropy": 0.6085,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11075,7 +11075,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4426,
+"entropy": 1.4427,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11086,7 +11086,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2783,
+"entropy": 1.2784,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11097,7 +11097,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4818,
+"entropy": 1.482,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11108,7 +11108,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4297,
+"entropy": 1.4299,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11119,7 +11119,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5011,
+"entropy": 1.5012,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11130,7 +11130,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1783,
+"entropy": 1.1784,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11141,7 +11141,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6116,
+"entropy": 0.6117,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11152,7 +11152,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4131,
+"entropy": 0.4132,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11163,7 +11163,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2166,
+"entropy": 1.2167,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11174,7 +11174,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2201,
+"entropy": 1.2202,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11185,7 +11185,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.4931,
+"entropy": 1.4932,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11196,7 +11196,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1775,
+"entropy": 1.1776,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11207,7 +11207,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1593,
+"entropy": 1.1594,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11218,7 +11218,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4151,
+"entropy": 1.4153,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11229,7 +11229,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4828,
+"entropy": 1.4829,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11251,7 +11251,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5099,
+"entropy": 1.51,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11262,7 +11262,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.454,
+"entropy": 1.4541,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11273,7 +11273,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.823,
+"entropy": 1.8231,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11284,7 +11284,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4236,
+"entropy": 0.4237,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11306,7 +11306,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4002,
+"entropy": 1.4004,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11317,7 +11317,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3826,
+"entropy": 0.3827,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11328,7 +11328,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3761,
+"entropy": 0.3763,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11339,7 +11339,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4181,
+"entropy": 1.4182,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11350,7 +11350,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1646,
+"entropy": 1.1648,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11361,7 +11361,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4021,
+"entropy": 1.4023,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11372,7 +11372,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3663,
+"entropy": 0.3664,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11394,7 +11394,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5311,
+"entropy": 1.5312,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11405,7 +11405,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1335,
+"entropy": 1.1336,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11416,7 +11416,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.425,
+"entropy": 1.4251,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11427,7 +11427,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4249,
+"entropy": 1.425,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11438,7 +11438,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1797,
+"entropy": 1.1798,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11449,7 +11449,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1649,
+"entropy": 1.165,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11460,7 +11460,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4212,
+"entropy": 1.4214,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11471,7 +11471,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3833,
+"entropy": 0.3835,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11482,7 +11482,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.899,
+"entropy": 0.8991,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11504,7 +11504,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3206,
+"entropy": 1.3207,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11526,7 +11526,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.722,
+"entropy": 0.7221,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -11537,7 +11537,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2212,
+"entropy": 1.2214,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11548,7 +11548,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3164,
+"entropy": 1.3165,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11559,7 +11559,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5326,
+"entropy": 1.5327,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11570,7 +11570,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3335,
+"entropy": 1.3336,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11581,7 +11581,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2197,
+"entropy": 1.2198,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -11592,7 +11592,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.597,
+"entropy": 1.5971,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -11603,7 +11603,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3296,
+"entropy": 1.3297,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12021,7 +12021,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2377,
+"entropy": 1.2378,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12032,7 +12032,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3321,
+"entropy": 1.3322,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12043,7 +12043,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4804,
+"entropy": 0.4805,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12065,7 +12065,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5163,
+"entropy": 1.5164,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12087,7 +12087,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4174,
+"entropy": 1.4175,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12109,7 +12109,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6024,
+"entropy": 1.6025,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12120,7 +12120,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5242,
+"entropy": 1.5243,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12160,18 +12160,18 @@
 "694387": {
 "player_key": "christian_knapczyk",
 "listed_pos": "SS",
-"p_hold": 0.445,
+"p_hold": 0.444,
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4644,
+"entropy": 1.4645,
 "entropy_band": "high",
 "basis": "live_listed"
 },
 "694388": {
 "player_key": "joey_loperfido",
 "listed_pos": "CF",
-"p_hold": 0.357,
+"p_hold": 0.356,
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
@@ -12197,7 +12197,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5433,
+"entropy": 0.5434,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12208,7 +12208,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.31,
+"entropy": 1.3101,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12219,7 +12219,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2641,
+"entropy": 1.2642,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12230,7 +12230,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5356,
+"entropy": 1.5357,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12241,7 +12241,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5767,
+"entropy": 0.5769,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12263,7 +12263,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1802,
+"entropy": 1.1804,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12274,7 +12274,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.228,
+"entropy": 1.2281,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12285,7 +12285,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4172,
+"entropy": 0.4173,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12307,7 +12307,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3178,
+"entropy": 1.3179,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12329,7 +12329,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4602,
+"entropy": 1.4603,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12351,7 +12351,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4539,
+"entropy": 1.454,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12373,7 +12373,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4535,
+"entropy": 1.4536,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12395,7 +12395,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2506,
+"entropy": 1.2507,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12406,7 +12406,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4203,
+"entropy": 0.4205,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12418,7 +12418,7 @@
 "t_lo": 0.831,
 "t_hi": 0.94,
 "entropy": 1.4215,
-"entropy_band": "high",
+"entropy_band": "mid",
 "basis": "live_listed"
 },
 "694930": {
@@ -12428,7 +12428,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5428,
+"entropy": 0.543,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12439,7 +12439,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5381,
+"entropy": 1.5382,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12450,7 +12450,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2981,
+"entropy": 1.2982,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12461,7 +12461,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2224,
+"entropy": 1.2225,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12472,7 +12472,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1744,
+"entropy": 1.1746,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12483,7 +12483,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.664,
+"entropy": 1.6641,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12494,7 +12494,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4118,
+"entropy": 0.4119,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12505,14 +12505,14 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5536,
+"entropy": 1.5537,
 "entropy_band": "high",
 "basis": "live_listed"
 },
 "695078": {
 "player_key": "jean_walters",
 "listed_pos": "2B",
-"p_hold": 0.498,
+"p_hold": 0.497,
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
@@ -12538,7 +12538,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4686,
+"entropy": 1.4688,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12549,7 +12549,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2943,
+"entropy": 1.2944,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12593,7 +12593,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2915,
+"entropy": 1.2916,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12604,7 +12604,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1699,
+"entropy": 1.17,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12615,7 +12615,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3749,
+"entropy": 0.3751,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12626,7 +12626,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6057,
+"entropy": 1.6058,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12644,11 +12644,11 @@
 "695494": {
 "player_key": "kevin_bazzell",
 "listed_pos": "C",
-"p_hold": 0.806,
+"p_hold": 0.805,
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6217,
+"entropy": 0.6218,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12659,7 +12659,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7035,
+"entropy": 1.7037,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12670,7 +12670,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3301,
+"entropy": 1.3302,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12681,7 +12681,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1438,
+"entropy": 1.1439,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12692,7 +12692,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6266,
+"entropy": 0.6267,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12703,7 +12703,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3786,
+"entropy": 0.3787,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12725,7 +12725,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2926,
+"entropy": 1.2927,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12736,7 +12736,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4231,
+"entropy": 1.4233,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12747,7 +12747,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3403,
+"entropy": 1.3404,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12758,7 +12758,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.4967,
+"entropy": 1.4968,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12769,18 +12769,18 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5854,
+"entropy": 0.5855,
 "entropy_band": "low",
 "basis": "live_listed"
 },
 "695600": {
 "player_key": "carter_jensen",
 "listed_pos": "C",
-"p_hold": 0.783,
+"p_hold": 0.782,
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6682,
+"entropy": 0.6683,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12791,7 +12791,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1789,
+"entropy": 1.1791,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12802,7 +12802,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2703,
+"entropy": 1.2704,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12813,7 +12813,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3749,
+"entropy": 1.375,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12824,7 +12824,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4518,
+"entropy": 1.4519,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12835,7 +12835,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6754,
+"entropy": 1.6755,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12846,7 +12846,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6573,
+"entropy": 1.6574,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12857,7 +12857,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3802,
+"entropy": 0.3804,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12868,7 +12868,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5089,
+"entropy": 0.509,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12879,7 +12879,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6514,
+"entropy": 1.6515,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -12890,7 +12890,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3688,
+"entropy": 1.3689,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12912,7 +12912,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 1.1996,
+"entropy": 1.1998,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12923,7 +12923,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2682,
+"entropy": 1.2683,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12934,7 +12934,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.393,
+"entropy": 0.3931,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12945,7 +12945,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3254,
+"entropy": 1.3255,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -12967,7 +12967,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5407,
+"entropy": 0.5408,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12978,7 +12978,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1625,
+"entropy": 1.1626,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -12989,7 +12989,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3205,
+"entropy": 1.3206,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13011,7 +13011,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5518,
+"entropy": 1.5519,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -13022,7 +13022,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4128,
+"entropy": 1.413,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13033,7 +13033,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3978,
+"entropy": 0.398,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13044,7 +13044,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1752,
+"entropy": 1.1753,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13055,7 +13055,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1513,
+"entropy": 1.1515,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13066,7 +13066,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5693,
+"entropy": 1.5694,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -13077,7 +13077,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1638,
+"entropy": 1.1639,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13088,7 +13088,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2719,
+"entropy": 1.272,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13110,7 +13110,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.745,
+"entropy": 1.7451,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -13132,7 +13132,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2943,
+"entropy": 1.2944,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13143,7 +13143,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3563,
+"entropy": 0.3564,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13154,7 +13154,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6226,
+"entropy": 1.6227,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -13165,7 +13165,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3802,
+"entropy": 1.3803,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13176,7 +13176,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2497,
+"entropy": 1.2498,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13187,7 +13187,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.4992,
+"entropy": 1.4993,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -13209,7 +13209,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2557,
+"entropy": 1.2558,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13374,7 +13374,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.9004,
+"entropy": 0.9005,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13550,7 +13550,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7362,
+"entropy": 0.7363,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13583,7 +13583,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.279,
+"entropy": 1.2791,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13594,7 +13594,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2322,
+"entropy": 1.2323,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13616,7 +13616,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5314,
+"entropy": 1.5315,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -13627,7 +13627,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4093,
+"entropy": 1.4095,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13638,7 +13638,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.3836,
+"entropy": 1.3838,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13649,7 +13649,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.9713,
+"entropy": 0.9714,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13682,7 +13682,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3508,
+"entropy": 0.351,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13704,7 +13704,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5151,
+"entropy": 1.5152,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -13737,7 +13737,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.581,
+"entropy": 0.5811,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13766,11 +13766,11 @@
 "700795": {
 "player_key": "mathieu_vallee",
 "listed_pos": "CF",
-"p_hold": 0.524,
+"p_hold": 0.523,
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2599,
+"entropy": 1.26,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13792,7 +13792,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4821,
+"entropy": 0.4822,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13803,7 +13803,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2449,
+"entropy": 1.245,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13814,7 +13814,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4028,
+"entropy": 0.4029,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13825,7 +13825,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3375,
+"entropy": 1.3376,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13836,7 +13836,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3007,
+"entropy": 1.3008,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13858,7 +13858,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3913,
+"entropy": 1.3914,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -13869,7 +13869,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5787,
+"entropy": 1.5788,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -13891,7 +13891,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.336,
+"entropy": 0.3362,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -13986,11 +13986,11 @@
 "701392": {
 "player_key": "marco_dinges",
 "listed_pos": "C",
-"p_hold": 0.886,
+"p_hold": 0.868,
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4288,
+"entropy": 0.4785,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14012,7 +14012,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3314,
+"entropy": 0.3315,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14023,7 +14023,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7815,
+"entropy": 0.7816,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14034,7 +14034,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5382,
+"entropy": 1.5383,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -14045,7 +14045,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1638,
+"entropy": 1.1639,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14056,7 +14056,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1431,
+"entropy": 1.1433,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14067,7 +14067,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7336,
+"entropy": 1.7337,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -14089,7 +14089,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.3905,
+"entropy": 1.3906,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14100,7 +14100,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1519,
+"entropy": 1.152,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14111,7 +14111,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3643,
+"entropy": 0.3644,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14122,7 +14122,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7056,
+"entropy": 0.7057,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14133,7 +14133,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2667,
+"entropy": 1.2668,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14144,7 +14144,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3755,
+"entropy": 1.3756,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14166,7 +14166,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2659,
+"entropy": 1.266,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14177,7 +14177,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2625,
+"entropy": 1.2626,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14188,7 +14188,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.5129,
+"entropy": 1.513,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -14199,7 +14199,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1427,
+"entropy": 1.1429,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14210,7 +14210,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2511,
+"entropy": 1.2512,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14221,7 +14221,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5136,
+"entropy": 0.5137,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14232,7 +14232,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.351,
+"entropy": 0.3511,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14243,7 +14243,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1631,
+"entropy": 1.1633,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14254,7 +14254,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.3871,
+"entropy": 1.3873,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14265,7 +14265,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.379,
+"entropy": 0.3792,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14276,7 +14276,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.368,
+"entropy": 0.3681,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14298,7 +14298,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3999,
+"entropy": 0.4,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14309,7 +14309,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1445,
+"entropy": 1.1446,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14331,7 +14331,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4775,
+"entropy": 1.4777,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -14342,7 +14342,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3296,
+"entropy": 0.3298,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14353,7 +14353,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7757,
+"entropy": 0.7758,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14364,7 +14364,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2672,
+"entropy": 1.2673,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14375,7 +14375,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3577,
+"entropy": 0.3578,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14397,7 +14397,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2873,
+"entropy": 1.2874,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14408,7 +14408,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3747,
+"entropy": 1.3748,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14419,7 +14419,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4156,
+"entropy": 0.4158,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14441,7 +14441,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5123,
+"entropy": 1.5124,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -14452,7 +14452,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4976,
+"entropy": 0.4977,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14485,7 +14485,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.362,
+"entropy": 0.3621,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14529,7 +14529,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3323,
+"entropy": 0.3325,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14551,7 +14551,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1457,
+"entropy": 1.1459,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14562,7 +14562,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.6009,
+"entropy": 0.601,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14584,7 +14584,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5845,
+"entropy": 1.5846,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -14595,7 +14595,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2625,
+"entropy": 1.2626,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14606,7 +14606,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.564,
+"entropy": 1.5641,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -14639,7 +14639,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5191,
+"entropy": 0.5192,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14672,7 +14672,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.3798,
+"entropy": 1.38,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14683,7 +14683,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1493,
+"entropy": 1.1495,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14749,7 +14749,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3346,
+"entropy": 0.3347,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14815,7 +14815,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1481,
+"entropy": 1.1483,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14837,7 +14837,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1463,
+"entropy": 1.1464,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -14936,7 +14936,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.3728,
+"entropy": 1.3729,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -14980,7 +14980,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3784,
+"entropy": 1.3785,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -15068,7 +15068,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1338,
+"entropy": 1.1339,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -15101,7 +15101,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.7904,
+"entropy": 1.7905,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -15156,7 +15156,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5313,
+"entropy": 1.5314,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -15563,7 +15563,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2662,
+"entropy": 1.2663,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -15574,7 +15574,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1992,
+"entropy": 1.1993,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -15607,7 +15607,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.3774,
+"entropy": 1.3775,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -15625,11 +15625,11 @@
 "703606": {
 "player_key": "jared_thomas",
 "listed_pos": "CF",
-"p_hold": 0.557,
+"p_hold": 0.556,
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1411,
+"entropy": 1.1412,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -15640,7 +15640,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1363,
+"entropy": 1.1365,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -15673,7 +15673,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1358,
+"entropy": 1.1359,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -15695,7 +15695,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.593,
+"entropy": 1.5931,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -15706,7 +15706,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3044,
+"entropy": 1.3045,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -16003,7 +16003,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1341,
+"entropy": 1.1342,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16229,6 +16229,17 @@
 },
 "800357": {
 "player_key": "ricardo_gonzalez",
+"listed_pos": "3B",
+"p_hold": 0.58,
+"band": "Likely stays",
+"t_lo": 0.478,
+"t_hi": 0.58,
+"entropy": 1.2257,
+"entropy_band": "mid",
+"basis": "live_listed"
+},
+"800370": {
+"player_key": "eduardo_guerrero",
 "listed_pos": "3B",
 "p_hold": 0.58,
 "band": "Likely stays",
@@ -16608,7 +16619,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3416,
+"entropy": 0.3417,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16630,7 +16641,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5183,
+"entropy": 0.5185,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16652,7 +16663,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4416,
+"entropy": 1.4417,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -16663,7 +16674,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3352,
+"entropy": 0.3354,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16674,7 +16685,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3034,
+"entropy": 1.3035,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -16685,7 +16696,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1951,
+"entropy": 1.1952,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16696,7 +16707,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4768,
+"entropy": 1.4769,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -16707,7 +16718,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4825,
+"entropy": 0.4826,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16718,7 +16729,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5225,
+"entropy": 0.5226,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16740,7 +16751,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3853,
+"entropy": 0.3854,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16762,7 +16773,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.497,
+"entropy": 0.4971,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16817,7 +16828,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3908,
+"entropy": 0.3909,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16828,7 +16839,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3598,
+"entropy": 1.3599,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -16850,7 +16861,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5417,
+"entropy": 1.5418,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -16861,7 +16872,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.187,
+"entropy": 1.1871,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16883,7 +16894,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1818,
+"entropy": 1.1819,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16905,7 +16916,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3631,
+"entropy": 0.3632,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16916,7 +16927,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.281,
+"entropy": 1.2811,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -16949,7 +16960,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3416,
+"entropy": 0.3417,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16960,7 +16971,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2033,
+"entropy": 1.2034,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -16971,7 +16982,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1431,
+"entropy": 1.1433,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -16993,7 +17004,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3631,
+"entropy": 0.3632,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17004,7 +17015,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5382,
+"entropy": 1.5383,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -17015,7 +17026,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2106,
+"entropy": 1.2107,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -17037,7 +17048,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5014,
+"entropy": 0.5016,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17048,7 +17059,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4364,
+"entropy": 1.4365,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -17092,7 +17103,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2484,
+"entropy": 1.2485,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -17103,7 +17114,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2501,
+"entropy": 1.2502,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -17114,7 +17125,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2176,
+"entropy": 1.2177,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -17125,7 +17136,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2131,
+"entropy": 1.2132,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -17180,7 +17191,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4975,
+"entropy": 1.4976,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -17191,7 +17202,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4158,
+"entropy": 0.4159,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17213,7 +17224,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4901,
+"entropy": 1.4903,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -17224,7 +17235,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4371,
+"entropy": 1.4372,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -17246,7 +17257,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3646,
+"entropy": 0.3647,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17257,7 +17268,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1944,
+"entropy": 1.1945,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17268,7 +17279,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1833,
+"entropy": 1.1835,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17290,7 +17301,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5539,
+"entropy": 1.554,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -17341,11 +17352,11 @@
 "803385": {
 "player_key": "jay_harry",
 "listed_pos": "SS",
-"p_hold": 0.327,
+"p_hold": 0.326,
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.7259,
+"entropy": 1.7261,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -17433,7 +17444,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1658,
+"entropy": 1.1659,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17466,7 +17477,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2402,
+"entropy": 1.2403,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -17477,7 +17488,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2007,
+"entropy": 1.2008,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17499,7 +17510,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2948,
+"entropy": 1.2949,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -17510,7 +17521,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1402,
+"entropy": 1.1404,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17664,7 +17675,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3403,
+"entropy": 0.3404,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17719,7 +17730,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3418,
+"entropy": 1.3419,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -17796,7 +17807,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2277,
+"entropy": 1.2279,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -17807,7 +17818,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.398,
+"entropy": 0.3981,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17847,11 +17858,11 @@
 "805416": {
 "player_key": "will_vierling",
 "listed_pos": "C",
-"p_hold": 0.921,
+"p_hold": 0.92,
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3288,
+"entropy": 0.3289,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17884,7 +17895,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5226,
+"entropy": 0.5227,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -17906,7 +17917,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.451,
+"entropy": 1.4511,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -17917,7 +17928,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2926,
+"entropy": 1.2927,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -18027,7 +18038,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.8337,
+"entropy": 1.8338,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -18049,7 +18060,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6044,
+"entropy": 1.6045,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -18060,7 +18071,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2603,
+"entropy": 1.2604,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -18071,7 +18082,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2052,
+"entropy": 1.2053,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -18104,7 +18115,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2385,
+"entropy": 1.2386,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -18115,7 +18126,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.5309,
+"entropy": 0.5311,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -18126,7 +18137,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3002,
+"entropy": 1.3003,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -18467,7 +18478,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.476,
+"entropy": 0.4762,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -18489,7 +18500,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3041,
+"entropy": 1.3042,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -18500,7 +18511,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3075,
+"entropy": 1.3076,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -19200,11 +19211,11 @@
 "807511": {
 "player_key": "nelly_taylor",
 "listed_pos": "CF",
-"p_hold": 0.552,
+"p_hold": 0.551,
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1622,
+"entropy": 1.1624,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -19270,7 +19281,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4252,
+"entropy": 0.4253,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -19303,7 +19314,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4361,
+"entropy": 1.4362,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -19325,7 +19336,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4332,
+"entropy": 0.4333,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -19336,7 +19347,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3223,
+"entropy": 1.3224,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -19358,7 +19369,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1983,
+"entropy": 1.1984,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -20040,7 +20051,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.4979,
+"entropy": 1.498,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -20161,7 +20172,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3893,
+"entropy": 0.3894,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -20172,7 +20183,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2858,
+"entropy": 1.2859,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -20216,7 +20227,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3229,
+"entropy": 1.323,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -20227,7 +20238,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3962,
+"entropy": 0.3964,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -20249,7 +20260,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.502,
+"entropy": 1.5021,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -20282,7 +20293,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5052,
+"entropy": 1.5053,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -20315,7 +20326,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3647,
+"entropy": 0.3649,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -20326,7 +20337,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4136,
+"entropy": 1.4137,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -20337,7 +20348,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3575,
+"entropy": 0.3577,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -20348,7 +20359,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.462,
+"entropy": 1.4621,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -20370,7 +20381,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3892,
+"entropy": 1.3893,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -20392,7 +20403,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2966,
+"entropy": 1.2967,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -20403,7 +20414,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2128,
+"entropy": 1.2129,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -20425,7 +20436,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5279,
+"entropy": 1.528,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -20524,7 +20535,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3013,
+"entropy": 1.3014,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -20535,7 +20546,7 @@
 "band": "Likely moves",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.6011,
+"entropy": 1.6012,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -20601,7 +20612,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2159,
+"entropy": 1.216,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -20623,7 +20634,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3909,
+"entropy": 0.3911,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -20733,7 +20744,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.399,
+"entropy": 1.3991,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -20744,7 +20755,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4408,
+"entropy": 0.4409,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -20755,7 +20766,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1865,
+"entropy": 1.1866,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -20766,7 +20777,7 @@
 "band": "Likely moves",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.7158,
+"entropy": 0.7159,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -20777,7 +20788,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.277,
+"entropy": 1.2771,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -20788,7 +20799,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4437,
+"entropy": 0.4438,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -20799,7 +20810,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2239,
+"entropy": 1.224,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -20854,7 +20865,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.491,
+"entropy": 0.4912,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -20865,7 +20876,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1872,
+"entropy": 1.1874,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -21019,7 +21030,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5331,
+"entropy": 1.5332,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -21074,7 +21085,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1612,
+"entropy": 1.1613,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -21085,7 +21096,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.221,
+"entropy": 1.2211,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -21096,7 +21107,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4538,
+"entropy": 1.4539,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -21107,7 +21118,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2143,
+"entropy": 1.2144,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -21118,7 +21129,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4346,
+"entropy": 0.4347,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -21129,7 +21140,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3218,
+"entropy": 1.3219,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -21140,7 +21151,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1778,
+"entropy": 1.178,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -21151,7 +21162,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3132,
+"entropy": 1.3133,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -21173,7 +21184,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3466,
+"entropy": 1.3467,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -21184,7 +21195,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.3095,
+"entropy": 1.3096,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -21195,7 +21206,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1512,
+"entropy": 1.1513,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -21206,7 +21217,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3606,
+"entropy": 0.3608,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -21239,7 +21250,7 @@
 "band": "Likely moves",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.4269,
+"entropy": 1.427,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -21250,7 +21261,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3191,
+"entropy": 1.3192,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -21261,7 +21272,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2814,
+"entropy": 1.2815,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -21294,7 +21305,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2285,
+"entropy": 1.2286,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -21426,7 +21437,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4337,
+"entropy": 0.4339,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -21470,7 +21481,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.5426,
+"entropy": 1.5427,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -21613,7 +21624,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5242,
+"entropy": 1.5243,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -21624,7 +21635,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1868,
+"entropy": 1.1869,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -21855,7 +21866,7 @@
 "band": "Likely moves",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.4524,
+"entropy": 1.4525,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -21866,7 +21877,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.275,
+"entropy": 1.2751,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -22427,7 +22438,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1839,
+"entropy": 1.1841,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -22559,7 +22570,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1505,
+"entropy": 1.1507,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -22955,7 +22966,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2668,
+"entropy": 1.2669,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -23384,7 +23395,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1504,
+"entropy": 1.1505,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -23571,7 +23582,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1365,
+"entropy": 1.1366,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -23582,7 +23593,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5261,
+"entropy": 1.5262,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -23604,7 +23615,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4302,
+"entropy": 1.4303,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -23637,7 +23648,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4188,
+"entropy": 1.419,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -23648,7 +23659,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.513,
+"entropy": 1.5131,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -23659,7 +23670,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4816,
+"entropy": 1.4817,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -23681,7 +23692,7 @@
 "band": "Likely moves",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.6372,
+"entropy": 1.6373,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -23714,7 +23725,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5591,
+"entropy": 1.5592,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -23747,7 +23758,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3953,
+"entropy": 0.3955,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -23791,7 +23802,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5079,
+"entropy": 1.508,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -23857,7 +23868,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.4087,
+"entropy": 1.4089,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -23901,7 +23912,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3334,
+"entropy": 0.3336,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -24275,7 +24286,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1332,
+"entropy": 1.1334,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -24308,7 +24319,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.4893,
+"entropy": 1.4894,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -24319,7 +24330,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4409,
+"entropy": 0.4411,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -24473,7 +24484,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5329,
+"entropy": 1.533,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -24484,7 +24495,7 @@
 "band": "Split risk",
 "t_lo": 0.447,
 "t_hi": 0.53,
-"entropy": 1.5164,
+"entropy": 1.5165,
 "entropy_band": "high",
 "basis": "live_listed"
 },
@@ -24495,7 +24506,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4478,
+"entropy": 0.448,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -24506,7 +24517,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1389,
+"entropy": 1.139,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -24528,7 +24539,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1437,
+"entropy": 1.1438,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -24748,7 +24759,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3536,
+"entropy": 0.3538,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -24759,7 +24770,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2942,
+"entropy": 1.2943,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -24814,7 +24825,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1616,
+"entropy": 1.1617,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -24825,7 +24836,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4284,
+"entropy": 0.4285,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -24836,7 +24847,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.333,
+"entropy": 0.3331,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -26585,7 +26596,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3845,
+"entropy": 0.3847,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -26673,7 +26684,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.4229,
+"entropy": 0.423,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -26827,7 +26838,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3826,
+"entropy": 0.3827,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -26893,7 +26904,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.1394,
+"entropy": 1.1395,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -27091,7 +27102,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.2959,
+"entropy": 1.296,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -27102,7 +27113,7 @@
 "band": "Split risk",
 "t_lo": 0.504,
 "t_hi": 0.558,
-"entropy": 1.2212,
+"entropy": 1.2214,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -27146,7 +27157,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3832,
+"entropy": 0.3833,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -27157,7 +27168,7 @@
 "band": "Split risk",
 "t_lo": 0.421,
 "t_hi": 0.47,
-"entropy": 1.3861,
+"entropy": 1.3863,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -28719,7 +28730,7 @@
 "band": "Split risk",
 "t_lo": 0.831,
 "t_hi": 0.94,
-"entropy": 0.3291,
+"entropy": 0.3293,
 "entropy_band": "low",
 "basis": "live_listed"
 },
@@ -28840,7 +28851,7 @@
 "band": "Split risk",
 "t_lo": 0.478,
 "t_hi": 0.58,
-"entropy": 1.3275,
+"entropy": 1.3276,
 "entropy_band": "mid",
 "basis": "live_listed"
 },
@@ -30872,6 +30883,7 @@
 "camden_troyer": 803131,
 "christian_olivo": 700840,
 "maddox_latta": 823944,
+"eduardo_guerrero": 800370,
 "nico_perez": 703639,
 "zach_evans": 828473,
 "carter_dorighi": 826163,

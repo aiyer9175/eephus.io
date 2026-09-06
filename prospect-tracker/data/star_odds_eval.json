@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-04",
+ "generated_at": "2026-09-05",
  "experiment": "star-odds-calibration",
  "model": "star_odds (P>=2 control seasons of >=4 WAR; mixture Poisson-binomial)",
  "seed": null,
@@ -18,22 +18,22 @@
       "tier": "35+",
       "fv": 37.5,
       "published": 0.004,
-      "model": 0.0017,
-      "abs_dev": 0.0023
+      "model": 0.0,
+      "abs_dev": 0.004
      },
      {
       "tier": "40",
       "fv": 40.0,
       "published": 0.008,
-      "model": 0.0006,
-      "abs_dev": 0.0074
+      "model": 0.0,
+      "abs_dev": 0.008
      },
      {
       "tier": "40+",
       "fv": 42.5,
       "published": 0.018,
-      "model": 0.0007,
-      "abs_dev": 0.0173
+      "model": 0.0001,
+      "abs_dev": 0.0179
      },
      {
       "tier": "45",
@@ -86,7 +86,7 @@
      }
     ],
     "max_abs_dev": 0.5556,
-    "mean_abs_dev": 0.1467
+    "mean_abs_dev": 0.147
    },
    "pitcher": {
     "tiers": [
@@ -94,22 +94,22 @@
       "tier": "35+",
       "fv": 37.5,
       "published": 0.004,
-      "model": 0.0006,
-      "abs_dev": 0.0034
+      "model": 0.0,
+      "abs_dev": 0.004
      },
      {
       "tier": "40",
       "fv": 40.0,
       "published": 0.004,
-      "model": 0.0002,
-      "abs_dev": 0.0038
+      "model": 0.0,
+      "abs_dev": 0.004
      },
      {
       "tier": "40+",
       "fv": 42.5,
       "published": 0.01,
-      "model": 0.0003,
-      "abs_dev": 0.0097
+      "model": 0.0,
+      "abs_dev": 0.01
      },
      {
       "tier": "45",
@@ -162,7 +162,7 @@
      }
     ],
     "max_abs_dev": 0.6533,
-    "mean_abs_dev": 0.132
+    "mean_abs_dev": 0.1321
    }
   }
  },
@@ -357,13 +357,13 @@
      "surplus_max_pct_dev": 0.6811,
      "surplus_mean_pct_dev": 0.2814,
      "star_max_abs_dev": 0.5556,
-     "star_mean_abs_dev": 0.1467
+     "star_mean_abs_dev": 0.147
     },
     "post": {
      "surplus_max_pct_dev": 0.5027,
      "surplus_mean_pct_dev": 0.2091,
      "star_max_abs_dev": 0.6257,
-     "star_mean_abs_dev": 0.1609
+     "star_mean_abs_dev": 0.1611
     }
    },
    "pitcher": {
@@ -372,7 +372,7 @@
      "surplus_max_pct_dev": 0.5667,
      "surplus_mean_pct_dev": 0.1949,
      "star_max_abs_dev": 0.6533,
-     "star_mean_abs_dev": 0.132
+     "star_mean_abs_dev": 0.1321
     },
     "post": {
      "surplus_max_pct_dev": 0.48,
@@ -388,27 +388,27 @@
   "definition": "2+ seasons of >=4 WAR in debut..debut+6",
   "roles": {
    "hitter": {
-    "n": 401,
+    "n": 395,
     "tiers": [
      {
       "tier": "<50",
-      "n": 280,
+      "n": 276,
       "stars": 9,
-      "realized": 0.032,
+      "realized": 0.033,
       "published": 0.06
      },
      {
       "tier": "50-55",
-      "n": 47,
+      "n": 46,
       "stars": 11,
-      "realized": 0.234,
+      "realized": 0.239,
       "published": 0.155
      },
      {
       "tier": "55-60",
-      "n": 43,
+      "n": 42,
       "stars": 13,
-      "realized": 0.302,
+      "realized": 0.31,
       "published": 0.253
      },
      {
@@ -428,11 +428,11 @@
     ]
    },
    "pitcher": {
-    "n": 424,
+    "n": 422,
     "tiers": [
      {
       "tier": "<50",
-      "n": 321,
+      "n": 319,
       "stars": 5,
       "realized": 0.016,
       "published": 0.03

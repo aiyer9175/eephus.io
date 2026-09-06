@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-09-04",
+ "generated_at": "2026-09-05",
  "season": 2026,
- "as_of": "2026-09-04",
+ "as_of": "2026-09-05",
  "verdict": "validated",
  "backtest": {
   "status": "validated",
@@ -90,7 +90,7 @@
   "available": true,
   "n_stamped": 730,
   "n_hitters": 730,
-  "n_feed_codes": 1444,
+  "n_feed_codes": 1445,
   "n_teams_with_orders": 30,
   "n_teams_identical_orders": 0,
   "keys": {

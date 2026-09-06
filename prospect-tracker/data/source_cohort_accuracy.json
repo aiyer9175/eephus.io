@@ -1,9 +1,9 @@
 {
- "generated_at": "2026-09-04T18:53:34Z",
+ "generated_at": "2026-09-05T17:00:53Z",
  "produced_by": "source_cohort_accuracy.run_source_cohort_accuracy",
- "as_of_date": "2026-09-04",
+ "as_of_date": "2026-09-05",
  "ships_a_weight": false,
- "headline": "The owner question is UNANSWERABLE in most cells. 2 of 25 scored cells clear their own MDE95, against 1.25 expected by construction at alpha 0.05. The GLOBAL head-to-head is itself not resolvable (d_rho -0.02038, MDE95 0.03522). Archetype heterogeneity does not reject one common difference (Cochran Q p 0.3736, label permutation p 0.3423, I2 6.7 percent). All six cohort-weight arms lose to equal weight, random cohort labels do no worse (permutation p 0.1294), and the in-sample global oracle gain 0.00039 sits below the 0.0068 ship gate, so estimation error is not the binding constraint. No weight ships and none should.",
+ "headline": "The owner question is UNANSWERABLE in most cells. 1 of 25 scored cells clear their own MDE95, against 1.25 expected by construction at alpha 0.05. The GLOBAL head-to-head is itself not resolvable (d_rho -0.01882, MDE95 0.03617). Archetype heterogeneity does not reject one common difference (Cochran Q p 0.442, label permutation p 0.4238, I2 0.0 percent). All six cohort-weight arms lose to equal weight, random cohort labels do no worse (permutation p 0.2289), and the in-sample global oracle gain 0.00021 sits below the 0.0068 ship gate, so estimation error is not the binding constraint. No weight ships and none should.",
  "basis": {
   "window_years": [
    2017,
@@ -15,8 +15,8 @@
    2023
   ],
   "min_lag_years": 3,
-  "pooled_common_rows": 4307,
-  "deduped_players": 1522,
+  "pooled_common_rows": 4315,
+  "deduped_players": 1528,
   "dedup_rule": "one row per player, latest PRE-DEBUT read; identical rule to source_backtest.py:952-967",
   "estimand": "d_rho = rho_fangraphs - rho_mlb_pipeline; negative means MLB Pipeline orders the cell better",
   "uncertainty": "player bootstrap B=2000, seed 20260809; mde95 = 1.96 * sd(bootstrap d_rho); answerable when abs(d_rho) >= mde95",
@@ -35,121 +35,121 @@
   "served_artifact_stale": false,
   "served_cell_n": {
    "hs_bat": 291,
-   "hs_arm": 296,
+   "hs_arm": 297,
    "college_bat": 174,
    "college_arm": 271,
-   "intl_bat": 287,
-   "intl_arm": 201
+   "intl_bat": 289,
+   "intl_arm": 204
   },
   "note": "Leg 1 recomputes source_backtest._archetype_accuracy on this lane's rows and is binding. Leg 2 compares to the served artifact and is informational, because the served artifact can predate its own inputs."
  },
  "accuracy": {
   "pooled": {
-   "n": 1522,
+   "n": 1528,
    "raters": {
     "fangraphs": {
-     "n": 1522,
-     "spearman": 0.2939,
-     "auc": 0.7428,
+     "n": 1528,
+     "spearman": 0.294,
+     "auc": 0.7432,
      "basis": "in_sample_common_set"
     },
     "mlb_pipeline": {
-     "n": 1522,
-     "spearman": 0.3143,
-     "auc": 0.7536,
+     "n": 1528,
+     "spearman": 0.3128,
+     "auc": 0.7542,
      "basis": "in_sample_common_set"
     },
     "prospx_consensus": {
-     "n": 1522,
-     "spearman": 0.3187,
-     "auc": 0.7669,
+     "n": 1528,
+     "spearman": 0.3171,
+     "auc": 0.7673,
      "basis": "in_sample_common_set"
     }
    },
    "scored": true,
-   "d_rho": -0.02038,
+   "d_rho": -0.01882,
    "d_rho_ci": [
-    -0.05428,
-    0.01579
+    -0.05599,
+    0.01722
    ],
-   "d_rho_boot_sd": 0.01797,
-   "mde95": 0.03522,
+   "d_rho_boot_sd": 0.01845,
+   "mde95": 0.03617,
    "answerable": false,
-   "boot_p_two_sided": 0.2729,
+   "boot_p_two_sided": 0.3068,
    "winner": "not_resolvable",
    "boot_b": 2000,
    "seed": 20260809
   },
   "by_side": {
    "bat": {
-    "n": 753,
+    "n": 755,
     "raters": {
      "fangraphs": {
-      "n": 753,
-      "spearman": 0.3081,
-      "auc": 0.7401,
+      "n": 755,
+      "spearman": 0.3088,
+      "auc": 0.7406,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 753,
+      "n": 755,
       "spearman": 0.3406,
-      "auc": 0.7478,
+      "auc": 0.7482,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 753,
-      "spearman": 0.3522,
-      "auc": 0.7634,
+      "n": 755,
+      "spearman": 0.3524,
+      "auc": 0.7641,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.03251,
+    "d_rho": -0.03175,
     "d_rho_ci": [
-     -0.07748,
-     0.01543
+     -0.07916,
+     0.0158
     ],
-    "d_rho_boot_sd": 0.02433,
-    "mde95": 0.04768,
+    "d_rho_boot_sd": 0.02389,
+    "mde95": 0.04683,
     "answerable": false,
-    "boot_p_two_sided": 0.1909,
+    "boot_p_two_sided": 0.1789,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
     "survives_holm": false
    },
    "arm": {
-    "n": 769,
+    "n": 773,
     "raters": {
      "fangraphs": {
-      "n": 769,
-      "spearman": 0.3049,
-      "auc": 0.7393,
+      "n": 773,
+      "spearman": 0.304,
+      "auc": 0.7394,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 769,
-      "spearman": 0.3086,
-      "auc": 0.7498,
+      "n": 773,
+      "spearman": 0.3051,
+      "auc": 0.7506,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 769,
-      "spearman": 0.3097,
-      "auc": 0.7619,
+      "n": 773,
+      "spearman": 0.3059,
+      "auc": 0.7622,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.00371,
+    "d_rho": -0.00103,
     "d_rho_ci": [
-     -0.06353,
-     0.04991
+     -0.05735,
+     0.05644
     ],
-    "d_rho_boot_sd": 0.02938,
-    "mde95": 0.05758,
+    "d_rho_boot_sd": 0.02914,
+    "mde95": 0.05711,
     "answerable": false,
-    "boot_p_two_sided": 0.8796,
+    "boot_p_two_sided": 0.9775,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
@@ -158,38 +158,38 @@
   },
   "by_acquisition": {
    "draft_hs": {
-    "n": 587,
+    "n": 588,
     "raters": {
      "fangraphs": {
-      "n": 587,
-      "spearman": 0.3157,
-      "auc": 0.7494,
+      "n": 588,
+      "spearman": 0.3159,
+      "auc": 0.7497,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 587,
-      "spearman": 0.3699,
-      "auc": 0.77,
+      "n": 588,
+      "spearman": 0.3675,
+      "auc": 0.7709,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 587,
-      "spearman": 0.3526,
-      "auc": 0.7691,
+      "n": 588,
+      "spearman": 0.3503,
+      "auc": 0.7697,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.05419,
+    "d_rho": -0.05159,
     "d_rho_ci": [
-     -0.10894,
-     -0.0009
+     -0.10528,
+     0.00118
     ],
-    "d_rho_boot_sd": 0.02753,
-    "mde95": 0.05396,
-    "answerable": true,
-    "boot_p_two_sided": 0.048,
-    "winner": "mlb_pipeline",
+    "d_rho_boot_sd": 0.02752,
+    "mde95": 0.05393,
+    "answerable": false,
+    "boot_p_two_sided": 0.056,
+    "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
     "survives_holm": false
@@ -199,8 +199,8 @@
     "raters": {
      "fangraphs": {
       "n": 445,
-      "spearman": 0.2521,
-      "auc": 0.7056,
+      "spearman": 0.2554,
+      "auc": 0.7065,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
@@ -211,58 +211,58 @@
      },
      "prospx_consensus": {
       "n": 445,
-      "spearman": 0.2785,
-      "auc": 0.7423,
+      "spearman": 0.2797,
+      "auc": 0.7427,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.02711,
+    "d_rho": -0.0238,
     "d_rho_ci": [
-     -0.0998,
-     0.04647
+     -0.09607,
+     0.04955
     ],
-    "d_rho_boot_sd": 0.03821,
-    "mde95": 0.0749,
+    "d_rho_boot_sd": 0.03827,
+    "mde95": 0.075,
     "answerable": false,
-    "boot_p_two_sided": 0.5177,
+    "boot_p_two_sided": 0.5857,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
     "survives_holm": false
    },
    "international": {
-    "n": 488,
+    "n": 493,
     "raters": {
      "fangraphs": {
-      "n": 488,
-      "spearman": 0.313,
-      "auc": 0.7813,
+      "n": 493,
+      "spearman": 0.3102,
+      "auc": 0.7815,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 488,
-      "spearman": 0.2821,
-      "auc": 0.7718,
+      "n": 493,
+      "spearman": 0.2815,
+      "auc": 0.7725,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 488,
-      "spearman": 0.3289,
+      "n": 493,
+      "spearman": 0.3261,
       "auc": 0.7971,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": 0.03085,
+    "d_rho": 0.02874,
     "d_rho_ci": [
-     -0.0302,
-     0.09544
+     -0.03174,
+     0.09174
     ],
-    "d_rho_boot_sd": 0.03227,
-    "mde95": 0.06326,
+    "d_rho_boot_sd": 0.03236,
+    "mde95": 0.06343,
     "answerable": false,
-    "boot_p_two_sided": 0.3208,
+    "boot_p_two_sided": 0.3638,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
@@ -308,37 +308,37 @@
     "survives_holm": false
    },
    "hs_arm": {
-    "n": 296,
+    "n": 297,
     "raters": {
      "fangraphs": {
-      "n": 296,
-      "spearman": 0.3262,
-      "auc": 0.7413,
+      "n": 297,
+      "spearman": 0.3267,
+      "auc": 0.7419,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 296,
-      "spearman": 0.395,
-      "auc": 0.7643,
+      "n": 297,
+      "spearman": 0.3899,
+      "auc": 0.7662,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 296,
-      "spearman": 0.3556,
-      "auc": 0.7603,
+      "n": 297,
+      "spearman": 0.3507,
+      "auc": 0.7616,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.06882,
+    "d_rho": -0.06313,
     "d_rho_ci": [
-     -0.15617,
-     0.01187
+     -0.14685,
+     0.01895
     ],
-    "d_rho_boot_sd": 0.04377,
-    "mde95": 0.08579,
+    "d_rho_boot_sd": 0.04324,
+    "mde95": 0.08475,
     "answerable": false,
-    "boot_p_two_sided": 0.1089,
+    "boot_p_two_sided": 0.1409,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
@@ -349,8 +349,8 @@
     "raters": {
      "fangraphs": {
       "n": 174,
-      "spearman": 0.2941,
-      "auc": 0.6712,
+      "spearman": 0.301,
+      "auc": 0.6735,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
@@ -361,21 +361,21 @@
      },
      "prospx_consensus": {
       "n": 174,
-      "spearman": 0.3346,
-      "auc": 0.695,
+      "spearman": 0.3376,
+      "auc": 0.6961,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.05134,
+    "d_rho": -0.04445,
     "d_rho_ci": [
-     -0.17714,
-     0.06037
+     -0.16904,
+     0.06699
     ],
-    "d_rho_boot_sd": 0.06132,
-    "mde95": 0.12018,
+    "d_rho_boot_sd": 0.06106,
+    "mde95": 0.11967,
     "answerable": false,
-    "boot_p_two_sided": 0.3858,
+    "boot_p_two_sided": 0.4418,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
@@ -419,74 +419,74 @@
     "survives_holm": false
    },
    "intl_bat": {
-    "n": 287,
+    "n": 289,
     "raters": {
      "fangraphs": {
-      "n": 287,
-      "spearman": 0.3101,
-      "auc": 0.7934,
+      "n": 289,
+      "spearman": 0.3071,
+      "auc": 0.7938,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 287,
+      "n": 289,
       "spearman": 0.3073,
-      "auc": 0.7824,
+      "auc": 0.7834,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 287,
-      "spearman": 0.3496,
-      "auc": 0.8137,
+      "n": 289,
+      "spearman": 0.3467,
+      "auc": 0.8143,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": 0.00274,
+    "d_rho": -0.00018,
     "d_rho_ci": [
-     -0.07157,
-     0.07705
+     -0.07519,
+     0.0778
     ],
-    "d_rho_boot_sd": 0.03841,
-    "mde95": 0.07529,
+    "d_rho_boot_sd": 0.03879,
+    "mde95": 0.07602,
     "answerable": false,
-    "boot_p_two_sided": 0.9325,
+    "boot_p_two_sided": 0.9745,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
     "survives_holm": false
    },
    "intl_arm": {
-    "n": 201,
+    "n": 204,
     "raters": {
      "fangraphs": {
-      "n": 201,
-      "spearman": 0.3526,
-      "auc": 0.7545,
+      "n": 204,
+      "spearman": 0.3489,
+      "auc": 0.7541,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 201,
-      "spearman": 0.2704,
-      "auc": 0.7366,
+      "n": 204,
+      "spearman": 0.2674,
+      "auc": 0.7362,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 201,
-      "spearman": 0.3185,
-      "auc": 0.753,
+      "n": 204,
+      "spearman": 0.3138,
+      "auc": 0.7517,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": 0.08228,
+    "d_rho": 0.08144,
     "d_rho_ci": [
-     -0.03611,
-     0.20189
+     -0.04213,
+     0.2015
     ],
-    "d_rho_boot_sd": 0.06154,
-    "mde95": 0.12062,
+    "d_rho_boot_sd": 0.06249,
+    "mde95": 0.12249,
     "answerable": false,
-    "boot_p_two_sided": 0.1819,
+    "boot_p_two_sided": 0.2049,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
@@ -499,8 +499,8 @@
     "raters": {
      "fangraphs": {
       "n": 76,
-      "spearman": 0.4176,
-      "auc": 0.8084,
+      "spearman": 0.4352,
+      "auc": 0.8112,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
@@ -511,95 +511,95 @@
      },
      "prospx_consensus": {
       "n": 76,
-      "spearman": 0.4851,
-      "auc": 0.8167,
+      "spearman": 0.4939,
+      "auc": 0.8186,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.02689,
+    "d_rho": -0.00928,
     "d_rho_ci": [
-     -0.18285,
-     0.1191
+     -0.16602,
+     0.13833
     ],
-    "d_rho_boot_sd": 0.07563,
-    "mde95": 0.14824,
+    "d_rho_boot_sd": 0.07612,
+    "mde95": 0.14919,
     "answerable": false,
-    "boot_p_two_sided": 0.7366,
+    "boot_p_two_sided": 0.9305,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
     "survives_holm": false
    },
    "IF": {
-    "n": 372,
+    "n": 373,
     "raters": {
      "fangraphs": {
-      "n": 372,
-      "spearman": 0.3679,
-      "auc": 0.7447,
+      "n": 373,
+      "spearman": 0.3671,
+      "auc": 0.7453,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 372,
-      "spearman": 0.3939,
-      "auc": 0.7672,
+      "n": 373,
+      "spearman": 0.3938,
+      "auc": 0.7676,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 372,
-      "spearman": 0.3956,
-      "auc": 0.7751,
+      "n": 373,
+      "spearman": 0.3951,
+      "auc": 0.7759,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.02593,
+    "d_rho": -0.02674,
     "d_rho_ci": [
-     -0.09372,
-     0.0383
+     -0.09231,
+     0.03557
     ],
-    "d_rho_boot_sd": 0.03266,
-    "mde95": 0.06402,
+    "d_rho_boot_sd": 0.03209,
+    "mde95": 0.0629,
     "answerable": false,
-    "boot_p_two_sided": 0.3848,
+    "boot_p_two_sided": 0.3858,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
     "survives_holm": false
    },
    "OF": {
-    "n": 295,
+    "n": 296,
     "raters": {
      "fangraphs": {
-      "n": 295,
-      "spearman": 0.2182,
-      "auc": 0.7186,
+      "n": 296,
+      "spearman": 0.2173,
+      "auc": 0.7182,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 295,
-      "spearman": 0.2604,
-      "auc": 0.7172,
+      "n": 296,
+      "spearman": 0.2603,
+      "auc": 0.7176,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 295,
-      "spearman": 0.2854,
+      "n": 296,
+      "spearman": 0.2848,
       "auc": 0.7344,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.04219,
+    "d_rho": -0.04302,
     "d_rho_ci": [
-     -0.12588,
-     0.04517
+     -0.12837,
+     0.04036
     ],
-    "d_rho_boot_sd": 0.0445,
-    "mde95": 0.08723,
+    "d_rho_boot_sd": 0.04359,
+    "mde95": 0.08543,
     "answerable": false,
-    "boot_p_two_sided": 0.3508,
+    "boot_p_two_sided": 0.3218,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
@@ -668,37 +668,37 @@
     "survives_holm": false
    },
    "P_unspecified": {
-    "n": 648,
+    "n": 652,
     "raters": {
      "fangraphs": {
-      "n": 648,
-      "spearman": 0.3026,
-      "auc": 0.7197,
+      "n": 652,
+      "spearman": 0.302,
+      "auc": 0.7201,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 648,
-      "spearman": 0.3173,
-      "auc": 0.7342,
+      "n": 652,
+      "spearman": 0.314,
+      "auc": 0.7354,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 648,
-      "spearman": 0.3261,
-      "auc": 0.7487,
+      "n": 652,
+      "spearman": 0.3221,
+      "auc": 0.7492,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.01472,
+    "d_rho": -0.01199,
     "d_rho_ci": [
-     -0.07497,
-     0.04547
+     -0.07331,
+     0.04957
     ],
-    "d_rho_boot_sd": 0.03101,
-    "mde95": 0.06078,
+    "d_rho_boot_sd": 0.03121,
+    "mde95": 0.06117,
     "answerable": false,
-    "boot_p_two_sided": 0.6617,
+    "boot_p_two_sided": 0.7246,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
@@ -773,8 +773,8 @@
      },
      "prospx_consensus": {
       "n": 124,
-      "spearman": -0.0788,
-      "auc": 0.4279,
+      "spearman": -0.0777,
+      "auc": 0.4283,
       "basis": "in_sample_common_set"
      }
     },
@@ -794,81 +794,81 @@
     "survives_holm": false
    },
    "45": {
-    "n": 230,
+    "n": 229,
     "raters": {
      "fangraphs": {
-      "n": 230,
-      "spearman": -0.019,
-      "auc": 0.467,
+      "n": 229,
+      "spearman": -0.0175,
+      "auc": 0.4688,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 230,
-      "spearman": -0.0594,
-      "auc": 0.4916,
+      "n": 229,
+      "spearman": -0.061,
+      "auc": 0.4901,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 230,
-      "spearman": -0.094,
-      "auc": 0.4375,
+      "n": 229,
+      "spearman": -0.0937,
+      "auc": 0.4383,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": 0.04046,
+    "d_rho": 0.04347,
     "d_rho_ci": [
-     -0.15995,
-     0.23991
+     -0.1605,
+     0.23457
     ],
-    "d_rho_boot_sd": 0.10325,
-    "mde95": 0.20238,
+    "d_rho_boot_sd": 0.10237,
+    "mde95": 0.20065,
     "answerable": false,
-    "boot_p_two_sided": 0.6877,
+    "boot_p_two_sided": 0.6707,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
     "survives_holm": false
    },
    "<45": {
-    "n": 1102,
+    "n": 1109,
     "raters": {
      "fangraphs": {
-      "n": 1102,
-      "spearman": 0.0458,
-      "auc": 0.5837,
+      "n": 1109,
+      "spearman": 0.0475,
+      "auc": 0.5827,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 1102,
-      "spearman": 0.0864,
-      "auc": 0.5979,
+      "n": 1109,
+      "spearman": 0.0841,
+      "auc": 0.5977,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 1102,
-      "spearman": 0.0802,
-      "auc": 0.5997,
+      "n": 1109,
+      "spearman": 0.0784,
+      "auc": 0.5987,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.04068,
+    "d_rho": -0.03664,
     "d_rho_ci": [
-     -0.1114,
-     0.02743
+     -0.10825,
+     0.03432
     ],
-    "d_rho_boot_sd": 0.03611,
-    "mde95": 0.07078,
+    "d_rho_boot_sd": 0.03624,
+    "mde95": 0.07102,
     "answerable": false,
-    "boot_p_two_sided": 0.2619,
+    "boot_p_two_sided": 0.3058,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
     "survives_holm": false
    }
   },
-  "by_fv_tier_range_restriction_warning": "SCIENTIFICALLY WEAK, emitted with the warning attached rather than omitted. The tier is a bin on the CONSENSUS, which is a function of BOTH graders, so within a tier the two grades are nearly equal by construction. That is range restriction, and it drives every within-tier rho toward zero: observed range -0.0937 to 0.2604 against a pooled 0.2939 / 0.3143. Do not read these cells as evidence about tier-specific accuracy.",
+  "by_fv_tier_range_restriction_warning": "SCIENTIFICALLY WEAK, emitted with the warning attached rather than omitted. The tier is a bin on the CONSENSUS, which is a function of BOTH graders, so within a tier the two grades are nearly equal by construction. That is range restriction, and it drives every within-tier rho toward zero: observed range -0.0937 to 0.2604 against a pooled 0.2940 / 0.3128. Do not read these cells as evidence about tier-specific accuracy.",
   "by_age_at_grading": {
    "<=18": {
     "n": 49,
@@ -961,7 +961,7 @@
      },
      "prospx_consensus": {
       "n": 336,
-      "spearman": 0.4395,
+      "spearman": 0.4396,
       "auc": 0.8248,
       "basis": "in_sample_common_set"
      }
@@ -982,74 +982,74 @@
     "survives_holm": false
    },
    "23-24": {
-    "n": 606,
+    "n": 610,
     "raters": {
      "fangraphs": {
-      "n": 606,
-      "spearman": 0.2831,
-      "auc": 0.7112,
+      "n": 610,
+      "spearman": 0.2823,
+      "auc": 0.712,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 606,
-      "spearman": 0.3691,
-      "auc": 0.7564,
+      "n": 610,
+      "spearman": 0.3682,
+      "auc": 0.7582,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 606,
-      "spearman": 0.3619,
-      "auc": 0.7658,
+      "n": 610,
+      "spearman": 0.3594,
+      "auc": 0.7668,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": -0.08606,
+    "d_rho": -0.08589,
     "d_rho_ci": [
-     -0.1448,
-     -0.02882
+     -0.14386,
+     -0.02602
     ],
-    "d_rho_boot_sd": 0.02969,
-    "mde95": 0.0582,
+    "d_rho_boot_sd": 0.03002,
+    "mde95": 0.05883,
     "answerable": true,
-    "boot_p_two_sided": 0.008,
+    "boot_p_two_sided": 0.006,
     "winner": "mlb_pipeline",
     "boot_b": 2000,
     "seed": 20260809,
     "survives_holm": true
    },
    ">=25": {
-    "n": 385,
+    "n": 387,
     "raters": {
      "fangraphs": {
-      "n": 385,
-      "spearman": 0.1874,
-      "auc": 0.6984,
+      "n": 387,
+      "spearman": 0.1926,
+      "auc": 0.6986,
       "basis": "in_sample_common_set"
      },
      "mlb_pipeline": {
-      "n": 385,
-      "spearman": 0.1803,
-      "auc": 0.6914,
+      "n": 387,
+      "spearman": 0.179,
+      "auc": 0.6909,
       "basis": "in_sample_common_set"
      },
      "prospx_consensus": {
-      "n": 385,
-      "spearman": 0.1725,
-      "auc": 0.719,
+      "n": 387,
+      "spearman": 0.1736,
+      "auc": 0.7194,
       "basis": "in_sample_common_set"
      }
     },
     "scored": true,
-    "d_rho": 0.00714,
+    "d_rho": 0.01358,
     "d_rho_ci": [
-     -0.09781,
-     0.10879
+     -0.09161,
+     0.11261
     ],
     "d_rho_boot_sd": 0.0526,
-    "mde95": 0.1031,
+    "mde95": 0.10309,
     "answerable": false,
-    "boot_p_two_sided": 0.8876,
+    "boot_p_two_sided": 0.8096,
     "winner": "not_resolvable",
     "boot_b": 2000,
     "seed": 20260809,
@@ -1065,35 +1065,35 @@
   "coverage_selection": {
    "per_source": {
     "fangraphs": {
-     "rows_own": 5034,
-     "rows_common": 4307,
+     "rows_own": 5042,
+     "rows_common": 4315,
      "rows_cut": 727,
      "players_cut": 511,
-     "rho_own": 0.2364,
-     "rho_common": 0.2549,
-     "delta_own_minus_common": -0.01855,
+     "rho_own": 0.236,
+     "rho_common": 0.2547,
+     "delta_own_minus_common": -0.01862,
      "cut_mean_fv": 37.71,
      "cut_debut_rate": 0.735,
      "kept_mean_fv": 43.73,
      "kept_debut_rate": 0.895
     },
     "mlb_pipeline": {
-     "rows_own": 4724,
-     "rows_common": 4307,
-     "rows_cut": 417,
-     "players_cut": 357,
-     "rho_own": 0.277,
+     "rows_own": 4733,
+     "rows_common": 4315,
+     "rows_cut": 418,
+     "players_cut": 358,
+     "rho_own": 0.2771,
      "rho_common": 0.2859,
-     "delta_own_minus_common": -0.00892,
+     "delta_own_minus_common": -0.00878,
      "cut_mean_fv": 44.57,
-     "cut_debut_rate": 0.832,
+     "cut_debut_rate": 0.833,
      "kept_mean_fv": 47.47,
      "kept_debut_rate": 0.895
     }
    },
-   "row_retention": 0.7901,
-   "player_retention": 0.749,
-   "union_player_year_slots": 5451,
+   "row_retention": 0.7903,
+   "player_retention": 0.7494,
+   "union_player_year_slots": 5460,
    "kept_pooled_mean_source_fv": 45.6,
    "kept_pooled_debut_rate": 0.895,
    "cut_pooled_mean_source_fv": 40.21,
@@ -1106,7 +1106,7 @@
  },
  "multiplicity": {
   "cells_tested": 25,
-  "cells_flagged_answerable": 2,
+  "cells_flagged_answerable": 1,
   "expected_false_positives_at_alpha_05": 1.25,
   "per_partition_holm": {
    "by_side": {
@@ -1116,7 +1116,7 @@
    },
    "by_acquisition": {
     "m": 3,
-    "raw_flagged_answerable": 1,
+    "raw_flagged_answerable": 0,
     "survives_holm": []
    },
    "by_archetype": {
@@ -1151,46 +1151,46 @@
    "df": 5,
    "d_rho": {
     "hs_bat": -0.04085,
-    "hs_arm": -0.06882,
-    "college_bat": -0.05134,
+    "hs_arm": -0.06313,
+    "college_bat": -0.04445,
     "college_arm": 0.01298,
-    "intl_bat": 0.00274,
-    "intl_arm": 0.08228
+    "intl_bat": -0.00018,
+    "intl_arm": 0.08144
    },
-   "weighted_mean_d_rho": -0.0186,
-   "cochran_q": 5.3595,
-   "chi2_p": 0.3736,
-   "permutation_p_labels": 0.3423,
+   "weighted_mean_d_rho": -0.01828,
+   "cochran_q": 4.79,
+   "chi2_p": 0.442,
+   "permutation_p_labels": 0.4238,
    "permutation_draws": 2000,
-   "tau2": 0.000154,
-   "tau": 0.0124,
-   "i2_percent": 6.7,
+   "tau2": 0.0,
+   "tau": 0.0,
+   "i2_percent": 0.0,
    "reading": "Q p and the label permutation are the family-level test. A survivor count is not one: 40 cells at alpha 0.05 produce about 2 false positives by construction."
   },
   "base_year_stability": {
    "per_year": [
     {
      "year": 2017,
-     "n": 315,
-     "rho_fangraphs": 0.1982,
-     "rho_mlb_pipeline": 0.3059,
-     "d_rho": -0.1077,
+     "n": 320,
+     "rho_fangraphs": 0.198,
+     "rho_mlb_pipeline": 0.3104,
+     "d_rho": -0.11244,
      "sign": -1
     },
     {
      "year": 2018,
-     "n": 459,
-     "rho_fangraphs": 0.2504,
-     "rho_mlb_pipeline": 0.2976,
-     "d_rho": -0.04721,
+     "n": 461,
+     "rho_fangraphs": 0.2506,
+     "rho_mlb_pipeline": 0.2984,
+     "d_rho": -0.04776,
      "sign": -1
     },
     {
      "year": 2019,
-     "n": 603,
-     "rho_fangraphs": 0.2397,
-     "rho_mlb_pipeline": 0.2799,
-     "d_rho": -0.04016,
+     "n": 604,
+     "rho_fangraphs": 0.24,
+     "rho_mlb_pipeline": 0.28,
+     "d_rho": -0.04003,
      "sign": -1
     },
     {
@@ -1231,7 +1231,7 @@
   }
  },
  "cohort_ab": {
-  "rows_n": 5264,
+  "rows_n": 5272,
   "vintage_rule": "weights for board year Y use base years <= Y - 3 only",
   "gate": {
    "min_d_rho": 0.0068,
@@ -1252,11 +1252,11 @@
      "auc": 0.7344
     },
     "weighted": {
-     "spearman": 0.2703,
+     "spearman": 0.2702,
      "auc": 0.7357
     },
-    "d_rho": -0.00406,
-    "d_auc": 0.00123,
+    "d_rho": -0.00416,
+    "d_auc": 0.00125,
     "gate": {
      "min_d_rho": 0.0068,
      "min_d_auc": 0.0052
@@ -1268,8 +1268,8 @@
       "n": 666,
       "weights_vintage_max_base": 2017,
       "alpha_fg": {
-       "__global__": 0.4276,
-       "hs_arm": 0.4858,
+       "__global__": 0.4247,
+       "hs_arm": 0.486,
        "hs_bat": 0.4233
       },
       "equal": {
@@ -1286,13 +1286,13 @@
       "n": 693,
       "weights_vintage_max_base": 2018,
       "alpha_fg": {
-       "__global__": 0.4401,
+       "__global__": 0.4388,
        "college_arm": 0.4156,
        "college_bat": 0.5461,
-       "hs_arm": 0.4742,
+       "hs_arm": 0.4745,
        "hs_bat": 0.4352,
-       "intl_arm": 0.4381,
-       "intl_bat": 0.4896
+       "intl_arm": 0.4373,
+       "intl_bat": 0.488
       },
       "equal": {
        "spearman": 0.3066,
@@ -1308,13 +1308,13 @@
       "n": 741,
       "weights_vintage_max_base": 2019,
       "alpha_fg": {
-       "__global__": 0.4495,
+       "__global__": 0.4487,
        "college_arm": 0.3771,
        "college_bat": 0.5231,
-       "hs_arm": 0.4885,
+       "hs_arm": 0.4887,
        "hs_bat": 0.4327,
-       "intl_arm": 0.458,
-       "intl_bat": 0.4848
+       "intl_arm": 0.4577,
+       "intl_bat": 0.4836
       },
       "equal": {
        "spearman": 0.298,
@@ -1330,13 +1330,13 @@
       "n": 830,
       "weights_vintage_max_base": 2020,
       "alpha_fg": {
-       "__global__": 0.4558,
+       "__global__": 0.4552,
        "college_arm": 0.3718,
        "college_bat": 0.5132,
-       "hs_arm": 0.4804,
+       "hs_arm": 0.4806,
        "hs_bat": 0.4559,
-       "intl_arm": 0.4433,
-       "intl_bat": 0.4833
+       "intl_arm": 0.4426,
+       "intl_bat": 0.4823
       },
       "equal": {
        "spearman": 0.2415,
@@ -1365,7 +1365,7 @@
      "spearman": 0.2732,
      "auc": 0.7358
     },
-    "d_rho": -0.00119,
+    "d_rho": -0.00118,
     "d_auc": 0.00136,
     "gate": {
      "min_d_rho": 0.0068,
@@ -1378,9 +1378,9 @@
       "n": 666,
       "weights_vintage_max_base": 2017,
       "alpha_fg": {
-       "__global__": 0.4276,
-       "hs_arm": 0.4635,
-       "hs_bat": 0.4597
+       "__global__": 0.4247,
+       "hs_arm": 0.4619,
+       "hs_bat": 0.4582
       },
       "equal": {
        "spearman": 0.248,
@@ -1396,13 +1396,13 @@
       "n": 693,
       "weights_vintage_max_base": 2018,
       "alpha_fg": {
-       "__global__": 0.4401,
-       "college_arm": 0.4793,
-       "college_bat": 0.4789,
-       "hs_arm": 0.4602,
-       "hs_bat": 0.459,
-       "intl_arm": 0.4688,
-       "intl_bat": 0.4652
+       "__global__": 0.4388,
+       "college_arm": 0.4789,
+       "college_bat": 0.4784,
+       "hs_arm": 0.4593,
+       "hs_bat": 0.4581,
+       "intl_arm": 0.4677,
+       "intl_bat": 0.4642
       },
       "equal": {
        "spearman": 0.3066,
@@ -1418,13 +1418,13 @@
       "n": 741,
       "weights_vintage_max_base": 2019,
       "alpha_fg": {
-       "__global__": 0.4495,
-       "college_arm": 0.4736,
-       "college_bat": 0.4742,
-       "hs_arm": 0.4618,
-       "hs_bat": 0.4614,
-       "intl_arm": 0.4672,
-       "intl_bat": 0.4652
+       "__global__": 0.4487,
+       "college_arm": 0.4732,
+       "college_bat": 0.4738,
+       "hs_arm": 0.4612,
+       "hs_bat": 0.4608,
+       "intl_arm": 0.4665,
+       "intl_bat": 0.4645
       },
       "equal": {
        "spearman": 0.298,
@@ -1440,13 +1440,13 @@
       "n": 830,
       "weights_vintage_max_base": 2020,
       "alpha_fg": {
-       "__global__": 0.4558,
-       "college_arm": 0.4707,
-       "college_bat": 0.473,
-       "hs_arm": 0.4644,
-       "hs_bat": 0.4641,
-       "intl_arm": 0.4681,
-       "intl_bat": 0.4662
+       "__global__": 0.4552,
+       "college_arm": 0.4703,
+       "college_bat": 0.4726,
+       "hs_arm": 0.4639,
+       "hs_bat": 0.4636,
+       "intl_arm": 0.4675,
+       "intl_bat": 0.4657
       },
       "equal": {
        "spearman": 0.2415,
@@ -1473,10 +1473,10 @@
     },
     "weighted": {
      "spearman": 0.2695,
-     "auc": 0.7339
+     "auc": 0.7338
     },
-    "d_rho": -0.00491,
-    "d_auc": -0.00055,
+    "d_rho": -0.00488,
+    "d_auc": -0.00067,
     "gate": {
      "min_d_rho": 0.0068,
      "min_d_auc": 0.0052
@@ -1488,8 +1488,8 @@
       "n": 666,
       "weights_vintage_max_base": 2017,
       "alpha_fg": {
-       "__global__": 0.4276,
-       "hs_arm": 0.4858,
+       "__global__": 0.4247,
+       "hs_arm": 0.486,
        "hs_bat": 0.4233
       },
       "equal": {
@@ -1498,7 +1498,7 @@
       },
       "weighted": {
        "spearman": 0.2393,
-       "auc": 0.6921
+       "auc": 0.6918
       }
      },
      {
@@ -1506,13 +1506,13 @@
       "n": 693,
       "weights_vintage_max_base": 2018,
       "alpha_fg": {
-       "__global__": 0.4401,
+       "__global__": 0.4388,
        "college_arm": 0.4156,
        "college_bat": 0.5461,
-       "hs_arm": 0.4742,
+       "hs_arm": 0.4745,
        "hs_bat": 0.4352,
-       "intl_arm": 0.4381,
-       "intl_bat": 0.4896
+       "intl_arm": 0.4373,
+       "intl_bat": 0.488
       },
       "equal": {
        "spearman": 0.3066,
@@ -1528,21 +1528,21 @@
       "n": 741,
       "weights_vintage_max_base": 2019,
       "alpha_fg": {
-       "__global__": 0.4495,
+       "__global__": 0.4487,
        "college_arm": 0.3771,
        "college_bat": 0.5231,
-       "hs_arm": 0.4885,
+       "hs_arm": 0.4887,
        "hs_bat": 0.4327,
-       "intl_arm": 0.458,
-       "intl_bat": 0.4848
+       "intl_arm": 0.4577,
+       "intl_bat": 0.4836
       },
       "equal": {
        "spearman": 0.298,
        "auc": 0.7464
       },
       "weighted": {
-       "spearman": 0.3026,
-       "auc": 0.7513
+       "spearman": 0.3025,
+       "auc": 0.7512
       }
      },
      {
@@ -1550,21 +1550,21 @@
       "n": 830,
       "weights_vintage_max_base": 2020,
       "alpha_fg": {
-       "__global__": 0.4558,
+       "__global__": 0.4552,
        "college_arm": 0.3718,
        "college_bat": 0.5132,
-       "hs_arm": 0.4804,
+       "hs_arm": 0.4806,
        "hs_bat": 0.4559,
-       "intl_arm": 0.4433,
-       "intl_bat": 0.4833
+       "intl_arm": 0.4426,
+       "intl_bat": 0.4823
       },
       "equal": {
        "spearman": 0.2415,
        "auc": 0.7758
       },
       "weighted": {
-       "spearman": 0.2264,
-       "auc": 0.7669
+       "spearman": 0.2277,
+       "auc": 0.7664
       }
      }
     ]
@@ -1582,11 +1582,11 @@
      "auc": 0.7344
     },
     "weighted": {
-     "spearman": 0.2716,
-     "auc": 0.7325
+     "spearman": 0.2718,
+     "auc": 0.7327
     },
-    "d_rho": -0.00275,
-    "d_auc": -0.00189,
+    "d_rho": -0.00254,
+    "d_auc": -0.00177,
     "gate": {
      "min_d_rho": 0.0068,
      "min_d_auc": 0.0052
@@ -1598,9 +1598,9 @@
       "n": 666,
       "weights_vintage_max_base": 2017,
       "alpha_fg": {
-       "__global__": 0.4276,
-       "hs_arm": 0.4635,
-       "hs_bat": 0.4597
+       "__global__": 0.4247,
+       "hs_arm": 0.4619,
+       "hs_bat": 0.4582
       },
       "equal": {
        "spearman": 0.248,
@@ -1616,20 +1616,20 @@
       "n": 693,
       "weights_vintage_max_base": 2018,
       "alpha_fg": {
-       "__global__": 0.4401,
-       "college_arm": 0.4793,
-       "college_bat": 0.4789,
-       "hs_arm": 0.4602,
-       "hs_bat": 0.459,
-       "intl_arm": 0.4688,
-       "intl_bat": 0.4652
+       "__global__": 0.4388,
+       "college_arm": 0.4789,
+       "college_bat": 0.4784,
+       "hs_arm": 0.4593,
+       "hs_bat": 0.4581,
+       "intl_arm": 0.4677,
+       "intl_bat": 0.4642
       },
       "equal": {
        "spearman": 0.3066,
        "auc": 0.7344
       },
       "weighted": {
-       "spearman": 0.3071,
+       "spearman": 0.3072,
        "auc": 0.7293
       }
      },
@@ -1638,21 +1638,21 @@
       "n": 741,
       "weights_vintage_max_base": 2019,
       "alpha_fg": {
-       "__global__": 0.4495,
-       "college_arm": 0.4736,
-       "college_bat": 0.4742,
-       "hs_arm": 0.4618,
-       "hs_bat": 0.4614,
-       "intl_arm": 0.4672,
-       "intl_bat": 0.4652
+       "__global__": 0.4487,
+       "college_arm": 0.4732,
+       "college_bat": 0.4738,
+       "hs_arm": 0.4612,
+       "hs_bat": 0.4608,
+       "intl_arm": 0.4665,
+       "intl_bat": 0.4645
       },
       "equal": {
        "spearman": 0.298,
        "auc": 0.7464
       },
       "weighted": {
-       "spearman": 0.3012,
-       "auc": 0.745
+       "spearman": 0.3022,
+       "auc": 0.7452
       }
      },
      {
@@ -1660,13 +1660,13 @@
       "n": 830,
       "weights_vintage_max_base": 2020,
       "alpha_fg": {
-       "__global__": 0.4558,
-       "college_arm": 0.4707,
-       "college_bat": 0.473,
-       "hs_arm": 0.4644,
-       "hs_bat": 0.4641,
-       "intl_arm": 0.4681,
-       "intl_bat": 0.4662
+       "__global__": 0.4552,
+       "college_arm": 0.4703,
+       "college_bat": 0.4726,
+       "hs_arm": 0.4639,
+       "hs_bat": 0.4636,
+       "intl_arm": 0.4675,
+       "intl_bat": 0.4657
       },
       "equal": {
        "spearman": 0.2415,
@@ -1674,7 +1674,7 @@
       },
       "weighted": {
        "spearman": 0.2365,
-       "auc": 0.7662
+       "auc": 0.7668
       }
      }
     ]
@@ -1692,11 +1692,11 @@
      "auc": 0.7344
     },
     "weighted": {
-     "spearman": 0.2775,
-     "auc": 0.7347
+     "spearman": 0.277,
+     "auc": 0.7358
     },
-    "d_rho": 0.00309,
-    "d_auc": 0.00031,
+    "d_rho": 0.00262,
+    "d_auc": 0.00139,
     "gate": {
      "min_d_rho": 0.0068,
      "min_d_auc": 0.0052
@@ -1708,9 +1708,9 @@
       "n": 666,
       "weights_vintage_max_base": 2017,
       "alpha_fg": {
-       "__global__": 0.4276,
-       "arm": 0.4552,
-       "bat": 0.4437
+       "__global__": 0.4247,
+       "arm": 0.4538,
+       "bat": 0.4408
       },
       "equal": {
        "spearman": 0.248,
@@ -1726,9 +1726,9 @@
       "n": 693,
       "weights_vintage_max_base": 2018,
       "alpha_fg": {
-       "__global__": 0.4401,
-       "arm": 0.4196,
-       "bat": 0.4634
+       "__global__": 0.4388,
+       "arm": 0.4198,
+       "bat": 0.4625
       },
       "equal": {
        "spearman": 0.3066,
@@ -1744,9 +1744,9 @@
       "n": 741,
       "weights_vintage_max_base": 2019,
       "alpha_fg": {
-       "__global__": 0.4495,
-       "arm": 0.4417,
-       "bat": 0.4618
+       "__global__": 0.4487,
+       "arm": 0.4418,
+       "bat": 0.4612
       },
       "equal": {
        "spearman": 0.298,
@@ -1762,9 +1762,9 @@
       "n": 830,
       "weights_vintage_max_base": 2020,
       "alpha_fg": {
-       "__global__": 0.4558,
-       "arm": 0.4503,
-       "bat": 0.469
+       "__global__": 0.4552,
+       "arm": 0.45,
+       "bat": 0.4686
       },
       "equal": {
        "spearman": 0.2415,
@@ -1790,11 +1790,11 @@
      "auc": 0.7344
     },
     "weighted": {
-     "spearman": 0.2711,
-     "auc": 0.7335
+     "spearman": 0.271,
+     "auc": 0.7337
     },
-    "d_rho": -0.00331,
-    "d_auc": -0.00095,
+    "d_rho": -0.00337,
+    "d_auc": -0.00074,
     "gate": {
      "min_d_rho": 0.0068,
      "min_d_auc": 0.0052
@@ -1806,9 +1806,9 @@
       "n": 666,
       "weights_vintage_max_base": 2017,
       "alpha_fg": {
-       "__global__": 0.4276,
-       "arm": 0.4552,
-       "bat": 0.4437
+       "__global__": 0.4247,
+       "arm": 0.4538,
+       "bat": 0.4408
       },
       "equal": {
        "spearman": 0.248,
@@ -1816,7 +1816,7 @@
       },
       "weighted": {
        "spearman": 0.2388,
-       "auc": 0.6936
+       "auc": 0.6926
       }
      },
      {
@@ -1824,9 +1824,9 @@
       "n": 693,
       "weights_vintage_max_base": 2018,
       "alpha_fg": {
-       "__global__": 0.4401,
-       "arm": 0.4196,
-       "bat": 0.4634
+       "__global__": 0.4388,
+       "arm": 0.4198,
+       "bat": 0.4625
       },
       "equal": {
        "spearman": 0.3066,
@@ -1842,9 +1842,9 @@
       "n": 741,
       "weights_vintage_max_base": 2019,
       "alpha_fg": {
-       "__global__": 0.4495,
-       "arm": 0.4417,
-       "bat": 0.4618
+       "__global__": 0.4487,
+       "arm": 0.4418,
+       "bat": 0.4612
       },
       "equal": {
        "spearman": 0.298,
@@ -1860,9 +1860,9 @@
       "n": 830,
       "weights_vintage_max_base": 2020,
       "alpha_fg": {
-       "__global__": 0.4558,
-       "arm": 0.4503,
-       "bat": 0.469
+       "__global__": 0.4552,
+       "arm": 0.45,
+       "bat": 0.4686
       },
       "equal": {
        "spearman": 0.2415,
@@ -1882,11 +1882,11 @@
    "target_arm": "side_shrunk",
    "draws": 200,
    "permuted": "cohort labels across rows, weights refit per draw",
-   "null_mean": 0.00064,
-   "null_sd": 0.00219,
-   "null_p95": 0.00389,
-   "observed_d_rho": 0.00309,
-   "p": 0.1294,
+   "null_mean": 0.00093,
+   "null_sd": 0.00215,
+   "null_p95": 0.00469,
+   "observed_d_rho": 0.00262,
+   "p": 0.2289,
    "reading": "p is the share of RANDOM cohort labelings that match or beat the real one. Above 0.5 means random labels do better."
   },
   "shrink_sensitivity": {
@@ -1894,8 +1894,8 @@
    "k_grid": [
     {
      "k": 0,
-     "d_rho": 0.00439,
-     "d_auc": 0.00261
+     "d_rho": 0.0045,
+     "d_auc": 0.00269
     },
     {
      "k": 25,
@@ -1904,18 +1904,18 @@
     },
     {
      "k": 50,
-     "d_rho": 0.00432,
-     "d_auc": 0.00252
+     "d_rho": 0.0043,
+     "d_auc": 0.00248
     },
     {
      "k": 150,
-     "d_rho": 0.00309,
-     "d_auc": 0.00031
+     "d_rho": 0.00262,
+     "d_auc": 0.00139
     },
     {
      "k": 400,
-     "d_rho": -0.00071,
-     "d_auc": -0.00172
+     "d_rho": -0.00063,
+     "d_auc": -0.00132
     },
     {
      "k": 1000,
@@ -1925,7 +1925,7 @@
    ],
    "monotone_increasing_in_k_rho": false,
    "monotone_increasing_in_k_auc": false,
-   "rank_corr_k_vs_d_rho": -0.9429,
+   "rank_corr_k_vs_d_rho": -1.0,
    "rank_corr_k_vs_d_auc": -1.0,
    "reading": "Improvement as k grows toward equal weight is the signature of zero signal: the best amount of the weight is none of it. The two estimands trend in OPPOSITE directions here, and the whole grid spans about 1e-3 against a 0.0068 gate, so neither trend is a result on its own."
   },
@@ -2008,12 +2008,12 @@
   },
   "deduped_common": {
    "basis": "deduped common set, one row per player",
-   "n": 1522,
-   "equal_rho": 0.3182,
+   "n": 1528,
+   "equal_rho": 0.3172,
    "global_oracle_alpha": 0.405,
-   "global_oracle_rho": 0.3186,
-   "global_oracle_gain": 0.00039,
-   "global_oracle_gain_vs_ship_gate": -0.00641,
+   "global_oracle_rho": 0.3174,
+   "global_oracle_gain": 0.00021,
+   "global_oracle_gain_vs_ship_gate": -0.00659,
    "global_oracle_clears_ship_gate": false,
    "per_cohort": {
     "hs_bat": {
@@ -2024,18 +2024,18 @@
      "within_gain": 0.00809
     },
     "hs_arm": {
-     "n": 296,
+     "n": 297,
      "oracle_alpha": 0.005,
-     "within_rho": 0.3998,
-     "equal_rho": 0.3849,
-     "within_gain": 0.01496
+     "within_rho": 0.3952,
+     "equal_rho": 0.3807,
+     "within_gain": 0.01447
     },
     "college_bat": {
      "n": 174,
      "oracle_alpha": 0.335,
-     "within_rho": 0.3491,
-     "equal_rho": 0.3444,
-     "within_gain": 0.00465
+     "within_rho": 0.352,
+     "equal_rho": 0.3476,
+     "within_gain": 0.00441
     },
     "college_arm": {
      "n": 271,
@@ -2045,28 +2045,28 @@
      "within_gain": 0.00166
     },
     "intl_bat": {
-     "n": 287,
+     "n": 289,
      "oracle_alpha": 0.5,
-     "within_rho": 0.3303,
-     "equal_rho": 0.3303,
+     "within_rho": 0.3287,
+     "equal_rho": 0.3287,
      "within_gain": 0.0
     },
     "intl_arm": {
-     "n": 201,
+     "n": 204,
      "oracle_alpha": 1.0,
-     "within_rho": 0.3526,
-     "equal_rho": 0.3344,
-     "within_gain": 0.01829
+     "within_rho": 0.3489,
+     "equal_rho": 0.3307,
+     "within_gain": 0.0182
     }
    },
-   "cohort_oracle_pooled_rho": 0.3111,
-   "cohort_oracle_pooled_gain": -0.00712,
-   "cohort_oracle_within_gain_n_weighted": 0.00771,
-   "cohort_oracle_share_surviving_pooling": -0.9237,
+   "cohort_oracle_pooled_rho": 0.31,
+   "cohort_oracle_pooled_gain": -0.00711,
+   "cohort_oracle_within_gain_n_weighted": 0.00759,
+   "cohort_oracle_share_surviving_pooling": -0.9365,
    "cohort_oracle_clears_ship_gate": false,
-   "corr_fg_mp_pearson": 0.75,
-   "sd_fangraphs": 6.3516,
-   "sd_mlb_pipeline": 6.0914,
+   "corr_fg_mp_pearson": 0.7501,
+   "sd_fangraphs": 6.3396,
+   "sd_mlb_pipeline": 6.0828,
    "geometry_note": "Two near-collinear predictors of similar scale have a nearly flat response surface in the mixing weight. A flat oracle is GEOMETRY, not sample size, and more base years cannot change it. Where the cohort oracle scores NEGATIVE pooled while every within-cohort oracle is non-negative, cohort-specific mixing has broken the global comparability of consensus FV faster than it bought within-cohort ordering."
   }
  },
@@ -2308,7 +2308,7 @@
    "espn": {
     "n": 263,
     "sigma_centered": 3.8349,
-    "sd_ratio_vs_fangraphs": 0.6678,
+    "sd_ratio_vs_fangraphs": 0.6679,
     "range_restricted": true,
     "weight": null,
     "why_no_weight": "range restriction deflates variance and covariance in OPPOSITE directions relative to the factor model, so a triad solved with this instrument in it is biased in a direction the triad cannot detect from within"
@@ -2316,7 +2316,7 @@
    "just_baseball": {
     "n": 158,
     "sigma_centered": 3.9391,
-    "sd_ratio_vs_fangraphs": 0.6859,
+    "sd_ratio_vs_fangraphs": 0.6861,
     "range_restricted": true,
     "weight": null,
     "why_no_weight": "range restriction deflates variance and covariance in OPPOSITE directions relative to the factor model, so a triad solved with this instrument in it is biased in a direction the triad cannot detect from within"
@@ -2324,7 +2324,7 @@
    "tjstats": {
     "n": 156,
     "sigma_centered": 3.7751,
-    "sd_ratio_vs_fangraphs": 0.6574,
+    "sd_ratio_vs_fangraphs": 0.6575,
     "range_restricted": true,
     "weight": null,
     "why_no_weight": "range restriction deflates variance and covariance in OPPOSITE directions relative to the factor model, so a triad solved with this instrument in it is biased in a direction the triad cannot detect from within"
@@ -2341,16 +2341,16 @@
    ],
    "pairwise_complete_cov": [
     [
-     32.981,
-     23.26,
+     32.966,
+     23.252,
      21.369,
      12.84,
      14.186,
      13.182
     ],
     [
-     23.26,
-     30.323,
+     23.252,
+     30.294,
      21.308,
      9.934,
      9.566,
@@ -2391,16 +2391,16 @@
    ],
    "pairwise_n": [
     [
-     10529,
-     7710,
+     10537,
+     7718,
      3731,
      263,
      155,
      153
     ],
     [
-     7710,
-     10505,
+     7718,
+     10524,
      3774,
      254,
      158,
@@ -2440,27 +2440,27 @@
     ]
    ],
    "eigenvalues": [
-    0.6452,
+    0.6449,
     2.0109,
-    7.5622,
-    18.3029,
-    22.5305,
-    101.7961
+    7.55,
+    18.285,
+    22.5298,
+    101.7831
    ],
    "psd": true,
    "pairs_with_implied_corr_above_1": [],
    "third_instrument_swap": {
     "baseballamerica": {
-     "b_fangraphs": 4.8298,
-     "reliability_fangraphs": 0.7073,
-     "reliability_third": 0.4343,
+     "b_fangraphs": 4.8289,
+     "reliability_fangraphs": 0.7074,
+     "reliability_third": 0.4345,
      "heywood": false,
      "pairwise_n_third_vs_fg": 3731
     },
     "espn": {
-     "b_fangraphs": 5.4831,
-     "reliability_fangraphs": 0.9116,
-     "reliability_third": 0.3729,
+     "b_fangraphs": 5.4822,
+     "reliability_fangraphs": 0.9117,
+     "reliability_third": 0.373,
      "heywood": false,
      "pairwise_n_third_vs_fg": 263
     },
@@ -2472,9 +2472,9 @@
      "pairwise_n_third_vs_fg": 155
     },
     "tjstats": {
-     "b_fangraphs": 5.559,
-     "reliability_fangraphs": 0.937,
-     "reliability_third": 0.3945,
+     "b_fangraphs": 5.5581,
+     "reliability_fangraphs": 0.9371,
+     "reliability_third": 0.3947,
      "heywood": false,
      "pairwise_n_third_vs_fg": 153
     }
@@ -2495,14 +2495,14 @@
      "n": 575,
      "alpha_fg": 0.6609,
      "heywood": false,
-     "d_rho": -0.06882
+     "d_rho": -0.06313
     },
     {
      "archetype": "college_bat",
      "n": 508,
      "alpha_fg": 0.4882,
      "heywood": false,
-     "d_rho": -0.05134
+     "d_rho": -0.04445
     },
     {
      "archetype": "college_arm",
@@ -2516,18 +2516,18 @@
      "n": 825,
      "alpha_fg": 0.6584,
      "heywood": false,
-     "d_rho": 0.00274
+     "d_rho": -0.00018
     },
     {
      "archetype": "intl_arm",
      "n": 340,
      "alpha_fg": 0.377,
      "heywood": false,
-     "d_rho": 0.08228
+     "d_rho": 0.08144
     }
    ],
-   "pearson_r": -0.5711,
-   "permutation_p_two_sided": 0.225,
+   "pearson_r": -0.5901,
+   "permutation_p_two_sided": 0.1917,
    "permutation": "exact, all k! orderings",
    "on_the_resolvable_cells": [],
    "reading": "Precision and accuracy are uncorrelated across archetypes. Where accuracy IS resolvable, precision does not point the same way, so a precision weight would have been wrong exactly where it mattered. alpha_fg above 0.5 means precision prefers FanGraphs; d_rho below 0 means accuracy prefers MLB Pipeline."
@@ -2538,14 +2538,14 @@
    "reasons": [
     "Lane M4 (2026-08-08) measured coverage dependence at p 0.048 pre-shrinkage and p 0.944 post-shrinkage: the incumbent SINGLE_SOURCE_K=0.5 already absorbs it.",
     "lambda_k is a continuous-in-k reparameterisation of the SAME estimand M4 already tested, not a new one.",
-    "its proposed interaction gate needs roughly n=2000 in the k=1 stratum; the outcome-resolvable window supplies 499.",
+    "its proposed interaction gate needs roughly n=2000 in the k=1 stratum; the outcome-resolvable window supplies 500.",
     "its input sigma_pub has no vintage estimate before 2023, so it cannot be computed on any year the A/B can score."
    ],
    "k1_stratum": {
-    "resolvable_window_k1": 499,
-    "resolvable_window_n": 2068,
-    "live_board_k1": 3235,
-    "live_board_n": 4686,
+    "resolvable_window_k1": 500,
+    "resolvable_window_n": 2075,
+    "live_board_k1": 3236,
+    "live_board_n": 4687,
     "interaction_gate_needs_n": 2000
    }
   }
@@ -2557,16 +2557,16 @@
    "mlb_pipeline": {
     "per_year": {
      "2017": {
-      "n": 342,
-      "offset_fv": 4.079
+      "n": 347,
+      "offset_fv": 4.049
      },
      "2018": {
-      "n": 900,
-      "offset_fv": 4.1
+      "n": 903,
+      "offset_fv": 4.097
      },
      "2019": {
-      "n": 1197,
-      "offset_fv": 3.943
+      "n": 1199,
+      "offset_fv": 3.949
      },
      "2020": {
       "n": 1299,
@@ -2599,8 +2599,8 @@
     },
     "per_year_quarter": {
      "2017Q1": {
-      "n": 315,
-      "offset_fv": 4.111
+      "n": 320,
+      "offset_fv": 4.078
      },
      "2017Q2": {
       "n": 6,
@@ -2611,28 +2611,28 @@
       "offset_fv": 4.048
      },
      "2018Q1": {
-      "n": 459,
-      "offset_fv": 3.682
+      "n": 461,
+      "offset_fv": 3.677
      },
      "2018Q2": {
       "n": 21,
       "offset_fv": 5.476
      },
      "2018Q3": {
-      "n": 420,
-      "offset_fv": 4.488
+      "n": 421,
+      "offset_fv": 4.489
      },
      "2019Q1": {
-      "n": 603,
-      "offset_fv": 3.516
+      "n": 604,
+      "offset_fv": 3.518
      },
      "2019Q2": {
       "n": 52,
       "offset_fv": 4.038
      },
      "2019Q3": {
-      "n": 524,
-      "offset_fv": 4.38
+      "n": 525,
+      "offset_fv": 4.39
      },
      "2019Q4": {
       "n": 18,
@@ -2751,19 +2751,19 @@
      {
       "from": 2017,
       "to": 2018,
-      "move_fv": 0.021,
+      "move_fv": 0.048,
       "flagged": false
      },
      {
       "from": 2018,
       "to": 2019,
-      "move_fv": -0.157,
+      "move_fv": -0.148,
       "flagged": false
      },
      {
       "from": 2019,
       "to": 2020,
-      "move_fv": 0.26,
+      "move_fv": 0.254,
       "flagged": false
      },
      {

@@ -1,13 +1,13 @@
 {
-"generated_at": "2026-09-04",
+"generated_at": "2026-09-05",
 "artifact": "data/advancement_pace.json",
 "kind": "descriptive QC only - no predictive claim is made or permitted anywhere for this statistic",
 "methodology_version": "1.0.0-eephus",
-"n_scored_latest_asof": 9743,
-"n_asof_rows_fit": 27674,
+"n_scored_latest_asof": 9745,
+"n_asof_rows_fit": 27677,
 "distribution_ap_plus_display_latest": {
 "mean": 99.32,
-"sd": 7.68,
+"sd": 7.67,
 "p5": 88.5,
 "p25": 94.8,
 "p50": 99.0,
@@ -20,7 +20,7 @@
 "mean": 99.34,
 "sd": 7.77,
 "min": 63.0,
-"max": 160.7,
+"max": 160.6,
 "p5": 88.5,
 "p50": 99.0,
 "p95": 113.9
@@ -38,7 +38,7 @@
 },
 "2021+": {
 "mean_ap_plus": 100.43,
-"n": 13478
+"n": 13481
 }
 },
 "position_group": {
@@ -60,16 +60,16 @@
 },
 "UNK": {
 "mean_ap_plus": 99.92,
-"n": 18907
+"n": 18909
 },
 "UT": {
 "mean_ap_plus": 100.39,
-"n": 1036
+"n": 1037
 }
 },
 "entry_pathway": {
 "draft_college": {
-"mean_ap_plus": 99.54,
+"mean_ap_plus": 99.55,
 "n": 1368
 },
 "draft_hs": {
@@ -78,17 +78,17 @@
 },
 "intl_amateur": {
 "mean_ap_plus": 100.71,
-"n": 15875
+"n": 15876
 },
 "undrafted_other": {
 "mean_ap_plus": 98.99,
-"n": 9667
+"n": 9669
 }
 },
 "entry_age_bucket": {
 "18": {
 "mean_ap_plus": 100.02,
-"n": 4756
+"n": 4757
 },
 "19-20": {
 "mean_ap_plus": 99.54,
@@ -96,7 +96,7 @@
 },
 "21-22": {
 "mean_ap_plus": 98.92,
-"n": 7189
+"n": 7191
 },
 "23+": {
 "mean_ap_plus": 99.36,
@@ -110,19 +110,19 @@
 },
 "threshold_stability": {
 "raw_pace_spearman_T20_vs_T30": 0.9946,
-"n_common_players": 9743
+"n_common_players": 9745
 },
 "named_riser_sanity": [
 {
 "name": "Dayson Croes",
-"ap_plus": 160.7,
+"ap_plus": 160.6,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AAA in 2 active seasons"
 },
 {
 "name": "Sam Petersen",
-"ap_plus": 147.6,
+"ap_plus": 147.7,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AAA in 2 active seasons"

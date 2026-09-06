@@ -1,62 +1,62 @@
 {
- "generated_at": "2026-09-04T19:19:49+00:00",
+ "generated_at": "2026-09-05T17:24:38+00:00",
  "what_this_is": "when each scheduled job last actually ran. A job that is configured but never fires looks healthy in its own artifact; this is the file that would have caught it.",
  "jobs": {
   "betting_board_export": {
-   "last_attempt_at": "2026-09-04T19:19:47+00:00",
-   "n_attempts": 14,
+   "last_attempt_at": "2026-09-05T17:24:37+00:00",
+   "n_attempts": 15,
    "last_result": "15 game(s)",
-   "last_success_at": "2026-09-04T19:19:47+00:00",
-   "n_successes": 14
+   "last_success_at": "2026-09-05T17:24:37+00:00",
+   "n_successes": 15
   },
   "betting_calibration_ledger": {
-   "last_attempt_at": "2026-09-04T19:19:47+00:00",
-   "n_attempts": 17,
-   "last_result": "+72 priced side(s), 54 settled",
-   "last_success_at": "2026-09-04T19:19:47+00:00",
-   "n_successes": 17
+   "last_attempt_at": "2026-09-05T17:24:37+00:00",
+   "n_attempts": 18,
+   "last_result": "+26 priced side(s), 0 settled",
+   "last_success_at": "2026-09-05T17:24:37+00:00",
+   "n_successes": 18
   },
   "betting_learning": {
-   "last_attempt_at": "2026-09-04T19:19:47+00:00",
-   "n_attempts": 17,
-   "last_result": "vintage 456/600, 17 history row(s), min_edge=None",
-   "last_success_at": "2026-09-04T19:19:47+00:00",
-   "n_successes": 17
+   "last_attempt_at": "2026-09-05T17:24:38+00:00",
+   "n_attempts": 18,
+   "last_result": "vintage 472/600, 18 history row(s), min_edge=None",
+   "last_success_at": "2026-09-05T17:24:38+00:00",
+   "n_successes": 18
   },
   "betting_model_refit": {
-   "last_attempt_at": "2026-09-04T19:19:46+00:00",
-   "n_attempts": 20,
-   "last_result": "n_graded=456",
-   "last_success_at": "2026-09-04T19:19:46+00:00",
-   "n_successes": 20
+   "last_attempt_at": "2026-09-05T17:24:37+00:00",
+   "n_attempts": 21,
+   "last_result": "n_graded=472",
+   "last_success_at": "2026-09-05T17:24:37+00:00",
+   "n_successes": 21
   },
   "betting_odds_snapshot": {
-   "last_attempt_at": "2026-09-04T19:12:06+00:00",
-   "n_attempts": 20,
-   "last_result": "ok: 2026-09-04-1912.json",
-   "last_success_at": "2026-09-04T19:12:06+00:00",
-   "n_successes": 20
+   "last_attempt_at": "2026-09-05T17:18:49+00:00",
+   "n_attempts": 21,
+   "last_result": "ok: 2026-09-05-1718.json",
+   "last_success_at": "2026-09-05T17:18:49+00:00",
+   "n_successes": 21
   },
   "betting_shadow_ledger": {
-   "last_attempt_at": "2026-09-04T19:19:47+00:00",
-   "n_attempts": 17,
-   "last_result": "+19 logged, 8 settled, per-tag {'board_all': 214, 'ev_rank': 45, 'longshot': 4, 'potd_band': 15} of 100",
-   "last_success_at": "2026-09-04T19:19:47+00:00",
-   "n_successes": 17
+   "last_attempt_at": "2026-09-05T17:24:37+00:00",
+   "n_attempts": 18,
+   "last_result": "+13 logged, 0 settled, per-tag {'board_all': 214, 'ev_rank': 45, 'longshot': 4, 'potd_band': 15} of 100",
+   "last_success_at": "2026-09-05T17:24:37+00:00",
+   "n_successes": 18
   },
   "efv_scoreboard": {
-   "last_attempt_at": "2026-09-04T19:19:49+00:00",
-   "n_attempts": 11,
-   "last_result": "  capture.curve_area [war_capture] efv=0.8127 cons=0.8183 margin=-0.0056 n=3655",
-   "last_success_at": "2026-09-04T19:19:49+00:00",
-   "n_successes": 11
+   "last_attempt_at": "2026-09-05T17:24:38+00:00",
+   "n_attempts": 12,
+   "last_result": "  capture.curve_area [war_capture] efv=0.8134 cons=0.8188 margin=-0.0054 n=3648",
+   "last_success_at": "2026-09-05T17:24:38+00:00",
+   "n_successes": 12
   },
   "leaderboard_vintage": {
-   "last_attempt_at": "2026-09-04T19:12:08+00:00",
-   "n_attempts": 20,
+   "last_attempt_at": "2026-09-05T17:18:50+00:00",
+   "n_attempts": 21,
    "last_result": "ok",
-   "last_success_at": "2026-09-04T19:12:08+00:00",
-   "n_successes": 20
+   "last_success_at": "2026-09-05T17:18:50+00:00",
+   "n_successes": 21
   }
  }
 }
