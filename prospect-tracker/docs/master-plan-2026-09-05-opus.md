@@ -227,9 +227,21 @@ with every clause frozen before the first read.
   row per rater beside `accuracy.per_year`, marked additional view; measured expectation
   MP pooled -0.0113 (0.93x floor), no verdict change.
 - **A-CLAIM-14 Candidate years and newcomer ledger** (consensus_sources.P04, kept):
-  per-pair in-window overlap and first decidable run year (the ESPN x Pipeline 2026
-  overlap at 11 rows can never clear the 100-row pairwise minimum), per-source key
-  resolution counts; 2024 enters at the 2027 run.
+  per-pair in-window overlap and first decidable run year, per-source key resolution
+  counts; 2024 enters at the 2027 run. **SHIPPED 2026-09-06 as
+  `accuracy.candidate_year_ledger`, and it RETRACTS this item's own example.** This entry
+  asserted that "the ESPN x Pipeline 2026 overlap at 11 rows can never clear the 100-row
+  pairwise minimum". Measured, that overlap is **102 rows** and clears the minimum; the
+  pair is blocked by the `CANDIDATE_YEARS` tuple, not by overlap, and would resolve at the
+  2029 run if the tuple were extended. Do not cite the 11-row figure again.
+  The distinction the item was reaching for is real and the ledger now names it per pair:
+  seven pairs are blocked on **overlap** and can never be decided on current vintages
+  (Pipeline x TJStats 94, ESPN x TJStats 90, every Just Baseball pair at 21 to 26), while
+  five are blocked only by the **tuple** (best overlap 102 to 113, all at 2029 if
+  extended). Those two states have opposite remedies, which is why they are reported
+  apart. Per-source resolved-key counts ship beside them, with an explicit statement that
+  the unresolved denominator is invisible to this artifact so no coverage rate may be
+  derived from them.
 - **A-CLAIM-15 (UNVERIFIED, critic lane) program arm ledger and reserved confirmation
   fold** (critic-07): tally every arm adjudicated on the 11-fold basis and hold the 2025
   decision cohort out of every exploratory read so the V1 unlock CONFIRMS survivors. Also

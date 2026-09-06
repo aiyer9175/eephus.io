@@ -70,6 +70,8 @@ SAMPLE = """{
  "backtest":{"n_labeled":44,"spearman_prefit_vs_held":0.223,"relief_k_bump_measured":0.022,
    "per_direction":{"SP->RP":{"n_war":61,"rho_prefit_vs_war_delta":0.295,"n_held":22,"rho_prefit_vs_held":0.43},
                     "RP->SP":{"n_war":25,"rho_prefit_vs_war_delta":-0.216,"n_held":13,"rho_prefit_vs_held":0.134}},
+   "war_basis":{"provider":"ewar_v2","series":"eWAR v2: the Baseball-Reference run frame with pitching re-priced on FIP within role","source":"war_source.stint_frame('pit') on war_source.DEFAULT_PROVIDER","stamped":"2026-09-05","n_seasons":156,"available":true,"provider_known":true},
+   "gate":{"artifact":"data/pal_eval.json","generated_at":"2026-07-15","basis_provider":"bwar","basis_series":"bWAR: the Baseball-Reference run frame, pitchers priced on the runs they actually allowed","rule":"rho(FIT,war_delta) >= rho(best baseline) AND gap lo95 > -0.01","same_basis_as_live":false,"per_direction":{"SP->RP":{"pass":true,"n_gate":61,"rho_fit_war_delta":0.2916,"best_baseline":"kbb_pre","best_baseline_rho":-0.097,"gap_lo95":0.0745},"RP->SP":{"pass":false,"n_gate":25,"rho_fit_war_delta":-0.2062,"best_baseline":"neg_era_pre","best_baseline_rho":0.1023,"gap_lo95":-0.7517}}},
    "converter_median_fit_pool_pctile":72,"disclaimer":"A screen, not a success-probability model."}
 }"""
 
@@ -118,7 +120,11 @@ def _render_payload(hash_: str, payload: str) -> str:
 
 
 def test_rp2sp_view():
-    html = _render("")
+    # EXPLICIT hash. The default tab moved to sp2rp (the direction that passes
+    # its gate), so _render("") renders the SP->RP board and this test would be
+    # asserting against the wrong section. What the default IS gets its own
+    # test below, so moving it again fails there and not here.
+    html = _render("#rp2sp")
     assert "mlbstats-table" in html and "Deep Reliever" in html
     assert "pal-fit" in html and ">85.2<" in html
 
@@ -137,6 +143,14 @@ def test_history_scorecard_view():
     assert "0.223" not in html
     assert "0.295" in html and "validated vs baselines" in html
     assert "-0.216" in html and "does not validate ranking" in html
+    # The chip carries TWO measurements on TWO bases and must keep them apart:
+    # the live rho is labelled with the series backtest.war_basis stamps, the
+    # verdict beside it with the gate's own n and the series the gate ran on.
+    # Asserting the labels is what makes this a test of DERIVED copy rather
+    # than of two literal strings (see the flip test below).
+    assert "(n=61, eWAR v2)" in html and "(n=25, eWAR v2)" in html
+    assert "(gate n=61, bWAR basis)" in html
+    assert "(gate n=25, bWAR basis)" in html
     assert "Converted Guy" in html
     assert "Hit" in html                              # held-role label
     # WAR produced by the conversion: before -> after with the delta
@@ -144,6 +158,45 @@ def test_history_scorecard_view():
     assert "3.2" in html and "+2.4" in html           # post WAR + gain
     # arsenal shift: CH was added in the move
     assert "+CH" in html
+
+
+def test_scorecard_verdicts_are_read_from_the_payload_not_hard_coded():
+    """The card used to print "validated vs baselines" / "does not validate
+    ranking" as literal strings keyed to the direction, so it went on reporting
+    the bWAR-era gate after the live rhos moved to the eWAR v2 series and
+    nothing failed. Flip the gate in the payload and the copy must flip with
+    it; remove the gate and the card must refuse to assert either way."""
+    flipped = json.loads(SAMPLE)
+    g = flipped["backtest"]["gate"]["per_direction"]
+    g["SP->RP"]["pass"], g["RP->SP"]["pass"] = False, True
+    html = _render_payload("#history", json.dumps(flipped))
+    assert "does not validate ranking" in html and "validated vs baselines" in html
+    # SP->RP is the first chip printed, so a flipped gate puts the FAIL word
+    # ahead of the PASS word. Hard-coded copy cannot move.
+    assert html.index("does not validate ranking") < html.index("validated vs baselines")
+    nogate = json.loads(SAMPLE)
+    nogate["backtest"].pop("gate")
+    html2 = _render_payload("#history", json.dumps(nogate))
+    assert "gate verdict not in this payload" in html2
+    assert "validated vs baselines" not in html2
+    assert "does not validate ranking" not in html2
+    # and with no war_basis the live rho must lose its series label rather than
+    # inherit one: two different unavailabilities, two different silences.
+    nobasis = json.loads(SAMPLE)
+    nobasis["backtest"].pop("war_basis")
+    html3 = _render_payload("#history", json.dumps(nobasis))
+    assert "(n=61)" in html3 and "eWAR v2" not in html3
+
+
+def test_default_tab_is_the_direction_whose_gate_passes():
+    """Owner default, 2026-09-06: the lab opens on SP->RP, the direction the
+    pre-registered gate validates, not RP->SP, the one it does not. This is the
+    only place the default is pinned -- every board test drives its hash -- so
+    flipping the page back to leading with its weakest claim fails here."""
+    default = _render("")
+    assert "Power Starter" in default, "no-hash load is not the SP->RP board"
+    assert "Deep Reliever" not in default
+    assert "Deep Reliever" in _render("#rp2sp"), "the RP->SP board is unreachable"
 
 
 def test_pitchadd_view():
@@ -172,7 +225,7 @@ def test_prospect_watch_view():
 # ---------------------------------------------------------------------------
 
 def test_tier_cuts_are_read_from_the_payload_per_direction():
-    rp = _render("")
+    rp = _render("#rp2sp")
     sp = _render("#sp2rp")
     # SP->RP carries its OWN cuts. Its FIT is a need-gated score that tops out
     # near 60, so a shared 70 cut left the advertised top tier permanently empty.
@@ -193,7 +246,7 @@ def test_tier_chip_is_coloured_by_TIER_not_by_direction():
     """The colour channel used to encode which tab the reader had already
     clicked (all cyan on one, all orange on the other), which is zero bits about
     the tier. Chips now carry a rank class and the severity ramp lives in CSS."""
-    rp = _render("")
+    rp = _render("#rp2sp")
     sp = _render("#sp2rp")
     assert "pal-tier--t1" in rp
     assert "pal-tier--t1" in sp          # a top-tier chip on BOTH tabs

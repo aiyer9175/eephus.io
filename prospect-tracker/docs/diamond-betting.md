@@ -1601,6 +1601,269 @@ of its own and the slot meta says so through the tag record.
 
 ---
 
+## 7e. The per-market objective and the coefficient fit (2026-09-06)
+
+**Standing on the pre-registration, stated first because it is weaker here than
+in 5a, 7b and 11a.** Those sections were written before their code existed and
+say so. This one is not that. The CLAUSES below are the owner's, fixed in the
+2026-09-05 plan and written into `betting_model.PER_MARKET_OBJECTIVE` and
+`betting_model.RIDGE_FIT_GATE_CRITERIA` before either was run; the thresholds
+(-0.002, -0.001, t >= 1.645, n >= 100, split quantiles 0.6 / 0.7 / 0.8) come
+from that plan and were not chosen after the grids were read. What this section
+cannot claim is that the PROSE predates the numbers, because it does not: the
+tables and the text were written in the same session as the runs. Read the
+clauses as fixed and the commentary as after the fact.
+
+This is the "accuracy-and-ROI selection bake-off" section 7d names as the next
+step. It is registered, it is measured, and it changes nothing that is served.
+
+### 7e-A. The per-market objective (owner decision 6)
+
+**Lexicographic, accuracy first.** For each market the board prices:
+
+1. **The accuracy leg, read FIRST.** Paired per-game Brier and log loss on the
+   vintage eval window against the section 6 ladder tiers, always including the
+   market OPEN tier recomputed on the same games. A subsample may only appear
+   against tiers recomputed on exactly its own games, which is the section 6
+   claim rule and is why every tier in the table below is scored on the
+   same-games window rather than on the full 487.
+2. **The ROI leg.** Flat-stake ROI with the one-sided 95% lower bound
+   `sweep_min_edge` already uses, plus expected log growth at quarter Kelly on
+   the RECORDED price, computed per `(market, rule)` cell of the shadow ledger.
+   The record stakes flat 1 unit and always will (7a); the Kelly number is a
+   reported diagnostic and nothing stakes it.
+3. **CLV is one key.** `roi.clv_unavailable` carries the reason, not a column of
+   nulls: *"close job never installed; 0 settled ledger rows carry a close
+   price"*. Measured 2026-09-06: 22 cached odds snapshots, every one of kind
+   `open`, zero of kind `close`, and 0 of the 255 ledger rows carry a close
+   price under any name.
+4. **The combination.** A market may set a threshold only when its accuracy leg
+   is non-inferior to the market open on the same games (paired Brier
+   `lb95 >= -0.002`) AND its ROI leg clears `lb95 > 0` at `n >= 100` inside ONE
+   `(market, rule)` cell. A market that fails the accuracy leg has its ROI leg
+   REPORTED and NOT CONSULTED: a positive ROI on a market whose probabilities
+   lose to the open is a sample, not a finding, and `roi_cells_clearing` is
+   empty for such a market even when a cell would have qualified on its own
+   numbers.
+5. **Floors.** 100 same-games comparisons per market for the accuracy leg, 100
+   settled rows per `(market, rule)` cell for ROI. Both are 100 because
+   `betting_shadow.MIN_BETS_FOR_SWEEP` and the 7b n floor are 100; this module
+   has one small-sample floor, not three.
+
+**Where the market prices come from.** `betting_model._market_open_by_market` is
+a SECOND walker over the same snapshots, deliberately: `_market_fair_probs`
+serves the section 6 ladder and its numbers are published, so widening it to
+three markets would change that ladder as a side effect of adding this block.
+The three rules are the same three: earliest capture per slate, proportional
+de-vig, average across the books posting a two-sided market. The runline event
+is "the HOME side of the posted 1.5 spread covers", whichever way the book posts
+it, because fixing the event as "home wins by 2 or more" is unpriced on every
+game where the home team is the underdog. The total is the modal posted line,
+and on a whole number both sides of the comparison are conditional on no push
+(the de-vigged two-way market is, and `total_side_probabilities` is).
+
+**The cross-check that the second walker is the same walker.** On the moneyline
+it reproduces the section 6 ladder's own `same_games` block to the digit:
+n = 254, market open 0.23467, model 0.24576, constant 0.24944, Elo 0.24505.
+
+#### Measured 2026-09-06
+
+Vintage eval window from 2026-08-01, 487 graded games, 22 slates with an open
+capture. Every tier scored on the same-games window for its market. Positive
+delta means the MODEL is better than the market open.
+
+| market | n same-games | model Brier | open Brier | constant Brier | Elo Brier | paired delta | t | lb95 | accuracy |
+|---|---|---|---|---|---|---|---|---|---|
+| moneyline | 254 | 0.24576 | 0.23467 | 0.24944 | 0.24505 | -0.011093 | -1.929 | -0.020556 | FAIL |
+| runline | 247 | 0.23649 | 0.23163 | 0.24980 | n/a | -0.004859 | -0.636 | -0.017432 | FAIL |
+| total | 250 | 0.27530 | 0.25128 | 0.24998 | n/a | -0.024015 | -2.431 | -0.040268 | FAIL |
+
+Log loss, same pairs: moneyline -0.027083 (t = -2.162), runline -0.010600
+(t = -0.644), total -0.084821 (t = -2.272). Games in the eval window with no
+open capture: 233 / 240 / 231. Six totals landed exactly on the line and were
+dropped as pushes from both sides.
+
+Against the constant tier instead of the open, the same paired Brier:
+moneyline +0.003681 (t = 1.664, lb95 +0.000042), runline +0.013309 (t = 1.170),
+total -0.025312 (t = -2.537). **The total is worse than its own base rate**, at
+two and a half standard errors, which is the section 11a dispersion defect
+showing up in a market rather than in a variance ratio. The moneyline is the
+only market that beats a constant, and it does so by less than it loses to the
+open.
+
+ROI leg, `per_market_cap` era, one row per `(market, rule)` cell:
+
+| cell | n | ROI | ROI lb95 | quarter-Kelly log growth per bet |
+|---|---|---|---|---|
+| moneyline::board_all | 43 | -0.30925 | -0.56745 | -0.009373 |
+| moneyline::longshot | 4 | -0.22500 | -1.32907 | +0.001668 |
+| moneyline::potd_band | 9 | +0.08686 | -0.47750 | +0.001876 |
+| runline::board_all | 71 | -0.01306 | -0.18604 | -0.003200 |
+| runline::potd_band | 6 | -0.47935 | -0.97385 | -0.025869 |
+| total::board_all | 100 | -0.12844 | -0.28706 | -0.008189 |
+
+One cell of six meets the 100-row floor (`total::board_all`) and it does not
+clear. `moneyline::potd_band` is the only positive ROI on the board and it is
+nine bets; its lower bound is -0.478.
+
+**Verdict: no market may set a threshold, and every one of them fails on the
+accuracy leg alone.** The ROI leg never had to be consulted. That is the
+lexicographic order working as intended rather than a shortage of ROI data,
+and it is worth saying which way round it fell: if the order had been ROI
+first, `moneyline::potd_band` at +8.7% over nine bets is exactly the kind of
+row a rule reads as encouraging.
+
+**Standing: dark.** `betting_model.PER_MARKET_SURFACE`. No slot, no record row,
+no exported edge and no `min_edge` reads this block. It states what each market
+would have to show; nothing consults it, the same standing the section 6 ladder
+ships under.
+
+### 7e-B. The coefficient fit: a wrong sign, and repairing it costs accuracy
+
+**The defect.** The vintage fit half (305 games, 610 design rows, split at
+2026-08-01) returns
+
+    b0 4.345387   b1 -0.037205   b2 -0.096479   b3 0.594771   b4 0.149360
+    rmse 3.288484   r2 0.003049   and then diff_shrink 1.28
+
+`b1` is the scoring team's OWN offense and it is negative: the fit says a better
+offense scores fewer runs. The contaminated 4,248-row fit puts the same term at
++0.260319, so the sign is not a property of the feature; it is 610 rows at
+r2 = 0.003 read as a slope. `diff_shrink` then comes back at 1.28, EXPANDING a
+differential that a parameter named "shrink" exists to contract.
+
+**The challenger.** The same five coefficients as a ridge shrunk toward
+`LITERATURE_COEFFS`, with three hard sign constraints (`b1 > 0`, `b2 < 0`,
+`b3 > 0`), solved exactly by enumerating the eight faces of the constrained
+orthant rather than by any iterative projection whose step size nobody
+registered. The penalty is chosen on the FIT half alone, by moneyline log loss
+on an inner date split at q = 0.75. One constant moves the whole thing:
+`betting_model.SERVE_RIDGE_FIT`.
+
+**The family does not contain the incumbent on this window**, which is worth
+saying because the opposite is the natural assumption about a ridge. Penalty 0
+reproduces the OLS to 1e-14 only when the OLS is already sign-feasible; where it
+is not, the CONSTRAINT still moves it. Measured on the vintage fit half, the
+path is:
+
+| penalty | b1 | b2 | b3 | b4 | constraint binding |
+|---|---|---|---|---|---|
+| 0.0 | 0.000000 | -0.096682 | 0.576559 | 0.147895 | b1 |
+| 0.001 | 0.000000 | -0.094463 | 1.031442 | 0.147881 | b1 |
+| 0.01 | 0.000000 | -0.088626 | 2.352576 | 0.146428 | b1 |
+| 0.1 | 0.000000 | -0.093504 | 3.079566 | 0.131576 | b1 |
+| 0.3 | +0.041543 | -0.110087 | 3.157603 | 0.114985 | none |
+| 1.0 | +0.139601 | -0.153313 | 3.186386 | 0.099384 | none |
+
+(OLS for comparison: b1 -0.037205, b2 -0.096479, b3 0.594771, b4 0.149360.) The
+penalty grid cannot return the incumbent here, so the gate compares two
+genuinely different fits rather than a fit against a shrunken copy of itself.
+
+**The gate**, `RIDGE_FIT_GATE_CRITERIA`, at split quantiles 0.6, 0.7 and 0.8,
+all three or nothing: (1) non-inferiority against OLS, paired per-game Brier
+`lb95 >= -0.001`; (2) superiority over the literature Elo tier, paired Brier
+`t >= 1.645`; (3) paired log loss not worse on the point estimate. Both arms
+re-solve the tie rate, `diff_shrink` and the home adjustment on their own fit
+half, so a tuned incumbent is never graded against an untuned challenger.
+
+#### Measured 2026-09-06
+
+| split | cut | n_fit | n_eval | Brier delta | lb95 | log loss delta | Elo t (ridge / OLS) | checks |
+|---|---|---|---|---|---|---|---|---|
+| 0.6 | 2026-08-13 | 469 | 323 | -0.000221 | -0.000774 | -0.000442 | 1.641 / 1.625 | 1 of 3 |
+| 0.7 | 2026-08-19 | 548 | 244 | -0.000203 | -0.000553 | -0.000411 | 1.632 / 1.645 | 1 of 3 |
+| 0.8 | 2026-08-25 | 627 | 165 | +0.000213 | -0.000611 | +0.000432 | 2.098 / 1.937 | 3 of 3 |
+
+**Verdict: INDETERMINATE. `SERVE_RIDGE_FIT` stays False and the OLS keeps
+serving.** One split of three passes.
+
+Two readings that belong beside it, both persisted, neither a criterion:
+
+- **Check 2 is a bar on the model class, not on the challenger.** The incumbent
+  misses the Elo bar at q = 0.6 (t = 1.625) and lands exactly on it at q = 0.7
+  (t = 1.645). A split where the ridge misses that bar is not evidence that the
+  ridge broke something. Every split persists `elo.ols_vs_elo` beside
+  `elo.ridge_vs_elo` so the two cannot be confused.
+- **The served window is where the interesting number is.** On the shipped cut
+  (2026-08-01, fit 305 / eval 487, the window a flip of the flag would actually
+  change) the ridge at penalty 0.3 repairs every symptom that motivated it:
+
+  | quantity | OLS | ridge | note |
+  |---|---|---|---|
+  | b1 | -0.037205 | +0.041543 | sign repaired, and the constraint is NOT binding there |
+  | b2 | -0.096479 | -0.110087 | |
+  | b3 | 0.594771 | 3.157603 | literature prior is 3.20 |
+  | b4 | 0.149360 | 0.114985 | |
+  | diff_shrink | 1.28 | 1.08 | still above 1, less so |
+  | home adj | -0.0443 | +0.0063 | sign repaired |
+  | eval Brier | 0.24460 | 0.24522 | delta -0.000617, t -0.812, lb95 -0.001868 |
+  | eval log loss | 0.68228 | 0.68352 | |
+
+  Every coefficient becomes more plausible and the out-of-sample Brier gets
+  worse. Not significantly worse (t = -0.812), and its one-sided lower bound
+  sits at -0.001868, below the registered -0.001 non-inferiority bar. So the
+  served window would not have carried the flip either.
+
+**What that means, and it is a finding about the FEATURE rather than the
+solver.** At the constrained optimum the own-offense term is pinned to EXACTLY
+zero at all three gate splits, at the penalties the inner split chose (0.01,
+0.003, 0.1). On vintage features that column is not paying for itself at any
+penalty the selection was willing to take. The wrong sign is real; repairing it
+buys nothing measurable; and the reason both statements hold at once is that the
+term carries no signal to get the sign of.
+
+### 7e-C. The fit window: growing it is measurably worse
+
+`VINTAGE_FIT_TARGET_GAMES = 300` anchors the vintage fit half, so every new
+slate goes to the eval window and the fit stays at about 300 games forever. The
+plan asked for it to grow. It does not, and the reason is measured.
+
+The two shipped configurations cannot be compared directly, because the fit half
+and the eval half are COMPLEMENTS: growing one shrinks the other, so their two
+Brier numbers are not paired. `betting_model.fit_window_probe` answers the
+question the only way it can be answered, by holding the eval window and varying
+only the fit. Anchored is the earliest 305 games before the cut, which is what
+the shipped rule builds; grown is every gradable game before the same cut. Both
+arms price the same eval games and re-solve every correction on their own fit
+window. Positive delta means grown is better.
+
+| split | cut | anchored n_fit | grown n_fit | n_eval | delta | t | lb95 |
+|---|---|---|---|---|---|---|---|
+| 0.6 | 2026-08-13 | 305 | 469 | 323 | -0.002789 | -2.107 | -0.004967 |
+| 0.7 | 2026-08-19 | 305 | 548 | 244 | -0.000133 | -0.162 | -0.001482 |
+| 0.8 | 2026-08-25 | 305 | 627 | 165 | +0.001750 | +0.867 | -0.001570 |
+
+The grown fit is worse at 0.6, a coin flip at 0.7 and better at 0.8 on the point
+estimate, but it misses the -0.001 bar (reused from the ridge gate rather than
+invented for this) at ALL THREE splits: the lb95 column reads -0.004967,
+-0.001482 and -0.001570, and every one of them is below -0.001. The split where
+growth looks best is no exception, because 165 eval games do not buy an interval
+tight enough to carry a +0.001750 point estimate over the bar.
+`VINTAGE_FIT_WINDOW_GROWS` stays False.
+
+It is worse WHILE LOOKING HEALTHIER. The grown fit at q = 0.6 carries b3 = 2.83
+against the anchored 0.59, a park coefficient much nearer the literature prior,
+and still grades 0.00279 of Brier worse on the same 323 games. Coefficient
+plausibility and out-of-sample accuracy point in opposite directions on this
+sample, twice now, and the flags follow the accuracy.
+
+The accounting cost the probe cannot see: on the 2026-09-06 archive (792
+gradable games over 59 dates) anchoring leaves 487 eval games and a date-share
+split leaves 408, which is 79 fewer on the `VINTAGE_MIN_GRADED_GAMES` clock. No
+paired statistic can price that, because those games are the ones the paired
+statistic would need in order to exist.
+
+### What ships from 7e
+
+Three measurements and no behaviour change. `SERVE_RIDGE_FIT` False,
+`VINTAGE_FIT_WINDOW_GROWS` False, the per-market block dark. The artifact keys
+are `data/betting_model_eval.json -> per_market`, `-> ridge_fit`, and
+`-> ridge_fit.fit_window_probe`. The one thing 7e establishes for the record is
+that the moneyline is the only market this model beats a constant on, it loses
+to the market open on all three, and the total loses to its own base rate.
+
+---
+
 ## 8. The append-only record
 
 `data/betting_record.json` is an array. `betting_export.write_record` proves

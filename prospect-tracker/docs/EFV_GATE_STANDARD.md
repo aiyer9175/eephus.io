@@ -147,6 +147,190 @@ Pooling belongs in the EVALUATOR, not the model: a pooled MODEL is a measured nu
 trends negative (cross-side coefficient sharing helps only below 40-60% of current training
 data and harms at full data).
 
+### 3.1 THE CONJUNCTION RULE. State it before the arm runs, not after (added 2026-09-06)
+
+**This subsection ADDS a rule. It retires nothing above it and changes no constant above
+it.** Registration A-CLAIM-11. Implementation `tools/efv_driver_lab.py`
+`two_metric_verdict()`, the only function in the driver lab permitted to form a verdict;
+producer `python tools/efv_driver_lab.py auc 2000`.
+
+**What the second metric is.** Contributor AUC, realized censored WAR at or above
+`efv_model._CONTRIB_WAR` (3.0 today), on the DEBUTED pool. It is the SOLE co-primary AUC
+leg. Star AUC (at or above `_STAR_WAR`, 10.0) is a **labelled sensitivity with no verdict
+weight at all**: the registered pitcher star cell carries **46 positives against an E_cond
+floor of 0.0397** (`data/xfv_auc_floor_eval.json`), and a leg that cannot resolve its own
+null cannot adjudicate anybody's arm. It gets a row so it is visible and it gets no vote,
+at any sign and at any magnitude.
+
+**The rule, and it is not symmetric.**
+
+1. **rho is the gate.** An arm that does not clear the pooled-rho floor is a NULL. Full
+   stop, whatever the AUC leg did.
+2. **Contributor AUC may VETO.** An arm that clears the rho floor while its contributor
+   AUC delta is adverse beyond its own floor is a FAIL, not a win with a caveat. It bought
+   rank movement with discrimination it does not have.
+3. **Contributor AUC may sit inside a jointly sized Holm family.** Jointly sized means
+   both legs of every arm are counted in `m`: two instruments over the same arms is a
+   bigger family, not a free second attempt. Entering the AUC leg and keeping the rho-only
+   family size is running the family twice and reporting whichever half won.
+   **And the family is built BEFORE the verdicts, not after them.** A Holm correction does
+   not exist until every arm in the family has run, so a verdict formed inside a per-arm
+   loop cannot have consulted it. Driver modes therefore MEASURE every arm first, record
+   the floors that arm was measured against (`floors_used`), build the joint family, and
+   only then form verdicts through `apply_holm_verdicts()`, which is the only place
+   `g["verdict"]` is written. An arm with no row in that family (a degenerate bootstrap
+   sd) reads `NOT_ADJUDICATED_NO_HOLM`, never a pass. **Fixed 2026-09-06 after review:**
+   both driver modes previously called `two_metric_verdict()` inside the measuring loop
+   with `holm_survives` at its `None` default and built the family afterwards, so the
+   correction was computed and then read by no verdict any arm carried.
+4. **Contributor AUC may NEVER CREDIT.** An arm that fails the rho floor and clears the
+   AUC floor is a **NULL BY RULE**. It is reported as `NULL_AUC_ONLY` so the reading stays
+   on the record, and `NULL_AUC_ONLY` is a null: not a small win, not a directional
+   signal, not a fringe gain, and not a reason to re-run the arm on a friendlier frame.
+
+**The verdict vocabulary is closed, and it separates DECISIONS from ABSENCES.**
+`two_metric_verdict()` emits exactly one of these eight strings and no other:
+
+| verdict | class | meaning |
+|---|---|---|
+| `PASS` | decision | rho cleared its floor, contributor AUC was measured against a floor derived on THIS frame and did not veto, and the arm survived the jointly sized Holm family. Every input the rule needs was present. |
+| `VETO_ON_AUC` | decision | rho cleared and contributor AUC is adverse beyond its own floor. A fail. |
+| `NULL` | decision | rho did not clear. Full stop, whatever the other legs did. |
+| `NULL_AUC_ONLY` | decision | rho did not clear and contributor AUC did. A NULL BY RULE, recorded so the reading stays on the record. |
+| `NULL_HOLM` | decision | rho cleared and the family correction killed it. |
+| `NOT_ADJUDICATED_NO_RHO_FLOOR` | absence | no rho floor on this frame. NOT a null: nothing was measured against anything. |
+| `NOT_ADJUDICATED_NO_AUC_FLOOR` | absence | rho cleared with the co-primary veto DISARMED, because no contributor-AUC floor exists on this frame. NOT a pass. |
+| `NOT_ADJUDICATED_NO_HOLM` | absence | rho cleared and no family decision reached the verdict. NOT a pass. |
+
+The three absence states are spelled that way on purpose, and none of them may ever
+collapse into `PASS`. **A gate that cannot fail is not a gate, and a gate that spells an
+absence of evidence the way it spells cleared evidence is worse than no gate**, because it
+launders the gap into a result. Every verdict also carries `not_adjudicated`, the list of
+every input that verdict needed and did not get, and `holm_state`, so a reader never has
+to infer the gap from the string alone. `auc_mode` drives all eight strings out of the
+rule table (control A4, ten corners) and asserts
+`A4_absence_never_reads_as_pass` as a conjunct of `all_controls_pass`.
+
+**Why the asymmetry is earned, and not a stylistic preference.** The AUC cells are the
+ones that flatter this model most, and the inadmissible full-pool cell is the most
+flattering of all. Three measurements, none of them new:
+
+- The carve-out above: an honest no-track indicator scores pitcher full-pool AUC
+  **+0.0792** against a row-permuted twin at +0.0003 while pooled rho goes **-0.0049**.
+  SIX archetype arms reproduced that exact signature, and all six are nulls on rank.
+- On the registered model-vs-consensus cells (`data/xfv_auc_floor_eval.json`), the margin
+  is larger on the INADMISSIBLE full-pool frame than on the admissible debuted frame in
+  three of the four cells: pit contributor **+0.01967 against +0.00403** (4.9x), hit
+  contributor +0.01264 against +0.00965, pit star +0.01328 against +0.00617. Hit star is
+  the one exception (+0.00271 against +0.00626).
+- The inadmissible frame also carries the SMALLER floor under E_refit in all four
+  registered cells (hit contributor 0.0216 against 0.0258, hit star 0.0211 against 0.0304,
+  pit contributor 0.0252 against 0.0282, pit star 0.0436 against 0.0522), so it flatters
+  twice: bigger margin, lower bar. Under E_cond the direction splits, pitcher cells
+  smaller and hitter cells larger, so the "lower bar" half of that reading is an E_refit
+  statement and has to be quoted as one.
+
+A rule that let AUC credit an arm would therefore convert the model's most flattering
+instrument into its cheapest ship route. A rule that lets AUC veto costs nothing that is
+real: an arm with a genuine rank effect and no discrimination behind it is exactly the arm
+this standard exists to stop.
+
+**Floors are derived in the run that uses them.** Every AUC number published in this
+document, section 7 included, is a MODEL-VS-CONSENSUS margin. A driver arm measures a
+FEATURE-ADD delta. Those are different statistic classes with different floors, and
+gating one against the other's number is the section 1a-vs-3 error restated on a new
+instrument. `tools/efv_driver_lab.py floor` derives the feature-add AUC floors from the
+same three N(0,1) noise arms and the same paired draws that produce the rho floors.
+
+**A run whose floors artifact predates the AUC leg adjudicates NOTHING, and specifically
+not "everything except the AUC leg".** `data/xfv_driver_floors.json`, generated
+**2026-08-14T22:39:54Z**, carries `MDE95_pooled_rho` (0.0194 hit, 0.0172 pit) and
+`MDE95_block_rho` (0.0227 hit, 0.0246 pit) and nothing else, so `freekeys_mode` hands the
+AUC leg a `None` floor on both sides. An arm in that state cleared rank with the
+co-primary veto DISARMED: nothing could have vetoed it, because there was no bar for it to
+be adverse against. Its verdict is `NOT_ADJUDICATED_NO_AUC_FLOOR`, which is not a pass,
+not a null, and not comparable to either. Regenerate the floors
+(`python tools/efv_driver_lab.py floor 2000`) before adjudicating any arm on AUC.
+**Fixed 2026-09-06 after review:** that branch previously emitted a bare `PASS`.
+
+**One draw, both legs.** The AUC delta and the rho delta come out of the SAME bootstrap
+resample and the SAME `side_stats` call on the SAME rows. Resampling the legs
+independently would give each an honest marginal sd and a meaningless joint reading, and
+the conjunction rule is a joint reading. It also means the two permutation p-values share
+their draws and must not be combined as though they were independent.
+
+**Name the estimator (section 7.1 applies unchanged).** The driver lab's AUC floor is
+**E_refit**: whole pool resampled, ridge and consensus OLS refit every draw. There is no
+E_cond leg in that lab, so a claim taken from it must say E_refit. Row-level i.i.d.
+resampling is admissible on this frame because the driver pool carries exactly one row per
+`player_key` (839 hit / 981 pit, zero repeats, measured 2026-09-06); the 1.519x
+anti-conservative narrowing that forced clustered resampling in section 7.6 is a property
+of the head-to-head frame, not of this one. And the AUC legs are UNWEIGHTED while the rho
+legs are pair-weighted, inherited from the served chain (control C-a); that asymmetry is
+reported rather than quietly fixed, because a weighted AUC is not the statistic the
+scoreboard publishes.
+
+#### The instrument was proved before it adjudicated anything
+
+Run 2026-09-06, `auc_mode(2000)`, seed 20260807, 739 s, on the current 11-fold
+pair-weighted frame (749 scored hit rows, 890 pit). Four controls, all pass.
+
+**Re-run 2026-09-06 after the verdict-wiring fix**, `auc_mode(2000, write=False)`, same
+seed, 1203 s: every number in this section reproduced to the digit, so the fix moved the
+VERDICT WIRING and left the instrument alone. The re-run also drives the three
+`NOT_ADJUDICATED_*` corners and adds two conjuncts to `all_controls_pass`
+(`A1_floors[*].noise_point_inside_own_floor` and `A4_absence_never_reads_as_pass`), and it
+still reports ALL CONTROLS PASS.
+
+| control | hit | pit |
+|---|---|---|
+| A0 numpy AUC against `source_backtest._auc`, contributor / star | exact, abs diff 0.0 | exact, abs diff 0.0 |
+| A0b one row per `player_key` | 839 / 839 | 981 / 981 |
+| A1 noise point deltas inside their own floor, 3 seeds x 4 legs | 12 / 12 | 12 / 12 |
+| A3 label-permuted AUC mean over K = 2000 | 0.500243, z +0.50 | 0.499691, z -0.62 |
+| A3 permuted sd against the analytic Hanley-McNeil null SE | 1.0032x | 0.9907x |
+
+**A4, the rule driven as behaviour.** Ten corners, each pushed through
+`two_metric_verdict()` and compared to the registered `A4_expected`: **10 of 10 match**,
+and `A4_absence_never_reads_as_pass` is true. The ten are the six conjunction corners, the
+three absence corners and the Holm corner. Two of them are new on 2026-09-06 and each
+pins a defect this section had shipped: `rho_clears_no_auc_floor` must return
+`NOT_ADJUDICATED_NO_AUC_FLOOR` (it returned `PASS`) and `rho_clears_holm_fails` must
+return `NULL_HOLM` (no arm's verdict had ever read Holm at all).
+
+**Feature-add floors, MDE95 one-sided, MAX of three N(0,1) noise seeds, E_refit.**
+
+| side | pooled rho | block-rho | contributor AUC | star AUC (sensitivity) |
+|---|---|---|---|---|
+| hit | 0.0170 | 0.0200 | **0.0091** | 0.0109 |
+| pit | 0.0121 | 0.0172 | **0.0068** | 0.0129 |
+
+Label prevalence on the scored frame, which is what those floors are a function of:
+contributor 276 / 749 (36.9%) hit and 219 / 890 (24.6%) pit; star 116 (15.5%) and 51
+(5.7%). The pitcher star cell is 5.7% prevalence, which is the whole reason star AUC is a
+sensitivity and not a leg.
+
+**Zero-information twin, the check the leg owed.** The three noise arms are zero
+information by construction and every one of their four point deltas lands inside its own
+floor, both sides: **24 of 24** (3 seeds x 4 legs x 2 sides), re-measured 2026-09-06. That
+is now ASSERTED rather than merely reported, because a control this document claims and
+the code does not check is not a control: `noise_point_inside_own_floor` was computed and
+written into the artifact from the first run and was NOT a conjunct of
+`all_controls_pass`, and it became one on 2026-09-06 after review. A real column
+(`fv_trend`) row-permuted, identical marginal and the row
+link destroyed, lands at contributor AUC +0.00352 hit (0.39x its floor) and -0.00096 pit
+(0.14x), rho +0.00410 (0.24x) and +0.00148 (0.12x). Verdict on both twins: NULL. A twin
+that had cleared the floor would mean the floor is too small and every verdict built on it
+is unsafe.
+
+**And the rule fired on the first real column it saw.** The same run's unpermuted
+`fv_trend` reads, on the pitcher side, contributor AUC **+0.00741 at 1.09x its floor**
+while pooled rho is **+0.00160 at 0.13x**. Under the conjunction rule that is
+`NULL_AUC_ONLY`: a null. Without the rule it is a headline. (This is an illustration, not
+an adjudication of that arm: `fv_trend` was carrying the twin, it did not run the full
+battery, and the D-1 ledger's +0.01028 for it is on the pre-epoch labels and is not
+comparable to +0.00160 on the current ones.)
+
 ## 4. Surplus-side currency
 
 Convert any rank claim into dollars before deciding it matters:

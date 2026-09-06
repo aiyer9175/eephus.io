@@ -1,0 +1,71 @@
+{
+ "generated_at": "2026-09-06T07:08:17+00:00",
+ "n_targets": 5,
+ "n_exact": 5,
+ "n_players": 5,
+ "n_comparisons": 15,
+ "n_comparisons_exact": 15,
+ "all_exact": true,
+ "offline": true,
+ "as_of_year": null,
+ "tolerance": "EXACT after half-up rounding to one decimal. Not a tolerance band: these three numbers are published to the tenth, so anything short of agreement to the tenth means the reimplementation differs and the difference has not been explained.",
+ "baseline": "Baseball-Reference published career WAR, WAR7 and JAWS, transcribed into REPRODUCTION_TARGETS",
+ "rows": [
+  {
+   "player_ID": "ruthba01",
+   "name": "Babe Ruth",
+   "career_war": 182.6,
+   "war7": 84.4,
+   "jaws": 133.5,
+   "career_war_pub": 182.6,
+   "war7_pub": 84.4,
+   "jaws_pub": 133.5,
+   "ok": true
+  },
+  {
+   "player_ID": "johnswa01",
+   "name": "Walter Johnson",
+   "career_war": 168.4,
+   "war7": 92.0,
+   "jaws": 130.2,
+   "career_war_pub": 168.4,
+   "war7_pub": 92.0,
+   "jaws_pub": 130.2,
+   "ok": true
+  },
+  {
+   "player_ID": "youngcy01",
+   "name": "Cy Young",
+   "career_war": 163.6,
+   "war7": 78.0,
+   "jaws": 120.8,
+   "career_war_pub": 163.6,
+   "war7_pub": 78.0,
+   "jaws_pub": 120.8,
+   "ok": true
+  },
+  {
+   "player_ID": "bondsba01",
+   "name": "Barry Bonds",
+   "career_war": 162.8,
+   "war7": 72.7,
+   "jaws": 117.7,
+   "career_war_pub": 162.8,
+   "war7_pub": 72.7,
+   "jaws_pub": 117.7,
+   "ok": true
+  },
+  {
+   "player_ID": "mayswi01",
+   "name": "Willie Mays",
+   "career_war": 156.2,
+   "war7": 73.6,
+   "jaws": 114.9,
+   "career_war_pub": 156.2,
+   "war7_pub": 73.6,
+   "jaws_pub": 114.9,
+   "ok": true
+  }
+ ],
+ "what_this_does_not_show": "agreement on the benchmark shelf, and nothing about whether the shelf predicts induction. It is a correctness check on a reimplementation, not evidence for any Hall of Fame claim."
+}

@@ -100,6 +100,33 @@ THE VINTAGE PATH (leaderboard_vintages.py), which is how that gets fixed.
     vintage sample is what gates `min_edge`; see VINTAGE_MIN_GRADED_GAMES for
     the threshold and the measurement behind it.
 
+    THE COEFFICIENT FIT IS FITTING NOISE, AND THE REPAIR DID NOT PAY (2026-09-06,
+    docs/diamond-betting.md section 7e). On the vintage fit half (305 games, 610
+    design rows) b1, the scoring team's OWN offense, comes back at -0.037205:
+    the fit says a better offense scores fewer runs, at r2 = 0.003, and
+    `diff_shrink` then lands at 1.28, expanding what a shrink parameter exists
+    to contract. A sign-constrained ridge shrunk toward LITERATURE_COEFFS was
+    built and gated (`ridge_fit_gate`, RIDGE_FIT_GATE_CRITERIA). On the served
+    window it repairs every symptom, b1 to +0.041543, b3 0.594771 to 3.157603,
+    diff_shrink to 1.08, and grades 0.00062 of Brier WORSE. The gate verdict is
+    INDETERMINATE, one split of three, so SERVE_RIDGE_FIT is False and the OLS
+    keeps serving. The finding underneath is about the FEATURE: at the
+    constrained optimum the own-offense term is pinned to exactly zero at every
+    gate split, so on vintage features it is not paying for itself. This module
+    does NOT claim the fit is sound. It claims the fit is measured and that the
+    obvious repair was measured too and lost.
+
+    WHAT THE MODEL IS WORTH PER MARKET, MEASURED, AND IT IS NOT MUCH (B-OBJ,
+    section 7e). `per_market_objective` scores every market the board prices
+    against the de-vigged market open on the same games. On the 2026-09-06
+    vintage eval window all three FAIL the accuracy leg: moneyline -0.011093
+    paired Brier against the open (lb95 -0.020556), runline -0.004859
+    (lb95 -0.017432), total -0.024015 (lb95 -0.040268). The total is worse than
+    its own base rate at t = -2.537. The moneyline is the only market that beats
+    a constant. Under the lexicographic objective (accuracy first) no market may
+    set a threshold and the ROI leg never had to be consulted. The block is DARK
+    and nothing served reads it; see PER_MARKET_SURFACE.
+
 DE-VIGGING (`devig`) uses the PROPORTIONAL method: each side's raw implied
 probability divided by the book's overround. It is the standard, it is
 transparent, and it is the one an edge number can be audited against.
@@ -111,6 +138,7 @@ CLI:
     python betting_model.py --context      # league constants + fitted coefficients
     python betting_model.py --backtest     # both modes, both labelled
     python betting_model.py --gate         # the min_edge gate state, one screen
+    python betting_model.py --ridge        # the section 7e fit gate + window probe
     python betting_model.py --game NYM CLE # one matchup, hand-checkable
 """
 from __future__ import annotations
@@ -520,6 +548,130 @@ VINTAGE_FIT_MAX_DATE_SHARE = 0.5
 # One-sided 95% normal critical value, used for both the Brier-skill gate and
 # the ROI lower bound in the min_edge sweep.
 Z_95_ONE_SIDED = 1.645
+
+
+# --- B-ML-FIT: the coefficient fit, and the sign that says it is noise -----
+# MEASURED 2026-09-06, reproduced in session on the same window the artifact
+# holds (data/betting_model_eval.json -> vintage.coefficients). The vintage fit
+# half is 305 games / 610 design rows and OLS returns
+#
+#     b0 4.345387   b1 -0.037205   b2 -0.096479   b3 0.594771   b4 0.149360
+#     rmse 3.288484   r2 0.003049   and then diff_shrink 1.28
+#
+# b1 is the SCORING TEAM'S OWN OFFENSE and it is NEGATIVE: on this window the
+# fit says a better offense scores fewer runs. The contaminated 4,248-row fit
+# puts the same term at +0.260319 (in_sample.coefficients.b1), so the sign is
+# not a property of the feature; it is 610 rows at r2 = 0.003 being read as a
+# slope. `diff_shrink` then comes back at 1.28, which EXPANDS a differential
+# that a parameter named "shrink" exists to contract, because the linear
+# predictor has almost no spread left of its own to take out.
+#
+# THE REPAIR IS SHRINKAGE, NOT FEATURES. Fit the same five coefficients as a
+# ridge pulled toward LITERATURE_COEFFS, with the three signs the run-scoring
+# model asserts a priori held as hard constraints: own offense up, opponent
+# prevention down, park up. The penalty is chosen on the FIT half alone, by
+# moneyline log loss on an inner date split of that half, and never on the eval
+# window.
+#
+# THE FAMILY DOES NOT CONTAIN THE INCUMBENT ON THIS WINDOW, and that is worth
+# stating because the opposite is the natural assumption about a ridge. Penalty
+# 0 reproduces the OLS to 1e-14 only when the OLS is already sign-feasible;
+# where it is not, the CONSTRAINT still moves it. Measured on the vintage fit
+# half, at penalty 0 the constrained fit pins b1 to exactly 0 and returns
+# b0 4.346304, b2 -0.096682, b3 0.576559, b4 0.147895, which is not the OLS.
+# b1 leaves the boundary only at penalty 0.3 and above. So the grid cannot
+# return the incumbent here, and the gate compares two genuinely different fits
+# rather than a fit against a shrunken copy of itself.
+#
+# NOTHING HERE SHIPS ON THAT ARGUMENT. RIDGE_FIT_GATE_CRITERIA is the
+# pre-registration, `ridge_fit_gate` is the measurement, and SERVE_RIDGE_FIT is
+# set from its verdict and from nothing else.
+RIDGE_PENALIZED_TERMS = ("b1", "b2", "b3", "b4")   # b0 is a run level, not a slope
+RIDGE_SIGN_CONSTRAINTS = {"b1": 1, "b2": -1, "b3": 1}
+# Log spaced, with 0.0 first so the weakest member of the family is on the grid
+# and an inner split that wants no shrinkage at all says so by returning it. 0.0
+# is NOT the incumbent wherever the sign constraints bind; see above.
+RIDGE_PENALTY_GRID = (0.0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0)
+RIDGE_INNER_SPLIT_Q = 0.75
+RIDGE_MIN_INNER_FIT_GAMES = 60
+RIDGE_MIN_INNER_EVAL_GAMES = 30
+RIDGE_FIT_GATE_CRITERIA = (
+    "fit both arms on the fit half of a date split and score both on the held-out "
+    "half, with {extra-innings tie rate, diff_shrink, home_field_runs_adj} re-solved "
+    "SEPARATELY for each arm on its own fit half, so a tuned incumbent is never "
+    "graded against an untuned challenger. The ridge penalty is chosen inside the "
+    "fit half by moneyline log loss on an inner date split at RIDGE_INNER_SPLIT_Q; "
+    "the eval half is never consulted for it. At split quantiles 0.6, 0.7 and 0.8, "
+    "ALL THREE or nothing: (1) NON-INFERIORITY, paired per-game Brier, ridge minus "
+    "OLS, one-sided 95% lower bound >= -0.001; (2) SUPERIORITY over the literature "
+    "Elo tier (tools/betting_elo, the section 6 ladder's results-only floor), paired "
+    "per-game Brier, ridge better at t >= 1.645; (3) paired log loss delta not worse "
+    "on the point estimate (>= 0). Fit half >= 100 games and eval half >= 50 or the "
+    "split cannot pass. Coefficients and diff_shrink are persisted at every split, "
+    "so a verdict that rides on one window is visible as one."
+)
+# Whether the ridge fit is SERVED. Set from `ridge_fit_gate`, never from a fit
+# statistic and never from the sign of b1 alone: a wrong-signed coefficient is a
+# reason to BUILD the challenger, not a reason to ship it.
+#
+# FALSE, AND THE VERDICT IS "INDETERMINATE". Measured 2026-09-06 by
+# `ridge_fit_gate` on the 792-game vintage-gradable sample (grid persisted at
+# data/betting_model_eval.json -> ridge_fit, table in
+# docs/diamond-betting.md section 7e):
+#
+#   split  cut         n_fit n_eval  brier delta  lb95       ll delta    checks
+#   0.6    2026-08-13    469    323   -0.000221   -0.000774  -0.000442   1 of 3
+#   0.7    2026-08-19    548    244   -0.000203   -0.000553  -0.000411   1 of 3
+#   0.8    2026-08-25    627    165   +0.000213   -0.000611  +0.000432   3 of 3
+#
+# One of three splits passes, so the grid is mixed and the incumbent keeps
+# serving. THE INTERESTING PART IS THE SERVED WINDOW. On the shipped cut
+# (2026-08-01, fit 305 / eval 487) the ridge at penalty 0.3 repairs every
+# symptom that motivated it: b1 goes -0.037205 -> +0.041543 (sign correct, and
+# the constraint is NOT binding there), b3 goes 0.594771 -> 3.157603 (the
+# literature prior is 3.20), diff_shrink 1.28 -> 1.08, home adjustment
+# -0.0443 -> +0.0063. The eval Brier goes 0.24460 -> 0.24522, delta -0.000617
+# at t = -0.812, lb95 -0.001868: worse, not significantly so, and below the
+# registered non-inferiority bar. The wrong sign is real and repairing it buys
+# nothing measurable, which is a finding about the FEATURE, not about the
+# solver: at the constrained optimum the own-offense term is pinned to exactly
+# zero at every gate split, so on vintage features that column is not paying
+# for itself at any penalty the inner split chose.
+SERVE_RIDGE_FIT = False
+# Whether the vintage fit window GROWS with the archive instead of being anchored
+# at VINTAGE_FIT_TARGET_GAMES. Anchored, every new slate goes to the eval window
+# and the fit stays at ~300 games forever; grown, the split is the date share and
+# both halves grow. The accounting cost is measured, not assumed: on the
+# 2026-09-06 archive (792 gradable games over 59 dates) anchoring gives fit 305 /
+# eval 487 and growing gives fit 384 / eval 408, so growth buys 79 fit games and
+# pays 79 eval games, one for one off the VINTAGE_MIN_GRADED_GAMES clock.
+#
+# FALSE, AND THE ACCURACY COST IS THE REASON, not the accounting one.
+# `fit_window_probe` answers this the only way it can be answered, by holding
+# the EVAL window and varying only the fit (the two windows are complements, so
+# the two shipped configurations are not paired and cannot be compared
+# directly). Paired per-game Brier, anchored minus grown, positive means grown
+# is better:
+#
+#   split  cut         fit 305 vs   n_eval   delta       t       lb95
+#   0.6    2026-08-13  469             323   -0.002789  -2.107  -0.004967
+#   0.7    2026-08-19  548             244   -0.000133  -0.162  -0.001482
+#   0.8    2026-08-25  627             165   +0.001750  +0.867  -0.001570
+#
+# The grown fit is WORSE at 0.6, a coin flip at 0.7 and better at 0.8 on the
+# point estimate, but it MISSES the -0.001 non-inferiority bar at ALL THREE
+# splits: the lb95 column is -0.004967, -0.001482 and -0.001570, and every one
+# of those sits below -0.001. The split where growth looks best is no exception,
+# because 165 eval games do not buy an interval tight enough to clear the bar
+# from a +0.001750 point estimate.
+#
+# It is worse while looking healthier: the grown fit at 0.6 carries b3 = 2.83
+# against the anchored
+# 0.59, i.e. a park coefficient much nearer the literature prior, and still
+# grades 0.00279 of Brier worse on the same 323 games. Coefficient plausibility
+# and out-of-sample accuracy point in OPPOSITE directions on this sample, and
+# the flag follows the accuracy.
+VINTAGE_FIT_WINDOW_GROWS = False
 
 
 # ---------------------------------------------------------------------------
@@ -2021,11 +2173,174 @@ def _design_rows(games: list[dict], teams: dict, parks: dict, starters: dict,
     return X, y, meta
 
 
+_COEFF_KEYS = ("b0", "b1", "b2", "b3", "b4")
+
+
+def _ridge_beta(X, y, lam: float, prior, penalize, signs):
+    """Sign-constrained ridge toward a prior, solved exactly.
+
+        argmin (1/n)*||y - X b||^2 + lam * sum_j d_j * (b_j - m_j)^2
+        subject to  sign_j * b_j >= 0  on the constrained coefficients
+
+    EXACT, NOT ITERATIVE, and that matters: an iterative projection would make
+    the fit depend on a step size nobody registered. The feasible set is an
+    orthant in three of the five coordinates and the objective is a convex
+    quadratic, so the minimiser sits on one of the 2^3 faces obtained by pinning
+    a subset of the constrained coefficients to their boundary at zero. Each
+    face is one small linear solve; the answer is the feasible face with the
+    lowest objective, which is the constrained optimum by KKT.
+
+    Returns (beta, pinned index tuple), or (None, ()) when every face is
+    singular."""
+    import numpy as np
+
+    A = np.asarray(X, dtype=float)
+    b = np.asarray(y, dtype=float)
+    n, k = A.shape
+    m = np.asarray(prior, dtype=float)
+    d = np.asarray([1.0 if q else 0.0 for q in penalize], dtype=float)
+    G = (A.T @ A) / n + lam * np.diag(d)
+    c = (A.T @ b) / n + lam * (d * m)
+    cons = [j for j in range(k) if signs[j]]
+    best = None
+    for mask in range(1 << len(cons)):
+        pinned = tuple(cons[i] for i in range(len(cons)) if (mask >> i) & 1)
+        free = [j for j in range(k) if j not in pinned]
+        try:
+            sol = np.linalg.solve(G[np.ix_(free, free)], c[free])
+        except np.linalg.LinAlgError:                          # pragma: no cover
+            continue
+        beta = np.zeros(k)
+        beta[free] = sol
+        if any(signs[j] * beta[j] < -1e-12 for j in cons):
+            continue
+        resid = b - A @ beta
+        obj = float((resid ** 2).mean()) + lam * float((d * (beta - m) ** 2).sum())
+        if best is None or obj < best[0]:
+            best = (obj, beta, pinned)
+    if best is None:                                           # pragma: no cover
+        return None, ()
+    return best[1], best[2]
+
+
+def _ridge_fit_from_design(X, y, lam: float) -> dict | None:
+    """`_ridge_beta` wrapped in the same dict shape the OLS path returns, so a
+    caller reading `coefficients()` cannot tell which solver produced it except
+    by reading `source`, which is the point."""
+    import numpy as np
+
+    prior = [float(LITERATURE_COEFFS[k]) for k in _COEFF_KEYS]
+    penalize = [k in RIDGE_PENALIZED_TERMS for k in _COEFF_KEYS]
+    signs = [RIDGE_SIGN_CONSTRAINTS.get(k, 0) for k in _COEFF_KEYS]
+    beta, pinned = _ridge_beta(X, y, lam, prior, penalize, signs)
+    if beta is None:                                           # pragma: no cover
+        return None
+    A, b = np.asarray(X, dtype=float), np.asarray(y, dtype=float)
+    resid = b - A @ beta
+    ss_tot = float(((b - b.mean()) ** 2).sum())
+    out = {k: float(beta[i]) for i, k in enumerate(_COEFF_KEYS)}
+    out.update({
+        # The source string is this path's whole honesty contract: the page
+        # prints it and `coefficients()["source"]` is what a reader audits.
+        "source": "ridge-to-literature",
+        "n_rows": len(X),
+        "rmse": float(math.sqrt(float((resid ** 2).mean()))),
+        "r2": float(1.0 - float((resid ** 2).sum()) / ss_tot) if ss_tot else None,
+        "penalty": float(lam),
+        "prior": "LITERATURE_COEFFS",
+        "sign_constraints": {k: ("positive" if v > 0 else "negative")
+                             for k, v in sorted(RIDGE_SIGN_CONSTRAINTS.items())},
+        "sign_constraints_binding": [_COEFF_KEYS[i] for i in pinned],
+    })
+    return out
+
+
+def choose_ridge_penalty(games, teams, parks, starters, resolve=None, *,
+                         grid=None) -> dict:
+    """The penalty, chosen ON THE FIT HALF and nowhere else.
+
+    Split the fit half by DATE at RIDGE_INNER_SPLIT_Q, fit the ridge at every
+    penalty on the inner-fit part, re-solve `diff_shrink` there for each one,
+    and score moneyline log loss on the inner-eval part. Lowest log loss wins.
+
+    TWO DELIBERATE CHEAPNESSES, stated because both are choices. The home
+    adjustment is left at 0 for the sweep and the tie rate is the inner-fit
+    rate: this is a RANKING over penalties, not a published level, and the home
+    adjustment is a mean recentring that moves every arm the same way. Second, a
+    window too small to split returns the grid smallest non-zero penalty with a
+    `basis` that says so, rather than silently returning 0: 0 is the weakest
+    member of the family, and defaulting to it on a technicality would hide that
+    nothing was measured. 0 is not the OLS wherever a sign constraint binds,
+    which is the case on this repo's vintage window.
+
+    Returns {"penalty", "basis", "grid": [...], "n_inner_fit", "n_inner_eval"}."""
+    grid = list(grid if grid is not None else RIDGE_PENALTY_GRID)
+    dates = sorted({g.get("date") for g in games if g.get("date")})
+    fallback = {"penalty": float(min([q for q in grid if q > 0] or [0.0])),
+                "basis": "no inner split: the fit half is too small to hold one",
+                "grid": [], "n_inner_fit": 0, "n_inner_eval": 0}
+    if len(dates) < 4:
+        return fallback
+    idx = max(1, min(int(len(dates) * RIDGE_INNER_SPLIT_Q), len(dates) - 1))
+    cut = dates[idx]
+    inner_fit = [g for g in games if (g.get("date") or "") < cut]
+    inner_ev = [g for g in games if (g.get("date") or "") >= cut]
+    if (len(inner_fit) < RIDGE_MIN_INNER_FIT_GAMES
+            or len(inner_ev) < RIDGE_MIN_INNER_EVAL_GAMES):
+        return fallback
+    Xi, yi, _ = _design_rows(inner_fit, teams, parks, starters, resolve)
+    if len(Xi) < 200:
+        return fallback
+    tie = _fit_tie_home(inner_fit)
+    rows, best = [], None
+    for lam in grid:
+        co = _ridge_fit_from_design(Xi, yi, lam)
+        if not co:                                             # pragma: no cover
+            continue
+        shrink, _ = _solve_diff_shrink(inner_fit, teams, parks, starters, co, tie,
+                                       0.0, resolve, None)
+        ps, ys = _p_home_series(inner_ev, teams, parks, starters, co, tie, 0.0,
+                                shrink, resolve, None)
+        ll = _logloss(ps, ys) if ps else None
+        rows.append({"penalty": lam,
+                     "log_loss": round(ll, 6) if ll is not None else None,
+                     "diff_shrink": shrink,
+                     "b1": round(co["b1"], 6), "b2": round(co["b2"], 6),
+                     "b3": round(co["b3"], 6),
+                     "binding": co["sign_constraints_binding"]})
+        if ll is not None and (best is None or ll < best[1]):
+            best = (lam, ll)
+    if best is None:                                           # pragma: no cover
+        return fallback
+    return {
+        "penalty": float(best[0]),
+        "basis": (f"lowest moneyline log loss ({best[1]:.6f}) on an inner date split "
+                  f"of the fit half at q={RIDGE_INNER_SPLIT_Q}"),
+        "grid": rows,
+        "inner_split_date": cut,
+        "n_inner_fit": len(inner_fit),
+        "n_inner_eval": len(inner_ev),
+    }
+
+
 def fit_coefficients(games: list[dict] | None = None, *, teams=None, parks=None,
-                     starters=None, resolve=None) -> dict | None:
-    """OLS for the five run-scoring coefficients. None when there is nothing to
-    fit on (no feed cache), which is what sends `coefficients()` to the
-    literature priors."""
+                     starters=None, resolve=None, ridge: bool | None = None,
+                     penalty: float | None = None) -> dict | None:
+    """The five run-scoring coefficients. None when there is nothing to fit on
+    (no feed cache), which is what sends `coefficients()` to the literature
+    priors.
+
+    TWO SOLVERS, ONE SEAM. `ridge=None` reads SERVE_RIDGE_FIT, so the switch is
+    that one constant and the persisted `source` moves with it:
+
+      OLS                    `source: "fitted"`, plain lstsq, the incumbent.
+      ridge-to-literature    `source: "ridge-to-literature"`, shrunk toward
+                             LITERATURE_COEFFS under RIDGE_SIGN_CONSTRAINTS,
+                             penalty chosen on this window own inner split.
+
+    `ridge=` and `penalty=` are the gate lab handles and no serving caller
+    passes them: `ridge_fit_gate` needs both arms on the same window, which is
+    exactly what a served flag cannot give it."""
     import numpy as np
 
     teams = teams if teams is not None else team_inputs()
@@ -2037,6 +2352,18 @@ def fit_coefficients(games: list[dict] | None = None, *, teams=None, parks=None,
     X, y, _ = _design_rows(games, teams, parks, starters, resolve)
     if len(X) < 200:
         return None
+    use_ridge = SERVE_RIDGE_FIT if ridge is None else bool(ridge)
+    if use_ridge:
+        if penalty is None:
+            pick = choose_ridge_penalty(games, teams, parks, starters, resolve)
+            lam, basis = pick["penalty"], pick["basis"]
+        else:
+            lam, basis = float(penalty), "supplied by the caller (gate lab)"
+        out = _ridge_fit_from_design(X, y, lam)
+        if out:
+            out["penalty_basis"] = basis
+            return out
+        log.warning("betting_model: ridge fit failed, falling back to OLS")
     A, b = np.asarray(X, dtype=float), np.asarray(y, dtype=float)
     beta, *_ = np.linalg.lstsq(A, b, rcond=None)
     resid = b - A @ beta
@@ -2962,6 +3289,353 @@ def prob_calibration_gate(games=None, *, teams=None, parks=None, starters=None,
     return out
 
 
+# ---------------------------------------------------------------------------
+# B-ML-FIT: the ridge gate (docs/diamond-betting.md section 7e)
+# ---------------------------------------------------------------------------
+def _ridge_arm(fit_games, eval_games, teams, parks, starters, resolve, *,
+               ridge: bool) -> dict | None:
+    """One arm of the section 7e gate: solve EVERY free parameter on the fit
+    half, then price the eval half and return the per-game losses.
+
+    The tie rate, `diff_shrink` and the home adjustment are re-solved for this
+    arm on this arm's own fit window, for the reason the dispersion gate states
+    in its own arm builder: a tuned incumbent graded against an untuned
+    challenger is not a measurement, it is a rigged one. The ridge penalty is
+    chosen inside the fit half too (`choose_ridge_penalty`), so the eval half
+    is untouched by anything either arm fitted."""
+    coeffs = fit_coefficients(fit_games, teams=teams, parks=parks, starters=starters,
+                              resolve=resolve, ridge=ridge)
+    if not coeffs:
+        return None
+    tie = _fit_tie_home(fit_games)
+    fit_home_rate = (sum(1 for g in fit_games if g["home_runs"] > g["away_runs"])
+                     / max(1, len(fit_games)))
+    shrink, _ = _solve_diff_shrink(fit_games, teams, parks, starters, coeffs, tie,
+                                   0.0, resolve, None)
+    adj = _solve_home_adj(fit_games, teams, parks, starters, coeffs, tie,
+                          fit_home_rate, shrink, resolve, None)
+    ps, ys, pks = [], [], []
+    for g in eval_games:
+        gt, gs, gpk = teams, starters, parks
+        if resolve is not None:
+            got = resolve(g)
+            if not got:
+                continue
+            gt, gs, gpk = got
+        gp = game_probabilities(g["home_org"], g["away_org"],
+                                home_sp=gs.get(g.get("home_sp")),
+                                away_sp=gs.get(g.get("away_sp")),
+                                teams=gt, parks=gpk, coeffs=coeffs, tie_home=tie,
+                                home_adj=adj, diff_shrink=shrink, run_alpha=None)
+        if not gp:
+            continue
+        ps.append(gp["p_home"])
+        ys.append(1 if g["home_runs"] > g["away_runs"] else 0)
+        pks.append(g.get("game_pk"))
+    if len(ps) < 2:
+        return None
+    briers, lls = _per_game_losses(ps, ys)
+    return {
+        "coefficients": coeffs,
+        "extra_inning_home_rate": round(tie, 4),
+        "diff_shrink": shrink,
+        "home_field_runs_adj": adj,
+        "n_eval": len(ps),
+        "brier": round(_brier(ps, ys), 5),
+        "log_loss": round(_logloss(ps, ys), 5),
+        "_ps": ps, "_ys": ys, "_pks": pks,
+        "_brier_rows": briers, "_ll_rows": lls,
+    }
+
+
+def _ridge_arm_public(arm: dict) -> dict:
+    """The arm minus its working series. The series are per-game vectors; they
+    exist to be paired, not to be published, and an artifact that carried them
+    would be five times its size for nothing."""
+    return {k: v for k, v in (arm or {}).items() if not k.startswith("_")}
+
+
+def fit_window_probe(games=None, *, teams=None, parks=None, starters=None,
+                     quantiles=None, ridge: bool = False) -> dict:
+    """Does the vintage fit window earn its extra games? A PAIRED answer.
+
+    The question VINTAGE_FIT_WINDOW_GROWS asks cannot be answered by comparing
+    the two shipped configurations, because they have DIFFERENT eval windows:
+    the fit half and the eval half are complements, so growing one shrinks the
+    other and the two Brier numbers are not paired. This probe fixes that by
+    holding the eval window and varying only the fit:
+
+      ANCHORED  the earliest VINTAGE_FIT_TARGET_GAMES games before the cut,
+                which is what the shipped rule uses however long the archive is
+      GROWN     every gradable game before the same cut
+
+    Both arms price the SAME eval games with all their corrections re-solved on
+    their own fit window, so the difference is the fit window and nothing else.
+
+    IT DOES NOT PRICE THE COST. Growing the fit window takes games off the
+    VINTAGE_MIN_GRADED_GAMES clock one for one (79 of them on the 2026-09-06
+    archive), and no paired statistic can see that, because those games are the
+    ones the paired statistic would need to exist."""
+    qs = tuple(quantiles if quantiles is not None else DISPERSION_SPLIT_QUANTILES)
+    games = games if games is not None else completed_games()
+    teams = teams if teams is not None else team_inputs()
+    parks = parks if parks is not None else park_index()
+    starters = starters if starters is not None else starter_inputs()
+    out = {
+        "question": ("is the OLS fit on every gradable game before the cut better than "
+                     "the fit on the earliest VINTAGE_FIT_TARGET_GAMES of them, on the "
+                     "SAME eval window"),
+        "arm": "ridge" if ridge else "ols",
+        "quantiles": list(qs),
+        "cost_not_priced": ("growth takes eval games one for one; on the 2026-09-06 "
+                            "archive the shipped rule leaves 487 eval games and a date "
+                            "share split leaves 408, which is 79 fewer on the "
+                            "VINTAGE_MIN_GRADED_GAMES clock"),
+    }
+    if not games or not teams:
+        out["status"] = "no data"
+        return out
+    reset_vintage_cache()
+    resolve, _ = _vintage_resolver()
+    gradable = [g for g in games if resolve(g)]
+    dates = sorted({g.get("date") for g in gradable if g.get("date")})
+    if len(gradable) < (VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES) or len(dates) < 4:
+        out["status"] = "insufficient vintage coverage"
+        return out
+    rows = []
+    for q in qs:
+        cut = dates[max(1, min(int(len(dates) * q), len(dates) - 1))]
+        before = sorted([g for g in gradable if (g.get("date") or "") < cut],
+                        key=lambda r: (r.get("date") or "", r.get("game_pk") or 0))
+        ev_g = [g for g in gradable if (g.get("date") or "") >= cut]
+        # ANCHORED keeps whole slates, the same way the shipped cut does.
+        anchored, cum = [], 0
+        for d in sorted({g.get("date") for g in before if g.get("date")}):
+            same = [g for g in before if g.get("date") == d]
+            # The slate that CROSSES the target is included, which is what
+            # `_vintage_cut_index` does (target_idx = i + 1). Stopping short of
+            # it would probe a fit window the shipped rule never builds.
+            anchored.extend(same)
+            cum += len(same)
+            if cum >= VINTAGE_FIT_TARGET_GAMES:
+                break
+        row = {"split_q": q, "split_date": cut, "n_eval": len(ev_g),
+               "n_fit_anchored": len(anchored), "n_fit_grown": len(before)}
+        if (len(anchored) < VINTAGE_MIN_FIT_GAMES or len(ev_g) < VINTAGE_MIN_EVAL_GAMES
+                or len(before) <= len(anchored)):
+            row["status"] = "no contrast at this split"
+            rows.append(row)
+            continue
+        a = _ridge_arm(anchored, ev_g, teams, parks, starters, resolve, ridge=ridge)
+        b = _ridge_arm(before, ev_g, teams, parks, starters, resolve, ridge=ridge)
+        if not a or not b or a["_pks"] != b["_pks"]:
+            row["status"] = "arms did not price the same games"
+            rows.append(row)
+            continue
+        row.update({
+            "status": "ran",
+            "anchored": _ridge_arm_public(a),
+            "grown": _ridge_arm_public(b),
+            "brier_delta": _paired_delta(a["_brier_rows"], b["_brier_rows"]),
+            "log_loss_delta": _paired_delta(a["_ll_rows"], b["_ll_rows"]),
+        })
+        rows.append(row)
+    ran = [r for r in rows if r.get("status") == "ran"]
+    out["grid"] = rows
+    out["status"] = "ran" if ran else "no contrast"
+    out["rule"] = ("grow only if the grown arm is non-inferior at every split on the "
+                   "same bar the ridge gate uses, paired Brier lb95 >= -0.001. The bar "
+                   "is REUSED rather than invented, and the clause was fixed before "
+                   "the grid below was read")
+    out["non_inferior_everywhere"] = bool(ran and all(
+        (r["brier_delta"].get("lb95") is not None
+         and r["brier_delta"]["lb95"] >= -0.001) for r in ran))
+    out["served"] = VINTAGE_FIT_WINDOW_GROWS
+    return out
+
+
+def ridge_fit_gate(games=None, *, teams=None, parks=None, starters=None,
+                   quantiles=None, log_fn=None) -> dict:
+    """The pre-registered gate on the ridge fit (RIDGE_FIT_GATE_CRITERIA).
+
+    Runs on the VINTAGE-gradable sample only, because the contaminated modes
+    cannot adjudicate a fit: their features contain the games being graded, and
+    a shrinkage repair aimed at 610 noisy rows would be scored against a design
+    where the noise is not noise. Both arms see the identical window, the
+    identical features and the identical corrections machinery, so the only
+    thing that differs between them is the solver.
+
+    THE VERDICT IS NOT `passed` ON ONE SPLIT. It is taken across
+    DISPERSION_SPLIT_QUANTILES, the same discipline section 11a arrived at the
+    hard way: a verdict that moves with the split point is a verdict about the
+    split point."""
+    qs = tuple(quantiles if quantiles is not None else DISPERSION_SPLIT_QUANTILES)
+    out = {
+        "criteria": RIDGE_FIT_GATE_CRITERIA,
+        "quantiles": list(qs),
+        "surface": ("gate lab only: no served price reads either arm until "
+                    "SERVE_RIDGE_FIT flips"),
+    }
+    games = games if games is not None else completed_games()
+    teams = teams if teams is not None else team_inputs()
+    parks = parks if parks is not None else park_index()
+    starters = starters if starters is not None else starter_inputs()
+    if not games or not teams:
+        out.update({"status": "no data", "verdict": "indeterminate", "ship": False,
+                    "served": SERVE_RIDGE_FIT})
+        return out
+    reset_vintage_cache()
+    resolve, _rstats = _vintage_resolver()
+    gradable = [g for g in games if resolve(g)]
+    dates = sorted({g.get("date") for g in gradable if g.get("date")})
+    out["n_gradable"] = len(gradable)
+    if len(gradable) < (VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES) or len(dates) < 4:
+        out.update({"status": "insufficient vintage coverage",
+                    "verdict": "indeterminate", "ship": False,
+                    "served": SERVE_RIDGE_FIT,
+                    "note": (f"{len(gradable)} vintage-gradable games; the gate needs "
+                             f"{VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES} to "
+                             "split at all")})
+        return out
+    elo_map = {}
+    try:
+        from tools import betting_elo
+        elo_map = betting_elo.elo_probabilities(games)
+    except Exception:                                          # noqa: BLE001
+        log.warning("betting_model: ridge gate could not build the Elo tier",
+                    exc_info=True)
+
+    grid = []
+    for q in qs:
+        cut = dates[max(1, min(int(len(dates) * q), len(dates) - 1))]
+        fit_g = [g for g in gradable if (g.get("date") or "") < cut]
+        ev_g = [g for g in gradable if (g.get("date") or "") >= cut]
+        row = {"split_q": q, "split_date": cut,
+               "n_fit": len(fit_g), "n_eval": len(ev_g)}
+        if len(fit_g) < VINTAGE_MIN_FIT_GAMES or len(ev_g) < VINTAGE_MIN_EVAL_GAMES:
+            row.update({"status": "below the fit/eval floors", "pass": False})
+            grid.append(row)
+            continue
+        old = _ridge_arm(fit_g, ev_g, teams, parks, starters, resolve, ridge=False)
+        new = _ridge_arm(fit_g, ev_g, teams, parks, starters, resolve, ridge=True)
+        if not old or not new or old["_pks"] != new["_pks"]:
+            row.update({"status": "arms did not price the same games", "pass": False})
+            grid.append(row)
+            continue
+        bd = _paired_delta(old["_brier_rows"], new["_brier_rows"])
+        ld = _paired_delta(old["_ll_rows"], new["_ll_rows"])
+        # The Elo leg, on the games Elo can price. It is the section 6 ladder's
+        # results-only floor and it is never fitted here or anywhere else.
+        e_idx = [i for i, pk in enumerate(new["_pks"]) if pk in elo_map]
+        elo_row = {"n": len(e_idx)}
+        if len(e_idx) >= 2:
+            e_ps = [elo_map[new["_pks"][i]] for i in e_idx]
+            e_ys = [new["_ys"][i] for i in e_idx]
+            e_br, _ = _per_game_losses(e_ps, e_ys)
+            elo_row["brier"] = round(_brier(e_ps, e_ys), 5)
+            elo_row["ridge_vs_elo"] = _paired_delta(
+                e_br, [new["_brier_rows"][i] for i in e_idx])
+            elo_row["ols_vs_elo"] = _paired_delta(
+                e_br, [old["_brier_rows"][i] for i in e_idx])
+        checks = [
+            {"id": "non_inferiority_vs_ols",
+             "value": bd.get("lb95"), "threshold": -0.001,
+             "pass": bool(bd.get("lb95") is not None and bd["lb95"] >= -0.001)},
+            {"id": "superiority_vs_elo",
+             "value": ((elo_row.get("ridge_vs_elo") or {}).get("t")),
+             "threshold": Z_95_ONE_SIDED,
+             "pass": bool((elo_row.get("ridge_vs_elo") or {}).get("t") is not None
+                          and elo_row["ridge_vs_elo"]["t"] >= Z_95_ONE_SIDED)},
+            {"id": "log_loss_not_worse",
+             "value": ld.get("delta"), "threshold": 0.0,
+             "pass": bool(ld.get("delta") is not None and ld["delta"] >= 0.0)},
+        ]
+        row.update({
+            "status": "ran",
+            "ols": _ridge_arm_public(old),
+            "ridge": _ridge_arm_public(new),
+            "brier_delta": bd,
+            "log_loss_delta": ld,
+            "elo": elo_row,
+            "checks": checks,
+            "pass": all(c["pass"] for c in checks),
+        })
+        grid.append(row)
+        if log_fn:
+            log_fn(f"betting_model: ridge gate q={q} cut={cut} "
+                   f"brier delta {bd.get('delta')} lb95 {bd.get('lb95')} "
+                   f"pass={row['pass']}")
+    # REPORTED, NOT A CRITERION. The grid above splits at date quantiles, so
+    # every one of its fit windows is GROWN. The window the site would actually
+    # serve on is the anchored one `_vintage_cut_index` builds, and "what would
+    # flipping the flag do to the published number" is a different question from
+    # "does the ridge clear the gate". Both get answered, and only the grid
+    # decides anything.
+    served = {"basis": ("the shipped vintage cut (_vintage_cut_index), which is the "
+                        "window a flip of SERVE_RIDGE_FIT would actually change"),
+              "is_a_criterion": False}
+    cut = dates[_vintage_cut_index(gradable, dates)]
+    fit_g = [g for g in gradable if (g.get("date") or "") < cut]
+    ev_g = [g for g in gradable if (g.get("date") or "") >= cut]
+    if len(fit_g) >= VINTAGE_MIN_FIT_GAMES and len(ev_g) >= VINTAGE_MIN_EVAL_GAMES:
+        so = _ridge_arm(fit_g, ev_g, teams, parks, starters, resolve, ridge=False)
+        sn = _ridge_arm(fit_g, ev_g, teams, parks, starters, resolve, ridge=True)
+        if so and sn and so["_pks"] == sn["_pks"]:
+            served.update({
+                "split_date": cut, "n_fit": len(fit_g), "n_eval": len(ev_g),
+                "ols": _ridge_arm_public(so), "ridge": _ridge_arm_public(sn),
+                "brier_delta": _paired_delta(so["_brier_rows"], sn["_brier_rows"]),
+                "log_loss_delta": _paired_delta(so["_ll_rows"], sn["_ll_rows"]),
+            })
+    out["served_window"] = served
+
+    ran = [r for r in grid if r.get("status") == "ran"]
+    if not ran:
+        verdict = "indeterminate"
+    elif all(r["pass"] for r in ran) and len(ran) == len(qs):
+        verdict = "pass"
+    elif any(r["pass"] for r in ran):
+        verdict = "indeterminate"
+    else:
+        verdict = "fail"
+    out.update({
+        "status": "ran" if ran else "insufficient vintage coverage",
+        "grid": grid,
+        "stability": {
+            "note": ("the coefficient and diff_shrink columns exist so a verdict that "
+                     "rides on one window is visible as one; a term that changes sign "
+                     "across three splits is not estimated, whatever its gate says"),
+            "ols": [{"split_q": r["split_q"],
+                     "b1": round(r["ols"]["coefficients"]["b1"], 6),
+                     "b2": round(r["ols"]["coefficients"]["b2"], 6),
+                     "b3": round(r["ols"]["coefficients"]["b3"], 6),
+                     "b4": round(r["ols"]["coefficients"]["b4"], 6),
+                     "diff_shrink": r["ols"]["diff_shrink"]} for r in ran],
+            "ridge": [{"split_q": r["split_q"],
+                       "penalty": r["ridge"]["coefficients"].get("penalty"),
+                       "b1": round(r["ridge"]["coefficients"]["b1"], 6),
+                       "b2": round(r["ridge"]["coefficients"]["b2"], 6),
+                       "b3": round(r["ridge"]["coefficients"]["b3"], 6),
+                       "b4": round(r["ridge"]["coefficients"]["b4"], 6),
+                       "diff_shrink": r["ridge"]["diff_shrink"],
+                       "binding": r["ridge"]["coefficients"].get(
+                           "sign_constraints_binding")} for r in ran],
+        },
+        "verdict": verdict,
+        "rule": ("every quantile must pass all three checks or the gate does not ship; "
+                 "a mixed grid is INDETERMINATE and the incumbent keeps serving"),
+        "elo_bar_note": ("check 2 is a bar on the MODEL CLASS, not on the challenger, "
+                         "and each split persists `elo.ols_vs_elo` beside "
+                         "`elo.ridge_vs_elo` so that cannot be misread. A split where "
+                         "the incumbent also misses the Elo bar is not evidence that "
+                         "the ridge broke something"),
+        "ship": verdict == "pass",
+        "served": SERVE_RIDGE_FIT,
+        "mode": "vintage",
+    })
+    return out
+
+
 def _calibration(ps: list[float], ys: list[int], bins: int = 10) -> list[dict]:
     out = []
     for i in range(bins):
@@ -3354,6 +4028,11 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                               fit_home_rate, shrink, resolve, alpha)
         ps, ys, tot_err, n_tot = [], [], 0.0, 0
         per_game_p: dict = {}
+        # The per-market view of the same pass, for section 7e. Lambdas travel
+        # UNROUNDED off `components`, because the total is re-priced at whatever
+        # line the book posted and a 0.0005-run rounding in a lambda is a real
+        # (if tiny) change to a tail probability.
+        per_game_mkt: dict = {}
         for g in eval_games:
             gt, gs, gpk = teams, starters, parks
             if resolve is not None:
@@ -3375,6 +4054,13 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
             ys.append(1 if g["home_runs"] > g["away_runs"] else 0)
             if g.get("game_pk") is not None:
                 per_game_p[g["game_pk"]] = gp["p_home"]
+                per_game_mkt[g["game_pk"]] = {
+                    "p_home": gp["p_home"],
+                    "p_home_minus_1_5": gp["p_home_minus_1_5"],
+                    "p_home_plus_1_5": gp["p_home_plus_1_5"],
+                    "lam_home": gp["components"]["lam_home"],
+                    "lam_away": gp["components"]["lam_away"],
+                }
             tot_err += abs(gp["fair_total"] - (g["home_runs"] + g["away_runs"]))
             n_tot += 1
         if not ps:
@@ -3386,6 +4072,7 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
             # on the model's own graded window, and re-pricing the window to
             # get these back would be a second clock.
             "_per_game_p": per_game_p,
+            "_per_game_markets": per_game_mkt,
             "label": label,
             "mode": mode,
             "honest": mode == "vintage",
@@ -3466,13 +4153,28 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
     # `_per_game_p` is working state, never artifact content: the ladder needs
     # the model's own graded probabilities to recompute tiers on identical
     # games, and it is popped from every graded block before the write.
-    per_game = {}
+    per_game, per_game_markets = {}, {}
     if isinstance(result.get("vintage"), dict):
         per_game = result["vintage"].pop("_per_game_p", None) or {}
+        per_game_markets = result["vintage"].pop("_per_game_markets", None) or {}
     for k in ("in_sample", "forward"):
         if isinstance(result.get(k), dict):
             result[k].pop("_per_game_p", None)
+            result[k].pop("_per_game_markets", None)
     result["benchmarks"] = _benchmarks_block(games, result["vintage"], per_game)
+
+    # --- the per-market objective (B-OBJ, section 7e, dark) ---------------
+    result["per_market"] = per_market_objective(games, result["vintage"],
+                                                per_game_markets)
+
+    # --- the ridge fit gate (B-ML-FIT, section 7e) ------------------------
+    # Same argument as the dispersion and calibration gates: it is a property of
+    # the sample this function already grades, and a second eval file would be a
+    # second clock to keep in sync.
+    result["ridge_fit"] = ridge_fit_gate(games, teams=teams, parks=parks,
+                                         starters=starters, log_fn=log_fn)
+    result["ridge_fit"]["fit_window_probe"] = fit_window_probe(
+        games, teams=teams, parks=parks, starters=starters)
 
     result["min_edge_gate"] = min_edge_gate(result["vintage"])
     result["min_edge"] = result["min_edge_gate"]["min_edge"]
@@ -3527,6 +4229,11 @@ def _vintage_cut_index(gradable: list[dict], dates: list[str]) -> int:
     begins. Whole slates never straddle the boundary, because the split is by
     date. See VINTAGE_FIT_TARGET_GAMES for why this is a target size rather
     than a share."""
+    if VINTAGE_FIT_WINDOW_GROWS:
+        # The fit half is the date share and both windows grow with the archive.
+        # See VINTAGE_FIT_WINDOW_GROWS for what that costs the eval clock.
+        return max(1, min(int(len(dates) * VINTAGE_FIT_MAX_DATE_SHARE),
+                          len(dates) - 1))
     per_date: dict[str, int] = {}
     for g in gradable:
         per_date[g.get("date")] = per_date.get(g.get("date"), 0) + 1
@@ -3897,6 +4604,484 @@ def _benchmarks_block(games: list[dict], vintage_block: dict,
     return out
 
 
+# ---------------------------------------------------------------------------
+# B-OBJ: the per-market objective (docs/diamond-betting.md section 7e)
+# ---------------------------------------------------------------------------
+#: The markets this block scores. Props are absent on purpose: the props pull
+#: is inert (section 7c), so a props market here would be a row of nulls
+#: pretending to be a measurement.
+PER_MARKET_MARKETS = ("moneyline", "runline", "total")
+#: Games in the same-games accuracy window before the accuracy leg may be read.
+#: 100 mirrors betting_shadow.MIN_BETS_FOR_SWEEP and the section 7b n floor, so
+#: this module has one small-sample floor and not three.
+PER_MARKET_MIN_CALIBRATION_GAMES = 100
+#: Settled rows in ONE (market, rule) cell before its ROI may be read.
+PER_MARKET_MIN_ROI_ROWS = 100
+#: Non-inferiority bar on the accuracy leg: the paired per-game Brier of the
+#: model minus the market open, one-sided 95% lower bound, on the same games.
+PER_MARKET_ACCURACY_LB95_FLOOR = -0.002
+#: The stake fraction the growth leg reports at. Quarter Kelly, and it is a
+#: REPORTED quantity only: the public record stakes flat 1 unit, always
+#: (section 7a), because a variable stake makes a published ROI unauditable.
+PER_MARKET_KELLY_FRACTION = 0.25
+#: CLV is ONE KEY CARRYING A REASON, not a column of nulls. Measured 2026-09-06:
+#: 22 cached odds snapshots, all of kind "open", zero of kind "close", and 0 of
+#: the 255 ledger rows carry a close price of any name.
+CLV_UNAVAILABLE_REASON = (
+    "close job never installed; 0 settled ledger rows carry a close price")
+PER_MARKET_OBJECTIVE = (
+    "LEXICOGRAPHIC, ACCURACY FIRST (owner decision 2026-09-05, decision 6). Per "
+    "market: (1) the ACCURACY leg is paired per-game Brier and log loss on the "
+    "vintage eval window against the ladder tiers, always including the market "
+    "OPEN tier recomputed on the same games, and it is read FIRST; (2) the ROI "
+    "leg is flat-stake ROI with the one-sided 95% lower bound `sweep_min_edge` "
+    "already uses, plus expected log growth at quarter Kelly on the recorded "
+    "price, per (market, rule) cell. A market may set a threshold only when its "
+    "accuracy leg is NON-INFERIOR to the market open on the same games (paired "
+    "Brier lb95 >= -0.002) AND its ROI leg clears an lb95 above zero at n >= 100 "
+    "inside ONE (market, rule) cell. A market that fails the accuracy leg has "
+    "its ROI leg REPORTED and NOT CONSULTED: a positive ROI on a market whose "
+    "probabilities lose to the open is a sample, not a finding. Floors: "
+    "100 canonical games per market for the accuracy leg, 100 settled rows per "
+    "(market, rule) cell for ROI. CLV is one key carrying the reason it does not "
+    "exist, never a null column."
+)
+PER_MARKET_SURFACE = (
+    "validation surface only, dark: no slot, no record row, no exported edge and "
+    "no min_edge reads this block. It states what each market WOULD have to show; "
+    "nothing consults it, the same standing the section 6 ladder ships under")
+
+
+def _modal_point(by_point: dict) -> float:
+    """The line most books posted, ties broken by the lower number so the choice
+    is deterministic. For the runline that means the home favourite reading
+    (-1.5) wins a tie; for the total it means the lower line does."""
+    return sorted(by_point, key=lambda k: (-len(by_point[k]), k))[0]
+
+
+def _market_open_by_market(dates_needed: set) -> dict:
+    """{slate: {(home_org, away_org): {market: spec}}} from the EARLIEST cached
+    open snapshot per slate.
+
+    A SECOND WALKER, DELIBERATELY. `_market_fair_probs` serves the section 6
+    ladder and its numbers are published; widening it to three markets would
+    change what that ladder reports as a side effect of adding this block. The
+    earliest-capture rule, the proportional de-vig and the across-books average
+    are the same three rules, applied to three markets instead of one.
+
+    The three specs:
+      moneyline  {"p_home"}              de-vigged P(home wins)
+      runline    {"home_point", "p_home_cover"}
+                 the HOME side of the posted 1.5 spread, whichever way it is
+                 posted. Fixing the event as "home wins by 2+" instead would be
+                 unpriced on every game where the home team is the underdog,
+                 because the book posts home +1.5 there and never prices home
+                 -1.5 at all.
+      total      {"line", "p_over"}      de-vigged P(over) at the modal line.
+                 On a whole-number line a de-vigged two-way over/under is
+                 already conditional on no push, which is exactly what
+                 `total_side_probabilities` returns, so the two sides of the
+                 comparison condition on the same event.
+
+    A DOUBLEHEADER'S TWO GAMES READ THE SAME CAPTURE, because the key is
+    (home_org, away_org) and the snapshot has one entry for the pair. That is
+    the existing ladder's behaviour, stated there as `subsample_note`, kept here
+    so the two surfaces do not disagree about the same slate."""
+    try:
+        import betting_ingest as bi
+    except Exception:                                         # noqa: BLE001
+        return {}
+    out: dict = {}
+    for meta in bi.list_snapshots():                          # oldest first
+        wrap = bi.load_snapshot(meta["path"])
+        if not wrap or wrap.get("kind") != "open":
+            continue
+        slate = wrap.get("slate_date") or meta["date"]
+        if slate not in dates_needed or slate in out:
+            continue
+        ev_map: dict = {}
+        for ev in wrap.get("events") or []:
+            ho, ao = _org(ev.get("home_team")), _org(ev.get("away_team"))
+            if not ho or not ao:
+                continue
+            hn = ev.get("home_team")
+            ml: list = []
+            rl: dict = {}
+            tl: dict = {}
+            for bk in ev.get("bookmakers") or []:
+                for mk in bk.get("markets") or []:
+                    key = mk.get("key")
+                    outs = mk.get("outcomes") or []
+                    decs, pts = {}, {}
+                    for o in outs:
+                        d = bi.american_to_decimal(o.get("price"))
+                        if d:
+                            decs[o.get("name")] = d
+                            if o.get("point") is not None:
+                                pts[o.get("name")] = float(o["point"])
+                    if len(decs) != 2:
+                        continue
+                    if key == "h2h":
+                        f = devig(decs).get(hn)
+                        if f is not None:
+                            ml.append(f)
+                    elif key == "spreads":
+                        if hn in pts and abs(pts[hn]) == 1.5 and len(pts) == 2:
+                            f = devig(decs).get(hn)
+                            if f is not None:
+                                rl.setdefault(pts[hn], []).append(f)
+                    elif key == "totals":
+                        if (pts.get("Over") is not None
+                                and pts.get("Over") == pts.get("Under")):
+                            f = devig(decs).get("Over")
+                            if f is not None:
+                                tl.setdefault(pts["Over"], []).append(f)
+            rec: dict = {}
+            if ml:
+                rec["moneyline"] = {"p_home": sum(ml) / len(ml), "n_books": len(ml)}
+            if rl:
+                pt = _modal_point(rl)
+                rec["runline"] = {"home_point": pt,
+                                  "p_home_cover": sum(rl[pt]) / len(rl[pt]),
+                                  "n_books": len(rl[pt])}
+            if tl:
+                pt = _modal_point(tl)
+                rec["total"] = {"line": pt, "p_over": sum(tl[pt]) / len(tl[pt]),
+                                "n_books": len(tl[pt])}
+            if rec:
+                ev_map[(ho, ao)] = rec
+        out[slate] = ev_map
+    return out
+
+
+def _market_outcome(game: dict, market: str, spec: dict):
+    """The observed 0/1 for one market on one game, or None when the game does
+    not resolve it (a total that lands exactly on the line is a PUSH and is
+    dropped from both sides of the comparison, never scored as a loss)."""
+    hr, ar = game.get("home_runs"), game.get("away_runs")
+    if hr is None or ar is None:
+        return None
+    if market == "moneyline":
+        return 1 if hr > ar else 0
+    if market == "runline":
+        pt = spec.get("home_point")
+        if pt is None:
+            return None
+        return 1 if (hr - ar) + float(pt) > 0 else 0
+    if market == "total":
+        line = spec.get("line")
+        if line is None:
+            return None
+        tot = hr + ar
+        if float(tot) == float(line):
+            return None
+        return 1 if tot > float(line) else 0
+    return None                                               # pragma: no cover
+
+
+def _model_market_prob(rec: dict, market: str, spec: dict, run_alpha):
+    """The model's probability of the SAME event the market spec names.
+
+    The total is recomputed from the game's own lambdas at the book's line
+    rather than read off a stored number, because the model prices a total only
+    once a line exists and the line is a property of the capture, not of the
+    model."""
+    if not rec:
+        return None
+    if market == "moneyline":
+        return rec.get("p_home")
+    if market == "runline":
+        pt = spec.get("home_point")
+        if pt == -1.5:
+            return rec.get("p_home_minus_1_5")
+        if pt == 1.5:
+            return rec.get("p_home_plus_1_5")
+        return None
+    if market == "total":
+        line = spec.get("line")
+        lh, la = rec.get("lam_home"), rec.get("lam_away")
+        if line is None or lh is None or la is None:
+            return None
+        _, tot = _score_joint(float(lh), float(la), _alpha_to_r(run_alpha))
+        return total_side_probabilities(tot, float(line)).get("p_over")
+    return None                                               # pragma: no cover
+
+
+def _per_market_accuracy(games: list[dict], model_markets: dict, run_alpha,
+                         elo_map: dict) -> dict:
+    """The accuracy leg, one entry per market in PER_MARKET_MARKETS.
+
+    Every tier is scored on EXACTLY the games that carry both a model price and
+    an open capture for that market, which is the only comparison the section 6
+    claim rule allows a subsample to appear in. The constant tier is the
+    subsample's own base rate, fitted on the games it scores, the same way the
+    ladder's `home_constant` is and with the same caveat."""
+    by_pk = {g.get("game_pk"): g for g in games if g.get("game_pk") is not None}
+    dates_needed = {g.get("date") for g in games
+                    if g.get("game_pk") in model_markets and g.get("date")}
+    opens = _market_open_by_market(dates_needed)
+    out: dict = {}
+    for market in PER_MARKET_MARKETS:
+        m_ps, k_ps, ys, e_ps, e_ys, pushes = [], [], [], [], [], 0
+        n_no_capture = 0
+        for pk, rec in model_markets.items():
+            g = by_pk.get(pk)
+            if not g:
+                continue                                      # pragma: no cover
+            spec = ((opens.get(g.get("date")) or {}).get(
+                (g.get("home_org"), g.get("away_org"))) or {}).get(market)
+            if not spec:
+                n_no_capture += 1
+                continue
+            mp = _model_market_prob(rec, market, spec, run_alpha)
+            kp = (spec.get("p_home") if market == "moneyline"
+                  else spec.get("p_home_cover") if market == "runline"
+                  else spec.get("p_over"))
+            y = _market_outcome(g, market, spec)
+            if mp is None or kp is None:
+                continue
+            if y is None:
+                pushes += 1
+                continue
+            m_ps.append(float(mp))
+            k_ps.append(float(kp))
+            ys.append(int(y))
+            if market == "moneyline" and pk in elo_map:
+                e_ps.append(float(elo_map[pk]))
+                e_ys.append(int(y))
+        n = len(ys)
+        entry = {
+            "n_games": n,
+            "floor": PER_MARKET_MIN_CALIBRATION_GAMES,
+            "floor_met": n >= PER_MARKET_MIN_CALIBRATION_GAMES,
+            "n_eval_games_without_an_open_capture": n_no_capture,
+            "n_pushes_dropped": pushes,
+        }
+        if n < 2:
+            entry.update({"status": "no same-games window",
+                          "non_inferior": False,
+                          "note": ("no eval game carries both a model price and an "
+                                   f"open capture of the {market}; this market is "
+                                   "unmeasured and claims nothing")})
+            out[market] = entry
+            continue
+        base = sum(ys) / n
+        m_br, m_ll = _per_game_losses(m_ps, ys)
+        k_br, k_ll = _per_game_losses(k_ps, ys)
+        c_br, c_ll = _per_game_losses([base] * n, ys)
+        tiers = {
+            "model_vintage": {"n": n, "brier": round(_brier(m_ps, ys), 5),
+                              "log_loss": round(_logloss(m_ps, ys), 5)},
+            "market_open_devig": {"n": n, "brier": round(_brier(k_ps, ys), 5),
+                                  "log_loss": round(_logloss(k_ps, ys), 5)},
+            "base_rate_constant": {"n": n, "p_constant": round(base, 4),
+                                   "brier": round(_brier([base] * n, ys), 5),
+                                   "log_loss": round(_logloss([base] * n, ys), 5),
+                                   "source": ("the same-games base rate, fitted on "
+                                              "the games it scores")},
+        }
+        if len(e_ys) >= 2:
+            tiers["elo_literature"] = {
+                "n": len(e_ys), "brier": round(_brier(e_ps, e_ys), 5),
+                "log_loss": round(_logloss(e_ps, e_ys), 5),
+                "source": "tools/betting_elo.py, moneyline only by construction"}
+        elif market == "moneyline":
+            tiers["elo_literature"] = {"n": 0, "brier": None,
+                                       "status": "unavailable, so it claims nothing"}
+        vs_open_brier = _paired_delta(k_br, m_br)
+        entry.update({
+            "status": "measured",
+            "tiers": tiers,
+            "model_vs_market_open": {
+                "brier": vs_open_brier,
+                "log_loss": _paired_delta(k_ll, m_ll),
+                "note": ("incumbent is the market open, challenger is the model; "
+                         "positive means the MODEL is better"),
+            },
+            "model_vs_base_rate": {"brier": _paired_delta(c_br, m_br),
+                                   "log_loss": _paired_delta(c_ll, m_ll)},
+            "non_inferiority_bar": PER_MARKET_ACCURACY_LB95_FLOOR,
+            "non_inferior": bool(
+                n >= PER_MARKET_MIN_CALIBRATION_GAMES
+                and vs_open_brier.get("lb95") is not None
+                and vs_open_brier["lb95"] >= PER_MARKET_ACCURACY_LB95_FLOOR),
+        })
+        out[market] = entry
+    return out
+
+
+def _per_market_roi_cells() -> dict:
+    """The ROI leg, one entry per (market, rule) cell of the shadow ledger.
+
+    THE SAMPLE COMES FROM betting_shadow AND ITS SHAPING RULES, not from a
+    second reading of the same file. `graded_bets_by_market_tag` is the public
+    per-cell reader; the raw rows are walked in parallel ONLY to recover
+    `model_prob`, which the sweep row does not carry and the Kelly leg cannot be
+    computed without. The two counts are compared per cell and a disagreement is
+    REPORTED rather than reconciled: if they ever diverge, one of the two samples
+    is wrong and neither number should be read until somebody knows which.
+
+    Flat stake is the published quantity. The quarter-Kelly growth beside it is
+    a REPORTED diagnostic and is not what the record stakes; see
+    PER_MARKET_KELLY_FRACTION."""
+    try:
+        import betting_shadow as bs
+    except Exception:                                         # noqa: BLE001
+        return {"status": "no ledger", "cells": {},
+                "reason": "betting_shadow is not importable in this checkout"}
+    try:
+        era = bs.PER_MARKET_CAP_ERA
+        cells = bs.graded_bets_by_market_tag(era=era)
+    except Exception:                                         # noqa: BLE001
+        log.warning("betting_model: per-cell ledger reader unavailable", exc_info=True)
+        return {"status": "no per-cell reader", "cells": {},
+                "reason": ("betting_shadow.graded_bets_by_market_tag is not available; "
+                           "the per-market ROI leg refuses to rebuild the cells itself")}
+    raw: dict = {}
+    try:
+        for r in bs.load():
+            if r.get("result") not in ("won", "lost"):
+                continue
+            if r.get("edge") is None or not r.get("decimal"):
+                continue
+            m = bs.market_of(r)
+            for t in bs.row_tags(r):
+                if bs.era_split_applies(m, t) and bs.budget_era(r) != era:
+                    continue
+                raw.setdefault((m, t), []).append(r)
+    except Exception:                                         # noqa: BLE001
+        log.warning("betting_model: raw ledger walk failed", exc_info=True)
+        raw = {}
+    out: dict = {}
+    for key, rows in sorted(cells.items(), key=lambda kv: (str(kv[0][0]), str(kv[0][1]))):
+        market, tag = key
+        n = len(rows)
+        profits = [(float(r["decimal"]) - 1.0) if r.get("won") else -1.0
+                   for r in rows if _pos(r.get("decimal"))]
+        entry = {"market": market, "rule": tag, "n": n,
+                 "floor": PER_MARKET_MIN_ROI_ROWS,
+                 "floor_met": n >= PER_MARKET_MIN_ROI_ROWS}
+        if profits:
+            mu = sum(profits) / len(profits)
+            var = sum((x - mu) ** 2 for x in profits) / len(profits)
+            se = math.sqrt(var / len(profits)) if var else 0.0
+            entry.update({
+                "n_priced": len(profits),
+                "roi": round(mu, 5),
+                "roi_lower_95": round(mu - Z_95_ONE_SIDED * se, 5),
+                "clears_lb95": bool(mu - Z_95_ONE_SIDED * se > 0),
+            })
+        mrows = raw.get(key) or []
+        if len(mrows) != n:
+            entry["kelly"] = {
+                "status": "unavailable",
+                "reason": (f"the per-cell reader returned {n} rows and the parallel "
+                           f"raw walk found {len(mrows)}; the two samples disagree and "
+                           "neither growth number is trustworthy until they do not"),
+            }
+        else:
+            gs, skipped = [], 0
+            for r in mrows:
+                pm, dec = r.get("model_prob"), r.get("decimal")
+                if pm is None or not _pos(dec):
+                    skipped += 1
+                    continue
+                f = PER_MARKET_KELLY_FRACTION * kelly_fraction(float(pm), float(dec))
+                f = max(0.0, min(f, 0.99))
+                if r.get("result") == "won":
+                    gs.append(math.log(1.0 + f * (float(dec) - 1.0)))
+                else:
+                    gs.append(math.log(max(1e-9, 1.0 - f)))
+            entry["kelly"] = {
+                "fraction": PER_MARKET_KELLY_FRACTION,
+                "n": len(gs), "n_skipped_no_model_prob": skipped,
+                "log_growth_per_bet": (round(sum(gs) / len(gs), 6) if gs else None),
+                "basis": ("realized mean log growth per settled bet at quarter Kelly on "
+                          "the RECORDED price; reported, never staked"),
+            }
+        out[f"{market}::{tag}"] = entry
+    return {"status": "ran", "era": era, "cells": out,
+            "clv_unavailable": CLV_UNAVAILABLE_REASON,
+            "note": ("one cell per (market, rule); there is no pooled row here and "
+                     "betting_shadow.MarketTagCells refuses to build one")}
+
+
+def per_market_objective(games: list[dict], vintage_block: dict,
+                         model_markets: dict) -> dict:
+    """The section 7e per-market objective, assembled and adjudicated.
+
+    LEXICOGRAPHIC, ACCURACY FIRST. See PER_MARKET_OBJECTIVE for the clauses.
+    The ROI leg is computed and reported for every market whether or not the
+    accuracy leg cleared, and `roi_consulted` says which markets were allowed to
+    use it. A market that fails accuracy and shows a positive ROI is a market
+    with a sample, not a market with a finding.
+
+    DARK. See PER_MARKET_SURFACE: nothing served reads this."""
+    out = {
+        "objective": PER_MARKET_OBJECTIVE,
+        "surface": PER_MARKET_SURFACE,
+        "markets": list(PER_MARKET_MARKETS),
+    }
+    roi = _per_market_roi_cells()
+    out["roi"] = roi
+    if (vintage_block or {}).get("status") != "graded" or not model_markets:
+        out["status"] = "no vintage eval window"
+        out["note"] = ("the accuracy leg scores the vintage eval window and there is "
+                       "none to score; the ROI leg above is reported anyway because "
+                       "it does not depend on one")
+        return out
+    elo_map = {}
+    try:
+        from tools import betting_elo
+        elo_map = betting_elo.elo_probabilities(games)
+    except Exception:                                         # noqa: BLE001
+        log.warning("betting_model: per-market Elo tier unavailable", exc_info=True)
+    alpha = (vintage_block or {}).get("run_dispersion_alpha")
+    acc = _per_market_accuracy(games, model_markets, alpha, elo_map)
+    verdicts: dict = {}
+    for market in PER_MARKET_MARKETS:
+        a = acc.get(market) or {}
+        cells = {k: v for k, v in (roi.get("cells") or {}).items()
+                 if v.get("market") == market}
+        clearing = sorted(k for k, v in cells.items()
+                          if v.get("floor_met") and v.get("clears_lb95"))
+        ok_acc = bool(a.get("non_inferior"))
+        if not a.get("floor_met"):
+            reason = (f"accuracy leg unmeasured: {a.get('n_games', 0)} same-games "
+                      f"comparisons against the market open, floor is "
+                      f"{PER_MARKET_MIN_CALIBRATION_GAMES}")
+        elif not ok_acc:
+            lb = ((a.get("model_vs_market_open") or {}).get("brier") or {}).get("lb95")
+            reason = (f"accuracy leg failed: paired Brier lb95 {lb} against the market "
+                      f"open, bar is {PER_MARKET_ACCURACY_LB95_FLOOR}")
+        elif not clearing:
+            reason = ("accuracy leg cleared and no (market, rule) cell has an ROI "
+                      f"lower bound above zero at n >= {PER_MARKET_MIN_ROI_ROWS}")
+        else:
+            reason = (f"accuracy leg cleared and {len(clearing)} cell(s) cleared ROI: "
+                      + ", ".join(clearing))
+        verdicts[market] = {
+            "accuracy_ok": ok_acc,
+            "roi_consulted": ok_acc,
+            "roi_cells_clearing": clearing if ok_acc else [],
+            "may_set_a_threshold": bool(ok_acc and clearing),
+            "reason": reason,
+        }
+    out.update({
+        "status": "ran",
+        "window": {"split_date": (vintage_block or {}).get("split_date"),
+                   "n_eval_games": (vintage_block or {}).get("n")},
+        "accuracy": acc,
+        "verdicts": verdicts,
+        "lexicographic_note": ("`roi_cells_clearing` is empty for any market whose "
+                               "accuracy leg did not clear, even when a cell would "
+                               "have qualified on its own numbers. That is the order "
+                               "of the rule, not a missing measurement: the cell is "
+                               "in `roi.cells` and can be read there"),
+    })
+    return out
+
+
 if __name__ == "__main__":                                       # pragma: no cover
     import argparse
 
@@ -3908,6 +5093,8 @@ if __name__ == "__main__":                                       # pragma: no co
                     help="the min_edge gate state off the last backtest artifact")
     ap.add_argument("--dispersion", action="store_true",
                     help="re-run the section 11a run-dispersion gate on its own")
+    ap.add_argument("--ridge", action="store_true",
+                    help="re-run the section 7e ridge fit gate and the fit window probe")
     ap.add_argument("--game", nargs=2, metavar=("AWAY", "HOME"), help="price one matchup")
     ap.add_argument("--season", default=None)
     args = ap.parse_args()
@@ -3944,6 +5131,15 @@ if __name__ == "__main__":                                       # pragma: no co
         if bmk.get("status") == "ran":
             for tname, row in (bmk.get("tiers") or {}).items():
                 print(f"    ladder {tname}: n={row.get('n')} brier={row.get('brier')}")
+        rf = r.get("ridge_fit") or {}
+        print(f"  ridge_fit (7e): verdict={rf.get('verdict')} ship={rf.get('ship')} "
+              f"served={rf.get('served')}")
+        pm = r.get("per_market") or {}
+        for mname, vd in (pm.get("verdicts") or {}).items():
+            acc = (pm.get("accuracy") or {}).get(mname) or {}
+            print(f"    per_market {mname}: n={acc.get('n_games')} "
+                  f"accuracy_ok={vd.get('accuracy_ok')} "
+                  f"may_set_a_threshold={vd.get('may_set_a_threshold')}")
         print(f"  min_edge: {r.get('min_edge')}")
         for g in (r.get("min_edge_gate") or {}).get("gates") or []:
             print(f"    gate {g['id']}: {'OPEN' if g['open'] else 'closed'} "
@@ -3961,6 +5157,38 @@ if __name__ == "__main__":                                       # pragma: no co
             print(f"    {'PASS' if c['pass'] else 'FAIL'}  {c['criterion']}: "
                   f"{c['value']} against {c['threshold']}"
                   + (f" at t={c['t']}" if c.get("t") is not None else ""))
+    if args.ridge:
+        # Standalone so the gate can be re-run against a grown archive without
+        # rewriting the whole eval artifact. It writes nothing.
+        rg = ridge_fit_gate(log_fn=print)
+        print(f"  ridge_fit (7e): verdict={rg.get('verdict')} ship={rg.get('ship')} "
+              f"served={rg.get('served')}")
+        for row in rg.get("grid") or []:
+            if row.get("status") != "ran":
+                print(f"    q={row.get('split_q')} {row.get('status')}")
+                continue
+            bd = row.get("brier_delta") or {}
+            print(f"    q={row['split_q']} cut={row['split_date']} "
+                  f"fit={row['n_fit']} eval={row['n_eval']} "
+                  f"ols {row['ols']['brier']} ridge {row['ridge']['brier']} "
+                  f"delta={bd.get('delta')} lb95={bd.get('lb95')} pass={row['pass']}")
+        sw = rg.get("served_window") or {}
+        if sw.get("ols"):
+            print(f"    served window {sw.get('split_date')} "
+                  f"(fit {sw.get('n_fit')} / eval {sw.get('n_eval')}): "
+                  f"ols {sw['ols']['brier']} ridge {sw['ridge']['brier']} "
+                  f"delta={(sw.get('brier_delta') or {}).get('delta')}")
+        pr = fit_window_probe()
+        print(f"  fit_window_probe: non_inferior_everywhere="
+              f"{pr.get('non_inferior_everywhere')} served={pr.get('served')}")
+        for row in pr.get("grid") or []:
+            if row.get("status") != "ran":
+                print(f"    q={row.get('split_q')} {row.get('status')}")
+                continue
+            bd = row.get("brier_delta") or {}
+            print(f"    q={row['split_q']} anchored {row['n_fit_anchored']} vs grown "
+                  f"{row['n_fit_grown']} on {row['n_eval']}: "
+                  f"delta={bd.get('delta')} t={bd.get('t')} lb95={bd.get('lb95')}")
     if args.game:
         away, home = _org(args.game[0]), _org(args.game[1])
         gp = game_probabilities(home, away)

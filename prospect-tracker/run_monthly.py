@@ -373,6 +373,66 @@ VINTAGE_GAP_WINDOW_DAYS = 3
 VINTAGE_GAP_STALE_DAYS = 2   # newest entry 2+ calendar days back is ~36h+ old
                              # at the nightly hour: two straight missed nights
 
+# THE ODDS LEG (2026-09-06). Third archive, same doctrine, same permanence: an
+# OPENING price is evidence about what the market believed before first pitch,
+# and a slate whose open was never captured can never be graded for CLV or
+# priced from a pregame book again. It was invisible until now.
+#
+# MEASURED on .cache/odds the day this was written: 22 snapshots, every one of
+# kind "open", covering 22 distinct slate dates across the 31-day span
+# 2026-08-06..2026-09-05. NINE slate days inside that span hold no open capture
+# at all: 08-15, 08-17, 08-22, 08-25, 08-26, 08-28, 08-29, 09-01, 09-02. Two of
+# those (08-15, 08-17) are the nights the vintage leg was built for; the other
+# seven were silent. That is the gap this leg makes visible.
+#
+# OPT-IN AT THE CALL SITE, deliberately. `odds_dir=None` leaves the leg quiet,
+# so a box with no EEPHUS_ODDS_API_KEY cannot capture, cannot be blamed for not
+# capturing, and does not learn to skip a red line it can do nothing about. The
+# nightly passes the real directory only when betting_ingest.configured().
+
+
+def _odds_slate_dates(dirpath: Path, year: int) -> list[date]:
+    """Sorted US-Eastern SLATE dates the cached open-odds archive covers,
+    current year only.
+
+    NOT the filename date. A snapshot is named for its UTC capture stamp
+    (`YYYY-MM-DD-HHMM.json`) while the slate it belongs to is US-Eastern: a
+    10:10pm ET first pitch closes after UTC midnight, which is why
+    2026-08-09-0133.json carries slate_date 2026-08-08. Counting filenames
+    would report 08-08 missing and 08-09 captured twice, both wrong.
+
+    The wrapper's own `slate_date` field is authoritative and is read first.
+    The fallback, for a pre-slate_date or unreadable file, converts the
+    filename stamp at the same fixed EDT offset betting_ingest.slate_date_of
+    uses; measured 2026-09-06, that fallback reproduces the wrapper's
+    slate_date on 22 of 22 cached snapshots. Cost of the read: 22 files,
+    1.9 MB, 15 ms.
+
+    Reads only; never raises past its caller."""
+    p = Path(dirpath)
+    if not p.exists():
+        return []
+    out: list[date] = []
+    for f in sorted(p.glob("*.json")):
+        stem = f.stem
+        try:
+            stamp = datetime.strptime(stem, "%Y-%m-%d-%H%M")
+        except ValueError:
+            continue                      # not a snapshot filename, skip it
+        slate = None
+        try:
+            wrap = json.loads(f.read_text(encoding="utf-8"))
+            sd = (wrap or {}).get("slate_date")
+            if isinstance(sd, str):
+                slate = date.fromisoformat(sd)
+        except (OSError, ValueError, TypeError):
+            slate = None
+        if slate is None:
+            slate = (stamp - timedelta(hours=4)).date()
+        if slate.year == year:
+            out.append(slate)
+    return sorted(set(out))
+
 
 def _archive_dates(dirpath: Path, year: int) -> list[date]:
     """Sorted date-stemmed *.json entries from one per-date archive, current
@@ -394,22 +454,54 @@ def _archive_dates(dirpath: Path, year: int) -> list[date]:
 
 def _vintage_capture_gap(*, today: date | None = None,
                          vintage_dir: Path | None = None,
-                         dfs_dir: Path | None = None) -> dict:
+                         dfs_dir: Path | None = None,
+                         odds_dir: Path | None = None) -> dict:
     """The nightly-gap verdict: {ok, severity, message, newest_vintage,
-    newest_dfs, missing_vintage_dates, missing_dfs_dates, n_vintages_in_window}.
+    newest_dfs, newest_odds, missing_vintage_dates, missing_dfs_dates,
+    missing_odds_dates, n_vintages_in_window, n_odds_in_window,
+    odds_archive_empty}.
 
     Pure read, injectable dirs and clock for tests, never raises past its
     caller's try. `today` is INCLUDED in the window because the daily path
     records this row AFTER step 9e-pre wrote tonight's vintage, so a missing
-    today means tonight's own capture failed, not that it has not run yet."""
+    today means tonight's own capture failed, not that it has not run yet.
+
+    `odds_dir` is the ONE argument whose default means OFF rather than
+    'use the standard location': None leaves the odds leg silent. Capture
+    there is gated on a credential this pipeline does not always hold, and a
+    sentinel that reds every night on an unarmed box teaches a reader to skip
+    the line. The nightly call site passes .cache/odds only when
+    betting_ingest.configured() says a capture was even possible.
+
+    AN EMPTY ODDS ARCHIVE IS RED, and that is deliberate. Passing odds_dir is
+    already proof the capture is ARMED, so an in-season archive holding nothing
+    for this year does not mean 'not watching yet', it means the armed capture
+    has produced nothing all season and every slate so far is unpriced. That is
+    the exact state this leg exists to catch, and an earlier draft was blind to
+    it: the whole leg sat behind `if o_dates:`, so an empty directory left
+    newest_odds None, missing_odds_dates empty and severity untouched, and the
+    row read ok forever. The verdict is carried on its own key,
+    odds_archive_empty, so a reader can tell 'never captured' from 'captured and
+    then stopped'. Note the asymmetry with the VINTAGE leg, which stays quiet on
+    an empty archive: the vintage leg is always on and cannot tell a first night
+    from an outage, while this one is only ever switched on by a caller that
+    already checked the credential.
+
+    ONE STATE STILL ESCAPES, and it escapes by ordering: an empty CURRENT-SEASON
+    vintage archive returns 'no_archive' above, before the odds leg is reached,
+    so a box with nothing running at all reports quiet rather than red. That is
+    the pipeline being dark, not the odds capture being broken, and the vintage
+    leg owns it."""
     root = Path(__file__).parent
     t = today or date.today()
     vdir = Path(vintage_dir) if vintage_dir else (root / ".cache" / "leaderboard_vintages")
     ddir = Path(dfs_dir) if dfs_dir else (root / ".cache" / "dfs_history")
 
     quiet = {"ok": True, "severity": "ok", "newest_vintage": None,
-             "newest_dfs": None, "missing_vintage_dates": [],
-             "missing_dfs_dates": [], "n_vintages_in_window": 0}
+             "newest_dfs": None, "newest_odds": None,
+             "missing_vintage_dates": [], "missing_dfs_dates": [],
+             "missing_odds_dates": [], "n_vintages_in_window": 0,
+             "n_odds_in_window": 0, "odds_archive_empty": False}
     if not (3 <= t.month <= 11):
         quiet["severity"] = "off_season"
         quiet["message"] = (f"month {t.month} is outside March..November; the "
@@ -452,9 +544,31 @@ def _vintage_capture_gap(*, today: date | None = None,
             cur += timedelta(days=1)
         stale_d = (t - newest_d).days >= VINTAGE_GAP_STALE_DAYS
 
-    if stale_v or len(missing_v) >= 2:
+    # The ODDS leg. Off entirely unless the caller handed us a directory (see
+    # the docstring). Graded like the VINTAGE leg, not like the DFS one: a
+    # slate with no open capture is a permanent hole in the pricing record,
+    # not an ambiguous off day, because the Odds API returns a board on every
+    # calendar day of the season and an empty board still writes a file.
+    # An armed leg with an EMPTY current-year archive is its own red, not a
+    # silence: see the docstring. `odds_dir` truthy is the arming proof.
+    o_dates = _odds_slate_dates(Path(odds_dir), t.year) if odds_dir else []
+    newest_o = o_dates[-1] if o_dates else None
+    missing_o, stale_o, n_o_in_window = [], False, 0
+    odds_empty = bool(odds_dir) and not o_dates
+    if o_dates:
+        ostart = max(o_dates[0], t - timedelta(days=VINTAGE_GAP_WINDOW_DAYS))
+        have_o, cur = set(o_dates), ostart
+        while cur <= t:
+            if cur not in have_o:
+                missing_o.append(cur.isoformat())
+            cur += timedelta(days=1)
+        stale_o = (t - newest_o).days >= VINTAGE_GAP_STALE_DAYS
+        n_o_in_window = sum(1 for d in o_dates if d >= ostart)
+
+    if (stale_v or len(missing_v) >= 2 or stale_o or len(missing_o) >= 2
+            or odds_empty):
         severity = "red"
-    elif missing_v or (stale_d and not stale_v):
+    elif missing_v or missing_o or (stale_d and not stale_v):
         severity = "yellow"
     else:
         severity = "ok"
@@ -476,20 +590,40 @@ def _vintage_capture_gap(*, today: date | None = None,
     if missing_d and severity != "ok":
         bits.append(f"DFS archive day(s) without a file in the window: "
                     f"{', '.join(missing_d)} (off days are legitimate here)")
+    if stale_o:
+        bits.append(f"newest OPEN ODDS capture is {newest_o.isoformat()}, "
+                    f"{(t - newest_o).days} slate day(s) back; nothing on the "
+                    "board since can be priced pregame or graded for CLV")
+    if missing_o:
+        bits.append(f"slate day(s) with NO open odds capture: "
+                    f"{', '.join(missing_o)} - an opening price cannot be "
+                    "recaptured, so those slates are unpriceable for good")
+    if odds_empty:
+        bits.append(f"the open-odds archive holds NOTHING for {t.year} while "
+                    "the capture is ARMED (this leg only runs when a key is "
+                    f"configured): {odds_dir} has no {t.year} snapshot, so "
+                    "every slate this season is unpriced and no CLV is gradable")
     if severity == "ok":
         msg = (f"capture current: newest vintage {newest_v.isoformat()}, "
                f"newest DFS slate "
                f"{newest_d.isoformat() if newest_d else 'none this season'}, "
                f"no gap inside the {VINTAGE_GAP_WINDOW_DAYS}-day window")
+        if odds_dir:
+            msg += (", newest open odds "
+                    f"{newest_o.isoformat() if newest_o else 'none this season'}")
     else:
         msg = f"!!! VINTAGE GAP {severity.upper()}: " + "; ".join(bits)
 
     return {"ok": severity == "ok", "severity": severity, "message": msg,
             "newest_vintage": newest_v.isoformat(),
             "newest_dfs": newest_d.isoformat() if newest_d else None,
+            "newest_odds": newest_o.isoformat() if newest_o else None,
             "missing_vintage_dates": missing_v,
             "missing_dfs_dates": missing_d,
-            "n_vintages_in_window": n_in_window}
+            "missing_odds_dates": missing_o,
+            "n_vintages_in_window": n_in_window,
+            "n_odds_in_window": n_o_in_window,
+            "odds_archive_empty": odds_empty}
 
 
 def write_ingest_health(out_dir: Path, mode: str,
@@ -1623,6 +1757,226 @@ def _load_env_files(log=None) -> list[str]:
     return loaded
 
 
+# ===========================================================================
+# THE EARLY-UTC OPEN-ODDS CAPTURE (2026-09-06)
+# ===========================================================================
+# WHY IT NEEDS ITS OWN CRON. The open snapshot has always been captured by
+# whichever step of the nightly happened to reach it, so the capture hour is
+# whatever hour the nightly runs. MEASURED over the 22 cached snapshots
+# (.cache/odds, 2026-08-06..2026-09-05, every one kind "open"):
+#
+#   * capture time of day ranges 01:33 to 23:19 UTC; 22 is even, so the median
+#     straddles the two middle captures, 19:25 and 19:46;
+#   * the earliest slate opening is 16:16 UTC. Rule: for each slate take its
+#     first game's start, then take the smallest clock time over slates. Do NOT
+#     take the smallest clock time over all 434 events, which is 00:05 UTC and
+#     is a night game belonging to the PREVIOUS Eastern slate;
+#   * 11 of 22 captures landed AFTER their own slate's first game had started;
+#   * 49 of the 434 events in those captures (11.3 percent) were already in
+#     progress at capture time, so they arrive priced in-game and the export's
+#     in-game filter drops them;
+#   * same-day priced games by capture hour: captures before 19:00 UTC average
+#     13.0 games over 7 captures, 19:00-20:00 average 14.0 over 5, at or after
+#     20:00 average 9.1 over 10.
+#
+# THE LOWER BOUND ON GAMES LOST, AND THE RULE THAT MAKES IT CHECKABLE. Assign
+# every event to the Eastern calendar date of its own commence_time, which is
+# the same key the wrapper's slate_date carries (verified: slate_date equals the
+# Eastern date of captured_at on all 22). For slate S let UNIVERSE(S) be every
+# event id any capture in the cache places on S, and HELD(S) be the event ids
+# S's own capture carried whose Eastern date is S. LOST(S) = UNIVERSE(S) minus
+# HELD(S). Re-derived 2026-09-06 over the 22 cached files:
+#
+#   08-08 priced 11 of 15 (lost 4)      08-19 priced 14 of 15 (lost 1)
+#   08-13 priced  3 of  9 (lost 6)      08-20 priced  6 of  9 (lost 3)
+#
+# 14 games across 4 of the 22 captured slates, and the other 18 slates lose
+# nothing. Every one of the 14 is proved by the PRIOR day's capture, and every
+# one of the 14 had already started when its own slate's capture fired, so the
+# loss is the late hour and nothing else. The true figure is larger, because on
+# a day whose only capture is late there is no earlier capture to compare with.
+# This bound is rule-dependent: attributing events to the UTC date of the
+# capture instead of the Eastern date of the game splits slates across midnight
+# and reports 53. That is why the rule is written out here rather than the
+# number alone.
+#
+# So the vintage clock accrues at roughly two thirds to one half the rate the
+# same credit spend could buy, and the deficit is invisible in the artifact
+# because a game that was never priced leaves nothing behind.
+#
+# THE FIX IS THE HOUR, NOT MORE CREDITS. This entry point does the ONE paid
+# open call and nothing else, so it can be crontabbed early in the UTC day,
+# before the earliest observed first pitch of 16:16 UTC. Recommended:
+#
+#   10 13 * * *  cd <repo> && python run_monthly.py --odds-open
+#
+# 13:10 UTC is 09:10 ET, after the books have posted the day's openers and
+# more than three hours before the earliest first pitch on record.
+#
+# CREDITS, the whole arithmetic. betting_ingest.credits_for() is 3 markets x 1
+# region = 3 credits a call. One call a day is 3 x 31 = 93 in the longest
+# month, against The Odds API free tier's 500. The provider's own meter, read
+# off the newest cached wrapper (.cache/odds/2026-09-05-1718.json, credits
+# block): used 9, remaining 491 for September. 93 + 9 = 102 of 500, and the
+# separate props cap (props_credits_cap, 6) is charged against its own ledger.
+# This step ADDS NO SPEND: it MOVES the existing daily call to a better hour,
+# and step 9d-pre-odds is demoted to a guarded fallback that skips when this
+# already captured today's slate.
+#
+# THE DUPLICATE GUARD IS AT THE CALL SITE, AND IT HAS TO BE. It would be
+# convenient if betting_ingest refused a duplicate for free, and it does not:
+# betting_ingest.run() calls fetch_snapshot() BEFORE write_snapshot(), so the
+# 3 credits are spent on the provider's meter before the FileExistsError can
+# fire, and that error only triggers on a collision of the exact
+# YYYY-MM-DD-HHMM filename anyway, which means two calls a minute apart both
+# succeed and both bill. Verified by reading betting_ingest.run and
+# write_snapshot on 2026-09-06. So the refusal must happen here, before the
+# call, exactly as step 9e already does it.
+def _book_credits(job: str, cost: int, note: str, log) -> None:
+    """Charge the shared tier ledger. Never raises.
+
+    Called on BOTH paths, success and failure, because The Odds API bills on the
+    request rather than the response: a call that reached the provider and then
+    blew up has already cost its credits, and a ledger that only counts
+    successes drifts below the truth in exactly the situation where an accurate
+    count matters most.
+    """
+    try:
+        import betting_credits as _bc
+        _bc.record(job, cost, note=note)
+    except Exception:                                     # noqa: BLE001
+        if log is not None:
+            log.warning("credit ledger: could not book %s credits for %s",
+                        cost, job, exc_info=True)
+
+
+def run_odds_open(*, log=None) -> dict:
+    """Capture today's OPEN odds snapshot, once, early, and nothing else.
+
+    Returns {ok, action, slate, reason} and never raises: this is a cron
+    entry point, and a crash here must not become a retry loop that bills.
+    `action` is one of "captured", "skipped_existing", "skipped_unarmed",
+    "skipped_no_credits", "failed".
+
+    THE SLATE, not the calendar day. The guard asks whether an open snapshot
+    already exists for the US-Eastern slate date, computed at the same fixed
+    EDT offset betting_ingest.slate_date_of stamps into the wrapper, so the
+    question the guard asks and the label the ingest writes are the same
+    question. Using the box's local date instead would ask a different one on
+    any box not set to Eastern."""
+    _utf8_console()
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        stream=sys.stdout,
+    )
+    log = log or logging.getLogger("run_odds_open")
+    _load_env_files(log.info)
+
+    now = datetime.now(timezone.utc)
+    slate = (now - timedelta(hours=4)).strftime("%Y-%m-%d")
+    out = {"ok": False, "action": "failed", "slate": slate, "reason": ""}
+
+    with _step("odds-open. Early-UTC open odds capture", log):
+        try:
+            import betting_ingest
+        except Exception as exc:                          # noqa: BLE001
+            out["reason"] = f"betting_ingest import failed: {exc}"
+            log.exception("odds-open: cannot import betting_ingest")
+            return out
+
+        if not betting_ingest.configured():
+            out.update(ok=True, action="skipped_unarmed",
+                       reason="EEPHUS_ODDS_API_KEY is not set; no call made")
+            log.warning("odds-open: %s", out["reason"])
+            return out
+
+        # THE GUARD, before any billable call.
+        try:
+            existing = betting_ingest.latest_snapshot(kind="open", on_date=slate)
+        except Exception:                                 # noqa: BLE001
+            # An unreadable cache must not license a second paid pull.
+            log.exception("odds-open: could not read the snapshot cache; "
+                          "refusing to spend credits on an unknown state")
+            out["reason"] = "snapshot cache unreadable; no call made"
+            return out
+        if existing:
+            out.update(ok=True, action="skipped_existing",
+                       reason=f"open snapshot for slate {slate} already cached "
+                              f"({Path(str(existing.get('_path'))).name}); "
+                              "no second 3-credit call")
+            log.info("odds-open: %s", out["reason"])
+            return out
+
+        # THE TIER GUARD, after the duplicate guard and before the call. The
+        # duplicate guard asks "have we already bought this slate"; this one
+        # asks "can the month afford it at all", and four jobs now share one
+        # 500-credit tier. It refuses BEFORE the request because
+        # betting_ingest.run() fetches before it writes: after the call the
+        # credits are gone whatever happens next.
+        _cost = 3
+        try:
+            import betting_credits as _bc
+            _cost = int(betting_ingest.credits_for())
+            _okc, _whyc = _bc.check("open", _cost)
+        except Exception:                                 # noqa: BLE001
+            # A broken ledger must not stop a job that was running fine before
+            # the ledger existed. Proceed, and say so.
+            _okc, _whyc = True, "credit ledger unavailable; proceeding unguarded"
+            log.warning("odds-open: credit ledger unusable", exc_info=True)
+        if not _okc:
+            out.update(ok=True, action="skipped_no_credits", reason=_whyc)
+            log.warning("odds-open: %s", _whyc)
+            return out
+        log.info("odds-open: credits %s", _whyc)
+
+        try:
+            st = betting_ingest.run("open")
+        except Exception as exc:                          # noqa: BLE001
+            # SENT BUT FAILED still bills: the provider charges on the request.
+            _book_credits("open", _cost, f"raised: {exc}", log)
+            out["reason"] = f"ingest raised: {exc}"
+            log.exception("odds-open: capture failed")
+            return out
+        _book_credits("open", _cost, str((st or {}).get("last_run"))[:80], log)
+
+        last = str((st or {}).get("last_run") or "")
+        ok = last.startswith("ok:")
+        out.update(ok=ok, action="captured" if ok else "failed", reason=last)
+        log.info("odds-open: %s", last or "no status")
+
+        # Say the margin out loud. A capture that lands after first pitch is
+        # the exact failure this step exists to end, and it is silent unless
+        # somebody prints it.
+        try:
+            wrap = betting_ingest.latest_snapshot(kind="open", on_date=slate)
+            stamps = []
+            for ev in ((wrap or {}).get("events") or []):
+                ct = (ev or {}).get("commence_time")
+                if ct:
+                    stamps.append(datetime.fromisoformat(
+                        str(ct).replace("Z", "+00:00")))
+            if stamps:
+                lead = (min(stamps) - now).total_seconds() / 60.0
+                started = sum(1 for s in stamps if s <= now)
+                log.info("odds-open: %d event(s) on slate %s, first pitch in "
+                         "%.0f min, %d already in progress at capture",
+                         len(stamps), slate, lead, started)
+                out["minutes_to_first_pitch"] = round(lead, 1)
+                out["n_events"] = len(stamps)
+                out["n_already_started"] = started
+        except Exception:                                 # noqa: BLE001
+            log.warning("odds-open: could not report the first-pitch margin")
+
+    try:
+        import job_heartbeat as _hb
+        _hb.record("betting_odds_snapshot", ok=out["ok"],
+                   result=f"{out['action']}: {out['reason']}"[:120])
+    except Exception:                                     # noqa: BLE001
+        pass
+    return out
+
+
 def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
               no_cache: bool = False, chained: bool = False) -> None:
     """DAILY fast-moving refresh — the time-sensitive subset of the pipeline.
@@ -2251,11 +2605,53 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # its duplicate-path check and a second call would spend 3 more
         # credits), so a transient failure here still gets one more chance and
         # the nightly cost stays one 3-credit call.
+        #
+        # DEMOTED 2026-09-06 to a SAME-DAY FALLBACK. The primary capture now
+        # runs on its own early-UTC cron (`--odds-open`, see run_odds_open),
+        # because the nightly's hour is not early enough: 11 of the 22 cached
+        # snapshots landed after their own slate's first pitch. This seam still
+        # fires when that cron did not (never installed, box asleep, transient
+        # failure), so a nightly on its own still produces a capture - just a
+        # late one, which is what it always produced.
+        #
+        # THE GUARD IS THE SAME ONE STEP 9e USES, and it is not optional.
+        # betting_ingest.run() fetches BEFORE write_snapshot can raise
+        # FileExistsError, and that error only fires on an identical
+        # YYYY-MM-DD-HHMM filename, so the ingest CANNOT refuse a same-day
+        # duplicate without billing 3 credits first (verified by reading
+        # betting_ingest.run and write_snapshot, 2026-09-06). The refusal has
+        # to live here. Slate date, not box-local date, so the question matches
+        # the label betting_ingest writes.
         with _step("9d-pre-odds. Betting odds snapshot (before the DFS slate)", log):
             try:
                 import betting_ingest
                 import job_heartbeat as _hb
-                _st = betting_ingest.run("open")
+                _slate = (datetime.now(timezone.utc)
+                          - timedelta(hours=4)).strftime("%Y-%m-%d")
+                if betting_ingest.latest_snapshot(kind="open", on_date=_slate):
+                    log.info("betting odds: slate %s already captured (the "
+                             "early --odds-open cron, or an earlier run); no "
+                             "second 3-credit call", _slate)
+                    _st = {"last_run": f"skipped: slate {_slate} already captured"}
+                else:
+                    # Same tier guard as the primary. This seam is a FALLBACK,
+                    # so it books against the same "open" allocation: the two
+                    # are one job that runs from two places, and giving the
+                    # fallback its own budget would double the job's ceiling.
+                    _c = int(betting_ingest.credits_for())
+                    try:
+                        import betting_credits as _bc
+                        _okc, _whyc = _bc.check("open", _c)
+                    except Exception:                     # noqa: BLE001
+                        _okc, _whyc = True, "credit ledger unavailable"
+                    if not _okc:
+                        log.warning("betting odds: %s", _whyc)
+                        _st = {"last_run": f"skipped: {_whyc}"}
+                    else:
+                        try:
+                            _st = betting_ingest.run("open")
+                        finally:
+                            _book_credits("open", _c, "9d-pre-odds fallback", log)
                 _hb.record("betting_odds_snapshot", ok=True,
                            result=str((_st or {}).get("last_run"))[:120])
             except Exception as _e:
@@ -2517,8 +2913,22 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             # a missing today means tonight's own capture failed. A night the
             # whole pipeline skips cannot report itself; this is the next
             # night's run noticing, which is the only place that can.
+            #
+            # THE ODDS LEG (2026-09-06) rides the same row. It is handed the
+            # directory ONLY when a capture was possible at all: on a box with
+            # no EEPHUS_ODDS_API_KEY the leg stays silent rather than reddening
+            # every night over a call that could never have been made. Measured
+            # before it existed: 9 slate days in a 31-day span held no open
+            # capture and nothing in the pipeline said so.
             try:
-                _vg = _vintage_capture_gap()
+                _odir = None
+                try:
+                    import betting_ingest as _bi_gap
+                    if _bi_gap.configured():
+                        _odir = Path(__file__).parent / ".cache" / "odds"
+                except Exception:                        # noqa: BLE001
+                    _odir = None
+                _vg = _vintage_capture_gap(odds_dir=_odir)
                 _record_ingest("vintage_capture_gap", _vg["ok"],
                                _vg.get("n_vintages_in_window", 0),
                                _vg["message"], log=log)
@@ -2638,6 +3048,24 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                          _sum.get("min_bets_for_sweep"), _per_tag)
                 log.info("calibration ledger: +%s priced side(s), %s settled",
                          _cal.get("written"), _cst.get("settled"))
+                # THE DATED READ, committed beside the ledger. The ledger file
+                # itself is a bare JSON array with nowhere to put a date, and a
+                # write stamp on it would answer the wrong question anyway: a
+                # slate where nothing cleared the floor rewrites nothing, so the
+                # file's mtime and the newest row's age come apart on exactly
+                # the nights that matter. This renders the per-market readiness
+                # with its own generated_at AND the newest row's timestamp, so a
+                # reader can tell a fresh render of a stale ledger from a fresh
+                # ledger. It is a report; it never raises.
+                try:
+                    _art = betting_shadow.write_readiness_artifact()
+                    log.info("shadow readiness: rendered %s cells, newest row %s",
+                             sum(len(v) for v in
+                                 (_art.get("sweep_readiness_by_market_tag") or {}).values()),
+                             _art.get("newest_row_at"))
+                except Exception:                                 # noqa: BLE001
+                    log.warning("daily: shadow readiness artifact not rendered; "
+                                "the ledger is unaffected", exc_info=True)
                 _store = _sum.get("storage") or {}
                 if not _store.get("durable"):
                     log.error("!!! BETTING RED: the paper ledger is not on the "
@@ -5392,6 +5820,14 @@ if __name__ == "__main__":
                          "Arkmetrics, farm grades and the ranking stay on the "
                          "monthly cadence (a plain `python run_monthly.py`). "
                          "Run this nightly.")
+    ap.add_argument("--odds-open", action="store_true", dest="odds_open",
+                    help="ONE early-UTC open-odds capture and nothing else. "
+                         "Its own cron (suggested 13:10 UTC), because the "
+                         "nightly's hour is not early enough: 11 of the 22 "
+                         "cached snapshots landed after their slate's first "
+                         "pitch. Costs 3 credits, skips for free when today's "
+                         "slate is already captured, and adds no spend because "
+                         "step 9d-pre-odds then skips.")
     args = ap.parse_args()
     # Ceiling worker counts on low-RAM deploy boxes: the spawn ProcessPoolExecutor
     # in statcast pass-3 is the one pool whose resident memory scales with worker
@@ -5407,6 +5843,13 @@ if __name__ == "__main__":
     if args.dry_run:
         probe(force=args.force)
         sys.exit(0)
+    # Ahead of --daily on purpose: --odds-open is the tiny standalone cron, and
+    # the two are never meant to be combined. Exit 0 on a skip as well as a
+    # capture; the only nonzero is a capture that was attempted and failed, so
+    # cron mail means something.
+    if args.odds_open:
+        _res = run_odds_open()
+        sys.exit(0 if _res.get("ok") else 1)
     if args.daily:
         run_daily(out_dir=args.out_dir, workers=args.workers, no_cache=args.no_cache)
         sys.exit(0)

@@ -18,9 +18,43 @@
 # gating one against the other's number is the specific error this lab exists to
 # stop.
 #
+# THE AUC LEG (added 2026-09-06, lane A-CLAIM-11). Until this edit `gate()` scored
+# rank ONLY, so every one of the 39 closed feature arms (D-1's 26 free keys, D-2's
+# 13 _extras arms) was adjudicated on rank alone while EFV_GATE_STANDARD section 3
+# says the gate is TWO metrics. `side_stats` now also returns contributor AUC
+# (realized censored WAR >= efv_model._CONTRIB_WAR) and star AUC (>= _STAR_WAR),
+# and because both are computed inside the SAME side_stats call on the SAME chain
+# output, the AUC delta rides the SAME bootstrap draw as the rho delta: the legs
+# are paired, not independently resampled, and their difference is a statistic
+# with its own sampling distribution rather than two runs compared by eye.
+#
+# WHAT THE AUC LEG MAY AND MAY NOT DO. Contributor AUC is the CO-PRIMARY. It can
+# VETO an arm that clears the rho floor (a negative AUC delta beyond its own
+# floor) and it can sit inside a jointly sized Holm family. It can NEVER credit an
+# arm that fails the rho floor: an AUC-only win is a NULL BY RULE, because the AUC
+# cells are the ones that flatter this model most and the carve-out already caught
+# six archetype arms reading as wins on AUC while rank was flat or negative. Star
+# AUC is a LABELLED SENSITIVITY with no verdict weight at all (46 pitcher stars in
+# the registered debuted_km cell against an E_cond floor of 0.0397,
+# data/xfv_auc_floor_eval.json). `two_metric_verdict()` is the only place the rule
+# is coded, and it refuses to emit a star verdict.
+#
+# A MISSING INPUT IS ITS OWN VERDICT (added 2026-09-06 after review). The verdict
+# vocabulary is closed and it separates DECISIONS from ABSENCES: PASS, VETO_ON_AUC,
+# NULL, NULL_AUC_ONLY and NULL_HOLM are decisions; NOT_ADJUDICATED_NO_RHO_FLOOR,
+# NOT_ADJUDICATED_NO_AUC_FLOOR and NOT_ADJUDICATED_NO_HOLM are absences. A gate that
+# spells an absence the way it spells a cleared bar is not a gate, and the AUC-floor
+# case is reachable today because data/xfv_driver_floors.json predates the AUC leg.
+# Holm is a FAMILY correction and therefore cannot be formed inside a per-arm loop:
+# every mode measures its arms first and forms verdicts afterwards in one place,
+# apply_holm_verdicts(), which is the only writer of g["verdict"].
+#
 # Run: python tools/efv_driver_lab.py floor [B]     re-derive the feature-add and
 #                                                   lambda-shift MDE95 on the
 #                                                   current 11-fold basis
+#      python tools/efv_driver_lab.py auc [B]       A-CLAIM-11 instrument proof:
+#                                                   in-run AUC floors + the
+#                                                   zero-information twins
 #      python tools/efv_driver_lab.py sb [B]        C1a  sb_rate_rel
 #      python tools/efv_driver_lab.py pos           C1b  positions_played census
 #      python tools/efv_driver_lab.py handbuild     C2   sidecar build (network)
@@ -63,6 +97,19 @@ DATA = ROOT / "data"
 # evidence is data/xfv_driver_handedness.json, which carries the join's provenance and
 # per-code counts, and `handbuild` reconstructs this file in about ten seconds.
 HAND_SIDECAR = ROOT / ".cache" / "xfv_handedness.json"
+
+# Outcome bars for the AUC leg, READ from efv_model rather than restated here, so a
+# label epoch cannot silently desync this lab from the served scoreboard. They read
+# 3.0 / 10.0 today (efv_model.py:631-632).
+CONTRIB_WAR = float(E._CONTRIB_WAR)
+STAR_WAR = float(E._STAR_WAR)
+
+# The gate's statistic vector. Order is the reporting order, not a precedence.
+# `auc_star` is present so it is MEASURED and VISIBLE; it is excluded from every
+# verdict by two_metric_verdict(), which is the only function allowed to decide.
+GATE_KEYS = ("rho", "block_rho", "auc_contrib", "auc_star")
+PRIMARY_KEYS = ("rho", "block_rho", "auc_contrib")
+SENSITIVITY_KEYS = ("auc_star",)
 
 
 # --------------------------------------------------------------------- pools
@@ -188,26 +235,69 @@ def chain(D, ex=(), sel=None, years=None, lam=None, lam_band=None,
     return tuple(np.concatenate(a) for a in (YR, C, B, T, W))
 
 
+def auc(scores, labels):
+    """ROC AUC by the Mann-Whitney U statistic, average ranks for ties.
+
+    A numpy replica of source_backtest._auc, which is what efv_model._auc_breakdown
+    calls, so the leg measures the served statistic and not a lookalike; the parity
+    check against the shipped function is `auc_mode`'s control A0 and it must be
+    re-run whenever this changes. NaN, never a number, on a degenerate label vector:
+    a fold or a bootstrap draw with no positives has no AUC and must drop out of the
+    bootstrap rather than contribute a 0.5.
+
+    UNWEIGHTED, deliberately. Every pooled rho in this lab is pair-weighted by
+    observed_seasons/6 and this is not. That asymmetry is inherited from the served
+    chain (EFV_GATE_STANDARD section 7.6 control C-a) and is reported rather than
+    quietly fixed: a weighted AUC would be a different statistic from the one the
+    scoreboard publishes, and the point of this leg is to gate on the published one.
+    """
+    lab = np.asarray(labels, dtype=bool)
+    n1 = int(lab.sum())
+    n2 = int(len(lab) - n1)
+    if n1 == 0 or n2 == 0 or len(lab) < 15:
+        return float("nan")
+    r = M._rankavg(np.asarray(scores, dtype=float))
+    u = float(r[lab].sum()) - n1 * (n1 + 1) / 2.0
+    return u / (n1 * n2)
+
+
 def side_stats(r, weighted=True):
-    """Pooled pair-weighted rho and the SIDE's own block-rho, on identical rows.
+    """Pooled pair-weighted rho, the SIDE's own block-rho, and the two AUC legs, all
+    on identical rows.
 
     Block-rho here is restricted to this side's (cohort-year) blocks. The joint
     both-sides instrument in EFV_GATE_STANDARD section 3 is the right one for a
     MODEL-vs-consensus claim; for a one-sided feature add it dilutes the candidate
     with a side the candidate cannot touch, so the floor and the effect are both
     measured on the side-restricted form and the two are never mixed.
+
+    `auc_contrib` and `auc_star` are the discrimination legs on the SAME rows and
+    the SAME resample as the two rank legs. The population is the debuted pool
+    (load_pool keeps kind == "debuted"), which is the population the section-3
+    carve-out rules ADMISSIBLE: the inadmissible full-pool debut / no-debut cell is
+    unreachable from this lab by construction, because no full_pool frame is ever
+    built here. Both AUC legs are also reported for the consensus baseline so a
+    reader can see whether an arm moved the model or moved the shared label mix.
     """
     yr, cons, blend, tgt, w = r
     ww = w if weighted else None
     bb = M.block_norm(yr, blend)
     bt = M.block_norm(yr, tgt)
     bc = M.block_norm(yr, cons)
+    lab_c = tgt >= CONTRIB_WAR
+    lab_s = tgt >= STAR_WAR
     return {
         "n": int(len(tgt)),
         "rho": M.wrho(blend, tgt, ww),
         "cons_rho": M.wrho(cons, tgt, ww),
         "block_rho": M.wrho(bb, bt, ww),
         "cons_block_rho": M.wrho(bc, bt, ww),
+        "auc_contrib": auc(blend, lab_c),
+        "auc_star": auc(blend, lab_s),
+        "cons_auc_contrib": auc(cons, lab_c),
+        "cons_auc_star": auc(cons, lab_s),
+        "n_pos_contrib": int(lab_c.sum()),
+        "n_pos_star": int(lab_s.sum()),
     }
 
 
@@ -222,16 +312,43 @@ def fold_rhos(r, weighted=True):
     return out
 
 
+def fold_aucs(r, thresh=None):
+    """Per-fold contributor AUC. A fold whose test year has no positive (or no
+    negative) has no AUC and is absent from the dict rather than imputed."""
+    thresh = CONTRIB_WAR if thresh is None else float(thresh)
+    yr, _cons, blend, tgt, _w = r
+    out = {}
+    for u in np.unique(yr):
+        m = yr == u
+        if int(m.sum()) < 15:
+            continue
+        a = auc(blend[m], tgt[m] >= thresh)
+        if np.isfinite(a):
+            out[int(u)] = a
+    return out
+
+
 # --------------------------------------------------------------------- gate
 def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
          lam=None, lam_band=None, base_lam=None, fv_min=None, seed=SEED,
          perm_col=None, tag="", years=None):
     """The full EFV_GATE_STANDARD battery for one candidate against one baseline.
 
-    Returns point deltas on pooled rho and side block-rho, a paired bootstrap of
-    the delta (train AND test resampled, refit every draw) whose sd IS the floor
-    for this statistic class, a zero-information control delta, a permutation null
-    band, and the per-fold sign count over the 11 forward-chained splits.
+    Returns point deltas on the four gate statistics (pooled rho, side block-rho,
+    contributor AUC, star AUC), a paired bootstrap of every delta (train AND test
+    resampled, refit every draw) whose sd IS the floor for that statistic class, a
+    zero-information control delta, a permutation null band on rho AND on
+    contributor AUC, and the per-fold sign count over the 11 forward-chained splits.
+
+    PAIRING IS THE POINT. One `sel` per draw feeds both the baseline chain and the
+    candidate chain, and one side_stats call per chain produces all four statistics,
+    so rho and AUC move together across draws. Resampling the two legs separately
+    would give each leg an honest marginal sd and a meaningless joint reading, and
+    the conjunction rule in EFV_GATE_STANDARD section 3 is a joint reading.
+
+    This function does NOT decide anything. It reports. two_metric_verdict() is the
+    only place a verdict is formed, and it is the only place that knows star AUC
+    carries no weight.
     """
     t0 = time.time()
     base = chain(D, base_ex, lam=base_lam, fv_min=fv_min, years=years)
@@ -239,21 +356,30 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
     if base is None or cand is None:
         return {"tag": tag, "error": "no fold survived"}
     sb, sc = side_stats(base), side_stats(cand)
-    point = {k: round(sc[k] - sb[k], 5) for k in ("rho", "block_rho")}
+
+    def _num(v, nd=5):
+        v = float(v)
+        return round(v, nd) if np.isfinite(v) else None
+
+    point = {k: _num(sc[k] - sb[k]) for k in GATE_KEYS}
     fb, fc = fold_rhos(base), fold_rhos(cand)
     folds = sorted(set(fb) & set(fc))
     fold_delta = {int(y): round(fc[y] - fb[y], 4) for y in folds}
     wins = sum(1 for y in folds if fc[y] > fb[y])
+    ab, ac = fold_aucs(base), fold_aucs(cand)
+    afolds = sorted(set(ab) & set(ac))
+    fold_auc_delta = {int(y): round(ac[y] - ab[y], 4) for y in afolds}
+    auc_wins = sum(1 for y in afolds if ac[y] > ab[y])
 
     ctrl = None
     if ctrl_ex is not None:
         cc = chain(D, ctrl_ex, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years)
         if cc is not None:
             sx = side_stats(cc)
-            ctrl = {k: round(sx[k] - sb[k], 5) for k in ("rho", "block_rho")}
+            ctrl = {k: _num(sx[k] - sb[k]) for k in GATE_KEYS}
 
     rng = np.random.default_rng(seed)
-    boot = {"rho": [], "block_rho": []}
+    boot = {k: [] for k in GATE_KEYS}
     for _ in range(B):
         sel = rng.integers(0, D["n"], D["n"])
         rb = chain(D, base_ex, sel=sel, lam=base_lam, fv_min=fv_min, years=years)
@@ -270,35 +396,72 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
         a = np.array(vals, dtype=float)
         a = a[np.isfinite(a)]
         sd = float(a.std(ddof=1)) if len(a) > 2 else float("nan")
+        ok = pt is not None and np.isfinite(sd)
+        # A degenerate bootstrap leaves sd = nan: fewer than 3 finite draws, which the
+        # AUC legs can reach when resamples lose their positives and auc() returns nan
+        # by design. json.dumps then writes a bare NaN token, which is not JSON and
+        # which strict readers reject, so the whole ledger becomes unreadable rather
+        # than merely uninformative. None is the honest encoding of "not estimable"
+        # and it round-trips. `point` was already guarded this way; these three were
+        # not, and they are the three a floor is read out of.
+        sd_ok = bool(np.isfinite(sd))
         return {
-            "B_used": int(len(a)), "point": round(float(pt), 5),
+            "B_used": int(len(a)), "point": (None if pt is None else round(float(pt), 5)),
             "boot_mean": round(float(a.mean()), 5) if len(a) else None,
-            "sd": round(sd, 5),
-            "mde95_onesided": round(1.645 * sd, 4),
-            "mde95_twosided": round(1.96 * sd, 4),
-            "x_floor": round(abs(pt) / (1.645 * sd), 3) if sd > 0 else None,
+            "sd": round(sd, 5) if sd_ok else None,
+            "mde95_onesided": round(1.645 * sd, 4) if sd_ok else None,
+            "mde95_twosided": round(1.96 * sd, 4) if sd_ok else None,
+            "x_floor": round(abs(pt) / (1.645 * sd), 3) if (ok and sd > 0) else None,
             "ci95": [round(float(np.percentile(a, 2.5)), 5),
                      round(float(np.percentile(a, 97.5)), 5)] if len(a) else None,
             "p_gt_0": round(float((a > 0).mean()), 4) if len(a) else None,
-            "resolvable": bool(abs(pt) >= 1.645 * sd) if sd > 0 else False,
+            "resolvable": bool(abs(pt) >= 1.645 * sd) if (ok and sd > 0) else False,
         }
 
     out = {
         "tag": tag,
         "n_pool": D["n"], "n_scored_base": sb["n"], "n_scored_cand": sc["n"],
-        "baseline": {k: round(v, 5) for k, v in sb.items() if k != "n"},
-        "candidate": {k: round(v, 5) for k, v in sc.items() if k != "n"},
+        "baseline": {k: _num(v) for k, v in sb.items() if k != "n"},
+        "candidate": {k: _num(v) for k, v in sc.items() if k != "n"},
         "delta": point,
         "control_delta": ctrl,
         "folds_scored": len(folds), "fold_rho_wins": wins,
         "fold_delta": fold_delta,
+        "fold_auc_scored": len(afolds), "fold_auc_wins": auc_wins,
+        "fold_auc_delta": fold_auc_delta,
         "bootstrap": {k: _summ(boot[k], point[k]) for k in boot},
         "coverage": D["cov"],
+        "auc_leg": {
+            "labels": {"contributor_war": CONTRIB_WAR, "star_war": STAR_WAR,
+                       "source": "efv_model._CONTRIB_WAR / _STAR_WAR"},
+            "population": ("debuted pool only (load_pool keeps kind == 'debuted'); the "
+                           "full-pool debut / no-debut cell the EFV_GATE_STANDARD "
+                           "section 3 carve-out rules INADMISSIBLE is not built here"),
+            "n_pos_contributor": sb["n_pos_contrib"], "n_pos_star": sb["n_pos_star"],
+            "prevalence_contributor": round(sb["n_pos_contrib"] / max(1, sb["n"]), 4),
+            "prevalence_star": round(sb["n_pos_star"] / max(1, sb["n"]), 4),
+            "weighting": "UNWEIGHTED, unlike the pair-weighted rho legs (control C-a)",
+            "paired_with_rho": True,
+            "estimator": ("E_refit: the whole pool is resampled, ridge and consensus OLS "
+                          "refit every draw. There is no E_cond leg in this lab, so a "
+                          "claim taken from it must NAME E_refit (section 7.1)."),
+            "clustering": ("row-level i.i.d. resampling is admissible here because the "
+                           "driver pool carries exactly one row per player_key (839 hit / "
+                           "981 pit, zero repeats, measured 2026-09-06). The 1.519x "
+                           "anti-conservative narrowing that forced clustered resampling "
+                           "on the head-to-head frame is a property of THAT frame."),
+            "star_role": ("LABELLED SENSITIVITY, NO VERDICT WEIGHT. Reported so it is "
+                          "visible; two_metric_verdict() refuses to score it."),
+            "conjunction_rule": ("contributor AUC is CO-PRIMARY: it may VETO an arm that "
+                                 "clears the rho floor and may sit in a jointly sized Holm "
+                                 "family, and it may NEVER credit an arm that fails the rho "
+                                 "floor. An AUC-only win is a NULL BY RULE."),
+        },
         "elapsed_s": round(time.time() - t0, 1),
     }
 
     if perm_col is not None and n_perm:
-        draws = []
+        draws, adraws = [], []
         prng = np.random.default_rng(seed + 7)
         i = D["ex_names"].index(perm_col)
         col0 = D["EX"][:, i].copy()
@@ -310,9 +473,13 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
             rc = chain(D2, cand_ex, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years)
             if rc is None:
                 continue
-            d = side_stats(rc)["rho"] - sb["rho"]
+            s = side_stats(rc)
+            d = s["rho"] - sb["rho"]
             if np.isfinite(d):
                 draws.append(d)
+            da = s["auc_contrib"] - sb["auc_contrib"]
+            if np.isfinite(da):
+                adraws.append(da)
         a = np.array(draws)
         out["permutation_null"] = {
             "draws": int(len(a)),
@@ -323,7 +490,230 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
             # +1/+1 so a zero count reports the resolution of the run, not 0.
             "p_value": round((float((a >= point["rho"]).sum()) + 1) / (len(a) + 1), 4),
         }
+        # The SAME permuted fits, read on the AUC leg. Not a second experiment: one
+        # set of row-link-broken draws answers both instruments, which is also why
+        # the two p-values are not independent and must not be combined.
+        b = np.array(adraws)
+        if len(b) > 2 and point["auc_contrib"] is not None:
+            out["permutation_null_auc_contrib"] = {
+                "draws": int(len(b)),
+                "mean": round(float(b.mean()), 5),
+                "sd": round(float(b.std(ddof=1)), 5),
+                "p95": round(float(np.percentile(b, 95)), 5),
+                "p_value": round((float((b >= point["auc_contrib"]).sum()) + 1)
+                                 / (len(b) + 1), 4),
+                "shares_draws_with": "permutation_null (rho); the two p are not independent",
+            }
     return out
+
+
+# --------------------------------------------------------------------- verdict
+def two_metric_verdict(delta, floors, holm_survives=None, tag=""):
+    """THE CONJUNCTION RULE, coded once. EFV_GATE_STANDARD section 3.
+
+    `delta`  a gate() delta dict. Needs "rho"; reads "block_rho", "auc_contrib"
+             and "auc_star" when present.
+    `floors` {"rho": .., "block_rho": .., "auc_contrib": ..}, MDE95 ONE-SIDED,
+             derived in the SAME run on the SAME frame. A constant lifted out of a
+             document is not a floor for this frame: every published AUC floor in
+             the standard is a MODEL-VS-CONSENSUS margin, and this lab measures a
+             FEATURE-ADD delta, which is a different statistic class.
+
+             A MISSING FLOOR IS NOT A WAIVER. Pass None for a leg whose floor was
+             not derived, and that leg is UNADJUDICATED rather than neutral: a
+             missing contributor-AUC floor DISARMS the co-primary veto, so the arm
+             was decided on rank alone and the verdict says exactly that
+             (NOT_ADJUDICATED_NO_AUC_FLOOR). This branch used to emit "PASS", which
+             is the most dangerous shape a gate can have: an absence of evidence
+             wearing the string a cleared gate wears. It is reachable today, because
+             data/xfv_driver_floors.json (generated 2026-08-14T22:39:54Z, re-read
+             this session) carries MDE95_pooled_rho and MDE95_block_rho only.
+    `holm_survives`
+             True, False or None. None is NOT "no correction needed": an arm that
+             would otherwise pass and was never handed a family decision reads
+             NOT_ADJUDICATED_NO_HOLM. Holm is a FAMILY correction, so it cannot
+             exist inside a per-arm loop; modes measure every arm first and form
+             verdicts afterwards through apply_holm_verdicts().
+
+    The rule, in one sentence each:
+      - rho is the gate. An arm that does not clear the rho floor is a NULL.
+      - contributor AUC is CO-PRIMARY and it VETOES: an arm that clears rho but
+        loses on AUC beyond the AUC floor is a FAIL, because it bought its rank
+        with discrimination it does not have.
+      - contributor AUC NEVER CREDITS. An arm that fails rho and clears AUC is a
+        NULL BY RULE, reported as NULL_AUC_ONLY so the reading is on the record
+        rather than lost. The AUC cells flatter this model more than the rank
+        cells do, and the most flattering cell of all (full-pool debut / no-debut)
+        is the one the carve-out already ruled inadmissible after six archetype
+        arms read as wins there while rank was flat or negative.
+      - star AUC is a sensitivity. It gets a row and no verdict, at any sign, at
+        any magnitude.
+      - AN ABSENCE IS NOT A DECISION. Three states say the rule COULD NOT BE
+        APPLIED rather than what it decided: NOT_ADJUDICATED_NO_RHO_FLOOR,
+        NOT_ADJUDICATED_NO_AUC_FLOOR and NOT_ADJUDICATED_NO_HOLM. None of the
+        three is a pass, none is a null, and none may ever collapse into "PASS".
+        `not_adjudicated` in the output lists every input that was missing.
+    """
+    def _leg(key):
+        d = delta.get(key)
+        f = (floors or {}).get(key)
+        if d is None:
+            return {"delta": None, "floor": f, "state": "not measured"}
+        if not f:
+            return {"delta": d, "floor": None, "state": "no floor derived"}
+        return {"delta": d, "floor": round(float(f), 4),
+                "x_floor": round(abs(d) / float(f), 3),
+                "clears": bool(d >= float(f)),
+                "adverse_beyond_floor": bool(d <= -float(f)),
+                "state": ("clears" if d >= float(f)
+                          else "adverse beyond floor" if d <= -float(f) else "inside floor")}
+
+    rho = _leg("rho")
+    blk = _leg("block_rho")
+    aucc = _leg("auc_contrib")
+    rho_clears = bool(rho.get("clears"))
+    auc_clears = bool(aucc.get("clears"))
+    auc_veto = bool(aucc.get("adverse_beyond_floor"))
+    UNMEASURED = ("no floor derived", "not measured")
+    # Every input this verdict needed and did not get. A PASS is only a PASS when the
+    # list is empty, and the list ships in the output so the gap is on the record
+    # instead of being recoverable only by reading this function.
+    missing = []
+    if aucc["state"] in UNMEASURED:
+        missing.append("contributor AUC: " + aucc["state"])
+    if holm_survives is None:
+        missing.append("Holm family survival: not supplied")
+
+    if rho["state"] in UNMEASURED:
+        # NOT a null. An arm whose rho floor was never derived on this frame has not
+        # been adjudicated at all, and saying "null" would bank an unmeasured result.
+        verdict = "NOT_ADJUDICATED_NO_RHO_FLOOR"
+    elif not rho_clears:
+        # rho is the gate and it failed. That is a DECISION, not an absence, whatever
+        # the other legs did or could not do.
+        verdict = "NULL_AUC_ONLY" if auc_clears else "NULL"
+    elif auc_veto:
+        verdict = "VETO_ON_AUC"
+    elif holm_survives is False:
+        # Also a decision: the family correction killed it. A missing AUC floor cannot
+        # rescue an arm here, because contributor AUC may never credit.
+        verdict = "NULL_HOLM"
+    elif aucc["state"] in UNMEASURED:
+        # THE CO-PRIMARY VETO WAS NEVER ARMED. rho cleared alone and nothing could have
+        # vetoed it, because the AUC leg had no floor (or no delta) on this frame. An
+        # absence of evidence on the second metric must never be spelled the way a
+        # cleared gate is spelled, so it gets its own verdict and never collapses
+        # into PASS.
+        verdict = "NOT_ADJUDICATED_NO_AUC_FLOOR"
+    elif holm_survives is None:
+        # The family correction never reached this verdict. Same class of hole: the
+        # arm was not adjudicated against its family, so it did not pass.
+        verdict = "NOT_ADJUDICATED_NO_HOLM"
+    else:
+        verdict = "PASS"
+
+    out = {
+        "tag": tag,
+        "verdict": verdict,
+        "rho": rho, "block_rho": blk, "auc_contributor": aucc,
+        "auc_star": {"delta": delta.get("auc_star"),
+                     "role": "LABELLED SENSITIVITY",
+                     "verdict_weight": 0,
+                     "why": ("the pitcher star cell carries 46 positives against an "
+                             "E_cond floor of 0.0397 in data/xfv_auc_floor_eval.json; "
+                             "a leg that cannot resolve its own null cannot adjudicate "
+                             "anyone else's arm")},
+        "holm_survives": holm_survives,
+        "holm_state": ("survives the family correction" if holm_survives is True
+                       else "does NOT survive the family correction"
+                       if holm_survives is False
+                       else "NOT SUPPLIED: no family correction reached this verdict"),
+        "not_adjudicated": missing,
+        "block_sign_agrees_with_rho": (
+            None if (rho["delta"] is None or blk["delta"] is None)
+            else bool((rho["delta"] >= 0) == (blk["delta"] >= 0))),
+        "rule": ("rho is the gate; contributor AUC may veto and may never credit; "
+                 "star AUC carries no verdict weight"),
+    }
+    if verdict == "NULL_AUC_ONLY":
+        out["note"] = ("AUC cleared its floor and rho did not. This is a NULL BY RULE, "
+                       "not a win and not a partial win. Recorded because the reading "
+                       "is evidence about the arm, and because six archetype arms in "
+                       "the 2026-07-25 program would have shipped on exactly this "
+                       "signature.")
+    if verdict == "VETO_ON_AUC":
+        out["note"] = ("rho cleared its floor and contributor AUC is adverse beyond its "
+                       "own floor. The AUC leg vetoes: the arm reorders the board "
+                       "without discriminating the outcome it claims to predict.")
+    if verdict == "NOT_ADJUDICATED_NO_AUC_FLOOR":
+        out["note"] = ("rho cleared its floor and the CO-PRIMARY COULD NOT BE "
+                       "ADJUDICATED: no contributor-AUC floor was derived on this "
+                       "frame, so the veto was never armed and this arm was decided on "
+                       "rank ALONE. NOT a pass. Derive the floor on this frame "
+                       "(`python tools/efv_driver_lab.py floor`, or read A1 out of "
+                       "`auc` mode) and re-form the verdict. Never substitute a "
+                       "published constant: every published AUC floor in the standard "
+                       "is a model-vs-consensus margin, a different statistic class.")
+    if verdict == "NOT_ADJUDICATED_NO_HOLM":
+        out["note"] = ("rho cleared its floor and NO HOLM FAMILY DECISION reached this "
+                       "verdict, so the multiplicity correction this arm shares with "
+                       "its family was computed for someone and never applied to it. "
+                       "NOT a pass. A mode must build the jointly sized family first "
+                       "and form its verdicts through apply_holm_verdicts().")
+    return out
+
+
+def holm_family(rows):
+    """Holm-Bonferroni, one-sided normal approximation, over a family sized by the
+    rows PASSED IN. rows = [(key, delta, sd)].
+
+    Sizing is the whole point and it is why this exists as a function. When the AUC
+    leg is entered as a co-primary the family is BOTH legs of every arm, so m
+    doubles and the step-1 alpha halves. Entering a second instrument for free
+    would be running the family twice and reporting whichever half won."""
+    from math import erfc, sqrt
+    live = [[k, d, sd, d / sd, 0.5 * erfc((d / sd) / sqrt(2))]
+            for k, d, sd in rows if sd and d is not None]
+    live.sort(key=lambda r: r[4])
+    m, still, out = len(live), True, {}
+    for i, r in enumerate(live):
+        alpha = 0.05 / (m - i)
+        surv = bool(still and r[4] <= alpha)
+        if not surv:
+            still = False
+        out[r[0]] = {"delta": round(r[1], 5), "sd": round(r[2], 5), "z": round(r[3], 3),
+                     "p_one_sided": round(r[4], 5), "rank": i + 1,
+                     "holm_alpha": round(alpha, 5), "survives_holm": surv}
+    return out, m
+
+
+def apply_holm_verdicts(arms, holm_joint, tag_prefix=""):
+    """SECOND PASS. Form the stored verdict for every arm once the family exists.
+
+    Holm is a family correction: it is not defined until every arm in the family has
+    run, so a verdict formed inside the per-arm measuring loop cannot have consulted
+    it. Before this function existed both driver modes called two_metric_verdict()
+    inside the loop with holm_survives at its default and built holm_joint AFTERWARDS,
+    so the correction was computed and then never read by any verdict any arm carried.
+
+    This is the ONLY place a mode writes g["verdict"]. Each arm is handed the survival
+    flag of its OWN rho leg out of the JOINTLY sized family (EFV_GATE_STANDARD section
+    3.1 rule 3: m counts both legs of every arm, so entering the AUC leg doubles the
+    family rather than buying a second attempt). An arm with no row in that family
+    gets holm_survives=None, which two_metric_verdict() reads as
+    NOT_ADJUDICATED_NO_HOLM and never as a pass.
+
+    `arms` rows must carry "floors_used", written by the loop that measured them, so
+    the floors a verdict is formed against are the ones that arm was measured against.
+    """
+    for key, g in arms.items():
+        row = (holm_joint or {}).get(f"{key}.rho")
+        g["holm_joint_row"] = f"{key}.rho" if row is not None else None
+        g["verdict"] = two_metric_verdict(
+            g["delta"], g.get("floors_used") or {},
+            holm_survives=(None if row is None else bool(row.get("survives_holm"))),
+            tag=f"{tag_prefix}{key}")
+    return {k: g["verdict"]["verdict"] for k, g in arms.items()}
 
 
 # --------------------------------------------------------------------- live
@@ -459,17 +849,28 @@ def _thr(v, t):
 def floor_mode(B=2000):
     """Re-derive the FEATURE-ADD and LAMBDA-SHIFT floors on the current basis.
 
-    A feature-add floor is the sampling sd of (rho with one more column) minus
-    (rho without it) under the paired bootstrap. Measured with a pure-noise
-    column: N(0,1), seeded, zero information by construction, so the point delta
-    is also the zero-information control for the whole statistic class. Three
-    independent noise seeds per side bound the stability of the floor itself.
+    A feature-add floor is the sampling sd of (statistic with one more column)
+    minus (statistic without it) under the paired bootstrap. Measured with a
+    pure-noise column: N(0,1), seeded, zero information by construction, so the
+    point delta is also the zero-information control for the whole statistic
+    class. Three independent noise seeds per side bound the stability of the floor
+    itself.
+
+    FOUR floors now come out of the same noise arms, not two: pooled rho, side
+    block-rho, contributor AUC and star AUC. They are derived from the SAME draws,
+    which is what makes the conjunction rule readable; and they are derived HERE,
+    on this frame, because every AUC floor published in EFV_GATE_STANDARD is a
+    model-vs-consensus margin on a different statistic class. Quoting one of those
+    at a feature add is the section 1a-vs-3 error this lab exists to stop.
     """
     out = {"purpose": ("feature-add and lambda-shift MDE95 on the 11-fold pair-weighted "
                        "basis. The registered 0.017 hit / 0.016 pit feature-add floor and "
                        "the 0.0076-0.011 / 0.005-0.008 lambda floors are 4-fold-basis "
                        "numbers (EFV_GATE_STANDARD.md section 1b) and must not be used to "
-                       "gate an 11-fold result."),
+                       "gate an 11-fold result. The two AUC floors are feature-add floors "
+                       "too: the AUC numbers in EFV_GATE_STANDARD section 7 and in "
+                       "data/xfv_auc_floor_eval.json are model-vs-consensus margins on a "
+                       "different frame and must not be used to gate a driver arm."),
            "basis": {"scored_years": list(E.SCORED_YEARS),
                      "lambda": {s: E.blend_lambda(s) for s in SIDES}},
            "protocol": ("paired bootstrap, train AND test resampled together, ridge and "
@@ -490,16 +891,32 @@ def floor_mode(B=2000):
             g = gate(D2, cand_ex=(0,), B=B, n_perm=0, tag=f"{side}:noise{s}")
             out["feature_add"][side][f"noise_seed_{s}"] = {
                 "point_rho": g["delta"]["rho"], "point_block": g["delta"]["block_rho"],
+                "point_auc_contrib": g["delta"]["auc_contrib"],
+                "point_auc_star": g["delta"]["auc_star"],
                 "rho": g["bootstrap"]["rho"], "block_rho": g["bootstrap"]["block_rho"],
+                "auc_contrib": g["bootstrap"]["auc_contrib"],
+                "auc_star": g["bootstrap"]["auc_star"],
                 "fold_rho_wins": g["fold_rho_wins"], "folds": g["folds_scored"],
+                "fold_auc_wins": g["fold_auc_wins"], "auc_folds": g["fold_auc_scored"],
+                "auc_prevalence": {"contributor": g["auc_leg"]["prevalence_contributor"],
+                                   "star": g["auc_leg"]["prevalence_star"],
+                                   "n_pos_contributor": g["auc_leg"]["n_pos_contributor"],
+                                   "n_pos_star": g["auc_leg"]["n_pos_star"]},
             }
-        sds = [out["feature_add"][side][k]["rho"]["sd"] for k in out["feature_add"][side]]
-        bsd = [out["feature_add"][side][k]["block_rho"]["sd"] for k in out["feature_add"][side]]
-        out["feature_add"][side]["MDE95_pooled_rho"] = round(1.645 * max(sds), 4)
-        out["feature_add"][side]["MDE95_block_rho"] = round(1.645 * max(bsd), 4)
+        arms = [v for k, v in out["feature_add"][side].items()
+                if k.startswith("noise_seed_")]
+        for stat, label in (("rho", "MDE95_pooled_rho"), ("block_rho", "MDE95_block_rho"),
+                            ("auc_contrib", "MDE95_auc_contributor"),
+                            ("auc_star", "MDE95_auc_star")):
+            sds = [a[stat]["sd"] for a in arms if a[stat].get("sd") is not None]
+            out["feature_add"][side][label] = round(1.645 * max(sds), 4) if sds else None
         out["feature_add"][side]["note"] = ("MDE95 quoted at the MAX of three noise seeds: "
                                             "the floor is a bound, so the conservative seed "
                                             "is the one that binds.")
+        out["feature_add"][side]["auc_note"] = (
+            "MDE95_auc_contributor is the CO-PRIMARY floor and it may veto, never credit. "
+            "MDE95_auc_star is derived so the sensitivity row can be READ against "
+            "something, and it is not a pass bar: no arm passes or fails on star AUC.")
 
         # lambda shift: the smallest move the pins could make and be seen.
         base = E.blend_lambda(side)
@@ -511,7 +928,11 @@ def floor_mode(B=2000):
                 "point_rho": g["delta"]["rho"], "rho": g["bootstrap"]["rho"]}
     _write("xfv_driver_floors.json", out)
     print(json.dumps({s: {"feature_add_MDE95_rho": out["feature_add"][s]["MDE95_pooled_rho"],
-                          "feature_add_MDE95_block": out["feature_add"][s]["MDE95_block_rho"]}
+                          "feature_add_MDE95_block": out["feature_add"][s]["MDE95_block_rho"],
+                          "feature_add_MDE95_auc_contributor":
+                              out["feature_add"][s]["MDE95_auc_contributor"],
+                          "feature_add_MDE95_auc_star_SENSITIVITY_ONLY":
+                              out["feature_add"][s]["MDE95_auc_star"]}
                       for s in SIDES}, indent=1))
     return out
 
@@ -1161,12 +1582,27 @@ def extras_mode(B=2000):
             g = gate(D, cand_ex=(0,), B=B, n_perm=0, tag=f"D-2:noise{s}:{side}",
                      years=EXTRAS_YEARS)
             noise.append({"seed": s, "point_rho": g["delta"]["rho"],
-                          "mde95": g["bootstrap"]["rho"]["mde95_onesided"]})
+                          "mde95": g["bootstrap"]["rho"]["mde95_onesided"],
+                          "point_auc_contrib": g["delta"]["auc_contrib"],
+                          "mde95_auc_contrib":
+                              g["bootstrap"]["auc_contrib"]["mde95_onesided"],
+                          "point_auc_star": g["delta"]["auc_star"],
+                          "mde95_auc_star": g["bootstrap"]["auc_star"]["mde95_onesided"]})
             print(f"  [floor] {side} noise{s} point {g['delta']['rho']:+.5f} "
-                  f"mde95 {g['bootstrap']['rho']['mde95_onesided']}", flush=True)
+                  f"mde95 {g['bootstrap']['rho']['mde95_onesided']}  "
+                  f"auc {g['delta']['auc_contrib']:+.5f} "
+                  f"mde95 {g['bootstrap']['auc_contrib']['mde95_onesided']}", flush=True)
         floor = max(n["mde95"] for n in noise)
-        out["floors"][side] = {"MDE95_pooled_rho": floor, "noise_arms": noise,
-                               "convention": "MAX of three noise seeds; a floor is a bound"}
+        floor_auc = max(n["mde95_auc_contrib"] for n in noise)
+        floor_auc_star = max(n["mde95_auc_star"] for n in noise)
+        out["floors"][side] = {"MDE95_pooled_rho": floor,
+                               "MDE95_auc_contributor": floor_auc,
+                               "MDE95_auc_star": floor_auc_star,
+                               "noise_arms": noise,
+                               "convention": "MAX of three noise seeds; a floor is a bound",
+                               "auc_star_note": ("derived for READING the sensitivity row; "
+                                                 "it is not a pass bar and no arm is "
+                                                 "adjudicated on it")}
 
         for i, key in enumerate(ARMS[side]):
             def _get(raw, feats, _k=key, _j=join):
@@ -1184,12 +1620,19 @@ def extras_mode(B=2000):
                      perm_col=key, tag=f"D-2:{key}:{side}", years=EXTRAS_YEARS)
             g["coverage"] = cov
             g["floor_rho"] = floor
+            g["floor_auc_contrib"] = floor_auc
+            # MEASURE HERE, ADJUDICATE AFTER THE FAMILY EXISTS. The loop records the
+            # floors this arm was measured against; apply_holm_verdicts() forms the
+            # verdict below, once holm_joint is built.
+            g["floors_used"] = {"rho": floor, "auc_contrib": floor_auc}
             out["arms"][f"{side}.{key}"] = g
             print(f"  {side}.{key:12s} d_rho {g['delta']['rho']:+.5f} "
                   f"d_block {g['delta']['block_rho']:+.5f} "
+                  f"d_auc {g['delta']['auc_contrib']:+.5f} "
                   f"ctrl {g['control_delta']['rho']:+.5f} "
                   f"folds {g['fold_rho_wins']}/{g['folds_scored']} "
-                  f"cov {cov['frac']} floor {floor}", flush=True)
+                  f"cov {cov['frac']} floor {floor}/{floor_auc} "
+                  "verdict pending Holm", flush=True)
 
     fam = [(k, g["delta"]["rho"], g["bootstrap"]["rho"]["sd"])
            for k, g in out["arms"].items() if g["bootstrap"]["rho"].get("sd")]
@@ -1206,11 +1649,32 @@ def extras_mode(B=2000):
                       "p_one_sided": round(r[4], 5), "rank": i + 1,
                       "holm_alpha": round(alpha, 5), "survives_holm": surv}
     out["holm"], out["holm_family_size"] = holm, m
+    # The JOINT family: rho AND contributor AUC for every arm, sized over both legs.
+    # The rho-only family above is kept UNCHANGED so the closed D-2 ledger stays
+    # comparable; this block is the one the conjunction rule reads, and it is
+    # bigger, which is the conservative direction.
+    jrows = []
+    for k, g in out["arms"].items():
+        for leg, stat in (("rho", "rho"), ("auc_contrib", "auc_contrib")):
+            b = (g.get("bootstrap") or {}).get(stat) or {}
+            if b.get("sd"):
+                jrows.append((f"{k}.{leg}", g["delta"][stat], b["sd"]))
+    out["holm_joint"], out["holm_joint_family_size"] = holm_family(jrows)
+    out["holm_joint_note"] = ("rho and contributor AUC legs pooled into ONE family. A "
+                              "surviving AUC cell whose rho cell fails is still a NULL: "
+                              "Holm survival is necessary, never sufficient, and the "
+                              "conjunction rule outranks it.")
+    # THE VERDICT PASS. Every verdict in this artifact is formed here, after the family
+    # exists, so the stored verdict is the Holm-corrected one.
+    out["verdicts"] = apply_holm_verdicts(out["arms"], out["holm_joint"], "D-2:")
+    out["verdict_basis"] = ("formed by apply_holm_verdicts() AFTER holm_joint, each arm "
+                            "on its own rho leg in the jointly sized family")
     out["n_arms"] = len(out["arms"])
     (DATA / "xfv_driver_extras.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
     print(f"\nwrote data/xfv_driver_extras.json  arms={out['n_arms']} "
           f"skipped={len(out['skipped'])} holm_family={m}")
     print("SURVIVES HOLM:", [k for k, h in holm.items() if h["survives_holm"]] or "NONE")
+    print("VERDICTS (Holm-corrected):", json.dumps(out["verdicts"]))
     return out
 
 
@@ -1245,8 +1709,21 @@ def freekeys_mode(B=2000):
         out["floors"][s] = {
             "rho": fa["MDE95_pooled_rho"],
             "block": fa["MDE95_block_rho"],
+            # None when the floors artifact predates the AUC leg, which is the state
+            # on disk today. That does NOT leave the AUC row merely un-barred while
+            # the arm passes on rank: with no bar the co-primary veto cannot fire, so
+            # two_metric_verdict() returns NOT_ADJUDICATED_NO_AUC_FLOOR and the arm is
+            # unadjudicated. Re-run `efv_driver_lab.py floor` to gate on AUC. Never
+            # substitute a constant.
+            "auc_contrib": fa.get("MDE95_auc_contributor"),
+            "auc_star": fa.get("MDE95_auc_star"),
             "floors_generated_at": floors.get("generated_at"),
         }
+        if fa.get("MDE95_auc_contributor") is None:
+            out["floors"][s]["auc_floor_missing"] = (
+                "data/xfv_driver_floors.json was produced before the AUC leg existed; "
+                "re-run `python tools/efv_driver_lab.py floor 2000` before adjudicating "
+                "any arm on AUC")
         out["floors"][s]["noise_band_rho"] = sorted(
             v["point_rho"] for v in fa.values()
             if isinstance(v, dict) and "point_rho" in v)
@@ -1279,12 +1756,20 @@ def freekeys_mode(B=2000):
             g["registered_repeat"] = bool((side, key) in REPEATS)
             g["floor_rho"] = out["floors"][side]["rho"]
             g["floor_block"] = out["floors"][side]["block"]
+            g["floor_auc_contrib"] = out["floors"][side]["auc_contrib"]
+            # MEASURE HERE, ADJUDICATE AFTER THE FAMILY EXISTS. auc_contrib is None
+            # whenever the floors artifact predates the AUC leg, which is the state on
+            # disk today, and the verdict below reads that as
+            # NOT_ADJUDICATED_NO_AUC_FLOOR rather than as a pass.
+            g["floors_used"] = {"rho": g["floor_rho"], "block_rho": g["floor_block"],
+                                "auc_contrib": g["floor_auc_contrib"]}
             out["arms"][f"{side}.{key}"] = g
             print(f"  {side}.{key:16s} d_rho {g['delta']['rho']:+.5f} "
                   f"d_block {g['delta']['block_rho']:+.5f} "
+                  f"d_auc {g['delta']['auc_contrib']:+.5f} "
                   f"ctrl {g['control_delta']['rho']:+.5f} "
                   f"folds {g['fold_rho_wins']}/{g['folds_scored']} "
-                  f"floor {g['floor_rho']}", flush=True)
+                  f"floor {g['floor_rho']} verdict pending Holm", flush=True)
 
     # D3 HOLM over the WHOLE family, both sides pooled into one family.
     fam = []
@@ -1309,6 +1794,24 @@ def freekeys_mode(B=2000):
                       "survives_holm": surv}
     out["holm_family_size"] = m
     out["holm"] = holm
+    # JOINT family, both legs of every arm, both sides. The rho-only family above is
+    # unchanged so the closed D-1 ledger stays comparable.
+    jrows = []
+    for k, g in out["arms"].items():
+        for stat in ("rho", "auc_contrib"):
+            b = (g.get("bootstrap") or {}).get(stat) or {}
+            if b.get("sd"):
+                jrows.append((f"{k}.{stat}", g["delta"][stat], b["sd"]))
+    out["holm_joint"], out["holm_joint_family_size"] = holm_family(jrows)
+    out["holm_joint_note"] = ("rho and contributor AUC legs pooled into ONE family. A "
+                              "surviving AUC cell whose rho cell fails is still a NULL: "
+                              "Holm survival is necessary, never sufficient, and the "
+                              "conjunction rule outranks it.")
+    # THE VERDICT PASS. Every verdict in this artifact is formed here, after the family
+    # exists, so the stored verdict is the Holm-corrected one.
+    out["verdicts"] = apply_holm_verdicts(out["arms"], out["holm_joint"], "D-1:")
+    out["verdict_basis"] = ("formed by apply_holm_verdicts() AFTER holm_joint, each arm "
+                            "on its own rho leg in the jointly sized family")
     out["n_arms"] = len(out["arms"])
     out["n_skipped"] = len(out["skipped"])
     (DATA / "xfv_driver_freekeys.json").write_text(json.dumps(out, indent=1),
@@ -1317,6 +1820,283 @@ def freekeys_mode(B=2000):
           f"skipped={out['n_skipped']} holm_family={m}")
     surv = [k for k, h in holm.items() if h["survives_holm"]]
     print("SURVIVES HOLM:", surv or "NONE")
+    print("VERDICTS (Holm-corrected):", json.dumps(out["verdicts"]))
+    return out
+
+
+def auc_mode(B=2000, write=True):
+    """A-CLAIM-11: prove the AUC leg before any arm is adjudicated on it.
+
+    An instrument that has never been shown to return a null on a known-null input
+    is not evidence, it is a number. So this mode runs the leg on inputs whose
+    answer is known in advance and reports whether it gave that answer:
+
+      A0  PARITY. The numpy `auc()` against source_backtest._auc, the function the
+          served scoreboard calls, on the real scored frame at both bars. Exact to
+          1e-12 or the leg is measuring a lookalike.
+      A1  FLOORS. Three N(0,1) noise columns per side, the construction floor_mode
+          already uses. Zero information by construction, so their point deltas are
+          the zero-information control for the statistic class and the max of their
+          bootstrap sds is the floor. Derived HERE, on this frame, every run.
+      A2  ZERO-INFORMATION TWIN. A REAL column (`fv_trend`, a free key, no join and
+          no network) row-permuted: identical marginal, row link destroyed. Its AUC
+          delta must sit inside the A1 floor. This is the check the lane owes: a
+          twin that cleared the floor would mean the floor is too small and every
+          AUC verdict built on it is unsafe.
+      A3  LABEL-PERMUTATION CENTRING AND WIDTH. Shuffle the WAR labels across the
+          scored rows and read the model's contributor AUC over K = 2000 draws. The
+          mean must sit within |z| <= 3 of 0.50 and the empirical sd within
+          [0.90, 1.10] of the analytic Hanley-McNeil null SE. Both bars are
+          two-sided, because a one-sided width check reads an over-wide null as
+          PASS and over-wide is the permissive direction here. The frozen bar in
+          tools/efv_auc_floor_lab.py, |AUC - 0.5| < 0.02 on ONE draw, is 0.84 null
+          SE and fails a CORRECT implementation about 40% of the time.
+      A4  RULE TABLE. two_metric_verdict() driven over the TEN corners the rule
+          actually has, so it is readable as behaviour and not only as prose: SIX
+          conjunction corners (rho clears with AUC concurring, silent or adverse;
+          rho fails with AUC clearing or silent; star alone), THREE not-adjudicated
+          corners (no rho floor, no contributor-AUC floor, no Holm decision) and
+          the Holm corner itself. The count is checked against A4_expected, which
+          carries the same ten keys, so a corner cannot be added without
+          registering what it must return.
+
+    What this mode does NOT do: adjudicate any driver arm, or claim the AUC leg has
+    power. It measures the floor and shows the instrument returns nulls on nulls.
+    """
+    from source_backtest import _auc as SB_AUC
+    out = {"lane": "A-CLAIM-11", "gate": "docs/EFV_GATE_STANDARD.md section 3",
+           "B": int(B), "seed": SEED,
+           "basis": {"scored_years": list(E.SCORED_YEARS),
+                     "lambda": {s: E.blend_lambda(s) for s in SIDES},
+                     "labels": {"contributor_war": CONTRIB_WAR, "star_war": STAR_WAR}},
+           "A0_parity": {}, "A1_floors": {}, "A2_zero_information_twin": {},
+           "A3_label_permutation": {}, "A4_rule_table": {}}
+
+    # ── A0 parity, and the frame census that every later number is read against.
+    for side in SIDES:
+        D = load_pool(side)
+        r = chain(D)
+        _yr, _cons, blend, tgt, _w = r
+        cell = {}
+        for label, bar in (("contributor", CONTRIB_WAR), ("star", STAR_WAR)):
+            lab = (tgt >= bar)
+            mine = auc(blend, lab)
+            theirs = SB_AUC(blend.tolist(), lab.tolist())
+            cell[label] = {"n": int(len(tgt)), "n_pos": int(lab.sum()),
+                           "prevalence": round(float(lab.mean()), 4),
+                           "auc_numpy": round(float(mine), 8),
+                           "auc_source_backtest": round(float(theirs), 8),
+                           "abs_diff": float(abs(mine - theirs)),
+                           "pass": bool(abs(mine - theirs) < 1e-12)}
+        # A0b: one row per player, so the i.i.d. row bootstrap under the AUC leg is
+        # not the anti-conservative resampling that section 7.6 caught on the
+        # clustered head-to-head frame. Asserted, not assumed.
+        cell["frame"] = {"pool_rows": D["n"], "unique_player_keys": len(set(D["pk"])),
+                         "one_row_per_player": bool(len(set(D["pk"])) == D["n"])}
+        out["A0_parity"][side] = cell
+        print(f"A0 {side}: contrib n_pos {cell['contributor']['n_pos']} "
+              f"auc {cell['contributor']['auc_numpy']:.6f} parity "
+              f"{cell['contributor']['pass']}; star n_pos {cell['star']['n_pos']} "
+              f"parity {cell['star']['pass']}", flush=True)
+
+    # ── A1 floors from three noise seeds per side.
+    for side in SIDES:
+        D = load_pool(side)
+        n = D["n"]
+        arms = []
+        for s in (0, 1, 2):
+            rng = np.random.default_rng(SEED + 1000 + s)
+            D2 = dict(D)
+            D2["EX"] = rng.standard_normal(n)[:, None]
+            D2["ex_names"] = [f"noise{s}"]
+            D2["cov"] = {}
+            g = gate(D2, cand_ex=(0,), B=B, n_perm=0, tag=f"A1:{side}:noise{s}")
+            arms.append({"seed": s,
+                         "point": {k: g["delta"][k] for k in GATE_KEYS},
+                         "sd": {k: g["bootstrap"][k]["sd"] for k in GATE_KEYS},
+                         "mde95": {k: g["bootstrap"][k]["mde95_onesided"]
+                                   for k in GATE_KEYS}})
+            print(f"A1 {side} noise{s}  d_rho {g['delta']['rho']:+.5f}  "
+                  f"d_auc {g['delta']['auc_contrib']:+.5f}  "
+                  f"mde95_auc {g['bootstrap']['auc_contrib']['mde95_onesided']}",
+                  flush=True)
+        floors = {k: round(max(a["mde95"][k] for a in arms), 4) for k in GATE_KEYS}
+        inside = {k: all(abs(a["point"][k]) < floors[k] for a in arms) for k in GATE_KEYS}
+        out["A1_floors"][side] = {
+            "MDE95": floors, "noise_arms": arms,
+            "convention": "MAX of three noise seeds, one-sided 1.645 sd; a floor is a bound",
+            "noise_point_inside_own_floor": inside,
+            "star_is_not_a_bar": ("MDE95.auc_star is derived so the sensitivity row can be "
+                                  "read; no arm passes or fails on it"),
+        }
+
+    # ── A2 the zero-information twin, on a real column.
+    TWIN_KEY = "fv_trend"
+    for side in SIDES:
+        def _get(raw, feats, _k=TWIN_KEY):
+            v = feats.get(_k)
+            return None if v is None else float(v)
+        D = load_pool(side, [{"name": TWIN_KEY, "get": _get, "impute": "zero"}])
+        rng = np.random.default_rng(SEED + 8800 + (0 if side == "hit" else 1))
+        D2 = with_permuted(D, TWIN_KEY, rng)
+        # index 1 is the PERMUTED column: the twin is the candidate here, not the
+        # control. The real column is scored beside it so the pair is readable.
+        gt = gate(D2, cand_ex=(1,), B=B, n_perm=0, tag=f"A2:{side}:{TWIN_KEY}__perm")
+        gr = gate(D2, cand_ex=(0,), B=B, n_perm=0, tag=f"A2:{side}:{TWIN_KEY}")
+        fl = out["A1_floors"][side]["MDE95"]
+        v = two_metric_verdict(gt["delta"], {"rho": fl["rho"], "block_rho": fl["block_rho"],
+                                             "auc_contrib": fl["auc_contrib"]},
+                               tag=f"A2:{side}:twin")
+        out["A2_zero_information_twin"][side] = {
+            "column": TWIN_KEY,
+            "coverage": D["cov"][TWIN_KEY],
+            "twin_delta": gt["delta"],
+            "twin_bootstrap_auc": gt["bootstrap"]["auc_contrib"],
+            "real_column_delta": gr["delta"],
+            "floors_used": fl,
+            "twin_auc_inside_floor": bool(
+                gt["delta"]["auc_contrib"] is not None
+                and abs(gt["delta"]["auc_contrib"]) < fl["auc_contrib"]),
+            "twin_rho_inside_floor": bool(
+                gt["delta"]["rho"] is not None and abs(gt["delta"]["rho"]) < fl["rho"]),
+            "twin_verdict": v,
+            "reading": ("the twin must land INSIDE the floor on both legs. A twin that "
+                        "cleared it would mean the floor is too small and every verdict "
+                        "built on it is unsafe."),
+        }
+        print(f"A2 {side} twin d_auc {gt['delta']['auc_contrib']:+.5f} vs floor "
+              f"{fl['auc_contrib']}  inside="
+              f"{out['A2_zero_information_twin'][side]['twin_auc_inside_floor']}  "
+              f"verdict {v['verdict']}", flush=True)
+
+    # ── A3 label permutation: is the AUC null centred on 0.5, and is it as WIDE as
+    # theory says. K = 2000, and the bar is |z| <= 3 two-sided on the mean.
+    #
+    # THE BAR WAS RE-SIZED ONCE, BEFORE ANY ARM RAN, AND HERE IS WHY. The first
+    # specification was |mean - 0.5| < 2 SEM at K = 200. It FAILED on the hitter
+    # side at z = 2.47. Re-measured at K = 4000 on three seeds the hitter mean sits
+    # at |z| = 0.44 / 1.08 / 0.25 and the pitcher at 1.52 / 1.02 / 0.80, so the null
+    # is centred and the K = 200 failure was the bar, not the instrument: a 2-SEM
+    # two-sided bar false-fails 4.6% of the time per side by construction, which
+    # over two sides and every future run manufactures failures. Sized at |z| <= 3
+    # it false-fails 0.27% per side. The width check is two-sided on purpose
+    # (EFV_GATE_STANDARD section 7.4: a one-sided coverage gate reads over-wide as
+    # PASS, and over-wide is the permissive direction for a program whose product
+    # is null verdicts).
+    K_PERM = 2000
+    for side in SIDES:
+        D = load_pool(side)
+        _yr, _cons, blend, tgt, _w = chain(D)
+        lab = tgt >= CONTRIB_WAR
+        n1 = int(lab.sum())
+        n2 = int(len(lab) - n1)
+        se = math.sqrt((n1 + n2 + 1) / (12.0 * n1 * n2))
+        prng = np.random.default_rng(SEED + 4242)
+        draws = np.array([auc(blend, lab[prng.permutation(len(lab))])
+                          for _ in range(K_PERM)])
+        mean = float(draws.mean())
+        sd = float(draws.std(ddof=1))
+        sem = sd / math.sqrt(len(draws))
+        z = (mean - 0.5) / sem
+        ratio = sd / se
+        out["A3_label_permutation"][side] = {
+            "draws": int(len(draws)), "mean_auc": round(mean, 6),
+            "sd_auc": round(sd, 5),
+            "analytic_null_se_hanley_mcneil": round(se, 5),
+            "sd_over_analytic": round(ratio, 4),
+            "z_of_mean": round(float(z), 3),
+            "p05": round(float(np.percentile(draws, 5)), 5),
+            "p95": round(float(np.percentile(draws, 95)), 5),
+            "centred_on_half": bool(abs(z) <= 3.0),
+            "width_matches_theory": bool(0.90 <= ratio <= 1.10),
+            "bar": ("two-sided: |z of the mean| <= 3 over K = 2000 draws, AND empirical "
+                    "sd within [0.90, 1.10] of the Hanley-McNeil analytic null SE"),
+        }
+        print(f"A3 {side} label-permuted AUC mean {mean:.6f} z {z:+.2f} "
+              f"sd/analytic {ratio:.4f} "
+              f"centred={out['A3_label_permutation'][side]['centred_on_half']} "
+              f"width={out['A3_label_permutation'][side]['width_matches_theory']}",
+              flush=True)
+
+    # ── A4 the rule, driven as behaviour.
+    F = {"rho": 0.020, "block_rho": 0.015, "auc_contrib": 0.020}
+    for name, d in (
+            ("rho_clears_auc_concurs", {"rho": 0.030, "block_rho": 0.020,
+                                        "auc_contrib": 0.030, "auc_star": 0.090}),
+            ("rho_clears_auc_silent", {"rho": 0.030, "block_rho": 0.020,
+                                       "auc_contrib": 0.001, "auc_star": -0.090}),
+            ("rho_clears_auc_adverse", {"rho": 0.030, "block_rho": 0.020,
+                                        "auc_contrib": -0.030, "auc_star": 0.090}),
+            ("rho_fails_auc_clears", {"rho": 0.005, "block_rho": 0.002,
+                                      "auc_contrib": 0.050, "auc_star": 0.200}),
+            ("rho_fails_auc_silent", {"rho": 0.005, "block_rho": 0.002,
+                                      "auc_contrib": 0.001, "auc_star": 0.0}),
+            ("star_alone_enormous", {"rho": 0.000, "block_rho": 0.000,
+                                     "auc_contrib": 0.000, "auc_star": 0.400})):
+        # holm_survives is stated EXPLICITLY so these six corners read the conjunction
+        # rule and nothing else. The Holm corners are driven separately below.
+        out["A4_rule_table"][name] = two_metric_verdict(
+            d, F, holm_survives=True, tag=name)["verdict"]
+    # The three NOT-ADJUDICATED corners. None of them may read as a null and none of
+    # them may read as a pass: an arm nobody could adjudicate has not been adjudicated,
+    # and the verdict string is the only place a reader learns which of the two it is.
+    CLEARS = {"rho": 0.030, "block_rho": 0.020, "auc_contrib": 0.030}
+    out["A4_rule_table"]["no_rho_floor_derived"] = two_metric_verdict(
+        CLEARS, {"rho": None, "auc_contrib": 0.020},
+        holm_survives=True, tag="no_rho_floor")["verdict"]
+    # THE CORNER THAT IS REACHABLE TODAY. data/xfv_driver_floors.json was generated
+    # 2026-08-14T22:39:54Z and carries MDE95_pooled_rho and MDE95_block_rho only, so
+    # freekeys_mode hands the AUC leg a None floor on BOTH sides. Until this edit that
+    # arm read "PASS": a disarmed co-primary veto wearing the string of a cleared gate.
+    out["A4_rule_table"]["rho_clears_no_auc_floor"] = two_metric_verdict(
+        CLEARS, {"rho": 0.020, "block_rho": 0.015, "auc_contrib": None},
+        holm_survives=True, tag="no_auc_floor")["verdict"]
+    out["A4_rule_table"]["rho_clears_holm_not_supplied"] = two_metric_verdict(
+        CLEARS, F, tag="no_holm")["verdict"]
+    # And the Holm corner itself, which is what makes the family correction visible in
+    # a stored verdict rather than computed after the verdicts and discarded.
+    out["A4_rule_table"]["rho_clears_holm_fails"] = two_metric_verdict(
+        CLEARS, F, holm_survives=False, tag="holm_fails")["verdict"]
+    out["A4_expected"] = {
+        "rho_clears_auc_concurs": "PASS", "rho_clears_auc_silent": "PASS",
+        "rho_clears_auc_adverse": "VETO_ON_AUC",
+        "rho_fails_auc_clears": "NULL_AUC_ONLY", "rho_fails_auc_silent": "NULL",
+        "star_alone_enormous": "NULL",
+        "no_rho_floor_derived": "NOT_ADJUDICATED_NO_RHO_FLOOR",
+        "rho_clears_no_auc_floor": "NOT_ADJUDICATED_NO_AUC_FLOOR",
+        "rho_clears_holm_not_supplied": "NOT_ADJUDICATED_NO_HOLM",
+        "rho_clears_holm_fails": "NULL_HOLM"}
+    out["A4_pass"] = bool(out["A4_rule_table"] == out["A4_expected"])
+    out["A4_corners"] = len(out["A4_expected"])
+    # The invariant behind the whole table, asserted separately so it cannot be lost in
+    # a future edit of the expected dict: no absence of evidence spells itself PASS.
+    out["A4_absence_never_reads_as_pass"] = bool(all(
+        out["A4_rule_table"][k] != "PASS" for k in
+        ("no_rho_floor_derived", "rho_clears_no_auc_floor",
+         "rho_clears_holm_not_supplied")))
+
+    out["all_controls_pass"] = bool(
+        all(c[lbl]["pass"] for c in out["A0_parity"].values()
+            for lbl in ("contributor", "star"))
+        and all(c["frame"]["one_row_per_player"] for c in out["A0_parity"].values())
+        # A1: the noise arms carry zero information by construction, so every one of
+        # their four point deltas has to land inside its own floor on both sides. It
+        # was measured and reported from the first run and was NOT a conjunct, while
+        # EFV_GATE_STANDARD section 3.1 asserted it in prose. A control the document
+        # claims and the code does not check is not a control.
+        and all(all(v["noise_point_inside_own_floor"].values())
+                for v in out["A1_floors"].values())
+        and all(v["twin_auc_inside_floor"] and v["twin_rho_inside_floor"]
+                for v in out["A2_zero_information_twin"].values())
+        and all(v["centred_on_half"] and v["width_matches_theory"]
+                for v in out["A3_label_permutation"].values())
+        and out["A4_pass"] and out["A4_absence_never_reads_as_pass"])
+    if write:
+        _write("xfv_driver_auc_floors.json", out)
+    print("\nA4 rule table", json.dumps(out["A4_rule_table"]), "pass", out["A4_pass"])
+    print("ALL CONTROLS PASS:", out["all_controls_pass"])
+    for s in SIDES:
+        print(f"  {s} floors {json.dumps(out['A1_floors'][s]['MDE95'])}")
     return out
 
 
@@ -1371,7 +2151,8 @@ def wrc_mode(B=1000):
 _MODES = {"floor": floor_mode, "sb": sb_mode, "pos": pos_mode,
           "handbuild": hand_build, "hand": hand_mode, "pairs": pairs_mode,
           "elite": elite_mode, "lam": lam_mode, "wrc": wrc_mode,
-          "freekeys": freekeys_mode, "extras_census": extras_census_mode, "extras": extras_mode}
+          "freekeys": freekeys_mode, "extras_census": extras_census_mode,
+          "extras": extras_mode, "auc": auc_mode}
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "floor"
@@ -1383,5 +2164,6 @@ if __name__ == "__main__":
     if mode in ("pos", "handbuild"):
         fn()
     else:
-        fn(int(sys.argv[2]) if len(sys.argv) > 2 else (2000 if mode in ("floor", "sb") else 1000))
+        fn(int(sys.argv[2]) if len(sys.argv) > 2
+           else (2000 if mode in ("floor", "sb", "auc") else 1000))
     print("elapsed", round(time.time() - t0, 1), "s")

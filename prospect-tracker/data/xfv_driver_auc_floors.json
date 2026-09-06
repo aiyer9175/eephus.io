@@ -1,0 +1,483 @@
+{
+ "lane": "A-CLAIM-11",
+ "gate": "docs/EFV_GATE_STANDARD.md section 3",
+ "B": 2000,
+ "seed": 20260807,
+ "basis": {
+  "scored_years": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "lambda": {
+   "hit": 0.7,
+   "pit": 0.57
+  },
+  "labels": {
+   "contributor_war": 3.0,
+   "star_war": 10.0
+  }
+ },
+ "A0_parity": {
+  "hit": {
+   "contributor": {
+    "n": 749,
+    "n_pos": 276,
+    "prevalence": 0.3685,
+    "auc_numpy": 0.73899255,
+    "auc_source_backtest": 0.73899255,
+    "abs_diff": 0.0,
+    "pass": true
+   },
+   "star": {
+    "n": 749,
+    "n_pos": 116,
+    "prevalence": 0.1549,
+    "auc_numpy": 0.81867271,
+    "auc_source_backtest": 0.81867271,
+    "abs_diff": 0.0,
+    "pass": true
+   },
+   "frame": {
+    "pool_rows": 839,
+    "unique_player_keys": 839,
+    "one_row_per_player": true
+   }
+  },
+  "pit": {
+   "contributor": {
+    "n": 890,
+    "n_pos": 219,
+    "prevalence": 0.2461,
+    "auc_numpy": 0.6956325,
+    "auc_source_backtest": 0.6956325,
+    "abs_diff": 0.0,
+    "pass": true
+   },
+   "star": {
+    "n": 890,
+    "n_pos": 51,
+    "prevalence": 0.0573,
+    "auc_numpy": 0.772535,
+    "auc_source_backtest": 0.772535,
+    "abs_diff": 0.0,
+    "pass": true
+   },
+   "frame": {
+    "pool_rows": 981,
+    "unique_player_keys": 981,
+    "one_row_per_player": true
+   }
+  }
+ },
+ "A1_floors": {
+  "hit": {
+   "MDE95": {
+    "rho": 0.017,
+    "block_rho": 0.02,
+    "auc_contrib": 0.0091,
+    "auc_star": 0.0109
+   },
+   "noise_arms": [
+    {
+     "seed": 0,
+     "point": {
+      "rho": 0.00578,
+      "block_rho": 0.00552,
+      "auc_contrib": 0.0042,
+      "auc_star": 0.00265
+     },
+     "sd": {
+      "rho": 0.00748,
+      "block_rho": 0.00868,
+      "auc_contrib": 0.00384,
+      "auc_star": 0.00445
+     },
+     "mde95": {
+      "rho": 0.0123,
+      "block_rho": 0.0143,
+      "auc_contrib": 0.0063,
+      "auc_star": 0.0073
+     }
+    },
+    {
+     "seed": 1,
+     "point": {
+      "rho": -0.00071,
+      "block_rho": -0.00269,
+      "auc_contrib": 0.0015,
+      "auc_star": -0.00122
+     },
+     "sd": {
+      "rho": 0.00917,
+      "block_rho": 0.01093,
+      "auc_contrib": 0.00481,
+      "auc_star": 0.00594
+     },
+     "mde95": {
+      "rho": 0.0151,
+      "block_rho": 0.018,
+      "auc_contrib": 0.0079,
+      "auc_star": 0.0098
+     }
+    },
+    {
+     "seed": 2,
+     "point": {
+      "rho": 0.00296,
+      "block_rho": 0.00685,
+      "auc_contrib": 0.00208,
+      "auc_star": 0.00521
+     },
+     "sd": {
+      "rho": 0.01031,
+      "block_rho": 0.01218,
+      "auc_contrib": 0.00552,
+      "auc_star": 0.00662
+     },
+     "mde95": {
+      "rho": 0.017,
+      "block_rho": 0.02,
+      "auc_contrib": 0.0091,
+      "auc_star": 0.0109
+     }
+    }
+   ],
+   "convention": "MAX of three noise seeds, one-sided 1.645 sd; a floor is a bound",
+   "noise_point_inside_own_floor": {
+    "rho": true,
+    "block_rho": true,
+    "auc_contrib": true,
+    "auc_star": true
+   },
+   "star_is_not_a_bar": "MDE95.auc_star is derived so the sensitivity row can be read; no arm passes or fails on it"
+  },
+  "pit": {
+   "MDE95": {
+    "rho": 0.0121,
+    "block_rho": 0.0172,
+    "auc_contrib": 0.0068,
+    "auc_star": 0.0129
+   },
+   "noise_arms": [
+    {
+     "seed": 0,
+     "point": {
+      "rho": -0.00188,
+      "block_rho": -0.00061,
+      "auc_contrib": 0.00157,
+      "auc_star": 0.0004
+     },
+     "sd": {
+      "rho": 0.00734,
+      "block_rho": 0.01045,
+      "auc_contrib": 0.00413,
+      "auc_star": 0.00784
+     },
+     "mde95": {
+      "rho": 0.0121,
+      "block_rho": 0.0172,
+      "auc_contrib": 0.0068,
+      "auc_star": 0.0129
+     }
+    },
+    {
+     "seed": 1,
+     "point": {
+      "rho": 0.00155,
+      "block_rho": 0.00381,
+      "auc_contrib": -0.00011,
+      "auc_star": 0.00063
+     },
+     "sd": {
+      "rho": 0.00594,
+      "block_rho": 0.00908,
+      "auc_contrib": 0.00294,
+      "auc_star": 0.00628
+     },
+     "mde95": {
+      "rho": 0.0098,
+      "block_rho": 0.0149,
+      "auc_contrib": 0.0048,
+      "auc_star": 0.0103
+     }
+    },
+    {
+     "seed": 2,
+     "point": {
+      "rho": 0.0003,
+      "block_rho": 0.00221,
+      "auc_contrib": -0.00068,
+      "auc_star": -0.0021
+     },
+     "sd": {
+      "rho": 0.00654,
+      "block_rho": 0.00945,
+      "auc_contrib": 0.0033,
+      "auc_star": 0.00641
+     },
+     "mde95": {
+      "rho": 0.0108,
+      "block_rho": 0.0155,
+      "auc_contrib": 0.0054,
+      "auc_star": 0.0106
+     }
+    }
+   ],
+   "convention": "MAX of three noise seeds, one-sided 1.645 sd; a floor is a bound",
+   "noise_point_inside_own_floor": {
+    "rho": true,
+    "block_rho": true,
+    "auc_contrib": true,
+    "auc_star": true
+   },
+   "star_is_not_a_bar": "MDE95.auc_star is derived so the sensitivity row can be read; no arm passes or fails on it"
+  }
+ },
+ "A2_zero_information_twin": {
+  "hit": {
+   "column": "fv_trend",
+   "coverage": {
+    "observed": 839,
+    "n": 839,
+    "frac": 1.0,
+    "impute": "zero",
+    "impute_value": 0.0,
+    "observed_mean": 3.74909,
+    "observed_sd": 5.45714
+   },
+   "twin_delta": {
+    "rho": 0.0041,
+    "block_rho": 0.00595,
+    "auc_contrib": 0.00352,
+    "auc_star": 0.00243
+   },
+   "twin_bootstrap_auc": {
+    "B_used": 2000,
+    "point": 0.00352,
+    "boot_mean": -0.00126,
+    "sd": 0.00456,
+    "mde95_onesided": 0.0075,
+    "mde95_twosided": 0.0089,
+    "x_floor": 0.469,
+    "ci95": [
+     -0.01193,
+     0.00772
+    ],
+    "p_gt_0": 0.3475,
+    "resolvable": false
+   },
+   "real_column_delta": {
+    "rho": -0.00092,
+    "block_rho": -0.00341,
+    "auc_contrib": 0.004,
+    "auc_star": -0.00063
+   },
+   "floors_used": {
+    "rho": 0.017,
+    "block_rho": 0.02,
+    "auc_contrib": 0.0091,
+    "auc_star": 0.0109
+   },
+   "twin_auc_inside_floor": true,
+   "twin_rho_inside_floor": true,
+   "twin_verdict": {
+    "tag": "A2:hit:twin",
+    "verdict": "NULL",
+    "rho": {
+     "delta": 0.0041,
+     "floor": 0.017,
+     "x_floor": 0.241,
+     "clears": false,
+     "adverse_beyond_floor": false,
+     "state": "inside floor"
+    },
+    "block_rho": {
+     "delta": 0.00595,
+     "floor": 0.02,
+     "x_floor": 0.298,
+     "clears": false,
+     "adverse_beyond_floor": false,
+     "state": "inside floor"
+    },
+    "auc_contributor": {
+     "delta": 0.00352,
+     "floor": 0.0091,
+     "x_floor": 0.387,
+     "clears": false,
+     "adverse_beyond_floor": false,
+     "state": "inside floor"
+    },
+    "auc_star": {
+     "delta": 0.00243,
+     "role": "LABELLED SENSITIVITY",
+     "verdict_weight": 0,
+     "why": "the pitcher star cell carries 46 positives against an E_cond floor of 0.0397 in data/xfv_auc_floor_eval.json; a leg that cannot resolve its own null cannot adjudicate anyone else's arm"
+    },
+    "holm_survives": null,
+    "holm_state": "NOT SUPPLIED: no family correction reached this verdict",
+    "not_adjudicated": [
+     "Holm family survival: not supplied"
+    ],
+    "block_sign_agrees_with_rho": true,
+    "rule": "rho is the gate; contributor AUC may veto and may never credit; star AUC carries no verdict weight"
+   },
+   "reading": "the twin must land INSIDE the floor on both legs. A twin that cleared it would mean the floor is too small and every verdict built on it is unsafe."
+  },
+  "pit": {
+   "column": "fv_trend",
+   "coverage": {
+    "observed": 981,
+    "n": 981,
+    "frac": 1.0,
+    "impute": "zero",
+    "impute_value": 0.0,
+    "observed_mean": 2.41529,
+    "observed_sd": 4.24098
+   },
+   "twin_delta": {
+    "rho": 0.00148,
+    "block_rho": -0.00412,
+    "auc_contrib": -0.00096,
+    "auc_star": 0.00023
+   },
+   "twin_bootstrap_auc": {
+    "B_used": 2000,
+    "point": -0.00096,
+    "boot_mean": -0.00175,
+    "sd": 0.00338,
+    "mde95_onesided": 0.0056,
+    "mde95_twosided": 0.0066,
+    "x_floor": 0.173,
+    "ci95": [
+     -0.0087,
+     0.00466
+    ],
+    "p_gt_0": 0.275,
+    "resolvable": false
+   },
+   "real_column_delta": {
+    "rho": 0.0016,
+    "block_rho": 0.00173,
+    "auc_contrib": 0.00741,
+    "auc_star": 0.00866
+   },
+   "floors_used": {
+    "rho": 0.0121,
+    "block_rho": 0.0172,
+    "auc_contrib": 0.0068,
+    "auc_star": 0.0129
+   },
+   "twin_auc_inside_floor": true,
+   "twin_rho_inside_floor": true,
+   "twin_verdict": {
+    "tag": "A2:pit:twin",
+    "verdict": "NULL",
+    "rho": {
+     "delta": 0.00148,
+     "floor": 0.0121,
+     "x_floor": 0.122,
+     "clears": false,
+     "adverse_beyond_floor": false,
+     "state": "inside floor"
+    },
+    "block_rho": {
+     "delta": -0.00412,
+     "floor": 0.0172,
+     "x_floor": 0.24,
+     "clears": false,
+     "adverse_beyond_floor": false,
+     "state": "inside floor"
+    },
+    "auc_contributor": {
+     "delta": -0.00096,
+     "floor": 0.0068,
+     "x_floor": 0.141,
+     "clears": false,
+     "adverse_beyond_floor": false,
+     "state": "inside floor"
+    },
+    "auc_star": {
+     "delta": 0.00023,
+     "role": "LABELLED SENSITIVITY",
+     "verdict_weight": 0,
+     "why": "the pitcher star cell carries 46 positives against an E_cond floor of 0.0397 in data/xfv_auc_floor_eval.json; a leg that cannot resolve its own null cannot adjudicate anyone else's arm"
+    },
+    "holm_survives": null,
+    "holm_state": "NOT SUPPLIED: no family correction reached this verdict",
+    "not_adjudicated": [
+     "Holm family survival: not supplied"
+    ],
+    "block_sign_agrees_with_rho": false,
+    "rule": "rho is the gate; contributor AUC may veto and may never credit; star AUC carries no verdict weight"
+   },
+   "reading": "the twin must land INSIDE the floor on both legs. A twin that cleared it would mean the floor is too small and every verdict built on it is unsafe."
+  }
+ },
+ "A3_label_permutation": {
+  "hit": {
+   "draws": 2000,
+   "mean_auc": 0.500243,
+   "sd_auc": 0.02195,
+   "analytic_null_se_hanley_mcneil": 0.02188,
+   "sd_over_analytic": 1.0032,
+   "z_of_mean": 0.496,
+   "p05": 0.46372,
+   "p95": 0.53597,
+   "centred_on_half": true,
+   "width_matches_theory": true,
+   "bar": "two-sided: |z of the mean| <= 3 over K = 2000 draws, AND empirical sd within [0.90, 1.10] of the Hanley-McNeil analytic null SE"
+  },
+  "pit": {
+   "draws": 2000,
+   "mean_auc": 0.499691,
+   "sd_auc": 0.02227,
+   "analytic_null_se_hanley_mcneil": 0.02248,
+   "sd_over_analytic": 0.9907,
+   "z_of_mean": -0.621,
+   "p05": 0.46251,
+   "p95": 0.53635,
+   "centred_on_half": true,
+   "width_matches_theory": true,
+   "bar": "two-sided: |z of the mean| <= 3 over K = 2000 draws, AND empirical sd within [0.90, 1.10] of the Hanley-McNeil analytic null SE"
+  }
+ },
+ "A4_rule_table": {
+  "rho_clears_auc_concurs": "PASS",
+  "rho_clears_auc_silent": "PASS",
+  "rho_clears_auc_adverse": "VETO_ON_AUC",
+  "rho_fails_auc_clears": "NULL_AUC_ONLY",
+  "rho_fails_auc_silent": "NULL",
+  "star_alone_enormous": "NULL",
+  "no_rho_floor_derived": "NOT_ADJUDICATED_NO_RHO_FLOOR",
+  "rho_clears_no_auc_floor": "NOT_ADJUDICATED_NO_AUC_FLOOR",
+  "rho_clears_holm_not_supplied": "NOT_ADJUDICATED_NO_HOLM",
+  "rho_clears_holm_fails": "NULL_HOLM"
+ },
+ "A4_expected": {
+  "rho_clears_auc_concurs": "PASS",
+  "rho_clears_auc_silent": "PASS",
+  "rho_clears_auc_adverse": "VETO_ON_AUC",
+  "rho_fails_auc_clears": "NULL_AUC_ONLY",
+  "rho_fails_auc_silent": "NULL",
+  "star_alone_enormous": "NULL",
+  "no_rho_floor_derived": "NOT_ADJUDICATED_NO_RHO_FLOOR",
+  "rho_clears_no_auc_floor": "NOT_ADJUDICATED_NO_AUC_FLOOR",
+  "rho_clears_holm_not_supplied": "NOT_ADJUDICATED_NO_HOLM",
+  "rho_clears_holm_fails": "NULL_HOLM"
+ },
+ "A4_pass": true,
+ "A4_corners": 10,
+ "A4_absence_never_reads_as_pass": true,
+ "all_controls_pass": true,
+ "generated_at": "2026-09-06T07:25:25Z",
+ "produced_by": "tools/efv_driver_lab.py"
+}

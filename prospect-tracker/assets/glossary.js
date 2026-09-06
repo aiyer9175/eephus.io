@@ -2603,6 +2603,23 @@ function _excludedSourcesClause(bt) {
   return parts.join(" ");
 }
 
+// A-CLAIM-12. WHAT THE COMPARISON IS COMPUTED OVER, in the hero's own foot,
+// because a reader who has just been told eFV ties the consensus deserves to
+// know on which players. The sentence is DERIVED in source_backtest.py and only
+// transcribed here: nothing on this page may state a population figure a human
+// typed. That rule exists because the C-6 lane's published -5.13 FV headline
+// survived for weeks purely because the number and the population it described
+// were maintained in two different places, and on the rows carrying a real
+// published opinion the true figure had the opposite sign.
+//
+// Returns "" when the block is absent, so an older artifact renders the page
+// unchanged rather than printing an empty claim.
+function _hhPopulationClause(bt) {
+  const sp = bt && bt.accuracy && bt.accuracy.served_population;
+  if (!sp || !sp.sentence) return "";
+  return " " + escapeHtml(String(sp.sentence));
+}
+
 function _hhFloorClause(bt) {
   const hh = bt && bt.accuracy && bt.accuracy.head_to_head_verdict;
   if (!hh || hh.mde95 == null) return ".";
@@ -2684,7 +2701,7 @@ function _methHeroBanner(bt) {
     <h2 class="source-comp-hero-title">${headline}</h2>
     <p class="source-comp-hero-lede">Every public FV grade is an educated opinion about the future. eFV is a model trained on resolved outcomes and scored the honest way: leakage-free, forward-chained, on the same players, the same window AND the same vintage as the sources it is measured against. On ordering skill - how well a preseason grade tracks the WAR a prospect went on to produce - ${verbPhrase}${leadClause}${_hhFloorClause(bt)}</p>
     <div class="meth-findings source-comp-hero-tiles">${tiles}</div>
-    <p class="source-comp-hero-foot">Ordering skill = Spearman correlation between the preseason grade and realized MLB WAR (higher is better). The full method, per-FV-tier and per-archetype breakdowns, and the honest limits are all below - nothing cherry-picked.</p>
+    <p class="source-comp-hero-foot">Ordering skill = Spearman correlation between the preseason grade and realized MLB WAR (higher is better). The full method, per-FV-tier and per-archetype breakdowns, and the honest limits are all below - nothing cherry-picked.${_hhPopulationClause(bt)}</p>
   </div>`;
 }
 

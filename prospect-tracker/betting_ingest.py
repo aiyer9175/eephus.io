@@ -419,6 +419,21 @@ def save_props_spend(ledger: dict, path: Path | None = None) -> None:
     tmp.replace(p)
 
 
+def _book_shared_credits(cost: int, note: str) -> None:
+    """Charge the SHARED tier ledger beside the props-only one. Never raises.
+
+    Two ledgers is not duplication. props_spend.json answers "how much of the
+    owner's props allowance is left"; betting_credits answers "how much of the
+    500-credit month is left across every job". A props pull consumes both, and
+    either can be the binding one."""
+    try:
+        import betting_credits as _bc
+        _bc.record("props", int(cost), note=str(note))
+    except Exception:                                     # noqa: BLE001
+        log.warning("betting_ingest: could not book %s props credits to the "
+                    "shared tier ledger", cost, exc_info=True)
+
+
 def props_budget_check(next_cost: int, *, cap: int | None = None,
                        ledger: dict | None = None, path: Path | None = None,
                        when: datetime | None = None) -> tuple[bool, str]:
@@ -814,6 +829,20 @@ def _run_props(event_ids: list, *, session=None, when: datetime | None = None,
     pulled, refused, results = 0, 0, []
     for eid in event_ids:
         ok, reason = props_budget_check(cost, cap=cap, path=spend_path, when=when)
+        if ok:
+            # TWO BUDGETS, BOTH BINDING. The check above is the props cap the
+            # owner sets (EEPHUS_PROPS_CREDITS); this one is the shared monthly
+            # tier the props pull competes for with the open capture, the close
+            # capture and futures. Props can be inside its own cap and still
+            # unaffordable, which is the case the shared ledger exists to catch.
+            try:
+                import betting_credits as _bc
+                ok, _tier_reason = _bc.check("props", cost)
+                if not ok:
+                    reason = _tier_reason
+            except Exception:                             # noqa: BLE001
+                log.warning("betting_ingest: shared credit ledger unusable; "
+                            "the props cap still applies", exc_info=True)
         if not ok:
             refused += 1
             results.append({"event_id": str(eid), "ok": False, "reason": reason})
@@ -826,12 +855,14 @@ def _run_props(event_ids: list, *, session=None, when: datetime | None = None,
             # the provider's meter whatever came back; the ledger charges it
             # so the guard can never under-count against the cap.
             record_props_spend(cost, event_id=eid, path=spend_path, when=when)
+            _book_shared_credits(cost, f"props {eid} fetch failed")
             results.append({"event_id": str(eid), "ok": False,
                             "reason": f"fetch failed: {exc}"})
             log.exception("betting_ingest: props fetch failed for %s", eid)
             continue
         record_props_spend(credits.get("cost") or cost, event_id=eid,
                            path=spend_path, when=when)
+        _book_shared_credits(credits.get("cost") or cost, f"props {eid}")
         try:
             path = write_props_snapshot(event, event_id=eid, when=when,
                                         credits=credits)

@@ -37,6 +37,33 @@ WHAT MAKES IT HONEST, and each of these is load-bearing:
      logged under a policy floor can never later be misread as one logged under
      a measured threshold, and rows chosen by three different rules can never be
      pooled into one ROI by accident.
+  5. Since 2026-09-06 the MARKET is a first-class dimension beside the tag. The
+     tag says which rule chose a row; it never said what was bet. Measured on
+     the live ledger that day (255 rows, 223 settled, pooled ROI -13.1%):
+     moneyline 44 settled at -27.4%, runline 74 at -3.2%, total 105 at -14.6%.
+     The pooled number is none of the three, and totals are 121 of the 255 rows,
+     so the pooled read is mostly a statement about totals wearing every
+     market's name. Each market now accrues, reports and can open or close on
+     its own evidence: see `graded_bets_by_market_tag`.
+
+WHAT THIS FILE REFUSES TO CLAIM. Nothing here is a recommendation, a return, or
+a forecast. The tallies are arithmetic over settled paper rows and they measure
+the selection rule that wrote those rows, nothing wider.
+
+THE POOLING IS NOT FIXED YET, AND THIS HEADER USED TO SAY IT WAS. What is true
+is narrower: no function ADDED for the market dimension returns a sample that
+pools two markets, two tags or two budget eras together, because a threshold
+fitted to a mixture is wrong for every population inside it. The PRE-EXISTING
+samplers still pool markets, and that is precisely the defect
+`graded_bets_by_market_tag` exists to replace. Re-run against the live ledger on
+2026-09-06, `graded_bets(slot='board_all')` returns a LIST of 214 sweepable
+{edge, decimal, won} rows, not a count, and those rows are 43 moneyline, 71
+runline and 100 total; `graded_bets(slot=None)` returns 220 rows across the same
+three markets; `graded_bets_by_tag` conditions on the tag alone, so its four
+cells are cross-market too: board_all 214 rows and ev_rank 45 each span all three
+markets, potd_band 15 spans runline and moneyline, and only longshot (4 rows, all
+moneyline) is single-market by accident of its own sample. Anything that sets a
+threshold from one of those samples is a defect, whichever function produced it.
 
 HOW THE MODEL IMPROVES FROM IT. As games resolve, three things move on their own:
 the coefficients refit nightly on completed games, the vintage-graded sample grows
@@ -172,6 +199,41 @@ MAX_PER_SLATE_BY_TAG = {
     **{t: 3 for t in PROPS_TAGS},
 }
 
+#: The three team markets a board row can be on. Props rows carry their own
+#: market name in the same field (the props tag IS its market), which is the
+#: right answer and not a special case: four props markets are four markets.
+TEAM_MARKETS = ("moneyline", "runline", "total")
+
+#: A row that somehow carries no market. Measured on the live ledger 2026-09-06:
+#: 0 of 255 rows. It exists so a malformed row lands in a named bucket instead
+#: of silently joining a real market's evidence.
+UNKNOWN_MARKET = "unknown_market"
+
+#: THE PER-MARKET ALLOCATION of a tag's per-slate budget: (market, tag) -> cap.
+#: MAX_PER_SLATE_BY_TAG above is UNCHANGED and still governs the total a tag may
+#: log on one slate. This dict says how much of that total one market may take
+#: before every other market has had its turn.
+#:
+#: WHY (2026-09-06, plan lane B-SUBLEDGERS, owner decision 6). `ev_rank` ranks
+#: the whole board by EV and takes the top three, and totals win that race.
+#: Measured on the live ledger: of ev_rank's 49 rows, 36 are totals, 9 runline,
+#: 4 moneyline. Four settled moneyline rows across 16 slate days puts that cell
+#: roughly a decade from MIN_BETS_FOR_SWEEP, so "each market opens on its own
+#: evidence" was unreachable for two markets of three: one market was spending
+#: another's budget.
+#:
+#: IT IS A RESERVATION, NOT A CEILING, and the difference is deliberate. The
+#: selector fills the allocations first, one row per market in EV order, and
+#: only then spends the seats no market claimed, in EV order, ignoring the
+#: allocation. A hard ceiling would cut the tag's volume on a slate where one
+#: market is the only thing on the board, which buys nothing: no market was
+#: outbid there. MEASURED COUNTERFACTUAL, replaying the recorded clearing sides
+#: of all 16 slates on disk: the same 46 ev_rank seats are filled either way,
+#: and the market split moves from (4 moneyline, 7 runline, 35 total) to
+#: (13, 15, 18). Those 46 are the 49 logged rows less the 3 that the two
+#: pre-2026-08-12 slates took before the per-slate budget was enforced at all.
+MAX_PER_SLATE_BY_MARKET_TAG = {(m, DEFAULT_SLOT_TAG): 1 for m in TEAM_MARKETS}
+
 #: Every tag a row may be a member of, plus the pre-tag era's bucket.
 KNOWN_TAGS = (*sorted(SLOT_TAGS.values()), DEFAULT_SLOT_TAG, BOARD_ALL_TAG,
               *PROPS_TAGS)
@@ -184,6 +246,78 @@ UNTAGGED = "untagged"
 #: cost is accepted deliberately - a threshold fitted to a mixture of four
 #: selection rules is wrong for every one of them.
 MIN_BETS_FOR_SWEEP = 100
+
+#: THE DATE THE PER-MARKET ALLOCATION SHIPPED, and therefore the date the series
+#: splits. Rows already on disk were selected under the pooled per-tag cap and
+#: are NEVER retagged: a row's selection rule is the one its writer applied, and
+#: restamping it would reinterpret evidence under a rule that did not exist when
+#: the row was chosen. That is the same hazard BOARD_ALL_TAG was introduced to
+#: avoid, and the answer is the same: split the series, name both halves, pool
+#: neither.
+#:
+#: THE COST, stated because it is large. Every ev_rank cell's post-split count
+#: starts at zero on this date, and on 2026-09-06 all 223 settled rows sit in
+#: the pooled-cap era, so no ev_rank cell can reach MIN_BETS_FOR_SWEEP on
+#: post-split evidence for at least 100 settled rows of new slates. The cells
+#: whose membership did NOT change are exempt and keep their full history: see
+#: `era_split_applies`.
+BUDGET_SPLIT_DATE = "2026-09-06"
+POOLED_CAP_ERA = "pooled_tag_cap"
+PER_MARKET_CAP_ERA = "per_market_cap"
+BUDGET_ERAS = (POOLED_CAP_ERA, PER_MARKET_CAP_ERA)
+
+
+def market_of(row: dict) -> str:
+    """Which market's sub-ledger one row belongs to.
+
+    Read off the row's own `market` field and never inferred from the tag or the
+    selection text. A props row's market is its props market, which is why props
+    rows need no special exclusion once the market dimension exists."""
+    m = row.get("market")
+    return str(m) if m else UNKNOWN_MARKET
+
+
+def cell_budget(market: str, tag: str):
+    """The per-slate cap for one (market, tag) cell. None means uncapped.
+
+    A cell with no explicit allocation falls back to its TAG's per-slate total,
+    which is the same statement as "this tag has no market allocation": the tag
+    total is then the only thing binding it."""
+    key = (market, tag)
+    if key in MAX_PER_SLATE_BY_MARKET_TAG:
+        return MAX_PER_SLATE_BY_MARKET_TAG[key]
+    return MAX_PER_SLATE_BY_TAG.get(tag)
+
+
+def era_split_applies(market: str, tag: str) -> bool:
+    """Does the 2026-09-06 cap change alter what THIS cell's membership means?
+
+    Computed from the two budget tables rather than asserted by hand: a cell
+    splits when its allocation is stricter than its tag's per-slate total. On
+    the shipped tables that is the three ev_rank cells and nothing else, and the
+    exemptions are the point:
+
+      board_all is uncapped on both sides of the date, so its population is
+      identical across the split and its 185 rows (measured 2026-09-06) keep
+      accruing into one sample.
+      potd_band and longshot are one published pick a slate. Their allocation
+      equals their tag total, 1, so the arithmetic cannot change what they hold.
+      Measured over the 16 slates on disk: potd_band is exactly 1 on all 16 and
+      longshot is 0 or 1 on all 16, so nothing was ever competing there.
+      A props tag IS its market, so cell and tag are the same budget."""
+    return cell_budget(market, tag) != MAX_PER_SLATE_BY_TAG.get(tag)
+
+
+def budget_era(row: dict) -> str:
+    """Which budget regime chose this row, by the slate it was chosen for.
+
+    Dated on `slate_date` and not `posted_at`, because the budget binds a slate:
+    a row logged after midnight UTC for the previous day's board competed under
+    that board's allocation. A row carrying neither date is assigned to the
+    OLDER era, which is the conservative reading (it predates the change and
+    cannot be evidence for the new rule)."""
+    d = row.get("slate_date") or str(row.get("posted_at") or "")[:10]
+    return PER_MARKET_CAP_ERA if d and str(d) >= BUDGET_SPLIT_DATE else POOLED_CAP_ERA
 
 
 class ShadowLedgerError(RuntimeError):
@@ -385,7 +519,8 @@ def candidates_from_board(payload: dict, *, min_edge: float,
                           max_per_slate: int = MAX_PER_SLATE,
                           slots: dict | None = None,
                           include_board_all: bool = False,
-                          budget_by_tag: dict | None = None) -> list[dict]:
+                          budget_by_tag: dict | None = None,
+                          budget_by_market_tag: dict | None = None) -> list[dict]:
     """The sides this slate would have bet: the published slots, then the rest
     by EV.
 
@@ -401,6 +536,13 @@ def candidates_from_board(payload: dict, *, min_edge: float,
     price band, and the whole point of the ledger is to make the published
     claims gradeable. Every other row still enters on EV and is tagged as such,
     so the sweep can separate the two rules later.
+
+    `budget_by_market_tag` is the per-(market, tag) allocation, defaulting to
+    MAX_PER_SLATE_BY_MARKET_TAG. It binds only the FIRST ev_rank pass: each
+    market gets its allocated seats before any market takes a second, and the
+    spill pass then fills the rest by EV. Passing a map of remaining room is how
+    record_slate makes the allocation a per-SLATE budget rather than a per-call
+    one, exactly as it already does for `budget_by_tag`.
 
     `include_board_all` adds the UNCAPPED tag: every remaining side that cleared
     the floor is returned too, tagged `board_all`, and the capped rows pick up
@@ -468,28 +610,54 @@ def candidates_from_board(payload: dict, *, min_edge: float,
     # were selected under the unenforced rule and rewriting them would reinterpret
     # evidence under a rule its writer never applied, which is the exact hazard
     # BOARD_ALL_TAG was introduced to avoid.
+    #
+    # THE MARKET ALLOCATION IS THE SECOND BUDGET (2026-09-06). A tag's total is
+    # unchanged; what changed is that the first pass hands each market its own
+    # seat before any market takes a second. Without it the EV ranking gave
+    # ev_rank 36 totals, 9 runlines and 4 moneylines over 16 slate days, which
+    # is a sub-ledger that can never open on its own evidence for two markets
+    # out of three. The SPILL pass then fills whatever the allocation left
+    # unclaimed, so a one-market board still logs its full budget: a seat no
+    # market wanted is not a seat any market was denied.
     budget = dict(MAX_PER_SLATE_BY_TAG if budget_by_tag is None else budget_by_tag)
+    cells = dict(MAX_PER_SLATE_BY_MARKET_TAG if budget_by_market_tag is None
+                 else budget_by_market_tag)
 
-    def _room(tag: str, taken: dict) -> bool:
+    picked, seen, taken, taken_cell = [], set(), {}, {}
+
+    def _room(tag: str) -> bool:
         cap = budget.get(tag, None)
         return cap is None or taken.get(tag, 0) < cap
 
-    picked, seen, taken = [], set(), {}
+    def _cell_room(cand: dict, tag: str) -> bool:
+        ck = (market_of(cand), tag)
+        # A cell with no allocation falls back to the tag total, so a tag that
+        # was never allocated behaves exactly as it did before this existed.
+        cap = cells.get(ck, budget.get(tag, None))
+        return cap is None or taken_cell.get(ck, 0) < cap
+
+    def _take(cand: dict, tag: str, row: dict) -> None:
+        picked.append(row)
+        seen.add(_row_key(cand))
+        taken[tag] = taken.get(tag, 0) + 1
+        ck = (market_of(cand), tag)
+        taken_cell[ck] = taken_cell.get(ck, 0) + 1
+
     for cand in out:
         k = _row_key(cand)
-        if k in tagged and k not in seen and _room(tagged[k], taken):
-            picked.append({**cand, "slot": tagged[k]})
-            seen.add(k)
-            taken[tagged[k]] = taken.get(tagged[k], 0) + 1
-    for cand in out:
-        if len(picked) >= max_per_slate:
-            break
-        k = _row_key(cand)
-        if k in seen or not _room(DEFAULT_SLOT_TAG, taken):
-            continue
-        picked.append(cand)
-        seen.add(k)
-        taken[DEFAULT_SLOT_TAG] = taken.get(DEFAULT_SLOT_TAG, 0) + 1
+        if (k in tagged and k not in seen and _room(tagged[k])
+                and _cell_room(cand, tagged[k])):
+            _take(cand, tagged[k], {**cand, "slot": tagged[k]})
+    for allocation_binds in (True, False):
+        for cand in out:
+            if len(picked) >= max_per_slate:
+                break
+            k = _row_key(cand)
+            if k in seen or not _room(DEFAULT_SLOT_TAG):
+                continue
+            if allocation_binds and not _cell_room(cand, DEFAULT_SLOT_TAG):
+                continue
+            _take(cand, DEFAULT_SLOT_TAG, cand)
     picked = picked[:max_per_slate]
     seen = {_row_key(c) for c in picked}
 
@@ -541,14 +709,26 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
     # is not truncated.
     existing = load(path)
     used: dict[str, int] = {}
+    used_cell: dict[tuple, int] = {}
     for r in existing:
         if r.get("slate_date") != slate:
             continue
         tag = r.get("slot") or DEFAULT_SLOT_TAG
         used[tag] = used.get(tag, 0) + 1
+        ck = (market_of(r), tag)
+        used_cell[ck] = used_cell.get(ck, 0) + 1
     remaining = {t: (None if MAX_PER_SLATE_BY_TAG.get(t) is None
                      else max(0, MAX_PER_SLATE_BY_TAG[t] - used.get(t, 0)))
                  for t in MAX_PER_SLATE_BY_TAG}
+    # THE ALLOCATION IS PER SLATE TOO, and for the same reason the tag budget
+    # is: the pipeline runs more than once a day, and a second pass that got a
+    # fresh allocation would let one market take its seat twice off two
+    # different capture times.
+    remaining_cell = {}
+    for ck in set(MAX_PER_SLATE_BY_MARKET_TAG) | set(used_cell):
+        cap = cell_budget(*ck)
+        remaining_cell[ck] = (None if cap is None
+                              else max(0, cap - used_cell.get(ck, 0)))
     # Props tags are OUTSIDE the team MAX_PER_SLATE arithmetic (2026-08-16,
     # section 7c): they are capped, but against their own budgets, and a props
     # row counted here would shrink the team room by rows that never competed
@@ -561,7 +741,8 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
     cands = candidates_from_board(payload, min_edge=min_edge, slots=slots,
                                   include_board_all=include_board_all,
                                   max_per_slate=max(0, room),
-                                  budget_by_tag=remaining)
+                                  budget_by_tag=remaining,
+                                  budget_by_market_tag=remaining_cell)
     if not cands:
         # TWO different empty results, and they must not share a sentence. With
         # a per-slate budget an empty candidate list no longer implies nothing
@@ -574,7 +755,8 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
         cleared_ignoring_budget = candidates_from_board(
             payload, min_edge=min_edge, slots=slots,
             include_board_all=include_board_all,
-            budget_by_tag={t: None for t in MAX_PER_SLATE_BY_TAG})
+            budget_by_tag={t: None for t in MAX_PER_SLATE_BY_TAG},
+            budget_by_market_tag={ck: None for ck in MAX_PER_SLATE_BY_MARKET_TAG})
         if used and cleared_ignoring_budget:
             return {"written": 0, "slate_date": slate,
                     "reason": "every capped row for this slate is already "
@@ -813,6 +995,28 @@ def row_tags(row: dict) -> set:
     return {slot} if slot else {UNTAGGED}
 
 
+def _sweep_row(r: dict) -> dict | None:
+    """One settled row as {edge, decimal, won}, or None when it cannot be swept.
+
+    Factored out of `graded_bets` unchanged (2026-09-06) so the per-cell reader
+    and the pooled counter shape rows the same way: two shaping rules would be
+    two different samples wearing one name. A push never reaches here, a row
+    with no edge or no usable price is dropped rather than defaulted."""
+    if r.get("result") not in ("won", "lost"):
+        return None
+    dec = r.get("decimal")
+    if not dec:
+        try:
+            import betting_ingest as bi
+            dec = bi.american_to_decimal(r.get("odds_at_post"))
+        except Exception:                                     # noqa: BLE001
+            dec = None
+    if r.get("edge") is None or not dec:
+        return None
+    return {"edge": float(r["edge"]), "decimal": float(dec),
+            "won": r["result"] == "won"}
+
+
 def graded_bets(*, slot: str | None = None, path: Path | None = None) -> list[dict]:
     """Settled shadow bets as {edge, decimal, won} rows, which is exactly what
     `betting_model.sweep_min_edge` consumes.
@@ -850,17 +1054,9 @@ def graded_bets(*, slot: str | None = None, path: Path | None = None) -> list[di
                 continue
         elif slot not in tags:
             continue
-        dec = r.get("decimal")
-        if not dec:
-            try:
-                import betting_ingest as bi
-                dec = bi.american_to_decimal(r.get("odds_at_post"))
-            except Exception:                                 # noqa: BLE001
-                dec = None
-        if r.get("edge") is None or not dec:
-            continue
-        out.append({"edge": float(r["edge"]), "decimal": float(dec),
-                    "won": r["result"] == "won"})
+        sw = _sweep_row(r)
+        if sw is not None:
+            out.append(sw)
     return out
 
 
@@ -884,6 +1080,118 @@ def sweep_readiness(*, path: Path | None = None) -> dict:
                 "ready": len(rws) >= MIN_BETS_FOR_SWEEP,
                 "max_per_slate": MAX_PER_SLATE_BY_TAG.get(t, "n/a")}
             for t, rws in sorted(by_tag.items())}
+
+
+class MarketTagCells(dict):
+    """{(market, tag): sweepable rows}, and nothing that pools them.
+
+    THE POINT IS WHAT IS ABSENT. There is no key meaning "every market", no
+    argument meaning "both eras", and no method that concatenates the cells, so
+    a sweep cannot reach a cross-market sample by taking the obvious next step.
+    The two-tuple key is the tripwire as well as the address: `cells["ev_rank"]`,
+    which is what a reader porting code from `graded_bets_by_tag` would write,
+    raises here instead of quietly handing back one tag pooled over three
+    markets whose ROIs measured -27.4%, -3.2% and -14.6% on 2026-09-06.
+
+    WHAT IT CANNOT STOP is a caller that builds the mixture on purpose, by
+    summing `values()` for instance. No dict can stop that. The refusal is
+    named, the reason is written down, and past that it is a choice someone has
+    to make in the open rather than one the API makes for them by accident."""
+
+    @staticmethod
+    def _check(key) -> None:
+        if not (isinstance(key, tuple) and len(key) == 2):
+            raise ShadowLedgerError(
+                f"cells are keyed by (market, tag); {key!r} is not a cell. There "
+                "is no key here that means every market: a threshold fitted "
+                "across markets is fitted to a mixture nobody bet")
+
+    def __getitem__(self, key):
+        self._check(key)
+        return dict.__getitem__(self, key)
+
+    def get(self, key, default=None):
+        self._check(key)
+        return dict.get(self, key, default)
+
+    def pooled(self, *_a, **_k):
+        raise ShadowLedgerError(
+            "there is no pooled read of the market cells, by design; sweep each "
+            "(market, tag) cell separately and let each market open or close on "
+            "its own evidence")
+
+
+def graded_bets_by_market_tag(*, era: str, path: Path | None = None) -> MarketTagCells:
+    """{(market, tag): sweepable rows} for one budget era. The shape a per-market
+    min-edge sweep may consume, and the only one this module offers.
+
+    `era` IS REQUIRED AND HAS NO "BOTH" VALUE. The 2026-09-06 allocation changed
+    what an ev_rank cell holds, so a sample spanning the split is a mixture of
+    two selection rules, which is the same defect as pooling two tags one
+    dimension over. Naming the era is how a caller states which rule it is
+    fitting a threshold for.
+
+    A cell whose membership did NOT change (see `era_split_applies`: board_all,
+    the two single-pick slot tags, the props tags) returns its FULL history
+    under either era value. That is not double counting: every cell is swept on
+    its own and yields its own threshold, so a cell is never summed with
+    itself. It is the correct answer, and the alternative, splitting a
+    population that did not change, would throw away the 185 board_all rows the
+    ledger has already paid for.
+
+    NO PROPS EXCLUSION IS NEEDED HERE, unlike `graded_bets`. That exclusion
+    exists because the pooled read has no market dimension and a props row would
+    silently join a team sample. Here a props row is in its own market's cell by
+    construction, which is what the exclusion was approximating."""
+    if era not in BUDGET_ERAS:
+        raise ShadowLedgerError(
+            f"era must be one of {list(BUDGET_ERAS)}; got {era!r}. There is no "
+            "value meaning both: the cap change split the series and a sample "
+            "spanning it mixes two selection rules")
+    cells: dict[tuple, list] = {}
+    for r in load(path):
+        sw = _sweep_row(r)
+        if sw is None:
+            continue
+        m = market_of(r)
+        for t in row_tags(r):
+            if era_split_applies(m, t) and budget_era(r) != era:
+                continue
+            cells.setdefault((m, t), []).append(sw)
+    return MarketTagCells(cells)
+
+
+def sweep_readiness_by_market_tag(*, path: Path | None = None) -> dict:
+    """{market: {tag: counts}}: how far each sub-ledger is from its own sweep.
+
+    A counter, not a rate and not a projection. `sweepable_n` is the count that
+    may set a threshold TODAY: for a cell the cap change split, that is the
+    post-split era alone, because the pre-split rows were chosen by a rule this
+    selector no longer runs (the same argument that put `untagged` on
+    betting_model's do-not-fit list, which still applies on top of this)."""
+    rows = load(path)
+    cells: dict[tuple, list] = {}
+    for r in rows:
+        m = market_of(r)
+        for t in row_tags(r):
+            cells.setdefault((m, t), []).append(r)
+    out: dict[str, dict] = {}
+    for (m, t), rws in sorted(cells.items()):
+        sweepable = [r for r in rws if _sweep_row(r) is not None]
+        n_by_era = {e: sum(1 for r in sweepable if budget_era(r) == e)
+                    for e in BUDGET_ERAS}
+        split = era_split_applies(m, t)
+        n_now = n_by_era[PER_MARKET_CAP_ERA] if split else len(sweepable)
+        out.setdefault(m, {})[t] = {
+            "n": len(sweepable),
+            "n_by_era": n_by_era,
+            "era_split": split,
+            "sweepable_n": n_now,
+            "need": MIN_BETS_FOR_SWEEP,
+            "ready": n_now >= MIN_BETS_FOR_SWEEP,
+            "max_per_slate": cell_budget(m, t),
+        }
+    return out
 
 
 def _tally(rows: list[dict]) -> dict:
@@ -921,7 +1229,14 @@ def summary(*, path: Path | None = None) -> dict:
     different selection rules and a pooled ROI would measure a mixture nobody
     bet. Rows written before 2026-08-07 carry no tag and are counted under
     `untagged`, which is honest about what they are: rows from the one-slot era,
-    selected on EV alone."""
+    selected on EV alone.
+
+    SINCE 2026-09-06 it also carries the market dimension: `by_market` (a
+    partition, counts sum to n_rows), `by_market_by_tag` (the cell a per-market
+    sweep keys on), `budget_split` (the two budget eras, reported apart, and the
+    cells the cap change actually split), and `sweep_readiness_by_market_tag`.
+    Every one of those is a REPORT. The sweepable shape lives in
+    `graded_bets_by_market_tag`, which has no pooled key at all."""
     rows = load(path)
     out = _tally(rows)
     buckets: dict[str, list[dict]] = {}
@@ -944,6 +1259,61 @@ def summary(*, path: Path | None = None) -> dict:
     out["by_tag_note"] = ("membership, not a partition: a capped row is also a "
                           "board_all row, so these counts overlap by design")
 
+    # BY MARKET (2026-09-06). The tag says which rule chose a row; it never said
+    # what was bet, and the two questions have different answers. Measured on
+    # the live ledger the day this shipped: moneyline 44 settled at -27.4%,
+    # runline 74 at -3.2%, total 105 at -14.6%, pooled -13.1%, with totals 121
+    # of the 255 rows. Reported and never pooled, on the same rule the tags get.
+    market_buckets: dict[str, list[dict]] = {}
+    for r in rows:
+        market_buckets.setdefault(market_of(r), []).append(r)
+    out["by_market"] = {m: _tally(v) for m, v in sorted(market_buckets.items())}
+    out["by_market_note"] = ("a partition: every row is on exactly one market, "
+                             "so these counts sum to n_rows. The pooled tally "
+                             "above is a mixture of them and may not set a "
+                             "threshold for any one market")
+
+    mt_buckets: dict[str, dict[str, list[dict]]] = {}
+    for r in rows:
+        m = market_of(r)
+        for t in row_tags(r):
+            mt_buckets.setdefault(m, {}).setdefault(t, []).append(r)
+    out["by_market_by_tag"] = {m: {t: _tally(v) for t, v in sorted(d.items())}
+                               for m, d in sorted(mt_buckets.items())}
+    out["by_market_by_tag_note"] = (
+        "the cell a per-market sweep would key on: (market, tag). Membership "
+        "inside a market, not a partition, because a capped row is also a "
+        "board_all row")
+
+    # THE BUDGET SPLIT. The per-market allocation changed what an ev_rank cell
+    # holds, and the rows already on disk are not retagged, so the series splits
+    # at BUDGET_SPLIT_DATE and both halves are reported separately. Cells whose
+    # membership did not change are exempt and are absent from cells_that_split.
+    era_buckets: dict[str, list[dict]] = {e: [] for e in BUDGET_ERAS}
+    for r in rows:
+        era_buckets[budget_era(r)].append(r)
+    split_cells = sorted((m, t) for m, d in mt_buckets.items() for t in d
+                         if era_split_applies(m, t))
+    split_detail: dict[str, dict] = {}
+    for m, t in split_cells:
+        split_detail.setdefault(m, {})[t] = {
+            e: _tally([r for r in mt_buckets[m][t] if budget_era(r) == e])
+            for e in BUDGET_ERAS}
+    out["budget_split"] = {
+        "split_date": BUDGET_SPLIT_DATE,
+        "what_changed": ("a tag's per-slate total is unchanged; each market now "
+                         "gets its own allocation of it before any market takes "
+                         "a second row"),
+        "eras": {e: _tally(v) for e, v in era_buckets.items()},
+        "cells_that_split": [[m, t] for m, t in split_cells],
+        "by_market_by_tag": split_detail,
+        "why_not_retagged": ("a row's selection rule is the one its writer "
+                             "applied; restamping the rows on disk would "
+                             "reinterpret evidence under a rule that did not "
+                             "exist when they were chosen"),
+    }
+    out["sweep_readiness_by_market_tag"] = sweep_readiness_by_market_tag(path=path)
+
     # The number the third gate is actually waiting on, PER TAG. The pooled
     # count is kept beside it because it is what the un-patched gate still
     # reads, and seeing the two apart is how the difference gets noticed.
@@ -958,3 +1328,74 @@ def summary(*, path: Path | None = None) -> dict:
     if path is None:
         out["storage"] = storage()
     return out
+
+
+#: The DATED, committed read of the sub-ledger, and the registered eval artifact
+#: for `betting_shadow_subledger`.
+#:
+#: WHY A SECOND FILE RATHER THAN A STAMP ON THE LEDGER. `data/betting_shadow.json`
+#: is a bare JSON array of rows, and it has to stay one: `load()` reads it as a
+#: list and the append-only checks compare list prefixes. There is nowhere to put
+#: a top-level date without changing the shape that the no-revision invariant is
+#: written against. Worse, a write stamp would answer the wrong question anyway.
+#: The age that matters for a ledger is the age of its newest ROW, not the moment
+#: somebody last rewrote the file, and those two diverge on exactly the nights
+#: this module exists to survive: a slate where nothing cleared the floor
+#: rewrites nothing and settles nothing, yet leaves the ledger perfectly current.
+#:
+#: So the readiness read gets its own file, it carries `generated_at`, and it also
+#: carries `newest_row_at` so a reader can tell a fresh render of a stale ledger
+#: from a fresh ledger.
+READINESS_PATH = DATA_DIR / "betting_subledger.json"
+
+
+def readiness_artifact(*, path: Path | None = None) -> dict:
+    """The per-market, per-tag readiness read, dated, with nothing pooled.
+
+    A COUNTER, NOT A VERDICT, and the distinction is the whole point of the row
+    this artifact backs. Every cell reports how many settled rows it holds and
+    whether that clears MIN_BETS_FOR_SWEEP. None of them reports a win rate as
+    evidence, because a cell below its own floor has no evidence to report and
+    printing 2-4 beside a threshold invites exactly the reading the floor exists
+    to forbid.
+    """
+    rows = load(path)
+    stamps = [str(r.get("settled_at") or r.get("logged_at") or "")
+              for r in rows]
+    stamps = sorted(x for x in stamps if x)
+    summ = summary(path=path)
+    return {
+        "generated_at": _now(),
+        "newest_row_at": stamps[-1] if stamps else None,
+        "oldest_row_at": stamps[0] if stamps else None,
+        "n_rows": len(rows),
+        "min_bets_for_sweep": MIN_BETS_FOR_SWEEP,
+        "by_market": summ.get("by_market"),
+        "by_market_by_tag": summ.get("by_market_by_tag"),
+        "sweep_readiness_by_market_tag": summ.get("sweep_readiness_by_market_tag"),
+        "budget_split": summ.get("budget_split"),
+        "reading": ("counts only. A cell is `ready` when its own settled count "
+                    "reaches the floor; until then it has no verdict, and the "
+                    "won/lost columns beside it are a description of history "
+                    "rather than evidence about the next bet."),
+        "pooling_is_forbidden": (
+            "the markets price different quantities and the tags name different "
+            "selection rules, so no cell here may be summed with another to "
+            "reach a floor sooner"),
+    }
+
+
+def write_readiness_artifact(*, path: Path | None = None,
+                             out: Path | None = None) -> dict:
+    """Render `readiness_artifact()` to disk. Never raises on an I/O problem:
+    this runs inside a nightly, and a failed render of a REPORT must not take
+    down the pipeline that maintains the ledger the report reads."""
+    art = readiness_artifact(path=path)
+    dest = Path(out) if out is not None else READINESS_PATH
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(json.dumps(art, indent=1) + chr(10), encoding="utf-8")
+    except OSError:
+        log.warning("betting_shadow: could not write the readiness artifact to "
+                    "%s; the ledger itself is unaffected", dest, exc_info=True)
+    return art

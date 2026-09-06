@@ -59609,10 +59609,46 @@
     "rho_prefit_vs_held": 0.415
    }
   },
+  "war_basis": {
+   "provider": "ewar_v2",
+   "series": "eWAR v2: the Baseball-Reference run frame with pitching re-priced on FIP within role (fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched)",
+   "source": "war_source.stint_frame('pit') on war_source.DEFAULT_PROVIDER",
+   "stamped": "2026-09-05",
+   "n_seasons": 156,
+   "available": true,
+   "provider_known": true
+  },
+  "gate": {
+   "artifact": "data/pal_eval.json",
+   "generated_at": "2026-07-15",
+   "basis_provider": "bwar",
+   "basis_series": "bWAR: the Baseball-Reference run frame, pitchers priced on the runs they actually allowed",
+   "rule": "rho(FIT,war_delta) >= rho(best baseline) AND gap lo95 > -0.01",
+   "same_basis_as_live": false,
+   "per_direction": {
+    "RP->SP": {
+     "pass": false,
+     "n_gate": 25,
+     "rho_fit_war_delta": -0.2062,
+     "best_baseline": "neg_era_pre",
+     "best_baseline_rho": 0.1023,
+     "gap_lo95": -0.7517
+    },
+    "SP->RP": {
+     "pass": true,
+     "n_gate": 61,
+     "rho_fit_war_delta": 0.2916,
+     "best_baseline": "kbb_pre",
+     "best_baseline_rho": -0.097,
+     "gap_lo95": 0.0745
+    }
+   },
+   "note": "Carried from the eval artifact, never re-run here. A direction with pass=false ships as a structural screen: its FIT ordering is not validated against realized WAR change."
+  },
   "primary_outcome": "war_delta (eWAR post-season minus pre-season), per direction, closed post seasons only; the pooled held rho above is a legacy reporting field (two different 0-100 scales)",
   "relief_k_bump_measured": 0.0167,
   "converter_median_fit_pool_pctile": 71,
-  "disclaimer": "A screen, not a success-probability model. The conversion sample is small and selection-biased (only pitchers teams chose to convert), so the weights are frozen priors from the literature. The gated evaluation (per-direction rho vs same-event baselines, bootstrap CI) lives in tools/pal_backtest_lab.py -> data/pal_eval.json; the rhos here are the live stamp of the same repaired harness. Held labels read closed >=20 IP follow-up seasons only. WAR outcomes are on the served eWAR basis: Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched."
+  "disclaimer": "A screen, not a success-probability model. The conversion sample is small and selection-biased (only pitchers teams chose to convert), so the weights are frozen priors from the literature. The gated evaluation (per-direction rho vs same-event baselines, bootstrap CI) lives in tools/pal_backtest_lab.py -> data/pal_eval.json; the rhos here are the live stamp of the same repaired harness. Held labels read closed >=20 IP follow-up seasons only. WAR outcomes are on eWAR v2: the Baseball-Reference run frame with pitching re-priced on FIP within role (fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched), stamped 2026-09-05. The pre-registered gate (data/pal_eval.json, 2026-07-15) ran on bWAR: the Baseball-Reference run frame, pitchers priced on the runs they actually allowed. It has NOT been re-run on the series above, so the rhos and the verdicts beside them are not the same measurement."
  },
  "verdict": "downgraded"
 }

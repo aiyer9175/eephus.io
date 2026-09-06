@@ -26,6 +26,17 @@ held-the-role label) with a caveat, plus where converters fall in the full-pool
 fit distribution. The relief K% bump used by the REM+ projection is MEASURED from
 the converters themselves.
 
+BASIS STAMP (2026-09-06). The backtest block now names the WAR series it was
+computed on (`backtest.war_basis`, whatever war_source.DEFAULT_PROVIDER served
+this run) and carries the pre-registered per-direction gate verdict out of
+data/pal_eval.json together with the series THAT was measured on
+(`backtest.gate`). It does NOT re-run the gate on the served series and it
+refuses to claim that it has: as of this stamp the live rhos are eWAR v2
+(+0.025 RP->SP, +0.278 SP->RP, data/pal.json) and the gate is bWAR (-0.2062 /
++0.2916, data/pal_eval.json generated_at 2026-07-15). Nothing in this file
+fits, scores or re-gates a direction; docs/e3-rp-sp-closure.md forbids
+re-gating RP->SP by expanding the event set.
+
 Run: `python pal_export.py`. Wired into run_monthly (best-effort). NETWORK-GATED:
 nothing fetches at import; any pull failure logs and degrades (a null component
 just drops from the renormalized blend) rather than aborting."""
@@ -73,6 +84,23 @@ EVAL_PATH = DATA_DIR / "pal_eval.json"
 HISTORY_YEARS = [2018, 2019, 2021, 2022, 2023, 2024, 2025, 2026]  # 2020 kept out of pairs
 CAND_MIN_IP = 20.0
 STATSAPI = "https://statsapi.mlb.com/api/v1"
+
+#: What each declared war_source provider measures, in one line, for the payload
+#: stamp. war_source.py is the authority on the ids; this is display text only.
+_WAR_SERIES = {
+    "bwar": ("bWAR: the Baseball-Reference run frame, pitchers priced on the "
+             "runs they actually allowed"),
+    "ewar_v2": ("eWAR v2: the Baseball-Reference run frame with pitching "
+                "re-priced on FIP within role (fielding unchanged pending SDR; "
+                "position players match bWAR except in seasons they also pitched)"),
+    "ewar_merged": "eWAR merged (declared, not servable)",
+}
+
+#: The provider load_bref_pitcher_war() actually READ in this process. None
+#: until it runs, and it stays None when the pull fails or when a harness
+#: substitutes its own loader (tools/pal_backtest_lab.py does), so the payload
+#: stamp can never name a WAR series this build did not read.
+_WAR_PROVIDER: Optional[str] = None
 
 
 def _num(v):
@@ -196,13 +224,21 @@ def load_bref_pitcher_war() -> dict:
     (traded pitchers), for the "WAR produced by conversion" read. One bulk pull
     (war_source.stint_frame('pit'); the explicit 'bwar' provider would be the raw
     pybaseball.bwar_pitch input); best-effort, {} on any failure so the
-    history still renders without the WAR column."""
+    history still renders without the WAR column.
+
+    RECORDS the provider it read into the module global _WAR_PROVIDER, which is
+    what stamps the served payload. The name of this function is now a lie about
+    its own default (it has said 'bref' since the bWAR days); the stamp is there
+    so a reader of data/pal.json never has to trust the name."""
+    global _WAR_PROVIDER
     try:
         import war_source
+        provider = war_source.DEFAULT_PROVIDER
         df = war_source.stint_frame("pit")
     except Exception as e:  # noqa: BLE001
         _log.warning("bref pitcher WAR unavailable: %s", e)
         return {}
+    _WAR_PROVIDER = provider
     out: dict = {}
     try:
         for r in df.to_dict("records"):
@@ -417,6 +453,121 @@ def _spearman(xs, ys):
     vx = sum((rx[i] - mx) ** 2 for i in range(n)) ** 0.5
     vy = sum((ry[i] - my) ** 2 for i in range(n)) ** 0.5
     return None if vx == 0 or vy == 0 else cov / (vx * vy)
+
+
+def _war_basis(war_by_year: dict, stamped: str) -> dict:
+    """Which WAR series produced the history WAR column and the war_delta rhos
+    in THIS build, and on what date. Pure labelling: it reads the global the
+    loader set and computes nothing about the model.
+
+    THREE states, and they are three different statements:
+      available False               the pull failed, so every war_delta rho in
+                                    the block is None by construction rather
+                                    than by measurement.
+      available, provider_known F   WAR rows are here but this process never ran
+                                    the loader (a substituted one, e.g. the
+                                    lab's cache), so the series is UNLABELLED
+                                    and must not be named.
+      available, provider_known T   the normal path; `series` names it."""
+    provider = _WAR_PROVIDER
+    return {
+        "provider": provider,
+        "series": _WAR_SERIES.get(provider),
+        "source": "war_source.stint_frame('pit') on war_source.DEFAULT_PROVIDER",
+        "stamped": stamped,
+        "n_seasons": len(war_by_year),
+        "available": bool(war_by_year),
+        "provider_known": provider is not None,
+    }
+
+
+def _eval_gate(live_provider: Optional[str]) -> Optional[dict]:
+    """The PRE-REGISTERED per-direction gate verdict, carried out of
+    data/pal_eval.json into the served payload.
+
+    THIS READS AN ARTIFACT. It does not re-run the gate, re-fit a weight or
+    re-score an event: tools/pal_backtest_lab.py owns that harness, and
+    docs/e3-rp-sp-closure.md forbids re-gating RP->SP by expanding the event
+    set. The carry exists because the page has to be able to name the verdict
+    AND the WAR series the verdict was measured on, and as of 2026-09-06 those
+    are two different series: the eval artifact is generated_at 2026-07-15 and
+    its primary_outcome names bWAR (rho -0.2062 / +0.2916), while the live rhos
+    beside it come from war_source.DEFAULT_PROVIDER, eWAR v2 since the
+    2026-09-03 epoch (rho +0.025 / +0.278 in data/pal.json).
+
+    Returns None when the artifact is missing, unreadable or carries no
+    per-direction block; the page then says the verdict is unavailable instead
+    of asserting one."""
+    try:
+        j = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    dirs_in = j.get("per_direction")
+    if not isinstance(dirs_in, dict) or not dirs_in:
+        return None
+    # The eval has no provider field (it predates the epoch), so read the basis
+    # off its own primary_outcome wording rather than assuming one.
+    low = str(j.get("primary_outcome") or "").lower()
+    basis = "ewar_v2" if "ewar" in low else ("bwar" if "bwar" in low else None)
+    out_dirs: dict = {}
+    rule = None
+    for d, v in dirs_in.items():
+        if not isinstance(v, dict):
+            continue
+        g = v.get("gate") or {}
+        rule = rule or g.get("rule")
+        best = v.get("best_baseline")
+        out_dirs[d] = {
+            "pass": g.get("pass"),
+            "n_gate": v.get("n_gate"),
+            "rho_fit_war_delta": v.get("rho_fit_war_delta"),
+            "best_baseline": best,
+            "best_baseline_rho": (v.get("baseline_rho_war_delta") or {}).get(best),
+            "gap_lo95": (v.get("gap_ci_vs_best") or {}).get("lo95"),
+        }
+    if not out_dirs:
+        return None
+    return {
+        "artifact": "data/pal_eval.json",
+        "generated_at": j.get("generated_at"),
+        "basis_provider": basis,
+        "basis_series": _WAR_SERIES.get(basis),
+        "rule": rule,
+        "same_basis_as_live": bool(basis) and basis == live_provider,
+        "per_direction": out_dirs,
+        "note": ("Carried from the eval artifact, never re-run here. A direction "
+                 "with pass=false ships as a structural screen: its FIT ordering "
+                 "is not validated against realized WAR change."),
+    }
+
+
+def _basis_sentence(war_basis: dict, gate: Optional[dict]) -> str:
+    """One sentence naming the WAR series under the live rhos and the series the
+    gate verdict was measured on, so a reader can never take the two for one
+    measurement. Derived from the stamps, so it cannot go stale on its own."""
+    if not war_basis.get("available"):
+        live = ("WAR outcomes are UNAVAILABLE in this build (the WAR pull failed), so "
+                "every war_delta rho above is null by construction, not by measurement.")
+    elif not war_basis.get("provider_known"):
+        live = ("WAR outcomes are present but UNLABELLED: this build did not run the "
+                "loader that records the series (a substituted loader), so the rhos "
+                "above cannot be attributed to a WAR provider.")
+    else:
+        live = ("WAR outcomes are on " + (war_basis.get("series")
+                                          or str(war_basis.get("provider")))
+                + ", stamped " + str(war_basis.get("stamped")) + ".")
+    if not gate:
+        return live + (" No gate verdict is available: data/pal_eval.json is missing "
+                       "or carries no per-direction block.")
+    out = (live + " The pre-registered gate (data/pal_eval.json, "
+           + str(gate.get("generated_at")) + ") ran on "
+           + (gate.get("basis_series") or str(gate.get("basis_provider"))
+              or "an unlabelled WAR series") + ".")
+    if (war_basis.get("available") and war_basis.get("provider_known")
+            and not gate.get("same_basis_as_live")):
+        out += (" It has NOT been re-run on the series above, so the rhos and the "
+                "verdicts beside them are not the same measurement.")
+    return out
 
 
 def _build_rem_pool(rows_2026: list, arsenal, velo, platoon) -> rem_plus.Pool:
@@ -868,13 +1019,21 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     conv_rp_pct = _percentile_of([h["pre_fit"] for h in history
                                   if h["direction"] == "RP->SP" and h["pre_fit"] is not None], full_rp_fits)
 
+    # BASIS STAMP (2026-09-06). The live rhos move with war_source's default
+    # provider and the gate verdict does not, so both get stamped by name: the
+    # payload said "eWAR basis" in prose while the served verdict copy was
+    # hard-coded to the bWAR-era gate. Labelling only, nothing is re-fitted.
+    war_basis = _war_basis(war_by_year, today)
+    gate = _eval_gate(war_basis.get("provider"))
     backtest = {
         "n_labeled": len(pre_fits),
         "spearman_prefit_vs_held": None if rho is None else round(rho, 3),
         "per_direction": per_direction,
-        "primary_outcome": ("war_delta (eWAR post-season minus pre-season), per direction, "
-                            "closed post seasons only; the pooled held rho above is a legacy "
-                            "reporting field (two different 0-100 scales)"),
+        "war_basis": war_basis,
+        "gate": gate,
+        "primary_outcome": ("war_delta (post-season minus pre-season on the war_basis series "
+                            "stamped below), per direction, closed post seasons only; the pooled "
+                            "held rho above is a legacy reporting field (two different 0-100 scales)"),
         "relief_k_bump_measured": relief_k_bump,
         "converter_median_fit_pool_pctile": conv_rp_pct,
         "disclaimer": ("A screen, not a success-probability model. The conversion sample is small and "
@@ -882,9 +1041,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                        "priors from the literature. The gated evaluation (per-direction rho vs same-event "
                        "baselines, bootstrap CI) lives in tools/pal_backtest_lab.py -> data/pal_eval.json; "
                        "the rhos here are the live stamp of the same repaired harness. Held labels read "
-                       "closed >=20 IP follow-up seasons only. WAR outcomes are on the served eWAR basis: "
-                       "Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged "
-                       "pending SDR; position players match bWAR except in seasons they also pitched."),
+                       "closed >=20 IP follow-up seasons only. " + _basis_sentence(war_basis, gate)),
     }
 
     # pitch-add lab: RP->SP candidates with a recommended weapon to add

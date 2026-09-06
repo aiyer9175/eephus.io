@@ -753,6 +753,58 @@ MODEL_GLOSSARY = {
     # command half of the same cohort pass stays internal until one is written.
     "composite_cmd_plus": "internal",
     "org_sur_plus": ["sur_plus"],      # the sur_plus entry IS OrgSur+ (scale + financial-branch role)
+
+    # --- 2026-09-06 Wave 0 of the Opus program (docs/master-plan-2026-09-05-opus.md) ---
+    #
+    # Three of the seven touch a reader-visible surface, so the "internal" call on
+    # them is a real decision rather than a default, and it rests on the same rule
+    # the Diamond rows settled on 2026-08-05: THE SITE GLOSSARY DOCUMENTS BASEBALL
+    # METRICS. A betting objective, a prop price and a shadow ledger tag are
+    # products of the betting module, and the /betting/ page carries their method
+    # and their limits in its own copy. Writing glossary stubs for them would put
+    # gambling machinery in a glossary a reader opens to look up wRC+.
+    #
+    # betting_per_market_objective changes WHICH markets publish, which a reader
+    # can see. It is internal because the thing a reader needs is the rule, and the
+    # rule now rides the published row itself: every slot carries market_policy and
+    # the evidence caveat, so the disclosure travels with the pick instead of
+    # sitting in a glossary the reader would have to go find.
+    "betting_per_market_objective": "internal",
+    # betting_props_pmf sets the distribution each prop market is priced under. It
+    # ships UNVALIDATED and names no artifact, deliberately: the sub-models have not
+    # graded dark against base rates yet (owner decision 8). The method block on the
+    # served row publishes the chosen distribution per market, which is the honest
+    # place for it while the verdict is still open.
+    "betting_props_pmf": "internal",
+    # betting_shadow_subledger is measurement infrastructure. Nothing renders it;
+    # it exists so a per-market verdict can be read later without re-deriving the
+    # ledger, and its rows are unpriced by construction.
+    "betting_shadow_subledger": "internal",
+    #
+    # The remaining four move no served number at all.
+    #
+    # claim_instruments_v6 is a REGISTRATION, not a reading. The V6 cells are signed
+    # and dated before any number is computed (owner decision 1) precisely so they
+    # cannot be swapped post hoc; until the 2027 read the accuracy page still states
+    # the V5 frame, and the V5 claim cells are what the xfv entry documents. When V6
+    # is read this mapping graduates to the xfv entry with it.
+    "claim_instruments_v6": "internal",
+    # pbp_corpus_base_state is a data substrate under .cache/. No page reads it. It
+    # earns a registry row because a reconstruction that is WRONG would silently
+    # poison every In-Game Management number built on top of it, so its agreement
+    # rate against the payload's own offense block belongs in the ledger.
+    "pbp_corpus_base_state": "internal",
+    # xfv_driver_auc_leg is the AUC half of the driver gate. It is a FLOOR
+    # derivation and a veto, not a feature: it shipped nothing and, on the record,
+    # its whole purpose is to stop arms that clear rho while failing discrimination.
+    "xfv_driver_auc_leg": "internal",
+    # hof_benchmark_shelf reproduces the public Hall of Fame yardsticks (JAWS, WAR7,
+    # ink, Monitor, Standards) so our own numbers can be scored against them. It has
+    # no surface yet; the Hall of Fame module is Part 3 of the plan and unbuilt. It
+    # names no artifact because reproduction_check() computes the comparison in
+    # process from the daily WAR cache rather than writing a file, which is why the
+    # verdict is provisional and not validated.
+    "hof_benchmark_shelf": "internal",
 }
 
 

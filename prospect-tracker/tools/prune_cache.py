@@ -74,8 +74,21 @@ SAFE_CACHES: tuple[str, ...] = (
 # prune_versioned_orphans can target them with a generous age default.
 VERSIONED_CACHES: tuple[str, ...] = ("statcast_metrics", "zone_metrics")
 
-# Never pruned: backups + rate-limited/small provenance scrapes.
-EXCLUDED = ("efv_backup", "bref_register", "draft_history")
+# Never pruned: backups + rate-limited/small provenance scrapes, plus the
+# derived play-by-play corpus.
+#
+# ``pbp_corpus`` is NOT refetchable in any useful sense and must never enter
+# SAFE_CACHES. It is built by tools/build_pbp_corpus.py out of the 19 GB
+# ``win_prob`` cache, and rebuilding it means re-reading all 19,132 game
+# payloads: about 21 ms per game, roughly 7 minutes for the flatten plus a 85 s
+# season index, and that is only while the source cache survives. If the pruner
+# has already reclaimed ``win_prob`` (it is the first and largest entry in
+# SAFE_CACHES, so under disk pressure it goes first) the corpus can only be
+# rebuilt by refetching every game from the StatsAPI, which is days of rate
+# limited network. The corpus is also small enough that pruning it buys almost
+# nothing: about 17.2 KB per game measured over 600 games, so roughly 330 MB for
+# the full cache against the 19 GB it was derived from.
+EXCLUDED = ("efv_backup", "bref_register", "draft_history", "pbp_corpus")
 
 
 def free_gb(path: Path | None = None) -> float:
@@ -88,9 +101,20 @@ def free_gb(path: Path | None = None) -> float:
 
 
 def _cache_files(caches=SAFE_CACHES, root: Path | None = None):
-    """Yield (mtime, size, path) for every regular file in the given caches."""
+    """Yield (mtime, size, path) for every regular file in the given caches.
+
+    Every deleting path (:func:`prune_by_age`, :func:`prune_to_target`,
+    :func:`prune_versioned_orphans`) walks through here, so this is where
+    :data:`EXCLUDED` is ENFORCED rather than merely documented. It used to be a
+    comment referenced by no code at all: a future edit that added a
+    non-refetchable directory to SAFE_CACHES, or a caller passing its own
+    ``caches`` tuple, would have deleted it with nothing to stop the write.
+    """
     base = root or CACHE_ROOT
     for name in caches:
+        if name in EXCLUDED:
+            _log.debug("skipping excluded cache: %s", name)
+            continue
         d = base / name
         if not d.is_dir():
             continue

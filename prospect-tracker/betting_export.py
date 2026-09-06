@@ -58,6 +58,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import math
 import os
 from collections import Counter
 from datetime import date, datetime, timedelta, timezone
@@ -2780,11 +2781,197 @@ def _fantasy_index() -> dict:
     return by
 
 
+# ===========================================================================
+# ONE PROBABILITY-MASS SOURCE PER PROP MARKET (2026-09-06)
+# ===========================================================================
+# WHAT THIS IS: a single pmf per prop market, shared by the fair-lines block
+# and the value block, so one page cannot quote two probabilities for one bet.
+#
+# WHAT IT REPLACED, and the size of the disagreement it removed: `1+ hits` and
+# `1+ home runs` were priced in props_fair_lines as `1 - (1 - p) ** exp_pa`
+# (a per-PA Bernoulli), while props_value_bets priced the SAME two markets
+# through _props_side_probabilities as a Poisson at lam = p * exp_pa. Measured
+# 2026-09-06 on a slot-1 hitter (exp_pa 4.65, lam 1.60, per-PA rate 0.34409),
+# 1+ hits at the 0.5 line:
+#
+#     fair-lines Bernoulli   P(over) = 0.85929
+#     value-block Poisson    P(over) = 0.79810   gap 0.06118
+#     one binomial path      P(over) = 0.85630   (-0.00298 / +0.05820)
+#
+# and at the 1.5 line the two surfaces had no shared answer at all, because
+# the fair-lines path only ever priced 0.5: Poisson 0.47507 against the
+# binomial's 0.51338, +0.03831 on the Over. On a whole 2.0 line the push mass
+# itself was wrong, 0.25843 Poisson against 0.32413 binomial, and the push is
+# what `_priced_side` scales EV by. The Poisson was also assigning 0.00604 of
+# mass to MORE THAN 5 HITS IN 4.65 PLATE APPEARANCES, an outcome with no
+# sample space. Nothing served moved: zero props rows exist anywhere in the
+# tree (the pull is inert without both arming variables), which is exactly why
+# the repair is free today.
+#
+# THE SIZE OF IT ON THE WHOLE POPULATION, not one hand-picked hitter. Binomial
+# minus Poisson across all 471 projected hitters in data/fantasy.json at
+# DEFAULT_PA 4.20 (2026-09-06): at the 0.5 line, median +0.04179 and a range of
+# +0.02922 to +0.05293, always positive because the binomial puts less mass on
+# a hitless game; at the 1.5 line, median -0.00658 (range -0.01115 to +0.00491),
+# the sign flipping with whether lam sits above or below the line. Across the
+# 203 projected starters at a 5.2 inning start, strikeouts move a median
+# +0.00396 (range -0.00834 to +0.01896), the smaller move because 22 batters
+# faced is close enough to unbounded that the binomial and the Poisson nearly
+# agree. `bf` is present on 272 of 272 projected pitchers, so the strikeout
+# trial count is measured (4.30 batters per inning at the median), not assumed
+# at three per inning.
+#
+# WHAT IT IS NOT: a fitted model. Nothing here is estimated from outcomes; the
+# lambdas still come from the projection engine's rest-of-season rates and the
+# only decision made here is which counting distribution carries them. It
+# REFUSES to claim the distributions are calibrated: no props row has ever
+# settled, so there is no graded evidence that a binomial beats a Poisson on
+# this board, only the structural argument stated per market below.
+
+#: The model that prices every props row on this page. Stamped on the row as
+#: `model_id`, beside `pmf` (which distribution produced the number), so a
+#: later sub-model swap is auditable from the payload alone.
+PROPS_MODEL_ID = "betting_props_pmf"
+
+#: prop name -> the distribution that prices it AND the reason it is that one.
+#: No blanket Poisson: each market declares, and the reason ships in the
+#: payload's method block so a reader can argue with the choice.
+#:
+#: `trials` names what the count is a sum over. When a row supplies that trial
+#: count the binomial markets use it; when it does not, the pmf falls back to
+#: Poisson and the row SAYS SO in `pmf_basis` rather than pretending.
+PROPS_DISTRIBUTIONS = {
+    "Strikeouts": {
+        "dist": "binomial", "trials": "expected batters faced",
+        "reason": "a batter faced is struck out or is not, so the count is a "
+                  "sum of Bernoulli trials with support capped at batters "
+                  "faced. Poisson puts mass on more strikeouts than batters, "
+                  "which cannot happen, and over-disperses (variance lam "
+                  "against the binomial's n p (1 - p))",
+    },
+    "Hits allowed": {
+        "dist": "binomial", "trials": "expected batters faced",
+        "reason": "one batter faced yields at most one hit, the same Bernoulli "
+                  "argument as strikeouts",
+    },
+    "Earned runs": {
+        "dist": "poisson", "trials": None,
+        "reason": "earned runs are not a per-batter indicator: one plate "
+                  "appearance can score four. The count is a compound sum with "
+                  "no per-trial cap, so the binomial argument does not apply "
+                  "and Poisson is the stated approximation. It understates the "
+                  "tail of a clumped scoring distribution",
+    },
+    "Total bases": {
+        "dist": "poisson", "trials": None,
+        "reason": "total bases per plate appearance take values 0 to 4, so the "
+                  "count is a compound sum, not a sum of indicators. A binomial "
+                  "would be wrong in the other direction, and the extra-base "
+                  "mix a compound distribution needs is not carried on the row. "
+                  "Poisson stays, now stated rather than assumed",
+    },
+    "1+ hits": {
+        "dist": "binomial", "trials": "expected plate appearances",
+        "reason": "a plate appearance yields at most one hit, so hits over a "
+                  "game are binomial over plate appearances. This is the market "
+                  "the two surfaces disagreed on: the fair line already used "
+                  "the Bernoulli reading and the value block used Poisson",
+    },
+    "1+ home runs": {
+        "dist": "binomial", "trials": "expected plate appearances",
+        "reason": "at most one home run per plate appearance, the same "
+                  "Bernoulli argument as hits",
+    },
+    "Outs recorded": {
+        "dist": None, "trials": None,
+        "reason": "published as a fair number only; no over line is priced, so "
+                  "no mass function is claimed for it",
+    },
+}
+
+def _prop_dist(prop_name: str) -> str | None:
+    """The declared distribution for a prop name, or None when the market
+    publishes a fair number and prices no side."""
+    return (PROPS_DISTRIBUTIONS.get(prop_name) or {}).get("dist")
+
+
+def _binomial_pmf(n: int, p: float, k_max: int | None = None) -> list[float]:
+    """pmf[0..n] for Binomial(n, p), exact via math.comb.
+
+    n is small here (about 4 to 5 plate appearances, about 20 to 27 batters
+    faced), so the exact form costs nothing and avoids the (1 - p) division of
+    the recurrence form blowing up at p = 1."""
+    n = max(0, int(n))
+    p = min(max(float(p), 0.0), 1.0)
+    if p >= 1.0:
+        out = [0.0] * n + [1.0]
+    elif p <= 0.0:
+        out = [1.0] + [0.0] * n
+    else:
+        q = 1.0 - p
+        out = [math.comb(n, k) * (p ** k) * (q ** (n - k)) for k in range(n + 1)]
+    if k_max is not None and k_max + 1 > len(out):
+        out = out + [0.0] * (k_max + 1 - len(out))
+    return out
+
+
+def _props_pmf(lam: float, *, dist: str | None = None,
+               n_trials: float | None = None):
+    """(pmf, distribution_name, fallback_basis) for one prop's count.
+
+    THE FRACTIONAL TRIAL COUNT IS A MIXTURE, NOT A ROUNDING. Expected plate
+    appearances are fractional by construction (SLOT_PA runs 4.65 down to
+    3.85) and a binomial needs an integer n. Rounding 4.65 up to 5 and 4.45
+    down to 4 moves P(1+ hits) at lam 1.2 from 0.74645 to 0.75990, a 1.35
+    point step off a 0.2 PA difference, which is an artefact of the rounding
+    and not of the hitter. So the trial count is treated as what it actually
+    is: a random number of trials, 4 with probability 0.35 and 5 with
+    probability 0.65 at exp_pa 4.65. The pmf is the matching mixture of
+    Binomial(4, p) and Binomial(5, p) with p = lam / exp_pa, which preserves
+    the mean at exactly lam (measured: mean 1.600000 at lam 1.6, mass summing
+    to 1.000000000000 over a support of 6) and is continuous in exp_pa. The
+    mixture reads 0.74781 where the two roundings read 0.74645 and 0.75990.
+
+    Falls back to Poisson, and SAYS SO in the third return value, when a
+    declared binomial has no trial count to stand on or when lam exceeds the
+    trial count (p > 1 is not a probability, and a market where that happens
+    is mis-specified rather than merely awkward)."""
+    dist = dist or "poisson"
+    lam = float(lam)
+    k_cap = max(30, int(lam) + 20)
+    if dist == "binomial":
+        try:
+            n_exp = float(n_trials)
+        except (TypeError, ValueError):
+            n_exp = 0.0
+        if n_exp <= 0:
+            return (bm._poisson_pmf(lam, k_cap), "poisson",
+                    "binomial declared for this market but no trial count was "
+                    "supplied on the row; Poisson used")
+        p = lam / n_exp
+        if p > 1.0:
+            return (bm._poisson_pmf(lam, k_cap), "poisson",
+                    f"binomial declared but lam {lam:.3f} exceeds the trial "
+                    f"count {n_exp:.2f}, so the per-trial rate is not a "
+                    "probability; Poisson used")
+        lo = int(math.floor(n_exp))
+        w = n_exp - lo
+        if w <= 1e-12:
+            return _binomial_pmf(lo, p), "binomial", None
+        a = _binomial_pmf(lo, p, k_max=lo + 1)
+        b = _binomial_pmf(lo + 1, p)
+        return ([(1.0 - w) * a[k] + w * b[k] for k in range(lo + 2)],
+                "binomial", None)
+    return bm._poisson_pmf(lam, k_cap), "poisson", None
+
+
 def _poisson_over(lam: float, line: float) -> float:
-    """P(count > line) for a half-point line."""
-    need = int(line) + 1
-    pmf = bm._poisson_pmf(lam, max(30, need + 20))
-    return sum(pmf[need:])
+    """P(count > line) for a half-point line, Poisson.
+
+    Kept under the name the pre-2026-09-06 call sites used, now a thin wrapper
+    on the single mass source so exactly one tail sum exists in this module."""
+    ps = _props_side_probabilities(lam, line)
+    return ps["p_over"] if ps else 0.0
 
 
 def _slate_season(games) -> int:
@@ -2864,18 +3051,27 @@ def props_fair_lines(games: list[dict], *, starters=None,
                 lam_k = (float(ros.get("k") or 0.0) / ip) * exp_ip
                 lam_er = (float(ros.get("er") or 0.0) / ip) * exp_ip
                 lam_h = (float(ros.get("h") or 0.0) / ip) * exp_ip
+                # THE TRIAL COUNT FOR THE BERNOULLI MARKETS. Strikeouts and
+                # hits allowed are per-batter indicators, so their binomial
+                # needs batters faced, not innings. `bf` is carried on the
+                # projection engine's rest-of-season line beside ip, so the
+                # rate is measured rather than assumed at three per inning; a
+                # record without it prices Poisson and the row says so.
+                bf = float(ros.get("bf") or 0.0)
+                exp_bf = (bf / ip) * exp_ip if bf > 0 else None
                 pitchers.append({
                     "mlbam": mid, "name": pp.get("name") or (rec or {}).get("name"),
                     "org": org, "opp": (g.get(opp) or {}).get("org"),
                     "game_pk": g.get("game_pk"),
                     "expected_ip": round(exp_ip, 2),
+                    "expected_bf": (round(exp_bf, 2) if exp_bf else None),
                     "props": [
-                        _prop_row("Strikeouts", lam_k),
+                        _prop_row("Strikeouts", lam_k, n_trials=exp_bf),
                         _prop_row("Earned runs", lam_er),
-                        _prop_row("Hits allowed", lam_h),
-                        {"prop": "Outs recorded", "fair_line": round(exp_ip * 3.0, 1),
-                         "lam": round(exp_ip * 3.0, 2), "over_line": None, "p_over": None,
-                         "note": "fair number only; outs props are priced off the same expected length"},
+                        _prop_row("Hits allowed", lam_h, n_trials=exp_bf),
+                        _prop_row("Outs recorded", exp_ip * 3.0, fair_digits=1,
+                                  note="fair number only; outs props are priced "
+                                       "off the same expected length"),
                     ],
                 })
         # Hitters: the projected order AGAINST THE OPPOSING PROBABLE'S HAND,
@@ -2926,16 +3122,20 @@ def props_fair_lines(games: list[dict], *, starters=None,
                     # never has to guess which platoon rates these are.
                     "vs_hand": vs_hand,
                     "vs_hand_basis": vs_basis,
+                    # THE OVER LINES ARE THE MARKET'S, NOT THE MODEL'S: total
+                    # bases posts at 1.5 and the two 1-plus questions at 0.5,
+                    # so the fair-line table answers the question the book
+                    # actually asks. All three go through _prop_row, which is
+                    # the same mass source the value block prices against.
                     "props": [
-                        {"prop": "Total bases", "fair_line": round(tb / pa * exp_pa, 2),
-                         "lam": round(tb / pa * exp_pa, 2), "over_line": 1.5,
-                         "p_over": round(_poisson_over(tb / pa * exp_pa, 1.5), 4)},
-                        {"prop": "1+ hits", "fair_line": round(p_hit * exp_pa, 2),
-                         "lam": round(p_hit * exp_pa, 2), "over_line": 0.5,
-                         "p_over": round(1.0 - (1.0 - p_hit) ** exp_pa, 4)},
-                        {"prop": "1+ home runs", "fair_line": round(p_hr * exp_pa, 3),
-                         "lam": round(p_hr * exp_pa, 3), "over_line": 0.5,
-                         "p_over": round(1.0 - (1.0 - p_hr) ** exp_pa, 4)},
+                        # No trial count on total bases: it is Poisson by
+                        # declaration, and stamping a PA count on a row that
+                        # does not use one would imply a binomial.
+                        _prop_row("Total bases", tb / pa * exp_pa, over_line=1.5),
+                        _prop_row("1+ hits", p_hit * exp_pa, over_line=0.5,
+                                  n_trials=exp_pa),
+                        _prop_row("1+ home runs", p_hr * exp_pa, over_line=0.5,
+                                  n_trials=exp_pa, fair_digits=3, lam_digits=3),
                     ],
                 })
     return {
@@ -2955,21 +3155,99 @@ def props_fair_lines(games: list[dict], *, starters=None,
                                  "bulk StatsAPI call. An unknown hand falls back to the vs-RHP "
                                  "order and each hitter row says so in vs_hand_basis. A posted "
                                  "lineup card beats this every time",
-            "distribution": "Poisson for counting props, which understates the tails of a "
-                            "clumped scoring distribution",
+            # `distribution` IS A PROSE STRING AND HAS TO STAY ONE. The page
+            # renders this key verbatim through one escaper (assets/betting.js,
+            # `kv("Distribution", esc(meth.distribution || "-"))`), and an
+            # escaper stringifies: a dict here reaches a paying reader as
+            # "[object Object]". The per-market table therefore lives in its
+            # own key below, which no client reads.
+            "distribution": "each prop market declares its own distribution "
+                            "and every row carries the one that priced it. The "
+                            "value block prices that same function at the "
+                            "book's line, so the fair line and the value line "
+                            "cannot disagree about a bet. No props row has "
+                            "settled yet, so none of these choices is "
+                            "calibrated against outcomes",
+            # ONE mass function per market, shared with the value block, each
+            # with the structural reason it is that one and not a blanket
+            # Poisson. Read PROPS_DISTRIBUTIONS in this module for the same
+            # table in source form.
+            "distribution_by_market": {
+                "rule": "each prop market declares one distribution, and the "
+                        "row carries which one priced it in `pmf`. The value "
+                        "block prices the SAME function at the book's line, so "
+                        "the two tables cannot disagree about one bet",
+                "model_id": PROPS_MODEL_ID,
+                "by_market": {k: {"dist": v["dist"], "trials": v["trials"],
+                                  "reason": v["reason"]}
+                              for k, v in PROPS_DISTRIBUTIONS.items()},
+                "not_claimed": "no props row has ever settled, so none of "
+                               "these distributions is calibrated against "
+                               "outcomes. The choice is structural, not "
+                               "measured",
+            },
         },
         "pitchers": pitchers,
         "hitters": hitters,
     }
 
 
-def _prop_row(name: str, lam: float) -> dict:
-    """A fair line plus the model probability over the nearest half point."""
-    line = round(lam * 2) / 2.0
-    if line == int(line):
-        line += 0.5
-    return {"prop": name, "fair_line": round(lam, 2), "lam": round(lam, 2),
-            "over_line": line, "p_over": round(_poisson_over(lam, line), 4)}
+def _prop_row(name: str, lam: float, *, n_trials: float | None = None,
+              over_line: float | None = None, fair_digits: int = 2,
+              lam_digits: int = 2, note: str | None = None) -> dict:
+    """ONE props fair-line row, priced by the market's declared distribution.
+
+    Every props row on the page is built here, pitcher and hitter alike. The
+    hitter rows used to be three inline dict literals with their own
+    arithmetic, which is how `1+ hits` came to be a Bernoulli complement on
+    this surface and a Poisson on the value surface.
+
+    `over_line` defaults to the nearest half point above lam, never a whole
+    number, because a whole-number fair line would push and a fair line has no
+    book to refund it. A market that declares no distribution
+    (PROPS_DISTRIBUTIONS `dist` None) publishes the fair number alone: no
+    line, no probability, and `pmf` null rather than a distribution it does
+    not claim.
+
+    `n_trials` is the count the market is a sum over (plate appearances,
+    batters faced). It rides on the row so the value block prices the same
+    binomial rather than re-deriving one.
+
+    THE ROW IS PRICED AT THE LAMBDA IT PUBLISHES. Rounding after pricing left
+    a second, smaller version of the same defect: the fair-line table priced
+    the unrounded intermediate while the value block priced the rounded `lam`
+    off the row, which read 0.58110 against 0.58029 on the first fixture
+    total-bases row (2026-09-06). Rounding first makes the published number
+    and the priced number the same number, and the two surfaces agree to the
+    last decimal rather than to four."""
+    spec = PROPS_DISTRIBUTIONS.get(name) or {}
+    dist = spec.get("dist")
+    lam_pub = round(float(lam), lam_digits)
+    trials = round(float(n_trials), 3) if n_trials else None
+    row = {"prop": name, "fair_line": round(float(lam), fair_digits),
+           "lam": lam_pub, "n_trials": trials,
+           "model_id": PROPS_MODEL_ID, "pmf": None, "pmf_basis": None,
+           "over_line": None, "p_over": None}
+    if note:
+        row["note"] = note
+    if dist is None:
+        row["pmf_basis"] = spec.get("reason")
+        return row
+    if over_line is None:
+        over_line = round(lam_pub * 2) / 2.0
+        if over_line == int(over_line):
+            over_line += 0.5
+    ps = _props_side_probabilities(lam_pub, over_line, dist=dist,
+                                   n_trials=trials)
+    row["over_line"] = over_line
+    if ps:
+        row["p_over"] = round(ps["p_over"], 4)
+        row["pmf"] = ps["pmf"]
+        row["pmf_basis"] = ps["pmf_basis"]
+    else:
+        row["pmf_basis"] = ("no mass function: lam is not positive, so no "
+                            "probability is published for this row")
+    return row
 
 
 # ===========================================================================
@@ -2983,6 +3261,11 @@ PROPS_MAX_GAMES_PER_DAY = 3
 #: The Odds API market key -> the props_fair_lines prop name whose lambda
 #: prices it. The lambdas already exist (section 4's fair lines, on the A5a
 #: vs-hand order); the value machinery evaluates them at the BOOK's line.
+#:
+#: The prop name is also the key into PROPS_DISTRIBUTIONS, so this map decides
+#: the distribution too and there is no second table to drift against it.
+#: test_betting_props_pmf pins that every name here has a declared
+#: distribution.
 PROPS_MARKET_LAMBDAS = {
     "pitcher_strikeouts": ("pitchers", "Strikeouts"),
     "batter_total_bases": ("hitters", "Total bases"),
@@ -3030,20 +3313,39 @@ def props_value_games(bets: list[dict], *, slots: dict | None = None,
     return picked[:cap]
 
 
-def _props_side_probabilities(lam: float, line: float) -> dict | None:
-    """Over, Under and PUSH for one posted props line, Poisson at `lam`.
+def _props_side_probabilities(lam: float, line: float, *,
+                              dist: str | None = None,
+                              n_trials: float | None = None) -> dict | None:
+    """Over, Under and PUSH for one posted props line, off the ONE mass source.
 
-    The same push discipline betting_model.total_side_probabilities carries
-    for totals: on a whole-number line the sides are CONDITIONED on the bet
-    resolving and `p_push` rides beside them, so `_priced_side` can scale the
-    EV by (1 - p_push) exactly as it does for a whole-number total."""
+    THIS IS THE ONLY PLACE A PROP PROBABILITY IS COMPUTED. Before 2026-09-06
+    the fair-lines block derived `1+ hits` and `1+ home runs` independently as
+    a per-PA Bernoulli complement while this function priced the same two
+    markets as a Poisson, so /betting/ carried two answers for one bet. Both
+    surfaces now call here with the market's declared distribution
+    (PROPS_DISTRIBUTIONS) and the trial count the row carries, so they agree
+    by construction rather than by review.
+
+    `dist` defaults to Poisson so the two-argument call kept by the older
+    tests prices exactly what it priced before.
+
+    The push discipline is unchanged and is the same one
+    betting_model.total_side_probabilities carries for totals: on a
+    whole-number line the sides are CONDITIONED on the bet resolving and
+    `p_push` rides beside them, so `_priced_side` can scale the EV by
+    (1 - p_push) exactly as it does for a whole-number total. A half-point
+    line cannot push and reports `p_push` None.
+
+    Returns `pmf`, the distribution that actually produced the numbers, and
+    `pmf_basis`, non-null only when a declared distribution could not be used
+    and the fallback needs stating."""
     try:
         lam, line = float(lam), float(line)
     except (TypeError, ValueError):
         return None
     if lam <= 0 or line < 0:
         return None
-    pmf = bm._poisson_pmf(lam, max(30, int(line) + 20))
+    pmf, used, basis = _props_pmf(lam, dist=dist, n_trials=n_trials)
     if abs(line - round(line)) < 1e-9:
         k = int(round(line))
         p_push = pmf[k] if 0 <= k < len(pmf) else 0.0
@@ -3052,25 +3354,49 @@ def _props_side_probabilities(lam: float, line: float) -> dict | None:
             return None
         return {"p_over": sum(pmf[k + 1:]) / denom,
                 "p_under": sum(pmf[:k]) / denom,
-                "p_push": p_push}
-    p_over = sum(pmf[int(line) + 1:])
-    return {"p_over": p_over, "p_under": 1.0 - p_over, "p_push": None}
+                "p_push": p_push, "pmf": used, "pmf_basis": basis}
+    need = int(line) + 1
+    p_over = sum(pmf[need:])
+    # A finite-support binomial can hand back a hair over or under 1.0 in
+    # floating point; the Under is the complement of the Over on a line that
+    # cannot push, and it is clamped so no row ever publishes a negative
+    # probability or one above 1.
+    p_under = min(1.0, max(0.0, 1.0 - p_over))
+    return {"p_over": min(1.0, max(0.0, p_over)), "p_under": p_under,
+            "p_push": None, "pmf": used, "pmf_basis": basis}
 
 
-def _props_lambda_index(props_fair: dict) -> dict:
-    """{(org, casefolded name, market_key): lam} out of the fair-lines block,
-    so the value pass prices the SAME lambdas the props tab already shows.
-    The org is in the key because two rosters can carry the same name."""
+def _props_pricing_index(props_fair: dict) -> dict:
+    """{(org, casefolded name, market_key): {lam, dist, n_trials, prop}} out of
+    the fair-lines block, so the value pass prices the SAME mass function the
+    props tab already shows.
+
+    IT CARRIES THE WHOLE SPEC, NOT THE LAMBDA ALONE (2026-09-06). While this
+    index returned a bare float the value block had no way to know a market
+    was binomial or what it was binomial over, so it fell back to a Poisson
+    for everything and quoted a different number than the table above it. The
+    trial count now travels with the lambda.
+
+    The org is in the key because two rosters can carry the same name. The
+    lambda read here is the value PUBLISHED on the row, and `_prop_row` prices
+    that same published value, so the value row and the fair-line row are the
+    identical number rather than two roundings of one."""
     idx = {}
     pf = props_fair or {}
     for mkey, (section, prop_name) in PROPS_MARKET_LAMBDAS.items():
+        dist = _prop_dist(prop_name)
         for rec in pf.get(section) or []:
             nm = (rec.get("name") or "").casefold().strip()
             if not nm:
                 continue
             for pr in rec.get("props") or []:
                 if pr.get("prop") == prop_name and pr.get("lam") is not None:
-                    idx[(rec.get("org"), nm, mkey)] = float(pr["lam"])
+                    idx[(rec.get("org"), nm, mkey)] = {
+                        "lam": float(pr["lam"]),
+                        "dist": dist,
+                        "n_trials": pr.get("n_trials"),
+                        "prop": prop_name,
+                    }
     return idx
 
 
@@ -3122,7 +3448,7 @@ def props_value_bets(bets: list[dict], props_fair: dict, *,
                                             "market_publishability table"),
         }
 
-    lam_idx = _props_lambda_index(props_fair)
+    lam_idx = _props_pricing_index(props_fair)
     rows_out, rejections = [], Counter()
     selected_meta = []
     for b in sel:
@@ -3157,16 +3483,21 @@ def props_value_bets(bets: list[dict], props_fair: dict, *,
                 if line is None:
                     rejections["no_consensus_line"] += 1
                     continue
-                lam = None
+                spec = None
                 nm = player.casefold().strip()
                 for org in orgs:
-                    lam = lam_idx.get((org, nm, mkey))
-                    if lam is not None:
+                    spec = lam_idx.get((org, nm, mkey))
+                    if spec is not None:
                         break
-                if lam is None:
+                if spec is None:
                     rejections["player_not_in_model_index"] += 1
                     continue
-                ps = _props_side_probabilities(lam, line)
+                lam = spec["lam"]
+                # THE SAME CALL THE FAIR-LINE ROW MADE, at the book's line
+                # instead of ours: same lambda, same distribution, same trial
+                # count. Two surfaces, one probability.
+                ps = _props_side_probabilities(lam, line, dist=spec["dist"],
+                                               n_trials=spec.get("n_trials"))
                 if not ps:
                     rejections["no_model_probability"] += 1
                     continue
@@ -3177,6 +3508,15 @@ def props_value_bets(bets: list[dict], props_fair: dict, *,
                     "game_pk": b.get("game_pk"), "matchup": matchup,
                     "start": b.get("start"), "lam": round(lam, 3),
                     "line": line, "vs_hand_source": "props_fair_lines (A5a)",
+                    # WHICH MODEL AND WHICH DISTRIBUTION PRICED THIS ROW, so a
+                    # later sub-model swap is auditable from the payload alone
+                    # and no reader has to guess whether a number came from a
+                    # Poisson or a binomial.
+                    "model_id": PROPS_MODEL_ID,
+                    "prop": spec.get("prop"),
+                    "pmf": ps.get("pmf"),
+                    "pmf_basis": ps.get("pmf_basis"),
+                    "n_trials": spec.get("n_trials"),
                     "captured_at": snap.get("_captured_at"),
                     "provisional": prov, "min_edge_used": thr,
                     "fair_book": mv.get("fair_book"),
@@ -3228,9 +3568,21 @@ def props_value_bets(bets: list[dict], props_fair: dict, *,
                            "only, fair probabilities from the minimum-hold "
                            "book, staleness / hold / consensus-distance "
                            "rejections counted per pair",
-            "model_prob": "the props fair-line Poisson lambda (vs-hand order, "
-                          "A5a) evaluated at the BOOK's consensus line, "
-                          "push-conditioned on whole numbers",
+            "model_prob": "the props fair-line lambda (vs-hand order, A5a) "
+                          "evaluated at the BOOK's consensus line through the "
+                          "SAME mass function the fair-line table publishes "
+                          "(_props_side_probabilities, distribution declared "
+                          "per market in PROPS_DISTRIBUTIONS), "
+                          "push-conditioned on whole numbers. Every row "
+                          "carries `model_id` and `pmf`",
+            "one_probability_per_bet": ("before 2026-09-06 this block priced "
+                                        "1+ hits and 1+ home runs as a Poisson "
+                                        "while the fair-line table priced them "
+                                        "as a per-PA Bernoulli, so the page "
+                                        "carried two answers for one bet. Both "
+                                        "now call one function. No published "
+                                        "number moved: no props row has ever "
+                                        "been served"),
         },
     }
 

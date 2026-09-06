@@ -470,6 +470,20 @@ def decide(now: datetime | None = None) -> dict:
     return out
 
 
+def _book_close_credits(cost: int, note: str) -> None:
+    """Charge the shared tier ledger for a close capture. Never raises.
+
+    Booked on both the success and the failure path: The Odds API bills on the
+    request, so a call that reached the provider and then raised has already
+    cost its credits."""
+    try:
+        import betting_credits as _bc
+        _bc.record("close", int(cost), note=str(note))
+    except Exception:                                     # noqa: BLE001
+        log.warning("betting_close_job: could not book %s close credits",
+                    cost, exc_info=True)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true",
@@ -541,12 +555,42 @@ def main() -> int:
     if not d["fire"]:
         return 0
 
+    # THE TIER GUARD. The close job's own window logic decides WHETHER this is
+    # the right moment; this decides whether the month can afford it. Four jobs
+    # share one 500-credit tier and until 2026-09-06 none of them could see the
+    # others, so whichever ran first could exhaust it and every later job would
+    # simply get provider errors on a budget the code believed was fine.
+    #
+    # The refusal is exit 0, not an error. A month that has spent its close
+    # allocation is a budget state, not a broken job, and returning non-zero
+    # would page somebody every fifteen minutes for the rest of the month.
     try:
         import betting_ingest as bi
+    except Exception:
+        log.exception("betting_close_job: cannot import betting_ingest")
+        return 1
+    _cost = 3
+    try:
+        import betting_credits as _bc
+        _cost = int(bi.credits_for())
+        _okc, _whyc = _bc.check("close", _cost)
+    except Exception:                                     # noqa: BLE001
+        _okc, _whyc = True, "credit ledger unavailable; proceeding unguarded"
+        log.warning("betting_close_job: credit ledger unusable", exc_info=True)
+    if not _okc:
+        log.warning("betting_close_job: %s", _whyc)
+        print(f"  no capture: {_whyc}")
+        return 0
+    log.info("betting_close_job: credits %s", _whyc)
+
+    try:
         status = bi.run("close")
     except Exception:
+        # Sent but failed still bills.
+        _book_close_credits(_cost, "raised")
         log.exception("betting_close_job: close snapshot failed")
         return 1
+    _book_close_credits(_cost, str((status or {}).get("last_run"))[:80])
     print(f"  {status.get('last_run')}")
 
     # Grade the record against the close we just captured. This is the ONLY

@@ -1,7 +1,25 @@
-# eephus.io betting + card jobs. Install on the production box with `crontab -e`.
+# eephus.io betting jobs. Install on the production box with `crontab -e`.
 #
-# Three jobs, and only one of them costs API credits (the card job spends only
-# marketplace requests, throttled to one per 5s).
+# THREE JOBS. Two of them bill The Odds API, and their combined spend is stated
+# in each section below so the monthly total can be read off this file without
+# running anything: the open capture is 3 credits a day (93 in a 31-day month)
+# and the close job is 3 credits a day (93), against the free tier's 500. The
+# vintage snapshot is offline and free.
+#
+# ONE LEDGER ACROSS ALL OF THEM (betting_credits.py, added 2026-09-06). Until it
+# existed no job could see any other's spend, so whichever ran first in a month
+# could exhaust the tier and every later job would simply collect provider errors
+# on a budget the code believed was fine. Each job now checks a shared ledger
+# BEFORE its request (it has to be before: the provider bills on the request, not
+# the response) against both its own allocation and the tier total, and refuses
+# with the arithmetic rather than a bare no. Allocations are open 100, close 100,
+# props 120, futures 30, which leaves 150 unallocated on purpose: that reserve
+# absorbs the spend the ledger cannot see.
+#
+# The card job that this header used to describe is GONE. The Card Market module
+# was removed on 2026-09-05 (owner decision: not feasible on the data we have),
+# and its cron line went with it. If you are reading an older crontab on the box
+# that still has a card line, delete it: the entry point no longer exists.
 #
 # TZ=UTC BELOW IS LOAD-BEARING, AND ITS ABSENCE IS THE PRIME SUSPECT FOR THE
 # ZERO CLOSE SNAPSHOTS (2026-08-09 owner decision, binding). This file used to
@@ -31,6 +49,29 @@ TZ=UTC                                         # <- every line below is UTC
 PATH=/usr/local/bin:/usr/bin:/bin
 EEPHUS=/opt/eephus/prospect-tracker           # <- the checkout on this box
 PY=/opt/eephus/venv/bin/python                 # <- the interpreter with the deps
+
+# --- The OPEN odds snapshot, the vintage clock's real constraint ------------
+# THIS IS AN HOUR FIX, NOT NEW SPEND. The nightly pipeline already made one paid
+# open call a day; it just made it too late. Measured 2026-09-05 on the cached
+# wrappers: 11 of 22 snapshots landed AFTER their own slate's first pitch, so
+# more than half the daily spend bought a price that was no longer an opening
+# price, and a game that was never priced in time leaves nothing behind to
+# audit. Moving the call earlier costs the same 3 credits and buys a usable one.
+#
+# 13:10 UTC is 09:10 Eastern: after the books post the day's openers, and more
+# than three hours before 16:16 UTC, the earliest first pitch on record in the
+# cache. Do not move this later without re-reading that number.
+#
+# It is safe to run beside the nightly. The pipeline's step 9d-pre-odds now
+# skips for free when this has already captured today's SLATE (the US-Eastern
+# slate date, the same label the ingest stamps, not the box's local date), so
+# the two cannot both bill. The guard is at the call site because it has to be:
+# betting_ingest.run() fetches before it writes, so the provider's meter is
+# already charged by the time a duplicate filename could raise.
+#
+# Exits 0 on every no-op, including an unarmed key, because a cron entry point
+# that raises becomes a retry loop that bills.
+10 13 * * *  cd $EEPHUS && . /etc/eephus.env && $PY run_monthly.py --odds-open >> logs/odds-open.log 2>&1
 
 # --- The close odds snapshot, for closing line value ------------------------
 # Runs every 15 minutes, ALL DAY, and DECIDES each time. It exits quietly on
@@ -80,6 +121,18 @@ PY=/opt/eephus/venv/bin/python                 # <- the interpreter with the dep
 #                                             capture, not the exit code, is the
 #                                             evidence, and the job exits 0 on
 #                                             every legitimate no-op.
+#   $PY betting_credits.py                    THE SHARED TIER LEDGER: what each
+#                                             job has spent this month, its
+#                                             allocation, and the provider's own
+#                                             reported remaining. Read this
+#                                             before adding any paid job. The
+#                                             provider figure is the authority;
+#                                             our count is a lower bound,
+#                                             because a manual pull or a second
+#                                             box bills without passing through
+#                                             the ledger, and the gap between
+#                                             the two is printed rather than
+#                                             hidden.
 #   $PY betting_ingest.py --status            is a key configured (never prints it)
 #   $PY leaderboard_vintages.py --coverage    how many vintages exist
 #

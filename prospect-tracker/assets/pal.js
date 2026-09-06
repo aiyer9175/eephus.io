@@ -14,17 +14,29 @@
 //   history - an archive of past SP<->RP switches (the model's backtest set)
 //             with a scorecard, plus a pitch-mix before/after view
 // The FIT scores are a candidate SCREEN, not a success probability. Backtest
-// evidence is PER DIRECTION (repaired harness, 2026-07): SP->RP FIT carries a
-// validated directional signal vs realized WAR change; RP->SP FIT is a
-// structural screen whose backtest does NOT validate ranking within the
-// direction. The retired pooled rho is reporting-only and never cited here.
+// evidence is PER DIRECTION and every validity word on this page is DERIVED
+// from data/pal.json, never written here: backtest.gate carries the
+// pre-registered per-direction verdict (with the WAR series IT was measured on)
+// and backtest.per_direction carries the live rho (on the series
+// backtest.war_basis stamps). A payload without those blocks makes the page say
+// the measurement is unavailable; it never asserts a verdict by default and it
+// never promotes the sign of a rho to one. Fixed 2026-09-06: the scorecard used
+// to print "validated vs baselines" and "does not validate ranking" as literal
+// strings, so it kept reporting the bWAR-era gate after the WAR series under
+// the live numbers changed to eWAR v2. The retired pooled rho is
+// reporting-only and never cited here.
 (function () {
   "use strict";
 
   var DATA_URL = "/data/pal.json";
   var DATA = null;
   var LOAD_ERROR = false;    // fetch failed / non-OK (distinct from "not exported yet")
-  var section = "rp2sp";     // rp2sp | sp2rp | posfit | history | pitchadd | platoon | prospects
+  // DEFAULT TAB = the direction that passes its gate (owner default, 2026-09-06).
+  // The lab opened on RP->SP, which is the direction whose ranking the gate does
+  // NOT validate; the page led with its weakest claim. build_site.py paints the
+  // server-rendered nav, so init() re-syncs the active button to whatever this
+  // is (and to the hash when there is one).
+  var section = "sp2rp";     // rp2sp | sp2rp | posfit | history | pitchadd | platoon | prospects
   var historyView = "table"; // table | mix
   var sortKey = "fit";
   var sortAsc = false;
@@ -475,7 +487,10 @@
       subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
         + rows.length + " relievers who profile as starters",
       url: "eephus.io/pal", filenameBase: "pal-rp2sp-candidates",
-      caption: "a candidate screen, not a forecast · RP→SP ranking is a structural screen (not backtest-validated)",
+      // Caption reads the payload verdict (see verdictPhrase): a shareable
+      // graphic that carries a frozen validity claim is the same defect as a
+      // page that carries one.
+      caption: "a candidate screen, not a forecast · RP→SP: " + verdictPhrase("RP->SP"),
       board: { defaultCount: 25, counts: [10, 25, 50],
         legend: "FIT 0-100 = RP→SP conversion screen · Command = component score 0-100 · tiers cut at "
           + (tierRule("rp2sp").tiers || []).filter(function (t) { return t.min_fit != null; })
@@ -534,7 +549,7 @@
       subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
         + rows.length + " starters whose stuff would play up in relief",
       url: "eephus.io/pal", filenameBase: "pal-sp2rp-candidates",
-      caption: "a candidate screen · SP→RP carries a validated directional signal vs realized WAR change",
+      caption: "a candidate screen · SP→RP: " + verdictPhrase("SP->RP"),
       board: { defaultCount: 25, counts: [10, 25, 50],
         legend: "FIT 0-100 = SP→RP relief-upside screen (gated by conversion need) · tiers cut at "
           + (tierRule("sp2rp").tiers || []).filter(function (t) { return t.min_fit != null; })
@@ -564,9 +579,11 @@
     if (!rows.length) return empty("No RP→SP candidates yet.");
     var note = '<div class="mlbstats-note">Relievers who profile as starters. ' + gloss("RP→SP FIT", "rp_sp_fit")
       + " leads on arsenal depth (a starter needs a third pitch to survive a lineup three times), then command, "
-      + "platoon-neutrality, and contact quality. This is a structural screen: the repaired backtest does not "
-      + "validate the ranking of RP&rarr;SP candidates against realized WAR change, so treat the order as a "
-      + "shortlist, not a forecast. Click a row for the component breakdown." + gfxChip("pal-rp2sp-gfx") + "</div>" + tierLegend("rp2sp");
+      + "platoon-neutrality, and contact quality. " + esc(verdictSentence("RP->SP"))
+      + (dirValidates("RP->SP") === true
+          ? " A FIT is still a candidate screen, not a forecast."
+          : " Treat the order as a shortlist, not a forecast.")
+      + " Click a row for the component breakdown." + gfxChip("pal-rp2sp-gfx") + "</div>" + tierLegend("rp2sp");
     return rp2spViz() + note + candTable(sortRows(rows, RP_COLS), RP_COLS);
   }
   function renderSP2RP() {
@@ -575,9 +592,8 @@
     var note = '<div class="mlbstats-note">Starters who are <b>struggling in the rotation</b> and whose stuff would play up in relief. '
       + gloss("SP→RP FIT", "sp_rp_fit") + " is relief upside GATED by conversion need: a starter succeeding in the rotation "
       + "scores low no matter how nasty his stuff is, because a good starter is worth more than a good reliever. SP ERA is "
-      + "the need signal; proj REM+ is a display-only relief projection. This direction carries a validated "
-      + "directional signal: in the repaired backtest, pre-conversion SP&rarr;RP FIT out-ranked every same-event "
-      + "baseline against realized WAR change." + gfxChip("pal-sp2rp-gfx") + "</div>" + tierLegend("sp2rp");
+      + "the need signal; proj REM+ is a display-only relief projection. " + esc(verdictSentence("SP->RP"))
+      + gfxChip("pal-sp2rp-gfx") + "</div>" + tierLegend("sp2rp");
     return sp2rpViz() + note + candTable(sortRows(rows, SP_COLS), SP_COLS);
   }
 
@@ -597,8 +613,9 @@
     if (h.success === false) return '<span class="pal-miss">Miss</span>';
     return '<span class="pal-pending">pending</span>';
   }
-  // WAR produced by the conversion: realized eWAR before and after the switch,
-  // with the delta colored (a gain reads as a hit, a drop as a miss).
+  // WAR produced by the conversion: realized WAR before and after the switch on
+  // whatever series backtest.war_basis stamps (eWAR v2 since the 2026-09-03
+  // epoch), with the delta colored (a gain reads as a hit, a drop as a miss).
   function warCell(h) {
     if (h.post_war == null && h.pre_war == null) return '<span class="pal-pending">-</span>';
     var pre = (h.pre_war == null) ? "-" : f1(h.pre_war);
@@ -629,23 +646,116 @@
       .concat(dropped.map(function (p) { return '<span class="pal-miss">-' + esc(p) + "</span>"; }));
     return out.length ? out.join(" ") : '<span class="proj-dim">same mix</span>';
   }
+  // ---- backtest verdicts: DERIVED, never hard-coded --------------------------
+  // Every validity claim on this page reads data/pal.json. Two different things
+  // live in that payload and they are NOT the same measurement:
+  //   backtest.per_direction  the LIVE rho of pre-conversion FIT against
+  //                           realized WAR change, on whatever WAR series
+  //                           backtest.war_basis names for this build.
+  //   backtest.gate           the PRE-REGISTERED gate verdict carried out of
+  //                           data/pal_eval.json, with the WAR series THAT was
+  //                           measured on (gate.basis_series) and its own n.
+  // A missing block yields "unavailable". The sign of a live rho is never
+  // promoted to a verdict here: the gate is a bootstrap gap against same-event
+  // baselines, and re-deciding it in a renderer would be inventing a gate.
+  function btBlock() { return (DATA && DATA.backtest) || {}; }
+  function btDir(key) { return (btBlock().per_direction || {})[key] || {}; }
+  function btGate(key) {
+    var g = btBlock().gate;
+    var d = (g && g.per_direction) ? g.per_direction[key] : null;
+    return (d && typeof d.pass === "boolean") ? d : null;
+  }
+  // Short series name off a stamp line ("eWAR v2: the Baseball-Reference ..."
+  // -> "eWAR v2"). null when the build read no WAR at all.
+  function seriesShort(s) {
+    return s ? String(s).split(":")[0].split("(")[0].trim() : null;
+  }
+  // null in BOTH states where the series must not be named: no WAR read at all,
+  // and WAR read by a substituted loader that never recorded which series it
+  // was (pal_export._war_basis stamps those separately).
+  function warSeriesShort() {
+    var wb = btBlock().war_basis || {};
+    if (wb.available === false || wb.provider_known === false) return null;
+    return seriesShort(wb.series || wb.provider);
+  }
+  function gateSeriesShort() {
+    var g = btBlock().gate;
+    return g ? seriesShort(g.basis_series || g.basis_provider) : null;
+  }
+  // true / false / null(unknown) - the ONLY source of a validity word.
+  function dirValidates(key) {
+    var d = btGate(key);
+    return d ? !!d.pass : null;
+  }
+  // Scorecard tail: the verdict word, the gate's own n, and the series the
+  // gate ran on (which may not be the series the live rho ran on).
+  function verdictTag(key) {
+    var v = dirValidates(key);
+    if (v === null) return '<span class="proj-dim">gate verdict not in this payload</span>';
+    var d = btGate(key);
+    var basis = gateSeriesShort();
+    return '<span class="' + (v ? "pal-hit" : "pal-miss") + '">'
+      + (v ? "validated vs baselines" : "does not validate ranking") + "</span>"
+      + '<span class="proj-dim"> (gate' + (d.n_gate == null ? "" : " n=" + esc(d.n_gate))
+      + (basis ? ", " + esc(basis) + " basis" : "") + ")</span>";
+  }
+  // PLAIN TEXT (callers esc() it for HTML; the GFX captions need it raw).
+  // One short clause for the banner and the shareable-board captions.
+  function verdictPhrase(key) {
+    var v = dirValidates(key);
+    if (v === null) return "backtest verdict unavailable";
+    return v ? "backtest-validated ranking" : "structural screen, ranking not backtest-validated";
+  }
+  // PLAIN TEXT. The long form for the section notes: the verdict, the gate's
+  // own n and series, its rho and the baseline it had to beat.
+  function verdictSentence(key) {
+    var v = dirValidates(key);
+    if (v === null) {
+      return "The gate verdict for this direction is not in this payload, so the page makes "
+        + "no validity claim either way.";
+    }
+    var d = btGate(key);
+    var basis = gateSeriesShort();
+    var where = " (gate" + (d.n_gate == null ? "" : " n=" + d.n_gate)
+      + (basis ? ", " + basis + " basis" : "")
+      + (d.rho_fit_war_delta == null ? "" : ", rho " + d.rho_fit_war_delta)
+      + (d.best_baseline ? " vs best same-event baseline " + d.best_baseline
+          + (d.best_baseline_rho == null ? "" : " " + d.best_baseline_rho) : "")
+      + ")";
+    return v
+      ? "This direction carries a validated directional signal: pre-conversion FIT out-ranked "
+        + "every same-event baseline against realized WAR change" + where + "."
+      : "This is a structural screen: the gated backtest does not validate the ranking within "
+        + "this direction against realized WAR change" + where + ".";
+  }
+
   function scorecard() {
-    var b = (DATA && DATA.backtest) || {};
-    var pd = b.per_direction || {};
+    var b = btBlock();
     // Evidence is per direction (repaired harness): pre-FIT rank vs realized
     // WAR change within each direction. The old pooled held-role rho is a
-    // retired reporting-only field and is not shown.
-    function dirStat(key, label, tag) {
-      var d = pd[key] || {};
-      if (d.rho_prefit_vs_war_delta == null) return "";
-      return '<span class="pal-sc-stat">' + label + " <b>&rho; "
-        + esc(d.rho_prefit_vs_war_delta) + '</b><span class="proj-dim"> vs WAR change (n='
-        + esc(d.n_war) + ") &middot; " + tag + "</span></span>";
+    // retired reporting-only field and is not shown. The VERDICT is derived
+    // (see verdictTag): this card used to hard-code one word per direction and
+    // therefore could not report a measurement, only remember one.
+    function dirStat(key, label) {
+      var d = btDir(key);
+      var g = btGate(key);
+      var rho = d.rho_prefit_vs_war_delta;
+      if (rho == null && !g) {
+        return '<span class="pal-sc-stat">' + label
+          + '<span class="proj-dim"> measurement unavailable</span></span>';
+      }
+      var series = warSeriesShort();
+      var live = (rho == null)
+        ? '<span class="proj-dim">no live &rho; in this build</span>'
+        : "<b>&rho; " + esc(rho) + '</b><span class="proj-dim"> vs WAR change (n=' + esc(d.n_war)
+          + (series ? ", " + esc(series) : "") + ")</span>";
+      return '<span class="pal-sc-stat">' + label + " " + live
+        + '<span class="proj-dim"> &middot; </span>' + verdictTag(key) + "</span>";
     }
     return '<div class="pal-scorecard">'
       + '<span class="pal-sc-stat"><b>' + esc(DATA.n_conversions) + "</b> conversions</span>"
-      + dirStat("SP->RP", gloss("SP→RP FIT", "sp_rp_fit"), "validated vs baselines")
-      + dirStat("RP->SP", gloss("RP→SP FIT", "rp_sp_fit"), "does not validate ranking")
+      + dirStat("SP->RP", gloss("SP→RP FIT", "sp_rp_fit"))
+      + dirStat("RP->SP", gloss("RP→SP FIT", "rp_sp_fit"))
       // NULL GUARD (plan item E6). rp2sp can be empty, and esc(null) renders
       // nothing, so this printed the literal "converters at th pct of the
       // field". A sentence with a hole in it reads as a rendering bug to a
@@ -687,7 +797,8 @@
         + "<td>" + successCell(h) + "</td></tr>";
     }).join("") + "</tbody>";
     var note = '<div class="mlbstats-note">Every detected SP&harr;RP switch since 2018, labeled by whether the pitcher '
-      + "held the new role. WAR before and after is realized Baseball-Reference pitcher WAR in the pre-role and "
+      + "held the new role. WAR before and after is realized pitcher WAR"
+      + (warSeriesShort() ? " on " + esc(warSeriesShort()) : "") + " in the pre-role and "
       + "post-role seasons (the value the conversion actually produced); Arsenal shift flags the pitches he added "
       + "or dropped in the move.</div>";
     return scorecard() + historyToggle() + note
@@ -1423,7 +1534,8 @@
         // StatsAPI (through bullpen_export) and the conversion WAR column is
         // Baseball-Reference.
         : empty("The Alchemy Lab conversion models are being computed from Statcast arsenals, "
-                + "StatsAPI roles and platoon splits, and Baseball-Reference WAR. Check back shortly.");
+                + "StatsAPI roles and platoon splits, and Baseball-Reference run-frame WAR. "
+                + "Check back shortly.");
       var retry = document.getElementById("pal-retry");
       if (retry) retry.addEventListener("click", function () {
         root.innerHTML = empty("Loading…");
@@ -1437,7 +1549,10 @@
     var banner = document.getElementById("pal-banner");
     if (banner) banner.innerHTML = DATA.season
       ? '<div class="mlbstats-note">Season ' + esc(DATA.season) + ' &middot; a candidate screen, not a projection. '
-        + 'Backtest evidence is per direction: SP&rarr;RP validated, RP&rarr;SP structural screen only. '
+        // Per-direction and DERIVED: the banner used to name the winner and the
+        // loser in literal text, which survived a change of WAR series.
+        + 'Backtest evidence is per direction: SP&rarr;RP ' + esc(verdictPhrase("SP->RP"))
+        + ', RP&rarr;SP ' + esc(verdictPhrase("RP->SP")) + '. '
         + esc((DATA.verdict && DATA.verdict !== "validated") ? "[" + DATA.verdict + "]" : "") + "</div>" : "";
     bindTable(root);
     wireGlossary(root);
@@ -1562,6 +1677,9 @@
 
   function init() {
     bindSectionNav();
+    // Sync the server-rendered nav to the default section BEFORE readHash, or a
+    // no-hash load paints SP->RP content under an active RP->SP button.
+    setSection(section);
     readHash();
     loadLinks();
     load();
