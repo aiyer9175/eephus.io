@@ -1,0 +1,1643 @@
+{
+ "generated_at": "2026-09-06T21:21:23+00:00",
+ "produced_by": "tools/hof_ledger_check.py",
+ "deterministic": true,
+ "as_of_year": 2026,
+ "what": "the induction-ledger repair: StatsAPI inductees the ingest could not bridge to a bbref id were dropped from the ledger, and the label layer reported them as not in the Hall",
+ "crosswalk": {
+  "pairs": 23681,
+  "distinct_bbref": 23681,
+  "distinct_mlbam": 23681,
+  "is_one_to_one": true,
+  "source": "war_source last-good parquets, read by path, never over the network"
+ },
+ "ledger": {
+  "n_statsapi": 354,
+  "n_resolved_before": 226,
+  "n_resolved_after": 306,
+  "resolution": {
+   "from_ballot_tables": 224,
+   "from_mlbam_crosswalk": 82,
+   "unresolved": 48,
+   "crosswalk_available": true,
+   "crosswalk_pairs": 23681,
+   "what_the_unresolved_are": "overwhelmingly people who never played: managers, executives, commissioners, union leaders, umpires and Negro Leagues pioneers. A crosswalk built from playing records cannot find them and should not: they have no player record to find. That is why the residual is reported rather than chased."
+  },
+  "unresolved_names": [
+   "Al Barlick",
+   "Alex Pompez",
+   "Alexander Cartwright",
+   "Barney Dreyfuss",
+   "Bill Klem",
+   "Bill McGowan",
+   "Bill Veeck",
+   "Billy Evans",
+   "Bowie Kuhn",
+   "Bud Fowler",
+   "Bud Selig",
+   "Byron Johnson",
+   "Cal Hubbard",
+   "Cool Papa Bell",
+   "Cum Posey",
+   "Doug Harvey",
+   "Earl Weaver",
+   "Ed Barrow",
+   "Effa Manley",
+   "Ford Frick",
+   "Frank Grant",
+   "Frank Selee",
+   "George Weiss",
+   "Happy Chandler",
+   "Henry Chadwick",
+   "J. L. Wilkinson",
+   "Jacob Ruppert",
+   "Jim Leyland",
+   "Joe McCarthy",
+   "John Schuerholz",
+   "Josh Gibson",
+   "Kenesaw Landis",
+   "Larry MacPhail",
+   "Lee MacPhail",
+   "Marvin Miller",
+   "Morgan Bulkeley",
+   "Nestor Chylak",
+   "Oscar Charleston",
+   "Pat Gillick",
+   "Ray Brown",
+   "Rube Foster",
+   "Sol White",
+   "Tom Connolly",
+   "Tom Yawkey",
+   "Walter O'Malley",
+   "Warren Giles",
+   "Will Harridge",
+   "William Hulbert"
+  ],
+  "n_in_eligible_universe": 286,
+  "out_of_universe": [
+   {
+    "player_id": "jossad01",
+    "name": "Addie Joss",
+    "election_year": 1978,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "spaldal01",
+    "name": "Al Spalding",
+    "election_year": 1939,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "coxbo01",
+    "name": "Bobby Cox",
+    "election_year": 2014,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "rickebr01",
+    "name": "Branch Rickey",
+    "election_year": 1967,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "cummica01",
+    "name": "Candy Cummings",
+    "election_year": 1939,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "o'dayha01",
+    "name": "Hank O'Day",
+    "election_year": 2013,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "wrighha01",
+    "name": "Harry Wright",
+    "election_year": 1953,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "conlajo01",
+    "name": "Jocko Conlan",
+    "election_year": 1974,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "willijo99",
+    "name": "Joe Williams",
+    "election_year": 1999,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "mendejo99",
+    "name": "Jose Mendez",
+    "election_year": 2006,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "santolo99",
+    "name": "Louis Santop",
+    "election_year": 2006,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "dihigma99",
+    "name": "Martin Dihigo",
+    "election_year": 1977,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "hillpe99",
+    "name": "Pete Hill",
+    "election_year": 2006,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "lloydjo99",
+    "name": "Pop Lloyd",
+    "election_year": 1977,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "dandrra99",
+    "name": "Ray Dandridge",
+    "election_year": 1987,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "andersp01",
+    "name": "Sparky Anderson",
+    "election_year": 2000,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "lasorto01",
+    "name": "Tommy Lasorda",
+    "election_year": 1997,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "larusto01",
+    "name": "Tony La Russa Jr.",
+    "election_year": 2014,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "alstowa01",
+    "name": "Walter Alston",
+    "election_year": 1983,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   },
+   {
+    "player_id": "herzowh01",
+    "name": "Whitey Herzog",
+    "election_year": 2010,
+    "reason": "not in the eligible universe (fewer than ten seasons with a WAR row, or last season inside the five-year wait)"
+   }
+  ]
+ },
+ "plaque_role_unverified": {
+  "n": 167,
+  "n_in_eligible_universe": 147,
+  "players_in_eligible_universe": [
+   {
+    "player_id": "lopezal01",
+    "name": "Al Lopez",
+    "election_year": 1977,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "trammal01",
+    "name": "Alan Trammell",
+    "election_year": 2018,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "rusieam01",
+    "name": "Amos Rusie",
+    "election_year": 1977,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "coopean99",
+    "name": "Andy Cooper",
+    "election_year": 2006,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "vaughar01",
+    "name": "Arky Vaughan",
+    "election_year": 1985,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "taylobe99",
+    "name": "Ben Taylor",
+    "election_year": 2006,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "mcphebi01",
+    "name": "Bid McPhee",
+    "election_year": 2000,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "fostebi99",
+    "name": "Bill Foster",
+    "election_year": 1996,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "mazerbi01",
+    "name": "Bill Mazeroski",
+    "election_year": 2001,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "mckecbi01",
+    "name": "Bill McKechnie",
+    "election_year": 1962,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "hamilbi01",
+    "name": "Billy Hamilton",
+    "election_year": 1961,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "hermabi01",
+    "name": "Billy Herman",
+    "election_year": 1975,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "southbi01",
+    "name": "Billy Southworth",
+    "election_year": 2008,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "mackebi99",
+    "name": "Biz Mackey",
+    "election_year": 2006,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "doerrbo01",
+    "name": "Bobby Doerr",
+    "election_year": 1986,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "wallabo01",
+    "name": "Bobby Wallace",
+    "election_year": 1953,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "ewingbu01",
+    "name": "Buck Ewing",
+    "election_year": 1939,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "leonabu99",
+    "name": "Buck Leonard",
+    "election_year": 1972,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "oneilbu01",
+    "name": "Buck O'Neil",
+    "election_year": 2021,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "harribu01",
+    "name": "Bucky Harris",
+    "election_year": 1975,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "roganbu99",
+    "name": "Bullet Rogan",
+    "election_year": 1998,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "grimebu01",
+    "name": "Burleigh Grimes",
+    "election_year": 1964,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "ansonca01",
+    "name": "Cap Anson",
+    "election_year": 1939,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "stengca01",
+    "name": "Casey Stengel",
+    "election_year": 1966,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "comisch01",
+    "name": "Charlie Comiskey",
+    "election_year": 1939,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "gehrich01",
+    "name": "Charlie Gehringer",
+    "election_year": 1949,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "hafeych01",
+    "name": "Chick Hafey",
+    "election_year": 1971,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "bendech01",
+    "name": "Chief Bender",
+    "election_year": 1953,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "kleinch01",
+    "name": "Chuck Klein",
+    "election_year": 1980,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "griffcl01",
+    "name": "Clark Griffith",
+    "election_year": 1946,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "mackco01",
+    "name": "Connie Mack",
+    "election_year": 1937,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "torricr99",
+    "name": "Cristobal Torriente",
+    "election_year": 2006,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "broutda01",
+    "name": "Dan Brouthers",
+    "election_year": 1945,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "bancrda01",
+    "name": "Dave Bancroft",
+    "election_year": 1971,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "parkeda01",
+    "name": "Dave Parker",
+    "election_year": 2025,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "whitede01",
+    "name": "Deacon White",
+    "election_year": 2013,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "allendi01",
+    "name": "Dick Allen",
+    "election_year": 2025,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "willidi02",
+    "name": "Dick Williams",
+    "election_year": 2008,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "averiea01",
+    "name": "Earl Averill Sr.",
+    "election_year": 1975,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "combsea01",
+    "name": "Earle Combs",
+    "election_year": 1970,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "delahed01",
+    "name": "Ed Delahanty",
+    "election_year": 1945,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "walshed01",
+    "name": "Ed Walsh",
+    "election_year": 1946,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "roushed01",
+    "name": "Edd Roush",
+    "election_year": 1962,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "planked01",
+    "name": "Eddie Plank",
+    "election_year": 1946,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "flickel01",
+    "name": "Elmer Flick",
+    "election_year": 1963,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "slaugen01",
+    "name": "Enos Slaughter",
+    "election_year": 1985,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "rixeyep01",
+    "name": "Eppa Rixey",
+    "election_year": 1963,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "lombaer01",
+    "name": "Ernie Lombardi",
+    "election_year": 1986,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "chancfr01",
+    "name": "Frank Chance",
+    "election_year": 1946,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "clarkfr01",
+    "name": "Fred Clarke",
+    "election_year": 1945,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "mcgrifr01",
+    "name": "Fred McGriff",
+    "election_year": 2023,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "lindsfr01",
+    "name": "Freddie Lindstrom",
+    "election_year": 1976,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "davisge01",
+    "name": "George Davis",
+    "election_year": 1998,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "kellge01",
+    "name": "George Kell",
+    "election_year": 1983,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "kellyge01",
+    "name": "George Kelly",
+    "election_year": 1973,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "wrighge01",
+    "name": "George Wright",
+    "election_year": 1937,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "hodgegi01",
+    "name": "Gil Hodges",
+    "election_year": 2021,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "gosligo01",
+    "name": "Goose Goslin",
+    "election_year": 1968,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "wilsoha01",
+    "name": "Hack Wilson",
+    "election_year": 1979,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "newhoha01",
+    "name": "Hal Newhouser",
+    "election_year": 1992,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "baineha01",
+    "name": "Harold Baines",
+    "election_year": 2019,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "hoopeha01",
+    "name": "Harry Hooper",
+    "election_year": 1971,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "manushe01",
+    "name": "Heinie Manush",
+    "election_year": 1964,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "smithhi99",
+    "name": "Hilton Smith",
+    "election_year": 2001,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "bakerfr01",
+    "name": "Home Run Baker",
+    "election_year": 1955,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "duffyhu01",
+    "name": "Hugh Duffy",
+    "election_year": 1945,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "jennihu01",
+    "name": "Hughie Jennings",
+    "election_year": 1945,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "chesbja01",
+    "name": "Jack Chesbro",
+    "election_year": 1946,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "morrija02",
+    "name": "Jack Morris",
+    "election_year": 2018,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "becklja01",
+    "name": "Jake Beckley",
+    "election_year": 1971,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "kentje01",
+    "name": "Jeff Kent",
+    "election_year": 2026,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "burkeje01",
+    "name": "Jesse Burkett",
+    "election_year": 1946,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "haineje01",
+    "name": "Jesse Haines",
+    "election_year": 1970,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "bottoji01",
+    "name": "Jim Bottomley",
+    "election_year": 1974,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "bunniji01",
+    "name": "Jim Bunning",
+    "election_year": 1996,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "kaatji01",
+    "name": "Jim Kaat",
+    "election_year": 2021,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "o'rouji01",
+    "name": "Jim O'Rourke",
+    "election_year": 1945,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "colliji01",
+    "name": "Jimmy Collins",
+    "election_year": 1945,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "gordojo01",
+    "name": "Joe Gordon",
+    "election_year": 2009,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "kellejo01",
+    "name": "Joe Kelley",
+    "election_year": 1971,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "mcginjo01",
+    "name": "Joe McGinnity",
+    "election_year": 1946,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "seweljo01",
+    "name": "Joe Sewell",
+    "election_year": 1977,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "tinkejo01",
+    "name": "Joe Tinker",
+    "election_year": 1946,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "torrejo01",
+    "name": "Joe Torre",
+    "election_year": 2014,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "clarkjo01",
+    "name": "John Clarkson",
+    "election_year": 1963,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "mcgrajo01",
+    "name": "John McGraw",
+    "election_year": 1937,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "wardjo01",
+    "name": "John Ward",
+    "election_year": 1964,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "eversjo01",
+    "name": "Johnny Evers",
+    "election_year": 1946,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "mizejo01",
+    "name": "Johnny Mize",
+    "election_year": 1981,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "wilsoju99",
+    "name": "Jud Wilson",
+    "election_year": 2006,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "johnsju99",
+    "name": "Judy Johnson",
+    "election_year": 1975,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "nichoki01",
+    "name": "Kid Nichols",
+    "election_year": 1949,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "cuyleki01",
+    "name": "Kiki Cuyler",
+    "election_year": 1968,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "kellyki01",
+    "name": "King Kelly",
+    "election_year": 1945,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "dobyla01",
+    "name": "Larry Doby",
+    "election_year": 1998,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "smithle02",
+    "name": "Lee Smith",
+    "election_year": 2019,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "gomezle01",
+    "name": "Lefty Gomez",
+    "election_year": 1972,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "durocle01",
+    "name": "Leo Durocher",
+    "election_year": 1994,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "dayle99",
+    "name": "Leon Day",
+    "election_year": 1995,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "wanerll01",
+    "name": "Lloyd Waner",
+    "election_year": 1967,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "gehrilo01",
+    "name": "Lou Gehrig",
+    "election_year": 1939,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "applilu01",
+    "name": "Luke Appling",
+    "election_year": 1964,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "careyma01",
+    "name": "Max Carey",
+    "election_year": 1961,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "welchmi01",
+    "name": "Mickey Welch",
+    "election_year": 1973,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "huggimi01",
+    "name": "Miller Huggins",
+    "election_year": 1964,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "minosmi01",
+    "name": "Minnie Minoso",
+    "election_year": 2021,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "irvinmo01",
+    "name": "Monte Irvin",
+    "election_year": 1973,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "brownmo01",
+    "name": "Mordecai Brown",
+    "election_year": 1949,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "suttlmu99",
+    "name": "Mule Suttles",
+    "election_year": 2006,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "hanlone01",
+    "name": "Ned Hanlon",
+    "election_year": 1996,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "foxne01",
+    "name": "Nellie Fox",
+    "election_year": 1997,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "radboch01",
+    "name": "Old Hoss Radbourn",
+    "election_year": 1939,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "cepedor01",
+    "name": "Orlando Cepeda",
+    "election_year": 1999,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "reesepe01",
+    "name": "Pee Wee Reese",
+    "election_year": 1984,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "rizzuph01",
+    "name": "Phil Rizzuto",
+    "election_year": 1994,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "galvipu01",
+    "name": "Pud Galvin",
+    "election_year": 1965,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "schalra01",
+    "name": "Ray Schalk",
+    "election_year": 1955,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "faberre01",
+    "name": "Red Faber",
+    "election_year": 1964,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "ruffire01",
+    "name": "Red Ruffing",
+    "election_year": 1967,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "schoere01",
+    "name": "Red Schoendienst",
+    "election_year": 1989,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "ashburi01",
+    "name": "Richie Ashburn",
+    "election_year": 1995,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "ferreri01",
+    "name": "Rick Ferrell",
+    "election_year": 1984,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "clemero01",
+    "name": "Roberto Clemente",
+    "election_year": 1973,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "bresnro01",
+    "name": "Roger Bresnahan",
+    "election_year": 1945,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "connoro01",
+    "name": "Roger Connor",
+    "election_year": 1976,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "santoro01",
+    "name": "Ron Santo",
+    "election_year": 2012,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "youngro01",
+    "name": "Ross Youngs",
+    "election_year": 1972,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "marquru01",
+    "name": "Rube Marquard",
+    "election_year": 1971,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "wadderu01",
+    "name": "Rube Waddell",
+    "election_year": 1946,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "crawfsa01",
+    "name": "Sam Crawford",
+    "election_year": 1957,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "ricesa01",
+    "name": "Sam Rice",
+    "election_year": 1963,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "thompsa01",
+    "name": "Sam Thompson",
+    "election_year": 1974,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "paigesa01",
+    "name": "Satchel Paige",
+    "election_year": 1971,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "covelst01",
+    "name": "Stan Coveleski",
+    "election_year": 1969,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "simmote01",
+    "name": "Ted Simmons",
+    "election_year": 2020,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "keefeti01",
+    "name": "Tim Keefe",
+    "election_year": 1964,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "mccarto01",
+    "name": "Tommy McCarthy",
+    "election_year": 1946,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "lazzeto01",
+    "name": "Tony Lazzeri",
+    "election_year": 1991,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "olivato01",
+    "name": "Tony Oliva",
+    "election_year": 2021,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "jackstr01",
+    "name": "Travis Jackson",
+    "election_year": 1982,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "steartu99",
+    "name": "Turkey Stearnes",
+    "election_year": 2000,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "willivi01",
+    "name": "Vic Willis",
+    "election_year": 1995,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "hoytwa01",
+    "name": "Waite Hoyt",
+    "election_year": 1969,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "robinwi01",
+    "name": "Wilbert Robinson",
+    "election_year": 1945,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "brownwi02",
+    "name": "Willard Brown",
+    "election_year": 2006,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "wellswi99",
+    "name": "Willie Wells",
+    "election_year": 1997,
+    "route": "VETERANS"
+   },
+   {
+    "player_id": "wheatza01",
+    "name": "Zack Wheat",
+    "election_year": 1959,
+    "route": "VETERANS"
+   }
+  ],
+  "blocking_lane": "H-DATA-PLAQUE",
+  "what_must_not_happen": "no Hall-sized line, no snub list and no deserved-versus-inducted verdict may be published off label_any while the plaque role is unverified. A line sized on a Hall that counts managers and executives is not a player line."
+ },
+ "labels_before": {
+  "label_any": {
+   "positive": 223,
+   "negative": 682,
+   "censored": 2715
+  },
+  "label_bbwaa": {
+   "positive": 139,
+   "negative": 1080,
+   "censored": 2401
+  }
+ },
+ "labels_after": {
+  "label_any": {
+   "positive": 286,
+   "negative": 649,
+   "censored": 2685
+  },
+  "label_bbwaa": {
+   "positive": 139,
+   "negative": 1080,
+   "censored": 2401
+  }
+ },
+ "repair_effect": {
+  "n_added_positive": 63,
+  "n_lost_positive": 0,
+  "false_zeros_corrected": 33,
+  "false_censors_corrected": 30,
+  "added_names": [
+   "Al Lopez",
+   "Alan Trammell",
+   "Andy Cooper",
+   "Ben Taylor",
+   "Bill McKechnie",
+   "Billy Southworth",
+   "Biz Mackey",
+   "Buck Ewing",
+   "Buck Leonard",
+   "Bucky Harris",
+   "Cap Anson",
+   "Casey Stengel",
+   "Charles Bender",
+   "Charlie Comiskey",
+   "Charlie Gehringer",
+   "Clark Griffith",
+   "Connie Mack",
+   "Cristóbal Torriente",
+   "Dan Brouthers",
+   "Dave Parker",
+   "Dick Allen",
+   "Dick Williams",
+   "Ed Delahanty",
+   "Ed Walsh",
+   "Eddie Plank",
+   "Frank Chance",
+   "Fred Clarke",
+   "Harold Baines",
+   "Hugh Duffy",
+   "Hughie Jennings",
+   "Jack Chesbro",
+   "Jack Morris",
+   "Jeff Kent",
+   "Jesse Burkett",
+   "Jim O'Rourke",
+   "Jimmy Collins",
+   "Joe McGinnity",
+   "Joe Tinker",
+   "Joe Torre",
+   "Johnny Evers",
+   "Jud Wilson",
+   "Judy Johnson",
+   "Kid Nichols",
+   "King Kelly",
+   "Lee Smith",
+   "Leo Durocher",
+   "Lou Gehrig",
+   "Luke Appling",
+   "Miller Huggins",
+   "Monte Irvin",
+   "Mordecai Brown",
+   "Mule Suttles",
+   "Ned Hanlon",
+   "Old Hoss Radbourn",
+   "Red Ruffing",
+   "Roberto Clemente",
+   "Roger Bresnahan",
+   "Rube Waddell",
+   "Satchel Paige",
+   "Ted Simmons",
+   "Tommy McCarthy",
+   "Wilbert Robinson",
+   "Willard Brown"
+  ],
+  "false_zero_names": [
+   "Al Lopez",
+   "Billy Southworth",
+   "Buck Ewing",
+   "Bucky Harris",
+   "Casey Stengel",
+   "Charles Bender",
+   "Charlie Gehringer",
+   "Connie Mack",
+   "Dick Allen",
+   "Ed Delahanty",
+   "Ed Walsh",
+   "Eddie Plank",
+   "Frank Chance",
+   "Fred Clarke",
+   "Hugh Duffy",
+   "Hughie Jennings",
+   "Jack Chesbro",
+   "Jesse Burkett",
+   "Jimmy Collins",
+   "Joe McGinnity",
+   "Joe Tinker",
+   "Joe Torre",
+   "Johnny Evers",
+   "Kid Nichols",
+   "Leo Durocher",
+   "Lou Gehrig",
+   "Luke Appling",
+   "Mordecai Brown",
+   "Red Ruffing",
+   "Roger Bresnahan",
+   "Rube Waddell",
+   "Satchel Paige",
+   "Ted Simmons"
+  ]
+ },
+ "label_bbwaa_invariance": {
+  "is_byte_identical": true,
+  "why": "label_bbwaa reads only b['by_pid']; b['inducted'] is read at exactly one site, inside label_any. The repair cannot move a writers' verdict and any movement here is a bug in the repair."
+ },
+ "resolution_year": {
+  "frame_shape": [
+   3620,
+   34
+  ],
+  "route_census_bbwaa": {
+   "dropped_off": 652,
+   "elected": 139,
+   "left_ballot": 427,
+   "none": 2402
+  },
+  "route_census_any": {
+   "committee_horizon": 975,
+   "elected": 243,
+   "inducted_never_balloted": 43,
+   "none": 2359
+  },
+  "players_with_a_pre_1979_drop_flag": 426,
+  "players_whose_drop_flag_precedes_their_last_appearance": 296,
+  "players_with_a_drop_flag_on_a_year_they_survived": 88,
+  "drop_flag_on_a_survived_year_examples": [
+   {
+    "player_id": "chaseha01",
+    "name": "Hal Chase",
+    "drop_years": [
+     1936
+    ],
+    "last_appearance": 1937
+   },
+   {
+    "player_id": "youngro01",
+    "name": "Ross Youngs",
+    "drop_years": [
+     1936
+    ],
+    "last_appearance": 1956
+   },
+   {
+    "player_id": "eversjo01",
+    "name": "Johnny Evers",
+    "drop_years": [
+     1936
+    ],
+    "last_appearance": 1945
+   },
+   {
+    "player_id": "brownmo01",
+    "name": "Mordecai Brown",
+    "drop_years": [
+     1936
+    ],
+    "last_appearance": 1945
+   },
+   {
+    "player_id": "chancfr01",
+    "name": "Frank Chance",
+    "drop_years": [
+     1936
+    ],
+    "last_appearance": 1945
+   },
+   {
+    "player_id": "schalra01",
+    "name": "Ray Schalk",
+    "drop_years": [
+     1936
+    ],
+    "last_appearance": 1955
+   },
+   {
+    "player_id": "roushed01",
+    "name": "Edd Roush",
+    "drop_years": [
+     1936,
+     1938,
+     1939,
+     1942,
+     1945
+    ],
+    "last_appearance": 1960
+   },
+   {
+    "player_id": "bendech01",
+    "name": "Charles Bender",
+    "drop_years": [
+     1936,
+     1948,
+     1949,
+     1950
+    ],
+    "last_appearance": 1953
+   },
+   {
+    "player_id": "marquru01",
+    "name": "Rube Marquard",
+    "drop_years": [
+     1936,
+     1938,
+     1939,
+     1949,
+     1951,
+     1952
+    ],
+    "last_appearance": 1955
+   },
+   {
+    "player_id": "clarkfr01",
+    "name": "Fred Clarke",
+    "drop_years": [
+     1936
+    ],
+    "last_appearance": 1945
+   },
+   {
+    "player_id": "gehrich01",
+    "name": "Charlie Gehringer",
+    "drop_years": [
+     1936,
+     1945
+    ],
+    "last_appearance": 1949
+   },
+   {
+    "player_id": "jennihu01",
+    "name": "Hughie Jennings",
+    "drop_years": [
+     1937
+    ],
+    "last_appearance": 1945
+   }
+  ],
+  "why_the_flag_must_be_on_the_final_appearance": "the 1979 restriction alone does not catch these. Harvey Haddix is flagged in 1979 and appears through 1985; Edd Roush is flagged in five separate years from 1936 and appears through 1960. A flag on a year the player went on to survive did not end anything, and resolving on it would date the writers' verdict years before the writers had finished. Found by a test, not by reasoning it out in advance.",
+  "bbwaa_panel_gap_years": [
+   1940,
+   1941,
+   1943,
+   1944,
+   1946,
+   1957,
+   1959,
+   1961,
+   1963,
+   1965
+  ],
+  "left_ballot_cases_where_last_plus_one_is_a_gap_year": 224,
+  "why_the_gap_years_matter": "the writers voted only every other year from 1956 to 1966 while the committees kept meeting, so the BBWAA panel has ten empty years and not the five the ingest records. Resolving a departed candidate at last plus one would name a year in which no verdict could have been observed, for the counted number of players above.",
+  "label_any_non_monotone_players": [
+   {
+    "player_id": "gordojo01",
+    "name": "Joe Gordon",
+    "window_close": 1945,
+    "inducted": 2009
+   },
+   {
+    "player_id": "southbi01",
+    "name": "Billy Southworth",
+    "window_close": 1945,
+    "inducted": 2008
+   },
+   {
+    "player_id": "minosmi01",
+    "name": "Minnie Minoso",
+    "window_close": 1969,
+    "inducted": 2021
+   },
+   {
+    "player_id": "lazzeto01",
+    "name": "Tony Lazzeri",
+    "window_close": 1945,
+    "inducted": 1991
+   },
+   {
+    "player_id": "durocle01",
+    "name": "Leo Durocher",
+    "window_close": 1949,
+    "inducted": 1994
+   },
+   {
+    "player_id": "wilsoha01",
+    "name": "Hack Wilson",
+    "window_close": 1937,
+    "inducted": 1979
+   },
+   {
+    "player_id": "allendi01",
+    "name": "Dick Allen",
+    "window_close": 1983,
+    "inducted": 2025
+   },
+   {
+    "player_id": "rusieam01",
+    "name": "Amos Rusie",
+    "window_close": 1937,
+    "inducted": 1977
+   },
+   {
+    "player_id": "seweljo01",
+    "name": "Joe Sewell",
+    "window_close": 1937,
+    "inducted": 1977
+   },
+   {
+    "player_id": "hodgegi01",
+    "name": "Gil Hodges",
+    "window_close": 1983,
+    "inducted": 2021
+   },
+   {
+    "player_id": "rizzuph01",
+    "name": "Phil Rizzuto",
+    "window_close": 1956,
+    "inducted": 1994
+   },
+   {
+    "player_id": "lombaer01",
+    "name": "Ernie Lombardi",
+    "window_close": 1950,
+    "inducted": 1986
+   },
+   {
+    "player_id": "youngro01",
+    "name": "Ross Youngs",
+    "window_close": 1936,
+    "inducted": 1972
+   },
+   {
+    "player_id": "marquru01",
+    "name": "Rube Marquard",
+    "window_close": 1936,
+    "inducted": 1971
+   },
+   {
+    "player_id": "jackstr01",
+    "name": "Travis Jackson",
+    "window_close": 1948,
+    "inducted": 1982
+   },
+   {
+    "player_id": "bancrda01",
+    "name": "Dave Bancroft",
+    "window_close": 1937,
+    "inducted": 1971
+   },
+   {
+    "player_id": "hoopeha01",
+    "name": "Harry Hooper",
+    "window_close": 1937,
+    "inducted": 1971
+   },
+   {
+    "player_id": "doerrbo01",
+    "name": "Bobby Doerr",
+    "window_close": 1953,
+    "inducted": 1986
+   },
+   {
+    "player_id": "combsea01",
+    "name": "Earle Combs",
+    "window_close": 1937,
+    "inducted": 1970
+   },
+   {
+    "player_id": "santoro01",
+    "name": "Ron Santo",
+    "window_close": 1980,
+    "inducted": 2012
+   },
+   {
+    "player_id": "dobyla01",
+    "name": "Larry Doby",
+    "window_close": 1966,
+    "inducted": 1998
+   },
+   {
+    "player_id": "vaughar01",
+    "name": "Arky Vaughan",
+    "window_close": 1953,
+    "inducted": 1985
+   },
+   {
+    "player_id": "kleinch01",
+    "name": "Chuck Klein",
+    "window_close": 1948,
+    "inducted": 1980
+   },
+   {
+    "player_id": "kellejo01",
+    "name": "Joe Kelley",
+    "window_close": 1939,
+    "inducted": 1971
+   },
+   {
+    "player_id": "haineje01",
+    "name": "Jesse Haines",
+    "window_close": 1939,
+    "inducted": 1970
+   },
+   {
+    "player_id": "covelst01",
+    "name": "Stan Coveleski",
+    "window_close": 1938,
+    "inducted": 1969
+   },
+   {
+    "player_id": "newhoha01",
+    "name": "Hal Newhouser",
+    "window_close": 1962,
+    "inducted": 1992
+   },
+   {
+    "player_id": "hoytwa01",
+    "name": "Waite Hoyt",
+    "window_close": 1939,
+    "inducted": 1969
+   },
+   {
+    "player_id": "becklja01",
+    "name": "Jake Beckley",
+    "window_close": 1942,
+    "inducted": 1971
+   },
+   {
+    "player_id": "ferreri01",
+    "name": "Rick Ferrell",
+    "window_close": 1956,
+    "inducted": 1984
+   },
+   {
+    "player_id": "lopezal01",
+    "name": "Al Lopez",
+    "window_close": 1949,
+    "inducted": 1977
+   },
+   {
+    "player_id": "ashburi01",
+    "name": "Richie Ashburn",
+    "window_close": 1968,
+    "inducted": 1995
+   },
+   {
+    "player_id": "lindsfr01",
+    "name": "Freddie Lindstrom",
+    "window_close": 1949,
+    "inducted": 1976
+   },
+   {
+    "player_id": "hermabi01",
+    "name": "Billy Herman",
+    "window_close": 1948,
+    "inducted": 1975
+   },
+   {
+    "player_id": "gomezle01",
+    "name": "Lefty Gomez",
+    "window_close": 1945,
+    "inducted": 1972
+   },
+   {
+    "player_id": "grimebu01",
+    "name": "Burleigh Grimes",
+    "window_close": 1937,
+    "inducted": 1964
+   },
+   {
+    "player_id": "faberre01",
+    "name": "Red Faber",
+    "window_close": 1937,
+    "inducted": 1964
+   },
+   {
+    "player_id": "averiea01",
+    "name": "Earl Averill Sr.",
+    "window_close": 1949,
+    "inducted": 1975
+   },
+   {
+    "player_id": "bottoji01",
+    "name": "Jim Bottomley",
+    "window_close": 1948,
+    "inducted": 1974
+   },
+   {
+    "player_id": "kellyge01",
+    "name": "George Kelly",
+    "window_close": 1947,
+    "inducted": 1973
+   }
+  ],
+  "n_label_any_non_monotone": 44,
+  "why_non_monotone": "label_any checks the induction ledger before the window close, so a player enshrined by a committee more than COMMITTEE_HORIZON_YEARS after his window closed reads a resolved zero for decades and then flips to one. The as-of identity with label_frame therefore holds at 2026 and is not claimed generally."
+ },
+ "horizon_sensitivity": {
+  "15": {
+   "positive": 286,
+   "negative": 773,
+   "censored": 2561
+  },
+  "20": {
+   "positive": 286,
+   "negative": 711,
+   "censored": 2623
+  },
+  "25": {
+   "positive": 286,
+   "negative": 649,
+   "censored": 2685
+  },
+  "30": {
+   "positive": 286,
+   "negative": 598,
+   "censored": 2736
+  },
+  "40": {
+   "positive": 286,
+   "negative": 450,
+   "censored": 2884
+  }
+ },
+ "what_this_does_not_show": "any accuracy gain. This is a correctness repair. Its most likely downstream effect on a benchmark bake-off is NEGATIVE, because the recovered positives are heavily the 1930s and 1940s veterans wave and carry lower JAWS than the existing positive class. It also makes the plaque-role problem larger rather than smaller, because the players it recovers include managers who also played."
+}

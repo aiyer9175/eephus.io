@@ -817,6 +817,14 @@ MODEL_GLOSSARY = {
     # is not the same object as a pre-declared read, and the accuracy page
     # already states the tie from the frame it is entitled to.
     "claim_exposure_matched_label": "internal",
+    # The Hall of Fame induction ledger. INTERNAL, and it will stay internal even
+    # after /hof/ ships: it is a label substrate, not a metric a reader looks up.
+    # What a reader WILL see from it is the induction column's disclosure copy,
+    # which says that inducted-as-a-player-by-the-writers is the only induction
+    # this data can verify and that every other route reads as unverified. That
+    # sentence belongs to the page, and it is derived from
+    # data/hof_ledger_eval.json rather than typed.
+    "hof_induction_ledger": "internal",
     # pbp_corpus_base_state is a data substrate under .cache/. No page reads it. It
     # earns a registry row because a reconstruction that is WRONG would silently
     # poison every In-Game Management number built on top of it, so its agreement

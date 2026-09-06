@@ -100,11 +100,18 @@ by schedule length is a claim about playing-time counterfactuals that this
 module does not make.
 
 WHAT THIS MODULE REFUSES TO CLAIM.
-  1. That it knows who is in the Hall of Fame. There is no ballot source in
-     this repo. label_bbwaa and label_any raise BallotSourceMissing naming the
-     missing artifact rather than inventing a membership list, and hall_line
-     returns a quantile shelf with line=None until a caller supplies the class
-     size from outside.
+  1. That it knows WHAT A PLAQUE SAYS. The ballot source is now ingested
+     (data/hof_ballots.json) and the labels resolve, so the old refusal here,
+     that no ballot source exists, is retired. What replaces it is narrower and
+     harder: the source records which ELECTORATE voted, never the role the
+     plaque names. An inductee who played and was later enshrined as a manager
+     reads as a player induction, and Connie Mack, Casey Stengel, Bucky Harris,
+     Al Lopez and Billy Southworth all reach the eligible universe that way.
+     Until H-DATA-PLAQUE lands, label_any means INDUCTED BY ANY ROUTE, PLAQUE
+     ROLE UNVERIFIED, the unverified set is published in
+     data/hof_ledger_eval.json, and hall_line still returns a shelf with
+     line=None because a Hall-sized line needs the count of players inducted AS
+     PLAYERS and that count is exactly what is not known.
   2. That it knows what position a player played. The war_daily frame carries
      no position column. position_class infers one, and the inference is
      measurably weak before 1953: see POSITION_CLASS_NOTE.
@@ -308,11 +315,18 @@ INK_TOPTEN_DEPTH: int = 10
 # ---------------------------------------------------------------------------
 
 BALLOT_SOURCE: str = "data/hof_ballots.json"
-"""The artifact plan lane H-DATA-2 must produce before any label resolves.
-It does not exist. The plan's two named upstreams are the StatsAPI awards
+"""The artifact plan lane H-DATA-2 produces, and it is BUILT.
+
+Both upstreams are ingested by tools/hof_ballot_ingest.py: the StatsAPI awards
 endpoint /awards/MLBHOF/recipients (inductees only, 354 rows over 85 election
 seasons) and the Baseball-Reference election pages (/awards/hof_<year>.shtml),
-which carry the vote shares for the non-inductees. Neither has been ingested.
+which carry the vote shares for the non-inductees.
+
+ONE DEFECT IN IT IS REPAIRED AT LOAD TIME rather than in the file. StatsAPI
+names inductees by MLBAM id and Baseball-Reference names ballot rows by bbref
+id, and where the ingest could not bridge the two the inductee was dropped from
+the ledger: 130 of 354, of whom 63 sit inside the eligible universe. See
+crosswalk_bbref_mlbam.
 """
 
 BALLOT_SOURCE_FIELDS: tuple[str, ...] = (
@@ -382,9 +396,75 @@ def stint_frame(side: str, *, offline: bool = False) -> pd.DataFrame:
 
 
 def clear_cache() -> None:
-    """Drop the memoised frames. For tests and for a rebuilt parquet."""
+    """Drop every memoised object in this module.
+
+    FOUR CACHES, NOT TWO. The old version cleared the frame caches only, so a
+    test that cleared between an unrepaired and a repaired ledger read got the
+    stale one back and passed for the wrong reason.
+    """
     _FRAME_CACHE.clear()
     _CAREER_CACHE.clear()
+    _BALLOT_CACHE.clear()
+    _XWALK_CACHE.clear()
+
+
+_XWALK_CACHE: dict = {}
+
+
+def crosswalk_bbref_mlbam() -> dict:
+    """{str(mlbam id): bbref player_ID}, read straight off the war_daily parquets.
+
+    WHY THIS EXISTS. StatsAPI names the Hall of Fame inductees by MLBAM id and
+    Baseball-Reference names ballot rows by bbref id. Where the ingest could not
+    bridge the two, the inductee simply did not enter the ledger, and the label
+    layer then said he is not in the Hall. Measured on 2026-09-06 that was 130 of
+    354 inductees, and 63 of them sit inside the eligible universe: the shipped
+    `label_any` called Charlie Gehringer, Ed Delahanty, Eddie Plank, Buck Ewing
+    and Jesse Burkett non-Hall-of-Famers, 33 as a resolved zero and 30 as
+    censored.
+
+    Both parquets already carry BOTH ids, so the bridge was on disk the whole
+    time. Measured: 23,681 pairs, 23,681 distinct on each side, one to one.
+
+    NO `offline` PARAMETER, deliberately. This reads war_source's last-good
+    parquet BY PATH and never calls `war_source.stint_frame`, so it can never
+    turn `label_frame(offline=True)` into a network call. That is a real hazard
+    and not a hypothetical: the pitching side of pybaseball carries no disk
+    cache, and hof_data documents it as a live download on every process.
+
+    Returns {} if the parquets are not readable, which leaves the ledger exactly
+    as it was before this function existed. That is the safe direction, but it is
+    also SILENT, so `_load_ballots` records whether the crosswalk was available
+    and `tools/hof_ledger_check.py` fails loudly when it was not.
+    """
+    # A COPY, NEVER THE CACHE ITSELF. Handing out the interior means a caller
+    # holds a live reference that `clear_cache()` empties underneath it. That
+    # is not hypothetical: the ledger producer captured the crosswalk, ran a
+    # horizon sweep that clears caches between arms, and then serialized zero
+    # pairs into the artifact while the repair it was documenting had worked
+    # perfectly.
+    if _XWALK_CACHE:
+        return dict(_XWALK_CACHE)
+    try:
+        import war_source
+        import pandas as _pd
+    except Exception:                              # noqa: BLE001
+        return {}
+    out: dict = {}
+    for side in SIDES:
+        try:
+            path = war_source._cache_path(side)
+            df = _pd.read_parquet(path, columns=["player_ID", "mlb_ID"])
+        except Exception:                          # noqa: BLE001
+            continue
+        df = df.dropna(subset=["player_ID", "mlb_ID"])
+        for pid, mid in zip(df["player_ID"], df["mlb_ID"]):
+            try:
+                out[str(int(mid))] = str(pid)
+            except (TypeError, ValueError):
+                continue
+    _XWALK_CACHE.update(out)
+    return dict(_XWALK_CACHE)
 
 
 # ---------------------------------------------------------------------------
@@ -906,10 +986,12 @@ def hall_line(cls: str, *, n_enshrined=None, offline: bool = False,
     )
     if n_enshrined is None:
         hl.reason = (
-            "line=None: the Hall-sized line needs the size of the Hall at "
-            "this class, and there is no ballot source in this repo "
-            f"({BALLOT_SOURCE} is not built). Pass n_enshrined, or ingest "
-            "plan lane H-DATA-2.")
+            "line=None: the Hall-sized line needs the count of players "
+            "inducted AS PLAYERS at this class, and that is not known. The "
+            f"ballot source ({BALLOT_SOURCE}) IS built, but it records which "
+            "electorate voted and not what the plaque says, so managers and "
+            "executives who also played cannot be separated out. Pass "
+            "n_enshrined from outside, or wait for H-DATA-PLAQUE.")
         return hl
     n = int(n_enshrined)
     if n <= 0 or n > len(sub):
@@ -931,8 +1013,8 @@ def hall_line(cls: str, *, n_enshrined=None, offline: bool = False,
 # The label contract (H-PRED-1).
 # ---------------------------------------------------------------------------
 #
-# TWO LABELS, and the resolution rules are these. They are written out here
-# because the code below cannot run them: the ballot source does not exist.
+# TWO LABELS, and the resolution rules are these. The ballot source IS built,
+# so the code below runs them; this block is the contract they implement.
 #
 # L_bbwaa (PRIMARY). Elected by the Baseball Writers' Association of America
 #   inside the player's OWN ballot window.
@@ -960,7 +1042,18 @@ def hall_line(cls: str, *, n_enshrined=None, offline: bool = False,
 #         with the censoring sensitivity table the plan asks for.
 #     CENSORED (None) : any committee window still open.
 #   Executives, managers, umpires and Negro Leagues pioneers inducted as
-#   contributors are NOT L_any=1 as players; the route field separates them.
+#   contributors SHOULD NOT be L_any=1 as players. THAT IS THE INTENT AND IT IS
+#   NOT IMPLEMENTED, because the second half of the old sentence here, that the
+#   route field separates them, is FALSE. `route` is the ELECTORATE that voted
+#   (BBWAA 137, VETERANS 147, UNKNOWN 70) and `route_note` is non-null on 21 of
+#   354 rows and encodes no role. No field in the source names the plaque.
+#
+#   So until H-DATA-PLAQUE lands, L_any means INDUCTED BY ANY ROUTE, PLAQUE ROLE
+#   UNVERIFIED. The unverified set is published in data/hof_ledger_eval.json and
+#   the ledger repair makes it LARGER, not smaller, because the players it
+#   recovers include managers who also played. Nothing downstream may publish a
+#   Hall-sized line, a snub list or a deserved-versus-inducted verdict off this
+#   label while that is true.
 #
 # THE INVARIANT: a censored player never carries a zero. Pinned by
 # assert_no_censored_zero and by test_hof_data.
@@ -993,7 +1086,7 @@ BBWAA_WINDOW_RULE_CHANGE_YEAR = 2015
 COMMITTEE_HORIZON_YEARS = 25
 
 
-def _load_ballots(path=None) -> dict:
+def _load_ballots(path=None, *, crosswalk=None) -> dict:
     """The ballot panel, indexed for lookup. Raises BallotSourceMissing when the
     artifact is absent, which is still the honest answer on a fresh checkout."""
     p = Path(path or (ROOT / BALLOT_SOURCE))
@@ -1011,10 +1104,31 @@ def _load_ballots(path=None) -> dict:
         if pid:
             by_pid.setdefault(pid, []).append(r)
     inducted: dict = {}
+    unresolved: list = []
     for r in doc.get("statsapi_inductees") or []:
         pid = r.get("player_id")
         if pid:
             inducted[pid] = r
+        else:
+            unresolved.append(r)
+    n_from_ingest = len(inducted)
+
+    # THE REPAIR. An inductee StatsAPI named by MLBAM id but the ingest could not
+    # bridge to a bbref id was dropped from the ledger entirely, and the label
+    # layer then reported him as not in the Hall. Both war_daily parquets carry
+    # both ids, so the bridge is on disk; `crosswalk={}` reproduces the
+    # unrepaired ledger for the before-and-after receipt.
+    xwalk = crosswalk_bbref_mlbam() if crosswalk is None else dict(crosswalk)
+    n_from_xwalk = 0
+    still: list = []
+    for r in unresolved:
+        pid = xwalk.get(str(r.get("mlbam_id")))
+        if pid and pid not in inducted:
+            inducted[pid] = {**r, "player_id": pid,
+                             "route_source": "war_daily mlbam crosswalk"}
+            n_from_xwalk += 1
+        elif not pid:
+            still.append(r)
     # A player elected by the writers appears in the ballot table with
     # elected=True; that is an induction too, and StatsAPI's ids do not resolve
     # for everyone, so both sources feed the any-route ledger.
@@ -1026,16 +1140,58 @@ def _load_ballots(path=None) -> dict:
             inducted[pid] = {"player_id": pid, "route": "BBWAA",
                              "election_year": min(r["election_year"] for r in won),
                              "route_source": "ballot table, elected"}
-    return {"by_pid": by_pid, "inducted": inducted, "doc": doc}
+    # PLAQUE ROLE IS NOT KNOWN AND THE REPAIR MAKES THAT WORSE, not better. The
+    # source records which ELECTORATE voted, never what the plaque says, so an
+    # inductee who played and was later enshrined as a manager reads as a player
+    # induction. Connie Mack, Casey Stengel, Bucky Harris, Al Lopez and Billy
+    # Southworth all enter the eligible universe this way. Naming them is the
+    # only honest thing available until H-DATA-PLAQUE lands, and it is why no
+    # Hall-sized line and no snub list may be published from this ledger.
+    unverified = []
+    for pid, r in inducted.items():
+        route = (r.get("route") or "").upper()
+        won_ballot = any(x.get("elected") for x in by_pid.get(pid) or [])
+        if not won_ballot and route != "BBWAA":
+            unverified.append({"player_id": pid,
+                               "name": r.get("player_name"),
+                               "election_year": r.get("election_year"),
+                               "route": r.get("route")})
+    return {
+        "by_pid": by_pid, "inducted": inducted, "doc": doc,
+        "resolution": {
+            "from_ballot_tables": n_from_ingest,
+            "from_mlbam_crosswalk": n_from_xwalk,
+            "unresolved": len(still),
+            "unresolved_names": sorted(x.get("player_name") or "" for x in still),
+            "crosswalk_available": bool(xwalk),
+            "crosswalk_pairs": len(xwalk),
+            "plaque_role_unverified": sorted(unverified,
+                                             key=lambda x: (x["name"] or "")),
+            "what_the_unresolved_are": (
+                "overwhelmingly people who never played: managers, executives, "
+                "commissioners, union leaders, umpires and Negro Leagues "
+                "pioneers. A crosswalk built from playing records cannot find "
+                "them and should not: they have no player record to find. That "
+                "is why the residual is reported rather than chased."),
+        },
+    }
 
 
 _BALLOT_CACHE: dict = {}
 
 
-def ballots(path=None) -> dict:
-    key = str(path or "")
+def ballots(path=None, *, crosswalk=None) -> dict:
+    """The ballot panel, memoised.
+
+    THE CACHE KEY INCLUDES THE CROSSWALK. It used to be the path alone while
+    `crosswalk` changes the result, so inside one process the first call won and
+    the label layer became call-order dependent: a test that read the unrepaired
+    ledger first would then get it back from a call that asked for the repaired
+    one.
+    """
+    key = (str(path or ""), None if crosswalk is None else tuple(sorted(crosswalk)))
     if key not in _BALLOT_CACHE:
-        _BALLOT_CACHE[key] = _load_ballots(path)
+        _BALLOT_CACHE[key] = _load_ballots(path, crosswalk=crosswalk)
     return _BALLOT_CACHE[key]
 
 
@@ -1152,8 +1308,16 @@ def label_frame(*, offline: bool = False, as_of_year=None, ballots_=None):
     """The eligible universe joined to both labels.
 
     Returns the feature half with `label_bbwaa`, `label_any`, `censored_bbwaa`
-    and `censored_any` columns. A censored row carries None, never 0, and
-    `assert_no_censored_zero` is run over the result before it is returned.
+    and `censored_any` columns. `assert_no_censored_zero` is run over the result
+    before it is returned.
+
+    A CENSORED ROW IS NaN IN THE FRAME, NOT None. The label lists are built as
+    python objects containing None and pandas coerces them to float64 NaN on
+    assignment. The dtype is deliberately left alone, because a nullable
+    integer column would change what every downstream comparison means. The
+    trap that follows from it is that `bool(nan) is True`, so a caller writing
+    `if row.label_any:` treats every censored player as an inductee. Test for
+    the label with `== 1`, `== 0` or `.isna()`, never for truthiness.
     """
     b = ballots_ or ballots()
     uni = eligible_universe(offline=offline, as_of_year=as_of_year)
@@ -1206,6 +1370,159 @@ def label_sensitivity(*, offline: bool = False, as_of_year=None,
             "label and the negative class is empty. The horizon closes it, and "
             "this table is what it costs."),
     }
+
+
+BBWAA_DROP_RULE_FIRST_YEAR = 1979
+"""The five percent retention rule began in 1979.
+
+`tools/hof_ballot_ingest.py` applies `vote_pct < 0.05` as a dropped-off flag all
+the way back to 1936, where no such rule existed. MEASURED 2026-09-06: 307
+players carry an earliest dropped-off year that PRECEDES their last real BBWAA
+appearance, by up to thirty years. Any fold keyed on that year is not a forward
+chain, because it claims the writers' verdict was observable years before the
+writers had finished voting on him.
+
+`bbwaa_window_close_year` is deliberately NOT changed. It is shipped, its output
+feeds `label_bbwaa` and `label_any`, and moving it would move labels. The
+correction lives in `resolution_year`, which is new and which nothing serves.
+"""
+
+RESOLUTION_ROUTES = ("elected", "dropped_off", "left_ballot",
+                     "inducted_never_balloted", "committee_horizon")
+"""How a player's label became observable.
+
+`exhausted` is deliberately ABSENT even though it is a real route. Separating a
+player who used up his ballot eligibility from one who simply stopped appearing
+needs the era-varying ballot cap, which went from fifteen years to ten in 2014
+and was different again before 1962. We do not have that table, and a route that
+silently mixed two mechanisms would be worse than one honest `left_ballot`.
+"""
+
+
+def _bbwaa_panel_years(b: dict) -> list:
+    """Every year the WRITERS actually voted, ascending.
+
+    NOT the ingest's `years_with_no_election`, which lists five years. The
+    writers also voted only every other year from 1956 to 1966 while the
+    committees kept meeting, so on the BBWAA panel there are TEN empty years:
+    1940, 1941, 1943, 1944, 1946, 1957, 1959, 1961, 1963 and 1965. A route that
+    resolved at `last + 1` could therefore name a year in which no verdict could
+    possibly have been observed.
+    """
+    ys = {r.get("election_year") for r in (b.get("doc") or {}).get("rows") or []
+          if (r.get("route") or "").upper() == "BBWAA" and r.get("election_year")}
+    return sorted(int(y) for y in ys if y)
+
+
+def _dropped_off_at(bb_rows, year: int) -> bool:
+    """Did a drop flag on `year` actually END this candidacy?
+
+    TWO CONDITIONS, and the second was found by a test rather than reasoned out.
+
+    (a) The election is at or after BBWAA_DROP_RULE_FIRST_YEAR. The five percent
+        retention rule did not exist before 1979 and the ingest applies the flag
+        back to 1936.
+
+    (b) The flagged year is the player's LAST appearance. A flag on an earlier
+        year did not end anything, because he came back. Measured: 88 non-elected
+        players carry a drop flag on a year they went on to survive, and the
+        1979 restriction alone does NOT catch them. Harvey Haddix is flagged in
+        1979 and appears through 1985; Edd Roush is flagged in five separate
+        years from 1936 and appears through 1960. Resolving either at his first
+        flag would date his verdict years before the writers had finished with
+        him, which is exactly the look-ahead this function exists to remove.
+    """
+    if int(year) < BBWAA_DROP_RULE_FIRST_YEAR:
+        return False
+    return any(r.get("dropped_off") and int(r["election_year"]) == int(year)
+               for r in bb_rows)
+
+
+def resolution_year(player_id: str, *, label: str = "bbwaa", ballots_=None):
+    """The year this player's label became OBSERVABLE, or None if it has not.
+
+    NOT `bbwaa_window_close_year`, and the differences are the point:
+
+      (a) a dropped-off flag is honoured only for elections at or after
+          BBWAA_DROP_RULE_FIRST_YEAR. Otherwise 307 players resolve decades
+          before the writers were done with them.
+      (b) the left-ballot route resolves at the next year the PANEL sat, strictly
+          after his last appearance, not at that appearance and not at last + 1.
+      (c) elected resolves at the first year he was elected, which matches
+          `bbwaa_window_close_year` exactly.
+      (d) label='any' adds `inducted_never_balloted` for an inductee with no
+          BBWAA row at all.
+
+    THE AS-OF IDENTITY WITH `label_frame` IS NOT GENERAL AND IS NOT CLAIMED. Two
+    structural reasons, both published rather than argued away. Clause (b)
+    deliberately disagrees with `label_bbwaa` at Y equal to the last appearance.
+    And `label_any` is NON-MONOTONE in Y: it checks the induction ledger before
+    the window close, so a player enshrined by a committee more than
+    COMMITTEE_HORIZON_YEARS after his window closed reads a resolved zero for
+    decades and then flips to one.
+    """
+    b = ballots_ if ballots_ is not None else ballots()
+    rows = (b.get("by_pid") or {}).get(player_id) or []
+    bb = [r for r in rows if (r.get("route") or "").upper() == "BBWAA"
+          and r.get("election_year")]
+
+    if label == "any":
+        ind = (b.get("inducted") or {}).get(player_id)
+        if ind is not None:
+            y = ind.get("election_year")
+            return int(y) if y else None
+        base = resolution_year(player_id, label="bbwaa", ballots_=b)
+        return None if base is None else int(base) + COMMITTEE_HORIZON_YEARS
+
+    won = [int(r["election_year"]) for r in bb if r.get("elected")]
+    if won:
+        return min(won)
+    if not bb:
+        return None
+    last = max(int(r["election_year"]) for r in bb)
+    if _dropped_off_at(bb, last):
+        return last
+    nxt = [y for y in _bbwaa_panel_years(b) if y > last]
+    return nxt[0] if nxt else None
+
+
+def resolution_route(player_id: str, *, label: str = "bbwaa", ballots_=None):
+    """Which of RESOLUTION_ROUTES produced `resolution_year`, or None."""
+    b = ballots_ if ballots_ is not None else ballots()
+    rows = (b.get("by_pid") or {}).get(player_id) or []
+    bb = [r for r in rows if (r.get("route") or "").upper() == "BBWAA"
+          and r.get("election_year")]
+    if label == "any":
+        if player_id in (b.get("inducted") or {}):
+            return "elected" if bb else "inducted_never_balloted"
+        return ("committee_horizon"
+                if resolution_year(player_id, label="bbwaa", ballots_=b) is not None
+                else None)
+    if any(r.get("elected") for r in bb):
+        return "elected"
+    if not bb:
+        return None
+    last = max(int(r["election_year"]) for r in bb)
+    if _dropped_off_at(bb, last):
+        return "dropped_off"
+    return "left_ballot" if [y for y in _bbwaa_panel_years(b) if y > last] else None
+
+
+def resolution_frame(*, offline: bool = False, as_of_year=None, ballots_=None):
+    """`label_frame` plus the four resolution columns.
+
+    Nothing serves this. It exists so a forward-chained fold can be keyed on the
+    year a label became observable rather than on the year the player retired,
+    which is the difference between a forward chain and a look-ahead.
+    """
+    b = ballots_ if ballots_ is not None else ballots()
+    df = label_frame(offline=offline, as_of_year=as_of_year, ballots_=b).copy()
+    pids = list(df["player_ID"])
+    df["res_year_bbwaa"] = [resolution_year(x, label="bbwaa", ballots_=b) for x in pids]
+    df["res_year_any"] = [resolution_year(x, label="any", ballots_=b) for x in pids]
+    df["res_route_bbwaa"] = [resolution_route(x, label="bbwaa", ballots_=b) for x in pids]
+    df["res_route_any"] = [resolution_route(x, label="any", ballots_=b) for x in pids]
+    return df
 
 
 def assert_no_censored_zero(rows: Iterable) -> int:
