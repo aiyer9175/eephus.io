@@ -902,6 +902,33 @@
   }
   function banner() { return bannerHTML(DATA); }
 
+  // WHAT THE TEAM COLUMN MEANS, and it is not what a reader assumes.
+  //
+  // The exporters point `team` at the club MLB's transaction feed says employs
+  // the player TODAY, on the history boards as well as the current one. So a
+  // past season carries the player's present club: Corbin Burnes' 2021 Cy Young
+  // season shows under his current club rather than Milwaukee.
+  //
+  // The exporters have written a full `team_basis` block explaining this since
+  // it was introduced. NOTHING ON THIS PAGE HAS EVER READ IT: a grep for
+  // team_basis in this file returned zero. So the convention was applied
+  // silently and a reader had no way to learn it existed.
+  //
+  // This renders the payload's own sentence. It does not change the basis,
+  // which is a deliberate choice with a real argument behind it (you can filter
+  // a club and see the arms it holds now); it just stops the page keeping that
+  // choice to itself.
+  function teamBasisNote(d) {
+    var tb = (d || {}).team_basis;
+    if (!tb || !tb.note) return "";
+    var moved = (tb.n_moved_to_current_club != null && tb.n_rows)
+      ? " " + esc(tb.n_moved_to_current_club) + " of " + esc(tb.n_rows) +
+        " rows are credited to a club other than the one they earned the line for."
+      : "";
+    return '<div class="mlbstats-note mlbstats-teambasis"><b>Team column:</b> ' +
+      esc(tb.note) + moved + "</div>";
+  }
+
   // REM+ accountability scorecard - mirrors PAL's pattern so a validated model
   // surfaces its out-of-sample backtest to users, not just a status word.
   function scorecard() {
@@ -971,7 +998,7 @@
     bindEvents(root);
     wireGlossary(root);
     var bann = document.getElementById("mlbstats-banner");
-    if (bann) bann.innerHTML = banner();
+    if (bann) bann.innerHTML = banner() + teamBasisNote(DATA);
   }
 
   function bindEvents(root) {

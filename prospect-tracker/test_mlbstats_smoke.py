@@ -490,3 +490,44 @@ def test_leverage_charts_render_for_a_full_pool():
     assert 'data-collapse="leverage-viz"' in html
     assert 'class="hub-hist"' in html and 'class="hub-scatter"' in html
     assert "undefined" not in html
+
+
+# --------------------------------------------------------------------------
+# The Team column means "today", and the page has to say so
+# --------------------------------------------------------------------------
+
+def test_the_team_basis_disclosure_is_actually_rendered():
+    """THE DEFECT. The exporters have written a full team_basis block since the
+    convention was introduced, and NOTHING on this page read it: a grep for
+    team_basis in assets/mlbstats.js returned zero.
+
+    So `team` pointed at the club that employs the player TODAY, on the history
+    boards as well as the current one, and a reader had no way to learn that
+    existed. A past season carries the player's present club.
+    """
+    js = (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
+    assert "team_basis" in js, (
+        "the page still does not read the team_basis block the exporters write")
+    assert "function teamBasisNote" in js
+    assert "teamBasisNote(DATA)" in js, "the note is defined but never mounted"
+
+
+def test_the_note_is_derived_from_the_payload_and_not_typed():
+    """The payload carries the sentence. A hand-written copy of it would go
+    stale the day the basis changes."""
+    js = (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
+    i = js.index("function teamBasisNote")
+    body = js[i:i + 900]
+    assert "tb.note" in body, "the note text is not read from the payload"
+    assert "n_moved_to_current_club" in body
+
+
+def test_the_exporters_still_write_the_block_the_page_now_reads():
+    import json
+    p = ROOT / "data" / "bullpen_leaderboards.json"
+    if not p.exists():
+        pytest.skip("bullpen leaderboards not built")
+    tb = json.loads(p.read_text(encoding="utf-8")).get("team_basis") or {}
+    assert tb.get("note"), "the disclosure block lost its note"
+    assert tb.get("basis") in ("current_roster", "stats_earned")
+    assert tb.get("n_rows")
