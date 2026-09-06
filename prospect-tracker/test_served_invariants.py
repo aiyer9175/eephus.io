@@ -464,3 +464,240 @@ def test_mutation_a_broken_decision_identity_is_caught(monkeypatch):
     _apply(monkeypatch, "management_board.json", m)
     with pytest.raises(AssertionError):
         _self.test_the_decision_and_execution_split_is_exact()
+
+
+# --------------------------------------------------------------------------
+# The prospect board
+# --------------------------------------------------------------------------
+
+def test_the_board_ranks_are_a_contiguous_permutation():
+    """A board rank is an ORDERING, so the ranked set must be exactly 1..n with
+    no gaps and no ties. A duplicate rank means two players claim one row and a
+    gap means a row was dropped after the ordering was assigned, which is what a
+    silently-filtered board looks like from the outside."""
+    d = _load("timeseries.json")
+    ranked = sorted(p["overall_rank"] for p in (d.get("players") or [])
+                    if p.get("overall_rank"))
+    if len(ranked) < 100:
+        pytest.skip("no baked board ranks on this build")
+    assert len(ranked) == len(set(ranked)), (
+        f"{len(ranked) - len(set(ranked))} duplicate board ranks")
+    assert ranked == list(range(1, len(ranked) + 1)), (
+        f"board ranks are not contiguous: min {ranked[0]}, max {ranked[-1]}, "
+        f"n {len(ranked)}")
+
+
+def test_a_graduated_player_never_holds_a_board_rank():
+    d = _load("timeseries.json")
+    bad = [p.get("player_key") for p in (d.get("players") or [])
+           if p.get("status") == "debuted" and p.get("overall_rank")]
+    assert not bad, f"debuted players holding a board rank: {bad[:6]}"
+
+
+# --------------------------------------------------------------------------
+# The betting board
+# --------------------------------------------------------------------------
+
+def _team_bets():
+    d = _load("betting.json")
+    tb = d.get("team_bets") or []
+    if not tb:
+        pytest.skip("no games on the slate")
+    return d, tb
+
+
+def test_every_game_probability_complements():
+    """Two teams play; one wins. If these ever fail to sum to one the devig or
+    the model has produced something that is not a probability pair."""
+    _d, tb = _team_bets()
+    bad = []
+    for r in tb:
+        m = r.get("model") or {}
+        ph, pa = m.get("p_home"), m.get("p_away")
+        if ph is None or pa is None:
+            continue
+        if not (_is_prob(ph) and _is_prob(pa)) or abs((ph + pa) - 1.0) > 1e-6:
+            bad.append((r.get("game_pk"), ph, pa))
+    assert not bad, f"home and away win probabilities do not complement: {bad[:5]}"
+
+
+def test_the_run_rates_are_physically_possible():
+    _d, tb = _team_bets()
+    bad = []
+    for r in tb:
+        m = r.get("model") or {}
+        for k in ("lam_home", "lam_away"):
+            v = m.get(k)
+            if v is not None and not (0.0 < v < 20.0):
+                bad.append((r.get("game_pk"), k, v))
+    assert not bad, f"implausible expected run rates: {bad[:5]}"
+
+
+def test_the_fair_total_is_the_sum_of_its_own_run_rates():
+    """A total that has drifted from the lambdas it is built on means two
+    different models are being published side by side."""
+    _d, tb = _team_bets()
+    bad = []
+    for r in tb:
+        m = r.get("model") or {}
+        ft, lh, la = m.get("fair_total"), m.get("lam_home"), m.get("lam_away")
+        if None in (ft, lh, la):
+            continue
+        if abs(ft - (lh + la)) > 0.06:
+            bad.append((r.get("game_pk"), ft, round(lh + la, 3)))
+    assert not bad, f"fair_total disagrees with lam_home + lam_away: {bad[:5]}"
+
+
+def test_the_record_arithmetic_closes():
+    """The record is append-only and is the one number on the page that can
+    embarrass us, so it has to add up."""
+    rec = (_load("betting.json").get("record") or {})
+    if not rec:
+        pytest.skip("no record block")
+    settled = rec.get("n_settled")
+    parts = (rec.get("won"), rec.get("lost"), rec.get("push"))
+    if settled is None or any(p is None for p in parts):
+        pytest.skip("record block is partial")
+    assert sum(parts) == settled, (
+        f"won + lost + push = {sum(parts)} against n_settled {settled}")
+    if rec.get("n_rows") is not None and rec.get("n_open") is not None:
+        assert rec["n_open"] + settled == rec["n_rows"], (
+            f"open {rec['n_open']} + settled {settled} != rows {rec['n_rows']}")
+
+
+# --------------------------------------------------------------------------
+# The arbitration ladder
+# --------------------------------------------------------------------------
+
+def _arb_rows():
+    rows = (_load("arbitration.json").get("rows") or [])
+    if not rows:
+        pytest.skip("no arbitration rows")
+    return rows
+
+
+def test_the_arbitration_total_is_the_sum_of_its_own_ladder():
+    """`tot` is what the page shows as a club's remaining arbitration cost. If
+    it drifts from the ladder beneath it, the summary and the detail are two
+    different numbers."""
+    bad = []
+    for r in _arb_rows():
+        lad = r.get("l") or []
+        if r.get("tot") is None or not lad:
+            continue
+        s = sum(x[1] for x in lad if x[1] is not None)
+        if abs(s - r["tot"]) > 1:
+            bad.append((r.get("n"), s, r["tot"]))
+    assert not bad, f"tot != sum of the ladder: {bad[:5]}"
+
+
+def test_every_arbitration_projection_sits_inside_its_own_band():
+    bad = []
+    for r in _arb_rows():
+        for x in (r.get("l") or []):
+            season, proj, lo, hi = x[0], x[1], x[2], x[3]
+            if None in (proj, lo, hi):
+                continue
+            if not (lo <= proj <= hi):
+                bad.append((r.get("n"), season, lo, proj, hi))
+    assert not bad, f"a projection sits outside its own low-high band: {bad[:5]}"
+
+
+def test_the_arbitration_ladder_and_the_war_series_are_aligned():
+    """`w` is documented as aligned to `l`. A length mismatch silently pairs a
+    season's dollars with a different season's WAR."""
+    bad = []
+    for r in _arb_rows():
+        lad, w = r.get("l") or [], r.get("w") or []
+        if lad and w and len(lad) != len(w):
+            bad.append((r.get("n"), len(lad), len(w)))
+    assert not bad, f"ladder and WAR series are different lengths: {bad[:5]}"
+
+
+def test_the_ladder_seasons_are_strictly_increasing():
+    bad = []
+    for r in _arb_rows():
+        yrs = [x[0] for x in (r.get("l") or [])]
+        if yrs != sorted(yrs) or len(set(yrs)) != len(yrs):
+            bad.append((r.get("n"), yrs))
+    assert not bad, f"ladder seasons repeat or run backwards: {bad[:5]}"
+
+
+def test_the_control_years_match_the_ladder_length():
+    bad = [(r.get("n"), r.get("yl"), len(r.get("l") or []))
+           for r in _arb_rows()
+           if r.get("yl") is not None and r["yl"] != len(r.get("l") or [])]
+    assert not bad, f"club-control years disagree with the ladder length: {bad[:5]}"
+
+
+def test_mutation_a_duplicate_board_rank_is_caught(monkeypatch):
+    def m(d):
+        ranked = [p for p in d["players"] if p.get("overall_rank")]
+        ranked[1]["overall_rank"] = ranked[0]["overall_rank"]
+        return d
+    _apply(monkeypatch, "timeseries.json", m)
+    with pytest.raises(AssertionError, match="duplicate board ranks"):
+        _self.test_the_board_ranks_are_a_contiguous_permutation()
+
+
+def test_mutation_a_non_complementing_game_is_caught(monkeypatch):
+    def m(d):
+        if d.get("team_bets"):
+            d["team_bets"][0]["model"]["p_away"] = 0.9
+        return d
+    _apply(monkeypatch, "betting.json", m)
+    with pytest.raises(AssertionError, match="do not complement"):
+        _self.test_every_game_probability_complements()
+
+
+def test_mutation_a_drifted_fair_total_is_caught(monkeypatch):
+    def m(d):
+        if d.get("team_bets"):
+            d["team_bets"][0]["model"]["fair_total"] = 99.0
+        return d
+    _apply(monkeypatch, "betting.json", m)
+    with pytest.raises(AssertionError, match="disagrees with"):
+        _self.test_the_fair_total_is_the_sum_of_its_own_run_rates()
+
+
+def test_mutation_a_record_that_does_not_add_up_is_caught(monkeypatch):
+    def m(d):
+        d["record"] = {"n_rows": 10, "n_open": 2, "n_settled": 8,
+                       "won": 5, "lost": 2, "push": 0}
+        return d
+    _apply(monkeypatch, "betting.json", m)
+    with pytest.raises(AssertionError, match="n_settled"):
+        _self.test_the_record_arithmetic_closes()
+
+
+def test_mutation_an_arbitration_total_that_drifts_is_caught(monkeypatch):
+    def m(d):
+        d["rows"][0]["tot"] = (d["rows"][0].get("tot") or 0) + 1_000_000
+        return d
+    _apply(monkeypatch, "arbitration.json", m)
+    with pytest.raises(AssertionError, match="sum of the ladder"):
+        _self.test_the_arbitration_total_is_the_sum_of_its_own_ladder()
+
+
+def test_mutation_a_projection_outside_its_band_is_caught(monkeypatch):
+    def m(d):
+        for r in d["rows"]:
+            if r.get("l"):
+                r["l"][0][1] = (r["l"][0][3] or 0) + 1
+                break
+        return d
+    _apply(monkeypatch, "arbitration.json", m)
+    with pytest.raises(AssertionError, match="outside its own"):
+        _self.test_every_arbitration_projection_sits_inside_its_own_band()
+
+
+def test_mutation_a_misaligned_war_series_is_caught(monkeypatch):
+    def m(d):
+        for r in d["rows"]:
+            if r.get("l") and r.get("w"):
+                r["w"] = r["w"][:-1] if len(r["w"]) > 1 else [0.0, 0.0]
+                break
+        return d
+    _apply(monkeypatch, "arbitration.json", m)
+    with pytest.raises(AssertionError, match="different lengths"):
+        _self.test_the_arbitration_ladder_and_the_war_series_are_aligned()
