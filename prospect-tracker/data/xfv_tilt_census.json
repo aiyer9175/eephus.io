@@ -1,0 +1,218 @@
+{
+ "generated_at": "2026-09-06T07:48:39+00:00",
+ "produced_by": "tools/efv_tilt_census.py",
+ "evaluated_object": "xfv_war_6yr",
+ "served_objects": {
+  "board_sort_key": "the ORDER: storage bakes overall_rank off this key",
+  "xfv_grade_quantile": "the DISPLAYED headline grade",
+  "xfv_grade": "the pure-model reference grade"
+ },
+ "is_additional_view": true,
+ "changes_no_served_number": true,
+ "sides": {
+  "H": {
+   "label": "hitters",
+   "n": 2140,
+   "grade_bases": {
+    "outcome_pooled": 1049,
+    "provisional_capped": 1091
+   },
+   "served_vs_evaluated": {
+    "board_sort_key": {
+     "n": 2140,
+     "spearman_vs_evaluated": 0.9876,
+     "pairs_total": 2288730,
+     "pairs_untied_in_both": 2261945,
+     "pairs_tied": 26785,
+     "tied_share": 0.0117,
+     "discordant": 74524,
+     "discordant_share": 0.0329
+    },
+    "xfv_grade_quantile": {
+     "n": 2140,
+     "spearman_vs_evaluated": 0.902,
+     "pairs_total": 2288730,
+     "pairs_untied_in_both": 1535868,
+     "pairs_tied": 752862,
+     "tied_share": 0.3289,
+     "discordant": 4752,
+     "discordant_share": 0.0031
+    },
+    "xfv_grade": {
+     "n": 2140,
+     "spearman_vs_evaluated": 0.7485,
+     "pairs_total": 2288730,
+     "pairs_untied_in_both": 2032407,
+     "pairs_tied": 256323,
+     "tied_share": 0.112,
+     "discordant": 340797,
+     "discordant_share": 0.1677
+    }
+   },
+   "by_grade_basis": {
+    "outcome_pooled": {
+     "n": 1049,
+     "share_of_side": 0.4902,
+     "grade_vs_evaluated": {
+      "n": 1049,
+      "spearman_vs_evaluated": 0.951,
+      "pairs_total": 549676,
+      "pairs_untied_in_both": 431826,
+      "pairs_tied": 117850,
+      "tied_share": 0.2144,
+      "discordant": 0,
+      "discordant_share": 0.0
+     },
+     "order_vs_evaluated": {
+      "n": 1049,
+      "spearman_vs_evaluated": 0.9967,
+      "pairs_total": 549676,
+      "pairs_untied_in_both": 539684,
+      "pairs_tied": 9992,
+      "tied_share": 0.0182,
+      "discordant": 6819,
+      "discordant_share": 0.0126
+     },
+     "distinct_consensus_fv": 124,
+     "consensus_fv_single_value": null
+    },
+    "provisional_capped": {
+     "n": 1091,
+     "share_of_side": 0.5098,
+     "grade_vs_evaluated": {
+      "n": 1091,
+      "spearman_vs_evaluated": 0.6481,
+      "pairs_total": 594595,
+      "pairs_untied_in_both": 564614,
+      "pairs_tied": 29981,
+      "tied_share": 0.0504,
+      "discordant": 143629,
+      "discordant_share": 0.2544
+     },
+     "order_vs_evaluated": {
+      "n": 1091,
+      "spearman_vs_evaluated": 0.9539,
+      "pairs_total": 594595,
+      "pairs_untied_in_both": 588928,
+      "pairs_tied": 5667,
+      "tied_share": 0.0095,
+      "discordant": 45193,
+      "discordant_share": 0.0767
+     },
+     "distinct_consensus_fv": 1,
+     "consensus_fv_single_value": 35.0
+    }
+   },
+   "routing": {
+    "cross_basis_pairs_untied": 1035967,
+    "cross_basis_discordant": 197168,
+    "cross_basis_discordant_share": 0.1903,
+    "share_of_all_grade_discordance_that_is_cross_basis": 0.5785,
+    "what_this_measures": "a pair whose two rows were graded through DIFFERENT maps. Each map can be perfectly monotone on its own rows and the composite still not be, which is what routing reorder means and why it is separated from the maps themselves."
+   }
+  },
+  "P": {
+   "label": "pitchers",
+   "n": 2406,
+   "grade_bases": {
+    "outcome_pooled": 1020,
+    "provisional_capped": 1386
+   },
+   "served_vs_evaluated": {
+    "board_sort_key": {
+     "n": 2406,
+     "spearman_vs_evaluated": 0.9855,
+     "pairs_total": 2893215,
+     "pairs_untied_in_both": 2880140,
+     "pairs_tied": 13075,
+     "tied_share": 0.0045,
+     "discordant": 111695,
+     "discordant_share": 0.0388
+    },
+    "xfv_grade_quantile": {
+     "n": 2406,
+     "spearman_vs_evaluated": 0.7826,
+     "pairs_total": 2893215,
+     "pairs_untied_in_both": 1367877,
+     "pairs_tied": 1525338,
+     "tied_share": 0.5272,
+     "discordant": 18527,
+     "discordant_share": 0.0135
+    },
+    "xfv_grade": {
+     "n": 2406,
+     "spearman_vs_evaluated": 0.5967,
+     "pairs_total": 2893215,
+     "pairs_untied_in_both": 2793485,
+     "pairs_tied": 99730,
+     "tied_share": 0.0345,
+     "discordant": 742656,
+     "discordant_share": 0.2659
+    }
+   },
+   "by_grade_basis": {
+    "outcome_pooled": {
+     "n": 1020,
+     "share_of_side": 0.4239,
+     "grade_vs_evaluated": {
+      "n": 1020,
+      "spearman_vs_evaluated": 0.9753,
+      "pairs_total": 519690,
+      "pairs_untied_in_both": 447456,
+      "pairs_tied": 72234,
+      "tied_share": 0.139,
+      "discordant": 0,
+      "discordant_share": 0.0
+     },
+     "order_vs_evaluated": {
+      "n": 1020,
+      "spearman_vs_evaluated": 0.9917,
+      "pairs_total": 519690,
+      "pairs_untied_in_both": 515894,
+      "pairs_tied": 3796,
+      "tied_share": 0.0073,
+      "discordant": 16423,
+      "discordant_share": 0.0318
+     },
+     "distinct_consensus_fv": 96,
+     "consensus_fv_single_value": null
+    },
+    "provisional_capped": {
+     "n": 1386,
+     "share_of_side": 0.5761,
+     "grade_vs_evaluated": {
+      "n": 1386,
+      "spearman_vs_evaluated": 0.035,
+      "pairs_total": 959805,
+      "pairs_untied_in_both": 946222,
+      "pairs_tied": 13583,
+      "tied_share": 0.0142,
+      "discordant": 461577,
+      "discordant_share": 0.4878
+     },
+     "order_vs_evaluated": {
+      "n": 1386,
+      "spearman_vs_evaluated": 0.9661,
+      "pairs_total": 959805,
+      "pairs_untied_in_both": 953666,
+      "pairs_tied": 6139,
+      "tied_share": 0.0064,
+      "discordant": 59759,
+      "discordant_share": 0.0627
+     },
+     "distinct_consensus_fv": 1,
+     "consensus_fv_single_value": 35.0
+    }
+   },
+   "routing": {
+    "cross_basis_pairs_untied": 1399807,
+    "cross_basis_discordant": 281079,
+    "cross_basis_discordant_share": 0.2008,
+    "share_of_all_grade_discordance_that_is_cross_basis": 0.3785,
+    "what_this_measures": "a pair whose two rows were graded through DIFFERENT maps. Each map can be perfectly monotone on its own rows and the composite still not be, which is what routing reorder means and why it is separated from the maps themselves."
+   }
+  }
+ },
+ "why_discordance_not_correlation": "Spearman rho against these fields is dominated by ties: the FV scale is coarse and the quantile map coarser, so a third to a half of pairs are tied in the displayed grade. A low rho there is mostly granularity. The share of pairs untied in BOTH fields and ordered oppositely is a real inversion and cannot be produced by rounding. Both are published; read the discordance.",
+ "reading": "hitters: the board's ORDER is close to the evaluated object (3.3% of untied pairs inverted, rho 0.9876). The flagship grade map is exactly monotone on its own rows (0.0% inverted over 431826 untied pairs). The provisional grade served to 1091 rows (51% of the side) is inverted against it on 25.4% of untied pairs. pitchers: the board's ORDER is close to the evaluated object (3.9% of untied pairs inverted, rho 0.9855). The flagship grade map is exactly monotone on its own rows (0.0% inverted over 447456 untied pairs). The provisional grade served to 1386 rows (58% of the side) is inverted against it on 48.8% of untied pairs. The gap is in the GRADE, not the ranking. A reader comparing two provisional players by their displayed eFV grades is reading a number that ordered them differently from the way the board ordered them, and differently again from the object the accuracy page scores. That may be deliberate, since a player with no professional track record is graded off a prior rather than off a ridge prediction nobody should trust yet; it had simply never been measured, and it bounds what the head-to-head covers."
+}

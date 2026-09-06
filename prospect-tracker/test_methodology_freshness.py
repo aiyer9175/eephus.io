@@ -822,6 +822,12 @@ MODEL_GLOSSARY = {
     # artifact, which is the honest place for it: a share card gets screenshotted
     # away from any glossary a reader might otherwise consult.
     "xfv_disagreement_floor": "internal",
+    # xfv_tilt_census measures the distance between what the board serves and
+    # what the accuracy page scores. Internal because it names no metric a reader
+    # looks up: it is a bound on the REACH of a claim the xfv entry already
+    # carries. If its provisional-grade finding ever changes what the board
+    # serves, that change ships with its own copy and this line moves with it.
+    "xfv_tilt_census": "internal",
 }
 
 

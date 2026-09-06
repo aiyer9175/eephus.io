@@ -4160,6 +4160,19 @@
    "owner": "eFV claim program",
    "last_validated": "2026-09-06",
    "notes": "2026-09-06 (A-CLAIM-10). MEASURED: 54.8% over 283 resolved disagreements, 95% CI 49.1% to 60.8%, one-sided p 0.058. The interval CONTAINS the coin, so this is a description of the sample and NOT an edge. Before this lane the share shipped as a bare percentage in four places, twice in bold, and tools/efv_scoreboard.py recorded win: true for it; that flag now requires the interval to clear and is None rather than False when no interval was derived. A SECOND DEFECT was fixed in the same lane: the percentile helper gave TIED grades different percentiles by list order, which matters because 38% of the board sits on the FV 35 constant anchor and one grade was being fanned across a wide band, manufacturing disagreement between players the consensus had graded identically. Ties now share the mean of the positions they occupy; the share moved 0.541 to 0.548 on the fix."
+  },
+  {
+   "model_id": "xfv_tilt_census",
+   "surface": "NOTHING SERVED. data/xfv_tilt_census.json, produced offline by tools/efv_tilt_census.py from data/xfv.json. No page reads it; it exists so the reach of every accuracy claim can be checked against what the board actually serves.",
+   "predicts": "nothing. It MEASURES the distance between the object the accuracy cells score (xfv_war_6yr) and the three objects the board serves: the ordering key overall_rank is baked from, the displayed quantile grade, and the pure-model grade.",
+   "champion": "discordant pairs: the share of pairs untied in BOTH fields and ordered oppositely. Spearman rho is published beside it and is NOT the statistic to read, because these fields are tie-heavy (33% of hitter and 53% of pitcher pairs are tied in the displayed grade) and a low rho against a coarse scale is granularity, not disagreement.",
+   "baseline": "descriptive by design; it inherits no gate and reaches no verdict. The comparison is against exact monotonicity, which the flagship map meets and the provisional map does not.",
+   "metric": "discordant share and Spearman rho per served object, decomposed within each grade_basis and across them (routing reorder), per side.",
+   "eval_artifact": "data/xfv_tilt_census.json",
+   "verdict": "provisional",
+   "owner": "eFV claim program",
+   "last_validated": "2026-09-06",
+   "notes": "2026-09-06 (A-CLAIM-7). THE ORDER IS FINE: the sort key inverts against the evaluated object on 3.3% of untied hitter pairs and 3.9% of pitcher pairs, rho 0.9876 and 0.9855, reproducing the figures the 2026-09-05 plan projected. THE FLAGSHIP MAP IS EXACTLY MONOTONE: zero inversions over ~880,000 untied pairs across both sides, so efv_score.py's monotonicity docstring is true where it applies. THE PROVISIONAL MAP IS NOT: served to 1,091 hitters (51% of the side) and 1,386 pitchers (58%), it inverts against the model's own predicted WAR on 25.4% and 48.8% of untied pairs, and half is what independence looks like. Every provisional row carries consensus FV exactly 35.0, so this basis IS the no-published-opinion population A-CLAIM-12 counts, reached from the other direction. Routing (pairs graded through different maps) accounts for 57.9% of all hitter grade discordance and 37.8% of pitcher. NOT NECESSARILY A DEFECT: a player with no professional track record is graded off a prior rather than off a ridge prediction nobody should trust yet. It had never been measured, and it bounds what the head-to-head result covers."
   }
  ],
  "problems": []
