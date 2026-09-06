@@ -531,22 +531,26 @@ def _slot_board():
 
 
 def test_the_headline_slot_takes_confidence_not_the_longest_price():
-    """UPDATED 2026-08-14. The expected label moved from "ATH +1.5" to "CIN"
-    because the runline is now excluded from published slots while the
-    dispersion correction is unserved (betting_model.market_is_publishable).
+    """UPDATED 2026-09-05. The expected label moved BACK from "CIN" to "ATH +1.5":
+    under the any-market slot policy (owner decision 2026-09-05, docs 7d) the
+    runline is eligible again, and its 0.70 is the highest probability in band.
+    2026-08-14 had moved it to "CIN" when the runline was excluded.
 
     THE TEST'S POINT IS UNCHANGED AND STILL EXERCISED: the +450 ATH row has the
     best EV on this board and the worst probability, and it still does not win.
-    The winner is the highest-probability PUBLISHABLE row, 0.66, over a row with
+    The winner is the highest-probability row in band, 0.70, over a row with
     better EV at 0.30. Selecting on EV is what this slot exists to stop doing
-    and this test still fails if it ever does."""
+    and this test still fails if it ever does. The runline row carries the
+    Poisson caveat because the dispersion correction is still unserved."""
     slots, _, meta = be.provisional_picks(_slot_board(), odds_configured=True)
     potd = slots["pick_of_the_day"]
-    assert potd["label"] == "CIN", (
+    assert potd["label"] == "ATH +1.5", (
         "the +450 row has the best EV on this board and the worst probability; "
         "selecting on EV is what this slot exists to stop doing")
-    assert potd["model_prob"] == 0.66
-    assert potd["market"] == "moneyline"
+    assert potd["model_prob"] == 0.70
+    assert potd["market"] == "runline"
+    assert potd["caveat"] == be.POISSON_CAVEAT
+    assert potd["market_policy"] == "any"
     assert meta["slots"]["pick_of_the_day"]["present"] is True
 
 
@@ -617,13 +621,14 @@ def test_a_slot_row_is_the_board_row_plus_context_only():
     pricing pass is what fused two books into one row and produced a 0.38839
     edge on 2026-08-06.
 
-    UPDATED 2026-08-14: the source row moved from the runline to the moneyline
-    the slot now actually selects. The assertion is unchanged and so is its
-    point, that every priced field on the published row is the SAME object's
-    value rather than a re-priced one.
+    UPDATED 2026-09-05: the source row moved back to the runline the slot
+    selects under the any-market policy (2026-08-14 had moved it to the
+    moneyline). The assertion is unchanged and so is its point, that every
+    priced field on the published row is the SAME object's value rather than a
+    re-priced one.
     """
     bets = _slot_board()
-    src = bets[0]["moneyline"][1]                     # CIN, the row now chosen
+    src = bets[0]["runline"][0]                       # ATH +1.5, the row now chosen
     slots, _, _ = be.provisional_picks(bets, odds_configured=True)
     potd = slots["pick_of_the_day"]
     assert potd["label"] == src["label"], "fixture drift: the slot moved"
@@ -2603,3 +2608,94 @@ def test_export_slots_carry_their_own_tag_record():
         assert lng["tag"] == "longshot"
         assert "n_settled" in potd and "roi" in potd and "net_units" in potd
         assert isinstance(potd["small_n"], bool)
+
+
+# ===========================================================================
+# 7. COLUMN SORTING (owner ask 2026-09-05)
+# ===========================================================================
+def test_client_exposes_a_pure_sort_parser_and_comparator():
+    """The parser and comparator are pure so the rules can be pinned without a
+    DOM: signed odds, percentages, units, dollars and thousands separators all
+    parse as numbers; a bare dash is null; text compares case-insensitively."""
+    c = _ctx(BAD_FETCH)
+    v = lambda s: c.eval("JSON.stringify(window.EEPHUS_BETTING_SORT.value(%s))" % json.dumps(s))  # noqa: E731
+    assert json.loads(v("+150"))["n"] == 150
+    assert json.loads(v("-110"))["n"] == -110
+    assert json.loads(v("12.3%"))["n"] == 12.3
+    assert json.loads(v("+1.5u"))["n"] == 1.5
+    assert json.loads(v("$1,234.5"))["n"] == 1234.5
+    assert json.loads(v("0.24398 dk")) ["n"] == 0.24398, "first token parses; the book tag is ignored"
+    assert v("-") == "null" and v("") == "null" and v("n/a") == "null"
+    assert json.loads(v("Over 8.5"))["n"] is None and json.loads(v("Over 8.5"))["s"] == "over 8.5"
+    cmp = lambda a, b, d: c.eval(  # noqa: E731
+        "window.EEPHUS_BETTING_SORT.compare(window.EEPHUS_BETTING_SORT.value(%s),"
+        "window.EEPHUS_BETTING_SORT.value(%s), %s)" % (json.dumps(a), json.dumps(b), json.dumps(d)))
+    assert cmp("150", "-110", "desc") < 0 and cmp("150", "-110", "asc") > 0
+    assert cmp("-", "150", "asc") > 0 and cmp("-", "150", "desc") > 0, "nulls sink in BOTH directions"
+    assert cmp("apple", "Banana", "asc") < 0 and cmp("apple", "Banana", "desc") > 0
+    assert cmp("7", "apple", "asc") < 0, "numbers sort before text"
+
+
+def test_client_wires_sortable_tables_after_every_table_render():
+    """Source pin: every innerHTML paint that can carry a table is followed by
+    the sortable wiring, and the wiring is idempotent per table."""
+    assert JS.count("wireSortableTables(") >= 4
+    body = JS.split("function renderSection() {", 1)[1].split("\n  }\n", 1)[0]
+    assert "wireSortableTables(root)" in body
+    assert 'data-bt-sortable' in JS and 'aria-sort' in JS and 'is-sorted' in JS
+
+
+def test_client_sorting_reorders_rows_in_a_real_browser():
+    """End to end on the served page: click a numeric header on the first data
+    table with three or more rows, and the rows come back in descending order
+    of that column; click again and they come back ascending."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+    from conftest import serve_site
+    with serve_site() as base, sync_playwright() as p:
+        try:
+            browser = p.chromium.launch(headless=True)
+        except Exception as exc:                              # noqa: BLE001
+            pytest.skip(f"chromium not installed for playwright: {exc}")
+        page = browser.new_page()
+        errs = []
+        page.on("pageerror", lambda e: errs.append(str(e)))
+        page.goto(base + "betting/index.html#section=validation", wait_until="load", timeout=60_000)
+        try:
+            page.wait_for_function(
+                "() => document.querySelectorAll('table.bt-table[data-bt-sortable] tbody tr').length >= 3",
+                timeout=60_000)
+        except Exception:
+            pytest.skip("no sortable table with three rows rendered (payload absent on this checkout)")
+        res = page.evaluate("""() => {
+          const tables = [...document.querySelectorAll('table.bt-table[data-bt-sortable]')]
+            .filter(t => t.querySelectorAll('tbody tr').length >= 3);
+          for (const t of tables) {
+            const ths = [...t.querySelectorAll('thead th')];
+            for (let ci = 0; ci < ths.length; ci++) {
+              const vals = [...t.querySelectorAll('tbody tr')].map(r => {
+                const td = r.children[ci]; if (!td) return null;
+                const v = window.EEPHUS_BETTING_SORT.value(td.getAttribute('data-sort') ?? td.textContent);
+                return v && v.n != null ? v.n : null; });
+              const nums = vals.filter(v => v != null);
+              if (nums.length >= 3 && new Set(nums).size >= 2) {
+                ths[ci].click();
+                const after1 = [...t.querySelectorAll('tbody tr')].map(r => {
+                  const v = window.EEPHUS_BETTING_SORT.value(r.children[ci].getAttribute('data-sort') ?? r.children[ci].textContent);
+                  return v && v.n != null ? v.n : null; }).filter(v => v != null);
+                const s1 = ths[ci].getAttribute('aria-sort');
+                ths[ci].click();
+                const after2 = [...t.querySelectorAll('tbody tr')].map(r => {
+                  const v = window.EEPHUS_BETTING_SORT.value(r.children[ci].getAttribute('data-sort') ?? r.children[ci].textContent);
+                  return v && v.n != null ? v.n : null; }).filter(v => v != null);
+                return { after1, s1, after2, s2: ths[ci].getAttribute('aria-sort') };
+              }
+            }
+          }
+          return null; }""")
+        browser.close()
+    if res is None:
+        pytest.skip("no numeric column with three distinct values on this checkout")
+    assert not errs, errs
+    assert res["s1"] == "descending" and res["after1"] == sorted(res["after1"], reverse=True), res
+    assert res["s2"] == "ascending" and res["after2"] == sorted(res["after2"]), res

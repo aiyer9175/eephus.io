@@ -1555,6 +1555,52 @@ reaches the public record, and no props row may enter a team tag's sweep
 
 ---
 
+## 7d. Any-market slots (owner decision 2026-09-05)
+
+Owner instruction, in intent: the Pick of the Day is not locked to the moneyline.
+Spread, moneyline, overs/unders and player props are all allowed; the slot finds
+the best pick. `betting_model.SLOT_MARKET_POLICY = "any"` implements it.
+
+What changes:
+
+- `_floor_clearing_sides` no longer skips a market. The dispersion leg (11a) and
+  the ledger leg (7b) STAMP the candidate instead: `evidence_closed` on the row,
+  and `_publish_slot` attaches `caveat` (runline / total, the Poisson
+  underdispersion) and `evidence_caveat` (a ledger-closed market) beside
+  `market_policy`. The row says what was overridden; nothing is hidden.
+- Priced props value rows (7c) enter the same candidate list on the same floor
+  and the same rule. To make that possible the props fair lines and value rows
+  are priced BEFORE the slots (a first pass with no watch-slot preference) and
+  the served props block is rebuilt AFTER the slots exactly as before. Inert
+  while the props pull is unarmed.
+- `append_record` keeps every row and stamps `dispersion_sensitive`,
+  `evidence_closed` and `market_policy` on it, computed on the BOARD name
+  (the 2026-08-16 vocabulary repair still applies).
+- `market_publishability` still measures and publishes both legs per market,
+  unchanged; `publishable` is True under the policy, `policy_override` says
+  when the legs would have barred it, and the reason sentence keeps the legs'
+  own words after the override clause. The client renders a both-legs market
+  as "two independent cautions" under the policy and as "watch-only" without it.
+- `SLOT_MARKET_POLICY = "dispersion_gated"` restores the 2026-08-14 / 2026-08-16
+  behaviour at both seams, so the earlier decision is one constant away and the
+  tests pin both states.
+
+What does NOT change: the selection rules (7a), the shared floor, the tags, the
+shadow ledger (which never excluded these markets), the record funnel's
+append-only chain, and the props credit discipline (7c). The rule itself is not
+reliability-aware: a runline probability off the underdispersed Skellam can win
+the headline slot on confidence it has not earned, which is why the row carries
+the caveat and why the accuracy-and-ROI selection bake-off (a registered lane,
+not a silent edit) is the next step: rank candidates on a per-market
+reliability-adjusted probability and EV, scored on the settled ledger and the
+vintage backtest before it replaces this rule.
+
+Settlement gap, stated plainly: a props row that wins a slot settles only when
+the props box-score grader exists (7c). Until then a props pick accrues no record
+of its own and the slot meta says so through the tag record.
+
+---
+
 ## 8. The append-only record
 
 `data/betting_record.json` is an array. `betting_export.write_record` proves

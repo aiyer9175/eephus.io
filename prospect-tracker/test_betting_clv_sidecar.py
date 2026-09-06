@@ -389,12 +389,19 @@ def test_the_jsonl_log_round_trips_and_chains(tmp_path):
     p = tmp_path / "record.jsonl"
     be.write_record(chained[:1], path=p)
     be.append_record([ml_row], path=p)
-    assert be.load_record(p) == chained
+    # Since 2026-09-05 the funnel stamps the two legs and the slot policy on every
+    # kept row (dispersion_sensitive / evidence_closed / market_policy, docs 7d);
+    # the chain test is about the rows' identity, so compare with those stripped.
+    _POLICY_STAMPS = ("dispersion_sensitive", "evidence_closed", "market_policy")
+    loaded = [{k: v for k, v in r.items() if k not in _POLICY_STAMPS} for r in be.load_record(p)]
+    assert loaded == chained
     lines = [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines() if x.strip()]
     assert [row["seq"] for row in lines] == [0, 1]
     assert lines[0]["prev_sha"] == be.CHAIN_GENESIS
     assert lines[1]["prev_sha"] == lines[0]["chain_sha"]
-    assert lines[1]["chain_sha"] == be.chain_sha(chained)
+    # The chain covers the rows AS STORED (with the policy stamps), so the
+    # expectation is computed over the loaded rows, not the pre-stamp input.
+    assert lines[1]["chain_sha"] == be.chain_sha(be.load_record(p))
 
 
 def test_an_edited_log_line_raises_rather_than_reading_back_clean(tmp_path):

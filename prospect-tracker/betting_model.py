@@ -66,6 +66,14 @@ WHAT THIS MODEL IS NOT, AND THE PAGE SAYS SO
     would delete the only evidence that could ever lift the exclusion. Owner
     decision 2026-08-14. See SERVE_RUN_DISPERSION and market_is_publishable.
 
+    AMENDED 2026-09-05, owner decision: the published slots are NO LONGER locked
+    to the moneyline. Every market the board prices (moneyline, runline, total,
+    and player props once the props pull is armed) is eligible for both slots
+    and for the public record; the slot finds the best side under its own rule
+    across all of them. The dispersion caveat and the section 7b ledger evidence
+    now ride the published ROW as disclosure instead of barring the market. See
+    SLOT_MARKET_POLICY; the theory leg is still measured and still published.
+
     Worse, and this is the reason the module ships UNVALIDATED: the team
     inputs are SEASON-TO-DATE aggregates. Backtesting 2026 games against
     August's leaderboards means the features already contain the outcomes
@@ -255,6 +263,39 @@ SERVE_RUN_DISPERSION = False
 # opposite.
 DISPERSION_SENSITIVE_MARKETS = ("runline", "total")
 
+#: SLOT MARKET POLICY (owner decision 2026-09-05, docs/diamond-betting.md 7d).
+#:   "any"               every market the board prices is eligible for both published
+#:                       slots and for the public record: moneyline, runline, total, and
+#:                       player props when the props pull is armed. The dispersion caveat
+#:                       (runline / total) and the section 7b ledger evidence travel ON
+#:                       THE ROW as disclosure; neither bars a market.
+#:   "dispersion_gated"  the 2026-08-14 behaviour: runline and total excluded from the
+#:                       slots and the record until SERVE_RUN_DISPERSION flips, and a
+#:                       ledger-closed market fills no slot.
+#: The owner's instruction, in intent: the Pick of the Day is not locked to the moneyline;
+#: spread, moneyline, totals and props are all allowed, find the best pick. The selection
+#: RULE is unchanged by this constant (highest model probability in the price band for the
+#: headline slot, best EV at a long price for the other); making the rule reliability-
+#: aware across markets of different measured calibration is the registered accuracy-and-
+#: ROI bake-off lane, not a silent edit here.
+SLOT_MARKET_POLICY = "any"
+
+
+def market_theory_ok(market: str | None) -> bool:
+    """The DISPERSION LEG alone: False for a market whose prices depend on the margin
+    distribution while the correction is not served. Independent of SLOT_MARKET_POLICY
+    on purpose: the policy decides whether a row may PUBLISH, this decides what the
+    publishability table SAYS about the theory, and the two must not blur."""
+    if SERVE_RUN_DISPERSION:
+        return True
+    return str(market or "").lower() not in DISPERSION_SENSITIVE_MARKETS
+
+
+def market_is_dispersion_sensitive(market: str | None) -> bool:
+    """True when a published row on this market must carry the Poisson caveat: the
+    market is priced off the margin distribution and the correction is unserved."""
+    return not market_theory_ok(market)
+
 
 def market_is_publishable(market: str | None) -> bool:
     """False for a market whose prices depend on the margin distribution while
@@ -271,10 +312,14 @@ def market_is_publishable(market: str | None) -> bool:
 
     Flips itself off automatically if SERVE_RUN_DISPERSION is ever set True, so
     this cannot outlive the defect it guards.
+
+    AMENDED 2026-09-05: under SLOT_MARKET_POLICY "any" every market is publishable
+    and the caveat rides the row (market_is_dispersion_sensitive). The theory leg
+    is still answered by market_theory_ok for the publishability table.
     """
-    if SERVE_RUN_DISPERSION:
+    if SLOT_MARKET_POLICY == "any":
         return True
-    return str(market or "").lower() not in DISPERSION_SENSITIVE_MARKETS
+    return market_theory_ok(market)
 # The gate itself, verbatim, so the artifact carries its own pre-registration
 # and a reader never has to trust that the doc and the code agree. Written into
 # docs/diamond-betting.md section 11a BEFORE the gate was run.
@@ -2782,9 +2827,10 @@ def prob_calibration_gate(games=None, *, teams=None, parks=None, starters=None,
                         "response scale, so a near-identity (a, b) is the honest "
                         "likely outcome"),
         "quantiles": [round(float(q), 3) for q in quantiles],
-        "serving_scope": ("moneyline only; the runline and the total stay behind "
-                          "the dispersion gate (section 11a) whatever this block "
-                          "says"),
+        "serving_scope": ("moneyline only for the Platt map; the runline and the total "
+                          "keep the UNSERVED dispersion correction (section 11a) whatever "
+                          "this block says, and since 2026-09-05 they publish under the "
+                          "any-market slot policy with the caveat on the row (section 7d)"),
     }
 
     # --- arm 1: vintage -----------------------------------------------------

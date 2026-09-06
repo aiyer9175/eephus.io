@@ -30,6 +30,16 @@ import pytest
 
 import betting_export as be
 import betting_model as bm
+
+
+@pytest.fixture(autouse=True)
+def _gated_policy_by_default(monkeypatch):
+    """This file pins the LEG mechanics (dwell, closure, the AND of the two legs) as
+    registered 2026-08-16, which is the gated policy. The SERVED policy since
+    2026-09-05 is "any" (owner decision, docs/diamond-betting.md 7d), under which
+    `publishable` follows the policy and the legs ride the row; the tests named
+    *_under_the_any_policy set that explicitly. Both states stay pinned."""
+    monkeypatch.setattr(bm, "SLOT_MARKET_POLICY", "dispersion_gated")
 import betting_shadow as bs
 from tools import betting_calibration as bc
 
@@ -363,12 +373,29 @@ def _board():
     }]
 
 
-def test_seam_1_a_ledger_closed_market_fills_no_slot():
+def test_seam_1_a_ledger_closed_market_fills_no_slot_when_gated(monkeypatch):
+    """The 2026-08-16 seam, pinned under the gated policy (owner decision 2026-09-05
+    made "any" the served policy; the seam stays one constant away)."""
+    monkeypatch.setattr(bm, "SLOT_MARKET_POLICY", "dispersion_gated")
     control = be._floor_clearing_sides(_board(), 0.06, ledger_closed=frozenset())
     assert {c["market"] for c in control} == {"moneyline"}
     cands = be._floor_clearing_sides(_board(), 0.06,
                                      ledger_closed=frozenset({"moneyline"}))
     assert cands == []
+
+
+def test_seam_1_a_ledger_closed_market_is_stamped_under_the_any_policy(monkeypatch):
+    """Owner decision 2026-09-05 (docs 7d): the evidence leg rides the row instead
+    of barring the market. Every market clears; the closed one is stamped."""
+    monkeypatch.setattr(bm, "SLOT_MARKET_POLICY", "any")
+    cands = be._floor_clearing_sides(_board(), 0.06,
+                                     ledger_closed=frozenset({"moneyline"}))
+    by = {c["market"]: c for c in cands}
+    assert set(by) == {"moneyline", "runline", "total"}
+    assert by["moneyline"]["evidence_closed"] is True
+    assert by["runline"]["evidence_closed"] is False
+    pub = be._publish_slot(by["moneyline"], "pick_of_the_day", thr=0.06, prov=True)
+    assert pub["evidence_caveat"] == be.EVIDENCE_CAVEAT
 
 
 def test_seam_1_reads_the_persisted_state_by_default(tmp_path, monkeypatch):
@@ -385,7 +412,8 @@ def test_seam_1_reads_the_persisted_state_by_default(tmp_path, monkeypatch):
         == {"moneyline"}
 
 
-def test_seam_2_append_record_refuses_a_ledger_closed_market(tmp_path):
+def test_seam_2_append_record_refuses_a_ledger_closed_market_when_gated(tmp_path, monkeypatch):
+    monkeypatch.setattr(bm, "SLOT_MARKET_POLICY", "dispersion_gated")
     p = tmp_path / "record.json"
     p.write_text("[]", encoding="utf-8")
     rows = [{"bet_id": "a", "market": "h2h", "side": "home"},
@@ -397,11 +425,26 @@ def test_seam_2_append_record_refuses_a_ledger_closed_market(tmp_path):
     assert [r["bet_id"] for r in control] == ["a", "b"]
 
 
-def test_seam_2_dispersion_guard_now_reads_the_feed_vocabulary(tmp_path):
+def test_seam_2_append_record_keeps_and_stamps_a_ledger_closed_market_under_the_any_policy(tmp_path, monkeypatch):
+    monkeypatch.setattr(bm, "SLOT_MARKET_POLICY", "any")
+    p = tmp_path / "record.json"
+    p.write_text("[]", encoding="utf-8")
+    rows = [{"bet_id": "a", "market": "h2h", "side": "home"},
+            {"bet_id": "b", "market": "moneyline", "side": "home"}]
+    out = be.append_record(rows, path=p, ledger_closed=frozenset({"moneyline"}))
+    assert [r["bet_id"] for r in out] == ["a", "b"]
+    assert all(r["evidence_closed"] is True for r in out), "h2h is the moneyline in feed vocabulary"
+    assert all(r["market_policy"] == "any" for r in out)
+
+
+def test_seam_2_dispersion_guard_now_reads_the_feed_vocabulary(tmp_path, monkeypatch):
     """THE VOCABULARY REPAIR, pinned. record_row writes `market` as the FEED
     key (h2h / spreads / totals), and the funnel guard used to test that raw
     key against a board-name exclusion list, so "spreads" and "totals" walked
-    straight past it. Both legs now see the canonical board name."""
+    straight past it. Both legs now see the canonical board name. Pinned under
+    the gated policy, where the guard refuses; under "any" the same board-name
+    resolution stamps `dispersion_sensitive` instead (test above)."""
+    monkeypatch.setattr(bm, "SLOT_MARKET_POLICY", "dispersion_gated")
     p = tmp_path / "record.json"
     p.write_text("[]", encoding="utf-8")
     rows = [{"bet_id": "a", "market": "h2h", "side": "home"},

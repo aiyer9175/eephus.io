@@ -221,6 +221,119 @@
     return '<div class="bt-empty"><strong>' + esc(title) + "</strong>" +
       (why ? "<span>" + esc(why) + "</span>" : "") + "</div>";
   }
+  // ---- sortable tables (owner ask 2026-09-05) --------------------------------
+  // Every data table the module renders sorts on a header click, in both
+  // directions, with nulls sinking. This mirrors the mlbstats.js header
+  // contract (role=button, tabindex, aria-sort, Enter and Space, the is-sorted
+  // class) but works on the RENDERED cells rather than a column spec: the
+  // betting tables are HTML strings built from a dozen payload shapes, and one
+  // generic wiring beats twelve column specs that drift. A cell may carry
+  // data-sort to override its display text; otherwise the first token of the
+  // text is parsed. Numbers, signed odds (+150 / -110), percentages (12.3%),
+  // units (+1.5u), dollars and thousands separators all parse as numbers; a
+  // bare "-", empty text or n/a is null; everything else compares as text.
+  // The parser and comparator are pure and exposed for tests.
+  function btSortValue(raw) {
+    var t = String(raw == null ? "" : raw).replace(/\s+/g, " ").trim();
+    if (!t) return null;
+    var low = t.toLowerCase();
+    if (low === "-" || low === "n/a" || low === "none" || low === "null") return null;
+    var tok = t.split(" ")[0].replace(/,/g, "").replace(/^\$/, "").replace(/[%ux]$/i, "");
+    if (/^[+-]?\d+(\.\d+)?$/.test(tok)) return { n: parseFloat(tok), s: low };
+    return { n: null, s: low };
+  }
+  // Returns <0 when a sorts before b in the requested direction. Nulls always
+  // sort LAST regardless of direction; ties keep source order (the caller
+  // breaks them by index).
+  function btCompare(a, b, dir) {
+    var an = (a == null), bn = (b == null);
+    if (an && bn) return 0;
+    if (an) return 1;
+    if (bn) return -1;
+    var sign = (dir === "asc") ? 1 : -1;
+    if (a.n != null && b.n != null) return (a.n - b.n) * sign;
+    if (a.n != null) return -1 * sign;      // numbers before text
+    if (b.n != null) return 1 * sign;
+    if (a.s < b.s) return -1 * sign;
+    if (a.s > b.s) return 1 * sign;
+    return 0;
+  }
+  function btSortStoreKey(key) { return "eephus.betting.sort." + key; }
+  function btSortTable(table, ci, dir, key, silent) {
+    var ths = table.querySelectorAll("thead th");
+    var th = ths[ci];
+    var tbody = table.querySelector("tbody");
+    if (!th || !tbody) return;
+    var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr")).filter(function (r) {
+      return r.parentNode === tbody;
+    });
+    if (!rows.length) return;
+    var vals = rows.map(function (r) {
+      var td = r.children[ci];
+      if (!td) return null;
+      var ds = td.getAttribute("data-sort");
+      return btSortValue(ds != null ? ds : td.textContent);
+    });
+    var numeric = vals.some(function (v) { return v && v.n != null; });
+    var cur = th.getAttribute("aria-sort");
+    if (!dir) dir = (cur === "descending") ? "asc" : (cur === "ascending") ? "desc" : (numeric ? "desc" : "asc");
+    var idx = rows.map(function (_, i) { return i; });
+    idx.sort(function (a, b) { var c = btCompare(vals[a], vals[b], dir); return c !== 0 ? c : a - b; });
+    idx.forEach(function (i) { tbody.appendChild(rows[i]); });
+    Array.prototype.forEach.call(ths, function (h) {
+      if (h.getAttribute("aria-sort")) h.setAttribute("aria-sort", "none");
+      h.classList.remove("is-sorted");
+    });
+    th.setAttribute("aria-sort", dir === "asc" ? "ascending" : "descending");
+    th.classList.add("is-sorted");
+    if (!silent && key) {
+      try { localStorage.setItem(btSortStoreKey(key), JSON.stringify({ col: ci, dir: dir })); }
+      catch (e) { /* storage is a convenience, never a dependency */ }
+    }
+  }
+  function wireSortableTables(root) {
+    if (!root || !root.querySelectorAll) return;
+    var tables = root.querySelectorAll("table.bt-table");
+    if (!tables || !tables.length) return;
+    Array.prototype.forEach.call(tables, function (table, ti) {
+      if (table.getAttribute("data-bt-sortable")) return;        // idempotent
+      var thead = table.querySelector("thead"), tbody = table.querySelector("tbody");
+      if (!thead || !tbody) return;
+      var ths = thead.querySelectorAll("th");
+      if (!ths || !ths.length) return;
+      table.setAttribute("data-bt-sortable", "1");
+      var labels = Array.prototype.map.call(ths, function (h) { return String(h.textContent || "").trim(); });
+      var key = table.getAttribute("data-sort-key") ||
+        ((S.section || "page") + ":" + ti + ":" + labels.join("|").slice(0, 80));
+      Array.prototype.forEach.call(ths, function (th, ci) {
+        if (!labels[ci]) return;                                   // blank action columns
+        th.setAttribute("role", "button");
+        th.setAttribute("tabindex", "0");
+        th.setAttribute("aria-sort", "none");
+        th.classList.add("bt-sortable");
+        var activate = function () { btSortTable(table, ci, null, key, false); };
+        th.addEventListener("click", activate);
+        th.addEventListener("keydown", function (e) {
+          if (e.key !== "Enter" && e.key !== " ") return;
+          e.preventDefault();
+          activate();
+        });
+      });
+      var saved = null;
+      try { saved = JSON.parse(localStorage.getItem(btSortStoreKey(key)) || "null"); }
+      catch (e) { saved = null; }
+      var def = table.getAttribute("data-default-sort");
+      if (saved && saved.col != null && ths[saved.col]) btSortTable(table, +saved.col, saved.dir, key, true);
+      else if (def) {
+        var parts = String(def).split(":");
+        if (ths[+parts[0]]) btSortTable(table, +parts[0], parts[1] || "desc", key, true);
+      }
+    });
+  }
+  if (typeof window !== "undefined") {
+    window.EEPHUS_BETTING_SORT = { value: btSortValue, compare: btCompare, wire: wireSortableTables };
+  }
+
   function fmtOdds(v) {
     if (v == null || isNaN(v)) return "-";
     var n = Math.round(Number(v));
@@ -643,10 +756,12 @@
     { key: "pick_of_the_day",
       pickTitle: "Pick of the Day",
       watchTitle: "Model Watch: largest disagreement",
-      pickLead: "The side the model is most confident in, among prices in the normal range.",
+      pickLead: "The side the model is most confident in, among prices in the normal range, " +
+                "on any market the board prices (moneyline, runline, total, props when priced).",
       watchLead: "The side tonight where the model's probability differs most from the " +
-                 "de-vigged market, among prices in the normal range. A disagreement " +
-                 "being logged in public, not a recommendation." },
+                 "de-vigged market, among prices in the normal range, on any market the " +
+                 "board prices (moneyline, runline, total, props when priced). A " +
+                 "disagreement being logged in public, not a recommendation." },
     { key: "longshot_of_the_day",
       pickTitle: "Longshot Value of the Day",
       watchTitle: "Model Watch: long-price disagreement",
@@ -802,6 +917,11 @@
     var mp = (S.data || {}).market_publishability || null;
     if (!mp || !mp.markets) return "";
     var pol = mp.policy || {};
+    // THE ANY-MARKET POLICY (owner decision 2026-09-05). When the payload says
+    // slot_market_policy is "any", a both-legs market is ELIGIBLE and the two
+    // legs are cautions that ride the published row; the sentence changes with
+    // the policy field and nothing here is hand-written either way.
+    var anyPolicy = pol.slot_market_policy === "any";
     var out = [];
     Object.keys(mp.markets).forEach(function (k) {
       var m = mp.markets[k] || {};
@@ -811,8 +931,11 @@
         : ("the n of " + pol.n_min + " floor");
       var bar = (pol.z == null) ? "the one-sided 95% bar"
         : ("the " + num(pol.z, 3) + " one-sided bar");
-      out.push(note("<strong>The " + esc(k) +
-        " market is watch-only for two independent reasons.</strong>" +
+      var head = anyPolicy
+        ? ("<strong>The " + esc(k) + " market carries two independent cautions and " +
+           "is eligible under the any-market policy (2026-09-05).</strong>")
+        : ("<strong>The " + esc(k) + " market is watch-only for two independent reasons.</strong>");
+      out.push(note(head +
         " Theory leg: " +
         esc((m.dispersion_leg || {}).reason ||
             "the margin-shape exclusion bars this market") +
@@ -820,10 +943,14 @@
         floor + ", mean Brier " + num(lg.brier, 5) + " on " +
         (lg.n_games == null ? "an unreported count of" : lg.n_games) +
         " canonical games, t " + num(lg.t, 3) + " against " + bar +
-        ". The two closes are independent: clearing either leg alone does " +
-        "not reopen the market, and the shadow and calibration ledgers keep " +
-        "recording it because they are the only instruments that can " +
-        "accumulate the evidence to reopen it."));
+        (anyPolicy
+          ? ". Both cautions ride any published row on this market as disclosure; " +
+            "the shadow and calibration ledgers keep recording it so the evidence " +
+            "keeps accruing."
+          : ". The two closes are independent: clearing either leg alone does " +
+            "not reopen the market, and the shadow and calibration ledgers keep " +
+            "recording it because they are the only instruments that can " +
+            "accumulate the evidence to reopen it.")));
     });
     return out.join("");
   }
@@ -967,7 +1094,8 @@
     // is one of the two the margin model is worst at; the dispersion line says
     // what was done about that and what the gate returned.
     var shaped = (p.market === "runline" || p.market === "total");
-    var caveat = (p.caveat ? note(esc(p.caveat)) : "") + dispersionLine(shaped);
+    var caveat = (p.caveat ? note(esc(p.caveat)) : "") +
+      (p.evidence_caveat ? note(esc(p.evidence_caveat)) : "") + dispersionLine(shaped);
     // The watch additions render in the watch frame only: when the gates open
     // the pick rendering returns exactly as it was, which is the self-lift the
     // 2026-08-16 decision requires.
@@ -2576,6 +2704,7 @@
           "is arithmetic rather than an assumption.");
     }
     host.innerHTML = body;
+    wireSortableTables(host);
     wireLegDrops(host);
   }
 
@@ -2940,6 +3069,7 @@
           '<td class="bt-acts">' + acts + "</td></tr>";
       }).join("") + "</tbody></table></div>";
     host.innerHTML = sum + body + note(esc(src));
+    wireSortableTables(host);
     host.querySelectorAll("[data-settle]").forEach(function (b) {
       b.addEventListener("click", function () {
         var to = b.getAttribute("data-settle");
@@ -3026,6 +3156,9 @@
     // markup is in the DOM. wire() is idempotent and cheap on a container this
     // size, so it runs on every paint rather than only on the first.
     wireGl(root);
+    // Every table in the section becomes sortable (owner ask 2026-09-05); the
+    // wiring is idempotent per table, so a re-paint never double-binds.
+    wireSortableTables(root);
   }
 
   // The shell ships the tabs, but the module injects any it is missing so a
@@ -3206,6 +3339,11 @@
     ".bt-table th{text-align:right;font:600 10px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border,#333)}",
     ".bt-table td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--border-light,#222);color:var(--text-primary)}",
     ".bt-table th.bt-l,.bt-table td.bt-l{text-align:left}",
+    ".bt-table th.bt-sortable{cursor:pointer;user-select:none}",
+    ".bt-table th.bt-sortable:focus-visible{outline:2px solid var(--accent-cyan,#2a7);outline-offset:-2px}",
+    ".bt-table th.is-sorted{color:var(--text-primary);border-bottom:2px solid var(--accent-gold,#a80)}",
+    ".bt-table th[aria-sort=\"ascending\"]::after{content:' \\25B2';font-size:8px}",
+    ".bt-table th[aria-sort=\"descending\"]::after{content:' \\25BC';font-size:8px}",
     ".bt-pos{color:var(--accent-green,#3a9)}.bt-neg{color:var(--accent-red,#c55)}",
     ".bt-dim{color:var(--text-tertiary)}",
     ".bt-note{font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);border-left:3px solid var(--accent-cyan,#2a7);padding:8px 10px;margin:8px 0}",

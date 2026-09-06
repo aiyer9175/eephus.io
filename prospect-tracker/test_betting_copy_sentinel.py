@@ -94,7 +94,13 @@ def test_both_legs_true_when_evidence_closes_a_dispersion_barred_market(tmp_path
     assert tot["dispersion_leg"]["publishable"] is False
     assert tot["ledger_leg"]["status"] == "ledger_closed"
     assert tot["both_legs"] is True
-    assert tot["publishable"] is False
+    # Owner decision 2026-09-05 (docs 7d): the legs are disclosure, not a bar.
+    # The table still says both legs closed; `publishable` follows the policy.
+    if bm.SLOT_MARKET_POLICY == "any":
+        assert tot["publishable"] is True and tot["policy_override"] is True
+        assert "any-market slot policy" in tot["reason"]
+    else:
+        assert tot["publishable"] is False and tot["policy_override"] is False
     assert "both legs" in tot["reason"]
 
 

@@ -804,14 +804,22 @@ def append_record(new_rows: list[dict], *, path: Path | None = None,
     if ledger_closed is None:
         ledger_closed = ledger_closed_markets()
     rows = list(new_rows or [])
+    gated = bm.SLOT_MARKET_POLICY != "any"
     kept, refused_dispersion, refused_ledger = [], [], []
     for r in rows:
         mk = board_market(r) or r.get("market")
-        if not bm.market_is_publishable(mk):
+        if gated and not bm.market_is_publishable(mk):
             refused_dispersion.append(mk)
-        elif mk in ledger_closed:
+        elif gated and mk in ledger_closed:
             refused_ledger.append(mk)
         else:
+            # POLICY "any" (2026-09-05): the row is kept and carries both legs as
+            # disclosure, computed on the BOARD name so the feed vocabulary (h2h /
+            # spreads / totals) cannot walk past either.
+            r = {**r,
+                 "dispersion_sensitive": bool(bm.market_is_dispersion_sensitive(mk)),
+                 "evidence_closed": bool(mk in ledger_closed),
+                 "market_policy": bm.SLOT_MARKET_POLICY}
             kept.append(r)
     if refused_dispersion:
         log.warning("betting_record: refused %d row(s) on a market excluded "
@@ -3571,6 +3579,15 @@ def _slot_tag_records() -> dict:
 #: inflates the model's confidence on the side of the line the middle sits on.
 #: The moneyline is the least exposed of the three. The caveat rides the row so
 #: it cannot be lost by a client that renders the pick and not the limits list.
+#: Attached to any published slot on a market the section 7b evidence leg has
+#: CLOSED (its own settled canonical games resolved worse than a coin for the
+#: dwell). Under the any-market policy (2026-09-05) the closure no longer bars the
+#: market; this is what the row says instead.
+EVIDENCE_CAVEAT = ("this market's own settled paper record resolved worse than a coin "
+                   "at the section 7b floor for the closure dwell; it is eligible "
+                   "under the any-market slot policy (owner decision 2026-09-05) and "
+                   "that record rides here as the disclosure, not as a bar")
+
 POISSON_CAVEAT = ("this is a runline or total, and the margin model is a Poisson "
                   "difference that underdisperses real run scoring, so its "
                   "probabilities sit too close to the middle; treat this edge as "
@@ -3696,7 +3713,7 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
         tr = trailing.get(m) or {}
         ms = (st.get("markets") or {}).get(m) or {}
         status = ms.get("status") or "open"
-        disp_ok = bm.market_is_publishable(m)
+        disp_ok = bm.market_theory_ok(m)
         if m in PROPS_GATED_MARKETS:
             # Props are not priced by the margin model, so the theory leg has
             # nothing to say about them; the ledger leg is the whole gate.
@@ -3736,8 +3753,10 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
                              f"trailing {MARKET_GATE_TRAILING} games fail the same "
                              f"test for {MARKET_GATE_DWELL} consecutive "
                              f"evaluations. Today: {ledger_reason}")
-        publishable = bool(disp_ok and status != "ledger_closed")
-        if publishable:
+        legs_ok = bool(disp_ok and status != "ledger_closed")
+        policy_any = bm.SLOT_MARKET_POLICY == "any"
+        publishable = bool(legs_ok or policy_any)
+        if legs_ok:
             reason = ("publishable: " + disp_reason + ", and " + ledger_reason)
         elif not disp_ok and status == "ledger_closed":
             reason = "excluded by both legs: " + disp_reason + "; " + ledger_reason
@@ -3745,9 +3764,18 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
             reason = disp_reason
         else:
             reason = ledger_reason
+        if policy_any and not legs_ok:
+            # THE POLICY OVERRIDE (2026-09-05): the legs are still measured and
+            # still stated; they ride the published row as disclosure instead of
+            # barring the market. The sentence keeps the legs' own words so a
+            # reader sees exactly what was overridden.
+            reason = ("eligible under the any-market slot policy (owner decision "
+                      "2026-09-05, section 7d); the legs ride the row as disclosure: "
+                      + reason)
         markets[m] = {
             "market": m,
             "publishable": publishable,
+            "policy_override": bool(policy_any and not legs_ok),
             "reason": reason,
             # THE BOTH-LEGS COPY STATE (2026-08-19, pre-decided). True exactly
             # when the evidence leg has CLOSED a market the theory leg already
@@ -3785,6 +3813,14 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
                   if len(under) == len(GATED_MARKETS) else None)
     return {
         "policy": {
+            "slot_market_policy": bm.SLOT_MARKET_POLICY,
+            "slot_market_policy_note": (
+                "any: every priced market may fill a slot and reach the record; the "
+                "dispersion and ledger legs below are disclosure on the row (owner "
+                "decision 2026-09-05, docs/diamond-betting.md 7d)"
+                if bm.SLOT_MARKET_POLICY == "any" else
+                "dispersion_gated: a market must clear BOTH legs to fill a slot or "
+                "reach the public record"),
             "n_min": n_min, "z": z, "dwell": MARKET_GATE_DWELL,
             "trailing": MARKET_GATE_TRAILING,
             "basis": ("n_min mirrors betting_shadow.MIN_BETS_FOR_SWEEP and z is "
@@ -3869,8 +3905,10 @@ def market_gate_evaluate(*, cal_path: Path | None = None,
 
 
 def _floor_clearing_sides(bets: list[dict], thr: float, *,
-                          ledger_closed: frozenset | None = None) -> list[dict]:
-    """Every side on the BOARD that clears `thr` at a real taken price.
+                          ledger_closed: frozenset | None = None,
+                          extra_rows: list[dict] | None = None) -> list[dict]:
+    """Every side on the BOARD that clears `thr` at a real taken price, plus any
+    `extra_rows` (priced props value rows) that clear it.
 
     THE ENUMERATION MAY NOT RE-PRICE ANYTHING. Each candidate is the board row
     verbatim plus context keys (market, game, matchup, start). Re-reading the
@@ -3882,27 +3920,35 @@ def _floor_clearing_sides(bets: list[dict], thr: float, *,
     badge read the rows that came out of that, so no two surfaces on the page
     can disagree about what a side costs.
 
+    MARKET POLICY (2026-09-05, betting_model.SLOT_MARKET_POLICY). Under "any" no
+    market is skipped: the dispersion leg and the section 7b ledger leg stamp the
+    candidate (`evidence_closed`) so the published row can carry them as
+    disclosure. Under "dispersion_gated" the two seams of 2026-08-14 / 2026-08-16
+    apply exactly as before: a dispersion-sensitive market fills no slot while the
+    correction is unserved, and a ledger-closed market fills no slot.
+
+    `extra_rows` are props value rows (props_value_bets value_rows): already priced
+    off the same _market_view discipline, already carrying market / game_pk /
+    matchup / start / label / player. They compete for the slots on the same floor
+    and the same rule; nothing about them is special-cased except that they never
+    enter the team ledger (record_props_slate keeps them in their own tags).
+
     `ledger_closed` is the section 7b evidence leg, injectable for tests;
     None reads the persisted dwell state."""
     if ledger_closed is None:
         ledger_closed = ledger_closed_markets()
+    gated = bm.SLOT_MARKET_POLICY != "any"
     cands = []
     for b in bets:
         for market, rows in (("moneyline", b.get("moneyline") or []),
                              ("runline", b.get("runline") or []),
                              ("total", (b.get("total") or {}).get("sides") or [])):
-            # SEAM 1 of 2 for the dispersion exclusion. betting_model has
-            # documented since the gate returned INDETERMINATE that these
-            # markets do not fill a published slot, and nothing enforced it:
-            # the pick of the day on 2026-08-14 was a runline at edge 0.123 on
-            # a market whose own graded Brier (0.26301) is worse than a coin.
-            # The predicate lifts itself the moment SERVE_RUN_DISPERSION flips.
-            if not bm.market_is_publishable(market):
+            # SEAM 1 of 2 for the dispersion exclusion (2026-08-14) and for the
+            # section 7b ledger leg (2026-08-16). Both are POLICY-scoped since
+            # 2026-09-05: they bar nothing under "any" and stamp the row instead.
+            if gated and not bm.market_is_publishable(market):
                 continue
-            # SEAM 1 of 2 for the section 7b ledger leg (2026-08-16): a market
-            # that RESOLVED worse than a coin on its own settled canonical
-            # games fills no slot until the trailing sample stops saying so.
-            if market in ledger_closed:
+            if gated and market in ledger_closed:
                 continue
             for row in rows or []:
                 if row.get("edge") is None or row["edge"] < thr:
@@ -3911,7 +3957,19 @@ def _floor_clearing_sides(bets: list[dict], thr: float, *,
                     continue        # no real price taken, no pick
                 cands.append({**row, "market": market, "game_pk": b.get("game_pk"),
                               "matchup": f"{b['away']['org']} at {b['home']['org']}",
-                              "start": b.get("start")})
+                              "start": b.get("start"),
+                              "evidence_closed": bool(market in ledger_closed)})
+    for row in extra_rows or []:
+        market = row.get("market")
+        if not market:
+            continue
+        if gated and market in ledger_closed:
+            continue
+        if row.get("edge") is None or row["edge"] < thr:
+            continue
+        if row.get("odds") is None or not row.get("book"):
+            continue
+        cands.append({**row, "evidence_closed": bool(market in ledger_closed)})
     return cands
 
 
@@ -3932,8 +3990,11 @@ def _publish_slot(row: dict, slot: str, *, thr: float, prov: bool) -> dict:
     # to lose a bankroll quickly, and the served number is a quarter of it so
     # nobody has to do the division under the impression the site endorsed it.
     out["kelly_quarter"] = round(float(k) / 4.0, 5) if k is not None else None
-    if row.get("market") in ("runline", "total"):
+    out["market_policy"] = bm.SLOT_MARKET_POLICY
+    if bm.market_is_dispersion_sensitive(row.get("market")):
         out["caveat"] = POISSON_CAVEAT
+    if row.get("evidence_closed"):
+        out["evidence_caveat"] = EVIDENCE_CAVEAT
     return out
 
 
@@ -3955,7 +4016,8 @@ def _longshot_rank(row: dict) -> tuple:
 
 def provisional_picks(bets: list[dict], *, odds_configured: bool,
                       evald: dict | None = None,
-                      block_reason: str | None = None) -> tuple[dict, str, dict]:
+                      block_reason: str | None = None,
+                      extra_candidates: list[dict] | None = None) -> tuple[dict, str, dict]:
     """Both published slots, chosen from ONE candidate list at ONE floor.
 
     Returns (slots, reason, meta). `slots` maps the payload key of each slot to
@@ -4031,8 +4093,8 @@ def provisional_picks(bets: list[dict], *, odds_configured: bool,
     potd_band = f"american odds from {lo:+d} to {hi:+d}"
     long_band = f"american odds of {LONGSHOT_MIN_ODDS:+d} or longer"
     potd_rule = ("highest model win probability among sides clearing the "
-                 f"{floor_txt}, restricted to {potd_band}; ties go to the price "
-                 "nearest -110, then to the higher expected value")
+                 f"{floor_txt} on any priced market, restricted to {potd_band}; ties "
+                 "go to the price nearest -110, then to the higher expected value")
     long_rule = ("highest expected value per unit among sides clearing the "
                  f"{floor_txt} at {long_band}")
 
@@ -4048,8 +4110,14 @@ def provisional_picks(bets: list[dict], *, odds_configured: bool,
                 present=False, reason=why, n_cands=0)
         return {k: None for k in SLOT_LABELS}, why, meta
 
-    cands = _floor_clearing_sides(bets, thr)
+    cands = _floor_clearing_sides(bets, thr, extra_rows=extra_candidates)
     meta["n_floor_clearing_sides"] = len(cands)
+    meta["market_policy"] = bm.SLOT_MARKET_POLICY
+    meta["markets_eligible"] = (
+        "any priced market: moneyline, runline, total, props when armed (owner decision "
+        "2026-09-05, section 7d); the dispersion and ledger legs ride the row as disclosure"
+        if bm.SLOT_MARKET_POLICY == "any" else
+        "moneyline while the dispersion correction is unserved; ledger-closed markets excluded")
     in_band = [c for c in cands if lo <= c["odds"] <= hi]
     longshots = [c for c in cands if c["odds"] >= LONGSHOT_MIN_ODDS]
 
@@ -4331,9 +4399,23 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     # per UTC day; a same-day re-run refreshes the statistics only. write=False
     # keeps a dry build from advancing the nightly counters.
     market_table = market_gate_evaluate(write=write, log_fn=log_fn)
+    # PROPS COMPETE FOR THE SLOTS (owner decision 2026-09-05). The props fair lines
+    # and the props value rows are priced BEFORE the slots are chosen so a props
+    # side can win a slot on the same floor and the same rule as a team side. This
+    # first pass takes slots=None, so its game selection is "largest team-market
+    # edge" alone; the served props block below is rebuilt AFTER the slots with the
+    # watch-slot game first, exactly as before. Pure reads both times: the props
+    # pull itself happens in betting_ingest and spends nothing here. Inert while the
+    # props machinery is unarmed (value_rows is then empty by construction).
+    props_fair = (props_fair_lines(games, starters=starters) if games else
+                  {"model_only": True, "pitchers": [], "hitters": [],
+                   "no_book_comparison_reason": "no slate loaded"})
+    _props_pre = props_value_bets(bets, props_fair, slots=None, on_date=slate_date,
+                                  evald=evald, market_table=market_table)
     slots, pick_reason, pick_meta = provisional_picks(
         bets, odds_configured=odds_configured, evald=evald,
-        block_reason=(odds_slate["reason"] if odds_slate.get("mismatch") else None))
+        block_reason=(odds_slate["reason"] if odds_slate.get("mismatch") else None),
+        extra_candidates=list(_props_pre.get("value_rows") or []))
     pick = slots["pick_of_the_day"]
     longshot = slots["longshot_of_the_day"]
     # STORAGE FIRST, BEFORE ANYTHING READS THE RECORD. `ensure_record_log`
@@ -4402,9 +4484,6 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         else:
             empty_reasons.append(status.get("note") or "no odds snapshot cached")
 
-    props_fair = (props_fair_lines(games, starters=starters) if games else
-                  {"model_only": True, "pitchers": [], "hitters": [],
-                   "no_book_comparison_reason": "no slate loaded"})
     payload = {
         "generated_at": _now(),
         "slate_date": (slate_date or on_date or date.today().isoformat()),
