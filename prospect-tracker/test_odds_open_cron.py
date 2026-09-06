@@ -410,3 +410,43 @@ def test_every_job_that_bills_has_an_allocation():
         "the per-job allocations consume the whole tier, leaving no reserve "
         "for the spend this ledger cannot see (a manual pull, a second box, a "
         "retry that billed before it failed)")
+
+
+# --------------------------------------------------------------------------
+# The empty-market credit trap
+# --------------------------------------------------------------------------
+
+def test_a_request_asking_for_no_markets_costs_nothing():
+    """THE TRAP THIS CLOSES, and it has real money on it.
+
+    `credits_for` floors both factors at 1 so that a one-market call is not
+    free. Those floors used to apply to the EMPTY case too, so
+    credits_for((), ("us",)) returned 1. Any capture job that ships inert with
+    an empty market tuple and is armed later would then clear its own credit
+    guard, because betting_credits.check short-circuits only at cost <= 0,
+    issue a request asking for nothing, and book a real credit every run.
+
+    Zero markets means no call.
+    """
+    import betting_ingest as bi
+    assert bi.credits_for((), ("us",)) == 0
+    assert bi.credits_for((), ()) == 0
+    assert bi.credits_for(("h2h",), ()) == 0
+
+
+def test_the_floors_still_apply_to_every_non_empty_call():
+    """The fix must not make a one-market call free, which is what the floors
+    were there for."""
+    import betting_ingest as bi
+    assert bi.credits_for(("h2h",), ("us",)) == 1
+    assert bi.credits_for(("h2h", "spreads", "totals"), ("us",)) == 3
+    assert bi.credits_for() == 3
+
+
+def test_the_zero_cost_short_circuit_is_what_makes_the_fix_load_bearing():
+    """The two halves have to be read together: check() treats a zero cost as
+    free, so credits_for is the only thing standing between an empty market
+    tuple and a billed request."""
+    import betting_credits as bc
+    ok, why = bc.check("props", 0)
+    assert ok and "spends nothing" in why

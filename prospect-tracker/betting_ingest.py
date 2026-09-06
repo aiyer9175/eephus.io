@@ -130,8 +130,24 @@ def configured() -> bool:
 
 def credits_for(markets=MARKETS, regions=REGIONS) -> int:
     """The Odds API bills markets x regions per request. This is the whole
-    reason the daily call is 3 credits and not 1."""
-    return max(1, len(tuple(markets))) * max(1, len(tuple(regions)))
+    reason the daily call is 3 credits and not 1.
+
+    AN EMPTY MARKET OR REGION TUPLE COSTS NOTHING, because there is no request
+    to make. The `max(1, ...)` floors exist so a one-market call is not free,
+    and they used to apply to the empty case as well: credits_for((), ("us",))
+    returned 1. That is not a rounding quirk, it is a live trap for any capture
+    job that ships INERT with an empty market tuple and is armed later.
+    `betting_credits.check` short-circuits only at `cost <= 0`, so such a job
+    would clear its own guard, issue a request asking for nothing, and book a
+    real credit every time it ran.
+
+    Zero markets means no call. The floors still apply to every non-empty case,
+    so the daily 3 and the props arithmetic are unchanged.
+    """
+    m, r = tuple(markets), tuple(regions)
+    if not m or not r:
+        return 0
+    return max(1, len(m)) * max(1, len(r))
 
 
 def props_credits_cap() -> int | None:
