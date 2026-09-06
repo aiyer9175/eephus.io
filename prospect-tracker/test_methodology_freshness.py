@@ -801,6 +801,14 @@ MODEL_GLOSSARY = {
     # the xfv entry already documents, not a metric a reader looks up. If it
     # ever changes what the accuracy page says, that copy ships with it.
     "claim_bust_inclusive": "internal",
+    # A-CLAIM-13, the rater scale view. Internal, and this one has to STAY
+    # internal for a reason the other two do not share: its block rho is a
+    # NARROWER statistic than the pooled Spearman the accuracy page publishes,
+    # measured on percentile-normalized outcomes that throw away magnitude. Put
+    # it in front of a reader beside the pooled number and it reads as a second,
+    # disagreeing head-to-head. A test in test_rater_scale_view.py pins that no
+    # page and no other module reads the artifact key at all.
+    "claim_rater_scale_view": "internal",
     # pbp_corpus_base_state is a data substrate under .cache/. No page reads it. It
     # earns a registry row because a reconstruction that is WRONG would silently
     # poison every In-Game Management number built on top of it, so its agreement

@@ -1639,6 +1639,7 @@ _CLAIM_BOOT_B = 2000
 _CLAIM_SEED = 20260906
 _CLAIM_MIN_ROWS = 60          # below this a clustered floor is noise about noise
 _CLAIM_MIN_CLUSTERS = 30
+_SCALE_PLACEBO_B = 200        # permutations for the A-CLAIM-13 scale placebo
 _CLAIM_BLOCK_MIN = 8          # a base year smaller than this cannot be percentiled
 _Z95 = 1.645                  # one-sided 95%, the convention in docs/EFV_GATE_STANDARD.md
 
@@ -2039,6 +2040,76 @@ def _econd_floor(label, cluster_ids, a, b, target, *, is_auc=False,
     }
 
 
+def _econd_two_target_floor(label, cluster_ids, a, a_target, b, b_target, *,
+                            B=_CLAIM_BOOT_B, seed=_CLAIM_SEED):
+    """Player-clustered E_cond bootstrap of rho(a, a_target) - rho(b, b_target).
+
+    WHY A SECOND FLOOR FUNCTION RATHER THAN A FLAG ON THE FIRST. `_econd_floor`
+    compares two grade columns against ONE target, which is right for every
+    head-to-head cell: the raters are being asked to order the same outcomes. The
+    scale view asks a different question, whether a rater's measured ordering
+    changes when the between-block scale is removed, and the two legs there are
+    scored against DIFFERENT targets by construction: the block leg against the
+    within-block percentile of the outcome, the pooled leg against raw WAR.
+    Forcing that through a one-target signature would have meant normalizing the
+    target once and pretending both legs saw it.
+
+    It is still E_cond: all four columns are fixed before the resampling starts,
+    so the only thing drawn is which players the frame contains. In particular
+    the percentiles are NOT recomputed inside a draw. Recomputing them would
+    change the estimand from "what would this frame have measured on a different
+    sample of players" to "what would a different sample have measured after
+    re-normalizing itself", which is a different and much wider question.
+    """
+    np = _numpy()
+    n = len(cluster_ids)
+    n_clusters = len(set(cluster_ids))
+    if np is None:
+        return _floor_shell(label, n, n_clusters, "not derived: numpy unavailable")
+    if n < _CLAIM_MIN_ROWS or n_clusters < _CLAIM_MIN_CLUSTERS:
+        return _floor_shell(label, n, n_clusters,
+                            f"not derived: frame below the floor gate "
+                            f"({_CLAIM_MIN_ROWS} rows / {_CLAIM_MIN_CLUSTERS} clusters)")
+    av = np.asarray(a, dtype=np.float64)
+    bv = np.asarray(b, dtype=np.float64)
+    at = np.asarray(a_target, dtype=np.float64)
+    bt = np.asarray(b_target, dtype=np.float64)
+    ids = {k: i for i, k in enumerate(dict.fromkeys(cluster_ids))}
+    order, starts, lens = _cluster_layout(np, [ids[k] for k in cluster_ids])
+    rng = np.random.default_rng(seed)
+    diffs = []
+    for _ in range(B):
+        idx = _cluster_draw(np, rng, order, starts, lens)
+        if idx.size < 8:
+            continue
+        xa = _spearman_np(np, av[idx], _ranks_np(np, at[idx]))
+        xb = _spearman_np(np, bv[idx], _ranks_np(np, bt[idx]))
+        if xa is not None and xb is not None:
+            diffs.append(xa - xb)
+    if len(diffs) < 50:
+        return _floor_shell(label, n, n_clusters, "not derived: too few usable draws")
+    pa = _spearman_np(np, av, _ranks_np(np, at))
+    pb = _spearman_np(np, bv, _ranks_np(np, bt))
+    d = np.asarray(diffs, dtype=np.float64)
+    sd = float(d.std(ddof=1))
+    q = np.quantile(d, [0.025, 0.975])
+    return {
+        "label": label, "n": n, "n_clusters": n_clusters,
+        "estimator": "E_cond", "derived_in_run": True,
+        "resampling_unit": "player cluster",
+        "statistic": "spearman, two targets",
+        "B": B, "B_used": len(diffs), "seed": seed,
+        "point_delta": (None if (pa is None or pb is None) else round(pa - pb, 5)),
+        "boot_mean_delta": round(float(d.mean()), 5),
+        "sd": round(sd, 5),
+        "mde95": round(_Z95 * sd, 4),
+        "mde95_twosided": round(1.96 * sd, 4),
+        "ci95": [round(float(q[0]), 4), round(float(q[1]), 4)],
+        "p_gt_0": round(float((d > 0).mean()), 4),
+        "convention": "MDE95 = 1.645 * sd(delta), one-sided",
+    }
+
+
 def _econd_best_rater_floor(label, cluster_ids, cons, candidates, target, *,
                             is_auc=False, B=_CLAIM_BOOT_B, seed=_CLAIM_SEED):
     """The `consensus_vs_inputs` floor with the ARGMAX RESAMPLED.
@@ -2144,6 +2215,262 @@ def _block_percentile(vals):
     r = _rankdata(vals)
     n = len(vals)
     return [(x - 0.5) / n for x in r]
+
+
+def _group_sizes(rows, key_of):
+    """Groups of `rows` under `key_of`, in a deterministic order. Used only to
+    give the permutation placebo the SAME block sizes as the real blocking."""
+    g: dict = {}
+    for c in rows:
+        g.setdefault(key_of(c), []).append(c)
+    return [g[k] for k in sorted(g, key=str)]
+
+
+def _scale_view_pass(usable, raters, block_of, *, floor=True, label=""):
+    """One blocking pass: percentile-normalize grade and outcome inside each
+    block, pool, and report each rater's block rho against its pooled rho on the
+    SAME rows.
+
+    Factored out of the view below so the attribution passes (side only, year
+    only) and the permutation placebo run through IDENTICAL code. A placebo that
+    runs through a second implementation tests the second implementation.
+    """
+    by_block: dict = {}
+    for c in usable:
+        by_block.setdefault(block_of(c), []).append(c)
+    cols = {r: [] for r in raters}
+    raw = {r: [] for r in raters}
+    ntgt, rtgt, keys, kept, dropped = [], [], [], {}, {}
+    for bk in sorted(by_block, key=str):
+        blk = by_block[bk]
+        if len(blk) < _CLAIM_BLOCK_MIN:
+            dropped[str(bk)] = len(blk)
+            continue
+        wars = [(c["outcome"] or {}).get("war") or 0.0 for c in blk]
+        kept[str(bk)] = {
+            "n": len(blk), "mean_war": round(sum(wars) / len(blk), 3),
+            "rho": {r: _r4(_spearman([c["grades"][r] for c in blk], wars))
+                    for r in raters},
+        }
+        for r in raters:
+            vals = [c["grades"][r] for c in blk]
+            cols[r].extend(_block_percentile(vals))
+            raw[r].extend(vals)
+        ntgt.extend(_block_percentile(wars))
+        rtgt.extend(wars)
+        keys.extend(c.get("key") for c in blk)
+    if len(ntgt) < _CLAIM_MIN_ROWS:
+        return {"label": label, "n": len(ntgt),
+                "status": "not computed: too few rows survive the block minimum"}
+    per_rater = {}
+    for r in raters:
+        b = _spearman(cols[r], ntgt)
+        pl = _spearman(raw[r], rtgt)
+        cell = {
+            "block_rho": _r4(b),
+            "pooled_rho_same_rows": _r4(pl),
+            "delta_block_minus_pooled": (None if (b is None or pl is None)
+                                         else round(b - pl, 5)),
+        }
+        if floor:
+            fl = _econd_two_target_floor(f"{label}.{r}", keys, cols[r], ntgt,
+                                         raw[r], rtgt)
+            cell["floor_E_cond_in_run"] = fl
+            cell["call_E_cond_in_run"] = _floored_call(
+                fl.get("point_delta"), fl.get("mde95"), "E_cond",
+                f"derived in run on the {label} normalized columns",
+                win="removing this block scale RAISES the rater",
+                loss="removing this block scale LOWERS the rater")
+        per_rater[r] = cell
+    return {"label": label, "n": len(ntgt), "n_players": len(set(keys)),
+            "blocks_kept": len(kept), "blocks_dropped_below_min": dropped,
+            "blocks": kept, "per_rater": per_rater,
+            "_cols": cols, "_ntgt": ntgt, "_keys": keys}
+
+
+def _rater_scale_view(rows, raters, side_of):
+    """A-CLAIM-13. Each rater's ordering measured inside SIDE x YEAR blocks,
+    published beside `accuracy.per_year` as an additional view.
+
+    WHAT IT SEPARATES. The pooled Spearman stacks base years AND sides. Both
+    carry scale that belongs to the block rather than to the rater. A base year
+    with more rows contributes more pairs; a base year whose cohort realized more
+    WAR contributes a longer outcome scale. And the two sides are not on one
+    scale at all: at the same consensus grade, pitchers realize a fraction of the
+    WAR hitters do, so a rater who happens to grade more hitters is credited with
+    ordering skill for a difference between populations.
+
+    Normalizing the grade and the outcome to percentiles INSIDE each side-year
+    block removes both, and what is left is within-cohort ordering only.
+
+    THIS IS A VIEW, NOT A VERDICT. It is registered as an additional row and no
+    published call reads it. The reason is that percentile-normalizing the target
+    discards the magnitude of the outcome, and magnitude is most of what a
+    prospect grade is FOR: a rater who separates a 40 WAR career from a 4 WAR one
+    deserves the credit the raw scale gives him. The block view answers a
+    narrower question, and the pooled cell stays primary.
+
+    The pooled leg is computed on the SAME rows the block leg kept, so the delta
+    is the normalization and nothing else. The all-rows pooled value is reported
+    separately, and the difference between the two is the cost of the blocks that
+    fell under the minimum.
+    """
+    usable = [c for c in rows if all(c["grades"].get(r) is not None for r in raters)]
+    _side = lambda c: side_of.get(c.get("key")) or "unknown"   # noqa: E731
+
+    main = _scale_view_pass(usable, raters, lambda c: (_side(c), c.get("year")),
+                            label="side_year")
+    if main.get("status"):
+        return {"view": "additional", **main}
+    cols = main.pop("_cols")
+    ntgt = main.pop("_ntgt")
+    keys = main.pop("_keys")
+    per_rater = main["per_rater"]
+    kept_blocks = main["blocks"]
+    dropped = main["blocks_dropped_below_min"]
+
+    for r in raters:
+        per_rater[r]["pooled_rho_all_rows"] = _r4(_spearman(
+            [c["grades"][r] for c in usable],
+            [(c["outcome"] or {}).get("war") or 0.0 for c in usable]))
+
+    # ATTRIBUTION. Side and year are two different confounders bundled into the
+    # headline number. Blocking on each alone says which one carries the effect;
+    # without this the view can only say "something about the blocks".
+    attribution = {}
+    for tag, keyer in (("side_only", lambda c: _side(c)),
+                       ("year_only", lambda c: c.get("year"))):
+        one = _scale_view_pass(usable, raters, keyer, label=tag)
+        for k in ("_cols", "_ntgt", "_keys"):
+            one.pop(k, None)
+        one.pop("blocks", None)
+        attribution[tag] = one
+
+    # THE PLACEBO, and it is the check that decides whether any of this is real.
+    # Percentile-normalizing inside blocks could lower rho all by itself, for
+    # reasons that have nothing to do with scale. Permute which rows belong to
+    # which block, keeping the block SIZES exactly, and re-measure. If the effect
+    # is block scale, the permuted delta goes to roughly zero. If it does not,
+    # the effect is the transform and this whole view is an artifact.
+    placebo = {"status": "not run: numpy unavailable"}
+    np = _numpy()
+    if np is not None:
+        sizes = [len(v) for v in _group_sizes(usable, lambda c: (_side(c), c.get("year")))]
+        rng = np.random.default_rng(_CLAIM_SEED)
+        draws = {r: [] for r in raters}
+        for _ in range(_SCALE_PLACEBO_B):
+            order = list(rng.permutation(len(usable)))
+            fake, at = {}, 0
+            for i, n_i in enumerate(sizes):
+                for j in order[at:at + n_i]:
+                    fake[id(usable[j])] = i
+                at += n_i
+            one = _scale_view_pass(usable, raters, lambda c: fake.get(id(c), -1),
+                                   floor=False, label="permuted_blocks")
+            if one.get("status"):
+                continue
+            for r in raters:
+                d = one["per_rater"][r]["delta_block_minus_pooled"]
+                if d is not None:
+                    draws[r].append(d)
+        placebo = {"label": "permuted_blocks", "B": _SCALE_PLACEBO_B,
+                   "seed": _CLAIM_SEED, "block_sizes_preserved": True,
+                   "per_rater": {}}
+        for r in raters:
+            v = np.asarray(draws[r], dtype=np.float64) if draws[r] else None
+            if v is None or v.size < 20:
+                placebo["per_rater"][r] = {"status": "too few usable permutations"}
+                continue
+            q = np.quantile(v, [0.025, 0.975])
+            mean = float(v.mean())
+            placebo["per_rater"][r] = {
+                "B_used": int(v.size),
+                "mean_delta": round(mean, 5),
+                "sd": round(float(v.std(ddof=1)), 5),
+                "ci95": [round(float(q[0]), 5), round(float(q[1]), 5)],
+            }
+            obs = per_rater[r]["delta_block_minus_pooled"]
+            if obs is not None:
+                per_rater[r]["placebo_mean_delta"] = round(mean, 5)
+                per_rater[r]["delta_net_of_placebo"] = round(obs - mean, 5)
+                per_rater[r]["observed_inside_placebo_band"] = bool(
+                    q[0] <= obs <= q[1])
+        placebo["what_it_tests"] = (
+            "block labels permuted at fixed block SIZES, so the transform is "
+            "identical and only the block meaning is destroyed. Under "
+            "permutation there is no block scale left to remove, so whatever "
+            "delta survives is what the percentile transform costs by itself. "
+            "Every rater's headline delta is therefore reported NET of its own "
+            "permuted mean: the net is the part attributable to block scale, "
+            "the permuted mean is the part attributable to the method.")
+        placebo["why_it_is_per_rater_and_not_one_number"] = (
+            "the transform does not cost every column the same. A coarse "
+            "20-to-80 grade is heavily tied and a continuous model number is "
+            "not, and within-block percentiling treats those two differently. "
+            "A single pooled placebo constant would have subtracted the wrong "
+            "amount from at least one rater, and on this frame it would have "
+            "subtracted far too little from eFV.")
+
+    # FOUR BLOCK RHOS NEXT TO EACH OTHER IS A COMPARISON, whether or not anybody
+    # called it one. A reader will rank them by eye, so every gap this view
+    # displays carries the floor that says whether it can be read. These use
+    # `_econd_floor` rather than the two-target floor above: both columns are
+    # scored against the SAME normalized target, which is the ordinary
+    # head-to-head shape.
+    gaps = {}
+    if "xfv" in raters:
+        for r in raters:
+            if r == "xfv":
+                continue
+            fl = _econd_floor(f"scale_view.gap.xfv_vs_{r}", keys,
+                              cols["xfv"], cols[r], ntgt)
+            gaps[f"xfv_vs_{r}"] = {
+                "floor_E_cond_in_run": fl,
+                "call_E_cond_in_run": _floored_call(
+                    fl.get("point_delta"), fl.get("mde95"), "E_cond",
+                    "derived in run on the side-year normalized columns",
+                    win="eFV orders better inside the blocks",
+                    loss=f"{r} orders better inside the blocks"),
+            }
+
+    return {
+        "view": "additional",
+        "registered_as": "A-CLAIM-13",
+        "gaps_on_this_view": gaps,
+        "why_the_gaps_are_floored": (
+            "four block rhos printed next to each other is a comparison whether "
+            "or not it is labelled one, and a reader will rank them by eye. Every "
+            "gap the view displays therefore carries its own floor. None of these "
+            "cells feeds a published verdict: the head-to-head call is read off "
+            "the pooled frame, and this row exists to describe it, not to "
+            "replace it."),
+        "basis": ("grade and outcome percentile-normalized inside each "
+                  "side x base-year block, then pooled"),
+        "raters": list(raters),
+        "n": len(ntgt), "n_players": len(set(keys)),
+        "n_before_block_minimum": len(usable),
+        "block_min_rows": _CLAIM_BLOCK_MIN,
+        "blocks_kept": len(kept_blocks),
+        "blocks_dropped_below_min": dropped,
+        "blocks": kept_blocks,
+        "per_rater": per_rater,
+        "attribution": attribution,
+        "placebo_permuted_blocks": placebo,
+        "changes_no_verdict": True,
+        "why_it_is_a_view_and_not_a_verdict": (
+            "percentile-normalizing the target discards the MAGNITUDE of the "
+            "outcome, and magnitude is most of what a prospect grade is for. A "
+            "rater who separates a 40 WAR career from a 4 WAR one has earned the "
+            "credit the raw scale gives him. This row answers the narrower "
+            "question of within-cohort ordering, and the pooled cell stays "
+            "primary."),
+        "what_it_removes": (
+            "two things that belong to the block rather than to the rater: base "
+            "years differ in how many rows and how much realized WAR they "
+            "contribute, and the two sides are not on one outcome scale at all, "
+            "so a rater graded on a different hitter share is otherwise credited "
+            "with a difference between populations."),
+    }
 
 
 def _within_year_block_leg(rows, raters, *, label=""):
@@ -3020,6 +3347,15 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         "per_year": {y: {"common_n": len(common_by_year[y]), **_acc(common_by_year[y])}
                      for y in years if common_by_year[y]},
     }
+    # A-CLAIM-13, the rater scale view. Sits BESIDE per_year, as registered, and
+    # is read by nothing: `changes_no_verdict` is asserted in the payload and
+    # pinned by test. It is here so a reader can see how much of each rater's
+    # pooled number is within-cohort ordering and how much is the scale of the
+    # cohorts they happened to be graded on.
+    accuracy["per_year_scale_view"] = _rater_scale_view(
+        efv_common_vintage if len(efv_common_vintage) >= _CLAIM_MIN_ROWS
+        else pooled_common,
+        [s for s in SCORED_SOURCES] + [CONSENSUS_KEY, "xfv"], m_side)
     # M-1 row accounting. Published rather than left in a doc, because the strip
     # changes the population every head-to-head number is computed on and a reader
     # has to be able to see exactly what left.
