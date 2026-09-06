@@ -969,10 +969,26 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         post_season = (e.get("post") or {}).get("season", e["year"])
         pre_war = (war_by_year.get(pre_season) or {}).get(e["mlbam"])
         post_war = (war_by_year.get(post_season) or {}).get(e["mlbam"])
+        # THE DISPLAYED DELTA IS THE DIFFERENCE OF THE DISPLAYED PARTS, and the
+        # STATISTIC KEEPS THE EXACT ONE. These used to be the same key computed
+        # two different ways: pre_war and post_war were each rounded to a tenth
+        # while war_delta was computed on the UNROUNDED pair and rounded after,
+        # so on 23 of 115 rows a reader subtracting the two numbers on screen got
+        # a different answer from the coloured delta between them. Reynaldo Lopez
+        # read 3.8 to 0.5 with a delta of -3.2, and one row showed the same
+        # number twice with a red loss between them.
+        #
+        # Rounding the difference of the rounded parts fixes the arithmetic a
+        # reader can do. It must NOT be what the correlation sees: rounding to a
+        # tenth manufactures tie groups, and this is the outcome variable behind
+        # the site's only PASS verdict on this model, so war_delta_exact carries
+        # the unrounded value and is what feeds the statistic below.
         h["pre_war"] = None if pre_war is None else round(pre_war, 1)
         h["post_war"] = None if post_war is None else round(post_war, 1)
+        h["war_delta_exact"] = (None if pre_war is None or post_war is None
+                                else post_war - pre_war)
         h["war_delta"] = (None if pre_war is None or post_war is None
-                          else round(post_war - pre_war, 1))
+                          else round(h["post_war"] - h["pre_war"], 1))
         # pitch-mix change (before/after arsenal usage) for the converter,
         # attached INLINE to the record so the history view can show the arsenal
         # shift per conversion (kept as a standalone array too).
@@ -997,10 +1013,15 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # fit scores are different 0-100 scales - pooling them was never
         # meaningful), closed post seasons only (a partial in-progress post
         # season deflates WAR mechanically).
-        if (pre_fit is not None and h["war_delta"] is not None
+        if (pre_fit is not None and h["war_delta_exact"] is not None
                 and post_season < season and e["direction"] in per_dir):
             per_dir[e["direction"]]["fit_war"].append(pre_fit)
-            per_dir[e["direction"]]["war"].append(h["war_delta"])
+            # THE EXACT DELTA, not the display-rounded one. Feeding a tenth-
+            # rounded outcome to a rank correlation manufactures ties: on the
+            # SP to RP direction 50 of 61 outcomes fell into rounding-created tie
+            # groups, which moved the published rho by about +0.008 on the one
+            # direction that carries this model's PASS verdict.
+            per_dir[e["direction"]]["war"].append(h["war_delta_exact"])
     history.sort(key=lambda h: (h["year"], -(h["pre_fit"] or 0)), reverse=True)
 
     rho = _spearman(pre_fits, labels)   # legacy pooled - REPORTING ONLY, not the gate
