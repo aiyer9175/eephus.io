@@ -1374,22 +1374,32 @@ the headline baseline, with league-average and replacement served beside it. Cho
 it is the only baseline a reader can argue with. The policy text is frozen in the gate doc
 before any number is computed, so it cannot be tuned to flatter a manager.
 
-**12. Hall of Fame label. DECIDED: ANY-ROUTE PRIMARY. THIS DIFFERS FROM THE PLAN'S
-RECOMMENDATION, which was BBWAA primary, and the difference has consequences the executor
-must handle rather than absorb.** Induction by any route (the writers or the veterans
-committees) is the primary label; the writers-only label becomes the secondary. What it
-buys: the positive class matches who is actually in the Hall, which is the honest target
-for a question phrased as "who belongs". What it costs: two very different selection
-processes are pooled into one label, and the committees resolve on a different and much
-longer clock. Three requirements follow and are binding. (a) H-PRED-1's censoring rule is
-stated PER ROUTE, and a player whose committee window is still open is censored, never a
-zero. (b) The eval publishes a per-route breakdown, so a fold whose positives are mostly
-committee inductions cannot masquerade as model skill. (c) The forward chain is by
-election year for the writers and by induction year for the committees, and the artifact
-says which rows came from which. THE FLAGS DECISION IS UNCHANGED: the
-performance-enhancing-drug, Mitchell, banned and posthumous flags stay OUT of the merit
-model and appear only in the voter model, quantified as a discount in vote points. That
-option was offered separately and was not chosen.
+**12. Hall of Fame label. DECIDED 2026-09-06 (amended the same day): BBWAA INDUCTION
+PRIMARY, ANY-ROUTE SECONDARY, FLAGS SEPARATE.** The first answer was any-route primary;
+the owner amended it to the recommended path once the flags half of the question was
+clarified. Both labels are computed and both are published; the writers' label is the one
+the headline probability and the gate are scored on.
+
+Why this way. The writers' ballot is a single process with a defined window, a published
+vote share every year, and a resolution rule (elected, dropped under five percent, or
+ballot exhausted) that makes censoring unambiguous. The veterans committees resolve on a
+different and much longer clock with no public vote share for most of their history, so
+pooling them into the primary label would mix two selection processes and let a
+committee-heavy fold read as model skill. Keeping any-route as the SECONDARY label
+preserves the honest answer to "who is actually in the Hall" without contaminating the
+gate.
+
+FLAGS STAY OUT OF THE MERIT MODEL. Performance-enhancing-drug suspensions, Mitchell report
+appearances, admitted or confirmed use, bans and posthumous status are a separate
+hand-maintained source with provenance URLs (H-DATA-5), and they enter only the VOTER
+model (H-PRED-4), where each is quantified as a discount in vote points at the candidate's
+merit logit. This is what lets the module say two different things and show its work: here
+is the on-field case, and here is what the ballot did with it.
+
+Requirements that ride the lane either way: censoring stated per route with an open window
+censored rather than scored zero, a per-route breakdown published in the eval, and a
+forward chain by election year for the writers with induction year recorded for the
+committees.
 
 **13. Hall of Fame eras. DECIDED: INCLUDE NEGRO LEAGUES AND PRE-1901 WITH AN ERA FACTOR.**
 Both are in the frame (8,072 Negro Leagues batting rows over 2,263 players) with the
