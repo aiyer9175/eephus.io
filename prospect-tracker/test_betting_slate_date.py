@@ -369,10 +369,10 @@ def test_a_mismatch_empties_both_slots():
                              "odds": -110, "book": "fanduel", "model_prob": 0.70,
                              "ev_per_unit": 0.30}],
               "runline": None, "total": {"sides": None}}]
-    free, _, meta0 = be.provisional_picks(board, odds_configured=True)
+    free, _, meta0 = be.provisional_picks(board, odds_priceable=True)
     assert free["pick_of_the_day"] is not None, "premise: this board has a pick"
     why = "ODDS SLATE MISMATCH: the board is the 2026-08-09 slate and ..."
-    slots, reason, meta = be.provisional_picks(board, odds_configured=True,
+    slots, reason, meta = be.provisional_picks(board, odds_priceable=True,
                                                block_reason=why)
     assert slots["pick_of_the_day"] is None and slots["longshot_of_the_day"] is None
     assert reason == why

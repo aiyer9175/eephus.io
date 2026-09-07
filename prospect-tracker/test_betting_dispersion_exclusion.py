@@ -136,7 +136,7 @@ def test_props_value_rows_compete_for_the_slots_on_the_same_floor(any_policy):
     labels = [c.get("label") for c in cands]
     assert "Some Arm Over 6.5" in labels and "No Price Over 5.5" not in labels, (
         "a props row with no taken price is not a candidate; one with a price is")
-    slots, _, meta = be.provisional_picks(_board(), odds_configured=True, extra_candidates=props)
+    slots, _, meta = be.provisional_picks(_board(), odds_priceable=True, extra_candidates=props)
     assert slots["pick_of_the_day"]["market"] == "props_pitcher_strikeouts", (
         "the highest model probability in band wins regardless of market")
     assert meta["market_policy"] == "any"
@@ -165,7 +165,7 @@ def test_gated_predicate_lifts_itself_when_the_correction_is_served(gated, monke
 def test_gated_slot_selection_emits_no_runline_or_total(gated):
     cands = be._floor_clearing_sides(_board(), 0.06, ledger_closed=frozenset())
     assert {c["market"] for c in cands} == {"moneyline"}, cands
-    slots, _, _ = be.provisional_picks(_board(), odds_configured=True)
+    slots, _, _ = be.provisional_picks(_board(), odds_priceable=True)
     for row in slots.values():
         if row is not None:
             assert row["market"] == "moneyline"

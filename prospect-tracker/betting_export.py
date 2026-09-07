@@ -2021,8 +2021,18 @@ def slate_games(on_date: str | None = None, *, include_unbettable: bool = False)
     return [g for g in dated if g["date"] == day]
 
 
-def _slate_is_open(day: str, games: list[dict], now: datetime | None = None) -> tuple[bool, str | None]:
-    """Is this calendar date's card still WHOLE, judged on the UNFILTERED rows?
+#: THE POINT WHERE A CARD STOPS BEING A BOARD. A policy constant, not a
+#: measurement, and it is named as one for the same reason PROVISIONAL_MIN_EDGE
+#: is: it is the share of a date's card that must still be ahead of you for the
+#: date to be worth pricing, and nothing in this repo can derive it. Half is the
+#: reading that "most of this card is still to come" stops being true.
+SLATE_OPEN_MIN_PREGAME_SHARE = 0.5
+
+
+def _slate_is_open(day: str, games: list[dict], now: datetime | None = None,
+                   counts: dict | None = None) -> tuple[bool, str | None]:
+    """Is MOST of this calendar date's card still ahead of us, judged on the
+    UNFILTERED rows?
 
     `slate_games` asks "which rows can be bet" and answers it row by row. That is
     the right question for the close job and the wrong one for the board, because
@@ -2030,16 +2040,28 @@ def _slate_is_open(day: str, games: list[dict], now: datetime | None = None) -> 
     still wins `min(date)`. Measured on the 2026-08-08 local build: the board
     priced ONE game of fifteen and said nothing about the other fourteen.
 
-    So the date is judged as a whole, on every row it carries, and two things
-    close it:
+    THE FIRST FIX OVERSHOT, AND IT OVERSHOT ON THE SAME QUANTITY. This returned
+    False on `n_started >= 1`, so a Sunday card died at 1:05pm with NINE of its
+    eleven games still pregame and four of them at night, and the board rolled to
+    tomorrow, whose lines the books had not posted yet. One of fifteen left is a
+    fragment; nine of eleven left is a board. A count of started games cannot
+    tell those apart, because the thing that separates them is a PROPORTION.
+
+    So the date is open while at least `SLATE_OPEN_MIN_PREGAME_SHARE` of its card
+    is still pregame. A game counts as started on either of two signals:
       * a row in SLATE_STARTED_STATES: the card is under way or over,
       * a first pitch at or before `now`: the same fact read off the clock rather
         than off StatsAPI, which catches a schedule block refreshed before a game
         started and not since.
 
+    `counts` is filled in with the two numbers behind the verdict so the served
+    candidate row shows the call rather than asserting it.
+
     Returns (open, why_not). `why_not` is None exactly when open is True."""
     now = now or datetime.now(timezone.utc)
     rows = [g for g in (games or []) if g.get("date") == day]
+    if counts is not None:
+        counts.update(n_started=0, n_pregame=0, pregame_share=None)
     if not rows:
         return False, f"{day} carries no games on the schedule"
     n_started = 0
@@ -2048,9 +2070,15 @@ def _slate_is_open(day: str, games: list[dict], now: datetime | None = None) -> 
         t = _stamp(g.get("datetime"))
         if st in SLATE_STARTED_STATES or (t is not None and t <= now):
             n_started += 1
-    if n_started:
-        return False, (f"{day} holds {len(rows)} game(s) and {n_started} have already "
-                       f"started or finished, so what is left of it is a fragment "
+    n_pre = len(rows) - n_started
+    share = n_pre / len(rows)
+    if counts is not None:
+        counts.update(n_started=n_started, n_pregame=n_pre,
+                      pregame_share=round(share, 4))
+    if share < SLATE_OPEN_MIN_PREGAME_SHARE:
+        return False, (f"{day} holds {len(rows)} game(s), {n_started} have already "
+                       f"started or finished and {n_pre} are still to come, so less "
+                       f"than half of the card is left and what remains is a fragment "
                        f"rather than a board")
     return True, None
 
@@ -2097,9 +2125,14 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
     for day in days:
         rows = [g for g in allg if g.get("date") == day]
         bettable = [g for g in rows if is_bettable(g)]
-        is_open, why_not = _slate_is_open(day, allg, now)
+        counts: dict = {}
+        is_open, why_not = _slate_is_open(day, allg, now, counts=counts)
         cands.append({"date": day, "n_games": len(rows),
                       "n_bettable": len(bettable), "open": is_open,
+                      "n_started": counts.get("n_started"),
+                      "n_pregame": counts.get("n_pregame"),
+                      "pregame_share": counts.get("pregame_share"),
+                      "min_pregame_share": SLATE_OPEN_MIN_PREGAME_SHARE,
                       "why_not": why_not})
         # An open date with nothing bettable on it is every game postponed. It
         # is open and it is not a board, so the walk keeps going.
@@ -3776,7 +3809,7 @@ def validation_state(evald: dict | None) -> dict:
 # ===========================================================================
 # pick of the day
 # ===========================================================================
-def pick_blockers(*, min_edge: float | None, odds_configured: bool,
+def pick_blockers(*, min_edge: float | None, odds_priceable: bool,
                   gate: dict | None = None, evald: dict | None = None) -> list[dict]:
     """EVERY reason there is no pick, not just the first one.
 
@@ -3793,12 +3826,16 @@ def pick_blockers(*, min_edge: float | None, odds_configured: bool,
     # function every other surface reads.
     state = model_verdict(evald)["gate_state"]
     out = []
-    if not odds_configured:
+    if not odds_priceable:
         out.append({
             "id": "odds_feed", "open": False,
             "need": "a cached odds snapshot to price against",
             "have": "none",
-            "reason": "no odds feed is configured, so there is no market to have an edge against",
+            # TRUE WHENEVER IT FIRES, which the old wording was not: it said
+            # "no odds feed is configured" off a missing API key while the
+            # board carried a full cached market. This fires only on an empty
+            # event list, which is the absence of a market and nothing else.
+            "reason": "no odds snapshot is cached, so there is no market to have an edge against",
         })
     if min_edge is None:
         closed = [g for g in ((gate or {}).get("gates") or []) if not g.get("open")]
@@ -4405,7 +4442,7 @@ def _longshot_rank(row: dict) -> tuple:
             -(row.get("model_prob") or 0.0))
 
 
-def provisional_picks(bets: list[dict], *, odds_configured: bool,
+def provisional_picks(bets: list[dict], *, odds_priceable: bool,
                       evald: dict | None = None,
                       block_reason: str | None = None,
                       extra_candidates: list[dict] | None = None) -> tuple[dict, str, dict]:
@@ -4489,8 +4526,8 @@ def provisional_picks(bets: list[dict], *, odds_configured: bool,
     long_rule = ("highest expected value per unit among sides clearing the "
                  f"{floor_txt} at {long_band}")
 
-    if not odds_configured or block_reason:
-        why = block_reason or ("no odds feed is configured, so there is no market price "
+    if not odds_priceable or block_reason:
+        why = block_reason or ("no odds snapshot is cached, so there is no market price "
                                "to have an edge against")
         meta["blocked"] = True
         meta["blocked_reason"] = why
@@ -4538,7 +4575,7 @@ def provisional_picks(bets: list[dict], *, odds_configured: bool,
 
 
 def pick_of_the_day(bets: list[dict], *, min_edge: float | None,
-                    odds_configured: bool,
+                    odds_priceable: bool,
                     gate: dict | None = None) -> tuple[dict | None, str]:
     """The highest-EV qualifying edge, or None with every reason it is absent.
 
@@ -4550,7 +4587,7 @@ def pick_of_the_day(bets: list[dict], *, min_edge: float | None,
     `gate` is the eval artifact's `min_edge_gate` block when one exists; it
     turns the second reason from "unvalidated" into the named count that is
     missing."""
-    blockers = pick_blockers(min_edge=min_edge, odds_configured=odds_configured, gate=gate)
+    blockers = pick_blockers(min_edge=min_edge, odds_priceable=odds_priceable, gate=gate)
     if blockers:
         return None, "; ".join(b["reason"] for b in blockers)
     cands = []
@@ -4767,7 +4804,22 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
                       stats=bet_stats) if games else [])
     min_edge = evald.get("min_edge")          # None until a clean test measures one
     gate = evald.get("min_edge_gate")
-    odds_configured = bool(status.get("configured") and events)
+    # THE MARKET IS WHAT MAKES AN EDGE POSSIBLE, NOT AN ENVIRONMENT VARIABLE.
+    # This read `bool(status.get("configured") and events)`, and `configured` is
+    # `EEPHUS_ODDS_API_KEY is not None`. A key gates whether TOMORROW's snapshot
+    # can be CAPTURED; it does not un-capture the ones already on disk. So a box
+    # with no key published "no odds feed is configured, so there is no market
+    # price to have an edge against" on a board whose own rows carried nine books
+    # a side and edges to +10.4 points, and because `provisional_picks` gates on
+    # the same flag and the client badge reads the floor a blocked build nulls,
+    # that one false predicate suppressed the pick AND every value badge.
+    #
+    # `resolve_snapshot` above is the real test of whether the cached market is
+    # THIS board's market, and its mismatch already empties both slots through
+    # `block_reason`, so nothing here needs a second opinion. The key keeps
+    # mattering where it actually applies: `status.configured` and the status
+    # note still say it is unset.
+    odds_priceable = bool(events)
     validation = validation_state(evald)
     # ONE derivation of "validated", read by status.model, model.validated and
     # (through the payload) the client's banner chip, so the three can never
@@ -4778,7 +4830,7 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     # because three surfaces each carried a private copy of it before.
     verdict = model_verdict(evald)
     validated = verdict["gate_state"] == "validated"
-    blockers = pick_blockers(min_edge=min_edge, odds_configured=odds_configured,
+    blockers = pick_blockers(min_edge=min_edge, odds_priceable=odds_priceable,
                              gate=gate, evald=evald)
     # PROVISIONAL PICKS (owner decision 2026-08-06, second slot 2026-08-07). The
     # blockers above are kept and published UNCHANGED: they are the honest
@@ -4804,7 +4856,7 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     _props_pre = props_value_bets(bets, props_fair, slots=None, on_date=slate_date,
                                   evald=evald, market_table=market_table)
     slots, pick_reason, pick_meta = provisional_picks(
-        bets, odds_configured=odds_configured, evald=evald,
+        bets, odds_priceable=odds_priceable, evald=evald,
         block_reason=(odds_slate["reason"] if odds_slate.get("mismatch") else None),
         extra_candidates=list(_props_pre.get("value_rows") or []))
     pick = slots["pick_of_the_day"]

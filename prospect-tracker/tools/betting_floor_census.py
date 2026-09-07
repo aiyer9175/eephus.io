@@ -186,7 +186,7 @@ def census_cell(snap: dict, events: list[dict], slate: str, *, floor: float,
     # the per-tag arrival rate below is the rule and not a re-implementation.
     evald = be._load("betting_model_eval.json") or {}
     slots, _reason, meta = be.provisional_picks(
-        bets, odds_configured=bool(pregame), evald=evald)
+        bets, odds_priceable=bool(pregame), evald=evald)
     n_potd = 1 if slots.get("pick_of_the_day") else 0
     n_longshot = 1 if slots.get("longshot_of_the_day") else 0
 

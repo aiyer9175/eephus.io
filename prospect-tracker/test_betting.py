@@ -470,15 +470,22 @@ def test_min_edge_cannot_be_set_from_the_contaminated_mode():
 # ===========================================================================
 # 4. EXPORT
 # ===========================================================================
-def test_pick_is_absent_without_an_odds_feed():
-    pick, why = be.pick_of_the_day([], min_edge=0.03, odds_configured=False)
-    assert pick is None and "odds feed" in why
+def test_pick_is_absent_without_a_cached_market():
+    """No market, no pick. The WORDING moved on 2026-09-07 and the behaviour did
+    not: this used to say "no odds feed is configured", which was read off the
+    API key rather than off the board and was therefore false on every box that
+    held a cached snapshot without a key. The flag now carries event presence,
+    so the sentence is true whenever it appears."""
+    pick, why = be.pick_of_the_day([], min_edge=0.03, odds_priceable=False)
+    assert pick is None
+    assert "no odds snapshot is cached" in why
+    assert "configured" not in why
 
 
 def test_pick_is_absent_without_a_measured_threshold():
     """The threshold is fitted or there is no pick. Inventing one is the
     failure this test exists to prevent."""
-    pick, why = be.pick_of_the_day([], min_edge=None, odds_configured=True)
+    pick, why = be.pick_of_the_day([], min_edge=None, odds_priceable=True)
     assert pick is None and "unvalidated" in why
 
 
@@ -493,7 +500,7 @@ def test_pick_takes_the_highest_ev_above_the_threshold():
         "runline": None, "total": {"sides": [
             {"side": "over", "label": "Over 8.5", "edge": 0.05, "ev_per_unit": 0.08}]},
     }]
-    pick, _ = be.pick_of_the_day(bets, min_edge=0.04, odds_configured=True)
+    pick, _ = be.pick_of_the_day(bets, min_edge=0.04, odds_priceable=True)
     assert pick["label"] == "PHI"          # 0.02-edge row is below the threshold
     assert pick["stake_units"] == 1.0
 
@@ -542,7 +549,7 @@ def test_the_headline_slot_takes_confidence_not_the_longest_price():
     better EV at 0.30. Selecting on EV is what this slot exists to stop doing
     and this test still fails if it ever does. The runline row carries the
     Poisson caveat because the dispersion correction is still unserved."""
-    slots, _, meta = be.provisional_picks(_slot_board(), odds_configured=True)
+    slots, _, meta = be.provisional_picks(_slot_board(), odds_priceable=True)
     potd = slots["pick_of_the_day"]
     assert potd["label"] == "ATH +1.5", (
         "the +450 row has the best EV on this board and the worst probability; "
@@ -555,7 +562,7 @@ def test_the_headline_slot_takes_confidence_not_the_longest_price():
 
 
 def test_the_longshot_slot_takes_the_long_price_by_ev():
-    slots, _, _ = be.provisional_picks(_slot_board(), odds_configured=True)
+    slots, _, _ = be.provisional_picks(_slot_board(), odds_priceable=True)
     ls = slots["longshot_of_the_day"]
     assert ls["label"] == "ATH" and ls["odds"] == 450
     assert ls["suggested_units"] == 0.5 and ls["stake_units"] == be.STAKE_UNITS
@@ -586,7 +593,7 @@ def test_a_price_band_tie_breaks_toward_a_standard_price():
         "runline": [], "total": {"line": 8.5, "sides": []},
     }
     bets.append(second)
-    slots, _, _ = be.provisional_picks(bets, odds_configured=True)
+    slots, _, _ = be.provisional_picks(bets, odds_priceable=True)
     potd = slots["pick_of_the_day"]
     assert potd["label"] == "SEA", "-115 is nearer -110 than -180"
     assert potd["model_prob"] == 0.70 and potd["market"] == "moneyline"
@@ -598,7 +605,7 @@ def test_an_empty_longshot_slot_names_the_floor_it_could_not_clear():
     could publish (docs/diamond-betting.md section 7)."""
     bets = _slot_board()
     bets[0]["moneyline"][0]["edge"] = 0.01        # the only long price fails
-    slots, _, meta = be.provisional_picks(bets, odds_configured=True)
+    slots, _, meta = be.provisional_picks(bets, odds_priceable=True)
     assert slots["longshot_of_the_day"] is None
     sm = meta["slots"]["longshot_of_the_day"]
     assert sm["present"] is False
@@ -607,10 +614,11 @@ def test_an_empty_longshot_slot_names_the_floor_it_could_not_clear():
     assert sm["reason"]
 
 
-def test_neither_slot_ships_without_an_odds_feed():
-    slots, why, meta = be.provisional_picks(_slot_board(), odds_configured=False)
+def test_neither_slot_ships_without_a_cached_market():
+    slots, why, meta = be.provisional_picks(_slot_board(), odds_priceable=False)
     assert slots == {"pick_of_the_day": None, "longshot_of_the_day": None}
-    assert "odds feed" in why
+    assert "no odds snapshot is cached" in why
+    assert "configured" not in why
     for sm in meta["slots"].values():
         assert sm["present"] is False and sm["min_edge"] == meta["min_edge"]
 
@@ -629,7 +637,7 @@ def test_a_slot_row_is_the_board_row_plus_context_only():
     """
     bets = _slot_board()
     src = bets[0]["runline"][0]                       # ATH +1.5, the row now chosen
-    slots, _, _ = be.provisional_picks(bets, odds_configured=True)
+    slots, _, _ = be.provisional_picks(bets, odds_priceable=True)
     potd = slots["pick_of_the_day"]
     assert potd["label"] == src["label"], "fixture drift: the slot moved"
     for f in ("odds", "decimal", "book", "edge", "model_prob", "ev_per_unit",
@@ -2555,11 +2563,11 @@ def test_export_payload_prose_is_pick_free_while_gates_are_closed():
                        "ev_per_unit": 0.1}],
         "runline": None, "total": {"sides": None},
     }]
-    slots, reason, meta = be.provisional_picks(board, odds_configured=True,
+    slots, reason, meta = be.provisional_picks(board, odds_priceable=True,
                                                evald=None)
     blob = json.dumps({
         "slots": slots, "reason": reason, "meta": meta,
-        "blockers": be.pick_blockers(min_edge=None, odds_configured=True),
+        "blockers": be.pick_blockers(min_edge=None, odds_priceable=True),
         "label": be.provisional_record_label(None, min_edge=0.06,
                                              provisional=True),
     })
@@ -2583,7 +2591,7 @@ def test_export_self_lift_restores_the_pick_labels():
     }]
     evald = {"min_edge_gate": {"min_edge": 0.031, "all_gates_open": True},
              "validated": True, "min_edge": 0.031}
-    slots, _, meta = be.provisional_picks(board, odds_configured=True,
+    slots, _, meta = be.provisional_picks(board, odds_priceable=True,
                                           evald=evald)
     assert meta["frame"] == "pick"
     p = slots["pick_of_the_day"]
@@ -2599,7 +2607,7 @@ def test_export_slots_carry_their_own_tag_record():
     pooled. MUTATION PROOF: dropping the tag_record key from _slot_meta, or
     pooling the tags into one record, breaks the per-slot tag names."""
     board = []
-    _, _, meta = be.provisional_picks(board, odds_configured=True, evald=None)
+    _, _, meta = be.provisional_picks(board, odds_priceable=True, evald=None)
     potd = meta["slots"]["pick_of_the_day"]["tag_record"]
     lng = meta["slots"]["longshot_of_the_day"]["tag_record"]
     assert potd is not None and lng is not None
