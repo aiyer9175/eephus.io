@@ -4406,6 +4406,21 @@
    "last_validated": "2026-09-06",
    "notes": "PROVISIONAL, NOT VALIDATED, and the distinction is the point: it carries an artifact because the artifact is what it PUBLISHES, not a forward record. 2026-09-06. UNVALIDATED AND SAYS SO. No captured market, no backtest, no forward record. What shipped today is a correctness repair plus honest error bars, not evidence the numbers are right. TWO LIVE DEFECTS FIXED. Milwaukee served playoffPct 1.001, because the emit rounded divisionPct and wildcardPct separately and ADDED them, which is unbounded above; it now derives the part from the whole. And remaining_pairs skipped games in progress while the standings had not booked them either, so 10 live games of 291 vanished and TWENTY of thirty clubs were projected over a 161-game season (ARI ATL BAL BOS CHC CIN CLE DET HOU KCR LAA MIA MIL NYM PHI PIT SFG TBR TEX TOR). season_shortfall now makes that visible: nothing had ever checked that wins plus losses plus remaining equalled a season. THE BRACKET is the current format with no reseeding, byes for the top two seeds, and coin-flip tiebreaks that are DISCLOSED rather than modelled. Conservation holds on the served build: 2.001 pennants, 1.000 champions, 4.000 byes. INTERVALS ARE WILSON ON RAW COUNTS, never Wald on a rounded probability, because the Wald error is identically zero at 0 and n and 13 of 30 clubs sit at those rails. No probability is published with zero stated uncertainty. THE WIN-TOTAL BAND IS SCHEDULE NOISE ONLY, at a fixed talent point estimate: no parameter uncertainty, no drift, no injuries, no trades. It is narrower than a real forecast interval by an amount nothing has measured, and the key is named sfScheduleOnly so a reader cannot mistake it for a predictive probability. A BUG MY OWN TEST CAUGHT: the seeding tiebreak drew from the regular-season generator, so switching the bracket on moved playoffPct from 0.340 to 0.417 on the same seed.",
    "provisional_kind": "measured_not_adopted"
+  },
+  {
+   "model_id": "efv_encompassing",
+   "predicts": "whether the eFV model leg adds information to the consensus anchor, out of fold",
+   "surface": "none (diagnostic; nothing is served off it)",
+   "metric": "b2 in y = a + b1*cons_war + b2*model_war + fold fixed effects",
+   "champion": "consensus anchor alone (b2 = 0)",
+   "baseline": "within-fold permutation of the model residual on cons_war, plus a zero-information twin",
+   "verdict": "provisional",
+   "eval_artifact": "data/xfv_encompassing_eval.json",
+   "last_checked": "2026-09-06",
+   "stale": false,
+   "artifact_age_days": 0,
+   "notes": "VERDICT NOTE: 'provisional' here means a real eval artifact exists and NOTHING IS SERVED, the same shape as pal_stuff_xrv. UNDECIDED BOTH SIDES, and the verdict rule was fixed before the run: a player-clustered CI95 covering zero prints UNDECIDED. hit b2 +0.2203 CI95 [-0.0987, +0.5952]; pit b2 +0.1301 CI95 [-0.1509, +0.4191]. Both b2 are POSITIVE and neither interval excludes zero, so on debuted_km at this n the served model leg does not measurably improve on the consensus anchor. THE TWO NULLS DISAGREE ON THE HITTER SIDE: the permutation null gives p=0.048 while the bootstrap CI covers zero. The CI is what was pre-specified and is what the verdict follows; they differ because the permutation holds the sample fixed while the bootstrap also carries uncertainty about which players were drawn. The zero-information twin returns +0.0006 and -0.0015, so the estimator is sound. Regressors are WAR-scale only and NEVER the blend beside its own components (blend = (1-lam)*cons + lam*model is an exact linear combination). This does NOT license removing the model leg or moving lambda: an interval covering zero is a statement about power as much as effect. The 802-row vintage-matched frame named in the plan is NOT scored here and is owed. Registered as the leakage-clean successor to lambda_calibration.wag. Gate doc docs/efv-2026-09-06/ENCOMPASSING_GATE.md; rerun with tools/efv_encompassing.py.",
+   "provisional_kind": "measurement_only"
   }
  ],
  "problems": []

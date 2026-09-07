@@ -43,6 +43,12 @@ MODEL_GLOSSARY = {
     "xfv_rank_objective": "internal",
     "surplus_decomposition_v6": "internal",
     "xfv_dist_recalibration": "internal",
+    # A-CLAIM-6, forecast encompassing (2026-09-06). INTERNAL on the same reasoning as
+    # the families above: it is a DIAGNOSTIC, its verdict is UNDECIDED on both sides,
+    # and it moved no served number and no line of page copy. It exists so the question
+    # "does the model leg add anything to consensus" has a recorded answer instead of an
+    # assumption. If it ever resolves, the mapping graduates to the xfv entry with it.
+    "efv_encompassing": "internal",
     # C-1b, the tail-preserving refit (2026-08-14). INTERNAL on the same reasoning
     # as the B-L3 lane below: all five declared families returned NO_SHIP, nothing
     # was promoted, and no served number and no page copy moved because of it.
