@@ -567,9 +567,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -826,9 +826,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -1096,72 +1096,6 @@
    }
   },
   {
-   "mlbam": 691799,
-   "name": "Grant Taylor",
-   "team": "CWS",
-   "fit": 79.6,
-   "n_pitches": 4,
-   "ip": 73.0,
-   "k_pct": 0.323,
-   "bb_pct": 0.0859,
-   "fb_velo": 98.8,
-   "proj_velo": 97.7,
-   "fb_pct": 0.573,
-   "platoon_split": 0.001,
-   "components": {
-    "arsenal_depth": 100.0,
-    "command": 48.7,
-    "fb_reliance_inv": 79.1,
-    "stuff_quality": 100.0,
-    "platoon_neutrality": 99.6,
-    "survivability": 13.4
-   },
-   "flags": [],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.461,
-     "whiff": 0.281,
-     "est_woba": 0.27
-    },
-    {
-     "pitch": "CU",
-     "usage": 0.269,
-     "whiff": 0.349,
-     "est_woba": 0.259
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.154,
-     "whiff": 0.345,
-     "est_woba": 0.17
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.112,
-     "whiff": 0.148,
-     "est_woba": 0.207
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "medium"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.553,
-    "opp_ops": 0.554,
-    "reverse_index": -0.001,
-    "reverse": false,
-    "split": 0.001,
-    "extreme": false,
-    "weak_hand": "LHB"
-   }
-  },
-  {
    "mlbam": 680742,
    "name": "Jonathan Bowlan",
    "team": "PHI",
@@ -1216,9 +1150,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -1230,6 +1164,72 @@
     "split": 0.191,
     "extreme": true,
     "weak_hand": "RHB"
+   }
+  },
+  {
+   "mlbam": 691799,
+   "name": "Grant Taylor",
+   "team": "CWS",
+   "fit": 79.3,
+   "n_pitches": 4,
+   "ip": 75.0,
+   "k_pct": 0.3244,
+   "bb_pct": 0.087,
+   "fb_velo": 98.8,
+   "proj_velo": 97.7,
+   "fb_pct": 0.573,
+   "platoon_split": 0.001,
+   "components": {
+    "arsenal_depth": 100.0,
+    "command": 47.2,
+    "fb_reliance_inv": 79.1,
+    "stuff_quality": 100.0,
+    "platoon_neutrality": 99.6,
+    "survivability": 13.4
+   },
+   "flags": [],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.461,
+     "whiff": 0.281,
+     "est_woba": 0.27
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.269,
+     "whiff": 0.349,
+     "est_woba": 0.259
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.154,
+     "whiff": 0.345,
+     "est_woba": 0.17
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.112,
+     "whiff": 0.148,
+     "est_woba": 0.207
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "medium"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.553,
+    "opp_ops": 0.554,
+    "reverse_index": -0.001,
+    "reverse": false,
+    "split": 0.001,
+    "extreme": false,
+    "weak_hand": "LHB"
    }
   },
   {
@@ -1408,9 +1408,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -1620,9 +1620,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Cutter",
+    "add": "Slider",
     "target": "LHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A cutter would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A slider would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -2686,9 +2686,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -2869,9 +2869,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -2934,9 +2934,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -3005,9 +3005,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -3261,9 +3261,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -3404,78 +3404,6 @@
     "reverse_index": -0.07,
     "reverse": false,
     "split": 0.07,
-    "extreme": false,
-    "weak_hand": "LHB"
-   }
-  },
-  {
-   "mlbam": 702193,
-   "name": "Andrew Morris",
-   "team": "MIN",
-   "fit": 71.7,
-   "n_pitches": 4,
-   "ip": 64.7,
-   "k_pct": 0.2107,
-   "bb_pct": 0.0786,
-   "fb_velo": 97.3,
-   "proj_velo": 95.8,
-   "fb_pct": 0.782,
-   "platoon_split": 0.135,
-   "components": {
-    "arsenal_depth": 100.0,
-    "command": 59.2,
-    "fb_reliance_inv": 19.4,
-    "stuff_quality": 100.0,
-    "platoon_neutrality": 46.0,
-    "survivability": 79.8
-   },
-   "flags": [],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.458,
-     "whiff": 0.205,
-     "est_woba": 0.275
-    },
-    {
-     "pitch": "FC",
-     "usage": 0.208,
-     "whiff": 0.248,
-     "est_woba": 0.274
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.116,
-     "whiff": 0.216,
-     "est_woba": 0.389
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.093,
-     "whiff": 0.25,
-     "est_woba": 0.159
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.11,
-     "whiff": 0.255,
-     "est_woba": 0.273
-    }
-   ],
-   "pitch_add": {
-    "add": "Cutter",
-    "target": "LHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A cutter would flatten the split a starter has to survive.",
-    "priority": "medium"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.614,
-    "opp_ops": 0.749,
-    "reverse_index": -0.135,
-    "reverse": false,
-    "split": 0.135,
     "extreme": false,
     "weak_hand": "LHB"
    }
@@ -3654,9 +3582,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -3936,6 +3864,78 @@
     "reverse": false,
     "split": 0.2,
     "extreme": true,
+    "weak_hand": "LHB"
+   }
+  },
+  {
+   "mlbam": 702193,
+   "name": "Andrew Morris",
+   "team": "MIN",
+   "fit": 70.2,
+   "n_pitches": 4,
+   "ip": 65.7,
+   "k_pct": 0.2091,
+   "bb_pct": 0.0836,
+   "fb_velo": 97.3,
+   "proj_velo": 95.8,
+   "fb_pct": 0.782,
+   "platoon_split": 0.135,
+   "components": {
+    "arsenal_depth": 100.0,
+    "command": 52.0,
+    "fb_reliance_inv": 19.4,
+    "stuff_quality": 100.0,
+    "platoon_neutrality": 46.0,
+    "survivability": 79.8
+   },
+   "flags": [],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.458,
+     "whiff": 0.205,
+     "est_woba": 0.275
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.208,
+     "whiff": 0.248,
+     "est_woba": 0.274
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.116,
+     "whiff": 0.216,
+     "est_woba": 0.389
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.093,
+     "whiff": 0.25,
+     "est_woba": 0.159
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.11,
+     "whiff": 0.255,
+     "est_woba": 0.273
+    }
+   ],
+   "pitch_add": {
+    "add": "Slider",
+    "target": "LHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A slider would flatten the split a starter has to survive.",
+    "priority": "medium"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.614,
+    "opp_ops": 0.749,
+    "reverse_index": -0.135,
+    "reverse": false,
+    "split": 0.135,
+    "extreme": false,
     "weak_hand": "LHB"
    }
   },
@@ -4441,12 +4441,7 @@
      "est_woba": 0.318
     }
    ],
-   "pitch_add": {
-    "add": "Cutter",
-    "target": "LHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A cutter would flatten the split a starter has to survive.",
-    "priority": "medium"
-   },
+   "pitch_add": null,
    "reverse_platoon": {
     "p_throws": "R",
     "own_ops": 0.719,
@@ -4877,9 +4872,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -5257,9 +5252,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -6365,6 +6360,71 @@
    }
   },
   {
+   "mlbam": 667297,
+   "name": "Tommy Nance",
+   "team": "MIN",
+   "fit": 63.5,
+   "n_pitches": 3,
+   "ip": 52.3,
+   "k_pct": 0.2533,
+   "bb_pct": 0.0889,
+   "fb_velo": 94.6,
+   "proj_velo": 93.6,
+   "fb_pct": 0.273,
+   "platoon_split": 0.31,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 44.4,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 70.7,
+    "platoon_neutrality": 0.0,
+    "survivability": 56.2
+   },
+   "flags": [
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "SL",
+     "usage": 0.433,
+     "whiff": 0.34,
+     "est_woba": 0.326
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.291,
+     "whiff": 0.241,
+     "est_woba": 0.178
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.273,
+     "whiff": 0.122,
+     "est_woba": 0.444
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.546,
+    "opp_ops": 0.856,
+    "reverse_index": -0.31,
+    "reverse": false,
+    "split": 0.31,
+    "extreme": true,
+    "weak_hand": "LHB"
+   }
+  },
+  {
    "mlbam": 678606,
    "name": "Jos\u00e9 A. Ferrer",
    "team": "SEA",
@@ -6413,9 +6473,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -6492,71 +6552,6 @@
     "split": 0.028,
     "extreme": false,
     "weak_hand": "RHB"
-   }
-  },
-  {
-   "mlbam": 667297,
-   "name": "Tommy Nance",
-   "team": "MIN",
-   "fit": 63.1,
-   "n_pitches": 3,
-   "ip": 51.7,
-   "k_pct": 0.2523,
-   "bb_pct": 0.0901,
-   "fb_velo": 94.6,
-   "proj_velo": 93.6,
-   "fb_pct": 0.273,
-   "platoon_split": 0.31,
-   "components": {
-    "arsenal_depth": 80.0,
-    "command": 42.7,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 70.7,
-    "platoon_neutrality": 0.0,
-    "survivability": 56.2
-   },
-   "flags": [
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "SL",
-     "usage": 0.433,
-     "whiff": 0.34,
-     "est_woba": 0.326
-    },
-    {
-     "pitch": "CU",
-     "usage": 0.291,
-     "whiff": 0.241,
-     "est_woba": 0.178
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.273,
-     "whiff": 0.122,
-     "est_woba": 0.444
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.546,
-    "opp_ops": 0.856,
-    "reverse_index": -0.31,
-    "reverse": false,
-    "split": 0.31,
-    "extreme": true,
-    "weak_hand": "LHB"
    }
   },
   {
@@ -6744,9 +6739,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -7196,12 +7191,7 @@
      "est_woba": 0.419
     }
    ],
-   "pitch_add": {
-    "add": "Cutter",
-    "target": "LHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A cutter would flatten the split a starter has to survive.",
-    "priority": "medium"
-   },
+   "pitch_add": null,
    "reverse_platoon": {
     "p_throws": "R",
     "own_ops": 0.698,
@@ -7520,9 +7510,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -7591,9 +7581,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -7662,9 +7652,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -8826,9 +8816,9 @@
    "team": "MIN",
    "fit": 59.1,
    "n_pitches": 3,
-   "ip": 45.7,
-   "k_pct": 0.199,
-   "bb_pct": 0.1224,
+   "ip": 46.3,
+   "k_pct": 0.2,
+   "bb_pct": 0.125,
    "fb_velo": 93.0,
    "proj_velo": 91.7,
    "fb_pct": 0.692,
@@ -9914,9 +9904,9 @@
     }
    ],
    "pitch_add": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    },
    "reverse_platoon": {
@@ -11793,69 +11783,6 @@
    }
   },
   {
-   "mlbam": 573124,
-   "name": "Taylor Rogers",
-   "team": "MIN",
-   "fit": 50.7,
-   "n_pitches": 2,
-   "ip": 51.0,
-   "k_pct": 0.1888,
-   "bb_pct": 0.1116,
-   "fb_velo": 92.0,
-   "proj_velo": 90.8,
-   "fb_pct": 0.363,
-   "platoon_split": 0.215,
-   "components": {
-    "arsenal_depth": 45.0,
-    "command": 12.0,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 79.1,
-    "platoon_neutrality": 14.0,
-    "survivability": 100.0
-   },
-   "flags": [
-    {
-     "key": "needs_third",
-     "label": "needs a third pitch"
-    },
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "ST",
-     "usage": 0.503,
-     "whiff": 0.233,
-     "est_woba": 0.272
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.363,
-     "whiff": 0.098,
-     "est_woba": 0.351
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "L",
-    "own_ops": 0.668,
-    "opp_ops": 0.883,
-    "reverse_index": -0.215,
-    "reverse": false,
-    "split": 0.215,
-    "extreme": true,
-    "weak_hand": "RHB"
-   }
-  },
-  {
    "mlbam": 696519,
    "name": "Samy Natera Jr.",
    "team": "LAA",
@@ -12044,6 +11971,69 @@
     "reverse_index": 0.155,
     "reverse": true,
     "split": 0.155,
+    "extreme": true,
+    "weak_hand": "RHB"
+   }
+  },
+  {
+   "mlbam": 573124,
+   "name": "Taylor Rogers",
+   "team": "MIN",
+   "fit": 50.2,
+   "n_pitches": 2,
+   "ip": 51.7,
+   "k_pct": 0.1891,
+   "bb_pct": 0.1134,
+   "fb_velo": 92.0,
+   "proj_velo": 90.8,
+   "fb_pct": 0.363,
+   "platoon_split": 0.215,
+   "components": {
+    "arsenal_depth": 45.0,
+    "command": 9.4,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 79.1,
+    "platoon_neutrality": 14.0,
+    "survivability": 100.0
+   },
+   "flags": [
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    },
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "ST",
+     "usage": 0.503,
+     "whiff": 0.233,
+     "est_woba": 0.272
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.363,
+     "whiff": 0.098,
+     "est_woba": 0.351
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "L",
+    "own_ops": 0.668,
+    "opp_ops": 0.883,
+    "reverse_index": -0.215,
+    "reverse": false,
+    "split": 0.215,
     "extreme": true,
     "weak_hand": "RHB"
    }
@@ -17239,7 +17229,7 @@
    "best_whiff": 0.381,
    "relief_upside": 63.3,
    "starter_era": 5.29,
-   "proj_relief_rem_plus": 116
+   "proj_relief_rem_plus": 117
   },
   {
    "mlbam": 681347,
@@ -19935,7 +19925,7 @@
    "best_whiff": 0.378,
    "relief_upside": 75.7,
    "starter_era": 3.95,
-   "proj_relief_rem_plus": 111
+   "proj_relief_rem_plus": 112
   },
   {
    "mlbam": 669854,
@@ -20964,7 +20954,7 @@
    "best_whiff": 0.423,
    "relief_upside": 62.7,
    "starter_era": 4.17,
-   "proj_relief_rem_plus": 94
+   "proj_relief_rem_plus": 95
   },
   {
    "mlbam": 687931,
@@ -22677,11 +22667,11 @@
    "mlbam": 641927,
    "name": "Bailey Ober",
    "team": "MIN",
-   "fit": 33.5,
+   "fit": 33.6,
    "n_pitches": 4,
-   "ip": 115.7,
-   "k_pct": 0.1701,
-   "bb_pct": 0.0656,
+   "ip": 117.7,
+   "k_pct": 0.1707,
+   "bb_pct": 0.0683,
    "fb_velo": 88.5,
    "proj_velo": 89.5,
    "fb_pct": null,
@@ -22691,7 +22681,7 @@
     "putaway": 100.0,
     "velo_leverage": 0.0,
     "tto_leakage": 0.0,
-    "conversion_need": 46.0
+    "conversion_need": 46.1
    },
    "flags": [
     {
@@ -23563,7 +23553,7 @@
    "best_whiff": 0.387,
    "relief_upside": 74.1,
    "starter_era": 3.44,
-   "proj_relief_rem_plus": 125
+   "proj_relief_rem_plus": 126
   },
   {
    "mlbam": 687473,
@@ -24008,7 +23998,7 @@
    "best_whiff": 0.382,
    "relief_upside": 73.2,
    "starter_era": 2.98,
-   "proj_relief_rem_plus": 118
+   "proj_relief_rem_plus": 119
   },
   {
    "mlbam": 683352,
@@ -40471,9 +40461,9 @@
    ],
    "platoon_split": 0.14,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -40551,9 +40541,9 @@
    ],
    "platoon_split": 0.136,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -40592,46 +40582,6 @@
    }
   },
   {
-   "mlbam": 691799,
-   "name": "Grant Taylor",
-   "team": "CWS",
-   "fit": 79.6,
-   "n_pitches": 4,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.461,
-     "whiff": 0.281,
-     "est_woba": 0.27
-    },
-    {
-     "pitch": "CU",
-     "usage": 0.269,
-     "whiff": 0.349,
-     "est_woba": 0.259
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.154,
-     "whiff": 0.345,
-     "est_woba": 0.17
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.112,
-     "whiff": 0.148,
-     "est_woba": 0.207
-    }
-   ],
-   "platoon_split": 0.001,
-   "rec": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "medium"
-   }
-  },
-  {
    "mlbam": 680742,
    "name": "Jonathan Bowlan",
    "team": "PHI",
@@ -40665,9 +40615,49 @@
    ],
    "platoon_split": 0.191,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
+    "priority": "medium"
+   }
+  },
+  {
+   "mlbam": 691799,
+   "name": "Grant Taylor",
+   "team": "CWS",
+   "fit": 79.3,
+   "n_pitches": 4,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.461,
+     "whiff": 0.281,
+     "est_woba": 0.27
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.269,
+     "whiff": 0.349,
+     "est_woba": 0.259
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.154,
+     "whiff": 0.345,
+     "est_woba": 0.17
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.112,
+     "whiff": 0.148,
+     "est_woba": 0.207
+    }
+   ],
+   "platoon_split": 0.001,
+   "rec": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "medium"
    }
   },
@@ -40745,9 +40735,9 @@
    ],
    "platoon_split": 0.156,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -40825,9 +40815,9 @@
    ],
    "platoon_split": 0.175,
    "rec": {
-    "add": "Cutter",
+    "add": "Slider",
     "target": "LHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A cutter would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A slider would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -41239,9 +41229,9 @@
    ],
    "platoon_split": 0.273,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -41329,9 +41319,9 @@
    ],
    "platoon_split": 0.319,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -41363,9 +41353,9 @@
    ],
    "platoon_split": 0.238,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -41403,9 +41393,9 @@
    ],
    "platoon_split": 0.214,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -41505,9 +41495,9 @@
    ],
    "platoon_split": 0.244,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -41582,52 +41572,6 @@
     "add": "Changeup",
     "target": "LHB",
     "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "medium"
-   }
-  },
-  {
-   "mlbam": 702193,
-   "name": "Andrew Morris",
-   "team": "MIN",
-   "fit": 71.7,
-   "n_pitches": 4,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.458,
-     "whiff": 0.205,
-     "est_woba": 0.275
-    },
-    {
-     "pitch": "FC",
-     "usage": 0.208,
-     "whiff": 0.248,
-     "est_woba": 0.274
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.116,
-     "whiff": 0.216,
-     "est_woba": 0.389
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.093,
-     "whiff": 0.25,
-     "est_woba": 0.159
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.11,
-     "whiff": 0.255,
-     "est_woba": 0.273
-    }
-   ],
-   "platoon_split": 0.135,
-   "rec": {
-    "add": "Cutter",
-    "target": "LHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A cutter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -41727,9 +41671,9 @@
    ],
    "platoon_split": 0.161,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -41851,6 +41795,52 @@
     "target": "LHB",
     "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "high"
+   }
+  },
+  {
+   "mlbam": 702193,
+   "name": "Andrew Morris",
+   "team": "MIN",
+   "fit": 70.2,
+   "n_pitches": 4,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.458,
+     "whiff": 0.205,
+     "est_woba": 0.275
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.208,
+     "whiff": 0.248,
+     "est_woba": 0.274
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.116,
+     "whiff": 0.216,
+     "est_woba": 0.389
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.093,
+     "whiff": 0.25,
+     "est_woba": 0.159
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.11,
+     "whiff": 0.255,
+     "est_woba": 0.273
+    }
+   ],
+   "platoon_split": 0.135,
+   "rec": {
+    "add": "Slider",
+    "target": "LHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A slider would flatten the split a starter has to survive.",
+    "priority": "medium"
    }
   },
   {
@@ -42037,46 +42027,6 @@
     "target": "RHB",
     "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "high"
-   }
-  },
-  {
-   "mlbam": 668390,
-   "name": "Cole Winn",
-   "team": "TEX",
-   "fit": 68.5,
-   "n_pitches": 4,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.316,
-     "whiff": 0.228,
-     "est_woba": 0.351
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.238,
-     "whiff": 0.398,
-     "est_woba": 0.247
-    },
-    {
-     "pitch": "FC",
-     "usage": 0.286,
-     "whiff": 0.208,
-     "est_woba": 0.386
-    },
-    {
-     "pitch": "FS",
-     "usage": 0.144,
-     "whiff": 0.333,
-     "est_woba": 0.318
-    }
-   ],
-   "platoon_split": 0.164,
-   "rec": {
-    "add": "Cutter",
-    "target": "LHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A cutter would flatten the split a starter has to survive.",
-    "priority": "medium"
    }
   },
   {
@@ -42311,9 +42261,9 @@
    ],
    "platoon_split": 0.139,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -42487,9 +42437,9 @@
    ],
    "platoon_split": 0.29,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -43020,6 +42970,40 @@
    }
   },
   {
+   "mlbam": 667297,
+   "name": "Tommy Nance",
+   "team": "MIN",
+   "fit": 63.5,
+   "n_pitches": 3,
+   "arsenal": [
+    {
+     "pitch": "SL",
+     "usage": 0.433,
+     "whiff": 0.34,
+     "est_woba": 0.326
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.291,
+     "whiff": 0.241,
+     "est_woba": 0.178
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.273,
+     "whiff": 0.122,
+     "est_woba": 0.444
+    }
+   ],
+   "platoon_split": 0.31,
+   "rec": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
+   }
+  },
+  {
    "mlbam": 678606,
    "name": "Jos\u00e9 A. Ferrer",
    "team": "SEA",
@@ -43047,9 +43031,9 @@
    ],
    "platoon_split": 0.35,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -43084,40 +43068,6 @@
     "add": "Slider",
     "target": "RHB",
     "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   }
-  },
-  {
-   "mlbam": 667297,
-   "name": "Tommy Nance",
-   "team": "MIN",
-   "fit": 63.1,
-   "n_pitches": 3,
-   "arsenal": [
-    {
-     "pitch": "SL",
-     "usage": 0.433,
-     "whiff": 0.34,
-     "est_woba": 0.326
-    },
-    {
-     "pitch": "CU",
-     "usage": 0.291,
-     "whiff": 0.241,
-     "est_woba": 0.178
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.273,
-     "whiff": 0.122,
-     "est_woba": 0.444
-    }
-   ],
-   "platoon_split": 0.31,
-   "rec": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "high"
    }
   },
@@ -43211,9 +43161,9 @@
    ],
    "platoon_split": 0.213,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -43394,52 +43344,6 @@
    }
   },
   {
-   "mlbam": 656638,
-   "name": "Alex Lange",
-   "team": "KC",
-   "fit": 62.1,
-   "n_pitches": 5,
-   "arsenal": [
-    {
-     "pitch": "SL",
-     "usage": 0.319,
-     "whiff": 0.373,
-     "est_woba": 0.293
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.238,
-     "whiff": 0.191,
-     "est_woba": 0.418
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.217,
-     "whiff": 0.311,
-     "est_woba": 0.248
-    },
-    {
-     "pitch": "FC",
-     "usage": 0.125,
-     "whiff": 0.132,
-     "est_woba": 0.412
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.101,
-     "whiff": 0.159,
-     "est_woba": 0.419
-    }
-   ],
-   "platoon_split": 0.187,
-   "rec": {
-    "add": "Cutter",
-    "target": "LHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A cutter would flatten the split a starter has to survive.",
-    "priority": "medium"
-   }
-  },
-  {
    "mlbam": 621074,
    "name": "Michael Rucker",
    "team": "SEA",
@@ -43597,9 +43501,9 @@
    ],
    "platoon_split": 0.276,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -43637,9 +43541,9 @@
    ],
    "platoon_split": 0.164,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -43677,9 +43581,9 @@
    ],
    "platoon_split": 0.266,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -44789,9 +44693,9 @@
    ],
    "platoon_split": 0.311,
    "rec": {
-    "add": "Changeup",
+    "add": "Splitter",
     "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A splitter would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -45660,34 +45564,6 @@
    }
   },
   {
-   "mlbam": 573124,
-   "name": "Taylor Rogers",
-   "team": "MIN",
-   "fit": 50.7,
-   "n_pitches": 2,
-   "arsenal": [
-    {
-     "pitch": "ST",
-     "usage": 0.503,
-     "whiff": 0.233,
-     "est_woba": 0.272
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.363,
-     "whiff": 0.098,
-     "est_woba": 0.351
-    }
-   ],
-   "platoon_split": 0.215,
-   "rec": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   }
-  },
-  {
    "mlbam": 696519,
    "name": "Samy Natera Jr.",
    "team": "LAA",
@@ -45768,6 +45644,34 @@
     "add": "Slider",
     "target": "RHB",
     "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   }
+  },
+  {
+   "mlbam": 573124,
+   "name": "Taylor Rogers",
+   "team": "MIN",
+   "fit": 50.2,
+   "n_pitches": 2,
+   "arsenal": [
+    {
+     "pitch": "ST",
+     "usage": 0.503,
+     "whiff": 0.233,
+     "est_woba": 0.272
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.363,
+     "whiff": 0.098,
+     "est_woba": 0.351
+    }
+   ],
+   "platoon_split": 0.215,
+   "rec": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "high"
    }
   },
@@ -55513,6 +55417,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 44.7,
    "tools": {
     "fb": 61.5,
     "sl": 53.5,
@@ -55534,6 +55439,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 38.0,
    "tools": {
     "fb": 60.0,
     "sl": 53.5,
@@ -55554,6 +55460,7 @@
    "org": "MIA",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 37.9,
    "tools": {
     "fb": 50.0,
     "sl": 55.0,
@@ -55575,6 +55482,7 @@
    "org": "TOR",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 42.8,
    "tools": {
     "fb": 51.5,
     "sl": 53.5,
@@ -55596,6 +55504,7 @@
    "org": "WSN",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 40.9,
    "tools": {
     "fb": 50.0,
     "sl": 55.0,
@@ -55616,6 +55525,7 @@
    "org": "ARI",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.7,
    "tools": {
     "fb": 53.5,
     "sl": 53.5,
@@ -55637,6 +55547,7 @@
    "org": "DET",
    "position": "SP",
    "fv": 46.0,
+   "fvE": 47.4,
    "tools": {
     "fb": 54.0,
     "sl": 50.0,
@@ -55658,6 +55569,7 @@
    "org": "ARI",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 39.4,
    "tools": {
     "fb": 53.5,
     "sl": 55.0,
@@ -55679,6 +55591,7 @@
    "org": "SEA",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.2,
    "tools": {
     "fb": 50.0,
     "sl": 56.5,
@@ -55700,6 +55613,7 @@
    "org": "TBR",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 56.5,
     "sl": 50.0,
@@ -55720,6 +55634,7 @@
    "org": "HOU",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 38.9,
    "tools": {
     "fb": 50.0,
     "sl": 50.0,
@@ -55741,6 +55656,7 @@
    "org": "OAK",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 41.2,
    "tools": {
     "fb": 50.0,
     "sl": 70.0,
@@ -55762,6 +55678,7 @@
    "org": "ATL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 40.3,
    "tools": {
     "fb": 55.0,
     "sl": 53.5,
@@ -55783,6 +55700,7 @@
    "org": "KCR",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 56.5,
     "sl": 51.5,
@@ -55803,6 +55721,7 @@
    "org": "TEX",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 50.0,
     "sl": 50.0,
@@ -55824,6 +55743,7 @@
    "org": "ATH",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.5,
    "tools": {
     "fb": 53.5,
     "sl": 56.5,
@@ -55845,6 +55765,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.8,
    "tools": {
     "fb": 51.5,
     "cb": 51.5,
@@ -55865,6 +55786,7 @@
    "org": "NYY",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 40.0,
    "tools": {
     "fb": 50.0,
     "sl": 51.5,
@@ -55886,6 +55808,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 45.0,
+   "fvE": 44.6,
    "tools": {
     "fb": 53.5,
     "sl": 55.0,
@@ -55908,6 +55831,7 @@
    "org": "TBR",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 58.5,
     "sl": 50.0,
@@ -55930,6 +55854,7 @@
    "org": "MIL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 21.3,
    "tools": {
     "fb": 53.5,
     "sl": 55.0,
@@ -55951,6 +55876,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 43.3,
    "tools": {
     "fb": 50.0,
     "sl": 46.5,
@@ -55972,6 +55898,7 @@
    "org": "PHI",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.5,
    "tools": {
     "fb": 53.5,
     "sl": 56.5,
@@ -55992,6 +55919,7 @@
    "org": "KCR",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.6,
    "tools": {
     "fb": 51.5,
     "sl": 58.5,
@@ -56013,6 +55941,7 @@
    "org": "DET",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 38.9,
    "tools": {
     "fb": 48.5,
     "sl": 45.0,
@@ -56034,6 +55963,7 @@
    "org": "NYY",
    "position": "SP",
    "fv": 42.0,
+   "fvE": 42.8,
    "tools": {
     "fb": 52.5,
     "sl": 52.5,
@@ -56055,6 +55985,7 @@
    "org": "MIN",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.4,
    "tools": {
     "fb": 52.5,
     "sl": 52.5,
@@ -56076,6 +56007,7 @@
    "org": "PIT",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.7,
    "tools": {
     "fb": 52.5,
     "sl": 50.0,
@@ -56097,6 +56029,7 @@
    "org": "BAL",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.7,
    "tools": {
     "fb": 52.5,
     "sl": 50.0,
@@ -56118,6 +56051,7 @@
    "org": "BOS",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.5,
    "tools": {
     "fb": 45.0,
     "sl": 50.0,
@@ -56137,6 +56071,7 @@
    "org": "LAD",
    "position": "SIRP",
    "fv": 41.0,
+   "fvE": 44.0,
    "tools": {
     "fb": 60.0,
     "sl": 61.5,
@@ -56157,6 +56092,7 @@
    "org": "CHC",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 43.8,
    "tools": {
     "fb": 53.5,
     "sl": 51.5,
@@ -56179,6 +56115,7 @@
    "org": "PIT",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 43.5,
     "sl": 53.5,
@@ -56199,6 +56136,7 @@
    "org": "ARI",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 41.9,
    "tools": {
     "fb": 58.5,
     "sl": 53.5,
@@ -56220,6 +56158,7 @@
    "org": "PHI",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 51.5,
     "sl": 58.5,
@@ -56241,6 +56180,7 @@
    "org": "KCR",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 53.5,
     "sl": 51.5,
@@ -56263,6 +56203,7 @@
    "org": "MIN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 40.2,
    "tools": {
     "fb": 43.5,
     "sl": 50.0,
@@ -56284,6 +56225,7 @@
    "org": "MIL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 53.5,
     "sl": 60.0,
@@ -56305,6 +56247,7 @@
    "org": "COL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 40.5,
    "tools": {
     "fb": 50.0,
     "sl": 56.5,
@@ -56326,6 +56269,7 @@
    "org": "KCR",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 51.5,
     "sl": 56.5,
@@ -56347,6 +56291,7 @@
    "org": "COL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 40.0,
    "tools": {
     "fb": 50.0,
     "cb": 53.5,
@@ -56367,6 +56312,7 @@
    "org": "CIN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.3,
    "tools": {
     "fb": 58.5,
     "sl": 45.0,
@@ -56388,6 +56334,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 46.0,
+   "fvE": 43.9,
    "tools": {
     "fb": 63.5,
     "sl": 73.5,
@@ -56409,6 +56356,7 @@
    "org": "TBR",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 56.5,
     "sl": 51.5,
@@ -56430,6 +56378,7 @@
    "org": "TEX",
    "position": "SP",
    "fv": 42.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 52.5,
     "sl": 55.0,
@@ -56450,6 +56399,7 @@
    "org": "CHC",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.6,
    "tools": {
     "fb": 53.5,
     "sl": 56.5,
@@ -56471,6 +56421,7 @@
    "org": "CLE",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 60.0,
     "sl": 55.0,
@@ -56492,6 +56443,7 @@
    "org": "MIN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.6,
    "tools": {
     "fb": 58.5,
     "sl": 47.5,
@@ -56514,6 +56466,7 @@
    "org": "PIT",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 37.9,
    "tools": {
     "fb": 58.5,
     "sl": 56.5,
@@ -56534,6 +56487,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 50.0,
     "cb": 52.5,
@@ -56554,6 +56508,7 @@
    "org": "LAA",
    "position": "SP",
    "fv": 45.0,
+   "fvE": 44.0,
    "tools": {
     "fb": 55.0,
     "sl": 50.0,
@@ -56574,6 +56529,7 @@
    "org": "ATH",
    "position": "SP",
    "fv": 45.0,
+   "fvE": 44.7,
    "tools": {
     "fb": 53.5,
     "cb": 58.5,
@@ -56594,6 +56550,7 @@
    "org": "COL",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 44.1,
    "tools": {
     "fb": 53.5,
     "sl": 50.0,
@@ -56616,6 +56573,7 @@
    "org": "NYY",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 41.3,
    "tools": {
     "fb": 48.5,
     "sl": 52.5,
@@ -56637,6 +56595,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.8,
    "tools": {
     "fb": 55.0,
     "sl": 51.5,
@@ -56659,6 +56618,7 @@
    "org": "CHC",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.5,
    "tools": {
     "fb": 50.0,
     "sl": 51.5,
@@ -56680,6 +56640,7 @@
    "org": "MIN",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 53.5,
     "sl": 53.5,
@@ -56701,6 +56662,7 @@
    "org": "CHC",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 50.0,
     "cb": 55.0,
@@ -56721,6 +56683,7 @@
    "org": "SDP",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 45.0,
     "cb": 55.0,
@@ -56741,6 +56704,7 @@
    "org": "MIN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 38.6,
    "tools": {
     "fb": 40.0,
     "sl": 60.0,
@@ -56764,6 +56728,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 44.7,
    "tools": {
     "fb": 61.5,
     "sl": 53.5,
@@ -56785,6 +56750,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 38.0,
    "tools": {
     "fb": 60.0,
     "sl": 53.5,
@@ -56805,6 +56771,7 @@
    "org": "MIA",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 37.9,
    "tools": {
     "fb": 50.0,
     "sl": 55.0,
@@ -56826,6 +56793,7 @@
    "org": "TOR",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 42.8,
    "tools": {
     "fb": 51.5,
     "sl": 53.5,
@@ -56847,6 +56815,7 @@
    "org": "WSN",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 40.9,
    "tools": {
     "fb": 50.0,
     "sl": 55.0,
@@ -56867,6 +56836,7 @@
    "org": "ARI",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.7,
    "tools": {
     "fb": 53.5,
     "sl": 53.5,
@@ -56888,6 +56858,7 @@
    "org": "DET",
    "position": "SP",
    "fv": 46.0,
+   "fvE": 47.4,
    "tools": {
     "fb": 54.0,
     "sl": 50.0,
@@ -56909,6 +56880,7 @@
    "org": "ARI",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 39.4,
    "tools": {
     "fb": 53.5,
     "sl": 55.0,
@@ -56930,6 +56902,7 @@
    "org": "SEA",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.2,
    "tools": {
     "fb": 50.0,
     "sl": 56.5,
@@ -56951,6 +56924,7 @@
    "org": "TBR",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 56.5,
     "sl": 50.0,
@@ -56971,6 +56945,7 @@
    "org": "HOU",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 38.9,
    "tools": {
     "fb": 50.0,
     "sl": 50.0,
@@ -56992,6 +56967,7 @@
    "org": "OAK",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 41.2,
    "tools": {
     "fb": 50.0,
     "sl": 70.0,
@@ -57013,6 +56989,7 @@
    "org": "ATL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 40.3,
    "tools": {
     "fb": 55.0,
     "sl": 53.5,
@@ -57034,6 +57011,7 @@
    "org": "KCR",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 56.5,
     "sl": 51.5,
@@ -57054,6 +57032,7 @@
    "org": "TEX",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 50.0,
     "sl": 50.0,
@@ -57075,6 +57054,7 @@
    "org": "ATH",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.5,
    "tools": {
     "fb": 53.5,
     "sl": 56.5,
@@ -57096,6 +57076,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.8,
    "tools": {
     "fb": 51.5,
     "cb": 51.5,
@@ -57116,6 +57097,7 @@
    "org": "NYY",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 40.0,
    "tools": {
     "fb": 50.0,
     "sl": 51.5,
@@ -57137,6 +57119,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 45.0,
+   "fvE": 44.6,
    "tools": {
     "fb": 53.5,
     "sl": 55.0,
@@ -57159,6 +57142,7 @@
    "org": "TBR",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 58.5,
     "sl": 50.0,
@@ -57181,6 +57165,7 @@
    "org": "MIL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 21.3,
    "tools": {
     "fb": 53.5,
     "sl": 55.0,
@@ -57202,6 +57187,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 43.3,
    "tools": {
     "fb": 50.0,
     "sl": 46.5,
@@ -57223,6 +57209,7 @@
    "org": "PHI",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.5,
    "tools": {
     "fb": 53.5,
     "sl": 56.5,
@@ -57243,6 +57230,7 @@
    "org": "KCR",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.6,
    "tools": {
     "fb": 51.5,
     "sl": 58.5,
@@ -57264,6 +57252,7 @@
    "org": "DET",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 38.9,
    "tools": {
     "fb": 48.5,
     "sl": 45.0,
@@ -57285,6 +57274,7 @@
    "org": "NYY",
    "position": "SP",
    "fv": 42.0,
+   "fvE": 42.8,
    "tools": {
     "fb": 52.5,
     "sl": 52.5,
@@ -57306,6 +57296,7 @@
    "org": "MIN",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.4,
    "tools": {
     "fb": 52.5,
     "sl": 52.5,
@@ -57327,6 +57318,7 @@
    "org": "PIT",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.7,
    "tools": {
     "fb": 52.5,
     "sl": 50.0,
@@ -57348,6 +57340,7 @@
    "org": "BAL",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.7,
    "tools": {
     "fb": 52.5,
     "sl": 50.0,
@@ -57369,6 +57362,7 @@
    "org": "BOS",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.5,
    "tools": {
     "fb": 45.0,
     "sl": 50.0,
@@ -57388,6 +57382,7 @@
    "org": "LAD",
    "position": "SIRP",
    "fv": 41.0,
+   "fvE": 44.0,
    "tools": {
     "fb": 60.0,
     "sl": 61.5,
@@ -57408,6 +57403,7 @@
    "org": "CHC",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 43.8,
    "tools": {
     "fb": 53.5,
     "sl": 51.5,
@@ -57430,6 +57426,7 @@
    "org": "PIT",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 43.5,
     "sl": 53.5,
@@ -57450,6 +57447,7 @@
    "org": "ARI",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 41.9,
    "tools": {
     "fb": 58.5,
     "sl": 53.5,
@@ -57471,6 +57469,7 @@
    "org": "PHI",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 51.5,
     "sl": 58.5,
@@ -57492,6 +57491,7 @@
    "org": "KCR",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 53.5,
     "sl": 51.5,
@@ -57514,6 +57514,7 @@
    "org": "MIN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 40.2,
    "tools": {
     "fb": 43.5,
     "sl": 50.0,
@@ -57535,6 +57536,7 @@
    "org": "MIL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 53.5,
     "sl": 60.0,
@@ -57556,6 +57558,7 @@
    "org": "COL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 40.5,
    "tools": {
     "fb": 50.0,
     "sl": 56.5,
@@ -57577,6 +57580,7 @@
    "org": "KCR",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 51.5,
     "sl": 56.5,
@@ -57598,6 +57602,7 @@
    "org": "COL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 40.0,
    "tools": {
     "fb": 50.0,
     "cb": 53.5,
@@ -57618,6 +57623,7 @@
    "org": "CIN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.3,
    "tools": {
     "fb": 58.5,
     "sl": 45.0,
@@ -57639,6 +57645,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 46.0,
+   "fvE": 43.9,
    "tools": {
     "fb": 63.5,
     "sl": 73.5,
@@ -57660,6 +57667,7 @@
    "org": "TBR",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 56.5,
     "sl": 51.5,
@@ -57681,6 +57689,7 @@
    "org": "TEX",
    "position": "SP",
    "fv": 42.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 52.5,
     "sl": 55.0,
@@ -57701,6 +57710,7 @@
    "org": "CHC",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.6,
    "tools": {
     "fb": 53.5,
     "sl": 56.5,
@@ -57722,6 +57732,7 @@
    "org": "CLE",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 60.0,
     "sl": 55.0,
@@ -57743,6 +57754,7 @@
    "org": "MIN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.6,
    "tools": {
     "fb": 58.5,
     "sl": 47.5,
@@ -57765,6 +57777,7 @@
    "org": "PIT",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 37.9,
    "tools": {
     "fb": 58.5,
     "sl": 56.5,
@@ -57785,6 +57798,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 50.0,
     "cb": 52.5,
@@ -57805,6 +57819,7 @@
    "org": "LAA",
    "position": "SP",
    "fv": 45.0,
+   "fvE": 44.0,
    "tools": {
     "fb": 55.0,
     "sl": 50.0,
@@ -57825,6 +57840,7 @@
    "org": "ATH",
    "position": "SP",
    "fv": 45.0,
+   "fvE": 44.7,
    "tools": {
     "fb": 53.5,
     "cb": 58.5,
@@ -57845,6 +57861,7 @@
    "org": "COL",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 44.1,
    "tools": {
     "fb": 53.5,
     "sl": 50.0,
@@ -57867,6 +57884,7 @@
    "org": "NYY",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 41.3,
    "tools": {
     "fb": 48.5,
     "sl": 52.5,
@@ -57888,6 +57906,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.8,
    "tools": {
     "fb": 55.0,
     "sl": 51.5,
@@ -57910,6 +57929,7 @@
    "org": "CHC",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.5,
    "tools": {
     "fb": 50.0,
     "sl": 51.5,
@@ -57931,6 +57951,7 @@
    "org": "MIN",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 53.5,
     "sl": 53.5,
@@ -57952,6 +57973,7 @@
    "org": "CHC",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 50.0,
     "cb": 55.0,
@@ -57972,6 +57994,7 @@
    "org": "SDP",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 45.0,
     "cb": 55.0,
@@ -57992,6 +58015,7 @@
    "org": "MIN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 38.6,
    "tools": {
     "fb": 40.0,
     "sl": 60.0,
@@ -58013,6 +58037,7 @@
    "org": "CLE",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.5,
    "tools": {
     "fb": 50.0,
     "sl": 50.0,
@@ -58033,6 +58058,7 @@
    "org": "CLE",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 45.0,
     "sl": 55.0,
@@ -58053,6 +58079,7 @@
    "org": "HOU",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.0,
    "tools": {
     "fb": 51.5,
     "sl": 40.0,
@@ -58075,6 +58102,7 @@
    "org": "CHC",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 45.0,
     "sl": 50.0,
@@ -58096,6 +58124,7 @@
    "org": "ARI",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 43.2,
    "tools": {
     "fb": 45.0,
     "sl": 50.0,
@@ -58117,6 +58146,7 @@
    "org": "ATL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 48.5,
     "sl": 55.0,
@@ -58138,6 +58168,7 @@
    "org": "CLE",
    "position": "SP",
    "fv": 40.0,
+   "fvE": null,
    "tools": {
     "fb": 45.0,
     "sl": 50.0,
@@ -58158,6 +58189,7 @@
    "org": "ATL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 47.5,
     "sl": 55.0,
@@ -58178,6 +58210,7 @@
    "org": "SFG",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 43.4,
    "tools": {
     "fb": 45.0,
     "sl": 60.0,
@@ -58198,6 +58231,7 @@
    "org": "NYM",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.1,
    "tools": {
     "fb": 46.5,
     "sl": 51.5,
@@ -58219,6 +58253,7 @@
    "org": "WSN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 41.1,
    "tools": {
     "fb": 45.0,
     "sl": 60.0,
@@ -58240,6 +58275,7 @@
    "org": "TEX",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 40.0,
     "sl": 55.0,
@@ -58261,6 +58297,7 @@
    "org": "CLE",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 45.0,
     "sl": 55.0,
@@ -58282,6 +58319,7 @@
    "org": "ARI",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 45.3,
    "tools": {
     "fb": 63.5,
     "sl": 58.5,
@@ -58302,6 +58340,7 @@
    "org": "DET",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 39.0,
    "tools": {
     "fb": 46.5,
     "sl": 53.5,
@@ -58323,6 +58362,7 @@
    "org": "MIN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.3,
    "tools": {
     "fb": 56.5,
     "sl": 52.5,
@@ -58344,6 +58384,7 @@
    "org": "LAA",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 60.0,
     "sl": 55.0,
@@ -58364,6 +58405,7 @@
    "org": "PIT",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 50.0,
     "sl": 51.5,
@@ -58385,6 +58427,7 @@
    "org": "DET",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 38.8,
    "tools": {
     "fb": 56.5,
     "sl": 55.0,
@@ -58405,6 +58448,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 50.0,
+   "fvE": 47.7,
    "tools": {
     "fb": 50.0,
     "sl": 50.0,
@@ -58426,6 +58470,7 @@
    "org": "BOS",
    "position": "SP",
    "fv": 48.0,
+   "fvE": 44.3,
    "tools": {
     "fb": 65.0,
     "sl": 53.5,
@@ -58446,6 +58491,7 @@
    "org": "ATL",
    "position": "SP",
    "fv": 46.0,
+   "fvE": 43.4,
    "tools": {
     "fb": 50.0,
     "cb": 60.0,
@@ -58466,6 +58512,7 @@
    "org": "STL",
    "position": "MIRP",
    "fv": 45.0,
+   "fvE": 43.1,
    "tools": {
     "fb": 51.5,
     "sl": 55.0,
@@ -58487,6 +58534,7 @@
    "org": "CLE",
    "position": "MIRP",
    "fv": 43.0,
+   "fvE": 42.6,
    "tools": {
     "fb": 57.5,
     "sl": 55.0,
@@ -58508,6 +58556,7 @@
    "org": "BAL",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 43.9,
    "tools": {
     "fb": 50.0,
     "sl": 51.5,
@@ -58530,6 +58579,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 43.5,
    "tools": {
     "fb": 48.5,
     "sl": 58.5,
@@ -58550,6 +58600,7 @@
    "org": "TEX",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 58.5,
     "sl": 51.5,
@@ -58571,6 +58622,7 @@
    "org": "NYY",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.7,
    "tools": {
     "fb": 60.0,
     "sl": 55.0,
@@ -58591,6 +58643,7 @@
    "org": "ARI",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 37.8,
    "tools": {
     "fb": 55.0,
     "sl": 52.5,
@@ -58612,6 +58665,7 @@
    "org": "NYM",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.9,
    "tools": {
     "fb": 53.5,
     "sl": 55.0,
@@ -58633,6 +58687,7 @@
    "org": "NYM",
    "position": "MIRP",
    "fv": 40.0,
+   "fvE": 42.0,
    "tools": {
     "fb": 55.0,
     "sl": 55.0,
@@ -58654,6 +58709,7 @@
    "org": "SDP",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.5,
    "tools": {
     "fb": 55.0,
     "sl": 51.5,
@@ -58675,6 +58731,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.1,
    "tools": {
     "fb": 50.0,
     "sl": 56.5,
@@ -58696,6 +58753,7 @@
    "org": "LAA",
    "position": "SP",
    "fv": 46.0,
+   "fvE": 47.7,
    "tools": {
     "fb": 53.5,
     "sl": 51.5,
@@ -58717,6 +58775,7 @@
    "org": "OAK",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 50.0,
     "sl": 50.0,
@@ -58738,6 +58797,7 @@
    "org": "NYM",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.5,
    "tools": {
     "fb": 47.5,
     "cb": 50.0,
@@ -58758,6 +58818,7 @@
    "org": "KCR",
    "position": "MIRP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 30.0,
     "sl": 60.0,
@@ -58778,6 +58839,7 @@
    "org": "NYY",
    "position": "SIRP",
    "fv": 49.0,
+   "fvE": 48.5,
    "tools": {
     "fb": 67.0,
     "sl": 59.0,
@@ -58800,6 +58862,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 47.0,
+   "fvE": 47.5,
    "tools": {
     "fb": 70.0,
     "sl": 55.0,
@@ -58822,6 +58885,7 @@
    "org": "ARI",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.6,
    "tools": {
     "fb": 52.5,
     "sl": 47.5,
@@ -58843,6 +58907,7 @@
    "org": "MIA",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 37.2,
    "tools": {
     "fb": 51.5,
     "sl": 55.0,
@@ -58864,6 +58929,7 @@
    "org": "BOS",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.8,
    "tools": {
     "fb": 60.0,
     "sl": 56.5,
@@ -58884,6 +58950,7 @@
    "org": "ATH",
    "position": "SP",
    "fv": 47.0,
+   "fvE": 44.3,
    "tools": {
     "fb": 54.0,
     "sl": 53.0,
@@ -58906,6 +58973,7 @@
    "org": "CIN",
    "position": "SP",
    "fv": 45.0,
+   "fvE": 43.6,
    "tools": {
     "fb": 53.5,
     "sl": 55.0,
@@ -58927,6 +58995,7 @@
    "org": "SDP",
    "position": "SP",
    "fv": 45.0,
+   "fvE": 43.6,
    "tools": {
     "fb": 50.0,
     "sl": 51.5,
@@ -58947,6 +59016,7 @@
    "org": "TEX",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 43.2,
    "tools": {
     "fb": 45.0,
     "sl": 53.5,
@@ -58968,6 +59038,7 @@
    "org": "MIA",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 44.0,
    "tools": {
     "fb": 48.5,
     "sl": 53.5,
@@ -58989,6 +59060,7 @@
    "org": "SFG",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 43.4,
    "tools": {
     "fb": 46.5,
     "sl": 56.5,
@@ -59010,6 +59082,7 @@
    "org": "KCR",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 43.7,
    "tools": {
     "fb": 48.5,
     "sl": 53.5,
@@ -59031,6 +59104,7 @@
    "org": "HOU",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 43.9,
    "tools": {
     "fb": 48.5,
     "sl": 50.0,
@@ -59053,6 +59127,7 @@
    "org": "PIT",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.1,
    "tools": {
     "fb": 48.5,
     "sl": 50.0,
@@ -59074,6 +59149,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.5,
    "tools": {
     "fb": 45.0,
     "cb": 55.0,
@@ -59094,6 +59170,7 @@
    "org": "WSN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.7,
    "tools": {
     "fb": 41.5,
     "sl": 51.5,
@@ -59115,6 +59192,7 @@
    "org": "TOR",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 38.6,
    "tools": {
     "fb": 50.0,
     "sl": 51.5,
@@ -59135,6 +59213,7 @@
    "org": "CHC",
    "position": "SP",
    "fv": 49.0,
+   "fvE": 47.0,
    "tools": {
     "fb": 66.0,
     "sl": 54.0,
@@ -59156,6 +59235,7 @@
    "org": "MIL",
    "position": "SP",
    "fv": 48.0,
+   "fvE": 47.2,
    "tools": {
     "fb": 55.0,
     "sl": 52.5,
@@ -59177,6 +59257,7 @@
    "org": "TOR",
    "position": "SP",
    "fv": 46.0,
+   "fvE": 45.7,
    "tools": {
     "fb": 56.5,
     "sl": 70.0,
@@ -59198,6 +59279,7 @@
    "org": null,
    "position": "SP",
    "fv": 45.0,
+   "fvE": 44.9,
    "tools": {
     "fb": 55.0,
     "cb": 55.0,
@@ -59217,6 +59299,7 @@
    "org": "SDP",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 41.8,
    "tools": {
     "fb": 58.5,
     "sl": 51.5,
@@ -59237,6 +59320,7 @@
    "org": "PHI",
    "position": "SP",
    "fv": 43.0,
+   "fvE": 44.0,
    "tools": {
     "fb": 65.0,
     "sl": 55.0,
@@ -59257,6 +59341,7 @@
    "org": "MIA",
    "position": "SP",
    "fv": 42.0,
+   "fvE": 43.3,
    "tools": {
     "fb": 62.5,
     "sl": 57.5,
@@ -59277,6 +59362,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.2,
    "tools": {
     "fb": 63.5,
     "sl": 43.5,
@@ -59297,6 +59383,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 42.8,
    "tools": {
     "fb": 55.0,
     "sl": 45.0,
@@ -59318,6 +59405,7 @@
    "org": "SFG",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 38.6,
    "tools": {
     "fb": 62.5,
     "sl": 52.5,
@@ -59338,6 +59426,7 @@
    "org": "HOU",
    "position": "SIRP",
    "fv": 41.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 55.0,
     "sl": 55.0,
@@ -59359,6 +59448,7 @@
    "org": "STL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.5,
    "tools": {
     "fb": 60.0,
     "sl": 55.0,
@@ -59379,6 +59469,7 @@
    "org": "BAL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 55.0,
     "sl": 60.0,
@@ -59399,6 +59490,7 @@
    "org": "MIA",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 40.0,
    "tools": {
     "fb": 60.0,
     "sl": 70.0,
@@ -59419,6 +59511,7 @@
    "org": "ARI",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.0,
    "tools": {
     "fb": 65.0,
     "sl": 56.5,
@@ -59439,6 +59532,7 @@
    "org": "MIA",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.8,
    "tools": {
     "fb": 48.5,
     "sl": 55.0,
@@ -59460,6 +59554,7 @@
    "org": "LAD",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 39.4,
    "tools": {
     "fb": 70.0,
     "sl": 50.0,
@@ -59481,6 +59576,7 @@
    "org": "MIL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 55.0,
     "sl": 60.0,
@@ -59501,6 +59597,7 @@
    "org": "DET",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.2,
    "tools": {
     "fb": 40.0,
     "sl": 47.5,
@@ -59522,6 +59619,7 @@
    "org": "MIA",
    "position": "SIRP",
    "fv": 41.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 60.0,
     "sl": 55.0,
@@ -59543,6 +59641,7 @@
    "org": "NYY",
    "position": "SP",
    "fv": 41.0,
+   "fvE": 43.3,
    "tools": {
     "fb": 46.5,
     "sl": 48.5,
@@ -59564,6 +59663,7 @@
    "org": "KCR",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 40.0,
     "cb": 60.0,
@@ -59583,6 +59683,7 @@
    "org": "MIA",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.9,
    "tools": {
     "fb": 50.0,
     "sl": 50.0,
@@ -59603,6 +59704,7 @@
    "org": "ATL",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 43.0,
    "tools": {
     "fb": 45.0,
     "sl": 55.0,
@@ -59623,6 +59725,7 @@
    "org": "CIN",
    "position": "MIRP",
    "fv": 40.0,
+   "fvE": 38.1,
    "tools": {
     "fb": 56.5,
     "sl": 56.5,
@@ -59643,6 +59746,7 @@
    "org": "CIN",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 20.0,
    "tools": {
     "fb": 50.0,
     "sl": 47.5,
@@ -59664,6 +59768,7 @@
    "org": "CLE",
    "position": "SP",
    "fv": 40.0,
+   "fvE": 42.5,
    "tools": {
     "fb": 45.0,
     "cb": 50.0,
@@ -59684,6 +59789,7 @@
    "org": "CHW",
    "position": "SIRP",
    "fv": 40.0,
+   "fvE": 42.5,
    "tools": {
     "fb": 68.5,
     "sl": 55.0,
@@ -59704,6 +59810,9 @@
   "fv_min": 40.0,
   "margin_min": 10.0,
   "cap": 60,
+  "n_pool": 1801,
+  "n_role_unstated": 621,
+  "n_role_unstated_above_fv": 268,
   "n_mismatches": 142,
   "n_qualified": 79,
   "n_shown": 60,

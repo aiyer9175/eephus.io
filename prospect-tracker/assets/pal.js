@@ -859,7 +859,15 @@
     var head = "<thead><tr><th>Pitcher</th><th>Throws</th><th>Role</th><th>vs own hand</th><th>vs opp hand</th>"
       + "<th>Split</th><th>Read</th></tr></thead>";
     var body = "<tbody>" + view.map(function (r) {
-      var read = r.reverse ? '<span class="pal-hit">reverse (neutral+)</span>'
+      // BOTH FLAGS, WHEN BOTH ARE SET. `reverse` is a DIRECTION (own-side OPS
+      // higher by more than .030) and `extreme` is a MAGNITUDE (|split| >= .150),
+      // so a row can carry both, and 22 of the 146 listed here do. The ternary
+      // showed only the first, so those rows displayed the strength this note
+      // describes and hid the blocker it describes in the same sentence. An
+      // extreme split is still a one-sided profile whichever hand it faces.
+      var read = (r.reverse && r.extreme)
+        ? '<span class="pal-hit">reverse</span>, but <span class="pal-miss">extreme</span>'
+        : r.reverse ? '<span class="pal-hit">reverse (neutral+)</span>'
         : '<span class="pal-miss">extreme split</span>';
       return '<tr><td class="mlbstats-name">' + logo(r.team) + nameLink(r.name, r.mlbam) + "</td>"
         + "<td>" + esc(r.p_throws) + "HP</td><td>" + esc(r.role) + "</td>"
@@ -924,7 +932,19 @@
       + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 scout grades). A scouted starter with a thin "
       + "arsenal profiles as a reliever; a reliever with a deep arsenal could start. Shape-only: there is no pitch tracking "
       + "at the minors, so this reads role fit from tool grades, not stuff. " + esc(DATA.n_prospects || "")
-      + " prospect pitchers scanned." + bound
+      + " prospect pitchers scanned"
+      // COVERAGE, STATED. A mismatch needs a stated role for the shape to
+      // disagree with, and a position of RHP, LHP or P states handedness and no
+      // role. Those rows can never appear here, correctly, and the bare
+      // "N scanned" read as a screen of the whole pool.
+      + ((rule && rule.n_role_unstated)
+         ? (", though " + esc(rule.n_role_unstated) + " of them carry a position that states "
+            + "handedness and no role (RHP, LHP, P), so there is no scouted role for the shape "
+            + "to disagree with and they cannot appear below"
+            + (rule.n_role_unstated_above_fv
+               ? "; " + esc(rule.n_role_unstated_above_fv) + " of those clear the FV floor" : "")
+            + ".")
+         : ".") + bound
       + " A descriptive shape screen, not a separately backtested model.</div>";
     function toolBars(tools) {
       tools = tools || {};
@@ -934,10 +954,16 @@
       }).join("");
     }
     var cards = rows.map(function (p) {
+      // Read the LEAN, not the negation of "SP". Only SP and RP rows can be a
+      // mismatch, so the else-branch is right today, but it asserted "scouted a
+      // reliever" for anything that was not literally SP, which would have
+      // mislabelled an UNSTATED row the moment one reached this list.
       var pdir = p.role === "SP" ? "SP->RP" : "RP->SP";
       var arrow = p.role === "SP" ? "SP &rarr; RP" : "RP &rarr; SP";
       var msg = p.role === "SP" ? "Scouted a starter, but the arsenal profiles as a reliever."
-        : "Scouted a reliever, but has the arsenal to start.";
+        : p.role === "RP" ? "Scouted a reliever, but has the arsenal to start."
+        : "Scouted " + esc(p.position || "a pitcher") + ", and the arsenal shape leans "
+          + esc(p.lean || "the other way") + ".";
       return '<div class="pal-mix-card"><h4><span>' + logo(p.org) + esc(p.name)
         + '<span class="proj-dim"> ' + esc(p.org || "") + "</span></span>"
         + '<span class="pal-dir' + dirClass(pdir) + '">' + arrow + "</span></h4>"

@@ -467,7 +467,24 @@ def prospect_role_fit(tools: dict, position: Optional[str]) -> dict:
     cmd_s = 50.0 if cmd is None else _clamp((cmd - 40.0) / (60.0 - 40.0) * 100.0)
     starter_shape = round(0.60 * depth_s + 0.40 * cmd_s, 1)
     pos = (position or "").upper()
-    role = "SP" if "SP" in pos else ("RP" if ("RP" in pos or "IRP" in pos or "CL" in pos) else "SWING")
+    # "NO ROLE STATED" IS NOT "SWINGMAN". A position of RHP, LHP or P states
+    # HANDEDNESS and no role at all, and it covers 691 of the 1,875 pool
+    # pitchers (36.9%). Those rows used to be filed as SWING beside genuine
+    # swingmen, which made a missing input look like a scouting read.
+    #
+    # Both still fail the `mismatch` predicate below and both always did, so no
+    # served row moves: with no stated role there is nothing for the shape to
+    # DISAGREE with, and excluding them from a mismatch list is correct. What
+    # was wrong was calling the exclusion a role. It is counted and disclosed
+    # instead, in pal_export.prospect_watch_rule.
+    if "SP" in pos:
+        role = "SP"
+    elif "RP" in pos or "CL" in pos:
+        role = "RP"
+    elif "SWING" in pos or "SWG" in pos:
+        role = "SWING"
+    else:
+        role = "UNSTATED"
     lean = ("SP" if starter_shape >= SHAPE_SP_MIN
             else ("RP" if starter_shape < SHAPE_RP_MAX else "SWING"))
     mismatch = role in ("SP", "RP") and lean in ("SP", "RP") and role != lean
@@ -814,6 +831,19 @@ def _hole_rec(fam: str, pitch_name: str, weak_hand, big_split: bool) -> dict:
             "priority": "high" if big_split else "medium"}
 
 
+# Candidates for the deep-arsenal platoon branch, in preference order, paired with
+# the Statcast pitch code that means "he already throws this". The first entry of
+# each pair is the incumbent recommendation, so a pitcher who throws neither is
+# advised exactly as before; the second is the same-family alternative for one who
+# already throws the first. USAGE FLOOR matches _families, so "already throws it"
+# means the same thing here as it does everywhere else in this module.
+PITCH_ADD_MIN_USAGE = 0.05
+PLATOON_ADD_CANDIDATES = {
+    "RHB": (("Changeup", "CH"), ("Splitter", "FS")),
+    "LHB": (("Cutter", "FC"), ("Slider", "SL")),
+}
+
+
 def recommend_pitch(arm: PalArm, league_xrv: Optional[dict] = None) -> Optional[dict]:
     """The pitch this arm most needs to add to survive a lineup as a starter,
     from its arsenal hole and platoon weakness. A rule model (the empty-slot x
@@ -859,9 +889,26 @@ def recommend_pitch(arm: PalArm, league_xrv: Optional[dict] = None) -> Optional[
                           "trust a third often enough to keep hitters honest across a full lineup.",
                 "priority": "medium"}
     if big_split:
-        want = "Changeup" if weak_hand == "RHB" else "Cutter"
-        return {"add": want, "target": weak_hand,
-                "reason": f"Deep arsenal, but a large platoon split leaves him exposed to {weak_hand}. "
-                          f"A {want.lower()} would flatten the split a starter has to survive.",
-                "priority": "medium"}
+        # DO NOT TELL HIM TO ADD A PITCH HE ALREADY THROWS. Every branch above
+        # this one fires on a family HOLE, so what it names is necessarily
+        # absent. This branch is reached precisely when the arsenal is DEEP
+        # (both families present) and it used to pick from the weak hand alone,
+        # without ever consulting the arsenal. Measured on the live payload: 22
+        # of 236 pitch_add rows recommended a pitch the arm was already throwing
+        # at 5% usage or more, including Brooks Raley, told to add a changeup he
+        # throws 10% of the time.
+        #
+        # The second candidate is the same family as the first, so the advice
+        # keeps its shape: an offspeed pitch to blunt opposite-handed contact, or
+        # a glove-side pitch to hold the other corner. If he throws both, this
+        # rule model has nothing left to point at and says so by returning None,
+        # which is what the docstring already promises for a deep arsenal.
+        have = {p.get("pitch") for p in arm.arsenal
+                if (_num(p.get("usage")) or 0) >= PITCH_ADD_MIN_USAGE}
+        for want, code in (PLATOON_ADD_CANDIDATES.get(weak_hand) or ()):
+            if code not in have:
+                return {"add": want, "target": weak_hand,
+                        "reason": f"Deep arsenal, but a large platoon split leaves him exposed to {weak_hand}. "
+                                  f"A {want.lower()} would flatten the split a starter has to survive.",
+                        "priority": "medium"}
     return None

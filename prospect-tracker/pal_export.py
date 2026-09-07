@@ -632,9 +632,15 @@ def build_prospect_watch_all(prospects: list) -> list:
         rf = pc.prospect_role_fit(p.get("tools"), p.get("position"))
         if not rf["mismatch"] or (p.get("fv") or 0) < PROSPECT_WATCH_FV_MIN:
             continue
+        # fvE RIDES ALONG. assets/pal.js reads `p.fvE != null ? Math.round(p.fvE)
+        # : fCeil(p.fv)`, and this entry never carried fvE, so the eFV branch was
+        # dead on 202 of 202 rows and the card always showed the consensus close.
+        # load_prospect_pitchers has resolved the eFV grade all along; it was
+        # dropped here, one line from the surface that wanted it.
         watch.append({"player_key": p.get("player_key"), "name": p["name"],
                       "org": p.get("org"), "position": p.get("position"),
-                      "fv": p.get("fv"), "tools": p.get("tools"), **rf})
+                      "fv": p.get("fv"), "fvE": p.get("fvE"),
+                      "tools": p.get("tools"), **rf})
     # Severity first (the owner's ranking), FV as the tiebreak, name as the stable
     # third key: starter_shape is quantized hard enough that ties are the norm, and
     # without a deterministic third key the served order would follow pool order.
@@ -696,9 +702,17 @@ def _severity_of(margin, cuts: list):
 
 def prospect_watch_rule(full: list, watch: list,
                         margin_min: float = PROSPECT_WATCH_MARGIN_MIN,
-                        cap: int = PROSPECT_WATCH_CAP) -> dict:
+                        cap: int = PROSPECT_WATCH_CAP,
+                        pool: Optional[list] = None) -> dict:
     """The bound, made visible in the payload. Every number the /pal/ copy states
-    comes from here, so the surface can never claim a bound it is not applying."""
+    comes from here, so the surface can never claim a bound it is not applying.
+
+    `pool` adds the COVERAGE half of that promise. A mismatch needs a stated role
+    for the shape to disagree with, and 691 of the 1,875 pool pitchers (36.9%)
+    carry a position of RHP, LHP or P, which states handedness and no role. They
+    are structurally unable to appear on this list, correctly, and 326 of them
+    clear the FV floor. The copy said "1,875 prospect pitchers scanned" and left
+    that unsaid, which reads as a screen of the whole pool."""
     qualified = [w for w in full if (w.get("mismatch_margin") or 0.0) >= margin_min]
     just_outside = [w for w in full if (w.get("mismatch_margin") or 0.0) < margin_min]
     best_outside = max((w.get("mismatch_margin") or 0.0) for w in just_outside) if just_outside else None
@@ -706,10 +720,18 @@ def prospect_watch_rule(full: list, watch: list,
     for c in cuts:
         c["n"] = sum(1 for w in watch
                      if _severity_of(w.get("mismatch_margin"), cuts) == c["key"])
+    unstated = [p for p in (pool or [])
+                if pc.prospect_role_fit(p.get("tools"), p.get("position"))["role"]
+                not in ("SP", "RP")]
     return {
         "fv_min": PROSPECT_WATCH_FV_MIN,
         "margin_min": margin_min,
         "cap": cap,
+        "n_pool": len(pool) if pool is not None else None,
+        "n_role_unstated": len(unstated) if pool is not None else None,
+        "n_role_unstated_above_fv": (
+            sum(1 for p in unstated if (p.get("fv") or 0) >= PROSPECT_WATCH_FV_MIN)
+            if pool is not None else None),
         "n_mismatches": len(full),
         "n_qualified": len(qualified),
         "n_shown": len(watch),
@@ -1080,7 +1102,8 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     # the /pal/ LIST without stripping anybody's card (see build_prospect_watch).
     prospect_watch_all = build_prospect_watch_all(prospects)
     prospect_watch = build_prospect_watch(prospects)
-    watch_rule = prospect_watch_rule(prospect_watch_all, prospect_watch)
+    watch_rule = prospect_watch_rule(prospect_watch_all, prospect_watch,
+                                     pool=prospects)
 
     payload = {
         "generated_at": today, "season": season,
