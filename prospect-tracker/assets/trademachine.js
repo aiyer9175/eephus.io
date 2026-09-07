@@ -805,18 +805,26 @@ function _tbRiskUiOn() {
 // safer) with a tooltip carrying the downside deviation, risk-adjusted surplus,
 // and bust probability. Colored by bust risk.
 function _tbRiskCell(p) {
-  if (p.sortino == null) return `<td class="tm-num tm-dim">-</td>`;
   const pb = p.p_bust;
+  // NO RATIO IS NOT NO INFORMATION. bayes_trade_value withholds the Sortino when
+  // the outcome fan is flat, because the ratio is a constant there and the
+  // column reads "higher is safer". This used to bail on a null Sortino and drop
+  // the bust chip with it, which threw away the ground-truthed P(bust) on the
+  // very rows where it is the only risk number there is: 3,862 of 5,264.
+  if (p.sortino == null && pb == null) return `<td class="tm-num tm-dim">-</td>`;
   const col = pb == null ? "var(--text-secondary)"
     : pb >= 0.25 ? "var(--neon-red)" : pb <= 0.10 ? "var(--neon-green)" : "var(--text-primary)";
   const tip = [
-    `Sortino ${p.sortino}: expected surplus per unit of downside risk (higher is safer)`,
+    p.sortino != null
+      ? `Sortino ${p.sortino}: expected surplus per unit of downside risk (higher is safer)`
+      : "No Sortino: the outcome fan is flat here (more than 80% of modelled outcomes land on one figure), so the ratio would be a constant rather than a reading on this player. It is withheld instead of printed as a 0",
     p.risk_mm != null ? `Risk-adjusted surplus $${p.risk_mm}M` : "",
     p.downside_mm != null ? `Downside deviation $${p.downside_mm}M` : "",
     pb != null ? `Bust probability ${(pb * 100).toFixed(0)}%` : "",
   ].filter(Boolean).join(" · ");
   const bustStr = pb != null ? ` <span class="tm-dim" style="font-size:9px;">${(pb * 100).toFixed(0)}% bust</span>` : "";
-  return `<td class="tm-num tm-risk" title="${escapeHtml(tip)}"><span style="color:${col};">${p.sortino}</span>${bustStr}</td>`;
+  const val = p.sortino != null ? p.sortino : "-";
+  return `<td class="tm-num tm-risk" title="${escapeHtml(tip)}"><span style="color:${col};">${val}</span>${bustStr}</td>`;
 }
 
 function _renderTBRows() {
@@ -879,7 +887,7 @@ function _renderTBRows() {
     ${_tbTh("FV", "fv", "tm-num", "Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)", false, "fv")}
     ${_tbTh("Grade", "grade", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale. The board ranks by the model's raw eFV grade, which orders realized value better than the dollar transform POOLED and in the top three tiers, but NOT in the low tier, which holds most of the board. The letter is the coarse display.", true)}
     ${_tbTh("Surplus", "surplus", "tm-num", "Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use", false, "surplus_value")}
-    ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside risk (higher is safer). Tooltip carries the risk-adjusted surplus and bust probability.", false, "risk_adjusted_surplus") : ""}
+    ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside risk (higher is safer). Blank where the outcome fan is flat and the ratio would be a constant rather than a reading; the bust probability beside it still applies. Tooltip carries the risk-adjusted surplus and bust probability.", false, "risk_adjusted_surplus") : ""}
     ${_tbTh("Contract", "contract", "", "Contract: phase · salary · FA year (MLB) or remaining controlled seasons (MiLB)", false, "service_time")}
     <th class="tm-col-div">Signals</th>
   </tr></thead><tbody>`;

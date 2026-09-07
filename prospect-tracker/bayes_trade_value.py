@@ -4157,12 +4157,30 @@ def _sortino_fields(dist: dict | None, scale: float) -> dict | None:
         return None
     w = (0.15, 0.25, 0.25, 0.25, 0.10)
     dd = sum(wi * min(float(p) - float(mean), 0.0) ** 2 for wi, p in zip(w, pts)) ** 0.5
+    # A FLAT FAN CANNOT SUPPORT A RISK RATIO. When p10 through p90 are all the
+    # same figure (4,825 of 9,505 eFV rows: the whole 10th-to-90th mass sits on
+    # the $0-surplus floor) the ratio below collapses to a constant that depends
+    # only on the fan's shape and carries no profile at all:
+    #
+    #     mean == the mass point   ->  dd = 0,          sortino = 0.00
+    #     mean above it            ->  dd = mean - p,   sortino = dd/dd = 1.00
+    #
+    # Measured on the served board before this guard: 3,297 rows published
+    # Sortino exactly 0.00 and 565 exactly 1.00, which is 3,862 of the 5,264 rows
+    # carrying one. The 0.00 is the worse of the two, because the column reads
+    # "higher is safer" and IS SORTABLE: it ranked 3,297 prospects as the most
+    # dangerous assets on the board on the strength of a fan with no width.
+    #
+    # downside_mm, risk_mm and p_bust stay. dd is honestly the mean's distance to
+    # the mass point and p_bust is the ground-truthed bust probability; it is the
+    # RATIO alone that is degenerate, so it is the ratio alone that is withheld.
+    flat_fan = (max(float(q) for q in pts) - min(float(q) for q in pts)) < 1e-9
     sortino = (float(mean) - float(pts[0])) / max(dd, 0.1)   # upside cushion per unit downside
     return {
         "p_bust": dist.get("p_bust"),
         "downside_mm": round(dd * scale, 1),
         "risk_mm": round((float(mean) - 0.5 * dd) * scale, 1),
-        "sortino": round(min(99.0, max(0.0, sortino)), 2),
+        "sortino": None if flat_fan else round(min(99.0, max(0.0, sortino)), 2),
     }
 
 

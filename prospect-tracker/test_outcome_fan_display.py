@@ -116,3 +116,55 @@ def test_board_bounds_are_ordered():
                and r.get("trade_value_hi") is not None
                and float(r["trade_value_hi"]) < float(r["trade_value_lo"]) - 1e-9]
     assert not crossed, f"{len(crossed)} board row(s) publish hi below lo: {crossed[:5]}"
+
+
+def test_no_sortino_is_published_off_a_flat_fan():
+    """The Risk ratio must be withheld where it would be a constant.
+
+    sortino = (mean - p10) / max(dd, 0.1). On a flat fan (p10 through p90 all
+    equal) that collapses to a function of the fan's shape alone: 0.00 when the
+    mean sits on the mass point, and dd/dd = 1.00 when it sits above. Neither is
+    a reading on the player.
+
+    MEASURED 2026-09-06, before the guard: 3,297 board rows published Sortino
+    exactly 0.00 and 565 exactly 1.00, which is 3,862 of the 5,264 rows carrying
+    one. The column header reads "higher is safer" and the column SORTS, so the
+    0.00 rows ranked as the most dangerous assets on the board on the strength of
+    a fan with no width.
+    """
+    rows = _json("trade_values.json")["players"]
+    bad = []
+    for r in rows:
+        if r.get("sortino") is None:
+            continue
+        d = r.get("dist") or {}
+        pts = [d.get(q) for q in ("p10_mm", "p25_mm", "p50_mm", "p75_mm", "p90_mm")]
+        if any(q is None for q in pts):
+            continue
+        if max(pts) - min(pts) < 1e-9:
+            bad.append((r.get("player_key"), r["sortino"], pts[0]))
+    assert not bad, (
+        f"{len(bad)} row(s) publish a Sortino off a fan with no spread, where the "
+        f"ratio is a constant: {bad[:5]}"
+    )
+
+
+def test_withholding_the_ratio_does_not_withhold_the_bust_probability():
+    """P(bust) is the only risk number those rows have. It must survive.
+
+    The Risk cell used to bail on a null Sortino and drop the bust chip with it,
+    so guarding the ratio would have silently deleted the ground-truthed bust
+    probability from every row it fired on.
+    """
+    rows = _json("trade_values.json")["players"]
+    withheld = [r for r in rows if r.get("sortino") is None and r.get("p_bust") is not None]
+    if not withheld:
+        pytest.skip("no rows with a withheld Sortino on this build")
+    js = (HERE / "assets" / "trademachine.js").read_text(encoding="utf-8")
+    assert "if (p.sortino == null && pb == null)" in js, (
+        f"the Risk cell bails on a null Sortino again, which would drop the bust "
+        f"probability from {len(withheld)} row(s) that carry nothing else"
+    )
+    assert "No Sortino: the outcome fan is flat here" in js, (
+        "the Risk cell no longer explains why the ratio is blank"
+    )
