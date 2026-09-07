@@ -94,7 +94,7 @@
 .eph-nav-account .eph-bell-count {
   font-family: var(--font-retro-mono); font-size: 10px; font-weight: 800;
   min-width: 16px; height: 16px; padding: 0 4px;
-  background: var(--accent-red); color: #fff;
+  background: var(--accent-red); color: var(--bg-primary);
   display: inline-flex; align-items: center; justify-content: center;
 }
 
@@ -163,7 +163,7 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   font-family: var(--font-retro-mono); font-size: 13px; font-weight: 700;
   letter-spacing: .04em; text-transform: uppercase; padding: 11px 16px;
-  background: var(--accent-navy); color: #fff; border: 1px solid var(--accent-navy);
+  background: var(--accent-navy); color: var(--bg-primary); border: 1px solid var(--accent-navy);
   cursor: pointer; text-decoration: none; transition: opacity .12s, background .12s;
 }
 .eph-btn:hover { opacity: .9; }

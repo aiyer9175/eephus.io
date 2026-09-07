@@ -153,3 +153,44 @@ def test_neither_module_hardcodes_a_light_mode_surface():
     assert not hits, (
         f"hardcoded light-mode surfaces; in dark mode --bg-secondary is #1A1A1E "
         f"and these do not move: {hits}")
+
+
+_FILLED_ACCENT = re.compile(
+    r"\{[^{}]*background:\s*var\(--accent-[a-z]+[^)]*\)[^{}]*color:\s*#f{3,6}[^{}]*\}"
+    r"|\{[^{}]*color:\s*#f{3,6}[^{}]*background:\s*var\(--accent-[a-z]+[^)]*\)[^{}]*\}",
+    re.IGNORECASE)
+
+
+def test_no_filled_accent_chip_carries_a_white_label():
+    """White on a filled accent is legible in light mode and gone in dark.
+
+    The accents INVERT: --accent-cyan is #0E7C86 light and #00D9FF dark,
+    --accent-green #1F7A3A and #4FFF9E, --accent-red #B91C1C and #FF6B7A,
+    --accent-navy #0E2B4D and #4FD9FF. A white label sits on the dark version in
+    light mode and on the BRIGHT version in dark mode. Measured contrast against
+    the 4.5:1 body-text requirement:
+
+        chip                     white label    var(--bg-primary) label
+        accent-green  dark          1.30:1              15.01:1
+        accent-navy   dark          1.65:1              11.82:1
+        accent-cyan   dark          1.70:1              11.51:1
+        accent-red    dark          2.75:1               7.11:1
+
+    1.30:1 is not "low contrast", it is invisible. site.css:1236 established the
+    house pattern years earlier, `background: var(--accent-navy); color:
+    var(--bg-primary)`, which inverts with the theme by construction. Seven chips
+    across four files had drifted off it, including two on /fantasy/.
+
+    The light-mode cost is real and small: white on accent-cyan is 4.95:1 and
+    --bg-primary is 4.35:1, marginally under AA, against a dark-mode gain from
+    1.70 to 11.51. Recorded rather than buried.
+    """
+    offenders = {}
+    for f in sorted(list(ASSETS.glob("*.js")) + list(ASSETS.glob("*.css"))):
+        hits = _FILLED_ACCENT.findall(f.read_text(encoding="utf-8", errors="ignore"))
+        if hits:
+            offenders[f.name] = len(hits)
+    assert not offenders, (
+        "filled accent chips with a hardcoded white label; the accents invert, so "
+        "these read at about 1.3:1 to 2.8:1 in dark mode. Use "
+        "color: var(--bg-primary), the pattern at site.css:1236: " + repr(offenders))
