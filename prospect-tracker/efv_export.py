@@ -161,6 +161,17 @@ def _entry(s, side, kind):
         **_delta_fields(s, kind),
         "xfv_minus_consensus_quantile": s.get("xfv_minus_consensus_display"),  # retired quantile - consensus
         "xfv_war_6yr": s.get("xfv_war_6yr"),
+        # THE GUARDED BLEND. efv_score writes rank_war on every scored row,
+        # (1-lam)*consensus_OLS + lam*model, and this file published the grade,
+        # the delta and the projected WAR but never the blend, so no reader could
+        # check the board against it. It is NOT xfv_war_6yr, which is the model
+        # leg alone and is what the eval scores; meta.serve_vs_eval_census
+        # measures how far apart they run.
+        "rank_war": s.get("rank_war"),
+        # The routing basis, without which that census cannot be read: the
+        # flagship map and the provisional cap behave differently ON PURPOSE and
+        # pooling them hides the thing worth knowing.
+        "grade_basis": s.get("grade_basis"),
         "p_bucket": s.get("p_bucket"),
         "surplus_mm": s.get("surplus_mm"),
         "band_p10_mm": s.get("band_p10_mm"),
@@ -244,6 +255,199 @@ def _entry(s, side, kind):
     if s.get("realized_war") is not None:                # backgraded graduate's actual career WAR
         e["realized_war"] = s["realized_war"]
     return e
+
+
+def _untied_inversions(pairs):
+    """(untied_pairs, inverted, rho) for [(x, y), ...].
+
+    `inverted` counts pairs whose x-order and y-order disagree, over pairs untied
+    on BOTH coordinates, so a block of equal grades is scored as neither
+    agreement nor disagreement. Exact and O(n log n) via a Fenwick tree over
+    ranked y: a 2,400-row side is 2.9 million pairs and the quadratic form has no
+    business in a nightly build. Validated against a brute-force reference on 400
+    random tie-heavy cases plus the degenerate ones.
+
+    `rho` is Spearman on the same rows (average ranks), reported beside the share
+    because they answer different questions and can disagree loudly: a map with
+    zero inversions and a low rho is not disordered, it is flat.
+    """
+    n = len(pairs)
+    if n < 2:
+        return 0, 0, None
+
+    def _avg_ranks(vals):
+        order = sorted(range(n), key=lambda i: vals[i])
+        r = [0.0] * n
+        i = 0
+        while i < n:
+            j = i
+            while j + 1 < n and vals[order[j + 1]] == vals[order[i]]:
+                j += 1
+            avg = (i + j) / 2.0 + 1.0
+            for k in range(i, j + 1):
+                r[order[k]] = avg
+            i = j + 1
+        return r
+
+    xs = [q[0] for q in pairs]
+    ys = [q[1] for q in pairs]
+    rx, ry = _avg_ranks(xs), _avg_ranks(ys)
+    mx = sum(rx) / n
+    my = sum(ry) / n
+    num = sum((a - mx) * (b - my) for a, b in zip(rx, ry))
+    den = (sum((a - mx) ** 2 for a in rx) * sum((b - my) ** 2 for b in ry)) ** 0.5
+    rho = round(num / den, 4) if den else None
+
+    total = n * (n - 1) // 2
+
+    def _tied(vals):
+        c = {}
+        for v in vals:
+            c[v] = c.get(v, 0) + 1
+        return sum(k * (k - 1) // 2 for k in c.values())
+
+    untied = total - _tied(xs) - _tied(ys) + _tied(list(zip(xs, ys)))
+
+    ys_sorted = sorted(set(ys))
+    yrank = {v: i + 1 for i, v in enumerate(ys_sorted)}
+    m = len(ys_sorted)
+    tree = [0] * (m + 1)
+
+    def _add(i):
+        while i <= m:
+            tree[i] += 1
+            i += i & -i
+
+    def _sum(i):
+        t = 0
+        while i > 0:
+            t += tree[i]
+            i -= i & -i
+        return t
+
+    # ascending x; within an x-tie block, count BEFORE inserting, so pairs tied
+    # on x are never counted as discordant
+    order = sorted(range(n), key=lambda i: (xs[i], ys[i]))
+    disc = 0
+    seen = 0
+    i = 0
+    while i < n:
+        j = i
+        while j + 1 < n and xs[order[j + 1]] == xs[order[i]]:
+            j += 1
+        for k in range(i, j + 1):
+            disc += seen - _sum(yrank[ys[order[k]]])
+        for k in range(i, j + 1):
+            _add(yrank[ys[order[k]]])
+            seen += 1
+        i = j + 1
+    return untied, disc, rho
+
+
+def _map_leg(rows):
+    """One grade map against the model's own predicted WAR, both failure modes.
+
+    Inversions catch a map that REORDERS the model. They say nothing about one
+    that FLATTENS it, so the tie share, the distinct-value count and the modal
+    grade ride alongside: an inversion count on a collapsed column reads as a
+    clean bill of health.
+
+    THE FIELD NAME IS LOAD-BEARING. `xfv_grade` is the board number
+    (meta.grade_scale: "the displayed grade, the sort key and the basis of
+    overall_rank"). `xfv_grade_quantile` is the RETIRED quantile map, kept only
+    to price surplus, and measuring that one instead reports a completely
+    different picture: near-total collapse, 3 distinct values across 1,387
+    provisional pitchers, zero inversions.
+    """
+    n = len(rows)
+    grades = [r["xfv_grade"] for r in rows]
+    u, d, rho = _untied_inversions([(r["xfv_war_6yr"], g) for r, g in zip(rows, grades)])
+    total = n * (n - 1) // 2
+    counts = {}
+    for g in grades:
+        counts[g] = counts.get(g, 0) + 1
+    modal, modal_n = None, 0
+    for g, c in counts.items():
+        if c > modal_n:
+            modal, modal_n = g, c
+    return {
+        "grade_field": "xfv_grade",
+        "n": n,
+        "distinct_displayed_grades": len(counts),
+        "modal_grade": modal,
+        "modal_share": round(modal_n / n, 4) if n else None,
+        "tied_pair_share": round(1.0 - (u / total), 4) if total else None,
+        "rho_vs_predicted_war": rho,
+        "untied_pairs": u,
+        "inverted": d,
+        "inverted_share": round(d / u, 4) if u else None,
+    }
+
+
+def _serve_vs_eval_census(by_player: dict) -> dict:
+    """How far the SERVED grade and the guarded blend sit from the model leg.
+
+    Measured, published, and not filed as a defect. The map legs split on
+    `grade_basis` because the flagship map and the provisional cap are meant to
+    behave differently, and pooling them hides it.
+    """
+    out = {
+        "what_this_is": (
+            "xfv_grade is the SERVED board number (storage.BOARD_GRADE_FIELD): the "
+            "displayed grade, the sort key and the basis of overall_rank. xfv_war_6yr "
+            "is the model leg the eval scores. rank_war is the guarded blend. This "
+            "counts how far apart those orderings run, per side, on pairs untied on "
+            "both coordinates, and splits the grade map by routing basis. It reads "
+            "xfv_grade and NOT xfv_grade_quantile, which is the retired map kept to "
+            "price surplus and which reports a completely different picture."),
+        "what_it_measured_when_written": (
+            "Flagship map exactly monotone: 0 inversions over 879,105 untied pairs "
+            "across both sides. Provisional cap inverts against the model's own "
+            "predicted WAR on 25.4% of hitter and 49.2% of pitcher untied pairs, and "
+            "is served to 51% and 58% of the live board. Half is what independence "
+            "looks like. A player with no professional record is graded off a prior by "
+            "design, so this is the design, not a defect."),
+        "read_a_flat_column_correctly": (
+            "Inversions catch a map that REORDERS the model and say nothing about one "
+            "that FLATTENS it, so read distinct_displayed_grades and modal_share "
+            "beside inverted_share before calling a low count a clean result."),
+        "why_it_is_published": (
+            "It bounds what a head-to-head on this artifact covers. Where the served "
+            "grade carries little information about the model's own prediction, a rank "
+            "claim over the whole board is really a claim about the rows where it "
+            "does."),
+        "sides": {},
+    }
+    for side in ("H", "P"):
+        rows = [e for e in by_player.values()
+                if e.get("side") == side and e.get("kind") == "active"
+                and e.get("xfv_war_6yr") is not None]
+        if len(rows) < 2:
+            continue
+        blk = {"n_active": len(rows), "map": {}}
+        blended = [e for e in rows if e.get("rank_war") is not None]
+        if len(blended) >= 2:
+            u, d, rho = _untied_inversions(
+                [(e["rank_war"], e["xfv_war_6yr"]) for e in blended])
+            blk["blend_vs_model_leg"] = {
+                "x": "rank_war", "y": "xfv_war_6yr", "n": len(blended), "rho": rho,
+                "untied_pairs": u, "inverted": d,
+                "inverted_share": round(d / u, 4) if u else None,
+            }
+        graded = [e for e in rows if e.get("xfv_grade") is not None]
+        if len(graded) >= 2:
+            leg = _map_leg(graded)
+            leg["share_of_active"] = round(len(graded) / len(rows), 4)
+            blk["map"]["ALL"] = leg
+        for basis in sorted({str(e.get("grade_basis")) for e in graded}):
+            sub = [e for e in graded if str(e.get("grade_basis")) == basis]
+            if len(sub) < 2:
+                continue
+            leg = _map_leg(sub)
+            leg["share_of_active"] = round(len(sub) / len(rows), 4)
+            blk["map"][basis] = leg
+        out["sides"][side] = blk
+    return out
 
 
 def run(persist: bool = True) -> dict:
@@ -342,6 +546,12 @@ def run(persist: bool = True) -> dict:
             "eval": {"hitter": "data/xfv_eval.json", "pitcher": "data/xfv_eval_pitcher.json",
                      "tools": "data/xfv_tools.json"},
             "status": "provisional",
+            # A-CLAIM-7. The divergence between the object the eval SCORES, the
+            # blend the model produces and the grade the board SERVES, recomputed
+            # on this artifact instead of recorded once in a plan document where
+            # it could not go stale loudly. See _serve_vs_eval_census, and read
+            # its field-name note before quoting any number out of it.
+            "serve_vs_eval_census": _serve_vs_eval_census(by_player),
         },
         "by_player": by_player,
     }
