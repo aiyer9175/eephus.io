@@ -968,6 +968,201 @@ the 2026-08-20 vintage, and their strict 4-week earliest look is ~2026-09-17.
 A source gap still degrades a column to a stated null with its basis, never a
 silent zero.
 
+## 5d. Schema 4: bullpen availability, schedule rest, weather (pre-registered 2026-09-07)
+
+**Written before the schema bump it describes exists in code and before any
+captured number has been related to any outcome**, in the same discipline as 5a,
+5c, 7b and 11a. The columns below start accruing tonight; nothing served reads
+them and nothing served changes. Coverage checks are reported here because 5c
+set that precedent (it verified 30 teams and 540 order slots before writing its
+own table); a coverage count is not a measurement of whether a feature helps.
+
+### The owner ask this answers
+
+Three things, asked 2026-09-07: adjust for lineup strength against the
+handedness of the starting pitcher; work out which relievers are unavailable
+tonight and price that ("if a reliever is used 2 days in a row, they usually
+never pitch the next day"); and look for weather correlations.
+
+The first needs no new column. `off_vs_lhp`, `off_vs_rhp` and the pitcher's
+`throws` have accrued since 2026-08-18 and its gate is section 5e below. The
+other two are new and are what this schema bump is for.
+
+### Where the data comes from, and why none of it is a new dependency
+
+`.cache/game_feeds` holds 20,490 complete StatsAPI live feeds. Both new families
+read that cache and nothing else: no new API, no new credential, no new nightly
+call. Coverage on a 400-feed random sample (seed 0), checked 2026-09-07:
+
+| Signal | Path | Coverage |
+|---|---|---|
+| game-time weather | `gameData.weather.{temp,condition,wind}` | 400 of 400 |
+| wind with a direction | `gameData.weather.wind`, e.g. `"9 mph, Out To CF"` | 400 of 400 |
+| pitchers used, in order | `liveData.boxscore.teams[side].pitchers` | 400 of 400 |
+| per-arm workload | `...players["ID<mlbam>"].stats.pitching.{outs,pitchesThrown}` | present on the sampled arms |
+
+Wind directions parse to a closed vocabulary: `Out To LF/CF/RF`, `In From
+LF/CF/RF`, `L To R`, `R To L`, `Calm`, `Varies`, `None`.
+
+### The columns
+
+Team columns (`TEAM_COLUMNS` grows from 11 to 19):
+
+| Column | Source | Basis |
+|---|---|---|
+| `pen_b2b_arms` | relievers appearing in this org's feeds on BOTH of the two prior calendar days | populated whenever both prior days resolve; a club's off day is a real zero, not a null |
+| `pen_arms_avail` | rostered relievers not flagged unavailable by the availability rule below | populated when the bullpen leaderboard and the prior feeds both resolve |
+| `pen_ip_l3` | bullpen outs over the three prior days, divided by 3 | populated |
+| `pen_plus_avail` | the club's `bullpen_plus` recomputed over AVAILABLE arms only, innings-weighted | populated; **this is the servable form of the ask** and it drops straight into `game_prevention_z`, where `bullpen_plus` already sits |
+| `rest_days` | days since this club's previous game; 0 on the second leg of a doubleheader | populated |
+| `games_in_l7` | this club's games in the seven prior days | populated |
+| `wx_temp_climo` | mean observed temperature at THIS venue within a +/- 7 calendar-day window, over seasons STRICTLY BEFORE the vintage date | populated where the venue has >= 10 prior-season games in the window; null with the count otherwise |
+| `wx_wind_out_climo` | same window, mean signed out-to-centre wind component (out +, in -, lateral and calm 0) | same rule |
+
+Pitcher column (`PITCHER_COLUMNS` grows from 5 to 6):
+
+| Column | Source | Basis |
+|---|---|---|
+| `sp_rest_days` | days since this pitcher's previous appearance in any cached feed | populated when a prior appearance exists; null on a season debut, with that stated |
+
+### The availability rule, named before it is measured
+
+A reliever is UNAVAILABLE for today when either holds, evaluated on feeds dated
+strictly before today:
+
+- he appeared on **both** of the two prior calendar days, or
+- he appeared **yesterday** on 30 or more pitches.
+
+Both numbers are POLICY, not measurement, and are named as such the way
+`PROVISIONAL_MIN_EDGE` and `SLATE_OPEN_MIN_PREGAME_SHARE` are. The
+back-to-back-two-days rule is the owner's own statement of the convention and
+matches ordinary bullpen practice; 30 pitches is the common threshold for a
+heavy outing. Nothing in this repo can derive either, and the honest way to hold
+them is to publish them, not to tune them. **Tuning either constant against
+outcomes before the gate below runs would be fitting the feature to the eval
+window**, which is the failure this whole store exists to prevent. If a
+candidate clears its gate, a sensitivity check across neighbouring constants is
+a SEPARATE, later question.
+
+### Weather cannot be served from observed weather, and that is the whole design
+
+`gameData.weather` is the weather AT THE GAME. It is not known before the game,
+so a model priced pregame on it is reading the future. This is not a small
+leak: temperature is exactly the sort of variable whose observed value is most
+correlated with the thing it would be predicting.
+
+So the two families are kept apart, deliberately:
+
+- **The vintage store gets CLIMATOLOGY only.** `wx_temp_climo` and
+  `wx_wind_out_climo` are built from seasons strictly before the vintage date,
+  at the same venue, in a calendar window around the same date. That is dated
+  history and is servable.
+- **Observed weather is a CONTAMINATED SCREEN and never a column.** The size of
+  the true weather effect is measured directly off the game feeds, labelled
+  contaminated, under the existing rule for such diagnostics: it can only ever
+  DISQUALIFY a candidate, never qualify one. If climatology cannot see an effect
+  that the observed screen says is large, that gap is a statement about
+  forecastability and it is the honest place to stop, not a licence to serve the
+  observed value.
+- **A real forecast is a separate decision with a cost.** Serving a same-day
+  forecast means a new external dependency and possibly a paid one. It is not
+  taken here and is not implied by anything above.
+
+### The gates
+
+Each candidate family gets its criteria named now.
+
+**5d-A. Bullpen availability (`pen_plus_avail`, B4 family).**
+Estimand: does replacing `bullpen_plus` with `pen_plus_avail` inside
+`game_prevention_z` improve calibration on the vintage eval half. Split: the
+existing vintage fit/eval split, unchanged. Criteria, BOTH required, the same
+two-criterion form as 11b: paired Brier improvement at one-sided t >= 1.645 on
+player-clustered bootstrap, AND paired log loss not worse on the point estimate.
+Plus the B4 burden from 5c: the builder must be on the nightly path before the
+clock starts. Control: the permuted twin from 5c rule 3, permuting availability
+across teams within each date, because "the club with tired arms" is partly "the
+club that has been playing badly" wearing a fatigue costume.
+
+**5d-B. Schedule rest (`rest_days`, `games_in_l7`, `sp_rest_days`).**
+Same estimand shape, entered as an additive term on run prevention. Same two
+criteria. Same permuted twin. NOTE the confound to be reported whichever way it
+lands: rest is correlated with travel, and with the schedule maker's tendency to
+give good teams favourable dates. The twin is what separates them.
+
+**5d-C. Weather climatology (`wx_temp_climo`, `wx_wind_out_climo`).**
+Estimand is on the TOTAL, not the moneyline, because that is where a run
+environment effect should land, and a candidate that moves the moneyline but not
+the total is reporting a park proxy rather than weather. Criteria: paired
+absolute error on total, improvement at one-sided t >= 1.645, AND no degradation
+of moneyline Brier on the point estimate. The observed-weather screen runs first
+and can only disqualify.
+
+### Correction (2026-09-07, same day): there are no prior seasons to build climatology from
+
+The 5d-C table above says `wx_temp_climo` and `wx_wind_out_climo` are built
+"over seasons STRICTLY BEFORE the vintage date" with a ">= 10 prior-season
+games" floor. That is not buildable on this box and the claim is withdrawn
+before anything was measured on it. `.cache/game_feeds` resolves 2,155 MLB games
+and ALL of them are 2026 (2026-03-25 to 2026-09-07); 2024 and 2025 resolve zero.
+A multi-season venue climatology has no seasons to average.
+
+The replacement is same-season and still dated strictly before the game: the
+mean observed temperature and signed out-to-centre wind at THAT VENUE over its
+own games in the TRAILING 30 DAYS, ending the day before the vintage date. The
+window is trailing rather than season-to-date on purpose, because an April game
+is not evidence about a September one and pooling the season would bias every
+late estimate cold. A venue hosts roughly nine to twelve games in thirty days,
+so the floor drops from 10 to **>= 4 games in the window**, and the realized
+count rides in the basis so a reader can see how thin any given estimate is.
+
+This is a weaker instrument than a multi-season normal and the gate is unchanged
+by that: it either clears its criteria or it does not. If the contaminated
+observed-weather screen shows a large effect that this cannot see, the honest
+reading is that the effect is real and not FORECASTABLE from what we hold, which
+is a finding about our data rather than about weather.
+
+### The clock
+
+Rule 2 of 5c governs: 4 to 6 weeks of accrued vintages before the first look.
+Schema 4 lands with the 2026-09-08 vintage at the earliest, so the strict
+four-week earliest admissible first look for every column in this section is
+**~2026-10-06**. A column that is null across its accrual window has not started
+its clock at all.
+
+---
+
+## 5e. The handedness gate (pre-registered 2026-09-07, columns accruing since 2026-08-18)
+
+The columns for this one already exist. `off_vs_lhp`, `off_vs_rhp` and the
+pitcher's `throws` have accrued since the first schema-3 vintage, and on the
+2026-09-07 backtest artifact all three read 259 populated eval games, 0 stated
+nulls, 243 games on records that predate the columns. This section exists
+because 5c rule 1 requires it BEFORE any number is computed, and none has been.
+
+**The candidate.** The served model reads one offense number per club,
+`z_off`, standardized from `offense_plus`. The candidate replaces it with the
+platoon-matched split: `off_vs_rhp` when the opposing probable throws R,
+`off_vs_lhp` when he throws L, standardized through the same
+`_assemble_team_inputs` seam so the live and vintage paths cannot diverge.
+
+**What must be reported whichever way it lands.** 5c already records that on
+nights the batSide lens is down, `platoon_applied` is false and the vl and vr
+orders are BYTE-IDENTICAL. On those games the candidate is arithmetically the
+same model as the baseline, so they carry no information about it. The count of
+such games in the eval window is part of the result, not a footnote, and the
+effective n is the games where the two differ.
+
+**Criteria.** Both required: paired Brier improvement over the served model at
+one-sided t >= 1.645, AND paired log loss not worse on the point estimate.
+Control: the 5c rule 3 permuted twin, permuting the handedness assignment across
+teams within each date. A club that hits RHP well is largely a club that hits,
+and the twin is what separates the platoon signal from the offense level that
+`z_off` already carries.
+
+**Clock.** The 2026-08-19 correction pins the schema-3 clock to the 2026-08-18
+vintage, so the strict four-week earliest admissible first look is
+**~2026-09-15**. Eight days after this section was written. It is written now
+precisely so that it cannot be written to fit what the first look shows.
 ---
 
 ## 6. The backtest: two modes, both labelled

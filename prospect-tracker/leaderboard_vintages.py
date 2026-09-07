@@ -138,7 +138,21 @@ VINTAGE_DIR = ROOT / ".cache" / "leaderboard_vintages"
 # record returns None for a column it predates, a populated record says where
 # the value came from, and an unpopulated one says why it is null, in the
 # `feature_basis` block. Absent is a stated fact, never a silent zero.
-SCHEMA = 3
+# SCHEMA 4 (2026-09-07) added the availability, rest and weather dark capture,
+# pre-registered in docs/diamond-betting.md section 5d BEFORE this bump existed:
+# eight team columns (four bullpen availability, two schedule rest, two venue
+# weather climatology) and one pitcher column (sp_rest_days). Same governing
+# rules as schema 3, which are the park precedent verbatim: an old record
+# returns None for a column it predates, a populated record says where the value
+# came from, an unpopulated one says why it is null, and absent is never zero.
+#
+# THE WEATHER COLUMNS ARE CLIMATOLOGY AND NOT OBSERVATIONS, deliberately.
+# `gameData.weather` is the weather AT THE GAME, which is not knowable before
+# first pitch, so a model priced on it reads the future. What is stored is a
+# trailing venue window ending the day BEFORE the vintage date. Section 5d
+# states this and states that the observed value stays a contaminated screen
+# that can only ever disqualify a candidate.
+SCHEMA = 4
 
 # The reduced record keeps only what betting_model actually consumes (plus the
 # schema-3 dark capture). Column order is part of the on-disk contract; a
@@ -147,14 +161,24 @@ SCHEMA = 3
 TEAM_COLUMNS = ("offense_plus", "rotation_plus", "bullpen_plus",
                 "starter_ip", "relief_ip",
                 "xwoba_14", "xwoba_30", "off_vs_lhp", "off_vs_rhp",
-                "lineup_strength", "star_out")
-PITCHER_COLUMNS = ("plus", "ip_per_gs", "org", "role", "throws")
+                "lineup_strength", "star_out",
+                "pen_b2b_arms", "pen_arms_avail", "pen_ip_l3", "pen_plus_avail",
+                "rest_days", "games_in_l7",
+                "wx_temp_climo", "wx_wind_out_climo")
+PITCHER_COLUMNS = ("plus", "ip_per_gs", "org", "role", "throws", "sp_rest_days")
 
 # The schema-3 additions by name, so a reader can ask "which columns might an
 # older record lack" without diffing tuples by hand.
 SCHEMA3_TEAM_COLUMNS = ("xwoba_14", "xwoba_30", "off_vs_lhp", "off_vs_rhp",
                         "lineup_strength", "star_out")
 SCHEMA3_PITCHER_COLUMNS = ("throws",)
+
+# The schema-4 additions by name, same purpose: a reader asks "which columns
+# might an older record lack" without diffing tuples by hand.
+SCHEMA4_TEAM_COLUMNS = ("pen_b2b_arms", "pen_arms_avail", "pen_ip_l3",
+                        "pen_plus_avail", "rest_days", "games_in_l7",
+                        "wx_temp_climo", "wx_wind_out_climo")
+SCHEMA4_PITCHER_COLUMNS = ("sp_rest_days",)
 
 # The stated basis for each schema-3 column, written into every record's
 # `feature_basis` block. These strings are the honesty mechanism: a column that
@@ -167,6 +191,13 @@ SCHEMA3_PITCHER_COLUMNS = ("throws",)
 # description of the populated case; the record's own feature_basis is always
 # the authority for what a given night actually stored.
 FEATURE_SOURCES = {
+    # Schema 4 (2026-09-07). The team columns' bases are DYNAMIC and come from
+    # the builder with that night's counts and window, the way the schema-3
+    # builder-backed columns do; only sp_rest_days keeps a static string.
+    "sp_rest_days": ("days since this pitcher's previous appearance in "
+                     ".cache/game_feeds, over a 21-day lookback; null on a "
+                     "season debut, which is a stated absence and not a large "
+                     "rest number"),
     "off_vs_lhp": ("hitter_leaderboards.json teams[].orders.vl, PA-weighted "
                    "mean of per-slot hem_plus"),
     "off_vs_rhp": ("hitter_leaderboards.json teams[].orders.vr, PA-weighted "
@@ -989,6 +1020,19 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
     season_str = src_meta["hitter_leaderboards.json"]["season"] or vintage_date[:4]
     dark = build_dark_team_columns(hit, on_date=vintage_date, season=season_str,
                                    data_dir=dd)
+    # Schema 4 dark capture (2026-09-07): bullpen availability, schedule rest
+    # and venue weather climatology, all off `.cache/game_feeds`, which is
+    # already on disk. One pass, isolated the same way the schema-3 builders
+    # are: a failure here costs its own columns a stated null, never the
+    # snapshot.
+    try:
+        import betting_usage
+        dark.update(betting_usage.build_schema4_team_columns(
+            on_date=vintage_date, data_dir=dd))
+    except Exception as exc:                                     # noqa: BLE001
+        why = f"ABSENT: the schema-4 builder raised {type(exc).__name__}: {exc}"
+        for c in SCHEMA4_TEAM_COLUMNS:
+            dark[c] = {"values": {}, "basis": why}
     for col, blk in dark.items():
         i_col = TEAM_COLUMNS.index(col)
         for org, row in teams.items():
@@ -1008,6 +1052,7 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
             _org(r.get("team")),
             r.get("role") or "SP",
             None,                     # throws, filled by the bulk join below
+            None,                     # sp_rest_days, filled below
         ]
     for r in pen.get("relievers") or []:
         mid, plus = r.get("mlbam"), r.get("rem_plus")
@@ -1015,8 +1060,12 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
             continue
         # REM+ is on the same 100/10z scale as SEM+, which is what lets the
         # prevention blend treat an opener the same way it treats a starter.
+        # One None per schema-3+ column, in TEAM/PITCHER_COLUMNS order: throws,
+        # then sp_rest_days. Building this row a slot short is what made the
+        # rest builder raise IndexError on the 171st pitcher, having silently
+        # filled the first 170.
         pitchers[str(int(mid))] = [round(float(plus), 3), None,
-                                   _org(r.get("team")), "RP", None]
+                                   _org(r.get("team")), "RP", None, None]
 
     # Schema 3 dark capture: throwing hand, ONE bulk call at assembly, never a
     # per-game lookup. `load_pitch_hand` is lru-cached per season and returns
@@ -1068,7 +1117,24 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
     # the marking cannot claim more fills than the record holds.
     fb = {c: {"basis": (dark[c]["basis"] if c in dark else FEATURE_SOURCES[c]),
               "n": _n_teams_with(c)}
-          for c in SCHEMA3_TEAM_COLUMNS}
+          for c in SCHEMA3_TEAM_COLUMNS + SCHEMA4_TEAM_COLUMNS}
+    # sp_rest_days: days since this arm's previous appearance in any cached
+    # feed. None on a season debut, which is a stated absence and not a large
+    # rest number, because a silent zero-or-999 is exactly what a downstream
+    # reader would mistake for one.
+    n_rest = 0
+    try:
+        import betting_usage
+        i_rest = PITCHER_COLUMNS.index("sp_rest_days")
+        rests = betting_usage.build_starter_rest(pitchers, on_date=vintage_date)
+        for mid, v in rests.items():
+            if v is not None and mid in pitchers:
+                pitchers[mid][i_rest] = int(v)
+                n_rest += 1
+        rest_basis = FEATURE_SOURCES["sp_rest_days"]
+    except Exception as exc:                                     # noqa: BLE001
+        rest_basis = f"ABSENT: the sp_rest_days builder raised {type(exc).__name__}: {exc}"
+    fb["sp_rest_days"] = {"basis": rest_basis, "n": n_rest}
     fb["throws"] = {
         "basis": (FEATURE_SOURCES["throws"] if n_throws else
                   "ABSENT: the bulk pitchHand call returned nothing tonight; "
