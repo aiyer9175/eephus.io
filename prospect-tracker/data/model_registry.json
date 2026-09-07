@@ -4421,6 +4421,20 @@
    "artifact_age_days": 0,
    "notes": "VERDICT NOTE: 'provisional' here means a real eval artifact exists and NOTHING IS SERVED, the same shape as pal_stuff_xrv. UNDECIDED BOTH SIDES, and the verdict rule was fixed before the run: a player-clustered CI95 covering zero prints UNDECIDED. hit b2 +0.2203 CI95 [-0.0987, +0.5952]; pit b2 +0.1301 CI95 [-0.1509, +0.4191]. Both b2 are POSITIVE and neither interval excludes zero, so on debuted_km at this n the served model leg does not measurably improve on the consensus anchor. THE TWO NULLS DISAGREE ON THE HITTER SIDE: the permutation null gives p=0.048 while the bootstrap CI covers zero. The CI is what was pre-specified and is what the verdict follows; they differ because the permutation holds the sample fixed while the bootstrap also carries uncertainty about which players were drawn. The zero-information twin returns +0.0006 and -0.0015, so the estimator is sound. Regressors are WAR-scale only and NEVER the blend beside its own components (blend = (1-lam)*cons + lam*model is an exact linear combination). This does NOT license removing the model leg or moving lambda: an interval covering zero is a statement about power as much as effect. The 802-row vintage-matched frame named in the plan is NOT scored here and is owed. Registered as the leakage-clean successor to lambda_calibration.wag. Gate doc docs/efv-2026-09-06/ENCOMPASSING_GATE.md; rerun with tools/efv_encompassing.py.",
    "provisional_kind": "measurement_only"
+  },
+  {
+   "model_id": "hof_merit",
+   "predicts": "P(elected by the BBWAA) for a retired, ballot-resolved player",
+   "surface": "none - /hof/ predictor section stays DARK on this result",
+   "metric": "AUC (discrimination, non-inferiority) then Brier and ECE (calibration)",
+   "champion": "hof_monitor (best public arm, AUC 0.9785 on the scored rows)",
+   "baseline": "the in-house shelf columns; best single is career_war at AUC 0.9492",
+   "verdict": "deprecated",
+   "eval_artifact": "data/hof_merit_eval.json",
+   "last_checked": "2026-09-07",
+   "stale": false,
+   "artifact_age_days": 0,
+   "notes": "NO_SHIP_DISCRIMINATION, and the loss is the deliverable. L2 logistic on the in-house shelf (career WAR, WAR7, JAWS, WAA, positive-WAA, ink, seasons, position indicators), fit per fold on players whose ballot resolved strictly earlier, 15 forward-chained blocks 1956-2030, scored on 1,067 out-of-fold players at a 10.0% base rate. AUC 0.9557 against hof_monitor 0.9785: a deficit of 0.0228 that CLEARS its own 0.0138 player-clustered detection floor, so the gap is real. Worse calibrated too (Brier 0.0427 vs 0.0353), so the calibration-first gate never opens. THE MODEL IS NOT BAD: it beats every in-house arm, 0.9557 against 0.9492 for the strongest single column, and beats hof_standard (0.9473) and JAWS (0.9463). The gap to hof_monitor is MISSING DATA, not modelling: that metric is built from batting titles, MVP shares, All-Star selections and postseason play and none of it is in our feature set, exactly as docs/HOF_BAKEOFF_GATE.md predicted before the run. Features are in-house ONLY; a public arm as a feature would score the model against its own input. Do not re-attempt on these features: the honest unlock is awards data. Rerun with tools/hof_merit.py."
   }
  ],
  "problems": []

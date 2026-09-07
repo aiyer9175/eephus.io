@@ -49,6 +49,10 @@ MODEL_GLOSSARY = {
     # "does the model leg add anything to consensus" has a recorded answer instead of an
     # assumption. If it ever resolves, the mapping graduates to the xfv entry with it.
     "efv_encompassing": "internal",
+    # H-PRED-3 (2026-09-07). INTERNAL: the model LOST its gate, the /hof/ predictor
+    # section stays dark, and no served number and no page copy rests on it. The
+    # section's own copy reports the loss and reads it off the artifact.
+    "hof_merit": "internal",
     # C-1b, the tail-preserving refit (2026-08-14). INTERNAL on the same reasoning
     # as the B-L3 lane below: all five declared families returned NO_SHIP, nothing
     # was promoted, and no served number and no page copy moved because of it.

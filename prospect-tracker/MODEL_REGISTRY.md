@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-09-06**. `validate()` at generation time: **clean**.
 
-**306 models.** Verdicts: validated: 53, provisional: 127, unvalidated: 41, deprecated: 85.
+**307 models.** Verdicts: validated: 53, provisional: 127, unvalidated: 41, deprecated: 86.
 
 ## Instrument boundary
 
@@ -325,6 +325,7 @@ can be measured.
 | `mgmt_board_export` | /management/. data/management_board.json, built by mgmt_e... | nothing. It is the rendering payload, registered because what it WITHHOLDS is the load-bearing decision: no per-club plus metric. | the league running-game result, the club STYLE board (attempts, success rate,... | not applicable. | not applicable. The gate verdict, the split-half correlation, the permutation... | **provisional** | `data/management_gate_eval.json` | - | - |
 | `playoff_odds_sim` | /projections/ team outlook and the Futures tab on /bettin... | division, playoff, bye, pennant and World Series probability per club, plus the full win-total distribution. | Monte Carlo over the actual remaining schedule at a blended true-talent estim... | none published. There is no captured futures market to compare against and no... | none yet. Monte Carlo intervals are published on every probability so a reade... | **provisional** | `data/futures.json` | - | - |
 | `efv_encompassing` | none (diagnostic; nothing is served off it) | whether the eFV model leg adds information to the consensus anchor, out of fold | consensus anchor alone (b2 = 0) | within-fold permutation of the model residual on cons_war, plus a zero-inform... | b2 in y = a + b1*cons_war + b2*model_war + fold fixed effects | **provisional** | `data/xfv_encompassing_eval.json` | 0 | no |
+| `hof_merit` | none - /hof/ predictor section stays DARK on this result | P(elected by the BBWAA) for a retired, ballot-resolved player | hof_monitor (best public arm, AUC 0.9785 on the scored rows) | the in-house shelf columns; best single is career_war at AUC 0.9492 | AUC (discrimination, non-inferiority) then Brier and ECE (calibration) | **deprecated** | `data/hof_merit_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

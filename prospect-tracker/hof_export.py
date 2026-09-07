@@ -181,6 +181,59 @@ def _shelf_agreement(cf, shelf) -> dict:
     }
 
 
+def _predictor_panel() -> dict:
+    """The predictor section. Dark, and now for a MEASURED reason.
+
+    It used to say a merit model had not been gated yet and that "the honest
+    expected outcome is a tie". The model has since been built (tools/hof_merit.py,
+    H-PRED-3) and the outcome is not a tie, it is a loss, so this reports the
+    numbers instead of a forecast. Reading them off the artifact rather than
+    restating them keeps the page from drifting the way the FA verdict tooltip did.
+    """
+    p = ROOT / "data" / "hof_merit_eval.json"
+    base = {"live": False, "blocked_on": "H-PRED-3",
+            "why": ("no induction probability is published until a merit model has "
+                    "passed its own gate against the best public baseline.")}
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return base
+    if d.get("verdict") == "SHIP":
+        return {"live": True, "eval_artifact": "data/hof_merit_eval.json",
+                "verdict": d["verdict"], "why": d.get("why")}
+    best = d.get("best_public_arm")
+    auc = d.get("auc") or {}
+    house = {k: v for k, v in auc.items()
+             if k not in ("merit", "hof_monitor", "hof_standard",
+                          "WAR_career", "WAR_peak7", "JAWS")}
+    best_house = max(house, key=house.get) if house else None
+    return {
+        "live": False,
+        "blocked_on": "H-PRED-3",
+        "eval_artifact": "data/hof_merit_eval.json",
+        "verdict": d.get("verdict"),
+        "why": (
+            "A merit model was built and gated, and it lost. On " + str(d.get("n_scored"))
+            + " out-of-fold players it reaches AUC " + f"{auc.get('merit', 0):.4f}"
+            + " against " + str(best) + " at " + f"{auc.get(best, 0):.4f}"
+            + ", a deficit of " + f"{abs(d.get('delta_auc_vs_best_public', 0)):.4f}"
+            + " that clears its own detection floor, so the gap is real rather than "
+            + "noise. It is also worse calibrated, Brier "
+            + f"{(d.get('calibration') or {}).get('merit', {}).get('brier', 0):.4f}"
+            + " against " + f"{(d.get('calibration') or {}).get(best, {}).get('brier', 0):.4f}"
+            + ". No induction probability is published on a model that loses to a "
+            + "column already on the board."),
+        "what_it_does_beat": (
+            ("the model is the best thing our own features produce: AUC "
+             + f"{auc.get('merit', 0):.4f}" + " against " + f"{house.get(best_house, 0):.4f}"
+             + " for " + str(best_house) + ", the strongest single in-house column. "
+             + "The gap to " + str(best) + " is not a modelling failure, it is missing "
+             + "data: that metric is built from batting titles, MVP shares, All-Star "
+             + "selections and postseason play, and none of it is in our feature set.")
+            if best_house else None),
+    }
+
+
 def _bakeoff_panel() -> dict:
     """The public benchmark bake-off, reduced to what a reader needs.
 
@@ -440,12 +493,7 @@ def build() -> dict:
             "deserved": {"live": False, "blocked_on": "H-DATA-PLAQUE",
                          "why": blocked},
             "bakeoff": _bakeoff_panel(),
-            "predictor": {"live": False, "blocked_on": "H-PRED-3",
-                          "why": ("no induction probability is published until a "
-                                  "merit model has passed its own gate against "
-                                  "the best public baseline. The public baselines "
-                                  "are already near the ceiling on this label, so "
-                                  "the honest expected outcome is a tie.")},
+            "predictor": _predictor_panel(),
             "franchises": {"live": False, "blocked_on": "no franchise spine",
                            "why": ("the season frame carries no team column and "
                                    "there is no franchise continuity map in this "
