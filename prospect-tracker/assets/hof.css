@@ -9,18 +9,23 @@
 .hof-bands { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 6px; }
 .hof-bandbtn {
   font: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer;
-  border: 1px solid var(--line, #d8d8d8); background: var(--card, #fff);
+  border: 1px solid var(--border-light); background: var(--bg-secondary);
   color: inherit; border-radius: 999px;
 }
-.hof-bandbtn.active { border-color: #0E2B4D; background: #0E2B4D; color: #fff; }
+/* A FILLED ACCENT CHIP TAKES THE PAGE BACKGROUND AS ITS FOREGROUND, not white:
+   --accent-navy is #0E2B4D in light and #4FD9FF in dark, so `color: #fff` here
+   was white on bright cyan the moment the theme flipped. site.css:1236 is the
+   precedent (background: var(--accent-navy); color: var(--bg-primary)). */
+.hof-bandbtn.active { border-color: var(--accent-navy); background: var(--accent-navy);
+  color: var(--bg-primary); }
 .hof-bandn { opacity: .65; margin-left: 4px; font-variant-numeric: tabular-nums; }
 .hof-bandbtn.active .hof-bandn { opacity: .8; }
 
 .hof-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
 .hof-controls input, .hof-controls select {
   font: inherit; font-size: 13px; padding: 6px 8px;
-  border: 1px solid var(--line, #d8d8d8); border-radius: 6px;
-  background: var(--card, #fff); color: inherit;
+  border: 1px solid var(--border-light); border-radius: 6px;
+  background: var(--bg-secondary); color: inherit;
 }
 .hof-controls input { min-width: 220px; flex: 1 1 220px; }
 
@@ -29,12 +34,12 @@
 .hof-table th, .hof-table td { padding: 5px 8px; white-space: nowrap; }
 .hof-table thead th {
   position: sticky; top: 0; z-index: 1; cursor: pointer; text-align: right;
-  background: var(--card, #fff); border-bottom: 2px solid var(--line, #d8d8d8);
+  background: var(--bg-secondary); border-bottom: 2px solid var(--border-light);
   font-weight: 600;
 }
-.hof-table thead th:focus { outline: 2px solid #C9A227; outline-offset: -2px; }
-.hof-table tbody tr:nth-child(even) { background: rgba(0, 0, 0, .025); }
-.hof-table td { border-bottom: 1px solid var(--line-soft, #eee); text-align: right; }
+.hof-table thead th:focus { outline: 2px solid var(--accent-gold); outline-offset: -2px; }
+.hof-table tbody tr:nth-child(even) { background: var(--bg-hover); }
+.hof-table td { border-bottom: 1px solid var(--border-subtle); text-align: right; }
 .hof-c-name, .hof-c-pos, .hof-c-ind { text-align: left !important; }
 .hof-c-name { font-weight: 600; }
 .hof-c-rank { text-align: right; opacity: .55; font-variant-numeric: tabular-nums; }
@@ -47,8 +52,8 @@
 .hof-blank { opacity: .3; }
 
 .hof-ind { font-size: 12px; padding: 1px 6px; border-radius: 999px; }
-.hof-ind--player_bbwaa { background: rgba(31, 122, 58, .12); color: #1F7A3A; }
-.hof-ind--route_unverified { background: rgba(201, 162, 39, .16); color: #7a5f00; }
+.hof-ind--player_bbwaa { background: color-mix(in srgb, var(--accent-green) 14%, transparent); color: var(--accent-green); }
+.hof-ind--route_unverified { background: color-mix(in srgb, var(--accent-gold) 18%, transparent); color: var(--text-gold, var(--accent-gold)); }
 
 .hof-note { font-size: 13px; line-height: 1.5; opacity: .85; margin: 8px 0; max-width: 74ch; }
 .hof-count { font-size: 12px; opacity: .6; margin: 8px 0; }
@@ -56,8 +61,8 @@
 .hof-more { margin: 10px 0; }
 .hof-more button {
   font: inherit; font-size: 13px; padding: 6px 14px; cursor: pointer;
-  border: 1px solid var(--line, #d8d8d8); border-radius: 6px;
-  background: var(--card, #fff); color: inherit;
+  border: 1px solid var(--border-light); border-radius: 6px;
+  background: var(--bg-secondary); color: inherit;
 }
 
 .hof-block { margin: 22px 0; }
@@ -66,19 +71,19 @@
 
 .hof-ladder { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
 .hof-ladder-cell {
-  border: 1px solid var(--line, #d8d8d8); border-radius: 8px;
+  border: 1px solid var(--border-light); border-radius: 8px;
   padding: 8px 14px; min-width: 78px; text-align: center;
-  background: var(--card, #fff);
+  background: var(--bg-secondary);
 }
 .hof-ladder-q { font-size: 12px; opacity: .6; }
 .hof-ladder-v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* A dark section is deliberately plain. It carries a blocker and a reason and
    nothing that could be mistaken for a result. */
-.hof-dark { border-left: 3px solid var(--line, #d8d8d8); padding-left: 12px; }
+.hof-dark { border-left: 3px solid var(--border-light); padding-left: 12px; }
 .hof-darktag {
   font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
-  border: 1px solid var(--line, #d8d8d8); border-radius: 999px;
+  border: 1px solid var(--border-light); border-radius: 999px;
   padding: 1px 8px; opacity: .7; vertical-align: middle;
 }
 .hof-dark-why { font-size: 13px; font-weight: 600; margin: 4px 0; }

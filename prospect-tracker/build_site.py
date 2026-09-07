@@ -3302,7 +3302,14 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
                      # 2026-08-07 merge; Dynasty / Redraft / DFS are its
                      # sub-modules and are reached by the module bar, not here.
                      "fantasy": "◈",
-                     "betting": "⌁", "diamond": "◆"}
+                     "betting": "⌁", "diamond": "◆",
+                     # The two 2026-09-06 modules. Both fell through to the
+                     # generic "›" because neither had an entry, which is the
+                     # same omission that kept them out of NAV_ITEMS entirely.
+                     # A signal flag for the manager flashing signs, and a
+                     # heraldic mark for the plaque; both sit in the same
+                     # ornamental family as ⚖ (arbitration) and ⚗ (alchemy).
+                     "management": "⚑", "hof": "⚜"}
     def _sb_link(key, label, href, grouped=False):
         classes = []
         if key == "home":

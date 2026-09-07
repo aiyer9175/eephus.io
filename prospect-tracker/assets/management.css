@@ -15,27 +15,31 @@
 
 .mgmt-cards { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
 .mgmt-card {
-  border: 1px solid var(--line, #d8d8d8); border-radius: 10px;
+  border: 1px solid var(--border-light); border-radius: 10px;
   padding: 12px 16px; min-width: 220px; flex: 1 1 220px;
-  background: var(--card, #fff);
+  background: var(--bg-secondary);
 }
 .mgmt-card-title { font-size: 13px; opacity: .7; }
 .mgmt-card-big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 2px 0; }
 .mgmt-card-sub { font-size: 12px; opacity: .6; margin-bottom: 8px; }
-.mgmt-pos { color: #1F7A3A; }
-.mgmt-neg { color: #B91C1C; }
+/* SEMANTIC, AND THE PAIR HAS TO MATCH. .mgmt-neg carried the literal #B91C1C,
+   which is --accent-red in LIGHT mode only; in dark it stays dark red on a
+   near-black page while its positive twin, already a token, flipped correctly.
+   --up / --down are the site's tokens for exactly this pair. */
+.mgmt-pos { color: var(--up); }
+.mgmt-neg { color: var(--down); }
 
 .mgmt-mini { width: 100%; border-collapse: collapse; font-size: 12px; }
 .mgmt-mini td { padding: 2px 0; }
 .mgmt-mini td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .mgmt-mini--wide { max-width: 520px; font-size: 13px; }
-.mgmt-mini--wide td { padding: 4px 0; border-bottom: 1px solid var(--line-soft, #eee); }
+.mgmt-mini--wide td { padding: 4px 0; border-bottom: 1px solid var(--border-subtle); }
 
 .mgmt-controls { margin: 10px 0; }
 .mgmt-controls select {
   font: inherit; font-size: 13px; padding: 6px 8px;
-  border: 1px solid var(--line, #d8d8d8); border-radius: 6px;
-  background: var(--card, #fff); color: inherit;
+  border: 1px solid var(--border-light); border-radius: 6px;
+  background: var(--bg-secondary); color: inherit;
 }
 
 .mgmt-tablewrap { overflow-x: auto; margin: 8px 0; }
@@ -43,18 +47,18 @@
 .mgmt-table th, .mgmt-table td { padding: 5px 10px; white-space: nowrap; text-align: right; }
 .mgmt-table th:first-child, .mgmt-table td:first-child { text-align: left; }
 .mgmt-table thead th {
-  cursor: pointer; background: var(--card, #fff);
-  border-bottom: 2px solid var(--line, #d8d8d8); font-weight: 600;
+  cursor: pointer; background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-light); font-weight: 600;
 }
-.mgmt-table thead th:focus { outline: 2px solid #C9A227; outline-offset: -2px; }
-.mgmt-table td { border-bottom: 1px solid var(--line-soft, #eee); font-variant-numeric: tabular-nums; }
-.mgmt-table tbody tr:nth-child(even) { background: rgba(0, 0, 0, .025); }
+.mgmt-table thead th:focus { outline: 2px solid var(--accent-gold); outline-offset: -2px; }
+.mgmt-table td { border-bottom: 1px solid var(--border-subtle); font-variant-numeric: tabular-nums; }
+.mgmt-table tbody tr:nth-child(even) { background: var(--bg-hover); }
 .mgmt-table--re td:first-child { font-weight: 600; }
 
-.mgmt-dark { border-left: 3px solid var(--line, #d8d8d8); padding-left: 12px; }
+.mgmt-dark { border-left: 3px solid var(--border-light); padding-left: 12px; }
 .mgmt-darktag {
   font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
-  border: 1px solid var(--line, #d8d8d8); border-radius: 999px;
+  border: 1px solid var(--border-light); border-radius: 999px;
   padding: 1px 8px; opacity: .7; vertical-align: middle;
 }
 .mgmt-dark-why { font-size: 13px; font-weight: 600; margin: 4px 0; }

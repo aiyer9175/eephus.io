@@ -3509,7 +3509,10 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   position: absolute;
   left: 0; top: 0; bottom: 0;
   width: 4px;
-  background: var(--org-color, var(--accent, currentColor));
+  /* --accent was dropped from this chain 2026-09-07: it is the undefined token
+     the 2026-07-31 note above names, and the chain already ended in
+     currentColor, so removing the dead link changes nothing that renders. */
+  background: var(--org-color, currentColor);
   transition: width .12s ease, box-shadow .12s ease;
 }
 /* BUGFIX 2026-07-31: both of these named var(--accent), which this stylesheet

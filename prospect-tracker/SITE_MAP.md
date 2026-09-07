@@ -20,13 +20,15 @@ fetch strings.
 | 7 | `pal` | Alchemy Lab | `/pal/` | MLB Modules |
 | 8 | `trademachine` | Trade Machine | `/trademachine/` | MLB Modules |
 | 9 | `arbitration` | Arbitration | `/arbitration/` | MLB Modules |
-| 10 | `fantasy` | Fantasy | `/fantasy/` | Diamond |
-| 11 | `betting` | Sports Betting | `/betting/` | Diamond |
-| 12 | `diamond` | Diamond Pass | `/diamond/` | Diamond |
-| 13 | `articles` | Articles | `/articles/` | - |
-| 14 | `forums` | Forums | `/forums/` | - |
-| 15 | `glossary` | Glossary | `/glossary/` | - |
-| 16 | `team` | Developers | `/team/` | - |
+| 10 | `management` | In-Game Management | `/management/` | MLB Modules |
+| 11 | `hof` | Hall of Fame | `/hof/` | MLB Modules |
+| 12 | `fantasy` | Fantasy | `/fantasy/` | Diamond |
+| 13 | `betting` | Sports Betting | `/betting/` | Diamond |
+| 14 | `diamond` | Diamond Pass | `/diamond/` | Diamond |
+| 15 | `articles` | Articles | `/articles/` | - |
+| 16 | `forums` | Forums | `/forums/` | - |
+| 17 | `glossary` | Glossary | `/glossary/` | - |
+| 18 | `team` | Developers | `/team/` | - |
 
 ## PROSPX sub-sections (`build_site.PROSPX_SUBNAV`)
 
