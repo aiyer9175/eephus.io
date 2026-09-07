@@ -4269,6 +4269,16 @@ def _grade_vintage(games: list[dict], cov: dict, grade_fn, *, log_fn=None) -> di
     if not gradable:
         return block
     dates = sorted({g.get("date") for g in gradable if g.get("date")})
+    # THE GRADABLE SPAN, WHICH IS NOT THE GRADED SPAN. Stamped here so a return
+    # before the split still carries a span, and OVERWRITTEN below the split by
+    # the eval window's own dates. `first_graded_date` used to be set here and
+    # never corrected, so it held 2026-07-06, a date inside the FIT half on
+    # which nothing was ever graded, while `n_graded` counted only the eval
+    # half. betting_learning divides `n_graded` by that span to publish the
+    # accrual rate behind the 600-game clock, so the served ETA was computed
+    # over 63 days instead of the eval window's 37 and ran about 70% slow.
+    block["first_gradable_date"] = dates[0] if dates else None
+    block["last_gradable_date"] = dates[-1] if dates else None
     block["first_graded_date"] = dates[0] if dates else None
     block["last_graded_date"] = dates[-1] if dates else None
     need = VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES
@@ -4316,6 +4326,21 @@ def _grade_vintage(games: list[dict], cov: dict, grade_fn, *, log_fn=None) -> di
     block.update(graded)
     block["status"] = "graded"
     block["split_date"] = cut
+    # The graded span is the EVAL window's, because the eval window is what was
+    # graded. Everything before `cut` is what the coefficients were fitted on.
+    ev_dates = sorted({g.get("date") for g in ev_g if g.get("date")})
+    block["first_graded_date"] = ev_dates[0] if ev_dates else None
+    block["last_graded_date"] = ev_dates[-1] if ev_dates else None
+    block["n_fit_games"] = len(fit_g)
+    block["fit_window"] = {
+        "n_games": len(fit_g),
+        "first_date": (sorted({g.get("date") for g in fit_g if g.get("date")}) or [None])[0],
+        "last_date": (sorted({g.get("date") for g in fit_g if g.get("date")}) or [None])[-1],
+        "why_not_graded": ("these are the games the coefficients and both one-parameter "
+                           "corrections are FITTED on, so scoring them would be scoring "
+                           "the model against its own training data; they are excluded "
+                           "from n_graded by construction and not by oversight"),
+    }
     block["n_graded"] = graded["n"]
     block["park_basis"] = park_basis
     block["feature_basis"] = featb

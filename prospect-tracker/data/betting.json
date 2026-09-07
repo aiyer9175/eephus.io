@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-07T17:17:25+00:00",
+ "generated_at": "2026-09-07T17:28:31+00:00",
  "slate_date": "2026-09-07",
  "n_games": 11,
  "status": {
@@ -76,7 +76,7 @@
    "board_slate": "2026-09-07",
    "snapshot_slate": "2026-09-07",
    "snapshot_captured_at": "2026-09-07T17:03:24+00:00",
-   "snapshot_age_hours": 0.2,
+   "snapshot_age_hours": 0.4,
    "matched": true,
    "match_rule": "slate_label",
    "n_pregame_events_on_board_slate": 9,
@@ -84,10 +84,10 @@
    "reason": "the cached snapshot is stamped for the 2026-09-07 slate"
   },
   "odds_slate_mismatch": false,
-  "odds_snapshot_age_hours": 0.2,
+  "odds_snapshot_age_hours": 0.4,
   "stale_board": false,
   "feed_health": {
-   "generated_at": "2026-09-07T17:17:25+00:00",
+   "generated_at": "2026-09-07T17:28:31+00:00",
    "window_days": 14,
    "source": ".cache/odds",
    "n_slates": 10,
@@ -96,7 +96,7 @@
    "n_unreadable_files": 0,
    "ever_captured_close": false,
    "hours_since_last_close": null,
-   "hours_since_last_open": 0.23,
+   "hours_since_last_open": 0.42,
    "close_stale_hours": 36.0,
    "close_job_last_run": null,
    "close_job_last_reason": null,
@@ -241,7 +241,7 @@
    "no weather, no umpire, no travel, no injury news beyond what the leaderboards already absorb"
   ],
   "backtest": {
-   "generated_at": "2026-09-07T17:05:14+00:00",
+   "generated_at": "2026-09-07T17:21:11+00:00",
    "model_version": "betting_runs_v1",
    "n_games": 2154,
    "validated": false,
@@ -258,17 +258,17 @@
     "honest": false,
     "n": 2154,
     "coefficients": {
-     "b0": 4.4753280352393885,
-     "b1": 0.2539892634634899,
-     "b2": -0.3074909103579785,
-     "b3": 3.592166915967566,
-     "b4": 0.04586157263559072,
+     "b0": 4.477752615784326,
+     "b1": 0.25822641959132797,
+     "b2": -0.30790430440333527,
+     "b3": 3.6431346948404286,
+     "b4": 0.045879702443011164,
      "source": "fitted",
      "n_rows": 4308,
-     "rmse": 3.1613119233191633,
-     "r2": 0.04123412092227341
+     "rmse": 3.1609663715776652,
+     "r2": 0.04144370803069708
     },
-    "home_field_runs_adj": 0.2016,
+    "home_field_runs_adj": 0.2015,
     "diff_shrink": 0.82,
     "run_dispersion_alpha": null,
     "extra_inning_home_rate": 0.4879,
@@ -282,61 +282,61 @@
     "mean_p_home": 0.526,
     "total_mae": 3.529,
     "skill_vs_home_base": {
-     "delta": 0.007844,
-     "sd": 0.08576,
-     "t": 4.245,
+     "delta": 0.007845,
+     "sd": 0.08612,
+     "t": 4.228,
      "beats_baseline_95": true,
-     "n_for_95": 323,
+     "n_for_95": 326,
      "baseline": 0.526,
      "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
     },
     "calibration": [
      {
       "bin": "0.1-0.2",
-      "n": 1,
-      "pred": 0.1983,
+      "n": 2,
+      "pred": 0.1996,
       "actual": 0.0
      },
      {
       "bin": "0.2-0.3",
-      "n": 22,
-      "pred": 0.2626,
-      "actual": 0.4091
+      "n": 21,
+      "pred": 0.2647,
+      "actual": 0.4286
      },
      {
       "bin": "0.3-0.4",
-      "n": 134,
-      "pred": 0.3658,
-      "actual": 0.3582
+      "n": 138,
+      "pred": 0.3661,
+      "actual": 0.3696
      },
      {
       "bin": "0.4-0.5",
-      "n": 664,
-      "pred": 0.4583,
-      "actual": 0.4759
+      "n": 662,
+      "pred": 0.4584,
+      "actual": 0.4743
      },
      {
       "bin": "0.5-0.6",
-      "n": 908,
-      "pred": 0.5482,
-      "actual": 0.5275
+      "n": 906,
+      "pred": 0.5484,
+      "actual": 0.5254
      },
      {
       "bin": "0.6-0.7",
-      "n": 370,
-      "pred": 0.6344,
-      "actual": 0.6486
+      "n": 369,
+      "pred": 0.6347,
+      "actual": 0.6531
      },
      {
       "bin": "0.7-0.8",
-      "n": 48,
-      "pred": 0.7395,
-      "actual": 0.75
+      "n": 49,
+      "pred": 0.7393,
+      "actual": 0.7551
      },
      {
       "bin": "0.8-0.9",
       "n": 7,
-      "pred": 0.8243,
+      "pred": 0.8253,
       "actual": 0.7143
      }
     ]
@@ -347,35 +347,35 @@
     "honest": false,
     "n": 664,
     "coefficients": {
-     "b0": 4.530632001258692,
-     "b1": 0.26508439747985346,
-     "b2": -0.30502046585193565,
-     "b3": 3.9394013135783483,
-     "b4": -0.0069558081228405415,
+     "b0": 4.533443713087377,
+     "b1": 0.26931904265646656,
+     "b2": -0.3053945585206683,
+     "b3": 4.067046212446887,
+     "b4": -0.006928071429217546,
      "source": "fitted",
      "n_rows": 2980,
-     "rmse": 3.1927426442238787,
-     "r2": 0.042461255693802324
+     "rmse": 3.191891387645365,
+     "r2": 0.04297179010428265
     },
-    "home_field_runs_adj": 0.2163,
+    "home_field_runs_adj": 0.2161,
     "diff_shrink": 0.8,
     "run_dispersion_alpha": null,
     "extra_inning_home_rate": 0.5,
-    "brier": 0.24114,
+    "brier": 0.24118,
     "brier_flat_500": 0.25,
     "brier_home_base": 0.2488,
-    "log_loss": 0.67482,
+    "log_loss": 0.6749,
     "log_loss_flat_500": 0.69315,
-    "accuracy": 0.5497,
+    "accuracy": 0.5512,
     "home_win_rate": 0.5346,
     "mean_p_home": 0.5248,
-    "total_mae": 3.542,
+    "total_mae": 3.546,
     "skill_vs_home_base": {
-     "delta": 0.007658,
-     "sd": 0.08268,
-     "t": 2.387,
+     "delta": 0.007619,
+     "sd": 0.08304,
+     "t": 2.364,
      "beats_baseline_95": true,
-     "n_for_95": 315,
+     "n_for_95": 321,
      "baseline": 0.5346,
      "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
     },
@@ -383,43 +383,43 @@
      {
       "bin": "0.2-0.3",
       "n": 6,
-      "pred": 0.255,
+      "pred": 0.2548,
       "actual": 0.3333
      },
      {
       "bin": "0.3-0.4",
-      "n": 40,
-      "pred": 0.3681,
-      "actual": 0.325
+      "n": 42,
+      "pred": 0.3689,
+      "actual": 0.3571
      },
      {
       "bin": "0.4-0.5",
-      "n": 208,
+      "n": 205,
       "pred": 0.4587,
-      "actual": 0.5144
+      "actual": 0.5073
      },
      {
       "bin": "0.5-0.6",
       "n": 292,
-      "pred": 0.5488,
-      "actual": 0.524
+      "pred": 0.5485,
+      "actual": 0.5274
      },
      {
       "bin": "0.6-0.7",
-      "n": 103,
-      "pred": 0.6343,
-      "actual": 0.6505
+      "n": 104,
+      "pred": 0.6345,
+      "actual": 0.6442
      },
      {
       "bin": "0.7-0.8",
       "n": 13,
-      "pred": 0.7379,
+      "pred": 0.7387,
       "actual": 0.8462
      },
      {
       "bin": "0.8-0.9",
       "n": 2,
-      "pred": 0.8233,
+      "pred": 0.8242,
       "actual": 1.0
      }
     ]
@@ -600,7 +600,9 @@
      "note": "schema-3 dark capture only: counts of gradable and eval games whose vintage record carried each column, said why it was null, or predates it (docs/diamond-betting.md section 5c). Nothing served reads these columns; a null is never filled from live files"
     },
     "note": "502 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season",
-    "first_graded_date": "2026-07-06",
+    "first_gradable_date": "2026-07-06",
+    "last_gradable_date": "2026-09-06",
+    "first_graded_date": "2026-08-01",
     "last_graded_date": "2026-09-06",
     "n": 502,
     "coefficients": {
@@ -662,7 +664,14 @@
       "actual": 0.8
      }
     ],
-    "split_date": "2026-08-01"
+    "split_date": "2026-08-01",
+    "n_fit_games": 305,
+    "fit_window": {
+     "n_games": 305,
+     "first_date": "2026-07-06",
+     "last_date": "2026-07-31",
+     "why_not_graded": "these are the games the coefficients and both one-parameter corrections are FITTED on, so scoring them would be scoring the model against its own training data; they are excluded from n_graded by construction and not by oversight"
+    }
    },
    "split_date": "2026-07-20",
    "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 502 games. A pick threshold is set from the vintage mode or from nothing."
@@ -670,7 +679,7 @@
   "validation": {
    "available": true,
    "artifact": "data/betting_model_eval.json",
-   "generated_at": "2026-09-07T17:05:14+00:00",
+   "generated_at": "2026-09-07T17:21:11+00:00",
    "model_version": "betting_runs_v1",
    "validated": false,
    "gates_picks": false,
@@ -696,11 +705,11 @@
      "accuracy": 0.5608,
      "key": "in_sample",
      "skill_vs_home_base": {
-      "delta": 0.007844,
-      "sd": 0.08576,
-      "t": 4.245,
+      "delta": 0.007845,
+      "sd": 0.08612,
+      "t": 4.228,
       "beats_baseline_95": true,
-      "n_for_95": 323,
+      "n_for_95": 326,
       "baseline": 0.526
      }
     },
@@ -709,17 +718,17 @@
      "mode": "contaminated",
      "honest": false,
      "n": 664,
-     "brier": 0.24114,
+     "brier": 0.24118,
      "brier_flat_500": 0.25,
      "brier_home_base": 0.2488,
-     "accuracy": 0.5497,
+     "accuracy": 0.5512,
      "key": "forward",
      "skill_vs_home_base": {
-      "delta": 0.007658,
-      "sd": 0.08268,
-      "t": 2.387,
+      "delta": 0.007619,
+      "sd": 0.08304,
+      "t": 2.364,
       "beats_baseline_95": true,
-      "n_for_95": 315,
+      "n_for_95": 321,
       "baseline": 0.5346
      }
     },
@@ -755,8 +764,16 @@
     "min_fit_games": 100,
     "min_eval_games": 50,
     "min_graded_games_for_min_edge": 600,
-    "first_graded_date": "2026-07-06",
+    "first_graded_date": "2026-08-01",
     "last_graded_date": "2026-09-06",
+    "n_fit_games": 305,
+    "fit_window": {
+     "n_games": 305,
+     "first_date": "2026-07-06",
+     "last_date": "2026-07-31",
+     "why_not_graded": "these are the games the coefficients and both one-parameter corrections are FITTED on, so scoring them would be scoring the model against its own training data; they are excluded from n_graded by construction and not by oversight"
+    },
+    "split_date": "2026-08-01",
     "park_basis": {
      "source": "mixed",
      "n_games_vintage_park": 796,
@@ -9892,7 +9909,7 @@
   "source": ".cache/betting/published_chain.json",
   "durable": true,
   "armed": true,
-  "published_at": "2026-09-07T17:12:12+00:00",
+  "published_at": "2026-09-07T17:28:11+00:00",
   "n_rows": 0
  },
  "settlement_url": "/data/betting_settlement.json",

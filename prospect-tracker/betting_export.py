@@ -3784,6 +3784,13 @@ def validation_state(evald: dict | None) -> dict:
             "min_graded_games_for_min_edge": vintage.get("min_graded_games_for_min_edge"),
             "first_graded_date": vintage.get("first_graded_date"),
             "last_graded_date": vintage.get("last_graded_date"),
+            # THE FIT HALF, NAMED. `n_gradable` 807 beside `n_graded` 502 reads
+            # as 305 games somebody forgot to score, and it is not: they are the
+            # games the coefficients are fitted on. The page could not say so
+            # because this block forwarded neither the count nor the reason.
+            "n_fit_games": vintage.get("n_fit_games"),
+            "fit_window": vintage.get("fit_window"),
+            "split_date": vintage.get("split_date"),
             # WHICH park index priced the honest sample. Null on an artifact
             # written before the park column existed, which is the correct
             # reading of that artifact: it does not know, and it may not claim
