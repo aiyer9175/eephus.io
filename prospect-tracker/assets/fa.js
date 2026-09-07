@@ -77,15 +77,58 @@
 
   // Deal verdict chip - the plain-English read of Deal+ (band edges are the
   // 2015-2026 corpus terciles; see the deal_verdict glossary entry).
-  const VERDICT_META = {
-    value: ["VALUE", "Projected to be UNDERPAID - rational value exceeds the predicted price (Deal+ in the corpus top tercile, ≥223)."],
-    market: ["MARKET", "Priced about right - rational value and predicted price sit in the corpus middle tercile (Deal+ 109-223)."],
-    overpay: ["OVERPAY", "Projected to be OVERPAID - predicted price exceeds rational value (Deal+ in the corpus bottom tercile, <109)."],
+  // WHAT A CHIP MEANS IS DECIDED SERVER-SIDE, SO THE TOOLTIP READS IT rather
+  // than restating it from memory. These strings used to hardcode the POOLED
+  // terciles 109/223, which are wrong twice over: the served board has banded
+  // verdicts PER POSITION GROUP since 2026-07-30 (owner decision,
+  // fa_market.VERDICT_BAND_MODE = "group"), and the pooled edges themselves were
+  // re-cut 109/223 -> 89/198 on 2026-08-19.
+  //
+  // Measured 2026-09-06: 60 of the 232 served chips carried a Deal+ that the
+  // tooltip's own numbers put in a DIFFERENT bucket. Sandy Alcantara, Deal+ 191,
+  // chipped VALUE beside a sentence saying value starts at 223. ZERO of the 232
+  // disagree with the live group edges, so the verdicts were right the whole
+  // time and only the sentence was wrong. Deriving it means it cannot go stale
+  // behind a re-cut again.
+  const VERDICT_LABEL = { value: "VALUE", market: "MARKET", overpay: "OVERPAY" };
+  const VERDICT_WHAT = {
+    value: "Projected to be UNDERPAID - rational value exceeds the predicted price",
+    market: "Priced about right - rational value and predicted price sit in the middle tercile",
+    overpay: "Projected to be OVERPAID - predicted price exceeds rational value",
   };
+  // fa_market._pos_group, mode v1 (the shipped four buckets). test_fa_verdict_
+  // tooltip.py reads the Python constants and fails if these drift apart.
+  function _faPosGroup(pos) {
+    const head = String(pos || "").toUpperCase().split("/")[0].trim();
+    if (["SP", "SP2", "P", "LHP", "RHP"].indexOf(head) >= 0) return "SP";
+    if (["RP", "CL", "SIRP", "MIRP"].indexOf(head) >= 0) return "RP";
+    if (head === "C") return "C";
+    return "POS";
+  }
+  // The band THIS row's verdict was actually cut on, read off the artifact.
+  function _faVerdictBand(pos) {
+    const e = ((D.fa_meta || {}).gate2 || {}).verdict_edges;
+    if (!e) return null;
+    const pooled = e.pooled || {};
+    let lo = pooled.overpay_max, hi = pooled.value_min, basis = "corpus-wide";
+    if (e.band_mode === "group" && e.group) {
+      const g = e.group[_faPosGroup(pos)];
+      if (g && g.length === 2) { lo = g[0]; hi = g[1]; basis = _faPosGroup(pos) + " group"; }
+    }
+    return (lo == null || hi == null) ? null : { lo: lo, hi: hi, basis: basis };
+  }
   function verdictChip(m) {
-    const v = VERDICT_META[m.verdict];
-    if (!v) return EM_DASH;
-    return `<span class="fa-verdict fa-verdict-${m.verdict}" data-gl="deal_plus" title="${v[1]} Underlying Deal+ ${m.dealPlus ?? "?"} (100 × rational / predicted price).">${v[0]}</span>`;
+    const label = VERDICT_LABEL[m.verdict];
+    if (!label) return EM_DASH;
+    const b = _faVerdictBand(m.pos);
+    let band = ".";
+    if (b) {
+      const where = m.verdict === "value" ? `Deal+ at or above ${b.hi}`
+                  : m.verdict === "overpay" ? `Deal+ below ${b.lo}`
+                  : `Deal+ ${b.lo} to ${b.hi}`;
+      band = ` (${where}: the ${b.basis} tercile edges this verdict is cut on).`;
+    }
+    return `<span class="fa-verdict fa-verdict-${m.verdict}" data-gl="deal_plus" title="${VERDICT_WHAT[m.verdict]}${band} Underlying Deal+ ${m.dealPlus ?? "?"} (100 × rational / predicted price).">${label}</span>`;
   }
   function surplusSpan(usd, p10, p90) {
     if (usd == null) return EM_DASH;
