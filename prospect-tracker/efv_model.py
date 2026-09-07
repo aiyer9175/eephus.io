@@ -1642,8 +1642,31 @@ def _run_eval(data, label, keys=None, mono=None, lam=None, side=None, cut=None):
             if ridge:
                 yp["ridge"].append((_predict(ridge, r["feats"]), t))
                 yw["ridge"].append(_w)
-            # blend == the SHIPPED headline rank: (1-lam)*consensus_OLS + lam*model
-            # (consensus anchor floored at 0 WAR, matching the baseline).
+            # THE BLEND SCORED HERE IS NOT THE SHIPPED HEADLINE RANK, and this
+            # comment used to say it was. Both are
+            # (1-lam)*consensus_OLS + lam*model with the consensus anchor floored
+            # at 0 WAR, but the MODEL LEG differs:
+            #
+            #   here (eval)      _predict(ridge, feats)                 raw
+            #   oos_grades       max(-2, a + b*_predict(ridge, feats))  calibrated
+            #                                                           per fold,
+            #                                                           then clamped
+            #
+            # A linear calibration is monotone, so it cannot reorder the ridge on
+            # its own, but it re-scales the model leg RELATIVE to the consensus
+            # leg it is blended against, so the BLEND does reorder. Measured
+            # 2026-09-06 on debuted_km: 0 of 761 hitter rows and 0 of 900 pitcher
+            # rows carry the same blend value under the two bases.
+            #
+            # WHAT THE DIFFERENCE COSTS IS A MEASURED NULL. Paired on identical
+            # rows, fold-clustered bootstrap B=2000:
+            #   hit  eval 0.3952 -> served 0.3996  delta +0.0044 CI95 [-0.0026, +0.0117]
+            #   pit  eval 0.2948 -> served 0.2945  delta -0.0003 CI95 [-0.0072, +0.0065]
+            # Both intervals contain zero and the sides point opposite ways, so no
+            # published rho is wrong by a measurable amount. The claim of identity
+            # was the defect, not the number.
+            # docs/efv-2026-09-06/SERVED_LEG_BASIS.md carries the reproduction and
+            # the reason the five-call-site helper did NOT land with it.
             if ridge and ols and lam is not None:
                 yp["blend"].append(((1 - lam) * max(0.0, _pred_ols(ols, r["fv"]))
                                     + lam * _predict(ridge, r["feats"]), t))
