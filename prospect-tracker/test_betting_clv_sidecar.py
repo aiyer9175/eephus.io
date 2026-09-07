@@ -443,8 +443,12 @@ def test_every_publish_blocker_is_pre_registered_and_shaped():
                                     rows=[], evald={}, health={"n_slates": 0},
                                     settlement={})
     ids = [b["id"] for b in bl]
-    assert ids == ["close_snapshot", "odds_slate", "dispersion_gate",
-                   "record_storage", "settlement_current"]
+    # THE LIST MOVES WITH `SERVE_CLV` (owner 2026-09-07) and is derived from it
+    # here rather than hardcoded twice, so a future flip cannot leave this test
+    # asserting a shape the module no longer builds.
+    expected = (["close_snapshot"] if be.SERVE_CLV else ["publish_armed"]) + [
+        "odds_slate", "dispersion_gate", "record_storage", "settlement_current"]
+    assert ids == expected
     for b in bl:
         assert set(("id", "open", "need", "have", "reason")) <= set(b)
         assert isinstance(b["open"], bool)
@@ -460,6 +464,11 @@ def test_publishing_needs_every_blocker_open():
 
 
 def test_a_missing_close_snapshot_blocks_publication(without_close):
+    """Unchanged in substance and skipped while CLV is retired: with SERVE_CLV
+    False the module builds no close_snapshot blocker at all, so there is
+    nothing to assert. Flipping the switch back re-arms this test."""
+    if not be.SERVE_CLV:
+        return
     bl = be.record_publish_blockers(payload={"slate_date": DAY, "status": {}},
                                     rows=[], evald={}, health={"n_slates": 0,
                                                                "diagnosis": "x"},
@@ -467,6 +476,31 @@ def test_a_missing_close_snapshot_blocks_publication(without_close):
     close = next(b for b in bl if b["id"] == "close_snapshot")
     assert close["open"] is False
     assert "CLV-graded" in close["reason"]
+
+
+def test_retiring_clv_does_not_silently_arm_the_public_record():
+    """THE DEFECT THIS PINS, which actually happened on 2026-09-07.
+
+    Retiring `close_snapshot` left the pre-registered list four-for-four open
+    and the very next build appended the first row the public record had ever
+    held. Nobody decided that; it fell out of removing a DIFFERENT gate. A
+    pre-registered list that arms itself when one of its own entries is
+    withdrawn is not pre-registered, so the withdrawal is represented by an
+    explicit decision entry instead of by a gap.
+    """
+    if be.SERVE_CLV:
+        return
+    bl = be.record_publish_blockers(payload={"slate_date": DAY, "status": {}},
+                                    rows=[], evald={}, health={"n_slates": 0},
+                                    settlement={})
+    armed = next(b for b in bl if b["id"] == "publish_armed")
+    assert armed["open"] is be.RECORD_PUBLISH_ARMED
+    assert be.RECORD_PUBLISH_ARMED is False, (
+        "the record must not ship armed by default; arming it is an owner call")
+    assert be.record_publish_ok(bl) is False
+    # and the reason says WHY, naming the retirement rather than shrugging
+    assert "close_snapshot" in armed["reason"]
+    assert "realized results" in armed["reason"]
 
 
 def test_the_provisional_label_reads_its_count_from_the_artifact():

@@ -858,6 +858,42 @@ def grade_clv(odds_post, odds_close) -> dict:
     }
 
 
+#: SERVE CLOSING LINE VALUE (owner decision 2026-09-07: retire it "for now").
+#: False removes every CLV surface from the served payload and from the publish
+#: gate; the machinery underneath is untouched and True restores all of it.
+#:
+#: WHY IT WAS RETIRED, in the numbers that decided it. On 2026-09-07 the cache
+#: held 24 odds snapshots, ALL of kind "open" and NONE of kind "close";
+#: `ever_captured_close` was False, `close_job_ever_ran` was False, and 0 record
+#: rows had ever been CLV-graded. The `close_snapshot` publish blocker was the
+#: ONLY one of five still shut, so the public record sat at 0 written rows with
+#: a candidate waiting, held by a capture the box has never made. The blocker's
+#: argument was that CLV is the only honest read on an unvalidated model's
+#: decisions; the shadow ledger has been grading those same selections on
+#: realized results throughout, so that read exists, and a read never once taken
+#: is not the only one.
+#:
+#: THE COST IS REAL AND IS STATED WHEREVER IT LANDS: results-only grading is a
+#: noisier instrument than closing line value, and the record's own prose says
+#: which basis it is on rather than leaving a reader to assume the stronger one.
+SERVE_CLV = False
+
+#: IS THE PUBLIC RECORD ARMED TO PUBLISH. False by default and it must be an
+#: OWNER DECISION, never a side effect.
+#:
+#: Retiring `close_snapshot` above left `record_publish_blockers` four-for-four
+#: open, and the very next build appended the first row the public record has
+#: ever held. That is a real editorial act, and nobody decided it: it fell out
+#: of removing a DIFFERENT gate. The pre-registration in this module is the
+#: whole reason its record is worth anything, and a pre-registered list that
+#: arms itself when one of its own entries is withdrawn is not pre-registered.
+#:
+#: So the withdrawal is replaced by an explicit entry rather than by an absence.
+#: Set this True to publish, knowing what it means: with SERVE_CLV off, rows are
+#: graded on REALIZED RESULTS alone, which is a noisier instrument than closing
+#: line value, on a model whose own gate still reads unvalidated.
+RECORD_PUBLISH_ARMED = False
+
 CLV_PATH = DATA_DIR / "betting_clv.json"
 
 #: THE TWO MARKET VOCABULARIES, AND THE MAP BETWEEN THEM (2026-08-09).
@@ -1661,13 +1697,18 @@ def record_publish_blockers(*, payload: dict | None = None,
     Pre-registered on purpose, and shipped in the payload whether it passes or
     not: the list is a claim about what the site refuses to publish, and a
     reader can only hold it to that if he can see it before the first row
-    exists. All five are returned with an `open` flag; publishing needs all
-    five open, and `record_publish_ok` is that conjunction.
+    exists. Each is returned with an `open` flag; publishing needs ALL of them open,
+    and `record_publish_ok` is that conjunction.
 
-    THE FIVE:
-      close_snapshot     a close capture exists for this slate. Without it the
-                         pick can never be CLV-graded, and CLV is the only
-                         honest read on an unvalidated model's decisions.
+    THE LIST IS FOUR LONG WHILE `SERVE_CLV` IS FALSE (owner, 2026-09-07) and
+    five when it is True:
+      close_snapshot     RETIRED, see SERVE_CLV. A close capture exists for this
+                         slate. Without it the pick can never be CLV-graded.
+                         This was the only shut blocker of five and had never
+                         been open on any slate, so the record sat at zero rows
+                         waiting on a capture the box does not make. With it
+                         gone the record grades on REALIZED RESULTS alone, which
+                         is noisier, and says so.
       odds_slate         the board is priced against ITS OWN slate. A pick
                          taken off another slate's snapshot is not a pick.
       dispersion_gate    betting_model's dispersion gate has RUN. Not passed:
@@ -1705,8 +1746,29 @@ def record_publish_blockers(*, payload: dict | None = None,
 
     out: list[dict] = []
 
-    snap = bi.closing_snapshot(slate) if slate else None
+    # THE ARMING ENTRY, which exists because retiring `close_snapshot` below
+    # left the list all-open and the next build published immediately. A
+    # pre-registered list that arms itself when one of its entries is withdrawn
+    # is not pre-registered, so the withdrawal is represented by a DECISION and
+    # not by a gap.
     out.append({
+        "id": "publish_armed", "open": bool(RECORD_PUBLISH_ARMED),
+        "need": "an explicit owner decision to publish the record",
+        "have": "armed" if RECORD_PUBLISH_ARMED else "not armed",
+        "reason": ("the record is armed by owner decision" if RECORD_PUBLISH_ARMED else
+                   "the close_snapshot blocker was retired on 2026-09-07 (SERVE_CLV), "
+                   "which left this list all-open and would have started the public "
+                   "record as a side effect of removing a different gate. Publishing "
+                   "is an owner decision: with CLV retired these rows grade on "
+                   "realized results alone, which is noisier than closing line value, "
+                   "on a model whose gate still reads unvalidated"),
+    })
+
+    # RETIRED 2026-09-07 (SERVE_CLV). This was four-of-five open and one shut,
+    # and the one shut had never been open on any slate in the module's life.
+    snap = bi.closing_snapshot(slate) if (slate and SERVE_CLV) else None
+    if SERVE_CLV:
+        out.append({
         "id": "close_snapshot", "open": bool(snap),
         "need": f"a close odds snapshot for slate {slate}",
         "have": ((snap or {}).get("captured_at") if snap else
@@ -1717,7 +1779,7 @@ def record_publish_blockers(*, payload: dict | None = None,
                    f"no close snapshot for this slate, so the {noun} could never be "
                    f"CLV-graded and the only honest read on an {verdict_state} model's "
                    "decisions would be missing. " + str(health.get("diagnosis") or "")),
-    })
+        })
 
     mismatch = bool(status.get("odds_slate_mismatch"))
     out.append({
@@ -2155,8 +2217,45 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
             }
     stats["slate_rule"] = rule
     if chosen is None:
+        stats["started_rows_dropped"] = None
         return None, []
-    return chosen, [g for g in allg if g.get("date") == chosen and is_bettable(g)]
+    on_slate = [g for g in allg if g.get("date") == chosen and is_bettable(g)]
+    # A GAME THAT HAS STARTED IS NOT ON THE BOARD, read off the clock as well as
+    # off StatsAPI. `is_bettable` alone keeps a stale-Preview row whose first
+    # pitch has passed, and `betting_ingest` has already dropped that event from
+    # the snapshot as in progress, so the row reaches the page with every price
+    # cell empty. Board local ON PURPOSE: see the module note on
+    # `anchors_close_window`, which needs stale Preview to keep reading bettable.
+    live_rows = []
+    started = []
+    for g in on_slate:
+        st = str(g.get("status") or "").strip().lower()
+        t = _stamp(g.get("datetime"))
+        if st in SLATE_STARTED_STATES or (t is not None and t <= now):
+            started.append({
+                "game_pk": g.get("game_pk"),
+                "matchup": f"{(g.get('away') or {}).get('org')} at "
+                           f"{(g.get('home') or {}).get('org')}",
+                "start": g.get("datetime"), "status": g.get("status")})
+        else:
+            live_rows.append(g)
+    stats["started_rows_dropped"] = {
+        "n": len(started),
+        "n_on_slate": len(on_slate),
+        "games": started[:20],
+        "reason": ("first pitch has passed, so the game is no longer on the book's "
+                   "pregame board and carries no price to show"),
+        "basis": "StatsAPI status or a first pitch at or before now, the same two "
+                 "signals the slate rule reads",
+    }
+    # NEVER RETURN AN EMPTY BOARD OVER THIS. If every row on the chosen slate has
+    # started, the slate rule and this filter disagree, and a blank page is worse
+    # than a stale one; the count above still says what happened.
+    if not live_rows:
+        stats["started_rows_dropped"]["applied"] = False
+        return chosen, on_slate
+    stats["started_rows_dropped"]["applied"] = True
+    return chosen, live_rows
 
 
 def _event_slate_date(ev: dict) -> str | None:
@@ -4967,6 +5066,9 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
             "slate_rule": slate_stats.get("slate_rule"),
             "slate_candidates": slate_stats.get("slate_candidates"),
             "partial_slate": slate_stats.get("partial_slate"),
+            # WHERE THE MISSING ROWS WENT. A seven-row board on an eleven-game
+            # slate has to say so, or it reads as a broken build.
+            "started_rows_dropped": slate_stats.get("started_rows_dropped"),
             # WHICH SLATE THE PRICES BELONG TO. `odds_captured_at` above says
             # when; this says what for.
             "odds_slate": odds_slate,
@@ -5088,7 +5190,11 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     # still naming data/betting.json means no durable anchor exists yet.
     payload["record_chain_anchor"] = prev_chain_src
     payload["settlement_url"] = "/data/betting_settlement.json"
-    payload["clv_url"] = "/data/betting_clv.json"
+    # THE FLAG THE CLIENT READS, so the panel and the grading copy move with the
+    # server switch instead of drifting from it.
+    payload["serve_clv"] = bool(SERVE_CLV)
+    if SERVE_CLV:
+        payload["clv_url"] = "/data/betting_clv.json"
     # The DERIVED copy, re-rendered from the log on every build. It is published
     # by rsync and it is safe to lose: `git checkout -- .` reverting it between
     # builds costs nothing, which is the whole reason the log exists.

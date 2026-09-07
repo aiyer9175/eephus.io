@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-07T17:28:31+00:00",
+ "generated_at": "2026-09-07T17:55:32+00:00",
  "slate_date": "2026-09-07",
  "status": {
   "odds_feed": "ok",
@@ -31,8 +31,8 @@
    },
    "n_orgs_joined": 30
   },
-  "n_slate_games": 11,
-  "n_events_dropped_in_progress": 2,
+  "n_slate_games": 7,
+  "n_events_dropped_in_progress": 4,
   "n_games_unpriced_time_mismatch": 0,
   "slate_rule": "first_open_slate",
   "slate_candidates": [
@@ -41,9 +41,9 @@
     "n_games": 11,
     "n_bettable": 11,
     "open": true,
-    "n_started": 2,
-    "n_pregame": 9,
-    "pregame_share": 0.8182,
+    "n_started": 4,
+    "n_pregame": 7,
+    "pregame_share": 0.6364,
     "min_pregame_share": 0.5,
     "why_not": null
    },
@@ -71,22 +71,55 @@
    }
   ],
   "partial_slate": null,
+  "started_rows_dropped": {
+   "n": 4,
+   "n_on_slate": 11,
+   "games": [
+    {
+     "game_pk": 823415,
+     "matchup": "ATL at PHI",
+     "start": "2026-09-07T17:05:00Z",
+     "status": "Preview"
+    },
+    {
+     "game_pk": 823820,
+     "matchup": "NYM at MIA",
+     "start": "2026-09-07T17:10:00Z",
+     "status": "Preview"
+    },
+    {
+     "game_pk": 824715,
+     "matchup": "LAA at BOS",
+     "start": "2026-09-07T17:35:00Z",
+     "status": "Preview"
+    },
+    {
+     "game_pk": 824793,
+     "matchup": "CLE at BAL",
+     "start": "2026-09-07T17:35:00Z",
+     "status": "Preview"
+    }
+   ],
+   "reason": "first pitch has passed, so the game is no longer on the book's pregame board and carries no price to show",
+   "basis": "StatsAPI status or a first pitch at or before now, the same two signals the slate rule reads",
+   "applied": true
+  },
   "odds_slate": {
    "board_slate": "2026-09-07",
    "snapshot_slate": "2026-09-07",
    "snapshot_captured_at": "2026-09-07T17:03:24+00:00",
-   "snapshot_age_hours": 0.4,
+   "snapshot_age_hours": 0.9,
    "matched": true,
    "match_rule": "slate_label",
-   "n_pregame_events_on_board_slate": 9,
+   "n_pregame_events_on_board_slate": 7,
    "mismatch": false,
    "reason": "the cached snapshot is stamped for the 2026-09-07 slate"
   },
   "odds_slate_mismatch": false,
-  "odds_snapshot_age_hours": 0.4,
+  "odds_snapshot_age_hours": 0.9,
   "stale_board": false,
   "feed_health": {
-   "generated_at": "2026-09-07T17:28:31+00:00",
+   "generated_at": "2026-09-07T17:55:32+00:00",
    "window_days": 14,
    "source": ".cache/odds",
    "n_slates": 10,
@@ -95,7 +128,7 @@
    "n_unreadable_files": 0,
    "ever_captured_close": false,
    "hours_since_last_close": null,
-   "hours_since_last_open": 0.42,
+   "hours_since_last_open": 0.87,
    "close_stale_hours": 36.0,
    "close_job_last_run": null,
    "close_job_last_reason": null,
@@ -522,7 +555,7 @@
     "band": "american odds from -199 to +199",
     "present": true,
     "reason": "highest model win probability among sides clearing the provisional floor on any priced market, restricted to american odds from -199 to +199; ties go to the price nearest -110, then to the higher expected value",
-    "n_candidates": 11,
+    "n_candidates": 10,
     "provisional": true,
     "min_edge": 0.06,
     "basis": "provisional_policy_floor",
@@ -550,7 +583,7 @@
     "rule": "highest expected value per unit among sides clearing the provisional floor at american odds of +200 or longer",
     "band": "american odds of +200 or longer",
     "present": false,
-    "reason": "12 side(s) cleared the 6.0% provisional floor on this slate and none of them are priced at american odds of +200 or longer",
+    "reason": "11 side(s) cleared the 6.0% provisional floor on this slate and none of them are priced at american odds of +200 or longer",
     "n_candidates": 0,
     "provisional": true,
     "min_edge": 0.06,
@@ -572,7 +605,7 @@
     }
    }
   },
-  "n_floor_clearing_sides": 12,
+  "n_floor_clearing_sides": 11,
   "market_policy": "any",
   "markets_eligible": "any priced market: moneyline, runline, total, props when armed (owner decision 2026-09-05, section 7d); the dispersion and ledger legs ride the row as disclosure"
  },
@@ -833,11 +866,11 @@
  },
  "record_publish_blockers": [
   {
-   "id": "close_snapshot",
+   "id": "publish_armed",
    "open": false,
-   "need": "a close odds snapshot for slate 2026-09-07",
-   "have": "0 of 10 slates in the last 14 days have one",
-   "reason": "no close snapshot for this slate, so the selection could never be CLV-graded and the only honest read on an unvalidated model's decisions would be missing. no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above"
+   "need": "an explicit owner decision to publish the record",
+   "have": "not armed",
+   "reason": "the close_snapshot blocker was retired on 2026-09-07 (SERVE_CLV), which left this list all-open and would have started the public record as a side effect of removing a different gate. Publishing is an owner decision: with CLV retired these rows grade on realized results alone, which is noisier than closing line value, on a model whose gate still reads unvalidated"
   },
   {
    "id": "odds_slate",
@@ -859,8 +892,8 @@
    "need": "the append-only JSONL under .cache/betting/ to be authoritative, and its chain to extend the last published chain_sha",
    "have": {
     "backend": "jsonl",
-    "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
-    "published_chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
+    "chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
+    "published_chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
     "chain_extends": true,
     "chain_check_armed": true
    },
@@ -871,7 +904,7 @@
    "open": true,
    "need": "every record row older than 36h settled, or the reason it is not settled named on the sidecar",
    "have": {
-    "n_rows": 0,
+    "n_rows": 1,
     "n_stale": 0,
     "n_stale_named": 0,
     "n_stale_unnamed": 0
@@ -885,8 +918,8 @@
   "backend": "jsonl",
   "authoritative_path": ".cache/betting/record.jsonl",
   "durable": true,
-  "n_rows": 0,
-  "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
+  "n_rows": 1,
+  "chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
   "derived_path": "data/betting_record.json",
   "path_basis": "relative to the site checkout root",
   "why": "the append-only log under .cache/ is untracked, so the nightly `git checkout -- .` cannot revert it; data/betting_record.json is re-rendered from it every build"
@@ -896,382 +929,194 @@
   "n_needed": 600,
   "source": "data/betting_model_eval.json vintage block"
  },
- "n_games": 11,
+ "n_games": 7,
  "team_bets": [
   {
-   "game_pk": 823415,
+   "game_pk": 824062,
    "date": "2026-09-07",
-   "start": "2026-09-07T17:05:00Z",
+   "start": "2026-09-07T18:10:00Z",
    "status": "Preview",
    "double_header": false,
-   "odds_event_id": null,
-   "odds_commence_time": null,
-   "venue": "Citizens Bank Park",
+   "odds_event_id": "b4745820fda1c660f277b88a71e25596",
+   "odds_commence_time": "2026-09-07T18:11:00Z",
+   "venue": "Kauffman Stadium",
    "home": {
-    "org": "PHI",
-    "team": "Philadelphia Phillies",
+    "org": "KCR",
+    "team": "Kansas City Royals",
     "probable": {
-     "mlbam": 666200,
-     "name": "Jes\u00fas Luzardo"
+     "mlbam": 702070,
+     "name": "Noah Cameron"
     },
-    "offense_plus": 99.0,
-    "bullpen_plus": 107.0
+    "offense_plus": 96.0,
+    "bullpen_plus": 88.0
    },
    "away": {
-    "org": "ATL",
-    "team": "Atlanta Braves",
+    "org": "ARI",
+    "team": "Arizona Diamondbacks",
     "probable": {
-     "mlbam": 656550,
-     "name": "Grant Holmes"
+     "mlbam": 571882,
+     "name": "Derek Law"
     },
-    "offense_plus": 101.0,
-    "bullpen_plus": 112.0
+    "offense_plus": 96.0,
+    "bullpen_plus": 106.0
    },
    "model": {
-    "p_home": 0.64352,
-    "p_away": 0.35648,
-    "lam_home": 4.675,
-    "lam_away": 3.59,
-    "fair_total": 8.26,
+    "p_home": 0.51755,
+    "p_away": 0.48245,
+    "lam_home": 4.46,
+    "lam_away": 4.316,
+    "fair_total": 8.78,
     "park_index": 1.04,
     "home_prevention": {
-     "starter_plus": 132.0,
-     "bullpen_plus": 107.0,
-     "starter_share": 0.673,
-     "blend_plus": 123.8,
+     "starter_plus": 107.0,
+     "bullpen_plus": 88.0,
+     "starter_share": 0.66,
+     "blend_plus": 100.5,
      "source": "probable"
     },
     "away_prevention": {
-     "starter_plus": 90.0,
-     "bullpen_plus": 112.0,
-     "starter_share": 0.562,
-     "blend_plus": 99.6,
-     "source": "probable"
-    }
-   },
-   "moneyline": [
-    {
-     "side": "home",
-     "label": "PHI",
-     "model_prob": 0.64352,
-     "fair_odds": -181,
-     "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
-    },
-    {
-     "side": "away",
-     "label": "ATL",
-     "model_prob": 0.35648,
-     "fair_odds": 181,
-     "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
-    }
-   ],
-   "runline": null,
-   "total": {
-    "line": null,
-    "sides": null,
-    "p_push": null,
-    "fair_total": 8.26
-   },
-   "market": null
-  },
-  {
-   "game_pk": 823820,
-   "date": "2026-09-07",
-   "start": "2026-09-07T17:10:00Z",
-   "status": "Preview",
-   "double_header": false,
-   "odds_event_id": null,
-   "odds_commence_time": null,
-   "venue": "loanDepot park",
-   "home": {
-    "org": "MIA",
-    "team": "Miami Marlins",
-    "probable": {
-     "mlbam": 691587,
-     "name": "Eury P\u00e9rez"
-    },
-    "offense_plus": 100.0,
-    "bullpen_plus": 99.0
-   },
-   "away": {
-    "org": "NYM",
-    "team": "New York Mets",
-    "probable": {
-     "mlbam": 804636,
-     "name": "Jonah Tong"
-    },
-    "offense_plus": 97.0,
-    "bullpen_plus": 100.0
-   },
-   "model": {
-    "p_home": 0.58758,
-    "p_away": 0.41242,
-    "lam_home": 4.916,
-    "lam_away": 4.226,
-    "fair_total": 9.14,
-    "park_index": 0.98,
-    "home_prevention": {
-     "starter_plus": 102.0,
-     "bullpen_plus": 99.0,
-     "starter_share": 0.601,
-     "blend_plus": 100.8,
-     "source": "probable"
-    },
-    "away_prevention": {
-     "starter_plus": 88.0,
-     "bullpen_plus": 100.0,
+     "starter_plus": 99.0,
+     "bullpen_plus": 106.0,
      "starter_share": 0.578,
-     "blend_plus": 93.1,
+     "blend_plus": 102.0,
      "source": "probable"
     }
    },
    "moneyline": [
     {
      "side": "home",
-     "label": "MIA",
-     "model_prob": 0.58758,
-     "fair_odds": -142,
+     "label": "KCR",
+     "model_prob": 0.51755,
+     "fair_odds": -107,
      "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
-    },
-    {
-     "side": "away",
-     "label": "NYM",
-     "model_prob": 0.41242,
-     "fair_odds": 142,
-     "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
-    }
-   ],
-   "runline": null,
-   "total": {
-    "line": null,
-    "sides": null,
-    "p_push": null,
-    "fair_total": 9.14
-   },
-   "market": null
-  },
-  {
-   "game_pk": 824715,
-   "date": "2026-09-07",
-   "start": "2026-09-07T17:35:00Z",
-   "status": "Preview",
-   "double_header": false,
-   "odds_event_id": "22430c880f9e9118f74aacf0b720b7ee",
-   "odds_commence_time": "2026-09-07T17:36:00Z",
-   "venue": "Fenway Park",
-   "home": {
-    "org": "BOS",
-    "team": "Boston Red Sox",
-    "probable": {
-     "mlbam": 678394,
-     "name": "Brayan Bello"
-    },
-    "offense_plus": 100.0,
-    "bullpen_plus": 109.0
-   },
-   "away": {
-    "org": "LAA",
-    "team": "Los Angeles Angels",
-    "probable": {
-     "mlbam": 680570,
-     "name": "Grayson Rodriguez"
-    },
-    "offense_plus": 94.0,
-    "bullpen_plus": 98.0
-   },
-   "model": {
-    "p_home": 0.66429,
-    "p_away": 0.33571,
-    "lam_home": 5.096,
-    "lam_away": 3.803,
-    "fair_total": 8.9,
-    "park_index": 1.06,
-    "home_prevention": {
-     "starter_plus": 114.0,
-     "bullpen_plus": 109.0,
-     "starter_share": 0.59,
-     "blend_plus": 112.0,
-     "source": "rotation-average"
-    },
-    "away_prevention": {
-     "starter_plus": 90.0,
-     "bullpen_plus": 98.0,
-     "starter_share": 0.539,
-     "blend_plus": 93.7,
-     "source": "probable"
-    }
-   },
-   "moneyline": [
-    {
-     "side": "home",
-     "label": "BOS",
-     "model_prob": 0.66429,
-     "fair_odds": -198,
-     "p_push": null,
-     "book": "lowvig",
-     "odds": -172,
-     "decimal": 1.5814,
-     "implied_prob": 0.63235,
-     "market_fair_prob": 0.61722,
-     "edge": 0.04707,
-     "ev_per_unit": 0.05051,
-     "ev_per_unit_if_no_push": 0.05051,
-     "kelly_full": 0.08687,
-     "book_title": "LowVig.ag",
+     "book": "betus",
+     "odds": -107,
+     "decimal": 1.9346,
+     "implied_prob": 0.5169,
+     "market_fair_prob": 0.50465,
+     "edge": 0.0129,
+     "ev_per_unit": 0.00125,
+     "ev_per_unit_if_no_push": 0.00125,
+     "kelly_full": 0.00134,
+     "book_title": "BetUS",
      "point": null
     },
     {
      "side": "away",
-     "label": "LAA",
-     "model_prob": 0.33571,
-     "fair_odds": 198,
+     "label": "ARI",
+     "model_prob": 0.48245,
+     "fair_odds": 107,
      "p_push": null,
-     "book": "lowvig",
-     "odds": 155,
-     "decimal": 2.55,
-     "implied_prob": 0.39216,
-     "market_fair_prob": 0.38278,
-     "edge": -0.04707,
-     "ev_per_unit": -0.14394,
-     "ev_per_unit_if_no_push": -0.14394,
+     "book": "betrivers",
+     "odds": -103,
+     "decimal": 1.9709,
+     "implied_prob": 0.50738,
+     "market_fair_prob": 0.49535,
+     "edge": -0.0129,
+     "ev_per_unit": -0.04914,
+     "ev_per_unit_if_no_push": -0.04914,
      "kelly_full": 0.0,
-     "book_title": "LowVig.ag",
+     "book_title": "BetRivers",
      "point": null
     }
    ],
    "runline": [
     {
      "side": "home",
-     "label": "BOS -1.5",
-     "model_prob": 0.46837,
-     "fair_odds": 114,
+     "label": "KCR +1.5",
+     "model_prob": 0.71392,
+     "fair_odds": -250,
      "p_push": null,
-     "book": "lowvig",
-     "odds": 126,
-     "decimal": 2.26,
-     "implied_prob": 0.44248,
-     "market_fair_prob": 0.4299,
-     "edge": 0.03847,
-     "ev_per_unit": 0.05852,
-     "ev_per_unit_if_no_push": 0.05852,
-     "kelly_full": 0.04644,
-     "book_title": "LowVig.ag",
-     "point": -1.5
+     "book": "fanduel",
+     "odds": -178,
+     "decimal": 1.5618,
+     "implied_prob": 0.64029,
+     "market_fair_prob": 0.61972,
+     "edge": 0.0942,
+     "ev_per_unit": 0.115,
+     "ev_per_unit_if_no_push": 0.115,
+     "kelly_full": 0.2047,
+     "book_title": "FanDuel",
+     "point": 1.5
     },
     {
      "side": "away",
-     "label": "LAA +1.5",
-     "model_prob": 0.53163,
-     "fair_odds": -114,
+     "label": "ARI -1.5",
+     "model_prob": 0.28608,
+     "fair_odds": 250,
      "p_push": null,
      "book": "mybookieag",
-     "odds": -136,
-     "decimal": 1.7353,
-     "implied_prob": 0.57627,
-     "market_fair_prob": 0.5701,
-     "edge": -0.03847,
-     "ev_per_unit": -0.07746,
-     "ev_per_unit_if_no_push": -0.07746,
+     "odds": 153,
+     "decimal": 2.53,
+     "implied_prob": 0.39526,
+     "market_fair_prob": 0.38028,
+     "edge": -0.0942,
+     "ev_per_unit": -0.27622,
+     "ev_per_unit_if_no_push": -0.27622,
      "kelly_full": 0.0,
      "book_title": "MyBookie.ag",
-     "point": 1.5
+     "point": -1.5
     }
    ],
    "total": {
-    "line": 8.5,
+    "line": 9.0,
     "sides": [
      {
       "side": "over",
-      "label": "Over 8.5",
-      "model_prob": 0.53106,
-      "fair_odds": -113,
-      "p_push": null,
-      "book": "lowvig",
-      "odds": 100,
-      "decimal": 2.0,
-      "implied_prob": 0.5,
-      "market_fair_prob": 0.48315,
-      "edge": 0.04791,
-      "ev_per_unit": 0.06212,
-      "ev_per_unit_if_no_push": 0.06212,
-      "kelly_full": 0.06212,
-      "book_title": "LowVig.ag",
-      "point": 8.5
+      "label": "Over 9.0",
+      "model_prob": 0.44108,
+      "fair_odds": 127,
+      "p_push": 0.13138,
+      "book": "betrivers",
+      "odds": -112,
+      "decimal": 1.8929,
+      "implied_prob": 0.52829,
+      "market_fair_prob": 0.52354,
+      "edge": -0.08246,
+      "ev_per_unit": -0.14339,
+      "ev_per_unit_if_no_push": -0.16508,
+      "kelly_full": 0.0,
+      "book_title": "BetRivers",
+      "point": 9.0
      },
      {
       "side": "under",
-      "label": "Under 8.5",
-      "model_prob": 0.46894,
-      "fair_odds": 113,
-      "p_push": null,
-      "book": "bovada",
-      "odds": -110,
-      "decimal": 1.9091,
-      "implied_prob": 0.52381,
-      "market_fair_prob": 0.51685,
-      "edge": -0.04791,
-      "ev_per_unit": -0.10475,
-      "ev_per_unit_if_no_push": -0.10475,
-      "kelly_full": 0.0,
-      "book_title": "Bovada",
-      "point": 8.5
+      "label": "Under 9.0",
+      "model_prob": 0.55892,
+      "fair_odds": -127,
+      "p_push": 0.13138,
+      "book": "lowvig",
+      "odds": 103,
+      "decimal": 2.03,
+      "implied_prob": 0.49261,
+      "market_fair_prob": 0.47646,
+      "edge": 0.08246,
+      "ev_per_unit": 0.11692,
+      "ev_per_unit_if_no_push": 0.13461,
+      "kelly_full": 0.13069,
+      "book_title": "LowVig.ag",
+      "point": 9.0
      }
     ],
-    "p_push": 0.0
+    "p_push": 0.13138
    },
    "market": {
-    "moneyline_hold_pct": 2.451,
-    "total_hold_pct": 3.488,
+    "moneyline_hold_pct": 2.43,
+    "total_hold_pct": 3.39,
     "moneyline_fair_book": "betonlineag",
     "moneyline_hold_range": [
-     2.451,
-     5.102
+     2.43,
+     4.742
     ],
     "moneyline_n_books_on_line": 9,
     "total_fair_book": "lowvig",
     "total_hold_range": [
-     3.488,
+     3.39,
      5.109
     ],
-    "total_n_books_on_line": 8,
-    "runline_fair_book": "lowvig",
-    "runline_hold_pct": 2.925,
+    "total_n_books_on_line": 7,
+    "runline_fair_book": "mybookieag",
+    "runline_hold_pct": 3.939,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
@@ -1284,13 +1129,447 @@
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 9
+      "on_line": 5
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
+      "on_line": 7
+     }
+    },
+    "max_book_lag_minutes": {
+     "moneyline": 0.8,
+     "runline": 0.733,
+     "total": 0.8
+    },
+    "stale_book_max_lag_minutes": 15.0,
+    "consensus_fair_max_distance": 0.05,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 823742,
+   "date": "2026-09-07",
+   "start": "2026-09-07T18:10:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "0902d8258427af19994e87abb3519262",
+   "odds_commence_time": "2026-09-07T18:11:00Z",
+   "venue": "American Family Field",
+   "home": {
+    "org": "MIL",
+    "team": "Milwaukee Brewers",
+    "probable": {
+     "mlbam": 688107,
+     "name": "Robert Gasser"
+    },
+    "offense_plus": 104.0,
+    "bullpen_plus": 109.0
+   },
+   "away": {
+    "org": "CHC",
+    "team": "Chicago Cubs",
+    "probable": {
+     "mlbam": 571510,
+     "name": "Matthew Boyd"
+    },
+    "offense_plus": 110.0,
+    "bullpen_plus": 94.0
+   },
+   "model": {
+    "p_home": 0.52136,
+    "p_away": 0.47864,
+    "lam_home": 5.103,
+    "lam_away": 4.919,
+    "fair_total": 10.02,
+    "park_index": 0.94,
+    "home_prevention": {
+     "starter_plus": 96.0,
+     "bullpen_plus": 109.0,
+     "starter_share": 0.602,
+     "blend_plus": 101.2,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 93.0,
+     "bullpen_plus": 94.0,
+     "starter_share": 0.632,
+     "blend_plus": 93.4,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "MIL",
+     "model_prob": 0.52136,
+     "fair_odds": -109,
+     "p_push": null,
+     "book": "betrivers",
+     "odds": -117,
+     "decimal": 1.8547,
+     "implied_prob": 0.53917,
+     "market_fair_prob": 0.53483,
+     "edge": -0.01347,
+     "ev_per_unit": -0.03303,
+     "ev_per_unit_if_no_push": -0.03303,
+     "kelly_full": 0.0,
+     "book_title": "BetRivers",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "CHC",
+     "model_prob": 0.47864,
+     "fair_odds": 109,
+     "p_push": null,
+     "book": "lowvig",
+     "odds": 110,
+     "decimal": 2.1,
+     "implied_prob": 0.47619,
+     "market_fair_prob": 0.46517,
+     "edge": 0.01347,
+     "ev_per_unit": 0.00514,
+     "ev_per_unit_if_no_push": 0.00514,
+     "kelly_full": 0.00468,
+     "book_title": "LowVig.ag",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "MIL -1.5",
+     "model_prob": 0.33597,
+     "fair_odds": 198,
+     "p_push": null,
+     "book": "mybookieag",
+     "odds": 167,
+     "decimal": 2.67,
+     "implied_prob": 0.37453,
+     "market_fair_prob": 0.3646,
+     "edge": -0.02863,
+     "ev_per_unit": -0.10296,
+     "ev_per_unit_if_no_push": -0.10296,
+     "kelly_full": 0.0,
+     "book_title": "MyBookie.ag",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "CHC +1.5",
+     "model_prob": 0.66403,
+     "fair_odds": -198,
+     "p_push": null,
+     "book": "betmgm",
+     "odds": -190,
+     "decimal": 1.5263,
+     "implied_prob": 0.65518,
+     "market_fair_prob": 0.6354,
+     "edge": 0.02863,
+     "ev_per_unit": 0.01351,
+     "ev_per_unit_if_no_push": 0.01351,
+     "kelly_full": 0.02567,
+     "book_title": "BetMGM",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 8.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 8.5",
+      "model_prob": 0.66973,
+      "fair_odds": -203,
+      "p_push": null,
+      "book": "betus",
+      "odds": -105,
+      "decimal": 1.9524,
+      "implied_prob": 0.51219,
+      "market_fair_prob": 0.50678,
+      "edge": 0.16295,
+      "ev_per_unit": 0.30758,
+      "ev_per_unit_if_no_push": 0.30758,
+      "kelly_full": 0.32296,
+      "book_title": "BetUS",
+      "point": 8.5
+     },
+     {
+      "side": "under",
+      "label": "Under 8.5",
+      "model_prob": 0.33027,
+      "fair_odds": 203,
+      "p_push": null,
+      "book": "lowvig",
+      "odds": -104,
+      "decimal": 1.9615,
+      "implied_prob": 0.50981,
+      "market_fair_prob": 0.49322,
+      "edge": -0.16295,
+      "ev_per_unit": -0.35218,
+      "ev_per_unit_if_no_push": -0.35218,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 8.5
+     }
+    ],
+    "p_push": 0.0
+   },
+   "market": {
+    "moneyline_hold_pct": 2.37,
+    "total_hold_pct": 3.361,
+    "moneyline_fair_book": "betonlineag",
+    "moneyline_hold_range": [
+     2.37,
+     4.772
+    ],
+    "moneyline_n_books_on_line": 9,
+    "total_fair_book": "lowvig",
+    "total_hold_range": [
+     3.361,
+     4.983
+    ],
+    "total_n_books_on_line": 9,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.111,
+    "fair_book_rule": "min_hold",
+    "n_books_rejected": {
+     "moneyline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "runline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
       "on_line": 8
+     },
+     "total": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     }
+    },
+    "max_book_lag_minutes": {
+     "moneyline": 0.8,
+     "runline": 0.8,
+     "total": 0.8
+    },
+    "stale_book_max_lag_minutes": 15.0,
+    "consensus_fair_max_distance": 0.05,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 824229,
+   "date": "2026-09-07",
+   "start": "2026-09-07T19:10:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "a410afcc86bee1b6cbe7e60eafd8d50e",
+   "odds_commence_time": "2026-09-07T19:11:00Z",
+   "venue": "Comerica Park",
+   "home": {
+    "org": "DET",
+    "team": "Detroit Tigers",
+    "probable": {
+     "mlbam": 675512,
+     "name": "Troy Melton"
+    },
+    "offense_plus": 99.0,
+    "bullpen_plus": 96.0
+   },
+   "away": {
+    "org": "MIN",
+    "team": "Minnesota Twins",
+    "probable": {
+     "mlbam": 657746,
+     "name": "Joe Ryan"
+    },
+    "offense_plus": 101.0,
+    "bullpen_plus": 98.0
+   },
+   "model": {
+    "p_home": 0.45824,
+    "p_away": 0.54176,
+    "lam_home": 4.196,
+    "lam_away": 4.497,
+    "fair_total": 8.69,
+    "park_index": 1.0,
+    "home_prevention": {
+     "starter_plus": 102.0,
+     "bullpen_plus": 96.0,
+     "starter_share": 0.669,
+     "blend_plus": 100.0,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 117.0,
+     "bullpen_plus": 98.0,
+     "starter_share": 0.607,
+     "blend_plus": 109.5,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "DET",
+     "model_prob": 0.45824,
+     "fair_odds": 118,
+     "p_push": null,
+     "book": "lowvig",
+     "odds": -115,
+     "decimal": 1.8696,
+     "implied_prob": 0.53487,
+     "market_fair_prob": 0.52743,
+     "edge": -0.06919,
+     "ev_per_unit": -0.14327,
+     "ev_per_unit_if_no_push": -0.14327,
+     "kelly_full": 0.0,
+     "book_title": "LowVig.ag",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "MIN",
+     "model_prob": 0.54176,
+     "fair_odds": -118,
+     "p_push": null,
+     "book": "betus",
+     "odds": 107,
+     "decimal": 2.07,
+     "implied_prob": 0.48309,
+     "market_fair_prob": 0.47257,
+     "edge": 0.06919,
+     "ev_per_unit": 0.12144,
+     "ev_per_unit_if_no_push": 0.12144,
+     "kelly_full": 0.1135,
+     "book_title": "BetUS",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "DET -1.5",
+     "model_prob": 0.26732,
+     "fair_odds": 274,
+     "p_push": null,
+     "book": "lowvig",
+     "odds": 182,
+     "decimal": 2.82,
+     "implied_prob": 0.35461,
+     "market_fair_prob": 0.34395,
+     "edge": -0.07663,
+     "ev_per_unit": -0.24616,
+     "ev_per_unit_if_no_push": -0.24616,
+     "kelly_full": 0.0,
+     "book_title": "LowVig.ag",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "MIN +1.5",
+     "model_prob": 0.73268,
+     "fair_odds": -274,
+     "p_push": null,
+     "book": "bovada",
+     "odds": -200,
+     "decimal": 1.5,
+     "implied_prob": 0.66667,
+     "market_fair_prob": 0.65605,
+     "edge": 0.07663,
+     "ev_per_unit": 0.09902,
+     "ev_per_unit_if_no_push": 0.09902,
+     "kelly_full": 0.19804,
+     "book_title": "Bovada",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 8.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 8.0",
+      "model_prob": 0.58223,
+      "fair_odds": -139,
+      "p_push": 0.13568,
+      "book": "lowvig",
+      "odds": 103,
+      "decimal": 2.03,
+      "implied_prob": 0.49261,
+      "market_fair_prob": 0.47646,
+      "edge": 0.10577,
+      "ev_per_unit": 0.15724,
+      "ev_per_unit_if_no_push": 0.18192,
+      "kelly_full": 0.17663,
+      "book_title": "LowVig.ag",
+      "point": 8.0
+     },
+     {
+      "side": "under",
+      "label": "Under 8.0",
+      "model_prob": 0.41777,
+      "fair_odds": 139,
+      "p_push": 0.13568,
+      "book": "mybookieag",
+      "odds": -118,
+      "decimal": 1.8475,
+      "implied_prob": 0.54127,
+      "market_fair_prob": 0.52354,
+      "edge": -0.10577,
+      "ev_per_unit": -0.19721,
+      "ev_per_unit_if_no_push": -0.22817,
+      "kelly_full": 0.0,
+      "book_title": "MyBookie.ag",
+      "point": 8.0
+     }
+    ],
+    "p_push": 0.13568
+   },
+   "market": {
+    "moneyline_hold_pct": 2.226,
+    "total_hold_pct": 3.39,
+    "moneyline_fair_book": "betus",
+    "moneyline_hold_range": [
+     2.226,
+     4.867
+    ],
+    "moneyline_n_books_on_line": 9,
+    "total_fair_book": "lowvig",
+    "total_hold_range": [
+     3.39,
+     5.109
+    ],
+    "total_n_books_on_line": 5,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.099,
+    "fair_book_rule": "min_hold",
+    "n_books_rejected": {
+     "moneyline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "runline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 6
+     },
+     "total": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 5
      }
     },
     "max_book_lag_minutes": {
@@ -1305,9 +1584,9 @@
   }
  ],
  "record": {
-  "n_rows": 0,
+  "n_rows": 1,
   "n_settled": 0,
-  "n_open": 0,
+  "n_open": 1,
   "won": 0,
   "lost": 0,
   "push": 0,
@@ -1317,7 +1596,7 @@
   "beat_close_rate": null,
   "avg_clv_pct": null,
   "stake_policy": "flat 1 unit",
-  "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
+  "chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
   "chain_note": "sha256 folded row by row over the record; a record that still contains an archived value as one of its prefix hashes is an append, and one that does not is a rewrite"
  },
  "gating_note": "Preview slice. Everything is public during the Diamond preview; this file is the seam a future gate would read."

@@ -1505,8 +1505,13 @@ CLV_GRADED = """{"n_rows": 4, "n_graded": 4, "beat_close_rate": 0.75,
            {"bet_id": "c", "graded": true, "clv_pct": 0.4, "beat_close": true},
            {"bet_id": "d", "graded": true, "clv_pct": 0.34, "beat_close": true}]}"""
 
+# `serve_clv` true here ON PURPOSE. CLV was retired from the SERVED payload on
+# 2026-09-07 (betting_export.SERVE_CLV) but the panel, the sidecar and the decile
+# histogram are all still in the client and all come back when the switch flips,
+# so the fixture keeps exercising them. The retired path gets its own fixture and
+# its own test below.
 LIVE_PAYLOAD = ("""{
- "slate_date": "2026-08-09", "n_games": 2,""" + FULL_STATUS + """, "model": {
+ "slate_date": "2026-08-09", "n_games": 2, "serve_clv": true,""" + FULL_STATUS + """, "model": {
    "version": "betting_runs_v1", "validated": false, "stage": "Diamond preview",
    "min_edge": null,""" + VALIDATION_BLOCK + """},
  "disclaimer": {"age": "21+ only.", "purpose": "Informational only.",
@@ -2113,6 +2118,28 @@ def test_every_chart_absence_branch_survives_a_missing_artifact():
     assert vtext.count("/data/betting_learning.json") >= 2
     rtext = _visible_text(c.eval("__show('record')"))
     assert "ROI by tag: not measured yet" in rtext
+
+
+def test_the_retired_state_shows_results_grading_and_no_clv_panel():
+    """WHAT THE SITE ACTUALLY SERVES since 2026-09-07.
+
+    With `serve_clv` false the panel is gone and the grading copy says what
+    replaced it. The cost is stated on the page rather than only in a commit
+    message: results are the noisier instrument, and a reader deciding how much
+    to trust the record is entitled to know that before reading it.
+    """
+    payload = LIVE_PAYLOAD.replace('"serve_clv": true', '"serve_clv": false')
+    c = _ctx(_fetch_js(main=payload, learning=LEARNING_ARTIFACT,
+                       evald=EVAL_ARTIFACT))
+    text = _visible_text(c.eval("__show('record')"))
+    # The PANEL is gone, asserted on its own cells rather than on the phrase:
+    # the replacement copy names closing line value while explaining what was
+    # retired, which is the point of it.
+    assert "Graded against the close" not in text
+    assert "Beat close" not in text
+    assert "Mean CLV" not in text
+    assert "realized results" in text
+    assert "noisier" in text
 
 
 def test_clv_absent_state_names_the_crontab_and_the_selfcheck(live_ctx):

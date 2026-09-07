@@ -665,7 +665,6 @@
     var segs = [];
     if (!d) {
       segs.push(fhSeg("odds", "payload not loaded", true));
-      segs.push(fhSeg("close", "unknown", true));
       segs.push(fhSeg("board", "unknown", true));
     } else {
       // OPEN. The capture the board was actually priced from, which is the one
@@ -675,25 +674,35 @@
       // CLOSE. Zero is the state this strip exists for, and it is stated in
       // capitals because it is not a degraded reading of a working job, it is
       // a job that has never run.
-      var nClose = fh ? fh.n_slates_with_close : null;
-      var nSlates = fh ? fh.n_slates : null;
-      var closeTxt, closeWarn;
-      if (!fh) { closeTxt = "not measured"; closeWarn = true; }
-      else if (!nClose) { closeTxt = "NEVER CAPTURED"; closeWarn = true; }
-      else if (nClose < nSlates) { closeTxt = nClose + " of " + nSlates + " slates"; closeWarn = true; }
-      else { closeTxt = "all " + nSlates + " slates"; closeWarn = false; }
-      segs.push(fhSeg("close", closeTxt, closeWarn));
+      // CLOSE, only while CLV is served. Left unconditional this painted the
+      // whole strip red and read "NEVER CAPTURED" forever over a capture the
+      // module no longer uses, which is an alarm about a retired feature.
+      if (clvEnabled()) {
+        var nClose = fh ? fh.n_slates_with_close : null;
+        var nSlates = fh ? fh.n_slates : null;
+        var closeTxt, closeWarn;
+        if (!fh) { closeTxt = "not measured"; closeWarn = true; }
+        else if (!nClose) { closeTxt = "NEVER CAPTURED"; closeWarn = true; }
+        else if (nClose < nSlates) { closeTxt = nClose + " of " + nSlates + " slates"; closeWarn = true; }
+        else { closeTxt = "all " + nSlates + " slates"; closeWarn = false; }
+        segs.push(fhSeg("close", closeTxt, closeWarn));
+      }
       segs.push(fhSeg("board", d.slate_date || "unknown", !d.slate_date));
       segs.push(fhSeg("games", String(d.n_games == null ? 0 : d.n_games),
                       !(d.n_games)));
     }
     var diag = (fh && fh.diagnosis) ? String(fh.diagnosis) : "";
-    host.className = "bt-fh" + (!fh || !fh.n_slates_with_close ? " bt-fh-red" : "");
+    // RED IS FOR THE FEED THAT PRICES THE BOARD. With CLV retired the absence
+    // of a close capture is not a fault, so it no longer reddens the strip; a
+    // missing OPEN snapshot still does, because that one empties the page.
+    var feedBad = clvEnabled() ? (!fh || !fh.n_slates_with_close)
+                               : !(d && d.status && d.status.odds_captured_at);
+    host.className = "bt-fh" + (feedBad ? " bt-fh-red" : "");
     host.setAttribute("role", "status");
     host.innerHTML = '<div class="bt-fh-line"' +
       (diag ? ' title="' + esc(diag) + '"' : "") + ">" +
       '<span class="bt-fh-hd">FEED</span>' + segs.join("") +
-      (fh && !fh.n_slates_with_close
+      (clvEnabled() && fh && !fh.n_slates_with_close
         ? '<span class="bt-fh-note">no close snapshot exists, so no ' + selNoun() +
           " on this page can ever be graded against the closing line</span>"
         : "") + "</div>";
@@ -1995,25 +2004,49 @@
     return '<div class="bt-panel">' + rows.join("") + "</div>";
   }
 
+  // ONE READ OF THE SERVED CLV SWITCH (betting_export.SERVE_CLV, owner
+  // 2026-09-07). Absent reads as OFF: a payload that does not carry the flag is
+  // one that cannot have CLV data either, and an empty panel is the defect this
+  // retirement removes.
+  function clvEnabled() {
+    return !!((S.data || {}).serve_clv);
+  }
+
   function renderRecord() {
     var d = S.data;
-    return recordPanel(d ? d.record : null) + clvPanel() + roiByTagPanel() +
+    // CLV RETIRED (betting_export.SERVE_CLV, owner 2026-09-07). Read off the
+    // payload, never a literal here, so the server flag moves the panel and the
+    // copy below together.
+    var clvOn = clvEnabled();
+    return recordPanel(d ? d.record : null) + (clvOn ? clvPanel() : "") + roiByTagPanel() +
       publishBlockerPanel() +
       '<div class="bt-panel"><div class="bt-panel-hd">How a ' + selNoun() +
       " gets graded</div>" +
       "<p>Every published " + selNoun() + " carries the timestamp, the book, the " +
       "price at post and a flat one " + gl("unit", "betting_unit") +
-      ". It settles won, lost or void, and it is then graded a second time " +
-      "against the closing line.</p>" +
-      "<p>" + gl("Closing line value", "clv") + " is the honest test. Beating the close means the market " +
-      "moved toward the " + selNoun() + " after it was posted, which is evidence " +
-      "the " + selNoun() + " had information in it. Winning a bet is not evidence " +
-      "of anything on its own, and one season of results is a smaller sample than " +
-      "it feels like.</p>" +
-      "<p>Two CLV numbers get published side by side: price CLV, the posted decimal " +
-      "over the closing decimal minus one, and probability CLV, the implied " +
-      "probability at close minus at post. Beat-close rate is the plain yes or no " +
-      "across every graded " + selNoun() + ".</p></div>";
+      ". It settles won, lost or void.</p>" +
+      (clvOn
+        ? "<p>It is then graded a second time against the closing line. " +
+          gl("Closing line value", "clv") + " is the honest test. Beating the " +
+          "close means the market moved toward the " + selNoun() + " after it " +
+          "was posted, which is evidence the " + selNoun() + " had information " +
+          "in it. Winning a bet is not evidence of anything on its own, and one " +
+          "season of results is a smaller sample than it feels like.</p>" +
+          "<p>Two CLV numbers get published side by side: price CLV, the posted " +
+          "decimal over the closing decimal minus one, and probability CLV, the " +
+          "implied probability at close minus at post. Beat-close rate is the " +
+          "plain yes or no across every graded " + selNoun() + ".</p>"
+        : "<p><strong>Grading is on realized results alone.</strong> Closing " +
+          "line value was retired from this module on 2026-09-07. It had never " +
+          "produced a number here: no closing snapshot was ever captured, so " +
+          "every CLV cell on this page read as ungraded and the public record " +
+          "sat at zero rows waiting on a capture that does not happen.</p>" +
+          "<p>That cost is worth naming rather than hiding. Beating the close " +
+          "is the sharper instrument, because it tests whether the market moved " +
+          "toward a " + selNoun() + " after it was posted. Results are noisier: " +
+          "winning a bet is not evidence of anything on its own, and one season " +
+          "of them is a much smaller sample than it feels like. Read the record " +
+          "below with that in mind.</p>") + "</div>";
   }
 
   function chip(label, value) {
@@ -2131,15 +2164,21 @@
       body = empty("The record starts when the " + selNounPl() + " do",
         "No " + selNoun() + " has been published, so there is nothing to grade. " +
         "When " + selNounPl() + " start, every one of them lands here with the " +
-        "book, the price at post, a flat 1 unit stake, and the closing line it " +
-        "is graded against. Rows are never edited or deleted.");
+        "book, the price at post, a flat 1 unit stake" +
+        (clvEnabled() ? ", and the closing line it is graded against" : "") +
+        ". Rows are never edited or deleted.");
     } else {
       body = '<div class="bt-kv">' +
         kv("Record", r.won + "-" + r.lost + (r.push ? "-" + r.push : "")) +
         kv("Net units", signed(r.net_units, 2)) +
         kv("ROI", r.roi_pct == null ? "-" : signed(r.roi_pct, 2) + "%") +
-        kv("Beat close", r.beat_close_rate == null ? "not graded yet" : pct(r.beat_close_rate)) +
-        kv("Average CLV", r.avg_clv_pct == null ? "not graded yet" : signed(r.avg_clv_pct, 2) + "%") +
+        // The two CLV cells ride the same served switch as the panel. Left in
+        // unconditionally they printed "not graded yet" forever, which is how a
+        // permanently absent instrument reads as a pending one.
+        (clvEnabled()
+          ? kv("Beat close", r.beat_close_rate == null ? "not graded yet" : pct(r.beat_close_rate)) +
+            kv("Average CLV", r.avg_clv_pct == null ? "not graded yet" : signed(r.avg_clv_pct, 2) + "%")
+          : "") +
         kv("Open", r.n_open) +
         "</div>";
     }
