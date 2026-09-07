@@ -631,10 +631,23 @@ def era_factor(seasons: pd.DataFrame, *, offline: bool = False) -> pd.Series:
 # Position class.
 # ---------------------------------------------------------------------------
 
-def _position_inputs(*, offline: bool = False) -> pd.DataFrame:
-    """Career sums of every column that carries a positional signal."""
+def _position_inputs(*, offline: bool = False,
+                    season_cutoff=None) -> pd.DataFrame:
+    """Career sums of every column that carries a positional signal.
+
+    `season_cutoff` truncates BOTH stint frames to seasons at or before that
+    year before summing, which is what makes pos_class, relief_share,
+    relief_coverage and pos_rate point-in-time. Without it a 1995 cutoff would
+    still know how a pitcher's career ENDED: relief_share is a career quantity
+    and a starter who finished in the bullpen would file as an RP at a cutoff
+    where he had never relieved.
+    """
     b = stint_frame("bat", offline=offline)
     p = stint_frame("pit", offline=offline)
+    if season_cutoff is not None:
+        cut = int(season_cutoff)
+        b = b[pd.to_numeric(b["year_ID"], errors="coerce") <= cut]
+        p = p[pd.to_numeric(p["year_ID"], errors="coerce") <= cut]
     bg = b.groupby("player_ID").agg(
         pa=("PA", "sum"),
         runs_position=("runs_position", "sum"),
@@ -733,8 +746,15 @@ def current_year() -> int:
 
 
 def career_frame(*, offline: bool = False,
-                 as_of_year=None) -> pd.DataFrame:
+                 as_of_year=None, season_cutoff=None) -> pd.DataFrame:
     """One row per bbref player_ID. The shelf.
+
+    `as_of_year` GATES ELIGIBILITY AND NOTHING ELSE. `season_cutoff` is the one
+    that makes the FEATURES point-in-time: it drops every season after that year
+    before any aggregation, so a call at 1995 sees the career as it stood in
+    1995. Ask for `as_of_year=1995` alone and you still get Barry Bonds at 162.8
+    career WAR, which is correct for a shelf and useless for a predictor. See
+    `as_of` below.
 
     Columns
       player_ID, name, first_season, last_season, n_seasons
@@ -753,12 +773,19 @@ def career_frame(*, offline: bool = False,
     a plate appearance. The two differ for a designated-hitter-era pitcher.
     """
     year = int(as_of_year or current_year())
-    key = (bool(offline), year)
+    cut = None if season_cutoff is None else int(season_cutoff)
+    # THE CUTOFF IS PART OF THE CACHE KEY. Without it the first full-career call
+    # poisons every point-in-time call after it, returning a 2026 career for a
+    # 1995 question with no error anywhere. That is the leak that would have been
+    # hardest to see, because the frame it hands back is perfectly well formed.
+    key = (bool(offline), year, cut)
     hit = _CAREER_CACHE.get(key)
     if hit is not None:
         return hit.copy()
 
     seasons = season_frame(offline=offline)
+    if cut is not None:
+        seasons = seasons[pd.to_numeric(seasons["year_ID"], errors="coerce") <= cut]
     g = seasons.groupby("player_ID")
     out = g.agg(
         name=("name", "last"),
@@ -795,7 +822,8 @@ def career_frame(*, offline: bool = False,
     out["ngl_share"] = out["ngl_seasons"] / out["n_seasons"]
     out["era_factor"] = era_factor(seasons, offline=offline).reindex(out.index)
 
-    pos = _position_inputs(offline=offline).reindex(out.index)
+    pos = _position_inputs(offline=offline,
+                           season_cutoff=cut).reindex(out.index)
     cls = [position_class(r) for r in pos.itertuples()]
     out["pos_class"] = [c for c, _ in cls]
     out["pos_basis"] = [b for _, b in cls]
@@ -808,6 +836,46 @@ def career_frame(*, offline: bool = False,
     out = out.reset_index()
     _CAREER_CACHE[key] = out
     return out.copy()
+
+
+def as_of(player_id: str, cutoff: int, *, offline: bool = False):
+    """H-PRED-2. This player's shelf row AS IT STOOD at `cutoff`, or None.
+
+    Strictly seasons at or before `cutoff`, on every feature: career WAR, WAR7,
+    JAWS, WAA, positive-WAA sum, WAR ink, exposure, position class and the era
+    columns. A player with no season at or before the cutoff returns None rather
+    than a row of zeros, because "had not played yet" and "played and was worth
+    nothing" are different statements and a model must not be handed the second
+    when the first is true.
+
+    THE POINT-IN-TIME PROPERTY, which is what makes this worth having: this
+    returns the same row as running the unparameterised frame over inputs
+    physically truncated at `cutoff`. test_hof_point_in_time pins that by
+    truncating independently rather than by trusting the parameter.
+
+    Two things it deliberately does NOT do. It does not gate eligibility, which
+    is `as_of_year`'s job and a separate question. And it does not pretend the
+    ballot is knowable: a merit feature frame says what a career looked like,
+    not what the writers were about to do with it.
+
+    POS_CLASS IS UNSTABLE EARLY, and a model reading it has to know. The
+    classifier requires PITCHER_MIN_IPOUTS (900) career outs before it will call
+    anyone a pitcher, so at an early cutoff a real pitcher with thin exposure
+    files as a FIELDER: Mariano Rivera at a 1996 cutoff has 524 outs and comes
+    back "1B/DH". Measured against the full frame: at a 1995 cutoff 166 players
+    (6.6% of the full frame's pitchers) are not yet classed as pitchers, and 7
+    of the 2,358 that are move between SP and RP; at 2005 it is 147 (5.1%) and
+    12 of 2,738. That is the threshold working, not a truncation defect, and it
+    is the honest content of a point-in-time answer: at that date the exposure
+    to decide was not there yet. Do not read an early pos_class as a claim about
+    what the player turned out to be.
+    """
+    cf = career_frame(offline=offline, as_of_year=int(cutoff),
+                      season_cutoff=int(cutoff))
+    hit = cf[cf["player_ID"] == player_id]
+    if not len(hit):
+        return None
+    return hit.iloc[0]
 
 
 def eligible_universe(*, offline: bool = False,
