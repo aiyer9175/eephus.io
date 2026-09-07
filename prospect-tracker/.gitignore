@@ -75,6 +75,15 @@ data/betting_settlement.json
 # backup list in deploy/WEBMASTER.md); this copy is a derived re-render written
 # by every write and published by rsync because data_catalog advertises it.
 data/betting_shadow.json
+# The FUTURES FORWARD RECORD, on exactly the same reasoning. It landed untracked
+# AND unignored on 2026-09-06, the state the note above calls the worst of the
+# three, and it is an accruing file: one entry per day, and the whole point is
+# that a completed season can be scored against the numbers that were live
+# through it. `git checkout -- .` at 03:10 would revert every entry the night
+# before had added. Source of truth is .cache/futures/ledger.json (untracked via
+# `.cache/`, on the backup list in deploy/WEBMASTER.md); this copy is a derived
+# re-render written by every build and published by rsync.
+data/futures_ledger.json
 # The LEARNING SERIES, derived the same way from the eval, the two ledgers and
 # its own append-only history. Rewritten by run_monthly step 9e every night.
 data/betting_learning.json

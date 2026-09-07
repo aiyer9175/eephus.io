@@ -2318,12 +2318,170 @@ def export() -> int:
     return len(raw)
 
 
+# The markets the ledger records, and the only ones it will ever be allowed to
+# score. Each is a probability this board publishes for a club-season, so each
+# resolves to a 0 or a 1 once the season is over. `winTotal` is deliberately
+# absent: it is a count, not a probability, and it would need a different loss.
+LEDGER_MARKETS = ("divisionPct", "playoffPct", "byePct", "pennantPct", "wsPct")
+
+#: THE LEDGER LIVES OUTSIDE data/, AND THE REASON IS WRITTEN DOWN TWICE ALREADY.
+#: deploy/nightly-build.sh runs `git checkout -- .` before every pipeline. An
+#: accruing file inside data/ therefore has three possible states and two of them
+#: destroy it: TRACKED means every appended entry is reverted at 03:10 with no
+#: error anywhere (this is what killed the public betting record, see the
+#: .gitignore note on data/betting_record.json), and UNTRACKED-AND-UNIGNORED is
+#: worse still, because it survives today and one `git add -A` arms the tracked
+#: failure later. Only `.cache/` both escapes the checkout and sits on the backup
+#: list in deploy/WEBMASTER.md, so it is also the only state that survives a box
+#: rebuild.
+#:
+#: So `.cache/futures/ledger.json` is the SOURCE OF TRUTH and
+#: `data/futures_ledger.json` is a DERIVED re-render, published by rsync and safe
+#: to lose. Same seam as betting_shadow.py, for the same reason.
+#:
+#: A JSON OBJECT AND NOT A JSONL LOG, matching the shadow ledger rather than the
+#: public record: resolution fills `resolved` and the realized outcomes in on
+#: entries already written, which a one-line-per-append log cannot express
+#: without an envelope-per-mutation format this file does not have.
+FUTURES_CACHE_DIR = DATA_DIR.parent / ".cache" / "futures"
+FUTURES_LEDGER_CACHE = FUTURES_CACHE_DIR / "ledger.json"
+FUTURES_LEDGER_DERIVED = DATA_DIR / "futures_ledger.json"
+FUTURES_LEDGER_PATH = FUTURES_LEDGER_CACHE
+
+
+def append_futures_ledger(fut: dict, *, season: int | None = None,
+                          today: str | None = None,
+                          path: Path | None = None) -> dict:
+    """Append what this build published, so a forward record can start accruing.
+
+    data/futures.json carries the sentence "These probabilities come from a
+    simulator with no validated forward record", and that sentence stays true
+    forever unless something writes the record down. A probability published
+    tonight and overwritten tomorrow night can never be scored: by the time the
+    season resolves, the only number left on disk is the last one, taken when
+    most of the uncertainty had already gone.
+
+    THIS SCORES NOTHING. It records. Resolution needs final standings and a
+    postseason result, and the ledger states how many entries are waiting rather
+    than implying any of them have been graded.
+
+    IDEMPOTENT PER DAY. The nightly run, a rebuild_only and a hand run on the
+    same date collapse to one entry, the last written. Without that, a day the
+    box was run four times would carry four times the weight of a day it ran
+    once, and the record would be measuring pipeline activity.
+    """
+    import datetime as _dt
+
+    path = path or FUTURES_LEDGER_PATH
+    today = today or _dt.date.today().isoformat()
+    season = int(season or _dt.date.today().year)
+    # READ THE CACHE, and fall back to the derived copy exactly once so a box that
+    # already has a data/ ledger from before the seam existed keeps its history
+    # instead of restarting the clock at zero.
+    led = {}
+    for src in (path, FUTURES_LEDGER_DERIVED if path == FUTURES_LEDGER_CACHE else None):
+        if src is None:
+            continue
+        try:
+            led = json.loads(src.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if led.get("entries"):
+            if src is not path:
+                log.info("futures ledger: adopting %d entr%s from %s (pre-seam copy)",
+                         len(led["entries"]), "y" if len(led["entries"]) == 1 else "ies",
+                         src.name)
+            break
+    entries = [e for e in (led.get("entries") or [])
+               if not (e.get("as_of") == today and int(e.get("season", -1)) == season)]
+    clubs = [{"team": c.get("team"), "record": c.get("record"),
+              "projWins": c.get("projWins"),
+              **{m: c.get(m) for m in LEDGER_MARKETS}}
+             for c in (fut.get("clubs") or [])]
+    if clubs:
+        entries.append({
+            "as_of": today,
+            "season": season,
+            # so an entry can be CHECKED against a re-run rather than trusted
+            "content_hash": fut.get("content_hash"),
+            "sims": fut.get("sims"),
+            "n_clubs": len(clubs),
+            "resolved": False,
+            "clubs": clubs,
+        })
+    entries.sort(key=lambda e: (int(e.get("season", 0)), str(e.get("as_of"))))
+    by_season: dict[str, int] = {}
+    for e in entries:
+        by_season[str(e.get("season"))] = by_season.get(str(e.get("season")), 0) + 1
+    out = {
+        "_meta": {
+            "produced_by": "proj_export.append_futures_ledger",
+            "markets": list(LEDGER_MARKETS),
+            "n_entries": len(entries),
+            "n_resolved": sum(1 for e in entries if e.get("resolved")),
+            "entries_by_season": by_season,
+            "first_as_of": entries[0]["as_of"] if entries else None,
+            "last_as_of": entries[-1]["as_of"] if entries else None,
+            "one_entry_per_day": ("A rebuild on a date already present REPLACES that "
+                                  "date's entry rather than adding one, so a day the "
+                                  "pipeline ran four times does not outweigh a day it "
+                                  "ran once."),
+            "nothing_here_is_scored": (
+                "This file is a record, not a result. No entry has been graded and no "
+                "accuracy claim rests on it. Scoring needs a completed season: final "
+                "division winners, the playoff field, the bye holders, both pennants "
+                "and the World Series winner, joined back onto the entry that was live "
+                "on each date. Until a season resolves, the honest reading of this file "
+                "is its length."),
+            "why_win_total_is_absent": (
+                "winTotal is a count, not a probability. It resolves to a number rather "
+                "than to a 0 or a 1, so it needs a different loss and it is not mixed in "
+                "with the five outright markets here."),
+        },
+        "entries": entries,
+    }
+    raw = json.dumps(out, indent=1)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(raw, encoding="utf-8")
+    tmp.replace(path)
+    # The derived copy is what rsync publishes. It is written from the same
+    # object rather than re-derived, so the two can never disagree, and losing it
+    # costs nothing.
+    if path == FUTURES_LEDGER_CACHE:
+        FUTURES_LEDGER_DERIVED.parent.mkdir(parents=True, exist_ok=True)
+        tmp = FUTURES_LEDGER_DERIVED.with_suffix(".json.tmp")
+        tmp.write_text(raw, encoding="utf-8")
+        tmp.replace(FUTURES_LEDGER_DERIVED)
+    return out
+
+
 def write_futures(rows: list) -> int:
     fut = build_futures(rows)
+    # The forward record starts here, and it can only ever start once. Appending
+    # BEFORE the write keeps futures.json and the ledger describing the same
+    # build; content_hash is a digest of the clubs alone, so the summary block
+    # below does not invalidate it.
+    led = append_futures_ledger(fut)
+    fut["ledger"] = {
+        "path": "data/futures_ledger.json",
+        "source_of_truth": ".cache/futures/ledger.json",
+        "n_entries": led["_meta"]["n_entries"],
+        "n_resolved": led["_meta"]["n_resolved"],
+        "first_as_of": led["_meta"]["first_as_of"],
+        "markets": led["_meta"]["markets"],
+        "what_it_is": ("Every build appends the probabilities it published, one entry "
+                       "per day, so this board's forward record accrues instead of "
+                       "being overwritten. Nothing in it is scored yet: that needs a "
+                       "completed season joined back onto the entries that were live "
+                       "through it."),
+    }
     raw = json.dumps(fut, separators=(",", ":"))
     (DATA_DIR / "futures.json").write_text(raw, encoding="utf-8")
-    log.info("futures export: %d clubs, hash %s",
-             len(fut["clubs"]), fut["content_hash"])
+    log.info("futures export: %d clubs, hash %s, ledger %d entr%s",
+             len(fut["clubs"]), fut["content_hash"],
+             led["_meta"]["n_entries"],
+             "y" if led["_meta"]["n_entries"] == 1 else "ies")
     return len(raw)
 
 

@@ -1885,6 +1885,20 @@
       '<p class="bt-note">' + esc(FUT.why_the_price_column_is_not_called_fair) + "</p>" +
       '<p class="bt-note">' + esc(FUT.what_the_intervals_are) + "</p>" +
       '<p class="bt-note">' + esc(FUT.win_total_basis) + "</p>" +
+      // THE FORWARD RECORD, STATED AT ITS TRUE LENGTH. The paragraph above says
+      // this simulator has no validated forward record, which will stay true
+      // until one accrues, and one cannot accrue while every night overwrites
+      // the last. The ledger records what was published each day so a completed
+      // season can be scored against the numbers that were live through it. It
+      // reports how many entries exist and how many are graded, and today the
+      // second number is zero. Saying so is the point: a record that describes
+      // itself as a result before anything resolves is worse than no record.
+      (FUT.ledger ? '<p class="bt-note"><strong>Forward record: ' +
+        esc(FUT.ledger.n_entries) + ' day' + (FUT.ledger.n_entries === 1 ? '' : 's') +
+        ' logged, ' + esc(FUT.ledger.n_resolved) + ' scored.</strong> ' +
+        esc(FUT.ledger.what_it_is) +
+        (FUT.ledger.first_as_of ? ' Logging began ' + esc(FUT.ledger.first_as_of) + '.' : '') +
+        '</p>' : '') +
       '<p class="bt-dim">' + esc(FUT.sims) + " simulations, board hash " +
       esc(FUT.content_hash) + ".</p></div>";
   }

@@ -336,6 +336,23 @@ ARTIFACTS = (
                  "capture instead of estimating one."),
     },
     {
+        "file": "futures_ledger.json", "group": "diamond",
+        "title": "Futures forward record",
+        "what": ("What the futures board published each day: the five outright "
+                 "probabilities per club, one entry per date, with the board hash "
+                 "and simulation count that produced them."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_futures_ledger.py",
+        "note": ("A RECORD, NOT A RESULT. Nothing in it is scored: that needs a "
+                 "completed season joined back onto the entries that were live "
+                 "through it, and the payload reports n_resolved so the distinction "
+                 "cannot be read past. This file is a DERIVED re-render published by "
+                 "rsync; the source of truth is .cache/futures/ledger.json, outside "
+                 "data/ because the nightly `git checkout -- .` reverts anything "
+                 "accruing inside it (the defect that destroyed the public betting "
+                 "record)."),
+    },
+    {
         "file": "management_board.json", "group": "mlb",
         "title": "In-Game Management board",
         "what": ("Stolen-base decision values by target base and season, the club "
