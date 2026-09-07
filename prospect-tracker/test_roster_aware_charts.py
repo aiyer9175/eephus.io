@@ -194,3 +194,42 @@ def test_no_prop_is_priced_for_an_off_roster_player():
         "priced for a player who cannot play")
     assert '"unknown"' in body or "unknown" in body, (
         "a failed roster walk must KEEP players rather than emptying the props board")
+
+
+def test_the_daily_path_re_stamps_roster_status():
+    """"Daily" is the whole requirement, and refresh_live reuses monthly players.
+
+    fantasy_export.refresh_live deliberately skips the projection rebuild, which
+    is what makes it cheap enough to run nightly. Roster status is the one field
+    on those reused rows that goes stale in HOURS, so without an explicit
+    re-stamp the flag would only refresh on the monthly build: a player who hit
+    the IL on the 3rd would read "active" until the 1st of the next month, which
+    is exactly the staleness the flag exists to remove.
+    """
+    import fantasy_export as fx
+    src = Path(fx.__file__).read_text(encoding="utf-8")
+    i = src.index("def refresh_live(")
+    body = src[i:src.index("\ndef ", i + 10)]
+    assert "roster_status" in body and "_active_roster_ids" in body, (
+        "the daily refresh no longer re-stamps roster status, so the flag is only "
+        "as fresh as the last monthly build")
+    d = _load("fantasy.json")
+    rs = d.get("roster_status") or {}
+    if rs.get("applied"):
+        assert rs.get("refreshed") == "daily"
+
+
+def test_every_roster_aware_surface_is_on_the_nightly_path():
+    """A one-off fix is not what "updated daily" means.
+
+    run_monthly --daily is what deploy/nightly-build.sh runs most nights. All
+    five surfaces have to be reached by it, or the roster data is only as fresh
+    as the last monthly.
+    """
+    src = (HERE / "run_monthly.py").read_text(encoding="utf-8")
+    for name in ("bullpen_export", "starter_export", "hitter_export",
+                 "fantasy_export", "dfs_export"):
+        assert name in src, f"{name} is not reached by run_monthly at all"
+    # the daily leaderboard block that rebuilds the three team boards
+    assert "daily leaderboards" in src
+    assert "refresh_live" in src and "dfs_export" in src

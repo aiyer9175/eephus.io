@@ -1313,6 +1313,39 @@ def refresh_live(log=print) -> int:
         if callable(log):
             log("fantasy: no monthly fantasy.json yet — skipping daily refresh")
         return 0
+    # RE-STAMP ROSTER STATUS EVERY NIGHT. This path deliberately REUSES the
+    # monthly ROS players and skips the projection rebuild, which is what makes
+    # it cheap; but roster status is the one field on those rows that goes stale
+    # in hours rather than weeks. Without this the flag would only refresh on the
+    # monthly build, so a player who hit the IL on the 3rd would read "active"
+    # until the 1st of the following month, which is exactly the staleness the
+    # flag exists to remove. One roster walk and a loop over ~650 rows; no
+    # projection is touched.
+    _active = _active_roster_ids()
+    _n_off = 0
+    for _pl in payload.get("players") or []:
+        _mid = _pl.get("mlbam")
+        if _active is None or _mid is None:
+            _pl["roster_status"] = "unknown"
+            continue
+        _on = int(_mid) in _active
+        _pl["roster_status"] = "active" if _on else "off_roster"
+        _n_off += 0 if _on else 1
+    payload["roster_status"] = {
+        "applied": _active is not None,
+        "n_off_roster": _n_off,
+        "refreshed": "daily",
+        "basis": "StatsAPI rosterType=active (26-man); an optioned or injured "
+                 "player reads off_roster",
+        "policy": ("FLAGGED, NEVER FILTERED. This is a rest-of-season board, so a "
+                   "player who is out is still the row a manager most needs to see. "
+                   "The lineup and rotation charts filter instead, because those are "
+                   "claims about tonight."),
+        "on_failure": "a roster walk covering fewer than 28 of 30 clubs flags "
+                      "every player 'unknown' rather than mislabelling whole clubs",
+    }
+    if callable(log):
+        log(f"fantasy: roster status re-stamped, {_n_off} off-roster")
     # Keep the schedule we already have, so an empty fetch can be told apart from
     # a genuinely empty slate (see the guard below).
     _prev_games = ((payload.get("schedule") or {}).get("games") or {})
