@@ -262,3 +262,212 @@ def test_the_policy_constants_are_the_ones_the_document_pre_registered():
     assert bu.HEAVY_PITCHES == 30
     assert bu.WX_WINDOW_DAYS == 30
     assert bu.WX_MIN_GAMES == 4
+
+
+# ==========================================================================
+# catcher framing (5d-D) and times through the order (5d-E)
+# ==========================================================================
+def _pitch(px, pz, call, top=3.4, bot=1.6):
+    return {"isPitch": True,
+            "details": {"call": {"code": call}},
+            "pitchData": {"coordinates": {"pX": px, "pZ": pz},
+                          "strikeZoneTop": top, "strikeZoneBottom": bot}}
+
+
+def _play(half, events, batter=1, pitcher=10, side="R"):
+    return {"about": {"halfInning": half},
+            "matchup": {"batSide": {"code": side},
+                        "batter": {"id": batter}, "pitcher": {"id": pitcher}},
+            "playEvents": events}
+
+
+def _feedfile(tmp: Path, pk: int, plays):
+    (tmp / f"{pk}.json").write_text(
+        json.dumps({"liveData": {"plays": {"allPlays": plays}}}), encoding="utf-8")
+
+
+def test_only_taken_pitches_count_toward_framing(tmp_path):
+    """A swing is not an umpire decision. Counting one would make framing a
+    measure of whether the other team swings."""
+    _feedfile(tmp_path, 1, [_play("top", [
+        _pitch(0.5, 2.5, "C"), _pitch(0.5, 2.5, "B"),
+        _pitch(0.5, 2.5, "S"),           # swinging strike
+        _pitch(0.5, 2.5, "X"),           # ball in play
+        {"isPitch": False, "details": {}},
+    ])])
+    rows = bu._taken_pitches(1, tmp_path)
+    assert len(rows) == 2
+    assert [r["is_strike"] for r in rows] == [True, False]
+
+
+def test_the_catching_club_is_read_off_the_half_inning(tmp_path):
+    """In the top half the away team bats, so the HOME team is catching. Exact,
+    no roster join, and immune to the mid-inning substitutions that make
+    per-catcher attribution hard."""
+    _feedfile(tmp_path, 2, [_play("top", [_pitch(0.5, 2.5, "C")]),
+                            _play("bottom", [_pitch(0.5, 2.5, "C")])])
+    rows = bu._taken_pitches(2, tmp_path)
+    assert [r["catching"] for r in rows] == ["home", "away"]
+
+
+def test_height_is_normalized_to_the_batter_s_own_zone(tmp_path):
+    """Binning raw feet would make the expectation a model of batter height. A
+    tall batter and a short one, each at the same RELATIVE height, must land in
+    the same bin."""
+    _feedfile(tmp_path, 3, [
+        _play("top", [_pitch(0.2, 2.50, "C", top=3.4, bot=1.6)]),   # mid-zone
+        _play("top", [_pitch(0.2, 2.05, "C", top=2.8, bot=1.3)]),   # mid-zone, short
+    ])
+    rows = bu._taken_pitches(3, tmp_path)
+    assert rows[0]["bin"] == rows[1]["bin"]
+
+
+def test_a_pitch_with_no_zone_is_dropped_rather_than_guessed(tmp_path):
+    _feedfile(tmp_path, 4, [_play("top", [
+        {"isPitch": True, "details": {"call": {"code": "C"}},
+         "pitchData": {"coordinates": {"pX": 0.5, "pZ": 2.5}}},
+    ])])
+    assert bu._taken_pitches(4, tmp_path) == []
+
+
+def test_framing_is_measured_against_the_league_in_the_same_bin(tmp_path):
+    """The expectation is the league's OWN rate in that bin over the SAME
+    window, so a club cannot beat it by playing in a period when everybody did.
+    Here every club sees the identical bin, so every rate is zero."""
+    games = []
+    for i in range(20):
+        pk = 100 + i
+        _feedfile(tmp_path, pk, [_play("top", [_pitch(0.2, 2.5, "C")] * 30)])
+        games.append({"date": "2026-09-0%d" % (i % 6 + 1), "game_pk": pk,
+                      "home_org": "TEX" if i % 2 else "BOS", "away_org": "SEA"})
+    out = bu.framing_rates(games, "2026-09-10", feed_dir=tmp_path)
+    for org, v in out["values"].items():
+        assert abs(v) < 1e-9, (org, v)
+
+
+def test_a_club_that_steals_strikes_scores_above_the_league(tmp_path):
+    """One club takes the SAME location and gets it called a strike more often
+    than the league does. That is the whole signal, and it must come out
+    positive for that club and negative for the one it is measured against."""
+    games = []
+    pk = 200
+    # league baseline: 20 games where the bin is called a strike half the time
+    for i in range(20):
+        _feedfile(tmp_path, pk, [_play("top", [_pitch(0.9, 2.5, "C")] * 15 +
+                                              [_pitch(0.9, 2.5, "B")] * 15)])
+        games.append({"date": "2026-09-01", "game_pk": pk,
+                      "home_org": "BOS", "away_org": "SEA"})
+        pk += 1
+    # TEX gets the same pitch called a strike every time
+    for i in range(20):
+        _feedfile(tmp_path, pk, [_play("top", [_pitch(0.9, 2.5, "C")] * 30)])
+        games.append({"date": "2026-09-01", "game_pk": pk,
+                      "home_org": "TEX", "away_org": "SEA"})
+        pk += 1
+    out = bu.framing_rates(games, "2026-09-10", feed_dir=tmp_path)
+    assert out["values"]["TEX"] > 0
+    assert out["values"]["BOS"] < 0
+
+
+def test_a_thin_bin_cannot_manufacture_a_difference(tmp_path):
+    """A bin under the league floor is dropped from BOTH the actual and the
+    expected side, so one club's handful of odd pitches cannot become a rate."""
+    games = []
+    pk = 300
+    for i in range(20):
+        _feedfile(tmp_path, pk, [_play("top", [_pitch(0.2, 2.5, "C")] * 15 +
+                                              [_pitch(0.2, 2.5, "B")] * 15)])
+        games.append({"date": "2026-09-01", "game_pk": pk,
+                      "home_org": "TEX", "away_org": "SEA"})
+        pk += 1
+    # a lone club-specific location, far under FRAME_MIN_BIN, all strikes
+    _feedfile(tmp_path, pk, [_play("top", [_pitch(2.9, 0.1, "C")] * 5)])
+    games.append({"date": "2026-09-01", "game_pk": pk,
+                  "home_org": "TEX", "away_org": "SEA"})
+    out = bu.framing_rates(games, "2026-09-10", feed_dir=tmp_path)
+    assert abs(out["values"]["TEX"]) < 1e-9
+    assert str(bu.FRAME_MIN_BIN) in out["basis"]
+
+
+def test_a_club_under_the_pitch_floor_gets_no_rate(tmp_path):
+    games = []
+    _feedfile(tmp_path, 400, [_play("top", [_pitch(0.2, 2.5, "C")] * 10)])
+    games.append({"date": "2026-09-01", "game_pk": 400,
+                  "home_org": "TEX", "away_org": "SEA"})
+    out = bu.framing_rates(games, "2026-09-10", feed_dir=tmp_path)
+    assert "TEX" not in out["values"]
+
+
+# -------------------------------------------------------------------- TTO
+def _tto_game(tmp: Path, pk: int, n_batters: int, pitcher=10):
+    plays = []
+    for i in range(n_batters):
+        plays.append(_play("top", [_pitch(0.2, 2.5, "C")],
+                           batter=100 + (i % 9), pitcher=pitcher))
+    _feedfile(tmp, pk, plays)
+
+
+def test_tto_counts_the_third_pass_through_the_order(tmp_path):
+    """27 batters against a nine-man order is three full passes, so nine of
+    them are the third time through."""
+    _tto_game(tmp_path, 500, 27)
+    games = [{"date": "2026-09-01", "game_pk": 500,
+              "home_org": "TEX", "away_org": "SEA"},
+             {"date": "2026-09-02", "game_pk": 501,
+              "home_org": "TEX", "away_org": "SEA"}]
+    _tto_game(tmp_path, 501, 27)
+    out = bu.tto_exposure(games, "2026-09-10", feed_dir=tmp_path)
+    assert out["values"]["10"] == 9.0
+
+
+def test_a_short_start_never_reaches_a_third_pass(tmp_path):
+    for pk in (600, 601):
+        _tto_game(tmp_path, pk, 12)
+    games = [{"date": "2026-09-0%d" % i, "game_pk": 599 + i,
+              "home_org": "TEX", "away_org": "SEA"} for i in (1, 2)]
+    out = bu.tto_exposure(games, "2026-09-10", feed_dir=tmp_path)
+    assert out["values"]["10"] == 0.0
+
+
+def test_only_the_starter_is_measured(tmp_path):
+    """A reliever's third time through is a different event with a different
+    cause, and counting one would put a starter's exposure on a bullpen arm."""
+    plays = [_play("top", [_pitch(0.2, 2.5, "C")], batter=100 + (i % 9), pitcher=10)
+             for i in range(27)]
+    plays += [_play("top", [_pitch(0.2, 2.5, "C")], batter=100 + (i % 9), pitcher=99)
+              for i in range(27)]
+    _feedfile(tmp_path, 700, plays)
+    _feedfile(tmp_path, 701, plays)
+    games = [{"date": "2026-09-0%d" % i, "game_pk": 699 + i,
+              "home_org": "TEX", "away_org": "SEA"} for i in (1, 2)]
+    out = bu.tto_exposure(games, "2026-09-10", feed_dir=tmp_path)
+    assert "10" in out["values"]
+    assert "99" not in out["values"], "a reliever must not carry a starter's exposure"
+
+
+def test_a_pitcher_under_the_start_floor_gets_no_value(tmp_path):
+    _tto_game(tmp_path, 800, 27)
+    games = [{"date": "2026-09-01", "game_pk": 800,
+              "home_org": "TEX", "away_org": "SEA"}]
+    out = bu.tto_exposure(games, "2026-09-10", feed_dir=tmp_path)
+    assert out["values"] == {}
+
+
+def test_the_window_stops_before_the_date_being_priced(tmp_path):
+    """Strictly before, the same rule every builder in this file follows."""
+    for pk in (900, 901):
+        _tto_game(tmp_path, pk, 27)
+    games = [{"date": "2026-09-10", "game_pk": 900,
+              "home_org": "TEX", "away_org": "SEA"},
+             {"date": "2026-09-11", "game_pk": 901,
+              "home_org": "TEX", "away_org": "SEA"}]
+    out = bu.tto_exposure(games, "2026-09-10", feed_dir=tmp_path)
+    assert out["values"] == {}
+
+
+def test_the_framing_and_tto_constants_are_the_pre_registered_ones():
+    assert bu.FRAME_X_BIN == 0.1
+    assert bu.FRAME_Z_BIN == 0.1
+    assert bu.FRAME_MIN_BIN == 40
+    assert bu.FRAME_MIN_TEAM_PITCHES == 200
+    assert bu.FRAME_WINDOW_DAYS == 30

@@ -1006,7 +1006,7 @@ LF/CF/RF`, `L To R`, `R To L`, `Calm`, `Varies`, `None`.
 
 ### The columns
 
-Team columns (`TEAM_COLUMNS` grows from 11 to 19):
+Team columns (`TEAM_COLUMNS` grows from 11 to 20):
 
 | Column | Source | Basis |
 |---|---|---|
@@ -1018,12 +1018,14 @@ Team columns (`TEAM_COLUMNS` grows from 11 to 19):
 | `games_in_l7` | this club's games in the seven prior days | populated |
 | `wx_temp_climo` | mean observed temperature at THIS venue within a +/- 7 calendar-day window, over seasons STRICTLY BEFORE the vintage date | populated where the venue has >= 10 prior-season games in the window; null with the count otherwise |
 | `wx_wind_out_climo` | same window, mean signed out-to-centre wind component (out +, in -, lateral and calm 0) | same rule |
+| `catch_frame_rate` | called strikes above the league's own rate in the same location bin, per 100 taken pitches, trailing 30d (section 5d-D) | populated; 30 of 30 clubs on the 2026-09-07 window |
 
-Pitcher column (`PITCHER_COLUMNS` grows from 5 to 6):
+Pitcher columns (`PITCHER_COLUMNS` grows from 5 to 7):
 
 | Column | Source | Basis |
 |---|---|---|
 | `sp_rest_days` | days since this pitcher's previous appearance in any cached feed | populated when a prior appearance exists; null on a season debut, with that stated |
+| `sp_tto3_bf` | mean batters faced for the 3rd+ time per start, trailing 30d, min 2 starts (section 5d-E) | populated for 173 pitchers on the 2026-09-07 window; null below the start floor |
 
 ### The availability rule, named before it is measured
 
@@ -1096,6 +1098,95 @@ the total is reporting a park proxy rather than weather. Criteria: paired
 absolute error on total, improvement at one-sided t >= 1.645, AND no degradation
 of moneyline Brier on the point estimate. The observed-weather screen runs first
 and can only disqualify.
+
+### 5d-D. Catcher framing (`catch_frame_rate`), added to schema 4 on 2026-09-07
+
+**Source.** `.cache/game_feeds` play events. Verified on a 40-feed random sample:
+11,753 pitch events, **all 11,753 carrying pX/pZ coordinates** and each plate
+appearance carrying its own `strikeZoneTop` / `strikeZoneBottom`. No new
+dependency; a 30-day window is 408 games and 3.5 seconds.
+
+**The number.** Called strikes above the league's own rate in the same location
+bin, per 100 TAKEN pitches, over a trailing 30-day window ending the day before
+the vintage date. Bins are (batter side, |pX| in 0.1 ft, height normalized to
+that batter's own zone in 0.1 units), and a bin under 40 league pitches is
+dropped from BOTH the actual and the expected side so a thin bin cannot
+manufacture a difference.
+
+**Three design choices that are the whole feature.** Height is normalized to the
+batter's own zone, because binning raw feet would make the expectation a model of
+batter height. Swings are excluded, because a swing is not an umpire decision and
+carries no framing information. And the catching club is read off the HALF
+INNING rather than off a pitcher-to-team map: in the top half the away team bats,
+so the home team is catching, which is exact, needs no roster join, and is immune
+to the mid-inning substitutions that make per-catcher attribution hard.
+
+**The units are a rate and stay a rate.** Converting to runs needs a
+runs-per-called-strike constant that nothing in this repo measures, and inventing
+one would put a fabricated number on a scale that looks measured.
+`_assemble_team_inputs` standardizes every column anyway.
+
+**Coverage check, not a measurement.** 30 of 30 clubs carry a rate on the
+2026-09-07 window, spread from +1.76 to -2.22 per 100. Reported here for the same
+reason 5c reported its 540 order slots: it says the builder produces a number.
+**No value in this section has been related to any game outcome.**
+
+**Gate.** Estimand: does adding `catch_frame_rate` to run prevention improve
+calibration on the vintage eval half. Criteria, both required, the 11b form:
+paired Brier improvement at one-sided t >= 1.645, AND paired log loss not worse
+on the point estimate. Control: the 5c rule 3 permuted twin, permuting framing
+across clubs within each date. The confound the twin exists for: a good framing
+club is disproportionately a good PITCHING club, and `bullpen_plus` and
+`rotation_plus` already carry that.
+
+### 5d-E. Times through the order (`sp_tto3_bf`), added to schema 4 on 2026-09-07
+
+**The number.** Mean batters a starter faces for the THIRD OR LATER time, per
+start, over his own starts in the trailing 30-day window. Only each side's first
+pitcher counts; a reliever's third time through is a different event with a
+different cause. Minimum 2 starts in the window or the column is null.
+
+**EXPOSURE, NOT PENALTY, and the distinction is the reason this is buildable.**
+How far a starter gets into the order a third time is well measured from his own
+recent starts. How much WORSE he is on that third pass is a per-pitcher split
+with a season of noise in it, and pricing one would need shrinkage this has not
+earned. The candidate asked here is narrow: does exposure carry information the
+innings share (`ip_per_gs`, already in `game_prevention_z`) does not. The
+per-pitcher decline is a separate, harder candidate and is not asked.
+
+**Coverage check.** 173 pitchers carry a value on the 2026-09-07 window, mean
+4.33, median 4.40, range 0.0 to 8.5. Again: a builder check, not a measurement.
+
+**Gate.** Same two criteria and the same permuted twin. **The confound to report
+whichever way it lands:** `sp_tto3_bf` is mechanically correlated with
+`ip_per_gs`, which the model already reads, so the twin and a variance-inflation
+read on the pair are both part of the result. A candidate that only reproduces
+the innings share has found nothing.
+
+### 5d-F. The home plate umpire is NOT SERVABLE, and this records why
+
+The umpire was scoped on 2026-09-07 and **no column was added**, because the
+assignment is not knowable at pricing time.
+
+`liveData.boxscore.officials` carries the home plate umpire and it resolves on
+**40 of 40** completed feeds, so his identity is available AFTER the game. A live
+probe of game_pk 824792 (CLE at BAL, 2026-09-08) in `Preview` state returned an
+**EMPTY officials list**. The board prices pregame, so an umpire column would be
+either empty when it is needed or filled from the future.
+
+This is the same shape as the observed-weather problem in 5d-C and it takes the
+same answer: **a contaminated screen only.** The size of the umpire effect can be
+measured off completed games, labelled contaminated, under the standing rule that
+such a diagnostic can only ever DISQUALIFY a candidate and never qualify one.
+That measurement is worth running for one specific reason: it decides whether
+chasing a pregame assignment source is worth a new external dependency. If the
+effect is small, the question closes. It has not been run and no number about it
+exists.
+
+**Do not add an umpire column to the vintage store until a source publishes the
+assignment BEFORE first pitch.** A column filled from a completed feed would be
+dated after the game it describes, which is the exact leak this store exists to
+close.
 
 ### Correction (2026-09-07, same day): there are no prior seasons to build climatology from
 

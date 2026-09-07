@@ -164,8 +164,9 @@ TEAM_COLUMNS = ("offense_plus", "rotation_plus", "bullpen_plus",
                 "lineup_strength", "star_out",
                 "pen_b2b_arms", "pen_arms_avail", "pen_ip_l3", "pen_plus_avail",
                 "rest_days", "games_in_l7",
-                "wx_temp_climo", "wx_wind_out_climo")
-PITCHER_COLUMNS = ("plus", "ip_per_gs", "org", "role", "throws", "sp_rest_days")
+                "wx_temp_climo", "wx_wind_out_climo", "catch_frame_rate")
+PITCHER_COLUMNS = ("plus", "ip_per_gs", "org", "role", "throws",
+                   "sp_rest_days", "sp_tto3_bf")
 
 # The schema-3 additions by name, so a reader can ask "which columns might an
 # older record lack" without diffing tuples by hand.
@@ -177,8 +178,8 @@ SCHEMA3_PITCHER_COLUMNS = ("throws",)
 # might an older record lack" without diffing tuples by hand.
 SCHEMA4_TEAM_COLUMNS = ("pen_b2b_arms", "pen_arms_avail", "pen_ip_l3",
                         "pen_plus_avail", "rest_days", "games_in_l7",
-                        "wx_temp_climo", "wx_wind_out_climo")
-SCHEMA4_PITCHER_COLUMNS = ("sp_rest_days",)
+                        "wx_temp_climo", "wx_wind_out_climo", "catch_frame_rate")
+SCHEMA4_PITCHER_COLUMNS = ("sp_rest_days", "sp_tto3_bf")
 
 # The stated basis for each schema-3 column, written into every record's
 # `feature_basis` block. These strings are the honesty mechanism: a column that
@@ -1053,6 +1054,7 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
             r.get("role") or "SP",
             None,                     # throws, filled by the bulk join below
             None,                     # sp_rest_days, filled below
+            None,                     # sp_tto3_bf, filled below
         ]
     for r in pen.get("relievers") or []:
         mid, plus = r.get("mlbam"), r.get("rem_plus")
@@ -1065,7 +1067,7 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
         # rest builder raise IndexError on the 171st pitcher, having silently
         # filled the first 170.
         pitchers[str(int(mid))] = [round(float(plus), 3), None,
-                                   _org(r.get("team")), "RP", None, None]
+                                   _org(r.get("team")), "RP", None, None, None]
 
     # Schema 3 dark capture: throwing hand, ONE bulk call at assembly, never a
     # per-game lookup. `load_pitch_hand` is lru-cached per season and returns
@@ -1122,19 +1124,22 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
     # feed. None on a season debut, which is a stated absence and not a large
     # rest number, because a silent zero-or-999 is exactly what a downstream
     # reader would mistake for one.
-    n_rest = 0
     try:
         import betting_usage
-        i_rest = PITCHER_COLUMNS.index("sp_rest_days")
-        rests = betting_usage.build_starter_rest(pitchers, on_date=vintage_date)
-        for mid, v in rests.items():
-            if v is not None and mid in pitchers:
-                pitchers[mid][i_rest] = int(v)
-                n_rest += 1
-        rest_basis = FEATURE_SOURCES["sp_rest_days"]
+        pit4 = betting_usage.build_pitcher_schema4(pitchers, on_date=vintage_date)
     except Exception as exc:                                     # noqa: BLE001
-        rest_basis = f"ABSENT: the sp_rest_days builder raised {type(exc).__name__}: {exc}"
-    fb["sp_rest_days"] = {"basis": rest_basis, "n": n_rest}
+        why = f"ABSENT: the schema-4 pitcher builder raised {type(exc).__name__}: {exc}"
+        pit4 = {c: {"values": {}, "basis": why} for c in SCHEMA4_PITCHER_COLUMNS}
+    for col in SCHEMA4_PITCHER_COLUMNS:
+        i_col = PITCHER_COLUMNS.index(col)
+        blk = pit4.get(col) or {"values": {}, "basis": "ABSENT: builder returned nothing"}
+        n_col = 0
+        for mid, v in (blk.get("values") or {}).items():
+            if v is not None and mid in pitchers:
+                pitchers[mid][i_col] = v
+                n_col += 1
+        fb[col] = {"basis": blk.get("basis") or FEATURE_SOURCES.get(col, ""),
+                   "n": n_col}
     fb["throws"] = {
         "basis": (FEATURE_SOURCES["throws"] if n_throws else
                   "ABSENT: the bulk pitchHand call returned nothing tonight; "

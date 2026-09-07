@@ -457,6 +457,14 @@ def build_schema4_team_columns(*, on_date: str, data_dir: Path | None = None,
 
     cols = ("pen_b2b_arms", "pen_arms_avail", "pen_ip_l3", "pen_plus_avail",
             "rest_days", "games_in_l7", "wx_temp_climo", "wx_wind_out_climo")
+    # Framing rides the same pass because it reads the same feeds; it is scored
+    # on a 30-day window rather than the 3-day availability one, so it takes its
+    # own scan and is isolated the way every other builder here is.
+    try:
+        frame = framing_rates(games, on_date, feed_dir=feed_dir)
+    except Exception as exc:                                     # noqa: BLE001
+        frame = {"values": {},
+                 "basis": f"ABSENT: the framing builder raised {type(exc).__name__}: {exc}"}
     values: dict = {c: {} for c in cols}
     n_thin_wx = 0
     for org in orgs:
@@ -491,7 +499,9 @@ def build_schema4_team_columns(*, on_date: str, data_dir: Path | None = None,
              "pen_ip_l3": pen_basis, "pen_plus_avail": pen_basis,
              "rest_days": rest_basis, "games_in_l7": rest_basis,
              "wx_temp_climo": wx_basis, "wx_wind_out_climo": wx_basis}
-    return {c: {"values": values[c], "basis": basis[c]} for c in cols}
+    out = {c: {"values": values[c], "basis": basis[c]} for c in cols}
+    out["catch_frame_rate"] = frame
+    return out
 
 
 def build_starter_rest(pitchers: dict, *, on_date: str,
@@ -516,4 +526,246 @@ def build_starter_rest(pitchers: dict, *, on_date: str,
     out = {}
     for mid in pitchers or {}:
         out[str(mid)] = starter_rest(mid, on_date, ledger)
+    return out
+
+
+def build_pitcher_schema4(pitchers: dict, *, on_date: str,
+                          games: list[dict] | None = None,
+                          feed_dir: Path | None = None) -> dict:
+    """Both schema-4 pitcher columns in one call:
+    {"sp_rest_days": {...}, "sp_tto3_bf": {...}}, each {mlbam_str: value}.
+
+    Isolated per column: one builder failing costs its own column a stated null
+    and never the snapshot, which is the rule every builder in this file
+    follows.
+    """
+    if games is None:
+        try:
+            import betting_model as bm
+            games = bm.completed_games(season=on_date[:4], refresh=False)
+        except Exception:                                        # noqa: BLE001
+            games = []
+    out: dict = {}
+    try:
+        out["sp_rest_days"] = {"values": build_starter_rest(
+            pitchers, on_date=on_date, games=games, feed_dir=feed_dir)}
+    except Exception as exc:                                     # noqa: BLE001
+        out["sp_rest_days"] = {"values": {},
+                               "basis": f"ABSENT: sp_rest_days raised {type(exc).__name__}: {exc}"}
+    try:
+        tto = tto_exposure(games, on_date, feed_dir=feed_dir)
+        out["sp_tto3_bf"] = {"values": {k: v for k, v in tto["values"].items()
+                                        if k in (pitchers or {})},
+                             "basis": tto["basis"]}
+    except Exception as exc:                                     # noqa: BLE001
+        out["sp_tto3_bf"] = {"values": {},
+                             "basis": f"ABSENT: sp_tto3_bf raised {type(exc).__name__}: {exc}"}
+    return out
+
+
+# ---------------------------------------------------------------------------
+# catcher framing and times through the order
+# ---------------------------------------------------------------------------
+#: Horizontal bin width for the called-strike expectation, in feet. The plate
+#: half-width is 0.7083 ft and a ball's radius is about 0.12 ft, so the decision
+#: boundary sits near 0.83 ft and a 0.1 ft bin resolves it without splitting the
+#: sample too thin.
+FRAME_X_BIN = 0.1
+
+#: Vertical bin width, in FRACTIONS OF THE BATTER'S OWN ZONE. The feed carries
+#: strikeZoneTop and strikeZoneBottom per plate appearance, so height is
+#: normalized to (pZ - bottom) / (top - bottom) and a tall batter and a short one
+#: land in the same bin. Binning raw feet would make the expectation a model of
+#: batter height.
+FRAME_Z_BIN = 0.1
+
+#: A bin needs this many league pitches before it can express an expectation.
+#: Below it the pitch is dropped from BOTH the actual and the expected side, so
+#: a thin bin cannot manufacture a difference.
+FRAME_MIN_BIN = 40
+
+#: A club needs this many scored pitches in the window before a rate is
+#: published. Below it the column is null, never a noisy number.
+FRAME_MIN_TEAM_PITCHES = 200
+
+#: Trailing window, in days, for the team framing rate and the TTO exposure.
+FRAME_WINDOW_DAYS = 30
+
+
+def _taken_pitches(game_pk, feed_dir=None):
+    """Every TAKEN pitch in one game: {bin, is_strike, catching}.
+
+    Taken means called strike or ball. A swing is not an umpire decision and
+    carries no framing information, so it is excluded rather than counted.
+
+    THE CATCHING SIDE IS READ OFF THE HALF INNING, not off a pitcher-to-team
+    map. In the top half the away team bats, so the home team is catching. That
+    is exact, needs no roster join, and is immune to the mid-inning
+    substitutions that make per-catcher attribution hard.
+    """
+    d = _feed(game_pk, feed_dir)
+    if not d:
+        return []
+    out = []
+    for p in ((d.get("liveData") or {}).get("plays") or {}).get("allPlays") or []:
+        half = str(((p.get("about") or {}).get("halfInning") or "")).lower()
+        if half not in ("top", "bottom"):
+            continue
+        catching = "home" if half == "top" else "away"
+        side = ((p.get("matchup") or {}).get("batSide") or {}).get("code") or "?"
+        for e in p.get("playEvents") or []:
+            if not e.get("isPitch"):
+                continue
+            code = ((e.get("details") or {}).get("call") or {}).get("code")
+            if code not in ("C", "B"):
+                continue
+            pd = e.get("pitchData") or {}
+            co = pd.get("coordinates") or {}
+            px, pz = co.get("pX"), co.get("pZ")
+            top, bot = pd.get("strikeZoneTop"), pd.get("strikeZoneBottom")
+            if px is None or pz is None or top is None or bot is None:
+                continue
+            try:
+                top, bot = float(top), float(bot)
+                if top <= bot:
+                    continue
+                zn = (float(pz) - bot) / (top - bot)
+                key = (side, round(abs(float(px)) / FRAME_X_BIN), round(zn / FRAME_Z_BIN))
+            except (TypeError, ValueError, ZeroDivisionError):
+                continue
+            out.append({"bin": key, "is_strike": code == "C", "catching": catching})
+    return out
+
+
+#: One framing scan per (date, window) per process. reduce_current is called
+#: several times in a suite run and by more than one pipeline step, and the scan
+#: is 408 games of play events; without this each caller pays it again. Keyed on
+#: the arguments that change the answer, so a different date still rescans.
+_FRAME_CACHE: dict = {}
+
+
+def framing_rates(games, on_date, *, feed_dir=None,
+                  window_days=FRAME_WINDOW_DAYS):
+    """{"values": {org: called strikes above expected per 100 taken pitches},
+    "basis": str}.
+
+    TWO PASSES OVER THE SAME WINDOW. The first builds the league expectation per
+    location bin; the second scores each club against it. The expectation is the
+    league's OWN rate in that bin over the SAME window, so it is a within-window
+    contrast that carries no constant from anywhere else, and a club cannot beat
+    it by playing in a period when everybody did.
+
+    THE UNITS ARE A RATE, ON PURPOSE. Converting to runs needs a
+    runs-per-called-strike constant that nothing in this repo measures, and
+    inventing one would put a fabricated number on a scale that looks measured.
+    `_assemble_team_inputs` standardizes every column anyway, so a rate reaches
+    the model in the same shape a run figure would.
+    """
+    from datetime import date as _date
+    ck = (on_date, window_days, str(feed_dir), len(games or []))
+    if ck in _FRAME_CACHE:
+        return _FRAME_CACHE[ck]
+    lo = (_date.fromisoformat(on_date) - timedelta(days=window_days)).isoformat()
+    win = [g for g in (games or []) if g.get("date") and lo <= g["date"] < on_date]
+    per_game = []
+    league = {}
+    for g in win:
+        rows = _taken_pitches(g.get("game_pk"), feed_dir)
+        if not rows:
+            continue
+        per_game.append((g, rows))
+        for r in rows:
+            b = league.setdefault(r["bin"], [0, 0])
+            b[0] += 1
+            b[1] += 1 if r["is_strike"] else 0
+    exp = {k: v[1] / v[0] for k, v in league.items() if v[0] >= FRAME_MIN_BIN}
+
+    tot = {}
+    n_used = n_dropped = 0
+    for g, rows in per_game:
+        sides = {"home": _org(g.get("home_org")), "away": _org(g.get("away_org"))}
+        for r in rows:
+            e = exp.get(r["bin"])
+            if e is None:
+                n_dropped += 1
+                continue                    # thin bin: dropped from BOTH sides
+            org = sides.get(r["catching"])
+            if not org:
+                continue
+            t = tot.setdefault(org, [0, 0.0])
+            t[0] += 1
+            t[1] += (1.0 if r["is_strike"] else 0.0) - e
+            n_used += 1
+    values = {o: round(100.0 * v[1] / v[0], 3)
+              for o, v in tot.items() if v[0] >= FRAME_MIN_TEAM_PITCHES}
+    basis = (f"called strikes above the league's own rate in the same location bin, "
+             f"per 100 taken pitches, over {len(per_game)} game(s) from {lo} to the "
+             f"day before {on_date}. {n_used} pitch(es) scored, {n_dropped} dropped "
+             f"for sitting in a bin under {FRAME_MIN_BIN} league pitches. Height is "
+             f"normalized to each batter's own zone and bins are split by batter "
+             f"side. Swings are excluded: a swing is not an umpire decision")
+    out = {"values": values, "basis": basis}
+    _FRAME_CACHE[ck] = out
+    return out
+
+
+_TTO_CACHE: dict = {}
+
+
+def tto_exposure(games, on_date, *, feed_dir=None,
+                 window_days=FRAME_WINDOW_DAYS):
+    """{"values": {mlbam_str: mean batters faced for the 3rd+ time per START},
+    "basis": str}.
+
+    EXPOSURE, NOT PENALTY. How far a starter gets into the order a third time is
+    well measured from his own recent starts. How much WORSE he is on that third
+    pass is a per-pitcher split with a season of noise in it, and pricing one
+    would need shrinkage this has not earned. The candidate is whether exposure
+    carries information the innings share does not; the per-pitcher decline is a
+    separate, harder question that is not asked here.
+
+    Only each side's FIRST pitcher counts. A reliever's third time through is a
+    different event with a different cause.
+    """
+    from datetime import date as _date
+    ck = (on_date, window_days, str(feed_dir), len(games or []))
+    if ck in _TTO_CACHE:
+        return _TTO_CACHE[ck]
+    lo = (_date.fromisoformat(on_date) - timedelta(days=window_days)).isoformat()
+    starts = {}
+    n_games = 0
+    for g in (games or []):
+        d = g.get("date")
+        if not d or not (lo <= d < on_date):
+            continue
+        fd = _feed(g.get("game_pk"), feed_dir)
+        if not fd:
+            continue
+        n_games += 1
+        order, faced, first = {}, {}, {}
+        for p in ((fd.get("liveData") or {}).get("plays") or {}).get("allPlays") or []:
+            m = p.get("matchup") or {}
+            pid = (m.get("pitcher") or {}).get("id")
+            bid = (m.get("batter") or {}).get("id")
+            half = str(((p.get("about") or {}).get("halfInning") or "")).lower()
+            if not pid or not bid or half not in ("top", "bottom"):
+                continue
+            first.setdefault(half, pid)
+            if pid != first[half]:
+                continue                          # not the starter for this side
+            faced.setdefault(pid, 0)
+            k = (pid, bid)
+            order[k] = order.get(k, 0) + 1
+            if order[k] >= 3:
+                faced[pid] += 1
+        for pid, n in faced.items():
+            starts.setdefault(pid, []).append(n)
+    values = {str(pid): round(sum(v) / len(v), 3)
+              for pid, v in starts.items() if len(v) >= 2}
+    basis = (f"mean batters faced for the 3rd+ time per start, over {n_games} game(s) "
+             f"from {lo} to the day before {on_date}, starters only, minimum 2 starts "
+             f"in the window. EXPOSURE only: the per-pitcher decline on that third "
+             f"pass is a separate candidate this does not price")
+    out = {"values": values, "basis": basis}
+    _TTO_CACHE[ck] = out
     return out
