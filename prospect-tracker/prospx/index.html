@@ -34740,7 +34740,7 @@ function _gfxSurplusBlock(p, P) {
     const pct = _ci.cred != null ? Math.round(_ci.cred * 100) : 90;
     metaBits.push(`${pct}% CI ${fmtUsd(_ci.lo_mm)}-${fmtUsd(_ci.hi_mm)}`);
   }
-  if (d.p10_mm != null) metaBits.push(`P10-P90 ${fmtUsd(d.p10_mm)}-${fmtUsd(d.p90_mm)}`);
+  if (d.p10_mm != null) metaBits.push(fmtFanRange(d.p10_mm, d.p90_mm, fmtUsd));
   if (pb != null) metaBits.push(`P(bust) ${pb}%`);
   if (d.p_above_threshold != null && d.threshold_mm != null) metaBits.push(`P(>$${Math.round(d.threshold_mm)}M) ${Math.round(d.p_above_threshold * 100)}%`);
   if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtUsd(d.risk_adjusted_mm)}`);
@@ -36954,7 +36954,8 @@ function makeSurplusCell(p) {
   const tip = `${isEfv ? "eFV" : "Consensus"} expected surplus ${fmtSvMM(s.value_mm)}`
     + (consSv != null ? ` (consensus FV surplus ${fmtSvMM(consSv)})` : "")
     + (ciText ? ` · ${ciText}` : "")
-    + (d.p10_mm != null ? ` · outcome range ${fmtSvMM(d.p10_mm)}-${fmtSvMM(d.p90_mm)}` : "")
+    + (d.p10_mm != null ? ` · ${fmtFanRange(d.p10_mm, d.p90_mm, fmtSvMM, "outcome range")}` : "")
+    + (fanOutsideNote(s.value_mm, d.p10_mm, d.p90_mm) ? ` · ${fanOutsideNote(s.value_mm, d.p10_mm, d.p90_mm)}` : "")
     + (pb != null ? ` · P(bust) ${pb}%` : "")
     + (d.risk_adjusted_mm != null ? ` · risk-adj ${fmtSvMM(d.risk_adjusted_mm)}` : "")
     + (wag != null ? ` · WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(2)}` : "")
@@ -37018,6 +37019,38 @@ function fmtSvMM(m) {
   if (a >= 10) return `${sign}$${Math.round(a)}M`;
   if (a >= 1)  return `${sign}$${a.toFixed(1)}M`;
   return `${sign}$${Math.round(a * 1000)}K`;
+}
+
+// A P10-to-P90 interval is a percentile range and the surplus beside it is a MEAN, so
+// the two need not contain each other, and at the bottom of the board they routinely do
+// not. Measured 2026-09-06 on data/xfv.json: 4,825 of 9,505 rows have P10 == P90 (the
+// whole 10th-to-90th mass sits ON the $0-surplus floor) and on 928 of those the expected
+// surplus sits ABOVE P90, because a grade-20 bat carries P(bust) 0.915 and every dollar
+// it is worth lives in the top decile. Both figures are correct. Printing
+// "P10-P90 $0.7M-$0.7M" beside a headline of $1.5M is not: it reads as a broken range and
+// buries the one fact worth knowing, which is that four outcomes in five land on the
+// floor.
+//
+// P10 == P90 implies P(X = that figure) > 0.80 by the definition of a quantile, which is
+// exactly what the flat wording claims and no more than that.
+function fmtFanRange(p10, p90, fmt, label) {
+  if (p10 == null || p90 == null || !isFinite(p10) || !isFinite(p90)) return "";
+  const f = fmt || fmtSvMM;
+  return Number(p90) > Number(p10)
+    ? `${label || "P10-P90"} ${f(p10)}-${f(p90)}`
+    : `80%+ of outcomes at ${f(p10)}`;
+}
+
+// Said out loud when the headline falls outside its own fan, rather than left for the
+// reader to notice and mistrust.
+function fanOutsideNote(value, p10, p90, fmt) {
+  if (value == null || p10 == null || p90 == null) return "";
+  const f = fmt || fmtSvMM;
+  if (Number(value) > Number(p90))
+    return `the ${f(value)} beside it is the EXPECTED surplus, which sits above the 90th percentile because the upside is concentrated in the top decile`;
+  if (Number(value) < Number(p10))
+    return `the ${f(value)} beside it is the EXPECTED surplus, which sits below the 10th percentile`;
+  return "";
 }
 
 // Stacked outcome-bucket bar. `buckets` = {bust,bench,regular,good,star} probs
@@ -47892,13 +47925,26 @@ function renderPlayerDetail(key) {
     // D4 - the eFV surplus credible band stated in words: band_p10_mm / band_p90_mm
     // from the xfv payload, an 80% band (P10 to P90) of SIMULATED SURPLUS DOLLARS.
     // These are dollars, never grade points. Skips cleanly when the fields are null
-    // (provisional/ungraded players) or the band is degenerate (P10 == P90, the
-    // $0-surplus org-filler case where the band carries no information).
-    const _efvBand = (_useEfv && _xf.band_p10_mm != null && _xf.band_p90_mm != null
-                      && Number(_xf.band_p90_mm) > Number(_xf.band_p10_mm))
-      ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 8px;font-size:10px;" title="80% credible band on the eFV surplus: in 8 of 10 simulated career paths the 6-year cost-controlled surplus lands between these dollar figures (P10 to P90 of the simulated outcomes). A range of surplus dollars, not a grade band.">
-           <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;flex:none;">Surplus band <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;">P10 to P90</span></span>
-           <span style="font-family:var(--font-mono);color:var(--text-secondary);font-variant-numeric:tabular-nums;">${fmtSvMM(_xf.band_p10_mm)} to ${fmtSvMM(_xf.band_p90_mm)}</span>
+    // (provisional/ungraded players).
+    //
+    // A DEGENERATE BAND IS NOT AN ABSENT ONE. This used to skip when P10 == P90,
+    // calling it "the $0-surplus org-filler case where the band carries no
+    // information". That is backwards: P10 == P90 says more than 80% of simulated
+    // career paths land on the SAME dollar figure, which is the $0-surplus floor,
+    // and it is the most decision-relevant fact on the card. It is also why the
+    // expected surplus printed above it can sit ABOVE the 90th percentile. 4,825
+    // of 9,505 eFV rows are in this state and every one of them showed nothing.
+    const _bandLo = _useEfv ? _xf.band_p10_mm : null;
+    const _bandHi = _useEfv ? _xf.band_p90_mm : null;
+    const _bandFlat = (_bandLo != null && _bandHi != null
+                       && !(Number(_bandHi) > Number(_bandLo)));
+    const _bandTitle = _bandFlat
+      ? "The eFV surplus fan is FLAT here: more than 80% of simulated career paths land on the same dollar figure, which for most rows in this state is the $0-surplus floor. The expected surplus shown above can therefore sit above the 90th percentile, because what value this profile carries lives entirely in the top decile of outcomes. A mean is not a percentile."
+      : "80% credible band on the eFV surplus: in 8 of 10 simulated career paths the 6-year cost-controlled surplus lands between these dollar figures (P10 to P90 of the simulated outcomes). A range of surplus dollars, not a grade band.";
+    const _efvBand = (_bandLo != null && _bandHi != null)
+      ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 8px;font-size:10px;" title="${_bandTitle}">
+           <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;flex:none;">Surplus band <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;">${_bandFlat ? "P10 = P90" : "P10 to P90"}</span></span>
+           <span style="font-family:var(--font-mono);color:var(--text-secondary);font-variant-numeric:tabular-nums;">${_bandFlat ? `80%+ at ${fmtSvMM(_bandLo)}` : `${fmtSvMM(_bandLo)} to ${fmtSvMM(_bandHi)}`}</span>
          </div>` : "";
     const fmtUsd = m => {
       if (m == null) return " - ";
@@ -48116,7 +48162,7 @@ function renderPlayerDetail(key) {
       // Skip the baked P10-P90 when the eFV surplus band is already shown above
       // (the eFV fan + its Surplus band are the headline distribution); avoids two
       // near-identical dollar ranges on the same card.
-      if (d.p10_mm != null && !_efvFan) metaBits.push(`P10-P90 ${fmtSvMM(d.p10_mm)}-${fmtSvMM(d.p90_mm)}`);
+      if (d.p10_mm != null && !_efvFan) metaBits.push(fmtFanRange(d.p10_mm, d.p90_mm, fmtSvMM));
       if (pb != null) metaBits.push(`<span style="color:${pb >= 40 ? 'var(--down)' : 'var(--text-secondary)'};">P(bust) ${pb}%</span>`);
       if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtSvMM(d.risk_adjusted_mm)}`);
       if (bk || d.p10_mm != null || metaBits.length) {

@@ -913,11 +913,30 @@ function _renderTBRows() {
     // because a projection band can go negative and "$-63.6-$799.4M" is not a
     // range anyone can read.
     const lo = p.trade_value_lo, hi = p.trade_value_hi;
-    const rangeTip = (lo != null && hi != null)
-      ? `Range ${_tbFmt(lo)} to ${_tbFmt(hi)} · ` + (p.band_basis === "projection"
-          ? "projection p10-p90 WAR fan, salary held fixed (every season at its own p10 together, so it is wide)"
-          : "eFV credible interval")
-      : "";
+    // THE BOUNDS ARE PERCENTILES AND THE PRICE BESIDE THEM IS A MEAN, so the
+    // price can sit outside its own range and the range can have no width at
+    // all. The compute states the opposite contract ("We anchor off the point
+    // estimate to guarantee lo <= tv <= hi") and then the re-point overwrites
+    // both bounds with the eFV band, which carries no such guarantee. Measured
+    // 2026-09-06: 3,957 of 6,432 rows carry a zero-width band and 592 carry one
+    // that excludes the price in the cell beside it, because a grade-20 profile
+    // busts 92% of the time and every dollar it is worth lives in the top
+    // decile. The bounds are right. "Range $0.7M to $0.7M" was not a sentence
+    // about them.
+    const bandWhat = p.band_basis === "projection"
+      ? "projection p10-p90 WAR fan, salary held fixed (every season at its own p10 together, so it is wide)"
+      : "eFV credible interval";
+    let rangeTip = "";
+    if (lo != null && hi != null) {
+      rangeTip = (Number(hi) > Number(lo))
+        ? `Range ${_tbFmt(lo)} to ${_tbFmt(hi)} · ${bandWhat}`
+        : `More than 80% of modelled outcomes land at ${_tbFmt(lo)} · ${bandWhat}`;
+      if (tv != null && Number(tv) > Number(hi)) {
+        rangeTip += `. The ${_tbFmt(tv)} shown is the EXPECTED value, which sits above the 90th percentile here because the upside is concentrated in the top decile`;
+      } else if (tv != null && Number(tv) < Number(lo)) {
+        rangeTip += `. The ${_tbFmt(tv)} shown is the EXPECTED value, which sits below the 10th percentile here`;
+      }
+    }
     const flash = p.flash || {};
     const injD  = p.injury_discount || 0;
 
