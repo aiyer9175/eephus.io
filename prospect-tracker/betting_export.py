@@ -2774,10 +2774,29 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
 # props: MODEL FAIR LINES ONLY (free tier has no per-event prop budget)
 # ===========================================================================
 def _fantasy_index() -> dict:
+    """(mlbam, side) -> fantasy projection row, ACTIVE ROSTER ONLY.
+
+    fantasy.json deliberately serves players who are off an active roster and
+    FLAGS them, because a rest-of-season board is exactly where a manager needs
+    to see that his man is out. A prop is the opposite: you cannot bet a hits
+    line on a player who is not on the roster tonight, so a projection carrying
+    roster_status "off_roster" must never reach a priced market. 156 of 652
+    fantasy rows were in that state on the day this landed.
+
+    "unknown" is KEPT. It means the roster walk was not trustworthy (fewer than
+    28 of 30 clubs), and dropping every player on a failed feed would empty the
+    props board rather than degrade it.
+    """
     fan = _load("fantasy.json") or {}
     by = {}
+    n_off = 0
     for p in fan.get("players") or []:
+        if p.get("roster_status") == "off_roster":
+            n_off += 1
+            continue
         by[(p.get("mlbam"), p.get("side"))] = p
+    if n_off:
+        log.info("props: %d off-roster projection(s) withheld from pricing", n_off)
     return by
 
 

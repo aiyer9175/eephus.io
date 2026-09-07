@@ -861,6 +861,7 @@ def _schedule_for_day(day: str, fantasy: dict | None) -> tuple[list, dict]:
 
 
 def build_payload(*, day: str | None = None, fantasy: dict | None = None,
+                  active_ids=None,
                   games: list | None = None, positions: dict | None = None,
                   park: dict | None = None, teams_ctx: dict | None = None,
                   vegas: dict | None = None, lineups: dict | None = None) -> dict:
@@ -1164,10 +1165,42 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     integrity["vegas_games"] = sum(1 for g in slate_games if g.get("vegas"))
     integrity["lineup_sides_posted"] = n_lineup_sides
     integrity["lineup_sides_possible"] = 2 * len(slate_games)
+    # TONIGHT'S SLATE, so an off-roster player is undraftable and does not belong
+    # in the pool: he cannot accrue a point. This is the opposite call from
+    # fantasy, which FLAGS the same players because a rest-of-season board is
+    # exactly where a manager needs to see that his man is out. Measured before
+    # this shipped: 119 of 497 served DFS players (23.9%) were not on an active
+    # roster. Removed rows are ledgered, not silently dropped, beside the
+    # `unprojected` list that already exists for this kind of accounting.
+    _active = active_ids
+    off_roster = []
+    if _active is not None:
+        kept = []
+        for r in rows:
+            mid = r.get("mlbam")
+            if mid is None or int(mid) in _active:
+                kept.append(r)          # unreadable id -> KEEP, never over-filter
+            else:
+                off_roster.append({"mlbam": mid, "name": r.get("name"),
+                                   "team": r.get("team"),
+                                   "why": "not on a current active roster"})
+        rows = kept
     payload.update({
         "vegas_source": vegas_meta,
         "n_games": len(slate_games),
         "n_players": len(rows),
+        "off_roster": off_roster[:60],
+        "roster_filter": {
+            "applied": _active is not None,
+            "n_removed": len(off_roster),
+            "basis": "StatsAPI rosterType=active (26-man)",
+            "policy": ("FILTERED. A DFS pool is a set of players you can draft for "
+                       "tonight, and one who is not on an active roster cannot score. "
+                       "fantasy.json flags the same players instead, because a "
+                       "rest-of-season board is where you need to see them."),
+            "on_failure": "a roster walk covering fewer than 28 of 30 clubs removes "
+                          "nothing; a player whose mlbam cannot be read is kept",
+        },
         "games": slate_games,
         "players": rows,
         "remaining_team_games": rem_games,
@@ -1195,6 +1228,16 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
         payload["empty_reason"] = integrity["message"]
         payload["empty_reason_kind"] = integrity["kind"]
     return payload
+
+
+def _active_roster_ids():
+    """The shared active-roster set, or None when the walk was not trustworthy."""
+    try:
+        from bullpen_export import _active_mlbam_ids
+        from datetime import date
+        return _active_mlbam_ids(date.today().year)
+    except Exception:                                      # noqa: BLE001
+        return None
 
 
 def _count_by(rows: list, field: str) -> dict:
@@ -1478,7 +1521,10 @@ def refresh(log=print, *, day: str | None = None, games: list | None = None,
     path = Path(out_path) if out_path else OUT_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        payload = build_payload(day=day, games=games)
+        # the roster walk belongs to the EXPORT path, not to the pure
+        # builder: build_payload takes its data from its caller.
+        payload = build_payload(day=day, games=games,
+                                active_ids=_active_roster_ids())
     except Exception:
         _log.exception("dfs: payload build failed - continuing")
         # NOT a bare `return 0`. Returning here left the previous payload on

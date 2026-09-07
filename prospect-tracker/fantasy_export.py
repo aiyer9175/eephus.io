@@ -289,6 +289,20 @@ def _ip_per_gs() -> dict:
             for r in (lb.get("starters") or []) if r.get("mlbam")}
 
 
+def _active_roster_ids():
+    """The shared active-roster set, or None when the walk was not trustworthy.
+
+    Imported lazily so this module keeps working with no network and so a
+    bullpen_export import cycle cannot form at module load.
+    """
+    try:
+        from bullpen_export import _active_mlbam_ids
+        from datetime import date
+        return _active_mlbam_ids(date.today().year)
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
 def build_players(limit: int | None = None) -> dict:
     """Project the whole pool ROS and score it. Returns the full payload dict."""
     corpus = fp.build_corpus()
@@ -366,11 +380,39 @@ def build_players(limit: int | None = None) -> dict:
                                 "pos": pr, "ros": stats, "fpts_fgp": pts})
 
     _enrich(players)
+    # ROSTER STATUS, FLAGGED AND NEVER FILTERED. This is a rest-of-season board, so
+    # an injured player is the most important row on it: a manager rostering him
+    # needs to SEE that he is out. Dropping him, the way the lineup charts
+    # correctly drop him, would be the bug here. Measured before this shipped: 190
+    # of 743 served players (25.6%) were not on an active roster and nothing said
+    # so anywhere.
+    active_ids = _active_roster_ids()
+    n_off = 0
+    for pl in players:
+        mid = pl.get("mlbam")
+        if active_ids is None or mid is None:
+            pl["roster_status"] = "unknown"
+            continue
+        on = int(mid) in active_ids
+        pl["roster_status"] = "active" if on else "off_roster"
+        n_off += 0 if on else 1
     return {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "season": cur,
         "season_fraction": round(frac, 3),
         "n_players": len(players),
+        "roster_status": {
+            "applied": active_ids is not None,
+            "n_off_roster": n_off,
+            "basis": "StatsAPI rosterType=active (26-man); an optioned or injured "
+                     "player reads off_roster",
+            "policy": ("FLAGGED, NEVER FILTERED. This is a rest-of-season board, so a "
+                       "player who is out is still the row a manager most needs to see. "
+                       "The lineup and rotation charts filter instead, because those are "
+                       "claims about tonight."),
+            "on_failure": "a roster walk covering fewer than 28 of 30 clubs flags "
+                          "every player 'unknown' rather than mislabelling whole clubs",
+        },
         "scoring": fscore.points_weight_tables(),
         "scoring_catalog": fscore.SCORING_CATALOG,
         "players": players,

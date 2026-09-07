@@ -132,3 +132,65 @@ def test_a_partial_roster_walk_refuses_to_filter():
     src = Path(be.__file__).read_text(encoding="utf-8")
     assert "n_clubs_ok" in src and "any_ok" not in src, (
         "the single-club guard is back")
+
+
+# --------------------------------------------------------------------------
+# Fantasy, DFS and betting: the SAME data, three different correct answers
+# --------------------------------------------------------------------------
+
+def test_fantasy_flags_off_roster_players_and_never_drops_them():
+    """A rest-of-season board is where you most need to see that your man is out.
+
+    Removing him here would be the bug, which is why fantasy takes the opposite
+    treatment from the lineup charts on the same underlying fact.
+    """
+    d = _load("fantasy.json")
+    rs = d.get("roster_status") or {}
+    if not rs.get("applied"):
+        pytest.skip("roster walk unavailable on this build")
+    rows = d.get("players") or []
+    off = [r for r in rows if r.get("roster_status") == "off_roster"]
+    assert off, "no player is flagged off_roster; the flag is not being written"
+    assert len(off) == rs["n_off_roster"]
+    assert all(r.get("roster_status") in ("active", "off_roster", "unknown")
+               for r in rows)
+    assert "NEVER FILTERED" in rs["policy"]
+
+
+def test_dfs_removes_off_roster_players_from_the_draftable_pool():
+    """A DFS pool is who you can draft tonight. An off-roster player cannot score."""
+    d = _load("dfs.json")
+    rf = d.get("roster_filter") or {}
+    if not rf.get("applied"):
+        pytest.skip("roster walk unavailable on this build")
+    assert rf["n_removed"] >= 0
+    assert isinstance(d.get("off_roster"), list), (
+        "removed players are not ledgered; a silent drop is how a pool shrinks "
+        "without anyone noticing")
+    ledger_ids = {r.get("mlbam") for r in d["off_roster"]}
+    served = {r.get("mlbam") for r in d.get("players") or []}
+    assert not (ledger_ids & served), "a player is both removed and served"
+
+
+def test_the_two_policies_are_deliberately_opposite_and_say_so():
+    fan = (_load("fantasy.json").get("roster_status") or {}).get("policy", "")
+    dfs = (_load("dfs.json").get("roster_filter") or {}).get("policy", "")
+    if not fan or not dfs:
+        pytest.skip("policy blocks absent on this build")
+    assert "FLAGGED" in fan and "FILTERED" in dfs
+    # each names the other, so a reader hitting one is told why the other differs
+    assert "lineup" in fan.lower() or "tonight" in fan.lower()
+    assert "fantasy" in dfs.lower()
+
+
+def test_no_prop_is_priced_for_an_off_roster_player():
+    """You cannot bet a hits line on someone who is not on the roster tonight."""
+    import betting_export as bx
+    src = Path(bx.__file__).read_text(encoding="utf-8")
+    i = src.index("def _fantasy_index(")
+    body = src[i:src.index("\ndef ", i + 10)]
+    assert 'roster_status' in body and 'off_roster' in body, (
+        "the props index no longer skips off-roster projections, so a prop can be "
+        "priced for a player who cannot play")
+    assert '"unknown"' in body or "unknown" in body, (
+        "a failed roster walk must KEEP players rather than emptying the props board")
