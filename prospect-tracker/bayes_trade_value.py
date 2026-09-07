@@ -4086,16 +4086,30 @@ def _roster_seasons_index(data_dir: Path) -> dict:
 
 
 def _has_control_window(row: dict) -> bool:
-    """Does this row have seasons a club actually controls?
+    """Does this row have controlled seasons left to price an eFV BACKGRADE over?
 
-    THE PRODUCT OF THIS MODULE IS SURPLUS OVER A CONTROL WINDOW, so a row whose
-    window has length zero has no surplus to publish. A free agent is the clear
-    case: there is no contract to trade and nothing to integrate production over.
+    READ THE BRANCH ORDER BEFORE READING THIS. It guards the `xfv_backgrade`
+    fallback ONLY, and that fallback is reached only when a row has no projection
+    price. It does NOT decide whether a pending free agent is a trade asset.
+
+    THAT QUESTION IS ALREADY ANSWERED, THE OTHER WAY, BY AN OWNER DECISION. See
+    `_unpriced_vets` below, 2026-08-03: "an expiring deal is no longer
+    unpriceable by itself. A club still controls the player for the rest of this
+    season and that is a real, tradeable asset ... This supersedes the earlier
+    reading that a pending free agent is not a trade asset." That rule prices him
+    through surTotal off a current-season salary, on the `projection` branch,
+    which is tested FIRST. A row that qualifies for it never arrives here.
+
+    Measured on the served board when this gate landed: 0 of the 61 rows it fired
+    on carried a projection surplus. So what it blocks is not "pricing a pending
+    free agent"; it is pricing a player with NO salary on file off a grade he
+    earned years earlier as a prospect. Victor Robles read $80.0M at grade A that
+    way, in a row whose own Contract cell said Free Agent.
 
     None is treated as UNKNOWN and allowed through, because a missing field is a
     coverage gap rather than a statement that the window is empty, and this
-    predicate must not silently drop rows whose control years simply were not
-    resolved.
+    predicate must not silently unprice every row whose control years simply
+    failed to resolve.
     """
     yrs = row.get("remaining_control_years")
     if yrs is None:
@@ -4872,14 +4886,14 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
                 if factor < 0.999:
                     stats["backgrade_tempered"] += 1
             elif x_sur is not None:
-                # NO CONTROL WINDOW, NO SURPLUS. Surplus is production above cost
-                # over the seasons a club controls the player, so a free agent
-                # with zero remaining controlled seasons has nothing to integrate
-                # over and nothing to trade. This branch used to price him
-                # anyway, off a prospect-era eFV backgrade: 61 rows, 43 of them
-                # positive, $482.7M in total, with Victor Robles reading $80.0M
-                # and a Trade Value Grade of A in a row whose own Contract cell
-                # said "Free Agent".
+                # NO SALARY ON FILE, SO NO BACKGRADE. This is reached only when
+                # the projection branch above did not price the row, which is the
+                # case where the owner's 2026-08-03 rule (price a pending free
+                # agent through surTotal off his current-season salary) does not
+                # apply because there is no salary. Pricing him anyway off a
+                # prospect-era eFV backgrade gave 61 rows, 43 of them positive,
+                # $482.7M in total, with Victor Robles reading $80.0M at grade A
+                # in a row whose own Contract cell said "Free Agent".
                 #
                 # THE ROW KEEPS ITS OWN BAYES PRICE; only the BACKGRADE is
                 # withheld, which is why the key says so. Measured on the

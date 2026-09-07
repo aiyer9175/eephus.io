@@ -198,3 +198,63 @@ def test_the_served_board_prices_no_zero_control_backgrade_row():
             f"{len(bad)} zero-control backgrade rows still priced; the exporter "
             "is fixed and data/trade_values.json has not been rebuilt yet")
     assert not bad
+
+
+def test_the_gate_never_fires_on_a_row_the_owner_rule_would_price():
+    """THE CHALLENGE THIS ANSWERS, and it is a real one.
+
+    An owner decision of 2026-08-03, recorded in bayes_trade_value._unpriced_vets,
+    says: "an expiring deal is no longer unpriceable by itself. A club still
+    controls the player for the rest of this season and that is a real, tradeable
+    asset ... This supersedes the earlier reading that a pending free agent is
+    not a trade asset."
+
+    So "a free agent cannot be traded" is NOT available as a justification here,
+    and the first version of this repair used it.
+
+    What makes the gate correct is the BRANCH ORDER, not that premise. The owner's
+    rule prices such a player through surTotal off a current-season salary, which
+    is the `projection` branch, tested FIRST. A row that qualifies for it never
+    reaches the backgrade fallback the gate guards. Measured when this landed: 0
+    of the 61 gated rows carried a projection surplus.
+    """
+    src = (ROOT / "bayes_trade_value.py").read_text(encoding="utf-8")
+    i = src.index("if pk in proj_sur:")
+    j = src.index("_has_control_window(r)")
+    assert i < j, (
+        "the control-window gate now runs BEFORE the projection branch, so it can "
+        "block a row the owner's 2026-08-03 rule says must be priced")
+
+
+def test_the_owner_decision_is_cited_where_the_gate_lives():
+    """A future reader who finds the owner note and this gate must not have to
+    reconcile them alone."""
+    src = (ROOT / "bayes_trade_value.py").read_text(encoding="utf-8")
+    i = src.index("def _has_control_window")
+    doc = src[i:i + 1800]
+    assert "2026-08-03" in doc
+    assert "supersedes" in doc
+
+
+def test_no_gated_row_carries_a_projection_price():
+    """The artifact check behind the branch-order argument. If a gated row ever
+    also has a projection surplus, the two paths are no longer disjoint and the
+    gate needs re-reading against the owner decision."""
+    import json
+    p = ROOT / "data" / "trade_values.json"
+    q = ROOT / "data" / "mlb_projections.json"
+    if not (p.exists() and q.exists()):
+        pytest.skip("artifacts not built")
+    gated = [r for r in json.loads(p.read_text(encoding="utf-8")).get("players") or []
+             if r.get("efv_backgrade_withheld")]
+    if not gated:
+        pytest.skip("no gated rows on this build")
+    proj = json.loads(q.read_text(encoding="utf-8"))
+    vets = proj.get("vets") or proj.get("players") or []
+    by = {v.get("player_key") or v.get("key"): v for v in vets}
+    keys = ("surTotal", "surTot", "surplus_total_mm", "surNpv")
+    both = [r.get("player_name") for r in gated
+            if any((by.get(r.get("player_key")) or {}).get(k) is not None for k in keys)]
+    assert not both, (
+        f"{len(both)} gated rows also carry a projection surplus, so the "
+        f"projection branch did not claim them first: {both[:5]}")

@@ -1,11 +1,11 @@
 {
- "generated_at": "2026-09-05T18:24:12Z",
+ "generated_at": "2026-09-07T00:13:35Z",
  "summary": {
-  "board_rows": 9785,
-  "active_board_rows": 4690,
-  "roster_rows": 10730,
+  "board_rows": 9786,
+  "active_board_rows": 4687,
+  "roster_rows": 10731,
   "colliding_slugs": 200,
-  "critical_player_keys": 6,
+  "critical_player_keys": 5,
   "critical_active_player_keys": 0,
   "c1_shared_key": 0,
   "c1_unattributed": 3,
@@ -14,18 +14,17 @@
   "c1_untracked": 33,
   "c2_double_bound": 0,
   "c3_unresolved_active": 0,
-  "c4_side_conflicts": 2,
+  "c4_side_conflicts": 3,
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
-  "c7_name_variant_splits": 20,
-  "c7_name_variant_open": 1,
+  "c7_name_variant_splits": 19,
+  "c7_name_variant_open": 0,
   "frankenstein_records": 0,
-  "unassigned_null_id_rows": 22
+  "unassigned_null_id_rows": 20
  },
  "critical_player_keys": [
   "adrian_hernandez",
   "david_rodriguez",
-  "dominic_keegan",
   "enmanuel_rodriguez",
   "michael_perez",
   "miguel_gomez"
@@ -1600,6 +1599,17 @@
    "mlbam_id": 685777,
    "scope": "inactive",
    "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "david_rodriguez",
+   "board_position": "C",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 48,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
   }
  ],
  "birthdate_conflicts": [],
@@ -1610,7 +1620,7 @@
     "bj_murray",
     "bj_murray_jr"
    ],
-   "player_key": "bj_murray",
+   "player_key": "bj_murray_jr",
    "names": [
     "BJ Murray",
     "BJ Murray Jr."
@@ -1624,32 +1634,9 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-09-01",
-    "2026-09-05"
+    "2026-01-22"
    ],
    "resolved_by_alias": true
-  },
-  {
-   "pair": [
-    "dom_keegan",
-    "dominic_keegan"
-   ],
-   "player_key": "dominic_keegan",
-   "names": [
-    "Dom Keegan",
-    "Dominic Keegan"
-   ],
-   "birth_date": "2000-08-01",
-   "org": "TBR",
-   "mlbam_ids": [
-    null,
-    681371
-   ],
-   "status": "unadjudicated",
-   "last_snapshot_dates": [
-    "2026-08-02",
-    "2026-02-15"
-   ],
-   "resolved_by_alias": false
   },
   {
    "pair": [
@@ -1670,7 +1657,7 @@
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
     "2022-08-02",
-    "2026-09-05"
+    "2026-09-06"
    ],
    "resolved_by_alias": false
   },
@@ -1739,7 +1726,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2023-08-01",
-    "2026-09-05"
+    "2026-08-02"
    ],
    "resolved_by_alias": true
   },
@@ -1762,7 +1749,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2022-08-02",
-    "2026-09-05"
+    "2026-01-22"
    ],
    "resolved_by_alias": true
   },
@@ -1785,7 +1772,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-02-12",
-    "2026-09-05"
+    "2026-08-10"
    ],
    "resolved_by_alias": true
   },
@@ -1830,7 +1817,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-05",
+    "2026-09-06",
     "2025-07-31"
    ],
    "resolved_by_alias": true
@@ -1899,7 +1886,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-05",
+    "2026-08-20",
     "2026-08-02"
    ],
    "resolved_by_alias": true
@@ -1922,7 +1909,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-05",
+    "2026-09-01",
     "2026-02-12"
    ],
    "resolved_by_alias": true
@@ -1945,7 +1932,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-05",
+    "2026-09-01",
     "2021-02-26"
    ],
    "resolved_by_alias": true
@@ -1969,7 +1956,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-08-02",
-    "2026-09-05"
+    "2026-08-10"
    ],
    "resolved_by_alias": true
   },
@@ -1978,7 +1965,7 @@
     "jack_natili",
     "jackson_natili"
    ],
-   "player_key": "jackson_natili",
+   "player_key": "jack_natili",
    "names": [
     "Jack Natili",
     "Jackson Natili"
@@ -1991,7 +1978,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-05",
+    "2026-01-22",
     "2026-08-10"
    ],
    "resolved_by_alias": true
@@ -2037,7 +2024,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-05",
+    "2026-08-10",
     "2025-07-31"
    ],
    "resolved_by_alias": true
@@ -2060,8 +2047,8 @@
    ],
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
-    "2026-09-05",
-    "2026-09-05"
+    "2026-09-06",
+    "2026-09-06"
    ],
    "resolved_by_alias": false
   }
