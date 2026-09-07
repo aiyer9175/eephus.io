@@ -938,6 +938,16 @@ function _renderTBRows() {
     if (flash.is_bimodal) signals += ` <span style="color:var(--card-gold);font-size:10px;" title="Ceiling player (p_click=${flash.p_click})">↑</span>`;
     if (injD > 0.05)      signals += ` <span style="color:var(--neon-red);font-size:10px;" title="Injury discount ${(injD*100).toFixed(0)}%">⚕</span>`;
     signals += _tbCrunchChip(p.crunch);
+    // BASIS CHIP. This row asked for an eFV backgrade and did not get one: it
+    // has no salary on file, so there is nothing to price a control window over
+    // and the fallback would have valued him off a grade he earned years ago as
+    // a prospect. The price shown is this module's own bayes number instead.
+    // Stamped by bayes_trade_value; rendered here because a basis change nobody
+    // can see is indistinguishable from no change at all, which was the whole
+    // argument for stamping it.
+    if (p.efv_backgrade_withheld) {
+      signals += ` <span style="color:var(--text-secondary);font-size:10px;" title="eFV backgrade withheld (${escapeHtml(String(p.efv_backgrade_withheld))}): no salary on file, so this price is the trade-value model's own number rather than a surplus priced off a prospect-era eFV grade.">&#8709;eFV</span>`;
+    }
     // GRPO breakout badge - a within-cohort breakout SIGNAL (display only; it no longer
     // shifts the surplus, which is now the platform eFV/Projections value). Click -> group.
     const grpoSc = p.grpo_breakout_score;
@@ -990,6 +1000,7 @@ function _tmSignalsText(p) {
   const flash = p.flash || {};
   if (flash.is_bimodal) bits.push("↑ ceiling");
   if ((p.injury_discount || 0) > 0.05) bits.push("IL");
+  if (p.efv_backgrade_withheld) bits.push("no eFV backgrade");
   const c = p.crunch;
   if (c) {
     if (c.rule5_exposed) bits.push("R5");

@@ -4976,6 +4976,20 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
                 stats["excluded_unpriceable"] += 1
             else:
                 r["surplus_source"] = "bayes_unrepointed"
+                # ONE ROW, ONE PRICE. The board table reads trade_value_mm and
+                # the deal evaluator reads posterior_surplus_mm. Every branch
+                # above writes the SAME mm to both, so those two fields are one
+                # served price wearing two names, and _BOARD_DROP keeps this key
+                # for exactly that reason ("the evaluator's prospect-pool
+                # currency"). This branch wrote NEITHER, so both fields kept
+                # their compute-native values, which are different quantities:
+                # trade_value_mm is the final price and posterior_surplus_mm is
+                # the Kalman posterior BEFORE scarcity, the defensive floor,
+                # option and Rule 5 premiums and the injury and worry discounts.
+                # Twenty rows therefore quoted two prices at once, with Emmanuel
+                # Clase at $2.7M on the board and $0.0M in the evaluator that
+                # prices a deal containing him.
+                r["posterior_surplus_mm"] = r.get("trade_value_mm")
                 stats["unchanged"] += 1
         # Trade Value Grade off the FINAL value (re-pointed or bayes fallback) so
         # every board row carries a letter; survives board_slim automatically.
