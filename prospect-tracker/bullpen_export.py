@@ -353,7 +353,8 @@ def apply_current_team(rows: list[dict], *, label: str = "") -> int:
     return moved
 
 
-def team_basis_meta(rows: list[dict], *, label: str = "") -> dict:
+def team_basis_meta(rows: list[dict], *, label: str = "",
+                    scope: str = "current") -> dict:
     """The team-basis disclosure block each /mlbstats/ board publishes.
 
     TEAM_BASIS decides whether `team` means "the club the stats were earned with"
@@ -370,19 +371,52 @@ def team_basis_meta(rows: list[dict], *, label: str = "") -> dict:
     goes to 100% of rows in the outage this pass exists for."""
     n_moved = sum(1 for r in rows if r.get("team_basis") == "current_roster")
     n_blank = sum(1 for r in rows if not r.get("team"))
+    # SCOPE CHANGES WHAT THE SENTENCE HAS TO SAY, not what the basis is. On the
+    # CURRENT season the strongest case the convention creates is an August
+    # acquisition credited to his new club, which is a few weeks of misattributed
+    # line. On a CLOSED season it is a whole career's worth: the same rule points
+    # a 2021 season at a 2026 club, and Corbin Burnes' Cy Young year shows under
+    # his current club rather than Milwaukee. Measured across the served history
+    # artifacts, 2,088 of 6,885 rows (30.3%) are in that state. A reader given the
+    # August-acquisition sentence on a history board has been told the mild half.
+    history = (scope == "history")
+    note = ("current_roster points `team` at the club MLB's transaction feed "
+            "says employs the player today, for the charts AND the "
+            "aggregates, so an August acquisition credits his whole season "
+            "to his new club. stats_earned keeps the club the stats were "
+            "earned with. n_team_unresolved counts rows serving a blank team; "
+            "those rows are absent from every team rollup.")
+    if history and TEAM_BASIS == "current_roster":
+        note = ("These are CLOSED seasons, and `team` points at the club MLB's "
+                "transaction feed says employs the player TODAY, not the club he "
+                "played the season for. A 2021 line therefore shows under a 2026 "
+                "club. The convention is deliberate (filter an organisation and "
+                "see the players it holds now) and it is applied to the charts "
+                "AND the aggregates. n_team_unresolved counts rows serving a "
+                "blank team; those rows are absent from every team rollup.")
     return {
         "basis": TEAM_BASIS,
+        "scope": scope,
         "n_rows": len(rows),
         "n_moved_to_current_club": n_moved,
         "n_team_unresolved": n_blank,
         "label": label or None,
-        "note": ("current_roster points `team` at the club MLB's transaction feed "
-                 "says employs the player today, for the charts AND the "
-                 "aggregates, so an August acquisition credits his whole season "
-                 "to his new club. stats_earned keeps the club the stats were "
-                 "earned with. n_team_unresolved counts rows serving a blank team; "
-                 "those rows are absent from every team rollup."),
+        "note": note,
     }
+
+
+def basis_rows_for(served: list[dict], source_rows: list[dict],
+                   key: str = "mlbam") -> list[dict]:
+    """The SOURCE rows behind a served board, so the disclosure counts what the
+    reader sees.
+
+    apply_current_team stamps `team_basis` on the season rows it repoints, and
+    the board rows are rebuilt through dataclasses that do not carry the stamp,
+    so a board cannot report its own basis. Joining back on mlbam gives the
+    served subset with the stamp intact; counting the whole season pool instead
+    would report an n_rows the reader never sees."""
+    ids = {r.get(key) for r in served if r.get(key) is not None}
+    return [r for r in source_rows if r.get(key) in ids]
 
 
 @functools.lru_cache(maxsize=1)
@@ -1190,6 +1224,7 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     seasons = list(seasons or HISTORY_SEASONS)
     out_path = out_path or HISTORY_PATH
     hist = {}
+    basis_rows: list[dict] = []
     for y in seasons:
         log(f"  bullpen-history: {y}...")
         rows = load_season_pitching(y)
@@ -1204,8 +1239,9 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
             _log.warning("history leverage walk %s failed: %s", y, e)
             leverage, cov = {}, {"games": 0, "games_total": 0}
         scored = rem_plus.score_pool(build_relievers(rows, leverage, swstr))
-        board = [{k: r.get(k) for k in _HISTORY_FIELDS}
-                 for r in scored["relievers"] if r.get("qualified")]
+        qual = [r for r in scored["relievers"] if r.get("qualified")]
+        basis_rows.extend(basis_rows_for(qual, rows))
+        board = [{k: r.get(k) for k in _HISTORY_FIELDS} for r in qual]
         board.sort(key=lambda r: (r.get("rem_plus") or -999), reverse=True)
         hist[str(y)] = {
             "season": y,
@@ -1221,6 +1257,8 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         "note": ("Per-season qualified-reliever boards for the yearly history tabs. "
                  "REM+ is the pure-skill run-prevention index; RIV+ is the realized "
                  "leverage-weighted impact index (deployment value, not repeatable skill)."),
+        "team_basis": team_basis_meta(basis_rows, label="bullpen history",
+                                      scope="history"),
         "history": hist,
     }
     if write and hist:

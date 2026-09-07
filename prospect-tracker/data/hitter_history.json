@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-21",
+ "generated_at": "2026-09-06",
  "seasons": [
   2021,
   2022,
@@ -8,6 +8,15 @@
   2025
  ],
  "note": "Per-season qualified-hitter boards for the yearly history tabs. HEM+ is the pure offensive-rate skill index (100 = average qualified hitter, shrunk wOBA); the slash line and volume columns are context.",
+ "team_basis": {
+  "basis": "current_roster",
+  "scope": "history",
+  "n_rows": 1792,
+  "n_moved_to_current_club": 567,
+  "n_team_unresolved": 0,
+  "label": "hitter history",
+  "note": "These are CLOSED seasons, and `team` points at the club MLB's transaction feed says employs the player TODAY, not the club he played the season for. A 2021 line therefore shows under a 2026 club. The convention is deliberate (filter an organisation and see the players it holds now) and it is applied to the charts AND the aggregates. n_team_unresolved counts rows serving a blank team; those rows are absent from every team rollup."
+ },
  "history": {
   "2021": {
    "season": 2021,
@@ -1358,7 +1367,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "NYM",
+     "team": "BAL",
      "hem_plus": 118,
      "tier": "Above-avg",
      "pa": 296,
@@ -6506,7 +6515,7 @@
     {
      "mlbam": 672284,
      "name": "Jarred Kelenic",
-     "team": "TEX",
+     "team": "NYY",
      "hem_plus": 83,
      "tier": "Below-avg",
      "pa": 377,
@@ -10296,7 +10305,7 @@
     {
      "mlbam": 606115,
      "name": "Orlando Arcia",
-     "team": "MIN",
+     "team": "CIN",
      "hem_plus": 107,
      "tier": "Average",
      "pa": 234,
@@ -11000,7 +11009,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "NYM",
+     "team": "BAL",
      "hem_plus": 102,
      "tier": "Average",
      "pa": 401,
@@ -15444,7 +15453,7 @@
     {
      "mlbam": 621512,
      "name": "Tom\u00e1s Nido",
-     "team": "DET",
+     "team": "BOS",
      "hem_plus": 74,
      "tier": "Below-avg",
      "pa": 313,
@@ -17034,7 +17043,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "NYM",
+     "team": "BAL",
      "hem_plus": 117,
      "tier": "Above-avg",
      "pa": 595,
@@ -19476,7 +19485,7 @@
     {
      "mlbam": 606115,
      "name": "Orlando Arcia",
-     "team": "MIN",
+     "team": "CIN",
      "hem_plus": 99,
      "tier": "Average",
      "pa": 533,
@@ -20466,7 +20475,7 @@
     {
      "mlbam": 672284,
      "name": "Jarred Kelenic",
-     "team": "TEX",
+     "team": "NYY",
      "hem_plus": 94,
      "tier": "Average",
      "pa": 416,
@@ -29052,7 +29061,7 @@
     {
      "mlbam": 672284,
      "name": "Jarred Kelenic",
-     "team": "TEX",
+     "team": "NYY",
      "hem_plus": 91,
      "tier": "Average",
      "pa": 449,
@@ -29690,7 +29699,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "NYM",
+     "team": "BAL",
      "hem_plus": 87,
      "tier": "Below-avg",
      "pa": 425,
@@ -30636,7 +30645,7 @@
     {
      "mlbam": 606115,
      "name": "Orlando Arcia",
-     "team": "MIN",
+     "team": "CIN",
      "hem_plus": 81,
      "tier": "Below-avg",
      "pa": 602,
@@ -31736,7 +31745,7 @@
     {
      "mlbam": 666150,
      "name": "Dominic Fletcher",
-     "team": "PIT",
+     "team": "CIN",
      "hem_plus": 65,
      "tier": "Below-avg",
      "pa": 241,
@@ -36428,7 +36437,7 @@
     {
      "mlbam": 673357,
      "name": "Luis Robert Jr.",
-     "team": "NYM",
+     "team": "BAL",
      "hem_plus": 93,
      "tier": "Average",
      "pa": 431,
@@ -39376,7 +39385,7 @@
     {
      "mlbam": 606115,
      "name": "Orlando Arcia",
-     "team": "MIN",
+     "team": "CIN",
      "hem_plus": 68,
      "tier": "Below-avg",
      "pa": 214,

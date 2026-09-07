@@ -41,7 +41,8 @@ import hem_plus
 from hem_plus import Hitter
 from bullpen_export import (_team_abbrev_map, _num, score_war_rate,
                             join_war_rate_3yr, guard_nonempty_block,
-                            team_basis_meta, _warn_unresolved_teams, _ingest_red,
+                            team_basis_meta, basis_rows_for,
+                            _warn_unresolved_teams, _ingest_red,
                             WAR_RATE_POOL_MIN_PA, WAR_RATE_DISPLAY_MIN_PA)
 import fa_sources
 
@@ -929,6 +930,7 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     seasons = list(seasons or HISTORY_SEASONS)
     out_path = out_path or HISTORY_PATH
     hist = {}
+    basis_rows: list[dict] = []
     for y in seasons:
         log(f"  hitter-history: {y}...")
         rows = load_season_hitting(y)
@@ -936,8 +938,9 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
             log(f"  hitter-history: no data for {y}; skipping")
             continue
         scored = hem_plus.score_pool(build_hitters(rows))
-        board = [{k: s.get(k) for k in _HISTORY_FIELDS}
-                 for s in scored["hitters"] if s.get("qualified")]
+        qual = [s for s in scored["hitters"] if s.get("qualified")]
+        basis_rows.extend(basis_rows_for(qual, rows))
+        board = [{k: s.get(k) for k in _HISTORY_FIELDS} for s in qual]
         board.sort(key=lambda s: (s.get("hem_plus") or -999), reverse=True)
         hist[str(y)] = {"season": y, "n_qualified": len(board), "hitters": board}
         log(f"  hitter-history: {y} -> {len(board)} qualified")
@@ -947,6 +950,8 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         "note": ("Per-season qualified-hitter boards for the yearly history tabs. HEM+ is the "
                  "pure offensive-rate skill index (100 = average qualified hitter, shrunk wOBA); "
                  "the slash line and volume columns are context."),
+        "team_basis": team_basis_meta(basis_rows, label="hitter history",
+                                      scope="history"),
         "history": hist,
     }
     if write and hist:

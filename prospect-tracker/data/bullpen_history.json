@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-21",
+ "generated_at": "2026-09-06",
  "seasons": [
   2021,
   2022,
@@ -8,6 +8,15 @@
   2025
  ],
  "note": "Per-season qualified-reliever boards for the yearly history tabs. REM+ is the pure-skill run-prevention index; RIV+ is the realized leverage-weighted impact index (deployment value, not repeatable skill).",
+ "team_basis": {
+  "basis": "current_roster",
+  "scope": "history",
+  "n_rows": 1389,
+  "n_moved_to_current_club": 387,
+  "n_team_unresolved": 0,
+  "label": "bullpen history",
+  "note": "These are CLOSED seasons, and `team` points at the club MLB's transaction feed says employs the player TODAY, not the club he played the season for. A 2021 line therefore shows under a 2026 club. The convention is deliberate (filter an organisation and see the players it holds now) and it is applied to the charts AND the aggregates. n_team_unresolved counts rows serving a blank team; those rows are absent from every team rollup."
+ },
  "history": {
   "2021": {
    "season": 2021,
@@ -9176,7 +9185,7 @@
     {
      "mlbam": 669212,
      "name": "Eli Morgan",
-     "team": "KC",
+     "team": "NYY",
      "rem_plus": 109,
      "riv_plus": 105,
      "role": "Setup",
@@ -9576,7 +9585,7 @@
     {
      "mlbam": 676760,
      "name": "Ron Marinaccio",
-     "team": "CIN",
+     "team": "MIN",
      "rem_plus": 106,
      "riv_plus": 109,
      "role": "Middle",
@@ -11451,7 +11460,7 @@
     {
      "mlbam": 669270,
      "name": "Joel Kuhnel",
-     "team": "MIL",
+     "team": "SF",
      "rem_plus": 97,
      "riv_plus": 85,
      "role": "Mop-up",
@@ -17234,7 +17243,7 @@
     {
      "mlbam": 669212,
      "name": "Eli Morgan",
-     "team": "KC",
+     "team": "NYY",
      "rem_plus": 103,
      "riv_plus": 101,
      "role": "Middle",
@@ -18384,7 +18393,7 @@
     {
      "mlbam": 680739,
      "name": "Josh Winder",
-     "team": "AZ",
+     "team": "PHI",
      "rem_plus": 96,
      "riv_plus": 99,
      "role": "Long",
@@ -19209,7 +19218,7 @@
     {
      "mlbam": 676760,
      "name": "Ron Marinaccio",
-     "team": "CIN",
+     "team": "MIN",
      "rem_plus": 93,
      "riv_plus": 98,
      "role": "High-leverage",
@@ -23942,7 +23951,7 @@
     {
      "mlbam": 668968,
      "name": "Hans Crouse",
-     "team": "BAL",
+     "team": "SD",
      "rem_plus": 102,
      "riv_plus": 96,
      "role": "Middle",
@@ -24292,7 +24301,7 @@
     {
      "mlbam": 669212,
      "name": "Eli Morgan",
-     "team": "KC",
+     "team": "NYY",
      "rem_plus": 100,
      "riv_plus": 101,
      "role": "Mop-up",
@@ -25792,7 +25801,7 @@
     {
      "mlbam": 688297,
      "name": "Chris Roycroft",
-     "team": "TB",
+     "team": "ATH",
      "rem_plus": 94,
      "riv_plus": 88,
      "role": "Mop-up",
@@ -34050,7 +34059,7 @@
     {
      "mlbam": 688297,
      "name": "Chris Roycroft",
-     "team": "TB",
+     "team": "ATH",
      "rem_plus": 85,
      "riv_plus": 86,
      "role": "Middle",

@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-21",
+ "generated_at": "2026-09-06",
  "seasons": [
   2021,
   2022,
@@ -8,6 +8,15 @@
   2025
  ],
  "note": "Per-season qualified-starter boards for the yearly history tabs. SEM+ is the pure-skill starter run-prevention index (100 = average qualified starter); durability columns are context.",
+ "team_basis": {
+  "basis": "current_roster",
+  "scope": "history",
+  "n_rows": 892,
+  "n_moved_to_current_club": 257,
+  "n_team_unresolved": 0,
+  "label": "starter history",
+  "note": "These are CLOSED seasons, and `team` points at the club MLB's transaction feed says employs the player TODAY, not the club he played the season for. A 2021 line therefore shows under a 2026 club. The convention is deliberate (filter an organisation and see the players it holds now) and it is applied to the charts AND the aggregates. n_team_unresolved counts rows serving a blank team; those rows are absent from every team rollup."
+ },
  "history": {
   "2021": {
    "season": 2021,
@@ -2662,7 +2671,7 @@
     {
      "mlbam": 669212,
      "name": "Eli Morgan",
-     "team": "KC",
+     "team": "NYY",
      "sem_plus": 90,
      "role": "Back-end",
      "ip": 89.3,
@@ -6868,7 +6877,7 @@
     {
      "mlbam": 680739,
      "name": "Josh Winder",
-     "team": "AZ",
+     "team": "PHI",
      "sem_plus": 87,
      "role": "Spot",
      "ip": 67.0,
@@ -13285,7 +13294,7 @@
     {
      "mlbam": 680573,
      "name": "Simeon Woods Richardson",
-     "team": "TOR",
+     "team": "SEA",
      "sem_plus": 98,
      "role": "Back-end",
      "ip": 133.7,
@@ -13390,7 +13399,7 @@
     {
      "mlbam": 663362,
      "name": "Matt Waldron",
-     "team": "TOR",
+     "team": "WSH",
      "sem_plus": 97,
      "role": "Back-end",
      "ip": 146.7,
@@ -17449,7 +17458,7 @@
     {
      "mlbam": 680573,
      "name": "Simeon Woods Richardson",
-     "team": "TOR",
+     "team": "SEA",
      "sem_plus": 95,
      "role": "Back-end",
      "ip": 111.3,

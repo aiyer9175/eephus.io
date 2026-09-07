@@ -32,7 +32,8 @@ from pathlib import Path
 from typing import Optional
 
 import mlb_leverage
-from bullpen_export import load_season_pitching, guard_nonempty_block, _ingest_red
+from bullpen_export import (load_season_pitching, guard_nonempty_block,
+                            team_basis_meta, basis_rows_for, _ingest_red)
 from hitter_export import load_season_hitting
 
 _log = logging.getLogger(__name__)
@@ -158,6 +159,15 @@ def _season_boards(season: int, *, leverage_limit: Optional[int] = None, log=pri
         f"{len(bat)} batters, {len(strt)} starters folded")
     batters = _build_batters(bat, bat_nt, pit_nt)
     starters = _build_starters(strt, pit_nt, pit_gs)
+    # THE SOURCE ROWS BEHIND THIS BOARD, kept so the payload can disclose its own
+    # team basis. This module never calls apply_current_team, which reads as "the
+    # leverage board is on stats_earned" and is WRONG: its team comes from
+    # load_season_hitting / load_season_pitching, both of which apply the remap
+    # before returning. Verified against the served data as well as the code, 0
+    # of 1,005 leverage rows carry a different team than the same player's row on
+    # the bullpen or hitter board. So the page was never mixing two bases; this
+    # board simply never said which one it was on.
+    src_rows = list(hit_rows) + list(pit_rows)
     n_bat_noteam = sum(1 for b in batters if not b.get("team"))
     n_st_noteam = sum(1 for s in starters if not s.get("team"))
     if n_bat_noteam or n_st_noteam:
@@ -179,7 +189,7 @@ def _season_boards(season: int, *, leverage_limit: Optional[int] = None, log=pri
                            "GS map dropping the whole board."),
         "n_batters_no_team": n_bat_noteam, "n_starters_no_team": n_st_noteam,
     }
-    return batters, starters, cov, sources
+    return batters, starters, cov, sources, src_rows
 
 
 def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None,
@@ -188,7 +198,7 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
     season = int(season or date.today().year)
     today = today or date.today().isoformat()
 
-    batters, starters, cov, sources = _season_boards(
+    batters, starters, cov, sources, src_rows = _season_boards(
         season, leverage_limit=leverage_limit, log=log)
 
     # REFUSE TO PUBLISH EMPTY. This export was the one of the four with no `if not
@@ -221,6 +231,8 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         # for each board, so a degraded run is auditable from the served file.
         "sources": sources,
         "block_guard": {"batters": bat_guard, "starters": st_guard},
+        "team_basis": team_basis_meta(basis_rows_for(batters + starters, src_rows),
+                                      label="leverage"),
         "note": ("Realized in-game leverage impact, self-computed from the MLB StatsAPI "
                  "winProbability feed (FanGraphs is blocked for autonomous pulls). Batters: "
                  "WPA, average Leverage Index faced (pLI), and Clutch (WPA/pLI minus WPA/LI). "
@@ -252,14 +264,16 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     seasons = list(seasons or HISTORY_SEASONS)
     out_path = out_path or HISTORY_PATH
     hist: dict[str, dict] = {}
+    basis_rows: list[dict] = []
     for y in seasons:
         try:
-            batters, starters, cov, _src = _season_boards(y, log=log)
+            batters, starters, cov, _src, src_rows = _season_boards(y, log=log)
         except Exception:
             _log.exception("leverage-history: %s failed; skipping", y)
             continue
         batters = [b for b in batters if b["qualified"]]
         starters = [s for s in starters if s["qualified"]]
+        basis_rows.extend(basis_rows_for(batters + starters, src_rows))
         if not batters and not starters:
             log(f"  leverage-history: no qualified rows for {y}; skipping")
             continue
@@ -274,6 +288,8 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         "note": ("Per-season qualified batter + starter realized-leverage boards for the "
                  "yearly history pills. WPA is realized in-game win-probability impact; pLI "
                  "and Clutch read the leverage of the spots. Descriptive, not predictive."),
+        "team_basis": team_basis_meta(basis_rows, label="leverage history",
+                                      scope="history"),
         "history": hist,
     }
     if write and hist:

@@ -918,6 +918,14 @@
   // which is a deliberate choice with a real argument behind it (you can filter
   // a club and see the arms it holds now); it just stops the page keeping that
   // choice to itself.
+  //
+  // AND IT HAS TO RUN ON EVERY BOARD. It was wired into one render site, the
+  // bullpen view, which is the board where the convention moves the FEWEST rows
+  // (39 of 790). The starter, hitter and Leverage views rendered nothing, and
+  // the yearly-history boards, where the same rule points a 2021 season at a
+  // 2026 club and moves 2,088 of 6,885 rows, had no team_basis block in their
+  // payloads at all to render. Each view passes ITS OWN payload, because the
+  // counts differ per board and a shared one would misreport three of them.
   function teamBasisNote(d) {
     var tb = (d || {}).team_basis;
     if (!tb || !tb.note) return "";
@@ -1619,7 +1627,8 @@
       : (starterView === "charts") ? renderStarterCharts() : renderStarterBoard();
     // No #mlbstats-banner div exists for this section, so the freshness line
     // leads the section's own root.
-    root.innerHTML = bannerHTML(starterData) + starterTabBar() + starterControls() + inner;
+    root.innerHTML = bannerHTML(starterData) + teamBasisNote(starterData)
+      + starterTabBar() + starterControls() + inner;
     bindStarterEvents(root);
     wireGlossary(root);
   }
@@ -1691,7 +1700,8 @@
     if (!root) return;
     var inner = (starterView === "teams") ? renderStarterTeams()
       : (starterView === "charts") ? renderStarterCharts() : renderStarterBoard();
-    root.innerHTML = bannerHTML(starterData) + starterTabBar() + starterControls() + inner;
+    root.innerHTML = bannerHTML(starterData) + teamBasisNote(starterData)
+      + starterTabBar() + starterControls() + inner;
     restoreFocus(root, focusId || "mlbstats-starter-q");
     bindStarterEvents(root);
     wireGlossary(root);
@@ -2168,7 +2178,8 @@
       : (hitterView === "charts") ? renderHitterCharts() : renderHitterBoard();
     // No #mlbstats-banner div for this section; the freshness line leads the
     // section's own root.
-    root.innerHTML = bannerHTML(hitterData) + hitterTabBar() + hitterControls() + inner;
+    root.innerHTML = bannerHTML(hitterData) + teamBasisNote(hitterData)
+      + hitterTabBar() + hitterControls() + inner;
     bindHitterEvents(root);
     wireGlossary(root);
   }
@@ -2245,7 +2256,8 @@
     if (!root) return;
     var inner = (hitterView === "teams") ? renderHitterTeams()
       : (hitterView === "charts") ? renderHitterCharts() : renderHitterBoard();
-    root.innerHTML = bannerHTML(hitterData) + hitterTabBar() + hitterControls() + inner;
+    root.innerHTML = bannerHTML(hitterData) + teamBasisNote(hitterData)
+      + hitterTabBar() + hitterControls() + inner;
     restoreFocus(root, focusId || "mlbstats-hitter-q");
     bindHitterEvents(root);
     wireGlossary(root);
@@ -2560,6 +2572,7 @@
     // methodology fold (renderLeverageBoard), so it does not stand above a
     // load error or a "no rows" state either.
     root.innerHTML = bannerHTML(leverageData, { noCoverage: true })
+      + teamBasisNote(leverageData)
       + leverageTabBar() + leverageSeasonPills() + leverageControls() + renderLeverageBoard();
     bindLeverageEvents(root);
     wireGlossary(root);
@@ -2569,6 +2582,7 @@
     var root = document.getElementById("mlbstats-leverage-root");
     if (!root) return;
     root.innerHTML = bannerHTML(leverageData, { noCoverage: true })
+      + teamBasisNote(leverageData)
       + leverageTabBar() + leverageSeasonPills() + leverageControls() + renderLeverageBoard();
     restoreFocus(root, focusId || "mlbstats-leverage-q");
     bindLeverageEvents(root);

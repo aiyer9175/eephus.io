@@ -35,7 +35,7 @@ from sem_plus import Starter
 # WAR-rate machinery (bullpen_export is the base of the /mlbstats/ export chain)
 from bullpen_export import (load_season_pitching, ip_to_float, _num,
                             score_war_rate, join_war_rate_3yr,
-                            guard_nonempty_block, team_basis_meta,
+                            guard_nonempty_block, team_basis_meta, basis_rows_for,
                             WAR_RATE_POOL_MIN_IP, WAR_RATE_DISPLAY_MIN_SP_IP)
 
 _log = logging.getLogger(__name__)
@@ -302,6 +302,7 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     seasons = list(seasons or HISTORY_SEASONS)
     out_path = out_path or HISTORY_PATH
     hist = {}
+    basis_rows: list[dict] = []
     for y in seasons:
         log(f"  starter-history: {y}...")
         rows = load_season_pitching(y)
@@ -309,8 +310,9 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
             log(f"  starter-history: no data for {y}; skipping")
             continue
         scored = sem_plus.score_pool(build_starters(rows))
-        board = [{k: s.get(k) for k in _HISTORY_FIELDS}
-                 for s in scored["starters"] if s.get("qualified")]
+        qual = [s for s in scored["starters"] if s.get("qualified")]
+        basis_rows.extend(basis_rows_for(qual, rows))
+        board = [{k: s.get(k) for k in _HISTORY_FIELDS} for s in qual]
         board.sort(key=lambda s: (s.get("sem_plus") or -999), reverse=True)
         hist[str(y)] = {"season": y, "n_qualified": len(board), "starters": board}
         log(f"  starter-history: {y} -> {len(board)} qualified")
@@ -320,6 +322,8 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         "note": ("Per-season qualified-starter boards for the yearly history tabs. SEM+ is "
                  "the pure-skill starter run-prevention index (100 = average qualified "
                  "starter); durability columns are context."),
+        "team_basis": team_basis_meta(basis_rows, label="starter history",
+                                      scope="history"),
         "history": hist,
     }
     if write and hist:
