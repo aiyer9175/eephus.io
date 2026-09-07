@@ -342,10 +342,29 @@ def build_batting_order(hitters: list["Hitter"], opp_hand: str) -> Optional[list
     return order
 
 
-def team_offense(team: str, hitters: list["Hitter"]) -> dict:
+def team_offense(team: str, hitters: list["Hitter"],
+                 active_ids: Optional[frozenset] = None) -> dict:
     """Team offense aggregates. Offense+ is PA-weighted HEM+ (the offensive
     quality of the plate appearances the lineup takes). Also emits constructed
-    batting orders vs RHP / LHP and a bench list (regulars beyond the nine)."""
+    batting orders vs RHP / LHP and a bench list (regulars beyond the nine).
+
+    `active_ids` is the set of MLBAM ids on a current ACTIVE roster. When given,
+    the CONSTRUCTED objects (orders, lineup, bench) are built only from players
+    who can actually play today; the AGGREGATES are not touched.
+
+    THAT SPLIT IS THE WHOLE DESIGN. A constructed batting order is a claim about
+    tonight, so an injured player in it is simply wrong: Nick Kurtz was batting
+    second for the Athletics on 434 plate appearances while out for the season,
+    and 37 of 270 constructed slots league-wide were held by players not on an
+    active roster. Offense+ is a claim about the season as played, where those
+    434 plate appearances are real and belong. It also feeds betting_model and
+    the leaderboard vintages the 600-game clock is accruing against, so
+    re-basing it would be a model change wearing a display fix's clothes.
+
+    None means the roster feed failed, and then NOTHING is filtered: an
+    unreachable feed must leave the charts intact rather than empty them. A
+    player with no readable mlbam is KEPT, never over-filtered.
+    """
     scored = [h for h in hitters if h.hem_plus is not None and h.pa > 0]
     out = {"team": team, "n_hitters": len(scored)}
     if not scored:
@@ -363,24 +382,38 @@ def team_offense(team: str, hitters: list["Hitter"]) -> dict:
     front = sorted([h for h in scored if h.pa >= QUALIFY_MIN_PA],
                    key=lambda h: h.hem_plus, reverse=True)[:3]
     out["heart_hem"] = int(round(sum(h.hem_plus for h in front) / len(front))) if front else None
-    ladder = sorted(scored, key=lambda h: (-(h.hem_plus or 0), -h.pa))
+    # THE CONSTRUCTED NINE IS TODAY'S QUESTION, so it runs on the active roster.
+    # Everything above this line stays on the full pool: those aggregates describe
+    # the season as played.
+    avail = scored if active_ids is None else [
+        h for h in scored
+        if h.mlbam is None or int(h.mlbam) in active_ids]      # unreadable id -> keep
+    out["n_off_roster_dropped"] = len(scored) - len(avail)
+    if not avail:
+        # every bat filtered out (a club mid-teardown, or a feed that returned a
+        # partial roster). An empty nine is worse than an unfiltered one.
+        avail = scored
+        out["n_off_roster_dropped"] = 0
+        out["roster_filter_skipped"] = "no active-roster bat matched; left unfiltered"
+    ladder = sorted(avail, key=lambda h: (-(h.hem_plus or 0), -h.pa))
     out["lineup"] = [{"tier": h.tier, "key": h.key, "name": h.name, "bats": h.bats,
                       "hem_plus": h.hem_plus, "pa": int(h.pa)} for h in ladder]
     # Constructed orders vs each pitcher hand (falls back to overall HEM+ when the
     # bat side is unknown; the toggle still re-lenses platoon advantage + stagger).
-    orders = {"vr": build_batting_order(scored, "R"),
-              "vl": build_batting_order(scored, "L")}
+    orders = {"vr": build_batting_order(avail, "R"),
+              "vl": build_batting_order(avail, "L")}
     out["orders"] = {k: v for k, v in orders.items() if v}
     # Bench bats: the regulars who did NOT make the everyday nine (by PA), the
     # next hitters by playing time, so the chart can show them clearly separated.
     everyday = {r["key"] for r in (orders.get("vr") or [])}
-    bench = [h for h in sorted(scored, key=lambda h: -(h.pa or 0)) if h.key not in everyday][:6]
+    bench = [h for h in sorted(avail, key=lambda h: -(h.pa or 0)) if h.key not in everyday][:6]
     out["bench"] = [{"key": h.key, "name": h.name, "bats": h.bats,
                      "hem_plus": h.hem_plus, "pa": int(h.pa)} for h in bench]
     return out
 
 
-def score_pool(hitters: list["Hitter"]) -> dict:
+def score_pool(hitters: list["Hitter"],
+               active_ids: Optional[frozenset] = None) -> dict:
     """End to end: derive rates, build the pool, score HEM+, assign tiers, roll up
     team offenses. Returns 'hitters', 'teams', 'pool'. Pure - callers supply the
     data."""
@@ -399,7 +432,7 @@ def score_pool(hitters: list["Hitter"]) -> dict:
     teams = []
     for team, hs in by_team.items():
         if team:
-            teams.append(team_offense(team, hs))
+            teams.append(team_offense(team, hs, active_ids))
     teams.sort(key=lambda t: (t.get("offense_plus") or -999), reverse=True)
 
     scored = [h for h in pool_input if h.hem_plus is not None]

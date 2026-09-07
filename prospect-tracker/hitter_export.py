@@ -41,7 +41,7 @@ import hem_plus
 from hem_plus import Hitter
 from bullpen_export import (_team_abbrev_map, _num, score_war_rate,
                             join_war_rate_3yr, guard_nonempty_block,
-                            team_basis_meta, basis_rows_for,
+                            team_basis_meta, basis_rows_for, _active_mlbam_ids,
                             _warn_unresolved_teams, _ingest_red,
                             WAR_RATE_POOL_MIN_PA, WAR_RATE_DISPLAY_MIN_PA)
 import fa_sources
@@ -808,6 +808,31 @@ def _platoon_availability(teams: list[dict], bat_side: Optional[dict],
     }
 
 
+def _roster_filter_meta(teams: list, active_ids) -> dict:
+    """What the active-roster filter did, published so it can be audited.
+
+    Same reasoning as the team-basis block beside it: a filter a reader cannot
+    see is indistinguishable from no filter, and this one changes which nine
+    names appear on a chart. n_dropped counts CONSTRUCTED slots removed, not
+    leaderboard rows: the leaderboard is the season as played and keeps everyone.
+    """
+    return {
+        "applied": active_ids is not None,
+        "n_active_roster_ids": (len(active_ids) if active_ids is not None else None),
+        "n_dropped_from_constructions": sum(int(t.get("n_off_roster_dropped") or 0)
+                                            for t in teams),
+        "basis": "StatsAPI rosterType=active (26-man), so an optioned or injured "
+                 "player drops",
+        "scope": "the constructed orders, lineup and bench ONLY. Offense+ and every "
+                 "other aggregate stay on the full season pool, because a player's "
+                 "HEM+ over the plate appearances he took is real whether or not he "
+                 "is hurt now, and Offense+ feeds betting_model and the leaderboard "
+                 "vintages the 600-game clock is accruing against.",
+        "on_failure": "a failed roster fetch filters NOTHING rather than blanking the "
+                      "charts; a player whose mlbam cannot be read is kept",
+    }
+
+
 def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
            write: bool = True, log=print, today: Optional[str] = None) -> int:
     """Build data/hitter_leaderboards.json and return the hitter count."""
@@ -835,7 +860,14 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                 h.bats = bs
                 n_bs += 1
         log(f"  hitters: bat side stamped for {n_bs} of {len(hitters)} hitters")
-    scored = hem_plus.score_pool(hitters)
+    # WHO CAN ACTUALLY PLAY TONIGHT. Without this the constructed nine is built
+    # from everyone with a plate appearance this season, so Nick Kurtz batted
+    # second for the Athletics on 434 PA while out for the year, and 37 of 270
+    # slots league-wide were held by players off an active roster. Shared with
+    # the bullpen depth ladders, which have filtered all along; it is the hitter
+    # and starter charts that never did. None (a failed feed) filters nothing.
+    active_ids = _active_mlbam_ids(int(season))
+    scored = hem_plus.score_pool(hitters, active_ids)
     h3_meta = _join_hem_plus_3yr(scored["hitters"])
     if h3_meta.get("n_stamped"):
         log(f"  hitters: 3-year HEM+ joined for {h3_meta['n_stamped']} hitters "
@@ -903,6 +935,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # many serve a blank team (see bullpen_export.team_basis_meta), plus the
         # zero-rollup guard's verdict for this run.
         "team_basis": team_basis_meta(rows, label=f"hitting {season}"),
+        "roster_filter": _roster_filter_meta(scored.get("teams") or [], active_ids),
         "team_rollup": rollup_meta,
         "pool": scored["pool"], "hitters": scored["hitters"], "teams": teams,
     }

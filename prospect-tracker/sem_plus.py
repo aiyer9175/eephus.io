@@ -221,9 +221,24 @@ def _role_rank(role: str) -> int:
         return len(ROLE_ORDER)
 
 
-def team_rotation(team: str, starters: list[Starter]) -> dict:
+def team_rotation(team: str, starters: list[Starter],
+                  active_ids=None) -> dict:
     """Team rotation aggregates. Rotation+ is starter-IP-weighted SEM+ (the
-    talent of the innings started)."""
+    talent of the innings started).
+
+    `active_ids` is the set of MLBAM ids on a current ACTIVE roster. When given,
+    the CONSTRUCTED `rotation` ladder is built only from arms that can pitch
+    today; Rotation+ and the other aggregates are not touched.
+
+    THE SPLIT MATTERS AND IS THE SAME ONE hem_plus.team_offense MAKES. A rotation
+    chart is a claim about who starts this week, so a Tommy John case in it is
+    wrong: 78 of 226 rotation slots, 34.5%, were held by arms off an active
+    roster. Rotation+ is a claim about the innings already thrown, and it feeds
+    betting_model and the leaderboard vintages, so it stays on the full pool.
+
+    None means the roster feed failed and NOTHING is filtered; an arm whose
+    mlbam cannot be read is kept.
+    """
     scored = [s for s in starters if s.sem_plus is not None and s.ip > 0]
     out = {"team": team, "n_starters": len(scored)}
     if not scored:
@@ -241,14 +256,23 @@ def team_rotation(team: str, starters: list[Starter]) -> dict:
     # top-3 by SEM+ = the rotation front
     front = sorted(scored, key=lambda s: s.sem_plus, reverse=True)[:3]
     out["front_sem"] = int(round(sum(s.sem_plus for s in front) / len(front))) if front else None
-    ladder = sorted(scored, key=lambda s: (-(s.sem_plus or 0), -s.ip))
+    avail = scored if active_ids is None else [
+        s for s in scored
+        if getattr(s, "mlbam", None) is None or int(s.mlbam) in active_ids]
+    out["n_off_roster_dropped"] = len(scored) - len(avail)
+    if not avail:
+        avail = scored
+        out["n_off_roster_dropped"] = 0
+        out["roster_filter_skipped"] = "no active-roster arm matched; left unfiltered"
+    ladder = sorted(avail, key=lambda s: (-(s.sem_plus or 0), -s.ip))
     out["rotation"] = [{"role": s.role, "key": s.key, "name": s.name,
                         "sem_plus": s.sem_plus, "ip": round(s.ip, 1),
                         "gs": int(s.gs)} for s in ladder]
     return out
 
 
-def score_pool(starters: list[Starter], *, gb_adjust: bool = False) -> dict:
+def score_pool(starters: list[Starter], *, gb_adjust: bool = False,
+               active_ids=None) -> dict:
     """End to end: filter to true starters, derive rates, build the pool, score
     SEM+, assign roles, roll up team rotations. Returns 'starters', 'teams',
     'pool'. Pure - callers supply the data."""
@@ -267,7 +291,7 @@ def score_pool(starters: list[Starter], *, gb_adjust: bool = False) -> dict:
     teams = []
     for team, ts in by_team.items():
         if team:
-            teams.append(team_rotation(team, ts))
+            teams.append(team_rotation(team, ts, active_ids))
     teams.sort(key=lambda t: (t.get("rotation_plus") or -999), reverse=True)
 
     scored = [s for s in pool_input if s.sem_plus is not None]

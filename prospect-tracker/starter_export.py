@@ -36,6 +36,7 @@ from sem_plus import Starter
 from bullpen_export import (load_season_pitching, ip_to_float, _num,
                             score_war_rate, join_war_rate_3yr,
                             guard_nonempty_block, team_basis_meta, basis_rows_for,
+                            _active_mlbam_ids,
                             WAR_RATE_POOL_MIN_IP, WAR_RATE_DISPLAY_MIN_SP_IP)
 
 _log = logging.getLogger(__name__)
@@ -235,7 +236,10 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     if not rows:
         log(f"  starters: no pitching data for {season} (source blocked or empty); skipping")
         return 0
-    scored = sem_plus.score_pool(build_starters(rows))
+    # TODAY'S ROTATION, not everyone who started a game this year. 78 of 226
+    # rotation slots (34.5%) were held by arms off an active roster.
+    active_ids = _active_mlbam_ids(int(season))
+    scored = sem_plus.score_pool(build_starters(rows), active_ids=active_ids)
     s3_meta = _join_sem_plus_3yr(scored["starters"])
     if s3_meta.get("n_stamped"):
         log(f"  starters: 3-year SEM+ joined for {s3_meta['n_stamped']} starters "
@@ -275,6 +279,16 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # many serve a blank team (see bullpen_export.team_basis_meta), plus the
         # zero-rollup guard's verdict for this run.
         "team_basis": team_basis_meta(rows, label=f"pitching {season}"),
+        "roster_filter": {
+            "applied": active_ids is not None,
+            "n_active_roster_ids": (len(active_ids) if active_ids is not None else None),
+            "n_dropped_from_constructions": sum(
+                int(t.get("n_off_roster_dropped") or 0) for t in (scored.get("teams") or [])),
+            "basis": "StatsAPI rosterType=active (26-man)",
+            "scope": ("the constructed rotation ladder ONLY; Rotation+ and the other "
+                      "aggregates stay on the full season pool"),
+            "on_failure": "a failed fetch filters nothing rather than blanking the charts",
+        },
         "team_rollup": rollup_meta,
         "pool": scored["pool"], "starters": scored["starters"], "teams": teams,
     }

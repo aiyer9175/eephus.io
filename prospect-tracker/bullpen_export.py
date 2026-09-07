@@ -461,6 +461,12 @@ def _team_abbrev_map() -> dict:
         return {}
 
 
+#: A roster walk that misses clubs is worse than one that fails outright: the
+#: callers would drop those clubs' players as off-roster. 28 of 30 tolerates a
+#: couple of transient fetch failures without letting a half-empty walk through.
+MIN_CLUBS_FOR_ROSTER_FILTER = 28
+
+
 @functools.lru_cache(maxsize=2)
 def _active_mlbam_ids(season: int) -> Optional[frozenset]:
     """Set of MLBAM ids on a current ACTIVE roster (26-man), fetched ONCE per
@@ -479,7 +485,7 @@ def _active_mlbam_ids(season: int) -> Optional[frozenset]:
     if not teams:
         return None
     ids: set = set()
-    any_ok = False
+    n_clubs_ok = 0
     for t in teams:
         tid = t.get("id")
         if not tid:
@@ -489,13 +495,30 @@ def _active_mlbam_ids(season: int) -> Optional[frozenset]:
         except Exception as e:
             _log.warning("active-roster fetch team %s failed: %s", tid, e)
             continue
+        got = 0
         for r in data.get("roster", []):
             pid = (r.get("person") or {}).get("id")
             if pid:
                 ids.add(int(pid))
-                any_ok = True
-    # if not a single roster came back, treat it as a total failure (do not filter)
-    return frozenset(ids) if any_ok else None
+                got += 1
+        if got:
+            n_clubs_ok += 1
+    # A PARTIAL WALK IS WORSE THAN NO WALK, and the old guard did not catch it.
+    # It returned the set as soon as ONE club came back, so five failed fetches
+    # produced a set missing five rosters and every caller then dropped those
+    # clubs' players as "off roster". That is invisible: the board does not go
+    # blank, it goes WRONG, on exactly the clubs whose feed failed.
+    #
+    # This matters more now than when only the bullpen ladders used it: the
+    # hitter lineups and the rotation charts filter on the same set, so a partial
+    # walk would empty three surfaces at once for the affected clubs. Measured on
+    # a healthy walk: 30 of 30 clubs, 27 to 28 players each.
+    if n_clubs_ok < MIN_CLUBS_FOR_ROSTER_FILTER:
+        _log.error("active-roster walk covered only %d of %d clubs; NOT filtering "
+                   "(a partial roster set silently drops the missing clubs' players)",
+                   n_clubs_ok, len(teams))
+        return None
+    return frozenset(ids)
 
 
 def _apply_roster_filter(teams: list, active_ids: Optional[frozenset]) -> int:
