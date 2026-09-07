@@ -178,7 +178,12 @@
         esc(c.label) + arrow + "</th>";
     }).join("");
     var body = rows.slice(0, state.shown).map(function (r, i) {
-      return '<tr><td class="hof-c-rank">' + (i + 1) + "</td>" +
+      // THE RANK CELL CARRIES .mlbstats-col-rank, on both the th and the td.
+      // This board leads with the rank digit rather than the player, so the
+      // shared freeze-:first-child would pin the NUMBER and scroll every
+      // name out of reach. With the class on both, the rank pins narrow at
+      // the left edge and the name pins beside it. Same contract as /pal/.
+      return '<tr><td class="hof-c-rank mlbstats-col-rank">' + (i + 1) + "</td>" +
         '<td class="hof-c-name">' + esc(r.name) + "</td>" +
         '<td class="hof-c-pos" title="' + esc(r.pos_basis || "") + '">' + esc(r.pos || "") + "</td>" +
         '<td class="hof-c-yr">' + esc(r.first) + "</td>" +
@@ -197,8 +202,8 @@
       ? '<div class="hof-more"><button type="button" id="hof-more">Show more (' +
         (rows.length - state.shown) + " left)</button></div>"
       : "";
-    return '<div class="hof-tablewrap"><table class="hof-table"><thead><tr>' +
-      '<th class="hof-c-rank">#</th>' + head + "</tr></thead><tbody>" +
+    return '<div class="hof-tablewrap mlbstats-scroll"><table class="hof-table"><thead><tr>' +
+      '<th class="hof-c-rank mlbstats-col-rank">#</th>' + head + "</tr></thead><tbody>" +
       (body || '<tr><td colspan="14" class="hof-empty">No players match.</td></tr>') +
       "</tbody></table></div>" + more +
       '<p class="hof-count">' + rows.length + " players shown of " +
@@ -259,7 +264,7 @@
     return '<section class="hof-block"><h2>Benchmark bake-off</h2>' +
       '<p class="hof-note"><strong>' + esc(b.headline) + "</strong></p>" +
       '<p class="hof-note">' + esc(b.why_it_loses) + "</p>" +
-      '<div class="hof-tablewrap"><table class="hof-table"><thead><tr>' +
+      '<div class="hof-tablewrap mlbstats-scroll"><table class="hof-table"><thead><tr>' +
       '<th class="hof-c-name">Rule</th><th class="hof-c-n">AUC</th>' +
       '<th class="hof-c-n">vs ' + esc(b.best_public) + "</th>" +
       '<th class="hof-c-n">Floor</th><th class="hof-c-ind">Verdict</th>' +

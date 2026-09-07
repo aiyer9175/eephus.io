@@ -1904,6 +1904,12 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    by both. Naming the dialects is what makes the CSS side stand on its own: a
    board that ever loses the shared class keeps its header and its identity
    column instead of quietly reverting.
+   SIX DIALECTS SINCE 2026-09-07. /hof/ and /management/ shipped two more,
+   .hof-table and .mgmt-table, and .hof-table reproduced the sticky-header defect
+   the top of this block describes EXACTLY: `.hof-tablewrap { overflow-x: auto }`
+   with `position: sticky; top: 0` on its own thead th, which is the
+   containing-block trap, on a 3,620-row leaderboard. Naming them here is the
+   whole fix on the CSS side; their wrappers gained .mlbstats-scroll in the JS.
    FONT SIZE IS NOT UNIFIED HERE. Only the scroll + sticky BEHAVIOUR is shared.
    The dialects' own font-size rules are injected at runtime, so they land later
    in the cascade at equal specificity and keep winning: 13px stays 13px on
@@ -1911,14 +1917,14 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    deliberate part of each module's cell density and is not this lane's to
    flatten. */
 @media (min-width: 1025px) {
-  .mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table)) {
+  .mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table)) {
     overflow: auto;
     max-height: calc(100dvh - 210px);
   }
 }
 @supports not (height: 100dvh) {
   @media (min-width: 1025px) {
-    .mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table)) {
+    .mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table)) {
       max-height: calc(100vh - 210px);
     }
   }
@@ -1939,7 +1945,8 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    opaque (--bg-secondary), so betting never had the bleed to begin with.
    A fill, never an opacity: a translucent value here would make the freeze
    column ghost, which is the failure this table already carries a scar for. */
-.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table)):not(:has(> .bt-table)) {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table,
+                          .hof-table, .mgmt-table)):not(:has(> .bt-table)) {
   background: var(--bg-primary);
 }
 /* The header needs to paint over the rows it now sits above. */
@@ -1954,8 +1961,8 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    outside one it is inert. The specificity (0,3,2) also clears the (0,1,1)
    rules the modules inject at runtime, which land later in the cascade than
    this file does. */
-.mlbstats-scroll:has(> :is(.dyn-table, .rd-table, .dfs-table, .bt-table))
-  :is(.dyn-table, .rd-table, .dfs-table, .bt-table) thead th {
+.mlbstats-scroll:has(> :is(.dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table))
+  :is(.dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table) thead th {
   position: sticky;
   top: 0;
   z-index: 2;
@@ -1988,10 +1995,10 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    The four injected dialects are named in the lists below too, subject to the
    SAME exclusion - see the un-freeze rule after the rank block, which is how
    the ones that lead with a rank digit are kept out of it. */
-.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
-  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) th:first-child,
-.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
-  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) td:first-child:not([colspan]) {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table) th:first-child,
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table) td:first-child:not([colspan]) {
   position: sticky;
   left: 0;
   z-index: 1;
@@ -1999,14 +2006,14 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 }
 /* The header's own first cell is sticky on BOTH axes, so it has to outrank
    the row it freezes and the header it sits in. */
-.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
-  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) thead th:first-child {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table) thead th:first-child {
   z-index: 3;
   background: var(--bg-secondary);
 }
 /* Keep the row-hover tint continuous across the frozen cell. */
-.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
-  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) tbody tr:hover td:first-child:not([colspan]) {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table) tbody tr:hover td:first-child:not([colspan]) {
   background: var(--bg-tertiary);
 }
 /* RANK-LED BOARDS (/pal/): freeze the rank AND the name next to it. The rank
@@ -2016,27 +2023,27 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    leaving 28px for content that is at most three tabular digits (~23px at
    12.5px mono). The width has to stay ABOVE min-content or the browser falls
    back to min-content and the `left` below stops lining up. */
-.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
-  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) .mlbstats-col-rank {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table) .mlbstats-col-rank {
   width: 48px;
   min-width: 48px;
 }
-.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
-  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) th.mlbstats-col-rank + th,
-.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
-  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) td.mlbstats-col-rank + td {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table) th.mlbstats-col-rank + th,
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table) td.mlbstats-col-rank + td {
   position: sticky;
   left: 48px;
   z-index: 1;
   background: var(--bg-primary);
 }
-.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
-  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) thead th.mlbstats-col-rank + th {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table) thead th.mlbstats-col-rank + th {
   z-index: 3;
   background: var(--bg-secondary);
 }
-.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
-  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) tbody tr:hover td.mlbstats-col-rank + td {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table, .hof-table, .mgmt-table) tbody tr:hover td.mlbstats-col-rank + td {
   background: var(--bg-tertiary);
 }
 /* UN-FREEZE THE RANK-LED BOARDS IN THE NEW DIALECTS. Point 2 of the exclusion

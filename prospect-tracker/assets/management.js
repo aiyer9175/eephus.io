@@ -89,7 +89,7 @@
       "same as saying nothing happens: the pool that moves between clubs is " +
       num(h.redistributable_pool_abs_dv_wins) + " wins in absolute value. It nets out.</p>" +
       "<h3>By season</h3>" +
-      '<div class="mgmt-tablewrap"><table class="mgmt-table"><thead><tr>' +
+      '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' +
       "<th>Season</th><th>Attempts</th><th>Success</th><th>Decision value</th>" +
       "</tr></thead><tbody>" + srows + "</tbody></table></div>" +
       "<h3>What a decision value is</h3>" +
@@ -98,7 +98,7 @@
       '<p class="mgmt-note">' + esc(r.why_the_league_average_runner) + "</p>" +
       '<p class="mgmt-note">' + esc(r.which_breakeven_predicts_the_sign) + "</p>" +
       "<h3>What is excluded, and why</h3>" +
-      '<div class="mgmt-tablewrap"><table class="mgmt-table"><tbody>' + exrows +
+      '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><tbody>' + exrows +
       "</tbody></table></div>" +
       '<p class="mgmt-note">' + esc(r.why_two_out_attempts_are_excluded) + "</p>" +
       '<p class="mgmt-note">' + esc(r.third_out_handling) + "</p></section>";
@@ -156,11 +156,11 @@
       'over ' + esc(ref.model.n_plays_fit) + ' plays across ' +
       esc((ref.model.seasons || []).length) + ' seasons. This is the table every ' +
       'break-even on this page is built from.</p>' +
-      '<div class="mgmt-tablewrap"><table class="mgmt-table mgmt-table--re"><thead>' +
+      '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table mgmt-table--re"><thead>' +
       head + "</thead><tbody>" + body + "</tbody></table></div>" +
       "<h2>Coming to bat in a tied game</h2>" +
       '<p class="mgmt-note">' + esc(ref.half_inning_start.note) + "</p>" +
-      '<div class="mgmt-tablewrap"><table class="mgmt-table"><thead><tr>' +
+      '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' +
       "<th>Inning</th><th>Half</th><th>Win probability</th></tr></thead><tbody>" +
       his + "</tbody></table></div>" +
       "<h2>What the win model is and is not</h2>" +
@@ -220,7 +220,7 @@
       '<p class="mgmt-note">' + esc(t.columns_are_style_not_skill) + "</p>" +
       '<div class="mgmt-controls"><select id="mgmt-season" aria-label="Season">' +
       opts + "</select></div>" +
-      '<div class="mgmt-tablewrap"><table class="mgmt-table"><thead><tr>' + head +
+      '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' + head +
       "</tr></thead><tbody>" + body + "</tbody></table></div>" +
       '<p class="mgmt-count">' + rows.length + " club-seasons" +
       (rows.length > 200 ? ", first 200 shown" : "") + ".</p></section>";
