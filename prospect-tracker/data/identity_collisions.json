@@ -1,11 +1,11 @@
 {
- "generated_at": "2026-09-07T01:40:38Z",
+ "generated_at": "2026-09-07T09:51:59Z",
  "summary": {
   "board_rows": 9787,
   "active_board_rows": 4688,
   "roster_rows": 10731,
   "colliding_slugs": 200,
-  "critical_player_keys": 4,
+  "critical_player_keys": 5,
   "critical_active_player_keys": 0,
   "c1_shared_key": 0,
   "c1_unattributed": 2,
@@ -17,13 +17,14 @@
   "c4_side_conflicts": 2,
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
-  "c7_name_variant_splits": 19,
-  "c7_name_variant_open": 0,
+  "c7_name_variant_splits": 20,
+  "c7_name_variant_open": 1,
   "frankenstein_records": 0,
   "unassigned_null_id_rows": 20
  },
  "critical_player_keys": [
   "adrian_hernandez",
+  "dominic_keegan",
   "enmanuel_rodriguez",
   "michael_perez",
   "miguel_gomez"
@@ -1585,7 +1586,7 @@
     "bj_murray",
     "bj_murray_jr"
    ],
-   "player_key": "bj_murray_jr",
+   "player_key": "bj_murray",
    "names": [
     "BJ Murray",
     "BJ Murray Jr."
@@ -1599,9 +1600,32 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-09-01",
-    "2026-01-22"
+    "2026-09-06"
    ],
    "resolved_by_alias": true
+  },
+  {
+   "pair": [
+    "dom_keegan",
+    "dominic_keegan"
+   ],
+   "player_key": "dominic_keegan",
+   "names": [
+    "Dom Keegan",
+    "Dominic Keegan"
+   ],
+   "birth_date": "2000-08-01",
+   "org": "TBR",
+   "mlbam_ids": [
+    null,
+    681371
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-02",
+    "2026-02-15"
+   ],
+   "resolved_by_alias": false
   },
   {
    "pair": [
@@ -1691,7 +1715,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2023-08-01",
-    "2026-08-02"
+    "2026-09-06"
    ],
    "resolved_by_alias": true
   },
@@ -1714,7 +1738,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2022-08-02",
-    "2026-01-22"
+    "2026-09-06"
    ],
    "resolved_by_alias": true
   },
@@ -1737,7 +1761,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-02-12",
-    "2026-08-10"
+    "2026-09-06"
    ],
    "resolved_by_alias": true
   },
@@ -1851,7 +1875,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-20",
+    "2026-09-06",
     "2026-08-02"
    ],
    "resolved_by_alias": true
@@ -1874,7 +1898,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-01",
+    "2026-09-06",
     "2026-02-12"
    ],
    "resolved_by_alias": true
@@ -1897,7 +1921,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-01",
+    "2026-09-06",
     "2021-02-26"
    ],
    "resolved_by_alias": true
@@ -1921,7 +1945,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-08-02",
-    "2026-08-10"
+    "2026-09-06"
    ],
    "resolved_by_alias": true
   },
@@ -1930,7 +1954,7 @@
     "jack_natili",
     "jackson_natili"
    ],
-   "player_key": "jack_natili",
+   "player_key": "jackson_natili",
    "names": [
     "Jack Natili",
     "Jackson Natili"
@@ -1943,7 +1967,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-01-22",
+    "2026-09-06",
     "2026-08-10"
    ],
    "resolved_by_alias": true
@@ -1989,7 +2013,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-08-10",
+    "2026-09-06",
     "2025-07-31"
    ],
    "resolved_by_alias": true
