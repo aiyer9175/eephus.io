@@ -235,10 +235,40 @@ def expected_tier_value_usd(point_path, p10_path, p90_path, years: int,
     averaged. Additivity means the copula cannot change this number, so it is
     computed without simulation and is byte-stable run to run.
 
-    The rectangle rule on an interior grid understates the tails slightly and
-    therefore understates the convexity premium slightly: the correction this
-    applies is a documented LOWER bound on the true Jensen gap, in the same
-    direction as the defect it fixes."""
+    THE GRID TRUNCATES THE TAIL, AND BY 7.4%, NOT "SLIGHTLY". QUAD_TAUS is
+    i/20 for i in 1..19: an interior grid on the 5% marks that never evaluates
+    u below 0.05 or above 0.95, so the convex tail this whole correction exists
+    to capture is exactly what it drops. Measured 2026-09-06 against a converged
+    reference (midpoint rule, n=399, which sits 0.03% from the n=102,399 limit;
+    the integral converges cleanly to a finite value):
+
+        served FA class, 231 rows   converged/shipped  median 1.0796
+                                    p05 1.0370, p95 1.1402
+        1,300-signing corpus        Deal+ ratio        median 1.0740
+                                    p05 1.0342, p95 1.1359
+
+    It is therefore a LOWER bound, as stated, but not a slight one and not a
+    uniform one: a 3.4% to 13.6% spread across rows moves the ORDER of Deal+ and
+    not only its level. A midpoint rule on the same 19 nodes already recovers
+    most of the gap, so the node count is not the problem; the endpoints are.
+
+    WHY IT IS STILL i/20. Not because the change is unsupported. On this lane's
+    own gate (tools/_fa_jensen.py, 444 forward-chained signings scored against
+    realized tier-priced WAR) converging the grid moves the PRIMARY metric,
+    signed bias, from -1.761 to -1.137 against a realized mean of $12.447M:
+    delta +0.624, CI95 [+0.551, +0.705] on a winter-clustered paired bootstrap,
+    B=2000, P(right direction) 1.0000. MAE worsens +0.231, CI95 [+0.139, +0.319],
+    which is the same trade this correction already accepted when it shipped.
+
+    It is deferred because it is not a numerics decision alone. Deal+ is
+    100 * this value / price, so converging the grid raises every published
+    Deal+ by a median 7.4% and flips 74 of the 1,300 corpus rows (5.7%) unless
+    the verdict terciles are re-cut with it. Those terciles are ALREADY carrying
+    one deferred re-cut: fa_market records that VERDICT_GROUP_EDGES is owed a
+    cut on the 2026-08-19 basis and that "served verdicts do not move until"
+    it happens. Stacking a second basis move onto published VALUE / MARKET /
+    OVERPAY labels is an owner call, and the numbers for it are laid out in
+    docs/fa-2026-09-06/QUAD_CONVERGENCE.md so it is one decision and not two."""
     from value_framework import _config as _vf_config
     from value_framework import tiered_war_value_usd
     level = dpw_usd / float(_vf_config()["dollars_per_war"]["flat"])
