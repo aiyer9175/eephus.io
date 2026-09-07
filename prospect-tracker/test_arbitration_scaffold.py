@@ -32,8 +32,26 @@ def test_arbitration_is_a_leaf_of_the_mlb_modules_group():
     assert ("arbitration", "Arbitration", "/arbitration/") in _mlb_children()
 
 
-def test_it_is_appended_last_so_existing_ordinals_stay_true():
-    assert _mlb_children()[-1][0] == "arbitration"
+# The MLB Modules order as it stood when Arbitration was appended. A new module
+# must go AFTER these, never between them.
+_MLB_PREFIX_AT_ARBITRATION = ("fa", "projections", "mlbstats", "pal",
+                              "trademachine", "arbitration")
+
+
+def test_a_new_module_appends_and_never_reorders_the_existing_ones():
+    """The invariant is STABLE ORDER for the modules already there, not that any
+    one of them stays last forever.
+
+    This used to assert `_mlb_children()[-1] == "arbitration"`, which is what
+    "appended last" meant on the day Arbitration shipped and which then blocked
+    the next two modules from being added at all. Nothing indexes the nav by
+    position (checked: no caller subscripts NAV_ITEMS, nav_leaves() or the
+    group's children), so what actually matters is that appending does not move
+    anything that was already in the list.
+    """
+    keys = tuple(k for k, _l, _h in _mlb_children())
+    assert keys[:len(_MLB_PREFIX_AT_ARBITRATION)] == _MLB_PREFIX_AT_ARBITRATION, (
+        f"the MLB Modules group was REORDERED, not appended to: {keys}")
 
 
 def test_group_keys_never_collide_with_leaf_keys():

@@ -330,6 +330,14 @@ NAV_ITEMS = [
         ("pal",         "Alchemy Lab", "/pal/"),
         ("trademachine", "Trade Machine", "/trademachine/"),
         ("arbitration", "Arbitration", "/arbitration/"),
+        # SHIPPED 2026-09-06 AND UNREACHABLE UNTIL NOW. Both pages were built,
+        # both were registered in the sitemap, and both already pass their own
+        # key to page() as the nav `active` marker, so they were authored
+        # expecting an entry here. There was none, and NAV_ITEMS is the single
+        # source for the top bar, the sidebar and the hand-kept static copies.
+        # A reader could reach either module only by typing its URL.
+        ("management", "In-Game Management", "/management/"),
+        ("hof",        "Hall of Fame",       "/hof/"),
     ]},
     # 2026-08-05: the Diamond section. 2026-08-07: Dynasty / Redraft / DFS
     # collapsed back into ONE "Fantasy" leaf, because three of the group's six
