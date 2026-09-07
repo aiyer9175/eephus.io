@@ -98,15 +98,28 @@ def test_the_census_reads_the_served_grade_not_the_retired_map():
         "what the board displays")
 
 
-def test_the_entry_carries_the_blend_and_the_routing_basis():
-    src = Path(ee.__file__).read_text(encoding="utf-8")
-    entry = src[src.index("def _entry("):src.index("def ", src.index("def _entry(") + 10)]
-    assert '"rank_war": s.get("rank_war")' in entry, (
+def test_the_entry_carries_the_blend_when_the_row_has_one():
+    """rank_war reaches the file, and reaches it the way the whitelist requires.
+
+    _entry is a field whitelist under a byte-identity contract that
+    test_board_basis_coherence pins: a row carrying neither grade_basis nor
+    board_sort_key must not GROW a null for them. A first pass added rank_war and
+    grade_basis unconditionally to the main dict, which duplicated an existing
+    conditional emit and put a null on every bare row. It rides with the other
+    two now, conditionally.
+    """
+    full = ee._entry({"player_key": "pk", "xfv_grade": 20.0, "rank_war": 3.21,
+                      "grade_basis": "provisional_capped"}, "hit", "active")
+    assert full["rank_war"] == 3.21, (
         "the guarded blend is not exported, so no reader can check the board "
         "against the quantity the model actually produced")
-    assert '"grade_basis": s.get("grade_basis")' in entry, (
+    assert full["grade_basis"] == "provisional_capped", (
         "without the routing basis the census cannot be split, and pooling the "
         "flagship map with the provisional cap hides the whole finding")
+    bare = ee._entry({"player_key": "pk", "xfv_grade": 40.0}, "hit", "resolved")
+    assert "rank_war" not in bare, (
+        "a row with no blend grew a null rank_war; rows that carry neither field "
+        "must stay byte-identical")
 
 
 def test_the_census_shape_holds_on_a_synthetic_board():

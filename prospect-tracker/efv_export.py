@@ -167,11 +167,6 @@ def _entry(s, side, kind):
         # check the board against it. It is NOT xfv_war_6yr, which is the model
         # leg alone and is what the eval scores; meta.serve_vs_eval_census
         # measures how far apart they run.
-        "rank_war": s.get("rank_war"),
-        # The routing basis, without which that census cannot be read: the
-        # flagship map and the provisional cap behave differently ON PURPOSE and
-        # pooling them hides the thing worth knowing.
-        "grade_basis": s.get("grade_basis"),
         "p_bucket": s.get("p_bucket"),
         "surplus_mm": s.get("surplus_mm"),
         "band_p10_mm": s.get("band_p10_mm"),
@@ -248,6 +243,17 @@ def _entry(s, side, kind):
         e["grade_basis"] = s["grade_basis"]
     if s.get("board_sort_key") is not None:
         e["board_sort_key"] = s["board_sort_key"]
+    #   rank_war         THE GUARDED BLEND, (1-lam)*consensus_OLS + lam*model.
+    #                    efv_score writes it on every scored row at all three emit
+    #                    sites and this whitelist never named it, so the file
+    #                    published the grade, the delta and the projected WAR but
+    #                    not the quantity the blend actually produced. It is NOT
+    #                    xfv_war_6yr, which is the model leg alone and is what the
+    #                    eval scores; meta.serve_vs_eval_census measures how far
+    #                    apart they run. Conditional for the same reason as the two
+    #                    above: a row without it must stay byte-identical.
+    if s.get("rank_war") is not None:
+        e["rank_war"] = s["rank_war"]
     if s.get("xline_note"):                              # S-XLINE measurement note (annotation only,
         e["xline_note"] = s["xline_note"]                # live covered players; never a ranked factor)
     if s.get("xfv_provisional"):                          # prior-anchored (no pro track record)
