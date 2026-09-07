@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-07T17:55:32+00:00",
+ "generated_at": "2026-09-07T19:05:33+00:00",
  "slate_date": "2026-09-07",
  "status": {
   "odds_feed": "ok",
@@ -31,27 +31,29 @@
    },
    "n_orgs_joined": 30
   },
-  "n_slate_games": 7,
-  "n_events_dropped_in_progress": 4,
+  "n_slate_games": 5,
+  "n_events_dropped_in_progress": 6,
   "n_games_unpriced_time_mismatch": 0,
-  "slate_rule": "first_open_slate",
+  "slate_rule": "earliest_priced_partial_slate",
   "slate_candidates": [
    {
     "date": "2026-09-07",
     "n_games": 11,
     "n_bettable": 11,
-    "open": true,
-    "n_started": 4,
-    "n_pregame": 7,
-    "pregame_share": 0.6364,
+    "open": false,
+    "n_priceable": 5,
+    "n_started": 6,
+    "n_pregame": 5,
+    "pregame_share": 0.4545,
     "min_pregame_share": 0.5,
-    "why_not": null
+    "why_not": "2026-09-07 holds 11 game(s), 6 have already started or finished and 5 are still to come, so less than half of the card is left and what remains is a fragment rather than a board"
    },
    {
     "date": "2026-09-08",
     "n_games": 15,
     "n_bettable": 15,
     "open": true,
+    "n_priceable": 0,
     "n_started": 0,
     "n_pregame": 15,
     "pregame_share": 1.0,
@@ -63,6 +65,7 @@
     "n_games": 15,
     "n_bettable": 15,
     "open": true,
+    "n_priceable": 0,
     "n_started": 0,
     "n_pregame": 15,
     "pregame_share": 1.0,
@@ -70,9 +73,16 @@
     "why_not": null
    }
   ],
-  "partial_slate": null,
+  "partial_slate": {
+   "slate_date": "2026-09-07",
+   "n_games_on_date": 11,
+   "n_bettable": 11,
+   "n_still_to_come": 5,
+   "n_priceable": 5,
+   "reason": "no whole card on the schedule has a cached market, so the board is the 5 game(s) still to come on 2026-09-07, which the snapshot can price. 2026-09-07 holds 11 game(s), 6 have already started or finished and 5 are still to come, so less than half of the card is left and what remains is a fragment rather than a board"
+  },
   "started_rows_dropped": {
-   "n": 4,
+   "n": 6,
    "n_on_slate": 11,
    "games": [
     {
@@ -98,6 +108,18 @@
      "matchup": "CLE at BAL",
      "start": "2026-09-07T17:35:00Z",
      "status": "Preview"
+    },
+    {
+     "game_pk": 824062,
+     "matchup": "ARI at KCR",
+     "start": "2026-09-07T18:10:00Z",
+     "status": "Preview"
+    },
+    {
+     "game_pk": 823742,
+     "matchup": "CHC at MIL",
+     "start": "2026-09-07T18:10:00Z",
+     "status": "Preview"
     }
    ],
    "reason": "first pitch has passed, so the game is no longer on the book's pregame board and carries no price to show",
@@ -108,18 +130,18 @@
    "board_slate": "2026-09-07",
    "snapshot_slate": "2026-09-07",
    "snapshot_captured_at": "2026-09-07T17:03:24+00:00",
-   "snapshot_age_hours": 0.9,
+   "snapshot_age_hours": 2.0,
    "matched": true,
    "match_rule": "slate_label",
-   "n_pregame_events_on_board_slate": 7,
+   "n_pregame_events_on_board_slate": 5,
    "mismatch": false,
    "reason": "the cached snapshot is stamped for the 2026-09-07 slate"
   },
   "odds_slate_mismatch": false,
-  "odds_snapshot_age_hours": 0.9,
+  "odds_snapshot_age_hours": 2.0,
   "stale_board": false,
   "feed_health": {
-   "generated_at": "2026-09-07T17:55:32+00:00",
+   "generated_at": "2026-09-07T19:05:33+00:00",
    "window_days": 14,
    "source": ".cache/odds",
    "n_slates": 10,
@@ -128,7 +150,7 @@
    "n_unreadable_files": 0,
    "ever_captured_close": false,
    "hours_since_last_close": null,
-   "hours_since_last_open": 0.87,
+   "hours_since_last_open": 2.04,
    "close_stale_hours": 36.0,
    "close_job_last_run": null,
    "close_job_last_reason": null,
@@ -230,7 +252,9 @@
    "diagnosis": "no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above",
    "why_not_a_heartbeat": "data/job_heartbeat.json is git-tracked and deploy/nightly-build.sh reverts it before every pipeline, so a close-job heartbeat cannot survive to be read; this is measured off .cache/odds/ instead"
   },
-  "empty_reasons": []
+  "empty_reasons": [
+   "no whole card on the schedule has a cached market, so the board is the 5 game(s) still to come on 2026-09-07, which the snapshot can price. 2026-09-07 holds 11 game(s), 6 have already started or finished and 5 are still to come, so less than half of the card is left and what remains is a fragment rather than a board"
+  ]
  },
  "model": {
   "version": "betting_runs_v1",
@@ -489,27 +513,27 @@
   "staking": "Every row on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
  },
  "pick_of_the_day": {
-  "side": "home",
-  "label": "KCR +1.5",
-  "model_prob": 0.71392,
-  "fair_odds": -250,
+  "side": "under",
+  "label": "Under 8.5",
+  "model_prob": 0.67464,
+  "fair_odds": -207,
   "p_push": null,
-  "book": "fanduel",
-  "odds": -178,
-  "decimal": 1.5618,
-  "implied_prob": 0.64029,
-  "market_fair_prob": 0.61972,
-  "edge": 0.0942,
-  "ev_per_unit": 0.115,
-  "ev_per_unit_if_no_push": 0.115,
-  "kelly_full": 0.2047,
-  "book_title": "FanDuel",
-  "point": 1.5,
-  "market": "runline",
-  "game_pk": 824062,
-  "matchup": "ARI at KCR",
-  "start": "2026-09-07T18:10:00Z",
-  "evidence_closed": false,
+  "book": "draftkings",
+  "odds": -112,
+  "decimal": 1.8929,
+  "implied_prob": 0.52829,
+  "market_fair_prob": 0.52354,
+  "edge": 0.1511,
+  "ev_per_unit": 0.27702,
+  "ev_per_unit_if_no_push": 0.27702,
+  "kelly_full": 0.31024,
+  "book_title": "DraftKings",
+  "point": 8.5,
+  "market": "total",
+  "game_pk": 824958,
+  "matchup": "TOR at ATH",
+  "start": "2026-09-08T02:05:00Z",
+  "evidence_closed": true,
   "slot": "pick_of_the_day",
   "slot_label": "Model Watch: largest disagreement",
   "slot_frame": "watch",
@@ -517,9 +541,10 @@
   "suggested_units": 1.0,
   "provisional": true,
   "min_edge_used": 0.06,
-  "kelly_quarter": 0.05117,
+  "kelly_quarter": 0.07756,
   "market_policy": "any",
   "caveat": "this is a runline or total, and the margin model is a Poisson difference that underdisperses real run scoring, so its probabilities sit too close to the middle; treat this edge as the softest of the three markets",
+  "evidence_caveat": "this market's own settled paper record resolved worse than a coin at the section 7b floor for the closure dwell; it is eligible under the any-market slot policy (owner decision 2026-09-05) and that record rides here as the disclosure, not as a bar",
   "tag_record": {
    "available": true,
    "tag": "potd_band",
@@ -555,7 +580,7 @@
     "band": "american odds from -199 to +199",
     "present": true,
     "reason": "highest model win probability among sides clearing the provisional floor on any priced market, restricted to american odds from -199 to +199; ties go to the price nearest -110, then to the higher expected value",
-    "n_candidates": 10,
+    "n_candidates": 7,
     "provisional": true,
     "min_edge": 0.06,
     "basis": "provisional_policy_floor",
@@ -583,7 +608,7 @@
     "rule": "highest expected value per unit among sides clearing the provisional floor at american odds of +200 or longer",
     "band": "american odds of +200 or longer",
     "present": false,
-    "reason": "11 side(s) cleared the 6.0% provisional floor on this slate and none of them are priced at american odds of +200 or longer",
+    "reason": "8 side(s) cleared the 6.0% provisional floor on this slate and none of them are priced at american odds of +200 or longer",
     "n_candidates": 0,
     "provisional": true,
     "min_edge": 0.06,
@@ -605,7 +630,7 @@
     }
    }
   },
-  "n_floor_clearing_sides": 11,
+  "n_floor_clearing_sides": 8,
   "market_policy": "any",
   "markets_eligible": "any priced market: moneyline, runline, total, props when armed (owner decision 2026-09-05, section 7d); the dispersion and ledger legs ride the row as disclosure"
  },
@@ -892,8 +917,8 @@
    "need": "the append-only JSONL under .cache/betting/ to be authoritative, and its chain to extend the last published chain_sha",
    "have": {
     "backend": "jsonl",
-    "chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
-    "published_chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
+    "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
+    "published_chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
     "chain_extends": true,
     "chain_check_armed": true
    },
@@ -904,7 +929,7 @@
    "open": true,
    "need": "every record row older than 36h settled, or the reason it is not settled named on the sidecar",
    "have": {
-    "n_rows": 1,
+    "n_rows": 0,
     "n_stale": 0,
     "n_stale_named": 0,
     "n_stale_unnamed": 0
@@ -918,8 +943,8 @@
   "backend": "jsonl",
   "authoritative_path": ".cache/betting/record.jsonl",
   "durable": true,
-  "n_rows": 1,
-  "chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
+  "n_rows": 0,
+  "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
   "derived_path": "data/betting_record.json",
   "path_basis": "relative to the site checkout root",
   "why": "the append-only log under .cache/ is untracked, so the nightly `git checkout -- .` cannot revert it; data/betting_record.json is re-rendered from it every build"
@@ -929,442 +954,8 @@
   "n_needed": 600,
   "source": "data/betting_model_eval.json vintage block"
  },
- "n_games": 7,
+ "n_games": 5,
  "team_bets": [
-  {
-   "game_pk": 824062,
-   "date": "2026-09-07",
-   "start": "2026-09-07T18:10:00Z",
-   "status": "Preview",
-   "double_header": false,
-   "odds_event_id": "b4745820fda1c660f277b88a71e25596",
-   "odds_commence_time": "2026-09-07T18:11:00Z",
-   "venue": "Kauffman Stadium",
-   "home": {
-    "org": "KCR",
-    "team": "Kansas City Royals",
-    "probable": {
-     "mlbam": 702070,
-     "name": "Noah Cameron"
-    },
-    "offense_plus": 96.0,
-    "bullpen_plus": 88.0
-   },
-   "away": {
-    "org": "ARI",
-    "team": "Arizona Diamondbacks",
-    "probable": {
-     "mlbam": 571882,
-     "name": "Derek Law"
-    },
-    "offense_plus": 96.0,
-    "bullpen_plus": 106.0
-   },
-   "model": {
-    "p_home": 0.51755,
-    "p_away": 0.48245,
-    "lam_home": 4.46,
-    "lam_away": 4.316,
-    "fair_total": 8.78,
-    "park_index": 1.04,
-    "home_prevention": {
-     "starter_plus": 107.0,
-     "bullpen_plus": 88.0,
-     "starter_share": 0.66,
-     "blend_plus": 100.5,
-     "source": "probable"
-    },
-    "away_prevention": {
-     "starter_plus": 99.0,
-     "bullpen_plus": 106.0,
-     "starter_share": 0.578,
-     "blend_plus": 102.0,
-     "source": "probable"
-    }
-   },
-   "moneyline": [
-    {
-     "side": "home",
-     "label": "KCR",
-     "model_prob": 0.51755,
-     "fair_odds": -107,
-     "p_push": null,
-     "book": "betus",
-     "odds": -107,
-     "decimal": 1.9346,
-     "implied_prob": 0.5169,
-     "market_fair_prob": 0.50465,
-     "edge": 0.0129,
-     "ev_per_unit": 0.00125,
-     "ev_per_unit_if_no_push": 0.00125,
-     "kelly_full": 0.00134,
-     "book_title": "BetUS",
-     "point": null
-    },
-    {
-     "side": "away",
-     "label": "ARI",
-     "model_prob": 0.48245,
-     "fair_odds": 107,
-     "p_push": null,
-     "book": "betrivers",
-     "odds": -103,
-     "decimal": 1.9709,
-     "implied_prob": 0.50738,
-     "market_fair_prob": 0.49535,
-     "edge": -0.0129,
-     "ev_per_unit": -0.04914,
-     "ev_per_unit_if_no_push": -0.04914,
-     "kelly_full": 0.0,
-     "book_title": "BetRivers",
-     "point": null
-    }
-   ],
-   "runline": [
-    {
-     "side": "home",
-     "label": "KCR +1.5",
-     "model_prob": 0.71392,
-     "fair_odds": -250,
-     "p_push": null,
-     "book": "fanduel",
-     "odds": -178,
-     "decimal": 1.5618,
-     "implied_prob": 0.64029,
-     "market_fair_prob": 0.61972,
-     "edge": 0.0942,
-     "ev_per_unit": 0.115,
-     "ev_per_unit_if_no_push": 0.115,
-     "kelly_full": 0.2047,
-     "book_title": "FanDuel",
-     "point": 1.5
-    },
-    {
-     "side": "away",
-     "label": "ARI -1.5",
-     "model_prob": 0.28608,
-     "fair_odds": 250,
-     "p_push": null,
-     "book": "mybookieag",
-     "odds": 153,
-     "decimal": 2.53,
-     "implied_prob": 0.39526,
-     "market_fair_prob": 0.38028,
-     "edge": -0.0942,
-     "ev_per_unit": -0.27622,
-     "ev_per_unit_if_no_push": -0.27622,
-     "kelly_full": 0.0,
-     "book_title": "MyBookie.ag",
-     "point": -1.5
-    }
-   ],
-   "total": {
-    "line": 9.0,
-    "sides": [
-     {
-      "side": "over",
-      "label": "Over 9.0",
-      "model_prob": 0.44108,
-      "fair_odds": 127,
-      "p_push": 0.13138,
-      "book": "betrivers",
-      "odds": -112,
-      "decimal": 1.8929,
-      "implied_prob": 0.52829,
-      "market_fair_prob": 0.52354,
-      "edge": -0.08246,
-      "ev_per_unit": -0.14339,
-      "ev_per_unit_if_no_push": -0.16508,
-      "kelly_full": 0.0,
-      "book_title": "BetRivers",
-      "point": 9.0
-     },
-     {
-      "side": "under",
-      "label": "Under 9.0",
-      "model_prob": 0.55892,
-      "fair_odds": -127,
-      "p_push": 0.13138,
-      "book": "lowvig",
-      "odds": 103,
-      "decimal": 2.03,
-      "implied_prob": 0.49261,
-      "market_fair_prob": 0.47646,
-      "edge": 0.08246,
-      "ev_per_unit": 0.11692,
-      "ev_per_unit_if_no_push": 0.13461,
-      "kelly_full": 0.13069,
-      "book_title": "LowVig.ag",
-      "point": 9.0
-     }
-    ],
-    "p_push": 0.13138
-   },
-   "market": {
-    "moneyline_hold_pct": 2.43,
-    "total_hold_pct": 3.39,
-    "moneyline_fair_book": "betonlineag",
-    "moneyline_hold_range": [
-     2.43,
-     4.742
-    ],
-    "moneyline_n_books_on_line": 9,
-    "total_fair_book": "lowvig",
-    "total_hold_range": [
-     3.39,
-     5.109
-    ],
-    "total_n_books_on_line": 7,
-    "runline_fair_book": "mybookieag",
-    "runline_hold_pct": 3.939,
-    "fair_book_rule": "min_hold",
-    "n_books_rejected": {
-     "moneyline": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 9
-     },
-     "runline": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 5
-     },
-     "total": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 7
-     }
-    },
-    "max_book_lag_minutes": {
-     "moneyline": 0.8,
-     "runline": 0.733,
-     "total": 0.8
-    },
-    "stale_book_max_lag_minutes": 15.0,
-    "consensus_fair_max_distance": 0.05,
-    "devig_method": "proportional"
-   }
-  },
-  {
-   "game_pk": 823742,
-   "date": "2026-09-07",
-   "start": "2026-09-07T18:10:00Z",
-   "status": "Preview",
-   "double_header": false,
-   "odds_event_id": "0902d8258427af19994e87abb3519262",
-   "odds_commence_time": "2026-09-07T18:11:00Z",
-   "venue": "American Family Field",
-   "home": {
-    "org": "MIL",
-    "team": "Milwaukee Brewers",
-    "probable": {
-     "mlbam": 688107,
-     "name": "Robert Gasser"
-    },
-    "offense_plus": 104.0,
-    "bullpen_plus": 109.0
-   },
-   "away": {
-    "org": "CHC",
-    "team": "Chicago Cubs",
-    "probable": {
-     "mlbam": 571510,
-     "name": "Matthew Boyd"
-    },
-    "offense_plus": 110.0,
-    "bullpen_plus": 94.0
-   },
-   "model": {
-    "p_home": 0.52136,
-    "p_away": 0.47864,
-    "lam_home": 5.103,
-    "lam_away": 4.919,
-    "fair_total": 10.02,
-    "park_index": 0.94,
-    "home_prevention": {
-     "starter_plus": 96.0,
-     "bullpen_plus": 109.0,
-     "starter_share": 0.602,
-     "blend_plus": 101.2,
-     "source": "probable"
-    },
-    "away_prevention": {
-     "starter_plus": 93.0,
-     "bullpen_plus": 94.0,
-     "starter_share": 0.632,
-     "blend_plus": 93.4,
-     "source": "probable"
-    }
-   },
-   "moneyline": [
-    {
-     "side": "home",
-     "label": "MIL",
-     "model_prob": 0.52136,
-     "fair_odds": -109,
-     "p_push": null,
-     "book": "betrivers",
-     "odds": -117,
-     "decimal": 1.8547,
-     "implied_prob": 0.53917,
-     "market_fair_prob": 0.53483,
-     "edge": -0.01347,
-     "ev_per_unit": -0.03303,
-     "ev_per_unit_if_no_push": -0.03303,
-     "kelly_full": 0.0,
-     "book_title": "BetRivers",
-     "point": null
-    },
-    {
-     "side": "away",
-     "label": "CHC",
-     "model_prob": 0.47864,
-     "fair_odds": 109,
-     "p_push": null,
-     "book": "lowvig",
-     "odds": 110,
-     "decimal": 2.1,
-     "implied_prob": 0.47619,
-     "market_fair_prob": 0.46517,
-     "edge": 0.01347,
-     "ev_per_unit": 0.00514,
-     "ev_per_unit_if_no_push": 0.00514,
-     "kelly_full": 0.00468,
-     "book_title": "LowVig.ag",
-     "point": null
-    }
-   ],
-   "runline": [
-    {
-     "side": "home",
-     "label": "MIL -1.5",
-     "model_prob": 0.33597,
-     "fair_odds": 198,
-     "p_push": null,
-     "book": "mybookieag",
-     "odds": 167,
-     "decimal": 2.67,
-     "implied_prob": 0.37453,
-     "market_fair_prob": 0.3646,
-     "edge": -0.02863,
-     "ev_per_unit": -0.10296,
-     "ev_per_unit_if_no_push": -0.10296,
-     "kelly_full": 0.0,
-     "book_title": "MyBookie.ag",
-     "point": -1.5
-    },
-    {
-     "side": "away",
-     "label": "CHC +1.5",
-     "model_prob": 0.66403,
-     "fair_odds": -198,
-     "p_push": null,
-     "book": "betmgm",
-     "odds": -190,
-     "decimal": 1.5263,
-     "implied_prob": 0.65518,
-     "market_fair_prob": 0.6354,
-     "edge": 0.02863,
-     "ev_per_unit": 0.01351,
-     "ev_per_unit_if_no_push": 0.01351,
-     "kelly_full": 0.02567,
-     "book_title": "BetMGM",
-     "point": 1.5
-    }
-   ],
-   "total": {
-    "line": 8.5,
-    "sides": [
-     {
-      "side": "over",
-      "label": "Over 8.5",
-      "model_prob": 0.66973,
-      "fair_odds": -203,
-      "p_push": null,
-      "book": "betus",
-      "odds": -105,
-      "decimal": 1.9524,
-      "implied_prob": 0.51219,
-      "market_fair_prob": 0.50678,
-      "edge": 0.16295,
-      "ev_per_unit": 0.30758,
-      "ev_per_unit_if_no_push": 0.30758,
-      "kelly_full": 0.32296,
-      "book_title": "BetUS",
-      "point": 8.5
-     },
-     {
-      "side": "under",
-      "label": "Under 8.5",
-      "model_prob": 0.33027,
-      "fair_odds": 203,
-      "p_push": null,
-      "book": "lowvig",
-      "odds": -104,
-      "decimal": 1.9615,
-      "implied_prob": 0.50981,
-      "market_fair_prob": 0.49322,
-      "edge": -0.16295,
-      "ev_per_unit": -0.35218,
-      "ev_per_unit_if_no_push": -0.35218,
-      "kelly_full": 0.0,
-      "book_title": "LowVig.ag",
-      "point": 8.5
-     }
-    ],
-    "p_push": 0.0
-   },
-   "market": {
-    "moneyline_hold_pct": 2.37,
-    "total_hold_pct": 3.361,
-    "moneyline_fair_book": "betonlineag",
-    "moneyline_hold_range": [
-     2.37,
-     4.772
-    ],
-    "moneyline_n_books_on_line": 9,
-    "total_fair_book": "lowvig",
-    "total_hold_range": [
-     3.361,
-     4.983
-    ],
-    "total_n_books_on_line": 9,
-    "runline_fair_book": "lowvig",
-    "runline_hold_pct": 3.111,
-    "fair_book_rule": "min_hold",
-    "n_books_rejected": {
-     "moneyline": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 9
-     },
-     "runline": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 8
-     },
-     "total": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 9
-     }
-    },
-    "max_book_lag_minutes": {
-     "moneyline": 0.8,
-     "runline": 0.8,
-     "total": 0.8
-    },
-    "stale_book_max_lag_minutes": 15.0,
-    "consensus_fair_max_distance": 0.05,
-    "devig_method": "proportional"
-   }
-  },
   {
    "game_pk": 824229,
    "date": "2026-09-07",
@@ -1581,12 +1172,446 @@
     "consensus_fair_max_distance": 0.05,
     "devig_method": "proportional"
    }
+  },
+  {
+   "game_pk": 823254,
+   "date": "2026-09-07",
+   "start": "2026-09-07T21:10:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "4b966f5cc20bd2c8aabb3ffae91d489c",
+   "odds_commence_time": "2026-09-07T21:11:00Z",
+   "venue": "Petco Park",
+   "home": {
+    "org": "SDP",
+    "team": "San Diego Padres",
+    "probable": {
+     "mlbam": 601713,
+     "name": "Nick Pivetta"
+    },
+    "offense_plus": 97.0,
+    "bullpen_plus": 120.0
+   },
+   "away": {
+    "org": "WSN",
+    "team": "Washington Nationals",
+    "probable": {
+     "mlbam": 663623,
+     "name": "Jake Irvin"
+    },
+    "offense_plus": 100.0,
+    "bullpen_plus": 90.0
+   },
+   "model": {
+    "p_home": 0.68647,
+    "p_away": 0.31353,
+    "lam_home": 4.684,
+    "lam_away": 3.282,
+    "fair_total": 7.97,
+    "park_index": 0.94,
+    "home_prevention": {
+     "starter_plus": 125.0,
+     "bullpen_plus": 120.0,
+     "starter_share": 0.444,
+     "blend_plus": 122.2,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 88.0,
+     "bullpen_plus": 90.0,
+     "starter_share": 0.529,
+     "blend_plus": 88.9,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "SDP",
+     "model_prob": 0.68647,
+     "fair_odds": -219,
+     "p_push": null,
+     "book": "draftkings",
+     "odds": -192,
+     "decimal": 1.5208,
+     "implied_prob": 0.65755,
+     "market_fair_prob": 0.64511,
+     "edge": 0.04136,
+     "ev_per_unit": 0.04398,
+     "ev_per_unit_if_no_push": 0.04398,
+     "kelly_full": 0.08445,
+     "book_title": "DraftKings",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "WSN",
+     "model_prob": 0.31353,
+     "fair_odds": 219,
+     "p_push": null,
+     "book": "betrivers",
+     "odds": 180,
+     "decimal": 2.8,
+     "implied_prob": 0.35714,
+     "market_fair_prob": 0.35489,
+     "edge": -0.04136,
+     "ev_per_unit": -0.12212,
+     "ev_per_unit_if_no_push": -0.12212,
+     "kelly_full": 0.0,
+     "book_title": "BetRivers",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "SDP -1.5",
+     "model_prob": 0.48123,
+     "fair_odds": 108,
+     "p_push": null,
+     "book": "draftkings",
+     "odds": 111,
+     "decimal": 2.11,
+     "implied_prob": 0.47393,
+     "market_fair_prob": 0.46875,
+     "edge": 0.01248,
+     "ev_per_unit": 0.0154,
+     "ev_per_unit_if_no_push": 0.0154,
+     "kelly_full": 0.01387,
+     "book_title": "DraftKings",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "WSN +1.5",
+     "model_prob": 0.51877,
+     "fair_odds": -108,
+     "p_push": null,
+     "book": "betrivers",
+     "odds": -121,
+     "decimal": 1.8264,
+     "implied_prob": 0.54753,
+     "market_fair_prob": 0.53125,
+     "edge": -0.01248,
+     "ev_per_unit": -0.05252,
+     "ev_per_unit_if_no_push": -0.05252,
+     "kelly_full": 0.0,
+     "book_title": "BetRivers",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 8.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 8.0",
+      "model_prob": 0.46804,
+      "fair_odds": 114,
+      "p_push": 0.13958,
+      "book": "lowvig",
+      "odds": -107,
+      "decimal": 1.9346,
+      "implied_prob": 0.5169,
+      "market_fair_prob": 0.5,
+      "edge": -0.03196,
+      "ev_per_unit": -0.08134,
+      "ev_per_unit_if_no_push": -0.09454,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 8.0
+     },
+     {
+      "side": "under",
+      "label": "Under 8.0",
+      "model_prob": 0.53196,
+      "fair_odds": -114,
+      "p_push": 0.13958,
+      "book": "lowvig",
+      "odds": -107,
+      "decimal": 1.9346,
+      "implied_prob": 0.5169,
+      "market_fair_prob": 0.5,
+      "edge": 0.03196,
+      "ev_per_unit": 0.02507,
+      "ev_per_unit_if_no_push": 0.02914,
+      "kelly_full": 0.03118,
+      "book_title": "LowVig.ag",
+      "point": 8.0
+     }
+    ],
+    "p_push": 0.13958
+   },
+   "market": {
+    "moneyline_hold_pct": 2.465,
+    "total_hold_pct": 3.382,
+    "moneyline_fair_book": "betonlineag",
+    "moneyline_hold_range": [
+     2.465,
+     4.707
+    ],
+    "moneyline_n_books_on_line": 9,
+    "total_fair_book": "lowvig",
+    "total_hold_range": [
+     3.382,
+     8.777
+    ],
+    "total_n_books_on_line": 9,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.06,
+    "fair_book_rule": "min_hold",
+    "n_books_rejected": {
+     "moneyline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "runline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "total": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     }
+    },
+    "max_book_lag_minutes": {
+     "moneyline": 0.8,
+     "runline": 0.8,
+     "total": 0.8
+    },
+    "stale_book_max_lag_minutes": 15.0,
+    "consensus_fair_max_distance": 0.05,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 823175,
+   "date": "2026-09-07",
+   "start": "2026-09-08T00:10:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "7e08f8c46ae533c3c09d2e5d1a37ac2b",
+   "odds_commence_time": "2026-09-08T00:11:00Z",
+   "venue": "Oracle Park",
+   "home": {
+    "org": "SFG",
+    "team": "San Francisco Giants",
+    "probable": {
+     "mlbam": 657277,
+     "name": "Logan Webb"
+    },
+    "offense_plus": 98.0,
+    "bullpen_plus": 91.0
+   },
+   "away": {
+    "org": "STL",
+    "team": "St. Louis Cardinals",
+    "probable": {
+     "mlbam": 700241,
+     "name": "Michael McGreevy"
+    },
+    "offense_plus": 98.0,
+    "bullpen_plus": 95.0
+   },
+   "model": {
+    "p_home": 0.56984,
+    "p_away": 0.43016,
+    "lam_home": 4.52,
+    "lam_away": 3.987,
+    "fair_total": 8.51,
+    "park_index": 0.94,
+    "home_prevention": {
+     "starter_plus": 110.0,
+     "bullpen_plus": 91.0,
+     "starter_share": 0.666,
+     "blend_plus": 103.6,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 96.0,
+     "bullpen_plus": 95.0,
+     "starter_share": 0.607,
+     "blend_plus": 95.6,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "SFG",
+     "model_prob": 0.56984,
+     "fair_odds": -132,
+     "p_push": null,
+     "book": "betonlineag",
+     "odds": -126,
+     "decimal": 1.7937,
+     "implied_prob": 0.55751,
+     "market_fair_prob": 0.54518,
+     "edge": 0.02466,
+     "ev_per_unit": 0.02212,
+     "ev_per_unit_if_no_push": 0.02212,
+     "kelly_full": 0.02787,
+     "book_title": "BetOnline.ag",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "STL",
+     "model_prob": 0.43016,
+     "fair_odds": 132,
+     "p_push": null,
+     "book": "betus",
+     "odds": 115,
+     "decimal": 2.15,
+     "implied_prob": 0.46512,
+     "market_fair_prob": 0.45482,
+     "edge": -0.02466,
+     "ev_per_unit": -0.07516,
+     "ev_per_unit_if_no_push": -0.07516,
+     "kelly_full": 0.0,
+     "book_title": "BetUS",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "SFG -1.5",
+     "model_prob": 0.36634,
+     "fair_odds": 173,
+     "p_push": null,
+     "book": "mybookieag",
+     "odds": 167,
+     "decimal": 2.67,
+     "implied_prob": 0.37453,
+     "market_fair_prob": 0.3646,
+     "edge": 0.00174,
+     "ev_per_unit": -0.02187,
+     "ev_per_unit_if_no_push": -0.02187,
+     "kelly_full": 0.0,
+     "book_title": "MyBookie.ag",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "STL +1.5",
+     "model_prob": 0.63366,
+     "fair_odds": -173,
+     "p_push": null,
+     "book": "fanduel",
+     "odds": -188,
+     "decimal": 1.5319,
+     "implied_prob": 0.65278,
+     "market_fair_prob": 0.6354,
+     "edge": -0.00174,
+     "ev_per_unit": -0.0293,
+     "ev_per_unit_if_no_push": -0.0293,
+     "kelly_full": 0.0,
+     "book_title": "FanDuel",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 7.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 7.5",
+      "model_prob": 0.61535,
+      "fair_odds": -160,
+      "p_push": null,
+      "book": "betrivers",
+      "odds": -113,
+      "decimal": 1.885,
+      "implied_prob": 0.5305,
+      "market_fair_prob": 0.51235,
+      "edge": 0.103,
+      "ev_per_unit": 0.15993,
+      "ev_per_unit_if_no_push": 0.15993,
+      "kelly_full": 0.18071,
+      "book_title": "BetRivers",
+      "point": 7.5
+     },
+     {
+      "side": "under",
+      "label": "Under 7.5",
+      "model_prob": 0.38465,
+      "fair_odds": 160,
+      "p_push": null,
+      "book": "fanduel",
+      "odds": 100,
+      "decimal": 2.0,
+      "implied_prob": 0.5,
+      "market_fair_prob": 0.48765,
+      "edge": -0.103,
+      "ev_per_unit": -0.2307,
+      "ev_per_unit_if_no_push": -0.2307,
+      "kelly_full": 0.0,
+      "book_title": "FanDuel",
+      "point": 7.5
+     }
+    ],
+    "p_push": 0.0
+   },
+   "market": {
+    "moneyline_hold_pct": 2.264,
+    "total_hold_pct": 3.547,
+    "moneyline_fair_book": "betus",
+    "moneyline_hold_range": [
+     2.264,
+     5.066
+    ],
+    "moneyline_n_books_on_line": 9,
+    "total_fair_book": "lowvig",
+    "total_hold_range": [
+     3.547,
+     4.975
+    ],
+    "total_n_books_on_line": 9,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.111,
+    "fair_book_rule": "min_hold",
+    "n_books_rejected": {
+     "moneyline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "runline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "total": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     }
+    },
+    "max_book_lag_minutes": {
+     "moneyline": 0.8,
+     "runline": 0.8,
+     "total": 0.8
+    },
+    "stale_book_max_lag_minutes": 15.0,
+    "consensus_fair_max_distance": 0.05,
+    "devig_method": "proportional"
+   }
   }
  ],
  "record": {
-  "n_rows": 1,
+  "n_rows": 0,
   "n_settled": 0,
-  "n_open": 1,
+  "n_open": 0,
   "won": 0,
   "lost": 0,
   "push": 0,
@@ -1596,7 +1621,7 @@
   "beat_close_rate": null,
   "avg_clv_pct": null,
   "stake_policy": "flat 1 unit",
-  "chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
+  "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
   "chain_note": "sha256 folded row by row over the record; a record that still contains an archived value as one of its prefix hashes is an append, and one that does not is a rewrite"
  },
  "gating_note": "Preview slice. Everything is public during the Diamond preview; this file is the seam a future gate would read."

@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-09-07T17:55:32+00:00",
+ "generated_at": "2026-09-07T19:05:33+00:00",
  "slate_date": "2026-09-07",
- "n_games": 7,
+ "n_games": 5,
  "status": {
   "odds_feed": "ok",
   "odds_note": "odds feed not configured: set EEPHUS_ODDS_API_KEY on the build box",
@@ -32,27 +32,29 @@
    },
    "n_orgs_joined": 30
   },
-  "n_slate_games": 7,
-  "n_events_dropped_in_progress": 4,
+  "n_slate_games": 5,
+  "n_events_dropped_in_progress": 6,
   "n_games_unpriced_time_mismatch": 0,
-  "slate_rule": "first_open_slate",
+  "slate_rule": "earliest_priced_partial_slate",
   "slate_candidates": [
    {
     "date": "2026-09-07",
     "n_games": 11,
     "n_bettable": 11,
-    "open": true,
-    "n_started": 4,
-    "n_pregame": 7,
-    "pregame_share": 0.6364,
+    "open": false,
+    "n_priceable": 5,
+    "n_started": 6,
+    "n_pregame": 5,
+    "pregame_share": 0.4545,
     "min_pregame_share": 0.5,
-    "why_not": null
+    "why_not": "2026-09-07 holds 11 game(s), 6 have already started or finished and 5 are still to come, so less than half of the card is left and what remains is a fragment rather than a board"
    },
    {
     "date": "2026-09-08",
     "n_games": 15,
     "n_bettable": 15,
     "open": true,
+    "n_priceable": 0,
     "n_started": 0,
     "n_pregame": 15,
     "pregame_share": 1.0,
@@ -64,6 +66,7 @@
     "n_games": 15,
     "n_bettable": 15,
     "open": true,
+    "n_priceable": 0,
     "n_started": 0,
     "n_pregame": 15,
     "pregame_share": 1.0,
@@ -71,9 +74,16 @@
     "why_not": null
    }
   ],
-  "partial_slate": null,
+  "partial_slate": {
+   "slate_date": "2026-09-07",
+   "n_games_on_date": 11,
+   "n_bettable": 11,
+   "n_still_to_come": 5,
+   "n_priceable": 5,
+   "reason": "no whole card on the schedule has a cached market, so the board is the 5 game(s) still to come on 2026-09-07, which the snapshot can price. 2026-09-07 holds 11 game(s), 6 have already started or finished and 5 are still to come, so less than half of the card is left and what remains is a fragment rather than a board"
+  },
   "started_rows_dropped": {
-   "n": 4,
+   "n": 6,
    "n_on_slate": 11,
    "games": [
     {
@@ -99,6 +109,18 @@
      "matchup": "CLE at BAL",
      "start": "2026-09-07T17:35:00Z",
      "status": "Preview"
+    },
+    {
+     "game_pk": 824062,
+     "matchup": "ARI at KCR",
+     "start": "2026-09-07T18:10:00Z",
+     "status": "Preview"
+    },
+    {
+     "game_pk": 823742,
+     "matchup": "CHC at MIL",
+     "start": "2026-09-07T18:10:00Z",
+     "status": "Preview"
     }
    ],
    "reason": "first pitch has passed, so the game is no longer on the book's pregame board and carries no price to show",
@@ -109,18 +131,18 @@
    "board_slate": "2026-09-07",
    "snapshot_slate": "2026-09-07",
    "snapshot_captured_at": "2026-09-07T17:03:24+00:00",
-   "snapshot_age_hours": 0.9,
+   "snapshot_age_hours": 2.0,
    "matched": true,
    "match_rule": "slate_label",
-   "n_pregame_events_on_board_slate": 7,
+   "n_pregame_events_on_board_slate": 5,
    "mismatch": false,
    "reason": "the cached snapshot is stamped for the 2026-09-07 slate"
   },
   "odds_slate_mismatch": false,
-  "odds_snapshot_age_hours": 0.9,
+  "odds_snapshot_age_hours": 2.0,
   "stale_board": false,
   "feed_health": {
-   "generated_at": "2026-09-07T17:55:32+00:00",
+   "generated_at": "2026-09-07T19:05:33+00:00",
    "window_days": 14,
    "source": ".cache/odds",
    "n_slates": 10,
@@ -129,7 +151,7 @@
    "n_unreadable_files": 0,
    "ever_captured_close": false,
    "hours_since_last_close": null,
-   "hours_since_last_open": 0.87,
+   "hours_since_last_open": 2.04,
    "close_stale_hours": 36.0,
    "close_job_last_run": null,
    "close_job_last_reason": null,
@@ -231,7 +253,9 @@
    "diagnosis": "no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above",
    "why_not_a_heartbeat": "data/job_heartbeat.json is git-tracked and deploy/nightly-build.sh reverts it before every pipeline, so a close-job heartbeat cannot survive to be read; this is measured off .cache/odds/ instead"
   },
-  "empty_reasons": []
+  "empty_reasons": [
+   "no whole card on the schedule has a cached market, so the board is the 5 game(s) still to come on 2026-09-07, which the snapshot can price. 2026-09-07 holds 11 game(s), 6 have already started or finished and 5 are still to come, so less than half of the card is left and what remains is a fragment rather than a board"
+  ]
  },
  "model": {
   "version": "betting_runs_v1",
@@ -962,27 +986,27 @@
   "staking": "Every row on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
  },
  "pick_of_the_day": {
-  "side": "home",
-  "label": "KCR +1.5",
-  "model_prob": 0.71392,
-  "fair_odds": -250,
+  "side": "under",
+  "label": "Under 8.5",
+  "model_prob": 0.67464,
+  "fair_odds": -207,
   "p_push": null,
-  "book": "fanduel",
-  "odds": -178,
-  "decimal": 1.5618,
-  "implied_prob": 0.64029,
-  "market_fair_prob": 0.61972,
-  "edge": 0.0942,
-  "ev_per_unit": 0.115,
-  "ev_per_unit_if_no_push": 0.115,
-  "kelly_full": 0.2047,
-  "book_title": "FanDuel",
-  "point": 1.5,
-  "market": "runline",
-  "game_pk": 824062,
-  "matchup": "ARI at KCR",
-  "start": "2026-09-07T18:10:00Z",
-  "evidence_closed": false,
+  "book": "draftkings",
+  "odds": -112,
+  "decimal": 1.8929,
+  "implied_prob": 0.52829,
+  "market_fair_prob": 0.52354,
+  "edge": 0.1511,
+  "ev_per_unit": 0.27702,
+  "ev_per_unit_if_no_push": 0.27702,
+  "kelly_full": 0.31024,
+  "book_title": "DraftKings",
+  "point": 8.5,
+  "market": "total",
+  "game_pk": 824958,
+  "matchup": "TOR at ATH",
+  "start": "2026-09-08T02:05:00Z",
+  "evidence_closed": true,
   "slot": "pick_of_the_day",
   "slot_label": "Model Watch: largest disagreement",
   "slot_frame": "watch",
@@ -990,9 +1014,10 @@
   "suggested_units": 1.0,
   "provisional": true,
   "min_edge_used": 0.06,
-  "kelly_quarter": 0.05117,
+  "kelly_quarter": 0.07756,
   "market_policy": "any",
   "caveat": "this is a runline or total, and the margin model is a Poisson difference that underdisperses real run scoring, so its probabilities sit too close to the middle; treat this edge as the softest of the three markets",
+  "evidence_caveat": "this market's own settled paper record resolved worse than a coin at the section 7b floor for the closure dwell; it is eligible under the any-market slot policy (owner decision 2026-09-05) and that record rides here as the disclosure, not as a bar",
   "tag_record": {
    "available": true,
    "tag": "potd_band",
@@ -1028,7 +1053,7 @@
     "band": "american odds from -199 to +199",
     "present": true,
     "reason": "highest model win probability among sides clearing the provisional floor on any priced market, restricted to american odds from -199 to +199; ties go to the price nearest -110, then to the higher expected value",
-    "n_candidates": 10,
+    "n_candidates": 7,
     "provisional": true,
     "min_edge": 0.06,
     "basis": "provisional_policy_floor",
@@ -1056,7 +1081,7 @@
     "rule": "highest expected value per unit among sides clearing the provisional floor at american odds of +200 or longer",
     "band": "american odds of +200 or longer",
     "present": false,
-    "reason": "11 side(s) cleared the 6.0% provisional floor on this slate and none of them are priced at american odds of +200 or longer",
+    "reason": "8 side(s) cleared the 6.0% provisional floor on this slate and none of them are priced at american odds of +200 or longer",
     "n_candidates": 0,
     "provisional": true,
     "min_edge": 0.06,
@@ -1078,7 +1103,7 @@
     }
    }
   },
-  "n_floor_clearing_sides": 11,
+  "n_floor_clearing_sides": 8,
   "market_policy": "any",
   "markets_eligible": "any priced market: moneyline, runline, total, props when armed (owner decision 2026-09-05, section 7d); the dispersion and ledger legs ride the row as disclosure"
  },
@@ -1338,440 +1363,6 @@
   }
  },
  "team_bets": [
-  {
-   "game_pk": 824062,
-   "date": "2026-09-07",
-   "start": "2026-09-07T18:10:00Z",
-   "status": "Preview",
-   "double_header": false,
-   "odds_event_id": "b4745820fda1c660f277b88a71e25596",
-   "odds_commence_time": "2026-09-07T18:11:00Z",
-   "venue": "Kauffman Stadium",
-   "home": {
-    "org": "KCR",
-    "team": "Kansas City Royals",
-    "probable": {
-     "mlbam": 702070,
-     "name": "Noah Cameron"
-    },
-    "offense_plus": 96.0,
-    "bullpen_plus": 88.0
-   },
-   "away": {
-    "org": "ARI",
-    "team": "Arizona Diamondbacks",
-    "probable": {
-     "mlbam": 571882,
-     "name": "Derek Law"
-    },
-    "offense_plus": 96.0,
-    "bullpen_plus": 106.0
-   },
-   "model": {
-    "p_home": 0.51755,
-    "p_away": 0.48245,
-    "lam_home": 4.46,
-    "lam_away": 4.316,
-    "fair_total": 8.78,
-    "park_index": 1.04,
-    "home_prevention": {
-     "starter_plus": 107.0,
-     "bullpen_plus": 88.0,
-     "starter_share": 0.66,
-     "blend_plus": 100.5,
-     "source": "probable"
-    },
-    "away_prevention": {
-     "starter_plus": 99.0,
-     "bullpen_plus": 106.0,
-     "starter_share": 0.578,
-     "blend_plus": 102.0,
-     "source": "probable"
-    }
-   },
-   "moneyline": [
-    {
-     "side": "home",
-     "label": "KCR",
-     "model_prob": 0.51755,
-     "fair_odds": -107,
-     "p_push": null,
-     "book": "betus",
-     "odds": -107,
-     "decimal": 1.9346,
-     "implied_prob": 0.5169,
-     "market_fair_prob": 0.50465,
-     "edge": 0.0129,
-     "ev_per_unit": 0.00125,
-     "ev_per_unit_if_no_push": 0.00125,
-     "kelly_full": 0.00134,
-     "book_title": "BetUS",
-     "point": null
-    },
-    {
-     "side": "away",
-     "label": "ARI",
-     "model_prob": 0.48245,
-     "fair_odds": 107,
-     "p_push": null,
-     "book": "betrivers",
-     "odds": -103,
-     "decimal": 1.9709,
-     "implied_prob": 0.50738,
-     "market_fair_prob": 0.49535,
-     "edge": -0.0129,
-     "ev_per_unit": -0.04914,
-     "ev_per_unit_if_no_push": -0.04914,
-     "kelly_full": 0.0,
-     "book_title": "BetRivers",
-     "point": null
-    }
-   ],
-   "runline": [
-    {
-     "side": "home",
-     "label": "KCR +1.5",
-     "model_prob": 0.71392,
-     "fair_odds": -250,
-     "p_push": null,
-     "book": "fanduel",
-     "odds": -178,
-     "decimal": 1.5618,
-     "implied_prob": 0.64029,
-     "market_fair_prob": 0.61972,
-     "edge": 0.0942,
-     "ev_per_unit": 0.115,
-     "ev_per_unit_if_no_push": 0.115,
-     "kelly_full": 0.2047,
-     "book_title": "FanDuel",
-     "point": 1.5
-    },
-    {
-     "side": "away",
-     "label": "ARI -1.5",
-     "model_prob": 0.28608,
-     "fair_odds": 250,
-     "p_push": null,
-     "book": "mybookieag",
-     "odds": 153,
-     "decimal": 2.53,
-     "implied_prob": 0.39526,
-     "market_fair_prob": 0.38028,
-     "edge": -0.0942,
-     "ev_per_unit": -0.27622,
-     "ev_per_unit_if_no_push": -0.27622,
-     "kelly_full": 0.0,
-     "book_title": "MyBookie.ag",
-     "point": -1.5
-    }
-   ],
-   "total": {
-    "line": 9.0,
-    "sides": [
-     {
-      "side": "over",
-      "label": "Over 9.0",
-      "model_prob": 0.44108,
-      "fair_odds": 127,
-      "p_push": 0.13138,
-      "book": "betrivers",
-      "odds": -112,
-      "decimal": 1.8929,
-      "implied_prob": 0.52829,
-      "market_fair_prob": 0.52354,
-      "edge": -0.08246,
-      "ev_per_unit": -0.14339,
-      "ev_per_unit_if_no_push": -0.16508,
-      "kelly_full": 0.0,
-      "book_title": "BetRivers",
-      "point": 9.0
-     },
-     {
-      "side": "under",
-      "label": "Under 9.0",
-      "model_prob": 0.55892,
-      "fair_odds": -127,
-      "p_push": 0.13138,
-      "book": "lowvig",
-      "odds": 103,
-      "decimal": 2.03,
-      "implied_prob": 0.49261,
-      "market_fair_prob": 0.47646,
-      "edge": 0.08246,
-      "ev_per_unit": 0.11692,
-      "ev_per_unit_if_no_push": 0.13461,
-      "kelly_full": 0.13069,
-      "book_title": "LowVig.ag",
-      "point": 9.0
-     }
-    ],
-    "p_push": 0.13138
-   },
-   "market": {
-    "moneyline_hold_pct": 2.43,
-    "total_hold_pct": 3.39,
-    "moneyline_fair_book": "betonlineag",
-    "moneyline_hold_range": [
-     2.43,
-     4.742
-    ],
-    "moneyline_n_books_on_line": 9,
-    "total_fair_book": "lowvig",
-    "total_hold_range": [
-     3.39,
-     5.109
-    ],
-    "total_n_books_on_line": 7,
-    "runline_fair_book": "mybookieag",
-    "runline_hold_pct": 3.939,
-    "fair_book_rule": "min_hold",
-    "n_books_rejected": {
-     "moneyline": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 9
-     },
-     "runline": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 5
-     },
-     "total": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 7
-     }
-    },
-    "max_book_lag_minutes": {
-     "moneyline": 0.8,
-     "runline": 0.733,
-     "total": 0.8
-    },
-    "stale_book_max_lag_minutes": 15.0,
-    "consensus_fair_max_distance": 0.05,
-    "devig_method": "proportional"
-   }
-  },
-  {
-   "game_pk": 823742,
-   "date": "2026-09-07",
-   "start": "2026-09-07T18:10:00Z",
-   "status": "Preview",
-   "double_header": false,
-   "odds_event_id": "0902d8258427af19994e87abb3519262",
-   "odds_commence_time": "2026-09-07T18:11:00Z",
-   "venue": "American Family Field",
-   "home": {
-    "org": "MIL",
-    "team": "Milwaukee Brewers",
-    "probable": {
-     "mlbam": 688107,
-     "name": "Robert Gasser"
-    },
-    "offense_plus": 104.0,
-    "bullpen_plus": 109.0
-   },
-   "away": {
-    "org": "CHC",
-    "team": "Chicago Cubs",
-    "probable": {
-     "mlbam": 571510,
-     "name": "Matthew Boyd"
-    },
-    "offense_plus": 110.0,
-    "bullpen_plus": 94.0
-   },
-   "model": {
-    "p_home": 0.52136,
-    "p_away": 0.47864,
-    "lam_home": 5.103,
-    "lam_away": 4.919,
-    "fair_total": 10.02,
-    "park_index": 0.94,
-    "home_prevention": {
-     "starter_plus": 96.0,
-     "bullpen_plus": 109.0,
-     "starter_share": 0.602,
-     "blend_plus": 101.2,
-     "source": "probable"
-    },
-    "away_prevention": {
-     "starter_plus": 93.0,
-     "bullpen_plus": 94.0,
-     "starter_share": 0.632,
-     "blend_plus": 93.4,
-     "source": "probable"
-    }
-   },
-   "moneyline": [
-    {
-     "side": "home",
-     "label": "MIL",
-     "model_prob": 0.52136,
-     "fair_odds": -109,
-     "p_push": null,
-     "book": "betrivers",
-     "odds": -117,
-     "decimal": 1.8547,
-     "implied_prob": 0.53917,
-     "market_fair_prob": 0.53483,
-     "edge": -0.01347,
-     "ev_per_unit": -0.03303,
-     "ev_per_unit_if_no_push": -0.03303,
-     "kelly_full": 0.0,
-     "book_title": "BetRivers",
-     "point": null
-    },
-    {
-     "side": "away",
-     "label": "CHC",
-     "model_prob": 0.47864,
-     "fair_odds": 109,
-     "p_push": null,
-     "book": "lowvig",
-     "odds": 110,
-     "decimal": 2.1,
-     "implied_prob": 0.47619,
-     "market_fair_prob": 0.46517,
-     "edge": 0.01347,
-     "ev_per_unit": 0.00514,
-     "ev_per_unit_if_no_push": 0.00514,
-     "kelly_full": 0.00468,
-     "book_title": "LowVig.ag",
-     "point": null
-    }
-   ],
-   "runline": [
-    {
-     "side": "home",
-     "label": "MIL -1.5",
-     "model_prob": 0.33597,
-     "fair_odds": 198,
-     "p_push": null,
-     "book": "mybookieag",
-     "odds": 167,
-     "decimal": 2.67,
-     "implied_prob": 0.37453,
-     "market_fair_prob": 0.3646,
-     "edge": -0.02863,
-     "ev_per_unit": -0.10296,
-     "ev_per_unit_if_no_push": -0.10296,
-     "kelly_full": 0.0,
-     "book_title": "MyBookie.ag",
-     "point": -1.5
-    },
-    {
-     "side": "away",
-     "label": "CHC +1.5",
-     "model_prob": 0.66403,
-     "fair_odds": -198,
-     "p_push": null,
-     "book": "betmgm",
-     "odds": -190,
-     "decimal": 1.5263,
-     "implied_prob": 0.65518,
-     "market_fair_prob": 0.6354,
-     "edge": 0.02863,
-     "ev_per_unit": 0.01351,
-     "ev_per_unit_if_no_push": 0.01351,
-     "kelly_full": 0.02567,
-     "book_title": "BetMGM",
-     "point": 1.5
-    }
-   ],
-   "total": {
-    "line": 8.5,
-    "sides": [
-     {
-      "side": "over",
-      "label": "Over 8.5",
-      "model_prob": 0.66973,
-      "fair_odds": -203,
-      "p_push": null,
-      "book": "betus",
-      "odds": -105,
-      "decimal": 1.9524,
-      "implied_prob": 0.51219,
-      "market_fair_prob": 0.50678,
-      "edge": 0.16295,
-      "ev_per_unit": 0.30758,
-      "ev_per_unit_if_no_push": 0.30758,
-      "kelly_full": 0.32296,
-      "book_title": "BetUS",
-      "point": 8.5
-     },
-     {
-      "side": "under",
-      "label": "Under 8.5",
-      "model_prob": 0.33027,
-      "fair_odds": 203,
-      "p_push": null,
-      "book": "lowvig",
-      "odds": -104,
-      "decimal": 1.9615,
-      "implied_prob": 0.50981,
-      "market_fair_prob": 0.49322,
-      "edge": -0.16295,
-      "ev_per_unit": -0.35218,
-      "ev_per_unit_if_no_push": -0.35218,
-      "kelly_full": 0.0,
-      "book_title": "LowVig.ag",
-      "point": 8.5
-     }
-    ],
-    "p_push": 0.0
-   },
-   "market": {
-    "moneyline_hold_pct": 2.37,
-    "total_hold_pct": 3.361,
-    "moneyline_fair_book": "betonlineag",
-    "moneyline_hold_range": [
-     2.37,
-     4.772
-    ],
-    "moneyline_n_books_on_line": 9,
-    "total_fair_book": "lowvig",
-    "total_hold_range": [
-     3.361,
-     4.983
-    ],
-    "total_n_books_on_line": 9,
-    "runline_fair_book": "lowvig",
-    "runline_hold_pct": 3.111,
-    "fair_book_rule": "min_hold",
-    "n_books_rejected": {
-     "moneyline": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 9
-     },
-     "runline": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 8
-     },
-     "total": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 9
-     }
-    },
-    "max_book_lag_minutes": {
-     "moneyline": 0.8,
-     "runline": 0.8,
-     "total": 0.8
-    },
-    "stale_book_max_lag_minutes": 15.0,
-    "consensus_fair_max_distance": 0.05,
-    "devig_method": "proportional"
-   }
-  },
   {
    "game_pk": 824229,
    "date": "2026-09-07",
@@ -2919,174 +2510,6 @@
   },
   "pitchers": [
    {
-    "mlbam": 702070,
-    "name": "Noah Cameron",
-    "org": "KCR",
-    "opp": "ARI",
-    "game_pk": 824062,
-    "expected_ip": 5.94,
-    "expected_bf": 25.46,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 5.41,
-      "lam": 5.41,
-      "n_trials": 25.457,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 5.5,
-      "p_over": 0.4637
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.65,
-      "lam": 2.65,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 2.5,
-      "p_over": 0.494
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.73,
-      "lam": 5.73,
-      "n_trials": 25.457,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 5.5,
-      "p_over": 0.5255
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 17.8,
-      "lam": 17.82,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": null,
-      "pmf_basis": "published as a fair number only; no over line is priced, so no mass function is claimed for it",
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 688107,
-    "name": "Robert Gasser",
-    "org": "MIL",
-    "opp": "CHC",
-    "game_pk": 823742,
-    "expected_ip": 5.42,
-    "expected_bf": 23.45,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 4.85,
-      "lam": 4.85,
-      "n_trials": 23.452,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 5.5,
-      "p_over": 0.3537
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.5,
-      "lam": 2.5,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 2.5,
-      "p_over": 0.4562
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.32,
-      "lam": 5.32,
-      "n_trials": 23.452,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 5.5,
-      "p_over": 0.4466
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 16.3,
-      "lam": 16.26,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": null,
-      "pmf_basis": "published as a fair number only; no over line is priced, so no mass function is claimed for it",
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 571510,
-    "name": "Matthew Boyd",
-    "org": "CHC",
-    "opp": "MIL",
-    "game_pk": 823742,
-    "expected_ip": 5.69,
-    "expected_bf": 24.45,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 4.89,
-      "lam": 4.89,
-      "n_trials": 24.449,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 5.5,
-      "p_over": 0.3617
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.76,
-      "lam": 2.76,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 3.5,
-      "p_over": 0.2992
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.69,
-      "lam": 5.69,
-      "n_trials": 24.449,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 5.5,
-      "p_over": 0.5186
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 17.1,
-      "lam": 17.07,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": null,
-      "pmf_basis": "published as a fair number only; no over line is priced, so no mass function is claimed for it",
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
     "mlbam": 675512,
     "name": "Troy Melton",
     "org": "DET",
@@ -3536,906 +2959,6 @@
    }
   ],
   "hitters": [
-   {
-    "mlbam": 695600,
-    "name": "Carter Jensen",
-    "org": "KCR",
-    "game_pk": 824062,
-    "slot": 1,
-    "expected_pa": 4.65,
-    "vs_hand": "R",
-    "vs_hand_basis": "opposing probable throws R",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.65,
-      "lam": 1.65,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.4911
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 0.93,
-      "lam": 0.93,
-      "n_trials": 4.65,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6436
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.168,
-      "lam": 0.168,
-      "n_trials": 4.65,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1571
-     }
-    ]
-   },
-   {
-    "mlbam": 677951,
-    "name": "Bobby Witt Jr.",
-    "org": "KCR",
-    "game_pk": 824062,
-    "slot": 2,
-    "expected_pa": 4.55,
-    "vs_hand": "R",
-    "vs_hand_basis": "opposing probable throws R",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.97,
-      "lam": 1.97,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.5858
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 1.13,
-      "lam": 1.13,
-      "n_trials": 4.55,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.7244
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.156,
-      "lam": 0.156,
-      "n_trials": 4.55,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1467
-     }
-    ]
-   },
-   {
-    "mlbam": 686469,
-    "name": "Vinnie Pasquantino",
-    "org": "KCR",
-    "game_pk": 824062,
-    "slot": 3,
-    "expected_pa": 4.45,
-    "vs_hand": "R",
-    "vs_hand_basis": "opposing probable throws R",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.66,
-      "lam": 1.66,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.4942
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 1.0,
-      "lam": 1.0,
-      "n_trials": 4.45,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6753
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.148,
-      "lam": 0.148,
-      "n_trials": 4.45,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1396
-     }
-    ]
-   },
-   {
-    "mlbam": 695506,
-    "name": "Jac Caglianone",
-    "org": "KCR",
-    "game_pk": 824062,
-    "slot": 4,
-    "expected_pa": 4.35,
-    "vs_hand": "R",
-    "vs_hand_basis": "opposing probable throws R",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.77,
-      "lam": 1.77,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.5282
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 0.98,
-      "lam": 0.98,
-      "n_trials": 4.35,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6682
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.173,
-      "lam": 0.173,
-      "n_trials": 4.35,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1617
-     }
-    ]
-   },
-   {
-    "mlbam": 686681,
-    "name": "Michael Massey",
-    "org": "KCR",
-    "game_pk": 824062,
-    "slot": 5,
-    "expected_pa": 4.25,
-    "vs_hand": "R",
-    "vs_hand_basis": "opposing probable throws R",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.58,
-      "lam": 1.58,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.4686
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 1.02,
-      "lam": 1.02,
-      "n_trials": 4.25,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6864
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.108,
-      "lam": 0.108,
-      "n_trials": 4.25,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1036
-     }
-    ]
-   },
-   {
-    "mlbam": 606466,
-    "name": "Ketel Marte",
-    "org": "ARI",
-    "game_pk": 824062,
-    "slot": 1,
-    "expected_pa": 4.65,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.94,
-      "lam": 1.94,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.5775
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 1.09,
-      "lam": 1.09,
-      "n_trials": 4.65,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.7088
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.201,
-      "lam": 0.201,
-      "n_trials": 4.65,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1856
-     }
-    ]
-   },
-   {
-    "mlbam": 672515,
-    "name": "Gabriel Moreno",
-    "org": "ARI",
-    "game_pk": 824062,
-    "slot": 2,
-    "expected_pa": 4.55,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.71,
-      "lam": 1.71,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.5099
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 1.07,
-      "lam": 1.07,
-      "n_trials": 4.55,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.7021
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.12,
-      "lam": 0.12,
-      "n_trials": 4.55,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1144
-     }
-    ]
-   },
-   {
-    "mlbam": 672695,
-    "name": "Geraldo Perdomo",
-    "org": "ARI",
-    "game_pk": 824062,
-    "slot": 3,
-    "expected_pa": 4.45,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.47,
-      "lam": 1.47,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.4321
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 0.99,
-      "lam": 0.99,
-      "n_trials": 4.45,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6711
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.087,
-      "lam": 0.087,
-      "n_trials": 4.45,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.0841
-     }
-    ]
-   },
-   {
-    "mlbam": 571448,
-    "name": "Nolan Arenado",
-    "org": "ARI",
-    "game_pk": 824062,
-    "slot": 4,
-    "expected_pa": 4.35,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.46,
-      "lam": 1.46,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.4287
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 0.95,
-      "lam": 0.95,
-      "n_trials": 4.35,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6553
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.131,
-      "lam": 0.131,
-      "n_trials": 4.35,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1245
-     }
-    ]
-   },
-   {
-    "mlbam": 682998,
-    "name": "Corbin Carroll",
-    "org": "ARI",
-    "game_pk": 824062,
-    "slot": 5,
-    "expected_pa": 4.25,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.74,
-      "lam": 1.74,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.5191
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 0.89,
-      "lam": 0.89,
-      "n_trials": 4.25,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6298
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.156,
-      "lam": 0.156,
-      "n_trials": 4.25,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1468
-     }
-    ]
-   },
-   {
-    "mlbam": 661388,
-    "name": "William Contreras",
-    "org": "MIL",
-    "game_pk": 823742,
-    "slot": 1,
-    "expected_pa": 4.65,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.64,
-      "lam": 1.64,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.4879
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 1.06,
-      "lam": 1.06,
-      "n_trials": 4.65,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6974
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.119,
-      "lam": 0.119,
-      "n_trials": 4.65,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1135
-     }
-    ]
-   },
-   {
-    "mlbam": 641343,
-    "name": "Jake Bauers",
-    "org": "MIL",
-    "game_pk": 823742,
-    "slot": 2,
-    "expected_pa": 4.55,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.6,
-      "lam": 1.6,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.4751
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 0.89,
-      "lam": 0.89,
-      "n_trials": 4.55,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6264
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.171,
-      "lam": 0.171,
-      "n_trials": 4.55,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1598
-     }
-    ]
-   },
-   {
-    "mlbam": 687401,
-    "name": "Joey Ortiz",
-    "org": "MIL",
-    "game_pk": 823742,
-    "slot": 3,
-    "expected_pa": 4.45,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.37,
-      "lam": 1.37,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.3978
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 0.97,
-      "lam": 0.97,
-      "n_trials": 4.45,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6627
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.086,
-      "lam": 0.086,
-      "n_trials": 4.45,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.0831
-     }
-    ]
-   },
-   {
-    "mlbam": 694192,
-    "name": "Jackson Chourio",
-    "org": "MIL",
-    "game_pk": 823742,
-    "slot": 4,
-    "expected_pa": 4.35,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.82,
-      "lam": 1.82,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.5431
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 1.05,
-      "lam": 1.05,
-      "n_trials": 4.35,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6968
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.171,
-      "lam": 0.171,
-      "n_trials": 4.35,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1599
-     }
-    ]
-   },
-   {
-    "mlbam": 668930,
-    "name": "Brice Turang",
-    "org": "MIL",
-    "game_pk": 823742,
-    "slot": 5,
-    "expected_pa": 4.25,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.49,
-      "lam": 1.49,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.4388
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 0.93,
-      "lam": 0.93,
-      "n_trials": 4.25,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.648
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.105,
-      "lam": 0.105,
-      "n_trials": 4.25,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1008
-     }
-    ]
-   },
-   {
-    "mlbam": 608324,
-    "name": "Alex Bregman",
-    "org": "CHC",
-    "game_pk": 823742,
-    "slot": 1,
-    "expected_pa": 4.65,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.7,
-      "lam": 1.7,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.5068
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 1.07,
-      "lam": 1.07,
-      "n_trials": 4.65,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.7012
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.158,
-      "lam": 0.158,
-      "n_trials": 4.65,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1484
-     }
-    ]
-   },
-   {
-    "mlbam": 691718,
-    "name": "Pete Crow-Armstrong",
-    "org": "CHC",
-    "game_pk": 823742,
-    "slot": 2,
-    "expected_pa": 4.55,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 2.0,
-      "lam": 2.0,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.594
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 1.04,
-      "lam": 1.04,
-      "n_trials": 4.55,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6904
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.228,
-      "lam": 0.228,
-      "n_trials": 4.55,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.2083
-     }
-    ]
-   },
-   {
-    "mlbam": 664023,
-    "name": "Ian Happ",
-    "org": "CHC",
-    "game_pk": 823742,
-    "slot": 3,
-    "expected_pa": 4.45,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.56,
-      "lam": 1.56,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.4621
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 0.87,
-      "lam": 0.87,
-      "n_trials": 4.45,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.618
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.153,
-      "lam": 0.153,
-      "n_trials": 4.45,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.144
-     }
-    ]
-   },
-   {
-    "mlbam": 673548,
-    "name": "Seiya Suzuki",
-    "org": "CHC",
-    "game_pk": 823742,
-    "slot": 4,
-    "expected_pa": 4.35,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.69,
-      "lam": 1.69,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.5036
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 0.93,
-      "lam": 0.93,
-      "n_trials": 4.35,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.6465
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.177,
-      "lam": 0.177,
-      "n_trials": 4.35,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1652
-     }
-    ]
-   },
-   {
-    "mlbam": 624424,
-    "name": "Michael Conforto",
-    "org": "CHC",
-    "game_pk": 823742,
-    "slot": 5,
-    "expected_pa": 4.25,
-    "vs_hand": "L",
-    "vs_hand_basis": "opposing probable throws L",
-    "props": [
-     {
-      "prop": "Total bases",
-      "fair_line": 1.49,
-      "lam": 1.49,
-      "n_trials": null,
-      "model_id": "betting_props_pmf",
-      "pmf": "poisson",
-      "pmf_basis": null,
-      "over_line": 1.5,
-      "p_over": 0.4388
-     },
-     {
-      "prop": "1+ hits",
-      "fair_line": 0.84,
-      "lam": 0.84,
-      "n_trials": 4.25,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.606
-     },
-     {
-      "prop": "1+ home runs",
-      "fair_line": 0.151,
-      "lam": 0.151,
-      "n_trials": 4.25,
-      "model_id": "betting_props_pmf",
-      "pmf": "binomial",
-      "pmf_basis": null,
-      "over_line": 0.5,
-      "p_over": 0.1424
-     }
-    ]
-   },
    {
     "mlbam": 650402,
     "name": "Gleyber Torres",
@@ -6567,20 +5090,20 @@
   "selection_rule": "the watch-slot game first, then the remaining games by largest team-market edge, capped at 3 a day",
   "selected_games": [
    {
-    "game_pk": 824062,
-    "matchup": "ARI at KCR",
+    "game_pk": 824958,
+    "matchup": "TOR at ATH",
     "basis": "watch-slot game",
     "has_props_snapshot": false
    },
    {
-    "game_pk": 823742,
-    "matchup": "CHC at MIL",
+    "game_pk": 824229,
+    "matchup": "MIN at DET",
     "basis": "largest team-market edge",
     "has_props_snapshot": false
    },
    {
-    "game_pk": 824958,
-    "matchup": "TOR at ATH",
+    "game_pk": 823175,
+    "matchup": "STL at SFG",
     "basis": "largest team-market edge",
     "has_props_snapshot": false
    }
@@ -6662,78 +5185,6 @@
    }
   ],
   "legs": [
-   {
-    "leg_id": "824062:ml:home",
-    "game_pk": 824062,
-    "label": "KCR moneyline",
-    "market": "h2h",
-    "model_prob": 0.51755,
-    "odds": -107,
-    "book": "betus"
-   },
-   {
-    "leg_id": "824062:ml:away",
-    "game_pk": 824062,
-    "label": "ARI moneyline",
-    "market": "h2h",
-    "model_prob": 0.48245,
-    "odds": -103,
-    "book": "betrivers"
-   },
-   {
-    "leg_id": "824062:tot:over",
-    "game_pk": 824062,
-    "label": "ARI at KCR Over 9.0",
-    "market": "totals",
-    "model_prob": 0.44108,
-    "odds": -112,
-    "book": "betrivers"
-   },
-   {
-    "leg_id": "824062:tot:under",
-    "game_pk": 824062,
-    "label": "ARI at KCR Under 9.0",
-    "market": "totals",
-    "model_prob": 0.55892,
-    "odds": 103,
-    "book": "lowvig"
-   },
-   {
-    "leg_id": "823742:ml:home",
-    "game_pk": 823742,
-    "label": "MIL moneyline",
-    "market": "h2h",
-    "model_prob": 0.52136,
-    "odds": -117,
-    "book": "betrivers"
-   },
-   {
-    "leg_id": "823742:ml:away",
-    "game_pk": 823742,
-    "label": "CHC moneyline",
-    "market": "h2h",
-    "model_prob": 0.47864,
-    "odds": 110,
-    "book": "lowvig"
-   },
-   {
-    "leg_id": "823742:tot:over",
-    "game_pk": 823742,
-    "label": "CHC at MIL Over 8.5",
-    "market": "totals",
-    "model_prob": 0.66973,
-    "odds": -105,
-    "book": "betus"
-   },
-   {
-    "leg_id": "823742:tot:under",
-    "game_pk": 823742,
-    "label": "CHC at MIL Under 8.5",
-    "market": "totals",
-    "model_prob": 0.33027,
-    "odds": -104,
-    "book": "lowvig"
-   },
    {
     "leg_id": "824229:ml:home",
     "game_pk": 824229,
@@ -6920,9 +5371,9 @@
   "math_note": "Independent legs multiply. Same-game legs do not, and the naive product is always too generous to the bettor's story and too cheap for the book to sell at that price."
  },
  "record": {
-  "n_rows": 1,
+  "n_rows": 0,
   "n_settled": 0,
-  "n_open": 1,
+  "n_open": 0,
   "won": 0,
   "lost": 0,
   "push": 0,
@@ -6932,7 +5383,7 @@
   "beat_close_rate": null,
   "avg_clv_pct": null,
   "stake_policy": "flat 1 unit",
-  "chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
+  "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
   "chain_note": "sha256 folded row by row over the record; a record that still contains an archived value as one of its prefix hashes is an append, and one that does not is a rewrite"
  },
  "record_url": "/data/betting_record.json",
@@ -6942,8 +5393,8 @@
   "backend": "jsonl",
   "authoritative_path": ".cache/betting/record.jsonl",
   "durable": true,
-  "n_rows": 1,
-  "chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
+  "n_rows": 0,
+  "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
   "derived_path": "data/betting_record.json",
   "path_basis": "relative to the site checkout root",
   "why": "the append-only log under .cache/ is untracked, so the nightly `git checkout -- .` cannot revert it; data/betting_record.json is re-rendered from it every build"
@@ -6961,7 +5412,7 @@
   ],
   "ok": false,
   "n_candidates": 1,
-  "n_new": 0,
+  "n_new": 1,
   "written": 0,
   "policy": "a selection enters the public record only when every blocker is open; the first row is written by the first nightly that clears all of them, and nothing else arms it",
   "reason": "blocked: publish_armed (the close_snapshot blocker was retired on 2026-09-07 (SERVE_CLV), which left this list all-open and would have started the public record as a side effect of removing a different gate. Publishing is an owner decision: with CLV retired these rows grade on realized results alone, which is noisier than closing line value, on a model whose gate still reads unvalidated)"
@@ -6994,8 +5445,8 @@
    "need": "the append-only JSONL under .cache/betting/ to be authoritative, and its chain to extend the last published chain_sha",
    "have": {
     "backend": "jsonl",
-    "chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
-    "published_chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
+    "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
+    "published_chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
     "chain_extends": true,
     "chain_check_armed": true
    },
@@ -7006,7 +5457,7 @@
    "open": true,
    "need": "every record row older than 36h settled, or the reason it is not settled named on the sidecar",
    "have": {
-    "n_rows": 1,
+    "n_rows": 0,
     "n_stale": 0,
     "n_stale_named": 0,
     "n_stale_unnamed": 0
@@ -7016,12 +5467,12 @@
   }
  ],
  "record_chain_anchor": {
-  "chain_sha": "a17fd72e20513bc7f8e1926db136de77275ee57956fce3da55e0bd989341f589",
+  "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
   "source": ".cache/betting/published_chain.json",
   "durable": true,
   "armed": true,
-  "published_at": "2026-09-07T17:54:50+00:00",
-  "n_rows": 1
+  "published_at": "2026-09-07T19:04:01+00:00",
+  "n_rows": 0
  },
  "settlement_url": "/data/betting_settlement.json",
  "serve_clv": false

@@ -41,6 +41,22 @@ def _card(day: str, n: int, n_started: int) -> list[dict]:
     return out
 
 
+def _resolve(games, stats, *, priceable):
+    """resolve_slate against an injected schedule and an injected market map.
+
+    Both are injected so the slate rule's tests never depend on what
+    `.cache/odds` or `data/fantasy.json` happen to hold when they run.
+    """
+    import betting_export as _be
+    orig = _be._load
+    _be._load = lambda name: ({"schedule": {"games": games}}
+                              if name == "fantasy.json" else orig(name))
+    try:
+        return _be.resolve_slate(now=NOW, stats=stats, priceable=priceable)
+    finally:
+        _be._load = orig
+
+
 # ---------------------------------------------------------------- the slate rule
 def test_a_card_with_most_of_it_left_is_still_a_board():
     """NINE OF ELEVEN PREGAME IS A BOARD. This is the live 2026-09-07 shape:
@@ -145,3 +161,57 @@ def test_an_unpriceable_board_publishes_neither():
     assert slots["pick_of_the_day"] is None
     assert meta.get("blocked") is True
     assert "snapshot" in reason
+
+
+# ------------------------------------------------- the board must price something
+def _sched(day, n, n_started):
+    return _card(day, n, n_started)
+
+
+def test_an_open_card_with_no_market_loses_to_a_priced_fragment():
+    """THE DEFECT. At 19:04 UTC on 2026-09-07 the board chose 2026-09-08, which
+    had fifteen games, none started and NO cached prices, over the five games
+    still to come on 2026-09-07 that the snapshot could price for all five. Both
+    halves were working as designed: `_slate_is_open` asks whether most of a
+    card is still ahead and never asks whether any of it can be priced, and the
+    books do not post tomorrow's lines until tomorrow. The page went blank."""
+    games = _sched("2026-09-07", 11, 6) + _sched("2026-09-08", 15, 0)
+    stats: dict = {}
+    day, rows = _resolve(games, stats, priceable={"2026-09-07": 5})
+    assert day == "2026-09-07"
+    assert stats["slate_rule"] == "earliest_priced_partial_slate"
+    assert len(rows) == 5, "only the games still to come"
+    ps = stats["partial_slate"]
+    assert ps["n_still_to_come"] == 5 and ps["n_priceable"] == 5
+    assert "cached market" in ps["reason"]
+
+
+def test_an_open_priced_card_still_wins_outright():
+    """The ordinary case is unchanged: a whole card with a market is the board."""
+    games = _sched("2026-09-07", 11, 6) + _sched("2026-09-08", 15, 0)
+    stats: dict = {}
+    day, rows = _resolve(games, stats, priceable={"2026-09-07": 5, "2026-09-08": 15})
+    assert day == "2026-09-08"
+    assert stats["slate_rule"] == "first_open_priced_slate"
+    assert len(rows) == 15
+
+
+def test_the_2026_08_08_defect_stays_shut_under_the_new_preference():
+    """One of fifteen left must NEVER win the board away from a whole card, even
+    when the straggler is the only priced game. That is the failure the slate
+    rule was written for, and the priceable preference is ordered so a
+    mostly-played card is taken only when the alternative can price nothing."""
+    games = _sched("2026-08-08", 15, 14) + _sched("2026-08-09", 15, 0)
+    stats: dict = {}
+    day, _ = _resolve(games, stats, priceable={"2026-08-08": 1, "2026-08-09": 15})
+    assert day == "2026-08-09", "a priced whole card outranks a priced fragment"
+
+
+def test_no_market_information_degrades_to_the_previous_rule():
+    """An empty map is "nothing is known about prices", not "nothing is priced".
+    A build with no snapshot must resolve a slate exactly as it did before."""
+    games = _sched("2026-09-07", 11, 6) + _sched("2026-09-08", 15, 0)
+    stats: dict = {}
+    day, _ = _resolve(games, stats, priceable={})
+    assert day == "2026-09-08"
+    assert stats["slate_rule"] == "first_open_slate"

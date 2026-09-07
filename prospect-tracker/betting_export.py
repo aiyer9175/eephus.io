@@ -2091,6 +2091,15 @@ def slate_games(on_date: str | None = None, *, include_unbettable: bool = False)
 SLATE_OPEN_MIN_PREGAME_SHARE = 0.5
 
 
+def _has_started(g: dict, now: datetime) -> bool:
+    """First pitch is behind us, on either signal. One definition, read by the
+    slate rule, the board filter and the priceable fallback, so the three can
+    never disagree about which games are gone."""
+    st = str((g or {}).get("status") or "").strip().lower()
+    t = _stamp((g or {}).get("datetime"))
+    return st in SLATE_STARTED_STATES or (t is not None and t <= now)
+
+
 def _slate_is_open(day: str, games: list[dict], now: datetime | None = None,
                    counts: dict | None = None) -> tuple[bool, str | None]:
     """Is MOST of this calendar date's card still ahead of us, judged on the
@@ -2146,7 +2155,8 @@ def _slate_is_open(day: str, games: list[dict], now: datetime | None = None,
 
 
 def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
-                  stats: dict | None = None) -> tuple[str | None, list[dict]]:
+                  stats: dict | None = None,
+                  priceable: dict | None = None) -> tuple[str | None, list[dict]]:
     """(slate date, bettable rows) for the board, and the audit trail behind it.
 
     THE DEFECT THIS CLOSES. `build` took whatever `slate_games` returned, which
@@ -2183,6 +2193,19 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
     fan = _load("fantasy.json") or {}
     allg = ((fan.get("schedule") or {}).get("games")) or []
     days = sorted({g["date"] for g in allg if g.get("date")})
+    # INJECTABLE, and defaulted from the cache only when the caller says nothing.
+    # A test that does not pass one used to read whatever `.cache/odds` happened
+    # to hold, which makes the slate rule's own regression tests depend on a
+    # file none of them writes.
+    priceable = cached_pregame_by_slate(now) if priceable is None else priceable
+    # SCOPED TO THIS SCHEDULE'S OWN DATES. A snapshot covering no date the
+    # schedule carries tells us nothing about THESE candidates, and treating it
+    # as "priced: no" would push every date into the unpriced fallback on the
+    # strength of a market for some other week. Intersecting makes that case
+    # read as "no market information", which is what it is, and it also stops
+    # the slate rule's regression tests from depending on whatever `.cache/odds`
+    # happens to hold when they run.
+    priceable = {d: n for d, n in (priceable or {}).items() if d in set(days)}
     cands, chosen, rule = [], None, None
     for day in days:
         rows = [g for g in allg if g.get("date") == day]
@@ -2191,6 +2214,7 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
         is_open, why_not = _slate_is_open(day, allg, now, counts=counts)
         cands.append({"date": day, "n_games": len(rows),
                       "n_bettable": len(bettable), "open": is_open,
+                      "n_priceable": priceable.get(day, 0),
                       "n_started": counts.get("n_started"),
                       "n_pregame": counts.get("n_pregame"),
                       "pregame_share": counts.get("pregame_share"),
@@ -2198,11 +2222,61 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
                       "why_not": why_not})
         # An open date with nothing bettable on it is every game postponed. It
         # is open and it is not a board, so the walk keeps going.
-        if is_open and bettable and chosen is None:
-            chosen, rule = day, "first_open_slate"
+        #
+        # PRICEABLE FIRST. An open date the cached snapshot cannot price is a
+        # blank page, and on any afternoon the NEXT day's card is exactly that:
+        # open, whole, and not yet posted by the books. So the first pass takes
+        # only a date that is both open and priced; the fallbacks below relax
+        # that in a fixed order.
+        # WITH NO MARKET INFORMATION AT ALL this reduces to the previous rule and
+        # keeps its name: an empty map is "nothing is known about prices", not
+        # "nothing is priced", and degrading to the old behaviour is the correct
+        # reading of a build with no snapshot.
+        if is_open and bettable and chosen is None and (
+                not priceable or priceable.get(day, 0)):
+            chosen, rule = day, ("first_open_slate" if not priceable
+                                 else "first_open_priced_slate")
 
     stats["slate_candidates"] = cands
     stats["partial_slate"] = None
+    stats["priceable_by_slate"] = dict(sorted(priceable.items()))
+
+    # FALLBACK 1: nothing open can be priced, but a mostly-played card still
+    # has unstarted games AND a live market for them. Five priced games beat
+    # fifteen unpriced ones, and this is labelled a partial board rather than
+    # served as a whole card, which is what separates it from the 2026-08-08
+    # defect (a one-of-fifteen straggler winning min(date) unlabelled).
+    if chosen is None:
+        for c in cands:
+            day = c["date"]
+            if not c["n_priceable"] or not c["n_bettable"]:
+                continue
+            live = [g for g in allg
+                    if g.get("date") == day and is_bettable(g)
+                    and not _has_started(g, now)]
+            if not live:
+                continue
+            chosen, rule = day, "earliest_priced_partial_slate"
+            stats["partial_slate"] = {
+                "slate_date": day,
+                "n_games_on_date": c["n_games"],
+                "n_bettable": c["n_bettable"],
+                "n_still_to_come": len(live),
+                "n_priceable": c["n_priceable"],
+                "reason": (f"no whole card on the schedule has a cached market, so the "
+                           f"board is the {len(live)} game(s) still to come on {day}, "
+                           f"which the snapshot can price. {c.get('why_not')}"),
+            }
+            break
+
+    # FALLBACK 2: the previous behaviour. A build with no snapshot at all has an
+    # empty priceable map and must still resolve a slate.
+    if chosen is None:
+        for c in cands:
+            if c["open"] and c["n_bettable"]:
+                chosen, rule = c["date"], "first_open_slate_unpriced"
+                break
+
     if chosen is None:
         dated = [g for g in allg if is_bettable(g) and g.get("date")]
         if dated:
@@ -2229,9 +2303,7 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
     live_rows = []
     started = []
     for g in on_slate:
-        st = str(g.get("status") or "").strip().lower()
-        t = _stamp(g.get("datetime"))
-        if st in SLATE_STARTED_STATES or (t is not None and t <= now):
+        if _has_started(g, now):
             started.append({
                 "game_pk": g.get("game_pk"),
                 "matchup": f"{(g.get('away') or {}).get('org')} at "
@@ -2256,6 +2328,35 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
         return chosen, on_slate
     stats["started_rows_dropped"]["applied"] = True
     return chosen, live_rows
+
+
+def cached_pregame_by_slate(now: datetime | None = None) -> dict:
+    """{slate_date: number of events in the newest cached snapshot that belong
+    to that slate and have NOT started}.
+
+    This is the "can the board price anything on this date" question, answered
+    off the same snapshot `resolve_snapshot` will later join against and under
+    the same slate convention (`_event_slate_date`), so the two cannot disagree
+    about which date an event belongs to.
+
+    An empty dict on any failure, which reads as "no market known" and leaves
+    the slate choice exactly where it was before this existed.
+    """
+    now = now or datetime.now(timezone.utc)
+    try:
+        snap = bi.latest_snapshot()
+        events = bi.parse_events(snap) if snap else []
+    except Exception:                                            # noqa: BLE001
+        return {}
+    out: dict = {}
+    for e in events or []:
+        t = _stamp(e.get("commence_time"))
+        if t is None or t <= now:
+            continue                          # already under way, not priceable
+        day = _event_slate_date(e)
+        if day:
+            out[day] = out.get(day, 0) + 1
+    return out
 
 
 def _event_slate_date(ev: dict) -> str | None:
