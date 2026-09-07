@@ -75,7 +75,11 @@
   var AUX = { learning: null, evald: null, clv: null };
   var AUX_STATE = { learning: null, evald: null, clv: null };
 
-  var S = { data: null, section: "potd", error: null, legs: [], bets: [], betsSource: "local" };
+  var S = { data: null, section: "potd", error: null, legs: [], bets: [], betsSource: "local",
+            // Team Bets has two views over the same rows: the game cards and
+            // the all-bets leaderboard. Remembered per browser, because a
+            // reader who prefers one wants it on the next load too.
+            teamView: "cards" };
   var LINKS = null;
   var LAST_HASH = null;
 
@@ -2334,6 +2338,131 @@
   }
 
   // ---- section: team bets ---------------------------------------------------
+  // ---- all-bets leaderboard (owner ask 2026-09-07) --------------------------
+  var TEAM_VIEW_KEY = "eephus.betting.teamview";
+
+  function teamView() {
+    if (S.teamView) return S.teamView;
+    try { S.teamView = localStorage.getItem(TEAM_VIEW_KEY) || "cards"; }
+    catch (e) { S.teamView = "cards"; }
+    return S.teamView;
+  }
+
+  function teamViewToggle() {
+    var v = teamView();
+    function b(id, label, title) {
+      return '<button type="button" class="bt-seg-btn' + (v === id ? " is-on" : "") +
+        '" data-teamview="' + id + '" aria-pressed="' + (v === id ? "true" : "false") +
+        '" title="' + esc(title) + '">' + esc(label) + "</button>";
+    }
+    return '<div class="bt-seg" role="group" aria-label="Team bets view">' +
+      b("cards", "Game cards", "One panel per game, all three markets together") +
+      b("board", "All bets", "Every bet on the slate in one sortable table") +
+      "</div>";
+  }
+
+  // Every leg on the board, flattened. One row per side of every market, with
+  // the game it came from, so the table can be sorted across games.
+  function allBetLegs(bets) {
+    var out = [];
+    (bets || []).forEach(function (b) {
+      var game = ((b.away || {}).org || "?") + " at " + ((b.home || {}).org || "?");
+      function push(market, marketLabel, rows) {
+        (rows || []).forEach(function (r) {
+          if (!r) return;
+          out.push({ game: game, start: b.start, market: market,
+                     marketLabel: marketLabel, r: r });
+        });
+      }
+      push("moneyline", "Moneyline", b.moneyline);
+      push("runline", "Run line", b.runline);
+      push("total", "Total", (b.total || {}).sides);
+    });
+    return out;
+  }
+
+  function allBetsTable(bets) {
+    var legs = allBetLegs(bets);
+    if (!legs.length) return "";
+    var thr = pickFloor();
+    var cols = [
+      ["Game", "the matchup, away at home"],
+      ["Market", "moneyline, run line or total"],
+      ["Bet", "the side and the number"],
+      ["Book", "the book posting the price used here"],
+      ["Odds", "the price on offer, American"],
+      ["Model", "the model's probability for this side"],
+      ["Fair", "the price the model's probability implies, American"],
+      ["Market", "the book's probability with the vig removed"],
+      ["Edge", "model probability minus de-vigged market probability"],
+      ["EV/unit", "expected profit per unit staked at this price"],
+      ["Kelly", "full Kelly stake fraction; the site stakes a flat unit"]
+    ];
+    var head = cols.map(function (c) {
+      return '<th scope="col" title="' + esc(c[1]) + '">' + esc(c[0]) + "</th>";
+    }).join("");
+    var body = legs.map(function (L) {
+      var r = L.r;
+      var clears = (thr != null && r.edge != null && r.edge >= thr &&
+                    r.odds != null && r.book);
+      // data-sort on the numeric cells so the parser never has to guess at a
+      // formatted string, and so an unpriced leg sorts as null rather than as 0.
+      function num(v, txt) {
+        return '<td class="bt-num"' + (v == null ? "" : ' data-sort="' + v + '"') +
+          ">" + txt + "</td>";
+      }
+      return '<tr' + (clears ? ' class="bt-row-value"' : "") + ">" +
+        "<td>" + esc(L.game) + "</td>" +
+        "<td>" + esc(L.marketLabel) + "</td>" +
+        "<td>" + esc(r.label == null ? "-" : r.label) +
+          (clears ? ' <span class="bt-tag bt-tag-ok">value</span>' : "") + "</td>" +
+        "<td>" + esc(r.book_title || r.book || "-") + "</td>" +
+        num(r.odds, fmtOdds(r.odds)) +
+        num(r.model_prob, pct(r.model_prob)) +
+        num(r.fair_odds, fmtOdds(r.fair_odds)) +
+        num(r.market_fair_prob, pct(r.market_fair_prob)) +
+        num(r.edge, r.edge == null ? "-" : signed(r.edge * 100, 1) + "%") +
+        num(r.ev_per_unit, r.ev_per_unit == null ? "-" : signed(r.ev_per_unit, 3)) +
+        num(r.kelly_full, r.kelly_full == null ? "-" : (r.kelly_full * 100).toFixed(1) + "%") +
+        "</tr>";
+    }).join("");
+    var n_priced = legs.filter(function (L) { return L.r.odds != null; }).length;
+    return '<div class="bt-panel"><div class="bt-panel-hd">Every bet on the board</div>' +
+      "<p>" + legs.length + " bet(s) across " + (bets || []).length + " game(s), " +
+      n_priced + " with a posted price. Click any column to sort; a second click " +
+      "reverses it. Unpriced legs are kept and sink to the bottom, because an " +
+      "absent row reads as an absent game.</p>" +
+      (thr == null
+        ? note("No floor is in force, so nothing is badged. " + floorAbsentReason())
+        : "") +
+      '<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table" data-sort-key="teams:allbets" ' +
+      'data-default-sort="8:desc"><thead><tr>' + head + "</tr></thead><tbody>" +
+      body + "</tbody></table></div></div>";
+  }
+
+  // Exposed for tests, the same way the sort parser and comparator are: both
+  // are pure functions of the board rows, and driving them directly is how a
+  // test asserts the leaderboard's CONTENT without a DOM to click a toggle in.
+  if (typeof window !== "undefined") {
+    window.EEPHUS_BETTING_BOARD = {
+      legs: function (bets) { return allBetLegs(bets); },
+      table: function (bets) { return allBetsTable(bets); },
+      // The SERVED floor, the one the badge reads, so a test asserts against
+      // the same number rather than a second copy of the rule.
+      floor: function () { return pickFloor(); }
+    };
+    // The loaded payload, read-only, so a test can drive the two pure functions
+    // above against the SAME rows the page rendered rather than a copy.
+    window.EEPHUS_BETTING_STATE = function () { return S; };
+  }
+
+  // Why there is no bar to clear, in the words the rest of the page uses.
+  function floorAbsentReason() {
+    var m = (S.data && S.data.pick_meta) || {};
+    if (m.blocked) return String(m.blocked_reason || "The slots are blocked for this build.");
+    return "The model has no measured minimum edge yet.";
+  }
+
   function renderTeam() {
     var d = S.data;
     if (!d) return empty("No slate loaded", "The betting payload has not been built yet.");
@@ -2391,7 +2520,12 @@
     // market's rows stay priced below (the ledgers keep recording it), and a
     // reader of this tab is owed the same two reasons the watch tab states.
     head += marketGateNotes();
-    return head + bets.map(gameCard).join("");
+    // TWO VIEWS OVER THE SAME ROWS. The toggle rides above both, so the notes
+    // and warnings above (unpriced counts, missing feed, blocked slots) are
+    // shown once and apply to whichever view is up.
+    var view = teamView();
+    return head + teamViewToggle() +
+      (view === "board" ? allBetsTable(bets) : bets.map(gameCard).join(""));
   }
 
   // THE BADGE AND THE PICKS READ ONE NUMBER. The threshold comes from
@@ -3252,6 +3386,19 @@
     });
   }
 
+  function wireTeamView(root) {
+    if (!root || !root.querySelectorAll) return;
+    Array.prototype.forEach.call(root.querySelectorAll("[data-teamview]"), function (b) {
+      b.addEventListener("click", function () {
+        var v = b.getAttribute("data-teamview");
+        if (!v || v === S.teamView) return;
+        S.teamView = v;
+        try { localStorage.setItem(TEAM_VIEW_KEY, v); } catch (e) { /* private mode */ }
+        renderSection();
+      });
+    });
+  }
+
   // ---- section plumbing -----------------------------------------------------
   function renderSection() {
     var root = el("betting-app-root");
@@ -3281,6 +3428,7 @@
     if (S.section === "calculators") wireCalc();
     if (S.section === "mybets") wireBets();
     if (S.section === "parlays") wireParlay();
+    if (S.section === "teams") wireTeamView(root);
     wireGfx();
     // Term spans get their tooltip + aria wiring here, after the section's
     // markup is in the DOM. wire() is idempotent and cheap on a container this
@@ -3531,6 +3679,19 @@
     ".bt-market-hd{font:700 10px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;margin-top:6px}",
     ".bt-faironly{font-size:12px;color:var(--text-secondary);padding:6px 0}",
     ".bt-hold{font-size:11px;color:var(--text-tertiary);margin-top:6px}",
+    // The Team Bets view toggle (owner ask 2026-09-07). Every colour is a theme
+    // token so the control follows light and dark with the rest of the module.
+    ".bt-seg{display:flex;gap:0;margin:10px 0;border:1px solid var(--border,#333);width:max-content}",
+    ".bt-seg-btn{font:600 11px/1 var(--font-retro,monospace);text-transform:uppercase;"
+      + "letter-spacing:.04em;padding:7px 13px;background:var(--bg-secondary);"
+      + "color:var(--text-secondary);border:0;cursor:pointer}",
+    ".bt-seg-btn + .bt-seg-btn{border-left:1px solid var(--border,#333)}",
+    ".bt-seg-btn:hover{background:var(--bg-tertiary);color:var(--text-primary)}",
+    ".bt-seg-btn.is-on{background:var(--accent-cyan,#2aa);color:var(--bg-primary)}",
+    ".bt-seg-btn:focus-visible{outline:2px solid var(--accent-cyan,#2aa);outline-offset:-2px}",
+    // A leg that clears the served floor is tinted, not recoloured: the text
+    // must keep its own contrast, so this is a background wash only.
+    ".bt-table tbody tr.bt-row-value td{background:color-mix(in srgb,var(--accent-green,#3a9) 9%,transparent)}",
     ".bt-tag{font:700 9px/1 var(--font-retro,monospace);padding:3px 5px;text-transform:uppercase}",
     ".bt-tag-warn{color:var(--text-primary);border:1.5px solid var(--accent-gold,#a80)}",
     ".bt-tag-ok{color:var(--accent-green,#3a9);border:1.5px solid var(--accent-green,#3a9)}",

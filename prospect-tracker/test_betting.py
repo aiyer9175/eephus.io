@@ -2734,3 +2734,72 @@ def test_client_sorting_reorders_rows_in_a_real_browser():
     assert not errs, errs
     assert res["s1"] == "descending" and res["after1"] == sorted(res["after1"], reverse=True), res
     assert res["s2"] == "ascending" and res["after2"] == sorted(res["after2"]), res
+
+
+# ===========================================================================
+# 13. THE ALL-BETS LEADERBOARD (owner ask 2026-09-07)
+# ===========================================================================
+# Team Bets carries two views over the SAME rows. The cards answer "what does
+# the model think of this game"; the leaderboard answers the question an owner
+# actually asks of a board, which is cross-game and cross-market: where is the
+# best number tonight. The table is driven directly here, the way the sort
+# parser is, because the harness has no DOM for a toggle click to land in.
+def _board(ctx):
+    """Render the teams section so the module has its payload, then hand back a
+    context in which `S_BETS()` is the board rows the leaderboard reads."""
+    ctx.eval("__show('teams')")
+    ctx.eval("function S_BETS(){return (window.EEPHUS_BETTING_STATE().data||{}).team_bets||[];}")
+    return ctx
+
+
+def test_the_team_tab_offers_both_views(live_ctx):
+    html = live_ctx.eval("__show('teams')")
+    assert 'data-teamview="cards"' in html
+    assert 'data-teamview="board"' in html
+    assert "Game cards" in html and "All bets" in html
+
+
+def test_the_leaderboard_lists_every_leg_of_every_market(live_ctx):
+    """One row per SIDE of every market, not one per game. A leaderboard that
+    listed games would be the cards again with worse typography."""
+    c = _board(live_ctx)
+    n_legs = c.eval("window.EEPHUS_BETTING_BOARD.legs(S_BETS()).length")
+    n_games = c.eval("S_BETS().length")
+    html = c.eval("window.EEPHUS_BETTING_BOARD.table(S_BETS())")
+    assert n_legs > n_games, "a leg table must be longer than a game table"
+    assert html.count("<tr") == n_legs + 1          # header plus one per leg
+
+
+def test_the_leaderboard_is_sortable_and_defaults_to_edge(live_ctx):
+    html = _board(live_ctx).eval("window.EEPHUS_BETTING_BOARD.table(S_BETS())")
+    assert 'class="bt-table mlbstats-table"' in html
+    assert 'data-sort-key="teams:allbets"' in html
+    assert 'data-default-sort="8:desc"' in html     # column 8 is Edge
+    assert '<div class="bt-scroll mlbstats-scroll">' in html
+
+
+def test_the_leaderboard_reads_the_served_floor_and_never_its_own(live_ctx):
+    """THE 2026-08-06 DEFECT, kept shut. An independent pricing pass fused two
+    books into one row and produced an 0.38839 edge no book ever posted. Every
+    number here is read off the board row, and the value badge uses the same
+    `pickFloor()` the server chose the slots with."""
+    c = _board(live_ctx)
+    html = c.eval("window.EEPHUS_BETTING_BOARD.table(S_BETS())")
+    over = c.eval(
+        "window.EEPHUS_BETTING_BOARD.legs(S_BETS()).filter(function(L){"
+        "var r=L.r,t=window.EEPHUS_BETTING_BOARD.floor();"
+        "return t!=null&&r.edge!=null&&r.edge>=t&&r.odds!=null&&r.book;}).length")
+    assert html.count("bt-row-value") == over
+
+
+def test_an_unpriced_leg_stays_on_the_leaderboard(live_ctx):
+    """An absent row reads as an absent game, which is the rule the cards
+    already follow. Nulls sink through the shared comparator, they are not
+    filtered out here."""
+    c = _board(live_ctx)
+    n_legs = c.eval("window.EEPHUS_BETTING_BOARD.legs(S_BETS()).length")
+    n_priced = c.eval("window.EEPHUS_BETTING_BOARD.legs(S_BETS())"
+                      ".filter(function(L){return L.r.odds!=null;}).length")
+    html = c.eval("window.EEPHUS_BETTING_BOARD.table(S_BETS())")
+    assert html.count("<tr") == n_legs + 1
+    assert n_priced <= n_legs

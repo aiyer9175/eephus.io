@@ -4432,8 +4432,9 @@ def build_betting() -> str:
     )
     return page("Sports Betting - eephus.io", "betting", body,
                 "MLB betting model from eephus.io: game win probabilities from our own team-strength "
-                "surfaces against de-vigged book prices, a flat-stake public record graded against the "
-                "closing line, betting calculators, and a personal bet tracker. 21+, informational only.",
+                "surfaces against de-vigged book prices, every bet on the slate in one sortable board, "
+                "a flat-stake public record, betting calculators, and a personal bet tracker. "
+                "21+, informational only.",
                 url=f"{SITE_ORIGIN}/betting/")
 
 
