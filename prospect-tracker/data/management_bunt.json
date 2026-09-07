@@ -1,0 +1,169 @@
+{
+ "status": "built",
+ "generated_at": "2026-09-07T16:41:52Z",
+ "produced_by": "mgmt_bunt.price",
+ "seasons": [
+  2018,
+  2019,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025,
+  2026
+ ],
+ "n_plate_appearances": 982773,
+ "n_bunts_priced": 6825,
+ "min_cell": 25,
+ "excluded": {
+  "two_outs": 466194,
+  "unpriceable_state": 0,
+  "thin_cell": 16
+ },
+ "total_decision_value_wins": -100.496,
+ "dv_per_bunt_mean": -0.01472,
+ "cells": [
+  {
+   "outs": 0,
+   "base": 0,
+   "bases": "empty",
+   "n_bunt": 804,
+   "n_alt": 352640,
+   "e_dwe_bunt": -0.01762,
+   "e_dwe_alt": 0.00079,
+   "dv_per_bunt": -0.01841,
+   "dv_total": -14.8006
+  },
+  {
+   "outs": 0,
+   "base": 1,
+   "bases": "1B",
+   "n_bunt": 1914,
+   "n_alt": 82198,
+   "e_dwe_bunt": -0.01605,
+   "e_dwe_alt": 0.00121,
+   "dv_per_bunt": -0.01726,
+   "dv_total": -33.0438
+  },
+  {
+   "outs": 0,
+   "base": 2,
+   "bases": "2B",
+   "n_bunt": 1013,
+   "n_alt": 21966,
+   "e_dwe_bunt": -0.01475,
+   "e_dwe_alt": 0.00448,
+   "dv_per_bunt": -0.01923,
+   "dv_total": -19.4786
+  },
+  {
+   "outs": 0,
+   "base": 3,
+   "bases": "1B+2B",
+   "n_bunt": 1213,
+   "n_alt": 19965,
+   "e_dwe_bunt": -0.00763,
+   "e_dwe_alt": 0.00152,
+   "dv_per_bunt": -0.00915,
+   "dv_total": -11.0953
+  },
+  {
+   "outs": 0,
+   "base": 5,
+   "bases": "1B+3B",
+   "n_bunt": 94,
+   "n_alt": 7136,
+   "e_dwe_bunt": 0.00203,
+   "e_dwe_alt": 0.01162,
+   "dv_per_bunt": -0.00959,
+   "dv_total": -0.9014
+  },
+  {
+   "outs": 1,
+   "base": 0,
+   "bases": "empty",
+   "n_bunt": 476,
+   "n_alt": 256528,
+   "e_dwe_bunt": -0.0124,
+   "e_dwe_alt": 0.00085,
+   "dv_per_bunt": -0.01325,
+   "dv_total": -6.3053
+  },
+  {
+   "outs": 1,
+   "base": 1,
+   "bases": "1B",
+   "n_bunt": 736,
+   "n_alt": 103190,
+   "e_dwe_bunt": -0.01381,
+   "e_dwe_alt": 0.00133,
+   "dv_per_bunt": -0.01514,
+   "dv_total": -11.1427
+  },
+  {
+   "outs": 1,
+   "base": 2,
+   "bases": "2B",
+   "n_bunt": 61,
+   "n_alt": 34765,
+   "e_dwe_bunt": -0.02092,
+   "e_dwe_alt": 0.00298,
+   "dv_per_bunt": -0.0239,
+   "dv_total": -1.4578
+  },
+  {
+   "outs": 1,
+   "base": 3,
+   "bases": "1B+2B",
+   "n_bunt": 181,
+   "n_alt": 36285,
+   "e_dwe_bunt": -0.02006,
+   "e_dwe_alt": 0.00078,
+   "dv_per_bunt": -0.02083,
+   "dv_total": -3.7707
+  },
+  {
+   "outs": 1,
+   "base": 4,
+   "bases": "3B",
+   "n_bunt": 49,
+   "n_alt": 10559,
+   "e_dwe_bunt": 0.03062,
+   "e_dwe_alt": 0.01282,
+   "dv_per_bunt": 0.0178,
+   "dv_total": 0.8721
+  },
+  {
+   "outs": 1,
+   "base": 5,
+   "bases": "1B+3B",
+   "n_bunt": 256,
+   "n_alt": 15667,
+   "e_dwe_bunt": 0.01096,
+   "e_dwe_alt": 0.00948,
+   "dv_per_bunt": 0.00147,
+   "dv_total": 0.3774
+  },
+  {
+   "outs": 1,
+   "base": 6,
+   "bases": "2B+3B",
+   "n_bunt": 28,
+   "n_alt": 10056,
+   "e_dwe_bunt": 0.01767,
+   "e_dwe_alt": 0.00872,
+   "dv_per_bunt": 0.00896,
+   "dv_total": 0.2508
+  }
+ ],
+ "independent_control": {
+  "source": "StatsAPI wp_home_before / wpa_home, converted to the batting team's frame and divided by 100 (those columns are percentage points, not probabilities)",
+  "total_wins": -75.33,
+  "is_realized_wpa": true,
+  "why_it_is_not_the_metric": "it is the REALIZED win-probability change of the plays that happened, so it carries outcome variance the decision did not choose. It is here to check the sign and the size of the modelled number against a win-expectancy model this repo did not build."
+ },
+ "what_this_is": "DV(S) = E[change in WE | a bunt was called from state S] minus E[change in WE | any other plate appearance from S], both measured league-wide. Each play is differenced against its OWN pre-play state, so the score and inning cancel and what is left is what the plate appearance did. so every bunt from one state carries the same decision value. The realized outcome of an individual bunt never enters it.",
+ "the_selection_problem": "NOT SOLVED, STATED. Managers bunt with the batters they least want swinging, so E[WE | bunt] is measured over a weaker population than E[WE | swing]. This prices THE BUNT AS DEPLOYED, which is a fair read of what the league's bunting has been worth, and it is biased against the bunt as a tactic. Removing the bias needs a per-batter plate appearance model (the plan's M-ENG-1), which does not exist yet.",
+ "two_outs_excluded": "With two down an out ends the half-inning, so its value comes from the measured half-inning-start table while the alternative comes from the smooth model. Those are two estimators with nothing calibrating them against each other, so their difference has no guaranteed sign. A two-out sacrifice is also nearly nonexistent.",
+ "no_per_club_metric": "None is published here, and it is not an oversight. The running-game battery found per-agent decision value does not repeat between halves of a season; nothing has shown this family behaves differently, so a per-club column would be a ranking of noise a reader could not recognise as one. It needs its own split-half before it can ship."
+}

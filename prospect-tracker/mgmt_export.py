@@ -168,6 +168,66 @@ def _team_board(corpus: Path | None):
     }
 
 
+BUNT = ROOT / "data" / "management_bunt.json"
+
+
+def _bunt_sentence(d: dict) -> str:
+    """DERIVED, not typed. A first version asserted the squeeze was "the only
+    positive cell" and there are three of them; they simply all share a runner on
+    third with one out, which is the more interesting statement and is true."""
+    pos = [c for c in (d.get("cells") or []) if (c.get("dv_per_bunt") or 0) > 0]
+    tail = "Every cell on the board is negative."
+    if pos:
+        on_third = all("3B" in (c.get("bases") or "") and c.get("outs") == 1
+                       for c in pos)
+        best = max(pos, key=lambda c: c["dv_per_bunt"])
+        tail = (f"Every one of the {len(pos)} positive cells is a squeeze, a runner "
+                f"on third with one out, the best of them "
+                f"{best['bases']} at {best['dv_per_bunt']:+.4f} wins a bunt."
+                if on_third else
+                f"{len(pos)} of {len(d.get('cells') or [])} cells come out positive, "
+                f"the best {best['bases']} with {best['outs']} out.")
+    return (f"The league's sacrifice bunting has cost "
+            f"{abs(d.get('total_decision_value_wins') or 0):.0f} wins across "
+            f"{d.get('n_bunts_priced'):,} bunts in "
+            f"{len(d.get('seasons') or [])} seasons, about "
+            f"{abs(d.get('dv_per_bunt_mean') or 0):.4f} wins each. " + tail)
+
+
+def _bunt_section() -> dict:
+    """The sacrifice-bunt family, read off its artifact.
+
+    LIVE, and it is a LEAGUE result rather than a leaderboard, on the same
+    discipline the running game ships under: no per-club column, because nothing
+    has shown a club's decision value repeats in THIS family either and the
+    running-game battery found it does not in that one.
+    """
+    try:
+        d = json.loads(BUNT.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"live": False, "blocked_on": "data/management_bunt.json",
+                "why": "the bunt family has not been built on this machine"}
+    if d.get("status") != "built":
+        return {"live": False, "blocked_on": "corpus",
+                "why": str(d.get("status"))}
+    ctl = d.get("independent_control") or {}
+    return {
+        "live": True,
+        "plus_metric": False,
+        "eval_artifact": "data/management_bunt.json",
+        "n_bunts_priced": d.get("n_bunts_priced"),
+        "seasons": d.get("seasons"),
+        "total_decision_value_wins": d.get("total_decision_value_wins"),
+        "dv_per_bunt_mean": d.get("dv_per_bunt_mean"),
+        "cells": d.get("cells"),
+        "sentence": _bunt_sentence(d),
+        "independent_control": ctl,
+        "the_selection_problem": d.get("the_selection_problem"),
+        "why_no_plus_metric": d.get("no_per_club_metric"),
+        "two_outs_excluded": d.get("two_outs_excluded"),
+    }
+
+
 def build(*, corpus=None, teams=True) -> dict:
     run = json.loads(RUNNING.read_text(encoding="utf-8"))
     gate = json.loads(GATE_EVAL.read_text(encoding="utf-8"))
@@ -286,12 +346,16 @@ def build(*, corpus=None, teams=True) -> dict:
                         "this family. Building the manager entity to attribute a "
                         "signal that is not there would be work spent to make a null "
                         "more precise.")},
+            "sacrifice_bunt": _bunt_section(),
             "bullpen_and_lineup": {
                 "live": False, "blocked_on": "not yet measured",
-                "why": ("the running game is one decision family and the null it "
-                        "returned is about the running game. The bullpen call and "
-                        "the pinch hit have more room and have not been measured, so "
-                        "nothing here says anything about them.")},
+                "why": ("two decision families are measured here, the running game "
+                        "and the sacrifice bunt, and they disagree: the running game "
+                        "is worth about +1.8 wins to the league and the bunt about "
+                        "-100. That disagreement is the argument for measuring the "
+                        "rest rather than generalising from either. The bullpen call "
+                        "and the pinch hit have more room and have not been measured, "
+                        "so nothing here says anything about them.")},
         },
 
         "what_this_page_does_not_claim": (
