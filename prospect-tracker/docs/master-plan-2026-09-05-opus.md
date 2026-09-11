@@ -202,6 +202,14 @@ batting team's frame with base-out entering only through run expectancy, plus a 
 half-inning-start table for the boundary. Brier 0.1559 against a 0.2498 base rate, ECE
 0.0066; MLB's own live number scores 0.1577 on the same plays.
 
+> **ERRATUM 2026-09-10 (audit F07-02).** The three figures in the sentence above are
+> LEAKED. The model was fitted and queried on a post-play score against a pre-play
+> base-out state, and that leak is what produced the apparent edge over the feed. On the
+> honest state: model Brier 0.157678, ECE 0.00572, and the MLB feed leads at 0.157516.
+> The conclusion that a team-blind valuation costs nothing measurable survives; the claim
+> that this model beat the feed does not. Repaired in `d8d13fc3`; the half-inning-start
+> table is 210 cells, not 213, because three of them described states that cannot occur.
+
 **The finding.** The league steals second at a 75.00% success rate against a
 swing-weighted break-even of 75.03%. Eight seasons and 11,977 attempts sum to -0.19 wins.
 Managers collectively run the stolen base at almost exactly the point of indifference.
