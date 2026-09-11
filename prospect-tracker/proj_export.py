@@ -28,7 +28,8 @@ configured $/WAR inflation per season - the same pricing the FA rational
 value and the (re-anchored) prospect surplus use. Veteran SURPLUS only
 exists where a real contract exists: salary-known seasons (Spotrac
 contract pages) net against production value and discount at the platform
-9%; arb/pre-arb seasons carry projections but no surplus claim. Prospect
+rate (value_framework discount_rate, read in _veteran_rows); arb/pre-arb
+seasons carry projections but no surplus claim. Prospect
 surplus IS the platform surplus value (control-window, service-time
 aware) - never a parallel number.
 

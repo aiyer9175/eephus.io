@@ -471,6 +471,35 @@ GATE2_MODEL_VERSION = "fa_mkt_v2"
 GATE2_COLLECT: list | None = None
 
 
+def _pct_label(rate: float) -> str:
+    """The percent a rate prints as in copy: 0.07 -> '7', 0.075 -> '7.5'."""
+    return f"{float(rate) * 100:g}"
+
+
+def gate2_notes(discount_rate: float) -> list[str]:
+    """The notes the Model Accountability page renders verbatim under the Gate-2
+    table (assets/fa.js renderModel joins gate2.notes).
+
+    The NPV line names the discount rate the table was PRICED AT, interpolated
+    from the argument, never typed. Until 2026-09-11 it was the literal
+    "deferral-adjusted at the platform 9% rate" over a 1,199-row table whose
+    actuals fa_market.deferral_npv_usd had discounted at 7 percent (audit
+    F12-01; the table's own Ohtani row reads 274.8, the 7 percent NPV, not the
+    214.9 a 9 percent rate would give). A typed rate cannot have been true at
+    any generation once the valuation set moved, and nothing compared it with
+    the engine. run_market_gate passes fm._discount_rate(), the same call the
+    engine makes when it prices the actuals, and stamps the rate into the
+    artifact beside the notes so test_claims_freshness can hold the two
+    together."""
+    return [
+        "forward-chained: trained on winters strictly before each test winter",
+        (f"guarantee/AAV in $M NPV (deferral-adjusted at the platform's "
+         f"{_pct_label(discount_rate)}% discount rate; no-schedule deals keep sticker)"),
+        "baseline = median of 5 nearest comps (prior winters), naive $/WAR-trend inflated, NPV basis",
+        "$/WAR level per test winter forecast ex-ante (method per data/dpw_forecast_eval.json)",
+    ]
+
+
 def run_market_gate(persist: bool = True, challenger: bool = False,
                     persist_dpw: bool = True) -> dict:
     """Gate 2. ``challenger=True`` additionally scores the WS-2f LightGBM
@@ -485,6 +514,11 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
     default keeps the historical behaviour, so no existing caller changes."""
     import fa_market as fm
     enriched = fm.enriched_signings(2015, 2026)
+    # The rate every NPV in this table is priced at (deferral_npv_usd reads the
+    # same config). Read once, stamped into the summary and interpolated into
+    # the served note, so the note can never name a rate the table was not
+    # computed at.
+    disc_rate = fm._discount_rate()
     test_years = sorted({s["class_year"] for s in enriched
                          if s["class_year"] > GATE2_WARMUP_THROUGH})
     pooled = {"guarantee": {"m": [], "b": []}, "aav": {"m": [], "b": []},
@@ -599,6 +633,7 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
     summary = {
         "model_version": GATE2_MODEL_VERSION,
         "basis": "npv_deferral_adjusted",
+        "discount_rate": disc_rate,
         "test_winters": test_years,
         "pooled": {k: {"mae_model": _mae(v["m"]), "mae_base": _mae(v["b"]),
                        "n": len(v["m"])} for k, v in pooled.items()},
@@ -611,12 +646,7 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
         "biggest_misses_years": sorted(misses, key=lambda m: -abs(m["err_years"]))[:12],
         "biggest_misses_aav": sorted(misses, key=lambda m: -abs(m["err_aav_mm"]))[:12],
         "deferral_coverage": fm.deferral_coverage_audit(enriched),
-        "notes": [
-            "forward-chained: trained on winters strictly before each test winter",
-            "guarantee/AAV in $M NPV (deferral-adjusted at the platform 9% rate; no-schedule deals keep sticker)",
-            "baseline = median of 5 nearest comps (prior winters), naive $/WAR-trend inflated, NPV basis",
-            "$/WAR level per test winter forecast ex-ante (method per data/dpw_forecast_eval.json)",
-        ],
+        "notes": gate2_notes(disc_rate),
     }
     gates = {k: summary["pooled"][k]["mae_model"] < summary["pooled"][k]["mae_base"]
              for k in ("guarantee", "aav", "years")}

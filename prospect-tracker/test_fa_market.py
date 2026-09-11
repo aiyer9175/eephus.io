@@ -92,9 +92,13 @@ def test_deal_verdict_group_bands():
 
 
 def test_deferral_npv_and_coverage():
-    """WS-2a: the deferral ledger prices Ohtani at the platform rate
-    (~$197M NPV at 9% — deliberately harsher than CBT's ~4.4%), level
-    deals pass through, and the >=200M coverage audit has no holes."""
+    """WS-2a: the deferral ledger prices Ohtani at the platform rate, level
+    deals pass through, and the >=200M coverage audit has no holes. This module
+    runs under the base prospx_current set (conftest _BASE_SET_MODULES), so the
+    rate here is the legacy 9% and Ohtani reads about $214.9M with years-out
+    counted from 0. The shipped clemens_2026 figure the glossary quotes (about
+    $274.8M at 7%) is pinned against the engine in test_claims_freshness.py.
+    Either way it is harsher than the CBT's ~4.4% statutory rate."""
     npv, had = fm.npv_guarantee_usd("shohei_ohtani", 2024, 700_000_000)
     assert had and 180_000_000 < npv < 215_000_000, npv
     npv2, had2 = fm.npv_guarantee_usd("aaron_judge", 2023, 360_000_000)

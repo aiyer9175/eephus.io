@@ -18,6 +18,9 @@ copy_lint catches voice; this file catches CLAIM drift, in three layers:
    dated reading marker ("YYYY-MM-DD reading:") no older than 45 days
    against the artifact's own generated date. One seeded stable-gate
    check pins fa_market's card guarantee figure to data/fa_gate2_eval.json.
+4. CODE-CONSTANT PINS (Part 4) and the DISCOUNT RATE (Part 5): copy is held to
+   the shipped constant it describes, and the Gate-2 note to the rate its own
+   table was priced at.
 
 Import-safe and deterministic: no network, no rebuilds, every file read
 happens inside a test function.
@@ -29,6 +32,8 @@ import json
 import re
 from datetime import date
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).parent
 
@@ -371,9 +376,14 @@ RETIRED_SLOPE_DISCLOSURES = (
 )
 
 
-# The three surfaces that state the valuation conventions in prose.
+# The surfaces that state the valuation conventions in prose. assets/fa.js
+# joined 2026-09-11 (audit F12-04): its deferral tooltip quoted a 9% rate that
+# no pin could see because the file was never scanned. The Gate-2 artifacts
+# (data/fa_gate2_eval.json, data/fa_meta.json) are NOT here: they are pipeline
+# output, and test_served_gate2_note_names_the_rate_its_table_was_priced_at
+# holds them to the rate they were priced at instead.
 _VALUATION_COPY_SURFACES = ("data/glossary.json", "assets/glossary.js",
-                            "docs/METHODOLOGY.md")
+                            "docs/METHODOLOGY.md", "assets/fa.js")
 
 
 def _copy_text_lower():
@@ -475,13 +485,51 @@ _CONTROL_PHRASES = (
 _NUMWORD = {2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven",
             8: "eight", 9: "nine", 10: "ten"}
 
+# Every phrasing that binds a number to THE platform discount rate. Until
+# 2026-09-11 the pin below matched only "net N percent", so it saw three correct
+# 7s and none of the stale 9s phrased without the word "net" (audit F12-04):
+# "discounts at 9%", "the platform 9% rate", "the platform's 9% rate", "the same
+# 9% NPV currency", "(1+0.09)^years-out". Each pattern captures ONE number:
+# "pct" rows a percent, "dec" rows a decimal rate. test_the_discount_ratchet_
+# sees_every_retired_phrasing proves every retired string trips it.
+#
+# Deliberately NOT matched, because each is true on the current copy: "a 10
+# percent discount rate minus 3 percent annual win-cost growth" (the gross rate
+# the net one is built from), "the base config's 6 control years and 9 percent
+# discount are the legacy prospx_current values" and "discount_rate: 0.09" (the
+# disclosed legacy value), and "the CBT's ~4.4% statutory rate" (a different
+# rate, named as one).
+_PCT = r"(\d+(?:\.\d+)?)\s*(?:%|percent)"
+DISCOUNT_RATE_PATTERNS = (
+    ("net N%", "pct", r"\bnet " + _PCT),
+    ("platform N%", "pct",
+     r"\bplatform(?:'s)?\s+(?:configured\s+)?(?:net\s+)?" + _PCT),
+    ("discounts at N%", "pct",
+     r"\bdiscount(?:s|ed|ing)?\s+at\s+(?:the\s+)?(?:platform(?:'s)?\s+)?"
+     r"(?:configured\s+)?(?:net\s+)?" + _PCT),
+    ("N% NPV", "pct", _PCT + r"\s+npv\b"),
+    ("N% platform rate", "pct", _PCT + r"\s+platform\s+rate\b"),
+    ("(1+r)^t literal", "dec", r"\(\s*1\s*\+\s*(0\.\d+)\s*\)\s*\^"),
+    ("net rate decimal", "dec", r"\bnet[ _]rate:?\s+(0\.\d+)"),
+)
+
+
+def _discount_rate_claims(text):
+    """[(pattern label, claimed rate in percent, snippet)] over LOWERCASED text."""
+    out = []
+    for label, kind, pat in DISCOUNT_RATE_PATTERNS:
+        for m in re.finditer(pat, text):
+            v = float(m.group(1)) * (100.0 if kind == "dec" else 1.0)
+            out.append((label, v, text[max(0, m.start() - 40):m.end() + 20]))
+    return out
+
 
 def test_control_window_and_discount_copy_match_valuation_set():
     import value_framework
 
     cfg = value_framework._config()
     control_years = int(cfg["service_time"]["control_years"])
-    discount_pct = round(float(cfg["discount_rate"]) * 100)
+    discount_pct = float(cfg["discount_rate"]) * 100
     text = _copy_text_lower()
 
     wrong = []
@@ -497,13 +545,15 @@ def test_control_window_and_discount_copy_match_valuation_set():
         + "; ".join(sorted(set(wrong)))
     )
 
-    nets = [int(v) for v in re.findall(r"net (\d+)\s*(?:%|percent)", text)]
+    claims = _discount_rate_claims(text)
+    nets = [c for c in claims if c[0] == "net N%"]
     assert nets, ("no copy surface states the net discount rate; the surplus "
                   "copy must name it so this pin has something to check")
-    off = sorted({v for v in nets if v != discount_pct})
+    off = [c for c in claims if abs(c[1] - discount_pct) > 0.05]
     assert not off, (
-        f"the active valuation set discounts at net {discount_pct} percent "
-        f"(value_framework._config discount_rate) but copy quotes net {off}"
+        f"the active valuation set discounts at {discount_pct:g} percent "
+        f"(value_framework._config discount_rate) but copy quotes: "
+        + "; ".join(f"{label} -> {v:g} in {snip!r}" for label, v, snip in off)
     )
 
 
@@ -537,3 +587,226 @@ def test_a_posterior_claim_is_banned_even_though_no_posterior_exists_yet():
     joined = " ".join(BANNED_CLAIM_FRAGMENTS).lower()
     assert "probability that efv is better" in joined
     assert "posterior probability that efv" in joined
+
+
+# ---------------------------------------------------------------------------
+# Part 5: the discount rate (audit F12-01 to F12-04, 2026-09-09).
+#
+# value_framework._config()["discount_rate"] is 0.07 under clemens_2026. Six
+# served strings quoted the legacy 9 percent beside it, one of them on the Free
+# Agency Model Accountability page over a 1,199-row table priced at 7, and the
+# deferral_npv card named an Ohtani figure ($197M) that was the 9 percent rate
+# AND a retired count-from-1 offset at once. No test compared any of them with
+# the engine. These do.
+
+# Verbatim retired strings (lowercased), one per surface they lived on.
+_RETIRED_DISCOUNT_PHRASINGS = (
+    "each control season still escalates with $/war inflation and discounts at 9%.",
+    "schedules in the curated deferral ledger discount at the platform 9% rate",
+    "because rational value and pick values share the same 9% npv currency",
+    "escalated per season and discounted at the platform's 9% rate",
+    "contract dollars discounted for deferral schedules at the platform 9% rate",
+    "npv = sum of scheduled payments / (1+0.09)^years-out",
+    "the 9% platform rate is deliberately harsher than the cbt's ~4.4% statutory rate",
+    "seasons and discounts at the platform 9%; arb/pre-arb seasons",
+    'title="deferral-adjusted npv at the platform 9% rate - the basis the prediction speaks"',
+    "guarantee/aav in $m npv (deferral-adjusted at the platform 9% rate; "
+    "no-schedule deals keep sticker)",
+)
+# True sentences that sit next to a discount rate and must NOT trip it.
+_TRUE_RATE_NEIGHBOURS = (
+    "a 10 percent discount rate minus 3 percent annual win-cost growth",
+    "a 10% discount rate minus 3% annual win-cost growth",
+    "the base config's 6 control years and 9 percent discount are the legacy "
+    "prospx_current values",
+    "the base config's 6 years / 9% are the legacy prospx_current values",
+    "`discount_rate: 0.09` and `dollars_per_war_inflation: 0.05`",
+    "harsher than the cbt's ~4.4% statutory rate",
+    "a 97%-deferred sticker is not the same liability as level cash",
+)
+
+
+def test_the_discount_ratchet_sees_every_retired_phrasing():
+    """A ratchet nobody has tripped is a ratchet nobody has tested. Every string
+    the net-only pin let through must now produce a 9, and every true neighbour
+    must produce nothing, or the pin turns red on correct copy."""
+    for s in _RETIRED_DISCOUNT_PHRASINGS:
+        vals = [v for _, v, _ in _discount_rate_claims(s)]
+        assert vals and all(abs(v - 9.0) < 1e-9 for v in vals), (s, vals)
+    for s in _TRUE_RATE_NEIGHBOURS:
+        assert not _discount_rate_claims(s), (s, _discount_rate_claims(s))
+
+
+def test_deferral_npv_ohtani_figure_matches_the_engine():
+    """The card's worked example is a served number, so it is held to the
+    function the payload calls, at the configured rate."""
+    import fa_market as fm
+
+    text = _entry_text(_glossary_entry("deferral_npv")).lower()
+    quoted = re.findall(r"ohtani's \$700m prices as ~?\$(\d+(?:\.\d+)?)m", text)
+    assert quoted, ("deferral_npv no longer quotes Ohtani's present liability in "
+                    "the pinned shape; update this test with the copy")
+    npv, had = fm.npv_guarantee_usd("shohei_ohtani", 2024, 700_000_000)
+    assert had, "the deferral ledger lost Ohtani's schedule; the example has nothing under it"
+    for raw in quoted:
+        assert abs(float(raw) - npv / 1e6) <= 0.05, (
+            f"deferral_npv says Ohtani prices at ${raw}M but "
+            f"fa_market.npv_guarantee_usd reads ${npv / 1e6:.1f}M at "
+            f"{fm._discount_rate():g}")
+
+
+def test_deferral_npv_rescale_clause_describes_the_serving_path(monkeypatch):
+    """The audit proposed deleting "schedules rescaled to the sticker total" as a
+    rescale the code does not do, measuring deferral_npv_usd alone. The serving
+    path is npv_guarantee_usd, and it rescales. This keeps the clause and the
+    behaviour together: if the rescale is ever removed, the clause goes too."""
+    import fa_market as fm
+
+    text = _entry_text(_glossary_entry("deferral_npv")).lower()
+    assert "rescaled to the sticker total" in text
+    fake = {"x:2030": {"schedule": [{"year_offset": 0, "amount_usd": 60_000_000},
+                                    {"year_offset": 5, "amount_usd": 60_000_000}]}}
+    monkeypatch.setattr(fm, "_deferral_ledger", lambda: fake)
+    npv, had = fm.npv_guarantee_usd("x", 2030, 100_000_000)
+    r = fm._discount_rate()
+    want = int(50_000_000 + 50_000_000 / (1 + r) ** 5)   # 120M nominal -> 100M sticker
+    assert had and abs(npv - want) <= 1, (npv, want)
+
+
+def test_no_copy_surface_types_a_fallback_discount_rate():
+    """A missing rate renders as words, never as a legacy number: the surplus
+    walk in assets/glossary.js printed 9%/yr whenever the payload lacked one."""
+    bad = []
+    for rel in ("assets/glossary.js", "assets/fa.js"):
+        for m in re.finditer(r"discount_rate\s*(?:\|\||\?\?)\s*\d*\.\d+", _read_text(rel)):
+            bad.append(f"{rel}: {m.group(0)!r}")
+    assert not bad, "typed fallback discount rate(s): " + "; ".join(bad)
+
+
+def test_gate2_npv_note_is_interpolated_from_the_rate_it_is_given():
+    """The SOURCE half of F12-01. fa_backtest used to type "platform 9% rate"
+    into the Gate-2 notes; the note must now move with the rate, and the
+    production call must hand it the engine's own rate and stamp it."""
+    import inspect
+
+    import fa_backtest as fb
+
+    for rate in (0.07, 0.09, 0.075):
+        npv_notes = [n for n in fb.gate2_notes(rate) if "deferral-adjusted" in n]
+        assert len(npv_notes) == 1, fb.gate2_notes(rate)
+        vals = [v for _, v, _ in _discount_rate_claims(npv_notes[0].lower())]
+        assert vals and all(abs(v - rate * 100) < 1e-6 for v in vals), (rate, npv_notes, vals)
+    src = inspect.getsource(fb.run_market_gate)
+    for needle in ("disc_rate = fm._discount_rate()", '"discount_rate": disc_rate',
+                   '"notes": gate2_notes(disc_rate)'):
+        assert needle in src, f"run_market_gate no longer carries {needle!r}"
+    assert not re.search(r"platform(?:'s)?\s+\d+(?:\.\d+)?\s*%", src), (
+        "run_market_gate types a platform rate again")
+
+
+def _gate2_ohtani_rows(g):
+    return [m for k in ("biggest_misses", "biggest_misses_years", "biggest_misses_aav")
+            for m in (g.get(k) or [])
+            if m.get("player") == "Shohei Ohtani" and m.get("winter") == 2024]
+
+
+def test_gate2_table_is_priced_at_the_configured_discount_rate():
+    """The table the note describes, checked from inside. Ohtani's 2024 signing
+    is a deferral-scheduled actual, so its NPV names the rate the table was
+    priced at: 274.8 at 7 percent, 214.9 at 9. This is what shows the note was
+    wrong and the table right, and it goes red if the engine's rate moves
+    without a Gate-2 regen."""
+    import fa_market as fm
+
+    g = _read_json("data/fa_gate2_eval.json")
+    rows = _gate2_ohtani_rows(g)
+    if not rows:
+        pytest.skip("Ohtani's 2024 signing is not among the published misses, so "
+                    "no row inside the table names its rate")
+    npv, had = fm.npv_guarantee_usd("shohei_ohtani", 2024, 700_000_000)
+    assert had
+    for m in rows:
+        assert abs(float(m["actual_guar_mm"]) - npv / 1e6) <= 0.051, (
+            f"Gate-2 prices Ohtani's actual at ${m['actual_guar_mm']}M; the engine "
+            f"reads ${npv / 1e6:.1f}M at {fm._discount_rate():g}. Regenerate Gate 2.")
+
+
+_GATE2_SURFACES = (("data/fa_gate2_eval.json", ()), ("data/fa_meta.json", ("gate2",)))
+
+
+def test_served_gate2_note_names_the_rate_its_table_was_priced_at():
+    """The SERVED half of F12-01. assets/fa.js renders gate2.notes verbatim.
+
+    An artifact written before the source fix carries no discount_rate stamp
+    and still holds the typed literal; that is a regen owed, not a new defect,
+    so it xfails (the repo's stamp-gated pattern, as in
+    test_trade_board_coverage.py) and turns into a real assertion the first
+    time Gate 2 is re-persisted."""
+    import value_framework
+
+    engine_pct = float(value_framework._config()["discount_rate"]) * 100
+    problems, owed = [], []
+    for rel, keypath in _GATE2_SURFACES:
+        g = _dig(_read_json(rel), keypath)
+        if not g:
+            continue                      # fa_meta written with no Gate-2 artifact
+        claims = [c for n in (g.get("notes") or []) for c in _discount_rate_claims(n.lower())]
+        stamp = g.get("discount_rate")
+        if stamp is None:
+            owed.append(f"{rel} (generated {g.get('generated_at')}) quotes "
+                        f"{sorted({v for _, v, _ in claims})}")
+            continue
+        stamp_pct = float(stamp) * 100
+        if abs(stamp_pct - engine_pct) > 1e-6:
+            problems.append(f"{rel}: table priced at {stamp_pct:g}% but the engine "
+                            f"discounts at {engine_pct:g}%; regenerate Gate 2")
+        if not claims:
+            problems.append(f"{rel}: no note names the discount rate")
+        for label, v, snip in claims:
+            if abs(v - stamp_pct) > 1e-6:
+                problems.append(f"{rel}: note says {v:g}% ({label}: {snip!r}) over a "
+                                f"table priced at {stamp_pct:g}%")
+    assert not problems, "Gate-2 discount note drift: " + "; ".join(problems)
+    if owed:
+        pytest.xfail(
+            "Gate-2 artifact predates the discount_rate stamp (audit F12-01), so "
+            "its NPV note is still the literal the source used to type: "
+            + "; ".join(owed)
+            + ". Regen owed: python -c \"import fa_backtest as fb; "
+              "fb.run_market_gate(persist=True, persist_dpw=False)\", then the "
+              "nightly fa_export carries it into fa_meta.json")
+
+
+_DPW_TIER_SHAPES = (("lt_1", r"\$(\d+\.\d+)m \(0-1 war\)"),
+                    ("1_to_2", r"\$(\d+\.\d+)m \(1-2\)"),
+                    ("2plus", r"\$(\d+\.\d+)m \(2\+\)"))
+
+
+def test_dpw_tier_rates_match_the_valuation_set():
+    """The second half of F12-04: the four published $/WAR rates were pinned to
+    nothing. They are held to the engine's loaded config (clemens_2026
+    win_cost.rates_musd), and any two-decimal $M figure on the card must be one
+    of the configured rates."""
+    import value_framework
+
+    dpw = value_framework._config()["dollars_per_war"]
+    rates = {k: float(v) / 1e6 for k, v in dpw["tiered"]["rates"].items()}
+    flat = float(dpw["flat"]) / 1e6
+    entry = _glossary_entry("dpw_tier")
+    formula = (entry.get("formula") or "").lower()
+    problems = []
+    for key, pat in _DPW_TIER_SHAPES:
+        got = re.findall(pat, formula)
+        if not got:
+            problems.append(f"formula no longer quotes the {key} tier in the pinned shape")
+        problems += [f"formula quotes ${raw}M for {key}; engine {rates[key]:.2f}"
+                     for raw in got if abs(float(raw) - rates[key]) > 0.005]
+    problems += [f"formula quotes ${raw}M overall; engine {flat:.2f}"
+                 for raw in re.findall(r"\$(\d+\.\d+)m overall", formula)
+                 if abs(float(raw) - flat) > 0.005]
+    allowed = list(rates.values()) + [flat]
+    every = " ".join(v for v in entry.values() if isinstance(v, str)).lower()
+    problems += [f"dpw_tier quotes ${raw}M, none of the configured rates {sorted(allowed)}"
+                 for raw in re.findall(r"\$(\d+\.\d\d)m\b", every)
+                 if not any(abs(float(raw) - a) <= 0.005 for a in allowed)]
+    assert not problems, "dpw_tier rate drift: " + "; ".join(problems)

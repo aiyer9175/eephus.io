@@ -2000,7 +2000,7 @@ function _gxSurplus() {
     <div class="gx-step"><span class="gx-step-n">3</span><span class="gx-step-t">× $${dpw.toFixed(2)}M / WAR</span><span class="gx-step-v">${_fmtMM2(gross)} gross</span></div>
     <div class="gx-step"><span class="gx-step-n">4</span><span class="gx-step-t">− cost (3×$${lgMin}M pre-arb + arb ${arbFr.map(f => f).join("/")})</span><span class="gx-step-v">−${_fmtMM2(cost)}</span></div>
     <div class="gx-step gx-step-sum"><span class="gx-step-n">=</span><span class="gx-step-t">framework surplus</span><span class="gx-step-v">${_fmtMM2(framework)}</span></div>
-    <div class="gx-surplus-final">Published surplus value <b>${_fmtMM2(published)}</b><div class="gx-surplus-note">The published figure additionally probability-weights the outcome distribution and discounts future years at ${((vf.discount_rate || 0.09) * 100).toFixed(0)}%/yr, so it differs slightly from the flat framework walk above.</div></div>`);
+    <div class="gx-surplus-final">Published surplus value <b>${_fmtMM2(published)}</b><div class="gx-surplus-note">The published figure additionally probability-weights the outcome distribution and discounts future years at ${vf.discount_rate != null ? `${(Number(vf.discount_rate) * 100).toFixed(0)}%/yr` : "the platform rate"}, so it differs slightly from the flat framework walk above.</div></div>`);
   if (window.EEPHUS_GL) { const _o = document.getElementById("gx-surplus-out"); if (_o) window.EEPHUS_GL.wire(_o); }
 }
 function _byId(id) { return document.getElementById(id); }
