@@ -2932,6 +2932,28 @@ best row; nothing on the moneyline or the runline. With it: `MODEL_VERSION` bump
 `--context` is re-run so the served key is written. A flip is outward-facing and is
 the owner's call even on a PASS.
 
+### Result (run 2026-09-11, once): FAIL, and the Poisson total keeps serving
+
+`python betting_model.py --total-dispersion`, vintage-gradable games only:
+
+| split | cut | fit / eval | alpha_T | grid log loss delta | t | lines not worse | pass |
+|---|---|---|---|---|---|---|---|
+| anchored | 2026-08-01 | 305 / 548 | 0.638 | +0.0119 | 0.73 | 2 of 4 | no |
+| 0.6 | 2026-08-16 | 507 / 346 | 0.459 | +0.0290 | 1.61 | 4 of 4 | no |
+| 0.7 | 2026-08-22 | 587 / 266 | 0.453 | +0.0357 | 1.62 | 4 of 4 | no |
+| 0.8 | 2026-08-29 | 679 / 174 | 0.461 | +0.0178 | 0.65 | 2 of 4 | no |
+
+The dispersed total beats the Poisson on the point estimate at every split and
+clears t = 1.645 at none. It fixes the tails (Over 10.5 at the 0.6 split: Poisson
+0.268, NB 0.314, observed 0.347; per-line t 2.54) and OVERCORRECTS the middle: on
+the anchored split it prices Over 8.5 at 0.445 against 0.485 observed, where the
+Poisson said 0.519. So one dispersion cannot fit both the median and the tails of
+these totals either, the same lesson 11a recorded for the margin. What remains
+open, each needing its own section: a total distribution with a free median
+(a quantile or isotonic map of the Poisson CDF fitted on the fit half), or a
+bivariate model of the two scores. Until then the lean is DISCLOSED on every
+affected row (section 7f), not repaired.
+
 ---
 
 ## 8. The append-only record
