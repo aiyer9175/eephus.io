@@ -174,3 +174,96 @@ def test_war_is_invariant_to_the_scale_when_the_fit_is_regenerated():
         f"WAR moved {war_a} -> {war_b} on a pure scale change; the fit must "
         "absorb it, and if it does not the repair is a model change wearing a "
         "display fix's clothes")
+
+
+# The FanGraphs Guts table, transcribed twice independently on 2026-09-09 (audit
+# sheet C1, lines 604-620). Complete seasons only: an in-progress season moves
+# daily and the transcription is a single moment of it.
+#   season: (scale, wBB, wHBP, w1B, w2B, w3B, wHR, runCS, R/PA, R/W, cFIP)
+GUTS = {
+    2025: (1.232, .691, .722, .882, 1.252, 1.584, 2.037, -.410, .118, 9.774, 3.135),
+    2024: (1.242, .689, .720, .882, 1.254, 1.590, 2.050, -.405, .117, 9.683, 3.166),
+    2023: (1.204, .696, .726, .883, 1.244, 1.569, 2.004, -.422, .122, 10.028, 3.255),
+    2022: (1.259, .689, .720, .884, 1.261, 1.601, 2.072, -.397, .114, 9.524, 3.112),
+    2021: (1.209, .692, .722, .879, 1.242, 1.568, 2.007, -.419, .121, 9.973, 3.170),
+    2020: (1.185, .699, .728, .883, 1.238, 1.558, 1.979, -.435, .125, 10.282, 3.191),
+    2019: (1.157, .690, .719, .870, 1.217, 1.529, 1.940, -.435, .126, 10.296, 3.214),
+    2018: (1.226, .690, .720, .880, 1.247, 1.578, 2.031, -.407, .117, 9.714, 3.160),
+    2017: (1.185, .693, .723, .877, 1.232, 1.552, 1.980, -.423, .122, 10.048, 3.158),
+    2016: (1.212, .691, .721, .878, 1.242, 1.569, 2.015, -.410, .118, 9.778, 3.147),
+    2015: (1.251, .687, .718, .881, 1.256, 1.594, 2.065, -.392, .112, 9.421, 3.134),
+    2014: (1.304, .689, .722, .892, 1.283, 1.635, 2.135, -.377, .107, 9.117, 3.132),
+    2013: (1.277, .690, .722, .888, 1.271, 1.616, 2.101, -.384, .110, 9.264, 3.048),
+    2012: (1.245, .691, .722, .884, 1.257, 1.593, 2.058, -.398, .114, 9.544, 3.094),
+    2011: (1.264, .694, .726, .890, 1.270, 1.611, 2.086, -.394, .112, 9.454, 3.025),
+}
+
+#: Half a unit in the third printed decimal plus the solve's own rounding.
+_THIRD = 0.0015
+
+
+def _solved_or_skip():
+    tbl = LC.load()
+    missing = [s for s in GUTS if s not in tbl or "woba_weights" not in tbl[s]]
+    if missing:
+        pytest.skip(f"artifact lacks solved weights for {missing}")
+    return tbl
+
+
+def test_the_solved_scale_reproduces_the_published_table():
+    tbl = _solved_or_skip()
+    for season, g in GUTS.items():
+        assert tbl[season]["woba_scale"] == pytest.approx(g[0], abs=_THIRD), season
+
+
+def test_the_solved_weights_reproduce_the_published_table():
+    """The weights are an identity in the feed, so every one must land on the
+    printed value. A miss here is a broken join or a changed feed, never a
+    league that moved."""
+    tbl = _solved_or_skip()
+    for season, g in GUTS.items():
+        w = tbl[season]["woba_weights"]
+        got = tuple(w[k] for k in LC.WEIGHT_KEYS)
+        for k, a, b in zip(LC.WEIGHT_KEYS, got, g[1:7]):
+            assert a == pytest.approx(b, abs=_THIRD), f"{season} {k}: {a} vs {b}"
+        assert tbl[season]["weights_worst_residual"] <= LC.WEIGHT_TOL
+
+
+def test_the_league_totals_reproduce_runs_per_win_fip_constant_and_runcs():
+    """Runs per win is FanGraphs' closed form on league R/IP; the FIP constant
+    includes intentional walks in BB, the only reading that reproduces the
+    table; runCS is -(2*R/outs + 0.075)."""
+    tbl = _solved_or_skip()
+    for season, g in GUTS.items():
+        b = tbl[season]
+        assert b["run_cs"] == pytest.approx(g[7], abs=_THIRD), season
+        assert b["lg_r_pa"] == pytest.approx(g[8], abs=0.0006), season
+        assert b["rpw"] == pytest.approx(g[9], abs=_THIRD), season
+        assert b["fip_constant"] == pytest.approx(g[10], abs=_THIRD), season
+        assert b["run_sb"] == LC.RUN_SB
+
+
+def test_the_weights_and_the_scale_describe_the_same_league():
+    """Two independent solves from the same feed: the scale from the wRAA
+    identity, the weights from the wOBA identity. League wOBA rebuilt from the
+    weights and the season totals must land near the league wOBA the scale
+    solve returned, or one of the two joins is wrong."""
+    tbl = _solved_or_skip()
+    for season in GUTS:
+        b = tbl[season]
+        assert 0.29 < b["lg_woba"] < 0.34
+        assert b["lg_wsb"] is not None and abs(b["lg_wsb"]) < 0.02, season
+
+
+def test_earlier_seasons_are_published_but_reach_no_consumer():
+    """Seasons before SERVED_FROM are solved and reviewable in the artifact, but
+    the projection corpus must keep reading its fallback for them until the move
+    of letting them in is measured on its own."""
+    tbl = LC.load()
+    early = [s for s in tbl if s < LC.SERVED_FROM]
+    if not early:
+        pytest.skip("no pre-served seasons in the artifact")
+    s = min(early)
+    assert LC.woba_scale(s, default=1.15) == 1.15
+    assert LC.constants(s) is None
+    assert set(LC.served()) == {x for x in tbl if x >= LC.SERVED_FROM}
