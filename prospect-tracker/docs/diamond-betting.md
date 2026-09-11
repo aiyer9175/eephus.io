@@ -6085,6 +6085,613 @@ is arithmetic on the recorded t and n.
 Nothing in this block was measured against a game result. It adds no new number: the
 expectation is arithmetic on the recorded t and n.
 
+## 7i. The score kernel: one joint distribution fitted on pre-2026 finals (pre-registered 2026-09-11)
+
+**Written before any reference table, tilt or gate for this candidate exists in code,
+and before the candidate has been computed for any game, pre-2026 or 2026, or related
+to any outcome or any market price**, in the discipline of 5a, 5c, 7b, 7g, 7h and 11a.
+It is committed alone, docs only, after the 7h re-read block and by 2026-09-16 (plan
+5.2, W0). It sits directly under that block and above the `---` before section 8. If it
+lands after 2026-09-11, the heading carries the commit date.
+
+It is candidate N2 of the 2026-09-11 plan
+(`docs/master-plan-2026-09-11-war-epoch-drivers-betting.md`, section 4.2). It is the
+successor 11a names ("a bivariate model with a one-run atom"), and the 7g result names it
+too ("a bivariate model of the two scores"). It takes up the B-RUNLINE lane of the
+2026-09-05 plan (`docs/master-plan-2026-09-05-opus.md`) and keeps that lane's first
+binding constraint: fit on pre-2026 finals only. Where it departs from B-RUNLINE or from
+the plan, the list near the end says so and why. Plan section 5 admits three kinds of
+betting candidate, and this is the kind fitted on pre-2026 data. Nothing served reads
+anything here, and nothing served changes.
+
+**Disclosed, because 5c rule 1 turns on it.** Every number this section quotes was on
+the record before it. Each describes the INCUMBENT or the fit data, never the candidate.
+- **The incumbent's shape errors on 2026 games.** All but the last were measured on
+  caches that include vintage eval-window games (dated from 2026-08-01):
+  - the tie atom (section 4, the 2,200-game cache of 2026-09-11);
+  - team-runs var/mean and its decomposition (11a, all 1,766 cached games, 2026-08-09);
+  - the one-run band (11a, the 1,775-game cache priced from the served context) and the
+    side asymmetry (11a's held-out half, from 2026-06-27);
+  - the total's shape (7f, the 305 fit-half games only).
+- **Eval-half observed Over rates.** The 7g run printed them for every split (disclosed
+  in 7h), and the 7g and 7h results quote some of them.
+- **Pre-2026 descriptives of the fit data,** from G4-07
+  (`scratchpad/fg-audit-2026-09-09/ideas/G4_betting_accuracy.md`, via lane R5), all read
+  off `.cache/pbp_corpus`, which holds 1,448,967 plays over 17,008 pre-2026 games (plan
+  4.2, N1):
+  - home win rate by season: 2018 0.5278, 2019 0.5294, 2021 0.5385, 2022 0.5329, 2023
+    0.5210, 2024 0.5216, 2025 0.5428;
+  - per-side runs var/mean by season: 2.291, 2.285, 2.238, 2.258, 2.245, 2.168, 2.370 for
+    2018, 2019 and 2021 to 2025 (2020 is not in the corpus);
+  - extra-inning share 0.083 to 0.089, extra-inning home rate 0.472 to 0.542 on 201 to
+    216 games a season, and P(|margin| = 1) 0.266 to 0.294, each a range with no season
+    named.
+- **One 2026 descriptive, listed apart:** per-side runs var/mean 2.340 (G4-07).
+- **Who saw what.** The draft of this section cited only lane R5's ranges (per-side
+  var/mean 2.168 in 2024 to 2.370 in 2025, home rates 0.5210 to 0.5428), and it fixed the
+  season window below. Whether its author opened G4-07's per-season lists is not recorded.
+  The author of this revision read them after the window was fixed, and the window did
+  not change.
+
+No reference table has been built. No tilt has been solved, and no kernel probability
+has been computed for any game. For this section and its two reviews, code was read to
+name functions and nothing was run: `betting_model.py`, `betting_export.py`,
+`betting_shadow.py`, `dfs_export.py`, `tools/build_pbp_corpus.py` and
+`tools/betting_calibration.py`. The knowledge above can steer two things: the choice to
+try a joint table of final scores at all, and the season window, which is argued below
+from the rule calendar. It sets no parameter. The kernel has no parameter fitted on 2026,
+and its criteria are the ones 11a, 7g and 7h already use.
+
+**Why one distribution.** The served model prices the two sides as independent
+Poissons and prices every market off that product. The product is wrong in three
+measured places:
+- **The tie atom** is 0.1352 at the league run environment, against an observed extras
+  rate of 0.0877 (section 4; 193 of 2,200 games).
+- **The one-run band.** P(|margin| = 1) is 0.2503 under Poisson against 0.2721
+  observed. NB2 moved it to 0.1917, the wrong way (11a).
+- **The total's shape.** var/mean is 2.347 on the fit half, where a Poisson has 1 (7f).
+  Team runs sit at var/mean 2.3385, and 93.75% of that excess is within-game clumping,
+  not lambda spread (11a).
+
+**The walk-off is what no product of two independent sides can carry (11a).** Of 193
+extra-inning games, the home side won 93 and won by two or more in 10. The away side
+won 100 and won by two or more in 51 (section 4). On 11a's held-out half, home -1.5
+landed 0.3442 against away -1.5 at 0.3768.
+
+**Every repair so far kept the independent product** and fitted one or two parameters
+on 2026 games:
+- NB2 fixed the margin tail and damaged the band (11a).
+- The tie split reassigns one atom that the Poisson overstates (section 4).
+- 7f fixed the low end of the total grid and broke the high end. 7g and 7h fixed the
+  tails and missed the middle of the anchored window.
+
+The reference below, a table of real final scores, carries all of it at league scoring:
+no ties, the clipped home winning margin, the band, the tail and the skew. Whether the
+tilted kernel keeps it at a game's own lambdas is what the gate reads. Three markets read
+off one table cannot disagree about one game, which is the property `_score_joint` and
+`split_tie_atom` were built to protect. These facts are motivation only. None of them is
+a criterion, and none of them sets a number below.
+
+### The fit data: pre-2026 finals only
+
+The reference table n(h, a) counts the games that ended with the home side on h runs and
+the away side on a runs.
+- **Source.** For each season Y, one call `fetch_finals(f"{Y}-03-01", f"{Y}-11-30")`:
+  one StatsAPI schedule request (`gameType=R`, hydrate `linescore`) and no Odds API
+  credit. `fetch_finals` is the schedule door of `build_game_cache`, and both doors write
+  the same row: `home_runs` and `away_runs` off the linescore, `innings` (the linescore's
+  `currentInning`) and `season`. Where the linescore carries no runs, `_row_from_schedule`
+  falls back to `teams.score`; the builder counts those rows (to be built).
+- **Seasons 2023, 2024 and 2025.** The 2023 rule package (the pitch clock, limits on
+  defensive shifts, larger bases) is the last change to the rules under which runs are
+  scored, and 2026 plays under it. So these are the pre-2026 seasons whose scoring
+  process 2026 shares. That is a run-environment reason, not a game-ending one. The rules
+  for how a game ends do not separate 2022: the automatic runner decided extra innings
+  from 2020 (2023 made it permanent), and nine-inning doubleheaders returned in 2022.
+  That is why the sensitivity arm is 2022 to 2025. It differs from the main arm only by
+  the season before the package. No per-season number chose the window (see "Who saw
+  what").
+- **Dropped and counted:**
+  - a row whose `season` is not Y (the range trap `_topup_game_cache` documents);
+  - a repeated `game_pk`, kept once (the later-dated row);
+  - a row with no inning count or fewer than 9 innings (a shortened game);
+  - a row whose final is level (no final can be, so it is a source defect).
+- **Nothing else.** No smoothing, no pseudo-count, no prior and no season weight. A
+  final score never seen in those three seasons has zero mass in every kernel.
+- **Completeness floors (POLICY, fixed now).** At least 2,420 distinct finals returned
+  per season, and at least 2,350 kept after the drops. The corpus census is 2,429 to
+  2,430 games per season for 2022 to 2025 (09-05 plan B-CORPUS; G4-07). Below either
+  floor the build refuses.
+- **Cross-check.** For each `game_pk` that is also in `.cache/pbp_corpus`, the fetched
+  final is compared with the corpus's: the post-play `home_score` and `away_score` on
+  the game's last play. Disagreements are counted and listed. More than 12 in any season
+  (0.5% of 2,430, POLICY) refuses the build. Otherwise the table is built from the
+  `fetch_finals` rows.
+- **A refused build** may be re-fetched. The floors, the cap and the rules do not
+  change. If it still refuses on 2026-10-06, 7i closes without a verdict and the text
+  records why.
+- **Frozen.** The table is written once, after this section is committed, to
+  `.cache/betting/score_kernel_reference.json` (to be built), outside the published
+  `data/` tree until the look. It carries the per-season counts, the drops, the
+  cross-check and a SHA-256 of the table. The hash is pinned as
+  `SCORE_KERNEL_REFERENCE_SHA256` (to be built) in a constant-only commit, and the gate
+  refuses a file whose hash differs.
+- **No shape before the look.** The build prints the counts, the drops, the cross-check
+  and the hash, and no shape statistic. The table's shape is first computed in the
+  result block.
+- **Never rebuilt.** No nightly, monthly or `--context` path rebuilds it. 2026 finals
+  never enter it. A reference with 2026 in it is a different candidate, with its own
+  section and a 2027 look.
+
+### The candidate
+
+For each game the pricer returns `lam_home` and `lam_away`: the pair `expected_runs`
+returns after `home_adj`, `diff_shrink` and the [1.5, 9.5] clamp. The kernel is the
+reference tilted to those two means:
+
+    K(h, a) = n(h, a) * exp(t_h * h + t_a * a) / Z(t_h, t_a)
+
+Here (t_h, t_a) is the unique solution of E_K[h] = lam_home and E_K[a] = lam_away, which
+exists for any pair of means inside the convex hull of the table's support. That makes K
+the distribution nearest the reference in relative entropy that has the game's two
+means, so the kernel has no free parameter. It is solved by damped Newton from (0, 0) to
+a mean error below 1e-9. The solution is fixed by the two equations, not by the solver.
+A tilt that does not converge at the look raises, and that split cannot pass. There is
+no fallback.
+
+Every market is read from K alone:
+- **Moneyline:** p_home is the mass on h > a. K has no mass on h = a, so there is no tie
+  atom, no `tie_home` and no runline split.
+- **Runline:** P(home margin >= 2) and P(home margin <= -2), read through
+  `split_tie_atom` with a zero atom. `split_tie_atom` still takes a `tie_home`. With a
+  zero atom any value in [0, 1] is inert, and the lab passes 0.5.
+  `p_home_minus_1_5 <= p_home` holds by construction.
+- **Total:** P(h + a = k). The Over, the Under and the push come from
+  `total_side_probabilities`.
+
+**What is not known until the look.** A joint tilt is not a tilt of each side. The
+kernel's home marginal is proportional to exp(t_h * h) * n_h(h) * E_ref[exp(t_a * a) |
+h]. The last factor varies with h, because the two sides are dependent in the reference
+(the empty diagonal, the walk-off clip). So the kernel's marginal dispersion at a game's
+lambdas is not the reference's, and it is unknown until the look.
+
+**The total moves with two 2026-fitted parameters.** Under the Poisson the total depends
+only on lam_home + lam_away, so `diff_shrink` and `home_adj` leave it alone (the
+`expected_runs` docstring). Under the kernel the total's pmf depends on each lambda. So
+the kernel arm's total moves with two moneyline parameters fitted on the 2026 fit half,
+though its mean does not. Neither is fitted to the total, which is why plan X1 (no
+fourth one-parameter total repair on the 305-game fit half) does not bind.
+
+**Structural, asserted by test (to be built), never measured:**
+- **On synthetic tables:** every kernel sums to 1 within 1e-12, has zero mass on h = a,
+  and hits both means within 1e-9 on a lambda grid over [1.5, 9.5] squared. The margin
+  and the total come from the same table.
+- **On the frozen references (main and sensitivity), once built:** the tilt converges
+  and hits both means within 1e-9 at every point of the [1.5, 9.5] squared grid at step
+  0.25 (1,089 points, POLICY). The test reads no game and no outcome, and prints no
+  probability. A failure may be repaired before the look by a better solver, because
+  the solution is fixed by the equations. The result block names the repair.
+- **The hash** of each reference matches the pinned one.
+- **No served module** imports the kernel until a flip.
+
+**A known bias, stated before the look.** The reference's spread includes the
+between-game spread in true scoring rate, and the tilt moves the mean without removing
+that spread. So the part of it the pricer's own lambdas already explain is counted
+twice. On the served lambdas 11a measured that part at 0.3755 of 6.0036 runs squared of
+excess variance (6.25%). The vintage pricer's win probabilities spread less than the
+served ones: 2.7% of graded games sit outside 0.4 to 0.6, against 25.3% served (plan
+4.2). That is a proxy for a narrower lambda spread, so less should be counted twice on
+the graded lambdas than 11a's figure. The bias is not repaired, because a repair needs a
+parameter fitted somewhere, and the gate is where the bias shows.
+
+### The incumbent, frozen here by construction
+
+The lab reads no serving flag and no context key. It passes every choice below
+explicitly, so no flip before the run, including one that follows the 7h re-read, can
+change what the kernel must beat. "Held False" means the gate holds the module constant
+for the run and restores it afterwards (to be built). On each split's fit half the
+incumbent is refit the way every lab in 7e to 7h refits it:
+
+| Piece | Frozen as | Through |
+|---|---|---|
+| coefficients | OLS; `SERVE_RIDGE_FIT` has no path in | `fit_coefficients` |
+| tie rate | the fit half's extra-inning home rate, shrunk | `_fit_tie_home` |
+| runline | the tie split at every split, whatever `SERVE_RUNLINE_TIE_SPLIT` reads | `_fit_runline_tie_split`, `split_tie_atom` |
+| margin | Poisson (`run_alpha` None); shrink and home level re-solved | `_solve_diff_shrink`, `_solve_home_adj`, `_p_home_series`, `game_probabilities`, `_score_joint` |
+| total | the Poisson total: no 7f level, no 7g alpha_T, no 7h map, whatever `SERVE_TOTAL_LEVEL`, `SERVE_TOTAL_DISPERSION` and `SERVE_TOTAL_CALIBRATION` read | `_total_pmf` (alpha None), `_pmf_over`, `total_side_probabilities` |
+| moneyline response | no Platt map; `SERVE_PROB_CALIBRATION` has no path in | none |
+| the Athletics' park | `SERVE_ATH_PARK` held False: the park is neutral at every split, in both arms | `parks_from_vintage` |
+| the cut | `VINTAGE_FIT_WINDOW_GROWS` held False: the anchored cut | `_vintage_cut_index` |
+| the pricer | the vintage pricer, refit per split; the O14 response does not reach the lab | `_vintage_resolver`, `inputs_as_of`, `leaderboard_vintages.as_of` |
+
+Why these values:
+- **The tie split.** The owner answered "reprice now" on 2026-09-11. So the kernel must
+  beat the repriced runline, and it cannot win on the atom that answer already moved.
+- **The Poisson total.** It serves at HEAD, with its Over lean disclosed (7f; owner
+  answer 2026-09-11). If `SERVE_TOTAL_CALIBRATION` has been flipped before the run, the
+  result also reports, never as a criterion, the kernel's grid delta against the 7h map
+  refit per split (`fit_total_calibration`).
+- **The park.** The owner answered that it serves. But it reaches both arms through the
+  same lambdas, and a record older than schema 5 keeps the club neutral whatever the flag
+  reads (`parks_from_vintage`). Holding it False keeps the fit halves those of the 7f to
+  7h runs, and matches the 7h re-read's freeze.
+- **The cut.** It is 2026-08-01 with 305 fit games on the record (7f to 7h).
+
+**A tie split that returns None.** `_fit_runline_tie_split` returns None when a fit half
+has no extra-inning win on one side. The incumbent would then fall back to the whole
+atom, which the owner's answer retired. A split where that happens cannot pass, and it is
+recorded.
+
+**Not stacked on anything.** The challenger is the kernel alone. In the lab and in
+serving, it is never composed with any of these:
+- the 7f level;
+- the 7g alpha_T;
+- the 7h survival map;
+- the 11a run alpha;
+- the 11b Platt map;
+- the tie split.
+
+`SERVE_SCORE_KERNEL` may not be True while any of `SERVE_RUN_DISPERSION`,
+`SERVE_TOTAL_LEVEL`, `SERVE_TOTAL_DISPERSION`, `SERVE_TOTAL_CALIBRATION` or
+`SERVE_PROB_CALIBRATION` is True. The flip commit's test pins that.
+`SERVE_RUNLINE_TIE_SPLIT` is left out of that list on purpose: under the kernel the atom
+is zero, so the split is inert, and after the owner's reprice the flag reads True.
+
+**Re-solving, per arm.** The two arms share the coefficient fit, because OLS on runs
+reads no distribution. Each arm re-solves `diff_shrink` and `home_adj` on its own fit
+half, under its own distribution. That is 11a's rule and B-RUNLINE's third constraint.
+Under NB2 the shrink moved from 0.70 to 1.08 (11a), and holding the Poisson's values
+would grade a tuned incumbent against an untuned challenger. Today `_solve_diff_shrink`
+and `_solve_home_adj` thread only `run_alpha`, through `_p_home_series` into
+`game_probabilities`. The kernel arm needs a kernel-threaded path through both (to be
+built). The kernel itself carries no parameter fitted on 2026, so it is not a fourth
+one-parameter repair on the 305-game fit half (plan X1).
+
+### The eval window, the criteria and the verdicts
+
+**The window.** Every 2026 regular-season game dated on or before 2026-09-27 that is
+final in the game cache after a top-up on the read day. The top-up is
+`build_game_cache(refresh=True)`, run after the last game dated 2026-09-27 is final.
+- **Pricing.** Each game is priced on a dated vintage through `_vintage_resolver`. A
+  game with no vintage strictly before it is skipped and counted, and never graded on
+  the fallback (section 6).
+- **Excluded.** A game dated after 2026-09-27 (a makeup) is outside the window.
+  Postseason games cannot enter, because both doors of `build_game_cache` keep
+  regular-season games only.
+- **Shortened games stay in.** The reference and the eval read one row definition but
+  not one scope: the reference drops games of fewer than 9 innings, and the eval grades
+  every final. A shortened game counts against whichever arm misprices it, and the
+  result reports how many there are. They are not dropped, because dropping them would
+  condition the eval on a post-game fact and remove the games a 9-inning table fits
+  worst.
+- **The splits** are the 7f/7g/7h grid: the anchored cut plus date quantiles 0.6, 0.7
+  and 0.8 of the gradable dates. Each fit half refits the pricer and each eval half
+  grades.
+- **The fit half is never graded.** Every eval half lies on or after the anchored cut,
+  so no game in the 305-game anchored fit half is graded at any split.
+
+**Criteria.** All are required, at ALL FOUR splits.
+- **Floors.** A split below `VINTAGE_MIN_FIT_GAMES` (100) or `VINTAGE_MIN_EVAL_GAMES`
+  (50) cannot pass.
+- **Sign.** delta is incumbent loss minus kernel loss per game, through
+  `_paired_delta`, so a positive delta means the kernel is better.
+- **Source.** The rows are 11a's four criteria, with its total row (over 9.0) replaced
+  by the 7g/7h grid.
+
+| # | Market | Paired per-game loss | Test on each eval half |
+|---|---|---|---|
+| 1 | moneyline (home win) | Brier | non-inferiority: one-sided 95% lower bound on delta >= -0.001 (11a; B-RUNLINE's second constraint). At the anchored split, `beats_baseline_95` from `_paired_brier_skill` against the home constant may not read True for the incumbent and False for the kernel |
+| 2 | runline, both sides | per-game sum of the log loss on home margin >= 2 and on home margin <= -2 (`RUNLINE_SIDE_AMENDMENT = "both"`) | delta > 0 at one-sided t >= 1.645 |
+| 3a | total, grid | log loss of the Over summed over `TOTAL_LEVEL_LINES` (7.5, 8.5, 9.5, 10.5) | delta > 0 at one-sided t >= 1.645 |
+| 3b | total, per line | log loss at each grid line | not worse on the point estimate at >= 3 of 4 lines |
+| 4 | runs, both sides | log-likelihood per scoring-side row of the observed final runs, the kernel's marginal against the Poisson side, top-coded as below | kernel > incumbent on the point estimate |
+
+**The top-code (POLICY).** Criterion 4 pools 15 or more runs into one cell, in both
+arms. If the reference's home or away marginal is empty at some r below 15, the top-code
+for both arms becomes the smallest such r. That is fixed on the reference alone, before
+the look, and recorded. So no observed score can land in a zero cell.
+
+**A mixed grid ships nothing, and neither does one market.** One table prices all three
+markets. Serving it on the runline while the Poisson prices the total would price one
+game from two distributions, the incoherence `split_tie_atom` was built to remove.
+Per-market readings are persisted and reported.
+
+**Controls.**
+- **The mirrored twin, required.** Transpose the reference, n'(h, a) = n(a, h), then run
+  the same tilt and the same re-solves. The tilt restores each game's two means, so the
+  twin differs from the candidate only in which side carries the home-side structure:
+  the walk-off clip and the unplayed bottom of the ninth. At every split, the
+  candidate's criterion 2 delta must exceed the twin's on the point estimate. A kernel
+  that cannot beat its own mirror on the runline is not pricing the structure this
+  section is about.
+- **The sensitivity arm, reported and never qualifying.** The same construction, on a
+  reference built from 2022 to 2025 finals under the same rules, floors and cap, and
+  pinned the same way.
+- **No seeds.** Every step is deterministic, with no bootstrap and no permutation. There
+  is no column to permute, so 5c rule 3's permuted twin has nothing to act on.
+- **No contaminated leg.** 5c rule 4's contaminated screen is for dark columns. Like 7f
+  to 7h, this candidate has no column.
+
+**Verdicts.**
+- **PASS:** every criterion at every split, the twin beaten at every split, and no split
+  refused (a floor, a tilt that does not converge, or a tie split that returns None).
+- **FAIL:** the twin not beaten at some split, or no split passing every criterion.
+- **INDETERMINATE:** anything else.
+
+Nothing ships on FAIL or INDETERMINATE, and no re-read follows either.
+
+### Holm, and the five attempts at the total
+
+N2 is a family of one.
+- **Families it is not in:**
+  - the 7e coefficient family, because it fits no coefficient;
+  - the 5k, 5d-C and 5h run-environment family, because it moves no location and reads
+    no weather, venue, date or dark column;
+  - N6, and the N4 grid.
+- **Within this section.** Requiring every criterion at every split can only lower the
+  false-pass rate below each test's one-sided 0.05, so no correction applies.
+
+**Across the total, disclosed and not corrected.** This is the fifth featureless repair
+of the 2026 total on overlapping eval games: 7f, 7g, 7h, the 7h re-read and 7i. It comes
+after 11a's joint NB2, whose total row (over 9.0) passed at all three splits in
+contaminated mode and did not ship. The run-environment family (5d-C, 5h, 5k) is
+separate. No family-wise correction spans the five, and joining them now would amend
+7h, whose text fixes its criteria. What 7i fixes for itself, now:
+- **The tie-break.** If the 7h re-read and 7i both PASS, the pre-registered
+  recommendation is the kernel, because one table prices all three markets and the map
+  prices the total alone. The two never price the total together (the tripwire above).
+  The flip stays the owner's call. A flip of the map over a passing kernel is recorded in
+  its flip commit as a departure from this rule.
+- **The label.** The flip commit, and any page copy that cites a PASS, call it the fifth
+  featureless total repair on overlapping 2026 eval games.
+- **A report, never a criterion:** the kernel's grid delta on eval games dated after
+  2026-09-10, the only games no total run before 2026-09-28 printed.
+
+**The pre-registered expectation, stated before any fit.**
+- **Criterion 2** is the question this section exists to ask.
+- **Criterion 3 is the likeliest miss.** 7g and 7h each missed the middle of the
+  anchored window, pricing Over 8.5 at 0.445 and 0.448 against 0.485 observed, and the
+  known bias above widens the kernel.
+- **Criterion 4 leans to a pass.** The reference carries the dispersion 11a measured
+  (NB2 alone bought +0.2190 nats per row on 11a's pre-registered split, in contaminated
+  mode). But the kernel's marginal is not the reference's (see above), so this is a
+  lean, not a property.
+- **Criterion 1 should be near neutral** once `diff_shrink` re-solves.
+
+None of this rests on a number about the kernel.
+
+### What is reported, and what is withheld
+
+**Reported whichever way it lands.**
+- **The references (main and sensitivity):**
+  - per-season counts and drops, the fallback rows and repeated `game_pk` included;
+  - the corpus cross-check;
+  - the hash and the top-code;
+  - the shape, computed here first: mean runs per side, var/mean per side and for the
+    total, P(|margin| = 1) and P(|margin| >= 5).
+- **Per split:**
+  - n_fit, n_eval and the skipped count;
+  - each arm's `diff_shrink` and `home_adj`;
+  - the incumbent's `tie_home` and runline split (or None);
+  - every criterion's delta, sd, t and lb95;
+  - the twin's criterion 2 delta.
+- **Per eval half,** each for the kernel, the incumbent and the observed games:
+  - P(|margin| = 1), which is B-RUNLINE's fourth constraint, against the 0.2721 on the
+    record;
+  - P(|margin| >= 2) and P(|margin| >= 5);
+  - the home -1.5 and away -1.5 landing rates, the walk-off diagnostic (11a read 0.3442
+    and 0.3768);
+  - the Over rate at each grid line, unless withheld (below).
+- **The tilt:** the largest mean error, and the count of games at the lambda clamp.
+- **The sensitivity arm's** full grid beside the candidate's.
+- **Report-only:**
+  - the grid delta on games dated after 2026-09-10;
+  - the grid delta against the 7h map, if it was flipped before the run;
+  - the count of shortened eval games.
+- **Market diagnostics, never criteria:**
+  - model P(over) at the posted line minus the realised rate, on eval games with a
+    cached open capture, unless withheld (below);
+  - the Over/Under split of positive-edge totals on every cached slate.
+- **The look record:** none, or each look and its consequence; the readiness counts.
+- **Configuration:** the worktree commit and the commits named under "Code", the main
+  tree's HEAD, `MODEL_VERSION`, the values the gate held, and the python and numpy
+  versions.
+
+**Withheld until the run-environment reads.** If the 5k registration and the amendments
+that put 5d-C and 5h in one Holm family with 5k are not all committed before this run,
+the result block withholds two things until those reads land, and records the rest:
+- the per-line Over rates (kernel, incumbent and observed) on every eval half;
+- the posted-line diagnostic.
+
+Those numbers describe the late-season residual that 5k, 5d-C and 5h target. 7h's
+late-window reading (Over 7.5 observed 0.615 after 2026-08-29) is a location question,
+and it belongs to them. Between this run and theirs, no amendment to 5d-C, 5h or 5k is
+written unless it names this printout.
+
+### The look
+
+**What counts as a look, and what one costs.**
+- **A look** is any computation, by any path, before the scheduled run, of the kernel,
+  the twin or the sensitivity arm at any game's lambdas: 2026 or pre-2026, N1's
+  reconstructed inputs included. The path does not matter, because an off-lab look is
+  easy: the board publishes `lam_home` and `lam_away` on every priced game
+  (`betting_export.py`), every 2026 result is public, and the reference sits on this
+  box. Development tests use synthetic tables and synthetic games only.
+- **A run of the switch before 2026-09-28** is a look too. A guard (to be built) refuses
+  one.
+- **The cost.** Any look is recorded here with its date and whatever it printed, and it
+  FORFEITS 7i: the scheduled run does not happen, 7i closes, and no PASS can come from
+  it.
+- **Not looks:** building a reference and printing its counts, drops, cross-check and
+  hash; the structural tests; the readiness counts below.
+
+**No amendment between commit and look,** except a dated correction on a fact that
+involves neither a reference's shape nor any outcome (a name, a path, a pinned hash). A
+cancellation needs a dated correction before the main reference is built. After that
+there is none. After the look, changing the seasons, the inclusion rules, the floors,
+the tilt, the top-code or any criterion makes a new candidate. It needs its own section,
+and it is graded on games this look did not see.
+
+**The read: once, on 2026-09-28.** `score_kernel_gate` (to be built; `python
+betting_model.py --score-kernel`).
+- **Code.** The read runs from a detached worktree of the commit that pins the reference
+  hashes, with `prospect-tracker/.cache` junctioned to the main tree's (the 7h re-read's
+  method). The result names that commit, and every commit since this section's that
+  changed a function in the incumbent table, with the reason. None may change a
+  criterion, the window, the reference rules or the incumbent's construction. A change
+  that would is a new candidate.
+- **Readiness,** relating nothing to an outcome. The gradable games dated on or before
+  2026-09-10 must number 853 (the 305 + 548 of 7f to 7h), and the anchored cut must be
+  2026-08-01 with 305 fit games. If either differs, the read does not run that day. The
+  cause is found and recorded without relating anything to an outcome, and the read runs
+  once the counts hold, by the kill date.
+- **A slip.** If the read cannot run on 2026-09-28 (code, box, cache, feed, build or
+  readiness), it runs on the first day it can, under the same window, code and rules. A
+  slipped read is still the one look.
+- **Kill date 2026-10-06.** If it has not run by then, 7i closes without a verdict and
+  the text records why. That keeps it ahead of the 2026-10-07 reads of 5d and 5k, which
+  use the same late-season totals.
+- **Order against the 7h re-read.** If both run on one day, 7i runs first. Otherwise the
+  result says which ran first.
+- **Why that date.** It is the day after the regular season ends, so the window is the
+  whole season and cannot be chosen by when the code lands. The incumbent is frozen
+  above, so the landing date cannot choose that either.
+- **No accrual clock** applies, because the kernel is fitted on pre-2026 data.
+- **Where it lands.** The criteria ride verbatim in `SCORE_KERNEL_GATE_CRITERIA` (to be
+  built). The grid persists at `data/betting_model_eval.json -> score_kernel`. The result
+  is appended as `### Result (run DATE, once): VERDICT, and ...`.
+
+### If it passes: the flip, and what moves
+
+The lab lands with no serving path, because a serving path for an unmeasured candidate
+is what 5c forbids (5h). On a PASS, the serving path lands behind `SERVE_SCORE_KERNEL`
+(to be built), default False, and the flip is the owner's call.
+
+The flip is one commit:
+- the flag and its tripwire test;
+- the main reference committed into `data/`, so every box serves the same table, with
+  its hash checked against the pinned one;
+- one `MODEL_VERSION` bump for all three markets. It labels the artifacts and the record
+  rows (`betting_export` writes `model_version` into each record row). The calibration
+  and shadow ledger rows carry no version field (`OPEN_FIELDS` in
+  `tools/betting_calibration.py`; `betting_shadow.py`);
+- `--context` re-run, so the kernel arm's `diff_shrink` and `home_adj` are written (keys
+  to be built).
+
+**After a flip the ledgers pool two pricers, and this says so.** 7b's statistics run on
+the settled canonical games in ledger order, with no version filter (`market_gate`;
+`trailing=200` takes the last 200).
+- The closure test for the moneyline and the runline keeps reading rows priced by the
+  Poisson product beside kernel rows. On the runline, after the owner's reprice, those
+  older rows are the Poisson plus the tie split.
+- The total's trailing-200 re-open test pools the two until 200 kernel-priced canonical
+  games settle.
+- Pooling leans against re-opening the total, because the rows it carries over are the
+  ones that closed it. It leans toward keeping the moneyline and the runline open on the
+  older rows.
+
+A window scoped to `slate_date` on or after the flip is not registered here. It would be
+a dated 7b amendment with its own code (to be built). It would also have to say what
+happens below 100 scoped games, where `worse_than_coin_95` cannot be true and the
+re-open test would pass on no evidence.
+
+What moves:
+- every moneyline, runline and total probability, edge, EV and Kelly;
+- which side is value;
+- both Model Watch slots, at the next nightly, whenever their best row moves (O21,
+  DEFAULT: slots chosen at the nightly and locked until 5j passes).
+
+What is re-read or checked:
+- **The text that describes the Poisson:** the `tie_atom` block, `tie_atom_caveat`,
+  `POISSON_CAVEAT`, section 4's atom paragraph, and section 11's runline and
+  run-distribution bullets.
+- **`total_level_check`** keeps running unchanged and decides for itself whether the
+  lean remains.
+- **`dfs_export`'s implied team totals** read `margin_distribution` and `split_tie_atom`
+  directly, so the flag does not reach them. The flip commit says whether they follow.
+
+What does not move:
+- **Props.**
+- **The total's ledger leg.** It has been LEDGER-CLOSED since 2026-09-03, at 0.268081 on
+  171 games (plan 4.2). A pass does not reopen it. Only 7b's re-open test does, on the
+  pooled window above.
+- **The total's slots.** Under O15's DEFAULT (slots from publishable markets only; a
+  ledger-leg-only `SLOT_MARKET_POLICY` value is to be built), the total stays out of the
+  slots until its ledger leg reopens.
+
+**What a pass cannot claim.** The lab grades the kernel on its own refit vintage pricer,
+with the Athletics' park neutral. The served kernel rides the served pricer, the park
+and the board's live repairs included. No registered section grades the kernel on the
+served pricer. Which pricer serves is 7e-D's question (O14, DEFAULT: if the replay
+fails, serve the graded vintage pricer), and X3 stands. Criterion 1's
+`beats_baseline_95` clause protects gate 2 and validates nothing.
+
+### What 7i does not claim
+
+- **No feature and no location term.** The level stays the pricer's. The late-window
+  reading belongs to 5k.
+- **Nothing about 2026's rules.** Whatever 2026 changed about how games are played is
+  not in the reference. The eval is where that would show.
+- **Nothing about the kernel's marginal dispersion** before the look.
+
+### Departures from the plan and from B-RUNLINE
+
+- **The clock.** Plan 4.2 (N2) and lane R5 say "immediate after registration", and plan
+  5.2 (W4) puts N2 stage 1 in the offseason. 7i has one look, on 2026-09-28, with a kill
+  date of 2026-10-06. The reason is the whole regular season as the window, on a date the
+  landing day cannot move. 7i has no pre-2026 scoring stage: the kernel has no free
+  parameter for such a stage to choose, and scoring it on pre-2026 games before the look
+  is a look.
+- **N4 is not folded in.** Plan 4.2 and R5 say N4 folds into N2 if N2 ships first. 7i
+  carries no tie prior, because it has no atom, and no home prior, because each arm
+  re-solves `home_adj` on the 2026 fit half. If the kernel ships, N4's tie prior has no
+  object on the served path. N4's home prior stays in N4's own section, graded against
+  whatever serves then.
+- **Four splits, not three.** B-RUNLINE and R5 grade at 0.6, 0.7 and 0.8. 7i adds the
+  anchored split, as 7f to 7h do, so its total row reads the same grid as the candidates
+  it competes with. That is stricter, not looser.
+- **No ledger arm.** B-RUNLINE's gate added "the ledger arm on the 141 canonical games",
+  and section 4 repeats it as the condition for serving the tie split, a condition the
+  owner's answer has since overtaken. 7i has none, for three reasons:
+  - the ledger's probabilities are priced on season-to-date inputs, contaminated
+    forward (7b's honesty note), and B-RUNLINE's own first constraint names those 2026
+    rows as what the fit must avoid;
+  - the ledger stores probabilities, not lambdas. A ledger arm would first invert a
+    moneyline row and a total row of the same game through the construction that priced
+    them. 7f inverted totals that way as a market diagnostic, never as a gate arm. The
+    inversion adds an assumption the vintage window does not need;
+  - the ledger's slates all date from August 2026 on (open captures from 2026-08-06,
+    G4-07), inside the vintage eval window, which grades both arms on uncontaminated
+    lambdas.
+
+  The choice is fixed before the reference exists.
+- **All three markets, not the runline alone.** B-RUNLINE modelled the margin only, kept
+  the Poisson total, and would have shipped the runline alone. 7i prices all three markets
+  from one table and ships all or none, for the coherence reason above.
+- **Three seasons.** B-RUNLINE and R5 say pre-2026 finals and name no seasons. G4-07 and
+  N4 use eight. 7i uses the three seasons of the current scoring rules, with 2022 to 2025
+  as the sensitivity arm.
+
+### Disqualification
+
+Any number relating this kernel, or a close variant, to a game outcome or a market price
+before this section is committed disqualifies the candidate under 5c rule 1. A close
+variant is any of these:
+- a reference built from any season set;
+- any smoothing, pseudo-count or reweighting of a reference;
+- any other map of a score table onto the pricer's lambdas;
+- the twin or the sensitivity arm;
+- a parametric joint score model with a walk-off or one-run term.
+
+After the commit, the look rules above govern: any such computation before the scheduled
+read is a look, and it forfeits 7i. Building a reference after the commit, printing its
+counts, drops, cross-check and hash, and running the structural tests are the fit, and
+they are allowed.
+
+Committed alone, docs only, ahead of any code that implements it. No number here relates
+the kernel or a close variant to a game result or a price; every quoted number was on the
+record.
+
 ---
 
 ## 8. The append-only record
