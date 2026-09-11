@@ -541,3 +541,58 @@ def test_math_sanity_of_fixture():
     assert math.isclose(6.2 + 3.8, 10.0)
     assert math.isclose(1.0 + 0.2, 1.2)
     assert math.isclose(1.9 + 0.6, 2.5)
+
+
+# --- the served eWAR vintage (audit F10-02 / F11-01) -------------------------
+
+def test_the_vintage_block_reports_absence_rather_than_zero():
+    """`data/ewar.json` is HAND-BUILT: nothing in run_monthly, build_site or
+    deploy runs tools/build_ewar.py, so the served WAR numerator can sit at the
+    artifact date while the innings beside it are current. The block that
+    discloses this must never report a clean zero it did not measure, which is
+    the failure mode that let the staleness run unnoticed."""
+    import war_source as ws
+    v = ws.ewar_vintage()
+    assert v["rebuilds_on_a_schedule"] is False, (
+        "if a scheduled rebuild ever ships, this flag and the glossary sentence "
+        "move together, and the runbook cascade has to move with them")
+    assert "build_command" in v
+    if not v["frames_read"]:
+        assert v["stale"] is None and "reason" in v, (
+            "with no frame read the drift is UNAVAILABLE, not zero")
+    else:
+        assert isinstance(v["stale"], bool)
+
+
+def test_the_vintage_block_goes_stale_past_its_own_threshold(monkeypatch):
+    """The tripwire itself. Seeded drift above the threshold must flip `stale`,
+    because a disclosure that cannot fire is not a disclosure."""
+    import war_source as ws
+    seeded = {"bat": {"artifact_generated_at": "2026-09-03T12:35:09",
+                      "bwar_revised": ws.EWAR_STALE_REVISED_MAX + 1,
+                      "covered_player_seasons": 900},
+              "pit": {"artifact_generated_at": "2026-09-03T12:35:09",
+                      "bwar_revised": 0, "covered_player_seasons": 900}}
+    monkeypatch.setattr(ws, "ewar_frame_diagnostics", lambda: seeded)
+    v = ws.ewar_vintage(as_of="2026-09-10")
+    assert v["stale"] is True
+    assert "warning" in v and "rebuild" in v["warning"].lower()
+    assert v["artifact_generated_at"] == "2026-09-03T12:35:09"
+
+    seeded["bat"]["bwar_revised"] = 0
+    clean = ws.ewar_vintage(as_of="2026-09-10")
+    assert clean["stale"] is False and "warning" not in clean
+
+
+def test_the_glossary_no_longer_claims_the_artifact_rebuilds_itself():
+    """The served sentence said data/ewar.json 'rebuilds with the season'. It does
+    not, and that claim is what made the staleness invisible to a reader."""
+    import json
+    from pathlib import Path
+    g = json.loads((Path(__file__).parent / "data" / "glossary.json")
+                   .read_text(encoding="utf-8"))
+    entry = next((e for e in g["entries"] if e.get("id") == "ewar"), None)
+    assert entry is not None
+    meth = entry.get("methodology") or ""
+    assert "rebuilds with the season" not in meth
+    assert "DOES NOT REBUILD WITH THE SEASON" in meth

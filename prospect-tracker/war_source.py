@@ -533,6 +533,89 @@ def _bwar_stint_frame(side: str, allow_stale: bool):
 
 # --- the eWAR frame transform ----------------------------------------------
 
+#: Covered player-seasons whose frame bWAR no longer matches the artifact before
+#: a board is called stale. Not zero: B-Ref revises single rows all the time and
+#: one revision is not a staleness signal. It is a POLICY number, not a fitted
+#: one, and it is here rather than in a caller so the three boards cannot drift.
+EWAR_STALE_REVISED_MAX: int = 25
+
+
+def ewar_vintage(as_of: str | None = None) -> dict:
+    """What build the served eWAR numbers come from, and whether it has fallen
+    behind the frame underneath them.
+
+    WHY THIS EXISTS (audit F10-02 / F11-01, 2026-09-10). `data/ewar.json` is
+    HAND-BUILT: nothing in run_monthly, build_site or deploy runs
+    tools/build_ewar.py, so the served WAR numerator sits at the artifact's own
+    generated_at while innings, ERA and the bWAR input on the same served row
+    refresh nightly. Measured on the 2026-09-03 build: 422 of 773 pitcher cards
+    carried a stale numerator, 71 of them off by a full display step.
+
+    The staleness is CURRENT-SEASON ONLY, and that distinction is the useful
+    part: 0 of 855 2024 and 0 of 873 2025 pitcher-seasons drift against the
+    artifact, so career totals, WAG inputs and the eFV labels carry one stale
+    cell rather than a stale series.
+
+    This REPORTS and never raises. A scheduled rebuild is an owner decision about
+    the whole re-anchor cascade (WAR_BASIS_RUNBOOK step B ends "INVALIDATES:
+    everything below", and below it sit the career_war rebase, the pooled outcome
+    curve, the empirical anchors, the slot curve and the projections retrain), so
+    a nightly rebuild with none of that would drift the label out from under
+    artifacts fitted on a named build, which is a worse defect than this one. The
+    board therefore publishes its vintage and a test fails on the drift; the
+    export stays up, because taking the boards down over a disclosure problem
+    trades one outage for another.
+
+    `bwar_revised` is the direct evidence and is already computed by the frame
+    transform, so no new pass over the data is needed. It is empty until a frame
+    has been read on provider 'ewar_v2' in this process, which is stated rather
+    than faked."""
+    diag = ewar_frame_diagnostics()
+    gen = None
+    for side in _SIDES:
+        g = (diag.get(side) or {}).get("artifact_generated_at")
+        if g:
+            gen = g
+            break
+    if gen is None:
+        try:
+            import ewar as _ewar   # noqa: PLC0415 - optional, artifact may be absent
+            gen = (_ewar.load() or {}).get("generated_at")
+        except Exception:   # noqa: BLE001 - absence is a reportable state
+            gen = None
+    revised = {s: int((diag.get(s) or {}).get("bwar_revised") or 0) for s in _SIDES}
+    covered = {s: int((diag.get(s) or {}).get("covered_player_seasons") or 0)
+               for s in _SIDES}
+    worst = max(revised.values()) if revised else 0
+    out = {
+        "artifact_generated_at": gen,
+        "as_of": as_of,
+        "bwar_revised": revised,
+        "covered_player_seasons": covered,
+        "threshold": EWAR_STALE_REVISED_MAX,
+        "frames_read": bool(diag),
+        "build_command": EWAR_BUILD_CMD,
+        "rebuilds_on_a_schedule": False,
+        "note": ("data/ewar.json is hand-built; nothing in the pipeline rebuilds "
+                 "it. Completed seasons do not drift, so a gap here is a "
+                 "current-season staleness in the WAR numerator while the "
+                 "denominator on the same row is current."),
+    }
+    if not diag:
+        out["stale"] = None
+        out["reason"] = ("no eWAR frame has been read in this process, so the "
+                         "drift count is unavailable rather than zero")
+    else:
+        out["stale"] = worst > EWAR_STALE_REVISED_MAX
+        if out["stale"]:
+            out["warning"] = (
+                f"{worst} covered player-seasons no longer match the eWAR artifact "
+                f"built {gen}; the served WAR numerator is behind its own frame "
+                f"(rebuild: {EWAR_BUILD_CMD}, then the runbook cascade)")
+            log.warning(out["warning"])
+    return out
+
+
 #: {side: receipt} for the last _ewar_frame call per side in this process.
 _EWAR_FRAME_DIAG: dict[str, dict] = {}
 

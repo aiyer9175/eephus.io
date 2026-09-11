@@ -62,6 +62,17 @@ WAR_RATE_MULTIYR_PATH = DATA_DIR / "war_rate_plus_multiyear_eval.json"
 STATSAPI = "https://statsapi.mlb.com/api/v1"
 
 
+def _war_source_vintage() -> dict:
+    """The served eWAR build stamp, or a stated absence. Never raises: a board
+    that cannot report its vintage must still render (audit F10-02)."""
+    try:
+        import war_source as _ws
+        return _ws.ewar_vintage()
+    except Exception as e:   # noqa: BLE001 - reporting must not take a board down
+        return {"artifact_generated_at": None, "stale": None,
+                "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}
+
+
 def _num(v) -> Optional[float]:
     if v is None or v == "":
         return None
@@ -1203,6 +1214,11 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         # WAR/IP+ scale block (anchor pool + measured pool parameters) and the
         # vintage of its FROZEN 3-year companion, same disclosure contract.
         "war_rate": wr_meta,
+        # WHICH BUILD the served eWAR numerator comes from, and whether it has
+        # fallen behind the frame under it (audit F10-02 / F11-01). data/ewar.json
+        # is hand-built; nothing in the pipeline rebuilds it, so a current-season
+        # WAR can sit at the artifact date while the innings beside it are current.
+        "ewar_vintage": _war_source_vintage(),
         "multiyear_war_rate": wr3_meta,
         # Which club a row's `team` names, how many rows were repointed, and how
         # many serve a blank team (see team_basis_meta), plus the zero-rollup
