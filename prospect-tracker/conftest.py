@@ -224,6 +224,35 @@ def _pin_base_valuation_set(request):
         yield
 
 
+@pytest.fixture(autouse=True)
+def _isolate_odds_credit_ledgers(tmp_path_factory, monkeypatch):
+    """No test may book credits to the REAL odds ledgers.
+
+    Found 2026-09-11: test_betting_props armed a pull with a fake session and
+    injected only the props-only ledger path, while betting_ingest also books
+    every props pull to the SHARED tier ledger (.cache/betting/credits-*.json).
+    Each run added four phantom credits under the test's fake event id `ev9`; thirty
+    runs read as the whole 120-credit props allocation spent, which then refused
+    the test's own pull and would have refused every real props pull this month.
+    No request ever left the box, but the ledger is what the pre-request guard
+    reads, so a polluted ledger is a real outage.
+
+    Both ledgers are redirected for every test; a test that wants its own path
+    still passes one explicitly."""
+    d = tmp_path_factory.mktemp("odds_ledgers")
+    try:
+        import betting_credits
+        monkeypatch.setattr(betting_credits, "LEDGER_DIR", d / "betting")
+    except Exception:                                     # noqa: BLE001
+        pass
+    try:
+        import betting_ingest
+        monkeypatch.setattr(betting_ingest, "PROPS_SPEND_PATH", d / "props_spend.json")
+    except Exception:                                     # noqa: BLE001
+        pass
+    yield
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _restore_committed_build_artifacts():
     """Test-hygiene guard for committed BUILD ARTIFACTS (data/ sidecars +
