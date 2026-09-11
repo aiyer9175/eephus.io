@@ -2885,6 +2885,53 @@ cached slates; with the unserved recentre it would fire on 11.
 `test_served_invariants.test_a_board_whose_totals_lean_says_so` holds every
 built board to it, with a mutation test on the incident shape.
 
+## 7g. The total's shape: a total-scoped dispersion (pre-registered 2026-09-11)
+
+**Written before the code exists and before any eval-window game has been scored
+under the candidate.** Section 7f found that the Over lean is a SHAPE defect: the
+level is right on the fit half and one shift cannot fix every line. This is the
+shape half, the direction section 11a left on the record ("a correction scoped to
+the total ... is the live direction").
+
+**Disclosed, because it is what makes the expectation a PASS.** Two earlier reads
+point the same way and neither is this gate. (1) Section 11a, 2026-08-09, on the
+1,775-game live cache with NB2 on both sides at alpha 0.28425: criterion 3 (the
+total over 9.0) improved by +0.010709 at t = +2.545; a different sample, a different
+mode (live features, not vintages) and a whole-model correction, not a total-scoped
+one. (2) The BET1 lane described NB2 on the vintage FIT half (grading nothing): the
+Over 7.5 bias falls from +0.114 to +0.023 and Over 8.5 from +0.088 to +0.037. The
+eval half has not been read under any NB total.
+
+**The candidate.** The Over, Under and push are priced off the total of two
+independent NB2 sides with the SAME dispersion alpha_T, at the model's own
+unshifted lambdas, through `_score_joint`'s total convolution. The margin
+distribution, and so the moneyline and the runline, are built from the first
+(served) pass and cannot move; `fair_total` stays the expected runs. No recentre.
+alpha_T is fitted on the fit half ALONE as the argmin of the summed over/under log
+loss at the fixed grid (7.5, 8.5, 9.5, 10.5), golden-section on [0.0001, 2.0].
+
+**Criteria**, the 7f form so the two halves of the repair are judged alike. Splits:
+the anchored served split and the date quantiles 0.6, 0.7, 0.8 of the
+vintage-gradable dates; every split refits the coefficients, tie rate, differential
+shrink and home adjustment on its own fit half, fits alpha_T on that same fit half,
+and scores the eval half. On each eval half BOTH must hold, at ALL FOUR splits or
+the verdict is not ship: (1) paired per-game total log loss summed over the grid,
+incumbent Poisson minus candidate, greater than 0 at one-sided t >= 1.645; (2)
+paired per-game log loss at EACH grid line not worse on the point estimate for at
+least three of the four lines. Structural and asserted by test, not measured: the
+moneyline and runline byte-identical with the flag on and off. Fit half >= 100
+games and eval half >= 50 or the split cannot pass. Diagnostics, never criteria:
+model P(over) at the posted line minus the realised over rate on eval games with a
+cached open capture, and the Over/Under split of positive-edge totals.
+
+**Serving.** `SERVE_TOTAL_DISPERSION`, default False, flipped only from this gate.
+Flipping it moves every total side's probability, edge, EV and Kelly, which total
+side is value on some games, and the slots whenever a total was or becomes their
+best row; nothing on the moneyline or the runline. With it: `MODEL_VERSION` bumps
+(every settled total row was priced by the Poisson), the tripwire test moves, and
+`--context` is re-run so the served key is written. A flip is outward-facing and is
+the owner's call even on a PASS.
+
 ---
 
 ## 8. The append-only record
