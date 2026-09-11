@@ -2763,6 +2763,691 @@ weather; sections 5d and 5h own that and neither clock has opened. It does not
 change any served price with its flag off, and the one flag it adds moves prices
 in the direction of MORE overs on the board it was measured on.
 
+## 5j. Posted lineups (pre-registered 2026-09-11, schema 6)
+
+**Written before any column, capture, job, helper, candidate function or flag below
+exists in code, and before the candidate has been computed for any club or related to
+any outcome or any price**, in the discipline of 5a, 5c, 5d, 5e, 5f and 7b. Nothing
+served reads anything in this section and no served price changes. The publication
+rules under Prerequisites change how the slots and the record publish, not what any
+row is priced at. Every name below that does not exist in code today is marked (to be
+built). The heading carries the date of the commit that adds this section.
+
+This section must be committed before the 5c B3/B4 look (~2026-09-17; plan section 5.1
+sets the deadline at 2026-09-15), so that the look's result on `lineup_strength` and
+`star_out`, both close relatives of this candidate, cannot shape it. **If it is
+committed after that look is recorded, it is void**, and the candidate needs a new
+registration that discloses the look's result.
+
+Disclosed, because 5c rule 1 turns on it. Before this section was written, the
+posted-lineup planning lane (R4, 2026-09-11) counted, on the cached completed games,
+game feeds, schedule captures and odds capture times:
+
+- starting-nine coverage: 2,197 of 2,200 completed games carry a full starting nine
+  on both sides, 545 of the 548 vintage eval-half games;
+- the boxscore `battingOrder` array against the true starting nine: different on
+  3,464 of 4,394 sides (78.8%);
+- when cards post, over 27 cached `/schedule?hydrate=lineups` captures: 42 of 42
+  sides posted inside an hour of first pitch, 46 of 48 at 60 to 120 minutes, 51 of 58
+  at 120 to 180, 54 of 106 at 180 to 240, 4 of 96 at 240 to 360, and 0 of 84 at six
+  hours or more;
+- the posted card against the nine that started: identical on 177 of 180 sides, and a
+  different nine by exactly one player on the other 3;
+- the listed probable against the first pitcher used, over 116 cached probable
+  captures: the probable started on 469 of 470 announced sides inside six hours;
+- a club's nine against its previous game: identical on 302 of 4,364 team-games over
+  the season and 82 of 1,060 in the eval half. In the eval half the count of bats
+  changed from the previous game was 1 on 222 team-games, 2 on 338, 3 on 285, 4 on
+  121, 5 on 11 and 6 on 1. A count of changed bats is a named close variant (see
+  Disqualification); no value was attached to any bat. A club's nine against its modal
+  nine: identical on 296 of 4,394 over the season and 161 of 1,090 in the eval half;
+- odds capture lead times, read off capture times only: 97 of 448 pregame events in
+  27 open snapshots were captured inside three hours of first pitch;
+- per-hand coverage by id: 32,254 of 39,546 starter slots belong to a player with a
+  per-hand HEM+ on the 2026-09-11 board. That was counted against the 418 ids the
+  board's orders and bench carry, not the full `build_split_hem` set, so it is not the
+  future `hand_index` coverage;
+- the spread of club offense numbers on the 2026-09-11 board: `offense_plus` sd 3.391
+  across 30 clubs, the constructed vs-RHP nine (season HEM+, season-PA weighted)
+  4.613, and the per-hand constructed nines 5.348 (vs RHP) and 5.015 (vs LHP). The
+  last two are that board's `off_vs_rhp` and `off_vs_lhp`, which are 5e's own candidate
+  columns, read as a spread across clubs. No outcome was joined, so this is not a 5c
+  rule 1 relation for 5e either. It is disclosed because the plan's calendar bars
+  reading those columns before 5e's look.
+
+The betting holistic lane (R5, 2026-09-11) counted:
+
+- the share of each club's Offense+ PA taken by hitters not active tonight (median
+  0.166);
+- cards posted in the 27 lineup cache files at each file's fetch time (file mtime):
+  457 of 694 sides pooled, and on five of this box's builds 3 of 30 (2026-09-05
+  17:18Z), 7 of 32 (09-04 19:12Z), 13 of 30 (09-09 19:16Z), 16 of 30 (09-11 19:55Z)
+  and 28 of 28 (08-30 20:44Z);
+- the backtest's starter against the first pitcher used: the same on 2,191 of 2,197
+  home sides and 2,194 of 2,197 away. The schedule cache's last pre-pitch probable
+  against the first pitcher used: different on 19 of 1,968 sides, TBD on 41;
+- open-capture timing: 264 same-slate event-captures, a median 3.83 hours before
+  first pitch (p10 0.73, p90 8.39).
+
+None of these counts read a score, run, win, win probability or price value, and none
+attached a value to any posted or started nine. R5 separately read the committed eval
+artifact and the served-versus-graded probability spread (R5-F1); those concern the
+core model and no lineup quantity. P, the delta and the candidate below were never
+computed.
+
+**The owner ask.** "... can we pull real lineups when they are posted before each game
+and have the model calculate based on this rather than on expected lineups?"
+(2026-09-11)
+
+**What the served prices read today, which corrects the premise.** The served
+moneyline, runline and total price no lineup, expected or real. `expected_runs` reads
+`z_off`, the standardized `offense_plus`, which is a season HEM+ rollup over the club's
+whole roster (`betting_model._assemble_team_inputs`). The constructed nine
+(`hitter_leaderboards.json teams[].orders`) reaches only the props fair lines and the
+dark vintage columns. A median 0.166 of each club's Offense+ PA come from hitters not
+active tonight: 20 of 30 clubs are above 0.15, and SF sits at 0.423 (R5, a roster fact
+with no outcome in it). On the production schedule as written (`deploy/README.md`, the
+03:10 ET nightly), the board is built once, when no card has posted (0 of 84 sides six
+hours or more before first pitch). This box's afternoon builds saw some cards (the five
+counts above). So what the owner asked for is a new model input: tonight's nine against
+tonight's starter.
+
+**The registered candidate does not replace the rollup, and this says why.** It ADDS a
+posted-minus-constructed delta to the offense term that serves. The rollup stays in
+`z_off_base`, and so does its median 0.166 share of PA from hitters not active tonight.
+There are three reasons.
+- Offense+ was left on the full season pool on purpose, because it feeds the 600-game
+  clock (R5-F5, `roster_filter.scope`).
+- The served coefficients are fitted on the rollup's scale. A replacement would change
+  the offense term's membership and its scale at once, and one look could not separate
+  the two.
+- The additive form holds everything except WHO IS PLAYING at the served number.
+
+The replacement form (P in place of `z_off`, the owner's literal ask) and an
+active-roster Offense+ are close variants (see Disqualification). Neither is asked here,
+and each needs its own section.
+
+**What this candidate reads, and the betting columns that read WAR.** The candidate
+reads HEM+ and nothing else. HEM+ is a ratio to its own season pool and references no
+WAR frame and no wOBA scale (a word-match for war, ewar, fwar, bwar, woba_scale,
+league_constants and war_source in `hem_plus.py` returns nothing). The served run model
+reads no WAR either. Two lineup-shaped dark columns on this module do read the
+projections bundle, though. 5c's `lineup_strength` is the mean projected year-1 wOBA
+(`mlb_projections.json vets[].woba[0]`) over the captured order slots. 5c's `star_out`
+ranks each club's top five by projected `vets[].warY1Champ` (`leaderboard_vintages.py`,
+the `star_out` builder). A projections retrain, which the WAR label epoch's cascade
+includes, can therefore move those two columns. It cannot move this candidate.
+
+**The capture, which moves no price and computes nothing.** The source is StatsAPI
+`/schedule` hydrated `lineups,probablePitcher`, at zero Odds API credits, read through a
+new helper beside `fantasy_schedule.fetch_lineups` (to be built). `fetch_lineups` itself,
+which `/dfs/` reads, cannot serve: it hydrates `lineups` only, caches one file per day
+(`lineups_<day>_<game_type>.json`, 12-minute TTL) and returns
+`{game_pk: {home: [ids], away: [ids]}}`. It drops each player's `primaryPosition`, the
+game's status and time, and the probables. The helper keeps its own cache, so the
+3-hour probable cache and the 12-minute lineup cache do not fight (R4 section A). The
+raw response lists each side's card in batting order with `id`, `fullName` and
+`primaryPosition`, and carries no bat side. Bat side joins from the hitter board and
+pitcher hand from `pal_export.load_pitch_hand`. The job is `tools/betting_lineup_job.py`
+(to be built), modelled on `tools/betting_close_job.py`:
+- cron `*/15` under TZ=UTC, with `--why`, `--selfcheck` and a heartbeat stamped on
+  every invocation, including refusals;
+- it acts only when a pregame game is 10 to 180 minutes from first pitch (POLICY, from
+  the posting counts above);
+- one StatsAPI call per invocation, asking for game types R, F, D, L and W, so
+  postseason cards are captured too (coverage only; see Postseason);
+- one immutable row per side whose posted state changed (a first posting, a changed
+  card, a changed probable), written to `.cache/lineup_captures/<UTC date>-<HHMM>.json`
+  (to be built). A same-minute collision raises `FileExistsError`, like the odds and
+  weather stores. The row carries `game_pk`, `game_type`, `side`, `org`, `posted_ids`
+  in order, `probable_id`, `captured_at`, `first_pitch`, `lead_minutes` and `status`;
+- it refuses any capture later than `MIN_LEAD_MINUTES = 5` (to be built; POLICY)
+  before first pitch.
+
+The unit is a SIDE, never a game. The `fetch_lineups` docstring records game 823428
+with nine home players posted and none away (2026-08-07), and count B found no partial
+card within a side. The store lives under `.cache/`, so the nightly `git checkout -- .`
+cannot touch it.
+
+**The starting nine.** A side's first-pitch nine is the nine players on the completed
+feed's `boxscore.teams[side].players` whose own `battingOrder` code is `100` to `900`.
+It is never the `battingOrder` array, which names the CURRENT occupant of each slot,
+substitutes included, and differs on 78.8% of completed sides. The reader is
+`starting_nine(feed, side)` (to be built). A test pins it against the array on a feed
+with a substitution. The `fetch_lineups` docstring's "verified" claim covers the posted
+card's ORDER only, and it is corrected in the same change.
+
+**The candidate.** For scoring side S facing opponent O, whose starter throws h:
+
+```
+N_h(nine) = sum_k SLOT_PA[k] * v_h(bat_k) / sum_k SLOT_PA[k]      (k = 1..9)
+N_s(nine) = the same with v_s
+P_h, P_s  = N over the nine the leg reads for S (Leg O: the first-pitch
+            nine; Leg M: the captured card)
+C_h, C_s  = N over S's constructed nine for hand h in the same vintage
+            (orders.vl when h = L, else orders.vr)
+z_off_lu  = z_off_base + [ w_O * (P_h - C_h) + (1 - w_O) * (P_s - C_s) ] / sd_base
+```
+
+- `v_h(bat)` is the bat's per-hand HEM+ against hand h from the vintage `hand_index`
+  (`hem_plus.build_split_hem`, scored on the season pool, so the league platoon effect
+  survives). It falls back per bat to his season HEM+. `v_s` is the season HEM+. **The
+  same fallback applies to P and to C**, so one side of the subtraction cannot
+  manufacture the delta by having more split coverage than the other.
+- `SLOT_PA` is FROZEN here as a literal: 4.65, 4.55, 4.45, 4.35, 4.25, 4.15, 4.05, 3.95,
+  3.85 for slots 1 to 9 (sum 38.25). That is today's
+  `leaderboard_vintages.LINEUP_SLOT_PA`. A later repair of `betting_export.SLOT_PA` or
+  of that table does not reach this candidate.
+- `w_O` is FROZEN here as registered, not read from a served helper. When O's starter
+  carries a SEM+, `w_O` is his `ip_per_gs / 9`, clipped to [0.25, 0.85], taking 5.2 / 9
+  when `ip_per_gs` is missing. With no such starter, it is O's own starter innings share
+  (`sp_ip_share`), and 5.2 / 9 when that is missing. That is today's
+  `betting_model._starter_share` with `DEFAULT_SP_SHARE = 5.2 / 9`. A later change to
+  that helper does not reach this candidate. Plan N6(d) (G4-10) would replace
+  `ip_per_gs` there.
+- `sd_base` is the sd that standardizes the base's HEM+ column. While the base is `z_off`
+  or any form still built on `offense_plus`, it is the vintage's `_scale.off_sd` (the
+  population sd of `offense_plus` across that vintage's clubs, from
+  `_assemble_team_inputs`). If 5e's split is the base, it is 5e's `sd_5e`. That is the
+  5f re-basing rule, divisor included. The live path and the vintage path standardize
+  with identical code.
+- h is the opposing starter's `throws` (the schema-3 pitcher column in the vintage;
+  live, `pal_export.load_pitch_hand`). Leg M reads the starter named in the capture.
+- The starter segment is hand-matched and the bullpen segment is hand-neutral, on
+  purpose. The bullpen's hand mix is 5f's lever, and the starter's hand applied to the
+  whole game is 5e's. What is left for this candidate is WHO IS PLAYING.
+- `z_off_base` is the offense term that serves on the look date. That is `z_off` today.
+  It is 5e's platoon-matched split if 5e serves first (the 5f re-basing rule), and the
+  5c B4 form if B4 serves first. The candidate is an ADDITION to it, never a replacement.
+- It is computed by `betting_model.game_offense_lineup_z` (to be built), which nothing
+  served calls, and a test pins that, as for `game_offense_ph_z`. The reduction is one
+  function, `leaderboard_vintages.nine_hand_value(nine_ids, hand, index)` (to be
+  built). The live path, the vintage path and the candidate share it, the way they
+  share `off_splits_from_hitter_team` today.
+- **ASSUMPTION: no new free parameter.** The delta enters through the offense
+  coefficient b1. That rests on the premise that a HEM+ point of a nine is worth a HEM+
+  point of the rollup, because both are PA-weighted means of the same shrunk per-hitter
+  HEM+. The premise is not measured. Slot weights differ from season-PA weights,
+  per-hand values are shrunk harder than season values, and a b1 fitted between clubs
+  may be attenuated for a delta within a club. Each would make b1 misprice the delta.
+  The look reports b1 per arm and fits no separate coefficient.
+
+**Fallbacks, per side, carried on the row as `lineup_basis` (to be built).** The labels
+apply to whichever nine the leg reads.
+- Not posted (live only): delta 0, the constructed-nine assumption, `constructed`.
+- A nine, opposing hand unknown: both segments on season values,
+  `posted_hand_unknown`.
+- A nine with one bat carrying neither a split nor a season value: that bat takes the
+  club's bench PA-weighted season HEM+, `posted_one_imputed`. This is POLICY: an
+  unscored starter is a bench or call-up bat by construction, and 100 would price a
+  debut as a league-average bat.
+- A nine with two or more such bats, or no constructed order: delta 0, and the side is
+  counted as `posted_unreadable`.
+- Otherwise: the full delta, `posted`.
+
+**The record blocks (schema 6, ASSUMED; all to be built).** These are record blocks,
+not team columns, following the 5i `parks_by_hand` pattern, so the per-schema dark tuples
+do not grow:
+- `hand_index`: {mlbam: {s, L, R, pa, pa_L, pa_R, bats, org}}, off a new top-level
+  `hand_index` block on the hitter artifact;
+- `orders`: {org: {vl: [nine ids], vr: [nine ids]}};
+- `bench_mean_hem`: {org: v}.
+
+`hitter_export` publishes `hand_index` with Offense+, every order slot and every
+displayed number byte-identical on the same inputs, verified before it ships (the
+F08-02 standard). A record older than these blocks returns None for them. Its games
+are EXCLUDED from the eval set and counted. In a fit half they enter at delta zero (the
+5f rule). They are never priced at zero in evaluation. `inputs_as_of` never fills a
+block from live files. Every record's `feature_basis` names each block's source or why
+it is null, and carries `platoon_splits.available`.
+
+The schema number is ASSUMED. `leaderboard_vintages.SCHEMA` is 5 in code today (the 5f,
+5g and 5i-B bump), and no schema-5 vintage is on this box yet: the newest records,
+2026-09-09 and 2026-09-10, are schema 4. These blocks land in whatever bump follows. If
+that number is not 6, a dated correction records the number and the first vintage that
+carries it, as 5d's correction of 2026-09-11 did, and nothing else in this section
+changes.
+
+**Provenance of the nine each leg reads (`lineup_source`, to be built).** There are
+three values, counted separately and never blended.
+- `archive-reconstruct`: the first-pitch nine, read by `starting_nine` from the game's
+  own completed feed. Leg O and every fit half read this. It is not a vintage column and
+  does not pass through `covers_through`. Who starts is fixed before the first pitch and
+  before any outcome of the game, so it is joined at pricing time as a pregame fact. The
+  vintage blocks the candidate also reads obey `covers_through < D`, like every vintage
+  value.
+- `live-capture`: the card in a `.cache/lineup_captures/` row. Leg M reads this, and a
+  served price would too.
+- `git-backfill`: the constructed nines of the backfill arm (below).
+
+Reading the first-pitch nine rests on owner decision O22 (OPEN; DEFAULT allow, labelled
+per row; plan section 6). As tabled, O22 covers 5k(a), N6 and the lineup backfill. This
+section extends it to the Leg O nine, and the question put to the owner must say so. If
+O22 is refused before the 5c B3/B4 look is recorded, Leg O reads the card in each
+side's newest capture row before first pitch instead, and games without one are
+excluded and counted. A refusal after that look closes this section (see Owner
+decisions).
+
+**The information each leg assumes, stated.** Leg O prices the nine that STARTED, which
+is at least as informed as any pregame capture: in cached captures the posted card
+equalled it on 177 of 180 sides. Leg O's starter is the final feed's probable, which
+equals the first pitcher used on 4,385 of 4,392 sides, while the nightly board prices
+the probable listed the night before. Leg O is therefore an upper bound on what a live
+refresh knows. Leg M prices only what its price's capture could have seen (below). The
+report carries the live posted-versus-started agreement count from the capture store.
+
+**The pre-registered expectation, stated before the first fit: UNDERPOWERED on
+outcomes, and likely null.**
+- For a correct candidate the expected paired-Brier t is about sqrt(n) times the RMS of
+  (p_candidate minus p_incumbent), on the home side.
+- For size, take the served context pricer (b1 0.25102, `diff_shrink` 0.8,
+  `data/betting_model_context.json` of 2026-09-11; it is fitted on every completed game,
+  R5-F1). A 110 bat resting for a 95 bench bat at slot 3 moves the nine by
+  15 * 4.45 / 38.25 = 1.745 HEM+ points. That is 0.51 sd of `offense_plus`, 0.13 runs,
+  and about 1.4 points of win probability near an even game. A Skellam at 4.5 runs a
+  side has margin sd 3.0, so about 0.133 of win probability per run of margin, times
+  `diff_shrink` 0.8.
+- A 140 star resting for a 90 bat at the same slot is 5.8 HEM+ points, 1.72 sd and 0.43
+  runs, about 4.6 points of win probability.
+- The outcome leg needs an RMS of about 6.7 points at 600 eval games and 5.2 at 1,000.
+- The second reason concerns the offense term, not lineups. On the vintage fit half the
+  own-offense coefficient came back at -0.037205, and the sign-constrained ridge pinned
+  it at exactly zero at all three gate splits (7e-B, 2026-09-06). A refit b1 at zero
+  prices this delta at nothing, and below zero it prices it backwards.
+
+A FAIL on the outcome leg is not evidence that lineups do not matter.
+
+**The sample: one regular season, never pooled.** Every fit and every eval half lies
+inside ONE regular season (section 5, caveat 1: a 2026 tail and a 2027 run are not one
+sample). Schema-6 games of 2026 are COVERAGE ONLY and are never graded here, in any leg.
+There are at most 15 regular-season days of them: a block first written by the
+2026-09-12 nightly prices 2026-09-13 to 2026-09-27, and the plan puts R4-3 in W1, from
+2026-09-17. Each look uses its own season alone. The split quantiles are 0.6, 0.7 and 0.8
+(`DISPERSION_SPLIT_QUANTILES`) of that season's vintage-gradable dates, and no fit reaches
+into an earlier season. The plan's N9 protocol (a 2027 served fit on all 2026
+vintage-graded games) is not adopted here.
+
+**Fitting: one procedure, both arms.** The incumbent is the served model's
+specification on the look date: its inputs and serve flags as they stand that day. That
+includes whichever of the owner's 2026-09-11 answers have landed (the Athletics' park,
+the runline tie split). This section fixes no `MODEL_VERSION` string. The candidate is
+that specification with `z_off_lu` in place of `z_off_base`. Both arms are fitted by the
+same procedure on the same games, and never on an eval game. Neither arm is the served
+context file: `build_context` fits on every completed game with live leaderboards, eval
+games included (R5-F1). The procedure is the one the serving pricer uses on the look
+date, read off `SERVE_PRICER` (to be built, 7e-D):
+- `vintage`, and also when `SERVE_PRICER` does not exist. Owner decision O14 (OPEN)
+  DEFAULTS to this state when the 7e-D replay fails. Each split's fit half: both arms
+  refit every coefficient, the tie rate, `diff_shrink` and the home adjustment there
+  (the 7e-B and 11a rule), so a tuned incumbent is never graded against an untuned
+  challenger.
+- `context`, after a 7e-D PASS: the 7e-D as-served replay, applied to both arms
+  identically. For each eval date D, both arms fit on every gradable game of the same
+  season dated before D, on the vintage that prices D.
+- If some other procedure serves on the look date (N1's `SERVE_HISTORY_FIT`, N9's
+  cross-season fit), both arms use the fit-half procedure. The report says the graded
+  procedure is not the served one, and serving the delta waits for a registered read on
+  the procedure that serves.
+
+Every fit (a fit half, or each date's fit) needs `VINTAGE_MIN_FIT_GAMES` (100) games,
+and each eval half `VINTAGE_MIN_EVAL_GAMES` (50). A split below either cannot pass.
+**`p_incumbent` and `p_candidate`** are each arm's moneyline home-win probability. Every
+leg, the control and the power precondition read these two and no other pricer.
+
+**The eval set, per game.** An eval-half regular-season game enters only when both of
+these hold:
+- (a) its vintage carries all three blocks under the construction in force since the
+  clock's start (Clock);
+- (b) BOTH sides' `lineup_basis`, for the nine the leg reads, is `posted`,
+  `posted_one_imputed` or `posted_hand_unknown`.
+
+Any other game is excluded and counted by reason: a record older than the blocks, a
+side `posted_unreadable`, a side with no nine, and for Leg M the reasons listed there.
+A game whose delta is exactly zero on both sides stays in the eval set. It enters with
+its computed paired differences, which are not zero because the two arms are fitted
+separately, and it is counted apart. In a fit half, a side with no readable delta (an
+older record, a `posted_unreadable` side, a side with no nine) enters with delta zero
+(the 5f rule).
+
+**Leg O, outcomes (required, non-inferiority).** At every split quantile, all three
+must hold:
+1. The one-sided 95% lower bound on paired moneyline Brier (incumbent minus candidate)
+   is at least -0.001, the 11a moneyline threshold.
+2. Paired moneyline log loss (the home-win event), incumbent minus candidate, is not
+   worse on the point estimate.
+3. Paired absolute error of the fair total against runs scored, incumbent minus
+   candidate, is not worse on the point estimate.
+
+Superiority, meaning paired moneyline Brier improvement at one-sided t >= 1.645, is
+computed at a quantile only when the power precondition holds there. Otherwise it is
+recorded UNDERPOWERED and not computed. It qualifies only in the fallback form under
+Verdict.
+
+**Leg M, the market (required in the default form, superiority; the qualifying leg is
+a DEFAULT pending owner decision O19).**
+- **Which games.** Eval-set games of the split for which all of the following hold.
+  Any game that fails one is excluded and counted by reason.
+  - Each side has at least one capture row carrying a posted card before first pitch.
+  - The job's heartbeat shows no gap longer than 30 minutes (POLICY) between T-180 and
+    T-5 minutes for the game, so a card change the job missed cannot hide behind an
+    outage.
+  - A snapshot of kind `lineup` (to be built) or `close` carries a two-sided h2h market
+    for the game. It was captured before first pitch, and at or after each side's
+    newest capture row before first pitch.
+  - The opposing side's newest capture row names a probable (`probable_id` not null).
+- **One price per game.** The NEWEST such snapshot. Its `captured_at` is the game's
+  information time.
+- **What both arms price.** Each side's card, and the opposing starter named by
+  `probable_id`, as they stand in each side's newest capture row at or before the
+  information time. By the rule above, that is each side's newest row before first
+  pitch, so neither arm knows a change the price could not have seen. P reads that card
+  (`live-capture`), never the first-pitch nine. Each arm applies its own Leg O fitted
+  coefficients to these inputs.
+- **The statistic.** Per game, d = (p_incumbent - m)^2 - (p_candidate - m)^2. Here m is
+  the proportional de-vig of that snapshot, averaged across the books posting a
+  two-sided h2h market in it (the section 6 rule). Games whose delta is zero on both
+  sides enter with their computed d and are counted apart.
+- **The bar.** Mean d > 0 at one-sided t >= 1.645, at ALL THREE quantiles. Each
+  quantile needs at least 100 Leg M games whose delta is non-zero (above 1e-9 in
+  absolute value) on at least one side. That is the module's one small-sample floor
+  (7b).
+- **Why the market.** The market is the sharpest pregame forecast there is. The one
+  thing a lineup-correct adjustment must do is move toward the price the market set
+  once it saw the cards.
+- **What a pass is not.** A Leg M pass is evidence that the adjustment points where the
+  market moved. It is not evidence of an edge against that price, and it opens no
+  `min_edge` gate.
+- **Captures.** None of these prices exist today: 0 of the 27 cached team snapshots are
+  kind `close`, and there is no `lineup` kind. Leg M therefore needs the close job
+  installed (owner decision O16, OPEN; DEFAULT install now). It also needs the
+  post-lineup capture (O18, OPEN; DEFAULT L-0 until the close job is verified running,
+  then L-1, one capture a day at T-60 of the slate's modal evening first pitch, about 93
+  credits a month from the 150 reserve). A `lineup` capture must be its own `kind`, so
+  that `resolve_snapshot`, the section 6 ladder's `market_open_devig` and the close job
+  never read it as an open or a close. A test pins that.
+
+**Control (required).** The 5c rule 3 permuted twin, 200 seeded permutations (seeds 0 to
+199). Within each date, permute the per-side delta pairs (P_h - C_h, P_s - C_s) across
+the sides entering that leg on that date: for Leg O the first-pitch deltas, and for Leg
+M the captured-card deltas of its games. Permute the deltas every fit reads within each
+date the same way. Then fit and grade each twin exactly as the candidate, on the candidate's
+games. At every quantile, the candidate's improvement on the qualifying leg must exceed
+the 95th percentile of the 200 twin improvements: mean d in the default form, paired
+moneyline Brier improvement in the fallback form. The twin's other numbers are reported.
+The twin tests ASSIGNMENT: whether this club's delta tonight carries information beyond
+a delta of the same size landing on another club that date. It does not separate the
+card from the schedule. A day-after-night or getaway effect is club- and game-level, and
+the permutation breaks that link as well. For that reason the delta's correlation with
+5d-B's `rest_days` is reported.
+
+**The power precondition, computed at the look before any outcome is joined.** 5j adopts
+5f's rule, which 5f calls specific to itself, with one difference: here non-inferiority
+still runs. At each quantile, compute the RMS of (p_candidate minus p_incumbent) over
+the Leg O eval games, from features and fitted coefficients only, and sqrt(n_eval) times
+that RMS. If the product is below 1.645 at a quantile, Leg O superiority at that
+quantile is recorded UNDERPOWERED, with the RMS and n_eval, and is not computed.
+
+**The contaminated screen (required; it can only DISQUALIFY).** This is 5c rule 4's
+first leg, in the one form registered here.
+- **Data.** Every cached 2026 regular-season completed game with both first-pitch
+  nines. Per-hand, season and bench values and the constructed orders come from the
+  hitter artifact as published after the last 2026 regular-season game (end-of-season
+  values, so contaminated). `z_off` and every other input come from the live
+  season-to-date leaderboards (section 6, Mode 1).
+- **Split.** By date at the 70% point `backtest()` uses for its contaminated forward
+  block (11a). Both arms refit on the fit half.
+- **Rule.** The candidate is disqualified if paired moneyline Brier or paired moneyline
+  log loss is worse for it at one-sided t >= 1.645. Nothing the screen shows can
+  qualify the candidate or amend a criterion.
+- **When.** Once, after this section is committed, after the 5c B3/B4 look is
+  recorded, and after 5e's look is recorded. 5e's columns are the per-hand constructed
+  nines this delta subtracts, and 5e's eval window holds 2026 games. The screen must
+  have run before the first look is recorded.
+- Its games are 2026 games and never enter a 5j eval window. A `.cache/pbp_corpus` form
+  (2018 to 2025 nines) is not registered, because no dated per-hand hitter values exist
+  for those seasons.
+
+**Verdict.**
+
+*Where the default form departs from 5c rule 4, and what licenses it.* Rule 4 requires
+two legs to serve. The first is the contaminated-forward screen, and it is kept (above).
+The second is paired Brier improvement at one-sided t >= 1.645 with log loss not worse
+(the 11b form). The default form replaces that second leg with Leg O non-inferiority
+plus Leg M superiority, because the expectation above says an outcome-only improvement
+cannot resolve a correct candidate at this module's samples. Owner decision O19 (OPEN;
+DEFAULT yes) is what licenses the substitution. The fallback form restores rule 4's
+improvement leg. 5e, 5f and 5g all carry that leg.
+
+In the default form (O19 yes), a PASS needs every item below at every quantile:
+1. Leg O's three non-inferiority criteria.
+2. Leg M's bar.
+3. The twin beaten on Leg M.
+4. b1 above zero in every fit the candidate arm makes at that split. At b1 = 0 the
+   delta prices nothing, and below zero it prices a weaker nine as scoring more. Such a
+   split cannot pass whatever the legs read (the 5g sign idiom).
+
+In the fallback form (O19 no, recorded before the 5c B3/B4 look is recorded), Leg M is
+reported and never qualifying, and a PASS needs every item below at every quantile:
+1. Leg O's three non-inferiority criteria.
+2. Leg O superiority at one-sided t >= 1.645.
+3. The twin beaten on Leg O's Brier improvement.
+4. The same sign condition.
+
+If the power precondition fails at any quantile in the fallback form, the look records
+UNDERPOWERED with the RMS and n_eval, and the candidate is neither passed nor closed
+(5f).
+
+The verdicts, and what each does:
+- PASS: every quantile passes.
+- INDETERMINATE: some quantiles pass and some do not (11a: a verdict that moves with
+  the split point is a verdict about the split point).
+- FAIL: no quantile passes.
+- UNDERPOWERED: the fallback form only, as above.
+- NOT READ: a floor is unmet.
+
+Anything short of a PASS does not ship. PASS, FAIL and INDETERMINATE are final for this
+registration. UNDERPOWERED and NOT READ wait for the next season's look. A PASS serves
+nothing until the contaminated screen has run without disqualifying (5c rule 4).
+
+*No Holm family.* 5j is the only estimator of its estimand, the posted-minus-constructed
+offense delta, so there is no family to size. The coefficient-vector family (7e-B, 7e-C,
+7e-D), the run-environment family (5k, 5d-C, 5h) and the z_prev family (N6) estimate
+other quantities. 5j's checks form a conjunction, whose false-pass rate is bounded by
+that of its weakest check. The three splits overlap: they are a robustness condition
+(11a), not a multiplicity control.
+
+**Reported whichever way it lands.**
+- the fitting procedure used, `SERVE_PRICER`, `MODEL_VERSION` and every `SERVE_*` flag
+  on the look date;
+- the effective n (sides with a delta above 1e-9 in absolute value), the sides at
+  exactly zero, and the games at zero on both sides;
+- the counts per `lineup_basis` and per `lineup_source`, the hand-unknown count, and
+  the eval exclusions by reason;
+- the Leg M exclusions by reason (no capture row, a heartbeat gap, no qualifying
+  snapshot, a null probable), and the lead-time distribution of the snapshots used;
+- the fitted b1 per quantile per arm;
+- the precondition's RMS and expected t per quantile;
+- the correlation of the delta with `z_off`, with 5e's delta, with 5c's
+  `lineup_strength` and `star_out`, and with 5d-B's `rest_days`;
+- the two-segment decomposition (starter segment alone, bullpen segment alone, never
+  qualifying);
+- the contaminated screen's numbers;
+- the live posted-versus-started agreement count.
+
+**What may be computed before the look.** Coverage only, never joined to a score, a
+run, a win or a price value:
+- the posting curve and the posted-versus-started agreement off the capture store. The
+  posting curve and the late-scratch rate rest today on 27 lineup and 116 probable
+  captures from one box, and are re-read after a month;
+- the count of games with a snapshot captured after both cards (timing only), and the
+  job's heartbeat gaps;
+- the `lineup_basis` counts;
+- `hand_index` and `bench_mean_hem` coverage.
+
+No value of P, C or the delta, and no statistic of them, is published or summarized
+before the look.
+
+**Clock.** The clock starts on the date of the first vintage whose `feature_basis` shows
+`hand_index`, `orders` and `bench_mean_hem` all populated and
+`platoon_splits.available` true. That is the first vintage on which v_h and C are what
+this section registers. Four weeks is 28 calendar days from that date. A missing night
+neither stops it nor moves it. A look also needs, in the look's season:
+- at least 600 (`VINTAGE_MIN_GRADED_GAMES`) eval-set games in the eval half of the
+  anchored split (`_vintage_cut_index`, the split gate 1 counts on);
+- at least 100 Leg M games with a non-zero delta at every quantile.
+
+Because 2026 games are coverage only, **the first look is in 2027**, after the last
+regular-season game. This candidate is not fitted on pre-2026 data. Nor is it
+archive-reconstructable in its registered per-hand form: no committed board holds
+per-hand values for the bats outside its constructed orders. So it carries a 2027 first
+look, as the plan's section 5 requires a registration to say. One look per season,
+after its last regular-season game. No other look, in either direction.
+
+*A change to what defines C, v_h or the bench value restarts the clock.* That covers
+the constructed-order builder and its membership, HEM+ and split-HEM+ scoring
+(`hem_plus`, `hitter_export.load_platoon_splits`), the `hand_index` source and the bench
+rows. Such a change needs a same-day dated correction under this section (plan X9). The
+clock restarts at the first vintage after the change. That season's games on earlier
+vintages leave the eval set and enter the fit half at delta zero.
+
+*Lapse.* The section lapses unread if no look has met every floor by the end of the
+2028 regular season. That could happen if O17 is refused, if O18 stays at L-0, or if the
+capture is down. A later attempt needs a new registration.
+
+**Postseason (DEFAULT pending owner decision O20).** Postseason captures and vintages of
+any season accrue and are not graded here. The look runs after the last regular-season
+game, and October changes rosters and usage (5f's reason). The owner's 2026-09-11 answer
+to count postseason games was given for 5e and does not carry to this section. If the
+owner aligns 5j with 5e, that must be recorded under Owner decisions.
+
+**Backfill arm (registered, NOT armed; DEFAULT pending owner decision O20).** This is
+the season-only form, (P_s - C_s) over the whole game, for 2026 games from 2026-07-06.
+- **Sources.** C comes from hitter boards committed to git strictly before each game
+  date (5a: `covers_through < D`), under the 5a four rules. That is 17 commit dates from
+  2026-07-05 to 2026-09-07, none between 2026-08-13 and 2026-09-04. P is the first-pitch
+  nine. C's provenance is `git-backfill`, counted separately and never blended with the
+  live store. Per-hand values do not exist in those blobs.
+- **Two memberships.** 16 of the 17 boards predate `7cd5f572` (2026-09-07), the commit
+  that made the constructed orders roster-aware (13.7% of constructed slots were
+  off-roster that day, R5-F4). The 2026-09-07 board is that commit's own, and it carries
+  the filter. So the arm's C is a different object before and after, and the two
+  memberships are reported apart.
+- **Standing.** The arm is REPORT-ONLY: never qualifying, alone or jointly. It reports
+  Leg O statistics only. Leg M is impossible, because no post-lineup price exists for a
+  2026 game.
+- **When.** If it is armed before the 5c B3/B4 look is recorded, it runs once under
+  the screen's timing and is reported beside the first look.
+
+**Owner decisions this section uses, and when they bind.**
+- The defaults for O19 (Leg M qualifies), O20 (no backfill; postseason not graded) and
+  O22 (archive-reconstruct allowed) bind from the commit. A different answer takes
+  effect only as a dated correction recorded before the 5c B3/B4 look is recorded, on a
+  fact established without outcomes. A different answer after that closes this section
+  unread, and the candidate needs a new registration that discloses the B3/B4 result.
+- O14 changes no text here. Its effect is read off `SERVE_PRICER` on the look date
+  (Fitting).
+- O16, O17, O18 and O21 are operational. They decide whether and when the legs can be
+  fed and how the slots publish, never what is graded.
+
+**Prerequisites: the publication rules that land before any intraday build.** None of
+these is a criterion. Each is a precondition of the Phase 2 disclosure rebuild and of
+any serving. Phase 2 is the intraday rebuild of `data/betting.json` and `data/dfs.json`
+when a capture lands. Phase 2 reprices nothing.
+- **Slot lock.** `.cache/betting/published_slots/<slate>.json` (to be built) is
+  first-write-wins and holds both slot rows as first published, with `published_at`.
+  Every later build of the slate serves `pick_of_the_day` and `longshot_of_the_day`
+  from the lock verbatim and never re-selects. Anything later (a posted card, a changed
+  probable, a started game) rides beside the locked row as `since_published` (to be
+  built), never in place of it. `write=False` builds never create a lock.
+- **Record guard.** `betting_export.maybe_publish_record` refuses a row whose
+  `(slate_date, slot)` already has one, naming the reason. This is in addition to
+  today's bet-identity check. The test builds a slate, changes one input so the slot
+  moves, builds again, and asserts one record row per slot. The defect is latent today
+  only because `RECORD_PUBLISH_ARMED` is False.
+- **Ledgers.** Shadow `board_all` rows written by an intraday pass carry
+  `pricing_basis` (to be built; `constructed` or `posted`) and are never pooled across
+  bases (the 7a tag rule). Calibration rows from an intraday reprice go under their own
+  `phase: "lineup"` id namespace (to be built), never pooled with the nightly rows.
+  Otherwise first-write-wins would keep only the pre-lineup price. This is a code
+  change: `tools/betting_calibration._check_phase` raises on an unknown phase today
+  (`PHASE_FIELDS` holds open, close and settled), and the fold merges phases per
+  `cal_id`, so a lineup row must never share a nightly `cal_id`.
+- **The stale-price rule.** An edge is valid only against a price captured after every
+  input change that moved the model. A repriced side whose price predates its latest
+  input change carries `price_predates_input: true` (to be built) and cannot enter a
+  slot, a badge or the record. The invariant test: no served edge on a `posted` side
+  whose market `captured_at` is earlier than its lineup `captured_at`.
+- **Phase 2's lineup block, bounded.** These are its only fields, all to be built. Per
+  side: `posted`, `captured_at`, `n_bats_vs_constructed`, `regulars_missing` (the
+  constructed regulars not on the card) and `probable_status` (`confirmed` or
+  `changed`). On a slot: `lineup_caveat`, a sentence with no typed number (the
+  `tie_atom_caveat` idiom). The block never carries a HEM+ value of a card, P, C, the
+  delta or any candidate value. `n_bats_vs_constructed` is a named close variant (a
+  count of changed bats). Publishing it is not a relation. But until the look, no shadow
+  or calibration ledger row carries any of these fields, and `pricing_basis` reads
+  `constructed` on every row. Relating archived lineup fields to an outcome or a price
+  disqualifies (see Disqualification).
+- **Publication timing (DEFAULT pending owner decision O21).** Slots are chosen at the
+  nightly and locked, until 5j passes. Choosing them after the cards post, against a
+  post-lineup price, is a new selection rule with its own shadow tag, its own gate-3
+  clock and its own decision.
+- **Arming (DEFAULT pending owner decision O17).** The capture is armed now, at zero
+  credits. Phase 2 follows only after the slot lock and the record guard land.
+
+**How it sits beside the registered candidates.**
+- 5c B4 (`lineup_strength`, `star_out`, first look ~2026-09-17) reads the constructed
+  orders, the IL cache and the projections bundle. This candidate reads the card. If B4
+  serves first, B4 is the base.
+- 5e swaps the whole-game offense to the constructed nine's split by the starter's
+  hand. This delta is posted-minus-constructed on the same hand. The two add in form,
+  not on one reference. C_h here is `SLOT_PA`-weighted, while 5e's `off_vs_*` is
+  season-PA weighted, and 5e covers the whole game while this hand term covers only
+  `w_O` of it. Their correlation is reported.
+- 5f owns the bullpen's hands.
+- Posted-nine variants of 5i-B, 5f, 5g and 5d-D are not asked here. Each stays frozen
+  on the constructed nine until its own section.
+
+**Disqualification.** The close variants are:
+- season-PA weights;
+- an equal-weight nine;
+- a count of changed bats;
+- the constructed-nine gap from `star_out`;
+- the season-only form;
+- the replacement form (P in place of `z_off`);
+- active-roster Offense+ (R5-F5; plan 5.1 bars active-roster variants before the B3/B4
+  look);
+- the whole game on the starter's hand (`w_O` = 1);
+- either segment alone.
+
+Outside a registered look, the only admissible relations of this delta, or a close
+variant, to a game outcome or a price are the contaminated screen and, if armed, the
+backfill arm, each at its registered time. Any other such relation disqualifies the candidate
+under 5c rule 1, on any game and whether it was computed before or after this commit.
+Registered looks of other sections on their own columns (5c B3/B4, 5e, 5f, 5i-B) are not
+relations of this delta. Counts of capture times that read no price value are not a
+relation either.
+
+**Changes after the commit.** Three kinds of change are recorded by dated correction
+whenever they occur: the schema number, the first vintage that carries the blocks, and
+the restarts under Clock. Other changes are possible only by a dated correction
+recorded before the 5c B3/B4 look is recorded, on a fact established without outcomes.
+That covers the candidate, the reduction, the fallbacks, the frozen `SLOT_PA` literal,
+the frozen starter share, the criteria and the three defaults under Owner decisions. A
+change after that closes the section.
+
+**What a pass would change.** No serving flag is added before a pass, because a serving
+path for an unmeasured feature is exactly what 5c forbids (5h's rule). On a PASS,
+`SERVE_POSTED_LINEUPS` (to be built) lands in `betting_model.py`, default False, with
+its tripwire test. Only after the contaminated screen has run without disqualifying, the
+owner flips it in one commit with a `MODEL_VERSION` bump, so no ledger pools two
+pricers, and a `--context` re-run. A flip is outward-facing and is the owner's call even
+on a PASS (7g). It serves on the pricer whose procedure was graded (Fitting). Only sides
+with a posted card move. The moneyline, runline and total of a posted game all move,
+through the two lambdas. Every repriced side obeys the stale-price rule, the published
+slots stay locked, and serving needs the post-lineup price capture (O18).
+
+**No number has been computed on this candidate.**
+
 ---
 
 ## 6. The backtest: two modes, both labelled
