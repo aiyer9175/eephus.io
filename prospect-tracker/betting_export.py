@@ -2922,6 +2922,134 @@ def tie_atom_caveat(row: dict, thr: float | None) -> str | None:
             "the runline margin gate.")
 
 
+# ===========================================================================
+# BET1: THE SLATE'S TOTAL LEAN, A DISCLOSURE AND NEVER A PRICE (2026-09-11)
+# ===========================================================================
+# THE INVARIANT THAT WOULD HAVE CAUGHT THE OVER SKEW. A model with no lean
+# toward either side of the total should, across a slate, sit as often above
+# the market's Over as below it. On every one of 26 cached slates it sat above:
+# re-priced on the served context and the dated vintage, positive-edge totals
+# split 323 Over to 102 Under, and the served 2026-09-11 board was 13 Overs of
+# 15. Nothing asserted the law, so nothing caught it for five weeks.
+#
+# THE STATISTIC IS ON THE PRICE, NOT ON THE RUNS, and the reason is the finding.
+# The model's expected total minus the posted line is published beside it
+# (`mean_gap_runs`), but it cannot be the test: a book posts its line where the
+# real run distribution splits, which is about a run under its mean (fit-half
+# median 8 against mean 8.81), so a run-scale gap on the MEAN would read about
+# +0.6 on a model whose level was perfect. The lean compares like with like:
+# the model's P(Over) at the posted line against the de-vigged P(Over) at the
+# same line, per game, averaged over the slate.
+#
+# THE MARKET IS A DIAGNOSTIC TARGET HERE AND NOTHING ELSE. No price, edge,
+# slot rule or ledger row reads this block. It warns in the build log, it rides
+# the payload, and when it fires it stamps a sentence on every priced total
+# side, so a best-value badge or a slot drawn from those rows carries it.
+#
+# Both constants are POLICY. 0.03 is the canonical total bias band the B-TOTAL
+# re-open rule already names (docs/master-plan-2026-09-05-opus.md, 2.3), reused
+# so the module has one tolerance for this quantity rather than two. The fire
+# rule also asks the mean to be distinguishable from zero at the module's
+# one-sided 95%, and for at least 8 priced totals, so a three-game Sunday
+# cannot flap it.
+TOTAL_LEAN_TOLERANCE = 0.03
+TOTAL_LEAN_MIN_GAMES = 8
+
+
+def total_level_check(bets: list[dict], *, fitted: dict | None = None) -> dict:
+    """The slate-level total lean, with the caveat it earns when it fires.
+
+    Per game with a priced total: lean = the Over row's model_prob minus its
+    market_fair_prob (both push-conditioned on a whole number, so they describe
+    the same event). `fires` = n >= TOTAL_LEAN_MIN_GAMES AND |mean lean| >
+    TOTAL_LEAN_TOLERANCE AND |t| >= Z_95_ONE_SIDED (or no spread at all, where t
+    does not exist and the lean is exact). `fitted` is the context's
+    `total_level_fitted` block; when present the caveat quotes its fit-half
+    per-line table, and every number in the sentence is read off this block or
+    that one, never typed."""
+    leans, gaps = [], []
+    n_pos = {"over": 0, "under": 0}
+    for b in bets or []:
+        t = b.get("total") or {}
+        sides = t.get("sides") or []
+        ov = next((s for s in sides if s.get("side") == "over"), None)
+        if (ov is None or t.get("line") is None or ov.get("model_prob") is None
+                or ov.get("market_fair_prob") is None):
+            continue
+        leans.append(float(ov["model_prob"]) - float(ov["market_fair_prob"]))
+        ft = (b.get("model") or {}).get("fair_total")
+        if ft is not None:
+            gaps.append(float(ft) - float(t["line"]))
+        for s in sides:
+            if s.get("side") in n_pos and s.get("edge") is not None and s["edge"] > 0:
+                n_pos[s["side"]] += 1
+    n = len(leans)
+    out = {
+        "statistic": ("mean over the slate of the Over's model probability minus its "
+                      "de-vigged market probability at the posted line"),
+        "tolerance": TOTAL_LEAN_TOLERANCE, "min_games": TOTAL_LEAN_MIN_GAMES,
+        "z": bm.Z_95_ONE_SIDED, "n": n,
+        "n_positive_edge": n_pos,
+        "mean_gap_runs": round(sum(gaps) / len(gaps), 3) if gaps else None,
+        "mean_gap_runs_note": ("the model's EXPECTED total minus the posted line, "
+                               "published as a description and not tested: a line "
+                               "sits where real totals split, about a run under "
+                               "their mean, so this reads positive for a model "
+                               "whose level is right"),
+        "total_level_served": bm.SERVE_TOTAL_LEVEL,
+        "surface": "disclosure only; no price, edge, slot or ledger reads this block",
+        "fires": False, "direction": None, "caveat": None,
+    }
+    if n < 2:
+        out["reason"] = f"{n} priced total(s) on this slate; nothing to average"
+        return out
+    mu = sum(leans) / n
+    sd = math.sqrt(sum((x - mu) ** 2 for x in leans) / n)
+    se = sd / math.sqrt(n) if sd else 0.0
+    tstat = (mu / se) if se else None
+    out.update({"mean_lean": round(mu, 5), "sd": round(sd, 5),
+                "t": round(tstat, 3) if tstat is not None else None})
+    # A slate with no spread in its lean has no t, and an exact lean past the
+    # band is the strongest case, not a degenerate one: it fires.
+    fires = bool(n >= TOTAL_LEAN_MIN_GAMES and abs(mu) > TOTAL_LEAN_TOLERANCE
+                 and (tstat is None or abs(tstat) >= bm.Z_95_ONE_SIDED))
+    out["fires"] = fires
+    if not fires:
+        out["reason"] = (f"mean lean {mu:+.4f} over {n} priced totals is inside the "
+                         f"{TOTAL_LEAN_TOLERANCE} band or not distinguishable from zero"
+                         if n >= TOTAL_LEAN_MIN_GAMES else
+                         f"{n} priced totals, under the {TOTAL_LEAN_MIN_GAMES}-game floor")
+        return out
+    side = "Over" if mu > 0 else "Under"
+    out["direction"] = side.lower()
+    fit_clause = ""
+    pl = next((r for r in ((fitted or {}).get("per_line") or [])
+               if r.get("line") == 8.5), None)
+    if pl and (fitted or {}).get("n"):
+        fit_clause = (f" Fit window: Over 8.5 priced {100.0 * float(pl['model_over_incumbent']):.1f}%, "
+                      f"hit {100.0 * float(pl['observed_over']):.1f}%.")
+    out["caveat"] = (
+        f"Slate leans {side}: model {side} probability {100.0 * abs(mu):.1f} pts above "
+        f"market on {n} totals ({n_pos[side.lower()]} positive-edge {side}s). Known "
+        f"model shape, not value: the total is priced as a Poisson centred on "
+        f"expected runs; real totals split lower.{fit_clause}")
+    return out
+
+
+def stamp_total_level_caveat(bets: list[dict], check: dict) -> int:
+    """Put the check's sentence on every priced total side when it fires, so a
+    best-value badge or a slot lifted off those rows carries it. Returns the
+    number of rows stamped. A no-op, touching nothing, when it does not fire."""
+    if not (check or {}).get("fires") or not check.get("caveat"):
+        return 0
+    n = 0
+    for b in bets or []:
+        for s in ((b.get("total") or {}).get("sides") or []):
+            s["total_level_caveat"] = check["caveat"]
+            n += 1
+    return n
+
+
 def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
               starters=None, now=None, stats=None) -> list[dict]:
     """Every game on the slate: model probabilities, the market when a snapshot
@@ -3047,6 +3175,12 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
                 "p_home": gp["p_home"], "p_away": gp["p_away"],
                 "lam_home": gp["lam_home"], "lam_away": gp["lam_away"],
                 "fair_total": gp["fair_total"],
+                # BET1: present only while a total recentre prices this game
+                # (SERVE_TOTAL_LEVEL), so a flag-off board is byte-identical to
+                # the one that shipped before the flag existed.
+                **({"total_level_runs": gp["total_level_runs"],
+                    "total_price_mean": gp["total_price_mean"]}
+                   if gp.get("total_level_runs") else {}),
                 "park_index": gp["components"]["park_index"],
                 "home_prevention": gp["components"]["home"]["prevention"],
                 "away_prevention": gp["components"]["away"]["prevention"],
@@ -5034,6 +5168,11 @@ def _carry_previous_board(payload: dict, reason: str, *, log_fn=None) -> dict:
     payload["slate_date"] = prev.get("slate_date") or payload.get("slate_date")
     payload["props_fair_lines"] = prev.get("props_fair_lines") or payload["props_fair_lines"]
     payload["parlay_context"] = parlay_context(prev_bets)
+    # BET1: the lean check describes the rows on the page, so a carried board
+    # carries a check recomputed off the carried rows, never tonight's empty one.
+    payload["total_level_check"] = total_level_check(prev_bets,
+                                                     fitted=bm.fitted_total_level())
+    stamp_total_level_caveat(prev_bets, payload["total_level_check"])
     prev_status = (prev or {}).get("status") or {}
     age_h = _hours_since(prev.get("generated_at"))
     age_txt = (f"built {age_h:g} hour{'' if age_h == 1 else 's'} ago" if age_h is not None
@@ -5116,6 +5255,20 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
                  "n_games_unpriced_time_mismatch": 0}
     bets = (team_bets(games, events, teams=teams, parks=parks, starters=starters,
                       stats=bet_stats) if games else [])
+    # BET1: the slate's total lean, computed off the board rows BEFORE the slots
+    # are chosen so a slot lifted off a total row carries the sentence. A
+    # disclosure: it changes no price, no edge and no selection.
+    total_check = total_level_check(bets, fitted=bm.fitted_total_level())
+    n_tl = stamp_total_level_caveat(bets, total_check)
+    if total_check.get("fires"):
+        log.warning("betting_export: totals on the %s slate lean %s (mean %+.4f over %d "
+                    "priced totals, t %s, tolerance %.2f); %d total rows carry the "
+                    "caveat", slate_date, total_check.get("direction"),
+                    total_check.get("mean_lean") or 0.0, total_check.get("n") or 0,
+                    total_check.get("t"), TOTAL_LEAN_TOLERANCE, n_tl)
+        if log_fn:
+            log_fn(f"betting_export: WARNING total lean {total_check.get('direction')} "
+                   f"{total_check.get('mean_lean')} over {total_check.get('n')} totals")
     min_edge = evald.get("min_edge")          # None until a clean test measures one
     gate = evald.get("min_edge_gate")
     # THE MARKET IS WHAT MAKES AN EDGE POSSIBLE, NOT AN ENVIRONMENT VARIABLE.
@@ -5334,6 +5487,8 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         # bars anything, because a gate a reader cannot see is a gate he
         # cannot hold the site to.
         "market_publishability": market_table,
+        # BET1: the slate's total lean and the caveat it earned, if any.
+        "total_level_check": total_check,
         "team_bets": bets,
         "props_fair_lines": props_fair,
         # The section 7c value block: inert without both arming variables and
@@ -5448,6 +5603,8 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         # The market gate travels with the free slice for the same reason the
         # publish blockers do: it is part of the trust surface.
         "market_publishability": payload["market_publishability"],
+        # BET1: the total lean is part of the trust surface too.
+        "total_level_check": payload.get("total_level_check"),
         # PRE-REGISTERED, IN THE FREE SLICE. What the site refuses to publish is
         # a claim a reader can only hold it to if he can see it before the first
         # row exists, so it is not behind any gate.

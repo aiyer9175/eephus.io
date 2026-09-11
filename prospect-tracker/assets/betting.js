@@ -1110,8 +1110,11 @@
     // L14-01: a runline slot also carries what the model's tie after nine is
     // worth to it. The sentence is built server-side from the row's own
     // tie_atom block, so no number here is typed or recomputed.
+    // BET1: a total slot on a slate whose totals lean one way carries the
+    // server's sentence about that lean, built from the payload's own block.
     var caveat = (p.caveat ? note(esc(p.caveat)) : "") +
       (p.tie_atom_caveat ? note(esc(p.tie_atom_caveat)) : "") +
+      (p.total_level_caveat ? note(esc(p.total_level_caveat)) : "") +
       (p.evidence_caveat ? note(esc(p.evidence_caveat)) : "") + dispersionLine(shaped);
     // The watch additions render in the watch frame only: when the gates open
     // the pick rendering returns exactly as it was, which is the self-lift the
@@ -2524,6 +2527,13 @@
     // market's rows stay priced below (the ledgers keep recording it), and a
     // reader of this tab is owed the same two reasons the watch tab states.
     head += marketGateNotes();
+    // BET1: when the slate's totals lean one way past the tolerance, the
+    // server's sentence says why before any total badge below is read.
+    var tlc = d.total_level_check || {};
+    if (hasMarket && tlc.fires && tlc.caveat) {
+      head += note("<strong>Totals lean " + esc(tlc.direction || "") + " on this " +
+        "slate.</strong> " + esc(tlc.caveat));
+    }
     // TWO VIEWS OVER THE SAME ROWS. The toggle rides above both, so the notes
     // and warnings above (unpriced counts, missing feed, blocked slots) are
     // shown once and apply to whichever view is up.
@@ -2577,6 +2587,12 @@
     var best = bestValueSide(b, pickFloor());
     var badge = best ? ' <span class="bt-tag bt-tag-ok bt-bestval">best value ' +
       esc(best.label || best.side || "") + " " + fmtOdds(best.odds) + "</span>" : "";
+    // BET1: a best-value badge on a total that leans with the whole slate
+    // carries the lean, so the badge cannot be read without it.
+    if (best && best.total_level_caveat) {
+      badge += ' <span class="bt-tag bt-tag-warn bt-totlean" title="' +
+        esc(best.total_level_caveat) + '">slate lean</span>';
+    }
     // UNPRICED IS A STATE, NOT AN OMISSION. The board carries the game and says
     // which filter left it without prices, because a game that vanished off the
     // page reads as a game that is not being played.

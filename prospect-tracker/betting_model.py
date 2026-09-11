@@ -750,6 +750,95 @@ SERVE_RIDGE_FIT = False
 VINTAGE_FIT_WINDOW_GROWS = False
 
 
+# --- BET1: the total level, and why most value totals are Overs (2026-09-11) --
+# THE OWNER'S QUESTION was whether a board where most value bets are Overs is a
+# bug or a feature. It is a bug, and it is not the one the 2026-09-05 plan named.
+#
+# THE SKEW IS SYSTEMATIC, not one slate. Re-pricing every cached open capture in
+# .cache/odds/ on the served context and the dated vintage (26 slates with a
+# completed game, 425 games): the model fair total sits a mean +0.604 runs above
+# the posted line (median +0.65), above it on 26 of 26 slates, and positive-edge
+# totals split 323 Over to 102 Under (232 to 44 at the 0.06 floor). The served
+# 2026-09-11 board reads +0.893 and 13 Overs of 15. The calibration ledger's
+# as-served rows, inverted through the served Poisson, read +0.652 on 18 of 18
+# slates and 155 Over to 46 Under.
+#
+# THE MEAN IS NOT THE CAUSE. On the vintage FIT half (305 games before the
+# 2026-08-01 split, served coefficients on dated features) the model's mean total
+# is 8.8649 against 8.8066 actual, a level bias of +0.058 runs. In-sample over all
+# 2,200 games it is 0.000 by the OLS identity. b0 is not too high, and the
+# prevention and park terms pull the fit-half level DOWN (-0.081 and -0.053),
+# not up. A mean recentre moves the total 0.058 runs and does almost nothing.
+#
+# THE CAUSE IS THE POISSON CENTRE. Real run totals have var/mean 2.35 on the same
+# 305 games (median 8, mean 8.81). A Poisson with the RIGHT mean puts its middle
+# at that mean, while the real distribution, skewed by blowouts, splits about a
+# run lower, and a book posts its line where the real distribution splits. So a
+# correctly levelled Poisson compares its mean against the market's median and
+# calls the Over: on the fit half, P(over 8.5) is 0.5206 served against 0.4328
+# observed, and 0.5131 even after the mean recentre.
+#
+# THIS FLAG IS THE LEVEL HALF OF THE REPAIR AND ONLY THAT. One additive constant
+# on the Poisson total mean, fitted on the vintage fit half alone by the summed
+# over/under log loss at the fixed line grid TOTAL_LEVEL_LINES (the lines
+# B-TOTAL named). It prices the TOTAL ONLY: the margin distribution, the
+# moneyline and the runline are built from the unshifted lambdas and are
+# byte-identical with the flag on or off, and `fair_total` stays lam_home +
+# lam_away (the expected runs). A Poisson cannot be calibrated at every line by
+# one shift, because its shape is wrong: the fitted constant is a compromise
+# between 7.5 (wants about -0.6) and 10.5 (wants a positive shift). The shape
+# half is the total-scoped dispersion lane (B-TOTAL stage 2), not this flag.
+TOTAL_LEVEL_LINES = (7.5, 8.5, 9.5, 10.5)
+# The search interval for the constant, in runs. Wide enough that the fit never
+# sits on it on any window this module has seen (the fit-half answer is -0.23).
+TOTAL_LEVEL_BOUNDS = (-3.0, 3.0)
+# The pre-registration, verbatim, written before any eval-window outcome was
+# scored under either arm (the fit half had been read; that is what it is for).
+TOTAL_LEVEL_GATE_CRITERIA = (
+    "the recentre is one additive constant delta (runs) on the Poisson total mean; "
+    "the margin, the moneyline and the runline are computed from the unshifted "
+    "lambdas and may not move. CENTRE arm (the candidate): delta = argmin of the "
+    "summed over/under log loss at the fixed line grid (7.5, 8.5, 9.5, 10.5), equal "
+    "weights, over the fit half, golden-section on [-3, 3]. MEAN arm (the 2026-09-05 "
+    "plan's literal candidate): delta = mean actual total minus mean model total on "
+    "the fit half. Splits: the anchored served split (_vintage_cut_index) AND the "
+    "date quantiles 0.6, 0.7, 0.8 of the vintage-gradable dates; every split refits "
+    "{coefficients, tie_home, diff_shrink, home_adj} on its own fit half as the "
+    "vintage lab does, fits delta on that same fit half, and scores the eval half. "
+    "On each split's EVAL half BOTH must hold, at ALL FOUR splits or the verdict is "
+    "not ship: (1) paired per-game total log loss summed over the same grid, "
+    "incumbent (delta 0) minus recentred, > 0 at one-sided t >= 1.645; (2) paired "
+    "per-game log loss at EACH grid line not worse on the point estimate for at least "
+    "three of the four lines. Structural and asserted by test, not measured: "
+    "moneyline and runline byte-identical with the flag on and off. Fit half >= 100 "
+    "games and eval half >= 50 or the split cannot pass. Diagnostics, never "
+    "criteria, because the market is a diagnostic target and never an input: model "
+    "P(over) at the posted line minus the realised over rate on eval games with a "
+    "cached open capture, and the Over/Under split of positive-edge totals on every "
+    "cached slate."
+)
+# Whether the fitted recentre is SERVED. Set from `total_level_gate`, never from
+# the size of the Over skew. FALSE: see docs/diamond-betting.md section 7f for
+# the gate grid.
+#
+# WHAT FLIPPING IT CHANGES, measured 2026-09-11 with the fit-half constant
+# -0.2315 runs:
+#   * every total side's model probability, edge, EV and Kelly (Over down,
+#     Under up), and `total_level_runs` / `total_price_mean` on the model row;
+#   * which total side is "value" on some games, and so the best-value badge and
+#     the published slots whenever a total was, or becomes, their best row;
+#   * NOTHING on the moneyline or the runline, to the bit.
+#
+# TO FLIP IT, in ONE commit: (1) `total_level_gate` returns ship; (2) this
+# constant, the tripwire in test_betting_total_level.py and section 7f move
+# together; (3) MODEL_VERSION is bumped, because every settled total row in the
+# shadow and calibration ledgers was priced without the recentre and a ledger
+# that pools two pricers under one version measures a mixture nobody priced;
+# (4) `python betting_model.py --context` is re-run so `total_level` is written
+# (the served key is null until then and a flip alone moves nothing).
+SERVE_TOTAL_LEVEL = False
+
+
 # ---------------------------------------------------------------------------
 # small io helpers
 # ---------------------------------------------------------------------------
@@ -1511,6 +1600,216 @@ def fitted_runline_tie_split() -> dict | None:
 
 
 # ---------------------------------------------------------------------------
+# the total level (BET1), read in ONE place
+# ---------------------------------------------------------------------------
+def _total_level_value(v) -> float | None:
+    """A recentre constant out of a context value, or None when it is absent,
+    not a finite number, or outside TOTAL_LEVEL_BOUNDS. One parser for the
+    served key and the fitted block, so they cannot disagree about validity."""
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        return None
+    lo, hi = TOTAL_LEVEL_BOUNDS
+    if not math.isfinite(x) or not lo <= x <= hi:
+        return None
+    return x
+
+
+def served_total_level() -> float | None:
+    """The SERVED total recentre in runs, or None for none.
+
+    The flag is checked FIRST, before any file is read, the served_platt
+    pattern: while SERVE_TOTAL_LEVEL is False this returns None
+    unconditionally, so a stray `total_level` key in an old or hand-edited
+    context file cannot reprice a total."""
+    if not SERVE_TOTAL_LEVEL:
+        return None
+    ctx = _load_json(CONTEXT_PATH) or {}
+    return _total_level_value(ctx.get("total_level"))
+
+
+def fitted_total_level() -> dict | None:
+    """The MEASUREMENT block (`total_level_fitted`), published whether or not it
+    is served. None when the context predates it or its constant is invalid."""
+    ctx = _load_json(CONTEXT_PATH) or {}
+    blk = ctx.get("total_level_fitted")
+    if not isinstance(blk, dict) or _total_level_value(blk.get("centre")) is None:
+        return None
+    return blk
+
+
+def _poisson_over(lam: float, line: float) -> float:
+    """P(total > line) for a Poisson total, clipped off 0 and 1 so a log loss
+    can never meet an exact 0. Integer lines are scored as strict Over (a push
+    counts against it), which is all the fit grid needs: every grid line is a
+    half point."""
+    need = math.floor(line) + 1
+    pm, cdf = math.exp(-lam), 0.0
+    for k in range(need):
+        if k:
+            pm *= lam / k
+        cdf += pm
+    return min(max(1.0 - cdf, _PROB_EPS), 1.0 - _PROB_EPS)
+
+
+def _total_level_losses(rows, delta: float, lines=None) -> list[float]:
+    """Per-game total log loss summed over the grid, at recentre `delta`.
+    `rows` is [(model total mean, actual total)]. The shifted mean is floored
+    at 0.5 runs so a large negative search step cannot ask for a negative
+    Poisson mean; no fitted constant on any window comes near it."""
+    lines = tuple(lines if lines is not None else TOTAL_LEVEL_LINES)
+    out = []
+    for m, y in rows:
+        lam = max(0.5, float(m) + delta)
+        s = 0.0
+        for L in lines:
+            p = _poisson_over(lam, L)
+            s -= math.log(p) if y > L else math.log(1.0 - p)
+        out.append(s)
+    return out
+
+
+def fit_total_level(rows, *, lines=None, tol: float = 1e-5) -> dict | None:
+    """Both recentre arms of TOTAL_LEVEL_GATE_CRITERIA on one fit window.
+
+    `rows` is [(model total mean, actual total)] over the FIT window and nothing
+    else. Returns None with fewer than two rows.
+
+      centre  argmin of the mean summed over/under log loss at `lines`
+              (TOTAL_LEVEL_LINES by default), golden-section on
+              TOTAL_LEVEL_BOUNDS. Deterministic: a fixed contraction on a fixed
+              interval, so two runs on the same rows return the same digits.
+      mean    mean actual total minus mean model total. The 2026-09-05 plan's
+              literal candidate, published beside the served one so the reader
+              can see how little of the Over skew a mean recentre touches.
+
+    `per_line` carries the observed Over rate and the mean model P(over) under
+    the incumbent and both arms, which is the whole argument in one table: the
+    mean is right and the Poisson centre is not."""
+    rows = [(float(m), float(y)) for m, y in (rows or [])]
+    n = len(rows)
+    if n < 2:
+        return None
+    lines = tuple(lines if lines is not None else TOTAL_LEVEL_LINES)
+
+    def f(d):
+        return sum(_total_level_losses(rows, d, lines)) / n
+
+    lo, hi = TOTAL_LEVEL_BOUNDS
+    inv_phi = (math.sqrt(5.0) - 1.0) / 2.0
+    x1, x2 = hi - inv_phi * (hi - lo), lo + inv_phi * (hi - lo)
+    f1, f2 = f(x1), f(x2)
+    while hi - lo > tol:
+        if f1 > f2:
+            lo, x1, f1 = x1, x2, f2
+            x2 = lo + inv_phi * (hi - lo)
+            f2 = f(x2)
+        else:
+            hi, x2, f2 = x2, x1, f1
+            x1 = hi - inv_phi * (hi - lo)
+            f1 = f(x1)
+    centre = round((lo + hi) / 2.0, 4)
+    mean_model = sum(m for m, _ in rows) / n
+    mean_actual = sum(y for _, y in rows) / n
+    mean_arm = round(mean_actual - mean_model, 4)
+    per_line = []
+    for L in lines:
+        obs = sum(1 for _, y in rows if y > L) / n
+        per_line.append({
+            "line": L,
+            "observed_over": round(obs, 4),
+            "model_over_incumbent": round(sum(_poisson_over(m, L) for m, _ in rows) / n, 4),
+            "model_over_centre": round(sum(_poisson_over(max(0.5, m + centre), L)
+                                           for m, _ in rows) / n, 4),
+            "model_over_mean": round(sum(_poisson_over(max(0.5, m + mean_arm), L)
+                                         for m, _ in rows) / n, 4),
+        })
+    ys = sorted(y for _, y in rows)
+    mid = n // 2
+    median_actual = ys[mid] if n % 2 else (ys[mid - 1] + ys[mid]) / 2.0
+    return {
+        "centre": centre,
+        "mean": mean_arm,
+        "n": n,
+        "lines": list(lines),
+        "mean_model_total": round(mean_model, 4),
+        "mean_actual_total": round(mean_actual, 4),
+        "median_actual_total": median_actual,
+        "log_loss_incumbent": round(f(0.0), 6),
+        "log_loss_centre": round(f(centre), 6),
+        "log_loss_mean": round(f(mean_arm), 6),
+        "per_line": per_line,
+    }
+
+
+def _total_level_rows(games, teams, parks, starters, coeffs, adj, shrink,
+                      resolve=None) -> list[tuple]:
+    """[(model total mean, actual total, game_pk)] under the given pricer.
+    lam_home + lam_away is 2 * mid, which the home adjustment and the
+    differential shrink leave untouched by construction; they are passed only
+    so the 1.5 / 9.5 lambda clamps bind exactly where the pricer's would."""
+    rows = []
+    for g in games:
+        gt, gs, gpk = teams, starters, parks
+        if resolve is not None:
+            got = resolve(g)
+            if not got:
+                continue
+            gt, gs, gpk = got
+        er = expected_runs(g["home_org"], g["away_org"],
+                           home_sp=gs.get(g.get("home_sp")),
+                           away_sp=gs.get(g.get("away_sp")),
+                           teams=gt, parks=gpk, coeffs=coeffs,
+                           home_adj=adj, diff_shrink=shrink)
+        if not er:
+            continue
+        rows.append((er["lam_home"] + er["lam_away"],
+                     int(g["home_runs"]) + int(g["away_runs"]), g.get("game_pk")))
+    return rows
+
+
+def fit_total_level_vintage(games, *, coeffs=None, adj=None, shrink=None) -> dict:
+    """The recentre for the SERVED pricer, fitted on the vintage FIT half.
+
+    The fit half is the one the honest backtest fits on and never grades
+    (`_vintage_cut_index`, split_date 2026-08-01 on 2026-09-11), priced on the
+    dated vintage features with the served coefficients and corrections, which is
+    what the served pricer would have said about those games before they were
+    played. The eval half is not read. The market is not read."""
+    if coeffs is None:
+        coeffs = coefficients()
+    if adj is None or shrink is None:
+        ctx = _load_json(CONTEXT_PATH) or {}
+        adj = float(ctx.get("home_field_runs_adj") or 0.0) if adj is None else adj
+        shrink = float(ctx.get("diff_shrink") or 1.0) if shrink is None else shrink
+    out = {"basis": ("vintage FIT half only (_vintage_cut_index), served coefficients "
+                     "and corrections on dated features; the eval half and the market "
+                     "are not read"),
+           "criteria": "TOTAL_LEVEL_GATE_CRITERIA", "served": SERVE_TOTAL_LEVEL}
+    resolve, _ = _vintage_resolver()
+    gradable = [g for g in (games or []) if resolve(g)]
+    dates = sorted({g.get("date") for g in gradable if g.get("date")})
+    if len(gradable) < (VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES) or len(dates) < 4:
+        out.update({"status": "insufficient vintage coverage", "centre": None,
+                    "n_gradable": len(gradable)})
+        return out
+    cut = dates[_vintage_cut_index(gradable, dates)]
+    fit_g = [g for g in gradable if (g.get("date") or "") < cut]
+    rows = _total_level_rows(fit_g, None, None, None, coeffs, adj, shrink, resolve)
+    fit = fit_total_level([(m, y) for m, y, _ in rows])
+    if not fit or len(rows) < VINTAGE_MIN_FIT_GAMES:
+        out.update({"status": "insufficient fit rows", "centre": None,
+                    "n_fit_games": len(rows)})
+        return out
+    out.update(fit)
+    out.update({"status": "fitted", "split_date": cut, "n_fit_games": len(rows),
+                "fit_first_date": min(g["date"] for g in fit_g),
+                "fit_last_date": max(g["date"] for g in fit_g)})
+    return out
+
+
+# ---------------------------------------------------------------------------
 # the game model
 # ---------------------------------------------------------------------------
 def game_prevention_z(team: dict, starter: dict | None, teams: dict) -> tuple[float, dict]:
@@ -1857,7 +2156,8 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
                        home_adj=None, diff_shrink=None,
                        run_alpha: float | None = None,
                        platt_ab: tuple | None = None,
-                       runline_tie_split: tuple | None = None) -> dict | None:
+                       runline_tie_split: tuple | None = None,
+                       total_level: float | None = None) -> dict | None:
     """The full model view of one game: moneyline, runline, fair total.
 
     Ties do not exist in MLB, so for the MONEYLINE the P(margin = 0) mass is
@@ -1889,7 +2189,18 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
     p_away move together, and the runline, the total and the fair total are
     computed from the uncalibrated margin distribution, because a scale repair
     on p_home says nothing about a mis-shaped margin (the dispersion gate owns
-    those two markets)."""
+    those two markets).
+
+    `total_level` is the BET1 total recentre in runs (SERVE_TOTAL_LEVEL). None
+    resolves the SERVED value, which is None until the flag flips, and resolves
+    it ONLY on the serving path: a caller that brings its own fit-window
+    `tie_home` (every lab) gets no recentre unless it passes one, the
+    `runline_tie_split` rule. A non-zero value prices the Over, the Under and the
+    push off a SECOND pass at lambdas shifted by half the constant each; the
+    margin distribution, and so the moneyline and the runline, still come from
+    the first pass and cannot move. `fair_total` stays lam_home + lam_away, the
+    expected runs; `total_price_mean` is the mean of the distribution the total
+    is priced on."""
     er = expected_runs(home_org, away_org, home_sp=home_sp, away_sp=away_sp,
                        teams=teams, parks=parks, coeffs=coeffs, home_adj=home_adj,
                        diff_shrink=diff_shrink)
@@ -1921,6 +2232,18 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
     # game level after nine counts as is `split_tie_atom`'s call, not this one.
     rl_prices = _runline_prices(atom)
     fair_total = lam_h + lam_a
+    # BET1: the total, and ONLY the total, may be recentred. `dist` above is
+    # already spent on the moneyline and the runline, so nothing below can move
+    # them; with no recentre `tot` is the first pass's array, bit for bit.
+    if total_level is None and tie_home is None:
+        total_level = served_total_level()
+    tl = float(total_level) if total_level else 0.0
+    price_mean = None
+    if tl:
+        lh2 = max(0.25, lam_h + tl / 2.0)
+        la2 = max(0.25, lam_a + tl / 2.0)
+        tot = _score_joint(lh2, la2, r)[1]
+        price_mean = lh2 + la2
 
     def runline_at_split(split) -> dict:
         return _runline_prices(split_tie_atom(dist, th, split))
@@ -1945,6 +2268,10 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
                               if runline_tie_split else None),
         "runline_at_split": runline_at_split,   # callable; see the docstring
         "fair_total": round(fair_total, 2),
+        # BET1. None while no recentre prices this game; otherwise the constant
+        # and the mean of the total distribution the Over and Under are read off.
+        "total_level_runs": round(tl, 4) if tl else None,
+        "total_price_mean": round(price_mean, 2) if price_mean is not None else None,
         "run_dispersion_alpha": (round(float(run_alpha), 5)
                                  if r is not None else None),
         "prob_calibration_ab": ([round(float(platt_ab[0]), 5),
@@ -2821,6 +3148,17 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
         if _ab:
             platt_fit = {"a": round(_ab[0], 5), "b": round(_ab[1], 5),
                          "n": len(_ps)}
+    # BET1: the total recentre, fitted for THESE coefficients and corrections on
+    # the vintage fit half alone. A failure here must not cost the context file
+    # the moneyline depends on, so it degrades to a stated null.
+    total_level_fit = None
+    if n and coeffs:
+        try:
+            total_level_fit = fit_total_level_vintage(games, coeffs=coeffs,
+                                                      adj=adj, shrink=shrink)
+        except Exception:                                      # noqa: BLE001
+            log.warning("betting_model: total level fit failed", exc_info=True)
+            total_level_fit = {"status": "failed", "centre": None}
     ctx = {
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "model_version": MODEL_VERSION,
@@ -2869,6 +3207,20 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
                                   "arms pass, and the fitted pair is expected "
                                   "near identity because diff_shrink already "
                                   "absorbs the response scale in-sample"),
+        # BET1. `total_level` is the SERVED total recentre in runs and stays null
+        # until SERVE_TOTAL_LEVEL flips; `total_level_fitted` is the fit-half
+        # measurement, published either way (both arms and the per-line table).
+        "total_level": ((total_level_fit or {}).get("centre")
+                        if SERVE_TOTAL_LEVEL else None),
+        "total_level_fitted": total_level_fit,
+        "total_level_note": ("one additive constant on the Poisson TOTAL mean, fitted "
+                             "on the vintage fit half by over/under log loss at "
+                             "the fixed lines 7.5 to 10.5; the moneyline and the "
+                             "runline never read it. The model's mean total is "
+                             "right on that half; the constant corrects where a "
+                             "Poisson puts its middle, which is the mean, while "
+                             "real run totals split lower. docs/diamond-betting.md "
+                             "section 7f"),
         "run_dispersion_rows": n_disp_rows,
         "run_dispersion_loglik_nb2": round(ll_nb, 3) if ll_nb is not None else None,
         "run_dispersion_loglik_poisson": round(ll_pois, 3) if ll_pois is not None else None,
@@ -3866,6 +4218,193 @@ def ridge_fit_gate(games=None, *, teams=None, parks=None, starters=None,
     return out
 
 
+def _total_level_split(fit_g, ev_g, teams, parks, starters, resolve) -> dict | None:
+    """One split of TOTAL_LEVEL_GATE_CRITERIA: solve everything on the fit half
+    exactly as the vintage lab does, fit both recentre arms on the same fit
+    half, score the eval half. Working series carry a leading underscore and
+    are popped before anything is published."""
+    coeffs = fit_coefficients(fit_g, teams=teams, parks=parks, starters=starters,
+                              resolve=resolve)
+    if not coeffs:
+        return None
+    tie = _fit_tie_home(fit_g)
+    fit_home_rate = (sum(1 for g in fit_g if g["home_runs"] > g["away_runs"])
+                     / max(1, len(fit_g)))
+    shrink, _ = _solve_diff_shrink(fit_g, teams, parks, starters, coeffs, tie,
+                                   0.0, resolve, None)
+    adj = _solve_home_adj(fit_g, teams, parks, starters, coeffs, tie,
+                          fit_home_rate, shrink, resolve, None)
+    fit_rows = _total_level_rows(fit_g, teams, parks, starters, coeffs, adj, shrink,
+                                 resolve)
+    fit = fit_total_level([(m, y) for m, y, _ in fit_rows])
+    if not fit:
+        return None
+    ev_rows = _total_level_rows(ev_g, teams, parks, starters, coeffs, adj, shrink,
+                                resolve)
+    if len(ev_rows) < 2:
+        return None
+    ev_my = [(m, y) for m, y, _ in ev_rows]
+    out = {"n_fit": len(fit_rows), "n_eval": len(ev_rows),
+           "coefficients": {k: round(coeffs[k], 6) for k in _COEFF_KEYS},
+           "diff_shrink": shrink, "home_field_runs_adj": adj,
+           "fit": fit, "_ev_rows": ev_rows}
+    inc = _total_level_losses(ev_my, 0.0)
+    for arm in ("centre", "mean"):
+        d = fit[arm]
+        ch = _total_level_losses(ev_my, d)
+        tot = _paired_delta(inc, ch)
+        per_line = []
+        for L in TOTAL_LEVEL_LINES:
+            pl = _paired_delta(_total_level_losses(ev_my, 0.0, (L,)),
+                               _total_level_losses(ev_my, d, (L,)))
+            obs = sum(1 for _, y in ev_my if y > L) / len(ev_my)
+            per_line.append({
+                "line": L, "log_loss_delta": pl,
+                "observed_over": round(obs, 4),
+                "model_over_incumbent": round(sum(_poisson_over(m, L)
+                                                  for m, _ in ev_my) / len(ev_my), 4),
+                "model_over_arm": round(sum(_poisson_over(max(0.5, m + d), L)
+                                            for m, _ in ev_my) / len(ev_my), 4)})
+        n_ok = sum(1 for r in per_line
+                   if r["log_loss_delta"].get("delta") is not None
+                   and r["log_loss_delta"]["delta"] >= 0.0)
+        checks = [
+            {"id": "grid_log_loss_superiority", "value": tot.get("t"),
+             "threshold": Z_95_ONE_SIDED,
+             "pass": bool(tot.get("t") is not None and tot["t"] >= Z_95_ONE_SIDED)},
+            {"id": "per_line_not_worse_3_of_4", "value": n_ok, "threshold": 3,
+             "pass": n_ok >= 3},
+        ]
+        out[arm] = {"delta_runs": d, "grid_log_loss_delta": tot,
+                    "per_line": per_line, "checks": checks,
+                    "pass": all(c["pass"] for c in checks)}
+    return out
+
+
+def _total_level_posted_diagnostic(split: dict, games_by_pk: dict) -> dict:
+    """DIAGNOSTIC, NEVER A CRITERION. On eval games whose slate has a cached open
+    capture, the model P(over) at the posted modal line minus the realised Over
+    rate, under the incumbent and both arms. The line is read from the market as
+    a LOCATION to score at; no market probability reaches any arm."""
+    rows = split.get("_ev_rows") or []
+    need = {games_by_pk[pk]["date"] for _, _, pk in rows if pk in games_by_pk}
+    caps = _market_open_by_market(need)
+    arms = {"incumbent": 0.0, "centre": split["centre"]["delta_runs"],
+            "mean": split["mean"]["delta_runs"]}
+    acc = {k: [] for k in arms}
+    ys, mkt = [], []
+    for m, y, pk in rows:
+        g = games_by_pk.get(pk)
+        if g is None:
+            continue
+        ev = (caps.get(g["date"]) or {}).get((g["home_org"], g["away_org"])) or {}
+        spec = ev.get("total")
+        if not spec or spec.get("line") is None:
+            continue
+        line = float(spec["line"])
+        if float(y) == line:
+            continue                                 # a push resolves nothing
+        ys.append(1 if y > line else 0)
+        mkt.append(float(spec["p_over"]))
+        for k, d in arms.items():
+            pmf = _poisson_pmf(max(0.5, m + d), 40)
+            acc[k].append(total_side_probabilities(pmf, line)["p_over"])
+    n = len(ys)
+    if not n:
+        return {"n": 0, "note": "no eval game in this split has a cached open capture"}
+    hit = sum(ys) / n
+    return {
+        "n": n, "is_a_criterion": False,
+        "realised_over_rate": round(hit, 4),
+        "market_fair_over_mean": round(sum(mkt) / n, 4),
+        "model_over_mean": {k: round(sum(v) / n, 4) for k, v in acc.items()},
+        "model_over_minus_realised": {k: round(sum(v) / n - hit, 4)
+                                      for k, v in acc.items()},
+        "n_positive_edge_over": {k: sum(1 for p, q in zip(v, mkt) if p > q)
+                                 for k, v in acc.items()},
+        "note": ("the market is a diagnostic target only; its line is where the "
+                 "total is scored and its de-vigged Over is printed beside the "
+                 "model, and neither enters any arm"),
+    }
+
+
+def total_level_gate(games=None, *, teams=None, parks=None, starters=None,
+                     quantiles=None, log_fn=None) -> dict:
+    """The pre-registered gate on SERVE_TOTAL_LEVEL (TOTAL_LEVEL_GATE_CRITERIA).
+
+    Vintage-gradable sample only. Four splits: the anchored served cut and the
+    three date quantiles. ALL FOUR must pass for `ship`. The CENTRE arm is the
+    candidate; the MEAN arm is graded beside it on identical games so the plan's
+    literal candidate has a number rather than an argument. The anchored split
+    never grades the 305-game fit half; no quantile cut falls before it."""
+    qs = tuple(quantiles if quantiles is not None else DISPERSION_SPLIT_QUANTILES)
+    out = {"criteria": TOTAL_LEVEL_GATE_CRITERIA, "quantiles": list(qs),
+           "lines": list(TOTAL_LEVEL_LINES),
+           "surface": ("gate lab only: no served price reads either arm until "
+                       "SERVE_TOTAL_LEVEL flips")}
+    games = games if games is not None else completed_games()
+    teams = teams if teams is not None else team_inputs()
+    parks = parks if parks is not None else park_index()
+    starters = starters if starters is not None else starter_inputs()
+    if not games or not teams:
+        out.update({"status": "no data", "verdict": "indeterminate", "ship": False,
+                    "served": SERVE_TOTAL_LEVEL})
+        return out
+    reset_vintage_cache()
+    resolve, _ = _vintage_resolver()
+    gradable = [g for g in games if resolve(g)]
+    dates = sorted({g.get("date") for g in gradable if g.get("date")})
+    out["n_gradable"] = len(gradable)
+    if len(gradable) < (VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES) or len(dates) < 4:
+        out.update({"status": "insufficient vintage coverage", "verdict": "indeterminate",
+                    "ship": False, "served": SERVE_TOTAL_LEVEL})
+        return out
+    by_pk = {g.get("game_pk"): g for g in gradable}
+    cuts = [("anchored", dates[_vintage_cut_index(gradable, dates)])]
+    cuts += [(q, dates[max(1, min(int(len(dates) * q), len(dates) - 1))]) for q in qs]
+    grid = []
+    for q, cut in cuts:
+        fit_g = [g for g in gradable if (g.get("date") or "") < cut]
+        ev_g = [g for g in gradable if (g.get("date") or "") >= cut]
+        row = {"split_q": q, "split_date": cut, "n_fit": len(fit_g), "n_eval": len(ev_g)}
+        if len(fit_g) < VINTAGE_MIN_FIT_GAMES or len(ev_g) < VINTAGE_MIN_EVAL_GAMES:
+            row.update({"status": "below the fit/eval floors", "pass": False})
+            grid.append(row)
+            continue
+        sp = _total_level_split(fit_g, ev_g, teams, parks, starters, resolve)
+        if not sp:
+            row.update({"status": "did not price", "pass": False})
+            grid.append(row)
+            continue
+        try:
+            diag = _total_level_posted_diagnostic(sp, by_pk)
+        except Exception:                                      # noqa: BLE001
+            diag = {"n": 0, "note": "the posted-line diagnostic failed"}
+        sp.pop("_ev_rows", None)
+        row.update({"status": "ran", **sp, "posted_line_diagnostic": diag,
+                    "pass": bool(sp["centre"]["pass"])})
+        grid.append(row)
+        if log_fn:
+            log_fn(f"betting_model: total level gate q={q} cut={cut} centre "
+                   f"{sp['centre']['delta_runs']} t={sp['centre']['grid_log_loss_delta'].get('t')} "
+                   f"pass={row['pass']}")
+    ran = [r for r in grid if r.get("status") == "ran"]
+    if not ran:
+        verdict = "indeterminate"
+    elif len(ran) == len(cuts) and all(r["pass"] for r in ran):
+        verdict = "pass"
+    elif any(r["pass"] for r in ran):
+        verdict = "indeterminate"
+    else:
+        verdict = "fail"
+    out.update({"status": "ran" if ran else "insufficient vintage coverage",
+                "grid": grid, "verdict": verdict, "ship": verdict == "pass",
+                "rule": ("the centre arm must pass both checks at all four splits; a "
+                         "mixed grid is INDETERMINATE and the incumbent keeps serving"),
+                "served": SERVE_TOTAL_LEVEL, "mode": "vintage"})
+    return out
+
+
 def _calibration(ps: list[float], ys: list[int], bins: int = 10) -> list[dict]:
     out = []
     for i in range(bins):
@@ -4446,6 +4985,17 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                                          starters=starters, log_fn=log_fn)
     result["ridge_fit"]["fit_window_probe"] = fit_window_probe(
         games, teams=teams, parks=parks, starters=starters)
+
+    # --- the total level gate (BET1, section 7f) --------------------------
+    # Same argument again: a property of this sample. A failure here degrades to
+    # a stated status, because the moneyline gates above must not be lost to it.
+    try:
+        result["total_level"] = total_level_gate(games, teams=teams, parks=parks,
+                                                 starters=starters, log_fn=log_fn)
+    except Exception:                                          # noqa: BLE001
+        log.warning("betting_model: total level gate failed", exc_info=True)
+        result["total_level"] = {"status": "failed", "verdict": "indeterminate",
+                                 "ship": False, "served": SERVE_TOTAL_LEVEL}
 
     result["min_edge_gate"] = min_edge_gate(result["vintage"])
     result["min_edge"] = result["min_edge_gate"]["min_edge"]
@@ -5391,9 +5941,27 @@ if __name__ == "__main__":                                       # pragma: no co
                     help="re-run the section 11a run-dispersion gate on its own")
     ap.add_argument("--ridge", action="store_true",
                     help="re-run the section 7e ridge fit gate and the fit window probe")
+    ap.add_argument("--total-level", action="store_true",
+                    help="re-run the section 7f total level gate (BET1); writes nothing")
     ap.add_argument("--game", nargs=2, metavar=("AWAY", "HOME"), help="price one matchup")
     ap.add_argument("--season", default=None)
     args = ap.parse_args()
+
+    if args.total_level:
+        tg = total_level_gate(log_fn=print)
+        print(f"  total level (7f): verdict={tg.get('verdict')} ship={tg.get('ship')} "
+              f"served={tg.get('served')}")
+        for row in tg.get("grid") or []:
+            if row.get("status") != "ran":
+                print(f"    q={row.get('split_q')} {row.get('status')}")
+                continue
+            for arm in ("centre", "mean"):
+                a = row[arm]
+                gd = a["grid_log_loss_delta"]
+                print(f"    q={row['split_q']} cut={row['split_date']} "
+                      f"n_fit={row['n_fit']} n_eval={row['n_eval']} {arm} "
+                      f"delta={a['delta_runs']} ll_delta={gd.get('delta')} "
+                      f"t={gd.get('t')} pass={a['pass']}")
 
     if args.context:
         print(json.dumps(build_context(season=args.season, log_fn=print), indent=1))

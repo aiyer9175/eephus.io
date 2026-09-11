@@ -562,6 +562,47 @@ def test_the_fair_total_is_the_sum_of_its_own_run_rates():
     assert not bad, f"fair_total disagrees with lam_home + lam_away: {bad[:5]}"
 
 
+def test_a_recentred_total_is_priced_on_the_mean_it_names():
+    """BET1. While SERVE_TOTAL_LEVEL prices a game, `total_price_mean` is the
+    mean the Over and the Under are read off, and it must be the expected total
+    plus the named constant. A board carrying one without the other is two
+    models published side by side."""
+    _d, tb = _team_bets()
+    bad = []
+    for r in tb:
+        m = r.get("model") or {}
+        tl, pm, ft = m.get("total_level_runs"), m.get("total_price_mean"), m.get("fair_total")
+        if tl is None and pm is None:
+            continue
+        if None in (tl, pm, ft) or abs(pm - (ft + tl)) > 0.02:
+            bad.append((r.get("game_pk"), ft, tl, pm))
+    assert not bad, f"total_price_mean is not fair_total + total_level_runs: {bad[:5]}"
+
+
+def test_a_board_whose_totals_lean_says_so():
+    """BET1, the law that would have caught the Over skew. Across a slate the
+    model's Over probability minus the market's, at the posted line, must centre
+    inside betting_export.TOTAL_LEAN_TOLERANCE, or the payload must say it does
+    not and every priced total row must carry the sentence. For five weeks every
+    cached slate leaned Over (26 of 26) and nothing on the page said so."""
+    d, tb = _team_bets()
+    if "total_level_check" not in d:
+        pytest.skip("data/betting.json was built before the BET1 total lean check; "
+                    "the next betting_export build carries it")
+    import betting_export as be
+    chk = be.total_level_check(tb)
+    if not chk["fires"]:
+        return
+    served = d.get("total_level_check") or {}
+    assert served.get("fires"), (
+        f"totals lean {chk['direction']} (mean {chk['mean_lean']:+.4f} over {chk['n']} "
+        "priced totals) and the payload does not say so")
+    missing = [r.get("game_pk") for r in tb
+               for s in ((r.get("total") or {}).get("sides") or [])
+               if not s.get("total_level_caveat")]
+    assert not missing, f"total rows on a leaning slate carry no caveat: {missing[:5]}"
+
+
 def test_the_record_arithmetic_closes():
     """The record is append-only and is the one number on the page that can
     embarrass us, so it has to add up."""
@@ -715,3 +756,40 @@ def test_mutation_a_misaligned_war_series_is_caught(monkeypatch):
     _apply(monkeypatch, "arbitration.json", m)
     with pytest.raises(AssertionError, match="different lengths"):
         _self.test_the_arbitration_ladder_and_the_war_series_are_aligned()
+
+
+def _lean_every_total(d, lean=0.10):
+    """The 2026-09-11 incident shape: every priced total leans Over by about
+    `lean`, the payload claims no lean and no row carries the sentence."""
+    n = 0
+    for i, r in enumerate(d.get("team_bets") or []):
+        for s in ((r.get("total") or {}).get("sides") or []):
+            s.pop("total_level_caveat", None)
+            if s.get("side") == "over" and s.get("market_fair_prob") is not None:
+                s["model_prob"] = min(0.99, s["market_fair_prob"] + lean + 0.01 * (i % 3))
+                n += 1
+    d["total_level_check"] = {"fires": False}
+    return d, n
+
+
+def test_mutation_a_leaning_board_with_no_disclosure_is_caught(monkeypatch):
+    import betting_export as be
+    d0, n = _lean_every_total(_copy.deepcopy(_load("betting.json")))
+    if n < be.TOTAL_LEAN_MIN_GAMES:
+        pytest.skip(f"{n} priced totals on the served slate, under the "
+                    f"{be.TOTAL_LEAN_MIN_GAMES}-game floor the check needs")
+    _apply(monkeypatch, "betting.json", lambda d: _lean_every_total(d)[0])
+    with pytest.raises(AssertionError, match="does not say so"):
+        _self.test_a_board_whose_totals_lean_says_so()
+
+
+def test_mutation_a_recentred_total_on_the_wrong_mean_is_caught(monkeypatch):
+    def m(d):
+        if d.get("team_bets"):
+            mod = d["team_bets"][0]["model"]
+            mod["total_level_runs"] = -0.25
+            mod["total_price_mean"] = (mod.get("fair_total") or 9.0) + 0.5
+        return d
+    _apply(monkeypatch, "betting.json", m)
+    with pytest.raises(AssertionError, match="total_price_mean"):
+        _self.test_a_recentred_total_is_priced_on_the_mean_it_names()

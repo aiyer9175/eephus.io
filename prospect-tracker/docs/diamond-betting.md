@@ -2454,6 +2454,118 @@ to the market open on all three, and the total loses to its own base rate.
 
 ---
 
+## 7f. The total level: why most value totals are Overs (BET1, 2026-09-11)
+
+The owner asked, on 2026-09-11, whether a board where most edge and value bets
+are Overs is a bug or a feature. **It is a bug, it is systematic, and its
+mechanism is not the one the 2026-09-05 plan (B-TOTAL-LEVEL) assumed.**
+
+### The skew is on every slate
+
+Every cached open capture in `.cache/odds/` re-priced on the served context
+coefficients and the dated leaderboard vintage for its slate, actual starters
+standing in for the probables (26 slates with a completed game, 425 games):
+
+| Basis | n | mean fair total minus line | positive-edge Over / Under | at the 0.06 floor |
+|---|---|---|---|---|
+| served 2026-09-11 board | 15 | +0.893 (median +0.85) | 13 / 2 | 12 / 0 |
+| every cached slate, re-priced | 425 | +0.604 (median +0.65), positive on 26 of 26 slates | 323 / 102 | 232 / 44 |
+| calibration ledger as served, inverted through the served Poisson | 100 | +0.652, positive on 18 of 18 slates | 155 / 46 | 112 / 19 |
+
+### The mechanism, decomposed on the vintage FIT half only
+
+The 305 gradable games before the 2026-08-01 split, priced by the served
+coefficients on dated features, against the runs actually scored. The market is
+not read here.
+
+| Piece | Measured |
+|---|---|
+| mean model total | 8.8649 |
+| mean actual total | 8.8066, so the LEVEL bias is **+0.058 runs** |
+| intercept 2*b0 + b4 | +9.0023 |
+| offense, prevention, park terms | -0.0041, -0.0807, -0.0526 (they pull the level DOWN) |
+| in-sample over all 2,200 games | 8.9632 against 8.9632, zero by the OLS identity |
+| actual total, fit half | median 8, var/mean 2.347 |
+
+`b0` is not too high and the prevention and park terms do not push the level
+up. What is wrong is the Poisson CENTRE. A Poisson with the right mean puts its
+middle at that mean; real run totals, skewed by blowouts, split about a run
+lower, and a book posts its line where they split. So a correctly levelled
+Poisson compares its mean with the market's median and calls the Over:
+
+| Line | observed Over | served Poisson | Poisson recentred to the true mean | NB2 (alpha 0.3366 fitted on the same half) |
+|---|---|---|---|---|
+| 7.5 | 0.5344 | 0.6485 | 0.6416 | 0.5570 |
+| 8.5 | 0.4328 | 0.5206 | 0.5131 | 0.4699 |
+| 9.5 | 0.3869 | 0.3958 | 0.3885 | 0.3895 |
+| 10.5 | 0.3213 | 0.2849 | 0.2785 | 0.3178 |
+
+A mean recentre moves nothing. A total-scoped dispersion fixes most of every
+line. The NB2 column is a fit-half DESCRIPTION, not a graded result; it is the
+pointer for B-TOTAL stage 2.
+
+### The flag, and its pre-registered gate
+
+`SERVE_TOTAL_LEVEL` (default False) is one additive constant on the Poisson
+total mean, fitted on the vintage fit half by over/under log loss at the fixed
+lines 7.5, 8.5, 9.5 and 10.5. It prices the TOTAL ONLY: the margin, the
+moneyline and the runline come from the unshifted lambdas and are
+byte-identical, which `test_betting_total_level.py` asserts at the model and at
+the export. `fair_total` stays the expected runs; `total_price_mean` names the
+mean the total is priced on. On the served pricer the fitted constant is
+**-0.2315 runs** (mean arm -0.0583).
+
+The gate was written into `betting_model.TOTAL_LEVEL_GATE_CRITERIA` before any
+eval-window outcome was scored: the centre arm must beat the incumbent on the
+grid's summed log loss at t >= 1.645 AND be no worse at three of the four lines,
+at the anchored split and at date quantiles 0.6, 0.7 and 0.8, all four or
+nothing. Result, `python betting_model.py --total-level`, 2026-09-11:
+
+| split | cut | n_fit | n_eval | centre delta | grid log loss delta | t | pass |
+|---|---|---|---|---|---|---|---|
+| anchored | 2026-08-01 | 305 | 548 | -0.2731 | -0.000053 | -0.005 | no |
+| 0.6 | 2026-08-16 | 507 | 346 | -0.1949 | -0.007571 | -0.714 | no |
+| 0.7 | 2026-08-22 | 587 | 266 | -0.1754 | -0.008713 | -0.797 | no |
+| 0.8 | 2026-08-29 | 679 | 174 | -0.1771 | -0.017736 | -1.309 | no |
+
+**Verdict FAIL; the flag stays False.** At every split the recentre improves
+Over 7.5 (t +3.60 at the anchored split) and damages Over 10.5 (t -3.48): one
+shift cannot fix a wrong shape. The mean arm is identically zero inside the lab,
+because the lab refits OLS on each fit half. The posted-line diagnostic (never a
+criterion) says the same thing from the other side: on the 292 anchored eval
+games with an open capture the incumbent's Over sits +0.044 above the realised
+rate and the recentre +0.008.
+
+What flipping it would do, measured on the served constant: the moneyline and
+runline are unchanged on every slate; on the 2026-09-11 board positive-edge
+totals go 13/2 to 12/3, floor-clearing 12/0 to 7/2, and the Pick of the Day
+(ATL moneyline -178) does not change; across the 26 cached slates positive-edge
+totals go 323/102 to 281/144, floor-clearing 232/44 to 171/71, 42 games change
+their positive-edge side, and the headline slot changes on 6 slates. To flip:
+the gate ships, this section and the tripwire move together, `MODEL_VERSION` is
+bumped, and `--context` is re-run so `total_level` is written.
+
+### The invariant that would have caught it
+
+`betting_export.total_level_check` runs on every build. Per priced total it
+takes the Over's model probability minus its de-vigged market probability at the
+posted line and averages over the slate; it FIRES when at least 8 totals are
+priced, the mean lean exceeds 0.03 (the canonical total bias band B-TOTAL
+already names) and it is distinguishable from zero at one-sided 95%. When it
+fires the build log warns, the payload carries `total_level_check` with the
+sentence, every priced total row carries `total_level_caveat`, and the page
+shows it on the board head, on a total's best-value badge and on a total slot.
+The market is a diagnostic target here: nothing priced reads the block. The
+run-scale gap (`mean_gap_runs`) rides beside it as description only, because it
+reads about +0.6 on a model whose level is perfect.
+
+It fires on the 2026-09-11 board (mean lean +0.0998, t 4.79) and on 22 of the 26
+cached slates; with the unserved recentre it would fire on 11.
+`test_served_invariants.test_a_board_whose_totals_lean_says_so` holds every
+built board to it, with a mutation test on the incident shape.
+
+---
+
 ## 8. The append-only record
 
 `data/betting_record.json` is an array. `betting_export.write_record` proves
