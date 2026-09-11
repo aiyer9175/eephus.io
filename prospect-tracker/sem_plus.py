@@ -319,6 +319,9 @@ def starter_row(s: Starter) -> dict:
         "k_bb_pct": _round(s.rates.get("k_bb_pct"), 4),
         "gb_pct": _round(s.rates.get("gb_pct"), 4),
         "ip_per_gs": _round(s.rates.get("ip_per_gs"), 2),
+        # NOT the standard FIP (audit F05-02): the sample-shrunk, starter-pool
+        # skill FIP SEM+ is a ratio of. Key kept for compatibility; the board
+        # labels it "Skill FIP" (see rem_plus.reliever_row).
         "fip": _round(s.fip_skill, 2),
         "era": _round(s.rates.get("era"), 2),
         "hr9": _round(_safe_div((s.hr or 0.0) * 9.0, s.ip), 2),

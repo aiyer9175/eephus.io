@@ -189,6 +189,17 @@
   function gloss(label, term) {
     return '<span class="g-term" data-gl="' + esc(term) + '">' + esc(label) + "</span>";
   }
+  // Header tooltip for the served `fip` field on both pitcher boards. One
+  // sentence builder so the reliever and starter wording cannot drift apart:
+  // only the pool and the index it feeds differ. No served number is typed
+  // here; the column's own cells carry the values.
+  function skillFipTitle(pool, index) {
+    return "Skill FIP, the sample-shrunk FIP that " + index + " is built on. Strikeout, walk,"
+      + " hit-batter and home-run rates are each pulled toward the " + pool + " pool by sample"
+      + " size, and the constant is solved on " + pool + "s rather than the whole league, so this"
+      + " is a skill estimate and not the standard FIP of the pitcher's actual line. It sits"
+      + " furthest from standard FIP on short samples.";
+  }
   function wireGlossary(el) {
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(el); } catch (e) { /* glossary optional */ }
   }
@@ -404,7 +415,14 @@
     { key: "k_pct", label: "K%", fmt: fPct, num: true },
     { key: "bb_pct", label: "BB%", fmt: fPct, num: true, asc: true },
     { key: "k_bb_pct", label: "K-BB%", fmt: fPct, num: true },
-    { key: "fip", label: "FIP", fmt: f2, num: true, asc: true },
+    // NOT the standard FIP. The payload key is `fip` for compatibility
+    // (build_site's current-lines payload and assets/fa.js read it), but the
+    // value is rem_plus.fip_skill: every component rate shrunk toward the
+    // RELIEVER pool by sample size, plus a reliever-pool constant. It is the
+    // number REM+ is a ratio of, so the header names it Skill FIP and links
+    // the skill_fip glossary entry, never the standard `fip` one.
+    { key: "fip", label: "Skill FIP", term: "skill_fip", fmt: f2, num: true, asc: true,
+      title: skillFipTitle("reliever", "REM+") },
     { key: "swstr_pct", label: "SwStr%", fmt: fPct, num: true },
     { key: "era", label: "ERA", fmt: f2, num: true, asc: true },
     { key: "gmli", label: "gmLI", term: "gmli", fmt: f2, num: true },
@@ -944,7 +962,7 @@
     if (b.rho_rem_plus == null) return "";
     return '<div class="mlbstats-scorecard">'
       + '<span class="pal-sc-stat">' + gloss("REM+", "rem_plus") + ' forward &rho; <b>'
-      + b.rho_rem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? EM_DASH : b.rho_fip)
+      + b.rho_rem_plus + '</b><span class="proj-dim"> vs raw FIP ' + (b.rho_fip == null ? EM_DASH : b.rho_fip)
       + ", ERA " + (b.rho_era == null ? EM_DASH : b.rho_era) + "</span></span>"
       + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
       + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
@@ -1325,7 +1343,11 @@
     { key: "bb_pct", label: "BB%", fmt: fPct, num: true, asc: true },
     { key: "k_bb_pct", label: "K-BB%", fmt: fPct, num: true },
     { key: "gb_pct", label: "GB%", fmt: fPct, num: true },
-    { key: "fip", label: "FIP", term: "fip", fmt: f2, num: true, asc: true },
+    // Same field, same caveat as the reliever board: sem_plus.fip_skill, shrunk
+    // toward the STARTER pool, not the standard FIP the `fip` glossary entry
+    // defines. That entry used to be wired here.
+    { key: "fip", label: "Skill FIP", term: "skill_fip", fmt: f2, num: true, asc: true,
+      title: skillFipTitle("starter", "SEM+") },
     { key: "era", label: "ERA", term: "era", fmt: f2, num: true, asc: true },
     { key: "hr9", label: "HR/9", fmt: f2, num: true, asc: true },
   ];
@@ -1365,7 +1387,7 @@
     if (b.rho_sem_plus == null) return "";
     return '<div class="mlbstats-scorecard">'
       + '<span class="pal-sc-stat">' + gloss("SEM+", "sem_plus") + ' forward &rho; <b>'
-      + b.rho_sem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? EM_DASH : b.rho_fip)
+      + b.rho_sem_plus + '</b><span class="proj-dim"> vs raw FIP ' + (b.rho_fip == null ? EM_DASH : b.rho_fip)
       + ", ERA " + (b.rho_era == null ? EM_DASH : b.rho_era) + "</span></span>"
       + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
       + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"

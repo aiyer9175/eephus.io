@@ -6400,8 +6400,14 @@ def build_swing_delta_payload() -> dict | None:
 # no stats of their own (the FA class board is a market payload). Every field is
 # lifted verbatim from a shipped leaderboard; nothing is recomputed. NOTE what is
 # NOT here: this site DERIVES no wRC+ and no xFIP, so neither is derived into
-# this payload - HEM+ (offense-rate index) and FIP/ERA are the numbers the site
-# actually computes.
+# this payload - HEM+ (offense-rate index), Skill FIP and ERA are the numbers the
+# site actually computes.
+#
+# The `fip` key is NOT the standard FIP (audit F05-02). It is the boards' `fip`
+# field, which rem_plus.reliever_row / sem_plus.starter_row fill from
+# fip_skill: component rates shrunk toward the ROLE pool by sample size plus a
+# role-pool constant. The key keeps its name because assets/fa.js reads it; the
+# note below and the tile label say which number it is.
 #
 # Sharpened 2026-07-31, because the MLB Stats hitter board now shows a wRC+
 # column and a reader could otherwise read "no wRC+" as contradicting it. Both
@@ -6458,8 +6464,12 @@ def build_current_lines_payload() -> dict | None:
         "note": ("Current-season MLB lines lifted verbatim from the eephus.io "
                  "leaderboards. This site derives no wRC+ and no xFIP of its "
                  "own, so neither is served here: HEM+ is the offense-rate "
-                 "index it does compute and FIP / SEM+ / REM+ are the "
-                 "run-prevention numbers. The MLB Stats hitter board does show "
+                 "index it does compute, and Skill FIP, SEM+ and REM+ are the "
+                 "run-prevention numbers. The fip field is Skill FIP, the "
+                 "sample-shrunk FIP with a starter-pool or reliever-pool "
+                 "constant that SEM+ and REM+ are built on, and not the "
+                 "standard FIP; the key keeps its name so existing readers do "
+                 "not break. The MLB Stats hitter board does show "
                  "a wRC+ column, but that figure is MLB's published wRC+ "
                  "displayed verbatim rather than anything this site derives, "
                  "and it is deliberately not carried in this payload."),

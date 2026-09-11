@@ -1448,9 +1448,21 @@
   //
   // WHAT IS NOT HERE, deliberately: this site computes no wRC+ and no xFIP, so
   // neither is shown. HEM+ is the offense-rate index the site actually has (100
-  // = league average hitter), SEM+/REM+ and FIP are the run-prevention numbers,
-  // and season eWAR lives on the MLB player card rather than the leaderboards.
-  // Inventing either number to fill the row would be worse than its absence.
+  // = league average hitter), SEM+/REM+ and Skill FIP are the run-prevention
+  // numbers, and season eWAR lives on the MLB player card rather than the
+  // leaderboards. Inventing either number to fill the row would be worse than
+  // its absence.
+  //
+  // `line.fip` is NOT the standard FIP. It is the boards' served `fip` field,
+  // which is sem_plus / rem_plus fip_skill: every component rate shrunk toward
+  // the pitcher's ROLE pool by sample size, plus a role-pool constant. The key
+  // keeps its name for compatibility, so the tile label and tooltip are what
+  // tell the reader which number this is. The same shrink runs at every sample
+  // size, which is why the PITCHER below-threshold note no longer claims the
+  // rate stats are shrunk toward league average: K%, BB% and ERA on this tile
+  // are the raw line, and only Skill FIP and SEM+/REM+ are shrunk, toward the
+  // role pool, qualified or not. The hitter wording was not re-audited here and
+  // is left as it was.
   function currentLineHTML(line, meta) {
     if (!line) return "";
     const cell = (label, val, title) => val == null || val === "" ? ""
@@ -1468,15 +1480,21 @@
     } else {
       tiles = cell("IP", line.ip == null ? null : Number(line.ip).toFixed(1))
         + cell("ERA", line.era == null ? null : Number(line.era).toFixed(2))
-        + cell("FIP", line.fip == null ? null : Number(line.fip).toFixed(2), "FIP - this site does not compute xFIP.")
+        + cell("Skill FIP", line.fip == null ? null : Number(line.fip).toFixed(2),
+               `Skill FIP - the sample-shrunk FIP that ${line.side === "sp" ? "SEM+" : "REM+"} is built on: strikeout, walk, hit-batter and home-run rates pulled toward the ${line.side === "sp" ? "starter" : "reliever"} pool by sample size, with a constant solved on that pool. It is not the standard FIP of his actual line. This site does not compute xFIP.`)
         + cell("K%", pct(line.kPct)) + cell("BB%", pct(line.bbPct))
         + cell(line.side === "sp" ? "SEM+" : "REM+", line.side === "sp" ? line.sem : line.rem,
-               line.side === "sp" ? "SEM+ - starter run-prevention skill index, 100 = league average."
-                                  : "REM+ - reliever skill index, 100 = league average.");
+               line.side === "sp" ? "SEM+ - starter run-prevention skill index, 100 = the average starter."
+                                  : "REM+ - reliever skill index, 100 = the average reliever.");
     }
     if (!tiles) return "";
     const qual = line.qual === false
-      ? ' <span class="fa-sub">(below the qualifying threshold - the rate stats are shrunk toward league average)</span>' : "";
+      ? (line.side === "hit"
+        ? ' <span class="fa-sub">(below the qualifying threshold - the rate stats are shrunk toward league average)</span>'
+        : ' <span class="fa-sub">(below the qualifying threshold - a small sample: ERA, K% and BB% are the raw line, while Skill FIP and '
+          + (line.side === "sp" ? "SEM+ are shrunk toward the starter" : "REM+ are shrunk toward the reliever")
+          + ' average, more so the smaller the sample)</span>')
+      : "";
     return `<h3>${esc(meta.season || "")} season to date</h3>
       <div class="mlbp-tiles fa-current-tiles">${tiles}</div>
       <p class="fa-note">Lifted verbatim from the eephus.io MLB leaderboards${meta.asOf ? `, data as of ${esc(meta.asOf)}` : ""}.${qual}</p>`;

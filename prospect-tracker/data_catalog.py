@@ -284,14 +284,19 @@ ARTIFACTS = (
         "title": "Starter leaderboards",
         "what": "Season starter board with SEM+, RIV+ and the team Rotation+ rollup.",
         "cadence": "monthly", "stability": STABLE,
-        "pinned_by": "test_starter_export_contract.py", "note": "",
+        "pinned_by": "test_starter_export_contract.py",
+        # F05-02: the key cannot be renamed (build_site and assets/fa.js read
+        # it), so the catalog says what it holds.
+        "note": ("`fip` is Skill FIP, the sample-shrunk FIP with a starter-pool "
+                 "constant that SEM+ is built on, not the standard FIP."),
     },
     {
         "file": "bullpen_leaderboards.json", "group": "mlb",
         "title": "Bullpen leaderboards",
         "what": "Season reliever board with REM+, leverage context and the team Bullpen+ rollup.",
         "cadence": "monthly", "stability": STABLE, "pinned_by": "test_bullpen_export.py",
-        "note": "",
+        "note": ("`fip` is Skill FIP, the sample-shrunk FIP with a reliever-pool "
+                 "constant that REM+ is built on, not the standard FIP."),
     },
     {
         "file": "pal.json", "group": "mlb",

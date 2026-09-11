@@ -1333,12 +1333,13 @@
    ],
    "priority": 12,
    "definition": "Fielding-Independent Pitching. ERA-scaled, using only K, BB, HBP, HR.",
-   "methodology": "What a pitcher's ERA would be with league-average luck on balls in play. ~4.00 is MLB average. Use FIP- for the 100-anchored version.",
+   "methodology": "What a pitcher's ERA would be with league-average luck on balls in play. ~4.00 is MLB average. Use FIP- for the 100-anchored version. The MLB Stats bullpen and starter boards do not show this statistic: their Skill FIP column is a sample-shrunk version with a role-pool constant (see Skill FIP).",
    "formula": "FIP = ((13·HR) + 3·(BB+HBP) − 2·K) / IP + constant",
    "seeAlso": [
     "era",
     "xfip",
-    "fip_minus"
+    "fip_minus",
+    "skill_fip"
    ],
    "shelf": "industry",
    "origin": "Industry metric. Created by Tom Tango, building on Voros McCracken's DIPS insight; popularized by FanGraphs."
@@ -5062,7 +5063,8 @@
    "seeAlso": [
     "bullpen_plus",
     "gmli",
-    "wpa"
+    "wpa",
+    "skill_fip"
    ],
    "shelf": "ark",
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
@@ -5280,7 +5282,8 @@
    "seeAlso": [
     "rem_plus",
     "sem_plus_3yr",
-    "fip"
+    "fip",
+    "skill_fip"
    ],
    "shelf": "ark",
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
@@ -6806,6 +6809,31 @@
     "jaws"
    ],
    "shelf": "foundation"
+  },
+  {
+   "id": "skill_fip",
+   "term": "Skill FIP (sample-shrunk FIP)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Skill FIP",
+    "sample-shrunk FIP",
+    "shrunk FIP"
+   ],
+   "priority": 21,
+   "definition": "The FIP-scale number on the MLB Stats bullpen and starter boards (the Skill FIP column) and on a free agent's current-season line. It is not the standard FIP. Each of the four FIP inputs, the strikeout, walk, hit-batter and home-run rates per batter faced, is pulled toward the average of the pitcher's own ROLE pool (relievers on the bullpen board, starters on the starter board) by sample size, and the constant is solved on that role pool rather than on the whole league. The result is a skill estimate: it sits closer to the role average than the pitcher's actual line, most of all over a short sample. REM+ and SEM+ are ratios of it. Lower is better.",
+   "methodology": "Each rate is shrunk with the same empirical-Bayes recipe: shrunk rate = (BF x rate + k x pool rate) / (BF + k), where BF is the pitcher's batters faced and k is a pseudo-count of 70 batters for strikeouts, 170 for walks, 170 for hit batters and 400 for home runs, so the home-run rate is regressed hardest. The shrunk rates are turned back into expected counts over the pitcher's own batters faced and divided by his own innings with the standard FIP weights (13 per home run, 3 per walk or hit batter, minus 2 per strikeout). The constant is solved so that the unshrunk FIP of the whole role pool equals that pool's ERA: relievers with 50 or more batters faced set the reliever constant, and starters with 20 or more innings set the starter constant. The result is floored at 1.00.\n\nHow it differs from standard FIP. Standard FIP, as FanGraphs publishes it, uses the pitcher's actual counts with no shrink and one league-wide constant per season. The two move toward each other as the sample grows, but a reliever season rarely reaches the 400 batters the home-run term needs to carry even half its own weight, so a reliever's home-run rate stays pulled toward the pool even over a full year. The reliever and starter constants also differ from each other and from the league constant, so a Skill FIP on the bullpen board and one on the starter board do not sit on exactly the same baseline.\n\nWhy it is served. REM+ is 100 times the reliever-pool average Skill FIP divided by the pitcher's own, and SEM+ is the same on the starter pool, so this column is the number those indexes are built from, shown so each index can be checked against it. In the data files the field is still named fip so existing readers do not break; the column label and this entry say what it holds. For the standard statistic, see FIP.",
+   "formula": "shrunk rate = (BF x rate + k x role-pool rate) / (BF + k); k = 70 (K), 170 (BB), 170 (HBP), 400 (HR) batters faced\nSkill FIP = max(1.00, (13 x HR' + 3 x (BB' + HBP') - 2 x K') / IP + role-pool constant), with each X' = shrunk rate x BF\nrole-pool constant = pool ERA - (13 x HR + 3 x (BB + HBP) - 2 x K) / IP, summed over the unshrunk role pool",
+   "example": "Take a hypothetical reliever pool at 22 percent strikeouts, 9 percent walks, 1 percent hit batters and 2.5 percent home runs per batter faced, with a 3.10 constant. A reliever who faces 60 batters over 15 innings with 24 strikeouts, 3 walks, no hit batters and no home runs has an unshrunk FIP of 0.50 on that constant, and a Skill FIP of 2.85: 60 batters is too few for the strikeout rate to stand alone, and with no home runs yet the 400-batter home-run term pulls him most of the way to the pool. The same rates over 240 batters and 60 innings read 1.89, nearer his line but still well above it.",
+   "seeAlso": [
+    "fip",
+    "rem_plus",
+    "sem_plus"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric component, created by Noah J. Dengler, original to eephus.io. Built on FIP (Tom Tango) with an empirical-Bayes shrink toward the role pool."
   }
  ]
 }

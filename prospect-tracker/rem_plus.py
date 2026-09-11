@@ -466,6 +466,10 @@ def reliever_row(r: Reliever) -> dict:
         "k_pct": _round(r.rates.get("k_pct"), 4),
         "bb_pct": _round(r.rates.get("bb_pct"), 4),
         "k_bb_pct": _round(r.rates.get("k_bb_pct"), 4),
+        # NOT the standard FIP (audit F05-02): the sample-shrunk, reliever-pool
+        # skill FIP REM+ is a ratio of. The key stays `fip` because build_site's
+        # current-lines payload and assets/fa.js read it; the boards label it
+        # "Skill FIP" and link the skill_fip glossary entry.
         "fip": _round(r.fip_skill, 2),
         "swstr_pct": _round(r.rates.get("swstr_pct"), 4),
         "era": _round(r.rates.get("era"), 2),
