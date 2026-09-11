@@ -2988,6 +2988,35 @@ of 4 lines. Fit >= 100, eval >= 50. Market diagnostics are never criteria.
 only by the owner. The same flip checklist as 7f and 7g: `MODEL_VERSION`, the
 tripwire test, `--context`.
 
+### Result (run 2026-09-11, once): INDETERMINATE, and the Poisson total keeps serving
+
+`python betting_model.py --total-calibration`, vintage-gradable games only:
+
+| split | cut | fit / eval | a | b | grid log loss delta | t | lines not worse | pass |
+|---|---|---|---|---|---|---|---|---|
+| anchored | 2026-08-01 | 305 / 548 | 0.472 | -0.246 | +0.0112 | 0.71 | 2 of 4 | no |
+| 0.6 | 2026-08-16 | 507 / 346 | 0.564 | -0.207 | +0.0298 | 1.67 | 4 of 4 | yes |
+| 0.7 | 2026-08-22 | 587 / 266 | 0.554 | -0.198 | +0.0377 | 1.73 | 4 of 4 | yes |
+| 0.8 | 2026-08-29 | 679 / 174 | 0.551 | -0.201 | +0.0204 | 0.75 | 2 of 4 | no |
+
+Better than the Poisson on the point estimate at every split, resolved at two of
+four, so under the rule fixed before the run the grid is INDETERMINATE and nothing
+ships. The fitted map is stable across the windows (a 0.47 to 0.56, b -0.20 to
+-0.25) and it fixes the tails (Over 10.5 at the 0.7 split: Poisson 0.267, mapped
+0.317, observed 0.350). What it cannot do is the middle of the anchored window: it
+prices Over 8.5 at 0.448 against 0.485 observed. Two things are visible in the grid
+and neither is a criterion: the late-season eval half runs hotter than any fit half
+(Over 7.5 observed 0.615 after 2026-08-29), and the misses are where the run
+environment moved. A run-environment term is a feature, and features enter only
+dark, through their own section.
+
+**Where the three total repairs leave the Over lean.** The lean is a shape defect
+(7f). A level shift (7f), a dispersion (7g) and a two-parameter survival map (7h)
+each beat the Poisson on the point estimate and none clears its gate at every
+split. The lean is DISCLOSED on every affected row and not repaired; the next
+admissible attempt is a dark run-environment feature with its own section, or more
+eval games under the same 7h criteria (no re-fit of the rule).
+
 ---
 
 ## 8. The append-only record

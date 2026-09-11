@@ -144,3 +144,45 @@ def test_the_gate_criteria_name_the_grid_the_scope_and_all_four_splits():
     for want in ("7.5, 8.5, 9.5, 10.5", "TOTAL only", "ALL FOUR", "moneyline",
                  "never criteria"):
         assert want in c, want
+
+
+# ---------------------------------------------------------------------------
+# section 7h: the two-parameter survival map
+# ---------------------------------------------------------------------------
+def test_the_survival_map_is_not_served_and_a_stray_key_is_ignored(tmp_path, monkeypatch):
+    assert bm.SERVE_TOTAL_CALIBRATION is False
+    monkeypatch.setattr(bm, "CONTEXT_PATH", _ctx(tmp_path, total_calibration=[0.5, -0.2]))
+    assert bm.served_total_calibration() is None
+    assert "total_calibration_ab" not in bm.game_probabilities("KCR", "CHC", **KW)
+
+
+def test_the_survival_map_is_a_distribution_and_matches_platt_at_half_lines():
+    tot = bm._total_pmf(4.4, 4.4, None)
+    m = bm.survival_map_pmf(tot, 0.55, -0.2)
+    assert sum(m) == pytest.approx(1.0, abs=1e-9)
+    assert all(x >= 0 for x in m)
+    for L in (6.5, 7.5, 8.5, 9.5, 10.5):
+        assert bm._pmf_over(m, L) == pytest.approx(
+            bm.apply_platt(bm._pmf_over(tot, L), 0.55, -0.2), abs=1e-9)
+
+
+def test_the_identity_map_is_the_poisson_total():
+    tot = bm._total_pmf(4.1, 4.9, None)
+    m = bm.survival_map_pmf(tot, 1.0, 0.0)
+    for a, b in zip(tot, m):
+        assert a == pytest.approx(b, abs=1e-12)
+
+
+def test_the_map_moves_the_total_and_nothing_else():
+    base = bm.game_probabilities("KCR", "CHC", tie_home=0.49, **KW)
+    moved = bm.game_probabilities("KCR", "CHC", tie_home=0.49, total_cal=(0.55, -0.2), **KW)
+    for k in ML_RL_KEYS:
+        assert base[k] == moved[k], k
+    assert moved["over"](8.5) < base["over"](8.5)
+    assert moved["total_calibration_ab"] == [0.55, -0.2]
+
+
+def test_a_non_positive_slope_is_refused():
+    assert bm._total_cal_pair((0.0, 0.1)) is None
+    assert bm._total_cal_pair((-0.3, 0.1)) is None
+    assert bm._total_cal_pair((0.5, -0.2)) == (0.5, -0.2)

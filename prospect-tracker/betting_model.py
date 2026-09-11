@@ -866,6 +866,26 @@ TOTAL_DISPERSION_GATE_CRITERIA = (
 # `--context` so `total_dispersion_alpha` is written.
 SERVE_TOTAL_DISPERSION = False
 
+# ── THE TOTAL'S MEDIAN (section 7h, 2026-09-11) ─────────────────────────────
+# Two parameters on the Poisson SURVIVAL function: S'(k) = sigmoid(a*logit(S(k))
+# + b) for every integer k, a valid distribution whenever a > 0. At a half-point
+# line this is exactly the Platt map of P(over), so (a, b) are fitted with
+# `fit_platt` on the fit half's pooled grid outcomes. The margin pass, the
+# moneyline and the runline cannot move.
+TOTAL_CALIBRATION_GATE_CRITERIA = (
+    "docs/diamond-betting.md section 7h: S'(k) = sigmoid(a*logit(S(k)) + b) on the "
+    "served Poisson TOTAL survival function at unshifted lambdas; (a, b) by MLE of "
+    "the Over outcomes pooled over (7.5, 8.5, 9.5, 10.5) on each split's fit half "
+    "(fit_platt); a <= 0 refused. Splits: anchored plus date quantiles 0.6, 0.7, "
+    "0.8, each refitting the pricer on its own fit half. On each eval half BOTH, at "
+    "ALL FOUR splits: (1) paired grid log loss, Poisson minus candidate, > 0 at "
+    "one-sided t >= 1.645; (2) per-line log loss not worse on the point estimate at "
+    ">= 3 of 4 lines. Fit >= 100, eval >= 50. The moneyline and the runline may not "
+    "move. Market diagnostics are never criteria."
+)
+# Served only from the 7h gate and only by the owner; the 7f flip checklist.
+SERVE_TOTAL_CALIBRATION = False
+
 
 # ---------------------------------------------------------------------------
 # small io helpers
@@ -1951,6 +1971,153 @@ def fit_total_dispersion_vintage(games, *, coeffs=None, adj=None, shrink=None) -
     return out
 
 
+def _total_cal_pair(v) -> tuple[float, float] | None:
+    """An (a, b) survival-map pair from a context value, or None. a must be
+    positive (a non-positive slope is not a survival function) and both finite."""
+    try:
+        a, b = float(v[0]), float(v[1])
+    except (TypeError, ValueError, IndexError, KeyError):
+        return None
+    if not (math.isfinite(a) and math.isfinite(b)) or a <= 0 or abs(a) > 50 or abs(b) > 50:
+        return None
+    return a, b
+
+
+def served_total_calibration() -> tuple[float, float] | None:
+    """The SERVED 7h map, or None for the Poisson total. Flag checked first."""
+    if not SERVE_TOTAL_CALIBRATION:
+        return None
+    ctx = _load_json(CONTEXT_PATH) or {}
+    return _total_cal_pair(ctx.get("total_calibration"))
+
+
+def fitted_total_calibration() -> dict | None:
+    """The MEASUREMENT block (`total_calibration_fitted`), published either way."""
+    ctx = _load_json(CONTEXT_PATH) or {}
+    blk = ctx.get("total_calibration_fitted")
+    if not isinstance(blk, dict) or _total_cal_pair((blk.get("a"), blk.get("b"))) is None:
+        return None
+    return blk
+
+
+def survival_map_pmf(tot: list[float], a: float, b: float) -> list[float]:
+    """The pmf implied by S'(k) = sigmoid(a*logit(S(k)) + b), S(k) = P(total > k).
+
+    S(-1) = 1 maps to 1 and an exact 0 in the far tail maps to 0, so the result is
+    a distribution on the same support; with a > 0 the map is monotone, so every
+    cell is non-negative."""
+    n = len(tot)
+    surv = []
+    rem = 1.0
+    for k in range(n):
+        rem -= tot[k]
+        surv.append(max(0.0, rem))
+    out = []
+    prev = 1.0
+    for k in range(n):
+        s = surv[k]
+        if s <= 0.0:
+            s2 = 0.0
+        elif s >= 1.0:
+            s2 = 1.0
+        else:
+            # An UNCLIPPED logit: `_logit` floors at _PROB_EPS, which would flatten
+            # every survival value in the tail to one number and pile the tail's
+            # mass onto a single cell.
+            sc = min(max(s, 1e-300), 1.0 - 1e-16)
+            s2 = _sigmoid(a * math.log(sc / (1.0 - sc)) + b)
+        out.append(max(0.0, prev - s2))
+        prev = s2
+    if prev > 0.0 and out:
+        out[-1] += prev                        # the tail beyond the support
+    return out
+
+
+def _total_cal_samples(rows, lines=None) -> tuple[list[float], list[int]]:
+    """Pooled (Poisson P(over L), outcome) pairs over the grid."""
+    lines = tuple(lines if lines is not None else TOTAL_LEVEL_LINES)
+    ps, ys = [], []
+    for lh, la, y in rows:
+        tot = _total_pmf(lh, la, None)
+        for L in lines:
+            ps.append(_pmf_over(tot, L))
+            ys.append(1 if y > L else 0)
+    return ps, ys
+
+
+def _total_cal_losses(rows, ab, lines=None) -> list[float]:
+    """Per-game grid log loss under the map (None is the served Poisson)."""
+    lines = tuple(lines if lines is not None else TOTAL_LEVEL_LINES)
+    out = []
+    for lh, la, y in rows:
+        tot = _total_pmf(lh, la, None)
+        s = 0.0
+        for L in lines:
+            p = _pmf_over(tot, L)
+            if ab is not None:
+                p = apply_platt(p, ab[0], ab[1])
+            s -= math.log(p) if y > L else math.log(1.0 - p)
+        out.append(s)
+    return out
+
+
+def fit_total_calibration(rows, *, lines=None) -> dict | None:
+    """(a, b) on ONE fit window, or None when fit_platt refuses or a <= 0."""
+    rows = [(float(a), float(b), float(y)) for a, b, y in (rows or [])]
+    n = len(rows)
+    if n < 2:
+        return None
+    lines = tuple(lines if lines is not None else TOTAL_LEVEL_LINES)
+    ps, ys = _total_cal_samples(rows, lines)
+    ab = fit_platt(ps, ys)
+    if ab is None or ab[0] <= 0:
+        return None
+    a, b = round(ab[0], 5), round(ab[1], 5)
+    per_line = []
+    for L in lines:
+        pp = [_pmf_over(_total_pmf(x, z, None), L) for x, z, _ in rows]
+        per_line.append({
+            "line": L,
+            "observed_over": round(sum(1 for *_, y in rows if y > L) / n, 4),
+            "model_over_poisson": round(sum(pp) / n, 4),
+            "model_over_mapped": round(sum(apply_platt(p, a, b) for p in pp) / n, 4),
+        })
+    return {"a": a, "b": b, "n": n, "lines": list(lines),
+            "log_loss_poisson": round(sum(_total_cal_losses(rows, None, lines)) / n, 6),
+            "log_loss_mapped": round(sum(_total_cal_losses(rows, (a, b), lines)) / n, 6),
+            "per_line": per_line}
+
+
+def fit_total_calibration_vintage(games, *, coeffs=None, adj=None, shrink=None) -> dict:
+    """(a, b) for the SERVED pricer on the vintage FIT half; the eval half and the
+    market are not read."""
+    if coeffs is None:
+        coeffs = coefficients()
+    if adj is None or shrink is None:
+        ctx = _load_json(CONTEXT_PATH) or {}
+        adj = float(ctx.get("home_field_runs_adj") or 0.0) if adj is None else adj
+        shrink = float(ctx.get("diff_shrink") or 1.0) if shrink is None else shrink
+    out = {"basis": ("vintage FIT half only (_vintage_cut_index); the eval half and "
+                     "the market are not read"),
+           "criteria": "TOTAL_CALIBRATION_GATE_CRITERIA", "served": SERVE_TOTAL_CALIBRATION}
+    resolve, _ = _vintage_resolver()
+    gradable = [g for g in (games or []) if resolve(g)]
+    dates = sorted({g.get("date") for g in gradable if g.get("date")})
+    if len(gradable) < (VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES) or len(dates) < 4:
+        out.update({"status": "insufficient vintage coverage", "a": None, "b": None})
+        return out
+    cut = dates[_vintage_cut_index(gradable, dates)]
+    fit_g = [g for g in gradable if (g.get("date") or "") < cut]
+    rows = _total_dispersion_rows(fit_g, None, None, None, coeffs, adj, shrink, resolve)
+    fit = fit_total_calibration([(a, b, y) for a, b, y, _ in rows])
+    if not fit or len(rows) < VINTAGE_MIN_FIT_GAMES:
+        out.update({"status": "insufficient fit rows or refused", "a": None, "b": None})
+        return out
+    out.update(fit)
+    out.update({"status": "fitted", "split_date": cut, "n_fit_games": len(rows)})
+    return out
+
+
 def fit_total_level_vintage(games, *, coeffs=None, adj=None, shrink=None) -> dict:
     """The recentre for the SERVED pricer, fitted on the vintage FIT half.
 
@@ -2340,7 +2507,8 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
                        platt_ab: tuple | None = None,
                        runline_tie_split: tuple | None = None,
                        total_level: float | None = None,
-                       total_alpha: float | None = None) -> dict | None:
+                       total_alpha: float | None = None,
+                       total_cal: tuple | None = None) -> dict | None:
     """The full model view of one game: moneyline, runline, fair total.
 
     `total_alpha` is the section 7g total-scoped NB2 dispersion. None resolves
@@ -2348,6 +2516,10 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
     serving path, the `total_level` rule. A value prices the Over, Under and push
     off a separate total pass with NB2 sides; the margin pass, and so the
     moneyline and the runline, cannot move.
+
+    `total_cal` is the section 7h survival map (a, b). None resolves the SERVED
+    pair (None until SERVE_TOTAL_CALIBRATION flips), serving path only. It maps
+    the total pmf after any level or dispersion pass; nothing else reads it.
 
     Ties do not exist in MLB, so for the MONEYLINE the P(margin = 0) mass is
     split by the MEASURED extra-innings home win rate (league_context, shrunk
@@ -2437,6 +2609,11 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
         tot = _score_joint(lh2, la2, _alpha_to_r(ta) if ta else r)[1]
         if tl:
             price_mean = lh2 + la2
+    if total_cal is None and tie_home is None:
+        total_cal = served_total_calibration()
+    tc = _total_cal_pair(total_cal) if total_cal else None
+    if tc:
+        tot = survival_map_pmf(tot, tc[0], tc[1])
 
     def runline_at_split(split) -> dict:
         return _runline_prices(split_tie_atom(dist, th, split))
@@ -2467,6 +2644,8 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
         "total_price_mean": round(price_mean, 2) if price_mean is not None else None,
         # 7g: present only while a total-scoped dispersion prices this game.
         **({"total_dispersion_alpha": round(ta, 5)} if ta else {}),
+        # 7h: present only while the survival map prices this game.
+        **({"total_calibration_ab": [round(tc[0], 5), round(tc[1], 5)]} if tc else {}),
         "run_dispersion_alpha": (round(float(run_alpha), 5)
                                  if r is not None else None),
         "prob_calibration_ab": ([round(float(platt_ab[0]), 5),
@@ -3364,6 +3543,14 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
         except Exception:                                      # noqa: BLE001
             log.warning("betting_model: total dispersion fit failed", exc_info=True)
             total_disp_fit = {"status": "failed", "alpha": None}
+    total_cal_fit = None
+    if n and coeffs:
+        try:
+            total_cal_fit = fit_total_calibration_vintage(games, coeffs=coeffs,
+                                                          adj=adj, shrink=shrink)
+        except Exception:                                      # noqa: BLE001
+            log.warning("betting_model: total calibration fit failed", exc_info=True)
+            total_cal_fit = {"status": "failed", "a": None, "b": None}
     ctx = {
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "model_version": MODEL_VERSION,
@@ -3423,6 +3610,12 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
         "total_dispersion_alpha": ((total_disp_fit or {}).get("alpha")
                                    if SERVE_TOTAL_DISPERSION else None),
         "total_dispersion_fitted": total_disp_fit,
+        # 7h. The SERVED survival map [a, b] (null until the flag flips) and its
+        # fit-half measurement.
+        "total_calibration": ([(total_cal_fit or {}).get("a"), (total_cal_fit or {}).get("b")]
+                              if SERVE_TOTAL_CALIBRATION and (total_cal_fit or {}).get("a")
+                              else None),
+        "total_calibration_fitted": total_cal_fit,
         "total_level_note": ("one additive constant on the Poisson TOTAL mean, fitted "
                              "on the vintage fit half by over/under log loss at "
                              "the fixed lines 7.5 to 10.5; the moneyline and the "
@@ -4734,6 +4927,120 @@ def total_dispersion_gate(games=None, *, teams=None, parks=None, starters=None,
                          "INDETERMINATE and the Poisson total keeps serving; a PASS "
                          "leaves the flip to the owner"),
                 "served": SERVE_TOTAL_DISPERSION, "mode": "vintage"})
+    return out
+
+
+def _total_calibration_split(fit_g, ev_g, teams, parks, starters, resolve) -> dict | None:
+    """One split of TOTAL_CALIBRATION_GATE_CRITERIA."""
+    coeffs = fit_coefficients(fit_g, teams=teams, parks=parks, starters=starters,
+                              resolve=resolve)
+    if not coeffs:
+        return None
+    tie = _fit_tie_home(fit_g)
+    fit_home_rate = (sum(1 for g in fit_g if g["home_runs"] > g["away_runs"])
+                     / max(1, len(fit_g)))
+    shrink, _ = _solve_diff_shrink(fit_g, teams, parks, starters, coeffs, tie,
+                                   0.0, resolve, None)
+    adj = _solve_home_adj(fit_g, teams, parks, starters, coeffs, tie,
+                          fit_home_rate, shrink, resolve, None)
+    fit_rows = _total_dispersion_rows(fit_g, teams, parks, starters, coeffs, adj,
+                                      shrink, resolve)
+    fit = fit_total_calibration([(a, b, y) for a, b, y, _ in fit_rows])
+    if not fit:
+        return {"n_fit": len(fit_rows), "refused": "fit_platt refused or a <= 0",
+                "pass": False}
+    ev_rows = _total_dispersion_rows(ev_g, teams, parks, starters, coeffs, adj,
+                                     shrink, resolve)
+    if len(ev_rows) < 2:
+        return None
+    ev = [(a, b, y) for a, b, y, _ in ev_rows]
+    ab = (fit["a"], fit["b"])
+    tot = _paired_delta(_total_cal_losses(ev, None), _total_cal_losses(ev, ab))
+    per_line = []
+    for L in TOTAL_LEVEL_LINES:
+        pl = _paired_delta(_total_cal_losses(ev, None, (L,)),
+                           _total_cal_losses(ev, ab, (L,)))
+        pp = [_pmf_over(_total_pmf(a, b, None), L) for a, b, _ in ev]
+        per_line.append({
+            "line": L, "log_loss_delta": pl,
+            "observed_over": round(sum(1 for *_, y in ev if y > L) / len(ev), 4),
+            "model_over_poisson": round(sum(pp) / len(ev), 4),
+            "model_over_mapped": round(sum(apply_platt(p, ab[0], ab[1]) for p in pp)
+                                       / len(ev), 4)})
+    n_ok = sum(1 for r in per_line if r["log_loss_delta"].get("delta") is not None
+               and r["log_loss_delta"]["delta"] >= 0.0)
+    checks = [
+        {"id": "grid_log_loss_superiority", "value": tot.get("t"),
+         "threshold": Z_95_ONE_SIDED,
+         "pass": bool(tot.get("t") is not None and tot["t"] >= Z_95_ONE_SIDED)},
+        {"id": "per_line_not_worse_3_of_4", "value": n_ok, "threshold": 3,
+         "pass": n_ok >= 3},
+    ]
+    return {"n_fit": len(fit_rows), "n_eval": len(ev_rows), "fit": fit,
+            "a": ab[0], "b": ab[1], "grid_log_loss_delta": tot, "per_line": per_line,
+            "checks": checks, "pass": all(c["pass"] for c in checks)}
+
+
+def total_calibration_gate(games=None, *, teams=None, parks=None, starters=None,
+                           quantiles=None, log_fn=None) -> dict:
+    """The pre-registered gate on SERVE_TOTAL_CALIBRATION (section 7h); the 7f/7g
+    verdict rule."""
+    qs = tuple(quantiles if quantiles is not None else DISPERSION_SPLIT_QUANTILES)
+    out = {"criteria": TOTAL_CALIBRATION_GATE_CRITERIA, "quantiles": list(qs),
+           "lines": list(TOTAL_LEVEL_LINES),
+           "surface": "gate lab only: no served price reads (a, b) until the flag flips"}
+    games = games if games is not None else completed_games()
+    teams = teams if teams is not None else team_inputs()
+    parks = parks if parks is not None else park_index()
+    starters = starters if starters is not None else starter_inputs()
+    if not games or not teams:
+        out.update({"status": "no data", "verdict": "indeterminate", "ship": False,
+                    "served": SERVE_TOTAL_CALIBRATION})
+        return out
+    reset_vintage_cache()
+    resolve, _ = _vintage_resolver()
+    gradable = [g for g in games if resolve(g)]
+    dates = sorted({g.get("date") for g in gradable if g.get("date")})
+    out["n_gradable"] = len(gradable)
+    if len(gradable) < (VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES) or len(dates) < 4:
+        out.update({"status": "insufficient vintage coverage", "verdict": "indeterminate",
+                    "ship": False, "served": SERVE_TOTAL_CALIBRATION})
+        return out
+    cuts = [("anchored", dates[_vintage_cut_index(gradable, dates)])]
+    cuts += [(q, dates[max(1, min(int(len(dates) * q), len(dates) - 1))]) for q in qs]
+    grid = []
+    for q, cut in cuts:
+        fit_g = [g for g in gradable if (g.get("date") or "") < cut]
+        ev_g = [g for g in gradable if (g.get("date") or "") >= cut]
+        row = {"split_q": q, "split_date": cut, "n_fit": len(fit_g), "n_eval": len(ev_g)}
+        if len(fit_g) < VINTAGE_MIN_FIT_GAMES or len(ev_g) < VINTAGE_MIN_EVAL_GAMES:
+            row.update({"status": "below the fit/eval floors", "pass": False})
+            grid.append(row)
+            continue
+        sp = _total_calibration_split(fit_g, ev_g, teams, parks, starters, resolve)
+        if not sp:
+            row.update({"status": "did not price", "pass": False})
+            grid.append(row)
+            continue
+        row.update({"status": "ran" if "refused" not in sp else "refused", **sp})
+        grid.append(row)
+        if log_fn and "refused" not in sp:
+            log_fn(f"betting_model: total calibration gate q={q} cut={cut} a={sp['a']} "
+                   f"b={sp['b']} t={sp['grid_log_loss_delta'].get('t')} pass={sp['pass']}")
+    ran = [r for r in grid if r.get("status") == "ran"]
+    if not ran:
+        verdict = "indeterminate"
+    elif len(ran) == len(cuts) and all(r["pass"] for r in ran):
+        verdict = "pass"
+    elif any(r["pass"] for r in ran):
+        verdict = "indeterminate"
+    else:
+        verdict = "fail"
+    out.update({"status": "ran" if ran else "insufficient vintage coverage",
+                "grid": grid, "verdict": verdict, "ship": verdict == "pass",
+                "rule": ("both checks at all four splits; a mixed grid is INDETERMINATE; "
+                         "a PASS leaves the flip to the owner"),
+                "served": SERVE_TOTAL_CALIBRATION, "mode": "vintage"})
     return out
 
 
@@ -6275,11 +6582,30 @@ if __name__ == "__main__":                                       # pragma: no co
                     help="re-run the section 7e ridge fit gate and the fit window probe")
     ap.add_argument("--total-level", action="store_true",
                     help="re-run the section 7f total level gate (BET1); writes nothing")
+    ap.add_argument("--total-calibration", action="store_true",
+                    help="run the section 7h total survival-map gate; writes nothing")
     ap.add_argument("--total-dispersion", action="store_true",
                     help="run the section 7g total-scoped dispersion gate; writes nothing")
     ap.add_argument("--game", nargs=2, metavar=("AWAY", "HOME"), help="price one matchup")
     ap.add_argument("--season", default=None)
     args = ap.parse_args()
+
+    if args.total_calibration:
+        tcg = total_calibration_gate(log_fn=print)
+        print(f"  total calibration (7h): verdict={tcg.get('verdict')} "
+              f"ship={tcg.get('ship')} served={tcg.get('served')}")
+        for row in tcg.get("grid") or []:
+            if row.get("status") != "ran":
+                print(f"    q={row.get('split_q')} {row.get('status')}")
+                continue
+            gd = row["grid_log_loss_delta"]
+            print(f"    q={row['split_q']} cut={row['split_date']} n_fit={row['n_fit']} "
+                  f"n_eval={row['n_eval']} a={row['a']} b={row['b']} "
+                  f"ll_delta={gd.get('delta')} t={gd.get('t')} pass={row['pass']}")
+            for pl in row["per_line"]:
+                print(f"      line {pl['line']}: obs {pl['observed_over']} poisson "
+                      f"{pl['model_over_poisson']} mapped {pl['model_over_mapped']} "
+                      f"d={pl['log_loss_delta'].get('delta')} t={pl['log_loss_delta'].get('t')}")
 
     if args.total_dispersion:
         tdg = total_dispersion_gate(log_fn=print)
