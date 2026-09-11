@@ -161,6 +161,28 @@ GLOSSARY_CLAIMS = (
      "data/value_framework_fitted.json", ("training_n", "hitter"), "abs", 0.5),
     ("bust_prob", "training_n pitcher", r"training_n is \d+ hitter and (\d+) pitcher",
      "data/value_framework_fitted.json", ("training_n", "pitcher"), "abs", 0.5),
+    # Audit L16-16 (2026-09-11): three unpinned entries had drifted from their
+    # artifacts (sem_plus quoted 0.39 / 0.26 / 0.36 against 0.4167 / 0.2843 /
+    # 0.3821; riv_plus 0.21 / 0.35 against 0.2023 / 0.3601), and the FV -> WAR
+    # EV table quoted FV 40 at 0.09 against a served 0.071. Each quoted number
+    # is now held to its artifact. Two-decimal copy, so abs 0.005; the FV 40
+    # knot is quoted to three decimals and held tighter.
+    ("sem_plus", "forward rho SEM+", r"at a Spearman correlation of (0\.\d+), beating ERA",
+     "data/sem_plus_eval.json", ("forward_spearman_vs_RA9_next", "sem_plus"), "abs", 0.005),
+    ("sem_plus", "forward rho ERA", r"beating ERA \((0\.\d+)",
+     "data/sem_plus_eval.json", ("forward_spearman_vs_RA9_next", "era"), "abs", 0.005),
+    ("sem_plus", "forward rho raw FIP", r"raw-FIP parent \((0\.\d+)\)",
+     "data/sem_plus_eval.json", ("forward_spearman_vs_RA9_next", "raw_fip"), "abs", 0.005),
+    ("riv_plus", "RIV+ year-to-year rho", r"rank correlation is (0\.\d+) against",
+     "data/riv_plus_eval.json", ("forward_stability_check", "riv_plus_y_to_y1_rho"), "abs", 0.005),
+    ("riv_plus", "REM+ year-to-year rho", r"rank correlation is 0\.\d+ against (0\.\d+) for REM\+",
+     "data/riv_plus_eval.json", ("forward_stability_check", "rem_plus_y_to_y1_rho"), "abs", 0.005),
+    ("fv_to_war_table", "EV anchor FV 40", r"FV 40 (\d\.\d+)",
+     "data/value_framework_fitted.json", ("empirical_anchors", "anchors", "40"), "abs", 0.0005),
+    ("fv_to_war_table", "EV anchor FV 50", r"FV 50 (\d\.\d+)",
+     "data/value_framework_fitted.json", ("empirical_anchors", "anchors", "50"), "abs", 0.005),
+    ("fv_to_war_table", "EV anchor FV 60", r"FV 60 (\d\.\d+)",
+     "data/value_framework_fitted.json", ("empirical_anchors", "anchors", "60"), "abs", 0.005),
 )
 
 # ---------------------------------------------------------------------------
