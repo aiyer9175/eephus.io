@@ -73,17 +73,167 @@ def test_card_numbers_trace_to_artifact():
 
 def test_refresh_stamps_preserves_card(tmp_path, monkeypatch):
     """refresh_stamps() rewrites the registry monthly; the card field must
-    round-trip. Run it against a temp copy so the committed file is untouched."""
+    round-trip. A literal card comes back unchanged. A derived card comes back
+    as its artifact reading with its spec intact (and
+    test_derived_cards_equal_their_artifact_exactly holds that reading equal
+    to the committed card). Run it against a temp copy so the committed file
+    is untouched."""
     reg = mr.load()
-    before = {m["model_id"]: m["card"] for m in reg["models"] if m.get("card")}
+    before = {m["model_id"]: m for m in reg["models"] if m.get("card")}
+    want = {mid: (mr.derive_card(m) if m["card"].get("derived_from") else m["card"])
+            for mid, m in before.items()}
     tmp = tmp_path / "reg.json"
     tmp.write_text(json.dumps(reg, ensure_ascii=False, indent=1), encoding="utf-8")
     monkeypatch.setattr(mr, "REGISTRY_PATH", tmp)
     mr.refresh_stamps()
     after = json.loads(tmp.read_text(encoding="utf-8"))
     got = {m["model_id"]: m.get("card") for m in after["models"]}
-    for mid, card in before.items():
+    for mid, card in want.items():
         assert got.get(mid) == card, f"{mid} card lost or altered by refresh_stamps"
+
+
+# --------------------------------------------------------------------------- #
+# Derived cards (audit L18-01, 2026-09-11)
+# --------------------------------------------------------------------------- #
+# consensus_fv served a weighted-vs-equal pair its own notes said had been
+# removed, with a star on a Spearman lead its own artifact calls not
+# resolvable, and every test above stayed green: the tolerance trace accepts a
+# number within max(0.02, 2 percent) of ANY leaf of a file with thousands of
+# leaves. A card over an artifact the pipeline regenerates now names the path
+# of each number (card.derived_from) and refresh_stamps() re-reads it.
+#
+# Artifacts run_monthly regenerates on every run, whose cards therefore cannot
+# hold typed numbers. data/eta_eval.json is regenerated too and its card is
+# still a literal that has drifted slightly from it; converting that card is an
+# open follow-up (which of its two champion blocks the card quotes is a
+# judgement call), so it is not listed here yet.
+REGENERATED_CARD_ARTIFACTS = {"data/source_backtest.json"}
+
+
+def _derived_cards():
+    return [m for m in _cards() if m["card"].get("derived_from")]
+
+
+def _champ_beats(h) -> bool:
+    return (h["champion"] < h["baseline"] if h["better"] == "lower"
+            else h["champion"] > h["baseline"])
+
+
+def test_derived_cards_equal_their_artifact_exactly():
+    """Provenance, not proximity: a derived card is held to the value at the
+    path it names, exactly. A failure means the artifact was regenerated and
+    refresh_stamps() has not run since (`python model_registry.py`)."""
+    cards = _derived_cards()
+    assert cards, "no derived cards; consensus_fv's card must be derived"
+    problems = []
+    for m in cards:
+        reading = mr.derive_card(m)
+        if reading != m["card"]:
+            problems.append(f"{m['model_id']}: committed card {m['card']} "
+                            f"!= artifact reading {reading}")
+    assert not problems, "\n".join(problems)
+
+
+def test_cards_on_regenerated_artifacts_are_derived():
+    literal = [m["model_id"] for m in _cards()
+               if m["eval_artifact"] in REGENERATED_CARD_ARTIFACTS
+               and not m["card"].get("derived_from")]
+    assert not literal, (
+        f"typed card numbers over an artifact run_monthly regenerates: {literal}. "
+        "They go stale on the next run; give the card a derived_from spec.")
+
+
+def test_consensus_fv_card_carries_only_the_leg_its_artifact_resolves():
+    """The row's own reading: blending buys discrimination, not ordering. The
+    ordering (Spearman) leg of accuracy.consensus_vs_inputs is not resolvable
+    at this power, so this row's card is the AUC leg alone, read from that
+    block, with n read from the common set it was measured on."""
+    row = next(m for m in mr.load()["models"] if m["model_id"] == "consensus_fv")
+    card = row["card"]
+    spec = card.get("derived_from")
+    assert spec, "consensus_fv's card is typed again; it must be derived"
+    assert spec.get("n") == "accuracy.common_n"
+    paths = [p for hs in spec["headline"] for p in hs.values()]
+    assert paths and all(p.startswith("accuracy.consensus_vs_inputs.auc.")
+                         for p in paths), paths
+    assert not any("spearman" in h["label"].lower() for h in card["headline"]), (
+        "a Spearman headline is back on consensus_fv; the row does not claim to "
+        "order realized WAR better than its best input")
+
+
+def test_a_validated_derived_card_shows_a_resolved_win():
+    """`validated` means the champion beats its stated baseline. When a
+    derived card is the proof, at least one headline must be a strict win on a
+    leg the artifact resolves. If a regeneration moves every leg inside its
+    floor the verdict needs an owner look, and this is where that surfaces."""
+    problems = []
+    for m in _derived_cards():
+        if m["verdict"] != "validated":
+            continue
+        if not any(h.get("resolvable") is True and _champ_beats(h)
+                   for h in m["card"]["headline"]):
+            problems.append(f"{m['model_id']}: validated, but its derived card "
+                            "shows no resolved win")
+    assert not problems, "\n".join(problems)
+
+
+def _card_js():
+    """assets/glossary.js::_cardHeadline, run in a real JS engine. The function
+    is pure (card in, markup out) and needs only escapeHtml beside it."""
+    import pytest
+    MiniRacer = pytest.importorskip("py_mini_racer").MiniRacer
+    js = (HERE / "assets" / "glossary.js").read_text(encoding="utf-8").replace("\r\n", "\n")
+    i = js.index("function _cardHeadline(card) {")
+    j = js.index("\n}\n", i) + 2
+    ctx = MiniRacer()
+    ctx.eval('function escapeHtml(s) { return String(s == null ? "" : s)'
+             '.replace(/&/g, "&amp;").replace(/</g, "&lt;")'
+             '.replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }')
+    ctx.eval(js[i:j])
+    return ctx
+
+
+def _render(ctx, card) -> str:
+    return ctx.eval(f"_cardHeadline({json.dumps(card)})")
+
+
+STAR = "★"
+
+
+def test_the_card_star_needs_a_strict_resolved_win():
+    ctx = _card_js()
+    base = {"label": "x", "champion": 0.75, "baseline": 0.70, "better": "higher"}
+    literal = _render(ctx, {"headline": [base]})
+    assert literal.count(STAR) == 1, "a literal card lost its star"
+    unresolved = _render(ctx, {"headline": [dict(
+        base, resolvable=False, verdict="not resolvable at this power")]})
+    assert unresolved.count(STAR) == 0, (
+        "the star went to a lead its artifact calls not resolvable")
+    assert "not resolvable at this power" in unresolved, (
+        "the artifact's verdict is not shown beside an unresolved bar pair")
+    resolved = _render(ctx, {"headline": [dict(base, resolvable=True,
+                                               verdict="the blend wins")]})
+    assert resolved.count(STAR) == 1 and "the blend wins" in resolved
+    tie = _render(ctx, {"headline": [dict(base, champion=0.70)]})
+    assert tie.count(STAR) == 0, "a tie was starred as a win"
+    lower = _render(ctx, {"headline": [dict(base, better="lower", champion=0.60)]})
+    assert lower.count(STAR) == 1
+
+
+def test_no_served_card_stars_a_leg_its_artifact_does_not_resolve():
+    """Over the live registry: render each headline alone and count stars. A
+    star appears exactly where the champion strictly wins and the artifact has
+    not marked the leg unresolvable."""
+    ctx = _card_js()
+    problems = []
+    for m in _cards():
+        for h in m["card"]["headline"]:
+            got = _render(ctx, {"headline": [h]}).count(STAR)
+            want = int(_champ_beats(h) and h.get("resolvable") is not False)
+            if got != want:
+                problems.append(f"{m['model_id']} {h['label']!r}: {got} stars, "
+                                f"expected {want}")
+    assert not problems, "\n".join(problems)
 
 
 # --------------------------------------------------------------------------- #

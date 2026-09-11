@@ -3950,12 +3950,20 @@ function _modelProofHTML(m) {
 
 // Report Card v0: paired champion-vs-baseline bars for each headline metric.
 // Bars are normalized to the larger of the two values so the win is visible;
-// the winner (per `better`) gets a star. One try/catch-wrapped card must never
-// strand the ledger, so the caller degrades to the text card on a throw.
+// the model bar gets a star only when it beats the baseline strictly AND the
+// headline's artifact has not marked the gap unresolvable. A derived card
+// (model_registry.derive_card) carries the artifact's own `resolvable` flag
+// and `verdict` string; a lead inside the floor the backtest can resolve is
+// not a win, and a tie is not a win either (audit L18-01: consensus_fv starred
+// a Spearman lead its own artifact called not resolvable). Literal cards
+// carry no flag and keep the plain comparison. One try/catch-wrapped card
+// must never strand the ledger, so the caller degrades to the text card on a
+// throw.
 function _cardHeadline(card) {
   if (!card || !Array.isArray(card.headline) || !card.headline.length) return "";
   const rows = card.headline.map(h => {
-    const champWins = h.better === "lower" ? h.champion <= h.baseline : h.champion >= h.baseline;
+    const champWins = (h.better === "lower" ? h.champion < h.baseline : h.champion > h.baseline)
+      && h.resolvable !== false;
     const scale = Math.max(Math.abs(h.champion), Math.abs(h.baseline)) || 1;
     const bar = (val, isChamp) => {
       const pct = Math.max(2, Math.min(100, Math.abs(val) / scale * 100));
@@ -3965,8 +3973,12 @@ function _cardHeadline(card) {
         <span class="gl-card-barval">${escapeHtml(String(val))}</span></div>`;
     };
     const dir = h.better === "lower" ? "lower is better" : "higher is better";
+    // The artifact's verdict, verbatim, when the card is derived: the reader
+    // sees "not resolvable at this power" beside a bar pair rather than
+    // having to infer it from a missing star.
+    const said = typeof h.verdict === "string" && h.verdict ? `; ${escapeHtml(h.verdict)}` : "";
     return `<div class="gl-card-metric">
-      <div class="gl-card-metriclab">${escapeHtml(h.label)} <span class="gl-card-dir">(${dir})</span></div>
+      <div class="gl-card-metriclab">${escapeHtml(h.label)} <span class="gl-card-dir">(${dir}${said})</span></div>
       ${bar(h.champion, true)}${bar(h.baseline, false)}</div>`;
   }).join("");
   const foot = [card.n ? `n = ${escapeHtml(String(card.n))}` : "", escapeHtml(card.window || "")]
