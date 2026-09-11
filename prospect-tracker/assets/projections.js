@@ -242,6 +242,25 @@
   let SWINGD = null;            // data/swing_delta.json (bat-tracking year-over-year), lazy
   let SWINGD_LOADING = false;
 
+  // Board sort keys. Every key a share link has ever carried keeps working (the
+  // retired tape bar's y0..y4 / warPeak / thru, the card header's rank / name /
+  // warTotal / aav / age / sur) plus the prospect columns. Anything else falls
+  // back to the default instead of sorting every row as a tie.
+  const SORT_KEYS = ["warTotal", "rank", "name", "sur", "y0", "y1", "y2", "y3", "y4",
+                     "age", "aav", "thru", "warPeak", "fv", "eta", "pBust"];
+  // First click ascending: A-Z, youngest, soonest, safest.
+  const ASC_FIRST = ["name", "age", "eta", "pBust"];
+  function naturalDir(k) { return ASC_FIRST.includes(k) ? 1 : -1; }
+  // The prospect column set replaces the contract tail. Both filters that
+  // leave only prospects switch to it.
+  function prospectView() { return state.src === "prospect" || state.contract === "prospect"; }
+  // Keys with a header (or a picker entry) in a column set. One list, read by
+  // the header, the sort picker and the orphaned-sort reset in render().
+  function viewSortKeys(pros) {
+    return ["rank", "name", "warTotal", "sur", "y0", "y1", "y2", "y3", "y4", "age"]
+      .concat(pros ? ["fv", "eta", "warPeak", "pBust"] : ["aav", "thru"]);
+  }
+
   function syncFromURL() {
     const p = new URLSearchParams(location.hash.slice(1));
     state.player = p.get("player") || null;
@@ -261,7 +280,8 @@
     if (p.has("sx")) state.sx = p.get("sx");
     if (p.has("sy")) state.sy = p.get("sy");
     if (p.has("q")) state.q = p.get("q");
-    if (p.has("sort")) state.sort = p.get("sort");
+    if (p.has("sort")) state.sort = SORT_KEYS.includes(p.get("sort")) ? p.get("sort") : "warTotal";
+    state.dir = p.get("dir") === "asc" ? 1 : p.get("dir") === "desc" ? -1 : naturalDir(state.sort);
   }
   function syncToURL() {
     const p = new URLSearchParams();
@@ -279,6 +299,7 @@
     if (state.sy !== "warY1") p.set("sy", state.sy);
     if (state.q) p.set("q", state.q);
     if (state.sort !== "warTotal") p.set("sort", state.sort);
+    if (state.dir !== naturalDir(state.sort)) p.set("dir", state.dir > 0 ? "asc" : "desc");
     const h = p.toString();
     history.replaceState(null, "", h ? `#${h}` : location.pathname);
   }
@@ -370,34 +391,45 @@
       && (!q || (m.name || "").toLowerCase().includes(q)));
   }
 
-  function sortRows(list) {
-    const k = state.sort;
-    const val = m => {
-      if (k === "age") return m.age ?? 99;
-      if (k === "sur") return surOf(m) ?? -1e15;
-      if (k === "warTotal") return warShown(m) ?? -99;  // sort by the DISPLAYED 5yr total (prospects: in-window only)
-      // Name and rank became sortable when the board moved to cards (2026-07-30).
-      // Name sorts as a string, so it is compared case-insensitively and the
-      // direction chip reads A-Z on the first click rather than Z-A.
-      if (k === "name") return String(m.name || "").toLowerCase();
-      // "rank" means the board's own current order, which is what the row
-      // number shows. Sorting by it is the way back to the default view after
-      // clicking through other columns.
-      if (k === "rank") return warShown(m) ?? -99;
-      if (k.startsWith("y")) {
-        const t = Number(k.slice(1));
-        if (state.cells !== "war") {
-          // Season headers sort the ACTIVE cell metric. FIP is lower-better:
-          // negate so the default descending click puts the best arms first.
-          const v = rateAt(m, t);
-          if (v == null) return -1e9;
-          return state.cells === "fip" ? -v : v;
-        }
-        return warAt(m, t) ?? -99;
+  // The value a row sorts on, or null when it has none. Null is not a number to
+  // compare: it sorts LAST in both directions (sortRows below).
+  function sortVal(m, k) {
+    if (k === "warTotal" || k === "rank") return warShown(m);
+    if (k === "sur") return surOf(m);
+    if (k === "name") return String(m.name || "");
+    if (/^y[0-4]$/.test(k)) {
+      const t = Number(k.slice(1));
+      if (state.cells !== "war") {
+        // Season headers sort the ACTIVE cell metric. FIP is lower-better:
+        // negated so the default descending click puts the best arms first.
+        const v = rateAt(m, t);
+        return v == null ? null : (state.cells === "fip" ? -v : v);
       }
-      return m[k] ?? -99;
-    };
-    return list.slice().sort((a, b) => state.dir * (val(a) > val(b) ? 1 : val(a) < val(b) ? -1 : 0));
+      return warAt(m, t);
+    }
+    // AAV of a contract that reaches the window. A deal ending before it (649
+    // rows, often a prorated few thousand dollars) shows a dash and sorts with
+    // the missing values.
+    if (k === "aav") return (m.thru && m.thru >= DATA.first_season) ? (m.aav ?? null) : null;
+    if (["age", "thru", "warPeak", "fv", "eta", "pBust"].includes(k)) return m[k] ?? null;
+    return null;
+  }
+  function sortRows(list) {
+    const k = state.sort, dir = state.dir;
+    const keyed = list.map(m => ({ m, v: sortVal(m, k), w: warShown(m) ?? -99, n: String(m.name || "") }));
+    const byName = (a, b) => a.n.localeCompare(b.n, undefined, { sensitivity: "base" });
+    keyed.sort((a, b) => {
+      if (a.v == null || b.v == null) {
+        if (a.v == null && b.v == null) return (b.w - a.w) || byName(a, b);
+        return a.v == null ? 1 : -1;          // missing values last, either direction
+      }
+      const c = typeof a.v === "string"
+        ? a.v.localeCompare(b.v, undefined, { sensitivity: "base" })
+        : (a.v > b.v ? 1 : a.v < b.v ? -1 : 0);
+      if (c) return dir * c;
+      return (b.w - a.w) || byName(a, b);     // ties keep the board's WAR order
+    });
+    return keyed.map(x => x.m);
   }
 
   // User-tweakable scatter: BOTH axes are pickable (age, year-1 WAR, 5y WAR,
@@ -560,7 +592,11 @@
     });
     bar.querySelectorAll("[data-pf]").forEach(b => b.onclick = () => {
       const [field, key] = b.dataset.pf.split(":");
-      state[field] = key; state.limit = 100; syncToURL(); render();
+      state[field] = key; state.limit = 100;
+      // A click that swaps the column set can orphan the sort (AAV has no
+      // header in the prospect set): fall back to the default order.
+      if (!viewSortKeys(prospectView()).includes(state.sort)) { state.sort = "warTotal"; state.dir = -1; }
+      syncToURL(); render();
     });
     const sel = document.getElementById("proj-team");
     if (sel) sel.onchange = () => { state.team = sel.value; state.limit = 100; syncToURL(); render(); };
@@ -1111,132 +1147,224 @@
     if (window.EEPHUS_GL) { if (banner) window.EEPHUS_GL.wire(banner); window.EEPHUS_GL.wire(root); }
   }
 
-  function sortHead(label, key, title) {
-    const active = state.sort === key;
-    return `<th class="proj-sort${active ? " is-sorted" : ""}" data-psort="${key}" title="${esc(title || "Click to sort")}">${label}${active ? (state.dir < 0 ? " ▾" : " ▴") : ""}</th>`;
+  // ===========================================================================
+  // Players board: ONE <table> (2026-09-11, owner ask). One row per player, a
+  // sticky header, the five seasons aligned under their own headers, every sort
+  // key on its own header.
+  //
+  // FIT, NOT SCROLL. table-layout:fixed at width:100% cannot be wider than its
+  // box, so the page never scrolls sideways. Columns leave by BOARD width
+  // (site.css, @container projboard), never the five seasons: AAV first, then
+  // the rank, then Age and Thru fold into the Player sub line, then the numbers
+  // tighten. Hidden cells stay in the DOM, so the CSV is the same at every
+  // width, and the row detail line carries every folded fact.
+  // ===========================================================================
+
+  // Logo in front of the team code, which follows it as text. Decorative: a
+  // failed load removes the image instead of printing the code twice.
+  function logoMark(org) {
+    if (!org) return "";
+    const slug = ESPN_SLUGS[org] || String(org).toLowerCase();
+    return `<img class="fa-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png" alt="" loading="lazy" onerror="this.remove()">`;
+  }
+  // One decimal, never "-0.0" (a P10 of -0.04 would print that).
+  function war1(v) { return v == null ? EM_DASH : fmtWar(Math.round(v * 10) / 10 || 0); }
+  // A 2026 salary can be a prorated few thousand dollars; money() would say $0.0M.
+  function aavText(usd) { return usd == null ? EM_DASH : (usd < 5e4 ? "<$0.1M" : money(usd)); }
+  // Contract cell: the year is the message, the colour repeats it.
+  // contractStatus() stays as it is: the Contract filter and the scatter read it.
+  function ctPill(m) {
+    const first = DATA.first_season;
+    if (m.src === "prospect")
+      return { text: "Prospect", sub: "", cls: "proj-ct-prospect", tip: "Pre-MLB; club control starts at debut" };
+    if (m.thru && m.thru > first)
+      return { text: String(m.thru), sub: `thru ${m.thru}`, cls: "proj-ct-signed",
+        tip: `Signed through ${m.thru}${m.aav ? ` at ${money(m.aav)}/yr` : ""}` };
+    if (m.thru && m.thru === first)
+      return { text: String(m.thru), sub: `thru ${m.thru}`, cls: "proj-ct-expiring",
+        tip: "Final guaranteed year; arbitration or free agency after it" };
+    if (m.thru)
+      return { text: String(m.thru), sub: `thru ${m.thru}`, cls: "proj-ct-controlled",
+        tip: `Guaranteed through ${m.thru} only` };
+    if (m.salSrc === "arb_projection")
+      return { text: "Arb est.", sub: "arb est.", cls: "proj-ct-controlled proj-ct-est",
+        tip: "No contract on file; surplus prices projected arbitration salaries" };
+    return { text: "none", sub: "no deal", cls: "proj-ct-controlled proj-ct-none",
+      tip: "No contract on file; surplus not priced" };
+  }
+  // Row detail line: every fact a folded column carried, plus the ones no
+  // column carries (per-season bands, the expected path surplus prices, the
+  // surplus split). Emitted only for open rows. Its first cell spans the
+  // columns that never fold (Player, 5y, Surplus, the first three seasons);
+  // every foldable column gets a pad carrying its own fold class, so the row
+  // always paints exactly as many cells as the header does at every width (a
+  // colspan past the painted columns adds phantom columns to a fixed table
+  // and crushes the Player column).
+  const OPEN = new Set();
+  function detailRowHtml(m, pros) {
+    const first = DATA.first_season, H = DATA.horizon;
+    const g = (label, body, gl) => `<span class="proj-dt-g"><b${gl ? ` data-gl="${gl}"` : ""}>${label}</b> ${body}</span>`;
+    const bands = Array.from({ length: H }, (_, t) => {
+      const s = first + t, lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
+      if (lo == null || hi == null) return `${s} ${m.src === "prospect" && s < m.eta ? "MiLB" : EM_DASH.trim()}`;
+      return `${s} ${war1(lo)}/${war1(hi)}`;
+    }).join(" &middot; ");
+    const parts = [];
+    if (m.src === "prospect") {
+      parts.push(g("eFV", m.fv_source === "xfv" ? String(Math.round(m.fv)) : `FV ${EEPHUS_HUB.fvCeil(m.fv)}`, "xfv"));
+      if (m.consensus_fv != null) parts.push(g("FV", String(EEPHUS_HUB.fvCeil(m.consensus_fv)), "consensus_fv"));
+      parts.push(g("ETA", esc(m.eta ?? EM_DASH)));
+      if (m.pBust != null) parts.push(g("P(bust)", `${(m.pBust * 100).toFixed(0)}%`, "bust_prob"));
+      if (m.bucketLo || m.bucketHi) parts.push(g("Outcomes", `${esc(m.bucketLo || "?")} to ${esc(m.bucketHi || "?")}`, "proj_buckets"));
+      if (m.warPeak != null) parts.push(g("Peak", fmtWar(m.warPeak)));
+      parts.push(g("P10/P90", bands, "p10_p90_bands"));
+    } else {
+      parts.push(g("P10/P90", bands, "p10_p90_bands"));
+      if (m.warTotal != null) parts.push(g(`Expected ${H}y`, fmtWar(m.warTotal), "ewar"));
+      const ct = m.thru && m.thru >= first && m.aav != null ? `${money(m.aav)} AAV thru ${m.thru}`
+        : m.thru ? `${m.thru} salary ${aavText(m.aav)}`
+        : m.salSrc === "arb_projection" ? "arb est." : "none on file";
+      parts.push(g("Contract", ct));
+      const sv = surOf(m);
+      const ros = m.surTotal != null ? m.surTotal - (m.surNpv || 0) : null;
+      const split = sv == null ? "not priced"
+        : (ros != null && m.surNpv != null) ? `${money(sv)} = rest of ${first - 1} ${money(ros)} + ${first}+ ${money(m.surNpv)}`
+        : (ros != null) ? `${money(sv)}, rest of ${first - 1} only`
+        : `${money(sv)}, ${first}+`;
+      parts.push(g("Surplus", split, "surplus_value"));
+      if (m.rosWar != null) parts.push(g(`Rest of ${first - 1}`, `${fmtWar(m.rosWar)} WAR`));
+      const line = (arr, fmt) => arr.map(v => v == null ? EM_DASH.trim() : fmt(v)).join(" ");
+      if ((m.wrc || []).some(v => v != null)) parts.push(g("wRC+", line(m.wrc, RATE_META.wrc.fmt), "wrc_plus"));
+      if ((m.fip || []).some(v => v != null)) parts.push(g("FIP", line(m.fip, RATE_META.fip.fmt), "fip"));
+      if (m.twoWay && m.warHit && m.warPit) {
+        const sum = a => a.reduce((x, y) => x + (y || 0), 0);
+        parts.push(g("Two-way", `hit ${fmtWar(sum(m.warHit))} + pit ${fmtWar(sum(m.warPit))} (expected)`));
+      }
+    }
+    const pad = c => `<td class="${c} proj-dt-pad" aria-hidden="true"></td>`;
+    const tail = [`pc-y pc-y${H - 2}`, `pc-y pc-y${H - 1}`, "pc-age"]
+      .concat(pros ? ["pc-fv", "pc-eta", "pc-peak", "pc-bust"] : ["pc-aav", "pc-ct"]);
+    return `<tr class="proj-detail" id="projd-${esc(m.key)}" data-export-skip>${pad("pc-rank")}`
+      + `<td colspan="${1 + H}" class="proj-dt-cell"><div class="proj-dt">${parts.join("")}</div></td>`
+      + tail.map(pad).join("") + `</tr>`;
   }
 
   function renderTable() {
     const root = document.getElementById("proj-rows");
     const first = DATA.first_season;
+    const H = DATA.horizon;
     const list = sortRows(rows());
-    const seasons = Array.from({ length: DATA.horizon }, (_, t) => first + t);
+    const seasons = Array.from({ length: H }, (_, t) => first + t);
+    const pros = prospectView();
+    const cellLbl = state.cells === "war" ? "WAR" : RATE_META[state.cells].label;
+
+    // Header cell: a real <th scope=col> carrying aria-sort (valid on a
+    // columnheader) around a native <button>: Enter and Space with no keydown
+    // shim. data-export-text keeps the arrow and the short forms out of the CSV.
+    const th = (key, label, cls, title, exportText) => {
+      const on = state.sort === key;
+      const aria = on ? (state.dir < 0 ? "descending" : "ascending") : "none";
+      return `<th scope="col" class="${cls}" aria-sort="${aria}" data-export-text="${esc(exportText)}">`
+        + `<button type="button" class="proj-sort" data-psort="${key}" title="${esc(title)}">${label}`
+        + `<span class="proj-sort-ind" aria-hidden="true">${on ? (state.dir < 0 ? "▾" : "▴") : ""}</span></button></th>`;
+    };
+    // .proj-sr-sm stays in the accessible name and leaves the screen at phone
+    // width, so "27" reads "2027" and "5y" reads "5y WAR" to a screen reader.
+    const head = `<thead><tr>`
+      + th("rank", "#", "pc-rank", "Board position under the current sort", "#")
+      + th("name", "Player", "pc-player", "Sort by name", "Player")
+      + `<th class="pc-csv" hidden data-export-text="Pos"></th><th class="pc-csv" hidden data-export-text="Team"></th>`
+      + th("warTotal", `${H}y<span class="proj-sr-sm"> WAR</span>`, "pc-tot",
+          "Projected eWAR over the window, playing-time-held (if-healthy) path. Surplus prices the expected path.", `${H}y WAR`)
+      + th("sur", "Surplus", "pc-sur",
+          "Veterans: production value minus salary, salary-known seasons only. Prospects: surplus value over the control window.", "Surplus")
+      + seasons.map((s, t) => th("y" + t,
+          `<span class="proj-sr-sm">${String(s).slice(0, 2)}</span>${String(s).slice(2)}`
+            + (state.cells === "war" ? "" : `<span class="proj-th-unit">${esc(cellLbl)}</span>`),
+          `pc-y pc-y${t}`, `Sort by ${s} (${cellLbl})`, `${s} ${cellLbl}`)).join("")
+      + th("age", "Age", "pc-age", "Age on the projection row", "Age")
+      + (pros
+        ? th("fv", "eFV", "pc-fv", "eFV, rounded to nearest; consensus FV fallback rounds up", "eFV")
+          + th("eta", "ETA", "pc-eta", "Projected MLB arrival season", "ETA")
+          + th("warPeak", "Peak", "pc-peak", "Per-year WAR at peak age on the talent path; surplus does not use it", "Peak WAR")
+          + th("pBust", "P(bust)", "pc-bust", "Probability the outcome lands in the bust bucket", "P(bust)")
+        : th("aav", "AAV", "pc-aav", "AAV of the guaranteed contract on file", "AAV")
+          + th("thru", "Thru", "pc-ct", "Final guaranteed season on the contract on file", "Thru"))
+      + `</tr></thead>`;
+
     const body = list.slice(0, state.limit).map((m, i) => {
-      // Season cells, emitted as tape chips. Each carries its own season label,
-      // which is what lets the strip live in row 2 without a separate header
-      // row to align against.
-      const cellChips = seasons.map((s, t) => {
-        const chip = (cls, val, title) =>
-          `<div class="mlb-chip ${cls}"${title ? ` title="${title}"` : ""}><b>${s}</b>${val}</div>`;
+      const isPros = m.src === "prospect";
+      const href = isPros ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`;
+      const ct = ctPill(m);
+      const seasonCells = seasons.map((s, t) => {
+        const td = inner => `<td class="pc-y pc-y${t}">${inner}</td>`;
+        const gap = () => td(`<span class="proj-dim">${isPros && s < m.eta ? "MiLB" : EM_DASH}</span>`);
         if (state.cells !== "war") {
           const v = rateAt(m, t);
-          if (v == null) {
-            const milb = m.src === "prospect" && s < m.eta;
-            return chip("proj-dim", milb ? "MiLB" : EM_DASH);
-          }
+          if (v == null) return gap();
           const mm = RATE_META[state.cells];
-          return chip("proj-war" + rateClass(v), mm.fmt(v),
-            `${s}: ${esc(mm.tip)}. Display only; WAR and pricing are unaffected.`);
+          return td(`<span class="proj-war${rateClass(v)}" title="${s}: ${esc(mm.tip)}. Display only; WAR and pricing are unaffected.">${mm.fmt(v)}</span>`);
         }
         const w = warAt(m, t);
-        if (w == null) {
-          const milb = m.src === "prospect" && s < m.eta;
-          return chip("proj-dim", milb ? "MiLB" : EM_DASH);
-        }
+        if (w == null) return gap();
         const lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
-        return chip("proj-war" + warClass(w), fmtWar(w),
-          `${s}: ${fmtWar(w)} eWAR (playing-time-held / if-healthy path)${lo != null ? ` &middot; floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10-P90 outcomes)` : ""}`);
+        return td(`<span class="proj-war${warClass(w)}" title="${s}: ${fmtWar(w)} eWAR (playing-time-held / if-healthy path)${lo != null ? ` &middot; P10 ${war1(lo)} / P90 ${war1(hi)}` : ""}">${fmtWar(w)}</span>`);
       }).join("");
-      // For prospects the per-season cells render only the fixed calendar window,
-      // which can drop ETA-shifted prime seasons; sum the SHOWN cells so the Total
-      // column agrees with what is visible. Vets keep their full warTotalPTH.
-      const totV = m.src === "prospect"
-        ? seasons.map((s, t) => warAt(m, t)).filter(v => v != null).reduce((a, b) => a + b, 0)
-        : (m.warTotalPTH ?? m.warTotal);
-      // Total-WAR P10-P90 band dropped (F-01): the band summed per-year
-      // quantiles and the per-year marginals undercover realized totals, so it
-      // was miscalibrated. Point estimate stays; per-year bands are unaffected.
-      const tot = `${fmtWar(totV)}`;
-      const cs = contractStatus(m);
-      // Contract status moved OUT of row 1 into the tape (2026-07-31): it is a
-      // categorical chip rather than a number, and its row-1 header sorted by
-      // AGE, which is the kind of mismatch nobody discovers except by testing a
-      // sort they did not ask for. AAV came out of it into a column of its own,
-      // which is also what finally made AAV sortable at all.
-      const ctChip = `<div class="mlb-chip mlb-chip-ct" title="${esc(cs.tip)}"><b>contract</b><span class="proj-ct ${cs.cls}"><span class="proj-ct-full">${esc(cs.label)}</span><span class="proj-ct-short">${esc(cs.short)}</span></span></div>`;
-      const aavCell = m.aav != null ? money(m.aav) : EM_DASH;
-      // Stays a CHIP and does not become a column, which was the plan until it
-      // was measured against the live payload: warPeak is carried by 203 of 203
-      // prospects and 0 of 1,326 veterans, so a row-1 column for it would be a
-      // dash on six of every seven rows of the default board. A chip can be
-      // omitted per row; a column cannot.
-      const peakChip = m.warPeak != null
-        ? `<div class="mlb-chip" title="Per-year WAR at peak age on the talent path; surplus does not use it"><b>peak WAR</b>${fmtWar(m.warPeak)}</div>`
-        : "";
-      const _sv = surOf(m);
-      const _surTitle = m.src === "prospect"
+      // Vets: the if-healthy total. Prospects: the in-window sum of the shown
+      // cells. The Total P10-P90 band stays withdrawn (F-01).
+      const totTip = isPros
+        ? "Sum of the in-window seasons shown (playing-time-held path)"
+        : `Playing-time-held path${m.warTotal != null ? `; expected path ${fmtWar(m.warTotal)}, which surplus prices` : ""}`;
+      const sv = surOf(m);
+      const surTip = isPros
         ? "Prospect surplus value over the control window"
         : (m.surRos != null && m.surNpv == null
-            ? `Rest-of-season control only: ${Math.round((m.rosFrac || 0) * 100)}% of ${DATA.first_season - 1} left, prorated projection minus prorated salary`
+            ? `Rest-of-season control only: ${Math.round((m.rosFrac || 0) * 100)}% of ${first - 1} left, prorated projection minus prorated salary`
             : (m.surRos != null
                 ? "Rest of this season plus NPV of (convex production value − salary) over salary-known seasons"
-                : "NPV of (convex production value − salary) over salary-known seasons"));
-      const sur = _sv != null
-        ? `<span class="${_sv >= 0 ? "proj-pos" : "proj-neg"}" title="${_surTitle}">${money(_sv)}</span>`
-        : EM_DASH;
-      // title carries the full name because .mlb-name is an ellipsis box. The
-      // identity block measures 224px at a 320px viewport and the photo rail
-      // plus the org logo take ~51px of that, so a long name is one of the few
-      // things on the row with nowhere else to be read.
-      const link = m.src === "prospect"
-        ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(m.key)}" title="${esc(m.name)}"><strong>${esc(m.name)}</strong></a>`
-        : `<a class="fa-player-link" href="#player=${encodeURIComponent(m.key)}" title="${esc(m.name)}"><strong>${esc(m.name)}</strong></a>`;
+                : "NPV of (convex production value − salary) over salary-known seasons"))
+          + (m.salSrc === "arb_projection" ? ". Priced on projected arbitration salaries" : "");
+      const sur = sv != null ? `<span class="${sv >= 0 ? "proj-pos" : "proj-neg"}" title="${surTip}">${money(sv)}</span>` : EM_DASH;
+      const aav = (m.aav != null && m.thru && m.thru >= first) ? money(m.aav) : EM_DASH;
+      const age = m.age != null ? Math.floor(m.age) : EM_DASH;
       const inCmp = state.cmp.includes(m.key);
-      // The whole appearance (including the picked-vs-unpicked colours) is on
-      // .proj-cmp-btn / .proj-cmp-btn.active - the class already encoded the
-      // state, so the inline copy of it was duplicated truth, not a value.
-      const cmpBtn = `<button class="proj-cmp-btn${inCmp ? " active" : ""}" data-cmp-key="${esc(m.key)}" type="button" title="${inCmp ? "Remove from compare" : "Compare head-to-head (pick two players)"}">⇄</button>`;
-      // PROSPX-pattern card (Lane B, 2026-07-30). Row 1 carries identity and the
-      // headline numbers; row 2 is a full-width tape of the season-by-season
-      // projection. The old markup put six elements into a single ellipsized
-      // 320px table cell, which is what made the board feel cramped: the fix is
-      // to give the seasons their own band rather than to keep widening a row.
-      const seasonTape = `<div class="mlb-tape"><div class="mlb-tape-inner">${cellChips}${peakChip}${ctChip}</div></div>`;
-      const cardHref = m.src === "prospect"
-        ? `/prospx/#player=${encodeURIComponent(m.key)}`
-        : `#player=${encodeURIComponent(m.key)}`;
-      return `<div class="mlb-card proj-card" tabindex="0" role="button"
-          data-card-href="${esc(cardHref)}"${m.orgColor ? ` style="--org-color:${esc(m.orgColor)}"` : ""}>
-        <span class="mlb-rank">${i + 1}</span>
-        <div class="proj-id">
-          ${rowPhoto(m)}
-          <span class="mlb-name">${teamLogo(m.team)}${link}</span>
-          <span class="mlb-sub">${esc(m.pos || "")}${m.team ? "" : " &middot; FA"}${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>${cmpBtn}</span>
-        </div>
-        <span class="mlb-metric" title="Projected eWAR over the window, playing-time-held (if-healthy) path">
-          <span class="mlb-metric-label">${DATA.horizon}y WAR</span>${tot}</span>
-        <span class="mlb-metric" title="AAV of the guaranteed contract on file"><span class="mlb-metric-label">AAV</span>${aavCell}</span>
-        <span class="mlb-metric" title="Age on the projection row"><span class="mlb-metric-label">Age</span>${m.age != null ? Math.floor(m.age) : "?"}</span>
-        <span class="mlb-metric"><span class="mlb-metric-label">Surplus</span>${sur}</span>
-        <span class="mlb-metric proj-col-wide" title="Final guaranteed season on the contract on file"><span class="mlb-metric-label">signed thru</span>${m.thru ? m.thru : EM_DASH}</span>
-        ${seasonTape}
-      </div>`;
+      const open = OPEN.has(m.key);
+      const cmpBtn = `<button type="button" class="proj-cmp-btn${inCmp ? " active" : ""}" data-cmp-key="${esc(m.key)}" aria-pressed="${inCmp}" aria-label="Compare ${esc(m.name)}" title="${inCmp ? "Remove from compare" : "Compare head-to-head (pick two players)"}">⇄</button>`;
+      const xpBtn = `<button type="button" class="proj-xp-btn" data-xp-key="${esc(m.key)}" aria-expanded="${open}"${open ? ` aria-controls="projd-${esc(m.key)}"` : ""} aria-label="Details: ${esc(m.name)}" title="Details">▾</button>`;
+      // Sub line: position and team as TEXT (the CSV and a screen reader get
+      // the org), then the facts whose columns fold at narrow widths (CSS shows
+      // them only then), then the row tags and the async FA chip.
+      const sub = `<span class="proj-pl-sub"><span class="proj-sub-id">${esc(m.pos || "")}${m.team ? ` &middot; ${logoMark(m.team)}${esc(m.team)}` : " &middot; FA"}</span>`
+        + `<span class="proj-sub-age">age ${age}</span>`
+        + (isPros ? "" : `<span class="proj-sub-ct ${ct.cls}" title="${esc(ct.tip)}">${esc(ct.sub)}</span>`)
+        + (pros && isPros ? `<span class="proj-sub-tag-pros">${tagFor(m)}</span>` : tagFor(m))
+        + `<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span></span>`;
+      const tail = pros
+        ? `<td class="pc-fv"><span title="${m.fv_source === "xfv" ? `Graded on eFV${m.consensus_fv != null ? `; consensus FV ${EEPHUS_HUB.fvCeil(m.consensus_fv)}` : ""}` : "Consensus FV (eFV abstains)"}">${isPros ? (m.fv_source === "xfv" ? Math.round(m.fv) : `FV ${EEPHUS_HUB.fvCeil(m.fv)}`) : EM_DASH}</span></td>`
+          + `<td class="pc-eta">${m.eta ?? EM_DASH}</td>`
+          + `<td class="pc-peak">${m.warPeak != null ? fmtWar(m.warPeak) : EM_DASH}</td>`
+          + `<td class="pc-bust"><span title="Outcome buckets ${esc(m.bucketLo || "?")} to ${esc(m.bucketHi || "?")}">${m.pBust != null ? (m.pBust * 100).toFixed(0) + "%" : EM_DASH}</span></td>`
+        : `<td class="pc-aav">${aav}</td>`
+          + `<td class="pc-ct"><span class="proj-ct ${ct.cls}" title="${esc(ct.tip)}">${esc(ct.text)}</span></td>`;
+      return `<tr data-key="${esc(m.key)}"${isPros ? ' class="is-prospect"' : ""}>`
+        + `<td class="pc-rank">${i + 1}</td>`
+        + `<th scope="row" class="pc-player" data-export-text="${esc(m.name)}"><div class="proj-pl">${rowPhoto(m)}`
+        + `<a class="fa-player-link mlb-name proj-pl-name" href="${esc(href)}" title="${esc(m.name)}">${esc(m.name)}</a>${cmpBtn}${xpBtn}${sub}</div></th>`
+        + `<td class="pc-csv" hidden>${esc(m.pos || "")}</td><td class="pc-csv" hidden>${esc(m.team || "")}</td>`
+        + `<td class="pc-tot"><span class="proj-tot" title="${esc(totTip)}">${fmtWar(warShown(m))}</span></td>`
+        + `<td class="pc-sur">${sur}</td>`
+        + seasonCells
+        + `<td class="pc-age">${age}</td>`
+        + tail
+        + `</tr>`
+        + (open ? detailRowHtml(m, pros) : "");
     }).join("");
+
     const _wm = projWarMap(list);
-    // font-size lives in CSS, not inline: an inline declaration outranks every
-    // stylesheet, so the 11px here survived the coarse-pointer rule that lifts
-    // fields to 16px and kept iOS zooming the page on focus. .proj-select
-    // already carries the compact desktop size.
     const _axSel = (id, cur) => `<select id="${id}" class="proj-select proj-select-ax">
       ${Object.entries(SCATTER_AXES).map(([k, ax]) => `<option value="${k}"${cur === k ? " selected" : ""}>${esc(ax.label)}</option>`).join("")}</select>`;
     const _ay = (SCATTER_AXES[state.sy] || SCATTER_AXES.warY1).label;
     const _ax2 = (SCATTER_AXES[state.sx] || SCATTER_AXES.age).label;
-    // Compact legend for the scatter's color encoding (contract status) -
-    // swatches share CONTRACT_DOT_COLORS with the dots; labels mirror the
-    // Contract filter chips. var() tokens keep it correct in both themes.
-    // Only the swatch BACKGROUND stays inline - it is a computed value out of
-    // CONTRACT_DOT_COLORS, the same map the dots read. Everything else is
-    // .proj-warmap-legend / .proj-legend-item / .proj-legend-dot.
     const warMapLegend = `<div class="proj-warmap-legend">
         <span class="proj-warmap-legend-lede">dot color = contract status</span>
         ${[["signed", "Signed"], ["expiring", "Expiring"], ["controlled", "Cost-ctrl / unsigned"], ["prospect", "Prospect"]].map(([k, l]) =>
@@ -1248,17 +1376,13 @@
       </div>
       ${warMapLegend}
       <div class="proj-warmap-wrap" data-export-chart data-export-title="${esc(_ay)} vs ${esc(_ax2)}">${_wm}</div></details>` : "";
-    // Right information rail for the Players view. Rebuilt inside renderTable so
-    // the leaders and pool-supply modules track the CURRENT filtered/sorted
-    // rows. View switching lives in the top filter-bar chips, so this rail is a
-    // pure read-out: scope/freshness, the WAR and surplus leaders, pool supply.
     function projBoardSidebar(curr) {
       const stampMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Data freshness and scope">Scope</div>
         ${DATA.generated_at ? `<div class="fa-rail-row"><span>data as of</span><span class="fa-rail-num">${esc(String(DATA.generated_at))}</span></div>` : ""}
         <div class="fa-rail-row"><span>veterans</span><span class="fa-rail-num">${DATA.n_vets}</span></div>
         <div class="fa-rail-row"><span>prospects</span><span class="fa-rail-num">${DATA.n_prospects}</span></div>
         <div class="fa-rail-row"><span data-gl="winter_dpw">$/WAR</span><span class="fa-rail-num">${money(DATA.dpw_usd)}</span></div></div>`;
-      const warTot = m => warShown(m) ?? -99;   // same windowed 5yr total the board sorts + shows
+      const warTot = m => warShown(m) ?? -99;
       const topWar = curr.slice().sort((a, b) => warTot(b) - warTot(a)).slice(0, 6);
       const warRow = m => `<div class="fa-rail-row"><a class="fa-player-link" href="${m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`}">${esc(m.name)}</a><span class="fa-rail-num">${fmtWar(warTot(m))}</span></div>`;
       const warMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Top ${DATA.horizon}-year projected eWAR among the current filters (if-healthy path)">Top projected WAR</div>
@@ -1274,102 +1398,80 @@
       const supplyMod = supply ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="Current filtered pool by position group">Pool supply</div>${supply}</div>` : "";
       return `<aside class="fa-board-rail">${stampMod}${warMod}${surMod}${supplyMod}</aside>`;
     }
-    // Card-head columns must mirror the .proj-card grid exactly, so the two
-    // read from the same source rather than from two that can drift apart.
-    // minmax(0,...) on the one flexible track: a bare fr refuses to shrink below
-    // min-content, so a long name would push the numbers off the card.
-    //
-    // TWO track strings since 2026-08-07, still one source. The identity track
-    // measured 670px at the 1400px wrap for content that needs about half of it
-    // (longest rendered name 189px, longest sub line 161px), so the contract's
-    // final guaranteed season becomes a real column where there is room, and
-    // stays a tape chip where there is not. site.css owns the threshold; below
-    // it the cell is display:none and the narrow string is restored, so the
-    // header and the cards can never disagree about the track count.
-    //
-    // ONE new column, not the two originally planned: see the peak WAR chip
-    // above for why that one failed its coverage check.
-    //
-    // The new cell sits LAST in the markup rather than beside AAV, and that is
-    // structural. Under 720px both boards collapse to a 2-across grid by
-    // nth-child parity on the metric cells, so a hidden cell inserted anywhere
-    // in the middle flips the odd/even column of everything after it. Appended,
-    // it shifts nothing.
-    const CARD_TRACKS = "34px minmax(0,1.9fr) 92px 84px 52px 96px 78px";
-    const CARD_TRACKS_NARROW = "34px minmax(0,1.9fr) 92px 84px 52px 96px";
-    const _trackStyle = `grid-template-columns:${CARD_TRACKS};--card-tracks-narrow:${CARD_TRACKS_NARROW};`;
-    // Every header is sortable now, including rank and name, and each is a real
-    // keyboard button with aria-sort. The old board exposed sorting on the
-    // season cells, 5y WAR and Surplus only, and none of them were reachable by
-    // keyboard, which made Projections the one module below the a11y contract
-    // that fa.js, mlbstats.js and prospx all already met.
-    const cardHead = (label, key, title, cls) => {
-      const active = state.sort === key;
-      const aria = active ? (state.dir < 0 ? "descending" : "ascending") : "none";
-      return `<span role="button" tabindex="0"${cls ? ` class="${cls}"` : ""} data-psort="${key}" aria-sort="${aria}"${title ? ` title="${esc(title)}"` : ""}>${label}${active ? (state.dir < 0 ? " ▾" : " ▴") : ""}</span>`;
-    };
-    // The row-2 tape chips are NOT track-aligned with the header (they live in
-    // the reserved band at the card bottom and scroll inside their own box), so
-    // they get their own strip of sort buttons - the /fantasy/ .ff-sortbar
-    // pattern. The per-season keys y0..y4 have existed in sortRows since the
-    // board was a table, but nothing in the UI reached them after the card
-    // conversion: they were only addressable by hand-editing #sort=y0 into the
-    // URL. This is where they come back, and they follow the active cell metric
-    // (WAR / wRC+ / wOBA / FIP) the same way the chips do.
-    const cellLbl = state.cells === "war" ? "WAR" : RATE_META[state.cells].label;
-    const tapeSortbar = `<div class="mlb-sortbar"><span class="mlb-sortbar-lbl">Sort tape</span>
-      ${seasons.map((s, t) => cardHead(String(s), "y" + t, `Sort by the ${s} cell (currently ${cellLbl})`)).join("")}
-      ${cardHead("peak WAR", "warPeak", "Talent-path projection at peak age")}
-      ${cardHead("contract thru", "thru", "Final guaranteed season on the contract on file. Prospects and unsigned players sort last.")}
-    </div>`;
-    // The board's masthead, the same newsprint eyebrow the FA class board
-    // carries. The scope prose stays in #proj-banner above; this only names the
-    // board and its window, so the two modules open the same way.
+    // Sort vocabulary: one table for the eyebrow cue, the picker and its
+    // reverse button. The cue is the only on-screen sign of a sort whose column
+    // has folded at this width.
+    const SORT_LBL = { rank: `${H}y WAR`, name: "Name", warTotal: `${H}y WAR`, sur: "Surplus", age: "Age",
+      aav: "AAV", thru: "Contract thru", fv: "eFV", eta: "ETA", warPeak: "Peak WAR", pBust: "P(bust)" };
+    seasons.forEach((s, t) => { SORT_LBL["y" + t] = `${s} ${cellLbl}`; });
+    const sortName = SORT_LBL[state.sort] || SORT_LBL.warTotal;
+    const arrow = state.dir < 0 ? "▾" : "▴";
+    const dirWord = state.sort === "name" ? (state.dir > 0 ? "A-Z" : "Z-A") : (state.dir < 0 ? "high first" : "low first");
     const boardHead = `<div class="newsprint-eyebrow" style="margin-top:4px;">
-      <span class="newsprint-eyebrow-label">${DATA.horizon}-Year Projection Board</span>
-      <span class="newsprint-eyebrow-meta">${seasons[0]}-${seasons[seasons.length - 1]} &middot; ${list.length} shown &middot; mean <span data-gl="ewar">eWAR</span> on the playing-time-held path</span>
+      <span class="newsprint-eyebrow-label">${H}-Year Projection Board</span>
+      <span class="newsprint-eyebrow-meta">${seasons[0]}-${seasons[seasons.length - 1]} &middot; ${list.length} shown &middot; sorted by ${esc(sortName)} ${arrow}
+        &middot; <span data-gl="ewar">eWAR</span> &middot; <span data-gl="surplus_value">surplus</span> &middot; <span data-gl="p10_p90_bands">P10/P90</span>${pros ? ` &middot; <span data-gl="xfv">eFV</span> &middot; <span data-gl="bust_prob">P(bust)</span>` : ""}</span>
     </div>`;
-    root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main">` + boardHead + warMap + tapeSortbar + `
-      <div class="mlb-card-head" style="${_trackStyle}">
-        ${cardHead("#", "rank", "Board position under the current sort")}
-        ${cardHead("Player", "name", "Sort by name")}
-        ${cardHead(`${DATA.horizon}y WAR`, "warTotal", "Projected eWAR over the window, playing-time-held (if-healthy) path. Surplus prices the expected path.")}
-        ${cardHead("AAV", "aav", "AAV of the guaranteed contract on file")}
-        ${cardHead("Age", "age", "Sort by age")}
-        ${cardHead(`<span data-gl="surplus_value">Surplus</span>`, "sur", "Veterans: production value minus salary, salary-known seasons only. Prospects: surplus value over the control window.")}
-        ${cardHead("signed thru", "thru", "Final guaranteed season on the contract on file; none sorts last", "proj-col-wide")}
-      </div>
-      <div class="mlb-card-list">${body || `<div class="fa-sub proj-empty">No players match.</div>`}</div>
-      ${list.length > state.limit ? `<div class="proj-more-wrap"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : ""}</div>${projBoardSidebar(list)}</div>`;
-    // One place sets the card grid, from the same string the header uses.
-    // (The --card-tracks custom property that used to sit on .mlb-card-list went
-    // with this change: nothing in the repo ever read it.)
-    root.querySelectorAll(".proj-card").forEach(c => {
-      c.style.gridTemplateColumns = CARD_TRACKS;
-      c.style.setProperty("--card-tracks-narrow", CARD_TRACKS_NARROW);
-    });
-    // Keyboard parity for EVERY sort affordance (click is wired below). This
-    // selector was scoped to .mlb-card-head, which would have left the new tape
-    // sort bar mouse-only - the exact a11y hole this pattern exists to close.
-    root.querySelectorAll("[data-psort]").forEach(h => {
-      h.onkeydown = e => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); h.click(); }
-      };
-    });
-    // Whole-card activation, matching the PROSPX row behaviour. Ignore clicks
-    // that landed on a control inside the card (the compare button, any link).
-    root.querySelectorAll(".proj-card[data-card-href]").forEach(c => {
-      const open = () => { location.href = c.dataset.cardHref; };
-      c.onclick = e => { if (!e.target.closest("a,button")) open(); };
-      c.onkeydown = e => {
-        if ((e.key === "Enter" || e.key === " ") && !e.target.closest("a,button")) { e.preventDefault(); open(); }
-      };
-    });
-    root.querySelectorAll("[data-psort]").forEach(h => h.onclick = () => {
-      const k = h.dataset.psort;
-      if (state.sort === k) state.dir = -state.dir;
-      else { state.sort = k; state.dir = -1; }
+    // Board tools: the sort picker (CSS shows it once any column has folded,
+    // so a folded column stays sortable) and the compare tray once one player
+    // is picked, so the first pick has a visible state.
+    const pickKeys = viewSortKeys(pros).filter(k => k !== "rank");
+    if (!pickKeys.includes(state.sort) && SORT_LBL[state.sort]) pickKeys.push(state.sort);
+    const sortPick = `<span class="proj-sort-pick"><label for="proj-sort-sel">Sort</label>
+      <select id="proj-sort-sel" class="proj-select">${pickKeys.map(k => `<option value="${k}"${state.sort === k || (state.sort === "rank" && k === "warTotal") ? " selected" : ""}>${esc(SORT_LBL[k])}</option>`).join("")}</select>
+      <button type="button" class="chip" id="proj-sort-dir" aria-label="Reverse sort">${arrow} ${dirWord}</button></span>`;
+    const cmpOne = state.cmp.length === 1 ? findRow(state.cmp[0]) : null;
+    const tray = cmpOne ? `<span class="proj-cmp-tray" role="status">Compare: <strong>${esc(cmpOne.name)}</strong> &middot; pick one more <button type="button" class="chip" data-cmp-clear>clear</button></span>` : "";
+    const tools = `<div class="proj-board-tools${pros ? " is-pros" : ""}">${sortPick}${tray}</div>`;
+    const table = `<div class="proj-board-wrap"><table class="proj-board-table${pros ? " is-pros" : ""}" data-export data-export-title="MLB Projections">${head}<tbody>${body}</tbody></table>`
+      + (body ? "" : `<div class="fa-sub proj-empty">No players match.</div>`) + `</div>`;
+    root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main proj-board-main">` + boardHead + tools + table
+      + (list.length > state.limit ? `<div class="proj-more-wrap"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : "")
+      + warMap + `</div>${projBoardSidebar(list)}</div>`;
+
+    const resort = (k, dir, focusSel) => {
+      state.sort = k; state.dir = dir;
       syncToURL(); renderTable();
+      // The re-render replaced the control; put focus back where the reader was.
+      const again = root.querySelector(focusSel);
+      if (again && again.focus) again.focus();
+    };
+    root.querySelectorAll("button[data-psort]").forEach(b => b.onclick = () => {
+      const k = b.dataset.psort;
+      resort(k, state.sort === k ? -state.dir : naturalDir(k), `button[data-psort="${k}"]`);
+    });
+    const sel = document.getElementById("proj-sort-sel");
+    if (sel) sel.onchange = () => resort(sel.value, naturalDir(sel.value), "#proj-sort-sel");
+    const dirBtn = document.getElementById("proj-sort-dir");
+    if (dirBtn) dirBtn.onclick = () => resort(state.sort, -state.dir, "#proj-sort-dir");
+    // Detail line: toggled in place (no re-render, focus stays put), kept open
+    // across sorts and filters through OPEN.
+    const toggle = tr => {
+      const key = tr.dataset.key;
+      const m = findRow(key);
+      const btn = tr.querySelector(".proj-xp-btn");
+      const next = tr.nextElementSibling;
+      if (OPEN.has(key)) {
+        OPEN.delete(key);
+        if (next && next.classList.contains("proj-detail")) next.remove();
+        if (btn) { btn.setAttribute("aria-expanded", "false"); btn.removeAttribute("aria-controls"); }
+      } else if (m) {
+        OPEN.add(key);
+        tr.insertAdjacentHTML("afterend", detailRowHtml(m, pros));
+        if (btn) { btn.setAttribute("aria-expanded", "true"); btn.setAttribute("aria-controls", "projd-" + key); }
+        if (window.EEPHUS_GL && tr.nextElementSibling) window.EEPHUS_GL.wire(tr.nextElementSibling);
+      }
+    };
+    root.querySelectorAll("tr[data-key]").forEach(tr => {
+      const btn = tr.querySelector(".proj-xp-btn");
+      if (btn) btn.onclick = () => toggle(tr);
+      // A click on a plain part of the row opens the line too; a drag-select
+      // does not, so numbers stay copyable.
+      tr.onclick = e => {
+        if (e.target.closest("a,button,select,input")) return;
+        if (window.getSelection && String(window.getSelection())) return;
+        toggle(tr);
+      };
     });
     ["proj-sx", "proj-sy"].forEach(id => {
       const el = document.getElementById(id);
@@ -1377,7 +1479,7 @@
         state[id === "proj-sx" ? "sx" : "sy"] = el.value;
         syncToURL(); renderTable();
         const d = root.querySelector("details.proj-warmap");
-        if (d) d.open = true;   // keep the chart open across the re-render
+        if (d) d.open = true;
       };
     });
     const more = document.getElementById("proj-more");
@@ -1390,18 +1492,16 @@
       syncToURL();
       if (state.cmp.length === 2) render(); else renderTable();
     });
-    // Rows the payload gave no mlbam: resolve the id and fill the (already
-    // reserved) 24px photo well.
+    const clr = root.querySelector("[data-cmp-clear]");
+    if (clr) clr.onclick = () => { state.cmp = []; syncToURL(); renderTable(); };
     fillRowPhotos(root);
-    // Cross-module cohesion: FA-class members get a $ chip linking to
-    // their market card (async via the links map; no layout shift).
     if (window.EEPHUS_HUB) {
       window.EEPHUS_HUB.links().then(L => {
         if (!L) return;
         root.querySelectorAll(".proj-fa-slot[data-fa-key]").forEach(el => {
           const row = (L.byKey || {})[el.dataset.faKey];
           if (row && row.fa) {
-            el.innerHTML = ` <a class="proj-tag" href="/fa/#player=${encodeURIComponent(row.key)}" title="In the current FA class: open the market card">$ FA</a>`;
+            el.innerHTML = `<a class="proj-tag proj-fa-chip" href="/fa/#player=${encodeURIComponent(row.key)}" title="In the current FA class: open the market card">$ FA</a>`;
           }
           el.removeAttribute("data-fa-key");
         });

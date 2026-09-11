@@ -208,7 +208,7 @@ def server():
 
 
 @pytest.mark.parametrize("route,card", [
-    ("projections/", ".proj-card"),
+    ("projections/", ".proj-board-table tbody tr[data-key]"),
     ("fa/", ".fa-card"),
 ])
 @pytest.mark.parametrize("theme", ["light", "dark"])

@@ -2331,9 +2331,6 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
    which no stylesheet could override - including the touch rule that lifts
    fields to 16px so iOS stops zooming the page. */
 .proj-app .proj-select-ax { font-size: 11px; }
-.proj-app th.proj-sort { cursor: pointer; user-select: none; white-space: nowrap; }
-.proj-app th.proj-sort:hover { color: var(--text-primary); }
-.proj-app th.proj-sort.is-sorted { color: var(--text-primary); border-bottom: 2px solid var(--accent-gold); }
 /* RESCOPED 2026-08-04. This was `.proj-app .proj-player { max-width: 320px;
    overflow: hidden; text-overflow: ellipsis }` - the truncation box for the
    board TABLE that the card conversion retired on 2026-07-30. The only
@@ -3932,7 +3929,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
    clip inside it, which is what makes the fixed height a promise rather than
    a hope.
    =========================================================================== */
-.fa-app .fa-card, .proj-app .proj-card {
+.fa-app .fa-card {
   /* 1.35 rather than the body's 1.55. Three stacked text lines per card at
      1.55 measure ~12px taller than they need to, which is the whole difference
      between a 108px card and a 120px one. */
@@ -3992,13 +3989,6 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
    font-size forced to 2.1/19px they grow to 168 rather than clipping - which
    is the whole point of the minimum. 96 is also the floor the phone block below
    has always used, so the two now agree. */
-.proj-app .proj-card {
-  height: auto; min-height: 96px; contain-intrinsic-size: auto 96px;
-}
-.proj-app .proj-card .proj-id {
-  grid-template-rows: minmax(min-content, auto) minmax(min-content, auto);
-}
-.proj-app .proj-card .proj-id > .mlb-name img { vertical-align: middle; }
 /* Same treatment for the FA board, which shares the primitive and the failure
    mode (its name line measured 25px against a 108px card). */
 .fa-app .fa-card { height: auto; min-height: 96px; }
@@ -4009,8 +3999,8 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 
 /* Identity block and the metric cells: stretched to the row, centred inside it,
    clipped at its edge (see the note above on align-items: center). */
-.fa-app .fa-card .fa-id, .proj-app .proj-card .proj-id,
-.fa-app .fa-card > .mlb-metric, .proj-app .proj-card > .mlb-metric {
+.fa-app .fa-card .fa-id,
+.fa-app .fa-card > .mlb-metric {
   align-self: stretch; min-width: 0; overflow: hidden;
   display: flex; flex-direction: column; justify-content: center;
 }
@@ -4034,7 +4024,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
    the card's min-height alone, which is precisely the shape the name-clip bug
    was made of. Same markup shape now (fa.js emits the well as a sibling of
    .mlb-name), same rules. */
-.proj-app .proj-card .proj-id, .fa-app .fa-card .fa-id {
+.fa-app .fa-card .fa-id {
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr);
   /* RESTATED, not inherited from the invariant rule above: this declaration is
@@ -4048,19 +4038,16 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 }
 /* Explicit areas rather than auto-placement: the well spans both rows, and the
    name/sub keep their order whatever else the identity block ever carries. */
-.proj-app .proj-card .proj-id > .fa-row-photo,
 .fa-app .fa-card .fa-id > .fa-row-photo {
   grid-area: 1 / 1 / 3 / 2; align-self: center; margin-right: 0;
 }
-.proj-app .proj-card .proj-id > .mlb-name,
 .fa-app .fa-card .fa-id > .mlb-name { grid-area: 1 / 2 / 2 / 3; }
-.proj-app .proj-card .proj-id > .mlb-sub,
 .fa-app .fa-card .fa-id > .mlb-sub  { grid-area: 2 / 2 / 3 / 3; }
 /* Metric children hug their content at the right edge; without this the verdict
    and contract pills would stretch to the full track width and stop reading as
    chips. */
-.fa-app .fa-card > .mlb-metric, .proj-app .proj-card > .mlb-metric { align-items: flex-end; }
-.fa-app .fa-card > .mlb-metric > *, .proj-app .proj-card > .mlb-metric > * { max-width: 100%; }
+.fa-app .fa-card > .mlb-metric { align-items: flex-end; }
+.fa-app .fa-card > .mlb-metric > * { max-width: 100%; }
 /* Status is the one prose cell on either board (SIGNED NYY 4y / $92.0M, or an
    option kind with its price and P(enter)). Two lines, then ellipsis - the full
    string stays on the cell's title and on the player card. */
@@ -4070,35 +4057,19 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
      the 46px row-1 budget, and at the card's own 1.35 they do not. */
   overflow: hidden; font-size: 11px; line-height: 1.25;
 }
-.fa-app .fa-card .mlb-sub, .proj-app .proj-card .mlb-sub { row-gap: 0; }
-.fa-app .fa-card .mlb-tape-inner, .proj-app .proj-card .mlb-tape-inner { padding-top: 3px; }
+.fa-app .fa-card .mlb-sub { row-gap: 0; }
+.fa-app .fa-card .mlb-tape-inner { padding-top: 3px; }
 /* Board-scoped, NOT on bare .mlb-chip: the fantasy .ff-card shares that
    primitive and sizes its own 104px budget around the 1.35/3px chip. */
-.fa-app .fa-card .mlb-chip, .proj-app .proj-card .mlb-chip {
+.fa-app .fa-card .mlb-chip {
   padding-top: 2px; padding-bottom: 2px; line-height: 1.2;
 }
 /* .mlb-chip is `flex: 1 1 0` + nowrap, so a chip that shrinks below its text
    would spill it over its neighbour. Ellipsis instead - the full string is on
    the chip's title, and both boards keep it on the player card. */
-.fa-app .fa-card .mlb-chip, .proj-app .proj-card .mlb-chip,
-.fa-app .fa-card .mlb-chip b, .proj-app .proj-card .mlb-chip b {
+.fa-app .fa-card .mlb-chip,
+.fa-app .fa-card .mlb-chip b {
   overflow: hidden; text-overflow: ellipsis;
-}
-/* The contract chip carries the longest string in either tape ("No multi-year
-   deal"), so it takes a wider share rather than ellipsing by default.
-   MIN-WIDTH GATED 2026-08-04: a wider SHARE only means anything where the
-   chips divide one fixed row. Below 641px they no longer do (see the tape
-   block above, where every chip goes to max-content and the strip swipes),
-   and this rule is both more specific and later in the sheet, so ungated it
-   was the one chip still being crushed - which is exactly the one carrying
-   the longest string. */
-@media (min-width: 641px) {
-  .proj-app .proj-card .mlb-chip-ct { flex: 1.8 1 0; }
-}
-/* The contract status is a chip inside a chip otherwise. Flatten the pill so it
-   keeps its status colour without a second border ring. */
-.proj-app .proj-card .mlb-chip .proj-ct {
-  border: 0; background: none; padding: 0; font-size: 11px; cursor: inherit;
 }
 /* Compare picker (2026-08-07). projections.js emits this button with a comment
    claiming "the whole appearance is on .proj-cmp-btn / .proj-cmp-btn.active".
@@ -4128,8 +4099,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 /* Active sort header. .mlb-card-head fades the whole strip with opacity, which a
    child cannot undo, so the active column is marked with the house gold rule
    (the same one the old th.fa-sort.is-sorted carried) plus full-strength text. */
-.fa-app .mlb-card-head [role="button"]:not([aria-sort="none"]),
-.proj-app .mlb-card-head [role="button"]:not([aria-sort="none"]) {
+.fa-app .mlb-card-head [role="button"]:not([aria-sort="none"]) {
   color: var(--text-primary); border-bottom: 2px solid var(--accent-gold);
 }
 /* Numeric headers over numeric cells (2026-08-04). Every .mlb-metric cell is
@@ -4140,45 +4110,11 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
    file): child 1 is the rank, child 2 is Player, everything after is a metric
    column on both boards. Phone width turns the header into a wrapped chip
    strip, where alignment inside a padded chip is a no-op. */
-.fa-app .mlb-card-head > *:nth-child(n+3),
-.proj-app .mlb-card-head > *:nth-child(n+3) { text-align: right; }
+.fa-app .mlb-card-head > *:nth-child(n+3) { text-align: right; }
 /* 13, not the shared 12: the cards carry a 1px border inside the same outer
    width, so an equal padding leaves the header labels exactly 1px right of the
    numbers they sit over. Measured right edges now match to the pixel. */
-.fa-app .mlb-card-head, .proj-app .mlb-card-head { padding-right: 13px; }
-
-/* WIDE-ONLY PROJECTIONS COLUMN (2026-08-07). The identity track measured 670px
-   at the 1400px wrap for content needing about half of it, so the contract's
-   final guaranteed season becomes a real row-1 column where the board can pay
-   for it and stays a tape chip where it cannot. projections.js carries BOTH
-   track strings; the narrow one rides in on --card-tracks-narrow, so the header
-   and the cards can never disagree about the count. !important is what beats
-   the inline grid-template-columns that sets the wide set.
-
-   Note for anyone adding a second wide column: the BOARD is not monotonic in
-   the viewport. .fa-board-main measures 976px at a 1024 viewport (the 230px
-   rail has stacked), 809px at 1101 (the rail is back), and does not clear 948px
-   again until 1240. ONE 78px column clears the tightest point - identity 283px
-   at 1101, against a sub line that needs 161px before it wraps and grows the
-   card - and a second one would not have. */
-@media (max-width: 1024px) {
-  .proj-app .proj-card, .proj-app .mlb-card-head {
-    grid-template-columns: var(--card-tracks-narrow) !important;
-  }
-  /* Four classes, not three, and that is load-bearing: the phone block at the
-     end of this sheet sets `display: block` on `.proj-app .proj-card >
-     .mlb-metric` at the same specificity and LATER in the file, so a
-     three-class hide here lost under 720px and the wide cell came back. */
-  .proj-app .proj-card > .mlb-metric.proj-col-wide,
-  .proj-app .mlb-card-head > [role="button"].proj-col-wide { display: none; }
-}
-/* The contract chip's label carries the year ("Signed - 2033") and so does the
-   column above it. Exactly one of the two forms ever paints. */
-.proj-app .proj-card .proj-ct-short { display: none; }
-@media (min-width: 1025px) {
-  .proj-app .proj-card .proj-ct-full { display: none; }
-  .proj-app .proj-card .proj-ct-short { display: inline; }
-}
+.fa-app .mlb-card-head { padding-right: 13px; }
 
 /* P10-P90 BAND POPOVER (2026-08-07). The bands were reachable by keyboard and
    screen reader but visible only as a `title`, which a touch device never
@@ -4221,14 +4157,14 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 }
 
 @media (max-width: 720px) {
-  .fa-app .fa-card, .proj-app .proj-card { height: auto; min-height: 96px; }
+  .fa-app .fa-card { height: auto; min-height: 96px; }
   /* The shared rule collapses row 1 under 720px, but it also PINS every row-1
      child to grid-row 1. Pinned items do not wrap - auto-placement keeps making
      implicit COLUMNS - so the card would scroll sideways instead of reflowing.
      Releasing the row is what actually makes the collapse work; the tape still
      takes the full width, last. */
-  .fa-app .fa-card > *:not(.mlb-tape), .proj-app .proj-card > *:not(.mlb-tape) { grid-row: auto; }
-  .fa-app .fa-card > .mlb-tape, .proj-app .proj-card > .mlb-tape { grid-row: auto; grid-column: 1 / -1; }
+  .fa-app .fa-card > *:not(.mlb-tape) { grid-row: auto; }
+  .fa-app .fa-card > .mlb-tape { grid-row: auto; grid-column: 1 / -1; }
   /* THREE tracks, not the shared two (2026-08-04). The shared collapse is
      `34px minmax(0,1fr)`, which is right for row 1 and wrong for everything
      under it: once the rows are released, auto-placement drops every other
@@ -4240,21 +4176,19 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
      class and fa.js belongs to another lane. The count is stable on both
      boards: child 1 is the rank, child 2 the identity, every child after that
      is a .mlb-metric until the tape, which spans the row on its own rule. */
-  .fa-app .fa-card, .proj-app .proj-card {
+  .fa-app .fa-card {
     grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr) !important;
   }
-  .fa-app .fa-card .fa-id, .proj-app .proj-card .proj-id { grid-column: 2 / -1; }
-  .fa-app .fa-card > .mlb-metric:nth-child(odd),
-  .proj-app .proj-card > .mlb-metric:nth-child(odd) { grid-column: 2; }
-  .fa-app .fa-card > .mlb-metric:nth-child(even),
-  .proj-app .proj-card > .mlb-metric:nth-child(even) { grid-column: 3; }
-  .fa-app .fa-card .fa-id, .proj-app .proj-card .proj-id,
-  .fa-app .fa-card > .mlb-metric, .proj-app .proj-card > .mlb-metric {
+  .fa-app .fa-card .fa-id { grid-column: 2 / -1; }
+  .fa-app .fa-card > .mlb-metric:nth-child(odd) { grid-column: 2; }
+  .fa-app .fa-card > .mlb-metric:nth-child(even) { grid-column: 3; }
+  .fa-app .fa-card .fa-id,
+  .fa-app .fa-card > .mlb-metric {
     align-self: auto; overflow: visible; align-items: flex-start; display: block;
   }
   /* The identity block keeps its headshot rail (the grid below) at every
      width; the `display: block` reset above is about the metric cells. */
-  .proj-app .proj-card .proj-id, .fa-app .fa-card .fa-id { display: grid; }
+  .fa-app .fa-card .fa-id { display: grid; }
   /* Re-state the -webkit-box; this line used to say `display: block`, next to
      the metric-cell resets above, and it read like one of them. It is not:
      -webkit-line-clamp only applies to a -webkit-box, so blocking the status
@@ -4266,12 +4200,240 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   /* Header tracks no longer line up with a collapsed card, so the header becomes
      a chip strip rather than being dropped: hiding it would take sorting away
      from exactly the readers most likely to be re-ranking a board on the move. */
-  .fa-app .mlb-card-head, .proj-app .mlb-card-head {
+  .fa-app .mlb-card-head {
     display: flex !important; flex-wrap: wrap; gap: 6px;
     grid-template-columns: none !important; opacity: 1;
   }
-  .fa-app .mlb-card-head [role="button"], .proj-app .mlb-card-head [role="button"] {
+  .fa-app .mlb-card-head [role="button"] {
     padding: 5px 8px; border: 1px solid var(--border);
     color: var(--text-secondary);
   }
+}
+
+
+/* ===========================================================================
+   PROJECTIONS PLAYERS TABLE (2026-09-11, owner ask: a table, not cards).
+   One fixed-layout table at width 100%: it cannot be wider than its box, so
+   the page never scrolls sideways and the name column never leaves the screen.
+   Columns fold by BOARD width (the board column is not monotonic in the
+   viewport: 809px at 1101, 1052px at 1100), never the five seasons.
+   =========================================================================== */
+/* clip, not auto: .fa-app .fa-board-main { overflow-x:auto } made the board
+   column a scroll container, so a thead inside it scrolled away with the rows.
+   clip creates no scroll container (overflow-y stays visible), so the header
+   sticks to the viewport, and a stray wide cell still cannot push the page
+   sideways. Scoped to the class only this board carries; /fa/ keeps its rule. */
+.proj-app .proj-board-main { overflow-x: clip; container: projboard / inline-size; }
+.proj-app .proj-board-wrap { background: var(--bg-primary); }
+.proj-app .proj-board-table {
+  width: 100%; table-layout: fixed;
+  border-collapse: separate; border-spacing: 0;
+  font-family: var(--font-retro-mono); font-size: 12.5px; line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+.proj-app .proj-board-table th, .proj-app .proj-board-table td {
+  box-sizing: border-box;
+  padding: 5px 7px; text-align: right; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  border-bottom: 1px solid var(--border-light);
+}
+.proj-app .proj-board-table thead th {
+  position: sticky; top: 0; z-index: 2;
+  padding: 0; vertical-align: bottom;
+  background: var(--bg-secondary); color: var(--text-tertiary);
+  border-bottom: 2px solid var(--bg-header);
+}
+.proj-app .proj-board-table thead th[aria-sort="ascending"],
+.proj-app .proj-board-table thead th[aria-sort="descending"] {
+  color: var(--text-primary); border-bottom-color: var(--accent-gold);
+}
+.proj-app .proj-sort {
+  position: relative; display: block; width: 100%; min-height: 32px; margin: 0;
+  padding: 6px 7px 5px; border: 0; background: none; color: inherit;
+  font: 700 10px/1.2 var(--font-retro-mono); letter-spacing: 0.05em;
+  text-transform: uppercase; text-align: inherit; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.proj-app .proj-sort:hover { color: var(--text-primary); }
+.proj-app .proj-sort:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: -2px; }
+.proj-app .proj-sort-ind { display: inline-block; min-width: 0.9em; text-align: left; }
+.proj-app .proj-th-unit { display: block; font-size: 9px; letter-spacing: 0.04em; opacity: 0.8; }
+.proj-app .proj-board-table .pc-rank, .proj-app .proj-board-table .pc-player { text-align: left; }
+.proj-app .proj-board-table tbody tr[data-key] { cursor: pointer; }
+.proj-app .proj-board-table tbody tr:hover > * { background: var(--bg-tertiary); }
+.proj-app .proj-board-table td.pc-rank { color: var(--text-tertiary); font-size: 11px; }
+/* The name column never leaves the screen because the table never scrolls
+   sideways. It is NOT position:sticky; left:0 as well: in a fixed-layout
+   table that declaration was measured to paint the row rules under the name
+   cell a device pixel off the rest of the row below an open detail line
+   (Chromium, DPR 2), and with no sideways scroller it buys nothing. If a
+   future change ever adds one, sticky-left comes back with it. */
+.proj-app .proj-board-table tbody th { font-weight: inherit; }
+.proj-app .proj-board-table tbody .pc-player { padding-top: 4px; padding-bottom: 4px; }
+/* Player cell: photo | name, compare, details | filler; the sub line under
+   the name. The trailing 1fr keeps the two buttons next to the name instead of
+   at the far edge of a wide cell. */
+.proj-app .proj-pl {
+  display: grid;
+  grid-template-columns: 24px minmax(0, max-content) 24px 24px minmax(0, 1fr);
+  grid-template-rows: auto auto; column-gap: 4px; row-gap: 1px; align-items: center;
+}
+.proj-app .proj-pl > .fa-row-photo { grid-area: 1 / 1 / 3 / 2; margin-right: 3px; }
+.proj-app .proj-pl > .proj-pl-name { grid-area: 1 / 2 / 2 / 3; }
+.proj-app .proj-pl > .proj-cmp-btn { grid-area: 1 / 3 / 2 / 4; }
+.proj-app .proj-pl > .proj-xp-btn { grid-area: 1 / 4 / 2 / 5; }
+.proj-app .proj-pl > .proj-pl-sub { grid-area: 2 / 2 / 3 / 6; }
+.proj-app .proj-pl-name {
+  font-family: var(--font-retro); font-size: 13px; font-weight: 700; line-height: 1.3;
+  border-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.proj-app .proj-pl-name:hover { text-decoration: underline dotted; }
+.proj-app .proj-pl-sub {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1px 6px; min-width: 0;
+  font-size: 10.5px; line-height: 1.3; color: var(--text-tertiary); white-space: normal;
+}
+.proj-app .proj-pl-sub .fa-logo { width: 13px; height: 13px; margin-right: 2px; vertical-align: -2px; }
+.proj-app .proj-pl-sub .proj-tag { font-size: 8.5px; }
+.proj-app .proj-sub-age, .proj-app .proj-sub-ct { display: none; }
+.proj-app .proj-pl-sub .proj-sub-ct { font-weight: 700; border: 0; background: none; padding: 0; }
+/* Compare and details: quiet at rest, framed on row hover or focus, cyan when on. */
+.proj-app .proj-board-table .proj-cmp-btn,
+.proj-app .proj-board-table .proj-xp-btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; padding: 0;
+  /* 24x24 target, but only 16px of the row's line box: the button overhangs
+     its own padding, so it never makes a row taller than its text. */
+  margin: -4px 0;
+  border: 1px solid transparent; background: none; color: var(--text-tertiary);
+  font: 700 12px/1 var(--font-retro-mono); cursor: pointer;
+}
+.proj-app .proj-board-table tr:hover .proj-cmp-btn,
+.proj-app .proj-board-table tr:hover .proj-xp-btn { border-color: var(--border); }
+.proj-app .proj-board-table .proj-cmp-btn:hover,
+.proj-app .proj-board-table .proj-xp-btn:hover { color: var(--text-primary); }
+.proj-app .proj-board-table .proj-cmp-btn.active,
+.proj-app .proj-board-table .proj-xp-btn[aria-expanded="true"] { color: var(--accent-cyan); border-color: var(--accent-cyan); }
+.proj-app .proj-board-table .proj-xp-btn[aria-expanded="true"] { transform: rotate(180deg); }
+.proj-app .proj-board-table .proj-cmp-btn:focus-visible,
+.proj-app .proj-board-table .proj-xp-btn:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 1px; }
+.proj-app .proj-board-table .proj-tot { font-weight: 700; color: var(--text-primary); }
+.proj-app .proj-board-table .proj-war { cursor: help; }
+.proj-app .proj-board-table .proj-dim { font-size: 10px; }
+.proj-app .proj-board-table .proj-ct { font-size: 10px; padding: 1px 5px; }
+.proj-app .proj-ct-est { border-style: dashed; }
+.proj-app .proj-ct-none { color: var(--text-tertiary); border-color: var(--border); background: none; }
+/* Detail line. */
+.proj-app .proj-board-table tr.proj-detail > td { background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+.proj-app .proj-board-table tr.proj-detail > td.proj-dt-cell { padding: 6px 7px 8px; white-space: normal; text-align: left; }
+.proj-app .proj-dt { display: flex; flex-wrap: wrap; gap: 3px 16px; font-size: 11px; line-height: 1.45; color: var(--text-secondary); }
+.proj-app .proj-dt-g b {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-right: 3px;
+}
+/* Column widths (fixed layout reads them off the header row); Player takes
+   the remainder. */
+.proj-app .proj-board-table .pc-rank { width: 40px; }
+.proj-app .proj-board-table .pc-tot  { width: 60px; }
+.proj-app .proj-board-table .pc-sur  { width: 74px; }
+.proj-app .proj-board-table .pc-y    { width: 50px; }
+.proj-app .proj-board-table .pc-age  { width: 42px; }
+.proj-app .proj-board-table .pc-aav  { width: 66px; }
+.proj-app .proj-board-table .pc-ct   { width: 72px; }
+.proj-app .proj-board-table .pc-fv   { width: 46px; }
+.proj-app .proj-board-table .pc-eta  { width: 48px; }
+.proj-app .proj-board-table .pc-peak { width: 52px; }
+.proj-app .proj-board-table .pc-bust { width: 62px; }
+/* Board tools: the sort picker once any column has folded; the compare tray
+   whenever one player is picked. */
+.proj-app .proj-board-tools { display: none; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 0 6px; }
+.proj-app .proj-board-tools:has(.proj-cmp-tray) { display: flex; }
+.proj-app .proj-sort-pick { display: none; align-items: center; gap: 6px;
+  font: 700 10px/1 var(--font-retro-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); }
+.proj-app .proj-cmp-tray { font-size: 12px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 6px; }
+.proj-app .proj-cmp-tray strong { color: var(--accent-cyan); }
+
+/* ---- column tiers by BOARD width ------------------------------------------
+   Each threshold is the fixed widths still showing plus a 220px Player floor
+   (200 in the prospect set). Seasons never fold. */
+/* VETERAN / ALL SET: tail = Age, AAV, Thru (fixed 604 at full). */
+@container projboard (max-width: 839px) {
+  .proj-app .proj-board-table:not(.is-pros) .pc-aav { display: none; }
+  .proj-app .proj-board-tools, .proj-app .proj-sort-pick { display: flex; }
+}
+@container projboard (max-width: 759px) { .proj-app .proj-board-table .pc-rank { display: none; } }
+/* PROSPECT SET: tail = Age, eFV, ETA, Peak, P(bust) (fixed 672 at full). */
+@container projboard (max-width: 899px) {
+  .proj-app .is-pros .pc-peak { display: none; }
+  .proj-app .proj-board-tools.is-pros, .proj-app .proj-board-tools.is-pros .proj-sort-pick { display: flex; }
+}
+@container projboard (max-width: 839px) { .proj-app .is-pros .pc-rank { display: none; } }
+@container projboard (max-width: 789px) { .proj-app .is-pros .pc-bust { display: none; } }
+@container projboard (max-width: 759px) {
+  .proj-app .is-pros .pc-age { display: none; }
+  .proj-app .is-pros .proj-pl-sub .proj-sub-age { display: inline; }
+}
+/* The prospect set shows eFV and ETA as columns; the sub-line tag repeats
+   them, so it steps aside while they are on screen. */
+@container projboard (min-width: 700px) {
+  .proj-app .proj-board-table.is-pros .proj-sub-tag-pros { display: none; }
+}
+/* NARROW (both sets): Age and Thru (or eFV and ETA) fold into the sub line. */
+@container projboard (max-width: 699px) {
+  .proj-app .proj-board-table .pc-age, .proj-app .proj-board-table .pc-ct,
+  .proj-app .proj-board-table .pc-fv, .proj-app .proj-board-table .pc-eta { display: none; }
+  .proj-app .proj-pl-sub .proj-sub-age, .proj-app .proj-pl-sub .proj-sub-ct { display: inline; }
+}
+@container projboard (max-width: 599px) {
+  .proj-app .proj-board-table .pc-tot { width: 52px; }
+  .proj-app .proj-board-table .pc-sur { width: 66px; }
+  .proj-app .proj-board-table .pc-y   { width: 44px; }
+}
+/* PHONE: every season stays, at 30px. The photo goes, the name wraps to two
+   lines, compare and details stack at the right of the cell, the year headers
+   read 27..31 (the "20" stays in the accessible name). */
+@container projboard (max-width: 519px) {
+  .proj-app .proj-board-table { font-size: 11.5px; }
+  .proj-app .proj-board-table th, .proj-app .proj-board-table td { padding-left: 3px; padding-right: 3px; }
+  .proj-app .proj-sort { padding: 6px 3px 5px; font-size: 9.5px; letter-spacing: 0.02em; }
+  .proj-app .proj-sort-ind { min-width: 0; }
+  .proj-app .proj-board-table .pc-tot { width: 34px; }
+  .proj-app .proj-board-table .pc-sur { width: 50px; }
+  .proj-app .proj-board-table .pc-y   { width: 29px; }
+  .proj-app .proj-board-table .proj-sr-sm {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .proj-app .proj-board-table .pc-player .fa-row-photo,
+  .proj-app .proj-pl-sub .fa-logo { display: none; }
+  .proj-app .proj-pl { grid-template-columns: minmax(0, 1fr) 24px; column-gap: 3px; row-gap: 2px; align-items: start; }
+  .proj-app .proj-pl > .proj-pl-name { grid-area: 1 / 1 / 2 / 2; }
+  .proj-app .proj-pl > .proj-cmp-btn { grid-area: 1 / 2 / 2 / 3; }
+  .proj-app .proj-pl > .proj-pl-sub { grid-area: 2 / 1 / 3 / 2; column-gap: 5px; }
+  .proj-app .proj-board-table .proj-cmp-btn, .proj-app .proj-board-table .proj-xp-btn { margin: -2px 0; }
+  .proj-app .proj-pl > .proj-xp-btn { grid-area: 2 / 2 / 3 / 3; }
+  .proj-app .proj-pl-name {
+    font-size: 12px; line-height: 1.25; white-space: normal; overflow-wrap: break-word;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  }
+}
+@container projboard (max-width: 339px) {
+  .proj-app .proj-board-table th, .proj-app .proj-board-table td { padding-left: 2px; padding-right: 2px; }
+  .proj-app .proj-sort { padding-left: 2px; padding-right: 2px; }
+  .proj-app .proj-board-table .pc-tot { width: 32px; }
+  .proj-app .proj-board-table .pc-sur { width: 48px; }
+  .proj-app .proj-board-table .pc-y   { width: 27px; }
+}
+/* 320px phones only: the last two seasons fold (the picker, the detail line
+   and the CSV keep them); five seasons show at 360 and up. */
+@container projboard (max-width: 319px) {
+  .proj-app .proj-board-table .pc-y3, .proj-app .proj-board-table .pc-y4 { display: none; }
+}
+
+/* Touch: header buttons grow; the two row buttons are already 24x24, so their
+   hit-area overlay (the coarse-pointer rule near the top of this sheet) only
+   widens sideways and cannot cover the neighbouring row. */
+@media (pointer: coarse) {
+  .proj-app .proj-sort { min-height: 36px; }
+  .proj-app .proj-board-table .proj-cmp-btn::after,
+  .proj-app .proj-board-table .proj-xp-btn::after { content: ""; position: absolute; inset: 0 -4px; }
 }

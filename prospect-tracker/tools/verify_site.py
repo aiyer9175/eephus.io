@@ -28,7 +28,7 @@ ROUTES = [
     ("/dynasty/",                      "a[href*='/fantasy/']"),
     ("/dfs/",                          "a[href*='/fantasy/']"),
     ("/models/",                       ".dm-table, table, .acct-row, tbody tr"),
-    ("/projections/",                  ".proj-card, .mlb-card"),
+    ("/projections/",                  "table.proj-board-table tbody tr[data-key]"),
     ("/projections/#view=teams",       "tbody tr, .mlb-card"),
     ("/fa/",                           ".fa-card, .mlb-card"),
     ("/betting/",                      ".bt-pick, .bt-panel"),

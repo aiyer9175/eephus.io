@@ -20,6 +20,8 @@ actually drives a render, then asserts the surfaces this app owns:
   scale family each index is banded on, and the Defense and Game context
   blocks. Sections are isolated by their data-mlbp-section hook, never by
   markup a styling change would move.
+- the Players table: one row per player, keyboard-sortable column headers,
+  the F-01 total band never rendered
 
 Skips when py_mini_racer is unavailable so it never blocks a machine without it.
 """
@@ -495,40 +497,149 @@ def test_luck_leaves_the_percentile_colour_scale():
 
 
 # ---------------------------------------------------------------------------
-# PROSPX-pattern board cards (Lane B, 2026-07-30)
+# Players TABLE (owner ask 2026-09-11: a table, not cards). The fixture's
+# first_season is 2026: vet_guy thru 2028, aav $25.0M.
 # ---------------------------------------------------------------------------
 
-def test_board_renders_cards_not_a_table():
-    """The board moved off <table> onto the PROSPX two-row card. The old markup
-    packed six elements into one ellipsized 320px cell, which is what made it
-    feel cramped; widening a table would not have fixed that."""
+
+def _board(html):
+    """The Players table, from its opening tag to its close. Asserts both ends
+    so the slice can never go vacuous."""
+    assert 'class="proj-board-table' in html, "board did not render its table"
+    part = html.split('class="proj-board-table', 1)[1]
+    assert "</table>" in part, "the board table never closed"
+    return part.split("</table>", 1)[0]
+
+
+def _head(html):
+    return _board(html).split("<thead>", 1)[1].split("</thead>", 1)[0]
+
+
+def _body(html):
+    return _board(html).split("<tbody>", 1)[1].split("</tbody>", 1)[0]
+
+
+def _row_keys(html):
+    return re.findall(r'<tr data-key="([^"]+)"', _body(html))
+
+
+def test_board_renders_one_table_row_per_player():
+    """One <tr> per player in one <tbody> under one <thead>; the card
+    primitives are gone from the board, and no detail line is open on load."""
     html = _render("")
-    assert "mlb-card proj-card" in html, "board did not render cards"
-    assert "mlb-card-list" in html
-    # the season projection is the row-2 tape, so it must be inside one
-    assert "mlb-tape" in html and "mlb-chip" in html
-    assert "proj-table" not in html, "the retired table shell is still being emitted"
+    board = _board(html)
+    assert "<thead>" in board and "<tbody>" in board
+    assert _row_keys(html) == ["vet_guy", "efv_kid", "cons_kid"]
+    for card_bit in ("mlb-card", "mlb-tape", "mlb-chip", "mlb-sortbar", "data-card-href"):
+        assert card_bit not in html, f"{card_bit} is still emitted on the board"
+    assert "proj-detail" not in _body(html)
+    assert "data-export" in html.split('class="proj-board-table', 1)[1][:200]
 
 
-def test_every_board_header_is_a_keyboard_sortable_button():
-    """Projections was the ONE module below the a11y contract that fa.js,
-    mlbstats.js and prospx all already met: its sort headers were plain <th>
-    with a click handler, so a keyboard user could not sort at all, and rank
-    and name were not sortable by any means."""
+def test_every_board_header_is_a_keyboard_sortable_columnheader():
+    """aria-sort on a <th scope=col> (a columnheader, where ARIA exposes it)
+    around a native <button> (Enter and Space for free). Every key a share
+    link has carried keeps a header or a picker entry; exactly one is active."""
     html = _render("")
-    head = html.split('class="mlb-card-head"')[1].split("</div>")[0]
-    for key in ("rank", "name", "warTotal", "sur"):
-        assert f'data-psort="{key}"' in head, f"{key} is not a sort header"
-    # every header advertises itself to assistive tech and is reachable by tab
-    assert head.count('role="button"') >= 4
-    assert head.count('tabindex="0"') >= 4
-    assert 'aria-sort=' in head
+    head = _head(html)
+    ths = [t for t in re.findall(r"<th\b[^>]*>.*?</th>", head, flags=re.S)
+           if not re.match(r"<th\b[^>]*\bhidden\b", t)]      # export-only Pos, Team
+    assert len(ths) >= 12
+    for th in ths:
+        assert 'scope="col"' in th and "aria-sort=" in th and "data-export-text=" in th
+        assert re.search(r'<button type="button" class="proj-sort" data-psort="', th), th[:120]
+        assert "data-gl" not in th, "a glossary hook inside a sort button is a nested tab stop"
+    keys = re.findall(r'data-psort="([^"]+)"', head)
+    for key in ("rank", "name", "warTotal", "sur", "y0", "y1", "y2", "y3", "y4", "age", "aav", "thru"):
+        assert key in keys, f"{key} lost its header"
+    active = re.findall(r'aria-sort="(ascending|descending)"[^>]*>\s*<button[^>]*data-psort="([^"]+)"', head)
+    assert active == [("descending", "warTotal")], active
+    assert 'role="button"' not in head and "tabindex" not in head
 
 
-def test_cards_are_focusable_and_carry_their_own_destination():
-    """Whole-card activation, matching the PROSPX row. The href rides the card
-    so keyboard and mouse open the same place without a lookup table."""
-    html = _render("")
-    card = html.split('class="mlb-card proj-card"')[1][:400]
-    assert 'tabindex="0"' in card and 'role="button"' in card
-    assert "data-card-href=" in card
+def test_rows_reach_their_player_through_a_real_link():
+    """The name link is the only navigation on a row: vets open the in-module
+    card, prospects PROSPX. The row header is the player cell, so a screen
+    reader names every number in the row."""
+    body = _body(_render(""))
+    assert 'role="button"' not in body
+    assert 'href="#player=vet_guy"' in body
+    assert 'href="/prospx/#player=efv_kid"' in body and 'href="/prospx/#player=cons_kid"' in body
+    assert body.count('<th scope="row"') == 3
+
+
+def test_rows_carry_compare_and_a_collapsed_detail_toggle():
+    body = _body(_render(""))
+    assert body.count('class="proj-cmp-btn') == 3 and body.count('aria-pressed="false"') == 3
+    assert body.count('class="proj-xp-btn"') == 3 and body.count('aria-expanded="false"') == 3
+    assert "aria-controls" not in body, "aria-controls points at a row that does not exist yet"
+
+
+def test_season_headers_keep_the_full_year_for_assistive_tech_and_the_csv():
+    """Phones show 26..30; the '20' is visually hidden, not removed, and the
+    CSV header is the full year plus the cell unit."""
+    head = _head(_render(""))
+    assert '<span class="proj-sr-sm">20</span>26' in head
+    assert 'data-export-text="2026 WAR"' in head and 'data-export-text="5y WAR"' in head
+    assert "proj-th-unit" not in head            # no unit line under WAR ...
+    head = _head(_render("#cells=wrc"))
+    assert 'data-export-text="2026 wRC+"' in head and "proj-th-unit" in head   # ... only under a rate
+
+
+def test_contract_cell_is_the_year_and_aav_needs_a_live_deal():
+    body = _body(_render(""))
+    vet = body.split('<tr data-key="vet_guy"', 1)[1].split("</tr>", 1)[0]
+    assert '<span class="proj-ct proj-ct-signed"' in vet and ">2028</span>" in vet
+    assert "$25.0M" in vet
+    assert "thru 2028" in vet                      # the sub-line form for narrow widths
+    kid = body.split('<tr data-key="efv_kid"', 1)[1].split("</tr>", 1)[0]
+    assert "proj-ct-prospect" in kid and ">Prospect<" in kid
+
+
+def test_prospect_view_shows_grade_eta_and_bust_as_columns():
+    """#src=prospect (or #contract=prospect) swaps the contract tail for the
+    prospect facts. eFV rounds to NEAREST (50.4 -> 50), consensus FV to
+    CEILING (45.2 -> 46)."""
+    for h in ("#src=prospect", "#contract=prospect"):
+        html = _render(h)
+        head = _head(html)
+        for key in ("fv", "eta", "warPeak", "pBust"):
+            assert f'data-psort="{key}"' in head, (h, key)
+        assert 'data-psort="aav"' not in head and 'data-psort="thru"' not in head
+        body = _body(html)
+        assert ">50</span>" in body and "FV 46" in body and "FV 51" not in html
+        assert "30%" in body                       # efv_kid pBust 0.3
+        assert 'data-gl="xfv"' in html and 'data-gl="bust_prob"' in html   # eyebrow hooks
+
+
+def test_total_band_stays_withdrawn():
+    """F-01: the summed P10-P90 total band is miscalibrated and never rendered.
+    The fixture's warTotalP10/P90 (22.0, 23.5, 15.5) are numbers nothing else
+    on the board produces."""
+    for h in ("", "#src=prospect"):
+        board = _board(_render(h))
+        for v in ("22.0", "23.5", "15.5"):
+            assert v not in board, (h, v)
+
+
+def test_unknown_sort_key_falls_back_and_dir_round_trips():
+    head = _head(_render("#sort=bogus"))
+    assert re.search(r'aria-sort="descending"[^>]*>\s*<button[^>]*data-psort="warTotal"', head)
+    head = _head(_render("#sort=age&dir=desc"))
+    assert re.search(r'aria-sort="descending"[^>]*>\s*<button[^>]*data-psort="age"', head)
+    head = _head(_render("#sort=name"))            # natural first direction A-Z
+    assert re.search(r'aria-sort="ascending"[^>]*>\s*<button[^>]*data-psort="name"', head)
+
+
+def test_missing_values_sort_last_in_both_directions():
+    """Only vet_guy carries an AAV. Ascending used to open on the dash rows."""
+    assert _row_keys(_render("#sort=aav&dir=asc"))[0] == "vet_guy"
+    assert _row_keys(_render("#sort=aav"))[0] == "vet_guy"
+    assert _row_keys(_render("#sort=name")) == ["cons_kid", "efv_kid", "vet_guy"]
+
+
+def test_eyebrow_names_the_active_sort():
+    """The only on-screen cue when the sorted column has folded at this width."""
+    assert "sorted by 5y WAR ▾" in _render("")
+    assert "sorted by AAV ▴" in _render("#sort=aav&dir=asc")
+    assert "sorted by 2027 FIP" in _render("#cells=fip&sort=y1")

@@ -62,9 +62,9 @@ def _defined() -> set[str]:
     """Every token the design system defines, in CSS or injected at runtime.
 
     A token set from JavaScript is as real as one in :root -- `--org-color` is
-    written per club by fantasy.js and dynasty.js, and `--card-tracks-narrow` by
-    projections.js, so a stylesheet naming either is correct. A guard that could
-    not see those would flag three working rules and get deleted.
+    written per club by fantasy.js and dynasty.js, so a stylesheet naming it is
+    correct. A guard that could not see that would flag two working rules and get
+    deleted.
     """
     d: set[str] = set()
     for f in _sheets():
