@@ -10,6 +10,11 @@ DEM+ is on the 100 + 10z ruler, so the anchor invariant is an unweighted mean of
 own number from the served scale block. No value band: bands on '+' metrics
 are banned (an honest 145 must print). Everything below holds by construction.
 
+Two owner decisions (2026-09-11) are pinned on the served file too: club framing
+rolls up (decision 17, dem_plus.TEAM_ROLLUP_FRAMING), and Def's positional term
+is our ladder pro-rated by innings, with FanGraphs' own as pos_runs_fg (decision
+18). A file built before either fails here until defense_export is re-run.
+
 Skips when the artifact is absent, so the suite never triggers an export.
 """
 from __future__ import annotations
@@ -136,14 +141,73 @@ def test_alignment_slots_are_valid_positions():
         assert set(pos) <= set(dem_plus.DEF_POSITIONS)
 
 
-def test_no_club_level_framing_while_the_rollup_withholds_it():
-    """Until the catch_frame_rate read is recorded no club-level number carries
-    framing (dem_plus.TEAM_ROLLUP_FRAMING); each catcher's own row still does."""
+def test_the_club_framing_rollup_matches_the_constant_and_the_rows():
+    """The served file says what dem_plus.TEAM_ROLLUP_FRAMING says. On (the
+    served state since owner decision 17), each club's team_frm_runs is the sum
+    of its catcher rows' framing and each catcher slot carries his own; off, no
+    club-level number carries framing and no slot does."""
     d = _doc()
-    if dem_plus.TEAM_ROLLUP_FRAMING:
-        pytest.skip("team framing rollup enabled")
+    inc = dem_plus.TEAM_ROLLUP_FRAMING
+    assert (d.get("team_rollup_framing") or {}).get("included") is inc, (
+        "the served file predates the framing flag it should carry: re-run defense_export")
+    by: dict = {}
+    for r in d["fielders"]:
+        by.setdefault(r["team"], []).append(r)
+    frm_by_id = {r["mlbam"]: r["frm_runs"] for r in d["fielders"] if r.get("frm_runs") is not None}
     for t in d["teams"]:
-        assert "team_frm_runs" not in t
-        assert t.get("rollup_includes_catchers") is False
-        for s in t.get("alignment") or []:
-            assert "frm_runs" not in s
+        assert t.get("rollup_includes_catchers") is inc, t["team"]
+        slots = t.get("alignment") or []
+        if not inc:
+            assert "team_frm_runs" not in t
+            assert all("frm_runs" not in s for s in slots)
+            continue
+        frm = [r["frm_runs"] for r in by.get(t["team"]) or [] if r.get("frm_runs") is not None]
+        if not frm:
+            assert t.get("team_frm_runs") is None, t["team"]
+        else:
+            # rows serve framing at 1 dp; the club sums unrounded values
+            assert t["team_frm_runs"] == pytest.approx(sum(frm), abs=0.051 * len(frm) + 0.051), t["team"]
+        for s in slots:
+            if s["pos"] == "C" and s.get("mlbam") in frm_by_id:
+                assert s["frm_runs"] == pytest.approx(frm_by_id[s["mlbam"]], abs=0.051), t["team"]
+            elif s["pos"] != "C":
+                assert "frm_runs" not in s, (t["team"], s["pos"])
+
+
+def test_def_is_our_ladder_by_innings_and_fangraphs_rides_beside_it():
+    """pos_runs (inside Def) = sum over C to RF of the served ladder rung x the
+    row's innings there / the served innings per 650 PA; DH never enters.
+    pos_runs_fg is FanGraphs' published positional and sits in no sum."""
+    d = _doc()
+    pm = d.get("positional") or {}
+    assert pm.get("basis") == "our_ladder", (
+        "the served file predates the our-ladder Def term: re-run defense_export")
+    if not pm.get("available"):
+        for r in d["fielders"]:
+            assert "pos_runs" not in r and "def_runs" not in r, r["name"]
+        return
+    assert pm["dh_excluded"] is True and pm["fg_column"] == "pos_runs_fg"
+    assert set(pm["values"]) == set(dem_plus.DEF_POSITIONS)
+    lad, conv = pm["values"], pm["inn_per_650pa"]
+    assert conv > 0
+    n_fg = 0
+    for r in d["fielders"]:
+        want = sum(lad[p] * inn / conv for p, inn in (r.get("pos_inn") or {}).items())
+        # pos_inn is served at 1 dp and pos_runs at 1 dp
+        assert r["pos_runs"] == pytest.approx(want, abs=0.06), r["name"]
+        n_fg += int(r.get("pos_runs_fg") is not None)
+    assert n_fg >= 0.9 * len(d["fielders"]), "FanGraphs' positional went missing from the board"
+
+
+def test_the_served_ladder_is_the_position_fit_artifact():
+    """By reference, never a copy: the rungs and the conversion on the board are
+    the ones data/positional_fit.json states."""
+    d = _doc()
+    pm = d.get("positional") or {}
+    p = ROOT / "data" / "positional_fit.json"
+    if not pm.get("available") or not p.exists():
+        pytest.skip("no ladder on the board or no positional_fit.json")
+    fit = json.loads(p.read_text(encoding="utf-8"))["fit"]
+    assert pm["values"] == {k: fit["ladder"]["values"][k] for k in dem_plus.DEF_POSITIONS}, (
+        "positional_fit.json moved since the board was built: re-run defense_export")
+    assert pm["inn_per_650pa"] == pytest.approx(fit["inn_per_650pa"])

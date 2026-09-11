@@ -1855,9 +1855,11 @@
     // WAR/PA+ rides remCell, NOT hemCell, and that is deliberate. The HEM+
     // family around it is a ratio index widened to wRC+ width (SD about 16), so
     // hemCell bands at 112/130. WAR/PA+ is 100 + 10z, so its SD is exactly 10 by
-    // construction and the +-2-sigma read is 80/120, which is what remClass
-    // bands at. Recoloring it with hemCell would call a 1.2-sigma hitter
-    // average. Do not "fix" this to match the neighbouring columns.
+    // construction, and remClass bands it at 93/107/120 (0.7 and 2 sigma), the
+    // one colour ruler the MLB player page shares for the whole 100 + 10z
+    // family (owner decision 25, 2026-09-11). Recoloring it with hemCell would
+    // call a 1.2-sigma hitter average. Do not "fix" this to match the
+    // neighbouring columns.
     { key: "war_pa_plus", label: "WAR/PA+", term: "war_pa_plus", num: true, desc: true, isRem: true,
       ewar: true,
       title: "Position-player eWAR (equal to bWAR on this side) per PA, 100 + 10z over hitters with 50+ PA; shown at 100+ PA. Carries fielding, baserunning and the positional adjustment, which HEM+ leaves out. p = percentile on this board.",
@@ -2244,6 +2246,38 @@
       + '<span class="bp-slot-rem"><span class="proj-dim" title="Season HEM+">' + fInt(r.hem_plus) + "</span></span>"
       + "</div>";
   }
+  // The constructed nine's PA-weighted mean HEM+ against one hand, computed
+  // EXACTLY as leaderboard_vintages._pa_weighted_hem computes off_vs_lhp and
+  // off_vs_rhp (owner decision 21, 2026-09-11: shown on the card): each slot's
+  // per-hand value (hem_plus_split), its season hem_plus when that is absent,
+  // weighted by the slot's season PA; a slot missing a value or a positive PA is
+  // skipped, never counted as zero. Display only: nothing here reaches betting.
+  function orderHandMean(order) {
+    var totPa = 0, acc = 0;
+    (order || []).forEach(function (s) {
+      if (!s || typeof s !== "object") return;
+      var hem = s.hem_plus_split;
+      if (hem == null) hem = s.hem_plus;
+      var pa = s.pa;
+      if (hem == null || pa == null) return;
+      hem = Number(hem); pa = Number(pa);
+      if (!isFinite(hem) || !isFinite(pa) || pa <= 0) return;
+      totPa += pa;
+      acc += hem * pa;
+    });
+    return totPa > 0 ? Math.round(acc / totPa * 1000) / 1000 : null;
+  }
+  function handMeans(t) {
+    if (t.platoon_applied === false || !t.orders) return "";
+    var vl = orderHandMean(t.orders.vl), vr = orderHandMean(t.orders.vr);
+    if (vl == null && vr == null) return "";
+    function one(hand, v) {
+      return '<span class="' + hemClass(v) + '" data-hand-mean="' + hand + '" data-raw="' + esc(v) + '">'
+        + "vs " + hand + "HP " + fInt(v) + "</span>";
+    }
+    return '<span class="proj-dim" data-gl="hem_plus_vs_hand" title="PA-weighted vs-hand HEM+ of the nine">'
+      + one("L", vl) + " &middot; " + one("R", vr) + "</span>";
+  }
   function lineupLadders() {
     var teams = (hitterData && hitterData.teams) || [];
     if (!teams.length) return "";
@@ -2291,6 +2325,7 @@
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
         + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
         + '<span class="rem-plus ' + hemClass(t.offense_plus) + '" data-gl="offense_plus">Offense+ ' + fInt(t.offense_plus) + "</span>"
+        + handMeans(t)
         + "</div>" + head + slots + benchHtml + outHtml + "</div>";
     }).join("");
     var lc = (hitterData && hitterData.lineup_cards) || {};
@@ -2812,8 +2847,10 @@
   // Team Defense / Defense Charts, a clone of the Hitter section. DEM+ is the
   // sample-shrunk published fielding rate on 100 + 10z, so its SD is exactly 10
   // and it bands with remClass (93/107/120), NEVER hemClass: it is not on the
-  // HEM+ ratio ruler. The run columns are FanGraphs' published values read from
-  // MLB's feed; this page computes none of them. Copy is column titles plus
+  // HEM+ ratio ruler. Fld and Frm are FanGraphs' published values read from
+  // MLB's feed; the positional term inside Def is OUR ladder (Position Fit,
+  // owner decision 18, 2026-09-11), with FanGraphs' own beside it as Pos (FG).
+  // This page computes none of them. Copy is column titles plus
   // glossary links (owner copy rule, 2026-09-11), and every accuracy number is
   // read from the payload's backtest block, never typed here.
   // ===========================================================================
@@ -2852,7 +2889,8 @@
 
   // Skill core first (DEM+), then the published run columns and the volume
   // context. DEM+ rides remCell for the reason WAR/PA+ does on the hitter
-  // board: 100 + 10z has SD exactly 10, so the +-2-sigma read is 80/120.
+  // board: 100 + 10z has SD exactly 10, and remClass's 93/107/120 is the one
+  // colour ruler the player page shares for that family.
   var DEFENSE_COLS = [
     { key: "name", label: "Fielder", term: null, sortable: true, kind: "name", asc: true },
     { key: "pos", label: "Pos", title: "Primary position (most defensive innings).", cell: posCell },
@@ -2883,10 +2921,12 @@
       title: "PUBLISHED, NOT COMPUTED HERE. Fielding runs without framing; equals Fld for non-catchers." },
     { key: "frm_runs", label: "Frm", term: "framing_runs", fmt: fSigned, num: true,
       title: "PUBLISHED, NOT COMPUTED HERE. Catcher framing runs; catchers only." },
-    { key: "pos_runs", label: "Pos adj", term: "positional_adjustment", fmt: fSigned, num: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. FanGraphs positional adjustment. Context; does not move DEM+." },
+    { key: "pos_runs", label: "Pos (ours)", term: "positional_adjustment", fmt: fSigned, num: true,
+      title: "OUR LADDER. Position Fit's positional ladder (Baseball-Reference scale), pro-rated by innings at each fielding position; DH time excluded. The term in Def. Context; does not move DEM+." },
+    { key: "pos_runs_fg", label: "Pos (FG)", term: "positional_adjustment", fmt: fSigned, num: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. FanGraphs' positional adjustment, DH time included. For comparison; not in Def." },
     { key: "def_runs", label: "Def", fmt: fSigned, num: true,
-      title: "Fld + Pos adj, both published." },
+      title: "Fld + Pos (ours): FanGraphs fielding and framing plus our positional ladder. Not FanGraphs Def." },
     { key: "rate_1000", label: "Fld/1000", fmt: fSigned, num: true,
       title: "Fld per 1,000 defensive innings, unshrunk." },
     { key: "rate_1000_shrunk", label: "Shrunk/1000", fmt: fSigned, num: true,
@@ -2917,16 +2957,21 @@
       get: function (t) { return num(t.n_above_avg); },
       cell: function (t) { return fInt(t.n_above_avg) + (t.n_fielders != null ? '<span class="proj-dim"> / ' + fInt(t.n_fielders) + "</span>" : ""); } },
     { key: "team_fld_total", label: "Fld", term: "fielding_runs", fmt: fSigned, num: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. Sum of FanGraphs fielding runs." },
-    { key: "team_pos_runs", label: "Pos adj", term: "positional_adjustment", fmt: fSigned, num: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. Sum of FanGraphs positional adjustments." },
+      title: "PUBLISHED, NOT COMPUTED HERE. Sum of FanGraphs fielding runs, catcher framing included when the rollup includes catchers." },
+    { key: "team_frm_runs", label: "Frm", term: "framing_runs", fmt: fSigned, num: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. Sum of the club's catcher framing runs; already inside Fld." },
+    { key: "team_pos_runs", label: "Pos (ours)", term: "positional_adjustment", fmt: fSigned, num: true,
+      title: "OUR LADDER. Sum of the fielders' Pos (ours): Position Fit's ladder pro-rated by innings, DH time excluded." },
+    { key: "team_pos_runs_fg", label: "Pos (FG)", term: "positional_adjustment", fmt: fSigned, num: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. Sum of FanGraphs' positional adjustments, for comparison." },
     { key: "team_inn", label: "Inn", fmt: fInt, num: true, title: "Defensive innings in the rollup." },
   ];
 
   function defenseExplainer() {
-    return explainer("dem_plus", gloss("DEM+", "dem_plus") + " is computed here; the run columns ("
-      + gloss("Fld", "fielding_runs") + ", " + gloss("Frm", "framing_runs") + ", "
-      + gloss("Pos adj", "positional_adjustment") + ") are FanGraphs' published values.");
+    return explainer("dem_plus", gloss("DEM+", "dem_plus") + " is computed here. "
+      + gloss("Fld", "fielding_runs") + " and " + gloss("Frm", "framing_runs")
+      + " are FanGraphs' published values; " + gloss("Pos (ours)", "positional_adjustment")
+      + ", the term in Def, is our positional ladder, with FanGraphs' own beside it as Pos (FG).");
   }
 
   function defenseScorecard() {
@@ -3101,7 +3146,8 @@
     if (!rows.length) return '<div class="mlbstats-empty">No team defenses to show yet.</div>';
     var tf = (defenseData && defenseData.team_rollup_framing) || {};
     var note = explainer("team_dem_plus", gloss("Team DEM+", "team_dem_plus") + ": innings-weighted DEM+"
-      + (tf.included === false ? "; catchers are excluded from it and from the team run totals." : "."));
+      + (tf.included === false ? "; catchers are excluded from it and from the team run totals."
+        : tf.included === true ? "; catchers are included, framing too." : "."));
     return proseFold("defteam-about", rows.length + " clubs", note)
       + '<div class="mlbstats-scroll">' + renderTable(rows, DEFENSE_TEAM_COLS, defenseTeamSort) + "</div>";
   }
@@ -3143,8 +3189,9 @@
   }
 
   // One card per club, a slot per position (the bullpen depth-card markup, so
-  // site.css needs nothing new). The alignment rows carry no framing value, so
-  // the catcher slot looks his up on the fielder board by MLBAM id.
+  // site.css needs nothing new). With the club framing rollup on, the catcher
+  // slot carries his own frm_runs; a payload built with it off does not, and
+  // the slot then looks his up on the fielder board by MLBAM id.
   function alignmentCards() {
     var teams = (defenseData && defenseData.teams) || [];
     if (!teams.length) return "";
@@ -3158,7 +3205,8 @@
       var slots = (t.alignment || []).filter(function (a) { return a && a.pos; })
         .sort(function (a, b) { return rung(a.pos) - rung(b.pos); })
         .map(function (a) {
-          var f = (a.pos === "C" && a.mlbam != null) ? frm[String(a.mlbam)] : null;
+          var f = a.pos !== "C" ? null
+            : (a.frm_runs != null ? a.frm_runs : (a.mlbam != null ? frm[String(a.mlbam)] : null));
           return '<div class="bp-slot">'
             + '<span class="bp-slot-role">' + esc(a.pos) + "</span>"
             + '<span class="bp-slot-name"' + (a.name ? ' title="' + esc(a.name) + '"' : "") + ">" + esc(a.name || EM_DASH)

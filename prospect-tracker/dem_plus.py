@@ -29,6 +29,17 @@ context columns (`pos_runs`, `def_runs`, `inn`). Neither moves DEM+, which is
 the glove per inning. A first baseman can read DEM+ 115 and still post
 negative Def, exactly as a DH can post a high HEM+ and a low WAR.
 
+WHOSE POSITIONAL TERM (owner decision 18, 2026-09-11: our ladder now).
+`pos_runs`, the term inside Def, is OUR positional ladder: Position Fit's
+fit.ladder (data/positional_fit.json, runs per 650 PA, inverted from
+Baseball-Reference's positional runs), pro-rated by the innings played at each
+fielding position at the conversion that artifact states (fit.inn_per_650pa,
+1,277.7 innings per 650 PA when this was written). DH is excluded: it has no
+fielding innings on this board. FanGraphs' own published positional rides
+beside it as `pos_runs_fg`, for comparison only. So Def is FanGraphs' fielding
+and framing plus a ladder fitted on the Baseball-Reference scale, and the
+payload says so; it is not FanGraphs Def any more.
+
 WHAT IT IS NOT. Not an input to eWAR (fielding stays on fielding_blend_w 0.0),
 not an eFV feature (do-not-reopen 17), not read by betting or projections. It
 is a steadier read of FanGraphs' published series, never a claim to measure
@@ -74,13 +85,16 @@ FRAMING_EPS = 0.05
 #: retroactive. Earlier seasons are UZR and are never pooled with these.
 FIRST_SEASON = 2016
 
-#: Whether a club rollup may carry catcher framing. OFF until the betting
-#: program's pre-registered `catch_frame_rate` read (docs/diamond-betting.md 5d-D,
-#: first look about 2026-10-06) is recorded: a public club-level framing total is
-#: the one number that invites an early eyeball of the skill that column
-#: measures. Per-catcher framing still displays (parity with fWAR); Team DEM+ and
-#: its run totals roll over non-catchers only. Restoring it is this one constant.
-TEAM_ROLLUP_FRAMING = False
+#: Whether a club rollup may carry catcher framing. ON by owner decision 17
+#: (2026-09-11, "show now"): Team DEM+ and its run totals roll over catchers too,
+#: framing included, and each alignment's catcher slot carries his framing. It was
+#: OFF until the betting program's pre-registered `catch_frame_rate` read
+#: (docs/diamond-betting.md 5d-D, first look about 2026-10-06), because a public
+#: club-level framing total invites an early eyeball of the skill that column
+#: measures; the owner took that call. Nothing here relates framing to a game
+#: outcome, and this module stays unread by betting. Withholding it again is this
+#: one constant.
+TEAM_ROLLUP_FRAMING = True
 
 TIER_ORDER = ["Elite", "Above-avg", "Average", "Below-avg"]
 #: The remClass breaks, as WAR/PA+ uses them on the same ruler.
@@ -103,7 +117,8 @@ class Fielder:
     inn_by_pos: dict = field(default_factory=dict)
     fld_runs: float = 0.0              # FanGraphs fielding, excluding framing
     frm_runs: Optional[float] = None   # catcher framing; None when absent
-    pos_runs: Optional[float] = None   # FanGraphs positional adjustment
+    pos_runs: Optional[float] = None   # the positional term Def uses (our ladder)
+    pos_runs_fg: Optional[float] = None  # FanGraphs' published positional, comparison
     putouts: float = 0.0
     assists: float = 0.0
     errors: float = 0.0
@@ -131,6 +146,27 @@ def primary_position(f: Fielder) -> str:
     if not cand:
         return ""
     return max(cand, key=lambda p: (cand[p], -POSITION_RUNG.index(p)))
+
+
+def ladder_pos_runs(inn_by_pos: dict, ladder: Optional[dict],
+                    inn_per_650: Optional[float]) -> Optional[float]:
+    """Our positional term for one fielder-season: the sum over the fielding
+    positions he played of ladder[p] (runs per 650 PA) x innings at p /
+    inn_per_650 (the innings 650 PA of exposure stands for). DH never enters: it
+    carries no fielding innings. None, never a partial sum, when the ladder or
+    the conversion is missing or lacks a rung for a position he played."""
+    if not ladder or not inn_per_650 or float(inn_per_650) <= 0:
+        return None
+    tot = 0.0
+    for p, v in (inn_by_pos or {}).items():
+        inn = float(v or 0.0)
+        if p not in DEF_POSITIONS or inn <= 0:
+            continue
+        rung = ladder.get(p)
+        if rung is None:
+            return None
+        tot += float(rung) * inn / float(inn_per_650)
+    return tot
 
 
 def fld_total(f: Fielder) -> float:
@@ -254,7 +290,9 @@ def team_defense(team: str, fielders: list[Fielder],
     over the season as played (not roster-filtered, the Offense+ rule), plus the
     run totals as context. The alignment is tonight's and IS filtered.
 
-    While TEAM_ROLLUP_FRAMING is False, anyone who caught is left out of the
+    With TEAM_ROLLUP_FRAMING on (the served state since 2026-09-11) catchers
+    roll up like everyone else, framing included, and the alignment's catcher
+    slot carries his framing. With it off, anyone who caught is left out of the
     rollup and its run totals, so no club-level number carries framing; the
     alignment still names the catcher, without his framing total."""
     scored = [f for f in fielders if f.dem_plus_raw is not None and f.inn > 0]
@@ -276,6 +314,8 @@ def team_defense(team: str, fielders: list[Fielder],
     out["team_fld_total"] = round(sum(fld_total(f) for f in rolled), 1)
     pr = [f.pos_runs for f in rolled if f.pos_runs is not None]
     out["team_pos_runs"] = round(sum(pr), 1) if pr else None
+    pg = [f.pos_runs_fg for f in rolled if f.pos_runs_fg is not None]
+    out["team_pos_runs_fg"] = round(sum(pg), 1) if pg else None
     align, dropped = build_alignment(scored, active_ids)
     if not TEAM_ROLLUP_FRAMING:
         for s in align:
@@ -371,4 +411,6 @@ def fielder_row(f: Fielder) -> dict:
     if f.pos_runs is not None:
         row["pos_runs"] = _round(f.pos_runs, 1)
         row["def_runs"] = _round(tot + float(f.pos_runs), 1)
+    if f.pos_runs_fg is not None:
+        row["pos_runs_fg"] = _round(f.pos_runs_fg, 1)
     return row

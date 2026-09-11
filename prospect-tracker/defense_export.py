@@ -12,7 +12,8 @@ team DEM+ from three MLB StatsAPI reads, all bulk and all cached:
     published wRC+ column already warms every night. Its `fielding` is
     FanGraphs' served fielding runs (Statcast range and arm, catcher blocking and
     throwing), EXCLUDING framing; `positional` is FanGraphs' positional
-    adjustment. Both are read verbatim.
+    adjustment. Both are read verbatim; the positional value ships as
+    `pos_runs_fg`, for comparison only.
   * catcher FRAMING, which the feed does not publish as a field but does carry
     inside `rar`: framing = rar - (batting + baseRunning + fielding + positional
     + wLeague + replacement). On 2025 that residual equals FanGraphs CFraming on
@@ -25,9 +26,12 @@ PERCENTAGE as a string ("1.000"); the sabermetrics group's is fielding RUNS as a
 float. This module reads runs only from the sabermetrics group and computes
 percentage from putouts, assists and errors, so the two can never be confused.
 
-DEM+ is the only number here the site computes (dem_plus.py). Every run column
-is published. NETWORK-GATED + BEST-EFFORT: nothing fetches at import, and a
-failed pull returns 0 without writing.
+THE POSITIONAL TERM IN DEF IS OURS (owner decision 18, 2026-09-11). `pos_runs`
+is Position Fit's fitted ladder (data/positional_fit.json fit.ladder, runs per
+650 PA) pro-rated by the innings at each fielding position at the artifact's own
+conversion, fit.inn_per_650pa; DH excluded. The site computes DEM+ and that
+term; every other run column is published. NETWORK-GATED + BEST-EFFORT: nothing
+fetches at import, and a failed pull returns 0 without writing.
 
 Run: `python defense_export.py [season]`  or  `python defense_export.py history`.
 """
@@ -55,6 +59,7 @@ HISTORY_PATH = DATA_DIR / "defense_history.json"
 EVAL_PATH = DATA_DIR / "dem_plus_eval.json"
 MULTIYR_PATH = DATA_DIR / "dem_plus_multiyear_eval.json"
 HITTER_BOARD = DATA_DIR / "hitter_leaderboards.json"
+POSITIONAL_FIT = DATA_DIR / "positional_fit.json"
 
 #: 2016 is the first season of the one Statcast fielding frame FanGraphs made
 #: retroactive; earlier seasons are UZR and are never pooled with these.
@@ -108,6 +113,61 @@ def load_published_fielding(season: int) -> dict:
     meta = saber_feed.load_components(int(season))
     meta["fetched_at"] = _cache_mtime(saber_feed.cache_key(season))
     return meta
+
+
+@functools.lru_cache(maxsize=1)
+def load_ladder() -> dict:
+    """Our positional ladder, read BY REFERENCE from Position Fit's artifact:
+    {"values": {pos: runs per 650 PA}, "inn_per_650": innings per 650 PA, ...}.
+    The conversion is the artifact's own fit.inn_per_650pa (the folklore_basis
+    pa_equivalent_innings, then 650 x inn_per_pa, as fallbacks: the same number
+    three ways). {"available": False, "reason": ...} when the artifact or a rung
+    is missing, and then every row's Def goes absent rather than falling back to
+    FanGraphs' term: a silent basis switch is the one thing this must not do."""
+    try:
+        art = json.loads(POSITIONAL_FIT.read_text(encoding="utf-8"))
+        fit = art["fit"]
+        lad = fit["ladder"]
+        vals = {p: float(lad["values"][p]) for p in DEF_POSITIONS}
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        return {"available": False, "reason": f"{POSITIONAL_FIT.name} unreadable ({e!r})"}
+    conv = fit.get("inn_per_650pa")
+    if conv is None:
+        conv = (lad.get("folklore_basis") or {}).get("pa_equivalent_innings")
+    if conv is None and lad.get("inn_per_pa") is not None:
+        conv = 650.0 * float(lad["inn_per_pa"])
+    if not conv or float(conv) <= 0:
+        return {"available": False,
+                "reason": f"{POSITIONAL_FIT.name} states no innings per 650 PA"}
+    return {"available": True, "values": vals, "inn_per_650": float(conv),
+            "seasons": lad.get("seasons"), "n_player_seasons": lad.get("n_player_seasons"),
+            "generated_at": art.get("generated_at")}
+
+
+def _positional_meta(lad: dict) -> dict:
+    if not lad.get("available"):
+        return {"basis": "our_ladder", "available": False, "reason": lad.get("reason"),
+                "fg_column": "pos_runs_fg",
+                "note": ("Our ladder was unavailable this build, so Pos (ours) and Def are "
+                         "absent; FanGraphs' positional still shows as pos_runs_fg.")}
+    return {
+        "basis": "our_ladder", "available": True,
+        "source": f"{POSITIONAL_FIT.name} fit.ladder",
+        "ladder_generated_at": lad.get("generated_at"),
+        "ladder_seasons": lad.get("seasons"),
+        "ladder_n_player_seasons": lad.get("n_player_seasons"),
+        "units": "runs per 650 PA, pro-rated by innings at each fielding position",
+        "inn_per_650pa": lad.get("inn_per_650"),
+        "values": lad.get("values"),
+        "dh_excluded": True,
+        "fg_column": "pos_runs_fg",
+        "note": ("pos_runs = sum over C to RF of ladder rung x innings at the position / "
+                 "inn_per_650pa. The ladder is inverted from Baseball-Reference's "
+                 "positional runs, so Def is FanGraphs fielding and framing plus a "
+                 "Baseball-Reference-scale positional term, not FanGraphs Def. "
+                 "pos_runs_fg is FanGraphs' own positional, for comparison; it is in "
+                 "no sum."),
+    }
 
 
 def _innings_to_float(v) -> float:
@@ -191,6 +251,8 @@ def build_fielders(season: int, *, log=print) -> tuple[list[Fielder], list[dict]
     """Join published runs, innings and identity by MLBAM id only."""
     pub = load_published_fielding(season)
     inn = load_season_innings(season)
+    lad = load_ladder()
+    rungs = lad.get("values") if lad.get("available") else None
     vals = pub.get("values") or {}
     players = inn.get("players") or {}
     ids = set(vals) & set(players)
@@ -208,9 +270,11 @@ def build_fielders(season: int, *, log=print) -> tuple[list[Fielder], list[dict]
         out.append(Fielder(
             key=str(pid), name=str(idr.get("name") or ""), team=str(idr.get("team") or ""),
             mlbam=int(pid), inn_by_pos=dict(p["inn"]), fld_runs=float(v["fld"]),
-            frm_runs=v.get("frm"), pos_runs=v.get("pos"),
+            frm_runs=v.get("frm"),
+            pos_runs=dem_plus.ladder_pos_runs(p["inn"], rungs, lad.get("inn_per_650")),
+            pos_runs_fg=v.get("pos"),
             putouts=p["po"], assists=p["a"], errors=p["e"]))
-    return out, basis_rows, {"published": pub, "innings": inn}
+    return out, basis_rows, {"published": pub, "innings": inn, "ladder": lad}
 
 
 def framing_check(fielders: list[Fielder], *, log=print, file_red: bool = True) -> dict:
@@ -307,6 +371,9 @@ def _frame_meta() -> dict:
                      "different frame; it is not on this board"),
         "claim": ("parity with the fWAR fielding frame, framing included; DEM+ is a "
                   "steadier read of that published series, not a better measure of it"),
+        "def_basis": ("Def = FanGraphs fielding and framing + our positional ladder "
+                      "(Position Fit, Baseball-Reference scale); FanGraphs' own "
+                      "positional rides beside it as pos_runs_fg"),
     }
 
 
@@ -405,9 +472,10 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         "n_multi_team": pub.get("n_multi_team"), "n_ambiguous": pub.get("n_ambiguous"),
         "ambiguous_ids": pub.get("ambiguous_ids"), "n_board": len(scored["fielders"]),
         **fr,
-        "note": ("Fielding, framing and positional runs are FanGraphs' PUBLISHED values, "
-                 "read verbatim from MLB's bulk season-total feed and joined by MLBAM id. "
-                 "This site computes none of them; DEM+ is the index it computes."),
+        "note": ("Fielding and framing runs, and pos_runs_fg, are FanGraphs' PUBLISHED "
+                 "values, read verbatim from MLB's bulk season-total feed and joined by "
+                 "MLBAM id. The site computes DEM+ and the positional term inside Def "
+                 "(pos_runs, our ladder)."),
     }
     payload = {
         "generated_at": today, "season": season, "as_of": today,
@@ -419,6 +487,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                     "note": ("Defensive innings by position from MLB's season fielding "
                              "feed, converted from baseball thirds at ingest.")},
         "scale": _scale_meta(scored["pool"]),
+        "positional": _positional_meta(src.get("ladder") or {}),
         "multiyear": d3,
         "team_rollup_framing": {
             "included": dem_plus.TEAM_ROLLUP_FRAMING,
@@ -426,7 +495,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                      "betting program's pre-registered catcher-framing read is recorded; "
                      "each catcher's own DEM+ still includes his framing.")
                     if not dem_plus.TEAM_ROLLUP_FRAMING else
-                    "Team DEM+ includes catchers and their framing."},
+                    ("Team DEM+ and the club run totals include catchers and their "
+                     "framing (team_frm_runs), and each alignment's catcher slot carries "
+                     "his framing.")},
         "hem_plus_join": {"n_stamped": n_hem,
                           "note": "HEM+ joined from hitter_leaderboards.json for the glove-versus-bat chart"},
         "team_basis": team_basis_meta(basis_rows_for(scored["fielders"], res["basis_rows"]),
@@ -450,8 +521,8 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
 
 
 _HISTORY_FIELDS = ("mlbam", "name", "team", "pos", "inn", "dem_plus", "tier",
-                   "fld_runs", "frm_runs", "fld_total", "pos_runs", "def_runs",
-                   "rate_1000", "fld_pct", "qualified")
+                   "fld_runs", "frm_runs", "fld_total", "pos_runs", "pos_runs_fg",
+                   "def_runs", "rate_1000", "fld_pct", "qualified")
 
 
 def export_history(seasons=None, *, out_path: Optional[Path] = None,
@@ -479,8 +550,11 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         "generated_at": date.today().isoformat(),
         "seasons": [int(y) for y in hist],
         "note": ("Qualified fielders by season. DEM+: sample-shrunk fielding rate, "
-                 "100 + 10z against that season's pool. Run columns are FanGraphs' "
-                 "published values as fetched; FanGraphs can revise them."),
+                 "100 + 10z against that season's pool. Fielding, framing and "
+                 "pos_runs_fg are FanGraphs' published values as fetched; FanGraphs can "
+                 "revise them. pos_runs (in Def) is our ladder as it stands today, "
+                 "applied to every season."),
+        "positional": _positional_meta(load_ladder()),
         "team_basis": team_basis_meta(basis_rows, label="defense history", scope="history"),
         "history": hist,
     }

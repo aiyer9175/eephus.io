@@ -32,7 +32,7 @@ ROOT = Path(__file__).parent
 DATA = ROOT / "data"
 
 DEF_KEYS = {"season", "pos", "inn", "posInn", "qualified", "demPlus", "demPlusPct",
-            "demPlusPosPct", "fldTotal", "frmRuns", "posRuns", "defRuns"}
+            "demPlusPosPct", "fldTotal", "frmRuns", "posRuns", "posRunsFg", "defRuns"}
 LEV_KEYS = {"kind", "season", "wpa", "wpaLi", "pli", "clutch", "wpaPerStart"}
 
 
@@ -58,7 +58,8 @@ def index(tmp_path, monkeypatch):
         {"mlbam": 1, "pos": "C", "inn": 908.7, "pos_inn": {"C": 908.7}, "qualified": True,
          "tier": "Elite", "dem_plus": 133, "dem_plus_raw": 133.08, "rel": 0.685,
          "rate_1000": 15.83, "fld_runs": 6.2, "fld_total": 14.4, "frm_runs": 8.2,
-         "pos_runs": 4.8, "def_runs": 19.1, "dem_plus_pct": 100, "dem_plus_pos_pct": 99,
+         "pos_runs": 4.8, "pos_runs_fg": 3.1, "def_runs": 19.1, "dem_plus_pct": 100,
+         "dem_plus_pos_pct": 99,
          "hem_plus": 104, "dem_plus_3yr": 124}]})
     return mpe._skill_index()
 
@@ -68,6 +69,9 @@ def test_def_block_is_its_own_key_with_only_the_card_columns(index):
     assert set(d) <= DEF_KEYS, set(d) - DEF_KEYS
     assert (d["demPlus"], d["fldTotal"], d["frmRuns"], d["defRuns"]) == (133, 14.4, 8.2, 19.1)
     assert d["season"] == 2026 and d["posInn"] == {"C": 908.7}
+    # the board's own positional (in Def) and FanGraphs' beside it, both carried,
+    # so the card's "Positional (FG)" comparison row has a value to render
+    assert (d["posRuns"], d["posRunsFg"]) == (4.8, 3.1)
     # never folded into the hem block, whose ruler (88/112) DEM+ does not share
     assert not DEF_KEYS & (set(index[1]["hem"]) - {"season", "qualified"})
 
@@ -155,6 +159,14 @@ def test_served_def_on_fielders_only_and_on_nine_in_ten_of_them():
             assert not (p.get("isPit") and not p.get("twoWay")), p.get("key")
             assert set(sk["def"]) <= DEF_KEYS, set(sk["def"]) - DEF_KEYS
         assert "demPlus" not in (sk.get("hem") or {}) and "demPlus" not in (sk.get("pitch") or {})
+    # a board that carries FanGraphs' positional beside ours hands it to the card
+    fg = {int(r["mlbam"]): r["pos_runs_fg"] for r in fb.get("fielders") or []
+          if r.get("mlbam") and r.get("pos_runs_fg") is not None}
+    if fg:
+        carried = [((p.get("skills") or {}).get("def") or {}).get("posRunsFg")
+                   for mid, p in _cards(d) if mid in fg and (p.get("skills") or {}).get("def")]
+        assert carried and sum(v is not None for v in carried) >= 0.9 * len(carried), (
+            "the board serves pos_runs_fg but the card payload drops it: re-run mlb_player_export")
 
 
 def test_served_payload_under_the_soft_budget():

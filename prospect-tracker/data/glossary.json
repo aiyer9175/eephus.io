@@ -6929,9 +6929,9 @@
     "team defense"
    ],
    "priority": 60,
-   "definition": "A club's fielding on the DEM+ scale: the innings-weighted DEM+ of its non-catchers this season.",
-   "methodology": "Every fielder counts by the innings he played, including players now hurt or traded, because the number describes the season as played (the Offense+ rule). Anyone who caught is left out of the rollup and its run totals, so no club-level number carries catcher framing until the betting program's pre-registered framing read is recorded (catchers still show their own framing on the fielder board). The Defensive Alignment card beside it answers tonight's question instead: for each position, the active-roster player with the most innings there.",
-   "formula": "Team DEM+ = sum(DEM+ x innings) / sum(innings) over the club's non-catcher fielders",
+   "definition": "A club's fielding on the DEM+ scale: the innings-weighted DEM+ of everyone who fielded for it this season, catchers and their framing included.",
+   "methodology": "Every fielder counts by the innings he played, including players now hurt or traded, because the number describes the season as played (the Offense+ rule). Catchers roll up like everyone else, framing included: the club's fielding runs carry its catchers' framing, which also shows as its own Frm column. The Defensive Alignment card beside it answers tonight's question instead: for each position, the active-roster player with the most innings there, and the catcher slot carries his framing.",
+   "formula": "Team DEM+ = sum(DEM+ x innings) / sum(innings) over the club's fielders, catchers included",
    "seeAlso": [
     "dem_plus"
    ],
@@ -7017,18 +7017,18 @@
     "positional credit"
    ],
    "priority": 64,
-   "definition": "The runs a player is credited for the difficulty of the position he plays: a shortstop gains, a first baseman and a designated hitter lose. FanGraphs' published value.",
-   "methodology": "Value, not skill, so it sits beside DEM+ as context and never moves it. Added to fielding runs and framing it makes Def (see Def runs).",
+   "definition": "The runs a player is credited for the difficulty of the position he plays: a shortstop gains, a first baseman loses. Two versions show on the Defense board and the MLB player page: Pos (ours), the value inside Def, is the site's positional ladder; Pos (FG) is FanGraphs' published value, for comparison.",
+   "methodology": "Value, not skill, so it sits beside DEM+ as context and never moves either version. Pos (ours) is Position Fit's fitted ladder, in runs per 650 plate appearances and inverted from Baseball-Reference's positional runs, pro-rated by the innings a player spent at each fielding position at the innings-per-650-PA conversion that artifact states. Designated-hitter time has no fielding innings, so it is left out; FanGraphs' value includes it, which is why a part-time DH reads far lower in Pos (FG). Pos (FG) sits in no sum. Added to fielding runs and framing, Pos (ours) makes Def (see Def runs).",
    "seeAlso": [
     "dem_plus",
     "def_runs"
    ],
    "shelf": "industry",
-   "origin": "Industry metric, FanGraphs' positional adjustment as published by MLB. We display it."
+   "origin": "Industry concept. Pos (ours) is the site's Position Fit ladder, computed here; Pos (FG) is FanGraphs' positional adjustment as published by MLB, which we display."
   },
   {
    "id": "def_runs",
-   "term": "Def runs (FanGraphs Def)",
+   "term": "Def runs",
    "category": "general-stat",
    "module": [
     "mlbstats",
@@ -7040,9 +7040,9 @@
     "defensive runs"
    ],
    "priority": 65,
-   "definition": "Total defensive value in runs: fielding runs plus catcher framing plus the positional adjustment, all FanGraphs' published values. The Def column on the Defense board and the Def row on the MLB player page.",
-   "methodology": "Published components, summed; the site computes none of them. Fielding runs (Statcast range and arm, catcher blocking and throwing) and framing are the glove; the positional adjustment is credit for the position's difficulty. DEM+ rates the glove per inning and ignores the positional term, so a first baseman can read DEM+ 115 and still post negative Def, as a DH can post a high HEM+ and a low WAR.",
-   "formula": "Def = fielding runs + framing runs + positional adjustment (all FanGraphs, per season)",
+   "definition": "Total defensive value in runs: FanGraphs' published fielding runs plus catcher framing plus the site's positional ladder, Pos (ours). The Def column on the Defense board and the Def row on the MLB player page. It is not FanGraphs' own Def, whose positional term is FanGraphs' (shown as Pos (FG)).",
+   "methodology": "Fielding runs (Statcast range and arm, catcher blocking and throwing) and framing are FanGraphs' published values, read verbatim; they are the glove. The positional term is credit for the position's difficulty, and it is ours: Position Fit's ladder pro-rated by the innings at each fielding position (see Positional adjustment). DEM+ rates the glove per inning and ignores the positional term, so a first baseman can read DEM+ 115 and still post negative Def, as a DH can post a high HEM+ and a low WAR.",
+   "formula": "Def = fielding runs + framing runs (FanGraphs, per season) + Pos (ours) (Position Fit ladder x innings at each position / innings per 650 PA)",
    "seeAlso": [
     "dem_plus",
     "fielding_runs",
@@ -7050,7 +7050,7 @@
     "positional_adjustment"
    ],
    "shelf": "industry",
-   "origin": "Industry metric, FanGraphs' Def as published through MLB's feed. We display it and compute no version of it."
+   "origin": "Industry concept, assembled here: FanGraphs' fielding and framing runs as published through MLB's feed, which we display, plus the site's positional ladder, which we compute."
   }
  ]
 }

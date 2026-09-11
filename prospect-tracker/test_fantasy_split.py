@@ -539,31 +539,135 @@ def test_fantasy_export_elig_is_additive():
     assert "skill" in players[0] and "team" in players[0]
 
 
-def test_fantasy_export_elig_positions_rule():
-    """The games floor with a modal-position fallback, exercised directly so a
-    change to the rule is a deliberate act."""
+def _elig_from(raw: dict, season=None) -> dict:
+    """_elig_positions reads from disk, so drive the rule through a temporary
+    artifact rather than reaching into module internals."""
     import fantasy_export as fe
-    raw = {"players": {
-        "a": {"mlbam": 1, "positions": {"SS": {"games": 80}, "2B": {"games": 9},
-                                        "LF": {"games": 2}}},
-        "b": {"mlbam": 2, "positions": {"DH": {"games": 3}}},          # modal, under floor
-        "c": {"mlbam": 3, "positions": {"P": {"games": 30}}},          # pitcher: no hitter slot
-    }}
     import json as _json
     import tempfile
-    # _elig_positions reads from disk, so drive the same rule through a
-    # temporary artifact rather than reaching into module internals.
     d = Path(tempfile.mkdtemp())
-    (d / "mlb_fielding_positions.json").write_text(_json.dumps(raw), encoding="utf-8")
+    (d / "fielding_innings.json").write_text(_json.dumps(raw), encoding="utf-8")
     old = fe.DATA_DIR
     try:
         fe.DATA_DIR = d
-        out = fe._elig_positions()
+        return fe._elig_positions(season)
     finally:
         fe.DATA_DIR = old
+
+
+def test_fantasy_export_elig_positions_rule():
+    """The games floor with a modal-position fallback, exercised directly so a
+    change to the rule is a deliberate act. The source is data/fielding_innings.json
+    (owner decision 24, 2026-09-11): {seasons: {year: {mlbam: {POS: {g, gs, inn}}}}}."""
+    raw = {"last_season": 2026, "seasons": {"2026": {
+        "1": {"SS": {"g": 80, "gs": 78, "inn": 690.0}, "2B": {"g": 9, "gs": 5, "inn": 50.0},
+              "LF": {"g": 2, "gs": 0, "inn": 3.0}},
+        "2": {"DH": {"g": 3, "gs": 3, "inn": 0.0}},                    # modal, under floor
+        "3": {"P": {"g": 30, "gs": 30, "inn": 170.0}},                 # pitcher: no hitter slot
+    }}}
+    out = _elig_from(raw)
     assert out[1] == ["SS", "2B"], out          # LF at 2 games is under the floor
     assert out[2] == ["UTIL"], out              # DH modal survives the floor
     assert 3 not in out                          # pitchers carry no fielding slot
+
+
+def test_fantasy_elig_reads_the_newest_season_once_it_is_established():
+    """Mutation: a closed season's positions bleeding into the slots of a
+    player who already has a season's sample this year."""
+    raw = {"seasons": {"2025": {"1": {"C": {"g": 120, "gs": 110, "inn": 950.0}}},
+                       "2026": {"1": {"1B": {"g": 60, "gs": 55, "inn": 480.0}}}}}
+    assert _elig_from(raw) == {1: ["1B"]}
+    assert _elig_from(raw, 2025) == {1: ["C"]}
+    assert _elig_from({"seasons": {}}) == {}
+
+
+def test_fantasy_elig_carries_last_season_across_the_rollover():
+    """refresh_current writes a new season's key the first night the feed has
+    rows. Mutation: a newest-season-only read, which on opening day strips an
+    everyday shortstop to whatever three games say, and a player with no games
+    yet to nothing at all."""
+    import fantasy_export as fe
+    assert fe._ELIG_CARRY_GAMES == 20
+    g = lambda n: {"g": n, "gs": n, "inn": 8.0 * n}             # noqa: E731
+    raw = {"seasons": {
+        "2026": {"1": {"SS": g(150), "2B": g(25), "3B": g(10)},
+                 "2": {"C": g(100), "1B": g(5)},
+                 "4": {"3B": g(100)},
+                 "5": {"DH": g(15), "1B": g(8)}},
+        "2027": {"1": {"SS": g(3)},
+                 "3": {"LF": g(2)},
+                 "4": {"2B": g(12), "SS": g(9)}}}}
+    out = _elig_from(raw)
+    assert out[1] == ["SS", "2B"], out       # 3 games now: last year's 20-game spots carry
+    assert out[2] == ["C"], out              # no games yet: last year's 20-game spot
+    assert out[3] == ["OF"], out             # a debut: this year's modal position
+    assert out[4] == ["2B", "SS"], out       # 21 appearances: this year alone decides
+    assert out[5] == ["UTIL"], out           # no games yet, nothing at 20: last modal
+    # the same file read as of the closed season is the closed season alone
+    assert _elig_from(raw, 2026)[1] == ["SS", "2B", "3B"]
+
+
+def test_eligibility_reads_the_nightly_innings_feed_not_the_june_file():
+    """Owner decision 24: fantasy eligibility (and so DFS, which delegates to
+    it) reads the innings feed run_monthly refreshes nightly. The June sidecar
+    nothing refreshed is not named as a source."""
+    import fantasy_export as fe
+    assert fe.ELIG_SOURCE == "fielding_innings.json"
+    src = Path(fe.__file__).read_text(encoding="utf-8")
+    assert '"mlb_fielding_positions.json"' not in src
+
+
+def test_refresh_live_re_stamps_elig_from_the_innings_feed(tmp_path, monkeypatch):
+    """The nightly path, end to end with the network stubbed: refresh_live
+    rewrites a hitter's elig when fielding_innings.json changes, keeps pitchers
+    on P, falls back to the detail position, and keeps the baked values when the
+    innings artifact is gone. Mutation: elig re-stamped only by the monthly
+    export (the pre-review state), or an empty read stripping every hitter."""
+    import json as _json
+    import fantasy_export as fe
+    d = tmp_path / "data"
+    d.mkdir()
+    players = [
+        {"mlbam": 1, "side": "hit", "pos": "H", "name": "A", "elig": ["SS"]},
+        {"mlbam": 2, "side": "hit", "pos": "H", "name": "B", "elig": ["C"]},
+        {"mlbam": 3, "side": "pit", "pos": "SP", "name": "C", "elig": ["P"]},
+    ]
+    (d / "fantasy.json").write_text(_json.dumps({"season": 2026, "players": players,
+                                                 "schedule": {"games": {}}}), encoding="utf-8")
+    (d / "mlb_player_detail.json").write_text(_json.dumps({"players": {
+        "b": {"mlbam": 2, "pos": "1B", "team": "NYY", "name": "B"}}}), encoding="utf-8")
+
+    def innings(block):
+        (d / "fielding_innings.json").write_text(_json.dumps({"seasons": {"2026": block}}),
+                                                 encoding="utf-8")
+
+    monkeypatch.setattr(fe, "DATA_DIR", d)
+    monkeypatch.setattr(fe, "OUT_PATH", d / "fantasy.json")
+    monkeypatch.setattr(fe, "_active_roster_ids", lambda: {1, 2, 3})
+    monkeypatch.setattr(fe, "_attach_schedule",
+                        lambda payload: payload.setdefault("schedule", {}).update(
+                            {"games": {"2026-09-11": []}}))
+    monkeypatch.setattr(fe, "build_sections", lambda payload: {})
+    monkeypatch.setattr(fe, "update_two_start_ledger",
+                        lambda *a, **k: {"projected_added": 0, "grades_added": 0, "n_rows": 0})
+
+    def served():
+        doc = _json.loads((d / "fantasy.json").read_text(encoding="utf-8"))
+        return {p["mlbam"]: p.get("elig") for p in doc["players"]}
+
+    innings({"1": {"SS": {"g": 120, "gs": 118, "inn": 1000.0},
+                   "3B": {"g": 30, "gs": 20, "inn": 200.0}},
+             "2": {"C": {"g": 90, "gs": 85, "inn": 760.0}}})
+    fe.refresh_live(log=None)
+    assert served() == {1: ["SS", "3B"], 2: ["C"], 3: ["P"]}
+    # the feed moves on overnight: the next refresh follows it
+    innings({"1": {"2B": {"g": 140, "gs": 130, "inn": 1100.0}}})
+    fe.refresh_live(log=None)
+    assert served() == {1: ["2B"], 2: ["1B"], 3: ["P"]}   # 2 left the feed: detail slot
+    # an absent artifact leaves the baked values standing
+    (d / "fielding_innings.json").unlink()
+    fe.refresh_live(log=None)
+    assert served() == {1: ["2B"], 2: ["1B"], 3: ["P"]}
 
 
 # ===========================================================================

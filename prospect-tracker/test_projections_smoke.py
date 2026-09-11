@@ -65,8 +65,9 @@ BOARD = """{
 }"""
 
 # Player detail payload (data/mlb_player_detail.json contract). Every banded
-# index a test reads sits at 113: that is above the HEM+ 88/112 cut and inside
-# the z family's 80/120 neutral zone, so the class says which ruler drew it.
+# index a test reads sits at 113: that is above the HEM+ 88/112 cut (proj-pos on
+# the ratio ruler) and in the z family's "good" band (rem-good, 107 to 120 on
+# the 93/107/120 ruler /mlbstats/ uses), so the class says which ruler drew it.
 DETAIL = json.dumps({"players": {
     "vet_guy": {
         "key": "vet_guy", "name": "Vet Guy", "pos": "SS", "age": 29.4, "team": "NYY",
@@ -113,7 +114,7 @@ DETAIL = json.dumps({"players": {
         "skills": {"def": {"season": 2026, "pos": "C", "inn": 908.7, "posInn": {"C": 908.7},
                            "qualified": True, "demPlus": 133, "demPlusPct": 100,
                            "demPlusPosPct": 99, "fldTotal": 14.4, "frmRuns": 8.2,
-                           "posRuns": 4.8, "defRuns": 19.1}}},
+                           "posRuns": 4.8, "posRunsFg": 3.1, "defRuns": 19.1}}},
     "two_way": {
         "key": "two_way", "name": "Two Way", "pos": "DH/SP", "age": 31.0, "team": "LAD",
         "mlbam": 660271, "isPit": False, "twoWay": True,
@@ -349,18 +350,90 @@ def test_async_slots_are_always_emitted():
 
 
 def test_dem_plus_tile_is_on_the_z_ruler_not_the_hem_cut():
-    """113 is above the HEM+ 88/112 cut and inside the 100 + 10z neutral zone.
-    DEM+ and WAR/PA+ must read neutral on the z ruler; HEM+ reads good on its
-    own ruler. DEM+ on the HEM+ bands would paint an average glove green."""
+    """113 is above the HEM+ 88/112 cut and in the z family's good band. DEM+
+    and WAR/PA+ carry the z ruler's rem-good (the class /mlbstats/ remClass gives
+    113), never the ratio ruler's proj-pos; HEM+ reads good on its own ruler."""
     html = _render("#player=vet_guy")
     dem = _tile_classes(html, "dem_plus")
     assert len(dem) == 2, dem                     # hero slot 4 + the Defense tab
     for cls in dem:
-        assert "mlbp-scale-z" in cls and "proj-pos" not in cls, cls
+        assert "mlbp-scale-z" in cls and "rem-good" in cls and "proj-pos" not in cls, cls
     for cls in _tile_classes(html, "war_pa_plus"):
-        assert "mlbp-scale-z" in cls and "proj-pos" not in cls, cls
+        assert "mlbp-scale-z" in cls and "rem-good" in cls and "proj-pos" not in cls, cls
     hem = _tile_classes(html, "hem_plus")
     assert hem and all("mlbp-scale-ratio" in c and "proj-pos" in c for c in hem), hem
+
+
+def test_the_z_family_bands_exactly_as_the_mlbstats_board_does():
+    """Owner decision 25 (2026-09-11): one colour ruler, 93/107/120, for DEM+,
+    WAR/PA+ and WAR/IP+ on both surfaces. The player page's z cuts and classes
+    are read off both files and must be the same list. Mutation: either surface
+    moving a cut alone."""
+    ms = (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
+    body = ms[ms.index("function remClass(v)"):]
+    body = body[:body.index("}\n") if "}\n" in body else 400]
+    board = [(int(n), c) for n, c in re.findall(r'n >= (\d+)\) return "(rem-[a-z]+)"', body)]
+    card = [(int(n), c) for n, c in re.findall(r'\[(\d+), "(rem-[a-z]+)"\]', JS)]
+    assert board == [(120, "rem-elite"), (107, "rem-good"), (93, "rem-avg")], board
+    assert card == board, card
+    assert 'below: "rem-low"' in JS and 'return "rem-low"' in body
+
+
+def test_every_z_band_renders_on_the_card():
+    """One value per band through the real tiles: 133 elite (the backstop's
+    DEM+), 113 good (WAR/IP+), and the average and low bands off fixture copies."""
+    assert all("rem-elite" in c for c in _tile_classes(_render("#player=backstop"), "dem_plus"))
+    for cls in _tile_classes(_render("#player=ace_arm"), "war_ip_plus_sp"):
+        assert "mlbp-scale-z" in cls and "rem-good" in cls, cls
+    global DETAIL
+    base = DETAIL
+    try:
+        for v, band in ((106, "rem-avg"), (93, "rem-avg"), (92, "rem-low"), (107, "rem-good"),
+                        (120, "rem-elite")):
+            d = json.loads(base)
+            d["players"]["vet_guy"]["skills"]["def"]["demPlus"] = v
+            DETAIL = json.dumps(d)
+            cls = _tile_classes(_render("#player=vet_guy"), "dem_plus")
+            assert cls and all(band in c for c in cls), (v, cls)
+    finally:
+        DETAIL = base
+
+
+def test_the_defense_lens_paints_the_z_band_on_an_inner_span():
+    """.mlbp-lens-num sets its own colour and outranks a one-class rem-* rule,
+    so the z band rides an inner span there; the ratio lens keeps proj-pos."""
+    html = _render("#player=vet_guy")
+    lens = html.split('data-mlbp-goto="defense"', 1)[1].split('class="mlbp-lens"', 1)[0]
+    assert '<span class="mlbp-lens-num"><span class="mlbp-scale-z rem-good">113</span></span>' in lens
+    hit = html.split('data-mlbp-goto="hitting"', 1)[1].split('class="mlbp-lens"', 1)[0]
+    assert 'class="mlbp-lens-num mlbp-scale-ratio proj-pos"' in hit
+
+
+def test_season_lines_carry_the_ewar_column_again():
+    """Owner decision 20 (2026-09-11): the eWAR column is back in the season
+    lines, and the Value tab keeps its bars. A two-way card shows each side's
+    own eWAR in that side's table."""
+    vet = _render("#player=vet_guy")
+    lines = _section(vet, "hitting-lines")
+    assert '<th><span data-gl="ewar">eWAR</span></th>' in lines
+    assert "<td>5.1</td>" in lines
+    assert 'data-mlbp-section="value-war"' in vet and "mlbp-warbars" in vet
+    ace = _section(_render("#player=ace_arm"), "pitching-lines")
+    assert '<span data-gl="ewar">eWAR</span>' in ace and "<td>6.1</td>" in ace
+    two = _render("#player=two_way")
+    assert "<td>7.0</td>" in _section(two, "hitting-lines")
+    assert "<td>1.2</td>" in _section(two, "pitching-lines")
+    # a season with no WAR on file prints the null marker, not a blank or 0.0
+    global DETAIL
+    base = DETAIL
+    try:
+        d = json.loads(base)
+        d["players"]["vet_guy"]["career"][0]["war"] = None
+        DETAIL = json.dumps(d)
+        lines = _section(_render("#player=vet_guy"), "hitting-lines")
+        assert lines.count("<td> - </td>") == 1 and "<td>0.0</td>" not in lines
+    finally:
+        DETAIL = base
 
 
 def test_hero_is_four_tiles_at_most_and_symmetric_by_role():
@@ -376,6 +449,9 @@ def test_defense_panel_labels_published_runs_and_links_the_glossary():
     html = _render("#player=backstop")
     runs = _section(html, "defense-runs")
     assert "FanGraphs published" in runs
+    # owner decision 18: the positional term in Def is ours, FanGraphs' beside it
+    assert "our ladder" in runs and "Positional (ours)" in runs and "Positional (FG)" in runs
+    assert "+4.8" in runs and "+3.1" in runs
     for gl in ("fielding_runs", "framing_runs", "positional_adjustment"):
         assert f'data-gl="{gl}"' in runs, gl
     assert "+14.4" in runs and "+8.2" in runs and "+19.1" in runs

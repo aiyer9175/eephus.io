@@ -8,8 +8,11 @@
 The load-bearing properties: the pool scores mean 100 and sd exactly 10 on the
 SHRUNK rates it serves; more runs per inning scores higher; a small sample is
 pulled toward the pool; the positional adjustment never moves DEM+; framing
-counts only for a fielder who caught; Team DEM+ is innings-weighted; nothing is
-clamped; and the eval artifact records a gate.
+counts only for a fielder who caught; Team DEM+ is innings-weighted and, by
+owner decision 17 (2026-09-11), carries catchers and their framing; Def's
+positional term is our ladder pro-rated by innings with FanGraphs' own riding
+beside it (owner decision 18); nothing is clamped; and the eval artifact records
+a gate.
 """
 from __future__ import annotations
 
@@ -124,6 +127,116 @@ def test_team_rollup_withholds_framing_while_the_flag_is_off(monkeypatch):
     monkeypatch.setattr(D, "TEAM_ROLLUP_FRAMING", True)
     t = {x["team"]: x for x in D.score_pool(fs)["teams"]}["T"]
     assert t["team_frm_runs"] == pytest.approx(9.0) and t["n_fielders"] == 2
+
+
+def test_the_club_rollup_carries_framing_by_owner_decision():
+    """Owner decision 17 (2026-09-11): club framing shows now. Mutation: the
+    constant flipped back, or the catcher slot stripped of his framing."""
+    assert D.TEAM_ROLLUP_FRAMING is True
+    fs = [_f("c", 5.0, pos="C", frm=9.0, team="T"), _f("ss", 5.0, team="T")] + _pool()
+    t = {x["team"]: x for x in D.score_pool(fs)["teams"]}["T"]
+    assert t["rollup_includes_catchers"] is True and t["n_fielders"] == 2
+    assert t["team_frm_runs"] == pytest.approx(9.0)
+    assert t["team_fld_total"] == pytest.approx(19.0)          # 5 + 9 framing + 5
+    c = {s["pos"]: s for s in t["alignment"]}["C"]
+    assert c["frm_runs"] == pytest.approx(9.0)
+    assert "frm_runs" not in {s["pos"]: s for s in t["alignment"]}["SS"]
+
+
+# --- the positional term: our ladder (owner decision 18) ----------------------
+
+_LAD = {"C": 10.0, "1B": -8.0, "2B": 5.0, "3B": 4.0, "SS": 8.0,
+        "LF": -6.0, "CF": 4.0, "RF": -6.0}
+
+
+def test_our_ladder_is_pro_rated_by_innings_and_skips_dh_and_p():
+    got = D.ladder_pos_runs({"SS": 650.0, "1B": 325.0, "DH": 400.0, "P": 10.0}, _LAD, 1300.0)
+    assert got == pytest.approx(8.0 * 650 / 1300 - 8.0 * 325 / 1300)
+    # a full 650-PA season's worth of innings at one position earns the rung
+    assert D.ladder_pos_runs({"C": 1277.7}, _LAD, 1277.7) == pytest.approx(10.0)
+
+
+def test_our_ladder_is_none_never_partial():
+    assert D.ladder_pos_runs({"SS": 900.0}, None, 1277.7) is None
+    assert D.ladder_pos_runs({"SS": 900.0}, _LAD, None) is None
+    assert D.ladder_pos_runs({"SS": 900.0}, _LAD, 0.0) is None
+    short = {k: v for k, v in _LAD.items() if k != "CF"}
+    assert D.ladder_pos_runs({"SS": 900.0, "CF": 10.0}, short, 1277.7) is None
+
+
+def test_def_sums_our_term_and_fangraphs_rides_beside_it():
+    """Mutation: FanGraphs' positional left inside Def, or dropped from the row."""
+    f = _f("x", 4.0, pos_runs=3.0)
+    f.pos_runs_fg = -5.0
+    g = _f("y", 1.0, team="AAA", pos_runs=-1.0)
+    g.pos_runs_fg = 2.0
+    out = D.score_pool(_pool() + [f, g])
+    row = {r["key"]: r for r in out["fielders"]}["x"]
+    assert row["pos_runs"] == pytest.approx(3.0)
+    assert row["pos_runs_fg"] == pytest.approx(-5.0)
+    assert row["def_runs"] == pytest.approx(row["fld_total"] + 3.0)
+    t = {x["team"]: x for x in out["teams"]}["AAA"]
+    assert t["team_pos_runs"] == pytest.approx(2.0)
+    assert t["team_pos_runs_fg"] == pytest.approx(-3.0)
+
+
+def _write_fit(tmp_path, *, conv=1277.7, drop=None, folklore=None):
+    lad = {"values": dict(_LAD, DH=-13.7), "seasons": [2021, 2026],
+           "n_player_seasons": 2023, "inn_per_pa": 1.9657}
+    if drop:
+        lad["values"].pop(drop)
+    if folklore is not None:
+        lad["folklore_basis"] = {"pa_equivalent_innings": folklore}
+    fit = {"ladder": lad}
+    if conv is not None:
+        fit["inn_per_650pa"] = conv
+    p = tmp_path / "positional_fit.json"
+    p.write_text(json.dumps({"generated_at": "2026-08-12", "fit": fit}), encoding="utf-8")
+    return p
+
+
+def test_the_exporter_reads_the_ladder_by_reference(tmp_path, monkeypatch):
+    import defense_export as DE
+    monkeypatch.setattr(DE, "POSITIONAL_FIT", _write_fit(tmp_path))
+    DE.load_ladder.cache_clear()
+    try:
+        lad = DE.load_ladder()
+        assert lad["available"] and lad["inn_per_650"] == pytest.approx(1277.7)
+        assert lad["values"] == _LAD                               # DH never enters
+        monkeypatch.setattr(DE, "POSITIONAL_FIT", _write_fit(tmp_path, conv=None, folklore=1300.0))
+        DE.load_ladder.cache_clear()
+        assert DE.load_ladder()["inn_per_650"] == pytest.approx(1300.0)
+        monkeypatch.setattr(DE, "POSITIONAL_FIT", _write_fit(tmp_path, conv=None))
+        DE.load_ladder.cache_clear()
+        assert DE.load_ladder()["inn_per_650"] == pytest.approx(650.0 * 1.9657)
+        monkeypatch.setattr(DE, "POSITIONAL_FIT", _write_fit(tmp_path, drop="SS"))
+        DE.load_ladder.cache_clear()
+        assert DE.load_ladder()["available"] is False
+    finally:
+        DE.load_ladder.cache_clear()
+
+
+def test_build_fielders_carries_both_terms_and_never_swaps_bases(monkeypatch):
+    """Our ladder goes in pos_runs, the feed's positional in pos_runs_fg; with
+    the ladder unavailable pos_runs is absent, not FanGraphs' number."""
+    import defense_export as DE
+    pub = {"values": {7: {"fld": 2.0, "frm": None, "pos": -4.5, "name": "X", "team_id": 1}}}
+    inn = {"players": {7: {"inn": {"SS": 650.0, "1B": 325.0}, "po": 1.0, "a": 1.0,
+                           "e": 0.0, "name": "X", "team_id": 1}}}
+    monkeypatch.setattr(DE, "load_published_fielding", lambda s: pub)
+    monkeypatch.setattr(DE, "load_season_innings", lambda s: inn)
+    monkeypatch.setattr(DE, "_identity_rows", lambda s, ids: [])
+    monkeypatch.setattr(DE, "_tmap", lambda: {1: "AAA"})
+    monkeypatch.setattr(DE, "load_ladder", lambda: {"available": True, "values": _LAD,
+                                                    "inn_per_650": 1300.0})
+    (f,), _rows, src = DE.build_fielders(2026, log=None)
+    assert f.pos_runs == pytest.approx(2.0) and f.pos_runs_fg == pytest.approx(-4.5)
+    assert src["ladder"]["available"] is True
+    monkeypatch.setattr(DE, "load_ladder", lambda: {"available": False, "reason": "x"})
+    (f,), _rows, _src = DE.build_fielders(2026, log=None)
+    assert f.pos_runs is None and f.pos_runs_fg == pytest.approx(-4.5)
+    row = D.fielder_row(f)
+    assert "def_runs" not in row and "pos_runs" not in row and row["pos_runs_fg"] == -4.5
 
 
 def test_team_dem_plus_is_innings_weighted():

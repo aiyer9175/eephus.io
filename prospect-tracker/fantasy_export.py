@@ -590,9 +590,12 @@ def _enrich(players: list[dict]) -> None:
     ALSO bakes `elig`, the fantasy position eligibility list (2026-08-05, for
     the /dfs/ and /redraft/ split). The corpus role for a hitter is the bare
     string "H", which is useless to a lineup slot, so eligibility is joined from
-    data/mlb_fielding_positions.json. Additive: every existing reader of `pos`
-    is untouched, and dfs_export re-reads the same artifact itself when a
-    payload predates this field.
+    data/fielding_innings.json, the innings feed run_monthly d9b1 refreshes every
+    night (owner decision 24, 2026-09-11; it used to read the June
+    data/mlb_fielding_positions.json, which nothing refreshes). refresh_live
+    re-stamps it every night through the same _hitter_elig, so the nightly
+    innings reach /redraft/ and /dfs/ without waiting for this monthly build.
+    Additive: every existing reader of `pos` is untouched.
 
     DATA-HOLE FALLBACK (2026-08-16): the three skill leaderboards carry only
     players who qualified for a board, so joining team from them alone left
@@ -610,7 +613,7 @@ def _enrich(players: list[dict]) -> None:
         if p["side"] == "hit":
             r = hit.get(mid) or {}
             p["skill"] = {k: r.get(k) for k in ("hem_plus", "luck_gap")}
-            slots = elig.get(mid)
+            slots = _hitter_elig(mid, elig, detail)
             if slots:
                 p["elig"] = slots
         elif p["pos"] == "SP":
@@ -628,10 +631,6 @@ def _enrich(players: list[dict]) -> None:
                 p["team"] = d.get("team")
             if not p.get("name"):
                 p["name"] = d.get("name")
-            if p["side"] == "hit" and not p.get("elig"):
-                slot = _POS_SLOT.get(d.get("pos") or "")
-                if slot:
-                    p["elig"] = [slot]
 
 
 # StatsAPI fielding abbreviation -> fantasy lineup slot. A hitter with no
@@ -642,36 +641,98 @@ _POS_SLOT = {"C": "C", "1B": "1B", "2B": "2B", "3B": "3B", "SS": "SS",
 _ELIG_MIN_GAMES = 5
 
 
-def _elig_positions() -> dict:
-    """{mlbam: [slot, ...]} from data/mlb_fielding_positions.json, most-played
-    first. A position counts at >= _ELIG_MIN_GAMES; the modal position always
-    counts so a mid-season call-up is never slotless. Empty when the artifact
-    is absent (fresh checkout), which simply leaves `elig` off the row."""
-    raw = _load_json("mlb_fielding_positions.json")
-    players = (raw or {}).get("players") if isinstance(raw, dict) else None
+#: The nightly-refreshed innings feed eligibility reads (fielding_innings.py).
+ELIG_SOURCE = "fielding_innings.json"
+
+
+def _elig_season(raw: dict, season: int | None = None) -> tuple[int | None, dict]:
+    """(season, {mlbam(str): {POS: {"g", "gs", "inn"}}}) for the eligibility
+    season: `season` when given, else the artifact's newest season (the live one
+    during the year, which run_monthly d9b1 rewrites nightly)."""
+    seasons = (raw or {}).get("seasons") if isinstance(raw, dict) else None
+    if not isinstance(seasons, dict) or not seasons:
+        return None, {}
+    keys = [int(k) for k in seasons if str(k).isdigit()]
+    if not keys:
+        return None, {}
+    y = int(season) if season is not None else max(keys)
+    block = seasons.get(str(y))
+    return (y, block) if isinstance(block, dict) else (y, {})
+
+
+#: SEASON ROLLOVER. fielding_innings.refresh_current writes a new season's key
+#: the first night the feed returns rows, so on opening day the newest block is
+#: a handful of games and a newest-season-only read would strip almost every
+#: hitter to UTIL. Until a player has _ELIG_CARRY_GAMES appearances in the field
+#: this season, every position he played _ELIG_CARRY_GAMES or more games at the
+#: season before still counts (and, with no games yet this season, last season's
+#: modal position does). Once he reaches it, this season alone decides, which is
+#: the rule the June file applied, so an established regular's slots in
+#: September are exactly the newest season's.
+_ELIG_CARRY_GAMES = 20
+
+
+def _games_by_pos(pos) -> dict:
+    """{POS: games} off one player's innings-feed block, pitching dropped."""
+    if not isinstance(pos, dict):
+        return {}
+    return {p: float((v or {}).get("g") or 0) for p, v in pos.items() if p != "P"}
+
+
+def _add_slots(slots: list, counts: dict, floor: float, keep_modal: bool) -> None:
+    """Append the lineup slots for the positions at >= floor games, most-played
+    first; with keep_modal the most-played position counts whatever its games."""
+    if not counts:
+        return
+    modal = max(counts, key=lambda p: counts[p])
+    for p, games in sorted(counts.items(), key=lambda kv: -kv[1]):
+        if games < floor and not (keep_modal and p == modal):
+            continue
+        s = _POS_SLOT.get(p)
+        if s and s not in slots:
+            slots.append(s)
+
+
+def _elig_positions(season: int | None = None) -> dict:
+    """{mlbam: [slot, ...]} from data/fielding_innings.json for the newest
+    season on it (or `season`). A position counts at >= _ELIG_MIN_GAMES games
+    this season, most-played first; the modal position always counts so a
+    mid-season call-up is never slotless. Under _ELIG_CARRY_GAMES appearances
+    this season, the prior season's positions at >= _ELIG_CARRY_GAMES games are
+    appended (the rollover carry above). Empty when the artifact is absent (fresh
+    checkout), which simply leaves `elig` off the row."""
+    raw = _load_json(ELIG_SOURCE)
+    y, cur = _elig_season(raw, season)
+    if y is None:
+        return {}
+    _py, prev = _elig_season(raw, y - 1)
     out: dict = {}
-    if not isinstance(players, dict):
-        return out
-    for rec in players.values():
-        mid = (rec or {}).get("mlbam")
-        pos = (rec or {}).get("positions") or {}
-        if not mid or not isinstance(pos, dict):
+    for key in set(cur) | set(prev):
+        try:
+            mid = int(key)
+        except (TypeError, ValueError):
             continue
-        counts = {p: float((v or {}).get("games") or 0)
-                  for p, v in pos.items() if p != "P"}
-        if not counts:
+        if not mid:
             continue
-        modal = max(counts, key=lambda p: counts[p])
+        now, before = _games_by_pos(cur.get(key)), _games_by_pos(prev.get(key))
         slots: list = []
-        for p, games in sorted(counts.items(), key=lambda kv: -kv[1]):
-            if games < _ELIG_MIN_GAMES and p != modal:
-                continue
-            s = _POS_SLOT.get(p)
-            if s and s not in slots:
-                slots.append(s)
+        _add_slots(slots, now, _ELIG_MIN_GAMES, keep_modal=True)
+        if sum(now.values()) < _ELIG_CARRY_GAMES:
+            _add_slots(slots, before, _ELIG_CARRY_GAMES, keep_modal=not now)
         if slots:
-            out[int(mid)] = slots
+            out[mid] = slots
     return out
+
+
+def _hitter_elig(mid, elig: dict, detail: dict):
+    """One hitter's served `elig`: the innings-feed slots, else the single slot
+    of his mlb_player_detail position (the 2026-08-16 data-hole fallback), else
+    None, which leaves the key off the row."""
+    slots = elig.get(mid)
+    if slots:
+        return list(slots)
+    slot = _POS_SLOT.get((detail.get(mid) or {}).get("pos") or "")
+    return [slot] if slot else None
 
 
 def _detail_by_mlbam() -> dict:
@@ -1302,6 +1363,43 @@ def two_start_ledger_summary(path: Path | None = None) -> dict:
     }
 
 
+def _restamp_elig(payload: dict, log=print) -> int:
+    """RE-STAMP HITTER ELIGIBILITY EVERY NIGHT (owner decision 24, 2026-09-11:
+    eligibility reads the nightly innings feed). refresh_live reuses the monthly
+    rows, and dfs_export reads the `elig` baked on them before its own live
+    lookup, so without this the nightly innings would reach /redraft/ and /dfs/
+    only on the next monthly build. The rule is _enrich's (_hitter_elig), so a
+    nightly row and a monthly row can never disagree. When the innings artifact
+    is absent or empty the baked values stand: an empty read must not strip every
+    hitter to UTIL. Best-effort: a failure here never fails the refresh. Returns
+    the number of hitter rows whose elig changed."""
+    try:
+        elig = _elig_positions()
+        if not elig:
+            if callable(log):
+                log(f"fantasy: {ELIG_SOURCE} unreadable or empty; baked elig kept")
+            return 0
+        detail = _detail_by_mlbam()
+        n = 0
+        for pl in payload.get("players") or []:
+            if pl.get("side") != "hit" or pl.get("mlbam") is None:
+                continue
+            new = _hitter_elig(int(pl["mlbam"]), elig, detail)
+            if new != pl.get("elig"):
+                n += 1
+            if new:
+                pl["elig"] = new
+            else:
+                pl.pop("elig", None)
+        if callable(log):
+            log(f"fantasy: hitter eligibility re-stamped from {ELIG_SOURCE}, {n} changed")
+        return n
+    except Exception:
+        logging.getLogger("fantasy_export").exception(
+            "fantasy: eligibility re-stamp failed - baked elig kept")
+        return 0
+
+
 def refresh_live(log=print) -> int:
     """DAILY cheap refresh: reuse the monthly ROS players, re-pull the probable-
     pitcher schedule, and rebuild the schedule-driven sections (streamers,
@@ -1346,6 +1444,7 @@ def refresh_live(log=print) -> int:
     }
     if callable(log):
         log(f"fantasy: roster status re-stamped, {_n_off} off-roster")
+    _restamp_elig(payload, log)
     # Keep the schedule we already have, so an empty fetch can be told apart from
     # a genuinely empty slate (see the guard below).
     _prev_games = ((payload.get("schedule") or {}).get("games") or {})

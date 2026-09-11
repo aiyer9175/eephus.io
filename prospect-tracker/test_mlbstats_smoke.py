@@ -587,6 +587,79 @@ def test_one_lineup_and_no_hand_column_when_the_split_was_not_applied():
     assert "undefined" not in html
 
 
+def _hand_means(card: str) -> dict:
+    """The header's vs-hand means, unrounded, off the card head only."""
+    import re
+    head = card.split('<div class="bp-slot', 1)[0]
+    return {h: float(v) for h, v in re.findall(r'data-hand-mean="([LR])" data-raw="([^"]+)"', head)}
+
+
+def _half_up(v: float) -> int:
+    import math
+    return int(math.floor(v + 0.5))
+
+
+def test_the_card_header_shows_the_nines_vs_hand_mean_as_the_capture_computes_it():
+    """Owner decision 21 (2026-09-11). The header number is the capture's own
+    reduction (leaderboard_vintages.off_splits_from_hitter_team): PA-weighted,
+    per-hand value first. It does not follow the toggle. Mutation: a flat mean,
+    the season number used on both hands, or the two hands swapped."""
+    import leaderboard_vintages as lv
+    served = {t["team"]: t for t in json.loads(_lineup_sample())["teams"]}
+    for split in ("vl", "vr"):
+        cards = _cards(_render_lineups(_lineup_sample(), split))
+        for team, card in cards.items():
+            vl, vr = lv.off_splits_from_hitter_team(served[team])
+            got = _hand_means(card)
+            assert got == pytest.approx({"L": vl, "R": vr}, abs=0.0011), (team, split)
+            assert got["L"] != got["R"], "the fixture's two hands differ; the header must too"
+            assert "vs LHP %d<" % _half_up(vl) in card and "vs RHP %d<" % _half_up(vr) in card
+            assert 'data-gl="hem_plus_vs_hand"' in card.split('<div class="bp-slot', 1)[0]
+
+
+def test_the_header_mean_skips_a_hole_and_falls_back_like_the_capture():
+    """A slot with no PA is skipped, never a zero; a slot with no per-hand value
+    reads its season HEM+. Both are the capture's rules, so the numbers match."""
+    import leaderboard_vintages as lv
+    d = json.loads(_lineup_sample())
+    nyy = d["teams"][0]
+    nyy["orders"]["vl"][0]["hem_plus_split"] = None      # season fallback
+    nyy["orders"]["vl"][1]["pa"] = None                  # skipped
+    nyy["orders"]["vr"][2]["pa"] = 0                     # skipped
+    blob = json.dumps(d)
+    card = _cards(_render_lineups(blob, "vr"))["NYY"]
+    vl, vr = lv.off_splits_from_hitter_team(nyy)
+    assert _hand_means(card) == pytest.approx({"L": vl, "R": vr}, abs=0.0011)
+
+
+def test_no_header_mean_when_the_split_was_not_applied():
+    html = _render_lineups(_lineup_sample(applied=False), "vl")
+    assert "data-hand-mean" not in html
+
+
+def test_the_live_board_header_means_equal_the_capture():
+    """On the served artifact: every club's header equals off_vs_lhp and
+    off_vs_rhp as the vintage capture reduces them. Skips when not built."""
+    import leaderboard_vintages as lv
+    p = ROOT / "data" / "hitter_leaderboards.json"
+    if not p.exists():
+        pytest.skip("hitter leaderboards not built")
+    blob = p.read_text(encoding="utf-8")
+    served = {t["team"]: t for t in json.loads(blob)["teams"]}
+    cards = _cards(_render_lineups(blob, "vr"))
+    n = 0
+    for team, card in cards.items():
+        t = served[team]
+        if t.get("platoon_applied") is False:
+            assert not _hand_means(card), team
+            continue
+        vl, vr = lv.off_splits_from_hitter_team(t)
+        want = {k: v for k, v in (("L", vl), ("R", vr)) if v is not None}
+        assert _hand_means(card) == pytest.approx(want, abs=0.0011), team
+        n += 1
+    assert n or not cards
+
+
 def test_the_live_board_renders_every_served_row_on_both_hands():
     """T2 on the served artifact. Skips when the board is not built."""
     p = ROOT / "data" / "hitter_leaderboards.json"
@@ -748,7 +821,8 @@ def _drow(mlbam, name, team, pos, dem, inn, hem, qualified=True, **extra):
            "tier": "Average", "dem_plus": dem, "dem_plus_raw": dem + 0.2,
            "dem_plus_pct": 50, "dem_plus_pos_pct": 55, "rel": 0.6,
            "rate_1000": 2.5, "rate_1000_shrunk": 1.4, "fld_runs": 3.1, "fld_total": 3.1,
-           "fld_pct": 0.981, "pos_runs": -1.2, "def_runs": 1.9, "hem_plus": hem}
+           "fld_pct": 0.981, "pos_runs": -1.2, "pos_runs_fg": -3.4, "def_runs": 1.9,
+           "hem_plus": hem}
     row.update(extra)
     return row
 
@@ -769,6 +843,7 @@ _DEF_ALIGN = [{"pos": p, "key": str(m), "mlbam": m, "name": n, "inn_at_pos": inn
               for p, m, n, inn, d in (("C", 222, "Frame Catcher", 800.0, 113),
                                       ("CF", 111, "Glove Star", 1000.0, 125),
                                       ("SS", 501, "Glove 01", 880.0, 98))]
+_DEF_ALIGN[0]["frm_runs"] = 6.4     # the club framing rollup is on: the slot carries it
 DEFENSE_SAMPLE = json.dumps({
     "generated_at": "2026-09-11", "season": 2026, "as_of": "2026-09-11",
     "verdict": "validated",
@@ -777,18 +852,22 @@ DEFENSE_SAMPLE = json.dumps({
                  "disclaimer": "DEM+ is scored against next season's published fielding rate."},
     "multiyear": {"source": "dem_plus_multiyear_eval.json", "available": True,
                   "generated_at": "2026-09-11", "window": [2024, 2025, 2026], "n_stamped": 2},
-    "team_rollup_framing": {"included": False, "note": "catchers roll up separately"},
+    "team_rollup_framing": {"included": True, "note": "Team DEM+ includes catchers and their framing."},
+    "positional": {"basis": "our_ladder", "available": True, "inn_per_650pa": 1277.7,
+                   "dh_excluded": True, "fg_column": "pos_runs_fg"},
     "team_basis": {"basis": "current_roster", "scope": "current", "n_rows": 15,
                    "n_moved_to_current_club": 1, "note": "Team is the current club."},
     "fielders": _DEF_ROWS,
     "teams": [
         {"team": "NYY", "team_dem_plus": 106, "team_dem_plus_raw": 106.2, "n_fielders": 8,
-         "n_above_avg": 5, "team_inn": 9800.0, "team_fld_runs": 20.5, "team_fld_total": 20.5,
-         "team_pos_runs": -4.0, "rollup_includes_catchers": False,
+         "n_above_avg": 5, "team_inn": 9800.0, "team_fld_runs": 20.5, "team_fld_total": 26.9,
+         "team_frm_runs": 6.4, "team_pos_runs": -4.0, "team_pos_runs_fg": -9.1,
+         "rollup_includes_catchers": True,
          "alignment": _DEF_ALIGN, "n_off_roster_dropped": 2},
         {"team": "BOS", "team_dem_plus": 94, "team_dem_plus_raw": 94.1, "n_fielders": 9,
          "n_above_avg": 3, "team_inn": 9700.0, "team_fld_runs": -8.0, "team_fld_total": -8.0,
-         "team_pos_runs": 2.0, "rollup_includes_catchers": False,
+         "team_frm_runs": None, "team_pos_runs": 2.0, "team_pos_runs_fg": 0.5,
+         "rollup_includes_catchers": True,
          "alignment": _DEF_ALIGN[:1], "n_off_roster_dropped": 0},
     ],
 })
@@ -808,9 +887,9 @@ DEFENSE_HISTORY_SAMPLE = json.dumps({
 })
 
 
-def _defense_prelude(hash_: str) -> str:
+def _defense_prelude(hash_: str, sample: str | None = None) -> str:
     override = f"""
-    var DEFENSE_SAMPLE={DEFENSE_SAMPLE};
+    var DEFENSE_SAMPLE={sample or DEFENSE_SAMPLE};
     var DEFENSE_HISTORY_SAMPLE={DEFENSE_HISTORY_SAMPLE};
     fetch=function(url){{
       var u=String(url);
@@ -830,10 +909,23 @@ def _defense_prelude(hash_: str) -> str:
     return _prelude(hash_) + override
 
 
-def _render_defense(hash_: str) -> str:
+def _render_defense(hash_: str, sample: str | None = None) -> str:
     ctx = MiniRacer()
-    ctx.eval(_defense_prelude(hash_) + JS)
+    ctx.eval(_defense_prelude(hash_, sample) + JS)
     return ctx.eval("__html['mlbstats-defense-root'] || ''")
+
+
+def _rollup_off_sample() -> str:
+    """The same board as a build with dem_plus.TEAM_ROLLUP_FRAMING off writes it:
+    no club framing, no framing on any slot."""
+    d = json.loads(DEFENSE_SAMPLE)
+    d["team_rollup_framing"] = {"included": False, "note": "catchers roll up separately"}
+    for t in d["teams"]:
+        t["rollup_includes_catchers"] = False
+        t.pop("team_frm_runs", None)
+        for s in t["alignment"]:
+            s.pop("frm_runs", None)
+    return json.dumps(d)
 
 
 def test_defense_board_renders_via_section_hash():
@@ -846,6 +938,11 @@ def test_defense_board_renders_via_section_hash():
     assert 'data-gl="fielding_runs"' in html and 'data-gl="framing_runs"' in html
     assert 'data-gl="positional_adjustment"' in html
     assert "published" in html                            # the one-line run-column note
+    # owner decision 18: Def carries OUR ladder, FanGraphs' positional rides beside it,
+    # and the column titles say which is which
+    assert "Pos (ours)" in html and "Pos (FG)" in html
+    assert 'title="OUR LADDER.' in html and "not in Def" in html
+    assert "-3.4" in html                                 # FanGraphs' positional, shown
     # clickable name: mlbam 111 resolves to the merged card
     assert 'class="mlbstats-name-link"' in html
     assert "/projections/#player=glove_star" in html
@@ -874,8 +971,25 @@ def test_team_defense_view_renders():
     html = _render_defense("#section=defense&dview=teams")
     assert "Team DEM+" in html and 'data-gl="team_dem_plus"' in html
     assert ">106<" in html and ">94<" in html
-    assert "catchers are excluded" in html                # team_rollup_framing.included false
+    assert "catchers are included, framing too" in html   # owner decision 17: rollup on
+    assert "catchers are excluded" not in html
+    assert "+6.4" in html and "-9.1" in html              # club Frm and Pos (FG) columns
+    assert "Pos (ours)" in html and "Pos (FG)" in html
     assert "undefined" not in html
+
+
+def test_team_defense_with_the_rollup_off_says_so():
+    html = _render_defense("#section=defense&dview=teams", _rollup_off_sample())
+    assert "catchers are excluded" in html
+    charts = _render_defense("#section=defense&dview=charts", _rollup_off_sample())
+    assert "Frm +6.4" in charts                           # the slot falls back to the board row
+
+
+def test_the_catcher_slot_reads_its_own_framing_first():
+    d = json.loads(DEFENSE_SAMPLE)
+    d["teams"][0]["alignment"][0]["frm_runs"] = 7.0       # differs from the board row's 6.4
+    html = _render_defense("#section=defense&dview=charts", json.dumps(d))
+    assert "Frm +7.0" in html
 
 
 def test_defense_charts_render():

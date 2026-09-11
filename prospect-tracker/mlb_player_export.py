@@ -574,11 +574,14 @@ def _skill_index() -> dict[int, dict]:
                 k: v for k, v in blk.items() if v is not None}
 
     # Defense block (fielders), from the Defense board. Its own key, never folded
-    # into "hem" or "pitch": DEM+ is 100 + 10z (the WAR/PA+ ruler, bands 80/120),
-    # not the ratio ruler those blocks band on, and the run columns are
-    # FanGraphs' published values carried verbatim. Only the columns the card
-    # renders ride along; the board's lab columns (shrunk rate, reliability,
-    # HEM+ join, 3-year lab output) stay on /mlbstats/.
+    # into "hem" or "pitch": DEM+ is 100 + 10z (the WAR/PA+ ruler, bands
+    # 93/107/120 on both the card and /mlbstats/), not the ratio ruler those
+    # blocks band on. Fielding and framing runs are FanGraphs' published values
+    # carried verbatim; posRuns (the term inside defRuns) is the board's own
+    # positional ladder, and posRunsFg is FanGraphs' published positional, for
+    # the card's comparison row. Only the columns the card renders ride along;
+    # the board's lab columns (shrunk rate, reliability, HEM+ join, 3-year lab
+    # output) stay on /mlbstats/.
     dd = _load("defense_leaderboards.json") or {}
     d_season = dd.get("season")
     for r in dd.get("fielders") or []:
@@ -592,7 +595,8 @@ def _skill_index() -> dict[int, dict]:
                "demPlus": r.get("dem_plus"), "demPlusPct": r.get("dem_plus_pct"),
                "demPlusPosPct": r.get("dem_plus_pos_pct"),
                "fldTotal": r.get("fld_total"), "frmRuns": r.get("frm_runs"),
-               "posRuns": r.get("pos_runs"), "defRuns": r.get("def_runs")}
+               "posRuns": r.get("pos_runs"), "posRunsFg": r.get("pos_runs_fg"),
+               "defRuns": r.get("def_runs")}
         out.setdefault(mid, {})["def"] = {k: v for k, v in blk.items() if v is not None}
     if unreadable:
         _record_skill_index_outage(unreadable, len(out))
@@ -805,7 +809,7 @@ def build_payload() -> dict:
             "aaa_stuff_plus: in-house AAA pitch-quality model (stuff_plus_aaa.py), ex-PROSPX pitchers' latest tracked AAA season",
             "skills: HEM+ (hitters), REM+/RIV+/SEM+ (pitchers) from the MLB Stats leaderboards, joined by MLBAM",
             "skills.lev: WPA, WPA/LI, pLI, Clutch (batters) or WPA, WPA/LI, WPA/start (starters) from leverage_leaderboards.json, the side the card renders; two-way cards carry the pitching side as levPit",
-            "skills.def: DEM+ (100 + 10z) and FanGraphs' published fielding, framing, positional and Def runs from defense_leaderboards.json, fielders only",
+            "skills.def: DEM+ (100 + 10z), FanGraphs' published fielding and framing runs, the Defense board's own positional ladder (posRuns, the term in defRuns) and FanGraphs' published positional beside it (posRunsFg), from defense_leaderboards.json, fielders only",
             "scout: latest published report blurb (capped) + consensus tool grades, ex-PROSPX players only",
             "origin.fvSpark: consensus-FV arc [[date, fv], ...] for ex-PROSPX players",
             "fa fields attach for current class members; verdict/dealPlus from the gate-validated market model",

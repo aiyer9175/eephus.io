@@ -1562,20 +1562,32 @@
   // ---- scale families --------------------------------------------------------
   // One ruler per family, never shared. "ratio" is the HEM+ family at wRC+ width
   // (bands 88/112), "run" is REM+/SEM+ (95/105), "z" is 100 + 10z (WAR/PA+,
-  // WAR/IP+, DEM+) banded at two pool sigma (80/120). A 113 is a good hitter on
-  // the ratio ruler and 1.3 sigma on the z ruler, so DEM+ never borrows the HEM+
-  // cut. The family class rides on every banded value so a test can read which
-  // ruler drew it. Do not tidy these into one cut.
+  // WAR/IP+, DEM+). A 113 is a good hitter on the ratio ruler and 1.3 sigma on
+  // the z ruler, so DEM+ never borrows the HEM+ cut. The family class rides on
+  // every banded value so a test can read which ruler drew it. Do not tidy
+  // these into one cut.
+  //
+  // ONE COLOUR RULER FOR THE z FAMILY (owner decision 25, 2026-09-11: 93/107/120
+  // everywhere). The z family is banded exactly as /mlbstats/ remClass bands the
+  // same numbers (elite 120, good 107, average 93, low below) and paints the same
+  // rem-* classes, so a DEM+ of 113 reads "good" on the card and on the board.
+  // It used to band at 80/120 here, which made that 113 neutral on one surface
+  // and good on the other. `bands` lists the cuts high to low.
   const SCALES = {
     ratio: { lo: 88, hi: 112, cls: "mlbp-scale-ratio" },
     run: { lo: 95, hi: 105, cls: "mlbp-scale-ratio" },
-    z: { lo: 80, hi: 120, cls: "mlbp-scale-z" },
+    z: { lo: 93, hi: 107, cls: "mlbp-scale-z",
+         bands: [[120, "rem-elite"], [107, "rem-good"], [93, "rem-avg"]], below: "rem-low" },
   };
   function bandCls(v, fam) {
     const s = SCALES[fam];
     if (!s) return "";
     const n = Number(v);
     if (v == null || v === "" || !Number.isFinite(n)) return s.cls;
+    if (s.bands) {
+      const hit = s.bands.find(([cut]) => n >= cut);
+      return s.cls + " " + (hit ? hit[1] : s.below);
+    }
     return s.cls + (n >= s.hi ? " proj-pos" : n <= s.lo ? " proj-neg" : "");
   }
   // Glossary hook: the explanation lives in the glossary entry, not on the page.
@@ -1800,17 +1812,21 @@
     if (!table && !tiles) return "";
     return section("pitching-arsenal", "Pitch Arsenal", "usage · run value /100 · whiff%", `<div class="mlbp-table-wrap">${table}</div>${tiles}`);
   }
-  // Season stat lines. WAR is not a column here: it has its own chart on the
-  // Value tab, on the served frame with the bWAR input beside it.
+  // Season stat lines, eWAR last (owner decision 20, 2026-09-11: the column is
+  // restored and the Value tab keeps its WAR-by-season bars with the bWAR tick).
+  // `war` is the served eWAR for that side of the card: a two-way card's
+  // hitting table shows hitting eWAR and its pitching table pitching eWAR.
   function seasonLines(rows, isPit, sid, sub) {
     const c = rows || [];
     if (!c.length) return "";
+    const warTh = `<th>${term("ewar", "eWAR")}</th>`;
+    const warTd = r => `<td>${r.war != null ? fmtWar(r.war) : EM_DASH}</td>`;
     const head = isPit
-      ? "<th>Year</th><th>IP</th><th>ERA</th><th>K%</th><th>BB%</th>"
-      : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th>";
+      ? "<th>Year</th><th>IP</th><th>ERA</th><th>K%</th><th>BB%</th>" + warTh
+      : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th>" + warTh;
     const body = c.slice().reverse().map(r => isPit
-      ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td></tr>`
-      : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.iso != null ? String(r.iso).replace(/^0(?=\.)/, "") : EM_DASH}</td></tr>`).join("");
+      ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td>${warTd(r)}</tr>`
+      : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.iso != null ? String(r.iso).replace(/^0(?=\.)/, "") : EM_DASH}</td>${warTd(r)}</tr>`).join("");
     return section(sid, "Season lines", sub,
       `<div class="mlbp-table-wrap"><table class="detail-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
   }
@@ -1978,9 +1994,11 @@
   }
 
   // ---- defense ---------------------------------------------------------------
-  // DEM+ (100 + 10z) on the z ruler, and FanGraphs' published fielding, framing
-  // and positional runs as their own labelled rows. Two quantities, never
-  // combined into one number here; nothing on this tab feeds a prospect grade.
+  // DEM+ (100 + 10z) on the z ruler, FanGraphs' published fielding and framing
+  // runs, and the positional term Def uses, which is OUR ladder (Position Fit,
+  // owner decision 18, 2026-09-11), as their own labelled rows. Two quantities,
+  // never combined into one number here; nothing on this tab feeds a prospect
+  // grade.
   function defensePanel(p) {
     const d = (p.skills || {}).def;
     if (!d || (d.demPlus == null && d.defRuns == null && d.fldTotal == null)) return "";
@@ -1993,10 +2011,11 @@
     const demSec = section("defense-dem", "Defense index",
       [yr, d.qualified ? "qualified" : "provisional", board].filter(Boolean).join(" · "),
       dem ? `<div class="mlbp-tiles mlbp-tiles-left">${dem}</div>` : "");
-    const runs = section("defense-runs", "Runs", `FanGraphs published${yr ? " · " + yr : ""}`, runBars([
+    const runs = section("defense-runs", "Runs", `fielding and framing FanGraphs published · positional our ladder${yr ? " · " + yr : ""}`, runBars([
       { label: "Fielding", v: d.fldTotal, gl: "fielding_runs" },
       d.frmRuns != null ? { label: "Framing (in Fielding)", v: d.frmRuns, gl: "framing_runs", sub: true } : null,
-      { label: "Positional", v: d.posRuns, gl: "positional_adjustment", neutral: true },
+      { label: "Positional (ours)", v: d.posRuns, gl: "positional_adjustment", neutral: true },
+      d.posRunsFg != null ? { label: "Positional (FG)", v: d.posRunsFg, gl: "positional_adjustment", neutral: true, sub: true } : null,
       { label: "Def", v: d.defRuns, total: true },
     ]));
     const pi = d.posInn ? Object.entries(d.posInn).filter(([, v]) => Number(v) > 0).sort((a, b) => b[1] - a[1]) : [];
@@ -2046,9 +2065,15 @@
     const sk = p.skills || {};
     const hitSide = !p.isPit || !!p.twoWay, pitSide = !!p.isPit || !!p.twoWay;
     const lenses = [];
+    // .mlbp-lens-num sets its own colour, which outranks the single-class rem-*
+    // bands, so a z-family band paints an inner span instead (site.css is not
+    // touched); the ratio and run families keep their two-class proj-* tones.
+    const lensNum = (num, cls) => (/\brem-/.test(cls || "")
+      ? `<span class="mlbp-lens-num"><span class="${cls}">${num}</span></span>`
+      : `<span class="mlbp-lens-num ${cls || ""}">${num}</span>`);
     const lens = (goto, head, num, cls, label, sub) => lenses.push(
       `<div class="mlbp-lens"><button type="button" class="mlbp-lens-head" data-mlbp-goto="${goto}">${head} &rarr;</button>`
-      + `<div class="mlbp-lens-val"><span class="mlbp-lens-num ${cls || ""}">${num}</span>${label}</div>`
+      + `<div class="mlbp-lens-val">${lensNum(num, cls)}${label}</div>`
       + (sub ? `<div class="mlbp-lens-sub">${sub}</div>` : "") + `</div>`);
     const h = hitSide ? sk.hem : null;
     if (h && h.hemPlus != null)

@@ -15,7 +15,10 @@ re-pricing and nothing else:
   * matchup context comes from the frames fantasy_export already loads:
     team Offense+ / Bullpen+ (_teams_context) and the opposing probable's SEM+
     off the fantasy pool itself,
-  * position eligibility comes from data/mlb_fielding_positions.json.
+  * position eligibility is fantasy_export's rule over data/fielding_innings.json,
+    the nightly innings feed: baked on data/fantasy.json by the monthly export
+    and re-stamped nightly by fantasy_export.refresh_live (owner decision 24,
+    2026-09-11; it used to read the June data/mlb_fielding_positions.json).
 
 THREE CONTEXT JOINS AND NOT ONE NEW MODEL (2026-08-07). Everything below reads
 an artifact somebody else already pays for, and every one of them is absent and
