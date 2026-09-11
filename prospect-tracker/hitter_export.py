@@ -152,6 +152,10 @@ def load_season_hitting(season: int) -> list[dict]:
             "HBP": st.get("hitByPitch"), "SF": st.get("sacFlies"), "SO": st.get("strikeOuts"),
             "SB": st.get("stolenBases"), "CS": st.get("caughtStealing"),
             "RBI": st.get("rbi"), "R": st.get("runs"),
+            # MLB's primary-position label on the same row (0 new calls). The
+            # lineup cards read it to keep pitchers off the bench and to name a
+            # DH, which the fielding-innings feed cannot see.
+            "primary_pos": (r.get("position") or {}).get("abbreviation"),
         })
     _warn_unresolved_teams(n_unresolved, len(out), tmap, f"hitting {season}")
     # Owner decision 2026-08-05: team charts follow the current roster, not the
@@ -178,6 +182,7 @@ def build_hitters(rows: list[dict]) -> list[Hitter]:
             sf=_num(r.get("SF")) or 0.0, so=_num(r.get("SO")) or 0.0,
             sb=_num(r.get("SB")) or 0.0, cs=_num(r.get("CS")) or 0.0,
             rbi=_num(r.get("RBI")) or 0.0, r=_num(r.get("R")) or 0.0,
+            primary_pos=r.get("primary_pos") or None,
         ))
     return out
 
@@ -960,6 +965,175 @@ def _roster_filter_meta(teams: list, active_ids) -> dict:
     }
 
 
+# --------------------------------------------------------------------------- #
+# Lineup cards: positions for the bench and the nine, and the status of the
+# regulars the active-roster filter dropped. Display only; see hem_plus
+# team_offense for the fence around `orders`.
+# --------------------------------------------------------------------------- #
+CACHE_DIR = Path(__file__).parent / ".cache"
+#: Freshness window on the cached 40-man rosters, the one leaderboard_vintages
+#: uses for its IL read (IL_CACHE_MAX_AGE_HOURS).
+ROSTER_STATUS_MAX_AGE_HOURS = 48.0
+#: StatsAPI 40-man status code -> card label. D<n> codes read IL-<n>. A code
+#: not listed shows MLB's own description; code A on a player the live active
+#: walk dropped is a skew between the two feeds and gets no reason.
+ROSTER_STATUS_LABELS = {"RM": "Minors", "BRV": "Bereavement", "A": "Not active"}
+
+
+def load_positions(season: int) -> tuple[Optional[dict], dict]:
+    """({mlbam: {pos: innings}}, meta) from defense_export.load_season_innings,
+    the StatsAPI season-fielding feed the Defense board already reads through
+    the same 24-hour scraper cache. No second fetcher.
+
+    None, never {}, when the lens is down (the load_bat_side posture): an empty
+    map would read as "nobody has a position" and blank every marker silently."""
+    meta = {"available": False, "source": "statsapi season fielding (bulk), "
+            "via defense_export.load_season_innings",
+            "min_innings": hem_plus.PLATOON_OPTION_MIN_POS_INN}
+    try:
+        import defense_export
+        doc = defense_export.load_season_innings(int(season))
+    except Exception as e:   # noqa: BLE001 - display lens, never aborts the board
+        meta["reason"] = f"fielding feed unavailable ({type(e).__name__})"
+        return None, meta
+    players = (doc or {}).get("players") or {}
+    out = {}
+    for pid, rec in players.items():
+        inn = (rec or {}).get("inn")
+        if isinstance(inn, dict):
+            try:
+                out[int(pid)] = dict(inn)
+            except (TypeError, ValueError):
+                continue
+    meta["fetched_at"] = (doc or {}).get("fetched_at")
+    if not out:
+        meta["reason"] = "fielding feed returned no fielders this run"
+        return None, meta
+    meta.update({"available": True, "n_fielders": len(out)})
+    return out, meta
+
+
+def _status_label(code: Optional[str], desc: Optional[str]) -> str:
+    c = str(code or "").upper()
+    if len(c) > 1 and c[0] == "D" and c[1:].isdigit():
+        return "IL-" + c[1:]
+    return ROSTER_STATUS_LABELS.get(c) or (desc or c or "Not active")
+
+
+def _roster_40man(season: int, team_id, now: float,
+                  cache_dir: Optional[Path] = None) -> Optional[dict]:
+    """{mlbam: (code, description)} off the cached 40-man roster for one club,
+    or None when the cache is absent, unreadable or older than the window.
+    Reads the file proj_export._il_out60 refreshes nightly; never fetches."""
+    p = Path(cache_dir or CACHE_DIR) / f"statsapi_roster_40man_{team_id}_{season}.json"
+    try:
+        if (now - p.stat().st_mtime) / 3600.0 > ROSTER_STATUS_MAX_AGE_HOURS:
+            return None
+        roster = json.loads(p.read_text(encoding="utf-8")).get("roster") or []
+    except (OSError, ValueError, AttributeError):
+        return None
+    out = {}
+    for r in roster:
+        mid = ((r or {}).get("person") or {}).get("id")
+        st = (r or {}).get("status") or {}
+        if mid:
+            out[int(mid)] = (st.get("code"), st.get("description"))
+    return out
+
+
+def stamp_regulars_out(teams: list[dict], season: int, *,
+                       team_ids: Optional[dict] = None,
+                       cache_dir: Optional[Path] = None,
+                       now: Optional[float] = None) -> dict:
+    """Stamp status_code / status_label on every teams[].regulars_out row and
+    return the roster_status meta block. Membership was already decided by the
+    live active walk; this only names the reason, and never guesses one:
+
+      * a fresh 40-man cache with the player on it -> his status (IL-10, Minors);
+      * a fresh cache without him -> "Off 40-man";
+      * no fresh cache for his club -> "Not active", no code.
+
+    `team_ids` is {team abbreviation: StatsAPI team id}; default inverts _tmap()."""
+    import time
+    now = time.time() if now is None else now
+    if team_ids is None:
+        team_ids = {abbr: tid for tid, abbr in _tmap().items() if abbr}
+    rosters: dict = {}
+    n_lab = n_unlab = 0
+    for t in teams:
+        rows = t.get("regulars_out") or []
+        if not rows:
+            continue
+        abbr = t.get("team")
+        if abbr not in rosters:
+            tid = team_ids.get(abbr)
+            rosters[abbr] = (_roster_40man(season, tid, now, cache_dir)
+                             if tid is not None else None)
+        roster = rosters[abbr]
+        for r in rows:
+            mid = r.get("mlbam")
+            if roster is None or mid is None:
+                r["status_code"], r["status_label"] = None, "Not active"
+                n_unlab += 1
+            elif int(mid) not in roster:
+                r["status_code"], r["status_label"] = None, "Off 40-man"
+                n_lab += 1
+            else:
+                code, desc = roster[int(mid)]
+                r["status_code"], r["status_label"] = code, _status_label(code, desc)
+                if str(code or "").upper() == "A":
+                    n_unlab += 1
+                else:
+                    n_lab += 1
+    return {"available": any(v is not None for v in rosters.values()),
+            "source": "cached StatsAPI 40-man rosters (statsapi_roster_40man_*), no fetch",
+            "max_age_hours": ROSTER_STATUS_MAX_AGE_HOURS,
+            "n_labelled": n_lab, "n_unlabelled": n_unlab}
+
+
+def _lineup_cards_meta(teams: list[dict], pos_meta: dict, status_meta: dict,
+                       split_available: bool) -> dict:
+    """The lineup-card disclosure block: what resolved, and the three marker
+    constants echoed so the page never types them."""
+    n_nine = n_nine_res = n_bench = n_bench_res = 0
+    n_opts = {"vl": 0, "vr": 0}
+    n_withheld = n_out = 0
+    for t in teams:
+        for m in (t.get("slot_meta") or {}).values():
+            n_nine += 1
+            n_nine_res += bool(m.get("pos"))
+        for b in t.get("bench") or []:
+            n_bench += 1
+            n_bench_res += bool(b.get("pos"))
+        po = t.get("platoon_options") or {}
+        for side in ("vl", "vr"):
+            n_opts[side] += len(po.get(side) or [])
+            n_withheld += int((po.get("n_withheld") or {}).get(side) or 0)
+        n_out += len(t.get("regulars_out") or [])
+    positions = dict(pos_meta)
+    positions.update({"n_nine": n_nine, "n_nine_resolved": n_nine_res,
+                      "n_bench": n_bench, "n_bench_resolved": n_bench_res})
+    out = {
+        "positions": positions,
+        "roster_status": status_meta,
+        "constants": {"min_split_pa": hem_plus.PLATOON_OPTION_MIN_SPLIT_PA,
+                      "margin": hem_plus.PLATOON_OPTION_MARGIN,
+                      "min_pos_innings": hem_plus.PLATOON_OPTION_MIN_POS_INN},
+        "n_platoon_options": n_opts,
+        "n_withheld_by_floor": n_withheld,
+        "n_regulars_out": n_out,
+        "display_only": ("bench per-hand fields, slot_meta, platoon_options and "
+                         "regulars_out are display siblings of teams[].orders; "
+                         "no betting or vintage reader may use them"),
+    }
+    if not pos_meta.get("available"):
+        out["reason"] = ("no platoon options this run: " + str(pos_meta.get("reason")
+                         or "fielding positions unavailable"))
+    elif not split_available:
+        out["reason"] = "no platoon options this run: per-hand HEM+ unavailable"
+    return out
+
+
 def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
            write: bool = True, log=print, today: Optional[str] = None) -> int:
     """Build data/hitter_leaderboards.json and return the hitter count."""
@@ -999,7 +1173,10 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     # off_vs_rhp split is permutation-invariant and identically equal. None leaves
     # every slot on the season number, exactly as before.
     platoon_counts = load_platoon_splits(int(season))
-    scored = hem_plus.score_pool(hitters, active_ids, platoon_counts)
+    # Positions for the lineup cards (bench and nine) and the platoon-option
+    # rule. Display only: `orders` and Offense+ are built without them.
+    positions, pos_meta = load_positions(int(season))
+    scored = hem_plus.score_pool(hitters, active_ids, platoon_counts, positions)
     ps_meta = _platoon_split_availability(scored.get("teams") or [], platoon_counts)
     log(f"  hitters: per-hand HEM+ {'available' if ps_meta['available'] else 'UNAVAILABLE'}"
         f" ({ps_meta.get('n_slots_split', 0)} of {ps_meta.get('n_slots', 0)} lineup slots)")
@@ -1048,6 +1225,13 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     # Orders ride ON the team rollups, so this runs on the SERVED teams (a
     # kept-stale rollup carries orders built from the same absent bat side).
     bs_meta = _platoon_availability(teams, bat_side, n_bs, len(hitters), log=log)
+    status_meta = stamp_regulars_out(teams, season)
+    lc_meta = _lineup_cards_meta(teams, pos_meta, status_meta, ps_meta["available"])
+    log(f"  hitters: lineup cards: positions "
+        f"{'available' if pos_meta.get('available') else 'UNAVAILABLE'}; "
+        f"platoon options vs LHP {lc_meta['n_platoon_options']['vl']}, vs RHP "
+        f"{lc_meta['n_platoon_options']['vr']} ({lc_meta['n_withheld_by_floor']} "
+        f"withheld by the split-PA floor); {lc_meta['n_regulars_out']} regulars out")
 
     payload = {
         "generated_at": today, "season": season, "as_of": today,
@@ -1076,6 +1260,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # slot carries the SEASON number on both hands, which makes any derived
         # vs-LHP / vs-RHP split identically equal (audit F08-02).
         "platoon_splits": ps_meta,
+        # Lineup-card disclosure: positions and roster-status coverage, the
+        # platoon-option constants and counts (see _lineup_cards_meta).
+        "lineup_cards": lc_meta,
         # Which club a row's `team` names, how many rows were repointed, and how
         # many serve a blank team (see bullpen_export.team_basis_meta), plus the
         # zero-rollup guard's verdict for this run.

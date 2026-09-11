@@ -316,9 +316,9 @@ HITTER_SAMPLE = ('{"generated_at":"2026-06-30","season":2026,"as_of":"2026-06-29
                  '"team_pa":5900,"lineup":[{"name":"Bat 2","hem_plus":124,"pa":560}]}]}')
 
 
-def _hitter_prelude(hash_: str) -> str:
+def _hitter_prelude(hash_: str, sample: str | None = None) -> str:
     override = f"""
-    var HITTER_SAMPLE={HITTER_SAMPLE};
+    var HITTER_SAMPLE={sample or HITTER_SAMPLE};
     fetch=function(url){{
       var body = (String(url).indexOf('hitter')>=0) ? HITTER_SAMPLE : SAMPLE;
       return FT({{ok:true,json:function(){{return FT(body);}}}});
@@ -367,6 +367,213 @@ def test_lineup_charts_render():
     assert "bp-depth-card" in html                          # per-team lineup ladders
     assert "Offense+" in html
     assert "Star Bat" in html and "undefined" not in html
+
+
+# ---------------------------------------------------------------------------
+# Bench-aware, platoon-aware lineup cards (owner ask 2026-09-11). The card
+# shows the served per-hand HEM+ on every slot and bench row, the served
+# platoon options, and the served regulars_out. The renderer computes none of
+# it, so these tests count rendered rows against served rows.
+# ---------------------------------------------------------------------------
+
+def _slot(slot, key, name, bats, hem, pa, sv, spa, adv):
+    return {"slot": slot, "key": key, "name": name, "bats": bats, "hem_plus": hem,
+            "pa": pa, "platoon_adv": adv, "hem_plus_split": sv, "split_pa": spa}
+
+
+def _lineup_team(team, off, keys, *, bench, opts=None, out=None, applied=True):
+    names = {k: ("Star Bat" if k == "111" else "Reg %s" % k) for k in keys}
+    bats = {k: ("L" if i % 2 else "R") for i, k in enumerate(keys)}
+    vr = [_slot(i + 1, k, names[k], bats[k], 120 - i * 3, 600 - i * 20,
+                (125 if bats[k] == "L" else 110) - i * 3, 400, bats[k] == "L")
+          for i, k in enumerate(keys)]
+    vl = [_slot(i + 1, k, names[k], bats[k], 120 - i * 3, 600 - i * 20,
+                (80 if bats[k] == "L" else 118) - i, 150, bats[k] == "R")
+          for i, k in enumerate(reversed(keys))]
+    t = {"team": team, "offense_plus": off, "heart_hem": 120, "n_above_avg": 5,
+         "n_hitters": 14, "team_pa": 6000, "platoon_applied": applied,
+         "lineup": [{"key": k, "name": names[k], "hem_plus": 100, "pa": 300} for k in keys],
+         "orders": {"vr": vr, "vl": vl},
+         "slot_meta": {k: {"mlbam": int(k), "pos": ["LF" if i % 2 else "SS"]}
+                       for i, k in enumerate(keys)},
+         "bench": bench,
+         "platoon_options": opts or {"vl": [], "vr": [], "n_withheld": {"vl": 0, "vr": 0}},
+         "regulars_out": out or []}
+    if not applied:
+        t["order_no_platoon"] = [dict(s, platoon_adv=None) for s in vr]
+    return t
+
+
+_NYY_KEYS = ["111", "501", "502", "503", "504", "505", "506", "507", "508"]
+_NYY_BENCH = [
+    # holds the edge vs LHP on a real 150-PA line: the marker pair
+    {"key": "601", "name": "Plat Bat", "bats": "R", "hem_plus": 110, "pa": 300, "mlbam": 601,
+     "pos": ["LF", "1B"], "hem_plus_split": {"L": 131, "R": 100}, "split_pa": {"L": 150, "R": 150}},
+    # the sub-floor shape: 107 on 4 PA vs LHP, never a marker, rendered thin
+    {"key": "602", "name": "Thin Bat", "bats": "R", "hem_plus": 106, "pa": 11, "mlbam": 602,
+     "pos": ["C"], "hem_plus_split": {"L": 107, "R": 98}, "split_pa": {"L": 4, "R": 7}},
+    # no vs-LHP line at all: the season fallback
+    {"key": "603", "name": "No Lefty Line", "bats": "L", "hem_plus": 95, "pa": 60, "mlbam": 603,
+     "pos": ["2B"], "hem_plus_split": {"L": None, "R": 97}, "split_pa": {"L": None, "R": 58}},
+]
+# 501 bats L and plays LF (odd index), and on vs-LHP he reads 80 - 7 = 73 on 150 PA
+_NYY_OPTS = {"vl": [{"starter_key": "501", "bench_key": "601", "pos": "LF",
+                     "starter_split": 73, "starter_split_pa": 150, "starter_bats": "L",
+                     "bench_split": 131, "bench_split_pa": 150, "bench_bats": "R", "delta": 58}],
+             "vr": [], "n_withheld": {"vl": 1, "vr": 0}}
+_NYY_OUT = [{"key": "701", "mlbam": 701, "name": "Hurt Regular", "bats": "L", "hem_plus": 118,
+             "pa": 420, "status_code": "D10", "status_label": "IL-10"}]
+_BOS_KEYS = ["801", "802", "803", "804", "805", "806", "807", "808", "809"]
+_BOS_BENCH = [{"key": "901", "name": "Bos Bench", "bats": "S", "hem_plus": 99, "pa": 120,
+               "mlbam": 901, "pos": ["CF"], "hem_plus_split": {"L": 101, "R": 98},
+               "split_pa": {"L": 110, "R": 130}}]
+
+
+def _lineup_sample(applied=True):
+    d = json.loads(HITTER_SAMPLE)
+    d["teams"] = [
+        _lineup_team("NYY", 112, _NYY_KEYS, bench=_NYY_BENCH, opts=_NYY_OPTS, out=_NYY_OUT,
+                     applied=applied),
+        _lineup_team("BOS", 98, _BOS_KEYS, bench=_BOS_BENCH, applied=applied)]
+    d["lineup_cards"] = {"constants": {"min_split_pa": 100, "margin": 15, "min_pos_innings": 30.0}}
+    return json.dumps(d)
+
+
+def _render_lineups(sample: str, split: str = "vr", links: str = "") -> str:
+    """The Lineup Charts view for one opposing hand. The toggle is event-driven
+    and the stub DOM carries no events, so the hand is set at the source."""
+    js = JS.replace('var hitterSplit = "vr";', 'var hitterSplit = "%s";' % split, 1)
+    assert split == "vr" or js != JS, "the hitterSplit declaration moved"
+    ctx = MiniRacer()
+    ctx.eval(_hitter_prelude("#section=hitters&hview=charts", sample) + links + js)
+    return ctx.eval("__html['mlbstats-hitters-root'] || ''")
+
+
+def _cards(html: str) -> dict:
+    out = {}
+    for chunk in html.split('<div class="bp-depth-card">')[1:]:
+        team = chunk.split('class="bp-depth-team">', 1)[1].split("<", 1)[0]
+        out[team] = chunk
+    return out
+
+
+def _row(card: str, name: str, kind: str) -> str:
+    """The one rendered row of `kind` (order | bench | out) naming `name`. Rows
+    hold no nested divs, so each row is the text up to the next <div."""
+    rows = [c for c in card.split('<div class="bp-slot')[1:]
+            if 'data-slot="%s"' % kind in c and name in c]
+    assert len(rows) == 1, (name, kind, len(rows))
+    return rows[0]
+
+
+def test_the_bench_renders_the_hand_specific_value_and_the_marker():
+    html = _render_lineups(_lineup_sample(), "vl")
+    nyy = _cards(html)["NYY"]
+    # the bench row leads with its vs-LHP number (131), not the season 110
+    row = _row(nyy, "Plat Bat", "bench")
+    assert 'data-kind="split"' in row and ">131<" in row
+    assert " 150 PA" in row and " 300 PA" not in row   # the vs-LHP sample, not the season
+    # the marker renders once, under the starter, with both split PAs on it
+    assert nyy.count('data-opt="1"') == 1
+    assert 'data-spa="150"' in nyy and 'data-bpa="150"' in nyy
+    assert 'data-gl="platoon_option"' in nyy
+    assert nyy.count('data-optb="1"') == 1          # the chip on the bench row
+    assert 'data-gl="hem_plus_vs_hand"' in html
+    assert "undefined" not in html and "NaN" not in html
+
+
+def test_rendered_rows_equal_served_rows_per_card_and_hand():
+    """T2 on the fixture. Mutation: rows dropped, duplicated or sliced."""
+    served = {t["team"]: t for t in json.loads(_lineup_sample())["teams"]}
+    for split in ("vl", "vr"):
+        for team, card in _cards(_render_lineups(_lineup_sample(), split)).items():
+            t = served[team]
+            assert card.count('data-slot="order"') == 9
+            assert card.count('data-slot="bench"') == len(t["bench"])
+            assert card.count('data-slot="out"') == len(t["regulars_out"])
+            assert card.count('data-opt="1"') == len(t["platoon_options"][split])
+
+
+def test_a_thin_line_is_dimmed_and_never_marked():
+    """T5. The Thin Bat reads 107 on 4 PA vs LHP, above the starter he could
+    replace, and the served options leave him out: the page must not add him."""
+    nyy = _cards(_render_lineups(_lineup_sample(), "vl"))["NYY"]
+    row = _row(nyy, "Thin Bat", "bench")
+    assert 'data-kind="thin"' in row and ">107<" in row
+    assert "4 PA vs LHP, under 100" in nyy
+    assert "data-optb" not in row
+    import re
+    for spa, bpa in re.findall(r'data-opt="1" data-spa="(\d+)" data-bpa="(\d+)"', nyy):
+        assert int(spa) >= 100 and int(bpa) >= 100
+
+
+def test_a_missing_hand_renders_the_season_fallback_visibly():
+    """T6. Mutation: a silent fallback that reads like a split."""
+    html = _render_lineups(_lineup_sample(), "vl")
+    served_nulls = sum(1 for t in json.loads(_lineup_sample())["teams"]
+                       for b in t["bench"] if b["hem_plus_split"]["L"] is None)
+    assert html.count('data-kind="fallback"') == served_nulls == 1
+    assert "No vs LHP line; season HEM+ shown" in html
+    assert ">95<sup>s</sup>" in html
+
+
+def test_the_out_block_shows_the_status_and_the_bench_sorts_by_the_hand():
+    nyy = _cards(_render_lineups(_lineup_sample(), "vl"))["NYY"]
+    assert "Hurt Regular" in nyy and ">IL-10<" in nyy
+    # vs LHP: the 150-PA line leads, the thin and fallback rows follow
+    bench = nyy.split('<div class="bp-bench-head">Bench</div>')[1]
+    assert bench.index("Plat Bat") < bench.index("Thin Bat") < bench.index("No Lefty Line")
+
+
+def test_card_names_link_to_the_player_card_when_mapped():
+    """T12. Slot, bench and out names all link when the mlbam maps."""
+    links = ("EEPHUS_HUB.links=function(){return FT({byMlbam:{"
+             '"111":{"key":"star_bat"},"601":{"key":"plat_bat"},"701":{"key":"hurt_reg"}}});};')
+    nyy = _cards(_render_lineups(_lineup_sample(), "vl", links))["NYY"]
+    for key in ("star_bat", "plat_bat", "hurt_reg"):
+        assert "/projections/#player=" + key in nyy, key
+    assert ">Thin Bat<" in nyy or "Thin Bat<span" in nyy      # unmapped: plain text
+
+
+def test_no_dashes_in_the_rendered_cards():
+    """T10: the bench role column used to print &mdash; on every row."""
+    for split in ("vl", "vr"):
+        html = _render_lineups(_lineup_sample(), split)
+        for bad in ("&mdash;", "&ndash;", "\u2014", "\u2013"):
+            assert bad not in html, (split, bad)
+
+
+def test_one_lineup_and_no_hand_column_when_the_split_was_not_applied():
+    """T11: platoon_applied=false means no toggle, no hand column, no markers."""
+    html = _render_lineups(_lineup_sample(applied=False), "vl")
+    assert "data-hittersplit" not in html
+    assert "data-kind=" not in html and 'data-opt="1"' not in html
+    assert "Handedness split unavailable" in html
+    assert html.count('data-slot="order"') == 18
+    assert "undefined" not in html
+
+
+def test_the_live_board_renders_every_served_row_on_both_hands():
+    """T2 on the served artifact. Skips when the board is not built."""
+    p = ROOT / "data" / "hitter_leaderboards.json"
+    if not p.exists():
+        pytest.skip("hitter leaderboards not built")
+    blob = p.read_text(encoding="utf-8")
+    served = {t["team"]: t for t in json.loads(blob)["teams"]}
+    for split in ("vl", "vr"):
+        cards = _cards(_render_lineups(blob, split))
+        assert len(cards) == len(served)
+        for team, card in cards.items():
+            t = served[team]
+            applied = t.get("platoon_applied") is not False
+            order = (t.get("orders") or {}).get(split) if applied else t.get("order_no_platoon")
+            if order:
+                assert card.count('data-slot="order"') == len(order), team
+            assert card.count('data-slot="bench"') == len(t.get("bench") or []), team
+            assert card.count('data-slot="out"') == len(t.get("regulars_out") or []), team
+            want = len(((t.get("platoon_options") or {}).get(split)) or []) if applied else 0
+            assert card.count('data-opt="1"') == want, team
+            assert "&mdash;" not in card and "undefined" not in card, team
 
 
 # ---------------------------------------------------------------------------

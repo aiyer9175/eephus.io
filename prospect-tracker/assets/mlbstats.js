@@ -2135,55 +2135,180 @@
     return '<div class="mlbstats-seasons" role="tablist" aria-label="Opposing pitcher hand">'
       + b("vr", "vs RHP") + b("vl", "vs LHP") + "</div>";
   }
-  function _slotRow(h, slotNum) {
-    var adv = h.platoon_adv
-      ? '<span class="bp-slot-adv" title="Platoon advantage vs this hand">●</span>' : "";
-    var hand = h.bats ? '<span class="proj-dim"> ' + esc(h.bats) + "HB</span>" : "";
-    return '<div class="bp-slot">'
-      + '<span class="bp-slot-role">' + slotNum + "</span>"
-      + '<span class="bp-slot-name"' + (h.name ? ' title="' + esc(h.name) + '"' : "") + ">" + esc(h.name || EM_DASH) + hand + adv
-      + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
-      + '<span class="bp-slot-rem ' + hemClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
+  // ---- lineup cards: the nine, the bench, platoon options, regulars out ----
+  // Every hand-specific number is SERVED (slot hem_plus_split / split_pa, the
+  // bench row's per-hand dicts, teams[].platoon_options, teams[].regulars_out).
+  // The page computes no marker and types no threshold: the thin floor is read
+  // from lineup_cards.constants, and an older payload without it dims nothing.
+  var EDGE_DOT = '<span class="bp-slot-adv" title="Platoon edge vs this hand">●</span>';
+  // The shared .bp-slot grid reserves 92px for a bullpen role label; a lineup
+  // row needs a slot number and a position, so the name gets the difference.
+  var LC_GRID = ' style="grid-template-columns:64px 1fr auto"';
+  function lcConst(key) {
+    var c = (hitterData && hitterData.lineup_cards && hitterData.lineup_cards.constants) || {};
+    return num(c[key]);
+  }
+  function splitHand() { return hitterSplit === "vl" ? "L" : "R"; }
+  function handLabel() { return hitterSplit === "vl" ? "vs LHP" : "vs RHP"; }
+  function hasEdge(bats, hand) {
+    var b = String(bats || "").toUpperCase().charAt(0);
+    return b === "S" || (b === "L" && hand === "R") || (b === "R" && hand === "L");
+  }
+  function posText(pos) { return (pos && pos.length) ? pos.slice(0, 3).join("/") : ""; }
+  // Card names link to the merged player card when the mlbam maps (nameCell's
+  // rule); plain text otherwise. Hitter keys are str(mlbam) by construction.
+  function cardName(h) {
+    var nm = esc(h.name || EM_DASH);
+    var id = h.mlbam != null ? h.mlbam : (/^\d+$/.test(String(h.key || "")) ? h.key : null);
+    var href = id != null ? playerHref({ mlbam: id }) : null;
+    return href ? '<a class="mlbstats-name-link" href="' + href + '">' + nm + "</a>" : nm;
+  }
+  function batsTxt(bats) { return bats ? '<span class="proj-dim"> ' + esc(bats) + "HB</span>" : ""; }
+  function paTxt(pa) { return pa != null ? '<span class="proj-dim"> ' + fInt(pa) + " PA</span>" : ""; }
+  // The number column. hand null = the neutral lineup (season HEM+ only).
+  // Otherwise the per-hand HEM+ leads and the season number trails, dim;
+  // data-kind names the state (split | thin | fallback) so each is countable.
+  function lcValue(hand, v, pa, season) {
+    if (!hand) return '<span class="bp-slot-rem ' + hemClass(season) + '">' + fInt(season) + "</span>";
+    var lbl = handLabel();
+    if (v == null) {
+      return '<span class="bp-slot-rem"><span class="rem-avg" data-kind="fallback" style="opacity:.6" title="No '
+        + lbl + ' line; season HEM+ shown">' + fInt(season) + "<sup>s</sup></span></span>";
+    }
+    var floor = lcConst("min_split_pa");
+    var thin = floor != null && (num(pa) || 0) < floor;
+    var cell = thin
+      ? '<span class="' + hemClass(v) + '" data-kind="thin" style="opacity:.6;text-decoration:underline dotted" title="'
+        + fInt(pa) + " PA " + lbl + ", under " + fInt(floor) + '">'
+      : '<span class="' + hemClass(v) + '" data-kind="split" title="' + lbl + " HEM+ on " + fInt(pa) + ' PA">';
+    return '<span class="bp-slot-rem">' + cell + fInt(v) + '</span><span class="proj-dim" title="Season HEM+"> '
+      + fInt(season) + "</span></span>";
+  }
+  function _slotRow(h, slotNum, meta, hand) {
+    var pos = posText((meta || {}).pos);
+    var adv = (hand && h.platoon_adv) ? EDGE_DOT : "";
+    var v = hand ? h.hem_plus_split : null;
+    return '<div class="bp-slot" data-slot="order"' + LC_GRID + ">"
+      + '<span class="bp-slot-role">' + slotNum + (pos ? " " + esc(pos) : "") + "</span>"
+      + '<span class="bp-slot-name"' + (h.name ? ' title="' + esc(h.name) + '"' : "") + ">" + cardName(h)
+      + batsTxt(h.bats) + adv + paTxt(hand && v != null ? h.split_pa : h.pa) + "</span>"
+      + lcValue(hand, v, h.split_pa, h.hem_plus)
+      + "</div>";
+  }
+  function _optRow(o, b) {
+    b = b || { key: o.bench_key, name: "" };
+    return '<div class="bp-slot bp-slot--opt" data-opt="1" data-spa="' + esc(o.starter_split_pa)
+      + '" data-bpa="' + esc(o.bench_split_pa) + '"' + LC_GRID + ">"
+      + '<span class="bp-slot-role"></span>'
+      + '<span class="bp-slot-name"' + (b.name ? ' title="' + esc(b.name) + '"' : "") + ">"
+      + '<span class="bp-role" data-gl="platoon_option">PLT</span> ' + cardName(b)
+      + batsTxt(o.bench_bats) + paTxt(o.bench_split_pa) + "</span>"
+      + '<span class="bp-slot-rem"><span class="' + hemClass(o.bench_split) + '">' + fInt(o.bench_split)
+      + '</span><span class="proj-dim"> +' + fInt(o.delta) + "</span></span>"
+      + "</div>";
+  }
+  function _benchRow(b, hand, opts, names) {
+    var v = hand ? (b.hem_plus_split || {})[hand] : null;
+    var pa = hand ? (b.split_pa || {})[hand] : null;
+    var chips = (opts || []).map(function (o) {
+      return '<span class="bp-role" data-optb="1" data-gl="platoon_option" title="For '
+        + esc(names[o.starter_key] || "") + " (" + esc(o.pos) + "), +" + fInt(o.delta) + '">PLT</span> ';
+    }).join("");
+    return '<div class="bp-slot bp-slot--bench" data-slot="bench"' + LC_GRID + ">"
+      + '<span class="bp-slot-role">' + esc(posText(b.pos)) + "</span>"
+      + '<span class="bp-slot-name"' + (b.name ? ' title="' + esc(b.name) + '"' : "") + ">" + cardName(b) + (chips ? " " + chips : "")
+      + batsTxt(b.bats) + ((hand && hasEdge(b.bats, hand)) ? EDGE_DOT : "")
+      + paTxt(hand && v != null ? pa : b.pa) + "</span>"
+      + lcValue(hand, v, pa, b.hem_plus)
+      + "</div>";
+  }
+  // Bench order for the toggled hand: split lines at or over the floor first,
+  // then thin and fallback rows, each by value. Neutral: the served order.
+  function _benchSorted(bench, hand) {
+    if (!hand) return bench.slice();
+    var floor = lcConst("min_split_pa");
+    function val(b) {
+      var v = (b.hem_plus_split || {})[hand];
+      return v != null ? num(v) : num(b.hem_plus);
+    }
+    function full(b) {
+      var v = (b.hem_plus_split || {})[hand], pa = num((b.split_pa || {})[hand]) || 0;
+      return v != null && (floor == null || pa >= floor);
+    }
+    return bench.slice().sort(function (a, b) {
+      var fa = full(a), fb = full(b);
+      if (fa !== fb) return fa ? -1 : 1;
+      return (val(b) || 0) - (val(a) || 0);
+    });
+  }
+  function _outRow(r) {
+    return '<div class="bp-slot bp-slot--bench" data-slot="out"' + LC_GRID + ">"
+      + '<span class="bp-slot-role">Out</span>'
+      + '<span class="bp-slot-name"' + (r.name ? ' title="' + esc(r.name) + '"' : "") + ">" + cardName(r)
+      + batsTxt(r.bats) + paTxt(r.pa)
+      + ' <span class="bp-prov">' + esc(r.status_label || "Not active") + "</span></span>"
+      + '<span class="bp-slot-rem"><span class="proj-dim" title="Season HEM+">' + fInt(r.hem_plus) + "</span></span>"
       + "</div>";
   }
   function lineupLadders() {
     var teams = (hitterData && hitterData.teams) || [];
     if (!teams.length) return "";
+    // platoon_applied=false on every club: one lineup, no toggle, no hand
+    // column (the _ORDER_KEY_CONTRACT "flag" rule). Absent = an older payload.
+    var splitOn = teams.some(function (t) { return t.platoon_applied !== false; });
     var sorted = teams.slice().sort(function (a, b) { return (num(b.offense_plus) || 0) - (num(a.offense_plus) || 0); });
     var cards = sorted.map(function (t) {
-      // Constructed handedness-aware order for the selected hand; fall back to the
-      // HEM+ depth ladder when the bat side wasn't available.
-      var order = (t.orders && t.orders[hitterSplit]) || null;
+      var hand = (splitOn && t.platoon_applied !== false) ? splitHand() : null;
+      // The hand's constructed order, or the one neutral nine; the HEM+ depth
+      // ladder when neither was served.
+      var order = hand ? ((t.orders && t.orders[hitterSplit]) || null)
+        : (t.order_no_platoon || (t.orders && (t.orders.vr || t.orders.vl)) || null);
+      var meta = t.slot_meta || {};
+      var opts = hand ? ((t.platoon_options || {})[hitterSplit] || []) : [];
+      var byStarter = {}, byBench = {}, benchByKey = {}, names = {};
+      opts.forEach(function (o) {
+        (byStarter[o.starter_key] = byStarter[o.starter_key] || []).push(o);
+        (byBench[o.bench_key] = byBench[o.bench_key] || []).push(o);
+      });
+      (t.bench || []).forEach(function (b) { benchByKey[b.key] = b; });
       var slots;
       if (order && order.length) {
-        slots = order.map(function (h) { return _slotRow(h, h.slot); }).join("");
+        order.forEach(function (h) { names[h.key] = h.name; });
+        slots = order.map(function (h) {
+          return _slotRow(h, h.slot, meta[h.key], hand)
+            + (byStarter[h.key] || []).map(function (o) { return _optRow(o, benchByKey[o.bench_key]); }).join("");
+        }).join("");
       } else {
-        slots = (t.lineup || []).slice(0, 9).map(function (h, i) { return _slotRow(h, i + 1); }).join("");
+        slots = (t.lineup || []).slice(0, 9).map(function (h, i) { return _slotRow(h, i + 1, null, null); }).join("");
       }
-      // Bench bats, clearly separated below the nine.
-      var bench = (t.bench || []);
+      var head = hand
+        ? '<div class="bp-slot"' + LC_GRID + '><span class="bp-slot-role">#</span><span class="bp-slot-name proj-dim">Hitter</span>'
+          + '<span class="bp-slot-rem proj-dim">' + gloss(handLabel(), "hem_plus_vs_hand") + "</span></div>"
+        : "";
+      var bench = _benchSorted(t.bench || [], hand);
       var benchHtml = bench.length
         ? '<div class="bp-bench-head">Bench</div>'
-          + bench.map(function (h) {
-              var hand = h.bats ? '<span class="proj-dim"> ' + esc(h.bats) + "HB</span>" : "";
-              return '<div class="bp-slot bp-slot--bench">'
-                + '<span class="bp-slot-role">&mdash;</span>'
-                + '<span class="bp-slot-name"' + (h.name ? ' title="' + esc(h.name) + '"' : "") + ">" + esc(h.name || EM_DASH) + hand
-                + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
-                + '<span class="bp-slot-rem ' + hemClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
-                + "</div>";
-            }).join("")
+          + bench.map(function (b) { return _benchRow(b, hand, byBench[b.key], names); }).join("")
+        : "";
+      var out = t.regulars_out || [];
+      var outHtml = out.length
+        ? '<div class="bp-bench-head" title="Regulars not on the active roster">Out</div>' + out.map(_outRow).join("")
         : "";
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
         + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
         + '<span class="rem-plus ' + hemClass(t.offense_plus) + '" data-gl="offense_plus">Offense+ ' + fInt(t.offense_plus) + "</span>"
-        + "</div>" + slots + benchHtml + "</div>";
+        + "</div>" + head + slots + benchHtml + outHtml + "</div>";
     }).join("");
-    return '<div class="mlbstats-note">A sabermetric batting order, not a HEM+ sort: the two best bats hit '
-      + "2nd and 4th, and left/right hitters are staggered so a reliever can't get a platoon matchup. Toggle "
-      + "the opposing hand to re-lens platoon advantage (" + "● marks a platoon-advantaged bat). Bench bats "
-      + "are listed below each nine.</div>"
-      + lineupSplitToggle()
+    var lc = (hitterData && hitterData.lineup_cards) || {};
+    var floor = lcConst("min_split_pa");
+    var note = splitOn
+      ? "Order built on season " + gloss("HEM+", "hem_plus") + ". Number: " + gloss("vs-hand HEM+", "hem_plus_vs_hand")
+        + ", season dim" + (floor != null ? "; dotted under " + fInt(floor) + " PA" : "") + "; <sup>s</sup> season fallback. "
+        + "● platoon edge. " + gloss("PLT", "platoon_option") + " platoon option."
+        + (lc.reason ? ' <span class="proj-dim">' + esc(lc.reason) + "</span>" : "")
+      : "Handedness split unavailable this build; one lineup shown, season " + gloss("HEM+", "hem_plus") + ".";
+    return '<div class="mlbstats-note">' + note + "</div>"
+      + (splitOn ? lineupSplitToggle() : "")
       + '<div class="bp-depth-grid">' + cards + "</div>";
   }
 

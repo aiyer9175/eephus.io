@@ -105,6 +105,10 @@ class Hitter:
     rbi: float = 0.0
     r: float = 0.0
     bats: Optional[str] = None   # 'L' | 'R' | 'S' (batSide), for lineup construction
+    # MLB's primary-position label off the season hitting row ('P', 'DH', 'C',
+    # 'TWP', ...). Read for the bench only: it drops pitchers and names a DH,
+    # which the fielding-innings feed cannot see. Never enters HEM+.
+    primary_pos: Optional[str] = None
     # computed
     rates: dict = field(default_factory=dict)
     woba_skill: Optional[float] = None
@@ -410,9 +414,128 @@ def build_batting_order(hitters: list["Hitter"], opp_hand: str,
     return order
 
 
+# ---- bench, positions and the platoon-option marker (display only) ----------
+# Everything below serves SIBLING keys of `orders` (bench per-hand fields,
+# slot_meta, platoon_options, regulars_out). None of it may reorder the nine,
+# add a key to a slot, or move Offense+: `orders` feeds the leaderboard
+# vintages' off_vs_lhp / off_vs_rhp and betting_export prices order[:5].
+#
+# A marker fires for opposing hand h, starter S and bench bat B only when ALL of:
+#   1. S lacks the platoon edge vs h (bats h, not a switch hitter);
+#   2. B holds it (bats opposite h, or switch);
+#   3. B has played S's primary position (DH is open to every non-pitcher);
+#   4. both carry a real per-hand HEM+ vs h (a season fallback never counts);
+#   5. both have PLATOON_OPTION_MIN_SPLIT_PA or more split PA vs h;
+#   6. B's split minus S's split is PLATOON_OPTION_MARGIN or more.
+# The reader-facing statement of the rule is the platoon_option glossary entry.
+#: Split PA floor, both players, against the hand. Below it the shrunk split is
+#: mostly the pool anchor (the data weight at 30 wOBA-PA is 0.20 on walks and
+#: 0.03 on doubles), and 100 PA is the page's existing thin-sample floor. The
+#: card dims any per-hand number under this same floor.
+PLATOON_OPTION_MIN_SPLIT_PA = 100
+#: HEM+ points the bench split must clear the starter's by. The measured spread of
+#: (vs-LHP minus vs-RHP HEM+) within a bat side and sample band is 13.5 to 22.3,
+#: an upper bound on the noise in a difference of two splits; 15 is its low end.
+PLATOON_OPTION_MARGIN = 15
+#: Defensive innings at a position that make a bat eligible there (rule 3). The
+#: fielding-innings feed carries innings only; 30 innings reproduces the
+#: fielding_positions 10-games-or-5-starts rule on 646 of 647 eligible
+#: (bat, position) pairs of the 2026-09-11 nine and bench, with 25 extra.
+PLATOON_OPTION_MIN_POS_INN = 30.0
+#: The fielding positions a bat can be eligible at; DH is handled by rule.
+FIELD_POSITIONS = ("C", "1B", "2B", "3B", "SS", "LF", "CF", "RF")
+BENCH_MAX = 6
+
+
+def is_pitcher(hi: "Hitter") -> bool:
+    """MLB labels the player a pitcher. A two-way player carries 'TWP' and stays."""
+    return (hi.primary_pos or "").upper() == "P"
+
+
+def player_positions(hi: "Hitter", positions: Optional[dict]) -> Optional[list]:
+    """Eligible 2026 MLB positions, primary first, or None when the fielding lens
+    is down (`positions` None). `positions` is {mlbam: {pos: innings}}.
+
+    Fielding positions with PLATOON_OPTION_MIN_POS_INN or more innings, most
+    innings first. A bat MLB labels DH leads with DH, because DH has no innings
+    and so is invisible to the fielding feed; a non-pitcher with no eligible
+    fielding position is a DH by elimination. A pitcher is ['P']."""
+    if positions is None:
+        return None
+    if is_pitcher(hi):
+        return ["P"]
+    inn = positions.get(int(hi.mlbam)) if hi.mlbam is not None else None
+    inn = inn if isinstance(inn, dict) else {}
+    field = sorted((p for p in FIELD_POSITIONS
+                    if (_num(inn.get(p)) or 0.0) >= PLATOON_OPTION_MIN_POS_INN),
+                   key=lambda p: (-(_num(inn.get(p)) or 0.0), FIELD_POSITIONS.index(p)))
+    out = (["DH"] if (hi.primary_pos or "").upper() == "DH" else []) + field
+    return out or ["DH"]
+
+
+def bench_row(hi: "Hitter", split_hem: Optional[dict],
+              positions: Optional[dict]) -> dict:
+    """One served bench row: the five legacy fields plus the per-hand HEM+ and
+    split PA from the SAME split map the slots read (null per hand when the feed
+    has no line), and the eligible positions."""
+    sp = (split_hem or {}).get(int(hi.mlbam)) if hi.mlbam is not None else None
+    sp = sp if isinstance(sp, dict) else {}
+    spa = sp.get("pa") or {}
+    return {"key": hi.key, "name": hi.name, "bats": hi.bats,
+            "hem_plus": hi.hem_plus, "pa": int(hi.pa), "mlbam": hi.mlbam,
+            "pos": player_positions(hi, positions),
+            "hem_plus_split": {"L": sp.get("L"), "R": sp.get("R")},
+            "split_pa": {"L": spa.get("L"), "R": spa.get("R")}}
+
+
+def platoon_options(order: Optional[list], bench: list, slot_meta: dict,
+                    hand: str) -> tuple[list, int]:
+    """(options, n_withheld_by_floor) for one opposing hand, from SERVED rows only
+    (slot `bats` / `hem_plus_split` / `split_pa`, slot_meta `pos`, bench `bats` /
+    `pos` / per-hand dicts), so a test can recompute the set off the artifact.
+
+    n_withheld_by_floor counts pairs that pass every rule except the split-PA
+    floor (rule 5). Options sort by delta, best first."""
+    out: list = []
+    withheld = 0
+    for s in order or []:
+        if _platoon_adj(s.get("bats"), hand) >= 0:                      # rule 1
+            continue
+        spos = ((slot_meta.get(s.get("key")) or {}).get("pos") or [None])[0]
+        sv, spa = s.get("hem_plus_split"), s.get("split_pa")
+        if spos is None or spos == "P" or sv is None:                   # rules 3, 4
+            continue
+        for b in bench:
+            if _platoon_adj(b.get("bats"), hand) <= 0:                  # rule 2
+                continue
+            bpos = b.get("pos") or []
+            if "P" in bpos or (spos != "DH" and spos not in bpos):      # rule 3
+                continue
+            bv = (b.get("hem_plus_split") or {}).get(hand)
+            bpa = (b.get("split_pa") or {}).get(hand)
+            if bv is None:                                              # rule 4
+                continue
+            delta = bv - sv
+            if delta < PLATOON_OPTION_MARGIN:                           # rule 6
+                continue
+            if ((spa or 0) < PLATOON_OPTION_MIN_SPLIT_PA
+                    or (bpa or 0) < PLATOON_OPTION_MIN_SPLIT_PA):       # rule 5
+                withheld += 1
+                continue
+            out.append({"starter_key": s.get("key"), "bench_key": b.get("key"),
+                        "pos": spos,
+                        "starter_split": sv, "starter_split_pa": spa,
+                        "starter_bats": s.get("bats"),
+                        "bench_split": bv, "bench_split_pa": bpa,
+                        "bench_bats": b.get("bats"), "delta": delta})
+    out.sort(key=lambda o: (-o["delta"], str(o["starter_key"]), str(o["bench_key"])))
+    return out, withheld
+
+
 def team_offense(team: str, hitters: list["Hitter"],
                  active_ids: Optional[frozenset] = None,
-                 split_hem: Optional[dict] = None) -> dict:
+                 split_hem: Optional[dict] = None,
+                 positions: Optional[dict] = None) -> dict:
     """Team offense aggregates. Offense+ is PA-weighted HEM+ (the offensive
     quality of the plate appearances the lineup takes). Also emits constructed
     batting orders vs RHP / LHP and a bench list (regulars beyond the nine).
@@ -433,6 +556,11 @@ def team_offense(team: str, hitters: list["Hitter"],
     None means the roster feed failed, and then NOTHING is filtered: an
     unreachable feed must leave the charts intact rather than empty them. A
     player with no readable mlbam is KEPT, never over-filtered.
+
+    `positions` ({mlbam: {pos: innings}}, None when the fielding lens is down)
+    only feeds the display siblings: bench `pos`, `slot_meta` and
+    `platoon_options`. `orders`, `lineup` and every aggregate are built before
+    it is read and never see it.
     """
     scored = [h for h in hitters if h.hem_plus is not None and h.pa > 0]
     out = {"team": team, "n_hitters": len(scored)}
@@ -474,10 +602,32 @@ def team_offense(team: str, hitters: list["Hitter"],
     out["orders"] = {k: v for k, v in orders.items() if v}
     # Bench bats: the regulars who did NOT make the everyday nine (by PA), the
     # next hitters by playing time, so the chart can show them clearly separated.
+    # A pitcher is never a bench bat (MLB's own position label, not a guess).
     everyday = {r["key"] for r in (orders.get("vr") or [])}
-    bench = [h for h in sorted(avail, key=lambda h: -(h.pa or 0)) if h.key not in everyday][:6]
-    out["bench"] = [{"key": h.key, "name": h.name, "bats": h.bats,
-                     "hem_plus": h.hem_plus, "pa": int(h.pa)} for h in bench]
+    bench = [h for h in sorted(avail, key=lambda h: -(h.pa or 0))
+             if h.key not in everyday and not is_pitcher(h)][:BENCH_MAX]
+    out["bench"] = [bench_row(h, split_hem, positions) for h in bench]
+    # Display siblings of `orders`. Nothing below writes into a slot.
+    by_key = {h.key: h for h in avail}
+    slot_keys = {r["key"] for side in out["orders"].values() for r in side}
+    out["slot_meta"] = {k: {"mlbam": by_key[k].mlbam,
+                            "pos": player_positions(by_key[k], positions)}
+                        for k in sorted(slot_keys) if k in by_key}
+    opts: dict = {"vl": [], "vr": [], "n_withheld": {"vl": 0, "vr": 0}}
+    if positions is not None:
+        for side, hand in (("vl", "L"), ("vr", "R")):
+            opts[side], opts["n_withheld"][side] = platoon_options(
+                out["orders"].get(side), out["bench"], out["slot_meta"], hand)
+    out["platoon_options"] = opts
+    # Would-be regulars the active filter dropped: the club's top nine by season
+    # PA over the UNFILTERED pool (the rule that picks the everyday nine) who are
+    # not in `avail`. Status labels are stamped by the exporter, which holds the
+    # roster caches; this module does no I/O.
+    avail_keys = {h.key for h in avail}
+    regulars = sorted([h for h in scored if not is_pitcher(h)], key=lambda h: -(h.pa or 0))[:9]
+    out["regulars_out"] = [{"key": h.key, "mlbam": h.mlbam, "name": h.name,
+                            "bats": h.bats, "hem_plus": h.hem_plus, "pa": int(h.pa)}
+                           for h in regulars if h.key not in avail_keys]
     return out
 
 
@@ -508,14 +658,18 @@ def build_split_hem(platoon_counts: Optional[dict], pool: Pool) -> Optional[dict
 
 def score_pool(hitters: list["Hitter"],
                active_ids: Optional[frozenset] = None,
-               platoon_counts: Optional[dict] = None) -> dict:
+               platoon_counts: Optional[dict] = None,
+               positions: Optional[dict] = None) -> dict:
     """End to end: derive rates, build the pool, score HEM+, assign tiers, roll up
     team offenses. Returns 'hitters', 'teams', 'pool'. Pure - callers supply the
     data.
 
     `platoon_counts` (optional) carries each hitter's per-hand counting line; the
     per-hand HEM+ is scored HERE because it must use this run's pool anchor, and
-    the pool does not exist until this function builds it."""
+    the pool does not exist until this function builds it.
+
+    `positions` (optional, {mlbam: {pos: innings}}) feeds only the lineup-card
+    display siblings (see team_offense)."""
     pool_input = [h for h in hitters if _woba_denom(h) > 0]
     for h in pool_input:
         derive_rates(h)
@@ -533,7 +687,7 @@ def score_pool(hitters: list["Hitter"],
     teams = []
     for team, hs in by_team.items():
         if team:
-            teams.append(team_offense(team, hs, active_ids, split_hem))
+            teams.append(team_offense(team, hs, active_ids, split_hem, positions))
     teams.sort(key=lambda t: (t.get("offense_plus") or -999), reverse=True)
 
     scored = [h for h in pool_input if h.hem_plus is not None]
