@@ -1107,7 +1107,11 @@
     // is one of the two the margin model is worst at; the dispersion line says
     // what was done about that and what the gate returned.
     var shaped = (p.market === "runline" || p.market === "total");
+    // L14-01: a runline slot also carries what the model's tie after nine is
+    // worth to it. The sentence is built server-side from the row's own
+    // tie_atom block, so no number here is typed or recomputed.
     var caveat = (p.caveat ? note(esc(p.caveat)) : "") +
+      (p.tie_atom_caveat ? note(esc(p.tie_atom_caveat)) : "") +
       (p.evidence_caveat ? note(esc(p.evidence_caveat)) : "") + dispersionLine(shaped);
     // The watch additions render in the watch frame only: when the gates open
     // the pick rendering returns exactly as it was, which is the self-lift the

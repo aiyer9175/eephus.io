@@ -406,8 +406,11 @@ def _split_total(total: float, p_home: float, tie_home: float) -> tuple[float, f
     lo, hi = 0.15 * total, 0.85 * total
 
     def _p(lam_home: float) -> float:
+        # The moneyline's reading of the tie atom, through the betting module's
+        # one reader of it (L14-01), so this bisection can never split a game
+        # level after nine differently from the board it inverts.
         dist = bm.margin_distribution(lam_home, total - lam_home)
-        return sum(p for d, p in dist.items() if d > 0) + dist.get(0, 0.0) * tie_home
+        return bm.split_tie_atom(dist, tie_home)["p_home"]
 
     if _p(hi) <= p_home:
         return hi, total - hi, True

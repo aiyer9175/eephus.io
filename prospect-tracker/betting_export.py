@@ -2829,6 +2829,99 @@ def match_event(game: dict, candidates: list[dict] | None) -> dict | None:
     return best
 
 
+def _runline_side_keys(home_is_fav: bool) -> dict:
+    """{board side: game_probabilities key} for one runline pair. The -1.5 side
+    must win by two, the +1.5 side is the complement of the other's -1.5. One
+    mapping, read by the served price AND by the tie-atom disclosure, so the two
+    can never describe different bets."""
+    if home_is_fav:
+        return {"home": "p_home_minus_1_5", "away": "p_away_plus_1_5"}
+    return {"home": "p_home_plus_1_5", "away": "p_away_minus_1_5"}
+
+
+def _stamp_tie_atom(rows: list[dict] | None, gp: dict, at_split, keys: dict,
+                    fitted: dict | None) -> None:
+    """L14-01. Stamp each runline row with what a game level after nine is worth
+    to it, IN PLACE. Disclosure only: `model_prob`, `edge` and everything the
+    slots rank on are untouched.
+
+    The served runline gives the model's whole tie atom to both +1.5 sides; the
+    moneyline beside it splits the same atom by the measured extra-innings home
+    rate. `tie_atom` carries the atom, whether the measured split is served, and
+    the row's probability and edge under that split, re-priced by
+    `game_probabilities`' own `runline_at_split` (so the arithmetic lives in
+    `betting_model.split_tie_atom` and nowhere here), plus the counts the split
+    was measured on. Nothing is stamped when the context predates the
+    measurement: an absent block is not a zero."""
+    if not rows or at_split is None or not fitted:
+        return
+    pair = bm._runline_split_pair(fitted)
+    if pair is None:
+        return
+    cf = at_split(pair)
+    served = gp.get("runline_tie_split") is not None
+    for r in rows:
+        p = r.get("model_prob")
+        key = keys.get(r.get("side"))
+        if p is None or key is None:
+            continue
+        p_if = cf[key]
+        fair = r.get("market_fair_prob")
+        r["tie_atom"] = {
+            "p_tie": gp.get("p_tie"),
+            "split_served": served,
+            "model_prob_if_split": p_if,
+            "shift_if_split": round(p_if - p, 5),
+            "edge_if_split": (round(bm.edge(p_if, fair), 5)
+                              if fair is not None and r.get("edge") is not None else None),
+            "n_games": fitted.get("n_games"),
+            "n_extra_inning_games": fitted.get("n_extra_inning_games"),
+            "n_home_wins": fitted.get("n_home_wins"),
+            "n_home_wins_by_2plus": fitted.get("n_home_wins_by_2plus"),
+            "n_away_wins": fitted.get("n_away_wins"),
+            "n_away_wins_by_2plus": fitted.get("n_away_wins_by_2plus"),
+        }
+
+
+def tie_atom_caveat(row: dict, thr: float | None) -> str | None:
+    """The published slot's sentence about the tie atom, or None.
+
+    EVERY NUMBER IN IT IS READ OFF THE ROW'S `tie_atom` BLOCK OR THE SLOT'S
+    FLOOR, never typed, so it moves the night the numbers do and a test can
+    hold each figure to the field it came from. None when the row carries no
+    block (not a runline, or a context that predates the measurement) or when
+    the split is already served, because then the price IS the split and there
+    is nothing left to disclose."""
+    ta = row.get("tie_atom") or {}
+    p = row.get("model_prob")
+    if (not ta or ta.get("split_served") or p is None
+            or ta.get("model_prob_if_split") is None or ta.get("p_tie") is None):
+        return None
+
+    def pc(x) -> str:
+        return f"{100.0 * float(x):.1f}%"
+
+    edge_clause = ""
+    e = ta.get("edge_if_split")
+    if e is not None and thr is not None:
+        edge_clause = (f", an edge of {100.0 * float(e):+.1f}% against the {pc(thr)} floor"
+                       + ("" if float(e) >= float(thr) else ", which it would not clear"))
+    n_x, n_g = ta.get("n_extra_inning_games"), ta.get("n_games")
+    rate = (f" ({pc(n_x / n_g)} of the {n_g} cached games went to extras)"
+            if n_x is not None and n_g else "")
+    return ("Extra innings: this runline counts the games the margin model leaves tied "
+            f"after nine ({pc(ta['p_tie'])} of this game's probability) as a +1.5 cover "
+            "for both sides, while the moneyline splits the same games by the measured "
+            f"extra-innings home rate. Of the {n_x} extra-inning games cached this "
+            f"season, the home side won {ta.get('n_home_wins')} and won by two or more in "
+            f"{ta.get('n_home_wins_by_2plus')}; the away side won {ta.get('n_away_wins')} "
+            f"and won by two or more in {ta.get('n_away_wins_by_2plus')}. Split the "
+            f"moneyline's way, this side is {pc(ta['model_prob_if_split'])} rather than "
+            f"{pc(p)}{edge_clause}. That tie probability is not a calibrated chance of "
+            f"extra innings{rate}, and the split is measured, not served: it waits on "
+            "the runline margin gate.")
+
+
 def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
               starters=None, now=None, stats=None) -> list[dict]:
     """Every game on the slate: model probabilities, the market when a snapshot
@@ -2867,6 +2960,9 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
 
     out = []
     n_time_refused = 0                     # games that had a candidate and lost it
+    # The measured runline split of the tie atom, read ONCE per board (L14-01).
+    # Disclosure only: nothing below prices off it while it is unserved.
+    rl_tie_fitted = bm.fitted_runline_tie_split()
     for g in games:
         home, away = (g.get("home") or {}), (g.get("away") or {})
         ho, ao = home.get("org"), away.get("org")
@@ -2879,6 +2975,7 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
             continue
         gp.pop("over", None)                   # callable; superseded by total_sides
         sides_fn = gp.pop("total_sides", None)
+        rl_at_split = gp.pop("runline_at_split", None)
         cands = by_pair.get((ho, ao)) or []
         ev = match_event(g, cands)
         if cands and ev is None:
@@ -2893,14 +2990,16 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
         if rl:
             hp_point = ((rl["best"].get("home") or {}).get("point"))
             home_is_fav = (hp_point is not None and hp_point < 0)
-            p_home_rl = gp["p_home_minus_1_5"] if home_is_fav else gp["p_home_plus_1_5"]
-            p_away_rl = gp["p_away_plus_1_5"] if home_is_fav else gp["p_away_minus_1_5"]
+            rl_keys = _runline_side_keys(home_is_fav)
+            p_home_rl = gp[rl_keys["home"]]
+            p_away_rl = gp[rl_keys["away"]]
             rl_rows = [
                 _priced_side("home", f"{ho} {hp_point:+.1f}" if hp_point is not None else ho,
                              p_home_rl, rl),
                 _priced_side("away", f"{ao} {-hp_point:+.1f}" if hp_point is not None else ao,
                              p_away_rl, rl),
             ]
+            _stamp_tie_atom(rl_rows, gp, rl_at_split, rl_keys, rl_tie_fitted)
         # The Under is NOT 1 - p_over. On a whole number that hands the Under
         # the push mass; betting_model.total_side_probabilities carries the
         # measurement and returns the push-conditioned pair.
@@ -4628,6 +4727,12 @@ def _publish_slot(row: dict, slot: str, *, thr: float, prov: bool) -> dict:
     out["market_policy"] = bm.SLOT_MARKET_POLICY
     if bm.market_is_dispersion_sensitive(row.get("market")):
         out["caveat"] = POISSON_CAVEAT
+    # L14-01: a runline slot also says what the tie atom does to it, with the
+    # numbers read off its own row and this slot's floor.
+    if row.get("market") == "runline":
+        tac = tie_atom_caveat(row, thr)
+        if tac:
+            out["tie_atom_caveat"] = tac
     if row.get("evidence_closed"):
         out["evidence_caveat"] = EVIDENCE_CAVEAT
     return out

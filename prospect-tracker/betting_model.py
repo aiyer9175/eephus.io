@@ -39,6 +39,13 @@ THE SCORING MODEL (two rows per game, one per scoring side)
     home rate splitting the tie mass), the runline (P(margin >= 2)), and the
     total (Poisson on the run sum).
 
+    THE TIE MASS IS READ IN ONE PLACE, `split_tie_atom`, and the two margin
+    markets do NOT read it the same way (L14-01, 2026-09-11). The moneyline
+    splits it by the measured extra-innings home rate. The served runline
+    gives the whole of it to BOTH +1.5 sides, which asserts that no game that
+    goes to extra innings is ever won by two or more. The measured split
+    exists and is published; it is not served. See SERVE_RUNLINE_TIE_SPLIT.
+
 WHAT THIS MODEL IS NOT, AND THE PAGE SAYS SO
     THE RUN DISTRIBUTION IS WRONG, not soft. Poisson asserts var = mean;
     measured over 3,532 scoring-side rows it is 2.3385, and the margin carries
@@ -185,6 +192,75 @@ LITERATURE_TIE_HOME = 0.50       # home win rate once a game reaches extras
 # inning games, whose raw rate swings +/- 4 points on noise alone, so the
 # measured value is shrunk toward a coin flip on a 100-game prior.
 TIE_SHRINK_K = 100.0
+
+# --- the regulation-tie atom (L14-01, 2026-09-11) ----------------------------
+# The margin distribution puts mass on d == 0, a game level after nine. MLB has
+# no ties, so every market priced off the margin has to say what that atom
+# becomes, and until 2026-09-11 the moneyline and the runline said two different
+# things about the SAME atom inside the same function, silently:
+#
+#   moneyline  P(d > 0) + p_tie * extra_inning_home_rate, the rate measured on
+#              this season's extra-inning games and shrunk toward a coin flip.
+#   runline    P(d >= 2) for home -1.5 and P(d <= -2) for away -1.5, so the
+#              whole atom is a +1.5 cover for BOTH sides. That is the unstated
+#              claim P(final margin >= 2 | the game went to extras) == 0.
+#
+# The completed-game cache the context is fitted on measures that conditional
+# directly, and `build_context` now publishes it as
+# `extra_inning_runline_split_fitted`. Read 2026-09-11 off the 2,200-game cache:
+# 193 extra-inning games, the home side won 93 of them and won by two or more in
+# 10, the away side won 100 and won by two or more in 51. The asymmetry is the
+# walk-off: the home team stops batting the moment it leads in the bottom of an
+# inning and the away team does not. So the served runline OVERSTATES every
+# +1.5 side by p_tie times the other side's two-run-plus share of the tie, and
+# understates the -1.5 side of the same pair by exactly as much. A home +1.5
+# carries the larger error.
+#
+# `split_tie_atom` is now the ONE reader of the atom: the moneyline, the
+# runline, and dfs_export's implied team totals all go through it. With this
+# flag False it reproduces every shipped number BIT FOR BIT, because the
+# runline's split is (0, 0), the whole-atom construction, now named instead of
+# implied. With it True the runline reads the served split, built so it is
+# coherent with the moneyline by construction: P(home by 2+ | tie) is
+# tie_home * P(home by 2+ | home wins in extras), and the away side likewise
+# with 1 - tie_home, so the runline can never say a side wins by two in extras
+# more often than the moneyline says it wins in extras at all.
+#
+# WHY IT IS FALSE. It moves served prices, and on the 2026-09-10 board it would
+# have changed the published Model Watch headline: CHW +1.5 at edge 0.08747
+# falls to 0.05161, under the 0.06 floor, and the slot passes to PIT at CHW
+# Over 7.5. All six served runline rows move, by 0.00615 to 0.03586.
+# It is a pricing change on the runline, and the runline already has a
+# registered successor lane with its own gate (B-RUNLINE,
+# docs/master-plan-2026-09-05-opus.md: a margin kernel with an explicit
+# walk-off redistribution, held-out runline both-sides log loss at t >= 1.645
+# at ALL of 0.6 / 0.7 / 0.8 plus the ledger arm on the canonical games). This
+# correction is a strict subset of that direction and does not ship around
+# that gate. It must also be gated JOINTLY with the one-run band (observed
+# P(|margin| == 1) 0.2721 against Poisson's 0.2503, section 11a), because
+# moving atom mass off d == +/-1 runs the opposite way to that error; it is not
+# stacked on any other margin correction blind. It is NOT the closed symmetric
+# NB2 arm: it widens nothing, it reassigns one atom.
+#
+# THE ATOM IS NOT A CALIBRATED P(EXTRA INNINGS). At the league run environment
+# (4.4841 runs a side) the Poisson tie atom is 0.1352, against an observed
+# extras rate of 0.0877 (193 of 2,200). An empirical extras conditional applied
+# to an inflated atom moves the runline toward the observed margin
+# distribution; it does not calibrate it.
+#
+# TO FLIP THIS FLAG, in ONE commit: (1) the gate above returns ship for the
+# runline; (2) MODEL_VERSION is bumped, because the settled runline rows in the
+# shadow ledger and every runline row in the calibration ledger were priced by
+# the whole-atom construction, and a ledger that pools two pricers under one
+# version measures a mixture nobody priced; (3) every lab that passes its own
+# fit-window tie_home (backtest `_grade`, `_dispersion_arm`, the ridge arm)
+# passes a fit-window split from `_fit_runline_tie_split` as well, and the
+# dispersion gate is re-run, because its criterion 2 reads these runline
+# probabilities; (4) this constant, the tripwire in
+# test_betting_runline_tie_atom.py and the served `extra_inning_runline_split`
+# context key move together; (5) the row disclosure (`tie_atom`,
+# `tie_atom_caveat`) is re-read, because it describes an UNSERVED correction.
+SERVE_RUNLINE_TIE_SPLIT = False
 
 # --- run dispersion --------------------------------------------------------
 # THE DEFECT THE MODULE SHIPPED WITH, measured 2026-08-09 on all 1,766 cached
@@ -1324,6 +1400,117 @@ def served_platt() -> tuple[float, float] | None:
 
 
 # ---------------------------------------------------------------------------
+# the regulation-tie atom (L14-01), read in ONE place
+# ---------------------------------------------------------------------------
+def split_tie_atom(dist: dict, tie_home: float,
+                   runline_split: tuple | None = None) -> dict:
+    """THE ONE READING OF THE d == 0 ATOM, for every market priced off the margin.
+
+    `dist` is P(home runs - away runs = d). d == 0 is a game level after nine,
+    which MLB settles in extra innings. `tie_home` is the share of that atom the
+    home side wins, the moneyline's split. `runline_split` is the pair
+    (P(home by 2+ | home wins in extras), P(away by 2+ | away wins in extras));
+    None or (0, 0) is the shipped whole-atom construction, in which every tie is
+    a +1.5 cover for both sides. See SERVE_RUNLINE_TIE_SPLIT.
+
+    Returns, UNROUNDED:
+      p_tie             dist[0]
+      p_home            P(d > 0)   + p_tie * tie_home                   moneyline
+      p_home_minus_1_5  P(d >= 2)  + p_tie * tie_home * c_home          runline
+      p_away_minus_1_5  P(d <= -2) + p_tie * (1 - tie_home) * c_away    runline
+    The +1.5 sides are the complements of the opposite -1.5 sides, so the
+    pair-sums-to-1 invariant is untouched.
+
+    COHERENT BY CONSTRUCTION. The runline's share of the tie is the moneyline's
+    share times a conditional in [0, 1], so p_home_minus_1_5 can never exceed
+    p_home and p_away_minus_1_5 can never exceed 1 - p_home, for any inputs. An
+    unconditional P(home by 2+ | extras) set beside a separately shrunk tie_home
+    does not have that property on a thin fit window.
+
+    BIT FOR BIT ON THE SHIPPED PATH. With a (0, 0) split the arithmetic is the
+    pre-2026-09-11 expression verbatim: the tie term is skipped, not added as a
+    zero, so no served number moves while SERVE_RUNLINE_TIE_SPLIT is False.
+
+    Raises ValueError on a tie_home or a conditional outside [0, 1], NaN
+    included: `not 0 <= nan <= 1` is True, so a NaN cannot slide through as a
+    truthy probability."""
+    th = float(tie_home)
+    if not 0.0 <= th <= 1.0:
+        raise ValueError(f"tie_home must be a probability, got {tie_home!r}")
+    if runline_split is None:
+        c_home, c_away = 0.0, 0.0
+    else:
+        c_home, c_away = float(runline_split[0]), float(runline_split[1])
+    for c in (c_home, c_away):
+        if not 0.0 <= c <= 1.0:
+            raise ValueError(f"runline tie split must be in [0, 1], got {runline_split!r}")
+    p_tie = dist.get(0, 0.0)
+    p_home_reg = sum(p for d, p in dist.items() if d > 0)
+    p_home = p_home_reg + p_tie * th
+    p_home_minus15 = sum(p for d, p in dist.items() if d >= 2)
+    p_away_minus15 = sum(p for d, p in dist.items() if d <= -2)
+    if c_home:
+        p_home_minus15 = p_home_minus15 + p_tie * th * c_home
+    if c_away:
+        p_away_minus15 = p_away_minus15 + p_tie * (1.0 - th) * c_away
+    return {"p_tie": p_tie, "p_home": p_home,
+            "p_home_minus_1_5": p_home_minus15,
+            "p_away_minus_1_5": p_away_minus15}
+
+
+def _runline_prices(atom: dict) -> dict:
+    """The four published runline probabilities off one `split_tie_atom` result,
+    rounded the way the board has always rounded them."""
+    return {
+        "p_home_minus_1_5": round(atom["p_home_minus_1_5"], 5),
+        "p_away_minus_1_5": round(atom["p_away_minus_1_5"], 5),
+        "p_home_plus_1_5": round(1.0 - atom["p_away_minus_1_5"], 5),
+        "p_away_plus_1_5": round(1.0 - atom["p_home_minus_1_5"], 5),
+    }
+
+
+def _runline_split_pair(blk) -> tuple[float, float] | None:
+    """(c_home, c_away) out of a context block, or None when it is absent,
+    malformed or outside [0, 1]. One parser for the served key and the fitted
+    one, so the two cannot disagree about what a valid split is."""
+    if not isinstance(blk, dict):
+        return None
+    try:
+        h = float(blk["home_by_2plus_given_home_win"])
+        a = float(blk["away_by_2plus_given_away_win"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not (0.0 <= h <= 1.0 and 0.0 <= a <= 1.0):
+        return None
+    return h, a
+
+
+def served_runline_tie_split() -> tuple[float, float] | None:
+    """The SERVED runline split of the tie atom, or None for the whole-atom
+    construction.
+
+    The flag is checked FIRST, before any file is read, the served_platt
+    pattern: while SERVE_RUNLINE_TIE_SPLIT is False this returns None
+    unconditionally, so a stray `extra_inning_runline_split` key in an old or
+    hand-edited context file cannot reprice the runline, and the solver loops
+    pay no extra file read."""
+    if not SERVE_RUNLINE_TIE_SPLIT:
+        return None
+    ctx = _load_json(CONTEXT_PATH) or {}
+    return _runline_split_pair(ctx.get("extra_inning_runline_split"))
+
+
+def fitted_runline_tie_split() -> dict | None:
+    """The MEASUREMENT block (`extra_inning_runline_split_fitted`), published
+    whether or not it is served, the run_dispersion_alpha_fitted convention.
+    None when the context predates it or carries a malformed block. The export
+    reads it to disclose, row by row, what the unserved split would do."""
+    ctx = _load_json(CONTEXT_PATH) or {}
+    blk = ctx.get("extra_inning_runline_split_fitted")
+    return blk if _runline_split_pair(blk) is not None else None
+
+
+# ---------------------------------------------------------------------------
 # the game model
 # ---------------------------------------------------------------------------
 def game_prevention_z(team: dict, starter: dict | None, teams: dict) -> tuple[float, dict]:
@@ -1669,12 +1856,26 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
                        teams=None, parks=None, coeffs=None, tie_home=None,
                        home_adj=None, diff_shrink=None,
                        run_alpha: float | None = None,
-                       platt_ab: tuple | None = None) -> dict | None:
+                       platt_ab: tuple | None = None,
+                       runline_tie_split: tuple | None = None) -> dict | None:
     """The full model view of one game: moneyline, runline, fair total.
 
-    Ties do not exist in MLB, so the P(margin = 0) mass is split by the
-    MEASURED extra-innings home win rate (league_context, shrunk toward a coin
-    flip on a 100-game prior), not by an invented constant.
+    Ties do not exist in MLB, so for the MONEYLINE the P(margin = 0) mass is
+    split by the MEASURED extra-innings home win rate (league_context, shrunk
+    toward a coin flip on a 100-game prior), not by an invented constant.
+
+    The RUNLINE reads the same atom through the same function,
+    `split_tie_atom`, with `runline_tie_split`. None resolves the SERVED split,
+    which is the whole-atom construction (every tie a +1.5 cover for both
+    sides) until SERVE_RUNLINE_TIE_SPLIT flips, and it resolves it ONLY on the
+    serving path: a caller that brings its own fit-window `tie_home` (every
+    lab) must bring its own split too, and otherwise gets the whole-atom
+    construction, never a season-wide number its eval window helped produce.
+    That is the rule `_fit_tie_home` states for the tie rate itself.
+    `runline_at_split` (a callable, like `over`) re-prices the four runline
+    probabilities under any explicit split off the same distribution and the
+    same tie_home; the export uses it to disclose the unserved split, and
+    nothing prices off it.
 
     `run_alpha` is the NB2 run dispersion. None reads the served value out of
     the context file (`run_dispersion_alpha`, absent until the section 11 gate
@@ -1699,11 +1900,16 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
     r = _alpha_to_r(run_alpha)
     lam_h, lam_a = er["lam_home"], er["lam_away"]
     dist, tot = _score_joint(lam_h, lam_a, r)
-    p_tie = dist.get(0, 0.0)
     th = tie_home if tie_home is not None else (league_context().get("extra_inning_home_rate")
                                                or LITERATURE_TIE_HOME)
-    p_home_reg = sum(p for d, p in dist.items() if d > 0)
-    p_home = p_home_reg + p_tie * th
+    if runline_tie_split is None and tie_home is None:
+        runline_tie_split = served_runline_tie_split()
+    # ONE reading of the tie atom for both markets (L14-01): the moneyline's
+    # split and the runline's split come out of the same call, so they cannot
+    # drift into two different claims about the same games again unseen.
+    atom = split_tie_atom(dist, th, runline_tie_split)
+    p_tie = atom["p_tie"]
+    p_home = atom["p_home"]
     # The B5 calibration seam, moneyline only. Identity while the serve flag
     # is off; see served_platt for why an old context key cannot leak through.
     if platt_ab is None:
@@ -1711,10 +1917,13 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
     if platt_ab:
         p_home = apply_platt(p_home, platt_ab[0], platt_ab[1])
     # Runline. A -1.5 favourite must win by 2+. The +1.5 dog needs the game
-    # inside one run OR an outright win, which is 1 - P(margin >= 2).
-    p_home_minus15 = sum(p for d, p in dist.items() if d >= 2)
-    p_away_minus15 = sum(p for d, p in dist.items() if d <= -2)
+    # inside one run OR an outright win, which is 1 - P(margin >= 2). What a
+    # game level after nine counts as is `split_tie_atom`'s call, not this one.
+    rl_prices = _runline_prices(atom)
     fair_total = lam_h + lam_a
+
+    def runline_at_split(split) -> dict:
+        return _runline_prices(split_tie_atom(dist, th, split))
 
     def over(line: float) -> float:
         need = math.floor(line) + 1 if line != int(line) else int(line) + 1
@@ -1727,10 +1936,14 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
         "home_org": home_org, "away_org": away_org,
         "lam_home": round(lam_h, 3), "lam_away": round(lam_a, 3),
         "p_home": round(p_home, 5), "p_away": round(1.0 - p_home, 5),
-        "p_home_minus_1_5": round(p_home_minus15, 5),
-        "p_away_minus_1_5": round(p_away_minus15, 5),
-        "p_home_plus_1_5": round(1.0 - p_away_minus15, 5),
-        "p_away_plus_1_5": round(1.0 - p_home_minus15, 5),
+        **rl_prices,
+        # The atom itself and the runline's reading of it, so a row can say
+        # what a game level after nine was worth to it (L14-01).
+        "p_tie": round(p_tie, 5),
+        "runline_tie_split": ([round(float(runline_tie_split[0]), 4),
+                               round(float(runline_tie_split[1]), 4)]
+                              if runline_tie_split else None),
+        "runline_at_split": runline_at_split,   # callable; see the docstring
         "fair_total": round(fair_total, 2),
         "run_dispersion_alpha": (round(float(run_alpha), 5)
                                  if r is not None else None),
@@ -2564,6 +2777,9 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
     tie_raw = (x_wins / len(extras)) if extras else None
     tie_shrunk = ((x_wins + 0.5 * TIE_SHRINK_K) / (len(extras) + TIE_SHRINK_K)
                   if extras else LITERATURE_TIE_HOME)
+    # The runline's reading of the same extras slice (L14-01). Measured and
+    # published every run; served only when SERVE_RUNLINE_TIE_SPLIT flips.
+    rl_tie_split = _fit_runline_tie_split(games)
     # THREE one-parameter corrections, solved in sequence and then refined
     # once, because all three interact. Order is alpha, shrink, adj, and it is
     # not arbitrary:
@@ -2615,6 +2831,20 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
         "extra_inning_games": len(extras),
         "extra_inning_home_rate_raw": round(tie_raw, 4) if tie_raw is not None else None,
         "extra_inning_home_rate_shrunk": round(tie_shrunk, 4),
+        # The SERVED runline split of the tie atom. Null means the whole-atom
+        # construction, every tie a +1.5 cover for both sides, which is what
+        # the runline has always priced (SERVE_RUNLINE_TIE_SPLIT).
+        "extra_inning_runline_split": (rl_tie_split if SERVE_RUNLINE_TIE_SPLIT else None),
+        # The MEASUREMENT, published whether or not it is served.
+        "extra_inning_runline_split_fitted": rl_tie_split,
+        "extra_inning_runline_split_note": (
+            "how often each side that won in extra innings won by two or more, "
+            "read off the same extra-inning games as extra_inning_home_rate; the "
+            "runline's share of the tie is tie_home times the home conditional and "
+            "(1 - tie_home) times the away one; no prior is applied because the "
+            "asymmetry is the walk-off and a pooled prior would erase it; served "
+            "only through SERVE_RUNLINE_TIE_SPLIT, which waits on the runline "
+            "margin gate"),
         "home_field_runs_adj": adj,
         "diff_shrink": shrink,
         "diff_shrink_log_loss": shrink_ll,
@@ -3912,6 +4142,47 @@ def _fit_tie_home(fit_games: list[dict]) -> float:
         return LITERATURE_TIE_HOME
     wins = sum(1 for g in extras if g["home_runs"] > g["away_runs"])
     return (wins + 0.5 * TIE_SHRINK_K) / (len(extras) + TIE_SHRINK_K)
+
+
+def _fit_runline_tie_split(fit_games: list[dict]) -> dict | None:
+    """How often a side that won in extra innings won by two or more, on the
+    games passed in and nothing else (L14-01; `_fit_tie_home`'s window rule).
+
+    The two conditionals are P(home by 2+ | home won in extras) and
+    P(away by 2+ | away won in extras). `split_tie_atom` multiplies them by the
+    moneyline's own tie_home and 1 - tie_home, which keeps the runline coherent
+    with the moneyline whatever window the tie rate was shrunk on.
+
+    NO PRIOR IS APPLIED, on purpose. The two rates differ by mechanism, not by
+    noise: the home team stops batting the moment it leads in the bottom of an
+    inning, and a game-ending hit counts only the runs needed to win unless it
+    leaves the park, so the home side wins an extra-inning game by two or more
+    only on a walk-off home run with a runner aboard. The away team can keep
+    scoring in the top half. A prior pooled
+    across the two sides would erase exactly the asymmetry being measured, and
+    choosing a structural prior is the B-RUNLINE lane's job (fit on pre-2026
+    finals). The counts ride the block so the sample is never hidden.
+
+    None when either side has no extra-inning win in the window: a conditional
+    with a zero denominator is not a measurement, and the whole-atom
+    construction stays in force."""
+    extras = [g for g in fit_games if (g.get("innings") or 9) > 9]
+    home_w = [g for g in extras if g["home_runs"] > g["away_runs"]]
+    away_w = [g for g in extras if g["away_runs"] > g["home_runs"]]
+    if not home_w or not away_w:
+        return None
+    h2 = sum(1 for g in home_w if g["home_runs"] - g["away_runs"] >= 2)
+    a2 = sum(1 for g in away_w if g["away_runs"] - g["home_runs"] >= 2)
+    return {
+        "n_games": len(fit_games),
+        "n_extra_inning_games": len(extras),
+        "n_home_wins": len(home_w),
+        "n_home_wins_by_2plus": h2,
+        "n_away_wins": len(away_w),
+        "n_away_wins_by_2plus": a2,
+        "home_by_2plus_given_home_win": round(h2 / len(home_w), 4),
+        "away_by_2plus_given_away_win": round(a2 / len(away_w), 4),
+    }
 
 
 def backtest(*, season: str | None = None, split_date: str | None = None,
@@ -5222,4 +5493,5 @@ if __name__ == "__main__":                                       # pragma: no co
         else:
             gp.pop("over", None)
             gp.pop("total_sides", None)      # callable; not JSON-serializable
+            gp.pop("runline_at_split", None)   # callable too
             print(json.dumps(gp, indent=1))

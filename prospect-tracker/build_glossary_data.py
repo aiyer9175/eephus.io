@@ -264,7 +264,7 @@ BETTING_ENTRIES = [
     {"id": "runline", "term": "Runline", "category": "betting",
      "aliases": ["run line", "spread"], "priority": 99,
      "definition": "Baseball's spread, almost always 1.5 runs. The favourite at -1.5 has to win by two or more; the underdog at +1.5 wins the bet by losing by one or winning outright.",
-     "methodology": "Runline probabilities on this site come from a Poisson-difference margin model, which underdisperses real run scoring: baseball scores in clumps, so the true margin distribution has fatter tails than the model assumes and its runline numbers sit too close to the middle. The moneyline is the least exposed of the three markets, and any published runline pick carries that caveat on the row.",
+     "methodology": "Runline probabilities on this site come from a Poisson-difference margin model, which underdisperses real run scoring: baseball scores in clumps, so the true margin distribution has fatter tails than the model assumes and its runline numbers sit too close to the middle. The moneyline is the least exposed of the three markets, and any published runline pick carries that caveat on the row. A second, separate error: the runline counts every game the model leaves tied after nine as a +1.5 cover for both sides, while the moneyline splits the same games by the measured extra-innings home rate, so a +1.5 price runs high and a -1.5 price runs low. The measured split is published and not yet served, and a published runline pick states what it would change.",
      "seeAlso": ["moneyline", "total_line"]},
     {"id": "total_line", "term": "Total", "category": "betting",
      "aliases": ["over/under", "the total"], "priority": 100,

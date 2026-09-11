@@ -252,9 +252,49 @@ results did, which is the normal failure mode for a model stacked out of
 already-shrunk season rate stats.
 
 Margin distribution is a Poisson difference by direct convolution (no scipy in
-the serving path). Ties are impossible in MLB, so the P(margin = 0) mass is
-split by the measured extra-innings home rate, shrunk toward a coin flip on a
-100-game prior (raw 0.479 on 140 games, shrunk 0.4875).
+the serving path). Ties are impossible in MLB, so for the MONEYLINE the
+P(margin = 0) mass is split by the measured extra-innings home rate, shrunk
+toward a coin flip on a 100-game prior (raw 0.479 on 140 games, shrunk 0.4875).
+
+**The runline does not split it, and until 2026-09-11 nothing said so (L14-01).**
+The served runline prices home -1.5 as P(margin >= 2) and away -1.5 as
+P(margin <= -2), so the whole tie atom is a +1.5 cover for BOTH sides. That is
+the unstated claim that no game which goes to extra innings is ever won by two or
+more. The same completed-game cache measures it: on 2026-09-11, 193 extra-inning
+games in 2,200, the home side won 93 and won by two or more in 10, the away side
+won 100 and won by two or more in 51. The asymmetry is the walk-off, the home
+team stops batting the moment it leads. So every served +1.5 side is overstated
+by the tie mass times the other side's two-run-plus share, and the -1.5 side of
+the same pair is understated by exactly as much.
+
+What changed on 2026-09-11, and what did not:
+
+- `betting_model.split_tie_atom` is the ONE reader of the atom. The moneyline,
+  the runline and `dfs_export`'s implied team totals all go through it, so the
+  two markets can no longer disagree about the same games without it showing.
+- The measured split is published every `--context` run as
+  `extra_inning_runline_split_fitted`: P(home by 2+ | home won in extras) and
+  P(away by 2+ | away won in extras), with the counts. The runline's share of the
+  tie is `tie_home` times the first and `1 - tie_home` times the second, which is
+  coherent with the moneyline by construction: the runline can never say a side
+  wins by two in extras more often than the moneyline says it wins there.
+- It is **not served**. `SERVE_RUNLINE_TIE_SPLIT` is False and every served
+  price is bit-identical to what shipped. Serving it is a runline pricing change
+  and waits on the runline margin gate (B-RUNLINE: held-out both-sides log loss
+  at t >= 1.645 at all three split quantiles plus the ledger arm), gated jointly
+  with the one-run band in 11a, with a `MODEL_VERSION` bump so the ledgers do not
+  pool two pricers. The flag's comment carries the full flip procedure.
+- What it would have done is disclosed on the row instead. Every runline board
+  row carries a `tie_atom` block (the tie mass, the row's probability and edge
+  under the measured split, the counts), and a runline in a published slot
+  carries `tie_atom_caveat`, a sentence built from that block and the slot's
+  floor with no typed number. On the 2026-09-10 board the headline slot was
+  CHW +1.5 at an edge of 0.08747; under the split it is 0.05161, under the 0.06
+  floor, and the slot would have gone to PIT at CHW Over 7.5.
+- The model's tie atom is not a calibrated chance of extra innings: 0.1352 at
+  the league run environment against an observed extras rate of 0.0877. The
+  split moves the runline toward the observed margin distribution; it does not
+  calibrate it.
 
 ### De-vig
 
@@ -1592,6 +1632,13 @@ section 11 is the standing account of that limit. The caveat rides the ROW, not
 a page-level list, so a client that renders the pick without the list cannot
 drop it.
 
+A runline pick ALSO carries `tie_atom_caveat` (2026-09-11, L14-01, section 4):
+the runline gives the model's whole tie-after-nine mass to both +1.5 sides while
+the moneyline splits it, and the sentence says, with numbers read off the row's
+own `tie_atom` block and the slot's floor, what this side's probability and edge
+would be under the measured split and whether it would still clear the floor.
+The split is not served, so the slot still ranks on the served probability.
+
 ### Slot 2: `longshot_of_the_day`
 
 The highest EV PER UNIT among floor-clearing sides priced at
@@ -2345,12 +2392,26 @@ never edits `assets/eephus-account.js`.
   rate). That is a real result on a real sample, it is not significant in either
   direction, and it is 211 of the 600 the gate asks for. It is the single most
   important fact about this model right now. Section 5a.
-- The runline and the total are NOT bettable here. The dispersion correction in
-  11a did not clear its gate - the verdict is INDETERMINATE, it passes at two of
-  the three pre-declared split points and misses at the third - so both markets
-  are excluded from `pick_of_the_day`, `longshot_of_the_day`, the public record
-  and the paper bet ledger. They stay on the board, carry the caveat, and still
-  enter the calibration ledger.
+- The runline and the total are priced off a margin model the site has
+  measured as mis-shaped. The dispersion correction in 11a did not clear its
+  gate - the verdict is INDETERMINATE, it passes at two of the three
+  pre-declared split points and misses at the third. **Corrected 2026-09-11:**
+  this bullet used to say both markets were therefore excluded from
+  `pick_of_the_day`, `longshot_of_the_day`, the public record and the paper bet
+  ledger. The ledger exclusion was never implemented, on purpose (the 2026-08-14
+  amendment in `betting_model.market_is_publishable`: the shadow ledger is the
+  evidence that could lift the exclusion), and the slot and record exclusion
+  ended with the any-market owner decision of 2026-09-05 (section 7d,
+  `SLOT_MARKET_POLICY = "any"`). Both markets are eligible for both slots and
+  the record; the caveat rides the published row as disclosure, and the
+  published headline on 2026-09-10 was a runline. `SLOT_MARKET_POLICY =
+  "dispersion_gated"` restores the exclusion this bullet described.
+- The runline gives the model's whole tie-after-nine mass to both +1.5 sides,
+  while the moneyline splits the same mass by the measured extra-innings home
+  rate (L14-01). Every served +1.5 side runs high and every -1.5 side low by the
+  tie mass times the other side's two-run-plus share of extra-inning games. The
+  measured split is published and not served; section 4 has the numbers and the
+  gate it waits on, and a runline slot says so on the row.
 - Hitter prop lines assume a projected batting order against a right-hander and
   a PA-by-slot table (4.65 at leadoff down to 3.85 at the nine hole). A posted
   lineup card beats this every time.
@@ -2639,6 +2700,17 @@ The caveat text on those rows is replaced. The old one said the probabilities
 markets", which understates a 2.15x tail error by about 5x and names no number.
 The replacement names the size, names the market, and says the row is not
 bettable here.
+
+**Correction (2026-09-11), recorded rather than written over the paragraph
+above.** The replacement was never made. `betting_export.POISSON_CAVEAT` still
+carries the "sit too close to the middle" and "softest of the three markets"
+text, and it is the caveat on every published runline and total slot today. The
+size of the dispersion error reaches the pick card only through the client's
+dispersion line (`dispersionLine` in `assets/betting.js`, which reads
+`run_dispersion` off the eval artifact and names alpha and the verdict, not the
+2.15x tail). Replacing the caveat text is open work for the dispersion lane. The
+one runline error the caveat never covered, the tie atom, now has its own
+row-level sentence (section 4, `tie_atom_caveat`).
 
 ### 11b. B5: Platt response-scale calibration, the pre-registered gate (2026-08-16)
 
