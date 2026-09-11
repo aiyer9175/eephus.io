@@ -11669,6 +11669,37 @@ function fvBadgeBreakoutClass(player) {
   return player && player.breakout_flag ? " is-breakout" : "";
 }
 
+// THE BREAKOUT PERFORMANCE BARS, one row per perf_gate storage._compute_breakout_flag
+// stamps, one column per path. storage.py runs TWO blocks and they use different bars
+// on the same field: the stat-only block (the ONLY block that emits reason "stats") and
+// the window block (the ONLY block that emits reason "fv", "upside" or "tools"). So
+// reason === "stats" picks the column, and that mapping is total.
+//
+// Why a table (audit F06-01, 2026-09-09). The star tooltip used to type one bar per gate,
+// and for stf_plus_periph it typed the stat-only 115 for BOTH paths. On the served board
+// 21 of the 26 stf_plus_periph breakout rows were window-path rows flagged at 105-114,
+// so the reader was told a player cleared a bar he had not cleared. The SC+ branch had
+// already been split for the same reason; this one was missed. Every number below is
+// pinned to the storage constant it names by test_prospx_breakout_gate_copy.py, and a
+// pairing storage never emits (null) prints no number at all rather than a guessed one.
+//   stats : _BREAKOUT_STAT_WRC_PLUS_GATE, _BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE,
+//           _BREAKOUT_STAT_STF_PLUS_GATE, _BREAKOUT_STAT_STATCAST_PLUS_GATE
+//   window: _BREAKOUT_HITTER_WRC_PLUS_GATE, _BREAKOUT_PITCHER_STF_PLUS_GATE,
+//           _BREAKOUT_PITCHER_FIP_MINUS_GATE, _BREAKOUT_STATCAST_PLUS_GATE
+const BREAKOUT_GATE_BARS = {
+  wrc_plus:        { label: "wRC+",              op: "≥", stats: 130,  window: 130 },
+  wrc_plus_level:  { label: "wRC+ vs level",     op: "≥", stats: 150,  window: null },
+  stf_plus_periph: { label: "Peripheral Stuff+", op: "≥", stats: 115,  window: 105 },
+  fip_minus:       { label: "FIP-",              op: "≤", stats: null, window: 90 },
+  statcast_plus:   { label: "SC+",               op: "≥", stats: 143,  window: 122 },
+};
+function breakoutGateText(meta) {
+  const g = BREAKOUT_GATE_BARS[(meta || {}).perf_gate];
+  if (!g) return "performance gate";
+  const bar = meta.reason === "stats" ? g.stats : g.window;
+  return bar == null ? `${g.label} gate` : `${g.label} ${g.op} ${bar}`;
+}
+
 function fvBadgeBreakoutMarkHTML(player) {
   if (!fvBadgeBreakoutClass(player)) return "";
   const meta = player.breakout_meta || {};
@@ -11677,30 +11708,23 @@ function fvBadgeBreakoutMarkHTML(player) {
   // or "stats" were shown a tool-velocity claim that is not why they were flagged, with
   // an "?" where the number should be. Each reason now states its own basis, and an
   // unrecognised reason says nothing specific rather than asserting the wrong one.
+  // 2026-09-10 (audit F06-01): "upside" had no branch of its own and fell through to the
+  // generic line on every upside row (13 of the 30 served breakouts). storage's window
+  // block emits it when a source ADDED a "+" upside mark inside the window, and stamps
+  // which sources did it on meta.upside_sources.
+  const upSrcs = Array.isArray(meta.upside_sources)
+    ? meta.upside_sources.map(s => SOURCE_LABELS[s] || s) : [];
   const why = meta.reason === "fv"
     ? `FV upgraded ${meta.fv_upgrade > 0 ? "+" : ""}${meta.fv_upgrade ?? "?"} grade points over the window`
     : meta.reason === "tools"
     ? `tool grades up ${meta.tool_velocity > 0 ? "+" : ""}${meta.tool_velocity ?? "?"} on average over the window`
+    : meta.reason === "upside"
+    ? `${upSrcs.length ? upSrcs.join(", ") : "a scouting source"} added a "+" upside mark over the window`
     : meta.reason === "stats"
     ? "performance cleared the breakout gate this season"
     : "flagged by the breakout screen over the window";
-  // Gate labels 2026-07-29: these now name the gates storage.build_spotlights actually
-  // emits, with the thresholds it actually uses. The removed rps_plus branch read a
-  // field populated for 0 of 4,505 players and advertised a 120 cut that no gate used.
-  const gate = meta.perf_gate === "wrc_plus" ? "wRC+ ≥ 130"
-             : meta.perf_gate === "wrc_plus_level" ? "wRC+ vs level ≥ 150"
-             : meta.perf_gate === "stf_plus_periph" ? "Peripheral Stuff+ ≥ 115"
-             // Both SC+ breakout paths stamp perf_gate "statcast_plus" but they
-             // are DIFFERENT bars: the stat-only path (reason "stats", the only
-             // path that emits that reason with this gate) needs the elite cut,
-             // the tool/FV path needs the lower one. This branch printed the
-             // elite number for both, so a player flagged at the lower bar was
-             // shown a threshold he had not cleared. Numbers re-mapped
-             // 2026-08-07 with the SC+ re-standardization (was 115 / 130).
-             : meta.perf_gate === "statcast_plus"
-                 ? (meta.reason === "stats" ? "SC+ ≥ 143" : "SC+ ≥ 122")
-             : "performance gate";
-  return `<span class="fv-breakout-mark" title="Breakout - ${why}, plus ${gate} this season.">★</span>`;
+  const gate = breakoutGateText(meta);
+  return `<span class="fv-breakout-mark" title="${escapeHtml(`Breakout - ${why}, plus ${gate} this season.`)}">★</span>`;
 }
 
 // v27 - Upside (+) indicator. Per-source "+" upside marker rolls up into
@@ -14620,9 +14644,11 @@ function makeMilbCell(p) {
     : "";
   // OPS+ / ERA- promoted from prose-detail-line to a sibling pill so it
   // sits inline with Level + RPS+ at the same chip geometry.
+  // The pitcher pill is the SITE'S level index (era_minus_level), labelled "ERA- lvl" and
+  // shown on sub-MLB lines only: see eraMinusLevelTip for why it is not the ERA- tile.
   const plusPill = isPitcher
-    ? (sl.era_minus_level != null
-        ? `<span class="stat-pill" title="ERA- vs level (lower is better)">ERA- ${Math.round(sl.era_minus_level)}</span>`
+    ? (sl.era_minus_level != null && sl.level !== "MLB"
+        ? `<span class="stat-pill" title="${escapeHtml(eraMinusLevelTip())}">ERA- lvl ${Math.round(sl.era_minus_level)}</span>`
         : "")
     : (_lvlPlus(sl) != null
         ? `<span class="stat-pill" title="wRC+ vs level: linear-weight offense against the PA-weighted league pool for his level and season. 100 is league average, higher is better.">wRC+ ${Math.round(_lvlPlus(sl))}</span>`
@@ -16810,7 +16836,10 @@ function _prospectDetailSidebarCards(p, activeTab) {
       ((rpsChip) => rpsChip != null ? { key: "RPS+", value: rpsChip, valColor: rpsChip >= 110 ? "var(--up)" : rpsChip <= 90 ? "var(--down)" : "var(--text-primary)" } : null)(_rpsPlusValue(p)),
       isPit && sl.stf_plus_periph != null ? { key: "pStuff+", value: sl.stf_plus_periph } : null,
       !isPit && _lvlPlus(sl) != null ? { key: "wRC+ lvl", value: _lvlPlus(sl) } : null,
-      isPit && sl.era_minus_level != null ? { key: "ERA-", value: sl.era_minus_level } : null,
+      // "ERA- lvl", sub-MLB only (audit F05-06): this rail sits on the Stats tab beside the
+      // MLB sabermetrics tiles, whose ERA- is a different number. Same key style as the
+      // "wRC+ lvl" twin one line up.
+      isPit && sl.era_minus_level != null && sl.level !== "MLB" ? { key: "ERA- lvl", value: sl.era_minus_level, tip: eraMinusLevelTip() } : null,
       sm.wrc_plus != null ? { key: "wRC+", value: Math.round(sm.wrc_plus) } : null,
     ].filter(Boolean);
     return [
@@ -17633,7 +17662,12 @@ function renderActiveContextRail(railId = "active-context-rail") {
   const tiers = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
   const counts = {};
   for (const t of tiers) counts[t] = 0;
-  const _distPool = players.concat(typeof provPlayers === "function" ? provPlayers() : []);
+  // ONE ROW PER PLAYER (audit L15-F1, 2026-09-09): 2,688 players carry both a graded row
+  // and a provisional twin, and the bare concat that stood here counted every one of them
+  // twice, so the "N rated" header ran 2,688 high. The graded row wins, exactly as on the
+  // board list; see _dedupeProvPool for why that direction and why the twin's entry lands
+  // on _prov_entry, never _xfv_entry. `players` is DATA.players, the pool's own input.
+  const _distPool = oneRowActivePool();
   let _distN = 0;
   for (const p of _distPool) {
     // gradeBlock.value = eFV grade (nearest) where rated, else fvCeil(fv_close), else null.
@@ -18691,8 +18725,10 @@ function renderWatchlist() {
     // starred row can never disagree with the farm list / roster. The baked
     // org.top_prospect (one run stale, consensus fv_label) only fills in when
     // the live pool is empty.
-    const _wlPool = (DATA.players || []).filter(p => p && p.player_key && p.org === org.org)
-      .concat((typeof provPlayers === "function" ? provPlayers() : []).filter(p => p.org === org.org));
+    // One row per player (audit L15-F1): the bare concat that stood here could seat a
+    // graded player's provisional twin as the org's live top prospect, the demotion
+    // _dedupeProvPool exists to prevent. Same pool as the farm list and farm detail.
+    const _wlPool = oneRowOrgPool(org.org).filter(p => p && p.player_key);
     _wlPool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
       || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
     const _wlTop = _wlPool[0] || null;
@@ -31549,6 +31585,37 @@ function _dedupeProvPool(graded, prov) {
   }
   return out;
 }
+// THE ONE-ROW-PER-PLAYER ACTIVE POOL (audit L15-F1, 2026-09-09): every graded row plus
+// every provisional row that is not a graded player's twin, deduped ONCE against the
+// whole graded board, the same convention as buildEfvOrgRankMap. The farm pools filter
+// this by org instead of deduping inside one org, and that choice is measured, not
+// taste: 19 players (same mlbam id on both rows) carry a graded row in one org and a
+// provisional twin in another after a move. A per-org dedupe cannot see the pair, so it
+// would list each of them in BOTH farms and leave the farm header one or more rows off
+// the org-rank denominator ("of N") on the same page. Memoized on the identity of its
+// two inputs; DATA is assigned once and provPlayers() hands back a NEW array whenever
+// the provisional file (re)loads, so a stale memo cannot survive a reload.
+let _ONE_ROW_POOL = null, _ONE_ROW_BY_ORG = null, _ONE_ROW_SRC = null, _ONE_ROW_PROV = null;
+function oneRowActivePool() {
+  const src = (DATA && Array.isArray(DATA.players)) ? DATA.players : [];
+  const prov = (typeof provPlayers === "function") ? provPlayers() : [];
+  if (_ONE_ROW_POOL === null || _ONE_ROW_SRC !== src || _ONE_ROW_PROV !== prov) {
+    _ONE_ROW_POOL = _dedupeProvPool(src.filter(p => p), prov);
+    _ONE_ROW_SRC = src; _ONE_ROW_PROV = prov; _ONE_ROW_BY_ORG = null;
+  }
+  return _ONE_ROW_POOL;
+}
+// One org's slice of that pool, graded rows first then provisional, each in source
+// order (exactly the order the old per-org concat produced). A fresh array every call,
+// because callers sort it in place.
+function oneRowOrgPool(org) {
+  const pool = oneRowActivePool();
+  if (_ONE_ROW_BY_ORG === null) {
+    _ONE_ROW_BY_ORG = {};
+    for (const p of pool) (_ONE_ROW_BY_ORG[p.org] = _ONE_ROW_BY_ORG[p.org] || []).push(p);
+  }
+  return (_ONE_ROW_BY_ORG[org] || []).slice();
+}
 // Rank of a prospect within their farm system's full prospect pool (graded board players +
 // provisional prospects for that org), by eFV. Used on the provisional detail page so an
 // un-scouted prospect still sees where they sit in their system. Cached per org.
@@ -31745,9 +31812,13 @@ function aaaStatcastPanel(p) {
     </div>`;
 }
 // ===== A-ball Statcast signal pill (data/statcast_alevel_signals.json) ======
-// S-XLINE-4 (registry xfv_statcast_line4) DISPLAY-ONLY surface. The grade
-// overlay was refused by its safety battery, so the validated residual read
-// renders as one informational pill and changes NO served number:
+// S-XLINE-4 (registry xfv_statcast_line4) panel. The panel itself computes
+// nothing served; it renders the validated residual read as one pill. It is
+// NOT true that the residual changes no served number: the same sidecar feeds
+// the "A-ball Statcast lean" overlay (efv_statcast_overlay, registry
+// xfv_statcast_overlay_uncapped, default ON since the A4 ship), which leans the
+// eFV model leg for covered active A/CPX players. This comment used to say the
+// overlay was refused; that was the pre-A4 state (audit F03-01, 2026-09-09).
 //   Hitters:  whiff_z minus the frozen OLS fit on current-K z. Residual at or
 //             above +0.75 = swing-and-miss ahead of the current strikeout
 //             rate (future K% risk the line has not paid for); at or below
@@ -31836,15 +31907,42 @@ function alevelSignalPanel(p) {
 // whiff-on-K call code was fit on n=788), so a reader can see the underlying
 // number rather than only the derived lean.
 //
-// DISPLAY ONLY, and deliberately so. The S-XLINE-4 grade overlay was NO-SHIP
-// (the rank-space ceiling problem), so nothing here feeds a grade, a rank, a
-// surplus dollar, or the TBS composite. The pill labels carry the level so
-// "A" / "CPX" is never mistaken for an upper-minors or MLB measurement, and
-// the tooltips say outright that this is a low-minors measurement signal and
-// not a grade input.
+// THE PILL'S NOTE SAID "NOT AN INPUT" ON 478 CARDS WHERE IT WAS ONE (audit F03-01,
+// 2026-09-09). This block used to say the S-XLINE-4 grade overlay was NO-SHIP. It was,
+// until the A4 uncapped ship flipped efv_statcast_overlay's defaults ON: the same sidecar
+// row now leans the eFV MODEL leg for covered active A/CPX players, and that lean carries
+// into the eFV grade, the board rank and the surplus that reprices off them. Measured on
+// the served data/xfv.json: 478 board rows (345 hitters, 133 pitchers) carry the
+// "A-ball Statcast lean" driver, every one of them a card that renders this pill.
+//
+// So the note is CONDITIONAL, and it reads the answer from the served eFV entry rather
+// than re-deriving the overlay's gate here: efv_score writes the "A-ball Statcast lean"
+// factor exactly when overlay_fv fired a nonzero lean for this player, with mag = |lean
+// in FV| / 2. On the other 218 pill cards no lean fired and the old sentence is true, so
+// they keep it. Where there is no eFV entry (not loaded yet, or the player has none),
+// the note states the general rule and claims nothing about him.
+// ALEVEL_LEAN_LABEL must equal efv_statcast_overlay.CHIP_LABEL
+// (test_prospx_alevel_pill_note.py pins it).
+//
+// The pill labels carry the level so "A" / "CPX" is never mistaken for an
+// upper-minors or MLB measurement.
 //
 // Fail-soft contract: renders "" when the sidecar is absent, still in flight,
 // missing this player, or missing the specific metric. Never throws.
+const ALEVEL_LEAN_LABEL = "A-ball Statcast lean";
+function alevelLeanNote(p) {
+  const x = (typeof getEfv === "function") ? getEfv(p) : null;
+  if (!x || !Array.isArray(x.factors)) {
+    return " For players the A-ball Statcast lean fires on, this signal is an input to the eFV grade, and the eFV card lists that lean as a driver.";
+  }
+  const f = x.factors.find(q => q && q.label === ALEVEL_LEAN_LABEL);
+  const mag = f ? Number(f.mag) : NaN;
+  if (f && isFinite(mag) && mag > 0) {
+    const fv = (2 * mag).toFixed(2);
+    return ` This signal IS an input for him: it drives the A-ball Statcast lean, which moves the model leg of his eFV grade ${f.dir === "down" ? "down" : "up"} ${fv} FV (listed as a driver on the eFV card). The eFV grade, the board rank and the surplus value all carry that lean; the consensus FV does not.`;
+  }
+  return " This is a low-minors tracked-measurement signal shown for context only: for him it is NOT an input to the FV, the eFV grade, the rank, or the surplus value.";
+}
 function alevelSignalPillsHTML(p) {
   if (!p) return "";
   ensureAlevelSignals();                 // lazy-load, same cache as the panel
@@ -31857,7 +31955,7 @@ function alevelSignalPillsHTML(p) {
     r.n_pitches != null ? `${r.n_pitches} tracked pitches` : null,
   ].filter(Boolean).join(", ");
   const ctxTail = ctx ? ` (${ctx})` : "";
-  const note = " This is a low-minors tracked-measurement signal shown for context only: it is NOT an input to the FV, the eFV grade, the rank, or the surplus value.";
+  const note = alevelLeanNote(p);
   // z is signed the same way in the sidecar for both sides, but "good" flips:
   // low whiff is good for a hitter, high velo is good for a pitcher.
   const zCls = (z, higherIsBetter) => {
@@ -38177,17 +38275,26 @@ function _buildDetailChipRibbon(p) {
     // 2026-07-29: was `sl.rps_plus`, populated for 0 of 4,505 players, so this
     // pill never rendered. Reads the live RPS+ (_rpsPlusValue) instead - the
     // same number the RPS+ pill and the RPS+ leaderboard show. Its inputs
-    // (OPS+ lvl / ERA-) are the adjacent chips below; RPS+ adds the
+    // (OPS+ lvl / ERA- lvl) are the adjacent chips below; RPS+ adds the
     // age-vs-level adjustment and the age x position-group re-anchoring.
     const _rpsPill = sl.level !== "MLB" ? _rpsPlusValue(p) : null;
     if (_rpsPill != null) {
       const c = _rpsPill >= 110 ? "var(--up)" : _rpsPill <= 90 ? "var(--down)" : "var(--text-secondary)";
       bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="RPS+ (Rate Performance Score) ${_rpsPill} · level-relative production (OPS+ vs level for hitters, ERA- vs level for pitchers) plus the age-vs-level adjustment, re-anchored to the mean prospect in the same age x position-group cohort. 100 = cohort mean.">RPS+ ${_rpsPill}</span>`);
     }
-    if (isPit && sl.era_minus_level != null) {
+    // TWO NUMBERS WERE BOTH CALLED "ERA-" ON ONE MLB PITCHER CARD (audit F05-06,
+    // 2026-09-09). This pill is the site's level index; the MLB sabermetrics tile further
+    // down is the park- and league-adjusted ERA- from the MLB feed. On data/debuts_lite.json
+    // 429 MLB statlines carried both, 250 disagreeing by 15 or more points and 134 by 30 or
+    // more (a 2-IP disaster reads about 100 here because of the innings shrink, and 400+
+    // on the tile). Guarded to sub-MLB like the RPS+ pill above and relabelled so it names
+    // its own quantity. DISPLAY ONLY: the era_minus_level FIELD is still served on MLB
+    // lines and must stay, because bayes_trade_value's pitcher disqualifier and RPS+
+    // (computeRelProd) read it.
+    if (isPit && sl.era_minus_level != null && sl.level !== "MLB") {
       const v = Math.round(sl.era_minus_level);
       const c = v <= 90 ? "var(--up)" : v >= 110 ? "var(--down)" : "var(--text-secondary)";
-      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="ERA- vs level (lower = better)">ERA- ${v}</span>`);
+      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="${escapeHtml(eraMinusLevelTip())}">ERA- lvl ${v}</span>`);
     }
     if (!isPit && _lvlPlus(sl) != null) {
       const v = Math.round(_lvlPlus(sl));
@@ -43248,8 +43355,10 @@ function renderFarmSystems() {
     // clickable - onclick fires goToPlayer() with the player_key and
     // stopPropagation prevents the row's goToFarm() from also firing.
     if (typeof ensureEfvUngraded === "function") ensureEfvUngraded();
-    const _orgPool = (DATA.players || []).filter(p => p && p.player_key && p.org === org.org)
-      .concat((typeof provPlayers === "function" ? provPlayers() : []).filter(p => p.org === org.org));
+    // One row per player (audit L15-F1), the same pool as the farm-detail Roster tab, so
+    // the Top-3 strip can never seat the same player twice or show a twin in place of
+    // his graded row.
+    const _orgPool = oneRowOrgPool(org.org).filter(p => p && p.player_key);
     _orgPool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
       || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
     const top3 = _orgPool.slice(0, 3);
@@ -50226,7 +50335,7 @@ function renderPlayerDetail(key) {
   const efvProxyHtml = (typeof efvProxyPanel === "function") ? efvProxyPanel(p) : "";  // leading indicator
   const palFitHtml = (typeof palFitPanel === "function") ? palFitPanel(p) : "";  // PAL role-conversion cross-link (pitchers)
   const aaaStatcastHtml = (typeof aaaStatcastPanel === "function") ? aaaStatcastPanel(p) : "";  // AAA Statcast contact-quality pills (hitters)
-  const alevelSignalHtml = (typeof alevelSignalPanel === "function") ? alevelSignalPanel(p) : "";  // A-ball Statcast signal pill (S-XLINE-4, display-only)
+  const alevelSignalHtml = (typeof alevelSignalPanel === "function") ? alevelSignalPanel(p) : "";  // A-ball Statcast signal pill (S-XLINE-4; the panel computes nothing, the overlay reading the same sidecar leans eFV)
   const apPaceHtml = (typeof apPacePanel === "function") ? apPacePanel(p) : "";  // Advancement Pace+ ladder-pace panel (W5, descriptive display only, hitters)
   // Archetype comps panel is BUILT BUT DELIBERATELY UNWIRED (2026-07-29). It was
   // written against an assumed per-player index (by_mlbam / by_player_key / ...) that
@@ -51360,8 +51469,16 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // fold this org's provisional players in so the depth chart, roster, pyramid and scatter all
   // treat them like any other active prospect (ranked by their eFV grade).
   if (typeof ensureEfvUngraded === "function") ensureEfvUngraded();
-  const rosterPlayersAll = (DATA.players || []).filter(p => p.org === orgCode)
-    .concat((typeof provPlayers === "function" ? provPlayers() : []).filter(p => p.org === orgCode));
+  // ONE ROW PER PLAYER (audit L15-F1, 2026-09-09). This pool feeds the "N prospects
+  // tracked" header, the eFV histogram and its "N rated", the acquisition mix, the ETA
+  // timeline, the depth chart, pyramid, scatter, promotion ladder, top-5 and the roster
+  // pagination. The bare concat that stood here put every graded player's provisional
+  // twin in it as a second row: 2,669 duplicate rows across all 30 orgs (Cleveland 373
+  // rows for 265 players within the org), while getEfvOrgRank, built on the site-wide
+  // DEDUPED pool, printed a smaller "of N" on the same site. Every count here drops by
+  // the org's duplicate count, by design, and now equals that denominator; nothing baked
+  // moves. The graded row wins (see _dedupeProvPool and oneRowActivePool).
+  const rosterPlayersAll = oneRowOrgPool(orgCode);
   let rosterPlayers = rosterPlayersAll.slice();
   if (state.acqFilter !== "all") {
     rosterPlayers = rosterPlayers.filter(p =>
@@ -53733,7 +53850,7 @@ function computeRelProd(p) {
       score: Math.round(perfAdj + ageAdj),
       perf: Math.round(perfAdj),
       age: Math.round(ageAdj),
-      driver: `ERA- ${sl.era_minus_level} · ${avl.diff != null ? `${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y vs ${sl.level || "level"}` : "age unknown"}`,
+      driver: `ERA- lvl ${sl.era_minus_level} · ${avl.diff != null ? `${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y vs ${sl.level || "level"}` : "age unknown"}`,
     };
   } else {
     if (_lvlPlus(sl) == null) return null;
@@ -53924,14 +54041,33 @@ function _rpsPlusValue(p) {
   return (row && row.plus != null && isFinite(row.plus)) ? row.plus : null;
 }
 
-// MLB-level players don't have level-relative stats (ops_plus_level /
-// era_minus_level are MiLB-only - storage.py:_serialize skips them when
-// the statline is MLB), so RPS+ resolves to null and the pill would
-// otherwise read "RPS+ - ". Substitute the actual league-relative stats
-// from FanGraphs sabermetrics: wRC+ for hitters (already 100 = MLB
-// league mean), xFIP + FIP- for pitchers (xFIP raw for unit familiarity,
-// FIP- for the 100-anchored read). Returns null when this isn't an MLB
-// player or the sabermetrics fields are missing - caller falls back to
+// The tooltip for the site's level ERA index (statline.era_minus_level), shared by every
+// surface that prints it as "ERA- lvl". What the number is, from storage.py: the line's
+// ERA shrunk toward the level's average ERA by innings pitched (K_IP), divided by that
+// average, times 100. So 100 is level average and lower is better, with no park term and
+// no league term. It is NOT the ERA- on the MLB sabermetrics tiles, which is MLB's
+// published park- and league-adjusted figure (audit F05-06: the two shared one label and
+// disagreed by 15+ points on 250 of 429 MLB lines carrying both). A function, not a
+// const, so it is hoisted and safe to call from any render path.
+function eraMinusLevelTip() {
+  return "ERA- lvl: this line's ERA against the average ERA at his level, shrunk toward that average by innings pitched. "
+    + "100 = level average, lower is better. A site index for minor-league lines, with no park or league adjustment; "
+    + "it is not the ERA- shown on the MLB sabermetrics tiles.";
+}
+
+// MLB-level lines DO carry the level-relative fields. storage.py stamps
+// ops_plus_level / era_minus_level / level_plus_pct whenever the level norms have a
+// block for the line's level, and they have an MLB block. An earlier version of this
+// comment said storage skipped them on MLB lines; it never did (audit F05-06, 543 MLB
+// statlines in data/debuts_lite.json carry era_minus_level). What keeps the level
+// reads off MLB cards is the DISPLAY guards: the RPS+ pill and the "ERA- lvl" pill
+// both require sl.level !== "MLB", and rpsPlusPillHTML below asks this function first.
+// Do not "fix" this by stripping the field server-side: bayes_trade_value's pitcher
+// disqualifier and RPS+ (computeRelProd) read it on MLB lines too.
+// At MLB the league-relative read is the MLB sabermetrics feed, so substitute it:
+// wRC+ for hitters (already 100 = MLB league mean), xFIP + FIP- for pitchers (xFIP
+// raw for unit familiarity, FIP- for the 100-anchored read). Returns null when this
+// isn't an MLB player or the sabermetrics fields are missing - caller falls back to
 // the regular RPS+ pill in that case.
 function mlbPerfPillHTML(p) {
   const sm = p && p.sabermetrics || {};
@@ -54579,8 +54715,10 @@ function scoutRatesHTML(p) {
     stuffPlusPillHTML(p),
     aaaStuffPlusPillHTML(p),
     krpPlusPillHTML(p),
-    // A-ball / complex tracked whiff + FB-velo measurement pills. Display
-    // only (S-XLINE-4 was NO-SHIP as a grade overlay); returns "" whenever
+    // A-ball / complex tracked whiff + FB-velo measurement pills. The pill
+    // computes nothing, but the same sidecar DOES lean the eFV model leg on
+    // covered active A/CPX players (A4 overlay ship), and the pill's note says
+    // so per player (alevelLeanNote, audit F03-01). Returns "" whenever
     // the sidecar is absent or the player is not in it, so the row never
     // grows an empty slot. Placed after the "+" family and before the
     // valuation pills so the measurement reads sit with the other rates.
