@@ -206,7 +206,7 @@ def test_a_down_bat_side_lens_is_a_stated_null_for_every_club():
             "teams": [{"team": "NYY", "orders": {"vr": _order(["L"] * 9),
                                                   "vl": _order(["L"] * 9)}}]}
     mix = lv.build_lineup_hand_mix(blob)
-    for col in lv.SCHEMA5_TEAM_COLUMNS:
+    for col in lv.SCHEMA5_PARK_TEAM_COLUMNS:
         assert mix[col]["values"] == {}
         assert mix[col]["basis"].startswith("ABSENT")
 
@@ -218,9 +218,13 @@ def test_one_pa_by_slot_table_on_the_site():
 
 
 def test_schema5_columns_are_registered():
+    """The 5i pair leads the schema-5 block; 5f and 5g ride the same bump
+    (docs/diamond-betting.md 5f, "Shared bump") and are appended after it."""
     assert lv.SCHEMA == 5
     assert set(lv.SCHEMA5_TEAM_COLUMNS) < set(lv.TEAM_COLUMNS)
-    assert lv.TEAM_COLUMNS[-2:] == lv.SCHEMA5_TEAM_COLUMNS
+    assert lv.TEAM_COLUMNS[-len(lv.SCHEMA5_TEAM_COLUMNS):] == lv.SCHEMA5_TEAM_COLUMNS
+    assert lv.SCHEMA5_TEAM_COLUMNS[:2] == lv.SCHEMA5_PARK_TEAM_COLUMNS
+    assert lv.SCHEMA5_PARK_TEAM_COLUMNS == ("lhb_share_vr", "lhb_share_vl")
     for c in lv.SCHEMA5_TEAM_COLUMNS:
         assert c in lv.FEATURE_SOURCES
 
@@ -248,8 +252,9 @@ def _fake_boards(data):
 
 @pytest.fixture
 def _quiet_builders(monkeypatch):
-    """No network and no feed scan: the hand join and the schema-4 builders are
-    stubbed, because this test is about the schema-5 capture alone."""
+    """No network and no feed scan: the hand join, the schema-4 builders and the
+    schema-5 pinch-hit tally are stubbed, because this test is about the 5i
+    capture alone (conftest already stubs the team-fielding loader)."""
     import betting_usage
     import pal_export
     monkeypatch.setattr(pal_export, "load_pitch_hand", lambda season: {101: "R"})
@@ -258,6 +263,9 @@ def _quiet_builders(monkeypatch):
                                          for c in lv.SCHEMA4_TEAM_COLUMNS})
     monkeypatch.setattr(betting_usage, "build_pitcher_schema4",
                         lambda *a, **k: {})
+    monkeypatch.setattr(betting_usage, "build_schema5_team_columns",
+                        lambda *a, **k: {c: {"values": {}, "basis": "ABSENT: stubbed"}
+                                         for c in lv.SCHEMA5_PH_TALLY_COLUMNS})
 
 
 def test_the_snapshot_captures_the_schema5_block(tmp_path, _quiet_builders):

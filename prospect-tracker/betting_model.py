@@ -929,18 +929,37 @@ def _mean_sd(xs: list[float]) -> tuple[float, float]:
 # ---------------------------------------------------------------------------
 # team + pitcher inputs off the committed leaderboards
 # ---------------------------------------------------------------------------
-# THE SCHEMA-3 DARK CAPTURE COLUMNS (2026-08-16), named here so the assembly
-# has a stable key set even before any record carries them. Pinned equal to
-# leaderboard_vintages.SCHEMA3_* by test_leaderboard_vintages, which is the
-# one-source-of-truth guard the lazy import cannot give.
+# THE DARK CAPTURE COLUMNS, ONE TUPLE PER SCHEMA, named here so the assembly has
+# a stable key set even before any record carries them. Each is pinned equal to
+# leaderboard_vintages.SCHEMA<n>_TEAM_COLUMNS by test_leaderboard_vintages, which
+# is the one-source-of-truth guard the lazy import cannot give.
+#
+# Until 2026-09-11 only the schema-3 tuple existed here, so the nine schema-4
+# columns (docs/diamond-betting.md 5d) were stored in every vintage and never
+# reached the standardization seam; the 5d harness needs that read path before
+# its look, and section 5f registered the generalization in the schema-5 bump.
+# A record written under a lower schema reads None for every higher-schema
+# column (team_inputs_from_vintage goes by the record's own column list), and
+# absent is never zero.
 #
 # DARK MEANS DARK. These reach the assembled team inputs and their z-scores are
 # computed by the same standardization as everything else, and then NOTHING
 # served reads them: not expected_runs, not game_prevention_z, not a slot, not
 # a record row. A candidate wanting a price goes through the protocol in
 # docs/diamond-betting.md section 5c, gate section first.
-DARK_TEAM_COLUMNS = ("xwoba_14", "xwoba_30", "off_vs_lhp", "off_vs_rhp",
-                     "lineup_strength", "star_out")
+DARK3_TEAM_COLUMNS = ("xwoba_14", "xwoba_30", "off_vs_lhp", "off_vs_rhp",
+                      "lineup_strength", "star_out")
+DARK4_TEAM_COLUMNS = ("pen_b2b_arms", "pen_arms_avail", "pen_ip_l3",
+                      "pen_plus_avail", "rest_days", "games_in_l7",
+                      "wx_temp_climo", "wx_wind_out_climo", "catch_frame_rate")
+DARK5_TEAM_COLUMNS = ("lhb_share_vr", "lhb_share_vl",                     # 5i-B
+                      "lineup_dis_vs_lhp", "lineup_dis_vs_rhp",           # 5f
+                      "bench_adv_vs_lhp", "bench_adv_vs_rhp",
+                      "ph_share", "pen_lhp_share",
+                      "team_fld_runs")                                    # 5g
+DARK_TEAM_COLUMNS_BY_SCHEMA = {3: DARK3_TEAM_COLUMNS, 4: DARK4_TEAM_COLUMNS,
+                               5: DARK5_TEAM_COLUMNS}
+DARK_TEAM_COLUMNS = DARK3_TEAM_COLUMNS + DARK4_TEAM_COLUMNS + DARK5_TEAM_COLUMNS
 DARK_PITCHER_COLUMNS = ("throws",)
 
 
@@ -954,10 +973,10 @@ def _assemble_team_inputs(off: dict, rots: dict, pens: dict,
     stored snapshot would make the backtest incomparable to the served model
     for a reason nobody would ever see.
 
-    `extras` is the schema-3 dark capture, {org: {column: value | None}} over
-    DARK_TEAM_COLUMNS. Every assembled row carries every dark column (None when
-    absent, never zero) plus its z, standardized over the teams that HAVE the
-    value; the served model reads none of them. Both paths hand the same shape
+    `extras` is the dark capture, {org: {column: value | None}} over
+    DARK_TEAM_COLUMNS (every schema's tuple). Every assembled row carries every
+    dark column (None when absent, never zero) plus its z, standardized over the
+    teams that HAVE the value; the served model reads none of them. Both paths hand the same shape
     in, so the live and vintage key sets cannot drift."""
     orgs = sorted(set(off) & set(pens) & set(rots))
     if not orgs:
@@ -1038,6 +1057,16 @@ def team_inputs_detail() -> dict:
     blobs = {k: _data(v) for k, v in files.items()}
 
     lv = _vintage_module()
+    # The schema-5 tally columns on the LIVE path come off the nightly capture's
+    # memo alone (betting_usage.live_ph_columns never opens a feed); a club the
+    # memo cannot place reads None. Any failure is a stated absence, never a
+    # zero and never a reason to fail the board.
+    try:
+        import betting_usage
+        ph_live = betting_usage.live_ph_columns()
+    except Exception:                                            # noqa: BLE001
+        ph_live = {}
+    lens_down = bool(lv.hand_lens_down(blobs["offense"])) if lv else True
     off, extras = {}, {}
     for t in (blobs["offense"] or {}).get("teams") or []:
         o = _org(t.get("team"))
@@ -1045,12 +1074,18 @@ def team_inputs_detail() -> dict:
             off[o] = float(t["offense_plus"])
             # The dark capture on the LIVE path, reduced by the SAME helper the
             # vintage write side uses so the two cannot drift. The columns with
-            # no committed builder (the xwOBA pair, lineup_strength, star_out)
-            # stay None here too: the live read states absence exactly the way
-            # the stored record does, and never invents a number.
+            # no live builder (the xwOBA pair, lineup_strength, star_out, every
+            # schema-4 column, team_fld_runs) stay None here: the live read
+            # states absence exactly the way a stored null does, and never
+            # invents a number.
             vl, vr = (lv.off_splits_from_hitter_team(t) if lv else (None, None))
             extras[o] = {c: None for c in DARK_TEAM_COLUMNS}
             extras[o]["off_vs_lhp"], extras[o]["off_vs_rhp"] = vl, vr
+            if lv and not lens_down:
+                extras[o]["lhb_share_vr"] = lv.lhb_share_from_orders(t, "R")
+                extras[o]["lhb_share_vl"] = lv.lhb_share_from_orders(t, "L")
+                extras[o].update(lv.ph_splits_from_hitter_team(t))
+            extras[o].update(ph_live.get(o) or {})
     pens, relief_ip = {}, {}
     for t in (blobs["bullpen"] or {}).get("teams") or []:
         o = _org(t.get("team"))
@@ -1386,9 +1421,10 @@ def team_inputs_from_vintage(rec: dict) -> dict:
         i_rip = cols.index("relief_ip")
     except ValueError:                                           # pragma: no cover
         return {}
-    # The schema-3 columns, by the RECORD'S OWN positions. A schema-2 record
-    # simply lacks the names, so every dark column reads None: the explicit
-    # stated fallback, never a silent zero, and never a fill from live files.
+    # The dark columns of every schema, by the RECORD'S OWN positions. A record
+    # of a lower schema simply lacks the higher schema's names, so each of those
+    # reads None: the explicit stated fallback, never a silent zero, and never a
+    # fill from live files.
     dark_pos = {c: cols.index(c) for c in DARK_TEAM_COLUMNS if c in cols}
     off, rots, pens, sip, rip, extras = {}, {}, {}, {}, {}, {}
     for org, row in (rec.get("teams") or {}).items():
@@ -2368,6 +2404,22 @@ def fit_total_level_vintage(games, *, coeffs=None, adj=None, shrink=None) -> dic
 # ---------------------------------------------------------------------------
 # the game model
 # ---------------------------------------------------------------------------
+def _starter_share(team: dict, starter: dict | None) -> tuple[float, float, str]:
+    """(starter share of the game, starter plus, source) for one pitching side.
+
+    The listed probable covers ip_per_gs/9 of the game, clipped to [0.25, 0.85];
+    with nobody announced the club's own starter innings share and rotation
+    average stand in. ONE definition: game_prevention_z prices on it and the
+    dark section-5f candidate (game_offense_ph_z) splits the game on it, so the
+    two can never disagree about how much of a game the bullpen pitches."""
+    if starter and starter.get("sem_plus") is not None:
+        share = (starter.get("ip_per_gs") or (DEFAULT_SP_SHARE * 9.0)) / 9.0
+        share = max(0.25, min(0.85, share))
+        return share, float(starter["sem_plus"]), "probable"
+    share = float(team.get("sp_ip_share") or DEFAULT_SP_SHARE)
+    return share, float(team.get("rotation_plus", 100.0)), "rotation-average"
+
+
 def game_prevention_z(team: dict, starter: dict | None, teams: dict) -> tuple[float, dict]:
     """(z, detail) for one side's run prevention IN THIS GAME.
 
@@ -2379,21 +2431,87 @@ def game_prevention_z(team: dict, starter: dict | None, teams: dict) -> tuple[fl
     mu = scale.get("prev_mu", 100.0)
     sd = scale.get("prev_sd", 1.0) or 1.0
     pen_plus = team.get("bullpen_plus", 100.0)
-    if starter and starter.get("sem_plus") is not None:
-        share = (starter.get("ip_per_gs") or (DEFAULT_SP_SHARE * 9.0)) / 9.0
-        share = max(0.25, min(0.85, share))
-        sp_plus = float(starter["sem_plus"])
-        src = "probable"
-    else:
-        share = float(team.get("sp_ip_share") or DEFAULT_SP_SHARE)
-        sp_plus = float(team.get("rotation_plus", 100.0))
-        src = "rotation-average"
+    share, sp_plus, src = _starter_share(team, starter)
     blended = share * sp_plus + (1.0 - share) * pen_plus
     return (blended - mu) / sd, {
         "starter_plus": round(sp_plus, 1), "bullpen_plus": round(pen_plus, 1),
         "starter_share": round(share, 3), "blend_plus": round(blended, 1),
         "source": src,
     }
+
+
+# The four hitter-derived section-5f columns; a scoring side with all four null
+# is excluded from the 5f eval set rather than priced on a zero bench term.
+PH_HITTER_COLUMNS = ("lineup_dis_vs_lhp", "lineup_dis_vs_rhp",
+                     "bench_adv_vs_lhp", "bench_adv_vs_rhp")
+
+
+def game_offense_ph_z(team_s: dict, team_o: dict, opp_starter: dict | None,
+                      teams: dict) -> tuple[float | None, dict]:
+    """DARK. The section 5f candidate offense for scoring side S facing O:
+
+        z_off_ph = z_off + (1 - w) * [ (pL - pL_bar) * (L - R)
+                                      + phi * (pL * g_L + (1 - pL) * g_R) ] / off_sd
+
+    `w` is O's starter share from `_starter_share`, the one helper
+    game_prevention_z prices on; `pL` O's pen_lhp_share and `pL_bar` its mean over
+    the clubs in `teams` (the same vintage); `L`, `R` S's off_vs_lhp and
+    off_vs_rhp, read and never written; `phi` S's ph_share; g_h = max(0,
+    bench_adv_vs_h - lineup_dis_vs_h), 0 when either is null. It never reads the
+    probable's `throws`, which is 5e's lever. No new free parameter: the served
+    b1 prices the result, refit on the fit half as the served model's is.
+
+    Returns (None, detail) when the 5f eval rule EXCLUDES the side: S's ph_share
+    or O's pen_lhp_share null, all four of S's hitter-derived columns null, or no
+    split pair or no club mean to reference. The detail carries each arm in z
+    units so a harness can report arm A and arm B alone.
+
+    NOTHING SERVED CALLS THIS. expected_runs, the fit and the export price on
+    z_off; this exists so the gate harness computes the candidate with one
+    definition, and a test pins that no served path reaches it."""
+    w, _, src = _starter_share(team_o, opp_starter)
+    detail: dict = {"starter_share": w, "source": src}
+    scale = teams.get("_scale") or {}
+    off_sd = scale.get("off_sd", 1.0) or 1.0
+    z_off = team_s.get("z_off")
+    pL, phi = team_o.get("pen_lhp_share"), team_s.get("ph_share")
+    L, R = team_s.get("off_vs_lhp"), team_s.get("off_vs_rhp")
+    pens = [r.get("pen_lhp_share") for k, r in teams.items()
+            if not str(k).startswith("_") and isinstance(r, dict)
+            and r.get("pen_lhp_share") is not None]
+    excluded = []
+    if z_off is None:
+        excluded.append("z_off")
+    if phi is None:
+        excluded.append("scoring side ph_share null")
+    if pL is None:
+        excluded.append("opposing pen_lhp_share null")
+    if all(team_s.get(c) is None for c in PH_HITTER_COLUMNS):
+        excluded.append("all four hitter-derived columns null")
+    if L is None or R is None:
+        excluded.append("off_vs_lhp or off_vs_rhp null")
+    if not pens:
+        excluded.append("no club carries pen_lhp_share")
+    if excluded:
+        detail["excluded"] = excluded
+        return None, detail
+
+    def _g(bench, lineup):
+        if bench is None or lineup is None:
+            return 0.0
+        return max(0.0, float(bench) - float(lineup))
+
+    pL, phi = float(pL), float(phi)
+    pL_bar = sum(float(p) for p in pens) / len(pens)
+    g_L = _g(team_s.get("bench_adv_vs_lhp"), team_s.get("lineup_dis_vs_lhp"))
+    g_R = _g(team_s.get("bench_adv_vs_rhp"), team_s.get("lineup_dis_vs_rhp"))
+    arm_a = (pL - pL_bar) * (float(L) - float(R))
+    arm_b = phi * (pL * g_L + (1.0 - pL) * g_R)
+    scale_late = (1.0 - w) / off_sd
+    detail.update({"pL": pL, "pL_bar": pL_bar, "g_L": g_L, "g_R": g_R,
+                   "arm_a_z": scale_late * arm_a, "arm_b_z": scale_late * arm_b,
+                   "delta_z": scale_late * (arm_a + arm_b)})
+    return float(z_off) + scale_late * (arm_a + arm_b), detail
 
 
 def expected_runs(home_org: str, away_org: str, *, home_sp: dict | None = None,
@@ -6079,7 +6197,10 @@ def _feature_basis(rstats: dict, gradable: list[dict], eval_games: list[dict]) -
     eval window is the one any published claim would read. Basis strings are
     collected verbatim off the records, never summarized into a guess."""
     by_date = (rstats or {}).get("feature_basis_by_date") or {}
-    features = DARK_TEAM_COLUMNS + DARK_PITCHER_COLUMNS
+    # Schema 3 ONLY, by name: the eval artifact's block is unchanged by the
+    # per-schema generalization of DARK_TEAM_COLUMNS (2026-09-11). A later
+    # schema's harness reads its own columns off the same records.
+    features = DARK3_TEAM_COLUMNS + DARK_PITCHER_COLUMNS
     out: dict = {}
     for f in features:
         counts = {"populated": 0, "null_stated": 0, "predates_column": 0}

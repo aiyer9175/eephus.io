@@ -46,12 +46,26 @@ def test_ewar_does_not_import_the_defense_modules():
     assert "0.0 if fielding_blend_w is None" in src
 
 
+# THE ONE REGISTERED EXCEPTION to C4 (docs/diamond-betting.md 5g, committed before
+# its builder existed, which is the "own section" C4 waits for). team_fld_runs
+# takes each fielder's primary position from the season fielding INNINGS, read
+# through defense_export.load_season_innings. That is the StatsAPI fielding feed's
+# cache reader, not the DEM+ index, the Defense board or its history, so the text
+# allowed is exactly the import and that one call, in that one module; any other
+# name from the Defense modules still fails here.
+ALLOWED_5G = {"leaderboard_vintages.py": ("import defense_export",
+                                          "defense_export.load_season_innings")}
+
+
 def test_betting_and_vintages_do_not_read_defense():
     for name in ("betting_model.py", "betting_export.py", "leaderboard_vintages.py",
                  "betting_usage.py", "dfs_export.py"):
         p = ROOT / name
         if p.exists():
-            assert not NAMES.search(_src(p)), f"{name} reads the DEM+ board"
+            src = _src(p)
+            for allowed in ALLOWED_5G.get(name, ()):
+                src = src.replace(allowed, "")
+            assert not NAMES.search(src), f"{name} reads the DEM+ board"
 
 
 def test_war_map_does_not_read_the_index():

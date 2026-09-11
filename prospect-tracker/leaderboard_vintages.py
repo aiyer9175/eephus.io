@@ -162,6 +162,17 @@ VINTAGE_DIR = ROOT / ".cache" / "leaderboard_vintages"
 # view drops). Same governing rules as schemas 3 and 4. Nothing served reads any
 # of it; `parks_short_window` reaches a price only through
 # betting_model.SERVE_ATH_PARK, which is off.
+#
+# SCHEMA 5 ALSO CARRIES 5f AND 5g (2026-09-11), appended in the same bump rather
+# than a sixth one, because section 5f registers one shared schema-5 bump for all
+# three sections. 5f: six pinch-hit and bullpen-hand team columns (the lineup's
+# bats without the platoon edge and the bench's bats with it, per hand; the
+# club's pinch-hit share of its relief PA; its bullpen's left-handed share of
+# the relief PA it throws). 5g: one team column, `team_fld_runs`, non-catcher
+# fielding runs of the club's current position players over the prior season
+# plus the season to date. Every one of them is built by its own builder inside
+# its own try/except in reduce_current, so a failure costs its columns a stated
+# null and never the snapshot or the schema-4 stream.
 SCHEMA = 5
 
 # The reduced record keeps only what betting_model actually consumes (plus the
@@ -175,7 +186,11 @@ TEAM_COLUMNS = ("offense_plus", "rotation_plus", "bullpen_plus",
                 "pen_b2b_arms", "pen_arms_avail", "pen_ip_l3", "pen_plus_avail",
                 "rest_days", "games_in_l7",
                 "wx_temp_climo", "wx_wind_out_climo", "catch_frame_rate",
-                "lhb_share_vr", "lhb_share_vl")
+                "lhb_share_vr", "lhb_share_vl",
+                "lineup_dis_vs_lhp", "lineup_dis_vs_rhp",
+                "bench_adv_vs_lhp", "bench_adv_vs_rhp",
+                "ph_share", "pen_lhp_share",
+                "team_fld_runs")
 PITCHER_COLUMNS = ("plus", "ip_per_gs", "org", "role", "throws",
                    "sp_rest_days", "sp_tto3_bf")
 
@@ -192,8 +207,17 @@ SCHEMA4_TEAM_COLUMNS = ("pen_b2b_arms", "pen_arms_avail", "pen_ip_l3",
                         "wx_temp_climo", "wx_wind_out_climo", "catch_frame_rate")
 SCHEMA4_PITCHER_COLUMNS = ("sp_rest_days", "sp_tto3_bf")
 
-# The schema-5 additions by name (2026-09-11, section 5i-B).
-SCHEMA5_TEAM_COLUMNS = ("lhb_share_vr", "lhb_share_vl")
+# The schema-5 additions by name (2026-09-11), one sub-tuple per registering
+# section so a test or a gate harness can name exactly its own columns, and the
+# whole schema-5 set as their concatenation in TEAM_COLUMNS order.
+SCHEMA5_PARK_TEAM_COLUMNS = ("lhb_share_vr", "lhb_share_vl")          # 5i-B
+SCHEMA5_PH_HITTER_COLUMNS = ("lineup_dis_vs_lhp", "lineup_dis_vs_rhp",
+                             "bench_adv_vs_lhp", "bench_adv_vs_rhp")  # 5f, off the board
+SCHEMA5_PH_TALLY_COLUMNS = ("ph_share", "pen_lhp_share")              # 5f, off the feeds
+SCHEMA5_PH_TEAM_COLUMNS = SCHEMA5_PH_HITTER_COLUMNS + SCHEMA5_PH_TALLY_COLUMNS
+SCHEMA5_FLD_TEAM_COLUMNS = ("team_fld_runs",)                         # 5g
+SCHEMA5_TEAM_COLUMNS = (SCHEMA5_PARK_TEAM_COLUMNS + SCHEMA5_PH_TEAM_COLUMNS
+                        + SCHEMA5_FLD_TEAM_COLUMNS)
 
 # Expected plate appearances by lineup slot, the weight each slot's bat side
 # carries in a club's handedness mix. Pinned EQUAL to betting_export.SLOT_PA by
@@ -252,6 +276,34 @@ FEATURE_SOURCES = {
     "lhb_share_vl": ("hitter_leaderboards.json teams[].orders.vl, left-handed "
                      "share of expected PA (LINEUP_SLOT_PA weights), switch "
                      "hitters batting right against a left-hander"),
+    # Schema 5 (2026-09-11, docs/diamond-betting.md section 5f). Bases are
+    # DYNAMIC at capture; these are the registry descriptions.
+    "lineup_dis_vs_lhp": ("hitter_leaderboards.json teams[].orders.vl, season-PA "
+                          "weighted hem_plus_split over the slots batting L (no "
+                          "platoon edge against a left-hander); null when the "
+                          "nine has none, never a season-number fallback"),
+    "lineup_dis_vs_rhp": ("hitter_leaderboards.json teams[].orders.vr, season-PA "
+                          "weighted hem_plus_split over the slots batting R"),
+    "bench_adv_vs_lhp": ("hitter_leaderboards.json teams[].bench, season-PA "
+                         "weighted hem_plus_split.L over bench bats batting R or "
+                         "switch (the platoon edge against a left-hander); null "
+                         "when none carries a split"),
+    "bench_adv_vs_rhp": ("hitter_leaderboards.json teams[].bench, season-PA "
+                         "weighted hem_plus_split.R over bench bats batting L or "
+                         "switch"),
+    "ph_share": ("betting_usage pinch-hit tally off .cache/game_feeds, games "
+                 "strictly before the vintage date: the club's pinch-hit PA "
+                 "against relievers over its PA against relievers, shrunk by "
+                 "K_PHI toward the league rate"),
+    "pen_lhp_share": ("betting_usage relief-hand tally off .cache/game_feeds, "
+                      "games strictly before the vintage date: relief PA the "
+                      "club's left-handers threw over all relief PA it threw, "
+                      "shrunk by K_PEN toward the league rate"),
+    # Schema 5 (2026-09-11, section 5g).
+    "team_fld_runs": ("saber_feed.load_components fielding runs (FanGraphs WAR "
+                      "fielding, framing excluded), prior full season plus the "
+                      "season to date, summed over the club's current position "
+                      "players whose primary position is not C, P or DH"),
 }
 
 SOURCES = ("hitter_leaderboards.json", "starter_leaderboards.json",
@@ -939,7 +991,7 @@ def feature_basis(rec: dict | None) -> dict:
     r = rec or {}
     fb = r.get("feature_basis")
     if isinstance(fb, dict) and fb:
-        return dict(fb)
+        return _mark_later_columns(dict(fb), r)
     schema = r.get("schema")
     reason = (f"ABSENT: schema {schema} record predates the column "
               "(added in schema 3, 2026-08-16)")
@@ -951,6 +1003,36 @@ def feature_basis(rec: dict | None) -> dict:
                              "ABSENT: record carries no park column; price on a "
                              "NEUTRAL park, never the live index"),
                    "n": n_parks}
+    return _mark_later_columns(out, r)
+
+
+# Where each dark column entered the store, for the predates-the-column marking
+# of a record written before it. Schema 5 gained columns on one date in two
+# commits (5i, then 5f and 5g), so a schema-5 record can itself predate a
+# schema-5 column; the record's OWN column list decides, never its number.
+_COLUMN_ADDED = {
+    **{c: (3, "2026-08-16") for c in SCHEMA3_TEAM_COLUMNS + SCHEMA3_PITCHER_COLUMNS},
+    **{c: (4, "2026-09-07") for c in SCHEMA4_TEAM_COLUMNS + SCHEMA4_PITCHER_COLUMNS},
+    **{c: (5, "2026-09-11") for c in SCHEMA5_TEAM_COLUMNS},
+}
+
+
+def _mark_later_columns(out: dict, rec: dict) -> dict:
+    """Add a stated entry for every schema-4 and schema-5 dark column the block
+    lacks, so 'predates the column' is a basis a reader can count and never a
+    missing key. Entries the record carries are never touched."""
+    cols = set(rec.get("team_columns") or ()) | set(rec.get("pitcher_columns") or ())
+    schema = rec.get("schema")
+    for c in SCHEMA4_TEAM_COLUMNS + SCHEMA4_PITCHER_COLUMNS + SCHEMA5_TEAM_COLUMNS:
+        if c in out:
+            continue
+        n_schema, added = _COLUMN_ADDED[c]
+        if c in cols:
+            out[c] = {"basis": "ABSENT: the record stores the column but no basis "
+                               "for it; read as a stated null", "n": 0}
+        else:
+            out[c] = {"basis": (f"ABSENT: schema {schema} record predates the column "
+                                f"(added in schema {n_schema}, {added})"), "n": 0}
     return out
 
 
@@ -1110,6 +1192,340 @@ def park_short_window_snapshot(data_dir: Path | None = None) -> dict | None:
 
 
 # ---------------------------------------------------------------------------
+# schema 5: the pinch-hit capture, hitter-derived half (section 5f)
+# ---------------------------------------------------------------------------
+# Four columns read off the SAME constructed nine and bench the board serves,
+# never a posted lineup and never the page's platoon markers: those carry
+# display constants (a split-PA floor, a margin) that a page tweak could move,
+# and a dark betting column must not move when a page changes. The pinch-hit
+# and relief-hand tallies are the other half and live in betting_usage, because
+# they read the game feeds.
+def hand_lens_down(hit_blob: dict | None) -> bool:
+    """True when the artifact says its bat-side lens was DOWN tonight, so the
+    orders are not hand-labelled and nothing hand-specific can be read off them.
+    An artifact that does not say is treated as up, the lhb_share rule."""
+    bs = (hit_blob or {}).get("bat_side")
+    return isinstance(bs, dict) and bs.get("available") is False
+
+
+def _bat_code(bats) -> str | None:
+    """'L', 'R' or 'S' (a switch hitter; StatsAPI's 'B' reads as 'S'), or None."""
+    b = str(bats or "").strip().upper()[:1]
+    if b in ("L", "R"):
+        return b
+    if b in ("S", "B"):
+        return "S"
+    return None
+
+
+def _split_value(v, hand: str):
+    """A per-hand HEM+ off a slot (a number: the order's own hand) or a bench
+    row (a {"L", "R"} dict). None for anything unreadable."""
+    if isinstance(v, dict):
+        v = v.get(hand)
+    if v is None or isinstance(v, bool):
+        return None
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return None if f != f else f
+
+
+def _pa_weighted_split(rows, hand: str, keep) -> float | None:
+    """Season-PA weighted mean of the per-hand HEM+ against `hand` over the rows
+    whose bat code passes `keep`. A row with no split is SKIPPED, never filled
+    with the season number: a season fallback cannot carry a platoon claim."""
+    tot = acc = 0.0
+    for r in rows or []:
+        if not isinstance(r, dict) or not keep(_bat_code(r.get("bats"))):
+            continue
+        if "P" in (r.get("pos") or []):
+            continue                       # a pitcher is never a bench bat
+        v = _split_value(r.get("hem_plus_split"), hand)
+        try:
+            pa = float(r.get("pa"))
+        except (TypeError, ValueError):
+            continue
+        if v is None or pa <= 0:
+            continue
+        tot += pa
+        acc += v * pa
+    return round(acc / tot, 3) if tot > 0 else None
+
+
+def ph_splits_from_hitter_team(team_blob: dict | None) -> dict:
+    """{lineup_dis_vs_lhp, lineup_dis_vs_rhp, bench_adv_vs_lhp, bench_adv_vs_rhp}
+    for one hitter-leaderboard team row (section 5f).
+
+      lineup_dis_vs_h  the nine's bats WITHOUT the platoon edge against hand h
+                       (bats h, not a switch hitter), in the order run against h
+      bench_adv_vs_h   the bench bats WITH the edge against h (bats opposite h,
+                       or switch; a switch hitter counts on both hands)
+
+    Each is the season-PA weighted hem_plus_split against h, None when no bat
+    qualifies or none carries a split. Shared by the WRITE side (reduce_current)
+    and the LIVE side (betting_model.team_inputs_detail), the
+    off_splits_from_hitter_team pattern, so the reduction exists once."""
+    t = team_blob if isinstance(team_blob, dict) else {}
+    orders = t.get("orders") if isinstance(t.get("orders"), dict) else {}
+    bench = t.get("bench") if isinstance(t.get("bench"), list) else []
+    return {
+        "lineup_dis_vs_lhp": _pa_weighted_split(orders.get("vl"), "L", lambda b: b == "L"),
+        "lineup_dis_vs_rhp": _pa_weighted_split(orders.get("vr"), "R", lambda b: b == "R"),
+        "bench_adv_vs_lhp": _pa_weighted_split(bench, "L", lambda b: b in ("R", "S")),
+        "bench_adv_vs_rhp": _pa_weighted_split(bench, "R", lambda b: b in ("L", "S")),
+    }
+
+
+def _bench_split_backed(team_blob: dict | None) -> tuple[int, int]:
+    """(bench rows carrying at least one per-hand HEM+, bench rows) for one
+    team row: the coverage count the capture's basis reports."""
+    bench = (team_blob or {}).get("bench")
+    bench = bench if isinstance(bench, list) else []
+    n_split = sum(1 for r in bench if isinstance(r, dict) and any(
+        _split_value(r.get("hem_plus_split"), h) is not None for h in ("L", "R")))
+    return n_split, len(bench)
+
+
+def build_ph_hitter_columns(hit_blob: dict | None) -> dict:
+    """{column: {"values": {org: v}, "basis": str}} for the four hitter-derived
+    section-5f columns. A down bat-side lens is a stated null for every club
+    rather than a split read off an order that means nothing."""
+    cols = SCHEMA5_PH_HITTER_COLUMNS
+    if hand_lens_down(hit_blob):
+        why = ("ABSENT: hitter_leaderboards bat_side.available is false tonight, so "
+               "no bat is hand-labelled; captured null")
+        return {c: {"values": {}, "basis": why} for c in cols}
+    vals: dict[str, dict] = {c: {} for c in cols}
+    n_split = n_bench = 0
+    for t in (hit_blob or {}).get("teams") or []:
+        o = _org(t.get("team")) if isinstance(t, dict) else None
+        if not o:
+            continue
+        got = ph_splits_from_hitter_team(t)
+        for c in cols:
+            if got.get(c) is not None:
+                vals[c][o] = got[c]
+        a, b = _bench_split_backed(t)
+        n_split += a
+        n_bench += b
+    ps = (hit_blob or {}).get("platoon_splits")
+    ps_note = (f"platoon_splits.available {ps.get('available')}" if isinstance(ps, dict)
+               else "no platoon_splits block")
+    out = {}
+    for c in cols:
+        out[c] = {"values": vals[c], "basis": (
+            FEATURE_SOURCES[c] + f"; {len(vals[c])} clubs resolved; bench rows "
+            f"split-backed {n_split} of {n_bench}; {ps_note}")}
+    return out
+
+
+# ---------------------------------------------------------------------------
+# schema 5: team fielding (section 5g)
+# ---------------------------------------------------------------------------
+# Runs, never an index, and never the Defense board: the builder reads the
+# sabermetrics feed through saber_feed (the loader the hitter board, the Defense
+# board and the eWAR replica share) and the season fielding innings through
+# defense_export.load_season_innings, both caches the nightly hitter export warms
+# before the vintage write. Catchers are out because served catcher fielding
+# carries framing context and framing has its own column (catch_frame_rate);
+# pitchers and DHs field nothing.
+FLD_EXCLUDED_POSITIONS = frozenset({"C", "P", "DH"})
+# Tie-break for a primary position, the harder rung first. Pinned equal to the
+# Defense board's own POSITION_RUNG by a test; a copy here so the vintage module
+# never imports the Defense board's scoring module.
+FLD_POSITION_RUNG = ("C", "SS", "CF", "2B", "3B", "RF", "LF", "1B")
+
+
+def primary_fielding_position(inn: dict | None) -> str | None:
+    """The position with the most innings; ties go to the harder rung. None for
+    a bat with no innings anywhere, which is a DH or a pitcher who never fielded,
+    and which therefore contributes nothing to team_fld_runs."""
+    cand = {}
+    for p, v in (inn or {}).items():
+        try:
+            f = float(v or 0.0)
+        except (TypeError, ValueError):
+            continue
+        if f > 0:
+            cand[str(p)] = f
+    if not cand:
+        return None
+    rung = {p: i for i, p in enumerate(FLD_POSITION_RUNG)}
+    return max(cand, key=lambda p: (cand[p], -rung.get(p, len(rung))))
+
+
+def _local_fetch_time(path: Path) -> str | None:
+    """The cache file's mtime as a LOCAL ISO timestamp, or None when absent. Local
+    because the vintage date is date.today(), which is local: comparing a UTC
+    stamp against it would null the column on every evening run."""
+    try:
+        return datetime.fromtimestamp(Path(path).stat().st_mtime).astimezone().isoformat(
+            timespec="seconds")
+    except OSError:
+        return None
+
+
+def _as_local(stamp) -> str | None:
+    """An ISO timestamp with an offset (load_season_innings stamps UTC) in LOCAL
+    time, for the same reason as _local_fetch_time. None when unreadable."""
+    try:
+        return datetime.fromisoformat(str(stamp)).astimezone().isoformat(timespec="seconds")
+    except (TypeError, ValueError):
+        return None
+
+
+def _load_fld_sources(season: int) -> dict | None:
+    """The three reads team_fld_runs needs: the sabermetrics components for the
+    season and the prior one, and the season fielding innings, plus each cache
+    file's fetch time. The nightly hitter export warms the two current-season
+    caches minutes before the vintage write, so these are cache reads there; a
+    test never reaches this (conftest stubs it), because a stale cache refetches."""
+    import saber_feed
+    import defense_export
+    season = int(season)
+    cache = ROOT / ".cache"
+    cur = saber_feed.load_components(season)
+    prior = saber_feed.load_components(season - 1)
+    inn = defense_export.load_season_innings(season)
+    # The innings loader stamps the file it actually read (the permanent
+    # statsapi_field cache or the scraper cache), so its own stamp is the fetch
+    # time; the two sabermetrics files are read here by their cache key.
+    return {"current": cur, "prior": prior, "innings": inn,
+            "fetched": {"current": _local_fetch_time(cache / f"{saber_feed.cache_key(season)}.json"),
+                        "prior": _local_fetch_time(cache / f"{saber_feed.cache_key(season - 1)}.json"),
+                        "innings": _as_local((inn or {}).get("fetched_at"))}}
+
+
+def _feed_club(v: dict) -> str | None:
+    """The feed row's own club, the fallback when the board does not place the
+    player: its StatsAPI team id through trades.canonical_org_from_id."""
+    try:
+        from trades import canonical_org_from_id
+        return canonical_org_from_id(v.get("team_id"))
+    except Exception:                                            # noqa: BLE001
+        return None
+
+
+def team_fld_runs_from_sources(current: dict, prior: dict, innings: dict,
+                               board_club: dict, *, feed_club=None) -> tuple[dict, dict]:
+    """({org: fielding runs}, diagnostics). Pure: every input is handed in.
+
+    `current` and `prior` are saber_feed.load_components(...)["values"]
+    ({mlbam: {"fld", "team_id", ...}}), `innings` is load_season_innings(...)
+    ["players"] ({mlbam: {"inn": {pos: innings}}}), `board_club` is {mlbam: org}
+    off tonight's hitter board. A player counts when he has a current-season row
+    and a primary position outside C, P and DH; his runs are the current row's
+    fld plus the prior season's (0 when he has no prior row: he fielded nothing
+    then). His club is the board's, else the feed row's; unplaced is counted."""
+    feed_club = feed_club or _feed_club
+    acc: dict[str, float] = {}
+    diag = {"n_players": 0, "n_excluded_c": 0, "n_excluded_p_dh_or_none": 0,
+            "n_no_innings_row": 0, "n_club_from_feed": 0, "n_unplaced": 0,
+            "n_with_prior": 0}
+    for pid, v in (current or {}).items():
+        if not isinstance(v, dict) or v.get("fld") is None:
+            continue
+        try:
+            mid = int(pid)
+        except (TypeError, ValueError):
+            continue
+        row = (innings or {}).get(mid)
+        if row is None:
+            diag["n_no_innings_row"] += 1
+        prim = primary_fielding_position((row or {}).get("inn"))
+        if prim == "C":
+            diag["n_excluded_c"] += 1
+            continue
+        if prim is None or prim in FLD_EXCLUDED_POSITIONS:
+            diag["n_excluded_p_dh_or_none"] += 1
+            continue
+        org = board_club.get(mid)
+        if not org:
+            org = feed_club(v)
+            if org:
+                diag["n_club_from_feed"] += 1
+        if not org:
+            diag["n_unplaced"] += 1
+            continue
+        runs = float(v["fld"])
+        pv = (prior or {}).get(mid)
+        if isinstance(pv, dict) and pv.get("fld") is not None:
+            runs += float(pv["fld"])
+            diag["n_with_prior"] += 1
+        acc[org] = acc.get(org, 0.0) + runs
+        diag["n_players"] += 1
+    return {o: round(r, 2) for o, r in acc.items()}, diag
+
+
+def build_team_fld_runs(hit_blob: dict | None, *, on_date: str, season,
+                        loader=None) -> dict:
+    """{"team_fld_runs": {"values": {org: runs}, "basis": str}}.
+
+    VINTAGE SAFETY. The column is a stated null when a current-season cache was
+    fetched after the vintage date, because a later fetch holds games the
+    record's date cannot have known; a backfill into a past date lands here
+    every time. The prior season is a closed season, so its fetch time is
+    recorded and never nulls the column. `loader(season)` is injectable."""
+    col = "team_fld_runs"
+    try:
+        season = int(season)
+        src = (loader or _load_fld_sources)(season)
+        if not isinstance(src, dict):
+            return {col: {"values": {}, "basis": (
+                "ABSENT: the team-fielding sources were not loaded tonight (the "
+                "builder never fetches around its loader); captured null")}}
+        cur = (src.get("current") or {}).get("values") or {}
+        prior = (src.get("prior") or {}).get("values") or {}
+        inn = (src.get("innings") or {}).get("players") or {}
+        fetched = src.get("fetched") or {}
+        for name, blk in (("current-season sabermetrics", cur),
+                          ("prior-season sabermetrics", prior),
+                          ("season fielding innings", inn)):
+            if not blk:
+                return {col: {"values": {}, "basis": (
+                    f"ABSENT: the {name} feed returned no rows tonight; the "
+                    "registered two-season sum cannot be formed; captured null")}}
+        unknown = [k for k in ("current", "innings") if not fetched.get(k)]
+        if unknown:
+            return {col: {"values": {}, "basis": (
+                f"ABSENT: the {', '.join(unknown)} cache fetch time is unknown, so it "
+                f"cannot be shown to predate the vintage date {on_date}; captured null")}}
+        late = [k for k in ("current", "innings") if str(fetched[k])[:10] > on_date]
+        if late:
+            return {col: {"values": {}, "basis": (
+                f"ABSENT: the {', '.join(late)} cache was fetched after the vintage "
+                f"date {on_date} ({', '.join(str(fetched[k]) for k in late)}), so it "
+                "can hold games this record cannot have known; captured null")}}
+        board = {}
+        for h in (hit_blob or {}).get("hitters") or []:
+            if not isinstance(h, dict) or h.get("mlbam") is None:
+                continue
+            o = _org(h.get("team"))
+            if o:
+                try:
+                    board[int(h["mlbam"])] = o
+                except (TypeError, ValueError):
+                    continue
+        vals, diag = team_fld_runs_from_sources(cur, prior, inn, board)
+        n_multi = (src.get("current") or {}).get("n_multi_team")
+        return {col: {"values": vals, "basis": (
+            f"{FEATURE_SOURCES[col]}; seasons {season - 1} and {season}; "
+            f"{diag['n_players']} players summed ({diag['n_with_prior']} with a "
+            f"prior-season row), {len(vals)} clubs; excluded {diag['n_excluded_c']} "
+            f"catchers and {diag['n_excluded_p_dh_or_none']} with no fielding primary "
+            f"(DH or pitcher); club off the hitter board, feed club for "
+            f"{diag['n_club_from_feed']}, {diag['n_unplaced']} unplaced; feed "
+            f"multi-team rows {n_multi}; fetched current {fetched.get('current')}, "
+            f"prior {fetched.get('prior')}, innings {fetched.get('innings')}")}}
+    except Exception as e:                                       # noqa: BLE001
+        return {col: {"values": {}, "basis": (
+            f"ABSENT: the team-fielding builder raised {type(e).__name__} "
+            "tonight; captured null")}}
+
+
+# ---------------------------------------------------------------------------
 # reduce the live leaderboards to a record
 # ---------------------------------------------------------------------------
 def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) -> dict | None:
@@ -1206,8 +1622,42 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
     # Schema 5 dark capture (2026-09-11): each club's left-handed PA share by
     # opposing hand, off the same orders the schema-3 splits read. Isolated
     # inside its builder; a failure is a stated null for its two columns.
-    dark.update(build_lineup_hand_mix(hit))
+    #
+    # Then sections 5f and 5g, each builder inside its OWN try/except: a failure
+    # costs that builder's columns a stated null and never the snapshot, the
+    # schema-4 stream above, or a sibling schema-5 builder. The schema-1 to
+    # schema-4 columns are written before any of this runs and nothing below
+    # writes into them, so a schema-5 write carries them byte-identical.
+    def _isolated(cols, build, label):
+        try:
+            got = build()
+            for c in cols:
+                blk = got.get(c)
+                if not (isinstance(blk, dict) and isinstance(blk.get("values"), dict)
+                        and isinstance(blk.get("basis"), str)):
+                    blk = {"values": {}, "basis": (
+                        f"ABSENT: the {label} builder returned no usable block for {c}")}
+                dark[c] = blk
+        except Exception as exc:                                 # noqa: BLE001
+            why = f"ABSENT: the {label} builder raised {type(exc).__name__}: {exc}"
+            for c in cols:
+                dark[c] = {"values": {}, "basis": why}
+
+    def _ph_tally():
+        import betting_usage
+        return betting_usage.build_schema5_team_columns(on_date=vintage_date)
+
+    _isolated(SCHEMA5_PARK_TEAM_COLUMNS, lambda: build_lineup_hand_mix(hit),
+              "lineup hand-mix")
+    _isolated(SCHEMA5_PH_HITTER_COLUMNS, lambda: build_ph_hitter_columns(hit),
+              "pinch-hit bench and lineup")
+    _isolated(SCHEMA5_PH_TALLY_COLUMNS, _ph_tally, "pinch-hit and relief-hand tally")
+    _isolated(SCHEMA5_FLD_TEAM_COLUMNS,
+              lambda: build_team_fld_runs(hit, on_date=vintage_date, season=season_str),
+              "team-fielding")
     for col, blk in dark.items():
+        if col not in TEAM_COLUMNS:
+            continue                     # a builder key the record has no column for
         i_col = TEAM_COLUMNS.index(col)
         for org, row in teams.items():
             v = (blk.get("values") or {}).get(org)
@@ -1805,9 +2255,22 @@ def dark_capture_dry_run(*, on_date: str | None = None,
         "of": rec["n_pitchers"],
         "basis": (rec.get("feature_basis") or {}).get("throws", {}).get("basis"),
     }
+    # The later schemas' team columns, reported beside the schema-3 block rather
+    # than inside it so the schema-3 rehearsal reads exactly as it always has.
+    later = {}
+    for schema_n, group in (("4", SCHEMA4_TEAM_COLUMNS), ("5", SCHEMA5_TEAM_COLUMNS)):
+        later[schema_n] = {}
+        for c in group:
+            i = cols.index(c)
+            later[schema_n][c] = {
+                "filled": sum(1 for r in rec["teams"].values() if r[i] is not None),
+                "of": n_teams,
+                "basis": (rec.get("feature_basis") or {}).get(c, {}).get("basis"),
+            }
     return {"ok": True, "date": d, "written": False,
             "covers_through": rec["covers_through"], "n_teams": n_teams,
-            "n_pitchers": rec["n_pitchers"], "columns": fills}
+            "n_pitchers": rec["n_pitchers"], "columns": fills,
+            "later_columns": later}
 
 
 def run(*, log_fn=None) -> dict:

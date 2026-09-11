@@ -51,10 +51,12 @@ def _record(vintage_date: str, *, covers_through: str | None = None,
     the producer: if the column order ever changes, this test fails and the
     stored archive is not silently reinterpreted.
 
-    Schema 3 shape: eleven team columns and five pitcher columns. The two
-    order splits carry values, the xwOBA pair and the two availability columns
-    are the stated nulls the live capture writes tonight, and `throws` is
-    populated the way the bulk join populates it."""
+    Current-schema shape: every team row is as long as TEAM_COLUMNS. The first
+    eleven entries are the schema-1 core and the schema-3 capture (the two order
+    splits carry values, the xwOBA pair and the two availability columns are
+    stated nulls), every later column is padded None the way a stated null is
+    stored, and `throws` is populated the way the bulk join populates it."""
+    pad = [None] * (len(lv.TEAM_COLUMNS) - 11)
     return {
         "schema": lv.SCHEMA,
         "vintage_date": vintage_date,
@@ -75,16 +77,17 @@ def _record(vintage_date: str, *, covers_through: str | None = None,
             "park": {"basis": "ABSENT: no park block in this fixture", "n": 0},
         },
         # columns 0-4 are the schema-1 core; 5-10 are the schema-3 dark capture
-        # (xwoba_14, xwoba_30, off_vs_lhp, off_vs_rhp, lineup_strength, star_out)
+        # (xwoba_14, xwoba_30, off_vs_lhp, off_vs_rhp, lineup_strength, star_out);
+        # the schema-4 and schema-5 columns follow as padded Nones
         "teams": {
             "NYM": [108.0 + bump, 104.0, 103.0, 560.0, 380.0,
-                    None, None, 106.5, 109.0, None, None],
+                    None, None, 106.5, 109.0, None, None] + pad,
             "PHI": [104.0, 108.0 + bump, 99.0, 590.0, 350.0,
-                    None, None, 102.0, 105.5, None, None],
+                    None, None, 102.0, 105.5, None, None] + pad,
             "ATL": [99.0, 97.0, 106.0 + bump, 540.0, 400.0,
-                    None, None, 98.5, 100.0, None, None],
+                    None, None, 98.5, 100.0, None, None] + pad,
             "WSN": [93.0, 92.0, 94.0, 520.0, 410.0,
-                    None, None, 91.0, 94.5, None, None],
+                    None, None, 91.0, 94.5, None, None] + pad,
         },
         "pitchers": {
             "101": [118.0, 5.9, "NYM", "SP", "L"],
@@ -360,13 +363,98 @@ def test_two_vintages_produce_different_prices(store):
 # 3a. SCHEMA 3: THE DARK CAPTURE (docs/diamond-betting.md section 5c)
 # ===========================================================================
 def test_dark_column_names_are_pinned_between_the_two_modules():
-    """betting_model carries its own copy of the schema-3 column names so the
-    assembly has a stable key set without an import cycle. The copies must be
-    the same tuple or the two modules quietly capture different features."""
-    assert bm.DARK_TEAM_COLUMNS == lv.SCHEMA3_TEAM_COLUMNS
+    """betting_model carries its own copy of each schema's dark column names so
+    the assembly has a stable key set without an import cycle. Pinned PER SCHEMA:
+    the copies must be the same tuples or the two modules quietly capture
+    different features."""
+    assert bm.DARK3_TEAM_COLUMNS == lv.SCHEMA3_TEAM_COLUMNS
+    assert bm.DARK4_TEAM_COLUMNS == lv.SCHEMA4_TEAM_COLUMNS
+    assert bm.DARK5_TEAM_COLUMNS == lv.SCHEMA5_TEAM_COLUMNS
+    assert bm.DARK_TEAM_COLUMNS_BY_SCHEMA == {3: lv.SCHEMA3_TEAM_COLUMNS,
+                                              4: lv.SCHEMA4_TEAM_COLUMNS,
+                                              5: lv.SCHEMA5_TEAM_COLUMNS}
+    assert bm.DARK_TEAM_COLUMNS == (lv.SCHEMA3_TEAM_COLUMNS + lv.SCHEMA4_TEAM_COLUMNS
+                                    + lv.SCHEMA5_TEAM_COLUMNS)
     assert bm.DARK_PITCHER_COLUMNS == lv.SCHEMA3_PITCHER_COLUMNS
     assert set(lv.SCHEMA3_TEAM_COLUMNS) < set(lv.TEAM_COLUMNS)
     assert set(lv.SCHEMA3_PITCHER_COLUMNS) < set(lv.PITCHER_COLUMNS)
+
+
+def test_every_stored_team_column_past_the_core_is_dark_in_some_schema():
+    """A schema bump that adds a stored column without a dark tuple would store
+    it and never standardize it, which is exactly how the nine schema-4 columns
+    sat unread from 2026-09-09 to 2026-09-11. Every schema from 3 to the current
+    one owns a tuple, and together they are every non-core stored column."""
+    assert set(bm.DARK_TEAM_COLUMNS_BY_SCHEMA) == set(range(3, lv.SCHEMA + 1))
+    assert bm.DARK_TEAM_COLUMNS == lv.TEAM_COLUMNS[5:]
+    assert len(set(bm.DARK_TEAM_COLUMNS)) == len(bm.DARK_TEAM_COLUMNS)
+    # The 5f and 5g sub-tuples are the registered names, in order.
+    assert lv.SCHEMA5_PH_TEAM_COLUMNS == ("lineup_dis_vs_lhp", "lineup_dis_vs_rhp",
+                                          "bench_adv_vs_lhp", "bench_adv_vs_rhp",
+                                          "ph_share", "pen_lhp_share")
+    assert lv.SCHEMA5_FLD_TEAM_COLUMNS == ("team_fld_runs",)
+
+
+def _schema4_record(vintage_date: str) -> dict:
+    """A record as the 2026-09-09 and 2026-09-10 files are: twenty team
+    columns, the schema-4 capture populated, no schema-5 column at all."""
+    cols = list(lv.TEAM_COLUMNS[:20])
+    assert cols[-1] == "catch_frame_rate"
+    rec = _record(vintage_date)
+    rec["schema"] = 4
+    rec["team_columns"] = cols
+    i_frame, i_rest = cols.index("catch_frame_rate"), cols.index("rest_days")
+    for n, org in enumerate(ORGS):
+        row = rec["teams"][org][:11] + [None] * 9
+        row[i_frame] = 1.5 - n
+        row[i_rest] = 1 + (n % 2)
+        rec["teams"][org] = row
+    rec["feature_basis"].update({c: {"basis": "fixture", "n": len(ORGS)}
+                                 for c in ("catch_frame_rate", "rest_days")})
+    return rec
+
+
+def test_schema4_columns_reach_the_standardization_seam():
+    """THE PLUMBING 5f REGISTERED: a schema-4 column stored in a record now
+    arrives on the assembled row with its z, through the same seam as the core,
+    so the 5d harness standardizes exactly as the live path would."""
+    rec = _schema4_record("2026-09-09")
+    teams = bm.team_inputs_from_vintage(rec)
+    assert teams["NYM"]["catch_frame_rate"] == 1.5
+    assert teams["WSN"]["catch_frame_rate"] == -1.5
+    assert teams["NYM"]["z_catch_frame_rate"] > teams["WSN"]["z_catch_frame_rate"]
+    assert teams["NYM"]["rest_days"] == 1 and teams["PHI"]["rest_days"] == 2
+    assert "catch_frame_rate" in teams["_scale"]["extras"]
+
+
+def test_a_schema4_record_reads_none_for_every_schema5_column(store):
+    """Absent is never zero, one schema up: a record that predates 5f and 5g
+    reads None for each of their columns through every door, and the marking
+    names the seam rather than leaving the key missing."""
+    rec = _schema4_record("2026-09-09")
+    row = lv.team_row(rec, "NYM")
+    teams = bm.team_inputs_from_vintage(rec)
+    for c in lv.SCHEMA5_TEAM_COLUMNS:
+        assert row[c] is None, c
+        assert teams["NYM"][c] is None and teams["NYM"]["z_" + c] is None, c
+        assert c not in teams["_scale"]["extras"]
+    fb = lv.feature_basis(rec)
+    for c in lv.SCHEMA5_TEAM_COLUMNS:
+        assert fb[c]["n"] == 0
+        assert "predates the column" in fb[c]["basis"], c
+    # Stored bases are never overwritten by the marking.
+    assert fb["catch_frame_rate"] == {"basis": "fixture", "n": len(ORGS)}
+    # And a schema-5 record written before 5f and 5g existed (the 5i-only shape)
+    # is told apart by its OWN column list, not by its schema number.
+    early5 = dict(rec, schema=5, team_columns=list(lv.TEAM_COLUMNS[:22]))
+    fb5 = lv.feature_basis(early5)
+    assert "predates the column" in fb5["ph_share"]["basis"]
+    assert "predates the column" in fb5["team_fld_runs"]["basis"]
+    # A column the record DOES store but gave no basis is a stated null of its
+    # own kind, never counted as predating.
+    assert fb5["lhb_share_vr"]["basis"].startswith("ABSENT")
+    assert "predates the column" not in fb5["lhb_share_vr"]["basis"]
+    assert lv.team_row(early5, "NYM")["ph_share"] is None
 
 
 def test_a_schema2_record_reads_none_for_schema3_columns_with_marking(store):
@@ -476,6 +564,102 @@ def test_the_absent_columns_are_stated_facts_not_zeros(store, tmp_path):
     i_vl = cols.index("off_vs_lhp")
     assert all(row[i_vl] is not None for row in rec["teams"].values())
     assert rec["feature_basis"]["off_vs_lhp"]["n"] == len(ORGS)
+
+
+# ===========================================================================
+# 3b. SCHEMA 5: 5f AND 5g RIDE THE SAME RECORD WITHOUT TOUCHING SCHEMA 4
+# ===========================================================================
+@pytest.fixture()
+def _fixed_builders(monkeypatch):
+    """Every feed- and network-backed builder replaced by a fixed answer, so the
+    record is a pure function of the fake boards and two runs can be compared
+    byte for byte. The schema-4 values are deliberately non-null: a schema-5
+    builder that wrote into them would show."""
+    import betting_usage
+    s4 = {c: {"values": {o: float(i + 1) for i, o in enumerate(ORGS)},
+              "basis": f"fixture {c}"} for c in lv.SCHEMA4_TEAM_COLUMNS}
+    monkeypatch.setattr(betting_usage, "build_schema4_team_columns",
+                        lambda **k: {c: dict(b) for c, b in s4.items()})
+    monkeypatch.setattr(betting_usage, "build_pitcher_schema4",
+                        lambda pitchers, **k: {
+                            "sp_rest_days": {"values": {m: 4 for m in pitchers},
+                                             "basis": "fixture rest"},
+                            "sp_tto3_bf": {"values": {}, "basis": "fixture tto"}})
+    monkeypatch.setattr(betting_usage, "build_schema5_team_columns",
+                        lambda **k: {"ph_share": {"values": {o: 0.05 for o in ORGS},
+                                                  "basis": "fixture ph"},
+                                     "pen_lhp_share": {"values": {o: 0.3 for o in ORGS},
+                                                       "basis": "fixture pen"}})
+    monkeypatch.setattr(lv, "build_team_fld_runs",
+                        lambda hit, **k: {"team_fld_runs": {
+                            "values": {o: 10.0 - i for i, o in enumerate(ORGS)},
+                            "basis": "fixture fld"}})
+
+
+def test_raising_schema5_builders_cost_only_their_own_columns(store, tmp_path,
+                                                             monkeypatch, _fixed_builders):
+    """THE ISOLATION 5f REGISTERED. Each schema-5 builder raising costs its own
+    columns a stated null, the snapshot still writes, and every schema-1 to
+    schema-4 value, basis, pitcher and park is byte-identical to the write in
+    which the schema-5 builders ran: a schema-5 write carries the schema-4
+    stream untouched."""
+    import betting_usage
+    data = tmp_path / "data"
+    data.mkdir()
+    _write_fake_leaderboards(data, offense=110.0, with_orders=True)
+    ok = lv.reduce_current(on_date="2026-09-12", data_dir=data)
+    i_ph = ok["team_columns"].index("ph_share")
+    i_fld = ok["team_columns"].index("team_fld_runs")
+    assert ok["teams"]["NYM"][i_ph] == 0.05 and ok["teams"]["NYM"][i_fld] == 10.0
+
+    def boom(*a, **k):
+        raise RuntimeError("fixture failure")
+
+    monkeypatch.setattr(lv, "build_lineup_hand_mix", boom)
+    monkeypatch.setattr(lv, "build_ph_hitter_columns", boom)
+    monkeypatch.setattr(betting_usage, "build_schema5_team_columns", boom)
+    monkeypatch.setattr(lv, "build_team_fld_runs", boom)
+    bad = lv.reduce_current(on_date="2026-09-12", data_dir=data)
+    assert bad is not None and bad["schema"] == lv.SCHEMA
+
+    keep = [i for i, c in enumerate(lv.TEAM_COLUMNS) if c not in lv.SCHEMA5_TEAM_COLUMNS]
+    assert len(keep) == 20
+    for org in ORGS:
+        assert (json.dumps([bad["teams"][org][i] for i in keep])
+                == json.dumps([ok["teams"][org][i] for i in keep])), org
+    assert json.dumps(bad["pitchers"], sort_keys=True) == json.dumps(ok["pitchers"], sort_keys=True)
+    assert bad["parks"] == ok["parks"]
+    for c in lv.SCHEMA3_TEAM_COLUMNS + lv.SCHEMA4_TEAM_COLUMNS:
+        assert bad["feature_basis"][c] == ok["feature_basis"][c], c
+    for c in lv.SCHEMA5_TEAM_COLUMNS:
+        i = lv.TEAM_COLUMNS.index(c)
+        assert all(r[i] is None for r in bad["teams"].values()), c
+        assert bad["feature_basis"][c]["n"] == 0
+        assert bad["feature_basis"][c]["basis"].startswith("ABSENT"), c
+        assert "raised RuntimeError" in bad["feature_basis"][c]["basis"], c
+
+    # And the write itself goes through: a builder failure never costs a night.
+    r = lv.snapshot(on_date="2026-09-12", vintage_dir=store, data_dir=data)
+    assert r["written"] is True
+
+
+def test_one_schema5_builder_raising_leaves_its_siblings_populated(tmp_path, monkeypatch,
+                                                                   _fixed_builders):
+    import betting_usage
+    data = tmp_path / "data"
+    data.mkdir()
+    _write_fake_leaderboards(data, offense=110.0, with_orders=True)
+
+    def boom(**k):
+        raise RuntimeError("tally down")
+
+    monkeypatch.setattr(betting_usage, "build_schema5_team_columns", boom)
+    rec = lv.reduce_current(on_date="2026-09-12", data_dir=data)
+    fb = rec["feature_basis"]
+    assert fb["ph_share"]["n"] == 0 and "tally down" in fb["ph_share"]["basis"]
+    assert fb["pen_lhp_share"]["n"] == 0
+    assert fb["team_fld_runs"]["n"] == len(ORGS)
+    assert fb["catch_frame_rate"]["n"] == len(ORGS)
 
 
 # ===========================================================================

@@ -1,4 +1,5 @@
 """Schema-4 dark-capture builders: bullpen availability, schedule rest, weather.
+Also the schema-5 pinch-hit and relief-hand tally (section 5f, at the bottom).
 
 Pre-registered in docs/diamond-betting.md section 5d BEFORE this file existed
 and before any number here was related to any outcome. Nothing served reads any
@@ -768,4 +769,319 @@ def tto_exposure(games, on_date, *, feed_dir=None,
              f"pass is a separate candidate this does not price")
     out = {"values": values, "basis": basis}
     _TTO_CACHE[ck] = out
+    return out
+
+
+# ---------------------------------------------------------------------------
+# schema 5: the pinch-hit and relief-hand tally (docs/diamond-betting.md 5f)
+# ---------------------------------------------------------------------------
+# Two team columns off the same cached feeds the schema-4 builders read, and
+# nothing else: `ph_share` (the club's pinch-hit PA against relievers over its
+# PA against relievers) and `pen_lhp_share` (relief PA its left-handers threw
+# over all relief PA it threw), season to date through the day BEFORE the
+# vintage date, each shrunk toward the league rate.
+#
+# WHAT A TALLY READS, AND WHAT IT NEVER READS. Per plate appearance: the half
+# inning, the batter and pitcher ids, the pitcher's hand, the play's
+# `result.eventType` (ONLY to tell a completed plate appearance from a non-PA
+# terminal event such as a caught stealing), and the substitution actions in
+# `playEvents`. The score fields that sit beside `eventType` in the same block
+# are never read, and the completed-games rows are read for game_pk, date and
+# the two orgs only. Section 5c rule 1: nothing here may be related to a result.
+
+#: Pseudo-counts, in relief PA, for the two shrinks. The MEDIAN split-half
+#: pseudo-count k = n_half * (1 - r) / r over 2022-2025, derived with NO 2026
+#: data (the pinch-hit design lane, 2026-09-11; per-season k 186.9, 286.6,
+#: 585.9, 309.4 for the pinch-hit share and 84.7, 160.2, 232.9, 123.6 for the
+#: bullpen hand share). Frozen by section 5f: tuning either against outcomes
+#: before the look is fitting the feature to the eval window.
+K_PHI = 298
+K_PEN = 142
+
+#: Terminal events that end a play without a plate appearance, by eventType
+#: prefix, plus the exact type "error". The same list the corpus measurement
+#: behind section 5f used, so the feed tally and the corpus count one thing.
+NON_PA_PREFIX = ("caught_stealing", "pickoff", "stolen_base", "wild_pitch",
+                 "passed_ball", "balk", "other_advance", "game_advisory",
+                 "runner_double_play", "other_out", "defensive_indiff",
+                 "forced_balk")
+
+#: StatsAPI's substitution code for a pinch HITTER. Code "12" is the pinch
+#: RUNNER, who takes no plate appearance and is not counted.
+PH_POSITION_CODE = "11"
+
+#: One small memo keyed by game_pk, so a nightly run opens only the feeds it has
+#: not tallied (about fifteen), never the whole season. Gitignored .cache, the
+#: same box-persistent state the vintage store lives in.
+PH_TALLY_PATH = ROOT / ".cache" / "betting" / "ph_tally.json"
+#: Bumped whenever the per-game rule changes, which discards every memoized
+#: tally rather than mixing two rules in one season's sums.
+PH_TALLY_VERSION = 1
+
+_PH_MEMO: dict = {}
+
+
+def is_pa_event(event_type) -> bool:
+    """True when a play's eventType closes a plate appearance. A missing type
+    cannot be classified and is not counted."""
+    et = str(event_type or "")
+    if not et or et == "error":
+        return False
+    return not et.startswith(NON_PA_PREFIX)
+
+
+def _zero_side() -> dict:
+    return {"rel_pa": 0, "ph_pa": 0, "ph_rel_pa": 0,
+            "pen_pa": 0, "pen_hand_pa": 0, "pen_lhp_pa": 0, "n_ph_actions": 0}
+
+
+def tally_game_feed(feed: dict | None) -> dict | None:
+    """{"home": {...}, "away": {...}} counts for one completed feed, or None.
+
+    Per side, as the BATTING club: `rel_pa` plate appearances against the other
+    side's relievers, `ph_pa` pinch-hit plate appearances, `ph_rel_pa` those
+    against a reliever, `n_ph_actions` code-11 announcements. As the FIELDING
+    club: `pen_pa` relief plate appearances its relievers threw, `pen_hand_pa`
+    those with a readable pitch hand, `pen_lhp_pa` those thrown left-handed.
+
+    A reliever is any pitcher other than the first one that side used, read off
+    the half inning (top: the home club is pitching). A pinch-hit PA is the FIRST
+    plate appearance, at or after his announcement, of a player introduced by a
+    code-11 action; so a pinch hitter who is himself hit for before a pitch has
+    none, and the PA his replacement takes counts once."""
+    if not isinstance(feed, dict):
+        return None
+    plays = ((feed.get("liveData") or {}).get("plays") or {}).get("allPlays")
+    if not isinstance(plays, list):
+        return None
+    out = {"home": _zero_side(), "away": _zero_side()}
+    first: dict = {}
+    # Player ids are unique across both clubs, so one pending set is exact and
+    # survives an announcement logged on the previous play.
+    pending: set = set()
+    for p in plays:
+        if not isinstance(p, dict):
+            continue
+        half = str(((p.get("about") or {}).get("halfInning") or "")).lower()
+        if half not in ("top", "bottom"):
+            continue
+        bat = "away" if half == "top" else "home"
+        fld = "home" if half == "top" else "away"
+        m = p.get("matchup") or {}
+        pid = (m.get("pitcher") or {}).get("id")
+        bid = (m.get("batter") or {}).get("id")
+        if pid is not None:
+            first.setdefault(half, pid)
+        for e in p.get("playEvents") or []:
+            if not isinstance(e, dict) or e.get("type") != "action":
+                continue
+            if not e.get("isSubstitution"):
+                continue
+            if (e.get("details") or {}).get("eventType") != "offensive_substitution":
+                continue
+            if str((e.get("position") or {}).get("code") or "") != PH_POSITION_CODE:
+                continue
+            ph = (e.get("player") or {}).get("id")
+            if ph is not None:
+                pending.add(ph)
+                out[bat]["n_ph_actions"] += 1
+        if pid is None or bid is None:
+            continue
+        if not is_pa_event((p.get("result") or {}).get("eventType")):
+            continue
+        is_rel = pid != first.get(half)
+        if is_rel:
+            out[bat]["rel_pa"] += 1
+            out[fld]["pen_pa"] += 1
+            hand = ((m.get("pitchHand") or {}).get("code") or "")
+            if hand in ("L", "R"):
+                out[fld]["pen_hand_pa"] += 1
+                if hand == "L":
+                    out[fld]["pen_lhp_pa"] += 1
+        if bid in pending:
+            pending.discard(bid)
+            out[bat]["ph_pa"] += 1
+            if is_rel:
+                out[bat]["ph_rel_pa"] += 1
+    return out
+
+
+def game_ph_tally(game_pk, feed_dir: Path | None = None) -> dict | None:
+    """tally_game_feed over one cached feed; None when the feed is absent."""
+    return tally_game_feed(_feed(game_pk, feed_dir))
+
+
+def _load_ph_memo(path: Path) -> dict:
+    """{game_pk as str: entry} off the memo file, in-process cached per path. A
+    missing, unreadable or other-version file is an empty memo, never an error."""
+    key = str(path)
+    if key in _PH_MEMO:
+        return _PH_MEMO[key]
+    games: dict = {}
+    try:
+        blob = json.loads(Path(path).read_text(encoding="utf-8"))
+        if isinstance(blob, dict) and blob.get("version") == PH_TALLY_VERSION:
+            g = blob.get("games")
+            games = g if isinstance(g, dict) else {}
+    except Exception:                                            # noqa: BLE001
+        games = {}
+    _PH_MEMO[key] = games
+    return games
+
+
+def _save_ph_memo(path: Path, games: dict) -> str | None:
+    """Write the memo atomically; the error text on failure, which the basis
+    carries, and never a raise: the tallies are already in hand."""
+    try:
+        import os
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        tmp = p.with_name(p.name + ".tmp")
+        tmp.write_text(json.dumps({
+            "version": PH_TALLY_VERSION,
+            "rule": ("per completed game: relief PA, pinch-hit PA (first PA of a "
+                     "code-11 player), relief PA by pitch hand; non-PA terminal "
+                     "events excluded; no score field is read"),
+            "games": games}, separators=(",", ":")), encoding="utf-8")
+        os.replace(tmp, p)
+        return None
+    except Exception as exc:                                     # noqa: BLE001
+        return f"{type(exc).__name__}: {exc}"
+
+
+def ph_tallies(games: list[dict], on_date: str, *, feed_dir: Path | None = None,
+               tally_path: Path | None = None) -> tuple[list[dict], dict]:
+    """(entries, diagnostics) for every completed game of on_date's season dated
+    STRICTLY BEFORE on_date. Memoized by game_pk: only an untallied game opens
+    its feed, and a game whose feed is absent is retried next night rather than
+    memoized as empty."""
+    path = Path(tally_path) if tally_path else PH_TALLY_PATH
+    memo = _load_ph_memo(path)
+    season = on_date[:4]
+    entries, n_new, n_missing = [], 0, 0
+    for g in games or []:
+        d = g.get("date")
+        pk = g.get("game_pk")
+        if not d or pk is None or d >= on_date or d[:4] != season:
+            continue
+        key = str(int(pk))
+        ent = memo.get(key)
+        if not isinstance(ent, dict):
+            t = game_ph_tally(pk, feed_dir)
+            if t is None:
+                n_missing += 1
+                continue
+            ent = {"date": d, "home_org": g.get("home_org"),
+                   "away_org": g.get("away_org"), "t": t}
+            memo[key] = ent
+            n_new += 1
+        entries.append(ent)
+    save_err = _save_ph_memo(path, memo) if n_new else None
+    return entries, {"n_games": len(entries), "n_new": n_new,
+                     "n_missing_feed": n_missing, "memo_error": save_err}
+
+
+def ph_columns_from_tallies(entries: list[dict]) -> tuple[dict, dict]:
+    """({"ph_share": {org: v}, "pen_lhp_share": {org: v}}, league rates and
+    counts). Pure. Shrunk toward the league rate over the same entries:
+
+        ph_share      = (ph_rel_pa + K_PHI * league)  / (rel_pa + K_PHI)
+        pen_lhp_share = (pen_lhp_pa + K_PEN * league) / (pen_hand_pa + K_PEN)
+
+    A club is populated when it has any relief PA on file on that side."""
+    bat: dict = {}
+    pen: dict = {}
+    for ent in entries or []:
+        t = ent.get("t") or {}
+        for side in ("home", "away"):
+            org = _org(ent.get(f"{side}_org"))
+            s = t.get(side) or {}
+            if not org:
+                continue
+            b = bat.setdefault(org, [0, 0])
+            b[0] += int(s.get("ph_rel_pa") or 0)
+            b[1] += int(s.get("rel_pa") or 0)
+            q = pen.setdefault(org, [0, 0])
+            q[0] += int(s.get("pen_lhp_pa") or 0)
+            q[1] += int(s.get("pen_hand_pa") or 0)
+    n_ph, n_rel = sum(v[0] for v in bat.values()), sum(v[1] for v in bat.values())
+    n_lhp, n_hand = sum(v[0] for v in pen.values()), sum(v[1] for v in pen.values())
+    lg_phi = (n_ph / n_rel) if n_rel else None
+    lg_lhp = (n_lhp / n_hand) if n_hand else None
+    ph_share = {o: round((v[0] + K_PHI * lg_phi) / (v[1] + K_PHI), 5)
+                for o, v in bat.items() if v[1] > 0 and lg_phi is not None}
+    lhp_share = {o: round((v[0] + K_PEN * lg_lhp) / (v[1] + K_PEN), 5)
+                 for o, v in pen.items() if v[1] > 0 and lg_lhp is not None}
+    return ({"ph_share": ph_share, "pen_lhp_share": lhp_share},
+            {"league_phi": lg_phi, "league_lhp": lg_lhp, "n_ph_rel_pa": n_ph,
+             "n_rel_pa": n_rel, "n_lhp_pa": n_lhp, "n_hand_pa": n_hand})
+
+
+def build_schema5_team_columns(*, on_date: str, games: list[dict] | None = None,
+                               feed_dir: Path | None = None,
+                               tally_path: Path | None = None) -> dict:
+    """{column: {"values": {org: v}, "basis": str}} for `ph_share` and
+    `pen_lhp_share`. The game list is betting_model.completed_games(season),
+    the same index schema 4 reads; every input is injectable for a test."""
+    if games is None:
+        try:
+            import betting_model as bm
+            games = bm.completed_games(season=on_date[:4], refresh=False)
+        except Exception:                                        # noqa: BLE001
+            games = []
+    entries, diag = ph_tallies(games, on_date, feed_dir=feed_dir, tally_path=tally_path)
+    vals, lg = ph_columns_from_tallies(entries)
+    span = (f"{diag['n_games']} game(s) tallied from the season's completed games "
+            f"dated before {on_date} ({diag['n_new']} newly opened, "
+            f"{diag['n_missing_feed']} without a cached feed")
+    if diag.get("memo_error"):
+        span += f"; memo not persisted: {diag['memo_error']}"
+    span += ")"
+    if not entries:
+        why = f"ABSENT: no completed game of the season before {on_date} has a tally; {span}"
+        return {c: {"values": {}, "basis": why} for c in ("ph_share", "pen_lhp_share")}
+    fmt = lambda x: "n/a" if x is None else f"{x:.5f}"     # noqa: E731
+    return {
+        "ph_share": {"values": vals["ph_share"], "basis": (
+            f"pinch-hit PA against relievers over PA against relievers, {span}; "
+            f"league rate {fmt(lg['league_phi'])} ({lg['n_ph_rel_pa']} of "
+            f"{lg['n_rel_pa']}); shrunk by K_PHI {K_PHI}; a pinch-hit PA is the "
+            f"first PA of a code-{PH_POSITION_CODE} player; {len(vals['ph_share'])} clubs")},
+        "pen_lhp_share": {"values": vals["pen_lhp_share"], "basis": (
+            f"relief PA thrown left-handed over relief PA with a readable hand, "
+            f"{span}; league rate {fmt(lg['league_lhp'])} ({lg['n_lhp_pa']} of "
+            f"{lg['n_hand_pa']}); shrunk by K_PEN {K_PEN}; "
+            f"{len(vals['pen_lhp_share'])} clubs")},
+    }
+
+
+_PH_LIVE_CACHE: dict = {}
+
+
+def live_ph_columns(*, on_date: str | None = None,
+                    tally_path: Path | None = None) -> dict:
+    """{org: {"ph_share", "pen_lhp_share"}} for the LIVE read, off the memo ALONE:
+    games of on_date's season dated before it that the nightly capture already
+    tallied. It never opens a feed, so a board build costs one small file read;
+    a club the memo cannot place reads None, which is a stated absence."""
+    d = on_date or date.today().isoformat()
+    path = Path(tally_path) if tally_path else PH_TALLY_PATH
+    try:
+        mt = path.stat().st_mtime
+    except OSError:
+        return {}
+    ck = (str(path), mt, d)
+    if ck in _PH_LIVE_CACHE:
+        return _PH_LIVE_CACHE[ck]
+    _PH_MEMO.pop(str(path), None)          # the file moved; re-read it
+    memo = _load_ph_memo(path)
+    entries = [e for e in memo.values() if isinstance(e, dict)
+               and str(e.get("date") or "")[:4] == d[:4] and str(e.get("date") or "") < d]
+    vals, _ = ph_columns_from_tallies(entries)
+    out: dict = {}
+    for col, per in vals.items():
+        for org, v in per.items():
+            out.setdefault(org, {"ph_share": None, "pen_lhp_share": None})[col] = v
+    _PH_LIVE_CACHE.clear()
+    _PH_LIVE_CACHE[ck] = out
     return out

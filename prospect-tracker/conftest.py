@@ -253,6 +253,48 @@ def _isolate_odds_credit_ledgers(tmp_path_factory, monkeypatch):
     yield
 
 
+@pytest.fixture(scope="session")
+def _schema5_tally_path(tmp_path_factory):
+    """A per-session copy of the pinch-hit tally memo. Seeded from the real memo
+    when one exists (read, never written), so a suite run pays the season's feed
+    scan at most once and never touches .cache/betting/ph_tally.json."""
+    import shutil
+    p = tmp_path_factory.mktemp("schema5") / "ph_tally.json"
+    try:
+        import betting_usage
+        if betting_usage.PH_TALLY_PATH.exists():
+            shutil.copyfile(betting_usage.PH_TALLY_PATH, p)
+    except Exception:                                     # noqa: BLE001
+        pass
+    return p
+
+
+@pytest.fixture(autouse=True)
+def _isolate_schema5_capture(_schema5_tally_path, monkeypatch):
+    """No test may write the real schema-5 capture state or reach the network
+    through it (docs/diamond-betting.md 5f and 5g).
+
+    Any test that calls leaderboard_vintages.reduce_current runs every schema-5
+    builder. Two of them have side effects outside a tmp dir: the pinch-hit tally
+    memoizes into .cache/betting/ph_tally.json, and the team-fielding loader goes
+    through the shared scraper cache, which REFETCHES a stale season file. The
+    memo is redirected to a session copy and the fielding loader returns nothing,
+    which the builder records as a stated null; a test of that builder injects
+    its own loader."""
+    try:
+        import betting_usage
+        monkeypatch.setattr(betting_usage, "PH_TALLY_PATH", _schema5_tally_path)
+    except Exception:                                     # noqa: BLE001
+        pass
+    try:
+        import leaderboard_vintages
+        monkeypatch.setattr(leaderboard_vintages, "_load_fld_sources",
+                            lambda season: None)
+    except Exception:                                     # noqa: BLE001
+        pass
+    yield
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _restore_committed_build_artifacts():
     """Test-hygiene guard for committed BUILD ARTIFACTS (data/ sidecars +
