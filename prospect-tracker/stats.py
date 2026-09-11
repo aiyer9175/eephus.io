@@ -3388,8 +3388,136 @@ def fetch_sabermetrics(player_key: str, mlbam_id: int,
 #    "career_war": 4.3,
 #    "war_per_yr": 2.15,
 #    "war_seasons_count": 2,
-#    "source": "bbref"}
+#    "source": "bbref",
+#    "seasons_pa": {"2023": 512, "2024": 601},       # measured MLB exposure on
+#    "seasons_ip": {"2023": 0.0, "2024": 0.0}}       # the SAME stints as the WAR
 # `seasons` is sparse - only years the player actually appeared in MLB.
+#
+# MEASURED EXPOSURE (owner decision 14c, 2026-09-11). `seasons_pa` is the war_daily
+# batting frame's PA and `seasons_ip` the pitching frame's IPouts / 3, summed over
+# exactly the stints whose WAR `seasons` sums (same player, same year window, WAR
+# not blank), one entry per season in `seasons`. A season with no WAR-bearing stint
+# on one side is a measured 0 on that side (the frame was read and has none). A side
+# whose frame did not load or carries no exposure column is OMITTED, never zeroed:
+# omission is "not measured", which storage treats as missing. storage's WAG gate
+# reads it where the MLB Stats API career_stats rows measure nothing for the role
+# (641 graduates have no such row at all); rows stored before 2026-09-11 get it from
+# storage.persist_career_war_exposure, which reads war_daily_exposure below.
+
+_EXPOSURE_COLUMN = {"bat": ("PA", 1.0), "pit": ("IPouts", 1.0 / 3.0)}
+
+
+def season_exposure_by_id(df, side: str, cohort_ids=None, start_year: int | None = None,
+                          end_year: int | None = None) -> dict[int, dict[int, float]] | None:
+    """{mlb_ID: {year: exposure}} from one war_daily stint frame: PA on 'bat', innings
+    (IPouts / 3) on 'pit', summed over the stints fetch_career_war_bulk sums WAR on
+    (cohort, year window, WAR not blank). None when the frame is absent or has no
+    exposure column, so a caller can tell "not measured" from "measured zero"."""
+    col, scale = _EXPOSURE_COLUMN[side]
+    if df is None or getattr(df, "empty", True) or col not in df.columns:
+        return None
+    sub = df
+    if cohort_ids is not None:
+        sub = sub[sub["mlb_ID"].isin(cohort_ids)]
+    if start_year is not None and end_year is not None:
+        sub = sub[sub["year_ID"].between(start_year, end_year)]
+    sub = sub[sub["WAR"].notna()]
+    out: dict[int, dict[int, float]] = {}
+    for mid, yr, val in zip(sub["mlb_ID"].tolist(), sub["year_ID"].tolist(),
+                            sub[col].tolist()):
+        try:
+            mid, yr = int(mid), int(yr)
+            v = float(val)
+        except (TypeError, ValueError):
+            continue
+        if v != v:            # a blank exposure cell on a WAR-bearing stint adds 0
+            v = 0.0
+        yr_map = out.setdefault(mid, {})
+        yr_map[yr] = yr_map.get(yr, 0.0) + v * scale
+    return out
+
+
+def _exposure_for_seasons(seasons: dict, by_year: dict[int, float] | None,
+                          *, innings: bool) -> dict[str, float] | None:
+    """One season-keyed exposure map for an aggregate's `seasons`, or None when the
+    side was not measured. PA rounds to whole appearances, innings to 2dp."""
+    if by_year is None:
+        return None
+    out: dict[str, float] = {}
+    for yr_s in seasons:
+        v = by_year.get(int(yr_s), 0.0)
+        out[yr_s] = round(v, 2) if innings else int(round(v))
+    return out
+
+
+_WAR_DAILY_EXPOSURE_MEMO: dict = {}
+
+
+def _stint_war_by_id(df) -> dict[int, dict[int, float]]:
+    """{mlb_ID: {year: WAR}} summed over one frame's WAR-bearing stints (the sum
+    fetch_career_war_bulk stores, before its 2dp rounding)."""
+    sub = df[df["WAR"].notna()]
+    out: dict[int, dict[int, float]] = {}
+    for mid, yr, war in zip(sub["mlb_ID"].tolist(), sub["year_ID"].tolist(),
+                            sub["WAR"].tolist()):
+        try:
+            mid, yr, war = int(mid), int(yr), float(war)
+        except (TypeError, ValueError):
+            continue
+        yr_map = out.setdefault(mid, {})
+        yr_map[yr] = yr_map.get(yr, 0.0) + war
+    return out
+
+
+def war_daily_exposure(mlbam_ids: Iterable[int]) -> dict[int, dict[int, dict[str, float]]]:
+    """{mlb_ID: {year: {"pa": PA, "ip": IP, "war": bWAR}}} for the given ids, read
+    OFFLINE from the war_daily last-good cache (.cache/war_daily/{bat,pit}.parquet,
+    the raw bWAR frames war_source.stint_frame stores on every fetch), on the same
+    stint rule as the career_war aggregate. `war` is that aggregate's season value
+    (batting plus pitching, 2dp), so a caller can check that a stored WAR is the
+    vintage the exposure comes from. Both sides or nothing: with one side's cache
+    absent a season on that side would read as a measured 0, so {} is returned, with
+    a warning. A (player, year) with a WAR-bearing stint on either side gets all three
+    keys (0 on the side it has none). Memoised per process on the two files' mtimes."""
+    import war_source
+    paths = {side: war_source._cache_path(side) for side in ("bat", "pit")}
+    try:
+        stamp = tuple((str(p), p.stat().st_mtime) for p in paths.values())
+    except OSError:
+        log.warning("war_daily_exposure: no war_daily cache at %s",
+                    " / ".join(str(p) for p in paths.values()))
+        return {}
+    if _WAR_DAILY_EXPOSURE_MEMO.get("stamp") != stamp:
+        import pandas as pd
+        sides = {}
+        for side, p in paths.items():
+            col = _EXPOSURE_COLUMN[side][0]
+            try:
+                df = pd.read_parquet(p, columns=["mlb_ID", "year_ID", "WAR", col])
+            except Exception:
+                log.warning("war_daily_exposure: unreadable %s cache at %s", side, p,
+                            exc_info=True)
+                return {}
+            got = season_exposure_by_id(df, side)
+            if got is None:
+                log.warning("war_daily_exposure: the %s cache at %s has no %s column",
+                            side, p, col)
+                return {}
+            sides[side] = got
+            sides[side + "_war"] = _stint_war_by_id(df)
+        _WAR_DAILY_EXPOSURE_MEMO.clear()
+        _WAR_DAILY_EXPOSURE_MEMO.update({"stamp": stamp, "sides": sides})
+    s = _WAR_DAILY_EXPOSURE_MEMO["sides"]
+    out: dict[int, dict[int, dict[str, float]]] = {}
+    for mid in {int(m) for m in mlbam_ids if m}:
+        b, p = s["bat"].get(mid) or {}, s["pit"].get(mid) or {}
+        bw, pw = s["bat_war"].get(mid) or {}, s["pit_war"].get(mid) or {}
+        yrs = set(b) | set(p)
+        if yrs:
+            out[mid] = {yr: {"pa": int(round(b.get(yr, 0.0))), "ip": round(p.get(yr, 0.0), 2),
+                             "war": round(bw.get(yr, 0.0) + pw.get(yr, 0.0), 2)}
+                        for yr in sorted(yrs)}
+    return out
 
 def fetch_career_war_bulk(
     targets: list[tuple[str, int, bool]],
@@ -3486,6 +3614,11 @@ def fetch_career_war_bulk(
     if not bat_by_id and not pit_by_id:
         return {}
 
+    # Measured exposure on the same stints (see the section note above). None per
+    # side = not measured, so that side's key is left off every aggregate.
+    bat_exp = season_exposure_by_id(bat_df, "bat", cohort_ids, start_year, end_year)
+    pit_exp = season_exposure_by_id(pit_df, "pit", cohort_ids, start_year, end_year)
+
     result: dict[str, dict] = {}
     for player_key, mid, _is_pitcher in targets:
         bat_yrs = bat_by_id.get(mid, {})
@@ -3507,6 +3640,12 @@ def fetch_career_war_bulk(
             "war_seasons_count": n,
             "source": "bbref",
         }
+        for field, by_id, innings in (("seasons_pa", bat_exp, False),
+                                      ("seasons_ip", pit_exp, True)):
+            got = _exposure_for_seasons(
+                seasons, None if by_id is None else by_id.get(mid, {}), innings=innings)
+            if got is not None:
+                result[player_key][field] = got
     return result
 
 

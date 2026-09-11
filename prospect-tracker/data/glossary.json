@@ -625,10 +625,10 @@
     "WAR Above Grade"
    ],
    "priority": 2,
-   "definition": "Graduate metric: MLB WAR per season minus the WAR per season his prospect grade implied. Two versions are live; see methodology.",
-   "methodology": "Matched to MLB seasons, not plate appearances: an injury-shortened season counts as a season, so WAG reflects accumulation over time.\n\nTwo computations are live until the unification lane lands (audit F25).\n\nEngine WAG (value_framework.wag): the board's surplus cell, WAG sort and pill, and the Time Machine. The baseline is the grade's expected WAR over the same seasons, busts included, at the eFV grade he carried at debut (consensus FV where eFV abstains). The number shown is shrunk toward 0 by a reliability weight on his measured MLB PA or IP. Boom and bust are the 80th and 20th percentiles of that expectation, called only once measured exposure reaches 200 PA or 80 IP. A recorded zero stays zero; where no MLB PA or IP is on file the gate reads each season as 600 PA or 200 IP and the block says exposure_measured false.\n\nLegacy WAG: the graduate card tile and chart, the graduates list, WARWAG, the farm recent-graduates table, farm Talent Translation and the farm Boom and Bust rates. The baseline is the survivor WAR per season at the grade: consensus FV on the card, list and Boom/Bust rates, eFV in Talent Translation. A positive delta becomes 0.70 x delta + 0.30 x WAR per season, times a churn, age and current-level penalty, so the scale jumps at zero. Sample floor 150 PA or 50 IP, else the stored WAR per season.\n\nWAR basis: eWAR from the 2026-09 epoch (bWAR before it). A position player's WAG is unchanged by the epoch; a pitcher's moves with his FIP re-pricing within role.",
-   "formula": "Engine: WAG = w x (WAR/season - E[WAR/season | eFV at debut, same seasons]), 0 <= w < 1\nboom: percentile >= 0.80 · bust: percentile <= 0.20 · gate: 200 PA or 80 IP measured\nLegacy: d = WAR/season - survivor WAR/season(FV); if d > 0, d = (0.70 d + 0.30 WAR/season) x penalty\nboom: d >= +2.5 · bust: d <= -1.5 · settled floor: 2 seasons or 800 PA or 200 IP",
-   "example": "1.4 WAR per season against a 1.2 baseline is a delta of +0.2. Legacy WAG serves 0.70 x 0.2 + 0.30 x 1.4 = +0.56 before the penalty; engine WAG serves w x 0.2.",
+   "definition": "Graduate metric: MLB WAR per season minus the WAR per season his grade implied over the same MLB seasons, shrunk toward 0 on a thin sample. One definition, baked once per graduate.",
+   "methodology": "One computation (value_framework.wag), baked into each graduate's block and read by every PROSPX and farm surface: the graduate card tile, chart and summary, the graduates list, pill and sorts, the board's surplus cell, the Time Machine, WARWAG, and the farm grade's Talent Translation and Boom and Bust rates. The overseas signings table is the one exception: it still serves the plain residual against the survivor WAR per season at the grade.\n\nBaseline: the grade's expected WAR over the same number of MLB seasons, busts included, at the eFV grade he carried at debut (consensus FV where eFV abstains). Matched to seasons, not plate appearances: an injury-shortened season counts as a season, so WAG reflects accumulation over time. The chart draws each season's WAR against the same per-season baseline.\n\nThe number shown is the per-season residual times a reliability weight w on his measured MLB exposure, so a thin sample regresses hard toward 0.\n\nExposure is his MLB PA (hitters) or innings (pitchers) from the MLB Stats API rows (PA read as AB x 1.1). Where those rows carry nothing for his role, as for graduates with no MLB row on file (Mike Trout among them), the gate reads the war_daily PA or innings of the stints his WAR sums, stored with his WAR. For the season in progress that load can run ahead of a WAR last refreshed earlier. Where neither exists the gate reads each season as 600 PA or 200 IP and the block says exposure_measured false.\n\nBoom and bust are the 80th and 20th percentiles of the expectation at his exposure, called only once measured exposure reaches 200 PA or 80 IP. Below that he reads unsettled and no WAG is shown.\n\nWAR basis: eWAR from the 2026-09 epoch (bWAR before it). A position player's WAG is unchanged by the epoch; a pitcher's moves with his FIP re-pricing within role.",
+   "formula": "WAG = w x (WAR/season - E[WAR/season | eFV at debut, same seasons]), 0 <= w < 1\nw = reliability weight on measured MLB PA or IP (MLB Stats API rows, else the war_daily stints of his WAR)\nboom: percentile >= 0.80 · bust: percentile <= 0.20 · gate: 200 PA or 80 IP measured",
+   "example": "1.4 WAR per season against a 1.2 baseline is a residual of +0.2. A veteran with thousands of PA serves close to +0.2; a rookie at 250 PA serves well under half of it.",
    "seeAlso": [
     "fv",
     "war",
@@ -651,10 +651,10 @@
     "WAR/yr + WAG/yr"
    ],
    "priority": 2,
-   "definition": "Graduate metric: WAR per season plus legacy WAG per season.",
-   "methodology": "WAR per MLB season plus the legacy WAG (see WAG). It rewards graduates who are both productive and ahead of their grade. On the negative branch it equals 2 x WAR/season - baseline; on the positive branch WAG carries the legacy level term. Needs 1 full season of MLB PA or IP and an FV on file, else None and the row sinks in the WARWAG sort. Sort on the Graduates list. WAR basis: eWAR from the 2026-09 epoch.",
-   "formula": "WARWAG = WAR/season + WAG (legacy)",
-   "example": "2.5 WAR per season exactly on grade: WAG 0, WARWAG 2.5. 2.5 against a 2.0 baseline: WAG = 0.70 x 0.5 + 0.30 x 2.5 = 1.1 before the penalty, WARWAG 3.6.",
+   "definition": "Graduate metric: WAR per season plus WAG per season.",
+   "methodology": "WAR per MLB season plus WAG (see WAG), read from the same baked block, so it rewards graduates who are both productive and ahead of their grade. Shown only where WAG is shown (measured exposure past the gate), else None and the row sinks in the WARWAG sort. Sort on the Graduates list. WAR basis: eWAR from the 2026-09 epoch.",
+   "formula": "WARWAG = WAR/season + WAG",
+   "example": "2.5 WAR per season exactly on grade: WAG 0, WARWAG 2.5. 2.5 against a 2.0 baseline with w 0.9: WAG 0.45, WARWAG 2.95.",
    "seeAlso": [
     "wag",
     "war",
@@ -735,9 +735,9 @@
     "6yr-avg WAR"
    ],
    "priority": 17,
-   "definition": "The FV → WAR conversion. Three quantities are served and they are not interchangeable: a prime/talent anchor (peak season if he makes it; display), an EV anchor (expected WAR per season over the first six MLB seasons, busts included; prices every dollar), and the survivor expectation (expected WAR per season given no bust; the WAG baseline).",
-   "methodology": "Quoting one number for different quantities is the common FV → WAR error. Prime WAR (fv_to_prime_war) is survivor talent at peak, the industry table (a 60 FV as a 3-WAR regular); it drives the displayed prime path and headline peak WAR. EV WAR (fv_to_6yr_avg_war) averages every outcome, bust mass included, across the first six seasons; it is the only quantity multiplied by $/WAR, and it runs 2-3x below prime at most grades. Survivor WAR (survivor_expected_war) is the EV curve conditioned on not busting, from the same bucket probabilities; legacy WAG and the client FV_WAR_ANCHORS read it.\n\nEV anchors, 2026-09-04 fit (data/value_framework_fitted.json empirical_anchors): FV 80 3.50, FV 70 2.49, FV 65 2.01, FV 60 1.44, FV 55 0.98, FV 50 0.68, FV 45 0.32, FV 40 0.071; FV 35 0.0069, FV 30 0.0058, FV 25 0.0051, FV 20 0.0044. Each anchor at FV 45-60 is a 50/50 blend of our resolved-cohort mean (2014-2020 cohorts, eWAR labels) and a public reference scaled from Edwards' fWAR tables; FV 65 and 70 weight the reference 0.71 and 0.82 for thin cells (n 19 and 8), and FV 80 is the reference alone. The FV 20-40 knots are declared values (amended 2026-09-04), a floor and not a measurement. Half-grades interpolate linearly. The EV table drives surplus value, Sur+, $/FV-pt and the projected career WAR behind the trade-regret view.",
-   "formula": "Prime/talent anchor (survivor, display): 80→6.5, 70→4.7, 65→3.8, 60→3.0, 55→2.3, 50→1.7, 45→1.1, 40→0.6\nEV anchor (all outcomes, prices dollars): see the dated 2026-09-04 row in the methodology; half-grades interpolate\nSurvivor expectation (WAG baseline): EV anchor conditioned on P(not bust), per side",
+   "definition": "The FV → WAR conversion. Three quantities are served and they are not interchangeable: a prime/talent anchor (peak season if he makes it; display), an EV anchor (expected WAR per season over the first six MLB seasons, busts included; prices every dollar), and the survivor expectation (expected WAR per season given no bust; the overseas signing WAG baseline).",
+   "methodology": "Quoting one number for different quantities is the common FV → WAR error. Prime WAR (fv_to_prime_war) is survivor talent at peak, the industry table (a 60 FV as a 3-WAR regular); it drives the displayed prime path and headline peak WAR. EV WAR (fv_to_6yr_avg_war) averages every outcome, bust mass included, across the first six seasons; it is the only quantity multiplied by $/WAR, and it runs 2-3x below prime at most grades. Survivor WAR (survivor_expected_war) is the EV curve conditioned on not busting, from the same bucket probabilities; the overseas signings' WAG and the client FV_WAR_ANCHORS read it. The graduate WAG does not: it is measured against the busts-included expectation at the eFV grade at debut (see WAG).\n\nEV anchors, 2026-09-04 fit (data/value_framework_fitted.json empirical_anchors): FV 80 3.50, FV 70 2.49, FV 65 2.01, FV 60 1.44, FV 55 0.98, FV 50 0.68, FV 45 0.32, FV 40 0.071; FV 35 0.0069, FV 30 0.0058, FV 25 0.0051, FV 20 0.0044. Each anchor at FV 45-60 is a 50/50 blend of our resolved-cohort mean (2014-2020 cohorts, eWAR labels) and a public reference scaled from Edwards' fWAR tables; FV 65 and 70 weight the reference 0.71 and 0.82 for thin cells (n 19 and 8), and FV 80 is the reference alone. The FV 20-40 knots are declared values (amended 2026-09-04), a floor and not a measurement. Half-grades interpolate linearly. The EV table drives surplus value, Sur+, $/FV-pt and the projected career WAR behind the trade-regret view.",
+   "formula": "Prime/talent anchor (survivor, display): 80→6.5, 70→4.7, 65→3.8, 60→3.0, 55→2.3, 50→1.7, 45→1.1, 40→0.6\nEV anchor (all outcomes, prices dollars): see the dated 2026-09-04 row in the methodology; half-grades interpolate\nSurvivor expectation (overseas signing WAG baseline): EV anchor conditioned on P(not bust), per side",
    "example": "A FV 60 reads as a ~3-WAR player at peak if he makes it (prime), is worth ~1.44 expected WAR per season over his first six seasons once busts and the ramp are priced (EV), and is expected ~1.55 per season as a hitter who does not bust (survivor). Dollars always multiply the EV figure.",
    "seeAlso": [
     "fv",
@@ -3019,7 +3019,7 @@
    ],
    "priority": 55,
    "definition": "Whether the org produces MLB players, especially top-end ones. 18% of the farm score (v40), eight equally weighted leaves.",
-   "methodology": "(a) Hitter production: WAR per season plus top-3 hitter career WAR. (b) Pitcher production: the same for pitchers. (c) Boom Rate: share of settled graduates with legacy WAG, at consensus FV, of +2.5 or more per season. (d) Bust Rate: share at -1.5 or less, entered negated. Settled = 2+ MLB WAR seasons, 800 PA or 200 IP; 5 settled minimum. (e) Top-3 graduate WAR per season. (f) Conviction: count of graduates at 3.0+ WAR per season or with a 3.5+ WAR season. (g) Grad Pace: FV 50+ graduations per year over 7 years. (h) HOF Track: graduates with a 5+ WAR season.\n\nTalent Translation (mean WAG) is shown but not graded since v40.",
+   "methodology": "(a) Hitter production: WAR per season plus top-3 hitter career WAR. (b) Pitcher production: the same for pitchers. (c) Boom Rate: share of settled graduates whose WAG label is boom, the 80th percentile or higher of the expectation at the eFV grade at debut. (d) Bust Rate: share at the 20th percentile or lower, entered negated. Settled = past the WAG gate, 200 PA or 80 IP measured; 5 settled minimum. (e) Top-3 graduate WAR per season. (f) Conviction: count of graduates at 3.0+ WAR per season or with a 3.5+ WAR season. (g) Grad Pace: FV 50+ graduations per year over 7 years. (h) HOF Track: graduates with a 5+ WAR season.\n\nTalent Translation (mean WAG) is shown but not graded since v40.",
    "formula": "Production_score = mean of the present leaves, each z-scored across orgs (100 = league mean): Hitter, Pitcher, Boom%, -Bust%, Top-3 WAR/season, Conviction, Grad Pace, HOF Track",
    "seeAlso": [
     "wag",
@@ -3046,8 +3046,8 @@
     "Boom percentage"
    ],
    "priority": 56,
-   "definition": "Share of an org's settled MLB graduates labelled boom: legacy WAG of +2.5 or more per season, at consensus FV.",
-   "methodology": "Leaf inside MLB Production. Each graduate is labelled boom / settled / bust by legacy WAG once he clears the sample floor (2+ MLB WAR seasons, 800 PA or 200 IP): boom at WAG ≥ +2.5, bust at ≤ −1.5. Boom Rate = booms / settled graduates; fewer than 5 settled shows ' - '. Pairs with Bust Rate (entered negated).",
+   "definition": "Share of an org's settled MLB graduates labelled boom: WAG at the 80th percentile or higher of the expectation at his eFV grade at debut.",
+   "methodology": "Leaf inside MLB Production. Each graduate carries the WAG label baked on his card (see WAG): unsettled until measured MLB exposure reaches 200 PA or 80 IP, then boom at percentile 0.80 or higher, bust at 0.20 or lower, settled between. Boom Rate = booms / settled graduates (boom, bust and settled); fewer than 5 shows ' - '. Pairs with Bust Rate (entered negated).",
    "seeAlso": [
     "farm_grade_mlb_production",
     "mlb_production_bust_pct",
@@ -3071,8 +3071,8 @@
     "Bust percentage"
    ],
    "priority": 56,
-   "definition": "Share of an org's settled MLB graduates labelled bust: legacy WAG of −1.5 or less per season, at consensus FV. Entered negated in MLB Production.",
-   "methodology": "Mirror of Boom Rate on the same floor (2+ MLB WAR seasons, 800 PA or 200 IP): bust = WAG ≤ −1.5. Bust Rate = busts / settled graduates; fewer than 5 settled shows ' - '. Higher bust share pulls the branch down.",
+   "definition": "Share of an org's settled MLB graduates labelled bust: WAG at the 20th percentile or lower of the expectation at his eFV grade at debut. Entered negated in MLB Production.",
+   "methodology": "Mirror of Boom Rate on the same gate (200 PA or 80 IP measured): bust = percentile 0.20 or lower. Bust Rate = busts / settled graduates; fewer than 5 settled shows ' - '. Higher bust share pulls the branch down.",
    "seeAlso": [
     "farm_grade_mlb_production",
     "mlb_production_boom_pct"
@@ -3326,8 +3326,8 @@
     "Farm WAG"
    ],
    "priority": 55,
-   "definition": "Per-org mean legacy WAG across graduates. Shown on the farm card; not in the farm grade since v40.",
-   "methodology": "Legacy WAG per graduate (see WAG): WAR per MLB season minus the survivor WAR per season at his eFV grade, consensus FV where eFV abstains. Per-org value = mean over graduates with a WAG; fewer than 3 show ' - '.",
+   "definition": "Per-org mean WAG across graduates. Shown on the farm card; not in the farm grade since v40.",
+   "methodology": "WAG per graduate (see WAG): WAR per MLB season against the expectation at his eFV grade at debut (consensus FV where eFV abstains), reliability-weighted and shown once measured exposure reaches 200 PA or 80 IP. Per-org value = mean over graduates with a WAG; fewer than 3 show ' - '.",
    "seeAlso": [
     "wag",
     "fv",
@@ -3485,7 +3485,7 @@
    ],
    "priority": 62,
    "definition": "Year-grouped view of MLB-signed overseas free agents (NPB / KBO / CPBL / etc.), with per-class rollups for total bonus, mean WAG, and mean WAR/yr.",
-   "methodology": "On the Overseas page's Signed sub-tab. Each signed prospect is grouped by posting_year (posted_date.year, else signed_date.year). Each year shows class totals (count, bonuses paid) plus mean WAG and mean WAR per season over signees with ≥1 full-season MLB sample, joined through milb_key to the graduate career payload the boom/bust pill and farm grade read.",
+   "methodology": "On the Overseas page's Signed sub-tab. Each signed prospect is grouped by posting_year (posted_date.year, else signed_date.year). Each year shows class totals (count, bonuses paid) plus mean WAG and mean WAR per season over signees with ≥1 full-season MLB sample, joined through milb_key to the graduate career payload. This WAG is the signing table's own residual against the survivor WAR per season at the grade, not the engine WAG the boom/bust pill and farm grade read.",
    "formula": "class = posting_year = posted_date.year, falling back to signed_date.year\nper-class rollups: signee count, SUM bonuses, mean WAG and mean WAR/yr over signees with >= 1 full-season MLB sample (joined via milb_key to the graduate career payload)",
    "example": "A class of 11 signees and $185M paid averages WAG and WAR per season only over the signees with a full MLB season on file; the rest sit out of both means.",
    "seeAlso": [

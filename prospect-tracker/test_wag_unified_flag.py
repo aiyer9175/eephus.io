@@ -3,11 +3,13 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""storage.WAG_UNIFIED: one WAG definition behind a flag (design audit F25; audit L13-03,
-L13-04, with L13-01 and L13-06 folded in).
+"""storage.WAG_UNIFIED: one WAG definition (design audit F25; audit L13-03, L13-04, with
+L13-01 and L13-06 folded in). ON since 2026-09-11 (owner decision 14b).
 
-OFF (the default) must be today's site exactly. ON must make every surface read the baked
-engine block. Both halves are asserted here, server and client.
+ON must make every surface read the baked engine block. OFF rolls back decision 14b, the
+WAG DEFINITION, and must reproduce the pre-flip definitions exactly; both halves are
+asserted here, server and client. OFF does not roll back decision 14c: the measured
+career-WAR exposure the engine gate reads is independent of this flag (last test).
 """
 from __future__ import annotations
 
@@ -49,8 +51,9 @@ GRID = [_grad(w, fv, churn=c, age=a) for w in (-0.4, 0.3, 1.1, 2.6) for fv in (3
 BLOCK = {"wag": {"regressed_wag": 9.9, "below_meaningful_exposure": False, "boom_label": "boom"}}
 
 
-def test_the_flag_ships_off():
-    assert storage.WAG_UNIFIED is False
+def test_the_flag_ships_on():
+    """The owner flipped it now, not at the label epoch (decision 14b, 2026-09-11)."""
+    assert storage.WAG_UNIFIED is True
     assert storage.WAG_DEFINITION == "engine_at_debut"
 
 
@@ -122,6 +125,22 @@ def test_on_the_survivor_read_is_monotone_l13_01():
         assert all(b >= a for a, b in zip(vals, vals[1:]))
         assert storage._fv_to_expected_war_per_yr(20) == storage._fv_to_expected_war_per_yr(35)
         assert storage._fv_to_expected_war_per_yr(0) is None
+
+
+def test_the_flag_does_not_roll_back_the_exposure_wiring():
+    """Decision 14c is not behind WAG_UNIFIED: with the flag off the engine block still
+    gates on the career-WAR stints where career_stats measures nothing, and says so."""
+    cw = {"career_war": 3.0, "seasons": {"2024": 1.5, "2025": 1.5},
+          "seasons_pa": {"2024": 100, "2025": 50}, "seasons_ip": {"2024": 0.0, "2025": 0.0}}
+    got = {}
+    for on in (False, True):
+        with _flag(on):
+            got[on] = storage._build_debuted_payload(50, False, "SS", age=25.0, career_war=cw,
+                                                     career_stats=[], wag_fv=50)["wag"]
+    for w in got.values():
+        assert (w["exposure_source"], w["exposure_load"]) == ("war_daily", 150.0)
+        assert w["below_meaningful_exposure"] is True
+    assert got[False]["regressed_wag"] == got[True]["regressed_wag"]
 
 
 def test_on_a_positive_residual_carries_no_level_term_l13_06():

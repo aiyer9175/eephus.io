@@ -9801,13 +9801,13 @@
         <button class="chip" data-debut-sort="fv_close"
                 title="Highest final consensus FV (the FV when the player debuted) first">Final FV</button>
         <button class="chip" data-debut-sort="vs_fv_proj"
-                title="WAG (WAR Above Grade) - playing-time-weighted MLB WAR/year (PA for hitters / IP for pitchers) minus the FV-grade-implied WAR/year (FanGraphs primer, lower-bound; linearly interpolated; hitter/pitcher tables split). Requires ≥1 full-season equivalent of MLB playing time. Highest outperformance first.">WAG (high)</button>
+                title="WAG (WAR Above Grade): WAR per MLB season minus what the eFV grade at debut implied over the same seasons, shrunk toward 0 on a thin sample. Shown once measured MLB exposure reaches 200 PA or 80 IP; graduates without a WAG sink to the bottom. Highest first.">WAG (high)</button>
         <button class="chip" data-debut-sort="vs_fv_proj_low"
-                title="WAG (WAR Above Grade) - same metric as 'WAG (high)' but inverted: lowest delta first, so debuts UNDERPERFORMING their FV grade most heavily surface at the top. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time (thin-debut players sink to the bottom).">WAG (low)</button>
+                title="WAG, lowest first: graduates furthest behind their eFV grade at debut surface at the top. Graduates without a WAG sink to the bottom.">WAG (low)</button>
         <button class="chip" data-debut-sort="warwag"
-                title="WARWAG - WAR/year + WAG/year combined (= 2 × WAR/year − FV-implied WAR/year). Rewards debuts that are BOTH productive (high WAR/yr) AND outperforming their prospect grade (high WAG). Highest first. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time.">WARWAG (high)</button>
+                title="WARWAG: WAR per season plus WAG. Rewards graduates who are both productive and ahead of their grade. Highest first; graduates without a WAG sink to the bottom.">WARWAG (high)</button>
         <button class="chip" data-debut-sort="warwag_low"
-                title="WARWAG (WAR/year + WAG/year) - same metric as 'WARWAG (high)' but inverted: lowest first, so debuts that are both unproductive AND underperforming their grade surface at the top. Thin-debut players (under 1 full-season equivalent) sink to the bottom.">WARWAG (low)</button>
+                title="WARWAG, lowest first: graduates both unproductive and behind their grade surface at the top. Graduates without a WAG sink to the bottom.">WARWAG (low)</button>
       </div>
       <!-- v30.8 - Statcast metric sort, Debuted list. Surfaces the
            graduate Statcast signals (most relevant to evaluating
@@ -22566,11 +22566,11 @@ function fvExpectedWarPerYr(fv, isPitcher) {
   return null;
 }
 
-// ONE WAG DEFINITION, behind the server flag storage.WAG_UNIFIED (audit F25 / L13-03,
-// 2026-09-11). When the export stamps DATA.wag_definition = "engine_at_debut", every
-// client WAG reads the baked engine block (debuted_value.wag): the value is its
-// regressed_wag once measured exposure clears the gate, the baseline its expected_rate.
-// Without the stamp every caller below runs exactly as before.
+// ONE WAG DEFINITION (audit F25 / L13-03). storage.WAG_UNIFIED is ON since 2026-09-11,
+// so the export stamps DATA.wag_definition = "engine_at_debut" and every client WAG
+// reads the baked engine block (debuted_value.wag): the value is its regressed_wag once
+// measured exposure clears the gate, the baseline its expected_rate. Without the stamp
+// (the server rollback) every caller below runs the legacy formula.
 function _wagUnified() {
   return typeof DATA !== "undefined" && !!DATA && DATA.wag_definition === "engine_at_debut";
 }
@@ -22582,6 +22582,15 @@ function wagBaked(g) {
 function wagBakedBaseline(g) {
   const w = g && g.debuted_value && g.debuted_value.wag;
   return (w && w.expected_rate != null) ? Number(w.expected_rate) : null;
+}
+// The MLB load the WAG gate read (owner decision 14c): measured PA / IP on the
+// career-WAR stints, or a note that none is on file and the gate read seasons.
+function wagExposureNote(g) {
+  const w = g && g.debuted_value && g.debuted_value.wag;
+  if (!w) return "";
+  if (w.exposure_measured === false) return "MLB PA/IP not on file, gated on seasons";
+  if (w.exposure_load == null) return "";
+  return `${Math.round(Number(w.exposure_load)).toLocaleString("en-US")} ${w.exposure_unit || "PA"}`;
 }
 
 // v32.0 - $/WAR market anchor. Now routed through dollarsPerWar() (the
@@ -30996,7 +31005,8 @@ function renderDebuts() {
     const wagDelta = gradVsFvProjection(g);
     if (wagDelta != null && _wagUnified()) {
       const w = g.debuted_value.wag;
-      const tip = `WAG ${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} per season against the eFV grade at debut · ${w.boom_label || "unsettled"}`;
+      const xn = wagExposureNote(g);
+      const tip = `WAG ${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} per season against the eFV grade at debut · ${w.boom_label || "unsettled"}${xn ? ` · ${xn}` : ""}`;
       const cls = wagDelta > 0.05 ? "is-pos" : wagDelta < -0.05 ? "is-neg" : "is-neutral";
       wagPill = `<span class="wag-pill ${cls} g-term" data-term="wag" style="margin-left:6px;" title="${escapeHtml(tip)}">${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} WAG</span>`;
     } else if (wagDelta != null) {
@@ -39823,14 +39833,26 @@ function makeFarmReportCard(org) {
   const topGrads      = t.mlb_production_top_grads || {};
   const convLeaf      = t.mlb_production_conviction || {};
   const talentTransLeaf = t.talent_translation || {};
+  // One WAG definition (storage.WAG_UNIFIED): the engine label, percentile-keyed on
+  // the eFV grade at debut and gated on measured MLB exposure. The legacy strings
+  // stay for the server rollback.
+  const _wagOne = _wagUnified();
   const boomTooltip = boomLeaf.boom_pct != null
-    ? `Share of settled graduates with WAG ≥ +2.5 per season. ${boomLeaf.settled_count ?? 0} settled grads (min 5).`
-    : `Insufficient settled grads (needs ≥5 with 800 PA / 200 IP / 2+ MLB seasons).`;
+    ? (_wagOne
+      ? `Share of settled graduates labelled boom: WAG percentile 0.80 or higher against the eFV grade at debut. Settled = past the WAG gate, 200 PA or 80 IP measured. ${boomLeaf.settled_count ?? 0} settled grads (min 5).`
+      : `Share of settled graduates with WAG ≥ +2.5 per season. ${boomLeaf.settled_count ?? 0} settled grads (min 5).`)
+    : (_wagOne
+      ? `Insufficient settled grads (needs 5 past the WAG gate, 200 PA or 80 IP measured).`
+      : `Insufficient settled grads (needs ≥5 with 800 PA / 200 IP / 2+ MLB seasons).`);
   const bustTooltip = bustLeaf.bust_pct != null
-    ? `Share of settled graduates with WAG ≤ -1.5 per season (negative input). ${bustLeaf.settled_count ?? 0} settled grads (min 5).`
+    ? (_wagOne
+      ? `Share of settled graduates labelled bust: WAG percentile 0.20 or lower against the eFV grade at debut (negative input). ${bustLeaf.settled_count ?? 0} settled grads (min 5).`
+      : `Share of settled graduates with WAG ≤ -1.5 per season (negative input). ${bustLeaf.settled_count ?? 0} settled grads (min 5).`)
     : `Insufficient settled grads to compute bust rate.`;
   const talentTransTooltip = talentTransLeaf.wag_mean != null
-    ? `Mean WAR-above-graduation (WAG) across all grads - how each grad's actual MLB output compared to their FV-implied baseline. Sign indicates over/under-performance vs FV. ${talentTransLeaf.grad_count ?? 0} grads.`
+    ? (_wagOne
+      ? `Mean WAG over the org's graduates that show one (past the 200 PA / 80 IP gate), against the eFV grade at debut. ${talentTransLeaf.grad_count ?? 0} grads.`
+      : `Mean WAR-above-graduation (WAG) across all grads - how each grad's actual MLB output compared to their FV-implied baseline. Sign indicates over/under-performance vs FV. ${talentTransLeaf.grad_count ?? 0} grads.`)
     : `Insufficient grads with WAG on file (needs ≥3).`;
   const topGradsTooltip = topGrads.top3_war_per_yr != null
     ? `Mean WAR/yr across the org's top-3 graduates by rate. Captures peak star-tier production. ${topGrads.grad_count_qualifying ?? 0} qualifying grads (min 3).`
@@ -43477,8 +43499,8 @@ function renderFarmSystems() {
         <div class="metric-cell"><span class="metric-label">${win.toUpperCase()}DvM+</span><span class="metric-value">${dvm != null ? dvm : " - "}</span></div>
         <div class="metric-cell"><span class="metric-label">Top-End</span><span class="metric-value">${org.top_end_points != null ? org.top_end_points.toFixed(0) : " - "}</span></div>
         <div class="metric-cell"><span class="metric-label">Depth</span><span class="metric-value">${org.depth_points != null ? org.depth_points.toFixed(0) : " - "}</span></div>
-        <div class="metric-cell" title="Per-org debut boom % - % of settled debuts with WAG ≥ +2.5 per season"><span class="metric-label">Boom%</span><span class="metric-value tier-boom">${boomPct != null ? boomPct + "%" : " - "}</span></div>
-        <div class="metric-cell" title="Per-org debut bust % - % of settled debuts with WAG ≤ −1.5 per season"><span class="metric-label">Bust%</span><span class="metric-value tier-bust">${bustPct != null ? bustPct + "%" : " - "}</span></div>
+        <div class="metric-cell" title="${_wagUnified() ? "Per-org boom %: share of settled graduates with a WAG percentile of 0.80 or higher" : "Per-org debut boom % - % of settled debuts with WAG ≥ +2.5 per season"}"><span class="metric-label">Boom%</span><span class="metric-value tier-boom">${boomPct != null ? boomPct + "%" : " - "}</span></div>
+        <div class="metric-cell" title="${_wagUnified() ? "Per-org bust %: share of settled graduates with a WAG percentile of 0.20 or lower" : "Per-org debut bust % - % of settled debuts with WAG ≤ −1.5 per season"}"><span class="metric-label">Bust%</span><span class="metric-value tier-bust">${bustPct != null ? bustPct + "%" : " - "}</span></div>
       </div>`;
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">
@@ -47699,7 +47721,7 @@ function renderPlayerDetail(key) {
     "WAG",
     `<span style="color:${wagColor};">${wagDeltaTile > 0 ? "+" : ""}${wagDeltaTile.toFixed(2)} WAR/yr</span>`,
     _wagUnified()
-      ? `vs eFV grade at debut · ${((p.career_war || {}).war_seasons_count) ?? "?"} MLB season${((p.career_war || {}).war_seasons_count) === 1 ? "" : "s"}${careerWarSparkline}`
+      ? `vs eFV grade at debut · ${((p.career_war || {}).war_seasons_count) ?? "?"} MLB season${((p.career_war || {}).war_seasons_count) === 1 ? "" : "s"}${wagExposureNote(p) ? ` · ${escapeHtml(wagExposureNote(p))}` : ""}${careerWarSparkline}`
       : p.fv_close != null
       ? `vs ${fvCeil(p.fv_close)} FV proj · ${wagRateTile.war_seasons_count} MLB season${wagRateTile.war_seasons_count === 1 ? "" : "s"} (PT-weighted)${careerWarSparkline}`
       : `${careerWarSparkline}`,
@@ -49023,7 +49045,7 @@ function renderPlayerDetail(key) {
         const color = delta > 0.05 ? "var(--up)" : delta < -0.05 ? "var(--down)" : "var(--text-secondary)";
         summary = `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
         <strong style="color:${color};">WAG ${delta > 0 ? "+" : ""}${delta.toFixed(1)} WAR/yr</strong>
-        over ${n ?? "?"} MLB season${n === 1 ? "" : "s"}.
+        over ${n ?? "?"} MLB season${n === 1 ? "" : "s"}${wagExposureNote(p) ? ` (${escapeHtml(wagExposureNote(p))})` : ""}.
         <span style="color:var(--text-tertiary);">Actual ${ps.toFixed(2)} vs grade baseline ${base.toFixed(2)} WAR/yr.</span>
       </div>`;
       }

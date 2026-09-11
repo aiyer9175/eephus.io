@@ -2756,19 +2756,22 @@ def upsert_career_war(by_key: dict[str, dict]) -> int:
        # eWAR epoch (2026-09-03) only, written by the ewar_v2 provider and by
        # tools/rebase_career_war_to_ewar.py:
        "seasons_bwar": {"2023": 1.4, "2024": 2.9, ...},   # the bWAR frame
-       "ewar_coverage": {...}}                             # transform receipt
+       "ewar_coverage": {...},                             # transform receipt
+       # measured MLB exposure on the same stints (2026-09-11, decision 14c):
+       "seasons_pa": {"2023": 512, ...}, "seasons_ip": {"2023": 0.0, ...}}
     `seasons` is the series every reader prices off (labels, WAG, anchors,
     surplus). `seasons_bwar` is the input frame kept beside it so the transform
     can be re-derived (rebase idempotency) and audited. For position players
     the two are equal season by season until the SDR defense drop lands; for
     pitchers eWAR re-prices runs on FIP within role (ewar.py).
 
-    MERGE RULES. `seasons` unions old-then-new (new wins per year), and so does
-    `seasons_bwar` when either side carries it; the aggregates are recomputed
-    over the merged `seasons`. A legacy payload (no seasons_bwar) merges as it
-    always did and drops nothing: an old seasons_bwar on file survives the
-    merge untouched. `source` and `ewar_coverage` come from the NEW payload,
-    never from the stored row.
+    MERGE RULES. `seasons` unions old-then-new (new wins per year), and so do
+    `seasons_bwar`, `seasons_pa` and `seasons_ip` when either side carries
+    them; the aggregates are recomputed over the merged `seasons`. A legacy
+    payload (none of those) merges as it always did and drops nothing: an old
+    map on file survives the merge untouched (so a rebase, which writes no
+    exposure, keeps the exposure a fetch stored). `source` and `ewar_coverage`
+    come from the NEW payload, never from the stored row.
     """
     n = 0
     with connect() as con:
@@ -2788,6 +2791,7 @@ def upsert_career_war(by_key: dict[str, dict]) -> int:
                 old_seasons = old.get("seasons") or {}
                 old_bwar = old.get("seasons_bwar") or {}
             except ValueError:
+                old = {}
                 old_seasons = {}
                 old_bwar = {}
             if old_seasons:
@@ -2818,6 +2822,18 @@ def upsert_career_war(by_key: dict[str, dict]) -> int:
                 if merged_bwar != (rec.get("seasons_bwar") or {}):
                     rec = dict(rec)
                     rec["seasons_bwar"] = merged_bwar
+            # Measured exposure (decision 14c) merges by the same union rule, so a
+            # narrow-window refetch or a rebase keeps the exposure of the seasons it
+            # did not touch. A payload and a row with neither map: nothing changes.
+            for _xf in ("seasons_pa", "seasons_ip"):
+                _old_x = old.get(_xf) if isinstance(old.get(_xf), dict) else {}
+                _new_x = rec.get(_xf) or {}
+                if _old_x or _new_x:
+                    _merged_x = dict(_old_x)
+                    _merged_x.update(_new_x)
+                    if _merged_x != _new_x:
+                        rec = dict(rec)
+                        rec[_xf] = _merged_x
             con.execute(
                 """INSERT INTO career_war (player_key, payload_json, fetched_at)
                    VALUES (?, ?, datetime('now'))
@@ -5611,24 +5627,27 @@ FV_EXPECTED_WAR_PER_YR_HITTER = {
     30: -0.1, 40: 0.0, 45: 0.8, 50: 1.6, 55: 2.5, 60: 3.4, 70: 5.0, 80: 7.0,
 }
 
-# ONE WAG DEFINITION, behind a flag (design audit F25, audit L13-03, 2026-09-11).
+# ONE WAG DEFINITION (design audit F25, audit L13-03). ON since 2026-09-11: the owner
+# chose to flip it now rather than at the eWAR label epoch (decision 14b).
 #
-# False (the default) is today's site, byte for byte: three WAG computations on three
-# baselines and three grades (the engine block on the card, the legacy transform on the
-# list and in the farm rollup, the client mirror).
+# True (served): the engine WAG (value_framework.wag) on the eFV grade at debut is THE
+# WAG. It is baked once per graduate (the _debuted_block_for memo in
+# export_timeseries_json) and every surface reads that block: the payload's top-level
+# boom_label, the farm rollup's graded Boom/Bust leaves and its Talent Translation
+# display leaf, and PROSPX, which the `wag_definition` stamp on timeseries.json switches
+# over. Folded in: the legacy survivor read is clamped to the fit support (L13-01) and
+# the legacy positive branch loses its level term (L13-06), so what survives of the
+# legacy path for a direct caller is a monotone residual. One direct caller remains:
+# overseas_export's signing column still calls _grad_wag (7 of its 14 served values
+# move with the flip, 2026-09-11 reading).
 #
-# True: the engine WAG (value_framework.wag) on the eFV grade at debut is THE WAG. It is
-# baked once per graduate (the _debuted_block_for memo in export_timeseries_json) and
-# every surface reads that block: the payload's top-level boom_label, the farm rollup's
-# graded Boom/Bust leaves and its Talent Translation display leaf, and PROSPX, which the
-# `wag_definition` stamp on timeseries.json switches over. Folded in: the legacy
-# survivor read is clamped to the fit support (L13-01) and the legacy positive branch
-# loses its level term (L13-06), so what survives of the legacy path for a direct caller
-# is a monotone residual.
-#
-# Sequenced AFTER the eWAR label epoch (plan 2026-09-09, Part 3.1), because flipping it
-# moves the graded farm leaves; the measured blast radius is in the WAG_unify lane report.
-WAG_UNIFIED = False
+# False rolls back decision 14b ONLY: the list, the farm rollup and the client go back
+# to the legacy transform (three computations on three baselines and three grades).
+# It does NOT roll back decision 14c: the measured career-WAR exposure the engine gate
+# reads (_career_war_exposure, WAG_EXPOSURE_STINTS_FIRST) is independent of this flag,
+# so with the flag off the card's engine block, the surplus cell and the engine sort
+# still gate on it and still carry the exposure_source / _load / _unit keys.
+WAG_UNIFIED = True
 WAG_DEFINITION = "engine_at_debut"
 
 
@@ -7106,8 +7125,292 @@ def _mlb_exposure_measured(career_stats) -> tuple[float | None, float | None]:
     return pa, ip
 
 
+def _career_war_exposure(career_war) -> tuple[float | None, float | None]:
+    """MLB PA / IP MEASURED ON THE CAREER-WAR STINTS (owner decision 14c, 2026-09-11).
+
+    The career_war row's `seasons_pa` / `seasons_ip` are the war_daily PA and
+    IPouts / 3 of exactly the stints whose WAR `seasons` sums, so this is the
+    exposure the observed WAR was earned over. They are PERSISTED on the row: the WAR
+    funnel writes them with the WAR (stats.fetch_career_war_bulk) and
+    persist_career_war_exposure backfills rows stored before 2026-09-11. Nothing here
+    reads a cache. A side is None unless its map carries EVERY season in `seasons`:
+    a partial map would understate the load and close a gate the player cleared."""
+    seasons = (career_war or {}).get("seasons") or {}
+    if not seasons:
+        return None, None
+
+    def _sum(field):
+        m = career_war.get(field)
+        if not isinstance(m, dict):
+            return None
+        tot = 0.0
+        for yr in seasons:
+            v = m.get(yr)
+            if v is None:
+                return None
+            try:
+                tot += float(v)
+            except (TypeError, ValueError):
+                return None
+        return tot
+
+    return _sum("seasons_pa"), _sum("seasons_ip")
+
+
+_CAREER_WAR_EXPOSURE_FIELDS = ("seasons_pa", "seasons_ip")
+
+# DECISION 14c, AS ANSWERED (owner, 2026-09-11: "641 missing-exposure graduates: wire
+# war_daily PA/IP NOW"). False, served: the career-WAR stints stand in ONLY where
+# career_stats has no measured load for the player's role, which is exactly the
+# population the question named. True would read the stints FIRST for every graduate,
+# including the ones already measured on career_stats (AB x 1.1, capped at
+# CAREER_SEASONS_KEPT seasons, lagging the season). That extension moves more engine
+# labels than the 641 (measured in the L3_wag lane report) and is the owner's own
+# line, not taken here.
+WAG_EXPOSURE_STINTS_FIRST = False
+
+# The stored bWAR of a season must equal the war_daily cache's bWAR for it (summed
+# over the same WAR-bearing stints, 2dp) before the cache's PA / IP are written beside
+# it; see _career_war_exposure_fill.
+_EXPOSURE_VINTAGE_TOL = 0.011
+
+
+def _bwar_reference(row: dict, yr: str):
+    """The bWAR a stored row carries for one season: `seasons_bwar` (eWAR rows), else
+    `seasons` on a bWAR row (source bbref). None when the row cannot say."""
+    frame = row.get("seasons_bwar")
+    if isinstance(frame, dict):
+        v = frame.get(yr)
+    elif row.get("source") == "bbref":
+        v = (row.get("seasons") or {}).get(yr)
+    else:
+        v = None
+    try:
+        return float(v) if v is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _career_war_exposure_fill(career_war: dict, *id_maps: dict) -> tuple[dict, dict]:
+    """The measured exposure to write into career_war rows that lack it, read OFFLINE
+    from the war_daily last-good cache (stats.war_daily_exposure). Returns
+    ({player_key: {"seasons_pa": {...}, "seasons_ip": {...}}}, receipt).
+
+    THE SAME STINTS. The id is the one the row's WAR was built on (ewar_coverage.mlbam,
+    the rebase receipt), and only then the id maps. A season is filled when the
+    cache's bWAR for (id, season) equals the row's stored bWAR for it, so the PA / IP
+    are those of the stints the stored WAR summed. A completed season that fails the
+    check, or that the cache does not hold (an id with no stint that year: an
+    identity collision), stays missing, so that side stays unmeasured and the gate
+    falls back.
+
+    THE ONE EXCEPTION IS THE SEASON IN PROGRESS (the cache's latest year). The cache
+    is refreshed nightly; the WAR of a graduate outside the monthly career-WAR cohort
+    (which needs an MLB career_stats row, so the 641 are outside it) is not, so its
+    current-season WAR can predate the cache by months. That season is filled anyway
+    and counted in `seasons_current_newer`: its PA / IP run ahead of the WAR beside
+    them. Leaving it out would leave Trout, Betts, Machado and Harper on a season-implied
+    load, the case decision 14c named. Measured 2026-09-11, no engine label depends on it
+    (the L3_wag lane report). The repair is to refresh those rows' WAR, not to drop
+    their exposure. Only seasons a row does not already carry are returned: a stored
+    value always wins."""
+    receipt = {"rows": 0, "incomplete": 0, "no_id": 0, "cache_ok": None,
+               "rows_filled": 0, "rows_completed": 0, "seasons_filled": 0,
+               "seasons_current_newer": 0, "seasons_vintage_mismatch": 0,
+               "seasons_no_stint": 0}
+    need: dict[str, int] = {}
+    for key, row in (career_war or {}).items():
+        seasons = (row or {}).get("seasons") or {}
+        if not seasons:
+            continue
+        receipt["rows"] += 1
+        if all(isinstance(row.get(f), dict) and all(y in row[f] for y in seasons)
+               for f in _CAREER_WAR_EXPOSURE_FIELDS):
+            continue
+        receipt["incomplete"] += 1
+        mid = (row.get("ewar_coverage") or {}).get("mlbam")
+        for m in id_maps:
+            if mid:
+                break
+            mid = (m or {}).get(key)
+        try:
+            need[key] = int(mid)
+        except (TypeError, ValueError):
+            receipt["no_id"] += 1
+    if not need:
+        return {}, receipt
+    try:
+        import stats as _stats
+        by_id = _stats.war_daily_exposure(need.values())
+    except Exception:
+        log.debug("career_war exposure: war_daily_exposure raised", exc_info=True)
+        by_id = {}
+    receipt["cache_ok"] = bool(by_id)
+    if not by_id:
+        log.warning("career_war exposure: the war_daily cache (.cache/war_daily/"
+                    "{bat,pit}.parquet) returned nothing; %d rows without measured "
+                    "exposure stay unmeasured", len(need))
+        return {}, receipt
+    latest = max((yr for yrs in by_id.values() for yr in yrs), default=None)
+    out: dict[str, dict] = {}
+    for key, mid in need.items():
+        row = career_war[key]
+        yrs = by_id.get(mid) or {}
+        old_pa = row.get("seasons_pa") if isinstance(row.get("seasons_pa"), dict) else {}
+        old_ip = row.get("seasons_ip") if isinstance(row.get("seasons_ip"), dict) else {}
+        add_pa: dict[str, float] = {}
+        add_ip: dict[str, float] = {}
+        for yr in row["seasons"]:
+            if yr in old_pa and yr in old_ip:
+                continue
+            try:
+                rec = yrs.get(int(yr))
+            except (TypeError, ValueError):
+                rec = None
+            if rec is None:
+                receipt["seasons_no_stint"] += 1
+                continue
+            ref = _bwar_reference(row, yr)
+            if ref is None:
+                receipt["seasons_vintage_mismatch"] += 1
+                continue
+            if abs(float(rec["war"]) - ref) > _EXPOSURE_VINTAGE_TOL:
+                if int(yr) != latest:
+                    receipt["seasons_vintage_mismatch"] += 1
+                    continue
+                # The season still in progress: the stored WAR predates the cache, so
+                # this PA / IP runs ahead of the WAR it sits beside. Filled, counted
+                # and disclosed (glossary wag, registry wag); see the docstring.
+                receipt["seasons_current_newer"] += 1
+            if yr not in old_pa:
+                add_pa[yr] = rec["pa"]
+            if yr not in old_ip:
+                add_ip[yr] = rec["ip"]
+            receipt["seasons_filled"] += 1
+        if not add_pa and not add_ip:
+            continue
+        out[key] = {"seasons_pa": add_pa, "seasons_ip": add_ip}
+        receipt["rows_filled"] += 1
+        merged = dict(row, seasons_pa={**add_pa, **old_pa}, seasons_ip={**add_ip, **old_ip})
+        if None not in _career_war_exposure(merged):
+            receipt["rows_completed"] += 1
+    return out, receipt
+
+
+def store_career_war_exposure(by_key: dict[str, dict]) -> int:
+    """Write measured exposure maps into EXISTING career_war rows, and nothing else.
+
+    Only `seasons_pa` / `seasons_ip` change, merged per season with the stored value
+    winning, so a funnel-measured season is never overwritten by a backfill. The WAR,
+    the aggregates, `source`, `ewar_coverage` and `fetched_at` are left as they are:
+    a backfill must not make a row look freshly fetched, or the monthly WAR refresh
+    would skip it (load_career_war_meta). A key with no stored row is skipped."""
+    n = 0
+    with connect() as con:
+        for key, maps in (by_key or {}).items():
+            got = con.execute("SELECT payload_json FROM career_war WHERE player_key = ?",
+                              (key,)).fetchone()
+            if got is None:
+                continue
+            try:
+                rec = json.loads(got["payload_json"] or "{}") or {}
+            except ValueError:
+                continue
+            changed = False
+            for f in _CAREER_WAR_EXPOSURE_FIELDS:
+                add = (maps or {}).get(f) or {}
+                if not add:
+                    continue
+                old = rec.get(f) if isinstance(rec.get(f), dict) else {}
+                merged = {**add, **old}
+                if merged != old:
+                    rec[f] = merged
+                    changed = True
+            if changed:
+                con.execute("UPDATE career_war SET payload_json = ? WHERE player_key = ?",
+                            (json.dumps(rec), key))
+                n += 1
+    return n
+
+
+def _durable_mlbam_by_key() -> dict[str, int]:
+    """{player_key: mlbam} from player_photos, keys bound to two ids excluded (the
+    same rule as export_timeseries_json's durable fallback)."""
+    out: dict[str, int] = {}
+    multi: set[str] = set()
+    for mid_s, pk in load_mlbam_player_keys().items():
+        if not pk:
+            continue
+        try:
+            mid = int(mid_s)
+        except (TypeError, ValueError):
+            continue
+        if out.get(pk) not in (None, mid):
+            multi.add(pk)
+        out[pk] = mid
+    for pk in multi:
+        out.pop(pk, None)
+    return out
+
+
+def persist_career_war_exposure(*, dry_run: bool = False) -> dict:
+    """Backfill measured MLB exposure into the career_war table (decision 14c).
+
+    ONE-SHOT AND IDEMPOTENT: run it once after this lands, locally and on the box (the
+    box keeps its own DB and its own .cache/war_daily). After that the WAG gate reads
+    the stored maps and never the cache, so the served labels do not depend on a
+    gitignored file being present on the night of the export. Rows the WAR funnel
+    writes carry the maps already. A re-run fills only what is still missing (a row
+    whose current-season WAR is refreshed later, for instance). Returns the receipt of
+    _career_war_exposure_fill plus `persisted` (rows written; 0 on a dry run)."""
+    table = load_career_war()
+    maps, receipt = _career_war_exposure_fill(table, _durable_mlbam_by_key())
+    receipt["persisted"] = 0 if dry_run else store_career_war_exposure(maps)
+    log.info("career_war exposure backfill: %s", receipt)
+    if receipt["cache_ok"] is False:
+        _file_ingest_if_pipeline(
+            "career_war_exposure", ok=False, n_rows=0,
+            message=(f"the war_daily cache returned nothing; {receipt['incomplete']} "
+                     "career_war rows without measured exposure stay unmeasured"))
+    return receipt
+
+
+def _career_war_exposure_census(career_war: dict) -> dict:
+    """How many career_war rows carry measured exposure for every season (both sides),
+    for the export's receipt."""
+    rows = [r for r in (career_war or {}).values() if (r or {}).get("seasons")]
+    complete = sum(1 for r in rows if None not in _career_war_exposure(r))
+    return {"rows": len(rows), "complete": complete}
+
+
+def _file_ingest_if_pipeline(source: str, *, ok: bool, n_rows: int, message: str) -> None:
+    """File one row into the running pipeline's ingest-health ledger, never raising and
+    never importing run_monthly (the same live-module rule as
+    bullpen_export._live_pipeline_module). Outside a pipeline run it does nothing. The
+    callers here file only ok=False: an ok=True row also stamps the durable
+    source_checks table, which a test calling the export must not write."""
+    try:
+        import sys as _sys
+        for mod in (_sys.modules.get("run_monthly"), _sys.modules.get("__main__")):
+            if (mod is not None and hasattr(mod, "_record_ingest")
+                    and hasattr(mod, "write_ingest_health")):
+                mod._record_ingest(source, ok=ok, n_rows=n_rows, message=message)
+                return
+    except Exception:
+        log.debug("ingest health: could not file %s", source, exc_info=True)
+
+
+def _served_career_war(row: dict | None) -> dict:
+    """The career_war block a payload serves: the stored row without the exposure
+    maps, which only the WAG gate reads (the block carries the summed load)."""
+    row = row or {}
+    if not any(f in row for f in _CAREER_WAR_EXPOSURE_FIELDS):
+        return row
+    return {k: v for k, v in row.items() if k not in _CAREER_WAR_EXPOSURE_FIELDS}
+
+
 def _engine_wag_result(fv, is_pitcher, position, observed_war, *, age=None,
-                       service_years=None, career_stats=None):
+                       service_years=None, career_stats=None, career_war=None):
     """The ONE engine-WAG computation path (value_framework.wag, Prompt M).
     Resolves exposure from the service-time decimal (preferred) or summed MLB
     PA/IP. Returns the full wag dict or None. Shared by the baked
@@ -7133,12 +7436,32 @@ def _engine_wag_result(fv, is_pitcher, position, observed_war, *, age=None,
         # season-implied load, flagged on the result as exposure_measured False so
         # the served block says which it was. The off-role figure keeps the old
         # `or None` read, so nothing but the measured-zero case moves.
+        #
+        # THE CAREER-WAR STINTS FILL THE GAP (owner decision 14c, 2026-09-11). Where
+        # career_stats has no measured load for the role (641 graduates, Mike Trout
+        # among them, have no MLB career_stats row at all), the gate reads the PA /
+        # IPouts of the war_daily stints the observed WAR was summed over
+        # (_career_war_exposure, persisted on the row) instead of a season-implied
+        # load. A row already measured on career_stats keeps it unless
+        # WAG_EXPOSURE_STINTS_FIRST is set (off: that extension is its own decision).
+        # `exposure_source` on the result says which load the gate read.
         pa, ip = _mlb_exposure_pa_ip(career_stats)
         mpa, mip = _mlb_exposure_measured(career_stats)
-        if is_pitcher:
-            exp_pa, exp_ip = (pa or None), mip
+        wpa, wip = _career_war_exposure(career_war)
+        cs_load = mip if is_pitcher else mpa
+        if (wip if is_pitcher else wpa) is not None and (WAG_EXPOSURE_STINTS_FIRST
+                                                        or cs_load is None):
+            source = "war_daily"
+            if is_pitcher:
+                exp_pa, exp_ip = (wpa or None), wip
+            else:
+                exp_pa, exp_ip = wpa, (wip or None)
         else:
-            exp_pa, exp_ip = mpa, (ip or None)
+            if is_pitcher:
+                exp_pa, exp_ip = (pa or None), mip
+            else:
+                exp_pa, exp_ip = mpa, (ip or None)
+            source = "career_stats" if cs_load is not None else None
         if service_years is not None:
             w = _engine_wag(fv, is_pitcher, ow, position=position,
                             service_years=float(service_years),
@@ -7147,7 +7470,13 @@ def _engine_wag_result(fv, is_pitcher, position, observed_war, *, age=None,
             w = _engine_wag(fv, is_pitcher, ow, position=position,
                             exposure_pa=exp_pa, exposure_ip=exp_ip, age=age)
         if w is not None:
-            w["exposure_measured"] = (exp_ip if is_pitcher else exp_pa) is not None
+            _load = exp_ip if is_pitcher else exp_pa
+            w["exposure_measured"] = _load is not None
+            # Where the gate's load came from, and the load itself in the role's
+            # unit (PA for a hitter, IP for a pitcher); None when not measured.
+            w["exposure_source"] = source
+            w["exposure_load"] = round(float(_load), 1) if _load is not None else None
+            w["exposure_unit"] = "IP" if is_pitcher else "PA"
         return w
     except Exception:
         return None
@@ -7223,7 +7552,7 @@ def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
         w = _engine_wag_result(_wag_baseline, is_pitcher, position, observed_war,
                                age=age,
                                service_years=(float(season_count) if season_count else None),
-                               career_stats=career_stats)
+                               career_stats=career_stats, career_war=cw)
         if w:
             out["wag"] = {
                 "regressed_wag": w.get("regressed_wag"),
@@ -7241,6 +7570,12 @@ def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
                 # False = no MLB PA/IP on file, so the gate read the season-implied
                 # load (audit L13-05); True = measured, a recorded 0 included.
                 "exposure_measured": w.get("exposure_measured"),
+                # "career_stats" (the MLB Stats API rows, read first), "war_daily" (the
+                # career-WAR stints, where career_stats measures nothing: decision 14c)
+                # or None (season-implied); the load in PA / IP.
+                "exposure_source": w.get("exposure_source"),
+                "exposure_load": w.get("exposure_load"),
+                "exposure_unit": w.get("exposure_unit"),
                 # Standardized boom/bust label (percentile-keyed) -- the canonical
                 # categorical grade signal, replacing the legacy _compute_boom_bust.
                 "boom_label": _engine_wag_boom_bust(w),
@@ -8744,6 +9079,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     except Exception:
         log.debug("export: durable player_photos id map unavailable", exc_info=True)
         _durable_ids_by_key = {}
+
+    # Measured MLB exposure on the career-WAR stints (owner decision 14c, 2026-09-11)
+    # is read from the stored rows only; the export never reads the war_daily cache.
+    # A table with no measured row means persist_career_war_exposure has not run on
+    # this DB, so the 641 still gate on a season-implied load: say so, loudly.
+    _xcen = _career_war_exposure_census(career_war)
+    if _xcen["rows"] and not _xcen["complete"]:
+        _xmsg = (f"no career_war row of {_xcen['rows']} carries measured MLB exposure; "
+                 "run storage.persist_career_war_exposure() (decision 14c)")
+        log.warning("export: %s", _xmsg)
+        _file_ingest_if_pipeline("career_war_exposure", ok=False, n_rows=0, message=_xmsg)
+    else:
+        log.info("export: career_war measured exposure on %d of %d rows",
+                 _xcen["complete"], _xcen["rows"])
 
     # Usage-based role correction (rule D, role_usage.py): a MIRP/SIRP
     # consensus label (FanGraphs forward-projection via
@@ -10930,8 +11279,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # populated by the bulk career-WAR fetch in run_monthly. Carries
             # {seasons: {year: war}, career_war, war_per_yr,
             # war_seasons_count, source}. Empty dict when no MLB time on
-            # file (every active prospect who hasn't debuted).
-            "career_war": career_war.get(p.player_key, {}),
+            # file (every active prospect who hasn't debuted). The per-season
+            # exposure maps stay server-side (_served_career_war).
+            "career_war": _served_career_war(career_war.get(p.player_key, {})),
             # Within-season + cross-season level changes derived from the
             # MLB Stats API per-player transactions endpoint. One record
             # per real level transition (lateral affiliate swaps filtered

@@ -10,7 +10,8 @@ L13-05  a measured zero MLB exposure reaches the gate as zero; a missing one sta
 L13-18  the client refuses the FV-0 sentinel as a WAG baseline, as the server does.
 L13-07  the outcome-bar tooltip no longer prints WAR bands the engine does not price at.
 L13-13  the eFV label series is named from war_source, not typed as bWAR.
-L13-14  the glossary WAG, WARWAG and farm entries describe the code that runs.
+L13-14  the glossary WAG, WARWAG and farm entries describe the code that runs (one
+        definition since the WAG_UNIFIED flip, 2026-09-11).
 L13-15  the one-series claim names the industry tables it does not cover.
 """
 from __future__ import annotations
@@ -80,14 +81,21 @@ def test_a_measured_zero_closes_the_gate():
     assert vf.wag_boom_bust(w) == "unsettled"
 
 
+def _provenance(w: dict) -> tuple:
+    """Strip and return the exposure provenance the storage wrapper adds."""
+    return (w.pop("exposure_measured"), w.pop("exposure_source"), w.pop("exposure_load"),
+            w.pop("exposure_unit"))
+
+
 def test_missing_exposure_keeps_the_season_load_and_says_so():
-    """No MLB row on file (620 graduates, Mike Trout among them) is NOT a zero: the
-    engine keeps its season-implied load, byte for byte, and the result says so."""
+    """No MLB PA/IP on file anywhere (neither the career-WAR stints nor career_stats) is
+    NOT a zero: the engine keeps its season-implied load, byte for byte, and the result
+    says so. Since decision 14c this is the residue the war_daily wiring cannot reach."""
     w = storage._engine_wag_result(55, False, "SS", 6.0, age=27.0, service_years=3.0,
                                    career_stats=[])
     ref = vf.wag(55, False, 6.0, position="SS", service_years=3.0,
                  exposure_pa=None, exposure_ip=None, age=27.0)
-    assert w.pop("exposure_measured") is False
+    assert _provenance(w) == (False, None, None, "PA")
     assert w == ref
     assert w["below_meaningful_exposure"] is False
 
@@ -102,7 +110,9 @@ def test_a_positive_measured_load_is_unchanged(is_pitcher, rows, pa, ip):
                                    career_stats=rows)
     ref = vf.wag(50, is_pitcher, 1.0, position=pos, service_years=2.0,
                  exposure_pa=pa, exposure_ip=ip, age=25.0)
-    assert w.pop("exposure_measured") is True
+    measured, source, load, unit = _provenance(w)
+    assert (measured, source, unit) == (True, "career_stats", "IP" if is_pitcher else "PA")
+    assert load == round(ip if is_pitcher else pa, 1)
     assert w == ref
 
 
@@ -168,6 +178,9 @@ def test_the_label_series_is_not_typed_as_bwar():
 
 # ---------------------------------------------------------------- L13-14
 def test_the_wag_entry_quotes_the_rules_the_code_runs():
+    """ONE definition since the flip (decision 14b): the entry quotes the engine's
+    rules and none of the retired legacy transform."""
+    assert storage.WAG_UNIFIED is True
     e = _glossary()["wag"]
     cfg = vf._config()["wag"]
     bb, me = cfg["boom_bust"], cfg["meaningful_exposure"]
@@ -175,22 +188,24 @@ def test_the_wag_entry_quotes_the_rules_the_code_runs():
     assert f"percentile >= {float(bb['boom_percentile']):.2f}" in f
     assert f"percentile <= {float(bb['bust_percentile']):.2f}" in f
     assert f"{int(me['hitter_pa'])} PA or {int(me['pitcher_ip'])} IP" in f
-    assert "d >= +2.5" in f and "d <= -1.5" in f and "0.70 d + 0.30" in f
-    assert "~1.57" not in _text(e)
-    # the legacy thresholds the formula quotes are the ones the labeller applies
-    def label(w):
-        p = {"career_war": {"career_war": w * 2, "war_seasons_count": 2, "war_per_yr": w},
-             "fv_close_raw": 50.0, "position": "SS",
-             "career_stats": [{"level": "MLB", "pa": 900}]}
-        return storage._compute_boom_bust(p)
-    exp50 = storage._fv_to_expected_war_per_yr(50.0)
-    assert label(exp50 - 1.5) == "bust" and label(exp50 - 1.49) == "settled"
+    assert "war_daily" in f and "eFV at debut" in f
+    text = _text(e)
+    for retired in ("d >= +2.5", "d <= -1.5", "0.70 d + 0.30", "0.70 x", "Legacy WAG",
+                    "Two computations", "Two versions", "~1.57"):
+        assert retired not in text, retired
+    assert "One definition" in e["definition"]
+    # the rules the entry quotes are the ones the served label applies
+    w = {"below_meaningful_exposure": False, "percentile": float(bb["boom_percentile"])}
+    assert vf.wag_boom_bust(w) == "boom"
+    assert vf.wag_boom_bust(dict(w, percentile=float(bb["bust_percentile"]))) == "bust"
+    assert vf.wag_boom_bust(dict(w, below_meaningful_exposure=True)) == "unsettled"
 
 
 def test_warwag_and_talent_translation_entries_drop_the_retired_numbers():
     g = _glossary()
     assert "FV-55 expects ~2.5" not in _text(g["warwag"])
-    assert g["warwag"]["formula"] == "WARWAG = WAR/season + WAG (legacy)"
+    assert g["warwag"]["formula"] == "WARWAG = WAR/season + WAG"
+    assert "legacy" not in _text(g["warwag"]).lower()
     tt = _text(g["farm_grade_talent_translation"])
     assert "actual_career_WAR" not in tt and "primer table" not in tt and "eFV" in tt
 
