@@ -218,13 +218,11 @@ def measured_rate(counts_by_date: dict, *, window: int = RATE_WINDOW_DATES,
         except ValueError:
             age = None
     effective = min(window, age) if age else window
-    basis = (f"counted arrivals over the {window} calendar days since {cutoff}, "
-             f"divided by {effective} day(s). A night with no capture is a night "
-             "the clock did not tick and is in the denominator")
+    basis = (f"arrivals over the {window} calendar days since {cutoff}, divided "
+             f"by {effective} day(s); a night with no capture counts as zero")
     if age is not None and effective < window:
-        basis += (f", but the series is only {age} day(s) old (started {start}) "
-                  "and days before it existed are not nights the clock failed "
-                  "to tick")
+        basis += (f". The series is only {age} day(s) old (started {start}), so "
+                  "days before it are not counted")
     basis += "."
     return {
         "n_in_window": total,
@@ -262,9 +260,8 @@ def days_to_need(have, need, rate: dict) -> dict:
         return {"days": None, "is_projection": True, "rate": per_day,
                 "rate_basis": rate.get("basis"),
                 "blocked_by": (f"no arrivals in the last {rate.get('window_days')} "
-                               "days, so no measured rate exists to project with. "
-                               "This is not an estimate of 'a long time', it is "
-                               "the absence of one.")}
+                               "days, so no measured rate exists to project with; "
+                               "the null is the absence of an estimate.")}
     return {
         "days": int(math.ceil(short / per_day)),
         "short_by": short,
@@ -272,8 +269,7 @@ def days_to_need(have, need, rate: dict) -> dict:
         "rate_basis": rate.get("basis"),
         "is_projection": True,
         "note": ("a MEASURED arrival rate applied forward, not a schedule. It "
-                 "assumes the next weeks look like the last ones and it will be "
-                 "wrong whenever they do not."),
+                 "assumes the next weeks look like the last ones."),
     }
 
 
@@ -349,9 +345,8 @@ def _vintage_clock(evald: dict, history: list[dict]) -> dict:
         "n_skipped_no_vintage": v.get("n_skipped_no_vintage"),
         "first_graded_date": v.get("first_graded_date"),
         "last_graded_date": v.get("last_graded_date"),
-        "may_go_backwards": ("yes. A refit can change which games are eligible, "
-                             "and this counter renders the drop rather than "
-                             "carrying the high-water mark forward."),
+        "may_go_backwards": ("yes. A refit can change which games are eligible; "
+                             "a drop is shown, not held at the high-water mark."),
     }
 
 
@@ -484,13 +479,12 @@ def _price_clock(shadow_summary: dict, ledger_rows: list[dict],
         "need_per_tag": need,
         "by_tag": per_tag,
         "why_per_tag": ("docs/diamond-betting.md section 7a: a pooled ROI measures "
-                        "a mixture nobody bet. The tags select on four different "
+                        "a mixture nobody bet. The tags select on different "
                         "quantities, so a threshold fitted to their union is wrong "
-                        "for each of them separately."),
-        "cost": ("100 settled rows PER TAG, so the slowest tag is about 3x slower "
-                 "to open than the pooled count. That is the price of a threshold "
-                 "that means something, and it is paid by the uncapped board_all "
-                 "tag rather than by loosening any existing tag."),
+                        "for each of them."),
+        "cost": (f"{need} settled rows PER TAG, so the slowest tag opens about 3x "
+                 "slower than the pooled count would. The uncapped board_all tag "
+                 "carries that cost; no existing tag is loosened."),
     }
 
 
@@ -524,8 +518,8 @@ def _calibration_block(cal_summary: dict, history: list[dict]) -> dict:
         "blocked_by": blocked,
         "not_gate_1": ("calibration is NOT the model's first validation gate. Gate "
                        "1 is the vintage-graded moneyline sample beating the "
-                       "home-field baseline on games the model could not see. A "
-                       "well calibrated board does not license a pick."),
+                       "home-field baseline on games the model could not see. "
+                       "Good calibration does not license a bet."),
     }
 
 

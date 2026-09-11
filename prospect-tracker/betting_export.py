@@ -305,11 +305,11 @@ CORRELATION_RULES = [
     {"id": "same_game_any", "severity": "warn",
      "when": "two or more legs from the same game",
      "why": "Same-game outcomes share the run environment, the starters and the weather. "
-            "Multiplying the legs is not arithmetic, it is an assumption, and it is wrong."},
+            "Multiplying the legs assumes an independence they do not have."},
     {"id": "ml_runline_same_team", "severity": "block",
      "when": "moneyline and runline on the same team",
-     "why": "The runline is a subset of the moneyline. These are one bet with two prices, "
-            "not two bets, and the product is meaningless."},
+     "why": "The runline is a subset of the moneyline: one bet with two prices. "
+            "The product is meaningless."},
     {"id": "ml_and_total", "severity": "warn",
      "when": "a moneyline and the total in the same game",
      "why": "Favourite plus under and dog plus over are both positively correlated. "
@@ -1624,8 +1624,8 @@ def model_verdict(evald: dict | None, *, registry: dict | None = None) -> dict:
                     "so no second word is shown")
     else:
         reg_half = (f"the model registry's verdict is \"{registry_verdict}\""
-                    + (", which there means measured but short of its sample "
-                       "gate, not working" if registry_verdict == "provisional" else ""))
+                    + (" (measured, short of its sample gate)"
+                       if registry_verdict == "provisional" else ""))
     return {
         "gate_state": gate_state,
         "registry_verdict": registry_verdict,
@@ -1680,8 +1680,7 @@ def provisional_record_label(evald: dict | None, *, min_edge: float,
     state = model_verdict(evald)["gate_state"]
     return (f"Provisional. This selection clears a {min_edge:.1%} floor that was chosen "
             f"as policy, not measured. The model is {state}: {got}, and no "
-            "minimum-edge threshold exists. This row is in the public record because "
-            "a claim that is not written down before the result is not a claim.")
+            "minimum-edge threshold exists. Recorded before the result.")
 
 
 def record_publish_blockers(*, payload: dict | None = None,
@@ -1756,12 +1755,11 @@ def record_publish_blockers(*, payload: dict | None = None,
         "need": "an explicit owner decision to publish the record",
         "have": "armed" if RECORD_PUBLISH_ARMED else "not armed",
         "reason": ("the record is armed by owner decision" if RECORD_PUBLISH_ARMED else
-                   "the close_snapshot blocker was retired on 2026-09-07 (SERVE_CLV), "
-                   "which left this list all-open and would have started the public "
-                   "record as a side effect of removing a different gate. Publishing "
-                   "is an owner decision: with CLV retired these rows grade on "
-                   "realized results alone, which is noisier than closing line value, "
-                   "on a model whose gate still reads unvalidated"),
+                   "retiring the close_snapshot blocker on 2026-09-07 (SERVE_CLV) left "
+                   "the list all open, which would have started the record on its "
+                   "own; publishing waits on an owner decision. Without CLV, rows "
+                   "grade on realized results alone, which is noisier than closing "
+                   f"line value, and the model gate reads {verdict_state}"),
     })
 
     # RETIRED 2026-09-07 (SERVE_CLV). This was four-of-five open and one shut,
@@ -3648,8 +3646,8 @@ def props_fair_lines(games: list[dict], *, starters=None,
     return {
         "model_only": True,
         "no_book_comparison_reason": ("The Odds API free tier bills player props per event; "
-                                      "a full slate would burn the monthly budget in about "
-                                      "two weeks. These are our fair numbers, not a market read."),
+                                      "a full slate would spend the monthly budget in about "
+                                      "two weeks."),
         "method": {
             "pitchers": "rest-of-season rate per inning from the projection engine, times "
                         "the pitcher's measured innings per start",
@@ -3660,21 +3658,19 @@ def props_fair_lines(games: list[dict], *, starters=None,
                                  "hand: the vs-LHP order when the probable throws left, the "
                                  "vs-RHP order otherwise, resolved for the whole slate in one "
                                  "bulk StatsAPI call. An unknown hand falls back to the vs-RHP "
-                                 "order and each hitter row says so in vs_hand_basis. A posted "
-                                 "lineup card beats this every time",
+                                 "order and each hitter row says so in vs_hand_basis. Posted "
+                                 "lineup cards are not read",
             # `distribution` IS A PROSE STRING AND HAS TO STAY ONE. The page
             # renders this key verbatim through one escaper (assets/betting.js,
             # `kv("Distribution", esc(meth.distribution || "-"))`), and an
             # escaper stringifies: a dict here reaches a paying reader as
             # "[object Object]". The per-market table therefore lives in its
             # own key below, which no client reads.
-            "distribution": "each prop market declares its own distribution "
-                            "and every row carries the one that priced it. The "
-                            "value block prices that same function at the "
-                            "book's line, so the fair line and the value line "
-                            "cannot disagree about a bet. No props row has "
-                            "settled yet, so none of these choices is "
-                            "calibrated against outcomes",
+            "distribution": "declared per prop market; every row carries the "
+                            "one that priced it, and the value block prices "
+                            "the same function at the book's line. No props "
+                            "row has settled, so no choice is calibrated "
+                            "against outcomes",
             # ONE mass function per market, shared with the value block, each
             # with the structural reason it is that one and not a blanket
             # Poisson. Read PROPS_DISTRIBUTIONS in this module for the same
@@ -4061,8 +4057,8 @@ def props_value_bets(bets: list[dict], props_fair: dict, *,
         "selected_games": selected_meta,
         "markets": list(bi.PROPS_MARKETS),
         "floor": {"min_edge": thr, "basis": basis, "provisional": prov,
-                  "note": "the SAME floor the team slots clear; no props "
-                          "floor exists and none may be invented"},
+                  "note": "the floor the team slots clear; props have no "
+                          "floor of their own"},
         "rows": rows_out,
         "value_rows": value_rows,
         "n_rows": len(rows_out),
@@ -4084,12 +4080,10 @@ def props_value_bets(bets: list[dict], props_fair: dict, *,
                           "carries `model_id` and `pmf`",
             "one_probability_per_bet": ("before 2026-09-06 this block priced "
                                         "1+ hits and 1+ home runs as a Poisson "
-                                        "while the fair-line table priced them "
-                                        "as a per-PA Bernoulli, so the page "
-                                        "carried two answers for one bet. Both "
-                                        "now call one function. No published "
-                                        "number moved: no props row has ever "
-                                        "been served"),
+                                        "and the fair-line table as a per-PA "
+                                        "Bernoulli. Both now call one function. "
+                                        "No props row had been served, so no "
+                                        "published number moved"),
         },
     }
 
@@ -4127,12 +4121,11 @@ def parlay_context(bets: list[dict]) -> dict:
         "rules": CORRELATION_RULES,
         "legs": legs,
         "featured_parlay": None,
-        "featured_reason": ("A featured parlay needs a backtest that survives the "
-                            "correlation haircut. There is not one, so there is no "
-                            "featured parlay."),
-        "math_note": ("Independent legs multiply. Same-game legs do not, and the naive "
-                      "product is always too generous to the bettor's story and too cheap "
-                      "for the book to sell at that price."),
+        "featured_reason": ("No parlay has a backtest that survives the "
+                            "correlation haircut."),
+        "math_note": ("Independent legs multiply. Same-game legs do not: on positively "
+                      "correlated legs the naive product understates the parlay's "
+                      "probability, at a price no book will sell."),
     }
 
 
@@ -4454,9 +4447,9 @@ def _slot_tag_records() -> dict:
 #: dwell). Under the any-market policy (2026-09-05) the closure no longer bars the
 #: market; this is what the row says instead.
 EVIDENCE_CAVEAT = ("this market's own settled paper record resolved worse than a coin "
-                   "at the section 7b floor for the closure dwell; it is eligible "
-                   "under the any-market slot policy (owner decision 2026-09-05) and "
-                   "that record rides here as the disclosure, not as a bar")
+                   "at the section 7b floor for the closure dwell. Eligible under the "
+                   "any-market slot policy (owner decision 2026-09-05); the record is "
+                   "shown as disclosure, not a bar")
 
 POISSON_CAVEAT = ("this is a runline or total, and the margin model is a Poisson "
                   "difference that underdisperses real run scoring, so its "
@@ -4702,8 +4695,7 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
         "today_note": today_note,
         "note": ("a market must clear BOTH legs to fill a slot or reach the "
                  "public record. The shadow and calibration ledgers keep "
-                 "recording closed markets, because they are the only "
-                 "instruments that can ever accumulate the evidence to re-open "
+                 "recording closed markets; only their evidence can re-open "
                  "one."),
         "markets": markets,
     }
@@ -4947,10 +4939,8 @@ def provisional_picks(bets: list[dict], *, odds_priceable: bool,
                        if prov else
                        ("the published pick clears the MEASURED minimum-edge "
                         "threshold; the provisional policy floor is retired")),
-            "shared_floor_note": ("both slots clear the same floor; no slot is "
-                                  "allowed a lower one, because a threshold "
-                                  f"lowered to make a {noun} appear is not a "
-                                  "threshold"),
+            "shared_floor_note": ("both slots clear the same floor, and it is "
+                                  f"never lowered to make a {noun} appear"),
             "slots": {}}
 
     def _slot_meta(slot, *, rule, band, present, reason, n_cands):
@@ -5181,9 +5171,9 @@ def _carry_previous_board(payload: dict, reason: str, *, log_fn=None) -> dict:
     # (these are old prices), gives the age, and refuses the reading that makes
     # a stale board dangerous: that an edge on it is an edge now.
     notice = (f"STALE BOARD: these are the {payload['slate_date']} slate's prices, "
-              f"{age_txt}, and they are NOT live. This build could not price a single "
-              f"game, so the last board that could be built is standing in for tonight's. "
-              f"No number on it is a current market and no edge on it is a current edge.")
+              f"{age_txt}, and they are NOT live. This build priced no games, so the "
+              f"last board that could be built stands in for tonight's. No price or "
+              f"edge on it is current.")
     payload["status"]["stale_board"] = True
     payload["status"]["stale_board_notice"] = notice
     payload["status"]["stale_board_slate_date"] = payload["slate_date"]
@@ -5197,7 +5187,7 @@ def _carry_previous_board(payload: dict, reason: str, *, log_fn=None) -> dict:
     payload["status"]["stale_board_reason"] = (
         f"this build priced 0 games ({reason}), so the board below is the last one that "
         f"could be built, for the {payload['slate_date']} slate. It is NOT tonight's "
-        f"board and no price on it should be treated as live.")
+        f"board and no price on it is live.")
     # Mutated IN PLACE: build() holds this same list object and hands it to the
     # preview slice, so the free tier and the full payload cannot disagree about
     # whether the board is stale.

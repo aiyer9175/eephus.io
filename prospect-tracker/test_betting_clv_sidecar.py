@@ -513,8 +513,7 @@ def test_the_provisional_label_reads_its_count_from_the_artifact():
     # de-picked every prose surface while the gates are closed.
     assert txt.startswith("Provisional. This selection clears a 6.0% floor that was "
                           "chosen as policy, not measured.")
-    assert txt.endswith("This row is in the public record because a claim that is not "
-                        "written down before the result is not a claim.")
+    assert txt.endswith("Recorded before the result.")
     moved = be.provisional_record_label(
         {"vintage": {"n_graded": 212, "min_graded_games_for_min_edge": 600}},
         min_edge=0.06, provisional=True)
