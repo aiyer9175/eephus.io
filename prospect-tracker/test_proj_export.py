@@ -163,12 +163,17 @@ def test_bucket_ordering_floor_mean_ceiling():
 
 
 def test_vet_surplus_only_on_contracted_seasons():
-    """The module's honesty rule: a veteran surplus claim requires a real
-    contract (signed_through + per-season salary)."""
+    """The module's honesty rule: a veteran surplus claim rests on a real
+    contract (signed_through + per-season salary) or, since GATE C
+    (2026-08-09, ea9cb564), on projected arbitration salaries for a debuted
+    player with a resolved arbitration step. Those rows are stamped salSrc
+    "arb_projection" and the board says so ("arb est."). A claim on neither
+    is the defect this guards."""
     d = _payload()
     for m in d["vets"]:
         if m.get("surNpv") is not None:
-            assert m.get("thru"), f"{m['name']} has surplus but no contract"
+            assert m.get("thru") or m.get("salSrc") == "arb_projection", (
+                f"{m['name']} has surplus but no contract and no arbitration projection")
         if m.get("sur"):
             assert any(s is not None for s in m["sur"])
 
