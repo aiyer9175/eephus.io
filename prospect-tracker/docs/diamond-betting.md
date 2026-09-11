@@ -1348,6 +1348,209 @@ schema-4 accrual both run on, and an unconditional raise would stop that stream.
 
 **Not reopened.** No criterion, control or threshold above is amended. The
 candidate, the two-leg bar and the permuted twin stand exactly as registered.
+
+## 5f. The pinch-hit and bullpen-handedness gate (pre-registered 2026-09-11, schema 5)
+
+**Written before the schema bump it describes exists in code and before the
+candidate has been computed for any club or related to any outcome**, in the
+discipline of 5a, 5c, 5d and 5e. Disclosed, because 5c rule 1 turns on it: before
+this section was written, the pinch-hit design lane (2026-09-11) measured pinch-hit
+frequency, innings, platoon share, each club's pinch-hit rate and each club's
+bullpen LHP share on `.cache/pbp_corpus` (2018, 2019, 2021-2026). Those are exposure
+measurements; no score, run, win, win probability or leverage field was read, and
+the candidate below was never computed.
+
+**The owner ask this answers.** "Incorporate pinch-hit awareness into the betting
+model ... Pinch hitting awareness should have platoon/handedness awareness."
+(2026-09-11)
+
+**The candidate.** The served model reads one offense number per club, `z_off`.
+The candidate adds a per-game delta over the BULLPEN share of the game only:
+
+```
+z_off_ph = z_off + (1 - w) * [ (pL - pL_bar) * (L - R)
+                              + phi * (pL * g_L + (1 - pL) * g_R) ] / off_sd
+```
+
+`w` is the opposing probable's starter share exactly as `game_prevention_z`
+computes it; `pL` the opposing club's `pen_lhp_share`; `pL_bar` its mean over the
+clubs in the same vintage; `L`, `R` the scoring club's `off_vs_lhp`, `off_vs_rhp`;
+`phi` its `ph_share`; `g_h = max(0, bench_adv_vs_h - lineup_dis_vs_h)`, zero when
+either is null. Coefficients are refit on the fit half as the served model's are;
+fit-half games whose vintage predates schema 5 enter with a delta of zero, which
+makes those rows identical to the served model's. There is no new free parameter.
+It is computed by `game_offense_ph_z`, which nothing served calls.
+
+**The six columns (schema 5).** `lineup_dis_vs_lhp` and `lineup_dis_vs_rhp`: the
+per-hand HEM+ (`hem_plus_split`) of the constructed nine's bats WITHOUT the platoon
+edge against that hand, season-PA weighted, null when the nine has none.
+`bench_adv_vs_lhp` and `bench_adv_vs_rhp`: the same over bench bats WITH the edge
+(switch hitters count on both hands), null when none carries a split, never a
+season-number fallback. `ph_share`: the club's pinch-hit PA over its relief PA,
+season to date through the day before the vintage, shrunk by `K_PHI = 298` toward
+the league rate. `pen_lhp_share`: relief PA thrown by the club's left-handers over
+all its relief PA, same window, `K_PEN = 142`. The betting builder reads the raw
+bench rows and the orders, never the page's platoon-option markers, whose display
+constants must be free to move without moving a dark column.
+
+**Constants, and where each comes from.** `K_PHI` and `K_PEN` are the median
+split-half pseudo-counts over 2022-2025, derived with no 2026 data. The platoon
+restriction on the bench and the lineup and the `max(0, ...)` are POLICY, grounded
+in exposure: in 2026, 86.4% of non-switch pinch hitters held the platoon edge
+against 46.6% of all non-switch PA against relievers, and the replaced regular was
+on the wrong side 90.6% of the time. Season-to-date rather than a trailing window
+because the two predicted a club's next 27 games equally (9 and 8 of 15
+comparisons). Tuning any of these against outcomes before the look is fitting the
+feature to the eval window.
+
+**How it stays separate from 5e.** 5e swaps the whole-game `z_off` for the split
+matching the STARTER's `throws`. This candidate never reads `throws` and leaves the
+starter share of the game at the served number; takes its hand from the opposing
+BULLPEN's season-to-date usage, and its bench term from columns 5e does not have;
+reads `off_vs_lhp` and `off_vs_rhp` and never writes them (the schema-5 build must
+leave both columns, every `orders` slot and Offense+ byte-identical on the same
+inputs, verified before it ships); and is frozen now, before 5e's look, so 5e's
+result cannot shape it. If 5e is SERVED before this look, the candidate is re-based
+mechanically: the served starter segment becomes 5e's and the bracket's reference
+becomes the split 5e served, `z_off_ph = z_off_5e + (1 - w) * (late -
+off_vs_throws) / sd_5e`, `late = pL * L + (1 - pL) * R + phi * (pL * g_L + (1 - pL)
+* g_R)`. Which form runs is read off the serve flag on the look date.
+
+**The pre-registered expectation, stated before the first fit: FAIL, for power.**
+Pinch-hit PAs are 2.41% of 2026 plate appearances (0.914 per team-game). At the
+served slope a plausible candidate moves a game's win probability by about 0.03 to
+1.0 points; at 1,000 eval games the paired-Brier leg can see about 5.2, so a
+correct candidate has power of about 5 to 7%, the false-positive rate. A FAIL is not
+evidence that pinch hitting does not matter, and a PASS on its own would not be
+evidence that it does.
+
+**The power precondition, computed before any outcome is joined.** At the look, for
+each split quantile, compute on the eval games the RMS of (candidate p_home minus
+served p_home) from features and fit-half coefficients only. If sqrt(n_eval) times
+that RMS is below 1.645 at ANY quantile, the look records UNDERPOWERED with the RMS
+and n_eval, the outcome comparison is not computed, and the candidate is neither
+passed nor closed. This rule is specific to 5f: it is the only candidate whose own
+exposure says the two legs cannot resolve it.
+
+**Criteria**, only when the precondition holds. Both required, at all three split
+quantiles (0.6, 0.7, 0.8) with the `VINTAGE_MIN_FIT_GAMES` and
+`VINTAGE_MIN_EVAL_GAMES` floors: paired Brier improvement over the served model at
+one-sided t >= 1.645, AND paired log loss not worse on the point estimate. The eval
+set is regular-season games whose vintage is schema 5 or later. A game is EXCLUDED
+when either club's `ph_share` or `pen_lhp_share` is null, or when all four of
+either club's hitter-derived columns are null. A null on ONE hand's bench or lineup
+column is the stated "no qualifying bat" case and scores `g = 0` on that hand.
+
+**Control.** The 5c rule 3 permuted twin, 200 seeded permutations (seeds 0 to 199):
+within each vintage date, permute `pen_lhp_share` across clubs and, independently,
+each club's bench pair `(g_L, g_R)` together with its `ph_share`; each club keeps
+its own `L` and `R`. The candidate beats its twin only if its paired Brier
+improvement exceeds the 95th percentile of the 200 twin improvements.
+
+**What must be reported whichever way it lands.** The effective n and the count
+dropped for each null; the count of vintage nights with `platoon_splits.available`
+false or `n_teams_split_equal` above zero (5e's tripwire, on which arm A is zero);
+the precondition's RMS and expected t at each quantile; the decomposition, arm A
+alone and arm B alone, reported and never qualifying; the correlation of this
+candidate's delta with `z_off` and with 5e's delta; bench coverage.
+
+**Clock.** 5c rule 2 governs: at least four weeks of schema-5 vintages. Postseason
+games are excluded from the eval set (rosters, bench and bullpen usage change in
+October, and they are exactly what this candidate prices). One look per season,
+after the last regular-season game; **the first is the end of the 2027 regular
+season.** No other look, in either direction.
+
+**What this gate is not.** A pricing question: does knowing a club's pinch-hit
+habit and bench, and the opposing bullpen's hands, improve a pregame forecast of a
+fully observed result. It is not the In-Game Management question of whether any
+pinch-hit DECISION was good, which needs the counterfactual of the pinch hit that
+did not happen; nothing the management module measures may be read into this gate.
+
+**Shared bump.** 5f and 5g land in ONE schema-5 bump. The same bump generalizes
+`betting_model.DARK_TEAM_COLUMNS` to one dark tuple per schema, pinned per schema,
+because today it is pinned to schema 3 only and the nine schema-4 columns (5d) are
+stored but never reach `_assemble_team_inputs`; the 5d harness needs that read path
+before its look.
+
+## 5g. Team fielding (`team_fld_runs`), schema 5 (pre-registered 2026-09-11)
+
+**Written before the schema bump it describes exists in code and before any value
+of the column has been related to any game outcome**, in the discipline of 5a, 5c,
+5d, 7b and 11a. Nothing served reads it and nothing served changes.
+
+**Why this is a gap and not a double count.** Run prevention in the served model is
+`z_prev`, a blend of the probable's SEM+ and the club's `bullpen_plus`
+(`game_prevention_z`). Both are sample-shrunk FIP: strikeouts, walks, hit batters
+and home runs. Balls in play, and so the fielders behind the pitcher, sit outside
+every prevention input. League-average fielding lives in `b0`; club-to-club fielding
+lives nowhere.
+
+**Source.** MLB StatsAPI `stats=sabermetrics`, the bulk season-total feed the hitter
+export already fetches every night before the vintage write, read through
+`saber_feed.load_components`. Its per-hitter `fielding` is FanGraphs' served WAR
+fielding component, in runs, excluding framing. The builder reads `saber_feed` and
+never the DEM+ index, the Defense board or its history.
+
+**The number.** For each club, the sum over its current position players whose
+primary position is not C, P or DH of `fielding` for the prior full season plus
+`fielding` for the current season to date. Runs, never an index. Current club from
+the vintage's own `canonical_org` join, the feed row's `team` as fallback; the
+multi-team count rides in the basis.
+
+**Three choices that are the whole feature.** Catchers are excluded, because served
+catcher fielding context includes framing, framing has its own column and gate
+(5d-D), and a framed strike partly lands in the K and BB that SEM+ and REM+ already
+read. Two seasons rather than season to date, because a single season of fielding
+runs is mostly noise and the prior season is dated history. Current-club
+attribution, because the price is for tonight's fielders.
+
+**Vintage safety.** The basis records the cache fetch time; the column is null when
+that time falls after the vintage date. Old records return None, absent is never
+zero, and `inputs_as_of` never fills the column from live files.
+
+**Coverage and adjacent facts, disclosed, not measurements of this candidate.**
+Before this section existed, a design lane summed 2026 season-to-date served
+`fielding` per feed-row team (one season, feed-row team, DH included) to confirm a
+builder produces a number: 30 of 30 clubs, -43.4 to +68.6 runs; and computed the
+player-level year-over-year persistence of served fielding per 600 PA (r 0.474 on
+800 pairs, 2021-2025). The DEM+ lab (docs/dem-plus-2026-09-11/) computed player-level
+forward correlations of the published fielding RATE. None of these relates any
+value to any game result; the registered construction above differs from all of
+them.
+
+**Candidate.** One additive term on run prevention, `runs_S = ... + b6 * z_fld_O`,
+where `z_fld_O` is the opponent's standardized `team_fld_runs`, fitted by the same
+`fit_coefficients` path on the vintage fit window.
+
+**Gate.** Estimand: does adding `z_fld_O` improve calibration on the vintage eval
+half. Split: the existing vintage fit/eval split; regular-season games only. ALL
+required: (1) paired Brier improvement at one-sided t >= 1.645; (2) paired log loss
+not worse on the point estimate; (3) `b6` carries the run-prevention sign (better
+opposing fielding lowers runs scored), and a wrong sign fails the candidate whatever
+(1) and (2) read; (4) at least `VINTAGE_MIN_GRADED_GAMES` (600) eval-half games
+carrying a populated value, with the 300-game fit window in front of them. Control:
+the 5c rule 3 permuted twin, permuting `team_fld_runs` across clubs within each
+date; the candidate must beat its twin. Report whichever way it lands: the
+variance-inflation read of `z_fld` against `z_prev` and `z_off`, and the park term
+(outfield fielding runs are partly park-shaped).
+
+**Not asked, each needing its own section.** Lineup-aware fielding (tonight's nine
+at their positions); the pitcher-by-fielding interaction; a shrunk fielding read;
+the season-to-date-only form; any catcher term.
+
+**Clock.** 5c rule 2 AND criterion (4). The 2026 regular season ends 2026-09-27, so
+a column first captured this month accrues at most about 240 regular-season games
+in 2026; **the earliest admissible first look is the first 2027 date on which both
+hold.** Postseason vintages accrue and are not graded.
+
+**Contaminated screen.** End-of-season fielding against 2026 outcomes may run,
+labelled contaminated, only after this section is committed, and can only
+DISQUALIFY.
+
+**Disqualification.** Any number relating this column, or a close variant (season
+to date, catchers included, feed-row team), to game outcomes before this section is
+committed disqualifies the candidate under 5c rule 1.
+
 ---
 
 ## 6. The backtest: two modes, both labelled
