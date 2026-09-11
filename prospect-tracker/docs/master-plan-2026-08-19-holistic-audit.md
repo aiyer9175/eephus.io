@@ -84,9 +84,13 @@ Diamond:
     windows. Card scraping UA spoofing banned; module frozen pending a licensed source.
 
 Other:
-16. eWAR site-basis flip REFUSED (loses team-wins gate permanently); D5 is an owner checkpoint;
-    dollars stay bWAR-anchored; the OAA/rfield grid reopens ONLY through SDR gate G-B; SDR gates
-    G-A/G-B/G-C are frozen and data-blocked, run only after a drop passes sdr_intake --validate.
+16. (Rewritten 2026-09-11; the original text read "eWAR site-basis flip REFUSED (loses team-wins
+    gate permanently); D5 is an owner checkpoint; dollars stay bWAR-anchored".) The eWAR basis
+    flip is SUPERSEDED by owner decision: eWAR primary on 2026-09-03, FanGraphs WAR as the frame
+    on 2026-09-09. The label source for fitted consumers is decision O1 of docs/master-plan-
+    2026-09-11-war-epoch-drivers-betting.md. The OAA/rfield grid still reopens ONLY through SDR
+    gate G-B; SDR gates G-A/G-B/G-C are frozen and data-blocked, run only after a drop passes
+    sdr_intake --validate.
 17. Defense-into-eFV closed (four refutations); reopen = the eWAR label change (D5/W4), one
     registered attempt.
 18. STALE_DAYS may not be lowered (test-pinned); attack the undated-artifact ratchet only.
