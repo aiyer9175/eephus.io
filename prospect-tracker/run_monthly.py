@@ -2872,15 +2872,16 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 except Exception:
                     log.exception("daily: defense leaderboard refresh failed - continuing")
 
-        # --- 9e-pre-wx. Forecast weather capture (DARK, ships OFF) ---------
+        # --- 9e-pre-wx. Forecast weather capture (DARK; ARMED 2026-09-11) ---
         # docs/diamond-betting.md section 5h. Captures the pregame forecast for
-        # today's remaining games and tomorrow's into .cache/weather_forecasts/,
-        # one immutable snapshot a night. INERT until the owner sets
-        # betting_weather.FORECAST_CAPTURE_ENABLED and FORECAST_SOURCE: until
-        # then this step logs the arming state and makes no request. Nothing
-        # served reads the capture either way. Runs before the export so the
-        # capture timestamp precedes the night's prices. Additive; never aborts.
-        with _step("9e-pre-wx. Forecast weather capture (dark, off by default)", log):
+        # today's remaining games and tomorrow's into .cache/weather_forecasts/
+        # (one keyless Open-Meteo request, one immutable snapshot a night), then
+        # runs the 5h-C Previous Runs backfill for completed 2026 regular-season
+        # games not yet in the store (capped at 40 archive requests and 200 feed
+        # fetches a night, stopping at the first failure). Nothing served reads
+        # either. Runs before the export so the capture timestamp precedes the
+        # night's prices. Additive; never aborts.
+        with _step("9e-pre-wx. Forecast weather capture (dark, armed)", log):
             try:
                 import betting_weather
                 betting_weather.run(log_fn=log.info)

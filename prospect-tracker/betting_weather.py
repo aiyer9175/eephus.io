@@ -6,9 +6,11 @@
 
 Pre-registered in docs/diamond-betting.md section 5h BEFORE this file existed
 and before any captured number was related to any game outcome. Nothing served
-reads anything here. The capture ships OFF (`FORECAST_CAPTURE_ENABLED = False`)
-because it is a new external dependency, and a new dependency is an owner
-decision (section 5h lists it).
+reads anything here. The capture shipped OFF because it is a new external
+dependency, and a new dependency is an owner decision. The owner ARMED it on
+2026-09-11 (Open-Meteo, keyless) and approved the section 5h-C backfill arm
+from Open-Meteo's Previous Runs API in the same answer. Arming changes no
+served number: it starts the capture, the backfill and the 5h clock.
 
 THE OWNER ASK (2026-09-11): make the module weather and ballpark aware,
 especially for overs/unders and player props.
@@ -47,6 +49,18 @@ THE STORE mirrors the odds snapshots: `.cache/weather_forecasts/<UTC date>-
 capture in the same minute raises FileExistsError). Under .cache/ for the
 reason the vintage store is: the nightly `git checkout -- .` would revert a
 tracked file.
+
+THE BACKFILL ARM (section 5h-C) writes into the same directory under its own
+name, `previous-runs-<UTC date>-<HHMM>.json`, so the live reader and the live
+clock can never pool the two arms (the 5a arm split). Each backfilled row is
+the forecast Open-Meteo archived about 24 hours before each game hour
+(`<var>_previous_day1`) and carries `issued_at`, the LATEST moment that
+forecast could have been issued; a row whose `issued_at` is not at least
+MIN_LEAD_HOURS before first pitch is never written. Its `captured_at` is the
+honest fetch time, which is after the game, and that is exactly why the live
+reader, which tests `captured_at`, can never return a backfilled row.
+The Historical Forecast API stays banned (5h): it is stitched from each run's
+first hours and tracks observed weather.
 """
 from __future__ import annotations
 
@@ -70,30 +84,30 @@ FORECAST_DIR = ROOT / ".cache" / "weather_forecasts"
 # ---------------------------------------------------------------------------
 # the arming flag (OWNER DECISION, docs/diamond-betting.md 5h)
 # ---------------------------------------------------------------------------
-#: Whether the nightly step makes the forecast call at all. FALSE, and the
-#: reason is that it is a new external dependency with a licence question
-#: attached (section 5h, "The owner decisions"), not that anything failed.
+#: Whether the nightly step makes the forecast call at all. TRUE since
+#: 2026-09-11: the owner armed it (docs/diamond-betting.md 5h, "Armed").
 #:
-#: WHAT FLIPPING IT CHANGES, exactly: run_monthly step 9e-pre-wx starts making
-#: ONE batched forecast request a night (Open-Meteo) or two requests per
-#: open-air venue (NWS) and writes one immutable snapshot under
-#: .cache/weather_forecasts/. The 5h clock starts on the first such night.
+#: WHAT ARMING CHANGES, exactly: run_monthly step 9e-pre-wx makes ONE batched
+#: Open-Meteo forecast request a night and writes one immutable snapshot under
+#: .cache/weather_forecasts/, then the 5h-C backfill (BACKFILL_ENABLED) makes
+#: its Previous Runs requests for completed games not yet in the store. The 5h
+#: clock starts on the first night a live open-air row lands.
 #: WHAT IT DOES NOT CHANGE: no served price, no fair total, no edge, no side
 #: marked value, neither Model Watch slot (the Pick of the Day and the longshot
 #: are byte-identical), no record row, no shadow or calibration ledger row, no
 #: vintage record. Nothing served imports this module and
 #: test_betting_weather.py pins that.
 #:
-#: TO FLIP IT, in ONE commit: set this True, set FORECAST_SOURCE to the source
-#: the owner chose, and, for Open-Meteo on a subscription site, put the
-#: commercial key in the environment variable OPEN_METEO_KEY_ENV names (the
-#: free endpoint is non-commercial only). Update the pinned test and the 5h
-#: "clock" paragraph with the first capture date.
-FORECAST_CAPTURE_ENABLED = False
+#: KEYLESS, as the owner chose. The licence paragraph in 5h still stands: the
+#: free endpoint's terms name subscription sites as commercial. Putting a key
+#: in the environment variable OPEN_METEO_KEY_ENV names moves the capture AND
+#: the backfill to the commercial endpoints with no code change. To disarm:
+#: set this False (the backfill then stops too) and update the pinned test.
+FORECAST_CAPTURE_ENABLED = True
 
-#: Which source. None until the owner picks one, so that flipping the flag
-#: alone cannot silently choose a licence. See SOURCES.
-FORECAST_SOURCE: str | None = None
+#: Which source: the owner chose Open-Meteo on 2026-09-11. None would make the
+#: armed flag inert, so that the flag alone can never silently pick a licence.
+FORECAST_SOURCE: str | None = "open-meteo"
 
 SOURCES = {
     "open-meteo": {
@@ -106,7 +120,8 @@ SOURCES = {
         "calls_per_night": "1 (all venues batched as comma-separated coordinates)",
         "archive": ("Previous Runs API (previous-runs-api.open-meteo.com), "
                     "`<var>_previous_day1` = the value forecast 24h before valid "
-                    "time, archived from January 2024 for most models"),
+                    "time, archived from January 2024 for most models; the 5h-C "
+                    "backfill arm, see PREVIOUS_RUNS"),
     },
     "nws": {
         "endpoint": "https://api.weather.gov",
@@ -123,6 +138,92 @@ SOURCES = {
 OPEN_METEO_KEY_ENV = "EEPHUS_OPEN_METEO_KEY"
 #: Environment variable carrying the NWS User-Agent string (contact details).
 NWS_USER_AGENT_ENV = "EEPHUS_NWS_USER_AGENT"
+
+# ---------------------------------------------------------------------------
+# the backfill arm (OWNER DECISION 2026-09-11, docs/diamond-betting.md 5h-C)
+# ---------------------------------------------------------------------------
+#: Whether the backfill runs. TRUE: approved by the owner on 2026-09-11 in the
+#: same answer that armed the capture. It also needs the capture armed with
+#: FORECAST_SOURCE "open-meteo", because the archive exists on that source only.
+#: WHAT IT CHANGES: the nightly step adds Previous Runs requests for completed
+#: regular-season games not yet in the store (about one per venue the first
+#: night, then one batched request a night) and writes one immutable
+#: `previous-runs-*.json` snapshot when it has new rows. No served number.
+BACKFILL_ENABLED = True
+
+#: The seasons the owner approved. 5h-C registered a backfill "over the 2026
+#: season to date", so the arm is pinned to 2026: on a date in another season
+#: it is inert and says so. Continuing the archive arm into 2027 (which the
+#: agreement check's four weeks of overlap would need, see
+#: AGREEMENT_MIN_OVERLAP_DAYS) is a separate owner decision (5h, "Armed").
+BACKFILL_SEASONS = ("2026",)
+
+#: POLICY caps on ONE night's backfill, so an outage costs one timeout and not
+#: the nightly critical path. The first night needs one archive request per
+#: venue (32 on the 2026 cache), so 40 covers it; the first failed request ends
+#: that night's requests, and every game it would have filled is retried later.
+BACKFILL_MAX_REQUESTS_PER_NIGHT = 40
+#: Game feeds fetched through feed_cache per night for games whose feed is not
+#: cached (a pruned box). The dev box held 2,197 of 2,200 on 2026-09-11; the
+#: first failed fetch ends that night's fetches.
+BACKFILL_MAX_FEED_FETCHES_PER_NIGHT = 200
+
+#: The archive product. Probed 2026-09-11 (three requests, lane folder only):
+#: HTTP 200, the same shape as the forecast API (a LIST of per-location objects
+#: for comma-separated coordinates, `hourly` arrays keyed `<var>_previous_day1`
+#: in GMT), and every one of the seven variables filled on every hour from
+#: 2026-03-25T00:00 to 2026-09-11T23:00 at Wrigley Field and Rogers Centre.
+#: The commercial host follows Open-Meteo's `customer-` prefix convention and
+#: was NOT probed (no key exists).
+PREVIOUS_RUNS = {
+    "endpoint": "https://previous-runs-api.open-meteo.com/v1/forecast",
+    "commercial_endpoint": "https://customer-previous-runs-api.open-meteo.com/v1/forecast",
+    "suffix": "_previous_day1",
+    "banned": ("historical-forecast-api.open-meteo.com: stitched from each run's "
+               "first hours, it tracks observed weather (5h); never a feature, "
+               "never a backfill"),
+}
+
+#: The provider's stated lead: `_previous_day1` is "the value that was
+#: predicted 24 hours before valid time". The 2026-09-11 probe is consistent
+#: with the value at hour T coming from the newest archived run initialised at
+#: or before T - 24h: beyond the newest run it repeats that run (it equals the
+#: current forecast for hours more than about a day ahead), and for every past
+#: hour probed it differs from the current run's value.
+BACKFILL_NOMINAL_LEAD_HOURS = 24.0
+
+#: POLICY: hours allowed between a run's initialisation and its publication.
+#: Open-Meteo says its global models update every 6 hours; this allowance is
+#: twice that, so `issued_at` is an UPPER BOUND on when the forecast behind a
+#: row existed, never an optimistic guess. It still sits about ten hours before
+#: first pitch for a three-hour window, so no honest row is lost to it.
+BACKFILL_ISSUE_ALLOWANCE_HOURS = 12.0
+
+#: A backfill whose games span at most this many UTC days is ONE batched
+#: request for every venue (the nightly case); a longer span is one request per
+#: venue over that venue's own date range (the first night: about 30 requests,
+#: the arithmetic 5h-C registered).
+BACKFILL_BATCH_MAX_DAYS = 7
+
+#: File-name prefix of a backfill snapshot. The live glob cannot match it.
+BACKFILL_PREFIX = "previous-runs-"
+
+#: The one mutable file of the backfill, under a subdirectory of the store so
+#: neither snapshot glob can match it: the last armed run's counts, skips by
+#: reason included, so coverage() can report a night that wrote nothing.
+BACKFILL_STATE_PATH = Path("state") / "backfill_last_run.json"
+
+#: POLICY thresholds of the 5h-C live-against-archive agreement check, copied
+#: from the section as registered; a weather-against-weather comparison. The
+#: sign share is over EVERY open-air pair, as registered ("on at least 80% of
+#: open-air rows"): a pair where either out-component is zero or null counts as
+#: not agreeing.
+AGREEMENT_MAX_TEMP_MAE_F = 3.0
+AGREEMENT_MIN_SIGN_SHARE = 0.80
+#: 5h-C: "so the agreement check has four weeks of overlap to run on". The
+#: check returns no verdict (`holds` None) until the paired games span this
+#: many calendar days.
+AGREEMENT_MIN_OVERLAP_DAYS = 28
 
 # ---------------------------------------------------------------------------
 # policy constants (named as policy, not measurement)
@@ -326,6 +427,22 @@ def load_schedule(on_date: str, *, data_dir: Path | None = None,
 # sources
 # ---------------------------------------------------------------------------
 def _default_opener(url: str, headers: dict | None = None) -> bytes:  # pragma: no cover
+    """requests first, urllib only when requests is missing.
+
+    Measured 2026-09-11 on the Windows dev box: urllib's default context failed
+    certificate verification against both Open-Meteo hosts ("certificate has
+    expired") while requests, on certifi's bundle, returned HTTP 200 from the
+    same hosts. The capture shipped with urllib and had never made a request
+    through it, so arming it on urllib would have armed a silent failure.
+    """
+    try:
+        import requests
+    except ImportError:
+        requests = None
+    if requests is not None:
+        resp = requests.get(url, headers=headers or {}, timeout=30)
+        resp.raise_for_status()
+        return resp.content
     req = urllib.request.Request(url, headers=headers or {})
     with urllib.request.urlopen(req, timeout=30) as r:
         return r.read()
@@ -354,7 +471,7 @@ def open_meteo_url(points: list[tuple[float, float]], *, forecast_days: int = 3,
     return base + "?" + urllib.parse.urlencode(q)
 
 
-def parse_open_meteo(body, n_points: int) -> list[dict]:
+def parse_open_meteo(body, n_points: int, *, suffix: str = "") -> list[dict]:
     """Response -> one {hour_key: {...}} series per requested point, in order.
 
     Shape verified by one probe on 2026-09-11 (Wrigley and Coors in one call):
@@ -362,6 +479,9 @@ def parse_open_meteo(body, n_points: int) -> list[dict]:
     keyed by variable and `time` as 'YYYY-MM-DDTHH:00' in GMT; a single-point
     request returns one object rather than a list. Coordinates snap to the
     model grid (Wrigley 41.948,-87.656 came back 41.963,-87.674).
+
+    `suffix` reads the Previous Runs archive, whose arrays are keyed
+    `<var>_previous_day1`; the same probe discipline confirmed that shape.
     """
     locs = body if isinstance(body, list) else [body]
     out = []
@@ -372,7 +492,7 @@ def parse_open_meteo(body, n_points: int) -> list[dict]:
         series = {}
         for k, t in enumerate(times):
             def _v(name):
-                arr = h.get(name) or []
+                arr = h.get(name + suffix) or []
                 return arr[k] if k < len(arr) else None
             series[str(t)[:13] + ":00"] = {
                 "temp_f": _v("temperature_2m"),
@@ -395,6 +515,42 @@ def fetch_open_meteo(points: list[tuple[float, float]], *, opener=None) -> tuple
     meta = {"source": "open-meteo", "n_calls": 1,
             "endpoint": "commercial" if key else "free (non-commercial)"}
     return parse_open_meteo(body, len(points)), meta
+
+
+def previous_runs_url(points: list[tuple[float, float]], start_date: str, end_date: str,
+                      *, api_key: str | None = None) -> str:
+    """The Previous Runs archive: `<var>_previous_day1` over a UTC date range,
+    every point in one request. Only this suffix is ever requested; the
+    current-run value for a past hour is close to observed weather and has no
+    use here."""
+    sfx = PREVIOUS_RUNS["suffix"]
+    q = {
+        "latitude": ",".join(f"{p[0]:.6f}" for p in points),
+        "longitude": ",".join(f"{p[1]:.6f}" for p in points),
+        "hourly": ",".join(v + sfx for v in OPEN_METEO_HOURLY),
+        "temperature_unit": "fahrenheit",
+        "wind_speed_unit": "mph",
+        "timezone": "GMT",
+        "start_date": str(start_date),
+        "end_date": str(end_date),
+    }
+    base = PREVIOUS_RUNS["endpoint"]
+    if api_key:
+        q["apikey"] = api_key
+        base = PREVIOUS_RUNS["commercial_endpoint"]
+    return base + "?" + urllib.parse.urlencode(q)
+
+
+def fetch_previous_runs(points: list[tuple[float, float]], start_date: str, end_date: str,
+                        *, opener=None) -> tuple[list[dict], dict]:
+    key = os.environ.get(OPEN_METEO_KEY_ENV) or None
+    url = previous_runs_url(points, start_date, end_date, api_key=key)
+    raw = (opener or _default_opener)(url, {"User-Agent": "eephus-betting-weather"})
+    body = json.loads(raw.decode("utf-8") if isinstance(raw, (bytes, bytearray)) else raw)
+    meta = {"source": "open-meteo-previous-runs", "n_calls": 1,
+            "endpoint": "commercial" if key else "free (non-commercial)",
+            "start_date": str(start_date), "end_date": str(end_date)}
+    return parse_open_meteo(body, len(points), suffix=PREVIOUS_RUNS["suffix"]), meta
 
 
 def _nws_mph(s) -> float | None:
@@ -482,7 +638,7 @@ def game_row(game: dict, venue: dict | None, series: dict | None,
         "lead_hours": _r((fp - captured_at).total_seconds() / 3600.0) if fp else None,
         "fc_temp_f": None, "fc_wind_mph": None, "fc_wind_from_deg": None,
         "fc_wind_out_mph": None, "fc_rh_pct": None, "fc_pressure_hpa": None,
-        "fc_precip_prob_pct": None, "hours_used": [],
+        "fc_precip_prob_pct": None, "hours_used": [], "arm": "live",
     }
     applies, why = weather_applies(row["roof_type"])
     row["weather_applies"] = applies
@@ -531,8 +687,8 @@ def arming_state(*, enabled: bool | None = None, source: str | None = None) -> d
     src = FORECAST_SOURCE if source is None else source
     if not en:
         return {"armed": False, "state": "inert",
-                "reason": ("FORECAST_CAPTURE_ENABLED is False: the forecast capture is a "
-                           "new external dependency and an owner decision "
+                "reason": ("FORECAST_CAPTURE_ENABLED is False: the forecast capture is "
+                           "disarmed, and arming it is an owner decision "
                            "(docs/diamond-betting.md 5h). No request is made.")}
     if src not in SOURCES:
         return {"armed": False, "state": "inert",
@@ -547,8 +703,9 @@ def capture(on_date: str | None = None, *, enabled: bool | None = None,
             now: datetime | None = None, log_fn=None) -> dict:
     """Capture tonight's forecast for today's remaining games and tomorrow's.
 
-    INERT unless armed: returns the arming state and makes no request and no
-    write. Every input is injectable so the whole path runs offline in a test.
+    INERT unless armed (it is, since 2026-09-11): disarmed, it returns the
+    arming state and makes no request and no write. Every input is
+    injectable so the whole path runs offline in a test.
     A game whose first pitch is within MIN_LEAD_HOURS of `now` is skipped and
     listed, because a row captured that late could not inform it anyway.
     """
@@ -629,6 +786,392 @@ def capture(on_date: str | None = None, *, enabled: bool | None = None,
 
 
 # ---------------------------------------------------------------------------
+# the backfill arm (section 5h-C): Previous Runs, never the Historical Forecast
+# ---------------------------------------------------------------------------
+def backfill_arming_state(*, enabled: bool | None = None, capture_enabled: bool | None = None,
+                          source: str | None = None) -> dict:
+    """The backfill needs the capture armed, its own flag, and Open-Meteo."""
+    st = arming_state(enabled=capture_enabled, source=source)
+    if not st["armed"]:
+        return {"armed": False, "state": "inert",
+                "reason": "the capture is not armed, so neither is its backfill: " + st["reason"]}
+    if not (BACKFILL_ENABLED if enabled is None else bool(enabled)):
+        return {"armed": False, "state": "inert",
+                "reason": ("BACKFILL_ENABLED is False: the 5h-C backfill is off "
+                           "(docs/diamond-betting.md 5h-C). No request is made.")}
+    if st["source"] != "open-meteo":
+        return {"armed": False, "state": "inert",
+                "reason": (f"FORECAST_SOURCE is {st['source']!r}; only Open-Meteo archives "
+                           "its forecasts (NWS has no archive), so there is no backfill arm")}
+    return {"armed": True, "state": "armed", "source": "open-meteo-previous-runs"}
+
+
+#: Skip codes a backfill run can record, each a reason the game is retried on a
+#: later night (never retired) except `issued_inside_lead`, which is never
+#: written at all. coverage()["backfill"]["last_run"] counts them.
+SKIP_CODES = ("feed_not_cached", "feed_fetch_failed", "feed_fetch_deferred",
+              "no_first_pitch", "hours_not_past", "request_failed", "request_deferred",
+              "series_empty", "series_misses_hours", "issued_inside_lead")
+
+
+def _default_feed_loader(game_pk, game_date):                    # pragma: no cover
+    """The game's feed through feed_cache, which caches it for the next reader.
+    The same `/feed/live` document the cached files are, so no new shape."""
+    import feed_cache
+    return feed_cache.get_game_feed(int(game_pk), game_date=game_date)
+
+
+def feed_game(result_row: dict, *, feed_dir: Path | None = None, feed: dict | None = None):
+    """(schedule-shaped game, venue, None) off the game's OWN feed, or
+    (None, None, reason). `feed` is a feed already in hand (fetched through
+    feed_cache); without it the cached file is read.
+
+    The venue comes from the game, never from the home club's usual park: the
+    2026 schedule carries neutral-site games (Mexico City, Las Vegas, the Field
+    of Dreams, Williamsport), and a club's park would put their weather in the
+    wrong city. That is also why there is no fallback to the club's venue when
+    the feed is missing: the game is retried instead. The clubs come from the
+    completed-games row, already canonical.
+    """
+    fdir = Path(feed_dir) if feed_dir else FEED_DIR
+    pk = result_row.get("game_pk")
+    d = feed
+    if d is None:
+        try:
+            d = json.loads((fdir / f"{int(pk)}.json").read_text(encoding="utf-8"))
+        except Exception:                                        # noqa: BLE001
+            d = None
+    if not isinstance(d, dict) or not isinstance(d.get("gameData"), dict):
+        return None, None, "the game's feed is not cached; retried on a later night"
+    gd = d.get("gameData") or {}
+    v = gd.get("venue") or {}
+    loc = v.get("location") or {}
+    co = loc.get("defaultCoordinates") or {}
+    dt = gd.get("datetime") or {}
+    game = {"game_pk": pk, "date": dt.get("officialDate") or result_row.get("date"),
+            "datetime": dt.get("dateTime"),
+            "venue": {"id": v.get("id"), "name": v.get("name")},
+            "home": {"org": result_row.get("home_org")},
+            "away": {"org": result_row.get("away_org")}}
+    venue = {"name": v.get("name"), "lat": co.get("latitude"), "lon": co.get("longitude"),
+             "azimuth_deg": loc.get("azimuthAngle"), "elevation_ft": loc.get("elevation"),
+             "roof_type": (v.get("fieldInfo") or {}).get("roofType"),
+             "tz": (v.get("timeZone") or {}).get("id"),
+             "home_org": result_row.get("home_org")}
+    return game, venue, None
+
+
+def _window_hours(fp: datetime) -> list[datetime]:
+    start = fp.replace(minute=0, second=0, microsecond=0)
+    return [start + timedelta(hours=k) for k in range(GAME_WINDOW_HOURS)]
+
+
+def backfill_row(game: dict, venue: dict, series: dict | None, fetched_at: datetime) -> dict:
+    """One backfilled row: the live row's columns, plus the issue time.
+
+    `issued_at` is an UPPER BOUND on when the forecast behind the row existed:
+    the newest run behind hour T was initialised no later than T minus
+    BACKFILL_NOMINAL_LEAD_HOURS, published within BACKFILL_ISSUE_ALLOWANCE_HOURS
+    of that, and the row's latest hour decides. `captured_at` stays the honest
+    fetch time. `lead_hours` is measured from `issued_at`, not from the fetch.
+    """
+    row = game_row(game, venue, series, fetched_at)
+    row["arm"] = "backfill"
+    row["issued_at"] = None
+    row["run_initialised_by"] = None
+    row["lead_hours"] = None
+    fp = _utc(row.get("first_pitch_utc"))
+    if fp is None or not row.get("hours_used") or row.get("fc_temp_f") is None:
+        if row.get("hours_used"):
+            row["basis"] = ("the archive returned this game's hours with no "
+                            "_previous_day1 temperature; a stated null")
+        return row
+    last = _utc(row["hours_used"][-1])
+    run_by = last - timedelta(hours=BACKFILL_NOMINAL_LEAD_HOURS)
+    issued = run_by + timedelta(hours=BACKFILL_ISSUE_ALLOWANCE_HOURS)
+    row["run_initialised_by"] = run_by.isoformat()
+    row["issued_at"] = issued.isoformat()
+    row["lead_hours"] = _r((fp - issued).total_seconds() / 3600.0)
+    row["basis"] = (f"Previous Runs _previous_day1 mean over {len(row['hours_used'])} hour(s) "
+                    f"from the first-pitch hour; the newest run behind it was initialised no "
+                    f"later than {run_by.isoformat()} and issued no later than "
+                    f"{issued.isoformat()}, {row['lead_hours']}h before first pitch; fetched "
+                    f"after the game ({row['captured_at']})")
+    return row
+
+
+def backfill_paths(forecast_dir: Path | None = None) -> list[Path]:
+    fdir = Path(forecast_dir) if forecast_dir else FORECAST_DIR
+    if not fdir.exists():
+        return []
+    return sorted(fdir.glob(f"{BACKFILL_PREFIX}????-??-??-????.json"))
+
+
+def _backfill_rows(forecast_dir: Path | None = None):
+    """(snapshot name, row) for every backfilled row, oldest snapshot first."""
+    for p in backfill_paths(forecast_dir):
+        try:
+            rec = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:                                        # noqa: BLE001
+            continue
+        for r in rec.get("rows") or []:
+            yield p.name, r
+
+
+def backfill_game_pks(forecast_dir: Path | None = None) -> set:
+    """Games already in the backfill store. First write wins, as in the vintage
+    store: a game is never fetched or written twice."""
+    return {r.get("game_pk") for _, r in _backfill_rows(forecast_dir)}
+
+
+def _backfill_batches(groups: dict) -> list[tuple[list, str, str]]:
+    """[(venue ids, start UTC date, end UTC date)]: one batch for a short span,
+    else one per venue over that venue's own range."""
+    def _span(fps):
+        hrs = [h for fp in fps for h in _window_hours(fp)]
+        return min(hrs).date(), max(hrs).date()
+    spans = {vid: _span([fp for _, fp in g["games"]]) for vid, g in groups.items()}
+    if not spans:
+        return []
+    lo = min(s[0] for s in spans.values())
+    hi = max(s[1] for s in spans.values())
+    if (hi - lo).days + 1 <= BACKFILL_BATCH_MAX_DAYS:
+        return [(list(groups), lo.isoformat(), hi.isoformat())]
+    return [([vid], s[0].isoformat(), s[1].isoformat()) for vid, s in spans.items()]
+
+
+def _write_last_run(fdir: Path, state: dict) -> None:
+    """The one mutable file: the last armed run's counts. Best effort."""
+    try:
+        p = fdir / BACKFILL_STATE_PATH
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(state, separators=(",", ":")), encoding="utf-8")
+    except Exception:                                            # noqa: BLE001
+        log.warning("betting_weather backfill: could not write %s", BACKFILL_STATE_PATH)
+
+
+def backfill(season: str | int | None = None, *, enabled: bool | None = None,
+             capture_enabled: bool | None = None, source: str | None = None,
+             games: list[dict] | None = None, feed_dir: Path | None = None, fetch=None,
+             feed_loader=None, forecast_dir: Path | None = None, now: datetime | None = None,
+             date_from: str | None = None, date_to: str | None = None, log_fn=None) -> dict:
+    """Backfill every completed regular-season game of an approved season
+    (BACKFILL_SEASONS) not yet in the store from the Previous Runs archive
+    (section 5h-C).
+
+    Open-air and retractable venues are fetched (retractable rows carry
+    `weather_applies = False`, for the secondary arm, as in the live capture);
+    domes never, and a dome game or a venue without coordinates is written as a
+    stated null. A forecast row is written only if its `issued_at` is at least
+    MIN_LEAD_HOURS before first pitch. A game whose feed cannot be read, or
+    whose request failed or was deferred, is listed with a code from SKIP_CODES
+    and NOT written, so a later night fills it; first write wins after that.
+
+    A feed missing from the cache is fetched through feed_cache (at most
+    BACKFILL_MAX_FEED_FETCHES_PER_NIGHT, and none after the first failure).
+    That default loader is used only on the production feed cache: a caller
+    that points `feed_dir` elsewhere fetches nothing unless it injects
+    `feed_loader(game_pk, game_date)`. Archive requests stop at the first
+    failure and at BACKFILL_MAX_REQUESTS_PER_NIGHT. Every armed run records its
+    counts, skips by code included, in BACKFILL_STATE_PATH. Inert unless armed;
+    every input injectable.
+    """
+    st = backfill_arming_state(enabled=enabled, capture_enabled=capture_enabled, source=source)
+    if not st["armed"]:
+        if log_fn:
+            log_fn(f"betting_weather backfill: {st['reason']}")
+        return {"captured": False, **st}
+    now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc).replace(microsecond=0)
+    season = str(season or now.year)
+    if season not in BACKFILL_SEASONS:
+        reason = (f"season {season} is not an approved backfill season {BACKFILL_SEASONS}: "
+                  "the owner approved the 2026 season (5h-C); another season is a new "
+                  "owner decision. No request is made.")
+        if log_fn:
+            log_fn(f"betting_weather backfill: {reason}")
+        return {"captured": False, "armed": False, "state": "inert", "reason": reason}
+    if games is None:
+        import betting_model as bm
+        games = bm.completed_games(season, refresh=False)
+    have = backfill_game_pks(forecast_dir)
+    loader = feed_loader
+    if loader is None and feed_dir is None:
+        loader = _default_feed_loader
+
+    groups: dict = {}
+    skipped: list = []
+    null_rows: list = []
+    n_have = 0
+    n_feed_fetches, feed_fetch_down = 0, False
+
+    def _skip(pk, day, code, reason):
+        skipped.append({"game_pk": pk, "date": day, "code": code, "reason": reason})
+
+    for g in sorted(games or [], key=lambda x: (str(x.get("date") or ""), x.get("game_pk") or 0)):
+        pk = g.get("game_pk")
+        if g.get("season") is not None and str(g.get("season")) != season:
+            continue
+        d = str(g.get("date") or "")
+        if (date_from and d < date_from) or (date_to and d > date_to):
+            continue
+        if pk in have:
+            n_have += 1
+            continue
+        sg, venue, why = feed_game(g, feed_dir=feed_dir)
+        code = "feed_not_cached" if why else None
+        if why and loader is not None:
+            if feed_fetch_down or n_feed_fetches >= BACKFILL_MAX_FEED_FETCHES_PER_NIGHT:
+                code = "feed_fetch_deferred"
+                why = ("the game's feed is not cached and tonight's feed fetches are spent "
+                       "or stopped; retried on a later night")
+            else:
+                n_feed_fetches += 1
+                try:
+                    sg, venue, why = feed_game(g, feed=loader(pk, d or None))
+                    code = "feed_not_cached" if why else None
+                except Exception as exc:                         # noqa: BLE001
+                    feed_fetch_down = True
+                    log.warning("betting_weather backfill: feed fetch for %s failed, no more "
+                                "feed fetches tonight: %s", pk, exc)
+                    code = "feed_fetch_failed"
+                    why = "fetching the game's feed failed; retried on a later night"
+        fp = _utc(sg.get("datetime")) if sg else None
+        roof = str((venue or {}).get("roof_type") or "").strip().lower()
+        if why is None and fp is None:
+            code = "no_first_pitch"
+            why = "no first-pitch time in the game's feed; retried on a later night"
+        if why is None and _window_hours(fp)[-1] + timedelta(hours=1) > now:
+            code = "hours_not_past"
+            why = "the game's hours are not all past yet; retried on a later night"
+        if why:
+            _skip(pk, d, code, why)
+            continue
+        # Durable facts are written as stated nulls, as the live capture writes
+        # its dome rows, so first-write-wins retires them and no later night
+        # re-reads their feeds.
+        null_why = None
+        if roof == "dome":
+            null_why = "fixed dome: weather does not reach the ball, never fetched"
+        elif venue.get("lat") is None or venue.get("lon") is None:
+            null_why = "the game's own feed carries no venue coordinates; a stated null"
+        if null_why:
+            nr = backfill_row(sg, venue, None, now)
+            nr["basis"] = null_why
+            null_rows.append(nr)
+            continue
+        vid = sg["venue"]["id"]
+        grp = groups.setdefault(vid, {"venue": venue, "games": []})
+        grp["games"].append((sg, fp))
+
+    fn = fetch or fetch_previous_runs
+    series_by_venue: dict = {}
+    failed_vids: set = set()
+    n_calls, n_requests, endpoint, batches = 0, 0, None, _backfill_batches(groups)
+    for vids, d0, d1 in batches:
+        if n_requests >= BACKFILL_MAX_REQUESTS_PER_NIGHT:
+            break                    # the rest are deferred to a later night
+        pts = [(float(groups[v]["venue"]["lat"]), float(groups[v]["venue"]["lon"])) for v in vids]
+        n_requests += 1
+        try:
+            sl, meta = fn(pts, d0, d1)
+        except Exception as exc:                                 # noqa: BLE001
+            # One failure ends the night's requests: a hung or refusing host
+            # costs one timeout, never one per venue on the critical path.
+            log.warning("betting_weather backfill: request for %d venue(s) %s..%s failed, no "
+                        "more requests tonight: %s", len(vids), d0, d1, exc)
+            failed_vids.update(vids)
+            break
+        n_calls += int((meta or {}).get("n_calls", 1))
+        endpoint = (meta or {}).get("endpoint", endpoint)
+        for v, s in zip(vids, sl):
+            series_by_venue[v] = s
+
+    rows = []
+    for vid, grp in groups.items():
+        for sg, fp in grp["games"]:
+            if not series_by_venue.get(vid):
+                if vid in failed_vids:
+                    code, why = "request_failed", "the archive request failed"
+                elif vid not in series_by_venue:
+                    code, why = ("request_deferred", "no archive request was made tonight "
+                                 "(the request cap, or an earlier failure)")
+                else:
+                    code, why = "series_empty", "the archive returned no series for this venue"
+                _skip(sg["game_pk"], sg["date"], code, why + "; retried on a later night")
+                continue
+            row = backfill_row(sg, grp["venue"], series_by_venue[vid], now)
+            if not row.get("hours_used"):
+                # A series that misses the game's hours is a request problem,
+                # not a fact about the archive: never retire the game on it.
+                _skip(sg["game_pk"], sg["date"], "series_misses_hours",
+                      "the archive series does not reach this game's hours; retried on a "
+                      "later night")
+                continue
+            issued = _utc(row.get("issued_at"))
+            if issued is not None and issued > fp - timedelta(hours=MIN_LEAD_HOURS):
+                # Cannot happen at the registered constants; enforced on the row
+                # anyway, because it is the whole safety property of this arm.
+                _skip(sg["game_pk"], sg["date"], "issued_inside_lead",
+                      "issued_at is not MIN_LEAD_HOURS before first pitch; never written")
+                continue
+            rows.append(row)
+    rows.extend(null_rows)
+    rows.sort(key=lambda r: (str(r.get("first_pitch_utc") or ""), r.get("game_pk") or 0))
+
+    by_code: dict = {}
+    for s in skipped:
+        by_code[s["code"]] = by_code.get(s["code"], 0) + 1
+    base = {"n_calls": n_calls, "n_requests": n_requests, "n_feed_fetches": n_feed_fetches,
+            "n_already_in_store": n_have, "n_skipped": len(skipped),
+            "skipped_by_code": dict(sorted(by_code.items()))}
+    fdir = Path(forecast_dir) if forecast_dir else FORECAST_DIR
+    last_run = {"run_at": now.isoformat(), "season": season, "n_written": len(rows),
+                "snapshot": None, **base}
+    if not rows:
+        _write_last_run(fdir, last_run)
+        if log_fn:
+            log_fn(f"betting_weather backfill: nothing new to write ({n_have} game(s) already "
+                   f"in the store, {len(skipped)} skipped {base['skipped_by_code']}, "
+                   f"{n_requests} request(s), {n_feed_fetches} feed fetch(es))")
+        return {"captured": False, "state": "armed", "reason": "no new row", **base}
+    rec = {
+        "schema": SNAPSHOT_SCHEMA, "kind": "previous_runs_backfill", "arm": "backfill",
+        "source": "open-meteo-previous-runs", "source_licence": SOURCES["open-meteo"]["licence"],
+        "variable_suffix": PREVIOUS_RUNS["suffix"],
+        "captured_at": now.isoformat(), "season": season,
+        "request": {"n_calls": n_calls, "n_requests": n_requests, "n_batches": len(batches),
+                    "n_venues": len(groups), "endpoint": endpoint,
+                    "n_feed_fetches": n_feed_fetches},
+        "n_games": len(rows),
+        "n_with_forecast": sum(1 for r in rows if r["fc_temp_f"] is not None),
+        "n_open_air_with_forecast": sum(1 for r in rows if r["fc_temp_f"] is not None
+                                        and r["weather_applies"]),
+        "n_already_in_store": n_have, "skipped_by_code": base["skipped_by_code"],
+        "skipped": skipped, "rows": rows,
+        "policy": {"min_lead_hours": MIN_LEAD_HOURS, "game_window_hours": GAME_WINDOW_HOURS,
+                   "nominal_lead_hours": BACKFILL_NOMINAL_LEAD_HOURS,
+                   "issue_allowance_hours": BACKFILL_ISSUE_ALLOWANCE_HOURS},
+        "note": ("DARK (docs/diamond-betting.md 5h-C): the BACKFILL arm, counted separately "
+                 "from the live capture. A row may inform a game only when issued_at is at "
+                 "least min_lead_hours before first pitch; captured_at is the fetch time and "
+                 "is after the game. Never the Historical Forecast API"),
+    }
+    fdir.mkdir(parents=True, exist_ok=True)
+    path = fdir / f"{BACKFILL_PREFIX}{now.strftime('%Y-%m-%d-%H%M')}.json"
+    if path.exists():
+        raise FileExistsError(f"backfill snapshot {path.name} already exists")
+    path.write_text(json.dumps(rec, separators=(",", ":")), encoding="utf-8")
+    _write_last_run(fdir, dict(last_run, snapshot=path.name))
+    if log_fn:
+        log_fn(f"betting_weather backfill: wrote {path.name} ({rec['n_games']} games, "
+               f"{rec['n_with_forecast']} with a forecast, {rec['n_open_air_with_forecast']} "
+               f"open-air, {len(skipped)} skipped {base['skipped_by_code']}, {n_have} already "
+               f"in the store, {n_requests} request(s), {n_feed_fetches} feed fetch(es))")
+    return {"captured": True, "state": "armed", "path": str(path), "n_games": rec["n_games"],
+            "n_with_forecast": rec["n_with_forecast"], **base}
+
+
+# ---------------------------------------------------------------------------
 # the reader (the only way a later candidate may see a row)
 # ---------------------------------------------------------------------------
 def snapshot_paths(forecast_dir: Path | None = None) -> list[Path]:
@@ -667,9 +1210,110 @@ def forecast_for_game(game_pk, first_pitch_utc, *, forecast_dir: Path | None = N
     return best
 
 
+def backfill_forecast_for_game(game_pk, first_pitch_utc, *, forecast_dir: Path | None = None,
+                               min_lead_hours: float = MIN_LEAD_HOURS) -> dict | None:
+    """The BACKFILLED row for this game, or None; the only reader of that arm.
+
+    The clock test is on the row's own `issued_at`, never on `captured_at`
+    (the fetch time, always after the game) and never on a file name. First
+    write wins, so the earliest snapshot holding the game is the one read.
+    None is the only fallback, exactly as in the live reader.
+    """
+    fp = _utc(first_pitch_utc)
+    if fp is None:
+        return None
+    limit = fp - timedelta(hours=float(min_lead_hours))
+    for name, r in _backfill_rows(forecast_dir):
+        if r.get("game_pk") != game_pk:
+            continue
+        issued = _utc(r.get("issued_at"))
+        if r.get("fc_temp_f") is None or issued is None or issued > limit:
+            return None
+        return dict(r, snapshot=name)
+    return None
+
+
+def live_archive_agreement(forecast_dir: Path | None = None, *,
+                           min_lead_hours: float = MIN_LEAD_HOURS) -> dict:
+    """The 5h-C precondition: the live capture against the archive on the games
+    both arms hold, open-air only. WEATHER AGAINST WEATHER: it reads no score,
+    no run, no line and no betting row, and it is not the 5h fidelity check
+    (which compares a forecast with the feed's at-game weather).
+
+    The registered rule decides: mean absolute temperature difference at most
+    AGREEMENT_MAX_TEMP_MAE_F, and out-component sign agreement on at least
+    AGREEMENT_MIN_SIGN_SHARE of ALL open-air pairs, so a pair where either
+    component is zero or null counts as NOT agreeing. The share over signed
+    pairs only is reported beside it and never decides. `holds` is None, no
+    verdict, until the paired games span AGREEMENT_MIN_OVERLAP_DAYS (5h-C's four
+    weeks of overlap).
+    """
+    live: dict = {}
+    for p in snapshot_paths(forecast_dir):
+        try:
+            rec = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:                                        # noqa: BLE001
+            continue
+        for r in rec.get("rows") or []:
+            fp, ca = _utc(r.get("first_pitch_utc")), _utc(r.get("captured_at"))
+            if r.get("fc_temp_f") is None or fp is None or ca is None:
+                continue
+            if ca > fp - timedelta(hours=float(min_lead_hours)):
+                continue
+            prev = live.get(r.get("game_pk"))
+            if prev is None or ca > _utc(prev["captured_at"]):
+                live[r.get("game_pk")] = r
+    seen: set = set()
+    diffs, days, n_signed, n_agree, n_zero_or_null = [], [], 0, 0, 0
+    for _, r in _backfill_rows(forecast_dir):
+        pk = r.get("game_pk")
+        if pk in seen:
+            continue
+        seen.add(pk)
+        lv = live.get(pk)
+        if (lv is None or r.get("fc_temp_f") is None or not r.get("weather_applies")
+                or not lv.get("weather_applies")):
+            continue
+        diffs.append(abs(float(lv["fc_temp_f"]) - float(r["fc_temp_f"])))
+        fp = _utc(r.get("first_pitch_utc"))
+        gd = r.get("game_date") or (fp.date().isoformat() if fp else None)
+        if gd:
+            days.append(str(gd)[:10])
+        a, b = lv.get("fc_wind_out_mph"), r.get("fc_wind_out_mph")
+        if a is None or b is None or a == 0 or b == 0:
+            n_zero_or_null += 1          # in the denominator, never agreeing
+            continue
+        n_signed += 1
+        n_agree += int((a > 0) == (b > 0))
+    n_pairs = len(diffs)
+    mae = _r(_mean(diffs), 3)
+    share = _r(n_agree / n_pairs, 4) if n_pairs else None
+    share_signed = _r(n_agree / n_signed, 4) if n_signed else None
+    span = ((date.fromisoformat(max(days)) - date.fromisoformat(min(days))).days + 1
+            if days else 0)
+    holds = None
+    if n_pairs and span >= AGREEMENT_MIN_OVERLAP_DAYS:
+        holds = bool(mae <= AGREEMENT_MAX_TEMP_MAE_F and share >= AGREEMENT_MIN_SIGN_SHARE)
+    return {"n_pairs": n_pairs, "temp_mae_f": mae,
+            "sign_agreement": share, "n_sign_agreeing": n_agree,
+            "n_pairs_zero_or_null_component": n_zero_or_null,
+            "sign_agreement_signed_pairs_only": share_signed,
+            "overlap_first_date": min(days) if days else None,
+            "overlap_last_date": max(days) if days else None,
+            "overlap_span_days": span, "holds": holds,
+            "thresholds": {"max_temp_mae_f": AGREEMENT_MAX_TEMP_MAE_F,
+                           "min_sign_share": AGREEMENT_MIN_SIGN_SHARE,
+                           "min_overlap_days": AGREEMENT_MIN_OVERLAP_DAYS},
+            "note": ("5h-C precondition, weather against weather; the sign share is over every "
+                     "open-air pair as registered, the signed-only share is reported and never "
+                     "decides; no verdict before min_overlap_days; no backfilled row is used "
+                     "by any candidate until this holds")}
+
+
 def coverage(forecast_dir: Path | None = None) -> dict:
     """COUNTS ONLY: how many captures, rows and open-air rows exist, and when
-    the 5h clock started. Never a value, never an outcome."""
+    the 5h clock started. Never a value, never an outcome. The backfill arm is
+    counted in its own block and never starts or advances the live clock."""
     paths = snapshot_paths(forecast_dir)
     n_rows = n_fc = n_open = 0
     first = None
@@ -693,6 +1337,39 @@ def coverage(forecast_dir: Path | None = None) -> dict:
                              "the calendar half only")
     else:
         out["clock_note"] = "5h: no open-air forecast row has accrued; the clock has not started"
+    bf = {"n_snapshots": len(backfill_paths(forecast_dir)), "n_rows": 0,
+          "n_rows_with_forecast": 0, "n_open_air_rows_with_forecast": 0,
+          "first_game_date": None, "last_game_date": None, "n_rows_issued_inside_lead": 0}
+    for _, r in _backfill_rows(forecast_dir):
+        bf["n_rows"] += 1
+        if r.get("fc_temp_f") is None:
+            continue
+        bf["n_rows_with_forecast"] += 1
+        bf["n_open_air_rows_with_forecast"] += int(bool(r.get("weather_applies")))
+        gd = r.get("game_date")
+        if gd and (bf["first_game_date"] is None or gd < bf["first_game_date"]):
+            bf["first_game_date"] = gd
+        if gd and (bf["last_game_date"] is None or gd > bf["last_game_date"]):
+            bf["last_game_date"] = gd
+        fp, issued = _utc(r.get("first_pitch_utc")), _utc(r.get("issued_at"))
+        if fp is None or issued is None or issued > fp - timedelta(hours=MIN_LEAD_HOURS):
+            bf["n_rows_issued_inside_lead"] += 1
+    # The last armed run, skips by code included, so a night that wrote nothing
+    # (every game skipped, say, on a pruned feed cache) is visible here too.
+    fdir = Path(forecast_dir) if forecast_dir else FORECAST_DIR
+    try:
+        lr = json.loads((fdir / BACKFILL_STATE_PATH).read_text(encoding="utf-8"))
+    except Exception:                                            # noqa: BLE001
+        lr = None
+    bf["last_run"] = ({k: lr.get(k) for k in ("run_at", "season", "n_written", "snapshot",
+                                              "n_requests", "n_feed_fetches",
+                                              "n_already_in_store", "n_skipped",
+                                              "skipped_by_code")}
+                      if isinstance(lr, dict) else None)
+    bf["note"] = ("5h-C backfill arm, counted SEPARATELY from the live capture (the 5a arm "
+                  "split); its rows never start or advance the live clock, and no candidate "
+                  "reads them until live_archive_agreement() holds")
+    out["backfill"] = bf
     return out
 
 
@@ -754,12 +1431,24 @@ def tb_weather_multiplier(hr_multiplier: float, hr_share_of_tb: float) -> float:
 # pipeline entry
 # ---------------------------------------------------------------------------
 def run(*, log_fn=None) -> dict:
-    """Nightly entry (run_monthly step 9e-pre-wx). Never raises; inert unless armed."""
+    """Nightly entry (run_monthly step 9e-pre-wx). Never raises; inert unless armed.
+
+    The live capture runs FIRST, so its timestamp is the earliest the night
+    can give it; the 5h-C backfill runs after it, in its own guard, and can
+    neither delay nor block it. The backfill's result rides under "backfill".
+    """
     try:
-        return capture(log_fn=log_fn)
+        out = capture(log_fn=log_fn)
     except Exception as exc:                                     # noqa: BLE001
         log.exception("betting_weather: capture failed")
-        return {"captured": False, "state": "error", "reason": f"{type(exc).__name__}: {exc}"}
+        out = {"captured": False, "state": "error", "reason": f"{type(exc).__name__}: {exc}"}
+    try:
+        out["backfill"] = backfill(log_fn=log_fn)
+    except Exception as exc:                                     # noqa: BLE001
+        log.exception("betting_weather: backfill failed")
+        out["backfill"] = {"captured": False, "state": "error",
+                           "reason": f"{type(exc).__name__}: {exc}"}
+    return out
 
 
 if __name__ == "__main__":                                       # pragma: no cover
@@ -768,13 +1457,24 @@ if __name__ == "__main__":                                       # pragma: no co
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     ap = argparse.ArgumentParser(description="Pregame forecast weather capture (dark).")
     ap.add_argument("--capture", action="store_true",
-                    help="capture tonight's forecasts (inert unless armed in this file)")
+                    help="capture tonight's forecasts, then run the 5h-C backfill")
+    ap.add_argument("--backfill", action="store_true",
+                    help="run the 5h-C Previous Runs backfill alone (first write wins)")
+    ap.add_argument("--from", dest="date_from", default=None, help="backfill: first game date")
+    ap.add_argument("--to", dest="date_to", default=None, help="backfill: last game date")
     ap.add_argument("--coverage", action="store_true", help="counts only")
+    ap.add_argument("--agreement", action="store_true",
+                    help="the 5h-C live-against-archive agreement check (weather only)")
     ap.add_argument("--venues", action="store_true", help="print the offline venue table")
     args = ap.parse_args()
     if args.capture:
         print(json.dumps(run(log_fn=print), indent=1))
+    if args.backfill:
+        print(json.dumps(backfill(date_from=args.date_from, date_to=args.date_to,
+                                  log_fn=print), indent=1))
     if args.coverage:
         print(json.dumps(coverage(), indent=1))
+    if args.agreement:
+        print(json.dumps(live_archive_agreement(), indent=1))
     if args.venues:
         print(json.dumps(venue_table(), indent=1, default=str))

@@ -41,8 +41,8 @@ leakage check it is held to.
 | `tools/betting_calibration.py` | The calibration ledger and `market_gate()` (section 7b) |
 | `test_leaderboard_vintages.py` | The vintage store, the strictly-before read, both modes, the three gates |
 | `test_backfill_vintages.py` | The commit-date cutoff, the named skips, first-write-wins, the arm split |
-| `betting_weather.py` | Section 5h: the pregame forecast capture (ships OFF), its reader, the literature props prior |
-| `test_betting_weather.py` | Section 5h: inert by default, the row-timestamp reader, the wind geometry, nothing served reads it |
+| `betting_weather.py` | Section 5h: the pregame forecast capture (armed 2026-09-11), the 5h-C Previous Runs backfill, their two readers, the literature props prior |
+| `test_betting_weather.py` | Section 5h: the arming pins, the row-timestamp and issue-time readers, the arm split, the wind geometry, nothing served reads it |
 | `test_fixtures/odds_api_mlb_sample.json` | The only odds any test ever reads |
 
 Artifacts written:
@@ -59,7 +59,9 @@ Artifacts written:
 | `.cache/betting/completed_games.json` | Compact game results from the feed cache | on demand |
 | `.cache/leaderboard_vintages/<date>.json` | Dated team inputs, ~25 KB each, first write wins | daily |
 | `.cache/betting/market_gate_state.json` | Section 7b dwell state, one evaluation per UTC day | daily tail |
-| `.cache/weather_forecasts/<date>-<hhmm>.json` | Section 5h forecast captures, immutable; none until the owner arms the capture | daily, when armed |
+| `.cache/weather_forecasts/<date>-<hhmm>.json` | Section 5h forecast captures, immutable | daily (armed 2026-09-11) |
+| `.cache/weather_forecasts/previous-runs-<date>-<hhmm>.json` | Section 5h-C backfill snapshots, immutable, first write wins per game | daily, after the capture, when there are new games |
+| `.cache/weather_forecasts/state/backfill_last_run.json` | The last armed backfill run's counts and skips by code; the one mutable file in the store, outside both snapshot globs | daily, after the capture |
 
 ---
 
@@ -298,6 +300,22 @@ What changed on 2026-09-11, and what did not:
   the league run environment against an observed extras rate of 0.0877. The
   split moves the runline toward the observed margin distribution; it does not
   calibrate it.
+
+**Served since 2026-09-11, by owner decision.** The bullets above are left as
+written. Later the same day the owner answered the decisions list (item 4,
+"reprice now"): `SERVE_RUNLINE_TIE_SPLIT` is flipped on, ahead of the B-RUNLINE
+gate the "not served" bullet says it waited on, so the owner's decision is the
+basis and no gate result is claimed for it. The runline now gives each +1.5 side
+only its measured share of the tie atom, and the labs that read a runline
+probability (the backtest's per-market grade and the 11a dispersion arms) price
+it on their fit window's own split. It shipped in the same pricer change as the
+short-sample parks (5i-A) and two-way starters on the starter board (owner
+decision 23), under ONE `MODEL_VERSION` bump, `betting_runs_v1` to
+`betting_runs_v2`, so the ledgers never pool the old and new pricers; v1 rows
+stay v1. The flag's comment in `betting_model.py` and the commit that flipped it
+carry the measured moves on the board it shipped against. The last measurement
+recorded in this document is the one above, where the 2026-09-10 headline CHW
++1.5 falls from an edge of 0.08747 to 0.05161, under the 0.06 floor.
 
 ### De-vig
 
@@ -1364,6 +1382,90 @@ schema-4 accrual both run on, and an unconditional raise would stop that stream.
 **Not reopened.** No criterion, control or threshold above is amended. The
 candidate, the two-leg bar and the permuted twin stand exactly as registered.
 
+### Amendment (2026-09-11): postseason games COUNT, and the new earliest look
+
+Recorded under the same rule as the 2026-09-10 correction: before the look and
+before any number relates the candidate to a game outcome. Unlike that
+correction it is not a fact found in the data. 5e was silent on postseason
+games, and the owner answered the question (decisions list, item 8, 2026-09-11):
+**they count.** Nothing in this amendment was measured against a game result.
+The paragraphs above are left as written.
+
+**The clock.** The 2026-09-10 restart rule, unchanged: four weeks after the
+first vintage whose `platoon_splits.available` is true. What this amendment adds
+is that postseason vintage nights count toward the four weeks exactly as
+regular-season nights do. The repair landed 2026-09-10 at 20:52 EDT, after that
+night's vintage was captured (2026-09-10T19:34:37Z), so no vintage on disk has
+the repaired split: the newest is `2026-09-10.json`, and the hitter artifact
+it read predates the repair. The hitter artifact dated 2026-09-11 reports
+`platoon_splits.available` true with 540 of 540 slots split and 0 clubs
+split-equal. Vintages are first-write-wins, so the first qualifying vintage is
+expected to be `2026-09-11.json`, and the earliest admissible first look is
+**2026-10-09** (2026-09-11 plus 28 days). The start date is read off the vintage
+record, never off the day's artifact: since schema 5 the basis string of the 5f
+hitter columns (`lineup_dis_vs_lhp` and its three siblings) carries the night's
+`platoon_splits.available`, and that flag is the condition, as registered. The
+count of clubs whose stored `off_vs_lhp` and `off_vs_rhp` are equal (the
+`n_teams_split_equal` tripwire, read off the stored rows) is reported with the
+result and, as the 2026-09-10 correction registered, warns and does not decide.
+If `2026-09-11.json` is not written, or its basis does not read available true,
+the clock starts at the first vintage that does and the look moves with it.
+
+**What postseason inclusion does to the eval set.**
+
+- *It adds games the served backtest cannot see, and only to the eval side.*
+  `betting_model.build_game_cache` and `_row_from_schedule` keep `gameType` R
+  and nothing else, on purpose (their comment: different team quality and
+  roster rules, which a fit would absorb). That stays. At the look, the 5e
+  harness adds the final postseason games (`gameType` F, D, L and W) through the
+  same vintage resolver, each priced from the vintage dated before it, and
+  scores the candidate and the served model with the coefficients fitted on the
+  regular-season vintage fit window. No fit sees a postseason game, and the
+  served fit, the served backtest and every served price are unchanged.
+- *Where the information sits.* Games on vintages that predate the repair price
+  the candidate identically to the served model, so they carry no information
+  (the effective-n rule above). The resolver reads the newest same-season
+  vintage whose cutoff is strictly before the game's date, so the first
+  qualifying vintage (2026-09-11) first prices the 2026-09-12 slate, and the
+  2026-09-11 games price off the pre-repair 2026-09-10 vintage and carry none.
+  The informative games are the regular-season slates from 2026-09-12 through
+  the 2026-09-27 season end, 16 slates and at most 215 games (2,430 scheduled,
+  less the 2,200 final through 2026-09-10 in the completed-games cache and the
+  15 on the 2026-09-11 board; a postponement not made up lowers it; the cached
+  schedule holds 79 of them, 2026-09-12 to 2026-09-17), plus every postseason
+  game played before the look. The whole
+  2026 postseason is 32 to 53 games (Wild Card Series 8 to 12, Division Series
+  12 to 20, League Championship Series 8 to 14, World Series 4 to 7); a look on
+  2026-10-09 sees the Wild Card Series and whatever part of the Division Series
+  has been played. A four-week floor from 2026-09-11 cannot be met inside the
+  2026 regular season, which is the question 5e left open: whether October
+  nights count toward it, and whether October games are graded. This amendment
+  answers yes to both.
+- *The permuted twin weakens on October dates.* The twin permutes the
+  handedness assignment across clubs within each date. A postseason date carries
+  one to four games, so it has few distinct permutations, and a one-game date
+  has two. That makes the control weaker, not the candidate stronger, and it is
+  reported rather than corrected.
+- *The games differ.* Starters go shorter and bullpens carry more of the game in
+  October, which dilutes the starter's-hand signal this candidate reads (it is
+  why 5f excludes postseason); home field follows the seeding, and the served
+  home constant is applied unchanged; every opponent is a playoff club. None of
+  this is adjusted for.
+
+**Added to what must be reported.** The postseason game count, split by round;
+the number of eval dates carrying fewer than four games; and, beside the pooled
+result that decides, the two criteria computed on the regular-season games
+alone, reported and never qualifying. Vintage gaps are handled by the resolver's
+own rule, unchanged: a game is priced from the newest same-season vintage
+strictly before it at whatever age that vintage is, a game with no such vintage
+is dropped and never filled from live files (5c), and the vintage-age
+distribution is reported (the store has gaps: September so far has no
+`2026-09-01.json`, `2026-09-02.json` or `2026-09-08.json`).
+
+**Not reopened.** The candidate, both criteria, the twin and every threshold
+stand as registered. The decision is 5e's alone: 5f and 5g still exclude
+postseason games.
+
 ## 5f. The pinch-hit and bullpen-handedness gate (pre-registered 2026-09-11, schema 5)
 
 **Written before the schema bump it describes exists in code and before the
@@ -1567,6 +1669,11 @@ to date, catchers included, feed-row team), to game outcomes before this section
 committed disqualifies the candidate under 5c rule 1.
 
 ## 5h. Forecast weather (pre-registered 2026-09-11; the capture ships OFF)
+
+**ARMED 2026-09-11 by owner decision, and the 5h-C backfill approved.** The
+heading and the pre-registration below are left as written; what changed, the
+clock rule for backfilled rows and what the approval does and does not buy are
+in "Armed, and the backfill approved" at the end of this section.
 
 **Written before the pipeline has captured a single forecast and before any
 forecast has been related to any game outcome**, in the discipline of 5a, 5c,
@@ -1871,6 +1978,155 @@ flipped: it only starts the capture and the clock.
 3. **The 5h-C backfill.** The only route to a 2026 measurement.
 4. **Where the attribution line lives,** if Open-Meteo is chosen.
 
+### Armed, and the backfill approved (owner decision 2026-09-11)
+
+The section above is left as written. The owner answered on 2026-09-11
+(decisions list, item 3, "arm + Previous-Runs backfill"): decision 1 yes,
+decision 2 Open-Meteo, keyless, and decision 3 yes. Decision 4 is still open.
+
+**What changed.** `FORECAST_CAPTURE_ENABLED = True`, `FORECAST_SOURCE =
+"open-meteo"`, and a new `BACKFILL_ENABLED = True`. The nightly
+`betting_weather.run()` (step `9e-pre-wx`) now makes one keyless forecast
+request and writes one live snapshot, THEN runs the backfill in its own guard,
+so the backfill can neither delay the live timestamp nor block it. **No served
+number moves:** no price, fair total, edge, side marked value, Model Watch
+slot, record row, ledger row or vintage record reads anything in this section,
+and `test_betting_weather.py` still pins that no served module imports it.
+What is added is network and disk: one forecast request a night, the backfill's
+requests (32 the first night, then one batched request a night), a StatsAPI
+feed fetch for any completed game whose feed is not cached, and files under
+`.cache/weather_forecasts/`. Every one of those is capped so an outage costs
+one timeout and not the nightly critical path: at most
+`BACKFILL_MAX_REQUESTS_PER_NIGHT` (40) archive requests and
+`BACKFILL_MAX_FEED_FETCHES_PER_NIGHT` (200) feed fetches a night, and the first
+failure of either kind ends that kind for the night; every game it would have
+filled is retried on a later night. The first backfill is meant to be run by
+hand once (`python betting_weather.py --backfill`), so the nightly step only
+ever makes the one batched request. The live clock starts on the first night
+`coverage()` reports a live open-air row; that date is written here when it
+happens, not predicted now.
+
+**The licence paragraph above still stands.** Keyless means the free endpoint,
+whose terms name subscription sites as commercial. Setting
+`EEPHUS_OPEN_METEO_KEY` moves the capture and the backfill to the commercial
+hosts with no code change (the backfill's host follows Open-Meteo's `customer-`
+convention and has not been exercised, because no key exists). CC BY 4.0 needs
+an attribution line on any page that shows the data; no page shows any today,
+because the columns are dark.
+
+**A transport defect, fixed before it could fail silently.** The capture
+shipped on `urllib` and had never made a request through it. On 2026-09-11,
+on the Windows development machine, `urllib` failed certificate verification
+against both Open-Meteo hosts ("certificate has expired") while `requests`
+returned HTTP 200 from the same hosts. The fetch now goes through `requests`
+and falls back to `urllib` only when `requests` is missing.
+
+**The backfill as built.** `betting_weather.backfill()` reads the completed
+regular-season games from the completed-games cache, and each game's venue,
+coordinates, bearing, roof and first pitch from that game's OWN cached feed,
+never from the home club's usual park: the 2026 schedule so far carries 10
+neutral-site games (Mexico City 2, Las Vegas Ballpark 6, the Field of Dreams 1,
+Williamsport 1). Open-air and retractable venues are fetched, as 5h-C
+registered (retractable rows carry `weather_applies = False` for the secondary
+arm, as in the live capture); dome games and venues without coordinates are
+written as stated nulls. It requests `<var>_previous_day1` for the same seven
+variables the live capture takes and nothing else, averages the same three
+hours from the first-pitch hour, and writes `previous-runs-<UTC date>-<HHMM>.json`
+into the same store, immutable, first write wins per game. A feed missing from
+`.cache/game_feeds` (a pruned box) is fetched through `feed_cache`, the same
+document the cache holds; there is deliberately no fallback to the home club's
+venue, because that is the neutral-site error above. A game whose feed cannot
+be read, whose request failed or was deferred, or whose returned series misses
+its hours is listed with a code (`SKIP_CODES`) and not written, so a later night
+fills it. The live glob cannot match a backfill file, so the two arms never
+pool (the 5a arm split), and `coverage()["backfill"]` counts the backfill
+separately, including the last run's skips by code, read off the one mutable
+file, `state/backfill_last_run.json`, which neither snapshot glob matches. The
+arm is pinned to the approved season, `BACKFILL_SEASONS = ("2026",)`: on a date
+in another season it makes no request and says why.
+
+**The clock rule for backfilled rows.**
+
+1. *What the value is.* Open-Meteo: `_previous_day1` is "the value that was
+   predicted 24 hours before valid time". The 2026-09-11 probe is consistent
+   with the value at hour T coming from the newest archived run initialised at
+   or before T minus 24 hours: on all 44 past hours probed it differed from the
+   current run's value, and for valid times more than about a day ahead it
+   equals the current run, which is what that rule gives when the newest run is
+   the current one.
+2. *The issue time.* Each row carries `run_initialised_by` (its latest hour
+   minus `BACKFILL_NOMINAL_LEAD_HOURS`, 24) and `issued_at`, that plus
+   `BACKFILL_ISSUE_ALLOWANCE_HOURS` (12, POLICY: twice the six-hour update cycle
+   Open-Meteo states for its global models, to cover publication). `issued_at`
+   is the LATEST moment the forecast behind the row could have existed, an upper
+   bound and never an optimistic guess.
+3. *The rule.* A backfilled row may inform a game only when its `issued_at` is
+   at least `MIN_LEAD_HOURS` (1) before first pitch. It is enforced twice: a row
+   that fails it is never written, and `backfill_forecast_for_game`, the only
+   reader of the arm, tests it again on the row, never on a file name. With the
+   three-hour window the bound sits 10.00 to 10.83 hours before first pitch on
+   every one of the 2,123 rows the dry run below would fetch, so no row is
+   refused at the registered constants and none can carry a value issued after
+   first pitch.
+4. *The fetch time is not the issue time.* `captured_at` on a backfilled row is
+   the honest fetch time, which is after the game. That is why the live reader,
+   which tests `captured_at`, can never return one, and why backfilled rows
+   never start or advance the live clock.
+5. *Never the analysis.* The Historical Forecast API stays banned, and the
+   backfill never requests the current-run value for a past hour.
+6. *Not before agreement.* No candidate reads a backfilled row until
+   `live_archive_agreement()`, the registered weather-against-weather check,
+   holds on the games both arms carry, in the registered words: mean absolute
+   temperature difference at most 3 F and "out-component sign agreement on at
+   least 80% of open-air rows". The denominator is therefore every open-air
+   pair, and a pair where either out-component is zero or null counts as not
+   agreeing; the share over signed pairs only is reported beside it and never
+   decides. The check gives no verdict (`holds` is None) until the paired games
+   span `AGREEMENT_MIN_OVERLAP_DAYS` (28), the "four weeks of overlap" 5h-C
+   names. The nightly backfill writes archive rows for the same games the live
+   capture covers, which is the overlap it runs on.
+
+**Coverage, counts only (2026-09-11, no value read against anything).** A dry
+run over the completed-games cache (2,200 games through 2026-09-10) with the
+request stubbed: 2,197 games resolve a feed (3 finals from 2026-09-10 are not
+cached yet and would be retried), 1,613 open-air (1,611 with coordinates; the 2
+Mexico City games carry none), 512 retractable, 72 dome; 32 venues, so 32
+requests the first night; about 25 to 40 seconds of feed reads, once. 8 open-air
+neutral-site games carry no bearing, so their out-component is null and their
+temperature is kept. Real fetches through the backfill code, into a scratch
+folder and not into the store: the 2026-09-09 slate (15 games, one batched
+request, 15 of 15 rows filled on every column) and 2026-06-08 to 2026-06-14 (89
+games, 19 per-venue requests because the span crossed the seven-day batch cap,
+86 of 86 fetched rows filled on every variable, the out-component on 80, the six
+without being Las Vegas). With the three shape probes that is 24 requests in all
+while scoping; none went to the Historical Forecast API, and nothing fetched was
+related to any game result.
+
+**What the approval buys, and what it does not.** The live arm's clock is
+unchanged: four weeks AND 400 open-air games, which still lands in 2027. For the
+archive arm, 5h-C says, verbatim: "The archive arm's first look is no earlier
+than the live clock below, so the agreement check has four weeks of overlap to
+run on." That clause admits two readings, and choosing between them is an
+owner call, not this document's:
+
+- *Reading A, the calendar half.* No earlier than four weeks after the live
+  clock STARTS (about 2026-10-10 if the first live open-air row lands
+  2026-09-12). The "so ... four weeks of overlap" clause points this way.
+- *Reading B, the clock as defined.* No earlier than the live clock's own first
+  look, both of its conditions, so the 400 live open-air games too, which puts
+  it in 2027.
+
+Until the owner rules, this document holds the stricter, B. Under either
+reading the agreement check decides next, and it cannot give a verdict in 2026:
+the backfill covers regular-season games only, so the overlap runs from the
+first live capture to the 2026-09-27 season end, about 16 nights at roughly 11
+open-air games a night, short of the 28 days the check requires. The thresholds
+and the minimum are not moved to fit that. So the archive arm waits for 2027
+either way, and in 2027 it needs the archive to keep running beside the live
+capture for four weeks, which `BACKFILL_SEASONS` does not allow: continuing the
+archive arm into 2027 is a further owner decision. Addition 1 (the
+B-TOTAL-LEVEL ordering) still applies to any 5h-A look.
+
 
 ## 5i. Ballpark awareness: the Athletics' park, and park by bat side (pre-registered 2026-09-11)
 
@@ -1983,6 +2239,46 @@ tripwire in `test_betting_ballpark.py`. The flag reaches only
 another club moves. Vintage records reach it only through their own dated
 `parks_short_window` block (schema 5); an older record keeps the A's neutral.
 `dfs_export` reads fa_meta park_factors and is not changed by this flag.
+
+**Served since 2026-09-11, by owner decision.** Later the same day the owner
+answered the decisions list (item 2, "flip on + refit", and the park follow-ups:
+DFS reads the same factor, and "the Rays aren't playing at Tropicana this year,
+make sure you have the right ballpark for each year"). `SERVE_ATH_PARK` is True,
+and the change that flipped it reaches further than the paragraphs above
+describe. Three of their sentences are no longer true, and are corrected here
+rather than rewritten:
+
+- *"The flag reaches only `SHORT_WINDOW_PARK_ORGS` (ATH)."* Corrected
+  2026-09-11: it reaches ATH and TBR. The venue audit found that the Rays
+  played 2025 at George M. Steinbrenner Field and all 72 of their 2026 home
+  games so far at Tropicana Field (venue 12, a dome), so Savant's 2024-2026
+  Tropicana row holds only 2024 and 2026. The Rays now take that row shrunk by
+  its own sample, under the same flag and the same shrink as the A's; a short
+  row can only pull a measured 3-season factor toward neutral by that factor's
+  own sample, never replace it with another number. The list is still explicit.
+- *"Tropicana's 3-season row ... is served unshrunk today; ... a separate served
+  change this section does not make."* Corrected 2026-09-11: that change is now
+  made, in the same flip.
+- *"`dfs_export` reads fa_meta park_factors and is not changed by this flag."*
+  Corrected 2026-09-11: `dfs_export`'s park leg now reads the same
+  venue-correct table through `betting_model.park_index_from_meta`, so /dfs/
+  prices the A's and the Rays at the factor /betting/ serves (its legs carry the
+  source `savant_mlb_short_window`). The FA engine's team-fit park component
+  (`fa_fit.venue_park_row`) reads it through the same shrink.
+
+**What the table above measures, and what it does not.** It is the A's flip
+alone, with the coefficients held and after the `--context` refit, on the
+2026-09-11 board. The served flip also moves the one dome game on that board,
+HOU at TBR, through the Rays' shrunk Tropicana factor, and ships under the one
+`MODEL_VERSION` bump (`betting_runs_v1` to `betting_runs_v2`) that also carries
+the runline tie split (section 4) and two-way starters on the starter board
+(owner decision 23). The moves of the change as shipped, both parks and the
+refit included, are in the flag's comment in `betting_model.py` and the commit
+that flipped it; this document does not restate them. A fact for the venue
+audit that no club-keyed park term fixes, read off the cached 2026 game feeds
+(venue only, no score): six Athletics home games (2026-06-08 to 2026-06-14,
+against MIL and COL) were played at Las Vegas Ballpark, not Sutter Health Park,
+so a park term keyed on the home club prices those six at Sutter's factor.
 
 ### 5i-B. Park by bat side for the TOTAL (dark, schema 5)
 
@@ -2387,6 +2683,9 @@ the moneyline splits it, and the sentence says, with numbers read off the row's
 own `tie_atom` block and the slot's floor, what this side's probability and edge
 would be under the measured split and whether it would still clear the floor.
 The split is not served, so the slot still ranks on the served probability.
+**2026-09-11, later:** the owner flipped the split on (section 4), so the served
+probability the slot ranks on is now the split one; what the caveat says after
+the flip is recorded with that commit.
 
 ### Slot 2: `longshot_of_the_day`
 
@@ -3405,6 +3704,10 @@ never edits `assets/eephus-account.js`.
   tie mass times the other side's two-run-plus share of extra-inning games. The
   measured split is published and not served; section 4 has the numbers and the
   gate it waits on, and a runline slot says so on the row.
+  **2026-09-11, later:** SERVED. The owner flipped `SERVE_RUNLINE_TIE_SPLIT` on
+  ahead of that gate (section 4), under the `betting_runs_v2` bump. The runline
+  is still priced off the mis-shaped margin model of the bullet above; the split
+  fixes the tie atom's allocation, not the shape.
 - Hitter prop lines assume a projected batting order against a right-hander and
   a PA-by-slot table (4.65 at leadoff down to 3.85 at the nine hole). A posted
   lineup card beats this every time.
@@ -3413,7 +3716,9 @@ never edits `assets/eephus-account.js`.
   **2026-09-11:** still true of every served price. Venue weather
   climatology accrues dark (5d), and a pregame forecast capture is authored
   and ships OFF behind an owner decision (5h); neither reaches a price until
-  its own pre-registered gate clears.
+  its own pre-registered gate clears. **Later the same day** the owner armed
+  the forecast capture and approved its Previous Runs backfill (5h, "Armed");
+  both accrue dark and still reach no price.
 - 29 of 30 parks have a Savant runs index in `fa_meta.json`; the missing one
   resolves neutral at lookup rather than being invented. **Amended 2026-09-11:**
   the missing one is the Athletics' Sutter Health Park, which Savant publishes
@@ -3421,7 +3726,13 @@ never edits `assets/eephus-account.js`.
   highest posted total (10.0) on the 2026-09-11 board. Neutral was the wrong
   default for it. The shrunk measured factor (1.1919) is built and NOT served:
   `SERVE_ATH_PARK` is False, and flipping it adds an over to the 2026-09-11
-  value set rather than removing one. Section 5i-A.
+  value set rather than removing one. Section 5i-A. **2026-09-11, later:**
+  SERVED. The owner flipped `SERVE_ATH_PARK` on with a refit (5i-A). The A's
+  home games now price at Sutter Health Park's shrunk factor, which adds to the
+  over tilt rather than reducing it, and the Rays' home games at their
+  two-season Tropicana row shrunk by its own sample; /dfs/ reads the same
+  table. Neutral-site games are still priced at the home club's park (the six
+  A's home games at Las Vegas Ballpark, 5i-A).
 - The park term carries no batter side. The by-hand split of Savant's runs
   index is measured near-pure noise (3-season reliability 0.0191) and its HR
   split weak (0.3293); both are captured dark with their gates in 5i-B and 5i-C.
@@ -3717,6 +4028,26 @@ dispersion line (`dispersionLine` in `assets/betting.js`, which reads
 2.15x tail). Replacing the caveat text is open work for the dispersion lane. The
 one runline error the caveat never covered, the tie atom, now has its own
 row-level sentence (section 4, `tie_atom_caveat`).
+
+**2026-09-11, `betting_runs_v2`: the gate re-run on its own schedule reads FAIL.**
+Serving the runline split of the tie atom (`SERVE_RUNLINE_TIE_SPLIT`, owner
+decision 4) changes what criterion 2 grades, because both arms now price the
+runline on their fit window's own split (`_lab_runline_split`). Measured on the
+2,200 cached games under the amended both-sides criterion, t at split quantiles
+0.6 / 0.7 / 0.8:
+
+| Pricer | Runline | Total | Verdict |
+|---|---|---|---|
+| v1 | 3.196 / 2.086 / 2.221 | 2.271 / 1.334 / 0.049 | INDETERMINATE |
+| tie split alone | 0.482 / -0.127 / 0.540 | | FAIL |
+| parks alone | | 2.614 / 1.841 / 0.517 | INDETERMINATE |
+| two-way starters alone | | 2.309 / 1.381 / 0.080 | INDETERMINATE |
+| v2 (all three) | 0.473 / -0.116 / 0.540 | 2.645 / 1.876 / 0.539 | FAIL |
+
+Dispersion did not ship and does not ship; `SERVE_RUN_DISPERSION` stays False. The
+total leg's gain at 0.7 (1.334 to 1.876) comes from the park repair, a
+pricer-input change. This is the registered gate re-run on its own nightly
+schedule, not a look at the B-TOTAL lane.
 
 ### 11b. B5: Platt response-scale calibration, the pre-registered gate (2026-08-16)
 

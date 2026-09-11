@@ -38,7 +38,7 @@ happen inside the called module, so this file alone cannot split them).
 | 9e-pre0. Refresh team leaderboards (bullpen_leaderboards.json, | bullpen_leaderboards.json, hitter_leaderboards.json, starter_leaderboards.json |
 | 9e-pre. Leaderboard vintage snapshot (validation clock) | - |
 | 9e-pre0b. Refresh Defense Leaderboards (defense_leaderboards.json) | defense_leaderboards.json |
-| 9e-pre-wx. Forecast weather capture (dark, off by default) | betting_model_eval.json |
+| 9e-pre-wx. Forecast weather capture (dark, armed) | betting_model_eval.json |
 | 9e-pre1. Betting model refit (betting_model_eval.json) | betting_model_eval.json |
 | 9e. Betting odds snapshot + payload (betting.json) | betting.json, betting_learning.json, betting_shadow.json, job_heartbeat.json, source_backtest.json, xfv_scoreboard_eval.json |
 | 9g. eFV scoreboard refresh (xfv_scoreboard_eval.json) | xfv_scoreboard_eval.json |
