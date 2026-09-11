@@ -228,8 +228,12 @@ def test_every_roster_aware_surface_is_on_the_nightly_path():
     """
     src = (HERE / "run_monthly.py").read_text(encoding="utf-8")
     for name in ("bullpen_export", "starter_export", "hitter_export",
-                 "fantasy_export", "dfs_export"):
+                 "fantasy_export", "dfs_export", "defense_export"):
         assert name in src, f"{name} is not reached by run_monthly at all"
+    # The Defense board's alignment cards are roster-filtered too, and the
+    # monthly 6b4i step alone would leave them a month stale.
+    assert "Refresh Defense Leaderboards" in src, (
+        "defense_export is reached only by the monthly build, not the daily path")
     # the daily leaderboard block that rebuilds the three team boards
     assert "daily leaderboards" in src
     assert "refresh_live" in src and "dfs_export" in src

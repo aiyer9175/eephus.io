@@ -492,6 +492,179 @@ def test_leverage_charts_render_for_a_full_pool():
     assert "undefined" not in html
 
 
+# ---------------------------------------------------------------------------
+# Defense Leaderboards section (DEM+), Team Defense, Defense Charts and the
+# season history, driven via the #section=defense deep-link. Row shapes follow
+# data/defense_leaderboards.json and data/defense_history.json as served.
+# ---------------------------------------------------------------------------
+
+_DEF_POS = ["CF", "SS", "2B", "3B", "RF", "LF", "1B", "CF", "SS", "2B", "3B", "RF"]
+
+
+def _drow(mlbam, name, team, pos, dem, inn, hem, qualified=True, **extra):
+    row = {"key": str(mlbam), "mlbam": mlbam, "name": name, "team": team, "pos": pos,
+           "pos_inn": {pos: inn}, "inn": inn, "qualified": qualified,
+           "tier": "Average", "dem_plus": dem, "dem_plus_raw": dem + 0.2,
+           "dem_plus_pct": 50, "dem_plus_pos_pct": 55, "rel": 0.6,
+           "rate_1000": 2.5, "rate_1000_shrunk": 1.4, "fld_runs": 3.1, "fld_total": 3.1,
+           "fld_pct": 0.981, "pos_runs": -1.2, "def_runs": 1.9, "hem_plus": hem}
+    row.update(extra)
+    return row
+
+
+_DEF_ROWS = (
+    [_drow(111, "Glove Star", "NYY", "CF", 125, 1100.0, 104,
+           pos_inn={"CF": 1000.0, "RF": 100.0}, dem_plus_pct=99, dem_plus_3yr=121,
+           dem_plus_3yr_pct=97, dem_plus_3yr_tag="established"),
+     _drow(222, "Frame Catcher", "BOS", "C", 113, 800.0, 91,
+           fld_runs=2.0, frm_runs=6.4, fld_total=8.4, def_runs=14.0, pos_runs=5.6,
+           dem_plus_3yr=109, dem_plus_3yr_pct=80, dem_plus_3yr_tag="provisional"),
+     _drow(333, "Thin Glove", "BOS", "SS", 104, 150.0, 97, qualified=False)]
+    + [_drow(500 + i, "Glove %02d" % i, "NYY" if i % 2 else "BOS", _DEF_POS[i],
+             101 - i * 3, 900.0 - i * 20, 99 - i)
+       for i in range(12)]
+)
+_DEF_ALIGN = [{"pos": p, "key": str(m), "mlbam": m, "name": n, "inn_at_pos": inn, "dem_plus": d}
+              for p, m, n, inn, d in (("C", 222, "Frame Catcher", 800.0, 113),
+                                      ("CF", 111, "Glove Star", 1000.0, 125),
+                                      ("SS", 501, "Glove 01", 880.0, 98))]
+DEFENSE_SAMPLE = json.dumps({
+    "generated_at": "2026-09-11", "season": 2026, "as_of": "2026-09-11",
+    "verdict": "validated",
+    "backtest": {"status": "validated", "n_pairs": 1255, "seasons": 4, "rho_dem_plus": 0.46,
+                 "rho_raw_rate": 0.45, "rho_fld_pct": 0.01, "rho_innings": 0.09,
+                 "disclaimer": "DEM+ is scored against next season's published fielding rate."},
+    "multiyear": {"source": "dem_plus_multiyear_eval.json", "available": True,
+                  "generated_at": "2026-09-11", "window": [2024, 2025, 2026], "n_stamped": 2},
+    "team_rollup_framing": {"included": False, "note": "catchers roll up separately"},
+    "team_basis": {"basis": "current_roster", "scope": "current", "n_rows": 15,
+                   "n_moved_to_current_club": 1, "note": "Team is the current club."},
+    "fielders": _DEF_ROWS,
+    "teams": [
+        {"team": "NYY", "team_dem_plus": 106, "team_dem_plus_raw": 106.2, "n_fielders": 8,
+         "n_above_avg": 5, "team_inn": 9800.0, "team_fld_runs": 20.5, "team_fld_total": 20.5,
+         "team_pos_runs": -4.0, "rollup_includes_catchers": False,
+         "alignment": _DEF_ALIGN, "n_off_roster_dropped": 2},
+        {"team": "BOS", "team_dem_plus": 94, "team_dem_plus_raw": 94.1, "n_fielders": 9,
+         "n_above_avg": 3, "team_inn": 9700.0, "team_fld_runs": -8.0, "team_fld_total": -8.0,
+         "team_pos_runs": 2.0, "rollup_includes_catchers": False,
+         "alignment": _DEF_ALIGN[:1], "n_off_roster_dropped": 0},
+    ],
+})
+DEFENSE_HISTORY_SAMPLE = json.dumps({
+    "generated_at": "2026-09-11", "seasons": [2024, 2025],
+    "team_basis": {"basis": "current_roster", "scope": "history", "n_rows": 2,
+                   "n_moved_to_current_club": 1,
+                   "note": "These are CLOSED seasons; team is the club today."},
+    "history": {"2025": {"season": 2025, "n_qualified": 2, "fielders": [
+        {"mlbam": 111, "name": "Past Glove", "team": "NYY", "pos": "CF", "inn": 1200.0,
+         "dem_plus": 131, "tier": "Elite", "fld_runs": 15.0, "fld_total": 15.0, "pos_runs": 2.0,
+         "def_runs": 17.0, "rate_1000": 12.5, "fld_pct": 0.99, "qualified": True},
+        {"mlbam": 222, "name": "Past Catcher", "team": "BOS", "pos": "C", "inn": 900.0,
+         "dem_plus": 97, "tier": "Average", "fld_runs": 1.0, "frm_runs": -2.0, "fld_total": -1.0,
+         "pos_runs": 6.0, "def_runs": 5.0, "rate_1000": -1.1, "fld_pct": 0.995, "qualified": True},
+    ]}},
+})
+
+
+def _defense_prelude(hash_: str) -> str:
+    override = f"""
+    var DEFENSE_SAMPLE={DEFENSE_SAMPLE};
+    var DEFENSE_HISTORY_SAMPLE={DEFENSE_HISTORY_SAMPLE};
+    fetch=function(url){{
+      var u=String(url);
+      var body = (u.indexOf('defense_history')>=0) ? DEFENSE_HISTORY_SAMPLE
+               : (u.indexOf('defense')>=0) ? DEFENSE_SAMPLE : SAMPLE;
+      return FT({{ok:true,json:function(){{return FT(body);}}}});
+    }};
+    var EEPHUS_HUB={{
+      teamLogo:function(){{return '';}},
+      histogram:function(){{return '<svg class="hub-hist"></svg>';}},
+      scatter:function(){{return '<svg class="hub-scatter"></svg>';}},
+      stripHTML:function(){{return '';}},
+      links:function(){{return FT({{byMlbam:{{"111":{{"key":"glove_star","mlbam":111,"name":"Glove Star"}}}}}});}}
+    }};
+    window.EEPHUS_HUB=EEPHUS_HUB;
+    """
+    return _prelude(hash_) + override
+
+
+def _render_defense(hash_: str) -> str:
+    ctx = MiniRacer()
+    ctx.eval(_defense_prelude(hash_) + JS)
+    return ctx.eval("__html['mlbstats-defense-root'] || ''")
+
+
+def test_defense_board_renders_via_section_hash():
+    html = _render_defense("#section=defense")
+    assert "mlbstats-table" in html
+    assert "DEM+" in html and "Glove Star" in html and "Frame Catcher" in html
+    assert "DEM+ 3yr" in html and "p97" in html          # frozen 3yr column + percentile
+    assert 'data-gl="dem_plus"' in html                   # header + explainer reach the glossary
+    assert "/glossary/#g=dem_plus" in html
+    assert 'data-gl="fielding_runs"' in html and 'data-gl="framing_runs"' in html
+    assert 'data-gl="positional_adjustment"' in html
+    assert "published" in html                            # the one-line run-column note
+    # clickable name: mlbam 111 resolves to the merged card
+    assert 'class="mlbstats-name-link"' in html
+    assert "/projections/#player=glove_star" in html
+    assert "Thin Glove" not in html                       # qualified-only default
+    assert "+6.4" in html                                 # catcher framing runs, signed
+    assert "undefined" not in html
+
+
+def test_dem_plus_bands_on_the_rem_ruler_not_the_hem_ruler():
+    """DEM+ is 100 + 10z (SD exactly 10), so it bands with remClass
+    93/107/120. hemClass (88/112/130) would call 113 average and 125 merely good."""
+    html = _render_defense("#section=defense")
+    assert 'class="rem-plus rem-good">113<' in html
+    assert 'class="rem-plus rem-elite">125<' in html
+    assert 'class="rem-plus rem-avg">113<' not in html
+    assert 'class="rem-plus rem-good">125<' not in html
+
+
+def test_defense_team_and_chart_tabs_exist():
+    html = _render_defense("#section=defense")
+    assert "Team Defense" in html and "Defense Charts" in html
+    assert 'data-mlbpos="CF"' in html and 'data-mlbpos="C"' in html   # position chips
+
+
+def test_team_defense_view_renders():
+    html = _render_defense("#section=defense&dview=teams")
+    assert "Team DEM+" in html and 'data-gl="team_dem_plus"' in html
+    assert ">106<" in html and ">94<" in html
+    assert "catchers are excluded" in html                # team_rollup_framing.included false
+    assert "undefined" not in html
+
+
+def test_defense_charts_render():
+    html = _render_defense("#section=defense&dview=charts")
+    assert 'data-collapse="defense-viz"' in html
+    assert "hub-hist" in html and "hub-scatter" in html
+    assert "bp-depth-card" in html and "bp-slot" in html
+    assert "Team DEM+ 106" in html
+    assert "Frm +6.4" in html                             # catcher slot reads his framing
+    assert "undefined" not in html
+
+
+def test_defense_season_pills_and_history_board():
+    html = _render_defense("#section=defense")
+    assert 'data-defenseseason="current"' in html
+    assert 'data-defenseseason="2025"' in html
+    hist = _render_defense("#section=defense&dseason=2025")
+    assert "Past Glove" in hist and "Past Catcher" in hist
+    assert "2025 season, 2 qualified fielders" in hist
+    assert "DEM+ 3yr" not in hist                         # frozen join is live-board only
+    assert "CLOSED seasons" in hist                       # the history file's own team note
+    assert "undefined" not in hist
+
+
+def test_defense_sort_deep_link_is_honoured():
+    html = _render_defense("#section=defense&dsort=inn.a")
+    body = html.split("<tbody>")[1]
+    assert body.index("Glove 11") < body.index("Glove Star")
+
+
 # --------------------------------------------------------------------------
 # The Team column means "today", and the page has to say so
 # --------------------------------------------------------------------------

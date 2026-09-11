@@ -40,7 +40,9 @@ JS = ROOT / "assets" / "mlbstats.js"
 # Every payload the /mlbstats/ page renders a team column from.
 BOARDS = ("bullpen_leaderboards.json", "starter_leaderboards.json",
           "hitter_leaderboards.json", "leverage_leaderboards.json",
-          "bullpen_history.json", "starter_history.json", "hitter_history.json")
+          "defense_leaderboards.json",
+          "bullpen_history.json", "starter_history.json", "hitter_history.json",
+          "defense_history.json")
 
 
 def _js():
@@ -81,6 +83,13 @@ def test_the_note_is_mounted_with_each_board_own_payload():
             f"the note is not mounted with {payload}, so that board either shows "
             f"nothing or shows another board's row counts"
         )
+    # The Defense board mounts the note through defenseBasis(), which hands it
+    # the history file's own block on a past-season pill (the CLOSED-season
+    # sentence) and the live board's otherwise.
+    assert "teamBasisNote(defenseBasis())" in js
+    body = js.split("function defenseBasis()")[1].split("\n  }")[0]
+    assert "DEFENSE_HISTORY" in body and "defenseData" in body, (
+        "defenseBasis() no longer chooses between the live and the history payload")
 
 
 def test_every_served_board_carries_the_block():
@@ -109,7 +118,8 @@ def test_a_history_board_says_the_history_thing():
     half of the convention.
     """
     checked = 0
-    for name in ("bullpen_history.json", "starter_history.json", "hitter_history.json"):
+    for name in ("bullpen_history.json", "starter_history.json", "hitter_history.json",
+                 "defense_history.json"):
         p = ROOT / "data" / name
         if not p.exists():
             continue
@@ -130,7 +140,8 @@ def test_the_disclosure_counts_what_the_reader_sees():
     """n_rows must be the served board, not the season pool behind it."""
     for name, key in (("bullpen_history.json", "relievers"),
                       ("starter_history.json", "starters"),
-                      ("hitter_history.json", "hitters")):
+                      ("hitter_history.json", "hitters"),
+                      ("defense_history.json", "fielders")):
         p = ROOT / "data" / name
         if not p.exists():
             continue

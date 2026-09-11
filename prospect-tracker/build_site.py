@@ -3938,22 +3938,23 @@ def build_trademachine() -> str:
 
 def build_mlbstats() -> str:
     """The /mlbstats/ MLB Stats module - league-wide MLB stat leaderboards.
-    First (and for now only) section is Bullpen Leaderboards: REM+ reliever
-    ratings, team Bullpen+ quality, and bullpen charts, all computed from
-    MLB play-by-play (gmLI/WPA self-computed from the StatsAPI winProbability
-    feed; FIP-based skill core). Static shell + assets/mlbstats.js, which fetches
-    the bullpen_export.py sidecar (data/bullpen_leaderboards.json). Styles ride
-    the .fa-app block plus a small .mlbstats-app extension in site.css. The
-    section nav is built to grow as more MLB stat sections land."""
+    Five sections, one tab each: Bullpen (REM+, bullpen_export.py), Starters
+    (SEM+, starter_export.py), Hitters (HEM+, hitter_export.py), Leverage (WPA,
+    leverage_export.py) and Defense (DEM+, defense_export.py). Static shell +
+    assets/mlbstats.js, which lazy-fetches each section's data/*_leaderboards.json
+    and *_history.json on first activation. Styles ride the .fa-app block plus
+    the .mlbstats-app extension in site.css; the Defense section reuses the
+    existing board and depth-card classes, so it adds no CSS."""
     body = (
         '<div class="fa-app mlbstats-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">β beta</span></h1></div>'
         '<span class="section-sub">League-wide MLB stat leaderboards. Bullpen Leaderboards - '
         'REM+ reliever skill, RIV+ impact, team Bullpen+ quality, and bullpen charts; Starter '
-        'Leaderboards - SEM+ starter run-prevention skill, team Rotation+, and rotation charts; and '
-        'Hitter Leaderboards - HEM+ offensive-rate skill, team Offense+, and lineup charts; and '
-        'Leverage Leaderboards - realized in-game WPA impact for batters and starters, computed '
+        'Leaderboards - SEM+ starter run-prevention skill, team Rotation+, and rotation charts; '
+        'Hitter Leaderboards - HEM+ offensive-rate skill, team Offense+, and lineup charts; '
+        'Leverage Leaderboards - realized in-game WPA impact for batters and starters; and '
+        'Defense Leaderboards - DEM+ fielding-rate skill, team DEM+, and alignment charts, computed '
         'from the MLB season.</span></div>'
         # Section nav (built as a tablist; sections join here as they ship).
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="MLB Stats sections">'
@@ -3961,6 +3962,7 @@ def build_mlbstats() -> str:
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="starters" role="tab" aria-selected="false" aria-controls="mlbstats-section-starters">Starter Leaderboards</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="hitters" role="tab" aria-selected="false" aria-controls="mlbstats-section-hitters">Hitter Leaderboards</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="leverage" role="tab" aria-selected="false" aria-controls="mlbstats-section-leverage">Leverage Leaderboards</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="defense" role="tab" aria-selected="false" aria-controls="mlbstats-section-defense">Defense Leaderboards</button>'
         '</div>'
         '<div id="mlbstats-section-bullpen" class="mlbstats-section" role="tabpanel" aria-label="Bullpen">'
         '<div id="mlbstats-banner"></div>'
@@ -3975,6 +3977,9 @@ def build_mlbstats() -> str:
         '<div id="mlbstats-section-leverage" class="mlbstats-section" role="tabpanel" aria-label="Leverage" hidden>'
         '<div id="mlbstats-leverage-root"></div>'
         '</div>'
+        '<div id="mlbstats-section-defense" class="mlbstats-section" role="tabpanel" aria-label="Defense" hidden>'
+        '<div id="mlbstats-defense-root"></div>'
+        '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
@@ -3982,8 +3987,8 @@ def build_mlbstats() -> str:
     )
     return page("MLB Stats - eephus.io", "mlbstats", body,
                 "MLB stat leaderboards from eephus.io - REM+ reliever skill and RIV+ impact, team "
-                "Bullpen+ quality, SEM+ starter run-prevention, and HEM+ hitter offense, computed "
-                "from the MLB season.",
+                "Bullpen+ quality, SEM+ starter run-prevention, HEM+ hitter offense, and DEM+ "
+                "fielding, computed from the MLB season.",
                 url=f"{SITE_ORIGIN}/mlbstats/")
 
 def build_pal() -> str:

@@ -15,6 +15,9 @@
 // better). The headline number is pure-skill (FIP-based, sample-shrunk); the
 // leverage context (gmLI / WPA / WPA-LI / SD-MD) rides separate Impact columns
 // so role assignment never moves the talent number (the two-number design).
+//
+// Five sections share this file: Bullpen (above), Starters (section 2),
+// Hitters (3), Leverage (4) and Defense (5, DEM+ from defense_export.py).
 (function () {
   "use strict";
 
@@ -1150,6 +1153,8 @@
     htsort: { key: "offense_plus", asc: false },    // Team Lineups
     lbsort: { key: "wpa", asc: false },             // Leverage: batters
     lssort: { key: "wpa", asc: false },             // Leverage: starters
+    dsort:  { key: "dem_plus", asc: false },        // Defense: fielders
+    dtsort: { key: "team_dem_plus", asc: false },   // Team Defense
   };
   // A season key is "current" or a four-digit year; anything else is ignored
   // rather than trusted, because the value goes straight into a payload lookup.
@@ -1173,10 +1178,11 @@
   }
   function readHash() {
     var h = location.hash || "";
-    // Top-level section deep-link (#section=bullpen|starters|hitters) + the
-    // per-section view (#view= bullpen, #sview= starters). Each key is anchored
-    // to a separator so e.g. "sview=teams" can never match the "view=" regex.
-    var s = /(?:^#|[#&])section=(bullpen|starters|hitters|leverage)\b/.exec(h);
+    // Top-level section deep-link (#section=bullpen|starters|hitters|leverage|
+    // defense) + the per-section view (#view= bullpen, #sview= starters,
+    // #dview= defense). Each key is anchored to a separator so e.g.
+    // "sview=teams" or "dview=teams" can never match the "view=" regex.
+    var s = /(?:^#|[#&])section=(bullpen|starters|hitters|leverage|defense)\b/.exec(h);
     if (s) section = s[1];
     var m = /(?:^#|[#&])view=(relievers|teams|depth)\b/.exec(h);
     if (m) view = m[1];
@@ -1186,12 +1192,15 @@
     if (hv) hitterView = hv[1];
     var lv = /(?:^#|[#&])lview=(batters|starters)\b/.exec(h);
     if (lv) leverageView = lv[1];
+    var dv = /(?:^#|[#&])dview=(fielders|teams|charts)\b/.exec(h);
+    if (dv) defenseView = dv[1];
     // Season pills. readHash runs from init(), after every one of these vars
     // and column arrays has been assigned, so the forward references are safe.
     relSeason = readSeason(h, "rseason", relSeason);
     starterSeason = readSeason(h, "sseason", starterSeason);
     hitterSeason = readSeason(h, "hseason", hitterSeason);
     leverageSeason = readSeason(h, "lseason", leverageSeason);
+    defenseSeason = readSeason(h, "dseason", defenseSeason);
     // Sort per board.
     readSort(h, "rsort", REL_COLS, relSort);
     readSort(h, "rtsort", TEAM_COLS, teamSort);
@@ -1201,6 +1210,8 @@
     readSort(h, "htsort", HITTER_TEAM_COLS, hitterTeamSort);
     readSort(h, "lbsort", BAT_LEV_COLS, leverageBatSort);
     readSort(h, "lssort", STARTER_LEV_COLS, leverageStarterSort);
+    readSort(h, "dsort", DEFENSE_COLS, defenseSort);
+    readSort(h, "dtsort", DEFENSE_TEAM_COLS, defenseTeamSort);
   }
 
   // Compose the FULL page state into the hash on every section/tab/season/sort
@@ -1220,10 +1231,12 @@
     if (starterView !== "starters") parts.push("sview=" + starterView);
     if (hitterView !== "hitters") parts.push("hview=" + hitterView);
     if (leverageView !== "batters") parts.push("lview=" + leverageView);
+    if (defenseView !== "fielders") parts.push("dview=" + defenseView);
     if (relSeason && relSeason !== "current") parts.push("rseason=" + relSeason);
     if (starterSeason && starterSeason !== "current") parts.push("sseason=" + starterSeason);
     if (hitterSeason && hitterSeason !== "current") parts.push("hseason=" + hitterSeason);
     if (leverageSeason && leverageSeason !== "current") parts.push("lseason=" + leverageSeason);
+    if (defenseSeason && defenseSeason !== "current") parts.push("dseason=" + defenseSeason);
     pushSort(parts, "rsort", relSort);
     pushSort(parts, "rtsort", teamSort);
     pushSort(parts, "ssort", starterSort);
@@ -1232,6 +1245,8 @@
     pushSort(parts, "htsort", hitterTeamSort);
     pushSort(parts, "lbsort", leverageBatSort);
     pushSort(parts, "lssort", leverageStarterSort);
+    pushSort(parts, "dsort", defenseSort);
+    pushSort(parts, "dtsort", defenseTeamSort);
     try { history.replaceState(null, "", "#" + parts.join("&")); } catch (e) { /* hash optional */ }
   }
 
@@ -1256,7 +1271,7 @@
   // number. Renders into #mlbstats-starters-root; reuses every shared helper
   // (renderTable / sortRows / gloss / remCell / explainer / season pills).
   // ===========================================================================
-  var section = "bullpen";                    // bullpen | starters
+  var section = "bullpen";                    // bullpen | starters | hitters | leverage | defense
   var STARTER_URL = "/data/starter_leaderboards.json";
   var STARTER_HISTORY_URL = "/data/starter_history.json";
 
@@ -2679,6 +2694,518 @@
   }
 
   // ===========================================================================
+  // Section 5: Defense Leaderboards (DEM+ fielding-rate skill).
+  // ---------------------------------------------------------------------------
+  // Renders data/defense_leaderboards.json (defense_export.py) into Fielders /
+  // Team Defense / Defense Charts, a clone of the Hitter section. DEM+ is the
+  // sample-shrunk published fielding rate on 100 + 10z, so its SD is exactly 10
+  // and it bands with remClass (93/107/120), NEVER hemClass: it is not on the
+  // HEM+ ratio ruler. The run columns are FanGraphs' published values read from
+  // MLB's feed; this page computes none of them. Copy is column titles plus
+  // glossary links (owner copy rule, 2026-09-11), and every accuracy number is
+  // read from the payload's backtest block, never typed here.
+  // ===========================================================================
+  var DEFENSE_URL = "/data/defense_leaderboards.json";
+  var DEFENSE_HISTORY_URL = "/data/defense_history.json";
+  var POS_ORDER = ["C", "1B", "2B", "3B", "SS", "LF", "CF", "RF"];
+
+  var defenseData = null;
+  var defenseErr = false;
+  var defenseInit = false;
+  var defenseView = "fielders";               // fielders | teams | charts
+  var defenseSort = { key: "dem_plus", asc: false };
+  var defenseTeamSort = { key: "team_dem_plus", asc: false };
+  var defenseQuery = "";
+  var defenseQualifiedOnly = true;
+  var defenseTeam = "";                       // "" = all clubs
+  var defenseMinInn = null;                   // null = no floor
+  var defensePos = [];                        // empty = all positions; else an OR set
+
+  var defenseSeason = "current";
+  var DEFENSE_HISTORY = null;
+  var DEFENSE_HISTORY_LOADING = false;
+  var DEFENSE_HISTORY_ERROR = false;
+
+  // Primary position, with the innings split in the tooltip for a fielder who
+  // played more than one. Not sortable (text, and not a name/team column).
+  function posCell(r) {
+    if (!r.pos) return EM_DASH;
+    var pi = r.pos_inn || {};
+    var keys = POS_ORDER.filter(function (p) { return pi[p] != null; });
+    var split = keys.length > 1
+      ? keys.map(function (p) { return p + " " + f1(pi[p]); }).join(", ") : "";
+    return "<span" + (split ? ' title="Innings: ' + esc(split) + '"' : "") + ">" + esc(r.pos)
+      + (split ? '<span class="proj-dim"> +' + (keys.length - 1) + "</span>" : "") + "</span>";
+  }
+
+  // Skill core first (DEM+), then the published run columns and the volume
+  // context. DEM+ rides remCell for the reason WAR/PA+ does on the hitter
+  // board: 100 + 10z has SD exactly 10, so the +-2-sigma read is 80/120.
+  var DEFENSE_COLS = [
+    { key: "name", label: "Fielder", term: null, sortable: true, kind: "name", asc: true },
+    { key: "pos", label: "Pos", title: "Primary position (most defensive innings).", cell: posCell },
+    { key: "dem_plus", label: "DEM+", term: "dem_plus", num: true, desc: true, isRem: true,
+      title: "100 = pool average; 10 points = 1 SD. Not the HEM+ scale. p = percentile on this board.",
+      get: function (r) { return r.dem_plus; },
+      cell: function (r) {
+        if (r.dem_plus == null) return EM_DASH;
+        var s = remCell(r.dem_plus);
+        if (r.dem_plus_pct != null) s += '<span class="proj-dim"> p' + fInt(r.dem_plus_pct) + "</span>";
+        return s;
+      } },
+    { key: "dem_plus_3yr", label: "DEM+ 3yr", term: "dem_plus_3yr", num: true, desc: true, isRem: true,
+      vintage: "multiyear",
+      get: function (r) { return r.dem_plus_3yr; },
+      cell: function (r) {
+        if (r.dem_plus_3yr == null) return EM_DASH;
+        var s = remCell(r.dem_plus_3yr);
+        if (r.dem_plus_3yr_pct != null) s += '<span class="proj-dim"> p' + fInt(r.dem_plus_3yr_pct) + "</span>";
+        if (r.dem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 1,000 innings in the trailing window">*</span>';
+        return s;
+      } },
+    { key: "dem_plus_pos_pct", label: "Pos %ile", fmt: fInt, num: true, desc: true,
+      title: "DEM+ percentile among fielders at the same primary position." },
+    { key: "fld_total", label: "Fld", term: "fielding_runs", fmt: fSigned, num: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. FanGraphs fielding runs; framing included for catchers." },
+    { key: "fld_runs", label: "Fld ex-Frm", term: "fielding_runs", fmt: fSigned, num: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. Fielding runs without framing; equals Fld for non-catchers." },
+    { key: "frm_runs", label: "Frm", term: "framing_runs", fmt: fSigned, num: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. Catcher framing runs; catchers only." },
+    { key: "pos_runs", label: "Pos adj", term: "positional_adjustment", fmt: fSigned, num: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. FanGraphs positional adjustment. Context; does not move DEM+." },
+    { key: "def_runs", label: "Def", fmt: fSigned, num: true,
+      title: "Fld + Pos adj, both published." },
+    { key: "rate_1000", label: "Fld/1000", fmt: fSigned, num: true,
+      title: "Fld per 1,000 defensive innings, unshrunk." },
+    { key: "rate_1000_shrunk", label: "Shrunk/1000", fmt: fSigned, num: true,
+      title: "Fld/1000 pulled toward the position mean by innings. DEM+ is scored on this rate." },
+    { key: "inn", label: "Inn", fmt: f1, num: true, title: "Defensive innings, C through RF." },
+    { key: "fld_pct", label: "Fld%", fmt: f3, num: true, title: "Fielding percentage (context)." },
+    { key: "hem_plus", label: "HEM+", term: "hem_plus", fmt: hemCell, num: true, desc: true,
+      title: "HEM+ from the Hitter board (ratio scale), for the glove vs bat read." },
+  ];
+
+  // History rows (defense_history.json) carry the season line but not the
+  // frozen 3-year join, the per-position percentile, the shrunk rate or the
+  // HEM+ join, so those columns drop rather than render blank.
+  var DEFENSE_HISTORY_DROP = { dem_plus_3yr: 1, dem_plus_pos_pct: 1, rate_1000_shrunk: 1, hem_plus: 1 };
+  var DEFENSE_HISTORY_COLS = DEFENSE_COLS.filter(function (c) { return !DEFENSE_HISTORY_DROP[c.key]; });
+  function defenseHistorySort() {
+    var ok = false;
+    DEFENSE_HISTORY_COLS.forEach(function (c) { if (c.key === defenseSort.key) ok = true; });
+    return ok ? defenseSort : { key: "dem_plus", asc: false };
+  }
+
+  var DEFENSE_TEAM_COLS = [
+    { key: "team", label: "Team", sortable: true, kind: "team", asc: true },
+    { key: "team_dem_plus", label: "Team DEM+", term: "team_dem_plus", fmt: remCell, num: true, desc: true, isRem: true,
+      title: "Innings-weighted DEM+ of the club's fielders. 100 + 10z scale." },
+    { key: "n_above_avg", label: "Above-avg", fmt: fInt, num: true,
+      title: "Fielders at DEM+ 100 or better / fielders in the rollup.",
+      get: function (t) { return num(t.n_above_avg); },
+      cell: function (t) { return fInt(t.n_above_avg) + (t.n_fielders != null ? '<span class="proj-dim"> / ' + fInt(t.n_fielders) + "</span>" : ""); } },
+    { key: "team_fld_total", label: "Fld", term: "fielding_runs", fmt: fSigned, num: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. Sum of FanGraphs fielding runs." },
+    { key: "team_pos_runs", label: "Pos adj", term: "positional_adjustment", fmt: fSigned, num: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. Sum of FanGraphs positional adjustments." },
+    { key: "team_inn", label: "Inn", fmt: fInt, num: true, title: "Defensive innings in the rollup." },
+  ];
+
+  function defenseExplainer() {
+    return explainer("dem_plus", gloss("DEM+", "dem_plus") + " is computed here; the run columns ("
+      + gloss("Fld", "fielding_runs") + ", " + gloss("Frm", "framing_runs") + ", "
+      + gloss("Pos adj", "positional_adjustment") + ") are FanGraphs' published values.");
+  }
+
+  function defenseScorecard() {
+    var b = (defenseData && defenseData.backtest) || {};
+    if (b.rho_dem_plus == null) return "";
+    function v(x) { return x == null ? EM_DASH : esc(x); }
+    return '<div class="mlbstats-scorecard">'
+      + '<span class="pal-sc-stat">' + gloss("DEM+", "dem_plus") + " forward &rho; <b>"
+      + v(b.rho_dem_plus) + '</b><span class="proj-dim"> vs raw rate ' + v(b.rho_raw_rate)
+      + ", Fld% " + v(b.rho_fld_pct) + ", Inn " + v(b.rho_innings) + "</span></span>"
+      + '<span class="pal-sc-stat"><b>' + v(b.n_pairs) + "</b> out-of-sample year pairs"
+      + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
+      + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
+      + "</div>";
+  }
+
+  function defenseHistorySeasons() {
+    if (DEFENSE_HISTORY && DEFENSE_HISTORY.seasons && DEFENSE_HISTORY.seasons.length) return DEFENSE_HISTORY.seasons.slice();
+    var cur = num(defenseData && defenseData.season);
+    if (cur == null) return [];
+    var out = [];
+    for (var y = cur - 1; y >= cur - 5; y--) out.push(y);
+    return out;
+  }
+  function defenseSeasonPills() {
+    var pills = [["current", "Current"]];
+    defenseHistorySeasons().slice().sort(function (a, b) { return b - a; }).forEach(function (y) {
+      pills.push([String(y), String(y)]);
+    });
+    return '<div class="mlbstats-seasons" role="tablist" aria-label="Season">' + pills.map(function (p) {
+      var sel = (p[0] === defenseSeason);
+      return '<button type="button" class="mlbstats-season' + (sel ? " active" : "")
+        + '" data-defenseseason="' + esc(p[0]) + '" role="tab" aria-selected="' + sel + '">' + esc(p[1]) + "</button>";
+    }).join("") + "</div>";
+  }
+  function loadDefenseHistory() {
+    if (DEFENSE_HISTORY || DEFENSE_HISTORY_LOADING) return;
+    DEFENSE_HISTORY_LOADING = true;
+    DEFENSE_HISTORY_ERROR = false;
+    fetch(DEFENSE_HISTORY_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { DEFENSE_HISTORY = j; DEFENSE_HISTORY_LOADING = false; renderDefense(); })
+      .catch(function () { DEFENSE_HISTORY_LOADING = false; DEFENSE_HISTORY_ERROR = true; renderDefense(); });
+  }
+  function defenseHistoryYear() {
+    return (DEFENSE_HISTORY && DEFENSE_HISTORY.history && DEFENSE_HISTORY.history[defenseSeason]) || null;
+  }
+  // The unfiltered pool behind the active season pill (see relSourceRows).
+  function defenseSourceRows() {
+    if (defenseSeason !== "current") {
+      var yr = defenseHistoryYear();
+      return (yr && yr.fielders) || [];
+    }
+    return (defenseData && defenseData.fielders) || [];
+  }
+  function defenseMatch(r) {
+    if (defenseQualifiedOnly && r.qualified === false) return false;
+    if (defenseTeam && r.team !== defenseTeam) return false;
+    if (defensePos.length && defensePos.indexOf(r.pos) < 0) return false;
+    if (!passesMin(r.inn, defenseMinInn)) return false;
+    var q = defenseQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+      || String(r.team || "").toLowerCase().indexOf(q) >= 0);
+  }
+  function filteredDefense() {
+    return ((defenseData && defenseData.fielders) || []).filter(defenseMatch);
+  }
+  function filteredDefenseHistory() {
+    var yr = defenseHistoryYear();
+    return ((yr && yr.fielders) || []).filter(defenseMatch);
+  }
+  // A past-season pill shows a CLOSED season, and the history file carries its
+  // own team_basis sentence for that case (a 2021 line under a 2026 club); the
+  // live board's sentence describes an in-season trade. Each board discloses
+  // its own. Team Defense and Defense Charts are always the live season.
+  function defenseBasis() {
+    return (defenseView === "fielders" && defenseSeason !== "current" && DEFENSE_HISTORY)
+      ? DEFENSE_HISTORY : defenseData;
+  }
+
+  // Position chips: the roleChips markup (season-pill buttons, OR set, "All"
+  // clears), keyed on the primary position in diamond order.
+  function posChips(rows, active, idPrefix) {
+    var counts = {}, n = 0;
+    (rows || []).forEach(function (r) { if (r.pos) { counts[r.pos] = (counts[r.pos] || 0) + 1; n++; } });
+    if (!n) return "";
+    var list = POS_ORDER.filter(function (p) { return counts[p]; });
+    Object.keys(counts).sort().forEach(function (p) { if (list.indexOf(p) < 0) list.push(p); });
+    var all = !active.length;
+    return '<div class="mlbstats-seasons mlbstats-roles" role="group" aria-label="Filter by position">'
+      + '<span class="mlbstats-roles-lbl">Pos</span>'
+      + '<button type="button" class="mlbstats-season' + (all ? " active" : "") + '" id="' + idPrefix
+      + 'all" data-mlbpos="" aria-pressed="' + all + '">All</button>'
+      + list.map(function (p) {
+          var on = active.indexOf(p) >= 0;
+          return '<button type="button" class="mlbstats-season' + (on ? " active" : "") + '" id="'
+            + idPrefix + roleSlug(p) + '" data-mlbpos="' + esc(p) + '" aria-pressed="' + on + '">'
+            + esc(p) + '<span class="proj-dim"> ' + counts[p] + "</span></button>";
+        }).join("") + "</div>";
+  }
+
+  function defenseTabBar() {
+    var tabs = [["fielders", "Fielders"], ["teams", "Team Defense"], ["charts", "Defense Charts"]];
+    return '<div class="mlbstats-tabs" role="tablist">' + tabs.map(function (t) {
+      var active = (t[0] === defenseView) ? " active" : "";
+      return '<button type="button" class="mlbstats-tab' + active + '" data-defenseview="' + t[0] + '" role="tab" aria-selected="' + (t[0] === defenseView) + '">' + t[1] + "</button>";
+    }).join("") + "</div>";
+  }
+  function defenseControls() {
+    if (defenseView === "teams") {
+      var teamChip = gfxChip("mlbstats-defense-teams-gfx");
+      return teamChip ? '<div class="mlbstats-bar">' + teamChip + "</div>" : "";
+    }
+    if (defenseView !== "fielders") return "";
+    var pool = defenseSourceRows();
+    return '<div class="mlbstats-bar">'
+      + '<label class="mlbstats-ctl">'
+      + '<input type="checkbox" id="mlbstats-defense-qual"' + (defenseQualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + teamSelect("mlbstats-defense-team", pool, defenseTeam)
+      + minSelect("mlbstats-defense-mininn", "min Inn", defenseMinInn,
+          "Hide fielders under this many defensive innings. Composes with qualified only.")
+      + gfxChip("mlbstats-defense-gfx")
+      + '<input class="mlbstats-search" type="search" id="mlbstats-defense-q" placeholder="Search fielder or team" value="' + esc(defenseQuery) + '">'
+      + "</div>"
+      + posChips(pool, defensePos, "mlbstats-defense-pos-");
+  }
+
+  function renderDefenseBoard() {
+    if (defenseSeason !== "current") return renderDefenseHistory();
+    var rows = sortRows(filteredDefense(), DEFENSE_COLS, defenseSort);
+    var body = rows.length
+      ? proseFold("def-about", rows.length + " fielders",
+          defenseExplainer() + defenseScorecard()
+          + vintageNote(defenseData, [["multiyear", "DEM+ 3yr"]]))
+        + '<div class="mlbstats-scroll">' + renderTable(rows, DEFENSE_COLS, defenseSort, defenseData) + "</div>"
+      : '<div class="mlbstats-empty">No fielders match the current filters.</div>';
+    return defenseSeasonPills() + body;
+  }
+
+  function renderDefenseHistory() {
+    // Start the fetch BEFORE reading the state, so a fetch that settles at
+    // once (a warm cache, the smoke harness) paints the board rather than
+    // leaving a stale "Loading" over it.
+    if (!DEFENSE_HISTORY && !DEFENSE_HISTORY_LOADING && !DEFENSE_HISTORY_ERROR) loadDefenseHistory();
+    var pills = defenseSeasonPills();
+    if (DEFENSE_HISTORY_ERROR) {
+      return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
+        + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        + '<button type="button" class="chip" id="mlbstats-defense-history-retry">Retry</button></div>';
+    }
+    if (!DEFENSE_HISTORY || DEFENSE_HISTORY_LOADING) {
+      return pills + '<div class="mlbstats-empty">Loading the ' + esc(defenseSeason) + " season leaderboard&hellip;</div>";
+    }
+    var yr = defenseHistoryYear();
+    if (!yr || !yr.fielders || !yr.fielders.length) {
+      return pills + '<div class="mlbstats-empty">No leaderboard for the ' + esc(defenseSeason) + " season.</div>";
+    }
+    var sort = defenseHistorySort();
+    var rows = sortRows(filteredDefenseHistory(), DEFENSE_HISTORY_COLS, sort);
+    var nQual = (yr.n_qualified != null) ? yr.n_qualified : yr.fielders.length;
+    var cap = proseFold("def-history-about",
+      esc(defenseSeason) + " season, " + esc(nQual) + " qualified fielders", defenseExplainer());
+    var table = rows.length
+      ? '<div class="mlbstats-scroll">' + renderTable(rows, DEFENSE_HISTORY_COLS, sort) + "</div>"
+      : '<div class="mlbstats-empty">No fielders match the current filters.</div>';
+    return pills + cap + table;
+  }
+
+  function renderDefenseTeams() {
+    var rows = sortRows((defenseData && defenseData.teams) || [], DEFENSE_TEAM_COLS, defenseTeamSort);
+    if (!rows.length) return '<div class="mlbstats-empty">No team defenses to show yet.</div>';
+    var tf = (defenseData && defenseData.team_rollup_framing) || {};
+    var note = explainer("team_dem_plus", gloss("Team DEM+", "team_dem_plus") + ": innings-weighted DEM+"
+      + (tf.included === false ? "; catchers are excluded from it and from the team run totals." : "."));
+    return proseFold("defteam-about", rows.length + " clubs", note)
+      + '<div class="mlbstats-scroll">' + renderTable(rows, DEFENSE_TEAM_COLS, defenseTeamSort) + "</div>";
+  }
+
+  // Defense Charts: DEM+ distribution, DEM+ by innings and DEM+ by HEM+ over the
+  // qualified live pool, then one alignment card per club.
+  function defenseViz() {
+    var qual = ((defenseData && defenseData.fielders) || []).filter(function (r) {
+      return r.qualified !== false && r.dem_plus != null;
+    });
+    if (qual.length < 12) return "";
+    var hist = chart("histogram", qual.map(function (r) { return r.dem_plus; }), { height: 108, min: 60, max: 140,
+      highlightAbove: 120, refs: [{ at: 100, label: "avg" }], aria: "DEM+ distribution" });
+    var pts = qual.filter(function (r) { return r.inn != null; }).map(function (r) {
+      return { x: r.dem_plus, y: r.inn,
+               label: r.name + "  " + (r.pos || "") + "  DEM+ " + fInt(r.dem_plus) + "  Inn " + f1(r.inn),
+               color: r.dem_plus >= 120 ? null : "var(--text-tertiary)" };
+    });
+    var sc = chart("scatter", pts, { height: 250, xLabel: "DEM+ →", yLabel: "↑ Inn",
+      xRef: 100, aria: "DEM+ by innings" });
+    var hpts = qual.filter(function (r) { return r.hem_plus != null; }).map(function (r) {
+      return { x: r.dem_plus, y: r.hem_plus,
+               label: r.name + "  " + (r.pos || "") + "  DEM+ " + fInt(r.dem_plus) + "  HEM+ " + fInt(r.hem_plus),
+               color: r.dem_plus >= 120 ? null : "var(--text-tertiary)" };
+    });
+    var hsc = hpts.length >= 12
+      ? chart("scatter", hpts, { height: 250, xLabel: "DEM+ →", yLabel: "↑ HEM+",
+          xRef: 100, yRef: 100, aria: "DEM+ by HEM+" })
+      : "";
+    if (!hist && !sc && !hsc) return "";
+    var body = '<div class="mlbstats-viz">'
+      + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("DEM+", "dem_plus")
+      + ' distribution <span class="proj-dim">(qualified fielders)</span></div>' + hist + "</div>"
+      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">DEM+ by innings</div>' + sc + "</div>" : "")
+      + (hsc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">DEM+ by ' + gloss("HEM+", "hem_plus")
+        + "</div>" + hsc + "</div>" : "")
+      + "</div>";
+    return collapsible("defense-viz", 'Charts <span class="proj-dim">(DEM+ distribution, by innings, by HEM+)</span>', body);
+  }
+
+  // One card per club, a slot per position (the bullpen depth-card markup, so
+  // site.css needs nothing new). The alignment rows carry no framing value, so
+  // the catcher slot looks his up on the fielder board by MLBAM id.
+  function alignmentCards() {
+    var teams = (defenseData && defenseData.teams) || [];
+    if (!teams.length) return "";
+    var frm = {};
+    ((defenseData && defenseData.fielders) || []).forEach(function (r) {
+      if (r.mlbam != null && r.frm_runs != null) frm[String(r.mlbam)] = r.frm_runs;
+    });
+    function rung(p) { var i = POS_ORDER.indexOf(p); return i < 0 ? POS_ORDER.length : i; }
+    var sorted = teams.slice().sort(function (a, b) { return (num(b.team_dem_plus) || 0) - (num(a.team_dem_plus) || 0); });
+    var cards = sorted.map(function (t) {
+      var slots = (t.alignment || []).filter(function (a) { return a && a.pos; })
+        .sort(function (a, b) { return rung(a.pos) - rung(b.pos); })
+        .map(function (a) {
+          var f = (a.pos === "C" && a.mlbam != null) ? frm[String(a.mlbam)] : null;
+          return '<div class="bp-slot">'
+            + '<span class="bp-slot-role">' + esc(a.pos) + "</span>"
+            + '<span class="bp-slot-name"' + (a.name ? ' title="' + esc(a.name) + '"' : "") + ">" + esc(a.name || EM_DASH)
+            + (a.inn_at_pos != null ? '<span class="proj-dim"> ' + f1(a.inn_at_pos) + " inn</span>" : "")
+            + (f != null ? '<span class="proj-dim"> Frm ' + fSigned(f) + "</span>" : "") + "</span>"
+            + '<span class="bp-slot-rem ' + remClass(a.dem_plus) + '">' + fInt(a.dem_plus) + "</span>"
+            + "</div>";
+        }).join("");
+      return '<div class="bp-depth-card"><div class="bp-depth-head">'
+        + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
+        + '<span class="rem-plus ' + remClass(t.team_dem_plus) + '" data-gl="team_dem_plus">Team DEM+ ' + fInt(t.team_dem_plus) + "</span>"
+        + "</div>" + slots + "</div>";
+    }).join("");
+    return '<div class="mlbstats-note">Alignment: the active-roster fielder with the most innings at each position.</div>'
+      + '<div class="bp-depth-grid">' + cards + "</div>";
+  }
+
+  function renderDefenseCharts() {
+    if (!defenseData || !((defenseData.fielders) || []).length) {
+      return '<div class="mlbstats-empty">No defense charts to show yet.</div>';
+    }
+    return defenseViz() + alignmentCards();
+  }
+
+  function defenseInner() {
+    return (defenseView === "teams") ? renderDefenseTeams()
+      : (defenseView === "charts") ? renderDefenseCharts() : renderDefenseBoard();
+  }
+
+  function renderDefense() {
+    var root = document.getElementById("mlbstats-defense-root");
+    if (!root) return;
+    if (!defenseData) {
+      root.innerHTML = defenseErr
+        ? '<div class="mlbstats-empty mlbstats-load-error" role="alert">Data failed to load. Refresh to retry; '
+          + 'if it persists the nightly build is mid-run. '
+          + '<button type="button" class="chip" id="mlbstats-defense-retry">Retry</button></div>'
+        : '<div class="mlbstats-empty">Defense Leaderboards are being computed. Check back shortly.</div>';
+      var retry = document.getElementById("mlbstats-defense-retry");
+      if (retry) retry.addEventListener("click", function () {
+        root.innerHTML = '<div class="mlbstats-empty">Loading&hellip;</div>';
+        loadDefense();
+      });
+      return;
+    }
+    // Build the body first: a past-season render can start the history fetch,
+    // and the team-basis note should read whichever payload the board shows.
+    var inner = defenseInner();
+    root.innerHTML = bannerHTML(defenseData) + teamBasisNote(defenseBasis())
+      + defenseTabBar() + defenseControls() + inner;
+    bindDefenseEvents(root);
+    wireGlossary(root);
+  }
+
+  function bindDefenseEvents(root) {
+    bindCollapse(root);
+    root.querySelectorAll("[data-defenseview]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        defenseView = b.getAttribute("data-defenseview");
+        writeHash();
+        renderDefense();
+      });
+    });
+    var q = root.querySelector("#mlbstats-defense-q");
+    if (q) q.addEventListener("input", function () { defenseQuery = q.value; renderDefenseInPlace(); });
+    var qual = root.querySelector("#mlbstats-defense-qual");
+    if (qual) qual.addEventListener("change", function () { defenseQualifiedOnly = qual.checked; renderDefenseInPlace(); });
+    var dTeam = root.querySelector("#mlbstats-defense-team");
+    if (dTeam) dTeam.addEventListener("change", function () {
+      defenseTeam = dTeam.value || "";
+      renderDefenseInPlace("mlbstats-defense-team");
+    });
+    var dMin = root.querySelector("#mlbstats-defense-mininn");
+    if (dMin) dMin.addEventListener("input", function () {
+      defenseMinInn = readMin(dMin);
+      renderDefenseInPlace("mlbstats-defense-mininn");
+    });
+    root.querySelectorAll("[data-mlbpos]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var v = b.getAttribute("data-mlbpos");
+        if (!v) defensePos = [];
+        else {
+          var i = defensePos.indexOf(v);
+          if (i >= 0) defensePos.splice(i, 1); else defensePos.push(v);
+        }
+        renderDefenseInPlace(b.id || null);
+      });
+    });
+    var dGfx = root.querySelector("#mlbstats-defense-gfx");
+    if (dGfx) dGfx.addEventListener("click", function () {
+      if (!window.EEPHUS_GFX) return;
+      var rows = (defenseSeason === "current")
+        ? sortRows(filteredDefense(), DEFENSE_COLS, defenseSort)
+        : sortRows(filteredDefenseHistory(), DEFENSE_HISTORY_COLS, defenseHistorySort());
+      EEPHUS_GFX.open(_mlbstatsBoardSpec("defense", rows));
+    });
+    var dTeamGfx = root.querySelector("#mlbstats-defense-teams-gfx");
+    if (dTeamGfx) dTeamGfx.addEventListener("click", function () {
+      if (!window.EEPHUS_GFX) return;
+      EEPHUS_GFX.open(_mlbstatsBoardSpec("teamdefense",
+        sortRows((defenseData && defenseData.teams) || [], DEFENSE_TEAM_COLS, defenseTeamSort)));
+    });
+    root.querySelectorAll("[data-defenseseason]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        defenseSeason = b.getAttribute("data-defenseseason");
+        if (defenseSeason !== "current") loadDefenseHistory();
+        writeHash();
+        renderDefense();
+      });
+    });
+    var dhretry = root.querySelector("#mlbstats-defense-history-retry");
+    if (dhretry) dhretry.addEventListener("click", function () {
+      DEFENSE_HISTORY_ERROR = false;
+      loadDefenseHistory();
+      renderDefense();
+    });
+    root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
+      bindSortKeys(th, root, function () {
+        var key = th.getAttribute("data-col");
+        var cols = (defenseView === "teams") ? DEFENSE_TEAM_COLS
+          : (defenseSeason !== "current") ? DEFENSE_HISTORY_COLS : DEFENSE_COLS;
+        var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
+        if (!col || (!col.num && col.kind !== "name" && col.kind !== "team")) return;
+        var sort = (defenseView === "teams") ? defenseTeamSort : defenseSort;
+        if (sort.key === key) sort.asc = !sort.asc;
+        else { sort.key = key; sort.asc = !!col.asc; }
+        writeHash();
+        renderDefense();
+      });
+    });
+  }
+
+  function renderDefenseInPlace(focusId) {
+    var root = document.getElementById("mlbstats-defense-root");
+    if (!root) return;
+    var inner = defenseInner();
+    root.innerHTML = bannerHTML(defenseData) + teamBasisNote(defenseBasis())
+      + defenseTabBar() + defenseControls() + inner;
+    restoreFocus(root, focusId || "mlbstats-defense-q");
+    bindDefenseEvents(root);
+    wireGlossary(root);
+  }
+
+  function loadDefense() {
+    defenseErr = false;
+    fetch(DEFENSE_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { defenseData = j; renderDefense(); })
+      .catch(function () { defenseData = null; defenseErr = true; renderDefense(); });
+  }
+
+  function initDefense() {
+    if (defenseInit) { renderDefense(); return; }
+    defenseInit = true;
+    renderDefense();
+    loadDefense();
+  }
+
+  // ===========================================================================
   // Generate GFX: shared EEPHUS_GFX board specs, one builder for every board.
   // ---------------------------------------------------------------------------
   // Each board's control row carries a "Generate GFX" chip; the click handler
@@ -2856,6 +3383,56 @@
           columns: levCols2, rows: levRows });
     }
 
+    if (view === "defense") {
+      var defRows = rows.map(function (r, i) {
+        return { cells: [
+          { t: i + 1 },
+          { t: r.name || EM_DASH, sub: r.team || undefined },
+          { t: r.pos || EM_DASH },
+          { t: fInt(r.dem_plus), c: "accent" },
+          { t: fInt(r.dem_plus_3yr) },
+          { t: fSigned(r.fld_total) },
+          { t: f1(r.inn) },
+        ] };
+      });
+      return spec("MLB Stats · DEM+ Leaders",
+        seasonBits(defenseSeason, defenseData, "fielders"),
+        "mlbstats-dem-leaders",
+        "DEM+ = sample-shrunk fielding runs per inning · Fld = FanGraphs, published",
+        { defaultCount: 25, counts: [10, 25, 50], legend: "DEM+ 100 = average fielder · 10 points = 1 SD", columns: [
+          { label: "#", frac: 0.05 },
+          { label: "Player", frac: 0.35 },
+          { label: "Pos", frac: 0.08 },
+          { label: "DEM+", frac: 0.12 },
+          { label: "DEM+ 3yr", frac: 0.12, wideOnly: true },
+          { label: "Fld", frac: 0.14 },
+          { label: "Inn", frac: 0.14, wideOnly: true },
+        ], rows: defRows });
+    }
+
+    if (view === "teamdefense") {
+      var tdRows = rows.map(function (t, i) {
+        return { cells: [
+          { t: i + 1 },
+          { t: t.team || EM_DASH },
+          { t: fInt(t.team_dem_plus), c: "accent" },
+          { t: fSigned(t.team_fld_total) },
+          { t: fInt(t.team_inn) },
+        ] };
+      });
+      return spec("MLB Stats · Team DEM+ Leaders",
+        seasonBits("current", defenseData, "clubs"),
+        "mlbstats-team-dem-rankings",
+        "Team DEM+ = innings-weighted DEM+ · Fld = FanGraphs, published",
+        { defaultCount: 30, counts: [10, 30], legend: "Team DEM+ 100 = average · 10 points = 1 SD", columns: [
+          { label: "#", frac: 0.08 },
+          { label: "Team", frac: 0.34 },
+          { label: "Team DEM+", frac: 0.20 },
+          { label: "Fld", frac: 0.19 },
+          { label: "Inn", frac: 0.19, wideOnly: true },
+        ], rows: tdRows });
+    }
+
     return null;
   }
 
@@ -2868,7 +3445,8 @@
       b.setAttribute("aria-selected", on ? "true" : "false");
     });
     var sects = { bullpen: "mlbstats-section-bullpen", starters: "mlbstats-section-starters",
-                  hitters: "mlbstats-section-hitters", leverage: "mlbstats-section-leverage" };
+                  hitters: "mlbstats-section-hitters", leverage: "mlbstats-section-leverage",
+                  defense: "mlbstats-section-defense" };
     Object.keys(sects).forEach(function (k) {
       var el = document.getElementById(sects[k]);
       if (el) { if (k === name) el.removeAttribute("hidden"); else el.setAttribute("hidden", "hidden"); }
@@ -2876,6 +3454,7 @@
     if (name === "starters") initStarters();
     else if (name === "hitters") initHitters();
     else if (name === "leverage") initLeverage();
+    else if (name === "defense") initDefense();
   }
   function bindSectionNav() {
     document.querySelectorAll("[data-mlbsection]").forEach(function (b) {
@@ -2890,7 +3469,8 @@
     readHash();
     bindSectionNav();
     load();
-    // Honor a deep-linked non-default section (#section=starters|hitters).
+    // Honor a deep-linked non-default section (#section=starters|hitters|
+    // leverage|defense).
     if (section !== "bullpen") showSection(section);
     // Preload the player-links map, then re-render the active section so the
     // leaderboard names upgrade from plain text to merged-card links.
@@ -2900,6 +3480,7 @@
         if (section === "starters") { if (starterInit) renderStarters(); }
         else if (section === "hitters") { if (typeof hitterInit !== "undefined" && hitterInit) renderHitters(); }
         else if (section === "leverage") { if (typeof leverageInit !== "undefined" && leverageInit) renderLeverage(); }
+        else if (section === "defense") { if (defenseInit) renderDefense(); }
         else render();
       });
     }
