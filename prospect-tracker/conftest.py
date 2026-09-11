@@ -248,6 +248,11 @@ def _isolate_odds_credit_ledgers(tmp_path_factory, monkeypatch):
     try:
         import betting_ingest
         monkeypatch.setattr(betting_ingest, "PROPS_SPEND_PATH", d / "props_spend.json")
+        # Found 2026-09-11 (second leak, same test): bi.run() ends in
+        # write_status(), which wrote the REAL data/betting_status.json with the
+        # fixture's state (props armed, cap 6, events ev9/ev10, zero snapshots).
+        # The page would have told readers props were armed.
+        monkeypatch.setattr(betting_ingest, "STATUS_PATH", d / "betting_status.json")
     except Exception:                                     # noqa: BLE001
         pass
     yield
@@ -314,10 +319,20 @@ def _restore_committed_build_artifacts():
     Snapshot which tracked files are clean at session start, then `git checkout`
     any the suite dirtied at session end. Files the dev/user had ALREADY
     modified (uncommitted source edits, a fresh run_monthly regen) are detected
-    as dirty-at-start and left untouched - so this only reverts churn the TESTS
-    introduced. No-ops cleanly when git is unavailable. `--relative` restricts
-    the scope to this project subtree."""
+    as dirty-at-start and left untouched by the git revert - so that half only
+    reverts churn the TESTS introduced. No-ops cleanly when git is unavailable.
+    `--relative` restricts the scope to this project subtree.
+
+    The dirty-at-start half (2026-09-11). A fresh local regen leaves ~100
+    tracked data files dirty, and the git revert cannot see a test overwrite
+    one of those: that is how fixture state reached data/betting_status.json.
+    So each dirty-at-start file's BYTES are copied aside at session start and
+    put back at the end if a test changed them, and the terminal summary names
+    every file restored, so a new leak is visible instead of silent."""
+    import hashlib
+    import shutil
     import subprocess
+    import tempfile
     from pathlib import Path
     here = Path(__file__).resolve().parent
 
@@ -330,10 +345,50 @@ def _restore_committed_build_artifacts():
             return set()  # no git in this environment -> guard is a no-op
         return {ln.strip() for ln in out.stdout.splitlines() if ln.strip()}
 
+    def _digest(p: Path) -> str | None:
+        try:
+            return hashlib.sha256(p.read_bytes()).hexdigest()
+        except OSError:
+            return None
+
     dirty_at_start = _dirty()
+    aside = Path(tempfile.mkdtemp(prefix="pt_dirty_at_start_"))
+    kept: dict[str, str | None] = {}
+    for rel in sorted(dirty_at_start):
+        if rel.startswith("..") or "/.." in rel:
+            continue
+        src = here / rel
+        if not src.is_file():
+            continue
+        dst = aside / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        kept[rel] = _digest(src)
     yield
     polluted = sorted(p for p in (_dirty() - dirty_at_start)
                       if not p.startswith("..") and "/.." not in p)
     if polluted:
         subprocess.run(["git", "checkout", "--", *polluted],
                        cwd=here, check=False)
+    for rel, before in kept.items():
+        if _digest(here / rel) != before:
+            shutil.copy2(aside / rel, here / rel)
+            _RESTORED_BY_GUARD.append(rel)
+    shutil.rmtree(aside, ignore_errors=True)
+
+
+_RESTORED_BY_GUARD: list[str] = []
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    """Name every locally-modified file a test overwrote (and the guard put
+    back). A non-empty list is a test-isolation bug, even though the guard
+    repaired the tree."""
+    if not _RESTORED_BY_GUARD:
+        return
+    terminalreporter.write_sep("-", "build-artifact guard")
+    terminalreporter.write_line(
+        f"restored {len(_RESTORED_BY_GUARD)} locally-modified file(s) a test "
+        "overwrote (a test-isolation bug to fix):")
+    for rel in _RESTORED_BY_GUARD:
+        terminalreporter.write_line(f"  {rel}")
