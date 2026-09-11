@@ -132,7 +132,28 @@ LADDER_SENSITIVITY_WINDOWS = (LADDER_EARLIEST_SEASON, LADDER_RETIRED_FIRST_SEASO
 MIN_PAIR_INN = 100.0           # innings at BOTH positions to count as a conversion pair
 MIN_RELIABILITY_INN = 300.0    # innings floor for the year-over-year reliability fit
 LADDER_MIN_PA = 200
-WOBA_SCALE = 1.15              # fa_config.yaml projection.woba_scale
+def _woba_scale(season: int | None = None) -> float:
+    """The wOBA scale, SOLVED per season, config fallback (audit F01-03).
+
+    This module carried a SECOND hardcoded 1.15 with a comment pointing at
+    fa_config, and unlike the projection engine there is no fitted coefficient
+    here to absorb it: it is used as a direct wOBA-to-runs conversion, so
+    bat_runs_per_650 was inflated by the same 7.8 percent. Not served today
+    (the slim UI view drops the column), which is why this is a correctness
+    repair rather than a served-number change, but a fix in fa_config alone
+    would have left the two copies disagreeing."""
+    try:
+        import league_constants as _lc
+        v = _lc.woba_scale(int(season or LADDER_EARLIEST_SEASON), default=None)
+        if v:
+            return float(v)
+    except Exception:   # noqa: BLE001 - absence falls back, never raises
+        pass
+    try:
+        import fa_projection as _fp
+        return float(_fp._pcfg()["assembly"]["woba_scale"])
+    except Exception:   # noqa: BLE001
+        return 1.15
 BAT_REGRESS_PA = 300.0         # regress wOBA toward league at this many PA
 RECENCY = (1.0, 0.62, 0.38)    # weight on lag 0 / 1 / 2 seasons of glove evidence
 FLAG_SIGMA = 1.0               # a move must clear this many SE of its own gain to flag
@@ -800,7 +821,7 @@ def _bat_runs(hit, league, mid, target_season):
     if den <= 0:
         return None, pa0
     woba = (num + BAT_REGRESS_PA * lg_woba) / (den + BAT_REGRESS_PA)
-    return (woba - lg_woba) / WOBA_SCALE * 650.0, pa0
+    return (woba - lg_woba) / _woba_scale(target_season) * 650.0, pa0
 
 
 def estimate_players(feeds: Feeds, ladder, diff, sig, feas, target_season,

@@ -1,0 +1,59 @@
+{
+ "generated_at": "2026-09-11T01:38:23+00:00",
+ "what_this_is": "per-season league constants SOLVED from MLB's published sabermetrics feed, not fitted and not typed",
+ "identity": "wRAA = ((wOBA - lgwOBA) / wOBAScale) * PA",
+ "min_pa": 50.0,
+ "min_rows": 30,
+ "min_r": 0.999,
+ "not_fixed_here": "the wOBA WEIGHTS are still the frozen 2013 set; a season-specific scale on season-invariant weights is an improvement, not coherence (W1.0 owns pairing them)",
+ "seasons": {
+  "2021": {
+   "season": 2021,
+   "n": 488,
+   "woba_scale": 1.2086,
+   "lg_woba": 0.3144,
+   "r": 0.99999999,
+   "source": "solved from statsapi sabermetrics woba + wRaa identity"
+  },
+  "2022": {
+   "season": 2022,
+   "n": 479,
+   "woba_scale": 1.2588,
+   "lg_woba": 0.3097,
+   "r": 1.0,
+   "source": "solved from statsapi sabermetrics woba + wRaa identity"
+  },
+  "2023": {
+   "season": 2023,
+   "n": 496,
+   "woba_scale": 1.2041,
+   "lg_woba": 0.3184,
+   "r": 1.0,
+   "source": "solved from statsapi sabermetrics woba + wRaa identity"
+  },
+  "2024": {
+   "season": 2024,
+   "n": 470,
+   "woba_scale": 1.2425,
+   "lg_woba": 0.3102,
+   "r": 1.0,
+   "source": "solved from statsapi sabermetrics woba + wRaa identity"
+  },
+  "2025": {
+   "season": 2025,
+   "n": 472,
+   "woba_scale": 1.2317,
+   "lg_woba": 0.3131,
+   "r": 0.99999998,
+   "source": "solved from statsapi sabermetrics woba + wRaa identity"
+  },
+  "2026": {
+   "season": 2026,
+   "n": 462,
+   "woba_scale": 1.24,
+   "lg_woba": 0.3164,
+   "r": 0.99998231,
+   "source": "solved from statsapi sabermetrics woba + wRaa identity"
+  }
+ }
+}

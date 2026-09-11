@@ -373,6 +373,27 @@ def _era_adjust(rows: list[dict], league: dict, comp: str, side: str) -> dict:
     return out
 
 
+def _woba_scale(season) -> float:
+    """The wOBA scale for `season`: SOLVED from the published identity where we
+    have it, the config constant otherwise (audit F01-03).
+
+    `fa_config.yaml assembly.woba_scale` was 1.15 for every season from 2000 to
+    2026 while the reference says in as many words that the value varies
+    year to year to keep wOBA on the league-OBP scale. Measured, 1.15 is 7.2
+    percent low against 2026, and the served projected wRC+ was that much too
+    wide on 3,205 rows. league_constants solves it exactly from MLB's own
+    sabermetrics feed (r = 1.0 to eight places); the config value remains the
+    fallback for seasons the feed does not cover, so an absent artifact degrades
+    to the old behaviour rather than to a crash."""
+    cfg = float(_pcfg()["assembly"]["woba_scale"])
+    try:
+        import league_constants as _lc
+        v = _lc.woba_scale(int(season), default=cfg)
+        return float(v) if v else cfg
+    except Exception:   # noqa: BLE001 - a missing artifact must not break a fit
+        return cfg
+
+
 def _corpus_sig(corpus: dict) -> str:
     """Eight hex chars identifying the corpus CONTENT.
 
@@ -408,6 +429,17 @@ def _corpus_sig(corpus: dict) -> str:
                      f"{r.get('pa') or r.get('ip')}|".encode())
     lg = corpus.get("league") or {}
     h.update(repr(sorted(lg.items()))[:4000].encode())
+    # THE SCALE IS AN INPUT TO THE FIT, so it belongs in the key (audit F01-03).
+    # The WAR map is fitted on wraa_pa and scored on wraa_pa, so it is invariant
+    # to the scale ONLY when both sides see the same one. Without this line a
+    # changed scale would load a fit built on the old constant and score it with
+    # the new one, which moves WAR rather than leaving it alone.
+    try:
+        seasons = sorted({r.get("season") for side in ("hit", "pit")
+                          for r in (corpus.get(side) or []) if r.get("season")})
+        h.update(repr([(y, _woba_scale(y)) for y in seasons])[:4000].encode())
+    except Exception:   # noqa: BLE001 - a key that cannot be built must not fit
+        h.update(b"woba_scale:unavailable")
     sig = h.hexdigest()[:8]
     corpus["_sig"] = sig
     return sig
@@ -1311,7 +1343,7 @@ def _realwar_map_features(h: dict, side: str, league: dict) -> list[float] | Non
             return None
         woba = _assemble_hitter({**h, "babip": h.get("babip") or lg.get("babip")},
                                 league, h["season"] + 1)["woba_proj"]
-        wraa_pa = (woba - lg["woba"]) / _pcfg()["assembly"]["woba_scale"]
+        wraa_pa = (woba - lg["woba"]) / _woba_scale(h["season"] + 1)
         pa6 = pa / 600.0
         row = [1.0, pa6, wraa_pa * pa6 * 600.0 / 10.0,
                (1.0 if h.get("role") == "C" else 0.0) * pa6]
@@ -1612,7 +1644,7 @@ def _assemble_hitter(p: dict, league: dict, season: int) -> dict:
             + w["double"] * doubles + w["triple"] * triples + w["hr"] * hr) / pa
     lg_woba = _league_recent(league, season, "woba") or 0.315
     lg_rpa = _league_recent(league, season, "r_pa") or 0.12
-    wraa_pa = (woba - lg_woba) / a["woba_scale"]
+    wraa_pa = (woba - lg_woba) / _woba_scale(season)
     wrc_plus = ((wraa_pa + lg_rpa) / lg_rpa) * 100 if lg_rpa else None
     return {"avg": round(h / ab, 3) if ab > 0 else None,
             "woba_proj": round(woba, 3),
@@ -1650,7 +1682,7 @@ def fit_war_map(corpus: dict, max_season: int, *,
             continue
         woba = _assemble_hitter({**r, "babip": r.get("babip") or lg.get("babip")},
                                 league, r["season"] + 1)["woba_proj"]
-        wraa_pa = (woba - lg["woba"]) / a["woba_scale"]
+        wraa_pa = (woba - lg["woba"]) / _woba_scale(r["season"] + 1)
         pa6 = r["pa"] / 600.0
         row = [1.0, pa6, wraa_pa * pa6 * 600.0 / 10.0, (1.0 if r["role"] == "C" else 0.0) * pa6]
         if _def:
