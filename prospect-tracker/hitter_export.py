@@ -673,6 +673,121 @@ def load_bat_side(season: int) -> Optional[dict]:
     return out
 
 
+def _platoon_split_availability(teams: list[dict], platoon_counts: Optional[dict]) -> dict:
+    """Did the per-hand HEM+ actually reach the served lineup slots this run?
+
+    The falsifiable companion to `bat_side` (audit F08-02). `bat_side.available`
+    only says the handedness LENS joined; it stayed true for months while every
+    derived split was identically equal, because the lens re-lensed the ORDER and
+    the slots still carried the season number. This block reports the thing that
+    was actually missing: how many slots carry a hand-specific value, and whether
+    the two hand means can differ at all.
+
+    `n_teams_split_equal` is the tripwire. It counts clubs whose vs-LHP and
+    vs-RHP PA-weighted means are still bit-identical WITH the lens reported
+    available. On the broken build that was 30 of 30. It WARNS and never raises:
+    the nightly vintage write is what the 600-game clock and the schema-4 accrual
+    both run on, and an unconditional raise here would stop that stream dead."""
+    n_slots = n_split = 0
+    n_teams = n_equal = 0
+    try:
+        import leaderboard_vintages as _lv
+    except Exception:   # noqa: BLE001 - the reduction is optional for this count
+        _lv = None
+    for t in teams:
+        orders = t.get("orders")
+        if not isinstance(orders, dict) or not orders:
+            continue
+        n_teams += 1
+        for side in ("vl", "vr"):
+            for s in (orders.get(side) or []):
+                n_slots += 1
+                if s.get("hem_plus_split") is not None:
+                    n_split += 1
+        if _lv is not None:
+            vl, vr = _lv.off_splits_from_hitter_team(t)
+            if vl is not None and vr is not None and vl == vr:
+                n_equal += 1
+    available = bool(platoon_counts) and n_split > 0
+    meta = {
+        "available": available,
+        "n_slots": n_slots,
+        "n_slots_split": n_split,
+        "n_teams_with_orders": n_teams,
+        "n_teams_split_equal": n_equal,
+        "n_rows_vs_lhp": len((platoon_counts or {}).get("L") or {}),
+        "n_rows_vs_rhp": len((platoon_counts or {}).get("R") or {}),
+        "source": ("StatsAPI statSplits sitCodes vl/vr, playerPool=All, two bulk "
+                   "calls; per-hand HEM+ scored on the same season pool anchor"),
+    }
+    if available and n_teams and n_equal == n_teams:
+        meta["warning"] = (
+            f"per-hand HEM+ reported available but all {n_equal} clubs still serve "
+            "an identical vs-LHP / vs-RHP mean; the split carries no information "
+            "this run (audit F08-02)")
+        _log.warning(meta["warning"])
+    elif not available:
+        meta["reason"] = ("no platoon split feed this run; every slot carries the "
+                          "season HEM+ on both hands, so any derived split is "
+                          "identically equal")
+    return meta
+
+
+@functools.lru_cache(maxsize=4)
+def load_platoon_splits(season: int) -> Optional[dict]:
+    """{'L': {mlbam: counts}, 'R': {mlbam: counts}} - every hitter's counting line
+    against each pitcher hand, in TWO bulk StatsAPI calls. Feeds the per-hand HEM+
+    (hem_plus.build_split_hem) and therefore the off_vs_lhp / off_vs_rhp capture.
+
+    WHY (audit F08-02, 2026-09-10). Before this, the two hand-labelled orders both
+    carried each hitter's SEASON hem_plus, so the PA-weighted split was a mean over
+    a permutation of the same nine bats and `off_vs_lhp` equalled `off_vs_rhp`
+    bit-for-bit on all 30 clubs across all 480 captured rows. The lens was up and
+    the orders genuinely differed; only the VALUES could not. The pre-registered
+    handedness gate would have measured its own twin.
+
+    `playerPool=All` is load-bearing: the default pool returns QUALIFIED hitters
+    only (139 of them on 2026-09-10) and the everyday nine reaches well past that.
+    With it, one call per hand covers 642 hitters vs LHP and 649 vs RHP, and all
+    270 constructed lineup bats resolve on BOTH hands (median 131 vs-LHP PA).
+
+    Returns None - never {} - on any outage, which is the load_bat_side posture:
+    an empty map is not "no platoon data", it is "no platoon lens", and the two
+    must not be indistinguishable downstream. A hand that comes back empty fails
+    the whole map, because a one-sided split is worse than none: it would make one
+    hand real and the other a fallback, and nothing downstream could tell."""
+    try:
+        import bullpen_export as be
+    except Exception as e:   # noqa: BLE001
+        _log.warning("platoon splits unavailable for %s (%s)", season, e)
+        return None
+    out: dict = {}
+    for hand, sit in (("L", "vl"), ("R", "vr")):
+        try:
+            data = be._get_json("stats", {
+                "stats": "statSplits", "sitCodes": sit, "group": "hitting",
+                "season": int(season), "gameType": "R", "sportId": 1,
+                "playerPool": "All", "limit": 2000})
+        except Exception as e:   # noqa: BLE001 - network/parse anything
+            _log.warning("platoon split fetch failed for %s %s (%s); the per-hand "
+                         "HEM+ lens is UNAVAILABLE this run", season, sit, e)
+            return None
+        rows = {}
+        for sp in ((data.get("stats") or [{}])[0].get("splits") or []):
+            pid = (sp.get("player") or {}).get("id")
+            st = sp.get("stat")
+            if pid and isinstance(st, dict):
+                rows[int(pid)] = st
+        if not rows:
+            _log.warning("platoon split feed for %s %s returned 0 usable rows; "
+                         "treating the per-hand HEM+ lens as UNAVAILABLE", season, sit)
+            return None
+        out[hand] = rows
+    _log.info("platoon splits %s: vs-LHP %d rows, vs-RHP %d rows",
+              season, len(out.get("L") or {}), len(out.get("R") or {}))
+    return out
+
+
 # WHICH KEY EACH CONSUMER READS. Published inside the bat_side block so the
 # contract lives in the artifact and not only in this file's head.
 _ORDER_KEY_CONTRACT = {
@@ -867,7 +982,15 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     # the bullpen depth ladders, which have filtered all along; it is the hitter
     # and starter charts that never did. None (a failed feed) filters nothing.
     active_ids = _active_mlbam_ids(int(season))
-    scored = hem_plus.score_pool(hitters, active_ids)
+    # PER-HAND HEM+ (audit F08-02). Without this the two hand-labelled orders carry
+    # the same season number for the same nine bats, so the derived off_vs_lhp /
+    # off_vs_rhp split is permutation-invariant and identically equal. None leaves
+    # every slot on the season number, exactly as before.
+    platoon_counts = load_platoon_splits(int(season))
+    scored = hem_plus.score_pool(hitters, active_ids, platoon_counts)
+    ps_meta = _platoon_split_availability(scored.get("teams") or [], platoon_counts)
+    log(f"  hitters: per-hand HEM+ {'available' if ps_meta['available'] else 'UNAVAILABLE'}"
+        f" ({ps_meta.get('n_slots_split', 0)} of {ps_meta.get('n_slots', 0)} lineup slots)")
     h3_meta = _join_hem_plus_3yr(scored["hitters"])
     if h3_meta.get("n_stamped"):
         log(f"  hitters: 3-year HEM+ joined for {h3_meta['n_stamped']} hitters "
@@ -931,6 +1054,11 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # are NOT earned (the orders are identical), not that the lineups are
         # missing. `keys` names the key each consumer should read.
         "bat_side": bs_meta,
+        # Whether the per-hand HEM+ (real platoon lines) reached the lineup slots
+        # this run, and how many slots it covered. available=false means every
+        # slot carries the SEASON number on both hands, which makes any derived
+        # vs-LHP / vs-RHP split identically equal (audit F08-02).
+        "platoon_splits": ps_meta,
         # Which club a row's `team` names, how many rows were repointed, and how
         # many serve a blank team (see bullpen_export.team_basis_meta), plus the
         # zero-rollup guard's verdict for this run.

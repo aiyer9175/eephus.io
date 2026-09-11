@@ -408,12 +408,23 @@ def _pa_weighted_hem(order: list | None) -> float | None:
     either number is skipped, never counted as zero: zero is a value on the
     HEM+ scale (it is a hundred points below average) and treating absence as
     zero would silently crater a team's split the night one slot lost its PA
-    column. Verified on the 2026-08-16 artifact: 540 slots, 0 missing."""
+    column. Verified on the 2026-08-16 artifact: 540 slots, 0 missing.
+
+    PER-HAND VALUE FIRST (audit F08-02, 2026-09-10). `hem_plus_split` is the
+    hitter's HEM+ against THIS order's pitcher hand, scored on the same season
+    pool; `hem_plus` is his season number and is identical in both orders. Before
+    the split existed this function averaged the season number over a permutation
+    of the same nine bats, which is permutation-invariant, so off_vs_lhp equalled
+    off_vs_rhp bit-for-bit on all 30 clubs for all 480 captured rows. Falling back
+    to `hem_plus` per slot keeps a partial feed servable, and the capture's own
+    platoon_splits block reports how many slots resolved."""
     tot_pa, acc = 0.0, 0.0
     for s in (order or []):
         if not isinstance(s, dict):
             continue
-        hem, pa = s.get("hem_plus"), s.get("pa")
+        hem, pa = s.get("hem_plus_split"), s.get("pa")
+        if hem is None:
+            hem = s.get("hem_plus")
         if hem is None or pa is None:
             continue
         try:

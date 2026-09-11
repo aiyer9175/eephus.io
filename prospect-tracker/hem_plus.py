@@ -257,6 +257,57 @@ def hem_plus(hi: "Hitter", pool: Pool) -> Optional[int]:
     return hi.hem_plus
 
 
+#: The split counting line this module accepts, StatsAPI statSplits field -> Hitter
+#: field. Kept as module data so the caller that fetches (hitter_export) and the
+#: scorer that consumes cannot drift about which events make the wOBA numerator.
+SPLIT_COUNT_FIELDS = {
+    "plateAppearances": "pa", "atBats": "ab", "hits": "h", "doubles": "doub",
+    "triples": "trip", "homeRuns": "hr", "baseOnBalls": "bb",
+    "intentionalWalks": "ibb", "hitByPitch": "hbp", "sacFlies": "sf",
+    "strikeOuts": "so",
+}
+
+
+def split_hem_plus(counts: dict | None, pool: Pool) -> Optional[int]:
+    """HEM+ for ONE hand, from that hand's own counting line, on the SAME pool.
+
+    WHY THIS EXISTS (audit finding F08-02, 2026-09-10). `_platoon_adj` says so in
+    its own docstring: it re-lenses the ORDER vs L / vs R and never the published
+    number. So both hand-labelled orders carried each hitter's SEASON hem_plus,
+    and a PA-weighted mean over a permutation of the same nine bats is
+    permutation-invariant. Measured on the served board: the batSide lens was up
+    (737 of 737 hitters stamped), the two orders were genuinely different
+    permutations (0 of 30 teams identical), and `off_vs_lhp` and `off_vs_rhp`
+    were still bit-identical on all 30 clubs, across all 480 captured rows. The
+    pre-registered handedness gate would have measured its own twin.
+
+    THE ANCHOR IS THE SEASON POOL, ON PURPOSE, AND IT IS THE WHOLE POINT. Scoring
+    each hand against its own hand-specific pool would re-centre both to 100 and
+    delete the league-wide platoon effect, which is the signal. Anchoring both to
+    the one season pool makes a lefty's vs-LHP number read BELOW his season HEM+
+    by the amount he actually loses, and makes the two hands comparable.
+
+    Shrinkage needs no new constant: the split denominator is smaller, so the
+    existing per-component reliability constants regress a thin split harder,
+    which is the correct behaviour and is why this reuses `hem_plus` verbatim
+    rather than re-deriving the arithmetic. Returns None on an unusable line,
+    never a fabricated value."""
+    if not isinstance(counts, dict):
+        return None
+    tmp = Hitter(key="_split")
+    for src, dst in SPLIT_COUNT_FIELDS.items():
+        v = counts.get(src)
+        if v is None:
+            continue
+        try:
+            setattr(tmp, dst, float(v))
+        except (TypeError, ValueError):
+            continue
+    if _woba_denom(tmp) <= 0:
+        return None
+    return hem_plus(tmp, pool)
+
+
 def assign_tiers(hitters: list["Hitter"]) -> None:
     for h in hitters:
         v = h.hem_plus
@@ -296,11 +347,20 @@ def _platoon_adj(bats: Optional[str], opp_hand: str) -> float:
     return PLATOON_ADV if adv else -PLATOON_ADV
 
 
-def build_batting_order(hitters: list["Hitter"], opp_hand: str) -> Optional[list[dict]]:
+def build_batting_order(hitters: list["Hitter"], opp_hand: str,
+                        split_hem: Optional[dict] = None) -> Optional[list[dict]]:
     """A sabermetric 9-man batting order vs the given pitcher hand ('R' or 'L').
     Not just HEM+ descending: the two best bats hit 2nd and 4th, then a handedness
     stagger breaks up same-handed runs (managers alternate L/R so a reliever can't
-    match up). Everyday nine = the top 9 by PA. Returns None if fewer than 9."""
+    match up). Everyday nine = the top 9 by PA. Returns None if fewer than 9.
+
+    `split_hem` is {mlbam: {'L': hem_vs_lhp, 'R': hem_vs_rhp}} from real platoon
+    lines (hitter_export.load_platoon_splits). When a slot resolves, it is stamped
+    as `hem_plus_split` ALONGSIDE the untouched season `hem_plus`, never instead
+    of it: the served per-slot display and Offense+ keep reading `hem_plus`, so
+    this adds a column and moves no served number. The ORDER is still built on the
+    season number plus the `_platoon_adj` heuristic; re-ordering on the real split
+    is a served-display change and belongs to its own epoch (audit F08-02)."""
     pool = [h for h in hitters if h.hem_plus is not None and (h.pa or 0) > 0]
     pool = sorted(pool, key=lambda h: -(h.pa or 0))[:9]
     if len(pool) < 9:
@@ -336,14 +396,23 @@ def build_batting_order(hitters: list["Hitter"], opp_hand: str) -> Optional[list
                         break
     order = []
     for idx, h in enumerate(slots):
-        order.append({"slot": idx + 1, "key": h.key, "name": h.name,
-                      "bats": h.bats, "hem_plus": h.hem_plus, "pa": int(h.pa),
-                      "platoon_adv": _platoon_adj(h.bats, opp_hand) > 0})
+        row = {"slot": idx + 1, "key": h.key, "name": h.name,
+               "bats": h.bats, "hem_plus": h.hem_plus, "pa": int(h.pa),
+               "platoon_adv": _platoon_adj(h.bats, opp_hand) > 0}
+        if split_hem and h.mlbam is not None:
+            sp = split_hem.get(int(h.mlbam))
+            if isinstance(sp, dict):
+                v = sp.get(opp_hand)
+                if v is not None:
+                    row["hem_plus_split"] = v
+                    row["split_pa"] = (sp.get("pa") or {}).get(opp_hand)
+        order.append(row)
     return order
 
 
 def team_offense(team: str, hitters: list["Hitter"],
-                 active_ids: Optional[frozenset] = None) -> dict:
+                 active_ids: Optional[frozenset] = None,
+                 split_hem: Optional[dict] = None) -> dict:
     """Team offense aggregates. Offense+ is PA-weighted HEM+ (the offensive
     quality of the plate appearances the lineup takes). Also emits constructed
     batting orders vs RHP / LHP and a bench list (regulars beyond the nine).
@@ -400,8 +469,8 @@ def team_offense(team: str, hitters: list["Hitter"],
                       "hem_plus": h.hem_plus, "pa": int(h.pa)} for h in ladder]
     # Constructed orders vs each pitcher hand (falls back to overall HEM+ when the
     # bat side is unknown; the toggle still re-lenses platoon advantage + stagger).
-    orders = {"vr": build_batting_order(avail, "R"),
-              "vl": build_batting_order(avail, "L")}
+    orders = {"vr": build_batting_order(avail, "R", split_hem),
+              "vl": build_batting_order(avail, "L", split_hem)}
     out["orders"] = {k: v for k, v in orders.items() if v}
     # Bench bats: the regulars who did NOT make the everyday nine (by PA), the
     # next hitters by playing time, so the chart can show them clearly separated.
@@ -412,11 +481,41 @@ def team_offense(team: str, hitters: list["Hitter"],
     return out
 
 
+def build_split_hem(platoon_counts: Optional[dict], pool: Pool) -> Optional[dict]:
+    """{mlbam: {'L': hem_vs_lhp, 'R': hem_vs_rhp, 'pa': {...}}} from raw split
+    lines, scored on the season `pool` (see split_hem_plus for why that anchor).
+
+    `platoon_counts` is {'L': {mlbam: counts}, 'R': {mlbam: counts}} as
+    hitter_export.load_platoon_splits returns it. None in, None out: an absent
+    feed must stay distinguishable from a feed that resolved nobody, which is
+    the load_bat_side posture and the reason that outage was caught at all."""
+    if not platoon_counts:
+        return None
+    out: dict = {}
+    for hand in ("L", "R"):
+        for mid, counts in (platoon_counts.get(hand) or {}).items():
+            v = split_hem_plus(counts, pool)
+            if v is None:
+                continue
+            row = out.setdefault(int(mid), {"pa": {}})
+            row[hand] = v
+            try:
+                row["pa"][hand] = int(float(counts.get("plateAppearances") or 0))
+            except (TypeError, ValueError):
+                pass
+    return out or None
+
+
 def score_pool(hitters: list["Hitter"],
-               active_ids: Optional[frozenset] = None) -> dict:
+               active_ids: Optional[frozenset] = None,
+               platoon_counts: Optional[dict] = None) -> dict:
     """End to end: derive rates, build the pool, score HEM+, assign tiers, roll up
     team offenses. Returns 'hitters', 'teams', 'pool'. Pure - callers supply the
-    data."""
+    data.
+
+    `platoon_counts` (optional) carries each hitter's per-hand counting line; the
+    per-hand HEM+ is scored HERE because it must use this run's pool anchor, and
+    the pool does not exist until this function builds it."""
     pool_input = [h for h in hitters if _woba_denom(h) > 0]
     for h in pool_input:
         derive_rates(h)
@@ -426,13 +525,15 @@ def score_pool(hitters: list["Hitter"],
         h.qualified = _woba_denom(h) >= QUALIFY_MIN_PA
     assign_tiers(pool_input)
 
+    split_hem = build_split_hem(platoon_counts, pool)
+
     by_team: dict[str, list["Hitter"]] = {}
     for h in pool_input:
         by_team.setdefault(h.team or "", []).append(h)
     teams = []
     for team, hs in by_team.items():
         if team:
-            teams.append(team_offense(team, hs, active_ids))
+            teams.append(team_offense(team, hs, active_ids, split_hem))
     teams.sort(key=lambda t: (t.get("offense_plus") or -999), reverse=True)
 
     scored = [h for h in pool_input if h.hem_plus is not None]

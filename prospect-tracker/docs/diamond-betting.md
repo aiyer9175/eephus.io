@@ -1254,6 +1254,60 @@ and the twin is what separates the platoon signal from the offense level that
 vintage, so the strict four-week earliest admissible first look is
 **~2026-09-15**. Eight days after this section was written. It is written now
 precisely so that it cannot be written to fit what the first look shows.
+
+### Correction (2026-09-10): the candidate column was its own baseline, and the clock restarts
+
+Found by the FanGraphs-library audit (finding F08-02) BEFORE the first look, and
+recorded here under 5c rule 1, which permits amending a pre-registration before
+its clock opens on a fact established without touching outcomes. **Nothing in
+this correction was measured against a game result.**
+
+**What was wrong.** `hem_plus._platoon_adj` says it in its own docstring: it
+re-lenses the ORDER vs L and vs R and never the published number. So both
+hand-labelled orders carried each hitter's SEASON `hem_plus`, and
+`leaderboard_vintages._pa_weighted_hem` averaged that over a permutation of the
+same nine bats. A PA-weighted mean over a permutation is permutation-invariant,
+so `off_vs_lhp` and `off_vs_rhp` were equal BY CONSTRUCTION, not by coincidence.
+
+**Measured on the served board and on the dark capture.** All 30 clubs
+bit-identical; all 480 stored (date, team) rows across 16 vintage dates
+identical. And this was NOT the "batSide lens is down" case the paragraph above
+anticipated: the lens was fully UP (737 of 737 hitters stamped) and the two
+orders were genuinely different permutations (0 of 30 teams identical). The
+paragraph above therefore describes the wrong failure mode, and the guard that
+was in place (`bat_side.available`, `n_teams_identical_orders`) could not see
+this one, because it checks the ORDERS and the defect was in the VALUES.
+
+**The repair (2026-09-10).** `hitter_export.load_platoon_splits` pulls each
+hitter's real per-hand counting line in two bulk StatsAPI calls
+(`statSplits`, `sitCodes=vl|vr`, `playerPool=All`; the default pool returns
+qualified hitters only and the everyday nine reaches well past it).
+`hem_plus.split_hem_plus` scores a hand-specific HEM+ from that line on the SAME
+season pool anchor, so the league-wide platoon effect survives rather than being
+re-centred away, and the existing per-component reliability constants shrink a
+thin split harder with no new constant. Each slot gains `hem_plus_split`
+ALONGSIDE the untouched season `hem_plus`; `_pa_weighted_hem` prefers it and
+falls back per slot. Measured after the repair on the live board: 540 of 540
+lineup slots resolved, clubs serving an identical split went 30 to 0, and the
+vs-LHP minus vs-RHP spread runs -20.74 to +11.24 with a median of -4.17.
+Offense+ and every per-slot displayed number are byte-unchanged, verified.
+
+**THE CLOCK RESTARTS, and this is the part that costs.** Every row captured
+before the repair carries a column that could not differ, so the accrued 480
+rows are uninformative about this candidate by construction. The earliest
+admissible first look is four weeks after the first vintage whose
+`platoon_splits.available` is true, NOT ~2026-09-15. Vintages are
+first-write-wins, so the first such file is the night AFTER the repair ships.
+
+**Two additions to what must be reported.** The `platoon_splits` block on the
+hitter artifact is now part of the result: `n_slots_split` of `n_slots`, and
+`n_teams_split_equal`, which is the tripwire that would have caught this. A run
+where the feed is reported available and every club is still identical WARNS and
+does not raise, because the nightly vintage write is what this clock and the
+schema-4 accrual both run on, and an unconditional raise would stop that stream.
+
+**Not reopened.** No criterion, control or threshold above is amended. The
+candidate, the two-leg bar and the permuted twin stand exactly as registered.
 ---
 
 ## 6. The backtest: two modes, both labelled
