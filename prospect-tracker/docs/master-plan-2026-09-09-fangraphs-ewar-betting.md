@@ -382,6 +382,24 @@ published Batting for a completed season drifts as the factor accrues, up to 4.0
 2025 between two fetch dates. Our number should be reproducible even where theirs is not,
 which is a genuine advantage and should be stated as one.
 
+**D11. The eWAR rebuild cadence, and it is the whole cascade, not a cron line
+(default: rebuild on the WAR-read cadence inside the runbook's ordering, NOT
+nightly).** Shipped 2026-09-10: the false glossary claim is deleted and every board
+now publishes its eWAR build stamp and drift. What is NOT shipped, because it is
+the owner's call, is when the artifact is rebuilt. Runbook step B ends
+"INVALIDATES: everything below", and below it sit the career_war rebase (which
+refuses a plain re-run), the pooled outcome curve, the empirical anchors, the draft
+slot curve, the war_rate vintages and the projections retrain. A nightly rebuild
+would also re-solve the per-season per-role centring constant every night, so
+completed-season WAR moves by rounding and the board-basis fingerprint churns
+daily. The three options are: (i) rebuild with the full cascade on the monthly WAR
+read, which keeps one named build behind every fitted artifact and leaves the
+current season up to a month stale with the staleness disclosed; (ii) rebuild
+nightly and accept fingerprint churn plus a re-anchor every night, which the plan
+recommends against; (iii) leave it hand-run and rely on the new disclosure, which
+is honest but means a reader sees a stale cell until someone remembers. Default is
+(i).
+
 **D10. The 2011-2020 park factors (default: ten Guts fetches).** Needed once, cached, then
 the batting replica is exact. The alternative, the Savant runs index, costs 1.06 runs MAE
 and has no 2011 coverage.

@@ -596,3 +596,20 @@ def test_the_glossary_no_longer_claims_the_artifact_rebuilds_itself():
     meth = entry.get("methodology") or ""
     assert "rebuilds with the season" not in meth
     assert "DOES NOT REBUILD WITH THE SEASON" in meth
+
+
+def test_the_three_year_war_rate_columns_disclose_their_basis():
+    """F10-01: the 3-year WAR-rate columns are measured on bWAR and are served
+    beside 1-year columns measured on eWAR, under copy asserting one scale. The
+    pitcher values move 4 to 5 points on a re-point, so the honest half ships
+    first and the re-point is its own epoch. The batting side is numerically
+    identical under both bases, which the entry must say rather than imply."""
+    import json
+    from pathlib import Path
+    g = json.loads((Path(__file__).parent / "data" / "glossary.json")
+                   .read_text(encoding="utf-8"))
+    by = {e.get("id"): e for e in g["entries"]}
+    for slug in ("war_ip_plus_sp_3yr", "war_ip_plus_rp_3yr", "war_pa_plus_3yr"):
+        meth = (by[slug].get("methodology") or "")
+        assert "audit F10-01" in meth, f"{slug} does not disclose its WAR basis"
+        assert "bWAR" in meth and "eWAR" in meth
