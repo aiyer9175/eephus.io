@@ -1663,6 +1663,41 @@ records (2026-09-09, 2026-09-10), 60 team rows, `wx_temp_climo` and
 club(s) below the 4-game floor" on both nights. The climatology candidate is
 unchanged; the separate FORECAST candidate is section 5h.
 
+### Amendment (2026-09-11): 5d-C is read inside the run-environment Holm family
+
+The 5d-C gate above is left as written.
+
+**The ground, recorded as a new precedent.** The one recorded permission, in the 5e
+correction of 2026-09-10, is a pre-registration amended "under 5c rule 1, which permits
+amending a pre-registration before its clock opens on a fact established without touching
+outcomes". 5d-C's clock opened with the 2026-09-09 vintage (the correction above), so that
+wording does not cover this amendment. This is a new precedent, recorded as one: an
+amendment made after a clock opens and before the look, that ONLY TIGHTENS, on a fact
+established without touching outcomes, and that the 2026-09-11 master plan requires (4.2,
+N3; 5.1). The fact is section 5k, registered the same day: three more tests of the same
+question on the TOTAL (does a dated run-environment term beat the served model).
+**Nothing in this amendment was measured against a game result.** No 5d-C value has been
+read against anything (the correction above: counts only).
+
+**What changes, three things, each a tightening:**
+1. **The family.** 5d-C's criterion 1 is one member of family RE (section 5k: 5d-C, 5h-A,
+   5k-A14, 5k-A30, 5k-B; family alpha 0.05, one-sided; Holm). Its p is the one-sided
+   normal p of its registered t. Its bar is the Holm step that p lands on: t 2.326 to
+   1.645 at m = 5, never below the registered 1.645. A disqualification by the
+   observed-weather screen enters the family as p = 1 and stays in m.
+2. **The read day.** 5d gave an earliest admissible look, 2026-10-07. 5d-C is now read in
+   one run with the three 5k members, on 5k's read day R: the first day on or after
+   2026-10-07 on which both harnesses are ready (committed, fixture tests passing) and the
+   run completes. No result of either is opened before all are written. If 5d-C's harness
+   is not ready by 2026-10-31, 5d-C is decided that day at p = 1 and never read; any later
+   read is a new candidate.
+3. **Early looks.** A run before R that computes 5d-C's criterion is a look, and 5d-C is
+   decided that day at p = 1.
+
+Everything else in 5d-C stands: its estimand, split, criterion 2, and the screen running
+first. 5d-A, 5d-B, 5d-D and 5d-E are moneyline-calibration candidates, not members, and
+their gates and dates are untouched.
+
 ---
 
 ## 5e. The handedness gate (pre-registered 2026-09-07, columns accruing since 2026-08-18)
@@ -2496,6 +2531,32 @@ either way, and in 2027 it needs the archive to keep running beside the live
 capture for four weeks, which `BACKFILL_SEASONS` does not allow: continuing the
 archive arm into 2027 is a further owner decision. Addition 1 (the
 B-TOTAL-LEVEL ordering) still applies to any 5h-A look.
+
+### Amendment (2026-09-11): 5h-A is read inside the run-environment Holm family
+
+Sections 5h-A to 5h-C are left as written. The fact is the same as the 5d amendment's,
+on the same day: section 5k. Here the 5e correction's wording covers the amendment as
+written ("before its clock opens"), because 5h's clock has not started. It only
+tightens, and the 2026-09-11 master plan requires it (4.2, N3; 5.1). The owner answered on 2026-09-11: arm the capture, with the
+5h-C Previous-Runs backfill. At HEAD 37e9382d the capture has not run
+(`betting_weather.FORECAST_CAPTURE_ENABLED` is False), and no forecast has been related to
+any outcome. **Nothing in this amendment was measured against a game result.**
+
+**What changes, and only this.**
+- 5h-A's criterion 1 is one member of family RE (section 5k). Its p is the one-sided
+  normal p of the registered t of the LIVE arm, the arm 5h-C says governs.
+- That p is 1 until the live arm reads, expected in 2027: 400 open-air live games are
+  needed and about 180 accrue in 2026 (The clock above; plan 5.1).
+- An archive-arm reading is reported beside it and never enters the family. This
+  amendment adds no route by which the archive arm decides 5h-A.
+- When the live arm reads, 5h-A's bar is the Holm step its p lands on over its p and the
+  four p values recorded in 2026, unchanged, never below the registered 1.645. If it never
+  reads, it keeps p = 1.
+
+Everything else stands: the three additions, the split rule, criterion 2, the
+contaminated leg, the permuted-venue twin (200, seed 20260911), the clock, and 5h-C's
+agreement check. 5h-B is a props estimand under the dark props frame's own interval rule,
+not a member.
 
 
 ## 5i. Ballpark awareness: the Athletics' park, and park by bat side (pre-registered 2026-09-11)
@@ -3447,6 +3508,535 @@ through the two lambdas. Every repriced side obeys the stale-price rule, the pub
 slots stay locked, and serving needs the post-lineup price capture (O18).
 
 **No number has been computed on this candidate.**
+
+## 5k. Run environment: trailing league scoring and a calendar-month offset (pre-registered 2026-09-11)
+
+**Written before any function, table, constant or flag below exists in code, before
+either term has been computed for any date, and before any pre-2026 season has been
+read for it**, in the discipline of 5a, 5c, 5d, 5h and 7b. No served number changes: the
+one served-code change is a keyword whose default reproduces today's output bit for bit
+(below).
+
+**Disclosed, because 5c rule 1 turns on it.** These outcome summaries are on the record
+and were known when this was written. Each describes outcomes over a season or a split
+window. None is a trailing league mean, a month offset or either term below.
+- 7f, the vintage fit half (305 games before 2026-08-01): mean actual total 8.8066
+  against the model's 8.8649, median 8; observed Over 0.5344, 0.4328, 0.3869, 0.3213 at
+  7.5 to 10.5; 8.9632 over all 2,200 games. The centre deltas fitted on the four growing
+  fit halves: -0.2731, -0.1949, -0.1754, -0.1771. The incumbent's Over +0.044 above the
+  realised rate on 292 anchored eval games with an open capture.
+- 7g and 7h: the 7g run printed each split's eval-half observed Over rate at the four
+  lines (0.560, 0.485, 0.385, 0.327 on the anchored split; 0.347 at 10.5 on the 0.6
+  split; 0.350 at 10.5 on the 0.7 split), and 7h records Over 7.5 observed 0.615 after
+  2026-08-29 and that the misses sit where the run environment moved. The four eval
+  windows are NESTED (cuts 2026-08-01, 08-16, 08-22, 08-29), so differencing them would
+  give disjoint-window rates, a coarse dated series of 2026 league scoring. That has not
+  been done.
+- Section 4: league run environment 4.494 runs per team per game (the full-season fit).
+- `lg_rpg`: `build_context` writes the season-to-date league runs per team-game with
+  `n_games` (`betting_model.py:3798`) to the tracked `data/betting_model_context.json`,
+  and `/betting/` shows it (`assets/betting.js:2070`). It is display only; no price reads
+  it. Two dates' `lg_rpg x n_games` difference exactly to a trailing-window league mean,
+  a close variant of 5k-A. No two copies have been differenced or related to a later
+  game.
+
+Those rates are why this section exists; 7h names "a dark run-environment feature with
+its own section" as the next admissible attempt. No number relating either arm, or any
+close variant named under Disqualification, to a later game, a total or a price has been
+computed.
+
+**Where the pieces come from.** The two windows are the house's two trailing windows,
+both fixed before 7g or 7h printed anything: `xwoba_14` and `xwoba_30` (5c, 2026-08-16)
+and the trailing 30 days of the 5d-C climatology (5d, correction of 2026-09-07). The
+2026-09-11 master plan adopts the same pair (4.2, N3). No other window length is read in
+this section. The offset is the 2026-09-05 plan's B-TOTAL stage 1a ("calendar-month EB
+offset fitted on pre-2026 finals, the one dated-results feature that is vintage-safe by
+construction"), written before 7g and 7h ran.
+
+**Why a league term.** The team inputs enter standardized across clubs
+(`_assemble_team_inputs`), so the league's scoring level reaches a price mainly through
+the intercept: 2*b0 + b4 is +9.0023 on the total over the 7f fit half, against -0.0041,
+-0.0807 and -0.0526 from the offense, prevention and park terms (7f). The intercept is
+fitted over a window that ends before the game: the vintage fit half in every gate, every
+completed game in the served build (section 4). When the league's scoring moves after
+that window, every later total inherits the gap. No price reads the league's recent
+scoring.
+
+**Sources, and one served-code hook.**
+- Arm A's 2026 values read `completed_games("2026")`, the results cache at
+  `.cache/betting/completed_games.json`, regular season on both of its doors (the feed
+  walk drops `game.type != "R"`, `_row_from_schedule` drops `gameType != "R"`). The season
+  argument is pinned: `completed_games(None)` returns every cached season.
+- The pre-2026 fits (arm A's `k_w` and arm B's table) read 2018, 2019 and 2021 to 2025
+  regular-season finals from `fetch_finals`, one StatsAPI schedule request per season,
+  seven in all, no credential and no credits. The `.cache/pbp_corpus` plays table carries
+  no date (`tools/build_pbp_corpus.py`, `_schemas()`). 2020 is excluded; the corpus holds
+  none. The fetched rows are stored under `.cache/betting/` (to be built), never `data/`.
+- **The census check.** Each season's count is reconciled against the 2026-09-05 plan's
+  B-CORPUS census, "2431/2429/2429/2430/2430/2429/2430/2124, no 2017 or 2020". The
+  season labels are inferred from that order (2018, 2019, 2021 to 2026); the seven
+  pre-2026 entries sum to 17,008, the pre-2026 game count the 2026-09-11 plan gives for
+  `.cache/pbp_corpus` (4.2, N1). The census counts the `.cache/win_prob` play corpus, not
+  schedule finals, so the check compares two sources. Any difference is resolved on
+  `game_pk` lists alone, with no runs field read, before any slope, offset or runs mean
+  is computed. The prefit refuses to fit while a difference is unexplained, and the
+  resolution is written into the Fitted block. No season is dropped once any slope,
+  offset or runs mean of it has been computed.
+- **Row rules, the same for every window mean, every pre-2026 fit and each contaminated
+  screen:**
+  - deduplicate `game_pk`, counted;
+  - drop a row whose `season` is not the season requested, counted (the range trap
+    `_topup_game_cache` documents);
+  - drop a row with no `innings` or `innings` below 9, counted (7i's rule: rain-shortened
+    games, and 2021's seven-inning doubleheaders);
+  - drop every RESUMED game, counted: a game whose final was recorded on a date other
+    than its `date`. `feed_cache.py:104-105` and `:171` record that a
+    suspended-then-resumed game keeps its original date, so a reconstruction that kept it
+    could hold a final that was unknown on D. No results row carries a resume marker
+    today (both doors write the same ten keys), so the lookup is to be built: a
+    `resumed_on` read from each game's cached feed or schedule entry, kept inside the dark
+    builders and never added to `_row_from_schedule`'s served row shape. A `game_pk`
+    listed on two schedule dates is treated as resumed. A game whose resume status cannot
+    be resolved STOPS the build with its `game_pk` named; it is never silently included.
+  - The graded eval set is not filtered by these rules. It is the 7f to 7h labs' own
+    rows, so the incumbent is scored on the games those labs score.
+- **The hook.** The term is league-level and in runs, so it does NOT pass through
+  `_assemble_team_inputs` (standardizing a value every club shares on a date would zero
+  it). It enters the run rows `expected_runs` builds, beside the park term, through a
+  keyword `env_runs` on `expected_runs` (to be built, default 0.0). A test pins that the
+  served output is bit-identical at the default and that no served caller passes it. The
+  value comes from one dark function the live and vintage paths share,
+  `betting_model.run_environment_term` (to be built), which nothing served calls, pinned
+  by a test.
+
+### 5k-A. Trailing league scoring, two windows (members 5k-A14 and 5k-A30)
+
+**The number.** For a game on date D and w in {14, 30}, `R_w(D)` is the league's runs per
+team-game (both clubs' runs over twice the games) over every qualifying regular-season
+final of D's season whose `date` falls in the w calendar days ending D-1. Games on D never
+enter, so game 2 of a doubleheader never reads game 1. A window holding fewer than half
+the games that 13.1 completed games per calendar date (section 5) would give it, rounded
+up (92 for 14 days, 197 for 30), gives no term for D. Such a game is excluded from that
+member's eval half and from its `Rbar_w`, and counted.
+
+**Vintage safety and provenance.** Each row's `covers_through` is the newest final date
+in its window, always before D, so the 5a cutoff `covers_through < D` holds. That
+definition replaces section 5's max over sources and the write date, which would stamp a
+reconstructed row with its build date. It is the O22 ruling's definition (the 2026-09-05
+plan, 6.5: "`covers_through` = last play date"). The build that prices D runs at 03:10 ET
+(the 2026-09-11 plan, 4.1), after the D-1 slate. A D-1 final not yet in the results cache
+at that hour is missing from that build's window, so a reconstruction is at least as
+informed as a live build, and never more than by a late D-1 final, because resumed games
+are dropped. Every past date's value is REBUILT from the results cache. Each row carries
+`provenance.source: "archive-reconstruct"` (5a's record shape), `covers_through`,
+`window_days`, `n_games` and each drop count. Rows are counted apart from live and
+git-backfill records, never blended (5a). Arm A reconstructs no clocked dark column (the
+plan's N1 rule): it reads finals and nothing a vintage stores.
+
+**DEFAULT, owner decision O22 open:** archive-reconstruct provenance is allowed, labelled
+per row (the 2026-09-11 plan, section 6).
+- Refused before the read: 5k-A14 and 5k-A30 are decided on the read day at p = 1 and are
+  not computed. A read from a live nightly record of the window is a new candidate, with
+  its own section and its own family, in 2027.
+- Refused after the read: each A member's verdict is voided (recorded, never servable).
+  No other member's decision is revisited.
+
+**The term,** the same amount on both sides:
+
+    raw_S' = raw_S + k_w * (R_w(D) - Rbar_w),   S in {home, away}
+
+`raw_home` and `raw_away` are the run rows `expected_runs` builds before the midpoint, the
+differential shrink and the [1.5, 9.5] clamp, so the pair mean moves and the
+half-difference does not. `Rbar_w` is the game-weighted mean of `R_w` over the split's
+fit-half games that carry a term. This is 5h's addition 2 applied to one regressor: "Both
+regressors are de-meaned on the fit portion and enter with no intercept, so the candidate
+cannot absorb a level error by construction." The term averages zero where the
+incumbent's intercept was fitted. A serving pricer de-means by the same rule over the
+games it was fitted on.
+
+**`k_w`, fitted on 2018-2025 only.** Pooled over the seven seasons, no intercept, weighted
+by team-games on D (twice the qualifying finals dated D):
+
+    x(D) = R_w(D) - mu_s,   y(D) = L(D) - mu_s,   k_w = sum n_D x y / sum n_D x^2
+
+`L(D)` is the league's runs per team-game over the qualifying finals dated D, and `mu_s`
+is season s's runs per team-game over all its qualifying finals. The sum runs over every
+regular-season date with a qualifying final whose window meets its floor. `mu_s` is a
+season fixed effect and nothing more.
+
+**One centring mismatch, reported and not corrected.** Before 2026, `k_w` is the slope
+around each FULL season's mean. In 2026 the term is centred on the split's FIT-HALF mean
+of `R_w`, the only centre knowable at pricing. These are different centres.
+
+**Reported in the Fitted block:**
+- per-season slopes, which are descriptive, and no season is dropped after they are
+  seen;
+- a season-block bootstrap: 1,000 resamples of the seven seasons with replacement,
+  `numpy.random.default_rng(20260911)`;
+- the 2023-2025 slope beside the pooled one, descriptive and never substituted;
+- every count and drop.
+
+A `k_w` at or below 0 records that member NULL BY CONSTRUCTION: no 2026 comparison is
+computed and it enters the family at p = 1.
+
+**Why 2018-2025 and not 7i's 2023-2025.** 7i fits how a game ENDS, which the 2023 rules
+changed (the automatic runner, the pitch clock), so it takes the seasons under 2026's
+rules. `k_w` and the month table are within-season shapes measured against each season's
+own mean, so the season fixed effect absorbs a rule change's level. Seven seasons also
+give arm B's `V(m)` seven points where three would give three. The 2023-2025 readings are
+reported beside the pooled ones so a rule-era difference is visible.
+
+### 5k-B. A calendar-month offset, fitted on 2018-2025 (member 5k-B)
+
+**The table.** Six bins: April (March games pooled in), May, June, July, August,
+September (regular-season October games pooled in). For season s and bin m, `d(s, m)` is
+the league's runs per team-game over its qualifying finals in bin m, minus `mu_s`.
+`dbar(m)` is the mean of `d(s, m)` over the seven seasons, and `V(m)` is its sample
+variance over them (ddof 1). Normal-normal empirical Bayes toward zero, by the method of
+moments:
+
+    A    = max(0, mean over the six bins of [dbar(m)^2 - V(m)/7])
+    o(m) = A / (A + V(m)/7) * dbar(m)
+
+`A` = 0 records the member NULL BY CONSTRUCTION, as above.
+
+**The term.** `raw_S' = raw_S + (o(m(D)) - obar)` on both sides, placed as in 5k-A. `m(D)`
+is D's calendar month, binned as above, and `obar` is the game-weighted mean of
+`o(m(D))` over the split's fit-half games. The pass-through is 1 and is not fitted: `o`
+is already in runs per team-game and already shrunk. Rows carry
+`provenance.source: "pre-2026-fit"`, the seasons and a digest of the table.
+
+**What neither arm does.** Neither fits a parameter on a 2026 game. That keeps 5k outside
+X1 (the 2026-09-11 plan, 4.2: no fourth one-parameter total repair fitted on the
+305-game fit half) and inside that plan's section 5 rule: arm A is archive-reconstructable
+and arm B is fitted on pre-2026 data. **No 2026 outcome is read to build either term.**
+The windows, floors, row rules, `k_14`, `k_30` and the table are fixed here or fitted on
+2018-2025. Arm A's VALUE on D reads 2026 finals dated D-1 and earlier: the cutoff every
+vintage obeys, and information the build that prices D already holds. The de-meaning
+constants read those dated values, never a priced game's own result.
+
+**Frozen before the read.** `k_14`, `k_30`, the table, their input counts, the bootstrap
+readings and the power figures below are written into this section as a dated block
+(`### Fitted (DATE): the 5k pre-2026 constants`). They are also literals in
+`betting_model.RUN_ENV_PRE2026` (to be built), pinned to that block by a test and never to
+a served constant (plan X4). The same test pins every choice in "Choices pinned" below.
+The fit is `tools/betting_run_env_prefit.py` (to be built), deterministic, and reads no
+2026 game. The block is committed before 2026-09-28. Re-fitting any constant after its
+block is committed disqualifies the member.
+
+**Power, stated in the Fitted block, never a criterion or a precondition.** On 2018-2025
+only, the prefit reports:
+- `RMS_T`: the RMS of each member's term on the TOTAL (twice the per-side term),
+  centred on each season's mean;
+- `sigma_T`: the sd of a game's total about its season mean;
+- the ceiling `t* = sqrt(n_eval) x RMS_T / (sigma_T x sqrt(2 pi))`. This is the expected
+  criterion-1 t if the term were exactly right, errors were normal and games were
+  independent. It is evaluated at each split's n_eval once the read fixes n_eval.
+
+The read reports `RMS_T` on each eval half from the terms alone. Unlike 5f, there is no
+UNDERPOWERED rule: the result stands whichever way it lands.
+
+### The 5k gate
+
+**The incumbent** is the served model on the read day, whatever `MODEL_VERSION` and flags
+serve that day (the owner's 2026-09-11 A's-park and runline answers included). It is
+refit on each split's fit half (coefficients, tie rate, differential shrink, home
+adjustment) as the 7f, 7g and 7h labs do. Each challenger is the incumbent plus one term,
+with nothing re-solved (5h-A's rule).
+
+**Why 5h-A's rule governs here and not 11a's re-solve rule.** 11a re-solves because a
+dispersion changes the margin's shape, so a fixed `diff_shrink` would be "rigged toward
+Poisson". This term moves only the pair mean:
+- `diff_shrink` scales the half-difference and holds the pair mean;
+- the home adjustment enters as +adj/2 and -adj/2 and cancels in the total;
+- the tie rate prices the moneyline only.
+
+So criterion 1 is untouched by all three. Criterion 2 feels the term only through the
+Poisson spread and the clamp, and a fixed shrink there, if anything, handicaps the
+challenger on a non-degradation condition, which is the conservative side.
+
+The lab is `python betting_model.py --run-environment` (to be built). It writes
+`data/betting_model_eval.json -> run_environment`.
+
+**Sample and splits.** The graded sample is the 2026 regular-season games in
+`completed_games("2026")` that the vintage resolver grades, whatever the read day. The
+splits are the 7f/7g/7h set: the anchored served split and date quantiles 0.6, 0.7 and 0.8
+of that sample's gradable dates. Because the sample is fixed once the regular season ends
+(2026-09-27, the 2026-09-11 plan section 5), the cuts do not move with the read day; each
+cut is written into the result. Each split needs a fit half of at least
+`VINTAGE_MIN_FIT_GAMES` (100) and an eval half of at least `VINTAGE_MIN_EVAL_GAMES` (50),
+or it cannot pass. The results set is regular season on both doors, so postseason is never
+graded. The owner's 2026-09-11 answer that counts postseason belongs to 5e and does not
+reach here.
+
+**Criteria, the 5d-C form, per member, at ALL FOUR splits.**
+1. Paired absolute error on the game total, incumbent minus challenger, greater than 0 at
+   the member's Holm threshold in family RE (below). Each model's scored total is
+   `lam_home + lam_away` as `expected_runs` returns them, before any total-pricing layer,
+   so no 7f, 7g, 7h or 7i flag moves either number.
+2. Moneyline paired Brier not worse on the point estimate.
+
+**Choices pinned.** Each is fixed here, pinned by the `RUN_ENV_PRE2026` test:
+- **Criterion 1's t.** The per-game difference is `d_i = |err_inc,i| - |err_chal,i|`, and
+  `dbar` is its mean over the N eval games. The standard error is clustered on date with
+  the CR1 small-sample factor, because every game on a date shares the term:
+  `S_g = sum over games on date g of (d_i - dbar)`, `SE = sqrt(G/(G-1) x sum_g S_g^2) / N`,
+  `t = dbar / SE`. G is the eval half's date count. The split's one-sided p is the upper
+  tail of a t distribution with G - 1 degrees of freedom, not the normal, because G is
+  small at the 0.8 split.
+- **Seeds.** `numpy.random.default_rng(seed)` for seeds 0 to 199, one permutation per
+  seed.
+- **The twin's bar.** `numpy.percentile(improvements, 95)` with its default linear
+  interpolation over the 200 twin improvements. The member must exceed it strictly.
+- **Row rules, the census response and `V(m)`'s ddof,** as written above.
+- **The screens** use each member's frozen pass-through and de-mean by that member's own
+  rule over the fit half, as written below.
+
+**Control, the permuted-date twin, required at every split.** This is the 5c rule 3
+control, permuted across dates because every club shares the term on a date.
+- 5k-A: within each split's eval half, permute the dated term across the eval dates (a
+  date's games move together), with `Rbar_w` untouched. The twin keeps the eval half's
+  mean shift and breaks the dating, so a member that is only a level shift ties its twin.
+- 5k-B: permute the six offsets across the six bins, then de-mean on the fit half. A
+  dated permutation would be the identity at a split whose eval half lies in one month.
+
+At every split, the member's mean paired improvement on criterion 1 must exceed the twin's
+bar.
+
+**The contaminated screen runs first and can only DISQUALIFY.**
+- 5k-A: the member with `R_w(D)` replaced by `S(D)`, the league's runs per team-game over
+  the qualifying finals dated D (the graded game's own included). It uses the member's
+  frozen `k_w` and is de-meaned by the same rule over the fit half. This is the league's
+  scoring that same day, at the member's own pass-through, so it differs from the member
+  only in what it knows.
+- 5k-B: 2026's own realized offsets `d(2026, m)`, over the full 2026 regular season, at
+  pass-through 1, de-meaned the same way.
+
+Both are labelled contaminated. A member whose contaminated version does not improve
+criterion 1 on the point estimate at every split is disqualified: if the league's actual
+scoring that day or month does not help, a trailing or climatological estimate of it has
+nothing to find. A disqualified member's numbers are computed and reported, and it enters
+the family at p = 1.
+
+**The expectation, stated before any number: criterion 1 is hard for this candidate.**
+Absolute error is minimized at the median, and the served total sits above where totals
+split: on the 7f fit half the model's mean total is 8.8649 against an actual median of 8,
+and on the 292 anchored eval games with an open capture its Over sits +0.044 above the
+realised rate (both 7f). Where the league scores above its fit-half level, each member
+raises a centre that is already above the median, and absolute error charges for that even
+when the new mean is right; 7h's disclosed grid says the late eval window ran hotter. So a
+FAIL on criterion 1 is not evidence that league scoring carries nothing about tonight's
+total. The criterion is kept because 5d-C and 5h-A are read under it, and a family read
+under two criteria is not one family.
+
+**Reported whichever way it lands, never qualifying.**
+- the effective n and every count dropped (window floor, each row rule, clamp hits at 1.5
+  and 9.5);
+- each term's mean, sd, range and `RMS_T` on both halves of every split;
+- paired SQUARED error on the total with its t (the loss a mean is consistent for);
+- the 7f grid log loss at 7.5 to 10.5;
+- criterion 1 by roof type (open, retractable, dome, from `betting_weather.venue_table`);
+- market diagnostics, never criteria: the positive-edge Over/Under split, and model
+  P(over) minus the realised rate on games with an open capture;
+- the twin distributions and both screens;
+- each member's correlation with 5d-C's climatology term on shared games;
+- the Fitted block.
+
+### The run-environment Holm family (RE)
+
+**Members, one test each.** 5d-C, 5h-A, 5k-A14, 5k-A30, 5k-B: m = 5. All five ask one
+question of the TOTAL: does a dated run-environment term beat the served model. A member's
+one test is its criterion 1. Three choices are decided in this section, not taken from the
+plan, which states no alpha for this family:
+- **Family alpha 0.05, one-sided.** That is the level 5d-C and 5h-A were registered at
+  alone, so joining can only raise a member's bar.
+- **Criterion 2, twins and screens carry no alpha and add nothing to m.** They are
+  point-estimate conditions and controls, not tests with a size. This departs from the
+  plan's PROSPX rule that "both legs of every arm count in m" (section 2.3), which is
+  written for arms whose legs are both tests.
+- **5d-A, 5d-B, 5d-D and 5d-E are not members.** They are moneyline-calibration
+  estimands. Plan 5.1's row ("5d A-E (schema 4) and 5k run environment, one Holm family
+  with 5d-C and 5h") can be read either way. The R5 lane's N3 names 5d-C and 5h only, and
+  this section follows it. Also not members, with their gates standing as registered:
+  - 5h-B, a props estimand under the dark props frame's own interval rule;
+  - 5i-B, a venue-by-lineup park term, not a date-level environment.
+
+**Why one family and not 5k alone.** Read apart, 5d-C, 5h-A and a 5k-only family would
+each spend 0.05. If the three were independent, the chance that some run-environment term
+clears by luck would approach 1 - 0.95^3 = 0.143. It is one question asked five ways, and
+the plan puts 5k in one family with 5d-C and 5h (4.2, N3; 5.1). Joining tightens 5d-C and
+5h-A, so it is recorded as an amendment to each, below, and only in that direction.
+
+**The procedure.**
+- **The p values.** A 5k member's p at a split is the t_(G-1) p pinned above. 5d-C's and
+  5h-A's p is the one-sided normal p of the t their own sections register, so p <= 0.05
+  exactly when that t >= 1.645. A member read at several splits, all required, takes its
+  LARGEST split p: an intersection-union test is level alpha at its largest component.
+- **Holm.** The j-th smallest p is compared with 0.05 / (m - j + 1), stopping at the first
+  that fails. Ties are ranked in the member order listed above. At m = 5 the normal
+  equivalents are t 2.326, 2.241, 2.128, 1.960 and 1.645, so no member's bar falls below
+  the 1.645 it was registered at. A 5k member's bar in t is the t_(G-1) quantile at the
+  same p, which is higher at every finite G.
+
+**Members read on different dates.** Each member is decided ONCE, on its own read date, by
+Holm over the p values on record that day, with every unread member at p = 1. It is never
+revisited. Holm is monotone in the p values: lowering an unread member's p from 1 can only
+add rejections. So every rejection made this way is one a single Holm run over all five
+would also make, and the family-wise error stays at most 0.05. The price is that a member
+decided early is never promoted by a later member's small p. A member that never reads
+keeps p = 1, and a disqualified or NULL BY CONSTRUCTION member enters at p = 1 and stays in
+m.
+
+**5h-A's date and p.** On 2026-09-11 the owner armed the forecast capture with the 5h-C
+Previous-Runs backfill. At HEAD 37e9382d, `betting_weather.FORECAST_CAPTURE_ENABLED` is
+still False, and that day's 03:10 ET nightly has run, so the first armed night is
+2026-09-12 at the earliest and four weeks put 5h-A's earliest look at 2026-10-10. The
+live arm also needs 400 open-air live games, and about 180 accrue before the season ends
+(5h, The clock), so the live arm reads in 2027 (plan 5.1). 5h-C says "the live arm
+governs". So:
+- 5h-A's p in family RE is the governing live arm's, and it stays 1 until that arm reads.
+- An archive-arm reading in 2026 is reported beside it and never enters RE. This
+  amendment adds no route by which the archive arm decides 5h-A.
+- 5h-A's decision, expected in 2027, is Holm over its p and the four p values recorded
+  in 2026, unchanged.
+
+**A member PASSES** only when all of these hold:
+- Holm rejects its null;
+- criterion 2 holds at every split;
+- it beats its twin at every split where its section registers one;
+- no screen disqualified it.
+
+**The labels.** A member's rank j is its place among the family's p values on its read day,
+and its per-split bar is p <= 0.05 / (m - j + 1) at that split.
+- FAIL: it clears that bar at no split.
+- INDETERMINATE: it clears at some splits but not all, as 7h did.
+- FAIL (Holm stopped): it clears at every split but Holm stopped at an earlier step.
+
+**If an amendment block is missing.** Family RE is the three 5k members plus each of 5d-C
+and 5h-A whose amendment block is committed in this document before 2026-09-28. m is 3, 4
+or 5 accordingly, and the bars follow the formula above. That is fixed by the commit
+history before the 2026-09-28 printouts, not by any result.
+
+### When 5k is read
+
+**The read day, R.** 5d-C and the three 5k members are computed in one run. That means one
+invocation of `--run-environment`, which computes 5d-C through 5d-C's own harness, or
+back-to-back invocations on the same day. Every member's result is written before any is
+opened. R is the first day on or after 2026-10-07 on which both harnesses are ready and
+the run completes. 2026-10-07 is 5d-C's earliest admissible look (5d, correction of
+2026-09-11; plan 5.1). The last read date is 2026-10-31, a date decided in this section.
+A trailing league mean and a venue temperature climatology are close variants (both
+follow the season's warming and cooling), so neither is read before the other:
+- **Ready** means the member's harness is committed to the repository and its fixture
+  tests pass. For 5k, the harness is the builders, `run_environment_term`, the `env_runs`
+  keyword, the lab, the prefit and the committed Fitted block.
+- **A 5k harness first ready on or after 2026-09-28**, the date of the first 2026 printout
+  after this commit, still computes on R and is reported, but its three members enter RE
+  at p = 1.
+- **If 5d-C's harness is not ready by 2026-10-31,** 5d-C is decided that day at p = 1 and
+  never read; any later 5d-C read is a new candidate. The 5k members read on 2026-10-31.
+  5d-C is at risk: its climatology columns exist only from the 2026-09-09 vintage (5d,
+  correction of 2026-09-11), and the anchored fit half ends 2026-07-31.
+- **A slipped run** (box, cache or feed failure on R) runs on the first day it can, no
+  later than 2026-10-31, with the same code.
+
+The sample does not grow after 2026-09-27, so waiting changes no graded game.
+
+**The guard and early looks.**
+- `--run-environment` (to be built) refuses a run dated before 2026-10-07, and refuses a
+  second run once a 5k result block exists.
+- Any run before R that computes a 5k criterion, a twin or a screen, or sets a 2026 value
+  of either term beside any 2026 outcome or price, is a look. The members it touched are
+  decided that day at p = 1 and recorded with the printout. There is no later read of
+  them. Recording such a look as a verdict would read 5k before 5d-C, which the one-run
+  rule forbids.
+- Before R the builders run for coverage only, and a coverage run prints counts only
+  (window counts, floors, each drop, the pre-2026 reconciliation). It never prints a 2026
+  `R_w`, `S`, `d` or term value, because a printed series of trailing means already sits
+  beside the later games. The 2026 term series is first written by the read itself.
+- Tests run on fixtures or on pre-2026 data only.
+
+**No accrual clock.** 5k needs no accrual clock: it adds no vintage column (5c rule 2
+counts columns), arm A is archive-reconstructable and arm B is pre-2026 (the 2026-09-11
+plan, section 5).
+
+**5h's addition 1, and why it is met.** Addition 1 bars measurement until B-TOTAL-LEVEL
+"has either shipped or been closed". Its concern, a term "credited with part of the level
+fix", applies with more force to a league-level term than to weather. Three records close
+the level repair for 2026:
+- 7f read `TOTAL_LEVEL_GATE_CRITERIA` once, behind `SERVE_TOTAL_LEVEL`: "Verdict FAIL; the
+  flag stays False", and 7f found the mechanism is not the one B-TOTAL-LEVEL assumed;
+- the owner answered on 2026-09-11 that the Over lean stays disclosed, with no
+  `SERVE_TOTAL_*` flip;
+- plan X1 bars a fourth one-parameter total repair on the fit half.
+
+5k also cannot re-fit 7f's constant, because every member is de-meaned on the fit half.
+`SERVE_TOTAL_CALIBRATION` (7h) and `SERVE_SCORE_KERNEL` (7i, to be built) act after
+`expected_runs` returns the lambdas, so a flip of either before R leaves criterion 1
+untouched. Serving 5k on top of either is its own section.
+
+**Printouts between this commit and R.**
+- **DEFAULT, owner decision O23 open:** the 7h re-read on 2026-09-28 may print eval-half
+  Over rates on grown windows.
+- 7i's look, on or after 2026-09-28, prints the grid and the realised-rate diagnostic.
+
+Both are known in advance. They can steer nothing here, because every constant, row rule,
+window, criterion, seed and procedure above is fixed in this text or on 2018-2025, the
+Fitted block and harness are committed before 2026-09-28, and m is fixed by then. Any
+amendment to 5k written after 2026-09-28 names every printout that preceded it.
+
+**Disqualification.** Any number relating either arm, or a close variant, to a later 2026
+game's total, result or price before this section is committed disqualifies the candidate
+under 5c rule 1. After commit and before R, the same relation is a look (above). A close
+variant is any of these:
+- a trailing league runs mean over any window;
+- a calendar-month or weekly league offset built from 2026 games;
+- an Over rate, mean total or runs mean for any 2026 date window derived from the 7g, 7h,
+  7h re-read or 7i printouts (by differencing nested splits or otherwise), compared with a
+  later window;
+- `lg_rpg` and `n_games` differenced across dates;
+- any of these against posted totals.
+
+None of these has been computed.
+
+### What a 5k pass would change
+
+A new flag in the `SERVE_RUN_DISPERSION` idiom (to be built), added only after a pass (5h:
+a serving path for an unmeasured feature is exactly what 5c forbids), default False. The
+owner flips it in one commit with:
+- a `MODEL_VERSION` bump;
+- the tripwire test;
+- a `--context` re-run that writes the served term and its constants.
+
+One term serves: if more than one family member passes, none is stacked on another. The
+owner chooses, and stacking is its own section.
+
+**What a flip moves.** Both lambdas of every game move by one amount, so every fair total
+and total side probability moves. The moneyline and runline move slightly, through the
+Poisson spread and the clamp.
+- **Slots.** **DEFAULT, owner decision O15 open:** slots come from publishable markets
+  only, so the total stays out of the slots and badges while its ledger leg is closed
+  (since 2026-09-03, plan 4.2). No `SLOT_MARKET_POLICY` value does that today (HEAD
+  `"any"`, `betting_model.py:385`); a ledger-leg value is to be built. Under that default
+  a flip moves total prices, not slots. If O15 is answered otherwise, a slot can change on
+  any night a total holds it or newly clears the 0.06 floor (at the nightly only, under
+  O21's DEFAULT lock).
+- **The Over lean.** In a window where the league scores above the fitted level, a flip
+  raises every total, which ADDS to the disclosed Over lean. 7f names that lean a shape
+  defect, and this term does not touch shape. The lean stays disclosed either way (owner
+  answer, 2026-09-11) and `total_level_check` does not change.
+
+**Which pricer a pass speaks for.** The lab grades each split's vintage refit, and the
+served pricer is the context fit (R5-F1: served b1 0.2510 against graded -0.0372). A pass
+is a statement about the vintage refit and says nothing about the served context pricer
+until 7e-D lands (plan X3). **DEFAULT, owner decision O14 open:** if the served pricer
+fails the 7e-D replay, the graded vintage pricer serves with a `MODEL_VERSION` bump. A 5k
+flip rides on whichever pricer serves, de-meaned over the games that pricer was fitted on.
+
+**What 5k does not claim.** It does not repair the Over lean, and it reopens nothing in 7f,
+7g or 7h: no rule there is re-fit and no member changes the total's shape. It says nothing
+about weather (5d-C, 5h) or the park (5i). **No number has been computed on this
+candidate.**
 
 ---
 
