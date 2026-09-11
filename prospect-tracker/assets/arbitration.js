@@ -195,15 +195,15 @@
     };
     var items = [];
     var est = n(F_SERVICE_EST);
-    if (est) items.push("Arbitration year is reconstructed, not read from published service time, on <b>" + est + "</b> players. Those rows are marked with a tilde." );
+    if (est) items.push("Arb year estimated, not from published service time: <b>" + est + "</b> players, marked ~.");
     var cls = n(F_CLASS_EST);
-    if (cls) items.push("Of those, <b>" + cls + "</b> come from the weakest source, a debut-year and salary-shape heuristic measured at 0.70 agreement against ground truth.");
+    if (cls) items.push("<b>" + cls + "</b> of those use the debut-year heuristic, the weakest source (agreement on the Model tab).");
     var carry = n(F_CARRY_FWD);
     var rules = board.rules || {};
-    if (carry) items.push("The collective bargaining agreement expires <b>" + esc(rules.expires || "2026-12-01") + "</b>. Every season from " + esc(String(rules.carry_forward_from || 2027)) + " assumes its arbitration structure survives unchanged. That is not estimated from data and no interval here covers it.");
-    items.push("Second-and-later arbitration years are a <b>population multiplier</b>, not a per-player model: the model did not beat one, so the simpler estimator is what ships. Only the first trip is model-driven.");
-    items.push("Non-tendered players are absent by construction, so summing a club total <b>overstates</b> what it actually owes.");
-    return '<div class="arb-caveatbar"><h3>Read this first</h3><ul><li>' +
+    if (carry) items.push("Seasons from " + esc(String(rules.carry_forward_from || 2027)) + " assume the current <span data-gl=\"cba_carry_forward\">CBA</span> survives its <b>" + esc(rules.expires || "2026-12-01") + "</b> expiry. Not estimated; no interval covers it.");
+    items.push("Arb 2+ is a <b>population step multiplier</b>: the <span data-gl=\"arb_award_model\">model</span> did not beat it. Only Arb 1 is model-driven.");
+    items.push("Non-tendered players are absent, so club totals <b>overstate</b> what is owed.");
+    return '<div class="arb-caveatbar"><h3>Caveats</h3><ul><li>' +
            items.join("</li><li>") + "</li></ul></div>";
   }
 
@@ -275,8 +275,7 @@
       return;
     }
     if (!board.rows || !board.rows.length) {
-      root.innerHTML = '<div class="mlbstats-empty">The arbitration board is being computed. ' +
-        "It builds off service time, the salary ledger and the projection engine. Check back shortly.</div>";
+      root.innerHTML = '<div class="mlbstats-empty">The arbitration board is not built yet. Check back shortly.</div>';
       return;
     }
     var rows = filtered().slice();
@@ -334,6 +333,14 @@
     if (clr) clr.onclick = function () {
       filters = { cls: "all", team: "all", flag: null }; renderBoard();
     };
+    wireGl(root);
+  }
+
+  /* Glossary spans ([data-gl]) get their aria wiring from the shared runtime;
+     the tooltip itself is delegated and works without this call. */
+  function wireGl(node) {
+    try { if (node && window.EEPHUS_GL && window.EEPHUS_GL.wire) window.EEPHUS_GL.wire(node); }
+    catch (e) { /* the glossary is enrichment */ }
   }
 
   /* ------------------------------------------------------------ history */
@@ -356,21 +363,17 @@
       return;
     }
     var note =
-      '<div class="card arb-note"><p><strong>Two different questions, kept apart.</strong> ' +
-      "<b>vs Market</b> asks whether the arbitration system paid him more or less than players " +
-      "with his case. It is this model&rsquo;s own residual and it sums to roughly zero across the " +
-      "league by construction. <b>vs Value</b> asks whether his salary beat his on-field " +
-      "production, priced at that winter&rsquo;s dollars per win. It does not sum to zero, because " +
-      "arbitration systematically pays less than the open market. Averaging a number centred on " +
-      "zero with one that is not gives you neither, so there is no combined column here and none " +
-      "may be added.</p>" +
-      "<p>A negative residual means this model expected a higher salary than the player received. " +
-      "It is a statement about the model, not a statement that the player is underpaid.</p></div>";
+      '<div class="card arb-note"><p><b><span data-gl="arb_market_residual">vs Market</span></b>: ' +
+      "actual minus this model; sums to about zero by construction. <b>vs Value</b>: actual minus " +
+      "eWAR at that winter&rsquo;s $/WAR; arbitration pays below the open market, so it does not " +
+      "sum to zero. The two are never combined.</p>" +
+      "<p>Negative vs Market means the model expected a higher salary. It does not mean the player " +
+      "is underpaid.</p></div>";
 
     var head = '<tr><th class="mlbstats-col-rank">#</th><th>Season</th><th>Player</th>' +
       "<th>Club</th><th>Arb</th><th>Actual</th><th>Ours</th><th>MLBTR</th>" +
-      '<th class="arb-gs">vs Market<small>the system vs comparable players</small></th>' +
-      '<th>vs Value<small>salary minus WAR at that winter&rsquo;s price</small></th></tr>';
+      '<th class="arb-gs">vs Market<small>actual minus model</small></th>' +
+      '<th>vs Value<small>actual minus eWAR &times; $/WAR</small></th></tr>';
 
     var maxOu = 1;
     rows.forEach(function (r) { if (r[9] != null) maxOu = Math.max(maxOu, Math.abs(r[9])); });
@@ -394,6 +397,7 @@
     root.innerHTML = note +
       '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead>' +
       head + "</thead><tbody>" + body + "</tbody></table></div>";
+    wireGl(root);
   }
 
   /* ---------------------------------------------------------- team view */
@@ -420,9 +424,8 @@
         "</td><td>" + t.n + "</td><td>" + money(t.next) + "</td><td>" + money(t.tot) + "</td></tr>";
     }).join("");
     root.innerHTML =
-      '<div class="card arb-note"><p>What each club still owes the players it controls through ' +
-      "arbitration. Non-tendered players are absent by construction, so these totals are an " +
-      "<strong>upper bound</strong> on the obligation, not a payroll forecast.</p></div>" +
+      '<div class="card arb-note"><p>Remaining arbitration cost by club. Non-tendered players ' +
+      "are absent, so each total is an <strong>upper bound</strong>, not a payroll forecast.</p></div>" +
       '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead><tr>' +
       '<th class="mlbstats-col-rank">#</th><th>Club</th><th>Arb-eligible</th>' +
       "<th>Next season</th><th>Total remaining</th></tr></thead><tbody>" + body +

@@ -92,9 +92,9 @@
   // behind a re-cut again.
   const VERDICT_LABEL = { value: "VALUE", market: "MARKET", overpay: "OVERPAY" };
   const VERDICT_WHAT = {
-    value: "Projected to be UNDERPAID - rational value exceeds the predicted price",
-    market: "Priced about right - rational value and predicted price sit in the middle tercile",
-    overpay: "Projected to be OVERPAID - predicted price exceeds rational value",
+    value: "Rational value above the predicted price",
+    market: "Rational value and predicted price in the middle tercile",
+    overpay: "Predicted price above rational value",
   };
   // fa_market._pos_group, mode v1 (the shipped four buckets). test_fa_verdict_
   // tooltip.py reads the Python constants and fails if these drift apart.
@@ -126,9 +126,9 @@
       const where = m.verdict === "value" ? `Deal+ at or above ${b.hi}`
                   : m.verdict === "overpay" ? `Deal+ below ${b.lo}`
                   : `Deal+ ${b.lo} to ${b.hi}`;
-      band = ` (${where}: the ${b.basis} tercile edges this verdict is cut on).`;
+      band = ` (${where}, ${b.basis} terciles).`;
     }
-    return `<span class="fa-verdict fa-verdict-${m.verdict}" data-gl="deal_plus" title="${VERDICT_WHAT[m.verdict]}${band} Underlying Deal+ ${m.dealPlus ?? "?"} (100 × rational / predicted price).">${label}</span>`;
+    return `<span class="fa-verdict fa-verdict-${m.verdict}" data-gl="deal_plus" title="${VERDICT_WHAT[m.verdict]}${band} Deal+ ${m.dealPlus ?? "?"}.">${label}</span>`;
   }
   function surplusSpan(usd, p10, p90) {
     if (usd == null) return EM_DASH;
@@ -137,8 +137,8 @@
     if (p10 == null || p90 == null) return `<span class="${cls}">${val}</span>`;
     // Same treatment the AAV and Yrs/Guar cells got: the band was hover-only
     // here, which is invisible on a phone and inconsistent for screen readers.
-    const band = `Surplus ${val}. Floor to ceiling from the P10 and P90 WAR `
-      + `paths: ${formatMetric(p10 / 1e6, "surplusM")} to ${formatMetric(p90 / 1e6, "surplusM")}.`;
+    const band = `Surplus ${val}. P10 to P90 WAR paths: `
+      + `${formatMetric(p10 / 1e6, "surplusM")} to ${formatMetric(p90 / 1e6, "surplusM")}.`;
     return `<span class="${cls}" data-band tabindex="0" aria-label="${esc(band)}" title="${esc(band)}">${val}</span>`;
   }
 
@@ -252,7 +252,7 @@
     if (!rows) return;
     chips.innerHTML = VIEWS.map(([k, label]) =>
       `<button class="chip${state.view === k ? " active" : ""}" data-fa-view="${k}">${label}</button>`).join("")
-      + ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Free Agency")}" title="Every FA term, defined - in the unified site glossary"><span class="chip-glyph" aria-hidden="true">§</span>Glossary</a>`;
+      + ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Free Agency")}" title="Free Agency terms in the site glossary"><span class="chip-glyph" aria-hidden="true">§</span>Glossary</a>`;
     chips.querySelectorAll("[data-fa-view]").forEach(b => b.onclick = () => {
       state.view = b.dataset.faView; state.player = null; syncToURL(); render();
     });
@@ -280,11 +280,11 @@
       await Promise.all([load(clsName), load("fa_archive"), load("fa_meta")]);
     } catch (e) {
       if (state.classYear) {
-        rows.innerHTML = `<div class="state-message">The ${state.classYear - 1}-${String(state.classYear).slice(2)} class isn't exported yet (run the monthly pipeline). <a href="#" onclick="location.hash='';return false;">Back to the current class</a>.</div>`;
+        rows.innerHTML = `<div class="state-message">The ${state.classYear - 1}-${String(state.classYear).slice(2)} class is not exported yet. <a href="#" onclick="location.hash='';return false;">Back to the current class</a>.</div>`;
         return;
       }
-      rows.innerHTML = `<div class="state-message is-error" role="alert">Data failed to load. Refresh to retry;
-        if it persists the nightly build is mid-run.
+      rows.innerHTML = `<div class="state-message is-error" role="alert">Data failed to load. If it
+        persists, the nightly build is mid-run.
         <button class="chip" id="fa-retry" type="button">Retry</button></div>`;
       const retry = document.getElementById("fa-retry");
       if (retry) retry.onclick = () => render();   // load() re-fetches: failures are not cached
@@ -296,10 +296,10 @@
       return;
     }
     const futureNote = state.classYear
-      ? `<div class="fa-cba-note">&#9432; ${state.classYear - 1}-${String(state.classYear).slice(2)} is a PROJECTED future class: contract-expiry members with option/QO statuses; projections priced at that winter's ex-ante $/WAR. No signings or events exist yet.</div>`
+      ? `<div class="fa-cba-note">&#9432; ${state.classYear - 1}-${String(state.classYear).slice(2)} is a projected class: contract-expiry members with option and QO statuses, priced at that winter's ex-ante <span data-gl="winter_dpw">$/WAR</span>. No signings yet.</div>`
       : "";
     banner.innerHTML = futureNote + (cls.cba_carry_forward
-      ? `<div class="fa-cba-note">&#9888; CBA rules past 2026-12-01 are <span data-gl="cba_carry_forward">carried forward</span> - thresholds and QO values for this winter are NOT yet collectively bargained.</div>`
+      ? `<div class="fa-cba-note">&#9888; CBA rules past 2026-12-01 are <span data-gl="cba_carry_forward">carried forward</span>: this winter's thresholds and QO values are not yet bargained.</div>`
       : "") + freshnessLine(meta);
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(banner);
     if (state.player) { renderPlayer(rows, cls, state.player); }
@@ -317,18 +317,18 @@
     if (m.status === "signed") {
       const terms = m.signedMilb ? "MiLB deal"
         : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)}`;
-      return `<span title="Signed${m.signedDate ? " - first observed " + m.signedDate : ""}. Terms from the class page; the date is the pipeline's observation stamp.">SIGNED ${esc(m.signedTo || "")} ${terms}</span>`;
+      return `<span title="Signed${m.signedDate ? ", first seen " + m.signedDate + " (pipeline observation date)" : ""}.">SIGNED ${esc(m.signedTo || "")} ${terms}</span>`;
     }
     if (m.status === "option_exercised") {
-      return `<span title="Option exercised - never reached the market (first-seen heuristic; see Tracker).">option exercised</span>`;
+      return `<span title="Option exercised; never reached the market (first-seen heuristic).">option exercised</span>`;
     }
-    if (m.status === "locked") return `<span title="Contract expires - locked into the class.">UFA</span>`;
+    if (m.status === "locked") return `<span title="Contract expires; locked into the class.">UFA</span>`;
     const pct = m.enterProb != null ? ` &middot; P(enter) ${(m.enterProb * 100).toFixed(0)}%` : "";
     const price = m.optPrice ? ` $${(m.optPrice / 1e6).toFixed(1)}M` : "";
     const src = m.enterProbSrc && m.enterProbSrc.startsWith("band_priced")
-      ? "Priced from the market model's own P10-P90 band distribution (the option price against the predicted AAV) - v2."
-      : "Documented v1 heuristic (mutual/conditional options keep explicit priors).";
-    return `<span title="Option-pending - class membership is probabilistic until the option resolves. ${src}">${esc((m.type || "").replace(/_/g, " "))}${price}${pct}</span>`;
+      ? "P(enter) from the option price against the predicted AAV band (v2)."
+      : "P(enter) from the v1 heuristic (mutual and conditional options keep explicit priors).";
+    return `<span title="Option pending: membership is probabilistic until it resolves. ${src}">${esc((m.type || "").replace(/_/g, " "))}${price}${pct}</span>`;
   }
 
   // A5: in-module deep links (player cards, rail, value-map, back-to-board) must
@@ -435,7 +435,7 @@
   // Disclosure badges - the model's weak spots are surfaced, never hidden.
   function thinBadge(m) {
     return m.thinPlatform
-      ? ` <span class="fa-thin" title="${esc(m.thinPlatform)} - projection confidence is LOW; the market line inherits the weakness.">&#9888;</span>` : "";
+      ? ` <span class="fa-thin" title="${esc(m.thinPlatform)}. Low-confidence projection; the market line inherits it.">&#9888;</span>` : "";
   }
 
   function noteBadge(m) {
@@ -454,8 +454,8 @@
     }
     const stale = d => (Date.now() - new Date(d + "T00:00:00").getTime()) / 864e5 > 14;
     const parts = Object.entries(src).map(([k, d]) =>
-      `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last confirmed ${d} - more than 14 days old. Re-run the FA pipeline.">&#9888; stale</span>` : ""}`);
-    return `<div class="fa-note fa-sources" title="When each input was last successfully checked for this class, not when the page was built. A quiet market with no new signings still counts as checked; a source that stopped parsing does not.">${gen ? gen + " &middot; " : ""}sources: ${parts.join(" &middot; ")}</div>`;
+      `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last confirmed ${d}, more than 14 days ago.">&#9888; stale</span>` : ""}`);
+    return `<div class="fa-note fa-sources" title="Date each source was last checked successfully, not the page build date. A quiet market counts as checked; a source that stopped parsing does not.">${gen ? gen + " &middot; " : ""}sources: ${parts.join(" &middot; ")}</div>`;
   }
 
   // Share graphics: boards go through the shared EEPHUS_GFX modal, one-subject
@@ -485,7 +485,7 @@
       title: `MLB Free Agency · ${yy} Class Board`,
       subtitle: `${cls.n_members} constructed members · ${cls.n_projected} projected · winter $/WAR ${money(cls.dpw_usd)}`,
       url: "eephus.io/fa", filenameBase: `fa-class-board-${yy}`,
-      caption: "predicted market vs rational value - two numbers, never conflated · ex-ante",
+      caption: "predicted market vs rational value · ex-ante",
       board: { defaultCount: 25, counts: [10, 25, 50], columns: [
         { label: "#", frac: 0.05 },
         { label: "Player", frac: 0.32 },
@@ -563,7 +563,7 @@
       title: `MLB Free Agency · ${team} Team Fits`,
       subtitle: `${yy} class · ${top.length} scored fits · CBT payroll ${money(t.taxPayroll ?? t.committed)}${t.space != null ? ` · tax space ${formatMetric(t.space / 1e6, "surplusM")}` : ""}`,
       url: "eephus.io/fa", filenameBase: `fa-team-fits-${team}-${yy}`,
-      caption: "team fit = who they can afford, need, and will actually sign - and who blocks the slot",
+      caption: "team fit composite · blocked = slot already held",
       board: { defaultCount: 25, counts: [10, 25, 50], legend: "Fit = need/window/afford/park/behavior composite", columns: [
         { label: "#", frac: 0.05 },
         { label: "Player", frac: 0.28 },
@@ -605,7 +605,7 @@
       title: `MLB Free Agency · ${yy} Archive`,
       subtitle: `${w.n} signings · ${money(w.spend_usd)} guaranteed · implied $/WAR ${money(w.dpw_usd)}`,
       url: "eephus.io/fa", filenameBase: `fa-archive-${yy}`,
-      caption: "realized WAR and surplus to date - the winter graded by what actually happened",
+      caption: "realized eWAR and surplus to date",
       board: { defaultCount: 25, counts: [10, 25, 50], legend: "realized through today", columns: [
         { label: "#", frac: 0.05 },
         { label: "Player", frac: 0.34 },
@@ -640,8 +640,8 @@
     const lbl = OPT_LABEL[t] || t.replace(/_/g, " ");
     const opt = isOption(m);
     const tip = opt
-      ? "Option / opt-out - class membership is probabilistic until the option resolves"
-      : "UFA - contract expires; locked into the class";
+      ? "Option or opt-out: membership is probabilistic until it resolves"
+      : "UFA: contract expires; locked into the class";
     return `<span class="fa-type ${opt ? "fa-type-opt" : "fa-type-ufa"}" title="${tip}">${lbl}</span>`;
   }
   function posHead(m) {
@@ -708,7 +708,7 @@
     };
     const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">${cls.class_year - 1}-${String(cls.class_year).slice(2)} Class Board</span>
-      <span class="newsprint-eyebrow-meta">${cls.members.length} constructed members &middot; ${cls.n_projected} projected &middot; winter $/WAR (ex-ante) ${money(cls.dpw_usd)}, escalating ${((cls.dpw_infl || 0.05) * 100).toFixed(0)}%/yr &middot; <button class="chip egfx-chip" id="fa-gfx-btn" title="Generate a shareable graphic (theme-aware, multiple formats)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></span>
+      <span class="newsprint-eyebrow-meta">${cls.members.length} constructed members &middot; ${cls.n_projected} projected &middot; winter $/WAR (ex-ante) ${money(cls.dpw_usd)}, escalating ${((cls.dpw_infl ?? 0.05) * 100).toFixed(1)}%/yr &middot; <button class="chip egfx-chip" id="fa-gfx-btn" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></span>
     </div>`;
     // Filter bar: Type (UFA vs the option family), position group, and verdict.
     const nUfa = cls.members.filter(m => !isOption(m)).length;
@@ -724,7 +724,7 @@
       ${["all", "C", "1B", "2B", "3B", "SS", "IF", "LF", "CF", "RF", "OF", "DH", "SP", "RP"].map(p => fchip("pos", p, p === "all" ? "All" : p, boardState.pos === p)).join("")}
       <span class="filter-label" style="margin-left:12px;">Verdict</span>
       ${["all", "value", "market", "overpay"].map(v => fchip("verdict", v, v === "all" ? "All" : v[0].toUpperCase() + v.slice(1), boardState.verdict === v)).join("")}
-      <span class="filter-label" style="margin-left:12px;" title="Bat side for position players, throwing hand for pitchers - the class row carries one letter and it means the side that matters for that role.">Hand</span>
+      <span class="filter-label" style="margin-left:12px;" title="Bat side for hitters, throwing hand for pitchers">Hand</span>
       ${[["all", "All"], ["L", "L"], ["R", "R"], ["S", "Switch"]].map(([v, l]) => fchip("hand", v, l, boardState.hand === v)).join("")}
       <span class="fa-sub fa-filter-count">${members.length} shown</span>
     </div>`;
@@ -736,7 +736,7 @@
       // club, fits as chips carrying their component scores). Dropping them from
       // the row is what buys the card a fixed height without cramping anything.
       const yearsBand = (m.projYearsP10 != null && m.projYearsP90 != null)
-        ? `${m.projYearsP10}&ndash;${m.projYearsP90}` : null;
+        ? `${m.projYearsP10}-${m.projYearsP90}` : null;
       // Total-WAR P10-P90 band dropped (F-01): summing per-year quantiles does
       // not give the total's quantile, and the underlying per-year marginals
       // undercover realized totals (no league-attrition zero floor), so the
@@ -766,9 +766,8 @@
                       && m.projAavP90 > m.projAav * 2.5;
       const aavBand = `Predicted average annual value ${money(m.projAav)}. `
         + `P10 to P90 ${money(m.projAavP10)} to ${money(m.projAavP90)}.`
-        + (aavWild ? " Note: this band comes from a flat ratio rather than a"
-                     + " per-tier fit, so the upper end is unrealistically wide"
-                     + " at the top of the market." : "");
+        + (aavWild ? " The band is a flat ratio, not a per-tier fit, so the"
+                     + " upper end is too wide at the top of the market." : "");
       const aavCell = m.projAav == null ? EM_DASH
         : `<span data-band tabindex="0" aria-label="${esc(aavBand)}" title="${esc(aavBand)}">${money(m.projAav)}</span>`;
       const guarBand = `Predicted term and total guarantee. Length P10 to P90 ${m.projYearsP10 ?? "?"} to ${m.projYearsP90 ?? "?"} years; guarantee P10 to P90 ${money(m.projGuarP10)} to ${money(m.projGuarP90)}.`;
@@ -791,20 +790,20 @@
       // wrong, which is exactly what a surplus point estimate hides.
       const risk = [
         m.warCvar10 != null ? chip("downside WAR", formatMetric(m.warCvar10, "war"),
-          "Conditional value at risk: the MEAN of the worst 10 percent of outcome paths, not the 10th percentile itself. What the contract looks like when it goes wrong.") : "",
+          "Mean of the worst 10% of outcome paths (CVaR), not the P10") : "",
         m.pAnyStar != null ? chip("star odds", (m.pAnyStar * 100).toFixed(0) + "%",
-          "Probability of at least one star-level season over the predicted term.") : "",
+          "P(at least one star-level season) over the predicted term") : "",
         m.optKind ? chip("option", esc(String(m.optKind)) + (m.optHeldBy ? " / " + esc(String(m.optHeldBy)) : ""),
-          "Contract option on the deal: which kind, and who holds it." + (m.optValue != null ? ` Modelled value ${money(m.optValue)}.` : "")) : "",
+          "Option kind / holder" + (m.optValue != null ? `; modelled value ${money(m.optValue)}` : "")) : "",
       ].join("");
       // Tape order runs production -> value -> risk -> shape, and every chip in
       // it has a matching button in the sort bar above the board (see FA_SORTBAR).
       const tape = `<div class="mlb-tape"><div class="mlb-tape-inner">
-        ${chip("WAR y1", m.warY1 != null ? formatMetric(m.warY1, "war") : null, "Projected year-1 WAR (eWAR basis)")}
-        ${chip("deal WAR", dealWar, "Projected WAR (eWAR basis) over the predicted term (floor-ceiling from the Gate-1 probability buckets)")}
-        ${chip("rational", m.rational != null ? money(m.rational) : null, "Convex-priced NPV of the projected production: what the deal is worth if you pay for value rather than for name")}
+        ${chip("WAR y1", m.warY1 != null ? formatMetric(m.warY1, "war") : null, "Projected year-1 eWAR")}
+        ${chip("deal WAR", dealWar, "Projected eWAR over the predicted term")}
+        ${chip("rational", m.rational != null ? money(m.rational) : null, "Convex-priced NPV of the projected production")}
         ${risk}
-        ${chip("yrs P10-P90", yearsBand, "The predicted term's P10-P90 range. The point estimate is in the Yrs / Guar column.")}
+        ${chip("yrs P10-P90", yearsBand, "Predicted term, P10-P90")}
       </div></div>`;
       return `<div class="mlb-card fa-card${trCls ? " " + trCls : ""}" tabindex="0" role="button"
           data-card-href="#player=${encodeURIComponent(m.key)}">
@@ -812,7 +811,7 @@
         <div class="fa-id">
           ${rowPhoto(m)}
           <span class="mlb-name">${playerLink(m, { noPhoto: true })}${noteBadge(m)}${thinBadge(m)} ${typeTag(m)}</span>
-          <span class="mlb-sub">${esc(m.pos || "")} &middot; ${m.age != null ? m.age.toFixed(1) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}${handOf(m) ? " &middot; " + handShort(m) : ""}${m.qo ? ` &middot; <span title="Received a qualifying offer: signing him costs the new club draft compensation">QO</span>` : ""}</span>
+          <span class="mlb-sub">${esc(m.pos || "")} &middot; ${m.age != null ? m.age.toFixed(1) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}${handOf(m) ? " &middot; " + handShort(m) : ""}${m.qo ? ` &middot; <span data-gl="qo_tax">QO</span>` : ""}</span>
         </div>
         <span class="mlb-metric"><span class="mlb-metric-label">Status</span><span class="fa-statustext">${statusChip(m)}</span></span>
         <span class="mlb-metric"><span class="mlb-metric-label">proj AAV</span>${aavCell}</span>
@@ -835,25 +834,25 @@
     // pattern. This is what restores every sort the table had, plus the ones it
     // never exposed, WITHOUT re-widening row 1 back into a twelve-column table.
     const FA_SORTBAR = `<div class="mlb-sortbar"><span class="mlb-sortbar-lbl">Sort tape</span>
-      ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 WAR (eWAR basis)")}
-      ${sHead("deal WAR", "warTotal", "Projected WAR over the predicted term, with floor-ceiling buckets. eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched.")}
+      ${sHead(`<span data-gl="ewar">WAR</span> y1`, "warY1", "Projected year-1 eWAR")}
+      ${sHead(`deal <span data-gl="ewar">WAR</span>`, "warTotal", "Projected eWAR over the predicted term")}
       ${sHead(`<span data-gl="rational_value">rational</span>`, "rational", "Convex-priced NPV of the projected production")}
-      ${sHead("downside WAR", "warCvar10", "Mean of the worst 10 percent of outcome paths - what the deal looks like when it goes wrong")}
-      ${sHead("star odds", "pAnyStar", "Probability of at least one star-level season over the predicted term")}
-      ${sHead("length", "projYears", "Predicted contract length in years")}
-      ${sHead("age", "age", "Player age carried on the class row")}
+      ${sHead("downside WAR", "warCvar10", "Mean of the worst 10% of outcome paths")}
+      ${sHead("star odds", "pAnyStar", "P(at least one star-level season) over the predicted term")}
+      ${sHead("length", "projYears", "Predicted contract length, years")}
+      ${sHead("age", "age", "Age")}
     </div>`;
     // # and Player join the sortable set; the table had them as inert th.
     rows.innerHTML = head + filterBar + valMap + `<div class="fa-board-layout"><div class="fa-board-main">
       ${FA_SORTBAR}
       <div class="mlb-card-head" style="grid-template-columns:${FA_TRACKS};">
-        ${sHead("#", "rank", "Board position under the current sort. The default order is the predicted guarantee.")}
+        ${sHead("#", "rank", "Default order: predicted guarantee")}
         ${sHead("Player", "name", "Sort by name")}
-        ${sHead("Status", "status", "Where the player is in the market")}
-        ${sHead("proj AAV", "projAav", "Predicted average annual value. Tap or click a cell for its P10-P90 band.")}
-        ${sHead("Yrs / Guar", "projGuar", "Predicted term and total guarantee. Tap or click a cell for the P10-P90 bands.")}
-        ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price. Tap or click a cell for the floor/ceiling range.")}
-        ${sHead(`<span data-gl="deal_plus">Verdict</span>`, "verdict", "The deal call, from surplus banded within the player's own group")}
+        ${sHead("Status", "status", "Market status")}
+        ${sHead(`proj <span data-gl="m_aav">AAV</span>`, "projAav", "Predicted AAV. Tap a cell for the P10-P90 band.")}
+        ${sHead("Yrs / Guar", "projGuar", "Predicted term and guarantee. Tap a cell for the P10-P90 bands.")}
+        ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price. Tap a cell for the P10-P90 range.")}
+        ${sHead(`<span data-gl="deal_plus">Verdict</span>`, "verdict", "Deal+ banded within the player's position group")}
       </div>
       <div class="mlb-card-list">${body || '<div class="fa-sub" style="padding:2rem;text-align:center;">No free agents match these filters.</div>'}</div></div>
       ${boardRail(cls)}</div>`;
@@ -1057,8 +1056,8 @@
         <a class="fa-player-link" href="#${faHash()}player=${encodeURIComponent(m.key || "")}">${esc(m.name)}</a>
         <span class="fa-rail-num" title="Actual guarantee minus predicted (NPV basis)">${formatMetric((actGuar(m) - m.projGuar) / 1e6, "surplusM")}</span></div>`).join("");
     return `<aside class="fa-board-rail">
-      ${railMod("Winter to date", pace, "How much of the class has signed, what it cost, and the model's running guarantee error over the deals that are scoreable (MLB deals with a frozen ex-ante prediction)")}
-      ${railMod("Biggest misses so far", misses, "Signed deals ranked by the size of the model's guarantee error, largest first - published, not hidden")}
+      ${railMod("Winter to date", pace, "Guarantee MAE covers scoreable deals: MLB deals with a frozen ex-ante prediction")}
+      ${railMod("Biggest misses so far", misses, "Signed deals by absolute guarantee error")}
     </aside>`;
   }
 
@@ -1082,8 +1081,8 @@
         <span class="fa-rail-num">${esc(b.n)}</span></div>`).join("");
     if (!active && !blocked) return "";   // nothing to say, so no sticky column
     return `<aside class="fa-board-rail">
-      ${railMod("Most active clubs", active, "Clubs ranked by the mean fit score of their own top five fits - the orgs the needs/afford/behavior model thinks are actually in this market")}
-      ${railMod(`Blocked slots &middot; ${esc(team || "")}`, blocked, "Positions this club is NOT shopping at: the needs matrix found an incumbent (MLB) or a near-ETA prospect (PX) already holding the slot")}
+      ${railMod("Most active clubs", active, "Mean fit of each club's top five fits")}
+      ${railMod(`Blocked slots &middot; ${esc(team || "")}`, blocked, "Slots held by an MLB incumbent (MLB) or a near-ETA prospect (PX)")}
     </aside>`;
   }
 
@@ -1105,8 +1104,8 @@
     // width, which is exactly what that winter looked like before.
     if (!warRows && !surRows) return "";
     return `<aside class="fa-board-rail">
-      ${railMod("Realized WAR leaders", warRows, "Most eWAR actually delivered on this winter's contracts so far - realized, not projected")}
-      ${railMod("Best realized surplus", surRows, "Realized surplus to date: WAR delivered x that season's estimated $/WAR, minus the money prorated to date")}
+      ${railMod("Realized WAR leaders", warRows, "Realized eWAR on this winter's contracts to date")}
+      ${railMod("Best realized surplus", surRows, "eWAR delivered x that season's $/WAR, minus money paid to date")}
     </aside>`;
   }
 
@@ -1143,15 +1142,15 @@
     const trendSvg = dpwTrendChart(series, yrs);
     const trend = trendSvg
       ? `<div class="fa-dpw-link" role="button" tabindex="0" data-fa-goto="view=dpw"
-          title="Open the $/WAR by winter detail - the full signings-implied series, how it is estimated, and what every future season escalates against">${trendSvg}<span class="fa-dpw-cue">$/WAR by winter, in full &rarr;</span></div>`
+          title="Open the $/WAR by winter detail">${trendSvg}<span class="fa-dpw-cue">$/WAR by winter, in full &rarr;</span></div>`
       : yrs.slice(-6).map(y =>
         `<div class="fa-rail-row"><span>${Number(y) - 1}-${String(y).slice(2)}</span><span class="fa-rail-num">${money(series[y])}</span></div>`).join("");
     const mod = railMod;
     return `<aside class="fa-board-rail">
-      ${mod("Best projected values", values.map(railRow).join(""), "Largest projected Contract Surplus among VALUE verdicts - rational value furthest above the predicted price")}
-      ${mod("Projected overpays", overpays.map(railRow).join(""), "Most negative projected Contract Surplus among OVERPAY verdicts")}
-      ${mod("Class supply", supply, "Projected members by position group - thin groups inflate prices (a market-model feature)")}
-      ${mod("FA $/WAR by winter", trend, "The signings-implied $/WAR series (Gate-2 estimator) - the gradual climb is why every future season escalates")}
+      ${mod("Best projected values", values.map(railRow).join(""), "Largest projected surplus among VALUE verdicts")}
+      ${mod("Projected overpays", overpays.map(railRow).join(""), "Most negative projected surplus among OVERPAY verdicts")}
+      ${mod("Class supply", supply, "Projected members by position group (a market-model feature)")}
+      ${mod("FA $/WAR by winter", trend, "Signings-implied $/WAR (Gate-2 estimator)")}
     </aside>`;
   }
 
@@ -1165,15 +1164,12 @@
     const signed = cls.members.filter(m => m.status === "signed");
     if (!evs.length && !signed.length) {
       rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Signing Tracker</span>
-        <span class="newsprint-eyebrow-meta">preseason - goes live with the first observed event</span></div>
+        <span class="newsprint-eyebrow-meta">preseason: live from the first observed event</span></div>
         <div class="state-message">
-          <div class="state-message-title">The ${cls.class_year - 1}-${String(cls.class_year).slice(2)} winter hasn't opened</div>
-          <div class="state-message-body">Signings, option decisions and qualifying offers land here as the
-          daily pipeline first observes them (Spotrac publishes no dates, so every event carries its
-          observation stamp). The winter runs in sequence: contract options resolve in the days after
-          the World Series, qualifying offers are extended and decided, and then the market opens.
-          Until then the Class Board carries the projected market -
-          ${cls.n_projected} of ${cls.n_members} members projected.</div>
+          <div class="state-message-title">The ${cls.class_year - 1}-${String(cls.class_year).slice(2)} winter has not opened</div>
+          <div class="state-message-body">Signings, option decisions and qualifying offers appear as the
+          daily pipeline first sees them; dates are observation stamps (Spotrac publishes none).
+          The Class Board carries the projected market: ${cls.n_projected} of ${cls.n_members} members projected.</div>
         </div>`;
       return;
     }
@@ -1188,7 +1184,7 @@
       .slice().sort((a, b) => (b.signedDate || "").localeCompare(a.signedDate || "") || (b.signedGuar || 0) - (a.signedGuar || 0))
       .map(m => {
         const actual = m.signedMilb ? "MiLB deal"
-          : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)}${m.signedGuarNpv != null ? `<span class="fa-band" title="Deferral-adjusted NPV at the platform's configured discount rate - the basis the prediction speaks"> (${money(m.signedGuarNpv)} NPV)</span>` : ""}`;
+          : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)}${m.signedGuarNpv != null ? ` <span class="fa-band">(${money(m.signedGuarNpv)} <span data-gl="deferral_npv">NPV</span>)</span>` : ""}`;
         const pred = m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : EM_DASH;
         const dGuar = (m.signedGuar != null && m.projGuar != null && !m.signedMilb)
           ? formatMetric((actGuar(m) - m.projGuar) / 1e6, "surplusM") : EM_DASH;
@@ -1199,20 +1195,20 @@
           <td>${playerLink(m)} <span class="fa-sub">${esc(m.pos || "")}</span>${m.qoAccepted ? ' <span title="Accepted the qualifying offer">QO accepted</span>' : ""}</td>
           <td>${teamLogo(m.from)}${esc(m.from || "")} &rarr; ${teamLogo(m.signedTo)}${esc(m.signedTo || "")}</td>
           <td>${actual}</td>
-          <td title="The model's pre-winter prediction - frozen, not re-fit">${pred}</td>
+          <td title="Pre-winter prediction, frozen">${pred}</td>
           <td title="Actual guarantee minus predicted (positive = market paid above model)">${dGuar}</td>
-          <td title="Deal+ at the ACTUAL price - 100 = rational value">${realized ?? EM_DASH}</td>
+          <td title="Deal+ at the actual price (100 = rational value)">${realized ?? EM_DASH}</td>
         </tr>`;
       }).join("");
     const evRows = evs.filter(e => e.type !== "signing").slice(0, 30).map(e => {
-      const label = e.type === "option_declined" ? `declines option${e.optPrice ? " (" + money(e.optPrice) + ")" : ""} - enters class`
-        : e.type === "option_exercised" ? `option exercised${e.optPrice ? " (" + money(e.optPrice) + ")" : ""} - off the board`
+      const label = e.type === "option_declined" ? `declines option${e.optPrice ? " (" + money(e.optPrice) + ")" : ""}; enters class`
+        : e.type === "option_exercised" ? `option exercised${e.optPrice ? " (" + money(e.optPrice) + ")" : ""}; off the board`
         : e.type === "qo_offered" ? "receives qualifying offer" : esc(e.type);
       return `<tr><td>${e.date}</td><td><a href="#${faHash()}player=${encodeURIComponent(e.key || "")}" class="fa-player-link"><strong>${esc(e.name || e.key || "")}</strong></a> <span class="fa-sub">${esc(e.pos || "")}</span></td><td>${label}</td></tr>`;
     }).join("");
     const remaining = cls.members.filter(m => m.status !== "signed" && m.status !== "option_exercised" && m.projGuar != null).slice(0, 10);
     const trackerGfx = scored.length
-      ? ` &middot; <button class="chip egfx-chip" id="fa-tracker-gfx" title="Generate a shareable graphic of the signing tracker"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>`
+      ? ` &middot; <button class="chip egfx-chip" id="fa-tracker-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>`
       : "";
     const trackerMain = `${sigRows ? `<table class="detail-table">
         <thead><tr><th><span data-gl="first_seen_dates">Seen</span></th><th>Player</th><th>From &rarr; To</th><th>Actual</th><th><span data-gl="m_guarantee">Predicted</span></th><th>&Delta; Guar</th><th><span data-gl="deal_plus">Deal+</span> real</th></tr></thead>
@@ -1223,7 +1219,7 @@
         <thead><tr><th>Player</th><th><span data-gl="m_years">projLength</span></th><th><span data-gl="m_guarantee">projGuarantee</span></th><th><span data-gl="m_aav">projAAV</span></th><th>Verdict</th></tr></thead>
         <tbody>${remaining.map(m => `<tr><td>${playerLink(m)} <span class="fa-sub">${esc(m.pos || "")}</span></td>
           <td>${m.projYears}</td><td>${money(m.projGuar)}</td><td>${money(m.projAav)}</td><td>${verdictChip(m)}</td></tr>`).join("")}</tbody></table>` : ""}`;
-    rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Signing Tracker - live</span>
+    rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Signing Tracker &middot; live</span>
       <span class="newsprint-eyebrow-meta">${signed.length} of ${cls.n_members} signed &middot; ${money(spent)} guaranteed &middot; ${mae != null ? `running guarantee MAE ${money(mae)} over ${scored.length} scored deals` : "no scored MLB deals yet"} &middot; dates are first-seen stamps${trackerGfx}</span></div>
       ${railLayout(trackerMain, trackerRail(cls, signed, scored, spent, mae))}`;
     const tgfx = document.getElementById("fa-tracker-gfx");
@@ -1292,7 +1288,7 @@
       return;
     }
     const band = (v, p10, p90, fmt) => v == null ? EM_DASH
-      : `${fmt(v)}<span class="fa-band"> (${fmt(p10)}&ndash;${fmt(p90)})</span>`;
+      : `${fmt(v)}<span class="fa-band"> (${fmt(p10)}-${fmt(p90)})</span>`;
     // Year-by-year projection table: calendar season, age, floor/mean/
     // ceiling eWAR, and that season's escalated $/WAR level. The mean bars
     // ride below as the visual.
@@ -1304,7 +1300,7 @@
       const dpwT = cls.dpw_usd * Math.pow(1 + infl, i);
       const inTerm = m.projYears != null && i < m.projYears;
       return `<tr${inTerm ? "" : ' class="fa-dim"'}>
-        <td>${season}${inTerm ? "" : '<span class="fa-sub" title="Beyond the predicted term - shown because any longer offer prices these seasons"> +</span>'}</td>
+        <td>${season}${inTerm ? "" : '<span class="fa-sub" title="Beyond the predicted term"> +</span>'}</td>
         <td>${m.age != null ? Math.floor(m.age) + i : EM_DASH}</td>
         <td>${lo != null ? formatMetric(lo, "war") : EM_DASH}</td>
         <td><strong>${formatMetric(w, "war")}</strong></td>
@@ -1332,13 +1328,12 @@
       <p>${teamLogo(m.from)}${esc(m.from || "")} &rarr; <strong>${teamLogo(m.signedTo)}${esc(m.signedTo || "")}</strong> &middot;
       ${m.signedMilb ? "MiLB deal" : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)} (${money(m.signedAav)} AAV)`}
       ${m.signedDate ? `<span class="fa-sub"> &middot; first seen ${m.signedDate}</span>` : ""}
-      ${(m.projGuar != null && m.signedGuar != null && !m.signedMilb) ? `<br>vs predicted ${m.projYears}y / ${money(m.projGuar)} - miss ${formatMetric(((m.signedGuarNpv ?? m.signedGuar) - m.projGuar) / 1e6, "surplusM")}; Deal+ at the actual price ${Math.round(100 * m.rational / (m.signedGuarNpv ?? m.signedGuar))}` : ""}</p>` : "";
+      ${(m.projGuar != null && m.signedGuar != null && !m.signedMilb) ? `<br>vs predicted ${m.projYears}y / ${money(m.projGuar)} &middot; miss ${formatMetric(((m.signedGuarNpv ?? m.signedGuar) - m.projGuar) / 1e6, "surplusM")} &middot; Deal+ at the actual price ${Math.round(100 * m.rational / (m.signedGuarNpv ?? m.signedGuar))}` : ""}</p>` : "";
     const arcBlock = m.fvArc ? `
-      <h3>Prospect to payday</h3>
+      <h3>Prospect FV history</h3>
       <div class="fa-arc">${_fvArcSvg(m.fvArc)}</div>
-      <p class="fa-note">Consensus-FV history from his run as a tracked PROSPX prospect
-      (${m.fvArc[0][0]} &rarr; ${m.fvArc[m.fvArc.length - 1][0]}), ending at today's
-      ${m.projGuar != null ? money(m.projGuar) + " predicted guarantee" : "constructed class row"} &middot;
+      <p class="fa-note">Consensus FV as a PROSPX prospect, ${m.fvArc[0][0]} to
+      ${m.fvArc[m.fvArc.length - 1][0]} &middot;
       <a href="/prospx/#player=${encodeURIComponent(m.key)}">full prospect page &rarr;</a></p>` : "";
     // ---- tabs ---------------------------------------------------------------
     // The FA card was the last untabbed player card of the three modules; this
@@ -1362,14 +1357,14 @@
         <td>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</td>
         <td>${verdictChip(m)}</td>
       </tr></tbody></table>
-      ${(m.surplusP10 != null && m.surplusP90 != null) ? `<p class="fa-note" title="Rational value of the floor/ceiling WAR paths minus the predicted price - the probability-bucketed read on the deal">Surplus range (floor &rarr; ceiling): ${surplusSpan(m.surplusP10)} &rarr; ${surplusSpan(m.surplusP90)} around a mean of ${surplusSpan(m.surplus)}</p>` : ""}`;
+      ${(m.surplusP10 != null && m.surplusP90 != null) ? `<p class="fa-note" title="Rational value of the P10 and P90 WAR paths minus the predicted price">Surplus range, P10 &rarr; P90: ${surplusSpan(m.surplusP10)} &rarr; ${surplusSpan(m.surplusP90)}; mean ${surplusSpan(m.surplus)}</p>` : ""}`;
     const seasonPanel = `
       ${yearRows ? `<h3>Season-by-season projection</h3>
       <table class="detail-table fa-year-table">
-      <thead><tr><th>Season</th><th>Age</th><th title="P10 of the Gate-1 probability bucket, decayed along the aging curves">Floor</th><th>Mean</th><th title="P90 of the Gate-1 probability bucket, decayed along the aging curves">Ceiling</th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
+      <thead><tr><th>Season</th><th>Age</th><th><span data-gl="proj_buckets">Floor</span></th><th>Mean</th><th><span data-gl="proj_buckets">Ceiling</span></th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
       <tbody>${yearRows}</tbody></table>` : ""}
-      ${warTrend ? `<div class="fa-war-trend" title="Projected eWAR by season, labelled at both ends (hover any point for its season)">${warTrend}</div>` : ""}
-      ${wp ? `<div class="fa-warpath" title="Aging-curve-decayed projected eWAR by season (hover bars for the floor/ceiling band)">${wp}</div>` : ""}
+      ${warTrend ? `<div class="fa-war-trend" title="Projected eWAR by season">${warTrend}</div>` : ""}
+      ${wp ? `<div class="fa-warpath" title="Projected eWAR by season; hover a bar for P10/P90">${wp}</div>` : ""}
       <div id="fa-current-line"></div>`;
     const compsPanel = `${arcBlock}
       ${comps ? `<h3>Nearest real comps</h3><table class="detail-table">
@@ -1406,7 +1401,7 @@
         <div class="mlbp-hero-main">
           <div class="mlbp-name">${teamLogo(m.from)}<h2>${esc(m.name)}</h2></div>
           <div class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? "age " + Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")}${handLabel(m) ? " &middot; " + esc(handLabel(m)) : ""} &middot; ${statusChip(m)}</div>
-          <div style="margin-top:8px;"><button class="chip egfx-chip" id="fa-player-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
+          <div style="margin-top:8px;"><button class="chip egfx-chip" id="fa-player-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
         </div>
         <div class="mlbp-tiles">
           ${m.projGuar != null ? `<div class="mlbp-tile"><span class="mlbp-tile-label">projected</span><span class="mlbp-tile-val">${m.projYears != null ? m.projYears + "y" : "?"} / ${money(m.projGuar)}</span></div>` : ""}
@@ -1414,7 +1409,7 @@
           ${m.dealPlus != null ? `<div class="mlbp-tile"><span class="mlbp-tile-label">Deal+</span><span class="mlbp-tile-val">${Math.round(m.dealPlus)}</span></div>` : ""}
         </div>
       </div>
-      ${m.thinPlatform ? `<div class="fa-cba-note">&#9888; ${esc(m.thinPlatform)} - the projection, and every number priced off it, is low-confidence.</div>` : ""}
+      ${m.thinPlatform ? `<div class="fa-cba-note">&#9888; <span data-gl="thin_platform">Thin platform</span>: ${esc(m.thinPlatform)}. The projection and every price built on it are low-confidence.</div>` : ""}
       ${m.note ? `<div class="fa-cba-note">&#8251; ${esc(m.note)}</div>` : ""}
       ${strip}${tabBody}`;
     bindFaCardTabs(rows, m);
@@ -1475,29 +1470,29 @@
           [f3(line.avg), f3(line.obp), f3(line.slg)].every(x => x != null)
             ? `${f3(line.avg)}/${f3(line.obp)}/${f3(line.slg)}` : null)
         + cell("HR", line.hr) + cell("wOBA", f3(line.woba))
-        + cell("HEM+", line.hem, "HEM+ - offensive-rate skill index, 100 = league-average hitter. This site does not compute wRC+.")
+        + cell("HEM+", line.hem, "HEM+: offensive-rate skill index, 100 = league-average hitter")
         + cell("Tier", line.tier ? esc(line.tier) : null);
     } else {
       tiles = cell("IP", line.ip == null ? null : Number(line.ip).toFixed(1))
         + cell("ERA", line.era == null ? null : Number(line.era).toFixed(2))
         + cell("Skill FIP", line.fip == null ? null : Number(line.fip).toFixed(2),
-               `Skill FIP - the sample-shrunk FIP that ${line.side === "sp" ? "SEM+" : "REM+"} is built on: strikeout, walk, hit-batter and home-run rates pulled toward the ${line.side === "sp" ? "starter" : "reliever"} pool by sample size, with a constant solved on that pool. It is not the standard FIP of his actual line. This site does not compute xFIP.`)
+               `Skill FIP: the number ${line.side === "sp" ? "SEM+" : "REM+"} is built on. K, BB, HBP and HR rates shrunk toward the ${line.side === "sp" ? "starter" : "reliever"} pool by sample size; not the standard FIP.`)
         + cell("K%", pct(line.kPct)) + cell("BB%", pct(line.bbPct))
         + cell(line.side === "sp" ? "SEM+" : "REM+", line.side === "sp" ? line.sem : line.rem,
-               line.side === "sp" ? "SEM+ - starter run-prevention skill index, 100 = the average starter."
-                                  : "REM+ - reliever skill index, 100 = the average reliever.");
+               line.side === "sp" ? "SEM+: starter run-prevention skill index, 100 = the average starter"
+                                  : "REM+: reliever skill index, 100 = the average reliever");
     }
     if (!tiles) return "";
     const qual = line.qual === false
       ? (line.side === "hit"
-        ? ' <span class="fa-sub">(below the qualifying threshold - the rate stats are shrunk toward league average)</span>'
-        : ' <span class="fa-sub">(below the qualifying threshold - a small sample: ERA, K% and BB% are the raw line, while Skill FIP and '
+        ? ' <span class="fa-sub">(below the qualifying threshold: rate stats shrunk toward league average)</span>'
+        : ' <span class="fa-sub">(below the qualifying threshold: ERA, K% and BB% are the raw line; Skill FIP and '
           + (line.side === "sp" ? "SEM+ are shrunk toward the starter" : "REM+ are shrunk toward the reliever")
-          + ' average, more so the smaller the sample)</span>')
+          + ' average)</span>')
       : "";
     return `<h3>${esc(meta.season || "")} season to date</h3>
       <div class="mlbp-tiles fa-current-tiles">${tiles}</div>
-      <p class="fa-note">Lifted verbatim from the eephus.io MLB leaderboards${meta.asOf ? `, data as of ${esc(meta.asOf)}` : ""}.${qual}</p>`;
+      <p class="fa-note">From the MLB leaderboards${meta.asOf ? `, as of ${esc(meta.asOf)}` : ""}.${qual}</p>`;
   }
 
   function fillCurrentLine(mlbam) {
@@ -1509,7 +1504,7 @@
       if (!el) return;
       el.innerHTML = line
         ? currentLineHTML(line, payload)
-        : `<h3>${esc((payload && payload.season) || "")} season to date</h3><p class="fa-note">No current-season line: this player is not on the MLB leaderboards for the season (injured, not yet on a roster, or below the leaderboard's minimum playing time).</p>`;
+        : `<h3>${esc((payload && payload.season) || "")} season to date</h3><p class="fa-note">Not on this season's MLB leaderboards (injured, unrostered, or below the minimum playing time).</p>`;
     }).catch(() => { /* sidecar absent - the card simply omits the block */ });
   }
 
@@ -1548,7 +1543,7 @@
       headshotURL: faHeadshotURL(linkRow && linkRow.mlbam, 132),
       url: `eephus.io/fa/#player=${m.key}`,
       filename: `eephus-${m.key}-fa-card.png`,
-      caption: "predicted market (projGuarantee) vs rational value - two numbers, never conflated · gate-validated, ex-ante",
+      caption: "predicted market (projGuarantee) vs rational value · ex-ante",
     });
   }
 
@@ -1574,7 +1569,7 @@
     // Component mini-bars: the same 0-1 score, readable at a glance.
     const cbar = (v, label) => `<div class="fa-cbar" title="${label} ${v}"><div style="width:${Math.round((v || 0) * 100)}%"></div><span>${v}</span></div>`;
     const blockedCell = bb => bb && bb.length
-      ? bb.map(b => `<span class="fa-block fa-block-${b.t}" title="${b.t === "mlb" ? "MLB incumbent already producing at the slot the signing would displace" : "PROSPX prospect (FV ≥ 50, near ETA)"}">${esc(b.n)}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>`).join(" ")
+      ? bb.map(b => `<span class="fa-block fa-block-${b.t}" title="${b.t === "mlb" ? "MLB incumbent at the slot" : "PROSPX prospect (FV ≥ 50, near ETA)"}">${esc(b.n)}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>`).join(" ")
       : EM_DASH;
     const body = list.map(({ m, f }) => `<tr>
         <td><strong>${playerLink(m)}</strong> <span class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"}</span></td>
@@ -1585,13 +1580,13 @@
         <td>${verdictChip(m)}</td>
       </tr>`).join("");
     const blockedLine = (t.blocked || []).length
-      ? `<div class="fa-note" title="Positions this club is NOT shopping at - the needs matrix found a blocker. MLB = a contracted incumbent producing at the slot a signing would displace; PX = a near-ETA PROSPX prospect (FV ≥ 50).">Not buying: ${t.blocked.map(b =>
+      ? `<div class="fa-note" title="MLB = contracted incumbent at the slot; PX = near-ETA PROSPX prospect (FV ≥ 50)">Not buying: ${t.blocked.map(b =>
           `<span class="fa-block fa-block-${b.t}">${esc(b.pos)} - ${esc(b.n)}${b.w != null ? ` (${formatMetric(b.w, "war")} WAR)` : ""}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>`).join(" ")}</div>` : "";
     const fitsGfx = (window.EEPHUS_GFX && list.length)
       ? ` &middot; ${window.EEPHUS_GFX.chipHTML("fa-fits-gfx")}` : "";
     const fitsMain = `${blockedLine}
       <table class="detail-table fa-fits-table">
-      <thead><tr><th>Player</th><th>Fit</th><th title="Displacement WAR gap at the position (CAN they upgrade here)">Need</th><th title="Marginal playoff leverage at the club's baseline wins">Window</th><th title="CBT space vs the predicted AAV - habitual taxpayers keep a documented floor">Afford</th><th title="Park factor alignment (deliberately the smallest weight - a tiebreaker, not a driver)">Park</th><th title="WILL they spend: biggest deal ever vs this price, recent 3-winter outlay, $100M-deal participation">Behavior</th><th title="WHO blocks the position: PX = PROSPX prospect (near ETA), MLB = contracted incumbent producing at the displaced slot">Blocked by</th><th>Predicted</th><th>Verdict</th></tr></thead>
+      <thead><tr><th>Player</th><th><span data-gl="fit_components">Fit</span></th><th title="WAR gap over the incumbent at the position">Need</th><th title="Marginal playoff leverage at the club's baseline wins">Window</th><th title="CBT space vs the predicted AAV (habitual taxpayers keep a floor)">Afford</th><th title="Park factor fit (smallest weight)">Park</th><th title="Biggest deal ever vs this price, last-3-winter outlay, $100M-deal count">Behavior</th><th title="PX = near-ETA PROSPX prospect, MLB = contracted incumbent">Blocked by</th><th>Predicted</th><th>Verdict</th></tr></thead>
       <tbody>${body || `<tr><td colspan="10">No scored fits for ${state.team} in this class.</td></tr>`}</tbody></table>`;
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Team</span>${chips}</div>
       <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${teamLogo(state.team)}${state.team} fits</span>
@@ -1624,13 +1619,13 @@
         <td>${s.milb ? "MiLB deal" : money(s.guar)}</td>
         <td>${money(s.aav)}</td>
         <td title="Realized eWAR over the contract's elapsed seasons">${s.warTd != null ? formatMetric(s.warTd, "war") : EM_DASH}</td>
-        <td title="Realized surplus to date: WAR delivered x that season's estimated $/WAR minus prorated money paid">${s.surplusTd != null ? formatMetric(s.surplusTd / 1e6, "surplusM") : EM_DASH}</td>
+        <td title="eWAR delivered x that season's $/WAR, minus money paid to date">${s.surplusTd != null ? formatMetric(s.surplusTd / 1e6, "surplusM") : EM_DASH}</td>
         <td>${s.done ? "complete" : (s.warTd != null ? "running" : EM_DASH)}</td>
       </tr>`).join("");
     const arcGfx = (window.EEPHUS_GFX && w.signings.length)
       ? ` &middot; ${window.EEPHUS_GFX.chipHTML("fa-archive-gfx")}` : "";
     const archiveMain = `<table class="detail-table">
-      <thead><tr><th>Player</th><th title="From = the club holding his rights AT signing - a midseason rental shows the acquiring club, not the team he opened the year with.">From &rarr; To</th><th>Yrs</th><th>Guarantee</th><th>AAV</th><th>WAR to date</th><th>Surplus to date</th><th>Status</th></tr></thead>
+      <thead><tr><th>Player</th><th title="From = club holding his rights at signing (a deadline rental shows the acquiring club)">From &rarr; To</th><th>Yrs</th><th>Guarantee</th><th>AAV</th><th>WAR to date</th><th>Surplus to date</th><th>Status</th></tr></thead>
       <tbody>${body}</tbody></table>`;
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Winter</span>${chips}</div>
       <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${state.winter - 1}-${String(state.winter).slice(2)} winter</span>
@@ -1677,30 +1672,31 @@
       `<button class="chip${t[0] === missTab[0] ? " active" : ""}" data-mtab="${t[0]}">${t[1]}</button>`).join("");
     rows.innerHTML = `
       <div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Model Accountability</span>
-      <span class="newsprint-eyebrow-meta">both hard gates, rendered verbatim from the committed eval artifacts, misses included &middot; ${meta.cba ? meta.cba.unverified_records + " curated CBA records pending owner verification" : ""}</span></div>
-      ${g1 ? `<h3>Gate 1 - projection engine (${g1.pass ? "PASSED" : "FAILING"})</h3>
-      <div class="fa-note">train &le; N&minus;1, predict N, ten held-out seasons ${g1.targets ? g1.targets.join(", ") : ""} &middot; P10&ndash;P90 coverage ${g1.coverage_p10_p90 != null ? g1.coverage_p10_p90.toFixed(3) : "?"} (target 0.75&ndash;0.85)</div>
+      <span class="newsprint-eyebrow-meta"><span data-gl="fa_gates">Gate 1 and Gate 2</span>, read from the committed eval artifacts, misses included &middot; ${meta.cba ? meta.cba.unverified_records + " CBA records pending owner verification" : ""}</span></div>
+      ${g1 ? `<h3>Gate 1: projection engine (${g1.pass ? "PASSED" : "FAILING"})</h3>
+      <div class="fa-note">train &le; N-1, predict N, held-out seasons ${g1.targets ? g1.targets.join(", ") : ""} &middot; <span data-gl="proj_buckets">P10-P90</span> coverage ${g1.coverage_p10_p90 != null ? g1.coverage_p10_p90.toFixed(3) : "?"} (target 0.75-0.85)</div>
       <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Naive baseline</th><th>n</th><th>Verdict</th></tr></thead>
       <tbody>${pooledRows(g1.pooled, v => v == null ? EM_DASH : v.toFixed(3))}</tbody></table>` : ""}
-      ${g2 ? `<h3>Gate 2 - market model (${g2.pass ? "PASSED" : "FAILING"})</h3>
-      <div class="fa-note">forward-chained winters ${g2.test_winters ? g2.test_winters.join(", ") : ""} vs nearest-comps baseline &middot; guarantee/AAV in $M</div>
+      ${g2 ? `<h3>Gate 2: market model (${g2.pass ? "PASSED" : "FAILING"})</h3>
+      <div class="fa-note">forward-chained winters ${g2.test_winters ? g2.test_winters.join(", ") : ""} vs <span data-gl="nearest_comps">nearest-comps</span> baseline &middot; guarantee/AAV in $M</div>
       <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Comps baseline</th><th>n</th><th>Verdict</th></tr></thead>
       <tbody>${pooledRows(g2.pooled, v => v == null ? EM_DASH : v.toFixed(2))}</tbody></table>
       ${g2.pooled_by_pos_group ? `
-      <h3>Where the model is systematically wrong</h3>
-      <div class="fa-note">MAE says how far off the model is; BIAS says which
-        way. A negative bias means the model UNDER-prices that group on average,
-        so the error is not noise, it is a lean. Positive means it over-prices.
-        This block was exported for a while before anything rendered it.</div>
+      <h3>Bias by group</h3>
+      <div class="fa-note">Bias = mean predicted minus mean actual ($M; years for
+        length rows). Negative: the model under-prices the group.</div>
       <table class="detail-table"><thead><tr><th>Group</th><th>Model MAE</th>
         <th>Model bias</th><th>Baseline bias</th><th>n</th><th>Lean</th></tr></thead>
       <tbody>${Object.entries(g2.pooled_by_pos_group).map(([k, v]) => {
         const b = v.bias_model;
+        // Length rows ("years:*") are in years, not $M; they used to print "$0.31M".
+        const yrs = String(k).startsWith("years");
         const lean = b == null ? EM_DASH
           : Math.abs(b) < 0.25 ? "no material lean"
           // Plain magnitude, NOT formatMetric: that helper prepends a sign for
           // "rate", which rendered "under-prices by +1.53M" and put a plus sign
           // directly after the word telling you the error is negative.
+          : yrs ? (b < 0 ? "too short" : "too long") + " by " + Math.abs(b).toFixed(2) + "y"
           : (b < 0 ? "under-prices" : "over-prices")
             + " by $" + Math.abs(b).toFixed(2) + "M";
         return `<tr><td>${esc(k)}</td>
@@ -1711,10 +1707,12 @@
           <td>${v.n}</td><td>${lean}</td></tr>`;
       }).join("")}</tbody></table>` : ""}
       ${(meta.war_input_divergence && meta.war_input_divergence.before_after) ? `
-      <h3>What changed, and what it cost</h3>
+      <h3>Pricing input change</h3>
       <div class="fa-note">${esc(meta.war_input_divergence.before_after.change)},
-        shipped ${esc(meta.war_input_divergence.before_after.shipped)}. Same rows
-        on both sides. ${esc(meta.war_input_divergence.before_after.note || "")}</div>
+        shipped ${esc(meta.war_input_divergence.before_after.shipped)}; same rows
+        before and after.${meta.war_input_divergence.diverges && meta.war_input_divergence.pinned_off
+          ? ` FA prices use a WAR projection without ${esc(meta.war_input_divergence.pinned_off)};
+        MLB Projections keeps it, so the two can show different WAR for one player.` : ""}</div>
       <table class="detail-table"><thead><tr><th>Metric</th><th>Before</th>
         <th>After</th><th>Change</th></tr></thead>
       <tbody>${(meta.war_input_divergence.before_after.rows || []).map(r => {
@@ -1724,7 +1722,7 @@
           <td>${r.before.toFixed(3)}</td><td>${r.after.toFixed(3)}</td>
           <td>${(d > 0 ? "+" : "") + d.toFixed(3)} ${good ? "better" : "worse"}</td></tr>`;
       }).join("")}</tbody></table>` : ""}
-      <h3>Biggest misses (published, not hidden)</h3>
+      <h3>Biggest misses</h3>
       <div class="fa-filter-bar" style="margin-bottom:8px;">${missTabBar}</div>
       <table class="detail-table"><thead><tr><th>Winter</th><th>Player</th><th>To</th><th>Actual</th><th>Model</th><th>Err</th></tr></thead>
       <tbody>${missRows}</tbody></table>

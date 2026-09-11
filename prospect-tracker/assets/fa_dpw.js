@@ -167,7 +167,7 @@
         <polyline points="${line}" fill="none" stroke="var(--dpw-implied)" stroke-width="1.8"
           stroke-linejoin="round" stroke-linecap="round"/>${dots}</svg>`;
     } else {
-      svg = `<div class="dpw-n">too few deals a winter to draw a line</div>`;
+      svg = `<div class="dpw-n">too few deals per winter to plot</div>`;
     }
     return `<div class="dpw-cell"><h4>${esc(title)}<em>${pooled == null ? DASH : money(pooled)}</em></h4>
       <div class="dpw-n">${n} deals, all winters${pooled == null ? " (too thin to price)" : ""}</div>${svg}</div>`;
@@ -217,7 +217,7 @@
     const legend = series.map(s =>
       `<span><i class="dpw-swatch" style="background:${s.color}"></i>${esc(s.label)}</span>`).join("")
       + (realized ? `<span><i class="dpw-swatch" style="background:var(--bg-secondary);
-        border:1.6px solid var(--dpw-realized);height:8px;width:8px;border-radius:50%"></i>term not finished</span>` : "");
+        border:1.6px solid var(--dpw-realized);height:8px;width:8px;border-radius:50%"></i>under 90% elapsed</span>` : "");
 
     // small multiples, one shared scale across every panel
     let panels = "";
@@ -255,55 +255,47 @@
     root.innerHTML = `
       <p><a href="#view=board">&larr; Class Board</a></p>
       <h2 class="dpw-head">FA $/WAR by winter</h2>
-      <p class="dpw-lede">One price of a win per winter, and what it is made of. The
-        headline series is what buyers IMPLIED they were paying - the winter's total
-        deferral-adjusted guarantee over the discounted WAR its signings were projected
-        to deliver. Every future season on this site escalates against it.</p>
+      <p class="dpw-lede">Implied <span data-gl="winter_dpw">$/WAR</span>: each winter's
+        <span data-gl="deferral_npv">deferral-adjusted</span> guarantees over the discounted
+        WAR its signings were projected to deliver. Future seasons on this site are priced from it.</p>
 
       <div class="dpw-panel">
-        <h3>Implied against realized</h3>
-        <p class="dpw-note">The realized line is the same winters priced after the fact -
-          money actually paid over WAR actually banked, on the eWAR basis (Baseball-Reference run
-          frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players
-          match bWAR today). It is the more honest number and
-          the less comparable one: a winter whose deals are half finished has banked half
-          its money and only some of its wins, so the recent end of that line is not a
-          market signal. Points whose terms are under 90% elapsed are drawn hollow.</p>
+        <h3>Implied vs realized</h3>
+        <p class="dpw-note">Realized: money paid over <span data-gl="ewar">eWAR</span> banked
+          to date. Recent winters have unfinished terms and are not comparable to old ones;
+          points under 90% elapsed are hollow.</p>
         <div class="dpw-legend">${legend}</div>
         ${lineChart(series, { xs, aria: "Implied and realized dollars per WAR by winter" })}
       </div>
 
       ${panels ? `<div class="dpw-panel"><h3>By position group</h3>
-        <p class="dpw-note">Same scale on every panel, so the panels are comparable to
-          each other. The number beside each heading is that group pooled across all
-          winters; a group is left unpriced rather than guessed when a cell holds fewer
-          than ${thin.min_deals} deals or under ${thin.min_war} projected WAR.</p>
+        <p class="dpw-note">Shared scale. Heading figure: the group pooled over all winters.
+          Cells under ${thin.min_deals} deals or ${thin.min_war} projected WAR are unpriced.</p>
         <div class="dpw-grid">${panels}</div></div>` : ""}
 
       ${bd ? `<div class="dpw-panel"><h3>By contract length</h3>
-        <p class="dpw-note">Pooled across every winter. Long deals are not a different
-          market so much as a more expensive one: the buyer is paying for the decline
-          years too. The 7+ bucket runs 0 to 5 deals a winter, which is why it is pooled
-          here and left blank in any single winter.</p>
+        <p class="dpw-note">Pooled over all winters.</p>
         ${barRows(bd.groups.len, bd.pooled.len)}</div>
 
       <div class="dpw-panel"><h3>By guarantee tier</h3>
-        <p class="dpw-note">Pooled across every winter, binned on the deal's own
-          deferral-adjusted guarantee.</p>
+        <p class="dpw-note">Pooled over all winters, binned on deferral-adjusted guarantee.</p>
         ${barRows(bd.groups.tier, bd.pooled.tier)}</div>` : ""}
 
       <div class="dpw-panel"><h3>Every winter</h3>
-        <p class="dpw-note">The table behind the charts. Spend is deferral-adjusted
-          present value across MLB deals with enough history to project; QO share is the
-          fraction of those deals that carried a qualifying offer.</p>
+        <p class="dpw-note">Spend: deferral-adjusted present value of MLB deals with enough
+          history to project. QO: share of those deals that carried a
+          <span data-gl="qualifying_offer">qualifying offer</span>.</p>
         <div class="dpw-scroll"><table>
           <thead><tr><th>Winter</th><th>Deals</th><th>Spend</th><th>QO</th>
             <th>Implied $/WAR</th><th>Realized $/WAR</th><th>Elapsed</th></tr></thead>
           <tbody>${rows}</tbody></table></div>
-        <p class="dpw-note">Method: ${esc((DATA && DATA.method) || "fa_signings_implied_v1")},
+        <p class="dpw-note">Method ${esc((DATA && DATA.method) || "fa_signings_implied_v1")},
           model ${esc((DATA && DATA.model_version) || "?")}. Thin winters are dropped from
-          the implied series entirely rather than published at a wide error bar.</p>
+          the implied series.</p>
       </div>`;
+    // aria wiring for the [data-gl] spans; the tooltip itself is delegated.
+    try { if (window.EEPHUS_GL && window.EEPHUS_GL.wire) window.EEPHUS_GL.wire(root); }
+    catch (e) { /* the glossary is enrichment */ }
   }
 
   // ---- mount ----------------------------------------------------------------

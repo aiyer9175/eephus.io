@@ -300,8 +300,8 @@ function _tmSearch(q) {
       // priced. A row only lands here now when there is no salary on file to
       // price the remainder with, so say that instead.
       sub: u.reason === "expiring"
-        ? `${u.pos || ""} · ${u.org || "FA"} · contract ends ${u.thru} - no salary on file for the remainder`
-        : `${u.pos || ""} · ${u.org || "FA"} · no contract on file - cannot price surplus`,
+        ? `${u.pos || ""} · ${u.org || "FA"} · contract ends ${u.thru}; no salary on file for the remainder`
+        : `${u.pos || ""} · ${u.org || "FA"} · no contract on file; surplus not priced`,
     });
   }
   return out;
@@ -339,10 +339,10 @@ function renderTradeMachine() {
       // defect, and the reader who is looking straight at the negative number is
       // the one who needs it said, so the convention rides the chip's own tip.
       const rosNeg = x.ros != null && Number(x.ros) < 0
-        ? " Negative is not floored: the salary still owed is worth more than the projected production, so the contract is underwater for the remainder. That is what a club is paying down when it retains salary in a deal."
+        ? " Negative is not floored: the salary still owed exceeds the projected production."
         : "";
       const rosChip = x.ros == null ? "" :
-        `<span class="tm-sub" title="Rest-of-season control ${_tbFmt(x.ros)} of ${_tbFmt(x.mm)}${rest != null ? `, ${_tbFmt(rest)} in controlled seasons after it` : ""}. The balance of the season in progress, undiscounted, with the prorated salary already netted out.${rosNeg}">rental ${_tbFmt(x.ros)}</span>`;
+        `<span class="tm-sub" title="Rest-of-season control ${_tbFmt(x.ros)} of ${_tbFmt(x.mm)}${rest != null ? `; ${_tbFmt(rest)} in controlled seasons after it` : ""}. Undiscounted, prorated salary netted out.${rosNeg}">rental ${_tbFmt(x.ros)}</span>`;
       return `
       <div class="tm-row">
         <span class="tm-kind tm-kind--${x.kind}" title="${x.kind === "prospect" ? "Prospect (eFV surplus)" : "MLB (contract surplus)"}">${x.kind === "prospect" ? "P" : "M"}</span>
@@ -380,7 +380,7 @@ function renderTradeMachine() {
   // evaluator's "receives" framing: the side that RECEIVES less value is the one giving up
   // the edge, so it is the side that hesitates / rejects.
   let vClass = "is-bal", vText = "";
-  if (!bothSides) { vText = "Add players to both sides for the grader verdict."; vClass = ""; }
+  if (!bothSides) { vText = "Add players to both sides for a verdict."; vClass = ""; }
   else if (diff < BALANCED_THRESHOLD_MM) { vText = `✓ Likely fair: both sides within $${BALANCED_THRESHOLD_MM}M.`; vClass = "is-bal"; }
   else if (pct < 15) { vText = `✓ Fair: Side ${lead} +$${diff.toFixed(1)}M (${pct.toFixed(0)}% edge).`; vClass = "is-bal"; }
   else if (pct < 40) { vText = `⚠ Side ${behind} may hesitate: $${diff.toFixed(1)}M short (${pct.toFixed(0)}% gap).`; vClass = "is-warn"; }
@@ -394,22 +394,21 @@ function renderTradeMachine() {
          </div>
          <div class="tm-balrow">
            <span class="tm-balverdict ${vClass}">${vText}</span>
-           <span class="fa-sub">one currency: prospect surplus (control-window NPV) + MLB contract surplus</span>
+           <span class="fa-sub"><span data-gl="surplus_value">surplus</span>: prospect control-window NPV + MLB contract surplus · $${BALANCED_THRESHOLD_MM}M dead-band</span>
          </div>
          <div class="tm-controls">
            <button class="chip" data-tm-clear type="button">Clear</button>
            <button class="chip" data-tm-copy type="button">Copy as text</button>
-           ${bothSides ? `<button class="chip" data-tm-gfx type="button" title="Generate a shareable deal graphic (theme-aware, multiple formats)">Generate GFX</button>` : ""}
+           ${bothSides ? `<button class="chip" data-tm-gfx type="button" title="Shareable deal graphic">Generate GFX</button>` : ""}
          </div>
        </div>`
     : "";
   el.innerHTML = `<div class="tm-wrap">
-    <div class="detail-title" style="font-size:13px;">Trade Machine
-      <span class="detail-title-sub">value both sides of a deal in the platform's surplus currency</span>
-    </div>
+    <div class="detail-title" style="font-size:13px;"><span data-gl="trade_machine">Trade Machine</span></div>
     <div class="tm-grid">${sideHtml("a", "Side A")}${sideHtml("b", "Side B")}</div>
     ${verdict}
   </div>`;
+  _tmWireGl(el);
   el.querySelectorAll("[data-tm-search]").forEach(inp => {
     inp.oninput = () => {
       const side = inp.dataset.tmSearch;
@@ -417,7 +416,7 @@ function renderTradeMachine() {
       const hits = _tmSearch(inp.value);
       res.innerHTML = hits.map((h, i) => h.disabled
         ? `<button class="tm-hit is-unpriced" type="button" disabled
-             title="We project this player, but there is no contract surplus to put in a deal.">
+             title="Projected, but no contract surplus to trade">
              <strong>${escapeHtml(h.name)}</strong> <span class="tm-sub">${escapeHtml(h.sub)}</span>
              <span class="tm-val">not tradeable</span></button>`
         : `<button class="tm-hit" data-tm-add="${side}:${i}" type="button">
@@ -817,7 +816,7 @@ function _tbRiskCell(p) {
   const tip = [
     p.sortino != null
       ? `Sortino ${p.sortino}: expected surplus per unit of downside risk (higher is safer)`
-      : "No Sortino: the outcome fan is flat here (more than 80% of modelled outcomes land on one figure), so the ratio would be a constant rather than a reading on this player. It is withheld instead of printed as a 0",
+      : "No Sortino: the outcome fan is flat here (more than 80% of modelled outcomes land on one figure), so the ratio would be a constant; withheld",
     p.risk_mm != null ? `Risk-adjusted surplus $${p.risk_mm}M` : "",
     p.downside_mm != null ? `Downside deviation $${p.downside_mm}M` : "",
     pb != null ? `Bust probability ${(pb * 100).toFixed(0)}%` : "",
@@ -870,7 +869,7 @@ function _renderTBRows() {
     const mustProtect = rows.filter(p => p.crunch && p.crunch.rule5_exposed).length;
     const squeezed    = rows.filter(p => p.crunch && p.crunch.on_40_man && p.crunch.options_left === 0).length;
     if (mustProtect || squeezed) {
-      _crunchBanner = `<div style="margin:2px 0 6px;color:var(--text-secondary);font-size:11px;" title="Roster-decision exposure among this org's rostered / MLB board players (not a full 40-man census, and not a predictive model)."><strong>${escapeHtml(_tbOrg)} roster crunch:</strong> ${mustProtect} Rule 5 must-protect · ${squeezed} out-of-options on the 40-man</div>`;
+      _crunchBanner = `<div style="margin:2px 0 6px;color:var(--text-secondary);font-size:11px;" title="Among this org's rostered and MLB board players; not a full 40-man census"><strong>${escapeHtml(_tbOrg)} <span data-gl="roster_crunch">roster crunch</span>:</strong> ${mustProtect} Rule 5 must-protect · ${squeezed} out-of-options on the 40-man</div>`;
     }
   }
 
@@ -884,10 +883,10 @@ function _renderTBRows() {
     ${_tbTh("Age", "age", "tm-num", "Current age (decimal years)")}
     ${_tbTh("Pos", "pos")}
     ${_tbTh("Org", "org")}
-    ${_tbTh("FV", "fv", "tm-num", "Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)", false, "fv")}
-    ${_tbTh("Grade", "grade", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale. The board ranks by the model's raw eFV grade, which orders realized value better than the dollar transform POOLED and in the top three tiers, but NOT in the low tier, which holds most of the board. The letter is the coarse display.", true)}
-    ${_tbTh("Surplus", "surplus", "tm-num", "Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use", false, "surplus_value")}
-    ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside risk (higher is safer). Blank where the outcome fan is flat and the ratio would be a constant rather than a reading; the bust probability beside it still applies. Tooltip carries the risk-adjusted surplus and bust probability.", false, "risk_adjusted_surplus") : ""}
+    ${_tbTh("FV", "fv", "tm-num", "Prospects only: eFV where graded, else consensus FV", false, "fv")}
+    ${_tbTh("Grade", "grade", "tm-num tm-col-div", "Trade Value Grade: contract-adjusted surplus, A+ to F. The default sort is the raw eFV grade, which orders realized value better pooled but not in the low tier (most of the board).", true)}
+    ${_tbTh("Surplus", "surplus", "tm-num", "$M of production above cost; same model as PROSPX and MLB Projections", false, "surplus_value")}
+    ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside (higher is safer). Blank on a flat outcome fan; the bust probability still shows.", false, "risk_adjusted_surplus") : ""}
     ${_tbTh("Contract", "contract", "", "Contract: phase · salary · FA year (MLB) or remaining controlled seasons (MiLB)", false, "service_time")}
     <th class="tm-col-div">Signals</th>
   </tr></thead><tbody>`;
@@ -932,7 +931,7 @@ function _renderTBRows() {
     // decile. The bounds are right. "Range $0.7M to $0.7M" was not a sentence
     // about them.
     const bandWhat = p.band_basis === "projection"
-      ? "projection p10-p90 WAR fan, salary held fixed (every season at its own p10 together, so it is wide)"
+      ? "projection P10-P90 WAR fan, salary fixed (every season at its own P10 together, so it is wide)"
       : "eFV credible interval";
     let rangeTip = "";
     if (lo != null && hi != null) {
@@ -940,9 +939,9 @@ function _renderTBRows() {
         ? `Range ${_tbFmt(lo)} to ${_tbFmt(hi)} · ${bandWhat}`
         : `More than 80% of modelled outcomes land at ${_tbFmt(lo)} · ${bandWhat}`;
       if (tv != null && Number(tv) > Number(hi)) {
-        rangeTip += `. The ${_tbFmt(tv)} shown is the EXPECTED value, which sits above the 90th percentile here because the upside is concentrated in the top decile`;
+        rangeTip += `. The ${_tbFmt(tv)} shown is the mean, which sits above the 90th percentile here (upside concentrated in the top decile)`;
       } else if (tv != null && Number(tv) < Number(lo)) {
-        rangeTip += `. The ${_tbFmt(tv)} shown is the EXPECTED value, which sits below the 10th percentile here`;
+        rangeTip += `. The ${_tbFmt(tv)} shown is the mean, which sits below the 10th percentile here`;
       }
     }
     const flash = p.flash || {};
@@ -973,7 +972,7 @@ function _renderTBRows() {
     // can see is indistinguishable from no change at all, which was the whole
     // argument for stamping it.
     if (p.efv_backgrade_withheld) {
-      signals += ` <span style="color:var(--text-secondary);font-size:10px;" title="eFV backgrade withheld (${escapeHtml(String(p.efv_backgrade_withheld))}): no salary on file, so this price is the trade-value model's own number rather than a surplus priced off a prospect-era eFV grade.">&#8709;eFV</span>`;
+      signals += ` <span style="color:var(--text-secondary);font-size:10px;" title="eFV backgrade withheld (${escapeHtml(String(p.efv_backgrade_withheld))}): no salary on file, so the price is the trade-value model's own number">&#8709;eFV</span>`;
     }
     // GRPO breakout badge - a within-cohort breakout SIGNAL (display only; it no longer
     // shifts the surplus, which is now the platform eFV/Projections value). Click -> group.
@@ -982,7 +981,7 @@ function _renderTBRows() {
       const grpoCol = grpoSc >= 0.70 ? "var(--neon-green)" : "var(--neon-amber)";
       signals += ` <button class="chip" style="padding:1px 5px;font-size:9px;color:${grpoCol};border-color:${grpoCol};"
         onclick="event.stopPropagation();_tbShowGroup('${escapeHtml(p.player_key||'')}');"
-        title="Breakout signal: ${(grpoSc*100).toFixed(0)}% within-cohort breakout score (provisional; does not change the surplus) - click to see the profile group">
+        title="GRPO within-cohort breakout score ${(grpoSc*100).toFixed(0)}% (provisional; does not move the surplus). Click for the profile group.">
         ▲${(grpoSc*100).toFixed(0)}
       </button>`;
     }
@@ -1169,7 +1168,7 @@ function _tbShowGroup(playerKey) {
     body.innerHTML = `<div style="color:var(--text-secondary);font-size:12px;">${
       _tbGrpoState === "pending"
         ? "Group data is still loading. Try the chip again in a moment."
-        : "Profile-group details are not available here right now. The breakout score on the chip still stands."
+        : "Profile-group data is unavailable; the breakout score on the chip stands."
     }</div>`;
     panel.style.display = "block";
     panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
