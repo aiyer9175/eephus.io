@@ -539,9 +539,19 @@
                missing.length > 0;
     var nGames = ((S.data || {}).games || []).length;
     var sides = g.lineup_sides_possible;
+    // TWO POPULATIONS (2026-09-11). n_hitters / n_pitchers are what the board
+    // serves; n_*_priced is everything that priced before the active-roster
+    // filter. The chip used to say "Hitters priced 128" above a board of 109.
+    // A payload from before the split carries no n_*_priced and its n_hitters
+    // IS the priced count, so it keeps the old label rather than being
+    // relabelled as a board count it never was.
+    var split = g.n_hitters_priced != null;
+    var offH = split ? (g.n_hitters_removed_off_roster || 0) : 0;
+    var offP = split ? (g.n_pitchers_removed_off_roster || 0) : 0;
     var cells =
-      kvChip("Hitters priced", g.n_hitters) +
-      kvChip("Starters priced", g.n_pitchers) +
+      kvChip(split ? "Hitters on the board" : "Hitters priced", g.n_hitters) +
+      kvChip(split ? "Starters on the board" : "Starters priced", g.n_pitchers) +
+      (offH + offP > 0 ? kvChip("Left off, not on an active roster", offH + offP) : "") +
       kvChip("Probables announced", g.n_probables_announced) +
       (exp == null ? "" : kvChip("Clubs with Offense+", off == null ? "-" : off + " of " + exp)) +
       (exp == null ? "" : kvChip("Clubs with Bullpen+", pen == null ? "-" : pen + " of " + exp)) +
@@ -565,8 +575,17 @@
         ? '<div class="dfs-integrity-note">Some clubs have no measured team context, so ' +
           "their matchup multiplier is sitting on a neutral fallback. The rows say which.</div>"
         : "") +
+      (offH + offP > 0
+        ? '<div class="dfs-integrity-note">We priced ' + esc(g.n_hitters_priced) + " " +
+          plural(g.n_hitters_priced, "hitter", "hitters") + " and " + esc(g.n_pitchers_priced) + " " +
+          plural(g.n_pitchers_priced, "starter", "starters") + ". " + esc(offH) + " " +
+          plural(offH, "hitter", "hitters") + " and " + esc(offP) + " " +
+          plural(offP, "starter", "starters") + " are not on a current active roster, so they " +
+          "are left off tonight's board: a player who is not active cannot score.</div>"
+        : "") +
       "</div>";
   }
+  function plural(n, one, many) { return Number(n) === 1 ? one : many; }
   function kvChip(label, value) {
     if (value == null) return "";
     return '<span class="dfs-kv"><span class="dfs-kv-l">' + esc(label) + "</span>" +
@@ -1271,9 +1290,14 @@
           (pp ? esc(pp.name) : "no probable posted") + "</span></div>";
       }
       var v = g.vegas;
+      // A refused market is not a missing one. The exporter found odds for
+      // this game and threw them out because they were read after first
+      // pitch, and the card says so rather than looking like a quiet miss.
+      var refused = !v && g.vegas_refused === "in_game"
+        ? " · no total: the odds we hold were taken after first pitch" : "";
       return '<div class="dfs-slate-card">' + sideLine(g.away) + sideLine(g.home) +
         '<div class="dfs-slate-meta">' + esc(g.venue || "") + parkMark(g) +
-        (v ? " · total " + num(v.total, 1) : "") + "</div></div>";
+        (v ? " · total " + num(v.total, 1) : "") + refused + "</div></div>";
     }).join("");
     return '<div class="dfs-slate">' + cards + "</div>" + vegasNote();
   }
@@ -1312,11 +1336,19 @@
   // taken out" is what a de-vigged two-way market IS.
   function vegasNote() {
     var d = S.data || {}, src = d.vegas_source || {}, integ = d.integrity || {};
+    // Interpolated from the payload's own refusal count, never typed.
+    var nLive = Number(src.n_rejected_in_game || 0);
+    var liveLine = nLive > 0
+      ? " " + nLive + " " + plural(nLive, "game", "games") + " on this slate had already started when " +
+        "that snapshot was taken, so " + plural(nLive, "its", "their") + " odds were for the rest of a " +
+        "game in progress and are not shown."
+      : "";
     if (integ.vegas_games) {
       return '<div class="dfs-note">Team totals are the market\'s, not ours: the posted game total, split ' +
         "between the clubs by each side's price with the house margin taken out. Read from an odds snapshot " +
         "taken " + esc(src.captured_at || "earlier") +
-        ". They are context to read beside a projection. Nothing on this page is priced off them.</div>";
+        ". They are context to read beside a projection. Nothing on this page is priced off them." +
+        liveLine + "</div>";
     }
     if (!src.reason) return "";
     return '<div class="dfs-note">No Vegas team totals on this slate: ' + esc(src.reason) +

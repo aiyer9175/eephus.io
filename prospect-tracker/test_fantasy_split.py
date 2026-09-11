@@ -459,8 +459,11 @@ def test_dfs_vegas_refuses_a_snapshot_from_a_different_day():
     import dfs_export as dx
     day, games = "2026-08-05", _games_fixture(day="2026-08-05")
 
-    def snapshot(commence):
-        return {"captured_at": "x", "kind": "close", "events": [{
+    # A real capture stamp, taken before the 23:05 first pitch. The in-game
+    # refusal (2026-09-11) reads it; the placeholder "x" this fixture used to
+    # carry would fall back to the build clock and refuse the game as started.
+    def snapshot(commence, captured_at="2026-08-05T19:00:00Z"):
+        return {"captured_at": captured_at, "kind": "close", "events": [{
             "id": "e", "commence_time": commence,
             "home_team": "New York Yankees", "away_team": "Boston Red Sox",
             "bookmakers": [

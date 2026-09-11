@@ -668,6 +668,37 @@ def parse_events(raw) -> list[dict]:
     return out
 
 
+def odds_event_started(event: dict, as_of: datetime) -> bool:
+    """True when this event's first pitch is at or before `as_of`, which makes
+    any price read for it at `as_of` an IN-GAME price.
+
+    ONE DEFINITION FOR EVERY CONSUMER OF A SNAPSHOT (2026-09-11). A book keeps a
+    game listed once it is under way, at the remaining-game price. /betting/
+    has refused those since 2026-08-09 (FanDuel HOU +1100 and a total of 4.5 on
+    a game 2h17m old); /dfs/ reads the same snapshot and did not, and on
+    2026-09-10 it served a 3.5-run total and a 0.98-run team total for a game
+    two and a half hours old. betting_export.team_bets and
+    dfs_export._vegas_index both call this, so a third reader of the cache
+    inherits the rule instead of re-deriving it.
+
+    An event with no readable commence_time is NOT called started, exactly as
+    team_bets always treated it: this is a refusal rule, and an unreadable stamp
+    is left to the caller's other joins rather than guessed at. A naive stamp
+    or clock is read as UTC, which is what both producers write."""
+    ct = (event or {}).get("commence_time")
+    if not ct:
+        return False
+    try:
+        t = datetime.fromisoformat(str(ct).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return False
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    if as_of.tzinfo is None:
+        as_of = as_of.replace(tzinfo=timezone.utc)
+    return t <= as_of
+
+
 def parse_props_snapshot(raw) -> dict | None:
     """A per-event props response (or its snapshot wrapper) -> one normalized
     record. PURE function of bytes, like parse_events, so every test runs on a

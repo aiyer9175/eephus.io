@@ -372,7 +372,19 @@ Inputs:
 * Vegas legs: game total and de-vigged implied team totals, read from the odds
   snapshots the betting module already pays for (`betting_ingest.latest_snapshot`);
   a snapshot from a different day's board is refused on first pitch, and a slate
-  with no snapshot shows no total rather than an estimated one
+  with no snapshot shows no total rather than an estimated one. A game that had
+  already started when the snapshot was taken is refused too (2026-09-11; it
+  served a live game's remaining-game total on 2026-09-10): the test is
+  `betting_ingest.odds_event_started`, shared with `/betting/`, judged at the
+  snapshot's `captured_at`, counted in `vegas_source.n_rejected_in_game` and
+  marked on the game as `vegas_refused: "in_game"`
+* active roster: the pool is FILTERED to the active roster after pricing.
+  `integrity.n_hitters` and `n_pitchers` count the board as served (always equal
+  to the rows in `players`), `n_*_priced` count what priced before the filter,
+  and `n_*_removed_off_roster` is the difference. The join detector
+  `orgs_without_hitters` reads the PRICED rows on purpose, so a club whose bats
+  were all roster-removed is not reported as a join miss; both collapse guards
+  read the served board
 * confirmed lineups: posted cards set a hitter's spot and turn his start rate
   into a fact (the projection it replaced rides beside it); a posted card he is
   NOT on marks him `out`. Both joins are context and neither moves `pts`.

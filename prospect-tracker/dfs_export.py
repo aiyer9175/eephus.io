@@ -354,6 +354,24 @@ _ITT_BISECT_STEPS = 40          # 10 runs / 2^40; the metric is rounded to 0.01
 # would silently price today's board on yesterday's closing line. A day apart is
 # 24 hours; six is loose enough for any schedule move and nowhere near that.
 _ODDS_TIME_TOLERANCE_S = 6 * 3600
+# AN EVENT THAT HAD STARTED WHEN THE SNAPSHOT WAS TAKEN IS AN IN-GAME MARKET
+# (2026-09-11). The tolerance above is a test of WHICH game, and a live game
+# passes it trivially, because its commence_time IS its scheduled first pitch.
+# Measured on the 2026-09-10 payload: HOU at PHI (first pitch 17:05 UTC) was
+# 2h29m into play when the 19:34 UTC snapshot was taken, and the board served
+# its remaining-game market
+# as the game's total (3.5 runs, Philadelphia 0.98) on 1 of 5 game cards and 22
+# of 117 player rows, while `n_rejected_on_time` read 0. /betting/ had refused
+# the same event off the same snapshot since 2026-08-09; this module never did.
+#
+# The test is betting_ingest.odds_event_started, the ONE definition both
+# consumers of a snapshot call, measured at the snapshot's own capture stamp:
+# whether a price is in-game is a fact about when it was read, so a backfill
+# for an earlier slate judges each snapshot the way its own day would have. A
+# snapshot with no readable stamp falls back to the build clock, which can only
+# refuse more. MATCH FIRST, THEN REFUSE: dropping started events before the
+# match would let game one of a doubleheader, under way, take game two's
+# pregame market, which sits well inside the six-hour tolerance.
 
 
 def _consensus_market(event: dict) -> dict | None:
@@ -426,16 +444,24 @@ def _split_total(total: float, p_home: float, tie_home: float) -> tuple[float, f
     return home, total - home, False
 
 
-def _vegas_index(day: str, games: list) -> tuple[dict, dict]:
+def _vegas_index(day: str, games: list, *, now: datetime | None = None) -> tuple[dict, dict]:
     """({game_pk: {home_itt, away_itt, ...}}, provenance) from the cached odds.
 
     Matching is (away org, home org) on the slate date, and the doubleheader
     tiebreak is the nearer first pitch: the two games of a split share a club
     pair, and the snapshot's commence_time runs about a minute later than
     StatsAPI's (measured across all 11 games of 2026-08-06), so an exact time
-    match would find nothing at all."""
+    match would find nothing at all.
+
+    A matched event that had already started when the snapshot was taken is
+    REFUSED, counted in `n_rejected_in_game` (never in `n_rejected_on_time`,
+    which is the different-day refusal) and named in `in_game_game_pks`, so the
+    game carries no market and says why. `now` is the fallback clock for a
+    snapshot with no readable capture stamp, injectable for tests."""
     meta = {"source": None, "captured_at": None, "kind": None,
-            "n_events": 0, "n_matched": 0, "reason": None}
+            "n_events": 0, "n_matched": 0, "reason": None,
+            "n_rejected_on_time": 0, "n_rejected_in_game": 0,
+            "in_game_game_pks": []}
     try:
         import betting_ingest as bi
         import betting_model as bm
@@ -472,9 +498,16 @@ def _vegas_index(day: str, games: list) -> tuple[dict, dict]:
         _log.exception("dfs: vegas join raised - continuing without it")
         meta["reason"] = "the odds snapshot could not be read"
         return {}, meta
+    # The instant the prices were read. See the note under _ODDS_TIME_TOLERANCE_S.
+    as_of = _aware(wrap.get("captured_at"))
+    as_of_basis = "snapshot_captured_at"
+    if as_of is None:
+        as_of = now or datetime.now(timezone.utc)
+        as_of_basis = "build_clock"
     meta.update(source=Path(wrap.get("_path") or "").name or "odds snapshot",
                 captured_at=wrap.get("captured_at"), kind=wrap.get("kind"),
                 n_events=len(events),
+                in_game_basis=as_of_basis,
                 tie_home=round(float(tie_home), 4),
                 model_version=getattr(bm, "MODEL_VERSION", None))
     by_pair: dict = {}
@@ -482,6 +515,7 @@ def _vegas_index(day: str, games: list) -> tuple[dict, dict]:
         by_pair.setdefault((e.get("away_org"), e.get("home_org")), []).append(e)
     out: dict = {}
     n_off_slate = 0
+    in_game: list = []
     for g in games:
         pk = g.get("game_pk")
         cands = by_pair.get(((g.get("away") or {}).get("org"),
@@ -498,6 +532,14 @@ def _vegas_index(day: str, games: list) -> tuple[dict, dict]:
                          "pricing this one on it", (g.get("away") or {}).get("org"),
                          (g.get("home") or {}).get("org"), gap / 3600.0)
             continue
+        if bi.odds_event_started(ev, as_of):
+            in_game.append(int(pk))
+            _log.warning("dfs: the cached odds for %s vs %s (game %s) were read after "
+                         "its first pitch (%s, snapshot %s), so they are an in-game "
+                         "market - this game shows no total rather than that one",
+                         (g.get("away") or {}).get("org"), (g.get("home") or {}).get("org"),
+                         pk, ev.get("commence_time"), as_of.isoformat())
+            continue
         mk = _consensus_market(ev)
         if not mk:
             continue
@@ -513,16 +555,42 @@ def _vegas_index(day: str, games: list) -> tuple[dict, dict]:
             "n_books": min(mk["n_books_ml"], mk["n_books_total"]),
             "total_range": mk["total_range"], "p_home_range": mk["p_home_range"],
             "at_bracket": edge,
+            # The matched event's own first pitch, so "was this read before
+            # the game started" is checkable against `captured_at` from the
+            # payload alone (test_dfs_served_counts pins it).
+            "commence_time": ev.get("commence_time"),
         }
     meta["n_matched"] = len(out)
     meta["n_rejected_on_time"] = n_off_slate
+    meta["n_rejected_in_game"] = len(in_game)
+    meta["in_game_game_pks"] = in_game
     if not out and events:
-        meta["reason"] = (
-            "the cached snapshot holds no game matching this slate" if not n_off_slate
-            else (f"the cached snapshot matched {n_off_slate} club pairing(s) on this "
-                  "slate but every one of them was hours from the scheduled first "
-                  "pitch, so it is a different day's board"))
+        if not n_off_slate and not in_game:
+            meta["reason"] = "the cached snapshot holds no game matching this slate"
+        elif not in_game:
+            meta["reason"] = (
+                f"the cached snapshot matched {n_off_slate} club pairing(s) on this "
+                "slate but every one of them was hours from the scheduled first "
+                "pitch, so it is a different day's board")
+        else:
+            meta["reason"] = (
+                f"the cached snapshot was taken after first pitch of "
+                f"{len(in_game)} game(s) on this slate, so their odds were in-game "
+                "and are not shown"
+                + (f", and {n_off_slate} other club pairing(s) matched a different "
+                   "day's board" if n_off_slate else ""))
     return out, meta
+
+
+def _aware(ts) -> datetime | None:
+    """An ISO timestamp as an aware UTC datetime, or None when unreadable.
+    Unlike _epoch, a miss here must stay a miss: 0 would read as 1970 and make
+    every event look like it had not started yet."""
+    try:
+        dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
 def _epoch(ts) -> float:
@@ -939,6 +1007,10 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
         vegas, vegas_meta = {}, {
             "source": None, "n_matched": 0,
             "reason": "the caller supplied the slate, so no odds were read"}
+    # Games whose only matched odds were read after first pitch. They carry
+    # `vegas: null` like any other miss, plus `vegas_refused` so the card can
+    # say it was refused rather than never found.
+    in_game_pks = set((vegas_meta or {}).get("in_game_game_pks") or [])
     if lineups is None:
         lineups = fsched.fetch_lineups(day) if own_slate else {}
     n_lineup_sides = sum(1 for v in lineups.values() for k in ("home", "away")
@@ -1063,6 +1135,8 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
             "lineups_posted": {"home": bool(lu.get("home")), "away": bool(lu.get("away"))},
             "home": sides["home"], "away": sides["away"],
         })
+        if g.get("game_pk") in in_game_pks and not vg:
+            slate_games[-1]["vegas_refused"] = "in_game"
 
         # --- pitchers: announced probables only -----------------------------
         for me in ("home", "away"):
@@ -1161,13 +1235,10 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     rows = sorted(by_id.values(),
                   key=lambda r: -(r["pts"]["dk"] if r.get("pts") else -1e9))
     payload = _empty(day, season, None)
-    integrity = _slate_integrity(day, slate_games, rows, ctx,
-                                 n_hit_pool=n_hit_pool, n_hit_teamless=n_hit_teamless)
-    integrity["park_basis"] = park_basis
-    integrity["park_sources"] = _count_by(slate_games, "park_source")
-    integrity["vegas_games"] = sum(1 for g in slate_games if g.get("vegas"))
-    integrity["lineup_sides_posted"] = n_lineup_sides
-    integrity["lineup_sides_possible"] = 2 * len(slate_games)
+    # Every row that PRICED, kept before the roster filter below narrows `rows`
+    # to the board. `_slate_integrity` reads both, and which one it reads for
+    # which field is the whole of the 2026-09-11 fix (see its docstring).
+    priced_rows = rows
     # TONIGHT'S SLATE, so an off-roster player is undraftable and does not belong
     # in the pool: he cannot accrue a point. This is the opposite call from
     # fantasy, which FLAGS the same players because a rest-of-season board is
@@ -1188,6 +1259,16 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                                    "team": r.get("team"),
                                    "why": "not on a current active roster"})
         rows = kept
+    integrity = _slate_integrity(day, slate_games, priced_rows, ctx,
+                                 n_hit_pool=n_hit_pool, n_hit_teamless=n_hit_teamless,
+                                 served=rows)
+    integrity["park_basis"] = park_basis
+    integrity["park_sources"] = _count_by(slate_games, "park_source")
+    integrity["vegas_games"] = sum(1 for g in slate_games if g.get("vegas"))
+    integrity["vegas_games_refused_in_game"] = sum(
+        1 for g in slate_games if g.get("vegas_refused") == "in_game")
+    integrity["lineup_sides_posted"] = n_lineup_sides
+    integrity["lineup_sides_possible"] = 2 * len(slate_games)
     payload.update({
         "vegas_source": vegas_meta,
         "n_games": len(slate_games),
@@ -1215,7 +1296,10 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
         "anchors": {"pa_per_start": _PA_PER_START, "sp_ip_share": round(_SP_IP_SHARE, 3),
                     "season_games": _SEASON_GAMES, "elig_min_games": _MIN_ELIG_GAMES},
     })
-    if not rows:
+    if not priced_rows:
+        # Nothing PRICED. A board that priced rows and then lost every one of
+        # them to the roster filter is not this sentence (they all had a
+        # projection); `integrity` names it as a collapse just below.
         payload["empty_reason"] = (
             f"{len(slate_games)} games are on the slate for {day}, but no probable "
             "starter or hitter on it has a rest-of-season projection yet.")
@@ -1255,7 +1339,8 @@ def _count_by(rows: list, field: str) -> dict:
 
 
 def _slate_integrity(day: str, slate_games: list, rows: list, ctx: dict, *,
-                     n_hit_pool: int, n_hit_teamless: int) -> dict:
+                     n_hit_pool: int, n_hit_teamless: int,
+                     served: list | None = None) -> dict:
     """Is this board STRUCTURALLY POSSIBLE, and what did the joins resolve?
 
     2026-08-05: /dfs/ served 15 games, 29 players and ZERO hitters. Every layer
@@ -1272,9 +1357,31 @@ def _slate_integrity(day: str, slate_games: list, rows: list, ctx: dict, *,
     early-morning slate), and a spot starter with no rest-of-season projection
     (he is already listed in `unprojected`). So the pitcher side only counts as
     collapsed when several arms were announced and NOT ONE of them priced, which
-    no amount of ordinary roster churn produces."""
-    n_hit = sum(1 for r in rows if r.get("side") == "hit")
-    n_pit = sum(1 for r in rows if r.get("side") == "pit")
+    no amount of ordinary roster churn produces.
+
+    TWO POPULATIONS, AND EACH FIELD READS THE ONE ITS QUESTION IS ABOUT
+    (2026-09-11). `rows` is every row that PRICED; `served` is the board after
+    the active-roster filter (None means no filter ran, so the two are equal).
+
+      * The JOIN detector (`orgs_without_hitters`) reads `rows`. It asks whether
+        the hitter join found bats for a club at all. A club whose every bat
+        was then roster-removed did not miss the join, and reading `served`
+        here would misreport it as a broken join, the opposite of what the
+        field means.
+      * Every count a reader sees as the board (`n_hitters`, `n_pitchers`) and
+        both collapse guards read `served`. They used to read `rows`: the
+        2026-09-10 panel said "Hitters priced 128" above a hitter board of 109,
+        and 128 - 109 = 19 was exactly `roster_filter.n_removed`. The same
+        ordering left the guards blind to a roster walk that removed every bat.
+      * The priced counts and the per-side removals are published beside them
+        (`n_*_priced`, `n_*_removed_off_roster`), so the gap is a stated number
+        rather than a silent one."""
+    if served is None:
+        served = rows
+    n_hit_priced = sum(1 for r in rows if r.get("side") == "hit")
+    n_pit_priced = sum(1 for r in rows if r.get("side") == "pit")
+    n_hit = sum(1 for r in served if r.get("side") == "hit")
+    n_pit = sum(1 for r in served if r.get("side") == "pit")
     n_prob = sum(1 for g in slate_games for k in ("home", "away")
                  if (g.get(k) or {}).get("probable"))
     slate_orgs = {(g.get(k) or {}).get("org") for g in slate_games
@@ -1308,7 +1415,13 @@ def _slate_integrity(day: str, slate_games: list, rows: list, ctx: dict, *,
                       or not (ctx.get(o) or {}).get("bullpen_plus_resolved")]
     out = {
         "ok": True, "kind": None, "message": None,
+        # What the BOARD serves: always equal to the hit and pit rows in
+        # `players`. The priced counts are the pre-filter population, and the
+        # removals are their difference, side by side.
         "n_hitters": n_hit, "n_pitchers": n_pit,
+        "n_hitters_priced": n_hit_priced, "n_pitchers_priced": n_pit_priced,
+        "n_hitters_removed_off_roster": n_hit_priced - n_hit,
+        "n_pitchers_removed_off_roster": n_pit_priced - n_pit,
         "n_probables_announced": n_prob,
         "n_slate_orgs": len(slate_orgs),
         "orgs_without_hitters": missing,
@@ -1327,17 +1440,33 @@ def _slate_integrity(day: str, slate_games: list, rows: list, ctx: dict, *,
                                   "n_context_rows": len(ctx),
                                   "league_clubs": fe._MLB_CLUBS},
     }
-    if slate_games and n_hit == 0:
+    # Both guards judge the SERVED board, and each names which of the two ways
+    # it emptied: nothing priced (a join) or everything priced and then removed
+    # by the active-roster filter (a roster walk that matched nobody).
+    if slate_games and n_hit == 0 and n_hit_priced == 0:
         out.update(ok=False, kind="collapsed_slate", message=(
             f"{len(slate_games)} games are on the slate for {day}, but not one "
             "hitter could be matched to a club. Two lineups play every game, so "
             "this is a broken join in our build, not a thin day. We would rather "
             "show you nothing than a board missing every bat."))
-    elif slate_games and n_prob >= _MIN_PROBABLES_FOR_COLLAPSE and n_pit == 0:
+    elif slate_games and n_hit == 0:
+        out.update(ok=False, kind="collapsed_slate", message=(
+            f"{n_hit_priced} hitters were priced for {day}, but the active-roster "
+            "filter removed every one of them, so the board would carry no bats. "
+            "Whole lineups do not leave the active rosters at once, so this is a "
+            "broken roster check in our build, not a thin day."))
+    elif (slate_games and n_prob >= _MIN_PROBABLES_FOR_COLLAPSE and n_pit == 0
+          and n_pit_priced == 0):
         out.update(ok=False, kind="collapsed_slate", message=(
             f"{n_prob} starters are announced for {day} but none of them could be "
             "priced, so the pitcher side of this board is empty. That is a broken "
             "join in our build, not a thin day."))
+    elif slate_games and n_prob >= _MIN_PROBABLES_FOR_COLLAPSE and n_pit == 0:
+        out.update(ok=False, kind="collapsed_slate", message=(
+            f"{n_prob} starters are announced for {day} and {n_pit_priced} of them "
+            "were priced, but the active-roster filter removed every one, so the "
+            "pitcher side of this board is empty. That is a broken roster check in "
+            "our build, not a thin day."))
     return out
 
 
@@ -1615,10 +1744,14 @@ def refresh(log=print, *, day: str | None = None, games: list | None = None,
             log(f"dfs: empty slate for {payload['slate_date']} - {payload['empty_reason']}")
         else:
             _mo = integ.get("matchup_orgs_resolved") or {}
-            log(f"dfs: {payload['n_players']} players priced across "
+            # Served counts, which sum to n_players; the pre-filter priced
+            # counts ride alongside rather than standing in for them.
+            log(f"dfs: {payload['n_players']} players on the board across "
                 f"{payload['n_games']} games ({payload['slate_date']}) - "
                 f"{integ.get('n_hitters', 0)} hitters, {integ.get('n_pitchers', 0)} "
-                f"starters, matchup context on {_mo.get('offense_plus', 0)}"
+                f"starters ({integ.get('n_hitters_priced', 0)} and "
+                f"{integ.get('n_pitchers_priced', 0)} priced before the active-roster "
+                f"filter), matchup context on {_mo.get('offense_plus', 0)}"
                 f"/{_mo.get('needed', 0)} clubs on the slate")
     # Partial misses do not block the publish - a board short a few clubs still
     # beats no board - but they do go in the ledger, because "23 of 30 orgs" is

@@ -2945,11 +2945,13 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
     # on the whole board. The filter is separate from `match_event` on purpose:
     # game one of a doubleheader being under way is a genuine two-candidate
     # case, and the time-nearest match would still take the started half.
+    # The test itself is bi.odds_event_started, shared with dfs_export so the
+    # two readers of one snapshot cannot disagree about what "started" means.
     n_in_progress = 0
     by_pair: dict[tuple, list] = {}
     for ev in events or []:
-        t = _stamp(ev.get("commence_time"))
-        if t is not None and t <= now:
+        if bi.odds_event_started(ev, now):
+            t = _stamp(ev.get("commence_time"))
             n_in_progress += 1
             log.info("betting_export: odds event %s (%s @ %s) started %.0f min ago; "
                      "its prices are in-game and cannot price a pregame board",
