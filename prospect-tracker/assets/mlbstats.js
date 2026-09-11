@@ -128,15 +128,17 @@
           yLabel: "↑ xREM+ (deserved)", xRef: 100, yRef: 100, diag: true, aria: "earned vs deserved" })
       : "";
     if (!hist && !sc && !xsc) return "";
+    // Captions are legends: the pool, the highlight cut and how to read the
+    // diagonal, each read off the chart options above.
     var body = '<div class="mlbstats-viz">'
       + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("REM+", "rem_plus")
-      + ' distribution <span class="proj-dim">(qualified relievers; cyan = elite)</span></div>' + hist + "</div>"
-      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Skill vs leverage'
-        + ' <span class="proj-dim">(top-right = elite arms in high leverage)</span></div>' + sc + "</div>" : "")
-      + (xsc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Earned vs deserved: REM+ × ' + gloss("xREM+", "xrem_plus")
-        + ' <span class="proj-dim">(below the diagonal = results ahead of contact quality)</span></div>' + xsc + "</div>" : "")
+      + ' distribution <span class="proj-dim">(qualified; cyan = 120+)</span></div>' + hist + "</div>"
+      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">REM+ vs ' + gloss("gmLI", "gmli")
+        + ' <span class="proj-dim">(bright = REM+ 115+)</span></div>' + sc + "</div>" : "")
+      + (xsc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">REM+ vs ' + gloss("xREM+", "xrem_plus")
+        + ' <span class="proj-dim">(below the diagonal = FIP results ahead of contact quality)</span></div>' + xsc + "</div>" : "")
       + "</div>";
-    return collapsible("relievers-viz", 'Charts <span class="proj-dim">(REM+ distribution, skill vs leverage, earned vs deserved)</span>', body);
+    return collapsible("relievers-viz", 'Charts <span class="proj-dim">(REM+ distribution, vs gmLI, vs xREM+)</span>', body);
   }
 
   // REM+/Bullpen+ index coloring (100 = average).
@@ -197,11 +199,8 @@
   // only the pool and the index it feeds differ. No served number is typed
   // here; the column's own cells carry the values.
   function skillFipTitle(pool, index) {
-    return "Skill FIP, the sample-shrunk FIP that " + index + " is built on. Strikeout, walk,"
-      + " hit-batter and home-run rates are each pulled toward the " + pool + " pool by sample"
-      + " size, and the constant is solved on " + pool + "s rather than the whole league, so this"
-      + " is a skill estimate and not the standard FIP of the pitcher's actual line. It sits"
-      + " furthest from standard FIP on short samples.";
+    return "The sample-shrunk FIP " + index + " is built on: K, BB, HBP and HR rates pulled toward"
+      + " the " + pool + " pool by sample size, constant solved on " + pool + "s; not the standard FIP.";
   }
   function wireGlossary(el) {
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(el); } catch (e) { /* glossary optional */ }
@@ -372,11 +371,11 @@
         return s;
       } },
     { key: "xrem_plus", label: "xREM+", term: "xrem_plus", num: true, desc: true, isRem: true,
-      title: "Deserved run prevention: the REM+ scale on Savant expected wOBA allowed (lower allowed = higher). A companion to REM+, which stays FIP-based (xwOBA-allowed did not beat FIP predictively); this is a deserved read, not a replacement. Tracked relievers only.",
+      title: "REM+ scale on Savant xwOBA allowed. A deserved read beside REM+, not a replacement: xwOBA allowed did not beat FIP predictively. Tracked relievers only.",
       get: function (r) { return r.xrem_plus; },
       cell: function (r) { return r.xrem_plus == null ? "" : remCell(r.xrem_plus); } },
     { key: "luck", label: "Luck", num: true, desc: true,
-      title: "Actual minus expected wOBA allowed. Positive = allowed more than his contact deserved (unlucky, room to improve); negative = allowed less (over-performing, due to regress).",
+      title: "wOBA allowed minus xwOBA allowed. Positive: allowed more than his contact deserved; negative: less.",
       get: function (r) { return r.luck; },
       cell: function (r) {
         if (r.luck == null) return "";
@@ -389,7 +388,8 @@
     // reliever banks more WAR per inning than a starter of equal talent, so the
     // two are never pooled. remCell, not hemCell: 100 + 10z has SD exactly 10.
     { key: "war_ip_plus", label: "WAR/IP+", term: "war_ip_plus_rp", num: true, desc: true, isRem: true,
-      title: "Pitching eWAR (FIP re-priced within role) per inning, indexed over RELIEVERS with 20+ IP: 100 is the average reliever and every 10 points is one standard deviation of that pool. Anchored on relievers only, so it is not comparable with the starter board's WAR/IP+. Needs 30 IP to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
+      ewar: true,
+      title: "Pitching eWAR per inning, 100 + 10z over relievers with 20+ IP; shown at 30+ IP. Not comparable with the starter board's WAR/IP+. p = percentile on this board.",
       get: function (r) { return r.war_ip_plus; },
       cell: function (r) {
         if (r.war_ip_plus == null) return "";
@@ -398,10 +398,15 @@
         return s;
       } },
     { key: "war_ip_plus_adj", label: "WAR/IP+ adj", term: "war_ip_plus_rp_adj", num: true, desc: true, isRem: true,
-      title: "WAR/IP+ regressed for sample size: the rate is pulled toward the pool rate by innings before indexing, so a short hot stretch does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season WAR does.",
+      title: "WAR/IP+ with the rate shrunk toward the pool by innings, re-standardised (10 points = 1 SD). A thin-sample readability aid, not a forecast: neither WAR rate predicts next season better than season WAR.",
       get: function (r) { return r.war_ip_plus_adj; },
       cell: function (r) { return r.war_ip_plus_adj == null ? "" : remCell(r.war_ip_plus_adj); } },
+    // BASIS, TYPED UNTIL THE PAYLOAD STAMPS IT (audit F10-01, 2026-09-10): the
+    // frozen 3-year pitcher column is bWAR while the 1-year column beside it is
+    // eWAR. multiyear_war_rate carries no basis field, so the page cannot read
+    // it; when the re-point epoch lands, this sentence goes with it.
     { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_rp_3yr", num: true, desc: true, isRem: true,
+      title: "Trailing three seasons, innings-weighted. bWAR basis while WAR/IP+ is eWAR, so the two are not on one scale.",
       vintage: "multiyear_war_rate",
       get: function (r) { return r.war_ip_plus_3yr; },
       cell: function (r) {
@@ -411,8 +416,8 @@
         if (r.war_ip_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 40 IP in the trailing window">*</span>';
         return s;
       } },
-    { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true,
-      title: "Pitching eWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched." },
+    { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true, ewar: true,
+      title: "Pitching eWAR this season; the WAR/IP+ numerator." },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "g", label: "G", fmt: fInt, num: true },
     { key: "k_pct", label: "K%", fmt: fPct, num: true },
@@ -435,7 +440,7 @@
     // one: see _join_leverage_consistency in bullpen_export.py, which returns a
     // row count where its sibling _join_rem_plus_3yr returns a vintage dict.
     { key: "gmli_3yr", label: "gmLI 3yr", term: "gmli_3yr", fmt: f2, num: true,
-      title: "Trailing 3-year game-entry Leverage Index, read verbatim from the frozen leverage-consistency artifact rather than recomputed with this board. Deployment context only, never an input to REM+. This artifact ships no vintage stamp, so unlike the other 3-year columns it cannot state its own date.",
+      title: "Trailing 3-year game-entry LI, frozen from the leverage-consistency artifact, which ships no date. Deployment context; not an input to REM+.",
       cell: function (r) {
         if (r.gmli_3yr == null) return "";
         var s = f2(r.gmli_3yr);
@@ -471,11 +476,13 @@
     // own. Point it at a real leverage_deploy_plus entry the day one exists;
     // until then a near-miss definition beats no tooltip at all.
     { key: "leverage_deploy_plus", label: "Lev Deploy+", term: "bullpen_plus", fmt: remCell, num: true,
-      title: "Bullpen+ recomputed on leverage-weighted innings: how good the arms are in the spots that actually decide games, rather than across all relief innings equally. Same 100-average scale." },
+      title: "Bullpen+ on leverage-weighted rather than IP-weighted relief innings. Same 100-average scale." },
     { key: "n_above_avg", label: "Above-avg arms", fmt: fInt, num: true,
+      title: "Relievers at REM+ 100 or better / relievers on the pen.",
       get: function (t) { var a = num(t.n_above_avg), n = num(t.n_relievers); return a; },
       cell: function (t) { return fInt(t.n_above_avg) + (t.n_relievers != null ? '<span class="proj-dim"> / ' + fInt(t.n_relievers) + "</span>" : ""); } },
-    { key: "high_lev_core_rem", label: "Hi-Lev Core", fmt: remCell, num: true },
+    { key: "high_lev_core_rem", label: "Hi-Lev Core", fmt: remCell, num: true,
+      title: "Mean REM+ of the pen's top three arms by gmLI." },
     { key: "relief_ip", label: "Relief IP", fmt: f1, num: true },
     { key: "team_wpa", label: "WPA", term: "wpa", fmt: fSigned, num: true },
     { key: "sd_md", label: "SD-MD", term: "shutdowns_meltdowns", fmt: fInt, num: true,
@@ -561,10 +568,22 @@
   function vintageTitle(b) {
     if (!b) return "";
     var w = vintageWindow(b);
-    return "FROZEN LAB COLUMN: read verbatim from " + (b.source || "a lab artifact")
-      + ", generated " + b.generated_at + (w ? " over the " + w + " window" : "")
-      + ". These values are as of that date, NOT as of this board's date, so the column can"
-      + " trail the season columns beside it and anyone who entered the pool since then is blank.";
+    return "FROZEN: read from " + (b.source || "a lab artifact") + ", generated " + b.generated_at
+      + (w ? ", " + w : "") + "; as of that date, not this board's. Blank for anyone who joined"
+      + " the pool since.";
+  }
+  // THE eWAR BUILD STAMP (war_source.ewar_vintage, on all three pitching and
+  // hitting payloads since 2026-09-10). data/ewar.json is hand-built, so this
+  // season's eWAR numerator can trail the IP or PA beside it. The page reads
+  // `stale` and the build date; it never types either.
+  function ewarVintage(meta) {
+    var v = meta && meta.ewar_vintage;
+    return (v && v.stale === true && v.artifact_generated_at) ? v : null;
+  }
+  function ewarTitle(meta) {
+    var v = ewarVintage(meta);
+    return v ? "eWAR built " + String(v.artifact_generated_at).slice(0, 10)
+      + " and not rebuilt nightly, so this season's value can trail the line beside it." : "";
   }
   // Compact board note. `cols` is [[payload key, column label], ...]; a block
   // that is absent or unavailable simply contributes nothing.
@@ -576,11 +595,12 @@
       var w = vintageWindow(b);
       bits.push(esc(p[1]) + " as of " + esc(b.generated_at) + (w ? " (" + esc(w) + ")" : ""));
     });
-    if (!bits.length) return "";
-    return '<div class="mlbstats-note mlbstats-vintage"><b>Frozen columns:</b> ' + bits.join(", ")
-      + ". The trailing-window columns are read verbatim from lab artifacts rather than recomputed"
-      + " with this board, so they carry their own date and stay blank for anyone who joined the"
-      + " pool after it." + (extra || "") + "</div>";
+    var ew = ewarTitle(meta);
+    if (!bits.length && !ew) return "";
+    return '<div class="mlbstats-note mlbstats-vintage">'
+      + (bits.length ? "<b>Frozen columns</b> (lab artifacts, not recomputed; blank for anyone who"
+        + " joined the pool later): " + bits.join(", ") + "." + (extra || "") : "")
+      + (ew ? (bits.length ? " " : "") + esc(ew) : "") + "</div>";
   }
 
   // ---- render: shared table -------------------------------------------------
@@ -593,6 +613,7 @@
       var sorted = (c.key === sort.key) ? " is-sorted" : "";
       var lbl = c.term ? gloss(c.label, c.term) : esc(c.label);
       var vint = c.vintage ? vintageTitle(vintageOf(meta, c.vintage)) : "";
+      if (c.ewar) { var ew = ewarTitle(meta); if (ew) vint = vint ? vint + " " + ew : ew; }
       var titleTxt = c.title ? (vint ? c.title + " " + vint : c.title) : vint;
       var title = titleTxt ? ' title="' + esc(titleTxt) + '"' : "";
       // keyboard-operable sort headers (the trademachine _tbTh pattern):
@@ -650,7 +671,7 @@
   function nameCell(r) {
     var role = r.role ? ' <span class="bp-role">' + esc(r.role) + "</span>" : "";
     var team = r.team ? '<span class="proj-dim"> ' + esc(r.team) + "</span>" : "";
-    var prov = (r.qualified === false) ? '<span class="bp-prov" title="below the qualifying sample - shown but provisional">prov</span>' : "";
+    var prov = (r.qualified === false) ? '<span class="bp-prov" title="Below the qualifying sample; provisional">prov</span>' : "";
     var nm = esc(r.name || EM_DASH);
     // A row with no name at all gets no title rather than a title of null
     // markers: an empty tooltip is worse than none.
@@ -768,24 +789,22 @@
     return ok ? relSort : { key: "rem_plus", asc: false };
   }
 
-  // On-page explainers for the headline metrics (F-08): 1-2 plain sentences,
-  // wired to the shared glossary tooltip (data-gl via gloss()) plus a deep link
-  // into the unified glossary entry.
+  // On-page explainers for the headline metrics (F-08): one line, wired to the
+  // shared glossary tooltip (data-gl via gloss()) plus a deep link into the
+  // unified glossary entry, which carries the method.
   function explainer(term, html) {
     return '<div class="mlbstats-note mlbstats-explainer">' + html
-      + ' <a href="/glossary/#g=' + encodeURIComponent(term) + '">Full definition in the glossary.</a></div>';
+      + ' <a href="/glossary/#g=' + encodeURIComponent(term) + '">Glossary</a></div>';
   }
   function remExplainer() {
     return explainer("rem_plus", gloss("REM+", "rem_plus")
-      + " measures a reliever's run-prevention skill on a league-relative scale: 100 is an average reliever, 110 is 10 percent"
-      + " better. It is FIP-based and regressed for small samples, so role and ball-in-play luck do not move it;"
-      + " the leverage columns carry the usage context separately.");
+      + ": FIP-based run-prevention skill, sample-shrunk; 100 is an average reliever, 110 is 10% better."
+      + " Role and leverage do not move it.");
   }
   function bullpenExplainer() {
     return explainer("bullpen_plus", gloss("Bullpen+", "bullpen_plus")
-      + " rates a whole pen on the same 100-average scale, weighting each reliever's "
-      + gloss("REM+", "rem_plus")
-      + " by the relief innings he actually throws. It reads the talent of the innings a bullpen really uses.");
+      + ": relief-IP-weighted " + gloss("REM+", "rem_plus") + " of a pen; 100 = average."
+      + " Lev Deploy+: the same on leverage-weighted innings.");
   }
 
   function renderRelievers() {
@@ -794,17 +813,13 @@
     var body = rows.length
       ? (function () {
           var note = '<div class="mlbstats-note">'
-            + gloss("REM+", "rem_plus") + " is pure run-prevention skill (100 = average reliever); "
-            + gloss("RIV+", "riv_plus") + " is realized leverage-weighted value, and "
-            + "gmLI / WPA / WPA-LI / SD-MD are the leverage context, kept separate. "
-            + gloss("WAR/IP+", "war_ip_plus_rp")
-            + " is banked value per inning, anchored on RELIEVERS only, so it does not compare with the"
-            + " starter board's column of the same name; 10 of its points is one standard deviation.</div>";
+            + gloss("RIV+", "riv_plus") + ": realized leverage-weighted value. gmLI, WPA, WPA/LI and SD-MD"
+            + " are leverage context. " + gloss("WAR/IP+", "war_ip_plus_rp")
+            + ": reliever-anchored, 10 points = 1 SD; not comparable with the starter board's.</div>";
           return proseFold("rel-about", rows.length + " relievers",
               remExplainer() + scorecard() + note
               + vintageNote(DATA, [["multiyear", "REM+ 3yr"], ["multiyear_war_rate", "WAR/IP+ 3yr"]],
-                  " gmLI 3yr is frozen the same way, from the leverage-consistency artifact, which ships no"
-                  + " date for the board to quote."))
+                  " gmLI 3yr: frozen the same way, no date shipped."))
             + relieverViz()
             + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort, DATA) + "</div>";
         })()
@@ -838,9 +853,8 @@
     var nQual = (yr.n_qualified != null) ? yr.n_qualified : yr.relievers.length;
     var cap = proseFold("rel-history-about",
       esc(relSeason) + " season, " + esc(nQual) + " qualified relievers",
-      '<div class="mlbstats-note">' + gloss("REM+", "rem_plus") + " is the skill read and "
-      + gloss("RIV+", "riv_plus") + " is realized leverage-weighted value; compare them against how "
-      + "these arms actually played forward.</div>");
+      '<div class="mlbstats-note">' + gloss("REM+", "rem_plus") + ": skill. "
+      + gloss("RIV+", "riv_plus") + ": realized leverage-weighted value.</div>");
     var table = rows.length
       ? '<div class="mlbstats-scroll">' + renderTable(rows, REL_HISTORY_COLS, sort) + "</div>"
       : '<div class="mlbstats-empty">No relievers match the current filters.</div>';
@@ -851,10 +865,7 @@
     var rows = (DATA && DATA.teams) || [];
     rows = sortRows(rows, TEAM_COLS, teamSort);
     if (!rows.length) return '<div class="mlbstats-empty">No team bullpens to show yet.</div>';
-    var note = '<div class="mlbstats-note">' + gloss("Bullpen+", "bullpen_plus")
-      + " weights each pen by the quality of the relief innings it throws (relief-IP-weighted REM+); "
-      + "Lev Deploy+ adds how much leverage those innings carry.</div>";
-    return proseFold("relteam-about", rows.length + " bullpens", bullpenExplainer() + note)
+    return proseFold("relteam-about", rows.length + " bullpens", bullpenExplainer())
       + '<div class="mlbstats-scroll">' + renderTable(rows, TEAM_COLS, teamSort) + "</div>";
   }
 
@@ -884,8 +895,8 @@
         + '<span class="rem-plus ' + remClass(t.bullpen_plus) + '" data-gl="bullpen_plus">Bullpen+ ' + fInt(t.bullpen_plus) + "</span>"
         + "</div>" + slots + "</div>";
     }).join("");
-    return '<div class="mlbstats-note">Each pen as a leverage ladder: who actually pitches the high-leverage innings, and how good they are ('
-      + gloss("REM+", "rem_plus") + " per slot).</div>" + '<div class="bp-depth-grid">' + cards + "</div>";
+    return '<div class="mlbstats-note">Each pen by role, then gmLI; number = '
+      + gloss("REM+", "rem_plus") + ".</div>" + '<div class="bp-depth-grid">' + cards + "</div>";
   }
 
   // ---- shell ----------------------------------------------------------------
@@ -914,7 +925,7 @@
       bits.push(esc(cov.games) + (tot != null ? " / " + esc(tot) : "") + " games of play-by-play");
     }
     if (d.verdict === "validated") {
-      bits.push('<span class="bp-validated" title="Backtested out of sample - see the scorecard below">backtested</span>');
+      bits.push('<span class="bp-validated" title="Backtested out of sample; scorecard in the board notes">backtested</span>');
     } else if (d.verdict) {
       bits.push('<span class="bp-prov" style="margin-left:0">' + esc(d.verdict) + "</span>");
     }
@@ -998,7 +1009,7 @@
       + '<input type="checkbox" id="mlbstats-qual"' + (qualifiedOnly ? " checked" : "") + "> qualified only</label>"
       + teamSelect("mlbstats-team", pool, relTeam)
       + minSelect("mlbstats-minip", "min IP", relMinIp,
-          "Hide relievers under this many innings. Composes with qualified only, which is the coarser gate.")
+          "Minimum innings. Stacks with qualified only.")
       + gfxChip("mlbstats-rel-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-q" placeholder="Search reliever or team" value="' + esc(query) + '">'
       + "</div>"
@@ -1309,11 +1320,11 @@
         return s;
       } },
     { key: "xsem_plus", label: "xSEM+", term: "xsem_plus", num: true, desc: true, isRem: true,
-      title: "Deserved run prevention: the SEM+ scale on Savant expected wOBA allowed (lower allowed = higher). A companion to SEM+, which stays FIP-based (xwOBA-allowed did not beat FIP predictively); a deserved read, not a replacement. Tracked starters only.",
+      title: "SEM+ scale on Savant xwOBA allowed. A deserved read beside SEM+, not a replacement: xwOBA allowed did not beat FIP predictively. Tracked starters only.",
       get: function (r) { return r.xsem_plus; },
       cell: function (r) { return r.xsem_plus == null ? "" : remCell(r.xsem_plus); } },
     { key: "luck", label: "Luck", num: true, desc: true,
-      title: "Actual minus expected wOBA allowed. Positive = allowed more than his contact deserved (unlucky, room to improve); negative = allowed less (over-performing, due to regress).",
+      title: "wOBA allowed minus xwOBA allowed. Positive: allowed more than his contact deserved; negative: less.",
       get: function (r) { return r.luck; },
       cell: function (r) {
         if (r.luck == null) return "";
@@ -1327,7 +1338,8 @@
     // banks more WAR per inning than a starter of equal talent). Both ride
     // remCell: 100 + 10z has SD exactly 10, which is what remClass bands for.
     { key: "war_ip_plus", label: "WAR/IP+", term: "war_ip_plus_sp", num: true, desc: true, isRem: true,
-      title: "Pitching eWAR (FIP re-priced within role) per inning, indexed over STARTERS with 20+ IP: 100 is the average starter and every 10 points is one standard deviation of that pool. Anchored on starters only, so it is not comparable with the reliever board's WAR/IP+. Needs 40 IP to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
+      ewar: true,
+      title: "Pitching eWAR per inning, 100 + 10z over starters with 20+ IP; shown at 40+ IP. Not comparable with the reliever board's WAR/IP+. p = percentile on this board.",
       get: function (r) { return r.war_ip_plus; },
       cell: function (r) {
         if (r.war_ip_plus == null) return "";
@@ -1336,10 +1348,12 @@
         return s;
       } },
     { key: "war_ip_plus_adj", label: "WAR/IP+ adj", term: "war_ip_plus_sp_adj", num: true, desc: true, isRem: true,
-      title: "WAR/IP+ regressed for sample size: the rate is pulled toward the pool rate by innings before indexing, so a short hot stretch does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season WAR does.",
+      title: "WAR/IP+ with the rate shrunk toward the pool by innings, re-standardised (10 points = 1 SD). A thin-sample readability aid, not a forecast: neither WAR rate predicts next season better than season WAR.",
       get: function (r) { return r.war_ip_plus_adj; },
       cell: function (r) { return r.war_ip_plus_adj == null ? "" : remCell(r.war_ip_plus_adj); } },
+    // Same typed basis sentence as the reliever board (audit F10-01).
     { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_sp_3yr", num: true, desc: true, isRem: true,
+      title: "Trailing three seasons, innings-weighted. bWAR basis while WAR/IP+ is eWAR, so the two are not on one scale.",
       vintage: "multiyear_war_rate",
       get: function (r) { return r.war_ip_plus_3yr; },
       cell: function (r) {
@@ -1349,8 +1363,8 @@
         if (r.war_ip_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 120 IP in the trailing window">*</span>';
         return s;
       } },
-    { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true,
-      title: "Pitching eWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched." },
+    { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true, ewar: true,
+      title: "Pitching eWAR this season; the WAR/IP+ numerator." },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "gs", label: "GS", fmt: fInt, num: true },
     { key: "ip_per_gs", label: "IP/GS", fmt: f1, num: true, title: "Average start length (innings per game started)" },
@@ -1377,7 +1391,8 @@
   var STARTER_TEAM_COLS = [
     { key: "team", label: "Team", sortable: true, kind: "team", asc: true },
     { key: "rotation_plus", label: "Rotation+", term: "rotation_plus", fmt: remCell, num: true, desc: true, isRem: true },
-    { key: "front_sem", label: "Front 3", fmt: remCell, num: true },
+    { key: "front_sem", label: "Front 3", fmt: remCell, num: true,
+      title: "Mean SEM+ of the top three starters by SEM+." },
     { key: "n_above_avg", label: "Above-avg", fmt: fInt, num: true,
       get: function (t) { return num(t.n_above_avg); },
       cell: function (t) { return fInt(t.n_above_avg) + (t.n_starters != null ? '<span class="proj-dim"> / ' + fInt(t.n_starters) + "</span>" : ""); } },
@@ -1389,10 +1404,8 @@
   // reliever REM+ one, wired to the glossary tooltip (data-gl) + deep link.
   function semExplainer() {
     return explainer("sem_plus", gloss("SEM+", "sem_plus")
-      + " measures a starting pitcher's pure run-prevention skill on a league-relative scale: 100 is an average"
-      + " qualified starter, 110 is 10 percent better. It is FIP-based and regressed for small samples, so"
-      + " durability (innings, games started, and average start length) rides the context columns instead of"
-      + " moving the skill number.");
+      + ": FIP-based run-prevention skill, sample-shrunk; 100 is an average qualified starter, 110 is"
+      + " 10% better. IP, GS and IP/GS are context and do not move it.");
   }
 
   // SEM+ accountability scorecard - mirrors the reliever scorecard so a validated
@@ -1491,7 +1504,7 @@
       + '<input type="checkbox" id="mlbstats-starter-qual"' + (starterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
       + teamSelect("mlbstats-starter-team", starterSourceRows(), starterTeam)
       + minSelect("mlbstats-starter-minip", "min IP", starterMinIp,
-          "Hide starters under this many innings. Composes with qualified only, which is the coarser gate.")
+          "Minimum innings. Stacks with qualified only.")
       + gfxChip("mlbstats-starter-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-starter-q" placeholder="Search starter or team" value="' + esc(starterQuery) + '">'
       + "</div>";
@@ -1502,12 +1515,8 @@
     var rows = sortRows(filteredStarters(), STARTER_COLS, starterSort);
     var body = rows.length
       ? (function () {
-          var note = '<div class="mlbstats-note">'
-            + gloss("SEM+", "sem_plus") + " is pure run-prevention skill (100 = average qualified starter); "
-            + "the durability columns (IP, GS, IP/GS) are context, kept separate from the skill number. "
-            + gloss("WAR/IP+", "war_ip_plus_sp")
-            + " is banked value per inning, anchored on STARTERS only, so it does not compare with the"
-            + " reliever board's column of the same name; 10 of its points is one standard deviation.</div>";
+          var note = '<div class="mlbstats-note">' + gloss("WAR/IP+", "war_ip_plus_sp")
+            + ": starter-anchored, 10 points = 1 SD; not comparable with the reliever board's.</div>";
           return proseFold("sp-about", rows.length + " starters",
               semExplainer() + starterScorecard() + note
               + vintageNote(starterData, [["multiyear", "SEM+ 3yr"], ["multiyear_war_rate", "WAR/IP+ 3yr"]]))
@@ -1543,8 +1552,7 @@
     var nQual = (yr.n_qualified != null) ? yr.n_qualified : yr.starters.length;
     var cap = proseFold("sp-history-about",
       esc(starterSeason) + " season, " + esc(nQual) + " qualified starters",
-      '<div class="mlbstats-note">' + gloss("SEM+", "sem_plus") + " is the skill read; the durability columns"
-      + " (IP, GS, IP/GS) are context. Compare against how these arms actually pitched forward.</div>");
+      '<div class="mlbstats-note">' + gloss("SEM+", "sem_plus") + ": skill. IP, GS and IP/GS: context.</div>");
     var table = rows.length
       ? '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_HISTORY_COLS, sort) + "</div>"
       : '<div class="mlbstats-empty">No starters match the current filters.</div>';
@@ -1555,9 +1563,8 @@
     var rows = (starterData && starterData.teams) || [];
     rows = sortRows(rows, STARTER_TEAM_COLS, starterTeamSort);
     if (!rows.length) return '<div class="mlbstats-empty">No team rotations to show yet.</div>';
-    var note = '<div class="mlbstats-note">' + gloss("Rotation+", "rotation_plus") + ' weights each rotation by the '
-      + gloss("SEM+", "sem_plus") + " of the starter innings it throws (starter-IP-weighted). Front 3 reads the"
-      + " top of the rotation; the durability columns are context.</div>";
+    var note = '<div class="mlbstats-note">' + gloss("Rotation+", "rotation_plus") + ": starter-IP-weighted "
+      + gloss("SEM+", "sem_plus") + " of a rotation; 100 = average.</div>";
     return proseFold("spteam-about", rows.length + " rotations", note)
       + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_TEAM_COLS, starterTeamSort) + "</div>";
   }
@@ -1593,13 +1600,13 @@
     if (!hist && !sc && !xsc) return "";
     var body = '<div class="mlbstats-viz">'
       + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("SEM+", "sem_plus")
-      + ' distribution <span class="proj-dim">(qualified starters; cyan = elite)</span></div>' + hist + "</div>"
-      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Skill vs durability'
-        + ' <span class="proj-dim">(top-right = front-line workhorses)</span></div>' + sc + "</div>" : "")
-      + (xsc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Earned vs deserved: SEM+ × ' + gloss("xSEM+", "xsem_plus")
-        + ' <span class="proj-dim">(below the diagonal = results ahead of contact quality)</span></div>' + xsc + "</div>" : "")
+      + ' distribution <span class="proj-dim">(qualified; cyan = 120+)</span></div>' + hist + "</div>"
+      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">SEM+ vs IP/GS'
+        + ' <span class="proj-dim">(bright = SEM+ 115+)</span></div>' + sc + "</div>" : "")
+      + (xsc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">SEM+ vs ' + gloss("xSEM+", "xsem_plus")
+        + ' <span class="proj-dim">(below the diagonal = FIP results ahead of contact quality)</span></div>' + xsc + "</div>" : "")
       + "</div>";
-    return collapsible("starters-viz", 'Distribution <span class="proj-dim">(SEM+ spread, durability, earned vs deserved)</span>', body);
+    return collapsible("starters-viz", 'Charts <span class="proj-dim">(SEM+ distribution, vs IP/GS, vs xSEM+)</span>', body);
   }
 
   function rotationLadders() {
@@ -1630,8 +1637,7 @@
         + '<span class="rem-plus ' + remClass(t.rotation_plus) + '" data-gl="rotation_plus">Rotation+ ' + fInt(t.rotation_plus) + "</span>"
         + "</div>" + slots + "</div>";
     }).join("");
-    return '<div class="mlbstats-note">Each rotation as a depth ladder: its starters ordered by workload, with '
-      + gloss("SEM+", "sem_plus") + " per slot (skill) and average start length.</div>"
+    return '<div class="mlbstats-note">Top five starters by IP; number = ' + gloss("SEM+", "sem_plus") + ".</div>"
       + '<div class="bp-depth-grid">' + cards + "</div>";
   }
 
@@ -1805,7 +1811,7 @@
     // can be read against the number the industry publishes. No isRem flag:
     // that marks the site's own index family and this is not one of them.
     { key: "wrc_plus", label: "wRC+", term: "wrc_plus", num: true, desc: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. MLB's own wRC+ for this season, read verbatim from the league's season-total feed and matched by player id. 100 is league average, park and league adjusted. It sits here as the industry benchmark next to HEM+, which is the offense-rate index this site does compute. Because it is unshrunk it runs wider than HEM+ (about 25 points per standard deviation of the qualified pool against about 18), so it is colored on its own thresholds. A traded hitter reads one season line, not a single stint.",
+      title: "PUBLISHED, NOT COMPUTED HERE. MLB's season-total wRC+, read verbatim by player id; a traded hitter reads one line. 100 = league average, park and league adjusted. Unshrunk, so it runs wider than HEM+ and bands on its own thresholds.",
       get: function (r) { return r.wrc_plus; },
       cell: function (r) { return r.wrc_plus == null ? "" : wrcCell(r.wrc_plus); } },
     { key: "hem_plus_3yr", label: "HEM+ 3yr", term: "hem_plus_3yr", num: true, desc: true, isRem: true,
@@ -1819,15 +1825,15 @@
         return s;
       } },
     { key: "xhem_plus", label: "xHEM+", term: "xhem_plus", num: true, desc: true, isRem: true,
-      title: "Deserved offense: the HEM+ scale on Savant expected wOBA (xwOBA). Forward-predicts next-year offense better than actual. Tracked hitters only.",
+      title: "HEM+ scale on Savant xwOBA. Predicts next-year offense better than actual wOBA. Tracked hitters only.",
       get: function (r) { return r.xhem_plus; },
       cell: function (r) { return r.xhem_plus == null ? "" : hemCell(r.xhem_plus); } },
     { key: "fwdhem_plus", label: "xHEM+ Blend", term: "fwdhem_plus", num: true, desc: true, isRem: true,
-      title: "Forward blend: 70% expected wOBA + 30% HEM+ core, on the HEM+ scale. The best single-number read on NEXT-year offense (beats xwOBA alone out of sample). Tracked hitters only.",
+      title: "70% xwOBA + 30% HEM+ core, HEM+ scale. Beats xwOBA alone on next-year offense out of sample. Tracked hitters only.",
       get: function (r) { return r.fwdhem_plus; },
       cell: function (r) { return r.fwdhem_plus == null ? "" : hemCell(r.fwdhem_plus); } },
     { key: "pwoba", label: "pWOBA", term: "pwoba", num: true, desc: true,
-      title: "Projected NEXT-season wOBA from the site's FA-engine Marcel (the validated projection engine: forward rho 0.5189 vs next-year wOBA, best of five gated arms). Read like wOBA: ~.310 average, .400 elite. Tracked hitters with a recent MLB sample only.",
+      title: "Next-season wOBA from the FA-engine Marcel projection; read like wOBA (about .310 average). Tracked hitters with a recent MLB sample.",
       get: function (r) { return r.pwoba; },
       cell: function (r) {
         if (r.pwoba == null) return "";
@@ -1838,7 +1844,7 @@
         return '<span class="rem-plus ' + cls + '" data-gl="pwoba">' + f3(r.pwoba) + "</span>";
       } },
     { key: "luck_gap", label: "Luck", num: true, desc: true,
-      title: "xHEM+ minus HEM+: positive = under-performing his contact quality (bad luck, room to bounce back); negative = over-performing (due to regress).",
+      title: "xHEM+ minus HEM+. Positive: results below his contact quality; negative: above it.",
       get: function (r) { return r.luck_gap; },
       cell: function (r) {
         if (r.luck_gap == null) return "";
@@ -1853,7 +1859,8 @@
     // bands at. Recoloring it with hemCell would call a 1.2-sigma hitter
     // average. Do not "fix" this to match the neighbouring columns.
     { key: "war_pa_plus", label: "WAR/PA+", term: "war_pa_plus", num: true, desc: true, isRem: true,
-      title: "Batting eWAR (equal to bWAR on the batting side) per plate appearance, indexed over hitters with 50+ PA: 100 is average and every 10 points is one standard deviation of that pool (not the wRC+-width scale HEM+ uses). Whole-player batting value per trip, so it carries fielding, baserunning and the positional adjustment, which HEM+ deliberately leaves out. Needs 100 PA to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
+      ewar: true,
+      title: "Position-player eWAR (equal to bWAR on this side) per PA, 100 + 10z over hitters with 50+ PA; shown at 100+ PA. Carries fielding, baserunning and the positional adjustment, which HEM+ leaves out. p = percentile on this board.",
       get: function (r) { return r.war_pa_plus; },
       cell: function (r) {
         if (r.war_pa_plus == null) return "";
@@ -1862,7 +1869,7 @@
         return s;
       } },
     { key: "war_pa_plus_adj", label: "WAR/PA+ adj", term: "war_pa_plus_adj", num: true, desc: true, isRem: true,
-      title: "WAR/PA+ regressed for sample size: the rate is pulled toward the league rate by playing time before indexing, so a hot 110-PA line does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season WAR does.",
+      title: "WAR/PA+ with the rate shrunk toward the league by PA, re-standardised (10 points = 1 SD). A thin-sample readability aid, not a forecast: neither WAR rate predicts next season better than season WAR.",
       get: function (r) { return r.war_pa_plus_adj; },
       cell: function (r) { return r.war_pa_plus_adj == null ? "" : remCell(r.war_pa_plus_adj); } },
     { key: "war_pa_plus_3yr", label: "WAR/PA+ 3yr", term: "war_pa_plus_3yr", num: true, desc: true, isRem: true,
@@ -1875,8 +1882,8 @@
         if (r.war_pa_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 600 PA in the trailing window">*</span>';
         return s;
       } },
-    { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true,
-      title: "Batting eWAR this season, the numerator of WAR/PA+ (shown so the rate is checkable against the PA column). eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched." },
+    { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true, ewar: true,
+      title: "Position-player eWAR this season; the WAR/PA+ numerator." },
     { key: "pa", label: "PA", fmt: fInt, num: true },
     { key: "hr", label: "HR", fmt: fInt, num: true },
     { key: "sb", label: "SB", fmt: fInt, num: true },
@@ -1913,7 +1920,7 @@
   var HITTER_TEAM_COLS = [
     { key: "team", label: "Team", sortable: true, kind: "team", asc: true },
     { key: "offense_plus", label: "Offense+", term: "offense_plus", fmt: hemCell, num: true, desc: true, isRem: true },
-    { key: "heart_hem", label: "Heart 3", fmt: hemCell, num: true, title: "Top-3 regulars by HEM+ (heart of the order)" },
+    { key: "heart_hem", label: "Heart 3", fmt: hemCell, num: true, title: "Mean HEM+ of the top three qualified regulars by HEM+." },
     { key: "n_above_avg", label: "Above-avg", fmt: fInt, num: true,
       get: function (t) { return num(t.n_above_avg); },
       cell: function (t) { return fInt(t.n_above_avg) + (t.n_hitters != null ? '<span class="proj-dim"> / ' + fInt(t.n_hitters) + "</span>" : ""); } },
@@ -1922,11 +1929,8 @@
 
   function hemExplainer() {
     return explainer("hem_plus", gloss("HEM+", "hem_plus")
-      + " measures a hitter's pure offensive-rate skill on a league-relative scale (100 = an average"
-      + " qualified hitter), scaled to the wRC+ convention so the league reads with real separation"
-      + " (roughly 15 points per standard deviation). It is a sample-shrunk wOBA (the wRC+ family), so"
-      + " volume (PA), baserunning (SB), and the slash line ride the context columns instead of moving"
-      + " the skill number.");
+      + ": sample-shrunk wOBA on the wRC+ scale; 100 = an average qualified hitter. PA, SB and the"
+      + " slash line are context and do not move it.");
   }
 
   function hitterScorecard() {
@@ -2013,7 +2017,7 @@
       + '<input type="checkbox" id="mlbstats-hitter-qual"' + (hitterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
       + teamSelect("mlbstats-hitter-team", hitterSourceRows(), hitterTeam)
       + minSelect("mlbstats-hitter-minpa", "min PA", hitterMinPa,
-          "Hide hitters under this many plate appearances. Composes with qualified only, which is the coarser gate.")
+          "Minimum plate appearances. Stacks with qualified only.")
       + gfxChip("mlbstats-hitter-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-hitter-q" placeholder="Search hitter or team" value="' + esc(hitterQuery) + '">'
       + "</div>";
@@ -2024,18 +2028,10 @@
     var rows = sortRows(filteredHitters(), HITTER_COLS, hitterSort);
     var body = rows.length
       ? (function () {
-          var note = '<div class="mlbstats-note">'
-            + gloss("HEM+", "hem_plus") + " is pure offensive-rate skill (100 = average qualified hitter); "
-            + "the volume (PA, HR, SB) and slash columns are context, kept separate from the skill number. "
-            + gloss("wRC+", "wrc_plus")
-            + " beside it is the industry's published number, not one of ours: it is read verbatim from"
-            + " MLB's season-total feed and matched by player id, so this site still derives no wRC+ of"
-            + " its own. It runs wider than HEM+ because it is unshrunk, which is why the two columns"
-            + " color on different thresholds. "
-            + gloss("WAR/PA+", "war_pa_plus")
-            + " is a different question and a different ruler: total batting value per plate appearance,"
-            + " fielding and baserunning included, and 10 of its points is one standard deviation rather"
-            + " than the wider spread HEM+ reads on.</div>";
+          var note = '<div class="mlbstats-note">' + gloss("wRC+", "wrc_plus")
+            + ": the industry's published number, not one of ours; read verbatim from MLB's feed, so this"
+            + " site derives no wRC+. Unshrunk, so it bands wider than HEM+. " + gloss("WAR/PA+", "war_pa_plus")
+            + ": value per PA with fielding and baserunning, 10 points = 1 SD.</div>";
           return proseFold("hit-about", rows.length + " hitters",
               hemExplainer() + hitterScorecard() + note
               + vintageNote(hitterData, [["multiyear", "HEM+ 3yr"], ["multiyear_war_rate", "WAR/PA+ 3yr"]]))
@@ -2068,8 +2064,7 @@
     var nQual = (yr.n_qualified != null) ? yr.n_qualified : yr.hitters.length;
     var cap = proseFold("hit-history-about",
       esc(hitterSeason) + " season, " + esc(nQual) + " qualified hitters",
-      '<div class="mlbstats-note">' + gloss("HEM+", "hem_plus") + " is the skill read; the slash + volume"
-      + " columns are context. Compare against how these bats actually hit forward.</div>");
+      '<div class="mlbstats-note">' + gloss("HEM+", "hem_plus") + ": skill. Slash and volume: context.</div>");
     var table = rows.length
       ? '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_HISTORY_COLS, sort) + "</div>"
       : '<div class="mlbstats-empty">No hitters match the current filters.</div>';
@@ -2080,9 +2075,8 @@
     var rows = (hitterData && hitterData.teams) || [];
     rows = sortRows(rows, HITTER_TEAM_COLS, hitterTeamSort);
     if (!rows.length) return '<div class="mlbstats-empty">No team lineups to show yet.</div>';
-    var note = '<div class="mlbstats-note">' + gloss("Offense+", "offense_plus") + ' weights each lineup by the '
-      + gloss("HEM+", "hem_plus") + " of the plate appearances it takes (PA-weighted). Heart 3 reads the"
-      + " top of the order; the volume columns are context.</div>";
+    var note = '<div class="mlbstats-note">' + gloss("Offense+", "offense_plus") + ": PA-weighted "
+      + gloss("HEM+", "hem_plus") + " of a lineup; 100 = average.</div>";
     return proseFold("hitteam-about", rows.length + " lineups", note)
       + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_TEAM_COLS, hitterTeamSort) + "</div>";
   }
@@ -2117,13 +2111,13 @@
     if (!hist && !sc && !psc) return "";
     var body = '<div class="mlbstats-viz">'
       + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("HEM+", "hem_plus")
-      + ' distribution <span class="proj-dim">(qualified hitters; cyan = elite)</span></div>' + hist + "</div>"
-      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Skill vs volume'
-        + ' <span class="proj-dim">(top-right = elite bats with the PAs to prove it)</span></div>' + sc + "</div>" : "")
-      + (psc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Now vs next: HEM+ × ' + gloss("pWOBA", "pwoba")
-        + ' <span class="proj-dim">(above the pack = projection believes; below = season outrunning it)</span></div>' + psc + "</div>" : "")
+      + ' distribution <span class="proj-dim">(qualified; cyan = 130+)</span></div>' + hist + "</div>"
+      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">HEM+ vs PA'
+        + ' <span class="proj-dim">(bright = HEM+ 130+)</span></div>' + sc + "</div>" : "")
+      + (psc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">HEM+ vs ' + gloss("pWOBA", "pwoba")
+        + ' <span class="proj-dim">(this season against the next-season projection)</span></div>' + psc + "</div>" : "")
       + "</div>";
-    return collapsible("hitters-viz", 'Distribution <span class="proj-dim">(HEM+ spread, skill vs volume, now vs next)</span>', body);
+    return collapsible("hitters-viz", 'Charts <span class="proj-dim">(HEM+ distribution, vs PA, vs pWOBA)</span>', body);
   }
 
   // vs-RHP / vs-LHP segmented toggle for the constructed lineups.
@@ -2488,16 +2482,16 @@
   var BAT_LEV_COLS = [
     { key: "name", label: "Batter", term: null, sortable: true, kind: "name", asc: true },
     { key: "wpa", label: "WPA", term: "wpa", num: true, desc: true,
-      title: "Win Probability Added (batter): total win probability the hitter's plate appearances swung his team's way.",
+      title: "Win probability his plate appearances added.",
       cell: function (r) { return levSignedCell(r.wpa, 2, 0); } },
     { key: "pli", label: "pLI", term: "pli", num: true, desc: true,
-      title: "Average Leverage Index faced (1.0 = neutral). How high-stakes his plate appearances were on average.",
+      title: "Average Leverage Index faced; 1.0 = neutral.",
       cell: function (r) { return r.pli == null ? EM_DASH : f2(r.pli); } },
     { key: "clutch", label: "Clutch", term: "clutch", num: true, desc: true,
-      title: "WPA/pLI minus WPA/LI: how much more (or less) win probability he added in high-leverage spots than his own rate predicts. A timing read, not a skill.",
+      title: "WPA/pLI minus WPA/LI. Timing, not skill.",
       cell: function (r) { return levSignedCell(r.clutch, 2, 0.5); } },
     { key: "wpa_li", label: "WPA/LI", term: "wpa_li", num: true, desc: true,
-      title: "Context-neutral WPA: his win-probability production stripped of the leverage of the spots he happened to be in.",
+      title: "WPA with the leverage of his spots removed.",
       cell: function (r) { return levSignedCell(r.wpa_li, 2, 0); } },
     { key: "pa", label: "PA", fmt: fInt, num: true, title: "Plate appearances (context)" },
   ];
@@ -2505,13 +2499,13 @@
   var STARTER_LEV_COLS = [
     { key: "name", label: "Starter", term: null, sortable: true, kind: "name", asc: true },
     { key: "wpa", label: "WPA", term: "wpa", num: true, desc: true,
-      title: "Win Probability Added (starter): total win probability his starts swung his team's way.",
+      title: "Win probability his starts added.",
       cell: function (r) { return levSignedCell(r.wpa, 2, 0); } },
     { key: "wpa_per_start", label: "WPA/start", num: true, desc: true,
-      title: "WPA per game started -- his average per-outing win-probability impact.",
+      title: "WPA per game started.",
       cell: function (r) { return levSignedCell(r.wpa_per_start, 3, 0); } },
     { key: "wpa_li", label: "WPA/LI", term: "wpa_li", num: true, desc: true,
-      title: "Context-neutral WPA: his production with the leverage of his spots removed.",
+      title: "WPA with the leverage of his spots removed.",
       cell: function (r) { return levSignedCell(r.wpa_li, 2, 0); } },
     { key: "starts", label: "GS", fmt: fInt, num: true, title: "Games started (context)" },
   ];
@@ -2521,12 +2515,9 @@
 
   function levExplainer() {
     return explainer("wpa", gloss("WPA", "wpa")
-      + " (Win Probability Added) is a realized, in-the-moment impact tally: every play shifts each team's"
-      + " win probability, and a batter is credited with his team's swing (the pitcher gets the mirror image)."
-      + " " + gloss("pLI", "pli") + " is the average leverage of the spots he was in (1.0 = neutral), and "
-      + gloss("Clutch", "clutch") + " asks whether his value clustered when it mattered (WPA/pLI minus WPA/LI)."
-      + " These are descriptive outcome measures, self-computed from the MLB win-probability feed -- not a"
-      + " projection.");
+      + ": realized win probability added, computed here from the MLB win-probability feed. "
+      + gloss("pLI", "pli") + ": average leverage faced (1.0 = neutral). " + gloss("Clutch", "clutch")
+      + ": WPA/pLI minus WPA/LI. Descriptive, not a projection.");
   }
 
   // The row source for the active view honors the season pill: the live board
@@ -2612,11 +2603,11 @@
       if (!hist && !sc) return "";
       body = '<div class="mlbstats-viz">'
         + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">WPA per start'
-        + ' <span class="proj-dim">(qualified starters)</span></div>' + hist + "</div>"
-        + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Skill vs timing'
-          + ' <span class="proj-dim">(above the line = value added in higher-leverage spots)</span></div>' + sc + "</div>" : "")
+        + ' <span class="proj-dim">(qualified; cyan = 0.04+)</span></div>' + hist + "</div>"
+        + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">WPA/LI vs timing'
+          + ' <span class="proj-dim">(timing = WPA minus WPA/LI; above 0 = more value in higher-leverage spots)</span></div>' + sc + "</div>" : "")
         + "</div>";
-      return collapsible("leverage-viz", 'Charts <span class="proj-dim">(WPA distribution, skill vs timing)</span>', body);
+      return collapsible("leverage-viz", 'Charts <span class="proj-dim">(WPA per start, WPA/LI vs timing)</span>', body);
     }
     hist = chart("histogram", qual.map(function (r) { return r.wpa; }),
       { height: 108, highlightAbove: 2, refs: [{ at: 0, label: "0" }], aria: "WPA distribution" });
@@ -2632,11 +2623,11 @@
     if (!hist && !sc) return "";
     body = '<div class="mlbstats-viz">'
       + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("WPA", "wpa")
-      + ' distribution <span class="proj-dim">(qualified batters; cyan = high impact)</span></div>' + hist + "</div>"
-      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Production vs leverage'
-        + ' <span class="proj-dim">(top-right = productive bats in high-leverage spots; green = clutch-positive, red = clutch-negative)</span></div>' + sc + "</div>" : "")
+      + ' distribution <span class="proj-dim">(qualified; cyan = 2+)</span></div>' + hist + "</div>"
+      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">WPA/LI vs ' + gloss("pLI", "pli")
+        + ' <span class="proj-dim">(green = Clutch +0.5 or more, red = -0.5 or less)</span></div>' + sc + "</div>" : "")
       + "</div>";
-    return collapsible("leverage-viz", 'Charts <span class="proj-dim">(WPA distribution, production vs leverage)</span>', body);
+    return collapsible("leverage-viz", 'Charts <span class="proj-dim">(WPA distribution, WPA/LI vs pLI)</span>', body);
   }
 
   function leverageTabBar() {
@@ -2670,7 +2661,7 @@
     }
     if (!cov || cov.games == null) return "";
     return '<span class="proj-dim"> &middot; ' + esc(cov.games)
-      + (cov.games_total != null ? " / " + esc(cov.games_total) : "") + " games walked</span>";
+      + (cov.games_total != null ? " / " + esc(cov.games_total) : "") + " games of play-by-play</span>";
   }
 
   function renderLeverageBoard() {
@@ -2696,17 +2687,13 @@
     if (!rows.length) return '<div class="mlbstats-empty">No players match the current filters.</div>';
     var isStart = (leverageView === "starters");
     var seasonLbl = (leverageSeason === "current") ? "" : (esc(leverageSeason) + " season, ");
-    var note = '<div class="mlbstats-note">'
-      + gloss("WPA", "wpa") + " is realized in-game impact; " + gloss("pLI", "pli")
-      + " and " + gloss("Clutch", "clutch") + " read the leverage of the spots. Descriptive outcome value, "
-      + "not a forecast.</div>";
     // The coverage count rides the fold HEAD, not the folded body: the shell
     // banner suppresses its own copy here (noCoverage) because only this board
     // knows which season the pill is on, so folding it away would leave a phone
     // reader with no games-walked count at all.
     return proseFold("lev-about",
         seasonLbl + rows.length + (isStart ? " starters" : " batters") + leverageCoverage(),
-        levExplainer() + note)
+        levExplainer())
       + leverageViz() + '<div class="mlbstats-scroll">' + renderTable(rows, cols, sort) + "</div>";
   }
 
@@ -3061,7 +3048,7 @@
       + '<input type="checkbox" id="mlbstats-defense-qual"' + (defenseQualifiedOnly ? " checked" : "") + "> qualified only</label>"
       + teamSelect("mlbstats-defense-team", pool, defenseTeam)
       + minSelect("mlbstats-defense-mininn", "min Inn", defenseMinInn,
-          "Hide fielders under this many defensive innings. Composes with qualified only.")
+          "Minimum defensive innings. Stacks with qualified only.")
       + gfxChip("mlbstats-defense-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-defense-q" placeholder="Search fielder or team" value="' + esc(defenseQuery) + '">'
       + "</div>"
@@ -3382,7 +3369,7 @@
       return spec("MLB Stats · REM+ Leaders",
         seasonBits(relSeason, DATA, "relievers"),
         "mlbstats-rem-leaders",
-        "REM+ = FIP-based, sample-shrunk run-prevention skill - leverage rides separate columns",
+        "REM+ = FIP-based, sample-shrunk run-prevention skill",
         { defaultCount: 25, counts: [10, 25, 50], legend: "REM+ 100 = average reliever", columns: [
           { label: "#", frac: 0.05 },
           { label: "Player", frac: 0.33 },
@@ -3408,7 +3395,7 @@
       return spec("MLB Stats · Bullpen+ Leaders",
         seasonBits("current", DATA, "bullpens"),
         "mlbstats-bullpen-rankings",
-        "Bullpen+ = relief-IP-weighted REM+ - the talent of the innings a pen actually uses",
+        "Bullpen+ = relief-IP-weighted REM+",
         { defaultCount: 30, counts: [10, 30], legend: "Bullpen+ 100 = average bullpen", columns: [
           { label: "#", frac: 0.08 },
           { label: "Team", frac: 0.34 },
@@ -3434,7 +3421,7 @@
       return spec("MLB Stats · SEM+ Leaders",
         seasonBits(starterSeason, starterData, "starters"),
         "mlbstats-sem-leaders",
-        "SEM+ = FIP-based, sample-shrunk starter run-prevention skill - durability kept separate",
+        "SEM+ = FIP-based, sample-shrunk starter run-prevention skill",
         { defaultCount: 25, counts: [10, 25, 50], legend: "SEM+ 100 = average starter", columns: [
           { label: "#", frac: 0.05 },
           { label: "Player", frac: 0.33 },
@@ -3462,7 +3449,7 @@
       return spec("MLB Stats · HEM+ Leaders",
         seasonBits(hitterSeason, hitterData, "hitters"),
         "mlbstats-hem-leaders",
-        "HEM+ = sample-shrunk wOBA on a league-relative scale - volume + slash kept separate",
+        "HEM+ = sample-shrunk wOBA on the wRC+ scale",
         { defaultCount: 25, counts: [10, 25, 50], legend: "HEM+ 100 = average hitter", columns: [
           { label: "#", frac: 0.05 },
           { label: "Player", frac: 0.35 },

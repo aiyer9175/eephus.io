@@ -163,7 +163,7 @@
         refs: [{ at: 60, label: "prospect band edge" }],
         aria: "RP-SP FIT distribution" });
     return vizWrap("rp2sp-viz", gloss("RP→SP FIT", "rp_sp_fit") + ' distribution <span class="proj-dim">(cyan = '
-      + f1(cut) + '+, a real starter profile)</span>', hist);
+      + f1(cut) + '+, the top tier)</span>', hist);
   }
   function sp2rpViz() {
     var rows = (DATA && DATA.sp2rp) || [];
@@ -178,7 +178,7 @@
     if (pts.length < 8) return "";
     var sc = chart("scatter", pts, { height: 270, xMin: 0, xMax: 100, yMin: 0, yMax: 100,
       xLabel: "relief upside →", yLabel: "↑ conversion need", xRef: 50, yRef: 50, aria: "upside vs need" });
-    return vizWrap("sp2rp-viz", 'The conversion sweet spot <span class="proj-dim">(top-right = good stuff AND struggling as a starter)</span>', sc);
+    return vizWrap("sp2rp-viz", 'Relief upside vs conversion need <span class="proj-dim">(dim = below the top tier)</span>', sc);
   }
 
   function fitClass(v) {
@@ -263,29 +263,27 @@
   }
   function tierLegend(dir) {
     var r = tierRule(dir);
-    var lead = (dir === "sp2rp")
-      ? "Tiers frame salvaging a struggling starter whose stuff plays up in short bursts. "
-      : "Tiers read FIT with role value in mind (a starter is worth more than a reliever, so a "
-        + "successful reliever who profiles as a starter is the premium case). ";
     var ts = r.tiers || [];
     var items = ts.map(function (t, i) {
       var prev = i ? ts[i - 1].min_fit : null;
       var band = (t.min_fit == null)
         ? ("below " + f1(prev))
         : (f1(t.min_fit) + "+");
+      // The premium label is the same tier for a reliever who is already
+      // succeeding (tier_rule.premium_flag), so the legend names the condition.
       var name = t.premium_label
-        ? ('<b>' + esc(t.premium_label) + "</b> / <b>" + esc(t.label) + "</b>")
+        ? ('<b>' + esc(t.premium_label) + "</b> if " + esc(t.premium_flag || "flagged")
+           + ", else <b>" + esc(t.label) + "</b>")
         : ('<b>' + esc(t.label) + "</b>");
       return name + " (" + band + (t.n == null ? "" : ", " + esc(t.n)) + ")";
     }).join(", ");
     // The SCALE is stated because the two directions do not share one: a 55 in
     // the SP->RP tab is near the top of its pool and mid-pack in the other.
     var scale = (r.fit_min != null && r.fit_max != null)
-      ? (" Cuts are absolute on this direction's own scale, which runs " + f1(r.fit_min)
-         + " to " + f1(r.fit_max) + " today, median " + f1(r.fit_median)
-         + ". They are not per-build quantiles, so a pitcher's tier moves when he does.")
+      ? (" This build's scale: " + f1(r.fit_min) + " to " + f1(r.fit_max) + ", median "
+         + f1(r.fit_median) + ". Cuts are fixed, not per-build quantiles.")
       : "";
-    return '<div class="pal-tier-legend">' + lead + items + "." + scale + "</div>";
+    return '<div class="pal-tier-legend">Tiers: ' + items + "." + scale + "</div>";
   }
   function fbPct(row) {
     if (row.fb_pct != null) return row.fb_pct;
@@ -490,7 +488,7 @@
       // Caption reads the payload verdict (see verdictPhrase): a shareable
       // graphic that carries a frozen validity claim is the same defect as a
       // page that carries one.
-      caption: "a candidate screen, not a forecast · RP→SP: " + verdictPhrase("RP->SP"),
+      caption: "candidate screen, not a forecast · RP→SP: " + verdictPhrase("RP->SP"),
       board: { defaultCount: 25, counts: [10, 25, 50],
         legend: "FIT 0-100 = RP→SP conversion screen · Command = component score 0-100 · tiers cut at "
           + (tierRule("rp2sp").tiers || []).filter(function (t) { return t.min_fit != null; })
@@ -549,7 +547,7 @@
       subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
         + rows.length + " starters whose stuff would play up in relief",
       url: "eephus.io/pal", filenameBase: "pal-sp2rp-candidates",
-      caption: "a candidate screen · SP→RP: " + verdictPhrase("SP->RP"),
+      caption: "candidate screen, not a forecast · SP→RP: " + verdictPhrase("SP->RP"),
       board: { defaultCount: 25, counts: [10, 25, 50],
         legend: "FIT 0-100 = SP→RP relief-upside screen (gated by conversion need) · tiers cut at "
           + (tierRule("sp2rp").tiers || []).filter(function (t) { return t.min_fit != null; })
@@ -577,23 +575,19 @@
   function renderRP2SP() {
     var rows = (DATA && DATA.rp2sp) || [];
     if (!rows.length) return empty("No RP→SP candidates yet.");
-    var note = '<div class="mlbstats-note">Relievers who profile as starters. ' + gloss("RP→SP FIT", "rp_sp_fit")
-      + " leads on arsenal depth (a starter needs a third pitch to survive a lineup three times), then command, "
-      + "platoon-neutrality, and contact quality. " + esc(verdictSentence("RP->SP"))
-      + (dirValidates("RP->SP") === true
-          ? " A FIT is still a candidate screen, not a forecast."
-          : " Treat the order as a shortlist, not a forecast.")
-      + " Click a row for the component breakdown." + gfxChip("pal-rp2sp-gfx") + "</div>" + tierLegend("rp2sp");
+    var note = '<div class="mlbstats-note">' + gloss("RP→SP FIT", "rp_sp_fit")
+      + ": arsenal depth first, then command, platoon-neutrality and contact quality. "
+      + esc(verdictSentence("RP->SP")) + " A candidate screen, not a forecast. Click a row for components."
+      + gfxChip("pal-rp2sp-gfx") + "</div>" + tierLegend("rp2sp");
     return rp2spViz() + note + candTable(sortRows(rows, RP_COLS), RP_COLS);
   }
   function renderSP2RP() {
     var rows = (DATA && DATA.sp2rp) || [];
     if (!rows.length) return empty("No SP→RP candidates yet.");
-    var note = '<div class="mlbstats-note">Starters who are <b>struggling in the rotation</b> and whose stuff would play up in relief. '
-      + gloss("SP→RP FIT", "sp_rp_fit") + " is relief upside GATED by conversion need: a starter succeeding in the rotation "
-      + "scores low no matter how nasty his stuff is, because a good starter is worth more than a good reliever. SP ERA is "
-      + "the need signal; proj REM+ is a display-only relief projection. " + esc(verdictSentence("SP->RP"))
-      + gfxChip("pal-sp2rp-gfx") + "</div>" + tierLegend("sp2rp");
+    var note = '<div class="mlbstats-note">' + gloss("SP→RP FIT", "sp_rp_fit")
+      + ": relief upside scaled by conversion need, so a starter succeeding in the rotation scores low. "
+      + "SP ERA is the need signal; proj REM+ is display-only. " + esc(verdictSentence("SP->RP"))
+      + " A candidate screen, not a forecast." + gfxChip("pal-sp2rp-gfx") + "</div>" + tierLegend("sp2rp");
     return sp2rpViz() + note + candTable(sortRows(rows, SP_COLS), SP_COLS);
   }
 
@@ -710,10 +704,7 @@
   // own n and series, its rho and the baseline it had to beat.
   function verdictSentence(key) {
     var v = dirValidates(key);
-    if (v === null) {
-      return "The gate verdict for this direction is not in this payload, so the page makes "
-        + "no validity claim either way.";
-    }
+    if (v === null) return "No gate verdict in this payload, so no validity claim either way.";
     var d = btGate(key);
     var basis = gateSeriesShort();
     var where = " (gate" + (d.n_gate == null ? "" : " n=" + d.n_gate)
@@ -723,10 +714,9 @@
           + (d.best_baseline_rho == null ? "" : " " + d.best_baseline_rho) : "")
       + ")";
     return v
-      ? "This direction carries a validated directional signal: pre-conversion FIT out-ranked "
-        + "every same-event baseline against realized WAR change" + where + "."
-      : "This is a structural screen: the gated backtest does not validate the ranking within "
-        + "this direction against realized WAR change" + where + ".";
+      ? "Gate: validated; pre-conversion FIT out-ranked every same-event baseline on realized "
+        + "WAR change" + where + "."
+      : "Gate: structural screen; the ranking is not validated on realized WAR change" + where + ".";
   }
 
   function scorecard() {
@@ -760,9 +750,11 @@
       // nothing, so this printed the literal "converters at th pct of the
       // field". A sentence with a hole in it reads as a rendering bug to a
       // reader and tells them nothing either way; say there is no sample.
+      // The ordinal is computed: a typed "th" printed "72th".
       + (b.converter_median_fit_pool_pctile == null
           ? '<span class="pal-sc-stat">no converter sample yet</span>'
-          : '<span class="pal-sc-stat">converters at <b>' + esc(b.converter_median_fit_pool_pctile) + "th</b> pct of the field</span>")
+          : '<span class="pal-sc-stat">converter median FIT: <b>' + esc(b.converter_median_fit_pool_pctile)
+            + esc(ordSuffix(Math.round(Number(b.converter_median_fit_pool_pctile)))) + "</b> pct of the field</span>")
       + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
       + "</div>";
   }
@@ -796,11 +788,10 @@
         + '<td>' + (h.pre_fit == null ? "-" : '<span class="pal-fit ' + fitClass(h.pre_fit) + '">' + f1(h.pre_fit) + "</span>") + "</td>"
         + "<td>" + successCell(h) + "</td></tr>";
     }).join("") + "</tbody>";
-    var note = '<div class="mlbstats-note">Every detected SP&harr;RP switch since 2018, labeled by whether the pitcher '
-      + "held the new role. WAR before and after is realized pitcher WAR"
-      + (warSeriesShort() ? " on " + esc(warSeriesShort()) : "") + " in the pre-role and "
-      + "post-role seasons (the value the conversion actually produced); Arsenal shift flags the pitches he added "
-      + "or dropped in the move.</div>";
+    var note = '<div class="mlbstats-note">Every detected ' + gloss("SP↔RP switch", "pal_conversion")
+      + " since 2018. WAR before &rarr; after: realized pitcher WAR"
+      + (warSeriesShort() ? " on " + esc(warSeriesShort()) : "") + ", pre-role and post-role seasons. "
+      + "Arsenal shift: pitches added (+) or dropped (-).</div>";
     return scorecard() + historyToggle() + note
       + '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>";
   }
@@ -819,17 +810,15 @@
         + '<div class="pal-mix-cols"><div><h4>Before</h4>' + usageBars(m.before) + "</div>"
         + '<div><h4>After</h4>' + usageBars(m.after) + "</div></div></div>";
     }).join("");
-    return '<div class="mlbstats-note">What did converters change? Pitch usage before and after the switch. '
-      + "A reliever stretching out often adds or leans on a third pitch; a starter moving to relief trims to his best two.</div>"
+    return '<div class="mlbstats-note">Pitch usage before and after the switch.</div>'
       + '<div class="pal-mix-grid">' + cards + "</div>";
   }
 
   function renderPitchAdd() {
     var rows = (DATA && DATA.pitch_add) || [];
     if (!rows.length) return empty("No pitch-add recommendations yet.");
-    var note = '<div class="mlbstats-note">What weapon would help each conversion candidate most? The '
-      + "recommendation comes from the arsenal hole (no breaking ball, no offspeed, or a thin third pitch) crossed "
-      + "with the platoon weakness a starter has to survive. Sorted by " + gloss("RP→SP FIT", "rp_sp_fit") + ".</div>";
+    var note = '<div class="mlbstats-note">Pitch to add: the arsenal hole (no breaking ball, no offspeed, or a '
+      + "thin third pitch) crossed with the platoon weakness. Sorted by " + gloss("RP→SP FIT", "rp_sp_fit") + ".</div>";
     var cards = rows.map(function (r) {
       var rec = r.rec || {};
       var arsenal = (r.arsenal || []).slice().sort(function (a, b) { return (b.usage || 0) - (a.usage || 0); })
@@ -852,10 +841,9 @@
       return (r.reverse || r.extreme) && (r.min_tbf == null || r.min_tbf >= 100);
     });
     if (!view.length) return empty("No notable platoon splits yet.");
-    var note = '<div class="mlbstats-note">Conventionally a pitcher is tougher on same-handed hitters. A '
-      + gloss("reverse platoon split", "platoon_split") + " (tougher on the OPPOSITE hand) is a rare hidden strength that "
-      + "helps him face a full lineup, a plus for RP&rarr;SP; an extreme normal split is a conversion blocker. OPS-against "
-      + "by batter hand. A descriptive split, not a separately backtested model.</div>";
+    var note = '<div class="mlbstats-note">' + gloss("Reverse split", "reverse_platoon")
+      + ": tougher on opposite-handed hitters, a plus for RP&rarr;SP. " + gloss("Extreme split", "platoon_split")
+      + ": a conversion blocker. OPS-against by batter hand, 100+ TBF per hand. Descriptive, not a backtested model.</div>";
     var head = "<thead><tr><th>Pitcher</th><th>Throws</th><th>Role</th><th>vs own hand</th><th>vs opp hand</th>"
       + "<th>Split</th><th>Read</th></tr></thead>";
     var body = "<tbody>" + view.map(function (r) {
@@ -912,40 +900,36 @@
     }
     var bound = "";
     if (rule) {
-      bound = " Ranked by how far past the swing band the shape sits, and staged: only the "
-        + esc(rule.n_qualified) + " of " + esc(rule.n_mismatches) + " mismatches at least "
-        + f1(rule.margin_min) + " shape points past the boundary are listed"
+      bound = " Ranked by margin past the swing band. Listed: " + esc(rule.n_qualified) + " of "
+        + esc(rule.n_mismatches) + " mismatches at " + f1(rule.margin_min) + "+ shape points past"
         + (rule.cap_binding ? (", top " + esc(rule.cap) + " shown") : "")
-        + ". The other " + esc(rule.n_below_margin) + " sit inside that margin"
+        + "; " + esc(rule.n_below_margin) + " below that margin"
         + (rule.best_margin_below_threshold != null
-           ? " (the closest is " + f1(rule.best_margin_below_threshold) + " points past)" : "")
-        + " and are kept in the payload rather than dropped.";
+           ? " (closest " + f1(rule.best_margin_below_threshold) + ")" : "")
+        + " stay in the payload.";
       if (sevCuts) {
-        bound += " Severity is the band read in quarters: "
+        bound += " Severity, in quarters of the band: "
           + sevCuts.map(function (c) {
               return "<b>" + esc(c.key) + "</b> at " + f1(c.min_margin) + "+"
                 + (c.n == null ? "" : " (" + esc(c.n) + ")");
             }).join(", ") + ".";
       }
     }
-    var note = '<div class="mlbstats-note">Prospect pitchers whose SCOUTED role may not fit their arsenal shape ('
-      + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 scout grades). A scouted starter with a thin "
-      + "arsenal profiles as a reliever; a reliever with a deep arsenal could start. Shape-only: there is no pitch tracking "
-      + "at the minors, so this reads role fit from tool grades, not stuff. " + esc(DATA.n_prospects || "")
-      + " prospect pitchers scanned"
+    var note = '<div class="mlbstats-note">Scouted role vs ' + gloss("starter shape", "starter_shape")
+      + " (" + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 grades; no minors pitch "
+      + "tracking, so tool grades, not stuff). " + esc(DATA.n_prospects || "") + " prospect pitchers scanned"
       // COVERAGE, STATED. A mismatch needs a stated role for the shape to
       // disagree with, and a position of RHP, LHP or P states handedness and no
       // role. Those rows can never appear here, correctly, and the bare
       // "N scanned" read as a screen of the whole pool.
       + ((rule && rule.n_role_unstated)
-         ? (", though " + esc(rule.n_role_unstated) + " of them carry a position that states "
-            + "handedness and no role (RHP, LHP, P), so there is no scouted role for the shape "
-            + "to disagree with and they cannot appear below"
+         ? ("; " + esc(rule.n_role_unstated) + " list only RHP, LHP or P, no role to compare, so they "
+            + "cannot appear"
             + (rule.n_role_unstated_above_fv
-               ? "; " + esc(rule.n_role_unstated_above_fv) + " of those clear the FV floor" : "")
+               ? " (" + esc(rule.n_role_unstated_above_fv) + " of those clear the FV floor)" : "")
             + ".")
          : ".") + bound
-      + " A descriptive shape screen, not a separately backtested model.</div>";
+      + " Descriptive shape screen, not a backtested model.</div>";
     function toolBars(tools) {
       tools = tools || {};
       return ["fb", "sl", "cb", "ch", "ct", "cmd"].filter(function (k) { return tools[k] != null; }).map(function (k) {
@@ -1028,19 +1012,16 @@
     var pool = (meta.pools && meta.pools[pos]) || null;
     var season = (meta.anchor && meta.anchor.season) || null;
     var stale = season && g.season && g.season !== season;
-    var tip = "Rng+ " + g.plus + ": sprint speed " + g.fts + " ft/s on the 100 + 10z scale, "
-      + "so ten points is one standard deviation of the league."
+    var tip = "Rng+ " + g.plus + ": sprint speed " + g.fts + " ft/s, 100 + 10z (10 points = 1 SD)."
       + (pct != null && pool
-          ? " That is the " + pct + ordSuffix(pct) + " percentile among "
-            + pool.n + " " + pos + " incumbents (400+ innings, trailing three seasons)."
+          ? " " + pct + ordSuffix(pct) + " percentile of " + pool.n + " " + pos
+            + " incumbents (400+ innings, trailing three seasons)."
           : "")
-      + " Measured against outfield range, not asserted: sprint speed tracks OAA per 1000 "
-      + "innings at " + pos + " with r " + fmtR(meta.r && meta.r[pos]) + ". It reads the "
-      + "outfield only. At third and short, speed and range come apart completely, so the "
-      + "meter is not shown there."
-      + (stale ? " Read from his " + g.season + " season; he has no " + season + " tracking yet." : "")
-      + " Display only: sprint speed is not a model input, because OAA already contains the legs.";
-    return ' <span class="pal-rng" title="' + esc(tip) + '">Rng+ ' + g.plus
+      + " Sprint vs OAA per 1000 innings at " + pos + ": r " + fmtR(meta.r && meta.r[pos])
+      + ". Outfield only."
+      + (stale ? " From his " + g.season + " season; no " + season + " tracking yet." : "")
+      + " Display only, not a model input.";
+    return ' <span class="pal-rng" data-gl="rng_plus" title="' + esc(tip) + '">Rng+ ' + g.plus
       + (pct != null ? ' <span class="proj-dim">' + pct + ordSuffix(pct) + " pct</span>" : "")
       + (stale ? ' <span class="proj-dim">(' + g.season + ")</span>" : "") + "</span>";
   }
@@ -1074,20 +1055,19 @@
         + '<span class="pal-ars-meta">' + pfSigned(v) + esc(mark) + pfRng(r, k) + "</span></div>";
     }).join("");
     var dem = (r.demPos && r.demGain != null)
-      ? '<div class="mlbstats-note" style="margin:2px 0 8px">Moving DOWN the spectrum to ' + esc(r.demPos)
-        + " is worth " + pfSigned(r.demGain) + " runs per 650 PA (&plusmn;" + f1(r.demSe) + "): "
-        + pfSigned(r.demPlayer) + " of that is this player's own glove, " + pfSigned(r.demLeague)
-        + " is the league-wide constant every hitter making that move gets. Read the player part when the total sits near the flag line.</div>"
+      ? '<div class="mlbstats-note" style="margin:2px 0 8px">Down to ' + esc(r.demPos) + ": "
+        + pfSigned(r.demGain) + " runs per 650 PA (&plusmn;" + f1(r.demSe) + "); own glove "
+        + pfSigned(r.demPlayer) + ", league-wide constant " + pfSigned(r.demLeague) + ".</div>"
       : "";
     return '<td colspan="20"><div class="pal-why"><div class="pal-why-grid">'
       + '<div><h4>Defensive value by position</h4>'
-      + '<div class="mlbstats-note" style="margin:2px 0 8px">Runs per 650 PA, fielding plus the positional adjustment. The bat is the same everywhere and is left out.</div>'
+      + '<div class="mlbstats-note" style="margin:2px 0 8px">Runs per 650 PA: fielding + positional adjustment. The bat is the same at every position and is left out.</div>'
       + bars + "</div>"
       + '<div><h4>The read</h4>' + dem
       + '<div class="mlbstats-note" style="margin:2px 0">Glove ' + pfSigned(r.gloveZ, 2)
-      + " standard units (&plusmn;" + f2(r.gloveZSe) + " after shrink), worth " + pfSigned(r.gloveRuns)
+      + " SD (&plusmn;" + f2(r.gloveZSe) + " after shrink) = " + pfSigned(r.gloveRuns)
       + " runs per 650 PA at " + esc(r.pos || "-") + ". Bat " + pfSigned(r.bat)
-      + " runs per 650 PA versus an average hitter: it does not move the position choice, it decides whether the bottom of the spectrum is still a job.</div>"
+      + " runs per 650 PA vs an average hitter; it does not move the position choice.</div>"
       + "</div></div>" + pfHistory(r) + "</div></td>";
   }
 
@@ -1114,11 +1094,9 @@
         + '<td class="' + relCls + '">' + rel + "</td></tr>";
     }).join("");
     return '<div style="margin-top:10px;"><h4>Where he has played</h4>'
-      + '<div class="mlbstats-note" style="margin:2px 0 6px">Per season and position. '
-      + "OAA and FRP are what the glove did; z is that rate against the position's own "
-      + "difficulty, in standard units. Trust is innings against the position's fitted "
-      + "stabilization constant, so the same OAA counts for more at centre field than at "
-      + "first base. Read the z column next to the trust column, never alone.</div>"
+      + '<div class="mlbstats-note" style="margin:2px 0 6px">z: the glove rate against the '
+      + "position's own difficulty, in SD. Trust: innings / (innings + the position's fitted "
+      + "stabilization constant). Read z with Trust.</div>"
       + '<div class="mlbstats-scroll"><table class="detail-table"><thead><tr>'
       + "<th>Season</th><th>Pos</th><th>Inn</th><th>OAA</th><th>FRP</th><th>z</th><th>Trust</th>"
       + "</tr></thead><tbody>" + rows + "</tbody></table></div></div>";
@@ -1205,12 +1183,11 @@
     if (!s || s.length !== 2 || num(s[0]) == null || num(s[1]) == null) return "";
     var span = Number(s[1]) - Number(s[0]) + 1;
     if (span > 8) return "";
-    return " The window is a measured choice rather than an assumption. These rungs drift by more "
-      + "than their own sampling intervals, so a long pool averages two different tables; fitted "
-      + "through one season and asked to predict the next, this short span beat the 2012-onward "
-      + "pool by 0.10 runs per 650 PA of held-out error (bootstrap interval 0.08 to 0.11, better "
-      + "in all three held-out seasons). It is paid for in precision: fewer rows, wider intervals "
-      + "in the column beside each rung.";
+    // TYPED FIGURES, flagged: the held-out comparison below is not in the
+    // payload, so it cannot follow a refit. The exporter should ship it.
+    return " Window: rungs drift by more than their sampling intervals, so the short span was chosen "
+      + "on held-out error; it beat the 2012-onward pool by 0.10 runs per 650 PA (bootstrap 0.08 to "
+      + "0.11, all three held-out seasons), at the cost of wider intervals.";
   }
   // The two Difference columns, explained where they are read. This is a
   // basis mismatch, not a scoring dispute, and the page used to print only the
@@ -1219,20 +1196,14 @@
   function pfFolkloreNote(L) {
     var b = L.folkloreBasis;
     if (!b || !b.scale_to_our_basis) {
-      return " The difference column is where it disagrees with this fit.";
+      return " Diff: this fit minus the folklore table.";
     }
-    return " The two difference columns are the same subtraction on different"
-      + " bases. Our rungs are runs per 650 PA of exposure; the folklore table"
-      + " is quoted per full defensive season (162 games, " + fThou(b.full_season_innings)
-      + " innings), and 650 PA is about " + fThou(b.pa_equivalent_innings)
-      + " of those innings, so as quoted it runs about "
-      + f1((1 / b.scale_to_our_basis - 1) * 100) + "% large. <strong>Diff, same"
-      + " basis</strong> rescales it by " + f2(b.scale_to_our_basis)
-      + " first. Both are shown and neither is the answer: the folklore table is"
-      + " quoted per 162 games in some sources and per 600 to 700 PA in others,"
-      + " and it is the FanGraphs ladder while this fit inverts"
-      + " Baseball-Reference, so the comparison is cross-system before it is"
-      + " cross-basis.";
+    return " Folklore is quoted per 162 games (" + fThou(b.full_season_innings)
+      + " innings); 650 PA is about " + fThou(b.pa_equivalent_innings)
+      + " innings, so as quoted it runs about " + f1((1 / b.scale_to_our_basis - 1) * 100)
+      + "% large. <strong>Diff, same basis</strong> rescales it by " + f2(b.scale_to_our_basis)
+      + " first. Neither diff is the answer: some sources quote the folklore table per 600 to"
+      + " 700 PA, and it is the FanGraphs ladder while this fit inverts Baseball-Reference.";
   }
 
   function pfLadder() {
@@ -1371,14 +1342,12 @@
       .map(function (p) {
         return ladderRow(p, false, '<span class="proj-dim"> not in the sum</span>');
       }).join("");
-    var note = '<div class="mlbstats-note">The positional adjustment, re-estimated from Baseball-Reference&rsquo;s own '
-      + "construction rather than taken from the folklore table: least squares of positional runs per 650 PA on innings "
-      + "shares, no intercept, " + fThou(L.nPlayerSeasons) + " player-seasons from " + esc((L.seasons || [])[0])
-      + " to " + esc((L.seasons || [])[1]) + " at " + fInt(L.minPa) + "+ PA. R&sup2; " + (L.r2 == null ? "-" : f1(L.r2 * 100) + "%")
-      + ", residual SD " + f2(L.residSd) + " runs. This is an INVERSION: it recovers the constants Baseball-Reference "
-      + "themselves used, so a rung reads as what BRef prices that position at, not as an independent measure of how "
-      + "hard it is to play. The folklore column is the table everyone quotes." + pfFolkloreNote(L)
-      + pfWindowNote(L) + "</div>";
+    var note = '<div class="mlbstats-note">' + gloss("Positional ladder", "positional_ladder")
+      + ", inverted from Baseball-Reference: least squares of positional runs per 650 PA on innings shares, "
+      + "no intercept; " + fThou(L.nPlayerSeasons) + " player-seasons, " + esc((L.seasons || [])[0])
+      + " to " + esc((L.seasons || [])[1]) + ", " + fInt(L.minPa) + "+ PA. R&sup2; " + (L.r2 == null ? "-" : f1(L.r2 * 100) + "%")
+      + ", residual SD " + f2(L.residSd) + " runs. A rung is what BRef prices the position at, not an independent "
+      + "measure of difficulty." + pfFolkloreNote(L) + pfWindowNote(L) + "</div>";
     // WHICH SUM IS ZERO, stated on the page rather than left to be
     // rediscovered. Only rendered when the artifact carries the identification
     // block (added 2026-07-31); older artifacts get the table with no claim
@@ -1395,38 +1364,24 @@
         // assume it.
         var lvl = (id.sum_equal_weight_fielders != null)
           ? id.sum_equal_weight_fielders / 8 : null;
-        sums = '<div class="mlbstats-note"><strong>How this column is centred.</strong> '
-          + "The eight FIELDING positions are centred to add to zero, which is the line the folklore "
-          + "table is drawn against, so the difference column compares like with like, and the subtotal "
-          + "row above adds the eight cells printed over it so the check can be redone by hand. DH sits "
-          + "below that line, on the same scale"
-          + (vals.DH != null ? " at " + pfSigned(vals.DH, 2) + " runs" : "")
-          + ", and is not part of the sum: DH is " + wDH + " of league play, not a ninth of it, so "
-          + "adding all nine rungs is not a check of anything. The model itself uses a different zero, "
-          + "the average positional mix of a qualified player-season with every fitted season counted "
-          + "once, and that sum is <strong>"
-          + f2(id.sum_exposure_weighted) + "</strong> by construction"
+        sums = '<div class="mlbstats-note"><strong>Centring.</strong> '
+          + "The eight fielding rungs sum to zero, the folklore table's convention; the subtotal row "
+          + "adds the printed cells. DH"
+          + (vals.DH != null ? " (" + pfSigned(vals.DH, 2) + ")" : "")
+          + " is outside the sum: DH is " + wDH + " of league play, not a ninth. The model's own zero "
+          + "is exposure-weighted (sum <strong>" + f2(id.sum_exposure_weighted) + "</strong> by construction"
           + (lvl == null ? ""
-             : "; on that basis every rung sits " + f2(Math.abs(lvl)) + " runs "
-               + (lvl >= 0 ? "higher" : "lower"))
-          + ". Only the LEVEL differs. The gap between any two positions is identical on either basis, "
-          + "and that gap is the whole content of a positional adjustment, so nothing a reader takes "
-          + "from this table depends on the choice. Every valuation elsewhere on the site runs on the "
-          + "weighted basis, and the 95% interval below is the model&rsquo;s own bootstrap band moved "
-          + "by that same constant, so it stays centred on the printed rung at its original width.</div>";
+             : "; every rung sits " + f2(Math.abs(lvl)) + " runs " + (lvl >= 0 ? "higher" : "lower")
+               + " on that basis")
+          + "). Gaps between positions are identical on either basis. Site valuations use the weighted "
+          + "basis; the 95% interval is the model&rsquo;s bootstrap band shifted by the same constant.</div>";
       } else {
-        sums = '<div class="mlbstats-note"><strong>Why the column does not add to zero.</strong> '
-          + "This artifact predates the fielder-centred column, so the rungs below are on the "
-          + "model&rsquo;s own basis: a WEIGHTED identity, centred so that the average positional mix "
-          + "of a qualified player-season reads zero, and that sum is <strong>"
-          + f2(id.sum_exposure_weighted)
-          + "</strong> here, imposed by construction. That is why the subtotal row above is "
-          + f2(id.sum_equal_weight_fielders) + " and not zero, and it is a consequence rather than an "
-          + "error. Adding the nine rungs with EQUAL weight gives "
-          + f2(id.sum_equal_weight_9) + ", which is not an error either: it weights DH like a fielding "
-          + "position when DH is " + wDH + " of league exposure, so the large negative DH rung gets "
-          + "counted nine times too heavily. Only the weighted sum is a constraint; the other two are "
-          + "consequences of it.</div>";
+        sums = '<div class="mlbstats-note"><strong>Centring.</strong> '
+          + "This artifact predates the fielder-centred column, so the rungs are on the model&rsquo;s "
+          + "exposure-weighted basis: that sum is <strong>" + f2(id.sum_exposure_weighted)
+          + "</strong> by construction. The subtotal row (" + f2(id.sum_equal_weight_fielders)
+          + ") and the equal-weight nine-rung sum (" + f2(id.sum_equal_weight_9)
+          + ") follow from it, not errors: DH is " + wDH + " of league exposure, not a ninth.</div>";
       }
     }
     return note + '<div class="mlbstats-scroll"><table class="mlbstats-table">'
@@ -1441,41 +1396,34 @@
     var A = (PF && PF.accuracy) || {}, D = (PF && PF.demotionNull) || {};
     var mae = A.mae || {}, adv = (A.advantage || {}).carry_over || {}, auc = D.auc || {};
     var ci = adv.ci95 || [];
-    var pass = '<div class="pal-mix-card"><h4><span>What the model does predict</span>'
+    var pass = '<div class="pal-mix-card"><h4><span>Predicts: the size of a move</span>'
       + '<span class="pal-dir pal-dir--pass">VALIDATED</span></h4>'
-      + '<div class="mlbstats-note" style="margin:4px 0">The SIZE of a move. Out of sample on '
-      + fInt(A.nConversions) + " real position changes (" + fInt(A.minInningsEachSide)
-      + "+ innings on each side), mean absolute error " + f2(mae.model) + " runs per 650 PA against "
-      + f2(mae.carry_over) + " for carrying the old rate over, " + f2(mae.league_avg) + " for league average and "
-      + f2(mae.permuted) + " for a row-permuted twin of the same column. The paired advantage over carry-over is "
-      + f2(adv.mean) + " runs, 95% CI " + f2(ci[0]) + " to " + f2(ci[1]) + ", against a permutation null band of "
-      + f2(A.permNull95) + ". Positive in " + esc(A.seasonAdvantagePositiveIn || "-") + " season splits.</div></div>";
-    var fail = '<div class="pal-mix-card"><h4><span>What it does NOT predict</span>'
+      + '<div class="mlbstats-note" style="margin:4px 0">Out of sample, ' + fInt(A.nConversions)
+      + " position changes (" + fInt(A.minInningsEachSide) + "+ innings each side). MAE " + f2(mae.model)
+      + " runs per 650 PA; carry-over " + f2(mae.carry_over) + ", league average " + f2(mae.league_avg)
+      + ", row-permuted twin " + f2(mae.permuted) + ". Advantage over carry-over " + f2(adv.mean)
+      + " runs (95% CI " + f2(ci[0]) + " to " + f2(ci[1]) + "; permutation null " + f2(A.permNull95)
+      + "). Positive in " + esc(A.seasonAdvantagePositiveIn || "-") + " season splits.</div></div>";
+    var fail = '<div class="pal-mix-card"><h4><span>Does not predict: who gets demoted</span>'
       + '<span class="pal-dir pal-dir--null">MEASURED NULL</span></h4>'
-      + '<div class="mlbstats-note" style="margin:4px 0">WHICH players clubs actually demote. Scored on '
-      + fThou(D.nScored) + " player-seasons (" + fPct(D.baseRate) + " of them moved down the next year), the model ranks "
-      + "demotions at AUC " + f2(auc.model) + ". A coin flip is 0.50, the permutation band on AUC minus a half is "
-      + f2(D.permNull95) + ", and RAW single-season OAA on its own ranks them at " + f2(auc.raw_oaa)
-      + " - better than the model. Read this list as valuation, not as prediction: it says what a move would be WORTH, "
-      + "not that anyone is about to make it.</div></div>";
+      + '<div class="mlbstats-note" style="margin:4px 0">' + fThou(D.nScored) + " player-seasons ("
+      + fPct(D.baseRate) + " moved down the next year): AUC " + f2(auc.model) + " (coin flip 0.50; "
+      + "permutation band on AUC minus 0.5: " + f2(D.permNull95) + "). Raw single-season OAA alone: "
+      + f2(auc.raw_oaa) + ", better than the model. The list is a valuation, not a prediction.</div></div>";
     var up = D.promotionSide || {};
     var nuance = (up.auc_model_up != null)
-      ? '<div class="pal-mix-card"><h4><span>The asymmetry</span></h4>'
-        + '<div class="mlbstats-note" style="margin:4px 0">The same score ranks moves UP the spectrum at AUC '
-        + f2(up.auc_model_up) + " over " + fInt(up.n_moved_up) + " promotions, against " + f2(up.auc_control_up)
-        + " for its zero-information control. A promotion needs a good glove AND an open job, and the glove part is "
-        + "clearly readable; a demotion is a club decision driven by things this model never sees.</div></div>"
+      ? '<div class="pal-mix-card"><h4><span>Moves up</span></h4>'
+        + '<div class="mlbstats-note" style="margin:4px 0">AUC ' + f2(up.auc_model_up) + " over "
+        + fInt(up.n_moved_up) + " promotions; zero-information control " + f2(up.auc_control_up) + ".</div></div>"
       : "";
     var caveats = ((PF && PF.caveats) || []).map(function (c) {
       return "<li>" + esc(c) + "</li>";
     }).join("");
     var oos = ((PF && PF.outOfScope) || []).join(", ");
     return '<div class="pal-mix-grid" style="margin-top:14px">' + pass + fail + nuance + "</div>"
-      + (caveats ? '<details class="fa-valmap" style="margin-top:12px"><summary>Limits the model states about itself</summary>'
+      + (caveats ? '<details class="fa-valmap" style="margin-top:12px"><summary>Stated limits</summary>'
         + '<ul class="mlbstats-note" style="margin:8px 0 0 18px;list-style:disc">' + caveats + "</ul>"
-        + (oos ? '<div class="mlbstats-note" style="margin-top:8px">Out of scope: ' + esc(oos)
-          + ". Savant publishes no OAA at catcher in any season, so catchers are carried in the payload "
-          + "and never offered a move; pitchers are not scored at all.</div>" : "")
+        + (oos ? '<div class="mlbstats-note" style="margin-top:8px">Out of scope: ' + esc(oos) + ".</div>" : "")
         + "</details>" : "");
   }
 
@@ -1502,22 +1450,18 @@
       : all;
     var fr = PF.flagRule || {};
     var lead = posfitView === "misplaced"
-      ? "Hitters whose best defensive home is not where they are playing. Flagged at " + f1(fr.min_gain_runs_per_650)
-        + "+ runs per 650 PA of gain AND at least " + f1(fr.min_sigma)
-        + " standard error of it, so a big number with a big error bar does not make the list. "
+      ? "Best defensive position is not the current one. Flag: gain of " + f1(fr.min_gain_runs_per_650)
+        + "+ runs per 650 PA and at least " + f1(fr.min_sigma) + " SE. "
         + fInt(PF.nFlagged) + " of " + fInt(PF.nQualified) + " qualified hitters."
       : posfitView === "down"
-      ? "The Arozarena question: hitters who would GAIN runs by moving down the defensive spectrum, "
-        + "the corner outfielder who belongs at first base or designated hitter. " + fInt(PF.nFlaggedDemotion)
-        + " qualified hitters clear the same bar on a downward move. Part of every corner-outfield-to-first-base "
-        + "gain is a league-wide constant rather than anything about the player; the expanded row splits the two."
-      : "Every qualified hitter the model scores, sorted by the gain at his best position. Click any row for the "
-        + "per-position breakdown. Qualification is " + fInt(fr.headline_min_pa) + "+ PA and "
-        + fInt(fr.headline_min_innings) + "+ defensive innings.";
-    var note = '<div class="mlbstats-note">' + esc(lead)
+      ? "Hitters who gain runs moving down the defensive spectrum, on the same flag bar: "
+        + fInt(PF.nFlaggedDemotion) + " qualified. Part of every corner-outfield-to-first-base gain is a league-wide "
+        + "constant; the expanded row splits it out."
+      : "Every qualified hitter (" + fInt(fr.headline_min_pa) + "+ PA, " + fInt(fr.headline_min_innings)
+        + "+ defensive innings), by gain at his best position. Click a row for the breakdown.";
+    var note = '<div class="mlbstats-note">' + gloss("Position fit", "position_fit") + ". " + esc(lead)
       + " Runs per 650 PA, " + esc(PF.season || "") + " season. Value identity: " + esc(PF.valueIdentity || "")
-      + ". The gain says what a move would be worth, NOT that a club is about to make it - the prediction side of "
-      + "that question measured as a null and is written up under The positional ladder.</div>";
+      + ". A valuation, not a prediction: who gets moved measured null (see The positional ladder).</div>";
     if (!rows.length) return nav + note + empty("No hitters clear the flag in this view.");
     return nav + note + pfTable(pfSortedRows(rows));
   }
@@ -1541,10 +1485,13 @@
     if (section === "posfit") {
       root.innerHTML = renderPosFit();
       var pfBanner = document.getElementById("pal-banner");
+      // The build date rides the banner: this payload is baked from a model
+      // artifact that is not refit nightly, so its age is the reader's to see.
       if (pfBanner) pfBanner.innerHTML = PF
         ? '<div class="mlbstats-note">Season ' + esc(PF.season || "") + " &middot; " + esc(PF.model || "")
-          + " &middot; a valuation, not a prediction: the conversion matrix is validated out of sample for the SIZE "
-          + "of a move, and predicting which players get moved down measured as a null.</div>"
+          + (PF.generated_at ? ", built " + esc(String(PF.generated_at).slice(0, 10)) : "")
+          + " &middot; valuation, not prediction: move SIZE validated out of sample; who gets moved "
+          + "down measured null.</div>"
         : "";
       bindTable(root);
       wireGlossary(root);
@@ -1559,9 +1506,8 @@
         // the arsenal and velocity half: role, rates and platoon splits are
         // StatsAPI (through bullpen_export) and the conversion WAR column is
         // Baseball-Reference.
-        : empty("The Alchemy Lab conversion models are being computed from Statcast arsenals, "
-                + "StatsAPI roles and platoon splits, and Baseball-Reference run-frame WAR. "
-                + "Check back shortly.");
+        : empty("The Alchemy Lab is being computed from Statcast arsenals, StatsAPI roles and "
+                + "platoon splits, and run-frame WAR. Check back shortly.");
       var retry = document.getElementById("pal-retry");
       if (retry) retry.addEventListener("click", function () {
         root.innerHTML = empty("Loading…");
@@ -1574,11 +1520,11 @@
       : (section === "prospects") ? renderProspects() : renderRP2SP();
     var banner = document.getElementById("pal-banner");
     if (banner) banner.innerHTML = DATA.season
-      ? '<div class="mlbstats-note">Season ' + esc(DATA.season) + ' &middot; a candidate screen, not a projection. '
+      ? '<div class="mlbstats-note">Season ' + esc(DATA.season) + ' &middot; candidate screen, not a projection'
         // Per-direction and DERIVED: the banner used to name the winner and the
         // loser in literal text, which survived a change of WAR series.
-        + 'Backtest evidence is per direction: SP&rarr;RP ' + esc(verdictPhrase("SP->RP"))
-        + ', RP&rarr;SP ' + esc(verdictPhrase("RP->SP")) + '. '
+        + ' &middot; SP&rarr;RP: ' + esc(verdictPhrase("SP->RP"))
+        + ' &middot; RP&rarr;SP: ' + esc(verdictPhrase("RP->SP")) + ' '
         + esc((DATA.verdict && DATA.verdict !== "validated") ? "[" + DATA.verdict + "]" : "") + "</div>" : "";
     bindTable(root);
     wireGlossary(root);

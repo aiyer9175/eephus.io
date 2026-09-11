@@ -18,6 +18,7 @@
 //   steals of third pay, steals of home do not
 //   the entire running game is worth a fraction of a win to the league
 //   and no club is repeatably better at deciding
+// The sacrifice bunt, the second family, renders from sections.sacrifice_bunt.
 //
 // NOT ONE FIGURE IN THIS FILE IS TYPED. Every number and every sentence comes
 // out of the payload. The one thing this file decides for itself is COLOUR, and
@@ -47,6 +48,11 @@
     return (v > 0 ? "+" : "") + Number(v).toFixed(nd === undefined ? 2 : nd);
   }
   function el(id) { return document.getElementById(id); }
+  // A glossary hook. Ids the glossary does not carry yet resolve to nothing,
+  // so an unmatched hook is inert rather than broken.
+  function gl(label, id) {
+    return '<span class="g-term" data-gl="' + esc(id) + '">' + esc(label) + "</span>";
+  }
 
   // ---- the running game ----------------------------------------------------
   function renderRunning() {
@@ -64,7 +70,8 @@
         '<div class="mgmt-card-sub">' + esc(t.n) + " attempts</div>" +
         '<table class="mgmt-mini">' +
         "<tr><td>Success rate</td><td>" + pct(t.success_rate) + "</td></tr>" +
-        "<tr><td>Break-even needed</td><td>" + pct(t.swing_weighted_breakeven_p) + "</td></tr>" +
+        "<tr><td>" + gl("Break-even", "steal_break_even") + " (swing-weighted)</td><td>" +
+        pct(t.swing_weighted_breakeven_p) + "</td></tr>" +
         "<tr><td>Below their own break-even</td><td>" +
         pct(t.share_of_attempts_below_their_own_breakeven) + "</td></tr>" +
         "</table></div>";
@@ -81,23 +88,25 @@
       return "<tr><td>" + esc(k.replace(/_/g, " ")) + "</td><td>" + esc(ex[k]) + "</td></tr>";
     }).join("");
 
+    // Copy is labels plus the payload's own sentences (owner copy rule,
+    // 2026-09-11). The swing-weighted break-even explainer and the third-out
+    // note are not drawn: the first belongs to the steal_break_even glossary
+    // entry, and the second describes two-out attempts, which are excluded.
     return '<section class="mgmt-block">' +
       '<p class="mgmt-lede">' + esc(h.sentence) + "</p>" +
       '<div class="mgmt-cards">' + cards + "</div>" +
-      '<p class="mgmt-note">Across ' + esc(h.games) + " games the whole running game is worth " +
-      signed(h.net_dv_all_seasons_wins) + " wins to the league that plays it. That is not the " +
-      "same as saying nothing happens: the pool that moves between clubs is " +
-      num(h.redistributable_pool_abs_dv_wins) + " wins in absolute value. It nets out.</p>" +
+      '<p class="mgmt-note">' + esc(h.games) + " games: net " +
+      signed(h.net_dv_all_seasons_wins) + " wins to the league; " +
+      num(h.redistributable_pool_abs_dv_wins) + " wins move between clubs in absolute value.</p>" +
       "<h3>By season</h3>" +
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' +
       "<th>Season</th><th>Attempts</th><th>Success</th><th>Decision value</th>" +
       "</tr></thead><tbody>" + srows + "</tbody></table></div>" +
-      "<h3>What a decision value is</h3>" +
-      '<p class="mgmt-note">' + esc(r.decomposition.dv) + " " + esc(r.decomposition.er) +
-      " " + esc(r.decomposition.identity) + "</p>" +
-      '<p class="mgmt-note">' + esc(r.why_the_league_average_runner) + "</p>" +
-      '<p class="mgmt-note">' + esc(r.which_breakeven_predicts_the_sign) + "</p>" +
-      "<h3>What is excluded, and why</h3>" +
+      "<h3>" + gl("Decision value", "decision_value") + "</h3>" +
+      '<p class="mgmt-note"><b>DV</b>: ' + esc(r.decomposition.dv) + " <b>ER</b>: " +
+      esc(r.decomposition.er) + " " + esc(r.decomposition.identity) + ".</p>" +
+      '<p class="mgmt-note"><b>League-average runner</b>: ' + esc(r.why_the_league_average_runner) + "</p>" +
+      "<h3>Excluded</h3>" +
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><tbody>' + exrows +
       "</tbody></table></div>" +
       // The census sentence says the table closes against the corpus (audit
@@ -105,30 +114,78 @@
       // payload that predates the census, and then nothing is drawn.
       (r.attempt_census_sentence
         ? '<p class="mgmt-note">' + esc(r.attempt_census_sentence) + "</p>" : "") +
-      '<p class="mgmt-note">' + esc(r.why_two_out_attempts_are_excluded) + "</p>" +
-      '<p class="mgmt-note">' + esc(r.third_out_handling) + "</p></section>";
+      '<p class="mgmt-note"><b>Two-out attempts</b>: ' + esc(r.why_two_out_attempts_are_excluded) +
+      "</p></section>" + (hasTab("bunt") ? "" : renderBunt());
+  }
+
+  // ---- the sacrifice bunt --------------------------------------------------
+  // The second decision family (mgmt_bunt.py), live in the payload since
+  // 2026-09-07 and never drawn until now. It rides under the running game
+  // until the page shell carries a tab of its own for it.
+  function hasTab(name) {
+    try { return !!document.querySelector('[data-mgmtsection="' + name + '"]'); }
+    catch (e) { return false; }
+  }
+  function renderBunt() {
+    var b = (DATA.sections || {}).sacrifice_bunt;
+    if (!b || !b.live) return "";
+    var rows = (b.cells || []).map(function (c) {
+      return "<tr><td>" + esc(c.bases) + "</td><td>" + esc(c.outs) + "</td><td>" +
+        esc(c.n_bunt) + '</td><td class="' + (c.dv_per_bunt > 0 ? "mgmt-pos" : "mgmt-neg") + '">' +
+        signed(c.dv_per_bunt, 4) + "</td><td>" + signed(c.dv_total, 1) + "</td></tr>";
+    }).join("");
+    var ic = b.independent_control || {};
+    return '<section class="mgmt-block"><h2>The sacrifice bunt</h2>' +
+      '<p class="mgmt-lede">' + esc(b.sentence) + "</p>" +
+      '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' +
+      "<th>Bases</th><th>Outs</th><th>Bunts</th><th>" + gl("DV", "decision_value") +
+      " per bunt</th><th>DV total</th></tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      (ic.total_wins != null
+        ? '<p class="mgmt-note"><b>Control</b> (StatsAPI realized WPA, same bunts): ' +
+          signed(ic.total_wins, 1) + " wins; " + esc(ic.why_it_is_not_the_metric) + "</p>" : "") +
+      (b.the_selection_problem
+        ? '<p class="mgmt-note"><b>Selection</b>: ' + esc(b.the_selection_problem) + "</p>" : "") +
+      (b.two_outs_excluded ? '<p class="mgmt-note">' + esc(b.two_outs_excluded) + "</p>" : "") +
+      "</section>";
   }
 
   // ---- the gate ------------------------------------------------------------
+  // THE RAW SPLIT-HALF, FROM THE NUMBERS. The payload's
+  // why_the_raw_number_is_not_the_finding quotes its figures inside the
+  // sentence, and on the 2026-09-11 build they are the pre-repair ones, which
+  // disagree with the gate block printed in the table directly above it. So
+  // the line is built from the gate block's own fields plus the payload's
+  // why_season_controlled, and that sentence is drawn only by a payload that
+  // predates raw_split_half_r_for_comparison.
+  function rawSplitHalf(g) {
+    if (g.raw_split_half_r_for_comparison == null || !g.why_season_controlled) {
+      return '<p class="mgmt-note">' + esc(g.why_the_raw_number_is_not_the_finding) + "</p>";
+    }
+    return '<p class="mgmt-note">Raw ' + num(g.raw_split_half_r_for_comparison, 4) +
+      " against " + num(g.split_half_r, 4) + " season-controlled: " +
+      esc(g.why_season_controlled) + "</p>";
+  }
   function renderGate() {
     var g = DATA.gate;
-    return '<section class="mgmt-block"><h2>Is any club better at this?</h2>' +
-      '<p class="mgmt-lede">No, and the test that says so is bounded rather than a shrug.</p>' +
+    // The lede is read off clears_null, never typed: it used to assert "No"
+    // as a literal, which could not follow the gate if a rebuild flipped it.
+    return '<section class="mgmt-block"><h2>Club decision value: split-half gate</h2>' +
+      '<p class="mgmt-lede">' + (g.clears_null ? "Clears its permutation null."
+        : "Inside its permutation null band, so no club is ranked.") + "</p>" +
       '<table class="mgmt-mini mgmt-mini--wide">' +
       "<tr><td>Split-half correlation, season-controlled</td><td>" + num(g.split_half_r, 4) + "</td></tr>" +
       "<tr><td>Permutation null band</td><td>" + num(g.null_band[0], 4) + " to " + num(g.null_band[1], 4) + "</td></tr>" +
       "<tr><td>Clears the null</td><td>" + (g.clears_null ? "yes" : "no") + "</td></tr>" +
       "<tr><td>Club-seasons in the split</td><td>" + esc(g.n_agent_seasons_in_the_split) + "</td></tr>" +
-      "<tr><td>Smallest effect this would have seen</td><td>" +
+      "<tr><td>Smallest detectable effect</td><td>" +
       esc(g.smallest_detectable_per_attempt_sd) + " wins per attempt</td></tr>" +
       "<tr><td>Variance explained by season</td><td>" + pct(g.variance_explained_by_season) + "</td></tr>" +
       "<tr><td>Variance explained by the club</td><td>" + pct(g.variance_explained_by_team) + "</td></tr>" +
       "</table>" +
-      '<h3>The number that looks like a finding and is not</h3>' +
-      '<p class="mgmt-note">' + esc(g.why_the_raw_number_is_not_the_finding) + "</p>" +
-      "<h3>How the null was built</h3>" +
+      "<h3>Raw split-half</h3>" + rawSplitHalf(g) +
+      "<h3>Null</h3>" +
       '<p class="mgmt-note">' + esc(g.null_construction) + "</p>" +
-      "<h3>What a bounded null decides</h3>" +
+      "<h3>Detection floor and scope</h3>" +
       '<p class="mgmt-note">' + esc(g.detection_floor_reading) + "</p>" +
       '<p class="mgmt-note">' + esc(g.what_a_null_decides) + "</p>" +
       '<p class="mgmt-count">Clauses frozen in ' + esc(DATA.gate_doc) + ", " +
@@ -160,11 +217,15 @@
     }).join("");
 
     var cal = ref.model.calibration || {};
-    return '<section class="mgmt-block"><h2>Run expectancy</h2>' +
-      '<p class="mgmt-note">Expected runs scored from here to the end of the half-inning, ' +
-      'over ' + esc(ref.model.n_plays_fit) + ' plays across ' +
-      esc((ref.model.seasons || []).length) + ' seasons. This is the table every ' +
-      'break-even on this page is built from.</p>' +
+    // The win model's method (why a model rather than a cell table, and why it
+    // is monotone) belongs to the win_expectancy glossary entry; the page keeps
+    // the two caveats a reader of these numbers needs. The MLB feed's own
+    // Brier prints beside the model's whenever the payload carries it, so the
+    // comparison is the reader's to make and never typed here.
+    return '<section class="mgmt-block"><h2>' + gl("Run expectancy", "run_expectancy") + "</h2>" +
+      '<p class="mgmt-note">Expected runs to the end of the half-inning; ' +
+      esc(ref.model.n_plays_fit) + " plays, " + esc((ref.model.seasons || []).length) +
+      " seasons. Every break-even on this page is priced from it.</p>" +
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table mgmt-table--re"><thead>' +
       head + "</thead><tbody>" + body + "</tbody></table></div>" +
       "<h2>Coming to bat in a tied game</h2>" +
@@ -173,13 +234,13 @@
       "<th>Inning</th><th>Half</th><th>Win probability</th><th>Games</th>" +
       "</tr></thead><tbody>" +
       his + "</tbody></table></div>" +
-      "<h2>What the win model is and is not</h2>" +
-      '<p class="mgmt-note">' + esc(ref.why_a_model_not_a_table) + "</p>" +
-      '<p class="mgmt-note">' + esc(ref.monotone_by_construction) + "</p>" +
-      '<p class="mgmt-note">' + esc(ref.smoothing_costs_the_tails) + "</p>" +
-      '<p class="mgmt-note">' + esc(ref.state_excludes) + "</p>" +
+      "<h2>" + gl("Win model", "win_expectancy") + "</h2>" +
+      '<p class="mgmt-note"><b>Tails</b>: ' + esc(ref.smoothing_costs_the_tails) + "</p>" +
+      '<p class="mgmt-note"><b>Not in the state</b>: ' + esc(ref.state_excludes) + "</p>" +
       (cal.brier ? '<p class="mgmt-count">Brier ' + num(cal.brier, 4) +
-        " against " + num(cal.brier_base_rate_only, 4) + " for the base rate alone.</p>" : "");
+        "; base rate alone " + num(cal.brier_base_rate_only, 4) +
+        (cal.feed_brier ? "; MLB feed " + num(cal.feed_brier, 4) : "") + ".</p>" : "") +
+      "</section>";
   }
 
   // ---- the club style board ------------------------------------------------
@@ -225,9 +286,9 @@
     }).join("");
 
     return '<section class="mgmt-block"><h2>Club style</h2>' +
-      '<p class="mgmt-lede">What a club CHOSE to do, not how well it chose.</p>' +
-      '<p class="mgmt-note">' + esc(DATA.sections.team_style.why_no_plus_metric) + "</p>" +
-      '<p class="mgmt-note">' + esc(t.columns_are_style_not_skill) + "</p>" +
+      '<p class="mgmt-note"><b>Columns</b>: ' + esc(t.columns_are_style_not_skill) + "</p>" +
+      '<p class="mgmt-note"><b>No plus metric</b>: ' +
+      esc(DATA.sections.team_style.why_no_plus_metric) + "</p>" +
       '<div class="mgmt-controls"><select id="mgmt-season" aria-label="Season">' +
       opts + "</select></div>" +
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' + head +
@@ -243,7 +304,7 @@
       if (!s || s.live) return;
       out += '<section class="mgmt-block mgmt-dark"><h2>' +
         esc(k.replace(/_/g, " ")) + ' <span class="mgmt-darktag">not published</span></h2>' +
-        '<p class="mgmt-dark-why">Blocked on ' + esc(s.blocked_on) + ".</p>" +
+        '<p class="mgmt-dark-why">Blocked on: ' + esc(s.blocked_on) + ".</p>" +
         '<p class="mgmt-note">' + esc(s.why) + "</p></section>";
     });
     out += '<section class="mgmt-block"><h2>What this page does not claim</h2>' +
@@ -259,8 +320,10 @@
     if (state.section === "gate") root.innerHTML = renderGate() + renderBlocked();
     else if (state.section === "reference") root.innerHTML = renderReference();
     else if (state.section === "teams") root.innerHTML = renderTeams();
+    else if (state.section === "bunt") root.innerHTML = renderBunt();
     else root.innerHTML = renderRunning();
     wire();
+    try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(root); } catch (e) { /* glossary optional */ }
   }
 
   function wire() {

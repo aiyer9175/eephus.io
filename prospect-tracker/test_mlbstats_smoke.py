@@ -150,6 +150,40 @@ def test_bullpen_plus_explainer_on_teams_view():
 
 
 # ---------------------------------------------------------------------------
+# The eWAR build stamp (war_source.ewar_vintage, served since 2026-09-10) and
+# the 3-year WAR-rate basis (audit F10-01). Both were served or known and
+# never drawn: data/ewar.json is hand-built, so this season's eWAR numerator
+# can trail the IP beside it, and the frozen 3-year pitcher column is bWAR.
+# ---------------------------------------------------------------------------
+
+def _render_payload(payload: dict, hash_: str = "") -> str:
+    ctx = MiniRacer()
+    ctx.eval(_prelude(hash_).replace(f"var SAMPLE={SAMPLE};",
+                                     f"var SAMPLE={json.dumps(payload)};") + JS)
+    return ctx.eval("__html['mlbstats-app-root'] || ''")
+
+
+def test_a_stale_ewar_build_is_disclosed_and_a_fresh_one_is_not():
+    d = json.loads(SAMPLE)
+    d["ewar_vintage"] = {"artifact_generated_at": "2026-09-03T12:35:09", "stale": True,
+                         "rebuilds_on_a_schedule": False}
+    html = _render_payload(d)
+    assert "eWAR built 2026-09-03" in html, "the stale eWAR build is not disclosed"
+    d["ewar_vintage"]["stale"] = False
+    assert "eWAR built" not in _render_payload(d), "a fresh build must not raise the note"
+    d.pop("ewar_vintage")
+    assert "eWAR built" not in _render_payload(d), "an absent stamp must not invent one"
+
+
+def test_the_pitcher_3yr_war_rate_column_names_its_basis():
+    """Typed until multiyear_war_rate stamps a basis; the re-point epoch
+    removes the sentence and this test with it."""
+    head = _render("").split("<thead>")[1].split("</thead>")[0]
+    th = head.split('data-col="war_ip_plus_3yr"')[0].rsplit("<th ", 1)[1]
+    assert "bWAR basis" in th and "not on one scale" in th, th
+
+
+# ---------------------------------------------------------------------------
 # X-D1 wiring: the gmLI 3yr deployment-context column (gate-validated;
 # joined by bullpen_export from data/leverage_consistency_eval.json).
 # ---------------------------------------------------------------------------

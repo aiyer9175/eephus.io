@@ -188,6 +188,13 @@ def test_scorecard_verdicts_are_read_from_the_payload_not_hard_coded():
     assert "(n=61)" in html3 and "eWAR v2" not in html3
 
 
+def test_the_converter_percentile_reads_as_an_ordinal():
+    """The chip typed a literal "th" after the number and printed "72th"."""
+    html = _render("#history")
+    assert "72nd</b> pct of the field" in html
+    assert "72th" not in html
+
+
 def test_default_tab_is_the_direction_whose_gate_passes():
     """Owner default, 2026-09-06: the lab opens on SP->RP, the direction the
     pre-registered gate validates, not RP->SP, the one it does not. This is the
