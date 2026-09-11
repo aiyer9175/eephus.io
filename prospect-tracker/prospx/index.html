@@ -16055,7 +16055,8 @@ function getFilteredActives() {
       if (_sk === "surplus_p10")   return d ? d.p10_mm : null;
       if (_sk === "surplus_p90")   return d ? d.p90_mm : null;
       if (_sk === "surplus_pbust") return d ? d.p_bust : null;
-      if (_sk === "wag")           return (p.debuted_value && p.debuted_value.wag)
+      if (_sk === "wag")           return _wagUnified() ? wagBaked(p)
+                                        : (p.debuted_value && p.debuted_value.wag)
                                           ? p.debuted_value.wag.regressed_wag : null;
       return null;
     };
@@ -20795,7 +20796,8 @@ function _boardAsOf(dateStr) {
       war: cw.career_war ?? null,
       warPerYr: (wpyObj && wpyObj.war_per_yr != null) ? wpyObj.war_per_yr : (cw.war_per_yr ?? null),
       warSeasons: cw.war_seasons_count ?? null,
-      wag: (wagObj && wagObj.regressed_wag != null) ? wagObj.regressed_wag : null,
+      wag: _wagUnified() ? wagBaked(p)
+        : ((wagObj && wagObj.regressed_wag != null) ? wagObj.regressed_wag : null),
       boomLabel: (wagObj && wagObj.boom_label) || null,
     });
   }
@@ -22564,6 +22566,24 @@ function fvExpectedWarPerYr(fv, isPitcher) {
   return null;
 }
 
+// ONE WAG DEFINITION, behind the server flag storage.WAG_UNIFIED (audit F25 / L13-03,
+// 2026-09-11). When the export stamps DATA.wag_definition = "engine_at_debut", every
+// client WAG reads the baked engine block (debuted_value.wag): the value is its
+// regressed_wag once measured exposure clears the gate, the baseline its expected_rate.
+// Without the stamp every caller below runs exactly as before.
+function _wagUnified() {
+  return typeof DATA !== "undefined" && !!DATA && DATA.wag_definition === "engine_at_debut";
+}
+function wagBaked(g) {
+  const w = g && g.debuted_value && g.debuted_value.wag;
+  if (!w || w.regressed_wag == null || w.below_meaningful_exposure) return null;
+  return Number(w.regressed_wag);
+}
+function wagBakedBaseline(g) {
+  const w = g && g.debuted_value && g.debuted_value.wag;
+  return (w && w.expected_rate != null) ? Number(w.expected_rate) : null;
+}
+
 // v32.0 - $/WAR market anchor. Now routed through dollarsPerWar() (the
 // non-linear 3-tier model from the 2026 FA article, rolling 3yr avg).
 // Used to convert a graduate's playing-time-weighted WAR/year into a
@@ -23021,6 +23041,7 @@ function gradVsFvProjection(g) {
   // partial seasons read as a +4 boom instead of ~on-grade). Mirrors the server
   // _grad_wag / engine WAG. gradWarPerYr is still the ≥1-full-season-of-playing-
   // time GATE so a thin debut (Ben Rice, 50 PA) drops out instead of a huge bust.
+  if (_wagUnified()) return wagBaked(g);
   const r = gradWarPerYr(g);
   if (!r) return null;
   const fv = g.fv_close_raw ?? g.fv_close;
@@ -23042,6 +23063,10 @@ function gradVsFvProjection(g) {
 // debuts that are BOTH productive AND beating their prospect grade. Shares
 // gradWarPerYr's ≥1-full-season gate (returns null below it / without an FV).
 function gradWarWag(g) {
+  if (_wagUnified()) {
+    const w = wagBaked(g), ps = _gradPerSeasonWar(g, null);
+    return (w == null || ps == null) ? null : ps + w;
+  }
   const r = gradWarPerYr(g);
   if (!r) return null;
   const wag = gradVsFvProjection(g);
@@ -23063,8 +23088,10 @@ function makeWagChart(g) {
   const fv = g.fv_close_raw ?? g.fv_close;
   if (fv == null) return "";
   const isPitcher = !!(g.sabermetrics && g.sabermetrics.is_pitcher);
-  const baseline = fvExpectedWarPerYr(fv, isPitcher);
+  const unified = _wagUnified();
+  const baseline = unified ? wagBakedBaseline(g) : fvExpectedWarPerYr(fv, isPitcher);
   if (baseline == null) return "";
+  const baseTag = unified ? "grade" : `FV-${fvCeil(fv)}`;
   const wars   = years.map(y => Number(seasons[y]));
   const wagVals = wars.map(w => w - baseline);
   const maxAbs = Math.max(0.5, ...wagVals.map(v => Math.abs(v)));
@@ -23078,7 +23105,7 @@ function makeWagChart(g) {
     const y = v >= 0 ? mid - barH : mid;
     const fill = v >= 0 ? "var(--up)" : "var(--down)";
     const sign = v >= 0 ? "+" : "";
-    const tip = `${years[i]}: ${sign}${v.toFixed(2)} WAG · ${wars[i] >= 0 ? "+" : ""}${wars[i].toFixed(1)} WAR vs ${baseline.toFixed(2)} FV-${fvCeil(fv)} expected`;
+    const tip = `${years[i]}: ${sign}${v.toFixed(2)} WAG · ${wars[i] >= 0 ? "+" : ""}${wars[i].toFixed(1)} WAR vs ${baseline.toFixed(2)} ${baseTag} expected`;
     return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(1, barH).toFixed(1)}" fill="${fill}"><title>${escapeHtml(tip)}</title></rect>`;
   }).join("");
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="WAG by season">
@@ -30951,7 +30978,7 @@ function renderDebuts() {
                          : wagDeltaCellNum < -0.05 ? "var(--down)"
                          : "var(--text-tertiary)";
       const sign = wagDeltaCellNum > 0 ? "+" : "";
-      wagValueInline = `<span style="font-family:var(--font-mono);font-size:var(--fs-xs);font-weight:700;color:${wagCellColor};font-variant-numeric:tabular-nums;margin-left:4px;" title="WAG (WAR Above Grade) - playing-time-weighted WAR/yr minus FV-implied baseline">${sign}${wagDeltaCellNum.toFixed(2)}</span>`;
+      wagValueInline = `<span style="font-family:var(--font-mono);font-size:var(--fs-xs);font-weight:700;color:${wagCellColor};font-variant-numeric:tabular-nums;margin-left:4px;" title="${_wagUnified() ? "WAG (WAR Above Grade) per season, against the eFV grade at debut" : "WAG (WAR Above Grade) - playing-time-weighted WAR/yr minus FV-implied baseline"}">${sign}${wagDeltaCellNum.toFixed(2)}</span>`;
     }
     const chartHtml = wagSparkHtml
       ? `<span style="display:inline-flex;align-items:center;gap:4px;">${wagSparkHtml}${wagValueInline}</span>`
@@ -30967,7 +30994,12 @@ function renderDebuts() {
     // treatment.
     let wagPill = "";
     const wagDelta = gradVsFvProjection(g);
-    if (wagDelta != null) {
+    if (wagDelta != null && _wagUnified()) {
+      const w = g.debuted_value.wag;
+      const tip = `WAG ${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} per season against the eFV grade at debut · ${w.boom_label || "unsettled"}`;
+      const cls = wagDelta > 0.05 ? "is-pos" : wagDelta < -0.05 ? "is-neg" : "is-neutral";
+      wagPill = `<span class="wag-pill ${cls} g-term" data-term="wag" style="margin-left:6px;" title="${escapeHtml(tip)}">${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} WAG</span>`;
+    } else if (wagDelta != null) {
       const isPitcher = !!sm.is_pitcher;
       const expected = fvExpectedWarPerYr(g.fv_close_raw ?? g.fv_close, isPitcher);
       const r = gradWarPerYr(g);  // never null when wagDelta isn't
@@ -37039,7 +37071,8 @@ function makeSurplusCell(p) {
                     ? p.debuted_value.posterior : s.buckets;
   }
   const pb = d.p_bust != null ? Math.round(d.p_bust * 100) : null;
-  const wag = (p.debuted_value && p.debuted_value.wag)
+  const wag = _wagUnified() ? wagBaked(p)
+            : (p.debuted_value && p.debuted_value.wag)
               ? p.debuted_value.wag.regressed_wag : null;
   const dvm = p.dollar_dvm_plus;   // per-player $DvM+ (surplus-development index)
   // The "under floor" display that used to live here is GONE, along with the floor
@@ -38824,7 +38857,7 @@ function _sortStatPill(p) {
   if (s === "statcast_plus") { const v = getStatcastPlus(p); return _pillHTML("SC+", v == null ? null : String(Math.round(v))); }
   if (surM[s]) { const v = surM[s][1](p.surplus); return _pillHTML(surM[s][0], v == null ? null : "$" + Number(v).toFixed(1) + "m"); }
   if (s === "surplus_pbust") { const v = p.surplus && p.surplus.dist && p.surplus.dist.p_bust; return _pillHTML("P(bust)", v == null ? null : Math.round(v * 100) + "%"); }
-  if (s === "wag") { const v = p.debuted_value && p.debuted_value.wag && p.debuted_value.wag.regressed_wag; return _pillHTML("WAG", v == null ? null : (v > 0 ? "+" : "") + Number(v).toFixed(1)); }
+  if (s === "wag") { const v = _wagUnified() ? wagBaked(p) : (p.debuted_value && p.debuted_value.wag && p.debuted_value.wag.regressed_wag); return _pillHTML("WAG", v == null ? null : (v > 0 ? "+" : "") + Number(v).toFixed(1)); }
   if (s === "age_vs_level") { const v = p.age_vs_level && p.age_vs_level.diff; return _pillHTML("Age vs level", v == null ? null : (v > 0 ? "+" : "") + Number(v).toFixed(1)); }
   if (s === "eta") { const v = p.eta && p.eta.year; return _pillHTML("ETA", v == null ? null : String(v)); }
   if (s === "stock_movers") { const v = (p.fv_close != null && p.fv_open != null) ? (p.fv_close - p.fv_open) : null; return _pillHTML("FV move", v == null ? null : (v > 0 ? "+" : "") + v); }
@@ -47665,7 +47698,9 @@ function renderPlayerDetail(key) {
   const wagTile = wagDeltaTile != null ? [
     "WAG",
     `<span style="color:${wagColor};">${wagDeltaTile > 0 ? "+" : ""}${wagDeltaTile.toFixed(2)} WAR/yr</span>`,
-    p.fv_close != null
+    _wagUnified()
+      ? `vs eFV grade at debut · ${((p.career_war || {}).war_seasons_count) ?? "?"} MLB season${((p.career_war || {}).war_seasons_count) === 1 ? "" : "s"}${careerWarSparkline}`
+      : p.fv_close != null
       ? `vs ${fvCeil(p.fv_close)} FV proj · ${wagRateTile.war_seasons_count} MLB season${wagRateTile.war_seasons_count === 1 ? "" : "s"} (PT-weighted)${careerWarSparkline}`
       : `${careerWarSparkline}`,
   ] : null;
@@ -48981,7 +49016,18 @@ function renderPlayerDetail(key) {
     const isPit = !!(p.sabermetrics && p.sabermetrics.is_pitcher);
     const expected = fv != null ? fvExpectedWarPerYr(fv, isPit) : null;
     let summary = "";
-    if (delta != null && r && expected != null) {
+    if (_wagUnified()) {
+      const base = wagBakedBaseline(p), ps = _gradPerSeasonWar(p, null);
+      const n = (p.career_war || {}).war_seasons_count;
+      if (delta != null && base != null && ps != null) {
+        const color = delta > 0.05 ? "var(--up)" : delta < -0.05 ? "var(--down)" : "var(--text-secondary)";
+        summary = `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
+        <strong style="color:${color};">WAG ${delta > 0 ? "+" : ""}${delta.toFixed(1)} WAR/yr</strong>
+        over ${n ?? "?"} MLB season${n === 1 ? "" : "s"}.
+        <span style="color:var(--text-tertiary);">Actual ${ps.toFixed(2)} vs grade baseline ${base.toFixed(2)} WAR/yr.</span>
+      </div>`;
+      }
+    } else if (delta != null && r && expected != null) {
       const verb = Math.abs(delta) < 0.05
         ? "Matching"
         : delta > 0 ? "Outperforming" : "Trailing";

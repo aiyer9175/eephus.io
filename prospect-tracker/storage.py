@@ -5610,6 +5610,43 @@ def _fv_to_expected_war(fv: float | int | None) -> float | None:
 FV_EXPECTED_WAR_PER_YR_HITTER = {
     30: -0.1, 40: 0.0, 45: 0.8, 50: 1.6, 55: 2.5, 60: 3.4, 70: 5.0, 80: 7.0,
 }
+
+# ONE WAG DEFINITION, behind a flag (design audit F25, audit L13-03, 2026-09-11).
+#
+# False (the default) is today's site, byte for byte: three WAG computations on three
+# baselines and three grades (the engine block on the card, the legacy transform on the
+# list and in the farm rollup, the client mirror).
+#
+# True: the engine WAG (value_framework.wag) on the eFV grade at debut is THE WAG. It is
+# baked once per graduate (the _debuted_block_for memo in export_timeseries_json) and
+# every surface reads that block: the payload's top-level boom_label, the farm rollup's
+# graded Boom/Bust leaves and its Talent Translation display leaf, and PROSPX, which the
+# `wag_definition` stamp on timeseries.json switches over. Folded in: the legacy
+# survivor read is clamped to the fit support (L13-01) and the legacy positive branch
+# loses its level term (L13-06), so what survives of the legacy path for a direct caller
+# is a monotone residual.
+#
+# Sequenced AFTER the eWAR label epoch (plan 2026-09-09, Part 3.1), because flipping it
+# moves the graded farm leaves; the measured blast radius is in the WAG_unify lane report.
+WAG_UNIFIED = False
+WAG_DEFINITION = "engine_at_debut"
+
+
+def _farm_grad_wag_and_label(wag_payload: dict, label_payload: dict,
+                             block: dict | None) -> tuple[float | None, str]:
+    """(WAG, boom/bust label) for one graduate in the org rollup.
+
+    WAG_UNIFIED False: the two legacy reads exactly as the rollup always made them, the
+    display WAG on `wag_payload` (eFV grade) and the GRADED label on `label_payload`
+    (consensus FV). True: both from the baked engine `block` (debuted_value), the WAG
+    only where the card shows one (measured exposure past the gate)."""
+    if WAG_UNIFIED:
+        w = (block or {}).get("wag") or {}
+        wag = (float(w["regressed_wag"])
+               if w.get("regressed_wag") is not None and not w.get("below_meaningful_exposure")
+               else None)
+        return wag, (w.get("boom_label") or "unsettled")
+    return _grad_wag(wag_payload), _compute_boom_bust(label_payload)
 FV_EXPECTED_WAR_PER_YR_PITCHER = {
     30: -0.1, 40: 0.0, 45: 1.0, 50: 1.8, 55: 2.6, 60: 3.5, 70: 5.0, 80: 7.0,
 }
@@ -5638,6 +5675,15 @@ def _fv_to_expected_war_per_yr(fv, is_pitcher: bool = False) -> float | None:
     # rows carry no points, so no org bucket, farm grade or rendered pill moves.
     if v < 20.0:
         return None
+    if WAG_UNIFIED:
+        # L13-01: under the fit support the survivor curve runs BACKWARDS (FV 20 reads
+        # 0.36 WAR/season, FV 35 reads 0.05, FV 40 0.24), so a lower grade was held to a
+        # higher bar. Read it at the support edge instead; above it the curve is monotone.
+        try:
+            import value_framework as _vf
+            v = max(v, float(_vf._config()["fit"]["support_fv"][0]))
+        except Exception:
+            pass
     try:
         import value_framework as _vf
         derived = _vf.survivor_expected_war(v, is_pitcher)
@@ -5985,7 +6031,10 @@ def _grad_wag(graduate_payload: dict) -> float | None:
     if expected is None:
         return None
     delta = full_season_war - expected
-    if delta > 0:
+    # L13-06: under WAG_UNIFIED the residual stays a residual. The transform below adds a
+    # level term (0.30 x WAR/season at delta 0+), so E[WAG | on grade] is not zero, and
+    # its penalty reads CURRENT age and level to modify PAST production.
+    if delta > 0 and not WAG_UNIFIED:
         # Positive surprise should still require current MLB production.
         # Blend WAG with actual WAR/yr, then dampen churn/older-minors
         # profiles so DFA-circus players do not top the leaderboard.
@@ -7196,6 +7245,11 @@ def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
                 # categorical grade signal, replacing the legacy _compute_boom_bust.
                 "boom_label": _engine_wag_boom_bust(w),
             }
+            if WAG_UNIFIED:
+                # The per-season baseline the client's WAG chart and summary draw
+                # against, and the definition stamp, so the block alone says what it is.
+                out["wag"]["expected_rate"] = w.get("expected_rate")
+                out["wag"]["definition"] = WAG_DEFINITION
     except Exception:
         pass
     return out or None
@@ -10732,15 +10786,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # every non-graduate, where the two are the same number anyway).
         _xrow = _xfv_by_key.get(p.player_key) or {}
         _wag_fv = _xrow.get("xfv_grade_at_debut", _xrow.get("xfv_grade"))
-        _debuted_value = (
-            _build_debuted_payload(
-                latest_fv, _is_pitcher_vf, p.position, age=age,
-                career_war=career_war.get(p.player_key),
-                roster_status=roster_status.get(p.player_key),
-                contract=contracts_by_key.get(p.player_key),
-                career_stats=career_stats.get(p.player_key),
-                wag_fv=_wag_fv)
-            if p.status == "debuted" else None)
+        if WAG_UNIFIED and p.player_key in _debuted_memo:
+            # Baked ONCE: the farm rollup already built this block and graded the org
+            # on it, so the card serves that same object (audit F25).
+            _debuted_value = _debuted_memo[p.player_key]
+        else:
+            _debuted_value = (
+                _build_debuted_payload(
+                    latest_fv, _is_pitcher_vf, p.position, age=age,
+                    career_war=career_war.get(p.player_key),
+                    roster_status=roster_status.get(p.player_key),
+                    contract=contracts_by_key.get(p.player_key),
+                    career_stats=career_stats.get(p.player_key),
+                    wag_fv=_wag_fv)
+                if p.status == "debuted" else None)
         payload = {
             "player_key": p.player_key,
             "player_name": p.player_name,
@@ -11060,7 +11119,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # cleared the sample floor).
         if p.status == "debuted":
             try:
-                payload["boom_label"] = _compute_boom_bust(payload)
+                if WAG_UNIFIED:
+                    payload["boom_label"] = (((_debuted_value or {}).get("wag") or {})
+                                             .get("boom_label") or "unsettled")
+                else:
+                    payload["boom_label"] = _compute_boom_bust(payload)
             except Exception:
                 payload["boom_label"] = "unsettled"
         else:
@@ -12179,6 +12242,29 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     #   - Total career WAR (across grads with a value)
     #   - Total bonus USD (across grads with bonus on file)
     # All grouped by graduate's CURRENT org (per user's choice).
+    #
+    # WAG_UNIFIED: the debuted block (engine WAG included) is baked ONCE per graduate
+    # here, memoised, and _serialize serves the same object on the card, so the WAG an
+    # org is graded on is the WAG its graduates' cards show. Same inputs, same call as
+    # _serialize's own. Unused while the flag is False.
+    _debuted_memo: dict[str, dict | None] = {}
+
+    def _debuted_block_for(pt: PlayerTimeseries) -> dict | None:
+        if pt.player_key not in _debuted_memo:
+            _xr = _xfv_by_key.get(pt.player_key) or {}
+            _debuted_memo[pt.player_key] = (
+                _build_debuted_payload(
+                    (pt.points[-1].consensus_fv_raw if pt.points else None),
+                    _vf_is_pitcher_position(pt.position), pt.position,
+                    age=compute_age_decimal(birth_dates.get(pt.player_key)),
+                    career_war=career_war.get(pt.player_key),
+                    roster_status=roster_status.get(pt.player_key),
+                    contract=contracts_by_key.get(pt.player_key),
+                    career_stats=career_stats.get(pt.player_key),
+                    wag_fv=_xr.get("xfv_grade_at_debut", _xr.get("xfv_grade")))
+                if pt.status == "debuted" else None)
+        return _debuted_memo[pt.player_key]
+
     grad_agg: dict[str, dict] = {}
     for gp in grads:
         if not gp.points:
@@ -12206,16 +12292,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         gp_bd = birth_dates.get(gp.player_key)
         gp_age = compute_age_decimal(gp_bd)
         gp_current_level = roster_level_by_key.get(gp.player_key)
-        wag = _grad_wag({
-            "career_war":   cw,
-            "fv_close_raw": _wag_fv_raw,
-            "fv_close":     (_gp_xfv if _gp_xfv is not None else gp.fv_close),
-            "position":     gp.position,
-            "career_stats": career_stats.get(gp.player_key, []),
-            "transactions": transactions_by_player.get(gp.player_key, []),
-            "age":          gp_age,
-            "current_level": gp_current_level,
-        })
+        # One helper returns BOTH the display WAG and the GRADED boom/bust label
+        # (audit L13-04: they used to read two different grades thirty lines apart).
+        # Flag off: the two legacy calls, unchanged. Flag on: the baked engine block.
+        wag, boom_label = _farm_grad_wag_and_label(
+            {
+                "career_war":   cw,
+                "fv_close_raw": _wag_fv_raw,
+                "fv_close":     (_gp_xfv if _gp_xfv is not None else gp.fv_close),
+                "position":     gp.position,
+                "career_stats": career_stats.get(gp.player_key, []),
+                "transactions": transactions_by_player.get(gp.player_key, []),
+                "age":          gp_age,
+                "current_level": gp_current_level,
+            },
+            {
+                "career_war":   cw,
+                "fv_close_raw": fv_close_raw,
+                "fv_close":     gp.fv_close,
+                "career_stats": (career_stats or {}).get(gp.player_key, []) or [],
+            },
+            (_debuted_block_for(gp) if WAG_UNIFIED else None))
         career_war_val = cw.get("career_war")
         gp_acq = (acquisitions or {}).get(gp.player_key, {}) or {}
         bonus_usd = gp_acq.get("bonus_usd")
@@ -12335,14 +12432,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "ifa_mid_war_per_yr_sum":      0.0, "ifa_mid_war_per_yr_count":      0,
             "ifa_lower_war_per_yr_sum":    0.0, "ifa_lower_war_per_yr_count":    0,
         })
-        # Boom/Bust classification for this graduate.
+        # Boom/Bust classification for this graduate (computed above with the WAG).
         career_rows = (career_stats or {}).get(gp.player_key, []) or []
-        boom_label = _compute_boom_bust({
-            "career_war":   cw,
-            "fv_close_raw": fv_close_raw,
-            "fv_close":     gp.fv_close,
-            "career_stats": career_rows,
-        })
         if boom_label == "boom":
             bucket["boom_count"] += 1
             bucket["settled_count"] += 1
@@ -16370,6 +16461,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # carried v5 dollars because a long-running chained export held the old
         # config in memory. Nothing could see it, because nothing said.
         "calibration": _vf_stamp.calibration_stamp(),
+        # Present only under WAG_UNIFIED: tells PROSPX every WAG reads the baked engine
+        # block. Absent, the client runs exactly as before (audit F25).
+        **({"wag_definition": WAG_DEFINITION} if WAG_UNIFIED else {}),
         "run": latest_run_summary(),
         "total_tracked": len(active_payload) + len(graduate_payload) + len(inactive_payload),
         "active_count": len(actives),
