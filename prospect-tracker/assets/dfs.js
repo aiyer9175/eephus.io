@@ -167,13 +167,14 @@
   function teamLogo(team) {
     return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && team) ? EEPHUS_HUB.teamLogo(team) : "";
   }
-  // Glossary term span. Slugs are checked against data/glossary.json before
-  // they are used: a [data-gl] whose slug is absent renders a term that looks
-  // interactive and defines nothing. The DFS vocabulary proper (salary, value,
-  // stack, ownership, slate) has no entry in the artifact, so only the two
-  // skill indices this board actually shows are wrapped.
+  // Glossary term span, on the betting.js contract: the span carries NO
+  // .g-term of its own. eephus-gl's wire() adds that class only when the slug
+  // resolves against the loaded glossary, so a slug the artifact does not
+  // carry yet (the DFS vocabulary: points per $1k, start rate, team total,
+  // matchup multiplier) degrades to plain text instead of a clickable term
+  // that defines nothing, and lights up the day the entry lands.
   function gl(label, slug) {
-    return '<span class="g-term" data-gl="' + esc(slug) + '">' + esc(label) + "</span>";
+    return '<span data-gl="' + esc(slug) + '">' + esc(label) + "</span>";
   }
   // Name key for joining a salary sheet to our pool. Lowercase, accents folded,
   // punctuation and generational suffixes dropped, so "Ronald Acuna Jr." and
@@ -293,8 +294,8 @@
     }
     if (hIdx < 0) {
       S.importReport = { ok: false,
-        msg: "Could not find a Name column and a Salary column in that file. " +
-             "Expected headers like Name, Position, Salary, TeamAbbrev." };
+        msg: "No Name and Salary columns found. Expected headers like Name, Position, " +
+             "Salary, TeamAbbrev." };
       return;
     }
     var pool = {}, byName = {};
@@ -496,9 +497,8 @@
     }
     if (d.slate_date && String(d.slate_date) < todayLocal()) {
       return { date: d.slate_date,
-               reason: "Today's build has not published a slate yet, so this is the last " +
-                 "board on disk. The payload carries no staleness stamp, which means the " +
-                 "daily run did not reach the point where it would have written one.",
+               reason: "Today's slate has not published; this is the last board on disk. " +
+                 "It carries no staleness stamp, so the daily run stopped before writing one.",
                kept: false, checked: null };
     }
     return null;
@@ -510,11 +510,9 @@
     return '<div class="dfs-stale" role="alert">' +
       "<strong>This is the " + when + " slate, not today's.</strong>" +
       "<span>" + esc(st.reason) + "</span>" +
-      "<span>" + (st.kept
-        ? "We kept the last board we could stand behind rather than publishing one we could not. "
-        : "") +
-      "Every projection below belongs to " + when + ", and salaries imported " +
-      "for a different date are dropped rather than applied to it.</span>" +
+      "<span>" + (st.kept ? "We kept the last board we could verify. " : "") +
+      "Projections below are for " + when + "; salaries imported for another date " +
+      "are dropped.</span>" +
       (st.checked
         ? '<span class="dfs-stale-when">Checked ' + esc(st.checked) + ".</span>"
         : "") +
@@ -568,12 +566,11 @@
       (missing.length
         ? '<div class="dfs-integrity-note">No hitter matched ' + missing.length +
           " club" + (missing.length === 1 ? "" : "s") + " on the slate: " +
-          esc(missing.join(", ")) + ". Two lineups play every game, so those are joins " +
-          "that missed rather than clubs with nobody to price.</div>"
+          esc(missing.join(", ")) + ". Those are missed joins.</div>"
         : "") +
       (thin && !missing.length
-        ? '<div class="dfs-integrity-note">Some clubs have no measured team context, so ' +
-          "their matchup multiplier is sitting on a neutral fallback. The rows say which.</div>"
+        ? '<div class="dfs-integrity-note">Some clubs have no measured team context; ' +
+          "their matchup multiplier falls back to neutral (rows marked no matchup).</div>"
         : "") +
       (offH + offP > 0
         ? '<div class="dfs-integrity-note">We priced ' + esc(g.n_hitters_priced) + " " +
@@ -581,7 +578,7 @@
           plural(g.n_pitchers_priced, "starter", "starters") + ". " + esc(offH) + " " +
           plural(offH, "hitter", "hitters") + " and " + esc(offP) + " " +
           plural(offP, "starter", "starters") + " are not on a current active roster, so they " +
-          "are left off tonight's board: a player who is not active cannot score.</div>"
+          "are left off the board.</div>"
         : "") +
       "</div>";
   }
@@ -598,9 +595,9 @@
   //    lookup that found nothing, and unmarked those two read identically.
   function matchupMark(ctx) {
     if (!ctx || ctx.matchup_resolved !== false) return "";
-    return ' <span class="dfs-unres" title="The opponent Offense+ / Bullpen+ lookup found ' +
-      "nothing for this club, so the matchup multiplier fell back to a neutral 100. That is " +
-      'a missing measurement, not an average opponent.">no matchup</span>';
+    return ' <span class="dfs-unres" title="The opponent Offense+ / Bullpen+ lookup missed; ' +
+      'the matchup multiplier uses a neutral 100. A missing measurement, not an average ' +
+      'opponent.">no matchup</span>';
   }
 
   // 4. empty_reason_kind. Six empties reach this page and they are not the same
@@ -611,24 +608,22 @@
   //    around it, and whether the box reads as an outage.
   var EMPTY_KINDS = {
     no_games_scheduled: { head: "No games today", bad: false,
-      tail: "Nothing is broken: the league did not schedule a slate. This page rebuilds every day." },
+      tail: "Nothing is broken. The page rebuilds daily." },
     season_over: { head: "The season is over", bad: false,
-      tail: "The board comes back with the schedule." },
+      tail: "The board returns with the schedule." },
     schedule_unavailable: { head: "We could not verify today's slate", bad: true,
-      tail: "That is our pipeline, not the league. The schedule feed did not answer, so we " +
-            "assert nothing about today rather than publish a guess about it." },
+      tail: "Pipeline outage: the schedule feed did not answer, so nothing is published " +
+            "for today." },
     no_corpus: { head: "The projection corpus is missing", bad: true,
-      tail: "That is our pipeline. Nothing on the slate can be priced without it, and a board " +
-            "of blanks would be worse than saying so." },
+      tail: "Pipeline outage: nothing on the slate can be priced without it." },
     no_projections: { head: "The slate is here, the projections are not", bad: false,
-      tail: "Games are scheduled, but nobody on them carries a rest-of-season projection yet. " +
-            "The board fills in on the next build." },
+      tail: "No player on today's games has a rest-of-season projection yet. The next " +
+            "build fills it in." },
     collapsed_slate: { head: "This board did not assemble", bad: true,
-      tail: "That is a broken join in our build, not a thin day. We would rather show you " +
-            "nothing than half a slate." },
+      tail: "A broken join in the build. No partial slate is published." },
     build_failed: { head: "Today's build did not finish", bad: true,
-      tail: "That is our pipeline. The run raised before it could price anything, so there is " +
-            "no board to stand behind for today and we are not dressing an older one up as one." }
+      tail: "Pipeline outage: the run failed before pricing anything. No older board is " +
+            "substituted." }
   };
   function emptyPanel(d) {
     var k = EMPTY_KINDS[d.empty_reason_kind] || null;
@@ -645,12 +640,12 @@
     { key: "name", label: "Pitcher", text: true },
     { key: "pts", label: "Proj", num: true },
     { key: "salary", label: "Salary", num: true },
-    { key: "value", label: "Pts/$1k", num: true },
+    { key: "value", label: "Pts/$1k", num: true, term: "dfs_points_per_1k" },
     { key: "opp", label: "Opponent", text: true },
     // The runs the market expects the club he is facing to score. It is the
     // single most-read number on a DFS pitcher card and it is pure market: no
     // projection on this page is priced off it.
-    { key: "opp_itt", label: "Opp total", num: true },
+    { key: "opp_itt", label: "Opp total", num: true, term: "implied_team_total" },
     { key: "ip", label: "IP", num: true },
     { key: "k", label: "K", num: true },
     { key: "sem_plus", label: "SEM+", num: true, term: "sem_plus" }
@@ -660,14 +655,14 @@
     { key: "name", label: "Hitter", text: true },
     { key: "pts", label: "Proj", num: true },
     { key: "salary", label: "Salary", num: true },
-    { key: "value", label: "Pts/$1k", num: true },
-    { key: "start_rate", label: "Start", num: true },
+    { key: "value", label: "Pts/$1k", num: true, term: "dfs_points_per_1k" },
+    { key: "start_rate", label: "Start", num: true, term: "dfs_start_rate" },
     // Sorts on the spot itself, so a click gives the reader the confirmed
     // top-of-the-order bats. Rows with no posted card sort last, which is the
     // honest place for "we do not know" on a column about what is known.
     { key: "lineup", label: "Spot", num: true },
     { key: "opp", label: "Opponent", text: true },
-    { key: "itt", label: "Team total", num: true },
+    { key: "itt", label: "Team total", num: true, term: "implied_team_total" },
     { key: "opp_sp", label: "Opp SP", text: true },
     { key: "hem_plus", label: "HEM+", num: true, term: "hem_plus" }
   ];
@@ -720,8 +715,7 @@
     if (key === "start_rate") {
       return Math.round(v * 100) + "%" +
         (p.lineup_status === "confirmed"
-          ? ' <span class="dfs-conf" title="His club has posted its lineup, so this is not a ' +
-            'projection. Our projected start rate for him was ' +
+          ? ' <span class="dfs-conf" title="Lineup posted. Projected start rate was ' +
             Math.round((p.start_rate_projected || 0) * 100) + '%.">posted</span>'
           : "");
     }
@@ -734,8 +728,7 @@
   var SPOT_SUFFIX = ["th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th"];
   function lineupCell(p) {
     if (p.lineup_status === "not_in_lineup") {
-      return '<span class="dfs-out" title="His club has posted its lineup and he is not in it. ' +
-        'He can still pinch hit, which is worth close to nothing in a DFS lineup.">out</span>';
+      return '<span class="dfs-out" title="Lineup posted without him.">out</span>';
     }
     var s = p.lineup_spot;
     if (!s) return "-";
@@ -843,18 +836,20 @@
     var park = parkPhrase();
     var sal = Object.keys(S.salaries).length
       ? (Object.keys(S.salaries).length + " salaries loaded from your import")
-      : "no salaries loaded yet, so the value column is blank until you import them";
+      : "No salaries loaded; Pts/$1k is blank until you import them";
     if (side === "pit") {
-      return '<div class="dfs-note">Announced probable starters only, projected for ONE start. The skill line ' +
-        "comes from the rest-of-season engine; hits, earned runs and home runs allowed carry an opponent-offense " +
-        "multiplier and " + esc(park) + ". Relievers are not listed: save and hold chances are not knowable before " +
-        "first pitch. " + esc(sal) + ".</div>";
+      return '<div class="dfs-note">Announced probables, one start each. Skill line: the ' +
+        "rest-of-season engine; hits, earned runs and home runs allowed carry an opponent-offense " +
+        "multiplier and " + esc(park) + ". No relievers: save and hold chances are unknowable " +
+        "before first pitch. " + esc(sal) + ".</div>";
     }
-    return '<div class="dfs-note">Every hitter whose club is on the slate, projected for a game he STARTS. Start ' +
-      "is our estimate of how often he is in the lineup, from projected playing time against a " +
-      (d.anchors ? d.anchors.pa_per_start : 4.15) + " plate appearance league anchor, and it is replaced by the " +
-      "posted card once his club files one. The matchup multiplier is the inverse of an innings-weighted opponent " +
-      "pitching index (announced starter SEM+ plus bullpen Bullpen+), times " + esc(park) + ". " + esc(sal) + ".</div>";
+    return '<div class="dfs-note">Every hitter on a slate club, projected for a game he starts. ' +
+      gl("Start", "dfs_start_rate") + ": projected lineup rate (playing time against a " +
+      (d.anchors ? d.anchors.pa_per_start : 4.15) + " PA-per-start anchor), replaced by the " +
+      "posted card. " + gl("Matchup multiplier", "dfs_matchup_multiplier") + ": inverse of " +
+      "the innings-weighted opponent pitching index (starter " + gl("SEM+", "sem_plus") +
+      " plus " + gl("Bullpen+", "bullpen_plus") + "), times " + esc(park) + ". " +
+      esc(sal) + ".</div>";
   }
 
   // ---- value board ----------------------------------------------------------
@@ -867,8 +862,8 @@
     });
     if (!priced.length) {
       return renderSalaries() +
-        '<div class="dfs-warn">No salaries loaded yet, so there is nothing to value. Import them above ' +
-        "and this board fills in.</div>";
+        '<div class="dfs-warn">No salaries loaded, so there is nothing to value. Import them ' +
+        "above.</div>";
     }
     priced = filterRows(priced);
     if (!priced.length) {
@@ -888,9 +883,9 @@
         "</td></tr>";
     }).join("");
     return renderSalaries() + filterBarHTML() +
-      '<div class="dfs-note">Projected points per thousand dollars of salary, over every player you have a ' +
-      "price for. Projections are ours; salaries are yours. A high value score on a low start rate is a bench " +
-      "bat who happens to be cheap, not a play.</div>" +
+      '<div class="dfs-note">' + gl("Pts/$1k", "dfs_points_per_1k") + ": projected points " +
+      "per $1,000 of salary, for every player you priced. Projections are ours; salaries are " +
+      "yours. Read it with Start: a high value on a low start rate is a cheap bench bat.</div>" +
       '<div class="dfs-scroll mlbstats-scroll"><table class="dfs-table mlbstats-table">' +
       '<thead><tr><th class="mlbstats-col-rank">#</th>' +
       '<th class="dfs-l">Player</th><th>Game</th><th>Proj</th>' +
@@ -941,12 +936,11 @@
         "</td><td>" + num(r.pts5, 1) + "</td><td>" + (r.sal4 ? money(r.sal4) : "-") +
         '</td><td class="dfs-l">' + esc(r.names.join(", ")) + "</td></tr>";
     }).join("");
-    return '<div class="dfs-note">Clubs ranked by the summed projection of their four best bats on the slate, ' +
-      "with the arm they face, that opponent's innings-weighted pitching index (lower is easier) and the runs " +
-      "the market implies for the club. The team total is Vegas, read from a cached odds snapshot; the points " +
-      "are ours and are not priced off it, so the two columns are independent reads of the same spot. The points " +
-      "are a SUM of independent per-player projections. The correlation that makes a stack worth building is real " +
-      "and we do not model it, so read this as a shortlist of good spots, not as a stack projection.</div>" +
+    return '<div class="dfs-note">Clubs ranked by the summed projection of their four best bats, with ' +
+      "the arm they face, that opponent's innings-weighted pitching index (lower is easier) and the " +
+      gl("team total", "implied_team_total") + " from a cached odds snapshot. Our points are not " +
+      "priced off it. Points are a sum of independent projections: stack correlation is real and " +
+      "we do not model it.</div>" +
       '<div class="dfs-scroll mlbstats-scroll"><table class="dfs-table mlbstats-table">' +
       '<thead><tr><th class="mlbstats-col-rank">#</th>' +
       '<th class="dfs-l">Club</th><th>Game</th><th>Opp SP</th>' +
@@ -960,10 +954,9 @@
     var meta = S.salaryMeta, rep = S.importReport;
     var have = Object.keys(S.salaries).length;
     var block =
-      '<div class="dfs-note">Salaries come from you. We do not scrape or republish any site\'s salary feed, and ' +
-      "nothing you paste here leaves your browser. Export the player list your contest site gives you and drop the " +
-      "file below, or paste the text. We look for a Name column and a Salary column; Position and TeamAbbrev help " +
-      "us join the right player. Your site's Position column wins over ours.</div>" +
+      '<div class="dfs-note">Salaries come from you and stay in this browser; no salary feed is ' +
+      "scraped or republished. Drop your contest site's player export below or paste it. Required " +
+      "columns: Name, Salary. Optional: Position (wins over ours), TeamAbbrev.</div>" +
       '<div class="dfs-form">' +
       '<label class="dfs-field"><span>CSV file</span><input type="file" id="dfs-csv-file" accept=".csv,text/csv,text/plain"></label>' +
       '<button type="button" class="dfs-btn" id="dfs-sal-clear">Clear salaries</button>' +
@@ -1197,16 +1190,17 @@
     if (!tpl) return { ok: false, msg: "No roster template is available in the payload." };
     var pool = optimizerPool(tpl);
     if (!pool.length) {
-      return { ok: false, msg: "No player on this slate has both a salary and a projection. " +
-                              "Import a salary sheet on the Salaries tab first." };
+      // The Salaries tab this used to name was folded into Value; the import
+      // form also renders on this tab, so the line points at neither.
+      return { ok: false, msg: "No player in the pool has both a salary and a projection. " +
+                              "Import salaries first." };
     }
     var roster = greedy(tpl, pool, false);
     if (!roster) roster = greedy(tpl, pool, true);   // cheapest-first feasibility pass
     if (!roster) {
-      return { ok: false, msg: "No lineup satisfies these constraints. The solver tried a best-first " +
-                              "build and then a cheapest-first one, and neither filled every slot. Try " +
-                              "raising the cap, raising the per-team limit, lowering the minimum start " +
-                              "rate, or importing more salaries." };
+      return { ok: false, msg: "No lineup satisfies these constraints (best-first and " +
+                              "cheapest-first builds both failed). Raise the cap or the per-team " +
+                              "limit, lower the minimum start rate, or import more salaries." };
     }
     roster = improve(roster, tpl, pool);
     return { ok: true, tpl: tpl, roster: roster,
@@ -1234,21 +1228,19 @@
         "> No hitters facing my starter</label>" +
       '<button type="button" class="dfs-btn dfs-btn-go" id="dfs-run">Optimize</button>' +
       "</div>";
-    var intro = '<div class="dfs-note">A greedy build plus a local-search improvement pass over the projections ' +
-      "on this page and the salaries you imported. Projections are ours and are labelled on the board tabs; " +
-      "salaries are yours. This is a solver, not a prediction: it maximizes projected points under your " +
-      "constraints, and it is only as good as the projection it is handed. The pool honors the filter bar on " +
-      "the Slate and Value tabs: filtering shrinks the pool, and a filtered-out player cannot be drafted.</div>" +
+    var intro = '<div class="dfs-note">Maximizes projected points under your constraints: a greedy ' +
+      "build plus local search over our projections and your salaries. The pool honors the Slate " +
+      "and Value filter bar: filtering shrinks the pool.</div>" +
       (filtersOn()
-        ? '<div class="dfs-warn">The slate filter is active, so the solver only sees the filtered pool. ' +
-          'Clear the filter on the Slate tab to solve over the whole slate.</div>'
+        ? '<div class="dfs-warn">The slate filter is active, so the solver sees only the ' +
+          "filtered pool.</div>"
         : "");
     if (!haveSal) {
       // The importer comes with the message. Telling a reader what is missing
       // and then making him hunt for the control that fixes it is half a
       // feature.
-      return intro + controls + '<div class="dfs-warn">No salaries loaded. The optimizer needs prices and we ' +
-        "do not have them, by choice: bring them from your own contest site below.</div>" + renderSalaries();
+      return intro + controls + '<div class="dfs-warn">No salaries loaded. Import your contest ' +
+        "site's prices below.</div>" + renderSalaries();
     }
     var res = S.lineup;
     var head = intro + controls + salaryStatus();
@@ -1340,20 +1332,17 @@
     var nLive = Number(src.n_rejected_in_game || 0);
     var liveLine = nLive > 0
       ? " " + nLive + " " + plural(nLive, "game", "games") + " on this slate had already started when " +
-        "that snapshot was taken, so " + plural(nLive, "its", "their") + " odds were for the rest of a " +
-        "game in progress and are not shown."
+        "that snapshot was taken; " + plural(nLive, "its", "their") + " in-game odds are not shown."
       : "";
     if (integ.vegas_games) {
-      return '<div class="dfs-note">Team totals are the market\'s, not ours: the posted game total, split ' +
-        "between the clubs by each side's price with the house margin taken out. Read from an odds snapshot " +
-        "taken " + esc(src.captured_at || "earlier") +
-        ". They are context to read beside a projection. Nothing on this page is priced off them." +
-        liveLine + "</div>";
+      return '<div class="dfs-note">' + gl("Team totals", "implied_team_total") + " are the " +
+        "market's: the posted game total split by each side's price with the house margin removed, " +
+        "from an odds snapshot taken " + esc(src.captured_at || "earlier") +
+        ". Nothing on this page is priced off them." + liveLine + "</div>";
     }
     if (!src.reason) return "";
     return '<div class="dfs-note">No Vegas team totals on this slate: ' + esc(src.reason) +
-      ". We read odds snapshots the betting module already pays for and never fetch our own, so a slate " +
-      "with no snapshot shows no total rather than an estimated one.</div>";
+      ". We read cached odds snapshots and never fetch our own, so no total is estimated.</div>";
   }
 
   // ---- render ---------------------------------------------------------------
@@ -1367,9 +1356,8 @@
       // a control that responds instead of four buttons that do nothing, and
       // the same honest message under every one of them.
       html = '<div class="dfs-error" role="alert"><strong>Slate failed to load.</strong> ' +
-        esc(S.error) + " The daily build may be mid-run, or the slate for today has not been " +
-        "built yet. Nothing on this page works without it, including the optimizer, which " +
-        'needs the projected pool to solve over. <button type="button" id="dfs-retry" ' +
+        esc(S.error) + ". The daily build may be mid-run. Every tab, the optimizer included, " +
+        'needs the slate. <button type="button" id="dfs-retry" ' +
         'class="dfs-btn">Retry</button></div>';
     } else if (d.empty_reason) {
       html = emptyPanel(d);
@@ -1683,8 +1671,10 @@
     if (b) {
       // The stage phrase is the page's only conversion route, so it is a link.
       b.innerHTML = '<div class="dfs-asof">' + esc(S.data.slate_date || "") + " · " +
+        // n_players is the SERVED count since the 2026-09-11 priced/served
+        // split, so the label says players, not players priced.
         (S.data.n_games || 0) + " games · " + (S.data.n_players || 0) +
-        ' players priced · <a class="dfs-name-link" href="/diamond/">Diamond preview</a>' +
+        ' players · <a class="dfs-name-link" href="/diamond/">Diamond preview</a>' +
         ", free while we build" +
         // Same predicate as the banner, so the header chip and the banner can
         // never disagree about whether the board is today's.

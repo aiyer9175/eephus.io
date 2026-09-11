@@ -164,9 +164,7 @@
   function auxMissing(key) {
     var st = auxState(key);
     if (st === "pending") return "Loading " + AUX_URL[key] + ".";
-    return AUX_URL[key] + " did not load, so this panel has nothing to read. " +
-      "It is written by the nightly build; a missing file means the build has " +
-      "not run since the lane that writes it shipped.";
+    return AUX_URL[key] + " did not load. The nightly build writes it.";
   }
 
   // ---- helpers --------------------------------------------------------------
@@ -532,15 +530,14 @@
   // "the model is unvalidated" with no way to check the claim.
   function noPickHeadline(v) {
     var lead = "No " + selNoun() + ": ";
-    if (!v) return lead + "this payload carries no validation state, so treat the model " +
-      "as unvalidated.";
+    if (!v) return lead + "this payload carries no validation state; the model is unvalidated.";
     if (v.available === false) {
       return lead + (v.reason || "the validation state is unknown") + ".";
     }
     var g = gateById(v, "vintage_sample");
     if (g) {
-      return lead + "the model is unvalidated until " + g.need + " exist, and " +
-        haveText(g) + " exist today.";
+      return lead + "the model is unvalidated until " + g.need + " exist; " +
+        haveText(g) + " today.";
     }
     return lead + "the model is unvalidated and no minimum edge has been measured.";
   }
@@ -556,8 +553,8 @@
     var rows = ['<div class="bt-panel-hd">Is the model validated?</div>'];
     if (!v) {
       return '<div class="bt-panel">' + rows.join("") +
-        "<p>No. This payload carries no validation state, which means it was built before " +
-        "the vintage grading lane existed. Treat every number on this page as unvalidated.</p></div>";
+        "<p>No. This payload predates the validation state; treat every number here as " +
+        "unvalidated.</p></div>";
     }
     if (v.available === false) {
       return '<div class="bt-panel">' + rows.join("") + "<p><strong>No.</strong> " +
@@ -568,18 +565,18 @@
 
     rows.push("<p><strong>" + (v.validated ? "Yes." : "No.") + "</strong> " +
       (v.validated
-        ? "The vintage mode has cleared every gate below, and the headline numbers on this " +
-          "page come from it."
-        : "The headline numbers on this page come from the <strong>" +
-          esc(v.headline_mode || "contaminated") + "</strong> mode, which cannot validate " +
-          "anything. " + esc((v.mode_meaning || {}).contaminated || "")) + "</p>");
+        ? "The vintage mode cleared every gate below; the headline numbers come from it."
+        : "Headline numbers come from the <strong>" +
+          esc(v.headline_mode || "contaminated") + "</strong> mode, which cannot validate. " +
+          esc((v.mode_meaning || {}).contaminated || "")) + "</p>");
 
     if ((v.mode_meaning || {}).vintage) {
-      rows.push("<p><strong>The honest mode.</strong> " + esc(v.mode_meaning.vintage) + " " +
-        "It has graded " + (vin.n_graded == null ? "-" : vin.n_graded) + " of the " +
-        (v.n_games_completed == null ? "-" : v.n_games_completed) + " completed games in the " +
-        "cache, and skipped " + (vin.n_skipped_no_vintage == null ? "-" : vin.n_skipped_no_vintage) +
-        " for want of a snapshot dated before them.</p>");
+      rows.push("<p><strong>" + gl("Vintage mode", "vintage_grading") + ".</strong> " +
+        esc(v.mode_meaning.vintage) + " Graded " +
+        (vin.n_graded == null ? "-" : vin.n_graded) + " of " +
+        (v.n_games_completed == null ? "-" : v.n_games_completed) + " completed games; skipped " +
+        (vin.n_skipped_no_vintage == null ? "-" : vin.n_skipped_no_vintage) +
+        " with no earlier snapshot.</p>");
     }
 
     rows.push('<div class="bt-kv">' +
@@ -588,12 +585,12 @@
       kv("Missing days inside that range", (cov.missing_dates || []).length) +
       kv("First game date a snapshot can price",
          cov.earliest_gradable_game_date ? esc(cov.earliest_gradable_game_date) : "-") +
-      kv("Games graded by the honest mode", vin.n_graded == null ? "-" : vin.n_graded) +
+      kv("Games graded by the vintage mode", vin.n_graded == null ? "-" : vin.n_graded) +
       kv("Graded games needed for a threshold", need == null ? "-" : need) +
       "</div>");
 
     if ((gate.gates || []).length) {
-      rows.push('<div class="bt-panel-sub">The three gates on a published ' +
+      rows.push('<div class="bt-panel-sub">Gates on a published ' +
         selNoun() + "</div>");
       rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr>' +
         '<th class="bt-l">Gate</th><th class="bt-l">What it needs</th><th>Have</th>' +
@@ -611,15 +608,13 @@
         esc(gate.policy || "")));
     }
 
-    rows.push('<div class="bt-panel-sub">When does that change</div>');
-    rows.push("<p>One dated snapshot lands per night, and a completed game becomes gradable " +
-      "only once a snapshot predates it. So the honest sample starts at games played on or " +
-      "after " + (cov.earliest_gradable_game_date ? esc(cov.earliest_gradable_game_date) :
-        "the first night the snapshot runs") + ", and it grows until it reaches " +
-      (need == null ? "the threshold" : need) + ". The arrival rate behind that is " +
-      "MEASURED, not assumed off a schedule: Clock A on the Validation tab carries it " +
-      "with the window it was counted over. A projection off a measured rate is still " +
-      "a projection and is labelled as one there.</p>");
+    rows.push('<div class="bt-panel-sub">When that changes</div>');
+    rows.push("<p>One snapshot lands per night; a game is gradable once a snapshot predates " +
+      "it. The sample starts at games on or after " +
+      (cov.earliest_gradable_game_date ? esc(cov.earliest_gradable_game_date) :
+        "the first snapshot night") + " and grows toward " +
+      (need == null ? "the threshold" : need) + ". Clock A (Validation tab) carries the " +
+      "measured arrival rate, its window, and a labelled projection.</p>");
     if (v.generated_at) {
       rows.push('<div class="bt-asof">Backtest artifact generated ' + esc(v.generated_at) +
         (v.model_version ? " &middot; " + esc(v.model_version) : "") + "</div>");
@@ -707,8 +702,8 @@
       (diag ? ' title="' + esc(diag) + '"' : "") + ">" +
       '<span class="bt-fh-hd">FEED</span>' + segs.join("") +
       (clvEnabled() && fh && !fh.n_slates_with_close
-        ? '<span class="bt-fh-note">no close snapshot exists, so no ' + selNoun() +
-          " on this page can ever be graded against the closing line</span>"
+        ? '<span class="bt-fh-note">no close snapshot, so no ' + selNoun() +
+          " here can be graded against the closing line</span>"
         : "") + "</div>";
   }
 
@@ -718,8 +713,8 @@
     var host = el("betting-banner");
     if (!host) return;
     if (!S.data) {
-      host.innerHTML = '<div class="bt-asof">Model payload not loaded. The calculators and ' +
-        "your bet tracker below still work.</div>";
+      host.innerHTML = '<div class="bt-asof">Model payload not loaded. Calculators and ' +
+        "My Bets still work.</div>";
       return;
     }
     var m = S.data.model || {}, st = S.data.status || {};
@@ -731,7 +726,7 @@
     // chip keeps its own class, so it still reads as a chip rather than as body
     // copy with an underline.
     chips.push('<a class="bt-chip bt-chip-stage bt-chip-link" href="/diamond/" ' +
-      'title="What Diamond is, and what it costs when it opens">' +
+      'title="Diamond: what it is and what it costs">' +
       esc(m.stage || "Diamond preview") + "</a>");
     chips.push('<span class="bt-chip ' + (m.validated ? "bt-chip-ok" : "bt-chip-warn") + '">' +
       (m.validated ? "validated" : "unvalidated model") + "</span>");
@@ -769,20 +764,16 @@
     { key: "pick_of_the_day",
       pickTitle: "Pick of the Day",
       watchTitle: "Model Watch: largest disagreement",
-      pickLead: "The side the model is most confident in, among prices in the normal range, " +
-                "on any market the board prices (moneyline, runline, total, props when priced).",
-      watchLead: "The side tonight where the model's probability differs most from the " +
-                 "de-vigged market, among prices in the normal range, on any market the " +
-                 "board prices (moneyline, runline, total, props when priced). A " +
-                 "disagreement being logged in public, not a recommendation." },
+      pickLead: "Highest model confidence inside the standard price band, any priced market.",
+      watchLead: "Largest gap between the model and the de-vigged market inside the " +
+                 "standard price band, any priced market. Logged in public, not a " +
+                 "recommendation." },
     { key: "longshot_of_the_day",
       pickTitle: "Longshot Value of the Day",
       watchTitle: "Model Watch: long-price disagreement",
-      pickLead: "The best expected value at a long price. It will lose most nights; " +
-                "that is what a long price means.",
-      watchLead: "The largest expected-value disagreement at a long price. Long prices " +
-                 "lose most nights; that is what a long price means. A disagreement " +
-                 "being logged in public, not a recommendation." }
+      pickLead: "Best expected value at a long price. Loses most nights.",
+      watchLead: "Largest expected-value gap at a long price. Loses most nights. " +
+                 "Logged in public, not a recommendation." }
   ];
 
   function slotTitle(slot) {
@@ -825,23 +816,17 @@
   function provBadge(m) {
     if (!m || m.provisional === false) return "";
     return '<span class="bt-tag bt-tag-warn bt-prov" title="' +
-      esc("This " + selNoun() + " is published against a policy floor, not a " +
-          "validated threshold. The model is unvalidated.") + '">provisional</span>';
+      esc("Cleared a policy floor, not a measured threshold. The model is " +
+          "unvalidated.") + '">provisional</span>';
   }
 
   // The sentence a reader who does not know what a de-vigged probability is can
   // still act on. Built entirely from served fields; it computes nothing.
   function pickSentence(p) {
-    var who = esc(p.label || p.side || "this side");
-    var s = "Our model gives " + who + " about a " + pct(p.model_prob, 0) +
-      " chance to cash. The price of " + fmtOdds(p.odds) + " " +
-      gl("implies", "implied_probability") + " " +
-      (p.implied_prob != null ? pct(p.implied_prob, 0) + ", which is " +
-        pct(p.market_fair_prob, 0) + " once the book's " + gl("cut", "vig") +
-        " is taken out" : pct(p.market_fair_prob, 0) + " after the book's " +
-        gl("cut", "vig") + " is taken out") +
-      ". The model and the market disagree by " + signed(p.edge * 100, 1) +
-      " points, and that gap is the " + gl("edge", "bet_edge") + ".";
+    var s = fmtOdds(p.odds) + " " + gl("implies", "implied_probability") + " " +
+      (p.implied_prob != null ? pct(p.implied_prob, 1) + ", " : "") +
+      pct(p.market_fair_prob, 1) + " after the " + gl("vig", "vig") + ". " +
+      gl("Edge", "bet_edge") + " is model minus market fair.";
     return "<p>" + s + "</p>";
   }
 
@@ -849,26 +834,21 @@
     var bits = [];
     bits.push("Shown at " + num(p.suggested_units == null ? p.stake_units
                                                           : p.suggested_units, 1) +
-      "u flat.");
-    bits.push("Recorded on the public record at " + num(p.stake_units, 1) +
-      "u, the same as every other " + selNoun() + ", because a record kept in " +
-      "variable stakes cannot be audited from its own rows.");
+      "u flat; recorded at " + num(p.stake_units, 1) + "u like every row, because " +
+      "variable stakes cannot be audited.");
     var kq = (p.kelly_quarter != null) ? p.kelly_quarter
       : (p.kelly_full != null ? p.kelly_full / 4 : null);
     var chipHtml = (kq == null) ? "" :
       '<span class="bt-numchip bt-numchip-info"><span class="bt-numchip-l">Quarter ' +
       gl("Kelly", "kelly_criterion") + '</span><span class="bt-numchip-v">' +
       pct(kq, 1) + "</span></span>";
-    return "<p>" + bits.join(" ") + " Kelly is informational here and never a " +
-      "stake: full Kelly is only optimal if the probability is right, and this " +
-      "model's probabilities have not been checked out of sample.</p>" +
+    return "<p>" + bits.join(" ") + " " + gl("Kelly", "kelly_criterion") +
+      " is informational, never a stake: it assumes the probability is right.</p>" +
       (chipHtml ? '<div class="bt-pick-nums">' + chipHtml + "</div>" : "") +
       (m && m.provisional !== false
-        ? note("This is a " +
-               gl("provisional " + selNoun(), "provisional_pick") +
-               ". It cleared " + floorText(m) + ", not a measured " +
-               "threshold, because the model is not validated. Nothing on this " +
-               "page is advice.")
+        ? note(gl("Provisional " + selNoun(), "provisional_pick") +
+               ": cleared " + floorText(m) + " because the model is unvalidated. " +
+               "Not advice.")
         : "");
   }
 
@@ -890,9 +870,9 @@
     return esc(String(Math.round(pt))) + " is a push " + pct(p.p_push, 1) +
       " of the time. A push returns the stake, so " +
       (probName || "the model probability") + " is the chance to cash given " +
-      "the bet resolves at all, and " + (evName || "the expected value below") +
+      "the bet resolves, and " + (evName || "the expected value below") +
       " is that conditional value scaled by the " + pct(1 - p.p_push, 1) +
-      " of the time it does.";
+      " that resolve.";
   }
   function pushLine(p) {
     var t = pushText(p, null, null);
@@ -912,10 +892,10 @@
       return note("Margin model: the run-dispersion correction is SERVED at alpha " +
         num(dr.served_alpha, 5) + ". Gate verdict " + verdict + ".");
     }
-    return note("Margin model: a one-parameter dispersion correction was fitted at alpha " +
-      num(dr.alpha, 5) + " and its pre-registered gate returned <strong>" + verdict +
-      "</strong>, so it is NOT served. This price comes from the Poisson difference, " +
-      "which puts too little mass in the tails. The full grid is on the Validation tab.");
+    return note("Margin model: the " + gl("dispersion correction", "run_dispersion") +
+      " (alpha " + num(dr.alpha, 5) + ") returned <strong>" + verdict +
+      "</strong> at its pre-registered gate and is NOT served. This price is the " +
+      "Poisson difference, which underweights the tails. Grid on the Validation tab.");
   }
 
   // THE BOTH-LEGS COPY STATE (2026-08-19, pre-decided). A market can be
@@ -945,25 +925,22 @@
       var bar = (pol.z == null) ? "the one-sided 95% bar"
         : ("the " + num(pol.z, 3) + " one-sided bar");
       var head = anyPolicy
-        ? ("<strong>The " + esc(k) + " market carries two independent cautions and " +
-           "is eligible under the any-market policy (2026-09-05).</strong>")
+        ? ("<strong>The " + esc(k) + " market carries two independent cautions; " +
+           "eligible under the any-market policy (2026-09-05).</strong>")
         : ("<strong>The " + esc(k) + " market is watch-only for two independent reasons.</strong>");
       out.push(note(head +
         " Theory leg: " +
         esc((m.dispersion_leg || {}).reason ||
             "the margin-shape exclusion bars this market") +
-        ". Evidence leg: its own graded record resolved worse than a coin at " +
+        ". Evidence leg: its graded record resolved worse than a coin at " +
         floor + ", mean Brier " + num(lg.brier, 5) + " on " +
         (lg.n_games == null ? "an unreported count of" : lg.n_games) +
         " canonical games, t " + num(lg.t, 3) + " against " + bar +
         (anyPolicy
-          ? ". Both cautions ride any published row on this market as disclosure; " +
-            "the shadow and calibration ledgers keep recording it so the evidence " +
-            "keeps accruing."
-          : ". The two closes are independent: clearing either leg alone does " +
-            "not reopen the market, and the shadow and calibration ledgers keep " +
-            "recording it because they are the only instruments that can " +
-            "accumulate the evidence to reopen it.")));
+          ? ". Both ride any published row on this market as disclosure; the shadow " +
+            "and calibration ledgers keep recording it."
+          : ". Clearing one leg does not reopen the market; the shadow and " +
+            "calibration ledgers keep recording it.")));
     });
     return out.join("");
   }
@@ -978,8 +955,8 @@
              ((S.data && S.data[key]) || {}).tag_record || null;
     if (!tr || tr.available === false) return "";
     if (!tr.n_settled) {
-      return '<div class="bt-tagrec">This selection rule (' + esc(tr.tag || "") +
-        ") has no settled paper record yet.</div>";
+      return '<div class="bt-tagrec">Selection rule ' + esc(tr.tag || "") +
+        ": no settled paper bets yet.</div>";
     }
     var rec = tr.won + "-" + tr.lost + (tr.push ? "-" + tr.push : "");
     var units = (tr.net_units == null) ? "" : signed(tr.net_units, 1) + "u, ";
@@ -988,8 +965,8 @@
       ? ' <span class="bt-tag bt-tag-warn">small sample: ' + tr.n_settled +
         " settled of the " + (tr.sweep_floor || 100) + " the sweep needs</span>"
       : "";
-    return '<div class="bt-tagrec">This selection rule (' + esc(tr.tag || "") +
-      ") is <strong>" + rec + "</strong> on its settled paper record, " + units +
+    return '<div class="bt-tagrec">Selection rule ' + esc(tr.tag || "") +
+      ": <strong>" + rec + "</strong> on settled paper bets, " + units +
       roi + "." + small + "</div>";
   }
 
@@ -1040,24 +1017,20 @@
     }).join("");
     var servedGap = (p.market_fair_prob != null &&
                      Math.abs(fair - p.market_fair_prob) > 0.001)
-      ? "<p>The served fair probability (" + pct(p.market_fair_prob, 1) +
-        ") comes from ONE book's two-sided quote, while the best prices above " +
-        "can come from different books; that is why the two fair numbers can " +
-        "differ a little, and the served one is the one the edge is measured " +
-        "against.</p>"
+      ? "<p>The served fair (" + pct(p.market_fair_prob, 1) + ") is de-vigged from " +
+        "ONE book's two-sided quote; the best prices above can come from different " +
+        "books, so the two fair numbers can differ. The edge uses the served one.</p>"
       : "";
     return '<details class="bt-devigex"><summary class="bt-devigex-sum">' +
-      "The worked de-vig: what this disagreement is measured against</summary>" +
+      "Worked " + gl("de-vig", "devig") + "</summary>" +
       '<div class="bt-devigex-body">' +
-      "<p>Each price implies a probability, 1 divided by the decimal odds:</p>" +
+      "<p>Implied probability = 1 / decimal odds:</p>" +
       '<ul class="bt-list">' + lines + "</ul>" +
-      "<p>The raw probabilities sum to " + pct(sum, 1) + "; the " +
-      pct(sum - 1, 1) + " above 100% is the " + gl("overround", "vig") +
-      ", the book's margin. Splitting it proportionally gives " +
-      esc(p.label || p.side || "this side") + " a fair " + pct(fair, 1) +
-      ". The model says " + pct(p.model_prob, 1) + ", so the disagreement is " +
-      signed((p.model_prob - fair) * 100, 1) + " points: model minus fair, " +
-      "which is the " + gl("edge", "bet_edge") + ".</p>" + servedGap +
+      "<p>Sum " + pct(sum, 1) + "; the " + pct(sum - 1, 1) + " over 100% is the " +
+      gl("overround", "vig") + ". Split proportionally, " +
+      esc(p.label || p.side || "this side") + " is fair at " + pct(fair, 1) +
+      ". Model " + pct(p.model_prob, 1) + ", so the " + gl("edge", "bet_edge") +
+      " is " + signed((p.model_prob - fair) * 100, 1) + " points.</p>" + servedGap +
       "</div></details>";
   }
 
@@ -1076,10 +1049,8 @@
       return '<div class="bt-pick bt-pick-empty">' + hd +
         '<div class="bt-pick-sel bt-dim">Nothing qualifies today</div>' +
         "<p>" + esc(why) + "</p>" +
-        "<p>The floor is " + floorText(m) + ", the same one every other slot " +
-        "clears, and it is never lowered to make a " + selNoun() +
-        " appear. An empty slot is the honest answer to a slate with nothing " +
-        "on it.</p></div>";
+        "<p>The floor is " + floorText(m) + ", the same for every slot, and it is " +
+        "never lowered to make a " + selNoun() + " appear.</p></div>";
     }
     // THE REDACTED SLOT (D16). The preview slice keeps the whole trust surface
     // (validation state, record, publish blockers) and withholds the SELECTION
@@ -1095,13 +1066,10 @@
         " &middot; cleared " + (p.min_edge_used == null ? "the floor"
                                                         : pct(p.min_edge_used, 1)) +
         "</div>" +
-        "<p>" + esc(p.redaction_note || ("This slot is filled. The preview slice " +
-          "carries its market and the floor it cleared, and not the side, the price " +
-          "or the book.")) + "</p>" +
-        note("Everything needed to judge the " + selNoun() + " is still on this " +
-          "page: the validation state, the two clocks, the gate table and the " +
-          "public record are never gated. What is behind the gate is the " +
-          "selection, not the evidence.") + "</div>";
+        "<p>" + esc(p.redaction_note || ("Filled. The preview slice shows the market " +
+          "and the floor it cleared; the side, price and book are withheld.")) + "</p>" +
+        note("Never gated: the validation state, the clocks, the gate table and the " +
+          "public record.") + "</div>";
     }
     // THE CAVEAT SLOT CARRIES BOTH LINES. The row's own caveat says the market
     // is one of the two the margin model is worst at; the dispersion line says
@@ -1168,9 +1136,8 @@
     return note("<strong>Census.</strong> " + n + " sides priced across " +
       (d.n_games || 0) + " games, " + (m == null ? "an unreported number of" : m) +
       " cleared the " + esc(floor) + " floor, and none of those are inside " +
-      esc(band) + ". That is a measurement of tonight's board, not a failure to " +
-      "load one: the board above is priced and the floor was not lowered to fill " +
-      "a slot.");
+      esc(band) + ". A measurement of tonight's board, not a failure to load one; " +
+      "the floor was not lowered.");
   }
 
   function renderPick() {
@@ -1178,7 +1145,7 @@
     var out = [];
     if (!d) {
       return empty((watchMode() ? "Model Watch" : "Pick of the day") + " is unavailable",
-        "The betting payload has not been built yet. Check back after the next build.");
+        "The betting payload has not been built yet.");
     }
     var any = SLOTS.some(function (s) { return !!d[s.key]; });
     out.push(SLOTS.map(pickCard).join(""));
@@ -1206,10 +1173,7 @@
           }).join("") + "</ul>"
         : "<p>" + esc(d.pick_reason || "") + "</p>";
       out.push('<div class="bt-nopick"><div class="bt-nopick-hd">Why nothing is here' +
-        "</div><p>" + esc(noPickHeadline(vstate())) + "</p>" + lines +
-        "<p>These are the standing reasons the model is not validated. They stay " +
-        "on the page whether a " + selNoun() + " ships or not, because a " +
-        "provisional " + selNoun() + " does not make any of them untrue.</p></div>");
+        "</div><p>" + esc(noPickHeadline(vstate())) + "</p>" + lines + "</div>");
     }
 
     // THE PANELS ARE COLLAPSED, NOT REMOVED. Every word of the contamination
@@ -1219,7 +1183,7 @@
     // is the only arrangement that is neither.
     out.push(trustTopline());
     out.push('<details class="bt-details"><summary class="bt-details-sum">' +
-      "How much should you trust this? Open the full accounting" +
+      "Validation and backtest" +
       "</summary><div class=\"bt-details-body\">" +
       validationPanel() + modelPanel(d.model || {}) + "</div></details>");
     return out.join("");
@@ -1233,17 +1197,19 @@
     var vin = (v || {}).vintage || {};
     var need = vin.min_graded_games_for_min_edge;
     var have = vin.n_graded;
-    var s = "Short version: this model is NOT validated. ";
-    if (need != null) {
-      s += "The honest backtest has graded " + (have == null ? "-" : have) +
-        " of the " + need + " games it needs before any edge threshold can be " +
-        "measured, so the " + selNounPl() + " above clear " + floorText(m) +
-        ", not a number fitted to anything. ";
-    } else {
-      s += "No minimum edge has been measured, so the " + selNounPl() +
-        " above clear a floor that was chosen as policy, not fitted to anything. ";
+    if (v && v.validated) {
+      return note("Validated: the vintage mode cleared every gate. The " + selNounPl() +
+        " above clear " + floorText(m) + ".");
     }
-    s += "Treat them as a labelled experiment being logged in public.";
+    var s = "<strong>Not validated.</strong> ";
+    if (need != null) {
+      s += "The vintage backtest has graded " + (have == null ? "-" : have) +
+        " of the " + need + " games needed to measure an edge threshold, so the " +
+        selNounPl() + " above clear " + floorText(m) + ".";
+    } else {
+      s += "No minimum edge is measured, so the " + selNounPl() +
+        " above clear a policy floor.";
+    }
     return note(s);
   }
 
@@ -1272,8 +1238,7 @@
     });
     if (!pts.length) {
       return chartAbsent("Reliability curve",
-        "every calibration bin is empty, so there is no point to plot; the " +
-        "bins fill as settled sides accumulate in the calibration ledger.");
+        "every calibration bin is empty; bins fill as sides settle.");
     }
     var W = 320, H = 240, L = 34, B = 22, T = 8, R = 10;
     var pw = W - L - R, ph = H - T - B;
@@ -1312,9 +1277,8 @@
     s.push("</svg>");
     var ns = (bins || []).map(function (b) { return b ? (b.n || 0) : 0; }).join(", ");
     return '<div class="bt-chart">' + s.join("") +
-      '<div class="bt-clock-fine">Dots above the diagonal resolved more often ' +
-      "than predicted; below it, less. Bin n, low bin to high: " + esc(ns) +
-      ". Hover a dot for its bin.</div></div>";
+      '<div class="bt-clock-fine">Above the diagonal: resolved more often than ' +
+      "predicted. Bin n, low bin to high: " + esc(ns) + ".</div></div>";
   }
 
   // The per-market branch exists so the day the learning artifact grows
@@ -1336,10 +1300,8 @@
       }).join("");
     }
     return reliabilitySVG(cal.bins, "pooled") +
-      note("Pooled across the three markets: data/betting_learning.json " +
-        "carries per-market summaries without per-market bins, so a " +
-        "per-market curve is not drawable yet. The day the artifact grows " +
-        "them, this panel splits on its own.");
+      note("Pooled across markets: data/betting_learning.json carries " +
+        "per-market summaries without per-market bins.");
   }
 
   // The Brier trend against the 0.25 coin line, from the learning history.
@@ -1355,8 +1317,7 @@
     });
     if (pts.length < 2) {
       return chartAbsent("Brier trend",
-        "the learning history holds " + pts.length + " usable nightly row(s) " +
-        "and a trend needs at least 2; the nightly build appends one per day.");
+        pts.length + " usable nightly row(s) in the learning history; a trend needs 2.");
     }
     var W = 320, H = 150, L = 40, B = 20, T = 8, R = 10;
     var pw = W - L - R, ph = H - T - B;
@@ -1395,9 +1356,8 @@
            '" text-anchor="end">' + esc(pts[pts.length - 1].date) + "</text>");
     s.push("</svg>");
     return '<div class="bt-chart">' + s.join("") +
-      '<div class="bt-clock-fine">Every priced side, both sides of every ' +
-      "market, scored on the binary outcome. Below the gold line is better " +
-      "than a coin; above it is worse. Hover a dot for its night.</div></div>";
+      '<div class="bt-clock-fine">Every priced side, scored on the binary outcome. ' +
+      "Below the gold line beats a coin.</div></div>";
   }
 
   function brierTrendBlock() {
@@ -1452,33 +1412,32 @@
     var n = b ? ((b.n_graded != null) ? b.n_graded : b.n) : null;
     if (!b || !n) {
       return '<div class="bt-headline bt-headline-warn">' +
-        '<div class="bt-headline-hd">The honest backtest has graded nothing yet</div>' +
-        "<p>The vintage mode is the only one that is out of sample, and it has " +
-        (b && b.status ? esc(b.status) : "no graded games") + ". Every Brier on this " +
-        "page is from a contaminated mode whose features contain the games it grades.</p></div>";
+        '<div class="bt-headline-hd">The vintage backtest has graded nothing yet</div>' +
+        "<p>" + gl("Vintage mode", "vintage_grading") + " is the only out-of-sample " +
+        "mode: " + (b && b.status ? esc(b.status) : "no graded games") + ". Every " +
+        "Brier on this page comes from a contaminated mode whose features contain " +
+        "the games it grades.</p></div>";
     }
     var sk = b.skill_vs_home_base || {};
     var d = sk.delta;
     var verb = (d == null) ? "has no measured margin against"
       : (d < 0 ? "LOSES to"
               : (sk.beats_baseline_95 ? "beats" : "does not significantly beat"));
+    // The bar is read off the served gate's own need string; no number is
+    // typed here, so a bar that moves server-side moves this chip with it.
+    var bar = gateNeedValue(gateById(v, "out_of_sample_skill"), v).n;
     return '<div class="bt-headline bt-headline-warn">' +
-      '<div class="bt-headline-hd">The honest backtest ' + verb +
+      '<div class="bt-headline-hd">The vintage backtest ' + verb +
       " &quot;always take the home team&quot;</div>" +
-      "<p>Out of sample, on " + n + " vintage-graded games: model " +
-      gl("Brier", "brier_score") + " " + num(b.brier, 5) + " against a home-baseline " +
-      num(b.brier_home_base, 5) + ", accuracy " + pct(b.accuracy, 2) + ". Paired " +
-      "per-game skill " + signed(d, 6) + " at t = " + num(sk.t, 3) +
-      ", one-sided 95% bar 1.645.</p>" +
       '<div class="bt-pick-nums">' +
       chip("Games", n) + chip("Brier", num(b.brier, 5)) +
       chip("Home base", num(b.brier_home_base, 5)) +
       chip("Accuracy", pct(b.accuracy, 2)) +
-      chip("Skill", signed(d, 6)) + chip("t", num(sk.t, 3)) + "</div>" +
-      "<p>Lower Brier is better, so a model above its own baseline is worse than the " +
-      "baseline. This is the number that decides whether anything on this site may be " +
-      "published as a " + selNoun() + ", and it is not close to deciding it " +
-      "yes.</p></div>";
+      chip("Skill", signed(d, 6)) + chip("t", num(sk.t, 3)) +
+      (bar == null ? "" : chip("t bar", num(bar, 3))) + "</div>" +
+      "<p>Out of sample, paired per game. Lower " + gl("Brier", "brier_score") +
+      " is better. This gate decides whether anything is published as a " +
+      selNoun() + ".</p></div>";
   }
 
   function clockA() {
@@ -1491,7 +1450,7 @@
     var rate = (c || {}).rate || null;
     var eta = (c || {}).eta || null;
     var rows = ['<div class="bt-clock-hd">Clock A &middot; vintage-graded games</div>',
-      '<div class="bt-clock-q">Has the model been graded on enough games it could not see?</div>',
+      '<div class="bt-clock-q">Games priced only from snapshots dated before them.</div>',
       '<div class="bt-clock-n">' + (have == null ? "-" : have) +
         ' <span class="bt-clock-need">of ' + (need == null ? "-" : need) + "</span></div>",
       meter(have, need)];
@@ -1503,7 +1462,7 @@
       kv("Days at that rate", eta && eta.days != null ? eta.days : "not projected") +
       "</div>");
     if (eta && eta.is_projection) {
-      rows.push(note("That day count is a MEASURED rate applied forward, not a schedule. " +
+      rows.push(note("Projection: the measured rate applied forward. " +
         esc(rate ? rate.basis : "")));
     }
     if (c && c.may_go_backwards) {
@@ -1511,7 +1470,7 @@
         "</div>");
     }
     if (!c) rows.push(note(esc(auxMissing("learning")) +
-      " The count above is read from the payload; the arrival rate is not."));
+      " The count is from the payload; no arrival rate."));
     return '<div class="bt-clock">' + rows.join("") + "</div>";
   }
 
@@ -1519,8 +1478,8 @@
     var L = ((aux("learning") || {}).latest) || {};
     var c = (L.clocks || {}).graded_price_history || null;
     var rows = ['<div class="bt-clock-hd">Clock B &middot; settled paper bets, per tag</div>',
-      '<div class="bt-clock-q">Does any edge threshold clear an ROI lower bound of zero, ' +
-      "measured per selection rule?</div>"];
+      '<div class="bt-clock-q">Per selection rule: does any edge threshold clear an ' +
+      "ROI lower bound of 0?</div>"];
     if (!c) {
       rows.push(note(esc(auxMissing("learning"))));
       return '<div class="bt-clock">' + rows.join("") + "</div>";
@@ -1558,7 +1517,7 @@
     if (!bar) return "";
     var f = Math.max(0, Math.min(1, Number(have) / Number(need)));
     return '<div class="bt-meter">' + bar + "</div>" +
-      '<div class="bt-clock-fine">' + pct(f, 1) + " of the way there</div>";
+      '<div class="bt-clock-fine">' + pct(f, 1) + " of target</div>";
   }
 
   // Clock C: the GRADABLE pool behind Clock A. Not a third gate: it counts
@@ -1583,13 +1542,11 @@
       need = vin.min_graded_games_for_min_edge;
     }
     var rows = ['<div class="bt-clock-hd">Clock C &middot; gradable games (the pool)</div>',
-      '<div class="bt-clock-q">How many completed games does a dated snapshot ' +
-      "cover at all? Clock A can never grade past this.</div>"];
+      '<div class="bt-clock-q">Completed games a dated snapshot covers; the ceiling ' +
+      "on Clock A.</div>"];
     if (have == null) {
       rows.push(chartAbsent("Gradable pool",
-        "neither the learning artifact nor the payload reports n_gradable, " +
-        "so there is no count to draw; it appears once either carries the " +
-        "vintage block."));
+        "neither the learning artifact nor the payload reports n_gradable."));
       return '<div class="bt-clock">' + rows.join("") + "</div>";
     }
     rows.push('<div class="bt-clock-n">' + have +
@@ -1599,25 +1556,20 @@
     var eta = (c || {}).eta || null;
     rows.push('<div class="bt-kv">' +
       kv("Measured arrivals per day", rate ? num(rate.per_day, 2)
-        : "not measured yet, because the learning artifact carries no " +
-          "gradable_games clock; the count above rides on the vintage_sample " +
-          "block") +
+        : "not measured: the learning artifact carries no gradable_games clock") +
       kv("Days at that rate", eta && eta.days != null ? eta.days : "not projected") +
       "</div>");
-    rows.push('<div class="bt-clock-fine">Not a gate: gates read Clock A and ' +
-      "Clock B. This is the supply line, and a pool below the Clock A bar " +
-      "caps the graded count no matter how fast grading runs.</div>");
+    rows.push('<div class="bt-clock-fine">Not a gate. A pool below the Clock A bar ' +
+      "caps the graded count.</div>");
     return '<div class="bt-clock">' + rows.join("") + "</div>";
   }
 
   function clocksPanel() {
-    return '<div class="bt-panel"><div class="bt-panel-hd">Two clocks, and they are not ' +
-      "the same clock</div>" +
-      "<p>One counts GAMES the model was graded on out of sample. The other counts " +
-      "SETTLED PAPER BETS, one row per selection rule. They open different gates and " +
-      "they may never be added together: nobody is waiting on 600 bets, and nobody is " +
-      "waiting on 100 games. The third card is the gradable POOL behind Clock A, " +
-      "shown because it is the ceiling on the first clock and belongs beside it.</p>" +
+    return '<div class="bt-panel"><div class="bt-panel-hd">Two clocks and the pool</div>' +
+      "<p>Clock A counts games graded out of sample; Clock B counts settled paper " +
+      "bets per selection rule. They open different " + gl("gates", "validation_clocks") +
+      " and may never be added together. Clock C is the gradable pool that caps " +
+      "Clock A.</p>" +
       '<div class="bt-clocks">' + clockA() + clockB() + clockGradable() + "</div></div>";
   }
 
@@ -1637,7 +1589,8 @@
       kv("Brier", num(cal.brier, 6)) +
       kv("Log loss", num(cal.log_loss, 6)) + "</div>");
     // A6 (2026-08-16): the picture beside the numbers, never instead of them.
-    rows.push('<div class="bt-panel-sub">Reliability curve</div>');
+    rows.push('<div class="bt-panel-sub">' + gl("Reliability curve", "reliability_curve") +
+      "</div>");
     rows.push(reliabilityBlock(L));
     rows.push('<div class="bt-panel-sub">Brier by night, against the coin</div>');
     rows.push(brierTrendBlock());
@@ -1656,7 +1609,7 @@
 
     var bym = L.by_market || null;
     if (bym) {
-      rows.push('<div class="bt-panel-sub">Per market, where the dispersion shows up</div>');
+      rows.push('<div class="bt-panel-sub">Per market</div>');
       var mk = Object.keys(bym);
       rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
         '<thead><tr><th class="bt-l">Market</th><th>Rows</th><th>Settled</th><th>Brier</th>' +
@@ -1674,10 +1627,9 @@
         }).join("") + "</tbody></table></div>");
       var any = mk.length ? (bym[mk[0]] || {}).canonical_side : null;
       if (any && any.note) rows.push(note(esc(any.note) +
-        " Read the model column against the market column on the runline and the total: " +
-        "a Poisson margin puts too little mass in the tails, so those two are where a " +
-        "shape error is visible. n is " + (any.n == null ? "-" : any.n) +
-        " canonical rows per market, which is not enough to conclude anything from."));
+        " A Poisson margin underweights the tails, so a shape error shows first on the " +
+        "runline and total. n = " + (any.n == null ? "-" : any.n) +
+        " canonical rows per market: too few to conclude from."));
     }
     return '<div class="bt-panel">' + rows.join("") + "</div>";
   }
@@ -1692,12 +1644,12 @@
   function benchmarkPanel() {
     var e = aux("evald") || {};
     var b = e.benchmarks || null;
-    var rows = ['<div class="bt-panel-hd">The benchmark ladder</div>'];
+    var rows = ['<div class="bt-panel-hd">' + gl("Benchmark ladder", "benchmark_ladder") +
+      "</div>"];
     if (!b || !b.tiers) {
       rows.push(chartAbsent("Benchmark ladder",
         (auxState("evald") === "ok"
-          ? "data/betting_model_eval.json carries no benchmarks block; it " +
-            "appears the first time the nightly eval runs with the ladder lane in."
+          ? "data/betting_model_eval.json carries no benchmarks block."
           : auxMissing("evald"))));
       return '<div class="bt-panel">' + rows.join("") + "</div>";
     }
@@ -1713,10 +1665,9 @@
     full.sort(function (a, c) { return a.brier - c.brier; });
     var modelLast = full.length && full[full.length - 1].key === "model_vintage";
     rows.push("<p>Every tier scored on the same " + (w.n == null ? "-" : w.n) +
-      "-game vintage eval window (from " + esc(w.first_date || "-") + " to " +
-      esc(w.last_date || "-") + "). Lower Brier is better." +
-      (modelLast ? " <strong>The model is last on this window, and that is " +
-        "the point of publishing the ladder.</strong>" : "") + "</p>");
+      "-game vintage eval window, " + esc(w.first_date || "-") + " to " +
+      esc(w.last_date || "-") + ". Lower Brier is better." +
+      (modelLast ? " <strong>The model is last on this window.</strong>" : "") + "</p>");
     rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
       '<thead><tr><th class="bt-l">Tier</th><th>Games</th><th>Brier</th>' +
       '<th class="bt-l">Basis</th></tr></thead><tbody>' +
@@ -1731,14 +1682,13 @@
       var sg = r.t.same_games || {};
       rows.push('<div class="bt-panel-sub">' + esc(r.key) + ", a subsample (" +
         r.n + " of " + (w.n == null ? "-" : w.n) + " games)</div>");
-      rows.push("<p>" + esc(r.t.subsample_note || "") + " Its Brier (" +
-        num(r.brier, 5) + ") may only be compared inside its own same-games " +
-        "block: model " + num(sg.model, 5) + ", home constant " +
-        num(sg.home_constant, 5) + ", elo " + num(sg.elo_literature, 5) + ".</p>");
+      rows.push("<p>" + esc(r.t.subsample_note || "") + " Compare its Brier (" +
+        num(r.brier, 5) + ") only inside its same-games block: model " +
+        num(sg.model, 5) + ", home constant " + num(sg.home_constant, 5) +
+        ", elo " + num(sg.elo_literature, 5) + ".</p>");
     });
     unmeasured.forEach(function (r) {
-      rows.push(chartAbsent(r.key,
-        r.t.status || "n is 0, so this tier has no number and no claim."));
+      rows.push(chartAbsent(r.key, r.t.status || "n = 0, no number."));
     });
     if (b.claim_rule) rows.push(note(esc(b.claim_rule)));
     return '<div class="bt-panel">' + rows.join("") + "</div>";
@@ -1751,7 +1701,8 @@
   function dispersionPanel() {
     var e = aux("evald") || {};
     var dr = e.run_dispersion || null;
-    var rows = ['<div class="bt-panel-hd">Run dispersion: the margin model gate</div>'];
+    var rows = ['<div class="bt-panel-hd">' + gl("Run dispersion", "run_dispersion") +
+      ": the margin model gate</div>"];
     if (!dr) {
       var L = ((AUX.learning || {}).latest) || {};
       var d2 = L.dispersion || null;
@@ -1760,17 +1711,20 @@
         rows.push('<div class="bt-kv">' + kv("Status", esc(d2.status || "-")) +
           kv("Alpha", num(d2.alpha, 5)) +
           kv("Served", d2.served ? "yes" : "no") + "</div>");
-        rows.push(note("Read from data/betting_learning.json, which carries the single " +
-          "split and NOT the split-quantile sweep the verdict is taken from."));
+        rows.push(note("From data/betting_learning.json: the single split only, NOT the " +
+          "split-quantile sweep the verdict is taken from."));
       }
       return '<div class="bt-panel">' + rows.join("") + "</div>";
     }
     var sens = dr.sensitivity || {};
     var verdict = String(dr.verdict || sens.verdict || "unknown");
     var cls = verdict === "pass" ? "bt-tag-ok" : "bt-tag-warn";
+    // The gloss is keyed to the verdict it glosses. Unconditional, it would
+    // have called a served pass or a clean fail "not a pass and not a failure".
     rows.push("<p><strong>Verdict: " +
       '<span class="bt-tag ' + cls + '">' + esc(verdict) + "</span></strong> " +
-      "Not a pass and not a failure. " + esc(dr.verdict_note || "") + "</p>");
+      (verdict === "indeterminate" ? "Not a pass and not a failure. " : "") +
+      esc(dr.verdict_note || "") + "</p>");
     rows.push('<div class="bt-kv">' +
       kv("Fitted alpha (NB2)", num(dr.alpha, 5)) +
       kv("Variance ratio", varianceRatioText(dr)) +
@@ -1802,9 +1756,7 @@
             '<span class="bt-tag ' + (pass ? "bt-tag-ok" : "bt-tag-warn") + '">' +
             (pass ? "pass" : "fail") + "</span></td></tr>";
         }).join("") + "</tbody></table></div>");
-      rows.push(note("<strong>Both honest readings are above.</strong> The amended " +
-        "criterion clears the bar at some split quantiles and misses it at others, and " +
-        "the home side alone misses it at every one. " + esc(sens.rule || "")));
+      if (sens.rule) rows.push(note(esc(sens.rule)));
     }
     if (dr.runline_side_note) {
       rows.push('<div class="bt-clock-fine">' + esc(dr.runline_side_note) + "</div>");
@@ -1854,7 +1806,7 @@
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (d) { FUT = d; paintAll(); })
       .catch(function () {
-        FUT_ERR = "The futures board could not be loaded.";
+        FUT_ERR = "data/futures.json did not load.";
         paintAll();
       });
   }
@@ -1925,17 +1877,18 @@
 
   function renderValidation() {
     var v = vstate();
+    // No subheading above the validation panel: it carries its own question
+    // heading and its own gates sub-heading, and a third label here repeated
+    // the second one word for word.
     var out = [honestResult(), clocksPanel()];
-    out.push('<div class="bt-subhd">The three gates on a published ' + selNoun() +
-      "</div>");
     out.push(validationPanel());
     out.push(calibrationPanel());
     out.push(benchmarkPanel());
     out.push(dispersionPanel());
     if (v && v.generated_at) {
-      out.push('<div class="bt-asof">Validation state read from ' +
+      out.push('<div class="bt-asof">Validation state: ' +
         esc(v.artifact || "data/betting_model_eval.json") + ", generated " +
-        esc(v.generated_at) + ". The clocks and the calibration ledger are read from " +
+        esc(v.generated_at) + ". Clocks and calibration: " +
         esc(AUX_URL.learning) + ".</div>");
     }
     return out.join("");
@@ -1961,17 +1914,14 @@
     if (!byTag) {
       rows.push(chartAbsent("ROI by tag",
         (auxState("learning") === "ok"
-          ? "data/betting_learning.json carries no shadow_by_tag block yet; " +
-            "it appears once the nightly build runs with the shadow summary in."
+          ? "data/betting_learning.json carries no shadow_by_tag block."
           : auxMissing("learning"))));
       return '<div class="bt-panel">' + rows.join("") + "</div>";
     }
     var keys = Object.keys(byTag).sort();
     var meas = keys.filter(function (k) { return (byTag[k] || {}).roi != null; });
     if (!meas.length) {
-      rows.push(chartAbsent("ROI by tag",
-        "no tag has a settled paper row yet, so no ROI is computable; the " +
-        "ledger settles as games finish."));
+      rows.push(chartAbsent("ROI by tag", "no tag has a settled paper row yet."));
       return '<div class="bt-panel">' + rows.join("") + "</div>";
     }
     var maxAbs = 0;
@@ -2007,11 +1957,10 @@
     });
     s.push("</svg>");
     rows.push('<div class="bt-chart">' + s.join("") + "</div>");
-    rows.push(note("<strong>Paper bets, not the record.</strong> These are the " +
-      "shadow ledger's settled paper rows per selection rule, at the prices " +
-      "actually on the board, and nothing here was ever a published " + selNoun() +
-      ". The tags are never pooled: each rule selects on a different quantity, " +
-      "so a combined ROI would measure a mixture nobody bet."));
+    rows.push(note("<strong>Paper bets, not the record.</strong> Settled " +
+      gl("shadow ledger", "shadow_ledger") + " rows per selection rule at board " +
+      "prices; none was a published " + selNoun() + ". Tags are never pooled: a " +
+      "combined ROI measures a mixture nobody bet."));
     return '<div class="bt-panel">' + rows.join("") + "</div>";
   }
 
@@ -2033,31 +1982,20 @@
       publishBlockerPanel() +
       '<div class="bt-panel"><div class="bt-panel-hd">How a ' + selNoun() +
       " gets graded</div>" +
-      "<p>Every published " + selNoun() + " carries the timestamp, the book, the " +
-      "price at post and a flat one " + gl("unit", "betting_unit") +
-      ". It settles won, lost or void.</p>" +
+      "<p>Each published " + selNoun() + " records the timestamp, book, price at " +
+      "post and a flat 1 " + gl("unit", "betting_unit") +
+      ", and settles won, lost or void.</p>" +
       (clvOn
-        ? "<p>It is then graded a second time against the closing line. " +
-          gl("Closing line value", "clv") + " is the honest test. Beating the " +
-          "close means the market moved toward the " + selNoun() + " after it " +
-          "was posted, which is evidence the " + selNoun() + " had information " +
-          "in it. Winning a bet is not evidence of anything on its own, and one " +
-          "season of results is a smaller sample than it feels like.</p>" +
-          "<p>Two CLV numbers get published side by side: price CLV, the posted " +
-          "decimal over the closing decimal minus one, and probability CLV, the " +
-          "implied probability at close minus at post. Beat-close rate is the " +
-          "plain yes or no across every graded " + selNoun() + ".</p>"
-        : "<p><strong>Grading is on realized results alone.</strong> Closing " +
-          "line value was retired from this module on 2026-09-07. It had never " +
-          "produced a number here: no closing snapshot was ever captured, so " +
-          "every CLV cell on this page read as ungraded and the public record " +
-          "sat at zero rows waiting on a capture that does not happen.</p>" +
-          "<p>That cost is worth naming rather than hiding. Beating the close " +
-          "is the sharper instrument, because it tests whether the market moved " +
-          "toward a " + selNoun() + " after it was posted. Results are noisier: " +
-          "winning a bet is not evidence of anything on its own, and one season " +
-          "of them is a much smaller sample than it feels like. Read the record " +
-          "below with that in mind.</p>") + "</div>";
+        ? "<p>It is also graded against the closing line (" +
+          gl("closing line value", "clv") + "): beating the close means the market " +
+          "moved toward it after posting. Price CLV is the posted decimal over the " +
+          "closing decimal, minus 1; probability CLV is the implied probability at " +
+          "close minus at post; beat-close rate is the share that beat it. A won bet " +
+          "alone is not evidence.</p>"
+        : "<p><strong>Graded on realized results only.</strong> " +
+          gl("Closing line value", "clv") + " was retired on 2026-09-07: no closing " +
+          "snapshot was ever captured. Results are noisier than CLV, and one season " +
+          "is a small sample.</p>") + "</div>";
   }
 
   function chip(label, value) {
@@ -2089,31 +2027,33 @@
       }
     }
     var sk = fwd && fwd.skill_vs_home_base;
+    // No claim about which baselines a block beats is typed here: the table
+    // above carries every Brier, and a sentence asserting the comparison would
+    // outlive the numbers it describes.
     if (!sk || sk.t == null) {
-      return "Each contaminated block beats both baselines on the point estimate, which is " +
-        "a point estimate and not a significance test.";
+      return "Point estimates, not significance tests.";
     }
-    var head = "Each contaminated block beats both baselines on the point estimate. On the " +
-      "forward split that margin over the home-field baseline is " + signed(sk.delta, 6) +
-      " Brier at t = " + num(sk.t, 2) + ", which ";
+    var head = "Forward split: " + signed(sk.delta, 6) + " Brier skill over the " +
+      "home-field baseline at t = " + num(sk.t, 2) + ", which ";
     if (sk.beats_baseline_95) {
       return head + "clears the one-sided 95% bar of 1.645.";
     }
-    return head + "does NOT clear the one-sided 95% bar of 1.645: a margin that size needs " +
-      "about " + (sk.n_for_95 == null ? "more" : sk.n_for_95) + " games and the split has " +
-      (fwd.n == null ? "fewer" : fwd.n) + ". Treat it as not significant.";
+    return head + "does NOT clear the one-sided 95% bar of 1.645 (needs about " +
+      (sk.n_for_95 == null ? "more" : sk.n_for_95) + " games; the split has " +
+      (fwd.n == null ? "fewer" : fwd.n) + ").";
   }
 
   function modelPanel(m) {
     var bt = m.backtest || {};
     var rows = [];
     rows.push('<div class="bt-panel-hd">How the number is made</div>');
-    rows.push("<p>Game probabilities come from the same measurements the rest of the site " +
-      "runs on: team " + gl("Offense+", "offense_plus") + " (the " + gl("HEM+", "hem_plus") +
-      " rollup), team " + gl("Bullpen+", "bullpen_plus") + " (" + gl("REM+", "rem_plus") +
-      "), the listed starter's own " + gl("SEM+", "sem_plus") + " for the innings a starter " +
-      "covers, the park run index, and home field. Expected runs go into a Poisson difference " +
-      "for the margin, which gives the moneyline, the runline and the fair total together.</p>");
+    rows.push("<p>Inputs: team " + gl("Offense+", "offense_plus") + " (" +
+      gl("HEM+", "hem_plus") + " rollup), team " + gl("Bullpen+", "bullpen_plus") + " (" +
+      gl("REM+", "rem_plus") + "), the listed starter's " + gl("SEM+", "sem_plus") +
+      " for a starter's share of innings, the park run index, and home field. Expected " +
+      "runs feed a Poisson-difference margin that prices the " +
+      gl("moneyline", "moneyline") + ", " + gl("runline", "runline") + " and " +
+      gl("total", "total_line") + ".</p>");
     if (m.coefficients) {
       var c = m.coefficients;
       rows.push('<div class="bt-kv">' +
@@ -2153,12 +2093,11 @@
             num(b.brier_home_base, 5) + "</td><td>" + pct(b.accuracy) + "</td></tr>";
         }).join("") + "</tbody></table></div>");
       rows.push(note("Lower " + gl("Brier", "brier_score") + " is better. " + skillSentence(blocks) +
-        " None of that validates the model: the team inputs in the contaminated rows are " +
-        "season to date, so every graded game sits inside its own features. " +
-        esc(bt.note || "")));
+        " Contaminated rows use season-to-date inputs, so every graded game sits inside " +
+        "its own features; they validate nothing. " + esc(bt.note || "")));
     }
     if (m.known_limits && m.known_limits.length) {
-      rows.push('<div class="bt-panel-sub">What it does not know</div><ul class="bt-list">' +
+      rows.push('<div class="bt-panel-sub">Known limits</div><ul class="bt-list">' +
         m.known_limits.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>");
     }
     return '<div class="bt-panel">' + rows.join("") + "</div>";
@@ -2173,10 +2112,9 @@
     var body;
     if (!r || !r.n_rows) {
       body = empty("The record starts when the " + selNounPl() + " do",
-        "No " + selNoun() + " has been published, so there is nothing to grade. " +
-        "When " + selNounPl() + " start, every one of them lands here with the " +
-        "book, the price at post, a flat 1 unit stake" +
-        (clvEnabled() ? ", and the closing line it is graded against" : "") +
+        "No " + selNoun() + " published yet. Each lands here with its book, price " +
+        "at post and a flat 1 unit stake" +
+        (clvEnabled() ? ", graded against the closing line" : "") +
         ". Rows are never edited or deleted.");
     } else {
       body = '<div class="bt-kv">' +
@@ -2202,18 +2140,17 @@
     var sha = (r || {}).chain_sha;
     var chain = sha ? ('<div class="bt-clock-fine">Chain ' +
       '<code class="bt-sha">' + esc(sha) + "</code>. " +
-      esc((r || {}).chain_note || "") + " Archive this value: a later record that " +
-      "still contains it as one of its prefix hashes is an append, and one that does " +
-      "not is a rewrite.</div>") : "";
+      esc((r || {}).chain_note || "") + " Archive it: a later record whose prefix " +
+      "hashes include it is an append; one without it is a rewrite.</div>") : "";
     return '<div class="bt-panel"><div class="bt-panel-hd">The public record</div>' + body +
       "<p>Joined across three files on bet_id: the append-only record, the settlement " +
-      "sidecar and the closing-line sidecar. Verification: recompute the chain by " +
-      "folding sha256 row by row over " + esc(url) + " and compare it to the hash " +
+      "sidecar and the closing-line sidecar. To verify, recompute the chain by " +
+      "folding sha256 row by row over " + esc(url) + " and compare to the hash " +
       "below.</p>" + chain +
       "<p>" + esc((S.data && S.data.record_policy) ||
         "Append only. Rows are never edited or deleted; a correction is a new row.") + " " +
-      'The raw file is <a class="bt-link" href="' + esc(url) + '">' + esc(url) + "</a>. " +
-      'The sidecars are <a class="bt-link" href="' +
+      'Raw file: <a class="bt-link" href="' + esc(url) + '">' + esc(url) + "</a>. " +
+      'Sidecars: <a class="bt-link" href="' +
       esc((S.data && S.data.settlement_url) || "/data/betting_settlement.json") + '">' +
       esc((S.data && S.data.settlement_url) || "/data/betting_settlement.json") + "</a> and " +
       '<a class="bt-link" href="' + esc((S.data && S.data.clv_url) || AUX_URL.clv) + '">' +
@@ -2277,28 +2214,24 @@
       var reasons = (side && side.ungraded_reasons) || null;
       if (reasons) {
         var keys = Object.keys(reasons).sort();
-        rows.push("<p>Nothing has a closing-line grade. Every row the sidecar looked at, " +
-          "and why:</p>");
+        rows.push("<p>No closing-line grades. Rows by reason:</p>");
         rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
           '<thead><tr><th class="bt-l">Reason</th><th>Rows</th></tr></thead><tbody>' +
           keys.map(function (k) {
             return '<tr><td class="bt-l">' + esc(k) + "</td><td>" + reasons[k] + "</td></tr>";
           }).join("") + "</tbody></table></div>");
       } else if (!r.n_rows) {
-        rows.push("<p>No " + selNoun() + " has been published, so there is no " +
-          "position to grade against a close. The sidecar is derived from the " +
-          "record and is not requested until the record has a row in it.</p>");
+        rows.push("<p>No " + selNoun() + " published, so nothing to grade against a " +
+          "close.</p>");
       } else {
-        rows.push("<p>No closing-line grade exists. " + esc(auxMissing("clv")) + "</p>");
+        rows.push("<p>No closing-line grades. " + esc(auxMissing("clv")) + "</p>");
       }
-      rows.push(note("CLV is unrecoverable after the fact. A slate whose close was never " +
-        "captured can never be graded, whatever runs tomorrow, which is why the feed strip " +
-        "at the top of this page leads with it. The repair is concrete: install the close " +
-        "cron (deploy/betting-crontab.example via crontab -e on the box, or " +
-        "deploy\\betting-close-task.ps1 -Register on Windows) and verify the scheduler " +
-        "reaches it with <code>python tools/betting_close_job.py --selfcheck</code>; " +
-        "NEVER RUN from that command means no cron or task is installed, however " +
-        "finished the code is."));
+      rows.push(note("CLV is unrecoverable after the fact: a slate whose close was never " +
+        "captured can never be graded. Repair: install the close cron " +
+        "(deploy/betting-crontab.example via crontab -e, or " +
+        "deploy\\betting-close-task.ps1 -Register on Windows) and check it with " +
+        "<code>python tools/betting_close_job.py --selfcheck</code>; NEVER RUN means " +
+        "no cron or task is installed."));
     }
     return '<div class="bt-panel">' + rows.join("") + "</div>";
   }
@@ -2313,15 +2246,13 @@
     var pub = d.record_publish || {};
     var rows = ['<div class="bt-panel-hd">What gates the first published row</div>'];
     if (!bl || !bl.length) {
-      rows.push("<p>This payload carries no publish-blocker list, which means it was " +
-        "built before that lane existed. The record above is the only evidence of what " +
-        "has been published.</p>");
+      rows.push("<p>This payload predates the publish-blocker list.</p>");
       return '<div class="bt-panel">' + rows.join("") + "</div>";
     }
     var nOpen = 0;
     bl.forEach(function (b) { if (b.open) nOpen += 1; });
     rows.push("<p>" + nOpen + " of " + bl.length + " are open. A " + selNoun() +
-      " is written to the public record only when every one of them is.</p>");
+      " is written to the public record only when all are.</p>");
     rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
       '<thead><tr><th class="bt-l">Blocker</th><th class="bt-l">What it needs</th>' +
       '<th class="bt-l">Have</th><th>State</th></tr></thead><tbody>' +
@@ -2436,9 +2367,7 @@
     var n_priced = legs.filter(function (L) { return L.r.odds != null; }).length;
     return '<div class="bt-panel"><div class="bt-panel-hd">Every bet on the board</div>' +
       "<p>" + legs.length + " bet(s) across " + (bets || []).length + " game(s), " +
-      n_priced + " with a posted price. Click any column to sort; a second click " +
-      "reverses it. Unpriced legs are kept and sink to the bottom, because an " +
-      "absent row reads as an absent game.</p>" +
+      n_priced + " with a posted price. Unpriced legs stay and sort last.</p>" +
       (thr == null
         ? note("No floor is in force, so nothing is badged. " + floorAbsentReason())
         : "") +
@@ -2481,9 +2410,8 @@
     }
     var hasMarket = (d.status || {}).odds_feed === "ok";
     var reason = (d.status || {}).odds_note || "";
-    var head = hasMarket ? "" : note("No odds feed is configured, so these are model fair " +
-      "prices with nothing to compare them against." +
-      (reason ? " The build reports: " + esc(reason) + "." : ""));
+    var head = hasMarket ? "" : note("No odds feed: model fair prices only." +
+      (reason ? " Build: " + esc(reason) + "." : ""));
     // AN ABSENT ROW READS AS AN ABSENT GAME. Two filters can leave a scheduled
     // game with no prices: the odds event was already under way (an in-game
     // price is real, it is just not this bet), or no event started within the
@@ -2494,10 +2422,9 @@
     var nDrop = st2.n_events_dropped_in_progress, nMiss = st2.n_games_unpriced_time_mismatch;
     if (hasMarket && (nDrop || nMiss)) {
       head += note("<strong>" + ((nDrop || 0) + (nMiss || 0)) + " odds events did not " +
-        "price a game.</strong> " + (nDrop || 0) + " were already under way when the " +
-        "snapshot was taken, and " + (nMiss || 0) + " games had a candidate event too " +
-        "far from first pitch to be the same game. Those games are still on the board " +
-        "below, marked unpriced, because an absent row reads as an absent game.");
+        "price a game.</strong> " + (nDrop || 0) + " were already under way at snapshot " +
+        "time; " + (nMiss || 0) + " had a candidate event too far from first pitch to be " +
+        "the same game. Those games stay on the board, marked unpriced.");
     }
     // 2026-08-16: pick_meta.blocked was read by pickCensus alone, so a build
     // whose slots the server hard-stopped still handed out green badges off
@@ -2509,19 +2436,15 @@
     if (meta.blocked) {
       head += note("<strong>No best value badges today.</strong> " +
         esc(meta.blocked_reason || "the selection rule never ran") +
-        ". The " + selNoun() + " slots were hard-stopped for that reason, and " +
-        "the badge takes the same stop rather than outliving it: nothing on " +
-        "this board is marked as a bet.");
+        ". The " + selNoun() + " slots stopped for that reason, and the badge " +
+        "stops with them.");
     }
     var thr = pickFloor();
     if (hasMarket && thr != null) {
-      head += note("A <strong>best value</strong> badge marks the single side in a " +
-        "game with the largest " + gl("edge", "bet_edge") + " clearing " +
-        esc(floorText((S.data && S.data.pick_meta) || {})) + ", the same bar the " +
-        selNounPl() + " above use, so the badge and the " + selNounPl() +
-        " can never disagree about the bar. A game with no badge had nothing " +
-        "clear it, and that absence is information: it means the model and the " +
-        "market agree about that game.");
+      head += note("A <strong>best value</strong> badge marks the side in each game " +
+        "with the largest " + gl("edge", "bet_edge") + " clearing " +
+        esc(floorText((S.data && S.data.pick_meta) || {})) + ", the bar the " +
+        selNounPl() + " use. No badge: nothing in that game cleared it.");
     }
     // The both-legs copy state renders above the board too: the closed
     // market's rows stay priced below (the ledgers keep recording it), and a
@@ -2598,8 +2521,7 @@
     // page reads as a game that is not being played.
     if (st.odds_feed === "ok" && !b.odds_event_id && !b.market) {
       badge += ' <span class="bt-tag bt-tag-warn bt-unpriced" title="' +
-        esc("betting_export.match_event refused the candidate event; see " +
-            "status.n_games_unpriced_time_mismatch and n_events_dropped_in_progress") +
+        esc("The candidate odds event was in progress or too far from first pitch.") +
         '">unpriced: no pre-game odds event within ' + matchWindowText(st) +
         " of first pitch</span>";
     }
@@ -2675,9 +2597,8 @@
       "</th><th>Hold range</th><th>Books on line</th>" +
       '<th class="bt-l">Refused</th></tr></thead><tbody>' + rows +
       "</tbody></table></div>" +
-      '<div class="bt-hold">Fair probabilities are ' + gl("de-vigged", "devig") +
-      " by the proportional method from the named book only. Rule: " +
-      esc(mk.fair_book_rule || "min_hold") + ".</div>";
+      '<div class="bt-hold">Fair probabilities: proportional ' + gl("de-vig", "devig") +
+      " of the named book only. Rule: " + esc(mk.fair_book_rule || "min_hold") + ".</div>";
   }
 
   function spLine(sideObj, prev) {
@@ -2757,8 +2678,7 @@
     var pv = d.props_value || null;
     var out = ['<div class="bt-panel-sub" id="bt-props-value">Value against the books</div>'];
     if (!pv) {
-      out.push(note("This payload predates the props value lane, so there is " +
-        "no props_value block to read. It appears on the next build."));
+      out.push(note("This payload predates the props_value block."));
       return out.join("");
     }
     var floor = pv.floor || {};
@@ -2767,13 +2687,12 @@
     var nPriced = (pv.rows || []).length || pv.n_rows || 0;
     if (!nPriced && !(pv.value_rows || []).length) {
       if (!pv.armed && pv.inert_reason) {
-        out.push(note("<strong>No book side exists to compare against.</strong> " +
-          esc(pv.inert_reason) + " Until then this section prices nothing, " +
-          "spends nothing, and the fair lines below stand on their own."));
+        out.push(note("<strong>No book prices to compare.</strong> " +
+          esc(pv.inert_reason) + " The section spends nothing; the fair lines below " +
+          "stand alone."));
       } else {
-        out.push(note("Armed, but no per-event props snapshot is cached for " +
-          "this slate, so there is nothing to price. The pull selects " +
-          esc(String(pv.max_games_per_day)) + " game(s) a day: " +
+        out.push(note("No per-event props snapshot is cached for this slate. The pull " +
+          "covers " + esc(String(pv.max_games_per_day)) + " game(s) a day: " +
           esc(pv.selection_rule || "") + "."));
       }
       return out.join("");
@@ -2781,23 +2700,24 @@
     var rows = pv.value_rows || [];
     if (!rows.length) {
       out.push(note("<strong>" + pv.n_rows + " props side(s) priced and none " +
-        "cleared " + floorTxt + ".</strong> The floor is the same one the " +
-        "team slots clear, never a lower one invented so this table has " +
-        "something in it. An empty table is the honest answer."));
+        "cleared " + floorTxt + ".</strong> Same floor as the team slots, never a " +
+        "lower one invented to fill the table."));
       return out.join("");
     }
-    out.push(note("Watch-frame rows, same treatment as the team slots: each " +
-      "cleared " + floorTxt + " against a real book price. " +
-      gl("Edge", "bet_edge") + " is model minus the de-vigged fair from the " +
-      "minimum-hold book on the consensus line. Nothing here is advice."));
+    out.push(note("Each row cleared " + floorTxt + " against a book price, the same " +
+      "floor as the team slots. " + gl("Edge", "bet_edge") + " is model minus the " +
+      "de-vigged fair from the minimum-hold book on the consensus line. Not advice."));
     out.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
       '<thead><tr><th class="bt-l">Player</th><th class="bt-l">Market</th>' +
       "<th>Line</th><th class=\"bt-l\">Side</th><th>Price</th><th>Model</th>" +
       "<th>Fair</th><th>Edge</th><th>EV/u</th><th>&frac14; Kelly</th></tr></thead><tbody>" +
       rows.map(function (r) {
         var cls = r.edge == null ? "" : (r.edge > 0 ? " bt-pos" : " bt-neg");
+        // The tag follows the floor, the same rule provBadge applies to the
+        // team slots: a measured floor retires the word.
         return '<tr><td class="bt-l">' + esc(r.player || "") +
-          ' <span class="bt-tag bt-tag-warn bt-prov">provisional</span></td>' +
+          (floor.provisional === false ? ""
+            : ' <span class="bt-tag bt-tag-warn bt-prov">provisional</span>') + "</td>" +
           '<td class="bt-l">' + esc(PROPS_MARKET_LABELS[r.market] || r.market || "") +
           "</td><td>" + (r.line == null ? "-" : esc(String(r.line))) + "</td>" +
           '<td class="bt-l">' + esc(r.side || "") + "</td>" +
@@ -2904,8 +2824,8 @@
 
     out.push('<div class="bt-subhd">Builder</div>');
     if (!(pc.legs || []).length) {
-      out.push(empty("No legs available", "No slate is priced, so there is nothing to chain. " +
-        "The parlay calculator under Calculators takes hand-entered odds and works with no data."));
+      out.push(empty("No legs available", "No slate is priced. The Parlay calculator " +
+        "under Calculators takes typed prices."));
     } else {
       out.push('<div class="bt-legpick"><select id="bt-legsel" class="bt-input">' +
         '<option value="">Add a leg...</option>' +
@@ -2937,7 +2857,7 @@
     if (!host) return;
     if (S.legs.length < 2) {
       host.innerHTML = empty(S.legs.length ? "One leg is not a parlay" : "No legs yet",
-        "Add two or more legs to see the parlay math.") +
+        "Add two or more legs.") +
         (S.legs.length ? legTable() : "");
       wireLegDrops(host);
       return;
@@ -2964,18 +2884,16 @@
     var body = legTable();
     if (blocked) {
       body += '<div class="bt-block"><strong>Same-game legs. The naive product is blocked.</strong> ' +
-        "Two legs from one game are not independent, so multiplying them is not a price. " +
-        "This builder will not print a number it cannot stand behind. Remove a leg, or treat " +
-        "the ticket as a same-game parlay and price it at the book.</div>";
+        "Legs from one game are correlated, so their product is not a price. Remove a leg, " +
+        "or price the ticket as a same-game parlay at the book.</div>";
     } else if (!allPriced) {
       body += '<div class="bt-parlay-sum">' +
         chip("Legs", S.legs.length) +
         chip("Model probability", pct(pProd, 2)) + "</div>" +
         note("<strong>No price on this ticket.</strong> " + (S.legs.length - priced) + " of " +
-          S.legs.length + " legs have no posted odds, because no odds feed is configured. " +
-          "The model probability above is ours and stands on its own. A parlay price, an " +
-          "implied probability and an EV all need a real price on every leg, so none of them " +
-          "is shown. The parlay calculator under Calculators takes prices you type in.");
+          S.legs.length + " legs have no posted odds (no odds feed). A price, implied " +
+          "probability and EV need a price on every leg. The Parlay calculator under " +
+          "Calculators takes typed prices.");
     } else {
       body += '<div class="bt-parlay-sum">' +
         chip("Legs", S.legs.length) +
@@ -2983,8 +2901,7 @@
         chip("Parlay price", fmtOdds(decToAm(decProd))) +
         chip("Implied", pct(decToImplied(decProd), 2)) +
         chip("EV / unit", signed(evPerUnit(pProd, decProd), 3)) + "</div>" +
-        note("Independent legs only. Every leg above is from a different game, so the product " +
-          "is arithmetic rather than an assumption.");
+        note("Every leg is from a different game, so the legs are treated as independent.");
     }
     host.innerHTML = body;
     wireSortableTables(host);
@@ -3014,34 +2931,28 @@
   // ---- section: calculators (pure client, no payload) -----------------------
   function renderCalc() {
     return [
-      note("These calculators are pure arithmetic in your browser. They need no data file, " +
-        "no odds feed and no account, and they keep working when everything else on this " +
-        "page is empty."),
+      note("Browser-only arithmetic: no data file, odds feed or account needed."),
       calcBox("Odds converter", "bt-c1",
         field("American", "bt-c1-am", "-110") + field("Decimal", "bt-c1-dec", "1.909") +
         field("Implied %", "bt-c1-imp", "52.38"),
-        "Type in any one box. The other two follow. Implied probability includes the vig."),
+        "Type in any box; the others follow. Implied probability includes the vig."),
       calcBox("Vig and hold", "bt-c2",
         field("Side A (American)", "bt-c2-a", "-110") + field("Side B (American)", "bt-c2-b", "-110"),
-        "Overround is the two implied prices added up. Hold is that figure over 100%, the " +
-        "same number the game cards publish. Book keeps is the share of a balanced handle " +
-        "the book actually retains, which is the hold divided by the overround: at -110 " +
-        "both ways the hold reads 4.76% and the book keeps 4.55% of what is staked. Fair " +
-        "probabilities are de-vigged proportionally, the same method the boards use."),
+        "Overround = sum of the implied probabilities. Hold = overround minus 100%, the " +
+        "game cards' number. Book keeps = hold / overround, the share of a balanced handle " +
+        "retained. Fair = proportional de-vig, as on the boards."),
       calcBox("Expected value", "bt-c3",
         field("Your probability %", "bt-c3-p", "55") + field("Price (American)", "bt-c3-odds", "-110") +
         field("Stake (units)", "bt-c3-stake", "1"),
-        "EV is what the bet returns on average per unit staked, at your probability."),
+        "Average return per unit staked, at your probability."),
       calcBox("Kelly", "bt-c4",
         field("Your probability %", "bt-c4-p", "55") + field("Price (American)", "bt-c4-odds", "-110"),
-        "Kelly is informational on this site. Every row on the public record is a flat " +
-        "1 unit, because a variable stake makes a published ROI impossible to audit."),
+        "Informational only. The public record stakes a flat 1 unit so its ROI stays " +
+        "auditable."),
       calcBox("Parlay", "bt-c5",
         field("Prices, comma separated", "bt-c5-legs", "-110, +150, -130") +
         field("Same game?", "bt-c5-same", "no"),
-        "Answer yes to Same game and the multiplication stops. Correlated legs cannot be " +
-        "multiplied, and a builder that pretends otherwise is selling you a worse number " +
-        "than the book already did.")
+        "Same game = yes stops the product: correlated legs cannot be multiplied.")
     ].join("");
   }
 
@@ -3081,8 +2992,8 @@
         if (from !== "am") am.value = "";
         if (from !== "dec") dec.value = "";
         if (from !== "imp") imp.value = "";
-        el("bt-c1-out").innerHTML = '<span class="bt-dim">Enter a price. American runs ' +
-          "from +100 and -100 outward; there is nothing between them.</span>";
+        el("bt-c1-out").innerHTML = '<span class="bt-dim">Enter a price. American odds ' +
+          "run from +100 and -100 outward.</span>";
       }
       guard = false;
     }
@@ -3155,8 +3066,8 @@
       if (parts.length < 2) { host.innerHTML = '<span class="bt-dim">Enter two or more prices.</span>'; return; }
       if (same === "y" || same === "yes" || same === "true") {
         host.innerHTML = '<div class="bt-block"><strong>Same-game parlay: no number.</strong> ' +
-          "Legs from one game are correlated, so the product of the prices is not the price " +
-          "of the ticket. Price a same-game parlay at the book and compare it to nothing here.</div>";
+          "Legs from one game are correlated; the product of their prices is not the " +
+          "ticket's price.</div>";
         return;
       }
       var d = parts.reduce(function (a, b) { return a * b; }, 1);
@@ -3267,8 +3178,8 @@
 
   function renderMyBets() {
     return '<div class="bt-panel"><div class="bt-panel-hd">My bets</div>' +
-      "<p>Your own log, separate from the site's public record. It works signed out: rows " +
-      "live in this browser until you sign in, and sync to your account after that.</p>" +
+      "<p>Your log, separate from the public record. It works signed out (stored in this " +
+      "browser) and syncs to your account once you sign in.</p>" +
       '<div id="bt-bet-form" class="bt-betform"></div></div>' +
       '<div id="bt-bets-out"></div>';
   }
@@ -3437,7 +3348,7 @@
     }
     if (S.error && S.section !== "calculators" && S.section !== "mybets") {
       html = '<div class="bt-error" role="alert"><strong>The betting payload failed to load.</strong> ' +
-        esc(S.error) + ' The nightly build may be mid-run. ' +
+        esc(S.error) + ". The nightly build may be mid-run. " +
         '<button type="button" id="bt-retry" class="bt-btn">retry</button></div>' + html;
     }
     // The share chip rides the two board sections only; there is nothing to

@@ -1841,7 +1841,9 @@ def test_a_blocked_build_suppresses_the_best_value_badge_and_says_why(live_ctx):
     asserts; deleting the blocked note from renderTeam kills the reason
     assert. The unblocked control line pins that the suppression asserts are
     not passing vacuously."""
-    assert "bt-bestval" in live_ctx.eval("__show('teams')")   # control: it does badge
+    control = live_ctx.eval("__show('teams')")
+    assert "bt-bestval" in control                            # control: it does badge
+    assert "nothing in that game cleared it" in _visible_text(control)  # and notes the bar
     payload = LIVE_PAYLOAD.replace(
         '"pick_of_the_day": {"side": "under"',
         '"pick_of_the_day": null, "unused_pick": {"side": "under"')
@@ -1856,7 +1858,7 @@ def test_a_blocked_build_suppresses_the_best_value_badge_and_says_why(live_ctx):
     assert "bt-bestval" not in html
     assert "no odds api key at build time" in text            # the reason, above the board
     assert "No best value badges today" in text
-    assert "never disagree about the bar" not in text         # the head note goes down too
+    assert "nothing in that game cleared it" not in text      # the head note goes down too
 
 
 def test_the_team_board_discloses_the_push_on_a_whole_number_total(live_ctx):
