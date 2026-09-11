@@ -573,7 +573,7 @@
       + " the pool since.";
   }
   // THE eWAR BUILD STAMP (war_source.ewar_vintage, on all three pitching and
-  // hitting payloads since 2026-09-10). data/ewar.json is hand-built, so this
+  // hitting payloads since 2026-09-10). the eWAR artifact is hand-built, so this
   // season's eWAR numerator can trail the IP or PA beside it. The page reads
   // `stale` and the build date; it never types either.
   function ewarVintage(meta) {
