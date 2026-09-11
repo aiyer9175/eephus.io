@@ -1872,6 +1872,231 @@ flipped: it only starts the capture and the clock.
 4. **Where the attribution line lives,** if Open-Meteo is chosen.
 
 
+## 5i. Ballpark awareness: the Athletics' park, and park by bat side (pre-registered 2026-09-11)
+
+**Written before any column, flag or arm below existed in code, and before any
+number about any candidate here was related to a game outcome**, in the
+discipline of 5a, 5c, 5d and 7b. Every number in this section is one of two
+kinds and says which: a fact about the SOURCE (Savant's own park indices, read
+off its pages), or a fact about SERVED PRICES (the 2026-09-11 board repriced).
+Neither kind is a measurement of whether a candidate predicts results.
+
+### The owner ask
+
+2026-09-11: most of the edge and value bets on the board are overs; is that a
+bug or a feature; and make the module weather and ballpark aware, especially
+for totals and player props. On that day's board the model's fair total sat a
+mean +0.89 runs above the posted line, above it on 14 of 15 games, and 13 of the
+15 positive-edge totals were overs. Section 7f measured why: the total is
+priced as a Poisson whose centre sits above where real totals split (the fit-half
+level bias is only +0.058 runs), and section 7g's total-scoped dispersion is the
+registered shape repair. Nothing in this section is a fix for that lean. Weather
+is sections 5d (climatology) and 5h (forecast). This section is the park.
+
+### What the park term is today
+
+One number per game, both sides: `b3 * (runs index / 100 - 1)`, the index read
+by `betting_model.park_index()` out of `data/fa_meta.json` park_factors, which
+is Savant's DEFAULT view, a 3-season rolling index. Served b3 is 3.386903 on
+4,400 rows. It carries no batter side.
+
+### 5i-A. The Athletics' park: a data repair behind `SERVE_ATH_PARK`
+
+**The defect (audit C5-F1).** Savant's default view drops any venue without a
+full 3-season window. Read 2026-09-11 off `.cache/savant_pf_2026_all.html` and
+`_2025_all.html`: the 2024-2026 view carries 29 venues and the 2023-2025 view 28.
+The Athletics have played at Sutter Health Park since 2025, so every consumer
+of the index has priced every A's home game at a NEUTRAL park: the served board,
+the coefficient fit that sets b3, the vintage backtest, the dark props frame and
+`dfs_export`.
+
+**The measured factor.** Savant publishes the venue at shorter windows
+(`fa_sources.fetch_savant_park_factors(year, rolling="2")`, fetched 2026-09-11):
+
+| View | Runs | wOBA | HR | PA |
+|---|---|---|---|---|
+| 2025-2026 (rolling 2) | 121 | 110 | 121 | 34,287 |
+| 2025 alone | 117 | 108 | 112 | 18,073 |
+| 2026 alone | 125 | 112 | 129 | 15,449 |
+| 2025-2026, left-handed batters | 117 | 108 | 121 | 14,219 |
+| 2025-2026, right-handed batters | 125 | 112 | 121 | 20,068 |
+
+The completed-game cache agrees on direction, louder: 72 A's home games average
+11.667 total runs against 8.387 in their 75 road games, a raw ratio of 1.391,
+the highest of the 30 clubs. A raw ratio is not on Savant's player-controlled
+scale; it is corroboration and nothing is priced on it.
+
+**The shrink, derived rather than typed.** A 2-season factor must not ride b3
+as if it were a 3-season one. Over Savant's single-season indices (2018, 2019,
+2021-2026; 206 stable venue-season pairs, same venue id and club), the noise
+variance of a single-season runs index is 32.372 index points squared at the
+mean single-season sample of 17,577 PA, and the signal variance 53.673. The
+sample-implied single-season reliability is 0.6238 against a direct
+season-to-season correlation of 0.6221, so the decomposition reproduces the one
+number it can be checked against. Reliability is 0.8360 at the 3-season view's
+median 54,034 PA and 0.7638 at the A's 34,287. b3 was fitted on 3-season
+indices, so the A's deviation is scaled by 0.7638 / 0.8360 = 0.9137: 121 becomes
+119.19, served as 1.1919. `betting_model.short_window_park_value` computes it
+from the constants and the row's own PA, so the value follows the sample as the
+season adds to it. Tropicana's 3-season row carries 34,861 PA and is served
+unshrunk today; the same argument would shrink it about as much, and that is a
+separate served change this section does not make.
+
+**What flipping it changes, on the 2026-09-11 board** (15 games; repricing with
+the same inputs reproduces all 90 served model probabilities exactly):
+
+| | Flag off (served) | Flag on, coefficients held | Flag on, after the `--context` refit |
+|---|---|---|---|
+| SEA at ATH fair total (line 10.0) | 9.86 | 11.16 | 11.27 |
+| Over 10.0 model prob / edge | 0.45648 / -0.05587 | 0.63349 / +0.12114 | 0.64684 / +0.13449 |
+| ATH moneyline | 0.44855 | 0.45156 | 0.45392 |
+| floor-clearing sides | 26 | 27 | 27 |
+| positive-edge totals that are overs | 13 of 15 | 14 of 15 | 14 of 15 |
+| fair minus line, mean / median | +0.8933 / +0.8500 | +0.9800 / +1.1600 | +0.9433 / +1.0500 |
+| Pick of the Day | ATL moneyline 0.75485 | unchanged | ATL moneyline 0.74978, edge 0.12368 |
+| Longshot of the Day | empty | empty | empty |
+
+The refit column exists because `build_context` fits b0..b4 through the same
+`park_index()` seam. Refit on the 2,200-game cache with the A's at 1.1919: b3
+3.386903 to 3.852374, b0 4.477242 to 4.452830, b1 -0.003093, b2 +0.008276, b4
++0.00052. The omission was attenuating b3: 72 home games that scored like a 1.39
+park were coded neutral. After the refit every total moves, the 14 other games
+by -0.13 to +0.03 runs.
+
+**It makes the over tilt worse, and that is the honest reading.** SEA at ATH was
+the one game the model priced under its line, and only because its park term
+was missing. The flag adds an over to the value set and does nothing about the
+Poisson centre that section 7f names as the cause.
+
+**Blast radius.** 72 completed A's home games (55 in the vintage fit half before
+the 2026-08-01 split, 17 after), 10 distinct A's home events in the 27 cached
+odds snapshots, 7 shadow-ledger rows, 16 calibration-ledger rows over 2 games.
+ZERO served props numbers: `props_fair_lines` carries no park term. The dark
+props frame's A3 arm reads fa_meta park_factors and is untouched.
+
+**Standing.** A data-completeness repair to an existing fitted input, not a new
+feature, so it carries no gate of its own; it carries the measurement above and
+the owner flips it. The flip procedure is in the flag's comment in
+`betting_model.py`: set it, bump `MODEL_VERSION`, re-run `--context`, flip the
+tripwire in `test_betting_ballpark.py`. The flag reaches only
+`SHORT_WINDOW_PARK_ORGS` (ATH), so its effect cannot grow by itself the day
+another club moves. Vintage records reach it only through their own dated
+`parks_short_window` block (schema 5); an older record keeps the A's neutral.
+`dfs_export` reads fa_meta park_factors and is not changed by this flag.
+
+### 5i-B. Park by bat side for the TOTAL (dark, schema 5)
+
+**A source finding first, because it decides what the candidate can be.** Over
+Savant's single-season pages (2019, 2021-2026; 176 stable venue-season pairs;
+no game outcome read), the per-venue LEFT minus RIGHT difference is:
+
+| Index | Season-to-season r of (L - R) | 3-season reliability (Spearman-Brown) | L index alone, r |
+|---|---|---|---|
+| runs | 0.0065 | 0.0191 | 0.4262 |
+| HR | 0.1406 | 0.3293 | 0.3735 |
+
+The RUNS split is almost pure noise at the samples Savant publishes, and the HR
+split is weak and real. On the current 3-season view the L minus R runs
+difference spreads -16 to +12 (sd 6.49) across 29 parks, which is what noise at
+about 24,000 and 30,000 PA per hand produces on its own. A lineup-weighted park
+runs factor built from the raw split would add variance to every total. The
+candidate is therefore the SHRUNK one, with the shrink fixed here.
+
+**The columns (schema 5, `leaderboard_vintages`).** They ride the ONE schema-5
+bump that 5f and 5g register; the three sets of columns are independent of one
+another, and whichever lands first carries `SCHEMA = 5` for all of them. Team:
+`lhb_share_vr` and `lhb_share_vl`, each club's left-handed share of expected PA
+in its captured order against a right- and a left-handed starter, slots weighted
+by the PA-by-slot table (`LINEUP_SLOT_PA`, pinned equal to
+`betting_export.SLOT_PA`), switch hitters batting opposite the starter's hand,
+null below 7 of 9 readable slots or when `bat_side.available` is false. Record
+blocks: `parks_by_hand` ({org: {L, R, hr_L, hr_R}} as index / 100, off fa_meta's
+new `park_factors_by_hand` sibling) and `parks_short_window` (5i-A's raw row).
+Coverage check on the 2026-09-11 hitter board: 30 of 30 clubs resolve both
+shares; vs RHP median 0.5647 (0.2301 to 0.8967), vs LHP median 0.4536 (0.2144 to
+0.6562); 54 switch-hitter slots across both orders. A builder check, not a
+measurement.
+
+**The candidate (`betting_model.lineup_park_factor`).** For each scoring side,
+with `s` its lineup's LHB share against the opposing probable's `throws`:
+
+    park_S = park_all + 0.0191 * (s * (L - park_all) + (1 - s) * (R - park_all))
+
+replacing the one shared `park` in that side's run row. 0.0191 is the runs-split
+reliability above, fixed now. At that scale the candidate differs from the
+served term by hundredths of an index point, and **the expected result is a
+null**; it is registered anyway, because the owner asked and a null on the
+record is worth more than one assumed. A side with any input missing prices on
+`park_all` and is counted.
+
+**Gate, both required** (the 5d-C form, because a park effect lands on the
+total): paired absolute error on the TOTAL, candidate better at one-sided
+t >= 1.645; AND moneyline paired Brier not worse on the point estimate. Control,
+also required: the SWAPPED twin, the same function at `1 - s`, must lose to the
+candidate on the first criterion. What must be reported whichever way it lands:
+the effective n (games where the candidate moves either side's park term by more
+than 0.0001), and whether a section 7f or 7g total repair was served at the
+first look; both arms share the total's level and shape either way, so neither
+can score for either arm.
+
+**Clock.** Four weeks of vintages whose `feature_basis` shows `lhb_share_vr`
+n = 30 AND `park_by_hand` n >= 29, counted from the first such vintage.
+fa_meta gains the by-hand sibling only when `fa_export` next writes it, so the
+earliest admissible first look is four weeks after that night, no earlier than
+~2026-10-10.
+
+### 5i-C. Park by bat side for HR and total-bases props (dark props frame)
+
+Props are graded DARK (`betting_props_dark.py`) and priced from the projection
+engine with no park term at all, so a props park candidate enters the dark
+frame and nowhere else. The existing all-hands park arm A3 is already a clean
+null on top of the batter rate (the artifact's `structure_leg`), which sets the
+expectation: a hand-scaled version of a null is expected to be a null.
+
+**The arms, added in their own blocks so no pre-existing number moves.**
+- HR ladder: `A4_eb_park_hand` is A3 with the park HR index read for the side
+  the batter hits from, its deviation from the all-hands index scaled by the
+  HR-split reliability 0.3293 (`HR_HAND_SPLIT_RELIABILITY`, pinned equal to
+  `betting_model.PARK_HAND_SPLIT_RELIABILITY["hr"]`). `A4_swap` reads the
+  opposite hand's index.
+- Total-bases ladder, new, on the 1.5 line the board prices: `C0_league` (league
+  per-PA mix of single, double, triple, HR), `C2_eb` (each component shrunk to
+  the league by the frozen 200-PA batter prior, reused and not refitted),
+  `C3_eb_park` (the all-hands park HR index on the HR rate, the added mass taken
+  from the zero-base outcome), `C4_eb_park_hand` (the hand-read index), `C4_swap`.
+  P(TB > 1.5) is exact under independent PAs: 1 - p0^n - n p1 p0^(n - 1).
+- Side: the listed bat side; a switch hitter bats opposite the opposing
+  starter's hand, read off the feed's first pitcher. Coverage check over the
+  cached feeds: 44,800 batter-games, 44,800 with a side, 43,306 with a by-hand
+  index; the 1,494 without are exactly the games at Sutter Health Park (no
+  3-season by-hand row), which price like A3.
+
+**Criteria, all required for each ladder**, the frame's existing rule (a
+game-clustered bootstrap interval on the paired Brier delta lying wholly below
+zero): the hand arm beats the arm it extends (`hand_leg`: A4 vs A3, C4 vs C3),
+AND beats its swapped twin (`hand_twin_leg`). Beating A3 alone could be a
+noisier copy of the same park. The TB ladder's `structure_leg` (C3 vs C2) is
+reported beside it and decides nothing about the hand.
+
+**Admissibility.** The first run of `betting_props_dark.py` after this section
+is committed AND after `fa_export` has written the `park_factors_by_hand`
+sibling is the first look, and its result is reported whichever way it lands. A
+run before the sibling exists publishes both hand legs as `NOT SCORED` with the
+reason: every hand arm would equal the arm it extends, and a zero-width null
+there is an artifact the module refuses to print. The reliability constant, the
+batter prior and the burn-in cut are frozen as written; re-tuning any of them
+after that run disqualifies the arm. The by-hand index is the live season's
+3-season view, contaminated in the same way A3's is, and the artifact carries
+that alongside A3's. A pass opens no slot and moves no served number: it would
+license a registered serving lane for the props park term, nothing more.
+
+### What this section does not claim
+
+It does not explain the over tilt and does not reduce it. It does not add
+weather; sections 5d and 5h own that and neither clock has opened. It does not
+change any served price with its flag off, and the one flag it adds moves prices
+in the direction of MORE overs on the board it was measured on.
+
 ---
 
 ## 6. The backtest: two modes, both labelled
@@ -3190,7 +3415,16 @@ never edits `assets/eephus-account.js`.
   and ships OFF behind an owner decision (5h); neither reaches a price until
   its own pre-registered gate clears.
 - 29 of 30 parks have a Savant runs index in `fa_meta.json`; the missing one
-  resolves neutral at lookup rather than being invented.
+  resolves neutral at lookup rather than being invented. **Amended 2026-09-11:**
+  the missing one is the Athletics' Sutter Health Park, which Savant publishes
+  at a 2-season window (runs 121 on 34,287 PA) and whose game carried the
+  highest posted total (10.0) on the 2026-09-11 board. Neutral was the wrong
+  default for it. The shrunk measured factor (1.1919) is built and NOT served:
+  `SERVE_ATH_PARK` is False, and flipping it adds an over to the 2026-09-11
+  value set rather than removing one. Section 5i-A.
+- The park term carries no batter side. The by-hand split of Savant's runs
+  index is measured near-pure noise (3-season reliability 0.0191) and its HR
+  split weak (0.3293); both are captured dark with their gates in 5i-B and 5i-C.
 
 ### 11a. The run distribution is wrong by a factor the caveat understated 5x
 
