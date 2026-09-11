@@ -7,7 +7,8 @@
 
 This is the training SUBSTRATE for the eFV flagship model. It assembles one row per
 resolved/censored prospect with features built strictly as-of a pre-outcome decision
-point, attaches a first-6-MLB-season bWAR label with censoring handling, and reproduces
+point, attaches a first-6-MLB-season WAR label (war_source.DEFAULT_PROVIDER, eWAR v2 since
+the 2026-09-04 epoch) with censoring handling, and reproduces
 the consensus-FV-only baseline that the model must match or beat. NO MODEL IS FIT HERE.
 
 Design (per docs/xfv-phase1-plan.md, owner sign-off 2026-06-21):
@@ -28,7 +29,8 @@ Design (per docs/xfv-phase1-plan.md, owner sign-off 2026-06-21):
              age-rel-level, level rank, staleness, league-relative k/bb/iso; plus draft
              pick/bonus and pre-decision IL history. NO Statcast (no historical depth;
              Tier-2 overlay is a later pass).
-  TARGET     first-6-MLB-season summed bWAR (career_war seasons debut..debut+5).
+  TARGET     first-6-MLB-season summed WAR on the label series (career_war seasons
+             debut..debut+5; war_source.DEFAULT_PROVIDER, eWAR v2 since 2026-09-04).
              ARM A1 (SERVICE_ALIGNED_WINDOW, default False, audit F03): with the flag
              on, a debut after the mid-April service cut takes debut+1..debut+6 with the
              debut season added as a stub. Off = this line, unchanged.
@@ -1536,7 +1538,8 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         "generated_at": date.today().isoformat(),
         "scope": (f"{'PITCHERS' if side == 'pit' else 'HITTERS'}; debut "
                   f"{DEBUT_YEARS[0]}-{DEBUT_YEARS[-1]} + never-MLB bust pool"),
-        "target": f"first-{TARGET_SEASONS}-season summed bWAR; resolved<= {RESOLVED_THROUGH}",
+        "target": (f"first-{TARGET_SEASONS}-season summed WAR ({_label_provider()}); "
+                   f"resolved<= {RESOLVED_THROUGH}"),
         "no_model": True,
         "accounting": acct,
         "counts": {
@@ -1554,7 +1557,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
             "pct_under_0.5": round(sum(1 for v in res_t if v < 0.5) / len(res_t), 3) if res_t else None,
         },
         "baseline_consensus_fv_spearman": baselines,
-        "baseline_note": ("THE bar. consensus_fv_raw rank vs realized first-6yr bWAR. "
+        "baseline_note": ("THE bar. consensus_fv_raw rank vs realized first-6yr label WAR. "
                           "debuted-only ~ the 0.38 Phase-1 sweep figure; full-pool dilutes "
                           "with busts. Sensitivity = resolved vs KM-censored."),
     }
@@ -1579,3 +1582,13 @@ if __name__ == "__main__":
     print("BASELINE consensus-FV Spearman:")
     for k, v in rep["baseline_consensus_fv_spearman"].items():
         print(f"  {k:28s} n={v['n']:5d}  spearman={v['spearman']}")
+
+def _label_provider() -> str:
+    """The WAR series the label is summed from, named from war_source rather than
+    typed (audit L13-13: the report said bWAR for a week after the 2026-09-04 label
+    epoch moved it to eWAR v2)."""
+    try:
+        import war_source
+        return str(war_source.DEFAULT_PROVIDER)
+    except Exception:
+        return "provider unavailable"

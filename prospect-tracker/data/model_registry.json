@@ -1042,8 +1042,8 @@
   {
    "model_id": "fv_outcome_pooled_grade",
    "surface": "THE eFV grade (xfv_grade) and therefore the joint board ordering, site-wide - SHIPPED 2026-07-30; docs/efv-2026-07-30/POOLED_OUTCOME_REFIT.md",
-   "predicts": "the industry-scale FV whose realized first-6yr bWAR distribution matches the model's predicted WAR6 for a player",
-   "champion": "inversion of the POOLED (side-neutral) empirical outcome curve E[first-6yr total bWAR | consensus FV], fit on 3,037 resolved uncensored rows by weighted PAVA isotonic regression shrunk toward the Clemens 2026 per-side prior (50/50 averaged) at K=30 pseudo-rows, re-monotonized strictly increasing, with the FV20-35 sub-floor knots produced by the production concave re-spread (value_framework._LOWEND_FG_EXP = 0.45)",
+   "predicts": "the industry-scale FV whose realized first-6yr label-WAR distribution matches the model's predicted WAR6 for a player",
+   "champion": "inversion of the POOLED (side-neutral) empirical outcome curve E[first-6yr total label WAR | consensus FV], fit on 3,037 resolved uncensored rows by weighted PAVA isotonic regression shrunk toward the Clemens 2026 per-side prior (50/50 averaged) at K=30 pseudo-rows, re-monotonized strictly increasing, with the FV20-35 sub-floor knots produced by the production concave re-spread (value_framework._LOWEND_FG_EXP = 0.45)",
    "baseline": "the shipped side-neutral inversion value_framework.realized_implied_fv, which inverts the valuation core's OWN forward expected-WAR map rather than a measured outcome curve",
    "metric": "held-out (forward-chained by decision year, 6 folds) calibration slope of realized on implied, per side, from the Phase-1 bake-off; head-to-head by paired player-clustered bootstrap against the EFV_GATE_STANDARD MAE MDE95",
    "eval_artifact": "data/fv_outcome_curves_pooled.json",

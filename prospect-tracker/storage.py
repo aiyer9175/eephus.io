@@ -5857,13 +5857,16 @@ def _career_pa_ip(graduate_payload: dict) -> tuple[int, float]:
         if s.get("level") != "MLB":
             continue
         try:
-            pa = int(s.get("pa") or 0)
+            pa = int(s["pa"]) if s.get("pa") is not None else None
         except (TypeError, ValueError):
-            pa = 0
-        if pa == 0:
+            pa = None
+        if pa is None:
             # Fall back to AB × ~1.13 (league-wide PA:AB ratio is ~1.135 —
             # walks + HBP + sacrifices push PA above AB). Better than
             # dropping the row entirely when PA isn't on file.
+            # Only when PA is ABSENT (audit L13-05, 2026-09-11): a recorded PA of 0
+            # is a measured zero and stays zero, never replaced by a conversion.
+            pa = 0
             try:
                 ab = int(s.get("ab") or 0)
             except (TypeError, ValueError):
@@ -7027,6 +7030,33 @@ def _mlb_exposure_pa_ip(career_stats) -> tuple[float, float]:
     return pa, ip
 
 
+def _mlb_exposure_measured(career_stats) -> tuple[float | None, float | None]:
+    """MLB PA / IP as MEASURED, with None where nothing is on file (audit L13-05).
+
+    PA is a row's `pa`, else its `ab` x 1.1 (the served MLB rows carry `ab`, never
+    `pa`), so a row with ab == 0 is a measured zero. IP is a row's `ip`. A field no
+    MLB row carries is MISSING, which is a different fact from a measured 0: 620
+    graduates have no career_stats rows at all (Mike Trout among them), and a 0
+    there would claim a thin sample nobody measured."""
+    pa = ip = None
+    for row in (career_stats or []):
+        if str(row.get("level") or "").upper() != "MLB":
+            continue
+        try:
+            if row.get("pa") is not None:
+                pa = (pa or 0.0) + float(row["pa"])
+            elif row.get("ab") is not None:
+                pa = (pa or 0.0) + float(row["ab"]) * 1.1
+        except (TypeError, ValueError):
+            pass
+        try:
+            if row.get("ip") is not None:
+                ip = (ip or 0.0) + float(row["ip"])
+        except (TypeError, ValueError):
+            pass
+    return pa, ip
+
+
 def _engine_wag_result(fv, is_pitcher, position, observed_war, *, age=None,
                        service_years=None, career_stats=None):
     """The ONE engine-WAG computation path (value_framework.wag, Prompt M).
@@ -7044,13 +7074,32 @@ def _engine_wag_result(fv, is_pitcher, position, observed_war, *, age=None,
         # Expected baseline matched to MLB SEASONS (service_years); the gate +
         # reliability use the REAL accumulated MLB PA/IP (passed alongside so a
         # thin multi-season sample is still gated + regressed).
+        #
+        # A MEASURED ZERO IS PASSED AS ZERO (audit L13-05, 2026-09-11). This used to
+        # pass `pa or None`, which turns a recorded 0 into "unknown", and the engine
+        # then gates an unknown load on len(seasons) full seasons, so a graduate with
+        # a 0-AB MLB line opened the 200 PA gate on a load nobody measured. The
+        # role's own exposure now goes in as measured (0 stays 0: gate closed, no
+        # reliability weight); a MISSING one stays None and keeps the engine's
+        # season-implied load, flagged on the result as exposure_measured False so
+        # the served block says which it was. The off-role figure keeps the old
+        # `or None` read, so nothing but the measured-zero case moves.
         pa, ip = _mlb_exposure_pa_ip(career_stats)
+        mpa, mip = _mlb_exposure_measured(career_stats)
+        if is_pitcher:
+            exp_pa, exp_ip = (pa or None), mip
+        else:
+            exp_pa, exp_ip = mpa, (ip or None)
         if service_years is not None:
-            return _engine_wag(fv, is_pitcher, ow, position=position,
-                               service_years=float(service_years),
-                               exposure_pa=(pa or None), exposure_ip=(ip or None), age=age)
-        return _engine_wag(fv, is_pitcher, ow, position=position,
-                           exposure_pa=(pa or None), exposure_ip=(ip or None), age=age)
+            w = _engine_wag(fv, is_pitcher, ow, position=position,
+                            service_years=float(service_years),
+                            exposure_pa=exp_pa, exposure_ip=exp_ip, age=age)
+        else:
+            w = _engine_wag(fv, is_pitcher, ow, position=position,
+                            exposure_pa=exp_pa, exposure_ip=exp_ip, age=age)
+        if w is not None:
+            w["exposure_measured"] = (exp_ip if is_pitcher else exp_pa) is not None
+        return w
     except Exception:
         return None
 
@@ -7140,6 +7189,9 @@ def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
                 "true_talent_war": w.get("true_talent_war"),
                 "w_obs": w.get("w_obs"),
                 "below_meaningful_exposure": w.get("below_meaningful_exposure"),
+                # False = no MLB PA/IP on file, so the gate read the season-implied
+                # load (audit L13-05); True = measured, a recorded 0 included.
+                "exposure_measured": w.get("exposure_measured"),
                 # Standardized boom/bust label (percentile-keyed) -- the canonical
                 # categorical grade signal, replacing the legacy _compute_boom_bust.
                 "boom_label": _engine_wag_boom_bust(w),

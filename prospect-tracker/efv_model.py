@@ -11,7 +11,8 @@ Honest by mandate: the loser is committed either way (program rule), and we expe
 on rank per the Phase-1 verdict -- the flagship case rests on the distribution/surplus
 (Pass 3), not a rank win.
 
-  TARGET     first-6-season summed bWAR, right-censored with an OBSERVED-RATE TAIL
+  TARGET     first-6-season summed WAR (war_source.DEFAULT_PROVIDER, eWAR v2 since the
+             2026-09-04 epoch), right-censored with an OBSERVED-RATE TAIL
              PROJECTION (target_censored), sample-weighted by observed fraction;
              resolved-only run as the sensitivity check. NOT Kaplan-Meier: there is no
              survival fit, risk set or hazard anywhere on this path, and the phrase
@@ -2224,7 +2225,7 @@ def _auc_breakdown(data, keys, lam, cohort_map) -> dict:
 
     out = {"n": len(scored), "n_with_seed_folds": len(recs),
            "labels": {"contributor_war": _CONTRIB_WAR, "star_war": _STAR_WAR,
-                      "war_metric": "first-6yr summed bWAR (target_censored); "
+                      "war_metric": "first-6yr summed label WAR (target_censored); "
                                     "model=blend, consensus=OLS(FV) anchor, shared labels"},
            "pooled": _cell(scored), "by_cohort": {}, "by_era": {}, "by_fv_tier": {}}
     for c in ("hs", "college", "ifa", "draft", "other"):
@@ -2817,7 +2818,7 @@ def _side_fairness_eval(persist: bool = True, out_path=None) -> dict:
                                "(storage.BOARD_GRADE_FIELD), so neither leg is a direct "
                                "read on served board order; re-basing this eval is a gate "
                                "decision, recorded here rather than done silently.",
-                "war_metric": "first-6yr summed bWAR, KM-censored (target_censored)",
+                "war_metric": "first-6yr summed label WAR, rate-projected tail (target_censored)",
                 "bootstrap": {"reps": _SF_BOOT, "seed": _SF_SEED, "ci": "CI90"},
                 "outcome_thresholds": {"contributor": _CONTRIB_WAR, "star": _STAR_WAR,
                                        "bust": _SF_BUST_WAR},
@@ -2951,7 +2952,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         "model": f"eFV {'pitcher' if side == 'pit' else 'hitter'} v1 (lean + guarded blend)",
         "scope": "PITCHERS" if side == "pit" else "HITTERS",
         "conventions": {
-            "target": "first-6-season summed bWAR; KM-censored (rate-projected tail) + resolved sensitivity",
+            "target": "first-6-season summed label WAR; rate-projected tail + resolved sensitivity",
             "vintage": "features strictly pre-outcome (Pass-1 matrix; leakage verified 0)",
             "protocol": "forward-chained by decision-year cohort; pooled OOS",
             "baseline": "within-fold OLS WAR ~ consensus_fv_raw (THE bar)",

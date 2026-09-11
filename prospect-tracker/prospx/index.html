@@ -22545,7 +22545,11 @@ const FV_WAR_ANCHORS = {
 };
 
 function fvExpectedWarPerYr(fv, isPitcher) {
-  if (fv == null) return null;
+  // FV lives on 20-80. Below 20 is the no-grade sentinel (a graduate with no
+  // consensus point ships fv_close 0.0, which `fv_close_raw ?? fv_close` keeps),
+  // never a grade, so there is no baseline and no WAG (audit L13-18; the server
+  // refuses the same inputs in storage._fv_to_expected_war_per_yr).
+  if (fv == null || !isFinite(fv) || fv < 20) return null;
   const table = isPitcher ? FV_WAR_ANCHORS.pitcher : FV_WAR_ANCHORS.hitter;
   const grades = Object.keys(table).map(Number).sort((a, b) => a - b);
   if (fv <= grades[0]) return table[grades[0]];
@@ -33354,7 +33358,7 @@ function efvDetailCard(p) {
       ${factorsHTML}
       ${healthyHTML}
       ${bucketBar ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin:10px 0 4px;">Projected outcome mix (6-yr)</div>${bucketBar}` : ""}
-      ${(p && p.surplus && p.surplus.star_odds != null) ? `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid var(--border-light);font-size:11px;" title="Star Odds: FanGraphs 2026 published probability of two or more seasons of four or more WAR during team control, for this player's FV and role. This is the SAME value shown in the board's Star Odds column. It is distinct from the outcome-mix Elite band above (the share of simulated careers whose per-season talent is in the top 4+ WAR/yr band).">
+      ${(p && p.surplus && p.surplus.star_odds != null) ? `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid var(--border-light);font-size:11px;" title="Star Odds: FanGraphs 2026 published probability of two or more seasons of four or more WAR during team control, for this player's FV and role. This is the SAME value shown in the board's Star Odds column. It is distinct from the outcome-mix Elite share above.">
         <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Star Odds <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;color:var(--text-tertiary);">2+ seasons of 4+ WAR</span></span>
         <span style="font-family:var(--font-mono);font-weight:700;color:${Number(p.surplus.star_odds) >= 0.20 ? "var(--up)" : Number(p.surplus.star_odds) >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)"};font-variant-numeric:tabular-nums;">${fmtStarOdds(p.surplus.star_odds)}</span>
       </div>` : ""}
@@ -36782,18 +36786,18 @@ const SV_BUCKET_COLOR = {
   good: "var(--neon-cyan)", star: "var(--up)",
 };
 // Top talent band is labeled "Elite" (not "Star") on purpose: it is the share of
-// simulated careers whose per-season talent lands in the top (4+ WAR/yr) band -
-// a DIFFERENT quantity than the "Star Odds" column (FanGraphs P(2+ seasons of 4+
-// WAR in team control)). Sharing the word "Star" made the two read as the same
-// number when they are not; "Elite" keeps the outcome-mix band distinct.
+// simulated careers in the top outcome bucket - a DIFFERENT quantity than the
+// "Star Odds" column (FanGraphs P(2+ seasons of 4+ WAR in team control)). Sharing
+// the word "Star" made the two read as the same number when they are not.
+//
+// NO WAR BAND IN THE LABEL (audit L13-07, 2026-09-11). The tooltip used to print the
+// config band beside each bucket ("Elite (4.0+ WAR)", "Good (2.5-4.0 WAR)"), but the
+// engine never prices a bucket at those levels: each is its calibrated midpoint times
+// k(FV), so a FV 60 hitter's Elite bucket sits at 2.67 WAR per season, inside the band
+// the bar called Good. The name carries no number now.
 const SV_BUCKET_LABEL = {
   bust: "Bust", bench: "Bench", regular: "Regular", good: "Good", star: "Elite",
 };
-function svBucketBand(key) {
-  const b = window.VALUE_FRAMEWORK && window.VALUE_FRAMEWORK.buckets
-            && window.VALUE_FRAMEWORK.buckets[key];
-  return (b && b.band) ? `${b.band} WAR` : "";
-}
 
 // Compact $M formatter for SV displays (≥$10M → whole, ≥$1M → 1 dp, else $K),
 // with a real minus sign for negatives. Used by every new SV surface so units
@@ -37165,8 +37169,7 @@ function renderBucketBar(buckets, opts) {
   const bar = segs.map(s => {
     const w = (s.p / total) * 100;
     const pct = Math.round(s.p * 100);
-    const band = svBucketBand(s.k);
-    const tip = `${SV_BUCKET_LABEL[s.k]}${band ? ` (${band})` : ""}: ${pct}% chance`;
+    const tip = `${SV_BUCKET_LABEL[s.k]}: ${pct}% chance`;
     const lbl = (opts.labels && w >= 11)
       ? `<span style="font-family:var(--font-mono);font-size:8px;font-weight:700;color:var(--text-on-accent);opacity:0.92;">${pct}</span>` : "";
     return `<div title="${escapeHtml(tip)}" style="width:${w.toFixed(2)}%;background:${SV_BUCKET_COLOR[s.k]};height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;">${lbl}</div>`;
@@ -39788,10 +39791,10 @@ function makeFarmReportCard(org) {
   const convLeaf      = t.mlb_production_conviction || {};
   const talentTransLeaf = t.talent_translation || {};
   const boomTooltip = boomLeaf.boom_pct != null
-    ? `Share of settled graduates with career WAR ≥ +5. ${boomLeaf.settled_count ?? 0} settled grads (min 5).`
+    ? `Share of settled graduates with WAG ≥ +2.5 per season. ${boomLeaf.settled_count ?? 0} settled grads (min 5).`
     : `Insufficient settled grads (needs ≥5 with 800 PA / 200 IP / 2+ MLB seasons).`;
   const bustTooltip = bustLeaf.bust_pct != null
-    ? `Share of settled graduates with poor MLB outcomes (negative input - higher bust% pulls the composite DOWN). ${bustLeaf.settled_count ?? 0} settled grads (min 5).`
+    ? `Share of settled graduates with WAG ≤ -1.5 per season (negative input). ${bustLeaf.settled_count ?? 0} settled grads (min 5).`
     : `Insufficient settled grads to compute bust rate.`;
   const talentTransTooltip = talentTransLeaf.wag_mean != null
     ? `Mean WAR-above-graduation (WAG) across all grads - how each grad's actual MLB output compared to their FV-implied baseline. Sign indicates over/under-performance vs FV. ${talentTransLeaf.grad_count ?? 0} grads.`
@@ -40435,7 +40438,7 @@ function makeFarmReportCard(org) {
           ${branch('Value',           'financial',            W.financial,            finSubs,
                    'Capital efficiency (v4). WAR per $M of signing bonus + grad-contract surplus + draft-pool efficiency (WAR/$M of pool) + IFA ROI (WAR/$M of bonuses signed). All 4 leaves equally weighted.')}
           ${branch('MLB Production',      'mlb_production',       W.mlb_production,       mlbSubs,
-                   'Whether this org produces MLB players, especially top-end ones (v4). 5 leaves: Hitter + Pitcher 3-input composites (WAG + WAR/yr + top-3 career WAR), Boom Rate (% settled grads with career WAR ≥ +5), Top-3 Grad WAR/yr, and Conviction (star-tier grad present). Conviction caps the composite for orgs without a star.')}
+                   'Whether this org produces MLB players, especially top-end ones. 8 leaves: Hitter + Pitcher production (WAR/yr + top-3 career WAR), Boom Rate, Bust Rate, Top-3 Grad WAR/yr, Conviction (star count), Grad Pace, HOF Track.')}
         </div>
       </details>
     </div>`;
@@ -43441,8 +43444,8 @@ function renderFarmSystems() {
         <div class="metric-cell"><span class="metric-label">${win.toUpperCase()}DvM+</span><span class="metric-value">${dvm != null ? dvm : " - "}</span></div>
         <div class="metric-cell"><span class="metric-label">Top-End</span><span class="metric-value">${org.top_end_points != null ? org.top_end_points.toFixed(0) : " - "}</span></div>
         <div class="metric-cell"><span class="metric-label">Depth</span><span class="metric-value">${org.depth_points != null ? org.depth_points.toFixed(0) : " - "}</span></div>
-        <div class="metric-cell" title="Per-org debut boom % - % of settled debuts with WAG ≥ +2.5 (full-season-equivalent)"><span class="metric-label">Boom%</span><span class="metric-value tier-boom">${boomPct != null ? boomPct + "%" : " - "}</span></div>
-        <div class="metric-cell" title="Per-org debut bust % - % of settled debuts with WAG ≤ −1.5 (full-season-equivalent)"><span class="metric-label">Bust%</span><span class="metric-value tier-bust">${bustPct != null ? bustPct + "%" : " - "}</span></div>
+        <div class="metric-cell" title="Per-org debut boom % - % of settled debuts with WAG ≥ +2.5 per season"><span class="metric-label">Boom%</span><span class="metric-value tier-boom">${boomPct != null ? boomPct + "%" : " - "}</span></div>
+        <div class="metric-cell" title="Per-org debut bust % - % of settled debuts with WAG ≤ −1.5 per season"><span class="metric-label">Bust%</span><span class="metric-value tier-bust">${bustPct != null ? bustPct + "%" : " - "}</span></div>
       </div>`;
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">

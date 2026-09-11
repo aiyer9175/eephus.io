@@ -1,7 +1,7 @@
 {
  "generated_at": "2026-09-05",
  "scope": "HITTERS; debut 2011-2024 + never-MLB bust pool",
- "target": "first-6-season summed bWAR; resolved<= 2025",
+ "target": "first-6-season summed WAR (ewar_v2); resolved<= 2025",
  "no_model": true,
  "accounting": {
   "debuted_seen": 2749,
@@ -71,5 +71,5 @@
    "spearman": 0.3768
   }
  },
- "baseline_note": "THE bar. consensus_fv_raw rank vs realized first-6yr bWAR. debuted-only ~ the 0.38 Phase-1 sweep figure; full-pool dilutes with busts. Sensitivity = resolved vs KM-censored."
+ "baseline_note": "THE bar. consensus_fv_raw rank vs realized first-6yr label WAR. debuted-only ~ the 0.38 Phase-1 sweep figure; full-pool dilutes with busts. Sensitivity = resolved vs KM-censored."
 }

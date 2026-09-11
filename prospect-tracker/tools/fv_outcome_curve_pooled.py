@@ -101,7 +101,7 @@ def build(b_boot: int = lab.B_BOOT) -> dict:
                         "(run / run_live / run_backgrade / score_history); named by "
                         "storage.board_basis_fingerprint()"),
         "schema": {
-            "curve": ("E[first-6yr total bWAR | consensus FV], SIDES POOLED. Parallel "
+            "curve": ("E[first-6yr total label WAR | consensus FV], SIDES POOLED. Parallel "
                       "per-knot lists: knots, isotonic (raw PAVA fit), cell_mean (raw mean "
                       "of the +/-1.25 FV cell), prior (50/50 average of the two Clemens "
                       "2026 per-side columns), n_cell, w_prior (K/(K+n_cell), K=30), shrunk, "

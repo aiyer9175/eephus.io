@@ -6,7 +6,7 @@ the flagship outputs (grade + 5-bucket distribution + surplus $ + uncertainty),
 reusing the existing value_framework engine end to end.
 
 Pipeline per player:
-  features -> ridge E[6yr summed bWAR] -> linear calibration (scale) = xfv_war
+  features -> ridge E[6yr summed label WAR] -> linear calibration (scale) = xfv_war
           -> vf.outcome_implied_fv(xfv_war)             = xfv_grade (20-80, THE board number)
           -> vf.realized_implied_fv(xfv_war)            = _odds_grade (retired map, odds only)
           -> vf.p_bucket_given_fv(_odds_grade)          = 5-bucket distribution

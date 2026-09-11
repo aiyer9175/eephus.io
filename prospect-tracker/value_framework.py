@@ -2884,7 +2884,7 @@ def realized_implied_fv(realized_war, is_pitcher: bool, *, exposure_seasons=None
 # `realized_implied_fv` above inverts THIS MODULE'S OWN forward map: the FV whose
 # FV-implied expected control-window WAR equals the prediction. That is a statement about
 # our valuation core, not about what prospects at a grade actually did. The map below
-# inverts the EMPIRICAL one instead: E[first-6yr total bWAR | consensus FV], fit on 3,037
+# inverts the EMPIRICAL one instead: E[first-6yr total label WAR | consensus FV], fit on 3,037
 # resolved uncensored cohort rows and shrunk toward the Clemens 2026 published table where
 # the cells are thin. Grade G now means "the industry FV whose realized outcome
 # distribution matches our prediction for this player".
@@ -2971,7 +2971,7 @@ def outcome_implied_fv(predicted_war, *, exposure_seasons: int = 6) -> float | N
     if int(exposure_seasons) != 6:
         raise ValueError(
             f"outcome_implied_fv is defined on the 6-season window only (got "
-            f"{exposure_seasons}); the curve's label is first-6yr total bWAR")
+            f"{exposure_seasons}); the curve's label is first-6yr total WAR on the label series")
     try:
         war = float(predicted_war)
     except (TypeError, ValueError):
