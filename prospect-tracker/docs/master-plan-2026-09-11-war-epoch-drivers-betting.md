@@ -171,7 +171,7 @@ rows, so the never-debuted half of the pooled curve's pool does not depend on th
 | E2 | **Identity repair.** 13 label players with 50 window seasons carry `career_war` WAR where the bound MLBAM id has no feed row. Example: `carlos_martinez` is bound to 830052 but carries 2013-2018 seasons worth 15.45 WAR. Also the 9 + 9 debuted rows with no id and the 135 `bbref` rows. Add a tripwire test: every nonzero window season has a feed row under its bound id | an MLBAM-keyed label would zero these rows, while today's label carries another man's WAR | R1 |
 | E3 | Frozen per-season fWAR vintage artifact (with `fetched_at`), a pitching loader in `saber_feed`, provider `fwar` in `war_source` (servable, not default; stint apportionment reuses `_ewar_frame`'s PA and IPouts split), and a rebase tool with a provider parameter and one receipt schema. The pre-2011 cache per O4 (22 calls, no credits; the first call is also the pre-2011 pitching probe) | C, D, K, M and S all read it | R1 |
 | E4 | Pre-register `docs/efv-2026-09-1X/FWAR_LABEL_EPOCH_GATE.md`, committed alone. Clauses (a)-(h) of `EWAR_LABEL_EPOCH_GATE.md` verbatim, plus: (i) the attribution arms of 1.4; (j) the `star_out` handling; (k) the Z1 registration pointer; (l) "copy may never claim an accuracy gain from the basis" | clause (f) attribution is otherwise lost | R1 |
-| E5 | 5c's look recorded (~2026-09-17) and GRPO's first forward read taken (2026-09-18), or amendments filed under their own rules before those looks | step M changes `star_out`'s and `lineup_strength`'s inputs; retraining GRPO mid-gate changes the gated object | R1, R2, R5 |
+| E5 | 5c's looks recorded (the xwOBA pair and `star_out` ~2026-09-17; `lineup_strength` 2026-10-05, per the 5c correction of 2026-09-11) and GRPO's first forward read taken (2026-09-18), or amendments filed under their own rules before those looks; step M not before 2026-09-27 (2026-10-04 if O25 counts postseason) | step M changes `star_out`'s and `lineup_strength`'s inputs; retraining GRPO mid-gate changes the gated object | R1, R2, R5 |
 | E6 | 2026 regular season ended (2026-09-27) and the D9 freeze fetch taken (O3) | a completed season freezes cleanly, and RT can advance in the same rebuild | R1 |
 | E7 | An independent label rebuild that matches the new matrices on at least 99% of debuted rows. `label_shift_descriptive.py` reads 837/842 and 972/982 on v2 and is the template | the label must be verified before any read | R2 |
 | E8 | The owner's 2026-09-11 answers that move served numbers have landed, each in its own epoch with its fingerprint term (WAG_UNIFIED, the F10-01 re-point, wOBA 2015-2020, Ohtani on the starter board, the A's park) | step A's snapshot must be taken after them, or clause (f) attributes their movement to the basis | this plan |
@@ -654,6 +654,9 @@ The gate text in summary (the full text is R4 section D):
 > **Disqualification:** any number relating this delta or a close variant to an outcome or
 > a price before commit.
 
+Per the 5c correction of 2026-09-11, 5j's contaminated screen and any 5j close-variant number
+also wait for the 2026-10-05 `lineup_strength` look.
+
 **Adjacent, each its own flag and section** [R4]: props on the confirmed slot and starter
 (`SERVE_PROPS_POSTED`), strikeout props against the posted nine, the props per-event pull
 moved after the chosen games' cards post (O24), and later posted-nine variants of 5i-B, 5f,
@@ -705,7 +708,7 @@ coin). The total has been LEDGER-CLOSED since 2026-09-03 (0.268081, t 2.19 worse
 | Rank | Item | Evidence | Owner action? |
 |---|---|---|---|
 | 1 | **I1: install the close job on the production box**, verified with `--selfcheck` | 0 of 27 snapshots are close; 0 of 2,214 calibration lines and 0 of 281 shadow rows carry a close price [R5]. Every slate without it is lost for good | yes (O16) |
-| 2 | **I3: two 5c amendments before 2026-09-17**, on facts established without outcomes: (a) `lineup_strength` became roster-filtered at `7cd5f572` (2026-09-07), so the look reports pre/post counts; (b) how rule 2 counts missing vintage nights | [R5] | no |
+| 2 | **I3: two 5c amendments before 2026-09-17**, on facts established without outcomes: (a) `lineup_strength` became roster-filtered at `7cd5f572` (2026-09-07). The correction as drafted goes further than pre/post counts: the column's clock restarts with the 2026-09-07 vintage and its one look moves to 2026-10-05; (b) how rule 2 counts missing vintage nights. Also owed before the 09-17 look (found while drafting): 5c rule 1 needs each of the four columns' own gate section before any number is computed on it, and none exists | [R5] | no |
 | 3 | **I2 and I10: independent crons for vintage (06:17 UTC) and open capture (13:10 UTC), a missing-night sentinel, and one named writer** | 16 of 24 schema-3 nights exist (missing 08-22, 08-25, 08-26, 08-28, 08-29, 09-01, 09-02, 09-08); 25 of 36 game dates have an open; captures land a median 3.83 h before first pitch [R5] | yes (O16) |
 | 4 | **I4 = the lineup capture job** (section 4.1) | [R4, R5] | arm (O17) |
 | 5 | **I7: season-end scorers committed before 2026-09-27**: the futures win-total PMF with CRPS vs Pythagenpat (G8-7), the DFS archive grader (18 slates), the ROS weekly archive (G8-9), and the two-start grader audit (7 of 561 exact) | [R5] | no |
@@ -741,11 +744,12 @@ fitted on pre-2026 data, or carries a 2027 first look, and its registration says
 |---|---|---|---|
 | by 2026-09-15 | deadline for the 5c amendments (I3), the 5e postseason amendment (owner answer 8), and the 5j and 5k registrations | the looks below | R4, R5 |
 | ~2026-09-16 | gate 1 `vintage_sample` opens (548/600 at 10.71/day) | the L14-05 tripwire (repair 3) | R5 |
-| ~2026-09-17 | 5c B3/B4 look (`xwoba_14/30`, `lineup_strength`, `star_out`), with twins | I3 amendments; no posted-lineup, active-roster or star variant computed on outcomes; no projections retrain | R5 |
+| ~2026-09-17 | 5c B3/B4 look (`xwoba_14/30`, `star_out`), with twins | I3 amendments and the rule-1 gate sections of both; no star variant computed on outcomes; no projections retrain | R5 |
 | 2026-09-18 | GRPO first admissible forward read | no GRPO retrain before it | R2 |
 | before 2026-09-27 | I7 scorers and the 7h re-read registration committed | season end | R5 |
 | 2026-09-27 | regular season ends | | all |
 | 2026-09-28 | 7h re-read (once); season-end reads of futures, ROS, two-start, DFS archive | | R5 |
+| 2026-10-05 | `lineup_strength` look, once (5c correction of 2026-09-11) | its rule-1 gate section; no posted-lineup, active-roster or lineup-strength variant related to an outcome or a price; step M not landed | R5 |
 | ~2026-10-05 | D9 freeze fetch of the 2026 fWAR vintage (O3); the epoch starts | E1 to E8 | R1 |
 | 2026-10-07 | 5d A-E (schema 4) and 5k run environment, one Holm family with 5d-C and 5h | G4-10 amended into 5d-E first | R5 |
 | ~2026-10-09 earliest | 5e handedness (restarted; four weeks after the first repaired vintage; postseason COUNTED per owner answer 8; subject to its floors) | its amendment | R5, owner |
@@ -777,7 +781,7 @@ fitted on pre-2026 data, or carries a 2027 first look, and its registration says
 
 **W1, 2026-09-17 to 2026-09-27.**
 - Betting:
-  - the 5c look on its date under its protocol;
+  - the 5c look (the xwOBA pair and `star_out`) on its date under its protocol;
   - then R4-1 (record guard, slot lock);
   - R4-3 (schema-6 `hand_index`, `orders` and `bench_mean_hem` blocks, byte-identical
     Offense+ verified);
@@ -835,7 +839,8 @@ for days, not weeks, with the gate's part 9 last.
 
 **Dependency spine:** E2, E3, E4 feed the D9 freeze, which feeds the epoch (A to Z). Z1,
 Z1b, Z1c, Z2, Z3 and Arm S follow the epoch. On the betting side: the I3 amendments feed the
-5c look, which is followed by step M, R4-candidate computation and the schema-6 look in 2027.
+5c look (xwOBA pair and `star_out`), then the 2026-10-05 `lineup_strength` look, which R4-candidate
+computation follows; step M lands after both, and the schema-6 look is in 2027.
 The I1 close job is needed before L-1 captures, which are needed before 5j Leg M.
 
 ---
@@ -856,7 +861,7 @@ The I1 close job is needed before L-1 captures, which are needed before 5j Leg M
 | O8 | Z1 scope and alpha | **Four add families at 0.025 / 0.015 / 0.005 / 0.005 plus ABL at 0.05 for removal; include the 09-04 families** (dropping them saves about 3 hours and changes no error control) | R2 |
 | O9 | Serving a Z1 passer before its reserved-fold confirmation | **Provisional, in its own epoch, no accuracy copy, automatic removal on a failed 2028 confirmation** | R2 |
 | O10 | Model-class re-adjudication | **Yes, once, as Z1b, if and only if O2 bundles RT** (its own reopen text) | X4 |
-| O11 | Sequence the epoch's projections retrain against 5c and GRPO | **After the 2026-09-17 look and the 2026-09-18 read**, stamping `star_out`'s basis; never an amendment after a look | R1, R2, R5 |
+| O11 | Sequence the epoch's projections retrain against 5c and GRPO | **After the 2026-09-17 look and the 2026-09-18 read, and not before 2026-09-27 (2026-10-04 if O25 counts postseason)**, stamping `star_out`'s basis; never an amendment after a look (the 5c correction of 2026-09-11 amends this default) | R1, R2, R5 |
 | O12 | The Futures board during the postseason | **Disclose the epoch's move with a one-line changelog**; do not hold two projection bundles | R5 |
 | O13 | Engine WAG's percentile "bust" (expectation percentile at or below 0.20), a meaning none of the other definitions share | **Rename it on every surface (for example "bottom-fifth outcome")**, so "bust" means only BUST-NEVER or BUST-MLB | R3 |
 | - | F-DEF repair | ANSWERED 2026-09-11: in the WAR epoch (rides as a step-M arm) | owner |
@@ -878,6 +883,7 @@ The I1 close job is needed before L-1 captures, which are needed before 5j Leg M
 | O22 | Archive-reconstruct provenance (ruling 6.5) for 5k(a), N6 and the lineup backfill | **ALLOW, labelled per row** | R5 |
 | O23 | One 7h re-read on 2026-09-28 under unchanged criteria (its own text allows it) | **Yes, once, registered before 09-27.** A pass still needs the owner's flip of `SERVE_TOTAL_CALIBRATION` | R5 |
 | O24 | Move the props per-event pull to after the chosen games' cards post | **Yes, when props are armed** (same 120 allocation) | R4 |
+| O25 | Postseason games in the `lineup_strength` look (added by the 5c correction of 2026-09-11; locked by 2026-09-15) | **Not graded** (as in 5f and 5g). This differs from the owner's 5e answer (count postseason), though 5e reads the same orders | 5c correction |
 | - | 5e postseason; runline reprice; DFS started games | ANSWERED 2026-09-11 (count postseason; reprice now; remove from the draftable board) | owner |
 
 ---
@@ -930,7 +936,7 @@ The I1 close job is needed before L-1 captures, which are needed before 5j Leg M
 6. **Stale inputs mid-lab.** The nightly regenerating matrices during Z1 voids the verdicts.
    Hence P4 [R2].
 7. **Close-variant contamination in betting.** Posted-lineup, active-roster and projections
-   work all touch `star_out` and `lineup_strength` before 09-17. Any outcome read before the
+   work all touch `star_out` (before 09-17) and `lineup_strength` (before 10-05). Any outcome read before the
    look disqualifies [R4, R5].
 8. **The 7e-D replay may remove the POTD.** That is the point, and the response is
    pre-registered (O14) [R5].

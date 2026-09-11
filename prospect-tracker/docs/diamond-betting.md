@@ -1029,6 +1029,376 @@ the 2026-08-20 vintage, and their strict 4-week earliest look is ~2026-09-17.
 A source gap still degrades a column to a stated null with its basis, never a
 silent zero.
 
+### Correction (2026-09-11): `lineup_strength` changed membership at `7cd5f572`, and its clock restarts
+
+**Standing.** Filed under the reading of rule 1 that the 2026-09-10 5e correction
+used: a pre-registration may be amended before its first look, on a fact established
+without touching outcomes. `lineup_strength` has not been looked at. Its clock opened
+with the 2026-08-20 vintage (2026-08-19b correction), and for this column only that
+start date is superseded below; the rest of both 2026-08-19 corrections stands.
+Written 2026-09-11, four days after the change, where X9 (plan 4.2) asks for the same
+day. It lands in one commit with the 2026-09-11b correction below, whose reading its
+dates use, no later than 2026-09-15 (plan 5.1, the I3 deadline). It goes beyond plan
+item I3, which asked only that the ~2026-09-17 look report pre/post counts: it moves
+this column's look to 2026-10-05. The plan edits that needs are listed at the end.
+**Nothing in this correction was measured against a game result.** Read to write it:
+- the diff and message of `7cd5f572`;
+- `as_of`, `generated_at` and the `roster_filter` block of the committed hitter boards
+  `944502c5` and `7cd5f572`;
+- per vintage file 2026-08-18 to 2026-09-10: `schema`, `vintage_date`, `captured_at`,
+  `covers_through`, `provenance.source`, `sources[*].as_of`, and the
+  `feature_basis.lineup_strength` basis string and `n`;
+- code: `hem_plus.team_offense`, `bullpen_export._active_mlbam_ids`,
+  `leaderboard_vintages` (`reduce_current`, `snapshot`, `as_of`,
+  `lineup_strength_from_orders`), `betting_model._feature_basis`,
+  `tools/backfill_vintages.py`.
+
+No column value, score, run, win probability or price was read.
+
+**What changed.** Commit `7cd5f572` ("Nick Kurtz was batting second for the Athletics
+while out for the season", 2026-09-07 12:04:02 -04:00, 16:04:02Z) gave
+`hem_plus.team_offense` an `active_ids` argument. The constructed `teams[].orders.vl` /
+`.vr`, `lineup` and `bench` in `hitter_leaderboards.json` now draw only on hitters on a
+StatsAPI active roster (`rosterType=active`). Before it, `build_batting_order` took the
+top nine by season PA from every hitter with a HEM+ and a plate appearance, injured or
+optioned included. The commit message measures 37 of 270 constructed lineup slots
+(13.7%) held by players off an active roster before the change and 0 of 270 after.
+Offense+ stays on the full season pool; `test_the_aggregates_are_not_filtered`
+(`test_roster_aware_charts.py`) pins `offense_plus` and `team_pa`.
+
+`lineup_strength` is built from those orders.
+`leaderboard_vintages.lineup_strength_from_orders` averages projected year-1 wOBA
+(`mlb_projections.json vets[].woba[0]`) over each side's joined slots, and drops a side
+that joins fewer than `LINEUP_MIN_JOINED_SLOTS` (7) of 9. The builder has not changed
+since `3eda89d7` (2026-08-19). The set of players it averages over changed, and no 5c
+text recorded it.
+
+**Which vintages are on which side.** The record carries no roster-filter flag. The
+split is read off capture time and the committed boards:
+
+| Side | Vintages (all live, `feature_basis` n 30 each) | Evidence |
+|---|---|---|
+| pre-change | 2026-08-20, 08-21, 08-23, 08-24, 08-27, 08-30, 08-31, 09-03, 09-04, 09-05, 09-06: 11 nights over 18 calendar days | All captured before 16:04:02Z on 2026-09-07. The last, 2026-09-06, reduced a board stamped `as_of` 2026-09-05, and the committed blob with that stamp (`944502c5`) has no `roster_filter` block |
+| post-change | 2026-09-07, 09-09, 09-10 (on disk 2026-09-11) | 2026-09-07 was captured at 17:04:38Z, one hour after the commit, from a board stamped `as_of` 2026-09-07. The one committed board with that stamp (`7cd5f572`) reads `roster_filter.applied` true, `n_active_roster_ids` 839, `n_dropped_from_constructions` 232, 0 clubs `roster_filter_skipped`. The vintage stores no hash of its source board, and the daily path rebuilds the boards before the snapshot (step 9e-pre0), so this is consistent with a filtered night, not proof of one |
+
+`n_dropped_from_constructions` sums each club's `n_off_roster_dropped`: hitters removed
+from the construction pool (`hem_plus.py:588`), not slots, whatever the name says.
+
+Under the knowledge cutoff (section 5: a record prices D only when
+`covers_through < D`), games dated 2026-08-21 to 2026-09-07 are priced on pre-change
+vintages, and games from 2026-09-08 on are priced on post-change ones.
+
+**The treatment.**
+
+1. **The clock restarts with the 2026-09-07 vintage.** Rule 4's B4 burden is that the
+   builder be on the nightly path before the clock starts. The only part of this column
+   that reads availability is the active-roster filter on the orders, and that code was
+   on the path from `7cd5f572`, committed one hour before the 2026-09-07 capture. The
+   start rests on the code, not on that night's roster walk; the walk is a per-night
+   question, handled below. Under the 2026-09-11b reading the four-week floor is
+   **2026-10-05**.
+2. **Why not pool. This extends the record and is stated as an extension.** The 5e
+   correction held that rows whose two columns "could not differ" were "uninformative
+   about this candidate by construction". The pre-change rows here can differ, but they
+   measure a construction the live path no longer produces, and 11 of the 14 populated
+   nights on disk are pre-change, so a pooled verdict would mostly grade that
+   construction. The nearest standing no-pooling rule is section 5 caveat 1 (a 2026
+   tail and a 2027 run are never one sample). 7a's "measures a mixture nobody bet"
+   (slot tags) and 5h's "never pool two pricers" (ledgers) are analogies only.
+3. **The pre-change vintages are kept and never graded for this column.** They stay on
+   disk as written (first write wins) and are never force-rewritten. A game priced on
+   one goes to a fourth bucket, "pre-change membership" (to be built, see 2026-09-11b),
+   outside `lineup_strength`'s graded n. Every other column those records carry is
+   graded as before.
+4. **The pre-change side is never read on its own.** It stopped at 11 nights over 18
+   calendar days, short of the rule 2 floor, and no later night can extend it.
+
+**The look: once, on 2026-10-05.**
+- Read once, on 2026-10-05 or the first day after it on which the pinned harness runs,
+  never earlier. No second read on 2026 data. A 2027 test is a new registration under
+  N9 (plan 4.2), never a continuation (section 5 caveat 1).
+- The graded window is fixed now: games priced on vintages 2026-09-07 to 2026-10-04 and
+  dated before 2026-10-05, regular season only by default (O25 below). A later run
+  reads the same games.
+- The incumbent and the harness are those of the ~2026-09-17 B3/B4 look, by commit. If
+  that look is not recorded, the incumbent is the served pricer at the commit that
+  lands this correction, and the harness commit is named in a dated note filed before
+  any `lineup_strength` number exists.
+- Fit, counting and the night floor are the 2026-09-11b rules for the four 5c columns.
+  At 13.1 games a date (section 5), the 20 regular-season dates 2026-09-08 to
+  2026-09-27 hold about 260 games, about 130 a half, before any bucket removal.
+- A look that cannot run records INDETERMINATE, neither passed nor closed, with no
+  second 2026 read. That covers fewer than `VINTAGE_MIN_FIT_GAMES` (100) inner-fit
+  games, fewer than `VINTAGE_MIN_EVAL_GAMES` (50) graded games, a missed night floor,
+  and a fit or twin that cannot run.
+
+**Nothing on this column is computed before its look.** No fit, paired score, permuted
+twin or rule 4 leg 1 contaminated-forward screen is computed for `lineup_strength`
+before 2026-10-05. The ~2026-09-17 harness (to be built) leaves it out of its candidate
+list, and a test (to be built) pins that the 09-17 run never fits, scores or twins it.
+For this column that look reports counts only:
+- the vintage nights on each side, listed;
+- the graded eval games in each bucket;
+- the post-change nights whose filter state the record cannot show.
+
+**The close-variant embargo moves with the look.** Until the `lineup_strength` look is
+recorded, no posted-lineup, active-roster or lineup-strength variant is related to an
+outcome or a price. That includes either side of the change alone, another roster
+source, another projections input, 5j's delta and 5j's contaminated screen. `star_out`
+and the xwOBA pair are registered columns, not variants, and keep the ~2026-09-17 date.
+
+**Disqualification.** Any number relating `lineup_strength`, either side of the change,
+or a variant above to a game outcome or a price before the 2026-10-05 look
+disqualifies the candidate under rule 1.
+
+**The projections retrain (plan step M), decided now.** Step M can move the joined
+`woba[0]`. Projections coverage also decides which slots reach the 7-of-9 join, so it
+can move who is averaged. Step M does not land before 2026-09-27 (2026-10-04 if O25
+counts postseason), so no vintage that prices a graded game reads a retrained bundle.
+This amends the O11 default ("after the 2026-09-17 look and the 2026-09-18 read"). It
+costs the plan nothing, because W2 places step M after the ~2026-10-05 freeze. If step M
+lands earlier anyway, every vintage written after it goes to an ungraded
+"post-retrain" bucket; no later record decides this. Any other projections refresh is
+part of the construction registered in 2026-08-19b and buckets nothing.
+
+**Postseason, DEFAULT (new owner decision O25, open).** The regular season ends
+2026-09-27. By default postseason games are not graded here, as in 5f and 5g, because
+October rosters are what this column's filter reads. This diverges from the owner's
+2026-09-11 answer that 5e counts postseason, though 5e reads the same orders; O20
+covers 5j only. O25 goes into the plan's decision table and is locked by 2026-09-15.
+After that date no amendment to `lineup_strength` is admissible.
+
+**What the record cannot show per night, and the stamp that will.**
+- **Board-level fallback.** `bullpen_export._active_mlbam_ids` returns None when the
+  team-list fetch fails, or when fewer than `MIN_CLUBS_FOR_ROSTER_FILTER` (28) of 30
+  club walks return a roster. Nothing is then filtered and the board reads
+  `roster_filter.applied` false.
+- **Per-club fallback.** In a 28- or 29-club walk, a club whose fetch failed matches no
+  bat. `hem_plus.team_offense` (lines 589-594) then serves that club the unfiltered
+  nine and sets `roster_filter_skipped`, while `applied` reads true.
+- **Unreadable ids.** A hitter with no readable mlbam is kept (line 587).
+- **The stamp (to be built; no stored value changes).** From the first vintage after
+  this correction lands, the `lineup_strength` basis string carries:
+  - the board's `roster_filter.applied`;
+  - `n_dropped_from_constructions`, in hitters;
+  - the list of clubs with `roster_filter_skipped`;
+  - the count of kept hitters with no readable mlbam.
+
+  A game is pre-change membership when the board reads `applied` false or either club
+  is on the skipped list.
+- **Nights before the stamp, from 2026-09-07 on**, are graded as post-change and
+  counted as "filter flag unrecorded". 2026-09-07 is one of them.
+
+**Other readers of the same orders.**
+- `off_vs_lhp` / `off_vs_rhp` (5e) changed membership at the same commit. Their clock
+  restarted at "the first vintage whose `platoon_splits.available` is true", after the
+  2026-09-10 repair, so it opens after this change. A night on pre-change membership
+  still carries a real hand split, which is 5e's candidate, so 5e grades it. The stamp
+  above rides in the `off_vs_*` basis too, and 5e's look reports the nights with
+  `applied` false and the skipped club-games. 5e counts postseason. If 3 or more
+  eliminated clubs' active rosters come back empty in October (unverified; no probe
+  run), `_active_mlbam_ids` returns None, and the stamp records it.
+- The schema-5 readers of the orders or bench (5i-B `lhb_share_vr/vl`; 5f
+  `lineup_dis_vs_*`, `bench_adv_vs_*`) landed in code on 2026-09-11, after the change,
+  and have no vintage yet. They carry the same stamp (to be built).
+
+**Forward.** Any later change to which players enter `teams[].orders` is recorded here
+the same day (X9). Its treatment before 2026-10-05 is fixed now: vintages written after
+it go to their own ungraded bucket, the clock does not restart again, and the look reads
+only the nights before the change. Under the night floor that can make it INDETERMINATE.
+
+**Plan edits this needs** (`docs/master-plan-2026-09-11-war-epoch-drivers-betting.md`):
+- 5.1, the ~2026-09-17 row: drop `lineup_strength`.
+- 5.1, a new 2026-10-05 row: the `lineup_strength` look, once. Preconditions: no
+  posted-lineup, active-roster or lineup-strength variant related to an outcome or a
+  price, and step M not landed.
+- E5 and O11: step M comes after the 09-17 look and the 09-18 GRPO read, and not before
+  2026-09-27 (2026-10-04 if O25 counts postseason).
+- W1 and the dependency spine: the 09-17 look is the xwOBA pair and `star_out`.
+  R4-candidate computation follows the 2026-10-05 look.
+- 4.1 (5j): the contaminated screen and any 5j close-variant number wait for the
+  2026-10-05 look.
+- 4.2, I3: record that this correction moves the look, beyond "reports pre/post
+  counts".
+- 6: add O25.
+- 7.2, risk 7: for `lineup_strength`'s variants, "before 09-17" becomes "before 10-05".
+
+**Not reopened.** No criterion, control or threshold in rules 1 to 4 is amended. For
+this column, this correction changes:
+- the clock start and the look date;
+- the pinned incumbent and harness;
+- the buckets and the embargo;
+- the earliest date for step M.
+
+The xwOBA pair and `star_out` keep the ~2026-09-17 date, subject to rule 1 (see
+2026-09-11b). They were cleared against `7cd5f572` only. The xwOBA pair reads
+`hitters[]`, the full season pool (`leaderboard_vintages.py:752-761`). `star_out` reads
+`vets[].warY1Champ` and the cached 40-man roster. No other construction change between
+2026-08-20 and 2026-09-17 was audited for them here.
+
+### Correction (2026-09-11b): rule 2 counts calendar weeks, and what a missing night costs
+
+**Standing.** Rule 2 stays as written. This correction is filed under the same reading
+of rule 1 (amendable before a first look, on a fact established without touching
+outcomes) and lands with the correction above, no later than 2026-09-15.
+**Nothing in this correction was measured against a game result.** Read to write it:
+- the file names in `.cache/leaderboard_vintages/`, and each file's `schema`,
+  `vintage_date`, `captured_at`, `covers_through` and `provenance.source`;
+- `leaderboard_vintages.snapshot`, `reduce_current`, `as_of` and `_age_distribution`;
+  `betting_model.inputs_as_of` and `_feature_basis`; `tools/backfill_vintages.py`;
+- `git log` of the three boards since 2026-08-17.
+
+**The fact.** Rule 2 says "4 to 6 weeks of schema-3 vintages". It does not say whether
+a week is seven calendar days or seven files. On this box nights are missing (plan I2
+records the same list):
+
+| Window | Nights | Files | Missing nights |
+|---|---|---|---|
+| schema 3 and later, 2026-08-18 to 2026-09-10 | 24 | 16 (14 schema 3; 2 schema 4, which carry every schema-3 column) | 2026-08-22, 08-25, 08-26, 08-28, 08-29, 09-01, 09-02, 09-08 |
+| B3/B4 builder columns, 2026-08-20 to 2026-09-10 | 22 | 14 | the same 8 |
+
+All 16 files are live provenance, with `captured_at` on their own `vintage_date` and
+`covers_through` equal to it. No 2026-09-11 file existed when this was written. The
+reading below was chosen with these counts in hand. It keeps every date on the record,
+and the floor in point 2 was set knowing it cannot bind the ~2026-09-17 look.
+
+**The reading.**
+
+1. **A week is calendar time.** A column's clock starts on the date of the first present
+   night (point 3) that carries it populated under its registered construction. The
+   four-week floor is that date plus 28 calendar days. A missing night neither stops the
+   clock nor moves the floor. Every date already on the record was computed this way,
+   and none moves:
+   - 2026-08-18 to ~2026-09-15, and 2026-08-20 to ~2026-09-17 (the 2026-08-19
+     corrections);
+   - 2026-09-09 to 2026-10-07 (5d);
+   - 2026-09-07 to 2026-10-05 (the correction above).
+
+   A clock restarts only before the column's first look, and only on a code change
+   named by commit. A value refresh never restarts one, and nothing restarts one once
+   any number relating the column to an outcome exists.
+2. **A night floor.** At least 14 of the 28 nights from the clock start to the floor
+   must be present, or the look is INDETERMINATE. 14 is half, and it is POLICY.
+   Without a floor, two files 28 days apart would satisfy rule 2. It was set with the
+   counts above in hand. The B3/B4 window (2026-08-20 to 2026-09-16) already holds 14
+   present nights, so the floor cannot bind the ~2026-09-17 look and guards only the
+   later ones. The `lineup_strength` window (2026-09-07 to 2026-10-04) holds 3 of its
+   first 4 nights.
+3. **A present night.** Night D is present when three things hold: `<D>.json` exists,
+   its `provenance.source` is live, and its `captured_at` UTC date is D or D+1. All 16
+   files on disk today qualify. A backfilled record is never a present night and never
+   prices a graded game for a dark column.
+4. **What a missing night costs.** At the store, no game. `as_of` prices a game on D
+   from the newest same-season vintage whose `covers_through` is before D, and there is
+   no maximum age. So a game after a gap rides the last vintage before it, one or more
+   days older. `vintage_age_days` (game date minus that cutoff, `_age_distribution`)
+   measures the cost. Counting files instead would tie the floor to pipeline uptime and
+   move every date above. Two exceptions:
+   - A gap just after a column's first file sends games to an older vintage. They fall
+     in "predates the column" and leave the graded n.
+   - The 5d day-specific columns (`pen_b2b_arms`, `pen_arms_avail`, `pen_ip_l3`,
+     `pen_plus_avail`, `rest_days`, `games_in_l7`, `sp_rest_days`) are built at
+     `on_date=vintage_date` (`leaderboard_vintages.py:1616`; pitcher columns at
+     1752). A game priced across a missing night carries a value for a different day,
+     which is wrong, not stale. For these columns, a game with `vintage_age_days` of 2
+     or more goes to an ungraded bucket, "priced across a missing night". This is filed
+     before any 5d number. It does not settle 5d's steady-state offset (vintage V
+     prices V+1 games on availability as of V), which is for 5d to file before
+     2026-10-07.
+5. **A missed night stays missing.**
+   - **It is never written late, with or without `--force`.** `snapshot(on_date=D)`
+     run after D reduces the boards as they stand at the write and stamps
+     `vintage_date` D. It sets `covers_through` to the max of the boards' `as_of` and D
+     (`leaderboard_vintages.py:1718`). Only the boards' `as_of` bounds it, and that can
+     lag the write date (the 2026-09-06 file reduced boards stamped 2026-09-05). Its
+     date-keyed builders (xwOBA anchors, pen availability, climatology windows) would
+     run for D over later boards and feeds, so one record would mix dates, and its
+     file would show D as present. A refusal in `snapshot` for a past `on_date` on
+     live provenance is to be built.
+   - **The git backfill writes none of them.** `tools/backfill_vintages.py` plans only
+     dates that carry a board commit, and never forces (line 246). Where it does write,
+     it runs the full `reduce_current` through `lv.snapshot` (line 383), dark builders
+     included, and some of them read live `.cache` files. No board was committed on any
+     of the 8 missing dates. The board commits since 2026-08-17 are `69fe0fca`
+     (2026-09-04), `944502c5` (2026-09-06) and `7cd5f572` (2026-09-07), all on dates
+     already captured live. "Reconstruct only the five core inputs" is N1's rule
+     (plan 4.2), not a property of this tool. Point 3 keeps any future backfilled
+     record out of every dark column's graded n.
+   - `inputs_as_of` never fills a dark column from live files (5c). Section 5 caveat 3
+     already says "Every missed nightly snapshot costs a day".
+
+**The report, fixed now so the look cannot choose it.** For every column read under
+rule 2, the look reports the items below. They are to be built in the look harness and
+in `betting_model._feature_basis`. Today that function has three statuses, covers the
+schema-3 columns only, and marks a record populated when any club has a value.
+- the clock start, the floor, and the nights present and missing between them, with
+  the missing dates listed;
+- the graded eval games by pricing vintage, in 5c's three buckets (dated value, stated
+  null, predates the column), plus "pre-change membership" for `lineup_strength` and
+  "priced across a missing night" for the 5d day-specific columns;
+- of the dated-value games, how many rode a vintage 2 or more days old, with their
+  game-weighted `vintage_age_days`.
+
+**Graded n and the fit, for the four 5c B3/B4 columns only** (`xwoba_14`, `xwoba_30`,
+`star_out`, `lineup_strength`).
+- **Graded n.** A game is dated-value only when BOTH clubs carry a value in the pricing
+  vintage (5f's form). The code's record-level count is not this; the game-level count
+  is to be built. The graded n is the dated-value games. A game in any other bucket is
+  counted and reported. It is never scored, and it never enters as a zero paired
+  difference, because None is not zero (5c, "Old records return None"). Section 6
+  recomputes the other tiers on a subsample's own games; that is an analogy for grading
+  only the games that carry the feature, not a rule that requires it.
+- **The fit.** Every game in the anchored fit window (the first
+  `VINTAGE_FIT_TARGET_GAMES`, 300, split near 2026-07-28 to 2026-08-01 per section 5's
+  2026-08-16 table and 5h-C) rides a vintage that predates schema 3. So no fit-half row
+  carries a value, and a zero-filled coefficient is unidentified. The fit therefore
+  takes 5h-A's form:
+  - The incumbent keeps every parameter as fitted on the anchored window.
+  - The parameters the candidate adds are fitted by least squares on the incumbent's
+    per-side residual (runs minus lambda), over the dated-value games before the
+    calendar midpoint of the dated-value game dates, first to last.
+  - Games on or after the midpoint are graded.
+  - The split date is written into the look record before any fit and never moved.
+
+  The graded games all fall in the vintage eval half, so rule 4 reads as written. At
+  13.1 games a date (section 5), the 27 dates 2026-08-21 to 2026-09-16 hold about 350
+  games for the ~2026-09-17 look, about 175 a half.
+- **The ~2026-09-17 window.** At that look the B3/B4 window holds at most 20 of 28
+  nights: 14 on disk through 2026-09-10, plus 2026-09-11 to 2026-09-16 if none of those
+  nights is missed.
+
+**Scope.**
+- The calendar reading (points 1, 3 and 5) and the night floor (point 2) govern every
+  clock counted in vintage files under rule 2: the four 5c columns, 5d, the restarted
+  5e, 5f and 5g.
+- The graded-n and fit rules govern the four 5c columns only. Sections with their own
+  null or fit rules keep them: 5e's effective n; 5f's exclusions, `g = 0` one-hand
+  null and fit-half delta zero; 5g's criterion 4. The anchored fit window predates
+  schemas 3 and 4 alike, so 5d-A's "existing vintage fit/eval split, unchanged" and
+  5e's replacement face the same fit fact. Each settles it in its own text before its
+  look.
+- 5d takes point 4's day-specific bucket.
+- 5i-B qualifies each vintage by its own basis counts. A night with no file is read the
+  same way there; beyond that, 5i-B's clock is its own.
+- 5h is out of scope. Its store is `.cache/weather_forecasts`, and its clock starts at
+  `clock_started`. `forecast_for_game` returns None when no row was captured at least
+  `MIN_LEAD_HOURS` ahead, so a missed capture night does remove games from its
+  400-game floor.
+- Where a section adds a game floor (5g 600/300), that floor applies alongside the
+  calendar weeks.
+
+**Not reopened, and not settled.** No criterion, control or pass threshold is amended.
+This correction adds:
+- a clock condition (the night floor);
+- two ungraded buckets;
+- the fit treatment for the four 5c columns, which rule 4 left open.
+
+Rule 1 is unchanged. Each of the four columns still needs its own gate section
+(estimand, split, criteria, thresholds) committed before any number is computed on it.
+None is on the record today: the four appear only in sections 5 and 5c. Those sections
+inherit the rules here. The missing nights are an operational fault (plan I2), not
+evidence about any candidate.
+
 ## 5d. Schema 4: bullpen availability, schedule rest, weather (pre-registered 2026-09-07)
 
 **Written before the schema bump it describes exists in code and before any
