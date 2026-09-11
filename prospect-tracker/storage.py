@@ -5626,6 +5626,18 @@ def _fv_to_expected_war_per_yr(fv, is_pitcher: bool = False) -> float | None:
         v = float(fv)
     except (TypeError, ValueError):
         return None
+    # BELOW THE SCALE FLOOR IS "NO GRADE", NOT A GRADE (audit L15-F2, 2026-09-11).
+    # FV lives on the 20-80 scale and the board serves 20.0 as its floor, so nothing
+    # below 20 is a real grade. 152 graduate rows carry an FV-0 SENTINEL, and
+    # survivor_expected_war extrapolates that to 11.84 WAR per year for a hitter,
+    # so every one of them was measured against an expectation no real player meets
+    # and 136 were labelled 'bust'. Returning None here makes WAG None, which
+    # _compute_boom_bust already reads as 'unsettled', the honest label for a player
+    # with no grade to be measured against. Contained by verification: this has one
+    # caller (_grad_wag), no graduate with points sits below FV 30, and the sentinel
+    # rows carry no points, so no org bucket, farm grade or rendered pill moves.
+    if v < 20.0:
+        return None
     try:
         import value_framework as _vf
         derived = _vf.survivor_expected_war(v, is_pitcher)
