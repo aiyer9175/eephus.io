@@ -353,6 +353,19 @@ not an improvement, and it is the largest catcher value term sitting at zero in 
 Two season-resolved sources exist. The 2026-09-05 ban covers only the year-blind Savant
 leaderboard endpoint and is not touched.
 
+*Erratum, 2026-09-11 (new evidence, changes this default's premise).* Framing is ON DISK
+after all, inside MLB's sabermetrics feed: `rar - (batting + baseRunning + fielding +
+positional + wLeague + replacement)` equals FanGraphs `CFraming` with max difference 0.0
+on every catcher in five probed seasons (2011, 2016, 2023, 2024, 2025), and is zero on
+every non-catcher. So a third source, needing no fangraphs.com fetch, is season-stamped
+and already cached for 2011-2026. Recommended default becomes that residual, read through
+`saber_feed.framing_residual` (the one loader the Defense board, the hitter board's wRC+
+column and the replica share; eWAR v3 must read `saber_feed`, never `dem_plus`). Three
+corrections to the C3 fielding record from the same lane: Savant `frp` in
+`data/savant_oaa.json` is FanGraphs' RANGE-ONLY `rFRP`, not unified FRP; B-Ref
+`runs_catcher` equals `rSB + rCERA` (no blocking piece; `rCERA` is staff run prevention);
+B-Ref `runs_defense` equals SIS DRS minus `rSZ`.
+
 **D4. Replacement split, 57/43 or 59/41 (default: 57/43, the FanGraphs convention).**
 B-Ref measures 59/41 and eWAR v2 inherits it. Under the FanGraphs frame the split is 57/43
 and pitchers gain about 20 WAR a season. RECORD as a decision in the runbook; there is no
