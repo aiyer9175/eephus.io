@@ -4933,6 +4933,596 @@ split leaves 408, which is 79 fewer on the `VINTAGE_MIN_GRADED_GAMES` clock. No
 paired statistic can price that, because those games are the ones the paired
 statistic would need in order to exist.
 
+### 7e-D. The as-served replay: grade the pricer that serves (pre-registered 2026-09-11)
+
+**Written before the code exists, before any replay fit has been run for any
+date, and before any replay probability has been computed for any game, related
+to any outcome or compared with any price**, in the discipline of 5a, 5c, 7b and
+11a. The prose predates the replay's numbers. It does not predate every number
+about the served pricer: the list under "Disclosed" names those, and the table
+of choices says which of them each choice was made beside. The clause comes from
+the 2026-09-11 plan (section 4.2, repair 1) and lane R5 (item D1).
+
+This is an EVAL MODE, not a feature. It reads the five core columns and, once
+`SERVE_ATH_PARK` serves, the schema-5 `parks_short_window` block, which is
+served data, not dark. It reads no dark column (schemas 3 to 5) and no
+`archive-reconstruct` record. Plan section 5 asks each betting item which of
+three kinds it is. This one reads only dated records written before each game
+(live and git-backfill vintages through 2026-09-27), needs no pre-2026 fit and
+no 2027 look, and has its one look in 2026.
+
+It moves no served price until it has run and the owner has acted under O14
+below. It changes one published line before the run: landing `SERVE_PRICER`
+turns gate 2's line to "not graded" for the served pricer (see the tripwire
+below, and the dated correction under section 7 it requires).
+
+#### Why: the pricer that serves is not the pricer gate 2 grades
+
+These facts are the reason for the replay, not a result of it (R5-F1 unless
+named).
+
+- **The served fit is in-sample.** `build_context` (`betting_model.py:3791`)
+  runs every night at `run_monthly` step 9e-pre1, just before `backtest()`. It
+  fits on every completed 2026 game with the LIVE season-to-date boards. The
+  working-tree `data/betting_model_context.json` (generated
+  2026-09-11T19:55:10Z, uncommitted) reads n 2,200, b1 0.2510, b2 -0.3126,
+  b3 3.4731, `diff_shrink` 0.80, home adjustment 0.2149. The committed copy
+  (generated 2026-09-05) reads n 2,124, b1 0.2603, `diff_shrink` 0.78. Its
+  `source_note` says the fit "is IN-SAMPLE and cannot validate the model".
+- **The honest mode grades a different fit.** It fits the 305-game anchored fit
+  half on dated boards: b1 -0.0372, b2 -0.0965, b3 0.5948
+  (`vintage.coefficients`), `diff_shrink` 1.28 (`vintage.diff_shrink`), home
+  adjustment -0.0443 (`vintage.home_field_runs_adj`), all in
+  `data/betting_model_eval.json` (7e-B).
+- **The two spread differently.** Bin counts only (R5 script
+  `m2_served_vs_graded.py`). The served open moneyline home probability sits
+  outside 0.4 to 0.6 on 45 of 178 games (25.3%; calibration-ledger open rows,
+  home side, one per game). The graded pricer does so on 15 of 548 eval games
+  (2.7%). The 2026-09-11 Pick of the Day was priced at 0.755 against a fair
+  0.6261 (edge 0.1289). In that range the graded pricer has 10 games in the 0.6
+  to 0.7 bin and none above 0.7.
+- **Gate 2 certifies the pricer that publishes nothing.** Gate 2's
+  `out_of_sample_skill` reads n 548, Brier 0.24334 against the home constant's
+  0.24792, t 2.314. The served edges come from a pricer whose only honest record
+  is the forward calibration ledger: moneyline 0.243617 on 175 canonical games,
+  t -1.006 against a coin, not resolved.
+- **Plausible coefficients are not evidence.** 7e-B and 7e-C each found
+  coefficient plausibility and out-of-sample accuracy pointing opposite ways on
+  this sample. The served set is the most plausible of all (literature priors
+  0.32, -0.32, 3.20). That is a reason to grade it, not to trust it.
+
+Plan stop-item X3 follows from this. `out_of_sample_skill` is not quoted as
+validation of the served board until this section has run.
+
+#### Disclosed, because 5c rule 1 turns on it
+
+No replay number exists. For this section `betting_model.py`,
+`betting_export.py`, `betting_shadow.py`, `tools/betting_calibration.py` and
+`run_monthly.py` were read to name functions, the key names of
+`data/betting_model_eval.json` were listed, and the context file's header was
+read. Nothing was run. Every number quoted below was already on the record: in
+this document, in lane R5's outputs, or in the published artifacts as the review
+lanes read them.
+
+**A close variant** is any fit of `build_context`'s construction on any board,
+live or dated, or any served coefficient set from the history of
+`data/betting_model_context.json`, that is graded on, or priced against, games
+dated in this section's window, in any market. `build_context`'s construction
+means: coefficients by `fit_coefficients` with every fit game priced on one
+board, then its tie rate, `diff_shrink` and home adjustment. The honest
+construction (each fit game on its own vintage, gradable games only) is the
+comparator's family and is not a close variant.
+
+**The known pre-existing relations, each a named exception.** "Inside" means
+inside all three criterion eval halves. Those start at the run's 0.6 cut. The
+nightly 0.6 cut on 2026-09-11 was 2026-08-16, and the run's falls later as dates
+are appended.
+
+| # | Item | Relates the served pricer to | Where |
+|---|---|---|---|
+| 1 | The served board: nightly prices, edges, slots (the 2026-09-11 Pick of the Day, 0.755 against fair 0.6261, R5-F1) and the shadow ledger (`board_all` ROI -0.06557, lb95 -0.16217, R5 section 0; the 7e-A ROI table) | prices, outcomes | inside |
+| 2 | The forward calibration ledger (7b; `data/betting.json -> market_publishability`): moneyline 0.243617 on 175 canonical games, runline 0.257521 on 173, total 0.268081 on 171, LEDGER-CLOSED since 2026-09-03 | outcomes, as priced each night | inside |
+| 3 | `data/betting_model_eval.json -> in_sample`, rebuilt nightly: the served construction graded on all 2,200 games ("coefficients and features both leak"), Brier 0.2411 against 0.24923, t 4.37 | outcomes | inside, every game |
+| 4 | `-> forward`, rebuilt nightly: a coefficient refit before 2026-07-22 on live boards, graded on the 682 games after it, 0.24039 against 0.24876, t 2.658 | outcomes | inside |
+| 5 | `-> run_dispersion` (11a), rebuilt nightly: its Poisson arm is the served construction refit at 2026-07-22 (n_eval 682), with the date-quantile sweep | outcomes | inside |
+| 6 | The context file's nightly measurements: `diff_shrink_log_loss` and `prob_calibration_fitted` (all 2,200 games); `total_level_fitted`, `total_dispersion_fitted` and `total_calibration_fitted` (the served coefficients priced on dated boards on the vintage fit half, against runs) | outcomes | the first two inside; the total fits before every cut |
+| 7 | 7f, fit half: 305 games before 2026-08-01 priced with the 2026-09-11 served coefficients on dated boards, against runs (mean model total 8.8649 against 8.8066) | outcomes | before every cut |
+| 8 | 7f, 26 cached slates (425 games): the same coefficients on dated vintages, against posted prices. It reports the moneyline and runline unchanged by the total flag on every slate and the headline slot changing on 6 slates, so moneyline and runline edges were computed | prices | inside |
+| 9 | 5a arm 1, specifications A to D (46 games, 2026-08-06 to 2026-08-09): A the served set of 2026-08-09, B the vintage-window refit, C the full-archive in-sample fit with corrections off (the served coefficient fit), D the literature priors. Only the paired live-minus-backfilled Brier difference was reported (+0.000450 to +0.001167) | outcomes, paired across stores | before every cut |
+| 10 | 5i-A: `build_context` refit with the A's park on the 2,200-game cache, and the 2026-09-11 board repriced with it (Pick of the Day edge 0.12368) | prices | inside |
+| 11 | R5's spread counts (m2): bin counts | nothing | n/a |
+| 12 | The git history of `data/betting_model_context.json`: 8 commits, the last 944502c5 (2026-09-06), a per-date record of served sets. No relation has been computed on it | nothing yet | n/a |
+| 13 | The nightly `ridge_fit` and `ridge_fit.fit_window_probe`, rebuilt by `backtest()` every night (`betting_model.py:5948-5951`). Comparator family, not a close variant; listed because they bear on the comparator and the Holm members | outcomes | inside |
+
+**Why none of them can steer the replay arm.** The arm has nothing left to fit
+by hand: it is `build_context` as it stands. The criteria are committed
+constants with a stricter z. What remains are the choices in the next table.
+Several were made with items 1, 2, 8 and 13 in view, and that is the disclosure.
+The standing is therefore the 7e preamble's, not 5a's: read the clauses as fixed
+and the listed knowledge as what the choices were made beside.
+
+#### The choices this section makes
+
+| # | Choice | Source and date | Made with in view |
+|---|---|---|---|
+| 1 | Grade the served pricer at all | R5 D1 and plan 4.2 repair 1 (committed bfb000be), 2026-09-11 | the spread counts, the Pick of the Day against its fair price, the forward ledger (t -1.006) |
+| 2 | Seats: the replay is the challenger, the vintage pricer the incumbent, so the burden is on the served pricer | R5 D1 ("non-inferiority ... against the vintage pricer"), 2026-09-11 | as 1 |
+| 3 | Comparator: the anchored honest pricer, not a per-split refit or 7e-B's grown OLS | this section, 2026-09-11 | 7e-C, the nightly probe (below) |
+| 4 | Criteria: the `RIDGE_FIT_GATE_CRITERIA` form at 0.6, 0.7, 0.8 | R5 D1 and plan repair 1, 2026-09-11 | the 7e-B record |
+| 5 | Family: 7e-B, 7e-C, 7e-D | plan repair 1 and R5 D1, 2026-09-11 | the 7e-B and 7e-C records |
+| 6 | m = 3, one intersection-union p per member; Holm applied to check 2 as well as check 1 | this section, 2026-09-11 | 7e-B's Elo readings |
+| 7 | Family alpha one-sided 0.05, locked | this section, 2026-09-11; no source names one | the forward ledger |
+| 8 | Window end 2026-09-27; run on or after 2026-09-28 and by 2026-10-31 | season end (plan 5); the deadline is this section's | the forward ledger |
+| 9 | INDETERMINATE takes the FAIL response | O14 DEFAULT, extended here; the plan's text says "if it fails" | none |
+| 10 | A miss on check 2 alone flips nothing | this section, 2026-09-11 | 7e-B's Elo readings |
+| 11 | The graded state, the provenance rule, the store | this section, 2026-09-11 | none |
+| 12 | Postseason not graded | the 5f and 5g precedent and the O20 default. The owner's 2026-09-11 5e answer went the other way (count); here the choice is moot because the window ends on the last regular-season day | none |
+
+**The comparator (choice 3) rests on two facts that no reading moves**: it is
+the pricer gate 2 grades, and it is the pricer the O14 response would serve.
+Disclosed beside it: 7e-C read grown minus anchored -0.002789 (t -2.107) at 0.6
+on 2026-09-06. The nightly `fit_window_probe` in the working-tree artifact
+(generated 2026-09-11T17:13:58Z, cuts 2026-08-16, 08-22, 08-29) reads -0.001465
+(t -1.764, lb95 -0.002831) at 0.6, +0.002557 (t 1.803, lb95 +0.000224) at 0.7
+and +0.004807 (t 2.287, lb95 +0.001349) at 0.8. On that reading grown beats
+anchored at 0.7 and 0.8, so the anchored comparator is the easier one to be
+non-inferior to at those splits.
+
+**The family alpha (choice 7) is locked at this commit.** It may be changed only
+to tighten it, by a dated correction committed on or before 2026-09-27.
+
+#### The replay arm
+
+For each eval date D:
+
+1. **The vintage.** V_D is the newest admissible record (below) with
+   `covers_through < D`: the `_vintage_resolver` and
+   `inputs_as_of(D, allow_fallback=False)` contract. A date with no such record
+   is skipped and counted (section 6), never priced on the fallback.
+2. **The fit set.** F_D is every completed 2026 regular-season game in the game
+   manifest (below) dated before D, gradable or not. It is the set a served
+   build on D's night would have fitted. On a missed night nothing was fitted,
+   and the replay grades the construction, not the build that ran.
+3. **The fit.** `build_context`'s own procedure on F_D, with V_D's team inputs,
+   starters and park index in place of `team_inputs()`, `starter_inputs()` and
+   `park_index()`. It solves the coefficients and the shrunk extra-innings home
+   rate, then `diff_shrink` and the home adjustment in one solve and one
+   refinement pass (the loop runs twice). Each SERVED sub-fit is solved on F_D:
+   dispersion only if `SERVE_RUN_DISPERSION`, the runline tie split
+   (`_fit_runline_tie_split`) only if `SERVE_RUNLINE_TIE_SPLIT`, the Platt map
+   and the three total fits only if their flags serve. Unserved sub-fits are
+   skipped for each date.
+
+   Every F_D game is priced on V_D's one board. That is the served build's
+   in-sample construction, contamination included, and the contamination is
+   part of the object being graded. Nothing dated D or later reaches the fit,
+   so the GRADE leaks nothing.
+4. **The price.** D's games are priced with that fit on V_D through
+   `game_probabilities`, the same call `_grade` makes, with the starters the
+   honest mode uses.
+
+**The leak assertion, per date.** The run persists and asserts, for every D,
+max(F_D date) < D and V_D `covers_through` < D. A failure makes the run VOID.
+
+**Frozen inputs (to be built).** At the first nightly after 2026-09-27, before
+any replay code touches real data, two manifests are written:
+
+- **The store manifest.** Every record in the store: file, sha256,
+  `provenance.source`, `captured_at`, `covers_through`. Admissible: `live`
+  records captured on or before 2026-09-27T23:59:59Z, and `git-backfill` records
+  captured on or before the date of this section's commit. `archive-reconstruct`
+  records are not read by either arm (the O22 ALLOW default governs other
+  sections). A record added or overwritten after its cutoff (an I2 repair, a
+  backfill run, a `--force` snapshot) is not read.
+- **The game manifest.** `game_pk` and `officialDate` of every completed
+  regular-season 2026 game dated on or before 2026-09-27 in the game cache at
+  that moment.
+
+Both arms read only what these list. Per date, the result persists V_D's file,
+sha256, provenance and `covers_through`. The store is the
+`.cache/leaderboard_vintages/` of the box named as the single writer under O16
+(I10). If none is named by then, it is this box's, the store R5-F3 measured. The
+host name is recorded.
+
+**To be built:**
+
+- **A `build_context` seam** that takes the games and the boards as arguments and
+  writes nothing. The replay IS `build_context`, not a copy.
+- **A seam self-check**, `--as-served-replay --seam-check`. Fed today's live
+  inputs and every completed game, the seam's served keys serialize
+  byte-identical to the ones `build_context(write=False)` returns:
+  `coefficients`, `extra_inning_home_rate_shrunk`, `diff_shrink`,
+  `home_field_runs_adj`, and each flag-served key (`run_dispersion_alpha`,
+  `extra_inning_runline_split`, `prob_calibration`, `total_level`,
+  `total_dispersion_alpha`, `total_calibration`). The `_fitted` measurements are
+  not compared. This is the one real-data call permitted before the run,
+  because it reproduces the nightly build, which is already published. It
+  prints only the key-by-key match.
+- **`as_served_replay`**, reached only by the CLI flag `--as-served-replay`;
+  `backtest()` never calls it. It refuses to run before 2026-09-28 or after
+  2026-10-31, with any window end other than 2026-09-27, or without both
+  manifests. The three dates are literals, `AS_SERVED_REPLAY_WINDOW_END`,
+  `AS_SERVED_REPLAY_FIRST_RUN` and `AS_SERVED_REPLAY_LAST_RUN`, pinned by test.
+- **The result file** `data/betting_as_served_replay.json`, written once by the
+  CLI and never by `backtest()`, which rewrites the whole eval file every night
+  (`betting_model.py:5979`).
+- **A cache of per-date fits** keyed by (D, V_D sha256, `MODEL_VERSION`). It is
+  never filled from the real archive before the run. Tests use synthetic
+  fixtures only.
+
+**Four approximations, disclosed:**
+
+- **Board age.** The served build on D read the boards the vintage store froze
+  that same night. Under `covers_through < D`, that record cannot price D. So
+  the replay runs one board refresh behind in steady state, and further behind
+  on missing nights: 10 of 36 live-era nights since 2026-08-06 are missing (26
+  on disk), and vintage age at grading has median 1 day, p90 8, max 13
+  (R5-F3). The replay is the served CONSTRUCTION on the dated board, not a byte
+  copy of what served. The calibration ledger stays the only record of the
+  exact served prices.
+- **Starter identity.** Both arms read the final feed's `probablePitchers`. That
+  matched the first pitcher used on 2,191 of 2,197 home sides and 2,194 of 2,197
+  away sides (R5-F6). The schedule cache at its LAST pre-pitch refresh disagreed
+  with the first pitcher on 19 of 1,968 sides (0.97%) and was TBD on 41. The
+  03:10 ET board read an earlier refresh, so 0.97% is a lower bound on how often
+  the board's starter differed. The hindsight affects both arms' inputs
+  identically. Its effect on each arm's score is not measured, and equal inputs
+  need not mean equal benefit: the served fit weights the pitcher term about 3.2
+  times the graded one (b2 -0.3126 against -0.0965).
+- **The Athletics' park.** Once `SERVE_ATH_PARK` serves, the served build prices
+  A's home games at 1.1919 on the live index (the 5i-A refit moves b3 from
+  3.386903 to 3.852374). A vintage record reaches that value only through its
+  own dated `parks_short_window` block (schema 5), and no schema-5 vintage is on
+  this box yet (the newest, 2026-09-09 and 2026-09-10, are schema 4). So for
+  nearly every D both arms fit and price A's home games at a neutral park, where
+  the served pricer does not. Recorded counts: 72 A's home games, 55 before
+  2026-08-01 and 17 after (DB 5i-A). The seam self-check runs on live inputs and
+  cannot catch this. The flag is not back-filled into older records, because
+  the 2025-2026 factor contains 2026 data from after D. **A fixed sensitivity
+  row, never a criterion:** the same grid with A's home games dropped from every
+  eval half, both arms, fits unchanged.
+- **Late finals.** The game cache carries no arrival time, so F_D cannot be cut
+  at D's nightly exactly. A game dated before D whose final arrived after D's
+  nightly (a suspended game resumed later) would enter F_D. Where the cached row
+  marks a resumption on or after D (to be built), the game is dropped from F_D
+  and counted. Where it cannot tell, the difference is disclosed, not closed.
+
+#### The comparator
+
+The comparator is the graded vintage pricer, exactly as the shipped honest mode
+builds it, on the same manifests. That is `_grade`, through `_grade_vintage`, on
+the anchored fit window: the earliest whole slates crossing
+`VINTAGE_FIT_TARGET_GAMES` (`_vintage_cut_index`; `VINTAGE_FIT_WINDOW_GROWS`
+False). Each fit game is priced on its own vintage. The tie rate, `diff_shrink`
+and the home adjustment are solved on that window.
+
+The comparator is the same at every split, because `_vintage_cut_index` caps the
+anchored cut at `VINTAGE_FIT_MAX_DATE_SHARE` (0.5) of the dates, below the 0.6
+quantile. It is also the pricer the O14 response would serve.
+
+The two arms differ in fit set, features and correction procedure. Each arm is
+exactly the pricer it names, so that difference is the estimand, not a
+confound.
+
+#### The window and the splits
+
+- **Sample.** Vintage-gradable regular-season games in the game manifest, dated
+  on or before 2026-09-27. Postseason games are not graded (choice 12).
+- **Splits.** Date quantiles 0.6, 0.7 and 0.8 of those gradable dates
+  (`DISPERSION_SPLIT_QUANTILES`), cut the way `ridge_fit_gate` cuts them. The
+  eval half is every gradable game dated on or after the cut.
+- **Guards.** A split whose cut falls inside the comparator's fit window, or
+  where the two arms do not price the identical games, makes the run VOID. It is
+  an engineering failure, never a FAIL.
+- **The honest window, reported.** The anchored window (cut by
+  `_vintage_cut_index`) is the window gate 2 reads. It is reported with the full
+  section 6 ladder: `_benchmarks_block`, recomputed on the replay's per-game
+  probabilities, every tier on identical games under the claim rule. It also
+  carries the replay's `skill_vs_home_base`. Nothing on this window is a
+  criterion. It is what gate 2 reads after a pass.
+
+#### The criteria
+
+The criteria use the `RIDGE_FIT_GATE_CRITERIA` form (committed 2026-09-06,
+7c45c5c1). The replay takes the challenger seat and the graded vintage pricer
+the incumbent seat. The one-sided critical value is the family's z = 2.128 (see
+the Holm family below) instead of 1.645. At split quantiles 0.6, 0.7 and 0.8,
+ALL THREE or nothing:
+
+1. **Non-inferiority** against the graded vintage pricer. Paired per-game Brier,
+   with delta = vintage minus replay (positive means the replay is better):
+   delta - 2.128 x se >= -0.001.
+2. **Superiority** over the literature Elo tier (`tools/betting_elo`, the
+   section 6 results-only floor). Paired per-game Brier, Elo minus replay:
+   t >= 2.128.
+3. **Log loss** not worse. Paired log loss, vintage minus replay, >= 0 on the
+   point estimate.
+
+**Floors.** The comparator's fit window and every F_D need at least
+`VINTAGE_MIN_FIT_GAMES` (100) games. Every eval half needs at least
+`VINTAGE_MIN_EVAL_GAMES` (50). A split below a floor makes the run VOID.
+
+**The verdict label** follows 7e-B's rule. All three splits pass: PASS. A mixed
+grid: INDETERMINATE. None: FAIL. What each label does is in the response below.
+
+**The recorded prior on check 2.** At each 7e-B split the vintage construction
+(7e-B's OLS arm, grown fit half) read Elo t 1.625, 1.645 and 1.937
+(`elo.ols_vs_elo`), all below 2.128. The nightly `ridge_fit` in the working-tree
+artifact reads ridge-vs-Elo t 1.477 at 0.6. On the served window the graded
+pricer leads Elo by 0.00106 Brier on 548 games (0.24334 against 0.2444). Check
+2 is a bar on the model class (7e-B), so a miss there alone says nothing about
+which pricer is better. The incumbent's own reading, `elo.vintage_vs_elo`, is
+persisted at the same z on the same games beside `elo.replay_vs_elo` (both to be
+built; the existing keys are `ols_vs_elo` and `ridge_vs_elo`). It is never a
+criterion.
+
+**Power and the burden.** Non-inferiority at a 0.001 margin and z 2.128, between
+two pricers that spread this differently (25.3% against 2.7% outside 0.4 to
+0.6), may not resolve even if the served pricer is as good. The burden is on the
+served pricer by design (choice 2): too little evidence means the vintage pricer
+serves under the O14 default. Persisted per split, never a criterion and with no
+response: sqrt(n_eval) x RMS(p_replay - p_vintage), computed before any eval
+outcome is joined.
+
+**The text above becomes constants.** It is carried in
+`AS_SERVED_REPLAY_CRITERIA`, with `AS_SERVED_REPLAY_Z = 2.128` as a literal (both
+to be built). A test pins both, the way it pins `DISPERSION_GATE_CRITERIA`.
+`RIDGE_FIT_GATE_CRITERIA` is not edited, because it still governs 7e-B.
+
+**Scope: the moneyline**, the market these criteria and gate 2 are written in.
+The replay's runline and total are priced on the same games and reported in
+7e-A's layout (same games, against the open). They are never criteria, and the
+total report prints no observed Over rate. The total is ledger-closed and its
+Over lean is disclosed (7f to 7h). Nothing here repairs it.
+
+**Persisted with the grid:**
+
+- Per split: both arms' Brier and log loss; the delta, sd, t and the bound at
+  z = 2.128; `elo.replay_vs_elo` beside `elo.vintage_vs_elo`; the power
+  reading; the share of each arm's probabilities outside 0.4 to 0.6.
+- The A's sensitivity row.
+- Per date: the replay's coefficients and corrections, V_D's file, sha256,
+  provenance and `covers_through`, n and max date of F_D, and the leak
+  assertion.
+- For the run: the host, the HEAD commit, `model_version`, `SERVE_PRICER`, the
+  state of every `SERVE_*` flag and `VINTAGE_FIT_WINDOW_GROWS`, and the seam
+  self-check result.
+
+The verdict reads the three criteria and nothing else.
+
+#### The Holm family: 7e-B, 7e-C and 7e-D
+
+The three are estimators of one coefficient vector on one eval archive (R5 D1),
+so they form one Holm family, m = 3.
+
+- **Family alpha: one-sided 0.05, locked at this commit** (choice 7). Nothing in
+  this document or the plan names a betting family alpha. 0.05 is the one-sided
+  level every single gate in this document tests at. It may only be tightened,
+  by 2026-09-27.
+- **Each member's p** is the intersection-union p of the member's conjunction:
+  the largest one-sided normal p among its inferential checks across its
+  splits. A point-estimate check carries no p. A member that misses one is a
+  non-rejection.
+- **Why a conjunction needs no correction within itself.** A member passes only
+  if every check passes, so its false-pass rate is bounded by its weakest check.
+- **The departure from the house form, stated.** Plan section 2.3 reads "both
+  legs of every arm count in m", for the Z1 driver families. Here each member's
+  verdict is one conjunction of all its checks at all splits, and the
+  intersection-union p of a conjunction is a valid p for that verdict, so Holm
+  over three members holds the family-wise rate at alpha. Counting legs would
+  also hold it, more conservatively (m = 5, step-1 z 2.326). It would also let
+  one member's legs clear at different Holm steps: 7e-B's check 1, which cleared
+  at all three splits, would enter as a leg of its own. The member form reads
+  each member as the verdict it is.
+
+**What joining does to 7e-B and 7e-C: nothing.** Both were read on 2026-09-06
+under their own single-test bars, and neither shipped. Their verdicts, their
+flags (`SERVE_RIDGE_FIT` False, `VINTAGE_FIT_WINDOW_GROWS` False) and their
+tables stand as recorded, and each member's family p is pinned to that record.
+`backtest()` recomputes both blocks every night (`betting_model.py:5948-5951`).
+The nightly re-runs are not family members and do not re-label the recorded
+verdicts. The working-tree artifact reads `ridge_fit.verdict` "fail" at cuts
+2026-08-16, 08-22 and 08-29, where the committed copy (2026-09-07) reads
+"indeterminate", and the probe values given above.
+
+Both members carry p above 0.05, on the record and on the nightly reading.
+7e-B's check 2 missed at t 1.641 and 1.632 on 2026-09-06 (nightly: 1.477 at
+0.6). 7e-C's lb95 fell below -0.001 at all three splits on 2026-09-06 (nightly:
+-0.002831 at 0.6).
+
+**7e-D's bar is Holm's first step.** Holm never steps past its first threshold,
+so 7e-D's bar is the step-1 bar: one-sided 0.05 / 3 = 0.016667, z = 2.128. That
+holds whatever order the p values fall in, because a p at or below 0.016667 is
+below both pinned member p values.
+
+**The family is closed at three.** N1 stage 2 is not a member, and no alpha is
+reserved for it. Its stage 1 is a new data source (pre-2026 play-by-play, R5
+N1), and its stage 2 is graded against whichever pricer this section leaves
+serving. Its own section declares its own family and discloses this one and its
+verdict. Any other later estimator on this archive does the same. Nothing can
+move 7e-D's bar once 7e-D has run.
+
+#### The run: once
+
+- **When.** Once, on or after 2026-09-28 and by 2026-10-31, after the result
+  block of the 7h re-read (O23 DEFAULT, 2026-09-28) is committed. The 7h read
+  goes first, so nothing the replay reports can reach it.
+- **The graded state, named now.** The run waits for all of these:
+  - `SERVE_PRICER` "context", landed with its tripwire and ledger stamps (below);
+  - `SERVE_ATH_PARK` True and `SERVE_RUNLINE_TIE_SPLIT` True, each landed with
+    its `MODEL_VERSION` bump and `--context` re-run (owner answers of
+    2026-09-11);
+  - `SERVE_RUN_DISPERSION`, `SERVE_PROB_CALIBRATION`, `SERVE_RIDGE_FIT` and
+    `VINTAGE_FIT_WINDOW_GROWS` False, as at this commit;
+  - the `SERVE_TOTAL_*` flags as they stand. They do not reach the moneyline;
+    a 7h flip, if the owner makes one, is recorded.
+
+  If the state has not landed by 2026-10-31, or anything else that reaches the
+  moneyline has changed by the run, the run is VOID.
+- **What the verdict covers.** The graded state's moneyline construction. A
+  later `MODEL_VERSION` bump whose test asserts the moneyline byte-identical
+  (the 7f to 7h form) keeps it. After any other bump, gate 2 reports the served
+  pricer "not graded" until a re-read, registered before it runs, has run.
+- **The owner's O14 answer** is recorded as a dated correction under this
+  section BEFORE the run. Until then the defaults below stand.
+
+#### The response, pre-registered (O14, DEFAULT pending the owner's answer)
+
+**PASS** (all three checks at all three splits).
+
+- `SERVE_PRICER` stays "context". No price moves, and there is no bump.
+- `backtest()` publishes the replay's grading nightly as
+  `data/betting_model_eval.json -> as_served`, beside `vintage` (to be built),
+  and gate 2 reads its `skill_vs_home_base`.
+- From that build on, `out_of_sample_skill` may be cited for the served board,
+  as that number, whatever it says. A pass of this section is not a pass of
+  gate 2. Before that build it may not be cited (X3).
+
+**FAIL response: check 1 or check 3 misses at any split** (label INDETERMINATE
+or FAIL; INDETERMINATE taking this response is part of the O14 default). The
+graded vintage pricer serves. One commit carries all of the following:
+
+- `SERVE_PRICER = "vintage"`.
+- A `MODEL_VERSION` bump.
+- The tripwire, moved with the flag.
+- A `--context` re-run, so the served coefficient vector and its three
+  corrections are the honest mode's anchored fit. The context-fitted set stays
+  published beside them as a measurement (the `_fitted` convention). If the
+  owner has flipped `SERVE_TOTAL_CALIBRATION`, this re-run also re-fits the
+  served 7h pair, because `build_context` fits it on the served coefficients.
+- The ledger stamps and filters below, if they have not landed already.
+
+The flip takes effect at the next nightly build. A slate whose slots were
+already locked (O21 default) keeps them.
+
+Accepted before the run: the Pick of the Day, the longshot and the value badges
+may go empty until a pricer clears. The shared floor (`PROVISIONAL_MIN_EDGE`
+0.06, 7a) is not lowered, and no slot gets a floor of its own. An empty slot
+names the floor it could not clear. Whether the slots empty depends on O15.
+Under its default (publishable markets only; the policy value is to be built),
+the ledger-closed total cannot fill a slot. Under `SLOT_MARKET_POLICY = "any"`
+as it stands, the total's Over lean can fill them under either pricer (on the
+served set, 232 of 425 re-priced games carried an Over clearing 0.06, 7f), with
+the lean disclosed on the row. The slots refill when the served pricer's own
+sides clear the unchanged floor, or when a later pricer clears its own
+registered gate (N1 stage 2 is the named route).
+
+The flip is outward-facing and is the owner's act. From the flip's commit on,
+gate 2 reads the served pricer's construction graded on dated boards, while the
+served prices come from live boards one refresh ahead (the board-age gap above).
+So `out_of_sample_skill` may be cited for boards priced after the flip, and
+never for rows the context pricer priced.
+
+**Check 2 alone: checks 1 and 3 hold at every split, and check 2 misses at one
+or more.** No flip. X3 stays in force, gate 2 reports the served pricer as not
+graded, `elo.vintage_vs_elo` is shown beside `elo.replay_vs_elo`, and the choice
+of pricer returns to the owner.
+
+**VOID.** A disqualified replay; a guard or floor failure; a seam self-check
+that is not byte-identical; a failed leak assertion; the graded state not
+reached, or changed; or no run by 2026-10-31. There is no verdict. X3 stays in
+force, gate 2 reports the served pricer as not graded, and the choice of pricer
+returns to the owner.
+
+#### `SERVE_PRICER`, the tripwire and the ledgers (to be built)
+
+`betting_model.SERVE_PRICER` takes the values "context" or "vintage". It lands
+at "context", which is what serves today, so landing it moves no price and needs
+no bump.
+
+Its tripwire test (for example `test_betting_serve_pricer.py`) asserts five
+things:
+
+1. **Gate 2 reads the pricer that serves.** The `out_of_sample_skill` gate in
+   `min_edge_gate` reads the skill block that `SERVE_PRICER` names: `vintage`
+   for "vintage", `as_served` for "context". When that block is absent, or
+   grades a moneyline construction no verdict covers, the gate reports
+   `open: false`, with the reason that the pricer that serves has not been
+   graded. The graded vintage pricer's number rides beside it, labelled as that
+   pricer's.
+2. **The served context matches the flag.** Its coefficients and three
+   corrections are the named pricer's.
+3. **The flip changes the version.** `model_version` differs between the two
+   states.
+4. **The seam is exact.** The seam self-check (above) passes on a fixture.
+5. **The ledgers do not pool the two pricers.** Today they would: calibration
+   rows (`tools/betting_calibration.record_slate`) and shadow rows
+   (`betting_shadow`) carry no version, only public record rows do
+   (`betting_export.py:1919`), and `market_gate`
+   (`tools/betting_calibration.py:696`) and the gate-3 sweep
+   (`_shadow_graded_bets_by_tag` into `sweep_min_edge_by_tag`) read every row.
+   Both row kinds are stamped with `serve_pricer` and `model_version`, and both
+   readers take only rows of the serving pricer. An unstamped row counts as
+   "context", the only pricer that has ever served.
+
+**7b across a flip.** 7b's dwell state carries over. A market LEDGER-CLOSED at
+the flip stays closed, and its re-open test reads the new pricer's rows only
+once they reach 7b's 100-game floor. Without that rule, filtering would re-open
+the total within three nights, because `worse_than_coin_95` is false below 100
+games. This amends 7b's wiring and is recorded as a dated correction under 7b
+in the flip commit (part of the O14 default). Filtering by `MODEL_VERSION` in
+general, which the flip idiom promises ("so the ledgers never pool two
+pricers") and the code does not do, is a standing gap. It is disclosed here and
+not repaired.
+
+**What landing it does before the run.** Today gate 2 reads the vintage block
+(t 2.314) for a board the context pricer prices. With the flag at "context" and
+no replay yet, gate 2 reports not graded. That re-points section 7's gate 2 from
+"that sample" to the pricer that serves, so a dated correction under section 7
+lands with the code. `min_edge` is null either way: gate 1 stood at 548 of 600
+on 2026-09-11, and gate 3 is closed (`board_all` ROI lb95 -0.16217, R5). What
+changes is the published gate-2 line, not a price. That is X3 made mechanical.
+
+#### Disqualification
+
+These void the replay's verdict under 5c rule 1:
+
+- any number relating the replay arm, or a close variant, to an outcome or a
+  market price, computed before this section is committed or outside the one
+  registered run;
+- any fill of the per-date fit cache from the real archive before the run;
+- any run of `--as-served-replay` other than the seam self-check before
+  2026-09-28 (the CLI refuses; a bypass voids).
+
+These do not:
+
+- the thirteen listed items in their current form, including every nightly
+  rebuild of items 1 to 6 and 13 by the served pipeline. A change to a listed
+  item's construction is a new instance;
+- the served pipeline pricing the current slate as it serves, including every
+  `--context` re-run, and a flip's before-and-after comparison on the current
+  board in the 5i-A form. The flips in flight (the A's park and the runline tie
+  split, workflow wf_02e3c0ae-178) fall here only if they reprice the current
+  board alone. A re-price of past slates with a served coefficient set (the 7f
+  form) is a new instance;
+- the seam self-check;
+- publication after the verdict: the PASS response's nightly `as_served` block
+  and the FAIL response's `--context` re-run.
+
+Any new instance voids the verdict. The result block lists every instance it
+knows of.
+
+#### What this section does not claim
+
+- **It does not claim either pricer is better, and states no expected
+  verdict.** It records the prior on check 2 (above). The rest points both ways.
+  Today's served fit uses about seven times the games (2,200 against 305:
+  context `n_games`, `vintage.n_fit_games`, R5-F1), and every F_D inside the
+  window is smaller than 2,200. 7e-C found a grown fit window worse at the 0.6
+  split on 2026-09-06 (delta -0.002789, t -2.107), and the nightly probe now
+  reads it better at 0.7 and 0.8. The replay's fit carries in-sample features
+  that 7e-C's did not.
+- **It does not reopen 7e-B or 7e-C.** Their nightly recomputation continues
+  and is not a family member. It does not change the honest mode, gate 1's
+  counter or the 600-game clock. It reads no dark column and touches no dark
+  clock.
+- **It does not repair the total or the runline.**
+- **"What ships from 7e" below still describes 2026-09-06.** That paragraph is
+  left as written.
+
+Committed alone, docs only, ahead of the code that implements it. Nothing in
+this section was measured against a game result.
+
 ### What ships from 7e
 
 Three measurements and no behaviour change. `SERVE_RIDGE_FIT` False,
