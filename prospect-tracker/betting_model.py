@@ -1121,7 +1121,13 @@ def starter_inputs() -> dict:
 def park_index() -> dict:
     """{org: runs index / 100}. data/fa_meta.json carries the Savant park
     factors the FA engine already reads; no second copy is fetched. Missing
-    parks resolve neutral at lookup, never invented."""
+    parks resolve neutral at lookup, never invented.
+
+    SERVE_ATH_PARK (section 5i-A) is the one exception to "missing resolves
+    neutral", and it is off. With it on, a SHORT_WINDOW_PARK_ORGS club that the
+    3-season view drops takes its shrunk short-window factor from fa_meta's
+    `park_factors_short_window` sibling; it can never overwrite a 3-season
+    factor. With it off this function is byte-for-byte what it was."""
     meta = _data("fa_meta.json") or {}
     pf = meta.get("park_factors") or {}
     out = {}
@@ -1130,7 +1136,201 @@ def park_index() -> dict:
             out[str(org)] = float((v or {}).get("runs") or 100) / 100.0
         except (TypeError, ValueError):
             continue
+    if SERVE_ATH_PARK:
+        out.update(short_window_parks(meta.get("park_factors_short_window"),
+                                      exclude=set(out)))
     return out
+
+
+# --- the Athletics' park (audit C5-F1, docs/diamond-betting.md section 5i-A) ---
+# THE DEFECT. `park_index()` reads data/fa_meta.json park_factors, which is
+# Savant's DEFAULT view, a 3-season rolling index. That view drops any venue
+# without a full window: the 2024-2026 view carries 29 venues and the 2023-2025
+# view 28 (read 2026-09-11 off .cache/savant_pf_2026_all.html and _2025_all).
+# The Athletics have played at Sutter Health Park since 2025, so every consumer
+# of the index has priced every A's home game at a NEUTRAL park: the served
+# board, the coefficient fit that sets b3, the vintage backtest and the dark
+# props frame. The docstring's "missing parks resolve neutral at lookup, never
+# invented" was true, and it was the wrong default for the park whose game
+# carried the highest posted total (10.0) on the 2026-09-11 board.
+#
+# THE MEASURED FACTOR, not a typed one. Savant publishes the venue at shorter
+# windows (fa_sources.fetch_savant_park_factors(..., rolling="2"), fetched
+# 2026-09-11): 2025-2026 runs 121, woba 110, hr 121, on 34,287 PA; the single
+# seasons read 117 (2025, 18,073 PA) and 125 (2026, 15,449 PA). The completed-
+# game cache agrees on direction and says it louder: 72 A's home games average
+# 11.667 total runs against 8.387 in their 75 road games, a raw ratio of 1.391,
+# the highest of the 30 clubs (a raw ratio is not on Savant's player-controlled
+# scale and is corroboration only).
+#
+# THE SHRINK, so a 2-season factor does not ride the coefficient as if it were
+# a 3-season one. Variance decomposition over Savant's own single-season
+# indices (2018, 2019, 2021-2026; 206 stable venue-season pairs): noise
+# variance 32.372 index points^2 at a single-season 17,577 PA, signal variance
+# 53.673. The n_pa-implied single-season reliability is 0.6238 against a direct
+# season-to-season correlation of 0.6221, so the decomposition reproduces the
+# number it can be checked against. Reliability is 0.8360 at the 3-season view's
+# median 54,034 PA and 0.7638 at the A's 34,287. b3 was fitted on 3-season
+# indices, so the A's deviation is scaled by 0.7638 / 0.8360 = 0.9137, the
+# reliability of what b3 was fitted on: 121 -> 119.19, served as 1.1919.
+# (Tropicana's 3-season row carries 34,861 PA and is served UNSHRUNK today; the
+# same argument would shrink it by about as much, and that is a separate,
+# unflagged served change this lane does not make.)
+#
+# WHAT FLIPPING IT CHANGES, measured on the 2026-09-11 board (15 games; the
+# same-inputs reprice reproduces all 90 served model probabilities exactly):
+#   * with the served coefficients held, ONE game moves, SEA at ATH. Fair total
+#     9.86 -> 11.16 against a 10.0 line; Over 10.0 0.45648 -> 0.63349, edge
+#     -0.05587 -> +0.12114, so the total's value side flips from the Under to the
+#     Over and the Over clears the 0.06 floor; ATH moneyline 0.44855 -> 0.45156;
+#     ATH +1.5 0.64008 -> 0.63166. Floor-clearing sides 26 -> 27.
+#   * THE OVER TILT GETS WORSE, NOT BETTER. Positive-edge totals were 13 overs
+#     of 15 and become 14 of 15; the board's fair-minus-line gap goes from a
+#     mean +0.8933 to +0.9800. SEA at ATH was the one game the model priced
+#     under its line, and only because its park term was missing. The
+#     board-wide lean is the Poisson centre (docs/diamond-betting.md section
+#     7f, SERVE_TOTAL_LEVEL / SERVE_TOTAL_DISPERSION), which this flag does not
+#     touch.
+#   * PICK OF THE DAY: unchanged, PHI at ATL, ATL moneyline 0.75485. The new A's
+#     Over is priced -113 inside the band but at 0.63349 it ranks far below it.
+#     The longshot slot stays empty.
+#   * AND THEN THE REFIT, because `build_context` fits b0..b4 through this same
+#     seam. Refit on the 2,200-game cache with ATH at 1.1919: b3 3.386903 ->
+#     3.852374, b0 4.477242 -> 4.452830, b1 -0.003093, b2 +0.008276, b4 +0.00052.
+#     The omission was ATTENUATING b3: 72 home games that scored like a 1.39 park
+#     were coded as neutral. After the refit every total on the board moves
+#     (the 14 other games by -0.13 to +0.03 runs, SEA at ATH to 11.27), the gap
+#     mean is +0.9433, and the headline is still ATL moneyline, at 0.74978,
+#     edge 0.12368.
+#   * Blast radius: 72 completed A's home games (55 in the vintage fit half
+#     before the 2026-08-01 split, 17 after), 10 distinct A's home events in the
+#     27 cached odds snapshots, 7 shadow-ledger rows. ZERO served props numbers:
+#     props_fair_lines carries no park term. The dark props frame (1,494 batter-
+#     games at Sutter) reads fa_meta park_factors and is untouched by this flag.
+#
+# WHY FALSE. It moves served prices and the value side of a total, so the owner
+# flips it. It is a data-completeness repair to an EXISTING fitted input, not a
+# new feature, so it carries no pre-registered gate of its own; it does carry
+# the measurement above.
+#
+# TO FLIP THIS FLAG, in ONE commit: (1) set it True; (2) bump MODEL_VERSION,
+# because the calibration and shadow ledgers must not pool the neutral-A's
+# pricer with this one; (3) re-run `python betting_model.py --context` so the
+# coefficients are refit through the same seam; (4) flip the tripwire in
+# test_betting_ballpark.py; (5) re-read section 11's park bullet. Vintage records
+# written before schema 5 carry no `parks_short_window` block and keep pricing
+# the A's neutral; that is the park precedent and it is stated, not repaired.
+SERVE_ATH_PARK = False
+# The clubs the flag may reach. An explicit list, not "whatever the short view
+# publishes": a flag whose effect grows by itself the day another club moves is
+# a flag whose measured effect is no longer the one written above.
+SHORT_WINDOW_PARK_ORGS = frozenset({"ATH"})
+# The shrink constants, measured 2026-09-11 (see above; the script and its
+# output are in the section 5i-A receipt). Index points are Savant's 100 scale.
+PARK_INDEX_SIGNAL_VAR = 53.673
+PARK_INDEX_NOISE_VAR_REF = 32.372
+PARK_INDEX_NOISE_REF_PA = 17577.0
+PARK_INDEX_3YR_REF_PA = 54034.0
+
+
+def park_index_reliability(n_pa: float) -> float:
+    """Reliability of a Savant park runs index measured on `n_pa` plate
+    appearances: signal / (signal + noise), noise scaling as 1 / n_pa. 0 for a
+    non-positive sample, which prices neutral."""
+    try:
+        n = float(n_pa)
+    except (TypeError, ValueError):
+        return 0.0
+    if not n > 0:
+        return 0.0
+    noise = PARK_INDEX_NOISE_VAR_REF * PARK_INDEX_NOISE_REF_PA / n
+    return PARK_INDEX_SIGNAL_VAR / (PARK_INDEX_SIGNAL_VAR + noise)
+
+
+def short_window_park_value(row: dict | None) -> float | None:
+    """One short-window Savant row -> the runs index / 100 the model would price.
+
+    The deviation from neutral is scaled by the row's reliability relative to
+    the 3-season view b3 was fitted on, capped at 1 so a long window is never
+    stretched. None for a row with no usable runs index or sample."""
+    if not isinstance(row, dict):
+        return None
+    try:
+        runs = float(row.get("runs"))
+    except (TypeError, ValueError):
+        return None
+    k = park_index_reliability(row.get("n_pa")) / park_index_reliability(PARK_INDEX_3YR_REF_PA)
+    if not k > 0:
+        return None
+    k = min(1.0, k)
+    return round(1.0 + k * (runs - 100.0) / 100.0, 4)
+
+
+def short_window_parks(block: dict | None, *, exclude=()) -> dict[str, float]:
+    """{org: shrunk runs index / 100} for the SHORT_WINDOW_PARK_ORGS a short-
+    window block carries, never for an org in `exclude` (the measured 3-season
+    set). Reads the fa_meta shape ({"orgs": {org: row}}) and the vintage shape
+    ({org: row}) alike. Pure: the flag is the CALLER's check."""
+    if not isinstance(block, dict):
+        return {}
+    rows = block.get("orgs") if isinstance(block.get("orgs"), dict) else block
+    out: dict[str, float] = {}
+    for org, row in rows.items():
+        o = str(org)
+        if o not in SHORT_WINDOW_PARK_ORGS or o in exclude:
+            continue
+        v = short_window_park_value(row)
+        if v is not None:
+            out[o] = v
+    return out
+
+
+# --- park by bat side (DARK, docs/diamond-betting.md sections 5i-B and 5i-C) --
+# Source reliability of the per-venue L minus R split at Savant's 3-season
+# window, measured 2026-09-11 from Savant's own single-season pages alone (2019,
+# 2021-2026; 176 stable venue-season pairs; NO game outcome was read): runs
+# split season-to-season r 0.0065 -> 3-season 0.0191; HR split r 0.1406 ->
+# 3-season 0.3293. The pre-registered candidates scale the hand deviation by
+# these, fixed BEFORE any candidate number exists; re-tuning them against
+# outcomes would be fitting the feature to the eval window.
+PARK_HAND_SPLIT_RELIABILITY = {"runs": 0.0191, "hr": 0.3293}
+
+
+def lineup_park_factor(park_all: float | None, by_hand: dict | None,
+                       lhb_share: float | None, *, stat: str = "runs") -> float | None:
+    """DARK. The section 5i-B candidate park term for ONE scoring side.
+
+        park_all + rel * (s * (L - park_all) + (1 - s) * (R - park_all))
+
+    `park_all` is the served park index (runs / 100) of the home park, `by_hand`
+    that park's {"L": x, "R": y} on the same scale, `lhb_share` the batting
+    lineup's left-handed PA share against the opposing probable's hand, and
+    `rel` PARK_HAND_SPLIT_RELIABILITY[stat]. None when any input is missing: the
+    lab prices that side on `park_all` and counts it, it never guesses a hand.
+    The permuted twin the gate requires is this function at 1 - lhb_share.
+
+    NOTHING SERVED CALLS THIS. expected_runs, the fit and the export read the
+    one park term they always read; this exists so the gate lab computes the
+    candidate with one definition."""
+    if park_all is None or lhb_share is None or not isinstance(by_hand, dict):
+        return None
+    try:
+        s = float(lhb_share)
+        lv_, rv_ = float(by_hand["L"]), float(by_hand["R"])
+        pa = float(park_all)
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not 0.0 <= s <= 1.0:
+        return None
+    rel = PARK_HAND_SPLIT_RELIABILITY[stat]
+    return pa + rel * (s * (lv_ - pa) + (1.0 - s) * (rv_ - pa))
+
+
+def parks_by_hand_from_vintage(rec: dict | None) -> dict | None:
+    """DARK. A schema-5 record's {org: {"L", "R", "hr_L", "hr_R"}} block, or None
+    when the record predates it or stored it null. Never filled from fa_meta."""
+    blk = (rec or {}).get("parks_by_hand")
+    return blk if isinstance(blk, dict) and blk else None
 
 
 # ---------------------------------------------------------------------------
@@ -1261,6 +1461,13 @@ def parks_from_vintage(rec: dict) -> dict | None:
             out[str(org)] = float(v)
         except (TypeError, ValueError):
             continue
+    # SERVE_ATH_PARK reaches the vintage path through the record's OWN dated
+    # block (schema 5), with the same shrink the live path uses. A record that
+    # predates the block keeps the club neutral; nothing is filled from today's
+    # fa_meta, which would be the leak this function exists to refuse.
+    if out and SERVE_ATH_PARK:
+        out.update(short_window_parks((rec or {}).get("parks_short_window"),
+                                      exclude=set(out)))
     return out or None
 
 

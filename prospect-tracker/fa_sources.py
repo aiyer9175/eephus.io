@@ -525,16 +525,27 @@ def fetch_statsapi_season_range(first: int, last: int, force: bool = False,
 
 _SAVANT_PF_URL = (
     "https://baseballsavant.mlb.com/leaderboard/statcast-park-factors"
-    "?type=year&year={year}&batSide={bat_side}&stat=index_wOBA&condition=All&rolling="
+    "?type=year&year={year}&batSide={bat_side}&stat=index_wOBA&condition=All&rolling={rolling}"
 )
 
 
-def fetch_savant_park_factors(year: int, bat_side: str = "", force: bool = False) -> list[dict]:
+def fetch_savant_park_factors(year: int, bat_side: str = "", force: bool = False,
+                              rolling: str = "") -> list[dict]:
     """Park-factor rows (100 = neutral) per venue: index_woba / index_hr /
-    index_runs / ... bat_side "" (all), "L", or "R" for handedness splits."""
+    index_runs / ... bat_side "" (all), "L", or "R" for handedness splits.
+
+    `rolling` is Savant's window in seasons. "" is the page default, a 3-season
+    rolling index, and it is what every existing caller gets: the URL and the
+    cache key are byte-identical to the pre-2026-09-11 fetcher when it is "".
+    The default view DROPS a venue without a full window (Sutter Health Park,
+    the Athletics' home since 2025, is absent from the 2024-2026 view while
+    Savant publishes it at rolling=2 on 34,287 PA), which is why a caller that
+    needs that venue asks for a shorter window explicitly and gets its own
+    cache key."""
     import json as _json
-    url = _SAVANT_PF_URL.format(year=year, bat_side=bat_side)
-    fr = _fetch(url, f"savant_pf_{year}_{bat_side or 'all'}", force=force)
+    url = _SAVANT_PF_URL.format(year=year, bat_side=bat_side, rolling=rolling or "")
+    key = f"savant_pf_{year}_{bat_side or 'all'}" + (f"_r{rolling}" if rolling else "")
+    fr = _fetch(url, key, force=force)
     if fr.status != 200 or not fr.body:
         log.warning("savant pf %d/%s: fetch failed (status=%d)", year, bat_side or "all", fr.status)
         return []

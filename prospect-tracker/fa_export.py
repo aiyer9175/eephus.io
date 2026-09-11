@@ -1257,8 +1257,29 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
             },
         },
         "park_factors": fa_fit.park_factors(class_year - 1),
+        # Two SIBLING blocks (2026-09-11, docs/diamond-betting.md section 5i).
+        # `park_factors` above is untouched, so every consumer that reads it
+        # (the FA engine, dfs_export, betting_model.park_index) is byte-for-byte
+        # where it was. Nothing in the FA engine reads either sibling.
+        "park_factors_short_window": _park_sibling(
+            fa_fit.park_factors_short_window, class_year - 1),
+        "park_factors_by_hand": _park_sibling(
+            fa_fit.park_factors_by_hand, class_year - 1),
         "teams": teams,
     }
+
+
+def _park_sibling(builder, season: int) -> dict | None:
+    """One best-effort park sibling block. A Savant outage costs the block a
+    null, never the fa_meta write: the FA engine does not read these, and a
+    failed optional fetch must not keep the free-agent board from publishing."""
+    try:
+        blk = builder(season)
+    except Exception:                                       # noqa: BLE001
+        log.warning("fa_meta: %s(%s) failed; block written as null",
+                    getattr(builder, "__name__", "park sibling"), season)
+        return None
+    return blk or None
 
 
 # Future winters exported alongside the current class (the board's year

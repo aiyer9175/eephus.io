@@ -152,7 +152,17 @@ VINTAGE_DIR = ROOT / ".cache" / "leaderboard_vintages"
 # trailing venue window ending the day BEFORE the vintage date. Section 5d
 # states this and states that the observed value stays a contaminated screen
 # that can only ever disqualify a candidate.
-SCHEMA = 4
+#
+# SCHEMA 5 (2026-09-11) added the ballpark dark capture, pre-registered in
+# docs/diamond-betting.md section 5i BEFORE this bump existed: two team columns
+# (lhb_share_vr, lhb_share_vl: each club's left-handed PA share in its captured
+# order against a right- and a left-handed starter) and two record blocks
+# (`parks_by_hand`, the home park's runs and HR index by batter side, and
+# `parks_short_window`, the raw short-window row for a club the 3-season park
+# view drops). Same governing rules as schemas 3 and 4. Nothing served reads any
+# of it; `parks_short_window` reaches a price only through
+# betting_model.SERVE_ATH_PARK, which is off.
+SCHEMA = 5
 
 # The reduced record keeps only what betting_model actually consumes (plus the
 # schema-3 dark capture). Column order is part of the on-disk contract; a
@@ -164,7 +174,8 @@ TEAM_COLUMNS = ("offense_plus", "rotation_plus", "bullpen_plus",
                 "lineup_strength", "star_out",
                 "pen_b2b_arms", "pen_arms_avail", "pen_ip_l3", "pen_plus_avail",
                 "rest_days", "games_in_l7",
-                "wx_temp_climo", "wx_wind_out_climo", "catch_frame_rate")
+                "wx_temp_climo", "wx_wind_out_climo", "catch_frame_rate",
+                "lhb_share_vr", "lhb_share_vl")
 PITCHER_COLUMNS = ("plus", "ip_per_gs", "org", "role", "throws",
                    "sp_rest_days", "sp_tto3_bf")
 
@@ -180,6 +191,20 @@ SCHEMA4_TEAM_COLUMNS = ("pen_b2b_arms", "pen_arms_avail", "pen_ip_l3",
                         "pen_plus_avail", "rest_days", "games_in_l7",
                         "wx_temp_climo", "wx_wind_out_climo", "catch_frame_rate")
 SCHEMA4_PITCHER_COLUMNS = ("sp_rest_days", "sp_tto3_bf")
+
+# The schema-5 additions by name (2026-09-11, section 5i-B).
+SCHEMA5_TEAM_COLUMNS = ("lhb_share_vr", "lhb_share_vl")
+
+# Expected plate appearances by lineup slot, the weight each slot's bat side
+# carries in a club's handedness mix. Pinned EQUAL to betting_export.SLOT_PA by
+# test_betting_ballpark: one PA-by-slot table on the site, not two, and a copy
+# here rather than an import because betting_export imports this module's
+# reader path and a cycle is not worth a nine-entry table.
+LINEUP_SLOT_PA = {s: round(4.65 - 0.10 * (s - 1), 2) for s in range(1, 10)}
+# A side's share is published only when at least this many of its nine slots
+# carry a readable bat side; the lineup_strength floor, so the two lineup-built
+# columns cannot disagree about what counts as a lineup.
+LINEUP_HAND_MIN_SLOTS = 7
 
 # The stated basis for each schema-3 column, written into every record's
 # `feature_basis` block. These strings are the honesty mechanism: a column that
@@ -220,6 +245,13 @@ FEATURE_SOURCES = {
                  "StatsAPI 40-man roster status codes"),
     "throws": ("pal_export.load_pitch_hand(season), one bulk StatsAPI call at "
                "assembly, never a per-game lookup"),
+    # Schema 5 (2026-09-11, docs/diamond-betting.md section 5i-B).
+    "lhb_share_vr": ("hitter_leaderboards.json teams[].orders.vr, left-handed "
+                     "share of expected PA (LINEUP_SLOT_PA weights), switch "
+                     "hitters batting left against a right-hander"),
+    "lhb_share_vl": ("hitter_leaderboards.json teams[].orders.vl, left-handed "
+                     "share of expected PA (LINEUP_SLOT_PA weights), switch "
+                     "hitters batting right against a left-hander"),
 }
 
 SOURCES = ("hitter_leaderboards.json", "starter_leaderboards.json",
@@ -952,6 +984,132 @@ def park_snapshot(data_dir: Path | None = None) -> dict | None:
 
 
 # ---------------------------------------------------------------------------
+# schema 5: the ballpark dark capture (docs/diamond-betting.md section 5i)
+# ---------------------------------------------------------------------------
+def _effective_side(bats, vs_hand: str) -> str | None:
+    """The side a hitter bats from against a `vs_hand` starter. A switch hitter
+    turns around: left against a right-hander, right against a left-hander.
+    None for anything unreadable, never a default side."""
+    b = str(bats or "").strip().upper()[:1]
+    if b in ("L", "R"):
+        return b
+    if b in ("S", "B"):
+        return "L" if vs_hand == "R" else "R"
+    return None
+
+
+def lhb_share_from_orders(team_blob: dict | None, vs_hand: str) -> float | None:
+    """One hitter-leaderboard team row -> the left-handed share of expected
+    plate appearances in its captured order against a `vs_hand` starter
+    ("R" reads orders.vr, "L" reads orders.vl), or None.
+
+    Weighted by LINEUP_SLOT_PA, because the leadoff man bats more than the nine
+    hole. A slot with no readable bat side is SKIPPED, never counted as either
+    hand, and fewer than LINEUP_HAND_MIN_SLOTS readable slots is None."""
+    orders = (team_blob or {}).get("orders")
+    if not isinstance(orders, dict) or vs_hand not in ("L", "R"):
+        return None
+    num = den = 0.0
+    n = 0
+    for s in orders.get("vr" if vs_hand == "R" else "vl") or []:
+        if not isinstance(s, dict):
+            continue
+        side = _effective_side(s.get("bats"), vs_hand)
+        try:
+            w = LINEUP_SLOT_PA.get(int(s.get("slot") or 0))
+        except (TypeError, ValueError):
+            w = None
+        if side is None or w is None:
+            continue
+        n += 1
+        den += w
+        num += w if side == "L" else 0.0
+    if n < LINEUP_HAND_MIN_SLOTS or den <= 0:
+        return None
+    return round(num / den, 4)
+
+
+def build_lineup_hand_mix(hit_blob: dict | None) -> dict:
+    """{column: {"values": {org: share}, "basis": str}} for the two schema-5
+    team columns. When the artifact says its bat-side lens was DOWN the orders
+    are not hand-labelled, so both columns are a stated null for every club
+    rather than a share read off an order that means nothing."""
+    cols = {"lhb_share_vr": "R", "lhb_share_vl": "L"}
+    try:
+        bs = (hit_blob or {}).get("bat_side")
+        if isinstance(bs, dict) and bs.get("available") is False:
+            why = ("ABSENT: hitter_leaderboards bat_side.available is false tonight, "
+                   "so the orders are not hand-labelled; captured null")
+            return {c: {"values": {}, "basis": why} for c in cols}
+        out = {}
+        for col, hand in cols.items():
+            vals = {}
+            for t in (hit_blob or {}).get("teams") or []:
+                o = _org(t.get("team")) if isinstance(t, dict) else None
+                if not o:
+                    continue
+                v = lhb_share_from_orders(t, hand)
+                if v is not None:
+                    vals[o] = v
+            out[col] = {"values": vals, "basis": (
+                FEATURE_SOURCES[col] + f"; a club needs >= {LINEUP_HAND_MIN_SLOTS} "
+                f"of 9 slots with a readable bat side; {len(vals)} clubs resolved")}
+        return out
+    except Exception as e:                                       # noqa: BLE001
+        why = (f"ABSENT: the lineup hand-mix builder raised {type(e).__name__} "
+               "tonight; captured null")
+        return {c: {"values": {}, "basis": why} for c in cols}
+
+
+def park_by_hand_snapshot(data_dir: Path | None = None) -> dict | None:
+    """{canonical org: {"L", "R", "hr_L", "hr_R"}} as index / 100, off fa_meta's
+    `park_factors_by_hand` sibling, or None. None, never {}, for the park_snapshot
+    reason: an empty block would read as a league of neutral parks. An org needs
+    both hands or it is left out rather than half-filled."""
+    dd = Path(data_dir) if data_dir else DATA_DIR
+    meta = _load_json(dd / "fa_meta.json")
+    blk = (meta or {}).get("park_factors_by_hand") if isinstance(meta, dict) else None
+    if not isinstance(blk, dict):
+        return None
+    left, right = blk.get("L") or {}, blk.get("R") or {}
+    out: dict[str, dict] = {}
+    for org in set(left) & set(right):
+        o = _org(org)
+        lr, rr = left.get(org), right.get(org)
+        if not o or not isinstance(lr, dict) or not isinstance(rr, dict):
+            continue
+        try:
+            out[o] = {"L": round(float(lr["runs"]) / 100.0, 4),
+                      "R": round(float(rr["runs"]) / 100.0, 4),
+                      "hr_L": round(float(lr["hr"]) / 100.0, 4),
+                      "hr_R": round(float(rr["hr"]) / 100.0, 4)}
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out or None
+
+
+def park_short_window_snapshot(data_dir: Path | None = None) -> dict | None:
+    """{canonical org: {"runs", "n_pa", "year_range"}} RAW, off fa_meta's
+    `park_factors_short_window` sibling, or None. Stored raw on purpose: the
+    shrink lives in ONE place (betting_model.short_window_park_value) and the
+    live and vintage paths both go through it."""
+    dd = Path(data_dir) if data_dir else DATA_DIR
+    meta = _load_json(dd / "fa_meta.json")
+    blk = (meta or {}).get("park_factors_short_window") if isinstance(meta, dict) else None
+    rows = (blk or {}).get("orgs") if isinstance(blk, dict) else None
+    if not isinstance(rows, dict):
+        return None
+    out: dict[str, dict] = {}
+    for org, r in rows.items():
+        o = _org(org)
+        if not o or not isinstance(r, dict) or r.get("runs") is None:
+            continue
+        out[o] = {"runs": r.get("runs"), "n_pa": r.get("n_pa"),
+                  "year_range": r.get("year_range")}
+    return out or None
+
+
+# ---------------------------------------------------------------------------
 # reduce the live leaderboards to a record
 # ---------------------------------------------------------------------------
 def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) -> dict | None:
@@ -1045,6 +1203,10 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
         why = f"ABSENT: the schema-4 builder raised {type(exc).__name__}: {exc}"
         for c in SCHEMA4_TEAM_COLUMNS:
             dark[c] = {"values": {}, "basis": why}
+    # Schema 5 dark capture (2026-09-11): each club's left-handed PA share by
+    # opposing hand, off the same orders the schema-3 splits read. Isolated
+    # inside its builder; a failure is a stated null for its two columns.
+    dark.update(build_lineup_hand_mix(hit))
     for col, blk in dark.items():
         i_col = TEAM_COLUMNS.index(col)
         for org, row in teams.items():
@@ -1130,7 +1292,7 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
     # the marking cannot claim more fills than the record holds.
     fb = {c: {"basis": (dark[c]["basis"] if c in dark else FEATURE_SOURCES[c]),
               "n": _n_teams_with(c)}
-          for c in SCHEMA3_TEAM_COLUMNS + SCHEMA4_TEAM_COLUMNS}
+          for c in SCHEMA3_TEAM_COLUMNS + SCHEMA4_TEAM_COLUMNS + SCHEMA5_TEAM_COLUMNS}
     # sp_rest_days: days since this arm's previous appearance in any cached
     # feed. None on a season debut, which is a stated absence and not a large
     # rest number, because a silent zero-or-999 is exactly what a downstream
@@ -1163,6 +1325,26 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
                   "this record use a NEUTRAL park, never the live index"),
         "n": len(parks) if parks else 0,
     }
+    # Schema 5 record blocks, both DARK and both None (never {}) when the
+    # fa_meta sibling is absent: a night without them is a stated absence, and
+    # the core park column above is untouched by either.
+    parks_by_hand = park_by_hand_snapshot(data_dir=dd)
+    parks_short = park_short_window_snapshot(data_dir=dd)
+    fb["park_by_hand"] = {
+        "basis": ("fa_meta.json park_factors_by_hand (Savant 3-season view by "
+                  "batter side), runs and HR index / 100; DARK" if parks_by_hand else
+                  "ABSENT: fa_meta.json carries no park_factors_by_hand block "
+                  "tonight; captured null"),
+        "n": len(parks_by_hand) if parks_by_hand else 0,
+    }
+    fb["park_short_window"] = {
+        "basis": ("fa_meta.json park_factors_short_window (Savant rolling=2, "
+                  "clubs the 3-season view drops), raw rows; priced only under "
+                  "betting_model.SERVE_ATH_PARK" if parks_short else
+                  "ABSENT: fa_meta.json carries no park_factors_short_window "
+                  "block tonight; captured null"),
+        "n": len(parks_short) if parks_short else 0,
+    }
 
     return {
         "schema": SCHEMA,
@@ -1183,6 +1365,8 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
         "parks": parks,
         "park_source": PARK_SOURCE if parks else None,
         "park_units": PARK_UNITS,
+        "parks_by_hand": parks_by_hand,
+        "parks_short_window": parks_short,
         "cutoff_note": ("covers_through is the max of the source leaderboards' as_of "
                         "dates and the date this file was written; a record may price "
                         "only games dated strictly after it"),

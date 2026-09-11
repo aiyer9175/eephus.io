@@ -149,6 +149,96 @@ def park_factors(season: int, bat_side: str = "") -> dict[str, dict]:
     return out
 
 
+# Savant's window, in seasons, for a venue the default 3-season view drops.
+# 2 is the shortest window that holds a full season plus the current one for a
+# club that moved in the season before last, which is exactly the Athletics'
+# case (Sutter Health Park since 2025).
+SHORT_WINDOW_ROLLING = "2"
+
+
+def _park_rows_with_sample(season: int, bat_side: str = "",
+                           rolling: str = "") -> dict[str, dict]:
+    """{org: {woba, hr, runs, n_pa, year_range, venue}} for one Savant view.
+
+    `park_factors` above is the FA engine's contract and is left exactly as it
+    is; this sibling carries the PA sample and the window beside the three
+    indices, because a consumer that has to decide how far to trust a factor
+    needs its sample, and a factor with no sample on it cannot be shrunk."""
+    rows = fa_sources.fetch_savant_park_factors(season, bat_side, rolling=rolling)
+    out: dict[str, dict] = {}
+    for r in rows:
+        club = r.get("name_display_club") or ""
+        org = _SAVANT_CLUB_OVERRIDES.get(club) or canonical_org(club)
+        if not org or len(org) > 3:
+            continue
+        try:
+            n_pa = int(float(r.get("n_pa") or 0))
+        except (TypeError, ValueError):
+            n_pa = 0
+        out[org] = {"woba": int(r.get("index_woba") or 100),
+                    "hr": int(r.get("index_hr") or 100),
+                    "runs": int(r.get("index_runs") or 100),
+                    "n_pa": n_pa,
+                    "year_range": r.get("year_range"),
+                    "venue": r.get("venue_name")}
+    return out
+
+
+def park_factors_short_window(season: int) -> dict:
+    """The clubs the default 3-season Savant view DROPS, from the shortest
+    window that publishes them, with the sample on every row.
+
+    {"season", "rolling", "source", "note", "orgs": {org: {...row, n_pa}}}.
+    An org lands here only when it is ABSENT from `park_factors(season)`, so
+    this block can never overwrite a measured 3-season factor. On 2026-09-11
+    the only such club is ATH: Savant's 2024-2026 view carries 29 venues and
+    its 2025-2026 view publishes Sutter Health Park at runs 121 on 34,287 PA.
+
+    Nothing in the FA engine reads this block. It exists so the betting model
+    can decide, behind its own flag, whether to stop pricing the Athletics'
+    home games at a neutral park (betting_model.SERVE_ATH_PARK)."""
+    base = park_factors(season)
+    short = _park_rows_with_sample(season, "", rolling=SHORT_WINDOW_ROLLING)
+    orgs = {o: row for o, row in short.items() if o not in base}
+    return {
+        "season": season,
+        "rolling": int(SHORT_WINDOW_ROLLING),
+        "source": ("Baseball Savant statcast-park-factors, rolling="
+                   f"{SHORT_WINDOW_ROLLING}, batSide all"),
+        "note": ("clubs absent from the default 3-season view only; every row "
+                 "carries its PA sample so a consumer can shrink it, and no "
+                 "consumer may treat it as a 3-season factor"),
+        "orgs": orgs,
+    }
+
+
+def park_factors_by_hand(season: int) -> dict:
+    """The default 3-season view split by batter side, with the sample.
+
+    {"season", "source", "note", "L": {org: row}, "R": {org: row}}. Read by the
+    betting module's DARK capture only (leaderboard_vintages parks_by_hand and
+    betting_props_dark's hand arms); the FA engine keeps reading
+    `park_factors(season, bat_side)` exactly as before.
+
+    MEASURED 2026-09-11 BEFORE ANY CONSUMER EXISTED, off Savant's own
+    single-season pages 2019 and 2021-2026 (176 stable venue-season pairs): the
+    per-venue L minus R difference in index_runs has a season-to-season
+    correlation of 0.0065, a 3-season reliability of 0.0191, so the RUNS split
+    is almost entirely noise at the samples Savant publishes. The index_hr split
+    correlates 0.1406 season to season, 0.3293 at three seasons: weak, and
+    real. docs/diamond-betting.md section 5i carries the arithmetic."""
+    out = {"season": season,
+           "source": "Baseball Savant statcast-park-factors, default 3-season view, "
+                     "batSide L and R",
+           "note": ("per-hand indices at 100 = neutral with the PA sample; the "
+                    "runs split is measured near-pure noise and the HR split weak, "
+                    "see docs/diamond-betting.md section 5i"),
+           "L": {}, "R": {}}
+    for side in ("L", "R"):
+        out[side] = _park_rows_with_sample(season, side)
+    return out
+
+
 def park_component(player: dict, org: str, season: int) -> dict:
     """0..1 score + the underlying indices. Hitters want >100 wOBA/HR in
     their batted side; pitchers want <100. ±25 index points saturate —
