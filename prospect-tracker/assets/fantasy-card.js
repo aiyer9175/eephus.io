@@ -66,8 +66,7 @@
   }
   // Glossary spans. Every slug below is checked against data/glossary.json
   // before it is used: a [data-gl] carrying a slug the artifact does not have
-  // renders a term that looks interactive and defines nothing. That is why the
-  // surplus and luck rows are plain text - neither has an entry yet.
+  // renders a term that looks interactive and defines nothing.
   function gl(label, slug) {
     return '<span class="g-term" data-gl="' + esc(slug) + '">' + esc(label) + "</span>";
   }
@@ -254,30 +253,33 @@
       return '<span class="fc-elig">' + esc(e) + "</span>";
     }).join("");
     var href = fullCardHref(mlbam);
+    // The roster flag (fantasy_export roster_status, FLAGGED, NEVER FILTERED):
+    // the tooltip is the payload's own basis string.
+    var off = recs.some(function (r) { return r && r.roster_status === "off_roster"; });
+    var basis = ((payload() || {}).roster_status || {}).basis || "Off the active roster at build time.";
     return '<div class="fc-head">' +
       '<h2 id="fc-title" class="fc-name">' + teamLogo(p.team) + " " + esc(p.name || "Player") + "</h2>" +
       '<div class="fc-sub">' + esc(p.team || "") + (p.pos ? " &middot; " + esc(p.pos) : "") +
       (recs.length > 1 ? ' <span class="fc-elig fc-twoway">two-way</span>' : "") +
+      (off ? ' <span class="fc-elig fc-off" title="' + esc(basis) + '">off roster</span>' : "") +
       " " + chips + "</div>" +
       (href
         ? '<a class="fc-out" href="' + esc(href) + '">Full MLB card</a>'
-        : '<span class="fc-out fc-out-off" title="This player has no merged MLB card in the ' +
-          'player_links artifact yet, so there is nowhere to send you.">No MLB card yet</span>') +
+        : '<span class="fc-out fc-out-off" title="No merged MLB card in player_links yet.">No MLB card yet</span>') +
       "</div>";
   }
   function scoreBlock(rec) {
     if (!HOST || typeof HOST.scoreLine !== "function") return "";
     var rows = HOST.scoreLine(rec) || [];
     if (!rows.length) return "";
-    return '<div class="fc-sec"><div class="fc-sec-h">Rest of season, every league format</div>' +
+    return '<div class="fc-sec"><div class="fc-sec-h">Rest of season, by league format</div>' +
       '<div class="fc-scores">' + rows.map(function (r) {
         return '<span class="fc-score' + (r.active ? " is-active" : "") + '">' +
           '<span class="fc-score-l">' + esc(r.label) + "</span>" +
           '<span class="fc-score-v">' + esc(r.value) + "</span></span>";
       }).join("") + "</div>" +
-      '<div class="fc-fine">Points formats are the dot product of the projection and that format\'s ' +
-      "weight table. Category formats are pooled z-scores over the board he sits on, so they are a " +
-      "position in a pool rather than a total.</div></div>";
+      '<div class="fc-fine">Points: projection times the format\'s weight table. Categories: summed ' +
+      "z-scores over his board, a position in a pool, not a total.</div></div>";
   }
   var HIT_TAPE = [["pa", "PA", 0], ["hr", "HR", 0], ["r", "R", 0], ["rbi", "RBI", 0],
                   ["sb", "SB", 0], ["avg", "AVG", 3], ["obp", "OBP", 3], ["slg", "SLG", 3]];
@@ -303,8 +305,7 @@
       (rec.side === "hit" ? "hitting" : "pitching") + "</div>" +
       '<div class="fc-tape">' + cells + "</div>" +
       (anyEst
-        ? '<div class="fc-fine">A dotted underline marks a leg the exporter estimated rather than ' +
-          "projected directly. Those are the counting stats that depend on the lineup around him.</div>"
+        ? '<div class="fc-fine">Dotted underline: an estimated leg, not a direct projection.</div>'
         : "") + "</div>";
   }
   function skillBlock(rec) {
@@ -337,9 +338,8 @@
     if (!out.length) return "";
     return '<div class="fc-sec"><div class="fc-sec-h">Skill and luck</div>' +
       '<div class="fc-chips">' + out.join("") + "</div>" +
-      '<div class="fc-fine">A positive gap means the results have run behind the contact quality, ' +
-      "which is the buy case. It is a description of what already happened, never part of the " +
-      "projection above.</div></div>";
+      '<div class="fc-fine">Positive gap: results behind the expected stats. Descriptive, not in the ' +
+      "projection. Whether a gap closes or persists is unmeasured.</div></div>";
   }
   function startsBlock(rec) {
     if (rec.side !== "pit") return "";
@@ -352,19 +352,18 @@
           (s.projected ? ' <span class="fc-dim">(projected)</span>' : "") + "</span>" +
           "<span>" + num(s.pts, 1) + " pts</span></div>";
       }).join("") + "</div>" +
-      '<div class="fc-fine">MLB posts probables about five days out. A start marked projected is ' +
-      "the team schedule on normal rest, not an announcement.</div></div>";
+      '<div class="fc-fine">Projected: team schedule on normal rest, not announced.</div></div>';
   }
   function roleBlock(rec) {
     if (rec.side !== "pit") return "";
     var r = bullpenRole(rec.mlbam);
     if (!r) return "";
-    var role = r.idx === 0 ? "likely closer" : (r.idx === 1 ? "next in line" : "bullpen depth");
-    return '<div class="fc-sec"><div class="fc-sec-h">Bullpen role</div>' +
+    // Role ORDER, never a likelihood (closer gate RED 2026-08-16).
+    var role = r.idx === 0 ? "closer slot" : (r.idx === 1 ? "next in line" : "bullpen depth");
+    return '<div class="fc-sec"><div class="fc-sec-h">' + gl("Bullpen role", "reliever_roles") + "</div>" +
       '<div class="fc-chips">' + chip(esc(r.team), role, r.idx === 0 ? "fc-good" : "") +
       chip("Depth chart", "#" + (r.idx + 1) + " of " + r.n) + "</div>" +
-      '<div class="fc-fine">Pecking order by average leverage, not by a named role. The club has ' +
-      "not told anyone who closes; this is where the manager has been using him.</div></div>";
+      '<div class="fc-fine">Order by a gmLI-led score with saves and REM+. Not a saves projection.</div></div>';
   }
   // ---- the season-trend sparkline (2026-08-16) ------------------------------
   // The cards.js precedent: inline SVG, theme tokens only, no canvas and no
@@ -408,9 +407,8 @@
       '<div class="fc-sparkrow">' + sparkSvg(pts) +
       '<span class="fc-spark-range">' + esc(first.s) + " " + num(first.v, 0) +
       ' <span class="fc-dim">to</span> ' + esc(last.s) + " " + num(last.v, 0) + "</span></div>" +
-      '<div class="fc-fine">One point per qualified season on the ' + label +
-      " history board" + (series.asof ? ", as of " + esc(series.asof) : "") +
-      ". A season he did not qualify for is a gap, not a zero.</div></div>";
+      '<div class="fc-fine">One point per qualified season' +
+      (series.asof ? ", as of " + esc(series.asof) : "") + ". Unqualified seasons are skipped.</div></div>";
   }
 
   // ---- the next-7 schedule strip (2026-08-16) -------------------------------
@@ -440,8 +438,8 @@
     }).join("");
     return '<div class="fc-sec"><div class="fc-sec-h">' + esc(team) + ", next 7 days</div>" +
       '<div class="fc-chips">' + chips + "</div>" +
-      '<div class="fc-fine">Colored by opponent Offense+: a soft week reads green, a hard one red. ' +
-      "An unmeasured opponent stays neutral rather than being scored as average.</div></div>";
+      '<div class="fc-fine">Border by opponent ' + gl("Offense+", "offense_plus") +
+      ": 105 or higher red, 95 or lower green, unmeasured neutral.</div></div>";
   }
 
   function dynastyBlock(mlbam) {
@@ -459,7 +457,7 @@
         chip(gl("ETA", "eta"), esc(d.eta || "-")) +
         chip(gl("Star", "star_odds"), d.star == null ? null : num(d.star, 0) + "%", "fc-good") +
         chip(gl("Bust", "bust_prob"), d.bust == null ? null : num(d.bust, 0) + "%", "fc-bad") +
-        chip("Surplus", d.surplus == null ? null : "$" + num(d.surplus, 0) + "M") +
+        chip(gl("Surplus", "surplus_value"), d.surplus == null ? null : "$" + num(d.surplus, 0) + "M") +
         chip("Outlook", (band[0] != null && band[1] != null)
           ? ("$" + num(band[0], 0) + "-" + num(band[1], 0) + "M") : null) +
         (HOST && typeof HOST.keeperRound === "function"
@@ -467,12 +465,10 @@
         "</div>";
     }
     if (cw) {
-      out += '<div class="fc-fine">On Call-up Watch: close to the majors with fantasy upside, ' +
-        "ETA " + esc(cw.eta || "-") + ".</div>";
+      out += '<div class="fc-fine">On Call-up Watch, ETA ' + esc(cw.eta || "-") + ".</div>";
     }
-    out += '<div class="fc-fine">The eFV grade is the served board number, the same one PROSPX ' +
-      "prints. The dynasty rank is a display blend over it and the columns beside it, not a " +
-      "second model.</div>";
+    out += '<div class="fc-fine">eFV is the served board grade, same as PROSPX. The rank is a display ' +
+      "blend over it, not a separate model.</div>";
     return '<div class="fc-sec"><div class="fc-sec-h">Dynasty</div>' + out + "</div>";
   }
   // The two links out of this block are the module hash, not /dfs/. That dir is
@@ -486,8 +482,8 @@
     }
     if (S.dfsState === "failed") {
       return '<div class="fc-sec"><div class="fc-sec-h">Tonight</div>' +
-        '<div class="fc-fine">The daily slate did not load, so we cannot say whether he is on it. ' +
-        'The board itself is at <a class="fc-link" href="#m=dfs&amp;section=slate">DFS</a>.</div></div>';
+        '<div class="fc-fine">The daily slate did not load. Board: ' +
+        '<a class="fc-link" href="#m=dfs&amp;section=slate">DFS</a>.</div></div>';
     }
     var rows = dfsRowsFor(mlbam);
     if (!rows.length) return "";
@@ -509,10 +505,9 @@
       (stale ? "On the " + esc(d.slate_date || "last") + " slate" : "Tonight") + "</div>" + body +
       '<div class="fc-fine">' +
       (stale
-        ? "This is not today's slate. The daily build has not published one, so these numbers " +
-          "belong to " + esc(d.slate_date || "an earlier day") + ". "
+        ? "Not today's slate: these numbers are from " + esc(d.slate_date || "an earlier day") + ". "
         : "") +
-      'Per-game contest projections. The full board, with salaries and the optimizer, is at ' +
+      'Per-game contest projections. Full board and optimizer: ' +
       '<a class="fc-link" href="#m=dfs&amp;section=slate">DFS</a>.</div></div>';
   }
 
@@ -525,8 +520,7 @@
       // is not an error: he has not played in the majors. Say which it is.
       if (dyn) return head(mlbam, [dynastyIdentity(mlbam)]) + dyn;
       return head(mlbam, [{}]) +
-        '<div class="fc-sec"><div class="fc-fine">This player is not in the current build. ' +
-        "The corpus rebuilds nightly.</div></div>";
+        '<div class="fc-sec"><div class="fc-fine">Not in the current build.</div></div>';
     }
     var out = head(mlbam, recs);
     recs.forEach(function (rec) {
@@ -635,6 +629,7 @@
       ".fc-sub{font-size:12.5px;color:var(--text-secondary);margin-top:3px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}",
       ".fc-elig{font:600 10px/1 var(--font-retro,monospace);color:var(--text-tertiary);border:1px solid var(--border);padding:2px 5px}",
       ".fc-twoway{color:var(--accent-cyan);border-color:var(--accent-cyan)}",
+      ".fc-off{color:var(--accent-red);border-color:var(--accent-red);cursor:help}",
       ".fc-out{display:inline-block;margin-top:8px;font:600 11px/1 var(--font-retro,monospace);color:var(--accent-cyan);text-decoration:none;border:1px solid var(--accent-cyan);padding:6px 10px}",
       ".fc-out:hover{text-decoration:underline}",
       ".fc-out-off{color:var(--text-tertiary);border-color:var(--border);cursor:help}",

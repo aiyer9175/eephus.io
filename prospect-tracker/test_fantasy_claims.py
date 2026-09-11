@@ -13,17 +13,19 @@ ratchet to that surface, in two layers:
 1. PHRASE RATCHET: the shared BANNED_CLAIM_FRAGMENTS from
    test_claims_freshness (contradicted eFV/consensus claims) plus the
    fantasy-specific fragments removed on 2026-08-19, each with its own
-   history, may never appear in assets/fantasy.js.
+   history, may never appear on a fantasy surface (FANTASY_SURFACES).
 2. REQUIRED DISCLOSURES: the honesty sentences the 2026-08-19 audit left
    in place (screen posture, role-order posture, display-ranking posture)
    are load-bearing; deleting one silently would re-open the claim it
    closes, so their presence is pinned.
 
-SCOPE: assets/fantasy.js only. The redraft.js / fantasy-card.js ports carry
-sibling copies of the buy/sell and closer notes; they were out of scope for
-the 2026-08-19 lane and adding them to FANTASY_SURFACES before their copy
-is repaired would turn this ratchet red on day one. Add each port here in
-the same change that fixes its copy.
+SCOPE: assets/fantasy.js since 2026-08-19; the SERVED ports joined on
+2026-09-11 in the change that repaired their copy. assets/redraft.js was
+still printing "is due to improve", "Buy-Low (unlucky)" and "the likely
+closer" on the live /fantasy/ page, and assets/fantasy-card.js called the
+top bullpen arm a "likely closer" and the positive gap "the buy case", all
+while the frozen fantasy.js (loaded by no page) carried the repaired copy.
+assets/dynasty.js joined for its blend disclosure.
 
 Import-safe and deterministic: no network, no rebuilds, every file read
 happens inside a test function.
@@ -41,6 +43,9 @@ ROOT = Path(__file__).parent
 # adding the ports).
 FANTASY_SURFACES = (
     "assets/fantasy.js",
+    "assets/redraft.js",
+    "assets/fantasy-card.js",
+    "assets/dynasty.js",
 )
 
 # ---------------------------------------------------------------------------
@@ -66,6 +71,11 @@ FANTASY_BANNED_FRAGMENTS = (
     # may describe the ordering rule (gmLI, saves/REM+ tiebreaks); it may
     # not attach a likelihood to who gets saves.
     "the likely closer",
+    # The card's role chip carried the same claim without the article
+    # ("likely closer"), and its skill note called a positive gap "the buy
+    # case". Both removed 2026-09-11 with the ports' copy repair.
+    "likely closer",
+    "the buy case",
 )
 
 # ---------------------------------------------------------------------------
@@ -79,6 +89,20 @@ FANTASY_REQUIRED_DISCLOSURES = (
      "closer grid role-order posture (fantasy_closer_depth; gate RED 2026-08-16)"),
     ("assets/fantasy.js", "display ranking over served efv numbers, not a separate model",
      "dynasty blend is a stated convention over gated upstream legs, never a fit"),
+    # The served ports (2026-09-11). Same three postures, on the pages a
+    # reader actually loads.
+    ("assets/redraft.js", "whether a gap closes or persists is unmeasured",
+     "buy/sell screen posture on the served Redraft board"),
+    ("assets/redraft.js", "not a saves projection",
+     "closer grid role-order posture on the served Redraft board"),
+    ("assets/fantasy-card.js", "whether a gap closes or persists is unmeasured",
+     "player card skill note: the gap is a screen, not a forecast"),
+    ("assets/fantasy-card.js", "not a saves projection",
+     "player card bullpen role: an order, not a saves projection"),
+    ("assets/fantasy-card.js", "not a separate model",
+     "player card dynasty block: the rank is a display blend"),
+    ("assets/dynasty.js", "display ranking over served efv numbers, not a separate model",
+     "dynasty board blend disclosure on the served Dynasty board"),
 )
 
 

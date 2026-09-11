@@ -357,13 +357,23 @@
   function f2(v) { return num(v, 2); }
   function f3(v) { return num(v, 3); }
   function scoreFmt(v) { return num(v, isRoto() ? 2 : 0); }
+  // THE ROSTER FLAG (fantasy_export roster_status, 2026-09-07). The payload's
+  // policy is FLAGGED, NEVER FILTERED: an optioned or injured player stays on
+  // a rest-of-season board, so the board has to show the flag or the policy
+  // is invisible. The tooltip is the payload's own basis string.
+  function offTag(p) {
+    if (!p || p.roster_status !== "off_roster") return "";
+    var basis = ((S.data && S.data.roster_status) || {}).basis || "Off the active roster at build time.";
+    return ' <span class="rd-off" title="' + esc(basis) + '">off roster</span>';
+  }
   function rosIdentity(o) {
     var p = o.p;
     var sub = (p.elig && p.elig.length) ? p.elig.join("/") : (p.pos || "");
     return '<div class="rd-id ff-id"><span class="mlb-name">' + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) +
-      '</span><span class="mlb-sub">' + esc(sub) + (p.team ? " &middot; " + esc(p.team) : "") + "</span></div>";
+      '</span><span class="mlb-sub">' + esc(sub) + (p.team ? " &middot; " + esc(p.team) : "") + offTag(p) +
+      "</span></div>";
   }
-  var SCORE_TITLE = "Rest-of-season value in the league format picked above. Points formats are the dot product of the projection and that format's weight table; roto formats are pooled category z-scores.";
+  var SCORE_TITLE = "Rest-of-season value in the selected format. Points: projection times the format's weight table. Categories: summed z-scores over this board.";
   var HIT_COLS = [
     { key: "rank", label: "#", where: "head", track: "38px", kind: "rank",
       title: "Board position under the current sort" },
@@ -527,9 +537,8 @@
   // and switching between those two cannot move this board. Said out loud here
   // because a control that visibly does nothing reads as a broken control.
   var HIT_FORMAT_NOTE =
-    '<div class="rd-note">FanGraphs Points and SABR Points share one hitter table. The two formats ' +
-    "differ only in how pitchers are scored, which is how Ottoneu runs them, so switching between " +
-    "those two leaves this board exactly where it is. The two category formats do re-rank it.</div>";
+    '<div class="rd-note">FanGraphs Points and SABR Points share one hitter table (they differ only ' +
+    "in pitcher scoring), so switching between them leaves this board unchanged.</div>";
   // The pool scores FIRST, the filter narrows what renders (see the filter-bar
   // note: filtering before rotoValue would re-value every remaining row).
   function filteredScored(ids, side) {
@@ -545,7 +554,7 @@
       filterBar(f.all.map(function (o) { return o.p; }), { shown: f.rows.length, total: f.all.length }) +
       renderCards(f.rows, HIT_COLS, SORT.ros_hitter, {
         hrefOf: function (o) { return hashFor(o.p.mlbam); },
-        empty: boardEmpty("Rest-of-season hitter projections populate on the nightly build.")
+        empty: boardEmpty("No rest-of-season hitter rows in this build.")
       });
   }
   function boardPitcher(ids, isRp) {
@@ -553,7 +562,7 @@
     return filterBar(f.all.map(function (o) { return o.p; }), { shown: f.rows.length, total: f.all.length }) +
       renderCards(f.rows, pitCols(isRp), isRp ? SORT.ros_rp : SORT.ros_sp, {
         hrefOf: function (o) { return hashFor(o.p.mlbam); },
-        empty: boardEmpty("Rest-of-season pitcher projections populate on the nightly build.")
+        empty: boardEmpty("No rest-of-season pitcher rows in this build.")
       });
   }
   function streamerDayLabel(d) {
@@ -576,8 +585,7 @@
     });
     days.sort();
     if (!days.length) {
-      return '<div class="rd-note">Probables are not posted for the streamer window yet. ' +
-        "Check back once lineups firm up.</div>";
+      return '<div class="rd-note">No probable starts posted in the 3-day window yet.</div>';
     }
     // A deep-linked #day= outside the served window is not an error state: it
     // snaps to the first slate, exactly as an empty S.streamerDay does.
@@ -599,10 +607,9 @@
         " (Off+ " + num(st.opp_off, 0) + ')</td><td class="rd-sc">' + num(st.per_start_fgp, 1) + "</td><td>" +
         (s.sem_plus != null ? num(s.sem_plus, 0) : "-") + "</td><td>" + esc(st.venue || "") + "</td></tr>";
     }).join("");
-    return '<div class="rd-note">Every announced probable start over the next 3 days, ranked by matchup-adjusted ' +
-      "expected points (a weaker opposing offense ranks higher). Pick a day below. Always scored in " +
-      "FanGraphs Points: the league-format selector lives on the three rest-of-season tabs, because those " +
-      "are the boards it can move.</div>" +
+    return '<div class="rd-note">Announced probable starts, next 3 days, ranked by expected FanGraphs Points ' +
+      "per start scaled by opponent " + gl("Offense+", "offense_plus") + ". Always FanGraphs Points; the " +
+      "format selector applies to the rest-of-season tabs.</div>" +
       '<div class="rd-daypills" role="tablist" aria-label="Streamer day">' + pills + "</div>" +
       '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table mlbstats-table">' +
       '<thead><tr><th class="mlbstats-col-rank">#</th><th class="rd-nm">Pitcher</th>' +
@@ -614,8 +621,7 @@
   // a fixed-height card box.
   function tableTwoStart(list) {
     if (!list || !list.length) {
-      return '<div class="rd-note">No two-start pitchers detected or projectable in the current window yet. ' +
-        "Check back once probables post for the scoring week.</div>";
+      return '<div class="rd-note">No two-start pitchers in the current window yet.</div>';
     }
     var rows = list.slice(0, 60).map(function (t, i) {
       var legs = (t.legs || []).map(function (l) {
@@ -626,9 +632,8 @@
         teamLogo(t.team) + "</td><td>" + esc(t.n_starts) + '</td><td class="rd-sc">' + num(t.total_fgp, 1) +
         "</td><td>" + legs + "</td></tr>";
     }).join("");
-    return '<div class="rd-note">Pitchers lined up for two starts this scoring week. MLB posts probables only ' +
-      "about 5 days out, so the second start is projected from the team schedule on normal rest and marked (proj) " +
-      "until it is announced.</div>" +
+    return '<div class="rd-note">Two starts this scoring week. (proj) marks a start projected from the team ' +
+      "schedule on normal rest, not yet announced.</div>" +
       '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table mlbstats-table">' +
       '<thead><tr><th class="mlbstats-col-rank">#</th><th class="rd-nm">Pitcher</th>' +
       "<th>Starts</th><th>Total pts</th>" +
@@ -657,9 +662,8 @@
         if (mt && mt.delta != null) {
           var md = (mt.delta > 0 ? "+" : "") + num(mt.delta, 0);
           chip = ' <span class="rd-mech ' + (mt.delta > 0 ? "rd-mech-up" : "rd-mech-down") +
-            '" title="Mechanics trend: per-season Swing+ (Will Cahoon) moved ' + md + " from " +
-            esc(mt.from) + " to " + esc(mt.to) + '. Context only, never part of this ranking.">mech trend ' +
-            md + "</span>";
+            '" title="Per-season Swing+ ' + md + ", " + esc(mt.from) + " to " + esc(mt.to) +
+            '. Not in the ranking.">mech trend ' + md + "</span>";
         }
         // TWO SCALES, TWO COLUMNS. Hitter luck_gap is xHEM+ minus HEM+, a
         // plus-stat delta whose pool spread is roughly +/-50; pitcher luck is
@@ -674,50 +678,51 @@
         var val = '<span class="rd-sc ' + cls + '">' + (gap > 0 ? "+" : "") +
           num(gap, isHit ? 0 : 3) + "</span>";
         var blank = '<span class="rd-dim">-</span>';
-        return '<tr><td class="rd-nm">' + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) + chip + "</td><td>" +
+        return '<tr><td class="rd-nm">' + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) + offTag(p) + chip + "</td><td>" +
           esc(p.pos || "") + "</td><td>" + (isHit ? val : blank) + "</td><td>" +
           (isHit ? blank : val) + "</td></tr>";
       }).join("");
       // AN EMPTY SIDE IS A SENTENCE, NOT A HEADER ROW OVER NOTHING. This was
       // the one surface on the page that fell through to a bare <tbody></tbody>:
-      // on an empty payload the reader got "Buy-Low (unlucky)" and three column
+      // on an empty payload the reader got a section heading and three column
       // headings above a blank strip. It also fires when the list IS served but
       // no id in it resolves to a player record, which reads the same way.
       if (!rows) {
         return '<div class="rd-half"><h3>' + label + "</h3>" +
           '<div class="rd-note">' +
           (S.q ? "No " + esc(kind) + " candidate matches the name filter."
-               : "No " + esc(kind) + " candidates in this build. The list comes " +
-                 "from the expected-stat gaps on the nightly run.") + "</div></div>";
+               : "No " + esc(kind) + " candidates in this build.") + "</div></div>";
       }
       return '<div class="rd-half"><h3>' + label + '</h3>' +
         '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table mlbstats-table">' +
         '<thead><tr><th class="rd-nm">Player</th><th>Pos</th>' +
-        '<th title="Hitters only: xHEM+ minus HEM+, in plus-stat points. Positive means unlucky.">Luck gap<br>' +
+        '<th title="Hitters: xHEM+ minus HEM+, plus-stat points.">Luck gap<br>' +
         gl("xHEM+", "xhem_plus") + " pts</th>" +
-        '<th title="Pitchers only: wOBA minus xwOBA, in wOBA points. Positive means unlucky.">Luck gap<br>' +
+        '<th title="Pitchers: wOBA minus xwOBA, wOBA points.">Luck gap<br>' +
         gl("wOBA", "woba") + " pts</th>" +
         "</tr></thead><tbody>" + rows + "</tbody></table></div></div>";
     }
     var sec = S.data.sections || {};
+    // Copy contract (test_fantasy_claims.py, same as the frozen fantasy.js):
+    // the fantasy_buy_sell registry row has no committed measurement that a
+    // gap regresses rather than persists, so the note states the gap direction
+    // and stops. No luck causality in the headers.
     return filterBar(null) +
-      '<div class="rd-note">Regression candidates from our expected-stat gaps (hitters: ' +
-      gl("xHEM+", "xhem_plus") + " against " + gl("HEM+", "hem_plus") + ", in plus-stat points; " +
-      "pitchers: " + gl("xwOBA", "xwoba") + " against actual " + gl("wOBA", "woba") + ", in wOBA " +
-      "points). The two scales sit about 500x apart, so they get a column each rather than one " +
-      "column that mixes them. A positive gap means the player has been UNLUCKY and is due to " +
-      "improve (buy); negative means he has been overperforming (sell). A mech trend chip flags a 5 point move in " +
-      "per-season " + gl("Swing+", "swing_plus") + " (Will Cahoon), swing-mechanics context only, " +
-      "never part of the ranking.</div>" +
-      '<div class="rd-cols">' + col(sec.buy_low, "Buy-Low (unlucky)", "rd-pos", "buy-low") +
-      col(sec.sell_high, "Sell-High (overperforming)", "rd-neg", "sell-high") + "</div>";
+      '<div class="rd-note">Screen on expected-stat gaps: hitters ' + gl("xHEM+", "xhem_plus") +
+      " minus " + gl("HEM+", "hem_plus") + ", pitchers " + gl("wOBA", "woba") + " minus " +
+      gl("xwOBA", "xwoba") + ". One column per scale (about 500x apart). Positive: results behind " +
+      "the expected stats; negative: ahead. Whether a gap closes or persists is unmeasured. " +
+      "mech trend: a 5+ point move in per-season " + gl("Swing+", "swing_plus") +
+      " (Will Cahoon), context only, not in the ranking.</div>" +
+      '<div class="rd-cols">' + col(sec.buy_low, "Buy-Low (behind x-stats)", "rd-pos", "buy-low") +
+      col(sec.sell_high, "Sell-High (ahead of x-stats)", "rd-neg", "sell-high") + "</div>";
   }
   // ALREADY A CARD GRID: 30 team cards of 5 arms each.
   function renderClosers() {
     var depth = (S.data.sections || {}).closer_depth || {};
     var teams = Object.keys(depth).sort();
     if (!teams.length) {
-      return '<div class="rd-note">The closer grid populates from the bullpen leaderboard on the nightly build.</div>';
+      return '<div class="rd-note">No bullpen rows in this build.</div>';
     }
     // Name search keeps the WHOLE team card when the club code or any arm on
     // it matches: a depth chart with its middle rung filtered out would
@@ -742,7 +747,7 @@
         var s = p.skill || {};
         var role = i === 0 ? '<span class="rd-closer">CLOSER</span>'
           : '<span class="rd-hc">' + (i === 1 ? "next" : "depth") + "</span>";
-        return '<div class="rd-relief">' + role + " " + nameLink(p.mlbam, p.name) +
+        return '<div class="rd-relief">' + role + " " + nameLink(p.mlbam, p.name) + offTag(p) +
           ' <span class="rd-dim">gmLI ' + num(s.gmli, 2) + " · " + num(s.saves, 0) +
           "sv · REM+ " + num(s.rem_plus, 0) + "</span></div>";
       }).join("");
@@ -751,9 +756,13 @@
       return '<div class="rd-team-card"><div class="rd-team-hd">' + teamLogo(tm) + " " + esc(tm) + "</div>" +
         (lst || '<div class="rd-relief rd-dim">No projectable arms in this build.</div>') + "</div>";
     }).join("");
+    // Copy contract (test_fantasy_claims.py): fantasy_closer_depth is a
+    // role-ORDER display and the save-share model lost to the pace rule (gate
+    // RED 2026-08-16). The note names the ordering rule and attaches no
+    // likelihood to who gets saves.
     return filterBar(null) +
-      '<div class="rd-note">Bullpen pecking order by average leverage (gmLI). The top arm is the likely ' +
-      "closer, the rest are save handcuffs. Grab the next in line before the save chance opens.</div>" +
+      '<div class="rd-note">' + gl("Role order", "reliever_roles") + " by a " + gl("gmLI", "gmli") +
+      "-led score with saves and REM+. Not a saves projection.</div>" +
       '<div class="rd-grid">' + cards + "</div>";
   }
 
@@ -1150,13 +1159,12 @@
   function errorState(msg) {
     var r = root();
     if (r) r.innerHTML = '<div class="rd-error" role="alert"><strong>Data failed to load.</strong> ' +
-      esc(msg || "") + ' The nightly build may be mid-run. <button type="button" id="rd-retry" class="rd-scorebtn">Retry</button></div>';
+      esc(msg || "") + ' <button type="button" id="rd-retry" class="rd-scorebtn">Retry</button></div>';
     var rb = el("rd-retry"); if (rb) rb.addEventListener("click", boot);
   }
   function notReady() {
     var r = root();
-    if (r) r.innerHTML = '<div class="rd-note">Rest-of-season projections are being computed. ' +
-      "Check back after the next nightly build.</div>";
+    if (r) r.innerHTML = '<div class="rd-note">Rest-of-season projections are not built yet (nightly build).</div>';
   }
   function onData(d) {
     if (!d || !d.players) { notReady(); return; }
@@ -1173,9 +1181,12 @@
     S.system = def ? def.id : "fgp";
     var b = bannerEl();
     if (b) {
-      b.innerHTML = '<div class="rd-asof">' + (d.n_players || 0) + " players · rest-of-season, " +
-        Math.round((d.season_fraction || 0) * 100) + "% of " + esc(d.season) +
-        " played · scored in your league format</div>";
+      // The build date is the vintage line: the corpus rebuilds nightly, and a
+      // banner with no date cannot show that a night was missed.
+      var built = String(d.generated_at || "").slice(0, 10);
+      b.innerHTML = '<div class="rd-asof">' + (d.n_players || 0) + " players · rest of season · " +
+        Math.round((d.season_fraction || 0) * 100) + "% of " + esc(d.season) + " played" +
+        (built ? " · built " + esc(built) : "") + "</div>";
     }
     // Deep-link restore between the defaults and the first paint, so a restored
     // section or format renders once rather than flashing the default first.
@@ -1274,7 +1285,8 @@
     ".rd-name-link{color:var(--accent-cyan);text-decoration:none}.rd-name-link:hover{text-decoration:underline}",
     ".rd-mech{font:600 10px/1 var(--font-retro,monospace);border:1px solid var(--border);padding:2px 5px;white-space:nowrap;cursor:help}",
     ".rd-mech.rd-mech-up{color:var(--accent-green);border-color:var(--accent-green)}",
-    ".rd-mech.rd-mech-down{color:var(--accent-red);border-color:var(--accent-red)}"
+    ".rd-mech.rd-mech-down{color:var(--accent-red);border-color:var(--accent-red)}",
+    ".rd-off{font:600 10px/1 var(--font-retro,monospace);color:var(--accent-red);border:1px solid var(--accent-red);padding:1px 4px;white-space:nowrap;cursor:help}"
     // NOTHING FOR THE SORT BAR, THE RANK CHIP OR THE SCORE CELL LIVES HERE any
     // more. Those are .ff-sortbar / .ff-rank / .ff-strong in assets/site.css
     // and the markup above names them. The local copies that used to sit here

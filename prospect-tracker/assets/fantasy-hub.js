@@ -143,7 +143,7 @@
     var s = document.createElement("script");
     s.src = src;
     s.onerror = function () {
-      fail(panel, "The module script did not load. The nightly build may be mid-run.");
+      fail(panel, "The module script did not load. Reload to retry.");
     };
     document.head.appendChild(s);
   }

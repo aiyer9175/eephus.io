@@ -266,7 +266,7 @@
   // only round. eFV rounds to NEAREST (it is not a scouting FV grade).
   var DYN_COLS = [
     { key: "rank", label: "#", where: "head", track: "38px", kind: "rank", asc: true,
-      title: "Served dynasty rank from the eFV blend. The diamond always shows the MODEL rank, never the position under an ad-hoc sort, so re-sorting the board cannot renumber the model.",
+      title: "Served dynasty rank. Sorting does not renumber it.",
       get: function (d) { return d.rank; } },
     { key: "name", label: "Prospect", where: "head", track: "minmax(0,1.7fr)", kind: "name", text: true, asc: true,
       title: "Sort by name", get: function (d) { return d.name; },
@@ -275,39 +275,39 @@
           '</span><span class="mlb-sub">' + esc(d.pos || "") + (d.org ? " &middot; " + esc(d.org) : "") + "</span></div>";
       } },
     { key: "efv", label: "eFV", term: "xfv", where: "head", track: "72px", strong: true,
-      title: "The eFV board grade, the same number PROSPX and Call-up Watch serve for this prospect, rounded to nearest. The dynasty rank blends it with star odds, bust odds, ETA and surplus.",
+      title: "eFV board grade, same as PROSPX, rounded to nearest.",
       get: function (d) { return d.efv; }, fmt: f0 },
     { key: "eta", label: "ETA", where: "head", track: "72px", asc: true,
-      title: "Projected first full season in the majors",
+      title: "Estimated MLB arrival year",
       get: function (d) { return d.eta; }, cell: function (d) { return esc(d.eta || "-"); } },
     { key: "tier", label: "Tier", where: "head", track: "96px", asc: true,
-      title: "Dynasty tier, bucketed off the served rank",
+      title: "Bucket of the served rank",
       get: function (d) { return d.rank; },
       cell: function (d) {
         var cls = d.tier === "Elite" ? " dyn-tier-elite" : (d.tier === "Tier 1" ? " dyn-tier-one" : "");
         return '<span class="dyn-tier' + cls + '">' + esc(d.tier) + "</span>";
       } },
     { key: "star", label: "Star", term: "star_odds", where: "tape",
-      title: "Odds this prospect reaches a star outcome",
+      title: "P(star outcome)",
       get: function (d) { return d.star; },
       cell: function (d) { return d.star == null ? "-" : num(d.star, 0) + "%"; } },
     { key: "bust", label: "Bust", term: "bust_prob", where: "tape", asc: true,
-      title: "Odds this prospect never returns real value",
+      title: "P(bust outcome)",
       get: function (d) { return d.bust; },
       cell: function (d) { return d.bust == null ? "-" : num(d.bust, 0) + "%"; } },
-    { key: "surplus", label: "Surplus", where: "tape",
-      title: "Projected surplus value in $M, read verbatim off the served eFV export.",
+    { key: "surplus", label: "Surplus", term: "surplus_value", where: "tape",
+      title: "Projected surplus, $M, from the served eFV export.",
       get: function (d) { return d.surplus; },
       cell: function (d) { return d.surplus == null ? "-" : "$" + num(d.surplus, 0) + "M"; } },
     { key: "keep", label: "Keep by", where: "tape",
-      title: "The earliest keeper round where this prospect is worth the pick you spend, given the league settings you entered in the Keeper Calculator. Pure arithmetic over the served rank.",
+      title: "Earliest keeper round whose pick number reaches his rank, under your Keeper Calculator settings.",
       get: function (d) { return breakEvenRound(d.rank); },
       cell: function (d) {
         var r = breakEvenRound(d.rank);
         return r == null ? "-" : ("R" + r);
       } },
     { key: "band_hi", label: "Outlook", where: "tape",
-      title: "10th to 90th percentile career-value band. Sorts on the P90 end.",
+      title: "P10-P90 career-value band, $M. Sorts on P90.",
       get: function (d) { return (d.band || [])[1]; },
       cell: function (d) {
         var b = d.band || [];
@@ -467,11 +467,11 @@
   // ---- sections -------------------------------------------------------------
   var LENSES = [
     { id: "board", label: "Board order", sort: { key: "rank", asc: true },
-      note: "The served dynasty rank: the eFV grade first, then star odds up, bust odds down, ETA proximity and projected surplus." },
+      note: "Served rank." },
     { id: "contend", label: "Contending", sort: { key: "eta", asc: true },
-      note: "Contending window. The board re-sorted by ETA, nearest first. Nothing about the model changes, only which end of it you read: a 2026 arrival helps a team trying to win now, a 2030 arrival does not." },
+      note: "Sorted by ETA, nearest first. Ranks unchanged." },
     { id: "rebuild", label: "Rebuilding", sort: { key: "star", asc: false },
-      note: "Rebuild window. The board re-sorted by star odds, highest first. If your season is already decided, the tail of the distribution is the only part worth paying for." }
+      note: "Sorted by star odds, highest first. Ranks unchanged." }
   ];
   function lensById(id) {
     var out = LENSES[0];
@@ -490,18 +490,17 @@
   function renderBoard() {
     var list = sections().dynasty || [];
     if (!list.length) {
-      return '<div class="dyn-note">The dynasty board populates from the eFV model on the nightly build. ' +
-        "Nothing is broken; the payload just has no rows yet.</div>";
+      return '<div class="dyn-note">No dynasty rows yet; they fill on the nightly build. Nothing is broken.</div>';
     }
     // When the shell gives us the bar above the nav, the lens goes there and
     // the board keeps its full height. Otherwise it rides inline.
     var host = lensHost();
     var inlineLens = host ? "" : renderLensBar();
-    var intro = '<div class="dyn-note">Dynasty prospect value from the eFV model. Ranked by a blend that keeps the ' +
-      "eFV grade primary, then rewards star upside, penalizes floor risk, and factors ETA proximity and projected " +
-      "surplus. Outlook is the 10th to 90th percentile career-value band. This is a display ranking over served eFV " +
-      "numbers, not a second model. Keep by is the earliest keeper round the pick pays for itself in your league, " +
-      "using the settings in the Keeper Calculator tab.</div>";
+    // The blend disclosure stays: the rank is a stated convention over gated
+    // upstream legs (fantasy_export._dynasty_prospects), never a fit.
+    var intro = '<div class="dyn-note">Rank: ' + glossLbl({ label: "eFV", term: "xfv" }) + " first, then " +
+      glossLbl({ label: "star odds", term: "star_odds" }) + " (up), " + glossLbl({ label: "bust odds", term: "bust_prob" }) +
+      " (down), ETA proximity and surplus. A display ranking over served eFV numbers, not a separate model.</div>";
     var rows = filterRows(list);
     return intro + inlineLens + filterBar(list, true, rows.length) +
       renderCards(rows, DYN_COLS, SORT.dynasty, {
@@ -509,14 +508,13 @@
         stripeOf: dynStripe,
         hrefOf: function (d) { return hashFor(d.mlbam); },
         empty: filtersOn() ? "No prospect matches the current filter."
-          : "The dynasty board populates from the eFV model on the nightly build."
+          : "No dynasty rows yet; they fill on the nightly build."
       });
   }
   function renderCallups() {
     var list = sections().callup_watch || [];
     if (!list.length) {
-      return '<div class="dyn-note">Call-up Watch populates from the prospect board on the nightly build ' +
-        "(prospects near their ETA with fantasy upside).</div>";
+      return '<div class="dyn-note">No Call-up Watch rows in this build.</div>';
     }
     if (S.q) {
       list = list.filter(function (c) { return normQ(c.name).indexOf(normQ(S.q)) >= 0; });
@@ -536,7 +534,7 @@
         "</td><td>" + esc(c.pos) + "</td><td>" + esc(c.eta) + '</td><td class="dyn-sc">' + grade + "</td></tr>";
     }).join("");
     return filterBar(null, false) +
-      '<div class="dyn-note">Prospects close to the majors with fantasy upside. Stash before the call.</div>' +
+      '<div class="dyn-note">ETA this season or next, ordered by eFV. Consensus FV (rounded up) where eFV is missing.</div>' +
       '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
       '<thead><tr><th class="dyn-nm">Prospect</th><th>Org</th><th>Pos</th>' +
       "<th>" + glossLbl({ label: "ETA", term: "eta" }) + "</th>" +
@@ -563,14 +561,11 @@
       '<button type="button" class="dyn-btn" id="dyn-k-reset">Reset</button>' +
       "</div>";
     var explain =
-      '<div class="dyn-note">Keeping a prospect costs a pick. This compares the pick you spend against where the ' +
-      "dynasty board ranks him, in rank space, which is the only space we can be honest in: we have never fit a " +
-      "dynasty dollar curve, so we do not print one. With " + k.teams + " teams and pick " + k.slot +
-      ", a round " + k.round + " keeper costs pick <b>" + costPick() + "</b> overall. Everything you enter stays " +
-      "in this browser.</div>";
+      '<div class="dyn-note">Pick spent against board rank. No dynasty dollar curve is fit, so no dollar value ' +
+      "is shown. With " + k.teams + " teams and pick " + k.slot + ", a round " + k.round +
+      " keeper costs pick <b>" + costPick() + "</b> overall. Settings stay in this browser.</div>";
     if (!list.length) {
-      return explain + form + '<div class="dyn-note">The board has no rows yet, so there is nothing to price. ' +
-        "The calculator still works: the pick math above updates as you type.</div>";
+      return explain + form + '<div class="dyn-note">No board rows yet. The pick math above still updates.</div>';
     }
     // Name search narrows BEFORE the 150-row cap, so a keeper deep on the
     // board is findable rather than cut off by the cap.
@@ -604,8 +599,8 @@
         "</tr>";
     }).join("");
     return explain + form + filterBar(null, false) +
-      '<div class="dyn-note">Edge is the pick you spend minus his board rank. Positive means the board ranks him ' +
-      "ahead of what the keeper costs. Keep by is the earliest round where that flips positive.</div>" +
+      '<div class="dyn-note">Edge = pick spent minus board rank; positive means keep. Keep by: earliest round ' +
+      "where edge is 0 or more.</div>" +
       '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
       '<thead><tr><th class="mlbstats-col-rank">#</th><th class="dyn-nm">Prospect</th><th>Pos</th>' +
       "<th>" + glossLbl({ label: "eFV", term: "xfv" }) + "</th>" +
@@ -886,14 +881,13 @@
   function errorState(msg) {
     var r = root();
     if (r) r.innerHTML = '<div class="dyn-error" role="alert"><strong>Data failed to load.</strong> ' +
-      esc(msg || "") + ' The nightly build may be mid-run. <button type="button" id="dyn-retry" class="dyn-btn">Retry</button></div>';
+      esc(msg || "") + ' <button type="button" id="dyn-retry" class="dyn-btn">Retry</button></div>';
     var rb = el("dyn-retry");
     if (rb) rb.addEventListener("click", boot);
   }
   function notReady() {
     var r = root();
-    if (r) r.innerHTML = '<div class="dyn-note">The dynasty payload has not been built yet. ' +
-      "Check back after the next nightly build.</div>";
+    if (r) r.innerHTML = '<div class="dyn-note">The dynasty payload is not built yet (nightly build).</div>';
   }
   function onData(d) {
     if (!d || !d.sections) { notReady(); return; }
@@ -903,10 +897,15 @@
       var n = (d.sections.dynasty || []).length;
       // The stage phrase is a link: it is the only conversion route the page
       // carries outside the nav dropdown's last item.
+      // The build date is the vintage line. "Free" is said only while the gate
+      // is off, so the day the flag flips this banner stops claiming it.
+      var built = String(d.generated_at || "").slice(0, 10);
+      var D = gate(), gatingOn = false;
+      try { gatingOn = !!(D && D.gating && D.gating()); } catch (e) { gatingOn = false; }
       b.innerHTML = '<div class="dyn-asof">' + n + " prospects · eFV board grades · " +
-        esc(d.season || "") +
-        ' season · <a class="dyn-name-link" href="/diamond/">Diamond preview</a>' +
-        ", free while we build</div>";
+        esc(d.season || "") + " season" + (built ? " · built " + esc(built) : "") +
+        ' · <a class="dyn-name-link" href="/diamond/">Diamond' + (gatingOn ? "" : " preview") + "</a>" +
+        (gatingOn ? "" : ", free") + "</div>";
     }
     readHash();
     attachCard();

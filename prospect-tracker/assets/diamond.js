@@ -123,9 +123,7 @@
     var vs = h2h && h2h.vs;
     var against = vs && (vs.prospx_consensus || vs.fangraphs || vs.mlb_pipeline);
     if (!against) {
-      root.innerHTML = note(
-        "The model scoreboard artifact is here but does not carry a head to head block. " +
-        "Nothing is being claimed until it does.");
+      root.innerHTML = note("The scoreboard artifact carries no head-to-head block, so no comparison is shown.");
       return;
     }
     var who = against.label || "the public consensus";
@@ -140,20 +138,17 @@
     var auc = against.auc_contributor || {};
     var tiles =
       tile("Rank correlation with realized career WAR", sp.efv, sp.consensus, sp.n, who, resolvable) +
-      tile("Picking out the players who became contributors", auc.efv, auc.consensus, auc.n, who, resolvable);
+      tile("Contributor AUC", auc.efv, auc.consensus, auc.n, who, resolvable);
     if (!tiles) {
       root.innerHTML = note("The scoreboard artifact carries no comparable metrics yet.");
       return;
     }
     var intro = resolvable
-      ? "<p>Both numbers are scored on the same players, out of sample, in a forward-chained " +
-        gl("backtest", "backtest") + ". " + gl("eFV", "xfv") + " never sees a player's own " +
-        "outcome before it grades him. Higher is better in both rows.</p>"
+      ? "<p>Scored on the same players out of sample, forward-chained " + gl("backtest", "backtest") +
+        ". Higher is better.</p>"
       : "<p>" + gl("eFV", "xfv") + " and the public consensus are statistically indistinguishable " +
-        "on both ordering and discrimination, scored on the same players out of sample. The tiles " +
-        "carry the raw numbers behind that verdict, from a forward-chained " +
-        gl("backtest", "backtest") + " in which the model never sees a player's own outcome " +
-        "before it grades him.</p>";
+        "on both ordering and discrimination, scored on the same players out of sample, forward-chained " +
+        gl("backtest", "backtest") + ".</p>";
     // A LEAD IS NOT A RESULT UNTIL IT CLEARS THE FLOOR, AND A FLOOR IS NOT CHECKABLE
     // UNTIL IT NAMES ITS ESTIMATOR. These tiles used to print two numbers and let the
     // bigger one win, which is the bare-inequality pattern the eFV verdict gating
@@ -185,13 +180,13 @@
     if (vv && vv.delta != null && vv.mde95 != null) {
       var lead = (vv.delta >= 0 ? "+" : "") + dec(vv.delta);
       var est = vv.mde95_estimator || "E_refit";
-      verdictHTML = '<p class="dm-fine">On rank correlation the margin is ' + esc(lead) +
+      verdictHTML = '<p class="dm-fine">Rank correlation margin ' + esc(lead) +
         " over " + esc(who) + ". " + (resolvable
-          ? "That clears the " + esc(dec(vv.mde95)) + " this backtest can resolve at 95% under " +
-            esc(est) + ", so it is a real lead."
-          : "That sits under the " + esc(dec(vv.mde95)) + " this backtest can resolve at 95% under " +
-            esc(est) + ", so it is a tie whatever its sign. More resolved cohorts, not a " +
-            "better model, is what settles it.") +
+          ? "Clears the " + esc(dec(vv.mde95)) + " this backtest resolves at 95% (" +
+            esc(est) + "): a real lead."
+          : "Under the " + esc(dec(vv.mde95)) + " this backtest resolves at 95% (" +
+            esc(est) + "): a tie whatever its sign. More resolved cohorts, not a " +
+            "better model, settle it.") +
         "</p>";
     }
     var arch = (h2h.by_archetype_vs_consensus || []).filter(function (a) {
@@ -225,7 +220,7 @@
         }).join("") +
         "</tbody></table></div>" +
         '<p class="dm-fine">These are point estimates on small groups. No per-group winner is ' +
-        "called: none of these rows carries a resolvable verdict of its own.</p>";
+        "called: no row carries its own verdict.</p>";
     }
     var protocol = h2h.protocol ? "<p class=\"dm-fine\">" + esc(h2h.protocol) + "</p>" : "";
     // The scoring date, and a loud note when it is old. 21 days: the scoreboard
@@ -237,19 +232,18 @@
       var ageDays = (Date.now() - Date.parse(asof)) / 86400000;
       asofHTML = '<p class="dm-fine">Scored as of ' + esc(asof) + "." +
         (isFinite(ageDays) && ageDays > 21
-          ? " That is more than three weeks old: read these as the last scoring run, not this week's."
+          ? " More than three weeks old: the last scoring run, not this week's."
           : "") + "</p>";
     }
     root.innerHTML = card(
-      "<h3>The prospect model against the public consensus</h3>" +
+      "<h3>eFV against the public consensus</h3>" +
       intro +
       '<div class="dm-tiles">' + tiles + "</div>" +
       verdictHTML +
       archHTML +
       protocol +
       asofHTML +
-      '<p class="dm-fine">Read live from data/xfv_scoreboard_eval.json on every page load. ' +
-      "If the model slips, this card slips with it.</p>"
+      '<p class="dm-fine">Read from data/xfv_scoreboard_eval.json at page load.</p>'
     );
     wireGl(root);
   }
@@ -258,9 +252,8 @@
     var root = el("diamond-receipts");
     if (!root) return;
     root.innerHTML = note(
-      "The model scoreboard did not load (" + (msg || "unknown error") + "). " +
-      "The numbers live in data/xfv_scoreboard_eval.json and are published rather than typed in, " +
-      "so this card stays empty rather than guessing.");
+      "The scoreboard did not load (" + (msg || "unknown error") + "). Its numbers come only from " +
+      "data/xfv_scoreboard_eval.json, so none are shown.");
   }
 
   // ---- 2. betting record ----------------------------------------------------
@@ -306,12 +299,9 @@
     var root = el("diamond-betting-record");
     if (!root) return;
     root.innerHTML = card(
-      "<h3>The betting record starts when the picks do</h3>" +
-      "<p>No pick has been published yet, so there is nothing to grade. When picks start, every one of " +
-      "them lands here with its timestamp, its book, the odds it was posted at, and a flat one unit " +
-      "stake. The file is append only: a losing pick cannot be edited out of it later.</p>" +
-      "<p>Each pick is also graded against the closing line. Win rate flatters a lucky month. Beating " +
-      "the close is the part that is hard to fake.</p>" +
+      "<h3>Betting record</h3>" +
+      "<p>No pick published yet. Each pick will carry its timestamp, book, posted odds and a flat " +
+      "1-unit stake, and be graded against the closing line. The file is append only.</p>" +
       (reason ? '<p class="dm-fine">' + esc(reason) + "</p>" : "")
     );
   }
@@ -325,14 +315,9 @@
     var root = el("diamond-betting-record");
     if (!root) return;
     root.innerHTML = card(
-      "<h3>" + esc(nPosted) + " pick" + (nPosted === 1 ? " is" : "s are") +
-        " posted and none has settled</h3>" +
-      "<p>The record file is live and carries " + esc(nPosted) + " pick" +
-        (nPosted === 1 ? "" : "s") + ", each with its timestamp, its book, the odds it was " +
-        "posted at and a flat one unit stake. None of them has a result yet, so there is no " +
-        "record to report: a win rate over zero graded picks is not a number.</p>" +
-      "<p>Every pick is also graded against the closing line once it settles. Win rate flatters " +
-      "a lucky month. Beating the close is the part that is hard to fake.</p>" +
+      "<h3>" + esc(nPosted) + " pick" + (nPosted === 1 ? "" : "s") + " posted, none settled</h3>" +
+      "<p>Each carries its timestamp, book, posted odds and a flat 1-unit stake. No pick is graded " +
+      "yet, so there is no record. Each is graded against the closing line when it settles.</p>" +
       (asof ? '<p class="dm-fine">Record as of ' + esc(String(asof).slice(0, 10)) + ".</p>" : "")
     );
   }
@@ -369,8 +354,8 @@
         statRow("Average closing line value", pctOf(clv)) +
         statRow("Beat the closing line", ratePct(beat)) +
       "</div>" +
-      "<p>Flat one unit per pick. Nothing is removed after the fact. Closing line value is the honest " +
-      "test: it says whether the number we posted was better than the number the market settled on.</p>" +
+      "<p>Flat 1 unit per pick, append only. Closing line value: posted odds against the closing " +
+      "odds.</p>" +
       (asof ? '<p class="dm-fine">Record as of ' + esc(String(asof).slice(0, 10)) + ".</p>" : "") +
       '<p class="dm-fine">21+. Informational and for entertainment only. Sports betting is not legal in ' +
       "every state. No affiliate links. If betting stops being fun, call 1-800-GAMBLER.</p>"
@@ -399,16 +384,14 @@
     function paint(html) { root.innerHTML = html; }
     function signedOut() {
       paint(
-        "<h3>" + (gated ? "Membership" : "There is nothing to buy yet") + "</h3>" +
+        "<h3>" + (gated ? "Membership" : "Nothing to buy yet") + "</h3>" +
         "<p>" + (gated
           ? "Diamond is live" + (price != null ? " at $" + esc(price) + " a month" : "") + "."
-          : "Diamond is free during the founding preview." +
+          : "Free during the founding preview." +
             (price != null && founding != null
-              ? " When it opens it is $" + esc(price) + " a month, or $" + esc(founding) +
-                " for founding members."
+              ? " At launch: $" + esc(price) + " a month, $" + esc(founding) + " for founding members."
               : "")) + "</p>" +
-        "<p>Make a free account so your watchlist, your bet log and your founding member status follow " +
-        "you between devices.</p>" +
+        "<p>A free account keeps your watchlist, bet log and founding status across devices.</p>" +
         '<button type="button" class="dm-btn" data-diamond="signin">Create a free account</button>'
       );
       var b = root.querySelector('[data-diamond="signin"]');
@@ -422,18 +405,16 @@
     }
     function signedIn(name, isMember) {
       paint(
-        "<h3>" + (isMember ? "Thanks for keeping this free" : "You are signed in" +
+        "<h3>" + (isMember ? "Diamond member" : "Signed in" +
           (name ? " as " + esc(name) : "")) + "</h3>" +
         (isMember
-          ? "<p>Your Diamond membership is active." +
-            (gated ? "" : " Everything in the Diamond section is open to everyone else too while " +
-              "the preview runs.") + "</p>"
+          ? "<p>Membership active." +
+            (gated ? "" : " Everything is open to all readers during the preview.") + "</p>"
           : gated
             ? "<p>Diamond is live" + (price != null ? " at $" + esc(price) + " a month" : "") + ".</p>"
-            : "<p>Nothing is gated during the preview, so there is nothing you need to do." +
+            : "<p>Nothing is gated during the preview." +
               (founding != null
-                ? " When Diamond opens, founding members pay $" + esc(founding) +
-                  " a month and keep that rate for a year."
+                ? " At launch, founding members pay $" + esc(founding) + " a month, held for a year."
                 : "") + "</p>") +
         '<p class="dm-fine">Diamond funds the free site.</p>'
       );
