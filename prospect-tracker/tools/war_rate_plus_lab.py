@@ -5,13 +5,15 @@
 
 """war_rate_plus_lab - the gate + frozen-vintage lab for WAR/PA+ and WAR/IP+.
 
-Two new Arkmetrics on the /mlbstats/ boards: WAR/PA+ (hitters, batting bWAR per
-plate appearance) and WAR/IP+ (pitchers, pitching bWAR per inning, shipped TWICE
-on two separate role-anchored pools). Convention 3 of
-docs/efv-2026-07-29/ARKMETRIC_SCALE_CONVENTIONS.md: 100 + 10z, ten points per
-population standard deviation. A ratio-to-mean index is UNDEFINED here because
-league mean WAR/PA is about +0.0025 and WAR goes negative, so there is no
-HEM_SPREAD_GAIN analog and none is added.
+Two new Arkmetrics on the /mlbstats/ boards: WAR/PA+ (hitters, batting WAR per
+plate appearance) and WAR/IP+ (pitchers, pitching WAR per inning, shipped TWICE
+on two separate role-anchored pools). WAR is the SERVED series (war_source's
+default provider, eWAR v2 since the 2026-09-03 epoch); the lab was re-pointed
+from bWAR on 2026-09-11 (audit F10-01, owner decision), see the AMENDMENT below
+the RESULT. Convention 3 of docs/efv-2026-07-29/ARKMETRIC_SCALE_CONVENTIONS.md:
+100 + 10z, ten points per population standard deviation. A ratio-to-mean index
+is UNDEFINED here because league mean WAR/PA is about +0.0025 and WAR goes
+negative, so there is no HEM_SPREAD_GAIN analog and none is added.
 
 Harness: tools/plus_lab_harness.py v2 (unrounded predictors, complete-outcome-
 season pairs only, player-clustered season-stratified bootstrap, dual-convention
@@ -166,6 +168,51 @@ G4 PASSES on hitters (0.4022 vs 0.3711, lo95 +0.0116) and relievers (0.1335 vs
 The 3-year window ships on all three surfaces for consistency of the board, with
 the starter case registered as unresolved rather than claimed.
 
+===========================================================================
+AMENDMENT 2026-09-11: THE WAR SOURCE IS THE SERVED PROVIDER (audit F10-01)
+===========================================================================
+
+The pre-registration above is left as written; this amends one input, by owner
+decision, and nothing else. Every gate, floor, window, seed and decision rule
+is unchanged. What moved is the SERIES.
+
+The registration named bWAR because bWAR was the site-wide series on
+2026-07-29. From the 2026-09-03 epoch the 1-year board columns read eWAR
+(war_source's default provider, via bullpen_export._side_war_by_season) while
+this lab kept reading pybaseball's bWAR files directly, so the FROZEN 3-year
+columns sat on a different series from the 1-year columns beside them under
+copy asserting one scale (measured: 4.0 points mean for starters, 5.1 for
+relievers; the batting side is numerically identical because eWAR v2 replaces
+only pitching). load_frames now reads war_source.stint_frame on the served
+provider: the same war_daily frame with WAR replaced per player-season by the
+eWAR side total, every other column (PA, OPS+, IPouts, G, GS, RA) untouched.
+Read "bWAR" above as "the served WAR series" for every arm, war_total included.
+Both artifacts stamp the basis (`war_provider` and `ewar_generated_at`, the
+eWAR build, from bullpen_export.served_war_basis), rerun_window refuses a ledger
+measured on another basis, and bullpen_export.join_war_rate_3yr refuses to
+serve a multiyear artifact whose provider OR eWAR build is not the one the
+1-year columns read. Run the lab after the eWAR artifact is current (see
+load_frames): the frozen 3-year value keeps whatever live-season numerator it
+was built on.
+
+RE-MEASURED ON eWAR (2026-09-11, same pairs, seed and bootstrap; the frames
+for completed seasons are pinned to the eWAR artifact, so these reproduce):
+
+    pool       n     index   season WAR   raw rate   G2 gap lo95   3yr vs 1yr (lo95)
+    hitters   3845   0.3711    0.4058      0.3713     -0.0479      0.4022 / 0.3711 (+0.0116)
+    starters  1396   0.4726    0.4496      0.4705     -0.0027      0.4766 / 0.4726 (-0.0231)
+    relievers 1621   0.2323    0.2267      0.2319     -0.0033      0.2590 / 0.2323 (-0.0035)
+
+Hitters do not move at all (eWAR v2 leaves the batting side equal to bWAR).
+Pitchers persist far better on the FIP-priced series (starters 0.2688 -> 0.4726,
+relievers 0.0886 -> 0.2323, the ewar_eval gate-2 persistence story), and the
+indexes now clear season WAR for starters (gap lo95 +0.0054) but tie the same
+rate left unstandardized, so G2 still FAILS on every pool and the rows stay
+unvalidated display indexes. Two verdicts flip: arm S no longer fires on
+relievers (lo95 -0.0016; it still fires on hitters), and G4 no longer passes on
+relievers, so the reliever 3-year column is now a longer window rather than a
+forward-supported one, like the starter column already was.
+
 Run: `python tools/war_rate_plus_lab.py`  (writes both artifacts)
      `python tools/war_rate_plus_lab.py --gate-only`   (no artifact write)
      `python tools/war_rate_plus_lab.py --restamp`     (re-derive verdicts only)
@@ -219,20 +266,72 @@ def _f(v):
     return None if f != f else f
 
 
-def load_frames() -> dict:
-    """{'hit': {(mlbam, season): row}, 'pit': {...}} from the bWAR files, one row
-    per player-season with the stints summed.
+def served_war_basis() -> dict:
+    """{war_provider, ewar_generated_at} of the series the SERVED one-year
+    columns read, from bullpen_export.served_war_basis, the same function the
+    3-year join compares the artifact's stamp against. One definition, so the
+    lab cannot stamp a basis the join reads differently."""
+    import bullpen_export
+    return bullpen_export.served_war_basis()
 
-    Numerator and denominator come from the SAME source file, so a stint that
-    bWAR carries and StatsAPI does not (or the reverse) can never produce a rate
-    with a mismatched denominator. Batting rows flagged as pitchers are dropped
-    from the hitter frame: a pitcher's plate appearances are not a hitter's
-    sample, and in the universal-DH era they are all far under the pool floor
-    anyway."""
-    import pybaseball as pyb
+
+def war_provider() -> str:
+    """The WAR provider the SERVED one-year columns read (bullpen_export
+    _side_war_by_season -> war_source.side_war_by_season on the facade default).
+    The lab reads the same one, so the 3-year columns and the 1-year columns
+    beside them are one series (audit F10-01)."""
+    return served_war_basis()["war_provider"]
+
+
+def _stint_frames(provider: str | None = None):
+    """(batting, pitching) war_daily stint frames on `provider` (default: the
+    served one). Through war_source, never pybaseball directly: reading
+    pybaseball here is how the lab stayed on bWAR for a week after every board
+    beside it moved to eWAR."""
+    import war_source
+    prov = provider or war_provider()
+    return (war_source.stint_frame("bat", provider=prov),
+            war_source.stint_frame("pit", provider=prov))
+
+
+def load_frames(provider: str | None = None, *, frames=None) -> dict:
+    """{'hit': {(mlbam, season): row}, 'pit': {...}} from the war_daily stint
+    frames on the SERVED WAR provider, one row per player-season with the stints
+    summed.
+
+    WAR BASIS (audit F10-01, re-pointed 2026-09-11 by owner decision). This read
+    pybaseball's bWAR files directly, so after the 2026-09-03 epoch the frozen
+    3-year columns stayed bWAR while the 1-year columns beside them moved to
+    eWAR. It now reads war_source.stint_frame on the facade default, the same
+    provider bullpen_export._side_war_by_season serves: the frame is the
+    identical war_daily download with WAR replaced per player-season by the
+    eWAR artifact's side total, every other column (PA, OPS+, IPouts, G, GS,
+    RA) untouched. Summed over a player-season's stints it reproduces the
+    side value the 1-year column divides.
+
+    RUN IT AFTER THE eWAR ARTIFACT IS CURRENT. The numerator is whatever
+    data/ewar.json holds for each season, the denominators are today's
+    war_daily. For completed seasons the two agree whatever day the lab runs;
+    for the live season a stale artifact (the 2026-09-03 hand build, until the
+    nightly rebuild of owner decision D11 is running) pairs an old numerator
+    with a current denominator and understates this season's rate in the
+    frozen 3-year value. The 1-year column carries the same numerator and
+    discloses it (war_source.ewar_vintage); the frozen value does not refresh,
+    so the lab should follow the eWAR rebuild, not precede it.
+
+    Numerator and denominator come from the SAME source frame, so a stint that
+    war_daily carries and StatsAPI does not (or the reverse) can never produce a
+    rate with a mismatched denominator. Batting rows flagged as pitchers are
+    dropped from the hitter frame: a pitcher's plate appearances are not a
+    hitter's sample, and in the universal-DH era they are all far under the pool
+    floor anyway.
+
+    `frames` = an already-read (batting, pitching) pair, for a caller that must
+    not touch the network (a measurement on the last-good cache)."""
     out = {"hit": {}, "pit": {}}
+    bat_df, pit_df = frames if frames is not None else _stint_frames(provider)
 
-    df = pyb.bwar_bat(return_all=True)
+    df = bat_df
     for r in df.itertuples(index=False):
         mid, yr, war = _f(r.mlb_ID), _f(r.year_ID), _f(r.WAR)
         if mid is None or yr is None or war is None:
@@ -250,7 +349,7 @@ def load_frames() -> dict:
             c["ops_plus_num"] += op * pa
             c["ops_plus_den"] += pa
 
-    df = pyb.bwar_pitch(return_all=True)
+    df = pit_df
     for r in df.itertuples(index=False):
         mid, yr, war = _f(r.mlb_ID), _f(r.year_ID), _f(r.WAR)
         if mid is None or yr is None or war is None:
@@ -761,11 +860,28 @@ def build_multiyear(frame: dict, season: int) -> dict:
     return blocks
 
 
-def main(argv: list[str]) -> int:
+def _basis_stamp(provider: str) -> dict:
+    """What series the artifact was measured on: served_war_basis(), i.e.
+    `war_provider` plus `ewar_generated_at` (the eWAR build, which a hand
+    rebuild moves and the nightly does not). bullpen_export.join_war_rate_3yr
+    compares both with the series the 1-year columns serve and refuses a
+    mismatch, so a stale artifact on another provider OR another eWAR build
+    blanks the 3-year columns instead of sitting beside them under one scale."""
+    basis = served_war_basis()
+    if basis["war_provider"] != provider:
+        raise RuntimeError(f"frames were read on {provider} but the served "
+                           f"provider is {basis['war_provider']}")
+    return basis
+
+
+def main(argv: list[str], *, frames=None) -> int:
+    """`frames`: an already-read (batting, pitching) stint-frame pair on the
+    served provider, for a measurement that must not touch the network."""
     t0 = time.time()
     gate_only = "--gate-only" in argv
-    print("loading bWAR frames...")
-    frame = load_frames()
+    prov = war_provider()
+    print(f"loading WAR frames (provider {prov})...")
+    frame = load_frames(prov, frames=frames)
     print(f"  hit {len(frame['hit'])} player-seasons, pit {len(frame['pit'])}")
 
     season = date.today().year
@@ -823,8 +939,10 @@ def main(argv: list[str]) -> int:
             primary="v2"),
         "conventions": {
             "scale": "100 + 10z (ARKMETRIC_SCALE_CONVENTIONS convention 3)",
-            "war_source": ("bWAR, batting and pitching sides kept SEPARATE "
-                           "(mlb_player_export._war_daily shape); never a summed side"),
+            "war_source": (f"{prov} (war_source.stint_frame on the provider the "
+                           "1-year board columns serve), batting and pitching "
+                           "sides kept SEPARATE; never a summed side. bWAR until "
+                           "the 2026-09-11 re-point (audit F10-01)"),
             "denominators": "PA for hitters, IP for pitchers",
             "anchor_pools": ("three, never pooled: hitters, starters (GS/G >= 0.50), "
                              "relievers. A starter-anchored and a reliever-anchored "
@@ -840,6 +958,7 @@ def main(argv: list[str]) -> int:
             "imputation": "NONE. A pair missing any arm's value is dropped from every arm.",
         },
         "pools": pools,
+        **_basis_stamp(prov),
     }
     art["verdict"] = _overall(pools)
     print("\n" + art["verdict"]["summary"])
@@ -859,6 +978,7 @@ def main(argv: list[str]) -> int:
                      "three separate metrics."),
             "gates": {p: pools[p]["window_gate"].get("g4_window_beats_one_season")
                       for p in pools},
+            **_basis_stamp(prov),
             "proposed_values": build_multiyear(frame, season),
         }
         MULTIYR_PATH.write_text(json.dumps(my, indent=1), encoding="utf-8")
@@ -892,21 +1012,66 @@ def _overall(pools: dict) -> dict:
                 if fired else
                 "Arm S did not clear its lo95 > 0 bar on any pool, so the "
                 "pre-registered default stands with nothing to override.")),
-        "summary": (
-            ("PASS on at least one pool: " if any_ship else
-             "NO PASS on the ship gate. WAR/PA+ and WAR/IP+ carry real signal "
-             "(they beat a zero-information control on all three pools) but they "
-             "do NOT forward-predict the next season's WAR rate better than plain "
-             "season bWAR, which is the simplest baseline in the set. ")
-            + f"G2 {g2}. They ship as "
-            + ("validated where G2 passed and as unvalidated display indexes elsewhere."
-               if any_ship else
-               "UNVALIDATED DISPLAY INDEXES with eval_artifact null, which is the "
-               "sanctioned path for a descriptive index. This artifact is the "
-               "measurement ledger, cited on the registry rows. The mechanism is "
-               "worth stating plainly: a season of playing time is itself a talent "
-               "signal, and a per-trip rate throws it away.")),
+        "summary": _summary(pools, g1, g2, any_ship),
     }
+
+
+_POOL_NAMES = {"hit": "Hitters (WAR/PA+)", "SP": "Starters (WAR/IP+)",
+               "RP": "Relievers (WAR/IP+)"}
+_BASELINE_NAMES = {"war_total": "plain season WAR on the same series",
+                   "rate": "the same rate left unstandardized",
+                   "ops_plus": "OPS+", "ra9_inv": "negated runs allowed per nine"}
+
+
+def _summary(pools: dict, g1: dict, g2: dict, any_ship: bool) -> str:
+    """The ledger's headline, DERIVED per pool from verdict_for() rather than
+    typed once for all three. A fixed sentence ("they do not beat plain season
+    WAR ... a per-trip rate throws playing time away") was true on bWAR for every
+    pool and is false on eWAR for starters, whose index clears season WAR and
+    loses only to the unstandardized rate. So each pool names its own binding
+    baseline and gap, and the playing-time mechanism is stated only for pools
+    where season WAR is the baseline that binds."""
+    def _f(x, sign=False):
+        return "n/a" if not isinstance(x, (int, float)) else (
+            f"{x:+.4f}" if sign else f"{x:.4f}")
+
+    lines, playing_time = [], []
+    for p in pools:
+        v = pools[p].get("verdict") or {}
+        g = v.get("g2_ship_vs_best_baseline") or {}
+        if not g:
+            lines.append(f"{_POOL_NAMES.get(p, p)}: unmeasurable.")
+            continue
+        best = g.get("best_baseline")
+        s = (f"{_POOL_NAMES.get(p, p)}: index {_f(g.get('rho_primary'))} vs "
+             f"{_BASELINE_NAMES.get(best, best)} {_f(g.get('rho_baseline'))} "
+             f"(gap lo95 {_f((g.get('gap') or {}).get('lo95'), True)}), "
+             f"G2 {'PASS' if g.get('pass') else 'FAIL'}")
+        if best != "war_total":
+            r = pools[p]["results_by_convention"][v.get("convention", "v2")]
+            wt = (r.get("gap_ci_primary_minus_baseline") or {}).get("war_total") or {}
+            lo = wt.get("lo95")
+            s += (f"; against season WAR ({_f(r['rho_baselines'].get('war_total'))}) "
+                  f"it {'clears' if isinstance(lo, (int, float)) and lo > 0 else 'does not clear'} "
+                  f"(lo95 {_f(lo, True)})")
+        elif not g.get("pass"):
+            playing_time.append(_POOL_NAMES.get(p, p).split(" ")[0].lower())
+        lines.append(s + ".")
+    sig = [_POOL_NAMES.get(p, p).split(" ")[0].lower() for p in pools if g1.get(p)]
+    head = ("PASS on at least one pool. " if any_ship else "NO PASS on the ship gate. ")
+    head += (f"The indexes carry real signal (they beat a zero-information "
+             f"control) on {', '.join(sig) if sig else 'no pool'}. ")
+    tail = (" They ship as validated where G2 passed and as unvalidated display "
+            "indexes elsewhere." if any_ship else
+            " They ship as UNVALIDATED DISPLAY INDEXES with eval_artifact null, "
+            "which is the sanctioned path for a descriptive index. This artifact "
+            "is the measurement ledger, cited on the registry rows.")
+    if playing_time:
+        tail += (f" Where season WAR itself is the binding baseline "
+                 f"({', '.join(playing_time)}), the mechanism is worth stating "
+                 f"plainly: a season of playing time is itself a talent signal, "
+                 f"and a per-trip rate throws it away.")
+    return head + " ".join(lines) + tail
 
 
 def rerun_window(argv: list[str] | None = None) -> int:
@@ -919,8 +1084,20 @@ def rerun_window(argv: list[str] | None = None) -> int:
     for its own sake. Everything else in the artifact is left exactly as
     measured."""
     art = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
-    print("loading bWAR frames...")
-    frame = load_frames()
+    served = served_war_basis()
+    prov = served["war_provider"]
+    had = {"war_provider": art.get("war_provider") or "bwar",
+           "ewar_generated_at": art.get("ewar_generated_at")}
+    if had != served:
+        # The single-season arms this path keeps were measured on another
+        # series (another provider, or another eWAR build); patching only the
+        # window gate would ship a mixed-basis ledger.
+        print(f"REFUSED: the committed ledger was measured on {had} and the "
+              f"served series is {served}; run the full lab "
+              f"(python tools/war_rate_plus_lab.py)")
+        return 2
+    print(f"loading WAR frames (provider {prov})...")
+    frame = load_frames(prov)
     season = date.today().year
     for pool in ("hit", "SP", "RP"):
         print(f"re-measuring the window gate for {pool}...")
@@ -948,6 +1125,7 @@ def rerun_window(argv: list[str] | None = None) -> int:
     my["generated_at"] = date.today().isoformat()
     my["gates"] = {p: art["pools"][p]["window_gate"].get("g4_window_beats_one_season")
                    for p in art["pools"]}
+    my.update(_basis_stamp(prov))
     my["proposed_values"] = build_multiyear(frame, season)
     MULTIYR_PATH.write_text(json.dumps(my, indent=1), encoding="utf-8")
     for k, b in my["proposed_values"].items():

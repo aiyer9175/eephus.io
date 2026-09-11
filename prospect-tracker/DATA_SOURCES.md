@@ -25,7 +25,8 @@ happen inside the called module, so this file alone cannot split them).
 | d5e. Leaderboard game logs (leaderboard_gamelogs.json) | leaderboard_gamelogs.json |
 | d6. Roster status | - |
 | d7. Auto-debut detection | - |
-| d8. Trade detection | timeseries.json |
+| d8. Trade detection | - |
+| d8b. eWAR live-season rebuild (ewar.json) | ewar.json |
 | d9. Rebuild timeseries (no scrape) | fielding_innings.json, mlb_player_detail.json, mlb_projections.json, trade_values.json, xfv.json |
 | d9b1. Refresh current-season fielding innings (fielding_innings.json) | fielding_innings.json |
 | d9b2. Re-bake MLB player detail (mlb_player_detail.json) | mlb_player_detail.json, photo_ctx.json |
@@ -75,6 +76,7 @@ happen inside the called module, so this file alone cannot split them).
 | 2b.xi. Amateur/winter/indy league stats ingest | pipeline_vintages.json |
 | 2b.xii. MLB Pipeline vintage boards ingest | - |
 | 2c. Affiliate roster map. ~6 HTTP calls (one per sport level) (no _step wrapper) | - |
+| 3-pre. eWAR live-season rebuild (ewar.json) | ewar.json |
 | 3a. Fetch career year-by-year stats (no _step wrapper) | - |
 | 3a-ii. Positional versatility (fielding) | positions_played.json |
 | 3a-iii. Self-heal graduates frozen pre-org-feature (no _step wrapper) | - |

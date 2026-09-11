@@ -401,12 +401,8 @@
       title: "WAR/IP+ with the rate shrunk toward the pool by innings, re-standardised (10 points = 1 SD). A thin-sample readability aid, not a forecast: neither WAR rate predicts next season better than season WAR.",
       get: function (r) { return r.war_ip_plus_adj; },
       cell: function (r) { return r.war_ip_plus_adj == null ? "" : remCell(r.war_ip_plus_adj); } },
-    // BASIS, TYPED UNTIL THE PAYLOAD STAMPS IT (audit F10-01, 2026-09-10): the
-    // frozen 3-year pitcher column is bWAR while the 1-year column beside it is
-    // eWAR. multiyear_war_rate carries no basis field, so the page cannot read
-    // it; when the re-point epoch lands, this sentence goes with it.
     { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_rp_3yr", num: true, desc: true, isRem: true,
-      title: "Trailing three seasons, innings-weighted. bWAR basis while WAR/IP+ is eWAR, so the two are not on one scale.",
+      title: "Trailing three seasons, innings-weighted, on the same eWAR series as WAR/IP+.",
       vintage: "multiyear_war_rate",
       get: function (r) { return r.war_ip_plus_3yr; },
       cell: function (r) {
@@ -573,9 +569,10 @@
       + " the pool since.";
   }
   // THE eWAR BUILD STAMP (war_source.ewar_vintage, on all three pitching and
-  // hitting payloads since 2026-09-10). the eWAR artifact is hand-built, so this
-  // season's eWAR numerator can trail the IP or PA beside it. The page reads
-  // `stale` and the build date; it never types either.
+  // hitting payloads since 2026-09-10). The live season rebuilds nightly since
+  // 2026-09-11; when a night is missed or refused this season's eWAR numerator
+  // can trail the IP or PA beside it. The page reads `stale`, the build date and
+  // `rebuilds_on_a_schedule`; it never types any of them.
   function ewarVintage(meta) {
     var v = meta && meta.ewar_vintage;
     return (v && v.stale === true && v.artifact_generated_at) ? v : null;
@@ -583,7 +580,9 @@
   function ewarTitle(meta) {
     var v = ewarVintage(meta);
     return v ? "eWAR built " + String(v.artifact_generated_at).slice(0, 10)
-      + " and not rebuilt nightly, so this season's value can trail the line beside it." : "";
+      + (v.rebuilds_on_a_schedule === true ? " and behind its nightly rebuild"
+         : " and not rebuilt nightly")
+      + ", so this season's value can trail the line beside it." : "";
   }
   // Compact board note. `cols` is [[payload key, column label], ...]; a block
   // that is absent or unavailable simply contributes nothing.
@@ -1351,9 +1350,8 @@
       title: "WAR/IP+ with the rate shrunk toward the pool by innings, re-standardised (10 points = 1 SD). A thin-sample readability aid, not a forecast: neither WAR rate predicts next season better than season WAR.",
       get: function (r) { return r.war_ip_plus_adj; },
       cell: function (r) { return r.war_ip_plus_adj == null ? "" : remCell(r.war_ip_plus_adj); } },
-    // Same typed basis sentence as the reliever board (audit F10-01).
     { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_sp_3yr", num: true, desc: true, isRem: true,
-      title: "Trailing three seasons, innings-weighted. bWAR basis while WAR/IP+ is eWAR, so the two are not on one scale.",
+      title: "Trailing three seasons, innings-weighted, on the same eWAR series as WAR/IP+.",
       vintage: "multiyear_war_rate",
       get: function (r) { return r.war_ip_plus_3yr; },
       cell: function (r) {

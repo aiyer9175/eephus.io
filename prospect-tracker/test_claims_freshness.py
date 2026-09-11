@@ -117,14 +117,55 @@ CLAIM_SURFACES = (
 GLOSSARY_CLAIMS = (
     # war_pa_plus quotes its own honest loss: forward Spearman 0.3711 for
     # the rate index vs 0.4058 for plain season WAR (v2 convention, hit
-    # pool; measured on the bWAR series, identical on the batting side under
-    # eWAR). Tight abs tolerance: these are quoted to four decimals.
+    # pool). Measured on eWAR since the lab's 2026-09-11 re-point (audit
+    # F10-01); the batting side reads the same as bWAR, so these two did not
+    # move. Tight abs tolerance: these are quoted to four decimals.
     ("war_pa_plus", "hit rho_primary (v2)", r"Spearman correlation of (0\.\d+)",
      "data/war_rate_plus_eval.json",
      ("pools", "hit", "results_by_convention", "v2", "rho_primary"), "abs", 0.005),
     ("war_pa_plus", "hit war_total baseline (v2)", r"predicts the same thing at (0\.\d+)",
      "data/war_rate_plus_eval.json",
      ("pools", "hit", "results_by_convention", "v2", "rho_baselines", "war_total"), "abs", 0.005),
+    # The pitcher entries and the three 3-year entries quote the same ledger and
+    # were unpinned, which is how their bWAR-era figures (0.2688 / 0.0886 and
+    # the 0.1335 window read) would have outlived the eWAR re-point that moved
+    # them to 0.4726 / 0.2323 / 0.259. Pinned from 2026-09-11.
+    ("war_ip_plus_sp", "SP rho_primary (v2)", r"Spearman correlation of (0\.\d+)",
+     "data/war_rate_plus_eval.json",
+     ("pools", "SP", "results_by_convention", "v2", "rho_primary"), "abs", 0.005),
+    ("war_ip_plus_sp", "SP war_total baseline (v2)", r"plain season WAR \((0\.\d+)",
+     "data/war_rate_plus_eval.json",
+     ("pools", "SP", "results_by_convention", "v2", "rho_baselines", "war_total"), "abs", 0.005),
+    ("war_ip_plus_sp", "SP rate baseline (v2)", r"unstandardized \((0\.\d+)",
+     "data/war_rate_plus_eval.json",
+     ("pools", "SP", "results_by_convention", "v2", "rho_baselines", "rate"), "abs", 0.005),
+    ("war_ip_plus_rp", "RP rho_primary (v2)", r"Spearman correlation of (0\.\d+)",
+     "data/war_rate_plus_eval.json",
+     ("pools", "RP", "results_by_convention", "v2", "rho_primary"), "abs", 0.005),
+    ("war_ip_plus_rp", "RP war_total baseline (v2)", r"plain season WAR \((0\.\d+)",
+     "data/war_rate_plus_eval.json",
+     ("pools", "RP", "results_by_convention", "v2", "rho_baselines", "war_total"), "abs", 0.005),
+    ("war_ip_plus_rp", "RP rate baseline (v2)", r"unstandardized \((0\.\d+)",
+     "data/war_rate_plus_eval.json",
+     ("pools", "RP", "results_by_convention", "v2", "rho_baselines", "rate"), "abs", 0.005),
+    ("war_pa_plus_3yr", "hit 3yr window rho (v2)", r"Spearman correlation of (0\.\d+) against",
+     "data/war_rate_plus_eval.json",
+     ("pools", "hit", "window_gate", "results_by_convention", "v2", "rho_window"), "abs", 0.005),
+    ("war_pa_plus_3yr", "hit one-season rho (v2)", r"against (0\.\d+) for one season",
+     "data/war_rate_plus_eval.json",
+     ("pools", "hit", "window_gate", "results_by_convention", "v2", "rho_one_season"), "abs", 0.005),
+    ("war_ip_plus_sp_3yr", "SP 3yr window rho (v2)", r"Spearman correlation of (0\.\d+) against",
+     "data/war_rate_plus_eval.json",
+     ("pools", "SP", "window_gate", "results_by_convention", "v2", "rho_window"), "abs", 0.005),
+    ("war_ip_plus_sp_3yr", "SP one-season rho (v2)", r"against (0\.\d+) for one season",
+     "data/war_rate_plus_eval.json",
+     ("pools", "SP", "window_gate", "results_by_convention", "v2", "rho_one_season"), "abs", 0.005),
+    ("war_ip_plus_rp_3yr", "RP 3yr window rho (v2)", r"Spearman correlation of (0\.\d+) against",
+     "data/war_rate_plus_eval.json",
+     ("pools", "RP", "window_gate", "results_by_convention", "v2", "rho_window"), "abs", 0.005),
+    ("war_ip_plus_rp_3yr", "RP one-season rho (v2)", r"against (0\.\d+) for one season",
+     "data/war_rate_plus_eval.json",
+     ("pools", "RP", "window_gate", "results_by_convention", "v2", "rho_one_season"), "abs", 0.005),
     # milb_translation quotes its LOO validation block. MAE rows use a
     # relative 0.15 band (copy rounds 3.937 to ~4.0). r2 rows use abs 0.02:
     # loose enough for two-decimal rounding (0.32 vs 0.319 passes), tight

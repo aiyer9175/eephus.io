@@ -1986,6 +1986,64 @@ def run_odds_open(*, log=None) -> dict:
     return out
 
 
+#: The date (ISO) the eWAR nightly last wrote the artifact in THIS process, so
+#: the daily chained onto a monthly run does not price the live season twice.
+_EWAR_NIGHTLY_DONE: str | None = None
+
+
+def _ewar_nightly_step(log: logging.Logger, where: str) -> int:
+    """Re-price the eWAR live season (tools/build_ewar.py --nightly) and log the
+    freshness assertion. Owner decision D11 (2026-09-11): data/ewar.json
+    rebuilds NIGHTLY, in WAR_BASIS_RUNBOOK step B's place: ahead of every WAR
+    reader of the run. It is not the whole of step B. Only the live season is
+    re-priced; every completed season is carried byte for byte, so nothing below
+    step B in the runbook is invalidated.
+
+    What moves nightly: the live season's blocks of the eWAR artifact and every
+    served live-season eWAR that reads them through war_source. What does not:
+    completed seasons, generated_at (the frozen series' build, the board
+    fingerprint's label term), the eWAR eval, the career_war table (monthly
+    3d), the outcome curve, the anchors, the draft slot curve and the
+    war_rate_plus vintages.
+
+    The FRESHNESS ASSERTION is war_source.ewar_cadence_status: the live season
+    built today on that night's frames, stats and standings, and every frozen
+    season still on its digest. It reports and records the `ewar_nightly`
+    heartbeat; it never stops the run, because a stale numerator is a
+    disclosure (ewar_vintage) and not an outage. Returns the step's rc (0, or 2
+    when it refused or failed); SystemExit from an input loader is caught here
+    as well as inside the step, so one bad data file cannot end the night."""
+    global _EWAR_NIGHTLY_DONE
+    rc, cad = 2, {}
+    try:
+        import war_source as _ws
+        from tools import build_ewar as _build_ewar
+        rc = _build_ewar.run_nightly(write=True)
+        cad = _ws.ewar_cadence_status()
+        if rc != 0 or not cad.get("ok"):
+            log.error("%s: eWAR nightly rc=%s, freshness problems: %s",
+                      where, rc, cad.get("problems"))
+        else:
+            log.info("%s: eWAR live season %s built %s; %d seasons frozen", where,
+                     cad.get("live_season"), cad.get("live_built_at"),
+                     len(cad.get("frozen_seasons") or []))
+        if rc == 0:
+            _EWAR_NIGHTLY_DONE = date.today().isoformat()
+        result = "; ".join(cad.get("problems") or []) or "ok"
+        if rc != 0:
+            result = f"refused (rc {rc}); " + result
+    except (Exception, SystemExit) as _e:                 # noqa: BLE001
+        log.exception("%s: eWAR nightly failed - the boards serve the previous "
+                      "build and say so (ewar_vintage) - continuing", where)
+        result = f"{type(_e).__name__}: {_e}"
+    try:
+        import job_heartbeat as _hb
+        _hb.record("ewar_nightly", ok=bool(rc == 0 and cad.get("ok")), result=result[:120])
+    except Exception:                                     # noqa: BLE001
+        pass
+    return rc
+
+
 def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
               no_cache: bool = False, chained: bool = False) -> None:
     """DAILY fast-moving refresh — the time-sensitive subset of the pipeline.
@@ -2525,7 +2583,22 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         del all_snaps, timeseries
         _gc.collect()
 
-        # --- 9. Rebuild timeseries.json from the refreshed DB. ------------
+        # --- d8b. eWAR: re-price the live season ------------------------
+        # WAR_BASIS_RUNBOOK step B's place: ahead of every WAR reader the rest
+        # of the night runs (d9's projections export and its eFV regen, d9b2's
+        # player cards, 9e-pre0's three boards, d10b's FA re-export all read
+        # eWAR through war_source). _ewar_nightly_step says what moves and what
+        # does not. On a chained monthly night step 3-pre already priced the
+        # live season before the monthly's first WAR reader, on the same day's
+        # inputs, so this skips.
+        with _step("d8b. eWAR live-season rebuild (ewar.json)", log):
+            if chained and _EWAR_NIGHTLY_DONE == date.today().isoformat():
+                log.info("daily: SKIP d8b: monthly 3-pre priced the eWAR live season "
+                         "today (chained)")
+            else:
+                _ewar_nightly_step(log, "daily")
+
+        # --- 9. Rebuild the timeseries artifact from the refreshed DB. ---
         # stamp_summary=False: this run is not finished yet, and the tail
         # below stamps the same 74MB file once finish_run has closed the row.
         # Both stamps used to run, so every nightly re-parsed and rewrote the
@@ -4264,6 +4337,15 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                  len(rosters_by_org), len(set(
                      lvl for levels in rosters_by_org.values() for lvl in levels)))
         _STEP_TIMES.append(("2c-ii. Build rosters_by_org structure", time.monotonic() - _rosters_start))
+
+        # eWAR nightly on the monthly path. The monthly reads WAR from step
+        # 3d-bis (career WAR through war_source) on, and every one of those
+        # readers (3d-bis, 4, 6, 6b..6b7b) runs before main() chains the daily,
+        # so pricing the live season only at the daily's d8b would feed the
+        # whole monthly yesterday's numerator. Same step, same guarantees
+        # (_ewar_nightly_step); the chained daily skips its d8b.
+        with _step("3-pre. eWAR live-season rebuild (ewar.json)", log):
+            _ewar_nightly_step(log, "monthly")
 
         # --- 3a. Fetch career year-by-year stats.
         # Two-pass design:

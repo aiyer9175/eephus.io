@@ -296,7 +296,7 @@ def test_starter_and_reliever_pools_are_anchored_separately(monkeypatch):
 # the frozen 3-year vintage
 # --------------------------------------------------------------------------- #
 def test_frozen_3yr_join_stamps_and_discloses(tmp_path, monkeypatch):
-    art = {"generated_at": "2026-07-29",
+    art = {"generated_at": "2026-07-29", **be.served_war_basis(),
            "proposed_values": {"hit": {
                "season": 2026, "window": [2024, 2025, 2026],
                "anchor_pool": "hitters with 50+ PA",
@@ -321,6 +321,8 @@ def test_frozen_3yr_join_stamps_and_discloses(tmp_path, monkeypatch):
     assert meta["window"] == [2024, 2025, 2026]
     assert "FROZEN" in meta["note"] and "generated_at" in meta["note"]
     assert meta["n_in_artifact"] == 2
+    assert meta["war_provider"] == be._served_war_provider()
+    assert meta["ewar_generated_at"] == be.served_war_basis()["ewar_generated_at"]
 
     # missing artifact is a clean no-op, never an exception
     monkeypatch.setattr(be, "WAR_RATE_MULTIYR_PATH", tmp_path / "nope.json")
@@ -330,7 +332,8 @@ def test_frozen_3yr_join_stamps_and_discloses(tmp_path, monkeypatch):
 def test_three_blocks_are_three_metrics(tmp_path, monkeypatch):
     """One artifact, three blocks, because the three anchor pools are three
     metrics. A join must read its OWN block."""
-    art = {"generated_at": "2026-07-29", "proposed_values": {
+    art = {"generated_at": "2026-07-29", **be.served_war_basis(),
+           "proposed_values": {
         "hit": {"players": {"1": {"war_pa_plus_3yr": 120, "pct": 90, "tag": "established"}}},
         "sp": {"players": {"1": {"war_ip_plus_3yr": 80, "pct": 10, "tag": "established"}}},
         "rp": {"players": {"1": {"war_ip_plus_3yr": 111, "pct": 70, "tag": "established"}}},
@@ -345,6 +348,101 @@ def test_three_blocks_are_three_metrics(tmp_path, monkeypatch):
     assert h[0]["war_pa_plus_3yr"] == 120
     assert s[0]["war_ip_plus_3yr"] == 80
     assert r[0]["war_ip_plus_3yr"] == 111
+
+
+def test_3yr_join_refuses_an_artifact_on_another_war_basis(tmp_path, monkeypatch):
+    """Audit F10-01. From the 2026-09-03 epoch the 1-year columns read eWAR while
+    the lab kept writing bWAR, and the pair sat on one board under copy asserting
+    one scale (4 to 5 points apart on the pitcher boards). The join now refuses
+    any artifact whose provider is not the one the 1-year column serves; an
+    UNSTAMPED artifact predates the stamp and is bWAR, so it is refused too.
+    Blank is honest, a mixed-basis pair is not."""
+    players = {"1": {"war_ip_plus_3yr": 111, "pct": 70, "tag": "established"}}
+    p = tmp_path / "war_rate_plus_multiyear_eval.json"
+    monkeypatch.setattr(be, "WAR_RATE_MULTIYR_PATH", p)
+    for stamp in ({}, {"war_provider": "bwar"}):
+        p.write_text(json.dumps({"generated_at": "2026-09-04", **stamp,
+                                 "proposed_values": {"rp": {"players": players}}}),
+                     encoding="utf-8")
+        r = [{"mlbam": 1}]
+        meta = be._join_war_ip_plus_3yr(r)
+        assert meta["available"] is False and meta["n_stamped"] == 0, stamp
+        assert "refused" in meta and "war_rate_plus_lab" in meta["refused"]
+        assert "war_ip_plus_3yr" not in r[0], "a mixed-basis value was served"
+    # and the served basis is accepted
+    p.write_text(json.dumps({"generated_at": "2026-09-11", **be.served_war_basis(),
+                             "proposed_values": {"rp": {"players": players}}}),
+                 encoding="utf-8")
+    r = [{"mlbam": 1}]
+    assert be._join_war_ip_plus_3yr(r)["available"] is True
+    assert r[0]["war_ip_plus_3yr"] == 111
+
+
+def test_3yr_join_refuses_an_artifact_on_another_ewar_build(tmp_path, monkeypatch):
+    """F10-01 must not recur INSIDE one provider. A full eWAR rebuild (the
+    WAR_BASIS_RUNBOOK cascade) can re-price completed seasons while the provider
+    id stays ewar_v2, so a provider-only check would serve the frozen 3-year
+    values on the old build beside a 1-year column on the new one. The artifact
+    stamps the eWAR build (the eWAR payload's generated_at, which the nightly
+    live-season rebuild does not move), and the join refuses a mismatch."""
+    players = {"1": {"war_ip_plus_3yr": 111, "pct": 70, "tag": "established"}}
+    p = tmp_path / "war_rate_plus_multiyear_eval.json"
+    monkeypatch.setattr(be, "WAR_RATE_MULTIYR_PATH", p)
+    monkeypatch.setattr(be, "served_war_basis", lambda: {
+        "war_provider": "ewar_v2", "ewar_generated_at": "2026-10-01T09:00:00"})
+    p.write_text(json.dumps({"generated_at": "2026-09-11", "war_provider": "ewar_v2",
+                             "ewar_generated_at": "2026-09-03T12:35:09",
+                             "proposed_values": {"rp": {"players": players}}}),
+                 encoding="utf-8")
+    r = [{"mlbam": 1}]
+    meta = be._join_war_ip_plus_3yr(r)
+    assert meta["available"] is False and "refused" in meta
+    assert "2026-09-03T12:35:09" in meta["refused"] and "2026-10-01T09:00:00" in meta["refused"]
+    assert "war_ip_plus_3yr" not in r[0], "a value on a stale eWAR build was served"
+
+
+def test_served_war_basis_names_the_frozen_build_not_the_nightly():
+    """The build identity is the eWAR payload's own generated_at (the frozen
+    series), never war_source.ewar_vintage()'s artifact_generated_at, which the
+    nightly rebuild turns into the live season's build time."""
+    import inspect
+    src = inspect.getsource(be.served_war_basis)
+    body = src.split('"""', 2)[2]
+    assert ".get(\"generated_at\")" in body
+    assert "ewar_vintage" not in body and "live_built_at" not in body
+    b = be.served_war_basis()
+    assert set(b) == {"war_provider", "ewar_generated_at"}
+
+
+def test_the_lab_reads_the_served_war_provider():
+    """The lab's frames come through war_source on the provider the 1-year
+    columns serve, never from pybaseball directly (that direct read is how the
+    3-year columns stayed bWAR after the epoch)."""
+    import sys
+    sys.path.insert(0, str(ROOT / "tools"))
+    import war_rate_plus_lab as lab
+    assert lab.war_provider() == be._served_war_provider()
+    assert lab.served_war_basis() == be.served_war_basis()
+    src = (ROOT / "tools" / "war_rate_plus_lab.py").read_text(encoding="utf-8")
+    body = src.split("def load_frames", 1)[1].split("\ndef ", 1)[0]
+    assert "pyb.bwar" not in body and "import pybaseball" not in body
+
+
+def test_the_served_3yr_artifact_shares_the_1yr_basis():
+    """The committed multiyear artifact must carry the served basis (provider
+    AND eWAR build), or the join blanks all three 3-year columns. A failure here
+    means the lab was not re-run after a basis change or an eWAR hand rebuild:
+    python tools/war_rate_plus_lab.py."""
+    served = be.served_war_basis()
+    art = json.loads((ROOT / "data" / "war_rate_plus_multiyear_eval.json")
+                     .read_text(encoding="utf-8"))
+    got = {"war_provider": art.get("war_provider") or "bwar",
+           "ewar_generated_at": art.get("ewar_generated_at")}
+    assert got == served, f"multiyear artifact measured on {got}, served {served}"
+    ev = json.loads((ROOT / "data" / "war_rate_plus_eval.json")
+                    .read_text(encoding="utf-8"))
+    assert {"war_provider": ev.get("war_provider") or "bwar",
+            "ewar_generated_at": ev.get("ewar_generated_at")} == served
 
 
 # --------------------------------------------------------------------------- #

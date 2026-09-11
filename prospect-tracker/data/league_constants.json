@@ -8,7 +8,7 @@
  "min_rows": 30,
  "min_r": 0.999,
  "weight_tol": 0.01,
- "served_from": 2021,
+ "served_from": 2015,
  "not_fixed_here": "the weights are solved here but no consumer reads them yet; fa_config, hem_plus and wrc_rates still carry the frozen 2013 set (the consumer half of W1.0)",
  "seasons": {
   "2011": {

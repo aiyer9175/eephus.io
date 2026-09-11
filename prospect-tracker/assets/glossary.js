@@ -381,7 +381,16 @@
         });
         return rows;
       },
-      note: () => "The index carries real signal but does not beat the season WAR total it is built from. It ships as a display index, not a validated forecaster, and the loss stays on this card.",
+      // Derived, not typed: on eWAR (re-pointed 2026-09-11, audit F10-01) the
+      // starter index DOES clear the season WAR total and ties the unscaled
+      // rate, so a fixed "does not beat" sentence would be false on one card.
+      note: j => {
+        const p = (j.pools || {})[pool] || {};
+        const g = ((((p.results_by_convention || {}).v2 || {}).gap_ci_primary_minus_baseline) || {}).war_total || {};
+        return (g.lo95 != null && g.lo95 > 0)
+          ? "The index carries real signal and clears the season WAR total, but it does not clear the same rate left unscaled, so the pre-registered ship gate still fails. It ships as a display index, not a validated forecaster."
+          : "The index carries real signal but does not beat the season WAR total it is built from. It ships as a display index, not a validated forecaster, and the loss stays on this card.";
+      },
     });
 
     _RCPT_SPECS = {

@@ -546,17 +546,18 @@ def test_math_sanity_of_fixture():
 # --- the served eWAR vintage (audit F10-02 / F11-01) -------------------------
 
 def test_the_vintage_block_reports_absence_rather_than_zero():
-    """`data/ewar.json` is HAND-BUILT: nothing in run_monthly, build_site or
-    deploy runs tools/build_ewar.py, so the served WAR numerator can sit at the
-    artifact date while the innings beside it are current. The block that
-    discloses this must never report a clean zero it did not measure, which is
-    the failure mode that let the staleness run unnoticed."""
+    """Since 2026-09-11 (owner decision D11) the pipeline re-prices the live
+    season nightly (tools/build_ewar.py --nightly, run_monthly d8b / 3-pre), so
+    the flag reads the ARTIFACT: True on a nightly build, False on the committed
+    hand build until the first night has run. The block must never report a
+    clean zero it did not measure, which is the failure mode that let the
+    staleness run unnoticed."""
     import war_source as ws
     v = ws.ewar_vintage()
-    assert v["rebuilds_on_a_schedule"] is False, (
-        "if a scheduled rebuild ever ships, this flag and the glossary sentence "
-        "move together, and the runbook cascade has to move with them")
-    assert "build_command" in v
+    nightly = ws.ewar_cadence().get("mode") == "nightly"
+    assert v["rebuilds_on_a_schedule"] is nightly, (
+        "the flag, the artifact's cadence block and the glossary sentence move together")
+    assert v["build_command"] == (ws.EWAR_NIGHTLY_CMD if nightly else ws.EWAR_BUILD_CMD)
     if not v["frames_read"]:
         assert v["stale"] is None and "reason" in v, (
             "with no frame read the drift is UNAVAILABLE, not zero")
@@ -584,9 +585,11 @@ def test_the_vintage_block_goes_stale_past_its_own_threshold(monkeypatch):
     assert clean["stale"] is False and "warning" not in clean
 
 
-def test_the_glossary_no_longer_claims_the_artifact_rebuilds_itself():
-    """The served sentence said data/ewar.json 'rebuilds with the season'. It does
-    not, and that claim is what made the staleness invisible to a reader."""
+def test_the_glossary_states_the_nightly_and_the_freeze():
+    """The served sentence once said data/ewar.json 'rebuilds with the season'
+    while nothing rebuilt it, and that claim made the staleness invisible. Since
+    2026-09-11 the live season does rebuild nightly and completed seasons are
+    frozen; the entry says exactly that, not the old whole-series claim."""
     import json
     from pathlib import Path
     g = json.loads((Path(__file__).parent / "data" / "glossary.json")
@@ -595,15 +598,17 @@ def test_the_glossary_no_longer_claims_the_artifact_rebuilds_itself():
     assert entry is not None
     meth = entry.get("methodology") or ""
     assert "rebuilds with the season" not in meth
-    assert "DOES NOT REBUILD WITH THE SEASON" in meth
+    assert "DOES NOT REBUILD WITH THE SEASON" not in meth
+    assert "THE LIVE SEASON REBUILDS NIGHTLY" in meth and "November 1" in meth
 
 
-def test_the_three_year_war_rate_columns_disclose_their_basis():
-    """F10-01: the 3-year WAR-rate columns are measured on bWAR and are served
-    beside 1-year columns measured on eWAR, under copy asserting one scale. The
-    pitcher values move 4 to 5 points on a re-point, so the honest half ships
-    first and the re-point is its own epoch. The batting side is numerically
-    identical under both bases, which the entry must say rather than imply."""
+def test_the_three_year_war_rate_columns_share_the_one_year_basis():
+    """F10-01, closed 2026-09-11 by owner decision: the lab re-pointed from bWAR
+    to the served provider, so the 3-year WAR-rate columns and the 1-year
+    columns beside them are one series. The 2026-09-10 disclosure that they
+    were NOT on one scale is now false and must be gone; each entry states the
+    shared basis instead. bullpen_export.join_war_rate_3yr enforces the same
+    fact on the data (it refuses an artifact on another provider)."""
     import json
     from pathlib import Path
     g = json.loads((Path(__file__).parent / "data" / "glossary.json")
@@ -611,5 +616,7 @@ def test_the_three_year_war_rate_columns_disclose_their_basis():
     by = {e.get("id"): e for e in g["entries"]}
     for slug in ("war_ip_plus_sp_3yr", "war_ip_plus_rp_3yr", "war_pa_plus_3yr"):
         meth = (by[slug].get("methodology") or "")
-        assert "audit F10-01" in meth, f"{slug} does not disclose its WAR basis"
-        assert "bWAR" in meth and "eWAR" in meth
+        assert "NOT on one scale" not in meth, f"{slug} still discloses a divergence"
+        assert "measured on bWAR" not in meth, f"{slug} still claims a bWAR basis"
+        assert "same eWAR series as the one-year" in meth, (
+            f"{slug} does not state the basis it shares with the 1-year column")

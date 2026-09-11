@@ -55,12 +55,17 @@ runs per win (FanGraphs' closed form 9*(R/IP)*1.5 + 3), the FIP constant
 which is the only reading that reproduces the table), runs per caught stealing
 (-(2*R/outs + 0.075)), runs per stolen base (0.2 by convention), and R/PA.
 
-SERVED VERSUS SOLVED. The artifact now carries every solvable season, but
-`woba_scale()` reads only seasons from `SERVED_FROM` on, which is where the
-served table started when the scale repair shipped. Letting 2015 through 2020
-reach the projection corpus is correct (those seasons still read 1.15 today, so
-the corpus mixes two scales) but it moves served projections, so it is a measured
-change of its own and not a side effect of adding columns.
+SERVED VERSUS SOLVED. The artifact carries every solvable season, but
+`woba_scale()` reads only seasons from `SERVED_FROM` on. The served table began
+at 2021 when the scale repair shipped; the owner let 2015 through 2020 in on
+2026-09-11 (decision 14), so the projection corpus no longer mixes the solved
+scale with the 1.15 config constant across 2014-2019 feature rows. 2011 through
+2014 stay solved and published but unserved: the owner's call named 2015, and
+widening it is a measured move of its own, not a side effect. Before 2011 there
+is no solve at all, so corpus rows from 2000 through 2013 still read the config
+constant (the fit reads the scale of the season AFTER the row, so the 2014 row
+reads 2015's). The WAR map absorbs the scale only because the fit cache key
+carries it (fa_projection._corpus_sig), so this move regenerates every fit.
 
 WHAT THIS DOES NOT FIX, stated so the next reader does not assume it did. The
 weights are now SOLVED here but no consumer reads them yet: fa_config.yaml,
@@ -100,10 +105,11 @@ MIN_ROWS = 30
 #: than no constant.
 MIN_R = 0.999
 
-#: The first season a consumer reads through `woba_scale()`. The served table
-#: began here when the scale repair shipped; earlier seasons are solved and
-#: published in the artifact but reach no consumer until that move is measured.
-SERVED_FROM = 2021
+#: The first season a consumer reads through `woba_scale()`. 2021 when the scale
+#: repair shipped; 2015 from the owner decision of 2026-09-11 (decision 14),
+#: measured before it moved. 2011-2014 are solved and published in the artifact
+#: but reach no consumer.
+SERVED_FROM = 2015
 
 #: The six wOBA events in the order the weights are solved and published.
 WEIGHT_KEYS = ("ubb", "hbp", "1b", "2b", "3b", "hr")

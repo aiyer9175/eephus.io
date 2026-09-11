@@ -72,12 +72,36 @@ concurrently; the pipeline is a single writer.
 
 FRESHNESS. Covered player-seasons are pinned to the ARTIFACT (its ewp/ewb
 side totals), so the served WAR of a covered pitcher-season moves only when
-data/ewar.json is rebuilt. In season, war_daily advances daily while the
-artifact holds its generated_at. Rebuild the artifact (EWAR_BUILD_CMD, add
---force-fetch to bypass ewar.bwar_frames' 7-day cache) before the monthly WAR
-reads, or the pitcher side serves the build date. ewar_frame_diagnostics()
-counts the player-seasons whose frame bWAR sum no longer matches the
-artifact's bwp/bwb (a B-Ref revision or an in-season update since the build).
+data/ewar.json is rebuilt. ewar_frame_diagnostics() counts the player-seasons
+whose frame bWAR sum no longer matches the artifact's bwp/bwb (a B-Ref revision
+or an in-season update since the build), per season.
+
+THE NIGHTLY CADENCE (owner decision D11, 2026-09-11: NIGHTLY). run_daily runs
+EWAR_NIGHTLY_CMD before the timeseries rebuild (and the monthly runs it before
+its first WAR reader). It rebuilds ONLY the live season and carries every
+completed season forward byte for byte, so:
+  - a season is COMPLETE from EWAR_FREEZE_MONTH_DAY of its own year; the first
+    nightly on or after that date prices it one last time and FREEZES it. A
+    hand build froze only the seasons that were complete on the day it was
+    BUILT (ewar_complete_at_build), so a season it priced in progress is
+    re-priced by the next nightly, never frozen at the in-progress numbers;
+  - a frozen season's blocks are never rewritten by the nightly (each carries
+    a sha256 in meta.cadence.frozen_digests and ewar_cadence_status fails on a
+    mismatch); only a hand full build (EWAR_BUILD_CMD) re-prices one, and that
+    is the runbook cascade;
+  - `generated_at` is the build identity of the FROZEN series and does not
+    move nightly, which is what storage.board_basis_fingerprint's label term
+    reads, so the board basis does not churn with the live season;
+    `live_built_at` is the live season's build time, and ewar_vintage reports it
+    as the served numerator's build;
+  - the box restores the COMMITTED data/ewar.json before every run
+    (deploy/nightly-build.sh `git checkout -- .`), so the nightly keeps its own
+    state in an untracked copy (tools/build_ewar.CARRY_PATH, under .cache) and
+    starts from it whenever it descends from the committed build.
+The fitted artifacts the runbook rebuilds after step B (the pooled outcome
+curve, the empirical anchors, the draft slot curve, the war_rate_plus vintages,
+the eFV matrices and floors, the career_war rebase) read completed seasons, which
+the nightly never moves, so none of them rebuilds nightly.
 
 THE RE-ANCHOR CASCADE IS A LATER WAVE. Flipping this default lands eWAR in
 every default reader; the bWAR-pinned artifacts (empirical FV outcome curve,
@@ -115,6 +139,21 @@ DEFAULT_PROVIDER: str = "ewar_v2"
 #: first season the eFV first-6yr label pool reaches; the FIP corpus prices
 #: 2011-2015 in full (707/707 .. 808/810 pitcher rows, tools/build_ewar.py).
 EWAR_BUILD_CMD: str = "python tools/build_ewar.py --first 2011 --last 2026 --write"
+
+#: The daily step (run_monthly run_daily, before d9): the live season only.
+EWAR_NIGHTLY_CMD: str = "python tools/build_ewar.py --nightly --write"
+
+#: A season is complete, and freezes, on this (month, day) of its own year: the
+#: regular season and the postseason are over and Baseball-Reference's
+#: end-of-season revisions have landed. The same rule fg_leaderboards uses.
+EWAR_FREEZE_MONTH_DAY: tuple[int, int] = (11, 1)
+
+#: The oldest a live-season input may be when the nightly prices on it, in
+#: hours before the build (the StatsAPI season stats behind the live FIP, the
+#: standings blob behind the replacement level). Their shared scraper cache
+#: refetches the current season after 24 hours, so a healthy night reads inputs
+#: under a day old; 36 leaves room for a late cron. A POLICY number.
+EWAR_LIVE_INPUT_MAX_AGE_HOURS: float = 36.0
 
 _SIDES = ("bat", "pit")
 
@@ -540,66 +579,237 @@ def _bwar_stint_frame(side: str, allow_stale: bool):
 EWAR_STALE_REVISED_MAX: int = 25
 
 
+# --- the cadence (nightly live season, frozen completed seasons) -------------
+
+def ewar_season_complete(season: int, today=None) -> bool:
+    """True from EWAR_FREEZE_MONTH_DAY of `season`'s own year onward."""
+    import datetime as _dt
+    today = today or _dt.date.today()
+    m, d = EWAR_FREEZE_MONTH_DAY
+    return (today.year, today.month, today.day) >= (int(season), m, d)
+
+
+def ewar_build_date(payload: dict | None):
+    """The calendar date of the artifact's build (`generated_at`), or None."""
+    import datetime as _dt
+    g = str((payload or {}).get("generated_at") or "")[:10]
+    try:
+        return _dt.date.fromisoformat(g)
+    except ValueError:
+        return None
+
+
+def ewar_complete_at_build(payload: dict | None) -> list[int]:
+    """The seasons of the artifact's window that were COMPLETE on the day it was
+    built. On a hand build these are the seasons it priced final; a season it
+    priced in progress is not among them however late the file is read, which is
+    what stops a restored hand build from freezing a season at in-progress
+    numbers (the box restores the committed file before every nightly)."""
+    built = ewar_build_date(payload)
+    lo, hi = ((payload or {}).get("seasons") or [None, None])[:2]
+    if built is None or lo is None or hi is None:
+        return []
+    return [s for s in range(int(lo), int(hi) + 1) if ewar_season_complete(s, built)]
+
+
+def ewar_season_digest(payload: dict, season: int) -> str:
+    """sha256 over one season's blocks in canonical JSON (keys sorted, compact):
+    {mlbam: block} for every player with that season. Two artifacts carry the
+    same WAR for a season exactly when this digest agrees, whatever order the
+    file lays players out in."""
+    import hashlib
+    import json
+    s = str(int(season))
+    blocks = {mid: by[s] for mid, by in (payload.get("players") or {}).items() if s in by}
+    blob = json.dumps(blocks, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(blob.encode("ascii")).hexdigest()
+
+
+def ewar_cadence(payload: dict | None = None) -> dict:
+    """The artifact's cadence block (meta.cadence), or {} for a hand-built one."""
+    if payload is None:
+        try:
+            payload = _payload()
+        except Exception:   # noqa: BLE001 - absence is a reportable state
+            return {}
+    return dict(((payload or {}).get("meta") or {}).get("cadence") or {})
+
+
+def _hours_between(earlier, later):
+    """Hours from one ISO stamp to another (naive local stamps, as the nightly
+    writes them), or None when either is missing or unparseable."""
+    import datetime as _dt
+    try:
+        a = _dt.datetime.fromisoformat(str(earlier))
+        b = _dt.datetime.fromisoformat(str(later))
+    except (TypeError, ValueError):
+        return None
+    if (a.tzinfo is None) != (b.tzinfo is None):
+        a, b = a.replace(tzinfo=None), b.replace(tzinfo=None)
+    return (b - a).total_seconds() / 3600.0
+
+
+def ewar_cadence_status(payload: dict | None = None, today=None) -> dict:
+    """The nightly's FRESHNESS ASSERTION, as a report (never raises).
+
+    ok is True only when all of these hold:
+      - the artifact is a nightly build (meta.cadence.mode == "nightly");
+      - the live season, if there is one and it is not complete, was built today;
+      - the live season was priced on that night's inputs: war_daily came off
+        the wire (not the last-good cache), and the StatsAPI season stats behind
+        its FIP and the standings behind its replacement level were at most
+        EWAR_LIVE_INPUT_MAX_AGE_HOURS old at the build;
+      - every frozen season's blocks still hash to the digest recorded when it
+        froze (the byte-identical promise, checked on the file itself);
+      - every season of the window that is complete is frozen.
+    `problems` names each failure. run_monthly logs it and records a heartbeat;
+    the tests carry the loudness."""
+    import datetime as _dt
+    today = today or _dt.date.today()
+    out = {"ok": None, "problems": [], "mode": None, "live_season": None,
+           "live_built_at": None, "frozen_seasons": [], "label_build_at": None,
+           "as_of": today.isoformat()}
+    if payload is None:
+        try:
+            payload = _payload()
+        except Exception as exc:   # noqa: BLE001
+            out["ok"] = False
+            out["problems"].append(f"data/ewar.json unreadable ({type(exc).__name__})")
+            return out
+    cad = ewar_cadence(payload)
+    out.update(mode=cad.get("mode") or "hand", live_season=cad.get("live_season"),
+               live_built_at=cad.get("live_built_at"),
+               frozen_seasons=list(cad.get("frozen_seasons") or []),
+               label_build_at=payload.get("generated_at"))
+    if cad.get("mode") != "nightly":
+        out["problems"].append("the artifact is hand-built: the nightly eWAR step has not run "
+                               f"({EWAR_NIGHTLY_CMD})")
+    live = cad.get("live_season")
+    if live is not None and not ewar_season_complete(live, today):
+        built = str(cad.get("live_built_at") or "")[:10]
+        if built != today.isoformat():
+            out["problems"].append(f"live season {live} last built {built or 'never'}, "
+                                   f"not {today.isoformat()}")
+        frames = cad.get("frames") or {}
+        if frames.get("served_stale"):
+            out["problems"].append("live season priced on the last-good war_daily cache "
+                                   f"({sorted(frames['served_stale'])})")
+        for key, what in (("fip_source_at", "StatsAPI season stats behind the live FIP"),
+                          ("standings_at", "standings behind the live replacement level")):
+            age = _hours_between(frames.get(key), cad.get("live_built_at"))
+            if age is None:
+                out["problems"].append(f"the {what} carry no vintage")
+            elif age > EWAR_LIVE_INPUT_MAX_AGE_HOURS:
+                out["problems"].append(f"the {what} were {age:.0f} hours old at the build "
+                                       f"(limit {EWAR_LIVE_INPUT_MAX_AGE_HOURS:.0f})")
+    digests = cad.get("frozen_digests") or {}
+    for s in out["frozen_seasons"]:
+        want = digests.get(str(s))
+        if want is None:
+            out["problems"].append(f"frozen season {s} has no recorded digest")
+        elif ewar_season_digest(payload, s) != want:
+            out["problems"].append(f"frozen season {s} no longer matches the digest it froze with")
+    lo, hi = (payload.get("seasons") or [None, None])[:2]
+    if lo is not None and hi is not None and cad.get("mode") == "nightly":
+        for s in range(int(lo), int(hi) + 1):
+            if ewar_season_complete(s, today) and s not in out["frozen_seasons"]:
+                out["problems"].append(f"season {s} is complete but not frozen")
+    out["ok"] = not out["problems"]
+    return out
+
+
 def ewar_vintage(as_of: str | None = None) -> dict:
     """What build the served eWAR numbers come from, and whether it has fallen
     behind the frame underneath them.
 
-    WHY THIS EXISTS (audit F10-02 / F11-01, 2026-09-10). `data/ewar.json` is
-    HAND-BUILT: nothing in run_monthly, build_site or deploy runs
-    tools/build_ewar.py, so the served WAR numerator sits at the artifact's own
-    generated_at while innings, ERA and the bWAR input on the same served row
-    refresh nightly. Measured on the 2026-09-03 build: 422 of 773 pitcher cards
-    carried a stale numerator, 71 of them off by a full display step.
+    WHY THIS EXISTS (audit F10-02 / F11-01, 2026-09-10). `data/ewar.json` was
+    HAND-BUILT: nothing in the pipeline ran tools/build_ewar.py, so the served WAR
+    numerator sat at the artifact's own generated_at while innings, ERA and the
+    bWAR input on the same served row refreshed nightly. Measured on the
+    2026-09-03 build: 422 of 773 pitcher cards carried a stale numerator, 71 of
+    them off by a full display step.
+
+    THE CADENCE (owner decision D11, 2026-09-11: nightly). Once the pipeline's
+    eWAR step has written the artifact, `rebuilds_on_a_schedule` is True,
+    `artifact_generated_at` is the live season's build (the served numerator's
+    vintage, the date the boards print when `stale` fires) and `label_build_at`
+    is the frozen series' build (`generated_at`, which the board fingerprint
+    reads and which the nightly never moves). On a hand build the two are one
+    stamp and the block says the artifact is hand-built. Both states are read
+    from the artifact, never assumed: from the frame receipts first (the
+    artifact the served frames were transformed with in this process), from the
+    file when no frame has been read.
 
     The staleness is CURRENT-SEASON ONLY, and that distinction is the useful
     part: 0 of 855 2024 and 0 of 873 2025 pitcher-seasons drift against the
-    artifact, so career totals, WAG inputs and the eFV labels carry one stale
-    cell rather than a stale series.
+    artifact, and a full rebuild on 2026-09-11 reproduced every 2011-2025 block
+    byte for byte. `bwar_revised_live` and `bwar_revised_frozen` split the drift
+    so a frozen-season revision (a B-Ref restatement; re-pricing it is a hand
+    run with the cascade) is not mistaken for a missed nightly.
 
-    This REPORTS and never raises. A scheduled rebuild is an owner decision about
-    the whole re-anchor cascade (WAR_BASIS_RUNBOOK step B ends "INVALIDATES:
-    everything below", and below it sit the career_war rebase, the pooled outcome
-    curve, the empirical anchors, the slot curve and the projections retrain), so
-    a nightly rebuild with none of that would drift the label out from under
-    artifacts fitted on a named build, which is a worse defect than this one. The
-    board therefore publishes its vintage and a test fails on the drift; the
-    export stays up, because taking the boards down over a disclosure problem
-    trades one outage for another.
-
-    `bwar_revised` is the direct evidence and is already computed by the frame
-    transform, so no new pass over the data is needed. It is empty until a frame
-    has been read on provider 'ewar_v2' in this process, which is stated rather
-    than faked."""
+    This REPORTS and never raises: taking the boards down over a disclosure
+    trades one outage for another, so the export stays up and a test fails on
+    the drift instead. `bwar_revised` is empty until a frame has been read on
+    provider 'ewar_v2' in this process, which is stated rather than faked."""
     diag = ewar_frame_diagnostics()
-    gen = None
+    blob = None
+    try:
+        import ewar as _ewar   # noqa: PLC0415 - optional, artifact may be absent
+        blob = _ewar.load() or {}
+    except Exception:   # noqa: BLE001 - absence is a reportable state
+        blob = None
+    cad = ewar_cadence(blob) if blob is not None else {}
+    nightly = cad.get("mode") == "nightly"
+    gen = label = None
     for side in _SIDES:
         g = (diag.get(side) or {}).get("artifact_generated_at")
         if g:
             gen = g
+            label = (diag.get(side) or {}).get("artifact_label_build_at") or g
             break
-    if gen is None:
-        try:
-            import ewar as _ewar   # noqa: PLC0415 - optional, artifact may be absent
-            gen = (_ewar.load() or {}).get("generated_at")
-        except Exception:   # noqa: BLE001 - absence is a reportable state
-            gen = None
+    if gen is None and blob is not None:
+        label = blob.get("generated_at")
+        gen = (blob.get("live_built_at") or label) if nightly else label
+    live = cad.get("live_season") if nightly else None
+    if not nightly and blob:
+        # a hand build has no cadence block: its live season is the last season
+        # of its window that was still in progress on the day it was built
+        hi = (blob.get("seasons") or [None, None])[-1]
+        if hi is not None and int(hi) not in ewar_complete_at_build(blob):
+            live = int(hi)
     revised = {s: int((diag.get(s) or {}).get("bwar_revised") or 0) for s in _SIDES}
     covered = {s: int((diag.get(s) or {}).get("covered_player_seasons") or 0)
                for s in _SIDES}
+    by_season: dict[int, int] = {}
+    for s in _SIDES:
+        for yr, n in ((diag.get(s) or {}).get("bwar_revised_by_season") or {}).items():
+            by_season[int(yr)] = by_season.get(int(yr), 0) + int(n)
+    # absent, not zero, when no frame has been read (the same rule as `stale`)
+    live_rev = by_season.get(int(live), 0) if (diag and live is not None) else None
+    frozen_rev = (sum(n for yr, n in by_season.items() if live is None or yr != int(live))
+                  if diag else None)
     worst = max(revised.values()) if revised else 0
     out = {
         "artifact_generated_at": gen,
+        "label_build_at": label,
         "as_of": as_of,
         "bwar_revised": revised,
+        "bwar_revised_live": live_rev,
+        "bwar_revised_frozen": frozen_rev,
         "covered_player_seasons": covered,
         "threshold": EWAR_STALE_REVISED_MAX,
         "frames_read": bool(diag),
-        "build_command": EWAR_BUILD_CMD,
-        "rebuilds_on_a_schedule": False,
-        "note": ("data/ewar.json is hand-built; nothing in the pipeline rebuilds "
-                 "it. Completed seasons do not drift, so a gap here is a "
-                 "current-season staleness in the WAR numerator while the "
-                 "denominator on the same row is current."),
+        "build_command": EWAR_NIGHTLY_CMD if nightly else EWAR_BUILD_CMD,
+        "rebuilds_on_a_schedule": nightly,
+        "cadence": {"mode": cad.get("mode") or "hand", "live_season": live,
+                    "frozen_through": max(cad.get("frozen_seasons") or [0]) or None},
+        "note": (("data/ewar.json rebuilds its live season nightly; completed seasons are "
+                  "frozen byte for byte and re-priced only by a hand build with the runbook "
+                  "cascade.") if nightly else
+                 ("data/ewar.json is hand-built; nothing in the pipeline has rebuilt it. "
+                  "Completed seasons do not drift, so a gap here is a current-season "
+                  "staleness in the WAR numerator while the denominator on the same row "
+                  "is current.")),
     }
     if not diag:
         out["stale"] = None
@@ -610,8 +820,9 @@ def ewar_vintage(as_of: str | None = None) -> dict:
         if out["stale"]:
             out["warning"] = (
                 f"{worst} covered player-seasons no longer match the eWAR artifact "
-                f"built {gen}; the served WAR numerator is behind its own frame "
-                f"(rebuild: {EWAR_BUILD_CMD}, then the runbook cascade)")
+                f"built {out['artifact_generated_at']}; the served WAR numerator is "
+                f"behind its own frame (rebuild: {out['build_command']}"
+                + ("" if nightly else ", then the runbook cascade") + ")")
             log.warning(out["warning"])
     return out
 
@@ -632,9 +843,12 @@ def ewar_frame_diagnostics() -> dict[str, dict]:
                                than 0.005: B-Ref revised the row, or the
                                season advanced since generated_at. The
                                artifact's eWAR is served either way.
+      bwar_revised_by_season   the same count per season ({"2026": n})
       delta_sum                sum over covered rows of (WAR - WAR_bwar):
                                the league-level move this transform made
-      artifact_generated_at
+      artifact_generated_at    the served numerator's build: live_built_at on
+                               a nightly artifact, generated_at on a hand one
+      artifact_label_build_at  generated_at (the frozen series' build)
     Empty until a frame has been read on provider 'ewar_v2'."""
     return {k: dict(v) for k, v in _EWAR_FRAME_DIAG.items()}
 
@@ -673,8 +887,11 @@ def _ewar_frame(df, side: str, *, door: str):
     receipt = {
         "door": door, "rows": int(len(out)), "covered_rows": 0,
         "covered_player_seasons": 0, "artifact_player_seasons": len(targets),
-        "bwar_revised": 0, "delta_sum": 0.0,
-        "artifact_generated_at": blob.get("generated_at"),
+        "bwar_revised": 0, "bwar_revised_by_season": {}, "delta_sum": 0.0,
+        # the served numerator's build (the live season's, on a nightly artifact)
+        # and the frozen series' build; one stamp on a hand build
+        "artifact_generated_at": blob.get("live_built_at") or blob.get("generated_at"),
+        "artifact_label_build_at": blob.get("generated_at"),
     }
     if not len(out) or not targets:
         _EWAR_FRAME_DIAG[side] = receipt
@@ -721,10 +938,16 @@ def _ewar_frame(df, side: str, *, door: str):
 
     per = grp.agg(fsum=("war", "sum"), bart=("bart", "first"))
     revised = per["bart"].notna() & ((per["fsum"] - per["bart"]).abs() > 0.005)
+    # the group id is mlbam * 10000 + season, so the season is its last 4 digits
+    rev_years = (per.index[revised.values] % 10000).tolist()
+    by_season: dict[int, int] = {}
+    for yr_ in rev_years:
+        by_season[int(yr_)] = by_season.get(int(yr_), 0) + 1
     receipt.update({
         "covered_rows": int(len(cov_idx)),
         "covered_player_seasons": int(len(per)),
         "bwar_revised": int(revised.sum()),
+        "bwar_revised_by_season": {str(k): by_season[k] for k in sorted(by_season)},
         "delta_sum": float(np.sum(new_war - w["war"].values)),
     })
     _EWAR_FRAME_DIAG[side] = receipt

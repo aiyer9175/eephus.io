@@ -151,9 +151,9 @@ def test_bullpen_plus_explainer_on_teams_view():
 
 # ---------------------------------------------------------------------------
 # The eWAR build stamp (war_source.ewar_vintage, served since 2026-09-10) and
-# the 3-year WAR-rate basis (audit F10-01). Both were served or known and
-# never drawn: data/ewar.json is hand-built, so this season's eWAR numerator
-# can trail the IP beside it, and the frozen 3-year pitcher column is bWAR.
+# the 3-year WAR-rate basis (audit F10-01, closed 2026-09-11: the 3-year
+# column now shares the 1-year eWAR series). data/ewar.json is hand-built, so
+# this season's eWAR numerator can trail the IP beside it.
 # ---------------------------------------------------------------------------
 
 def _render_payload(payload: dict, hash_: str = "") -> str:
@@ -175,12 +175,13 @@ def test_a_stale_ewar_build_is_disclosed_and_a_fresh_one_is_not():
     assert "eWAR built" not in _render_payload(d), "an absent stamp must not invent one"
 
 
-def test_the_pitcher_3yr_war_rate_column_names_its_basis():
-    """Typed until multiyear_war_rate stamps a basis; the re-point epoch
-    removes the sentence and this test with it."""
+def test_the_pitcher_3yr_war_rate_column_shares_the_1yr_basis():
+    """F10-01 closed 2026-09-11: the lab re-pointed to the served provider, so
+    the typed "bWAR basis ... not on one scale" sentence is false and gone."""
     head = _render("").split("<thead>")[1].split("</thead>")[0]
     th = head.split('data-col="war_ip_plus_3yr"')[0].rsplit("<th ", 1)[1]
-    assert "bWAR basis" in th and "not on one scale" in th, th
+    assert "bWAR" not in th and "not on one scale" not in th, th
+    assert "same eWAR series" in th, th
 
 
 # ---------------------------------------------------------------------------

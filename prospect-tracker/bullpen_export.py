@@ -1089,11 +1089,61 @@ def _join_war_ip_plus_3yr(relievers: list[dict]) -> dict:
     return join_war_rate_3yr(relievers, "rp", "war_ip_plus_3yr", "arms")
 
 
+def served_war_basis() -> dict:
+    """The WAR series the 1-year WAR-rate columns serve, as the two fields a
+    frozen 3-year artifact must carry to be served beside them.
+
+      war_provider       war_source's facade default, the provider
+                         _side_war_by_season reads.
+      ewar_generated_at  the eWAR artifact's own generated_at: the BUILD of the
+                         frozen series. A hand rebuild (the WAR_BASIS_RUNBOOK
+                         cascade) moves it and can re-price completed seasons;
+                         the nightly live-season rebuild (owner decision D11)
+                         stamps its own time elsewhere and leaves it alone. None
+                         on a provider with no artifact. ewar_vintage()'s
+                         artifact_generated_at is deliberately NOT used: under
+                         the nightly it is the live season's build time and
+                         moves every night, so it cannot name a series.
+
+    tools/war_rate_plus_lab.py stamps exactly this dict on both artifacts, so
+    the lab and the join read the basis from one place."""
+    import war_source
+    prov = war_source.DEFAULT_PROVIDER
+    gen = None
+    if prov != "bwar":
+        try:
+            import ewar
+            gen = (ewar.load() or {}).get("generated_at")
+        except Exception:   # noqa: BLE001 - absence is a reportable state
+            gen = None
+    return {"war_provider": prov, "ewar_generated_at": gen}
+
+
+def _served_war_provider() -> str:
+    """The provider the 1-year WAR-rate columns read (_side_war_by_season ->
+    war_source.side_war_by_season on the facade default)."""
+    return served_war_basis()["war_provider"]
+
+
 def join_war_rate_3yr(rows: list[dict], block: str, key: str, who: str) -> dict:
     """Shared frozen-vintage join for the three trailing-window WAR-rate columns
     (hitter / starter / reliever blocks of data/war_rate_plus_multiyear_eval.json).
     Missing artifact, missing block, or unmatched player -> fields absent and the
-    column renders blank."""
+    column renders blank.
+
+    ONE BASIS OR NOTHING (audit F10-01, re-pointed 2026-09-11 by owner
+    decision). The artifact stamps the series it was measured on: `war_provider`
+    (an unstamped artifact predates the stamp and is bWAR) and
+    `ewar_generated_at` (the eWAR build). If either differs from
+    served_war_basis(), the join REFUSES and the column renders blank. The
+    provider check closes F10-01 itself: from the 2026-09-03 epoch until this
+    repair the 3-year column was bWAR beside an eWAR 1-year column under copy
+    asserting one scale, 4 to 5 points apart on the pitcher boards. The build
+    check closes its repeat: a full eWAR rebuild inside ewar_v2 would otherwise
+    leave the frozen 3-year values on the old build beside a 1-year column on
+    the new one with the provider check still passing. A blank column is honest;
+    a mixed-basis pair is not. The fix for a refusal is the lab (python
+    tools/war_rate_plus_lab.py), never a copy change."""
     meta = {"source": WAR_RATE_MULTIYR_PATH.name, "n_stamped": 0, "available": False,
             "block": block}
     try:
@@ -1101,6 +1151,19 @@ def join_war_rate_3yr(rows: list[dict], block: str, key: str, who: str) -> dict:
         pv = art["proposed_values"][block]
         players = pv["players"]
     except (OSError, ValueError, KeyError):
+        return meta
+    basis = {"war_provider": art.get("war_provider") or "bwar",
+             "ewar_generated_at": art.get("ewar_generated_at")}
+    served = served_war_basis()
+    meta.update(basis)
+    if basis != served:
+        meta["refused"] = (f"{WAR_RATE_MULTIYR_PATH.name} was measured on "
+                           f"{basis['war_provider']} (eWAR build "
+                           f"{basis['ewar_generated_at']}) and the 1-year column "
+                           f"serves {served['war_provider']} (eWAR build "
+                           f"{served['ewar_generated_at']}); re-run "
+                           f"tools/war_rate_plus_lab.py")
+        _log.warning("%s REFUSED: %s", key, meta["refused"])
         return meta
     n = 0
     for r in rows:
@@ -1118,6 +1181,9 @@ def join_war_rate_3yr(rows: list[dict], block: str, key: str, who: str) -> dict:
         "season": pv.get("season"), "window": pv.get("window"),
         "anchor_pool": pv.get("anchor_pool"),
         "n_in_artifact": len(players),
+        # The basis (war_provider, ewar_generated_at, set above) rides on the
+        # block so a page can read it instead of typing it: assets/mlbstats.js
+        # carried a hand-typed bWAR sentence because this block had no field.
         "note": (f"The 3-year column is FROZEN lab output read verbatim from "
                  f"{WAR_RATE_MULTIYR_PATH.name}, as of generated_at, not this "
                  f"board's as_of. {who.capitalize()} who joined the pool since "

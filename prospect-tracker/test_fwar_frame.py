@@ -8,8 +8,15 @@
 Every test here pins one library formula or one measured convention on numbers a
 reader can check by hand. The last group reads the eval artifact if it has been
 built and asserts the gate numbers are RECORDED (row counts behind every share,
-a verdict that agrees with its share), never that they pass: the pitching side
-does not clear the gate from disk, and a test that demanded it would be a lie.
+a verdict that agrees with its share), never that they pass: with FanGraphs'
+IFFB, FIP park factor, pitcher framing and Start-IP the pitching side clears
+the gate in some seasons and not others (traded pitchers are priced on season
+totals), and a test that demanded it would be a lie.
+
+The last section pins the eWAR NIGHTLY (owner decision D11, tools/build_ewar.py
+--nightly): the live season is re-priced on that night's inputs, every completed
+season is carried byte for byte, generated_at does not move, the eval is never
+rewritten, and the state survives the box restoring the committed file.
 """
 from __future__ import annotations
 
@@ -241,6 +248,23 @@ def test_pitcher_rar_is_war_times_its_own_dynamic_rpw():
     assert rar == pytest.approx(war * ln["drpw"])
 
 
+def test_framing_is_charged_back_to_the_pitcher_per_nine():
+    """Convention 9: the framing runs earned on a pitcher's pitches are added
+    to his park-adjusted FIPR9, so 3 framing runs over 180 innings cost him
+    0.15 runs per nine and, for an average starter, about that many runs of RAR."""
+    assert F.framing_charge_per9(3.0, 180.0) == pytest.approx(0.15)
+    assert F.framing_charge_per9(-2.0, 60.0) == pytest.approx(-0.3)
+    assert F.framing_charge_per9(5.0, 0.0) == 0.0
+    lg = 4.4
+    base = F.role_line(180.0, 30.0, True, lg, lg, lg, None)
+    charged = F.role_line(180.0, 30.0, True, lg, lg, lg + F.framing_charge_per9(3.0, 180.0), None)
+    war_b, rar_b = F.pitcher_war([base], 0.0)
+    war_c, rar_c = F.pitcher_war([charged], 0.0)
+    # 3.0 runs off RAAP9, less the 0.18 the replacement part gains because the
+    # charge also lifts his dynamic runs per win (0.12 * 20 * 0.075)
+    assert rar_b - rar_c == pytest.approx(3.0 - 0.12 * 20.0 * 0.075, abs=1e-9)
+
+
 def test_pf_from_fip_minus_inverts_the_fip_minus_formula():
     fipv, lgfip, pf = 3.6, 4.15, 1.04
     fip_minus = 100.0 * (fipv + (fipv - fipv * pf)) / lgfip
@@ -295,6 +319,517 @@ def test_the_artifact_records_every_season_and_component():
 def test_the_artifact_labels_what_it_consumed():
     art = _artifact()
     text = " ".join(art["consumed"]).lower()
-    for word in ("ubr", "fielding", "framing", "gmli", "park factor"):
+    for word in ("ubr", "fielding", "framing", "gmli", "park factor", "iffb",
+                 "fangraphs guts fip park factor", "start-ip"):
         assert word in text, f"consumed input '{word}' is not labelled"
     assert art["gate"]["tolerance_runs"] == 1.0 and art["gate"]["share"] == 0.99
+    assert art["fangraphs_inputs"]["served"] is False
+
+
+def test_every_pitcher_line_names_its_inputs_and_every_arm_its_row_count():
+    """Owner decision 14a: the pitcher line is priced on FanGraphs' IFFB and FIP
+    park factor wherever they are cached, and each season says which inputs it
+    actually had. The arms are one input apart, so what each input buys is read
+    off the table; every share carries its n."""
+    art = _artifact()
+    for s, blk in art["seasons"].items():
+        p = blk["pitchers"]
+        for k in ("arm", "runs_leg", "pf_source", "role_innings", "framing_charge"):
+            assert k in p, f"{s}: pitcher line lacks {k}"
+        prov = art["inputs"]["fangraphs"][s]
+        if prov.get("pitching") and prov.get("park_factors"):
+            assert p["arm"] == "iffb_fg_pf_framing_fg_role", s
+            assert p["runs_leg"].startswith("ifFIP") and p["pf_source"].startswith("fg_fip")
+        else:
+            assert p["pf_source"].startswith("fip_minus"), f"{s}: uncached season must fall back"
+        for arm, v in blk["pitchers_arms"].items():
+            assert v["rar"]["n"] > 0 and "share_within" in v["rar"], (s, arm)
+
+
+def test_the_catcher_framing_cross_check_is_recorded_where_fangraphs_is_cached():
+    """Decision 13: FanGraphs CFraming against the feed's framing residual, the
+    number the replica and DEM+ price. Recorded (agreement counts and the worst
+    rows), never asserted to pass."""
+    art = _artifact()
+    for s, blk in art["seasons"].items():
+        fc = blk["hitters"].get("framing_crosscheck")
+        if not art["inputs"]["fangraphs"][s].get("fielding"):
+            assert fc is None
+            continue
+        for k in ("n_both", "n_within_0_01", "max_abs_diff", "only_in_feed", "only_in_fg"):
+            assert k in fc, (s, k)
+        assert 0 <= fc["n_within_0_01"] <= fc["n_both"]
+
+
+def test_the_public_artifact_republishes_nothing_of_fangraphs():
+    """The eval ships with the site's accountability artifacts. It carries what
+    the replica made of FanGraphs' numbers (shares, gaps, row counts, the sha256
+    of each cached response), never FanGraphs' park-factor table, a pitcher's
+    applied FanGraphs factor or a catcher's CFraming value."""
+    art = _artifact()
+    for s, blk in art["seasons"].items():
+        fg_pf = (blk["pitchers"].get("park_factor") or {}).get("fg_fip") or {}
+        assert "team_pf" not in fg_pf, f"{s}: the Guts FIP table is republished"
+        if blk["pitchers"].get("pf_source", "").startswith("fg_fip"):
+            assert all(r.get("pf") is None for r in blk["pitchers"]["worst_rows"]), s
+        for r in ((blk["hitters"].get("framing_crosscheck") or {}).get("worst") or []):
+            assert "fg_cframing" not in r and "abs_diff" in r, s
+        for kind, prov in (art["inputs"]["fangraphs"].get(s) or {}).items():
+            assert set(prov) <= {"fetched_at", "complete", "n_rows", "raw_sha256"}, (s, kind)
+
+
+def test_the_park_factor_comparison_is_on_the_artifact():
+    """The default line prices the Guts FIP factor (decision 14a); with the other
+    three inputs in place the leave-one-out FIP- back-solve clears more seasons.
+    Both are listed, so the comparison is read off the artifact."""
+    art = _artifact()
+    arms = art["pitcher_arms_summary"]
+    assert art["pitcher_default_arm"] == "iffb_fg_pf_framing_fg_role"
+    for name in ("iffb_fg_pf_framing_fg_role", "iffb_loo_pf_framing_fg_role"):
+        for comp in ("rar", "war_runs"):
+            v = arms[name][comp]
+            assert set(v) == {"pass", "fail"} and not set(v["pass"]) & set(v["fail"])
+    default = art["summary"]["pitchers.rar"]
+    assert arms["iffb_fg_pf_framing_fg_role"]["rar"] == default, "the default arm is the table"
+
+
+# --------------------------------------------------------------------------
+# The eWAR nightly (owner decision D11): live season only, completed seasons
+# frozen byte for byte, generated_at carried, the eval never rewritten, the
+# state carried across the box's `git checkout -- .`, stale inputs refused
+# --------------------------------------------------------------------------
+
+def _season_block(mid: int, season: int, ew: float) -> dict:
+    return {"ew": ew, "bw": ew, "ewp": ew, "bwp": ew, "pe": 1.0, "pb": 1.0, "ps": "fip",
+            "ip": 50.0, "tm": ["DET"]}
+
+
+def _payload(seasons, ew_of=lambda mid, s: 1.0, generated_at="2026-09-03T12:35:09",
+             cadence=None) -> dict:
+    players = {str(m): {str(s): _season_block(m, s, ew_of(m, s)) for s in seasons}
+               for m in (100, 200, 300)}
+    meta = {"generated_at": generated_at, "seasons": [min(seasons), max(seasons)],
+            "by_season": {str(s): {"n_rows": 3, "replacement_scale": 1.0} for s in seasons},
+            "pitching": {"by_season": {str(s): {"n_rows": 3, "n_covered": 3, "ip_total": 150.0,
+                                                "ip_covered": 150.0} for s in seasons},
+                         "n_rows": 3 * len(seasons)},
+            "fielding": {"by_season": {}},
+            "rpw_by_season": {str(s): 9.7 for s in seasons}}
+    if cadence is not None:
+        meta["cadence"] = cadence
+    return {"model": "ewar_v2", "generated_at": generated_at,
+            "seasons": [min(seasons), max(seasons)], "consumers": "x", "field_key": {},
+            "meta": meta, "n_player_seasons": 3 * len(seasons), "players": players}
+
+
+def _be():
+    from tools import build_ewar
+    return build_ewar
+
+
+def _fresh(at="2026-09-11T02:00:00"):
+    """Input vintages of a healthy night (stats and standings read that night)."""
+    return {"fip_source_at": at, "standings_at": at}
+
+
+def test_the_nightly_plan_freezes_completed_seasons_and_rebuilds_only_the_live_one():
+    import datetime as dt
+    B = _be()
+    prev = _payload(range(2011, 2027))                  # a hand build of 2026-09-03
+    plan = B.nightly_plan(prev, dt.date(2026, 9, 11), range(2011, 2027))
+    assert plan["frozen_before"] == list(range(2011, 2026)), "complete when it was built"
+    assert plan["rebuild"] == [2026] and plan["live"] == 2026 and plan["freeze_now"] == []
+    # the freeze pass: the first nightly on or after November 1 prices the live
+    # 2026 once more and freezes it
+    nightly = _payload(range(2011, 2027), cadence={"mode": "nightly", "live_season": 2026,
+                                                   "frozen_seasons": list(range(2011, 2026))})
+    plan = B.nightly_plan(nightly, dt.date(2026, 11, 1), range(2011, 2027))
+    assert plan["rebuild"] == [2026] and plan["freeze_now"] == [2026] and plan["live"] is None
+    assert plan["frozen_after"] == list(range(2011, 2027))
+    frozen = _payload(range(2011, 2027), cadence={"mode": "nightly",
+                                                  "frozen_seasons": list(range(2011, 2027))})
+    assert B.nightly_plan(frozen, dt.date(2026, 12, 1), range(2011, 2027))["rebuild"] == []
+    # a new season appears in the frames: it becomes the live season
+    plan = B.nightly_plan(frozen, dt.date(2027, 3, 28), range(2011, 2028))
+    assert plan["rebuild"] == [2027] and plan["live"] == 2027
+
+
+def test_a_hand_build_freezes_only_what_was_complete_the_day_it_was_built():
+    """The reviewer's failure: the box restores the committed hand build (built
+    2026-09-03) before every nightly, so judging completeness by TODAY froze 2026
+    at the September numbers from November 1 on, and a completed season's WAR
+    moved backwards overnight. Completeness is judged at the build date."""
+    import datetime as dt
+    import war_source as ws
+    B = _be()
+    sept = _payload(range(2011, 2027))
+    assert ws.ewar_complete_at_build(sept) == list(range(2011, 2026))
+    for day in (dt.date(2026, 10, 31), dt.date(2026, 11, 1), dt.date(2027, 1, 15)):
+        plan = B.nightly_plan(sept, day, range(2011, 2027))
+        assert plan["rebuild"] == [2026], day
+    assert B.nightly_plan(sept, dt.date(2026, 11, 1), range(2011, 2027))["freeze_now"] == [2026]
+    # a hand build made AFTER the freeze date priced 2026 final: frozen as built
+    nov = _payload(range(2011, 2027), generated_at="2026-11-15T10:00:00")
+    assert B.nightly_plan(nov, dt.date(2026, 12, 1), range(2011, 2027))["rebuild"] == []
+
+
+def test_the_merge_carries_every_frozen_season_byte_for_byte():
+    import datetime as dt
+    import war_source as ws
+    B = _be()
+    prev = _payload(range(2011, 2027))
+    plan = B.nightly_plan(prev, dt.date(2026, 9, 11), range(2011, 2027))
+    live = _payload([2026], ew_of=lambda m, s: 2.5)
+    new = B.merge_nightly(prev, {2026: live}, plan, now_iso="2026-09-11T03:00:00")
+    for s in range(2011, 2026):
+        assert ws.ewar_season_digest(new, s) == ws.ewar_season_digest(prev, s), s
+    assert ws.ewar_season_digest(new, 2026) != ws.ewar_season_digest(prev, 2026)
+    assert new["generated_at"] == prev["generated_at"], "the frozen series' build does not move"
+    cad = new["meta"]["cadence"]
+    assert cad["mode"] == "nightly" and cad["live_season"] == 2026
+    assert cad["live_built_at"] == new["live_built_at"] == "2026-09-11T03:00:00"
+    assert cad["frozen_seasons"] == list(range(2011, 2026))
+    assert set(cad["frozen_digests"]) == {str(s) for s in range(2011, 2026)}
+    assert B.check_nightly(prev, new, plan) == []
+    # a second night on the same frames writes the same bytes but for the stamp
+    again = B.merge_nightly(new, {2026: live}, B.nightly_plan(new, dt.date(2026, 9, 12),
+                                                                range(2011, 2027)),
+                            now_iso="2026-09-12T03:00:00")
+    def strip(d):
+        cad = {**d["meta"]["cadence"], "live_built_at": None}
+        return json.dumps({**d, "live_built_at": None, "meta": {**d["meta"], "cadence": cad}},
+                          separators=(",", ":"))
+    assert strip(again) == strip(new)
+
+
+def test_the_nightly_refuses_to_move_a_frozen_season_or_the_label_build():
+    import datetime as dt
+    B = _be()
+    prev = _payload(range(2011, 2027))
+    plan = B.nightly_plan(prev, dt.date(2026, 9, 11), range(2011, 2027))
+    bad = B.merge_nightly(prev, {2019: _payload([2019], ew_of=lambda m, s: 9.9)},
+                          {**plan, "rebuild": [2019]}, now_iso="x")
+    assert any("2019" in p for p in B.check_nightly(prev, bad, plan))
+    moved = B.merge_nightly(prev, {2026: _payload([2026])}, plan, now_iso="x")
+    moved["generated_at"] = "2026-09-11T03:00:00"
+    assert any("generated_at" in p for p in B.check_nightly(prev, moved, plan))
+
+
+def test_the_freshness_assertion_reports_a_missed_night_stale_inputs_and_a_tampered_season():
+    import datetime as dt
+    import war_source as ws
+    B = _be()
+    prev = _payload(range(2011, 2027))
+    hand = ws.ewar_cadence_status(prev, dt.date(2026, 9, 11))
+    assert hand["ok"] is False and "hand-built" in hand["problems"][0]
+    plan = B.nightly_plan(prev, dt.date(2026, 9, 11), range(2011, 2027))
+    new = B.merge_nightly(prev, {2026: _payload([2026], ew_of=lambda m, s: 2.0)}, plan,
+                          now_iso="2026-09-11T03:00:00", frames=_fresh())
+    assert ws.ewar_cadence_status(new, dt.date(2026, 9, 11))["ok"] is True
+    late = ws.ewar_cadence_status(new, dt.date(2026, 9, 13))
+    assert late["ok"] is False and "2026-09-11" in late["problems"][0]
+    old = B.merge_nightly(prev, {2026: _payload([2026])}, plan, now_iso="2026-09-11T03:00:00",
+                          frames=_fresh("2026-09-08T15:30:00"))
+    probs = ws.ewar_cadence_status(old, dt.date(2026, 9, 11))["problems"]
+    assert any("hours old" in p and "FIP" in p for p in probs), probs
+    blind = B.merge_nightly(prev, {2026: _payload([2026])}, plan, now_iso="2026-09-11T03:00:00",
+                            frames={"served_stale": {"pit": {"age_days": 2.0}}})
+    probs = ws.ewar_cadence_status(blind, dt.date(2026, 9, 11))["problems"]
+    assert any("last-good" in p for p in probs) and any("no vintage" in p for p in probs)
+    tampered = json.loads(json.dumps(new))
+    tampered["players"]["100"]["2019"]["ew"] = 1.01
+    assert any("2019" in p for p in ws.ewar_cadence_status(tampered, dt.date(2026, 9, 11))["problems"])
+
+
+def test_the_carried_copy_wins_only_when_it_descends_from_the_committed_build():
+    import datetime as dt
+    B = _be()
+    hand = _payload(range(2011, 2027))
+    plan = B.nightly_plan(hand, dt.date(2026, 9, 11), range(2011, 2027))
+    night = B.merge_nightly(hand, {2026: _payload([2026], ew_of=lambda m, s: 2.0)}, plan,
+                            now_iso="2026-09-11T03:00:00", frames=_fresh())
+    assert B.choose_base(hand, None)[1] == "tracked"
+    assert B.choose_base(hand, night)[:2] == (night, "carried")
+    # a new hand build was committed: the carried lineage is over
+    rebuilt = _payload(range(2011, 2027), generated_at="2026-09-20T09:00:00")
+    base, which, notes = B.choose_base(rebuilt, night)
+    assert which == "tracked" and "committed build wins" in notes[0]
+    # a damaged carry (a frozen season off its digest) is ignored
+    broken = json.loads(json.dumps(night))
+    broken["players"]["100"]["2015"]["ew"] = 7.0
+    assert B.choose_base(hand, broken)[1] == "tracked"
+    # a nightly committed from another machine that is at least as new wins
+    later = B.merge_nightly(night, {2026: _payload([2026], ew_of=lambda m, s: 2.2)},
+                            B.nightly_plan(night, dt.date(2026, 9, 12), range(2011, 2027)),
+                            now_iso="2026-09-12T03:00:00", frames=_fresh("2026-09-12T02:00:00"))
+    assert B.choose_base(later, night)[1] == "tracked"
+    assert B.choose_base(night, later)[1] == "carried"
+
+
+def _nightly_env(tmp_path, monkeypatch, live_ew):
+    """build_ewar.run_nightly on stubs: the artifact and its carried copy under
+    tmp_path, frames with every season, a one-season build whose live eWAR is
+    live_ew[0] (mutable, so a test can move it night to night), and that night's
+    input vintages. No network, no real build."""
+    import pandas as pd
+    import ewar
+    import war_source as ws
+    B = _be()
+    out, ev, carry = tmp_path / "ewar.json", tmp_path / "ewar_eval.json", tmp_path / "carry.json"
+    monkeypatch.setattr(ewar, "_CACHE", None)   # restored after: the step resets the memo
+    monkeypatch.setattr(ewar, "OUT", out)
+    monkeypatch.setattr(ewar, "EVAL_OUT", ev)
+    monkeypatch.setattr(B, "CARRY_PATH", carry)
+    frame = pd.DataFrame({"year_ID": list(range(2011, 2027))})
+    monkeypatch.setattr(ws, "stint_frame", lambda side, provider="bwar", allow_stale=True: frame)
+    monkeypatch.setattr(ws, "served_stale", lambda: {})
+    seen = []
+
+    def fake_build(first, last, shrink=True, **kw):
+        seen.append((first, last))
+        return {"season": first}
+    monkeypatch.setattr(ewar, "build", fake_build)
+    monkeypatch.setattr(ewar, "export_payload",
+                        lambda model: _payload([model["season"]], ew_of=lambda m, s: live_ew[0]))
+    vint = {"at": "2026-09-11T02:00:00"}
+    monkeypatch.setattr(B, "_warm_standings", lambda season: vint["at"])   # no network
+    monkeypatch.setattr(B, "live_fip_corpus", lambda seasons: (
+        {}, {"fip_source_by_season": {str(s): {"at": vint["at"]} for s in seasons}}))
+    return B, out, ev, carry, seen, vint
+
+
+def test_the_nightly_writes_the_artifact_and_its_carry_only_and_never_the_eval(tmp_path, monkeypatch):
+    """End to end on stubs: the step reads the artifact, prices one season,
+    writes data/ewar.json and its carried copy atomically, and leaves
+    data/ewar_eval.json alone."""
+    import datetime as dt
+    import war_source as ws
+    live = [3.0]
+    B, out, ev, carry, seen, vint = _nightly_env(tmp_path, monkeypatch, live)
+    prev = _payload(range(2011, 2027))
+    out.write_text(json.dumps(prev, separators=(",", ":")), encoding="utf-8")
+    assert B.run_nightly(write=True, today=dt.date(2026, 9, 11)) == 0
+    assert seen == [(2026, 2026)], "only the live season is priced"
+    assert not ev.exists(), "the nightly never writes the eval"
+    assert carry.read_bytes() == out.read_bytes(), "the state is carried outside git"
+    new = json.loads(out.read_text(encoding="utf-8"))
+    assert all(ws.ewar_season_digest(new, s) == ws.ewar_season_digest(prev, s)
+               for s in range(2011, 2026))
+    assert new["players"]["100"]["2026"]["ew"] == 3.0
+    assert new["meta"]["cadence"]["frames"]["fip_source_at"] == vint["at"]
+    first_bytes = out.read_bytes()
+    vint["at"] = "2026-11-02T02:00:00"
+    assert B.run_nightly(write=True, today=dt.date(2026, 11, 2)) == 0   # the freeze pass
+    frozen_bytes = out.read_bytes()
+    assert B.run_nightly(write=True, today=dt.date(2026, 11, 3)) == 0   # nothing to price
+    assert out.read_bytes() == frozen_bytes, "a fully frozen window is left byte for byte"
+    assert first_bytes != frozen_bytes
+    # a missing artifact is refused, never rebuilt from nothing
+    out.unlink()
+    assert B.run_nightly(write=True, today=dt.date(2026, 9, 11)) == 2
+
+
+def test_the_box_restores_the_committed_build_every_night_and_nothing_moves_backwards(
+        tmp_path, monkeypatch):
+    """deploy/nightly-build.sh runs `git checkout -- .` before the pipeline, so
+    data/ewar.json is the committed hand build at the start of every night. The
+    carried copy keeps the nightly's state, a completed season stays frozen at
+    its freeze-pass numbers, and without the copy a restored hand build is
+    re-priced, never frozen at its September numbers."""
+    import datetime as dt
+    live = [3.0]
+    B, out, ev, carry, seen, vint = _nightly_env(tmp_path, monkeypatch, live)
+    committed = json.dumps(_payload(range(2011, 2027)), separators=(",", ":"))
+
+    def box_night(day, ew):
+        out.write_text(committed, encoding="utf-8")          # git checkout -- .
+        live[0] = ew
+        vint["at"] = f"{day.isoformat()}T02:00:00"
+        seen.clear()
+        return B.run_nightly(write=True, today=day)
+
+    def ew2026():
+        return json.loads(out.read_text(encoding="utf-8"))["players"]["100"]["2026"]["ew"]
+
+    assert box_night(dt.date(2026, 10, 31), 3.0) == 0 and ew2026() == 3.0
+    assert box_night(dt.date(2026, 11, 1), 4.0) == 0 and ew2026() == 4.0   # the freeze pass
+    nov1 = out.read_bytes()
+    assert 2026 in json.loads(nov1)["meta"]["cadence"]["frozen_seasons"]
+    assert box_night(dt.date(2026, 11, 2), 5.0) == 0
+    assert seen == [] and out.read_bytes() == nov1, "frozen: byte-identical night to night"
+    assert box_night(dt.date(2026, 11, 3), 6.0) == 0 and out.read_bytes() == nov1
+    # the carry is lost (a rebuilt box): the Sep 3 hand build is re-priced, not
+    # frozen at 1.0, and 2026 freezes again on that night's numbers
+    carry.unlink()
+    assert box_night(dt.date(2026, 11, 4), 4.0) == 0
+    assert seen == [(2026, 2026)] and ew2026() == 4.0
+
+
+def test_a_stale_frame_a_stopped_build_or_older_inputs_refuse_and_serve_the_carried_nightly(
+        tmp_path, monkeypatch):
+    import datetime as dt
+    import ewar
+    import war_source as ws
+    live = [3.0]
+    B, out, ev, carry, seen, vint = _nightly_env(tmp_path, monkeypatch, live)
+    committed = json.dumps(_payload(range(2011, 2027)), separators=(",", ":"))
+    out.write_text(committed, encoding="utf-8")
+    assert B.run_nightly(write=True, today=dt.date(2026, 9, 11)) == 0
+    good = carry.read_bytes()
+
+    def restored():
+        out.write_text(committed, encoding="utf-8")
+        live[0] = 9.0
+
+    # 1. war_daily served from the last-good cache
+    restored()
+    monkeypatch.setattr(ws, "served_stale", lambda: {"pit": {"age_days": 3.0, "rows": 1}})
+    assert B.run_nightly(write=True, today=dt.date(2026, 9, 12)) == 2
+    assert out.read_bytes() == good, "the carried nightly is served, not the hand build"
+    monkeypatch.setattr(ws, "served_stale", lambda: {})
+    # 2. an input loader stops the build (ewar raises SystemExit on a bad data file)
+    restored()
+
+    def stops(first, last, shrink=True, **kw):
+        raise SystemExit("ewar: cannot read data/savant_oaa.json")
+    monkeypatch.setattr(ewar, "build", stops)
+    assert B.run_nightly(write=True, today=dt.date(2026, 9, 12)) == 2
+    assert out.read_bytes() == good
+    monkeypatch.setattr(ewar, "build", lambda first, last, shrink=True, **kw: {"season": first})
+    # 3. tonight's stats are older than the ones the carried live season used
+    restored()
+    vint["at"] = "2026-09-09T02:00:00"
+    assert B.run_nightly(write=True, today=dt.date(2026, 9, 12)) == 2
+    assert out.read_bytes() == good
+    # a healthy night moves on
+    vint["at"] = "2026-09-12T02:00:00"
+    assert B.run_nightly(write=True, today=dt.date(2026, 9, 12)) == 0
+    assert json.loads(out.read_text(encoding="utf-8"))["players"]["100"]["2026"]["ew"] == 9.0
+
+
+def test_the_live_fip_is_reread_tonight_without_touching_the_shared_corpus(monkeypatch):
+    """The live FIP comes from that night's StatsAPI pitching lines, priced by
+    fa_projection.build_corpus itself in memory: the shared pickle's path,
+    WAR/age join and StatsAPI cache keys are never used for it, and a short
+    re-read keeps the pickle's rows and says so."""
+    import ewar
+    import fa_projection as fp
+    B = _be()
+    base = {"pit": [{"mlbam": m, "season": s, "fip": 4.0} for m in (1, 2, 3) for s in (2025, 2026)],
+            "league": {2025: {"era": 4.1}, 2026: {"era": 4.2}}, "hit": []}
+    monkeypatch.setattr(ewar, "_corpus", lambda: base)
+    real_cache = fp.CORPUS_CACHE
+    seen = {}
+
+    def fake_build_corpus(first_season=None, last_season=None, force=False):
+        seen["cache"] = fp.CORPUS_CACHE
+        seen["maps"] = fp._war_age_maps()
+        seen["fetch"] = fp.fa_sources.fetch_statsapi_season_range
+        rows = [{"mlbam": m, "season": 2026, "fip": 3.5} for m in (1, 2, 3, 4)]
+        return {"pit": rows[:n_rows[0]], "league": {2026: {"era": 4.3}}, "hit": []}
+    n_rows = [4]
+    monkeypatch.setattr(fp, "build_corpus", fake_build_corpus)
+    merged, vint = B.live_fip_corpus([2026])
+    assert seen["cache"] != real_cache and seen["maps"] == ({}, {})
+    assert seen["fetch"] is B._fetch_live_pitching
+    assert fp.CORPUS_CACHE == real_cache and fp.fa_sources.fetch_statsapi_season_range \
+        is not B._fetch_live_pitching, "every patch is undone"
+    fips = {(r["mlbam"], r["season"]): r["fip"] for r in merged["pit"]}
+    assert fips[(1, 2025)] == 4.0 and fips[(1, 2026)] == 3.5 and (4, 2026) in fips
+    assert merged["league"][2026]["era"] == 4.3 and merged["league"][2025]["era"] == 4.1
+    assert vint["fip_source_by_season"]["2026"]["source"].startswith("StatsAPI")
+    n_rows[0] = 1                                  # a truncated read: 1 row against 3
+    merged, vint = B.live_fip_corpus([2026])
+    assert {r["fip"] for r in merged["pit"] if r["season"] == 2026} == {4.0}
+    assert vint["fip_source_by_season"]["2026"]["source"].startswith("fa_corpus.pkl")
+
+
+def test_the_vintage_block_reads_the_cadence_from_the_artifact(monkeypatch):
+    import datetime as dt
+    import ewar
+    import war_source as ws
+    B = _be()
+    prev = _payload(range(2011, 2027))
+    plan = B.nightly_plan(prev, dt.date(2026, 9, 11), range(2011, 2027))
+    new = B.merge_nightly(prev, {2026: _payload([2026])}, plan, now_iso="2026-09-11T03:00:00")
+    monkeypatch.setattr(ws, "ewar_frame_diagnostics", lambda: {})
+    monkeypatch.setattr(ewar, "_CACHE", new)
+    v = ws.ewar_vintage()
+    assert v["rebuilds_on_a_schedule"] is True
+    assert v["artifact_generated_at"] == "2026-09-11T03:00:00", "the live numerator's build"
+    assert v["label_build_at"] == "2026-09-03T12:35:09", "the frozen series' build"
+    assert v["cadence"]["live_season"] == 2026 and v["stale"] is None
+    monkeypatch.setattr(ewar, "_CACHE", prev)
+    assert ws.ewar_vintage()["rebuilds_on_a_schedule"] is False, "a hand build says so"
+
+
+def test_the_vintage_stamp_comes_from_the_artifact_the_frames_were_transformed_with(monkeypatch):
+    """When a frame has been read, the stamp is the one the transform used (its
+    receipt), so a seeded or earlier receipt is reported as it is whatever file
+    sits on disk now; the receipt of a nightly artifact names the live build."""
+    import datetime as dt
+    import ewar
+    import war_source as ws
+    B = _be()
+    prev = _payload(range(2011, 2027))
+    plan = B.nightly_plan(prev, dt.date(2026, 9, 11), range(2011, 2027))
+    new = B.merge_nightly(prev, {2026: _payload([2026])}, plan, now_iso="2026-09-11T03:00:00")
+    monkeypatch.setattr(ewar, "_CACHE", new)
+    seeded = {"bat": {"artifact_generated_at": "2026-09-03T12:35:09",
+                      "bwar_revised": ws.EWAR_STALE_REVISED_MAX + 1, "covered_player_seasons": 9},
+              "pit": {"artifact_generated_at": "2026-09-03T12:35:09", "bwar_revised": 0,
+                      "covered_player_seasons": 9}}
+    monkeypatch.setattr(ws, "ewar_frame_diagnostics", lambda: seeded)
+    v = ws.ewar_vintage(as_of="2026-09-11")
+    assert v["stale"] is True and v["artifact_generated_at"] == "2026-09-03T12:35:09"
+    assert "--nightly" in v["warning"]
+    import pandas as pd
+    frame = pd.DataFrame({"mlb_ID": [100], "year_ID": [2026], "WAR": [1.0], "IPouts": [150]})
+    monkeypatch.setattr(ws, "_EWAR_FRAME_DIAG", {})
+    ws._ewar_frame(frame, "pit", door="stint")
+    r = ws._EWAR_FRAME_DIAG["pit"]
+    assert r["artifact_generated_at"] == "2026-09-11T03:00:00"
+    assert r["artifact_label_build_at"] == "2026-09-03T12:35:09"
+
+
+def test_the_pipeline_prices_the_live_season_before_any_war_reader():
+    """WAR_BASIS_RUNBOOK step B's place. Daily: d8b before d9 (the projections
+    export and the eFV regen), d9b2 (player cards) and 9e-pre0 (the boards).
+    Monthly: 3-pre before 3d-bis (career WAR), the first WAR reader, so the
+    monthly's readers are not a night behind; the chained daily skips d8b."""
+    src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    daily = src[src.index("def run_daily("):src.index("\ndef ", src.index("def run_daily(") + 1)]
+    i = daily.index('"d8b. eWAR live-season rebuild')
+    for later in ('"d9. Rebuild timeseries', '"d9b2. Re-bake MLB player detail',
+                  '"9e-pre0. Refresh team leaderboards'):
+        assert i < daily.index(later), later
+    block = daily[i:daily.index('"d9. Rebuild timeseries')]
+    assert '_ewar_nightly_step(log, "daily")' in block
+    assert "chained and _EWAR_NIGHTLY_DONE" in block
+    main = src[src.index("\ndef main("):]
+    j = main.index('"3-pre. eWAR live-season rebuild')
+    assert j < main.index("# --- 3a. Fetch career") < main.index("war_source.career_war_bulk(")
+    assert '_ewar_nightly_step(log, "monthly")' in main[j:main.index("# --- 3a. Fetch career")]
+    helper = src[src.index("def _ewar_nightly_step("):src.index("def run_daily(")]
+    assert "run_nightly(write=True)" in helper and "ewar_cadence_status()" in helper
+    assert "except (Exception, SystemExit)" in helper
+
+
+def test_the_pipeline_step_survives_a_systemexit_and_records_the_heartbeat(monkeypatch):
+    """ewar's input loaders raise SystemExit, which `except Exception` does not
+    catch; one unreadable data file must not end the night."""
+    import logging
+    import job_heartbeat
+    import run_monthly
+    B = _be()
+    rows = []
+    monkeypatch.setattr(job_heartbeat, "record",
+                        lambda job, ok, result="", path=None: rows.append((job, ok, result)))
+
+    def stops(write, today=None):
+        raise SystemExit("ewar: cannot read data/positional_fit.json")
+    monkeypatch.setattr(B, "run_nightly", stops)
+    monkeypatch.setattr(run_monthly, "_EWAR_NIGHTLY_DONE", None)
+    assert run_monthly._ewar_nightly_step(logging.getLogger("t"), "daily") == 2
+    assert rows and rows[-1][0] == "ewar_nightly" and rows[-1][1] is False
+    assert "SystemExit" in rows[-1][2] and run_monthly._EWAR_NIGHTLY_DONE is None

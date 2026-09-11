@@ -257,8 +257,9 @@ def test_the_weights_and_the_scale_describe_the_same_league():
 
 def test_earlier_seasons_are_published_but_reach_no_consumer():
     """Seasons before SERVED_FROM are solved and reviewable in the artifact, but
-    the projection corpus must keep reading its fallback for them until the move
-    of letting them in is measured on its own."""
+    the projection corpus keeps reading its fallback for them: widening the
+    served table is a measured move of its own. Since 2026-09-11 that means
+    2011-2014."""
     tbl = LC.load()
     early = [s for s in tbl if s < LC.SERVED_FROM]
     if not early:
@@ -267,3 +268,23 @@ def test_earlier_seasons_are_published_but_reach_no_consumer():
     assert LC.woba_scale(s, default=1.15) == 1.15
     assert LC.constants(s) is None
     assert set(LC.served()) == {x for x in tbl if x >= LC.SERVED_FROM}
+
+
+def test_2015_through_2020_are_served_by_owner_decision():
+    """Owner decision 14 (2026-09-11): the solved 2015-2020 scales reach the
+    projection corpus, so the fit no longer mixes the solved scale with the 1.15
+    config constant across those feature rows. 2011-2014 stay unserved because
+    the decision named 2015, and the artifact's own served_from must say what
+    the module does."""
+    assert LC.SERVED_FROM == 2015
+    tbl = LC.load()
+    if not tbl:
+        pytest.skip("data/league_constants.json not built")
+    import fa_projection as fp
+    for s in range(2015, 2021):
+        assert s in tbl, f"{s} missing from the artifact"
+        assert LC.woba_scale(s) == tbl[s]["woba_scale"], s
+        assert fp._woba_scale(s) == pytest.approx(tbl[s]["woba_scale"]), s
+    assert LC.woba_scale(2014, default=1.15) == 1.15
+    blob = json.loads(LC.OUT_PATH.read_text(encoding="utf-8"))
+    assert blob["served_from"] == LC.SERVED_FROM

@@ -19,15 +19,44 @@ the league adjustment, replacement, RPW, FIP, the pitcher runs leg, dynamic RPW,
 role replacement, the leverage multiplier and the 430 pin. CONSUMED from the
 published feed, each labelled in the artifact: UBR + wGDP (need play-by-play), the
 fielding column and the catcher framing residual (UZR/Statcast/framing are not on
-disk), gmLI (needs play-by-play win expectancy), and two park factors, each
-BACK-SOLVED leave-one-out from a published column so no player's own value enters
-the factor applied to him: the batting park factor from Batting, the pitching park
-factor from FIP-.
+disk), gmLI (needs play-by-play win expectancy), and the batting park factor,
+BACK-SOLVED leave-one-out from the published Batting so no player's own value
+enters the factor applied to him.
+
+THE FANGRAPHS INPUTS (owner decisions 13 and 14a, 2026-09-11), all through
+fg_leaderboards.py's cache and none back-solved from a published WAR, so none is
+circular. The pitcher runs leg is ifFIP on FanGraphs' IFFB; the pitcher park
+factor is FanGraphs' own FIP park factor per team-season (the Guts table); each
+pitcher is charged the catcher framing earned on his pitches (the pitching
+leaderboard's CFraming, fwar_frame convention 9, the residual no park factor
+could close); and the start/relief split is FanGraphs' Start-IP. Where a season
+is not cached the line falls back, input by input, to plain FIP, the leave-one-out
+FIP- back-solve and B-Ref's role innings, and the artifact names what each season
+had (`arm`, `runs_leg`, `pf_source`, `framing_charge`, `role_innings`). Every arm
+one input apart is scored beside the default (`pitchers_arms`), so what each input
+buys is its own line. Catcher framing is cross-checked against FanGraphs CFraming
+in the hitter block (`framing_crosscheck`), and FanGraphs' own published pitcher
+WAR against the feed's (`pitchers_published_crosscheck`).
+
+THE PARK FACTOR IS SCORED BOTH WAYS. With IFFB, the framing charge and Start-IP
+in place, the leave-one-out FIP- back-solve clears more seasons than FanGraphs'
+Guts FIP factor (the Guts column as served today sits a fraction of a point
+from the factor inside the published FIP-). The default line stays on the Guts
+factor, the INPUT decision 14a asked for, and `pitcher_arms_summary` lists the
+passing seasons of every arm so the comparison is read off the artifact rather
+than a write-up.
+
+NOTHING OF FANGRAPHS' IS REPUBLISHED. This file ships with the site's eval
+artifacts, so it carries what the replica made of FanGraphs' numbers (shares,
+MAE, row counts, the gap between two park-factor sources) and the sha256 of
+every cached response, never FanGraphs' tables or per-player values.
 
 WHAT IT READS (never the network): the StatsAPI caches under .cache
 (statsapi_saber_{hitting,pitching}_{y}.json, fa_statsapi_{hitting,pitching}_{y}.json,
 statsapi_field/fld_{y}.json, statsapi_standings_{y}.json), B-Ref's war_daily
-parquets for stint PA, `Inn` and role innings, and data/league_constants.json.
+parquets for stint PA, `Inn` and role innings, data/league_constants.json and the
+FanGraphs cache .cache/fangraphs/ (fg_leaderboards.load, which never fetches;
+fill it with `python fg_leaderboards.py --seasons 2011 2026`).
 saber_feed.load_components is deliberately NOT called: it goes through the
 scraper's TTL cache and would refetch an expired season.
 
@@ -57,14 +86,14 @@ for p in (str(REPO), str(ROOT)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
+import fg_leaderboards as FG    # noqa: E402
 import fwar_frame as F          # noqa: E402
 import league_constants as LCM  # noqa: E402
 from saber_feed import framing_residual, resolve_groups, run_value  # noqa: E402
 
 CACHE = REPO / ".cache"
 OUT_PATH = REPO / "data" / "fwar_replica_eval.json"
-PROBE_DIR = Path(os.environ.get("FWAR_PROBE_DIR")
-                 or REPO.parent.parent / "_audit_2026-09-09" / "fwar_probe")
+FG_CACHE = Path(os.environ.get("FG_CACHE_DIR") or (CACHE / "fangraphs"))
 
 FIRST, LAST = 2011, 2026
 LG_ID = {"AL": 103, "NL": 104}
@@ -222,6 +251,36 @@ def constants(season: int) -> Optional[dict]:
     return LCM.solve_season(season)
 
 
+def fg_inputs(season: int) -> dict:
+    """The FanGraphs inputs for one season from the cache (never the network):
+    {"iffb": {mlbam: IFFB}, "fip_pf": {team_id: decimal}, "start_ip": {mlbam: IP},
+    "pitcher_framing": {mlbam: CFraming earned on his pitches},
+    "framing": {mlbam: catcher CFraming runs}, "published": {mlbam: leaderboard row},
+    "provenance": {kind: {fetched_at, complete, raw_sha256} | None}}. A kind that is
+    not cached is absent from the dict and None in provenance."""
+    out: dict = {"provenance": {}}
+    for kind in FG.KINDS:
+        try:
+            doc = FG.load(kind, season, FG_CACHE)
+        except (FG.NotCached, FG.ShapeChanged):
+            out["provenance"][kind] = None
+            continue
+        out["provenance"][kind] = {"fetched_at": doc["fetched_at"], "complete": doc["complete"],
+                                   "n_rows": doc["n_rows"], "raw_sha256": doc["raw_sha256"]}
+    if out["provenance"].get("pitching"):
+        rows = FG.pitcher_rows(season, FG_CACHE)
+        out["published"] = rows
+        out["iffb"] = {pid: _num(r.get("IFFB")) for pid, r in rows.items()}
+        out["start_ip"] = {pid: FG.fg_ip(r.get("Start-IP")) for pid, r in rows.items()
+                           if r.get("Start-IP") is not None}
+        out["pitcher_framing"] = FG.pitcher_framing(season, FG_CACHE)
+    if out["provenance"].get("park_factors"):
+        out["fip_pf"] = FG.fip_park_factors(season, FG_CACHE)
+    if out["provenance"].get("fielding"):
+        out["framing"] = FG.catcher_framing(season, FG_CACHE)
+    return out
+
+
 def _lg_key(season: int, lg: str, team_id, region: dict, fallback: int):
     """The league a stint is priced in: AL/NL, or 2020's regional group."""
     if season == 2020:
@@ -238,10 +297,45 @@ def _median(xs):
 # Position players
 # --------------------------------------------------------------------------
 
-def hitters(season: int, pf_override: Optional[dict] = None) -> dict:
+def framing_crosscheck(recs: dict, framing_fg: Optional[dict]) -> Optional[dict]:
+    """The feed's framing residual against FanGraphs CFraming, catcher by catcher.
+
+    The residual (rar minus the six published parts) is what the replica and
+    DEM+ read; CFraming is FanGraphs' own column (owner decision 13). They are
+    two reads of one number, so the check is exact agreement, not correlation:
+    rows within 0.01 runs, the largest gap, and who is in one source only."""
+    if framing_fg is None:
+        return None
+    feed = {pid: r["frm_raw"] for pid, r in recs.items()
+            if r["pa"] > 0 and r["fld_pos"].get("C", 0.0) > 0 and r["frm_raw"] is not None}
+    both = sorted(set(feed) & set(framing_fg))
+    diffs = [abs(feed[p] - framing_fg[p]) for p in both]
+    only_feed = [p for p in feed if p not in framing_fg]
+    only_fg = [p for p in framing_fg if p not in feed]
+    worst = sorted(both, key=lambda p: -abs(feed[p] - framing_fg[p]))[:5]
+    return {
+        "n_catchers_feed": len(feed), "n_catchers_fg": len(framing_fg), "n_both": len(both),
+        "n_within_0_01": sum(1 for d in diffs if d <= 0.01),
+        "n_within_0_1": sum(1 for d in diffs if d <= 0.1),
+        "max_abs_diff": round(max(diffs), 4) if diffs else None,
+        "mae": round(sum(diffs) / len(diffs), 5) if diffs else None,
+        "only_in_feed": {"n": len(only_feed),
+                         "max_abs_residual": round(max((abs(feed[p]) for p in only_feed), default=0.0), 3)},
+        "only_in_fg": {"n": len(only_fg),
+                       "max_abs_cframing": round(max((abs(framing_fg[p]) for p in only_fg), default=0.0), 3)},
+        # the gap only: FanGraphs' own column is not republished here
+        "worst": [{"mlbam": p, "name": recs[p]["name"], "feed_residual": round(feed[p], 3),
+                   "abs_diff": round(abs(feed[p] - framing_fg[p]), 3)} for p in worst],
+    }
+
+
+def hitters(season: int, pf_override: Optional[dict] = None,
+            framing_fg: Optional[dict] = None) -> dict:
     """Price every position-player season. `pf_override` ({team_id: PF decimal})
     replaces the same-season leave-one-out park factor; the driver passes the
-    PRIOR season's factors to size what a non-circular park input costs."""
+    PRIOR season's factors to size what a non-circular park input costs.
+    `framing_fg` ({mlbam: CFraming}) adds the framing cross-check; it never
+    replaces the residual the replica prices."""
     K = constants(season)
     if not K:
         return {"error": "league constants unsolvable"}
@@ -470,6 +564,7 @@ def hitters(season: int, pf_override: Optional[dict] = None) -> dict:
                                  "pool_pa": ppa},
         "replacement_per_pa": round(rep_rate, 6), "rpw": rpw, "mlb_games": games,
         "worst_rows": worst,
+        "framing_crosscheck": framing_crosscheck(recs, framing_fg),
     }
 
 
@@ -477,30 +572,29 @@ def hitters(season: int, pf_override: Optional[dict] = None) -> dict:
 # Pitchers
 # --------------------------------------------------------------------------
 
-def _probe(season: int) -> dict:
-    blob = _json(PROBE_DIR / f"fg_pit_{season}.json")
-    rows = blob.get("data") if isinstance(blob, dict) else blob
-    out = {}
-    for r in rows or []:
-        try:
-            out[int(r["xMLBAMID"])] = r
-        except (KeyError, TypeError, ValueError):
-            continue
-    return out
-
-
-def _fg_ip(x) -> float:
-    x = _num(x)
-    whole = int(x)
-    return whole + round((x - whole) * 10) / 3.0
+#: Park-factor sources the pitcher replica knows. "fg_fip" is FanGraphs' own FIP
+#: park factor (the default whenever it is cached); "fip_minus" back-solves one
+#: leave-one-out from the published FIP- (the pre-2026-09-11 default, kept as the
+#: fallback and as a scored arm); "war_loo" back-solves from the published WAR and
+#: is CIRCULAR by design, a ceiling diagnostic never used as an input.
+PF_SOURCES = ("fg_fip", "fip_minus", "war_loo")
 
 
 def pitchers(season: int, iffb: Optional[dict] = None, role_ip: Optional[dict] = None,
-             mode: str = "role", pf_source: str = "fip_minus") -> dict:
-    """Price every pitcher-season. `iffb` switches the runs leg to ifFIP (only the
-    diagnostic passes it); `role_ip` overrides the start-inning share (diagnostic);
-    `mode` is "role" (default, convention 6) or "blended"; `pf_source` is
-    "fip_minus" (default) or "war_loo" (the circular ceiling diagnostic)."""
+             mode: str = "role", pf_source: str = "fip_minus",
+             fip_pf: Optional[dict] = None, framing: Optional[dict] = None,
+             keep_rows: bool = False) -> dict:
+    """Price every pitcher-season. `iffb` ({mlbam: IFFB}) switches the runs leg
+    to ifFIP; `role_ip` ({mlbam: start innings}) overrides the B-Ref start-inning
+    share; `mode` is "role" (convention 6) or "blended"; `pf_source` is one of
+    PF_SOURCES, and "fg_fip" needs `fip_pf` ({team_id: decimal}); `framing`
+    ({mlbam: CFraming runs}) charges each pitcher the framing earned on his
+    pitches (fwar_frame convention 9). The driver passes the FanGraphs inputs
+    whenever they are cached (see build and PITCHER_ARMS)."""
+    if pf_source not in PF_SOURCES:
+        raise ValueError(f"pf_source {pf_source!r} not in {PF_SOURCES}")
+    if pf_source == "fg_fip" and not fip_pf:
+        raise ValueError("pf_source 'fg_fip' needs the FanGraphs FIP park factors (fip_pf)")
     K = constants(season)
     if not K:
         return {"error": "league constants unsolvable"}
@@ -533,7 +627,8 @@ def pitchers(season: int, iffb: Optional[dict] = None, role_ip: Optional[dict] =
     stints_all = stints_by_player("pit", season)
     tmap = team_map(stints_all, rows)
 
-    # pitching park factor: leave-one-out back-solve from the published FIP-
+    # the leave-one-out FIP- back-solve: the fallback park factor, and the arm
+    # the FanGraphs factor is measured against
     pool = collections.defaultdict(list)
     for pid, r in rows.items():
         st = r.get("stat") or {}
@@ -569,9 +664,12 @@ def pitchers(season: int, iffb: Optional[dict] = None, role_ip: Optional[dict] =
         r = rows.get(pid)
         st = (r or {}).get("stat") or {}
         L_row = (c.get("league") or {}).get("id")
-        f_val = F.fip(_num(s.get("homeRuns")), _num(s.get("baseOnBalls")), _num(s.get("hitByPitch")),
-                      _num(s.get("strikeOuts")), ip, const,
-                      _num((iffb or {}).get(pid)) if iffb is not None else 0.0)
+        cnts = (_num(s.get("homeRuns")), _num(s.get("baseOnBalls")), _num(s.get("hitByPitch")),
+                _num(s.get("strikeOuts")))
+        f_val = F.fip(*cnts, ip, const, _num((iffb or {}).get(pid)) if iffb is not None else 0.0)
+        # the INPUT check is always plain FIP against the published FIP, whatever
+        # the runs leg: the feed publishes FIP, never ifFIP
+        f_plain = F.fip(*cnts, ip, K["fip_constant"])
         # stints: park and league baseline by IP share (season counts are not split)
         ss = [x for x in stints_all.get(pid) or [] if x["outs"] > 0]
         multi = int((r or c).get("numTeams") or 1) > 1 or len(ss) > 1
@@ -598,22 +696,36 @@ def pitchers(season: int, iffb: Optional[dict] = None, role_ip: Optional[dict] =
         recs.append({"pid": pid, "name": (c.get("player") or {}).get("fullName", ""), "ip": ip,
                      "g": g, "gs": gs, "g_rel": g_rel, "start_ip": start_ip, "parts": parts,
                      "lg9": lg9, "gm": run_value(st.get("gmli")),
-                     "team": team_id, "multi": multi, "fip": f_val, "in_feed": r is not None,
+                     "team": team_id, "multi": multi, "fip": f_val, "fip_plain": f_plain,
+                     "in_feed": r is not None,
                      "feed": {k: run_value(st.get(k)) for k in ("fip", "war", "rar", "gmli")}})
 
     def price(rec, pf):
         pfr = F.pfipr9(F.fipr9(rec["fip"], K["lg_ra9"], K["lg_era"]), pf)
+        if framing is not None:
+            # convention 9: the framing runs the pitcher's catchers earned on
+            # his pitches are charged back to him, after the park factor
+            pfr += F.framing_charge_per9(_num(framing.get(rec["pid"])), rec["ip"])
         if mode == "role":
             return [F.role_line(rec["start_ip"], rec["gs"], True, rec["lg9"], rec["lg9"], pfr, rec["gm"]),
                     F.role_line(rec["ip"] - rec["start_ip"], rec["g_rel"], False, rec["lg9"],
                                 rec["lg9"], pfr, rec["gm"])]
         return [F.blended_line(rec["ip"], rec["g"], rec["gs"], rec["lg9"], rec["lg9"], pfr, rec["gm"])]
 
+    n_pf_missing = [0]
+
     def pf_of(rec, lookup):
-        return sum(((lookup(t, rec["pid"]) if not rec["multi"] else lookup(t, None)) or 1.0) * w
-                   for t, L, w in rec["parts"])
+        tot_pf = 0.0
+        for t, L, w in rec["parts"]:
+            v = lookup(t, rec["pid"]) if not rec["multi"] else lookup(t, None)
+            if v is None:
+                v = 1.0
+                n_pf_missing[0] += 1
+            tot_pf += v * w
+        return tot_pf
 
     def settle(lookup):
+        n_pf_missing[0] = 0
         for rec in recs:
             rec["pf"] = pf_of(rec, lookup)
             rec["lines"] = price(rec, rec["pf"])
@@ -624,20 +736,30 @@ def pitchers(season: int, iffb: Optional[dict] = None, role_ip: Optional[dict] =
             rec["war"], rec["rar"] = F.pitcher_war(rec["lines"], w_)
         return w_, target_
 
-    wip, target = settle(lambda t, ex: pf_for(t, exclude=ex) if ex is not None else team_pf.get(t))
-    pf_note = "fip_minus"
+    def loo(t, ex):
+        return pf_for(t, exclude=ex) if ex is not None else team_pf.get(t)
+
+    if pf_source == "fg_fip":
+        # FanGraphs' own factor is one number per team-season with no player in
+        # it, so there is nothing to leave out: a traded pitcher carries the
+        # IP-weighted factors of his stints
+        wip, target = settle(lambda t, ex: fip_pf.get(t))
+        pf_note = "fg_fip (FanGraphs Guts FIP park factor per team-season)"
+    else:
+        wip, target = settle(loo)
+        pf_note = "fip_minus (leave-one-out back-solve from feed FIP-)"
     war_pf_sd: list = []
     if pf_source == "war_loo":
         # CEILING DIAGNOSTIC, circular by design: back-solve each single-team
         # pitcher's park factor from his published WAR (bisection on the priced
         # line at the settled WARIP), then apply the team's leave-one-out mean.
-        # It sizes what FanGraphs' own FIP park factor would buy; never served.
         imp = collections.defaultdict(list)
         for rec in recs:
             fw = rec["feed"]["war"]
             if rec["multi"] or fw is None or rec["ip"] < PF_POOL_MIN_IP:
                 continue
-            def gap(pf):
+
+            def gap(pf, rec=rec, fw=fw):
                 return F.pitcher_war(price(rec, pf), wip)[0] - fw
             lo, hi = 0.7, 1.4
             glo, ghi = gap(lo), gap(hi)
@@ -665,8 +787,8 @@ def pitchers(season: int, iffb: Optional[dict] = None, role_ip: Optional[dict] =
 
     def table(sub):
         return {
-            "fip_runs": F.gate_row([(r["fip"] - r["feed"]["fip"]) * r["ip"] / 9.0 for r in sub
-                                    if r["feed"]["fip"] is not None and iffb is None]),
+            "fip_runs": F.gate_row([(r["fip_plain"] - r["feed"]["fip"]) * r["ip"] / 9.0 for r in sub
+                                    if r["feed"]["fip"] is not None]),
             "rar": F.gate_row([r["rar"] - r["feed"]["rar"] for r in sub if r["feed"]["rar"] is not None]),
             "war_runs": F.gate_row([(r["war"] - r["feed"]["war"]) * rpw for r in sub if r["feed"]["war"] is not None]),
         }
@@ -674,10 +796,30 @@ def pitchers(season: int, iffb: Optional[dict] = None, role_ip: Optional[dict] =
     cand = sorted((r for r in scored if r["feed"]["rar"] is not None),
                   key=lambda r: -abs(r["rar"] - r["feed"]["rar"]))[:8]
     worst = [{"mlbam": r["pid"], "name": r["name"], "ip": round(r["ip"], 1), "g": r["g"], "gs": r["gs"],
-              "start_ip": round(r["start_ip"], 1), "multi": r["multi"], "pf": round(r["pf"], 4),
+              "start_ip": round(r["start_ip"], 1), "multi": r["multi"],
+              # FanGraphs' factor is not republished; a back-solved one is ours
+              "pf": None if pf_source == "fg_fip" else round(r["pf"], 4),
               "gmli": r["gm"], "replica_rar": round(r["rar"], 2), "feed_rar": round(r["feed"]["rar"], 2),
               "replica_war": round(r["war"], 3), "feed_war": round(r["feed"]["war"], 3)} for r in cand]
-    return {
+    pf_block = {"source": pf_note, "n_pf_lookups_missing_neutral": n_pf_missing[0],
+                "loo_fip_minus": {"method": "leave-one-out back-solve from feed FIP-, IP-weighted over "
+                                            "single-team pitchers with IP >= %g" % PF_POOL_MIN_IP,
+                                  "n_teams": len(team_pf),
+                                  "within_team_sd_pf_points_median":
+                                      round(100 * statistics.median(pf_sd), 3) if pf_sd else None,
+                                  "within_team_sd_pf_points_max": round(100 * max(pf_sd), 3) if pf_sd else None}}
+    if fip_pf:
+        common = sorted(set(team_pf) & set(fip_pf))
+        gaps = [100 * (team_pf[t] - fip_pf[t]) for t in common]
+        # FanGraphs' table itself is not republished (the cache digest is under
+        # inputs.fangraphs); what the replica made of it is
+        pf_block["fg_fip"] = {"n_teams": len(fip_pf),
+                              "loo_minus_fg_pf_points_mae": round(sum(abs(x) for x in gaps) / len(gaps), 3)
+                              if gaps else None,
+                              "loo_minus_fg_pf_points_max": round(max(abs(x) for x in gaps), 3) if gaps else None}
+    if war_pf_sd:
+        pf_block["war_implied_within_team_sd_pf_points_median"] = round(100 * statistics.median(war_pf_sd), 3)
+    out = {
         "worst_rows": worst,
         "components": table(scored),
         "single_team": table([r for r in scored if not r["multi"]]),
@@ -688,49 +830,121 @@ def pitchers(season: int, iffb: Optional[dict] = None, role_ip: Optional[dict] =
         "sum_replica_war": round(sum(r["war"] for r in recs), 2),
         "sum_feed_war": round(sum(r["feed"]["war"] or 0 for r in scored), 2),
         "rows": {"scored": len(scored), "priced_not_in_feed": len(recs) - len(scored),
-                 "multi_team": sum(1 for r in scored if r["multi"]), "ambiguous_ids": len(ambiguous)},
-        "park_factor": {"method": "leave-one-out back-solve from feed FIP-, IP-weighted over single-team pitchers with IP >= %g" % PF_POOL_MIN_IP,
-                        "n_teams": len(team_pf),
-                        "within_team_sd_pf_points_median": round(100 * statistics.median(pf_sd), 3) if pf_sd else None,
-                        "within_team_sd_pf_points_max": round(100 * max(pf_sd), 3) if pf_sd else None,
-                        "war_implied_within_team_sd_pf_points_median":
-                            round(100 * statistics.median(war_pf_sd), 3) if war_pf_sd else None},
+                 "multi_team": sum(1 for r in scored if r["multi"]), "ambiguous_ids": len(ambiguous),
+                 "iffb_missing": (sum(1 for r in recs if r["pid"] not in iffb) if iffb is not None else None)},
+        "park_factor": pf_block,
         "mode": mode, "pf_source": pf_note,
-        "runs_leg": "ifFIP (probe IFFB)" if iffb is not None else "plain FIP (no IFFB on disk)",
+        "role_innings": "FanGraphs Start-IP" if role_ip is not None else "B-Ref IPouts_start share",
+        "runs_leg": "ifFIP (FanGraphs IFFB)" if iffb is not None else "plain FIP (no IFFB)",
+        "framing_charge": ("FanGraphs pitcher CFraming, runs per nine after the park factor "
+                           "(convention 9)") if framing is not None else None,
     }
+    if keep_rows:
+        # diagnostics only (never serialised): the priced rows and the pricer
+        out["_rows"], out["_price"], out["_warip"] = recs, price, wip
+    return out
 
 
-def iffb_diagnostic(season: int) -> Optional[dict]:
-    """The IFFB gap, measured where a FanGraphs leaderboard pull exists on disk
-    (the 2026-09-09 probe, 2011 and 2025 only). The probe is a one-off, never an
-    input to the replica: it is read here only to size what the pull would buy."""
-    pr = _probe(season)
-    if not pr:
+#: The scored pitcher arms, each one input away from its neighbour, so what each
+#: FanGraphs input buys is its own line of the table. (name, IFFB, park-factor
+#: source, pitcher framing charge, FanGraphs Start-IP for the role split.)
+PITCHER_ARMS = (
+    ("plain_fip_loo_pf", False, "fip_minus", False, False),   # the W1.1 baseline (4242177b)
+    ("iffb_loo_pf", True, "fip_minus", False, False),         # + IFFB
+    ("iffb_fg_pf", True, "fg_fip", False, False),             # + FanGraphs FIP park factor
+    ("iffb_fg_pf_framing", True, "fg_fip", True, False),      # + framing charged back (conv. 9)
+    ("iffb_fg_pf_framing_fg_role", True, "fg_fip", True, True),  # + FanGraphs Start-IP: DEFAULT
+    ("iffb_loo_pf_framing_fg_role", True, "fip_minus", True, True),  # the default on the LOO factor
+)
+DEFAULT_ARM = "iffb_fg_pf_framing_fg_role"
+
+
+def arm_kwargs(fg: dict, use_iffb: bool, pfs: str, use_framing: bool,
+               fg_role: bool) -> Optional[dict]:
+    """pitchers() keyword arguments for one arm, or None when an input it needs
+    is not cached for the season."""
+    missing = ((use_iffb and "iffb" not in fg)
+               or (pfs == "fg_fip" and "fip_pf" not in fg)
+               or (use_framing and "pitcher_framing" not in fg)
+               or (fg_role and "start_ip" not in fg))
+    if missing:
         return None
-    iffb = {pid: _num(r.get("IFFB")) for pid, r in pr.items()}
-    role = {pid: _fg_ip(r.get("Start-IP")) for pid, r in pr.items() if r.get("Start-IP") is not None}
-    arms = {
-        "plain_fip_bref_role_ip": pitchers(season),
-        "iffb_bref_role_ip": pitchers(season, iffb=iffb),
-        "iffb_fg_role_ip": pitchers(season, iffb=iffb, role_ip=role),
-        "iffb_fg_role_ip_war_pf_ceiling": pitchers(season, iffb=iffb, role_ip=role, pf_source="war_loo"),
-    }
-    return {k: {"rar": v["components"]["rar"], "war_runs": v["components"]["war_runs"],
-                "war_wins_mae": v["war_wins_mae"], "rar_single_team": v["single_team"]["rar"],
-                "rar_ip_ge_50": v["ip_ge_50"]["rar"], "park_factor": v["park_factor"]}
-            for k, v in arms.items()}
+    kw: dict = {"pf_source": pfs}
+    if use_iffb:
+        kw["iffb"] = fg["iffb"]
+    if pfs == "fg_fip":
+        kw["fip_pf"] = fg["fip_pf"]
+    if use_framing:
+        kw["framing"] = fg["pitcher_framing"]
+    if fg_role:
+        kw["role_ip"] = fg["start_ip"]
+    return kw
+
+
+def pitcher_arms(season: int, fg: dict) -> dict:
+    """Every arm whose inputs are cached, scored on the same rows."""
+    out = {}
+    for name, *spec in PITCHER_ARMS:
+        kw = arm_kwargs(fg, *spec)
+        if kw is None:
+            continue
+        v = pitchers(season, **kw)
+        if "components" not in v:
+            continue
+        out[name] = {"rar": v["components"]["rar"], "war_runs": v["components"]["war_runs"],
+                     "war_wins_mae": v["war_wins_mae"], "rar_single_team": v["single_team"]["rar"],
+                     "rar_multi_team": v["multi_team"]["rar"], "rar_ip_ge_50": v["ip_ge_50"]["rar"]}
+    return out
+
+
+def published_crosscheck(season: int, fg: dict) -> Optional[dict]:
+    """FanGraphs' leaderboard WAR against the StatsAPI feed's war: the two
+    published copies of one number. The replica is scored against the feed, so
+    a disagreement here would make the target itself ambiguous."""
+    pub = fg.get("published")
+    if not pub:
+        return None
+    rows, _ = saber("pitching", season)
+    diffs = []
+    for pid, r in rows.items():
+        fw = run_value((r.get("stat") or {}).get("war"))
+        p = pub.get(pid)
+        if fw is None or p is None or p.get("WAR") is None:
+            continue
+        diffs.append(abs(fw - float(p["WAR"])))
+    return {"n_both": len(diffs), "n_feed": len(rows), "n_fg": len(pub),
+            "n_within_0_01_war": sum(1 for d in diffs if d <= 0.01),
+            "max_abs_war_diff": round(max(diffs), 4) if diffs else None}
 
 
 # --------------------------------------------------------------------------
 # Driver
 # --------------------------------------------------------------------------
 
+def default_pitcher_inputs(fg: dict) -> tuple[str, dict]:
+    """(arm name, pitchers() keyword arguments) for the default pitcher line: the
+    full FanGraphs input set where the season is cached, otherwise the richest
+    arm its cache supports, down to the W1.1 fallback (plain FIP, leave-one-out
+    FIP- back-solve, B-Ref role innings)."""
+    order = [DEFAULT_ARM] + [a[0] for a in reversed(PITCHER_ARMS) if a[0] != DEFAULT_ARM
+                             and a[2] == "fg_fip"] + ["iffb_loo_pf", "plain_fip_loo_pf"]
+    spec = {a[0]: a[1:] for a in PITCHER_ARMS}
+    for name in order:
+        kw = arm_kwargs(fg, *spec[name])
+        if kw is not None:
+            return name, kw
+    return "plain_fip_loo_pf", {"pf_source": "fip_minus"}
+
+
 def build(seasons=None) -> dict:
     seasons = list(seasons or range(FIRST, LAST + 1))
     out_seasons = {}
     prev_pf = None
+    fg_prov = {}
     for y in seasons:
-        h = hitters(y)
+        fg = fg_inputs(y)
+        fg_prov[str(y)] = fg["provenance"]
+        h = hitters(y, framing_fg=fg.get("framing"))
         prior = None
         if prev_pf:
             hp = hitters(y, pf_override=prev_pf)
@@ -738,15 +952,16 @@ def build(seasons=None) -> dict:
                      "note": "Batting with the PRIOR season's back-solved team park factors, "
                              "the cost of a park input not read from the same season"}
         prev_pf = h["park_factor"].pop("_team_pf_raw", None) if "park_factor" in h else None
-        p = pitchers(y)
-        blended = pitchers(y, mode="blended")
+        arm, kw = default_pitcher_inputs(fg)
+        p = pitchers(y, **kw)
+        p["arm"] = arm
+        blended = pitchers(y, mode="blended", **kw)
         blk = {"hitters": h, "pitchers": p, "hitters_prior_season_pf": prior,
                "pitchers_blended_line": {"rar": blended["components"]["rar"],
                                          "war_runs": blended["components"]["war_runs"],
-                                         "war_wins_mae": blended["war_wins_mae"]}}
-        diag = iffb_diagnostic(y)
-        if diag:
-            blk["pitchers_iffb_diagnostic"] = diag
+                                         "war_wins_mae": blended["war_wins_mae"]},
+               "pitchers_arms": pitcher_arms(y, fg),
+               "pitchers_published_crosscheck": published_crosscheck(y, fg)}
         if y == LAST:
             blk["in_progress"] = True
         out_seasons[str(y)] = blk
@@ -757,6 +972,18 @@ def build(seasons=None) -> dict:
                  if "components" in b[side]}
             summary[f"{side}.{comp}"] = {"pass": sorted(s for s, x in v.items() if x == "PASS"),
                                          "fail": sorted(s for s, x in v.items() if x == "FAIL")}
+    # every pitcher arm's passing seasons, so the default line is read against
+    # its neighbours (the leave-one-out park factor above all) off the artifact
+    arms_summary: dict = {}
+    for name, *_ in PITCHER_ARMS:
+        for comp in ("rar", "war_runs"):
+            v = {s: ((b.get("pitchers_arms") or {}).get(name) or {}).get(comp, {}).get("verdict")
+                 for s, b in out_seasons.items()}
+            v = {s: x for s, x in v.items() if x}
+            if v:
+                arms_summary.setdefault(name, {})[comp] = {
+                    "pass": sorted(s for s, x in v.items() if x == "PASS"),
+                    "fail": sorted(s for s, x in v.items() if x == "FAIL")}
     inputs = {
         "league_constants": _mtime(REPO / "data" / "league_constants.json"),
         "war_daily_bat": _mtime(CACHE / "war_daily" / "bat.parquet"),
@@ -765,6 +992,7 @@ def build(seasons=None) -> dict:
         "saber_pitching": {str(y): _mtime(CACHE / f"statsapi_saber_pitching_{y}.json") for y in seasons},
         "fielding": {str(y): _mtime(fielding_path(y)) for y in seasons},
         "counts_hitting": {str(y): _mtime(CACHE / f"fa_statsapi_hitting_{y}.json") for y in seasons},
+        "fangraphs": fg_prov,
     }
     return {
         "generated_at": None,
@@ -773,15 +1001,25 @@ def build(seasons=None) -> dict:
         "gate": {"tolerance_runs": F.TOLERANCE_RUNS, "share": F.GATE_SHARE,
                  "rule": "a component clears a season when >= 99% of its rows sit within 1.0 run"},
         "built": ["wOBA", "wRAA", "batting league term", "wSB", "positional (FG ladder, DH from B-Ref Inn, pitcher-batting credit)",
-                  "league adjustment", "replacement", "RPW", "FIP", "pitcher runs leg", "dynamic RPW",
+                  "league adjustment", "replacement", "RPW", "FIP and ifFIP", "pitcher runs leg", "dynamic RPW",
                   "role replacement", "leverage multiplier", "430 pin"],
         "consumed": ["UBR + wGDP (feed baseRunning - wSb)", "fielding (feed)", "catcher framing residual (feed)",
                      "gmLI (feed)", "batting park factor (LOO back-solve from feed Batting)",
-                     "pitching park factor (LOO back-solve from feed FIP-)"],
+                     "IFFB (FanGraphs pitching leaderboard, fg_leaderboards cache)",
+                     "pitcher framing charge (FanGraphs pitching-leaderboard CFraming, convention 9)",
+                     "pitcher role innings (FanGraphs Start-IP)",
+                     "pitching park factor (FanGraphs Guts FIP park factor per team-season; "
+                     "LOO back-solve from feed FIP- where the season is not cached)"],
+        "fangraphs_inputs": {"source": "fg_leaderboards.py cache (.cache/fangraphs), never fetched by this tool",
+                             "served": False,
+                             "note": "owner decision 14a (2026-09-11): IFFB and the FIP park factor from "
+                                     "FanGraphs; decision 13: CFraming cross-checked against the feed residual"},
         "war_runs_note": "war_runs is (replica WAR - feed WAR) times the season RPW, so both sides are gated in runs",
         "inputs": inputs,
         "seasons": out_seasons,
         "summary": summary,
+        "pitcher_default_arm": DEFAULT_ARM,
+        "pitcher_arms_summary": arms_summary,
     }
 
 
@@ -797,6 +1035,22 @@ def _print(res: dict) -> None:
                       f"{g.get('share_within') if g.get('share_within') is not None else '-':6}  "
                       f"{g.get('mae') if g.get('mae') is not None else '-':6}  "
                       f"{g.get('max') if g.get('max') is not None else '-':6}  {g.get('verdict')}")
+    print()
+    print("pitcher arms, RAR share within 1.0 run (n)   single-team   multi-team   WAR MAE wins")
+    for s, b in res["seasons"].items():
+        for arm, v in (b.get("pitchers_arms") or {}).items():
+            r, st, mt = v["rar"], v["rar_single_team"], v["rar_multi_team"]
+            print(f"{s}   {arm:24s} {r.get('share_within')!s:7} ({r.get('n')})   "
+                  f"{st.get('share_within')!s:7}      {mt.get('share_within')!s:7}     {v.get('war_wins_mae')}")
+    print()
+    print("framing cross-check, feed residual vs FanGraphs CFraming (catchers)")
+    for s, b in res["seasons"].items():
+        fc = (b.get("hitters") or {}).get("framing_crosscheck")
+        if fc:
+            print(f"{s}   both {fc['n_both']:4d}  within 0.01 {fc['n_within_0_01']:4d}  "
+                  f"max {fc['max_abs_diff']}  only feed {fc['only_in_feed']['n']} "
+                  f"(max {fc['only_in_feed']['max_abs_residual']})  only FG {fc['only_in_fg']['n']} "
+                  f"(max {fc['only_in_fg']['max_abs_cframing']})")
 
 
 def main(argv=None) -> int:

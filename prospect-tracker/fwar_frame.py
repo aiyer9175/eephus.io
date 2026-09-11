@@ -35,7 +35,8 @@ PITCHERS (library page "WAR for Pitchers", sheet C5 section 1)
 
     FIP     = (13*HR + 3*(BB + HBP) - 2*(K + IFFB)) / IP + constant   (IFFB = 0 is plain FIP)
     FIPR9   = FIP + (lgRA9 - lgERA)                  ADDITIVE, not multiplicative
-    pFIPR9  = FIPR9 / (PF/100)                       FIP park factor divided in
+    pFIPR9  = FIPR9 / (PF/100) + 9*CFraming/IP       FIP park factor divided in; framing
+                                                     earned on his pitches charged back (9)
     RAAP9   = league FIPR9 - pFIPR9                  own league (AL or NL), not MLB
     dRPW    = (((18 - IP/G)*lgFIPR9 + (IP/G)*pFIPR9) / 18 + 2) * 1.5   lgFIPR9 = own league
     RepLvl  = 0.03*(1 - GS/G) + 0.12*(GS/G)
@@ -76,6 +77,17 @@ the replica land, and each is a place a naive build would silently differ.
   8. The lgFIPR9 inside dRPW is the pitcher's OWN league's FIPR9, not MLB's. The
      library's worked example (Stroman 2016: AL FIPR9 4.56, pFIPR9 4.12, IP/G
      204/32) prints dRPW 9.61; the AL value reproduces 9.61, MLB's 4.52 gives 9.57.
+  9. FanGraphs charges a pitcher the catcher framing runs earned on his pitches
+     (the `CFraming` column of its PITCHING leaderboard; the catcher is credited
+     the same runs inside Fielding, so the league's runs are counted once). No
+     library page states it. It is the team-level residual that no park factor
+     could close: back-solving a park factor from published WAR gave team values
+     4 to 8 points off FanGraphs' own FIP park factor in 2011 (Brewers 95 vs 103
+     with Lucroy catching), and the pitcher RAR residual correlated -0.988 with
+     pitcher CFraming. Added as runs per nine after the park factor, it takes
+     2011 pitcher RAR from 73.0 to 99.7 percent within a run. Placement was
+     measured four ways (after the pitcher's RAR, levered with relief, before
+     and after the park factor); the last three tie within 0.01 runs of MAE.
 
 WHAT THIS MODULE DELIBERATELY DOES NOT DO. It does not improve anything: the
 positional ladder is FanGraphs' fixed table here (the plan's decision to read OUR
@@ -328,6 +340,15 @@ def fipr9(fip_value: float, lg_ra9: float, lg_era: float) -> float:
 def pfipr9(fipr9_value: float, pf: float) -> float:
     """Park-adjusted FIPR9, PF as a decimal, divided in."""
     return fipr9_value / pf
+
+
+def framing_charge_per9(cframing: float, ip: float) -> float:
+    """Convention 9: the framing runs a pitcher's catchers earned on his pitches,
+    as runs per nine added to his park-adjusted FIPR9. Positive framing (called
+    strikes stolen for him) raises his runs; zero innings charge nothing."""
+    if not ip or ip <= 0:
+        return 0.0
+    return 9.0 * float(cframing or 0.0) / float(ip)
 
 
 def raap9(league_fipr9: float, pfipr9_value: float) -> float:
