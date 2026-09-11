@@ -299,10 +299,8 @@
     }).join("");
     return '<tr class="pk-detail"><td colspan="' + cols + '"><div class="pk-detail-wrap">'
       + '<div class="pk-detail-h">' + esc(r.venue) + " - season by season</div>"
-      + '<div class="mlbstats-note">The single-season columns are the inputs, shown so the window is '
-      + "auditable. They are not the board's ranking basis: year to year they repeat at a Spearman in "
-      + "the 0.35 to 0.48 range on runs, under the 0.50 the park registration asked for. The 3yr "
-      + "columns are what the board sorts.</div>"
+      + '<div class="mlbstats-note">Single seasons are the inputs, shown for audit. They miss the '
+      + "stability bar (see Method), so the board sorts on the 3yr columns.</div>"
       + '<table class="pk-mini"><thead><tr><th>Season</th><th>Club</th><th>Lvl</th>'
       + "<th>Home G</th><th>Run PF</th><th>HR PF</th><th>3yr Run</th><th>3yr HR</th>"
       + "</tr></thead><tbody>" + body + "</tbody></table></div></td></tr>";
@@ -414,15 +412,13 @@
         + '<div class="mlbstats-empty">No venue carries a factor for ' + esc(String(state.season))
         + " as a window end.</div>";
     }
-    var note = "Three-season factor as of " + state.season + ": home games in "
-      + (state.season - 2) + " through " + state.season
-      + " only, weighted by home games. A venue with no games in that span is not listed. "
-      + "The board ranks on the window and not on any single season, because single seasons "
-      + "miss the stability bar (Method has the measurement).";
+    var note = "Three-season factor, " + (state.season - 2) + " to " + state.season
+      + ", weighted by home games; venues with no games in that span are omitted. Ranked on "
+      + "the window only: single seasons miss the stability bar (see Method).";
     return tiles(rows)
       + controls(rows.length, all.length)
       + '<div class="mlbstats-note">' + esc(note)
-      + " Click a row for the season by season detail.</div>"
+      + " Click a row for each season.</div>"
       + viz(rows)
       + (rows.length
           ? '<div class="mlbstats-scroll">' + boardTable(rows) + "</div>"
@@ -467,10 +463,9 @@
         + '<td class="pk-venue">' + esc(g.cold.venue) + "</td></tr>";
     }).join("");
     return controls(rows.length, all.length)
-      + '<div class="mlbstats-note">Every league-season is centered on its own mean, so league AVERAGES '
-      + "are 1.00 by construction and say nothing. The spread does say something: it is how much park "
-      + "context varies inside a league, which is how much a raw stat line needs reading before you "
-      + "compare two players in it. Leagues with fewer than three rated venues are dropped.</div>"
+      + '<div class="mlbstats-note">League means are 1.00 by construction (each league-season is '
+      + "centered), so the spread is the signal: how much park context varies inside a league. "
+      + "Leagues with under three rated venues are dropped.</div>"
       + '<div class="mlbstats-scroll"><table class="mlbstats-table"><thead><tr>'
       + "<th>League</th><th>Venues</th><th>Low</th><th>Median</th><th>High</th><th>SD</th>"
       + "<th>Most offense</th><th>Least offense</th></tr></thead><tbody>"
@@ -580,39 +575,37 @@
     var venues = ((DATA && DATA.venues) || []).length;
     var ts = ((DATA && DATA.team_seasons) || []).length;
     var h = '<div class="pk-prose">';
+    // The shrink constant is read out of the artifact's own method string
+    // (K_G=<n>) so the formula on the page cannot drift from the one the lab ran.
+    var kMatch = /K_G\s*=\s*(\d+)/.exec(String(m.run_pf || ""));
+    var kG = kMatch ? kMatch[1] : null;
     h += "<h3>What the number is</h3>";
-    h += "<p>A park factor here is a ratio: runs per game scored AND allowed at this venue by the clubs "
-      + "who play there, divided by what those same clubs did on the road over the same span. Above 1.00 "
-      + "the park adds offense; below 1.00 it takes offense away. Hodgetown at 1.209 says games in "
-      + "Amarillo ran about 21 percent higher scoring than the same clubs' road games, after the league "
-      + "centering and the sample shrink below.</p>";
+    h += "<p>Runs per game, scored plus allowed, at the venue by its clubs, divided by the same "
+      + "clubs' road rate over the same span, then league-centered and shrunk. Above 1.00 the park "
+      + 'adds offense. <a class="g-term" href="/glossary/#g=milb_park_factor" '
+      + 'data-gl="milb_park_factor">Glossary entry</a>.</p>';
     h += "<h3>How it is built</h3><ul>"
-      + "<li>Source is the StatsAPI schedule, regular season only, final scores. Sports "
-      + esc((m.sports || []).join(", ")) + " (Triple-A down through the complex and Dominican leagues), seasons "
+      + "<li>StatsAPI schedule, regular season, final scores. Sports "
+      + esc((m.sports || []).join(", ")) + " (Triple-A through the DSL), seasons "
       + esc(sp.length === 2 ? sp[0] + " through " + sp[1] : sp.join(", ")) + ".</li>"
-      + "<li>Each club-season is centered on the unweighted mean ratio of its own league-season, so a "
-      + "league that simply scores more does not make all of its parks look hot. Unlabeled leagues, or "
-      + "leagues with under four rated clubs, fall back to the pooled sport-season.</li>"
-      + "<li>Each club-season is then shrunk toward 1.00, empirical-Bayes style, by its own home-game "
-      + "count: it keeps G / (G + 70) of its raw gap. A full 68-game home schedule keeps about half of "
-      + "what it measured; a 35-game partial keeps a third. That is why the board has no 1.60s.</li>"
-      + "<li>The three-season window is the home-game-weighted mean of those ALREADY shrunk seasons, so "
-      + "more seasons buy stability, not a bigger number. It reads only seasons at or before the year "
-      + "you selected, so the 2023 number never sees 2024. Nothing here peeks forward.</li>"
-      + "<li>A venue is a club's modal home venue. Where several clubs share a site, the venue-season is "
-      + "their home-game-weighted mean and the row is flagged as shared.</li>"
-      + "<li>Home run factors come from the league-wide team split fetch (home runs hit plus home runs "
-      + "allowed at the venue) and get the same centering, shrink and window.</li>"
+      + "<li>Each club-season is centered on its league-season mean ratio (pooled sport-season "
+      + "when a league is unlabeled or has under four rated clubs).</li>"
+      + "<li>Shrunk toward 1.00 by home games"
+      + (kG ? ": it keeps G / (G + " + esc(kG) + ") of its raw gap" : "") + ".</li>"
+      + "<li>The three-season window is the home-game-weighted mean of the shrunk seasons at or "
+      + "before the selected year. It never reads forward.</li>"
+      + "<li>Venue = a club's modal home venue. Shared sites are home-game weighted and flagged.</li>"
+      + "<li>Home run factors: the league-wide team split fetch (home runs hit plus allowed), same "
+      + "centering, shrink and window.</li>"
       + "</ul>";
     // Observed ranges are READ OFF the artifact, never typed into the prose,
     // so a rebuild can never leave this paragraph claiming a stale number.
     var rng = observedRanges();
     h += "<h3>What backs it</h3><ul>"
       + "<li>" + esc(String(venues)) + " venues, " + esc(String(ts)) + " club-seasons.</li>"
-      + "<li>Across every venue-season on the three-season window the run factor spans "
-      + f3(rng.runLo) + " to " + f3(rng.runHi) + " and the home run factor spans "
-      + f3(rng.hrLo) + " to " + f3(rng.hrHi) + ". Single seasons run wider ("
-      + f3(rng.sRunLo) + " to " + f3(rng.sRunHi) + " on runs), which is the shrink doing its job.</li>"
+      + "<li>Three-season range: run " + f3(rng.runLo) + " to " + f3(rng.runHi)
+      + ", home run " + f3(rng.hrLo) + " to " + f3(rng.hrHi) + ". Single seasons: run "
+      + f3(rng.sRunLo) + " to " + f3(rng.sRunHi) + ".</li>"
       + "<li>Run factor coverage " + esc(fInt(stop.covered_run_pf)) + " of "
       + esc(fInt(stop.observed_team_seasons)) + " club-seasons ("
       + esc(fPct(stop.coverage_run_pf)) + ").</li>"
@@ -620,10 +613,8 @@
       + esc(fInt(stop.observed_team_seasons)) + " club-seasons ("
       + esc(fPct(stop.covered_hr_pf && stop.observed_team_seasons
             ? stop.covered_hr_pf / stop.observed_team_seasons : null))
-      + "). The gap is club-seasons whose split fetch came back empty; those rows show a dash, not a guess.</li>"
-      + "<li>Home games behind a single row range from a few dozen (a one-season affiliate, shrunk hard "
-      + "toward neutral) to a few hundred. The Home G column is on the board so you can price the "
-      + "confidence yourself.</li>"
+      + "); an empty split fetch shows a dash.</li>"
+      + "<li>Home G on the board is the sample behind each row.</li>"
       + "</ul>";
     // ---- stability, measured on the page ----
     var st = stability();
@@ -631,47 +622,34 @@
       return "<tr><td>" + esc(p.pair) + "</td><td>" + p.n + "</td><td>" + f2(p.rho) + "</td></tr>";
     }).join("");
     h += "<h3>How much of it repeats</h3>";
-    h += "<p>A park factor is only worth reading if the same park keeps producing it. The numbers "
-      + "below are computed in your browser from the table this page draws, so they cannot drift "
-      + "from what you are looking at.</p>";
+    h += "<p>Computed in the browser from the table on this page.</p>";
     if (yoyRows) {
       h += '<table class="pk-mini"><thead><tr><th>Consecutive seasons</th><th>Venues</th>'
         + "<th>Run factor Spearman</th></tr></thead><tbody>" + yoyRows + "</tbody></table>";
     }
     h += "<p>Single seasons repeat at " + f2(st.runLo) + " to " + f2(st.runHi)
-      + ". The park registration for this data asked for 0.50 before a factor could be trusted on "
-      + "its own, and single seasons do not get there. Split the seasons into two independent halves "
-      + "instead (odd years against even years, each a home-game-weighted aggregate) and the same "
-      + "venues line up at " + f2(st.splitRun.rho) + " on runs across " + st.splitRun.n
-      + " venues and " + f2(st.splitHr.rho) + " on home runs across " + st.splitHr.n + ". "
-      + "<strong>That is why the board ranks on the three-season window and offers no single-season "
-      + "sort.</strong> The per-season inputs stay visible inside each venue's row, where they are "
-      + "an audit trail rather than a leaderboard.</p>";
+      + ", under the 0.50 bar in the park registration. Odd against even seasons, each a "
+      + "home-game-weighted aggregate, repeat at " + f2(st.splitRun.rho) + " on runs ("
+      + st.splitRun.n + " venues) and " + f2(st.splitHr.rho) + " on home runs ("
+      + st.splitHr.n + "). <strong>So the board ranks on the three-season window and offers no "
+      + "single-season sort.</strong> Per-season inputs stay in each venue's row.</p>";
     h += "<h3>What it is not</h3><ul>"
-      + "<li>Not a regression. There is no control for weather, altitude, roster, or schedule beyond the "
-      + "home and road split itself. A club that happens to draw tougher road opponents will bleed a "
-      + "little into its home number.</li>"
-      + "<li>Not a component park factor. One run factor and one home run factor, not a per-event table.</li>"
-      + "<li>Not park-adjusted stats. Nothing on this page rewrites a player line. It is context you "
-      + "apply yourself.</li>"
-      + "<li>Complex-league rows (CPX, DSL) describe a site that several clubs share, and one row pools "
-      + "the club-seasons the feed reports no venue for. Read those as league context, not as a park.</li>"
-      + "<li>The live season is partial. Its window leans on the two completed seasons behind it.</li>"
+      + "<li>Not a regression: no control for weather, altitude, roster or schedule beyond the "
+      + "home and road split.</li>"
+      + "<li>Not a component factor: one run factor and one home run factor.</li>"
+      + "<li>Not park-adjusted stats: no player line is rewritten.</li>"
+      + "<li>CPX and DSL rows describe shared sites, and one row pools the club-seasons with no "
+      + "reported venue. Read them as league context.</li>"
+      + "<li>The live season is partial; its window leans on the two seasons behind it.</li>"
       + "</ul>";
-    h += '<div class="pk-warn"><strong>Display only.</strong> No model on this site reads these factors. '
-      + "They were built to test whether park-neutralizing a minor-league stat line makes the eFV "
-      + "prospect model more accurate. It did not: the gate came back +0.0005 Spearman on hitters "
-      + "(lower bound -0.0011) and -0.0021 on pitchers (lower bound -0.0051), both inside their own "
-      + "null band. The lane is registered as a fail, the code path that would apply it stays gated "
-      + "off, and the table survives as context for a reader instead of an input to a number. "
-      + 'The ledger row is <code>xfv_park_line</code> in <a href="/glossary/#view=models">Models '
-      + "&amp; Proofs</a>, with its eval artifact at "
-      + '<a href="/data/xfv_park_line_eval.json">data/xfv_park_line_eval.json</a>. '
-      + "The clamps the artifact carries (run " + esc(f3((clamps.run_pf || [])[0])) + " to "
+    h += '<div class="pk-warn"><strong>Display only.</strong> No model reads these factors. '
+      + "Park-neutralizing MiLB lines did not improve eFV, and the lane is a registered fail: "
+      + '<code>xfv_park_line</code> in <a href="/glossary/#view=models">Models &amp; Proofs</a>, '
+      + 'eval at <a href="/data/xfv_park_line_eval.json">data/xfv_park_line_eval.json</a>. '
+      + "The artifact's clamps (run " + esc(f3((clamps.run_pf || [])[0])) + " to "
       + esc(f3((clamps.run_pf || [])[1])) + ", home run " + esc(f3((clamps.hr_pf || [])[0]))
       + " to " + esc(f3((clamps.hr_pf || [])[1]))
-      + ") belong to that disabled path. The board above shows the UNCLAMPED values, which is why "
-      + "Amarillo reads past the clamp ceiling.</div>";
+      + ") belong to that disabled path; the board shows unclamped values.</div>";
     h += "<h3>The artifact, in its own words</h3>";
     h += '<div class="pk-verbatim">' + esc(String(m.run_pf || "")) + "</div>";
     h += '<div class="pk-verbatim">' + esc(String(m.hr_pf || "")) + "</div>";

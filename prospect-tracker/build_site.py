@@ -504,16 +504,16 @@ BETA_BADGE = (
 # hero keeps the site-wide chip (eephus.io is in beta).
 MODULE_STAGE = {
     "prospx": ("β", "PROSPX is in beta"),
-    "trademachine": ("β", "Trade Machine is in beta - newly launched"),
-    "fa": ("β", "MLB Free Agency is in beta - newly launched; numbers may shift as the model matures"),
-    "projections": ("β", "MLB Projections is in beta - newly launched; numbers may shift as the model matures"),
-    "mlbstats": ("β", "MLB Stats is in beta - newly launched; metrics may shift as the models mature"),
-    "pal": ("β", "Alchemy Lab is in beta - newly launched; the conversion models are provisional"),
-    "arbitration": ("β", "Arbitration Predictor is in beta - newly launched; the arb-1 model is gated, the arb-2-and-later projection is a population multiplier"),
-    "forums": ("β", "Forums is in beta - newly launched"),
-    "parks": ("β", "MiLB Park Factors is in beta - newly launched; the factors are a measured artifact, the surface is new"),
-    "management": ("β", "In-Game Management is in beta - the running-game family is measured and its gate returned a bounded null, so the page publishes the league result and withholds any per-club plus metric"),
-    "hof": ("β", "Hall of Fame is in beta - the leaderboards reproduce a public shelf and four of the eight sections are dark, each naming its blocker"),
+    "trademachine": ("β", "Trade Machine is in beta"),
+    "fa": ("β", "MLB Free Agency is in beta"),
+    "projections": ("β", "MLB Projections is in beta"),
+    "mlbstats": ("β", "MLB Stats is in beta"),
+    "pal": ("β", "Alchemy Lab is in beta"),
+    "arbitration": ("β", "Beta. Arb-1 model gated; arb-2+ is a population multiplier"),
+    "forums": ("β", "Forums is in beta"),
+    "parks": ("β", "Beta. Display only: no model reads these factors"),
+    "management": ("β", "Beta. Gate returned a bounded null: no per-club plus metric"),
+    "hof": ("β", "Beta. Every unpublished section names its blocker"),
     # Diamond section (2026-08-05). These rows carry the FULL chip text in
     # slot [0] and render through _stage_chip(); the older rows above predate
     # the helper and their call sites still write "β beta" literally, using
@@ -521,9 +521,9 @@ MODULE_STAGE = {
     # public and free while the section is built out.
     # One row for the merged module (2026-08-07). Dynasty, Redraft and DFS are
     # sub-modules under one masthead now, so there is one chip, not three.
-    "fantasy": ("◆ Diamond preview", "Fantasy is a Diamond preview - free and public while the Diamond section is built out"),
-    "betting": ("◆ Diamond preview", "Sports Betting is a Diamond preview - free and public while the Diamond section is built out"),
-    "diamond": ("◆ Diamond preview", "Diamond Pass is not selling anything yet - everything on the site is free today"),
+    "fantasy": ("◆ Diamond preview", "Diamond preview: free and public"),
+    "betting": ("◆ Diamond preview", "Diamond preview: free and public"),
+    "diamond": ("◆ Diamond preview", "Nothing is for sale yet; the whole site is free"),
 }
 
 def _stage_chip(key: str) -> str:
@@ -534,6 +534,14 @@ def _stage_chip(key: str) -> str:
     return (f'<span class="eephus-beta" title="{html.escape(title)}">'
             f'{html.escape(label)}</span>')
 
+def _gl(slug: str, label: str) -> str:
+    """One glossary term in shell copy: the hover definition comes from
+    eephus-gl.js (it delegates on any [data-gl] in the document, so a static
+    shell needs no wire() call) and the href opens the canonical entry. Shell
+    copy names a concept once and points here instead of explaining it."""
+    s = html.escape(slug, quote=True)
+    return f'<a class="g-term" href="/glossary/#g={s}" data-gl="{s}">{html.escape(label)}</a>'
+
 # Every betting surface carries this block. It is not decoration: it is the
 # legal floor the module ships under (21+, informational only, state-by-state
 # legality, no affiliate relationships, problem-gambling helpline). Any new
@@ -541,11 +549,9 @@ def _stage_chip(key: str) -> str:
 BETTING_DISCLAIMER = (
     '<div class="card betting-disclaimer" role="note">'
     '<h3>21+. Informational and entertainment only.</h3>'
-    '<p>eephus.io is not a sportsbook. We do not accept wagers, we do not take a cut of yours, '
-    'and there are no affiliate links anywhere on this site. Nothing here is betting advice. '
-    'Sports betting is not legal in every state and the rules differ where it is. '
-    'Odds shown are the odds captured at the time a selection was posted and they move after that. '
-    'No model wins every bet and we do not claim one will. '
+    '<p>eephus.io is not a sportsbook: no wagers, no cut, no affiliate links. Nothing here is betting advice. '
+    'Sports betting is not legal in every state, and the rules differ where it is. '
+    'Odds are captured when a selection posts and move after. No model wins every bet. '
     'If betting stops being fun, call 1-800-GAMBLER or visit '
     '<a href="https://www.1800gamblerhelp.org/" target="_blank" rel="noopener noreferrer">1800gamblerhelp.org</a>.</p>'
     '</div>'
@@ -1998,13 +2004,10 @@ def build_news(data: dict | None = None) -> str:
     body = (
         '<div class="news-app">'
         '<div class="section-head"><h1>Prospect News</h1>'
-        '<span class="section-sub">the full recent prospect wire - filterable by event type</span>'
+        '<span class="section-sub">debuts, trades, level moves, IL, FV changes and FA signings</span>'
         f'{_gfx_chip_html("news-gfx-chip")}</div>'
-        '<p class="news-intro">Every move on the board - prospect debuts, trades, promotions and '
-        'demotions, IL placements, genuine FV grade changes, and Free Agency signings - newest first. '
-        'The homepage shows the latest dozen; this is the full recent feed (last ~30 days), with each '
-        "player's current FV grade and scouting line. Filter by type, or jump into Time Machine on any "
-        'date to see the whole board as it stood.</p>'
+        f'<p class="news-intro">The {_gl("wire_ticker", "wire")}, last ~30 days, newest first. '
+        'FV rows are real grade changes only. A date header opens Time Machine on that date.</p>'
         f'<div class="filter-bar" id="news-filter-bar"><span class="filter-label">Filter</span>{chips}</div>'
         f'<div class="sb-feed news-feed" id="news-feed">{feed}</div>'
         '</div>'
@@ -2021,8 +2024,8 @@ def build_news(data: dict | None = None) -> str:
         + f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
     )
     return page("Prospect News - eephus.io", "news", body,
-                "The full recent eephus.io prospect wire: debuts, trades, promotions, IL moves, "
-                "FV grade changes, and Free Agency signings - filterable by type.",
+                "The eephus.io prospect wire: debuts, trades, promotions, IL moves, FV grade "
+                "changes and Free Agency signings, filterable by type.",
                 url=f"{SITE_ORIGIN}/news/")
 
 def _fv_sparkline(points: list, color: str, w: int = 150, h: int = 34) -> str:
@@ -2668,8 +2671,8 @@ def build_this_day(data: dict | None = None) -> str:
         + _section("IL on this day", il_rows)
     )
     if not sections:
-        sections = ('<p class="news-intro">No tracked prospect history lands on '
-                    f'{html.escape(mon_d)} yet. Check back tomorrow.</p>')
+        sections = ('<p class="news-intro">No tracked prospect history on '
+                    f'{html.escape(mon_d)}.</p>')
 
     chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
                  ("signing", "Signings"), ("il", "IL")]
@@ -2682,23 +2685,18 @@ def build_this_day(data: dict | None = None) -> str:
         '<div class="news-app hist-app">'
         f'<div class="section-head"><h1>Today in Prospect History - {html.escape(mon_d)}</h1>'
         '<span class="section-sub">debut anniversaries, trades, signings &amp; IL moves on this calendar date</span></div>'
-        f'<p class="news-intro">Everything the tracker knows about {html.escape(mon_d)} across past '
-        'seasons: MLB debut anniversaries from the graduate pool (with each player\'s WAG - how the '
-        'career has run against the grade), prospect trades on this exact date, signings and '
-        'free-agency moves from the transaction ledger (2019 to present), and injured-list '
-        'placements (2017 to present). Exact calendar-date matches only. The homepage module shows '
-        'a five-row taste; this page is the whole day.</p>'
+        '<p class="news-intro">Exact calendar-date matches from past seasons. Transactions from 2019, '
+        f'IL placements from 2017. Debut rows carry {_gl("wag", "WAG")}.</p>'
         f'<div class="filter-bar" id="hist-filter-bar"><span class="filter-label">Filter</span>{chips}</div>'
         f'<div id="hist-sections" style="max-width:760px;">{sections}</div>'
-        '<p class="news-intro" style="font-size:11px;">Why no "big eFV moves" section: the model\'s '
-        'grade history stamps changes at snapshot re-run dates, not the day the change actually '
-        'happened, so a calendar-day anniversary there would mislead.</p>'
+        '<p class="news-intro" style="font-size:11px;">No eFV-move section: grade history is stamped '
+        'at model re-run dates, not the day a grade changed.</p>'
         '</div>'
         + _HIST_FILTER_JS
     )
     return page("Today in Prospect History - eephus.io", "", body,
-                "Today in prospect history on eephus.io: MLB debut anniversaries, prospect trades, "
-                "signings, and IL moves that happened on this calendar date in past seasons.",
+                "Prospect history for this calendar date: MLB debut anniversaries, prospect trades, "
+                "signings and IL moves from past seasons.",
                 url=f"{SITE_ORIGIN}/history/")
 
 def _date_callout() -> str:
@@ -2966,6 +2964,27 @@ def _cross_module_strip() -> str:
                           'realized win-probability added', rows))
     except (OSError, ValueError, KeyError):
         pass
+    # Defense Leaderboards (DEM+, 2026-09-11) - the fifth /mlbstats/ section and
+    # the only one the strip did not reach. Qualified fielders only, the same
+    # innings bar the board's own default view applies, so the card cannot lead
+    # with a 60-inning outlier the leaderboard itself would flag provisional.
+    try:
+        dl = _cached_data_json("defense_leaderboards.json")
+        top = sorted((f for f in dl.get("fielders") or []
+                      if f.get("qualified") and f.get("dem_plus") is not None),
+                     key=lambda f: -f["dem_plus"])[:3]
+        rows = "".join(
+            f'<a class="xmod-row" href="/mlbstats/#section=defense">'
+            f'<span class="xmod-name">{html.escape(f.get("name") or "")}</span>'
+            f'<span class="xmod-sub">{html.escape(f.get("team") or "")}'
+            f'{" · " + html.escape(f["pos"]) if f.get("pos") else ""}</span>'
+            f'<span class="xmod-val">{round(f["dem_plus"])} DEM+</span></a>'
+            for f in top)
+        if rows:
+            cards.append(('⌖ Defense', '/mlbstats/#section=defense',
+                          'top qualified fielders by DEM+', rows))
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
     # Alchemy Lab - highest RP->SP fit scores. The copy says "screen", not
     # "candidates": the rp2sp direction's backtest came back sign-wrong
     # (rho -0.17, n=35, no-ship), so the page frames fit as a structural screen
@@ -3057,7 +3076,7 @@ def _cross_module_strip() -> str:
                 ("unvalidated", "Unvalidated", "serving, not yet gated")))
         if tally:
             cards.append(('✓ Model Ledger', '/models/',
-                          f'{sum(tally.values())} models with a predictive claim, verdicts included',
+                          f'{sum(tally.values())} models with a predictive claim',
                           rows))
     except (OSError, ValueError, KeyError, TypeError):
         pass
@@ -3070,7 +3089,7 @@ def _cross_module_strip() -> str:
     free_line = ("member pass" if _diamond_cfg()["gating"]
                  else "free during the founding preview")
     cards.append(('◆ Diamond', '/diamond/',
-                  'the pass that funds the free site',
+                  'the paid tier: fantasy and betting',
                   '<a class="xmod-row" href="/fantasy/"><span class="xmod-name">Fantasy</span><span class="xmod-val">redraft · dynasty · DFS →</span></a>'
                   '<a class="xmod-row" href="/betting/"><span class="xmod-name">Sports Betting</span><span class="xmod-val">model vs the book price →</span></a>'
                   f'<a class="xmod-row" href="/diamond/"><span class="xmod-name">Diamond Pass</span><span class="xmod-val">{free_line} →</span></a>'))
@@ -3231,9 +3250,9 @@ def _efv_distribution_html(players: list) -> str:
     caption = (
         f'<div style="margin-top:6px;font-family:var(--font-retro-mono);font-size:11px;'
         f'color:var(--text-tertiary);line-height:1.5;">'
-        f'{total:,} graded prospects · median eFV {median} · '
-        f'{floor_n:,} more sit at the eFV {int(_EFV_FLOOR)} floor (organizational depth the '
-        f'model carries no projection for) and are not plotted.</div>')
+        f'{total:,} graded prospects · median {_gl("xfv", "eFV")} {median} · '
+        f'{floor_n:,} at the eFV {int(_EFV_FLOOR)} floor (no projection), not plotted · '
+        f'bands are {_gl("rarity_tiers", "rarity tiers")}</div>')
     return _home_module("eFV Distribution", "/prospx/", "Full board",
                         svg + legend + caption, full=True)
 
@@ -3385,8 +3404,8 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         'style="display:block;padding:10px 14px;border-radius:8px;'
         'background:var(--brand-navy,#0E2B4D);color:#fff;font-weight:600;'
         'text-decoration:none;">'
-        '<span class="blip"></span> The MLB Draft is live. Open the Draft War Room '
-        'to see every pick priced against our board in surplus dollars.</a></div>'
+        '<span class="blip"></span> The MLB Draft is live. Draft War Room: every pick '
+        'priced against the board in surplus dollars.</a></div>'
         '<script>(function(){try{fetch("/data/draft_live.json",{cache:"no-cache"})'
         '.then(function(r){return r.ok?r.json():null;})'
         '.then(function(j){if(j&&j.status==="live"){'
@@ -3530,7 +3549,8 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     )
     inner = f'{ticker}<div class="home-shell">{sidebar}{main}</div>'
     return page_home("eephus.io - sabermetrics", inner,
-                     "MiLB prospect board with outcome-grounded eFV grades, top prospects, movers, graduates, and analysis.")
+                     "Prospect board graded by eFV, plus MLB free agency, projections, leaderboards, "
+                     "fantasy and betting models.")
 
 def build_articles_index(articles: list[dict]) -> str:
     cards = []
@@ -3582,8 +3602,8 @@ def build_fa() -> str:
         '<div class="fa-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Free Agency '
         f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["fa"][1])}">β beta</span></h1></div>'
-        f'<span class="section-sub">the {_fa_span} class, constructed from data · '
-        f'projected markets, rational value &amp; team fits · {_fa_winters} archived winters</span></div>'
+        f'<span class="section-sub">the {_fa_span} class · projected contracts, '
+        f'{_gl("rational_value", "rational value")}, team fits · {_fa_winters} archived winters</span></div>'
         '<div id="fa-banner"></div>'
         '<div class="filter-bar"><span class="filter-label">View</span>'
         '<span id="fa-view-chips"></span></div>'
@@ -3595,9 +3615,9 @@ def build_fa() -> str:
         f'<script src="/assets/fa_dpw.js?v={_FA_DPW_VER}" defer></script>'
     )
     return page("Free Agency - eephus.io", "fa", body,
-                "The 2026-27 MLB free-agent class: projected contracts (projLength / projGuarantee / "
-                "projAAV with floor-mean-ceiling bands), rational value vs predicted price, deal "
-                "verdicts, team fits, and twelve archived winters with a realized-surplus ledger.",
+                f"The {_fa_span} MLB free-agent class: projected contracts with floor, mean and "
+                "ceiling bands, rational value vs predicted price, deal verdicts, team fits, and "
+                f"{_fa_winters} archived winters with a realized-surplus ledger.",
                 url=f"{SITE_ORIGIN}/fa/")
 
 
@@ -3612,11 +3632,11 @@ def build_fa() -> str:
 # deal-builder mount above it: the board is the surface with the table.
 _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
     <span class="newsprint-eyebrow-label">Trade Machine</span>
-    <span class="newsprint-eyebrow-meta">build + value a deal both ways: prospects on eFV surplus, MLB players on projection surplus &middot; then the full Bayesian trade-value board &middot; module by Anirudh Iyer</span>
+    <span class="newsprint-eyebrow-meta">module by Anirudh Iyer</span>
   </div>
   <div id="trade-machine"></div>
   <div class="tm-ros-note" style="margin:10px 0 2px;max-width:760px;color:var(--text-secondary);font-size:11px;line-height:1.55;">
-    <strong>The rental leg has no floor.</strong> It prices the fraction of the season still to be played times the full-season surplus: the dollar value of a full season of projected WAR, minus the full-season salary. A negative number means projected production is worth less than the salary still owed, so the contract is underwater for the remainder, which is why salary-retention trades exist.
+    <strong>Rental leg:</strong> remaining season fraction &times; full-season surplus (projected WAR value minus salary). No floor: negative means the salary still owed exceeds the production.
   </div>
   <div class="trademachine-board-head detail-title" style="margin:18px 0 4px;font-size:13px;">Trade-value board <span class="detail-title-sub">Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted</span></div>
   <div class="filter-toggle-row">
@@ -3721,8 +3741,9 @@ def build_projections() -> str:
         '<div class="fa-app proj-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Projections '
         f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">β beta</span></h1></div>'
-        '<span class="section-sub">five-year eWAR paths for every MLB player · floor / mean / ceiling '
-        'probability buckets · contract surplus on salary-known seasons · prospects join at their PROSPX ETA</span></div>'
+        f'<span class="section-sub">five-year {_gl("ewar", "eWAR")} paths for every MLB player · '
+        f'{_gl("proj_buckets", "floor / mean / ceiling")} · contract surplus on salary-known seasons · '
+        'prospects join at their PROSPX ETA</span></div>'
         '<div id="proj-view-projections">'
         '<div id="proj-banner"></div>'
         '<div class="filter-bar" id="proj-filters"></div>'
@@ -3735,9 +3756,8 @@ def build_projections() -> str:
         + _PROJ_TM_REDIRECT
     )
     return page("MLB Projections - eephus.io", "projections", body,
-                "Five-year eWAR projections for every MLB player - floor/mean/ceiling probability "
-                "buckets, aging-curve decay, contract surplus on salary-known seasons, and PROSPX "
-                "prospects joining at their projected ETA.",
+                "Five-year eWAR projections for every MLB player: floor, mean and ceiling paths, "
+                "contract surplus on salary-known seasons, and PROSPX prospects joining at their ETA.",
                 url=f"{SITE_ORIGIN}/projections/")
 
 
@@ -3754,9 +3774,8 @@ def _arb_model_panel() -> str:
     src = ROOT / "data" / "arbitration_eval.json"
     if not src.exists():
         return ('<div class="card arb-note"><p><strong>The gate has not been '
-                'run.</strong> This module ships its evaluation with it. Until '
-                'the eval artifact exists there is nothing to report here, and '
-                'nothing above should be read as validated.</p></div>')
+                'run.</strong> No eval artifact yet: nothing on this page is '
+                'validated.</p></div>')
     try:
         ev = _json.loads(src.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -3779,20 +3798,19 @@ def _arb_model_panel() -> str:
     if a1:
         tiles.append(tile(
             "%.2fx" % (a1.get("gain_over_floor") or 0), "arb-1 vs its floor",
-            "the first-trip model beats an intercept-plus-WAR bar by this "
-            "multiple of its own minimum detectable effect",
+            "gain over an intercept-plus-WAR baseline, in multiples of the "
+            "minimum detectable effect",
             "green" if a1.get("resolvable") else "orange"))
     if a2:
         tiles.append(tile(
             "%.2fx" % (a2.get("gain_over_floor") or 0), "arb-2+ vs its floor",
-            "below 1.00 is a NULL: the model does not beat a step multiplier by "
-            "more than the floor", "orange"))
+            "under 1.00 is a NULL against a step multiplier", "orange"))
     if a6.get("n"):
         tiles.append(tile(
             "%.1fx" % (a6.get("ratio_ours_over_swartz") or 0),
             "Swartz is more accurate",
-            "on the %d settled seasons where MLB Trade Rumors published a "
-            "projection" % a6["n"], "red"))
+            "on %d settled seasons with an MLB Trade Rumors projection"
+            % a6["n"], "red"))
     tiles.append(tile(
         pool.get("rows", "-"), "scored player-seasons",
         "%s players over %s forward-chained folds"
@@ -3828,37 +3846,33 @@ def _arb_model_panel() -> str:
                       % (html.escape(str(entry.get("claim", ""))),
                          html.escape(str(entry.get("statement", "")))))
 
+    # The substitute-source agreement figures live in the artifact
+    # (conventions.pool); this list names the limit and does not retype them.
     gaps = (
         "<ul>"
-        "<li>It prices the SYSTEM, not the hearing. There is no access to filed "
-        "figures, so a case that went to a panel is scored on its award alone.</li>"
-        "<li>Arbitration steps before 2022 are reconstructed, and the substitute "
-        "sources measure 0.66 and 0.70 agreement against published service time. "
-        "Those seasons are reported and NOT scored.</li>"
-        "<li>2020 is never a label year. Salaries were paid at 60/162 of contract "
-        "and the sources disagree on which basis they report.</li>"
-        "<li>The collective bargaining agreement in force expires 2026-12-01. "
-        "Every projected season from 2027 assumes its arbitration structure "
-        "survives unchanged. That is not estimated from data and no interval "
-        "here covers it.</li>"
-        "<li>Non-tendered players are absent by construction. They are the "
-        "bottom of the award distribution, so summing these projections "
-        "OVERSTATES what a club actually owes.</li>"
+        "<li>It prices the SYSTEM, not the hearing: no filed figures, so a panel "
+        "case is scored on its award alone.</li>"
+        "<li>Steps before 2022 are reconstructed from substitute service-time "
+        "sources: reported, NOT scored.</li>"
+        "<li>2020 is never a label year (salaries paid at 60/162, reported on "
+        "inconsistent bases).</li>"
+        "<li>The CBA expires 2026-12-01. Seasons from 2027 assume the arbitration "
+        "structure survives; no interval here covers that.</li>"
+        "<li>Non-tendered players are absent, so summed projections OVERSTATE what "
+        "a club owes.</li>"
         "</ul>")
 
     return (
         '<div class="arb-scorecard">%s</div>'
         '<div class="section-head"><h2>What was measured</h2>'
-        '<span class="section-sub">Registered before the numbers were read</span></div>'
+        '<span class="section-sub">pre-registered</span></div>'
         '%s'
-        '<div class="section-head"><h2>Losses</h2>'
-        '<span class="section-sub">On the same footing as the wins</span></div>'
+        '<div class="section-head"><h2>Losses</h2></div>'
         '<ul class="arb-losses">%s</ul>'
         '<div class="section-head"><h2>What this model cannot tell you</h2></div>'
         '<div class="card arb-note">%s</div>'
         % ("".join(tiles), "".join(rows),
-           "".join(losses) or "<li>No rejected variants are recorded, which "
-                              "means the gate has been run once.</li>",
+           "".join(losses) or "<li>No rejected variants recorded.</li>",
            gaps))
 
 
@@ -3877,11 +3891,10 @@ def build_arbitration() -> str:
         + CREATED_BY_BANNER
         + '<h1>Arbitration Predictor <span class="eephus-beta" title="'
         + html.escape(stage[1]) + '">&beta; beta</span></h1></div>'
-        '<span class="section-sub">What every arbitration-eligible player is '
-        'still owed, and what the arbitration market paid him against comparable '
-        'players and against his own production. The first-trip model is gated '
-        'and beats its baseline; the second-and-later projection is a population '
-        'multiplier, because the model did not beat one.</span></div>'
+        '<span class="section-sub">Projected '
+        + _gl("arb_award_model", "arbitration awards")
+        + ' and the market record against comparables. Arb-1 beats its baseline; '
+        'arb-2+ is a population multiplier because the model did not.</span></div>'
         '<div id="arb-caveatbar"></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Arbitration sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-arbsection="projections" role="tab" aria-selected="true" aria-controls="arb-panel-projections">Projections</button>'
@@ -3920,8 +3933,8 @@ def build_trademachine() -> str:
         '<div class="fa-app proj-app tm-app" id="proj-view-trademachine">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>Trade Machine '
         f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["trademachine"][1])}">β beta</span></h1></div>'
-        '<span class="section-sub">build and value a deal both ways: prospects on eFV surplus, MLB players '
-        'on projection surplus, then the full Bayesian trade-value board</span></div>'
+        f'<span class="section-sub">{_gl("surplus_value", "surplus")} in one currency: prospects on eFV, '
+        'MLB players on projections, then the Bayesian trade-value board</span></div>'
         + _TRADE_MACHINE_BODY +
         '</div>'
         f'<link rel="stylesheet" href="/assets/trademachine.css?v={_TM_CSS_VER}">'
@@ -3931,9 +3944,9 @@ def build_trademachine() -> str:
         + _TRADE_MACHINE_INIT
     )
     return page("Trade Machine - eephus.io", "trademachine", body,
-                "Build and value MLB trades both ways - prospects on outcome-grounded eFV surplus, "
-                "MLB players on projection surplus, on one currency - plus the full Bayesian "
-                "trade-value board (contract-aware, positional scarcity, opt-out adjusted).",
+                "Value MLB trades in one currency: prospects on eFV surplus, MLB players on "
+                "projection surplus, plus a Bayesian trade-value board (contract-aware, "
+                "positional scarcity, opt-out adjusted).",
                 url=f"{SITE_ORIGIN}/trademachine/")
 
 def build_mlbstats() -> str:
@@ -3949,13 +3962,10 @@ def build_mlbstats() -> str:
         '<div class="fa-app mlbstats-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">β beta</span></h1></div>'
-        '<span class="section-sub">League-wide MLB stat leaderboards. Bullpen Leaderboards - '
-        'REM+ reliever skill, RIV+ impact, team Bullpen+ quality, and bullpen charts; Starter '
-        'Leaderboards - SEM+ starter run-prevention skill, team Rotation+, and rotation charts; '
-        'Hitter Leaderboards - HEM+ offensive-rate skill, team Offense+, and lineup charts; '
-        'Leverage Leaderboards - realized in-game WPA impact for batters and starters; and '
-        'Defense Leaderboards - DEM+ fielding-rate skill, team DEM+, and alignment charts, computed '
-        'from the MLB season.</span></div>'
+        f'<span class="section-sub">Relievers ({_gl("rem_plus", "REM+")}), starters '
+        f'({_gl("sem_plus", "SEM+")}), hitters ({_gl("hem_plus", "HEM+")}), fielders '
+        f'({_gl("dem_plus", "DEM+")}) and leverage ({_gl("wpa", "WPA")}), with team rollups. '
+        '100 is league average on every + scale.</span></div>'
         # Section nav (built as a tablist; sections join here as they ship).
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="MLB Stats sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-mlbsection="bullpen" role="tab" aria-selected="true" aria-controls="mlbstats-section-bullpen">Bullpen Leaderboards</button>'
@@ -3986,9 +3996,9 @@ def build_mlbstats() -> str:
         f'<script src="/assets/mlbstats.js?v={_MLBSTATS_VER}" defer></script>'
     )
     return page("MLB Stats - eephus.io", "mlbstats", body,
-                "MLB stat leaderboards from eephus.io - REM+ reliever skill and RIV+ impact, team "
-                "Bullpen+ quality, SEM+ starter run-prevention, HEM+ hitter offense, and DEM+ "
-                "fielding, computed from the MLB season.",
+                "MLB leaderboards from eephus.io: REM+ relievers and RIV+ impact, SEM+ starters, "
+                "HEM+ hitters, DEM+ fielders, WPA leverage, and team Bullpen+, Rotation+, "
+                "Offense+ and DEM+.",
                 url=f"{SITE_ORIGIN}/mlbstats/")
 
 def build_pal() -> str:
@@ -4011,12 +4021,9 @@ def build_pal() -> str:
         '<div class="fa-app mlbstats-app pal-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">β beta</span></h1></div>'
-        '<span class="section-sub">Players in the wrong job. Which relievers profile as starters and which starters '
-        'would shine in relief, which hitters are worth more runs at a different position, plus the history of the '
-        'conversions that worked and the ones that did not. The backtest grades each lane on its own: the '
-        'starter-to-relief signal is validated, the reliever-to-starter list is a structural screen, and the '
-        'position-conversion matrix is validated for the SIZE of a move but not for guessing which players clubs '
-        'actually move.</span></div>'
+        f'<span class="section-sub">Role and position {_gl("pal_conversion", "conversions")}. '
+        f'{_gl("sp_rp_fit", "SP to RP")} is validated; {_gl("rp_sp_fit", "RP to SP")} is a screen, not a '
+        'ranking; position fit is validated for the size of a move, not for which players clubs move.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="PAL sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-palsection="rp2sp" role="tab" aria-selected="true" aria-controls="pal-section">RP&rarr;SP Candidates</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="sp2rp" role="tab" aria-selected="false" aria-controls="pal-section">SP&rarr;RP Candidates</button>'
@@ -4048,14 +4055,14 @@ def build_pal() -> str:
     # splits, and the OAA the fielding side reads - so the attribution is split
     # rather than deleted. The tab list also went stale: Pitch-Add Lab,
     # Reverse-Platoon Radar and Prospect Watch all shipped after the copy was
-    # written and were invisible to a search snippet. Length 296 chars, down
-    # from 325; the house band is roughly 205-253 (/fa/, /betting/,
-    # /projections/) and this page has seven surfaces to name.
+    # written and were invisible to a search snippet. Length 270 chars after
+    # the 2026-09-11 copy pass (296 before it, 325 before that); this page has
+    # seven surfaces to name.
     return page("Alchemy Lab - eephus.io", "pal", body,
-                "MLB players in the wrong job: reliever-to-starter and starter-to-relief candidates, "
-                "hitters worth more runs at another position, pitch-add, reverse-platoon and prospect "
-                "boards, and the conversion backtest. Arsenals and velocity from Statcast, the "
-                "positional ladder fitted from Baseball-Reference.",
+                "MLB role and position conversions: reliever-to-starter and starter-to-relief "
+                "candidates, position fit, pitch-add, reverse-platoon and prospect boards, and the "
+                "conversion backtest. Arsenals and velocity from Statcast; the positional ladder "
+                "fitted from Baseball-Reference.",
                 url=f"{SITE_ORIGIN}/pal/")
 
 def _fantasy_panel(mod: str, blurb: str, bar: str, nav_label: str,
@@ -4124,11 +4131,10 @@ def build_fantasy() -> str:
     """
     redraft = _fantasy_panel(
         "redraft",
-        "Rest-of-season rankings and daily streamers, scored in YOUR league format: "
-        "Ottoneu FanGraphs Points (default), SABR Points, Old School 5x5, or Ottoneu 4x4. "
-        "The projections come from the same engine as the MLB Projections board. Matchup and "
-        "regression context comes from REM+/SEM+/HEM+, team Offense+/Bullpen+, and the gap "
-        "between real and expected stats.",
+        "Rest-of-season ranks and daily streamers in your scoring format (Ottoneu FanGraphs "
+        "Points default, SABR Points, Old School 5x5, Ottoneu 4x4). Projections from the MLB "
+        f"Projections engine; matchup context from {_gl('rem_plus', 'REM+')}, "
+        f"{_gl('sem_plus', 'SEM+')}, {_gl('hem_plus', 'HEM+')}, Offense+ and Bullpen+.",
         # redraft.js fills this from data/fantasy.json scoring_catalog, and only
         # on the three tabs S.system can actually move.
         '<div id="redraft-scoring" class="fantasy-scoring-bar" aria-label="League scoring format"></div>',
@@ -4139,11 +4145,9 @@ def build_fantasy() -> str:
         "redraft-board", True)
     dynasty = _fantasy_panel(
         "dynasty",
-        "Dynasty and keeper value on one board. Prospect grades come from eFV, the same model "
-        "the PROSPX board runs on, blended with ETA and surplus value so a 19-year-old in A-ball "
-        "and a 27-year-old in his arbitration years can sit in the same ranking. Call-up Watch "
-        "flags who is next. The keeper calculator prices years of control against what the same "
-        "player costs in a redraft league.",
+        f"Dynasty and keeper value: prospects on {_gl('xfv', 'eFV')}, blended with ETA and "
+        "surplus so prospects and MLB players share one ranking. Call-up Watch flags who is next; "
+        "the keeper calculator prices years of control against redraft cost.",
         # dynasty.js fills this with the LENS control (board order / contending
         # / rebuilding), not a scoring selector: this board is graded and
         # ranked, it has no scoring formats. The class stays as-is because
@@ -4156,11 +4160,9 @@ def build_fantasy() -> str:
         "dynasty-board", False)
     dfs = _fantasy_panel(
         "dfs",
-        "Today's slate, priced per game. Projections come from the same rest-of-season engine as "
-        "the Redraft board, re-scored for one night with the probable pitcher, the park, and the "
-        "bullpen behind him. Paste or import your own salaries from your DFS site and the "
-        "optimizer builds lineups against them. We do not scrape salary feeds, so the salaries "
-        "are yours and the projections are ours.",
+        "Today's slate: the Redraft engine re-scored per game for the probable pitcher, park and "
+        "bullpen. Paste or import your DFS salaries and the optimizer builds against them. No "
+        "salary feed is scraped.",
         # No slot: the contest-format selector renders inline at the top of the
         # DFS section, which is where it was before the merge.
         "",
@@ -4188,9 +4190,7 @@ def build_fantasy() -> str:
         '<div class="fa-app mlbstats-app fantasy-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>Fantasy {_stage_chip("fantasy")}</h1></div>'
-        '<span class="section-sub">Three fantasy surfaces on one page, off one projection engine: '
-        'rest-of-season and daily for a redraft league, an eFV-graded dynasty and keeper board, and '
-        "tonight's DFS slate with a lineup optimizer. Pick the one you play.</span>"
+        '<span class="section-sub">Redraft, dynasty and DFS on one projection engine.</span>'
         f'{_partof_diamond()}</div>'
         f'{modbar}{redraft}{dynasty}{dfs}'
         '</div>'
@@ -4209,13 +4209,13 @@ def build_fantasy() -> str:
         f'<script src="/assets/fantasy-hub.js?v={_FANTASY_HUB_VER}" defer></script>'
     )
     return page("Fantasy - eephus.io", "fantasy", body,
-                "Fantasy baseball from eephus.io: rest-of-season and daily redraft ranks scored in your "
-                "league format, an eFV-graded dynasty and keeper board with a keeper calculator, and a "
-                "DFS slate with per-game projections and a lineup optimizer.",
+                "Fantasy baseball from eephus.io: redraft ranks in your league format, an eFV-graded "
+                "dynasty and keeper board, and a DFS slate with per-game projections and a lineup "
+                "optimizer.",
                 url=f"{SITE_ORIGIN}/fantasy/")
 
 
-def _fantasy_redirect(title: str, module: str, label: str, what: str) -> str:
+def _fantasy_redirect(title: str, module: str, label: str) -> str:
     """A retired fantasy page dir, kept as a HASH-PRESERVING redirect stub.
 
     Same shape as build_teams_redirect(), with one addition it does not need:
@@ -4240,7 +4240,7 @@ def _fantasy_redirect(title: str, module: str, label: str, what: str) -> str:
 location.replace("/fantasy/#m={module}"+(h?"&"+h:""));}})();</script>
 </head><body>
 <p style="font-family:monospace;padding:2rem;">{html.escape(label)} moved into
-<a href="/fantasy/#m={module}">Fantasy &rarr; {html.escape(label)}</a>. {html.escape(what)}</p>
+<a href="/fantasy/#m={module}">Fantasy &rarr; {html.escape(label)}</a>.</p>
 </body></html>
 """
 
@@ -4338,34 +4338,23 @@ def _diamond_ledger_card() -> str:
         for k in ("validated", "provisional", "unvalidated", "deprecated"))
     return (
         '<div class="card diamond-get">'
-        '<h3><a href="/models/">The report card is the product</a></h3>'
-        f'<p>{total} models on this site carry a predictive claim and a registry row: '
-        f'{counts}. The deprecated rows are published on purpose: the failed experiments '
-        'are how you know the wins are real.</p>'
-        '<p class="diamond-fine">Counted at build time off data/model_registry.json. '
-        'The full ledger, eval artifacts included, is at /models/.</p>'
+        '<h3><a href="/models/">Model ledger</a></h3>'
+        f'<p>{total} models carry a predictive claim and a registry row: {counts}. '
+        'Deprecated rows are shown on purpose.</p>'
+        '<p class="diamond-fine">Counted at build time from data/model_registry.json.</p>'
         '</div>')
 
 
 def build_dynasty() -> str:
-    return _fantasy_redirect(
-        "Dynasty", "dynasty", "Dynasty",
-        "The dynasty board, Call-up Watch and the keeper calculator are the "
-        "Dynasty sub-module there.")
+    return _fantasy_redirect("Dynasty", "dynasty", "Dynasty")
 
 
 def build_redraft() -> str:
-    return _fantasy_redirect(
-        "Redraft", "redraft", "Redraft",
-        "Daily streamers, two-start pitchers, the rest-of-season boards, "
-        "buy / sell and the closer grid are the Redraft sub-module there.")
+    return _fantasy_redirect("Redraft", "redraft", "Redraft")
 
 
 def build_dfs() -> str:
-    return _fantasy_redirect(
-        "DFS", "dfs", "DFS",
-        "Tonight's slate, value plays, stacks and the lineup optimizer are the "
-        "DFS sub-module there.")
+    return _fantasy_redirect("DFS", "dfs", "DFS")
 
 
 def build_betting() -> str:
@@ -4400,11 +4389,9 @@ def build_betting() -> str:
         '<div class="fa-app mlbstats-app betting-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>Sports Betting {_stage_chip("betting")}</h1></div>'
-        '<span class="section-sub">Our model probability next to the book price, with the vig stripped out, '
-        'so you can see the edge rather than take our word for it. Every pick is posted with a timestamp, '
-        'the book, the odds at post, and a flat one-unit stake. The record is append-only: nothing gets '
-        'quietly deleted after it loses. Each pick is also graded against the closing line, because beating '
-        'the close is the honest test of whether a model knows something.</span>'
+        f'<span class="section-sub">Model probability vs the {_gl("devig", "de-vigged")} book price. '
+        'Every pick posts with timestamp, book, odds and a flat one-unit stake; the record is '
+        f'append-only and graded against the {_gl("clv", "closing line")}.</span>'
         f'{_partof_diamond()}</div>'
         f'{BETTING_DISCLAIMER}'
         # THE FEED-HEALTH STRIP, ABOVE THE TABS. betting.js paints it from
@@ -4436,10 +4423,9 @@ def build_betting() -> str:
         f'<script src="/assets/betting.js?v={_BETTING_VER}" defer></script>'
     )
     return page("Sports Betting - eephus.io", "betting", body,
-                "MLB betting model from eephus.io: game win probabilities from our own team-strength "
-                "surfaces against de-vigged book prices, every bet on the slate in one sortable board, "
-                "a flat-stake public record, betting calculators, and a personal bet tracker. "
-                "21+, informational only.",
+                "MLB betting model from eephus.io: game win probabilities against de-vigged book "
+                "prices, every bet on the slate in one sortable board, a flat-stake public record, "
+                "betting calculators, and a personal bet tracker. 21+, informational only.",
                 url=f"{SITE_ORIGIN}/betting/")
 
 
@@ -4475,26 +4461,21 @@ def build_diamond() -> str:
         money = (
             '<div class="card diamond-price">'
             f'<h3>${price} a month</h3>'
-            f'<p>Diamond is live. Membership is ${price} a month, and everything else on '
-            'eephus.io stays free. Not free for now. Free.</p>'
-            f'<p>Founding members, the people who used the preview and told us what was broken, '
-            f'pay ${founding} a month, held for a year.</p>'
-            '<p class="diamond-fine">Diamond funds the free site. The board, the projections, the free agency '
-            'model, the glossary and every article stay open to everyone, and the people paying for Diamond are '
-            'what keeps them that way.</p>'
+            f'<p>Diamond is live at ${price} a month. The rest of eephus.io stays free.</p>'
+            f'<p>Founding members (preview users) pay ${founding} a month, held for a year.</p>'
+            '<p class="diamond-fine">Diamond funds the free site: the board, projections, free agency '
+            'model, glossary and articles stay open to everyone.</p>'
             '</div>'
         )
     else:
         money = (
             '<div class="card diamond-price">'
             f'<h3>${price} a month, when it goes live</h3>'
-            f'<p>Nothing is for sale today. When Diamond opens, it is ${price} a month, and everything else on '
-            'eephus.io stays free. Not free for now. Free.</p>'
-            f'<p>The first group of members gets a founding rate of ${founding} a month, held for a year. If you are '
-            'reading this during the preview, you are in that group.</p>'
-            '<p class="diamond-fine">Diamond funds the free site. The board, the projections, the free agency '
-            'model, the glossary and every article stay open to everyone, and the people paying for Diamond are '
-            'what keeps them that way.</p>'
+            f'<p>Nothing is for sale today. At launch Diamond is ${price} a month; the rest of '
+            'eephus.io stays free.</p>'
+            f'<p>Founding rate: ${founding} a month, held for a year, for everyone using the preview.</p>'
+            '<p class="diamond-fine">Diamond funds the free site: the board, projections, free agency '
+            'model, glossary and articles stay open to everyone.</p>'
             '</div>'
         )
     gets = [
@@ -4504,12 +4485,11 @@ def build_diamond() -> str:
         # (owner decision: no feasible price source with the current data); the
         # FAQ carries the honest line about where it went.
         ("Fantasy", "/fantasy/",
-         "Three surfaces on one board set. Redraft: rest-of-season ranks in your scoring format, "
-         "daily streamers, two-start pitchers, buy and sell. Dynasty: the full keeper board with "
-         "the eFV blend and the keeper calculator. DFS: per-game projections for the slate and the "
-         "lineup optimizer, run against salaries you import."),
+         "Redraft ranks in your scoring format, streamers, two-start pitchers and buy / sell; "
+         "the dynasty board and keeper calculator; DFS projections and the lineup optimizer on "
+         "your salaries."),
         ("Sports Betting", "/betting/",
-         "Model prices on every game, the pick of the day, the calculators, and the public record graded against the close."),
+         "Model prices on every game, the pick of the day, calculators, and the record graded against the close."),
     ]
     # THE EXTRAS, REWRITTEN AGAINST WHAT EXISTS (2026-08-05).
     #
@@ -4525,21 +4505,15 @@ def build_diamond() -> str:
     # accidentally become a link to a page that does not exist.
     extras = [
         ("Data exports and a JSON API", "live", "/sources/#api",
-         "Every model artifact the site runs on is public static JSON, now with a documented "
-         "catalog: what is in each file, how often it updates, and which parts are stable "
-         "enough to build on. Every board also carries a Download CSV control that writes "
-         "exactly the rows you are looking at."),
+         "Every model artifact is public static JSON with a documented catalog (contents, "
+         "cadence, stability). Every board has a Download CSV control."),
         ("eFV movement alerts", "partial", "/data/efv_alerts.json",
-         "The feed is built and published on every rebuild: the biggest genuine eFV moves with "
-         "the driver behind each one. Delivery is not wired. Telling us which players you follow "
-         "needs the account layer, which is not switched on yet, so today you read the feed "
-         "rather than being told."),
+         "Published every rebuild: the biggest genuine eFV moves with their drivers. No "
+         "delivery yet: following players needs the account layer, which is off."),
         ("The DFS lineup optimizer", "live", "/fantasy/#m=dfs&section=optimizer",
-         "A salary-cap solver over our per-game projections. You bring the salaries from your "
-         "own site."),
+         "Salary-cap solver over our per-game projections, run on salaries you bring."),
         ("A members-only weekly newsletter", "planned", None,
-         "Not built. There is no list, no signup and no first issue, and it will not be "
-         "described as a benefit until there is."),
+         "Not built: no list, no signup, no issue."),
     ]
     module_cards = "".join(
         f'<div class="card diamond-get"><h3><a href="{href}">{html.escape(name)}</a></h3>'
@@ -4560,38 +4534,29 @@ def build_diamond() -> str:
     extra_cards = "".join(_extra_card(*e) for e in extras)
     gate_faq = (
         ("Is any of this gated right now?",
-         f"Yes. The member modules are for members at ${price} a month. The free site is unchanged: "
-         "the prospect board, the projections, the free agency model, the glossary and the articles "
-         "stay public.")
+         f"Yes. Member modules are ${price} a month. The free site is unchanged: the prospect board, "
+         "projections, free agency model, glossary and articles stay public.")
         if gated else
         ("Is any of this gated right now?",
-         "No. Every page in the Diamond section is public and free while we build it. There is no paywall "
-         "in the code path, no card form, and no trial that quietly converts. When that changes, it will be "
-         "announced before it happens, not after."))
+         "No. Every Diamond page is public and free while we build it: no paywall, no card form, no "
+         "trial. Any change is announced before it happens."))
     faq = [
         gate_faq,
         ("Will the price go up?",
-         f"The list price is ${price} a month. Founding members pay ${founding} and keep that for twelve "
-         f"months. If the price ever moves above ${price}, founding members are not moved with it during "
-         "that year."),
+         f"List price is ${price} a month. Founding members pay ${founding} for twelve months and are "
+         f"not moved if the list price rises above ${price} in that year."),
         ("Where is the Card Market?",
-         "Removed on 2026-09-05. The screen ran on public sold prices with no licensed feed behind it, "
-         "no feasible source turned up, and the module came off the site and the nightly pipeline. It "
-         "is not a member benefit and will not be described as one unless a licensed price source is "
+         "Removed on 2026-09-05: it ran on public sold prices with no licensed feed, and no feasible "
+         "source turned up. It is not a member benefit and returns only if a licensed price source is "
          "wired."),
         ("Do you guarantee I will make money betting?",
-         "No, and anyone who does is lying to you. What we promise instead is a record you can audit: every "
-         "pick posted with its timestamp, book and odds, a flat one-unit stake, nothing deleted after the "
-         "fact, and every pick graded against the closing line so you can see whether the model actually "
-         "knew something or just got lucky."),
+         "No. What we publish is an auditable record: every pick with timestamp, book and odds, a flat "
+         "one-unit stake, nothing deleted, each graded against the closing line."),
         ("What happens to the free site?",
-         "It stays free. The prospect board, the projections, the free agency model, the glossary and the "
-         "articles are the reason anyone shows up, and putting them behind a wall would be the fastest way "
-         "to kill the thing. Diamond funds the free site."),
+         "It stays free."),
         ("Who is behind this?",
-         "One person writing the models and a small group writing the articles. The models publish their "
-         "own eval artifacts, including the experiments that failed, which is not something a marketing "
-         "page usually offers to show you."),
+         "One person writes the models; a small group writes the articles. Every model publishes its "
+         "eval artifacts, failed experiments included."),
     ]
     faq_html = "".join(
         f'<div class="card diamond-faq"><h3>{html.escape(q)}</h3><p>{html.escape(a)}</p></div>'
@@ -4603,27 +4568,26 @@ def build_diamond() -> str:
         banner = (
             '<div class="card diamond-banner" role="note">'
             '<h3>Diamond is live</h3>'
-            f'<p>The member modules are open to members at ${price} a month, ${founding} for founding '
-            'members. The rest of the site is free and stays free.</p>'
+            f'<p>Member modules: ${price} a month, ${founding} for founding members. The rest of the '
+            'site stays free.</p>'
             '</div>'
         )
         cta = (
             '<div id="diamond-cta" class="card diamond-cta">'
             '<h3>Membership runs through your account</h3>'
-            '<p>Sign in to manage your membership. If no sign-in control renders on this build, accounts '
-            'are not wired here yet and nothing can be bought on this page.</p>'
+            '<p>Sign in to manage it. If no sign-in control renders on this build, accounts are not '
+            'wired here and nothing can be bought on this page.</p>'
             '</div>'
         )
-        sub = 'The paid tier that keeps the rest of eephus.io free.'
+        sub = 'Paid tier for fantasy and betting.'
         desc = (f"Diamond is the eephus.io paid tier: fantasy and sports betting tools for ${price} "
-                "a month. Everything else on the site stays free, including the public data artifacts.")
+                "a month. The rest of the site stays free, including the public data artifacts.")
     else:
         banner = (
             '<div class="card diamond-banner" role="note">'
             '<h3>Founding preview: everything is free while we build</h3>'
-            '<p>Diamond is not switched on. Every page in this section is open to everyone right now. '
-            'Use them, tell us what is wrong with them, and you will be a founding member when the '
-            'doors open.</p>'
+            '<p>Diamond is not switched on. Every page here is open to everyone; preview users become '
+            'founding members.</p>'
             '</div>'
         )
         # The honest static CTA (2026-08-16). The old card told the reader to
@@ -4633,16 +4597,14 @@ def build_diamond() -> str:
         cta = (
             '<div id="diamond-cta" class="card diamond-cta">'
             '<h3>There is nothing to buy yet</h3>'
-            '<p>There is no signup, because accounts are not switched on and the preview needs none. '
-            'When accounts open, founding status will be honored for the people who were here during '
-            'the preview.</p>'
+            '<p>There is no signup: accounts are not switched on. When they open, founding status '
+            'will be honored for preview users.</p>'
             '</div>'
         )
-        sub = ('The paid tier that keeps the rest of eephus.io free. It is not selling '
-               'anything yet.')
+        sub = 'Paid tier for fantasy and betting. Not selling anything yet.'
         desc = (f"Diamond is the eephus.io paid tier: fantasy and sports betting tools for ${price} "
-                "a month when it launches. Everything else on the site stays free, including the "
-                "public data artifacts. Nothing is gated today.")
+                "a month when it launches. The rest of the site stays free, including the public "
+                "data artifacts. Nothing is gated today.")
     # The section-sub counts follow the lists, not a literal: the last rewrite
     # left "four modules" over a two-module grid for a day.
     words = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
@@ -4651,8 +4613,7 @@ def build_diamond() -> str:
         f'{words[n_mod] if n_mod < len(words) else n_mod} '
         f'module{"" if n_mod == 1 else "s"}, plus '
         f'{words[n_ex] if n_ex < len(words) else n_ex} '
-        f'thing{" that is" if n_ex == 1 else "s that are"} not a module, each '
-        'labeled with what actually exists today')
+        f'extra{"" if n_ex == 1 else "s"}, each labeled with its state today')
     body = (
         '<div class="fa-app mlbstats-app diamond-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
@@ -4660,11 +4621,8 @@ def build_diamond() -> str:
         f'<span class="section-sub">{sub}</span></div>'
         f'{banner}'
         '<div class="gl-intro">'
-        '<p>eephus.io is a sabermetrics site that publishes its own report card. The prospect model posts '
-        'its out-of-sample accuracy against the public consensus, and it posts the experiments that failed '
-        'too. That habit is the product.</p>'
-        '<p>Diamond is the paid tier on top of it: the fantasy and betting work. '
-        'Everything else on the site stays free forever. Diamond funds the free site.</p>'
+        '<p>eephus.io publishes its own report card: the prospect model\'s out-of-sample record '
+        'against the public consensus, failed experiments included.</p>'
         '</div>'
         f'{money}'
         '<div class="section-head"><h2>What members get</h2>'
@@ -4677,20 +4635,18 @@ def build_diamond() -> str:
         # card is server-rendered: its registry is read at build time, and the
         # card says so.
         '<div class="section-head"><h2>The receipts</h2>'
-        '<span class="section-sub">the model scoreboard read live from its artifacts, and the ledger '
-        'counted at build time</span></div>'
+        '<span class="section-sub">scoreboard read live from its artifact; ledger counted at build'
+        '</span></div>'
         f'{_diamond_ledger_card()}'
         '<div id="diamond-receipts" class="diamond-receipts">'
-        '<div class="card"><p>The prospect model scoreboard loads here, straight out of the eval '
-        'artifact the model writes for itself. If this sentence is still on the page, the artifact '
-        'did not load and no accuracy number is being claimed.</p></div>'
+        '<div class="card"><p>The prospect model scoreboard loads here from its eval artifact. If '
+        'this line is still here, the artifact did not load and no accuracy is claimed.</p></div>'
         '</div>'
         '<div id="diamond-betting-record" class="diamond-record">'
-        '<div class="card"><p>The betting record loads here. If this sentence is still on the page, '
-        'the record has not published yet.</p></div>'
+        '<div class="card"><p>The betting record loads here. If this line is still here, the '
+        'record has not published yet.</p></div>'
         '</div>'
-        '<div class="section-head"><h2>Questions worth asking</h2>'
-        '<span class="section-sub">including the ones a sales page would skip</span></div>'
+        '<div class="section-head"><h2>Questions</h2></div>'
         f'<div class="article-grid">{faq_html}</div>'
         # diamond.js replaces the static CTA only when the account layer is
         # configured and switched on; on every other build the static card IS
@@ -4735,11 +4691,9 @@ def build_parks() -> str:
         '<div class="fa-app mlbstats-app parks-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>MiLB Park Factors <span class="eephus-beta" title="{html.escape(MODULE_STAGE["parks"][1])}">β beta</span></h1></div>'
-        '<span class="section-sub">Where a minor-league stat line was earned. Run and home-run park '
-        'factors for every affiliated venue from Triple-A down through the complex and Dominican '
-        'leagues, built from home-versus-road scoring, centered on the league-season and shrunk toward '
-        'neutral by sample. Amarillo runs a 1.21 run factor and a 1.43 home-run factor; Arkansas runs '
-        '0.84. Two hitters with the same slash line did not do the same thing.</span></div>'
+        f'<span class="section-sub">Run and home-run {_gl("milb_park_factor", "park factors")} for every '
+        'affiliated venue, Triple-A through the DSL: home vs road scoring, league-centered, shrunk toward '
+        'neutral by sample. Display only: no model reads them.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Park Factors sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-parksection="board" role="tab" aria-selected="true">Venue Board</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-parksection="leagues" role="tab" aria-selected="false">League Spread</button>'
@@ -4756,9 +4710,8 @@ def build_parks() -> str:
     )
     return page("MiLB Park Factors - eephus.io", "parks", body,
                 "Minor-league park factors for every affiliated venue: run and home-run factors by "
-                "season and on a vintage-safe three-season window, with the level, affiliate and "
-                "home-game sample behind each one. Built from home-versus-road scoring, league-centered "
-                "and sample-shrunk. Display only, no model reads them.",
+                "season and on a three-season window, with the level, affiliate and home-game sample "
+                "behind each. Home vs road scoring, league-centered, sample-shrunk. Display only.",
                 url=f"{SITE_ORIGIN}/parks/")
 
 def build_management() -> str:
@@ -4790,21 +4743,20 @@ def build_management() -> str:
     reference surface, because they need no gate: they are what every break-even
     on the page is computed from.
 
-    Not in NAV_ITEMS, on the /parks/ and /hof/ precedent."""
+    In NAV_ITEMS under MLB Modules since the 2026-09-06 nav fix."""
     body = (
         '<div class="fa-app mlbstats-app mgmt-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>In-Game Management <span class="eephus-beta" title="{html.escape(MODULE_STAGE["management"][1])}">β beta</span></h1></div>'
-        '<span class="section-sub">Every stolen-base attempt since 2018, priced against the win '
-        'probability the club gave up to try it. The decision is scored with a league-average '
-        'runner, because having a fast team is a roster fact and not a managerial one. There is '
-        'no plus metric on this page: the gate came back a bounded null, and what a null of that '
-        'kind buys is the right to say what the league as a whole is doing.</span></div>'
+        '<span class="section-sub">Every stolen-base attempt since 2018, priced in win probability '
+        f'against its {_gl("sb_break_even", "break-even")} with a league-average runner (speed is a '
+        'roster fact, not a decision). No per-club plus metric: the gate returned a bounded null, so '
+        'the page reports the league.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Management sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-mgmtsection="running" role="tab" aria-selected="true">The Running Game</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="teams" role="tab" aria-selected="false">Club Style</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="reference" role="tab" aria-selected="false">Run Expectancy</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="gate" role="tab" aria-selected="false">Is Anyone Better?</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="gate" role="tab" aria-selected="false">Club Gate</button>'
         '</div>'
         '<div id="mgmt-section" class="mlbstats-section">'
         f'<div id="mgmt-app-root"{_csv_optin("in-game-management")}></div>'
@@ -4815,10 +4767,9 @@ def build_management() -> str:
         f'<script src="/assets/management.js?v={_MGMT_VER}" defer></script>'
     )
     return page("In-Game Management - eephus.io", "management", body,
-                "Every stolen-base attempt since 2018 priced against win probability, with a "
-                "league-average runner so a fast roster cannot flatter a manager. The league "
-                "steals second at almost exactly its own break-even. No per-club plus metric: "
-                "the gate returned a bounded null and the page says so.",
+                "Every stolen-base attempt since 2018 priced in win probability with a "
+                "league-average runner. The league steals second near its break-even. No "
+                "per-club plus metric: the gate returned a bounded null.",
                 url=f"{SITE_ORIGIN}/management/")
 
 
@@ -4826,8 +4777,9 @@ def build_hof() -> str:
     """The /hof/ Hall of Fame module.
 
     Static shell + assets/hof.js, which fetches data/hof_board.json
-    (hof_export.py). FOUR SECTIONS LIVE, FOUR DARK, and the dark ones each name
-    their blocker on the page.
+    (hof_export.py). FIVE SECTIONS LIVE (the bake-off went live reporting a
+    loss), THREE DARK, and the dark ones each name their blocker on the page.
+    The shell types no section count: the payload's `sections` block owns it.
 
     WHAT IT IS NOT. It is not a Hall-of-Fame predictor and it does not tell a
     reader who belongs. The Hall-sized line is dark because a Hall-SIZED line
@@ -4844,20 +4796,16 @@ def build_hof() -> str:
     Eligible carries them, and the exporter refuses to write a payload whose
     three bands do not partition the ten-plus-season population exactly.
 
-    Not in NAV_ITEMS on purpose, the same decision /parks/ took: the nav
-    definition is mirrored by three hand-maintained static copies that
-    test_collegesavant_nav_in_sync pins, so a nav row lands with those copies.
-    Discovery rides the footer link, the homepage strip and sitemap.xml."""
+    In NAV_ITEMS under MLB Modules since the 2026-09-06 nav fix (it shipped
+    unreachable before that); the three static nav copies carry it too."""
     body = (
         '<div class="fa-app mlbstats-app hof-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>Hall of Fame <span class="eephus-beta" title="{html.escape(MODULE_STAGE["hof"][1])}">β beta</span></h1></div>'
-        '<span class="section-sub">Career WAR, WAR7 and JAWS for every player with ten seasons or more, '
-        'reproduced from the same daily WAR file Baseball-Reference publishes from, with the writers\' '
-        'ballot record joined to it. Three bands: the eligible universe, the active players, and the '
-        'ones who last played in 2022 through 2024 and are still inside the five-year wait. This page '
-        'publishes no Hall line and no snub list, and it says why on the page rather than in a '
-        'footnote.</span></div>'
+        f'<span class="section-sub">Career WAR, {_gl("war7", "WAR7")} and {_gl("jaws", "JAWS")} for '
+        'every ten-season player, reproduced from Baseball-Reference\'s daily WAR file, with the '
+        'writers\' ballot record. Three bands: eligible, active, and inside the five-year wait. No Hall '
+        'line and no snub list; the Bake-off tab says why.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Hall of Fame sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-hofsection="board" role="tab" aria-selected="true">Leaderboards</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-hofsection="blocked" role="tab" aria-selected="false">Bake-off &amp; What Is Not Published</button>'
@@ -4873,9 +4821,9 @@ def build_hof() -> str:
     )
     return page("Hall of Fame - eephus.io", "hof", body,
                 "Career WAR, WAR7 and JAWS for every ten-season player, reproduced from "
-                "Baseball-Reference's own daily WAR file, with the ballot record joined to it. "
-                "Eligible, active and not-yet-eligible boards, a JAWS quantile ladder, and four "
-                "sections held dark with their blockers named. No Hall line, no snub list.",
+                "Baseball-Reference's daily WAR file, with the ballot record. Eligible, active and "
+                "not-yet-eligible boards, a JAWS quantile ladder and a benchmark bake-off; "
+                "unpublished sections name their blockers. No Hall line, no snub list.",
                 url=f"{SITE_ORIGIN}/hof/")
 
 
@@ -4900,17 +4848,15 @@ def build_hof() -> str:
 _ACCT_VERDICTS = (
     ("validated", "Validated",
      "A forward-chained out-of-sample backtest is committed and the champion "
-     "beats the baseline the row names."),
+     "beats the named baseline."),
     ("provisional", "Provisional",
-     "Measured, but only partly. A synthetic-only harness, a short window, or a "
-     "descriptive correlation rather than a forward test."),
+     "Partly measured: a synthetic-only harness, a short window, or a descriptive "
+     "correlation instead of a forward test."),
     ("unvalidated", "Unvalidated",
-     "Registered and serving, with no measurement yet. This is the audit's own "
-     "hit list, not a defect list: an unvalidated row is a model whose gate has "
-     "not been run, which is not the same thing as a model that is wrong."),
+     "Registered and serving, with no measurement yet. Its gate has not been run, "
+     "which is not the same thing as a model that is wrong."),
     ("deprecated", "Deprecated",
-     "It was measured, it failed its gate, and it was retired or demoted. These "
-     "are the losses, and they are kept on the ledger on purpose."),
+     "Measured, failed its gate, retired or demoted. Kept on the ledger."),
 )
 
 # Parse ceiling for reading an artifact's own stamp, mirroring
@@ -4948,11 +4894,11 @@ def _acct_artifact_url(rel: str) -> tuple:
     if not p:
         return None, "no eval artifact is registered for this row"
     if not p.startswith("data/") or p.count("/") != 1:
-        return None, "the artifact lives outside the published data directory"
+        return None, "outside the published /data/ directory"
     if p.split("/", 1)[1] in _acct_data_excludes():
-        return None, "deploy/data_exclude.txt holds this file back from the webroot"
+        return None, "held back by deploy/data_exclude.txt"
     if not (ROOT / p).exists():
-        return None, "the artifact is not in this tree"
+        return None, "not in this build"
     return "/" + p, ""
 
 
@@ -5162,26 +5108,24 @@ def build_models() -> str:
                         for n in (reg.get("notes") or []))
     problems = reg.get("problems") or []
     problems_html = (
-        '<div class="card acct-note"><h3>The registry validator is reporting problems</h3>'
+        '<div class="card acct-note"><h3>Registry validator problems</h3>'
         '<ul class="acct-list">'
         + "".join(f"<li>{html.escape(str(p))}</li>" for p in problems)
         + "</ul></div>") if problems else ""
 
     fresh_bits = [
-        f"{len(with_art)} of the {n_models} rows name an eval artifact, pointing at "
-        f"{len(art_facts)} distinct files.",
-        f"{len(dated)} of those files carry a production date of their own.",
+        f"{len(with_art)} of {n_models} rows name an eval artifact ({len(art_facts)} "
+        "distinct files).",
+        f"{len(dated)} of those files carry their own production date.",
     ]
     if oldest is not None:
-        fresh_bits.append(f"The oldest dated artifact is {oldest} days old.")
+        fresh_bits.append(f"Oldest dated artifact: {oldest} days.")
     fresh_bits.append(
-        f"The pipeline calls an eval stale past {model_registry.STALE_DAYS} days; "
-        f"{len(stale)} {'is' if len(stale) == 1 else 'are'} past that bar today.")
+        f"Stale past {model_registry.STALE_DAYS} days: {len(stale)} today.")
     if undated:
         fresh_bits.append(
-            f"{len(undated)} files do not date themselves, so this page states no age "
-            "for them rather than reading the file timestamp, which the deploy box "
-            "rewrites on every checkout.")
+            f"{len(undated)} files are undated and show no age (file timestamps are "
+            "rewritten on every deploy checkout).")
 
     gaps = []
     no_eval = [m for m in models if not (m.get("eval_artifact") or "").strip()]
@@ -5191,16 +5135,15 @@ def build_models() -> str:
             by_v[m.get("verdict")] = by_v.get(m.get("verdict"), 0) + 1
         split = ", ".join(f"{n} {html.escape(str(v))}"
                           for v, n in sorted(by_v.items(), key=lambda kv: -kv[1]))
-        gaps.append(f"{len(no_eval)} rows carry no eval artifact at all ({split}).")
+        gaps.append(f"{len(no_eval)} rows have no eval artifact ({split}).")
     if unlinkable:
         gaps.append(
             f"{len(unlinkable)} artifacts behind {len(unlinkable_rows)} rows are not "
-            "published, so this page names them without linking them. A dead receipt "
-            "is worse than an absent one.")
+            "published: named, not linked.")
     if orphans:
         gaps.append(
-            f"{len(orphans)} eval artifacts ship in /data/ that no registry row claims. "
-            "They are listed at the foot of this page.")
+            f"{len(orphans)} eval artifacts in /data/ have no registry row; listed at "
+            "the foot of this page.")
 
     orphan_html = ""
     if orphans:
@@ -5212,9 +5155,8 @@ def build_models() -> str:
             + "</li>"
             for f in orphans)
         orphan_html = (
-            '<div class="section-head"><h2>Measured, but not on the ledger</h2>'
-            '<span class="section-sub">eval artifacts that ship with no registry row '
-            'pointing at them</span></div>'
+            '<div class="section-head"><h2>Unregistered evals</h2>'
+            '<span class="section-sub">shipped eval artifacts no registry row claims</span></div>'
             f'<div class="card acct-note"><ul class="acct-list acct-orphans">{rows}</ul></div>')
 
     # The last group is a catch-all for a verdict outside the enum. It should
@@ -5226,8 +5168,8 @@ def build_models() -> str:
                       - {k for k, _l, _d in _ACCT_VERDICTS})
     plan = list(_ACCT_VERDICTS) + [
         (v, str(v) if v else "(no verdict)",
-         "This verdict is not one of the four the registry declares. It is "
-         "shown here rather than dropped.") for v in off_enum]
+         "Not one of the four registry verdicts; shown, not dropped.")
+        for v in off_enum]
     groups = []
     for key, label, desc in plan:
         rows = sorted((m for m in models if m.get("verdict") == key),
@@ -5260,35 +5202,30 @@ def build_models() -> str:
         f'<div class="fa-app mlbstats-app acct-app" data-acct-stale-days="{model_registry.STALE_DAYS}">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         '<h1>Model Accountability</h1></div>'
-        '<span class="section-sub">Every model on eephus.io that makes a predictive claim, the '
-        'verdict it carries, and the eval artifact behind that verdict. Read out of the registry '
-        'and out of the artifacts themselves when this page was built.</span></div>'
+        '<span class="section-sub">Every model with a predictive claim, its '
+        f'{_gl("model_verdict", "verdict")}, and the eval artifact behind it, read from the registry '
+        'and the artifacts at build time.</span></div>'
         '<div class="acct-intro">'
-        '<p>A model that only publishes its wins is publishing an advertisement. This ledger lists '
-        'the losses on the same footing as the wins, because the losses are the part that tells you '
-        'whether the wins were measured or asserted.</p>'
         f'<p>Registry vintage: <strong>{html.escape(_fmt_iso_date(reg.get("checked_at")))}</strong>. '
-        f'Registry version <code>{html.escape(str(reg.get("version") or ""))}</code>. The source file '
-        'is <a href="/data/model_registry.json"><code>data/model_registry.json</code></a> and the full '
-        'accountability note for each row is on the '
-        '<a href="/glossary/#view=models">glossary ledger</a>.</p>'
+        f'Version <code>{html.escape(str(reg.get("version") or ""))}</code>. Source: '
+        '<a href="/data/model_registry.json"><code>data/model_registry.json</code></a>; each row\'s '
+        'full note is on the <a href="/glossary/#view=models">glossary ledger</a>.</p>'
         '</div>'
         f'<div class="acct-tiles">{tiles}</div>'
         '<div class="section-head"><h2>Freshness</h2>'
-        '<span class="section-sub">how old the measurement is, by the artifact\'s own stamp</span></div>'
+        '<span class="section-sub">by each artifact\'s own stamp</span></div>'
         '<div class="card acct-note"><ul class="acct-list">'
         + "".join(f"<li>{html.escape(b)}</li>" for b in fresh_bits)
         + '</ul></div>'
-        + ('<div class="section-head"><h2>What the ledger cannot show you</h2>'
-           '<span class="section-sub">the gaps, counted rather than omitted</span></div>'
+        + ('<div class="section-head"><h2>Gaps</h2></div>'
            '<div class="card acct-note"><ul class="acct-list">'
            + "".join(f"<li>{html.escape(g)}</li>" for g in gaps)
            + '</ul></div>' if gaps else "")
-        + ('<div class="card acct-note"><h3>What the registry says about itself</h3>'
+        + ('<div class="card acct-note"><h3>Registry notes</h3>'
            f'<ul class="acct-list">{reg_notes}</ul></div>' if reg_notes else "")
         + problems_html
         + '<div class="section-head"><h2>The ledger</h2>'
-          '<span class="section-sub">open a row for the claim, the baseline, and the receipt</span></div>'
+          '<span class="section-sub">open a row for claim, baseline and receipt</span></div>'
         + f'<div class="filter-bar acct-filters">{chips}</div>'
         + f'<div id="acct-rows">{"".join(groups)}</div>'
         + orphan_html
@@ -5296,9 +5233,8 @@ def build_models() -> str:
         f'<script src="/assets/accountability.js?v={_ACCT_HUB_VER}" defer></script>'
     )
     return page("Model Accountability - eephus.io", "models", body,
-                "The eephus.io model ledger: every model that makes a predictive claim, its "
-                "verdict, the baseline it had to beat, and the committed eval artifact behind it. "
-                "Failed models are listed with the same weight as validated ones.",
+                "The eephus.io model ledger: every model with a predictive claim, its verdict, "
+                "its baseline, and the eval artifact behind it, failed models included.",
                 url=f"{SITE_ORIGIN}/models/")
 
 def build_glossary() -> str:
@@ -5310,32 +5246,15 @@ def build_glossary() -> str:
     Glossary/Methodology tab (owner decision 2026-06-10)."""
     intro = (
         '<div class="gl-intro">'
-        "<p>Every number on eephus.io resolves to an entry on this page. The glossary is the "
-        "platform's single source of truth: the PROSPX board, the Free Agency module, the "
-        "command palette (Ctrl+K from anywhere), and every hover definition read from the same "
-        "file that renders these cards.</p>"
-        "<p>The analytical frame throughout is resource allocation. A prospect is a "
-        "cost-controlled asset whose scouting grade implies a production forecast; a free agent "
-        "is a priced asset whose contract is the market's forecast. For any priced decision the "
-        "platform keeps two independently derived numbers - what the production is worth "
-        "(rational value, surplus) and what the market pays (predicted or actual contract) - and "
-        "never blends them, because the gap between them is the entire point.</p>"
-        "<p>WAR site-wide is eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched. One series, every surface. Where samples "
-        "are thin the models shrink toward the mean and say so; where data is missing the site "
-        "shows a plain dash, never a guess.</p>"
-        "<p>Model derivations and the interactive teaching widgets live under Methodology; the "
-        "source-vs-source backtest under Source Comparison grades the site's own consensus "
-        "against its inputs - misses included. Source Accuracy goes one level finer and asks "
-        "which outlet grades which kind of prospect better; on 21 of 25 scored cohort cells "
-        "the honest answer is that the data cannot tell, and the view says so in every row "
-        "rather than crowning the larger of two statistically identical numbers. No blend "
-        "weight ships from it.</p>"
+        "<p>Every number on eephus.io resolves to an entry here; hover definitions and the Ctrl+K "
+        f"palette read the same file. Site-wide WAR is {_gl('ewar', 'eWAR')}. Value and price are "
+        f"kept apart ({_gl('value_framework', 'value framework')}). Missing data shows a dash.</p>"
         "</div>"
     )
     body = (
         '<div class="gl-app">'
         '<div class="section-head"><h1>Glossary &amp; Methodology</h1>'
-        '<span class="section-sub">every term, model derivation, and the track record behind the site</span></div>'
+        '<span class="section-sub">terms, derivations, and each model\'s track record</span></div>'
         f"{intro}"
         '<div class="filter-bar"><span class="gl-microlabel">View</span>'
         '<button class="chip active" data-glossary-view="terms">Terms</button>'
@@ -5386,8 +5305,8 @@ def build_glossary() -> str:
         f'<script src="/assets/glossary.js?v={_GLAPP_VER}" defer></script>'
     )
     return page("Glossary & Methodology - eephus.io", "glossary", body,
-                "Definitions, model mechanics, and methodology for every metric on eephus.io - "
-                "PROSPX prospect analytics, MLB Free Agency, and the statistical foundations.",
+                "Definitions, model mechanics and methodology for every metric on eephus.io, "
+                "with each model's track record.",
                 url=f"{SITE_ORIGIN}/glossary/")
 
 def build_article_page(a: dict) -> str:
@@ -5631,7 +5550,7 @@ def build_team() -> str:
         )
         cards.append(
             f'<div class="team-card team-flip" id="member-{slug}" tabindex="0" role="button" '
-            f'aria-pressed="false" aria-label="{html.escape(m["name"])} - activate to flip the card for contribution details">'
+            f'aria-pressed="false" aria-label="{html.escape(m["name"])}: flip for contributions">'
             f'<div class="team-card-inner">{front_face}{back_face}</div></div>'
         )
     follow = (
@@ -5639,17 +5558,14 @@ def build_team() -> str:
         f'{_x_link("eephus_io")}{_x_link("MLBPROSPX")}{_discord_link()}</div>'
     )
     mission = (
-        "<p class=\"team-mission\">eephus.io is a collaborative sabermetric analysis project "
-        "created by us, the development team (listed below). We are all college "
-        "students actively pursuing futures in baseball. Please contact any of us "
-        "for questions, feedback, or opportunities.</p>"
+        "<p class=\"team-mission\">eephus.io is built by the development team below, college "
+        "students working toward careers in baseball. Contact any of us for questions, "
+        "feedback or opportunities.</p>"
         # This leaf is labeled "Developers" in the nav, so a developer arriving
         # here looking for the data finds a pointer instead of a dead end. The
         # catalog itself lives on /sources/ (see _sources_api_section for why).
-        "<p class=\"team-mission\">Building on our data rather than joining the team? "
-        "Every model artifact the site runs on is public JSON, catalogued at "
-        "<a href=\"/sources/#api\">the public data page</a> with its update cadence and "
-        "what each file is safe to depend on.</p>"
+        "<p class=\"team-mission\">Building on the data? Every model artifact is public JSON, "
+        "catalogued on <a href=\"/sources/#api\">the public data page</a>.</p>"
     )
     # Click / keyboard flip: toggles .is-flipped on a card. Clicks on the social
     # links (or any future back-face link/button) do NOT flip, so links still
@@ -5758,43 +5674,28 @@ def _sources_api_section() -> str:
             f'<div class="article-grid">{cards}</div>')
     return (
         '<div class="section-head" id="api"><h2>The data we publish</h2>'
-        '<span class="section-sub">every artifact the site serves, what is in it, '
-        'and how much it can be trusted</span></div>'
+        '<span class="section-sub">contents, cadence and stability of every served artifact</span></div>'
         '<div class="gl-intro">'
-        f'<p>Every model on eephus.io writes its output to a static JSON file under '
-        f'<code>/data/</code>, and the site itself is just a reader of those files. They are '
-        f'public. There is no key, no quota and no sign-up, because there is no server to sign '
-        f'up to: fetch the URL and you have the same payload the board is rendering from. '
-        f'{c["n"]} artifacts are documented below, {c["stable"]} of them stable.</p>'
-        '<p>What is deliberately NOT promised: a version header, a deprecation window, an '
-        'uptime target, or a stable byte layout. A nightly pipeline writes these and a nightly '
-        'pipeline sometimes fails. Fields get added without warning. What does hold is that a '
-        'field named on this page keeps its name and its meaning, because the site reads the '
-        'same field and a rename breaks us first.</p>'
-        f'<p>{c["withheld"]} more files stay local by design (model internals and pipeline '
-        'inputs that no page fetches), and they are left off this list rather than linked, so '
-        'nothing here points at a URL that does not resolve.</p>'
+        f'<p>Every model writes a static JSON file under <code>/data/</code>; the site reads the '
+        f'same files. No key, no quota, no sign-up. {c["n"]} artifacts documented below, '
+        f'{c["stable"]} of them stable.</p>'
+        '<p>Not promised: version headers, deprecation windows, uptime, or byte layout. Fields can '
+        'be added without notice. A field named here keeps its name and meaning.</p>'
+        f'<p>{c["withheld"]} more files stay local (model internals and pipeline inputs no page '
+        'fetches) and are not listed.</p>'
         '</div>'
         '<div class="card">'
-        '<h3>CSV, straight off any board</h3>'
-        '<p>Every board on the site now carries a Download CSV control above its table. It '
-        'writes exactly what is on screen: your current sort, your current filters, and each '
-        'number in the format the page displays it. That makes it the right tool for "the '
-        'twelve rows I am looking at" and the wrong tool for "the whole board", which is what '
-        'the artifacts above are for.</p>'
+        '<h3>CSV from any board</h3>'
+        '<p>Download CSV writes what is on screen: current sort, filters and display formats. '
+        'Use the artifacts for whole boards.</p>'
         '</div>'
         '<div class="card">'
-        '<h3>eFV movement alerts: the feed exists, the delivery does not</h3>'
-        '<p>The biggest genuine eFV moves from each rebuild are published to '
-        '<a href="/data/efv_alerts.json"><code>/data/efv_alerts.json</code></a> with the '
-        'driving explainer attached. Nothing is emailed or pushed from it yet: per-user '
-        'watchlists need the account layer, which is not switched on. The artifact says so '
-        'about itself in a <code>delivery</code> field, so a consumer reading the JSON alone '
-        'cannot mistake it for a live alert stream.</p>'
-        '<p>One thing worth knowing before you rank on the delta: about half the movers on a '
-        'typical rebuild have an endpoint at eFV 20, which is the model floor. Those rows are a '
-        'player entering or leaving the graded pool, not a re-grade. Each row carries an '
-        '<code>at_floor</code> flag so you can separate the two in one predicate.</p>'
+        '<h3>eFV movement alerts: feed only, no delivery</h3>'
+        '<p>Each rebuild publishes the biggest genuine eFV moves, with drivers, to '
+        '<a href="/data/efv_alerts.json"><code>/data/efv_alerts.json</code></a>. Nothing is '
+        'emailed or pushed; the artifact\'s <code>delivery</code> field says so.</p>'
+        '<p>A move with an endpoint at the eFV 20 floor is a player entering or leaving the graded '
+        'pool, not a re-grade; filter on <code>at_floor</code>.</p>'
         '</div>'
         + "".join(blocks)
     )
@@ -5826,10 +5727,12 @@ def build_sources() -> str:
         ("TJStats", "https://x.com/TJStats",
          "Prospect rankings (consensus input) and movers wire."),
         ("MLB Stats API / Baseball Savant", "https://baseballsavant.mlb.com/",
-         "Game logs, transactions, rosters, Statcast tracking data (pitch, batted-ball, "
+         "Game logs, transactions, rosters, the sabermetrics feed (league wOBA constants; the "
+         "fielding and framing runs behind DEM+), Statcast tracking data (pitch, batted-ball "
          "and zone metrics), and player headshots via MLB static media."),
         ("Baseball-Reference", "https://www.baseball-reference.com/",
-         "war_daily (bWAR): the run frame the served eWAR is built on, plus historical player pages."),
+         "war_daily (bWAR): the run frame the served eWAR is built on and the source the Hall "
+         "of Fame board reproduces, plus historical player pages."),
         ("pybaseball", "https://github.com/jldbc/pybaseball",
          "Open-source Python toolkit used to pull Statcast, FanGraphs, and "
          "Baseball-Reference data programmatically."),
@@ -5843,22 +5746,16 @@ def build_sources() -> str:
     )
     body = (
         '<div class="section-head"><h1>Data: sources, attribution and what we publish</h1>'
-        '<span class="section-sub">every upstream the platform reads, and every artifact '
-        'the platform serves back</span></div>'
+        '<span class="section-sub">upstreams we read, artifacts we publish</span></div>'
         '<div class="gl-intro">'
-        "<p>eephus.io is a sabermetric analysis platform. PROSPX grades are a consensus "
-        "built across seven independent industry sources - the value added is the aggregation, "
-        "calibration, and track-record audit, not any single list. No source's rankings or "
-        "reports are republished wholesale; excerpts appear with attribution in the spirit of "
-        "commentary and analysis. All trademarks and data remain the property of their owners.</p>"
-        "<p>If you represent one of these sources and have a question or concern, email "
-        '<a href="mailto:arkndjl@gmail.com">arkndjl@gmail.com</a> and it will be addressed '
-        "promptly.</p>"
-        '<p>Building something on top of this? Skip to <a href="#api">the data we publish</a> '
-        'for the artifact catalog, the update cadence and what each file is safe to depend on.</p>'
+        "<p>PROSPX grades are a consensus of seven industry sources. No source's rankings or "
+        "reports are republished wholesale; excerpts carry attribution. Trademarks and data "
+        "belong to their owners.</p>"
+        "<p>Sources with a question or concern: "
+        '<a href="mailto:arkndjl@gmail.com">arkndjl@gmail.com</a>.</p>'
+        '<p>Building on the data: <a href="#api">the data we publish</a>.</p>'
         "</div>"
-        '<div class="section-head"><h2>Where the data comes from</h2>'
-        '<span class="section-sub">the upstreams, and how each one is used</span></div>'
+        '<div class="section-head"><h2>Where the data comes from</h2></div>'
         f'<div class="article-grid">{cards}</div>'
         f'{_sources_api_section()}'
     )
@@ -5875,10 +5772,9 @@ def build_bug_report() -> str:
     an on-theme placeholder card with the mailto fallback so the page is never
     a dead end during the Open Beta."""
     intro = (
-        '<div class="gl-intro"><p>Found something off? Tell us what happened and we '
-        'will take a look. Please note which section the bug is in - the form below '
-        'has a picker for it.</p></div>'
-    )
+        '<div class="gl-intro"><p>Say what happened and which section; the form has a '
+        'section picker.</p></div>'
+    ) if BUG_FORM_URL else ""
     if BUG_FORM_URL:
         form = (
             f'<iframe src="{html.escape(BUG_FORM_URL)}" width="100%" height="820" '
@@ -5887,10 +5783,9 @@ def build_bug_report() -> str:
     else:
         form = (
             '<div class="card">'
-            '<h3>The bug report form will appear here once it is configured.</h3>'
-            '<p>In the meantime, email the details - including which section the bug is '
-            'in - to <a href="' + FEEDBACK_MAILTO + '">arkndjl@gmail.com</a> and we will '
-            'sort it out.</p>'
+            '<h3>The form is not configured yet</h3>'
+            '<p>Email the details, with the section, to '
+            '<a href="' + FEEDBACK_MAILTO + '">arkndjl@gmail.com</a>.</p>'
             '</div>'
         )
     body = (
@@ -5906,18 +5801,17 @@ def build_bug_report() -> str:
 
 def build_404() -> str:
     """The not-found page (nginx: `error_page 404 /404.html;`). On-theme,
-    no dead ends: home link + the module rail + the palette hint."""
+    no dead ends: home link + the module rail + the palette hint. The rail is
+    read off nav_leaves() so a module added to NAV_ITEMS lands here too (the
+    hand-typed list had stopped at seven modules and missed ten)."""
+    rail = " · ".join(f'<a href="{h}">{html.escape(l)}</a>'
+                      for k, l, h in nav_leaves() if k != "home")
     body = (
-        '<div class="section-head"><h1>404 - lost ball in the lights</h1>'
-        '<span class="section-sub">that page does not exist, or it moved</span></div>'
+        '<div class="section-head"><h1>404: page not found</h1>'
+        '<span class="section-sub">it does not exist, or it moved</span></div>'
         '<div class="gl-intro">'
-        '<p>Try the <a href="/">homepage</a>, or jump straight into a module: '
-        '<a href="/prospx/">PROSPX</a> · <a href="/collegesavant/">CollegeSavant</a> · '
-        '<a href="/fa/">Free Agency</a> · <a href="/projections/">Projections</a> · '
-        '<a href="/mlbstats/">MLB Stats</a> · <a href="/pal/">Alchemy Lab</a> · '
-        '<a href="/glossary/">Glossary</a>.</p>'
-        '<p>Looking for a player? Press <strong>Ctrl+K</strong> (⌘K on Mac) anywhere on the '
-        'site and type a name.</p>'
+        f'<p><a href="/">Home</a> · {rail}</p>'
+        '<p>Player search: <strong>Ctrl+K</strong> (⌘K on Mac).</p>'
         '</div>'
     )
     return page("Page not found - eephus.io", "", body,

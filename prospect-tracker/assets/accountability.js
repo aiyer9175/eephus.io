@@ -114,9 +114,8 @@
     el.textContent = days + "d";
     el.classList.toggle("is-stale", stale);
     el.title = stale
-      ? "the artifact stamped itself " + iso + ", which is past the " + bar +
-        "-day bar the pipeline calls stale"
-      : "the artifact stamped itself " + iso;
+      ? "stamped " + iso + "; past the " + bar + "-day stale bar"
+      : "stamped " + iso;
   });
 
   // ---- filters ------------------------------------------------------------

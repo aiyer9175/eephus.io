@@ -69,6 +69,12 @@
     return Number(v).toFixed(nd === undefined ? 1 : nd);
   }
   function el(id) { return document.getElementById(id); }
+  // A glossary term: eephus-gl.js shows the definition on hover (document-level
+  // [data-gl] delegation) and the href opens the canonical entry.
+  function glTerm(slug, label) {
+    return '<a class="g-term" href="/glossary/#g=' + esc(slug) + '" data-gl="' +
+      esc(slug) + '">' + esc(label) + "</a>";
+  }
 
   // A BLANK PUBLIC CELL IS NOT A ZERO. hof_monitor and hof_standards exist only
   // for players who reached a Hall of Fame election page, so an empty cell means
@@ -238,10 +244,9 @@
         num(q[k]) + "</div></div>");
     });
     return '<section class="hof-block"><h2>JAWS ladder</h2>' +
-      '<p class="hof-note">Where a JAWS sits inside the eligible universe of ' +
-      esc(DATA.counts.n_eligible) + " players. This is a distribution, not a line: " +
-      "the Hall-sized line is dark below and this ladder is what can be said " +
-      "without it.</p>" +
+      '<p class="hof-note">' + glTerm("jaws", "JAWS") + " quantiles across the " +
+      esc(DATA.counts.n_eligible) + " eligible players. A distribution, not a Hall line " +
+      "(that section is dark).</p>" +
       '<div class="hof-ladder">' + out.join("") + "</div></section>";
   }
 
@@ -269,12 +274,14 @@
       '<th class="hof-c-n">vs ' + esc(b.best_public) + "</th>" +
       '<th class="hof-c-n">Floor</th><th class="hof-c-ind">Verdict</th>' +
       "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
-      '<p class="hof-note">Scored on ' + esc(b.n) + " players with a resolved writers' " +
-      "verdict, " + esc(b.n_positive) + " of them elected. " + esc(b.population_note) + "</p>" +
-      '<p class="hof-note">On calibration, ' + esc(b.calibration.n_cells_clearing_holm) +
+      '<p class="hof-note">' + esc(b.n) + " players with a resolved writers' verdict, " +
+      esc(b.n_positive) + " elected. Population: " + esc(b.population_note) + "</p>" +
+      '<p class="hof-note">Calibration: ' + esc(b.calibration.n_cells_clearing_holm) +
       " of " + esc(b.calibration.n_cells) + " cells clear a multiplicity correction, and " +
       esc(b.calibration.note) + "</p>" +
-      '<p class="hof-note">' + esc(b.what_it_does_not_show) + "</p>" +
+      // what_it_does_not_show is a clause ("that our shelf is wrong. ..."), so
+      // the page supplies the verb it completes; it rendered as a fragment.
+      '<p class="hof-note">It does not show ' + esc(b.what_it_does_not_show) + "</p>" +
       '<p class="hof-count">Clauses frozen in ' + esc(b.gate_doc) + ", " +
       esc(b.gate_frozen || "") + "</p></section>";
   }
@@ -283,8 +290,8 @@
     var s = DATA.sections[key];
     return '<section class="hof-block hof-dark"><h2>' + esc(title) +
       ' <span class="hof-darktag">not published</span></h2>' +
-      '<p class="hof-dark-why">This section has not passed a gate. It is blocked on ' +
-      esc(s.blocked_on) + ", and nothing is published here until it does.</p>" +
+      '<p class="hof-dark-why">Blocked on ' + esc(s.blocked_on) +
+      ". Nothing is published until it clears.</p>" +
       '<p class="hof-note">' + esc(s.why) + "</p></section>";
   }
 
@@ -292,15 +299,13 @@
     var c = DATA.coverage, r = DATA.reproduction, a = r.against_the_public_shelf;
     var hand = r.hand_checked;
     return '<section class="hof-block"><h2>What these numbers are</h2>' +
-      '<p class="hof-note">These are Baseball-Reference\'s own career WAR, WAR7 and JAWS, ' +
-      "reproduced from the same daily WAR file they publish from. On the " +
-      esc(hand.n_players) + " players checked by hand the reproduction is exact on all " +
-      esc(hand.n_comparisons) + " published figures. Across the " +
-      esc(a.n_with_a_published_value) + " players who have ever appeared on a Hall of Fame " +
-      "ballot page it agrees exactly on career WAR for " + esc(a.n_exact_on_career_war) +
-      " and within a tenth for " + esc(a.n_within_a_tenth) + ", with a mean absolute " +
-      "difference of " + num(a.mean_absolute_difference, 2) + ". " +
-      esc(r.what_it_means) + "</p>" +
+      '<p class="hof-note">Baseball-Reference\'s career WAR, ' + glTerm("war7", "WAR7") +
+      " and " + glTerm("jaws", "JAWS") + ", reproduced from their daily WAR file. Hand-checked: " +
+      esc(hand.n_players) + " players, exact on all " + esc(hand.n_comparisons) +
+      " published figures. Against the " + esc(a.n_with_a_published_value) +
+      " players with a ballot page: career WAR exact for " + esc(a.n_exact_on_career_war) +
+      ", within 0.1 for " + esc(a.n_within_a_tenth) + ", mean absolute difference " +
+      num(a.mean_absolute_difference, 2) + ". " + esc(r.what_it_means) + "</p>" +
       '<h3>The public columns</h3><p class="hof-note">' +
       esc(c.why_a_blank_public_column_is_not_a_zero) + " " +
       esc(DATA.coverage.n_eligible_with_no_ballot_page) + " of the " +
@@ -310,13 +315,12 @@
       '<h3>The induction column</h3><p class="hof-note">' + esc(c.induction_column) + "</p>" +
       '<h3>The ledger</h3><p class="hof-note">' +
       esc(DATA.ledger.n_resolved_to_bbref) + " of " + esc(DATA.ledger.n_statsapi_inductees) +
-      " inductees resolve to a playing record, " + esc(DATA.ledger.n_in_eligible_universe) +
-      " of them inside the eligible universe. The " +
-      esc((DATA.ledger.resolution || {}).unresolved) +
-      " that do not are overwhelmingly people who never played: umpires, owners, " +
-      "commissioners, union leaders and Negro Leagues pioneers. " +
+      " inductees resolve to a playing record (" + esc(DATA.ledger.n_in_eligible_universe) +
+      " in the eligible universe). The " + esc((DATA.ledger.resolution || {}).unresolved) +
+      " unresolved are mostly non-players: umpires, owners, commissioners, union leaders " +
+      "and Negro Leagues pioneers. " +
       esc(DATA.ledger.plaque_role_unverified.n_in_eligible_universe) +
-      " inductees inside the eligible universe carry a route we cannot verify.</p>" +
+      " eligible inductees carry a route we cannot verify.</p>" +
       '<h3>What this page does not claim</h3><p class="hof-note">' +
       esc(DATA.what_this_page_does_not_claim) + "</p></section>";
   }
@@ -397,9 +401,8 @@
         // fails, a player is on two boards or on none, and saying so is better
         // than drawing a board that quietly loses people.
         if (d.counts && d.counts.bands_partition_the_ten_plus_population === false) {
-          LOAD_ERROR = "The three bands do not partition the population, so this " +
-            "board would be showing a player twice or not at all. Rebuild with " +
-            "hof_export.py.";
+          LOAD_ERROR = "The three bands do not partition the population (a player " +
+            "would show twice or not at all). Rebuild with hof_export.py.";
         }
         render();
       })

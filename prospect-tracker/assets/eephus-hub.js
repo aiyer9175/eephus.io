@@ -190,7 +190,7 @@
         : `<a class="${cls}" href="${href}" title="Open this player's ${m.note}">${inner}</a>`;
     }).filter(Boolean);
     if (chips.length <= 1) return "";
-    return `<div class="player-hub-strip" title="One player, every module - the same player across eephus.io surfaces">${chips.join("")}</div>`;
+    return `<div class="player-hub-strip" title="This player on every eephus.io module">${chips.join("")}</div>`;
   }
 
   // ---- unified share card ---------------------------------------------------
