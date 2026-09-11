@@ -182,11 +182,10 @@ def _season_boards(season: int, *, leverage_limit: Optional[int] = None, log=pri
         "n_hitting_rows": len(hit_rows), "n_pitching_rows": len(pit_rows),
         "n_batters_folded": len(bat), "n_starters_folded": len(strt),
         "gs_filter_applied": pit_gs is not None,
-        "gs_filter_note": ("Starters are filtered to GS>0 on the season pitching "
-                           "line. When that line is unavailable the filter is "
-                           "SKIPPED (gs_filter_applied=false) and every folded "
-                           "starter is served with gs=null, rather than an empty "
-                           "GS map dropping the whole board."),
+        "gs_filter_note": ("Starters need GS>0 on the season pitching line. "
+                           "Without that line the filter is SKIPPED "
+                           "(gs_filter_applied=false) and every folded starter "
+                           "serves with gs=null."),
         "n_batters_no_team": n_bat_noteam, "n_starters_no_team": n_st_noteam,
     }
     return batters, starters, cov, sources, src_rows
@@ -233,11 +232,10 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         "block_guard": {"batters": bat_guard, "starters": st_guard},
         "team_basis": team_basis_meta(basis_rows_for(batters + starters, src_rows),
                                       label="leverage"),
-        "note": ("Realized in-game leverage impact, self-computed from the MLB StatsAPI "
-                 "winProbability feed (FanGraphs is blocked for autonomous pulls). Batters: "
-                 "WPA, average Leverage Index faced (pLI), and Clutch (WPA/pLI minus WPA/LI). "
-                 "Starters: per-start WPA and WPA/LI. Descriptive realized value, not a "
-                 "predictive model."),
+        "note": ("Realized in-game leverage impact, computed from the MLB StatsAPI "
+                 "winProbability feed (FanGraphs blocks automated pulls). Batters: WPA, "
+                 "pLI (average Leverage Index faced), Clutch (WPA/pLI minus WPA/LI). "
+                 "Starters: per-start WPA and WPA/LI. Descriptive, not predictive."),
         "batters": batters, "starters": starters,
     }
     n = len(batters) + len(starters)
@@ -285,9 +283,9 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     payload = {
         "generated_at": date.today().isoformat(),
         "seasons": [int(y) for y in hist],
-        "note": ("Per-season qualified batter + starter realized-leverage boards for the "
-                 "yearly history pills. WPA is realized in-game win-probability impact; pLI "
-                 "and Clutch read the leverage of the spots. Descriptive, not predictive."),
+        "note": ("Qualified batters and starters by season. WPA: realized win-probability "
+                 "impact; pLI and Clutch: the leverage of the spots. Descriptive, not "
+                 "predictive."),
         "team_basis": team_basis_meta(basis_rows, label="leverage history",
                                       scope="history"),
         "history": hist,

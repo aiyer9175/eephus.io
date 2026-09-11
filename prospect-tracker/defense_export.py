@@ -289,10 +289,9 @@ def _join_dem_plus_3yr(rows: list[dict]) -> dict:
                  "generated_at": art.get("generated_at"),
                  "season": pv.get("season"), "window": pv.get("window"),
                  "n_in_artifact": len(players),
-                 "note": ("3-year DEM+ is FROZEN lab output read verbatim from "
-                          f"{MULTIYR_PATH.name}; it is as of generated_at, not as of "
-                          "this board, and fielders who joined after that date have "
-                          "no value.")})
+                 "note": (f"3-year DEM+ is FROZEN lab output read verbatim from "
+                          f"{MULTIYR_PATH.name}, as of generated_at, not this board's "
+                          f"as_of. Fielders who joined the pool since have no value.")})
     return meta
 
 
@@ -323,9 +322,8 @@ def _scale_meta(pool: dict) -> dict:
                          "2016 to 2018 (docs/dem-plus-2026-09-11/DEM_PLUS_GATE.md); LF "
                          "keeps the positional_fit constant"),
             "note": ("dem_plus_raw = 100 + 10 * (rate_1000_shrunk - pool_mean_rate) / "
-                     "pool_sd_rate. Ten points is one standard deviation of the pool's "
-                     "SHRUNK rates, so this is the WAR/PA+ ruler and not the ratio "
-                     "ruler of HEM+, REM+ and SEM+.")}
+                     "pool_sd_rate: 10 points = 1 SD of the pool's SHRUNK rates (the "
+                     "WAR/PA+ ruler, not the HEM+/REM+/SEM+ ratio ruler).")}
 
 
 def _verdict() -> str:
@@ -352,8 +350,8 @@ def _backtest() -> dict:
         "rho_fld_pct": fs.get("fld_pct"),
         "rho_innings": fs.get("innings"),
         "disclaimer": ("DEM+ is scored against next season's published fielding rate. "
-                       "Positional credit and innings are context columns, because DEM+ "
-                       "is the glove per inning, not the value of the position."),
+                       "Positional credit and innings are context: DEM+ is glove per "
+                       "inning, not positional value."),
     }
 
 
@@ -480,10 +478,9 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     payload = {
         "generated_at": date.today().isoformat(),
         "seasons": [int(y) for y in hist],
-        "note": ("Per-season qualified-fielder boards. DEM+ is the sample-shrunk fielding "
-                 "rate on the 100 + 10z ruler, scored against that season's own pool; the "
-                 "run columns are FanGraphs' published values as fetched, which FanGraphs "
-                 "can revise after the fact."),
+        "note": ("Qualified fielders by season. DEM+: sample-shrunk fielding rate, "
+                 "100 + 10z against that season's pool. Run columns are FanGraphs' "
+                 "published values as fetched; FanGraphs can revise them."),
         "team_basis": team_basis_meta(basis_rows, label="defense history", scope="history"),
         "history": hist,
     }

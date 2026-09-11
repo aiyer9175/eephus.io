@@ -192,7 +192,7 @@ def _predictor_panel() -> dict:
     """
     p = ROOT / "data" / "hof_merit_eval.json"
     base = {"live": False, "blocked_on": "H-PRED-3",
-            "why": ("no induction probability is published until a merit model has "
+            "why": ("No induction probability is published until a merit model has "
                     "passed its own gate against the best public baseline.")}
     try:
         d = json.loads(p.read_text(encoding="utf-8"))
@@ -213,23 +213,22 @@ def _predictor_panel() -> dict:
         "eval_artifact": "data/hof_merit_eval.json",
         "verdict": d.get("verdict"),
         "why": (
-            "A merit model was built and gated, and it lost. On " + str(d.get("n_scored"))
-            + " out-of-fold players it reaches AUC " + f"{auc.get('merit', 0):.4f}"
+            "The merit model lost its gate: AUC " + f"{auc.get('merit', 0):.4f}"
             + " against " + str(best) + " at " + f"{auc.get(best, 0):.4f}"
-            + ", a deficit of " + f"{abs(d.get('delta_auc_vs_best_public', 0)):.4f}"
-            + " that clears its own detection floor, so the gap is real rather than "
-            + "noise. It is also worse calibrated, Brier "
+            + " on " + str(d.get("n_scored")) + " out-of-fold players, a "
+            + f"{abs(d.get('delta_auc_vs_best_public', 0)):.4f}"
+            + " deficit that clears its detection floor, and Brier "
             + f"{(d.get('calibration') or {}).get('merit', {}).get('brier', 0):.4f}"
             + " against " + f"{(d.get('calibration') or {}).get(best, {}).get('brier', 0):.4f}"
             + ". No induction probability is published on a model that loses to a "
             + "column already on the board."),
         "what_it_does_beat": (
-            ("the model is the best thing our own features produce: AUC "
+            ("the best our own features produce: AUC "
              + f"{auc.get('merit', 0):.4f}" + " against " + f"{house.get(best_house, 0):.4f}"
              + " for " + str(best_house) + ", the strongest single in-house column. "
-             + "The gap to " + str(best) + " is not a modelling failure, it is missing "
-             + "data: that metric is built from batting titles, MVP shares, All-Star "
-             + "selections and postseason play, and none of it is in our feature set.")
+             + "The gap to " + str(best) + " is missing data, not modelling: that "
+             + "metric counts batting titles, MVP shares, All-Star selections and "
+             + "postseason play, none of which is in our feature set.")
             if best_house else None),
     }
 
@@ -246,10 +245,10 @@ def _bakeoff_panel() -> dict:
     """
     if not BAKEOFF.exists():
         return {"live": False, "blocked_on": "docs/HOF_BAKEOFF_GATE.md",
-                "why": ("the public benchmark bake-off has not been run under its "
-                        "gate. Until it has, this page makes no claim about whether "
-                        "our shelf separates the Hall better or worse than "
-                        "Baseball-Reference's own HoF Monitor.")}
+                "why": ("The public benchmark bake-off has not been run under its "
+                        "gate, so this page makes no claim on whether our shelf "
+                        "separates the Hall better or worse than "
+                        "Baseball-Reference's HoF Monitor.")}
     d = json.loads(BAKEOFF.read_text(encoding="utf-8"))
     b = d["labels"][d["primary_label"]]
     disc = b["discrimination_full_frame"]
@@ -270,6 +269,19 @@ def _bakeoff_panel() -> dict:
             "verdict": cell.get("verdict"),
         })
     cal = b["calibration"]
+    # The headline's counts are read off the rows and the Holm block, never typed.
+    house = [r for r in rows if not r["is_public"]]
+    n_lose = sum(1 for r in house
+                 if r["delta_vs_best_public"] is not None and r["mde95"] is not None
+                 and r["delta_vs_best_public"] < -r["mde95"])
+    keys = {r["arm"] for r in house}
+    holm = [c for c in ((fam.get("holm") or {}).get("cells") or [])
+            if c.get("key") in keys]
+    n_holm = sum(1 for c in holm if c.get("reject_holm"))
+
+    def _of(k, n):
+        return f"all {n}" if k == n else f"{k} of {n}"
+
     return {
         "live": True,
         "gate_doc": "docs/HOF_BAKEOFF_GATE.md",
@@ -283,29 +295,28 @@ def _bakeoff_panel() -> dict:
         "rows": rows,
         "headline": (
             "Baseball-Reference's Hall of Fame Monitor separates the Hall better "
-            "than our WAR shelf does. Every one of our columns loses to it by more "
-            "than the margin this sample can resolve, and the loss survives a "
-            "multiplicity correction. That is the finding, and it is published "
-            "because the point of this panel was to benchmark the shelf against the "
-            "public work instead of asserting over it."),
+            "than our WAR shelf does. " + _of(n_lose, len(house)).capitalize()
+            + " in-house columns lose to it by more than their detection floor"
+            + (f", and {_of(n_holm, len(holm))} survive a Holm correction."
+               if holm else ".")),
         "why_it_loses": (
-            "HoF Monitor is built from batting titles, MVP shares, All-Star "
-            "selections and postseason play. None of that is in our feature set, so "
-            "this is a statement about missing data rather than about modelling."),
+            "HoF Monitor counts batting titles, MVP shares, All-Star selections and "
+            "postseason play, and none of that is in our feature set: the gap is "
+            "missing data, not modelling."),
         "population_note": b["frame"]["population_note"],
         "calibration": {
             "n_cells_clearing_holm": cal.get("n_cells_clearing_holm"),
             "n_cells": cal.get("n_cells"),
             "note": (
-                "the same column also carries the lowest pooled Brier. The "
-                "calibration-error leg resolves nothing at all; Brier and log loss "
-                "resolve, and every resolved cell points the same way."),
+                "the same column has the lowest pooled Brier. The calibration-error "
+                "leg resolves nothing; Brier and log loss resolve, every resolved "
+                "cell the same way."),
         },
+        # Rendered after "It does not show ", so this stays a clause.
         "what_it_does_not_show": (
-            "that our shelf is wrong. It reproduces the public WAR shelf almost "
-            "exactly, which is what the leaderboard claims. It shows that WAR alone "
-            "orders Hall of Fame outcomes less well than a rule that also counts "
-            "awards and postseason play."),
+            "that our shelf is wrong: it reproduces the public WAR shelf almost "
+            "exactly. WAR alone orders Hall of Fame outcomes less well than a rule "
+            "that also counts awards and postseason play."),
     }
 
 
@@ -350,15 +361,14 @@ def build() -> dict:
 
     blocked = (
         "A Hall-sized line needs the count of players inducted AS PLAYERS, and "
-        "no field in this data says what a plaque says. The source records the "
-        f"ELECTORATE that voted, and {len(unverified_in_E)} inductees inside the "
+        "no field here says what a plaque says: the source records the "
+        f"ELECTORATE that voted. {len(unverified_in_E)} inductees in the "
         "eligible universe carry a route we cannot verify, among them Connie "
         "Mack, Casey Stengel, Joe Torre, John McGraw, Clark Griffith, Miller "
-        "Huggins, Ned Hanlon and Bill McKechnie. A line sized on a Hall that "
-        "counts them is not a player line. Excluding them does not fix it "
-        "either: dropping a contributor from the ledger does not unlabel him, "
-        "it makes him a resolved zero, and this page would then be publishing "
-        "that Joe Torre is above the Hall line and not in the Hall of Fame.")
+        "Huggins, Ned Hanlon and Bill McKechnie, so a line sized on that count "
+        "is not a player line. Excluding them makes each a resolved zero, and "
+        "the page would then say Joe Torre is above the Hall line and not in "
+        "the Hall of Fame.")
 
     out = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -414,11 +424,10 @@ def build() -> dict:
             "by_class": None,
             "by_class_blocked_because": (
                 "position class misfiles every catcher who retired before "
-                f"roughly 1930. The catcher class holds {n_catchers} players in "
-                f"the eligible universe and {n_catchers_pre1930} of them started "
-                "before 1930, which is not a fact about catchers. "
-                f"{n_rate_basis} rows fall back to the positional-rate basis and "
-                f"{n_rate_pre53} of those last played before 1953, when the "
+                f"roughly 1930: the catcher class holds {n_catchers} eligible "
+                f"players, {n_catchers_pre1930} of them starting before 1930. "
+                f"{n_rate_basis} rows fall back to the positional-rate basis, "
+                f"{n_rate_pre53} of them last playing before 1953, when the "
                 "fielding run components begin."),
         },
 
@@ -434,37 +443,33 @@ def build() -> dict:
             },
             "against_the_public_shelf": agree,
             "what_it_means": (
-                "this is a reproduction of a public shelf, not an improvement on "
-                "it. The large disagreements sit in the Negro Leagues and "
-                "pre-1901 population, where the two sources count different "
-                "seasons."),
+                "A reproduction of a public shelf, not an improvement on it. The "
+                "large disagreements are Negro Leagues and pre-1901 players, where "
+                "the two sources count different seasons."),
         },
 
         "coverage": {
             "n_eligible_with_no_ballot_page": n_no_shelf,
             "why_a_blank_public_column_is_not_a_zero": (
-                "a blank HoF Monitor or HoF Standards cell means the player "
-                "never appeared on a Hall of Fame election page, so "
-                "Baseball-Reference published no value for him. It does not "
-                "mean zero."),
+                "A blank HoF Monitor or HoF Standards cell means the player never "
+                "reached a Hall of Fame election page, so Baseball-Reference "
+                "published no value. It is not a zero."),
             "war_ink_is_ours": (
-                "WAR ink is ours and it is NOT Bill James's Black Ink or Gray "
-                "Ink. It scores four points for a league-leading WAR season and "
-                "one for a top-ten season, ranking hitters and pitchers in a "
-                "single pool per league-season. Do not read it next to a "
-                "published Black Ink number."),
+                "WAR ink is ours, NOT Bill James's Black Ink or Gray Ink: "
+                f"{hd.INK_LEAD_POINTS} points for a league-leading WAR season, "
+                f"{hd.INK_TOPTEN_POINTS} for a top-{hd.INK_TOPTEN_DEPTH} season, "
+                "hitters and pitchers ranked in one pool per league-season. Not "
+                "comparable to a published Black Ink number."),
             "position_basis": (
-                "position class is inferred from the fielding run components "
-                "where they exist, which is 1953 and later, and from the "
-                "positional adjustment rate before that. Every pre-1930 catcher "
-                "on this page is misfiled, and the basis column says which "
-                "method produced each row."),
+                "Position class comes from the fielding run components from 1953 "
+                "on and from the positional adjustment rate before that. Every "
+                "pre-1930 catcher is misfiled; the basis column names the method "
+                "for each row."),
             "induction_column": (
-                "inducted as a player by the writers is the only induction this "
-                "page can verify from its own data. Every other route reads as "
-                "route unverified, because the source records which electorate "
-                "voted and not what the plaque says. That is why this page "
-                "publishes no Hall line and no snub list."),
+                "A writers' election as a player is the only induction this page "
+                "can verify. Every other route reads route unverified: the source "
+                "records the electorate, not the plaque. Hence no Hall line and no "
+                "snub list."),
         },
 
         "leaderboard": [_row(r, b, shelf) for _, r in eligible.iterrows()],
@@ -476,31 +481,29 @@ def build() -> dict:
             "quantile_ladder": {"live": True},
             "watch": {"live": True, "projection": False,
                       "why_no_projection": (
-                          "this board ranks active players by what they have "
-                          "already done, against the same shelf as the retired "
-                          "board. A pace curve needs a per-age remaining-career "
-                          "WAR model, a backtest run forward on players who have "
-                          "already retired, and a year-filtered feature frame. "
-                          "None of those three exists yet, so this page does not "
-                          "guess.")},
+                          "Active players ranked by what they have already done, "
+                          "on the retired board's shelf. A pace curve needs a "
+                          "per-age remaining-career WAR model, a forward backtest "
+                          "on retired players and a year-filtered feature frame; "
+                          "none exists yet, so this page does not guess.")},
+            # The band edges are read off the constants that cut the bands.
             "not_yet_eligible": {"live": True,
                                  "why": (
-                                     "these players have ten or more seasons and "
-                                     "last played in 2022, 2023 or 2024, so they "
-                                     "have not cleared the five-year wait and are "
-                                     "on neither the eligible board nor the "
-                                     "active board.")},
+                                     f"{MIN_SEASONS}+ seasons, last played "
+                                     f"{AS_OF - WAIT_YEARS + 1} to {ACTIVE_FROM - 1}: "
+                                     f"inside the {WAIT_YEARS}-year wait, so on "
+                                     "neither the eligible board nor the active "
+                                     "board.")},
             "deserved": {"live": False, "blocked_on": "H-DATA-PLAQUE",
                          "why": blocked},
             "bakeoff": _bakeoff_panel(),
             "predictor": _predictor_panel(),
             "franchises": {"live": False, "blocked_on": "no franchise spine",
-                           "why": ("the season frame carries no team column and "
-                                   "there is no franchise continuity map in this "
-                                   "repo. Beyond the map, crediting a multi-team "
-                                   "career needs a frozen attribution rule with "
-                                   "the rejected alternative named, which is a "
-                                   "gate and not a query.")},
+                           "why": ("The season frame carries no team column and "
+                                   "there is no franchise continuity map. "
+                                   "Crediting a multi-team career also needs a "
+                                   "frozen attribution rule with the rejected "
+                                   "alternative named.")},
         },
 
         "what_this_page_does_not_claim": None,

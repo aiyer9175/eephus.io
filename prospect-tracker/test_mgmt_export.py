@@ -107,7 +107,10 @@ def test_the_raw_number_is_published_beside_the_controlled_one(d):
     assert g["raw_split_half_r_for_comparison"] > 0.7
     assert g["split_half_r"] < 0.2
     why = g["why_the_raw_number_is_not_the_finding"]
-    assert "same season" in why and "79.6" in why
+    # The sentence is built from the gate fields beside it, so it must quote them,
+    # never a typed figure (it quoted 79.6 for weeks after the field read 78.7).
+    assert "same season" in why
+    assert f"{100.0 * g['variance_explained_by_season']:.1f}" in why
 
 
 def test_the_null_is_bounded_by_a_detection_floor(d):

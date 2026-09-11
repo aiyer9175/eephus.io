@@ -248,9 +248,8 @@ def guard_nonempty_block(fresh: list, out_path: Path, *, key: str, source: str,
     kept = prev.get("generated_at") or prev.get("as_of")
     meta.update({
         "stale": True, "n": len(prev_block), "n_fresh": 0, "kept_from": kept,
-        "reason": (f"this run produced 0 {key}; kept the previous run's {key} "
-                   f"rather than publishing an empty block that reads downstream "
-                   f"as a legitimately empty board"),
+        "reason": (f"0 {key} this run; serving the previous run's "
+                   f"{len(prev_block)} (vintage {kept})"),
     })
     _log.error("%s: '%s' came back EMPTY but the previous artifact had %d; "
                "keeping the older block (vintage %s) rather than publishing empty",
@@ -391,20 +390,18 @@ def team_basis_meta(rows: list[dict], *, label: str = "",
     # artifacts, 2,088 of 6,885 rows (30.3%) are in that state. A reader given the
     # August-acquisition sentence on a history board has been told the mild half.
     history = (scope == "history")
-    note = ("current_roster points `team` at the club MLB's transaction feed "
-            "says employs the player today, for the charts AND the "
-            "aggregates, so an August acquisition credits his whole season "
-            "to his new club. stats_earned keeps the club the stats were "
-            "earned with. n_team_unresolved counts rows serving a blank team; "
-            "those rows are absent from every team rollup.")
-    if history and TEAM_BASIS == "current_roster":
-        note = ("These are CLOSED seasons, and `team` points at the club MLB's "
-                "transaction feed says employs the player TODAY, not the club he "
-                "played the season for. A 2021 line therefore shows under a 2026 "
-                "club. The convention is deliberate (filter an organisation and "
-                "see the players it holds now) and it is applied to the charts "
-                "AND the aggregates. n_team_unresolved counts rows serving a "
-                "blank team; those rows are absent from every team rollup.")
+    if TEAM_BASIS != "current_roster":
+        note = "The club the stats were earned with, on the charts and in team totals."
+    elif history:
+        note = ("CLOSED seasons shown under the club MLB's transaction feed lists "
+                "today, not the club he played for: a past season can show under a "
+                "club he joined later. Charts and team totals both follow it, so "
+                "filtering a club shows the players it holds now.")
+    else:
+        note = ("The club MLB's transaction feed lists today, on the charts and in "
+                "team totals, so a traded player's whole season counts for his new "
+                "club.")
+    note += f" Rows with no club ({n_blank}) are left out of team totals."
     return {
         "basis": TEAM_BASIS,
         "scope": scope,
@@ -733,9 +730,9 @@ def _backtest() -> dict:
         "rho_era": fs.get("era"),
         "gap_vs_era_lo95": gap.get("lo95"),
         "market_rho": mk.get("rho_leverage_weighted_vs_aav"),
-        "disclaimer": ("REM+ predicts next-year run prevention out of sample. Leverage (gmLI, WPA, "
-                       "Shutdowns minus Meltdowns) rides separate Impact columns because it is "
-                       "assigned by the manager, not a repeatable skill."),
+        "disclaimer": ("REM+ predicts next-year run prevention out of sample. Leverage (gmLI, "
+                       "WPA, SD-MD) sits in the Impact columns: the manager assigns it, so it "
+                       "is not skill."),
     }
 
 
@@ -805,10 +802,9 @@ def _join_rem_plus_3yr(relievers: list[dict]) -> dict:
         "season": pv.get("season"),
         "window": pv.get("window"),
         "n_in_artifact": len(players),
-        "note": ("3-year REM+ is FROZEN lab output read verbatim from "
-                 f"{MULTIYR_PATH.name}, not recomputed by this run. It is as of "
-                 "generated_at, NOT as of this board's as_of date, and arms who "
-                 "joined the pool after that date have no value."),
+        "note": (f"3-year REM+ is FROZEN lab output read verbatim from "
+                 f"{MULTIYR_PATH.name}, as of generated_at, not this board's "
+                 f"as_of. Arms who joined the pool since have no value."),
     })
     return meta
 
@@ -1053,19 +1049,19 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
         "pool_mean_rate": round(mu, 6), "pool_sd_rate": round(sd, 6),
         "shrink_K": round(K, 1), "pool_rate": round(pool_rate, 6),
         "adj_mean_rate": round(mu_s, 6), "adj_sd_rate": round(sd_s, 6),
-        "note": (f"100 + 10z of eWAR per {denom_key.upper()} over {anchor}. "
-                 f"eWAR (eephus WAR): Baseball-Reference run frame with pitching re-priced on FIP; fielding unchanged pending SDR; position players match bWAR except in seasons they also pitched. Ten "
-                 f"points is one standard deviation of that pool, not one "
-                 f"percent: this is not the HEM+/REM+/SEM+ ratio scale. No "
-                 f"shrink and no clamp. Rows under {display_min:g} "
-                 f"{denom_key.upper()} carry no value."),
-        "adj_note": (f"{out_key}_adj regresses the rate toward the pool rate by "
+        "note": (f"100 + 10z of eWAR per {denom_key.upper()} over {anchor}: 10 "
+                 f"points = 1 pool SD, not the HEM+/REM+/SEM+ ratio scale. eWAR: "
+                 f"Baseball-Reference run frame, pitching re-priced on FIP, fielding "
+                 f"unchanged pending SDR; position players match bWAR except in "
+                 f"seasons they also pitched. No shrink, no clamp; blank under "
+                 f"{display_min:g} {denom_key.upper()}."),
+        "adj_note": (f"{out_key}_adj shrinks the rate toward the pool rate by "
                      f"sample size (K = pool median {denom_key.upper()} = {K:g}) "
-                     f"and re-standardises on the SHRUNK pool. It is a "
-                     f"readability aid for thin samples, not a forward claim: the "
-                     f"ship gate G2 failed on every pool, and the post-hoc volume "
-                     f"control shows the shrink gain is mostly a volume leak. It "
-                     f"does NOT reproduce war/{denom_key} on the row."),
+                     f"and re-standardises on the SHRUNK pool. A readability aid "
+                     f"for thin samples, not a forward claim: ship gate G2 failed "
+                     f"on every pool, and a post-hoc volume control puts most of "
+                     f"the shrink gain down to volume. Does NOT reproduce "
+                     f"war/{denom_key} on the row."),
     })
     return meta
 
@@ -1123,9 +1119,9 @@ def join_war_rate_3yr(rows: list[dict], block: str, key: str, who: str) -> dict:
         "anchor_pool": pv.get("anchor_pool"),
         "n_in_artifact": len(players),
         "note": (f"The 3-year column is FROZEN lab output read verbatim from "
-                 f"{WAR_RATE_MULTIYR_PATH.name}, not recomputed by this run. It is "
-                 f"as of generated_at, NOT as of this board's as_of date, and "
-                 f"{who} who joined the pool after that date have no value."),
+                 f"{WAR_RATE_MULTIYR_PATH.name}, as of generated_at, not this "
+                 f"board's as_of. {who.capitalize()} who joined the pool since "
+                 f"have no value."),
     })
     return meta
 
@@ -1209,8 +1205,9 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         "coverage": {
             "games": coverage.get("games", 0),
             "expected": coverage.get("games_total", 0),
-            "note": ("gmLI / WPA / SD-MD reflect the games walked so far; REM+ skill is "
-                     "full-season. Coverage fills toward complete as the feed cache accrues."),
+            "note": (f"gmLI, WPA and SD-MD cover {coverage.get('games', 0)} of "
+                     f"{coverage.get('games_total', 0)} games walked; REM+ is "
+                     f"full-season."),
         },
         "verdict": _verdict(),
         "backtest": _backtest(),
@@ -1300,9 +1297,8 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     payload = {
         "generated_at": date.today().isoformat(),
         "seasons": [int(y) for y in hist],
-        "note": ("Per-season qualified-reliever boards for the yearly history tabs. "
-                 "REM+ is the pure-skill run-prevention index; RIV+ is the realized "
-                 "leverage-weighted impact index (deployment value, not repeatable skill)."),
+        "note": ("Qualified relievers by season. REM+: run-prevention skill. RIV+: "
+                 "realized leverage-weighted impact (deployment, not skill)."),
         "team_basis": team_basis_meta(basis_rows, label="bullpen history",
                                       scope="history"),
         "history": hist,

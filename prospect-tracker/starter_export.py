@@ -106,9 +106,8 @@ def _backtest() -> dict:
         "rho_sem_plus": fs.get("sem_plus"),
         "rho_fip": fs.get("raw_fip"),
         "rho_era": fs.get("era"),
-        "disclaimer": ("SEM+ predicts next-year run prevention out of sample. Durability "
-                       "(innings, games started, average start length) is shown as context "
-                       "because it is workload, not run-prevention rate."),
+        "disclaimer": ("SEM+ predicts next-year run prevention out of sample. IP, GS and "
+                       "innings per start are workload context, not rate."),
     }
 
 
@@ -147,10 +146,9 @@ def _join_sem_plus_3yr(starters: list[dict]) -> dict:
         "season": pv.get("season"),
         "window": pv.get("window"),
         "n_in_artifact": len(players),
-        "note": ("3-year SEM+ is FROZEN lab output read verbatim from "
-                 f"{MULTIYR_PATH.name}, not recomputed by this run. It is as of "
-                 "generated_at, NOT as of this board's as_of date, and starters "
-                 "who joined the pool after that date have no value."),
+        "note": (f"3-year SEM+ is FROZEN lab output read verbatim from "
+                 f"{MULTIYR_PATH.name}, as of generated_at, not this board's "
+                 f"as_of. Starters who joined the pool since have no value."),
     })
     return meta
 
@@ -393,9 +391,8 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     payload = {
         "generated_at": date.today().isoformat(),
         "seasons": [int(y) for y in hist],
-        "note": ("Per-season qualified-starter boards for the yearly history tabs. SEM+ is "
-                 "the pure-skill starter run-prevention index (100 = average qualified "
-                 "starter); durability columns are context."),
+        "note": ("Qualified starters by season. SEM+: starter run-prevention skill, "
+                 "100 = average qualified starter. Durability columns are context."),
         "team_basis": team_basis_meta(basis_rows, label="starter history",
                                       scope="history"),
         "history": hist,

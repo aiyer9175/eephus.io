@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -173,12 +174,9 @@ def _team_board(corpus: Path | None):
         "n_rows": len(rows),
         "rows": rows,
         "columns_are_style_not_skill": (
-            "attempts, success rate and target mix are what a club CHOSE to do. "
-            "They repeat trivially, because running a lot is a policy. Summed "
-            "decision value is deliberately absent: the gate battery found it "
-            "does not repeat between halves of a season, so a column of it "
-            "sorted descending would be a ranking of noise that a reader has no "
-            "way to recognise as one."),
+            "attempts, success rate and target mix are what a club chose to do; "
+            "they repeat because running is a policy. Summed decision value is "
+            "withheld."),
     }
 
 
@@ -194,12 +192,11 @@ def _raw_number_sentence(raw_r, ctl_r, clears, v_season, v_team) -> str:
     def pct(x):
         return "n/a" if x is None else f"{100.0 * float(x):.1f}"
 
-    return (f"The raw split-half correlation is {f(raw_r)}, which looks like a "
-            "repeatable skill and is not one: both halves of an agent-season sit "
-            "in the same season, so a league-wide year effect reads as agreement. "
+    return (f"Raw split-half {f(raw_r)}: both halves of an agent-season sit in "
+            "the same season, so a league-wide year effect reads as agreement. "
             f"Season explains {pct(v_season)} percent of the variance in a "
-            f"club-season's summed decision value; the club explains "
-            f"{pct(v_team)} percent. Controlled for season it is {f(ctl_r)}"
+            f"club-season's summed decision value, the club {pct(v_team)} "
+            f"percent. Controlled for season: {f(ctl_r)}"
             + (", inside its permutation band." if clears is False else "."))
 
 
@@ -208,21 +205,25 @@ def _bunt_sentence(d: dict) -> str:
     positive cell" and there are three of them; they simply all share a runner on
     third with one out, which is the more interesting statement and is true."""
     pos = [c for c in (d.get("cells") or []) if (c.get("dv_per_bunt") or 0) > 0]
-    tail = "Every cell on the board is negative."
+    tail = "Every cell is negative."
     if pos:
         on_third = all("3B" in (c.get("bases") or "") and c.get("outs") == 1
                        for c in pos)
         best = max(pos, key=lambda c: c["dv_per_bunt"])
-        tail = (f"Every one of the {len(pos)} positive cells is a squeeze, a runner "
-                f"on third with one out, the best of them "
-                f"{best['bases']} at {best['dv_per_bunt']:+.4f} wins a bunt."
-                if on_third else
-                f"{len(pos)} of {len(d.get('cells') or [])} cells come out positive, "
-                f"the best {best['bases']} with {best['outs']} out.")
-    return (f"The league's sacrifice bunting has cost "
-            f"{abs(d.get('total_decision_value_wins') or 0):.0f} wins across "
-            f"{d.get('n_bunts_priced'):,} bunts in "
-            f"{len(d.get('seasons') or [])} seasons, about "
+        if not on_third:
+            tail = (f"{len(pos)} of {len(d.get('cells') or [])} cells are positive; "
+                    f"best {best['bases']} with {best['outs']} out.")
+        elif len(pos) > 1:
+            tail = (f"All {len(pos)} positive cells are squeezes (runner on third, "
+                    f"one out); best {best['bases']} at "
+                    f"{best['dv_per_bunt']:+.4f} wins a bunt.")
+        else:
+            tail = (f"The one positive cell is a squeeze (runner on third, one "
+                    f"out): {best['bases']} at {best['dv_per_bunt']:+.4f} wins a bunt.")
+    tot = d.get("total_decision_value_wins") or 0
+    return (f"Sacrifice bunts {'cost' if tot < 0 else 'gained'} the league "
+            f"{abs(tot):.0f} wins over {d.get('n_bunts_priced'):,} bunts in "
+            f"{len(d.get('seasons') or [])} seasons, "
             f"{abs(d.get('dv_per_bunt_mean') or 0):.4f} wins each. " + tail)
 
 
@@ -281,22 +282,16 @@ def _headline_sentence(bt: dict, net, n_seasons: int) -> str:
     number printed beside it. Every clause here is read off the artifact.
     """
     gap = (bt["2B"]["success_rate"] or 0) - (bt["2B"]["swing_weighted_breakeven_p"] or 0)
-    how = ("almost exactly as often as it should" if abs(gap) < 0.01
-           else "more often than it should" if gap > 0
-           else "less often than it should")
+    how = ("almost exactly at" if abs(gap) < 0.01
+           else "above" if gap > 0 else "below")
     third = "pay" if (bt["3B"]["sum_dv_wins"] or 0) > 0 else "do not pay"
     home = "do not" if (bt["HOME"]["sum_dv_wins"] or 0) < 0 else "do"
     net = float(net or 0.0)
-    if abs(net) < 0.5:
-        worth = ("worth nothing the entire league could notice, "
-                 "%+.2f wins across all of it" % net)
-    elif net > 0:
-        worth = "worth about %.2f wins to the entire league" % net
-    else:
-        worth = "costing the entire league about %.2f wins" % abs(net)
-    return (f"Across {_words(n_seasons)} seasons the league steals second "
-            f"{how}. Steals of third {third}, steals of home {home}, and the "
-            f"whole running game is {worth}.")
+    worth = (f"costs the league {abs(net):.2f} wins" if net < 0
+             else f"is worth {net:.2f} wins to the league")
+    return (f"Over {_words(n_seasons)} seasons the league steals second "
+            f"{how} its break-even. Steals of third {third}, steals of home "
+            f"{home}, and the running game {worth}.")
 
 
 def _census_sentence(run: dict):
@@ -319,18 +314,44 @@ def _census_sentence(run: dict):
     ex = int(sum((run.get("excluded") or {}).values()))
     gap = total - n - ex
     if gap == 0:
-        tail = "so every attempt in the corpus is one or the other."
+        tail = "so every attempt is one or the other."
     elif gap > 0:
-        tail = f"which leaves {gap:,} attempts neither priced nor counted."
+        tail = f"leaving {gap:,} attempts neither priced nor counted."
     else:
         tail = f"which is {-gap:,} more than the corpus holds."
-    return (f"The corpus holds {total:,} steal attempts across "
+    return (f"The corpus holds {total:,} steal attempts over "
             f"{_words(len(c.get('seasons') or []))} seasons: "
-            f"{int(c.get('from_the_events_table') or 0):,} recorded as events inside "
-            f"a plate appearance and {int(c.get('from_the_play_result_only') or 0):,} "
-            f"recorded only as the result that ended one, such as a caught "
-            f"stealing for the third out. {n:,} are priced and {ex:,} are counted "
-            f"in the table above, " + tail)
+            f"{int(c.get('from_the_events_table') or 0):,} as events inside a "
+            f"plate appearance, {int(c.get('from_the_play_result_only') or 0):,} "
+            f"only as the result that ended one (such as a caught stealing for "
+            f"the third out). {n:,} are priced and {ex:,} excluded in the table "
+            f"above, " + tail)
+
+
+def _decomposition(dec: dict) -> dict:
+    """The running artifact's DV / ER definitions without their rhetorical
+    questions (owner copy rule, 2026-09-11). The definitions and the identity
+    stay the artifact's own; only the sentences ending in "?" are dropped."""
+    out = dict(dec)
+    for k in ("dv", "er"):
+        s = out.get(k)
+        if isinstance(s, str):
+            out[k] = " ".join(p for p in re.split(r"(?<=[.?!])\s+", s.strip())
+                              if not p.endswith("?"))
+    return out
+
+
+def _families_sentence(net, bunt) -> str:
+    """The still-dark families, with both measured totals and their size ratio
+    read off the artifacts (audit F07-02: both figures moved on the score
+    repair, and one changed sign)."""
+    apart = (f", a {max(abs(bunt), abs(net)) / min(abs(bunt), abs(net)):.0f}-fold "
+             f"gap in size" if net and bunt else "")
+    return (f"two decision families are measured: the running game "
+            f"({net:+.2f} wins to the league) and the sacrifice bunt "
+            f"({bunt:+.0f} wins){apart}, so neither generalises to the rest. "
+            f"The bullpen call and the pinch hit have more room and have not "
+            f"been measured.")
 
 
 def build(*, corpus=None, teams=True) -> dict:
@@ -373,7 +394,7 @@ def build(*, corpus=None, teams=True) -> dict:
             "excluded": run["excluded"],
             "attempt_census": run.get("attempt_census"),
             "attempt_census_sentence": _census_sentence(run),
-            "decomposition": run["decomposition"],
+            "decomposition": _decomposition(run["decomposition"]),
             "why_two_out_attempts_are_excluded": run["two_out_attempts_are_excluded"],
             "why_the_league_average_runner": run["league_average_is_deliberate"],
             "which_breakeven_predicts_the_sign": run["which_breakeven_predicts_the_sign"],
@@ -439,44 +460,36 @@ def build(*, corpus=None, teams=True) -> dict:
             "reference": {"live": True},
             "team_style": {"live": True, "plus_metric": False,
                            "why_no_plus_metric": (
-                               "the gate battery found that a club's decision value "
-                               "in this family does not repeat between halves of a "
-                               "season. A plus metric built on it would be a ranking "
-                               "of noise, and the page withholds it for the same "
-                               "reason the leverage board withholds its own.")},
+                               "the gate battery found a club's decision value in "
+                               "this family does not repeat between halves of a "
+                               "season, so a plus metric on it would be a ranking "
+                               "of noise. The leverage board withholds its own for "
+                               "the same reason.")},
             "manager_attribution": {
                 "live": False, "blocked_on": "M-MWAR-2, the manager entity",
-                "why": ("this module stops at the attempt. A team-season is an "
-                        "UPPER BOUND on a manager, because managers change and teams "
-                        "do not, and the team-season carries no repeatable signal in "
-                        "this family. Building the manager entity to attribute a "
-                        "signal that is not there would be work spent to make a null "
-                        "more precise.")},
+                "why": ("the module stops at the attempt. A team-season is an "
+                        "UPPER BOUND on a manager (managers change, teams do not) "
+                        "and carries no repeatable signal in this family, so a "
+                        "manager entity would attribute a signal that is not "
+                        "there.")},
             "sacrifice_bunt": _bunt,
             "bullpen_and_lineup": {
                 "live": False, "blocked_on": "not yet measured",
                 # DERIVED, not typed (audit F07-02). Both figures in this
                 # sentence moved when the score convention was corrected, and
                 # one of them changed sign.
-                "why": ("two decision families are measured here, the running game "
-                        "and the sacrifice bunt, and they disagree in size by two "
-                        "orders of magnitude: the running game is worth about "
-                        f"{_r(gate['headline']['net_dv_all_seasons_wins'], 2):+.2f} "
-                        "wins to the league and the bunt about "
-                        f"{(_bunt.get('total_decision_value_wins') or 0):+.0f}. "
-                        "That disagreement is the argument for measuring the "
-                        "rest rather than generalising from either. The bullpen call "
-                        "and the pinch hit have more room and have not been measured, "
-                        "so nothing here says anything about them.")},
+                "why": _families_sentence(
+                    _r(gate["headline"]["net_dv_all_seasons_wins"], 2),
+                    _bunt.get("total_decision_value_wins") or 0)},
         },
 
+        # The detection floor is read off the gate block, never typed.
         "what_this_page_does_not_claim": (
             "that any manager is better than any other. The running game returned "
-            "a bounded null: no club's decision value in the "
-            "running game repeats between halves of its own season, and the battery "
-            "would have seen an effect of 0.0005 wins per attempt if one existed. "
-            "That is a ceiling, not a shrug, and it is the reason there is no plus "
-            "metric on this page."),
+            "a bounded null: no club's decision value repeats between halves of "
+            "its own season, and the battery would have detected "
+            f"{float(gate['detection_floor']['smallest_detectable_per_attempt_sd']):g}"
+            " wins per attempt. Hence no plus metric on this page."),
     }
 
 

@@ -102,10 +102,9 @@ def _join_hem_plus_3yr(hitters: list[dict]) -> dict:
         "season": pv.get("season"),
         "window": pv.get("window"),
         "n_in_artifact": len(players),
-        "note": ("3-year HEM+ is FROZEN lab output read verbatim from "
-                 f"{MULTIYR_PATH.name}, not recomputed by this run. It is as of "
-                 "generated_at, NOT as of this board's as_of date, and hitters "
-                 "who joined the pool after that date have no value."),
+        "note": (f"3-year HEM+ is FROZEN lab output read verbatim from "
+                 f"{MULTIYR_PATH.name}, as of generated_at, not this board's "
+                 f"as_of. Hitters who joined the pool since have no value."),
     })
     return meta
 
@@ -399,13 +398,11 @@ def _join_wrc_plus(hitters: list[dict], season: int) -> dict:
         "hit_rate_qualified": round(n_q / n_qual, 4) if n_qual else None,
         "bands": dict(WRC_PLUS_BANDS),
         "note": ("wRC+ is MLB's PUBLISHED value, read verbatim from the bulk "
-                 "season-total sabermetrics feed and joined by MLBAM id. This "
-                 "site DISPLAYS wRC+ rather than deriving it; HEM+ is the "
-                 "offense-rate index it does compute. The value is a season "
-                 "total, never a single stint, so a traded hitter reads one "
-                 "line. Shown only at " + str(WRC_PLUS_MIN_PA) + "+ PA: it is "
-                 "unshrunk, unlike HEM+, so a thin sample reads as a wild "
-                 "number rather than as league average."),
+                 "season-total sabermetrics feed and joined by MLBAM id; this "
+                 "site derives none (HEM+ is its own offense index). A season "
+                 "total, never a stint, so a traded hitter reads one line. "
+                 "Shown at " + str(WRC_PLUS_MIN_PA) + "+ PA only: unlike HEM+ "
+                 "it is unshrunk."),
     }
 
 
@@ -645,9 +642,8 @@ def _backtest() -> dict:
         "rho_woba": fs.get("raw_woba"),
         "rho_ops": fs.get("ops"),
         "rho_avg": fs.get("avg"),
-        "disclaimer": ("HEM+ predicts next-year offensive rate (wOBA) out of sample. Volume "
-                       "(PA), baserunning (SB), and the slash line are shown as context "
-                       "because HEM+ is offensive-rate skill, not counting or speed value."),
+        "disclaimer": ("HEM+ predicts next-year wOBA out of sample. PA, SB and the slash "
+                       "line are context: HEM+ is rate skill, not volume or speed."),
     }
 
 
@@ -932,11 +928,10 @@ def _platoon_availability(teams: list[dict], bat_side: Optional[dict],
         "n_order_no_platoon": n_neutral, "n_teams": n_teams,
         "keys": _ORDER_KEY_CONTRACT,
         "note": ("The vs-LHP / vs-RHP labels are NOT earned this run: with no bat "
-                 "side the platoon term is 0.0 for every hitter, so the two orders "
-                 "come out identical. The lineups themselves are real and are "
-                 "still served - read teams[].order_no_platoon (or either half of "
-                 "teams[].orders, they are the same nine) and show one lineup with "
-                 "the split marked unavailable."),
+                 "side the platoon term is 0.0 for every hitter, so both orders are "
+                 "the same nine. The lineups still serve: read "
+                 "teams[].order_no_platoon (or either half of teams[].orders) and "
+                 "show one lineup with the split marked unavailable."),
     }
 
 
@@ -956,10 +951,10 @@ def _roster_filter_meta(teams: list, active_ids) -> dict:
         "basis": "StatsAPI rosterType=active (26-man), so an optioned or injured "
                  "player drops",
         "scope": "the constructed orders, lineup and bench ONLY. Offense+ and every "
-                 "other aggregate stay on the full season pool, because a player's "
-                 "HEM+ over the plate appearances he took is real whether or not he "
-                 "is hurt now, and Offense+ feeds betting_model and the leaderboard "
-                 "vintages the 600-game clock is accruing against.",
+                 "other aggregate stay on the full season pool: HEM+ over PA already "
+                 "taken stands whether or not the player is hurt now, and Offense+ "
+                 "feeds betting_model and the leaderboard vintages behind the "
+                 "600-game clock.",
         "on_failure": "a failed roster fetch filters NOTHING rather than blanking the "
                       "charts; a player whose mlbam cannot be read is kept",
     }
@@ -1312,9 +1307,8 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     payload = {
         "generated_at": date.today().isoformat(),
         "seasons": [int(y) for y in hist],
-        "note": ("Per-season qualified-hitter boards for the yearly history tabs. HEM+ is the "
-                 "pure offensive-rate skill index (100 = average qualified hitter, shrunk wOBA); "
-                 "the slash line and volume columns are context."),
+        "note": ("Qualified hitters by season. HEM+: offensive-rate skill on shrunk wOBA, "
+                 "100 = average qualified hitter. Slash line and volume are context."),
         "team_basis": team_basis_meta(basis_rows, label="hitter history",
                                       scope="history"),
         "history": hist,
