@@ -224,7 +224,15 @@
                   teamSort: null, teamDir: 1,
                   // Team Outlook slate: "proj" = the 2027 projection (default),
                   // "now" = the dark-launched Current (2026) view (#now=1 soak).
-                  teamMode: "proj", teamModeTouched: false };
+                  teamMode: "proj", teamModeTouched: false,
+                  // Player-page tab (#ptab=, the key PROSPX uses). Held here so an
+                  // async fill or a re-render never snaps the reader back to the
+                  // first tab; PTAB_FOR scopes it to the player it was chosen on.
+                  ptab: null };
+  // The ids a #ptab= may name. Anything else in a share link falls back to the
+  // first tab instead of leaving no panel visible.
+  const PTABS = ["overview", "hitting", "pitching", "defense", "value", "projection", "scouting", "discussion"];
+  let PTAB_FOR = null;
   let DETAIL = null;            // data/mlb_player_detail.json, lazy
   let DETAIL_LOADING = false;
   let FIELDING = null;          // data/mlb_fielding_positions.json, lazy
@@ -237,6 +245,8 @@
   function syncFromURL() {
     const p = new URLSearchParams(location.hash.slice(1));
     state.player = p.get("player") || null;
+    state.ptab = PTABS.includes(p.get("ptab")) ? p.get("ptab") : null;
+    PTAB_FOR = state.player;
     state.view = ["teams", "accountability"].includes(p.get("view")) ? p.get("view") : "players";
     state.cmp = (p.get("cmp") || "").split(",").filter(Boolean).slice(0, 2);
     if (p.has("src")) state.src = p.get("src");
@@ -256,6 +266,7 @@
   function syncToURL() {
     const p = new URLSearchParams();
     if (state.player) p.set("player", state.player);
+    if (state.player && state.ptab && PTAB_FOR === state.player) p.set("ptab", state.ptab);
     if (state.view !== "players") p.set("view", state.view);
     if (state.cmp.length) p.set("cmp", state.cmp.join(","));
     if (state.src !== "all") p.set("src", state.src);
@@ -1533,10 +1544,10 @@
 
   // ===========================================================================
   // MLB player page (#player={key}) - the per-player detail surface
-  // (data/mlb_player_detail.json, mlb_player_export.py). Parity goal with
-  // prospect detail: hero + tiles, projection fan, Savant percentile
-  // sliders, pitch arsenal, season-by-season career with eWAR, FA market
-  // block for class members.
+  // (data/mlb_player_detail.json, mlb_player_export.py). A hero of at most
+  // four tiles, then tabs by question: Overview, Hitting, Pitching, Defense,
+  // Value, Projection & Contract, Scouting, Discussion (mlbpTabs). The open
+  // tab is state (#ptab=); async fills patch stable slots (slotHTML).
   // ===========================================================================
   // The player page's own headshotURL is GONE (2026-08-05). It duplicated the
   // board builder and lost the two things that builder had learned: it asked
@@ -1548,17 +1559,182 @@
   function pctClass(p) {
     return p >= 80 ? "is-elite" : p >= 60 ? "is-good" : p >= 40 ? "is-avg" : p >= 20 ? "is-low" : "is-poor";
   }
-  function sliders(sc) {
+
+  // ---- scale families --------------------------------------------------------
+  // One ruler per family, never shared. "ratio" is the HEM+ family at wRC+ width
+  // (bands 88/112), "run" is REM+/SEM+ (95/105), "z" is 100 + 10z (WAR/PA+,
+  // WAR/IP+, DEM+) banded at two pool sigma (80/120). A 113 is a good hitter on
+  // the ratio ruler and 1.3 sigma on the z ruler, so DEM+ never borrows the HEM+
+  // cut. The family class rides on every banded value so a test can read which
+  // ruler drew it. Do not tidy these into one cut.
+  const SCALES = {
+    ratio: { lo: 88, hi: 112, cls: "mlbp-scale-ratio" },
+    run: { lo: 95, hi: 105, cls: "mlbp-scale-ratio" },
+    z: { lo: 80, hi: 120, cls: "mlbp-scale-z" },
+  };
+  function bandCls(v, fam) {
+    const s = SCALES[fam];
+    if (!s) return "";
+    const n = Number(v);
+    if (v == null || v === "" || !Number.isFinite(n)) return s.cls;
+    return s.cls + (n >= s.hi ? " proj-pos" : n <= s.lo ? " proj-neg" : "");
+  }
+  // Glossary hook: the explanation lives in the glossary entry, not on the page.
+  const term = (slug, label) => (slug ? `<span data-gl="${slug}">${label}</span>` : label);
+  // Signed runs and WPA: "+1.2", "-0.4", "0.0" (never "-0.0").
+  function signed(v, d) {
+    const n = Number(v);
+    if (v == null || v === "" || !Number.isFinite(n)) return EM_DASH;
+    const r = Number(n.toFixed(d));
+    return r === 0 ? (0).toFixed(d) : (r > 0 ? "+" : "") + r.toFixed(d);
+  }
+  const fmtInn = v => (v == null ? EM_DASH : Number(v).toFixed(1).replace(/\.0$/, ""));
+  function tileHTML(label, val, cls, opt) {
+    const o = opt || {};
+    return `<div class="mlbp-tile"><span class="mlbp-tile-label">${term(o.gl, label)}</span>`
+      + `<span class="mlbp-tile-val ${cls || ""}">${val}</span>`
+      + (o.sub ? `<span class="mlbp-tile-sub">${o.sub}</span>` : "") + `</div>`;
+  }
+  // Every section carries a stable data-mlbp-section id: the smoke test isolates
+  // sections by it, never by markup that a styling change would move.
+  function section(id, title, sub, body) {
+    if (!body) return "";
+    return `<div class="mlbp-section" data-mlbp-section="${id}"><div class="mlbp-section-title">${title}${sub ? ` <span class="fa-sub">${sub}</span>` : ""}</div>${body}</div>`;
+  }
+
+  // ---- async slots -----------------------------------------------------------
+  // Each async fill lands in a stable wrapper instead of re-rendering the page,
+  // so the open tab, the scroll position and a mounted Discussion thread survive
+  // it. The wrapper is always emitted (empty until its data lands). When the
+  // wrapper is missing, because its tab had nothing to show at first paint,
+  // the fill falls back to one full render.
+  const slotId = name => "mlbp-slot-" + name;
+  function slotHTML(name, html) {
+    return `<div class="mlbp-slot" id="${slotId(name)}" data-mlbp-slot="${name}">${html || ""}</div>`;
+  }
+  function patchSlot(name, key, html) {
+    if (!key || state.player !== key) return;
+    const el = document.getElementById(slotId(name));
+    if (el) {
+      el.innerHTML = html || "";
+      if (window.EEPHUS_GL) window.EEPHUS_GL.wire(el);
+    } else if (html) {
+      renderPlayer(key);
+    }
+  }
+  const currentCard = () => (state.player && DETAIL && (DETAIL.players || {})[state.player]) || null;
+
+  // ---- shared visual components ----------------------------------------------
+  // Savant percentile rows. Luck (wOBA minus xwOBA) is not a skill percentile:
+  // painted on the percentile colours, the hitter whose results ran furthest
+  // ahead of his contact reads as elite, so it keeps its number on a neutral chip.
+  function sliders(sc, sid) {
     if (!sc || !sc.metrics || !sc.metrics.length) return "";
-    const rows = sc.metrics.map(m => `
+    const isLuck = m => /^luck/i.test(String(m.label || ""));
+    const rows = sc.metrics.filter(m => !isLuck(m)).map(m => `
       <div class="mlbp-slider">
         <span class="mlbp-slider-label">${esc(m.label)}</span>
         <div class="mlbp-slider-track"><div class="mlbp-slider-fill ${pctClass(m.pct)}" style="width:${m.pct}%;"></div>
           <span class="mlbp-slider-pct ${pctClass(m.pct)}" style="left:${Math.min(94, Math.max(2, m.pct))}%;">${m.pct}</span></div>
         <span class="mlbp-slider-val">${esc(m.value)}</span>
       </div>`).join("");
-    return `<div class="mlbp-section"><div class="mlbp-section-title">Statcast Percentiles <span class="fa-sub">${sc.season} · vs qualified MLB pool</span></div>${rows}</div>`;
+    const luck = sc.metrics.find(isLuck);
+    const luckHTML = luck
+      ? `<div class="mlbp-luck"><span class="mlbp-luck-label">${esc(luck.label)}</span><span class="mlbp-luck-val">${esc(luck.value)}</span></div>` : "";
+    return section(sid, "Statcast Percentiles", `${esc(String(sc.season))} · vs qualified MLB pool`, rows + luckHTML);
   }
+  // Dot ruler for one scale family: every index on it shares the axis, the
+  // centre line is 100 and the shaded band is the family's neutral zone.
+  function rulerHTML(rows, fam, axis) {
+    const s = SCALES[fam];
+    const use = (rows || []).filter(r => r && r.v != null && Number.isFinite(Number(r.v)));
+    if (!s || !use.length) return "";
+    // The axis widens in steps of 10 to hold every value on it, so a 171 is
+    // drawn at 171 rather than pinned to the edge.
+    const vals = use.map(r => Number(r.v));
+    const a0 = Math.min((axis || [60, 160])[0], Math.floor(Math.min(...vals) / 10) * 10);
+    const a1 = Math.max((axis || [60, 160])[1], Math.ceil(Math.max(...vals) / 10) * 10);
+    const at = v =>Math.max(0, Math.min(100, (Number(v) - a0) / (a1 - a0) * 100));
+    const guide = `<span class="mlbp-ruler-band" style="left:${at(s.lo).toFixed(1)}%;width:${(at(s.hi) - at(s.lo)).toFixed(1)}%;"></span>`
+      + `<span class="mlbp-ruler-mid" style="left:${at(100).toFixed(1)}%;"></span>`;
+    const body = use.map(r => {
+      const cls = bandCls(r.v, fam);
+      return `<div class="mlbp-ruler-row"><span class="mlbp-ruler-label">${term(r.gl, r.label)}</span>`
+        + `<div class="mlbp-ruler-track">${guide}<span class="mlbp-ruler-dot ${cls}" style="left:${at(r.v).toFixed(1)}%;"></span></div>`
+        + `<span class="mlbp-ruler-val ${cls}">${esc(String(r.v))}${r.note ? `<span class="fa-band"> ${esc(r.note)}</span>` : ""}</span></div>`;
+    }).join("");
+    const scale = [a0, 100, a1].map(t => `<span style="left:${at(t).toFixed(1)}%;">${t}</span>`).join("");
+    return `<div class="mlbp-ruler">${body}<div class="mlbp-ruler-row mlbp-ruler-axis"><span></span><div class="mlbp-ruler-scale">${scale}</div><span></span></div></div>`;
+  }
+  // Horizontal run bars diverging about zero (defensive runs). `neutral` rows
+  // (the positional ladder) are context, not a grade, so they carry no tone.
+  function runBars(rows) {
+    const use = (rows || []).filter(r => r && r.v != null && Number.isFinite(Number(r.v)));
+    if (!use.length) return "";
+    const m = Math.max(10, ...use.map(r => Math.abs(Number(r.v))));
+    return `<div class="mlbp-runbars">${use.map(r => {
+      const v = Number(r.v), w = Math.abs(v) / m * 50;
+      const left = v >= 0 ? 50 : 50 - w;
+      const tone = r.neutral ? "" : v > 0 ? "proj-pos" : v < 0 ? "proj-neg" : "";
+      return `<div class="mlbp-runbar${r.total ? " is-total" : ""}${r.sub ? " is-sub" : ""}">`
+        + `<span class="mlbp-runbar-label">${term(r.gl, r.label)}</span>`
+        + `<div class="mlbp-runbar-track"><span class="mlbp-runbar-zero"></span><span class="mlbp-runbar-fill ${tone}" style="left:${left.toFixed(1)}%;width:${w.toFixed(1)}%;"></span></div>`
+        + `<span class="mlbp-runbar-val ${tone}">${signed(v, 1)}</span></div>`;
+    }).join("")}</div>`;
+  }
+  // WAR by season on the served frame. `a` is the card's primary side (hitting,
+  // or pitching for a pitcher), `b` the pitching side of a two-way card; `refA`
+  // and `refB` are the bWAR inputs where they differ at 1dp (absent = equal).
+  function warSeasons(p) {
+    const by = {};
+    const add = (rows, side) => (rows || []).forEach(r => {
+      if (!r || r.war == null) return;
+      const c = by[r.y] || (by[r.y] = { y: r.y, a: null, b: null, refA: null, refB: null });
+      c[side] = r.war;
+      if (r.war_bwar != null) c[side === "a" ? "refA" : "refB"] = r.war_bwar;
+    });
+    add(p.career, "a");
+    if (p.twoWay) add(p.careerPit, "b");
+    return Object.values(by).sort((x, y) => x.y - y.y);
+  }
+  const warTot = s => (s.a || 0) + (s.b || 0);
+  const warRef = s => ((s.refA == null && s.refB == null) ? null
+    : (s.refA != null ? s.refA : (s.a || 0)) + (s.refB != null ? s.refB : (s.b || 0)));
+  function warBarsSVG(ss, sides) {
+    const use = (ss || []).filter(s => s.a != null || s.b != null);
+    if (!use.length) return "";
+    const W = 560, H = 180, PL = 8, PR = 8, PT = 18, PB = 22;
+    const pos = s => Math.max(0, s.a || 0) + Math.max(0, s.b || 0);
+    const neg = s => Math.min(0, s.a || 0) + Math.min(0, s.b || 0);
+    const mx = Math.max(1, ...use.map(pos), ...use.map(s => warRef(s) || 0));
+    const mn = Math.min(0, ...use.map(neg), ...use.map(s => warRef(s) || 0));
+    const slot = (W - PL - PR) / use.length, bw = Math.min(34, slot * 0.62);
+    const y = v => PT + (mx - v) * (H - PT - PB) / ((mx - mn) || 1);
+    const cx = i => PL + slot * (i + 0.5);
+    const bars = use.map((s, i) => {
+      const r = warRef(s);
+      const title = `${s.y}: ${fmtWar(warTot(s))} eWAR`
+        + (sides && s.b != null ? ` (${sides[0]} ${fmtWar(s.a)}, ${sides[1]} ${fmtWar(s.b)})` : "")
+        + (r != null ? `, bWAR ${fmtWar(r)}` : "");
+      let pb = 0, nb = 0, out = "";
+      [["a", s.a], ["b", s.b]].forEach(([k, v]) => {
+        if (v == null) return;
+        const lo = v >= 0 ? pb : nb + v, hi = v >= 0 ? pb + v : nb;
+        if (v >= 0) pb += v; else nb += v;
+        out += `<rect x="${(cx(i) - bw / 2).toFixed(1)}" y="${y(hi).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0.5, y(lo) - y(hi)).toFixed(1)}" class="mlbp-warbar${k === "b" ? " mlbp-warbar-b" : ""}"><title>${esc(title)}</title></rect>`;
+      });
+      if (r != null)
+        out += `<line x1="${(cx(i) - bw / 2 - 3).toFixed(1)}" x2="${(cx(i) + bw / 2 + 3).toFixed(1)}" y1="${y(r).toFixed(1)}" y2="${y(r).toFixed(1)}" class="mlbp-warbar-ref"><title>${s.y}: bWAR ${fmtWar(r)}</title></line>`;
+      const ly = warTot(s) >= 0 ? y(pb) - 4 : y(nb) + 11;
+      out += `<text x="${cx(i).toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" class="mlbp-warbar-val">${fmtWar(warTot(s))}</text>`
+        + `<text x="${cx(i).toFixed(1)}" y="${H - 6}" text-anchor="middle" class="mlbp-fan-tick">${s.y}</text>`;
+      return out;
+    }).join("");
+    return `<svg class="mlbp-fan mlbp-warbars" viewBox="0 0 ${W} ${H}" role="img" aria-label="eWAR by season">`
+      + `<line x1="${PL}" x2="${W - PR}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="mlbp-warbar-zero"/>${bars}</svg>`;
+  }
+
+  // ---- projection ------------------------------------------------------------
   function fanChart(p) {
     const war = (p.proj && p.proj.war) || [];
     if (war.length < 2) return "";
@@ -1573,11 +1749,11 @@
       ? `<polygon points="${pts(hi)} ${lo.map((v, t) => `${x(lo.length - 1 - t)},${y(lo[lo.length - 1 - t])}`).join(" ")}" class="mlbp-fan-band"/>` : "";
     const ticks = war.map((v, t) => `<text x="${x(t)}" y="${H - 6}" text-anchor="middle" class="mlbp-fan-tick">${first + t}</text>`).join("");
     const zero = (mn < 0) ? `<line x1="${PX}" x2="${W - 8}" y1="${y(0)}" y2="${y(0)}" class="mlbp-fan-zero"/>` : "";
-    return `<div class="mlbp-section"><div class="mlbp-section-title">Projected eWAR <span class="fa-sub">mean + P10-P90 band · expected (attrition-discounted) path, the one surplus prices</span></div>
-      <svg class="mlbp-fan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected WAR path">${band}
+    return section("projection-fan", "Projected eWAR", "mean, P10-P90 · expected path, the surplus basis",
+      `<svg class="mlbp-fan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected WAR path">${band}
         <polyline points="${pts(war)}" class="mlbp-fan-line"/>
         ${war.map((v, t) => `<circle cx="${x(t)}" cy="${y(v)}" r="3" class="mlbp-fan-dot"><title>${first + t}: ${fmtWar(v)}${lo[t] != null ? ` (${fmtWar(lo[t])}-${fmtWar(hi[t])})` : ""}</title></circle>`).join("")}
-        ${zero}${ticks}</svg></div>`;
+        ${zero}${ticks}</svg>`);
   }
   // Explicit upside read-out: the per-year P90 (ceiling) path, each season
   // labeled on its own. Per-year quantiles are NOT additive, so this element
@@ -1588,28 +1764,8 @@
     if (!hi.length || !hi.some(v => v != null)) return "";
     const first = DATA.first_season;
     const cells = hi.map((v, t) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${first + t}</span><span class="mlbp-cell-val${warClass(v)}">${fmtWar(v)}</span></div>`).join("");
-    return `<div class="mlbp-section"><div class="mlbp-section-title">Upside <span class="fa-sub">P90 outcome per season - the year-by-year ceiling if things break right (per-year percentiles; they do not add up to a multi-year total)</span></div>
-      <div class="mlbp-grid mlbp-grid-flow">${cells}</div></div>`;
-  }
-  function arsenalTable(ar) {
-    if (!ar || !ar.length) return "";
-    return `<div class="mlbp-section"><div class="mlbp-section-title">Pitch Arsenal <span class="fa-sub">usage · run value /100 · whiff%</span></div>
-      <table class="detail-table"><thead><tr><th>Pitch</th><th>Usage</th><th>RV/100</th><th>Whiff%</th><th>BA against</th></tr></thead>
-      <tbody>${ar.map(a => `<tr><td>${esc(a.pitch || "")}</td><td>${a.usage != null ? a.usage.toFixed(1) + "%" : EM_DASH}</td>
-        <td class="${a.rv100 != null && a.rv100 < 0 ? "proj-pos" : a.rv100 > 0 ? "proj-neg" : ""}">${a.rv100 != null ? a.rv100.toFixed(1) : EM_DASH}</td>
-        <td>${a.whiff != null ? a.whiff.toFixed(1) + "%" : EM_DASH}</td><td>${a.ba != null ? String(a.ba) : EM_DASH}</td></tr>`).join("")}</tbody></table></div>`;
-  }
-  function careerTable(p) {
-    const c = p.career || [];
-    if (!c.length) return "";
-    const head = p.isPit
-      ? "<th>Year</th><th>IP</th><th>ERA</th><th>K%</th><th>BB%</th><th>eWAR</th>"
-      : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th><th>eWAR</th>";
-    const rows = c.slice().reverse().map(r => p.isPit
-      ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.war != null ? r.war.toFixed(1) : EM_DASH}</td></tr>`
-      : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.iso != null ? String(r.iso).replace(/^0(?=\.)/, "") : EM_DASH}</td><td>${r.war != null ? r.war.toFixed(1) : EM_DASH}</td></tr>`).join("");
-    return `<div class="mlbp-section"><div class="mlbp-section-title">Career <span class="fa-sub">MLB seasons · eWAR (B-Ref frame, pitching on FIP; hitters match bWAR unless they pitched)</span></div>
-      <table class="detail-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    return section("upside", "Upside", "P90 outcome per season · per-year percentiles; they do not add up to a multi-year total",
+      `<div class="mlbp-grid mlbp-grid-flow">${cells}</div>`);
   }
   function faBlock(p) {
     const f = p.fa;
@@ -1623,10 +1779,360 @@
       ["Deal+", f.dealPlus != null ? String(Math.round(f.dealPlus)) : EM_DASH],
       ["Prior AAV", f.prevAav != null ? money(f.prevAav) : EM_DASH],
     ];
-    return `<div class="mlbp-section"><div class="mlbp-section-title">Free Agency <span class="fa-sub">${esc(f.status || "")} · gate-validated market model</span> ${verd}</div>
-      <div class="mlbp-grid">${cells.map(([l, v]) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${l}</span><span class="mlbp-cell-val">${v}</span></div>`).join("")}</div>
-      <div class="fa-sub mlbp-block-foot"><a class="fa-player-link" href="/fa/#player=${encodeURIComponent(p.key)}">market card on the class board →</a></div></div>`;
+    return section("contract-fa", "Free Agency", `${esc(f.status || "")} · gate-validated market model ${verd}`,
+      `<div class="mlbp-grid">${cells.map(([l, v]) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${l}</span><span class="mlbp-cell-val">${v}</span></div>`).join("")}</div>
+      <div class="fa-sub mlbp-block-foot"><a class="fa-player-link" href="/fa/#player=${encodeURIComponent(p.key)}">FA market card &rarr;</a></div>`);
   }
+  function projectionPanel(p) {
+    const pr = p.proj || {};
+    const twoWayNote = (p.twoWay && pr.warHit && pr.warPit)
+      ? `<div class="fa-note">Two-way: the path sums hitting (${pr.warHit.map(fmtWar).join(" / ")}) and pitching (${pr.warPit.map(fmtWar).join(" / ")}).</div>` : "";
+    return fanChart(p) + upsidePath(p) + twoWayNote + faBlock(p);
+  }
+
+  // ---- hitting ---------------------------------------------------------------
+  function arsenalTable(ar, extra) {
+    const table = (ar && ar.length)
+      ? `<table class="detail-table"><thead><tr><th>Pitch</th><th>Usage</th><th>RV/100</th><th>Whiff%</th><th>BA against</th></tr></thead>
+      <tbody>${ar.map(a => `<tr><td>${esc(a.pitch || "")}</td><td>${a.usage != null ? a.usage.toFixed(1) + "%" : EM_DASH}</td>
+        <td class="${a.rv100 != null && a.rv100 < 0 ? "proj-pos" : a.rv100 > 0 ? "proj-neg" : ""}">${a.rv100 != null ? a.rv100.toFixed(1) : EM_DASH}</td>
+        <td>${a.whiff != null ? a.whiff.toFixed(1) + "%" : EM_DASH}</td><td>${a.ba != null ? String(a.ba) : EM_DASH}</td></tr>`).join("")}</tbody></table>` : "";
+    const tiles = extra ? `<div class="mlbp-tiles mlbp-tiles-left">${extra}</div>` : "";
+    if (!table && !tiles) return "";
+    return section("pitching-arsenal", "Pitch Arsenal", "usage · run value /100 · whiff%", `<div class="mlbp-table-wrap">${table}</div>${tiles}`);
+  }
+  // Season stat lines. WAR is not a column here: it has its own chart on the
+  // Value tab, on the served frame with the bWAR input beside it.
+  function seasonLines(rows, isPit, sid, sub) {
+    const c = rows || [];
+    if (!c.length) return "";
+    const head = isPit
+      ? "<th>Year</th><th>IP</th><th>ERA</th><th>K%</th><th>BB%</th>"
+      : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th>";
+    const body = c.slice().reverse().map(r => isPit
+      ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td></tr>`
+      : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.iso != null ? String(r.iso).replace(/^0(?=\.)/, "") : EM_DASH}</td></tr>`).join("");
+    return section(sid, "Season lines", sub,
+      `<div class="mlbp-table-wrap"><table class="detail-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
+  }
+  function hittingIndexBlock(p) {
+    const h = (p.skills || {}).hem;
+    if (!h) return "";
+    const ruler = rulerHTML([
+      { label: "HEM+", v: h.hemPlus, gl: "hem_plus" },
+      // luckGap is xHEM+ minus HEM+ (hitter_export), so + means results BELOW
+      // the contact. Said as the difference it is, not as "luck".
+      { label: "xHEM+", v: h.xhemPlus, gl: "xhem_plus", note: h.luckGap != null ? `${signed(h.luckGap, 0)} vs HEM+` : "" },
+      { label: "xHEM+ Blend", v: h.fwdhemPlus, gl: "fwdhem_plus" },
+      { label: "wRC+", v: h.wrcPlus, gl: "wrc_plus" },
+      { label: "HEM+ 3yr", v: h.hemPlus3yr, gl: "hem_plus_3yr" },
+    ], "ratio");
+    if (!ruler) return "";
+    const note = [h.pa != null ? `${h.pa} PA` : "", h.qualified ? "qualified" : "",
+      h.pwoba != null ? `${term("pwoba", "pWOBA")} ${Number(h.pwoba).toFixed(3).replace(/^0(?=\.)/, "")}` : ""].filter(Boolean);
+    note.push(`<a class="fa-player-link" href="/mlbstats/#section=hitters">MLB Stats &rarr;</a>`);
+    return section("hitting-index", "Offense index", `${h.season ? esc(String(h.season)) + " · " : ""}100 = average qualified hitter`,
+      ruler + `<div class="fa-sub mlbp-index-note">${note.join(" · ")}</div>`);
+  }
+  function swingTiles(p) {
+    let out = "";
+    if (p.swingPlus != null)
+      out += tileHTML("Swing+", `${p.swingPlus}<span class="fa-band"> n=${p.swingN}</span>`,
+        p.swingPlus >= 105 ? "proj-pos" : p.swingPlus <= 95 ? "proj-neg" : "", { gl: "swing_plus" });
+    // Per-season Swing+ (display only; the pooled tile is the served number).
+    // * marks a season under 180 swings, shrunk hard toward 100.
+    if (p.swingPlusSeasons) {
+      const sy = Object.keys(p.swingPlusSeasons).filter(y => (p.swingPlusSeasons[y] || {}).swing_plus != null).sort();
+      if (sy.length >= 2) {
+        const seg = sy.map(y => `${y.slice(2)}: ${Math.round(p.swingPlusSeasons[y].swing_plus)}${p.swingPlusSeasons[y].low_n ? "*" : ""}`).join(" / ");
+        const sd = p.swingPlusSeasons[sy[sy.length - 1]].swing_plus - p.swingPlusSeasons[sy[sy.length - 2]].swing_plus;
+        out += tileHTML("Swing+ trend", `<span class="mlbp-swing-seasons">${seg}</span>`,
+          sd >= 5 ? "proj-pos" : sd <= -5 ? "proj-neg" : "", { gl: "swing_plus" });
+      }
+    }
+    return out;
+  }
+  // Leverage and deployment: descriptive game context, not a skill index, so it
+  // sits in its own block and is never banded on a plus ruler.
+  function gameContextBlock(p, side) {
+    const sk = p.skills || {};
+    const cells = [];
+    const cell = (label, val, gl) => cells.push(`<div class="mlbp-cell"><span class="mlbp-cell-label">${term(gl, label)}</span><span class="mlbp-cell-val">${val}</span></div>`);
+    let season = null, hasWpa = false;
+    if (side === "hit") {
+      const L = sk.lev;
+      if (L && L.kind === "bat") {
+        season = L.season;
+        if (L.wpa != null) cell("WPA", signed(L.wpa, 2), "wpa");
+        if (L.wpaLi != null) cell("WPA/LI", signed(L.wpaLi, 2), "wpa_li");
+        if (L.pli != null) cell("pLI", Number(L.pli).toFixed(2), "pli");
+        if (L.clutch != null) cell("Clutch", signed(L.clutch, 2), "clutch");
+      }
+    } else {
+      const s = pitchSkill(p);
+      if (s && s.kind === "rel") {
+        season = s.season;
+        if (s.gmli != null) cell("gmLI", Number(s.gmli).toFixed(2) + (s.gmli3yr != null ? `<span class="fa-band"> 3yr ${Number(s.gmli3yr).toFixed(2)}</span>` : ""), "gmli");
+        if (s.sd != null || s.md != null) cell("SD / MD", `${s.sd ?? 0} / ${s.md ?? 0}`, "shutdowns_meltdowns");
+        if (s.wpa != null) { cell("WPA", signed(s.wpa, 2), "wpa"); hasWpa = true; }
+      }
+      const L = p.twoWay ? sk.levPit : sk.lev;
+      if (L && L.kind === "sp") {
+        season = season || L.season;
+        if (L.wpa != null && !hasWpa) cell("WPA", signed(L.wpa, 2), "wpa");
+        if (L.wpaLi != null) cell("WPA/LI", signed(L.wpaLi, 2), "wpa_li");
+        if (L.wpaPerStart != null) cell("WPA/start", signed(L.wpaPerStart, 3), "wpa");
+      }
+    }
+    if (!cells.length) return "";
+    return section(side === "hit" ? "hitting-context" : "pitching-context", "Game context",
+      `${season ? esc(String(season)) + " · " : ""}descriptive`,
+      `<div class="mlbp-grid mlbp-grid-flow">${cells.join("")}</div>`);
+  }
+  function hittingPanel(p) {
+    const head = p.twoWay ? `<div class="mlbp-section-title mlbp-subhead">As a hitter</div>` : "";
+    const idx = hittingIndexBlock(p);
+    const swing = swingTiles(p);
+    const bs = batSpeedChip(p);
+    const bat = (swing || bs)
+      ? `<div class="mlbp-section" data-mlbp-section="hitting-bat"><div class="mlbp-section-title">Bat tracking <span class="fa-sub">MLB 2024+${p.swingPlusSeasons ? " · * under 180 swings" : ""}</span></div>`
+        + `${swing ? `<div class="mlbp-tiles mlbp-tiles-left">${swing}</div>` : ""}${slotHTML("batspeed", bs)}</div>`
+      : slotHTML("batspeed", "");
+    const sc = sliders(p.sc, "hitting-statcast");
+    const ctx = gameContextBlock(p, "hit");
+    const lines = seasonLines(p.career, false, "hitting-lines", "MLB · hitting");
+    return { content: idx + swing + bs + sc + ctx + lines, html: head + idx + bat + sc + ctx + lines };
+  }
+
+  // ---- pitching --------------------------------------------------------------
+  // Live season pitching from the /mlbstats/ leaderboards (REM+ / RIV+ for
+  // relievers, SEM+ for starters), joined by MLBAM. Prefer the baked skills
+  // block; payloads generated before the bake fall back to the client-fetched
+  // leaderboard rows, which land in the pitchlb slot.
+  function ensurePitchingStats() {
+    if (PITCHLB || PITCHLB_LOADING) return;
+    PITCHLB_LOADING = true;
+    const byMlbam = {};
+    const grab = (url, kind) => fetch(url, { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        const rows = (d && (d.relievers || d.starters)) || [];
+        const season = d && d.season;
+        rows.forEach(row => { if (row.mlbam != null) byMlbam[row.mlbam] = { kind, season, row }; });
+      })
+      .catch(() => {});
+    Promise.all([
+      grab("/data/bullpen_leaderboards.json", "rel"),
+      grab("/data/starter_leaderboards.json", "sp"),
+    ]).then(() => {
+      PITCHLB = { byMlbam };
+      PITCHLB_LOADING = false;
+      const cur = currentCard();
+      if (cur && (cur.isPit || cur.twoWay)) patchSlot("pitchlb", state.player, pitchingIndexBlock(cur));
+    });
+  }
+  function pitchSkill(p) {
+    if (!p || p.mlbam == null) return null;
+    if (p.skills && p.skills.pitch) return p.skills.pitch;
+    const hit = PITCHLB && PITCHLB.byMlbam && PITCHLB.byMlbam[p.mlbam];
+    if (!hit) return null;
+    const r = hit.row;
+    return { kind: hit.kind, season: hit.season, role: r.role, ip: r.ip,
+      remPlus: r.rem_plus, rivPlus: r.riv_plus, remPlus3yr: r.rem_plus_3yr, xremPlus: r.xrem_plus,
+      semPlus: r.sem_plus, semPlus3yr: r.sem_plus_3yr, xsemPlus: r.xsem_plus,
+      warIpPlus: r.war_ip_plus, warIpPlusAdj: r.war_ip_plus_adj, warIpPlusPct: r.war_ip_plus_pct,
+      warIpPlus3yr: r.war_ip_plus_3yr, gmli: r.gmli, gmli3yr: r.gmli_3yr,
+      saves: r.saves, holds: r.holds, wpa: r.wpa, sd: r.sd, md: r.md, gs: r.gs, ipPerGs: r.ip_per_gs };
+  }
+  // Starters and relievers are separate pools; their indexes never share an axis.
+  function pitchingIndexBlock(p) {
+    const s = pitchSkill(p);
+    if (!s) return "";
+    const rel = s.kind === "rel";
+    const ruler = rulerHTML(rel
+      ? [{ label: "REM+", v: s.remPlus, gl: "rem_plus" }, { label: "RIV+", v: s.rivPlus, gl: "riv_plus" },
+        { label: "xREM+", v: s.xremPlus, gl: "xrem_plus" }, { label: "REM+ 3yr", v: s.remPlus3yr, gl: "rem_plus_3yr" }]
+      : [{ label: "SEM+", v: s.semPlus, gl: "sem_plus" }, { label: "xSEM+", v: s.xsemPlus, gl: "xsem_plus" },
+        { label: "SEM+ 3yr", v: s.semPlus3yr, gl: "sem_plus_3yr" }], "run");
+    if (!ruler) return "";
+    const line = [esc(s.role || (rel ? "reliever" : "starter")),
+      s.ip != null ? `${esc(String(s.ip))} IP` : "",
+      !rel && s.gs != null ? `${esc(String(s.gs))} GS` : "",
+      !rel && s.ipPerGs != null ? `${Number(s.ipPerGs).toFixed(1)} IP/GS` : "",
+      rel && (s.saves != null || s.holds != null) ? `${s.saves || 0} SV / ${s.holds || 0} HLD` : "",
+      `<a class="fa-player-link" href="/mlbstats/#section=${rel ? "bullpen" : "starters"}">MLB Stats &rarr;</a>`].filter(Boolean);
+    return section("pitching-index", "Run prevention",
+      `${s.season ? esc(String(s.season)) + " · " : ""}100 = ${rel ? "reliever" : "starter"} pool average`,
+      `<div class="fa-sub mlbp-index-note">${line.join(" · ")}</div>${ruler}`);
+  }
+  function pitchingPanel(p) {
+    const head = p.twoWay ? `<div class="mlbp-section-title mlbp-subhead">As a pitcher</div>` : "";
+    const idx = pitchingIndexBlock(p);
+    const sc = sliders(p.twoWay ? p.scPit : p.sc, "pitching-statcast");
+    const astuff = p.aaaStuffPlus != null
+      ? tileHTML("aStuff+", `${Math.round(p.aaaStuffPlus)}<span class="fa-band"> AAA ${esc(String(p.aaaStuffSeason || ""))}</span>`,
+        p.aaaStuffPlus >= 110 ? "proj-pos" : p.aaaStuffPlus <= 90 ? "proj-neg" : "", { gl: "stuff_plus_aaa" }) : "";
+    const ars = arsenalTable(p.arsenal, astuff);
+    const ctx = gameContextBlock(p, "pit");
+    const lines = seasonLines(p.twoWay ? p.careerPit : p.career, true, "pitching-lines", "MLB · pitching");
+    return { content: idx + sc + ars + ctx + lines, html: head + slotHTML("pitchlb", idx) + sc + ars + ctx + lines };
+  }
+
+  // ---- defense ---------------------------------------------------------------
+  // DEM+ (100 + 10z) on the z ruler, and FanGraphs' published fielding, framing
+  // and positional runs as their own labelled rows. Two quantities, never
+  // combined into one number here; nothing on this tab feeds a prospect grade.
+  function defensePanel(p) {
+    const d = (p.skills || {}).def;
+    if (!d || (d.demPlus == null && d.defRuns == null && d.fldTotal == null)) return "";
+    const yr = d.season ? esc(String(d.season)) : "";
+    const pos = esc(d.pos || "");
+    const pct = [d.demPlusPct != null ? `p${d.demPlusPct} MLB` : "", d.demPlusPosPct != null && pos ? `p${d.demPlusPosPct} ${pos}` : ""].filter(Boolean).join(" · ");
+    const dem = d.demPlus != null
+      ? tileHTML("DEM+", esc(String(d.demPlus)), bandCls(d.demPlus, "z"), { gl: "dem_plus", sub: pct }) : "";
+    const board = `<a class="fa-player-link" href="/mlbstats/#section=defense">Defense board &rarr;</a>`;
+    const demSec = section("defense-dem", "Defense index",
+      [yr, d.qualified ? "qualified" : "provisional", board].filter(Boolean).join(" · "),
+      dem ? `<div class="mlbp-tiles mlbp-tiles-left">${dem}</div>` : "");
+    const runs = section("defense-runs", "Runs", `FanGraphs published${yr ? " · " + yr : ""}`, runBars([
+      { label: "Fielding", v: d.fldTotal, gl: "fielding_runs" },
+      d.frmRuns != null ? { label: "Framing (in Fielding)", v: d.frmRuns, gl: "framing_runs", sub: true } : null,
+      { label: "Positional", v: d.posRuns, gl: "positional_adjustment", neutral: true },
+      { label: "Def", v: d.defRuns, total: true },
+    ]));
+    const pi = d.posInn ? Object.entries(d.posInn).filter(([, v]) => Number(v) > 0).sort((a, b) => b[1] - a[1]) : [];
+    const chips = pi.map(([ps, v]) => `<span class="position-usage-chip"><span>${esc(ps)}</span>:${fmtInn(v)}</span>`).join("");
+    const posSec = section("defense-positions", "Positions", `innings${yr ? " · " + yr : ""}`,
+      chips ? `<div class="position-usage-strip">${chips}${d.inn != null ? `<span class="fa-sub">${fmtInn(d.inn)} total</span>` : ""}</div>` : "");
+    return demSec + runs + posSec;
+  }
+
+  // ---- value -----------------------------------------------------------------
+  function valueRatesBlock(p) {
+    const sk = p.skills || {};
+    const h = (!p.isPit || p.twoWay) ? sk.hem : null;
+    const s = (p.isPit || p.twoWay) ? pitchSkill(p) : null;
+    const t = [];
+    if (h) {
+      if (h.warPaPlus != null) t.push(tileHTML("WAR/PA+", esc(String(h.warPaPlus)), bandCls(h.warPaPlus, "z"), { gl: "war_pa_plus", sub: h.warPaPlusPct != null ? `p${h.warPaPlusPct}` : "" }));
+      if (h.warPaPlusAdj != null) t.push(tileHTML("WAR/PA+ adj", esc(String(h.warPaPlusAdj)), bandCls(h.warPaPlusAdj, "z"), { gl: "war_pa_plus_adj" }));
+      if (h.warPaPlus3yr != null) t.push(tileHTML("WAR/PA+ 3yr", esc(String(h.warPaPlus3yr)), bandCls(h.warPaPlus3yr, "z"), { gl: "war_pa_plus_3yr" }));
+    }
+    if (s) {
+      // Anchored on the pitcher's own role pool: a starter's and a reliever's
+      // WAR/IP+ are not comparable.
+      const g = s.kind === "rel"
+        ? ["war_ip_plus_rp", "war_ip_plus_rp_adj", "war_ip_plus_rp_3yr"]
+        : ["war_ip_plus_sp", "war_ip_plus_sp_adj", "war_ip_plus_sp_3yr"];
+      if (s.warIpPlus != null) t.push(tileHTML("WAR/IP+", esc(String(s.warIpPlus)), bandCls(s.warIpPlus, "z"), { gl: g[0], sub: s.warIpPlusPct != null ? `p${s.warIpPlusPct}` : "" }));
+      if (s.warIpPlusAdj != null) t.push(tileHTML("WAR/IP+ adj", esc(String(s.warIpPlusAdj)), bandCls(s.warIpPlusAdj, "z"), { gl: g[1] }));
+      if (s.warIpPlus3yr != null) t.push(tileHTML("WAR/IP+ 3yr", esc(String(s.warIpPlus3yr)), bandCls(s.warIpPlus3yr, "z"), { gl: g[2] }));
+    }
+    return section("value-rates", "Rate indexes", "100 + 10z", t.length ? `<div class="mlbp-tiles mlbp-tiles-left">${t.join("")}</div>` : "");
+  }
+  function valuePanel(p) {
+    const ss = warSeasons(p);
+    const chart = warBarsSVG(ss, p.twoWay ? ["hitting", "pitching"] : null);
+    const legend = (chart && p.twoWay)
+      ? `<div class="fa-sub mlbp-legend"><span><i class="mlbp-legend-swatch"></i>hitting</span><span><i class="mlbp-legend-swatch mlbp-legend-b"></i>pitching</span></div>` : "";
+    const hasRef = ss.some(s => s.refA != null || s.refB != null);
+    return section("value-war", "WAR by season", `${term("ewar", "eWAR")}${hasRef ? " · tick = bWAR" : ""}`, chart ? chart + legend : "")
+      + valueRatesBlock(p);
+  }
+
+  // ---- overview --------------------------------------------------------------
+  // One screen for the reader who never clicks: a lens per question, each
+  // opening the tab that owns it, and the two season arcs.
+  function overviewPanel(p, key) {
+    const sk = p.skills || {};
+    const hitSide = !p.isPit || !!p.twoWay, pitSide = !!p.isPit || !!p.twoWay;
+    const lenses = [];
+    const lens = (goto, head, num, cls, label, sub) => lenses.push(
+      `<div class="mlbp-lens"><button type="button" class="mlbp-lens-head" data-mlbp-goto="${goto}">${head} &rarr;</button>`
+      + `<div class="mlbp-lens-val"><span class="mlbp-lens-num ${cls || ""}">${num}</span>${label}</div>`
+      + (sub ? `<div class="mlbp-lens-sub">${sub}</div>` : "") + `</div>`);
+    const h = hitSide ? sk.hem : null;
+    if (h && h.hemPlus != null)
+      lens("hitting", "Offense", esc(String(h.hemPlus)), bandCls(h.hemPlus, "ratio"), term("hem_plus", "HEM+"),
+        [h.wrcPlus != null ? `wRC+ ${esc(String(h.wrcPlus))}` : "", h.xhemPlus != null ? `xHEM+ ${esc(String(h.xhemPlus))}` : ""].filter(Boolean).join(" · "));
+    const s = pitSide ? pitchSkill(p) : null;
+    if (s) {
+      const rel = s.kind === "rel";
+      const v = rel ? s.remPlus : s.semPlus;
+      if (v != null)
+        lens("pitching", "Run prevention", esc(String(v)), bandCls(v, "run"), term(rel ? "rem_plus" : "sem_plus", rel ? "REM+" : "SEM+"),
+          [rel ? (s.rivPlus != null ? `RIV+ ${esc(String(s.rivPlus))}` : "") : (s.xsemPlus != null ? `xSEM+ ${esc(String(s.xsemPlus))}` : ""),
+            s.ip != null ? `${esc(String(s.ip))} IP` : ""].filter(Boolean).join(" · "));
+    }
+    const d = hitSide ? sk.def : null;
+    if (d && d.demPlus != null)
+      lens("defense", "Defense", esc(String(d.demPlus)), bandCls(d.demPlus, "z"), term("dem_plus", "DEM+"),
+        [d.fldTotal != null ? `${signed(d.fldTotal, 1)} fielding runs` : "", d.pos ? esc(d.pos) : ""].filter(Boolean).join(" · "));
+    const ss = warSeasons(p);
+    const last = ss[ss.length - 1];
+    if (last)
+      lens("value", "Value", fmtWar(warTot(last)), "", `${last.y} ${term("ewar", "eWAR")}`,
+        h && h.warPaPlus != null ? `WAR/PA+ ${esc(String(h.warPaPlus))}` : (s && s.warIpPlus != null ? `WAR/IP+ ${esc(String(s.warIpPlus))}` : ""));
+    const lensHTML = lenses.length
+      ? `<div class="mlbp-section" data-mlbp-section="overview-lenses"><div class="mlbp-lenses">${lenses.join("")}</div></div>` : "";
+    const opt = aria => ({ w: 240, h: 60, fmt: fmtWar, aria });
+    const warTrend = miniTrendSVG(ss.map(x => ({ v: warTot(x), t: `${x.y}: ${fmtWar(warTot(x))} eWAR` })), opt("eWAR by season"));
+    const pw = (p.proj && p.proj.war) || [];
+    const first = DATA ? DATA.first_season : null;
+    const projTrend = first != null
+      ? miniTrendSVG(pw.map((v, t) => ({ v, t: `${first + t}: ${fmtWar(v)}` })), opt("Projected eWAR")) : "";
+    const mini = (goto, label, svg) => (svg
+      ? `<div class="mlbp-mini"><button type="button" class="mlbp-lens-head" data-mlbp-goto="${goto}">${label} &rarr;</button>${svg}</div>` : "");
+    const minis = mini("value", `eWAR by season${ss.length ? ` <span class="fa-sub">${ss[0].y}-${last.y}</span>` : ""}`, warTrend)
+      + mini("projection", `Projected eWAR${pw.length && first != null ? ` <span class="fa-sub">${first}-${first + pw.length - 1}</span>` : ""}`, projTrend);
+    const minisHTML = minis ? `<div class="mlbp-section" data-mlbp-section="overview-trends"><div class="mlbp-minis">${minis}</div></div>` : "";
+    const usage = positionGamesSummary(key);
+    return { content: lensHTML + minisHTML + usage, html: lensHTML + minisHTML + slotHTML("usage", usage) };
+  }
+
+  // ---- hero ------------------------------------------------------------------
+  // At most four tiles, the same four slots for every role: window WAR, surplus,
+  // the primary skill index, and a second read (DEM+ for fielders, WAR/IP+ for
+  // pitchers, the pitching index for a two-way card). A missing slot falls back
+  // to the latest season's eWAR, then to nothing.
+  function heroTiles(p) {
+    const sk = p.skills || {}, pr = p.proj || {};
+    const sum = a => (a || []).reduce((acc, v) => acc + (v || 0), 0);
+    const out = [];
+    if (pr.warTotal != null)
+      out.push(tileHTML(`${(pr.war || []).length}y WAR`, fmtWar(pr.warTotal), "", { gl: "ewar",
+        sub: (p.twoWay && pr.warHit && pr.warPit) ? `hit ${fmtWar(sum(pr.warHit))} / pit ${fmtWar(sum(pr.warPit))}` : "expected" }));
+    const sv = surOf(p.proj);
+    if (sv != null)
+      out.push(tileHTML((pr.surNpv == null && pr.surRos != null) ? "Surplus (rest of season)" : "Surplus NPV",
+        money(sv), sv >= 0 ? "proj-pos" : "proj-neg", { gl: "contract_surplus" }));
+    const h = sk.hem, d = sk.def, s = (p.isPit || p.twoWay) ? pitchSkill(p) : null;
+    const pitIdx = () => {
+      if (!s) return "";
+      if (s.kind === "rel")
+        return s.remPlus != null ? tileHTML("REM+", esc(String(s.remPlus)), bandCls(s.remPlus, "run"), { gl: "rem_plus", sub: s.rivPlus != null ? `RIV+ ${esc(String(s.rivPlus))}` : "" }) : "";
+      return s.semPlus != null ? tileHTML("SEM+", esc(String(s.semPlus)), bandCls(s.semPlus, "run"), { gl: "sem_plus", sub: s.semPlus3yr != null ? `3yr ${esc(String(s.semPlus3yr))}` : "" }) : "";
+    };
+    const seasonWar = () => {
+      const ss = warSeasons(p), last = ss[ss.length - 1];
+      return last ? tileHTML(`${last.y} WAR`, fmtWar(warTot(last)), "", { gl: "ewar" }) : "";
+    };
+    if (p.isPit && !p.twoWay) {
+      out.push(pitIdx());
+      out.push((s && s.warIpPlus != null)
+        ? tileHTML("WAR/IP+", esc(String(s.warIpPlus)), bandCls(s.warIpPlus, "z"), { gl: s.kind === "rel" ? "war_ip_plus_rp" : "war_ip_plus_sp", sub: s.warIpPlusPct != null ? `p${s.warIpPlusPct}` : "" })
+        : seasonWar());
+    } else {
+      if (h && h.hemPlus != null)
+        out.push(tileHTML("HEM+", esc(String(h.hemPlus)), bandCls(h.hemPlus, "ratio"), { gl: "hem_plus", sub: h.hemPlus3yr != null ? `3yr ${esc(String(h.hemPlus3yr))}` : "" }));
+      if (p.twoWay) out.push(pitIdx() || seasonWar());
+      else if (d && d.demPlus != null)
+        out.push(tileHTML("DEM+", esc(String(d.demPlus)), bandCls(d.demPlus, "z"), { gl: "dem_plus", sub: d.fldTotal != null ? `${signed(d.fldTotal, 1)} fielding runs` : "" }));
+      else out.push(seasonWar());
+    }
+    return out.filter(Boolean).slice(0, 4).join("");
+  }
+
   // ---- bat-speed change -----------------------------------------------------
   // MLB bat tracking starts in 2024, so a year-over-year Swing+ delta exists ONLY
   // for hitters with a scored season on BOTH sides of the latest pair. That is a
@@ -1639,7 +2145,7 @@
   // validated predictor of anything. Nothing here claims a decline forecasts
   // decline; it says this season's swing is in the bottom tenth of observed
   // year-over-year changes.
-  function ensureSwingDelta(key) {
+  function ensureSwingDelta() {
     if (SWINGD || SWINGD_LOADING) return;
     SWINGD_LOADING = true;
     fetch("/data/swing_delta.json", { cache: "no-cache" })
@@ -1647,11 +2153,11 @@
       .then(d => {
         SWINGD = d || { players: {} };
         SWINGD_LOADING = false;
-        if (state.player === key) renderPlayer(key);
+        const cur = currentCard();
+        if (cur && (!cur.isPit || cur.twoWay)) patchSlot("batspeed", state.player, batSpeedChip(cur));
       })
       .catch(() => { SWINGD = { players: {} }; SWINGD_LOADING = false; });
   }
-
   function batSpeedChip(p) {
     if (p.isPit && !p.twoWay) return "";           // bat tracking is a hitter read
     if (!SWINGD || !SWINGD.players) return "";
@@ -1689,7 +2195,7 @@
     return wrap(alert ? "is-alert" : "", body, title);
   }
 
-  function ensureFielding(key) {
+  function ensureFielding() {
     if (FIELDING || FIELDING_LOADING) return;
     FIELDING_LOADING = true;
     fetch("/data/mlb_fielding_positions.json", { cache: "no-cache" })
@@ -1697,104 +2203,9 @@
       .then(d => {
         FIELDING = d || {};
         FIELDING_LOADING = false;
-        if (state.player === key) renderPlayer(key);
+        if (state.player) patchSlot("usage", state.player, positionGamesSummary(state.player));
       })
       .catch(() => { FIELDING = { players: {} }; FIELDING_LOADING = false; });
-  }
-  // Live season pitching from the /mlbstats/ leaderboards (REM+ / RIV+ for
-  // relievers, SEM+ for starters), joined by MLBAM. Lazy-loaded once and cached,
-  // then the player page re-renders (same pattern as ensureFielding). This rolls
-  // the current-season pitching skill/impact ratings into the MLB player card.
-  function ensurePitchingStats(key) {
-    if (PITCHLB || PITCHLB_LOADING) return;
-    PITCHLB_LOADING = true;
-    const byMlbam = {};
-    const grab = (url, kind) => fetch(url, { cache: "no-cache" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        const rows = (d && (d.relievers || d.starters)) || [];
-        const season = d && d.season;
-        rows.forEach(row => { if (row.mlbam != null) byMlbam[row.mlbam] = { kind, season, row }; });
-      })
-      .catch(() => {});
-    Promise.all([
-      grab("/data/bullpen_leaderboards.json", "rel"),
-      grab("/data/starter_leaderboards.json", "sp"),
-    ]).then(() => {
-      PITCHLB = { byMlbam };
-      PITCHLB_LOADING = false;
-      if (state.player === key) renderPlayer(key);
-    });
-  }
-  function pitchingStatsBlock(p) {
-    if (!p || p.mlbam == null) return "";
-    // Prefer the baked skills block (mlb_player_export); fall back to the
-    // client-fetched leaderboard row for payloads generated before it was baked.
-    let kind, season, role, ip, remPlus, rivPlus, remPlus3yr, semPlus, semPlus3yr;
-    let xremPlus, xsemPlus, warIpPlus, warIpPlusAdj, warIpPlusPct, gmli, saves, holds;
-    if (p.skills && p.skills.pitch) {
-      const s = p.skills.pitch;
-      kind = s.kind; season = s.season; role = s.role; ip = s.ip;
-      remPlus = s.remPlus; rivPlus = s.rivPlus; remPlus3yr = s.remPlus3yr;
-      semPlus = s.semPlus; semPlus3yr = s.semPlus3yr;
-      xremPlus = s.xremPlus; xsemPlus = s.xsemPlus;
-      warIpPlus = s.warIpPlus; warIpPlusAdj = s.warIpPlusAdj;
-      warIpPlusPct = s.warIpPlusPct; gmli = s.gmli;
-      saves = s.saves; holds = s.holds;
-    } else if (PITCHLB && PITCHLB.byMlbam && PITCHLB.byMlbam[p.mlbam]) {
-      const hit = PITCHLB.byMlbam[p.mlbam], r = hit.row;
-      kind = hit.kind; season = hit.season; role = r.role; ip = r.ip;
-      remPlus = r.rem_plus; rivPlus = r.riv_plus; remPlus3yr = r.rem_plus_3yr;
-      semPlus = r.sem_plus; semPlus3yr = r.sem_plus_3yr;
-      xremPlus = r.xrem_plus; xsemPlus = r.xsem_plus;
-      warIpPlus = r.war_ip_plus; warIpPlusAdj = r.war_ip_plus_adj;
-      warIpPlusPct = r.war_ip_plus_pct; gmli = r.gmli;
-      saves = r.saves; holds = r.holds;
-    } else return "";
-    const plus = (label, val, hi) => (val == null ? "" :
-      `<div class="mlbp-tile"><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val ${val >= (hi || 105) ? "proj-pos" : val <= (200 - (hi || 105)) ? "proj-neg" : ""}">${val}</span></div>`);
-    // WAR/IP+ is 100 + 10z, so it bands at 80/120 (two pool sigma) rather than the
-    // 105/95 the ratio-scale REM+/SEM+ family uses. Separate helper so the two
-    // rulers cannot drift into each other.
-    const zplus = (label, val, title) => (val == null ? "" :
-      `<div class="mlbp-tile"${title ? ` title="${esc(title)}"` : ""}><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val ${val >= 120 ? "proj-pos" : val <= 80 ? "proj-neg" : ""}">${val}</span></div>`);
-    const raw = (label, val, title) => (val == null ? "" :
-      `<div class="mlbp-tile"${title ? ` title="${esc(title)}"` : ""}><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val">${val}</span></div>`);
-    const WAR_IP_TIP = "Pitching eWAR (FIP re-priced within role) per inning, indexed so 100 is average and every TEN points is one standard deviation of the pool. Anchored on this pitcher's own role pool, so a starter's value and a reliever's are not comparable.";
-    let tiles = "", n = "";
-    if (kind === "rel") {
-      tiles = plus("REM+", remPlus) + plus("RIV+", rivPlus)
-        + (remPlus3yr != null ? plus("REM+ 3yr", remPlus3yr) : "")
-        + plus("xREM+", xremPlus)
-        + zplus("WAR/IP+", warIpPlus, WAR_IP_TIP + (warIpPlusPct != null ? ` Percentile: ${warIpPlusPct}.` : ""))
-        + zplus("WAR/IP+ adj", warIpPlusAdj, "The same index regressed toward the pool rate by innings, so a short hot stretch does not outrank a full season. Relief innings totals are small enough that this matters most here.")
-        + raw("gmLI", gmli == null ? null : gmli.toFixed(2), "Average leverage index when he ENTERS a game: how big the moments are that his manager trusts him with. 1.00 is a neutral spot.");
-      n = `${role || "reliever"}${ip != null ? ` · ${ip} IP` : ""}`
-        + (saves != null || holds != null ? ` · ${saves || 0} SV / ${holds || 0} HLD` : "");
-    } else {
-      tiles = plus("SEM+", semPlus) + (semPlus3yr != null ? plus("SEM+ 3yr", semPlus3yr) : "")
-        + plus("xSEM+", xsemPlus)
-        + zplus("WAR/IP+", warIpPlus, WAR_IP_TIP + (warIpPlusPct != null ? ` Percentile: ${warIpPlusPct}.` : ""))
-        + zplus("WAR/IP+ adj", warIpPlusAdj, "The same index regressed toward the pool rate by innings, so a short hot stretch does not outrank a full season.");
-      n = `${role || "starter"}${ip != null ? ` · ${ip} IP` : ""}`;
-    }
-    // Leverage: descriptive game-context, kept in its own line rather than mixed
-    // into the plus tiles above, because none of it is on a plus scale.
-    const L = (p.skills && p.skills.lev) || null;
-    if (L && (L.wpa != null || L.clutch != null)) {
-      const bits = [];
-      if (L.wpa != null) bits.push(`WPA ${L.wpa > 0 ? "+" : ""}${L.wpa.toFixed(2)}`);
-      if (L.wpaLi != null) bits.push(`WPA/LI ${L.wpaLi > 0 ? "+" : ""}${L.wpaLi.toFixed(2)}`);
-      if (L.pli != null) bits.push(`pLI ${L.pli.toFixed(2)}`);
-      if (L.clutch != null) bits.push(`Clutch ${L.clutch > 0 ? "+" : ""}${L.clutch.toFixed(2)}`);
-      if (L.wpaPerStart != null) bits.push(`WPA/start ${L.wpaPerStart > 0 ? "+" : ""}${L.wpaPerStart.toFixed(3)}`);
-      if (bits.length) n += ` · ${bits.join(" · ")}`;
-    }
-    if (!tiles) return "";
-    const seasonTxt = season ? `${season} ` : "";
-    return `<div class="mlbp-section-title mlbp-subhead">Live pitching <span class="fa-sub mlbp-subhead-sub">${esc(seasonTxt)}season</span></div>
-      <div class="fa-sub mlbp-subhead-note">${esc(n)} · <a class="fa-player-link" href="/mlbstats/">open the MLB Stats leaderboards &rarr;</a></div>
-      <div class="mlbp-tiles">${tiles}</div>`;
   }
   // Consensus-FV trajectory as a tiny inline sparkline (ex-PROSPX players). The
   // arc is [[date, fv], ...] baked from the same series the PROSPX FV-history
@@ -1856,8 +2267,11 @@
         <p class="mlbp-scout-text">${esc(r.text)}${r.truncated ? "&hellip;" : ""}${p.origin && p.origin.prospx ? ` <a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(p.origin.prospx)}">full report &rarr;</a>` : ""}</p></div>`;
     }
     if (!pillsHtml && !reportHtml) return "";
-    return `<div class="mlbp-section"><div class="mlbp-section-title">Scouting <span class="fa-sub">consensus 20-80 tool grades + latest published report · via PROSPX</span></div>${pillsHtml}${reportHtml}</div>`;
+    return section("scouting", "Scouting", "consensus 20-80 tools · latest report · via PROSPX", pillsHtml + reportHtml);
   }
+  // Games by position from data/mlb_fielding_positions.json, stamped with the
+  // file's own date: the season label alone would read as current when the
+  // file is not.
   function positionGamesSummary(key) {
     const entry = FIELDING && FIELDING.players && FIELDING.players[key];
     const positions = entry && entry.positions;
@@ -1873,52 +2287,40 @@
       .sort((a, b) => (b.games - a.games) || (b.innings - a.innings) || a.pos.localeCompare(b.pos));
     if (!rows.length) return "";
     const season = FIELDING.season || "current";
-    return `<div class="position-usage-strip" title="${esc(String(season))} MLB games by position">
-      <span class="position-usage-label">${esc(String(season))} usage</span>
+    const asOf = FIELDING.generated_at ? String(FIELDING.generated_at).slice(0, 10) : "";
+    return `<div class="position-usage-strip">
+      <span class="position-usage-label">${esc(String(season))} games by position</span>
       ${rows.map(r => {
         const title = `${r.pos}: ${r.games} games${Number.isFinite(r.starts) ? `, ${r.starts} starts` : ""}${Number.isFinite(r.innings) ? `, ${r.innings} innings` : ""}`;
         return `<span class="position-usage-chip" title="${esc(title)}"><span>${esc(r.pos)}</span>:${esc(String(r.games))}</span>`;
       }).join("")}
+      ${asOf ? `<span class="fa-sub">as of ${esc(asOf)}</span>` : ""}
     </div>`;
   }
 
-  // Group the merged card's sections (projection + statcast + stats + contract)
-  // into a tabbed layout that mirrors the Prospect Detail Card. The section
-  // functions keep their own .mlbp-section wrappers; only non-empty panels get a
-  // tab, and the first non-empty panel is active by default. All sections stay in
-  // the DOM (hidden panels included), so their async fills still land.
-  function mlbpTabs(p, key) {
+  // Tabs are questions, not sources. Hitter: Overview, Hitting, Defense, Value,
+  // Projection & Contract, Scouting, Discussion. Pitcher: no Defense, Pitching
+  // in place of Hitting. Two-way: both, Defense only with fielded innings. A tab
+  // renders only when its panel has content (an empty async slot does not
+  // count). Every panel stays in the DOM, hidden when inactive, so async fills
+  // can land in an unopened tab. The active tab is state.ptab when that panel
+  // exists, else the first.
+  function mlbpTabs(panels, key) {
     const nonEmpty = (h) => !!(h && h.replace(/\s+/g, "").length);
-    const twoWayNote = (p.twoWay && p.proj && p.proj.warHit)
-      ? `<div class="fa-note">Two-way projection: the path above SUMS both sides per season - hitting ${p.proj.warHit.map(fmtWar).join(" / ")} + pitching ${p.proj.warPit.map(fmtWar).join(" / ")}.</div>` : "";
-    const statcast = (p.twoWay ? `<div class="mlbp-section-title mlbp-subhead">As a hitter</div>` : "")
-      + sliders(p.sc)
-      + ((p.isPit && !p.twoWay) ? arsenalTable(p.arsenal) : "")
-      + (p.twoWay ? `<div class="mlbp-section-title mlbp-subhead">As a pitcher</div>${sliders(p.scPit)}${arsenalTable(p.arsenal)}` : "");
-    const stats = positionGamesSummary(key) + pitchingStatsBlock(p) + careerTable(p)
-      + (p.twoWay && p.careerPit && p.careerPit.length ? careerTable({ ...p, career: p.careerPit, isPit: true }) : "");
-    const panels = [
-      { id: "proj", label: "Projection", html: fanChart(p) + upsidePath(p) + twoWayNote },
-      { id: "statcast", label: "Statcast", html: statcast },
-      { id: "stats", label: "Stats & Career", html: stats },
-      { id: "scouting", label: "Scouting", html: scoutingBlock(p) },
-      { id: "contract", label: "Contract & FA", html: faBlock(p) },
-    ].filter((pan) => nonEmpty(pan.html));
+    const shown = panels.filter(pan => nonEmpty(pan.content != null ? pan.content : pan.html));
     // Discussion (per-player thread). Gated on the forum layer being loaded so a
     // build without it never leaves an empty shell; the layer itself paints a
     // quiet "No comments yet" state when Supabase config is blank.
     if (window.EephusUI && typeof window.EephusUI.mountForum === "function")
-      panels.push({ id: "discussion", label: "Discussion", html: '<div id="eph-forum-mount"></div>' });
-    if (!panels.length) return "";
-    // The active/inactive read is carried by aria-selected ALONE: the strip's
-    // layout is .mlbp-tabs and the dimmed state is .mlbp-tab[aria-selected="false"]
-    // in the stylesheet. It used to be an inline opacity written here and
-    // rewritten in bindMlbpTabs, which meant the visual state and the accessible
-    // state were two facts that had to be kept in agreement by hand.
-    const strip = panels.length > 1
-      ? `<div class="mlbp-tabs" role="tablist">${panels.map((pan, i) => `<button type="button" class="chip mlbp-tab" data-mlbp-tab="${pan.id}" role="tab" aria-selected="${i === 0}">${pan.label}</button>`).join("")}</div>`
+      shown.push({ id: "discussion", label: "Discussion", html: '<div id="eph-forum-mount"></div>' });
+    if (!shown.length) return "";
+    const want = (state.ptab && PTAB_FOR === key && shown.some(pan => pan.id === state.ptab)) ? state.ptab : shown[0].id;
+    // aria-selected is the ONLY state: the stylesheet draws the selected and
+    // unselected tabs off it (.mlbp-tab[aria-selected="true"]).
+    const strip = shown.length > 1
+      ? `<div class="mlbp-tabs" role="tablist">${shown.map(pan => `<button type="button" class="chip mlbp-tab" data-mlbp-tab="${pan.id}" role="tab" aria-selected="${pan.id === want}">${pan.label}</button>`).join("")}</div>`
       : "";
-    const body = panels.map((pan, i) => `<div class="mlbp-tabpanel" data-mlbp-panel="${pan.id}"${i === 0 ? "" : " hidden"}>${pan.html}</div>`).join("");
+    const body = shown.map(pan => `<div class="mlbp-tabpanel" data-mlbp-panel="${pan.id}" role="tabpanel"${pan.id === want ? "" : " hidden"}>${pan.html}</div>`).join("");
     return strip + body;
   }
 
@@ -1936,22 +2338,45 @@
     };
     const active = root.querySelector("[data-mlbp-panel]:not([hidden])");
     if (active) maybeMountForum(active.getAttribute("data-mlbp-panel"));
-    const tabs = root.querySelectorAll("[data-mlbp-tab]");
-    if (!tabs.length) return;
-    tabs.forEach((t) => t.addEventListener("click", () => {
-      const id = t.getAttribute("data-mlbp-tab");
+    const activate = (id) => {
+      const panes = root.querySelectorAll("[data-mlbp-panel]");
+      let found = false;
+      panes.forEach((pane) => { if (pane.getAttribute("data-mlbp-panel") === id) found = true; });
+      if (!found) return false;
       root.querySelectorAll("[data-mlbp-tab]").forEach((b) => {
-        // aria-selected is the ONLY thing toggled: the stylesheet dims the
-        // unselected tabs off that attribute, so there is no second copy of the
-        // state to fall out of sync with the accessible one.
         b.setAttribute("aria-selected", b.getAttribute("data-mlbp-tab") === id ? "true" : "false");
       });
-      root.querySelectorAll("[data-mlbp-panel]").forEach((pane) => {
+      panes.forEach((pane) => {
         if (pane.getAttribute("data-mlbp-panel") === id) pane.removeAttribute("hidden");
         else pane.setAttribute("hidden", "hidden");
       });
+      // The tab is state, kept in the URL (replaceState, so no hashchange fires).
+      state.ptab = id;
+      PTAB_FOR = key;
+      syncToURL();
       maybeMountForum(id);
+      return true;
+    };
+    root.querySelectorAll("[data-mlbp-tab]").forEach((t) => t.addEventListener("click", () => {
+      activate(t.getAttribute("data-mlbp-tab"));
     }));
+    // Overview lenses open the tab that owns their number.
+    root.querySelectorAll("[data-mlbp-goto]").forEach((b) => b.addEventListener("click", () => {
+      if (!activate(b.getAttribute("data-mlbp-goto"))) return;
+      const strip = root.querySelector(".mlbp-tabs");
+      if (strip && strip.scrollIntoView) strip.scrollIntoView({ block: "nearest" });
+    }));
+  }
+
+  function pageFoot(p) {
+    const sk = p.skills || {};
+    return [
+      `${term("fa_projection_engine", "Projection engine")} proj_lgbm_v1, bands = empirical residual quantiles`,
+      "Statcast percentiles vs the season's qualified MLB pool",
+      p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)" : "",
+      p.aaaStuffPlus != null ? "aStuff+: in-house AAA pitch model, latest tracked AAA season" : "",
+      sk.def ? "Fielding, framing and positional runs: FanGraphs, via MLB StatsAPI" : "",
+    ].filter(Boolean).join(" · ");
   }
 
   function renderPlayer(key) {
@@ -1983,76 +2408,15 @@
       root.innerHTML = `<div class="state-message">No detail for "${esc(key)}". <a href="#" onclick="location.hash='';return false;">Back</a>.</div>`;
       return;
     }
-    ensureFielding(key);
-    if (!p.isPit || p.twoWay) ensureSwingDelta(key);
-    // Only client-fetch the pitching leaderboards when the skills block was not
-    // baked into the payload (older builds); the baked block renders directly.
-    if ((p.isPit || p.twoWay) && !(p.skills && p.skills.pitch)) ensurePitchingStats(key);
+    // A tab chosen on another player does not carry over.
+    if (PTAB_FOR !== key) { state.ptab = null; PTAB_FOR = key; }
+    const hitSide = !p.isPit || !!p.twoWay;
+    const pitSide = !!p.isPit || !!p.twoWay;
     // .mlbp-headshot is 96x96 (site.css), same box fa.js asks for. A 'none'
     // context returns null: no img at all rather than a known-404 request.
     const heroShot = headshotURL(p.mlbam, 96);
     const photo = heroShot
       ? `<img class="mlbp-headshot" src="${heroShot}" alt="" onerror="this.style.visibility='hidden'">` : "";
-    const tiles = [];
-    const tile = (label, val, cls, title) => tiles.push(`<div class="mlbp-tile"${title ? ` title="${esc(title)}"` : ""}><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val ${cls || ""}">${val}</span></div>`);
-    if (p.proj && p.proj.warTotal != null)
-      // Total-WAR band dropped (F-01, miscalibrated); per-year bands stay in the fan chart + upside strip.
-      tile(`${(p.proj.war || []).length}y WAR`, `${fmtWar(p.proj.warTotal)}`,
-        null, "Expected (attrition-discounted) eWAR over the projection window - the same path surplus prices. The board headline uses the if-healthy path, which reads a little higher.");
-    if (p.proj && surOf(p.proj) != null) {
-      const _pv = surOf(p.proj);
-      // Name the basis when the only priced months are the rest of this season,
-      // so a small honest number does not read as a broken one.
-      const _lbl = (p.proj.surNpv == null && p.proj.surRos != null) ? "Surplus (rest of season)" : "Surplus NPV";
-      tile(_lbl, money(_pv), _pv >= 0 ? "proj-pos" : "proj-neg");
-    }
-    // HEM+ (hitters): pure offensive-rate skill from the MLB Stats leaderboards.
-    if (p.skills && p.skills.hem && p.skills.hem.hemPlus != null) {
-      const h = p.skills.hem;
-      tile("HEM+", `${h.hemPlus}${h.hemPlus3yr != null ? `<span class="fa-band"> 3yr ${h.hemPlus3yr}</span>` : ""}`,
-        h.hemPlus >= 112 ? "proj-pos" : h.hemPlus <= 88 ? "proj-neg" : "",
-        "HEM+: a hitter's pure offensive-rate skill (100 = average qualified hitter), a sample-shrunk wOBA. From the MLB Stats hitter leaderboards.");
-      // xHEM+ and the luck gap: what the batted-ball inputs say he should have hit.
-      if (h.xhemPlus != null)
-        tile("xHEM+", `${h.xhemPlus}${h.luckGap != null ? `<span class="fa-band"> luck ${h.luckGap > 0 ? "+" : ""}${h.luckGap}</span>` : ""}`,
-          h.xhemPlus >= 112 ? "proj-pos" : h.xhemPlus <= 88 ? "proj-neg" : "",
-          "xHEM+ is HEM+ rebuilt on expected (batted-ball) inputs instead of outcomes. The luck gap is HEM+ minus xHEM+: positive means results have run ahead of the contact quality behind them.");
-      // WAR/PA+ is 100 + 10z, so it bands at 80/120 (two pool sigma), NOT at the
-      // wRC+-width 88/112 the HEM+ family above uses. Do not "tidy" these to match:
-      // a 112 here is 1.2 sigma, which is a genuinely good hitter, not an average one.
-      if (h.warPaPlus != null)
-        tile("WAR/PA+", `${h.warPaPlus}${h.warPaPlusPct != null ? `<span class="fa-band"> p${h.warPaPlusPct}</span>` : ""}`,
-          h.warPaPlus >= 120 ? "proj-pos" : h.warPaPlus <= 80 ? "proj-neg" : "",
-          "Batting eWAR (equal to bWAR on the batting side) per plate appearance, indexed so 100 is average and every TEN points is one standard deviation of the hitter pool. That is a wider ruler than HEM+: a 113 is the 91st percentile, not 13 percent above average. Carries fielding, baserunning and the positional adjustment, which HEM+ leaves out. The p-number is the percentile.");
-      if (h.warPaPlusAdj != null)
-        tile("WAR/PA+ adj", `${h.warPaPlusAdj}`,
-          h.warPaPlusAdj >= 120 ? "proj-pos" : h.warPaPlusAdj <= 80 ? "proj-neg" : "",
-          "The same index with the rate regressed toward league average by playing time, so a hot short sample does not outrank a full season. A readability aid, not a forecast: neither WAR rate predicts next season better than plain season WAR.");
-    }
-    if (p.swingPlus != null) tile("Swing+", `${p.swingPlus}<span class="fa-band"> n=${p.swingN}</span>`, p.swingPlus >= 105 ? "proj-pos" : p.swingPlus <= 95 ? "proj-neg" : "");
-    // W6 display-only: per-season Swing+ trend. swingPlusSeasons rides the
-    // detail payload where scored; the guard covers older payloads and
-    // one-season hitters. * marks a sub-180-swing season (partial tracking,
-    // shrunk hard toward 100 by the model's reliability weight).
-    if (p.swingPlusSeasons) {
-      const sy = Object.keys(p.swingPlusSeasons).filter(y => (p.swingPlusSeasons[y] || {}).swing_plus != null).sort();
-      if (sy.length >= 2) {
-        const seg = sy.map(y => `${y.slice(2)}: ${Math.round(p.swingPlusSeasons[y].swing_plus)}${p.swingPlusSeasons[y].low_n ? "*" : ""}`).join(" / ");
-        const sd = p.swingPlusSeasons[sy[sy.length - 1]].swing_plus - p.swingPlusSeasons[sy[sy.length - 2]].swing_plus;
-        tile("Swing+ trend", `<span class="mlbp-swing-seasons">${seg}</span>`,
-          sd >= 5 ? "proj-pos" : sd <= -5 ? "proj-neg" : "",
-          "Per-season Swing+ (Will Cahoon's model): the same competitive-swing filter and 360-swing reliability shrink, scored season by season. * = under 180 swings that season. Display context only - the pooled Swing+ tile is the served number.");
-      }
-    }
-    if (p.aaaStuffPlus != null) tile("aStuff+", `${Math.round(p.aaaStuffPlus)}<span class="fa-band"> AAA ${p.aaaStuffSeason}</span>`, p.aaaStuffPlus >= 110 ? "proj-pos" : p.aaaStuffPlus <= 90 ? "proj-neg" : "");
-    if (p.fa && p.fa.projAav != null) tile("Proj AAV", money(p.fa.projAav));
-    // Two-way: surface the hitting vs pitching WAR split (the path above sums both).
-    if (p.twoWay && p.proj && p.proj.warHit)
-      tile("Hitting WAR", fmtWar((p.proj.warHit || []).reduce((a, b) => a + b, 0)), null,
-        "Projected eWAR from the hitting side over the window (the headline path sums both sides).");
-    if (p.twoWay && p.proj && p.proj.warPit)
-      tile("Pitching WAR", fmtWar((p.proj.warPit || []).reduce((a, b) => a + b, 0)), null,
-        "Projected eWAR from the pitching side over the window (the headline path sums both sides).");
     const contract = p.proj && p.proj.thru
       ? `signed thru ${p.proj.thru}${p.proj.aav ? ` · ${money(p.proj.aav)}/y` : ""}`
       : (p.fa ? `free agent${p.fa.type ? ` · ${esc(p.fa.type)}` : ""}` : "arb / pre-arb");
@@ -2060,31 +2424,50 @@
     // debut date - the hub strip carries the link to the full arc.
     const org = p.origin;
     const originLine = (org && org.prospx)
-      ? `<div class="fa-sub mlbp-origin-line"><a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(org.prospx)}" title="Open this player's full PROSPX prospect page (FV history, tools, eFV)">ex-PROSPX prospect &rarr;</a>${org.fvOpen != null && org.fvClose != null ? ` · FV ${org.fvOpen} &rarr; ${org.fvClose}` : ""}${org.debut ? ` · debuted ${esc(org.debut)}` : ""}${fvSparkSVG(org.fvSpark)}</div>`
+      ? `<div class="fa-sub mlbp-origin-line"><a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(org.prospx)}">ex-PROSPX prospect &rarr;</a>${org.fvOpen != null && org.fvClose != null ? ` · FV ${org.fvOpen} &rarr; ${org.fvClose}` : ""}${org.debut ? ` · debuted ${esc(org.debut)}` : ""}${fvSparkSVG(org.fvSpark)}</div>`
       : "";
+    const ov = overviewPanel(p, key);
+    const hit = hitSide ? hittingPanel(p) : null;
+    const pit = pitSide ? pitchingPanel(p) : null;
+    const panels = [
+      { id: "overview", label: "Overview", html: ov.html, content: ov.content },
+      hit ? { id: "hitting", label: "Hitting", html: hit.html, content: hit.content } : null,
+      pit ? { id: "pitching", label: "Pitching", html: pit.html, content: pit.content } : null,
+      hitSide ? { id: "defense", label: "Defense", html: defensePanel(p) } : null,
+      { id: "value", label: "Value", html: valuePanel(p) },
+      { id: "projection", label: "Projection &amp; Contract", html: projectionPanel(p) },
+      { id: "scouting", label: "Scouting", html: scoutingBlock(p) },
+    ].filter(Boolean);
     root.innerHTML = `<div class="mlbp-page">
-      <div id="mlbp-hub"></div>
+      <div class="mlbp-slot" id="mlbp-hub" data-mlbp-slot="hub"></div>
       <div class="mlbp-hero">
         ${photo}
         <div class="mlbp-hero-main">
           <div class="mlbp-name">${teamLogo(p.team)}<h2>${esc(p.name || key)}</h2></div>
           <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${esc(p.team)}` : " · FA"} · ${contract}</div>
           ${originLine}
-          <div class="mlbp-hero-actions"><button class="chip egfx-chip" id="mlbp-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && surOf(p.proj) != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}" title="Value this player in the Trade Machine - prospects (eFV surplus) and MLB players (projection surplus) on one currency">&#8646; Trade Machine</a>` : ""}</div>
+          <div class="mlbp-hero-actions"><button class="chip egfx-chip" id="mlbp-gfx" title="Generate a shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && surOf(p.proj) != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}">&#8646; Trade Machine</a>` : ""}</div>
         </div>
-        <div class="mlbp-tiles">${tiles.join("")}</div>
+        <div class="mlbp-tiles">${heroTiles(p)}</div>
       </div>
-      ${batSpeedChip(p)}
-      ${mlbpTabs(p, key)}
-      <div class="fa-note mlbp-page-foot">Projections: the eephus projection engine (proj_lgbm_v1; bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}${p.swingPlusSeasons ? " Swing+ trend is per-season with the same reliability shrink; * = under 180 swings that season." : ""}${p.aaaStuffPlus != null ? " aStuff+: in-house AAA pitch-quality model (per-pitch kinematics vs run value, latest tracked AAA season)." : ""}</div>
+      ${mlbpTabs(panels, key)}
+      <div class="fa-note mlbp-page-foot">${pageFoot(p)}</div>
     </div>`;
     bindMlbpTabs(root, p, key);
+    if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
+    // Async fills run AFTER the first paint and patch their own slot, so none
+    // of them re-renders the page under the reader.
+    ensureFielding();
+    if (hitSide) ensureSwingDelta();
+    // Only client-fetch the pitching leaderboards when the skills block was not
+    // baked into the payload (older builds); the baked block renders directly.
+    if (pitSide && !(p.skills && p.skills.pitch)) ensurePitchingStats();
     // hub strip (cross-module identity) - lazy, never blocks the paint
     if (window.EEPHUS_HUB) {
       window.EEPHUS_HUB.links().then(L => {
         const row = L && (L.byKey || {})[key];
         const el = document.getElementById("mlbp-hub");
-        if (el && row) el.innerHTML = window.EEPHUS_HUB.stripHTML(row, "mlb");
+        if (el && row && state.player === key) el.innerHTML = window.EEPHUS_HUB.stripHTML(row, "mlb");
       });
       const btn = document.getElementById("mlbp-gfx");
       if (btn) btn.onclick = () => shareMlbCard(p);

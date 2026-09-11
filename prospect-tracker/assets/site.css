@@ -3277,10 +3277,139 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .mlbp-fan-band { fill: var(--accent-cyan); opacity: .14; }
 .mlbp-fan-zero { stroke: var(--border); stroke-dasharray: 3 3; }
 .mlbp-fan-tick { fill: var(--text-tertiary); font-family: var(--font-mono); font-size: 10px; }
+/* Player-page CSS contract (2026-09-11). Every mlbp-* class projections.js and
+   fa.js emit has a rule here; test_mlbp_css_contract.py enforces it. The tab
+   strip copies the PROSPX .detail-tabs / .detail-tab.active treatment, keyed on
+   aria-selected, the only state the renderers write. The .chip compound
+   outranks `.fa-app button.chip` (0,2,1), which the buttons also match. */
+.mlbp-tabs {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  margin: 4px 0 16px; padding: 6px 8px;
+  border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);
+  position: sticky; top: 0; z-index: 30;
+  background: var(--bg-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.mlbp-tabs .chip.mlbp-tab {
+  font-family: var(--font-retro); font-size: 12px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.mlbp-tabs .chip.mlbp-tab:hover {
+  background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--text-tertiary);
+}
+.mlbp-tabs .chip.mlbp-tab[aria-selected="true"] {
+  background: var(--neon-cyan); color: var(--bg-primary); border-color: var(--neon-cyan);
+}
+.mlbp-tabs .chip.mlbp-tab:focus-visible { outline: 2px solid var(--neon-cyan); outline-offset: 2px; }
+.mlbp-tabpanel { width: 100%; min-width: 0; }
+.mlbp-tabpanel > * { min-width: 0; }
+.mlbp-slot:empty { display: none; }
+.mlbp-slot { min-width: 0; }
+.mlbp-hero-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.mlbp-origin-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 3px; }
+.mlbp-fvspark { display: inline-block; vertical-align: middle; margin-left: 6px; }
+.mlbp-page-foot { margin-top: 18px; }
+.mlbp-block-foot { margin-top: 8px; }
+.mlbp-tile-sub { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+.mlbp-tiles-left { justify-content: flex-start; }
+.mlbp-tiles-left .mlbp-tile { align-items: flex-start; }
+/* scale-family markers: which ruler banded a value (ratio 88/112 or 95/105,
+   z 80/120). Colour comes from .proj-pos / .proj-neg; these only align digits. */
+.mlbp-scale-ratio, .mlbp-scale-z { font-variant-numeric: tabular-nums; }
+.mlbp-subhead { margin-top: 18px; color: var(--text-secondary); }
+.mlbp-subhead-sub { text-transform: none; letter-spacing: 0; }
+.mlbp-subhead-note { margin: -4px 0 8px; }
+.mlbp-index-note { margin-top: 6px; }
+.mlbp-table-wrap { overflow-x: auto; }
+/* scouting */
+.mlbp-toolpills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.mlbp-toolpill {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  padding: 3px 9px; border: 1px solid var(--border); background: var(--bg-secondary);
+}
+.mlbp-toolpill-label {
+  font-family: var(--font-sans); font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.mlbp-toolpill-val { font-family: var(--font-mono); font-size: 14px; font-weight: 800; }
+.mlbp-scout-report { border-left: 3px solid var(--border); padding: 4px 0 4px 12px; }
+.mlbp-scout-src { margin-bottom: 4px; }
+.mlbp-scout-text { margin: 0; font-size: 13px; line-height: 1.55; color: var(--text-secondary); max-width: 72ch; }
+/* overview lenses + season arcs */
+.mlbp-lenses { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+.mlbp-lens, .mlbp-mini {
+  display: flex; flex-direction: column; gap: 4px; min-width: 0;
+  padding: 10px 12px; background: var(--bg-secondary); border: 1px solid var(--border);
+}
+.mlbp-lens-head {
+  align-self: flex-start; padding: 0; border: 0; background: none; cursor: pointer;
+  font-family: var(--font-sans); font-size: 10px; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.mlbp-lens-head:hover, .mlbp-lens-head:focus-visible { color: var(--neon-cyan); }
+.mlbp-lens-val { display: flex; align-items: baseline; gap: 6px; font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+.mlbp-lens-num { font-size: 22px; font-weight: 800; color: var(--text-primary); }
+.mlbp-lens-sub { font-size: 11px; color: var(--text-tertiary); }
+.mlbp-minis { display: flex; flex-wrap: wrap; gap: 8px; }
+.mlbp-mini { flex: 1 1 240px; }
+.mlbp-mini .proj-minitrend { width: 100%; height: auto; }
+/* one dot ruler per scale family: shaded neutral band, centre line at 100 */
+.mlbp-ruler { margin: 4px 0 6px; }
+.mlbp-ruler-row { display: grid; grid-template-columns: 110px 1fr 96px; gap: 12px; align-items: center; margin: 7px 0; }
+.mlbp-ruler-label { font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.mlbp-ruler-track { position: relative; height: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); }
+.mlbp-ruler-band { position: absolute; top: 0; bottom: 0; background: var(--border); }
+.mlbp-ruler-mid { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--text-tertiary); }
+.mlbp-ruler-dot {
+  position: absolute; top: 50%; width: 10px; height: 10px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  color: var(--text-secondary); background: currentColor; border: 1px solid var(--bg-primary);
+}
+.mlbp-ruler-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; text-align: right; }
+.mlbp-ruler-axis { margin: 0; }
+.mlbp-ruler-scale { position: relative; height: 12px; }
+.mlbp-ruler-scale span {
+  position: absolute; transform: translateX(-50%);
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary);
+}
+/* run bars diverging about zero (defensive runs) */
+.mlbp-runbars { margin: 4px 0 6px; }
+.mlbp-runbar { display: grid; grid-template-columns: 170px 1fr 64px; gap: 12px; align-items: center; margin: 6px 0; }
+.mlbp-runbar-label { font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.mlbp-runbar.is-sub .mlbp-runbar-label { padding-left: 14px; font-weight: 500; }
+.mlbp-runbar.is-total { border-top: 1px solid var(--border); padding-top: 6px; }
+.mlbp-runbar-track { position: relative; height: 12px; background: var(--bg-tertiary); border: 1px solid var(--border); }
+.mlbp-runbar-zero { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--text-tertiary); }
+.mlbp-runbar-fill { position: absolute; top: 0; bottom: 0; color: var(--text-tertiary); background: currentColor; }
+.mlbp-runbar-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; text-align: right; }
+/* WAR by season (served frame bars, bWAR tick) */
+.mlbp-warbars { overflow: visible; }
+.mlbp-warbar { fill: var(--accent-cyan); }
+.mlbp-warbar-b { fill: var(--accent-gold); }
+.mlbp-warbar-ref { stroke: var(--text-primary); stroke-width: 2; }
+.mlbp-warbar-val { fill: var(--text-secondary); font-family: var(--font-mono); font-size: 10px; font-weight: 700; }
+.mlbp-warbar-zero { stroke: var(--text-tertiary); stroke-width: 1; }
+.mlbp-legend { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 6px; }
+.mlbp-legend-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: middle; background: var(--accent-cyan); }
+.mlbp-legend-swatch.mlbp-legend-b { background: var(--accent-gold); }
+/* Luck (wOBA - xwOBA): a neutral chip, off the percentile colour scale */
+.mlbp-luck {
+  display: inline-flex; align-items: baseline; gap: 8px; margin-top: 8px;
+  padding: 3px 8px; border: 1px solid var(--border); font-size: 11px; color: var(--text-tertiary);
+}
+.mlbp-luck-label { font-weight: 600; }
+.mlbp-luck-val { font-family: var(--font-mono); font-weight: 700; color: var(--text-secondary); }
 @media (max-width: 720px) {
   .mlbp-grid { grid-template-columns: 1fr 1fr; }
   .mlbp-slider { grid-template-columns: 96px 1fr 70px; }
   .mlbp-tiles { justify-content: flex-start; }
+  .mlbp-tabs { flex-wrap: nowrap; overflow-x: auto; }
+  .mlbp-tabs .chip.mlbp-tab { flex: none; }
+  .mlbp-ruler-row { grid-template-columns: 84px 1fr 72px; gap: 8px; }
+  .mlbp-runbar { grid-template-columns: 112px 1fr 56px; gap: 8px; }
 }
 
 /* ---- player hub strip: one player, every module ---- */

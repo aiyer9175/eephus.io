@@ -33,6 +33,9 @@ Will Cahoon's model via data/swing_plus.json).
   AAA STUFF+ joined from data/stuff_plus_aaa.json for ex-PROSPX
              pitchers (the in-house pitch-quality model; origin gate
              keeps vets' rehab-stint AAA pitches off their pages).
+  SKILLS     the /mlbstats/ boards joined by mlbam (_skill_index): HEM+,
+             REM+/RIV+/SEM+, leverage (skills.lev) and the Defense board's
+             DEM+ with published defensive runs (skills.def).
 
 Artifact: data/mlb_player_detail.json (single sidecar, lazy-fetched by
 assets/projections.js on first player view). Wired into run_monthly
@@ -416,8 +419,9 @@ def _record_skill_index_outage(missing: list[str], n_joined: int) -> None:
     The join is silent by construction: every consumer of this index reads it
     with `.get()`, so a leaderboard that failed to load costs the HEM+/REM+/
     SEM+/leverage tiles on EVERY MLB player card and produces a card payload
-    that is structurally perfect. Nothing else in the pipeline reads these four
-    files, so without this row there is no other place the outage shows up.
+    that is structurally perfect. Nothing else in the pipeline reads these
+    files back at bake time, so without this row there is no other place the
+    outage shows up.
 
     Filed through bullpen_export.record_ingest rather than importing
     run_monthly directly: under the deploy launch shape (`python
@@ -438,10 +442,15 @@ def _record_skill_index_outage(missing: list[str], n_joined: int) -> None:
 
 
 def _skill_index() -> dict[int, dict]:
-    """{mlbam: {"hem": {...} | "pitch": {...}}} from the /mlbstats/ leaderboards
-    (hitter HEM+, reliever REM+/RIV+, starter SEM+), joined by MLBAM. Baked onto
-    the card so it no longer client-fetches the whole leaderboard just to show a
-    few tiles. Relievers take priority over starters for the rare swingman."""
+    """{mlbam: {"hem" | "pitch" | "lev" | "def": {...}}} from the /mlbstats/
+    leaderboards (hitter HEM+, reliever REM+/RIV+, starter SEM+, leverage, and
+    the Defense board), joined by MLBAM. Baked onto the card so it no longer
+    client-fetches the whole leaderboard just to show a few tiles. Relievers
+    take priority over starters for the rare swingman.
+
+    "lev" is stored PER SIDE ({"bat": {...}, "sp": {...}}): one merged dict let
+    a player on both boards have the starter row's None pLI and Clutch overwrite
+    the batter row's values. _card_skills hands each card the side it renders."""
     out: dict[int, dict] = {}
     unreadable: list[str] = []
 
@@ -462,12 +471,14 @@ def _skill_index() -> dict[int, dict]:
             return None
 
     hd = _load("hitter_leaderboards.json") or {}
+    h_season = hd.get("season")
     for r in hd.get("hitters") or []:
         try:
             mid = int(r.get("mlbam"))
         except (TypeError, ValueError):
             continue
         out.setdefault(mid, {})["hem"] = {
+            "season": h_season,
             "hemPlus": r.get("hem_plus"), "hemPlus3yr": r.get("hem_plus_3yr"),
             "xhemPlus": r.get("xhem_plus"), "tier": r.get("tier"),
             "qualified": bool(r.get("qualified")), "luckGap": r.get("luck_gap"),
@@ -533,19 +544,73 @@ def _skill_index() -> dict[int, dict]:
     # skill index, and bundling it into "hem" would invite a renderer to band it on
     # a plus scale it does not share.
     ld = _load("leverage_leaderboards.json") or {}
+    l_season = ld.get("season")
     for grp, key in (("batters", "bat"), ("starters", "sp")):
         for r in ld.get(grp) or []:
             try:
                 mid = int(r.get("mlbam"))
             except (TypeError, ValueError):
                 continue
-            out.setdefault(mid, {}).setdefault("lev", {}).update({
-                "kind": key, "wpa": r.get("wpa"), "wpaLi": r.get("wpa_li"),
-                "pli": r.get("pli"), "clutch": r.get("clutch"),
-                "wpaPerStart": r.get("wpa_per_start")})
+            blk = {"kind": key, "season": l_season,
+                   "wpa": r.get("wpa"), "wpaLi": r.get("wpa_li"),
+                   "pli": r.get("pli"), "clutch": r.get("clutch"),
+                   "wpaPerStart": r.get("wpa_per_start")}
+            out.setdefault(mid, {}).setdefault("lev", {})[key] = {
+                k: v for k, v in blk.items() if v is not None}
+
+    # Defense block (fielders), from the Defense board. Its own key, never folded
+    # into "hem" or "pitch": DEM+ is 100 + 10z (the WAR/PA+ ruler, bands 80/120),
+    # not the ratio ruler those blocks band on, and the run columns are
+    # FanGraphs' published values carried verbatim. Only the columns the card
+    # renders ride along; the board's lab columns (shrunk rate, reliability,
+    # HEM+ join, 3-year lab output) stay on /mlbstats/.
+    dd = _load("defense_leaderboards.json") or {}
+    d_season = dd.get("season")
+    for r in dd.get("fielders") or []:
+        try:
+            mid = int(r.get("mlbam"))
+        except (TypeError, ValueError):
+            continue
+        blk = {"season": d_season, "pos": r.get("pos"), "inn": r.get("inn"),
+               "posInn": r.get("pos_inn") or None,
+               "qualified": bool(r.get("qualified")),
+               "demPlus": r.get("dem_plus"), "demPlusPct": r.get("dem_plus_pct"),
+               "demPlusPosPct": r.get("dem_plus_pos_pct"),
+               "fldTotal": r.get("fld_total"), "frmRuns": r.get("frm_runs"),
+               "posRuns": r.get("pos_runs"), "defRuns": r.get("def_runs")}
+        out.setdefault(mid, {})["def"] = {k: v for k, v in blk.items() if v is not None}
     if unreadable:
         _record_skill_index_outage(unreadable, len(out))
     return out
+
+
+def _card_skills(sk: dict | None, is_pit: bool, two_way: bool) -> dict:
+    """The skill blocks one card carries, chosen by the side the card renders.
+
+    hem and def are hitter-side, pitch is pitcher-side, and a two-way card takes
+    both. lev arrives per side from _skill_index: a hitter card gets the batter
+    row, a pitcher card the starter row, and a two-way card the batter row as
+    lev plus the starter row as levPit, so neither side's WPA stands in for the
+    other's."""
+    if not sk:
+        return {}
+    hit_side = (not is_pit) or two_way
+    pit_side = is_pit or two_way
+    block: dict = {}
+    if sk.get("hem") and hit_side:
+        block["hem"] = sk["hem"]
+    if sk.get("pitch") and pit_side:
+        block["pitch"] = sk["pitch"]
+    if sk.get("def") and hit_side:
+        block["def"] = sk["def"]
+    lev = sk.get("lev") or {}
+    if hit_side and lev.get("bat"):
+        block["lev"] = lev["bat"]
+        if two_way and lev.get("sp"):
+            block["levPit"] = lev["sp"]
+    elif pit_side and lev.get("sp"):
+        block["lev"] = lev["sp"]
+    return block
 
 
 def build_payload() -> dict:
@@ -659,17 +724,13 @@ def build_payload() -> dict:
                     sc_block["tools"] = tools
                 p["scout"] = sc_block
         # Skill ratings from the MLB Stats leaderboards (HEM+ for hitters,
-        # REM+/RIV+/SEM+ for pitchers), baked so the card stops client-fetching
-        # whole leaderboards for a few tiles.
-        sk = skills_by_mlbam.get(int(mlbam))
-        if sk:
-            block = {}
-            if sk.get("hem") and not p["isPit"]:
-                block["hem"] = sk["hem"]
-            if sk.get("pitch") and (p["isPit"] or p.get("twoWay")):
-                block["pitch"] = sk["pitch"]
-            if block:
-                p["skills"] = block
+        # REM+/RIV+/SEM+ for pitchers, leverage, DEM+ and published defensive
+        # runs for fielders), baked so the card stops client-fetching whole
+        # leaderboards for a few tiles.
+        block = _card_skills(skills_by_mlbam.get(int(mlbam)),
+                             bool(p["isPit"]), bool(p.get("twoWay")))
+        if block:
+            p["skills"] = block
         p["career"] = _career_rows(int(mlbam), p["isPit"], war_by, war_bwar_by)
         n_car += 1 if p["career"] else 0
         sc = _statcast_block(int(mlbam), p["isPit"], year)
@@ -714,6 +775,13 @@ def build_payload() -> dict:
                      "aaa_stuff_plus": sum(1 for p in players.values()
                                            if p.get("aaaStuffPlus") is not None),
                      "skills": sum(1 for p in players.values() if p.get("skills")),
+                     # Per-block counts, so a served-artifact test can tell a
+                     # payload baked before these blocks existed (key absent)
+                     # from one whose join came back empty (key present, 0).
+                     "lev": sum(1 for p in players.values()
+                                if (p.get("skills") or {}).get("lev")),
+                     "def": sum(1 for p in players.values()
+                                if (p.get("skills") or {}).get("def")),
                      "scout": sum(1 for p in players.values() if p.get("scout"))},
         "notes": [
             "career: MLB season lines (StatsAPI) + per-season WAR on the war_source default provider (eWAR v2: FIP-repriced pitching within role; batting side equal to bWAR until the SDR defense drop); war_bwar = the bWAR input where it differs at 1dp, absent means equal",
@@ -721,6 +789,8 @@ def build_payload() -> dict:
             "swing_plus: Will Cahoon's model, MLB bat tracking 2024+ only; swingPlusSeasons = per-season slices (low_n under 180 swings)",
             "aaa_stuff_plus: in-house AAA pitch-quality model (stuff_plus_aaa.py), ex-PROSPX pitchers' latest tracked AAA season",
             "skills: HEM+ (hitters), REM+/RIV+/SEM+ (pitchers) from the MLB Stats leaderboards, joined by MLBAM",
+            "skills.lev: WPA, WPA/LI, pLI, Clutch (batters) or WPA, WPA/LI, WPA/start (starters) from leverage_leaderboards.json, the side the card renders; two-way cards carry the pitching side as levPit",
+            "skills.def: DEM+ (100 + 10z) and FanGraphs' published fielding, framing, positional and Def runs from defense_leaderboards.json, fielders only",
             "scout: latest published report blurb (capped) + consensus tool grades, ex-PROSPX players only",
             "origin.fvSpark: consensus-FV arc [[date, fv], ...] for ex-PROSPX players",
             "fa fields attach for current class members; verdict/dealPlus from the gate-validated market model",
