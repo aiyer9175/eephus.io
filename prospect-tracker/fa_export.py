@@ -52,8 +52,8 @@ def _clean(d: dict) -> dict:
     return {k: v for k, v in d.items() if v is not None and v != [] and v != {}}
 
 
-TWO_WAY_NOTE = ("Two-way profile - the market model prices one profile only, "
-                "so the predicted contract is a FLOOR, not a point estimate.")
+TWO_WAY_NOTE = ("Two-way profile. The market model prices one side only, so the "
+                "predicted contract is a floor.")
 
 
 def _compact_fit(f: dict, with_org: bool = True) -> dict:
@@ -289,19 +289,17 @@ def _record_arc_outage(n_keys: int, n_loaded: int) -> None:
 # defect, and it was invisible while all three shared a label.
 NO_PROJ_REASONS = {
     fa_ident.NO_MLB_RECORD:
-        "no Baseball-Reference major-league record at all, so there is no "
-        "history to project from. Common and correct for a KBO/NPB entrant "
-        "who has not played affiliated ball.",
+        "no Baseball-Reference major-league record, so no history to project "
+        "from. Expected for a KBO/NPB entrant with no affiliated ball.",
     fa_ident.NO_RECORD_IN_WINDOW:
         "has a Baseball-Reference career, but no major-league season in "
-        "{y0}-{y1}, so there is nothing recent enough to project from.",
+        "{y0}-{y1}, so nothing recent to project from.",
     fa_ident.IDENTITY_AMBIGUOUS:
         "more than one Baseball-Reference player of this name was active in "
-        "{y0}-{y1}, so the identity is not decidable and this site will not "
-        "guess which career to attach.",
+        "{y0}-{y1}, so no career is attached.",
     "no_recent_seasons":
-        "identified, but no major-league season inside the {y0}-{y1} "
-        "projection window, so there is nothing recent to project from.",
+        "identified, but no major-league season in the {y0}-{y1} projection "
+        "window.",
     "projection_unavailable":
         "the projection engine returned no WAR path for the seasons on file.",
 }
@@ -1148,6 +1146,53 @@ def _qo_tax_block(class_year: int) -> dict:
     return out
 
 
+# J4: the before/after, as a public receipt rather than prose. Numbers from the
+# four-arm attribution run, same rows both sides. The disclosure sentences in
+# _war_input_divergence read their figures from these rows.
+_DEF_PIN_ROWS = (
+    {"metric": "AAV", "before": 3.135, "after": 2.909,
+     "unit": "$M mean absolute error", "better": "lower"},
+    {"metric": "Guarantee", "before": 10.207, "after": 9.690,
+     "unit": "$M mean absolute error", "better": "lower"},
+    {"metric": "Mega deals", "before": 86.065, "after": 79.814,
+     "unit": "$M mean absolute error", "better": "lower"},
+    {"metric": "Length", "before": 0.429, "after": 0.433,
+     "unit": "years mean absolute error", "better": "lower"},
+)
+
+
+def _war_input_divergence() -> dict:
+    """DISCLOSURE, required by the owner decision that created the pin
+    (2026-08-06). FA pricing deliberately reads a DIFFERENT WAR than
+    /projections/ does for the same player. A reader who finds two figures
+    and no explanation has found a bug even when both numbers are right, so
+    the divergence ships with the numbers rather than living in a commit
+    message."""
+    rows = [dict(r) for r in _DEF_PIN_ROWS]
+    by = {r["metric"]: r for r in rows}
+    aav, length = by["AAV"], by["Length"]
+    return {
+        "diverges": bool(not fm.FA_PRICING_USE_DEF),
+        "pinned_off": "F-DEF, the fitted defensive and positional column",
+        "why": ("F-DEF wins the WAR projection gate and loses the money gate. "
+                f"Dropped from pricing only: AAV error {aav['before']:.3f} to "
+                f"{aav['after']:.3f} (about 2.5x the smallest resolvable "
+                "difference), edge over baseline 0.224 to 0.340, guarantee "
+                "and mega-deal error also lower."),
+        "consequence": ("FA prices here use a WAR projection without defense. "
+                        "MLB Projections includes it, so the two can show "
+                        "different WAR for one player."),
+        "measured": "docs/fa-gate2-attribution-2026-08-06.md",
+        "before_after": {
+            "shipped": "2026-08-06",
+            "change": "F-DEF removed from free agent pricing only",
+            "rows": rows,
+            "note": (f"Length got worse ({length['before']:.3f} to "
+                     f"{length['after']:.3f} years) and is listed anyway."),
+        },
+    }
+
+
 def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
     def _gate(path: str):
         try:
@@ -1213,49 +1258,7 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
         "dpw_series": dpw_series,
         "gate1": _gate("fa_gate1_eval.json"),
         "gate2": _gate("fa_gate2_eval.json"),
-        # DISCLOSURE, required by the owner decision that created the pin
-        # (2026-08-06). FA pricing deliberately reads a DIFFERENT WAR than
-        # /projections/ does for the same player. A reader who finds two figures
-        # and no explanation has found a bug even when both numbers are right,
-        # so the divergence ships with the numbers rather than living in a
-        # commit message.
-        "war_input_divergence": {
-            "diverges": bool(not fm.FA_PRICING_USE_DEF),
-            "pinned_off": "F-DEF, the fitted defensive and positional column",
-            "why": ("F-DEF wins the WAR projection gate and loses the money "
-                    "gate. Dropping it from pricing only takes AAV error from "
-                    "3.135 to 2.909 (about 2.5 times the smallest difference "
-                    "this test can resolve) and widens the model's edge over "
-                    "its baseline from 0.224 to 0.340. It also improves the "
-                    "guarantee and the mega-deal error."),
-            "consequence": ("Free agent prices on this page are built on a WAR "
-                            "projection that excludes defense. The MLB "
-                            "Projections module includes it, so the two can "
-                            "show different WAR for the same player. Both are "
-                            "doing the job they were measured for."),
-            "measured": "docs/fa-gate2-attribution-2026-08-06.md",
-            # J4: the before/after, as a public receipt rather than prose. The
-            # receipts culture is the point of this panel, and a change that
-            # improved accuracy should be as visible as the errors above it.
-            # Numbers from the four-arm attribution run, same rows both sides.
-            "before_after": {
-                "shipped": "2026-08-06",
-                "change": "F-DEF removed from free agent pricing only",
-                "rows": [
-                    {"metric": "AAV", "before": 3.135, "after": 2.909,
-                     "unit": "$M mean absolute error", "better": "lower"},
-                    {"metric": "Guarantee", "before": 10.207, "after": 9.690,
-                     "unit": "$M mean absolute error", "better": "lower"},
-                    {"metric": "Mega deals", "before": 86.065, "after": 79.814,
-                     "unit": "$M mean absolute error", "better": "lower"},
-                    {"metric": "Length", "before": 0.429, "after": 0.433,
-                     "unit": "years mean absolute error", "better": "lower"},
-                ],
-                "note": ("Length got slightly worse and is shown anyway. A "
-                         "before and after that only lists the wins is an "
-                         "advertisement, not a receipt."),
-            },
-        },
+        "war_input_divergence": _war_input_divergence(),
         "park_factors": fa_fit.park_factors(class_year - 1),
         # Two SIBLING blocks (2026-09-11, docs/diamond-betting.md section 5i).
         # `park_factors` above is untouched, so every consumer that reads it

@@ -217,6 +217,7 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             "w": wars,
         })
     rows.sort(key=lambda r: -(r.get("tot") or 0))
+    carry_from = 2027
     return {
         "model": model_doc.get("model", "arb_award_v1"),
         "generated_at": date.today().isoformat(),
@@ -236,11 +237,10 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
         "rules": {
             "regime": "cba_2022",
             "expires": CBA_EXPIRES,
-            "carry_forward_from": 2027,
-            "note": ("Every projected season from 2027 assumes the 2022 CBA's "
-                     "arbitration structure survives unchanged. That is an "
-                     "assumption about rules that do not yet exist. It is not "
-                     "estimated from data and no interval here covers it."),
+            "carry_forward_from": carry_from,
+            "note": (f"Projected seasons from {carry_from} assume the 2022 CBA "
+                     "arbitration structure survives unchanged. Not estimated "
+                     "from data; no interval covers it."),
         },
         "dpw": dpw,
         "rows": rows,

@@ -1995,41 +1995,37 @@ def build_futures(rows: list) -> dict:
         "sims": sims,
         "clubs": clubs,
         "empty_reason": (None if clubs else
-                         "the season simulator returned no postseason block, "
-                         "which happens when the standings read is partial or "
-                         "the field is not a complete thirty-club league. A "
-                         "board of thirty nulls is worse than a board of none."),
+                         "The season simulator returned no postseason block "
+                         "(partial standings read, or not a complete "
+                         "thirty-club field), so no board of thirty nulls is "
+                         "published."),
         "no_market": {
             "captured": False,
             "what_is_missing": (
-                "no futures price has ever been captured by this platform. "
-                "There is no book number beside any of these, so there is no "
-                "edge column, no value flag and no expected return."),
+                "No futures price has been captured, so there is no book "
+                "number, edge column, value flag or expected return."),
             "what_would_have_to_happen": (
-                "an outrights capture against the odds provider, weekly, at "
-                "about twenty credits a month, which is an owner decision "
-                "because it comes out of the same 500-credit monthly tier as "
-                "the daily game odds and the props."),
+                "Capture needs a weekly outrights pull at about 20 credits a "
+                "month from the 500-credit monthly tier shared with game odds "
+                "and props, so it is an owner decision."),
             "and_then_still_not_an_edge": (
-                "a captured price would give a comparison, not a validated "
-                "one. The futures backtest has not been run, so nothing here "
-                "may be published as value until it has."),
+                "A captured price would still be unvalidated: the futures "
+                "backtest has not been run, and nothing here may be published "
+                "as value until it has."),
         },
         "why_the_price_column_is_not_called_fair": (
-            "a FAIR price asserts zero expected value, which requires the "
+            "A fair price asserts zero expected value, which requires the "
             "probability to be right. These probabilities come from a "
             "simulator with no validated forward record, so the column is the "
-            "price IMPLIED by the model's own number and is labelled that way."),
+            "price implied by the model's own probability."),
         "what_the_intervals_are": (
-            "Monte Carlo error only. They say how far the number would move if "
-            "the simulation were run again, and nothing about whether the "
-            "talent estimate underneath it is right. The second question is "
-            "much the larger one and this page does not answer it."),
+            "Intervals are Monte Carlo error only: how far the number moves "
+            "if the simulation is re-run. Error in the talent estimate "
+            "underneath it is much larger and not measured here."),
         "win_total_basis": (
-            "the win-total band is schedule noise at a fixed talent estimate. "
-            "It carries no uncertainty about the estimate itself, no in-season "
-            "drift, no injuries and no trades, so it is narrower than a real "
-            "forecast interval by an amount this page has not measured."),
+            "The win band is schedule noise at a fixed talent estimate: no "
+            "talent uncertainty, in-season drift, injuries or trades. It is "
+            "narrower than a real forecast interval by an unmeasured amount."),
     }
 
 
@@ -2423,21 +2419,18 @@ def append_futures_ledger(fut: dict, *, season: int | None = None,
             "entries_by_season": by_season,
             "first_as_of": entries[0]["as_of"] if entries else None,
             "last_as_of": entries[-1]["as_of"] if entries else None,
-            "one_entry_per_day": ("A rebuild on a date already present REPLACES that "
-                                  "date's entry rather than adding one, so a day the "
-                                  "pipeline ran four times does not outweigh a day it "
-                                  "ran once."),
+            "one_entry_per_day": ("A rebuild on a date already present replaces that "
+                                  "date's entry, so repeat runs on one day add no "
+                                  "weight."),
             "nothing_here_is_scored": (
-                "This file is a record, not a result. No entry has been graded and no "
-                "accuracy claim rests on it. Scoring needs a completed season: final "
-                "division winners, the playoff field, the bye holders, both pennants "
-                "and the World Series winner, joined back onto the entry that was live "
-                "on each date. Until a season resolves, the honest reading of this file "
-                "is its length."),
+                "No entry has been graded and no accuracy claim rests on this file. "
+                "Scoring needs a completed season (division winners, the playoff "
+                "field, bye holders, both pennants, the World Series winner) joined "
+                "to the entry live on each date."),
             "why_win_total_is_absent": (
-                "winTotal is a count, not a probability. It resolves to a number rather "
-                "than to a 0 or a 1, so it needs a different loss and it is not mixed in "
-                "with the five outright markets here."),
+                "winTotal is a count that resolves to a number rather than a 0 or 1, "
+                "so it needs a different loss and is kept out of the "
+                f"{len(LEDGER_MARKETS)} outright markets here."),
         },
         "entries": entries,
     }
@@ -2471,11 +2464,9 @@ def write_futures(rows: list) -> int:
         "n_resolved": led["_meta"]["n_resolved"],
         "first_as_of": led["_meta"]["first_as_of"],
         "markets": led["_meta"]["markets"],
-        "what_it_is": ("Every build appends the probabilities it published, one entry "
-                       "per day, so this board's forward record accrues instead of "
-                       "being overwritten. Nothing in it is scored yet: that needs a "
-                       "completed season joined back onto the entries that were live "
-                       "through it."),
+        "what_it_is": ("Each build appends its published probabilities, one entry "
+                       "per day. Nothing in it is scored yet: scoring needs a "
+                       "completed season joined to the entries live through it."),
     }
     raw = json.dumps(fut, separators=(",", ":"))
     (DATA_DIR / "futures.json").write_text(raw, encoding="utf-8")

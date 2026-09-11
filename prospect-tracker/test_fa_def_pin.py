@@ -121,6 +121,22 @@ def test_the_divergence_is_disclosed_to_readers():
         "against, or the disclosure does not help them")
 
 
+def test_the_disclosure_quotes_the_rows_it_ships_with():
+    """The why and the note quote AAV and Length figures the before/after rows
+    carry. Built from the rows, so the sentence and the table cannot drift."""
+    fa_export = pytest.importorskip("fa_export")
+    d = fa_export._war_input_divergence()
+    assert d["diverges"] is True
+    assert "Projections" in d["consequence"]
+    by = {r["metric"]: r for r in d["before_after"]["rows"]}
+    aav, length = by["AAV"], by["Length"]
+    assert f"{aav['before']:.3f}" in d["why"] and f"{aav['after']:.3f}" in d["why"]
+    note = d["before_after"]["note"]
+    assert f"{length['before']:.3f}" in note and f"{length['after']:.3f}" in note
+    assert length["after"] > length["before"], (
+        "the note says Length got worse; if a rerun fixed it, rewrite the note")
+
+
 # --- F1.5: the fits cache must notice when the data changes ----------------
 
 def test_the_fits_cache_key_carries_the_corpus_content():

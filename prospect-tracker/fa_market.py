@@ -1140,7 +1140,7 @@ def opt_out_scenarios(war_by_year: list[float], opt_out_after: int,
     full = rational_value_usd(war_by_year, class_year, dpw_usd)
     pre = rational_value_usd(war_by_year[:opt_out_after], class_year, dpw_usd)
     return {"full_term_rational_usd": full, "pre_opt_out_rational_usd": pre,
-            "note": "scenario lines — opt-out not option-priced in v1"}
+            "note": "scenario lines; opt-out not option-priced in v1"}
 
 
 _PICK_FV_CACHE: dict | None = None
