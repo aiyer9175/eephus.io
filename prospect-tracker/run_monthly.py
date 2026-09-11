@@ -2771,6 +2771,21 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 except Exception:
                     log.exception("daily: defense leaderboard refresh failed - continuing")
 
+        # --- 9e-pre-wx. Forecast weather capture (DARK, ships OFF) ---------
+        # docs/diamond-betting.md section 5h. Captures the pregame forecast for
+        # today's remaining games and tomorrow's into .cache/weather_forecasts/,
+        # one immutable snapshot a night. INERT until the owner sets
+        # betting_weather.FORECAST_CAPTURE_ENABLED and FORECAST_SOURCE: until
+        # then this step logs the arming state and makes no request. Nothing
+        # served reads the capture either way. Runs before the export so the
+        # capture timestamp precedes the night's prices. Additive; never aborts.
+        with _step("9e-pre-wx. Forecast weather capture (dark, off by default)", log):
+            try:
+                import betting_weather
+                betting_weather.run(log_fn=log.info)
+            except Exception:
+                log.exception("daily: forecast weather capture failed - continuing")
+
         # --- 9e-pre1. Betting model refit, so the validation clock TICKS ---
         # THE DEFECT THIS CLOSES (2026-08-06). Every ingredient of the honest
         # backtest was already nightly: the vintage snapshot at 9e-pre, the

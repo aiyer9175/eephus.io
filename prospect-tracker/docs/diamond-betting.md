@@ -41,6 +41,8 @@ leakage check it is held to.
 | `tools/betting_calibration.py` | The calibration ledger and `market_gate()` (section 7b) |
 | `test_leaderboard_vintages.py` | The vintage store, the strictly-before read, both modes, the three gates |
 | `test_backfill_vintages.py` | The commit-date cutoff, the named skips, first-write-wins, the arm split |
+| `betting_weather.py` | Section 5h: the pregame forecast capture (ships OFF), its reader, the literature props prior |
+| `test_betting_weather.py` | Section 5h: inert by default, the row-timestamp reader, the wind geometry, nothing served reads it |
 | `test_fixtures/odds_api_mlb_sample.json` | The only odds any test ever reads |
 
 Artifacts written:
@@ -57,6 +59,7 @@ Artifacts written:
 | `.cache/betting/completed_games.json` | Compact game results from the feed cache | on demand |
 | `.cache/leaderboard_vintages/<date>.json` | Dated team inputs, ~25 KB each, first write wins | daily |
 | `.cache/betting/market_gate_state.json` | Section 7b dwell state, one evaluation per UTC day | daily tail |
+| `.cache/weather_forecasts/<date>-<hhmm>.json` | Section 5h forecast captures, immutable; none until the owner arms the capture | daily, when armed |
 
 ---
 
@@ -1260,6 +1263,18 @@ four-week earliest admissible first look for every column in this section is
 **~2026-10-06**. A column that is null across its accrual window has not started
 its clock at all.
 
+### Correction (2026-09-11): schema 4 landed with the 2026-09-09 vintage
+
+The paragraph above is left as written. On disk, `2026-09-07.json` is the last
+schema-3 vintage, there is no `2026-09-08.json`, and the first schema-4 record is
+`2026-09-09.json` (captured 2026-09-09T19:16:44Z). So the strict four-week
+earliest first look for every column in 5d is **2026-10-07**, one day later than
+stated. Coverage on 2026-09-11, counts only and no value read: 2 schema-4
+records (2026-09-09, 2026-09-10), 60 team rows, `wx_temp_climo` and
+`wx_wind_out_climo` populated on 60 of 60, basis "32 venue(s) resolved, 0
+club(s) below the 4-game floor" on both nights. The climatology candidate is
+unchanged; the separate FORECAST candidate is section 5h.
+
 ---
 
 ## 5e. The handedness gate (pre-registered 2026-09-07, columns accruing since 2026-08-18)
@@ -1550,6 +1565,312 @@ DISQUALIFY.
 **Disqualification.** Any number relating this column, or a close variant (season
 to date, catchers included, feed-row team), to game outcomes before this section is
 committed disqualifies the candidate under 5c rule 1.
+
+## 5h. Forecast weather (pre-registered 2026-09-11; the capture ships OFF)
+
+**Written before the pipeline has captured a single forecast and before any
+forecast has been related to any game outcome**, in the discipline of 5a, 5c,
+5d and 7b. One probe request was made while scoping the source (below) to
+confirm the response shape; it returned tomorrow's weather at two parks and
+nothing about any game result. Nothing served reads anything in this section,
+and nothing served changes. This is a SEPARATE candidate from the 5d-C
+climatology candidate, with its own columns, its own store, its own gate and
+its own clock; neither one's result may be read as the other's.
+
+### The owner ask this answers
+
+2026-09-11, in his words: "Can we also make the sports betting module
+weather/ballpark aware, especially for overs/unders and player props?" It was
+asked in the same message as "most of the edge/value bets are overs", and the
+two are different questions. This section answers the weather one only.
+
+### What weather cannot explain on today's board
+
+Board facts off `data/betting.json` for the 2026-09-11 slate, a description of
+the served prices and not an outcome. Mean model fair total minus the posted
+line, by the venue's roof type:
+
+| Roof | Games | Mean fair total minus line | Positive-edge total sides | Of which overs |
+|---|---|---|---|---|
+| Open | 10 | +0.818 | 10 | 9 |
+| Retractable | 4 | +1.280 | 4 | 4 |
+| Dome | 1 | +0.100 | 1 | 0 |
+
+The lean is as large under a roof as outdoors, so it is not a weather effect
+the model is missing, and a weather term would not remove it. It is the
+board-wide level error that lane B-TOTAL-LEVEL (the 2026-09-05 master plan,
+Part 2 section 2.2) names, and that plan orders the level fix BEFORE any totals
+feature work. This section inherits that ordering as a hard rule (addition 1
+below).
+
+### Why a forecast, and why neither existing weather source is one
+
+- `gameData.weather` is the weather AT THE GAME (5d). Pricing on it reads the
+  future. It stays a contaminated screen that can only disqualify.
+- `wx_temp_climo` / `wx_wind_out_climo` (5d) are a trailing venue climatology.
+  Servable, but a climatology cannot see tonight's cold front, which is exactly
+  what the owner is asking about.
+- A FORECAST captured before first pitch is the only pregame signal that sees
+  tonight's weather without reading the future. The whole safety property is the
+  capture timestamp on the row.
+
+### The source, scoped with one probe (2026-09-11)
+
+**Open-Meteo forecast API** (`api.open-meteo.com/v1/forecast`), no key. The
+probe was one request carrying Wrigley Field and Coors Field as comma-separated
+coordinates (taken from the cached feeds), hourly `temperature_2m`,
+`relative_humidity_2m`, `surface_pressure`, `wind_speed_10m`,
+`wind_direction_10m`, `wind_gusts_10m`, `precipitation_probability`, in F, mph
+and GMT. It returned HTTP 200 and a JSON LIST of two objects in request order,
+48 hourly steps each (2026-09-11T00:00 to 2026-09-12T23:00 at
+`forecast_days=2`). Coordinates snap to the model grid: Wrigley 41.948171,
+-87.655503 came back 41.962704, -87.67416 at elevation 182 m (the feed says 595
+ft, 181 m); Coors came back at 1582 m (the feed says 5190 ft, 1582 m). One
+request covers every venue on a slate, so a night costs one call. A
+single-location request returns one object rather than a list, and the parser
+handles both.
+
+Open-Meteo sells two archive products and only one of them is honest here:
+
+- **Previous Runs API** (`previous-runs-api.open-meteo.com`): `<var>_previous_day1`
+  is the value predicted 24 hours before the valid time, up to day 7, archived
+  from January 2024 for most models (GFS 2 m temperature from March 2021). A
+  genuine forecast at a fixed lead, so it is a candidate BACKFILL (5h-C).
+- **Historical Forecast API** (`historical-forecast-api.open-meteo.com`): built by
+  stitching the first hours of each successive model run, and by the provider's
+  own description it tracks actual conditions. That is an analysis, close to
+  observed weather, and a backtest on it would bring the 5d leak back in a
+  disguised form. **It may not be used for this candidate, as a feature or as a
+  backfill.**
+
+**The licence is the reason this is an owner decision.** Open-Meteo's terms say
+the free API is for non-commercial use only, and they list "operating websites
+or apps that have subscriptions or display advertisements" as commercial. This
+site sells a subscription tier, so Open-Meteo means its commercial plan (API
+Standard, 1M calls a month; the price is shown only at checkout) and a CC BY 4.0
+attribution line on the page. The code supports the commercial endpoint through
+the `EEPHUS_OPEN_METEO_KEY` environment variable and never writes the key
+anywhere.
+
+**NWS** (`api.weather.gov`): no key, a User-Agent with contact details
+(`EEPHUS_NWS_USER_AGENT`), and its documentation says the data is "free to use
+for any purpose". US only, so Rogers Centre (TOR) has no forecast; it is a
+retractable venue, so the primary arm loses nothing. Two requests per venue
+(`/points`, then the hourly forecast), wind direction as a 16-point compass
+string, no pressure, and NO archive, so there is no backfill arm on this source.
+Its response shape is documented and was NOT probed in this lane (the probe
+budget was one call); the parser is tested on the documented shape.
+
+### Venues, coordinates, bearing and roof: already on disk
+
+`gameData.venue` in the cached feeds carries `location.defaultCoordinates`,
+`location.azimuthAngle` (the bearing from home plate to centre field) and
+`fieldInfo.roofType`, so the only new network call is the forecast itself.
+Offline read by `betting_weather.venue_table` (newest three games per club): 30
+home venues, 0 missing coordinates, 0 missing a bearing; 22 Open, 7 Retractable
+(HOU, MIA, SEA, MIL, TOR, TEX, ARI), 1 Dome (TBR). Over the 2,197 cached
+completed 2026 games whose feed resolves, 1,613 were at open-air venues, 512 at
+retractable and 72 at the dome. At the 512 retractable games the feed's at-game
+condition read "Roof Closed" 342 times, and the roof decision is not published
+before first pitch in anything this repo holds. Bearing spot check against
+known geography: Wrigley 37 and Fenway 45 (both face north-east), Coors 4,
+Oracle 85.
+
+### What is captured
+
+One row per scheduled game, averaged over `GAME_WINDOW_HOURS` (3) hours from the
+first-pitch hour:
+
+| Column | Meaning |
+|---|---|
+| `fc_temp_f` | forecast 2 m temperature |
+| `fc_wind_mph`, `fc_wind_from_deg` | forecast 10 m wind speed, and the direction it blows FROM (first hour) |
+| `fc_wind_out_mph` | signed out-to-centre component: speed times cos(toward minus bearing), toward = from + 180. Out is positive, the sign `betting_usage.WIND_OUT_COMPONENT` gives the feed's own "Out To CF". Averaged per hour as a component, so an hour out and an hour in are a zero, not a crosswind |
+| `fc_rh_pct`, `fc_pressure_hpa`, `fc_precip_prob_pct` | carried, not in the candidate |
+| `weather_applies` | True only at an open-air venue. Dome venues are never fetched; retractable venues are fetched for the secondary arm and carry False |
+| `captured_at`, `lead_hours`, `hours_used` | the safety property, on the row |
+
+The store is `.cache/weather_forecasts/<UTC date>-<HHMM>.json`, one immutable
+file per capture (a second capture in the same minute raises
+`FileExistsError`, exactly like the odds snapshots). The nightly step
+`9e-pre-wx` runs after the vintage snapshot and before the export, and captures
+today's remaining games and tomorrow's (`HORIZON_DAYS = 2`), because tomorrow's
+day games start before the next nightly run. `MIN_LEAD_HOURS = 1` is POLICY: a
+row captured later than one hour before first pitch never informs that game.
+
+Offline dry run on the 2026-09-11 schedule with the request stubbed from the
+probe response: 30 games in the two-day horizon, 1 skipped (Wrigley at 18:20Z,
+already under way at a 19:00Z capture), 29 rows, 14 venues in the one request
+(the dome not asked). A day game's only capture is the previous night's, at a
+lead of about 23 hours.
+
+### The rules: 5c verbatim, plus three additions
+
+- **Dark means dark.** No served price, slot, record row or exported edge reads
+  a forecast. `betting_weather.forecast_for_game` is the only reader. It returns
+  the newest row whose OWN `captured_at` is at least `MIN_LEAD_HOURS` before
+  first pitch (never a file name), and None otherwise: never the observed
+  weather, never the climatology, never a zero. `test_betting_weather.py` pins
+  that no served module imports it.
+- **Addition 1, ordering.** The candidate may not be measured until B-TOTAL-LEVEL
+  has either shipped or been closed, and the incumbent in 5h-A is the served
+  model as it stands on the day of the look. A weather term measured on top of the
+  board's +0.89-run mean total gap would be credited with part of the level fix,
+  because September is colder than the season the level was fitted on.
+- **Addition 2, no intercept.** Both regressors are de-meaned on the fit portion
+  and enter with no intercept, so the candidate cannot absorb a level error by
+  construction.
+- **Addition 3, what may be computed before the clock.** Coverage counts, and
+  the FORECAST FIDELITY CHECK: the captured forecast against the same game's
+  feed-reported temperature and wind out-component. It reads no score; it
+  measures the instrument (bias and mean absolute error; the slope of the feed's
+  out-component on the forecast's, which is the wind pass-through 5h-B needs;
+  and the sign agreement of the two out-components, which is the test of the
+  bearing convention). It may never be joined to runs, totals or any betting
+  row, and a fidelity result may not amend a 5h-A criterion.
+
+### 5h-A. The totals candidate
+
+**Estimand.** On the TOTAL, for 5d-C's reason: a run environment effect lands
+on the total, and a candidate that moves the moneyline but not the total is
+reporting a park proxy.
+
+**The challenger.** The incumbent's per-side lambda plus
+`b_t * (fc_temp_f - T_ref) + b_w * fc_wind_out_mph` at open-air games; zero at
+retractable and dome games. `T_ref` is the venue's own trailing-30-day
+climatology from `betting_usage.venue_climatology` at the game's date (the
+schema-4 builder, dated strictly before the game), so the term prices the
+ANOMALY that the park index, which already carries the venue's usual weather,
+cannot see. `b_t` and `b_w` are fitted by least squares on the incumbent's
+per-side residual (runs minus lambda) on the fit portion only; every other
+parameter of the incumbent is untouched, so the comparison is one term wide.
+
+**Split.** The live-capture window, from the first accrual night to the look
+date, split at its calendar midpoint: the earlier half fits, the later half
+grades. The split date is written into this section on the day of the look and
+never moved.
+
+**Criteria, both required, the 5d-C form.** (1) Paired absolute error on the
+game total (incumbent minus challenger) improves at one-sided t >= 1.645 over
+the graded open-air games. (2) Moneyline paired Brier not worse on the point
+estimate.
+
+**The contaminated leg.** The 5d observed-weather screen, the same two
+regressors built from `gameData.weather`, labelled contaminated. It can only
+DISQUALIFY: if the observed weather itself shows no effect on the total, a
+forecast of it has nothing to find.
+
+**The permuted-venue twin.** Permute the (temperature anomaly, wind
+out-component) pairs across the open-air venues playing on the same date,
+refit, and grade, 200 times with seed 20260911. The challenger's mean graded
+improvement must exceed the 95th percentile of the twin's. The twin separates
+weather at THIS park from a date-level effect: a league-wide cold night, a
+getaway-day slate, or anything else every game that night shares.
+
+**Reported whichever way it lands:** the retractable secondary arm (roof
+assumed open), n by roof type, the lead-hour distribution, and the fidelity
+check's numbers.
+
+### 5h-B. The props prior (home runs, total bases)
+
+A LITERATURE prior, never fitted here, in `betting_weather.hr_weather_prior`:
+
+| Constant | Value | Source |
+|---|---|---|
+| carry per degree F | 0.33 ft | Nathan, "Effect of Temperature on Home Run Production" (trajectory calculator, 103 mph at 28 degrees, linear over 50 to 100 F, slope 0.33143) |
+| carry per mph straight out / in | 3.2 ft / 3.4 ft | Nathan, "The Carry of a Fly Ball": 397 ft in still air, 413 ft with 5 mph out, 380 ft with 5 mph in |
+| home runs per foot of carry | ln(1.25) / 8.5 = 0.026252 per ft, log-linear | Nathan: shifting Statcast 2015-2017 fly balls past ~400 ft by 8.5 ft raised home runs about 25% |
+
+The multiplier on a batter's HR rate is `exp(0.026252 * carry_ft)` with
+`carry_ft = 0.33 * (fc_temp_f - T_ref) + (3.2 or 3.4) * (p * fc_wind_out_mph -
+wind_ref)`. Temperature alone is 0.87% per degree F, which cross-checks against
+Nathan's own "about 1%" and Callahan and Mankin (BAMS 2023), about 2% per degree
+C of daily high, 1.1% per degree F. The elasticity is local to about 8.5 ft,
+and a result beyond that carries `extrapolated: true`. The reference is the
+venue climatology, as in 5h-A.
+
+**The wind pass-through `p` is not a literature number and is not invented.**
+It is the fraction of the forecast 10 m wind that reaches the field, and the
+fidelity check (addition 3) measures it without reading a score.
+`WIND_PASS_THROUGH` is None until then and the prior's wind term is OFF; the
+measured value is written into this section before any look.
+
+**Total bases.** `1 + s * (m_HR - 1)`, with `s` the hitter's own 4 x HR / TB off
+the same rest-of-season line `props_fair_lines` prices from. A lower bound: it
+ignores extra carry on doubles and triples, and the contact effect (Rob Arthur,
+via Nathan, about +0.0001 BABIP per degree F).
+
+**Size, as arithmetic and not as a measurement.** At +10 F over the reference
+the HR multiplier is 1.0905; a 0.034 HR/PA hitter over 4.2 PA goes from a 0.13522
+to a 0.14673 chance of a home run, +0.0115, about a fifth of the 0.06 floor; at
+-10 F it is -0.0107. A 1.5 total-bases line at s = 0.34 moves by a 1.0308
+multiplier. With `p = 0.5` a 10 mph forecast wind straight out is 16 ft of
+carry and a 1.522 multiplier, flagged extrapolated, which is why the wind term
+waits for the measured `p`.
+
+**How the dark props model reads it.** `betting_props_dark`'s HR ladder gains an
+arm A4 = A3 times this multiplier on the same batter-games. It is NOT wired in
+this lane, because that module grades against outcomes whenever it runs, and
+wiring it now would measure it before its clock. **Gate:** that module's own
+rule, A4 against A3, paired Brier with the game-clustered bootstrap, the 95%
+interval wholly below zero, and log score not worse on the point estimate; the
+same permuted-venue twin; the same clock as 5h-A.
+
+### 5h-C. The backfill arm (a separate owner decision)
+
+The Previous Runs API's `_previous_day1` for every open-air and retractable
+venue over the 2026 season to date: about one request per venue with a date
+range, roughly 30 requests once. Records are counted SEPARATELY from the live
+capture, the 5a arm split. Before any backfilled row is used, the live-against-
+archive agreement check (a weather-against-weather comparison on the nights
+both exist) must hold: mean absolute temperature difference at most 3 F and
+out-component sign agreement on at least 80% of open-air rows (both POLICY). If
+approved and agreeing, 5h-A may fit on the vintage FIT half (the games before
+the 2026-08-01 split, which are fitted on and never graded) and grade on the
+vintage eval window, reported beside the live arm; the live arm governs, and a
+sign disagreement between the arms is INDETERMINATE. The archive arm's first
+look is no earlier than the live clock below, so the agreement check has four
+weeks of overlap to run on. Nothing in this lane requests the archive.
+
+### The clock
+
+It starts the first night `betting_weather.coverage()` reports an open-air row
+carrying a forecast (`clock_started`), which is the night the capture is armed
+and first runs. Two conditions, both required, before the first look: four
+weeks (5c rule 2), AND at least 400 open-air games carrying a live forecast
+across the window (POLICY: the 5d-C column covers every game, this one covers
+only captured nights, and only half the window is graded). About two and a half
+weeks of the 2026 regular season remain after 2026-09-11, at roughly 11
+open-air games a night, so a capture armed now accrues about 180 open-air games
+before the season ends. **The live arm's first look therefore falls in 2027
+unless 5h-C is approved.** That is the cost of doing this honestly, stated now
+so that nobody discovers it at the look.
+
+### What a pass would change, and the flag it would ship behind
+
+Serving needs a new flag in `betting_model.py` in the `SERVE_RUN_DISPERSION`
+idiom, default False, flipped in one commit with a `MODEL_VERSION` bump so the
+ledgers never pool two pricers. Flipping it would move `lam_home` and
+`lam_away` at every open-air game by the fitted anomaly terms, so every open-air
+fair total and total side probability moves, the moneyline and runline move
+slightly through the same two lambdas, and the Pick of the Day can change on any
+night the slot holds a total or a total newly clears the 0.06 floor. **This
+lane adds no such flag,** because a serving path for an unmeasured feature is
+exactly what 5c forbids. What this lane does add, `FORECAST_CAPTURE_ENABLED`,
+changes no served number, no side marked value and neither Model Watch slot when
+flipped: it only starts the capture and the clock.
+
+### The owner decisions this section needs
+
+1. **Arm the capture at all.** It is a new external dependency.
+2. **Which source.** Open-Meteo's commercial plan (one call a night, the best
+   shape, archived day-ahead forecasts, a CC BY 4.0 attribution line, price at
+   checkout) or NWS (free for any purpose, US only, no archive, about 28 calls
+   a night). The free Open-Meteo endpoint is not an option for a subscription
+   site under its own terms.
+3. **The 5h-C backfill.** The only route to a 2026 measurement.
+4. **Where the attribution line lives,** if Open-Meteo is chosen.
+
 
 ---
 
@@ -2732,6 +3053,10 @@ never edits `assets/eephus-account.js`.
   lineup card beats this every time.
 - No weather, no umpire, no travel, no injury news beyond what the leaderboards
   already absorb.
+  **2026-09-11:** still true of every served price. Venue weather
+  climatology accrues dark (5d), and a pregame forecast capture is authored
+  and ships OFF behind an owner decision (5h); neither reaches a price until
+  its own pre-registered gate clears.
 - 29 of 30 parks have a Savant runs index in `fa_meta.json`; the missing one
   resolves neutral at lookup rather than being invented.
 
