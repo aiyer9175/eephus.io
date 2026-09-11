@@ -3911,6 +3911,315 @@ split. The lean is DISCLOSED on every affected row and not repaired; the next
 admissible attempt is a dark run-environment feature with its own section, or more
 eval games under the same 7h criteria (no re-fit of the rule).
 
+### The one re-read, on 2026-09-28 (pre-registered 2026-09-11)
+
+**Written on 2026-09-11, in the discipline of 5a, 5c and 7f to 7h, before the first
+nightly that settles a game dated after 2026-09-10.** The date was fixed earlier that day
+by the plan (commit bfb000be, 2026-09-11 17:05 ET, section 5.1). This block stands as
+written only if it is committed before that nightly (the 2026-09-12 build). If it lands
+later, the committer changes the heading date to the commit date and adds one line
+before committing: how many nightly builds had by then settled a total dated after
+2026-09-10. Either way it is committed alone, docs only, by 2026-09-16 (plan 5.2, W0).
+It sits in 7h, directly under the 2026-09-11 result, whose last paragraph ends "(no re-fit
+of the rule).", and above the `---` before section 8.
+
+**The licence, and when it was written.** The last paragraph of 7h's result allows this
+and nothing wider: "the next admissible attempt is a dark run-environment feature with its
+own section, or more eval games under the same 7h criteria (no re-fit of the rule)." That
+sentence was written AFTER the first read printed INDETERMINATE, with passes at the 0.6
+(t 1.67) and 0.7 (t 1.73) splits. It is not in 7h's pre-registration. Open owner decision
+O23 (plan section 6) also postdates that result, and this block carries its DEFAULT: "Yes,
+once, registered before 09-27. A pass still needs the owner's flip of
+`SERVE_TOTAL_CALIBRATION`." So this second look exists because the first one passed at two
+splits of four. That is optional stopping. A PASS here is labelled "PASS at a second, post
+hoc look" wherever it is cited.
+
+**Owner answer.** If the owner answers O23 "no" before the read, a dated correction below
+cancels the re-read and 7h closes. Any other answer (another date, window, code or rule)
+is not a correction to this block. It is a new candidate under "No second re-read", and
+its section discloses both 7h reads.
+
+**Disclosed, because 5c rule 1 turns on it.** Everything the 2026-09-11 run printed is
+known:
+- the table above;
+- the observed, Poisson and mapped Over rates at each grid line on each split's eval half;
+- that the eval half after 2026-08-29 runs hotter (Over 7.5 observed 0.615).
+
+None of it chose the date, which is the day after the last regular-season game
+(2026-09-27, plan 5.1).
+
+For this block and its two reviews, three things were read and nothing was run:
+- `betting_model.py` and `leaderboard_vintages.py`, to name functions and constants;
+- one config key in the served context file (`run_dispersion_alpha`, null);
+- game DATES in the game cache (no runs).
+
+No number relating the map, the Poisson total or any close variant to a game outcome or a
+price has been computed since the 2026-09-11 run. Until the read, the calibration ledger
+and the lean check (7f) publish the served Poisson total's settled rows and its lean every
+night. That is why the date, the window, the code and the invocation are all fixed here.
+
+**What counts as a look, and what one costs.** A look is any computation, by any path,
+after the 2026-09-11 run and before the scheduled read, that does either of these:
+- (a) applies a survival map of the 7h form to a game dated after 2026-09-10 and relates
+  it to that game's runs or to a price. Any (a, b) counts: the lab pair, the served pair in
+  `total_calibration_fitted`, or any other.
+- (b) calls `total_calibration_gate`, `_total_calibration_split`, `total_level_gate`,
+  `_total_level_split`, `total_dispersion_gate` or `_total_dispersion_split` on a game list
+  that holds such a game. Test fixtures are not games.
+
+Any look is recorded here with its date and whatever it printed. A look FORFEITS the
+re-read: the scheduled read does not run, 7h closes, and no PASS can come from it.
+- **Not looks.** The nightly `build_context` (called by `run_monthly.py` at lines 2826
+  and 5664, and by `--context`) fits the served pair on the anchored fit half. It uses the
+  served coefficients, which are fitted on every cached game, new ones included, but it
+  computes no loss on a game dated on or after the cut. The 7b ledger statistic, and any
+  nightly artifact that grades the Poisson total without a map, price no map.
+- **Date guard.** A guard that refuses the lab switches before 2026-09-28 does not exist
+  (to be built if wanted, not required).
+- **Known looks.** None known when this block was written.
+
+**The window.** Every 2026 regular-season game dated on or before 2026-09-27 that is final
+in the game cache after a top-up on the read day. The top-up runs in the main tree
+(`build_game_cache(refresh=True)`) after the last game dated 2026-09-27 is final.
+- Postseason games cannot enter, because both cache doors keep game type R only
+  (`betting_model.py` lines 3129 and 3310).
+- A game dated after 2026-09-27 (a makeup) is outside the window.
+- A game with no vintage strictly before it is skipped and counted, never graded on the
+  fallback (section 6). The gate counts no skips itself, so the invocation below does.
+
+**The code and configuration, frozen at commit 37e9382d.** This block was written
+against that tree:
+- `betting_model.py`, blob 873713d0;
+- `leaderboard_vintages.py`, blob d69aa9be;
+- every other module and the tracked `data/` of that commit.
+
+Nothing written after 37e9382d reaches the read. The read runs from a detached worktree of
+37e9382d (`git worktree add --detach`) whose `prospect-tracker/.cache` is a directory
+junction to the main tree's `.cache`. The frozen code therefore reads the current game
+cache and vintage store and nothing else that moved.
+
+Why 37e9382d and not the first run's bbf00237: two commits since then (997a4b17 and
+e328f62a) added the Athletics' park behind an off flag and the schema-5 dark capture, and
+the new games are priced on vintages written by that code. The anchored reproduction below
+certifies that the two versions price the fit half alike.
+
+Every flag at 37e9382d:
+
+| Constant | Value | Path into this lab |
+|---|---|---|
+| `SERVE_TOTAL_CALIBRATION` | False | none; the lab applies its own (a, b) |
+| `SERVE_RIDGE_FIT` | False | `fit_coefficients` (OLS) |
+| `SERVE_RUN_DISPERSION` | False; context `run_dispersion_alpha` null | `_solve_diff_shrink`, `_solve_home_adj` (run_alpha None reads the key): Poisson margins |
+| `SERVE_ATH_PARK` | False | `parks_from_vintage`: the Athletics' park stays neutral on every vintage |
+| `SERVE_RUNLINE_TIE_SPLIT` | False | none; the lab passes `tie_home` |
+| `SERVE_TOTAL_LEVEL`, `SERVE_TOTAL_DISPERSION`, `SERVE_PROB_CALIBRATION` | False | frozen as is |
+| `VINTAGE_FIT_WINDOW_GROWS` | False | `_vintage_cut_index` (line 6017): holds the anchored cut |
+| `MODEL_VERSION` | `betting_runs_v1` | recorded |
+| `SERVE_PRICER` | absent at 37e9382d (to be built, plan 4.2 repair 1) | none |
+
+**Excluded by name: the owner-answered repairs of 2026-09-11.** The Athletics' park is to
+serve on the board, and the runline tie split is to be repriced there. Neither enters this
+read. The runline never reaches the lab. The park would reach both arms alike, but only
+through code written after this block.
+
+**What does not change.** All of it is as at 37e9382d:
+- **Criteria:** `TOTAL_CALIBRATION_GATE_CRITERIA`. Both checks must hold at ALL FOUR
+  splits, and a mixed grid is INDETERMINATE.
+- **Grid:** `TOTAL_LEVEL_LINES` (7.5, 8.5, 9.5, 10.5).
+- **Splits:** the anchored cut (`_vintage_cut_index`) plus `DISPERSION_SPLIT_QUANTILES`
+  (0.6, 0.7, 0.8) of the vintage-gradable dates. Each split refits the pricer on its own
+  fit half.
+- **Fit:** (a, b) by `fit_platt` on each fit half's pooled grid outcomes; a <= 0 is
+  refused.
+- **Floors:** `VINTAGE_MIN_FIT_GAMES` 100 and `VINTAGE_MIN_EVAL_GAMES` 50;
+  `VINTAGE_FIT_TARGET_GAMES` 300 and `VINTAGE_FIT_MAX_DATE_SHARE` 0.5 set the anchored cut.
+- **Test:** `_paired_delta` at `Z_95_ONE_SIDED` 1.645.
+- **Seeds:** none. Newton in `fit_platt` and an analytic t in `_paired_delta`; no
+  bootstrap, permutation or seed.
+
+The freeze is by commit, not by name. For the record, the read runs through:
+- the gate: `total_calibration_gate`, `_total_calibration_split`, `_vintage_cut_index`;
+- the rows and the incumbent: `_total_dispersion_rows`, `expected_runs`, `_total_pmf`,
+  `_pmf_over`;
+- the map: `fit_total_calibration`, `_total_cal_samples`, `_total_cal_losses`, `fit_platt`,
+  `apply_platt`, `_logit`, `_sigmoid`, `_PROB_EPS`, `_paired_delta`;
+- gradability: `_vintage_resolver`, `inputs_as_of`, `leaderboard_vintages.as_of`;
+- the window: `completed_games`, `build_game_cache`;
+- the refit: `fit_coefficients`, `_fit_tie_home`, `_solve_diff_shrink`, `_solve_home_adj`,
+  `_p_home_series`, `game_probabilities`, `_score_joint`.
+
+**Readiness, before the read.** This step runs in the worktree and relates nothing to an
+outcome or a price:
+
+```
+python -c "import betting_model as bm; g = [x for x in bm.completed_games(refresh=False) if '2026-01-01' <= (x.get('date') or '') <= '2026-09-27']; res, _ = bm._vintage_resolver(); old = [x for x in g if (x.get('date') or '') <= '2026-09-10']; new = [x for x in g if (x.get('date') or '') > '2026-09-10']; print(sum(1 for x in old if res(x)), len(new), sum(1 for x in new if res(x)))"
+```
+
+- **Old gradable games must be 853** (the first run's 305 + 548). If the count differs, an
+  input moved. The read does not run that day. The cause is found and recorded without
+  relating anything to an outcome, and the read runs once the count is 853 again, by the
+  kill date.
+- **New gradable games under 50** (`VINTAGE_MIN_EVAL_GAMES`; the 0.8 split grades only new
+  games) mean the frozen code cannot price the new games. The read does not run, and 7h
+  closes without a re-read, recorded with the cause.
+
+**The read.** This is the one command, in the worktree:
+
+```
+python -c "import json, betting_model as bm; g = [x for x in bm.completed_games(refresh=False) if '2026-01-01' <= (x.get('date') or '') <= '2026-09-27']; r = bm.total_calibration_gate(games=g, log_fn=print); r['n_window'] = len(g); r['n_skipped'] = len(g) - r.get('n_gradable', 0); r['last_window_date'] = max(x.get('date') or '' for x in g); print(json.dumps(r, indent=1, default=str))"
+```
+
+It calls the function that `--total-calibration` calls, with the window as its `games`
+list, which the function already accepts. The switch itself is not used: it takes no games
+argument and prints neither `n_gradable` nor the last date (`betting_model.py` lines 6921
+to 6936). The 2026 date filter changes no gradable game, because `as_of` fences every
+vintage to its own season.
+
+**When.** Once, on 2026-09-28.
+- **A slip.** If the read cannot run that day (box, cache, feed or readiness failure), it
+  runs on the first day it can, no later than 2026-10-06, under the same window, code and
+  invocation. The result records the late date. A slipped read is still the one read.
+- **Kill date.** If it has not run by 2026-10-06, 7h closes without a re-read and the text
+  records why. The kill date keeps this read ahead of the 2026-10-07 reads of 5d and 5k,
+  which use the same late-season totals.
+
+**What moves by the rule, and is not a re-fit.** At the first run there were 64 gradable
+dates (2026-07-06 to 2026-09-10, with 07-13 to 07-15 empty); its 0.6, 0.7 and 0.8 cuts
+reproduce from them. The re-read adds up to 17 dates, so it has 80 or 81.
+- **Anchored:** the cut stays 2026-08-01 (305 fit games), because
+  `VINTAGE_FIT_WINDOW_GROWS` is False and the target index sits below the half cap
+  (`_vintage_cut_index`, lines 6025 to 6032). The fit half, the refit pricer and (a, b) are
+  the same. The eval half is the first 548 games plus every new game.
+- **0.6 and 0.7:** the cuts move to about 2026-08-26 and 2026-09-03 (index int(q x 81) =
+  48 and 56). The fit halves grow. Each eval half keeps the part of the first run's eval
+  half dated on or after its new cut, plus every new game.
+- **0.8:** the cut lands on the first new game date (index 64). Its fit half is the first
+  run's 853 games. Its eval half is new games only, disjoint from the first read's 0.8 eval
+  half.
+- **Fit halves:** no split's fit half holds a game dated after 2026-09-10 (int(0.8 x 81)
+  is 64). With the frozen `SERVE_ATH_PARK` False, `parks_short_window` is unread at every
+  split, whatever schema a record carries. At writing, the records those games resolve to
+  are schema 4 or lower (5d, correction 2026-09-11).
+
+That is what the committed rule does with more dates. Scoring at the old cut dates
+instead would be the re-fit.
+
+**The anchored reproduction, and VOID.** The anchored split must reproduce the first run
+in four values: cut 2026-08-01, n_fit 305, and a 0.472 and b -0.246 to the three places
+the table prints. If any of the four differs, an input or the code moved, and the read is
+VOID:
+- it is recorded in full;
+- it cannot PASS, and `SERVE_TOTAL_CALIBRATION` stays False;
+- 7h closes, and there is no re-run.
+
+**What each verdict does.**
+- **PASS** (both checks at all four splits, anchored reproduced): recorded as "PASS at a
+  second, post hoc look". The lab says `ship`. Nothing serves until the owner flips
+  `SERVE_TOTAL_CALIBRATION` ("flipped only from this gate and only by the owner"). The flip
+  is the 7f checklist in one commit:
+  - the flag set True and 7h updated;
+  - `MODEL_VERSION` bumped;
+  - the tripwire moved (`test_betting_total_dispersion.py` line 153,
+    `assert bm.SERVE_TOTAL_CALIBRATION is False`);
+  - `--context` re-run so `total_calibration` is written.
+
+  The flip commit, and any page copy that cites the pass, cite both reads.
+
+  **The served pair.** It is the pair `fit_total_calibration_vintage` fits on the anchored
+  fit half for whichever pricer serves at the flip. Under the O14 DEFAULT (if 7e-D fails,
+  the graded vintage pricer serves), the served pair follows the pricer that serves after
+  7e-D and is refitted at the next `--context`. The re-read's per-split (a, b) are
+  evidence, not served constants.
+
+  **Slots.** Under the O15 DEFAULT (publishable markets only), the total stays out of
+  slots and badges until its ledger leg (7b) re-opens on its own trailing-200 statistic.
+  So a flip moves total prices, not slots.
+
+  **What a pass cannot claim.** The lab grades the map on its own refit pricer at the
+  frozen code. The served pair rides the served pricer: the context fit, plus the board's
+  live repairs, the Athletics' park included. No registered section grades the served
+  (a, b) on the served pricer. 7e-D (to be registered, plan 4.2 repair 1) grades the served
+  pricer on moneyline criteria only (`RIDGE_FIT_GATE_CRITERIA`).
+- **INDETERMINATE or FAIL:** nothing changes. `SERVE_TOTAL_CALIBRATION` stays False, the
+  Poisson total keeps serving, and the Over lean stays DISCLOSED on every affected row
+  (owner answer 2026-09-11). 7h closes.
+- **A refused split** (a <= 0, or `fit_platt` refuses) or one below the floors cannot
+  pass, and the verdict follows the rule.
+
+**No second re-read.**
+- **This is the only re-read 7h gets.** After it, the map is not read on 2026 games again,
+  whatever this read prints. A later look at it, on 2027 games included, is a new
+  candidate. It needs its own section under 5c rule 1, and that section discloses both 7h
+  reads.
+- **7f and 7g are not re-read** on this date or any other. Their texts allow none.
+
+**Multiplicity, disclosed and not corrected.** The two reads overlap unevenly:
+- the anchored split re-grades all 548 of its first eval games;
+- the 0.6 and 0.7 splits re-grade the part dated on or after their new cuts;
+- the 0.8 split grades new games only.
+
+Two looks, each at one-sided t >= 1.645, with the second taken because the first passed at
+two splits, make a looser test than the nominal one-sided 0.05. By how much is not
+computed here. It is not corrected, because raising the bar after the first result would
+itself change the rule. It is disclosed instead, through the post hoc label above. What
+bounds it:
+- there are exactly two looks;
+- the second date was fixed before any new game was scored under the map;
+- a pass needs all four splits.
+
+**Expectation, stated so the result cannot be steered.** There is no new number here; this
+is arithmetic on the recorded t and n.
+- **New games:** the 7h table graded 548 anchored eval games over the 41 dates 2026-08-01
+  to 2026-09-10, 13.4 a game date. It is not the 10.71 a day of the `vintage_sample`
+  clock, which counts nightly arrivals (plan 5.1). 17 more dates (2026-09-11 to
+  2026-09-27) give about 227 new games, taking the anchored eval half from 548 to about
+  775.
+- **The anchored split:** its first 548 per-game deltas are fixed (see above). At the same
+  per-game spread, the anchored t goes from 0.71 to about 0.84 if the new games repeat the
+  old mean improvement. Reaching 1.645 needs the new games to carry about 4.2 times the old
+  per-game improvement.
+- **The 0.8 split:** it grades about 227 new games alone, with a map fitted on 853. At the
+  first run it read t 0.75 on 174 games.
+- **The verdict:** a PASS at all four splits is unlikely. INDETERMINATE or FAIL is the
+  expected verdict.
+
+**Where it sits.**
+- **No Holm family.** The plan names four betting families (the 7e coefficient vector,
+  run environment, z_prev, the N4 grid), and 7h is in none of them.
+- **No dark clock is touched.** The read uses no weather and no dark column. Its rows are
+  priced on the five core inputs the vintage resolver returns, so no dark clock is touched
+  (5c to 5i, and 5j and 5k once they are registered).
+- **Not a fourth repair** (plan X1): no parameter, line, split or criterion is added.
+- **7i is not stacked on 7h** (plan N2). If both pass, `SERVE_TOTAL_CALIBRATION` and 7i's
+  flag (`SERVE_SCORE_KERNEL`, to be built) never price the total together, and which one
+  serves is the owner's call.
+- **Ordering against the run-environment family.** Three texts are owed:
+  - the 5k registration, due by 2026-09-15 (plan 5.1);
+  - the amendments that put 5d-C and 5h in one Holm family with 5k (plan 4.2 N3 and 5.1).
+
+  If all three are not committed before the read, the result block withholds the per-line
+  observed, Poisson and mapped Over rates until those reads land, and records the rest.
+  Those rates describe the late-season residual that 5k, 5d-C and 5h target. Between this
+  read and theirs, no amendment to 5d-C, 5h or 5k is written unless it names this printout.
+
+**The result block.** It is appended directly under this block as `### Result (run
+2026-09-28, once): VERDICT, and ...`, with the actual run date if the read slipped. The
+2026-09-11 result above is left unedited (the 11a V1 precedent). It carries:
+- the look record: none, or each look and its consequence;
+- the readiness counts: old gradable, new in window, new gradable;
+- the invocation, the worktree commit 37e9382d, the two blob hashes, the main tree's HEAD,
+  and the python and numpy versions;
+- `MODEL_VERSION` and the flag values as run;
+- `n_window`, `n_gradable`, `n_skipped` and the last date in the window;
+- per split, the columns the first run printed (cut, fit / eval, a, b, grid log loss
+  delta, t, lines not worse, pass), plus the per-line observed, Poisson and mapped Over
+  rates unless they are withheld under "Where it sits";
+- the anchored reproduction: cut, n_fit, a and b against 2026-08-01, 305, 0.472 and
+  -0.246.
+
+Nothing in this block was measured against a game result. It adds no new number: the
+expectation is arithmetic on the recorded t and n.
+
 ---
 
 ## 8. The append-only record
