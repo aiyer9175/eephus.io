@@ -1215,7 +1215,8 @@
       "label": "Next-year fielding rate (Spearman)",
       "champion": 0.4597,
       "baseline": 0.0111,
-      "better": "higher"
+      "better": "higher",
+      "resolvable": true
      }
     ],
     "derived_from": {
@@ -1223,7 +1224,8 @@
      "headline": [
       {
        "champion": "forward_spearman_vs_rate_next.dem_plus",
-       "baseline": "forward_spearman_vs_rate_next.fld_pct"
+       "baseline": "forward_spearman_vs_rate_next.fld_pct",
+       "resolvable": "gate.clauses_v1.beats_fld_pct"
       }
      ]
     }
