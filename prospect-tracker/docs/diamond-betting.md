@@ -2954,6 +2954,40 @@ open, each needing its own section: a total distribution with a free median
 bivariate model of the two scores. Until then the lean is DISCLOSED on every
 affected row (section 7f), not repaired.
 
+## 7h. The total's median: a two-parameter survival map (pre-registered 2026-09-11)
+
+**Written before the code exists, after 7f and 7g failed, and disclosed as such.**
+7f moved the level (one parameter) and 7g the dispersion (one parameter); each fixed
+one end of the line grid and broke the other. The third candidate gives the shape
+two degrees of freedom. **Disclosed, because it bears on 5c rule 1:** the 7g run
+printed, for each split's EVAL half, the observed Over rate at each grid line (for
+example 0.560, 0.485, 0.385, 0.327 at 7.5 to 10.5 on the anchored split). No
+candidate below had been computed on any eval game when this was written, and the
+criteria are the 7f/7g criteria unchanged, so the knowledge can steer nothing but
+the choice to try a two-parameter shape at all.
+
+**The candidate.** For each game, S(k) = P(total > k) under the served Poisson total
+at the model's own lambdas. The candidate replaces it with S'(k) = sigmoid(a *
+logit(S(k)) + b) for every integer k, which is a valid survival function whenever
+a > 0 (monotone, from about 1 at k = -1 to about 0 in the tail), and prices the Over,
+Under and push off the pmf it implies, pmf'(k) = S'(k-1) - S'(k). (a, b) are fitted
+on the fit half ALONE by maximum likelihood of the Over outcomes at the fixed grid
+(7.5, 8.5, 9.5, 10.5), pooled, with the module's existing `fit_platt` (Newton,
+deterministic, refuses separable data). a < 1 compresses the Poisson toward 50/50
+at every line; b moves the median. The margin, the moneyline and the runline come
+from the served pass and cannot move. A fitted a <= 0 is refused and the split
+cannot pass.
+
+**Criteria**, the 7f/7g form, unchanged: anchored plus quantiles 0.6, 0.7, 0.8; every
+split refits the pricer on its own fit half and fits (a, b) there; on each eval half
+BOTH, at ALL FOUR splits: (1) paired grid log loss, Poisson minus candidate, > 0 at
+one-sided t >= 1.645; (2) per-line log loss not worse on the point estimate at >= 3
+of 4 lines. Fit >= 100, eval >= 50. Market diagnostics are never criteria.
+
+**Serving.** `SERVE_TOTAL_CALIBRATION`, default False, flipped only from this gate and
+only by the owner. The same flip checklist as 7f and 7g: `MODEL_VERSION`, the
+tripwire test, `--context`.
+
 ---
 
 ## 8. The append-only record
