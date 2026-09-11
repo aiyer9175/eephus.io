@@ -538,6 +538,21 @@ def _skill_index() -> dict[int, dict]:
             "warIpPlusPct": r.get("war_ip_plus_pct"),
             "warIpPlus3yr": r.get("war_ip_plus_3yr"), "war": r.get("war"),
             "ipPerGs": r.get("ip_per_gs"), "gs": r.get("gs")}
+    # Two-way players: the board keeps them out of its pool, and the export scores
+    # them against that pool for the card alone. cardOnly tells the renderer this
+    # number has no board row behind it.
+    for r in ((sd.get("two_way_card_only") or {}).get("starters") or []):
+        try:
+            mid = int(r.get("mlbam"))
+        except (TypeError, ValueError):
+            continue
+        e = out.setdefault(mid, {})
+        if "pitch" in e:
+            continue
+        e["pitch"] = {
+            "kind": "sp", "season": s_season, "cardOnly": True,
+            "ip": r.get("ip"), "qualified": bool(r.get("qualified")),
+            "semPlus": r.get("sem_plus"), "ipPerGs": r.get("ip_per_gs"), "gs": r.get("gs")}
 
     # Leverage block (batters + starters), from the fourth /mlbstats/ board. Kept
     # OUT of the hem/pitch blocks on purpose: it is descriptive game-context, not a

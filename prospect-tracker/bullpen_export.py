@@ -559,7 +559,7 @@ def _apply_roster_filter(teams: list, active_ids: Optional[frozenset]) -> int:
     return dropped
 
 
-def load_season_pitching(season: int) -> list[dict]:
+def load_season_pitching(season: int, positions: tuple = ("P",)) -> list[dict]:
     """All MLB pitchers' season lines from the StatsAPI leaderboard (playerPool
     'all' so relievers are included). One combined row per player. [] on any
     failure (offline / API change).
@@ -583,14 +583,20 @@ def load_season_pitching(season: int) -> list[dict]:
     stats = data.get("stats") or []
     if not stats:
         return []
-    return rows_from_pitching_splits(stats[0].get("splits", []), season)
+    return rows_from_pitching_splits(stats[0].get("splits", []), season, positions)
 
 
-def rows_from_pitching_splits(splits: list[dict], season: int) -> list[dict]:
+def rows_from_pitching_splits(splits: list[dict], season: int,
+                              positions: tuple = ("P",)) -> list[dict]:
     """StatsAPI pitching `splits` records -> the flat row shape build_starters
     and build_relievers consume. Split out of load_season_pitching so an
     offline caller can supply cached splits and get a byte-identical mapping
-    instead of re-implementing 25 field names that would drift."""
+    instead of re-implementing 25 field names that would drift.
+
+    `positions` keeps rows whose primary position is in it (default: pitchers
+    only, the boards' pool). A caller that wants two-way players (feed position
+    TWP) asks for them explicitly; each such row carries `pos` so it can be
+    kept out of any pool it must not anchor."""
     if not splits:
         return []
     tmap = _team_abbrev_map()
@@ -605,7 +611,7 @@ def rows_from_pitching_splits(splits: list[dict], season: int) -> list[dict]:
             continue
         # drop position players pitching mop-up (their primary position is not P)
         pos = (s.get("position") or {}).get("abbreviation")
-        if pos and pos != "P":
+        if pos and pos not in positions:
             continue
         # `or ""` is kept (a genuinely unassigned row must still serve a blank),
         # but the blank is COUNTED now: see _warn_unresolved_teams.
@@ -626,6 +632,7 @@ def rows_from_pitching_splits(splits: list[dict], season: int) -> list[dict]:
             # starter-side context (SEM+): durability + a batted-ball signal
             "CG": st.get("completeGames"), "GO": st.get("groundOuts"),
             "AO": st.get("airOuts"), "Strk": st.get("strikes"),
+            **({"pos": pos} if pos and pos != "P" else {}),
         })
     _warn_unresolved_teams(n_unresolved, len(out), tmap, f"pitching {season}")
     apply_current_team(out, label=f"pitching {season}")

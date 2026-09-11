@@ -235,6 +235,43 @@ def _join_war_ip_plus_3yr(starters: list[dict]) -> dict:
     return join_war_rate_3yr(starters, "sp", "war_ip_plus_3yr", "starters")
 
 
+def score_two_way_card_only(pool_rows: list[dict], two_way_rows: list[dict]) -> dict:
+    """SEM+ for two-way players (feed position TWP), scored against the SERVED
+    starter pool and never entering it.
+
+    The board drops TWP rows (they are not primary pitchers), so a two-way
+    starter's card had no pitching index at all. Admitting him to the board
+    would move the pool anchor and, because the betting model reads the listed
+    probable's SEM+ off the board, the price of every game he starts: that is
+    the owner's call. This is the card-only half: the pool is rebuilt from the
+    exact rows the board scored (deterministic, so it is the served pool), the
+    two-way line is scored against it, and the result rides a separate payload
+    key that no pool, rotation, betting input or vintage reads."""
+    out = {"n": 0, "starters": [],
+           "note": ("two-way players scored against the served starter pool for their "
+                    "player card only; they do not enter the pool, the rotations or "
+                    "anything the betting model reads")}
+    if not two_way_rows:
+        return out
+    base = [st for st in build_starters(pool_rows) if sem_plus.is_true_starter(st)]
+    for st in base:
+        sem_plus.derive_rates(st)
+    pool = sem_plus.build_pool(base)
+    rows = []
+    for t in build_starters(two_way_rows):
+        if not sem_plus.is_true_starter(t):
+            continue
+        sem_plus.derive_rates(t)
+        if sem_plus.sem_plus(t, pool) is None:
+            continue
+        t.qualified = (t.gs >= sem_plus.QUALIFY_MIN_GS) or (t.ip >= sem_plus.QUALIFY_MIN_IP)
+        row = sem_plus.starter_row(t)
+        row["card_only"] = True
+        rows.append(row)
+    out.update({"n": len(rows), "starters": rows, "pool_n": pool.n})
+    return out
+
+
 def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
            write: bool = True, log=print, today: Optional[str] = None) -> int:
     """Build data/starter_leaderboards.json and return the starter count."""
@@ -243,7 +280,11 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     today = today or date.today().isoformat()
 
     log(f"  starters: loading {season} StatsAPI season pitching...")
-    rows = load_season_pitching(season)
+    rows_all = load_season_pitching(season, positions=("P", "TWP"))
+    # The board's pool is primary pitchers only, exactly as before; two-way rows
+    # are split off and scored for their cards alone (score_two_way_card_only).
+    rows = [r for r in rows_all if not r.get("pos")]
+    two_way_rows = [r for r in rows_all if r.get("pos") == "TWP"]
     if not rows:
         log(f"  starters: no pitching data for {season} (source blocked or empty); skipping")
         return 0
@@ -307,6 +348,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         },
         "team_rollup": rollup_meta,
         "pool": scored["pool"], "starters": scored["starters"], "teams": teams,
+        # Card-only SEM+ for two-way players (see score_two_way_card_only). A
+        # separate key on purpose: nothing that reads starters[] or teams[] sees it.
+        "two_way_card_only": score_two_way_card_only(rows, two_way_rows),
     }
     n = len(scored["starters"])
     log(f"  starters: {n} starters ({scored['pool'].get('n_qualified', 0)} qualified), "
