@@ -166,6 +166,51 @@ def primary_position(mlbam: int | str, season: int, exclude_dh: bool = True) -> 
     return max(cand.items(), key=lambda kv: (kv[1]["inn"], kv[1]["g"]))[0]
 
 
+def _write_atomic(payload: dict) -> None:
+    """Temp file beside the artifact, then replace: a reader never sees a
+    half-written file (the old in-place write could truncate on an interrupt)."""
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = OUT.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+    tmp.replace(OUT)
+    _payload.cache_clear()
+
+
+def refresh_current(season: int | None = None, *, log=print) -> int:
+    """Re-fetch ONE season (the live one by default) and rewrite only that
+    season's key in data/fielding_innings.json. Returns the player count, 0
+    when the fetch came back empty (the artifact is then left untouched).
+
+    WHY. The artifact was hand-run and sat at 2026-07-24 while the season ran on,
+    so everything that read it (the Defense board, the fWAR replica's positional
+    component, Position Fit, the eWAR build) paired September runs with July
+    innings. One request a night keeps it current, and it refreshes the same
+    permanent cache (.cache/statsapi_field/fld_{y}.json) the positions builder
+    and the Defense board read, so the feed is fetched once."""
+    today = _dt.date.today()
+    season = int(season or (today.year if today.month >= 3 else today.year - 1))
+    d = parse_season(fetch_season(season, force=True))
+    if not d:
+        if callable(log):
+            log(f"  fielding innings: {season} fetch empty; artifact left as it was")
+        return 0
+    try:
+        payload = json.loads(OUT.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        payload = {"seasons": {}}
+    payload.setdefault("seasons", {})[str(season)] = d
+    payload["generated_at"] = today.isoformat()
+    payload["last_season"] = max(int(payload.get("last_season") or season), season)
+    payload.setdefault("first_season", FIRST_SEASON)
+    payload["n_seasons"] = len(payload["seasons"])
+    payload.setdefault("generated_from", "MLB StatsAPI /api/v1/stats?stats=season&group=fielding (sportId=1, playerPool=All)")
+    payload.setdefault("innings_note", "innings converted from baseball thirds (.1=1/3, .2=2/3) to decimal at ingest")
+    _write_atomic(payload)
+    if callable(log):
+        log(f"  fielding innings: {season} refreshed, {len(d)} players")
+    return len(d)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--first", type=int, default=FIRST_SEASON)
@@ -174,9 +219,7 @@ def main() -> None:
     ap.add_argument("--force-last", action="store_true")
     a = ap.parse_args()
     payload = build(a.first, a.last, force=a.force, force_last=a.force_last)
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
-    _payload.cache_clear()
+    _write_atomic(payload)
     print(f"wrote {OUT} -- {payload['n_seasons']} seasons "
           f"{payload['first_season']}-{payload['last_season']}")
 

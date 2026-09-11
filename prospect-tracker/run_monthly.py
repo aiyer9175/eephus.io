@@ -2562,6 +2562,17 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # a log-only skip and no longer models anything, so the try/except
         # below is the only thing keeping a detail-bake failure from aborting
         # the daily tail.
+        # --- d9b1. Current-season fielding innings (fielding_innings.json) ----
+        # One request refreshes the live season's innings by position, so the card
+        # bake below, the Defense board and Position Fit stop pairing current runs
+        # with a July innings file. Rewrites only that season's key, atomically.
+        with _step("d9b1. Refresh current-season fielding innings (fielding_innings.json)", log):
+            try:
+                from fielding_innings import refresh_current as _refresh_innings
+                _refresh_innings(log=log.info)
+            except Exception:
+                log.exception("daily: fielding innings refresh failed - continuing")
+
         with _step("d9b2. Re-bake MLB player detail (mlb_player_detail.json)", log):
             try:
                 from mlb_player_export import export as _export_mlbp

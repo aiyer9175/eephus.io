@@ -125,8 +125,16 @@ def load_season_innings(season: int) -> dict:
     doc = None
     fetched_at = None
     src = "statsapi season fielding (bulk)"
-    if season < date.today().year:
-        p = CACHE_DIR / "statsapi_field" / f"fld_{season}.json"
+    p = CACHE_DIR / "statsapi_field" / f"fld_{season}.json"
+    # A closed season always reads fielding_innings' permanent cache. The live
+    # season reads it too when the nightly refresh (run_monthly d9b1) wrote it in
+    # the last 24 hours, so the feed is fetched once a night, not twice.
+    fresh = False
+    try:
+        fresh = (datetime.now(timezone.utc).timestamp() - p.stat().st_mtime) < 24 * 3600
+    except OSError:
+        fresh = False
+    if season < date.today().year or fresh:
         try:
             doc = json.loads(p.read_text(encoding="utf-8"))
             fetched_at = datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).isoformat(
