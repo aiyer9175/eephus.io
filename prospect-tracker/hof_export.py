@@ -360,7 +360,7 @@ def build() -> dict:
         "it makes him a resolved zero, and this page would then be publishing "
         "that Joe Torre is above the Hall line and not in the Hall of Fame.")
 
-    return {
+    out = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "produced_by": "hof_export.py",
         "as_of_year": AS_OF,
@@ -503,12 +503,18 @@ def build() -> dict:
                                    "gate and not a query.")},
         },
 
-        "what_this_page_does_not_claim": (
-            "that it knows who belongs in the Hall of Fame, that it knows what a "
-            "plaque says, or that its WAR shelf is better than the public one it "
-            "reproduces. Four of its eight sections are dark and each says what "
-            "it is blocked on."),
+        "what_this_page_does_not_claim": None,
     }
+    # DERIVED, not typed: the sentence used to say "four of its eight sections are
+    # dark" and went false the day the bake-off went live.
+    secs = out.get("sections") or {}
+    n_dark = sum(1 for v in secs.values() if isinstance(v, dict) and not v.get("live"))
+    out["what_this_page_does_not_claim"] = (
+        "that it knows who belongs in the Hall of Fame, that it knows what a "
+        "plaque says, or that its WAR shelf is better than the public one it "
+        f"reproduces. {n_dark} of its {len(secs)} sections are dark and each says "
+        "what it is blocked on.")
+    return out
 
 
 def main() -> int:

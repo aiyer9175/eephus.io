@@ -185,6 +185,24 @@ def _team_board(corpus: Path | None):
 BUNT = ROOT / "data" / "management_bunt.json"
 
 
+def _raw_number_sentence(raw_r, ctl_r, clears, v_season, v_team) -> str:
+    """Why the raw split-half number is not the finding, from the numbers the
+    gate block publishes beside it."""
+    def f(x, nd=4):
+        return "n/a" if x is None else f"{float(x):.{nd}f}"
+
+    def pct(x):
+        return "n/a" if x is None else f"{100.0 * float(x):.1f}"
+
+    return (f"The raw split-half correlation is {f(raw_r)}, which looks like a "
+            "repeatable skill and is not one: both halves of an agent-season sit "
+            "in the same season, so a league-wide year effect reads as agreement. "
+            f"Season explains {pct(v_season)} percent of the variance in a "
+            f"club-season's summed decision value; the club explains "
+            f"{pct(v_team)} percent. Controlled for season it is {f(ctl_r)}"
+            + (", inside its permutation band." if clears is False else "."))
+
+
 def _bunt_sentence(d: dict) -> str:
     """DERIVED, not typed. A first version asserted the squeeze was "the only
     positive cell" and there are three of them; they simply all share a runner on
@@ -382,15 +400,15 @@ def build(*, corpus=None, teams=True) -> dict:
                 gate["why_the_published_series_is_season_controlled"][
                     "variance_of_agent_summed_dv_explained_by_team"]),
             "raw_split_half_r_for_comparison": _r(raw.get("pearson_mean_dv")),
-            "why_the_raw_number_is_not_the_finding": (
-                "the RAW split-half correlation is 0.7789, which looks like a "
-                "strong repeatable skill and is not one. Both halves of an "
-                "agent-season sit in the same season, so a league-wide year "
-                "effect reads as agreement while saying nothing about the club. "
-                "Season explains 79.6 percent of the variance in a club-season's "
-                "summed decision value; the club itself explains 2.2 percent. "
-                "Controlled for season the correlation falls to 0.0691 and lands "
-                "inside its own permutation band."),
+            # DERIVED from the same gate fields this block publishes: the typed
+            # version kept quoting the pre-2026-09-10 figures after the repair.
+            "why_the_raw_number_is_not_the_finding": _raw_number_sentence(
+                raw.get("pearson_mean_dv"), pub.get("pearson_mean_dv"),
+                pub.get("clears_null"),
+                gate["why_the_published_series_is_season_controlled"][
+                    "variance_of_agent_summed_dv_explained_by_season"],
+                gate["why_the_published_series_is_season_controlled"][
+                    "variance_of_agent_summed_dv_explained_by_team"]),
             "null_construction": (sh.get("null") or {}).get("construction"),
             "n_agent_seasons_in_the_split": pub.get("n_agent_seasons"),
             "why_season_controlled": gate[
@@ -453,8 +471,8 @@ def build(*, corpus=None, teams=True) -> dict:
         },
 
         "what_this_page_does_not_claim": (
-            "that any manager is better than any other. The one decision family "
-            "measured here returned a bounded null: no club's decision value in the "
+            "that any manager is better than any other. The running game returned "
+            "a bounded null: no club's decision value in the "
             "running game repeats between halves of its own season, and the battery "
             "would have seen an effect of 0.0005 wins per attempt if one existed. "
             "That is a ceiling, not a shrug, and it is the reason there is no plus "
