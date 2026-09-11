@@ -1,0 +1,3981 @@
+{
+ "generated_at": "2026-09-11",
+ "seasons": [
+  2021,
+  2022,
+  2023,
+  2024
+ ],
+ "seed": 20260911,
+ "experiment": "X-D2",
+ "model": "dem_plus_3yr",
+ "n_forward_pairs": 971,
+ "preregistration": "docs/dem-plus-2026-09-11/DEM_PLUS_GATE.md",
+ "conventions": {
+  "predictor_year": "innings-weighted trailing 3 seasons through Y (2+ seasons, 1000+ innings)",
+  "target": "published fielding rate in Y+1 (innings >= 300)"
+ },
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "published fielding rate (fielding + framing per 1,000 innings) in Y+1, raw pooled",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "published fielding rate in Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "dem_1yr_forward_rho_on_3yr_set": 0.4786,
+ "dem_3yr_forward_rho": 0.4893,
+ "gap_ci_3yr_minus_1yr": {
+  "mean": 0.011,
+  "lo95": -0.0263,
+  "hi95": 0.0472
+ },
+ "results_by_convention": {
+  "v1": {
+   "rho_primary": 0.4893,
+   "rho_baselines": {
+    "vs_1yr": 0.4786
+   },
+   "gap_ci": {
+    "vs_1yr": {
+     "mean": 0.011,
+     "lo95": -0.0263,
+     "hi95": 0.0472
+    }
+   }
+  },
+  "v2": {
+   "rho_primary": 0.4903,
+   "rho_baselines": {
+    "vs_1yr": 0.4798
+   },
+   "gap_ci": {
+    "vs_1yr": {
+     "mean": 0.0109,
+     "lo95": -0.0256,
+     "hi95": 0.0472
+    }
+   },
+   "cluster": {
+    "n_pairs": 971,
+    "n_players": 415,
+    "max_pairs_per_player": 4,
+    "mean_pairs_per_player": 2.34,
+    "n_strata_first_pred_season": 4
+   }
+  }
+ },
+ "gate": {
+  "bar": "3yr rho > 1yr rho on the same set AND gap lo95 >= 0",
+  "convention": "v1",
+  "pass": false
+ },
+ "verdict": "MARGINAL: 3-year DEM+ does not clear the same-set gate; it ships provisional with the numbers published.",
+ "runtime_seconds": 212.9,
+ "proposed_values": {
+  "season": 2026,
+  "window": [
+   2024,
+   2025,
+   2026
+  ],
+  "metric": "dem_plus_3yr",
+  "display_name": "DEM+ (3yr)",
+  "definition": "innings-weighted mean DEM+ over the trailing 3 seasons, each season scored against its own pool; tag 'established' with 2+ seasons and 1000+ innings",
+  "n_with_value": 431,
+  "players": {
+   "500743": {
+    "name": "Miguel Rojas",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 110,
+    "seasons_used": 3,
+    "inn_total": 1957.3,
+    "tag": "established",
+    "pct": 88
+   },
+   "502671": {
+    "name": "Paul Goldschmidt",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 2936.7,
+    "tag": "established",
+    "pct": 55
+   },
+   "514888": {
+    "name": "Jose Altuve",
+    "dem_plus_now": 88,
+    "dem_plus_3yr": 91,
+    "seasons_used": 3,
+    "inn_total": 3084.7,
+    "tag": "established",
+    "pct": 12
+   },
+   "516782": {
+    "name": "Starling Marte",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 89,
+    "seasons_used": 3,
+    "inn_total": 959.7,
+    "tag": "provisional",
+    "pct": 6
+   },
+   "518692": {
+    "name": "Freddie Freeman",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 3695.0,
+    "tag": "established",
+    "pct": 54
+   },
+   "521692": {
+    "name": "Salvador Perez",
+    "dem_plus_now": 91,
+    "dem_plus_3yr": 95,
+    "seasons_used": 3,
+    "inn_total": 2725.0,
+    "tag": "established",
+    "pct": 20
+   },
+   "543309": {
+    "name": "Kyle Higashioka",
+    "dem_plus_now": 86,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 1658.0,
+    "tag": "established",
+    "pct": 29
+   },
+   "543510": {
+    "name": "James McCann",
+    "dem_plus_now": 82,
+    "dem_plus_3yr": 85,
+    "seasons_used": 3,
+    "inn_total": 1214.0,
+    "tag": "established",
+    "pct": 2
+   },
+   "543760": {
+    "name": "Marcus Semien",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 105,
+    "seasons_used": 3,
+    "inn_total": 3579.7,
+    "tag": "established",
+    "pct": 75
+   },
+   "543877": {
+    "name": "Christian V\u00e1zquez",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 110,
+    "seasons_used": 3,
+    "inn_total": 1878.3,
+    "tag": "established",
+    "pct": 89
+   },
+   "545121": {
+    "name": "Ildemaro Vargas",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 1854.7,
+    "tag": "established",
+    "pct": 58
+   },
+   "545341": {
+    "name": "Randal Grichuk",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 95,
+    "seasons_used": 3,
+    "inn_total": 947.3,
+    "tag": "provisional",
+    "pct": 23
+   },
+   "545361": {
+    "name": "Mike Trout",
+    "dem_plus_now": 86,
+    "dem_plus_3yr": 87,
+    "seasons_used": 3,
+    "inn_total": 1289.3,
+    "tag": "established",
+    "pct": 4
+   },
+   "547180": {
+    "name": "Bryce Harper",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 3528.7,
+    "tag": "established",
+    "pct": 55
+   },
+   "553869": {
+    "name": "Elias D\u00edaz",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 1735.3,
+    "tag": "established",
+    "pct": 53
+   },
+   "553993": {
+    "name": "Eugenio Su\u00e1rez",
+    "dem_plus_now": 88,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 3081.3,
+    "tag": "established",
+    "pct": 40
+   },
+   "571448": {
+    "name": "Nolan Arenado",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 3247.7,
+    "tag": "established",
+    "pct": 80
+   },
+   "571970": {
+    "name": "Max Muncy",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 2448.7,
+    "tag": "established",
+    "pct": 53
+   },
+   "572233": {
+    "name": "Christian Walker",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 3602.7,
+    "tag": "established",
+    "pct": 69
+   },
+   "573262": {
+    "name": "Mike Yastrzemski",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 2942.3,
+    "tag": "established",
+    "pct": 67
+   },
+   "575929": {
+    "name": "Willson Contreras",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 2476.7,
+    "tag": "established",
+    "pct": 56
+   },
+   "592450": {
+    "name": "Aaron Judge",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 2304.7,
+    "tag": "established",
+    "pct": 50
+   },
+   "592518": {
+    "name": "Manny Machado",
+    "dem_plus_now": 109,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 3229.3,
+    "tag": "established",
+    "pct": 57
+   },
+   "592663": {
+    "name": "J.T. Realmuto",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 93,
+    "seasons_used": 3,
+    "inn_total": 2962.7,
+    "tag": "established",
+    "pct": 16
+   },
+   "593428": {
+    "name": "Xander Bogaerts",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 105,
+    "seasons_used": 3,
+    "inn_total": 3151.3,
+    "tag": "established",
+    "pct": 73
+   },
+   "595879": {
+    "name": "Javier B\u00e1ez",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 2111.3,
+    "tag": "established",
+    "pct": 38
+   },
+   "595978": {
+    "name": "Austin Hedges",
+    "dem_plus_now": 88,
+    "dem_plus_3yr": 119,
+    "seasons_used": 3,
+    "inn_total": 1427.0,
+    "tag": "established",
+    "pct": 97
+   },
+   "596019": {
+    "name": "Francisco Lindor",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 3448.0,
+    "tag": "established",
+    "pct": 80
+   },
+   "596115": {
+    "name": "Trevor Story",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 91,
+    "seasons_used": 3,
+    "inn_total": 2029.3,
+    "tag": "established",
+    "pct": 12
+   },
+   "596142": {
+    "name": "Gary S\u00e1nchez",
+    "dem_plus_now": 87,
+    "dem_plus_3yr": 88,
+    "seasons_used": 3,
+    "inn_total": 768.7,
+    "tag": "provisional",
+    "pct": 5
+   },
+   "596146": {
+    "name": "Max Kepler",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 2116.0,
+    "tag": "established",
+    "pct": 71
+   },
+   "602104": {
+    "name": "Ram\u00f3n Ur\u00edas",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 1763.0,
+    "tag": "established",
+    "pct": 34
+   },
+   "605141": {
+    "name": "Mookie Betts",
+    "dem_plus_now": 113,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 3178.0,
+    "tag": "established",
+    "pct": 70
+   },
+   "605170": {
+    "name": "Victor Caratini",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 1788.7,
+    "tag": "established",
+    "pct": 65
+   },
+   "606192": {
+    "name": "Teoscar Hern\u00e1ndez",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 90,
+    "seasons_used": 3,
+    "inn_total": 3299.3,
+    "tag": "established",
+    "pct": 8
+   },
+   "606466": {
+    "name": "Ketel Marte",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 2678.3,
+    "tag": "established",
+    "pct": 68
+   },
+   "606992": {
+    "name": "Eric Haase",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 95,
+    "seasons_used": 3,
+    "inn_total": 528.3,
+    "tag": "provisional",
+    "pct": 22
+   },
+   "607043": {
+    "name": "Brandon Nimmo",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 3648.0,
+    "tag": "established",
+    "pct": 46
+   },
+   "607208": {
+    "name": "Trea Turner",
+    "dem_plus_now": 90,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 3447.7,
+    "tag": "established",
+    "pct": 57
+   },
+   "608070": {
+    "name": "Jos\u00e9 Ram\u00edrez",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 105,
+    "seasons_used": 3,
+    "inn_total": 3003.0,
+    "tag": "established",
+    "pct": 75
+   },
+   "608324": {
+    "name": "Alex Bregman",
+    "dem_plus_now": 110,
+    "dem_plus_3yr": 108,
+    "seasons_used": 3,
+    "inn_total": 3382.0,
+    "tag": "established",
+    "pct": 84
+   },
+   "608348": {
+    "name": "Carson Kelly",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 102,
+    "seasons_used": 3,
+    "inn_total": 2313.0,
+    "tag": "established",
+    "pct": 63
+   },
+   "608369": {
+    "name": "Corey Seager",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 2502.0,
+    "tag": "established",
+    "pct": 68
+   },
+   "620443": {
+    "name": "Luis Torrens",
+    "dem_plus_now": 123,
+    "dem_plus_3yr": 121,
+    "seasons_used": 3,
+    "inn_total": 1558.3,
+    "tag": "established",
+    "pct": 98
+   },
+   "621020": {
+    "name": "Dansby Swanson",
+    "dem_plus_now": 120,
+    "dem_plus_3yr": 112,
+    "seasons_used": 3,
+    "inn_total": 3684.0,
+    "tag": "established",
+    "pct": 91
+   },
+   "621043": {
+    "name": "Carlos Correa",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 102,
+    "seasons_used": 3,
+    "inn_total": 2183.3,
+    "tag": "established",
+    "pct": 61
+   },
+   "621438": {
+    "name": "Tyrone Taylor",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 2044.7,
+    "tag": "established",
+    "pct": 81
+   },
+   "621439": {
+    "name": "Byron Buxton",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 2337.7,
+    "tag": "established",
+    "pct": 37
+   },
+   "621493": {
+    "name": "Taylor Ward",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 3463.0,
+    "tag": "established",
+    "pct": 69
+   },
+   "621566": {
+    "name": "Matt Olson",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 4170.3,
+    "tag": "established",
+    "pct": 72
+   },
+   "622268": {
+    "name": "Donovan Walton",
+    "dem_plus_now": 88,
+    "dem_plus_3yr": 90,
+    "seasons_used": 3,
+    "inn_total": 515.7,
+    "tag": "provisional",
+    "pct": 9
+   },
+   "622761": {
+    "name": "Jorge Mateo",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 1151.7,
+    "tag": "established",
+    "pct": 24
+   },
+   "623168": {
+    "name": "Tyler Heineman",
+    "dem_plus_now": 120,
+    "dem_plus_3yr": 119,
+    "seasons_used": 3,
+    "inn_total": 933.3,
+    "tag": "provisional",
+    "pct": 97
+   },
+   "624413": {
+    "name": "Pete Alonso",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 3947.3,
+    "tag": "established",
+    "pct": 33
+   },
+   "624424": {
+    "name": "Michael Conforto",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 94,
+    "seasons_used": 3,
+    "inn_total": 2107.0,
+    "tag": "established",
+    "pct": 18
+   },
+   "624428": {
+    "name": "Adam Frazier",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 1690.0,
+    "tag": "established",
+    "pct": 44
+   },
+   "624431": {
+    "name": "Jose Trevino",
+    "dem_plus_now": 108,
+    "dem_plus_3yr": 113,
+    "seasons_used": 3,
+    "inn_total": 1602.7,
+    "tag": "established",
+    "pct": 92
+   },
+   "624641": {
+    "name": "Edmundo Sosa",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 106,
+    "seasons_used": 3,
+    "inn_total": 1718.0,
+    "tag": "established",
+    "pct": 79
+   },
+   "630105": {
+    "name": "Jake Cronenworth",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 3197.0,
+    "tag": "established",
+    "pct": 39
+   },
+   "640902": {
+    "name": "Jhonny Pereda",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 517.0,
+    "tag": "provisional",
+    "pct": 48
+   },
+   "641343": {
+    "name": "Jake Bauers",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 2038.7,
+    "tag": "established",
+    "pct": 29
+   },
+   "641355": {
+    "name": "Cody Bellinger",
+    "dem_plus_now": 118,
+    "dem_plus_3yr": 111,
+    "seasons_used": 3,
+    "inn_total": 3278.3,
+    "tag": "established",
+    "pct": 89
+   },
+   "641487": {
+    "name": "J.P. Crawford",
+    "dem_plus_now": 85,
+    "dem_plus_3yr": 90,
+    "seasons_used": 3,
+    "inn_total": 3134.7,
+    "tag": "established",
+    "pct": 8
+   },
+   "641555": {
+    "name": "J.C. Escarra",
+    "dem_plus_now": 109,
+    "dem_plus_3yr": 108,
+    "seasons_used": 2,
+    "inn_total": 438.7,
+    "tag": "provisional",
+    "pct": 83
+   },
+   "641598": {
+    "name": "Mitch Garver",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 90,
+    "seasons_used": 3,
+    "inn_total": 853.7,
+    "tag": "provisional",
+    "pct": 8
+   },
+   "641680": {
+    "name": "Jonah Heim",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 89,
+    "seasons_used": 3,
+    "inn_total": 2351.0,
+    "tag": "established",
+    "pct": 8
+   },
+   "641857": {
+    "name": "Ryan McMahon",
+    "dem_plus_now": 106,
+    "dem_plus_3yr": 108,
+    "seasons_used": 3,
+    "inn_total": 3382.0,
+    "tag": "established",
+    "pct": 83
+   },
+   "641933": {
+    "name": "Tyler O'Neill",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 1580.3,
+    "tag": "established",
+    "pct": 24
+   },
+   "642201": {
+    "name": "Eli White",
+    "dem_plus_now": 114,
+    "dem_plus_3yr": 113,
+    "seasons_used": 3,
+    "inn_total": 1150.0,
+    "tag": "established",
+    "pct": 92
+   },
+   "642215": {
+    "name": "Weston Wilson",
+    "dem_plus_now": 82,
+    "dem_plus_3yr": 89,
+    "seasons_used": 3,
+    "inn_total": 846.7,
+    "tag": "provisional",
+    "pct": 6
+   },
+   "642350": {
+    "name": "Jose Siri",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 114,
+    "seasons_used": 3,
+    "inn_total": 1620.0,
+    "tag": "established",
+    "pct": 94
+   },
+   "642708": {
+    "name": "Amed Rosario",
+    "dem_plus_now": 84,
+    "dem_plus_3yr": 87,
+    "seasons_used": 3,
+    "inn_total": 1298.3,
+    "tag": "established",
+    "pct": 4
+   },
+   "642715": {
+    "name": "Willy Adames",
+    "dem_plus_now": 75,
+    "dem_plus_3yr": 94,
+    "seasons_used": 3,
+    "inn_total": 3842.3,
+    "tag": "established",
+    "pct": 18
+   },
+   "642851": {
+    "name": "Austin Wynns",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 516.0,
+    "tag": "provisional",
+    "pct": 32
+   },
+   "643289": {
+    "name": "Mauricio Dub\u00f3n",
+    "dem_plus_now": 107,
+    "dem_plus_3yr": 114,
+    "seasons_used": 3,
+    "inn_total": 3145.0,
+    "tag": "established",
+    "pct": 94
+   },
+   "643376": {
+    "name": "Danny Jansen",
+    "dem_plus_now": 81,
+    "dem_plus_3yr": 85,
+    "seasons_used": 3,
+    "inn_total": 1800.0,
+    "tag": "established",
+    "pct": 2
+   },
+   "643396": {
+    "name": "Isiah Kiner-Falefa",
+    "dem_plus_now": 111,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 2518.0,
+    "tag": "established",
+    "pct": 64
+   },
+   "643446": {
+    "name": "Jeff McNeil",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 2885.7,
+    "tag": "established",
+    "pct": 38
+   },
+   "645277": {
+    "name": "Ozzie Albies",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 3526.7,
+    "tag": "established",
+    "pct": 31
+   },
+   "645302": {
+    "name": "Victor Robles",
+    "dem_plus_now": 108,
+    "dem_plus_3yr": 102,
+    "seasons_used": 3,
+    "inn_total": 1224.0,
+    "tag": "established",
+    "pct": 63
+   },
+   "645305": {
+    "name": "Ali S\u00e1nchez",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 108,
+    "seasons_used": 3,
+    "inn_total": 519.3,
+    "tag": "provisional",
+    "pct": 85
+   },
+   "646240": {
+    "name": "Rafael Devers",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 2271.0,
+    "tag": "established",
+    "pct": 30
+   },
+   "647304": {
+    "name": "Josh Naylor",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 3489.3,
+    "tag": "established",
+    "pct": 59
+   },
+   "650333": {
+    "name": "Luis Arraez",
+    "dem_plus_now": 112,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 3122.3,
+    "tag": "established",
+    "pct": 56
+   },
+   "650402": {
+    "name": "Gleyber Torres",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 95,
+    "seasons_used": 3,
+    "inn_total": 3064.3,
+    "tag": "established",
+    "pct": 21
+   },
+   "650489": {
+    "name": "Willi Castro",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 3266.0,
+    "tag": "established",
+    "pct": 26
+   },
+   "650859": {
+    "name": "Luis Rengifo",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 2435.0,
+    "tag": "established",
+    "pct": 25
+   },
+   "655316": {
+    "name": "Andruw Monasterio",
+    "dem_plus_now": 78,
+    "dem_plus_3yr": 89,
+    "seasons_used": 3,
+    "inn_total": 1270.7,
+    "tag": "established",
+    "pct": 5
+   },
+   "656305": {
+    "name": "Matt Chapman",
+    "dem_plus_now": 106,
+    "dem_plus_3yr": 108,
+    "seasons_used": 3,
+    "inn_total": 3173.0,
+    "tag": "established",
+    "pct": 84
+   },
+   "656484": {
+    "name": "Tristan Gray",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 94,
+    "seasons_used": 3,
+    "inn_total": 712.3,
+    "tag": "provisional",
+    "pct": 19
+   },
+   "656537": {
+    "name": "Derek Hill",
+    "dem_plus_now": 106,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 1134.3,
+    "tag": "established",
+    "pct": 81
+   },
+   "656555": {
+    "name": "Rhys Hoskins",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 1874.3,
+    "tag": "established",
+    "pct": 39
+   },
+   "656716": {
+    "name": "Zach McKinstry",
+    "dem_plus_now": 119,
+    "dem_plus_3yr": 108,
+    "seasons_used": 3,
+    "inn_total": 2756.0,
+    "tag": "established",
+    "pct": 83
+   },
+   "656775": {
+    "name": "Cedric Mullins",
+    "dem_plus_now": 111,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 3170.3,
+    "tag": "established",
+    "pct": 34
+   },
+   "656811": {
+    "name": "Ryan O'Hearn",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 1906.7,
+    "tag": "established",
+    "pct": 48
+   },
+   "657041": {
+    "name": "Lane Thomas",
+    "dem_plus_now": 88,
+    "dem_plus_3yr": 91,
+    "seasons_used": 3,
+    "inn_total": 2089.0,
+    "tag": "established",
+    "pct": 11
+   },
+   "657136": {
+    "name": "Connor Wong",
+    "dem_plus_now": 76,
+    "dem_plus_3yr": 76,
+    "seasons_used": 3,
+    "inn_total": 1962.3,
+    "tag": "established",
+    "pct": 0
+   },
+   "657656": {
+    "name": "Ram\u00f3n Laureano",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 2068.3,
+    "tag": "established",
+    "pct": 28
+   },
+   "657757": {
+    "name": "Gavin Sheets",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 1900.7,
+    "tag": "established",
+    "pct": 27
+   },
+   "660162": {
+    "name": "Yo\u00e1n Moncada",
+    "dem_plus_now": 90,
+    "dem_plus_3yr": 86,
+    "seasons_used": 3,
+    "inn_total": 912.7,
+    "tag": "provisional",
+    "pct": 3
+   },
+   "660670": {
+    "name": "Ronald Acu\u00f1a Jr.",
+    "dem_plus_now": 90,
+    "dem_plus_3yr": 90,
+    "seasons_used": 3,
+    "inn_total": 1920.0,
+    "tag": "established",
+    "pct": 8
+   },
+   "660688": {
+    "name": "Keibert Ruiz",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 88,
+    "seasons_used": 3,
+    "inn_total": 2273.0,
+    "tag": "established",
+    "pct": 4
+   },
+   "660710": {
+    "name": "Rodolfo Dur\u00e1n",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 103,
+    "seasons_used": 1,
+    "inn_total": 246.7,
+    "tag": "provisional",
+    "pct": 67
+   },
+   "660821": {
+    "name": "Jes\u00fas S\u00e1nchez",
+    "dem_plus_now": 80,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 2471.0,
+    "tag": "established",
+    "pct": 43
+   },
+   "660844": {
+    "name": "Leo Rivas",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 813.7,
+    "tag": "provisional",
+    "pct": 30
+   },
+   "661388": {
+    "name": "William Contreras",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 3167.3,
+    "tag": "established",
+    "pct": 55
+   },
+   "662139": {
+    "name": "Daulton Varsho",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 112,
+    "seasons_used": 3,
+    "inn_total": 2707.3,
+    "tag": "established",
+    "pct": 90
+   },
+   "663368": {
+    "name": "Blake Perkins",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 105,
+    "seasons_used": 3,
+    "inn_total": 1561.0,
+    "tag": "established",
+    "pct": 74
+   },
+   "663457": {
+    "name": "Lars Nootbaar",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 2435.7,
+    "tag": "established",
+    "pct": 41
+   },
+   "663494": {
+    "name": "Bryan Torres",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 103,
+    "seasons_used": 1,
+    "inn_total": 299.3,
+    "tag": "provisional",
+    "pct": 68
+   },
+   "663538": {
+    "name": "Nico Hoerner",
+    "dem_plus_now": 107,
+    "dem_plus_3yr": 109,
+    "seasons_used": 3,
+    "inn_total": 3914.3,
+    "tag": "established",
+    "pct": 86
+   },
+   "663586": {
+    "name": "Austin Riley",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 3113.0,
+    "tag": "established",
+    "pct": 43
+   },
+   "663604": {
+    "name": "Brandon Lockridge",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 106,
+    "seasons_used": 3,
+    "inn_total": 636.7,
+    "tag": "provisional",
+    "pct": 77
+   },
+   "663616": {
+    "name": "Trevor Larnach",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 1679.3,
+    "tag": "established",
+    "pct": 26
+   },
+   "663647": {
+    "name": "Ke'Bryan Hayes",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 114,
+    "seasons_used": 3,
+    "inn_total": 2688.0,
+    "tag": "established",
+    "pct": 93
+   },
+   "663656": {
+    "name": "Kyle Tucker",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 2759.0,
+    "tag": "established",
+    "pct": 40
+   },
+   "663698": {
+    "name": "Joey Bart",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 92,
+    "seasons_used": 3,
+    "inn_total": 1492.0,
+    "tag": "established",
+    "pct": 13
+   },
+   "663728": {
+    "name": "Cal Raleigh",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 118,
+    "seasons_used": 3,
+    "inn_total": 2982.0,
+    "tag": "established",
+    "pct": 96
+   },
+   "663743": {
+    "name": "Nick Fortes",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 2124.3,
+    "tag": "established",
+    "pct": 82
+   },
+   "663757": {
+    "name": "Trent Grisham",
+    "dem_plus_now": 81,
+    "dem_plus_3yr": 87,
+    "seasons_used": 3,
+    "inn_total": 2579.7,
+    "tag": "established",
+    "pct": 4
+   },
+   "663837": {
+    "name": "Matt Vierling",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 1928.0,
+    "tag": "established",
+    "pct": 30
+   },
+   "663886": {
+    "name": "Tyler Stephenson",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 95,
+    "seasons_used": 3,
+    "inn_total": 2445.0,
+    "tag": "established",
+    "pct": 21
+   },
+   "663968": {
+    "name": "Jake Mangum",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 106,
+    "seasons_used": 2,
+    "inn_total": 1818.0,
+    "tag": "established",
+    "pct": 77
+   },
+   "663993": {
+    "name": "Nathaniel Lowe",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 2841.0,
+    "tag": "established",
+    "pct": 56
+   },
+   "664023": {
+    "name": "Ian Happ",
+    "dem_plus_now": 111,
+    "dem_plus_3yr": 106,
+    "seasons_used": 3,
+    "inn_total": 3661.3,
+    "tag": "established",
+    "pct": 78
+   },
+   "664034": {
+    "name": "Ty France",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 102,
+    "seasons_used": 3,
+    "inn_total": 3004.0,
+    "tag": "established",
+    "pct": 62
+   },
+   "664040": {
+    "name": "Brandon Lowe",
+    "dem_plus_now": 112,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 2661.0,
+    "tag": "established",
+    "pct": 44
+   },
+   "664056": {
+    "name": "Harrison Bader",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 2370.7,
+    "tag": "established",
+    "pct": 81
+   },
+   "664702": {
+    "name": "Myles Straw",
+    "dem_plus_now": 110,
+    "dem_plus_3yr": 113,
+    "seasons_used": 3,
+    "inn_total": 1392.0,
+    "tag": "established",
+    "pct": 93
+   },
+   "664728": {
+    "name": "Kyle Isbel",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 2776.0,
+    "tag": "established",
+    "pct": 82
+   },
+   "664761": {
+    "name": "Alec Bohm",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 3460.3,
+    "tag": "established",
+    "pct": 51
+   },
+   "664770": {
+    "name": "Nathan Lukes",
+    "dem_plus_now": 118,
+    "dem_plus_3yr": 113,
+    "seasons_used": 3,
+    "inn_total": 1900.0,
+    "tag": "established",
+    "pct": 93
+   },
+   "664774": {
+    "name": "LaMonte Wade Jr.",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 1545.0,
+    "tag": "established",
+    "pct": 36
+   },
+   "664954": {
+    "name": "Brett Sullivan",
+    "dem_plus_now": 90,
+    "dem_plus_3yr": 91,
+    "seasons_used": 3,
+    "inn_total": 519.7,
+    "tag": "provisional",
+    "pct": 10
+   },
+   "664983": {
+    "name": "Jake McCarthy",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 2536.3,
+    "tag": "established",
+    "pct": 65
+   },
+   "665019": {
+    "name": "Kody Clemens",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 2144.7,
+    "tag": "established",
+    "pct": 59
+   },
+   "665052": {
+    "name": "Griffin Conine",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 799.3,
+    "tag": "provisional",
+    "pct": 36
+   },
+   "665161": {
+    "name": "Jeremy Pe\u00f1a",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 3236.7,
+    "tag": "established",
+    "pct": 44
+   },
+   "665487": {
+    "name": "Fernando Tatis Jr.",
+    "dem_plus_now": 110,
+    "dem_plus_3yr": 114,
+    "seasons_used": 3,
+    "inn_total": 3344.7,
+    "tag": "established",
+    "pct": 94
+   },
+   "665489": {
+    "name": "Vladimir Guerrero Jr.",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 3258.3,
+    "tag": "established",
+    "pct": 47
+   },
+   "665561": {
+    "name": "Rafael March\u00e1n",
+    "dem_plus_now": 121,
+    "dem_plus_3yr": 111,
+    "seasons_used": 3,
+    "inn_total": 634.7,
+    "tag": "provisional",
+    "pct": 90
+   },
+   "665742": {
+    "name": "Juan Soto",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 94,
+    "seasons_used": 3,
+    "inn_total": 3178.7,
+    "tag": "established",
+    "pct": 18
+   },
+   "665750": {
+    "name": "Leody Taveras",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 2670.7,
+    "tag": "established",
+    "pct": 24
+   },
+   "665804": {
+    "name": "Miguel Amaya",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 1642.0,
+    "tag": "established",
+    "pct": 34
+   },
+   "665833": {
+    "name": "Oneil Cruz",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 2875.0,
+    "tag": "established",
+    "pct": 33
+   },
+   "665862": {
+    "name": "Jazz Chisholm Jr.",
+    "dem_plus_now": 110,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 3468.7,
+    "tag": "established",
+    "pct": 80
+   },
+   "665877": {
+    "name": "Jos\u00e9 Ferm\u00edn",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 926.0,
+    "tag": "provisional",
+    "pct": 26
+   },
+   "665923": {
+    "name": "Esteury Ruiz",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 91,
+    "seasons_used": 3,
+    "inn_total": 692.3,
+    "tag": "provisional",
+    "pct": 11
+   },
+   "665926": {
+    "name": "Andr\u00e9s Gim\u00e9nez",
+    "dem_plus_now": 124,
+    "dem_plus_3yr": 117,
+    "seasons_used": 3,
+    "inn_total": 3252.7,
+    "tag": "established",
+    "pct": 95
+   },
+   "665953": {
+    "name": "Andr\u00e9s Chaparro",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 526.7,
+    "tag": "provisional",
+    "pct": 43
+   },
+   "665966": {
+    "name": "Carlos Narv\u00e1ez",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 109,
+    "seasons_used": 3,
+    "inn_total": 1676.7,
+    "tag": "established",
+    "pct": 86
+   },
+   "666018": {
+    "name": "Jonathan Aranda",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 102,
+    "seasons_used": 3,
+    "inn_total": 2160.7,
+    "tag": "established",
+    "pct": 60
+   },
+   "666023": {
+    "name": "Freddy Fermin",
+    "dem_plus_now": 122,
+    "dem_plus_3yr": 114,
+    "seasons_used": 3,
+    "inn_total": 2081.0,
+    "tag": "established",
+    "pct": 95
+   },
+   "666126": {
+    "name": "Carlos Cortes",
+    "dem_plus_now": 86,
+    "dem_plus_3yr": 92,
+    "seasons_used": 2,
+    "inn_total": 691.7,
+    "tag": "provisional",
+    "pct": 13
+   },
+   "666139": {
+    "name": "Josh Lowe",
+    "dem_plus_now": 113,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 2287.7,
+    "tag": "established",
+    "pct": 49
+   },
+   "666152": {
+    "name": "David Hamilton",
+    "dem_plus_now": 85,
+    "dem_plus_3yr": 93,
+    "seasons_used": 3,
+    "inn_total": 2003.0,
+    "tag": "established",
+    "pct": 16
+   },
+   "666160": {
+    "name": "Mickey Moniak",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 89,
+    "seasons_used": 3,
+    "inn_total": 2331.3,
+    "tag": "established",
+    "pct": 7
+   },
+   "666176": {
+    "name": "Jo Adell",
+    "dem_plus_now": 87,
+    "dem_plus_3yr": 86,
+    "seasons_used": 3,
+    "inn_total": 3420.0,
+    "tag": "established",
+    "pct": 3
+   },
+   "666181": {
+    "name": "Will Benson",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 1688.7,
+    "tag": "established",
+    "pct": 27
+   },
+   "666182": {
+    "name": "Bo Bichette",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 92,
+    "seasons_used": 3,
+    "inn_total": 3018.3,
+    "tag": "established",
+    "pct": 14
+   },
+   "666211": {
+    "name": "Taylor Trammell",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 892.0,
+    "tag": "provisional",
+    "pct": 27
+   },
+   "666310": {
+    "name": "Bo Naylor",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 106,
+    "seasons_used": 3,
+    "inn_total": 2055.7,
+    "tag": "established",
+    "pct": 79
+   },
+   "666397": {
+    "name": "Edouard Julien",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 94,
+    "seasons_used": 3,
+    "inn_total": 1495.7,
+    "tag": "established",
+    "pct": 18
+   },
+   "666969": {
+    "name": "Adolis Garc\u00eda",
+    "dem_plus_now": 117,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 2819.7,
+    "tag": "established",
+    "pct": 52
+   },
+   "666971": {
+    "name": "Lourdes Gurriel Jr.",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 2365.3,
+    "tag": "established",
+    "pct": 60
+   },
+   "667472": {
+    "name": "Dane Myers",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 1560.0,
+    "tag": "established",
+    "pct": 24
+   },
+   "668227": {
+    "name": "Randy Arozarena",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 94,
+    "seasons_used": 3,
+    "inn_total": 3836.0,
+    "tag": "established",
+    "pct": 19
+   },
+   "668670": {
+    "name": "Jake Rogers",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 119,
+    "seasons_used": 3,
+    "inn_total": 1509.3,
+    "tag": "established",
+    "pct": 97
+   },
+   "668709": {
+    "name": "JJ Bleday",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 93,
+    "seasons_used": 3,
+    "inn_total": 2940.7,
+    "tag": "established",
+    "pct": 15
+   },
+   "668715": {
+    "name": "Spencer Steer",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 3201.0,
+    "tag": "established",
+    "pct": 51
+   },
+   "668723": {
+    "name": "Ryan Vilade",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 617.3,
+    "tag": "provisional",
+    "pct": 30
+   },
+   "668804": {
+    "name": "Bryan Reynolds",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 93,
+    "seasons_used": 3,
+    "inn_total": 3170.0,
+    "tag": "established",
+    "pct": 15
+   },
+   "668885": {
+    "name": "Austin Martin",
+    "dem_plus_now": 108,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 1658.0,
+    "tag": "established",
+    "pct": 33
+   },
+   "668901": {
+    "name": "Mark Vientos",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 94,
+    "seasons_used": 3,
+    "inn_total": 1980.3,
+    "tag": "established",
+    "pct": 17
+   },
+   "668904": {
+    "name": "Royce Lewis",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 2215.0,
+    "tag": "established",
+    "pct": 50
+   },
+   "668930": {
+    "name": "Brice Turang",
+    "dem_plus_now": 110,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 3807.3,
+    "tag": "established",
+    "pct": 69
+   },
+   "668939": {
+    "name": "Adley Rutschman",
+    "dem_plus_now": 128,
+    "dem_plus_3yr": 112,
+    "seasons_used": 3,
+    "inn_total": 2031.3,
+    "tag": "established",
+    "pct": 92
+   },
+   "668942": {
+    "name": "Josh Rojas",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 1748.7,
+    "tag": "established",
+    "pct": 66
+   },
+   "668952": {
+    "name": "Ryan Kreidler",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 870.0,
+    "tag": "provisional",
+    "pct": 51
+   },
+   "669003": {
+    "name": "Garrett Mitchell",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 1634.3,
+    "tag": "established",
+    "pct": 68
+   },
+   "669016": {
+    "name": "Brandon Marsh",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 3115.3,
+    "tag": "established",
+    "pct": 37
+   },
+   "669065": {
+    "name": "Kyle Stowers",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 2044.0,
+    "tag": "established",
+    "pct": 37
+   },
+   "669127": {
+    "name": "Shea Langeliers",
+    "dem_plus_now": 91,
+    "dem_plus_3yr": 85,
+    "seasons_used": 3,
+    "inn_total": 2670.7,
+    "tag": "established",
+    "pct": 2
+   },
+   "669134": {
+    "name": "Luis Campusano",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 76,
+    "seasons_used": 2,
+    "inn_total": 1080.7,
+    "tag": "established",
+    "pct": 1
+   },
+   "669224": {
+    "name": "Austin Wells",
+    "dem_plus_now": 109,
+    "dem_plus_3yr": 118,
+    "seasons_used": 3,
+    "inn_total": 2739.7,
+    "tag": "established",
+    "pct": 96
+   },
+   "669236": {
+    "name": "Jeremiah Jackson",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 99,
+    "seasons_used": 2,
+    "inn_total": 869.0,
+    "tag": "provisional",
+    "pct": 41
+   },
+   "669242": {
+    "name": "Tommy Edman",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 106,
+    "seasons_used": 3,
+    "inn_total": 1673.7,
+    "tag": "established",
+    "pct": 78
+   },
+   "669257": {
+    "name": "Will Smith",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 91,
+    "seasons_used": 3,
+    "inn_total": 2357.7,
+    "tag": "established",
+    "pct": 10
+   },
+   "669357": {
+    "name": "Nolan Gorman",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 95,
+    "seasons_used": 3,
+    "inn_total": 1987.7,
+    "tag": "established",
+    "pct": 21
+   },
+   "669364": {
+    "name": "Xavier Edwards",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 94,
+    "seasons_used": 3,
+    "inn_total": 2908.7,
+    "tag": "established",
+    "pct": 19
+   },
+   "669392": {
+    "name": "Samad Taylor",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 281.7,
+    "tag": "provisional",
+    "pct": 44
+   },
+   "669394": {
+    "name": "Jake Burger",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 2882.3,
+    "tag": "established",
+    "pct": 42
+   },
+   "669397": {
+    "name": "Nick Allen",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 111,
+    "seasons_used": 3,
+    "inn_total": 1734.3,
+    "tag": "established",
+    "pct": 89
+   },
+   "669477": {
+    "name": "Casey Schmitt",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 1661.7,
+    "tag": "established",
+    "pct": 38
+   },
+   "669699": {
+    "name": "Braden Shewmake",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 95,
+    "seasons_used": 2,
+    "inn_total": 393.0,
+    "tag": "provisional",
+    "pct": 20
+   },
+   "669701": {
+    "name": "Josh Smith",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 2562.3,
+    "tag": "established",
+    "pct": 31
+   },
+   "669707": {
+    "name": "Jared Triolo",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 2648.0,
+    "tag": "established",
+    "pct": 64
+   },
+   "669743": {
+    "name": "Alex Call",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 1275.0,
+    "tag": "established",
+    "pct": 42
+   },
+   "670032": {
+    "name": "Nicky Lopez",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 1615.0,
+    "tag": "established",
+    "pct": 66
+   },
+   "670042": {
+    "name": "Luke Raley",
+    "dem_plus_now": 81,
+    "dem_plus_3yr": 93,
+    "seasons_used": 3,
+    "inn_total": 2018.3,
+    "tag": "established",
+    "pct": 15
+   },
+   "670231": {
+    "name": "John Rave",
+    "dem_plus_now": 106,
+    "dem_plus_3yr": 109,
+    "seasons_used": 2,
+    "inn_total": 684.0,
+    "tag": "provisional",
+    "pct": 85
+   },
+   "670242": {
+    "name": "Matt Wallner",
+    "dem_plus_now": 78,
+    "dem_plus_3yr": 93,
+    "seasons_used": 3,
+    "inn_total": 1362.3,
+    "tag": "established",
+    "pct": 16
+   },
+   "670623": {
+    "name": "Isaac Paredes",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 3119.3,
+    "tag": "established",
+    "pct": 40
+   },
+   "670764": {
+    "name": "Taylor Walls",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 2361.7,
+    "tag": "established",
+    "pct": 25
+   },
+   "670770": {
+    "name": "TJ Friedl",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 91,
+    "seasons_used": 3,
+    "inn_total": 2558.0,
+    "tag": "established",
+    "pct": 11
+   },
+   "671056": {
+    "name": "Iv\u00e1n Herrera",
+    "dem_plus_now": 80,
+    "dem_plus_3yr": 89,
+    "seasons_used": 3,
+    "inn_total": 1034.7,
+    "tag": "established",
+    "pct": 7
+   },
+   "671218": {
+    "name": "Heliot Ramos",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 92,
+    "seasons_used": 3,
+    "inn_total": 3117.0,
+    "tag": "established",
+    "pct": 13
+   },
+   "671277": {
+    "name": "Luis Garc\u00eda Jr.",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 3070.7,
+    "tag": "established",
+    "pct": 45
+   },
+   "671289": {
+    "name": "Tyler Freeman",
+    "dem_plus_now": 87,
+    "dem_plus_3yr": 86,
+    "seasons_used": 3,
+    "inn_total": 1935.0,
+    "tag": "established",
+    "pct": 3
+   },
+   "671732": {
+    "name": "Lawrence Butler",
+    "dem_plus_now": 77,
+    "dem_plus_3yr": 95,
+    "seasons_used": 3,
+    "inn_total": 3180.0,
+    "tag": "established",
+    "pct": 20
+   },
+   "671739": {
+    "name": "Michael Harris II",
+    "dem_plus_now": 114,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 3494.7,
+    "tag": "established",
+    "pct": 81
+   },
+   "671976": {
+    "name": "Tristan Peters",
+    "dem_plus_now": 113,
+    "dem_plus_3yr": 112,
+    "seasons_used": 2,
+    "inn_total": 1063.3,
+    "tag": "established",
+    "pct": 91
+   },
+   "672275": {
+    "name": "Patrick Bailey",
+    "dem_plus_now": 113,
+    "dem_plus_3yr": 145,
+    "seasons_used": 3,
+    "inn_total": 2692.7,
+    "tag": "established",
+    "pct": 100
+   },
+   "672356": {
+    "name": "Gabriel Arias",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 102,
+    "seasons_used": 3,
+    "inn_total": 1767.0,
+    "tag": "established",
+    "pct": 62
+   },
+   "672386": {
+    "name": "Alejandro Kirk",
+    "dem_plus_now": 125,
+    "dem_plus_3yr": 133,
+    "seasons_used": 3,
+    "inn_total": 2247.0,
+    "tag": "established",
+    "pct": 100
+   },
+   "672515": {
+    "name": "Gabriel Moreno",
+    "dem_plus_now": 112,
+    "dem_plus_3yr": 112,
+    "seasons_used": 3,
+    "inn_total": 2119.0,
+    "tag": "established",
+    "pct": 91
+   },
+   "672580": {
+    "name": "Maikel Garcia",
+    "dem_plus_now": 110,
+    "dem_plus_3yr": 109,
+    "seasons_used": 3,
+    "inn_total": 3195.7,
+    "tag": "established",
+    "pct": 87
+   },
+   "672640": {
+    "name": "Otto Lopez",
+    "dem_plus_now": 114,
+    "dem_plus_3yr": 112,
+    "seasons_used": 3,
+    "inn_total": 3400.7,
+    "tag": "established",
+    "pct": 92
+   },
+   "672695": {
+    "name": "Geraldo Perdomo",
+    "dem_plus_now": 115,
+    "dem_plus_3yr": 106,
+    "seasons_used": 3,
+    "inn_total": 3511.3,
+    "tag": "established",
+    "pct": 77
+   },
+   "672724": {
+    "name": "Oswald Peraza",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 1427.3,
+    "tag": "established",
+    "pct": 46
+   },
+   "672761": {
+    "name": "Wenceel P\u00e9rez",
+    "dem_plus_now": 87,
+    "dem_plus_3yr": 102,
+    "seasons_used": 3,
+    "inn_total": 2049.3,
+    "tag": "established",
+    "pct": 61
+   },
+   "672960": {
+    "name": "Kazuma Okamoto",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 99,
+    "seasons_used": 1,
+    "inn_total": 1205.3,
+    "tag": "provisional",
+    "pct": 41
+   },
+   "673237": {
+    "name": "Yainer Diaz",
+    "dem_plus_now": 84,
+    "dem_plus_3yr": 92,
+    "seasons_used": 3,
+    "inn_total": 2560.3,
+    "tag": "established",
+    "pct": 12
+   },
+   "673357": {
+    "name": "Luis Robert Jr.",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 2167.3,
+    "tag": "established",
+    "pct": 47
+   },
+   "673490": {
+    "name": "Ha-Seong Kim",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 1736.7,
+    "tag": "established",
+    "pct": 48
+   },
+   "673548": {
+    "name": "Seiya Suzuki",
+    "dem_plus_now": 123,
+    "dem_plus_3yr": 109,
+    "seasons_used": 3,
+    "inn_total": 1904.3,
+    "tag": "established",
+    "pct": 86
+   },
+   "673962": {
+    "name": "Josh Jung",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 2221.0,
+    "tag": "established",
+    "pct": 54
+   },
+   "675961": {
+    "name": "Alika Williams",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 101,
+    "seasons_used": 2,
+    "inn_total": 712.3,
+    "tag": "provisional",
+    "pct": 56
+   },
+   "676356": {
+    "name": "Jonny DeLuca",
+    "dem_plus_now": 124,
+    "dem_plus_3yr": 118,
+    "seasons_used": 3,
+    "inn_total": 1613.0,
+    "tag": "established",
+    "pct": 96
+   },
+   "676391": {
+    "name": "Ernie Clement",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 3474.7,
+    "tag": "established",
+    "pct": 71
+   },
+   "676439": {
+    "name": "Hunter Feduccia",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 94,
+    "seasons_used": 3,
+    "inn_total": 836.7,
+    "tag": "provisional",
+    "pct": 19
+   },
+   "676475": {
+    "name": "Alec Burleson",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 2833.0,
+    "tag": "established",
+    "pct": 28
+   },
+   "676609": {
+    "name": "Jos\u00e9 Caballero",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 2951.7,
+    "tag": "established",
+    "pct": 72
+   },
+   "676694": {
+    "name": "Jake Meyers",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 109,
+    "seasons_used": 3,
+    "inn_total": 2335.0,
+    "tag": "established",
+    "pct": 87
+   },
+   "676724": {
+    "name": "Jared Young",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 100,
+    "seasons_used": 2,
+    "inn_total": 627.0,
+    "tag": "provisional",
+    "pct": 49
+   },
+   "676914": {
+    "name": "Davis Schneider",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 1758.0,
+    "tag": "established",
+    "pct": 53
+   },
+   "677587": {
+    "name": "Brayan Rocchio",
+    "dem_plus_now": 115,
+    "dem_plus_3yr": 106,
+    "seasons_used": 3,
+    "inn_total": 3272.0,
+    "tag": "established",
+    "pct": 79
+   },
+   "677592": {
+    "name": "Everson Pereira",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 98,
+    "seasons_used": 2,
+    "inn_total": 363.3,
+    "tag": "provisional",
+    "pct": 36
+   },
+   "677594": {
+    "name": "Julio Rodr\u00edguez",
+    "dem_plus_now": 91,
+    "dem_plus_3yr": 102,
+    "seasons_used": 3,
+    "inn_total": 3656.0,
+    "tag": "established",
+    "pct": 61
+   },
+   "677649": {
+    "name": "Ezequiel Duran",
+    "dem_plus_now": 120,
+    "dem_plus_3yr": 113,
+    "seasons_used": 3,
+    "inn_total": 2210.7,
+    "tag": "established",
+    "pct": 93
+   },
+   "677800": {
+    "name": "Wilyer Abreu",
+    "dem_plus_now": 113,
+    "dem_plus_3yr": 119,
+    "seasons_used": 3,
+    "inn_total": 3050.0,
+    "tag": "established",
+    "pct": 97
+   },
+   "677870": {
+    "name": "Leo Jim\u00e9nez",
+    "dem_plus_now": 90,
+    "dem_plus_3yr": 94,
+    "seasons_used": 3,
+    "inn_total": 905.7,
+    "tag": "provisional",
+    "pct": 17
+   },
+   "677942": {
+    "name": "Blaze Alexander",
+    "dem_plus_now": 91,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 1565.0,
+    "tag": "established",
+    "pct": 23
+   },
+   "677950": {
+    "name": "Alek Thomas",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 93,
+    "seasons_used": 3,
+    "inn_total": 1602.0,
+    "tag": "established",
+    "pct": 16
+   },
+   "677951": {
+    "name": "Bobby Witt Jr.",
+    "dem_plus_now": 128,
+    "dem_plus_3yr": 122,
+    "seasons_used": 3,
+    "inn_total": 3816.7,
+    "tag": "established",
+    "pct": 98
+   },
+   "678011": {
+    "name": "Anthony Seigler",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 95,
+    "seasons_used": 2,
+    "inn_total": 485.3,
+    "tag": "provisional",
+    "pct": 20
+   },
+   "678218": {
+    "name": "Brandon Valenzuela",
+    "dem_plus_now": 122,
+    "dem_plus_3yr": 122,
+    "seasons_used": 1,
+    "inn_total": 591.7,
+    "tag": "provisional",
+    "pct": 98
+   },
+   "678246": {
+    "name": "Miguel Vargas",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 95,
+    "seasons_used": 3,
+    "inn_total": 2812.3,
+    "tag": "established",
+    "pct": 22
+   },
+   "678391": {
+    "name": "Jorbit Vivas",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 103,
+    "seasons_used": 2,
+    "inn_total": 840.3,
+    "tag": "provisional",
+    "pct": 64
+   },
+   "678489": {
+    "name": "Jorge Barrosa",
+    "dem_plus_now": 109,
+    "dem_plus_3yr": 109,
+    "seasons_used": 3,
+    "inn_total": 631.7,
+    "tag": "provisional",
+    "pct": 87
+   },
+   "678545": {
+    "name": "Osleivis Basabe",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 89,
+    "seasons_used": 1,
+    "inn_total": 262.3,
+    "tag": "provisional",
+    "pct": 7
+   },
+   "678554": {
+    "name": "Curtis Mead",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 95,
+    "seasons_used": 3,
+    "inn_total": 1420.0,
+    "tag": "established",
+    "pct": 23
+   },
+   "678662": {
+    "name": "Ezequiel Tovar",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 106,
+    "seasons_used": 3,
+    "inn_total": 3234.0,
+    "tag": "established",
+    "pct": 79
+   },
+   "678882": {
+    "name": "Ceddanne Rafaela",
+    "dem_plus_now": 120,
+    "dem_plus_3yr": 114,
+    "seasons_used": 3,
+    "inn_total": 3825.0,
+    "tag": "established",
+    "pct": 95
+   },
+   "679529": {
+    "name": "Spencer Torkelson",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 3259.7,
+    "tag": "established",
+    "pct": 35
+   },
+   "679822": {
+    "name": "Justin Foscue",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 358.7,
+    "tag": "provisional",
+    "pct": 66
+   },
+   "679845": {
+    "name": "Nick Loftin",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 1559.3,
+    "tag": "established",
+    "pct": 49
+   },
+   "680574": {
+    "name": "Matt McLain",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 105,
+    "seasons_used": 2,
+    "inn_total": 2219.7,
+    "tag": "established",
+    "pct": 76
+   },
+   "680700": {
+    "name": "Richie Palacios",
+    "dem_plus_now": 90,
+    "dem_plus_3yr": 95,
+    "seasons_used": 3,
+    "inn_total": 1520.0,
+    "tag": "established",
+    "pct": 22
+   },
+   "680757": {
+    "name": "Steven Kwan",
+    "dem_plus_now": 109,
+    "dem_plus_3yr": 114,
+    "seasons_used": 3,
+    "inn_total": 3458.7,
+    "tag": "established",
+    "pct": 95
+   },
+   "680776": {
+    "name": "Jarren Duran",
+    "dem_plus_now": 107,
+    "dem_plus_3yr": 108,
+    "seasons_used": 3,
+    "inn_total": 3866.3,
+    "tag": "established",
+    "pct": 85
+   },
+   "680777": {
+    "name": "Ryan Jeffers",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 90,
+    "seasons_used": 3,
+    "inn_total": 1999.7,
+    "tag": "established",
+    "pct": 9
+   },
+   "680779": {
+    "name": "Henry Davis",
+    "dem_plus_now": 111,
+    "dem_plus_3yr": 108,
+    "seasons_used": 3,
+    "inn_total": 1638.0,
+    "tag": "established",
+    "pct": 83
+   },
+   "680869": {
+    "name": "Zack Gelof",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 2204.7,
+    "tag": "established",
+    "pct": 50
+   },
+   "680977": {
+    "name": "Brendan Donovan",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 2607.3,
+    "tag": "established",
+    "pct": 56
+   },
+   "681082": {
+    "name": "Bryson Stott",
+    "dem_plus_now": 108,
+    "dem_plus_3yr": 105,
+    "seasons_used": 3,
+    "inn_total": 3588.7,
+    "tag": "established",
+    "pct": 75
+   },
+   "681198": {
+    "name": "TJ Rumfield",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 103,
+    "seasons_used": 1,
+    "inn_total": 1053.3,
+    "tag": "provisional",
+    "pct": 67
+   },
+   "681297": {
+    "name": "Colton Cowser",
+    "dem_plus_now": 113,
+    "dem_plus_3yr": 111,
+    "seasons_used": 3,
+    "inn_total": 2743.3,
+    "tag": "established",
+    "pct": 89
+   },
+   "681351": {
+    "name": "Logan O'Hoppe",
+    "dem_plus_now": 73,
+    "dem_plus_3yr": 84,
+    "seasons_used": 3,
+    "inn_total": 2527.3,
+    "tag": "established",
+    "pct": 1
+   },
+   "681393": {
+    "name": "Connor Norby",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 1660.7,
+    "tag": "established",
+    "pct": 28
+   },
+   "681481": {
+    "name": "Kerry Carpenter",
+    "dem_plus_now": 73,
+    "dem_plus_3yr": 92,
+    "seasons_used": 3,
+    "inn_total": 1282.7,
+    "tag": "established",
+    "pct": 14
+   },
+   "681546": {
+    "name": "James Outman",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 1142.7,
+    "tag": "established",
+    "pct": 49
+   },
+   "681624": {
+    "name": "Andy Pages",
+    "dem_plus_now": 115,
+    "dem_plus_3yr": 110,
+    "seasons_used": 3,
+    "inn_total": 3399.3,
+    "tag": "established",
+    "pct": 88
+   },
+   "681715": {
+    "name": "Heriberto Hern\u00e1ndez",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 105,
+    "seasons_used": 2,
+    "inn_total": 1168.3,
+    "tag": "established",
+    "pct": 73
+   },
+   "681807": {
+    "name": "David Fry",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 97,
+    "seasons_used": 2,
+    "inn_total": 697.3,
+    "tag": "provisional",
+    "pct": 31
+   },
+   "682177": {
+    "name": "Daniel Schneemann",
+    "dem_plus_now": 109,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 2052.0,
+    "tag": "established",
+    "pct": 82
+   },
+   "682622": {
+    "name": "Noelvi Marte",
+    "dem_plus_now": 80,
+    "dem_plus_3yr": 88,
+    "seasons_used": 3,
+    "inn_total": 1653.7,
+    "tag": "established",
+    "pct": 5
+   },
+   "682626": {
+    "name": "Francisco Alvarez",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 1961.0,
+    "tag": "established",
+    "pct": 40
+   },
+   "682657": {
+    "name": "Angel Mart\u00ednez",
+    "dem_plus_now": 109,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 2160.0,
+    "tag": "established",
+    "pct": 26
+   },
+   "682668": {
+    "name": "Luisangel Acu\u00f1a",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 1104.7,
+    "tag": "established",
+    "pct": 40
+   },
+   "682818": {
+    "name": "Yohendrick Pi\u00f1ango",
+    "dem_plus_now": 88,
+    "dem_plus_3yr": 88,
+    "seasons_used": 1,
+    "inn_total": 378.7,
+    "tag": "provisional",
+    "pct": 5
+   },
+   "682829": {
+    "name": "Elly De La Cruz",
+    "dem_plus_now": 108,
+    "dem_plus_3yr": 105,
+    "seasons_used": 3,
+    "inn_total": 3800.3,
+    "tag": "established",
+    "pct": 76
+   },
+   "682848": {
+    "name": "Endy Rodr\u00edguez",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 95,
+    "seasons_used": 2,
+    "inn_total": 434.3,
+    "tag": "provisional",
+    "pct": 21
+   },
+   "682928": {
+    "name": "CJ Abrams",
+    "dem_plus_now": 75,
+    "dem_plus_3yr": 79,
+    "seasons_used": 3,
+    "inn_total": 3501.0,
+    "tag": "established",
+    "pct": 1
+   },
+   "682985": {
+    "name": "Riley Greene",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 3014.0,
+    "tag": "established",
+    "pct": 44
+   },
+   "682987": {
+    "name": "Spencer Jones",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 94,
+    "seasons_used": 1,
+    "inn_total": 516.0,
+    "tag": "provisional",
+    "pct": 17
+   },
+   "682997": {
+    "name": "Tyler Callihan",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 96,
+    "seasons_used": 2,
+    "inn_total": 239.7,
+    "tag": "provisional",
+    "pct": 25
+   },
+   "682998": {
+    "name": "Corbin Carroll",
+    "dem_plus_now": 113,
+    "dem_plus_3yr": 112,
+    "seasons_used": 3,
+    "inn_total": 3720.7,
+    "tag": "established",
+    "pct": 91
+   },
+   "683002": {
+    "name": "Gunnar Henderson",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 3827.0,
+    "tag": "established",
+    "pct": 32
+   },
+   "683011": {
+    "name": "Anthony Volpe",
+    "dem_plus_now": 110,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 3175.0,
+    "tag": "established",
+    "pct": 66
+   },
+   "683083": {
+    "name": "Nasim Nu\u00f1ez",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 1520.3,
+    "tag": "established",
+    "pct": 70
+   },
+   "683146": {
+    "name": "Brett Baty",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 102,
+    "seasons_used": 3,
+    "inn_total": 2259.7,
+    "tag": "established",
+    "pct": 60
+   },
+   "683227": {
+    "name": "Cody Freeman",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 98,
+    "seasons_used": 2,
+    "inn_total": 449.7,
+    "tag": "provisional",
+    "pct": 37
+   },
+   "683357": {
+    "name": "Owen Caissie",
+    "dem_plus_now": 77,
+    "dem_plus_3yr": 79,
+    "seasons_used": 2,
+    "inn_total": 666.7,
+    "tag": "provisional",
+    "pct": 1
+   },
+   "683734": {
+    "name": "Andrew Vaughn",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 2407.3,
+    "tag": "established",
+    "pct": 35
+   },
+   "683737": {
+    "name": "Michael Busch",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 102,
+    "seasons_used": 3,
+    "inn_total": 3605.7,
+    "tag": "established",
+    "pct": 60
+   },
+   "683748": {
+    "name": "Victor Mesa Jr.",
+    "dem_plus_now": 135,
+    "dem_plus_3yr": 129,
+    "seasons_used": 2,
+    "inn_total": 558.7,
+    "tag": "provisional",
+    "pct": 99
+   },
+   "683766": {
+    "name": "Christian Koss",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 101,
+    "seasons_used": 2,
+    "inn_total": 842.0,
+    "tag": "provisional",
+    "pct": 60
+   },
+   "683953": {
+    "name": "Travis Bazzana",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 96,
+    "seasons_used": 1,
+    "inn_total": 877.3,
+    "tag": "provisional",
+    "pct": 24
+   },
+   "685133": {
+    "name": "Wade Meckler",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 105,
+    "seasons_used": 1,
+    "inn_total": 547.7,
+    "tag": "provisional",
+    "pct": 73
+   },
+   "686217": {
+    "name": "Sal Frelick",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 110,
+    "seasons_used": 3,
+    "inn_total": 3077.7,
+    "tag": "established",
+    "pct": 88
+   },
+   "686452": {
+    "name": "Drew Millas",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 635.0,
+    "tag": "provisional",
+    "pct": 54
+   },
+   "686469": {
+    "name": "Vinnie Pasquantino",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 2816.3,
+    "tag": "established",
+    "pct": 46
+   },
+   "686475": {
+    "name": "Tyler Tolbert",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 99,
+    "seasons_used": 2,
+    "inn_total": 494.7,
+    "tag": "provisional",
+    "pct": 42
+   },
+   "686527": {
+    "name": "Dominic Canzone",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 96,
+    "seasons_used": 3,
+    "inn_total": 1246.7,
+    "tag": "established",
+    "pct": 27
+   },
+   "686555": {
+    "name": "Isaac Collins",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 104,
+    "seasons_used": 3,
+    "inn_total": 1952.7,
+    "tag": "established",
+    "pct": 70
+   },
+   "686611": {
+    "name": "Dylan Crews",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 105,
+    "seasons_used": 3,
+    "inn_total": 1766.7,
+    "tag": "established",
+    "pct": 74
+   },
+   "686668": {
+    "name": "Brenton Doyle",
+    "dem_plus_now": 87,
+    "dem_plus_3yr": 110,
+    "seasons_used": 3,
+    "inn_total": 2747.7,
+    "tag": "established",
+    "pct": 88
+   },
+   "686681": {
+    "name": "Michael Massey",
+    "dem_plus_now": 108,
+    "dem_plus_3yr": 105,
+    "seasons_used": 3,
+    "inn_total": 2101.7,
+    "tag": "established",
+    "pct": 75
+   },
+   "686765": {
+    "name": "Nick Sogard",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 867.7,
+    "tag": "provisional",
+    "pct": 57
+   },
+   "686780": {
+    "name": "Pedro Pag\u00e9s",
+    "dem_plus_now": 109,
+    "dem_plus_3yr": 108,
+    "seasons_used": 3,
+    "inn_total": 1955.7,
+    "tag": "established",
+    "pct": 85
+   },
+   "686797": {
+    "name": "Brooks Lee",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 2704.3,
+    "tag": "established",
+    "pct": 28
+   },
+   "686948": {
+    "name": "Drake Baldwin",
+    "dem_plus_now": 88,
+    "dem_plus_3yr": 93,
+    "seasons_used": 2,
+    "inn_total": 1402.3,
+    "tag": "established",
+    "pct": 15
+   },
+   "687093": {
+    "name": "Vaughn Grissom",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 94,
+    "seasons_used": 2,
+    "inn_total": 1040.7,
+    "tag": "established",
+    "pct": 18
+   },
+   "687221": {
+    "name": "Dalton Rushing",
+    "dem_plus_now": 85,
+    "dem_plus_3yr": 90,
+    "seasons_used": 2,
+    "inn_total": 857.7,
+    "tag": "provisional",
+    "pct": 9
+   },
+   "687231": {
+    "name": "Darell Hernaiz",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 1152.7,
+    "tag": "established",
+    "pct": 37
+   },
+   "687263": {
+    "name": "Zach Neto",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 92,
+    "seasons_used": 3,
+    "inn_total": 3629.0,
+    "tag": "established",
+    "pct": 14
+   },
+   "687282": {
+    "name": "Gabriel Rincones Jr.",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 102,
+    "seasons_used": 1,
+    "inn_total": 200.0,
+    "tag": "provisional",
+    "pct": 61
+   },
+   "687363": {
+    "name": "Victor Scott II",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 108,
+    "seasons_used": 3,
+    "inn_total": 1974.0,
+    "tag": "established",
+    "pct": 84
+   },
+   "687401": {
+    "name": "Joey Ortiz",
+    "dem_plus_now": 115,
+    "dem_plus_3yr": 113,
+    "seasons_used": 3,
+    "inn_total": 3256.3,
+    "tag": "established",
+    "pct": 92
+   },
+   "687462": {
+    "name": "Spencer Horwitz",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 2219.3,
+    "tag": "established",
+    "pct": 48
+   },
+   "687515": {
+    "name": "Colby Thomas",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 95,
+    "seasons_used": 2,
+    "inn_total": 515.3,
+    "tag": "provisional",
+    "pct": 21
+   },
+   "687551": {
+    "name": "Drew Gilbert",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 104,
+    "seasons_used": 2,
+    "inn_total": 1070.3,
+    "tag": "established",
+    "pct": 71
+   },
+   "687597": {
+    "name": "Jordan Beck",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 1932.7,
+    "tag": "established",
+    "pct": 58
+   },
+   "687637": {
+    "name": "Dylan Beavers",
+    "dem_plus_now": 85,
+    "dem_plus_3yr": 90,
+    "seasons_used": 2,
+    "inn_total": 860.3,
+    "tag": "provisional",
+    "pct": 10
+   },
+   "687749": {
+    "name": "Jase Bowen",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 104,
+    "seasons_used": 1,
+    "inn_total": 250.3,
+    "tag": "provisional",
+    "pct": 69
+   },
+   "687859": {
+    "name": "Troy Johnston",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 99,
+    "seasons_used": 2,
+    "inn_total": 902.7,
+    "tag": "provisional",
+    "pct": 41
+   },
+   "687952": {
+    "name": "Christian Encarnacion-Strand",
+    "dem_plus_now": 106,
+    "dem_plus_3yr": 102,
+    "seasons_used": 3,
+    "inn_total": 876.0,
+    "tag": "provisional",
+    "pct": 62
+   },
+   "688363": {
+    "name": "Graham Pauley",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 822.7,
+    "tag": "provisional",
+    "pct": 80
+   },
+   "689414": {
+    "name": "Liam Hicks",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 101,
+    "seasons_used": 2,
+    "inn_total": 1300.0,
+    "tag": "established",
+    "pct": 57
+   },
+   "690976": {
+    "name": "Alex Freeland",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 102,
+    "seasons_used": 2,
+    "inn_total": 770.3,
+    "tag": "provisional",
+    "pct": 63
+   },
+   "690984": {
+    "name": "Petey Halpin",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 104,
+    "seasons_used": 2,
+    "inn_total": 434.7,
+    "tag": "provisional",
+    "pct": 71
+   },
+   "690993": {
+    "name": "Colt Keith",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 2186.0,
+    "tag": "established",
+    "pct": 47
+   },
+   "691011": {
+    "name": "Drew Romo",
+    "dem_plus_now": 106,
+    "dem_plus_3yr": 105,
+    "seasons_used": 3,
+    "inn_total": 613.0,
+    "tag": "provisional",
+    "pct": 74
+   },
+   "691016": {
+    "name": "Tyler Soderstrom",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 2577.0,
+    "tag": "established",
+    "pct": 34
+   },
+   "691023": {
+    "name": "Jordan Walker",
+    "dem_plus_now": 88,
+    "dem_plus_3yr": 88,
+    "seasons_used": 3,
+    "inn_total": 2441.0,
+    "tag": "established",
+    "pct": 5
+   },
+   "691026": {
+    "name": "Masyn Winn",
+    "dem_plus_now": 120,
+    "dem_plus_3yr": 115,
+    "seasons_used": 3,
+    "inn_total": 3437.3,
+    "tag": "established",
+    "pct": 95
+   },
+   "691176": {
+    "name": "Jasson Dom\u00ednguez",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 91,
+    "seasons_used": 3,
+    "inn_total": 1312.0,
+    "tag": "established",
+    "pct": 10
+   },
+   "691406": {
+    "name": "Junior Caminero",
+    "dem_plus_now": 88,
+    "dem_plus_3yr": 94,
+    "seasons_used": 3,
+    "inn_total": 2871.3,
+    "tag": "established",
+    "pct": 17
+   },
+   "691458": {
+    "name": "Blaze Jordan",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 103,
+    "seasons_used": 1,
+    "inn_total": 457.0,
+    "tag": "provisional",
+    "pct": 63
+   },
+   "691594": {
+    "name": "Javier Sanoja",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 1805.3,
+    "tag": "established",
+    "pct": 64
+   },
+   "691718": {
+    "name": "Pete Crow-Armstrong",
+    "dem_plus_now": 140,
+    "dem_plus_3yr": 130,
+    "seasons_used": 3,
+    "inn_total": 3568.7,
+    "tag": "established",
+    "pct": 99
+   },
+   "691720": {
+    "name": "Kyle Karros",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 102,
+    "seasons_used": 2,
+    "inn_total": 1250.0,
+    "tag": "established",
+    "pct": 63
+   },
+   "691723": {
+    "name": "Coby Mayo",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 1328.0,
+    "tag": "established",
+    "pct": 38
+   },
+   "691740": {
+    "name": "Daniel Susac",
+    "dem_plus_now": 123,
+    "dem_plus_3yr": 123,
+    "seasons_used": 1,
+    "inn_total": 352.0,
+    "tag": "provisional",
+    "pct": 98
+   },
+   "691777": {
+    "name": "Max Muncy",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 91,
+    "seasons_used": 2,
+    "inn_total": 954.3,
+    "tag": "provisional",
+    "pct": 12
+   },
+   "691781": {
+    "name": "Brady House",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 100,
+    "seasons_used": 2,
+    "inn_total": 1174.7,
+    "tag": "established",
+    "pct": 53
+   },
+   "691783": {
+    "name": "Jordan Lawlar",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 99,
+    "seasons_used": 2,
+    "inn_total": 349.0,
+    "tag": "provisional",
+    "pct": 45
+   },
+   "691785": {
+    "name": "Marcelo Mayer",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 101,
+    "seasons_used": 2,
+    "inn_total": 830.0,
+    "tag": "provisional",
+    "pct": 55
+   },
+   "691788": {
+    "name": "Joe Mack",
+    "dem_plus_now": 126,
+    "dem_plus_3yr": 126,
+    "seasons_used": 1,
+    "inn_total": 704.3,
+    "tag": "provisional",
+    "pct": 99
+   },
+   "693304": {
+    "name": "Nick Gonzales",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 2725.3,
+    "tag": "established",
+    "pct": 32
+   },
+   "693307": {
+    "name": "Dillon Dingler",
+    "dem_plus_now": 133,
+    "dem_plus_3yr": 124,
+    "seasons_used": 3,
+    "inn_total": 2134.0,
+    "tag": "established",
+    "pct": 99
+   },
+   "694192": {
+    "name": "Jackson Chourio",
+    "dem_plus_now": 113,
+    "dem_plus_3yr": 108,
+    "seasons_used": 3,
+    "inn_total": 3314.0,
+    "tag": "established",
+    "pct": 84
+   },
+   "694197": {
+    "name": "Angel Genao",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 101,
+    "seasons_used": 1,
+    "inn_total": 245.0,
+    "tag": "provisional",
+    "pct": 58
+   },
+   "694203": {
+    "name": "Denzer Guzman",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 99,
+    "seasons_used": 2,
+    "inn_total": 647.7,
+    "tag": "provisional",
+    "pct": 45
+   },
+   "694212": {
+    "name": "Samuel Basallo",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 96,
+    "seasons_used": 2,
+    "inn_total": 712.0,
+    "tag": "provisional",
+    "pct": 25
+   },
+   "694249": {
+    "name": "Cole Carrigg",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 99,
+    "seasons_used": 1,
+    "inn_total": 608.7,
+    "tag": "provisional",
+    "pct": 39
+   },
+   "694362": {
+    "name": "Blake Dunn",
+    "dem_plus_now": 108,
+    "dem_plus_3yr": 107,
+    "seasons_used": 3,
+    "inn_total": 546.3,
+    "tag": "provisional",
+    "pct": 82
+   },
+   "694371": {
+    "name": "Tommy Troy",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 103,
+    "seasons_used": 1,
+    "inn_total": 306.0,
+    "tag": "provisional",
+    "pct": 66
+   },
+   "694374": {
+    "name": "Tim Tawa",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 100,
+    "seasons_used": 2,
+    "inn_total": 1137.7,
+    "tag": "established",
+    "pct": 53
+   },
+   "694377": {
+    "name": "Nick Yorke",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 511.3,
+    "tag": "provisional",
+    "pct": 52
+   },
+   "694378": {
+    "name": "Jacob Gonzalez",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 97,
+    "seasons_used": 1,
+    "inn_total": 480.3,
+    "tag": "provisional",
+    "pct": 32
+   },
+   "694384": {
+    "name": "Nolan Schanuel",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 100,
+    "seasons_used": 3,
+    "inn_total": 3238.7,
+    "tag": "established",
+    "pct": 51
+   },
+   "694388": {
+    "name": "Joey Loperfido",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 103,
+    "seasons_used": 3,
+    "inn_total": 1067.0,
+    "tag": "established",
+    "pct": 65
+   },
+   "694497": {
+    "name": "Evan Carter",
+    "dem_plus_now": 108,
+    "dem_plus_3yr": 106,
+    "seasons_used": 3,
+    "inn_total": 1709.7,
+    "tag": "established",
+    "pct": 76
+   },
+   "694671": {
+    "name": "Wyatt Langford",
+    "dem_plus_now": 107,
+    "dem_plus_3yr": 111,
+    "seasons_used": 3,
+    "inn_total": 2815.3,
+    "tag": "established",
+    "pct": 90
+   },
+   "694728": {
+    "name": "Brice Matthews",
+    "dem_plus_now": 110,
+    "dem_plus_3yr": 108,
+    "seasons_used": 2,
+    "inn_total": 627.3,
+    "tag": "provisional",
+    "pct": 85
+   },
+   "695336": {
+    "name": "Thomas Saggese",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 1051.7,
+    "tag": "established",
+    "pct": 42
+   },
+   "695490": {
+    "name": "Edwin Arroyo",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 103,
+    "seasons_used": 1,
+    "inn_total": 377.7,
+    "tag": "provisional",
+    "pct": 65
+   },
+   "695506": {
+    "name": "Jac Caglianone",
+    "dem_plus_now": 93,
+    "dem_plus_3yr": 90,
+    "seasons_used": 2,
+    "inn_total": 1422.7,
+    "tag": "established",
+    "pct": 9
+   },
+   "695578": {
+    "name": "James Wood",
+    "dem_plus_now": 83,
+    "dem_plus_3yr": 91,
+    "seasons_used": 3,
+    "inn_total": 2596.0,
+    "tag": "established",
+    "pct": 11
+   },
+   "695600": {
+    "name": "Carter Jensen",
+    "dem_plus_now": 102,
+    "dem_plus_3yr": 102,
+    "seasons_used": 2,
+    "inn_total": 830.7,
+    "tag": "provisional",
+    "pct": 62
+   },
+   "695657": {
+    "name": "Colson Montgomery",
+    "dem_plus_now": 112,
+    "dem_plus_3yr": 111,
+    "seasons_used": 2,
+    "inn_total": 1729.0,
+    "tag": "established",
+    "pct": 90
+   },
+   "695670": {
+    "name": "Harry Ford",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 96,
+    "seasons_used": 2,
+    "inn_total": 216.0,
+    "tag": "provisional",
+    "pct": 27
+   },
+   "695720": {
+    "name": "Tommy White",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 97,
+    "seasons_used": 1,
+    "inn_total": 341.0,
+    "tag": "provisional",
+    "pct": 31
+   },
+   "695731": {
+    "name": "Braden Montgomery",
+    "dem_plus_now": 106,
+    "dem_plus_3yr": 106,
+    "seasons_used": 1,
+    "inn_total": 682.3,
+    "tag": "provisional",
+    "pct": 78
+   },
+   "695734": {
+    "name": "Daylen Lile",
+    "dem_plus_now": 107,
+    "dem_plus_3yr": 97,
+    "seasons_used": 2,
+    "inn_total": 1674.0,
+    "tag": "established",
+    "pct": 29
+   },
+   "696030": {
+    "name": "Alejandro Osuna",
+    "dem_plus_now": 81,
+    "dem_plus_3yr": 92,
+    "seasons_used": 2,
+    "inn_total": 871.7,
+    "tag": "provisional",
+    "pct": 14
+   },
+   "696100": {
+    "name": "Hunter Goodman",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 97,
+    "seasons_used": 3,
+    "inn_total": 1995.7,
+    "tag": "established",
+    "pct": 29
+   },
+   "696285": {
+    "name": "Jacob Young",
+    "dem_plus_now": 109,
+    "dem_plus_3yr": 117,
+    "seasons_used": 3,
+    "inn_total": 3149.0,
+    "tag": "established",
+    "pct": 96
+   },
+   "699013": {
+    "name": "Esmerlyn Valdez",
+    "dem_plus_now": 95,
+    "dem_plus_3yr": 95,
+    "seasons_used": 1,
+    "inn_total": 548.3,
+    "tag": "provisional",
+    "pct": 23
+   },
+   "699302": {
+    "name": "H\u00e9ctor Rodr\u00edguez",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 104,
+    "seasons_used": 1,
+    "inn_total": 205.0,
+    "tag": "provisional",
+    "pct": 73
+   },
+   "699393": {
+    "name": "Pedro Ram\u00edrez",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 100,
+    "seasons_used": 1,
+    "inn_total": 352.3,
+    "tag": "provisional",
+    "pct": 50
+   },
+   "699625": {
+    "name": "Jimmy Crooks",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 97,
+    "seasons_used": 2,
+    "inn_total": 416.7,
+    "tag": "provisional",
+    "pct": 31
+   },
+   "699912": {
+    "name": "Jose Fernandez",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 104,
+    "seasons_used": 1,
+    "inn_total": 321.7,
+    "tag": "provisional",
+    "pct": 69
+   },
+   "700250": {
+    "name": "Ben Rice",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 99,
+    "seasons_used": 3,
+    "inn_total": 1415.3,
+    "tag": "established",
+    "pct": 39
+   },
+   "700337": {
+    "name": "Edgar Quero",
+    "dem_plus_now": 85,
+    "dem_plus_3yr": 75,
+    "seasons_used": 2,
+    "inn_total": 1017.0,
+    "tag": "established",
+    "pct": 0
+   },
+   "700932": {
+    "name": "Kyle Manzardo",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 98,
+    "seasons_used": 3,
+    "inn_total": 1096.0,
+    "tag": "established",
+    "pct": 35
+   },
+   "701162": {
+    "name": "Ben Malgeri",
+    "dem_plus_now": 106,
+    "dem_plus_3yr": 106,
+    "seasons_used": 1,
+    "inn_total": 246.7,
+    "tag": "provisional",
+    "pct": 76
+   },
+   "701358": {
+    "name": "Cam Smith",
+    "dem_plus_now": 109,
+    "dem_plus_3yr": 107,
+    "seasons_used": 2,
+    "inn_total": 2222.7,
+    "tag": "established",
+    "pct": 82
+   },
+   "701398": {
+    "name": "Sal Stewart",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 100,
+    "seasons_used": 2,
+    "inn_total": 1285.3,
+    "tag": "established",
+    "pct": 47
+   },
+   "701538": {
+    "name": "Jackson Merrill",
+    "dem_plus_now": 107,
+    "dem_plus_3yr": 106,
+    "seasons_used": 3,
+    "inn_total": 3566.0,
+    "tag": "established",
+    "pct": 77
+   },
+   "701675": {
+    "name": "Nathan Church",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 100,
+    "seasons_used": 2,
+    "inn_total": 1122.3,
+    "tag": "established",
+    "pct": 46
+   },
+   "701678": {
+    "name": "Hao-Yu Lee",
+    "dem_plus_now": 84,
+    "dem_plus_3yr": 84,
+    "seasons_used": 1,
+    "inn_total": 650.7,
+    "tag": "provisional",
+    "pct": 2
+   },
+   "701762": {
+    "name": "Nick Kurtz",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 98,
+    "seasons_used": 2,
+    "inn_total": 1792.7,
+    "tag": "established",
+    "pct": 35
+   },
+   "701785": {
+    "name": "Kaelen Culpepper",
+    "dem_plus_now": 101,
+    "dem_plus_3yr": 101,
+    "seasons_used": 1,
+    "inn_total": 245.0,
+    "tag": "provisional",
+    "pct": 59
+   },
+   "701807": {
+    "name": "Carson Benge",
+    "dem_plus_now": 114,
+    "dem_plus_3yr": 114,
+    "seasons_used": 1,
+    "inn_total": 1197.0,
+    "tag": "provisional",
+    "pct": 94
+   },
+   "701852": {
+    "name": "Drew Cavanaugh",
+    "dem_plus_now": 92,
+    "dem_plus_3yr": 92,
+    "seasons_used": 1,
+    "inn_total": 321.7,
+    "tag": "provisional",
+    "pct": 13
+   },
+   "702222": {
+    "name": "Justin Crawford",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 89,
+    "seasons_used": 1,
+    "inn_total": 1011.7,
+    "tag": "provisional",
+    "pct": 6
+   },
+   "702284": {
+    "name": "Cole Young",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 93,
+    "seasons_used": 2,
+    "inn_total": 1895.3,
+    "tag": "established",
+    "pct": 15
+   },
+   "702332": {
+    "name": "Caleb Durbin",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 104,
+    "seasons_used": 2,
+    "inn_total": 2287.3,
+    "tag": "established",
+    "pct": 70
+   },
+   "702616": {
+    "name": "Jackson Holliday",
+    "dem_plus_now": 96,
+    "dem_plus_3yr": 95,
+    "seasons_used": 3,
+    "inn_total": 2454.0,
+    "tag": "established",
+    "pct": 22
+   },
+   "703520": {
+    "name": "Brett Bateman",
+    "dem_plus_now": 111,
+    "dem_plus_3yr": 111,
+    "seasons_used": 1,
+    "inn_total": 247.0,
+    "tag": "provisional",
+    "pct": 89
+   },
+   "703601": {
+    "name": "Max Clark",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 104,
+    "seasons_used": 1,
+    "inn_total": 312.3,
+    "tag": "provisional",
+    "pct": 72
+   },
+   "703607": {
+    "name": "Henry Bolte",
+    "dem_plus_now": 104,
+    "dem_plus_3yr": 104,
+    "seasons_used": 1,
+    "inn_total": 844.0,
+    "tag": "provisional",
+    "pct": 72
+   },
+   "800050": {
+    "name": "Chase DeLauter",
+    "dem_plus_now": 109,
+    "dem_plus_3yr": 109,
+    "seasons_used": 1,
+    "inn_total": 507.7,
+    "tag": "provisional",
+    "pct": 86
+   },
+   "800325": {
+    "name": "Luis Lara",
+    "dem_plus_now": 106,
+    "dem_plus_3yr": 106,
+    "seasons_used": 1,
+    "inn_total": 358.0,
+    "tag": "provisional",
+    "pct": 78
+   },
+   "802139": {
+    "name": "JJ Wetherholt",
+    "dem_plus_now": 121,
+    "dem_plus_3yr": 121,
+    "seasons_used": 1,
+    "inn_total": 1131.0,
+    "tag": "provisional",
+    "pct": 98
+   },
+   "802415": {
+    "name": "Chandler Simpson",
+    "dem_plus_now": 108,
+    "dem_plus_3yr": 99,
+    "seasons_used": 2,
+    "inn_total": 2041.0,
+    "tag": "established",
+    "pct": 43
+   },
+   "803011": {
+    "name": "Sam Antonacci",
+    "dem_plus_now": 89,
+    "dem_plus_3yr": 89,
+    "seasons_used": 1,
+    "inn_total": 979.0,
+    "tag": "provisional",
+    "pct": 6
+   },
+   "804606": {
+    "name": "Konnor Griffin",
+    "dem_plus_now": 87,
+    "dem_plus_3yr": 87,
+    "seasons_used": 1,
+    "inn_total": 532.7,
+    "tag": "provisional",
+    "pct": 3
+   },
+   "804668": {
+    "name": "Rafael Flores Jr.",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 100,
+    "seasons_used": 2,
+    "inn_total": 304.3,
+    "tag": "provisional",
+    "pct": 54
+   },
+   "805300": {
+    "name": "Jakob Marsee",
+    "dem_plus_now": 99,
+    "dem_plus_3yr": 100,
+    "seasons_used": 2,
+    "inn_total": 1596.0,
+    "tag": "established",
+    "pct": 52
+   },
+   "805347": {
+    "name": "Jim Jarvis",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 98,
+    "seasons_used": 1,
+    "inn_total": 311.3,
+    "tag": "provisional",
+    "pct": 36
+   },
+   "805367": {
+    "name": "Chase Meidroth",
+    "dem_plus_now": 107,
+    "dem_plus_3yr": 105,
+    "seasons_used": 2,
+    "inn_total": 2246.3,
+    "tag": "established",
+    "pct": 73
+   },
+   "805779": {
+    "name": "Jacob Wilson",
+    "dem_plus_now": 116,
+    "dem_plus_3yr": 101,
+    "seasons_used": 3,
+    "inn_total": 1927.0,
+    "tag": "established",
+    "pct": 59
+   },
+   "805808": {
+    "name": "Kevin McGonigle",
+    "dem_plus_now": 97,
+    "dem_plus_3yr": 97,
+    "seasons_used": 1,
+    "inn_total": 1216.7,
+    "tag": "provisional",
+    "pct": 33
+   },
+   "805811": {
+    "name": "Bryce Eldridge",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 100,
+    "seasons_used": 2,
+    "inn_total": 319.7,
+    "tag": "provisional",
+    "pct": 47
+   },
+   "805999": {
+    "name": "A.J. Ewing",
+    "dem_plus_now": 110,
+    "dem_plus_3yr": 110,
+    "seasons_used": 1,
+    "inn_total": 878.7,
+    "tag": "provisional",
+    "pct": 87
+   },
+   "806068": {
+    "name": "Colt Emerson",
+    "dem_plus_now": 91,
+    "dem_plus_3yr": 91,
+    "seasons_used": 1,
+    "inn_total": 588.0,
+    "tag": "provisional",
+    "pct": 11
+   },
+   "806146": {
+    "name": "George Lombard Jr.",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 100,
+    "seasons_used": 1,
+    "inn_total": 255.3,
+    "tag": "provisional",
+    "pct": 45
+   },
+   "806198": {
+    "name": "Cooper Pratt",
+    "dem_plus_now": 103,
+    "dem_plus_3yr": 103,
+    "seasons_used": 1,
+    "inn_total": 504.3,
+    "tag": "provisional",
+    "pct": 67
+   },
+   "807712": {
+    "name": "Luke Keaschall",
+    "dem_plus_now": 80,
+    "dem_plus_3yr": 85,
+    "seasons_used": 2,
+    "inn_total": 1521.7,
+    "tag": "established",
+    "pct": 2
+   },
+   "807713": {
+    "name": "Matt Shaw",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 101,
+    "seasons_used": 2,
+    "inn_total": 1361.0,
+    "tag": "established",
+    "pct": 58
+   },
+   "808959": {
+    "name": "Munetaka Murakami",
+    "dem_plus_now": 100,
+    "dem_plus_3yr": 100,
+    "seasons_used": 1,
+    "inn_total": 901.0,
+    "tag": "provisional",
+    "pct": 52
+   },
+   "808975": {
+    "name": "Hyeseong Kim",
+    "dem_plus_now": 98,
+    "dem_plus_3yr": 100,
+    "seasons_used": 2,
+    "inn_total": 726.3,
+    "tag": "provisional",
+    "pct": 50
+   },
+   "808982": {
+    "name": "Jung Hoo Lee",
+    "dem_plus_now": 90,
+    "dem_plus_3yr": 89,
+    "seasons_used": 3,
+    "inn_total": 2674.7,
+    "tag": "established",
+    "pct": 7
+   },
+   "810938": {
+    "name": "Ben Williamson",
+    "dem_plus_now": 94,
+    "dem_plus_3yr": 98,
+    "seasons_used": 2,
+    "inn_total": 1293.7,
+    "tag": "established",
+    "pct": 34
+   },
+   "813841": {
+    "name": "Jonah Cox",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 105,
+    "seasons_used": 1,
+    "inn_total": 225.7,
+    "tag": "provisional",
+    "pct": 76
+   },
+   "814439": {
+    "name": "Ryan Waldschmidt",
+    "dem_plus_now": 106,
+    "dem_plus_3yr": 106,
+    "seasons_used": 1,
+    "inn_total": 624.3,
+    "tag": "provisional",
+    "pct": 79
+   },
+   "823550": {
+    "name": "Sung-Mun Song",
+    "dem_plus_now": 105,
+    "dem_plus_3yr": 105,
+    "seasons_used": 1,
+    "inn_total": 356.3,
+    "tag": "provisional",
+    "pct": 74
+   }
+  }
+ }
+}

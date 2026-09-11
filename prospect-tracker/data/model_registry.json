@@ -1198,6 +1198,50 @@
    }
   },
   {
+   "model_id": "dem_plus",
+   "surface": "/mlbstats/ Defense Leaderboards, DEM+ column; Team DEM+ rolls it up by innings",
+   "predicts": "fielding-rate skill: a sample-shrunk rate of FanGraphs' published fielding runs (framing included for catchers) per 1,000 defensive innings, on the 100 + 10z ruler (100 = the average fielder with 200+ innings)",
+   "champion": "dem_plus_v1 (per-position empirical-Bayes shrink toward the position mean of zero, pool-anchored 100 + 10z; positional credit and innings held out of the skill number)",
+   "baseline": "fielding percentage (the naive rate), innings (a playing-time proxy) and the raw unshrunk rate (its parent)",
+   "metric": "forward-chained Spearman Y->Y+1 published fielding rate, predictor seasons 2021-2024, seeded bootstrap CI on the rho gap, plus a within-season permuted twin that must fail",
+   "eval_artifact": "data/dem_plus_eval.json",
+   "verdict": "validated",
+   "notes": "SHIPPED 2026-09-11 (owner request: a Defense board with a new metric named DEM+ to match HEM+/REM+/SEM+). Pre-registered in docs/dem-plus-2026-09-11/DEM_PLUS_GATE.md before any forward number was computed. Input is ONE source: FanGraphs' served fielding runs read verbatim from MLB StatsAPI sabermetrics, plus catcher framing recovered as the exact residual rar - (batting + baseRunning + fielding + positional + wLeague + replacement), which equals FanGraphs CFraming on every catcher checked. No OAA, DRS or SIS column enters, so it is not the banned OAA/rfield blend class. Shrink constants frozen from predictor seasons 2016-2018 (the fit_signal rule on single-position player-seasons), LF on the positional_fit fallback at 29 pairs; the lab's refit reproduces them (k_fit.matches_frozen). X-D1 over 2021-2024 predictors (1255 pairs): DEM+ rho 0.4597 vs raw rate 0.4531, fielding percentage 0.0111, innings 0.089; the permuted twin reads 0.0228 and fails as required. Scale is convention 3 (100 + 10z) because fielding runs are zeroed per position and season, so a ratio to the league divides by zero; a point of DEM+ is not a point of HEM+. NOT an input to eWAR (fielding_blend_w stays 0.0; this verdict is inadmissible for any eWAR fielding weight), eFV (do-not-reopen 17), betting (needs its own section before capture, and Team DEM+ carries framing, so nothing relates it to outcomes before the catch_frame_rate read) or projections (the F04-01 repair reads runs, not an index). Harness tools/dem_plus_lab.py; core dem_plus.py; exporter defense_export.py.",
+   "card": {
+    "n": 1255,
+    "window": "2021-2024 predictors, forward pairs",
+    "headline": [
+     {
+      "label": "Next-year fielding rate (Spearman)",
+      "champion": 0.4597,
+      "baseline": 0.0111,
+      "better": "higher"
+     }
+    ],
+    "derived_from": {
+     "n": "n_forward_pairs",
+     "headline": [
+      {
+       "champion": "forward_spearman_vs_rate_next.dem_plus",
+       "baseline": "forward_spearman_vs_rate_next.fld_pct"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "model_id": "dem_plus_3yr",
+   "surface": "/mlbstats/ Defense Leaderboards, DEM+ 3yr column",
+   "predicts": "fielding-rate skill over a trailing 3-season window (innings-weighted mean DEM+, each season against its own pool)",
+   "champion": "dem_plus_3yr (innings-weighted trailing-3-season DEM+)",
+   "baseline": "single-season DEM+ forward rho on the same fielder set",
+   "metric": "forward-chained Spearman Y->Y+1 published fielding rate, 3yr vs 1yr on the same set (seeded bootstrap CI on the gap)",
+   "eval_artifact": "data/dem_plus_multiyear_eval.json",
+   "verdict": "provisional",
+   "notes": "X-D2 of the DEM+ pre-registration. 971 pairs: 3-year rho 0.4893 vs 1-year 0.4786 on the same set, gap CI {'mean': 0.011, 'lo95': -0.0263, 'hi95': 0.0472}. MARGINAL: the same-set gap does not clear zero, so the column ships provisional with the numbers published. Joined into defense_leaderboards.json by MLBAM from proposed_values (defense_export._join_dem_plus_3yr).",
+   "provisional_kind": "shipped_partial_measurement"
+  },
+  {
    "model_id": "hit_plus",
    "surface": "PROSPX prospect rows (HIT+ pill)",
    "predicts": "descriptive hit-tool read blending contact performance, zone tracking and the Hit / Bat-Control grades",

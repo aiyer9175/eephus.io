@@ -1,0 +1,341 @@
+{
+ "generated_at": "2026-09-11",
+ "seasons": [
+  2021,
+  2022,
+  2023,
+  2024
+ ],
+ "seed": 20260911,
+ "experiment": "X-D1",
+ "model": "dem_plus",
+ "preregistration": "docs/dem-plus-2026-09-11/DEM_PLUS_GATE.md",
+ "conventions": {
+  "predictor_year": "year Y (innings >= 200)",
+  "target": "published fielding rate in Y+1 (innings >= 300)",
+  "excluded": "2020 (60-game season)",
+  "n_partial_outcome_pairs_dropped": 0
+ },
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "published fielding rate (fielding + framing per 1,000 innings) in Y+1, raw pooled",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "published fielding rate in Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "k_fit": {
+  "window": [
+   2016,
+   2017,
+   2018
+  ],
+  "rule": "positional_fit.fit_signal on single-position player-seasons (share >= 0.8, 300+ innings at the position both years)",
+  "by_position": {
+   "C": {
+    "n": 177,
+    "n_pairs": 128,
+    "yoy_r": 0.6176,
+    "hm_inn": 673.0,
+    "obs_sd": 13.834,
+    "k_inn": 417.0
+   },
+   "1B": {
+    "n": 105,
+    "n_pairs": 69,
+    "yoy_r": 0.236,
+    "hm_inn": 962.0,
+    "obs_sd": 3.883,
+    "k_inn": 3116.0
+   },
+   "2B": {
+    "n": 87,
+    "n_pairs": 54,
+    "yoy_r": 0.4618,
+    "hm_inn": 988.0,
+    "obs_sd": 5.454,
+    "k_inn": 1151.0
+   },
+   "3B": {
+    "n": 90,
+    "n_pairs": 50,
+    "yoy_r": 0.4943,
+    "hm_inn": 995.0,
+    "obs_sd": 5.929,
+    "k_inn": 1018.0
+   },
+   "SS": {
+    "n": 94,
+    "n_pairs": 73,
+    "yoy_r": 0.6297,
+    "hm_inn": 1048.0,
+    "obs_sd": 7.04,
+    "k_inn": 616.0
+   },
+   "LF": {
+    "n_pairs": 29,
+    "fallback": "positional_fit constant",
+    "k_inn": 935.0
+   },
+   "CF": {
+    "n": 88,
+    "n_pairs": 50,
+    "yoy_r": 0.6836,
+    "hm_inn": 977.0,
+    "obs_sd": 8.332,
+    "k_inn": 452.0
+   },
+   "RF": {
+    "n": 81,
+    "n_pairs": 46,
+    "yoy_r": 0.7202,
+    "hm_inn": 948.0,
+    "obs_sd": 6.253,
+    "k_inn": 368.0
+   }
+  },
+  "frozen": {
+   "C": 417.0,
+   "1B": 3116.0,
+   "2B": 1151.0,
+   "3B": 1018.0,
+   "SS": 616.0,
+   "LF": 935.0,
+   "CF": 452.0,
+   "RF": 368.0
+  },
+  "drift_vs_frozen": {},
+  "matches_frozen": true
+ },
+ "n_forward_pairs": 1255,
+ "forward_spearman_vs_rate_next": {
+  "dem_plus": 0.4597,
+  "raw_rate": 0.4531,
+  "fld_pct": 0.0111,
+  "innings": 0.089,
+  "twin": 0.0228
+ },
+ "gap_ci_vs_fld_pct": {
+  "mean": 0.4491,
+  "lo95": 0.3815,
+  "hi95": 0.5176
+ },
+ "gap_ci_vs_innings": {
+  "mean": 0.3713,
+  "lo95": 0.3057,
+  "hi95": 0.4401
+ },
+ "gap_ci_vs_raw_rate": {
+  "mean": 0.0067,
+  "lo95": -0.0039,
+  "hi95": 0.0172
+ },
+ "twin": {
+  "rho": 0.0228,
+  "gap_ci_vs_fld_pct": {
+   "mean": 0.0115,
+   "lo95": -0.0655,
+   "hi95": 0.0875
+  },
+  "fails_as_required": true
+ },
+ "results_by_convention": {
+  "v1": {
+   "rho_primary": 0.4597,
+   "rho_baselines": {
+    "vs_fld_pct": 0.0111,
+    "vs_innings": 0.089,
+    "vs_raw_rate": 0.4531
+   },
+   "gap_ci": {
+    "vs_fld_pct": {
+     "mean": 0.4491,
+     "lo95": 0.3815,
+     "hi95": 0.5176
+    },
+    "vs_innings": {
+     "mean": 0.3713,
+     "lo95": 0.3057,
+     "hi95": 0.4401
+    },
+    "vs_raw_rate": {
+     "mean": 0.0067,
+     "lo95": -0.0039,
+     "hi95": 0.0172
+    }
+   }
+  },
+  "v2": {
+   "rho_primary": 0.4613,
+   "rho_baselines": {
+    "vs_fld_pct": 0.0123,
+    "vs_innings": 0.0892,
+    "vs_raw_rate": 0.4543
+   },
+   "gap_ci": {
+    "vs_fld_pct": {
+     "mean": 0.4476,
+     "lo95": 0.3684,
+     "hi95": 0.5283
+    },
+    "vs_innings": {
+     "mean": 0.3705,
+     "lo95": 0.2917,
+     "hi95": 0.4468
+    },
+    "vs_raw_rate": {
+     "mean": 0.0071,
+     "lo95": -0.0027,
+     "hi95": 0.0167
+    }
+   },
+   "cluster": {
+    "n_pairs": 1255,
+    "n_players": 523,
+    "max_pairs_per_player": 4,
+    "mean_pairs_per_player": 2.4,
+    "n_strata_first_pred_season": 4
+   }
+  }
+ },
+ "sensitivities": {
+  "fit_window_2016_2019_in_sample": {
+   "n": 1106,
+   "v1": {
+    "rho_primary": 0.4793,
+    "rho_baselines": {
+     "vs_fld_pct": 0.0332,
+     "vs_innings": 0.0781,
+     "vs_raw_rate": 0.4711
+    },
+    "gap_ci": {
+     "vs_fld_pct": {
+      "mean": 0.4457,
+      "lo95": 0.3698,
+      "hi95": 0.5169
+     },
+     "vs_innings": {
+      "mean": 0.4012,
+      "lo95": 0.3233,
+      "hi95": 0.4754
+     },
+     "vs_raw_rate": {
+      "mean": 0.008,
+      "lo95": -0.0014,
+      "hi95": 0.0172
+     }
+    }
+   },
+   "gate_v1": {
+    "beats_fld_pct": true,
+    "beats_innings": true,
+    "not_worse_than_raw": true,
+    "all": true
+   }
+  },
+  "non_catchers": {
+   "n": 1056,
+   "v1": {
+    "rho_primary": 0.4065,
+    "rho_baselines": {
+     "vs_fld_pct": 0.0127,
+     "vs_innings": 0.1068,
+     "vs_raw_rate": 0.4024
+    },
+    "gap_ci": {
+     "vs_fld_pct": {
+      "mean": 0.3933,
+      "lo95": 0.3193,
+      "hi95": 0.4653
+     },
+     "vs_innings": {
+      "mean": 0.2984,
+      "lo95": 0.2249,
+      "hi95": 0.3715
+     },
+     "vs_raw_rate": {
+      "mean": 0.0037,
+      "lo95": -0.0085,
+      "hi95": 0.0169
+     }
+    }
+   },
+   "gate_v1": {
+    "beats_fld_pct": true,
+    "beats_innings": true,
+    "not_worse_than_raw": true,
+    "all": true
+   }
+  },
+  "predictor_floor_300": {
+   "n": 1182,
+   "v1": {
+    "rho_primary": 0.4697,
+    "rho_baselines": {
+     "vs_fld_pct": 0.0017,
+     "vs_innings": 0.0967,
+     "vs_raw_rate": 0.4633
+    },
+    "gap_ci": {
+     "vs_fld_pct": {
+      "mean": 0.466,
+      "lo95": 0.3966,
+      "hi95": 0.5375
+     },
+     "vs_innings": {
+      "mean": 0.3714,
+      "lo95": 0.302,
+      "hi95": 0.4429
+     },
+     "vs_raw_rate": {
+      "mean": 0.0064,
+      "lo95": -0.0036,
+      "hi95": 0.0164
+     }
+    }
+   },
+   "gate_v1": {
+    "beats_fld_pct": true,
+    "beats_innings": true,
+    "not_worse_than_raw": true,
+    "all": true
+   }
+  }
+ },
+ "gate": {
+  "bar": "gap vs fielding percentage lo95 > 0 AND vs innings lo95 > 0 AND vs the raw rate lo95 >= -0.01 AND the permuted twin fails",
+  "convention": "v1",
+  "clauses_v1": {
+   "beats_fld_pct": true,
+   "beats_innings": true,
+   "not_worse_than_raw": true,
+   "all": true
+  },
+  "clauses_v2": {
+   "beats_fld_pct": true,
+   "beats_innings": true,
+   "not_worse_than_raw": true,
+   "all": true
+  },
+  "v2_sign_agrees": true,
+  "pass": true
+ },
+ "runtime_seconds": 212.9,
+ "verdict": {
+  "status": "validated",
+  "summary": "Forward-chained over predictor seasons 2021 to 2024 (1255 Y to Y+1 pairs): DEM+ rho 0.4597 against the raw rate 0.4531, fielding percentage 0.0111 and innings 0.089; the permuted twin reads 0.0228. Gap CIs: vs fielding percentage {'mean': 0.4491, 'lo95': 0.3815, 'hi95': 0.5176}, vs innings {'mean': 0.3713, 'lo95': 0.3057, 'hi95': 0.4401}, vs the raw rate {'mean': 0.0067, 'lo95': -0.0039, 'hi95': 0.0172}. VALIDATED: every pre-registered clause holds and the twin fails."
+ }
+}

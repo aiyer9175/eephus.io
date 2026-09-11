@@ -33,7 +33,8 @@ happen inside the called module, so this file alone cannot split them).
 | 9d-pre-odds. Betting odds snapshot (before the DFS slate) | dfs.json |
 | 9d-bis. DFS daily slate (dfs.json) | dfs.json |
 | 9e-pre0. Refresh team leaderboards (bullpen_leaderboards.json, | bullpen_leaderboards.json, hitter_leaderboards.json, starter_leaderboards.json |
-| 9e-pre. Leaderboard vintage snapshot (validation clock) | betting_model_eval.json |
+| 9e-pre. Leaderboard vintage snapshot (validation clock) | - |
+| 9e-pre0b. Refresh Defense Leaderboards (defense_leaderboards.json) | betting_model_eval.json, defense_leaderboards.json |
 | 9e-pre1. Betting model refit (betting_model_eval.json) | betting_model_eval.json |
 | 9e. Betting odds snapshot + payload (betting.json) | betting.json, betting_learning.json, betting_shadow.json, job_heartbeat.json, source_backtest.json, xfv_scoreboard_eval.json |
 | 9g. eFV scoreboard refresh (xfv_scoreboard_eval.json) | xfv_scoreboard_eval.json |
@@ -98,6 +99,8 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4g-lab. hitter lab (hem_plus + hem_plus_multiyear evals) | hem_plus_eval.json, xhem_plus_eval.json |
 | 6b4g. Hitter Leaderboards (hitter_leaderboards.json) | hitter_history.json, hitter_leaderboards.json, leverage_leaderboards.json |
 | 6b4h. Leverage Leaderboards (leverage_leaderboards.json) | leverage_history.json, leverage_leaderboards.json |
+| 6b4i-lab. defense lab (dem_plus + dem_plus_multiyear evals) | dem_plus_eval.json |
+| 6b4i. Defense Leaderboards (defense_leaderboards.json) | defense_history.json, defense_leaderboards.json |
 | 6b5. Alchemy Lab (pal.json) | arbitration.json, pal.json |
 | 6b7. Arbitration Predictor (arbitration.json) | arbitration.json, management_board.json |
 | 6b7c. In-Game Management board (management_board.json) | hof_board.json, management_board.json |

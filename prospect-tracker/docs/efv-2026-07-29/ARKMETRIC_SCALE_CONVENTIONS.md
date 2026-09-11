@@ -55,6 +55,8 @@ different units.
 | $DvM+ | 3 (100 + 10z), FV-TIER anchored | the player's FV tier, not the league | 40-160 | `storage.py` (`_dollar_dvm_by_key`) |
 | Org $DvM+ | 3 (inherited) | mean of the org's actives' $DvM+ | 40-160 inherited | `storage.py` |
 | RIV+ | 3 (100 + 10z) | relievers | none | `rem_plus.py` (`RIV_SCALE = 10`) |
+| DEM+ | 3 (100 + 10z) | fielders with 200+ defensive innings, shrunk rates | none | `dem_plus.py` |
+| Team DEM+ | 3 (inherited) | innings-weighted mean of a club's non-catcher DEM+ | none | `dem_plus.py` (`team_defense`) |
 | AP+ (Advancement Pace+) | 3 (100 + 10z) | experience-year peer group | `ap_plus` uncapped (model), `ap_plus_display` capped 70-130 | `advancement_pace_export.py` |
 | Farm tiebreaker | 3 (100 + 10z) | the 30 orgs | none | `storage.py` (`farm_tiebreaker`) |
 | tjStuff+ | 3 with an INVERTED sign (100 - 10z) | external MLB per-pitch model | 20-180 | `mlb_stuff_plus.py` |

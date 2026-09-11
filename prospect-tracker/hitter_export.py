@@ -190,8 +190,9 @@ def build_hitters(rows: list[dict]) -> list[Hitter]:
 # CONSTRUCTION: a season-scoped sabermetrics request returns one aggregated row
 # per player, so there is no stint decomposition to mis-index (see
 # load_published_wrc_plus for the measurement and the guard).
-_SABER_URL = ("https://statsapi.mlb.com/api/v1/stats?stats=sabermetrics"
-              "&group=hitting&season={season}&sportId=1&playerPool=All&limit=2000")
+# The URL lives in saber_feed, the one loader every reader of this feed shares
+# (the Defense board and the eWAR replica read the same rows).
+from saber_feed import SABER_URL as _SABER_URL  # noqa: E402
 
 # Color bands for the wRC+ column, DERIVED FROM THE MEASURED SPREAD of published
 # wRC+, NOT inherited from HEM+.

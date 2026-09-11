@@ -6834,6 +6834,143 @@
    ],
    "shelf": "ark",
    "origin": "Arkmetric component, created by Noah J. Dengler, original to eephus.io. Built on FIP (Tom Tango) with an empirical-Bayes shrink toward the role pool."
+  },
+  {
+   "id": "dem_plus",
+   "term": "DEM+ (Defense Evaluation Metric)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "DEM+",
+    "defense evaluation metric",
+    "defense plus",
+    "fielding plus"
+   ],
+   "priority": 22,
+   "definition": "A fielder's glove per inning on a 100-anchored scale, where 100 is the average fielder with 200 or more defensive innings and ten points is one standard deviation. The fielding member of the HEM+ / REM+ / SEM+ family: FanGraphs' published fielding runs per 1,000 defensive innings, catcher framing included, pulled toward average by sample size. Positional credit and innings are shown beside it as context and never move it.",
+   "methodology": "The runs are FanGraphs' served fielding runs (Statcast range and arm, catcher blocking and throwing), read verbatim from MLB's sabermetrics feed. Catcher framing is not published as its own field there, but it sits inside the same feed's run line, so it is recovered exactly as the residual rar minus batting, baserunning, fielding, positional, league and replacement runs. Nothing from Outs Above Average or Defensive Runs Saved enters: one source, no blend.\n\nEach fielder's rate is shrunk toward zero, which is the position average because FanGraphs zeroes fielding runs within every position and season. The pull uses a per-position constant fixed from 2016 to 2018 before the test window was read: catchers (framing is measured on every pitch) are trusted fastest, first basemen slowest. The scale is ten points per standard deviation of the pool's shrunk rates, the WAR/PA+ ruler, not the ratio ruler of HEM+, REM+ and SEM+, because a rate centred on zero cannot be divided by its own average. A point of DEM+ is not a point of HEM+.\n\nTested before it shipped, on a plan written first: over 2021 to 2024, DEM+ ranks next season's fielding rate at a Spearman correlation of 0.4597, against 0.4531 for the unshrunk rate, 0.0111 for fielding percentage and 0.089 for innings; a shuffled copy scores 0.0228. Framing inside the catcher number is parity with FanGraphs WAR, not an improvement on it. Accountability artifact: data/dem_plus_eval.json.",
+   "formula": "rate = (fielding runs + framing runs) x 1000 / defensive innings\nshrunk rate = (fielding runs + framing runs) x 1000 / (innings + k), k the innings-weighted per-position constant\nDEM+ = 100 + 10 x (shrunk rate - pool mean) / pool sd, over fielders with 200+ innings",
+   "example": "A shortstop at +12 fielding runs over 1,100 innings with k = 616: shrunk rate 12 x 1000 / 1716 = 7.0. Against a pool mean of 0.1 and sd of 3.3 that is 100 + 10 x 6.9 / 3.3 = 121.",
+   "seeAlso": [
+    "team_dem_plus",
+    "dem_plus_3yr",
+    "fielding_runs",
+    "framing_runs",
+    "positional_adjustment",
+    "hem_plus",
+    "war_pa_plus"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "team_dem_plus",
+   "term": "Team DEM+",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Team DEM+",
+    "team defense plus",
+    "team defense"
+   ],
+   "priority": 60,
+   "definition": "A club's fielding on the DEM+ scale: the innings-weighted average DEM+ of everyone who has fielded for it this season.",
+   "methodology": "Every fielder counts by the innings he actually played, including players now hurt or traded, because the number describes the season as played (the Offense+ rule). The Defensive Alignment card beside it is tonight's question instead: for each position, the active-roster player with the most innings there. Team DEM+ carries catcher framing, so no betting model reads it until that input's own pre-registered test has run.",
+   "formula": "Team DEM+ = sum(DEM+ x innings) / sum(innings) over the club's fielders",
+   "seeAlso": [
+    "dem_plus"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "dem_plus_3yr",
+   "term": "DEM+ (3yr)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "DEM+ 3yr",
+    "three-year DEM+"
+   ],
+   "priority": 61,
+   "definition": "Innings-weighted DEM+ over the last three seasons, each season scored against its own pool. A steadier glove read than one season.",
+   "methodology": "Tested against one-season DEM+ on the same fielders: 3-year rho 0.4893 against 1-year 0.4786. The gap does not clear zero, so it ships provisional with the numbers published. The column is frozen lab output (data/dem_plus_multiyear_eval.json), dated to the lab run rather than to the board. Needs two seasons and 1,000 innings in the window for the established tag.",
+   "seeAlso": [
+    "dem_plus"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "fielding_runs",
+   "term": "Fielding runs (FanGraphs)",
+   "category": "general-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "fielding runs",
+    "Fld runs",
+    "FanGraphs fielding"
+   ],
+   "priority": 62,
+   "definition": "FanGraphs' fielding runs above average: Statcast range and arm for fielders, blocking and throwing for catchers, zeroed within each position and season. Published by MLB's sabermetrics feed; we display it and compute no version of it.",
+   "methodology": "Since FanGraphs' 2022 and 2024 updates, which it applied back to 2016, range and outfield arm come from Statcast. Seasons before 2016 are on a different basis and are not pooled with these. MLB's feed publishes this number without catcher framing; the DEM+ board adds framing back for catchers.",
+   "seeAlso": [
+    "dem_plus",
+    "framing_runs"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric, FanGraphs' fielding runs as published by MLB. We display it and compute no version of it."
+  },
+  {
+   "id": "framing_runs",
+   "term": "Framing runs",
+   "category": "general-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "framing",
+    "catcher framing",
+    "CFraming"
+   ],
+   "priority": 63,
+   "definition": "Runs a catcher saves by getting borderline pitches called strikes, as FanGraphs credits them.",
+   "methodology": "MLB's feed carries framing inside a catcher's run total rather than as a field, so it is recovered as that total minus every published component. It matches FanGraphs' own framing column exactly on the seasons checked, and it is zero for every non-catcher. It is counted in DEM+ because FanGraphs WAR counts it.",
+   "seeAlso": [
+    "dem_plus",
+    "fielding_runs"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric, FanGraphs' catcher framing runs, recovered from MLB's published run line. We display it."
+  },
+  {
+   "id": "positional_adjustment",
+   "term": "Positional adjustment",
+   "category": "general-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "positional runs",
+    "Pos runs",
+    "positional credit"
+   ],
+   "priority": 64,
+   "definition": "The runs a player is credited for the difficulty of the position he plays: a shortstop gains, a first baseman and a designated hitter lose. FanGraphs' published value.",
+   "methodology": "It is value, not skill, so it sits beside DEM+ as context and never moves it. Def runs on the board are fielding runs plus framing plus this adjustment, the FanGraphs Def quantity.",
+   "seeAlso": [
+    "dem_plus"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric, FanGraphs' positional adjustment as published by MLB. We display it."
   }
  ]
 }

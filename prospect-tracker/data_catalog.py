@@ -299,6 +299,17 @@ ARTIFACTS = (
                  "constant that REM+ is built on, not the standard FIP."),
     },
     {
+        "file": "defense_leaderboards.json", "group": "mlb",
+        "title": "Defense leaderboards",
+        "what": ("Season fielder board with DEM+, published fielding and framing runs, "
+                 "and the team DEM+ rollup with each club's defensive alignment."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_defense_export_contract.py",
+        "note": ("Fielding, framing and positional runs are FanGraphs' published values "
+                 "read from MLB's feed; DEM+ is on the 100 + 10z ruler, not the HEM+ "
+                 "ratio scale."),
+    },
+    {
         "file": "pal.json", "group": "mlb",
         "title": "Alchemy Lab conversions",
         "what": "Reliever to starter and starter to reliever fits, with pitch-mix change history.",

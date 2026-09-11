@@ -230,6 +230,9 @@ SCHEDULED_EXPORTS = (
     "hitter_leaderboards", "starter_leaderboards", "bullpen_leaderboards",
     "leverage_leaderboards", "leverage_batters", "leverage_starters",
     "hitter_bat_side",
+    # DEM+ board: the zero-rollup guard, and the framing tripwire that fires if
+    # MLB's run line changes shape and the recovered framing residual goes to zero
+    "defense_leaderboards", "defense_published_fielding",
     # /fantasy/ + /dfs/ + /betting/, all of which read the same probables feed
     "fantasy_schedule", "fantasy_teams_context", "fantasy_export",
     "dfs_schedule", "dfs_slate", "betting_export",
@@ -2752,6 +2755,21 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     _hb.record("leaderboard_vintage", ok=False, result=str(_e)[:120])
                 except Exception:
                     pass
+
+        # --- 9e-pre0b. Refresh the Defense board (display only) -------------
+        # Placed AFTER the vintage snapshot on purpose: DEM+ feeds no model, and
+        # work between the boards the clock freezes and the snapshot moves its timing.
+        # Two cheap reads of caches 9e-pre0's hitter export just warmed.
+        with _step("9e-pre0b. Refresh Defense Leaderboards (defense_leaderboards.json)", log):
+            if chained:
+                log.info("daily: SKIP 9e-pre0b: monthly 6b4i just built the defense board (chained)")
+            else:
+                try:
+                    from defense_export import export as _export_defense_daily
+                    log.info("daily leaderboards: defense scored %s",
+                             _export_defense_daily(log=log.info))
+                except Exception:
+                    log.exception("daily: defense leaderboard refresh failed - continuing")
 
         # --- 9e-pre1. Betting model refit, so the validation clock TICKS ---
         # THE DEFECT THIS CLOSES (2026-08-06). Every ingredient of the honest
@@ -5465,6 +5483,34 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     _export_lev_history(log=log.info)
             except Exception:
                 log.exception("leverage leaderboards export failed - continuing")
+
+        # --- 6b4i-lab. Defense lab (dem_plus_eval + dem_plus_multiyear_eval) --
+        # The pre-registered DEM+ validation (docs/dem-plus-2026-09-11/) and the
+        # 3yr proposed_values. Offline against the caches 6b4g just warmed.
+        with _step("6b4i-lab. defense lab (dem_plus + dem_plus_multiyear evals)", log):
+            try:
+                if not _lab_should_skip(out_dir / "dem_plus_eval.json",
+                                        "6b4i-lab defense lab", log):
+                    from tools import dem_plus_lab
+                    dem_plus_lab.run(write=True)
+            except Exception:
+                log.exception("defense lab failed - continuing (export uses the last eval)")
+
+        # --- 6b4i. Defense Leaderboards + history (defense_*.json) ------------
+        # DEM+ fielder board + Team DEM+ from FanGraphs' published fielding runs
+        # (MLB sabermetrics feed, framing recovered as the rar residual) and the
+        # season fielding innings. After 6b4g, which it reads for the HEM+ join.
+        with _step("6b4i. Defense Leaderboards (defense_leaderboards.json)", log):
+            try:
+                from defense_export import (export as _export_defense,
+                                            export_history as _export_def_history)
+                _def_n = _export_defense(log=log.info)
+                log.info("defense: %d fielders scored", _def_n)
+                if not _lab_should_skip(out_dir / "defense_history.json",
+                                        "6b4i defense history", log):
+                    _export_def_history(log=log.info)
+            except Exception:
+                log.exception("defense leaderboards export failed - continuing")
 
         # --- 6b5. Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion

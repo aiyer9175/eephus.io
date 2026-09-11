@@ -102,3 +102,35 @@ than 1-year rho and gap lo95 >= 0. Otherwise the 3-year column ships MARGINAL.
 `data/dem_plus_multiyear_eval.json`; registry rows `dem_plus` and `dem_plus_3yr`.
 The constants fit writes its own block into `data/dem_plus_eval.json` under
 `k_fit` so the frozen values are reviewable beside the verdict they fed.
+
+## 7. Disclosure, added 2026-09-11 after the first and only run
+
+Written after the lab ran, so nothing here is a pre-registered change; it records
+what was known before the registration and what happened once.
+
+- **A partial look at the parent before registration.** About twelve minutes before
+  this file was committed, a design lane computed the year-over-year persistence of
+  the candidate's raw PARENT on the gate window: served fielding runs per 600 PA,
+  r 0.474 on 800 pairs 2021-2025 (PA 300+ both years; 0.476 on 729 non-catcher
+  pairs), and Baseball-Reference `runs_defense` persistence 0.436 on 2,416 pairs
+  2011-2025. Different exposure unit and floor from X-D1, and nothing above was chosen
+  from them (the constants come from 2016-2018, the floors from the HEM+ precedent).
+  Within-season spreads by position were also computed; they relate no season to the
+  next.
+- **The run.** `tools/dem_plus_lab.py` ran once, on 2026-09-11. The refit on the
+  constant window reproduced every frozen constant. X-D1 PASSED on every clause under
+  both conventions and the permuted twin failed as required (numbers in
+  `data/dem_plus_eval.json`). X-D2 did not clear its bar, so the 3-year column ships
+  provisional. No floor, target, constant or estimator changed after the run.
+- **Not added after the fact.** A design lane proposed report-only baselines (raw OAA
+  and raw DRS rates) and catcher-only and non-catcher-only legs as amendments to be
+  committed before the first run. The run came first, so they were not added as
+  pre-registered legs. The non-catcher and floor-300 sensitivities in section 3 ran as
+  written. If the OAA and DRS comparisons are ever run, they are post-hoc and must be
+  labelled so.
+- **Confirmatory holdout.** The 2025 to 2026 pairs run once, after 2026-11-15, and are
+  reported beside the verdict, never merged into it.
+- **Club-level framing is withheld** (`dem_plus.TEAM_ROLLUP_FRAMING = False`) until the
+  betting program's `catch_frame_rate` read is recorded: Team DEM+ and the club run
+  totals roll over non-catchers, while each catcher's own DEM+ keeps his framing. A
+  display choice, not a change to the metric or the gate.
