@@ -233,18 +233,52 @@ def _join_war_ip_plus_3yr(starters: list[dict]) -> dict:
     return join_war_rate_3yr(starters, "sp", "war_ip_plus_3yr", "starters")
 
 
+# TWO-WAY PLAYERS ARE ON THE BOARD (owner decision 23, 2026-09-11). Feed
+# position TWP used to be split off: the board dropped the rows and a card-only
+# block scored them against the served pool without letting them in. The owner
+# admitted them, so a two-way starter now enters the SEM+ pool, the rotation
+# rollup and starters[] exactly like any primary pitcher who passes the same
+# true-starter filter, and the betting model prices the games he starts off his
+# own SEM+ rather than his club's rotation average. The card-only block is
+# RETIRED: the key stays in the payload, empty with a note, so a reader of an
+# older payload shape (mlb_player_export) finds nothing to double-count.
+# False restores the card-only split exactly (the board is byte-for-byte what
+# it was before 2026-09-11).
+ADMIT_TWO_WAY_TO_BOARD = True
+
+
+def _two_way_block(two_way_rows: list[dict], starters: list[dict]) -> dict:
+    """The payload's account of the two-way rows: which are on the board and
+    which are not, read off the SCORED starters[] rather than off the input, so
+    a two-way line the true-starter filter dropped is never listed as admitted."""
+    on_board = {int(r["mlbam"]) for r in starters or [] if r.get("mlbam") is not None}
+    ids = sorted({int(r["mlbam"]) for r in two_way_rows if r.get("mlbam") is not None})
+    admitted = [m for m in ids if ADMIT_TWO_WAY_TO_BOARD and m in on_board]
+    return {
+        "admitted": ADMIT_TWO_WAY_TO_BOARD,
+        "mlbam": admitted,
+        "not_on_board": [m for m in ids if m not in admitted],
+        "note": ("two-way players (feed position TWP) enter the starter pool, the "
+                 "rotations and starters[] like any primary pitcher who passes the "
+                 "true-starter filter (owner decision 2026-09-11); `mlbam` lists the "
+                 "ones on the board, `not_on_board` the two-way lines the filter "
+                 "kept off it"
+                 if ADMIT_TWO_WAY_TO_BOARD else
+                 "two-way players are kept out of the pool and scored for their "
+                 "cards alone in two_way_card_only"),
+    }
+
+
 def score_two_way_card_only(pool_rows: list[dict], two_way_rows: list[dict]) -> dict:
     """SEM+ for two-way players (feed position TWP), scored against the SERVED
-    starter pool and never entering it.
+    starter pool and never entering it. RETIRED from the served path while
+    ADMIT_TWO_WAY_TO_BOARD is True: the two-way rows are on the board itself.
 
-    The board drops TWP rows (they are not primary pitchers), so a two-way
-    starter's card had no pitching index at all. Admitting him to the board
-    would move the pool anchor and, because the betting model reads the listed
-    probable's SEM+ off the board, the price of every game he starts: that is
-    the owner's call. This is the card-only half: the pool is rebuilt from the
-    exact rows the board scored (deterministic, so it is the served pool), the
-    two-way line is scored against it, and the result rides a separate payload
-    key that no pool, rotation, betting input or vintage reads."""
+    The card-only half of the 2026-09-10 compromise: the pool is rebuilt from
+    the exact rows the board scored (deterministic, so it is the served pool),
+    the two-way line is scored against it, and the result rides a separate
+    payload key that no pool, rotation, betting input or vintage reads. Kept so
+    the flag above can restore it in one line."""
     out = {"n": 0, "starters": [],
            "note": ("two-way players scored against the served starter pool for their "
                     "player card only; they do not enter the pool, the rotations or "
@@ -279,10 +313,12 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
 
     log(f"  starters: loading {season} StatsAPI season pitching...")
     rows_all = load_season_pitching(season, positions=("P", "TWP"))
-    # The board's pool is primary pitchers only, exactly as before; two-way rows
-    # are split off and scored for their cards alone (score_two_way_card_only).
-    rows = [r for r in rows_all if not r.get("pos")]
+    # Primary pitchers, plus the two-way rows (feed position TWP) since owner
+    # decision 23 (ADMIT_TWO_WAY_TO_BOARD). Either way a row still has to pass
+    # sem_plus.is_true_starter to reach the pool.
     two_way_rows = [r for r in rows_all if r.get("pos") == "TWP"]
+    rows = ([r for r in rows_all if not r.get("pos") or r.get("pos") == "TWP"]
+            if ADMIT_TWO_WAY_TO_BOARD else [r for r in rows_all if not r.get("pos")])
     if not rows:
         log(f"  starters: no pitching data for {season} (source blocked or empty); skipping")
         return 0
@@ -346,9 +382,20 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         },
         "team_rollup": rollup_meta,
         "pool": scored["pool"], "starters": scored["starters"], "teams": teams,
-        # Card-only SEM+ for two-way players (see score_two_way_card_only). A
-        # separate key on purpose: nothing that reads starters[] or teams[] sees it.
-        "two_way_card_only": score_two_way_card_only(rows, two_way_rows),
+        # The two-way rows (feed position TWP) and what the board did with each:
+        # `mlbam` lists only the ones that are ON the board (in starters[]),
+        # `not_on_board` the rest (a two-way line that fails the true-starter
+        # filter, or every one while the flag is off), so the label never names
+        # a player the board did not admit.
+        "two_way": _two_way_block(two_way_rows, scored["starters"]),
+        # RETIRED while ADMIT_TWO_WAY_TO_BOARD is True: empty, with a note, so a
+        # card that still reads the key finds nothing to double-count. With the
+        # flag False it is the card-only score of the pre-2026-09-11 board.
+        "two_way_card_only": (
+            {"n": 0, "starters": [],
+             "note": ("retired 2026-09-11: two-way players are on the starter board "
+                      "itself, so their cards read starters[]")}
+            if ADMIT_TWO_WAY_TO_BOARD else score_two_way_card_only(rows, two_way_rows)),
     }
     n = len(scored["starters"])
     log(f"  starters: {n} starters ({scored['pool'].get('n_qualified', 0)} qualified), "

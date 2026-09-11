@@ -24,6 +24,13 @@
    /betting/ had refused the same event off the same snapshot since 2026-08-09.
    The two readers now share one predicate, and a refused game says so.
 
+3. THE BOARD SERVED GAMES NOBODY COULD DRAFT (owner decision 5, 2026-09-11).
+   45 of 117 rows on the 2026-09-10 slate sat on games already started or final,
+   and the optimizer built lineups out of them. Only a game whose first pitch
+   has not been thrown is draftable now; the rest leave `games`, `players` and
+   the optimizer and are listed in `excluded_games` with their state, and the
+   schedule's cached status is backed by the clock because it can lag by hours.
+
 Pure-builder tests inject every input; the served-artifact laws skip loudly when
 data/dfs.json is absent or was built before these fields existed.
 """
@@ -297,10 +304,13 @@ def test_a_live_doubleheader_opener_does_not_borrow_the_nightcap_market(monkeypa
 
 def test_the_payload_names_a_refused_game_and_moves_no_price(monkeypatch):
     """Through build_payload on its OWN slate (the only path that reads odds):
-    the live game carries vegas null plus the refusal, no row carries its
-    market, the integrity count says so, and not one point total moves."""
+    a game whose only snapshot was read after its first pitch carries vegas
+    null plus the refusal, no row carries its market, the integrity count says
+    so, and not one point total moves. The build clock sits BEFORE that first
+    pitch (a replay of the pregame build against a later capture), so the game
+    is still draftable and the refusal is the only thing that touches it."""
     import dfs_export as dx
-    games = [_game(pk=1, first_pitch="17:05:00", status="Live"),
+    games = [_game(pk=1, first_pitch="17:05:00"),
              _game(pk=2, first_pitch="23:40:00")]
     monkeypatch.setattr(dx, "_schedule_for_day",
                         lambda day, fantasy: (games, {"source": "statsapi",
@@ -308,7 +318,8 @@ def test_the_payload_names_a_refused_game_and_moves_no_price(monkeypatch):
                                                       "stale": False}))
     _serve_snapshot(monkeypatch, _snapshot(["2026-08-05T17:06:00Z", "2026-08-05T23:41:00Z"],
                                            "2026-08-05T19:34:00Z"))
-    p = _build(games=None)
+    p = _build(games=None, now=datetime(2026, 8, 5, 17, 0, tzinfo=timezone.utc))
+    assert p["excluded_games"] == [] and p["slate_filter"]["n_draftable"] == 2
     by_pk = {g["game_pk"]: g for g in p["games"]}
     assert by_pk[1]["vegas"] is None and by_pk[1]["vegas_refused"] == "in_game"
     assert by_pk[2]["vegas"] and "vegas_refused" not in by_pk[2]
@@ -322,6 +333,112 @@ def test_the_payload_names_a_refused_game_and_moves_no_price(monkeypatch):
     base = _build(games=games, vegas={})
     assert ({(r["mlbam"], r["side"]): r["pts"] for r in p["players"]}
             == {(r["mlbam"], r["side"]): r["pts"] for r in base["players"]})
+
+
+# ===========================================================================
+# 2b. Only draftable games reach the board (owner decision 5)
+# ===========================================================================
+def test_a_started_or_final_game_leaves_the_board_and_the_optimizer():
+    import dfs_export as dx
+    games = [_game(pk=1, first_pitch="17:05:00", status="Live"),
+             _game(pk=2, first_pitch="18:05:00", status="Final"),
+             _game(pk=3, first_pitch="23:40:00")]
+    p = _build(games=games)
+    assert {g["game_pk"] for g in p["games"]} == {3}
+    assert {r["game_pk"] for r in p["players"]} == {3}
+    ex = {x["game_pk"]: x for x in p["excluded_games"]}
+    assert ex[1]["state"] == "started" and ex[2]["state"] == "final"
+    assert ex[1]["basis"] == ex[2]["basis"] == "schedule_status"
+    assert (ex[1]["away"], ex[1]["home"]) == ("BOS", "NYY")
+    f = p["slate_filter"]
+    assert (f["n_scheduled"], f["n_draftable"], f["n_excluded"]) == (3, 1, 2)
+    assert f["by_state"] == {"started": 1, "final": 1}
+    assert p["n_games"] == 1 and p["n_games_scheduled"] == 3
+    # An injected slate reads no clock unless the caller hands it one.
+    assert f["clock"] is None
+    assert dx.game_state(_game(first_pitch="17:05:00")) == "open"
+
+
+def test_a_postponed_game_is_labelled_postponed_not_final():
+    import dfs_export as dx
+    pp = dict(_game(pk=4), status="Final", coded_state="D",
+              detailed_state="Postponed", status_reason="Rain")
+    for g, want in ((pp, "postponed"),
+                    (dict(_game(), status="Live", coded_state="T",
+                          detailed_state="Suspended: Rain"), "suspended"),
+                    (dict(_game(), status="Final", coded_state="C",
+                          detailed_state="Cancelled"), "cancelled"),
+                    (dict(_game(), status="Preview", coded_state="P",
+                          detailed_state="Delayed Start"), "open"),
+                    (dict(_game(), status=None), "open")):
+        assert dx.game_state(g) == want, g
+    p = _build(games=[pp, _game(pk=5)])
+    ex = p["excluded_games"]
+    assert [(x["game_pk"], x["state"], x["detailed_state"], x["reason"]) for x in ex] == [
+        (4, "postponed", "Postponed", "Rain")]
+    assert {r["game_pk"] for r in p["players"]} == {5}
+
+
+def test_the_clock_locks_a_game_the_cached_status_still_calls_preview():
+    """The 2026-09-11 build: PIT at CHC, first pitch 18:20 UTC, still read
+    "Preview" off a schedule cached at 17:35 when the board built at 19:55."""
+    import dfs_export as dx
+    games = [_game(pk=1, first_pitch="17:05:00"), _game(pk=2, first_pitch="23:40:00")]
+    clock = datetime(2026, 8, 5, 19, 0, tzinfo=timezone.utc)
+    p = _build(games=games, now=clock)
+    assert {g["game_pk"] for g in p["games"]} == {2}
+    x = p["excluded_games"][0]
+    assert (x["game_pk"], x["state"], x["basis"]) == (1, "started", "scheduled_first_pitch")
+    assert p["slate_filter"]["clock"] == "2026-08-05T19:00:00Z"
+    # AT first pitch is locked; a TBD start (doubleheader game two) is not read.
+    at = datetime(2026, 8, 5, 17, 5, tzinfo=timezone.utc)
+    assert dx.game_state(_game(first_pitch="17:05:00"), at) == "started"
+    tbd = dict(_game(first_pitch="17:05:00"), start_time_tbd=True)
+    assert dx.game_state(tbd, clock) == "open"
+    # An unreadable time is never excluded on the clock.
+    assert dx.game_state(dict(_game(), datetime="not a time"), clock) == "open"
+
+
+def test_a_slate_with_nothing_left_to_draft_is_slate_closed(tmp_path, monkeypatch):
+    import dfs_export as dx
+    games = [_game(pk=1, status="Final"), _game(pk=2, first_pitch="18:05:00", status="Live")]
+    p = _build(games=games)
+    assert p["empty_reason_kind"] == "slate_closed"
+    assert p["players"] == [] and p["games"] == []
+    assert [x["game_pk"] for x in p["excluded_games"]] == [1, 2]
+    assert "nothing is left to draft" in p["empty_reason"]
+    # A closed slate is a fact about the day: refresh publishes it rather than
+    # carrying an earlier board of the same games forward.
+    assert "slate_closed" not in dx._KEEP_PREVIOUS_KINDS
+    monkeypatch.setattr(dx, "build_payload", lambda **_kw: p)
+    monkeypatch.setattr(dx, "_active_roster_ids", lambda: None)
+    monkeypatch.setattr(dx.fe, "_record_ingest_safe", lambda *_a, **_k: None)
+    out = tmp_path / "dfs.json"
+    out.write_text(json.dumps({"slate_date": "2026-08-05", "players": [{"mlbam": 1}],
+                               "n_players": 1}), encoding="utf-8")
+    assert dx.refresh(log=lambda *_a, **_k: None, day="2026-08-05", out_path=out,
+                      archive_dir=tmp_path / "hist") == 0
+    assert json.loads(out.read_text(encoding="utf-8"))["empty_reason_kind"] == "slate_closed"
+
+
+def test_the_payload_names_its_eligibility_source(monkeypatch):
+    """Owner decision 24: eligibility reads the nightly innings feed, and the
+    payload's label names the file the one rule ACTUALLY opened, not a constant
+    compared with itself."""
+    import dfs_export as dx
+    p = _build()
+    assert p["elig_source"] == "fielding_innings.json"
+    opened = []
+    real = dx.fe._load_json
+
+    def spy(name, *a, **k):
+        opened.append(name)
+        return real(name, *a, **k)
+
+    monkeypatch.setattr(dx.fe, "_load_json", spy)
+    dx.positions_by_mlbam()
+    assert p["elig_source"] in opened, opened
+    assert "mlb_fielding_positions.json" not in opened
 
 
 # ===========================================================================
@@ -351,6 +468,24 @@ def test_served_dfs_counts_equal_the_served_rows():
     rf = d.get("roster_filter") or {}
     assert (g["n_hitters_removed_off_roster"] + g["n_pitchers_removed_off_roster"]
             == int(rf.get("n_removed") or 0))
+
+
+def test_no_served_row_sits_on_a_game_that_cannot_be_drafted():
+    d = _dfs_payload()
+    if "slate_filter" not in d:
+        pytest.skip("data/dfs.json predates the draftable filter (2026-09-11)")
+    gone = {x["game_pk"] for x in d.get("excluded_games") or []}
+    assert not gone & {g["game_pk"] for g in d["games"]}
+    assert not gone & {r["game_pk"] for r in d["players"]}
+    f = d["slate_filter"]
+    assert f["n_draftable"] == len(d["games"]) == d["n_games"]
+    assert f["n_excluded"] == len(gone)
+    assert f["n_scheduled"] == f["n_draftable"] + f["n_excluded"]
+    clock = f.get("clock")
+    for g in d["games"]:
+        assert g.get("status") not in ("Live", "Final"), g["game_pk"]
+        if clock and g.get("datetime"):
+            assert g["datetime"] > clock, (g["game_pk"], g["datetime"], clock)
 
 
 def test_no_served_market_was_read_after_its_first_pitch():

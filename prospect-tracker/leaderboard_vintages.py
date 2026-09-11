@@ -158,10 +158,12 @@ VINTAGE_DIR = ROOT / ".cache" / "leaderboard_vintages"
 # (lhb_share_vr, lhb_share_vl: each club's left-handed PA share in its captured
 # order against a right- and a left-handed starter) and two record blocks
 # (`parks_by_hand`, the home park's runs and HR index by batter side, and
-# `parks_short_window`, the raw short-window row for a club the 3-season park
-# view drops). Same governing rules as schemas 3 and 4. Nothing served reads any
+# `parks_short_window`, the raw row for a club whose venue holds less than a
+# full 3-season sample: the Athletics, whom the 3-season view drops, and since
+# the 2026-09-11 venue audit the Rays, whose Tropicana row holds 2024 and 2026
+# only). Same governing rules as schemas 3 and 4. Nothing served reads the rest
 # of it; `parks_short_window` reaches a price only through
-# betting_model.SERVE_ATH_PARK, which is off.
+# betting_model.SERVE_ATH_PARK, which is ON since 2026-09-11 (owner decision 2).
 #
 # SCHEMA 5 ALSO CARRIES 5f AND 5g (2026-09-11), appended in the same bump rather
 # than a sixth one, because section 5f registers one shared schema-5 bump for all
@@ -1171,10 +1173,15 @@ def park_by_hand_snapshot(data_dir: Path | None = None) -> dict | None:
 
 
 def park_short_window_snapshot(data_dir: Path | None = None) -> dict | None:
-    """{canonical org: {"runs", "n_pa", "year_range"}} RAW, off fa_meta's
-    `park_factors_short_window` sibling, or None. Stored raw on purpose: the
-    shrink lives in ONE place (betting_model.short_window_park_value) and the
-    live and vintage paths both go through it."""
+    """{canonical org: {"runs", "n_pa", "year_range", "window", "venue_match"}}
+    RAW, off fa_meta's `park_factors_short_window` sibling, or None. Stored raw
+    on purpose: the shrink lives in ONE place
+    (betting_model.short_window_park_value) and the live and vintage paths both
+    go through it. `window` says which Savant view the row is ("rolling=2" for a
+    venue the 3-season view drops, "default" for the 3-season row itself on a
+    short venue sample) and `venue_match` whether its venue is the one StatsAPI
+    says the club plays in (fa_fit's venue check; a False row never prices); a
+    row written before either key existed reads None and prices the same way."""
     dd = Path(data_dir) if data_dir else DATA_DIR
     meta = _load_json(dd / "fa_meta.json")
     blk = (meta or {}).get("park_factors_short_window") if isinstance(meta, dict) else None
@@ -1187,7 +1194,8 @@ def park_short_window_snapshot(data_dir: Path | None = None) -> dict | None:
         if not o or not isinstance(r, dict) or r.get("runs") is None:
             continue
         out[o] = {"runs": r.get("runs"), "n_pa": r.get("n_pa"),
-                  "year_range": r.get("year_range")}
+                  "year_range": r.get("year_range"), "window": r.get("window"),
+                  "venue_match": r.get("venue_match")}
     return out or None
 
 
@@ -1788,9 +1796,11 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
         "n": len(parks_by_hand) if parks_by_hand else 0,
     }
     fb["park_short_window"] = {
-        "basis": ("fa_meta.json park_factors_short_window (Savant rolling=2, "
-                  "clubs the 3-season view drops), raw rows; priced only under "
-                  "betting_model.SERVE_ATH_PARK" if parks_short else
+        "basis": ("fa_meta.json park_factors_short_window (clubs whose venue "
+                  "holds less than a full 3-season Savant sample: Savant rolling=2 "
+                  "for a venue the 3-season view drops, the 3-season row itself "
+                  "for one it carries on a short sample), raw rows; priced "
+                  "under betting_model.SERVE_ATH_PARK" if parks_short else
                   "ABSENT: fa_meta.json carries no park_factors_short_window "
                   "block tonight; captured null"),
         "n": len(parks_short) if parks_short else 0,

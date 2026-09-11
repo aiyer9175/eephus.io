@@ -20,15 +20,32 @@ re-pricing and nothing else:
     and re-stamped nightly by fantasy_export.refresh_live (owner decision 24,
     2026-09-11; it used to read the June data/mlb_fielding_positions.json).
 
+ONLY GAMES THAT HAVE NOT STARTED ARE DRAFTABLE (owner decision 5, 2026-09-11).
+A DFS pool is the set of players a contest can still roster, and a game under
+way, final, postponed, suspended or cancelled offers nobody. Measured on the
+2026-09-10 slate before this shipped: 45 of 117 served rows sat on games already
+started or final. Those games leave `games` and every row on them leaves
+`players` (so the client optimizer never sees them); each is listed in
+`excluded_games` with the state the StatsAPI schedule reported, and a slate
+with nothing left to draft publishes the `slate_closed` empty state rather than
+a board of games nobody can enter. See `game_state`. THIS FILTER READS THE BUILD
+CLOCK, and the board is built once a day: on the 2026-09-11 22:27 UTC build it
+removed 3 of 15 games (67 of 335 served rows) and left 12 whose first pitches
+fell between 23:05 and 02:15 UTC. A game that starts after the build stays in
+the payload with its `datetime` (and `start_time_tbd` when StatsAPI has no
+time), so the page is what can lock it on the viewer's clock.
+
 THREE CONTEXT JOINS AND NOT ONE NEW MODEL (2026-08-07). Everything below reads
 an artifact somebody else already pays for, and every one of them is absent and
 labelled when it does not resolve rather than filled in:
 
-  * PARK. The Savant runs index in data/fa_meta.json, the same table /betting/
-    prices games with. It is keyed by club and a game is played at a venue, so
-    it is resolved through the StatsAPI club-venue map and applied only at a
-    club's own park. It is the one join here that MOVES a price, so it went
-    through a pre-registered gate: docs/dfs-park-leg-gate-2026-08-07.md.
+  * PARK. The Savant runs index in data/fa_meta.json, the same venue-correct
+    table /betting/ prices games with (betting_model.park_index_from_meta: the
+    Athletics' Sutter Health Park and the Rays' two-season Tropicana row shrunk
+    by their own samples). It is keyed by club and a game is played at a
+    venue, so it is resolved through the StatsAPI club-venue map and applied
+    only at a club's own park. It is the one join here that MOVES a price, so it
+    went through a pre-registered gate: docs/dfs-park-leg-gate-2026-08-07.md.
   * VEGAS. Implied team totals off the odds snapshots the betting close job
     already bought. This module never fetches: the budget is 500 credits a
     month at 3 a snapshot and this costs zero. Display only.
@@ -203,8 +220,123 @@ def positions_by_mlbam() -> dict:
     floor, modal-position fallback, StatsAPI abbreviation to slot map) has
     exactly one definition on the site. This module only needs the answer, and
     a second copy of the rule is how /fantasy/ ended up serving two eFV bases
-    off one page."""
+    off one page.
+
+    THE SOURCE IS THE NIGHTLY INNINGS FEED (owner decision 24, 2026-09-11):
+    data/fielding_innings.json, rewritten every night since e7ceaa5d, in place
+    of the June data/mlb_fielding_positions.json nothing refreshed. The repoint
+    lives in that one rule, so /dfs/ and /fantasy/ move together; a hitter row
+    reads the `elig` fantasy.json baked with it first, this map second, and the
+    payload's `elig_source` names the artifact."""
     return fe._elig_positions()
+
+
+# ---------------------------------------------------------------------------
+# The draftable slate (owner decision 5, 2026-09-11)
+# ---------------------------------------------------------------------------
+# StatsAPI's codedGameState letters for the states that end a game's slate
+# life without it being played to a final today. Read off the schedule the
+# probables fetch already cached; fetch_probables carries only the abstract
+# state (Preview / Live / Final), and a postponed game reads "Final" there.
+_CODED_POSTPONED = frozenset({"D"})
+_CODED_SUSPENDED = frozenset({"T", "U"})
+_CODED_CANCELLED = frozenset({"C"})
+
+
+def _first_pitch(g: dict) -> datetime | None:
+    """The game's scheduled first pitch as an aware UTC time, or None when it
+    is unreadable or StatsAPI marks the start time TBD (the second game of a
+    traditional doubleheader), which the clock rule must not read."""
+    if g.get("start_time_tbd"):
+        return None
+    try:
+        t = datetime.fromisoformat(str(g.get("datetime")).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+
+
+def game_state(g: dict, now: datetime | None = None) -> str:
+    """One slate game -> "open", "started", "final", "postponed", "suspended"
+    or "cancelled". Only "open" is draftable.
+
+    The detailed state (annotated by `_annotate_states` off the cached raw
+    schedule) decides first, because a postponed game carries the abstract
+    state "Final" and must not be called finished. Then the abstract state:
+    "Live" (in progress, warmup, a manager challenge) is started, "Final" is
+    final.
+
+    THEN THE CLOCK, because the status is a cached read. The schedule cache
+    lives three hours (fantasy_schedule.SCHEDULE_TTL), so a status can say
+    "Preview" about a game already under way: on the 2026-09-11 build (19:55
+    UTC, off a 17:35 UTC schedule read) PIT at CHC, first pitch 18:20 UTC, was
+    still "Preview". A DFS contest locks at the scheduled first pitch in any
+    case, so with a clock in hand (`now`) a game whose scheduled first pitch is
+    at or before it is "started". A TBD start time is not read.
+
+    An unreadable state is OPEN, never excluded, because a filter that removes
+    what it cannot read empties a board on a feed hiccup."""
+    coded = str(g.get("coded_state") or "").upper()
+    detailed = str(g.get("detailed_state") or "").lower()
+    if coded in _CODED_POSTPONED or "postponed" in detailed:
+        return "postponed"
+    if coded in _CODED_CANCELLED or "cancel" in detailed:
+        return "cancelled"
+    if coded in _CODED_SUSPENDED or "suspended" in detailed:
+        return "suspended"
+    abstract = str(g.get("status") or "")
+    if abstract == "Live":
+        return "started"
+    if abstract == "Final":
+        return "final"
+    if now is not None:
+        t = _first_pitch(g)
+        if t is not None and t <= now:
+            return "started"
+    return "open"
+
+
+def _excluded_row(g: dict, state: str) -> dict:
+    """The label a game left off the board carries: who, when, the state, and
+    what said so (`basis`: the schedule's status, or the scheduled first pitch
+    against the build clock when the cached status still read "Preview")."""
+    by_status = (str(g.get("status") or "") in ("Live", "Final")
+                 or state in ("postponed", "suspended", "cancelled"))
+    return {"game_pk": g.get("game_pk"), "date": g.get("date"),
+            "datetime": g.get("datetime"),
+            "away": (g.get("away") or {}).get("org"),
+            "home": (g.get("home") or {}).get("org"),
+            "venue": (g.get("venue") or {}).get("name"),
+            "state": state, "status": g.get("status"),
+            "detailed_state": g.get("detailed_state"),
+            "basis": "schedule_status" if by_status else "scheduled_first_pitch",
+            "reason": g.get("status_reason")}
+
+
+def _annotate_states(games: list, start: str, end: str) -> None:
+    """Stamp each fetched game IN PLACE with the schedule's detailed state
+    (`coded_state`, `detailed_state`, `status_reason`), read off the raw
+    schedule document fetch_probables just cached, so no second request is
+    made. Best-effort: on any failure the games keep only the abstract state,
+    and `game_state` still excludes every started or final game (a postponed
+    one would then read "final": excluded either way, labelled less exactly)."""
+    try:
+        data = fsched._cached_schedule(start, end, "R", True)
+    except Exception:                                      # noqa: BLE001
+        return
+    by_pk = {}
+    for d in (data or {}).get("dates") or []:
+        for raw in d.get("games") or []:
+            st = raw.get("status") or {}
+            if raw.get("gamePk"):
+                by_pk[int(raw["gamePk"])] = st
+    for g in games:
+        st = by_pk.get(g.get("game_pk"))
+        if st:
+            g["coded_state"] = st.get("codedGameState")
+            g["detailed_state"] = st.get("detailedState")
+            g["status_reason"] = st.get("reason")
+            g["start_time_tbd"] = bool(st.get("startTimeTBD"))
 
 
 def _park_factors(season: int, raw: dict | None = None, *, meta: dict | None = None,
@@ -230,9 +362,21 @@ def _park_factors(season: int, raw: dict | None = None, *, meta: dict | None = N
     cannot place is exactly the invented leg this module refuses everywhere
     else.
 
-    ATH HAS NO ENTRY, on purpose and not by omission: the Savant table covers
-    29 of 30 clubs, and Sutter Health Park's first season is not a park factor
-    yet. Its home games take source "no_factor_for_park".
+    THE SAME VENUE-CORRECT TABLE THE BETTING BOARD PRICES (2026-09-11, owner
+    decision on the park follow-ups). The club factors come through
+    betting_model.park_index_from_meta, so a club whose venue holds less than a
+    full 3-season Savant sample prices at that venue's factor shrunk by its own
+    sample, exactly as /betting/ does: the Athletics at Sutter Health Park (the
+    3-season view drops it; its home games took "no_factor_for_park" and a
+    neutral 1.00 until 2026-09-11) and the Rays at Tropicana Field (a 2024-2026
+    row holding 2024 and 2026 only, because 2025 was played at George M.
+    Steinbrenner Field). Those legs keep source "savant_mlb", because they ARE
+    the Savant table applied at the club's own park (the page counts and labels
+    an applied park by that source), and carry `window: "short"` with the
+    sample (`n_pa`) and the unshrunk factor (`pf_raw`, null for the Athletics,
+    whom the 3-season view does not carry) beside it; a 3-season leg is the
+    same cell it always was. A club with no factor at all still takes
+    "no_factor_for_park".
 
     The park leg was NEUTRAL FOR EVERY MLB VENUE until 2026-08-07 and the
     payload said so. It earns its place through the pre-registered gate in
@@ -253,13 +397,25 @@ def _park_factors(season: int, raw: dict | None = None, *, meta: dict | None = N
     savant = (meta or {}).get("park_factors") or {}
     if not savant:
         return out
+    import betting_model as bm
+    served = bm.park_index_from_meta(meta)
+    raw = {}
+    for org, row in savant.items():
+        runs = (row or {}).get("runs") if isinstance(row, dict) else None
+        if isinstance(runs, (int, float)) and runs:
+            raw[str(org)] = float(runs) / 100.0
+    short_rows = (((meta or {}).get("park_factors_short_window") or {}).get("orgs")
+                  or {})
     if home_venues is None:
         home_venues = fsched.fetch_home_venues(season)
     for vid, org in (home_venues or {}).items():
-        row = savant.get(org)
-        runs = (row or {}).get("runs") if isinstance(row, dict) else None
-        if isinstance(runs, (int, float)) and runs:
-            out[int(vid)] = {"pf": float(runs) / 100.0, "source": "savant_mlb", "org": org}
+        pf = served.get(org)
+        if isinstance(pf, (int, float)) and pf:
+            cell = {"pf": float(pf), "source": "savant_mlb", "org": org}
+            if not (org in raw and float(pf) == raw[org]):
+                cell.update(window="short", pf_raw=raw.get(org),
+                            n_pa=(short_rows.get(org) or {}).get("n_pa"))
+            out[int(vid)] = cell
         else:
             out[int(vid)] = {"pf": 1.0, "source": "no_factor_for_park", "org": org}
     return out
@@ -277,6 +433,12 @@ def _park_basis(park: dict | None) -> str:
                                                              "no_factor_for_park"):
             return "savant_mlb"
     return "venue_map_unavailable"
+
+
+def _park_window(park: dict | None, venue_id) -> str | None:
+    """"short" when one venue's Savant leg is a short-sample factor, else None."""
+    cell = (park or {}).get(venue_id)
+    return cell.get("window") if isinstance(cell, dict) else None
 
 
 def _park_leg(park: dict | None, venue_id, basis: str) -> tuple[float, str]:
@@ -330,8 +492,10 @@ def _clamp(v: float, lo: float, hi: float) -> float:
 # WHY THE SPLIT REUSES THE BETTING MODEL. Turning a win probability into a run
 # margin needs a run distribution. This module does not get to invent one: it
 # inverts the one /betting/ already publishes and grades (two independent
-# Poissons, `betting_runs_v1`, with the P(margin = 0) mass split by the MEASURED
-# extra-innings home win rate). So the DFS board and the betting board cannot
+# Poissons, betting_model.MODEL_VERSION, with the P(margin = 0) mass split by the
+# MEASURED extra-innings home win rate for the moneyline; the runline's own
+# split since v2 does not reach this inversion, which reads the moneyline only).
+# So the DFS board and the betting board cannot
 # disagree about what a 62% favourite is worth in runs, and no new distribution
 # enters the site.
 #
@@ -774,7 +938,9 @@ def _empty(day: str, season, reason: str, extra: dict | None = None,
     games" is a fact about baseball, "the schedule feed did not answer" is a
     fact about our pipeline, and only one of them is safe to publish as an
     assertion. Keys: no_corpus, season_over, no_games_scheduled,
-    schedule_unavailable, no_projections, collapsed_slate; None when healthy."""
+    schedule_unavailable, slate_closed, no_projections, collapsed_slate; None
+    when healthy. `slate_closed` is a day whose every game has started,
+    finished or been postponed: a fact about the slate, published as it is."""
     payload = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "slate_date": day,
@@ -814,9 +980,14 @@ _NOTES = [
     "before first pitch, and pretending otherwise would be the least honest "
     "number on the page.",
     "Park factors are the Savant runs index the free-agent engine already "
-    "builds, the same table the betting model prices games with. It covers 29 "
-    "of 30 parks and only applies when the game is at the home club's own park; "
-    "every other venue stays neutral and each row says which it got.",
+    "builds, the same table the betting model prices games with. Savant's "
+    "three-season table covers 29 of 30 parks; the thirtieth (the Athletics in "
+    "Sacramento) and the Rays' Tropicana Field, back after a season away, have "
+    "less than three seasons of data and are pulled toward neutral by their own "
+    "samples. A factor applies only when the game is at the home club's own "
+    "park; every other venue stays neutral and each row says which it got.",
+    "Games that had started, finished or been postponed when the board was built "
+    "are left off it, because nobody can still draft them.",
     "The matchup multiplier is the inverse of an innings-weighted opponent "
     "pitching index (5.4 of 9 innings to the announced starter's SEM+, the rest "
     "to the bullpen's Bullpen+), clamped. It mirrors the opponent term the "
@@ -888,6 +1059,8 @@ def _schedule_for_day(day: str, fantasy: dict | None) -> tuple[list, dict]:
     try:
         s, e = fsched.date_window(1, date.fromisoformat(day))
         games = fsched.fetch_probables(s, e)
+        if games:
+            _annotate_states(games, s, e)
     except Exception:
         _log.exception("dfs: schedule fetch raised for %s - treating as no answer", day)
         games = []
@@ -938,7 +1111,8 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                   active_ids=None,
                   games: list | None = None, positions: dict | None = None,
                   park: dict | None = None, teams_ctx: dict | None = None,
-                  vegas: dict | None = None, lineups: dict | None = None) -> dict:
+                  vegas: dict | None = None, lineups: dict | None = None,
+                  now: datetime | None = None) -> dict:
     """Assemble data/dfs.json. Every input is injectable so the whole thing
     runs offline in a test with a stubbed schedule.
 
@@ -954,6 +1128,12 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     slate is a test, a lab or the offline CLI, and going to the network behind
     its back for a lineup it did not ask for is how an offline path stops being
     offline. Pass them explicitly to exercise the joins.
+
+    `now` is the build clock the draftable filter reads (`game_state`). An
+    own slate defaults it to the wall clock; an INJECTED slate reads only the
+    states its games carry unless the caller passes a clock, for the same
+    reason it owns its context: a lab replaying a past slate is not asking
+    whether that slate has since been played.
 
     Pure: this only builds and diagnoses. Whether the result is fit to publish
     is refresh()'s call, and it reads `empty_reason_kind` and `integrity`."""
@@ -992,6 +1172,44 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
              "did not answer, so we do not know whether games are scheduled, and "
              "we will not guess. This page rebuilds on the next run."),
             extra={"schedule_source": sched_meta}, kind="schedule_unavailable")
+
+    # THE DRAFTABLE SLATE. A game that has started, finished, been postponed,
+    # suspended or cancelled offers nobody a contest can still roster, so it
+    # leaves the board here, before any join reads it, and is listed with its
+    # state instead (owner decision 5, 2026-09-11; `game_state`).
+    n_scheduled = len(games)
+    clock = now if now is not None else (datetime.now(timezone.utc) if own_slate else None)
+    if clock is not None and clock.tzinfo is None:
+        clock = clock.replace(tzinfo=timezone.utc)      # a naive clock is UTC
+    excluded = []
+    draftable = []
+    for g in games:
+        st = game_state(g, clock)
+        if st == "open":
+            draftable.append(g)
+        else:
+            excluded.append(_excluded_row(g, st))
+    games = draftable
+    slate_filter = {
+        "n_scheduled": n_scheduled, "n_draftable": len(games),
+        "n_excluded": len(excluded),
+        "by_state": _count_by(excluded, "state"),
+        "policy": ("DRAFTABLE ONLY. A game that has started, finished, been "
+                   "postponed, suspended or cancelled is off the board and out of "
+                   "the optimizer pool; it is listed in excluded_games with the "
+                   "state the StatsAPI schedule reported."),
+        "on_unreadable": "a game whose state cannot be read stays on the board",
+        "clock": clock.strftime("%Y-%m-%dT%H:%M:%SZ") if clock else None,
+    }
+    if not games:
+        return _empty(
+            day, season,
+            (f"Every game on the {day} slate has started, finished or been "
+             "postponed, so nothing is left to draft. The next slate publishes "
+             "on the next run."),
+            extra={"schedule_source": sched_meta, "excluded_games": excluded,
+                   "slate_filter": slate_filter, "n_games_scheduled": n_scheduled},
+            kind="slate_closed")
 
     if positions is None:
         positions = positions_by_mlbam()
@@ -1066,6 +1284,7 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     for g in games:
         venue = g.get("venue") or {}
         pf, park_source = _park_leg(park, venue.get("id"), park_basis)
+        park_window = _park_window(park, venue.get("id"))
         vg = vegas.get(g.get("game_pk"))
         lu = lineups.get(g.get("game_pk")) or {}
         sides = {}
@@ -1132,8 +1351,14 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
         slate_games.append({
             "game_pk": g.get("game_pk"), "date": g.get("date"),
             "datetime": g.get("datetime"), "status": g.get("status"),
+            # A start time StatsAPI marks TBD (game two of a traditional
+            # doubleheader) is never read as a first pitch, here or on the page.
+            **({"start_time_tbd": True} if g.get("start_time_tbd") else {}),
             "venue": venue.get("name"), "venue_id": venue.get("id"),
             "park_run_pf": round(pf, 3), "park_source": park_source,
+            # "short" when the factor is a short-sample venue's, shrunk by its
+            # own sample (the Athletics, the Rays); absent for every other leg.
+            **({"park_window": park_window} if park_window else {}),
             "vegas": vg,
             "lineups_posted": {"home": bool(lu.get("home")), "away": bool(lu.get("away"))},
             "home": sides["home"], "away": sides["away"],
@@ -1275,6 +1500,12 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     payload.update({
         "vegas_source": vegas_meta,
         "n_games": len(slate_games),
+        "n_games_scheduled": n_scheduled,
+        "excluded_games": excluded,
+        "slate_filter": slate_filter,
+        # Which artifact the position eligibility on every row came from: the
+        # one rule fantasy_export owns (see positions_by_mlbam).
+        "elig_source": fe.ELIG_SOURCE,
         "n_players": len(rows),
         "off_roster": off_roster[:60],
         "roster_filter": {
@@ -1500,7 +1731,7 @@ _ARCHIVE_KEEP_DAYS = 120
 # only lossily, so the compact row keeps the price, not the whole vector.
 _ARCHIVE_PLAYER_FIELDS = ("mlbam", "side", "name", "team", "opp", "game_pk",
                           "is_home", "start_rate", "games_today", "pts")
-_ARCHIVE_GAME_FIELDS = ("game_pk", "date", "datetime", "venue_id",
+_ARCHIVE_GAME_FIELDS = ("game_pk", "date", "datetime", "status", "venue_id",
                         "park_run_pf", "park_source", "vegas")
 
 
@@ -1531,6 +1762,11 @@ def _archive_slate(payload: dict, archive_dir: Path | None = None) -> Path | Non
         "fantasy_generated_at": payload.get("fantasy_generated_at"),
         "n_games": payload.get("n_games"),
         "n_players": payload.get("n_players"),
+        # The games the board left off because they could not be drafted, so a
+        # grading pass can tell "not on the slate" from "not priced".
+        "excluded_games": [{k: (g or {}).get(k) for k in
+                            ("game_pk", "datetime", "state", "detailed_state")}
+                           for g in (payload.get("excluded_games") or [])],
         "games": [{k: (g or {}).get(k) for k in _ARCHIVE_GAME_FIELDS}
                   for g in (payload.get("games") or [])],
         "players": [{k: (p or {}).get(k) for k in _ARCHIVE_PLAYER_FIELDS}

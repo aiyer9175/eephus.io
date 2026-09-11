@@ -2,9 +2,17 @@
 
 WHAT THESE TESTS PROTECT, in the order a regression would hurt:
 
-  1. THE FLAG IS OFF AND OFF MEANS BYTE-IDENTICAL. SERVE_ATH_PARK moves served
-     prices and the value side of a total. With it False, park_index() and the
-     vintage park read return exactly what they returned before 2026-09-11.
+  1. THE FLAG IS ON (owner decision 2, 2026-09-11) AND OFF STILL MEANS
+     BYTE-IDENTICAL. SERVE_ATH_PARK moves served prices and the value side of a
+     total. With it False, park_index() and the vintage park read return exactly
+     what they returned before 2026-09-11, so the flag is a one-line rollback.
+  1b. THE VENUE AUDIT (every club, 2021-2026, off the cached StatsAPI feeds and
+     Savant's single-season pages). The Rays played 2025 at George M.
+     Steinbrenner Field and all 72 of their 2026 home games at Tropicana Field,
+     so the 2024-2026 Tropicana row holds two seasons; it prices shrunk by its
+     own sample, the same way as the Athletics' Sutter Health Park row, and a
+     short row can only ever move a factor toward neutral. The team fit and the
+     DFS park leg read the same venue-correct table.
   2. THE ATHLETICS' FACTOR IS DERIVED, NOT TYPED. The served value under the
      flag is the measured Savant row shrunk by the measured reliability ratio;
      the constants reproduce the documented 1.1919 and follow the row's PA.
@@ -48,19 +56,24 @@ def _meta(tmp_path, *, short=None, by_hand=None, park_factors=None):
 
 
 # ===========================================================================
-# 1. SERVE_ATH_PARK: off, and off is byte-identical
+# 1. SERVE_ATH_PARK: on, and off is still byte-identical
 # ===========================================================================
-def test_the_athletics_flag_ships_off():
-    """TRIPWIRE. Flipping this moves served prices (section 5i-A). The flip is
-    one commit with MODEL_VERSION bumped and --context re-run; change this
-    assertion in that commit and nowhere else."""
-    assert bm.SERVE_ATH_PARK is False
-    assert bm.SHORT_WINDOW_PARK_ORGS == frozenset({"ATH"})
+def test_the_short_window_park_flag_ships_on():
+    """TRIPWIRE. The flag went live on 2026-09-11 (owner decision 2, with the
+    Rays added by the venue audit) in ONE commit with MODEL_VERSION bumped and
+    --context re-run. Change this assertion only in a commit that moves the
+    flag, the club list and the ledger key together."""
+    assert bm.SERVE_ATH_PARK is True
+    assert bm.SHORT_WINDOW_PARK_ORGS == frozenset({"ATH", "TBR"})
+    assert bm.MODEL_VERSION != "betting_runs_v1", (
+        "serving the short-window parks without a MODEL_VERSION bump pools two "
+        "pricers in every ledger")
 
 
 def test_park_index_is_unchanged_with_the_flag_off(tmp_path, monkeypatch):
     data = _meta(tmp_path, short={"orgs": {"ATH": SHORT_ROW}})
     monkeypatch.setattr(bm, "DATA_DIR", data)
+    monkeypatch.setattr(bm, "SERVE_ATH_PARK", False)
     assert bm.park_index() == {"NYY": 1.02, "SEA": 0.85}
 
 
@@ -130,7 +143,8 @@ def test_a_row_with_no_sample_or_no_index_prices_nothing():
 # ===========================================================================
 # 3. the vintage path reads the record's own dated block and nothing else
 # ===========================================================================
-def test_the_vintage_park_read_is_unchanged_with_the_flag_off():
+def test_the_vintage_park_read_is_unchanged_with_the_flag_off(monkeypatch):
+    monkeypatch.setattr(bm, "SERVE_ATH_PARK", False)
     rec = {"parks": {"NYY": 1.02}, "parks_short_window": {"ATH": SHORT_ROW}}
     assert bm.parks_from_vintage(rec) == {"NYY": 1.02}
 
@@ -144,6 +158,158 @@ def test_the_vintage_park_read_takes_the_record_s_block_under_the_flag(monkeypat
     assert bm.parks_from_vintage({"parks": {"NYY": 1.02}}) == {"NYY": 1.02}
     # And no park column at all is still the None sentinel.
     assert bm.parks_from_vintage({"parks_short_window": {"ATH": SHORT_ROW}}) is None
+
+
+# ===========================================================================
+# 3b. the venue audit: the Rays' two-season Tropicana row
+# ===========================================================================
+TROP_ROW = {"runs": 94, "woba": 97, "hr": 105, "n_pa": 34828, "year_range": "2024-2026",
+            "venue": "Tropicana Field", "window": "default"}
+
+
+def test_the_rays_three_season_row_is_shrunk_by_its_own_sample(tmp_path, monkeypatch):
+    """Tropicana's 2024-2026 row holds 2024 and 2026 only (2025 was played at
+    Steinbrenner Field), so it prices like the short sample it is."""
+    data = _meta(tmp_path, park_factors={"NYY": {"runs": 102}, "TBR": {"runs": 94}},
+                 short={"orgs": {"ATH": SHORT_ROW, "TBR": TROP_ROW}})
+    monkeypatch.setattr(bm, "DATA_DIR", data)
+    idx = bm.park_index()
+    assert idx["TBR"] == bm.short_window_park_value(TROP_ROW) == 0.945
+    assert idx["ATH"] == 1.1919 and idx["NYY"] == 1.02
+    monkeypatch.setattr(bm, "SERVE_ATH_PARK", False)
+    assert bm.park_index() == {"NYY": 1.02, "TBR": 0.94}
+
+
+def test_a_short_row_carrying_another_number_is_refused(tmp_path, monkeypatch):
+    """The short row may only shrink the served factor by that factor's OWN
+    sample. A row with a different index is another measurement and never
+    replaces a 3-season factor."""
+    data = _meta(tmp_path, park_factors={"TBR": {"runs": 94}},
+                 short={"orgs": {"TBR": dict(TROP_ROW, runs=110)}})
+    monkeypatch.setattr(bm, "DATA_DIR", data)
+    assert bm.park_index() == {"TBR": 0.94}
+
+
+@pytest.mark.parametrize("runs", [80, 94, 100, 106, 121, 130])
+@pytest.mark.parametrize("n_pa", [5_000, 17_577, 34_828, 54_034, 90_000])
+def test_a_short_row_only_ever_moves_a_factor_toward_neutral(runs, n_pa):
+    raw = runs / 100.0
+    got = bm.short_window_parks({"orgs": {"TBR": {"runs": runs, "n_pa": n_pa}}},
+                                measured={"TBR": raw})["TBR"]
+    assert min(1.0, raw) - 1e-9 <= got <= max(1.0, raw) + 1e-9
+
+
+def test_the_vintage_path_shrinks_the_rays_from_the_record_s_own_block(monkeypatch):
+    rec = {"parks": {"TBR": 0.94, "NYY": 1.02}, "parks_short_window": {"TBR": TROP_ROW}}
+    assert bm.parks_from_vintage(rec) == {"TBR": 0.945, "NYY": 1.02}
+    # A record written before the block keeps the raw 3-season factor.
+    assert bm.parks_from_vintage({"parks": {"TBR": 0.94}}) == {"TBR": 0.94}
+
+
+def test_the_listed_clubs_are_the_ones_the_served_block_carries():
+    """THE SERVED STATE, AND IT FAILS RATHER THAN SKIPS. data/fa_meta.json is
+    what the board, the refit and DFS read, and the nightly checkout reverts it
+    to its committed copy before any of them run, so a committed file without
+    the block leaves the flag doing nothing while the rows say v2. The explicit
+    list and the measured block must also agree: a club that moves and lands in
+    the block without joining the list (or a listed club the block no longer
+    carries) fails here rather than pricing one way on the board and another in
+    the audit. And the block's own venue check must find every club at the park
+    it plays in."""
+    p = bm.ROOT / "data" / "fa_meta.json"
+    meta = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+    blk = meta.get("park_factors_short_window")
+    if not bm.SERVE_ATH_PARK:
+        pytest.skip("SERVE_ATH_PARK is off; nothing is promised")
+    assert isinstance(blk, dict) and isinstance(blk.get("orgs"), dict), (
+        "SERVE_ATH_PARK is on but data/fa_meta.json carries no "
+        "park_factors_short_window block: run `python fa_export.py --park-blocks` "
+        "and commit data/fa_meta.json")
+    assert set(blk["orgs"]) == set(bm.SHORT_WINDOW_PARK_ORGS)
+    assert bm.short_window_parks_missing(meta) == []
+    vc = blk.get("venue_check") or {}
+    assert vc.get("status") == "checked", vc
+    assert vc.get("mismatch") == {}, vc["mismatch"]
+    assert all(r.get("venue_match") is True for r in blk["orgs"].values())
+
+
+def test_a_row_at_another_venue_never_prices(tmp_path, monkeypatch):
+    """fa_fit's venue check marks a row whose Savant venue is not where the club
+    plays; the consumer refuses it outright, on the live and the vintage path."""
+    bad = dict(SHORT_ROW, venue_match=False)
+    data = _meta(tmp_path, short={"orgs": {"ATH": bad}})
+    monkeypatch.setattr(bm, "DATA_DIR", data)
+    assert "ATH" not in bm.park_index()
+    assert bm.parks_from_vintage({"parks": {"NYY": 1.02},
+                                  "parks_short_window": {"ATH": bad}}) == {"NYY": 1.02}
+    ok = dict(SHORT_ROW, venue_match=True)
+    assert bm.short_window_parks({"orgs": {"ATH": ok}}) == {"ATH": 1.1919}
+
+
+def test_a_listed_club_the_block_cannot_price_is_named_and_logged(tmp_path, monkeypatch):
+    meta = {"park_factors": {"TBR": {"runs": 94}}}
+    assert bm.short_window_parks_missing(meta) == ["ATH", "TBR"]
+    meta["park_factors_short_window"] = {"orgs": {"ATH": SHORT_ROW, "TBR": TROP_ROW}}
+    assert bm.short_window_parks_missing(meta) == []
+    monkeypatch.setattr(bm, "SERVE_ATH_PARK", False)
+    assert bm.short_window_parks_missing({}) == []
+    monkeypatch.setattr(bm, "SERVE_ATH_PARK", True)
+    data = _meta(tmp_path)                      # no short-window block on disk
+    monkeypatch.setattr(bm, "DATA_DIR", data)
+    monkeypatch.setattr(bm, "_SHORT_PARK_WARNED", set())
+    said = []
+    monkeypatch.setattr(bm.log, "warning", lambda msg, *a: said.append(msg % a))
+    assert bm.park_index() == {"NYY": 1.02, "SEA": 0.85}
+    bm.park_index()
+    hits = [m for m in said if "park_factors_short_window" in m]
+    assert len(hits) == 1 and "ATH, TBR" in hits[0], said
+
+
+def test_the_team_fit_reads_the_venue_correct_row(monkeypatch):
+    import fa_fit
+    base = {"NYY": {"woba": 101, "hr": 118, "runs": 102},
+            "TBR": {"woba": 97, "hr": 105, "runs": 94}}
+    monkeypatch.setattr(fa_fit, "park_factors", lambda season, bat_side="": base)
+    monkeypatch.setattr(fa_fit, "_short_window_rows",
+                        lambda season: {"ATH": dict(SHORT_ROW, window="rolling=2"),
+                                        "TBR": TROP_ROW})
+    k_ath = bm.short_window_shrink(SHORT_ROW["n_pa"])
+    k_tbr = bm.short_window_shrink(TROP_ROW["n_pa"])
+    ath = fa_fit.venue_park_row("ATH", 2026)
+    assert ath == {"woba": round(100 + k_ath * 10, 1), "hr": round(100 + k_ath * 21, 1),
+                   "runs": round(100 + k_ath * 21, 1)}
+    assert fa_fit.venue_park_row("TBR", 2026)["runs"] == round(100 - k_tbr * 6, 1)
+    assert fa_fit.venue_park_row("NYY", 2026) == base["NYY"]
+    hitter = {"position": "CF", "bat_throw": "R/R"}
+    assert fa_fit.park_component(hitter, "ATH", 2026)["score"] > 0.7
+    monkeypatch.setattr(bm, "SERVE_ATH_PARK", False)
+    assert fa_fit.venue_park_row("ATH", 2026) is None
+    assert fa_fit.park_component(hitter, "ATH", 2026)["score"] == pytest.approx(0.5)
+
+
+def test_the_dfs_park_leg_prices_the_same_venue_correct_table():
+    import dfs_export as dx
+    meta = {"park_factors": {"NYY": {"runs": 106}, "TBR": {"runs": 94}},
+            "park_factors_short_window": {"orgs": {"ATH": SHORT_ROW, "TBR": TROP_ROW}}}
+    idx = dx._park_factors(2026, raw={}, meta=meta,
+                           home_venues={3313: "NYY", 12: "TBR", 2529: "ATH"})
+    # The source is the one the page counts and labels as an applied park; the
+    # short window rides beside it with its sample and the unshrunk factor.
+    assert idx[3313] == {"pf": 1.06, "source": "savant_mlb", "org": "NYY"}
+    assert idx[12] == {"pf": 0.945, "source": "savant_mlb", "org": "TBR", "window": "short",
+                       "pf_raw": 0.94, "n_pa": 34828}
+    assert idx[2529] == {"pf": 1.1919, "source": "savant_mlb", "org": "ATH",
+                         "window": "short", "pf_raw": None, "n_pa": 34287}
+    assert bm.park_index_from_meta(meta) == {"NYY": 1.06, "TBR": 0.945, "ATH": 1.1919}
+    assert dx._park_leg(idx, 2529, "savant_mlb") == (1.1919, "savant_mlb")
+    assert "park" in dx._est(["matchup"], "savant_mlb")
+    assert dx._park_window(idx, 12) == "short" and dx._park_window(idx, 3313) is None
+    assert dx._park_basis(idx) == "savant_mlb"
+    # Every source the exporter can write is one the page knows (assets/dfs.js
+    # counts and labels an applied park by exactly these two names).
+    js = (bm.ROOT / "assets" / "dfs.js").read_text(encoding="utf-8")
+    for src in dx._PARK_APPLIED:
+        assert f'"{src}"' in js or f".{src}" in js, src
 
 
 # ===========================================================================
@@ -349,12 +515,28 @@ def test_the_default_fetch_is_byte_identical(monkeypatch):
 
 
 def _savant_rows(*rows):
-    return [{"name_display_club": club, "venue_name": venue, "index_runs": str(runs),
-             "index_woba": "100", "index_hr": str(hr), "n_pa": str(n),
-             "year_range": yr} for club, venue, runs, hr, n, yr in rows]
+    """(club, venue, runs, hr, n_pa, year_range[, venue_id]) -> Savant rows."""
+    out = []
+    for r in rows:
+        club, venue, runs, hr, n, yr = r[:6]
+        row = {"name_display_club": club, "venue_name": venue, "index_runs": str(runs),
+               "index_woba": "100", "index_hr": str(hr), "n_pa": str(n),
+               "year_range": yr}
+        if len(r) > 6:
+            row["venue_id"] = str(r[6])
+        out.append(row)
+    return out
 
 
-def test_the_short_window_block_carries_only_the_dropped_clubs(monkeypatch):
+@pytest.fixture
+def _no_statsapi(monkeypatch):
+    """The venue check's StatsAPI half, off the network: no map unless a test
+    passes one."""
+    import fa_fit
+    monkeypatch.setattr(fa_fit, "_home_venue_ids", lambda season: None)
+
+
+def test_the_short_window_block_carries_only_the_dropped_clubs(monkeypatch, _no_statsapi):
     import fa_fit
     import fa_sources
 
@@ -371,11 +553,111 @@ def test_the_short_window_block_carries_only_the_dropped_clubs(monkeypatch):
         blk = fa_fit.park_factors_short_window(2026)
         assert set(blk["orgs"]) == {"ATH"}
         assert blk["orgs"]["ATH"]["runs"] == 121 and blk["orgs"]["ATH"]["n_pa"] == 34287
+        assert blk["orgs"]["ATH"]["window"] == "rolling=2"
+        assert blk["orgs"]["ATH"]["venue_match"] is None
+        assert blk["venue_check"]["status"] == "unavailable"
         assert blk["rolling"] == 2
         hand = fa_fit.park_factors_by_hand(2026)
         assert hand["L"]["NYY"]["n_pa"] == 55865 and "R" in hand
     finally:
         fa_fit.park_factors.cache_clear()
+
+
+_HOME_2026 = {"NYY": 3313, "STL": 2889, "DET": 2394, "TBR": 12, "ATH": 2529}
+
+
+def _fake_2026(year, bat_side="", force=False, rolling=""):
+    rows = [("Yankees", "Yankee Stadium", 102, 118, 55865, "2024-2026", 3313),
+            ("Cardinals", "Busch Stadium", 94, 76, 52539, "2024-2026", 2889),
+            ("Tigers", "Comerica Park", 100, 100, 53975, "2024-2026", 2394),
+            ("Rays", "Tropicana Field", 94, 105, 34828, "2024-2026", 12)]
+    if rolling == "2":
+        rows = [("Athletics", "Sutter Health Park", 121, 121, 34287, "2025-2026", 2529),
+                ("Rays", "Tropicana Field", 98, 112, 15145, "2025-2026", 12)]
+    return _savant_rows(*rows)
+
+
+def test_the_short_window_block_carries_a_short_sample_default_row(monkeypatch):
+    """The 2026-09-11 shape: the default view carries Tropicana on 0.645 of the
+    median sample. Its own row lands in the block, labelled `default`; a row
+    near the median does not; and every row is at the venue StatsAPI says the
+    club plays in."""
+    import fa_fit
+    import fa_sources
+
+    monkeypatch.setattr(fa_sources, "fetch_savant_park_factors", _fake_2026)
+    fa_fit.park_factors.cache_clear()
+    try:
+        blk = fa_fit.park_factors_short_window(2026, home_venues=_HOME_2026)
+        assert set(blk["orgs"]) == {"ATH", "TBR"}
+        tbr = blk["orgs"]["TBR"]
+        # The DEFAULT view's own row (94 on 34,828), never the rolling=2 one.
+        assert (tbr["runs"], tbr["n_pa"], tbr["window"]) == (94, 34828, "default")
+        assert (tbr["venue_id"], tbr["statsapi_venue_id"], tbr["venue_match"]) == (12, 12, True)
+        assert blk["orgs"]["ATH"]["venue_match"] is True
+        assert blk["default_view_median_n_pa"] == (52539 + 53975) / 2
+        assert blk["short_sample_pa_share"] == fa_fit.SHORT_SAMPLE_PA_SHARE
+        vc = blk["venue_check"]
+        assert (vc["status"], vc["n_default_rows"], vc["n_match"]) == ("checked", 4, 4)
+        assert vc["mismatch"] == {} and vc["absent_from_default_view"] == ["ATH"]
+        assert blk["refused"] == {}
+    finally:
+        fa_fit.park_factors.cache_clear()
+
+
+def test_a_club_that_moved_never_prices_at_the_park_it_left(monkeypatch):
+    """The venue rule, not only the sample rule: were the Rays listed at
+    Steinbrenner Field (2523) by StatsAPI while Savant's short row named
+    Tropicana, the row is refused, named in `refused`, and the venue check
+    reports the mismatch."""
+    import fa_fit
+    import fa_sources
+
+    monkeypatch.setattr(fa_sources, "fetch_savant_park_factors", _fake_2026)
+    fa_fit.park_factors.cache_clear()
+    try:
+        blk = fa_fit.park_factors_short_window(2026, home_venues=dict(_HOME_2026, TBR=2523))
+        assert set(blk["orgs"]) == {"ATH"}
+        assert blk["refused"]["TBR"]["venue_id"] == 12
+        assert blk["refused"]["TBR"]["statsapi_venue_id"] == 2523
+        assert blk["venue_check"]["mismatch"] == {
+            "TBR": {"savant_venue": "Tropicana Field", "savant_venue_id": 12,
+                    "statsapi_venue_id": 2523}}
+    finally:
+        fa_fit.park_factors.cache_clear()
+
+
+def test_the_park_blocks_refresh_rewrites_only_their_own_keys(tmp_path, monkeypatch):
+    """fa_export.refresh_park_siblings: the two sibling blocks are rebuilt, every
+    other key is left as it was, and a builder that fails keeps the block on
+    disk rather than writing a null over a served park."""
+    import fa_export
+    import fa_fit
+    path = tmp_path / "fa_meta.json"
+    meta = {"class_year": 2027, "park_factors": {"NYY": {"runs": 102}},
+            "teams": [{"org": "NYY"}], "park_factors_by_hand": {"old": True}}
+    path.write_text(json.dumps(meta), encoding="utf-8")
+    new_blk = {"season": 2026, "orgs": {"ATH": SHORT_ROW}}
+    seen = []
+    monkeypatch.setattr(fa_fit, "park_factors_short_window",
+                        lambda season: seen.append(season) or new_blk)
+
+    def boom(season):
+        raise OSError("savant down")
+
+    monkeypatch.setattr(fa_fit, "park_factors_by_hand", boom)
+    got = fa_export.refresh_park_siblings(path, log_fn=lambda *_a: None)
+    assert seen == [2026] and got["season"] == 2026 and got["written"] is True
+    assert got["blocks"] == {"park_factors_short_window": "refreshed",
+                             "park_factors_by_hand": "kept"}
+    out = json.loads(path.read_text(encoding="utf-8"))
+    assert out["park_factors_short_window"] == new_blk
+    assert out["park_factors_by_hand"] == {"old": True}
+    assert {k: out[k] for k in ("class_year", "park_factors", "teams")} == {
+        k: meta[k] for k in ("class_year", "park_factors", "teams")}
+    again = fa_export.refresh_park_siblings(path, log_fn=lambda *_a: None)
+    assert again["written"] is False
+    assert again["blocks"]["park_factors_short_window"] == "unchanged"
 
 
 # ===========================================================================

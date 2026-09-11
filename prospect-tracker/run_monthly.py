@@ -2755,6 +2755,23 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 except Exception:
                     pass
 
+        # --- 9d-park. The short-sample park block, before anything prices it -
+        # data/fa_meta.json is tracked, so the checkout reverts it to the
+        # committed copy, and DFS (9d-bis), the betting refit (9e-pre1), the
+        # vintage snapshot (9e-pre) and the board (9e) all read its
+        # park_factors_short_window block (betting_model.SERVE_ATH_PARK: the
+        # Athletics at Sutter Health Park, the Rays' two-season Tropicana row)
+        # hours before d10b rewrites fa_meta. This rewrites ONLY the two park
+        # sibling blocks, off Savant pages fa_sources caches. Best-effort: a
+        # failure keeps the committed block, which is what prices tonight.
+        with _step("9d-park. Refresh the fa_meta park blocks (fa_meta.json)", log):
+            try:
+                import fa_export
+                fa_export.refresh_park_siblings(log_fn=log.info)
+            except Exception:
+                log.exception("daily: fa_meta park block refresh failed; the committed "
+                              "block prices tonight - continuing")
+
         # --- 9d-bis. DFS daily slate (dfs.json) ---------------------------
         # Prices today's slate off the probables 9d just refreshed. Reads the
         # fantasy corpus already on disk, so it adds no second corpus build.

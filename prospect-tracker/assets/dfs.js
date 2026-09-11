@@ -623,7 +623,12 @@
       tail: "A broken join in the build. No partial slate is published." },
     build_failed: { head: "Today's build did not finish", bad: true,
       tail: "Pipeline outage: the run failed before pricing anything. No older board is " +
-            "substituted." }
+            "substituted." },
+    // Every game on the slate had started (or finished, or was postponed)
+    // when the board was built or when this page checked: a fact about the
+    // day, so it reassures.
+    slate_closed: { head: "Today's games have all started", bad: false,
+      tail: "Nothing is broken. The next slate publishes on the next build." }
   };
   function emptyPanel(d) {
     var k = EMPTY_KINDS[d.empty_reason_kind] || null;
@@ -632,6 +637,63 @@
       "<span>" + esc(d.empty_reason || "") + "</span>" +
       "<span>" + esc(k ? k.tail : "This page rebuilds every day.") + "</span>" +
       "</div>";
+  }
+
+  // ---- the draftable slate, on the viewer's clock (owner decision 5) --------
+  // The exporter leaves off every game that had started when the board was
+  // BUILT, but the board is built once a day and most games start hours after
+  // that. A contest locks each game at its scheduled first pitch, so the page
+  // applies the same rule on the viewer's clock, every time it renders or
+  // solves: a game whose first pitch is at or before now leaves the slate
+  // cards, both boards, the value and stack tabs and the optimizer pool, and is
+  // listed beside the games the exporter left off. An unreadable time, or a
+  // start time StatsAPI marks TBD, is never locked (the exporter's rule).
+  var OFF_STATE = { started: "under way", final: "final", postponed: "postponed",
+                    suspended: "suspended", cancelled: "cancelled" };
+  function firstPitchMs(g) {
+    if (!g || g.start_time_tbd) return null;
+    var t = Date.parse(String(g.datetime || ""));
+    return isNaN(t) ? null : t;
+  }
+  function lockStarted(d, nowMs) {
+    if (!d || !d.games || !d.games.length) return d;
+    var keep = [], gone = {}, locked = [];
+    d.games.forEach(function (g) {
+      var t = firstPitchMs(g);
+      if (t !== null && t <= nowMs) {
+        gone[g.game_pk] = true;
+        locked.push({ game_pk: g.game_pk, datetime: g.datetime,
+                      away: (g.away || {}).org, home: (g.home || {}).org,
+                      state: "started", basis: "viewer_clock" });
+      } else keep.push(g);
+    });
+    if (!locked.length) return d;
+    d.games = keep;
+    d.players = (d.players || []).filter(function (p) { return !gone[p.game_pk]; });
+    d.n_games = keep.length;
+    d.n_players = d.players.length;
+    d.locked_on_page = (d.locked_on_page || []).concat(locked);
+    if (!keep.length && !d.empty_reason) {
+      d.empty_reason = "Every game on the " + (d.slate_date || "") + " slate has started, " +
+        "so nothing is left to draft.";
+      d.empty_reason_kind = "slate_closed";
+    }
+    return d;
+  }
+  function liveData() {
+    return lockStarted(S.data, Date.now());
+  }
+  // The games that are not on the board and why, from the exporter's list and
+  // the page's own clock. Nothing renders when every game is still open.
+  function offBoardNote() {
+    var d = S.data || {};
+    var rows = (d.excluded_games || []).concat(d.locked_on_page || []);
+    if (!rows.length) return "";
+    return '<div class="dfs-note">Off the board, because nobody can still draft them: ' +
+      rows.map(function (x) {
+        return esc((x.away || "") + " at " + (x.home || "")) + " (" +
+          esc(OFF_STATE[x.state] || "under way") + (x.reason ? ", " + esc(x.reason) : "") + ")";
+      }).join(", ") + ".</div>";
   }
 
   // ---- boards ---------------------------------------------------------------
@@ -1186,6 +1248,7 @@
     return roster;
   }
   function optimize() {
+    liveData();
     var tpl = template();
     if (!tpl) return { ok: false, msg: "No roster template is available in the payload." };
     var pool = optimizerPool(tpl);
@@ -1269,7 +1332,7 @@
   function renderSlate() {
     var d = S.data || {};
     var games = d.games || [];
-    if (!games.length) return "";
+    if (!games.length) return offBoardNote();
     var cards = games.map(function (g) {
       function sideLine(s) {
         var pp = (s || {}).probable;
@@ -1291,7 +1354,7 @@
         '<div class="dfs-slate-meta">' + esc(g.venue || "") + parkMark(g) +
         (v ? " · total " + num(v.total, 1) : "") + refused + "</div></div>";
     }).join("");
-    return '<div class="dfs-slate">' + cards + "</div>" + vegasNote();
+    return '<div class="dfs-slate">' + cards + "</div>" + offBoardNote() + vegasNote();
   }
   // Every park source is a different claim and the card says which one it is.
   // "neutral" alone used to cover all of them, which meant an average park, a
@@ -1349,6 +1412,7 @@
   function renderSection() {
     var r = root();
     if (!r) return;
+    if (!S.error) liveData();
     var d = S.data || {};
     var html;
     if (S.error) {
@@ -1360,7 +1424,7 @@
         'needs the slate. <button type="button" id="dfs-retry" ' +
         'class="dfs-btn">Retry</button></div>';
     } else if (d.empty_reason) {
-      html = emptyPanel(d);
+      html = emptyPanel(d) + (d.empty_reason_kind === "slate_closed" ? offBoardNote() : "");
     } else if (S.section === "value") html = renderValue();
     else if (S.section === "stacks") html = renderStacks();
     else if (S.section === "optimizer") html = renderOptimizer();
@@ -1659,7 +1723,7 @@
   }
   function onData(d) {
     S.error = null;
-    S.data = d || {};
+    S.data = lockStarted(d || {}, Date.now());
     loadSettings();
     loadSalaries();
     var t = template();

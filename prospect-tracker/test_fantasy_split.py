@@ -1204,6 +1204,101 @@ def test_dfs_empty_slate_renders_a_loud_state_not_a_blank_page():
     assert "Nothing is broken" in html
 
 
+def _timed_payload(offsets_min, now_ms=None):
+    """The optimizer payload with one game per offset (minutes from the JS
+    clock's now; negative has started) and the players spread over them."""
+    d = json.loads(_opt_payload())
+    base = d["games"][0]
+    games = []
+    for i, off in enumerate(offsets_min):
+        g = dict(base, game_pk=i + 1, datetime="__T%d__" % i)
+        games.append(g)
+    d["games"] = games
+    for j, p in enumerate(d["players"]):
+        p["game_pk"] = (j % len(games)) + 1 if games else 1
+    d["n_games"] = len(games)
+    return d, offsets_min
+
+
+def _boot_timed(offsets_min, extra=None, salaries=True):
+    """Boot dfs.js with game times set relative to the engine's own Date.now(),
+    so the lock is exercised on the clock the page reads."""
+    d, offs = _timed_payload(offsets_min)
+    d.update(extra or {})
+    c = MiniRacer()
+    now = c.eval("Date.now()")
+    raw = json.dumps(d)
+    from datetime import datetime as _dt, timezone as _tz
+    for i, off in enumerate(offs):
+        iso = _dt.fromtimestamp(now / 1000.0 + off * 60, _tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        raw = raw.replace("__T%d__" % i, iso)
+    c.eval(APP_PRELUDE % raw)
+    c.eval("__hide('dfs-scoring'); __hide('fantasy-scoring');")
+    if salaries:
+        rows = {"%d|%s" % (m, s): {"salary": sal}
+                for (m, _n, s, _e, _t, _p, sal) in OPT_PLAYERS}
+        c.eval("__seedSalaries(%s)" % json.dumps(json.dumps(
+            {"slate_date": "2026-08-05", "saved_at": "2026-08-05T00:00:00Z", "rows": rows})))
+    c.eval((ASSETS / "dfs.js").read_text(encoding="utf-8"))
+    return c
+
+
+def test_dfs_a_game_past_first_pitch_leaves_the_board_and_the_pool():
+    """Owner decision 5, on the VIEWER's clock: the board is built once a day,
+    so a game that starts after the build must still leave the slate, the
+    boards and the optimizer the moment its first pitch passes."""
+    c = _boot_timed([-30, 120])
+    html = c.eval('__go("#section=pitchers")')
+    assert "Off the board, because nobody can still draft them" in html, html[:600]
+    assert "BBB at AAA (under way)" in html
+    # Game 1's players (odd mlbam: Ace Arm, Star Catcher, Big Bat, Fine Bat)
+    # are gone from both boards; game 2's are there.
+    for gone in ("Ace Arm", "Star Catcher", "Big Bat", "Fine Bat"):
+        assert gone not in html.split("Off the board")[1], gone
+    for kept in ("Cheap Arm", "Good Bat"):
+        assert kept in html, kept
+    opt = c.eval('__go("#section=optimizer")')
+    run = c.eval('__click("#dfs-run")')
+    for gone in ("Ace Arm", "Star Catcher", "Big Bat", "Fine Bat"):
+        assert gone not in run, (gone, run[:400])
+
+
+def test_dfs_an_open_game_and_an_unreadable_time_stay_on_the_board():
+    c = _boot_timed([90, 240])
+    html = c.eval('__go("#section=pitchers")')
+    assert "Off the board" not in html
+    assert "Ace Arm" in html and "Cheap Arm" in html
+    # The fixture's original shape (no datetime at all) is never locked.
+    c = _dfs_ctx()
+    assert "Ace Arm" in c.eval('__go("#section=pitchers")')
+
+
+def test_dfs_a_slate_whose_games_have_all_started_reads_closed_not_broken():
+    c = _boot_timed([-90, -10])
+    html = c.eval('__go("#section=pitchers")')
+    assert "Today's games have all started" in html, html[:500]
+    assert "Nothing is broken" in html and "is-broken" not in html
+    assert "nothing is left to draft" in html
+
+
+def test_dfs_the_exporter_s_excluded_games_are_listed_with_their_state():
+    extra = {"excluded_games": [
+        {"game_pk": 90, "away": "CCC", "home": "DDD", "state": "postponed",
+         "reason": "Rain"},
+        {"game_pk": 91, "away": "EEE", "home": "FFF", "state": "final"}]}
+    c = _boot_timed([120], extra=extra)
+    html = c.eval('__go("#section=pitchers")')
+    assert "CCC at DDD (postponed, Rain)" in html and "EEE at FFF (final)" in html
+    closed = {"players": [], "games": [], "n_games": 0, "n_players": 0,
+              "empty_reason": "Every game on the 2026-08-05 slate has started, finished or "
+                              "been postponed, so nothing is left to draft.",
+              "empty_reason_kind": "slate_closed"}
+    closed.update(extra)
+    c = _boot_timed([], extra=closed)
+    html = c.eval('__go("#section=pitchers")')
+    assert "Today's games have all started" in html and "CCC at DDD (postponed, Rain)" in html
+
+
 def test_dfs_pipeline_failure_does_not_claim_nothing_is_broken():
     """The other half of the same contract, and the reason the kinds exist. A
     schedule feed that did not answer is OUR outage, so the page must NOT tell

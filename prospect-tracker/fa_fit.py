@@ -154,6 +154,17 @@ def park_factors(season: int, bat_side: str = "") -> dict[str, dict]:
 # club that moved in the season before last, which is exactly the Athletics'
 # case (Sutter Health Park since 2025).
 SHORT_WINDOW_ROLLING = "2"
+# A default-view row whose PA sample is under this share of the view's median
+# rests on fewer seasons at its venue than the window claims, and is carried in
+# the short-window block beside its sample so a consumer can shrink it. The
+# venue audit of 2026-09-11 (every club, 2021-2026, off the cached StatsAPI game
+# feeds and Savant's single-season pages) found exactly one such row in the
+# 2024-2026 view: Tropicana Field at 34,828 PA, 0.645 of the 53,975 median,
+# because the Rays played 2025 at George M. Steinbrenner Field and came back to
+# Tropicana for all 72 of their 2026 home games. The next-lowest row sits at
+# 0.973 (Busch Stadium), so any cut between the two separates them; 0.8 is "less
+# than about two and a half of the three seasons".
+SHORT_SAMPLE_PA_SHARE = 0.8
 
 
 def _park_rows_with_sample(season: int, bat_side: str = "",
@@ -180,35 +191,143 @@ def _park_rows_with_sample(season: int, bat_side: str = "",
                     "runs": int(r.get("index_runs") or 100),
                     "n_pa": n_pa,
                     "year_range": r.get("year_range"),
-                    "venue": r.get("venue_name")}
+                    "venue": r.get("venue_name"),
+                    "venue_id": _venue_id(r.get("venue_id"))}
     return out
 
 
-def park_factors_short_window(season: int) -> dict:
-    """The clubs the default 3-season Savant view DROPS, from the shortest
-    window that publishes them, with the sample on every row.
+def _venue_id(v) -> int | None:
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return None
 
-    {"season", "rolling", "source", "note", "orgs": {org: {...row, n_pa}}}.
-    An org lands here only when it is ABSENT from `park_factors(season)`, so
-    this block can never overwrite a measured 3-season factor. On 2026-09-11
-    the only such club is ATH: Savant's 2024-2026 view carries 29 venues and
-    its 2025-2026 view publishes Sutter Health Park at runs 121 on 34,287 PA.
 
-    Nothing in the FA engine reads this block. It exists so the betting model
-    can decide, behind its own flag, whether to stop pricing the Athletics'
-    home games at a neutral park (betting_model.SERVE_ATH_PARK)."""
+def _home_venue_ids(season: int) -> dict[str, int] | None:
+    """{org: the club's own home venue id} from StatsAPI's team list for
+    `season` (fantasy_schedule.fetch_home_venues, cached), or None when the map
+    cannot be read. The INDEPENDENT half of the venue check: Savant attributes a
+    park row to a venue, StatsAPI says where the club plays, and a row only
+    prices a club when the two agree."""
+    try:
+        import fantasy_schedule as _fs
+        m = _fs.fetch_home_venues(season)
+    except Exception:                                       # noqa: BLE001
+        return None
+    out = {}
+    for vid, org in (m or {}).items():
+        try:
+            out[str(org)] = int(vid)
+        except (TypeError, ValueError):
+            continue
+    return out or None
+
+
+def park_factors_short_window(season: int, *, home_venues: dict | None = None) -> dict:
+    """Every club whose home venue holds less than a full 3-season Savant
+    sample, with the sample on every row, CHECKED AGAINST THE VENUE THE CLUB
+    ACTUALLY PLAYS IN.
+
+    {"season", "rolling", "source", "note", "orgs": {org: {...row, n_pa,
+    window, venue_id, statsapi_venue_id, venue_match}}, "refused",
+    "venue_check"}. Two kinds of row, each labelled by `window`:
+
+      * "rolling=2": a club ABSENT from `park_factors(season)`, from the
+        shortest window that publishes its venue. On 2026-09-11 that is ATH,
+        Sutter Health Park at runs 121 on 34,287 PA.
+      * "default": a club PRESENT in `park_factors(season)` whose default-view
+        row carries under SHORT_SAMPLE_PA_SHARE of the view's median sample,
+        i.e. the venue hosted fewer of the window's seasons than the row's
+        year_range says. The row is the default view's OWN row (same index,
+        same venue), so a consumer can only shrink the served 3-season factor
+        by its own sample, never replace it. On 2026-09-11 that is TBR,
+        Tropicana Field 2024-2026 at 34,828 PA (2024 and 2026 only).
+
+    THE SAMPLE RULE IS NOT THE VENUE RULE. The PA share says a row rests on
+    fewer seasons than its window; it cannot say WHICH park those seasons were
+    played in. So every candidate row is checked against StatsAPI's home venue
+    for the club that season (`home_venues`, {org: venue id}, default
+    `_home_venue_ids`): Savant's `venue_id` must equal it. A row whose venue is
+    not where the club plays is REFUSED (listed under `refused`, never in
+    `orgs`), so a club that moved can never price at the park it left. With no
+    StatsAPI map the rows ship with `venue_match` null, Savant's own venue
+    attribution standing alone, and `venue_check.status` says so.
+
+    `venue_check` runs the same comparison over EVERY default-view row, so the
+    served artifact answers "is every club priced at the ballpark it plays in
+    this season" each time it is built: on 2026-09-11, 29 of 29 default rows
+    match and the one club the default view drops is ATH.
+
+    Read by the betting model (betting_model.SERVE_ATH_PARK), dfs_export's park
+    leg through betting_model.park_index_from_meta, and `park_component` below,
+    each through the one shrink (betting_model.short_window_shrink)."""
     base = park_factors(season)
+    dflt = _park_rows_with_sample(season, "")
+    ns = sorted(r["n_pa"] for r in dflt.values() if r.get("n_pa"))
+    med = None
+    if ns:
+        mid = len(ns) // 2
+        med = ns[mid] if len(ns) % 2 else (ns[mid - 1] + ns[mid]) / 2.0
+    if home_venues is None:
+        home_venues = _home_venue_ids(season)
+    hv = {str(k): v for k, v in (home_venues or {}).items()}
+
+    def checked(o: str, row: dict) -> dict:
+        want = hv.get(o)
+        got = row.get("venue_id")
+        match = None if (want is None or got is None) else int(got) == int(want)
+        return {**row, "statsapi_venue_id": want, "venue_match": match}
+
     short = _park_rows_with_sample(season, "", rolling=SHORT_WINDOW_ROLLING)
-    orgs = {o: row for o, row in short.items() if o not in base}
+    cands = {o: checked(o, {**row, "window": f"rolling={SHORT_WINDOW_ROLLING}"})
+             for o, row in short.items() if o not in base}
+    if med:
+        for o, row in dflt.items():
+            if (o in base and o not in cands and row.get("n_pa")
+                    and row["n_pa"] < SHORT_SAMPLE_PA_SHARE * med):
+                cands[o] = checked(o, {**row, "window": "default"})
+    orgs = {o: r for o, r in cands.items() if r["venue_match"] is not False}
+    refused = {o: {"venue": r.get("venue"), "venue_id": r.get("venue_id"),
+                   "statsapi_venue_id": r.get("statsapi_venue_id"),
+                   "window": r.get("window"),
+                   "reason": "Savant's row is not at the venue the club plays in"}
+               for o, r in cands.items() if r["venue_match"] is False}
+    if hv:
+        mism = {o: {"savant_venue": r.get("venue"), "savant_venue_id": r.get("venue_id"),
+                    "statsapi_venue_id": hv.get(o)}
+                for o, r in dflt.items()
+                if hv.get(o) is not None and r.get("venue_id") is not None
+                and int(r["venue_id"]) != int(hv[o])}
+        venue_check = {
+            "status": "checked",
+            "basis": ("Savant's default-view venue_id against StatsAPI's home venue "
+                      f"for each club, season {season}"),
+            "n_default_rows": len(dflt),
+            "n_match": sum(1 for o, r in dflt.items() if hv.get(o) is not None
+                           and r.get("venue_id") is not None
+                           and int(r["venue_id"]) == int(hv[o])),
+            "mismatch": mism,
+            "absent_from_default_view": sorted(o for o in hv if o not in dflt),
+        }
+    else:
+        venue_check = {"status": "unavailable",
+                       "basis": ("StatsAPI's team list could not be read; Savant's "
+                                 "own venue attribution stands alone")}
     return {
         "season": season,
         "rolling": int(SHORT_WINDOW_ROLLING),
         "source": ("Baseball Savant statcast-park-factors, rolling="
-                   f"{SHORT_WINDOW_ROLLING}, batSide all"),
-        "note": ("clubs absent from the default 3-season view only; every row "
-                 "carries its PA sample so a consumer can shrink it, and no "
-                 "consumer may treat it as a 3-season factor"),
+                   f"{SHORT_WINDOW_ROLLING} for a venue the default view drops, and "
+                   "the default view's own row for a venue it carries on a short "
+                   "sample; batSide all"),
+        "note": ("clubs whose venue holds less than a full 3-season sample only; "
+                 "every row carries its PA sample and its window so a consumer can "
+                 "shrink it, and no consumer may treat it as a 3-season factor"),
+        "default_view_median_n_pa": med,
+        "short_sample_pa_share": SHORT_SAMPLE_PA_SHARE,
         "orgs": orgs,
+        "refused": refused,
+        "venue_check": venue_check,
     }
 
 
@@ -239,16 +358,74 @@ def park_factors_by_hand(season: int) -> dict:
     return out
 
 
+@lru_cache(maxsize=8)
+def _short_window_rows(season: int) -> dict:
+    """{org: row} off `park_factors_short_window`, or {} on any failure: the
+    team-fit park component must never fail a board over an optional view."""
+    try:
+        return dict((park_factors_short_window(season) or {}).get("orgs") or {})
+    except Exception:                                       # noqa: BLE001
+        log.warning("fit: short-window park rows for %s unavailable; the short-"
+                    "sample clubs keep their default-view reading", season)
+        return {}
+
+
+def venue_park_row(org: str, season: int, bat_side: str = "") -> dict | None:
+    """The {woba, hr, runs} the team fit reads for `org`, venue-correct.
+
+    The default 3-season view by batted side, then all hands, exactly as
+    before, EXCEPT for a club in betting_model.SHORT_WINDOW_PARK_ORGS whose
+    venue holds a short sample (SERVE_ATH_PARK, owner decision 2026-09-11): the
+    Athletics, whom the default view drops and who therefore read NEUTRAL here
+    until 2026-09-11, take Sutter Health Park's short-window row, and the Rays'
+    Tropicana row (2024 and 2026 only) is read as it was. In both cases every
+    index's deviation from 100 is scaled by the one shrink the betting model
+    prices with (betting_model.short_window_shrink on the venue's all-hands PA).
+    The shrink was measured on the runs index and is applied to wOBA and HR as
+    the same reliability ratio: an approximation, stated. None when nothing
+    resolves, which the caller reads as neutral."""
+    pf = park_factors(season, bat_side).get(org) or park_factors(season).get(org)
+    try:
+        import betting_model as _bm
+    except Exception:                                       # noqa: BLE001
+        return pf
+    if not _bm.SERVE_ATH_PARK or org not in _bm.SHORT_WINDOW_PARK_ORGS:
+        return pf
+    # A season Savant has not published (a future class's winter) has no view
+    # to be short against; it stays neutral and fetches nothing.
+    if not park_factors(season):
+        return pf
+    short = _short_window_rows(season).get(org)
+    if not isinstance(short, dict):
+        return pf
+    if pf is not None and short.get("window") != "default":
+        return pf          # a measured default-view row is never replaced
+    k = _bm.short_window_shrink(short.get("n_pa"))
+    if k is None:
+        return pf
+    src = pf if pf is not None else short
+    out = {}
+    for key in ("woba", "hr", "runs"):
+        try:
+            out[key] = round(100.0 + k * (float(src.get(key)) - 100.0), 1)
+        except (TypeError, ValueError):
+            out[key] = 100
+    return out
+
+
 def park_component(player: dict, org: str, season: int) -> dict:
     """0..1 score + the underlying indices. Hitters want >100 wOBA/HR in
     their batted side; pitchers want <100. ±25 index points saturate —
     flattened from the v1 ±20 (and the weight cut in fa_config) after the
     measured failure mode: the most suppressive park topped EVERY pitcher's
-    fit list because park alone separated otherwise-similar teams."""
+    fit list because park alone separated otherwise-similar teams.
+
+    The row is `venue_park_row`, so a short-sample venue (the Athletics at
+    Sutter Health Park, the Rays' Tropicana row) reads its own shrunk factor
+    rather than neutral or an unshrunk two-season number."""
     side = (player.get("bat_throw") or "").split("/")[0].strip().upper()
     bat_side = side if side in ("L", "R") else ""
-    pf = park_factors(season, bat_side).get(org) or park_factors(season).get(org) \
-        or {"woba": 100, "hr": 100, "runs": 100}
+    pf = venue_park_row(org, season, bat_side) or {"woba": 100, "hr": 100, "runs": 100}
     idx = (pf["woba"] + pf["hr"]) / 2.0
     is_pitcher = _position_norm(player.get("position")) in ("SP", "RP")
     edge = (100.0 - idx) if is_pitcher else (idx - 100.0)

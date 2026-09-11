@@ -17,12 +17,15 @@ headline, CHW +1.5 at edge 0.08747, sat at 0.05161 under the measured split,
 under the 0.06 floor.
 
 WHAT THESE TESTS HOLD
-  1. `split_tie_atom` with no split IS the shipped arithmetic, bit for bit, and
-     `game_probabilities` routes through it without moving a served number.
+  1. `split_tie_atom` with no split IS the pre-2026-09-11 arithmetic, bit for
+     bit, and with the flag off `game_probabilities` routes through it without
+     moving a number, so the flag is a one-line rollback.
   2. Under any split the runline stays coherent with the moneyline (a side can
      never be likelier to win by two than to win) and the pair still sums to 1.
-  3. The serve flag is False, a stray context key cannot switch it on, and a lab
-     that brings its own fit-window tie never reads a season-wide split.
+  3. The serve flag is ON (owner decision 4, 2026-09-11) with MODEL_VERSION
+     bumped; with it off a stray context key cannot switch it on; a lab that
+     brings its own fit-window tie never reads a season-wide split, and the labs
+     that grade the runline price it on their FIT window's own split.
   4. The measurement counts what it says it counts.
   5. The atom has exactly one reader in the betting and DFS code.
   6. Every runline board row carries the disclosure, priced by the same
@@ -96,10 +99,11 @@ def test_no_split_is_the_shipped_arithmetic_bit_for_bit(lh, la, r):
             assert got["p_tie"] == dist.get(0, 0.0)
 
 
-def test_game_probabilities_prices_exactly_what_shipped_while_unserved():
-    """The served board path (no tie_home, no split) and the lab path (an
-    explicit tie_home) both reproduce the whole-atom construction exactly."""
-    assert bm.SERVE_RUNLINE_TIE_SPLIT is False
+def test_game_probabilities_prices_exactly_what_shipped_while_unserved(monkeypatch):
+    """With the flag off, the served board path (no tie_home, no split) and the
+    lab path (an explicit tie_home) both reproduce the whole-atom construction
+    exactly: the rollback is bit for bit."""
+    monkeypatch.setattr(bm, "SERVE_RUNLINE_TIE_SPLIT", False)
     for th in (None, 0.47):
         gp = bm.game_probabilities("KCR", "CHC", tie_home=th, **KW)
         assert gp is not None
@@ -177,23 +181,65 @@ def test_a_non_probability_is_refused_not_priced(bad):
 # ---------------------------------------------------------------------------
 # 3. the serve flag, the stray key and the lab rule
 # ---------------------------------------------------------------------------
-def test_tripwire_the_split_is_not_served():
-    """TO FLIP SERVE_RUNLINE_TIE_SPLIT: the runline margin gate returns ship, the
-    MODEL_VERSION is bumped, the labs pass fit-window splits and the dispersion
-    gate is re-run, and this test, the flag and the served context key move in
-    ONE commit. See the constant's comment in betting_model.py."""
-    assert bm.SERVE_RUNLINE_TIE_SPLIT is False, (
-        "the runline tie split went live; read the flip procedure on the flag")
+def test_tripwire_the_split_is_served():
+    """SERVE_RUNLINE_TIE_SPLIT went live on 2026-09-11 (owner decision 4, ahead
+    of the runline margin gate, which still decides its successor) in ONE commit
+    with the MODEL_VERSION bump and the lab wiring. THE SERVED STATE, and it
+    fails rather than skips: the price reads the served context's measured split
+    whether or not a v2 `--context` has rewritten the served key yet, and once
+    it has, the served key IS the measurement."""
+    assert bm.SERVE_RUNLINE_TIE_SPLIT is True, (
+        "the runline tie split was switched off; read the flag's comment")
+    assert bm.MODEL_VERSION != "betting_runs_v1", (
+        "serving the split without a MODEL_VERSION bump pools two pricers "
+        "in every ledger")
     ctx = json.loads((ROOT / "data" / "betting_model_context.json").read_text(encoding="utf-8"))
-    assert ctx.get("extra_inning_runline_split") is None, (
-        "the served split key carries a value while the flag is False")
-    if bm.SERVE_RUNLINE_TIE_SPLIT:                               # pragma: no cover
-        assert bm.MODEL_VERSION != "betting_runs_v1", (
-            "serving the split without a MODEL_VERSION bump pools two pricers "
-            "in every ledger")
+    fitted = ctx.get("extra_inning_runline_split_fitted")
+    pair = bm._runline_split_pair(fitted)
+    assert pair is not None, "the served context carries no runline split measurement"
+    assert bm.served_runline_tie_split() == pair
+    if ctx.get("model_version") == bm.MODEL_VERSION:
+        assert ctx.get("extra_inning_runline_split") == fitted, (
+            "a v2 context whose served split key does not carry the measurement")
+
+
+def test_a_context_written_before_the_flip_still_prices_the_split(tmp_path, monkeypatch):
+    """A context from before the flip carries the measurement beside a null
+    served key. With the flag on the price reads the measurement, so a refit
+    that has not yet run cannot leave the runline on the whole atom."""
+    monkeypatch.setattr(bm, "CONTEXT_PATH", _ctx_file(
+        tmp_path, extra_inning_runline_split=None, model_version="betting_runs_v1"))
+    monkeypatch.setattr(bm, "SERVE_RUNLINE_TIE_SPLIT", True)
+    assert bm.served_runline_tie_split() == SPLIT
+    assert bm.game_probabilities("KCR", "CHC", **KW)["runline_tie_split"] == [0.1075, 0.51]
+    monkeypatch.setattr(bm, "SERVE_RUNLINE_TIE_SPLIT", False)
+    assert bm.served_runline_tie_split() is None
+
+
+def test_rows_carry_the_context_version_beside_the_pricer(tmp_path, monkeypatch):
+    """The ledger key comes from the code; the coefficients come from the
+    context. A night whose context was fitted under another version stamps
+    both, so the ledger can keep them apart, and the build says so."""
+    monkeypatch.setattr(bm, "CONTEXT_PATH", _ctx_file(tmp_path, model_version=bm.MODEL_VERSION))
+    assert bm.context_model_version() == bm.MODEL_VERSION
+    assert be.context_version_note(bm.MODEL_VERSION) is None
+    assert be.context_version_note(None) is None
+    slot = {"game_pk": 9, "market": "runline", "side": "home", "point": 1.5,
+            "label": "KCR +1.5", "odds": -190, "model_prob": 0.7, "edge": 0.08,
+            "min_edge_used": 0.06}
+    row = be.record_row(slot, slate_date="2026-09-11", evald={})
+    assert row["model_version"] == bm.MODEL_VERSION
+    assert row["context_version"] == bm.MODEL_VERSION
+    monkeypatch.setattr(bm, "CONTEXT_PATH", _ctx_file(tmp_path, model_version="betting_runs_v1"))
+    row = be.record_row(slot, slate_date="2026-09-11", evald={})
+    assert (row["model_version"], row["context_version"]) == (bm.MODEL_VERSION,
+                                                              "betting_runs_v1")
+    note = be.context_version_note("betting_runs_v1")
+    assert "betting_runs_v1" in note and bm.MODEL_VERSION in note
 
 
 def test_a_stray_served_key_cannot_switch_the_split_on(tmp_path, monkeypatch):
+    monkeypatch.setattr(bm, "SERVE_RUNLINE_TIE_SPLIT", False)
     monkeypatch.setattr(bm, "CONTEXT_PATH", _ctx_file(
         tmp_path, extra_inning_runline_split=MEASURED))
     assert bm.served_runline_tie_split() is None
@@ -219,6 +265,56 @@ def test_a_lab_that_brings_its_own_tie_never_reads_the_season_split(tmp_path, mo
     assert lab["runline_tie_split"] is None
     assert lab["p_home"] == served["p_home"]
     assert lab["p_home_plus_1_5"] > served["p_home_plus_1_5"]
+
+
+def test_the_labs_price_the_runline_on_their_fit_window_split(monkeypatch):
+    """With the flag on, the two labs that READ a runline probability (the
+    section 11a dispersion arms and the backtest's per-market grade) price it on
+    the split measured on their FIT window alone; with it off they price the
+    whole-atom construction, which is what the board then serves."""
+    games = [_g(4, 3, 10), _g(6, 4, 11), _g(2, 3, 10), _g(1, 6, 13), _g(5, 1)]
+    assert bm._lab_runline_split(games) == (0.5, 0.5)
+    monkeypatch.setattr(bm, "SERVE_RUNLINE_TIE_SPLIT", False)
+    assert bm._lab_runline_split(games) is None
+    monkeypatch.setattr(bm, "SERVE_RUNLINE_TIE_SPLIT", True)
+    # No extra-inning win on one side: not a measurement, whole atom.
+    assert bm._lab_runline_split([_g(4, 3, 10)]) is None
+    src = (ROOT / "betting_model.py").read_text(encoding="utf-8")
+    arm = src[src.index("def _dispersion_arm("):]
+    arm = arm[:arm.index("\ndef ")]
+    assert "rl_split = _lab_runline_split(fit_games)" in arm
+    assert "runline_tie_split=rl_split" in arm
+    grade = src[src.index("    def _grade(fit_games, eval_games"):]
+    grade = grade[:6000]
+    assert "rl_split = _lab_runline_split(fit_games)" in grade
+    assert "runline_tie_split=rl_split" in grade
+
+
+def test_a_served_split_prices_the_runline_and_leaves_nothing_to_disclose(
+        tmp_path, monkeypatch):
+    """The served state: the context carries the split, every runline row is
+    priced on it, the row's disclosure says so with a zero shift, and the slot
+    carries no tie-atom sentence."""
+    monkeypatch.setattr(bm, "CONTEXT_PATH", _ctx_file(
+        tmp_path, extra_inning_runline_split=MEASURED))
+    ev = {"event_id": "e9", "home_team": "Kansas City Royals",
+          "away_team": "Chicago Cubs", "home_org": "KCR", "away_org": "CHC",
+          "commence_time": "2026-08-09T18:10:00Z",
+          "books": {"lowvig": {"title": "LowVig", "last_update": "2026-08-09T01:33:00Z",
+                               "spreads": {"home": {"price": -190, "point": 1.5},
+                                           "away": {"price": 160, "point": -1.5}}}}}
+    g = {"game_pk": 9, "date": "2026-08-09", "datetime": "2026-08-09T18:10:00Z",
+         "status": "Preview", "home": {"org": "KCR"}, "away": {"org": "CHC"}}
+    rows = be.team_bets([g], [ev], teams=TEAMS, parks={"KCR": 1.0}, starters={},
+                        now=datetime(2026, 8, 9, 1, 33, 53, tzinfo=timezone.utc))
+    gp = bm.game_probabilities("KCR", "CHC", teams=TEAMS, parks={"KCR": 1.0})
+    assert gp["runline_tie_split"] == [0.1075, 0.51]
+    keys = be._runline_side_keys(False)
+    for r in rows[0]["runline"]:
+        assert r["model_prob"] == gp[keys[r["side"]]]
+        ta = r["tie_atom"]
+        assert ta["split_served"] is True and ta["shift_if_split"] == 0.0
+        assert be.tie_atom_caveat({**r, "market": "runline"}, 0.06) is None
 
 
 def test_a_malformed_fitted_block_is_absent_not_zero(tmp_path, monkeypatch):
@@ -285,6 +381,10 @@ def test_dfs_implied_totals_read_the_same_function(monkeypatch):
 # 6. the disclosure on the board and on the slot
 # ---------------------------------------------------------------------------
 def _board(tmp_path, monkeypatch, *, home_point=1.5):
+    """The UNSERVED board: the disclosure these tests hold describes a split the
+    price does not carry, which since v2 is the rollback state (flag off). The
+    served state has its own test above."""
+    monkeypatch.setattr(bm, "SERVE_RUNLINE_TIE_SPLIT", False)
     monkeypatch.setattr(bm, "CONTEXT_PATH", _ctx_file(tmp_path))
     ev = {"event_id": "e9", "home_team": "Kansas City Royals",
           "away_team": "Chicago Cubs", "home_org": "KCR", "away_org": "CHC",

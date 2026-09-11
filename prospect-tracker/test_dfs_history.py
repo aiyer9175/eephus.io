@@ -65,6 +65,25 @@ def test_archive_written_with_compact_shape():
     assert "home" not in g and "away" not in g
 
 
+def test_archive_keeps_the_games_the_board_left_off():
+    """A grading pass must tell "not on the slate" from "not priced": the
+    games the draftable filter excluded ride the archive with their state, and
+    every archived game carries the status it was served with."""
+    d = _tmpdir()
+    pl = _healthy_payload()
+    pl["excluded_games"] = [{"game_pk": 900002, "datetime": "2026-08-10T17:05:00Z",
+                             "state": "started", "detailed_state": "In Progress",
+                             "away": "CCC", "home": "DDD", "basis": "schedule_status"}]
+    got = json.loads(dx._archive_slate(pl, archive_dir=d).read_text(encoding="utf-8"))
+    assert got["excluded_games"] == [{"game_pk": 900002, "datetime": "2026-08-10T17:05:00Z",
+                                      "state": "started", "detailed_state": "In Progress"}]
+    assert got["games"][0]["status"] == "Preview"
+    # A payload from before the filter archives an empty list, not a missing key.
+    got = json.loads(dx._archive_slate(_healthy_payload(day="2026-08-11"),
+                                       archive_dir=d).read_text(encoding="utf-8"))
+    assert got["excluded_games"] == []
+
+
 def test_archive_refuses_empty_and_refused_payloads():
     d = _tmpdir()
     empty = _healthy_payload()

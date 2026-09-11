@@ -1261,9 +1261,13 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
         "war_input_divergence": _war_input_divergence(),
         "park_factors": fa_fit.park_factors(class_year - 1),
         # Two SIBLING blocks (2026-09-11, docs/diamond-betting.md section 5i).
-        # `park_factors` above is untouched, so every consumer that reads it
-        # (the FA engine, dfs_export, betting_model.park_index) is byte-for-byte
-        # where it was. Nothing in the FA engine reads either sibling.
+        # `park_factors` above is untouched. The short-window block carries every
+        # club whose venue holds less than a full 3-season sample (the
+        # Athletics at Sutter Health Park, the Rays' two-season Tropicana row),
+        # and since the 2026-09-11 venue audit it prices, through the one shrink
+        # in betting_model: the betting board (SERVE_ATH_PARK), dfs_export's park
+        # leg and the team fit's park component (fa_fit.venue_park_row). The
+        # by-hand block stays dark.
         "park_factors_short_window": _park_sibling(
             fa_fit.park_factors_short_window, class_year - 1),
         "park_factors_by_hand": _park_sibling(
@@ -1274,8 +1278,10 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
 
 def _park_sibling(builder, season: int) -> dict | None:
     """One best-effort park sibling block. A Savant outage costs the block a
-    null, never the fa_meta write: the FA engine does not read these, and a
-    failed optional fetch must not keep the free-agent board from publishing."""
+    null, never the fa_meta write: a failed optional fetch must not keep the
+    free-agent board from publishing. A null short-window block prices the
+    short-sample clubs the way they priced before 2026-09-11 (the Athletics
+    neutral, the Rays at their raw 3-season row), stated, never invented."""
     try:
         blk = builder(season)
     except Exception:                                       # noqa: BLE001
@@ -1283,6 +1289,56 @@ def _park_sibling(builder, season: int) -> dict | None:
                     getattr(builder, "__name__", "park sibling"), season)
         return None
     return blk or None
+
+
+def refresh_park_siblings(path: Path | None = None, *, log_fn=None) -> dict:
+    """Rewrite ONLY the two park sibling blocks of an existing fa_meta.json,
+    from the same builders `build_fa_meta_payload` calls, and leave every other
+    key byte-for-byte where it was.
+
+    WHY IT EXISTS. The short-window block PRICES (betting_model.SERVE_ATH_PARK,
+    dfs_export's park leg, the team fit), but the full fa_meta write runs late
+    in the nightly (run_monthly d10b), after DFS (9d-bis), the betting refit
+    (9e-pre1) and the board (9e) have already read the file, and the nightly
+    checkout reverts the file to its committed copy first. So a Savant refresh
+    reaches those consumers only through a committed fa_meta.json, or through
+    this call placed before 9d-bis. It fetches only the Savant pages (cached by
+    fa_sources) and StatsAPI's team list (cached by fantasy_schedule).
+
+    A block whose builder fails is KEPT as it was on disk, never overwritten
+    with a null, so an outage costs a refresh and never a served park. Returns
+    {"path", "season", "written", "blocks": {key: "refreshed" | "kept" |
+    "unchanged"}}."""
+    path = Path(path) if path else DATA_DIR / "fa_meta.json"
+    say = log_fn or log.info
+    try:
+        meta = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        say(f"fa_meta park blocks: {path.name} unreadable; nothing refreshed")
+        return {"path": str(path), "season": None, "written": False, "blocks": {}}
+    season = int(meta.get("class_year") or CLASS_YEAR) - 1
+    status = {}
+    changed = False
+    for key, builder in (("park_factors_short_window", fa_fit.park_factors_short_window),
+                         ("park_factors_by_hand", fa_fit.park_factors_by_hand)):
+        blk = _park_sibling(builder, season)
+        if blk is None:
+            status[key] = "kept"
+            continue
+        if meta.get(key) == blk:
+            status[key] = "unchanged"
+            continue
+        meta[key] = blk
+        status[key] = "refreshed"
+        changed = True
+    if changed:
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_text(json.dumps(meta, separators=(",", ":")), encoding="utf-8")
+        tmp.replace(path)
+    short = (meta.get("park_factors_short_window") or {}).get("orgs") or {}
+    say(f"fa_meta park blocks ({season}): {status}; short-window clubs "
+        f"{sorted(short)}")
+    return {"path": str(path), "season": season, "written": changed, "blocks": status}
 
 
 # Future winters exported alongside the current class (the board's year
@@ -1348,5 +1404,9 @@ def export_all() -> dict[str, int]:
 
 
 if __name__ == "__main__":
+    import sys
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    print(export_all())
+    if "--park-blocks" in sys.argv[1:]:
+        print(refresh_park_siblings())
+    else:
+        print(export_all())

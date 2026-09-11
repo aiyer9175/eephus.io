@@ -1917,6 +1917,11 @@ def record_row(slot_row: dict, *, slate_date: str, evald: dict | None,
         "min_edge_used": slot_row.get("min_edge_used"),
         "provisional": bool(slot_row.get("provisional")),
         "model_version": bm.MODEL_VERSION,
+        # The version stamped on the context whose coefficients priced the row.
+        # Equal to model_version on a healthy night; different only when the
+        # refit did not run under this pricer, and then the ledger can tell the
+        # rows apart instead of pooling them (see context_version_note).
+        "context_version": bm.context_model_version(),
         "label": provisional_record_label(
             evald, min_edge=float(slot_row.get("min_edge_used") or PROVISIONAL_MIN_EDGE),
             provisional=bool(slot_row.get("provisional"))),
@@ -2843,9 +2848,11 @@ def _stamp_tie_atom(rows: list[dict] | None, gp: dict, at_split, keys: dict,
     to it, IN PLACE. Disclosure only: `model_prob`, `edge` and everything the
     slots rank on are untouched.
 
-    The served runline gives the model's whole tie atom to both +1.5 sides; the
-    moneyline beside it splits the same atom by the measured extra-innings home
-    rate. `tie_atom` carries the atom, whether the measured split is served, and
+    Until 2026-09-11 the served runline gave the model's whole tie atom to both
+    +1.5 sides while the moneyline beside it split the same atom by the measured
+    extra-innings home rate; since SERVE_RUNLINE_TIE_SPLIT went live the runline
+    reads the split too, and the stamp records `split_served: True` with a zero
+    shift. `tie_atom` carries the atom, whether the measured split is served, and
     the row's probability and edge under that split, re-priced by
     `game_probabilities`' own `runline_at_split` (so the arithmetic lives in
     `betting_model.split_tie_atom` and nowhere here), plus the counts the split
@@ -2881,6 +2888,22 @@ def _stamp_tie_atom(rows: list[dict] | None, gp: dict, at_split, keys: dict,
         }
 
 
+def context_version_note(ctx_version: str | None) -> str | None:
+    """None when the served context was fitted by this pricer (or there is no
+    context, and the literature priors price). Otherwise the sentence the build
+    logs and the payload carries: the coefficients came from a refit under
+    another MODEL_VERSION, so the rows carry both versions and the ledger can
+    keep them apart. Since v2 the runline reads the context's measured split
+    whether or not the served key was written (served_runline_tie_split), so
+    what such a night mixes is the coefficients alone."""
+    if not ctx_version or ctx_version == bm.MODEL_VERSION:
+        return None
+    return (f"the served betting_model_context.json was fitted under {ctx_version} and "
+            f"this pricer is {bm.MODEL_VERSION}; the coefficients are that refit's "
+            "until `python betting_model.py --context` runs again, and every record "
+            "row carries context_version so the two are never pooled")
+
+
 def tie_atom_caveat(row: dict, thr: float | None) -> str | None:
     """The published slot's sentence about the tie atom, or None.
 
@@ -2889,7 +2912,10 @@ def tie_atom_caveat(row: dict, thr: float | None) -> str | None:
     hold each figure to the field it came from. None when the row carries no
     block (not a runline, or a context that predates the measurement) or when
     the split is already served, because then the price IS the split and there
-    is nothing left to disclose."""
+    is nothing left to disclose. With SERVE_RUNLINE_TIE_SPLIT on the split is
+    served whenever the context carries the measurement (read from the served
+    key or, on a context written before the flip, from the fitted block), so
+    this sentence can only be reached with the flag off."""
     ta = row.get("tie_atom") or {}
     p = row.get("model_prob")
     if (not ta or ta.get("split_served") or p is None
@@ -3089,7 +3115,8 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
     out = []
     n_time_refused = 0                     # games that had a candidate and lost it
     # The measured runline split of the tie atom, read ONCE per board (L14-01).
-    # Disclosure only: nothing below prices off it while it is unserved.
+    # Disclosure only: the price reads the SERVED split through
+    # bm.game_probabilities (SERVE_RUNLINE_TIE_SPLIT), never this block.
     rl_tie_fitted = bm.fitted_runline_tie_split()
     for g in games:
         home, away = (g.get("home") or {}), (g.get("away") or {})
@@ -5237,6 +5264,12 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     parks, starters = bm.park_index(), bm.starter_inputs()
     ctx = bm.league_context()
     coeffs = bm.coefficients()
+    ctx_version = bm.context_model_version()
+    ctx_note = context_version_note(ctx_version)
+    if ctx_note:
+        log.warning("betting_export: %s", ctx_note)
+        if log_fn:
+            log_fn(f"betting_export: WARNING {ctx_note}")
     evald = _load("betting_model_eval.json") or {}
 
     # Zeroed up front so the two counts are always integers on the status block,
@@ -5434,6 +5467,10 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         },
         "model": {
             "version": bm.MODEL_VERSION,
+            # Which pricer fitted the coefficients below, and whether it is this
+            # one (context_version_note says what a mismatch means).
+            "context_version": ctx_version,
+            "context_version_note": ctx_note,
             "validated": validated,
             "stage": "Diamond preview",
             "inputs": ["team Offense+ (HEM+ rollup)", "team Bullpen+ (REM+ rollup)",

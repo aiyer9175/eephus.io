@@ -32,7 +32,8 @@ happen inside the called module, so this file alone cannot split them).
 | d9b2. Re-bake MLB player detail (mlb_player_detail.json) | mlb_player_detail.json, photo_ctx.json |
 | d9c. Headshot resolution (photo_ctx.json) | fantasy.json, photo_ctx.json |
 | 9d. Fantasy daily refresh (fantasy.json schedule) | dfs.json, fantasy.json |
-| 9d-pre-odds. Betting odds snapshot (before the DFS slate) | dfs.json |
+| 9d-pre-odds. Betting odds snapshot (before the DFS slate) | fa_meta.json |
+| 9d-park. Refresh the fa_meta park blocks (fa_meta.json) | dfs.json, fa_meta.json |
 | 9d-bis. DFS daily slate (dfs.json) | dfs.json |
 | 9e-pre0. Refresh team leaderboards (bullpen_leaderboards.json, | bullpen_leaderboards.json, hitter_leaderboards.json, starter_leaderboards.json |
 | 9e-pre. Leaderboard vintage snapshot (validation clock) | - |

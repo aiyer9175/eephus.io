@@ -39,12 +39,13 @@ THE SCORING MODEL (two rows per game, one per scoring side)
     home rate splitting the tie mass), the runline (P(margin >= 2)), and the
     total (Poisson on the run sum).
 
-    THE TIE MASS IS READ IN ONE PLACE, `split_tie_atom`, and the two margin
-    markets do NOT read it the same way (L14-01, 2026-09-11). The moneyline
-    splits it by the measured extra-innings home rate. The served runline
-    gives the whole of it to BOTH +1.5 sides, which asserts that no game that
-    goes to extra innings is ever won by two or more. The measured split
-    exists and is published; it is not served. See SERVE_RUNLINE_TIE_SPLIT.
+    THE TIE MASS IS READ IN ONE PLACE, `split_tie_atom` (L14-01, 2026-09-11).
+    The moneyline splits it by the measured extra-innings home rate. Until
+    2026-09-11 the runline gave the whole of it to BOTH +1.5 sides, which
+    asserts that no game that goes to extra innings is ever won by two or more;
+    since owner decision 4 the runline reads the measured split of the same
+    atom, coherent with the moneyline by construction. See
+    SERVE_RUNLINE_TIE_SPLIT.
 
 WHAT THIS MODEL IS NOT, AND THE PAGE SAYS SO
     THE RUN DISTRIBUTION IS WRONG, not soft. Poisson asserts var = mean;
@@ -168,7 +169,21 @@ GAME_CACHE = ROOT / ".cache" / "betting"
 CONTEXT_PATH = DATA_DIR / "betting_model_context.json"
 EVAL_PATH = DATA_DIR / "betting_model_eval.json"
 
-MODEL_VERSION = "betting_runs_v1"
+# THE LEDGER KEY. Every calibration, shadow and record row carries it, and a
+# ledger that pools two pricers under one version measures a mixture nobody
+# priced. v2 (2026-09-11, owner decisions 2, 4 and 23, ONE bump for all three
+# pricer changes, which shipped together): the short-sample parks are served
+# (SERVE_ATH_PARK: the Athletics at Sutter Health Park and the Rays' Tropicana
+# row shrunk by its own sample), the runline reads the measured split of the
+# tie atom (SERVE_RUNLINE_TIE_SPLIT), and two-way starters enter the SEM+
+# starter pool the probable's price is read from (starter_export). v1 rows
+# stay v1; nothing re-labels them. Two artifacts carry the v2 state and the
+# nightly checkout reverts both to their committed copies: data/fa_meta.json's
+# `park_factors_short_window` block (without it the parks price as v1; logged,
+# see `park_index`) and data/betting_model_context.json (the coefficients; a v1
+# context beside this pricer is stamped on every record row as
+# `context_version`, see betting_export.context_version_note).
+MODEL_VERSION = "betting_runs_v2"
 
 # Share of a game the listed starter is expected to cover when the pitcher has
 # no measured ip_per_gs. 5.2 IP is roughly the 2026 league average start.
@@ -226,21 +241,58 @@ TIE_SHRINK_K = 100.0
 # with 1 - tie_home, so the runline can never say a side wins by two in extras
 # more often than the moneyline says it wins in extras at all.
 #
-# WHY IT IS FALSE. It moves served prices, and on the 2026-09-10 board it would
-# have changed the published Model Watch headline: CHW +1.5 at edge 0.08747
-# falls to 0.05161, under the 0.06 floor, and the slot passes to PIT at CHW
-# Over 7.5. All six served runline rows move, by 0.00615 to 0.03586.
-# It is a pricing change on the runline, and the runline already has a
-# registered successor lane with its own gate (B-RUNLINE,
-# docs/master-plan-2026-09-05-opus.md: a margin kernel with an explicit
-# walk-off redistribution, held-out runline both-sides log loss at t >= 1.645
-# at ALL of 0.6 / 0.7 / 0.8 plus the ledger arm on the canonical games). This
-# correction is a strict subset of that direction and does not ship around
-# that gate. It must also be gated JOINTLY with the one-run band (observed
-# P(|margin| == 1) 0.2721 against Poisson's 0.2503, section 11a), because
-# moving atom mass off d == +/-1 runs the opposite way to that error; it is not
-# stacked on any other margin correction blind. It is NOT the closed symmetric
-# NB2 arm: it widens nothing, it reassigns one atom.
+# SERVED SINCE 2026-09-11, OWNER DECISION 4 ("reprice now"), ahead of the gate
+# below, which it does not replace. It moves served prices, so it shipped in ONE
+# commit with the MODEL_VERSION bump (betting_runs_v2), the lab wiring and the
+# tests, and it was measured first. On the 2026-09-11 slate (15 games, 86 priced
+# rows, the 17:35 UTC snapshot, re-priced on the leaderboards as rebuilt at 22:41
+# UTC, the old and the new pricer on identical inputs), with the served
+# coefficients held: all 28 runline rows on the 14 games with a runline move, by
+# 0.00628 to 0.03668, every +1.5 side DOWN and every -1.5 side UP by the same
+# amount; the moneyline and the total do not move. One value side flips (LAA at
+# WSN, away +1.5 to home -1.5). Floor-clearing sides 23 -> 21 (CHW at STL home
+# +1.5, 0.69211 -> 0.65757, and CLE at MIN home +1.5, 0.69375 -> 0.65707, fall
+# under 0.06); the Pick of the Day is unchanged (PHI at ATL, ATL moneyline
+# 0.75424). Over the 27 cached odds snapshots re-priced on today's inputs (425
+# games, 2,540 rows): 840 runline rows move, 34 value sides flip, floor-clearing
+# sides 605 -> 553, and the published slot changes on 8 of 27 slates, every one
+# of them a +1.5 runline pick that the split prices under the floor or below
+# another side (2026-09-10: CHW +1.5 edge 0.09332 gives way to PIT at CHW Over
+# 7.5).
+#
+# IT CHANGES THE SECTION 11a DISPERSION GATE'S VERDICT, LEG BY LEG, and the
+# registry text that quotes it goes stale on the next nightly backtest. The gate
+# grades NB2 against Poisson on the runline as the board prices it, so with the
+# split served both arms price the split (`_lab_runline_split`), and the split
+# takes most of what NB2 was being credited for on the runline. Measured on the
+# 2,200 cached games, amended both-sides criterion, t at split quantiles 0.6 /
+# 0.7 / 0.8:
+#   v1 pricer            runline 3.196 / 2.086 / 2.221 PASS at all three; total
+#                        2.271 / 1.334 / 0.049; verdict INDETERMINATE (0.6 only)
+#   the split alone      runline 0.482 / -0.127 / 0.540 FAIL at all three; total
+#                        unchanged; verdict FAIL
+#   the parks alone      runline 3.186 / 2.043 / 2.203; total 2.614 / 1.841 / 0.517;
+#                        verdict INDETERMINATE (0.6 and 0.7)
+#   two-way alone        runline 3.189 / 2.076 / 2.212; total 2.309 / 1.381 / 0.080;
+#                        verdict INDETERMINATE (0.6 only)
+#   v2, all three        runline 0.473 / -0.116 / 0.540 FAIL; total 2.645 / 1.876 /
+#                        0.539; verdict FAIL
+# So dispersion moves from INDETERMINATE to FAIL, and it did not ship before and
+# does not ship now. The total leg's gain (0.7: t 1.334 -> 1.876, now past 1.645)
+# comes from the PARK REPAIR, a pricer-input change (the split alone leaves it
+# identical); it is the registered 11a gate re-run on its own schedule, not a
+# look at the B-TOTAL lane, and B-TOTAL's own criteria are untouched by it.
+#
+# THE GATE STILL OWNS THE SUCCESSOR. The runline has a registered successor lane
+# (B-RUNLINE, docs/master-plan-2026-09-05-opus.md: a margin kernel with an
+# explicit walk-off redistribution, held-out runline both-sides log loss at
+# t >= 1.645 at ALL of 0.6 / 0.7 / 0.8 plus the ledger arm on the canonical
+# games). This correction is a strict subset of that direction; the gate decides
+# whether the kernel replaces it, and it must still be gated JOINTLY with the
+# one-run band (observed P(|margin| == 1) 0.2721 against Poisson's 0.2503,
+# section 11a), because moving atom mass off d == +/-1 runs the opposite way to
+# that error. It is NOT the closed symmetric NB2 arm: it widens nothing, it
+# reassigns one atom.
 #
 # THE ATOM IS NOT A CALIBRATED P(EXTRA INNINGS). At the league run environment
 # (4.4841 runs a side) the Poisson tie atom is 0.1352, against an observed
@@ -248,19 +300,20 @@ TIE_SHRINK_K = 100.0
 # to an inflated atom moves the runline toward the observed margin
 # distribution; it does not calibrate it.
 #
-# TO FLIP THIS FLAG, in ONE commit: (1) the gate above returns ship for the
-# runline; (2) MODEL_VERSION is bumped, because the settled runline rows in the
-# shadow ledger and every runline row in the calibration ledger were priced by
-# the whole-atom construction, and a ledger that pools two pricers under one
-# version measures a mixture nobody priced; (3) every lab that passes its own
-# fit-window tie_home (backtest `_grade`, `_dispersion_arm`, the ridge arm)
-# passes a fit-window split from `_fit_runline_tie_split` as well, and the
-# dispersion gate is re-run, because its criterion 2 reads these runline
-# probabilities; (4) this constant, the tripwire in
-# test_betting_runline_tie_atom.py and the served `extra_inning_runline_split`
-# context key move together; (5) the row disclosure (`tie_atom`,
-# `tie_atom_caveat`) is re-read, because it describes an UNSERVED correction.
-SERVE_RUNLINE_TIE_SPLIT = False
+# WHAT SHIPPED WITH IT, the flip procedure this constant used to list: (1) the
+# owner's call stands in for the gate's ship; (2) MODEL_VERSION is bumped, because
+# the settled runline rows in the shadow ledger and every runline row in the
+# calibration ledger were priced by the whole-atom construction; (3) the labs
+# that READ a runline probability (the section 11a dispersion arms and the
+# backtest's per-market grade) price it on their FIT window's own split through
+# `_lab_runline_split`, and the dispersion gate is re-run on the next
+# `--dispersion`; (4) this constant, test_betting_runline_tie_atom.py and the
+# served `extra_inning_runline_split` context key (written by the next
+# `--context`) move together; (5) the row disclosure (`tie_atom`) now records
+# `split_served: True` with a zero shift, and `tie_atom_caveat` returns None,
+# because the price IS the split. False restores the whole-atom construction
+# bit for bit.
+SERVE_RUNLINE_TIE_SPLIT = True
 
 # --- run dispersion --------------------------------------------------------
 # THE DEFECT THE MODULE SHIPPED WITH, measured 2026-08-09 on all 1,766 cached
@@ -1159,25 +1212,73 @@ def park_index() -> dict:
     parks resolve neutral at lookup, never invented.
 
     SERVE_ATH_PARK (section 5i-A) is the one exception to "missing resolves
-    neutral", and it is off. With it on, a SHORT_WINDOW_PARK_ORGS club that the
-    3-season view drops takes its shrunk short-window factor from fa_meta's
-    `park_factors_short_window` sibling; it can never overwrite a 3-season
-    factor. With it off this function is byte-for-byte what it was."""
-    meta = _data("fa_meta.json") or {}
-    pf = meta.get("park_factors") or {}
+    neutral", and it is ON since 2026-09-11 (owner decision 2). A
+    SHORT_WINDOW_PARK_ORGS club whose venue holds less than a full 3-season
+    Savant sample takes that venue's factor shrunk by its own PA sample, off
+    fa_meta's `park_factors_short_window` sibling: the Athletics (Sutter Health
+    Park, dropped by the 3-season view) and the Rays (Tropicana Field, whose
+    2024-2026 row holds only 2024 and 2026, because they played 2025 at George
+    M. Steinbrenner Field). A short row can only ever shrink a 3-season factor
+    toward neutral by that factor's own sample, never replace it with a
+    different number. See `park_index_from_meta`.
+
+    THE BLOCK HAS TO BE ON DISK FOR THE FLAG TO DO ANYTHING. fa_meta.json is a
+    tracked artifact the nightly checkout reverts, and the board, the refit and
+    DFS all read it before the FA re-export rewrites it, so a committed copy
+    without `park_factors_short_window` prices the Athletics neutral and the
+    Rays unshrunk while the rows say v2. That state is logged here, loudly and
+    once per process, naming the clubs (`short_window_parks_missing`), and
+    test_betting_ballpark fails on it rather than skipping."""
+    meta = _data("fa_meta.json")
+    missing = short_window_parks_missing(meta)
+    if missing and tuple(missing) not in _SHORT_PARK_WARNED:
+        _SHORT_PARK_WARNED.add(tuple(missing))
+        log.warning("betting_model: SERVE_ATH_PARK is on but data/fa_meta.json's "
+                    "park_factors_short_window cannot price %s; those parks fall back "
+                    "to the pre-2026-09-11 reading. Refresh it with "
+                    "`python fa_export.py --park-blocks` and commit fa_meta.json",
+                    ", ".join(missing))
+    return park_index_from_meta(meta)
+
+
+_SHORT_PARK_WARNED: set = set()
+
+
+def _three_season_index(meta: dict) -> dict:
     out = {}
-    for org, v in pf.items():
+    for org, v in (meta.get("park_factors") or {}).items():
         try:
             out[str(org)] = float((v or {}).get("runs") or 100) / 100.0
         except (TypeError, ValueError):
             continue
-    if SERVE_ATH_PARK:
-        out.update(short_window_parks(meta.get("park_factors_short_window"),
-                                      exclude=set(out)))
     return out
 
 
-# --- the Athletics' park (audit C5-F1, docs/diamond-betting.md section 5i-A) ---
+def park_index_from_meta(meta: dict | None) -> dict:
+    """`park_index` on an fa_meta document already in hand, so dfs_export and a
+    lab price the SAME venue-correct table without a second reader. Pure."""
+    meta = meta if isinstance(meta, dict) else {}
+    out = _three_season_index(meta)
+    if SERVE_ATH_PARK:
+        out.update(short_window_parks(meta.get("park_factors_short_window"),
+                                      measured=out))
+    return out
+
+
+def short_window_parks_missing(meta: dict | None) -> list[str]:
+    """The SHORT_WINDOW_PARK_ORGS clubs this fa_meta document does NOT price off
+    its short-window block while SERVE_ATH_PARK is on: the block is absent, or
+    it carries no usable row for the club (or a refused one). [] with the flag
+    off, when there is nothing the flag promised. Pure."""
+    if not SERVE_ATH_PARK:
+        return []
+    meta = meta if isinstance(meta, dict) else {}
+    got = short_window_parks(meta.get("park_factors_short_window"),
+                             measured=_three_season_index(meta))
+    return sorted(SHORT_WINDOW_PARK_ORGS - set(got))
+
+
+# --- the short-sample parks (audit C5-F1, docs/diamond-betting.md 5i-A) ---
 # THE DEFECT. `park_index()` reads data/fa_meta.json park_factors, which is
 # Savant's DEFAULT view, a 3-season rolling index. That view drops any venue
 # without a full window: the 2024-2026 view carries 29 venues and the 2023-2025
@@ -1208,58 +1309,102 @@ def park_index() -> dict:
 # median 54,034 PA and 0.7638 at the A's 34,287. b3 was fitted on 3-season
 # indices, so the A's deviation is scaled by 0.7638 / 0.8360 = 0.9137, the
 # reliability of what b3 was fitted on: 121 -> 119.19, served as 1.1919.
-# (Tropicana's 3-season row carries 34,861 PA and is served UNSHRUNK today; the
-# same argument would shrink it by about as much, and that is a separate,
-# unflagged served change this lane does not make.)
+# (Tropicana's 3-season row carried 34,861 PA and was served UNSHRUNK until
+# 2026-09-11; the venue audit below brings it under the same shrink.)
 #
-# WHAT FLIPPING IT CHANGES, measured on the 2026-09-11 board (15 games; the
-# same-inputs reprice reproduces all 90 served model probabilities exactly):
-#   * with the served coefficients held, ONE game moves, SEA at ATH. Fair total
-#     9.86 -> 11.16 against a 10.0 line; Over 10.0 0.45648 -> 0.63349, edge
-#     -0.05587 -> +0.12114, so the total's value side flips from the Under to the
-#     Over and the Over clears the 0.06 floor; ATH moneyline 0.44855 -> 0.45156;
-#     ATH +1.5 0.64008 -> 0.63166. Floor-clearing sides 26 -> 27.
-#   * THE OVER TILT GETS WORSE, NOT BETTER. Positive-edge totals were 13 overs
-#     of 15 and become 14 of 15; the board's fair-minus-line gap goes from a
-#     mean +0.8933 to +0.9800. SEA at ATH was the one game the model priced
-#     under its line, and only because its park term was missing. The
-#     board-wide lean is the Poisson centre (docs/diamond-betting.md section
-#     7f, SERVE_TOTAL_LEVEL / SERVE_TOTAL_DISPERSION), which this flag does not
-#     touch.
-#   * PICK OF THE DAY: unchanged, PHI at ATL, ATL moneyline 0.75485. The new A's
-#     Over is priced -113 inside the band but at 0.63349 it ranks far below it.
-#     The longshot slot stays empty.
-#   * AND THEN THE REFIT, because `build_context` fits b0..b4 through this same
-#     seam. Refit on the 2,200-game cache with ATH at 1.1919: b3 3.386903 ->
-#     3.852374, b0 4.477242 -> 4.452830, b1 -0.003093, b2 +0.008276, b4 +0.00052.
-#     The omission was ATTENUATING b3: 72 home games that scored like a 1.39 park
-#     were coded as neutral. After the refit every total on the board moves
-#     (the 14 other games by -0.13 to +0.03 runs, SEA at ATH to 11.27), the gap
-#     mean is +0.9433, and the headline is still ATL moneyline, at 0.74978,
-#     edge 0.12368.
-#   * Blast radius: 72 completed A's home games (55 in the vintage fit half
-#     before the 2026-08-01 split, 17 after), 10 distinct A's home events in the
-#     27 cached odds snapshots, 7 shadow-ledger rows. ZERO served props numbers:
-#     props_fair_lines carries no park term. The dark props frame (1,494 batter-
-#     games at Sutter) reads fa_meta park_factors and is untouched by this flag.
+# SERVED SINCE 2026-09-11, OWNER DECISION 2 ("flip on + refit"), generalised to
+# every club the venue audit found on a short venue sample. It moves served
+# prices and the value side of a total; it is a data-completeness repair to an
+# EXISTING fitted input, not a new feature, so it carries no pre-registered gate
+# of its own. It carries the measurement below and shipped in ONE commit with
+# the MODEL_VERSION bump (betting_runs_v2). False restores the pre-2026-09-11
+# index byte for byte.
 #
-# WHY FALSE. It moves served prices and the value side of a total, so the owner
-# flips it. It is a data-completeness repair to an EXISTING fitted input, not a
-# new feature, so it carries no pre-registered gate of its own; it does carry
-# the measurement above.
+# THE VENUE AUDIT (owner: "Rays are not playing at Tropicana this year, make
+# sure you have the right ballpark for each year"). Every club and season
+# 2021-2026: the 2026 venues from gameData.venue in all 2,197 cached regular-
+# season feeds, 2021-2025 from Savant's single-season pages (rolling=1, fetched
+# 2026-09-11 for section 5i), each against the default 3-season row every
+# consumer reads. Findings:
+#   * THE RAYS PLAYED 2026 AT TROPICANA FIELD: all 72 home games, venue 12, and
+#     StatsAPI's 2026 club venue is Tropicana. 2025 is the year they did not:
+#     George M. Steinbrenner Field (venue 2523, 17,419 PA). So the 2024-2026
+#     Tropicana row the index serves is the right venue on the wrong sample:
+#     34,828 PA, 2024 and 2026 only, 0.645 of the view's 53,975 median. It was
+#     served UNSHRUNK at 0.94; it now prices 0.945 (reliability 0.7666 / 0.8360).
+#   * THE ATHLETICS, Sutter Health Park (venue 2529) since 2025: 66 of 72 2026
+#     home games there, dropped by the 3-season view, priced NEUTRAL until now;
+#     now 1.1919 off the rolling=2 row (121 on 34,287 PA), the shrink above.
+#   * EVERY OTHER CLUB-SEASON 2021-2026 plays at the venue its row names. The
+#     only other short samples are historical and served by no live consumer:
+#     Globe Life Field is absent from the 2019-2021 view (TEX 2021) and Rogers
+#     Centre carries 0.64 of a window in 2019-2021 and 2020-2022 (TOR played
+#     2020-21 in Buffalo and Dunedin).
+#   * NEUTRAL SITES, excluded from the club mapping and priced here at the home
+#     club's factor because this index is org-keyed: 10 of 2026's 2,197 games
+#     (ATH 6 at Las Vegas Ballpark, ARI 2 in Mexico City, MIN 1 at Field of
+#     Dreams, MIL 1 at Williamsport). The DFS park leg is venue-keyed and prices
+#     them neutral.
 #
-# TO FLIP THIS FLAG, in ONE commit: (1) set it True; (2) bump MODEL_VERSION,
-# because the calibration and shadow ledgers must not pool the neutral-A's
-# pricer with this one; (3) re-run `python betting_model.py --context` so the
-# coefficients are refit through the same seam; (4) flip the tripwire in
-# test_betting_ballpark.py; (5) re-read section 11's park bullet. Vintage records
-# written before schema 5 carry no `parks_short_window` block and keep pricing
-# the A's neutral; that is the park precedent and it is stated, not repaired.
-SERVE_ATH_PARK = False
+# WHAT FLIPPING IT CHANGED, measured on the 2026-09-11 slate (15 games, 86
+# priced rows, the 17:35 UTC snapshot, old and new pricer on the leaderboards as
+# rebuilt at 22:41 UTC):
+#   * with the served coefficients held, 12 rows move in TWO games. SEA at ATH:
+#     fair total 9.86 -> 11.19 against a 10.0 line, Over 10.0 0.45629 -> 0.63743,
+#     edge -0.05606 -> +0.12508, so the total's value side flips from the Under to
+#     the Over and the Over clears the 0.06 floor; ATH moneyline 0.44860 ->
+#     0.45168; ATH +1.5 0.64014 -> 0.63153. HOU at TBR: fair total 7.67 -> 7.70,
+#     Over 7.5 0.49996 -> 0.50497; TBR moneyline 0.62432 -> 0.62406.
+#     Floor-clearing sides 23 -> 24; the Pick of the Day is unchanged (PHI at
+#     ATL, ATL moneyline 0.75424); the longshot slot stays empty.
+#   * THE OVER TILT GETS WORSE, NOT BETTER: positive-edge Overs 12 -> 13 of 15,
+#     fair-minus-line mean +0.8757 -> +0.9729. The board-wide lean is the Poisson
+#     centre (section 7f), which this flag does not touch.
+#   * THE REFIT (`build_context` fits b0..b4 through this seam, together with the
+#     two-way starter admission of the same commit), on the 2,200-game cache: b3
+#     3.472888 -> 3.934482, b0 4.477487 -> 4.449446, b1 0.250996 -> 0.247453, b2
+#     -0.312974 -> -0.309139, b4 0.047531 -> 0.048185; home_field_runs_adj 0.2149
+#     -> 0.2072, diff_shrink 0.80 -> 0.82, the fitted dispersion alpha 0.28122 ->
+#     0.27929 (the served context: b3 3.473080). The omission was ATTENUATING b3:
+#     72 A's home games that scored like a 1.39 park were coded neutral. With all
+#     three v2 changes and the refit, every row on the board moves: SEA at ATH
+#     11.30, Over 0.65094, edge +0.13859; HOU at TBR 7.62; the gap mean is
+#     +0.9321; four value sides flip (LAA at WSN and KCR at BOS runlines to the
+#     home side, PHI at ATL total to the Under, SEA at ATH total to the Over);
+#     floor-clearing sides 23 -> 21; the headline is still ATL moneyline, 0.75543,
+#     edge 0.12933.
+#   * CACHED SLATES (27 odds snapshots re-priced on today's inputs, 425 games):
+#     108 rows move in 18 games (8 A's and 10 Rays home games), 7 value sides
+#     flip, floor-clearing sides 605 -> 608, no published slot changes.
+#   * THE TEAM FIT AND DFS read the same shrink. The FA team fit's park score for
+#     an A's hitter goes 0.500 -> 0.736 and for an A's pitcher 0.500 -> 0.264
+#     (fit weight 0.05, so a member-club fit moves at most 0.0118; of the 12
+#     members on the A's served list none gains the A's in his own top three,
+#     and the list reorders, its three starters falling from 0.532 / 0.532 /
+#     0.529 to 0.520 / 0.520 / 0.517, below the hitters; the rest of the class
+#     moves on the next FA export within the same bound); a Rays score moves by
+#     at most 0.013. DFS: the SEA at ATH and HOU at TBR
+#     legs move to 1.192 and 0.945, 56 of 409 priced rows, -1.73 to +1.77 DK
+#     points.
+#   * THE VINTAGE PATH MOVES NOTHING YET: all 37 records (through 2026-09-10)
+#     predate schema 5, carry no `parks_short_window` block, and keep pricing the
+#     A's neutral and the Rays at 0.94. That is the park precedent, stated, not
+#     repaired. The first record to carry the block is the first nightly after
+#     data/fa_meta.json carries it (see `park_index`).
+#   * Blast radius of the A's half, from the first (2026-09-11 BET2) measurement
+#     that this block supersedes: 72 completed A's home games (55 in the vintage
+#     fit half before the 2026-08-01 split, 17 after), 10 distinct A's home
+#     events in the cached odds snapshots, 7 shadow-ledger rows. ZERO served
+#     props numbers: props_fair_lines carries no park term. The dark props
+#     frame (1,494 batter-games at Sutter) reads fa_meta park_factors and is
+#     untouched by this flag.
+SERVE_ATH_PARK = True
 # The clubs the flag may reach. An explicit list, not "whatever the short view
 # publishes": a flag whose effect grows by itself the day another club moves is
 # a flag whose measured effect is no longer the one written above.
-SHORT_WINDOW_PARK_ORGS = frozenset({"ATH"})
+# test_betting_ballpark holds this list equal to the clubs fa_meta's short-window
+# block carries, so a club that moves fails a test instead of joining silently.
+SHORT_WINDOW_PARK_ORGS = frozenset({"ATH", "TBR"})
 # The shrink constants, measured 2026-09-11 (see above; the script and its
 # output are in the section 5i-A receipt). Index points are Savant's 100 scale.
 PARK_INDEX_SIGNAL_VAR = 53.673
@@ -1294,29 +1439,65 @@ def short_window_park_value(row: dict | None) -> float | None:
         runs = float(row.get("runs"))
     except (TypeError, ValueError):
         return None
-    k = park_index_reliability(row.get("n_pa")) / park_index_reliability(PARK_INDEX_3YR_REF_PA)
-    if not k > 0:
+    k = short_window_shrink(row.get("n_pa"))
+    if k is None:
         return None
-    k = min(1.0, k)
     return round(1.0 + k * (runs - 100.0) / 100.0, 4)
 
 
-def short_window_parks(block: dict | None, *, exclude=()) -> dict[str, float]:
+def short_window_shrink(n_pa) -> float | None:
+    """The factor a park index deviation measured on `n_pa` plate appearances
+    is scaled by before it prices: its reliability over the reliability of the
+    3-season view b3 was fitted on, capped at 1 so a long window is never
+    stretched. None for a non-positive or unreadable sample. One definition for
+    the betting model and fa_fit's team-fit park component."""
+    k = park_index_reliability(n_pa) / park_index_reliability(PARK_INDEX_3YR_REF_PA)
+    if not k > 0:
+        return None
+    return min(1.0, k)
+
+
+def short_window_parks(block: dict | None, *, measured: dict | None = None,
+                       exclude=()) -> dict[str, float]:
     """{org: shrunk runs index / 100} for the SHORT_WINDOW_PARK_ORGS a short-
-    window block carries, never for an org in `exclude` (the measured 3-season
-    set). Reads the fa_meta shape ({"orgs": {org: row}}) and the vintage shape
-    ({org: row}) alike. Pure: the flag is the CALLER's check."""
+    window block carries. Reads the fa_meta shape ({"orgs": {org: row}}) and the
+    vintage shape ({org: row}) alike. Pure: the flag is the CALLER's check.
+
+    `measured` is the 3-season index the caller already serves ({org: runs /
+    100}). A club absent from it (the Athletics) takes its shrunk short row. A
+    club PRESENT in it (the Rays) takes the shrunk value only when the short
+    row IS that same measurement, the 3-season row itself resting on a short
+    venue sample: then the served number moves toward neutral by that row's own
+    sample and can never move anywhere else. A row carrying a different index
+    (another window's number) is refused, so a short window can never replace a
+    measured 3-season factor. `exclude` is the pre-2026-09-11 keyword: orgs in it
+    are skipped outright.
+
+    A row whose `venue_match` is False (fa_fit's venue check: Savant's venue is
+    not the one StatsAPI says the club plays in) is refused outright; a row
+    written before the check existed carries no key and is read as before."""
     if not isinstance(block, dict):
         return {}
     rows = block.get("orgs") if isinstance(block.get("orgs"), dict) else block
+    measured = measured if isinstance(measured, dict) else {}
     out: dict[str, float] = {}
     for org, row in rows.items():
         o = str(org)
         if o not in SHORT_WINDOW_PARK_ORGS or o in exclude:
             continue
+        if isinstance(row, dict) and row.get("venue_match") is False:
+            continue
         v = short_window_park_value(row)
-        if v is not None:
-            out[o] = v
+        if v is None:
+            continue
+        if o in measured:
+            try:
+                same = abs(float(row.get("runs")) / 100.0 - float(measured[o])) < 1e-6
+            except (TypeError, ValueError):
+                same = False
+            if not same:
+                continue
+        out[o] = v
     return out
 
 
@@ -1499,11 +1680,12 @@ def parks_from_vintage(rec: dict) -> dict | None:
             continue
     # SERVE_ATH_PARK reaches the vintage path through the record's OWN dated
     # block (schema 5), with the same shrink the live path uses. A record that
-    # predates the block keeps the club neutral; nothing is filled from today's
-    # fa_meta, which would be the leak this function exists to refuse.
+    # predates the block keeps the Athletics neutral and the Rays at their raw
+    # 3-season factor; nothing is filled from today's fa_meta, which would be
+    # the leak this function exists to refuse.
     if out and SERVE_ATH_PARK:
         out.update(short_window_parks((rec or {}).get("parks_short_window"),
-                                      exclude=set(out)))
+                                      measured=dict(out)))
     return out or None
 
 
@@ -1877,14 +2059,36 @@ def served_runline_tie_split() -> tuple[float, float] | None:
     if not SERVE_RUNLINE_TIE_SPLIT:
         return None
     ctx = _load_json(CONTEXT_PATH) or {}
-    return _runline_split_pair(ctx.get("extra_inning_runline_split"))
+    pair = _runline_split_pair(ctx.get("extra_inning_runline_split"))
+    if pair is None:
+        # A context written before the flip carries a null served key beside
+        # the measurement. With the flag on, the served split IS that
+        # measurement (build_context writes one into the other), so the price
+        # reads it rather than falling back to the whole atom on a context the
+        # refit has not yet rewritten.
+        pair = _runline_split_pair(ctx.get("extra_inning_runline_split_fitted"))
+    return pair
+
+
+def context_model_version() -> str | None:
+    """The MODEL_VERSION stamped on the served context by the `build_context`
+    that wrote it, or None when there is no context. A context whose version
+    is not MODEL_VERSION holds coefficients fitted by a different pricer:
+    betting_export stamps it beside every row so the ledger can tell them
+    apart, and logs the mismatch."""
+    ctx = _load_json(CONTEXT_PATH) or {}
+    v = ctx.get("model_version")
+    return str(v) if v else None
 
 
 def fitted_runline_tie_split() -> dict | None:
     """The MEASUREMENT block (`extra_inning_runline_split_fitted`), published
     whether or not it is served, the run_dispersion_alpha_fitted convention.
     None when the context predates it or carries a malformed block. The export
-    reads it to disclose, row by row, what the unserved split would do."""
+    reads it to stamp each runline row's `tie_atom` disclosure (a zero shift
+    while the split is served, what the split would do while it is not), and
+    `served_runline_tie_split` prices off it when a context written before the
+    2026-09-11 flip carries it beside a null served key."""
     ctx = _load_json(CONTEXT_PATH) or {}
     blk = ctx.get("extra_inning_runline_split_fitted")
     return blk if _runline_split_pair(blk) is not None else None
@@ -2860,8 +3064,8 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
     That is the rule `_fit_tie_home` states for the tie rate itself.
     `runline_at_split` (a callable, like `over`) re-prices the four runline
     probabilities under any explicit split off the same distribution and the
-    same tie_home; the export uses it to disclose the unserved split, and
-    nothing prices off it.
+    same tie_home; the export uses it for the row's `tie_atom` disclosure (a
+    zero shift while the split is served), and nothing prices off it.
 
     `run_alpha` is the NB2 run dispersion. None reads the served value out of
     the context file (`run_dispersion_alpha`, absent until the section 11 gate
@@ -3886,9 +4090,9 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
         "extra_inning_games": len(extras),
         "extra_inning_home_rate_raw": round(tie_raw, 4) if tie_raw is not None else None,
         "extra_inning_home_rate_shrunk": round(tie_shrunk, 4),
-        # The SERVED runline split of the tie atom. Null means the whole-atom
-        # construction, every tie a +1.5 cover for both sides, which is what
-        # the runline has always priced (SERVE_RUNLINE_TIE_SPLIT).
+        # The SERVED runline split of the tie atom (SERVE_RUNLINE_TIE_SPLIT, on
+        # since 2026-09-11). Null means the whole-atom construction, every tie a
+        # +1.5 cover for both sides, which is what the runline priced before.
         "extra_inning_runline_split": (rl_tie_split if SERVE_RUNLINE_TIE_SPLIT else None),
         # The MEASUREMENT, published whether or not it is served.
         "extra_inning_runline_split_fitted": rl_tie_split,
@@ -3898,8 +4102,8 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
             "runline's share of the tie is tie_home times the home conditional and "
             "(1 - tie_home) times the away one; no prior is applied because the "
             "asymmetry is the walk-off and a pooled prior would erase it; served "
-            "only through SERVE_RUNLINE_TIE_SPLIT, which waits on the runline "
-            "margin gate"),
+            "through SERVE_RUNLINE_TIE_SPLIT (owner decision 2026-09-11, ahead of "
+            "the runline margin gate, which still decides its successor)"),
         "home_field_runs_adj": adj,
         "diff_shrink": shrink,
         "diff_shrink_log_loss": shrink_ll,
@@ -4075,12 +4279,16 @@ def _dispersion_arm(fit_games, eval_games, teams, parks, starters, coeffs, tie,
     rl_home, rl_away = [], []     # the runline, one series per SIDE
     ys_ml, ys_rl, ys_rl_away, ys_tl = [], [], [], []
     n_over = 0
+    # The runline prices the tie atom the way the board serves it, on the FIT
+    # window's own split (SERVE_RUNLINE_TIE_SPLIT; `_lab_runline_split`).
+    rl_split = _lab_runline_split(fit_games)
     for g in eval_games:
         gp = game_probabilities(g["home_org"], g["away_org"],
                                 home_sp=starters.get(g.get("home_sp")),
                                 away_sp=starters.get(g.get("away_sp")),
                                 teams=teams, parks=parks, coeffs=coeffs, tie_home=tie,
-                                home_adj=adj, diff_shrink=shrink, run_alpha=alpha)
+                                home_adj=adj, diff_shrink=shrink, run_alpha=alpha,
+                                runline_tie_split=rl_split)
         if not gp:
             continue
         hr, ar = g["home_runs"], g["away_runs"]
@@ -5688,6 +5896,22 @@ def _fit_runline_tie_split(fit_games: list[dict]) -> dict | None:
     }
 
 
+def _lab_runline_split(fit_games: list[dict]) -> tuple[float, float] | None:
+    """The runline split a LAB prices its eval window on: the split measured on
+    its FIT window alone, while SERVE_RUNLINE_TIE_SPLIT is on, so a lab grades
+    the construction the board serves without the eval window helping to set
+    it (the `_fit_tie_home` rule). None, the whole-atom construction, while the
+    flag is off, or when the fit window holds no extra-inning win on one side.
+
+    Only the labs that READ a runline probability call this (the section 11a
+    dispersion arms and the backtest's per-market grade). The moneyline, the
+    total and every solver are untouched by the split, so the labs that read
+    only those need nothing."""
+    if not SERVE_RUNLINE_TIE_SPLIT:
+        return None
+    return _runline_split_pair(_fit_runline_tie_split(fit_games))
+
+
 def backtest(*, season: str | None = None, split_date: str | None = None,
              write: bool = True, log_fn=None) -> dict:
     """Grade the model on completed games, in BOTH modes, offline.
@@ -5800,6 +6024,9 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                                        resolve, alpha)
         adj = _solve_home_adj(fit_games, teams, parks, starters, coeffs, tie,
                               fit_home_rate, shrink, resolve, alpha)
+        # The runline reads the tie atom the way the board serves it, on the FIT
+        # window's own split, never the season-wide one (`_lab_runline_split`).
+        rl_split = _lab_runline_split(fit_games)
         ps, ys, tot_err, n_tot = [], [], 0.0, 0
         per_game_p: dict = {}
         # The per-market view of the same pass, for section 7e. Lambdas travel
@@ -5821,7 +6048,8 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                                     home_sp=gs.get(g.get("home_sp")),
                                     away_sp=gs.get(g.get("away_sp")),
                                     teams=gt, parks=gpk, coeffs=coeffs, tie_home=tie,
-                                    home_adj=adj, diff_shrink=shrink, run_alpha=alpha)
+                                    home_adj=adj, diff_shrink=shrink, run_alpha=alpha,
+                                    runline_tie_split=rl_split)
             if not gp:
                 continue
             ps.append(gp["p_home"])
