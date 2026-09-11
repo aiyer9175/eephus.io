@@ -1244,6 +1244,18 @@
    "provisional_kind": "shipped_partial_measurement"
   },
   {
+   "model_id": "fwar_replica",
+   "surface": "none served; the eWAR v3 W1.1 instrument (fwar_frame.py, tools/fwar_replica_eval.py)",
+   "predicts": "nothing forward; DESCRIPTIVE REPLICA of FanGraphs WAR, component by component, from inputs, gated at 1.0 run on at least 99 percent of player-seasons per season against MLB's published sabermetrics feed",
+   "champion": "fwar_frame v1 (wRAA, Batting, wSB, positional, league, replacement, RPW built; UBR+wGDP, fielding and the batting park factor consumed and labelled)",
+   "baseline": "the published feed value of each component",
+   "metric": "share of rows within 1.0 run, MAE and max per season per component, 2011-2026",
+   "eval_artifact": "data/fwar_replica_eval.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "W1.1 of docs/master-plan-2026-09-09-fangraphs-ewar-betting.md. Position players reproduce every component for every complete season 2011-2025 (at least 99.9 percent within 1.0 run; worst MAE 0.11 runs), multi-team hitters priced per stint through war_daily PA shares. Eight conventions the library pages do not state were read back from the feed and are coded and tested (lgPA includes pitchers batting; one MLB RPW; the pitcher-batting positional credit; an MLB-wide league adjustment; 2020's regional groups; per-role pitcher pricing; pitcher RAR = WAR x own dRPW; own-league lgFIPR9 in dRPW). Pitchers FAIL the gate every season (RAR 66 to 96 percent within 1.0 run): FIP reproduces exactly, and the shortfall is IFFB (2025: 81.4 to 94.7 percent with it), FanGraphs' FIP park factor and per-stint counting stats for traded pitchers, none of which is on disk. Nothing served reads this module; it is the faithful frame every eWAR v3 improvement arm must be measured against."
+  },
+  {
    "model_id": "hit_plus",
    "surface": "PROSPX prospect rows (HIT+ pill)",
    "predicts": "descriptive hit-tool read blending contact performance, zone tracking and the Hit / Bat-Control grades",
