@@ -188,7 +188,21 @@ pitchers gain 20 WAR a season from the 430 pin.
   same-name veteran's seasons under a prospect's slug, the Chadwick name path hands a
   never-debuted prospect any same-name MLB id, and 142 MLBAM ids are unresolved.
 
+*Status 2026-09-11.* The league-constants table is built (`723848c6`): wOBA weights,
+scale and lgwOBA solved exactly from the feed, RPW, the FIP constant (BB includes IBB),
+runSB, runCS, lgwSB and R/PA, each matching the Guts table to its printed digit for
+2011-2025. The reference set is cached. Not done: the `build_ewar` pipeline step (waits
+on D11), the consumer half (fa_config, hem_plus and wrc_rates still carry the 2013
+weights), and the identity repair.
+
 **W1.1 The faithful replica (effort L). Build fWAR, do not improve it yet.**
+
+*Status 2026-09-11 (`4242177b`).* Position players PASS every component in every
+complete season 2011-2025 (at least 99.9 percent within 1.0 run, worst MAE 0.11 runs),
+with UBR, wGDP, fielding and the batting park factor consumed and labelled. Pitchers
+FAIL every season (RAR 66 to 96 percent within a run): FIP reproduces exactly, and the
+gap is IFFB, FanGraphs' FIP park factor and per-stint pitcher counts, none on disk.
+Component table: `data/fwar_replica_eval.json`; registry row `fwar_replica`.
 
 Each component reproduced from inputs and gated at **1.0 run on at least 99 percent of rows
 per season, 2011-2026**, against the published feed:
