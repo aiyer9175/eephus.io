@@ -4767,7 +4767,7 @@ def build_management() -> str:
     of 0.0005 wins per attempt. So no club is ranked by decision quality, and
     the club board carries volume, success rate and target mix only.
 
-    What the null makes sayable is worth a page on its own. Over 13,971 priced
+    What the null makes sayable is worth a page on its own. Over 13,973 priced
     attempts across eight seasons the league steals second at 75.00 percent
     against a swing-weighted break-even of 75.29 percent, which is minus two and
     a half wins for the entire league. Steals of third pay, steals of home do

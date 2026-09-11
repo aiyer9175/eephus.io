@@ -21,6 +21,11 @@ and the resulting state is worth what the NEXT half-inning is worth to the other
 team. Pricing it as "two outs, bases empty" understates the cost of the worst
 possible time to be thrown out, which is exactly the decision the metric most
 needs to get right.
+
+The fourth is the census. Every identity above holds INSIDE the population, and
+all of them passed while the population was missing 40.56% of its caught
+stealings (audit F02-01). So one block compares the population with the corpus
+it was read from, and holds priced plus excluded equal to the corpus count.
 """
 from __future__ import annotations
 
@@ -52,6 +57,16 @@ def art():
     if not ART.exists():
         pytest.skip("data/management_running.json has not been built")
     return json.loads(ART.read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="module")
+def priced():
+    """The live attempt frame, computed once for every test that needs it."""
+    if not (M.CORPUS / "events").is_dir() or not (M.CORPUS / "plays").is_dir():
+        pytest.skip(".cache/pbp_corpus is not on this machine")
+    if not (ROOT / "data" / "win_expectancy.json").exists():
+        pytest.skip("the win-expectancy model has not been built")
+    return M.attempts()
 
 
 # --------------------------------------------------------------------------
@@ -180,9 +195,14 @@ def test_the_origin_base_bits_are_consistent():
 
 
 def test_exclusions_are_counted_and_published(art):
+    """EVERY counter, not two of them. Until 2026-09-11 this asserted only
+    prior_state_change and origin_base_empty, so the counter that was short by
+    2,455 (two_outs_crosses_the_boundary) was never even required to exist."""
     ex = art["excluded"]
-    for k in ("prior_state_change", "origin_base_empty"):
-        assert k in ex
+    for k in ("prior_state_change", "origin_base_empty",
+              "no_play_row_to_price_from", "two_outs_crosses_the_boundary",
+              "unpriceable_state"):
+        assert k in ex, f"the exclusion counter {k!r} is not published"
     total = art["n_attempts_priced"] + sum(ex.values())
     assert ex["prior_state_change"] / total < 0.05, (
         f"{ex['prior_state_change']} attempts were dropped for an earlier "
@@ -196,6 +216,159 @@ def test_no_attempt_is_priced_from_an_empty_origin_base(art):
     assert art["excluded"]["origin_base_empty"] >= 0
     src = (ROOT / "management.py").read_text(encoding="utf-8")
     assert "origin_base_empty" in src
+
+
+# --------------------------------------------------------------------------
+# The census (audit F02-01, F02-02)
+#
+# A steal that ENDS a plate appearance is not a playEvent. It is the play's
+# own result, so the corpus writes it to the plays table and never to the
+# events table. This module read the events table alone and lost 40.56% of
+# every caught stealing, 2,455 of them two-out attempts the exclusion row said
+# it counted. Every test above passed throughout, because each one checked an
+# identity INSIDE the population and nothing compared the population with the
+# corpus it came from.
+# --------------------------------------------------------------------------
+
+class _FlatModel:
+    """A stand-in win model: monotone in bases and outs, never undefined. The
+    census tests are about which attempts are counted, not what they are worth,
+    so nothing here should depend on a fitted model being on disk."""
+
+    def offense_we(self, inning, half, score_diff, outs, base):
+        return 0.5 + 0.02 * bin(int(base)).count("1") - 0.1 * int(outs)
+
+    def half_inning_start(self, inning, half, lead):
+        return 0.5
+
+
+def _tiny_corpus(root: Path, season: str = "2099") -> Path:
+    """Five plate appearances, each a case the census has to get right.
+
+      ab 0  a mid-PA steal of second, an event row. Priced.
+      ab 1  a caught stealing that ends the PA with two out: ONLY a play
+            result. Must reach the two-out exclusion, not vanish.
+      ab 2  a caught stealing written BOTH as an event row and as the play
+            result, same type. One attempt, priced once.
+      ab 3  a steal of second (event row, two out) and then a caught stealing
+            at third that ends the PA (play result, different type). Two real
+            attempts; keying on the plate appearance alone would drop one.
+            The play-result one follows a state change, so it is counted as
+            prior_state_change.
+      ab 4  a steal of third that ends the PA with one out: ONLY a play
+            result, and priceable. The shape of the two real attempts
+            (games 716359 and 824664) the repair added to the priced pool.
+    """
+    import pandas as pd
+
+    (root / "events" / season).mkdir(parents=True)
+    (root / "plays" / season).mkdir(parents=True)
+    ev = pd.DataFrame({
+        "game_pk": [1, 1, 1],
+        "at_bat_index": [0, 2, 3],
+        "index": [0, 0, 0],
+        "event_type": ["stolen_base_2b", "caught_stealing_2b", "stolen_base_2b"],
+    })
+    nan = float("nan")
+    pl = pd.DataFrame({
+        "game_pk": [1, 1, 1, 1, 1],
+        "at_bat_index": [0, 1, 2, 3, 4],
+        "inning": [3, 3, 4, 4, 5],
+        "half": ["top", "top", "bottom", "bottom", "top"],
+        "event_type": ["single", "caught_stealing_2b", "caught_stealing_2b",
+                       "caught_stealing_3b", "stolen_base_3b"],
+        "outs_before": [0, 2, 1, 2, 1],
+        "on_first": [100.0, 101.0, 102.0, 103.0, nan],
+        "on_second": [nan, nan, nan, nan, 104.0],
+        "on_third": [nan, nan, nan, nan, nan],
+        "home_score": [0, 0, 0, 0, 0],
+        "away_score": [0, 0, 0, 0, 0],
+        "runs_scored_on_play": [0, 0, 0, 0, 0],
+    })
+    ev.to_parquet(root / "events" / season / "events.parquet", index=False)
+    pl.to_parquet(root / "plays" / season / "plays.parquet", index=False)
+    return root
+
+
+def test_a_plate_appearance_ending_steal_is_counted(tmp_path):
+    """The regression test for F02-01, on a corpus small enough to read."""
+    corpus = _tiny_corpus(tmp_path / "pbp_corpus")
+    df = M.attempts(corpus=corpus, seasons=["2099"], we=_FlatModel())
+    art = M.summarize(df)
+    ex = art["excluded"]
+    c = art["attempt_census"]
+    assert c["from_the_events_table"] == 3
+    assert c["from_the_play_result_only"] == 3, (
+        "a steal that exists only as the play's own result was not read")
+    assert c["play_result_already_an_event_row"] == 1, (
+        "a play result that is also an event row of the same type must be "
+        "counted once")
+    assert ex["two_outs_crosses_the_boundary"] == 2, (
+        f"two two-out attempts, one of them only a play result; counted {ex}")
+    assert ex["prior_state_change"] == 1, (
+        "the caught stealing at third that follows a steal of second in the "
+        "same plate appearance is a second attempt; keying on the plate "
+        "appearance alone drops it")
+    assert art["n_attempts_priced"] == 3
+    got = sorted(zip(df["at_bat_index"].astype(int), df["event_type"]))
+    assert got == [(0, "stolen_base_2b"), (2, "caught_stealing_2b"),
+                   (4, "stolen_base_3b")]
+    assert c["total"] == 6 and c["priced_plus_excluded"] == 6
+    assert c["reconciles"] is True
+
+
+def test_the_attempt_census_reconciles_with_the_corpus(priced):
+    """THE LAW, over the live corpus: every steal attempt the corpus holds is
+    either priced or counted in an exclusion, exactly once.
+
+    The corpus side is counted here, independently of management.py: steal
+    event types from the events table, plus steal event types on the play
+    result that are not already an event row of the same type in the same
+    plate appearance. event_type stays in the key; see _tiny_corpus ab 3.
+    """
+    import pandas as pd
+
+    key = ["game_pk", "at_bat_index", "event_type"]
+    seasons = sorted(p.name for p in (M.CORPUS / "events").iterdir() if p.is_dir())
+    n_ev = n_po = 0
+    for s in seasons:
+        efs = sorted((M.CORPUS / "events" / s).glob("*.parquet"))
+        pfs = sorted((M.CORPUS / "plays" / s).glob("*.parquet"))
+        if not efs or not pfs:
+            continue
+        ev = pd.concat([pd.read_parquet(f, columns=key) for f in efs])
+        pl = pd.concat([pd.read_parquet(f, columns=key) for f in pfs])
+        evs = ev[ev["event_type"].isin(M.STEAL_EVENTS)]
+        pls = pl[pl["event_type"].isin(M.STEAL_EVENTS)]
+        seen = set(map(tuple, evs[key].to_numpy().tolist()))
+        n_ev += len(evs)
+        n_po += sum(1 for t in map(tuple, pls[key].to_numpy().tolist())
+                    if t not in seen)
+    ex = priced.attrs["excluded"]
+    c = priced.attrs["attempt_census"]
+    accounted = int(len(priced)) + sum(v for k, v in ex.items()
+                                       if k != "unpriceable_state")
+    assert c["from_the_events_table"] == n_ev
+    assert c["from_the_play_result_only"] == n_po
+    assert accounted == n_ev + n_po, (
+        f"priced plus excluded is {accounted:,} and the corpus holds "
+        f"{n_ev + n_po:,} steal attempts ({n_ev:,} event rows + {n_po:,} that "
+        "exist only as a play result). An attempt that is neither priced nor "
+        "counted is the defect this test was written against.")
+
+
+def test_the_published_census_closes(art):
+    """The same law over the ARTIFACT, which is what the page renders."""
+    c = art.get("attempt_census")
+    assert c, ("data/management_running.json carries no attempt_census; "
+               "rebuild it with python management.py")
+    assert c["total"] == c["from_the_events_table"] + c["from_the_play_result_only"]
+    assert art["n_attempts_priced"] + sum(art["excluded"].values()) == c["total"]
+    assert c["priced_plus_excluded"] == c["total"] and c["reconciles"] is True
+    assert c["from_the_play_result_only"] > 0, (
+        "no attempt was read off a play result. On any real corpus the "
+        "plate-appearance-ending caught stealings are there, so the plays "
+        "table is not being read.")
 
 
 # --------------------------------------------------------------------------
@@ -316,17 +489,17 @@ def test_two_out_attempts_are_excluded_and_the_reason_is_published(art):
     total = art["n_attempts_priced"] + sum(art["excluded"].values())
     assert 0.25 < ex / total < 0.55, (
         f"two-out attempts are {ex/total:.1%} of the population; the recorded "
-        "figure is about 40%, and a large move means the exclusion is selecting "
-        "something other than what it claims")
+        "figure is about 45% (it read 40% until the 2026-09-11 census repair "
+        "added the plate-appearance-ending caught stealings), and a large move "
+        "means the exclusion is selecting something other than what it claims")
 
 
-def test_no_attempt_is_priced_so_that_being_caught_helps(art):
-    """The property the two-out exclusion buys, and the reason it is worth 40%
+def test_no_attempt_is_priced_so_that_being_caught_helps(art, priced):
+    """The property the two-out exclusion buys, and the reason it is worth 45%
     of the sample."""
     src = (ROOT / "management.py").read_text(encoding="utf-8")
     assert "two_outs_crosses_the_boundary" in src
-    import management as _M
-    df = _M.attempts()
+    df = priced
     ok = df[df["dv"].notna()]
     bad = ok[ok["we_fail"] >= ok["we_hold"]]
     assert len(bad) == 0, (

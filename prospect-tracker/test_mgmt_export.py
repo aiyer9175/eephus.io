@@ -6,7 +6,7 @@ in the running game does not repeat between halves of its own season, so no club
 ranked by it.
 
 What the null buys is the right to say what the league is doing, and the league result is
-the page: 13,971 priced attempts, second stolen at almost exactly its own break-even, third
+the page: 13,973 priced attempts, second stolen at almost exactly its own break-even, third
 worth having and home not.
 
 THE SIX MISTAKES THESE TESTS EXIST FOR:
@@ -20,7 +20,10 @@ THE SIX MISTAKES THESE TESTS EXIST FOR:
      would have seen 0.0005 wins per attempt, which makes it a ceiling.
   4. LOSING THE EXCLUSIONS. Two-out attempts are excluded because the caught-stealing case
      crosses the half-inning boundary where two estimators meet and nothing calibrates them;
-     9,328 attempts leave that way and the count belongs on the page.
+     11,783 attempts leave that way and the count belongs on the page. It read 9,328 until
+     2026-09-11, because every caught stealing that ENDED a plate appearance lives only on
+     the play's own result and was never read (audit F02-01); the census sentence now shows
+     the table closing against the corpus.
   5. TYPING A FIGURE INTO THE HTML OR JS.
   6. LETTING THE MANAGER SECTION LOOK DEFERRED RATHER THAN DECIDED. It is not "coming soon":
      the null says building the manager entity to attribute this family is not worth doing.
@@ -164,6 +167,43 @@ def test_the_exclusions_are_published_with_their_counts(d):
     assert "half-inning" in txt and "boundary" in txt
 
 
+def test_the_census_sentence_is_read_off_the_payload(d):
+    """MISTAKE 4 AGAIN, the way it actually happened (audit F02-01). The page
+    said the excluded attempts "are excluded and counted" while 2,455 of them
+    were neither, and nothing on the page let a reader check. The census
+    sentence puts the corpus count beside the priced and excluded counts, every
+    figure interpolated from the same payload the table is drawn from."""
+    rg = d["running_game"]
+    c = rg.get("attempt_census")
+    s = rg.get("attempt_census_sentence")
+    assert c and s, "rebuild: python management.py, then python mgmt_export.py"
+    ex = sum(rg["excluded"].values())
+    for n in (c["total"], c["from_the_events_table"],
+              c["from_the_play_result_only"], rg["n_attempts_priced"], ex):
+        assert f"{n:,}" in s, f"{n:,} is not in the census sentence: {s}"
+    if rg["n_attempts_priced"] + ex == c["total"]:
+        assert "one or the other" in s
+    else:
+        assert "one or the other" not in s, (
+            "the sentence says the table closes and the payload says it does not")
+
+
+def test_a_census_gap_is_said_rather_than_hidden():
+    """The sentence reports a gap from the counts themselves, never from a flag,
+    so a future loss of the same shape reaches the page as a stated number."""
+    import mgmt_export as X
+    run = {"n_attempts_priced": 10, "excluded": {"a": 3, "b": 0},
+           "attempt_census": {"total": 15, "from_the_events_table": 12,
+                              "from_the_play_result_only": 3,
+                              "seasons": ["2098", "2099"]}}
+    s = X._census_sentence(run)
+    assert "2 attempts neither priced nor counted" in s
+    assert "one or the other" not in s
+    run["attempt_census"]["total"] = 13
+    assert "one or the other" in X._census_sentence(run)
+    assert X._census_sentence({"n_attempts_priced": 1, "excluded": {}}) is None
+
+
 def test_the_decision_execution_identity_is_exact(d):
     dec = d["running_game"]["decomposition"]
     assert dec["identity_max_abs_error"] == 0.0
@@ -264,6 +304,7 @@ def test_the_js_reads_its_copy_from_the_payload():
     js = JS.read_text(encoding="utf-8")
     for key in ("why_no_plus_metric", "why_the_raw_number_is_not_the_finding",
                 "detection_floor_reading", "why_two_out_attempts_are_excluded",
+                "attempt_census_sentence",
                 "columns_are_style_not_skill", "what_this_page_does_not_claim"):
         assert key in js, f"the page does not render the payload's {key}"
     assert "NOT ONE FIGURE IN THIS FILE IS TYPED" in js

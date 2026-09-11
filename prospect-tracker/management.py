@@ -41,7 +41,7 @@ so the sum is positive exactly when the league rate beats the SWING-WEIGHTED mea
 of p*. The median and the plain mean are the readable numbers and neither
 determines the verdict.
 
-TWO-OUT ATTEMPTS ARE EXCLUDED, and that is 40% of them. With nobody out or one
+TWO-OUT ATTEMPTS ARE EXCLUDED, and that is 45% of them. With nobody out or one
 out, a caught stealing leaves the inning alive and both sides of the comparison
 come from the same monotone model. With two out it ends the inning, so the
 alternative comes from a different estimator, and nothing calibrates the two
@@ -53,17 +53,29 @@ attempts are counted and published; pricing them needs an inning-level model tha
 predicts the boundary and the mid-inning state together, and that has not been
 built.
 
-WHAT IT FOUND, restated 2026-09-10 on the corrected win model, over the same
-13,971 priceable attempts:
+THE COUNT DID NOT CLOSE UNTIL 2026-09-11 (audit F02-01). A steal that ENDS a
+plate appearance, a caught stealing for the third out above all, is not a
+playEvent: it is the play's own result and it lives only in the corpus's plays
+table. This module read the events table alone, so 40.56% of every caught
+stealing in the corpus was neither priced nor counted, 2,455 two-out attempts
+were missing from the exclusion row, and the share above read 40%. Both tables
+are read now, and the artifact's `attempt_census` carries the corpus count
+beside priced plus excluded so the identity is checked rather than promised.
+
+WHAT IT FOUND, restated 2026-09-10 on the corrected win model and again
+2026-09-11 on the complete census, over 13,973 priceable attempts:
 
   stealing second   the league succeeds 75.00% against a swing-weighted
                     break-even of 75.29%. Eight seasons of decision value sum to
                     -2.60 wins across 11,977 attempts. Managers collectively
                     still run the stolen base at close to the point of
                     indifference.
-  stealing third    76.1% against 73.1%, worth +5.93 wins.
+  stealing third    76.2% against 73.1%, worth +5.99 wins. Two
+                    plate-appearance-ending steals of third, both with one out
+                    in the eleventh, joined the priced pool with the census
+                    repair; they are the only attempts it added below two out.
   stealing home     25.8% against 73.5%, worth -4.08 wins.
-  net               -0.75 wins, where the 2026-09-06 build read +1.79.
+  net               -0.69 wins, where the 2026-09-06 build read +1.79.
 
 WHY THOSE NUMBERS MOVED (audit F07-02). The state this module prices is the one
 "BEFORE he decided", and until 2026-09-10 the score in that state was read off
@@ -112,6 +124,10 @@ STEAL_EVENTS: dict[str, tuple[str, bool]] = {
     "pickoff_caught_stealing_3b": ("3B", False),
     "pickoff_caught_stealing_home": ("HOME", False),
 }
+
+#: One steal attempt, as both corpus tables can name it. See
+#: `_play_result_steals` for why event_type has to stay in the key.
+STEAL_KEY = ["game_pk", "at_bat_index", "event_type"]
 
 #: Events that CHANGE the base-out state inside a plate appearance. An attempt
 #: preceded by one of these cannot be priced from the play's starting state, so
@@ -211,7 +227,11 @@ def attempts(*, corpus: Path | None = None, seasons=None, we=None):
 
     frames = []
     excluded = {"prior_state_change": 0, "origin_base_empty": 0,
+                "no_play_row_to_price_from": 0,
                 "two_outs_crosses_the_boundary": 0, "unpriceable_state": 0}
+    census = {"from_the_events_table": 0, "from_the_play_result_only": 0,
+              "play_result_already_an_event_row": 0, "seasons": []}
+    pa_key = ["game_pk", "at_bat_index"]
     for season in want:
         efs = sorted((ev_dir / season).glob("*.parquet"))
         pfs = sorted((pl_dir / season).glob("*.parquet"))
@@ -222,9 +242,16 @@ def attempts(*, corpus: Path | None = None, seasons=None, we=None):
 
         ev = ev.sort_values(["game_pk", "at_bat_index", "index"])
         ev["is_sc"] = ev["event_type"].isin(STATE_CHANGING)
-        ev["prior_sc"] = (ev.groupby(["game_pk", "at_bat_index"])["is_sc"]
-                          .cumsum() - ev["is_sc"].astype(int))
-        st = ev[ev["event_type"].isin(STEAL_EVENTS)].copy()
+        by_pa = ev.groupby(pa_key)["is_sc"]
+        ev["prior_sc"] = by_pa.cumsum() - ev["is_sc"].astype(int)
+        st_ev = ev.loc[ev["event_type"].isin(STEAL_EVENTS),
+                       STEAL_KEY + ["prior_sc"]]
+        st_pl, n_dup = _play_result_steals(pd, st_ev, pl, by_pa.sum())
+        census["from_the_events_table"] += int(len(st_ev))
+        census["from_the_play_result_only"] += int(len(st_pl))
+        census["play_result_already_an_event_row"] += n_dup
+        census["seasons"].append(str(season))
+        st = pd.concat([st_ev, st_pl], ignore_index=True)
         excluded["prior_state_change"] += int((st["prior_sc"] > 0).sum())
         st = st[st["prior_sc"] == 0]
         if st.empty:
@@ -235,7 +262,15 @@ def attempts(*, corpus: Path | None = None, seasons=None, we=None):
         keep = ["game_pk", "at_bat_index", "inning", "half", "outs_before",
                 "on_first", "on_second", "on_third", "home_score", "away_score",
                 "runs_scored_on_play"]
-        j = st.merge(pl[keep], on=["game_pk", "at_bat_index"], how="inner")
+        # A LEFT JOIN, COUNTED. The inner join this replaced would have dropped
+        # an attempt whose plate appearance has no play row without a trace,
+        # which is the shape of audit F02-01: an attempt neither priced nor
+        # counted. It measured zero on the 2026-09-11 corpus, and it is counted
+        # so that it stays visible if it ever is not.
+        j = st.merge(pl[keep], on=pa_key, how="left", indicator=True)
+        nop = (j["_merge"] == "left_only").to_numpy()
+        excluded["no_play_row_to_price_from"] += int(nop.sum())
+        j = j[~nop].drop(columns="_merge")
         # Arithmetic rather than bit shifts: a pandas Series has no <<, and the
         # three terms are disjoint powers of two so addition IS the OR here.
         # Occupancy is notna(), never astype(bool): these columns hold the
@@ -277,9 +312,12 @@ def attempts(*, corpus: Path | None = None, seasons=None, we=None):
         # version. A metric that says being thrown out improved your chances is
         # not a metric.
         #
-        # So the family is restricted to the 60% of attempts it can price
-        # honestly, and the excluded 40% is counted and published rather than
-        # quietly absorbed. Pricing a two-out attempt needs an inning-level model
+        # So the family is restricted to the attempts it can price honestly,
+        # about 53% of the corpus, and the two-out 45% is counted and published
+        # rather than quietly absorbed. Until 2026-09-11 those shares read 60%
+        # and 40%, because the plate-appearance-ending caught stealings were
+        # never read (audit F02-01) and almost every one of them is a two-out
+        # attempt. Pricing a two-out attempt needs an inning-level model
         # that predicts the boundary and the mid-inning state together; that is a
         # real lane and it has not been built.
         excluded["two_outs_crosses_the_boundary"] += int((j["outs_before"] >= 2).sum())
@@ -337,7 +375,79 @@ def attempts(*, corpus: Path | None = None, seasons=None, we=None):
     df["realized_delta"] = real
     excluded["unpriceable_state"] = int(df["dv"].isna().sum())
     df.attrs["excluded"] = excluded
+    df.attrs["attempt_census"] = census
     return df
+
+
+def _play_result_steals(pd, st_ev, pl, sc_per_pa):
+    """The steal attempts that exist ONLY as a play's own result (audit F02-01).
+
+    The corpus writes a steal in one of two places. A steal in the middle of a
+    plate appearance is a non-pitch playEvent and lands in the `events` table.
+    A steal that ENDS the plate appearance, the usual case being a caught
+    stealing for the third out, is not a playEvent at all: it is the play's own
+    `result.eventType`, and it lands only in the `plays` table. Until 2026-09-11
+    this module read the events table alone, and 40.56% of every caught
+    stealing in the corpus was neither priced nor counted while the artifact
+    said the excluded attempts were counted.
+
+    THE DE-DUPLICATION KEY KEEPS event_type. A play result that is ALSO an event
+    row of the same type in the same plate appearance is the same attempt and is
+    counted once. A play result whose plate appearance holds a steal event of a
+    DIFFERENT type is a second, real attempt (a runner steals second, then is
+    caught at third to end the inning), and keying on the plate appearance alone
+    would silently drop it. Measured 2026-09-11: 13 such attempts.
+
+    THE PLAY RESULT COMES LAST. Every playEvent in the plate appearance precedes
+    it, so every state change in the plate appearance is a PRIOR state change for
+    it, and it is excluded under the same rule as an event row would be.
+
+    Returns (frame with STEAL_KEY + prior_sc, count of play results that were
+    already event rows).
+    """
+    st_pl = pl.loc[pl["event_type"].isin(STEAL_EVENTS), STEAL_KEY].copy()
+    if st_pl.empty:
+        return st_pl.assign(prior_sc=0), 0
+    seen = st_ev[STEAL_KEY].drop_duplicates()
+    st_pl = st_pl.merge(seen, on=STEAL_KEY, how="left", indicator=True)
+    dup = st_pl["_merge"] == "both"
+    st_pl = st_pl[~dup].drop(columns="_merge")
+    sc = sc_per_pa.rename("prior_sc").reset_index()
+    st_pl = st_pl.merge(sc, on=["game_pk", "at_bat_index"], how="left")
+    st_pl["prior_sc"] = st_pl["prior_sc"].fillna(0).astype(int)
+    return st_pl, int(dup.sum())
+
+
+def _census(census: dict, n_priced: int, excluded: dict) -> dict:
+    """Every steal attempt in the corpus, and the identity that accounts for it.
+
+    THE LAW (audit F02-02): priced plus excluded equals the corpus's own
+    attempt count. The artifact carries both sides and whether they agree, so
+    the served-invariant test can hold it over the published file, and a
+    reader of the exclusion table can see that the table closes.
+    """
+    ev = int(census.get("from_the_events_table", 0))
+    po = int(census.get("from_the_play_result_only", 0))
+    accounted = int(n_priced) + int(sum(excluded.values()))
+    return {
+        "from_the_events_table": ev,
+        "from_the_play_result_only": po,
+        "play_result_already_an_event_row": int(
+            census.get("play_result_already_an_event_row", 0)),
+        "total": ev + po,
+        "priced_plus_excluded": accounted,
+        "reconciles": accounted == ev + po,
+        "seasons": list(census.get("seasons") or []),
+        "note": (
+            "a steal attempt reaches the corpus in one of two places. A steal "
+            "in the middle of a plate appearance is a row in the events table; "
+            "a steal that ENDS the plate appearance, such as a caught stealing "
+            "for the third out, is only the play's own result. Both are read, "
+            "and a play result that is also an event row of the same type in "
+            "the same plate appearance is counted once. Every attempt is either "
+            "priced or counted in the exclusion table, and priced_plus_excluded "
+            "equal to total is the check that says so."),
+    }
 
 
 def summarize(df) -> dict:
@@ -396,13 +506,16 @@ def summarize(df) -> dict:
             "sum_dv_wins": round(float(g["dv"].sum()), 2),
             "sum_er_wins": round(float(g["er"].sum()), 2),
         }
+    excluded = dict(df.attrs.get("excluded", {}))
     return {
         "generated_at": datetime.now(timezone.utc)
                         .replace(microsecond=0).isoformat(),
         "produced_by": "management.py",
         "family": "running game: the stolen base decision",
         "n_attempts_priced": int(len(ok)),
-        "excluded": df.attrs.get("excluded", {}),
+        "excluded": excluded,
+        "attempt_census": _census(df.attrs.get("attempt_census") or {},
+                                  int(len(ok)), excluded),
         "decomposition": {
             "dv": ("the DECISION, priced with the league-average success rate "
                    "for that season and target base. Was sending anybody here a "
@@ -480,6 +593,12 @@ def main(argv=None) -> int:
         OUT.write_text(json.dumps(art, indent=1) + "\n", encoding="utf-8")
     print(f"priced attempts: {art['n_attempts_priced']:,}  "
           f"excluded {art['excluded']}")
+    c = art["attempt_census"]
+    print(f"attempt census: {c['total']:,} in the corpus "
+          f"({c['from_the_events_table']:,} event rows + "
+          f"{c['from_the_play_result_only']:,} play results only); "
+          f"priced + excluded = {c['priced_plus_excluded']:,}  "
+          f"reconciles={c['reconciles']}")
     print(f"DV + ER identity, max abs error: "
           f"{art['decomposition']['identity_max_abs_error']}")
     print("\nby target base:")

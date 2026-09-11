@@ -247,11 +247,25 @@ def test_the_decision_and_execution_split_is_exact():
 
 
 def test_every_priced_attempt_is_accounted_for():
-    """An uncounted exclusion is where every defect this session came from."""
+    """An uncounted exclusion is where every defect this session came from.
+
+    AND THIS TEST WAS ONE (audit F02-02). Its body checked only that each
+    counter was a non-negative integer, which held while 2,455 two-out caught
+    stealings were neither priced nor counted. The law is a partition: priced
+    plus excluded equals the corpus's own attempt count, which the artifact
+    carries as attempt_census."""
     d = _load("management_board.json")["running_game"]
     ex = d["excluded"]
     assert all(isinstance(v, int) and v >= 0 for v in ex.values())
     assert d["n_attempts_priced"] > 0
+    c = d.get("attempt_census")
+    assert c, ("the board carries no attempt_census; rebuild in order: "
+               "python management.py, python tools/mgmt_gate.py, "
+               "python mgmt_export.py")
+    assert c["total"] == c["from_the_events_table"] + c["from_the_play_result_only"]
+    assert d["n_attempts_priced"] + sum(ex.values()) == c["total"], (
+        f"priced {d['n_attempts_priced']:,} plus excluded {sum(ex.values()):,} "
+        f"does not equal the {c['total']:,} steal attempts in the corpus")
 
 
 def test_the_management_board_publishes_no_per_club_plus_metric():

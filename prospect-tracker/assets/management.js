@@ -100,6 +100,11 @@
       "<h3>What is excluded, and why</h3>" +
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><tbody>' + exrows +
       "</tbody></table></div>" +
+      // The census sentence says the table closes against the corpus (audit
+      // F02-01). It is derived in mgmt_export._census_sentence; absent on a
+      // payload that predates the census, and then nothing is drawn.
+      (r.attempt_census_sentence
+        ? '<p class="mgmt-note">' + esc(r.attempt_census_sentence) + "</p>" : "") +
       '<p class="mgmt-note">' + esc(r.why_two_out_attempts_are_excluded) + "</p>" +
       '<p class="mgmt-note">' + esc(r.third_out_handling) + "</p></section>";
   }

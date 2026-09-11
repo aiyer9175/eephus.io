@@ -1,13 +1,33 @@
 {
- "generated_at": "2026-09-11T01:06:52+00:00",
+ "generated_at": "2026-09-11T17:11:41+00:00",
  "produced_by": "management.py",
  "family": "running game: the stolen base decision",
- "n_attempts_priced": 13971,
+ "n_attempts_priced": 13973,
  "excluded": {
-  "prior_state_change": 348,
-  "origin_base_empty": 17,
-  "two_outs_crosses_the_boundary": 9328,
+  "prior_state_change": 365,
+  "origin_base_empty": 18,
+  "no_play_row_to_price_from": 0,
+  "two_outs_crosses_the_boundary": 11783,
   "unpriceable_state": 0
+ },
+ "attempt_census": {
+  "from_the_events_table": 23664,
+  "from_the_play_result_only": 2475,
+  "play_result_already_an_event_row": 0,
+  "total": 26139,
+  "priced_plus_excluded": 26139,
+  "reconciles": true,
+  "seasons": [
+   "2018",
+   "2019",
+   "2021",
+   "2022",
+   "2023",
+   "2024",
+   "2025",
+   "2026"
+  ],
+  "note": "a steal attempt reaches the corpus in one of two places. A steal in the middle of a plate appearance is a row in the events table; a steal that ENDS the plate appearance, such as a caught stealing for the third out, is only the play's own result. Both are read, and a play result that is also an event row of the same type in the same plate appearance is counted once. Every attempt is either priced or counted in the exclusion table, and priced_plus_excluded equal to total is the check that says so."
  },
  "decomposition": {
   "dv": "the DECISION, priced with the league-average success rate for that season and target base. Was sending anybody here a good idea?",
@@ -32,19 +52,19 @@
    "swing_ratio_failure_over_success": 0.978
   },
   "3B": {
-   "n": 1932,
-   "success_rate": 0.7614,
-   "mean_breakeven_p": 0.7341,
+   "n": 1934,
+   "success_rate": 0.7616,
+   "mean_breakeven_p": 0.7342,
    "median_breakeven_p": 0.7372,
-   "share_of_attempts_below_their_own_breakeven": 0.6558,
+   "share_of_attempts_below_their_own_breakeven": 0.6562,
    "swing_weighted_breakeven_p": 0.7308,
-   "mean_dv": 0.003068,
-   "sum_dv_wins": 5.93,
-   "mean_er": 0.000284,
-   "sum_er_wins": 0.55,
-   "mean_swing_on_success": 0.09989,
+   "mean_dv": 0.003095,
+   "sum_dv_wins": 5.99,
+   "mean_er": 0.000312,
+   "sum_er_wins": 0.6,
+   "mean_swing_on_success": 0.10006,
    "mean_swing_on_failure": 0.09822,
-   "swing_ratio_failure_over_success": 0.9832
+   "swing_ratio_failure_over_success": 0.9815
   },
   "HOME": {
    "n": 62,
@@ -88,10 +108,10 @@
    "sum_er_wins": 0.0
   },
   "2023": {
-   "n": 2080,
-   "success_rate": 0.7841,
-   "sum_dv_wins": 6.31,
-   "sum_er_wins": 1.52
+   "n": 2081,
+   "success_rate": 0.7842,
+   "sum_dv_wins": 6.35,
+   "sum_er_wins": 1.54
   },
   "2024": {
    "n": 2081,
@@ -106,10 +126,10 @@
    "sum_er_wins": 1.85
   },
   "2026": {
-   "n": 1807,
-   "success_rate": 0.7565,
-   "sum_dv_wins": 0.58,
-   "sum_er_wins": 1.69
+   "n": 1808,
+   "success_rate": 0.7566,
+   "sum_dv_wins": 0.59,
+   "sum_er_wins": 1.72
   }
  },
  "why_execution_residual_does_not_sum_to_zero": "ER is priced against the group's OWN mean success rate, so successes and failures balance in count but need not balance in value: sum ER equals the sum over attempts of (success minus league_p) times the win-probability swing, an identity this artifact checks. RESOLVED 2026-09-06. On the full population the swing on failed attempts ran about 1.5 times the swing on successful ones, which invited a behavioural reading (defences hold runners better when it matters). It was MECHANICAL. Once the two-out attempts are excluded, and with them every caught stealing that ends an inning, the ratio falls to 1.00 on steals of second and 1.05 on steals of third. The asymmetry was the third out, not the defence. Whatever residual remains is small enough that the execution term now nearly sums to zero, which is what it should do when it is priced against its own group's mean.",

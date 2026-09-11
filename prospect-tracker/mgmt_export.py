@@ -281,6 +281,40 @@ def _headline_sentence(bt: dict, net, n_seasons: int) -> str:
             f"whole running game is {worth}.")
 
 
+def _census_sentence(run: dict):
+    """DERIVED, not typed (audit F02-01, F02-02).
+
+    The exclusion table used to sit above a sentence saying the excluded
+    attempts "are excluded and counted", and 2,455 of them were not: every
+    caught stealing that ENDED a plate appearance lives only on the play's own
+    result, and management.py read the events table alone. This sentence states
+    the corpus's attempt count beside the priced and excluded counts the page
+    renders, so the table can be seen to close. The gap is computed from the
+    same two numbers the reader sees, never from a flag, and a gap is SAID
+    rather than hidden. None when the running artifact predates the census.
+    """
+    c = run.get("attempt_census") or {}
+    if not c.get("total"):
+        return None
+    total = int(c["total"])
+    n = int(run["n_attempts_priced"])
+    ex = int(sum((run.get("excluded") or {}).values()))
+    gap = total - n - ex
+    if gap == 0:
+        tail = "so every attempt in the corpus is one or the other."
+    elif gap > 0:
+        tail = f"which leaves {gap:,} attempts neither priced nor counted."
+    else:
+        tail = f"which is {-gap:,} more than the corpus holds."
+    return (f"The corpus holds {total:,} steal attempts across "
+            f"{_words(len(c.get('seasons') or []))} seasons: "
+            f"{int(c.get('from_the_events_table') or 0):,} recorded as events inside "
+            f"a plate appearance and {int(c.get('from_the_play_result_only') or 0):,} "
+            f"recorded only as the result that ended one, such as a caught "
+            f"stealing for the third out. {n:,} are priced and {ex:,} are counted "
+            f"in the table above, " + tail)
+
+
 def build(*, corpus=None, teams=True) -> dict:
     run = json.loads(RUNNING.read_text(encoding="utf-8"))
     gate = json.loads(GATE_EVAL.read_text(encoding="utf-8"))
@@ -319,6 +353,8 @@ def build(*, corpus=None, teams=True) -> dict:
             "by_target": bt,
             "by_season": run["by_season"],
             "excluded": run["excluded"],
+            "attempt_census": run.get("attempt_census"),
+            "attempt_census_sentence": _census_sentence(run),
             "decomposition": run["decomposition"],
             "why_two_out_attempts_are_excluded": run["two_out_attempts_are_excluded"],
             "why_the_league_average_runner": run["league_average_is_deliberate"],

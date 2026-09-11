@@ -1,6 +1,6 @@
 """M-MWAR-4: the In-Game Management gate battery, and the team attribution under it.
 
-WHY THE BATTERY EXISTS. `management.py` prices 13,971 stolen-base decisions. Pricing them
+WHY THE BATTERY EXISTS. `management.py` prices 13,973 stolen-base decisions. Pricing them
 correctly is not the same as those prices meaning anything about the person who made them. A
 decision metric that cannot survive a split-half is measuring the schedule, and it would reach
 a reader as a manager leaderboard.
