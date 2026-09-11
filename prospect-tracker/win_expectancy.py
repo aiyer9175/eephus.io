@@ -24,12 +24,28 @@ standard deviation is 0.04, meaning it carries team quality, and better offences
 reach second base more often. Both estimates are confounded at the resolution a
 decision metric needs.
 
-On raw accuracy the feed and this model are effectively level: Brier 0.157516
-against 0.155718, measured on the same 1.45 million plays. That is not a claim to
-have beaten MLB at win probability, since the feed is a live in-game number
-solving a different problem. What it settles is the only question this module
-needed answered, which is that insisting on a team-blind valuation costs nothing
-measurable.
+On raw accuracy the feed and this model are effectively level. The numbers are
+DERIVED into the artifact by every build rather than typed here, because they
+move with the fit; measured on 2026-09-10 over the same 1,448,965 plays the feed
+reads 0.157516 and this model 0.157678. The feed is very slightly ahead. That is
+not a concession of anything this module needed: the gap is 0.00016 of Brier, the
+feed is a live in-game number solving a different problem, and what the
+comparison settles is the only question this module asked, which is that
+insisting on a team-blind valuation costs nothing measurable.
+
+WHY THOSE NUMBERS CHANGED, 2026-09-10 (audit findings F07-02, F07-01, F07-05).
+Until this build the fit paired a POST-play score with a PRE-play base-out
+state. `.cache/pbp_corpus` stores `home_score` / `away_score` as
+`result.homeScore` / `result.awayScore`, which is the score AFTER the play, while
+`outs_before` and the occupancy columns are reconstructed BEFORE it. On 9.12
+percent of plays the runs the base state produced were therefore already inside
+the `lead` feature, which is leakage: it lifted the reported Brier to 0.155718,
+attenuated the run-expectancy coefficient by 30 to 46 percent, and manufactured
+a 213-cell boundary table containing three states that cannot occur, among them
+a bottom of the ninth entered with a one-run home lead. The score is now taken
+before the play everywhere it is read (`pre_play_score_diff`), the fit is
+honest, and the served accuracy claim is derived from the corrected comparison
+instead of asserting an edge the leak had created.
 
 SO THE BASE-OUT STATE ENTERS THROUGH ITS RUN EXPECTANCY, AS ONE NUMBER. RE(base,
 outs) is estimated from the same corpus, is monotone in both directions, and
@@ -81,6 +97,11 @@ INNING_CAP = 9
 #: Score differences past this are pooled at the cap.
 DIFF_CAP = 10
 
+#: The published bottom-of-the-ninth tail, tied and bases empty, by outs. An
+#: EXTERNAL reference, kept as a constant so the artifact's disclosure paragraph
+#: can be derived against it rather than typed beside it (audit F07-05).
+PUBLISHED_NINTH_TAIL = (0.63, 0.57, 0.52)
+
 #: A run-expectancy cell below this is not trusted on its own. RE is estimated on
 #: 24 cells over 1.45 million plays, so the thinnest is still enormous; the floor
 #: exists to make a corpus change loud rather than silent.
@@ -90,6 +111,42 @@ BASE_LABELS = {
     0: "empty", 1: "1B", 2: "2B", 3: "1B2B",
     4: "3B", 5: "1B3B", 6: "2B3B", 7: "loaded",
 }
+
+
+def add_pre_play_scores(df):
+    """Attach `home_score_before` / `away_score_before` to a corpus frame.
+
+    AUDIT F07-02. The corpus score columns are POST-play: the builder writes
+    `result.homeScore` / `result.awayScore` (tools/build_pbp_corpus.py) and its
+    own diagnostic asserts that their total minus the previous total equals
+    `runs_scored_on_play`, which is the definition of an after-the-play score.
+    Every other state column on the same row (`outs_before`, the occupancy
+    columns) is reconstructed BEFORE the play. Pairing them is leakage, so the
+    runs the play itself scored are backed out here, on the BATTING side only,
+    and every consumer reads the pre-play pair.
+
+    This is the corpus-free repair. Writing the two columns in
+    tools/build_pbp_corpus.py would be equivalent and would cost a full corpus
+    rebuild; it reproduces this arithmetic exactly on the columns that already
+    exist, so the cheaper route is taken and named.
+    """
+    runs = df["runs_scored_on_play"].fillna(0).astype(int)
+    bot = df["half"].astype(str).str.startswith("bot")
+    df["home_score_before"] = df["home_score"] - runs.where(bot, 0)
+    df["away_score_before"] = df["away_score"] - runs.where(~bot, 0)
+    return df
+
+
+def pre_play_score_diff(df):
+    """HOME minus AWAY BEFORE the play, as a Series. See `add_pre_play_scores`.
+
+    AUDIT F07-02. This is what `score_diff` means everywhere in this module and
+    in management.py, mgmt_bunt.py and tools/mgmt_gate.py: the state the manager
+    decided from, not the state his decision produced.
+    """
+    runs = df["runs_scored_on_play"].fillna(0).astype(int)
+    bot = df["half"].astype(str).str.startswith("bot")
+    return (df["home_score"] - df["away_score"]) - runs.where(bot, -runs)
 
 
 def base_code(on_first, on_second, on_third) -> int:
@@ -249,17 +306,27 @@ def half_inning_start_table(df, np) -> dict:
 
     This table needs no extrapolation. A half-inning always starts with nobody
     out and nobody on, so the state is just (inning, half, lead) and the data is
-    dense: 337,155 half-inning starts over 19,130 games, a median of about 1,250
+    dense: 337,155 half-inning starts over 19,130 games, a median of about 1,260
     observations per cell. It is measured, not modelled, and it is right at the
     tail where it matters most: the home team batting in the bottom of the ninth
-    trailing by one wins 16.5% of the time, and tied, 62.0%.
+    trailing by one wins 17.8% of the time, and tied, 63.4%.
+
+    THE LEAD IS READ BEFORE THE PLAY (audit F07-02). It used to be read off the
+    leadoff play's POST-play score, so a half-inning whose first batter homered
+    was filed under the lead his home run produced. That put 11,326 of 337,155
+    leadoff rows in the wrong cell and invented three cells for states that
+    cannot exist: `1|top|1` and `1|bottom|1` (nobody has batted yet) and
+    `9|bottom|1` (a home team leading after the top of the ninth does not bat).
+    The last of those shipped as a measured 100 percent win probability on 87
+    observations. The corrected table has 210 cells, and the leadoff cell
+    `1|top|0` now holds exactly one row per game in the corpus.
     """
     hi = df[(df["outs_before"] == 0) & (df["_base"] == 0)]
     hi = hi.sort_values(["game_pk", "inning", "half"], kind="mergesort")
     hi = hi.drop_duplicates(["game_pk", "inning", "half"], keep="first")
     is_bot = hi["half"].astype(str).str.startswith("bot").to_numpy()
-    home = hi["home_score"].to_numpy()
-    away = hi["away_score"].to_numpy()
+    home = hi["home_score_before"].to_numpy()
+    away = hi["away_score_before"].to_numpy()
     lead = np.where(is_bot, home - away, away - home)
     lead = np.clip(lead, -START_LEAD_CAP, START_LEAD_CAP)
     inn = np.minimum(hi["inning"].to_numpy(), INNING_CAP)
@@ -316,9 +383,15 @@ def build(*, corpus: Path | None = None, seasons=None) -> dict:
                    + 2 * df["on_second"].notna().astype(int)
                    + 4 * df["on_third"].notna().astype(int))
 
+    # THE SCORE IS TAKEN BEFORE THE PLAY (audit F07-02). Every other state
+    # column on the row is pre-play; the corpus score column is not.
+    df = add_pre_play_scores(df)
+
     re_tbl = run_expectancy(df, np)
 
-    # THE LABEL. One per game, joined onto every play in it.
+    # THE LABEL. One per game, joined onto every play in it. This one reads the
+    # POST-play column on purpose: the maximum of an after-the-play score is the
+    # final score, which is the outcome being predicted.
     last = df.groupby("game_pk")[["home_score", "away_score"]].max()
     won = (last["home_score"] > last["away_score"]).astype(float)
     tied = last["home_score"] == last["away_score"]
@@ -332,7 +405,7 @@ def build(*, corpus: Path | None = None, seasons=None) -> dict:
                       for b, o in zip(df["_base"].to_numpy(),
                                       df["outs_before"].to_numpy())])
     is_bot = df["half"].astype(str).str.startswith("bot").to_numpy()
-    diff = (df["home_score"] - df["away_score"]).to_numpy()
+    diff = (df["home_score_before"] - df["away_score_before"]).to_numpy()
     # EVERYTHING IN THE BATTING TEAM'S FRAME. The label flips with it: the model
     # predicts whether the team AT BAT goes on to win, so the home-win label is
     # inverted in the top half.
@@ -378,11 +451,81 @@ def build(*, corpus: Path | None = None, seasons=None) -> dict:
         sum(r["n"] for r in rel), 1)
 
     coef = dict(zip(FEATURE_NAMES, [round(float(c), 6) for c in clf.coef_[0]]))
+
+    # THE DISCLOSURE PARAGRAPHS ARE DERIVED FROM THIS FIT, NEVER TYPED
+    # (audit F07-05). The shipped string carried 0.6295 / 0.5868 / 0.5556
+    # against a model that produced 0.6020 / 0.5564 / 0.5234, and both of its
+    # narrative claims had inverted, because a refit moved the model and the
+    # prose stayed where somebody had left it. A served number inside a string
+    # is interpolated from the thing it describes.
+    def _we_home(inning, half, score_diff, outs, base):
+        c = re_tbl.get(f"{int(base)}|{int(outs)}")
+        if c is None:
+            return None
+        b_, f_ = innings_left(inning, half)
+        bot = str(half).startswith("bot")
+        X1 = _features(np, [b_], [f_], [score_diff if bot else -score_diff],
+                       [c["re"]])
+        z = float((X1 @ clf.coef_[0])[0]) + float(clf.intercept_[0])
+        v = float(1.0 / (1.0 + np.exp(-z)))
+        return v if bot else 1.0 - v
+
+    tail = [_we_home(9, "bottom", 0, o, 0) for o in (0, 1, 2)]
+
+    def _gap_phrase(got, pub):
+        d = (got - pub) * 100.0
+        if abs(d) < 0.5:
+            return "matches"
+        return f"is about {abs(d):.1f} points {'high' if d > 0 else 'low'}"
+
+    tail_note = (
+        "the model is less sharp than the raw cell means at the extremes. "
+        "Bottom of the ninth tied, bases empty reads "
+        + " / ".join(f"{v:.4f}" for v in tail)
+        + " by outs against published values near "
+        + " / ".join(f"{v:.2f}" for v in PUBLISHED_NINTH_TAIL)
+        + ": the leadoff cell " + _gap_phrase(tail[0], PUBLISHED_NINTH_TAIL[0])
+        + ", the one-out cell " + _gap_phrase(tail[1], PUBLISHED_NINTH_TAIL[1])
+        + " and the two-out cell " + _gap_phrase(tail[2], PUBLISHED_NINTH_TAIL[2])
+        + ". That is the price of a functional form smooth enough to difference, "
+        "and it is a price worth paying, because a table that is right on "
+        "average and non-monotone in the base state cannot value a decision at "
+        "all. Any family reading the ninth-inning tail should say so. These "
+        "three figures are interpolated from the fit this artifact ships and "
+        "cannot drift from it.")
+
+    start_ns = sorted(c["n"] for c in start_tbl.values())
+    start_median_n = start_ns[len(start_ns) // 2] if start_ns else 0
+
+    feed_gap = feed_brier - brier
+    if feed_gap > 0:
+        feed_verdict = ("so the context-free model is very slightly BETTER on "
+                        "Brier despite knowing nothing about the teams")
+    elif feed_gap < 0:
+        feed_verdict = ("so the feed is very slightly ahead on Brier, by "
+                        f"{abs(feed_gap):.5f}, which is what an estimator that "
+                        "knows the teams should manage")
+    else:
+        feed_verdict = "so the two are level on Brier"
+    feed_note = (
+        "the MLB feed's own wp_home_before, scored on the same plays, for "
+        f"comparison. Measured on this build it is {feed_brier:.6f} against "
+        f"this model's {brier:.6f}, {feed_verdict}. That is not a ranking of "
+        "win-probability models: the feed is a live in-game number solving a "
+        "different problem, and the gap either way is smaller than the "
+        "rounding a reader sees. What it settles is that insisting on a "
+        "team-blind valuation costs nothing measurable here, which is the only "
+        "question this module needed answered. The feed is still not the "
+        "engine, because its within-cell standard deviation of 0.04 means it "
+        "carries team quality, and crediting a manager for having better "
+        "players is the confound this module exists to avoid. Both figures are "
+        "derived from this fit; neither is typed.")
+
     return {
         "generated_at": datetime.now(timezone.utc)
                         .replace(microsecond=0).isoformat(),
         "produced_by": "win_expectancy.py",
-        "schema_version": 4,
+        "schema_version": 5,
         "model": "logistic regression, scikit-learn, effectively unpenalised",
         "seasons": sorted(set(want)),
         "n_plays_fit": int(keep.sum()),
@@ -402,7 +545,9 @@ def build(*, corpus: Path | None = None, seasons=None) -> dict:
             "states where making the third out RAISED the batting team's win "
             "probability. A half-inning always starts with nobody out and "
             "nobody on, so this table needs no extrapolation and its cells hold "
-            "about 1,250 observations each."),
+            f"a median of {start_median_n:,} observations each. The lead is read "
+            "BEFORE the leadoff play, so no cell describes a state that cannot "
+            "occur."),
         "calibration": {
             "brier": round(brier, 6),
             "brier_base_rate_only": round(brier_base, 6),
@@ -413,20 +558,7 @@ def build(*, corpus: Path | None = None, seasons=None) -> dict:
             "brier_on_the_home_frame": round(home_brier, 6),
             "reliability": rel,
             "feed_brier": round(feed_brier, 6),
-            "feed_note": (
-                "the MLB feed's own wp_home_before, scored on the same plays, "
-                "for comparison. Measured 2026-09-06 it is 0.157516 against "
-                "this model's 0.155718, so the context-free model is very "
-                "slightly BETTER on Brier despite knowing nothing about the "
-                "teams. That is not a claim to have beaten MLB at win "
-                "probability: the feed is a live in-game number solving a "
-                "different problem, and the gap is small. What it does settle "
-                "is that insisting on a team-blind valuation costs nothing "
-                "measurable here, which is the only question this module needed "
-                "answered. The feed is still not the engine, because its "
-                "within-cell standard deviation of 0.04 means it carries team "
-                "quality, and crediting a manager for having better players is "
-                "the confound this module exists to avoid."),
+            "feed_note": feed_note,
         },
         "why_a_model_not_a_table": (
             "a table of cell means at this resolution cannot support "
@@ -436,16 +568,15 @@ def build(*, corpus: Path | None = None, seasons=None) -> dict:
             "about 318 each, the standard error of a binary outcome at that "
             "count is 0.029, and the effect being measured is 0.02 to 0.05. The "
             "feed's own numbers averaged the same way violate it in 24.6%."),
-        "smoothing_costs_the_tails": (
-            "the model is less sharp than the raw cell means at the extremes. "
-            "Bottom of the ninth tied, bases empty reads 0.6295 / 0.5868 / "
-            "0.5556 by outs against published values near 0.63 / 0.57 / 0.52: "
-            "the leadoff cell matches and the two-out cell is about three "
-            "points high. That is the price of a functional form smooth enough "
-            "to difference, and it is a price worth paying, because a table "
-            "that is right on average and non-monotone in the base state cannot "
-            "value a decision at all. Any family reading the ninth-inning tail "
-            "should say so."),
+        "smoothing_costs_the_tails": tail_note,
+        "ninth_inning_tail": {
+            "state": "bottom of the ninth, tied, bases empty",
+            "model_by_outs": [round(v, 5) for v in tail],
+            "published_by_outs": list(PUBLISHED_NINTH_TAIL),
+            "note": ("the three figures quoted in smoothing_costs_the_tails, "
+                     "shipped as numbers so a test can compare the prose "
+                     "against the model instead of against a memory of it."),
+        },
         "monotone_by_construction": (
             "the base-out state enters ONLY through its run expectancy, as a "
             "single covariate with a positive coefficient, so advancing a runner "
@@ -482,15 +613,18 @@ class WinExpectancy:
     def load(cls, path: Path | None = None) -> "WinExpectancy":
         p = Path(path or OUT)
         art = json.loads(p.read_text(encoding="utf-8"))
-        if art.get("schema_version") != 4:
+        if art.get("schema_version") != 5:
             raise ValueError(
                 f"{p} is schema {art.get('schema_version')}; this module reads "
-                "schema 4, the batting-team frame with a measured "
-                "half-inning-start boundary. Re-run "
+                "schema 5, the batting-team frame with a measured "
+                "half-inning-start boundary and a PRE-play score. Re-run "
                 "`python win_expectancy.py`. Schema 1 was a grid of cell means "
                 "and is not safe to difference at all; schema 2 was smooth but "
                 "discontinuous across the half-inning boundary, which mispriced "
-                "19.2% of steal attempts.")
+                "19.2% of steal attempts; schema 4 fitted and queried a "
+                "post-play score against a pre-play base-out state, which "
+                "leaked the outcome into the lead feature and moved every "
+                "decision value that reads it (audit F07-02).")
         return cls(art)
 
     def half_inning_start(self, inning, half, lead) -> float | None:
@@ -569,6 +703,7 @@ def main(argv=None) -> int:
           "either way: it carries team quality)")
     print(f"coefficients: {art['coef']}")
     W = WinExpectancy(art)
+    print(f"ninth-inning tail, derived: {art['ninth_inning_tail']['model_by_outs']}")
     print("\nbottom of the 9th, tied, bases empty, by outs:")
     for o in (0, 1, 2):
         print(f"   {o} out: home WE = {W.we(9, 'bottom', 0, o, 0):.4f}")

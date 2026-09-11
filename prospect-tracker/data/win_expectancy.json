@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-09-06T08:27:31+00:00",
+ "generated_at": "2026-09-11T01:06:34+00:00",
  "produced_by": "win_expectancy.py",
- "schema_version": 4,
+ "schema_version": 5,
  "model": "logistic regression, scikit-learn, effectively unpenalised",
  "seasons": [
   "2018",
@@ -24,15 +24,15 @@
   "last_licks"
  ],
  "coef": {
-  "lead": -0.185655,
-  "lead_x_urgency": 2.648433,
-  "re_bat": 0.102771,
-  "re_bat_x_urgency": 0.983732,
-  "half_innings_left_total": 0.006531,
-  "half_innings_left_diff": 0.214651,
-  "last_licks": 0.214651
+  "lead": -0.143396,
+  "lead_x_urgency": 2.498454,
+  "re_bat": 0.133609,
+  "re_bat_x_urgency": 1.433375,
+  "half_innings_left_total": 0.006327,
+  "half_innings_left_diff": 0.213719,
+  "last_licks": 0.213719
  },
- "intercept": -0.423721,
+ "intercept": -0.437158,
  "inning_cap": 9,
  "diff_cap": 10,
  "run_expectancy": {
@@ -135,308 +135,298 @@
  },
  "half_inning_start": {
   "1|bottom|0": {
-   "p": 0.57857,
-   "n": 13459,
+   "p": 0.58316,
+   "n": 13907,
    "thin": false
   },
   "1|top|0": {
-   "p": 0.46523,
-   "n": 18481,
+   "p": 0.46989,
+   "n": 19130,
    "thin": false
   },
   "2|bottom|-3": {
-   "p": 0.23015,
-   "n": 869,
+   "p": 0.22707,
+   "n": 894,
    "thin": false
   },
   "2|top|0": {
-   "p": 0.46824,
-   "n": 9950,
+   "p": 0.47408,
+   "n": 10205,
    "thin": false
   },
   "3|bottom|-3": {
-   "p": 0.23603,
-   "n": 1199,
+   "p": 0.23665,
+   "n": 1217,
    "thin": false
   },
   "3|top|3": {
-   "p": 0.80491,
-   "n": 774,
+   "p": 0.81016,
+   "n": 748,
    "thin": false
   },
   "4|bottom|-3": {
-   "p": 0.2006,
-   "n": 1336,
+   "p": 0.20341,
+   "n": 1347,
    "thin": false
   },
   "4|top|3": {
-   "p": 0.82502,
-   "n": 1023,
+   "p": 0.83049,
+   "n": 997,
    "thin": false
   },
   "5|bottom|-3": {
-   "p": 0.17014,
-   "n": 1393,
+   "p": 0.17518,
+   "n": 1410,
    "thin": false
   },
   "5|top|3": {
-   "p": 0.84516,
-   "n": 1156,
+   "p": 0.8503,
+   "n": 1149,
    "thin": false
   },
   "6|bottom|-3": {
-   "p": 0.15149,
-   "n": 1406,
+   "p": 0.15465,
+   "n": 1429,
    "thin": false
   },
   "6|top|3": {
-   "p": 0.87112,
-   "n": 1257,
+   "p": 0.87131,
+   "n": 1220,
    "thin": false
   },
   "7|bottom|-4": {
-   "p": 0.05597,
-   "n": 1072,
+   "p": 0.061,
+   "n": 1082,
    "thin": false
   },
   "7|top|3": {
-   "p": 0.90089,
-   "n": 1241,
+   "p": 0.90228,
+   "n": 1228,
    "thin": false
   },
   "8|bottom|-4": {
-   "p": 0.03122,
-   "n": 1089,
+   "p": 0.03315,
+   "n": 1086,
    "thin": false
   },
   "8|top|4": {
-   "p": 0.97513,
-   "n": 965,
+   "p": 0.97708,
+   "n": 960,
    "thin": false
   },
   "9|top|-2": {
-   "p": 0.05487,
+   "p": 0.05779,
    "n": 1713,
    "thin": false
   },
   "1|bottom|-3": {
-   "p": 0.2623,
-   "n": 610,
-   "thin": false
-  },
-  "1|top|1": {
-   "p": 0.60247,
-   "n": 649,
+   "p": 0.2711,
+   "n": 616,
    "thin": false
   },
   "2|top|2": {
-   "p": 0.70523,
-   "n": 1089,
+   "p": 0.70718,
+   "n": 1045,
    "thin": false
   },
   "4|bottom|-1": {
-   "p": 0.41627,
-   "n": 2938,
+   "p": 0.42164,
+   "n": 2948,
    "thin": false
   },
   "4|top|0": {
-   "p": 0.47866,
-   "n": 4640,
+   "p": 0.47943,
+   "n": 4691,
    "thin": false
   },
   "5|bottom|-1": {
-   "p": 0.39649,
-   "n": 2623,
+   "p": 0.40008,
+   "n": 2652,
    "thin": false
   },
   "5|top|1": {
-   "p": 0.65491,
-   "n": 2608,
+   "p": 0.65851,
+   "n": 2574,
    "thin": false
   },
   "6|bottom|-1": {
-   "p": 0.38237,
-   "n": 2359,
+   "p": 0.38889,
+   "n": 2376,
    "thin": false
   },
   "6|top|1": {
-   "p": 0.6678,
-   "n": 2363,
+   "p": 0.67292,
+   "n": 2345,
    "thin": false
   },
   "7|top|1": {
-   "p": 0.70793,
-   "n": 2157,
+   "p": 0.71242,
+   "n": 2142,
    "thin": false
   },
   "9|bottom|-4": {
-   "p": 0.01867,
+   "p": 0.01956,
    "n": 1125,
    "thin": false
   },
   "9|top|4": {
-   "p": 0.98606,
-   "n": 1004,
+   "p": 0.9871,
+   "n": 1008,
    "thin": false
   },
   "2|bottom|4": {
-   "p": 0.87391,
-   "n": 230,
+   "p": 0.87793,
+   "n": 213,
    "thin": false
   },
   "2|top|-4": {
-   "p": 0.15444,
-   "n": 259,
+   "p": 0.1597,
+   "n": 263,
    "thin": false
   },
   "3|bottom|4": {
-   "p": 0.91355,
-   "n": 428,
+   "p": 0.90952,
+   "n": 420,
    "thin": false
   },
   "3|top|-4": {
-   "p": 0.119,
-   "n": 479,
+   "p": 0.12016,
+   "n": 491,
    "thin": false
   },
   "4|top|-4": {
-   "p": 0.09449,
-   "n": 762,
+   "p": 0.0915,
+   "n": 765,
    "thin": false
   },
   "5|bottom|-4": {
-   "p": 0.10515,
-   "n": 913,
+   "p": 0.10808,
+   "n": 916,
    "thin": false
   },
   "6|bottom|-4": {
-   "p": 0.08358,
-   "n": 1029,
+   "p": 0.08624,
+   "n": 1032,
    "thin": false
   },
   "6|top|4": {
-   "p": 0.91771,
-   "n": 802,
+   "p": 0.92298,
+   "n": 792,
    "thin": false
   },
   "7|bottom|-6": {
-   "p": 0.01083,
-   "n": 1569,
+   "p": 0.01069,
+   "n": 1591,
    "thin": false
   },
   "7|top|4": {
-   "p": 0.9458,
-   "n": 941,
+   "p": 0.94698,
+   "n": 943,
    "thin": false
   },
   "8|bottom|-6": {
-   "p": 0.00384,
-   "n": 1823,
+   "p": 0.00381,
+   "n": 1839,
    "thin": false
   },
   "8|top|6": {
-   "p": 0.99563,
-   "n": 1373,
+   "p": 0.99558,
+   "n": 1357,
    "thin": false
   },
   "9|bottom|-6": {
-   "p": 0.00094,
-   "n": 2133,
+   "p": 0.00093,
+   "n": 2154,
    "thin": false
   },
   "9|top|6": {
-   "p": 0.99939,
-   "n": 1648,
+   "p": 0.99938,
+   "n": 1619,
    "thin": false
   },
   "2|bottom|2": {
-   "p": 0.78898,
-   "n": 1071,
+   "p": 0.79049,
+   "n": 1031,
    "thin": false
   },
   "2|top|-2": {
-   "p": 0.2437,
-   "n": 1231,
+   "p": 0.2498,
+   "n": 1253,
    "thin": false
   },
   "3|bottom|2": {
-   "p": 0.81246,
-   "n": 1461,
+   "p": 0.8208,
+   "n": 1423,
    "thin": false
   },
   "3|top|-2": {
-   "p": 0.22342,
-   "n": 1665,
+   "p": 0.22558,
+   "n": 1689,
    "thin": false
   },
   "4|bottom|2": {
-   "p": 0.8169,
-   "n": 1775,
+   "p": 0.81823,
+   "n": 1744,
    "thin": false
   },
   "4|top|-2": {
-   "p": 0.22273,
-   "n": 1953,
+   "p": 0.22411,
+   "n": 1999,
    "thin": false
   },
   "5|bottom|2": {
-   "p": 0.8375,
-   "n": 1840,
+   "p": 0.84193,
+   "n": 1803,
    "thin": false
   },
   "5|top|-2": {
-   "p": 0.21045,
-   "n": 2048,
+   "p": 0.21377,
+   "n": 2063,
    "thin": false
   },
   "6|bottom|2": {
-   "p": 0.88031,
-   "n": 1788,
+   "p": 0.8817,
+   "n": 1792,
    "thin": false
   },
   "6|top|-2": {
-   "p": 0.17784,
-   "n": 2013,
+   "p": 0.18267,
+   "n": 2031,
    "thin": false
   },
   "7|bottom|1": {
-   "p": 0.81417,
-   "n": 2131,
+   "p": 0.81758,
+   "n": 2116,
    "thin": false
   },
   "7|top|-2": {
-   "p": 0.13933,
-   "n": 1902,
+   "p": 0.14182,
+   "n": 1925,
    "thin": false
   },
   "8|bottom|1": {
-   "p": 0.89013,
-   "n": 1884,
+   "p": 0.89111,
+   "n": 1901,
    "thin": false
   },
   "8|top|-1": {
-   "p": 0.21535,
-   "n": 2020,
+   "p": 0.22211,
+   "n": 2035,
    "thin": false
   },
   "9|top|-1": {
-   "p": 0.13058,
-   "n": 1838,
+   "p": 0.14023,
+   "n": 1847,
    "thin": false
   },
   "1|bottom|-1": {
-   "p": 0.46037,
-   "n": 2826,
+   "p": 0.4638,
+   "n": 2887,
    "thin": false
   },
   "6|bottom|1": {
-   "p": 0.76871,
-   "n": 2218,
-   "thin": false
-  },
-  "6|top|-1": {
-   "p": 0.31146,
-   "n": 2347,
+   "p": 0.77328,
+   "n": 2201,
    "thin": false
   },
   "7|bottom|4": {
@@ -445,837 +435,846 @@
    "thin": false
   },
   "7|top|-4": {
-   "p": 0.04662,
-   "n": 1051,
+   "p": 0.04869,
+   "n": 1068,
    "thin": false
   },
   "8|bottom|6": {
-   "p": 0.99878,
-   "n": 1643,
+   "p": 0.99876,
+   "n": 1619,
    "thin": false
   },
   "8|top|-6": {
-   "p": 0.00276,
-   "n": 1810,
+   "p": 0.00274,
+   "n": 1822,
    "thin": false
   },
   "9|top|-6": {
-   "p": 0.00144,
-   "n": 2086,
+   "p": 0.00238,
+   "n": 2105,
    "thin": false
   },
   "2|bottom|-1": {
-   "p": 0.42893,
-   "n": 3194,
+   "p": 0.43509,
+   "n": 3243,
    "thin": false
   },
   "2|top|1": {
-   "p": 0.60769,
-   "n": 2498,
+   "p": 0.60609,
+   "n": 2234,
    "thin": false
   },
   "3|bottom|-2": {
-   "p": 0.32335,
-   "n": 1936,
+   "p": 0.327,
+   "n": 1948,
    "thin": false
   },
   "3|top|1": {
-   "p": 0.62041,
-   "n": 2753,
+   "p": 0.62196,
+   "n": 2677,
    "thin": false
   },
   "4|top|2": {
-   "p": 0.72749,
-   "n": 1677,
+   "p": 0.72766,
+   "n": 1645,
    "thin": false
   },
   "7|bottom|-3": {
-   "p": 0.11022,
-   "n": 1370,
+   "p": 0.10925,
+   "n": 1373,
    "thin": false
   },
   "8|top|3": {
-   "p": 0.94058,
-   "n": 1279,
+   "p": 0.94081,
+   "n": 1267,
    "thin": false
   },
   "2|bottom|-2": {
-   "p": 0.32216,
-   "n": 1701,
+   "p": 0.32661,
+   "n": 1736,
    "thin": false
   },
   "3|top|2": {
-   "p": 0.71683,
-   "n": 1515,
-   "thin": false
-  },
-  "7|bottom|-1": {
-   "p": 0.33036,
-   "n": 2128,
-   "thin": false
-  },
-  "8|bottom|0": {
-   "p": 0.60217,
-   "n": 2026,
-   "thin": false
-  },
-  "8|top|0": {
-   "p": 0.48507,
-   "n": 2076,
-   "thin": false
-  },
-  "9|bottom|0": {
-   "p": 0.62322,
-   "n": 2455,
-   "thin": false
-  },
-  "9|top|0": {
-   "p": 0.48921,
-   "n": 2827,
-   "thin": false
-  },
-  "2|bottom|0": {
-   "p": 0.57086,
-   "n": 8072,
-   "thin": false
-  },
-  "3|bottom|-1": {
-   "p": 0.4328,
-   "n": 3043,
-   "thin": false
-  },
-  "3|top|0": {
-   "p": 0.47119,
-   "n": 6613,
-   "thin": false
-  },
-  "4|top|1": {
-   "p": 0.61886,
-   "n": 2726,
-   "thin": false
-  },
-  "8|bottom|-1": {
-   "p": 0.27259,
-   "n": 1959,
-   "thin": false
-  },
-  "8|top|1": {
-   "p": 0.75348,
-   "n": 2012,
-   "thin": false
-  },
-  "9|bottom|-1": {
-   "p": 0.16529,
-   "n": 1936,
-   "thin": false
-  },
-  "9|top|1": {
-   "p": 0.85339,
-   "n": 1828,
-   "thin": false
-  },
-  "3|bottom|0": {
-   "p": 0.57653,
-   "n": 5547,
-   "thin": false
-  },
-  "4|bottom|0": {
-   "p": 0.57788,
-   "n": 3987,
-   "thin": false
-  },
-  "5|bottom|0": {
-   "p": 0.58022,
-   "n": 3235,
-   "thin": false
-  },
-  "5|top|0": {
-   "p": 0.47536,
-   "n": 3612,
-   "thin": false
-  },
-  "6|bottom|0": {
-   "p": 0.58127,
-   "n": 2627,
+   "p": 0.72188,
+   "n": 1467,
    "thin": false
   },
   "6|top|0": {
-   "p": 0.48239,
-   "n": 2896,
+   "p": 0.48975,
+   "n": 2926,
+   "thin": false
+  },
+  "7|bottom|-1": {
+   "p": 0.33691,
+   "n": 2146,
+   "thin": false
+  },
+  "8|bottom|0": {
+   "p": 0.60983,
+   "n": 2035,
+   "thin": false
+  },
+  "8|top|0": {
+   "p": 0.49305,
+   "n": 2087,
+   "thin": false
+  },
+  "9|bottom|0": {
+   "p": 0.63432,
+   "n": 2494,
+   "thin": false
+  },
+  "9|top|0": {
+   "p": 0.49842,
+   "n": 2843,
+   "thin": false
+  },
+  "2|bottom|0": {
+   "p": 0.57534,
+   "n": 8256,
+   "thin": false
+  },
+  "3|bottom|-1": {
+   "p": 0.43681,
+   "n": 3086,
+   "thin": false
+  },
+  "3|top|0": {
+   "p": 0.47553,
+   "n": 6702,
+   "thin": false
+  },
+  "4|top|1": {
+   "p": 0.62889,
+   "n": 2665,
+   "thin": false
+  },
+  "8|bottom|-1": {
+   "p": 0.28285,
+   "n": 1948,
+   "thin": false
+  },
+  "8|top|1": {
+   "p": 0.75876,
+   "n": 1998,
+   "thin": false
+  },
+  "9|bottom|-1": {
+   "p": 0.17787,
+   "n": 1934,
+   "thin": false
+  },
+  "9|top|1": {
+   "p": 0.85444,
+   "n": 1800,
+   "thin": false
+  },
+  "3|bottom|0": {
+   "p": 0.58102,
+   "n": 5616,
+   "thin": false
+  },
+  "4|bottom|0": {
+   "p": 0.58032,
+   "n": 4034,
+   "thin": false
+  },
+  "5|bottom|0": {
+   "p": 0.58531,
+   "n": 3253,
+   "thin": false
+  },
+  "5|top|0": {
+   "p": 0.47968,
+   "n": 3617,
+   "thin": false
+  },
+  "6|bottom|0": {
+   "p": 0.58672,
+   "n": 2635,
    "thin": false
   },
   "7|bottom|0": {
-   "p": 0.59013,
-   "n": 2269,
+   "p": 0.59604,
+   "n": 2275,
    "thin": false
   },
   "7|top|0": {
-   "p": 0.49548,
-   "n": 2434,
+   "p": 0.50041,
+   "n": 2440,
    "thin": false
   },
   "8|bottom|2": {
-   "p": 0.95216,
-   "n": 1693,
+   "p": 0.95341,
+   "n": 1674,
    "thin": false
   },
   "8|top|-2": {
-   "p": 0.10902,
-   "n": 1807,
+   "p": 0.11283,
+   "n": 1808,
    "thin": false
   },
-  "9|bottom|1": {
-   "p": 1.0,
-   "n": 87,
-   "thin": true
-  },
   "1|bottom|-2": {
-   "p": 0.34257,
-   "n": 1299,
+   "p": 0.34535,
+   "n": 1332,
    "thin": false
   },
   "4|bottom|-2": {
-   "p": 0.30241,
-   "n": 1994,
+   "p": 0.30929,
+   "n": 2024,
    "thin": false
   },
   "5|top|2": {
-   "p": 0.75573,
-   "n": 1744,
-   "thin": false
-  },
-  "7|bottom|-5": {
-   "p": 0.02941,
-   "n": 816,
-   "thin": false
-  },
-  "7|top|5": {
-   "p": 0.9814,
-   "n": 645,
-   "thin": false
-  },
-  "8|top|5": {
-   "p": 0.9797,
-   "n": 739,
-   "thin": false
-  },
-  "9|bottom|-5": {
-   "p": 0.00701,
-   "n": 856,
-   "thin": false
-  },
-  "6|bottom|-5": {
-   "p": 0.04868,
-   "n": 719,
-   "thin": false
-  },
-  "6|top|2": {
-   "p": 0.78828,
+   "p": 0.7587,
    "n": 1724,
    "thin": false
   },
-  "8|bottom|-2": {
-   "p": 0.15183,
-   "n": 1640,
+  "7|bottom|-5": {
+   "p": 0.03071,
+   "n": 814,
+   "thin": false
+  },
+  "8|bottom|-5": {
+   "p": 0.02439,
+   "n": 861,
+   "thin": false
+  },
+  "8|top|5": {
+   "p": 0.97942,
+   "n": 729,
+   "thin": false
+  },
+  "9|bottom|-5": {
+   "p": 0.00692,
+   "n": 867,
+   "thin": false
+  },
+  "6|bottom|-5": {
+   "p": 0.04658,
+   "n": 730,
+   "thin": false
+  },
+  "8|bottom|-3": {
+   "p": 0.07587,
+   "n": 1384,
    "thin": false
   },
   "6|bottom|-2": {
-   "p": 0.24098,
+   "p": 0.24628,
    "n": 1884,
    "thin": false
   },
   "7|bottom|-2": {
-   "p": 0.20271,
-   "n": 1771,
+   "p": 0.20908,
+   "n": 1784,
    "thin": false
   },
   "7|top|2": {
-   "p": 0.82598,
-   "n": 1701,
+   "p": 0.82791,
+   "n": 1691,
    "thin": false
   },
   "9|bottom|-3": {
-   "p": 0.02799,
-   "n": 1322,
+   "p": 0.0303,
+   "n": 1320,
    "thin": false
   },
   "2|top|-1": {
-   "p": 0.37211,
-   "n": 2510,
+   "p": 0.37441,
+   "n": 2556,
    "thin": false
   },
   "3|bottom|1": {
-   "p": 0.6854,
-   "n": 2616,
+   "p": 0.6853,
+   "n": 2558,
    "thin": false
   },
   "3|top|-1": {
-   "p": 0.36622,
-   "n": 3061,
+   "p": 0.36996,
+   "n": 3103,
    "thin": false
   },
   "4|top|-1": {
-   "p": 0.35607,
-   "n": 2859,
+   "p": 0.36574,
+   "n": 2890,
    "thin": false
   },
   "6|bottom|4": {
-   "p": 0.95045,
-   "n": 888,
+   "p": 0.95147,
+   "n": 886,
    "thin": false
   },
   "6|top|-5": {
-   "p": 0.03748,
-   "n": 667,
+   "p": 0.03869,
+   "n": 672,
    "thin": false
   },
   "8|bottom|4": {
-   "p": 0.99107,
-   "n": 1008,
+   "p": 0.99194,
+   "n": 993,
    "thin": false
   },
   "8|top|-4": {
-   "p": 0.02917,
+   "p": 0.03099,
    "n": 1097,
    "thin": false
   },
   "9|top|-5": {
-   "p": 0.00456,
-   "n": 878,
+   "p": 0.00226,
+   "n": 886,
    "thin": false
   },
   "9|bottom|-2": {
-   "p": 0.07798,
-   "n": 1603,
+   "p": 0.08133,
+   "n": 1623,
    "thin": false
   },
   "2|bottom|3": {
-   "p": 0.86581,
-   "n": 544,
+   "p": 0.86716,
+   "n": 542,
    "thin": false
   },
   "2|top|-5": {
-   "p": 0.09091,
-   "n": 110,
+   "p": 0.09649,
+   "n": 114,
    "thin": false
   },
   "3|bottom|3": {
-   "p": 0.85597,
-   "n": 854,
+   "p": 0.85924,
+   "n": 817,
    "thin": false
   },
   "3|top|-3": {
-   "p": 0.17155,
-   "n": 956,
+   "p": 0.17965,
+   "n": 963,
    "thin": false
   },
   "4|top|-5": {
-   "p": 0.05147,
-   "n": 408,
+   "p": 0.05882,
+   "n": 425,
    "thin": false
   },
   "4|bottom|1": {
-   "p": 0.70778,
-   "n": 2505,
+   "p": 0.71579,
+   "n": 2463,
    "thin": false
   },
   "5|top|-3": {
-   "p": 0.13323,
-   "n": 1306,
+   "p": 0.13283,
+   "n": 1325,
    "thin": false
   },
   "7|bottom|2": {
-   "p": 0.9121,
-   "n": 1752,
+   "p": 0.91344,
+   "n": 1756,
    "thin": false
   },
   "9|top|-4": {
-   "p": 0.00857,
-   "n": 1167,
+   "p": 0.00849,
+   "n": 1178,
    "thin": false
   },
   "5|bottom|1": {
-   "p": 0.74344,
-   "n": 2362,
+   "p": 0.74744,
+   "n": 2348,
+   "thin": false
+  },
+  "6|top|-1": {
+   "p": 0.31601,
+   "n": 2367,
    "thin": false
   },
   "7|top|-1": {
-   "p": 0.26779,
-   "n": 2248,
+   "p": 0.27761,
+   "n": 2255,
    "thin": false
   },
   "9|top|-3": {
-   "p": 0.01829,
-   "n": 1367,
-   "thin": false
-  },
-  "8|bottom|-3": {
-   "p": 0.07388,
-   "n": 1367,
+   "p": 0.02036,
+   "n": 1375,
    "thin": false
   },
   "9|top|3": {
-   "p": 0.97508,
-   "n": 1284,
+   "p": 0.97404,
+   "n": 1271,
    "thin": false
   },
   "5|top|-1": {
-   "p": 0.3221,
-   "n": 2611,
+   "p": 0.32868,
+   "n": 2650,
    "thin": false
   },
   "5|bottom|-2": {
-   "p": 0.2849,
-   "n": 1927,
+   "p": 0.28836,
+   "n": 1942,
+   "thin": false
+  },
+  "6|top|2": {
+   "p": 0.78889,
+   "n": 1710,
+   "thin": false
+  },
+  "8|bottom|-2": {
+   "p": 0.1551,
+   "n": 1657,
    "thin": false
   },
   "8|top|2": {
-   "p": 0.87693,
-   "n": 1617,
+   "p": 0.87679,
+   "n": 1607,
    "thin": false
   },
   "2|bottom|1": {
-   "p": 0.68055,
-   "n": 2401,
+   "p": 0.68163,
+   "n": 2161,
    "thin": false
   },
   "1|bottom|-4": {
-   "p": 0.17722,
-   "n": 237,
+   "p": 0.17842,
+   "n": 241,
    "thin": false
   },
   "2|bottom|-4": {
-   "p": 0.16229,
-   "n": 419,
+   "p": 0.16746,
+   "n": 418,
    "thin": false
   },
   "2|top|4": {
-   "p": 0.87895,
-   "n": 190,
+   "p": 0.88398,
+   "n": 181,
    "thin": false
   },
   "3|bottom|-4": {
-   "p": 0.14689,
-   "n": 708,
+   "p": 0.14644,
+   "n": 717,
    "thin": false
   },
   "6|bottom|-6": {
-   "p": 0.01444,
-   "n": 1316,
+   "p": 0.01647,
+   "n": 1336,
    "thin": false
   },
   "4|bottom|-4": {
-   "p": 0.12186,
-   "n": 837,
+   "p": 0.12673,
+   "n": 868,
    "thin": false
   },
   "5|bottom|-5": {
-   "p": 0.08571,
-   "n": 630,
+   "p": 0.08642,
+   "n": 648,
    "thin": false
   },
   "5|top|4": {
-   "p": 0.91341,
-   "n": 716,
+   "p": 0.91679,
+   "n": 697,
    "thin": false
   },
   "6|top|5": {
-   "p": 0.95478,
-   "n": 575,
+   "p": 0.95414,
+   "n": 567,
+   "thin": false
+  },
+  "7|top|5": {
+   "p": 0.98237,
+   "n": 624,
    "thin": false
   },
   "4|bottom|5": {
-   "p": 0.96588,
-   "n": 381,
+   "p": 0.96267,
+   "n": 375,
    "thin": false
   },
   "5|bottom|6": {
-   "p": 0.98619,
-   "n": 724,
+   "p": 0.9858,
+   "n": 704,
    "thin": false
   },
   "5|top|-6": {
-   "p": 0.01861,
-   "n": 806,
+   "p": 0.01961,
+   "n": 816,
    "thin": false
   },
   "6|bottom|6": {
-   "p": 0.99504,
-   "n": 1008,
+   "p": 0.99489,
+   "n": 978,
    "thin": false
   },
   "6|top|-6": {
-   "p": 0.01329,
-   "n": 1129,
+   "p": 0.01394,
+   "n": 1148,
    "thin": false
   },
   "7|bottom|6": {
-   "p": 0.997,
-   "n": 1334,
+   "p": 0.99694,
+   "n": 1307,
    "thin": false
   },
   "7|top|-6": {
-   "p": 0.00817,
-   "n": 1469,
+   "p": 0.00809,
+   "n": 1484,
    "thin": false
   },
   "4|bottom|3": {
-   "p": 0.88786,
-   "n": 1079,
+   "p": 0.88728,
+   "n": 1038,
    "thin": false
   },
   "4|top|-3": {
-   "p": 0.1541,
-   "n": 1207,
+   "p": 0.16105,
+   "n": 1217,
    "thin": false
   },
   "5|bottom|5": {
-   "p": 0.96802,
-   "n": 469,
+   "p": 0.96644,
+   "n": 447,
    "thin": false
   },
   "5|top|-5": {
-   "p": 0.07407,
-   "n": 540,
+   "p": 0.07168,
+   "n": 558,
    "thin": false
   },
   "6|bottom|5": {
-   "p": 0.98618,
-   "n": 579,
+   "p": 0.98787,
+   "n": 577,
    "thin": false
   },
   "7|bottom|5": {
-   "p": 0.98875,
-   "n": 622,
+   "p": 0.98849,
+   "n": 608,
    "thin": false
   },
   "7|top|-5": {
-   "p": 0.02095,
-   "n": 716,
+   "p": 0.02078,
+   "n": 722,
    "thin": false
   },
   "8|bottom|5": {
-   "p": 0.99575,
-   "n": 706,
+   "p": 0.99573,
+   "n": 702,
    "thin": false
   },
   "8|top|-5": {
-   "p": 0.01001,
-   "n": 799,
+   "p": 0.00988,
+   "n": 810,
    "thin": false
   },
   "6|bottom|3": {
-   "p": 0.92598,
-   "n": 1297,
+   "p": 0.92393,
+   "n": 1262,
    "thin": false
   },
   "6|top|-3": {
-   "p": 0.11033,
+   "p": 0.11174,
    "n": 1423,
    "thin": false
   },
   "7|bottom|3": {
-   "p": 0.95781,
-   "n": 1280,
+   "p": 0.958,
+   "n": 1262,
    "thin": false
   },
   "7|top|-3": {
-   "p": 0.07788,
-   "n": 1451,
+   "p": 0.07978,
+   "n": 1454,
    "thin": false
   },
   "8|bottom|3": {
-   "p": 0.9844,
-   "n": 1282,
+   "p": 0.98426,
+   "n": 1271,
    "thin": false
   },
   "2|top|3": {
-   "p": 0.79668,
-   "n": 482,
+   "p": 0.8026,
+   "n": 461,
    "thin": false
   },
   "4|bottom|-5": {
-   "p": 0.09877,
-   "n": 486,
-   "thin": false
-  },
-  "4|top|5": {
-   "p": 0.92705,
-   "n": 329,
-   "thin": false
-  },
-  "5|top|5": {
-   "p": 0.93002,
-   "n": 443,
-   "thin": false
-  },
-  "8|top|-3": {
-   "p": 0.04483,
-   "n": 1383,
-   "thin": false
-  },
-  "9|top|5": {
-   "p": 0.99354,
-   "n": 774,
-   "thin": false
-  },
-  "3|bottom|-6": {
-   "p": 0.0679,
-   "n": 486,
-   "thin": false
-  },
-  "3|top|5": {
-   "p": 0.94203,
-   "n": 207,
-   "thin": false
-  },
-  "4|bottom|-6": {
-   "p": 0.02699,
-   "n": 741,
-   "thin": false
-  },
-  "4|top|6": {
-   "p": 0.96394,
-   "n": 416,
-   "thin": false
-  },
-  "5|bottom|-6": {
-   "p": 0.01959,
-   "n": 1072,
-   "thin": false
-  },
-  "5|top|6": {
-   "p": 0.98784,
-   "n": 658,
-   "thin": false
-  },
-  "6|top|6": {
-   "p": 0.9893,
-   "n": 935,
-   "thin": false
-  },
-  "7|top|6": {
-   "p": 0.9922,
-   "n": 1154,
-   "thin": false
-  },
-  "9|top|2": {
-   "p": 0.92675,
-   "n": 1570,
-   "thin": false
-  },
-  "5|bottom|4": {
-   "p": 0.94865,
-   "n": 779,
-   "thin": false
-  },
-  "5|top|-4": {
-   "p": 0.05896,
-   "n": 882,
-   "thin": false
-  },
-  "6|top|-4": {
-   "p": 0.06256,
-   "n": 991,
-   "thin": false
-  },
-  "8|bottom|-5": {
-   "p": 0.02471,
-   "n": 850,
-   "thin": false
-  },
-  "2|bottom|5": {
-   "p": 0.96739,
-   "n": 92,
-   "thin": true
-  },
-  "3|bottom|5": {
-   "p": 0.95,
-   "n": 220,
-   "thin": false
-  },
-  "3|top|-5": {
-   "p": 0.06,
-   "n": 250,
-   "thin": false
-  },
-  "5|bottom|3": {
-   "p": 0.91394,
-   "n": 1162,
-   "thin": false
-  },
-  "2|bottom|-5": {
-   "p": 0.10222,
-   "n": 225,
-   "thin": false
-  },
-  "3|bottom|-5": {
-   "p": 0.08483,
-   "n": 389,
-   "thin": false
-  },
-  "4|bottom|6": {
-   "p": 0.99045,
-   "n": 419,
-   "thin": false
-  },
-  "4|top|-6": {
-   "p": 0.0303,
-   "n": 495,
-   "thin": false
-  },
-  "3|top|4": {
-   "p": 0.86721,
-   "n": 369,
+   "p": 0.10041,
+   "n": 488,
    "thin": false
   },
   "4|top|4": {
-   "p": 0.88819,
-   "n": 635,
+   "p": 0.88455,
+   "n": 615,
+   "thin": false
+  },
+  "5|top|5": {
+   "p": 0.92807,
+   "n": 431,
+   "thin": false
+  },
+  "8|top|-3": {
+   "p": 0.045,
+   "n": 1400,
+   "thin": false
+  },
+  "9|top|5": {
+   "p": 0.99342,
+   "n": 760,
+   "thin": false
+  },
+  "3|bottom|-6": {
+   "p": 0.06883,
+   "n": 494,
+   "thin": false
+  },
+  "3|top|4": {
+   "p": 0.86236,
+   "n": 356,
+   "thin": false
+  },
+  "4|bottom|-6": {
+   "p": 0.02789,
+   "n": 753,
+   "thin": false
+  },
+  "4|top|6": {
+   "p": 0.96259,
+   "n": 401,
+   "thin": false
+  },
+  "5|bottom|-6": {
+   "p": 0.02039,
+   "n": 1079,
+   "thin": false
+  },
+  "5|top|6": {
+   "p": 0.98752,
+   "n": 641,
+   "thin": false
+  },
+  "6|top|6": {
+   "p": 0.98909,
+   "n": 917,
+   "thin": false
+  },
+  "7|top|6": {
+   "p": 0.99206,
+   "n": 1134,
+   "thin": false
+  },
+  "9|top|2": {
+   "p": 0.9297,
+   "n": 1579,
+   "thin": false
+  },
+  "5|bottom|4": {
+   "p": 0.95355,
+   "n": 775,
+   "thin": false
+  },
+  "5|top|-4": {
+   "p": 0.06554,
+   "n": 885,
+   "thin": false
+  },
+  "6|top|-4": {
+   "p": 0.06474,
+   "n": 1004,
+   "thin": false
+  },
+  "2|bottom|5": {
+   "p": 0.95699,
+   "n": 93,
+   "thin": true
+  },
+  "3|bottom|5": {
+   "p": 0.95238,
+   "n": 210,
+   "thin": false
+  },
+  "3|top|-5": {
+   "p": 0.05929,
+   "n": 253,
+   "thin": false
+  },
+  "5|bottom|3": {
+   "p": 0.91406,
+   "n": 1152,
+   "thin": false
+  },
+  "2|bottom|-5": {
+   "p": 0.11588,
+   "n": 233,
+   "thin": false
+  },
+  "3|bottom|-5": {
+   "p": 0.08718,
+   "n": 390,
+   "thin": false
+  },
+  "3|top|5": {
+   "p": 0.93846,
+   "n": 195,
+   "thin": false
+  },
+  "4|top|5": {
+   "p": 0.93417,
+   "n": 319,
+   "thin": false
+  },
+  "4|bottom|6": {
+   "p": 0.9925,
+   "n": 400,
+   "thin": false
+  },
+  "4|top|-6": {
+   "p": 0.02994,
+   "n": 501,
    "thin": false
   },
   "4|bottom|4": {
-   "p": 0.93405,
-   "n": 652,
+   "p": 0.93827,
+   "n": 648,
    "thin": false
   },
   "2|top|-3": {
-   "p": 0.1696,
-   "n": 625,
+   "p": 0.17085,
+   "n": 638,
    "thin": false
   },
   "2|bottom|-6": {
-   "p": 0.08907,
-   "n": 247,
+   "p": 0.08765,
+   "n": 251,
    "thin": false
   },
   "3|bottom|6": {
-   "p": 0.97119,
-   "n": 243,
+   "p": 0.97009,
+   "n": 234,
    "thin": false
   },
   "3|top|-6": {
-   "p": 0.03717,
-   "n": 269,
-   "thin": false
-  },
-  "1|bottom|1": {
-   "p": 0.68817,
-   "n": 558,
+   "p": 0.0365,
+   "n": 274,
    "thin": false
   },
   "3|top|6": {
-   "p": 0.92237,
-   "n": 219,
+   "p": 0.92453,
+   "n": 212,
    "thin": false
   },
   "1|bottom|-5": {
-   "p": 0.19753,
-   "n": 81,
+   "p": 0.17442,
+   "n": 86,
    "thin": true
   },
   "2|top|5": {
-   "p": 0.84058,
-   "n": 69,
+   "p": 0.83871,
+   "n": 62,
    "thin": true
   },
   "1|bottom|-6": {
-   "p": 0.1,
-   "n": 60,
+   "p": 0.11475,
+   "n": 61,
    "thin": true
   },
   "2|top|6": {
-   "p": 0.89583,
-   "n": 48,
+   "p": 0.89362,
+   "n": 47,
    "thin": true
   },
   "2|bottom|6": {
-   "p": 0.95385,
-   "n": 65,
+   "p": 0.9661,
+   "n": 59,
    "thin": true
   },
   "2|top|-6": {
-   "p": 0.02899,
-   "n": 69,
+   "p": 0.02817,
+   "n": 71,
    "thin": true
   }
  },
- "half_inning_start_note": "P(the team coming to bat wins) at the START of each half-inning, MEASURED rather than modelled. A decision that ends a half-inning is valued from this table, not from the smooth model, because a smooth model is free to be discontinuous across a boundary it was never constrained at: two successive fits left about 8% of two-out states where making the third out RAISED the batting team's win probability. A half-inning always starts with nobody out and nobody on, so this table needs no extrapolation and its cells hold about 1,250 observations each.",
+ "half_inning_start_note": "P(the team coming to bat wins) at the START of each half-inning, MEASURED rather than modelled. A decision that ends a half-inning is valued from this table, not from the smooth model, because a smooth model is free to be discontinuous across a boundary it was never constrained at: two successive fits left about 8% of two-out states where making the third out RAISED the batting team's win probability. A half-inning always starts with nobody out and nobody on, so this table needs no extrapolation and its cells hold a median of 1,262 observations each. The lead is read BEFORE the leadoff play, so no cell describes a state that cannot occur.",
  "calibration": {
-  "brier": 0.155718,
+  "brier": 0.157678,
   "brier_base_rate_only": 0.249754,
-  "brier_skill_score": 0.3765,
-  "expected_calibration_error": 0.00657,
+  "brier_skill_score": 0.3687,
+  "expected_calibration_error": 0.00572,
   "batting_team_win_rate": 0.5157,
   "home_win_rate": 0.5169,
-  "brier_on_the_home_frame": 0.155718,
+  "brier_on_the_home_frame": 0.157678,
   "reliability": [
    {
     "bin": "0.0-0.1",
-    "n": 198408,
-    "predicted": 0.0292,
-    "observed": 0.0352
+    "n": 195537,
+    "predicted": 0.0301,
+    "observed": 0.0362
    },
    {
     "bin": "0.1-0.2",
-    "n": 90249,
-    "predicted": 0.1497,
-    "observed": 0.1407
+    "n": 88139,
+    "predicted": 0.149,
+    "observed": 0.1451
    },
    {
     "bin": "0.2-0.3",
-    "n": 92523,
-    "predicted": 0.2504,
-    "observed": 0.2318
+    "n": 91570,
+    "predicted": 0.2491,
+    "observed": 0.2291
    },
    {
     "bin": "0.3-0.4",
-    "n": 82794,
-    "predicted": 0.3415,
-    "observed": 0.3344
+    "n": 90366,
+    "predicted": 0.3429,
+    "observed": 0.3362
    },
    {
     "bin": "0.4-0.5",
-    "n": 228501,
-    "predicted": 0.4491,
-    "observed": 0.4447
+    "n": 226092,
+    "predicted": 0.4536,
+    "observed": 0.4495
    },
    {
     "bin": "0.5-0.6",
-    "n": 202744,
-    "predicted": 0.5573,
-    "observed": 0.5582
+    "n": 205866,
+    "predicted": 0.5597,
+    "observed": 0.56
    },
    {
     "bin": "0.6-0.7",
-    "n": 118035,
-    "predicted": 0.6508,
-    "observed": 0.6587
+    "n": 123676,
+    "predicted": 0.651,
+    "observed": 0.6557
    },
    {
     "bin": "0.7-0.8",
-    "n": 114847,
-    "predicted": 0.7487,
-    "observed": 0.7644
+    "n": 118183,
+    "predicted": 0.7505,
+    "observed": 0.7639
    },
    {
     "bin": "0.8-0.9",
-    "n": 104950,
-    "predicted": 0.8497,
-    "observed": 0.856
+    "n": 101741,
+    "predicted": 0.8509,
+    "observed": 0.8576
    },
    {
     "bin": "0.9-1.0",
-    "n": 215914,
-    "predicted": 0.9673,
-    "observed": 0.9644
+    "n": 207795,
+    "predicted": 0.9668,
+    "observed": 0.9645
    }
   ],
   "feed_brier": 0.157516,
-  "feed_note": "the MLB feed's own wp_home_before, scored on the same plays, for comparison. Measured 2026-09-06 it is 0.157516 against this model's 0.155718, so the context-free model is very slightly BETTER on Brier despite knowing nothing about the teams. That is not a claim to have beaten MLB at win probability: the feed is a live in-game number solving a different problem, and the gap is small. What it does settle is that insisting on a team-blind valuation costs nothing measurable here, which is the only question this module needed answered. The feed is still not the engine, because its within-cell standard deviation of 0.04 means it carries team quality, and crediting a manager for having better players is the confound this module exists to avoid."
+  "feed_note": "the MLB feed's own wp_home_before, scored on the same plays, for comparison. Measured on this build it is 0.157516 against this model's 0.157678, so the feed is very slightly ahead on Brier, by 0.00016, which is what an estimator that knows the teams should manage. That is not a ranking of win-probability models: the feed is a live in-game number solving a different problem, and the gap either way is smaller than the rounding a reader sees. What it settles is that insisting on a team-blind valuation costs nothing measurable here, which is the only question this module needed answered. The feed is still not the engine, because its within-cell standard deviation of 0.04 means it carries team quality, and crediting a manager for having better players is the confound this module exists to avoid. Both figures are derived from this fit; neither is typed."
  },
  "why_a_model_not_a_table": "a table of cell means at this resolution cannot support differencing. Measured on the first build: advancing a runner from first to second LOWERED the batting team's win expectancy in 42.6% of comparable cells, because 1.45 million plays over 4,557 cells is about 318 each, the standard error of a binary outcome at that count is 0.029, and the effect being measured is 0.02 to 0.05. The feed's own numbers averaged the same way violate it in 24.6%.",
- "smoothing_costs_the_tails": "the model is less sharp than the raw cell means at the extremes. Bottom of the ninth tied, bases empty reads 0.6295 / 0.5868 / 0.5556 by outs against published values near 0.63 / 0.57 / 0.52: the leadoff cell matches and the two-out cell is about three points high. That is the price of a functional form smooth enough to difference, and it is a price worth paying, because a table that is right on average and non-monotone in the base state cannot value a decision at all. Any family reading the ninth-inning tail should say so.",
+ "smoothing_costs_the_tails": "the model is less sharp than the raw cell means at the extremes. Bottom of the ninth tied, bases empty reads 0.6396 / 0.5757 / 0.5285 by outs against published values near 0.63 / 0.57 / 0.52: the leadoff cell is about 1.0 points high, the one-out cell is about 0.6 points high and the two-out cell is about 0.8 points high. That is the price of a functional form smooth enough to difference, and it is a price worth paying, because a table that is right on average and non-monotone in the base state cannot value a decision at all. Any family reading the ninth-inning tail should say so. These three figures are interpolated from the fit this artifact ships and cannot drift from it.",
+ "ninth_inning_tail": {
+  "state": "bottom of the ninth, tied, bases empty",
+  "model_by_outs": [
+   0.63957,
+   0.57567,
+   0.52849
+  ],
+  "published_by_outs": [
+   0.63,
+   0.57,
+   0.52
+  ],
+  "note": "the three figures quoted in smoothing_costs_the_tails, shipped as numbers so a test can compare the prose against the model instead of against a memory of it."
+ },
  "monotone_by_construction": "the base-out state enters ONLY through its run expectancy, as a single covariate with a positive coefficient, so advancing a runner always raises the batting team's win probability. That property is what makes differencing safe and it is asserted in the tests, not assumed.",
  "state_excludes": "the teams, the batter, the pitcher, the park and the count. Every one matters to a real win probability and every one would let a manager's roster leak into his grade. This is a league-average valuation of a SITUATION, which is the only thing a decision can be fairly scored against.",
  "extra_innings_note": "innings past the cap read as zero regulation half-innings remaining. Since 2020 extra innings begin with an automatic runner on second, so the tenth is a structurally different game; it is pooled rather than modelled."

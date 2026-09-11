@@ -28,6 +28,7 @@ THE SIX MISTAKES THESE TESTS EXIST FOR:
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -306,3 +307,82 @@ def test_the_gate_doc_exists_and_is_frozen():
     assert GATE.exists()
     txt = GATE.read_text(encoding="utf-8")
     assert "2026-09-06" in txt
+
+
+# --- the two invariants whose absence WAS the defect (audit F07-01, F07-02) ---
+
+def test_every_tied_game_boundary_cell_is_populated_and_carries_its_sample(d):
+    """F07-01: the served half-inning-start table shipped 18 of 18 tied-game rows
+    BLANK, under copy telling the reader the boundary is priced from exactly this
+    table. The numbers existed and were correct in data/win_expectancy.json the
+    whole time; the export wrapped them in a shape the renderer could not read,
+    and no assertion anywhere compared the two. The absence of this test is the
+    whole of the finding, so it is the test that matters more than the fix."""
+    his = d["reference"]["half_inning_start"]
+    tied = his["tied_game"]
+    assert len(tied) == 18, f"expected 18 tied-game rows, got {len(tied)}"
+    for r in tied:
+        assert r.get("batting_team_win_prob") is not None, (
+            f"inning {r.get('inning')} {r.get('half')} serves a blank win "
+            "probability; that is F07-01 returning")
+        assert 0.0 < r["batting_team_win_prob"] < 1.0
+        assert (r.get("n") or 0) > 100, (
+            f"inning {r.get('inning')} {r.get('half')} carries n={r.get('n')}; a "
+            "served cell must publish the sample it was measured on")
+
+
+def test_the_last_licks_edge_survives_in_the_served_table(d):
+    """The bottom of an inning is worth more than the top of the same inning to
+    the batting team, because the home side bats last. A table that lost this
+    would be reporting noise."""
+    tied = d["reference"]["half_inning_start"]["tied_game"]
+    by = {(r["inning"], r["half"]): r["batting_team_win_prob"] for r in tied}
+    ninth_top, ninth_bot = by.get((9, "top")), by.get((9, "bottom"))
+    assert ninth_top is not None and ninth_bot is not None
+    assert ninth_bot > ninth_top, (
+        f"bottom of the ninth ({ninth_bot}) must beat the top ({ninth_top})")
+
+
+def test_the_headline_sentence_agrees_in_sign_with_its_own_number(d):
+    """F07-02: the served sentence said the running game was 'worth about one and
+    a half wins to the entire league' while the corrected number is NEGATIVE. The
+    sentence was TYPED and the number was computed, so nothing could catch the
+    disagreement. Both are now derived; this pins that they cannot diverge again.
+
+    The rule is the one the accuracy page already follows: a served number inside
+    a string is interpolated from the artifact, never typed."""
+    hl = d["headline"]
+    net = hl.get("net_dv_all_seasons_wins")
+    sentence = hl.get("sentence") or ""
+    assert net is not None, "the running game serves no net decision value"
+    assert sentence, "the running game serves no headline sentence"
+    low = sentence.lower()
+    if net < 0:
+        assert "cost" in low, (
+            f"net is {net} wins but the sentence does not say the running game "
+            f"costs anything: {sentence[:160]}")
+    else:
+        assert ("worth" in low) or ("pay" in low), (
+            f"net is {net} wins and the sentence does not say so: {sentence[:160]}")
+    nums = [float(x) for x in re.findall(r"(\d+\.?\d*)\s*wins", low)]
+    assert any(abs(n - abs(net)) < 0.55 for n in nums), (
+        f"the sentence quotes {nums} wins and the artifact says {net}")
+
+
+def test_the_bunt_sentence_agrees_with_its_own_total(d):
+    """Same rule, the other served paragraph. The bunt total moved 26.6 percent
+    on the F07-02 repair and the sentence has to move with it."""
+    blk = d["sections"]["sacrifice_bunt"]
+    sentence = (blk.get("sentence") or "").lower()
+    assert sentence, "the bunt section serves no sentence"
+    total = None
+    for k in ("total_decision_value_wins", "total_dv_wins", "total_wins"):
+        if blk.get(k) is not None:
+            total = float(blk[k]); break
+    if total is None:
+        pytest.skip("no machine-readable bunt total on this build")
+    nums = [float(x) for x in re.findall(r"(\d+\.?\d*)\s*wins", sentence)]
+    assert any(abs(n - abs(total)) < 1.5 for n in nums), (
+        f"the bunt sentence quotes {nums} wins against an artifact total of {total}")
+    if total < 0:
+        assert "cost" in sentence

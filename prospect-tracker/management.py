@@ -53,14 +53,28 @@ attempts are counted and published; pricing them needs an inning-level model tha
 predicts the boundary and the mid-inning state together, and that has not been
 built.
 
-WHAT IT FOUND, 2026-09-06, over 13,971 priceable attempts:
+WHAT IT FOUND, restated 2026-09-10 on the corrected win model, over the same
+13,971 priceable attempts:
 
   stealing second   the league succeeds 75.00% against a swing-weighted
-                    break-even of 75.03%. Eight seasons of decision value sum to
-                    -0.19 wins. Managers collectively run the stolen base at
-                    almost exactly the point of indifference.
-  stealing third    76.1% against 72.8%, worth +4.31 wins.
-  stealing home     25.8% against 55.8%, worth -2.33 wins.
+                    break-even of 75.29%. Eight seasons of decision value sum to
+                    -2.60 wins across 11,977 attempts. Managers collectively
+                    still run the stolen base at close to the point of
+                    indifference.
+  stealing third    76.1% against 73.1%, worth +5.93 wins.
+  stealing home     25.8% against 73.5%, worth -4.08 wins.
+  net               -0.75 wins, where the 2026-09-06 build read +1.79.
+
+WHY THOSE NUMBERS MOVED (audit F07-02). The state this module prices is the one
+"BEFORE he decided", and until 2026-09-10 the score in that state was read off
+the corpus's POST-play score column while the outs and the bases were read
+pre-play. 2,388 of the 13,971 attempts (17.09%) sit in a plate appearance that
+scored, so the runner was valued against a scoreboard that already contained
+runs driven in after he broke; for a steal of home the run being stolen was in
+the score and `_we_after` then added it a second time. The score is now taken
+from `win_expectancy.pre_play_score_diff`. The win model was refit on the same
+correction, which moves these numbers again and by more, because the leak had
+attenuated the run-expectancy coefficient the whole family differences.
 
 Offline. Reads .cache/pbp_corpus and data/win_expectancy.json.
 """
@@ -219,7 +233,8 @@ def attempts(*, corpus: Path | None = None, seasons=None, we=None):
         st["success"] = st["event_type"].map(lambda e: STEAL_EVENTS[e][1])
 
         keep = ["game_pk", "at_bat_index", "inning", "half", "outs_before",
-                "on_first", "on_second", "on_third", "home_score", "away_score"]
+                "on_first", "on_second", "on_third", "home_score", "away_score",
+                "runs_scored_on_play"]
         j = st.merge(pl[keep], on=["game_pk", "at_bat_index"], how="inner")
         # Arithmetic rather than bit shifts: a pandas Series has no <<, and the
         # three terms are disjoint powers of two so addition IS the OR here.
@@ -230,7 +245,13 @@ def attempts(*, corpus: Path | None = None, seasons=None, we=None):
         j["base_before"] = (j["on_first"].notna().astype(int)
                             + 2 * j["on_second"].notna().astype(int)
                             + 4 * j["on_third"].notna().astype(int))
-        j["score_diff"] = j["home_score"] - j["away_score"]
+        # THE SCORE IS THE ONE HE DECIDED FROM (audit F07-02). The corpus
+        # score columns are POST-play, so on a plate appearance that scored they
+        # already contain runs driven in after the runner broke. Reading them
+        # raw paired an after-the-play score with a before-the-play base-out
+        # state on 17.09% of attempts and moved every decision value in the
+        # family.
+        j["score_diff"] = wx.pre_play_score_diff(j)
         j["origin_bit"] = j["target"].map(ORIGIN_BIT)
         # THE ORIGIN BASE MUST BE OCCUPIED. A "steal of second" whose first base
         # is empty is not a steal this module can price: it means the state

@@ -92,18 +92,32 @@ def _run_expectancy(we: dict) -> list:
 def _half_inning_start(we: dict) -> dict:
     """The measured table, reduced to the tied game, which is the readable slice.
 
-    THE WHOLE TABLE IS 213 CELLS and it is not a page. What a reader wants is
-    "what is my chance of winning as I come to bat in the seventh, tied", and
-    that is one column of it. The rest stays in data/win_expectancy.json.
+    THE WHOLE TABLE IS A FEW HUNDRED CELLS and it is not a page. What a reader
+    wants is "what is my chance of winning as I come to bat in the seventh,
+    tied", and that is one column of it. The rest stays in
+    data/win_expectancy.json. The count ships as `n_cells_total`, derived, so
+    nothing here has to be kept in step with the model by hand.
+
+    THE CELL IS A DICT, NOT A SCALAR (audit F07-01). It carries
+    {"p": ..., "n": ..., "thin": ...}, and `_r` on the dict raised TypeError
+    inside its own try, returned None, and drew all 18 rows of the "Coming to
+    bat in a tied game" table with an empty Win probability column under a
+    paragraph saying the numbers were measured. This is the identical defect
+    `_run_expectancy` documents having fixed eight lines above; the fix was
+    applied to one of the two functions. The sample size ships too, for the same
+    reason it ships on the run-expectancy matrix.
     """
     tab = we.get("half_inning_start") or {}
     rows = []
     for inn in range(1, 10):
         for half in ("top", "bottom"):
             v = tab.get(f"{inn}|{half}|0")
-            if v is not None:
-                rows.append({"inning": inn, "half": half, "score_diff": 0,
-                             "batting_team_win_prob": _r(v)})
+            if v is None:
+                continue
+            cell = v if isinstance(v, dict) else {"p": v, "n": None, "thin": None}
+            rows.append({"inning": inn, "half": half, "score_diff": 0,
+                         "batting_team_win_prob": _r(cell.get("p")),
+                         "n": cell.get("n"), "thin": cell.get("thin")})
     return {"tied_game": rows,
             "note": we.get("half_inning_start_note"),
             "n_cells_total": len(tab)}
@@ -228,6 +242,45 @@ def _bunt_section() -> dict:
     }
 
 
+#: Small counts read as words in this copy, so a derived sentence reads the way
+#: the typed one did. Anything larger stays a numeral.
+_WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
+          7: "seven", 8: "eight", 9: "nine", 10: "ten", 11: "eleven",
+          12: "twelve"}
+
+
+def _words(n: int) -> str:
+    return _WORDS.get(int(n), str(n))
+
+
+def _headline_sentence(bt: dict, net, n_seasons: int) -> str:
+    """DERIVED, not typed (audit F07-02, F07-05).
+
+    The shipped sentence said the running game "is worth about one and a half
+    wins to the entire league" and was written against a build whose score
+    convention leaked. Correcting the leak flips the net to negative, so a typed
+    sentence would not merely be stale, it would assert the opposite of the
+    number printed beside it. Every clause here is read off the artifact.
+    """
+    gap = (bt["2B"]["success_rate"] or 0) - (bt["2B"]["swing_weighted_breakeven_p"] or 0)
+    how = ("almost exactly as often as it should" if abs(gap) < 0.01
+           else "more often than it should" if gap > 0
+           else "less often than it should")
+    third = "pay" if (bt["3B"]["sum_dv_wins"] or 0) > 0 else "do not pay"
+    home = "do not" if (bt["HOME"]["sum_dv_wins"] or 0) < 0 else "do"
+    net = float(net or 0.0)
+    if abs(net) < 0.5:
+        worth = ("worth nothing the entire league could notice, "
+                 "%+.2f wins across all of it" % net)
+    elif net > 0:
+        worth = "worth about %.2f wins to the entire league" % net
+    else:
+        worth = "costing the entire league about %.2f wins" % abs(net)
+    return (f"Across {_words(n_seasons)} seasons the league steals second "
+            f"{how}. Steals of third {third}, steals of home {home}, and the "
+            f"whole running game is {worth}.")
+
+
 def build(*, corpus=None, teams=True) -> dict:
     run = json.loads(RUNNING.read_text(encoding="utf-8"))
     gate = json.loads(GATE_EVAL.read_text(encoding="utf-8"))
@@ -236,6 +289,7 @@ def build(*, corpus=None, teams=True) -> dict:
     pub = sh["published"]
     raw = sh["raw_for_comparison"]
     bt = run["by_target"]
+    _bunt = _bunt_section()
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -255,11 +309,9 @@ def build(*, corpus=None, teams=True) -> dict:
             "redistributable_pool_abs_dv_wins": _r(
                 gate["headline"]["redistributable_pool_abs_dv_wins"], 2),
             "games": gate["team_attribution"]["games"],
-            "sentence": (
-                "Across eight seasons the league steals second almost exactly as "
-                "often as it should. Steals of third pay, steals of home do not, "
-                "and the whole running game is worth about one and a half wins to "
-                "the entire league."),
+            "sentence": _headline_sentence(
+                bt, gate["headline"]["net_dv_all_seasons_wins"],
+                len(run.get("by_season") or {})),
         },
 
         "running_game": {
@@ -346,13 +398,19 @@ def build(*, corpus=None, teams=True) -> dict:
                         "this family. Building the manager entity to attribute a "
                         "signal that is not there would be work spent to make a null "
                         "more precise.")},
-            "sacrifice_bunt": _bunt_section(),
+            "sacrifice_bunt": _bunt,
             "bullpen_and_lineup": {
                 "live": False, "blocked_on": "not yet measured",
+                # DERIVED, not typed (audit F07-02). Both figures in this
+                # sentence moved when the score convention was corrected, and
+                # one of them changed sign.
                 "why": ("two decision families are measured here, the running game "
-                        "and the sacrifice bunt, and they disagree: the running game "
-                        "is worth about +1.8 wins to the league and the bunt about "
-                        "-100. That disagreement is the argument for measuring the "
+                        "and the sacrifice bunt, and they disagree in size by two "
+                        "orders of magnitude: the running game is worth about "
+                        f"{_r(gate['headline']['net_dv_all_seasons_wins'], 2):+.2f} "
+                        "wins to the league and the bunt about "
+                        f"{(_bunt.get('total_decision_value_wins') or 0):+.0f}. "
+                        "That disagreement is the argument for measuring the "
                         "rest rather than generalising from either. The bullpen call "
                         "and the pinch hit have more room and have not been measured, "
                         "so nothing here says anything about them.")},

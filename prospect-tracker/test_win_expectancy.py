@@ -262,10 +262,15 @@ def test_the_home_win_rate_is_right(art):
 
 
 def test_the_feed_comparison_is_stated_as_measured(art):
-    """This claim was written before it was measured and was WRONG: the note
-    said the feed was better, and on Brier the context-free model is very
-    slightly ahead. The artifact must carry what was measured, not what was
-    expected."""
+    """The artifact must carry what was measured, not what was expected.
+
+    AMENDED 2026-09-10 (audit F07-02). The old docstring recorded that "on Brier
+    the context-free model is very slightly ahead". That was an artifact of the
+    leak: the model was fitted and queried on a POST-play score against a
+    PRE-play base-out state. On the honest pre-play state the FEED wins, 0.157516
+    against 0.157678. The half of this test that checked the direction only fired
+    when the model was ahead, so after the repair it asserted nothing at all.
+    Both directions are now checked, which is the point of the test."""
     c = art["calibration"]
     note = c["feed_note"]
     # The note quotes figures from the build that wrote it. What must hold is
@@ -273,9 +278,18 @@ def test_the_feed_comparison_is_stated_as_measured(art):
     # digits move with every refit and pinning them would make the note a
     # maintenance burden that nobody updates, which is how a stale claim ships.
     assert "0.15" in note, "the feed note quotes no Brier score at all"
-    if c["feed_brier"] > c["brier"]:
-        assert "better" in note.lower(), (
-            "the model beats the feed and the note does not say so")
+    # WHICH SUBJECT the note names as ahead must match which one actually is.
+    # A bare "better" search is not enough: the note legitimately says the feed
+    # would carry "better players", which is a different clause entirely.
+    import re
+    claim = re.search(r"the (feed|model) is [^.]{0,60}?(ahead|better)", note.lower())
+    assert claim, f"the feed note states no direction at all: {note[:160]}"
+    winner = "feed" if c["feed_brier"] < c["brier"] else "model"
+    assert claim.group(1) == winner, (
+        f"the note says the {claim.group(1)} is ahead while the artifact has the "
+        f"{winner} ahead (feed {c['feed_brier']} against model {c['brier']}). That "
+        "is the F07-02 defect returning: a served sentence outliving the number "
+        "underneath it.")
     assert "team quality" in note.lower()
 
 

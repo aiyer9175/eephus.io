@@ -261,16 +261,21 @@ def test_the_league_steals_second_at_almost_exactly_break_even(art):
 
     Measured 2026-09-06 over 11,977 attempts with nobody out or one out: the
     league succeeds 75.00% of the time against a swing-weighted break-even of
-    75.03%. The summed decision value across eight seasons is -0.19 wins, which
-    is zero for every practical purpose. Managers collectively run the stolen
-    base at the point of indifference.
+    75.03%, summed decision value -0.19 wins.
+
+    RE-MEASURED 2026-09-10 on the repaired win model (audit F07-02, which removed
+    a post-play score from the fit and every query). Same 11,977 attempts: success
+    75.00% against a break-even of 75.29%, summed decision value -2.60 wins. The
+    FINDING is unchanged, and that is worth stating plainly: managers still run
+    the stolen base at the point of indifference, and the gap is still inside a
+    third of a percentage point. What moved is the price, not the verdict.
     """
     v = art["by_target"]["2B"]
     assert v["n"] > 10000
     gap = v["success_rate"] - v["swing_weighted_breakeven_p"]
     assert abs(gap) < 0.02, (
         f"the league's stolen-base success rate now sits {gap:+.4f} from its "
-        "swing-weighted break-even, against 0.0003 on 2026-09-06. That is a "
+        "swing-weighted break-even, against -0.0029 on 2026-09-10. That is a "
         "real finding either way; confirm it before it changes any published "
         "number.")
     assert abs(v["sum_dv_wins"]) < 15.0, (

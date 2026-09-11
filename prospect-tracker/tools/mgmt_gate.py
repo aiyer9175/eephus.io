@@ -223,7 +223,8 @@ def _leg_captured_share(np, pd, df, corpus):
         season = season_dir.name
         pl = pd.concat([pd.read_parquet(f, columns=[
             "game_pk", "at_bat_index", "inning", "half", "outs_before",
-            "on_first", "on_second", "on_third", "home_score", "away_score"])
+            "on_first", "on_second", "on_third", "home_score", "away_score",
+            "runs_scored_on_play"])
             for f in sorted(season_dir.glob("*.parquet"))], ignore_index=True)
         # THE OPPORTUNITY SET, exactly the population management.py prices:
         # fewer than two out, a runner on first, second base empty.
@@ -236,7 +237,12 @@ def _leg_captured_share(np, pd, df, corpus):
     opp["base_before"] = (opp["on_first"].notna().astype(int)
                           + 2 * opp["on_second"].notna().astype(int)
                           + 4 * opp["on_third"].notna().astype(int))
-    opp["score_diff"] = opp["home_score"] - opp["away_score"]
+    # PRE-PLAY, the same convention management.py prices from (audit F07-02).
+    # This site was not in the finding's table of four and is the fifth: the
+    # captured-share opportunity set is priced through W.offense_we exactly as
+    # an attempt is, so a post-play score here would compare a corrected actual
+    # against a leaked optimum.
+    opp["score_diff"] = wx.pre_play_score_diff(opp)
 
     lg = df[df["target"] == "2B"].groupby("season")["success"].mean().to_dict()
 

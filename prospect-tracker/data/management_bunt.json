@@ -1,6 +1,6 @@
 {
  "status": "built",
- "generated_at": "2026-09-07T16:41:52Z",
+ "generated_at": "2026-09-11T01:07:22Z",
  "produced_by": "mgmt_bunt.price",
  "seasons": [
   2018,
@@ -20,8 +20,8 @@
   "unpriceable_state": 0,
   "thin_cell": 16
  },
- "total_decision_value_wins": -100.496,
- "dv_per_bunt_mean": -0.01472,
+ "total_decision_value_wins": -127.198,
+ "dv_per_bunt_mean": -0.01864,
  "cells": [
   {
    "outs": 0,
@@ -29,10 +29,10 @@
    "bases": "empty",
    "n_bunt": 804,
    "n_alt": 352640,
-   "e_dwe_bunt": -0.01762,
-   "e_dwe_alt": 0.00079,
-   "dv_per_bunt": -0.01841,
-   "dv_total": -14.8006
+   "e_dwe_bunt": -0.02514,
+   "e_dwe_alt": 0.0,
+   "dv_per_bunt": -0.02514,
+   "dv_total": -20.211
   },
   {
    "outs": 0,
@@ -40,10 +40,10 @@
    "bases": "1B",
    "n_bunt": 1914,
    "n_alt": 82198,
-   "e_dwe_bunt": -0.01605,
-   "e_dwe_alt": 0.00121,
-   "dv_per_bunt": -0.01726,
-   "dv_total": -33.0438
+   "e_dwe_bunt": -0.02252,
+   "e_dwe_alt": 9e-05,
+   "dv_per_bunt": -0.02261,
+   "dv_total": -43.277
   },
   {
    "outs": 0,
@@ -51,10 +51,10 @@
    "bases": "2B",
    "n_bunt": 1013,
    "n_alt": 21966,
-   "e_dwe_bunt": -0.01475,
-   "e_dwe_alt": 0.00448,
-   "dv_per_bunt": -0.01923,
-   "dv_total": -19.4786
+   "e_dwe_bunt": -0.01998,
+   "e_dwe_alt": 0.00304,
+   "dv_per_bunt": -0.02302,
+   "dv_total": -23.3238
   },
   {
    "outs": 0,
@@ -62,10 +62,10 @@
    "bases": "1B+2B",
    "n_bunt": 1213,
    "n_alt": 19965,
-   "e_dwe_bunt": -0.00763,
-   "e_dwe_alt": 0.00152,
-   "dv_per_bunt": -0.00915,
-   "dv_total": -11.0953
+   "e_dwe_bunt": -0.0105,
+   "e_dwe_alt": -0.00034,
+   "dv_per_bunt": -0.01016,
+   "dv_total": -12.3289
   },
   {
    "outs": 0,
@@ -73,10 +73,10 @@
    "bases": "1B+3B",
    "n_bunt": 94,
    "n_alt": 7136,
-   "e_dwe_bunt": 0.00203,
-   "e_dwe_alt": 0.01162,
-   "dv_per_bunt": -0.00959,
-   "dv_total": -0.9014
+   "e_dwe_bunt": -0.00555,
+   "e_dwe_alt": 0.00156,
+   "dv_per_bunt": -0.00711,
+   "dv_total": -0.6686
   },
   {
    "outs": 1,
@@ -84,10 +84,10 @@
    "bases": "empty",
    "n_bunt": 476,
    "n_alt": 256528,
-   "e_dwe_bunt": -0.0124,
-   "e_dwe_alt": 0.00085,
-   "dv_per_bunt": -0.01325,
-   "dv_total": -6.3053
+   "e_dwe_bunt": -0.01768,
+   "e_dwe_alt": 0.00016,
+   "dv_per_bunt": -0.01784,
+   "dv_total": -8.4921
   },
   {
    "outs": 1,
@@ -95,10 +95,10 @@
    "bases": "1B",
    "n_bunt": 736,
    "n_alt": 103190,
-   "e_dwe_bunt": -0.01381,
-   "e_dwe_alt": 0.00133,
-   "dv_per_bunt": -0.01514,
-   "dv_total": -11.1427
+   "e_dwe_bunt": -0.01956,
+   "e_dwe_alt": 0.00033,
+   "dv_per_bunt": -0.0199,
+   "dv_total": -14.6447
   },
   {
    "outs": 1,
@@ -106,10 +106,10 @@
    "bases": "2B",
    "n_bunt": 61,
    "n_alt": 34765,
-   "e_dwe_bunt": -0.02092,
-   "e_dwe_alt": 0.00298,
-   "dv_per_bunt": -0.0239,
-   "dv_total": -1.4578
+   "e_dwe_bunt": -0.02995,
+   "e_dwe_alt": 0.00059,
+   "dv_per_bunt": -0.03054,
+   "dv_total": -1.8627
   },
   {
    "outs": 1,
@@ -117,10 +117,10 @@
    "bases": "1B+2B",
    "n_bunt": 181,
    "n_alt": 36285,
-   "e_dwe_bunt": -0.02006,
-   "e_dwe_alt": 0.00078,
-   "dv_per_bunt": -0.02083,
-   "dv_total": -3.7707
+   "e_dwe_bunt": -0.02791,
+   "e_dwe_alt": -0.00101,
+   "dv_per_bunt": -0.0269,
+   "dv_total": -4.8695
   },
   {
    "outs": 1,
@@ -128,10 +128,10 @@
    "bases": "3B",
    "n_bunt": 49,
    "n_alt": 10559,
-   "e_dwe_bunt": 0.03062,
-   "e_dwe_alt": 0.01282,
-   "dv_per_bunt": 0.0178,
-   "dv_total": 0.8721
+   "e_dwe_bunt": 0.02744,
+   "e_dwe_alt": 0.00376,
+   "dv_per_bunt": 0.02367,
+   "dv_total": 1.1599
   },
   {
    "outs": 1,
@@ -139,10 +139,10 @@
    "bases": "1B+3B",
    "n_bunt": 256,
    "n_alt": 15667,
-   "e_dwe_bunt": 0.01096,
-   "e_dwe_alt": 0.00948,
-   "dv_per_bunt": 0.00147,
-   "dv_total": 0.3774
+   "e_dwe_bunt": 0.00566,
+   "e_dwe_alt": 0.0017,
+   "dv_per_bunt": 0.00396,
+   "dv_total": 1.0142
   },
   {
    "outs": 1,
@@ -150,10 +150,10 @@
    "bases": "2B+3B",
    "n_bunt": 28,
    "n_alt": 10056,
-   "e_dwe_bunt": 0.01767,
-   "e_dwe_alt": 0.00872,
-   "dv_per_bunt": 0.00896,
-   "dv_total": 0.2508
+   "e_dwe_bunt": 0.01208,
+   "e_dwe_alt": 0.00113,
+   "dv_per_bunt": 0.01095,
+   "dv_total": 0.3067
   }
  ],
  "independent_control": {

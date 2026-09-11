@@ -16,7 +16,7 @@
 // What ships instead is the thing the null makes sayable:
 //   the league steals second at almost exactly its own break-even
 //   steals of third pay, steals of home do not
-//   the entire running game is worth about one and a half wins to the league
+//   the entire running game is worth a fraction of a win to the league
 //   and no club is repeatably better at deciding
 //
 // NOT ONE FIGURE IN THIS FILE IS TYPED. Every number and every sentence comes
@@ -145,9 +145,13 @@
       return "<tr><td>" + esc(b) + "</td>" + cells + "</tr>";
     }).join("");
 
+    // The cell carries p, n and thin. It used to be read as a bare number and
+    // every row drew blank (audit F07-01); the sample size now ships beside the
+    // probability, the way it does on the run-expectancy matrix.
     var his = ref.half_inning_start.tied_game.map(function (r) {
       return "<tr><td>" + esc(r.inning) + "</td><td>" + esc(r.half) + "</td><td>" +
-        pct(r.batting_team_win_prob) + "</td></tr>";
+        pct(r.batting_team_win_prob) + "</td><td>" +
+        (r.n === null || r.n === undefined ? "" : esc(r.n)) + "</td></tr>";
     }).join("");
 
     var cal = ref.model.calibration || {};
@@ -161,7 +165,8 @@
       "<h2>Coming to bat in a tied game</h2>" +
       '<p class="mgmt-note">' + esc(ref.half_inning_start.note) + "</p>" +
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' +
-      "<th>Inning</th><th>Half</th><th>Win probability</th></tr></thead><tbody>" +
+      "<th>Inning</th><th>Half</th><th>Win probability</th><th>Games</th>" +
+      "</tr></thead><tbody>" +
       his + "</tbody></table></div>" +
       "<h2>What the win model is and is not</h2>" +
       '<p class="mgmt-note">' + esc(ref.why_a_model_not_a_table) + "</p>" +

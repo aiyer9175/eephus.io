@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-06T08:27:53+00:00",
+ "generated_at": "2026-09-11T01:06:52+00:00",
  "produced_by": "management.py",
  "family": "running game: the stolen base decision",
  "n_attempts_priced": 13971,
@@ -19,97 +19,97 @@
   "2B": {
    "n": 11977,
    "success_rate": 0.75,
-   "mean_breakeven_p": 0.7534,
-   "median_breakeven_p": 0.7429,
-   "share_of_attempts_below_their_own_breakeven": 0.5718,
-   "swing_weighted_breakeven_p": 0.7503,
-   "mean_dv": -1.5e-05,
-   "sum_dv_wins": -0.19,
-   "mean_er": -3.6e-05,
-   "sum_er_wins": -0.43,
-   "mean_swing_on_success": 0.05313,
-   "mean_swing_on_failure": 0.05332,
-   "swing_ratio_failure_over_success": 1.0035
+   "mean_breakeven_p": 0.7563,
+   "median_breakeven_p": 0.7465,
+   "share_of_attempts_below_their_own_breakeven": 0.5282,
+   "swing_weighted_breakeven_p": 0.7529,
+   "mean_dv": -0.000217,
+   "sum_dv_wins": -2.6,
+   "mean_er": 0.000317,
+   "sum_er_wins": 3.79,
+   "mean_swing_on_success": 0.0773,
+   "mean_swing_on_failure": 0.0756,
+   "swing_ratio_failure_over_success": 0.978
   },
   "3B": {
    "n": 1932,
    "success_rate": 0.7614,
-   "mean_breakeven_p": 0.7309,
-   "median_breakeven_p": 0.732,
-   "share_of_attempts_below_their_own_breakeven": 0.6749,
-   "swing_weighted_breakeven_p": 0.7284,
-   "mean_dv": 0.00223,
-   "sum_dv_wins": 4.31,
-   "mean_er": -0.000636,
-   "sum_er_wins": -1.23,
-   "mean_swing_on_success": 0.06603,
-   "mean_swing_on_failure": 0.0694,
-   "swing_ratio_failure_over_success": 1.051
+   "mean_breakeven_p": 0.7341,
+   "median_breakeven_p": 0.7372,
+   "share_of_attempts_below_their_own_breakeven": 0.6558,
+   "swing_weighted_breakeven_p": 0.7308,
+   "mean_dv": 0.003068,
+   "sum_dv_wins": 5.93,
+   "mean_er": 0.000284,
+   "sum_er_wins": 0.55,
+   "mean_swing_on_success": 0.09989,
+   "mean_swing_on_failure": 0.09822,
+   "swing_ratio_failure_over_success": 0.9832
   },
   "HOME": {
    "n": 62,
    "success_rate": 0.2581,
-   "mean_breakeven_p": 0.5865,
-   "median_breakeven_p": 0.5887,
-   "share_of_attempts_below_their_own_breakeven": 0.0484,
-   "swing_weighted_breakeven_p": 0.5584,
-   "mean_dv": -0.037595,
-   "sum_dv_wins": -2.33,
-   "mean_er": -0.010115,
-   "sum_er_wins": -0.63,
-   "mean_swing_on_success": 0.09337,
-   "mean_swing_on_failure": 0.14083,
-   "swing_ratio_failure_over_success": 1.5083
+   "mean_breakeven_p": 0.7571,
+   "median_breakeven_p": 0.7511,
+   "share_of_attempts_below_their_own_breakeven": 0.0,
+   "swing_weighted_breakeven_p": 0.7352,
+   "mean_dv": -0.065794,
+   "sum_dv_wins": -4.08,
+   "mean_er": -0.007502,
+   "sum_er_wins": -0.47,
+   "mean_swing_on_success": 0.11861,
+   "mean_swing_on_failure": 0.14924,
+   "swing_ratio_failure_over_success": 1.2582
   }
  },
  "by_season": {
   "2018": {
    "n": 1606,
    "success_rate": 0.703,
-   "sum_dv_wins": -3.65,
-   "sum_er_wins": -1.73
+   "sum_dv_wins": -6.11,
+   "sum_er_wins": -1.11
   },
   "2019": {
    "n": 1399,
    "success_rate": 0.7041,
-   "sum_dv_wins": -3.28,
-   "sum_er_wins": -1.09
+   "sum_dv_wins": -5.14,
+   "sum_er_wins": -0.77
   },
   "2021": {
    "n": 1354,
    "success_rate": 0.729,
-   "sum_dv_wins": -1.35,
-   "sum_er_wins": -0.13
+   "sum_dv_wins": -2.21,
+   "sum_er_wins": 0.65
   },
   "2022": {
    "n": 1522,
    "success_rate": 0.7523,
-   "sum_dv_wins": 0.3,
-   "sum_er_wins": -0.58
+   "sum_dv_wins": 0.02,
+   "sum_er_wins": 0.0
   },
   "2023": {
    "n": 2080,
    "success_rate": 0.7841,
-   "sum_dv_wins": 4.51,
-   "sum_er_wins": 0.65
+   "sum_dv_wins": 6.31,
+   "sum_er_wins": 1.52
   },
   "2024": {
    "n": 2081,
    "success_rate": 0.7708,
-   "sum_dv_wins": 2.56,
-   "sum_er_wins": -0.68
+   "sum_dv_wins": 3.16,
+   "sum_er_wins": 0.04
   },
   "2025": {
    "n": 2122,
    "success_rate": 0.7644,
-   "sum_dv_wins": 2.1,
-   "sum_er_wins": 0.71
+   "sum_dv_wins": 2.65,
+   "sum_er_wins": 1.85
   },
   "2026": {
    "n": 1807,
    "success_rate": 0.7565,
-   "sum_dv_wins": 0.6,
-   "sum_er_wins": 0.57
+   "sum_dv_wins": 0.58,
+   "sum_er_wins": 1.69
   }
  },
  "why_execution_residual_does_not_sum_to_zero": "ER is priced against the group's OWN mean success rate, so successes and failures balance in count but need not balance in value: sum ER equals the sum over attempts of (success minus league_p) times the win-probability swing, an identity this artifact checks. RESOLVED 2026-09-06. On the full population the swing on failed attempts ran about 1.5 times the swing on successful ones, which invited a behavioural reading (defences hold runners better when it matters). It was MECHANICAL. Once the two-out attempts are excluded, and with them every caught stealing that ends an inning, the ratio falls to 1.00 on steals of second and 1.05 on steals of third. The asymmetry was the third out, not the defence. Whatever residual remains is small enough that the execution term now nearly sums to zero, which is what it should do when it is priced against its own group's mean.",

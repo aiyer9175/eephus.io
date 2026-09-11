@@ -83,8 +83,18 @@ def _load_plays(corpus: Path, seasons=None):
 
 
 def _state(df):
-    """base_before (0-7), score_diff (home minus away), and the outs guard."""
+    """base_before (0-7), score_diff (home minus away) BEFORE the play, and the
+    outs guard.
+
+    THE SCORE IS PRE-PLAY (audit F07-02). The corpus score columns are the score
+    AFTER the play, so reading them raw put both endpoints of every bunt
+    comparison one run or more hotter than the state the manager actually faced.
+    The delta across the two calls was still right, which is why the family's
+    sign survived, but the level was wrong and the level is where the urgency
+    interaction lives.
+    """
     import numpy as np
+    import win_expectancy as wx
     df = df.copy()
     # notna(), never astype(bool): these hold a runner id as float with NaN for
     # empty, and bool(NaN) is True, which reports every base occupied. That
@@ -92,7 +102,7 @@ def _state(df):
     df["base_before"] = (df["on_first"].notna().astype(int)
                          + 2 * df["on_second"].notna().astype(int)
                          + 4 * df["on_third"].notna().astype(int))
-    df["score_diff"] = df["home_score"] - df["away_score"]
+    df["score_diff"] = wx.pre_play_score_diff(df)
     return df
 
 

@@ -4769,10 +4769,17 @@ def build_management() -> str:
 
     What the null makes sayable is worth a page on its own. Over 13,971 priced
     attempts across eight seasons the league steals second at 75.00 percent
-    against a swing-weighted break-even of 75.03 percent, which is minus a fifth
-    of a win for the entire league. Steals of third pay, steals of home do not,
-    and the whole running game is worth about one and a half wins to everybody
-    who plays it.
+    against a swing-weighted break-even of 75.29 percent, which is minus two and
+    a half wins for the entire league. Steals of third pay, steals of home do
+    not, and the whole running game costs everybody who plays it about
+    three quarters of a win.
+
+    Those figures moved on 2026-09-10 and the page does not carry any of them as
+    typed copy: audit finding F07-02 found the win model fitted and queried on a
+    POST-play score against a PRE-play base-out state, and correcting it flipped
+    the league net from plus 1.79 wins to minus 0.75. The board's own sentence is
+    derived in mgmt_export._headline_sentence so this docstring can go stale
+    without the page going stale with it.
 
     The run-expectancy matrix and the measured half-inning-start table ship as a
     reference surface, because they need no gate: they are what every break-even
