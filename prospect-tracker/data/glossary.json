@@ -1532,7 +1532,8 @@
    "module": [
     "prospx",
     "projections",
-    "fa"
+    "fa",
+    "mlbstats"
    ],
    "aliases": [
     "eWAR",

@@ -2223,6 +2223,79 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-family: var(--font-retro-mono); font-size: 9px; text-transform: uppercase;
   letter-spacing: .05em; color: var(--text-tertiary); }
 .bp-slot--bench { opacity: .72; }
+/* ---- mlbx begin ---- */
+/* ---- MLB Stats column views (/mlbstats/ only) -------------------------------
+   Every rule is scoped under .mlbx, a class build_site.build_mlbstats puts on
+   the /mlbstats/ root ONLY. .mlbstats-app is shared by ten module roots
+   (arb, pal, fantasy, betting, diamond, parks, mgmt, hof, acct), so a rule
+   scoped to it would restyle their tables too. test_mlbx_css_scope.py pins it. */
+.mlbx .mlbstats-table .mlbstats-cv-off { display: none; }
+/* Case-coded labels (xREM+, eWAR, gmLI, pLI, wRC+, pWOBA) survive. */
+.mlbx .mlbstats-table th { text-transform: none; letter-spacing: .02em; font-size: 10.5px; }
+.mlbx .mlbstats-table th, .mlbx .mlbstats-table td { padding-left: 8px; padding-right: 8px; }
+/* Column groups: a hairline on the first cell of each group. */
+.mlbx .mlbstats-table .mlbstats-cv-grp { border-left: 1px solid var(--border); }
+/* No stretch: the table hugs its columns. */
+.mlbx .mlbstats-table { width: auto; }
+/* Row number on the current sort: generated content, so never in CSV or copy. */
+.mlbx .mlbstats-table tbody { counter-reset: mlbx-rank; }
+.mlbx .mlbstats-table tbody tr { counter-increment: mlbx-rank; }
+.mlbx .mlbstats-table tbody td.mlbstats-name::before { content: counter(mlbx-rank); display: inline-block;
+  min-width: 2.2em; margin-right: 6px; text-align: right; color: var(--text-tertiary);
+  font-family: var(--font-retro-mono); font-size: 10px; font-weight: 400; }
+/* Season pills and the Columns strip share one row where there is room. */
+.mlbx .mlbstats-toolrow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin: 4px 0 10px; }
+.mlbx .mlbstats-toolrow > .mlbstats-seasons { margin: 0; }
+/* All: every column, one step denser, two-word headers may wrap, name capped
+   at 232px, so all 25 reliever columns fit a 1232px container. */
+.mlbx .mlbstats-table.mlbstats-cv-all th, .mlbx .mlbstats-table.mlbstats-cv-all td { padding-left: 5px; padding-right: 5px; }
+.mlbx .mlbstats-table.mlbstats-cv-all th { white-space: normal; max-width: 5.6em; line-height: 1.15; vertical-align: bottom; }
+.mlbx .mlbstats-table.mlbstats-cv-all th:first-child,
+.mlbx .mlbstats-table.mlbstats-cv-all th.mlbstats-nw { white-space: nowrap; max-width: none; }
+.mlbx .mlbstats-table.mlbstats-cv-all td.mlbstats-name { max-width: 232px; }
+/* The Download CSV control rides the tab row instead of its own row. */
+@media (min-width: 641px) { .mlbx .eph-csv-bar { float: right; margin: 12px 0 0 12px; } }
+/* A table that FITS (markFit sets .is-fit) needs no scroll container: the
+   header sticks to the viewport and the page is the only scroll. A table that
+   does not fit keeps the scroller and the frozen name column. */
+.mlbx .mlbstats-scroll.is-fit { overflow-x: clip; overflow-y: visible; max-height: none; }
+/* Phone filter drawer: the toggle is phone-only. */
+.mlbx .mlbstats-bar button.mlbx-filtbtn { display: none; }
+@media (max-width: 640px) {
+  .mlbx .mlbstats-table .mlbstats-cv-wide { display: none; }
+  .mlbx .mlbstats-table th, .mlbx .mlbstats-table td { padding-left: 5px; padding-right: 5px; }
+  .mlbx .mlbstats-table td .mlbstats-pct { display: none; }
+  /* Two-line identity: row number and name on line 1, team and role on line 2. */
+  .mlbx .mlbstats-table td.mlbstats-name { max-width: 128px; white-space: normal; line-height: 1.2;
+    padding-top: 4px; padding-bottom: 4px; }
+  .mlbx .mlbstats-table tbody td.mlbstats-name::before { float: left; min-width: 1.9em; margin-right: 4px; font-size: 9px; line-height: 1.6; }
+  .mlbx .mlbstats-table td.mlbstats-name > .eephus-teamlogo { display: none; }
+  .mlbx .mlbstats-table td.mlbstats-name > :is(.mlbstats-name-link, .mlbstats-name-txt) {
+    display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mlbx .mlbstats-table td.mlbstats-name > .bp-role { font-size: 8px; padding: 0 3px; }
+  .mlbx .mlbstats-toolrow { display: block; }
+  .mlbx .mlbstats-toolrow > .mlbstats-seasons { margin: 4px 0 6px; }
+  .mlbx .mlbstats-bar button.mlbx-filtbtn { display: inline-flex; align-items: center; flex: none; }
+  .mlbx .mlbx-filters { flex-wrap: nowrap; }
+  .mlbx .mlbx-filters.is-open { flex-wrap: wrap; }
+  .mlbx .mlbx-filters:not(.is-open) > :not(.mlbstats-search):not(.mlbx-filtbtn) { display: none; }
+  .mlbx .mlbx-filters:not(.is-open) + .mlbstats-roles { display: none; }
+  .mlbx .mlbx-filters .mlbstats-search { flex: 1 1 0; min-width: 0; margin-left: 0; }
+}
+/* The eWAR section button keeps its case (the nav is uppercase; EWAR is not the stat). */
+.mlbx .mlbstats-sectionbtn[data-mlbsection="war"] { text-transform: none; }
+/* Tablet tier (641 to 1023px): the phone's two-line identity at a wider cap and one step
+   less padding, so every named view fits a 720px container (768 portrait). */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .mlbx .mlbstats-table th, .mlbx .mlbstats-table td { padding-left: 6px; padding-right: 6px; }
+  .mlbx .mlbstats-table td.mlbstats-name { max-width: 176px; white-space: normal; line-height: 1.2;
+    padding-top: 4px; padding-bottom: 4px; }
+  .mlbx .mlbstats-table tbody td.mlbstats-name::before { float: left; min-width: 2em; margin-right: 5px; line-height: 1.5; }
+  .mlbx .mlbstats-table td.mlbstats-name > .eephus-teamlogo { display: none; }
+  .mlbx .mlbstats-table td.mlbstats-name > :is(.mlbstats-name-link, .mlbstats-name-txt) {
+    display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+/* ---- mlbx end ---- */
 /* ---- Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
 .pal-fit { font-weight: 700; cursor: help; font-variant-numeric: tabular-nums; }
 .pal-hi { color: var(--accent-cyan); }

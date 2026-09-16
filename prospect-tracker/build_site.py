@@ -3959,7 +3959,10 @@ def build_mlbstats() -> str:
     the .mlbstats-app extension in site.css; the Defense section reuses the
     existing board and depth-card classes, so it adds no CSS."""
     body = (
-        '<div class="fa-app mlbstats-app">'
+        # .mlbx is carried by THIS root only: every /mlbstats/ column-view rule in
+        # site.css is scoped under it, because .mlbstats-app is shared by ten
+        # module roots (test_mlbx_css_scope.py pins the scope).
+        '<div class="fa-app mlbstats-app mlbx">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">β beta</span></h1></div>'
         f'<span class="section-sub">Relievers ({_gl("rem_plus", "REM+")}), starters '
