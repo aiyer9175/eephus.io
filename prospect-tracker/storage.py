@@ -12277,7 +12277,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "_draft_ceiling_hits":  0,
                 # v18 — Active-surplus accumulators feeding the new
                 # `fin_active_surplus` leaf. _net = sum of (FV-implied
-                # 6yr surplus $M) − (acquisition bonus $M, NOT amortized
+                # surplus $M over the valuation set's own window, 7 seasons
+                # under clemens_2026 - NOT the 6 the comment read until
+                # 2026-09-17, and NOT the club control window the MLB
+                # Projections board prices) − (acquisition bonus $M, NOT amortized
                 # since we want full cost basis vs the full window
                 # surplus). _cost tracks the bonus dollars alone for
                 # tooltip / debug.

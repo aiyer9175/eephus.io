@@ -888,6 +888,30 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         if arc and mlbam and arc["mlbam"] == mlbam:
             m["fvArc"] = arc["pts"]
             n_arc += 1
+        # TWO SOURCES, ONE PLAYER, AND THE DISAGREEMENT MADE VISIBLE
+        # (2026-09-17). Class membership is SCRAPED from Spotrac's
+        # free-agents-available list and never consults the arbitration board,
+        # so a member can be published here as a 2027 free agent while
+        # mlb_projections prices him club-controlled into 2028 or 2029. This
+        # does NOT move membership - that is a data-sourcing question with its
+        # own gate - it stamps the contradiction so the site stops publishing
+        # two confident and incompatible answers with no acknowledgement.
+        #
+        # The gate is `ctrlThru > class_year AND ctrlEst`, not `ctrlThru >
+        # class_year` alone: 11 further members run past the class year on an
+        # OPTION season whose dollars Spotrac already lists as guaranteed, and
+        # the status column names that option on the row. Those are explained.
+        # A season priced on a PROJECTED arbitration award past the guarantee
+        # is not, and there are 3 of them.
+        pv = (proj.get("by_key") or {}).get(key) or {}
+        _ct, _thru, _st = pv.get("ctrlThru"), pv.get("thru"), pv.get("salThru")
+        if _ct is None and (_thru is not None or _st is not None):
+            _ct = max(_thru or 0, _st or 0) or None
+        _est = bool(pv.get("ctrlEst")) or (
+            _st is not None and (not _thru or _st > _thru))
+        if _ct is not None and _ct > class_year and _est:
+            m["ctrlFlag"] = True
+            m["ctrlThru"] = _ct
         members.append(m)
     # Log what actually SHIPPED, not just what resolved. The id gate above can
     # drop a resolved arc (name-key collision, or the class row never resolved

@@ -194,6 +194,20 @@
       return c;
     };
     var items = [];
+    /* THE CAVEAT THIS PAGE NEEDED (2026-09-17). The ladder runs as far as the
+       published grid, and on more than half the board that grid ends on a
+       pre-arbitration token, which states nothing about when arbitration - let
+       alone club control - begins or ends. First in the list because it is the
+       one a reader has to have before reading anything else on the page. */
+    var preEnd = 0;
+    for (var pi = 0; pi < rows.length; pi++) {
+      var _l = rows[pi].l || [];
+      if (_l.length && (_l[_l.length - 1][4] || "") === "PRE-ARB") preEnd++;
+    }
+    if (preEnd) items.push("The ladder runs as far as the published grid, which ends on a " +
+      "pre-arbitration season for <b>" + preEnd + "</b> players. It is not a statement about " +
+      "when club control ends; the club control window is on the " +
+      "<a href=\"/projections/\">projections board</a>.");
     var est = n(F_SERVICE_EST);
     if (est) items.push("Arb year estimated, not from published service time: <b>" + est + "</b> players, marked ~.");
     var cls = n(F_CLASS_EST);
@@ -226,14 +240,14 @@
                "</i><b>" + money(usd) + "</b></span>");
       aria.push(esc(tok) + ", " + yr + ", " + money(usd));
     }
-    /* The free-agency bookend: three dollar figures are data, three ending in
-       FA is a story with an end. */
-    var last = steps.length ? steps[steps.length - 1][0] : null;
-    if (last) {
-      out.push('<span class="arb-step arb-step--fa"><i>FA</i><b>&rsquo;' +
-               String(last + 1).slice(2) + "</b></span>");
-      aria.push("free agent after " + last);
-    }
+    /* NO FREE-AGENCY BOOKEND. It was invented from whatever season Spotrac's
+       grid happened to stop at, and 442 of 852 rows stop on a PRE-ARB token,
+       which says nothing about when arbitration begins. The richer fix - run
+       class closure here so the ladder shows the rungs /projections/ already
+       computes - reopens decision D3 and grows the published `tot` by 467
+       seasons across 245 rows, so the board keeps publishing the grid it was
+       given and stops claiming an end it cannot derive. */
+    if (steps.length) aria.push("Ladder as published; the control end is not shown on this board");
     return '<div class="arb-ladder" role="img" aria-label="' +
            esc(aria.join(". ")) + '">' + out.join("") + "</div>";
   }
@@ -303,8 +317,10 @@
 
     var head =
       '<tr><th class="mlbstats-col-rank">#</th><th>Player</th><th>Club</th>' +
-      '<th>Class</th><th>Yrs</th><th>Remaining arbitration ladder</th>' +
-      '<th data-col="tot">Total remaining<small>sorted</small></th></tr>';
+      '<th>Class</th><th title="Seasons on the published grid. Not the number of ' +
+      'club-control seasons remaining.">Ladder yrs</th><th>Remaining arbitration ladder</th>' +
+      '<th data-col="tot" title="Sum of the seasons on the published grid, not of the ' +
+      'club control window.">Total remaining<small>sorted</small></th></tr>';
     var body = rows.map(function (r, i) {
       return '<tr><td class="mlbstats-col-rank">' + (i + 1) + "</td>" +
         "<td>" + esc(r.n) + "</td><td>" + club(r.t) + "</td>" +

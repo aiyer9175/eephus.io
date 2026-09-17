@@ -10,7 +10,7 @@
 // league, plus PROSPX prospects joining at their projected ETA. One sidecar
 // (data/mlb_projections.json, proj_export.py); standalone by design - no
 // PROSPX boot payload, no FA sidecars. Every row carries floor/mean/ceiling
-// probability buckets; veteran surplus exists ONLY on salary-known seasons.
+// probability buckets; veteran surplus prices every club-controlled season.
 (function () {
   "use strict";
 
@@ -241,8 +241,11 @@
   // retired tape bar's y0..y4 / warPeak / thru, the card header's rank / name /
   // warTotal / aav / age / sur) plus the prospect columns. Anything else falls
   // back to the default instead of sorting every row as a tie.
+  // `thru` was the contract column's key until 2026-09-17; syncFromURL aliases
+  // it to `ctrl`, so a saved share link resolves to the Control column that
+  // replaced it instead of silently falling back to the default order.
   const SORT_KEYS = ["warTotal", "rank", "name", "sur", "y0", "y1", "y2", "y3", "y4",
-                     "age", "aav", "thru", "warPeak", "fv", "eta", "pBust"];
+                     "age", "aav", "ctrl", "warPeak", "fv", "eta", "pBust"];
   // First click ascending: A-Z, youngest, soonest, safest.
   const ASC_FIRST = ["name", "age", "eta", "pBust"];
   function naturalDir(k) { return ASC_FIRST.includes(k) ? 1 : -1; }
@@ -253,7 +256,7 @@
   // the header, the sort picker and the orphaned-sort reset in render().
   function viewSortKeys(pros) {
     return ["rank", "name", "warTotal", "sur", "y0", "y1", "y2", "y3", "y4", "age"]
-      .concat(pros ? ["fv", "eta", "warPeak", "pBust"] : ["aav", "thru"]);
+      .concat(pros ? ["fv", "eta", "warPeak", "pBust"] : ["aav", "ctrl"]);
   }
 
   function syncFromURL() {
@@ -266,7 +269,10 @@
     if (p.has("src")) state.src = p.get("src");
     if (p.has("pos")) state.pos = p.get("pos");
     if (p.has("team")) state.team = p.get("team");
-    if (p.has("contract")) state.contract = p.get("contract");
+    // `controlled` was one bucket until 2026-09-17, when the payload learned to
+    // tell a club-controlled player from a man with no deal on file at all. A
+    // saved link carrying it lands on the half that kept its meaning.
+    if (p.has("contract")) state.contract = p.get("contract") === "controlled" ? "ctrl" : p.get("contract");
     if (p.has("age")) state.age = p.get("age");
     // Whitelist like view above: an arbitrary #cells= value (typo, truncated
     // share link) would crash renderTable's header template on
@@ -275,7 +281,10 @@
     if (p.has("sx")) state.sx = p.get("sx");
     if (p.has("sy")) state.sy = p.get("sy");
     if (p.has("q")) state.q = p.get("q");
-    if (p.has("sort")) state.sort = SORT_KEYS.includes(p.get("sort")) ? p.get("sort") : "warTotal";
+    if (p.has("sort")) {
+      const _s = p.get("sort") === "thru" ? "ctrl" : p.get("sort");
+      state.sort = SORT_KEYS.includes(_s) ? _s : "warTotal";
+    }
     state.dir = p.get("dir") === "asc" ? 1 : p.get("dir") === "desc" ? -1 : naturalDir(state.sort);
   }
   function syncToURL() {
@@ -417,6 +426,10 @@
     // rows, often a prorated few thousand dollars) shows a dash and sorts with
     // the missing values.
     if (k === "aav") return (m.thru && m.thru >= DATA.first_season) ? (m.aav ?? null) : null;
+    // The Control column sorts on the last season the club CONTROLS him, not on
+    // the last season a contract guarantees him. Sorting the old `thru`
+    // descending buried every cost-controlled star under every signed veteran.
+    if (k === "ctrl") return ctrlThruOf(m);
     if (["age", "thru", "warPeak", "fv", "eta", "pBust"].includes(k)) return m[k] ?? null;
     return null;
   }
@@ -457,7 +470,8 @@
   // Talent-map dot tint by contract control status - one shared map for the
   // scatter dots AND the legend row under the axis pickers, so they never drift.
   const CONTRACT_DOT_COLORS = { signed: "var(--accent-green)", expiring: "var(--accent-gold)",
-                                controlled: "var(--accent-cyan)", prospect: "var(--text-tertiary)" };
+                                ctrl: "var(--accent-cyan)", nodeal: "var(--accent-lilac)",
+                                prospect: "var(--text-tertiary)" };
   function projWarMap(list) {
     const ax = SCATTER_AXES[state.sx] || SCATTER_AXES.age;
     const ay = SCATTER_AXES[state.sy] || SCATTER_AXES.warY1;
@@ -511,30 +525,51 @@
       ? `<span class="proj-tag" title="Two-way: hitting and pitching projected separately and summed per season">two-way</span>` : "";
   }
 
-  // Contract control status, at the granularity the data supports. Spotrac
-  // gives the guaranteed-salary schedule but no service time or option flags,
-  // so the pre-arb-vs-arb split and the option kinds (which the Free Agency
-  // module DOES tag: club / player / mutual / opt-out) are not modelled for the
-  // league-wide vet pool - the cost-controlled bucket says so plainly rather
-  // than guessing.
-  // `short` is the same call with the YEAR taken out. It exists because the
-  // wide board carries the year in its own "signed thru" column, and a row that
-  // says 2033 twice reads like two facts. Both strings are emitted; site.css
-  // shows exactly one, by width.
+  // Contract control status: the Contract chip row, the scatter tint and the
+  // scatter legend, all reading one function so the three cannot disagree.
+  //
+  // THE BUCKET ASKS THE CELL'S QUESTION, AND IT ASKS IT FIRST. Until
+  // 2026-09-17 the first two tests read `thru` alone, so the answer depended on
+  // the GUARANTEE and not on control: 226 rows whose contract ended in the
+  // season in progress and who have no arbitration season on file at all were
+  // labelled "Club control" beside Caminero, and 121 rows the club genuinely
+  // holds for two more seasons (Elly De La Cruz, 2027 -> 2029) were labelled
+  // "Expiring" under a tip that promised free agency. The control test now runs
+  // before the guarantee tests, which is the only order that gets both right.
+  //
+  // `label` / `short` / `tip` are emitted for a caller that wants a rendered
+  // token; the chip row and the legend carry their own fixed labels. They are
+  // kept ACCURATE rather than deleted, because a stale string in an unused
+  // branch is how the last one shipped.
   function contractStatus(m) {
     const first = DATA.first_season;
     if (m.src === "prospect")
       return { key: "prospect", label: "Prospect", short: "Prospect", cls: "proj-ct-prospect",
         tip: "Pre-MLB; club control starts at debut" };
+    // An OPEN window with `ctrlThru == thru` belongs here too: the published
+    // grid ends on a pre-arbitration season, so the platform knows there are
+    // controlled seasons after the guarantee and cannot name the last one. It
+    // is club control either way; only the year is unknown.
+    const _ct = ctrlThruOf(m), _open = ctrlOpenOf(m);
+    if (_ct != null && (_ct > (m.thru || 0) || _open))
+      return { key: "ctrl", label: "Club control", short: "Club control",
+        cls: "proj-ct-controlled",
+        tip: _ct > (m.thru || 0)
+          ? "Club-controlled past his guaranteed contract: the seasons after it are priced on the salary path, the league minimum for pre-arbitration years and the projected award for arbitration years"
+          : "Club-controlled past his guaranteed contract: the published arbitration grid stops before the window does, so the seasons after it carry no price" };
     if (m.thru && m.thru > first)
       return { key: "signed", label: `Signed · ${m.thru}`, short: "Signed", cls: "proj-ct-signed",
         tip: `Guaranteed contract through ${m.thru}${m.aav ? ` at ${money(m.aav)}/yr` : ""}` };
-    if (m.thru && m.thru === first)
+    // Everything left with a contract is a man whose guarantee runs out inside
+    // the priced window and who has no controlled season after it: the season
+    // in progress (`thru < first`) counts, and used to fall through to the
+    // control bucket.
+    if (m.thru)
       return { key: "expiring", label: `Expiring ${m.thru}`, short: "Expiring", cls: "proj-ct-expiring",
-        tip: "Final guaranteed year; arbitration or free agency after it" };
-    return { key: "controlled", label: "No multi-year deal", short: "No multi-year deal",
-      cls: "proj-ct-controlled",
-      tip: "No guaranteed multi-year deal on file: pre-arb, arbitration, or an unsigned free agent (so not necessarily cost-controlled)" };
+        tip: `Last guaranteed season on file is ${m.thru}; no controlled season is priced after it` };
+    return { key: "nodeal", label: "No deal", short: "No deal",
+      cls: "proj-ct-controlled proj-ct-none",
+      tip: "No contract and no arbitration grid on file" };
   }
 
   // The three top-level projection views + the unified-glossary chip (mirrors
@@ -567,7 +602,7 @@
       ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${DATA.n_vets} veterans (<span data-gl="fa_projection_engine">FA projection engine</span>)
       &middot; ${DATA.n_prospects} prospects (<span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA)
       &middot; priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons"}
-      &middot; WAR shown: <strong>playing-time-held</strong> (if-healthy) path; <span data-gl="surplus_value">surplus</span> prices the expected value, contracted seasons only
+      &middot; WAR shown: <strong>playing-time-held</strong> (if-healthy) path; <span data-gl="surplus_value">surplus</span> prices the expected value over the club control window
       &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
     const gfxBtn = document.getElementById("proj-board-gfx");
     if (gfxBtn) gfxBtn.onclick = () => {
@@ -584,7 +619,7 @@
       <span class="filter-label proj-fgroup">Age</span>
       ${[["All", "all"], ["U23", "u23"], ["23-26", "23-26"], ["27-30", "27-30"], ["31-34", "31-34"], ["35+", "35+"]].map(([l, k]) => chip(l, k, "age")).join("")}
       <span class="filter-label proj-fgroup">Contract</span>
-      ${[["All", "all"], ["Signed", "signed"], ["Expiring", "expiring"], ["Cost-ctrl", "controlled"], ["Prospect", "prospect"]].map(([l, k]) => chip(l, k, "contract")).join("")}
+      ${[["All", "all"], ["Signed", "signed"], ["Expiring", "expiring"], ["Club control", "ctrl"], ["No deal", "nodeal"], ["Prospect", "prospect"]].map(([l, k]) => chip(l, k, "contract")).join("")}
       <span class="filter-label proj-fgroup">Team</span>
       <select id="proj-team" class="proj-select">
         <option value="all">All teams</option>
@@ -669,7 +704,7 @@
     if (banner) {
       const bControl = rows.some(r => r.lockedPct != null);
       const frame = `${DATA.first_season} projected roster <span data-gl="ewar">eWAR</span> &rarr; wins`
-        + (bControl ? ` &middot; core control = share of projected WAR under team control` : "");
+        + (bControl ? ` &middot; core control = share of projected WAR under contract or an age proxy` : "");
       banner.innerHTML = `<div class="fa-note fa-sources">
         ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${frame}
         &middot; <button class="chip egfx-chip" id="proj-teams-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
@@ -815,8 +850,8 @@
         if (spark) spark += " ";
       }
       const tip = (r.ctrlWar5y != null && r.fullWar5y != null && by.length)
-        ? `${pctStr} of projected ${by[0].season}-${by[by.length - 1].season} WAR under team control (${r.ctrlWar5y} of ${r.fullWar5y}). Line: controlled WAR per season.`
-        : "Share of projected WAR under team control";
+        ? `${pctStr} of projected ${by[0].season}-${by[by.length - 1].season} WAR under contract, or projected controlled by age where no contract is on file (${r.ctrlWar5y} of ${r.fullWar5y}). Line: controlled WAR per season.`
+        : "Share of projected WAR under contract, or projected controlled by age where no contract is on file";
       return `<span class="proj-ctrl" title="${esc(tip)}">${spark}<span class="proj-ctrl-pct" style="color:${pctCol};">${pctStr}</span></span>`;
     };
     // Click-sortable columns. `natural` = first-click direction; clicking the
@@ -868,7 +903,7 @@
         ? `<a href="/prospx/#farm-org=${encodeURIComponent(r.team)}" title="PROSPX farm system detail">#${f.farmRank}</a> <span class="fa-sub">${f.farmScore != null ? Math.round(f.farmScore) : ""}</span>`
         : EM_DASH;
       const surCell = f.farmSurplusMM != null
-        ? `<span class="${f.farmSurplusMM >= 0 ? "proj-pos" : "proj-neg"}" title="Net control-window NPV over the org's active prospect pool">$${Math.round(f.farmSurplusMM)}M</span>`
+        ? `<span class="${f.farmSurplusMM >= 0 ? "proj-pos" : "proj-neg"}" title="Net prospect surplus NPV over the org's active prospect pool">$${Math.round(f.farmSurplusMM)}M</span>`
         : EM_DASH;
       const topCell = f.topProspect
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(f.topProspect.key || "")}">${esc(f.topProspect.name)}</a> <span class="fa-sub">FV ${esc(String(f.topProspect.fv || "?"))}</span>`
@@ -906,7 +941,7 @@
     }).join("");
     const note = nowMode
       ? `Current (${curSeason}) slate <span class="eephus-beta" title="Newly launched; blend and odds may shift">β beta</span>: Bayesian blend of the roster-talent prior, actual record and Pythagorean record (RS/RA); the prior fades as games are played. Playoff odds: Monte Carlo over ${DATA.mc_schedule_source === "balanced_fallback" ? "a balanced-schedule ESTIMATE (live schedule unavailable)" : "the live remaining schedule"}. SOS: log5 opponent talent over unplayed games (1 = hardest). Does not change the projection board.`
-      : `${DATA.first_season} projected roster <span data-gl="ewar">eWAR</span> to wins at the 47.7 replacement baseline; <span data-gl="forward_gate">forward gate</span> on Model Accountability.${hasControl ? ` Core control: WAR-weighted share of each org's projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} production under contract or club control; the sparkline is controlled WAR per season.` : ""}${hasFarm ? " Farm columns come from the PROSPX org models." : ""}`;
+      : `${DATA.first_season} projected roster <span data-gl="ewar">eWAR</span> to wins at the 47.7 replacement baseline; <span data-gl="forward_gate">forward gate</span> on Model Accountability.${hasControl ? ` Core control: WAR-weighted share of each org's projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} production under contract, or projected controlled by age where no contract is on file; the sparkline is controlled WAR per season.` : ""}${hasFarm ? " Farm columns come from the PROSPX org models." : ""}`;
     // Sortable header: click to sort by it, click again to flip direction.
     // The active column shows a ▲/▼ arrow reflecting the effective direction.
     const _arrow = (key) => state.teamSort === key
@@ -921,7 +956,7 @@
       : "";
     const header = nowMode
       ? `<thead><tr><th>#</th>${sth("team", "Team")}${sth("nowPct", "Record", `Actual ${curSeason} record + win%`)}${sth("pythag", "Pythag", "Pythagorean win% from run differential (exp 1.83)")}${sth("blend", "Proj W-L", "Bayesian blend of talent prior + actual + Pythag -> projected full-season record")}${sth("playoff", "Playoff odds", "Monte-Carlo division/wildcard/playoff probability")}${sth("sos", "Rem SOS", "Remaining strength of schedule via log5 (rank 1 = hardest)")}</tr></thead>`
-      : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under team control`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net control-window NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
+      : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under contract, or projected controlled by age where no contract is on file. Not the club control window; that is on the players board.`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net prospect surplus NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
     root.innerHTML = `${modeChips}<div class="fa-note proj-teams-note">${note}</div>
       <table class="detail-table proj-table">
       ${header}
@@ -1259,43 +1294,140 @@
   function war1(v) { return v == null ? EM_DASH : fmtWar(Math.round(v * 10) / 10 || 0); }
   // A 2026 salary can be a prorated few thousand dollars; money() would say $0.0M.
   function aavText(usd) { return usd == null ? EM_DASH : (usd < 5e4 ? "<$0.1M" : money(usd)); }
-  // Contract cell: the year is the message, the colour repeats it.
-  // contractStatus() stays as it is: the Contract filter and the scatter read it.
+  // THE CONTROL WINDOW, READ ONCE. `ctrlThru` is stamped by
+  // salary_path.control_end and copied verbatim into every payload; nothing on
+  // this page recomputes max(thru, salThru), which is how the site came to
+  // carry five answers to one question. The fallback exists only so a payload
+  // exported before 2026-09-17 still paints a coherent cell.
+  function ctrlThruOf(m) {
+    if (m.ctrlThru != null) return m.ctrlThru;
+    const v = Math.max(m.thru || 0, m.salThru || 0);
+    return v || null;
+  }
+  function ctrlOpenOf(m) { return m.ctrlThru != null ? !!m.ctrlOpen : !!m.salTrunc; }
+  // WHAT THE UNSIGNED SEASONS ARE, NAMED ONCE. A pre-arbitration salary is the
+  // CBA league minimum - a rule, not a prediction - and an arbitration salary
+  // is the board's projected award. The glossary says exactly that and the
+  // salary path strip four rows below labels each season with its own token,
+  // so the one-sentence disclosure may not call the whole span "projected
+  // arbitration salaries": on 397 rows, the owner's named row among them, the
+  // span opens with a PRE-ARB season. The split is read off `salPath`, which
+  // every row that has a span also carries.
+  function unsignedSpanText(m, from, to) {
+    let pre = false, arb = false;
+    (m.salPath || []).forEach(st => {
+      const s = st[0];
+      if (s < from || s > to || st[5] === "contract") return;
+      if (String(st[4] || "").toUpperCase().indexOf("PRE") === 0) pre = true; else arb = true;
+    });
+    const span = from >= to ? `${to} is` : `${from}-${to} are`;
+    if (pre && arb)
+      return `${span} unsigned club-controlled seasons: the CBA league minimum for the pre-arbitration years, the projected award for the arbitration years.`;
+    if (pre)
+      return `${span} unsigned pre-arbitration seasons at the CBA league minimum, which is a rule and not a signed salary.`;
+    if (arb)
+      return `${span} projected arbitration salaries, not signed.`;
+    return `${span} unsigned club-controlled seasons.`;
+  }
+  // The second sentence of an OPEN cell, by the reason the window is open. One
+  // string, so the board cell, the card block and the PROSPX chip cannot give
+  // three accounts of the same row.
+  function ctrlOpenReason(why, ct) {
+    return why === "no_prior_salary"
+      ? "No season of the window carries a salary to raise the first arbitration award from, so the seasons after it are not priced."
+      : `The published arbitration grid ends on a pre-arbitration season, so the first arbitration season is unknown and the seasons after ${ct} are not priced.`;
+  }
+  function ctrlEstOf(m) {
+    return m.ctrlThru != null ? !!m.ctrlEst
+      : (m.salThru != null && (!m.thru || m.salThru > m.thru));
+  }
+
+  // THE CONTROL CELL (2026-09-17, replacing the Thru cell).
+  //
+  // The cell prints the last season the CLUB CONTROLS him and the sub-line
+  // prints the guarantee. It used to be the other way round, and that is the
+  // owner's report: a cell reading 2026 sat four columns from a Surplus cell
+  // whose own tooltip said "contracted seasons plus projected arbitration
+  // seasons", which is two window lengths stated at once on one row. The badge
+  // that qualified it rendered eight columns away in the Player cell and was
+  // stripped from the CSV, so the reader read the cell.
+  //
+  // THE DISCLOSURE RULE, WITH NO EXCEPTION: the words "signed" and
+  // "guaranteed" belong to `thru` and are never attached to `ctrlThru`. The
+  // projected part of the span is marked three ways, strongest first: a dashed
+  // border (the idiom the salary path strip on this same page already taught
+  // the reader), a sub-line naming the guarantee (it survives a screenshot, a
+  // print stylesheet and a colour-blind reader), and a tip naming the seasons.
+  //
+  // `sub` is the Control cell's second line. `fold` is what the Player cell
+  // shows once the column folds below 700px, so a phone keeps the fact.
   function ctPill(m) {
-    const first = DATA.first_season;
+    const first = DATA.first_season, lastS = first + DATA.horizon - 1;
     if (m.src === "prospect")
-      return { text: "Prospect", sub: "", cls: "proj-ct-prospect", tip: "Pre-MLB; club control starts at debut" };
-    // ASK C: a guaranteed year still governs the pill, but where the salary
-    // path prices seasons AFTER it the sub-line and the tip say so, because a
-    // cell reading "2026" beside a surplus built on 2027-2029 was the surface
-    // contradicting its own number.
-    const est = m.salThru != null && (!m.thru || m.salThru > m.thru);
-    const truncNote = m.salTrunc
-      ? `; the control window past ${m.salThru} is not established` : "";
-    if (m.thru && m.thru > first)
-      return { text: String(m.thru), sub: `thru ${m.thru}`, cls: "proj-ct-signed",
-        tip: `Signed through ${m.thru}${m.aav ? ` at ${money(m.aav)}/yr` : ""}` };
-    if (m.thru && m.thru === first)
-      return { text: String(m.thru), sub: est ? "+ arb est." : `thru ${m.thru}`,
-        cls: `proj-ct-expiring${est ? " proj-ct-est" : ""}`,
-        tip: est
-          ? `Guaranteed through ${m.thru}; ${m.thru + 1}-${m.salThru} priced on projected arbitration salaries${truncNote}`
-          : "Final guaranteed year; arbitration or free agency after it" };
-    if (m.thru)
-      return { text: String(m.thru), sub: est ? "+ arb est." : `thru ${m.thru}`,
-        cls: `proj-ct-expiring${est ? " proj-ct-est" : ""}`,
-        tip: est
-          ? `Guaranteed through ${m.thru}; ${m.thru + 1}-${m.salThru} priced on projected arbitration salaries${truncNote}`
-          : `Guaranteed through ${m.thru} only` };
-    if (m.salThru != null)
-      return { text: "Arb est.", sub: m.salTrunc ? `thru ${m.salThru}+` : `thru ${m.salThru}`,
-        cls: "proj-ct-controlled proj-ct-est",
-        tip: `No contract on file; surplus prices projected arbitration salaries through ${m.salThru}${truncNote}` };
-    if (m.salSrc === "arb_projection")
-      return { text: "Arb est.", sub: "arb est.", cls: "proj-ct-controlled proj-ct-est",
-        tip: "No contract on file; surplus prices projected arbitration salaries" };
-    return { text: "none", sub: "no deal", cls: "proj-ct-controlled proj-ct-none",
-      tip: "No contract on file; surplus not priced" };
+      return { text: "Prospect", sub: "starts at debut", fold: "prospect",
+        cls: "proj-ct-prospect",
+        tip: "Pre-MLB. Club control starts at his debut and is priced from his projected ETA over the 7-season valuation window." };
+    const ct = ctrlThruOf(m);
+    const cutNote = m.salCut != null
+      ? ` The model projects the club declines to tender him for ${m.salCut}, so surplus stops after ${m.salCut - 1}.` : "";
+    if (ct == null)
+      return { text: "none", sub: "no deal on file", fold: "no deal on file",
+        cls: "proj-ct-controlled proj-ct-none",
+        tip: m.ctrlWhy === "no_prior_salary"
+          ? "No contract on file, and no season of the window carries a salary to raise a first arbitration award from, so nothing is priced for this player."
+          : "No contract and no arbitration grid on file. Surplus is not priced for this player." };
+    const est = ctrlEstOf(m), open = ctrlOpenOf(m);
+    const why = m.ctrlWhy || (m.salTrunc || null);
+    // THE BRANCHES ARE ORDERED BY INFORMATION, NOT BY BASIS. `!est` used to run
+    // first, so a row whose window is OPEN but whose path prices nothing past
+    // the guarantee (the grid ends on a pre-arbitration token, 2 rows today)
+    // printed a solid "2028 / guaranteed / No arbitration seasons are on file
+    // after it" here while its own player-card Contract tab printed "2028+" and
+    // called the year a floor. A grid that ends on a PRE-ARB token guarantees
+    // that arbitration seasons follow, so the sentence was also false on its
+    // own terms. `open` is the stronger statement and it goes first.
+    if (open) {
+      return { text: `${ct}+`, sub: m.thru ? `guar. ${m.thru}` : "no deal on file",
+        fold: m.thru ? `${ct}+ · guar. ${m.thru}` : `${ct}+ · no deal`,
+        cls: `proj-ct-controlled proj-ct-open${est ? " proj-ct-est" : ""}`,
+        tip: `Club control through at least ${ct}. ${ctrlOpenReason(why, ct)}${cutNote}` };
+    }
+    if (!est) {
+      // Control ends where the guarantee ends: the cell is a CONTRACT fact, so
+      // it is solid and it uses the guarantee word. `m.thru` is always set here
+      // (est is false only when the path prices nothing past it).
+      const rate = m.aav ? ` at ${money(m.aav)}/yr` : "";
+      const tail = why === "horizon"
+        ? ` Surplus prices the ${first}-${lastS} horizon only.`
+        : why === "closure_buyout"
+        ? " The contract buys out his whole published arbitration grid, so no arbitration season follows it."
+        : " No arbitration seasons are on file after it.";
+      return { text: String(ct), sub: "guaranteed", fold: `guaranteed ${m.thru}`,
+        cls: "proj-ct-signed",
+        tip: `Guaranteed through ${m.thru}${rate}.${tail}${cutNote}` };
+    }
+    const guar = m.thru
+      ? `Guaranteed through ${m.thru}${m.aav ? ` at ${money(m.aav)}/yr` : ""}; ${unsignedSpanText(m, m.thru + 1, ct)}`
+      : "No guaranteed contract on file.";
+    // A HORIZON ROW ON AN ESTIMATED BASIS NAMES A FLOOR, NOT AN END. The year
+    // is where the five-season window stopped, not where control stops, so the
+    // plain-year rule (which belongs to the contract-only case above, and to
+    // the 39 nine-figure deals that run past the horizon) would state a fact
+    // the platform has not established. 0 rows today; the assertion that the
+    // population stays empty is in test_control_window.py, and this branch is
+    // what keeps the empty population from being the only thing standing
+    // between a reader and a false year.
+    if (why === "horizon")
+      return { text: `${ct}+`, sub: m.thru ? `guar. ${m.thru}` : "no deal on file",
+        fold: m.thru ? `${ct}+ · guar. ${m.thru}` : `${ct}+ · no deal`,
+        cls: "proj-ct-controlled proj-ct-est proj-ct-open",
+        tip: `Club control through at least ${ct}; the board prices the ${first}-${lastS} horizon only. ${guar}${cutNote}` };
+    return { text: String(ct), sub: m.thru ? `guar. ${m.thru}` : "no deal on file",
+      fold: m.thru ? `${ct} · guar. ${m.thru}` : `${ct} · no deal`,
+      cls: "proj-ct-controlled proj-ct-est",
+      tip: m.thru
+        ? `Club control through ${ct}. ${guar}${cutNote}`
+        : `Club control through ${ct} on unsigned club-controlled seasons. ${guar}${cutNote}` };
   }
   // Row detail line: every fact a folded column carried, plus the ones no
   // column carries (per-season bands, the expected path surplus prices, the
@@ -1326,16 +1458,29 @@
     } else {
       parts.push(g("P10/P90", bands, "p10_p90_bands"));
       if (m.warTotal != null) parts.push(g(`Expected ${H}y`, fmtWar(m.warTotal), "ewar"));
-      const ct = m.thru && m.thru >= first && m.aav != null ? `${money(m.aav)} AAV thru ${m.thru}`
-        : m.thru ? `${m.thru} salary ${aavText(m.aav)}`
-        : m.salPath ? "arb est." : "none on file";
-      parts.push(g("Contract", ct));
+      // The Contract group is where a reader goes for the whole contract
+      // picture, so it carries BOTH facts and keeps them apart by name: the
+      // guarantee is a signed deal, the club control end is not.
+      const _ctY = ctrlThruOf(m);
+      const ctGuar = m.thru && m.thru >= first && m.aav != null ? `guaranteed ${m.thru} at ${money(m.aav)}/yr`
+        : m.thru ? `guaranteed ${m.thru}, salary ${aavText(m.aav)}`
+        : m.salPath ? "no guaranteed contract on file" : "none on file";
+      const ctCtrl = (_ctY != null && _ctY !== m.thru)
+        ? ` · club control ${_ctY}${ctrlOpenOf(m) ? "+" : ""}` : "";
+      parts.push(g("Contract", `${ctGuar}${ctCtrl}`));
       const sv = surOf(m);
       const ros = m.surTotal != null ? m.surTotal - (m.surNpv || 0) : null;
       // ASK C: the group names the CONTROL WINDOW, because that is now what the
       // number covers - the seasons a club still holds him for, at whatever the
       // path says each one costs, not only the ones a contract prices.
-      const thruTxt = m.salThru != null ? ` (control window through ${m.salThru}${m.salTrunc ? "+" : ""})` : "";
+      // Gated on the two cases where "through YYYY" would be a claim the
+      // platform cannot make: an OPEN window (the grid stopped early) says "at
+      // least", and a horizon-clamped row says nothing at all, because its
+      // number is a statement about our five seasons and not about the player.
+      const _ctW = ctrlThruOf(m);
+      const thruTxt = _ctW == null || m.ctrlWhy === "horizon" ? ""
+        : ctrlOpenOf(m) ? ` (club control window through at least ${_ctW})`
+        : ` (club control window through ${_ctW})`;
       const split = sv == null ? "not priced"
         : (ros != null && m.surNpv != null) ? `${money(sv)} = rest of ${first - 1} ${money(ros)} + ${first}+ ${money(m.surNpv)}${thruTxt}`
         : (ros != null) ? `${money(sv)}, rest of ${first - 1} only`
@@ -1388,7 +1533,7 @@
       + th("warTotal", `${H}y<span class="proj-sr-sm"> WAR</span>`, "pc-tot",
           "Projected eWAR over the window, playing-time-held (if-healthy) path. Surplus prices the expected path.", `${H}y WAR`)
       + th("sur", "Surplus", "pc-sur",
-          "Veterans: production value minus salary, salary-known seasons only. Prospects: surplus value over the control window.", "Surplus")
+          "Veterans: production value minus salary over the club control window - contracted dollars where a contract exists, the league minimum for pre-arbitration seasons, the projected award for arbitration seasons. Prospects: surplus over the 7-season valuation window from their ETA.", "Surplus")
       + seasons.map((s, t) => th("y" + t,
           `<span class="proj-sr-sm">${String(s).slice(0, 2)}</span>${String(s).slice(2)}`
             + (state.cells === "war" ? "" : `<span class="proj-th-unit">${esc(cellLbl)}</span>`),
@@ -1400,7 +1545,15 @@
           + th("warPeak", "Peak", "pc-peak", "Per-year WAR at peak age on the talent path; surplus does not use it", "Peak WAR")
           + th("pBust", "P(bust)", "pc-bust", "Probability the outcome lands in the bust bucket", "P(bust)")
         : th("aav", "AAV", "pc-aav", "AAV of the guaranteed contract on file", "AAV")
-          + th("thru", "Thru", "pc-ct", "Final guaranteed season on the contract on file", "Thru"))
+          // A tooltip cannot travel in a CSV, so the guarantee and the basis
+          // become export-only columns beside the visible Control year. They
+          // are `hidden`, which keeps them out of the layout and out of the
+          // header/detail column count, and innerText on an unrendered cell
+          // falls back to textContent, which is what the scraper reads.
+          + `<th class="pc-csv" hidden data-export-text="Guaranteed thru"></th>`
+          + th("ctrl", "Control", "pc-ct",
+              "Last season the club controls him. The seasons past the guaranteed contract are unsigned club-controlled seasons: the CBA league minimum for pre-arbitration years, the projected award for arbitration years.", "Control thru")
+          + `<th class="pc-csv" hidden data-export-text="Control basis"></th>`)
       + `</tr></thead>`;
 
     const body = list.slice(0, state.limit).map((m, i) => {
@@ -1432,16 +1585,16 @@
         + ". Colour ranks the per-season average of the seasons shown";
       const sv = surOf(m);
       const surTip = isPros
-        ? "Prospect surplus value over the control window"
+        ? "Prospect surplus value over the 7-season valuation window from his projected ETA"
         : (m.surRos != null && m.surNpv == null
             ? `Rest-of-season control only: ${Math.round((m.rosFrac || 0) * 100)}% of ${first - 1} left, prorated projection minus prorated salary`
             : (m.surRos != null
-                ? "Rest of this season plus NPV of (convex production value − salary) over the control window"
-                : "NPV of (convex production value − salary) over the control window"))
+                ? "Rest of this season plus NPV of (convex production value − salary) over the club control window"
+                : "NPV of (convex production value − salary) over the club control window"))
           + (m.salSrc === "contract+arb"
-              ? ". Control window: contracted seasons plus projected arbitration seasons"
+              ? ". Club control window: contracted seasons plus projected arbitration seasons"
               : m.salSrc === "arb_projection" || m.salPath
-              ? ". Control window: the salary path. Arbitration seasons are projected"
+              ? ". Club control window: the salary path. Arbitration seasons are projected"
               : "")
           + (m.salCut != null ? `. Not tendered from ${m.salCut}` : "");
       // Surplus is a RANKED value, not a sign: 100 / 50 / 20 / 5 / 1 $M plus the red
@@ -1460,7 +1613,7 @@
       // them only then), then the row tags and the async FA chip.
       const sub = `<span class="proj-pl-sub"><span class="proj-sub-id">${esc(m.pos || "")}${m.team ? ` &middot; ${logoMark(m.team)}${esc(m.team)}` : " &middot; FA"}</span>`
         + `<span class="proj-sub-age">age ${age}</span>`
-        + (isPros ? "" : `<span class="proj-sub-ct ${ct.cls}" title="${esc(ct.tip)}">${esc(ct.sub)}</span>`)
+        + (isPros ? "" : `<span class="proj-sub-ct ${ct.cls}" title="${esc(ct.tip)}">${esc(ct.fold)}</span>`)
         + (pros && isPros ? `<span class="proj-sub-tag-pros">${tagFor(m)}</span>` : tagFor(m))
         + `<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span></span>`;
       const tail = pros
@@ -1469,7 +1622,17 @@
           + `<td class="pc-peak">${m.warPeak != null ? fmtWar(m.warPeak) : EM_DASH}</td>`
           + `<td class="pc-bust"><span title="Outcome buckets ${esc(m.bucketLo || "?")} to ${esc(m.bucketHi || "?")}">${m.pBust != null ? (m.pBust * 100).toFixed(0) + "%" : EM_DASH}</span></td>`
         : `<td class="pc-aav">${aav}</td>`
-          + `<td class="pc-ct"><span class="proj-ct ${ct.cls}" title="${esc(ct.tip)}">${esc(ct.text)}</span></td>`;
+          + `<td class="pc-csv" hidden>${m.thru != null ? m.thru : ""}</td>`
+          // data-export-text on the CELL, because the scraper reads the cell's
+          // innerText and the sub-line is part of it: without this the CSV
+          // column would read "2030 guar. 2026" in one field. The guarantee has
+          // its own column beside it. A row with no control end exports EMPTY,
+          // never "none" and never 0.
+          + `<td class="pc-ct" data-export-text="${esc(ctrlThruOf(m) != null ? ct.text : "")}">`
+          + `<span class="proj-ct ${ct.cls}" title="${esc(ct.tip)}">${esc(ct.text)}</span>`
+          + (ct.sub ? `<span class="proj-ct-sub" title="${esc(ct.tip)}">${esc(ct.sub)}</span>` : "")
+          + `</td>`
+          + `<td class="pc-csv" hidden>${esc(m.salSrc && m.salSrc !== "pending" ? m.salSrc : "")}</td>`;
       return `<tr data-key="${esc(m.key)}"${isPros ? ' class="is-prospect"' : ""}>`
         + `<td class="pc-rank">${i + 1}</td>`
         + `<th scope="row" class="pc-player" data-export-text="${esc(m.name)}"><div class="proj-pl">${rowPhoto(m)}`
@@ -1491,7 +1654,7 @@
     const _ax2 = (SCATTER_AXES[state.sx] || SCATTER_AXES.age).label;
     const warMapLegend = `<div class="proj-warmap-legend">
         <span class="proj-warmap-legend-lede">dot color = contract status</span>
-        ${[["signed", "Signed"], ["expiring", "Expiring"], ["controlled", "Cost-ctrl / unsigned"], ["prospect", "Prospect"]].map(([k, l]) =>
+        ${[["signed", "Signed"], ["expiring", "Expiring"], ["ctrl", "Club control"], ["nodeal", "No deal"], ["prospect", "Prospect"]].map(([k, l]) =>
           `<span class="proj-legend-item"><span class="proj-legend-dot" style="background:${CONTRACT_DOT_COLORS[k]};" aria-hidden="true"></span>${l}</span>`).join("")}
       </div>`;
     const warMap = _wm ? `<details class="proj-warmap"><summary>Scatter &middot; ${esc(_ay)} vs ${esc(_ax2)} (current filters &middot; pick any axes)</summary>
@@ -1526,7 +1689,7 @@
     // reverse button. The cue is the only on-screen sign of a sort whose column
     // has folded at this width.
     const SORT_LBL = { rank: `${H}y WAR`, name: "Name", warTotal: `${H}y WAR`, sur: "Surplus", age: "Age",
-      aav: "AAV", thru: "Contract thru", fv: "eFV", eta: "ETA", warPeak: "Peak WAR", pBust: "P(bust)" };
+      aav: "AAV", ctrl: "Club control thru", fv: "eFV", eta: "ETA", warPeak: "Peak WAR", pBust: "P(bust)" };
     seasons.forEach((s, t) => { SORT_LBL["y" + t] = `${s} ${cellLbl}`; });
     const sortName = SORT_LBL[state.sort] || SORT_LBL.warTotal;
     const arrow = state.dir < 0 ? "▾" : "▴";
@@ -1746,7 +1909,7 @@
           <tbody>${seasonRows}
             ${totRow(`${DATA.horizon}y WAR`, warShown(a), warShown(b), fmtWar)}
             ${totRow("Surplus", surOf(a), surOf(b), money)}</tbody></table>
-        <div class="fa-note proj-cmp-note">Edge = left minus right. <span data-gl="surplus_value">Surplus</span> is contract surplus for a veteran and control-window surplus for a prospect: both value above cost, not like-for-like terms.</div>
+        <div class="fa-note proj-cmp-note">Edge = left minus right. <span data-gl="surplus_value">Surplus</span> is club control window surplus for a veteran and projected surplus over his controlled seasons for a prospect: both value above cost, not like-for-like terms.</div>
       </div></div>`;
     const gfx = document.getElementById("cmp-gfx");
     if (gfx) gfx.onclick = () => {
@@ -2031,7 +2194,41 @@
     const pr = p.proj || {};
     const twoWayNote = (p.twoWay && pr.warHit && pr.warPit)
       ? `<div class="fa-note">Two-way: the path sums hitting (${pr.warHit.map(fmtWar).join(" / ")}) and pitching (${pr.warPit.map(fmtWar).join(" / ")}).</div>` : "";
-    return fanChart(p) + upsidePath(p) + twoWayNote + faBlock(p);
+    return fanChart(p) + upsidePath(p) + twoWayNote + contractBlock(p) + faBlock(p);
+  }
+
+  // A tab named "Projection & Contract" showed no contract for every player who
+  // is not a free agent, because faBlock returns "" without a p.fa block. This
+  // is composition of renderers that already ship: the guarantee line, the club
+  // control line and the salary path strip that owns the dashed idiom.
+  function contractBlock(p) {
+    const pr = p.proj || {};
+    const strip = salaryStripHtml(pr, { cls: "mlbp-sp" });
+    const ctThru = pr.ctrlThru != null ? pr.ctrlThru
+      : (Math.max(pr.thru || 0, pr.salThru || 0) || null);
+    if (!strip && ctThru == null) return "";
+    const open = pr.ctrlThru != null ? !!pr.ctrlOpen : !!pr.salTrunc;
+    const cells = [
+      ["Guaranteed thru", pr.thru != null ? String(pr.thru) : "no deal on file"],
+      ["AAV", pr.aav != null ? `${money(pr.aav)}/yr` : EM_DASH],
+      ["Club control thru", ctThru == null ? EM_DASH : `${ctThru}${open ? "+" : ""}`],
+      ["Basis", pr.salSrc && pr.salSrc !== "pending" ? esc(String(pr.salSrc).replace(/_/g, " ")) : EM_DASH],
+    ];
+    const _why = pr.ctrlWhy || (pr.salTrunc || null);
+    const _floor = open
+      ? (_why === "no_prior_salary"
+          ? " No season of the window carries a salary to raise the first arbitration award from, so the control end shown is a floor."
+          : " The published arbitration grid ends on a pre-arbitration season, so the control end shown is a floor.")
+      : "";
+    const note = ctThru != null && pr.thru != null && ctThru > pr.thru
+      ? `<div class="fa-sub mlbp-block-foot">${unsignedSpanText(pr, pr.thru + 1, ctThru)} They are drawn with a dashed border.${_floor}</div>`
+      : open
+      ? `<div class="fa-sub mlbp-block-foot">${_floor.trim()}</div>`
+      : "";
+    const band = (pr.surSalLo != null && pr.surSalHi != null)
+      ? `<div class="fa-sub mlbp-block-foot">If the award lands at the band ends: ${money(pr.surSalLo)} to ${money(pr.surSalHi)}.</div>` : "";
+    return section("contract-ctrl", "Contract", `${term("salary_path", "salary path")} · ${term("club_control_window", "club control window")}`,
+      `<div class="mlbp-grid">${cells.map(([l, v]) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${l}</span><span class="mlbp-cell-val">${v}</span></div>`).join("")}</div>${strip}${note}${band}`);
   }
 
   // ---- hitting ---------------------------------------------------------------
@@ -2365,7 +2562,7 @@
     if (sv != null)
       out.push(tileHTML(
         (pr.surNpv == null && pr.surRos != null) ? "Surplus (rest of season)"
-          : pr.salPath ? "Surplus (control window)" : "Surplus NPV",
+          : pr.salPath ? "Surplus (club control window)" : "Surplus NPV",
         money(sv), sv >= 0 ? "proj-pos" : "proj-neg",
         { gl: "surplus_value",
           sub: (pr.surSalLo != null && pr.surSalHi != null)
@@ -2684,12 +2881,17 @@
     // ASK C: where the salary path knows the window end, the card states THAT
     // and not "arb / pre-arb". `remaining_control_years` (debut+6) keeps being
     // emitted for the rank gate but no longer contradicts it on a surface.
-    const _sThru = p.proj && p.proj.salThru;
-    const contract = p.proj && p.proj.thru
-      ? `signed thru ${p.proj.thru}${p.proj.aav ? ` · ${money(p.proj.aav)}/y` : ""}`
-        + (_sThru && _sThru > p.proj.thru ? ` · club control thru ${_sThru}` : "")
-      : _sThru
-      ? `club control thru ${_sThru}${p.proj.salTrunc ? "+ (window not established)" : ""}`
+    const _pr = p.proj || {};
+    const _cThru = _pr.ctrlThru != null ? _pr.ctrlThru
+      : (Math.max(_pr.thru || 0, _pr.salThru || 0) || null);
+    const _cOpen = _pr.ctrlThru != null ? !!_pr.ctrlOpen : !!_pr.salTrunc;
+    const _cWord = _cThru == null ? ""
+      : _cOpen ? `club control thru at least ${_cThru}` : `club control thru ${_cThru}`;
+    const contract = _pr.thru
+      ? `signed thru ${_pr.thru}${_pr.aav ? ` · ${money(_pr.aav)}/y` : ""}`
+        + (_cThru && _cThru > _pr.thru ? ` · ${_cWord}` : "")
+      : _cThru
+      ? _cWord
       : (p.fa ? `free agent${p.fa.type ? ` · ${esc(p.fa.type)}` : ""}` : "arb / pre-arb");
     // Prospect origin line (ex-PROSPX players): the FV arc endpoints +
     // debut date - the hub strip carries the link to the full arc.
@@ -2775,7 +2977,7 @@
       title: `MLB Projections · ${DATA.horizon}-Year eWAR Leaders`,
       subtitle: `${DATA.n_vets} veterans + ${DATA.n_prospects} prospects · seasons ${DATA.first_season}-${DATA.first_season + DATA.horizon - 1}`,
       url: "eephus.io/projections", filenameBase: "eephus-projections-board",
-      caption: "eWAR on the playing-time-held path · prospects join at their PROSPX ETA",
+      caption: "eWAR on the playing-time-held path · prospects join at their PROSPX ETA · surplus is priced over each player's club control window",
       board: { defaultCount: 25, counts: [10, 25, 50], columns: [
         { label: "#", frac: 0.05 },
         { label: "Player", frac: 0.52 },
@@ -2827,7 +3029,7 @@
       subtitle: `${DATA.first_season} roster eWAR → projected wins${hasControl ? " · core control" : ""} · ${rows.length} teams`,
       url: "eephus.io/projections", filenameBase: "eephus-projections-team-outlook",
       caption: "Roster eWAR at the 47.7 replacement baseline · league-recentered"
-        + (hasControl ? " · core control = share of projected WAR under team control" : "")
+        + (hasControl ? " · core control = share of projected WAR under contract or an age proxy" : "")
         + (hasFarm ? " · farm rank + surplus from the PROSPX org models" : ""),
       board: { defaultCount: 30, counts: [10, 30], columns: cols, rows: brows },
     };

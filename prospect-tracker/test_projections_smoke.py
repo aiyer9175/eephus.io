@@ -579,8 +579,13 @@ def test_every_board_header_is_a_keyboard_sortable_columnheader():
         assert re.search(r'<button type="button" class="proj-sort" data-psort="', th), th[:120]
         assert "data-gl" not in th, "a glossary hook inside a sort button is a nested tab stop"
     keys = re.findall(r'data-psort="([^"]+)"', head)
-    for key in ("rank", "name", "warTotal", "sur", "y0", "y1", "y2", "y3", "y4", "age", "aav", "thru"):
+    # `ctrl` replaced `thru` on 2026-09-17: the column prints the last season the
+    # club CONTROLS him, not the last season a contract guarantees him. A share
+    # link carrying the old key still resolves (syncFromURL aliases it), which is
+    # what test_unknown_sort_key_falls_back_and_dir_round_trips has to keep true.
+    for key in ("rank", "name", "warTotal", "sur", "y0", "y1", "y2", "y3", "y4", "age", "aav", "ctrl"):
         assert key in keys, f"{key} lost its header"
+    assert "thru" not in keys, "the guarantee year is the sub-line now, not the column"
     active = re.findall(r'aria-sort="(ascending|descending)"[^>]*>\s*<button[^>]*data-psort="([^"]+)"', head)
     assert active == [("descending", "warTotal")], active
     assert 'role="button"' not in head and "tabindex" not in head
@@ -616,11 +621,21 @@ def test_season_headers_keep_the_full_year_for_assistive_tech_and_the_csv():
 
 
 def test_contract_cell_is_the_year_and_aav_needs_a_live_deal():
+    """The CONTROL cell (2026-09-17). For a man whose club controls him exactly
+    as long as his contract guarantees him, the cell is his guarantee year, it
+    is solid, and it keeps the guarantee word - which belongs to `thru` and is
+    never attached to `ctrlThru`. The sub-line under it says which fact it is."""
     body = _body(_render(""))
     vet = body.split('<tr data-key="vet_guy"', 1)[1].split("</tr>", 1)[0]
     assert '<span class="proj-ct proj-ct-signed"' in vet and ">2028</span>" in vet
     assert "$25.0M" in vet
-    assert "thru 2028" in vet                      # the sub-line form for narrow widths
+    assert '<span class="proj-ct-sub"' in vet and ">guaranteed</span>" in vet
+    assert "guaranteed 2028" in vet                # the sub-line form for narrow widths
+    assert "Guaranteed through 2028" in vet        # and the tip names the contract
+    ctcell = vet.split('<td class="pc-ct"', 1)[1].split("</td>", 1)[0]
+    assert "club control" not in ctcell.lower(), "control words on a contract-only cell"
+    # The export column a tooltip cannot carry: the visible year, not the sub.
+    assert 'data-export-text="2028"' in vet
     kid = body.split('<tr data-key="efv_kid"', 1)[1].split("</tr>", 1)[0]
     assert "proj-ct-prospect" in kid and ">Prospect<" in kid
 

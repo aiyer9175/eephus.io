@@ -75,6 +75,24 @@ def test_sidecar_shape_contract():
         assert m["key"] and m["name"] and m["src"] in ("vet", "prospect")
         assert len(m["war"]) <= max(pe.HORIZON, _ctrl, 6) and m["war"], m["name"]
         assert m["warTotal"] is not None
+    # The control-window keys (2026-09-17). `ctrlThru` is the last season the
+    # club CONTROLS him, derived once in salary_path.control_end; `salThru` is
+    # the last season the path PRICES him, and they are different objects on
+    # hundreds of rows. Every surface reads the first and none of them
+    # recomputes it, so the shape contract is where it has to be pinned.
+    _ctrl_rows = [m for m in d["vets"] if m.get("ctrlThru") is not None]
+    assert _ctrl_rows, "no vet row carries a control window"
+    for m in _ctrl_rows:
+        assert isinstance(m["ctrlThru"], int)
+        assert m["ctrlThru"] >= (m.get("thru") or 0)
+        assert m["ctrlThru"] >= (m.get("salThru") or 0)
+        assert m.get("ctrlWhy") in (None, "prearb_grid", "no_prior_salary",
+                                    "closure_buyout", "horizon", "contract_only")
+        # omitted rather than shipped false: the payload carries 1,120 vet rows
+        for k in ("ctrlOpen", "ctrlEst"):
+            assert m.get(k) in (None, True), (m["key"], k)
+    for m in d["prospects"]:
+        assert m.get("ctrlThru") is None, m["key"]
 
 
 def test_efv_grade_matches_prospx_board():
@@ -250,6 +268,20 @@ def test_last_controlled_season():
     assert pe._last_controlled_season({"src": "vet", "age": 31}) == F
     # Mid (age 27): 29-27 = 2 more seasons.
     assert pe._last_controlled_season({"src": "vet", "age": 27}) == F + 2
+    # AND IT IS NOT THE FIELD ANY SURFACE READS. This function is the Team
+    # Outlook control cliff and it stays on the age proxy (decision D5): for a
+    # pre-arb 23-year-old it returns the full horizon while the salary path,
+    # which is what the board prints, ends where the grid ends. The surfaces
+    # read `ctrlThru`. If this ever becomes the displayed window, it has to be
+    # a measured change with the Team Outlook blast radius priced, not a quiet
+    # re-point - so the disagreement is asserted rather than assumed.
+    import salary_path as _sp
+    _path = {"last_controlled": F + 1, "truncated": None,
+             "closure_buyout": False, "src_mix": "arb_ladder"}
+    assert pe._last_controlled_season({"src": "vet", "age": 23}) == last
+    assert _sp.control_end(_path, None, F, H)["end"] == F + 1
+    assert _sp.control_end(_path, None, F, H)["end"] != pe._last_controlled_season(
+        {"src": "vet", "age": 23})
 
 
 def _toy_team_outlook(monkeypatch, vets, prospects=None):

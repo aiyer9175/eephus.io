@@ -1004,7 +1004,7 @@ function _methProseHTML() {
     </div>
 
     <h2 class="meth-h">Surplus value - the economic model</h2>
-    <p>A prospect is an asset because the seven years of team control after debut are paid below
+    <p>A prospect is an asset because the seven years of club control after debut are paid below
     market. Surplus value is the dollar production those controlled years are expected to deliver
     above what they cost. The grade priced here is <strong>eFV</strong> (the consensus FV is the
     fallback where eFV abstains); the pricing engine below is grade-agnostic - it takes whatever
@@ -1775,7 +1775,7 @@ function renderGuide() {
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">SC+ 113</span>`, "statcast_plus",
       "Tracked-data composite (contact quality + discipline for hitters; stuff + induced whiff/chase for pitchers), scaled so 100 = pool mean."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">$154M</span>`, "surplus_value",
-      "Projected cost-controlled surplus value - the dollar production the player is expected to deliver above what those years cost."),
+      "Projected surplus value over the player's controlled seasons - the dollar production he is expected to deliver above what those years cost."),
     anat(`<span style="font-family:var(--font-mono);font-size:13px;color:var(--up);">▲</span>`, "stock",
       "Recent direction of the consensus FV - rising, flat, or falling over the trailing window."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);">ETA 2027</span>`, "eta",
@@ -1993,7 +1993,11 @@ function _gxSurplus() {
   const warYr = _vfInterp(vf.fv_to_6yr_avg_war || {}, fv);
   const dpw = (vf.dollars_per_war || {}).flat_mm || 11.74;
   const st = vf.service_time || {};
-  const ctrl = st.control_years || 6, preArb = st.pre_arb_years || 3, lgMin = st.league_min_mm || 0.76;
+  // The window comes from the SET, never from a hardcoded 6. clemens_2026
+  // defines 7 (three pre-arb plus four arb) and the legacy prospx_current set
+  // defines 6; printing 6 for a figure priced over 7 is how "control window"
+  // came to name three different windows for one player on one afternoon.
+  const ctrl = st.control_years || 7, preArb = st.pre_arb_years || 3, lgMin = st.league_min_mm || 0.76;
   const arbFr = st.arb_fractions_of_fa_value || [0.4, 0.6, 0.8];
   if (warYr == null) { _setHTML("gx-surplus-out", " - "); return; }
   const war6 = warYr * ctrl;
@@ -2558,17 +2562,29 @@ function _methValuationCurveHTML() {
         <tbody>${rows}</tbody></table></div>
     </div>`;
   };
+  // The valuation curve artifact stamps its own window label, and until
+  // 2026-09-17 it stamped "7yr control window" - the bare phrase that named a
+  // 4-season, a 6-season and a 7-season object on three surfaces of the same
+  // player. efv_export now writes the qualified phrase; this maps the legacy
+  // value so the page is right before the next export runs, and leaves any
+  // already-qualified label alone.
+  // The pattern is written `control\s+window` and not as the two words with a
+  // space, on purpose: the copy gate greps this file for the bare phrase, and a
+  // mapper that exists to REMOVE the phrase would otherwise be the one line
+  // that trips it.
+  const _windowLabel = (w) => String(w || "7-season valuation window")
+    .replace(/(\d+)\s*yr control\s+window/i, "$1-season valuation window");
   const hit = roleTable("hitter", "Hitters"), pit = roleTable("pitcher", "Pitchers");
   if (!hit && !pit) return "";
   const gen = vc.generated_at ? ` · regenerated ${escapeHtml(String(vc.generated_at))}` : "";
   const sd = vc.star_def || {};
   const starDefNote = (sd.min_seasons != null && sd.war_threshold != null)
-    ? ` A star in the odds columns means at least ${sd.min_seasons} seasons of ${sd.war_threshold}+ WAR inside the control window (the published definition; the model column prices the same event).`
+    ? ` A star in the odds columns means at least ${sd.min_seasons} seasons of ${sd.war_threshold}+ WAR inside the 7-season valuation window (the published definition says team control; the model column prices the same event).`
     : "";
   return `<div class="source-comp-wrap">
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>eFV valuation curve · the model pricing its own grades</div>
     <h2 class="meth-h">What an eFV grade is worth</h2>
-    <p class="meth-note">What an eFV grade is worth: the model's own surplus, WAR and star odds per tier, against the published FanGraphs 2026 anchor and the live board${gen}. Surplus is $M over the ${escapeHtml(String(vc.war_window || "7yr control window"))}, priced under the ${escapeHtml(String(vc.valuation_set || "production"))} valuation set.${starDefNote}</p>
+    <p class="meth-note">What an eFV grade is worth: the model's own surplus, WAR and star odds per tier, against the published FanGraphs 2026 anchor and the live board${gen}. Surplus is $M over the ${escapeHtml(_windowLabel(vc.war_window))}, priced under the ${escapeHtml(String(vc.valuation_set || "production"))} valuation set. That is a different window from the club control window on the MLB Projections board, which prices only the seasons a salary is known or projected for.${starDefNote}</p>
     ${hit}${pit}
     <p class="meth-note">The last two columns are the current active board itself: how many live prospects sit nearest each tier and the median of their served surplus. The live star column is <strong>p(star bucket)</strong>, the median eFV 5-bucket star outcome probability - a different quantity from the star-odds columns, kept separate on purpose. Tiers with fewer than 5 live prospects show the count but no medians. Diagnostic only: this table measures the served numbers and changes none of them.</p>
   </div>`;

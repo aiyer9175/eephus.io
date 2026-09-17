@@ -674,7 +674,12 @@ def _valuation_curve(by_player=None) -> dict:
     out = {
         "generated_at": date.today().isoformat(),
         "valuation_set": _VC_SET,
-        "war_window": "7yr control window (published ctrl_war basis)",
+        # THE LABEL THE GLOSSARY PRINTS VERBATIM. "7yr control window" named this
+        # 7-season valuation object with the same three words /projections/ uses
+        # for a 4-season club control window, on a page a reader reaches from
+        # either one. The renderer maps the legacy value for artifacts written
+        # before this line changed.
+        "war_window": "7-season valuation window (published ctrl_war basis)",
         "star_def": {"min_seasons": star_def.get("min_seasons", 2),
                      "war_threshold": star_def.get("war_threshold", 4.0)},
         "surplus_basis": ("model.surplus_mm and live.surplus_mm_median are both "

@@ -1193,6 +1193,21 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
             m["salThru"] = path["last_controlled"]
         if path["truncated"]:
             m["salTrunc"] = path["truncated"]
+        # THE CONTROL WINDOW, DERIVED ONCE (2026-09-17). `salThru` is the last
+        # season the path PRICES; `ctrlThru` is the last season the club
+        # CONTROLS, and they are different objects on 481 served rows. Every
+        # surface reads these four keys and none of them recomputes
+        # max(thru, salThru) in JS, which is how the site acquired five answers
+        # to one question. salary_path.control_end owns the rule.
+        ce = sp.control_end(path, m.get("thru"), FIRST_SEASON, HORIZON)
+        if ce["end"] is not None:
+            m["ctrlThru"] = ce["end"]
+        if ce["open"]:
+            m["ctrlOpen"] = True
+        if ce["est"]:
+            m["ctrlEst"] = True
+        if ce["why"]:
+            m["ctrlWhy"] = ce["why"]
         if path["cut_season"] is not None:
             m["salCut"] = path["cut_season"]
         so = sp.payload_options(path)
@@ -1552,6 +1567,13 @@ def _last_controlled_season(m: dict) -> int:
     card and the trade-board tooltip SUPPRESS the control-years line and show
     the path instead, so no surface states two different window lengths at
     once.
+
+    AND IT IS NOT THE CLUB CONTROL WINDOW. The window every surface now prints
+    is `ctrlThru` (salary_path.control_end), stamped a few hundred lines above
+    this one. This function computes an age-proxy control SHARE for the Team
+    Outlook roll-up, 551 of 894 rows of it disagree with `min(salThru, last)`,
+    and the copy on that board says so in those words rather than promising a
+    control model the code does not call.
     """
     last = FIRST_SEASON + HORIZON - 1
     if m.get("src") == "prospect":
@@ -2014,8 +2036,10 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
                 f"only the first season ({FIRST_SEASON}) is forward-gateable; "
                 "out-years (2028+) are a controlled-core competitive trajectory, "
                 "NOT scored against actual standings",
-                "control window = Spotrac signed_through where present, else an "
-                "age-based proxy (no service time in the pipeline)",
+                "the cliff is Spotrac signed_through where present, else an "
+                "age-based proxy (no service time in the pipeline). It is NOT "
+                "the club control window on the players board, which is the "
+                "salary path's own end (ctrlThru)",
                 "cohort intercepts were fit on year-1 residuals; out-year "
                 "application re-bands by age but is an approximation"],
         },
@@ -2036,7 +2060,10 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
     payload["window_alignment"] = {
         "kind": "surplus-weighted farm ETA (etaMean) vs the controlled-core WAR "
                 "center (coreCenter); etaAlignYears = etaMean - coreCenter, "
-                "<= 0 = farm arrives inside the control window (aligned)",
+                "<= 0 = farm arrives inside the controlled-core window "
+                "(aligned). That window is the age-proxy cliff "
+                "(_last_controlled_season), not the club control window the "
+                "players board prints",
         "weight": "expected surplus $ (value_mm), floored at 0; count-weight fallback",
         "eta_coverage_orgs": len(etas),
         "align_coverage_orgs": len(aligns),

@@ -750,6 +750,103 @@ def payload_path(path: dict):
     return out or None
 
 
+def control_end(path: dict, thru, first_season: int, horizon: int) -> dict:
+    """The last season the club holds this player's rights, and how well we
+    know it. THE ONE DERIVED ANSWER; every surface reads this and nothing else.
+
+    `salThru` (``path["last_controlled"]``) is NOT that season. It is the last
+    season of the horizon that carries a PRICE, which is a narrower object in
+    three ways: it is capped at ``first_season + horizon - 1`` (a contract
+    running past the horizon reads short), it stops where the published
+    arbitration grid stops rather than where control stops (`truncated`), and
+    it can sit at or past a season the tender cliff has already stamped `cut`.
+    This function is the only place the COPY is allowed to read, because it is
+    the only object in this tree that is a statement about CONTROL rather than
+    about PRICING.
+
+    Returns a dict:
+      end    int or None   the last controlled season, `max(thru, salThru)`,
+                           because club control is never SHORTER than the
+                           guarantee. That one line is what makes the served
+                           cross-module invariant hold on every row
+                           (test_served_control_window_coherence).
+      open   bool          the platform knows more controlled seasons exist and
+                           cannot name them, so the year is a FLOOR: the surface
+                           renders `YYYY+` and says "through at least". An
+                           INFORMATION failure - a grid that ends on a
+                           pre-arbitration token, or no prior salary to chain
+                           from - and never a horizon failure.
+
+                           A CLOSURE BUY-OUT IS NOT ONE OF THEM. Where a
+                           contract covers the whole published grid, the grid's
+                           LAST TOKEN says what follows: on a pre-arbitration
+                           token more controlled seasons certainly follow, and
+                           `truncated` is already "prearb_grid" for that row, so
+                           this function marks it open through that reason. On
+                           an ARB rung the next season is FREE AGENCY, and
+                           "through at least" would assert controlled seasons
+                           that do not exist - on a row whose surplus correctly
+                           stops. It is 0 served rows today only because both
+                           current buy-out rows end on a pre-arbitration token;
+                           the first club that extends an arbitration-eligible
+                           player through his last arbitration year is the case,
+                           and it renders a plain year and the guarantee word.
+      est    bool          a season inside the span is priced on a PROJECTION
+                           rather than on a signed contract, so the surface
+                           draws it dashed.
+      why    str or None   one of `prearb_grid`, `no_prior_salary`,
+                           `closure_buyout`, `horizon`, `contract_only`, None.
+                           Drives the second sentence of every tip.
+      guar   int or None   the guarantee, carried through unchanged. The words
+                           "signed" and "guaranteed" belong to THIS field and
+                           are never attached to `end`.
+      basis  str or None   the path's own source mix, for the CSV column.
+
+    A horizon failure prints a PLAIN year and no `+`, on purpose: it is a
+    statement about the five seasons this platform prices, not about the
+    player, and every such row already names a season at or past the end of
+    everything priced here, so nothing downstream can contradict it. Putting a
+    `+` on 39 nine-figure veteran contracts would be the noise that teaches a
+    reader to ignore the mark where it matters.
+    """
+    last_h = int(first_season) + int(horizon) - 1
+    try:
+        thru = int(thru) if thru is not None else None
+    except (TypeError, ValueError):
+        thru = None
+    sal_thru = path.get("last_controlled")
+    end = max(thru or 0, sal_thru or 0) or None
+    est = sal_thru is not None and (not thru or sal_thru > thru)
+    if path.get("truncated"):
+        why = path["truncated"]
+    elif end is None:
+        why = None                     # nothing on file at all: the cell says so
+    elif end >= last_h:
+        # THE HORIZON TEST OUTRANKS THE BUY-OUT TEST. A window that reaches the
+        # last priced season ran out of HORIZON whatever else is true of it, and
+        # `truncated` is cleared on exactly those rows a few lines above for the
+        # same reason; leaving the buy-out test first let a row whose grid was
+        # bought out AND priced to the horizon end report a reason about the
+        # grid when the only thing that stopped it was this platform's window.
+        why = "horizon"
+    elif path.get("closure_buyout"):
+        why = "closure_buyout"
+    elif not sal_thru or (thru and sal_thru <= thru):
+        why = "contract_only"
+    else:
+        why = None                     # an exact, established control end
+    # A FLOOR NEEDS A YEAR TO BE A FLOOR. 8 served rows carry
+    # `no_prior_salary` with no contract and no priced season at all: nothing is
+    # known about them, so there is no "at least YYYY" to render and the cell
+    # reads `none`. Flagging them open would be a mark no surface could paint,
+    # and it would contradict the cell four characters away. `why` still carries
+    # the reason, which is what the tip reads.
+    open_ = bool(path.get("truncated")) and end is not None
+    return {"end": end, "open": open_, "est": est, "why": why,
+            "guar": thru,
+            "basis": path.get("src_mix") or ("contract" if thru else None)}
+
+
 def payload_options(path: dict):
     """`salOpt`: [[season, "club"|"player"], ...] for the seasons inside the
     window that carry an option. STAMPED AND DISCLOSED, NOT PRICED (D10).

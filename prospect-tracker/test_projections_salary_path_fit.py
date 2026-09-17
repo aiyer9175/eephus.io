@@ -84,6 +84,13 @@ _STRIP = """async () => {
 # A row carrying salTrunc must render is-unk and NEVER is-fa: "2029 FA / not
 # controlled" is a served falsehood for a grid that never established a control
 # end, and 266 veterans are in exactly that state.
+#
+# EXTENDED 2026-09-17: the same assertion now also covers the Control CELL on
+# the same row. The strip was always honest about an unestablished window; the
+# cell was the surface that printed the guarantee year instead, which is the
+# owner's report. The cell must print the control end as a FLOOR ("2028+") and
+# must never print the bare year, because a bare year on a grid that stopped at
+# a pre-arbitration token is an end the platform cannot derive.
 _TRUNC = """async () => {
   const t = document.querySelector('table.proj-board-table');
   const rows = [...t.querySelectorAll('tbody tr[data-key]')].slice(0, 80);
@@ -92,8 +99,17 @@ _TRUNC = """async () => {
     await new Promise(x => setTimeout(x, 30));
     const d = r.nextElementSibling;
     const unk = d ? d.querySelectorAll('.proj-sp-c.is-unk').length : 0;
-    if (unk) return {key: r.getAttribute('data-key'), unk: unk,
-                     fa: d.querySelectorAll('.proj-sp-c.is-fa').length};
+    if (unk) {
+      const pill = r.querySelector('td.pc-ct .proj-ct');
+      const sub = r.querySelector('td.pc-ct .proj-ct-sub');
+      return {key: r.getAttribute('data-key'), unk: unk,
+              fa: d.querySelectorAll('.proj-sp-c.is-fa').length,
+              cellTxt: pill ? (pill.innerText || '').trim() : null,
+              cellSub: sub ? (sub.innerText || '').trim() : null,
+              cellTip: pill ? (pill.getAttribute('title') || '') : '',
+              cellOpen: !!(pill && pill.classList.contains('proj-ct-open')),
+              cellDashed: pill ? getComputedStyle(pill).borderTopStyle : null};
+    }
     r.querySelector('.proj-xp-btn').click();
     await new Promise(x => setTimeout(x, 10));
   }
@@ -144,3 +160,14 @@ def test_a_row_with_no_established_window_never_claims_a_free_agent_year(server,
             pytest.skip("no served row carries salTrunc yet")
         assert s["unk"] == 1, f"{s['key']}: expected one is-unk cell, got {s['unk']}"
         assert s["fa"] == 0, f"{s['key']}: rendered a free-agent year it cannot know"
+        # The Control cell on the SAME row, which is where the reader looks.
+        if s.get("cellTxt") is None:
+            pytest.skip("the Control column is folded at this width")
+        assert s["cellOpen"], f"{s['key']}: the Control cell does not mark an open window"
+        assert s["cellTxt"].endswith("+"), (
+            f"{s['key']}: the Control cell prints {s['cellTxt']!r}, which names an "
+            "end the published grid cannot establish")
+        assert "through at least" in s["cellTip"], s["cellTip"]
+        assert "free agent" not in s["cellTip"].lower(), s["cellTip"]
+        assert s["cellDashed"] == "dashed", f"{s['key']}: an estimated span is not dashed"
+        print(f"open control cell {w}px: {s['cellTxt']} / {s['cellSub']}")

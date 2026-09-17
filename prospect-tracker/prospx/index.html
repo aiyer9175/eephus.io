@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=c2f44284">
+  <link rel="stylesheet" href="/assets/site.css?v=fdcca126">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -9880,7 +9880,7 @@
         <button class="chip" data-farm-sort="ifa_spend_pct" title="IFA's share of total Draft+IFA spending over the trailing 3 years - orgs that allocate the highest percentage of their amateur-acquisition dollars to international free agents rise to the top">IFA Spending %</button>
         <button class="chip" data-farm-sort="draft_spend_pct" title="Draft's share of total Draft+IFA spending over the trailing 3 years - orgs that allocate the highest percentage of their amateur-acquisition dollars to the draft rise to the top">Draft Spending %</button>
         <button class="chip" data-farm-sort="roi" title="Financial ROI - career WAR per million USD spent on signing bonuses (draft + IFA). Higher = more efficient development per dollar.">ROI</button>
-        <button class="chip" data-farm-sort="surplus" title="Aggregate FV-implied 6yr cost-controlled surplus value ($M) across all active prospects in the org. v32.0 - re-derived from FV→WAR primer × non-linear $/WAR; click the Sur+ term in the glossary for details.">Surplus value</button>
+        <button class="chip" data-farm-sort="surplus" title="Aggregate FV-implied surplus value ($M) over each prospect's controlled seasons, across all active prospects in the org. v32.0 - re-derived from FV→WAR primer × non-linear $/WAR; click the Sur+ term in the glossary for details.">Surplus value</button>
         <button class="chip" data-farm-sort="total_fv">Total FV</button>
         <button class="chip" data-farm-sort="count">Count</button>
         <button class="chip" data-farm-sort="tier_60">60+ prospects</button>
@@ -21534,147 +21534,74 @@ async function _ensureMlbTradePlayersLoaded() {
 }
 
 // ===========================================================================
-// TRADE MACHINE - build-a-package valuation over the platform's two value
-// currencies: prospect surplus (control-window NPV, calibrated) and MLB
-// contract surplus NPV (salary-known seasons). Lives at the top of the
-// Transactions tab; values are the SAME numbers the cards show.
+// TRADE MACHINE - DELETED 2026-09-17. It moved to /trademachine/ long ago and
+// #tab=trademachine / #tab=tradeboard have redirected there since; nothing
+// outside this block ever called into it, so it has painted nothing for months.
+// What it still carried was pre-ask-C copy ("MLB contract surplus NPV
+// (salary-known seasons)", twice) reading `surNpv` where /projections/ reads
+// `surTotal`, plus a 4.9MB detail fetch. One nav change would have re-awakened
+// all of it, which is why it is deleted rather than repaired.
+//
+// BALANCED_THRESHOLD_MM outlives the block: the trade-grade renderer reads it.
 // ===========================================================================
-const _TM = { a: [], b: [], detail: null, detailLoading: false };
-
-function _tmEnsureDetail() {
-  if (_TM.detail || _TM.detailLoading) return;
-  _TM.detailLoading = true;
-  fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
-    .then(r => (r.ok ? r.json() : null))
-    .then(j => { _TM.detail = (j && j.players) || {};
-      if (state.section === "trademachine" || state.section === "tradeboard") renderTradeMachine(); })
-    .catch(() => { _TM.detail = {}; });
-}
-
-// Translatability with MLB Projections: a "⇄ Trade Machine" link on a player's
-// /projections/ page deep-links here as #tab=trademachine&tm=<kind>:<key>, which
-// pre-loads that player into Side A so you can value him against a package.
-function _tmSeedFromURL() {
-  if (_TM.seeded) return;
-  const seed = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("tm");
-  if (!seed) { _TM.seeded = true; return; }
-  const ci = seed.indexOf(":");
-  const kind = seed.slice(0, ci), key = seed.slice(ci + 1);
-  if (kind === "prospect") {
-    const p = (DATA.players || []).find(x => x.player_key === key);
-    const sv = p && p.surplus && p.surplus.value_mm;
-    if (sv != null) { _TM.a.push({ kind: "prospect", key, name: p.player_name,
-      sub: `${p.position || ""} · ${p.org || ""} · FV ${gradeBlock(p).label ?? "?"}`, mm: sv }); _TM.seeded = true; }
-  } else if (kind === "mlb") {
-    if (!_TM.detail) return;                 // detail still loading; seed on the re-render
-    const d = _TM.detail[key];
-    if (d && d.proj && d.proj.surNpv != null) _TM.a.push({ kind: "mlb", key, name: d.name,
-      sub: `${d.pos || ""} · ${d.team || "FA"} · contract surplus`, mm: d.proj.surNpv / 1e6 });
-    _TM.seeded = true;
-  } else { _TM.seeded = true; }
-}
-
-function _tmSearch(q) {
-  q = q.trim().toLowerCase();
-  if (q.length < 2) return [];
-  const out = [];
-  for (const p of (DATA.players || [])) {
-    if (out.length >= 6) break;
-    if ((p.player_name || "").toLowerCase().includes(q)) {
-      const sv = p.surplus && p.surplus.value_mm;
-      if (sv != null) out.push({ kind: "prospect", key: p.player_key,
-        name: p.player_name, sub: `${p.position || ""} · ${p.org || ""} · FV ${gradeBlock(p).label ?? "?"}`,
-        mm: sv });
-    }
-  }
-  if (_TM.detail) {
-    for (const k in _TM.detail) {
-      if (out.length >= 10) break;
-      const d = _TM.detail[k];
-      if ((d.name || "").toLowerCase().includes(q) && d.proj && d.proj.surNpv != null) {
-        out.push({ kind: "mlb", key: k, name: d.name,
-          sub: `${d.pos || ""} · ${d.team || "FA"} · contract surplus`,
-          mm: d.proj.surNpv / 1e6 });
-      }
-    }
-  }
-  return out;
-}
-
-function _tmTotal(side) {
-  return side.reduce((s, x) => s + (x.mm || 0), 0);
-}
-
-// One shared dead-band for "even" trade verdicts, used by BOTH the Trade
-// Machine and the Transactions Trade Audit so the two never disagree on what
-// counts as balanced. The wider $5M band is deliberate: surplus dollars carry
-// real model uncertainty, so a sub-$5M edge is not a meaningful "winner."
 const BALANCED_THRESHOLD_MM = 5;
 
-function renderTradeMachine() {
-  const el = document.getElementById("trade-machine");
-  if (!el) return;
-  _tmEnsureDetail();
-  _tmSeedFromURL();
-  const sideHtml = (side, label) => {
-    const list = _TM[side].map((x, i) => `
-      <div class="tm-row">
-        <span class="tm-kind">${x.kind === "prospect" ? "P" : "M"}</span>
-        <a class="fa-player-link" href="${x.kind === "prospect" ? `#player=${encodeURIComponent(x.key)}` : `/projections/#player=${encodeURIComponent(x.key)}`}">${escapeHtml(x.name)}</a>
-        <span class="tm-sub">${escapeHtml(x.sub)}</span>
-        <span class="tm-val">${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm).toFixed(1)}M</span>
-        <button class="tm-x" data-tm-remove="${side}:${i}" title="Remove" aria-label="Remove">×</button>
-      </div>`).join("");
-    const tot = _tmTotal(_TM[side]);
-    return `<div class="tm-side">
-      <div class="tm-side-head">${label} receives <span class="tm-total ${tot >= 0 ? "proj-pos" : "proj-neg"}">$${tot.toFixed(1)}M</span></div>
-      <input class="tm-search" type="search" placeholder="Add player (prospect or MLB)…" data-tm-search="${side}" autocomplete="off">
-      <div class="tm-results" data-tm-results="${side}"></div>
-      ${list || '<div class="tm-empty">no players yet</div>'}
-    </div>`;
-  };
-  const dA = _tmTotal(_TM.a), dB = _tmTotal(_TM.b);
-  const verdict = (_TM.a.length || _TM.b.length)
-    ? `<div class="tm-verdict">${Math.abs(dA - dB) < BALANCED_THRESHOLD_MM ? "≈ balanced package"
-        : (dA > dB ? `Side A receives +$${(dA - dB).toFixed(1)}M of value`
-                   : `Side B receives +$${(dB - dA).toFixed(1)}M of value`)}
-       <span class="fa-sub"> · prospect surplus (calibrated control-window NPV) vs MLB contract surplus (salary-known seasons) - one currency</span></div>`
-    : "";
-  el.innerHTML = `<div class="tm-wrap">
-    <div class="detail-title" style="font-size:13px;">Trade Machine
-      <span class="detail-title-sub">value both sides of a deal in the platform's surplus currency</span>
-    </div>
-    <div class="tm-grid">${sideHtml("a", "Side A")}${sideHtml("b", "Side B")}</div>
-    ${verdict}
-  </div>`;
-  el.querySelectorAll("[data-tm-search]").forEach(inp => {
-    inp.oninput = () => {
-      const side = inp.dataset.tmSearch;
-      const res = el.querySelector(`[data-tm-results="${side}"]`);
-      const hits = _tmSearch(inp.value);
-      res.innerHTML = hits.map((h, i) =>
-        `<button class="tm-hit" data-tm-add="${side}:${i}" type="button">
-           <strong>${escapeHtml(h.name)}</strong> <span class="tm-sub">${escapeHtml(h.sub)}</span>
-           <span class="tm-val">$${h.mm.toFixed(1)}M</span></button>`).join("");
-      res._hits = hits;
-    };
+// ---------------------------------------------------------------------------
+// CLUB CONTROL WINDOW JOIN (2026-09-17). One fetch per page, cached, lazy.
+// ---------------------------------------------------------------------------
+const _CTRLWIN = { rows: null, loading: false };
+function _ctrlWinFill() {
+  const slots = document.querySelectorAll("[data-ctrlwin-key]:not([data-ctrlwin-done])");
+  if (!slots.length) return;
+  if (!_CTRLWIN.rows) { _ctrlWinLoad(); return; }
+  slots.forEach(el => {
+    el.setAttribute("data-ctrlwin-done", "1");
+    const v = _CTRLWIN.rows[el.getAttribute("data-ctrlwin-key")];
+    if (!v) return;
+    const guar = v.thru != null ? v.thru : (Number(el.getAttribute("data-ctrlwin-thru")) || null);
+    const ct = v.ctrlThru != null ? v.ctrlThru : (Math.max(v.thru || 0, v.salThru || 0) || null);
+    if (ct == null || (guar != null && ct <= guar)) return;
+    const open = v.ctrlThru != null ? !!v.ctrlOpen : !!v.salTrunc;
+    // The same sentence the board and the card print, built from the same
+    // tokens: a pre-arbitration season is the CBA league minimum, which is a
+    // rule, and only the arbitration seasons are a projection. Calling the
+    // whole span "projected arbitration salaries" was a second vocabulary for
+    // seasons the salary path strip labels PRE-ARB four rows below.
+    let _pre = false, _arb = false;
+    (v.salPath || []).forEach(st => {
+      const s = st[0];
+      if (guar == null || s <= guar || s > ct || st[5] === "contract") return;
+      if (String(st[4] || "").toUpperCase().indexOf("PRE") === 0) _pre = true; else _arb = true;
+    });
+    const _span = guar == null ? "" : (guar + 1 >= ct ? `${ct} is` : `${guar + 1}-${ct} are`);
+    const _what = !_span ? ""
+      : (_pre && _arb) ? `${_span} unsigned club-controlled seasons: the CBA league minimum for the pre-arbitration years, the projected award for the arbitration years.`
+      : _pre ? `${_span} unsigned pre-arbitration seasons at the CBA league minimum, which is a rule and not a signed salary.`
+      : _arb ? `${_span} projected arbitration salaries, not signed.`
+      : `${_span} unsigned club-controlled seasons.`;
+    const tip = _what
+      + (open ? (v.ctrlWhy === "no_prior_salary"
+                  ? " No season of the window carries a salary to raise the first arbitration award from, so the control end shown is a floor."
+                  : " The published arbitration grid ends on a pre-arbitration season, so the control end shown is a floor.")
+              : "")
+      + " Priced in full on the MLB Projections board.";
+    el.innerHTML = `<span style="display:inline-block;margin-top:3px;padding:0 4px;`
+      + `border:1px dashed var(--border);font-size:10px;color:var(--text-secondary);`
+      + `font-style:italic;" title="${escapeHtml(tip.trim())}">club control thru ${ct}${open ? "+" : ""}</span>`;
   });
-  el.querySelectorAll("[data-tm-results]").forEach(res => {
-    res.onclick = (e) => {
-      const b = e.target.closest("[data-tm-add]");
-      if (!b || !res._hits) return;
-      const [side, i] = b.dataset.tmAdd.split(":");
-      _TM[side].push(res._hits[Number(i)]);
-      renderTradeMachine();
-    };
-  });
-  el.querySelectorAll("[data-tm-remove]").forEach(b => {
-    b.onclick = () => {
-      const [side, i] = b.dataset.tmRemove.split(":");
-      _TM[side].splice(Number(i), 1);
-      renderTradeMachine();
-    };
-  });
+}
+function _ctrlWinLoad() {
+  if (_CTRLWIN.loading) return;
+  _CTRLWIN.loading = true;
+  fetch("/data/mlb_projections.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      const by = {};
+      ((j && j.vets) || []).forEach(v => { if (v.key) by[v.key] = v; });
+      _CTRLWIN.rows = by;
+      _ctrlWinFill();
+    })
+    .catch(() => { _CTRLWIN.rows = {}; });
 }
 
 function renderRecentlyTraded() {
@@ -22403,7 +22330,7 @@ function renderRecentlyTraded() {
             const kindLbl = v.kind === "war"        ? `Realized · ${v.war?.toFixed(1)} WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M`
                           : v.kind === "surplus_mm" ? `MLB vet contract surplus · ${v.pos || ' - '}${v.age ? ` · age ${v.age}` : ''} · proj ${v.proj_war?.toFixed(1) ?? '?'} WAR over ${v.years || '?'}yr at $${aavMm || '?'}M AAV · net $${v.value.toFixed(1)}M`
                           : v.kind === "war_vet" ? `MLB vet (no contract on file) · ${v.pos || ' - '} · ${v.war?.toFixed(1)} career WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M - using realized career value as proxy`
-                          : v.kind === "fv"         ? `Projected MLB surplus · FV ${v.fv}${tbsHere != null ? ` · TBS ${tbsHere}` : ''} · 6yr cost-controlled`
+                          : v.kind === "fv"         ? `Projected MLB surplus · FV ${v.fv}${tbsHere != null ? ` · TBS ${tbsHere}` : ''} · controlled seasons`
                           : v.kind === "unresolved" ? "Untracked MLB player - career WAR not on file yet"
                           : 'unknown';
             const vetTag = (v.kind === "war_vet" || v.kind === "surplus_mm")
@@ -30386,52 +30313,12 @@ function _tbWorryBadge(w) {
   const col = w.score > 0.5 ? "var(--neon-red)" : "var(--neon-amber)";
   return `<span style="font-size:10px;color:${col}" title="Worriedness ${(w.score*100).toFixed(0)}% - ${label} signal">⚠ ${label}</span>`;
 }
-function _tbCtrlBadge(p) {
-  const ctrl   = p.remaining_control_years;
-  const cc     = p.contract || {};
-  const isMlb  = p.status === "graduated" || p.status === "debuted";
-
-  if (!isMlb) {
-    // Active MiLB prospect - only show something if they have a real MLB deal
-    const hasDeal = cc.signed_through || (cc.aav_mm && cc.aav_mm > 0.5);
-    if (!hasDeal) return "";  // No MLB deal yet; nothing to show
-    const fa  = cc.fa_year ? `FA ${cc.fa_year}` : (cc.signed_through ? `thru ${cc.signed_through}` : "");
-    const sal = cc.current_salary_mm
-      ? `$${cc.current_salary_mm < 1 ? (cc.current_salary_mm*1000).toFixed(0)+"k" : cc.current_salary_mm.toFixed(1)+"M"}`
-      : null;
-    return `<span style="font-size:10px;color:var(--neon-amber);">${escapeHtml([sal, fa].filter(Boolean).join(" · "))}</span>`;
-  }
-
-  // MLB player: full contract spec
-  const phase = cc.phase || " - ";
-  const sal   = cc.current_salary_mm != null
-    ? (cc.current_salary_mm < 1 ? `$${(cc.current_salary_mm*1000).toFixed(0)}k` : `$${cc.current_salary_mm.toFixed(1)}M`)
-    : null;
-  const fa    = cc.fa_year ? `FA ${cc.fa_year}` : null;
-  // Contract structural options (player opt-outs / club options)
-  // Format year ranges compactly: [2030,2031,2032,2033] → "2030-33"
-  function _fmtYears(yrs) {
-    if (!yrs || !yrs.length) return null;
-    if (yrs.length === 1) return String(yrs[0]);
-    const lo = yrs[0], hi = yrs[yrs.length - 1];
-    return lo === hi ? String(lo) : `${lo}-${String(hi).slice(-2)}`;
-  }
-  const pOpts = cc.player_opt_years && cc.player_opt_years.length
-    ? `P-opt ${_fmtYears(cc.player_opt_years)}` : null;
-  const cOpts = cc.club_opt_years && cc.club_opt_years.length
-    ? `C-opt ${_fmtYears(cc.club_opt_years)}` : null;
-
-  const tip = [sal && `Salary: ${sal}/yr`, pOpts, cOpts].filter(Boolean).join(" · ");
-  const col = ctrl >= 5 ? "var(--neon-green)" : ctrl >= 2 ? "var(--neon-amber)" : "var(--text-secondary)";
-  const parts = [
-    `<span style="font-weight:600;">${escapeHtml(phase)}</span>`,
-    sal  ? `<span style="color:${col}">${sal}</span>` : "",
-    pOpts ? `<span style="color:var(--neon-amber);font-size:9px;" title="Player can opt out">${escapeHtml(pOpts)}</span>` : "",
-    cOpts ? `<span style="color:var(--text-secondary);font-size:9px;" title="Team holds option">${escapeHtml(cOpts)}</span>` : "",
-  ].filter(Boolean).join(" · ");
-
-  return `<span style="font-size:10px;line-height:1.3;" title="${escapeHtml(tip)}">${parts}</span>`;
-}
+// _tbCtrlBadge - DELETED 2026-09-17. A stale fork of the /trademachine/ badge
+// that never learned the salary path: its tooltip was [salary, player options,
+// club options] with no window end, no basis, no award band and no cut season,
+// and its colour band read debut+6. It painted nothing only because
+// #tab=tradeboard redirects to /trademachine/, which is one nav change away
+// from re-awakening pre-ask-C wording on a live surface.
 function _tbFmt(mm) {
   if (mm == null) return " - ";
   return mm >= 100 ? `$${Number(mm).toFixed(0)}M` : `$${Number(mm).toFixed(1)}M`;
@@ -30539,7 +30426,7 @@ function _renderTBRows() {
       <td style="padding:4px 3px;color:var(--text-secondary);font-size:11px;">${org}</td>
       <td style="padding:4px 3px;text-align:right;font-size:11px;">${fv}</td>
       <td style="padding:4px 3px;text-align:right;font-weight:700;color:${tvCol};">${_tbFmt(tv)}</td>
-      <td style="padding:4px 3px;">${_tbCtrlBadge(p)}</td>
+      <td style="padding:4px 3px;"></td>
       <td style="padding:4px 3px;">${signals}</td>
     </tr>`;
   });
@@ -30673,7 +30560,7 @@ function _mtRenderList(side) {
                         padding:5px 0;border-bottom:1px solid var(--border-subtle);font-size:12px;">
       <span>
         <strong>${escapeHtml(p.player_name || "?")}</strong>
-        <span style="color:var(--text-secondary);margin-left:4px;">${escapeHtml(p.position||"")} · ${escapeHtml(p.org||"")} · ${isMlb?"MLB":"MiLB"} · ${_tbCtrlBadge(p)}</span>
+        <span style="color:var(--text-secondary);margin-left:4px;">${escapeHtml(p.position||"")} · ${escapeHtml(p.org||"")} · ${isMlb?"MLB":"MiLB"}</span>
       </span>
       <span style="display:flex;align-items:center;gap:8px;">
         <span style="font-weight:700;color:${col};">${_tbFmt(tv)}</span>
@@ -34892,7 +34779,7 @@ function _gfxSurplusBlock(p, P) {
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:11px;border-bottom:1px solid ${P.border};margin-bottom:13px;">
       <div style="min-width:0;">
         <div style="font-family:var(--font-sans);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:${P.text3};font-weight:700;">Surplus value${scChip}</div>
-        <div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};margin-top:4px;font-style:italic;">${_fvIsEfv ? "eFV" : "FV"} ${fv != null ? (_fvIsEfv ? fv : fvCeil(fv)) : " - "} ${isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};margin-top:4px;font-style:italic;">${_fvIsEfv ? "eFV" : "FV"} ${fv != null ? (_fvIsEfv ? fv : fvCeil(fv)) : " - "} ${isPit ? "pitcher" : "hitter"} · controlled seasons</div>
       </div>
       <div style="font-family:var(--font-mono);font-size:30px;font-weight:800;color:${surplusColor};line-height:1;">${escapeHtml(fmtUsd(surplus))}</div>
     </div>
@@ -48109,7 +47996,7 @@ function renderPlayerDetail(key) {
                        && !(Number(_bandHi) > Number(_bandLo)));
     const _bandTitle = _bandFlat
       ? "The eFV surplus fan is FLAT here: more than 80% of simulated career paths land on the same dollar figure, which for most rows in this state is the $0-surplus floor. The expected surplus shown above can therefore sit above the 90th percentile, because what value this profile carries lives entirely in the top decile of outcomes. A mean is not a percentile."
-      : "80% credible band on the eFV surplus: in 8 of 10 simulated career paths the 6-year cost-controlled surplus lands between these dollar figures (P10 to P90 of the simulated outcomes). A range of surplus dollars, not a grade band.";
+      : "80% credible band on the eFV surplus: in 8 of 10 simulated career paths the surplus over his controlled seasons lands between these dollar figures (P10 to P90 of the simulated outcomes). A range of surplus dollars, not a grade band.";
     const _efvBand = (_bandLo != null && _bandHi != null)
       ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 8px;font-size:10px;" title="${_bandTitle}">
            <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;flex:none;">Surplus band <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;">${_bandFlat ? "P10 = P90" : "P10 to P90"}</span></span>
@@ -48141,20 +48028,29 @@ function renderPlayerDetail(key) {
     // Cite the engine that actually produced the number on screen: the baked
     // career-path mixture model when present, the FV-implied estimate fallback
     // otherwise. (Was unconditionally citing the 2019 FanGraphs framework.)
+    // THE WINDOW IS READ FROM THE SET, not from a hardcoded 6. clemens_2026
+    // defines seven seasons (three pre-arb plus four arb); the legacy
+    // prospx_current set defines six. And it is a VALUATION window, not the
+    // club control window the MLB Projections board prices off a real salary
+    // path: the same man is $42M here and $371M there, and until now both
+    // called their window "control".
+    const _ctrlYrs = ((window.VALUE_FRAMEWORK || {}).service_time || {}).control_years || 7;
+    const _winWords = `${_ctrlYrs}-season valuation window`;
+    const _winNote = ` A different window from the club control window on the MLB Projections board, which prices only the seasons a salary is known or projected for.`;
     const surplusTip = _baked
-      ? `Estimated MLB surplus over the 6-year cost-controlled window, from the eephus value framework (a career-path mixture model) on FV ${fvCeil(fv)}, with the position-scarcity multiplier applied. Real surplus depends on health, performance variance, and the $/WAR market.`
-      : `FV-implied estimate of MLB surplus over the 6-year cost-controlled window (FV ${fvCeil(fv)}, hitter/pitcher split), shown only until the engine value lands. Real surplus depends on health, performance variance, and the $/WAR market.`;
+      ? `Estimated MLB surplus over the ${_winWords}, from the eephus value framework (a career-path mixture model) on FV ${fvCeil(fv)}, with the position-scarcity multiplier applied.${_winNote} Real surplus depends on health, performance variance, and the $/WAR market.`
+      : `FV-implied estimate of MLB surplus over the ${_winWords} (FV ${fvCeil(fv)}, hitter/pitcher split), shown only until the engine value lands.${_winNote} Real surplus depends on health, performance variance, and the $/WAR market.`;
     const _surpLabel = _useEfv ? "eFV surplus" : (p.status === "debuted" ? "Expected surplus (FV)" : "Surplus value");
     const _surpSub = _useEfv
-      ? `eFV ${efvGradeDisplay(_xf)} · 6yr cost-controlled (outcome-grounded)`
-      : `FV ${fvCeil(fv)} ${_isPit ? "pitcher" : "hitter"} · 6yr cost-controlled`;
+      ? `eFV ${efvGradeDisplay(_xf)} · ${_winWords} (outcome-grounded)`
+      : `FV ${fvCeil(fv)} ${_isPit ? "pitcher" : "hitter"} · ${_winWords}`;
     const surplusRow = surplus != null
       ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${_surpLabel}${scarcityChip}</div>
              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${_surpSub}</div>
            </div>
-           <div style="font-family:var(--font-mono);font-size:${p.status === "debuted" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="${_useEfv ? `eFV expected surplus over the 6-year cost-controlled window, from the outcome-grounded grade (the model's calibrated WAR distribution priced through the value framework). ${escapeHtml(surplusTip)}` : surplusTip}">${fmtUsd(surplus)}</div>
+           <div style="font-family:var(--font-mono);font-size:${p.status === "debuted" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="${_useEfv ? `eFV expected surplus over the ${_winWords}, from the outcome-grounded grade (the model's calibrated WAR distribution priced through the value framework). ${escapeHtml(surplusTip)}` : surplusTip}">${fmtUsd(surplus)}</div>
          </div>${_efvFan ? `<div style="margin:-2px 0 8px;">${_efvFan}</div>` : ""}${_efvBand}`
       : "";
     // Expected market AAV - FV-derived WAR/yr × $/WAR market rate.
@@ -48371,6 +48267,15 @@ function renderPlayerDetail(key) {
       <div class="detail-card">${inner}</div>`;
   })();
 
+  // ---- club control window, joined from the MLB projections payload -------
+  // A prospect card shows the Spotrac deal. For the population the owner named
+  // - a player who is a PROSPX prospect and an MLB projection row at the same
+  // time, Junior Caminero being the named case - the deal is not the whole
+  // answer: his club holds him past it, on pre-arbitration and projected
+  // arbitration seasons that /projections/ prices in full. The line says so, in
+  // the same words every other surface uses, and it says which part is
+  // projected. A MiLB-only prospect has no joined row and gets nothing, because
+  // for a player who has not debuted the platform genuinely does not know.
   // Contract details - Spotrac-sourced year-by-year salary breakdown.
   // Lives alongside (NOT inside) the surplus value card so the user can
   // see the full contract picture without losing the FV-implied vs
@@ -48431,7 +48336,8 @@ function renderPlayerDetail(key) {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:10px;border-bottom:1px solid var(--border-light);margin-bottom:10px;gap:10px;">
         <div>
           <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;"><span class="g-term" data-term="aav">AAV</span>${extBadge}</div>
-          <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${c.years_remaining || c.years || "?"} yr · signed thru ${c.signed_through || "?"}</div>
+          <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${c.years_remaining || c.years || "?"} yr guaranteed · signed thru ${c.signed_through || "?"}</div>
+          <div class="ctrlwin-slot" data-ctrlwin-key="${escapeHtml(p.player_key || "")}" data-ctrlwin-thru="${c.signed_through != null ? c.signed_through : ""}"></div>
         </div>
         <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;" title="${escapeHtml("Average Annual Value - total contract / years remaining (present-value adjusted by Spotrac for deferral-heavy deals)")}">${fmtUsd(c.aav_usd)}</div>
       </div>`;
@@ -50571,6 +50477,10 @@ function renderPlayerDetail(key) {
     ${sidebarHtml}
   </div>`;
   root.innerHTML = header + detailChipRibbon + quickReadHtml + tilesHtml + tabBarWithRail;
+  // Club control window, joined from the MLB projections payload. Lazy, cached,
+  // silent on failure: a card that cannot reach it shows the Spotrac deal alone,
+  // which is exactly what it showed before.
+  try { _ctrlWinFill(); } catch (e) { /* the contract line is non-critical */ }
   // Fill the Splits body lazily (only present when the Stats / Statcast tab is
   // active). Loads the gamelog slice on first open, then re-renders in place.
   try { ensureSplits(p); } catch (e) { /* splits are non-critical */ }

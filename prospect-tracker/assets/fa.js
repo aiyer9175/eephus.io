@@ -808,9 +808,22 @@
       return { short: "EXERCISED", cls: "fa-st-off", sub: "EXERCISED", long: "option exercised",
         tip: "Option exercised; never reached the market (first-seen heuristic)." };
     }
+    // TWO SOURCES, ONE PLAYER. Class membership is scraped from Spotrac's
+    // free-agents-available list and never consults the arbitration board, so a
+    // member can be published here as a free agent for this class while
+    // mlb_projections prices him club-controlled past it on a PROJECTED
+    // arbitration season. fa_export stamps `ctrlFlag` on exactly those rows.
+    // This does not move membership, which is a data-sourcing question; it stops
+    // the site publishing two confident and incompatible answers in silence.
+    const ctrlNote = m.ctrlFlag
+      ? ` Spotrac lists him as a free agent for this class; the arbitration board prices him under club control through ${m.ctrlThru}. The two sources disagree.`
+      : "";
     if (m.status === "locked") {
-      return { short: "UFA", cls: "fa-st-ufa", sub: "UFA", long: "UFA",
-        tip: "Contract expires; locked into the class." };
+      return { short: `UFA${m.ctrlFlag ? " \u00b7 ?" : ""}`, cls: `fa-st-ufa${m.ctrlFlag ? " fa-st-ctrlflag" : ""}`,
+        sub: `UFA${m.ctrlFlag ? " \u00b7 ?" : ""}`, long: "UFA",
+        tip: "Contract expires; locked into the class"
+          + (m.ctrlFlag ? ", unless the club control window on the projections board is right." : ".")
+          + ctrlNote };
     }
     const type = String(m.type || "");
     const word = FA_OPT_SHORT[type] || esc(type.replace(/_/g, " ").toUpperCase()) || "OPTION";
@@ -821,11 +834,13 @@
       ? "P(enter) from the option price against the predicted AAV band (v2)."
       : "P(enter) from the v1 heuristic (mutual and conditional options keep explicit priors).";
     return {
-      short: price ? `${word} ${price}` : word, cls: "fa-st-opt",
+      short: (price ? `${word} ${price}` : word) + (m.ctrlFlag ? " \u00b7 ?" : ""),
+      cls: `fa-st-opt${m.ctrlFlag ? " fa-st-ctrlflag" : ""}`,
       sub: `${word}${price ? " " + price : ""}${pct ? " &middot; " + pct : ""}`,
       long: `${words}${price ? " " + price : ""}${pct ? " &middot; P(enter) " + pct : ""}`,
       tip: `Option pending: membership is probabilistic until it resolves. ${src}`
-        + (pct ? ` P(enter) ${pct} is the probability the row reaches the market.` : ""),
+        + (pct ? ` P(enter) ${pct} is the probability the row reaches the market.` : "")
+        + ctrlNote,
     };
   }
   // Deal+ is the number every verdict is cut on and the card printed it nowhere

@@ -86,7 +86,9 @@ checksum-validated by `valuation_sets._validate_checksums`):
   2026-only and a 2020-2026 average; the framework states a 2024-2026 basis).
 - **Arbitration**: 15 / 35 / 50 / 75 percent of the prior season's free-agency
   value for Arb 1 through Arb 4, floored at the league minimum, over a seven-season
-  control window (three pre-arb plus four arb).
+  valuation window (three pre-arb plus four arb). That window is a valuation
+  assumption for a player with no salary on file; it is not the club control
+  window the MLB Projections board prints, which is read off the salary path.
 - **Discount**: net 7 percent, applied as the exact net-7-percent-flat branch (a
   10 percent discount rate minus 3 percent annual win-cost growth). Exactly one of
   the two is applied, never both.

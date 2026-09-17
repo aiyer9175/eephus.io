@@ -686,6 +686,11 @@ def build_payload() -> dict:
              # is a VERBATIM copy of the projection row - it must stay verbatim,
              # because the moment it starts deriving a field the two surfaces
              # can disagree about one player's price.
+             # ctrlThru / ctrlOpen / ctrlEst / ctrlWhy (2026-09-17): the CONTROL
+             # window, derived once in salary_path.control_end. Copied for the
+             # same reason as the rest: the card's hero line states the control
+             # end, and a card that re-derived it could disagree with the board
+             # about which season a club holds a player through.
              "proj": {k: v.get(k) for k in ("war", "warP10", "warP90",
                                             "warTotal", "warTotalP10",
                                             "warTotalP90", "sur", "surNpv",
@@ -694,6 +699,8 @@ def build_payload() -> dict:
                                             "salPath", "salThru", "salSrc",
                                             "surSalLo", "surSalHi", "salCut",
                                             "salTrunc", "salOpt", "salVintage",
+                                            "ctrlThru", "ctrlOpen", "ctrlEst",
+                                            "ctrlWhy",
                                             "thru", "aav", "warHit", "warPit")},
              "twoWay": bool(v.get("twoWay")) or None,
              "isPit": is_pit and not v.get("twoWay")}

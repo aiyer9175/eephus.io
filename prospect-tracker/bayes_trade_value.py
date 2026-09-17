@@ -5134,6 +5134,45 @@ def _stamp_projection_bands(records: list, proj_rows: dict,
             # SUPPRESS the control-years line wherever this one exists rather
             # than stating two different window lengths at once.
             r["salary_thru"] = v.get("salThru")
+        # THE CONTROL WINDOW (2026-09-17). Copied verbatim from the projection
+        # row, never re-derived here: `control_thru` is the last season the club
+        # holds him, `salary_thru` is the last season the path prices him, and
+        # the Trade Machine's Contract column now shows the first and sorts on
+        # it instead of resting on debut+6.
+        if v.get("ctrlThru") is not None:
+            r["control_thru"] = v.get("ctrlThru")
+        if v.get("ctrlOpen"):
+            r["control_open"] = True
+        if v.get("ctrlEst"):
+            r["control_est"] = True
+        if v.get("ctrlWhy"):
+            r["control_why"] = v.get("ctrlWhy")
+        # A FREE AGENCY YEAR INSIDE THE PRICED WINDOW IS A SERVED FALSEHOOD,
+        # AND THE REPAIR IS TO WITHDRAW IT, NOT TO RESTATE IT LOUDER.
+        # `contract.fa_year` is debut+6 raised to signed_through+1, and it never
+        # consulted the salary path: measured on the served board, 33 of the 77
+        # joinable rows named a season at or before the last season the SAME row
+        # prices as controlled (Rafael Flores "FA 2027" against a window priced
+        # through 2028; Brandon Eisert, Cam Booser and DJ Herz "FA 2027" against
+        # 2030). The contradicting year is DROPPED.
+        #
+        # It is not replaced by `ctrlThru + 1`. That season is derived from a
+        # PROJECTED arbitration ladder - on class-closure rungs, from a ladder
+        # this platform extended itself - and /arbitration/ deletes exactly that
+        # claim in this same change, because a projected ladder cannot name the
+        # season a club stops holding a player. `ctrlThru` itself is published
+        # beside it and is labelled everywhere it renders; a bare `fa_year` in a
+        # payload carries no such label, and horizon-clamped rows would make it
+        # an artifact of the five-season window besides. If a consumer ever
+        # needs the first uncontrolled season it gets its own basis-tagged
+        # field; nothing reads this one on the MLB branch today.
+        # `contract.phase` is untouched: it is computed upstream, the MiLB
+        # branch renders it and the rank gate reads it.
+        cc = r.get("contract")
+        if isinstance(cc, dict) and v.get("ctrlThru") is not None:
+            fa = cc.get("fa_year")
+            if fa is not None and int(fa) <= int(v["ctrlThru"]):
+                cc.pop("fa_year", None)
         if v.get("salCut") is not None:
             r["salary_cut_season"] = v.get("salCut")
     return n
@@ -5459,8 +5498,12 @@ def _prearb_basis_stamp() -> dict:
             "roster_status.service_phase overrides where present."),
         "window_priced": (
             "remaining pre-arb seasons plus the balance of the season in progress. "
-            "The arbitration years the club also controls are NOT priced, so a "
-            "prearb_min value is a FLOOR on the row's true control-window surplus."),
+            "This basis serves only the rows that carry no salary path at all: a row "
+            "with one is priced over its whole club control window instead "
+            "(salary_path, 2026-09-16). Where this basis does serve a row, the "
+            "arbitration years the club also controls are NOT priced, so a "
+            "prearb_min value is a FLOOR on the row's true club control window "
+            "surplus."),
     }
 
 

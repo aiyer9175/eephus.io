@@ -402,7 +402,7 @@ function renderTradeMachine() {
          </div>
          <div class="tm-balrow">
            <span class="tm-balverdict ${vClass}">${vText}</span>
-           <span class="fa-sub"><span data-gl="surplus_value">surplus</span>: prospect control-window NPV + MLB contract surplus · $${BALANCED_THRESHOLD_MM}M dead-band</span>
+           <span class="fa-sub"><span data-gl="surplus_value">surplus</span>: prospect surplus NPV + MLB club control window surplus · $${BALANCED_THRESHOLD_MM}M dead-band</span>
          </div>
          <div class="tm-controls">
            <button class="chip" data-tm-clear type="button">Clear</button>
@@ -582,6 +582,39 @@ function _tbSortParts() {
 // Note: since the 2026-07-06 quantile flip, surplus
 // dollars are priced on the DISPLAYED quantile grade, not this raw grade -
 // they are related but distinct orderers. Surplus stays on trade_value_mm.
+// The season in progress. The control END the payload carries is an absolute
+// year; the colour band and the contract sort both want a SPAN, and this module
+// had no season constant of its own.
+//
+// IT COMES OFF THE PAYLOAD, NOT THE READER'S CLOCK. Every other surface derives
+// its seasons from the artifact it was served (DATA.first_season on
+// /projections/), and a board whose colour bands and sort order shift at
+// midnight on 1 January - or on a machine whose timezone is a day ahead - is
+// reporting the reader's calendar, not the regen's. `generated_at` is stamped
+// by the same run that stamps `control_thru`, so the two cannot disagree. The
+// clock is the fallback for a payload with no stamp at all.
+function _tbCurSeason() {
+  const m = /^(\d{4})/.exec(String((typeof _tbData !== "undefined" && _tbData && _tbData.generated_at) || ""));
+  return m ? Number(m[1]) : new Date().getUTCFullYear();
+}
+
+// The contract word for a row the salary path never priced. 860 of 1752 MLB
+// rows are in that state (420 pre-arb, 155 arb, 102 team control, 41 on an
+// extension, 60 free agents, 81 with nothing on file), and for one revision of
+// this change they rendered a bare salary or an empty cell: the control end
+// replaced the phase instead of joining it. The phase is translated into the
+// site's lexicon rather than printed raw - "Ext. thru 2028" is a GUARANTEED
+// contract fact and takes the guarantee word, "Team Control" becomes "Club
+// control" with no year because the row has none - and the class words
+// (Pre-Arb, Arb) stay, because they describe a SEASON and not a window.
+function _tbPhaseWord(phase) {
+  const s = String(phase || "").trim();
+  if (!s || s === "-") return null;
+  const m = /^Ext\. thru (\d{4})$/.exec(s);
+  if (m) return `Guar. thru ${m[1]}`;
+  return s === "Team Control" ? "Club control" : s;
+}
+
 function _tbSortVal(p, col) {
   const num = v => (v == null || v === "") ? null : (Number.isFinite(Number(v)) ? Number(v) : null);
   if (col === "age") return { n: num(p.age) };
@@ -589,7 +622,15 @@ function _tbSortVal(p, col) {
   if (col === "org") return { t: String(p.org || "") };
   if (col === "pos") return { t: _tbPrimaryPos(p.position) };
   if (col === "name") return { t: String(p.player_name || "") };
-  if (col === "contract") return { n: num(p.remaining_control_years) };
+  // The Contract column sorts on the last season the club CONTROLS him. It
+  // sorted on debut+6 (`remaining_control_years`) while its own tooltip named
+  // the salary path's window end, which is two window lengths in one column;
+  // 597 of 892 rows change their key. The old field is the fallback for a row
+  // the path never priced.
+  if (col === "contract") {
+    var _ct = num(p.control_thru);
+    return { n: _ct != null ? _ct - _tbCurSeason() + 1 : num(p.remaining_control_years) };
+  }
   if (col === "risk") return { n: num(p.sortino) };   // downside-adjusted surplus
   if (col === "surplus") return { n: num(p.trade_value_mm) };   // explicit $ column
   return { n: num(p.xfv_grade) };                // grade (default) - eFV grade orderer
@@ -739,7 +780,10 @@ function _tbCtrlBadge(p) {
   const sal   = cc.current_salary_mm != null
     ? (cc.current_salary_mm < 1 ? `$${(cc.current_salary_mm*1000).toFixed(0)}k` : `$${cc.current_salary_mm.toFixed(1)}M`)
     : null;
-  const fa    = cc.fa_year ? `FA ${cc.fa_year}` : null;
+  // `fa_year` is NOT read in this branch. It was declared here and never used:
+  // `parts` and `tip` are both built without it, so the column header's promise
+  // of an FA year was a promise no row could keep. The club control end below
+  // is the figure that answers the question it was asked.
   // Contract structural options (player opt-outs / club options)
   // Format year ranges compactly: [2030,2031,2032,2033] → "2030-33"
   function _fmtYears(yrs) {
@@ -758,7 +802,23 @@ function _tbCtrlBadge(p) {
   // salary path knows the window end, the tooltip states it and the row stops
   // resting on `remaining_control_years` (debut+6), which is still emitted for
   // the rank gate but is no longer the thing a reader is shown.
-  const _spThru = p.salary_thru != null ? `Control window priced through ${p.salary_thru}` : null;
+  const _ctThru = p.control_thru != null ? p.control_thru
+    : (p.salary_thru != null ? p.salary_thru : null);
+  const _ctOpen = p.control_thru != null ? !!p.control_open : false;
+  // A PLAYER OPT-OUT IS A CEILING ON THE WINDOW, NOT A FOOTNOTE TO IT.
+  // `control_end` takes max(guarantee, priced path), so a deal with an opt-out
+  // inside it reports the last GUARANTEED season as the control end: 2039 for
+  // Soto, 2037 for Witt, 2034 for Julio. The right to leave is the player's,
+  // and this module is the one that states the window in words, so the words
+  // carry the qualifier. The strip already prints `P-opt 2030-33` beside it.
+  const _optTail = (cc.player_opt_years && cc.player_opt_years.length)
+    ? ` unless he opts out (${_fmtYears(cc.player_opt_years)})` : "";
+  const _spThru = _ctThru != null
+    ? (_ctOpen ? `Club control through at least ${_ctThru}${_optTail}`
+               : `Club control through ${_ctThru}${_optTail}`)
+    : (_tbPhaseWord(phase)
+        ? `${_tbPhaseWord(phase)} on service time; no salary path prices this row, so no controlled season is named`
+        : null);
   const _spBasis = p.salary_basis ? `Salary basis: ${String(p.salary_basis).replace(/_/g, " ")}` : null;
   const _spCut = p.salary_cut_season != null
     ? `Not tendered from ${p.salary_cut_season}: carrying him through the rest of his arbitration years costs more than he is worth` : null;
@@ -766,15 +826,34 @@ function _tbCtrlBadge(p) {
     ? `If the award lands at the band ends: $${p.surplus_salary_band_mm[0]}M to $${p.surplus_salary_band_mm[1]}M` : null;
   const tip = [sal && `Salary: ${sal}/yr`, pOpts, cOpts,
                _spThru, _spBasis, _spBand, _spCut].filter(Boolean).join(" · ");
-  const col = ctrl >= 5 ? "var(--neon-green)" : ctrl >= 2 ? "var(--neon-amber)" : "var(--text-secondary)";
+  // THE YEAR IS ON THE STRIP, not only in the title. A tooltip is unreachable
+  // on touch and absent from the CSV, and the strip used to show `cc.phase`
+  // alone ("Pre-Arb" / "Arb" / "Team Control" / "Ext. thru YYYY") - derived
+  // from debut+6 and carrying no year at all. Where the path knows the end, the
+  // end replaces it; where it does not, the phase is still the only thing the
+  // row knows and it keeps the cell. The band reads the control end where there
+  // is one and the debut+6 proxy where there is not.
+  // ONE SPAN EXPRESSION, shared with the column's sort key. The band's
+  // thresholds were calibrated on `remaining_control_years`, which COUNTS the
+  // season in progress, so dropping the +1 here shifted every row one band
+  // darker than the sort that sits beside it.
+  const _ctSpan = _ctThru != null ? (_ctThru - _tbCurSeason() + 1) : ctrl;
+  const col = _ctSpan >= 5 ? "var(--neon-green)" : _ctSpan >= 2 ? "var(--neon-amber)" : "var(--text-secondary)";
+  const head = _ctThru != null
+    ? `Ctrl thru ${_ctThru}${_ctOpen ? "+" : ""}`
+    : _tbPhaseWord(phase);
   const parts = [
-    `<span style="font-weight:600;">${escapeHtml(phase)}</span>`,
+    head ? `<span style="font-weight:600;${p.control_est ? "border-bottom:1px dashed currentColor;" : ""}">${escapeHtml(head)}</span>` : "",
     sal  ? `<span style="color:${col}">${sal}</span>` : "",
     pOpts ? `<span style="color:var(--neon-amber);font-size:9px;" title="Player can opt out">${escapeHtml(pOpts)}</span>` : "",
     cOpts ? `<span style="color:var(--text-secondary);font-size:9px;" title="Team holds option">${escapeHtml(cOpts)}</span>` : "",
   ].filter(Boolean).join(" · ");
 
-  return `<span style="font-size:10px;line-height:1.3;" title="${escapeHtml(tip)}">${parts}</span>`;
+  // 81 MLB rows carry no control end, no phase and no salary. They rendered a
+  // " - " placeholder before the Contract column was rebuilt and an EMPTY cell
+  // after it, which reads as a rendering failure rather than as "nothing on
+  // file"; the site's own idiom for the second is a dash.
+  return `<span style="font-size:10px;line-height:1.3;" title="${escapeHtml(tip)}">${parts || " - "}</span>`;
 }
 function _tbFmt(mm) {
   if (mm == null) return "-";
@@ -903,7 +982,7 @@ function _renderTBRows() {
     ${_tbTh("Grade", "grade", "tm-num tm-col-div", "Trade Value Grade: contract-adjusted surplus, A+ to F. The default sort is the raw eFV grade, which orders realized value better pooled but not in the low tier (most of the board).", true)}
     ${_tbTh("Surplus", "surplus", "tm-num", "$M of production above cost; same model as PROSPX and MLB Projections", false, "surplus_value")}
     ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside (higher is safer). Blank on a flat outcome fan; the bust probability still shows.", false, "risk_adjusted_surplus") : ""}
-    ${_tbTh("Contract", "contract", "", "Contract: phase · salary · FA year (MLB) or remaining controlled seasons (MiLB)", false, "service_time")}
+    ${_tbTh("Contract", "contract", "", "Club control: last controlled season · current salary. Where no salary path prices the row, its service-time phase instead, and the sort falls back to the debut+6 proxy. MiLB: the MLB deal on file, if any.", false, "club_control_window")}
     <th class="tm-col-div">Signals</th>
   </tr></thead><tbody>`;
 
@@ -1102,7 +1181,7 @@ function _tmBoardSpec(rows) {
     caption: "Bayesian surplus · contract-aware · positional scarcity · opt-out adjusted",
     board: {
       defaultCount: 25, counts: [10, 25, 50],
-      legend: "Surplus = control-window NPV surplus ($M)",
+      legend: "Surplus = NPV surplus over each player's controlled seasons ($M)",
       columns: [
         { label: "#", frac: 0.05 },
         { label: "Player", frac: 0.32 },

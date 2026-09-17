@@ -4253,6 +4253,21 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .proj-app .proj-board-table .proj-ct { font-size: 10px; padding: 1px 5px; }
 .proj-app .proj-ct-est { border-style: dashed; }
 .proj-app .proj-ct-none { color: var(--text-tertiary); border-color: var(--border); background: none; }
+/* Club control end NOT established: the year printed is a FLOOR ("2028+"), so
+   the cell reuses the salary strip's own `is-unk` treatment - dashed border,
+   secondary ink - rather than inventing a colour for it. The dash is set HERE
+   and not only on .proj-ct-est, because an open window whose path prices
+   nothing past the guarantee carries no estimated season and would otherwise
+   paint the solid border that means "signed". */
+.proj-app .proj-ct-open { color: var(--text-secondary); border-color: var(--border);
+  background: none; border-style: dashed; }
+/* The Control cell's second line: the guarantee, under the control year. It is
+   the disclosure that survives a screenshot and a colour-blind reader, so it is
+   text and not a tint. */
+.proj-app .proj-board-table .proj-ct-sub { display: block; margin-top: 1px;
+  font-family: var(--font-retro-mono); font-size: 8px; letter-spacing: 0.02em;
+  color: var(--text-tertiary); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; }
 /* Detail line. */
 .proj-app .proj-board-table tr.proj-detail > td { background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
 .proj-app .proj-board-table tr.proj-detail > td.proj-dt-cell { padding: 6px 7px 8px; white-space: normal; text-align: left; }
@@ -4309,7 +4324,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .proj-app .proj-board-table .pc-y    { width: 50px; }
 .proj-app .proj-board-table .pc-age  { width: 42px; }
 .proj-app .proj-board-table .pc-aav  { width: 66px; }
-.proj-app .proj-board-table .pc-ct   { width: 72px; }
+.proj-app .proj-board-table .pc-ct   { width: 86px; }
 .proj-app .proj-board-table .pc-fv   { width: 46px; }
 .proj-app .proj-board-table .pc-eta  { width: 48px; }
 .proj-app .proj-board-table .pc-peak { width: 52px; }
@@ -4559,6 +4574,13 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .fa-app .fa-board-table .fa-st { font-size: 10.5px; }
 .fa-app .fa-board-table .fa-st-ufa, .fa-app .fa-board-table .fa-st-off { color: var(--text-dim); }
 .fa-app .fa-board-table .fa-st-opt { color: var(--text-gold); }
+/* Two sources disagree about this row: /fa/ publishes him as a free agent for
+   this class and the arbitration board prices him club-controlled past it. The
+   marker is a dashed underline and a "?" in the cell text, never a colour, so
+   it reads the same in both themes and on a colour-blind screen. The sentence
+   naming both sources is in the title. */
+.fa-app .fa-board-table .fa-st-ctrlflag,
+.fa-app .fa-pl-sub .fa-st-ctrlflag { border-bottom: 1px dashed currentColor; }
 /* Signed rows keep the site's green. Measured light 4.73 / 4.94 at rest and
    4.32 on a hovered row, which is the SAME reading the shipped .fa-app .fa-pos
    carries on the Surplus cell of the same hovered row: it is the unchanged
