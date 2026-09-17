@@ -377,9 +377,18 @@ def test_a_down_bat_side_lens_is_a_stated_null_for_every_club():
         assert mix[col]["basis"].startswith("ABSENT")
 
 
-def test_one_pa_by_slot_table_on_the_site():
-    import betting_export as be
-    assert lv.LINEUP_SLOT_PA == be.SLOT_PA
+def test_the_hand_mix_weights_are_the_frozen_literal():
+    """5i-B's weights are a REGISTERED LITERAL (docs/diamond-betting.md 5i,
+    amendment 2026-09-17), not a read of whatever the served props table holds
+    this month. What stood here was `lv.LINEUP_SLOT_PA == be.SLOT_PA`, which is
+    stop item X4 in executable form: it pinned a dark column's constant to a
+    served constant, so a repair of the served table would have moved the dark
+    column's input membership without anyone writing it down. The nine numbers
+    below are what every vintage's lhb_share_vr and lhb_share_vl were built
+    with and what they stay built with."""
+    assert lv.LINEUP_SLOT_PA == {1: 4.65, 2: 4.55, 3: 4.45, 4: 4.35, 5: 4.25,
+                                 6: 4.15, 7: 4.05, 8: 3.95, 9: 3.85}
+    assert sum(lv.LINEUP_SLOT_PA.values()) == 38.25
     assert lv.LINEUP_HAND_MIN_SLOTS == lv.LINEUP_MIN_JOINED_SLOTS
 
 

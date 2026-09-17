@@ -6,20 +6,33 @@
 """Four guards on the board's two entry seams: which DATE it is, and which
 POSTED NUMBER it prices. Audit items L14-04, L14-06, L14-08 and L14-12.
 
-None of these is a pricing change. No probability moves, no edge moves, no
-selection moves, and `betting_model.MODEL_VERSION` is untouched: every one of
-the four either refuses a case the module had no number for, restores a
-denominator, or makes a published sentence say what the code does.
+None of these is a pricing change. No probability moves and no edge moves, and
+`betting_model.MODEL_VERSION` is untouched: every one of the four either refuses
+a case the module had no number for, restores a denominator, or makes a
+published sentence say what the code does. Selection is untouched on any board
+that carries no refusal, which is every board to date; a refusal does take two
+runline candidates out of the slot pool, which is what a refusal is for.
 
   L14-04  `_slate_is_open` read TWO signals for "this game has started", the
           status and the clock, and excluded postponements from the first one
           only. A postponed game keeps its scheduled `datetime`, so once that
           time passed it counted as started anyway - the exact thing the
           exclusion's own comment forbids. Three postponements and one real
-          night game made a live card read as a 0.25 fragment; the mirror case
-          gave a 0.75 pregame share to a date with nothing bettable on it.
-          A called-off row is now in neither half and leaves the denominator,
-          which is published beside the counts.
+          night game made a live card read as a 0.25 fragment. The mirror case,
+          three postponements still ahead of the clock, published a 0.75 pregame
+          share on a date with nothing bettable; it chose no board, because
+          every reader of the verdict is gated on a bettable row, so that half
+          is a disclosure defect. A called-off row is now in neither half and
+          leaves the denominator, which is published beside the counts.
+
+          AND THE SIGNAL IS ONE THIS PRODUCER EMITS. The status strings
+          ("postponed", "cancelled") are not in data/fantasy.json:
+          `fantasy_schedule.fetch_probables` writes `abstractGameState` alone,
+          where a postponement reads "Final", so a set keyed on those strings
+          would have left case B exactly where it was. The coded and detailed
+          states are in the raw schedule document the same fetch cached, which
+          `called_off_game_pks` reads and `dfs_export._annotate_states` already
+          read for the same reason. No request is made on either path.
 
   L14-06  `team_bets` read only the SIGN of the posted spread point. A posted
           -2.5 would have been labelled "-2.5" and priced with P(margin >= 2),
@@ -43,18 +56,30 @@ denominator, or makes a published sentence say what the code does.
           Pick of the Day broke the one stated in `note`.
 
 MEASURED 2026-09-17, so the tests below can be read as regression pins rather
-than as claims. Over the 31 cached snapshots in `.cache/odds`, 492 pregame
-events carry a two-sided spread view and every one is posted at +/-1.5,
-mirrored, with a point on both sides, so the L14-06 guard refuses nothing that
-has ever reached a board; the served board's 15 runline pairs all clear it too,
+than as claims.
+
+L14-06: over the 31 cached snapshots in `.cache/odds`, 492 pregame events carry
+a two-sided spread view and every one is posted at +/-1.5, mirrored, with a
+point on both sides, so the guard refuses nothing that has ever reached a board,
 while all 30 in-game spread views posted away from +/-1.5 were already dropped
-upstream. The L14-04 case is latent as well: of 1,317 cached schedule rows none
-carries a postponed, cancelled or suspended state, so no candidate row's share
-moves today either.
+upstream. The served board is deliberately not pinned in this file: it is
+rebuilt several times a day and any count of it written into a test goes stale
+by the next build, while the snapshot cache is append-only and reproduces.
+
+L14-04: `.cache/fantasy_schedule` holds 160 files, of which 128 are schedule
+windows (the rest are the lineup and team documents, which are named
+differently and are skipped by shape). Those 128 carry 6,857 game rows and 899
+distinct gamePk. `abstractGameState` across all of them is only "Preview"
+(6,285), "Final" (271) and "Live" (301), and no row is postponed or cancelled on
+any of the three status fields, so nothing on today's board moves. The pin that
+the read is load-bearing rather than dead is
+`test_without_the_producer_signal_the_same_card_walks_a_day_forward`, which
+serves a different date when the document is taken away.
 """
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -66,9 +91,62 @@ bm = pytest.importorskip("betting_model")
 
 ROOT = Path(__file__).parent
 ODDS_DIR = ROOT / ".cache" / "odds"
+SCHED_DIR = ROOT / ".cache" / "fantasy_schedule"
+#: The schedule WINDOW documents in that directory, by the same name shape
+#: `_schedule_cache_documents` uses. The lineup and team documents share the
+#: directory and are not schedules; an empty list means a pruned or unbuilt
+#: cache, which skips the measurement rather than failing it.
+SCHED_DOCS = sorted(
+    p for p in (SCHED_DIR.glob("*_*_*.json") if SCHED_DIR.is_dir() else [])
+    if len(p.stem.split("_")) == 3 and len(p.stem.split("_")[0]) == 10
+    and p.stem[4] == "-")
 
 NOW = datetime(2026, 9, 10, 23, 30, tzinfo=timezone.utc)
 DAY = "2026-09-10"
+DAY2 = "2026-09-11"
+
+
+@pytest.fixture
+def cache_dir(tmp_path, monkeypatch):
+    """`called_off_game_pks` pointed at a directory this test owns, with the
+    per-day memo cleared going in AND coming out, so no test can inherit another
+    test's answer or the repo's own cache."""
+    d = tmp_path / "fantasy_schedule"
+    d.mkdir()
+    monkeypatch.setattr(be, "SCHEDULE_CACHE_DIR", d)
+    be._CALLED_OFF_BY_DAY.clear()
+    yield d
+    be._CALLED_OFF_BY_DAY.clear()
+
+
+def _raw_game(pk: int, *, coded: str = "S", detailed: str = "Scheduled",
+              abstract: str = "Preview", day: str = DAY) -> dict:
+    """One game as the RAW StatsAPI schedule document carries it: the three
+    status fields, of which data/fantasy.json keeps only the first."""
+    return {"gamePk": pk, "officialDate": day,
+            "status": {"abstractGameState": abstract, "codedGameState": coded,
+                       "detailedState": detailed}}
+
+
+def _write_schedule_doc(cache_dir: Path, blocks: dict, *, start: str, end: str,
+                        mtime: float | None = None) -> Path:
+    """One cached raw /schedule document, named the way fantasy_schedule names
+    them. `blocks` is {date: [raw game, ...]}."""
+    path = cache_dir / f"{start}_{end}_R.json"
+    path.write_text(json.dumps(
+        {"dates": [{"date": d, "games": g} for d, g in sorted(blocks.items())]}),
+        encoding="utf-8")
+    if mtime is not None:
+        os.utime(path, (mtime, mtime))
+    return path
+
+
+def _postponed_doc(cache_dir: Path, pks, *, day: str = DAY, **kw) -> Path:
+    return _write_schedule_doc(
+        cache_dir,
+        {day: [_raw_game(pk, coded="D", detailed="Postponed", abstract="Final",
+                         day=day) for pk in pks]},
+        start=kw.pop("start", day), end=kw.pop("end", day), **kw)
 
 
 def _row(status: str, *, hours: float, pk: int = 0, home="SEA", away="TBR") -> dict:
@@ -122,9 +200,9 @@ def test_a_postponement_ahead_of_the_clock_is_not_a_pregame_game():
 
 def test_the_share_denominator_is_the_playable_card():
     """The verdict is a proportion, and the question the proportion answers is
-    "of the games that CAN be played, how many are still ahead". Six playable
-    games with three still to come is exactly the threshold whatever number of
-    postponements sits beside them."""
+    "of the games this date will actually stage, played and still to come, how
+    many are still ahead". Six staged games with three of them still to come is
+    exactly the threshold whatever number of postponements sits beside them."""
     playable = ([_row("Final", hours=-4, pk=i) for i in range(3)]
                 + [_row("Preview", hours=2, pk=10 + i) for i in range(3)])
     for n_off in range(0, 5):
@@ -158,6 +236,17 @@ def test_every_called_off_state_the_deny_list_carries_is_read_the_same_way():
         assert be._has_started(g, NOW) is False, st
         assert st in be.NOT_BETTABLE_STATES, st
         assert not be.is_bettable(g), st
+
+
+def test_the_two_slate_halves_partition_the_deny_list():
+    """A STATE ADDED TO ONE LIST MUST LAND IN A HALF. The three sets are today an
+    exact, disjoint partition, and nothing but this says so: add "rescheduled" to
+    NOT_BETTABLE_STATES alone, the way a StatsAPI vocabulary change would arrive,
+    and it is in neither slate half, so `_has_started` falls through to the clock
+    and four future-dated unbettable rows read as a whole pregame card. That is
+    the L14-04 shape reintroduced by a one-line edit somewhere else."""
+    assert be.SLATE_STARTED_STATES | be.SLATE_CALLED_OFF_STATES == be.NOT_BETTABLE_STATES
+    assert not (be.SLATE_STARTED_STATES & be.SLATE_CALLED_OFF_STATES)
 
 
 def test_the_slate_rule_and_the_board_filter_share_one_definition():
@@ -194,6 +283,271 @@ def test_the_candidate_row_publishes_the_denominator(monkeypatch):
     assert cand["n_playable"] == 1
     assert cand["n_started"] + cand["n_pregame"] == cand["n_playable"]
     assert cand["open"] is True
+
+
+# ===========================================================================
+# L14-04, the other half: the signal the producer actually emits
+# ===========================================================================
+def test_a_postponement_this_producer_reports_as_final_is_still_called_off(
+        cache_dir, monkeypatch):
+    """THE CASE THE STRING SET CANNOT REACH. `fetch_probables` writes
+    `abstractGameState`, and StatsAPI reports a postponement there as "Final" on
+    this feed, so the row arrives as "final": in SLATE_STARTED_STATES, counted as
+    started, audit case B untouched. The first half of this test is that defect,
+    reproduced with an empty cache; the second half is the same rows with the
+    document the fetch already wrote sitting beside them."""
+    rows = [_row("Final", hours=-3, pk=i) for i in range(3)]
+    rows.append(_row("Preview", hours=2, pk=9))
+
+    counts: dict = {}
+    is_open, why_not = be._slate_is_open(DAY, rows, NOW, counts=counts)
+    assert not is_open, "with nothing on disk the status string is all there is"
+    assert counts["n_started"] == 3 and counts["n_called_off"] == 0
+    assert counts["pregame_share"] == 0.25
+    assert "fragment" in why_not
+
+    _postponed_doc(cache_dir, range(3))
+    be._CALLED_OFF_BY_DAY.clear()
+    counts2: dict = {}
+    is_open2, why2 = be._slate_is_open(DAY, rows, NOW, counts=counts2)
+    assert is_open2, why2
+    assert counts2["n_called_off"] == 3
+    assert counts2["n_started"] == 0
+    assert counts2["n_playable"] == 1
+    assert counts2["pregame_share"] == 1.0
+
+
+def test_either_status_field_is_enough_and_suspended_is_not_called_off(cache_dir):
+    """Two fields, read independently, because a vocabulary change in one of
+    them must not take the guard with it. SUSPENDED IS NOT HERE: a suspended
+    game has started, which is the distinction `anchors_close_window` turns on
+    and the reason it is in SLATE_STARTED_STATES instead."""
+    _write_schedule_doc(cache_dir, {DAY: [
+        _raw_game(1, coded="D", detailed="Scheduled"),
+        _raw_game(2, coded="S", detailed="Postponed"),
+        _raw_game(3, coded="C", detailed="Scheduled"),
+        _raw_game(4, coded="S", detailed="Cancelled"),
+        _raw_game(5, coded="U", detailed="Suspended"),
+        _raw_game(6, coded="T", detailed="Suspended"),
+        _raw_game(7),
+    ]}, start=DAY, end=DAY)
+    assert be.called_off_game_pks(DAY) == {
+        1: "postponed", 2: "postponed", 3: "cancelled", 4: "cancelled"}
+
+
+def test_the_freshest_document_wins(cache_dir):
+    """A game called off and then reinstated must not be read off the stale
+    copy, and a postponement announced at four o'clock is not in the noon
+    window."""
+    _postponed_doc(cache_dir, [1], start="2026-09-09", end="2026-09-11", mtime=1000.0)
+    _write_schedule_doc(cache_dir, {DAY: [_raw_game(1)]},
+                        start="2026-09-10", end="2026-09-12", mtime=2000.0)
+    assert be.called_off_game_pks(DAY) == {}
+
+    be._CALLED_OFF_BY_DAY.clear()
+    _write_schedule_doc(cache_dir, {DAY: [
+        _raw_game(1, coded="D", detailed="Postponed", abstract="Final")]},
+        start="2026-09-08", end="2026-09-14", mtime=3000.0)
+    assert be.called_off_game_pks(DAY) == {1: "postponed"}
+
+
+def test_only_the_date_asked_for_is_read_out_of_a_multi_day_document(cache_dir):
+    """The windows overlap by design (a three-day forward pull, every night), so
+    a row is read for the date it is listed on and not for the file it is in."""
+    _write_schedule_doc(cache_dir, {
+        DAY: [_raw_game(1, coded="D", detailed="Postponed", abstract="Final")],
+        DAY2: [_raw_game(2, coded="D", detailed="Postponed", abstract="Final",
+                         day=DAY2)],
+    }, start=DAY, end=DAY2)
+    assert be.called_off_game_pks(DAY) == {1: "postponed"}
+    assert be.called_off_game_pks(DAY2) == {2: "postponed"}
+
+
+def test_a_missing_or_pruned_cache_degrades_to_the_status_string(tmp_path, monkeypatch):
+    """tools/prune_cache.py prunes this directory, so an empty one is a real
+    state. It puts the module back exactly where it was rather than blanking a
+    board on a file that is not there."""
+    monkeypatch.setattr(be, "SCHEDULE_CACHE_DIR", tmp_path / "not-here")
+    be._CALLED_OFF_BY_DAY.clear()
+    try:
+        assert be.called_off_game_pks(DAY) == {}
+        assert be._is_called_off(_row("Postponed", hours=-2, pk=1)) is True
+        assert be._is_called_off(_row("Final", hours=-2, pk=1)) is False
+    finally:
+        be._CALLED_OFF_BY_DAY.clear()
+
+
+def test_a_corrupt_cache_file_is_not_a_verdict(cache_dir):
+    """An unreadable file says nothing, in either direction."""
+    (cache_dir / f"{DAY}_{DAY}_R.json").write_text("{not json", encoding="utf-8")
+    assert be.called_off_game_pks(DAY) == {}
+
+
+def test_a_row_with_no_game_pk_is_not_looked_up(cache_dir):
+    """The lookup is keyed on gamePk, so a row without one falls back to the
+    string and must not raise on the way there."""
+    _postponed_doc(cache_dir, [1])
+    g = {"date": DAY, "status": "Preview", "datetime": None}
+    assert be._is_called_off(g) is False
+    assert be._is_called_off({"game_pk": "not-a-number", "date": DAY,
+                              "status": "Preview"}) is False
+
+
+def test_the_called_off_read_never_makes_a_request():
+    """NO STATSAPI CALL ON THE BETTING PATH. `fantasy_schedule._cached_schedule`
+    would refetch a window past its three-hour TTL, which would put a network
+    round trip inside `_slate_is_open`; this opens the files that fetch already
+    wrote and nothing else.
+
+    Read off the COMPILED names rather than the source text, so the prose in the
+    docstrings above, which has to name `_cached_schedule` to say why it is not
+    called, cannot satisfy or break the check."""
+    forbidden = {"_cached_schedule", "fetch_probables", "SESSION", "requests",
+                 "urlopen", "feed_cache", "fantasy_schedule"}
+    for fn in (be.called_off_game_pks, be._schedule_cache_documents,
+               be._called_off_label, be._is_called_off):
+        assert not (set(fn.__code__.co_names) & forbidden), fn.__name__
+    assert not hasattr(be, "fantasy_schedule"), (
+        "betting_export does not import the schedule fetcher at all")
+
+
+@pytest.mark.skipif(not SCHED_DOCS, reason="no cached schedule documents")
+def test_the_producer_cannot_say_called_off_in_the_field_it_publishes():
+    """THE MEASUREMENT, as a test. Counted 2026-09-17: 128 schedule documents,
+    6,857 game rows, 899 distinct gamePk, `abstractGameState` only ever
+    "Preview" / "Live" / "Final", and no row postponed or cancelled on any
+    field, which is why no served number moves today.
+
+    The assertion is the DURABLE half, and it is vacuous only until the first
+    postponement is cached: whenever a row IS called off, the field
+    data/fantasy.json keeps cannot say so, so the string set alone would miss
+    it. That is the finding, held against the real cache rather than asserted."""
+    n_docs = n_rows = n_off = 0
+    pks = set()
+    for path in SCHED_DOCS:
+        n_docs += 1
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+        except ValueError:
+            continue
+        for block in doc.get("dates") or []:
+            for raw in block.get("games") or []:
+                n_rows += 1
+                pks.add(raw.get("gamePk"))
+                st = raw.get("status") or {}
+                if not be._called_off_label(st):
+                    continue
+                n_off += 1
+                abstract = str(st.get("abstractGameState") or "").strip().lower()
+                assert abstract not in be.SLATE_CALLED_OFF_STATES, (
+                    f"{raw.get('gamePk')} is {st.get('detailedState')} and the "
+                    f"producer's own field says {abstract!r}")
+    assert n_docs >= 100, f"the schedule cache thinned out: {n_docs} documents"
+    assert n_rows >= 6000, f"the schedule cache thinned out: {n_rows} rows"
+    assert len(pks) >= 800, f"the schedule cache thinned out: {len(pks)} games"
+
+
+# ===========================================================================
+# L14-04: what the chosen date lost, published
+# ===========================================================================
+def _walk(monkeypatch, rows, **kw):
+    monkeypatch.setattr(be, "_load",
+                        lambda name: ({"schedule": {"games": rows}}
+                                      if name == "fantasy.json" else None))
+    stats: dict = {}
+    day, board = be.resolve_slate(now=NOW, stats=stats, priceable={}, **kw)
+    return day, board, stats
+
+
+def _gutted_card() -> list[dict]:
+    """Ten games listed today: six postponed (arriving as "Final", the way this
+    producer reports one), two really final, two still to come. Twelve whole
+    games tomorrow."""
+    rows = [_row("Final", hours=-3, pk=i) for i in range(6)]
+    rows += [_row("Final", hours=-4, pk=10 + i) for i in range(2)]
+    rows += [_row("Preview", hours=2, pk=20 + i) for i in range(2)]
+    rows += [{**_row("Preview", hours=26, pk=30 + i), "date": DAY2}
+             for i in range(12)]
+    return rows
+
+
+def test_a_card_gutted_by_postponements_wins_the_walk_and_says_why(
+        cache_dir, monkeypatch):
+    """THE CONSEQUENCE OF THE DENOMINATOR, pinned rather than discovered later.
+    Six of today's ten are called off, so the share is read over the four the
+    date will stage and today opens on a two-game board. That is the right
+    board - those two games are tonight and the books are posting them - and it
+    must not be the silent one, because the payload otherwise says ten games on
+    the date and ships two rows."""
+    _postponed_doc(cache_dir, range(6))
+    day, board, stats = _walk(monkeypatch, _gutted_card())
+    assert day == DAY
+    assert [g["game_pk"] for g in board] == [20, 21]
+    off = stats["slate_called_off"]
+    assert off["slate_date"] == DAY
+    assert off["n_called_off"] == 6
+    assert off["n_games_on_date"] == 10
+    assert off["n_playable"] == 4
+    assert off["n_bettable"] == 2
+    assert "6 of the 10" in off["reason"]
+    assert {g["game_pk"] for g in off["games"]} == set(range(6))
+    cand = stats["slate_candidates"][0]
+    assert cand["pregame_share"] == 0.5 and cand["open"] is True
+
+
+def test_without_the_producer_signal_the_same_card_walks_a_day_forward(
+        cache_dir, monkeypatch):
+    """THE PIN THAT THE READ IS LOAD-BEARING. Same rows, same clock, no cached
+    document: the six postponements read as started, today is a 0.2 fragment and
+    the board is tomorrow's twelve games. If `called_off_game_pks` ever stops
+    finding what it finds, this test goes green and the one above goes red."""
+    day, board, stats = _walk(monkeypatch, _gutted_card())
+    assert day == DAY2
+    assert len(board) == 12
+    assert stats["slate_called_off"] is None
+    assert stats["slate_candidates"][0]["pregame_share"] == 0.2
+
+
+def test_a_board_with_nothing_called_off_publishes_null_and_not_a_zero_block(
+        cache_dir, monkeypatch):
+    """Null means the date lost nothing. A block with n 0 would read as a date
+    that had postponements and recovered them."""
+    rows = [_row("Preview", hours=2, pk=i) for i in range(4)]
+    day, board, stats = _walk(monkeypatch, rows)
+    assert day == DAY and len(board) == 4
+    assert stats["slate_called_off"] is None
+    assert stats["called_off_rows_dropped"]["n"] == 0
+
+
+def test_a_bettable_row_the_document_calls_off_leaves_the_board(
+        cache_dir, monkeypatch):
+    """THE REGRESSION THE DENOMINATOR FIX WOULD OTHERWISE HAVE OPENED. A row
+    whose cached document says postponed while data/fantasy.json still says
+    "Preview" is bettable by the status string, and it is no longer started
+    either, so without a bucket of its own it would sit on the board with a
+    price cell for a game nobody will play."""
+    _postponed_doc(cache_dir, [0])
+    rows = [_row("Preview", hours=2, pk=0), _row("Preview", hours=3, pk=1)]
+    day, board, stats = _walk(monkeypatch, rows)
+    assert [g["game_pk"] for g in board] == [1]
+    off = stats["called_off_rows_dropped"]
+    assert off["n"] == 1 and off["n_on_slate"] == 2
+    assert off["games"][0]["game_pk"] == 0
+    assert stats["started_rows_dropped"]["n"] == 0
+    assert stats["started_rows_dropped"]["applied"] is True
+
+
+def test_the_never_blank_fallback_does_not_restore_a_called_off_row(
+        cache_dir, monkeypatch):
+    """A blank page is worse than a stale one, and a called-off game is not
+    stale: it was never played. The fallback hands back the started rows and
+    leaves the postponement out."""
+    _postponed_doc(cache_dir, [0])
+    rows = [_row("Preview", hours=2, pk=0), _row("Preview", hours=-2, pk=1)]
+    day, board, stats = _walk(monkeypatch, rows)
+    assert [g["game_pk"] for g in board] == [1]
+    assert stats["started_rows_dropped"]["applied"] is False
+    assert stats["called_off_rows_dropped"]["n"] == 1
 
 
 # ===========================================================================
@@ -242,6 +596,20 @@ def test_an_explicit_date_whose_whole_card_has_started_is_not_blanked(monkeypatc
     assert day == DAY and len(board) == 3
     drop = stats["started_rows_dropped"]
     assert drop["applied"] is False and drop["n"] == 3
+
+
+def test_an_explicit_date_with_no_bettable_row_still_says_the_filter_ran(monkeypatch):
+    """`applied: false` is documented to mean the never-blank fallback fired, so
+    an empty board must not publish it: "nothing to filter" and "the filter
+    refused to blank the board" are the two states this field exists to keep
+    apart, and a rebuild of a fully postponed date hit the second label with the
+    first fact."""
+    rows = [_row("Postponed", hours=-2, pk=i) for i in range(4)]
+    day, board, stats = _explicit(monkeypatch, rows)
+    assert day == DAY and board == []
+    drop = stats["started_rows_dropped"]
+    assert drop["n"] == 0 and drop["n_on_slate"] == 0
+    assert drop["applied"] is True
 
 
 def test_the_walk_and_the_explicit_date_reach_the_same_filter(monkeypatch):
@@ -362,7 +730,7 @@ def test_an_integer_runline_is_refused_because_it_can_push():
     assert row["runline"] is None
     assert stats["n_runline_refused"] == 1
     assert "pushes" in row["runline_refused"]
-    assert "no push mass" in row["runline_refused"]
+    assert "no push term" in row["runline_refused"]
 
 
 def test_a_one_run_integer_line_is_refused_too():
@@ -387,6 +755,61 @@ def test_two_sides_posted_at_different_numbers_are_not_one_bet():
     mv = {"best": {"home": {"point": -1.5}, "away": {"point": 2.5}}}
     reason = be.runline_point_refusal(mv)
     assert reason and "not one line" in reason
+
+
+def test_a_point_that_is_not_a_finite_number_is_refused():
+    """NaN PASSES EVERY OTHER TEST, because each one is an inequality and every
+    comparison with NaN is False: it would fall through as priceable, be read for
+    its sign as not-favourite, and print as "nan" on the board. `json.loads`
+    accepts a bare NaN literal, so a snapshot can really carry this shape."""
+    nan = float("nan")
+    assert "finite" in (be.runline_point_refusal(
+        {"best": {"home": {"point": nan}, "away": {"point": nan}}}) or "")
+    assert "finite" in (be.runline_point_refusal(
+        {"best": {"home": {"point": float("inf")},
+                  "away": {"point": float("-inf")}}}) or "")
+    parsed = json.loads('{"home": {"point": NaN}, "away": {"point": NaN}}')
+    assert "finite" in (be.runline_point_refusal({"best": parsed}) or "")
+
+
+def test_a_refused_runline_publishes_no_runline_market_beside_its_null():
+    """ONE ROW MUST NOT ASSERT A MARKET THE ROW BESIDE IT REFUSED. With the
+    spread refused, `market` was still publishing the runline's fair book, its
+    hold and its book counts next to `runline: null`, which reads as "no spread
+    was posted" rather than "a spread was posted and this model has no number
+    for it"."""
+    row, _ = _bets(_event(-2.5))
+    assert row["runline"] is None and row["runline_refused"]
+    mk = row["market"]
+    assert mk["runline_fair_book"] is None
+    assert mk["runline_hold_pct"] is None
+    assert "runline" not in mk["n_books_rejected"]
+    assert "runline" not in mk["max_book_lag_minutes"]
+    assert mk["moneyline_fair_book"], "the priced markets are untouched"
+    assert "moneyline" in mk["n_books_rejected"]
+
+
+def test_a_priced_runline_still_publishes_its_market_disclosure():
+    """The other half of the pair: the gate is the refusal and nothing else."""
+    row, _ = _bets(_event(-1.5))
+    mk = row["market"]
+    assert mk["runline_fair_book"]
+    assert mk["runline_hold_pct"] is not None
+    assert "runline" in mk["n_books_rejected"]
+    assert "runline" in mk["max_book_lag_minutes"]
+
+
+def test_the_refusal_reason_names_the_dict_and_not_the_model():
+    """`betting_model.margin_distribution` returns the whole margin PMF, which
+    IS the push mass. What is missing is a push term in the dict
+    `game_probabilities` hands back, and the served reason has to say the second
+    thing, because the first one would send a reader looking for a model that is
+    already there."""
+    reason = be.runline_point_refusal(
+        {"best": {"home": {"point": -2.0}, "away": {"point": 2.0}}})
+    assert "game_probabilities returns no push term" in reason
+    assert "margin model" not in reason
+    assert hasattr(bm, "margin_distribution")
 
 
 def test_a_game_with_no_spread_posted_at_all_is_not_a_refusal():

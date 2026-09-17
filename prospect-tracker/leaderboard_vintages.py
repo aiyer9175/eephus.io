@@ -222,10 +222,17 @@ SCHEMA5_TEAM_COLUMNS = (SCHEMA5_PARK_TEAM_COLUMNS + SCHEMA5_PH_TEAM_COLUMNS
                         + SCHEMA5_FLD_TEAM_COLUMNS)
 
 # Expected plate appearances by lineup slot, the weight each slot's bat side
-# carries in a club's handedness mix. Pinned EQUAL to betting_export.SLOT_PA by
-# test_betting_ballpark: one PA-by-slot table on the site, not two, and a copy
-# here rather than an import because betting_export imports this module's
-# reader path and a cycle is not worth a nine-entry table.
+# carries in a club's handedness mix. FROZEN at these nine values, and no
+# longer pinned equal to betting_export.SLOT_PA: they are 5i-B's registered
+# weights (docs/diamond-betting.md 5i, amendment 2026-09-17), every vintage's
+# lhb_share_vr and lhb_share_vl on disk was built with them, and a repair of
+# the served props table must not reach a dark column (stop item X4, and X9 for
+# what a silent membership change would cost). test_betting_ballpark holds the
+# literal. THERE ARE NOW TWO PA-BY-SLOT TABLES ON THE SITE ON PURPOSE: this
+# one, frozen for a pre-registered column, and betting_export's, which is free
+# to be repaired for served reasons. The copy lives here rather than as an
+# import because betting_export imports this module's reader path and a cycle
+# is not worth a nine-entry table.
 LINEUP_SLOT_PA = {s: round(4.65 - 0.10 * (s - 1), 2) for s in range(1, 10)}
 # A side's share is published only when at least this many of its nine slots
 # carry a readable bat side; the lineup_strength floor, so the two lineup-built

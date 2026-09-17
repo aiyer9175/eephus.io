@@ -4974,7 +4974,8 @@ another, and whichever lands first carries `SCHEMA = 5` for all of them. Team:
 `lhb_share_vr` and `lhb_share_vl`, each club's left-handed share of expected PA
 in its captured order against a right- and a left-handed starter, slots weighted
 by the PA-by-slot table (`LINEUP_SLOT_PA`, pinned equal to
-`betting_export.SLOT_PA`), switch hitters batting opposite the starter's hand,
+`betting_export.SLOT_PA`; **pin withdrawn, see the 2026-09-17 amendment at the
+end of this section**), switch hitters batting opposite the starter's hand,
 null below 7 of 9 readable slots or when `bat_side.available` is false. Record
 blocks: `parks_by_hand` ({org: {L, R, hr_L, hr_R}} as index / 100, off fa_meta's
 new `park_factors_by_hand` sibling) and `parks_short_window` (5i-A's raw row).
@@ -5062,6 +5063,77 @@ It does not explain the over tilt and does not reduce it. It does not add
 weather; sections 5d and 5h own that and neither clock has opened. It does not
 change any served price with its flag off, and the one flag it adds moves prices
 in the direction of MORE overs on the board it was measured on.
+
+### Amendment (2026-09-17): the hand-mix weights are a frozen literal, not a read of the served table
+
+**Standing.** 5c rule 1 as the 2026-09-10 (5e) and 2026-09-11
+(`lineup_strength`) corrections read it: a pre-registration may be amended
+before its first look, on a fact established without touching outcomes. 5i-B
+has not been looked at, and cannot have been: its clock starts with the first
+vintage carrying `lhb_share_vr` n = 30 AND `park_by_hand` n >= 29, `fa_meta`
+has not yet written the `park_factors_by_hand` sibling, and the earliest
+admissible look is ~2026-10-10. **Nothing in this amendment was measured
+against a game result, a price or a market.** Read to write it: the plan's
+repair 8 (`docs/master-plan-2026-09-11-war-epoch-drivers-betting.md` 4.2), the
+R5 lane record D4, audit finding L17-F3, the code
+(`leaderboard_vintages.LINEUP_SLOT_PA`, `betting_export.SLOT_PA`,
+`test_betting_ballpark`), and a count of plate appearances by lineup slot off
+`.cache/pbp_corpus`. No column value, no score, no run, no win probability and
+no price was read.
+
+**What changes.** The registration above weights each slot's bat side "by the
+PA-by-slot table (`LINEUP_SLOT_PA`, pinned equal to `betting_export.SLOT_PA`)".
+**The pin is withdrawn.** The weights are FROZEN here as a literal, exactly the
+way 5j freezes the same table for its own candidate: 4.65, 4.55, 4.45, 4.35,
+4.25, 4.15, 4.05, 3.95, 3.85 for slots 1 to 9 (sum 38.25). That is today's
+`leaderboard_vintages.LINEUP_SLOT_PA` and it does not move. A later repair of
+`betting_export.SLOT_PA`, or of any served constant, does not reach
+`lhb_share_vr` or `lhb_share_vl`.
+
+**Why now.** A dark column's constant pinned to a served constant is stop item
+X4 (plan 4.2): the served table can be repaired for served reasons at any time,
+and a pin turns that repair into a silent change of a dark column's input
+membership, which is stop item X9. The served table is due for repair under
+plan repair 8 (L17-F3: the rule hands nine starters 38.25 plate appearances out
+of the roughly 37.8 a team-game carries), so the pin is withdrawn BEFORE that
+repair rather than discovered after it. The order matters and it is the order
+the plan asks for: freeze first, then repair.
+
+**Nothing captured moves, and no clock moves.** `LINEUP_SLOT_PA` keeps the nine
+numbers it has carried since the column was registered, so every vintage
+record's `lhb_share_vr` and `lhb_share_vl`, on disk and to come, is what it
+would have been with no amendment at all. 5i-B's membership, its four-week
+floor, its ~2026-10-10 earliest look, its candidate function, its swapped twin
+and its criteria are untouched. This is the same-day X9 note for a change that
+does NOT move a dark column's input membership, written so the next reader can
+see the membership was checked rather than assumed. 5c-B's `lineup_strength`
+keeps its equal slot weights and the slot-PA-weighted form stays embargoed
+there. 5i-C's `HR_HAND_SPLIT_RELIABILITY` pin is a different pin, to a
+reliability constant and not to a PA table; it is not touched here and stands
+as registered.
+
+**The test that held the pin.** `test_betting_ballpark` asserted
+`lv.LINEUP_SLOT_PA == be.SLOT_PA` under the name
+`test_one_pa_by_slot_table_on_the_site`. That assertion IS the X4 pin in
+executable form, so it is replaced by a pin to the nine literals above, under a
+name that says what it now protects. The comment in `leaderboard_vintages` that
+named the equality is corrected here, with this amendment, ahead of the repair
+that will make it false.
+
+**What this amendment does not do, and what the repair beside it DOES do.**
+This amendment does not change any served number: it freezes a dark column's
+weights at the values they already carry. The repair it clears the way for is a
+different matter and must not be read as covered by that sentence. Plan repair
+8 replaces `betting_export.SLOT_PA` with a measured, home-and-away-split table,
+and that DOES move a served number: every hitter props fair line and every
+served props Over probability on /betting/ falls, one-signed. The size and the
+sign are recorded in section 11 with the flag that carries them
+(`SERVE_SLOT_PA_MEASURED`), not here, because this section is 5i's and the
+repair is the props table's. What neither half touches is the moneyline, the
+runline or the total, which is what `MODEL_VERSION` tracks, so neither half
+bumps it. Neither half measures 5i-B, names a result, or moves a date, and
+neither licenses reading `lhb_share_vr` or `lhb_share_vl` for anything before
+2026-10-10.
 
 ## 5j. Posted lineups (pre-registered 2026-09-11, schema 6)
 
