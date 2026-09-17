@@ -212,7 +212,8 @@ def test_overlay_noop_on_empty_standings():
 
 def test_overlay_preserves_2027_fields(monkeypatch):
     # force the fallback schedule (no network) for determinism
-    monkeypatch.setattr(pc, "remaining_schedule", lambda season, today=None: {})
+    monkeypatch.setattr(pc, "remaining_schedule",
+                        lambda season, today=None, played=None: {})
     monkeypatch.setattr(pc, "remaining_pairs", lambda season, today=None: [])
     rows = [_row("BOS", 90), _row("NYY", 95)]
     base = copy.deepcopy(rows)

@@ -2216,7 +2216,15 @@ def _attach_current_season(rows: list[dict], standings: dict[str, dict],
     # 2) shared remaining schedule (live -> fallback), used by BOTH SOS + MC.
     import proj_current as pc
     teams_present = [r["team"] for r in rows if r.get("current")]
-    sched = pc.remaining_schedule(season)
+    # Pass the standings' own counts so the schedule read is reconciled against
+    # them: the standings is disk-cached and the schedule is not, and the games
+    # in that seam are final (dropped by the schedule) and unbooked (missing
+    # from gamesPlayed), so without this every club can lose a game. Measured
+    # 2026-09-17: a 09-16 standings cache against a 09-17 schedule read put all
+    # 30 clubs on a 161-game season.
+    played_now = {r["team"]: (r["current"].get("gamesPlayed") or 0)
+                  for r in rows if r.get("current")}
+    sched = pc.remaining_schedule(season, played=played_now)
     sched_source = "live"
     if not sched:
         # fallback needs a per-team games-remaining estimate: 162 - gamesPlayed.

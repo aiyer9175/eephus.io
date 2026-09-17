@@ -210,10 +210,57 @@ def season_shortfall(teams: dict, pairs: list, scheduled: int = SCHEDULED_GAMES)
     return {o: int(scheduled - played[o] - rem[o]) for o in teams}
 
 
-def remaining_schedule(season: int, *, today: date | None = None) -> dict[str, list[str]]:
+def recent_final_pairs(season: int, *, today: date | None = None,
+                       days_back: int = 12) -> list[tuple[str, str, str]]:
+    """[(date_iso, home_org, away_org), ...] for games already FINAL in the
+    `days_back` days BEFORE `today`, newest first.
+
+    This exists for the cache seam, not for display. `remaining_pairs` starts at
+    today and drops every game already final; `gamesPlayed` comes from a
+    DISK-CACHED standings read. When the standings cache is a day or more older
+    than the schedule read, the games in between are final (so the schedule
+    drops them) and uncounted (so the standings has not booked them), and they
+    vanish from the season exactly the way live games used to. Measured
+    2026-09-17: a standings cache written 09-16 09:47 against a schedule read
+    starting 09-17 lost all 30 clubs exactly one game.
+    """
+    end = (today or date.today()) - timedelta(days=1)
+    start = end - timedelta(days=max(0, days_back - 1))
+    if start > end:
+        return []
+    data = _fetch_schedule_raw(start.isoformat(), end.isoformat())
+    if not data:
+        return []
+    from trades import canonical_org_from_id
+    out: list[tuple[str, str, str]] = []
+    for d in data.get("dates", []):
+        day = d.get("date") or ""
+        for g in d.get("games", []):
+            status = ((g.get("status") or {}).get("abstractGameState")) or ""
+            detailed = ((g.get("status") or {}).get("detailedState")) or ""
+            if not (status == "Final" or detailed in {"Final", "Game Over", "Completed Early"}):
+                continue
+            teams = g.get("teams") or {}
+            ht = (teams.get("home") or {}).get("team") or {}
+            at = (teams.get("away") or {}).get("team") or {}
+            ho = canonical_org_from_id(ht.get("id"), ht.get("name") or "")
+            ao = canonical_org_from_id(at.get("id"), at.get("name") or "")
+            if ho and ao and len(ho) <= 3 and len(ao) <= 3:
+                out.append((day, ho, ao))
+    out.sort(key=lambda r: r[0], reverse=True)
+    return out
+
+
+def remaining_schedule(season: int, *, today: date | None = None,
+                       played: dict[str, int] | None = None) -> dict[str, list[str]]:
     """{org: [opponent_org, ...]} of unplayed regular-season games (both home and
     away), derived from remaining_pairs(). {} on fetch failure -> caller falls
-    back to balanced_remaining()."""
+    back to balanced_remaining().
+
+    Pass `played` ({org: games already counted by the standings}) to reconcile
+    the two feeds: see `_reconcile_to_season`. Without it the result is the raw
+    schedule read, which is correct only when the standings is no older than it.
+    """
     pairs = remaining_pairs(season, today=today)
     if not pairs:
         return {}
@@ -221,7 +268,44 @@ def remaining_schedule(season: int, *, today: date | None = None) -> dict[str, l
     for home, away in pairs:
         sched.setdefault(home, []).append(away)
         sched.setdefault(away, []).append(home)
+    if played:
+        _reconcile_to_season(sched, played, season, today=today)
     return sched
+
+
+def _reconcile_to_season(sched: dict[str, list[str]], played: dict[str, int],
+                         season: int, *, today: date | None = None,
+                         scheduled: int = SCHEDULED_GAMES) -> dict[str, int]:
+    """Make every club's played + remaining equal a season, and say what it moved.
+
+    A club short of `scheduled` is missing games that fell in the seam between
+    the standings read and the schedule read (see `recent_final_pairs`). Those
+    games are real and their opponents are known, so they are put back on the
+    remaining list and simulated from their pre-game state, which is the same
+    safe direction the live-game fix took: understating certainty about a game
+    already decided beats deleting it from the season.
+
+    A club LONG (the standings booked a game the schedule still lists) loses its
+    soonest listed game instead, since that is the one already counted.
+    """
+    backfill = None
+    moved: dict[str, int] = {}
+    for org in list(sched):
+        have = len(sched[org])
+        need = int(scheduled) - int(played.get(org) or 0)
+        if need == have or need < 0:
+            continue
+        if need > have:
+            if backfill is None:
+                backfill = recent_final_pairs(season, today=today)
+            opps = [a if h == org else h for _, h, a in backfill if org in (h, a)]
+            add = opps[:need - have]
+            sched[org] = add + sched[org]
+            moved[org] = len(add)
+        else:
+            sched[org] = sched[org][have - need:]
+            moved[org] = need - have
+    return moved
 
 
 def _div_of(org: str) -> str | None:

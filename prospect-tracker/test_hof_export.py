@@ -33,6 +33,7 @@ THE FIVE MISTAKES THESE TESTS EXIST FOR:
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -296,11 +297,21 @@ def test_hof_is_excluded_from_pytest_collection():
 
 
 def test_hof_export_is_a_watched_scheduled_export():
+    """hof_export is in the SCHEDULED_EXPORTS tuple, read as a tuple.
+
+    This used to scan a fixed 3,000-character window after the opening line,
+    which is a proxy for membership and not membership: adding
+    war_leaderboards (2026-09-17) pushed hof_export to offset 3,341 and failed
+    a test about the Hall of Fame board for a reason that had nothing to do
+    with it. The tuple is parsed now, so it stays true however the list grows.
+    """
     src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
     i = src.index("SCHEDULED_EXPORTS = (")
-    assert '"hof_export"' in src[i:i + 3000], (
+    block = src[i:src.index(chr(10) + ")", i) + 2]
+    watched = re.findall(r'"([a-z_0-9]+)"', block)
+    assert "hof_export" in watched, (
         "a silent export failure would leave the page painting an empty state "
-        "with nobody told")
+        "with nobody told; watched exports are %r" % (watched,))
     assert "6b7b. Hall of Fame board" in src
 
 
