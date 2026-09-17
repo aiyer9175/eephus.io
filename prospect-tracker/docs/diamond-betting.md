@@ -5748,6 +5748,76 @@ slots stay locked, and serving needs the post-lineup price capture (O18).
 
 **No number has been computed on this candidate.**
 
+**Correction (2026-09-17), the arming of the capture job and the close job that
+will not be installed. Recorded rather than written over the paragraphs above.**
+Two owner answers of 2026-09-17, recorded as dated operational corrections
+before the 5c B3/B4 look is recorded. Neither changes what this section grades.
+Both change what can feed it.
+
+*The capture job is armed.* `tools/betting_lineup_job.py` exists as of this date
+and is armed on 2026-09-17 by owner decision, phase 1 capture only, at zero
+credits, and it moves no served price. That is the default under Arming (owner
+decision O17) confirmed, not a change to it. The cron line is NOT installed by
+this change: the job ships with `*/15 * * * *` under `TZ=UTC` as its intended
+entry, and `--selfcheck` reports NEVER RUN on this machine until a scheduler
+reaches it. Phase 2 still waits on the slot lock and the record guard, as Arming
+says.
+
+Two details of the job differ from the Capture paragraph above and are recorded
+rather than written over it. The fetch helper lives inside
+`tools/betting_lineup_job.py`, not beside `fantasy_schedule.fetch_lineups`,
+because it needs its own game types and its own cache clock. And the correction
+that paragraph owes to the `fetch_lineups` docstring, whose "verified" claim
+covers the posted card's ORDER and not the completed feed's array, has not been
+made; it is still owed.
+
+The job's pre-call gate reads a slate the job writes itself, under
+`.cache/lineup_captures/`, and never `data/fantasy.json`. Three properties of
+that artifact rule it out, and the first was observed on this date: its
+19:31:22Z build carried an empty schedule block while StatsAPI held a full card
+for the same date, because its producer degrades to an empty list on any failure
+and says nothing. A rebuild later the same day filled it, which is the point:
+downstream, nothing distinguishes the two states. It is also regular-season
+only, while this job must ask for R, F, D, L and W. And it is tracked, so the
+nightly `git checkout -- .` reverts it, the same line this section cites as the
+reason the capture store lives under `.cache/`. A gate on it would have exited
+before the call on every invocation of that hour while stamping a healthy
+heartbeat, which is the one shape Leg M's gap rule cannot see. The heartbeat is
+therefore two files: a last-run stamp, and an append-only run log, because a
+last-run stamp is overwritten every fifteen minutes and can never show a gap.
+
+*O16 is answered NO.* The close job will not be installed by owner decision of
+2026-09-17. The Captures bullet under Leg M still reads "owner decision O16,
+OPEN; DEFAULT install now", and the plan's decision table
+(docs/master-plan-2026-09-11-war-epoch-drivers-betting.md, the row that reads
+"Install all three now") still carries that default. Both are corrected by this
+note, and neither is edited from here.
+
+O18 therefore stays at L-0 by its own conditional default, which reads "L-0
+until the close job is verified running, then L-1". With O16 declined there is
+no close job to verify, so no snapshot of kind `close` and no snapshot of kind
+`lineup` will exist for a 2026 game. Leg M reads one of those two kinds. It has
+no price source and cannot be scored.
+
+*What this does NOT do.* O19's default stands: Leg M qualifies. Leg M is
+BLOCKED, not replaced. This is not a switch to the fallback form under Verdict,
+which activates only on an O19 answer of no. So this section keeps accruing
+captures and can read Leg O, and it cannot reach a PASS on its registered
+default form until a post-lineup price source exists. The Lapse clause above
+already names this state ("That could happen ... if O18 stays at L-0") and its
+2028 deadline is unchanged.
+
+*The consequences, stated narrowly, because one of them was overstated when this
+was decided.* True: no CLV for any 2026 slate, and CLV is unrecoverable after
+the fact; `betting_close_job.attach_closes` never fires, so the calibration
+ledger's market-move block stays empty; Leg M is unfeedable, so 5j's qualifying
+leg is blocked. It does NOT block the third publish gate: `graded_price_history`
+counts settled shadow rows carrying the price taken from that slate's OPEN
+snapshot, and no close price enters that path.
+
+No count, capture tally, result or price relation is recorded here, and no
+number has been computed on this candidate.
+
 ## 5k. Run environment: trailing league scoring and a calendar-month offset (pre-registered 2026-09-11)
 
 **Written before any function, table, constant or flag below exists in code, before

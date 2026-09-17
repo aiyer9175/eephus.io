@@ -291,6 +291,16 @@ SCHEDULED_EXPORTS = (
     # The row is filed off .cache/odds/ (which survives `git checkout -- .`),
     # never off a heartbeat (data/job_heartbeat.json does not).
     "betting_close_capture",
+    # THE POSTED-LINEUP CAPTURE (2026-09-17). Same shape and the same reason:
+    # tools/betting_lineup_job.py is dark, spends nothing and exits 0 on every
+    # legitimate no-op, so a */15 TZ=UTC cron that was never installed reads in
+    # the log exactly like a quiet afternoon. That is precisely how the close
+    # capture sat at ZERO snapshots for months with nothing saying so, and a
+    # lineup capture is the same kind of loss: evidence about what was posted
+    # at an instant, which cannot be rebuilt afterwards. Filed off
+    # .cache/lineup_captures/, which survives `git checkout -- .`. This
+    # pipeline never imports or runs the job: 5j phase 1 stays dark.
+    "betting_lineup_capture",
     # THE NIGHTLY-GAP SENTINEL (2026-08-19). The 2026-08-15 and 2026-08-17
     # nightlies never ran and NOTHING said so: two leaderboard vintage nights,
     # a DFS slate and two days of schema-3 dark-capture accrual are gone, and
@@ -3073,6 +3083,53 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception as _e:
                 _record_ingest("betting_close_capture", False, 0,
                                f"!!! BETTING RED: snapshot_health crashed: {_e}", log=log)
+            # --- posted-lineup capture health, off the job's own store ----
+            # READ, NEVER IMPORTED. The job is 5j phase 1 and must stay
+            # unreachable from the pipeline, so this reads its directory and
+            # nothing else. Three named failures, because "no capture today" is
+            # ambiguous on its own: no slate file at all means the job has never
+            # run on this box; a slate older than a day means it has stopped; a
+            # slate that lists recent games with no capture beside it means it
+            # is running and not capturing. An off day and the whole offseason
+            # read as healthy, because the slate says there was nothing to post.
+            try:
+                import re as _re                    # run_monthly imports no re
+                _lud = Path(__file__).resolve().parent / ".cache" / "lineup_captures"
+                _cut = (date.today() - timedelta(days=3)).isoformat()
+                _caps = [p for p in (sorted(_lud.iterdir()) if _lud.is_dir() else [])
+                         if _re.match(r"^\d{4}-\d{2}-\d{2}-\d{4}\.json$", p.name)
+                         and p.name[:10] >= _cut]
+                _sl = _lud / "slate.json"
+                _sldoc = json.loads(_sl.read_text(encoding="utf-8")) if _sl.exists() else None
+                _slage = None
+                if _sldoc:
+                    _st = str(_sldoc.get("fetched_at") or "")[:10]
+                    _slage = _st if _st else None
+                _games = [g for g in ((_sldoc or {}).get("games") or [])
+                          if str(g.get("official_date") or "") >= _cut]
+                if not _sldoc:
+                    _lumsg = ("!!! BETTING RED: tools/betting_lineup_job.py has never run "
+                              "on this box (no .cache/lineup_captures/slate.json). The "
+                              "*/15 TZ=UTC cron is not installed; run it with --selfcheck")
+                elif _slage is None or _slage < (date.today() - timedelta(days=1)).isoformat():
+                    _lumsg = (f"!!! BETTING RED: the posted-lineup job last ran {_slage}. "
+                              f"The cron has stopped reaching it, and a lineup capture "
+                              f"cannot be rebuilt after the fact")
+                elif _games and not _caps:
+                    _lumsg = (f"!!! BETTING RED: the posted-lineup job is running but has "
+                              f"captured nothing in 3 days across {len(_games)} scheduled "
+                              f"game(s); check its heartbeat and run log")
+                else:
+                    _lumsg = (f"{len(_caps)} posted-lineup capture file(s) in 3 days over "
+                              f"{len(_games)} scheduled game(s)")
+                _record_ingest("betting_lineup_capture",
+                               not _lumsg.startswith("!!!"), len(_caps), _lumsg, log=log)
+                if _lumsg.startswith("!!!"):
+                    log.error("%s", _lumsg)
+            except Exception as _e:
+                _record_ingest("betting_lineup_capture", False, 0,
+                               f"!!! BETTING RED: lineup-capture health crashed: {_e}",
+                               log=log)
             # --- the nightly-gap sentinel, off the two per-date archives -----
             # Runs AFTER step 9e-pre (tonight's vintage) and the DFS export, so
             # a missing today means tonight's own capture failed. A night the
