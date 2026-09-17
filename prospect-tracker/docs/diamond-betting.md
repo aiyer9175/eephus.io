@@ -2756,6 +2756,887 @@ precedents are 5g (sign), 5h-A and 5f (the twin bar), 5c-C (the within-club twin
 n-1 divisor), 5c-A and plan 4.1 (the total guard), 7e-D (the named exceptions and the
 last day) and 5c-A (the exclusion before an earlier run).
 
+### 5c-C. The B4 availability gate: `star_out`, look 2026-10-05 (drafted 2026-09-11, revised 2026-09-16)
+
+**Standing.** This is the gate section rule 1 requires for `star_out`. It was drafted on
+2026-09-11 and revised on 2026-09-16 on two reviews, before any number related the column,
+either side of the `f8c17ffe` ranking-basis change, or any variant to a game outcome or a
+price. It lands after `584184d8` (2026-09-16 19:50:30 -0400), the commit that carries 5c-A
+and 5c-B, and after the two 2026-09-11 corrections at `6e82acd5` (2026-09-11 19:55:59
+-0400). It is late: plan 5.1 set 2026-09-15 as the deadline for the I3 amendments and the
+rule-1 gate sections, and this one missed it. Lateness costs nights and graded games, never
+adds them, and it changes nothing this section may claim. If the section lands after
+2026-09-16 the committer changes the heading date to the commit date and adds one line
+saying what moved on disk since, the form 5c-A uses.
+
+**No `star_out` number exists at commit, and here is how that was checked.** `star_out`
+appears in three places in the tree: the builder functions in `leaderboard_vintages.py`,
+the dark column tuple `DARK3_TEAM_COLUMNS` and one comment in `betting_model.py`, and two
+test files (`test_leaderboard_vintages.py`, `test_schema3_builders.py`) whose fixtures carry
+no game result. `tools/` holds `ph_gate.py` (5f) and no B3/B4, look or dark harness. Nothing
+in the tree joins this column, a variant or a delta to a run, a win, a probability or a
+price. The restart below is therefore still admissible under 2026-09-11b point 1, which ends
+a restart only once such a number exists.
+
+**What moved on disk between the draft and this commit, read as counts only.** The vintage
+store gained 2026-09-13, 09-14 and 09-16 and lost 09-15 for good (2026-09-11b point 5). The
+game cache grew from 2,200 games (last date 2026-09-10) to 2,270 (last date 2026-09-15). The
+projections bundle was rebuilt (mtime 2026-09-16T15:15:00Z, `generated_at` "2026-09-16",
+1,380 vets, against 1,370 on the 2026-09-11 bundle). The champion fit key moved twice with
+HEAD unchanged, to `a39327f2` (2026-09-13T19:23Z) and `44ea7f96` (2026-09-16T14:32Z).
+`data/betting_model_eval.json` was regenerated (2026-09-16T15:17:35Z) with the same anchored
+cut and coefficients. None of these is a value of this column and none was read as one.
+
+**For this column only, three committed sentences are superseded, later and never earlier.**
+This document records rather than writes over (11a), so nothing above is edited:
+- the 2026-09-11 correction, "The close-variant embargo moves with the look": "`star_out`
+  and the xwOBA pair are registered columns, not variants, and keep the ~2026-09-17 date";
+- the same correction, "Not reopened": "The xwOBA pair and `star_out` keep the ~2026-09-17
+  date, subject to rule 1 (see 2026-09-11b)". The "subject to rule 1" clause is what admits
+  this section;
+- 2026-09-11b, "The ~2026-09-17 window", to the extent it assumes a 2026-09-17 B3/B4 look
+  reads this column.
+
+5c-A superseded the same sentences for the xwOBA pair on 2026-09-16. With both landed, no 5c
+column looks on ~2026-09-17. The 2026-08-19b clock start and the four-week floor rule are
+unchanged; what moves is this column's own start date, for the reason in the next section.
+
+**Amendment cutoff.** This section is final at commit. After it the only admissible
+additions are the dated X9 and post-retrain records it requires below, each a record of an
+event rather than a change to a criterion, a threshold, a window, a split or a bucket rule.
+A later owner answer, a later review and a later count change nothing. A 2027 test is a new
+registration under N9.
+
+**Nothing in this section was measured against a game result.** Read to write it:
+- this document's sections 5, 5a, 5c (with all four corrections), 5c-A, 5c-B, 5d, 5e, 5f,
+  5g, 5h (rules and 5h-A), 6, 7e, 11a and 11b; plan sections 1.1, 1.3, 1.5, 4 and 5; the R5
+  lane record (R5-F1, R5-F2, R5-F3, R5-F10, I2, I10);
+- code, read at HEAD `584184d8` on a clean tree. `betting_model.py`,
+  `leaderboard_vintages.py`, `proj_export.py`, `fa_projection.py`, `fa_market.py` and
+  `war_source.py` are byte-identical at `497d667f`, `6e82acd5`, `a890f36a` and `584184d8`
+  (blob compare), and the working tree equals HEAD on all of them. `run_monthly.py` differs
+  at `57ebc163` in the weather step alone. Code is cited by name, never by line, because
+  line numbers move:
+  - `leaderboard_vintages` (`_il_by_org`, `star_out_from_projections`, `build_star_out`,
+    `build_dark_team_columns`, `snapshot`, `as_of`, `_org`, `STAR_OUT_TOP_N`,
+    `IL_CACHE_MAX_AGE_HOURS`);
+  - `proj_export` (`build_payload`, `_il_out60`, `_IL60_CODES`, the vet row, `FIRST_SEASON`);
+    `fa_market`'s champion path; `fa_projection` (`build_corpus`, `_war_age_maps`,
+    `_corpus_provider_stale`, `_corpus_sig`, `DEF_FEATURE_DEFAULT`, the `EEPHUS_FA_DEF`
+    override); `war_source.DEFAULT_PROVIDER`; `scrapers._fetch`; `fa_fit`'s roster write;
+    `run_monthly`'s d9 `rebuild_only` and step 9e-pre; `tools/train_proj_models.py --final`;
+    `trades.canonical_org`;
+  - `betting_model` (`_assemble_team_inputs`, `_mean_sd`, `team_inputs_detail`,
+    `team_inputs_from_vintage`, `inputs_as_of`, `expected_runs`, `game_probabilities`,
+    `_score_joint`, `split_tie_atom`, `run_dispersion_alpha`, `served_platt`,
+    `_lab_runline_split`, `_lambda_rows`, `_paired_delta`, `_logloss`, `backtest`,
+    `backtest._grade`, `_vintage_cut_index`, `_feature_basis`, `build_game_cache`,
+    `fetch_finals`, `_row_from_schedule`, `DARK3_TEAM_COLUMNS`, the serve flags and the
+    vintage constants); `tools/ph_gate.py`;
+- `git log` and `git diff` of every commit in the construction audit below, and
+  `git log -L` on `_il_by_org`, `star_out_from_projections` and `build_star_out`;
+- per vintage file 2026-08-18 to 2026-09-16: `schema`, `vintage_date`, `captured_at`,
+  `covers_through`, `provenance.source`, the `feature_basis.star_out` basis string and `n`,
+  whether a `parks_short_window` block exists, and whether each club's `star_out` cell is
+  null, never the value;
+- `.cache/betting/completed_games.json`: `date`, `game_pk`, `home_org`, `away_org` only;
+  `.cache/fantasy_schedule/2026-09-*_R.json`: `officialDate`, `gamePk`, `gameType`;
+- `data/mlb_projections.json`: top-level keys, `generated_at`, mtime, the vet count, and the
+  positions of each club's top five with no IL join (`construction_counts_output.txt`,
+  2026-09-11);
+- the 2026-09-11 40-man roster cache: the status-code inventory and the cache ages, and the
+  mtimes of the 30 roster files and the teams cache today;
+- mtimes and keys of `.cache/fa_corpus.pkl` and `.cache/fa_fits_*`, and the corpus
+  `war_provider` stamp;
+- `data/betting_model_eval.json`: the `vintage` block's `split_date`, `fit_window`,
+  `coefficients`, `diff_shrink` and `home_field_runs_adj`, the top-level `split_date` and
+  `forward.n`;
+- the memory record of the 2026-09-04 nightly (`execution-2026-09-04-ewar-epoch`).
+
+No column value, score, run, win probability, outcome or price was read.
+
+**What the column counts.** Per club per vintage, how many of its top `STAR_OUT_TOP_N` (5)
+players carry a StatsAPI 40-man status code starting "D". An integer 0 to 5; 0 is a value.
+- **Who is a star.** `vets[].warY1Champ` in `data/mlb_projections.json`, descending, ties by
+  mlbam (`star_out_from_projections`). `warY1Champ` is the champion (non-ML) mean WAR for the
+  first projected season, `FIRST_SEASON` 2027: `proj_export` sums each side's
+  `war_y1_champ`, and `fa_market` sets that to the champion path's own year 1 inside the ML
+  branch. `proj_ml` never reaches it. The club is the vet row's `team`: contract club first,
+  observed club as fallback, mapped through `trades.canonical_org` by `_org`.
+- **Stars are hitters and pitchers.** On the 2026-09-11 bundle (1,370 vets; 458 RP, 270 SP):
+  of the 150 top-five slots, 88 are position players, 58 SP, 3 RP and 1 the two-way row, so
+  62 of 150 are pitchers; 29 of 30 clubs have at least one pitcher in their five; all 30
+  clubs have five or more rankable vets, and none is dropped for a missing mlbam, team or
+  `warY1Champ`. Counts, not values, read 2026-09-11.
+- **Who is out.** `code.startswith("D")` on the cached roster. On the 2026-09-11 cache
+  (1,367 rows over 30 clubs) the D codes are D60 (176), D15 (48), D10 (41) and D7 (1), 266 in
+  all; every other code is A (840), RM (258), BRV (2) or NYR (1). An optioned star (RM) is
+  not out. The rule is `startswith("D")`, not a code list: `proj_export._IL60_CODES` and the
+  builder's own comment show compound codes exist, and whatever StatsAPI emits, the rule is
+  frozen by X9 below. The inventory is dated 2026-09-11 because the cache is overwritten
+  nightly.
+- **The roster source.** `.cache/statsapi_roster_40man_{teamId}_{season}.json`, fresh when
+  its mtime is within `IL_CACHE_MAX_AGE_HOURS` (48) of `time.time()` at the builder run,
+  which precedes `captured_at`. It is written by `proj_export._il_out60`, which
+  `build_payload` calls only inside its `standings_now` branch, through `scrapers._fetch`
+  under the 24h current-year TTL; `fa_fit` writes the same keys. So a night reads IL status
+  fetched up to 48 hours before its capture. The builder never fetches. Verified for one
+  night, 2026-09-16: the 30 roster files carry mtimes 14:28:54Z to 14:29:09Z and the teams
+  cache 14:28:53Z, the bundle was written 15:15:00Z, and the vintage was captured 15:16:50Z,
+  which is the d9 then 9e-pre order.
+- **Nulls, the whole list.** ABSENT for every club when: `mlb_projections.json` is absent or
+  carries no vets; the `statsapi_teams_{season}` cache is missing or unreadable (no freshness
+  test is applied to that file); no club has a fresh roster cache; or the builder raises. One
+  club null when: its roster file is missing, its mtime is older than 48 hours, its JSON is
+  unreadable, its org code is longer than 3 characters, or it has fewer than 5 rankable vets.
+  On all 19 populated nights 2026-08-20 to 2026-09-16 the basis reads 30 orgs fresh, 0 stale,
+  0 missing, and 30 of 30 clubs carry an integer.
+- **The record stores the count only.** No identity, no bundle hash, no corpus basis, no
+  cache age. A hitter and pitcher split of the count cannot be recovered from the store, so
+  it is not part of this gate; it would be a new column with its own clock, and the embargo
+  below covers it.
+
+**The construction changed at `f8c17ffe`, and the clock restarts.**
+
+- **The fact.** `f8c17ffe` (2026-09-03 21:49:55 -0400, 2026-09-04T01:49:55Z) made `ewar_v2`
+  the `war_source` default. `fa_projection._war_age_maps` labels the projection corpus
+  through that default, and `_corpus_provider_stale` rebuilds any cached corpus whose
+  `war_provider` differs. That corpus fits the champion WAR map, so `warY1Champ` is ranked on
+  a different label series after it. Per the commit message, pitcher-seasons are re-priced on
+  FIP within season and role and position players are "numerically identical" to bWAR. That
+  claim is the commit's, and it is not exactly true: the 2026-09-04 execution record measured
+  107 of 1,899 hitter rows moving, every one a position player who threw mop-up innings. The
+  reach is also narrower than "a bWAR engine becomes an eWAR v2 one": `ewar_v2` reaches back
+  to 2011 with a per-season bWAR fallback, and the corpus spans 2000 to 2026, so the pre-2011
+  rows stay bWAR under an `ewar_v2` stamp (plan 1.1 measures 40.0% of hit and 35.6% of pit
+  corpus rows as bWAR). What is measured is that 62 of 150 top-five slots are pitchers on the
+  2026-09-11 bundle. Whether the membership of any club's five actually changed at the commit
+  was NOT measured, here or anywhere, and this section does not claim it did.
+- **Which nights.** 2026-08-20 to 2026-09-03 (8 populated nights) ranked on the old series;
+  the 2026-09-03 capture (15:16:50Z) precedes the commit.
+- **2026-09-04 cannot be placed, so it starts nothing.** The 2026-09-04 capture is
+  19:12:08Z, 17h22m after the commit. The 2026-09-04 nightly ran 13:46 to 15:21 EDT (17:46 to
+  19:21Z), so that capture sits inside it. The execution record for that day says the nightly
+  "pre-empted the epoch" and "rebuilt every served artifact on a MIXED basis", and plan 1.5's
+  step D row records the same incident. The epoch's step E then deleted `fa_corpus.pkl` and
+  `fa_fits_*`, and the oldest champion-fit cache on disk is `d196c408`, written
+  2026-09-04T20:06:08Z, after that capture. So the record cannot show which basis the bundle
+  the 2026-09-04 vintage read was built on. Under 2026-09-11b point 1 a clock starts on the
+  first present night carrying the column "populated under its registered construction", and
+  that night does not qualify.
+- **2026-09-05 can be placed, by mtime.** Its capture is 2026-09-05T17:18:50Z. The only
+  champion-fit key alive between 2026-09-04T20:06:08Z and 2026-09-06T04:09Z is `d196c408`,
+  and the corpus on disk reads `war_provider` `ewar_v2`. So the bundle that night's d9 wrote,
+  and the 9e-pre capture read, was fitted on the new series.
+- **Why the old clock cannot stand.** Under the 2026-09-11b fit rule a ~2026-09-17 look would
+  split at 2026-09-03: all 180 fit-half games would ride 2026-08-20 to 2026-08-31 vintages,
+  before the change, and of 101 graded games 25 would ride pre-change vintages and 76
+  post-change ones. The fit would be on one construction and the grade mostly on the other.
+- **The treatment.**
+  1. The clock restarts with the **2026-09-05** vintage, the first present night that can be
+     shown to carry the column under the new ranking basis. The start rests on the code and
+     the fit-cache record, as `lineup_strength`'s rests on the code. The four-week floor is
+     **2026-10-03**, and the night window is 2026-09-05 to 2026-10-02.
+  2. The 2026-09-04 vintage is kept as written, never force-rewritten, and goes to an
+     ungraded **basis unconfirmed** bucket with every game it prices. On disk that is 15
+     games, all dated 2026-09-05.
+  3. The 2026-08-20 to 2026-09-03 vintages are kept as written and go to an ungraded
+     **pre-change ranking basis** bucket. On disk that is 205 games, priced 15 / 30 / 10 /
+     37 / 46 / 12 / 39 / 16 on the 08-20, 08-21, 08-23, 08-24, 08-27, 08-30, 08-31 and 09-03
+     vintages. Every other column on those records grades as before. That side is never read
+     on its own, before or after the look.
+  4. Starting on 09-05 rather than 09-04 costs one night of night-floor slack and 15 fit-side
+     games, and moves the floor one day later. It is the harder of the two starts in every
+     direction, which is how a start chosen with counts in hand should read.
+
+**Construction change or refresh: the rule, and every commit classified.**
+
+The rule, taken from the committed 2026-09-11 correction ("Any other projections refresh is
+part of the construction registered in 2026-08-19b and buckets nothing") and 2026-09-11b
+point 1 ("A value refresh never restarts one"):
+
+> A construction change is a commit that replaces the label series
+> `fa_projection._war_age_maps` fits the champion WAR map on, or changes who enters or how
+> the five are ranked. Everything else that moves `warY1Champ`'s numbers is a refresh: it
+> buckets nothing, restarts nothing, and is reported.
+
+A re-key of the champion fit is not evidence of a code change: `_corpus_sig` digests every
+corpus row's `war`, and the key took ten values in the thirteen days 2026-09-04 to
+2026-09-16 (`d196c408` 09-04T20:06Z, `a8b9b08d` 09-06T04:09Z, `fdcf9120` 09-06T23:41Z,
+`25a4798c` 09-09T18:44Z, `6cd1a293` 09-10T19:02Z, `7b43c863` 09-11T16:50Z, `cc10d35d`
+09-11T19:47Z, `ee815fe0` 09-11T22:11Z, `a39327f2` 09-13T19:23Z, `44ea7f96` 09-16T14:32Z),
+the last two with HEAD unchanged. The fit-key list per night is the refresh record and is
+reported with the look.
+
+**This reading was chosen knowing where each commit falls**, which 2026-09-11b's own
+disclosure form requires. Reading `419811bb` (2026-09-11T22:44:20Z) as a construction change
+would put the clock at 2026-09-12, the floor at 2026-10-10, and, under the night floor and
+the 2026-09-27 season end, almost certainly at INDETERMINATE before any number. Reading it as
+a refresh keeps the 2026-10-03 floor and the 2026-10-05 look. The rule above is the committed
+one and it is applied the same way to every commit in the table.
+
+Every commit from 2026-08-19 (the builder's own commit) to HEAD `584184d8` touching
+`war_source.py`, `fa_projection.py`, `proj_export.py`, `fa_market.py`, `league_constants.py`,
+`scrapers.py`, `fa_fit.py`, `leaderboard_vintages.py`, `run_monthly.py` or
+`tools/train_proj_models.py`:
+
+| Commit | Date (UTC) | Touches | Class | Evidence |
+|---|---|---|---|---|
+| `3eda89d7` | 2026-08-20T00:20:11Z | the three builder functions | the construction itself | `git log -L` on `_il_by_org`, `star_out_from_projections` and `build_star_out` returns this commit only; 19h53m before the first populated capture |
+| `b528517c` | 2026-09-03T16:14:40Z | `scrapers._fetch`, `run_monthly` | out of scope | adds an ESPN-only TTL branch and a `headers` parameter; the `statsapi_roster_40man_*` key path and its 24h current-year TTL are untouched |
+| `f8c17ffe` | 2026-09-04T01:49:55Z | `war_source.DEFAULT_PROVIDER`, `fa_projection`, `proj_export`, `run_monthly` | **construction change** | replaces the label series `_war_age_maps` fits on; the restart above |
+| `489d40d4`, `7c45c5c1`, `c5bc2554`, `1362d7f7`, `5f7c4a3d`, `7a095fd2` | 2026-09-06 | `run_monthly`, `proj_export` (Futures forward record, tab copy) | refresh or out of scope | none touches the corpus path, the champion path, the vet `team` rule or `warY1Champ` |
+| `609774aa`, `2fbc82ac` | 2026-09-07 | `leaderboard_vintages` schema-4 columns | not a construction change | `git log -L` on the three builder functions returns `3eda89d7` only |
+| `7cd5f572` | 2026-09-07T16:04:02Z | `hem_plus.team_offense`, the orders | does not touch this column | its roster walk, `bullpen_export._active_mlbam_ids`, reads `rosterType=active`, never the 40-man cache; `lineup_strength` is the column it moved (5c-B) |
+| `0629fb69` | 2026-09-11T00:52:37Z | `leaderboard_vintages` (the 5e repair) | not a construction change | same `git log -L` |
+| `0cffda7e` | 2026-09-11T01:18:44Z | `war_source` | refresh (disclosure only) | adds `ewar_vintage` and `EWAR_STALE_REVISED_MAX` and stamps three boards; no served WAR value and no provider changes |
+| `dc648755` | 2026-09-11T01:43:20Z | `fa_projection._woba_scale`, `league_constants` | refresh | its own message: WAR must not move; it re-keys the fit, which is a key change, not a series change |
+| `723848c6` | 2026-09-11T17:52:09Z | `league_constants` | refresh (inert) | "No consumer reads the solved weights yet"; `fa_projection` reads only the wOBA scale |
+| `483a17bb`, `8c79e5aa` | 2026-09-11 | `proj_export`, `fa_market` copy | out of scope | copy strings; no path, no ranking field |
+| `06fdabdc`, `48ab3de9`, `e7ceaa5d`, `997a4b17`, `e328f62a` | 2026-09-11 | `run_monthly`, `fa_fit`, `leaderboard_vintages` schema-5 blocks | refresh or out of scope | same `git log -L`; `fa_fit` writes the same roster cache keys under the same TTL |
+| `419811bb` | 2026-09-11T22:44:20Z | `war_source` (nightly cadence), `league_constants` (wOBA scale from 2015), `run_monthly` | **refresh, and reported** | the provider does not change and the label series is not replaced. Per its message the scale move changes 127 of 641 hitter paths with a year-1 maximum of 0.30 WAR and pitchers do not move; those are the commit's figures, not measured here. What it does add is a nightly re-price of the LIVE season, so the corpus 2026 rows now move every night under the same provider. That is a cadence change inside the registered construction. The look reports the dated-value games priced on vintages before and after it |
+| `497d667f` | 2026-09-11T23:53:21Z | `fa_fit`, `leaderboard_vintages`, `run_monthly` (parks, runline split) | not a construction change | same `git log -L`; it reaches this look only through both arms alike, below |
+| `57ebc163` | 2026-09-11T23:54:07Z | `run_monthly` | out of scope | the 9e-pre-wx weather step only |
+| `39347a6a`, `192c04e4`, `d79067a5`, `aabc8455`, `a890f36a`, `6e82acd5`, `584184d8` | 2026-09-11 to 09-16 | docs | out of scope | doc commits; `betting_model.py` and `leaderboard_vintages.py` are byte-identical across all of them |
+
+The look record repeats this audit up to the harness commit before any fit.
+
+**What moves this column's ranking, and what does not.** `warY1Champ` moves when the corpus
+`war_provider` changes or the champion fits are refitted: the epoch's step D (flip
+`DEFAULT_PROVIDER`), step E (delete `fa_corpus.pkl` and `fa_fits_*`),
+`_corpus_provider_stale` on any nightly, and any corpus rebuild. It does NOT move at step M:
+`tools/train_proj_models.py --final` trains and saves `proj_ml` only, and `fa_market` writes
+the champion's own year 1 into the ML branch. Step M moves `lineup_strength`'s `woba[0]`, not
+this ranking. The plan's 1.1 row and E5 should read "steps D and E" for this column, not
+"step M".
+
+**The candidate: two terms, one on each side's lambda.** The count covers hitters and
+pitchers, so it enters both sides. For scoring side S against opponent O:
+
+```
+lam'_S = min(9.5, max(1.5, lam_S + c_own * (z_S - zbar) + c_opp * (z_O - zbar)))
+```
+
+- `lam_S` is the incumbent's per-side lambda, unrounded, after its home adjustment,
+  `diff_shrink` and the [1.5, 9.5] clamp in `expected_runs`.
+- `z` is `z_star_out` exactly as `team_inputs_from_vintage` and `_assemble_team_inputs`
+  produce it from the pricing vintage: (v - mu) / sd over the core-intersection clubs
+  carrying a value, population sd (`_mean_sd`, `sqrt(var) or 1.0`), None when fewer than 2
+  carry one.
+- `zbar` is the mean of z over the fit-side rows. It is the same constant in both terms,
+  because every club-game appears once as S and once as O. There is no intercept, so neither
+  coefficient can absorb a level error (5h addition 2).
+- Two free parameters, in runs per standard deviation. `c_own` is expected negative (a star
+  bat out) and `c_opp` positive (a star arm out).
+- This adds a term; it does not replace `z_off`. The served `z_off` still counts plate
+  appearances by hitters not active tonight (plan 4.1: a median 16.6% of Offense+ PA).
+
+**The fit.** `c_own` and `c_opp` are fitted together by least squares on the incumbent's
+per-side residual (runs minus `lam_S`) over both scoring sides of every fit-side game, at the
+incumbent's parameters. That is the 2026-09-11b 5h-A form. Every incumbent parameter stays as
+fitted on the anchored window. The fit cannot run when the design matrix is singular, when
+either column's sum of squares is 0, or when a pricing vintage has fewer than 2 clubs with a
+value; that is verdict row 1.
+
+**One seam prices both arms (to be built; nothing served calls it).** It takes the
+incumbent's (`lam_home`, `lam_away`) for a game, adds the two terms to each side, clamps, and
+prices through `_score_joint` (Poisson: `_grade` passes alpha None, `game_probabilities` then
+calls `run_dispersion_alpha()`, which reads the context key `build_context` writes as None
+while `SERVE_RUN_DISPERSION` is False) and `split_tie_atom` at the incumbent's fit-window
+`tie_home`. Platt is identity (`served_platt` returns None while `SERVE_PROB_CALIBRATION` is
+False). The incumbent arm is the same seam at `c_own = c_opp = 0`, so both arms share every
+rounding. Before any number the harness asserts that at zero the seam's `p_home` equals
+`game_probabilities(...)["p_home"]` to its 5 published places on every window game. That check
+reads no outcome. It is needed because `_grade` rounds `p_home` to 5 places and the tie to 4,
+and the unrounded lambdas live only in `_per_game_markets`, which `backtest()` pops before it
+returns.
+
+**Rows (to be built).** `_lambda_rows` returns bare (lam, runs) tuples and silently skips
+games it cannot price, so the regressors cannot be joined to its rows. A row builder returns
+(`game_pk`, date, side, scoring org, opposing org, lam, runs) per scoring side at the
+incumbent's parameters, and counts what it skips. A game the incumbent cannot price is
+outside every bucket and is counted.
+
+**Runline and park, both arms alike.**
+- **Runline.** `game_probabilities` resolves the served split only when `tie_home` is None,
+  and every lab passes a fit-window `tie_home`, so the owner's 2026-09-11 reprice
+  (`SERVE_RUNLINE_TIE_SPLIT` True since `497d667f`) reaches a lab only through
+  `_lab_runline_split(fit_games)`, which `backtest._grade` threads at that commit. Both arms
+  take `_lab_runline_split` of the anchored fit window; if the pinned commit lacks it, both
+  take the whole-atom construction and the record says which. The split never touches
+  `p_home`.
+- **Park.** `SERVE_ATH_PARK` (True since `497d667f`) reaches a vintage-priced game only
+  through the record's own `parks_short_window` block. The 2026-09-05, 09-06, 09-07, 09-09 and
+  09-10 records carry none; the 09-13, 09-14 and 09-16 records carry one, with keys `ATH` and
+  `TBR`. So the window's games ride two park terms for those clubs' home games, on the fit
+  side and the graded side alike. This is not a leak: the block is dated with its record and
+  both arms read it alike. The look reports fit-side and graded games on records with and
+  without the block.
+- No xwOBA and no `lineup_strength` term enters either arm, whatever 5c-A or 5c-B records.
+
+**Estimand.** On regular-season window games: does adding the two `star_out` terms to the
+vintage-mode incumbent's per-side lambdas lower paired per-game moneyline Brier on the graded
+side, without worsening log loss or the total, beyond both twins? The moneyline decides, in
+rule 4's 11b form, which here means its two criteria only: 2026-09-11b replaces 11b's
+0.6/0.7/0.8 grid with one calendar-midpoint split. The total is a guard. The runline is
+reported only.
+
+**The incumbent.** The vintage-mode pricer, never `build_context`:
+- `backtest._grade` in vintage mode at the pinned commit: `fit_coefficients`,
+  `_fit_tie_home`, alpha None, `_solve_diff_shrink`, `_solve_home_adj`, and every serve flag
+  of that commit.
+- 2026-09-11b says the incumbent "keeps every parameter as fitted on the anchored window".
+  `build_context` fits on every completed game, graded ones included, with season-to-date
+  boards (R5-F1), so it cannot be that pricer. This is the pricer 7e-D grades and plan 4.2
+  repair 1 names.
+- **The anchored window** is every vintage-gradable game dated before 2026-08-01. That split
+  date governs. On the 2026-09-16 artifact it holds 305 games, 2026-07-06 to 07-31, with b0
+  4.345387, b1 -0.037205, b2 -0.096479, b3 0.594771, b4 0.149360, `diff_shrink` 1.28 and home
+  adjustment -0.0443. `MODEL_VERSION` is `betting_runs_v2`.
+- **Inline, with parity.** `_grade` is a closure inside `backtest()`, so the harness re-solves
+  the incumbent inline, as `_total_level_split` does. Before any number: the five
+  coefficients, `diff_shrink`, the home adjustment, the tie rate, the split date and n_fit
+  must equal the artifact's `vintage` block at the pinned commit, to its rounding, and
+  `_vintage_cut_index`'s own cut at the run is printed beside 2026-08-01. If the cut is not
+  2026-08-01 or any value differs, the look records INDETERMINATE and nothing is fitted;
+  2026-08-01 governs and is never replaced by a later cut.
+
+**The pin, and the one thing this section adds to it.** This look runs in the same harness
+run as the `lineup_strength` look. 5c-B's committed "dated note, filed before any number on
+this column" pins, directly: the harness commit after it passes the identity and parity
+checks, the incumbent commit with `MODEL_VERSION` and every serve flag at each, the anchored
+window as its `game_pk` set, the incumbent's parameters, the store host, path and hash, the
+split date M, and the step 1 counts. This section chains to that note by name and takes every
+pin in it, and adds one condition:
+
+> The note must be filed before the FIRST outcome join of ANY B3/B4 column on that harness,
+> the 2026-09-28 xwOBA run included. If a B3/B4 column is joined to an outcome on that
+> harness before the note exists, this look records INDETERMINATE.
+
+The reason is dated: the 2026-09-28 run joins outcomes, on the same harness, to games dated
+2026-09-16 to 09-27, which are this column's graded games. A harness commit chosen after that
+read is a choice made after data. Until the first candidate number exists the harness may be
+fixed, and the note names the commit that ran.
+
+**The store.** `prospect-tracker/.cache/leaderboard_vintages/` on host NOAH-PC, the store
+R5-F3 measured and the one every count here reads (40 files today). The deploy box's store is
+not read for this look and no file from it is copied in. A copied file would pass the
+present-night test and let the look choose its nights by coverage, and with 4 of the first 12
+window nights missing and 6 more needed, that is a live risk, not a hypothetical one (R5-F3,
+I10).
+
+**The look: once, first day 2026-10-05, last day 2026-10-31.**
+- The read runs on 2026-10-05, or the first day after it on which the pinned harness runs
+  under the same window, code and rules. A slipped read is still the one look.
+- The floor is 2026-10-03; the look is 2026-10-05 because it is 5c-B's date and the two run
+  together. Both dates see the same graded games, because the regular season ends 2026-09-27.
+- If it has not run by 2026-10-31, the look records INDETERMINATE, 2026 closes for the
+  column, and the record says why. That matches 5c-B's last day.
+- There is no second read on 2026 data, whatever the verdict. A 2027 test is a new
+  registration under N9, never a continuation (section 5 caveat 1).
+
+**The graded window.** A game is in the window when:
+- `lv.as_of(date)` prices it on a vintage dated 2026-09-05 to 2026-10-04 (the newest
+  same-season vintage whose `covers_through` is strictly before the game date);
+- it is dated before 2026-10-05;
+- it is `gameType` R.
+
+**Postseason is not graded, and here is whose decision that is.** The window is
+regular-season games. `completed_games.json` carries no `gameType` field; R is a fetch-time
+filter in both doors (`fetch_finals`'s params, `_row_from_schedule`, and the feed walk's
+`game.get("type") != "R"`), which `build_game_cache` keeps. So grading October would need the
+5e-style harness addition, which is not built. Three further reasons, in order of weight:
+- The other B4 column in this same run is regular-season only: the 2026-09-11 correction set
+  O25's default at "not graded" with a 2026-09-15 lock, no answer was given, and 5c-B closed
+  it at the default. Split answers would put two looks in one run on different game sets.
+- The owner's 2026-09-11 answer that 5e counts postseason binds 5e alone: the 5e amendment
+  itself says "5f and 5g still exclude postseason games".
+- 5f and 5g exclude October for bench, bullpen and roster-usage reasons. A 40-man IL code is
+  not that fact, so that reason does not transfer, and this section does not borrow it.
+
+No new owner number is opened. O25's lock date has passed and the fit side is already
+complete on disk, so a window answer taken now would be a window chosen after the data exist.
+A later answer goes to a 2027 registration under N9.
+
+**The buckets. Each window game falls in exactly one, checked in this order.**
+1. **not a present night** (2026-09-11b point 3: `<D>.json` exists, `provenance.source` live,
+   `captured_at` UTC date D or D+1): ungraded.
+2. **post-retrain**: priced on a vintage written after the corpus `war_provider` changed, or
+   after a code change on the label path that replaces the series (steps D and E, or any
+   commit the audit rule classes as a construction change): ungraded.
+3. **X9**: priced on a vintage written after an X9 event below: ungraded.
+4. **stamp missing**: priced on a vintage dated 2026-09-19 or later whose `star_out` basis
+   carries no build stamp: ungraded.
+5. **stated null**: either club carries no value: ungraded.
+6. **dated value**: BOTH clubs carry a value (2026-09-11b, 5f's form). This is the graded n.
+
+Outside the window, reported and never graded, never scored, never entered as a zero paired
+difference: **basis unconfirmed** (priced on the 2026-09-04 vintage: 15 games on disk),
+**pre-change ranking basis** (priced on a 2026-08-20 to 2026-09-03 vintage: 205 games on
+disk), **predates the column** (priced on a vintage with no `star_out` value: 572 games), and
+games with no vintage at all (1,347). Those four plus the 131 dated-value games account for
+all 2,270 games in the cache.
+
+Inside dated value, two counts are reported and never chosen at the look: **basis unrecorded**
+(priced on a vintage written before the stamp lands) and games on a record with and without
+`parks_short_window`.
+
+**The stamp (to be built, I9; no stored value changes).** The correction's form, dated here.
+From the commit that lands this section, or the next code commit, so that the 2026-09-19
+vintage carries it at the latest, the `star_out` basis string carries:
+- the projections bundle's mtime and a content hash. Its `generated_at` is
+  `date.today().isoformat()` and cannot separate two builds on one day, which is exactly the
+  2026-09-04 and 2026-09-11 cases;
+- the corpus `war_provider`, which `proj_export` must also start writing into the bundle (the
+  bundle carries no such key today);
+- the champion fit key (`_corpus_sig`);
+- the oldest and newest roster-cache mtime read;
+- the codes counted as out.
+
+Every vintage from 2026-09-19 without it goes to bucket 4, ungraded. Delay costs graded
+games, never adds them. Nights from 2026-09-05 to the stamp are graded and counted as "basis
+unrecorded"; if the stamp does not ship within the eleven days to the 2026-09-27 season end,
+that count is every graded game, and a reader of the look record should expect 100%.
+
+**Split and fit (the 2026-09-11b 5h-A form).**
+- Let F and L be the first and last dated-value game dates. The split date is
+  M = F + floor((L - F) / 2) calendar days. The floor settles the half day 2026-09-11b left
+  open.
+- Dated-value games dated before M fit; games on or after M are graded.
+- M is computed at the look from dates and buckets alone, written into the look record before
+  any fit, and never moved.
+- Every graded game falls after 2026-08-01, in the vintage eval half, so rule 4 reads as
+  written.
+
+**What that arithmetic already fixes, and what it does not.** F is 2026-09-06: the 2026-09-05
+vintage first prices the 09-06 slate. With L = 2026-09-27 the span is 21 days and M is
+2026-09-16. L is not on disk, so M is not final, and it moves with the last dated-value date:
+
+| L | span | M | fit-side games on disk |
+|---|---|---|---|
+| 2026-09-20 | 14 | 2026-09-13 | 91 |
+| 2026-09-21 | 15 | 2026-09-13 | 91 |
+| 2026-09-22 | 16 | 2026-09-14 | 106 |
+| 2026-09-24 | 18 | 2026-09-15 | 116 |
+| 2026-09-26 or 09-27 | 20 or 21 | 2026-09-16 | 131 |
+
+So the 100-game fit floor is met if and only if the last dated-value game date is 2026-09-22
+or later. If the store dies before then, the look is INDETERMINATE on step 1, which is the
+correction's rule and plan I2's operational fault, not evidence about the candidate.
+
+Under the expected L every graded game is unplayed at commit: the game cache's last date is
+2026-09-15 and M is 2026-09-16. Under an earlier L the graded side reaches back into dates
+already played. Either way no number on this column against any of those outcomes exists at
+commit, and the split rule is fixed arithmetic on dates, not a choice.
+
+**The statistic, written out.** For each graded game i, d_i is the incumbent's loss minus the
+candidate's loss, so positive means the candidate is better. With n graded games:
+- mean = sum(d_i) / n;
+- sd = sqrt(sum((d_i - mean)^2) / (n - 1)), the n-1 divisor;
+- se = sd / sqrt(n); t = mean / se; lb95 = mean - 1.645 se.
+- If sd = 0 the criterion cannot run (verdict row 3). Nothing escapes to se = 0.
+
+**The divisor, disclosed.** `_paired_delta` at the pinned commit divides by n, not n-1, and
+returns t None on sd = 0. Plan 4.2 repair 3 moves the module to the n-1 divisor with a
+zero-variance refusal. The written form above governs whichever lands: the harness computes it
+inline and, before any number, asserts on a fixture that `_paired_delta` at the pinned commit
+agrees to its rounding, or the note says the helper differs and the inline form ran. n-1 is
+chosen because it is the plan's direction and the smaller t. 5c-B carries the same written
+form and cites this section for it. 5c-A, also committed, reads `_paired_delta` itself and so
+carries the population divisor. That is a real divergence inside one run, it is recorded here
+rather than papered over, and it cannot be fixed from this section, because 5c-A is committed
+pre-registration. The look record prints which divisor each column used.
+
+**Leg 2, the vintage leg. All four required, on the graded dated-value games.** Every delta
+is incumbent loss minus candidate loss per game, so positive means the candidate is better.
+1. **Moneyline Brier**, the statistic above: mean > 0 and t >= `Z_95_ONE_SIDED` (1.645). y is
+   home runs greater than away runs, as `_grade` scores it.
+2. **Moneyline log loss** (`_logloss`, eps 1e-9), same statistic: mean >= 0 on the point
+   estimate.
+3. **Net availability sign**: `c_own - c_opp < 0`. A club's run differential moves by
+   (c_own - c_opp)(z - zbar), so this is the statement that a club with more stars out is
+   priced to a worse differential. A wrong net sign fails the candidate whatever 1 and 2
+   read. The two signs separately are reported, not required. This is 5g criterion 3's form.
+4. **Total, not worse.** Paired absolute error |home runs + away runs - (lam_home +
+   lam_away)| on unrounded lambdas, the `fair_total` `game_probabilities` builds before any
+   total level. Mean >= 0 on the point estimate. Both terms move both lambdas, so a flip moves
+   the total, and the total is ledger-closed with a disclosed Over lean (plan 4.2). 5c-A and
+   5c-B carry the same guard.
+
+The runline is reported only, never a criterion, on both sides: the per-game sum of the two
+tails' log losses (home margin >= 2, home margin <= -2; the 11a amendment,
+`RUNLINE_SIDE_AMENDMENT` "both") and each tail's Brier. It is 11a's form, which needs no
+posted price.
+
+**Is rule 3's twin right for an availability count?** Rule 3 binds rolling-form candidates in
+its own words, and 5d-A applied it to availability. On its own it is the wrong control for a
+count like this. Permuting across clubs within a date destroys two things at once: the club's
+standing level of injured stars and the night's timing. So beating it cannot separate "this
+club's stars are out tonight" from "this club has carried injured stars all month", and the
+second is a club trait that tracks what `z_off` and `z_prev` already price. Rule 3's twin is
+kept as twin A, and twin B is added. Both are required.
+
+**Twin A, rule 3's permuted twin (the chance control).**
+- Replicate k, for k = 0 to 199, uses `random.Random(k)`, one generator per replicate,
+  advanced across vintages. It is not reseeded per vintage: reseeding would give every 30-club
+  night the same permutation, a fixed club relabelling that keeps club persistence, which is a
+  different null.
+- Rule 3's "within each date" is read as within each pricing vintage. z is standardized within
+  the vintage and one vintage's value prices every game it covers, so per-vintage is the unit.
+  This reading is this section's own and is listed under "Extensions".
+- Walk the pricing vintages that price at least one dated-value game, in ascending
+  `vintage_date`. In each, shuffle the stored values among the clubs carrying one, listed in
+  canonical org-code order. mu and sd do not change, so the z-scores permute exactly. The
+  buckets fix the vintage set before any fit.
+- Refit `c_own` and `c_opp` with their own `zbar` on the same fit side, and grade the same
+  graded side.
+
+**Twin B, the within-club twin (the availability control).** It keeps each club's level and
+destroys only the timing, which is the B4 claim.
+- Replicate k, for k = 0 to 199, uses `random.Random(200 + k)`.
+- Within each half, fit among fit and graded among graded, so no twin fit reads a graded-side
+  value. Inside the fit half a game may take a later fit-half value; that is the null, and the
+  property claimed is only that no graded-side value enters a fit.
+- For each club in canonical org-code order, shuffle its z across its own dated-value
+  club-games, listed in (date, `game_pk`) order. Both of a game's regressors take the permuted
+  values, since a club's value is its own z whether it is scoring or opposing.
+- Refit and grade as above.
+- A club whose z never moves within a half is unchanged by twin B. A club whose stored COUNT
+  never moves can still have a moving z, because z is standardized per vintage over that
+  vintage's clubs. The count of clubs with a constant z per half is reported.
+
+**zbar and both coefficients are recomputed on every replicate**, because clubs appear
+unequally often per vintage, so the fit-row mean of z moves under permutation.
+
+**The bar, for each twin.** The candidate's criterion 1 mean must be strictly greater than at
+least 190 of the 200 twin means, that is, greater than the 190th smallest. Ties count against
+it. This is 5h-A's "exceed the 95th percentile" as a nearest-rank order statistic. Its exact
+size under the null is 11/201 = 5.47%, not 5%; 191 of 200 would give 4.98%. 190 is kept
+because 5c-A and 5c-B are committed with the same bar and one run must read alike, and the
+size is stated here so no reader has to derive it.
+
+**Reported, never qualifying: the offense arm.** The same fit on the same rows with the
+scoring club's centered `z_off` from the same record in place of `z_star_out`, plus the
+correlation and variance-inflation read of `z_star_out` against `z_off` and `z_prev` over
+fit-side and graded rows, from features only. It asks whether the column beats a refit of
+offense level. Twin B tests the availability claim directly, so this arm is reported and not
+required.
+
+**Leg 1, the contaminated-forward screen (rule 4; to be built; it can only fail the
+candidate).**
+- **The column (to be built).** No season-to-date `star_out` exists: `team_inputs_detail`
+  sets every dark column None. The screen builds one per game date D for every 2026
+  regular-season game:
+  - the top five by `warY1Champ` on a PINNED bundle, recorded by mtime and content hash, with
+    its corpus `war_provider` and champion fit key. The bundle must be an `ewar_v2` build
+    written before the epoch's step D. The look date is also the D9 freeze and step D (plan
+    5.1, W2), after which `_corpus_provider_stale` rebuilds the corpus on `fwar` at the next
+    nightly, so "the bundle on disk when the harness runs" is not a pin and is not used. If no
+    such bundle is on disk at the run, leg 1 is recorded unrunnable and verdict row 3 applies;
+  - counted against the 40-man status as of D-1, from
+    `/api/v1/teams/{teamId}/roster?rosterType=40Man&date=<D-1>`, codes starting "D";
+  - standardized within date, `_mean_sd`'s form, then centered on the forward fit-half rows.
+- **The endpoint is unverified.** No probe has been run. A probe before the look that reads
+  roster data only, joins no outcome and no price, may run, and the record says whether it did
+  and on what day. If the endpoint cannot return a dated status, the fallback named now is IL
+  spells rebuilt from the StatsAPI transactions feed. If neither yields a dated status for 28
+  of 30 clubs on 90% of dates, leg 1 is unbuildable and the candidate cannot serve in 2026
+  whatever leg 2 reads.
+- **It is contaminated twice, and labelled so**: the ranking bundle has seen the season, and a
+  dated roster read can show an IL placement made retroactively.
+- **It reads 40-man IL codes only.** It never reads active-roster membership, a posted lineup
+  or a boxscore roster, so it is not a variant the `lineup_strength` embargo covers.
+- **The incumbent** is `backtest()`'s contaminated `forward` fit at the pinned commit, split at
+  `dates[int(len(dates) * 0.7)]` over the completed dates. That cut moves with the season: on
+  the 2026-09-11 artifact it was 2026-07-22 with 682 forward games, and on the 2026-09-16
+  artifact it is 2026-07-26 with 700. The rule is the pin, not the value; the artifact's
+  `generated_at` and the cut at the run are recorded, with a parity check against the
+  artifact's `forward` block and top-level `split_date`.
+- The two coefficients are fitted by the same residual least squares on the forward fit half.
+- **Leg 1 fires**, and the candidate fails, when the forward-eval paired Brier mean is <= 0 on
+  the point estimate, or when `c_own - c_opp >= 0`. Leaked features that show no effect in the
+  right direction leave a dated feature nothing to find.
+- **It runs in the look run only**, on or after 2026-10-05, never after it. "Or after it"
+  would be a second 2026 outcome read on this column, on the graded games among others, with
+  leg 2 already known.
+
+**Order of operations.**
+0. Before any number: the zero-coefficient identity check, both parity checks, the
+   `_paired_delta` fixture check, then the dated note.
+1. Counts, on the pinned commit and the named store:
+   - present nights from 2026-09-05 to 2026-10-02: at least 14 of 28 (2026-09-11b point 2);
+   - dated-value fit-side games: at least `VINTAGE_MIN_FIT_GAMES` (100);
+   - dated-value graded games: at least `VINTAGE_MIN_EVAL_GAMES` (50);
+   - the identification precondition: at least 30 fit-side club-games carry a count of 1 or
+     more and at least 30 carry 0. POLICY. It was set with the D-code inventory (266 of 1,367
+     rows on the 2026-09-11 cache) and the top-five composition in hand, which are counts, not
+     stored column values, and that is disclosed rather than denied.
+
+   If any count fails, nothing is fitted, scored or twinned, and leg 1 does not run.
+2. Fit `c_own` and `c_opp`.
+3. Criteria 1 to 4, both twins, the offense arm and leg 1, in one run. Everything that runs is
+   reported.
+
+`VINTAGE_MIN_GRADED_GAMES` (600) is not a criterion here, as in 11b's form, so a pass would
+rest on at most about 160 graded games. That is one reason a pass serves nothing in 2026.
+
+**The verdict. The first row that matches wins.**
+
+| Order | Verdict | When |
+|---|---|---|
+| 1 | INDETERMINATE | the look has not run by 2026-10-31, the dated note was not filed before the first B3/B4 outcome join on the harness, a parity or identity check fails, or step 1 or step 2 fails. Nothing else is computed |
+| 2 | FAIL | any of criteria 1 to 4 fails, either twin is not beaten, or leg 1 fires. A failed requirement is a FAIL even when another component could not run |
+| 3 | INDETERMINATE | nothing failed, but a criterion (sd = 0), a twin or leg 1 could not run |
+| 4 | PASS | every floor met, criteria 1 to 4 hold, both twins beaten, leg 1 ran and is silent |
+
+**No second read.** No verdict permits a second 2026 read. A harness defect found after the
+run makes the look INDETERMINATE, recorded with the defect named: the file, the function and
+the reported numbers it touched. The original numbers stay beside it, labelled defective.
+Nothing is recomputed on 2026 outcomes. A defect can move a PASS or a FAIL to INDETERMINATE,
+never to PASS.
+
+**No power precondition.** 5f and 5c-A stop at UNDERPOWERED when sqrt(n) x RMS is below 1.645.
+This section adds no such verdict, as 5c-B adds none: the look runs once, so reading it costs
+no later look, and a power verdict would be a new stopping rule on the graded read. Two
+numbers are reported beside the verdict and neither decides: the RMS of candidate minus
+incumbent `p_home` over the graded games, and sqrt(n) times it.
+
+**Multiplicity and stacking.** Three 5c candidates read the same incumbent family on
+overlapping 2026 games: the xwOBA pair (5c-A, 2026-09-28), `lineup_strength` (5c-B, this run)
+and this column. Each faces an unadjusted one-sided t >= 1.645, by design. Rule 4 sets that
+bar per candidate; a Holm family in plan 2.3's form would raise the first-ranked bar, which
+amends rule 4's threshold, and this section does not do that. `star_out` sits in no existing
+Holm family (RE is total-only; 7e's family is coefficient estimators), and none is assigned
+after the verdict. The cost is stated: for the two B4 columns read in this run, the chance
+that at least one of two null candidates passes criterion 1 is at most 0.10 (0.0975 if
+independent); across all four 5c candidates at most 0.20. No candidate's term ever enters
+another's arms. A PASS here and a PASS on `lineup_strength` give two separate flag proposals,
+never a joint one, because a two-term fit is a third, unregistered candidate.
+
+**Coverage at commit (counts, no value; 2026-09-16, script `rev4/counts4.py`).**
+- Nights in the window (2026-09-05 to 2026-10-02): 8 present of the 12 elapsed, 2026-09-05,
+  09-06, 09-07, 09-09, 09-10, 09-13, 09-14 and 09-16. Missing: 2026-09-08, 09-11, 09-12 and
+  09-15; none can be written late (2026-09-11b point 5). Every present night is live, captured
+  on its own date, `feature_basis.star_out` n 30, 30 of 30 clubs non-null.
+- `completed_games.json`: 2,270 games, last date 2026-09-15.
+- Buckets over all 2,270 games at the as_of rule: 131 dated value (2026-09-06 to 09-15), 15
+  basis unconfirmed (the 2026-09-04 vintage, all dated 09-05), 205 pre-change ranking basis,
+  572 predates the column, 1,347 no vintage. 0 stated null. The five sum to 2,270.
+- Dated-value games by date: 09-06 15, 09-07 11, 09-08 15, 09-09 15, 09-10 5, 09-11 15, 09-12
+  15, 09-13 15, 09-14 10, 09-15 15.
+- The ceiling on the graded side: 2,430 scheduled regular-season games less 2,270 complete
+  leaves at most 160, every one dated 2026-09-16 or later. The schedule cache holds 88 of
+  them, 2026-09-16 to 09-22 (15, 9, 15, 15, 15, 3, 16); it reaches no further, so the
+  2026-09-27 season end here rests on 5e, 5g and plan 5.1, not on the cache.
+- The look reports, of the dated-value games, how many rode a vintage 2 or more days old,
+  with their game-weighted `vintage_age_days`.
+
+**The night floor, as arithmetic.** Of the 28 window nights, 8 are present and 4 are missing,
+so the floor needs 6 of the remaining 16 (2026-09-17 to 10-02). Whether the nightly writes
+vintages after the 2026-09-27 season end is unverified. If it does not, the floor needs 6 of
+the 11 nights 2026-09-17 to 09-27, which is 55% uptime. At the window's own rate (8 of 12,
+67%) those 11 nights yield about 7.3, and at the schema-3 rate (16 of 24, the 2026-09-11b
+table) about 7.3 as well. The floor is reachable at the observed rate with little slack. The
+2026-09-04 start would have needed 5 of 15; that one night of slack is what the restart's
+honest start costs.
+
+**Power, as arithmetic on counts.** Suppose the candidate's probabilities were exactly right.
+Its expected paired-Brier t is then about sqrt(n) x RMS of its `p_home` shift, the arithmetic
+5f and plan 4.1's 5j summary use. At the graded ceiling n = 160 (sqrt 12.65), with the chance
+of t >= 1.645 from a normal approximation:
+
+| RMS shift in p_home | expected t | chance of t >= 1.645 |
+|---|---|---|
+| 0.010 | 0.13 | 0.064 |
+| 0.020 | 0.25 | 0.082 |
+| 0.046 (plan 4.1's resting star on an even game) | 0.58 | 0.144 |
+| 0.130 | 1.65 | 0.50 |
+| 0.197 | 2.49 | 0.80 |
+
+These are upper bounds, because they ignore the noise in the two coefficients and criteria 2
+to 4 and both twins. One standard error on a coefficient is about 0.20 runs per standard
+deviation: 3.18 runs of per-side residual sd (11a's 10.4889 run variance less 0.3755 of lambda
+variance) over the 262 fit-side rows the 131 fit games give, ignoring the correlation between
+the two regressors, which is real because each club-game enters once as S and once as O.
+
+**The pre-registered expectation: FAIL or INDETERMINATE, for power.** A FAIL at this n is not
+evidence that availability does not matter. A PASS would need a shift several times the
+4.6-point resting-star shift plan 4.1 records.
+
+**Reported whichever way it lands.**
+- The dated note's contents, and which divisor this column used.
+- The incumbent: its parameters, the governing split 2026-08-01 with `_vintage_cut_index`'s
+  own cut beside it, both parity results, the identity check and the `_paired_delta` fixture
+  result, and which runline construction both arms used.
+- The construction audit to the harness commit, and the fit-key list per night.
+- The clock start, the floor, and the nights present and missing, with the missing dates
+  listed.
+- The 8 pre-change nights listed, the 2026-09-04 night listed on its own, and their game
+  counts.
+- The window games per bucket, per pricing vintage, with "basis unrecorded" and the
+  `parks_short_window` split inside dated value.
+- Of the dated-value games, the count on a vintage 2 or more days old and their game-weighted
+  `vintage_age_days`.
+- F, L, M, the fit and graded n, `zbar`, `c_own`, `c_opp` and their standard errors.
+- Criteria 1 to 4: mean, sd, t and lb95.
+- Each twin: its 200 means, the 190th smallest, and the candidate's rank. For twin B, the
+  clubs per half whose z never moves.
+- The offense arm, and the correlation and variance-inflation reads.
+- Leg 1's delta, t and both signs, labelled contaminated, with its pinned bundle's mtime,
+  hash, `war_provider` and fit key, the forward cut and the artifact `generated_at`, and its
+  excluded clubs and games.
+- The runline, both tails.
+- The distribution of stored counts on the fit and graded halves.
+- The RMS and sqrt(n) x RMS above.
+- The dated-value games priced on vintages before and after `419811bb`'s nightly cadence.
+- Reported, never qualifying: criteria 1 and 2 on the graded games at vintage age 1 only; a
+  date-clustered t; and, on the look-date bundle, the top-five players absent from their
+  club's 40-man cache.
+
+**Before the look: counts only, and the guard that makes it so.** No fit, paired score, twin
+or leg 1 is computed for this column before 2026-10-05. `star_out` sits in
+`betting_model.DARK3_TEAM_COLUMNS`, the tuple a generic candidate loop would iterate and
+`_assemble_team_inputs` standardizes, so:
+- any harness that runs on the real store before 2026-10-05, the 2026-09-28 run of 5c-A
+  included, carries in its own commit and before its first run an exclusion of this column
+  from its candidate list, a date refusal before 2026-10-05 and an outcome-field refusal in
+  the form of `tools/ph_gate.check_look_date` and `refuse_outcome_fields` (that function
+  itself refuses every date before `FIRST_LOOK_SEASON` 2027, so it cannot be reused as is),
+  and a test that no run dated before 2026-10-05 writes `z_star_out` beside an outcome field;
+- that run's record lists its candidate columns. A run whose record does not list them is
+  treated as having computed on this column, and the candidate is disqualified;
+- such a run reports, for this column, the nights on each side of `f8c17ffe` listed, the
+  window games per bucket, and the nights on the new basis the record cannot confirm. If no
+  such run is held, the look record reports them first.
+
+**Known readers of the same 40-man cache, and why none is a pre-existing relation.** No served
+price reads a 40-man IL code. `proj_export._il_out60` writes the cache and serves a display
+badge; `fa_fit` and `hitter_export` read the same keys and price no game; the DFS and fantasy
+availability rules read `rosterType=active`, a different endpoint.
+`betting_model._feature_basis` counts each dark column's status per graded game and reads no
+value. So the embargo below needs no named exceptions, and this is recorded so a reader does
+not mistake the nightly cache write for a relation.
+
+**Embargo.** Until this look is recorded, no star-availability, IL, injury or active-roster
+variant of this column is related to a game outcome or a price. That covers another top-N,
+another ranking field or WAR basis, a hitter-only or pitcher-only count, a WAR-weighted count,
+another roster source, another freshness window, and either side of `f8c17ffe` alone. The
+pre-change side and the basis-unconfirmed night are never related to an outcome on their own,
+before or after the look.
+
+**Disqualification.** Any of these before the 2026-10-05 look disqualifies the candidate under
+rule 1: any number relating `star_out`, either side of the change, or a variant above to a game
+outcome or a price; any fit, score or twin of this column in any run before 2026-10-05,
+including a run whose record lists no candidate columns.
+
+**Forward (X9).** Any later change to who enters the five or what counts as out is recorded
+here the same day: `STAR_OUT_TOP_N`; the ranking field or its definition; the corpus WAR
+provider; `fa_projection.DEF_FEATURE_DEFAULT` (True since `4853e683`, 2026-07-31) or the
+`EEPHUS_FA_DEF` environment override read ahead of it; the vet `team` rule or
+`trades.canonical_org`'s mapping; the D-code rule; the roster endpoint, cache key or TTL;
+`IL_CACHE_MAX_AGE_HOURS`. Vintages written after such a change go to the X9 bucket, the clock
+does not restart again, and the look reads only the nights before it. Under the night floor
+that can make the look INDETERMINATE.
+
+**Post-retrain and refresh, forward.** The post-retrain bucket's events are a corpus
+`war_provider` change and a construction-class code change on the label path, the epoch's
+steps D and E above all. Step M is not one of them. Plan W2 puts step D in the epoch after
+the ~2026-10-05 freeze, and the 2026-09-11 correction keeps step M after 2026-09-27, so no
+graded game should be touched. If either lands earlier, every vintage written after it goes
+to the post-retrain bucket, and no later record decides that. Any other projections refresh,
+including the nightly live-season re-price `419811bb` added and every re-key of the champion
+fit, is part of the construction and buckets nothing.
+
+**What a pass changes: nothing served in 2026.**
+- It records that `star_out` passed both legs, all four criteria and both twins on at most
+  about 160 games, and licenses a flag proposal, not a flip.
+- The flag would be `SERVE_STAR_OUT` (to be built, default False, in the
+  `SERVE_RUN_DISPERSION` idiom), flipped by the owner in one commit with a `MODEL_VERSION`
+  bump and a tripwire test, so the ledgers never pool two pricers.
+- The served coefficients and `zbar` are the look's fit-side values, frozen as literals (X4),
+  never refit on the 2026 graded games.
+- Serving needs a live builder on `team_inputs_detail`'s path; that function sets the column
+  None today.
+- A flip would move `lam_home` and `lam_away` at every game where either club's count is off
+  the mean, so every moneyline, runline and total side moves and the Pick of the Day can
+  change.
+- The proposal must state two things, and the owner decides both: the coefficients were fitted
+  on the vintage-mode pricer's residual, so serving them on the `build_context` pricer serves a
+  pair never graded together (O14, 7e-D); and the ranking field changes series at the fWAR
+  epoch (step D), so a 2026 pass describes a construction the 2027 pipeline will not produce.
+  It enters N9's 2027 protocol as a candidate, re-registered on the new basis.
+
+**What a FAIL or INDETERMINATE changes.** Nothing. The column stays dark and keeps accruing,
+2026 closes for it, and a 2027 test is a new registration under N9.
+
+**To be built before the look.** Named so the run cannot improvise: the seam and the row
+builder; the residual fit and the written statistic with its fixture check; both twins with
+their seeds; the offense arm; leg 1's column, its endpoint probe and its pinned bundle; the
+game-level both-clubs count and the bucket report in `_feature_basis`; the basis stamp above;
+the harness arm with its date and outcome-field refusals and their tests; the exclusion of
+this column from any earlier harness's candidate list, in that harness's own commit; the
+`snapshot` refusal for a past `on_date`; the look record, carrying M before any fit.
+
+**Extensions.** Each extends the record and is stated as an extension. None can make a pass
+easier.
+1. **The clock start.** 2026-09-05 rather than 2026-09-04, on the record that the 2026-09-04
+   capture ran inside a nightly that wrote a mixed basis, and the fit-cache mtimes that place
+   2026-09-05 on the new series. It costs a night of floor slack and 15 fit-side games.
+2. **The basis-unconfirmed bucket** for that one night and its 15 games.
+3. **The refresh rule, written out** with every commit since 2026-08-19 classified, and the
+   disclosure that the reading was chosen knowing where each commit falls.
+4. **The pin condition**: 5c-B's dated note must precede the first B3/B4 outcome join on the
+   harness, the 2026-09-28 run included.
+5. **The postseason window**, settled in this column's own terms rather than borrowed from 5f
+   and 5g, and routed to N9 for 2027.
+6. **The stamp, dated** (2026-09-19 at the latest), with the "stamp missing" ungraded bucket,
+   and the bundle mtime and hash in place of `generated_at`, which is a date string.
+7. **Criteria 3 and 4, twin B, the 190-of-200 bar, the identification precondition, the
+   verdict order and the last day**, all of which can only make passing harder.
+8. **The statistic and the n-1 divisor** written out where `_paired_delta` uses n, with the
+   divergence from 5c-A disclosed.
+9. **The store**, named now, never merged (R5-F3, I10).
+10. **The twin reading**: per pricing vintage rather than per date, because z is per vintage.
+
+**Plan edits this needs** (`docs/master-plan-2026-09-11-war-epoch-drivers-betting.md`),
+consistent with the list 5c-A already carries:
+- 5.1, the ~2026-09-17 row: no column looks. It becomes "if a harness run is held, counts only
+  for the xwOBA pair, `star_out` and `lineup_strength`", or is deleted.
+- 5.1, the 2026-10-05 row: add the `star_out` look beside `lineup_strength`, with its
+  preconditions (its rule-1 gate section; no star-availability variant related to an outcome
+  or a price; no construction-class change on the label path landed).
+- 1.1 and E5: `star_out` moves at **steps D and E**, not at step M. E5's "`star_out`
+  ~2026-09-17" becomes 2026-10-05.
+- 1.5, "Betting touch points of step M": step M does not move `star_out`'s ranking; the
+  corpus and champion fits do. The stamp item stays.
+- O11: the sequencing constraint for this column is steps D and E, not the 09-17 look; the
+  09-17 date it names is spent.
+- E4 clause (j), the `star_out` handling: the post-retrain and X9 buckets above, and the
+  stamp.
+- I3: record that this section moves this column's look and restarts its clock.
+- I9: the stamp contents above.
+- W1 and the dependency spine: the 09-17 row is counts only; the 2026-09-28 xwOBA look, then
+  the 2026-10-05 `lineup_strength` and `star_out` looks.
+- 4.1 (5j) and the N12 / G4-08 market-residual screen: for star-availability variants the
+  exclusion date is 2026-10-05.
+- 7.2, risk 7: "before 09-17" becomes "before 10-05" for star variants, which is now the same
+  date both B4 columns carry.
+
+**Doc edits this needs** (`docs/diamond-betting.md`): the two committed sentences that keep
+`star_out` on ~2026-09-17 (the 2026-09-11 correction, "The close-variant embargo" and "Not
+reopened") and 2026-09-11b's "The ~2026-09-17 window" paragraph each gain "superseded for
+`star_out` by 5c-C", beneath them and never over them.
+
+**Not reopened.** No criterion, control or threshold in rules 1 to 4, or in the two 2026-09-11
+corrections, is amended. For this column this section fixes: the clock start (2026-09-05) and
+the floor (2026-10-03); the look (2026-10-05, last day 2026-10-31); the candidate, the fit,
+the estimand, the four criteria, both twins and their bar, leg 1 and the verdict order; the
+window, the split rule, the buckets, the stamp, the embargo and the disqualification rule.
+Their precedents are 5g (sign), 5h-A and 5f (the twin bar), 5c-B (the within-club twin, the
+written statistic, the store, the defect rule and the last day), 5c-A and plan 4.1 (the total
+guard) and 7e-D (the last day).
+
+
 
 ## 5d. Schema 4: bullpen availability, schedule rest, weather (pre-registered 2026-09-07)
 
