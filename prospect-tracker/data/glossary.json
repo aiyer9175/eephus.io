@@ -4248,6 +4248,69 @@
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
+   "id": "downside_war",
+   "term": "Downside WAR",
+   "category": "fa",
+   "aliases": [
+    "downside WAR",
+    "CVaR",
+    "conditional value at risk"
+   ],
+   "priority": 71,
+   "definition": "The mean of the worst 10% of simulated WAR paths over the predicted term: a conditional value at risk, not the P10. A surplus point estimate hides what a deal looks like when it goes wrong; this is that number.",
+   "seeAlso": [
+    "ewar",
+    "contract_surplus",
+    "p10_p90_bands"
+   ],
+   "module": [
+    "fa"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "p_enter",
+   "term": "P(enter)",
+   "category": "fa",
+   "aliases": [
+    "P(enter)",
+    "probability of entering the class"
+   ],
+   "priority": 72,
+   "definition": "The probability a player reaches free agency at all. It is 100% when a contract simply expires, and lower for the option family, where membership stays probabilistic until the option resolves.",
+   "methodology": "Band-priced options read the option price against the predicted AAV band (v2); mutual and conditional options keep explicit v1 priors. The source is carried per row in enterProbSrc.",
+   "seeAlso": [
+    "m_guarantee",
+    "deal_plus"
+   ],
+   "module": [
+    "fa"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "team_fit",
+   "term": "Team fit",
+   "category": "fa",
+   "aliases": [
+    "team fit",
+    "fit score"
+   ],
+   "priority": 73,
+   "definition": "A 0 to 1 score for how well a club and a free agent match, built from positional need, contention window, payroll room, park and the club's own signing behaviour. It is a demand estimate, not a prediction of where he signs.",
+   "seeAlso": [
+    "rational_value",
+    "contract_surplus"
+   ],
+   "module": [
+    "fa"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
    "id": "qo_tax",
    "term": "QO pick tax",
    "category": "fa",

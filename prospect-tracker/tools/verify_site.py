@@ -30,7 +30,7 @@ ROUTES = [
     ("/models/",                       ".dm-table, table, .acct-row, tbody tr"),
     ("/projections/",                  "table.proj-board-table tbody tr[data-key]"),
     ("/projections/#view=teams",       "tbody tr, .mlb-card"),
-    ("/fa/",                           ".fa-card, .mlb-card"),
+    ("/fa/",                           "table.fa-board-table tbody tr[data-key]"),
     ("/betting/",                      ".bt-pick, .bt-panel"),
     ("/pal/",                          "tbody tr, .pal-tier"),
     ("/glossary/",                     ".gl-app, .g-term, tbody tr"),

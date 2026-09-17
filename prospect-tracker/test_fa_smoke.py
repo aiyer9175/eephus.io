@@ -71,67 +71,190 @@ def test_fetch_failure_renders_error_state():
 
 
 # ---------------------------------------------------------------------------
-# PROSPX-pattern board cards + Phase H fields (Lane B, 2026-07-30)
+# The Class Board is ONE TABLE (owner ask B, 2026-09-16)
 #
 # Source-level assertions, not render assertions: this module's only browser
 # fixture drives the FETCH-FAILURE path (every fetch rejects by design), so
 # there is no rendered board to inspect here. Pinning the emitted markup in the
-# source is the same approach test_war_rate_plus.py takes for assets/mlbstats.js.
+# source is the same approach test_war_rate_plus.py takes for assets/mlbstats.js,
+# and test_fa_table_fit.py drives the built page for everything CSS decides.
+#
+# Every slice below asserts BOTH ends, so none of them can quietly go vacuous
+# when the source moves.
 # ---------------------------------------------------------------------------
 
-def test_board_emits_cards_not_a_table():
-    """The 12-column table squeezed four predicted-deal figures in beside their
-    own P10-P90 bands. The card moves the deal into a row-2 tape instead."""
-    assert "mlb-card fa-card" in JS, "board no longer emits cards"
-    assert "mlb-card-list" in JS
-    assert 'class="mlb-tape"' in JS
-    assert "detail-table" not in JS.split("function renderBoard")[1].split("boardRail(cls)")[0],         "the retired table shell is still emitted by renderBoard"
+def _board(js):
+    """renderBoard's source, from its opening line to the next top-level
+    function. Both ends are asserted, so the slice cannot go vacuous."""
+    assert "function renderBoard(rows, cls)" in js
+    part = js.split("function renderBoard(rows, cls)", 1)[1]
+    assert "function faValueMap(members)" in part
+    return part.split("function faValueMap(members)", 1)[0]
 
 
-def test_sort_headers_are_spans_with_the_a11y_contract():
-    """The head is a CSS grid now, so a <th> would be invalid markup that
-    browsers silently reparent, dropping the header row entirely."""
-    shead = JS.split("const sHead = (label, key, title) =>")[1].split("};")[0]
-    assert "<span class=\"fa-sort" in shead, "sHead still emits a table cell"
-    assert "<th" not in shead
-    for attr in ('tabindex="0"', 'role="button"', "aria-sort="):
-        assert attr in shead, f"sHead dropped {attr}"
+def _board_all(js):
+    """Everything the board emits: the row, the detail line and renderBoard."""
+    assert "// ---- Class Board: ONE TABLE" in js
+    part = js.split("// ---- Class Board: ONE TABLE", 1)[1]
+    assert "function faValueMap(members)" in part
+    return part.split("function faValueMap(members)", 1)[0]
 
 
-def test_every_board_column_is_sortable():
-    """rank and name were inert <th> on the table board; AAV and guarantee lost
-    their headers entirely when the board became cards (53355d9), which is how
-    "sort by AAV" disappeared while the comparator kept working.
+def _head(js):
+    part = js.split("const head = `<thead><tr>`", 1)
+    assert len(part) == 2, "the board head is not one <thead> template"
+    return part[1].split("</tr></thead>", 1)[0]
 
-    Asserts the PROPERTY (the key is reachable through a sort control), not the
-    LOCATION. Row-1 columns live in .mlb-card-head and row-2 tape chips live in
-    the .mlb-sortbar strip, because the tape is not track-aligned with the
-    header; pinning a key to one region turned red the moment a chip moved
-    between them, which told us nothing about whether the board still sorts."""
-    head = JS.split('class="mlb-card-head"')[1].split("</div>")[0]
-    bar = JS.split('class="mlb-sortbar"')[1].split("</div>")[0]
-    controls = head + bar
-    for key in ("rank", "name", "status", "projAav", "projGuar", "surplus",
-                "verdict", "warY1", "warTotal", "warCvar10", "pAnyStar"):
-        assert f'"{key}"' in controls, f"{key} is not reachable through any sort control"
-    assert "sHead(" in head and "sHead(" in bar
+
+def test_board_emits_one_table_not_cards():
+    """Owner ask B (2026-09-16): the class board is a table. The card grid put
+    2 rows above the fold at 1440 and 0 on a phone."""
+    board = _board(JS)
+    assert 'class="fa-board-table"' in board
+    assert "<thead>" in board and "<tbody>" in board
+    assert '<tr data-key="' in JS
+    for card_bit in ("mlb-card fa-card", "mlb-card-list", 'class="mlb-tape"',
+                     "mlb-sortbar", "data-card-href", "FA_TRACKS"):
+        assert card_bit not in JS, f"{card_bit} is still emitted on the board"
+    # the in-module table dialect stays with the other five views
+    assert "detail-table" not in board
+    assert "data-export" in board.split('class="fa-board-table"', 1)[1][:200]
+
+
+def test_every_board_header_is_a_keyboard_sortable_columnheader():
+    """aria-sort on a <th scope=col> (a columnheader, where ARIA exposes it)
+    around a native <button>: Enter and Space with no keydown shim, one tab
+    stop, and no glossary hook nested inside a control."""
+    import re
+    head = _head(JS)
+    ths = [t for t in re.findall(r"\+ th\(\"[^\"]+\"", head)]
+    assert len(ths) == 13, f"{len(ths)} sortable headers, not 13"
+    th_src = JS.split("const th = (key, label, cname, title, exportText) =>", 1)[1].split("};", 1)[0]
+    assert 'scope="col"' in th_src and "aria-sort=" in th_src and "data-export-text=" in th_src
+    assert '<button type="button" class="fa-sort" data-fsort=' in th_src
+    assert 'role="button"' not in th_src and "tabindex" not in th_src
+    assert "data-gl" not in head, "a glossary hook inside a sort button is a nested tab stop"
+    keys = re.findall(r'th\("([A-Za-z0-9]+)"', head)
+    for key in ("rank", "name", "status", "verdict", "projAav", "projYears", "projGuar",
+                "surplus", "dealPlus", "rational", "warY1", "warTotal", "age"):
+        assert key in keys, f"{key} lost its header"
+
+
+def test_every_sort_key_is_reachable_and_whitelisted():
+    """A key with no column must be reachable through the picker, and an unknown
+    #sort= must fall back rather than sort every row as a tie. warCvar10 and
+    pAnyStar have no column at any width, so the picker is their only path."""
+    import re
+    keys = set(re.findall(r'"([A-Za-z0-9]+)"', JS.split("const FA_SORT_KEYS = [", 1)[1].split("];", 1)[0]))
+    assert keys == {"rank", "name", "status", "verdict", "projAav", "projYears", "projGuar",
+                    "surplus", "dealPlus", "rational", "warY1", "warTotal", "warCvar10",
+                    "pAnyStar", "age", "prevAav"}
+    # the picker offers every key except rank, which has its own column
+    assert 'const FA_PICK_KEYS = FA_SORT_KEYS.filter(k => k !== "rank");' in JS
+    assert "FA_PICK_KEYS.map(" in JS, "the picker is not built from FA_PICK_KEYS"
+    head_keys = set(re.findall(r'th\("([A-Za-z0-9]+)"', _head(JS)))
+    assert keys - head_keys - {"prevAav", "warCvar10", "pAnyStar"} == set(), \
+        "a key has neither a header nor a documented picker-only route"
+    assert 'FA_SORT_KEYS.indexOf(p.get("sort")) >= 0 ? p.get("sort") : "projGuar"' in JS
+    labels = JS.split("const FA_SORT_LBL = {", 1)[1].split("};", 1)[0]
+    for key in keys:
+        assert f"{key}:" in labels, f"{key} has no picker label"
 
 
 def test_default_sort_key_has_a_header():
     """boardState.sort defaulted to projGuar while NO header carried that key,
     so first paint showed no active-sort indicator and the default ordering was
     unreachable after a single click."""
-    default = JS.split("boardState")[1].split("sort:")[1].split(",")[0]
-    key = default.strip().strip('"\' ')
-    head = JS.split('class="mlb-card-head"')[1].split("</div>")[0]
-    bar = JS.split('class="mlb-sortbar"')[1].split("</div>")[0]
-    assert f'"{key}"' in head + bar, f"default sort {key!r} has no sort control"
+    default = JS.split("const boardState")[1].split("sort:")[1].split(",")[0].strip().strip("\"' ")
+    assert f'th("{default}"' in _head(JS), f"default sort {default!r} has no header"
+
+
+def test_missing_values_sort_last_in_both_directions():
+    """The card comparator used -1e15, so every ascending sort opened on the
+    four unprojected rows. The null branch must return 1 / -1 BEFORE dir is
+    applied, which is the only shape that keeps a missing value last in both
+    directions. Asserted on the CODE, not on its comment: a "missing values
+    last" disjunct is satisfied by the comment on that very line, so a mutant
+    that flips the branch to dir * (a.v == null ? -1 : 1) would keep the comment
+    and survive the pin."""
+    src = JS.split("function faSortRows(list)", 1)[1].split("\n  }", 1)[0]
+    assert "-1e15" not in JS, "the -1e15 null sentinel is back"
+    assert "return a.v == null ? 1 : -1;" in src, "nulls no longer sort last in both directions"
+    assert "localeCompare" in src, "no deterministic tiebreak"
 
 
 def test_phase_h_fields_are_rendered():
-    """warCvar10, pAnyStar and the option decomposition were computed and carried
-    in the payload but rendered NOWHERE (master-plan-2026-07-29 Phase H). A
-    surplus point estimate hides the downside; CVaR is what shows it."""
+    """warCvar10, pAnyStar and the option decomposition were computed and
+    carried in the payload but rendered NOWHERE before Phase H; the table keeps
+    them on the detail line, with prevAav, the unprojected reason, the comps and
+    the fits, none of which the row has ever shown."""
     for field in ("warCvar10", "pAnyStar", "optKind"):
         assert field in JS, f"Phase H field {field} still unrendered"
     assert "downside WAR" in JS
+    detail = JS.split("function faDetailRow(m, cls)", 1)[1].split("\n  }", 1)[0]
+    for field in ("warCvar10", "pAnyStar", "optKind", "prevAav", "thinPlatform",
+                  "unprojected_reason_text", "comps", "fits"):
+        assert field in detail, f"{field} is not on the detail line"
+
+
+def test_the_band_disclosure_travels_with_the_number():
+    """The aavWild sentence is composed once, at the band; the surplus sentence
+    is composed once in surplusBandText, which the cell and the detail line both
+    read; and openBand still prints the cell's own aria-label."""
+    bands = JS.split("function faBands(m)", 1)[1].split("\n  }", 1)[0]
+    assert "flat ratio, not a per-tier fit" in bands
+    assert "surplus: surplusBandText(m.surplus, m.surplusP10, m.surplusP90)" in bands
+    assert JS.count("P10 to P90 WAR paths") == 1, "the surplus sentence is composed twice"
+    assert "const band = surplusBandText(usd, p10, p90);" in JS
+    # One FORMATTER too: the board block must not turn a surplus field into a
+    # string of its own, and no caller may invent a zero for a missing end.
+    assert _board_all(JS).count('"surplusM"') == 0, "the board formats a surplus of its own"
+    assert "?? 0) / 1e6" not in JS, "a missing band end is printed as a zero"
+    assert "const sp = surplusBandParts(m.surplus, m.surplusP10, m.surplusP90);" in JS
+    assert 'aria-label="${esc(label)}"' in JS and "data-band" in JS
+    assert 'const text = cell.getAttribute("aria-label");' in JS
+
+
+def test_the_total_band_stays_withdrawn():
+    """F-01: summing per-year quantiles is not the total's quantile."""
+    board = _board_all(JS)
+    for f in ("warTotalP10", "warTotalP90", "warTotalP10Comon", "warTotalP90Comon"):
+        assert f not in board, f"{f} is back on the board"
+
+
+def test_the_board_carries_its_state_in_the_hash():
+    """A sorted or filtered class board was unshareable: boardState never
+    reached the URL. And dir must be read only when the hash carries dir or
+    sort, or coming back from a player card would silently flip the order."""
+    to = JS.split("function syncToURL()", 1)[1].split("\n  }", 1)[0]
+    assert 'p.set("sort", boardState.sort)' in to
+    assert 'p.set("dir"' in to
+    assert '"type", "pos", "verdict", "hand"' in to
+    frm = JS.split("function syncFromURL()", 1)[1].split("\n  }", 1)[0]
+    assert 'p.has("sort")' in frm and '"asc"' in frm
+    assert 'if (p.has("dir") || p.has("sort")) {' in frm, "dir is reapplied on every hash read"
+    assert '"type", "pos", "verdict", "hand"' in frm
+
+
+def test_deal_plus_is_not_banded_on_the_house_thresholds():
+    """Deal+ is a RATIO index, so its cuts are the served per-group terciles in
+    fa_meta.gate2.verdict_edges, never the 93/107/120 ruler that belongs to the
+    100 + 10z family. The column carries no colour at all."""
+    tip = JS.split("function faDealPlusTip(m)", 1)[1].split("\n  }", 1)[0]
+    assert "_faVerdictBand(m.pos)" in tip, "the tooltip does not read the served edges"
+    cell = JS.split("const dp = m.dealPlus != null", 1)[1].split(";", 1)[0]
+    for literal in ("93", "107", "120"):
+        assert literal not in tip, f"a house threshold {literal} is hardcoded in the Deal+ tooltip"
+        assert literal not in cell, f"a house threshold {literal} is hardcoded in the Deal+ cell"
+    assert "vt-" not in cell and "class=" not in cell, "the Deal+ cell carries a band class"
+
+
+def test_in_module_links_keep_the_class():
+    """The retired whole-card handler built #player= WITHOUT faHash(), so a
+    click on a future-class row dropped class= and re-read the current class."""
+    import re
+    board = _board_all(JS)
+    hrefs = re.findall(r'href="#([^"]*)"', board)
+    assert hrefs, "the board emits no links"
+    for h in hrefs:
+        assert h.startswith("${faHash()}"), f'href="#{h}" drops the class'

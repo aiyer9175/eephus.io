@@ -209,7 +209,7 @@ def server():
 
 @pytest.mark.parametrize("route,card", [
     ("projections/", ".proj-board-table tbody tr[data-key]"),
-    ("fa/", ".fa-card"),
+    ("fa/", ".fa-board-table tbody tr[data-key]"),
 ])
 @pytest.mark.parametrize("theme", ["light", "dark"])
 def test_board_card_names_are_not_self_clipped(server, route, card, theme):
