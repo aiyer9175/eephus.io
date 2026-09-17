@@ -905,9 +905,19 @@
         "multiplier and " + esc(park) + ". No relievers: save and hold chances are unknowable " +
         "before first pitch. " + esc(sal) + ".</div>";
     }
+    // The anchor prints to two decimals, because the page is prose and the
+    // exporter's fourth decimal is not a sentence. The provenance clause
+    // follows the payload's OWN receipt: a board built before the anchor was
+    // measured carries no `pa_per_start_basis`, and the page must not tell a
+    // reader that board was priced off a count it was not priced off.
+    var anch = (d.anchors && d.anchors.pa_per_start != null)
+      ? Number(d.anchors.pa_per_start).toFixed(2) : "4.02";
+    var anchNote = (d.anchors && d.anchors.pa_per_start_basis)
+      ? anch + " PA-per-start league anchor, counted off this season's box scores"
+      : anch + " PA-per-start anchor";
     return '<div class="dfs-note">Every hitter on a slate club, projected for a game he starts. ' +
       gl("Start", "dfs_start_rate") + ": projected lineup rate (playing time against a " +
-      (d.anchors ? d.anchors.pa_per_start : 4.15) + " PA-per-start anchor), replaced by the " +
+      anchNote + "), replaced by the " +
       "posted card. " + gl("Matchup multiplier", "dfs_matchup_multiplier") + ": inverse of " +
       "the innings-weighted opponent pitching index (starter " + gl("SEM+", "sem_plus") +
       " plus " + gl("Bullpen+", "bullpen_plus") + "), times " + esc(park) + ". " +

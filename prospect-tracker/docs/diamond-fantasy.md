@@ -394,9 +394,20 @@ Re-pricing:
 * Hitters. The ROS line already prices rest days, so dividing by the remaining
   team games gives an unconditional per-game line, which is the wrong number for
   a lineup slot. The two are split instead: `start_rate = min(1, pa_per_team_game
-  / 4.15)` and the line is scaled to `pa_per_team_game / start_rate` plate
-  appearances. An everyday bat comes out at a full start and rate 1.0; a
-  strong-side platoon comes out at the same 4.15-PA game with a rate near 0.6.
+  / _PA_PER_START)` and the line is scaled to `pa_per_team_game / start_rate`
+  plate appearances. An everyday bat comes out at a full start and rate 1.0; a
+  strong-side platoon comes out at the same 4.02-PA game with a rate near 0.6.
+  The anchor is MEASURED, not assumed: 4.0169 plate appearances per
+  starting-lineup bat, 95% CI [4.0017, 4.0322] over 41,148 starter game rows in
+  2,286 cached 2026 games (2026-09-17). It replaced a hand 4.15 that made every
+  start-conditional line about 3.2% long, and the payload publishes the count
+  beside it as `anchors.pa_per_start_basis`
+* Hitter lines add up. The matchup and park multiplier moves the rate legs and
+  leaves the plate appearance alone, so the AT BAT absorbs the walks and hit
+  batsmen it adds: `ab + bb + hbp + sf = pa` closes on every served row (audit
+  L17-F5, which found it broken on 14 of 109). The cost, stated because it is a
+  real one: with the turns at the plate held fixed, the implied one-game batting
+  average now responds to a matchup by MORE than the multiplier
 * Starters. The ROS vector carries a projected start count, so the per-start
   line is a division. The matchup enters on the ALLOWED side (hits, earned runs,
   home runs), not as a blanket multiplier on the total: a weak opponent does not

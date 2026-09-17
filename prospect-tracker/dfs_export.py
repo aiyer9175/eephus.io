@@ -110,7 +110,38 @@ OUT_PATH = DATA_DIR / "dfs.json"
 # same spirit as fantasy_export's _LG_OBP / _SP_DECISION_RATE block.
 # ---------------------------------------------------------------------------
 _SEASON_GAMES = 162             # team games in a regular season
-_PA_PER_START = 4.15            # league plate appearances for a player who starts
+# MEASURED 2026-09-17, not assumed: 4.0169 plate appearances per starting
+# lineup bat, n = 41,148 starter game rows over the 2,286 completed 2026 regular
+# season games that .cache/betting/completed_games.json lists and
+# .cache/game_feeds holds; game-clustered 95% CI [4.0017, 4.0322]. A starter is
+# a bat whose box score battingOrder ends in 0, which is StatsAPI's own mark for
+# the player who began the game in that spot. Every anchor this repair moved,
+# here and in fantasy_export, was counted in that one pass over that one cache.
+#
+# THE OLD 4.15 NEVER NEEDED A DATASET TO DISPROVE. Nine starters at 4.15 take
+# 37.35 of the 37.86 plate appearances a club gets in a game, which leaves 0.51
+# for every substitute combined; the measured substitute share is 1.70. So every
+# line conditional on a start was about 3.2% long and every start rate about
+# 3.1% short. `_PA_PER_START_BASIS` rides in the payload so a reader can check
+# the anchor instead of taking it, and `_LG_PA_PER_TEAM_GAME` is the ceiling the
+# anchor has to fit under nine times over (test_dfs_anchors.py).
+#
+# THE RECORD MOVES WITH THE CONSTANT. The registry row `dfs_slate_pricing`
+# states this anchor in prose and a test pins that note to this constant,
+# because a number that moves in the code while its audited record stands still
+# is how 4.15 survived long enough to be audited at all.
+_PA_PER_START = 4.0169
+_PA_PER_START_BASIS = {
+    "value": 4.0169,
+    "ci95": [4.0017, 4.0322],
+    "n_starter_games": 41148,
+    "n_games": 2286,
+    "league_pa_per_team_game": 37.855,
+    "measured_on": "2026-09-17",
+    "source": ("StatsAPI box scores cached in .cache/game_feeds, over the 2026 "
+               "regular season games listed in .cache/betting/completed_games.json"),
+}
+_LG_PA_PER_TEAM_GAME = 37.855   # measured in the same pass, and the ceiling
 _SP_IP_SHARE = 5.4 / 9.0        # starter share of a team's innings (5.4 IP per GS,
                                 # the same anchor fantasy_export._pitcher_ros uses)
 _MIN_ELIG_GAMES = fe._ELIG_MIN_GAMES   # games at a position before it is eligible
@@ -130,8 +161,15 @@ _MIN_ELIG_GAMES = fe._ELIG_MIN_GAMES   # games at a position before it is eligib
 # THIS MOVES NO NUMBER THAT WAS EVER SERVED. Clamping before or after a
 # multiplication by exactly 1.0 is the same arithmetic, and 1.0 is what every
 # MLB park leg was until the join below landed.
-_HIT_MULT_CLAMP = (0.80, 1.25)
-_PIT_ALLOW_CLAMP = (0.82, 1.22)
+_HIT_MULT_CLAMP = (0.80, 1.25)  # the HITTER matchup band, this module's own
+# There is no pitcher-side band in this module any more. The allowed side reads
+# fantasy_export.MATCHUP_CLAMP through fe.matchup_mult, because the streamer
+# score on the SAME served row reads it too (L17-F6), and two local names for
+# one band is exactly how those two drifted apart. The payload publishes both
+# surviving bands under the name of the multiplier each one clamps
+# (`hit_matchup_clamp`, `allow_matchup_clamp`), so a reader checking a served
+# multiplier against a published clamp checks it against the one that priced
+# it.
 # A guard rail on the park TABLE, not on the park effect. The committed Savant
 # index spans 0.83 (T-Mobile) to 1.28 (Coors), so nothing honest reaches these
 # bounds; they exist so a corrupt or mis-scaled entry (a factor written as 108
@@ -842,13 +880,15 @@ def _hitter_line(ros: dict, rem_games: int, mult: float) -> tuple[dict, float]:
     the lineup". Split the two:
 
         pa_per_team_game = ros.pa / remaining team games
-        start_rate       = min(1, pa_per_team_game / 4.15)
+        start_rate       = min(1, pa_per_team_game / _PA_PER_START)
         line             = ros line scaled to (pa_per_team_game / start_rate) PA
 
-    so an everyday bat scales to a 4.15-PA game and his start rate reads ~1.0,
-    while a strong-side platoon scales to the same 4.15-PA game with a start
-    rate near 0.6. The optimizer prices the line; the UI shows the rate, which
-    is the number a DFS player actually wants before lineups post."""
+    so an everyday bat scales to a `_PA_PER_START` game and his start rate reads
+    ~1.0, while a strong-side platoon scales to that same game with a start rate
+    near 0.6. The anchor is the MEASURED 4.0169 plate appearances (2026-09-17,
+    41,148 starter game rows), not the 4.15 this docstring taught until then.
+    The optimizer prices the line; the UI shows the rate, which is the number a
+    DFS player actually wants before lineups post."""
     pa = float(ros.get("pa") or 0)
     if pa <= 0 or rem_games <= 0:
         return {}, 0.0
@@ -858,7 +898,16 @@ def _hitter_line(ros: dict, rem_games: int, mult: float) -> tuple[dict, float]:
         return {}, 0.0
     pa_per_start = pa_pg / start_rate
     scale = pa_per_start / pa
-    line = {}
+    # The sacrifice fly, which the ROS vector carries without publishing it: it
+    # closes ab + bb + hbp + sf = pa, so the residual is what is left when the
+    # three published legs come out. Needed below to close the same identity on
+    # the rescaled line.
+    ab_ros = ros.get("ab")
+    sf = None
+    if ab_ros is not None:
+        sf = max(0.0, pa - float(ab_ros) - float(ros.get("bb") or 0.0)
+                 - float(ros.get("hbp") or 0.0))
+    line, exact = {}, {}
     for k in ("pa", "ab", "h", "single", "double", "triple", "hr", "bb",
               "hbp", "so", "sb", "cs", "r", "rbi"):
         v = ros.get(k)
@@ -871,7 +920,49 @@ def _hitter_line(ros: dict, rem_games: int, mult: float) -> tuple[dict, float]:
         # table scores it; the scored out term is ab - h), so it rides through
         # unadjusted rather than carrying a sign we know is backwards.
         m = 1.0 if k in ("pa", "ab", "so") else mult
-        line[k] = round(float(v) * scale * m, 3)
+        exact[k] = float(v) * scale * m
+        line[k] = round(exact[k], 3)
+    # AND THEN THE AT BAT CLOSES THE IDENTITY (audit L17-F5). The multiplier
+    # moves walks and hit batsmen and leaves the plate appearance alone, which
+    # is right. What it cannot also leave alone is the AT BAT: the walks it just
+    # added came out of the same turns at the plate, so holding `ab` fixed puts
+    # more events in the game than there are trips to take them. Measured on the
+    # 2026-09-10 board, ab + bb + hbp ran PAST pa on 14 of 109 rows, worst 4.264
+    # against a 4.15 plate appearance game, and FanDuel charges -0.25 an out, so
+    # the incoherence was priced and not merely displayed.
+    #
+    # At mult == 1.0 this is exactly the old arithmetic (scale * ros.ab), so a
+    # neutral matchup in a neutral park moves nothing.
+    #
+    # WHAT THIS TRADE COSTS, SAID OUT LOUD. L17-F5 reported TWO harms and this
+    # closes the first while making the second LARGER. The second is that the
+    # implied one-game batting average moves with the matchup. Holding `pa`
+    # fixed and letting the at bat absorb the walk is the audit's own first
+    # option, and its arithmetic consequence is that h / ab now moves by MORE
+    # than `mult`: hits per plate appearance and walks per plate appearance both
+    # rise, so the at bats fall under a rising numerator. Measured by replaying
+    # the served board (the pre-repair function reproduces it row for row): on
+    # the 2026-09-17T20:18Z board the 14 rows with mult > 1 inflate a further
+    # 0.89% on average and 2.45% at worst ON TOP OF the multiplier, and the 50
+    # rows with mult < 1 deflate a further 0.93% and 2.72%. On the wider
+    # 2026-09-16 board, whose 226 bats reach a multiplier of 1.374, it is 1.30%
+    # mean and 4.94% max (Tatis: a rest-of-season .264 read .363 before and
+    # reads .381 after). The scored FanDuel out (ab - h) therefore moves on both
+    # of its terms now, where it used to move on one. That is the trade being
+    # taken: a line that adds up, at the price of a rate leg that reads further
+    # from the ROS vector's own average.
+    #
+    # THE OTHER OPTION THE AUDIT NAMED IS REJECTED, and here is why. Scaling
+    # `pa` by the same multiplier also closes the identity and leaves every
+    # per-PA rate exactly where the ROS vector put it, but it contradicts the
+    # repair at the top of this module: a start is a MEASURED 4.0169 plate
+    # appearances, and a 1.37 multiplier would publish a 5.5 plate appearance
+    # start. A matchup is a rate term. It is not more turns at the plate, and
+    # putting it there would undo the anchor this module just measured.
+    if sf is not None:
+        exact["ab"] = max(0.0, exact.get("pa", 0.0) - exact.get("bb", 0.0)
+                          - exact.get("hbp", 0.0) - sf * scale)
+        line["ab"] = round(exact["ab"], 3)
     line["out"] = round(max(0.0, (line.get("ab") or 0.0) - (line.get("h") or 0.0)), 3)
     return line, round(start_rate, 3)
 
@@ -1314,7 +1405,7 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
             hit_matchup = _clamp(100.0 / opp_pitch, *_HIT_MULT_CLAMP)
             hit_mult = hit_matchup * pf
             opp_off = octx.get("offense_plus") or 100
-            allow_matchup = _clamp(float(opp_off) / 100.0, *_PIT_ALLOW_CLAMP)
+            allow_matchup = fe.matchup_mult(opp_off, side="allowed")
             allow_mult = allow_matchup * pf
             sides[me] = {
                 "org": side_obj.get("org"), "team": side_obj.get("team"),
@@ -1528,7 +1619,17 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
         "schedule_source": sched_meta,
         "integrity": integrity,
         "anchors": {"pa_per_start": _PA_PER_START, "sp_ip_share": round(_SP_IP_SHARE, 3),
-                    "season_games": _SEASON_GAMES, "elig_min_games": _MIN_ELIG_GAMES},
+                    "season_games": _SEASON_GAMES, "elig_min_games": _MIN_ELIG_GAMES,
+                    # The anchor's receipt, not a decoration: a reader who wants
+                    # to know why a start is 4.02 plate appearances long gets the
+                    # count, the interval and the date it was taken.
+                    "pa_per_start_basis": dict(_PA_PER_START_BASIS),
+                    "lg_pa_per_team_game": _LG_PA_PER_TEAM_GAME,
+                    # BOTH bands, each under the name of the multiplier it
+                    # clamps. A single key called "the matchup clamp" would be
+                    # read against hitter multipliers it does not bound.
+                    "hit_matchup_clamp": list(_HIT_MULT_CLAMP),
+                    "allow_matchup_clamp": list(fe.MATCHUP_CLAMP)},
     })
     if not priced_rows:
         # Nothing PRICED. A board that priced rows and then lost every one of

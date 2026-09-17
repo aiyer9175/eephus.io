@@ -382,8 +382,24 @@ _RESTORED_BY_GUARD: list[str] = []
 
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
     """Name every locally-modified file a test overwrote (and the guard put
-    back). A non-empty list is a test-isolation bug, even though the guard
-    repaired the tree."""
+    back), then the betting sidecar golden-hash verdict. A non-empty list is a
+    test-isolation bug, even though the guard repaired the tree."""
+    changed = _sidecar_final_report()
+    if changed:
+        terminalreporter.write_sep("-", "betting sidecar golden hash")
+        terminalreporter.write_line(
+            f"{len(changed)} watched artifact(s) moved during this run, so the "
+            "run fails on that alone (repair 2, stop item X6). The likeliest "
+            "cause is a test writing a served betting or DFS sidecar; a regen "
+            "or a cron writing the same store while the suite ran looks the "
+            "same from here, and the runbook says not to run the two "
+            "together:")
+        for row in changed:
+            terminalreporter.write_line(f"  {row}")
+        # Machine-readable duplicates for tools/run_suite.py, which reads only
+        # lines beginning FAILED or ERROR. See _sidecar_runner_rows.
+        for row in _sidecar_runner_rows(changed):
+            terminalreporter.write_line(row)
     if not _RESTORED_BY_GUARD:
         return
     terminalreporter.write_sep("-", "build-artifact guard")
@@ -392,3 +408,597 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         "overwrote (a test-isolation bug to fix):")
     for rel in _RESTORED_BY_GUARD:
         terminalreporter.write_line(f"  {rel}")
+
+
+# ===========================================================================
+# BETTING AND DFS SIDECAR ISOLATION
+#
+# Repair 2 of docs/master-plan-2026-09-11-war-epoch-drivers-betting.md section
+# 4.2, and the enforcement of its stop item X6 ("letting tests write betting
+# artifacts").
+#
+# TWO INDEPENDENT HALVES, because neither one can be trusted alone.
+#
+#   1. A REDIRECT. Every betting/DFS module constant that names a write target
+#      by default is pointed at a per-session mirror BEFORE THE FIRST FIXTURE
+#      OF ANY SCOPE IS SET UP, so a generator invoked with no explicit path
+#      writes the mirror and not the checkout. This is prevention, and it only
+#      ever covers the names in _SIDECAR_WRITE_TARGETS.
+#
+#   2. A GOLDEN HASH. The bytes of every watched artifact are hashed at session
+#      start and again at session end; any difference fails the run and names
+#      the file, plus the test that was running when it moved, where the
+#      per-test watch could see it. This is detection, it covers writers nobody
+#      listed, and it is the half that survives a module growing a new default
+#      path next month.
+#
+# WHY DETECTION IS NOT ENOUGH ALONE: the two leaks found on 2026-09-11 (the
+# shared credit ledger, then data/betting_status.json) had been running for
+# weeks before anyone looked. WHY PREVENTION IS NOT ENOUGH ALONE: both of them
+# went through constants nobody had thought to list.
+#
+# THE REDIRECT IS SESSION SCOPED, AND THAT IS THE WHOLE POINT. The first cut of
+# this fixture was function scoped, and pytest sets up higher-scoped fixtures
+# FIRST: every module-, class- and session-scoped fixture therefore ran against
+# the real constants. That is not a hypothetical shape, it is the shape already
+# in the tree. test_betting_publish_hygiene.py::built_payload is a module
+# scoped fixture that calls be.build(write=False), and it has to hand-redirect
+# bi.STATUS_PATH itself precisely because nothing else reached it; under the
+# function-scoped cut it also topped up the real
+# .cache/betting/completed_games.json through betting_model.GAME_CACHE, so the
+# suite exited 1 on a run in which every test passed. A prevention half that
+# misses the fixtures doing the heaviest work is prevention in name only.
+#
+# THE GOLDEN HASH DOES NOT REPAIR. _restore_committed_build_artifacts puts
+# TRACKED files back, but .cache/ is gitignored, so a leak there leaves the
+# store dirty on purpose: the fix is to redirect the writer, and a silent
+# restore would race a real nightly writing the same store while a suite runs.
+# ===========================================================================
+
+#: The artifacts a test run must leave byte-identical, as globs under the
+#: checkout root. The first four are the plan's list: the betting sidecars, the
+#: DFS board, the durable betting store and the odds snapshot cache.
+#: `.cache/odds/**/*` is watched even though nothing under it is redirected
+#: below, because a captured board is the only copy that exists and no credit
+#: buys it back.
+#:
+#: The last two are added here, because they are the same class of file and
+#: nothing else guards them: `.cache/` is gitignored, so
+#: _restore_committed_build_artifacts cannot see either one, and both are the
+#: only record of a day that has passed. The DFS slate archive is what the
+#: season-end DFS archive grader reads, and the two-start ledger is what the
+#: two-start grader audit reads.
+#:
+#: RECURSIVE ON PURPOSE (`**/*`, not `*`). A single-star glob stops at the
+#: directory itself, and the next repair in this same plan section puts the
+#: slot lock at .cache/betting/published_slots/<slate>.json, a first-write-wins
+#: vintage record that would have landed unwatched under a flat glob.
+#:
+#: .cache/betting/completed_games.json IS WATCHED, and it is a derived cache
+#: rather than a served sidecar, so the decision is stated rather than implied:
+#: it is the offline record of which games have finished, every grader and the
+#: park gate read it, and a test's view of "completed" is a fixture. A test
+#: topping it up writes fixture truth into the file the graders trust, so it
+#: stays watched, and betting_model.GAME_CACHE is redirected so a top-up during
+#: a test lands in the mirror instead.
+_SIDECAR_GLOBS = (
+    "data/betting*.json",
+    "data/dfs.json",
+    ".cache/betting/**/*",
+    ".cache/odds/**/*",
+    ".cache/dfs_history/**/*",
+    ".cache/two_start_ledger.jsonl",
+)
+
+#: The small directories the PER-TEST watch re-lists, so a file a test CREATES
+#: (a close-job heartbeat, a new snapshot, a slate archive, a slot lock) is
+#: attributed to that test and not merely noticed at the end. data/ is not
+#: re-listed per test (439 entries); a new data/betting*.json is caught by the
+#: session-end sweep instead. 60 files across the three, walked recursively.
+_SIDECAR_WATCH_DIRS = (".cache/betting", ".cache/odds", ".cache/dfs_history")
+
+
+def _sidecar_files(root: Path) -> list[Path]:
+    """Every watched file under `root`, deduplicated and sorted."""
+    out: set[Path] = set()
+    for pat in _SIDECAR_GLOBS:
+        for p in root.glob(pat):
+            if p.is_file():
+                out.add(p)
+    return sorted(out)
+
+
+def _sidecar_is_watched(rel: str) -> bool:
+    """Whether a checkout-relative posix path is one of the watched artifacts.
+
+    Matched the way _SIDECAR_GLOBS is written rather than with fnmatch, which
+    has no notion of `**` and would answer NO for every file sitting directly
+    under .cache/betting. The directory half of a pattern is compared exactly
+    and only the basename is globbed, so "data/betting*.json" cannot quietly
+    claim data/betting/something.json."""
+    import fnmatch
+    for pat in _SIDECAR_GLOBS:
+        if pat.endswith("/**/*"):
+            if rel.startswith(pat[:-4]):
+                return True
+            continue
+        pdir, _, pname = pat.rpartition("/")
+        rdir, _, rname = rel.rpartition("/")
+        if pdir == rdir and fnmatch.fnmatchcase(rname, pname):
+            return True
+    return False
+
+
+def _sidecar_hash(p: Path) -> str | None:
+    """sha256 of a file, or None when it is absent or unreadable. Absence is a
+    state the report has to be able to name, so it is not an error here."""
+    import hashlib
+    try:
+        return hashlib.sha256(p.read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def _sidecar_sig(p: Path):
+    """The CHEAP per-test signal: (size, mtime_ns). It can fire when the bytes
+    did not move (a rewrite of identical content), which is why the verdict is
+    the hash and this only ever supplies the blame."""
+    try:
+        st = p.stat()
+    except OSError:
+        return None
+    return (st.st_size, st.st_mtime_ns)
+
+
+def _sidecar_dir_sigs(root: Path, rel_dir: str) -> dict:
+    """{relative posix path: signature} for one directory TREE, from scandir.
+
+    The directory entry already carries the stat on Windows, so this is one
+    pass per directory instead of one stat per file, which is what keeps a
+    per-test guard off the suite's critical path. RECURSIVE, because a nested
+    directory is exactly where a first-write-wins vintage record lands, and a
+    flat scan would neither watch it in the checkout nor sweep it out of the
+    mirror."""
+    import os
+    out = {}
+    stack = [rel_dir]
+    while stack:
+        cur = stack.pop()
+        try:
+            with os.scandir(root / cur) as it:
+                for e in it:
+                    try:
+                        if e.is_dir():
+                            stack.append(f"{cur}/{e.name}")
+                            continue
+                        if not e.is_file():
+                            continue
+                        st = e.stat()
+                    except OSError:
+                        continue
+                    out[f"{cur}/{e.name}"] = (st.st_size, st.st_mtime_ns)
+        except OSError:
+            continue
+    return out
+
+
+def _sidecar_snapshot(root: Path) -> dict[str, str | None]:
+    """{relative posix path: sha256} for every watched file under `root`."""
+    return {p.relative_to(root).as_posix(): _sidecar_hash(p)
+            for p in _sidecar_files(root)}
+
+
+def _sidecar_changes(before: dict, after: dict, blame: dict | None = None,
+                     moved: dict | None = None) -> list[str]:
+    """One report line per artifact whose BYTES moved.
+
+    `before` and `after` are the session-start and session-end snapshots.
+    `moved` carries the hashes the per-test watch saw MID-RUN, which is how a
+    leak survives being repaired: _restore_committed_build_artifacts finalizes
+    before the session-end sweep, so a tracked file a test overwrote is already
+    back to its committed bytes by then and `after` alone would call the run
+    clean. The per-test watch runs at each test's own teardown, earlier than
+    any session fixture, so it sees the write while it is still on disk.
+
+    THE NAMED TEST IS A SUSPECT, NOT A VERDICT, and the wording says so. All
+    the watch knows is that the file changed while that test was running. A
+    close-job cron or a run_monthly regen writing the same store during a suite
+    run looks identical from here, which is why tools/run_suite.py already says
+    not to run the suite alongside an edit or a regen.
+
+    Pure, and takes its inputs as arguments, so the tripwire itself can be
+    tested without writing to anything real (test_betting_sidecar_isolation)."""
+    blame, moved = blame or {}, moved or {}
+    rows = []
+    for rel in sorted(set(before) | set(after) | set(moved)):
+        was, now = before.get(rel), after.get(rel)
+        who = list(blame.get(rel) or [])
+        named = (", ".join(who[:4]) + (" and more" if len(who) > 4 else "")
+                 if who else "no test the watch could see")
+        if was != now:
+            what = ("appeared" if was is None
+                    else "disappeared" if now is None else "changed")
+            rows.append(f"{rel}: {what} while running {named}")
+        elif rel in moved and moved[rel] != was:
+            rows.append(f"{rel}: changed while running {named}, and was put "
+                        "back afterwards (a leak the build-artifact guard hid)")
+    return rows
+
+
+_SIDECAR_GOLDEN: dict[str, str | None] = {}
+_SIDECAR_SIG: dict[str, object] = {}
+_SIDECAR_BLAME: dict[str, list[str]] = {}
+_SIDECAR_MOVED: dict[str, str | None] = {}
+_SIDECAR_REPORT: list[str] | None = None
+#: Modules in _SIDECAR_WRITE_TARGETS that would not import. Collected rather
+#: than swallowed: the one state in which the redirect is silently OFF must not
+#: also be the one state nothing reports.
+_SIDECAR_IMPORT_FAILURES: dict[str, str] = {}
+
+
+def pytest_sessionstart(session):
+    """Hash every watched artifact before a single test runs."""
+    _SIDECAR_GOLDEN.clear()
+    _SIDECAR_SIG.clear()
+    _SIDECAR_BLAME.clear()
+    _SIDECAR_MOVED.clear()
+    for p in _sidecar_files(_SITE_ROOT):
+        rel = p.relative_to(_SITE_ROOT).as_posix()
+        _SIDECAR_GOLDEN[rel] = _sidecar_hash(p)
+        _SIDECAR_SIG[rel] = _sidecar_sig(p)
+
+
+@pytest.fixture(autouse=True)
+def _watch_betting_sidecars(request):
+    """Attribute a moved artifact to the test that was running when it moved.
+
+    Three directory walks plus one stat per watched file outside them (about
+    15), which buys a named test in the failure instead of "somewhere in a
+    900-test run"."""
+    yield
+    live = {}
+    for d in _SIDECAR_WATCH_DIRS:
+        live.update(_sidecar_dir_sigs(_SITE_ROOT, d))
+    covered = tuple(f"{d}/" for d in _SIDECAR_WATCH_DIRS)
+    for rel in _SIDECAR_SIG:
+        if rel.startswith(covered):
+            live.setdefault(rel, None)       # watched, and now gone
+        else:
+            live[rel] = _sidecar_sig(_SITE_ROOT / rel)
+    node = request.node.nodeid
+    for rel, sig in live.items():
+        if rel in _SIDECAR_SIG and sig == _SIDECAR_SIG[rel]:
+            continue
+        _SIDECAR_SIG[rel] = sig
+        # Only a HASH that left the golden value is a violation: a rewrite of
+        # identical bytes moves the mtime and is not one.
+        digest = _sidecar_hash(_SITE_ROOT / rel)
+        if digest == _SIDECAR_GOLDEN.get(rel):
+            continue
+        _SIDECAR_MOVED[rel] = digest
+        who = _SIDECAR_BLAME.setdefault(rel, [])
+        if node not in who:
+            who.append(node)
+
+
+def _sidecar_final_report() -> list[str]:
+    """The session verdict, computed once however it is first reached (the
+    terminal summary under the default plugins, sessionfinish otherwise).
+
+    A module this conftest could not import is part of the verdict: its
+    constants were never redirected, so the run had a hole in it whatever the
+    hashes say."""
+    global _SIDECAR_REPORT
+    if _SIDECAR_REPORT is None:
+        rows = _sidecar_changes(
+            _SIDECAR_GOLDEN, _sidecar_snapshot(_SITE_ROOT),
+            _SIDECAR_BLAME, _SIDECAR_MOVED)
+        for name in sorted(_SIDECAR_IMPORT_FAILURES):
+            covers = sorted({rel for mod, _a, rel in _SIDECAR_WRITE_TARGETS
+                             if mod == name})
+            rows.append(
+                f"{name}: could not be imported, so its redirect never "
+                f"happened and {', '.join(covers) or 'its targets'} ran "
+                f"unprotected ({_SIDECAR_IMPORT_FAILURES[name]})")
+        _SIDECAR_REPORT = rows
+    return _SIDECAR_REPORT
+
+
+def _sidecar_runner_rows(changed: list[str]) -> list[str]:
+    """The same verdict in the ONE shape tools/run_suite.py can read.
+
+    The canonical way to run this suite is the chunked runner, and its verdict
+    is built only from stdout lines that start with FAILED or ERROR:
+
+        return 0 if (n_crash == 0 and not unexpected) else 1
+
+    A sidecar-only violation is precisely a chunk that exits 1 with no such
+    line, so without these rows the runner prints "No unexpected failures" and
+    exits 0 over a run that rewrote a served artifact. The tripwire would bind
+    for a bare `python -m pytest` and stay invisible to the runner everyone
+    actually uses, which is the same thing as having no tripwire.
+
+    The blamed node id is written with a SINGLE colon. run_suite decides a
+    failure is expected by `any(known in node for known in
+    KNOWN_BASELINE_REDS)`, and every entry in that list is a `file.py::test`
+    string, so a leak blamed on one of those two tests would otherwise be
+    absorbed into the baseline and disappear."""
+    return [f"ERROR betting_sidecar_golden_hash::{row.replace('::', ':')}"
+            for row in changed]
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """FAIL THE RUN on a changed artifact, even when every test passed.
+
+    A green suite that rewrote data/betting.json is not green: the next build
+    publishes whatever the test left behind. pytest returns session.exitstatus
+    after this hook, so setting it here is what makes the tripwire binding."""
+    if _sidecar_final_report() and getattr(session, "exitstatus", 0) in (0, 5):
+        session.exitstatus = 1
+
+
+# ---------------------------------------------------------------------------
+# The redirect
+# ---------------------------------------------------------------------------
+
+#: (module, attribute, path relative to the checkout root) for every betting or
+#: DFS module-level constant that resolves onto a WATCHED artifact. A test that
+#: passes its own path is unaffected; this is only about the no-argument call.
+#:
+#: WRITE TARGETS AND READERS ARE BOTH LISTED, deliberately. Three of these are
+#: read-only today (tools.betting_floor_census.COMPLETED,
+#: tools.dfs_park_gate.GAMES and mgmt_teams.GROUND_TRUTH, all three the results
+#: cache). Pointing a reader at a mirror seeded from the real file changes no
+#: byte it reads, and it makes the rule this block enforces the simple one: a
+#: module-level path that lands on a watched artifact is redirected, with no
+#: exceptions to remember. The first cut drew the line at "writers" and got it
+#: wrong in a way worth recording: it redirected the three READ-ONLY copies of
+#: the close-job heartbeat and attach-result paths in betting_learning and
+#: betting_export, and left tools/betting_close_job.py, the module that
+#: actually writes both files by default, untouched.
+#:
+#: NOT REDIRECTED, deliberately:
+#:   * betting_ingest.CACHE_DIR (.cache/odds). Two tests replay a real snapshot
+#:     through the live pipeline (test_betting_event_match,
+#:     test_betting_line_consistency) and redirecting the directory would turn
+#:     them into skips. The golden hash covers the snapshots instead, including
+#:     one a test creates.
+#:   * betting_credits.LEDGER_DIR, betting_ingest.PROPS_SPEND_PATH and
+#:     STATUS_PATH, betting_usage.PH_TALLY_PATH: already redirected above by
+#:     _isolate_odds_credit_ledgers and _isolate_schema5_capture.
+_SIDECAR_WRITE_TARGETS = (
+    ("betting_export", "OUT_PATH", "data/betting.json"),
+    ("betting_export", "PREVIEW_PATH", "data/betting_preview.json"),
+    ("betting_export", "RECORD_PATH", "data/betting_record.json"),
+    ("betting_export", "RECORD_JSONL", ".cache/betting/record.jsonl"),
+    ("betting_export", "SETTLEMENT_PATH", "data/betting_settlement.json"),
+    ("betting_export", "CLV_PATH", "data/betting_clv.json"),
+    ("betting_export", "PUBLISHED_CHAIN_PATH",
+     ".cache/betting/published_chain.json"),
+    ("betting_export", "MARKET_GATE_STATE_PATH",
+     ".cache/betting/market_gate_state.json"),
+    ("betting_export", "CLOSE_HEARTBEAT_PATH",
+     ".cache/betting/close_job_heartbeat.json"),
+    ("betting_learning", "LEARNING_PATH", "data/betting_learning.json"),
+    ("betting_learning", "CLOSE_JOB_HEARTBEAT_PATH",
+     ".cache/betting/close_job_heartbeat.json"),
+    ("betting_learning", "CLOSE_ATTACH_RESULT_PATH",
+     ".cache/betting/close_attach_result.json"),
+    ("betting_model", "CONTEXT_PATH", "data/betting_model_context.json"),
+    ("betting_model", "EVAL_PATH", "data/betting_model_eval.json"),
+    ("betting_shadow", "SHADOW_CACHE_PATH", ".cache/betting/shadow.json"),
+    ("betting_shadow", "SHADOW_PATH", ".cache/betting/shadow.json"),
+    ("betting_shadow", "SHADOW_DERIVED_PATH", "data/betting_shadow.json"),
+    ("betting_shadow", "READINESS_PATH", "data/betting_subledger.json"),
+    ("betting_props_dark", "OUT", "data/betting_props_dark_eval.json"),
+    ("dfs_export", "OUT_PATH", "data/dfs.json"),
+    ("fantasy_export", "LEDGER_PATH", ".cache/two_start_ledger.jsonl"),
+    ("tools.betting_calibration", "LEDGER_PATH",
+     ".cache/betting/calibration.jsonl"),
+    # The close-job WRITER itself: `p = path or HEARTBEAT_PATH` and
+    # `p = path or ATTACH_RESULT_PATH`.
+    ("tools.betting_close_job", "HEARTBEAT_PATH",
+     ".cache/betting/close_job_heartbeat.json"),
+    ("tools.betting_close_job", "ATTACH_RESULT_PATH",
+     ".cache/betting/close_attach_result.json"),
+    # The market-blend lab writes its eval sidecar and appends the SAME
+    # calibration ledger tools.betting_calibration owns.
+    ("tools.betting_market_blend_lab", "OUT",
+     "data/betting_market_blend_eval.json"),
+    ("tools.betting_market_blend_lab", "LEDGER",
+     ".cache/betting/calibration.jsonl"),
+    # Readers of the results cache. See the note above: listed so the rule has
+    # no exceptions, and so the day one of them grows a write it is covered.
+    ("tools.betting_floor_census", "COMPLETED",
+     ".cache/betting/completed_games.json"),
+    ("tools.dfs_park_gate", "GAMES", ".cache/betting/completed_games.json"),
+    ("mgmt_teams", "GROUND_TRUTH", ".cache/betting/completed_games.json"),
+)
+
+#: Directory constants, redirected so a path BUILT from one at call time lands
+#: in the mirror too (betting_export.BETTING_CACHE_DIR.mkdir, and the
+#: betting_model.GAME_CACHE / "completed_games.json" top-up).
+_SIDECAR_WRITE_DIRS = (
+    ("betting_export", "BETTING_CACHE_DIR", ".cache/betting"),
+    ("betting_shadow", "BETTING_CACHE_DIR", ".cache/betting"),
+    ("betting_model", "GAME_CACHE", ".cache/betting"),
+    ("dfs_export", "ARCHIVE_DIR", ".cache/dfs_history"),
+)
+
+#: Modules that turn one of these paths into a STRING for readers of a
+#: published payload. See _sidecar_public_path for why the redirect owes them a
+#: shim.
+_SIDECAR_PUBLIC_PATH_MODULES = ("betting_export",)
+
+#: Directories the mirror copies WHOLE, because a redirected directory constant
+#: is read back as well as written (the results cache, the slate archive the
+#: pruner counts) and a file nobody listed still has to be there to be read.
+_SIDECAR_SEED_DIRS = (".cache/betting", ".cache/dfs_history")
+
+
+_SIDECAR_MODULES: dict[str, object] = {}
+
+
+def _sidecar_module(name: str):
+    """The imported module, or None, resolved once per session.
+
+    An import failure is RECORDED in _SIDECAR_IMPORT_FAILURES, not swallowed. A
+    module this conftest cannot import is a module whose constants are not
+    redirected, and the whole point of this block is that a guard which quietly
+    stops working puts the original bug back."""
+    if name not in _SIDECAR_MODULES:
+        import importlib
+        try:
+            _SIDECAR_MODULES[name] = importlib.import_module(name)
+        except Exception as exc:                          # noqa: BLE001
+            _SIDECAR_MODULES[name] = None
+            _SIDECAR_IMPORT_FAILURES[name] = f"{type(exc).__name__}: {exc}"
+    return _SIDECAR_MODULES[name]
+
+
+@pytest.fixture(scope="session")
+def _betting_sidecar_mirror(tmp_path_factory):
+    """A per-session copy of the sidecar tree, SEEDED FROM THE REAL FILES.
+
+    Seeded, not empty, because most of these constants are read as well as
+    written: betting_model.CONTEXT_PATH is the served context every pricing
+    test reads, and GAME_CACHE / completed_games.json is the results cache an
+    offline build reads back. An empty mirror would silently change what the
+    tests price against, which is a worse bug than the one being fixed. The
+    whole of .cache/betting and .cache/dfs_history is copied (3.7MB, about
+    0.2s warm, once per session) so a file nobody listed is still there to be
+    read.
+
+    A second pristine copy sits beside it so the per-test fixture can put back
+    whatever a test changed, which keeps the mirror from becoming a cross-test
+    channel of its own. Returns (work, seed, seed signatures)."""
+    import shutil
+    root = tmp_path_factory.mktemp("betting_sidecars")
+    work, seed = root / "work", root / "seed"
+    (work / "data").mkdir(parents=True, exist_ok=True)
+    for rel in _SIDECAR_SEED_DIRS:
+        (work / rel).mkdir(parents=True, exist_ok=True)
+        src_dir = _SITE_ROOT / rel
+        if src_dir.is_dir():
+            shutil.copytree(src_dir, work / rel, dirs_exist_ok=True)
+    for _mod, _attr, rel in _SIDECAR_WRITE_TARGETS:
+        src, dst = _SITE_ROOT / rel, work / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if src.is_file() and not dst.exists():
+            shutil.copy2(src, dst)
+    shutil.copytree(work, seed)
+    # The seed manifest is taken ONCE. Walking it per test would double the
+    # teardown cost of every test in the suite for a tree that cannot change.
+    sigs = {p.relative_to(seed).as_posix(): _sidecar_sig(p)
+            for p in seed.rglob("*") if p.is_file()}
+    return work, seed, sigs
+
+
+def _sidecar_sweep_dirs() -> tuple[str, ...]:
+    """Every mirror directory the per-test restore has to re-list.
+
+    Derived from the DECLARED set (the seeded directories, the parent of every
+    redirected path, and every redirected directory), never from the seed
+    manifest. A manifest-derived sweep only ever visits directories that
+    happened to hold a file at session start, so a watched directory that is
+    empty in the checkout would never be swept and a file a test created there
+    would survive for the rest of the session: exactly the cross-test channel
+    this mirror exists to prevent."""
+    dirs = set(_SIDECAR_SEED_DIRS)
+    for _mod, _attr, rel in _SIDECAR_WRITE_TARGETS:
+        if "/" in rel:
+            dirs.add(rel.rsplit("/", 1)[0])
+    for _mod, _attr, rel in _SIDECAR_WRITE_DIRS:
+        dirs.add(rel)
+    return tuple(sorted(d for d in dirs if d))
+
+
+def _sidecar_restore_mirror(work: Path, seed: Path, sigs: dict) -> None:
+    """Put the mirror back to its seeded bytes: re-copy what a test changed,
+    drop what it created, restore what it deleted.
+
+    Runs at the teardown of EVERY test, so it reads the mirror by directory
+    tree rather than walking every file individually."""
+    import shutil
+    have = {}
+    for d in _sidecar_sweep_dirs():
+        have.update(_sidecar_dir_sigs(work, d))
+    for rel, sig in have.items():
+        if rel not in sigs:
+            (work / rel).unlink(missing_ok=True)
+        elif sig != sigs[rel]:
+            shutil.copy2(seed / rel, work / rel)
+    for rel in sigs:
+        if rel not in have:
+            (work / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(seed / rel, work / rel)
+
+
+def _sidecar_public_path(work: Path, real):
+    """betting_export._public_path, told where the test mirror is.
+
+    _public_path publishes a path RELATIVE TO THE CHECKOUT ROOT and returns
+    anything outside that root verbatim, because on the build box a verbatim
+    path is absolute and would carry the OS username onto a public artifact.
+    Redirect a write target into a tmp mirror and the published field becomes
+    that absolute tmp path, which fails
+    test_betting_publish_hygiene.py on the AppData pattern: those two hygiene
+    tests passed under the function-scoped cut only because the redirect never
+    reached the module-scoped fixture that builds the payload, so widening the
+    redirect without this shim would have turned a real assertion red for a
+    reason that has nothing to do with what it asserts.
+
+    So the mirror gets the treatment the checkout gets, and only the mirror: a
+    path under `work` publishes the relative form it would have had in the
+    checkout, and every other path goes to the real function unchanged,
+    including the tmp paths test_betting.py pins the verbatim echo on. Nothing
+    in the production module moves. This is the harness telling the formatter
+    where its own root went."""
+    def _shim(p):
+        try:
+            return Path(p).resolve().relative_to(work.resolve()).as_posix()
+        except (ValueError, OSError):
+            return real(p)
+    return _shim
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _isolate_betting_sidecar_writes(_betting_sidecar_mirror):
+    """No test writes a betting or DFS sidecar inside the checkout.
+
+    SESSION SCOPED AND AUTOUSE, so the redirect is in place before the first
+    fixture of any scope is set up. An autouse session fixture is ordered ahead
+    of the module-, class- and session-scoped fixtures a test requests, and
+    that ordering is the only one under which a module-scoped `be.build()`
+    writes the mirror rather than the checkout. pytest.MonkeyPatch() rather
+    than the `monkeypatch` fixture, because that one is function scoped by
+    construction and was the whole defect in the first cut.
+
+    Autouse for EVERY test file, not only the betting modules, because the
+    leaks that reached the working tree came from tests whose names say nothing
+    about betting (a props pull; a status write at the end of an ingest run)."""
+    work, _seed, _sigs = _betting_sidecar_mirror
+    mp = pytest.MonkeyPatch()
+    try:
+        for mod_name, attr, rel in _SIDECAR_WRITE_TARGETS + _SIDECAR_WRITE_DIRS:
+            mod = _sidecar_module(mod_name)
+            if mod is not None and hasattr(mod, attr):
+                mp.setattr(mod, attr, work / rel)
+        for mod_name in _SIDECAR_PUBLIC_PATH_MODULES:
+            mod = _sidecar_module(mod_name)
+            if mod is not None and hasattr(mod, "_public_path"):
+                mp.setattr(mod, "_public_path",
+                           _sidecar_public_path(work, mod._public_path))
+        yield work
+    finally:
+        mp.undo()
+
+
+@pytest.fixture(autouse=True)
+def _reset_betting_sidecar_mirror(_isolate_betting_sidecar_writes,
+                                  _betting_sidecar_mirror):
+    """Put the mirror back between tests, so one test's write is never the next
+    test's input. Depends on the session redirect so the ordering is declared
+    rather than assumed."""
+    yield
+    _sidecar_restore_mirror(*_betting_sidecar_mirror)

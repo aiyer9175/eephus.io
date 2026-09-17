@@ -5,6 +5,19 @@
 
 """fantasy_startscore_lab - backtest of the fantasy streamer per-start score.
 
+STALE BASELINE NOTICE (2026-09-17, written after the freeze and outside it).
+PRODUCTION MOVED. fantasy_export._start_score now takes its multiplier from
+fantasy_export.matchup_mult(opp_off, side="total"), clamped into
+fantasy_export.MATCHUP_CLAMP = (0.82, 1.22), which is the band the DFS pitcher
+line on the SAME served row already used (audit L17-F6, 2026-09-10). Everything
+below, B0 included, is the PRE-2026-09-17 incumbent, and the [0.6, 1.5] band it
+names is no longer production's. The recorded results (registry row
+fantasy_startscore, B0 holdout mean within-date Spearman 0.2692) were computed
+at that vintage and stand as that vintage's record; nothing here is restated.
+A RE-RUN MUST RE-BASELINE B0 on matchup_mult first, the pre-registered second
+look due after 2026-09-15 included, or it scores its arms against a baseline the
+site no longer serves.
+
 PRE-REGISTRATION (frozen 2026-07-23, BEFORE any results were computed)
 ======================================================================
 

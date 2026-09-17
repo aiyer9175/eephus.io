@@ -47,10 +47,105 @@ DATA_DIR = Path(__file__).parent / "data"
 OUT_PATH = DATA_DIR / "fantasy.json"
 
 # League anchors for the CONTEXT-stat heuristics (rate model doesn't emit these).
-_LG_OBP, _LG_SLG = 0.315, 0.410
+#
+# MEASURED, NOT ASSUMED (2026-09-17). Every anchor carrying that date below was
+# COUNTED off the cached StatsAPI box scores: all 2,286 completed 2026 regular
+# season games that .cache/betting/completed_games.json lists and
+# .cache/game_feeds holds, both clubs, every player row, no sampling. The fields
+# read are public counting stats (PA, AB, IP, ER, BF, HBP, SB, CS), so nothing
+# here is an outcome any board is graded against. The anchors with no date are
+# the older hand numbers and are now labelled as hand numbers.
+_LG_OBP, _LG_SLG = 0.315, 0.410  # hand anchors, R and RBI heuristics only
 _LG_PIT_BABIP = 0.290           # hits-allowed on balls in play
 _SP_DECISION_RATE = 0.60        # fraction of a start that yields a W/L decision
-_LG_CS_PER_SB = 0.26            # caught-stealing per stolen base
+_LG_CS_PER_SB = 0.2999          # caught stealing per stolen base. 2026-09-17:
+                                # 929 CS on 3,098 SB. The old 0.26 was a hand
+                                # number 13% light, so every base stealer was
+                                # credited with steals he was never charged for
+                                # being thrown out on. FanGraphs points charge
+                                # -2.8 a caught stealing, so this was worth
+                                # points and not just a column.
+_LG_SB_PER_PA = 0.01790         # stolen bases per plate appearance. 2026-09-17:
+                                # 3,098 in 173,074. This is the DEFAULT for a
+                                # bat with no observed pace; the old 0.012 has
+                                # never been exercised on a served row (every
+                                # hitter resolves a rate), so this moves nothing
+                                # today and stops being wrong the day it does.
+
+# PITCHER HIT BATSMEN, BY ROLE, because the two roles are not one rate and the
+# surfaces that read them are not one surface. 2026-09-17: starters 1,047 hit
+# batsmen in 98,470 batters faced, relievers 951 in 74,604. The code carried
+# 0.008 for both, 25% light on a starter and 37% light on a reliever.
+#
+# WHY BY ROLE AND NOT THE 0.01154 POOLED RATE. The one SERVED BETTING surface a
+# ROS pitcher line reaches is the props "Hits allowed" fair line, and every row
+# on that board is an announced STARTER. Pricing a starter off a pooled rate
+# that reliever innings pull upward moves that published number further than the
+# repair the plan authorised, which names 0.01072: the audit's starter subset,
+# reproduced here at 0.01063 on a larger sample. The reliever rate is separately
+# right for the reliever rows, so nothing is traded away to get it.
+_LG_HBP_PER_BF_SP = 0.01063     # starters, 1,047 in 98,470
+_LG_HBP_PER_BF_RP = 0.01275     # relievers, 951 in 74,604
+
+# THE QUALITY-START RULE'S LEVEL, re-set 2026-09-17; its two slopes are not.
+# The slopes are stated conventions and refitting them on outcomes would be a
+# model fit, which this repair is not. What was measurably wrong was the level.
+# On the 3,995 real starts in the sample (BF >= 18, so an opener is not counted
+# as a failed start), mean 5.4701 IP, the league quality-start rate is 0.3772.
+# The rule returned 0.26581 at those inputs against a league FIP of 4.00. The
+# intercept absorbs the whole 0.11139 gap: same shape, measured level.
+_QS_INTERCEPT = 0.3114
+_QS_IP_SLOPE = 0.14
+_QS_FIP_SLOPE = 0.11
+_QS_CEILING = 0.85
+
+# ---------------------------------------------------------------------------
+# ONE opponent-offense matchup multiplier, for every board that prices a start.
+#
+# There were two of them (audit L17-F6, 2026-09-10), riding the SAME served row:
+# _start_score clamped 100 / Offense+ into [0.6, 1.5] and dfs_export's pitcher
+# line clamped Offense+ / 100 into [0.82, 1.22]. Those bands are not reciprocals
+# of one another, since [1/1.5, 1/0.6] is [0.667, 1.667], so one club could be
+# worth two different amounts depending on which of the two boards you read.
+#
+# The band kept is the NARROW one, because it is the honest one: [0.82, 1.22] is
+# reciprocally symmetric to within 0.0005 (1 / 0.82 = 1.2195), so no club can be
+# worth more to face than its mirror is to avoid. It is still a guard rail and
+# not the operative term: Offense+ has to leave [82, 122] before it binds.
+#
+# WHAT THIS DOES NOT DO. It does not put a park factor on the streamer score,
+# and it does not change WHICH numbers each board multiplies: the streamer score
+# still scales a whole per-start point total (innings and strikeouts included,
+# which dfs_export's own docstring argues is wrong), and the DFS line still
+# scales only the hits, earned runs and home runs allowed. Both are the other
+# halves of L17-F6 and both are decisions, not repairs.
+MATCHUP_CLAMP = (0.82, 1.22)
+
+
+def matchup_mult(opp_off: float | None, *, side: str) -> float:
+    """The opponent-offense matchup multiplier for ONE start, in ONE band.
+
+    `side="allowed"` is the multiplier on what a pitcher gives up, which RISES
+    with the opponent's offense. `side="total"` is the multiplier a streamer
+    score puts on a whole per-start point total, which FALLS as the opponent's
+    offense rises. The two are reciprocals and they are clamped in the same
+    band, which is the entire point of routing both through one function.
+
+    An unreadable, zero or missing index prices at a neutral 1.0 rather than
+    dividing by it. Saying which kind of neutral that is stays the caller's job
+    (`opp_off_resolved` on the streamer row, `matchup_resolved` on the DFS game
+    side): a measured league-average opponent and a lookup that found nothing
+    produce the same multiplier and must not read the same."""
+    if side not in ("allowed", "total"):
+        raise ValueError(f"unknown matchup side {side!r}")
+    try:
+        idx = float(opp_off)
+    except (TypeError, ValueError):
+        return 1.0
+    if idx <= 0:
+        return 1.0
+    raw = (idx / 100.0) if side == "allowed" else (100.0 / idx)
+    return min(max(raw, MATCHUP_CLAMP[0]), MATCHUP_CLAMP[1])
 
 
 def _load_json(name: str) -> dict | list | None:
@@ -210,7 +305,7 @@ def _hitter_ros(proj: dict, ros_pa: float, sb_per_pa: float | None) -> dict:
     obp = ((h + bb + hbp) / pa) if pa > 0 else 0.0
     slg = ((singles + 2 * doubles + 3 * triples + 4 * hr) / ab) if ab > 0 else 0.0
     r_pa = 0.12                                             # league R (≈RBI) per PA anchor
-    sb = (sb_per_pa if sb_per_pa is not None else 0.012) * pa
+    sb = (sb_per_pa if sb_per_pa is not None else _LG_SB_PER_PA) * pa
     runs = r_pa * (obp / _LG_OBP) * pa
     rbi = r_pa * (slg / _LG_SLG) * pa
     return {
@@ -235,7 +330,7 @@ def _pitcher_ros(proj: dict, ros_bf: float, ros_ip: float, role: str,
     k = proj["k_pct"] * bf
     bb = proj["bb_pct"] * bf
     hr = proj["hr_bf"] * bf
-    hbp = 0.008 * bf
+    hbp = (_LG_HBP_PER_BF_SP if role == "SP" else _LG_HBP_PER_BF_RP) * bf
     bip = max(0.0, bf - k - bb - hbp - hr)
     h = _LG_PIT_BABIP * bip + hr                            # hits allowed (est)
     fip = proj.get("fip_proj") or 4.2
@@ -257,7 +352,10 @@ def _pitcher_ros(proj: dict, ros_bf: float, ros_ip: float, role: str,
     if role == "SP":
         ipgs = ip_per_gs or 5.4
         starts = ip / ipgs if ipgs > 0 else 0.0
-        qs_rate = min(0.85, max(0.0, 0.20 + 0.14 * (ipgs - 5.0) - 0.11 * (fip - 4.0)))
+        qs_rate = min(_QS_CEILING,
+                      max(0.0, _QS_INTERCEPT
+                          + _QS_IP_SLOPE * (ipgs - 5.0)
+                          - _QS_FIP_SLOPE * (fip - 4.0)))
         decisions = starts * _SP_DECISION_RATE
         pwin = min(0.80, max(0.20, 0.5 - 0.07 * (fip - 4.2)))
         row.update({"gs": round(starts, 1), "qs": round(starts * qs_rate, 1),
@@ -908,7 +1006,10 @@ def _start_score(p: dict, opp_org: str | None, teams_ctx: dict) -> dict | None:
     raw_off = ((teams_ctx or {}).get(opp_org) or {}).get("offense_plus")
     resolved = isinstance(raw_off, (int, float)) and bool(raw_off)
     opp_off = raw_off if resolved else 100
-    mult = max(0.6, min(1.5, 100.0 / opp_off)) if opp_off else 1.0
+    # ONE band with the DFS pitcher line (L17-F6). This used to clamp into
+    # [0.6, 1.5], which is not the reciprocal of the band the same row's
+    # DFS multiplier used. See matchup_mult.
+    mult = matchup_mult(opp_off, side="total")
     return {"per_start_fgp": round(per_start * mult, 1),
             "per_start_base": round(per_start, 1), "opp_off": opp_off,
             "opp_off_resolved": resolved}
