@@ -36,6 +36,20 @@ must be regenerated downstream. BOX = whether the deploy box must run it as well
 
 ### A. Preconditions and the pre-epoch snapshot
 
+**THE DESTINATION BELOW IS THIS EPOCH'S, NOT A CONSTANT (addendum 2026-09-17).** The
+commands in this step hardcode `../_pre_epoch_2026-09/`, which on disk today holds the
+2026-09-04 epoch's evidence: 18 files, `prospects.db` at 1.77 GB, 1.9 GB in all. Running
+this step verbatim for a LATER epoch copies into that same directory, so the snapshot
+becomes half one epoch and half another, and clause (f) of every gate diffs its blast
+radius against a mixture while the earlier epoch's baseline is gone. Every epoch takes its
+own directory, named for itself, and the step REFUSES if that directory already exists.
+The 2026-10 fWAR epoch uses `../_pre_epoch_fwar_2026-10/`
+(`docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md`, part 7 step A), which is the one place
+that gate overrides this runbook. The copy list below is also not a constant: it names
+`farm_grade_eval.json`, which is not in the 2026-09 directory, and omits `debuts.json`,
+`xfv_hitter_matrix.json`, `xfv_pitcher_matrix.json` and `player_transactions.bak.json.gz`,
+which are, so the list a given epoch actually needs is stated by that epoch's gate.
+
     cd C:/Users/noah/baseball-projects/BaseballR/prospect-tracker
     git status --short | grep -v "^ M data/"       # code tree clean apart from data/ churn
     git status --short data/ ; sleep 300 ; git status --short data/   # stable twice = nightly idle
