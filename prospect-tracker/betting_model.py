@@ -5590,6 +5590,41 @@ def _calibration(ps: list[float], ys: list[int], bins: int = 10) -> list[dict]:
     return out
 
 
+#: The variance divisor, named here so every artifact that carries a sweep
+#: carries the basis of its interval too (L14-09, 2026-09-09).
+VARIANCE_BASIS = ("sample variance, n - 1: the settled rows are a sample of the "
+                  "bets the rule can produce, not the population of them")
+
+#: What a sample with no spread gets instead of a threshold.
+#:
+#: `se = 0` makes the lower bound equal the mean, so a threshold would qualify
+#: with no uncertainty at all. That takes 100 rows all settling at one identical
+#: profit, which is remote; it is also the degenerate-fan shape of 2026-09-06, a
+#: guard that reads as certainty because the sample has none to report.
+ZERO_VARIANCE_REFUSAL = ("the settled sample has zero profit variance, so no "
+                         "interval can be formed; se = 0 would publish a "
+                         "certainty the sample does not contain")
+
+#: The thresholds every sweep looks at: 0.5% to 10% in half-point steps.
+#:
+#: HOISTED SO THE FAMILY CAN BE COUNTED (2026-09-17). Each sweep is one
+#: one-sided test per entry here with no multiplicity correction, and the
+#: (market, tag) sub-ledgers multiply the sweeps by the markets, so the number
+#: of looks is a fact about the gate and not about any one sweep.
+#: `min_edge_gate` publishes cells times grid as `multiplicity_family`.
+MIN_EDGE_GRID = tuple(round(0.005 * i, 3) for i in range(1, 21))
+
+
+def _zero_variance_reason(mu: float) -> str:
+    """ZERO_VARIANCE_REFUSAL plus the constant the sample actually returned.
+
+    A sample where every row LOST has zero variance too, and the bare refusal
+    reads as though the verdict were undecidable when it is not: naming the
+    per-unit return says which of the two shapes this is without letting either
+    one through."""
+    return f"{ZERO_VARIANCE_REFUSAL} (every qualifying row returned {mu:+.3f} units)"
+
+
 def sweep_min_edge(rows: list[dict], *, grid=None, z: float = Z_95_ONE_SIDED,
                    min_bets: int = 100) -> dict:
     """The smallest edge threshold whose graded ROI lower bound clears zero.
@@ -5604,13 +5639,37 @@ def sweep_min_edge(rows: list[dict], *, grid=None, z: float = Z_95_ONE_SIDED,
     qualifying threshold wins, because a higher one is a smaller sample
     pretending to be a stronger result.
 
+    THE SPREAD IS A SAMPLE SPREAD, n - 1 (L14-09). This divided by n, which
+    understates the standard error by about 0.5% at n = 100 and understates it
+    in the direction that opens the gate. A gate may be wrong in the direction
+    that keeps it shut; it may not be wrong in the other one.
+
+    ZERO VARIANCE IS A REFUSAL. See ZERO_VARIANCE_REFUSAL and
+    `_zero_variance_reason`: a sample with no spread reports no interval rather
+    than a perfect one, and says which constant it returned so the all-lost
+    shape is not mistaken for an undecidable one.
+
+    THE GRID IS SWEPT WITH NO MULTIPLICITY CORRECTION, and `multiplicity` says
+    so on every result. Twenty one-sided tests at 95% are not one test at 95%.
+    Taking the SMALLEST qualifying threshold is conservative on sample size and
+    says nothing about the number of looks. The family is larger than one
+    sweep, because the sub-ledgers multiply the sweeps by the markets, so the
+    count across cells is published by `min_edge_gate` rather than implied here.
+
     Returns {"min_edge": float|None, "reason": str, "candidates": [...]}.
     None is the normal answer and stays the answer until a graded price
     history exists: this module has never held one, since the odds ingest only
     started caching snapshots and nothing has settled against them yet."""
-    grid = list(grid) if grid is not None else [round(0.005 * i, 3) for i in range(1, 21)]
+    grid = list(grid) if grid is not None else list(MIN_EDGE_GRID)
+    multiplicity = (f"{len(grid)} one-sided tests at the same level with no "
+                    "multiplicity correction; the smallest qualifying threshold "
+                    "is taken, which is conservative on sample size and says "
+                    "nothing about the number of looks. See the gate's "
+                    "multiplicity_family for the count across every sub-ledger")
     if not rows:
         return {"min_edge": None, "n_rows": 0, "candidates": [],
+                "variance_basis": VARIANCE_BASIS, "multiplicity": multiplicity,
+                "n_looks": len(grid),
                 "reason": ("no settled bets with both a model edge and a taken price; "
                            "the threshold cannot be swept on data that does not exist")}
     cands = []
@@ -5625,21 +5684,39 @@ def sweep_min_edge(rows: list[dict], *, grid=None, z: float = Z_95_ONE_SIDED,
             continue
         profits = [(float(r["decimal"]) - 1.0) if r.get("won") else -1.0 for r in sel]
         mu = sum(profits) / n
-        var = sum((p - mu) ** 2 for p in profits) / n
-        se = math.sqrt(var / n) if var else 0.0
+        if n < 2:
+            # Reachable only when a caller lowers `min_bets`, which the tests
+            # do and the gate never does. It stays because n - 1 is a division
+            # and a one-row sample is the input that makes it a zero one.
+            cands.append({"edge": thr, "n": n, "roi": round(mu, 5),
+                          "roi_lower_95": None, "qualified": False,
+                          "reason": ("one settled row carries no spread to form an "
+                                     "interval from")})
+            continue
+        var = sum((p - mu) ** 2 for p in profits) / (n - 1)
+        if not var:
+            cands.append({"edge": thr, "n": n, "roi": round(mu, 5),
+                          "roi_lower_95": None, "qualified": False,
+                          "reason": _zero_variance_reason(mu)})
+            continue
+        se = math.sqrt(var / n)
         lower = mu - z * se
         cands.append({"edge": thr, "n": n, "roi": round(mu, 5),
                       "roi_lower_95": round(lower, 5), "qualified": bool(lower > 0)})
     ok = [c for c in cands if c.get("qualified")]
     if not ok:
         return {"min_edge": None, "n_rows": len(rows), "candidates": cands,
+                "variance_basis": VARIANCE_BASIS, "multiplicity": multiplicity,
+                "n_looks": len(grid),
                 "reason": ("no edge threshold produced an ROI whose one-sided 95% lower "
                            "bound clears zero on the graded sample")}
     best = ok[0]
     return {"min_edge": best["edge"], "n_rows": len(rows), "candidates": cands,
+            "variance_basis": VARIANCE_BASIS, "multiplicity": multiplicity,
+            "n_looks": len(grid),
             "reason": (f"smallest threshold whose graded ROI lower bound clears zero "
                        f"(n={best['n']}, ROI {best['roi']:+.3f}, "
-                       f"lower bound {best['roi_lower_95']:+.3f})")}
+                       f"lower bound {best['roi_lower_95']:+.3f}); {multiplicity}")}
 
 
 def _odds_history_dates() -> list[str]:
@@ -5677,18 +5754,67 @@ def _shadow_graded_bets() -> list[dict]:
 
 
 def _shadow_graded_bets_by_tag() -> dict:
-    """{tag: settled paper bets} - the shape gate 3 is allowed to sweep.
+    """{tag: settled paper bets} - the per-tag view, and NOT what gate 3 reads.
 
-    The per-tag API existed in betting_shadow from the day the fourth tag
-    shipped and had no caller, so the gate went on sweeping the pooled set the
-    docs forbid (docs/diamond-betting.md section 7a: "a pooled ROI measures a
-    mixture nobody bet"). This is that caller."""
+    NO CALLER AT THE GATE SINCE 2026-09-17. A tag spans markets, so it is one
+    level short of a sub-ledger (L14-05); `_shadow_cells_for_the_gate` is what
+    `min_edge_gate` reads now. This stays because docs/diamond-betting.md
+    section 7 still names it as the pre-repair path, and a reader following
+    that reference should land on the function and on this paragraph rather
+    than on a hole. `test_betting_min_edge_tripwires.py` pins both facts, in
+    `test_the_per_tag_sampler_is_not_what_the_gate_reads`."""
     try:
         import betting_shadow
         return betting_shadow.graded_bets_by_tag()
     except Exception:                                         # noqa: BLE001
         log.debug("betting_model: shadow ledger unavailable", exc_info=True)
         return {}
+
+
+def _shadow_cells_for_the_gate() -> dict:
+    """The sample gate 3 sweeps, the census it is checked against, and the ONE
+    budget era both were read under, in a single call.
+
+    THE ERA IS RETURNED, NOT RESTATED. The block used to publish the era from a
+    module constant while the cells came from a separate call, so a sampler
+    pointed at the other era would have gone on publishing the right-looking
+    label with nothing able to notice. One variable now feeds the cells, the
+    census and the label, so the three cannot disagree about which selection
+    rule the threshold is being fitted for.
+
+    A TAG IS NOT A SUB-LEDGER. `graded_bets_by_tag` conditions on the tag
+    alone, so `board_all` is one sample holding three markets whose measured
+    ROIs were -27.4% (moneyline), -3.2% (runline) and -14.6% (total) on
+    2026-09-06, and a threshold swept over their union is the pooling defect of
+    section 7a one level down (L14-05). The market dimension shipped in
+    betting_shadow on 2026-09-06 with no caller at the gate; this is that
+    caller.
+
+    THE CELLS ARE READ FIRST AND THE CENSUS SECOND, deliberately. A row
+    settling between the two reads then lands in the census and not in the
+    cells, which is the direction check 2 tolerates. The other order would
+    publish a false overflow the first time a settle raced a build.
+
+    `census` IS None WHEN THE READ FAILED, which is a different fact from a
+    census with no rows in it and is never published as if it were the same."""
+    try:
+        import betting_shadow
+        era = betting_shadow.PER_MARKET_CAP_ERA
+        cells = dict(betting_shadow.graded_bets_by_market_tag(era=era))
+        census = betting_shadow.market_span_by_tag(era=era)
+        return {"available": True, "era": era,
+                "split_date": betting_shadow.BUDGET_SPLIT_DATE,
+                "cells": cells, "census": census,
+                "why": ("the per-market allocation of 2026-09-06 changed what an "
+                        "ev_rank cell holds, so a sample spanning the date mixes two "
+                        "selection rules; cells whose membership did not change keep "
+                        "their whole history under either era")}
+    except Exception:                                         # noqa: BLE001
+        log.debug("betting_model: shadow ledger unavailable", exc_info=True)
+        return {"available": False, "era": None, "split_date": None,
+                "cells": {}, "census": None,
+                "why": ("the shadow ledger could not be read, so there is no cell and "
+                        "no census, and no era to name for either")}
 
 
 #: The tag a caller's EXPLICIT `graded_bets=` list is swept under.
@@ -5699,6 +5825,19 @@ def _shadow_graded_bets_by_tag() -> dict:
 #: rows came from instead of laundering them through a real tag's name.
 EXPLICIT_TAG = "explicit"
 
+#: The market an explicit list is swept under, for the same reason: the caller
+#: named the population, so it is one cell, and the cell says out loud that its
+#: market is whatever the caller meant rather than one of the three on the board.
+EXPLICIT_MARKET = "explicit"
+
+#: The budget era an explicit list is reported under.
+#:
+#: A caller's rows were not chosen by either of this site's allocation rules,
+#: so naming one of them would be a claim about a selection rule that did not
+#: produce them. The census and the cells agree on this value because the same
+#: literal builds both.
+EXPLICIT_ERA = "explicit"
+
 #: Tags that may accumulate evidence but may NOT set a threshold.
 #:
 #: `untagged` is the pre-2026-08-07 era: one slot a slate, chosen on EV alone.
@@ -5708,15 +5847,147 @@ EXPLICIT_TAG = "explicit"
 #: That is the pooling defect with a smaller n, not an exception to it.
 TAGS_THAT_MAY_NOT_SET_A_THRESHOLD = frozenset({"untagged"})
 
+#: Markets that may accumulate evidence but may NOT set a threshold.
+#:
+#: `unknown_market` is betting_shadow.UNKNOWN_MARKET, the named bucket a row
+#: with no market field lands in (measured 0 of 255 rows on 2026-09-06). It
+#: exists so a malformed row cannot join a real market's evidence, and a bucket
+#: whose members have no market in common is the same mixture as a pooled tag.
+#: The literal is repeated rather than imported because this module imports
+#: betting_shadow lazily and a module constant may not depend on a ledger being
+#: importable; `test_betting_min_edge_tripwires.py` pins the two together.
+MARKETS_THAT_MAY_NOT_SET_A_THRESHOLD = frozenset({"unknown_market"})
+
+
+def cell_may_set_a_threshold(market: str, tag: str) -> bool:
+    """One rule, in one place, for whether a (market, tag) sub-ledger's sweep
+    is allowed to become the published floor."""
+    return (tag not in TAGS_THAT_MAY_NOT_SET_A_THRESHOLD
+            and market not in MARKETS_THAT_MAY_NOT_SET_A_THRESHOLD)
+
 
 def sweep_min_edge_by_tag(rows_by_tag: dict, **kw) -> dict:
     """`sweep_min_edge` run ONCE PER TAG, never over their union.
 
-    Returns {tag: sweep result}. A tag with four settled rows stays shut while
-    another with a hundred and twenty opens, which is the correct behaviour and
-    the reason the pooled version looked further along than it was."""
+    KEPT, AND NO LONGER WHAT THE GATE READS (L14-05). A tag spans markets, so
+    this is one level short of a sub-ledger: see `sweep_min_edge_by_market_tag`,
+    which is what `min_edge_gate` sweeps, and nothing this returns can become
+    the published floor. It stays because docs/diamond-betting.md section 7
+    still names it as the pre-repair gate-3 sweep and a reader following that
+    reference should find the function and this paragraph.
+    `test_betting_min_edge_tripwires.py` pins what it does and that the gate
+    does not call it, in `test_the_per_tag_sampler_is_not_what_the_gate_reads`."""
     return {t: sweep_min_edge(list(rws or []), **kw)
             for t, rws in sorted((rows_by_tag or {}).items())}
+
+
+def sweep_min_edge_by_market_tag(cells: dict, **kw) -> dict:
+    """`sweep_min_edge` run ONCE PER (MARKET, TAG) SUB-LEDGER.
+
+    Returns {(market, tag): sweep result}, keyed by the cell tuple exactly as
+    `betting_shadow.graded_bets_by_market_tag` hands it over, because the tuple
+    key is the address AND the claim: a two-part key says the rows under it are
+    one market and one selection rule.
+
+    A KEY THAT IS NOT A PAIR RAISES. `tuple("board_all")` is nine one-character
+    strings, so a caller handing in the per-tag dict would otherwise have had
+    its pooled tag swept under a shredded key and the answer published as a
+    threshold. `MarketTagCells` refuses that on the ledger side; this refuses it
+    here, because this function is one step the gate's tripwire is the only
+    other guard on. The JSON shape is built by `min_edge_gate`, which nests the
+    pairs, since a tuple is not a JSON key."""
+    out = {}
+    for ck, rws in sorted((cells or {}).items(), key=lambda kv: str(kv[0])):
+        if not (isinstance(ck, tuple) and len(ck) == 2):
+            raise ValueError(
+                f"{ck!r} is not a (market, tag) sub-ledger. This function sweeps "
+                "cells, and there is no key here that means every market: a "
+                "threshold fitted across markets is fitted to a mixture nobody bet")
+        out[(str(ck[0]), str(ck[1]))] = sweep_min_edge(list(rws or []), **kw)
+    return out
+
+
+def cross_market_tripwire(cells: dict, census: dict | None) -> dict:
+    """Does the sample gate 3 is about to sweep span more than one market?
+
+    THE REFUSAL IS THE PRODUCT. This returns a report, but the only thing that
+    matters about it is `passes`: while that is false `min_edge_gate` sweeps
+    nothing at all, publishes no row count as evidence in hand, and gate 3
+    stays shut with this block as the reason. It exists because the failure it
+    catches is an ORDERING accident rather than a disagreement (L14-05): the
+    per-market cells shipped on 2026-09-06 and the gate went on reading the
+    per-tag sampler, so on the day the other two gates opened, a threshold
+    could have been set from a three-market mixture with no line of code
+    holding an opinion about it. Two of the three gates ARE open today, so the
+    accident is no longer hypothetical.
+
+    THREE CHECKS, each of which can only close a gate:
+
+      1. Every key is a (market, tag) pair. A bare tag key means the caller is
+         holding the per-tag sampler, which is the defect itself.
+      2. No cell holds more rows than the ledger census has for that (market,
+         tag). A cell with more rows than its own census entry is holding rows
+         that are not its own, whatever its key says. This is the check that
+         survives a sampler being swapped underneath the gate, because the
+         census is counted by a different function over the same rows.
+      3. The census was readable at all. `census` is None when the ledger read
+         failed, which is a different fact from a census with no rows in it.
+         Without one, check 2 has nothing to compare against and every real
+         cell would look like an overflow, so the failure is published under
+         its own id naming the missing read instead of as an accusation the
+         cells did nothing to earn. It still fails closed.
+
+    `census` is {tag: {market: {n_in_era, n_all_eras, era_split}}}, from
+    `betting_shadow.market_span_by_tag`. Check 2 reads `n_in_era`, which is
+    counted under the same budget era the cells were built with, so the two are
+    comparable row for row and the check can actually fire; `n_all_eras` is a
+    different quantity and is never the thing a cell is measured against."""
+    failures = []
+    if census is None and (cells or {}):
+        failures.append({"cell": None, "check": "census_unavailable",
+                         "detail": ("the ledger census could not be read, so no "
+                                    "cell's membership can be verified; the cells "
+                                    "themselves are not accused of anything")})
+    by_cell = {(t, m): int((b or {}).get("n_in_era") or 0)
+               for t, ms in (census or {}).items()
+               for m, b in (ms or {}).items()}
+    for ck, rws in sorted((cells or {}).items(), key=lambda kv: str(kv[0])):
+        if not (isinstance(ck, tuple) and len(ck) == 2):
+            failures.append({"cell": str(ck), "check": "key_is_a_market_tag_pair",
+                             "detail": (f"{ck!r} names a tag and not a (market, tag) "
+                                        "sub-ledger, so the rows under it are a "
+                                        "cross-market mixture")})
+            continue
+        if census is None:
+            continue
+        market, tag = str(ck[0]), str(ck[1])
+        have = len(rws or [])
+        known = int(by_cell.get((tag, market), 0))
+        if have > known:
+            failures.append({"cell": f"{market}|{tag}", "check": "cell_is_one_market",
+                             "detail": (f"the cell holds {have} settled rows while the "
+                                        f"ledger census has {known} for {market} under "
+                                        f"{tag}; a cell cannot hold rows its own "
+                                        "(market, tag) census does not, so the sampler "
+                                        "and the census disagree about what is in it")})
+    cross = {t: {m: int((b or {}).get("n_in_era") or 0)
+                 for m, b in sorted((ms or {}).items())}
+             for t, ms in sorted((census or {}).items()) if len(ms or {}) > 1}
+    passes = not failures
+    return {
+        "passes": passes,
+        "n_cells_checked": len(cells or {}),
+        "census_available": census is not None,
+        "failures": failures,
+        "cross_market_tags": cross,
+        "rule": ("a threshold may only be swept on a sample that is one market and "
+                 "one selection rule; a sampler whose cells span more than one "
+                 "market closes gate 3 rather than setting a floor"),
+        "reason": ("every swept sample is one (market, tag) sub-ledger"
+                   if passes else
+                   "; ".join(f["detail"] for f in failures)),
+        "finding": "L14-05",
+    }
 
 
 def min_edge_gate(vintage_block: dict | None, *, graded_bets: list[dict] | None = None) -> dict:
@@ -5733,24 +6004,43 @@ def min_edge_gate(vintage_block: dict | None, *, graded_bets: list[dict] | None 
       2. OUT-OF-SAMPLE SKILL. On that sample, the paired Brier difference
          against the home-field baseline must clear zero at one-sided 95%.
          Sample size alone is not evidence; this is the actual claim.
-      3. A GRADED PRICE HISTORY, SWEPT PER SELECTION RULE. A threshold is a
-         statement about EV against real prices, so it can only be swept on
-         settled bets with a taken price. The shadow ledger tags every row with
-         the rule that chose it, and those tags select on four different
-         quantities, so the sweep runs ONCE PER TAG and a tag opens only if it
-         individually clears. Pooling them would fit a threshold to a mixture
-         nobody bet (docs/diamond-betting.md section 7a).
+      3. A GRADED PRICE HISTORY, SWEPT PER (MARKET, TAG) SUB-LEDGER, AND
+         COVERING THE BOARD. A threshold is a statement about EV against real
+         prices, so it can only be swept on settled bets with a taken price.
+         The shadow ledger tags every row with the rule that chose it AND with
+         the market it was on, and both dimensions select on different
+         quantities: four tags are four selection rules, and one tag's rows
+         still span three markets whose ROIs were -27.4%, -3.2% and -14.6%
+         when they were last measured (2026-09-06). So the sweep runs ONCE PER
+         CELL and a cell opens only if it individually clears. Pooling either
+         dimension would fit a threshold to a mixture nobody bet
+         (docs/diamond-betting.md section 7a; L14-05).
+         `cross_market_tripwire` refuses to sweep anything at all if the sample
+         handed to it is not one market per cell.
+
+    COVERAGE IS PART OF GATE 3 (2026-09-17). Splitting the pooled tag into
+    sub-ledgers makes each cell EASIER to clear than their union was, and the
+    published `min_edge` is one scalar that every market on the board is
+    filtered against. Without a coverage rule, a single 110-row moneyline cell
+    clearing at 0.005 would set a floor that licenses total and runline picks
+    on no evidence at all, and would flip the validated chip while doing it.
+    So a market that has produced sweepable rows and has no cleared threshold
+    HOLDS THE GATE SHUT, and `markets_without_evidence` names it. That is the
+    direction a gate is allowed to be wrong in: it can only refuse picks the
+    evidence might have supported, never license ones it does not.
 
     Gate 3 is why `min_edge` would still be None on the day gates 1 and 2 open:
     a calibrated probability is not an edge until there is a market to have an
     edge against.
 
-    THE SCALAR `min_edge` IS THE STRICTEST CLEARED TAG'S THRESHOLD. One number
-    has to serve the whole board, and the tags disagree about what an edge is
-    worth, so the only safe reduction is the largest: a floor above a tag's own
-    measured threshold is stricter than that tag's evidence requires and can
-    never be looser. `min_edge_by_tag` ships beside it so a per-slot consumer
-    can condition on its own rule instead of on the reduction."""
+    THE SCALAR `min_edge` IS THE STRICTEST CLEARED SUB-LEDGER'S THRESHOLD, over
+    a board every one of whose markets cleared. One number has to serve the
+    whole board, and the cells disagree about what an edge is worth, so the
+    only safe reduction is the largest: a floor above a cell's own measured
+    threshold is stricter than that cell's evidence requires and can never be
+    looser. `min_edge_by_market_tag` and `min_edge_by_market` ship beside it so
+    a per-slot or per-market consumer can condition on its own sub-ledger
+    instead of on the reduction."""
     vb = vintage_block or {}
     n_graded = int(vb.get("n_graded") or 0)
     skill = vb.get("skill_vs_home_base") or {}
@@ -5758,35 +6048,140 @@ def min_edge_gate(vintage_block: dict | None, *, graded_bets: list[dict] | None 
     # None means "look for them"; an explicit [] still means "none".
     explicit = graded_bets is not None
     rows = list(graded_bets if explicit else _shadow_graded_bets())
-    by_tag = {EXPLICIT_TAG: rows} if explicit else _shadow_graded_bets_by_tag()
-    # ONE SWEEP PER TAG. `rows` above is only ever counted, never swept: it is
-    # the union of four selection rules and a threshold fitted to it is wrong
-    # for every one of them separately.
-    sweeps = sweep_min_edge_by_tag(by_tag)
-    cleared = {t: s["min_edge"] for t, s in sweeps.items()
-               if s.get("min_edge") is not None
-               and t not in TAGS_THAT_MAY_NOT_SET_A_THRESHOLD}
-    price_open = bool(cleared)
-    sweep_min = max(cleared.values()) if cleared else None
-    tag_table = {
-        t: {"n": s.get("n_rows"), "min_edge": s.get("min_edge"),
-            "open": bool(s.get("min_edge") is not None
-                         and t not in TAGS_THAT_MAY_NOT_SET_A_THRESHOLD),
-            "may_set_a_threshold": t not in TAGS_THAT_MAY_NOT_SET_A_THRESHOLD,
+    if explicit:
+        # The caller named the population, so it is one cell and the census
+        # agrees with it by construction. Nothing is laundered through a real
+        # market's name, and the era is the caller's rather than the ledger's.
+        read = {"available": True, "era": EXPLICIT_ERA, "split_date": None,
+                "cells": {(EXPLICIT_MARKET, EXPLICIT_TAG): rows},
+                "census": {EXPLICIT_TAG: {EXPLICIT_MARKET: {
+                    "n_in_era": len(rows), "n_all_eras": len(rows),
+                    "era_split": False}}},
+                "why": ("the caller handed in one population, so it is one cell and "
+                        "its census is that same count")}
+    else:
+        read = _shadow_cells_for_the_gate()
+    cells, census, era = read["cells"], read["census"], read["era"]
+    # ONE SWEEP PER (MARKET, TAG) SUB-LEDGER, and nothing is swept at all while
+    # the tripwire is red. `rows` above is only ever counted: it is the union of
+    # four selection rules over three markets and a threshold fitted to it is
+    # wrong for every one of them separately.
+    tripwire = cross_market_tripwire(cells, census)
+    sweeps = sweep_min_edge_by_market_tag(cells) if tripwire["passes"] else {}
+    cleared = {ck: s["min_edge"] for ck, s in sweeps.items()
+               if s.get("min_edge") is not None and cell_may_set_a_threshold(*ck)}
+
+    cell_table: dict = {}
+    for (m, t), s in sorted(sweeps.items(), key=lambda kv: str(kv[0])):
+        may = cell_may_set_a_threshold(m, t)
+        cell_table.setdefault(m, {})[t] = {
+            "n": s.get("n_rows"), "min_edge": s.get("min_edge") if may else None,
+            "open": bool(s.get("min_edge") is not None and may),
+            "may_set_a_threshold": may,
             "reason": s.get("reason")}
-        for t, s in sweeps.items()
-    }
-    if cleared:
-        sweep_reason = (f"{len(cleared)} of {len(sweeps)} tag(s) cleared on their own "
-                        f"evidence ({', '.join(f'{t} at {v:.3f}' for t, v in sorted(cleared.items()))}); "
+
+    # COVERAGE. Every market that produced a sweepable cell has to clear one of
+    # its own before a single scalar floor may serve a board that prices all of
+    # them. See the docstring: this can only keep the gate shut.
+    markets_present = sorted({str(ck[0]) for ck in (cells or {})
+                              if isinstance(ck, tuple) and len(ck) == 2
+                              and cell_may_set_a_threshold(str(ck[0]), str(ck[1]))})
+    markets_cleared = sorted({m for m, _t in cleared})
+    markets_uncovered = [m for m in markets_present if m not in markets_cleared]
+    price_open = bool(cleared) and not markets_uncovered
+    sweep_min = max(cleared.values()) if cleared else None
+
+    if tripwire["passes"]:
+        # The biggest sub-ledger is what gate 3 is actually waiting on. The
+        # pooled union is larger and always will be, which is why it is
+        # reported under its own name and never as `have`: a reader comparing
+        # 100 against the union would think the gate is nearly open when no
+        # single sample is.
+        sweepable = [(len(rws or []), f"{ck[0]}|{ck[1]}")
+                     for ck, rws in (cells or {}).items()
+                     if isinstance(ck, tuple) and len(ck) == 2
+                     and cell_may_set_a_threshold(str(ck[0]), str(ck[1]))]
+        largest_n, largest_cell = max(sweepable) if sweepable else (0, None)
+    else:
+        # A REFUSED SAMPLE IS NOT EVIDENCE IN HAND. `have` is the number
+        # betting_export.pick_blockers prints behind the gate sentence, so
+        # publishing the size of a sample this block has just declared
+        # contaminated would refuse in a field nothing renders and reassure in
+        # the one the page does. None sends pick_blockers to its own "none
+        # measured" branch.
+        largest_n, largest_cell = None, None
+
+    # THE PER-TAG VIEW IS A CENSUS, not a sweep, and every count in it is
+    # stamped with the era it was counted under. The cells are era-filtered and
+    # the whole history is not, so publishing one unlabelled number per tag
+    # beside the cells put two denominators for one quantity in one artifact.
+    swept_cells = {(str(m), str(t)) for m, t in sweeps}
+    tag_table = {}
+    for t, ms in sorted((census or {}).items()):
+        in_era = {m: int((b or {}).get("n_in_era") or 0) for m, b in sorted(ms.items())}
+        all_eras = {m: int((b or {}).get("n_all_eras") or 0) for m, b in sorted(ms.items())}
+        n_in_era, n_all = sum(in_era.values()), sum(all_eras.values())
+        one = next(iter(in_era)) if len(in_era) == 1 else None
+        may = bool(one is not None and cell_may_set_a_threshold(one, t))
+        was_swept = bool(one is not None and (one, t) in swept_cells)
+        if one is None:
+            why = (f"{n_in_era} settled rows in the {era} era spanning {len(in_era)} "
+                   f"markets ({', '.join(f'{m} {c}' for m, c in in_era.items())}); a "
+                   "threshold fitted to their union would be fitted to a mixture "
+                   "nobody bet, so this tag is counted and never swept")
+        elif t in TAGS_THAT_MAY_NOT_SET_A_THRESHOLD:
+            why = (f"{n_in_era} settled rows from a selection rule this site no longer "
+                   "runs; counted, never swept")
+        elif one in MARKETS_THAT_MAY_NOT_SET_A_THRESHOLD:
+            why = (f"{n_in_era} settled rows, all {one}, which is the bucket a row with "
+                   "no market of its own lands in; counted, never swept")
+        else:
+            why = (f"{n_in_era} settled rows in the {era} era, all {one}; this tag IS "
+                   f"one sub-ledger and its threshold is swept as the ({one}, {t}) cell")
+        tag_table[t] = {"n_in_era": n_in_era, "n_all_eras": n_all, "era": era,
+                        "markets_in_era": in_era, "markets_all_eras": all_eras,
+                        "n_markets": len(in_era),
+                        "swept": was_swept, "may_set_a_threshold": may,
+                        "reason": why}
+
+    if cleared and price_open:
+        sweep_reason = (f"{len(cleared)} of {len(sweeps)} sub-ledger(s) cleared on their own "
+                        f"evidence ({', '.join(f'{m}/{t} at {v:.3f}' for (m, t), v in sorted(cleared.items()))}); "
                         f"the published floor is the strictest of them")
+    elif cleared:
+        sweep_reason = (f"{len(cleared)} sub-ledger(s) cleared, but "
+                        f"{', '.join(markets_uncovered)} produced settled rows and no "
+                        "cleared threshold, so one scalar floor cannot be published for "
+                        "a board that prices them")
+    elif not tripwire["passes"]:
+        sweep_reason = f"nothing was swept: {tripwire['reason']}"
     elif sweeps:
-        sweep_reason = (f"no tag cleared: {len(sweeps)} tag(s) present and none of them "
-                        "produced an ROI lower bound above zero on 100+ of its own "
-                        "settled rows")
+        sweep_reason = (f"no sub-ledger cleared: {len(sweeps)} (market, tag) cell(s) present "
+                        "and none of them produced an ROI lower bound above zero on 100+ of "
+                        "its own settled rows")
     else:
         sweep_reason = ("no settled bets with both a model edge and a taken price; "
                         "the threshold cannot be swept on data that does not exist")
+
+    coverage = {
+        "markets_with_evidence": markets_cleared,
+        "markets_without_evidence": markets_uncovered,
+        "rule": ("every market holding sweepable rows must clear a threshold of its "
+                 "own before one scalar floor may serve a board that prices all of "
+                 "them; a market with rows and no cleared threshold holds gate 3 "
+                 "shut rather than borrowing another market's floor"),
+    }
+    multiplicity_family = {
+        "n_cells_swept": len(sweeps),
+        "n_thresholds_per_cell": len(MIN_EDGE_GRID),
+        "n_one_sided_looks": len(sweeps) * len(MIN_EDGE_GRID),
+        "corrected": False,
+        "note": ("the family grows with the cells: one sweep is a one-sided test per "
+                 "grid step and the sub-ledgers multiply the sweeps by the markets. "
+                 "The max reduction over the CLEARED cells is a severity control "
+                 "across cells that already agree a floor exists, NOT a multiplicity "
+                 "control across the looks, and nothing here corrects for them"),
+    }
 
     gates = [
         {"id": "vintage_sample",
@@ -5805,38 +6200,88 @@ def min_edge_gate(vintage_block: dict | None, *, graded_bets: list[dict] | None 
                  "'always take the home team' on games it could not see")},
         {"id": "graded_price_history",
          "need": ("settled bets with a taken price, enough that some edge threshold "
-                  "clears an ROI lower bound of zero on at least 100 of them, "
-                  "WITHIN ONE TAG"),
-         # `have` stays the POOLED count and is a count only. It is what a
-         # reader wants when asking how much evidence exists at all, and it is
-         # explicitly not what the sweep ran on.
-         "have": len(rows),
-         "have_by_tag": {t: b["n"] for t, b in tag_table.items()},
+                  "clears an ROI lower bound of zero in every market holding "
+                  "settled rows, on at least 100 of them WITHIN ONE (MARKET, TAG) "
+                  "SUB-LEDGER"),
+         # `have` is the LARGEST single sub-ledger, because that is the sample
+         # the 100-row floor is measured against, and None when the tripwire
+         # refused the sample. The pooled union rides beside it under its own
+         # name and is a count and nothing else.
+         "have": largest_n,
+         "have_cell": largest_cell,
+         "have_pooled": len(rows),
+         "have_pooled_basis": ("every tag and every market, both budget eras, props "
+                               "rows excluded: a count, never a sample"),
+         "census_era": era,
+         "have_by_tag": {t: b["n_in_era"] for t, b in tag_table.items()},
+         "have_by_tag_all_eras": {t: b["n_all_eras"] for t, b in tag_table.items()},
+         "have_by_market_tag": {m: {t: b["n"] for t, b in ts.items()}
+                                for m, ts in cell_table.items()},
          "open": price_open,
          "by_tag": tag_table,
+         "by_market_tag": cell_table,
+         "coverage": coverage,
+         "multiplicity_family": multiplicity_family,
+         "cross_market_tripwire": tripwire,
          "why": ("an edge threshold is a claim about EV against real prices; "
                  f"{len(odds_dates)} dates of odds snapshots are cached. The sweep "
-                 "runs per tag and a tag opens only if it individually clears - a "
-                 "pooled ROI measures a mixture nobody bet"),
-         "pooled_is_not_sweepable": ("`have` is the union of every tag and is never "
-                                     "swept; see by_tag for the four clocks that are")},
+                 "runs per (market, tag) sub-ledger and one opens only if it "
+                 "individually clears - a pooled ROI measures a mixture nobody bet, "
+                 "and a tag pools three markets the same way four tags pool four "
+                 "selection rules. The scalar floor then needs every market with "
+                 "rows to have cleared, because one number filters all of them"),
+         "pooled_is_not_sweepable": ("`have_pooled` is the union of every tag and "
+                                     "every market and is never swept; see "
+                                     "by_market_tag for the sub-ledgers that are")},
     ]
     all_open = all(g["open"] for g in gates)
     return {
         "min_edge": sweep_min if all_open else None,
-        "min_edge_by_tag": ({t: b["min_edge"] for t, b in tag_table.items()}
-                            if all_open else {}),
-        "min_edge_reduction": ("max over the tags that cleared; a floor above a tag's "
-                               "own measured threshold is stricter than that tag's "
-                               "evidence requires and can never be looser"),
+        "min_edge_by_market_tag": ({f"{m}|{t}": b["min_edge"]
+                                    for m, ts in cell_table.items()
+                                    for t, b in ts.items()} if all_open else {}),
+        "min_edge_by_market": ({m: (max([b["min_edge"] for b in ts.values()
+                                         if b["min_edge"] is not None], default=None))
+                                for m, ts in cell_table.items()} if all_open else {}),
+        # KEPT AND EMPTY. A tag is not a sub-ledger, so there is no per-tag
+        # threshold to publish any more; the key stays so a reader who goes
+        # looking for it finds the reason rather than nothing.
+        "min_edge_by_tag": {},
+        "min_edge_by_tag_note": ("a tag spans markets, so it can no longer set a "
+                                 "threshold; the per-rule number lives in "
+                                 "min_edge_by_market_tag"),
+        "min_edge_reduction": ("max over the (market, tag) sub-ledgers that cleared, "
+                               "and only once every market with settled rows has "
+                               "cleared one of its own; a floor above a sub-ledger's "
+                               "own measured threshold is stricter than that "
+                               "sub-ledger's evidence requires and can never be "
+                               "looser, but it is not evidence about a market that "
+                               "cleared nothing"),
         "all_gates_open": all_open,
         "gates": gates,
         "odds_snapshot_dates": len(odds_dates),
-        # POOLED n, PER-TAG verdict. The count is the union; the reason is never
-        # a statement about the union's ROI, because nothing swept it.
+        # POOLED n, PER-SUB-LEDGER verdict. The count is the union; the reason is
+        # never a statement about the union's ROI, because nothing swept it.
         "sweep": {"n_rows": len(rows), "reason": sweep_reason,
-                  "n_tags": len(sweeps), "n_tags_cleared": len(cleared)},
-        "sweep_by_tag": sweeps,
+                  "n_cells": len(sweeps), "n_cells_cleared": len(cleared),
+                  "n_tags": len(tag_table),
+                  "basis": ("one sweep per (market, tag) sub-ledger; the union is "
+                            "counted and never swept"),
+                  "coverage": coverage,
+                  "multiplicity_family": multiplicity_family,
+                  # The era the CELLS were read under, carried out of the same
+                  # call that read them rather than restated from a constant.
+                  "budget_era": {"era": era,
+                                 "split_date": read.get("split_date"),
+                                 "ledger_available": read.get("available"),
+                                 "why": read.get("why")}},
+        "sweep_by_market_tag": {m: {t: sweeps[(m, t)] for t in ts}
+                                for m, ts in cell_table.items()},
+        # The per-tag view is a CENSUS now, not a sweep: it says how many rows
+        # each tag holds, in which era and across how many markets, which is the
+        # fact that disqualifies it from setting anything.
+        "sweep_by_tag": tag_table,
+        "cross_market_tripwire": tripwire,
         "policy": ("min_edge stays null until all three gates are open. A threshold "
                    "invented to make a pick appear is the single most dishonest number "
                    "this module could publish."),
@@ -6964,7 +7409,19 @@ def _per_market_roi_cells() -> dict:
 
     Flat stake is the published quantity. The quarter-Kelly growth beside it is
     a REPORTED diagnostic and is not what the record stakes; see
-    PER_MARKET_KELLY_FRACTION."""
+    PER_MARKET_KELLY_FRACTION.
+
+    L14-09 IS STILL OPEN HERE, AND ONLY HERE (disclosed 2026-09-17). The
+    interval below divides the profit variance by n rather than n - 1 and
+    escapes to se = 0 on a sample with no spread, which is exactly what
+    `sweep_min_edge` was repaired for on 2026-09-17. It is NOT repaired here,
+    because this block is dark (see PER_MARKET_SURFACE: nothing served reads
+    it) and moving a dark column's numbers is a stop-and-say-so under the
+    plan's X9, not a fix to slip in beside an unrelated one. Whoever promotes
+    this column repairs the divisor and the zero-variance escape IN THAT SAME
+    CHANGE, using VARIANCE_BASIS and ZERO_VARIANCE_REFUSAL; reading the repair
+    note on `sweep_min_edge` and assuming it landed everywhere is the mistake
+    this paragraph exists to prevent."""
     try:
         import betting_shadow as bs
     except Exception:                                         # noqa: BLE001

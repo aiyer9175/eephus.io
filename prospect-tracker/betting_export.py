@@ -148,6 +148,22 @@ SLATE_STARTED_STATES = frozenset({
     "completed early", "forfeit",
 })
 
+# States that mean THE GAME WILL NOT BE PLAYED ON THIS DATE AT ALL, so the row
+# is neither started nor still to come and belongs in NEITHER half of the slate
+# rule's share (L14-04).
+#
+# The exclusion above was read off the STATUS only. `_slate_is_open` reads a
+# second signal beside it, the clock, and a postponed game keeps its scheduled
+# `datetime`: once that time passed the row counted as started, which is exactly
+# what the comment above forbids. Three postponements and one real night game
+# made a live card read as a 0.25 fragment; the mirror case gave a 0.75 pregame
+# share to a date with nothing bettable on it.
+#
+# Every state here is one `is_bettable` already refuses, so a called-off row can
+# never reach the board through this. What it changes is the DENOMINATOR of the
+# share, which is published beside the counts.
+SLATE_CALLED_OFF_STATES = frozenset({"postponed", "cancelled", "canceled", "other"})
+
 # How far a parsed odds event's `commence_time` may sit from a schedule row's
 # first pitch and still be that game. The two games of a doubleheader are about
 # three and a half hours apart (game two starts roughly 30 minutes after game
@@ -2097,10 +2113,26 @@ SLATE_OPEN_MIN_PREGAME_SHARE = 0.5
 def _has_started(g: dict, now: datetime) -> bool:
     """First pitch is behind us, on either signal. One definition, read by the
     slate rule, the board filter and the priceable fallback, so the three can
-    never disagree about which games are gone."""
+    never disagree about which games are gone.
+
+    A CALLED-OFF ROW IS NEVER STARTED, whatever its clock says (L14-04). A
+    postponed game keeps its scheduled `datetime`, so the second signal below
+    called it started the moment that time passed, on a card that had thrown no
+    pitch. On the board filter and the priceable fallback this changes nothing,
+    because both are fed rows `is_bettable` has already kept; the slate rule
+    reads the UNFILTERED card and is where the difference lands."""
     st = str((g or {}).get("status") or "").strip().lower()
+    if st in SLATE_CALLED_OFF_STATES:
+        return False
     t = _stamp((g or {}).get("datetime"))
     return st in SLATE_STARTED_STATES or (t is not None and t <= now)
+
+
+def _is_called_off(g: dict) -> bool:
+    """This row will not be played on this date: postponed, cancelled, or the
+    "other" bucket a postponement arrives in on some feeds."""
+    st = str((g or {}).get("status") or "").strip().lower()
+    return st in SLATE_CALLED_OFF_STATES
 
 
 def _slate_is_open(day: str, games: list[dict], now: datetime | None = None,
@@ -2122,39 +2154,103 @@ def _slate_is_open(day: str, games: list[dict], now: datetime | None = None,
     tell those apart, because the thing that separates them is a PROPORTION.
 
     So the date is open while at least `SLATE_OPEN_MIN_PREGAME_SHARE` of its card
-    is still pregame. A game counts as started on either of two signals:
+    is still pregame. A game counts as started on either of two signals, read
+    through `_has_started` so this rule and the board filter cannot drift apart:
       * a row in SLATE_STARTED_STATES: the card is under way or over,
       * a first pitch at or before `now`: the same fact read off the clock rather
         than off StatsAPI, which catches a schedule block refreshed before a game
         started and not since.
 
-    `counts` is filled in with the two numbers behind the verdict so the served
+    A CALLED-OFF ROW IS IN NEITHER HALF (L14-04). It has not started and it is
+    not still to come, so it leaves the SHARE'S DENOMINATOR: the question is what
+    fraction of the games that CAN be played is still ahead. Counting a
+    postponement as started closed a live card as a fragment; counting it as
+    pregame opened a date with nothing bettable on it. `n_called_off` and
+    `n_playable` are published beside the other two so the denominator is visible
+    rather than inferred.
+
+    `counts` is filled in with the numbers behind the verdict so the served
     candidate row shows the call rather than asserting it.
 
     Returns (open, why_not). `why_not` is None exactly when open is True."""
     now = now or datetime.now(timezone.utc)
     rows = [g for g in (games or []) if g.get("date") == day]
     if counts is not None:
-        counts.update(n_started=0, n_pregame=0, pregame_share=None)
+        counts.update(n_started=0, n_pregame=0, n_called_off=0, n_playable=0,
+                      pregame_share=None)
     if not rows:
         return False, f"{day} carries no games on the schedule"
-    n_started = 0
+    n_started = n_called_off = 0
     for g in rows:
-        st = str(g.get("status") or "").strip().lower()
-        t = _stamp(g.get("datetime"))
-        if st in SLATE_STARTED_STATES or (t is not None and t <= now):
+        if _is_called_off(g):
+            n_called_off += 1
+        elif _has_started(g, now):
             n_started += 1
-    n_pre = len(rows) - n_started
-    share = n_pre / len(rows)
+    n_playable = len(rows) - n_called_off
+    n_pre = n_playable - n_started
     if counts is not None:
         counts.update(n_started=n_started, n_pregame=n_pre,
-                      pregame_share=round(share, 4))
+                      n_called_off=n_called_off, n_playable=n_playable,
+                      pregame_share=(round(n_pre / n_playable, 4)
+                                     if n_playable else None))
+    if not n_playable:
+        return False, (f"{day} holds {len(rows)} game(s) and every one of them is "
+                       f"called off, so there is no card here to price")
+    off = f", {n_called_off} of them called off" if n_called_off else ""
+    share = n_pre / n_playable
     if share < SLATE_OPEN_MIN_PREGAME_SHARE:
-        return False, (f"{day} holds {len(rows)} game(s), {n_started} have already "
-                       f"started or finished and {n_pre} are still to come, so less "
-                       f"than half of the card is left and what remains is a fragment "
-                       f"rather than a board")
+        return False, (f"{day} holds {len(rows)} game(s){off}, {n_started} have "
+                       f"already started or finished and {n_pre} are still to come, "
+                       f"so less than half of the card is left and what remains is a "
+                       f"fragment rather than a board")
     return True, None
+
+
+def _drop_started_rows(chosen: str, on_slate: list[dict], now: datetime,
+                       stats: dict) -> tuple[str, list[dict]]:
+    """The board rows for a chosen slate, with the started ones removed and the
+    removal published. ONE filter, reached by both paths into `resolve_slate`.
+
+    A GAME THAT HAS STARTED IS NOT ON THE BOARD, read off the clock as well as
+    off StatsAPI. `is_bettable` alone keeps a stale-Preview row whose first
+    pitch has passed, and `betting_ingest` has already dropped that event from
+    the snapshot as in progress, so the row reaches the page with every price
+    cell empty. Board local ON PURPOSE: see the module note on
+    `anchors_close_window`, which needs stale Preview to keep reading bettable.
+
+    THIS IS A FUNCTION BECAUSE OF L14-12. It lived inline at the end of the
+    walk, so `resolve_slate(on_date)` returned before ever reaching it and an
+    explicit-date rebuild served rows this filter would have dropped, with
+    `started_rows_dropped` null to say nothing had happened.
+    """
+    live_rows = []
+    started = []
+    for g in on_slate:
+        if _has_started(g, now):
+            started.append({
+                "game_pk": g.get("game_pk"),
+                "matchup": f"{(g.get('away') or {}).get('org')} at "
+                           f"{(g.get('home') or {}).get('org')}",
+                "start": g.get("datetime"), "status": g.get("status")})
+        else:
+            live_rows.append(g)
+    stats["started_rows_dropped"] = {
+        "n": len(started),
+        "n_on_slate": len(on_slate),
+        "games": started[:20],
+        "reason": ("first pitch has passed, so the game is no longer on the book's "
+                   "pregame board and carries no price to show"),
+        "basis": "StatsAPI status or a first pitch at or before now, the same two "
+                 "signals the slate rule reads",
+    }
+    # NEVER RETURN AN EMPTY BOARD OVER THIS. If every row on the chosen slate has
+    # started, the slate rule and this filter disagree, and a blank page is worse
+    # than a stale one; the count above still says what happened.
+    if not live_rows:
+        stats["started_rows_dropped"]["applied"] = False
+        return chosen, on_slate
+    stats["started_rows_dropped"]["applied"] = True
+    return chosen, live_rows
 
 
 def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
@@ -2188,10 +2284,17 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
     if stats is None:
         stats = {}
     if on_date:
+        # L14-12 / plan stop-item X5. This used to RETURN here, so the
+        # started-rows filter below never ran on an explicit-date build and
+        # `started_rows_dropped` published null - the same value the no-slate
+        # branch writes, which leaves a reader unable to tell "no started rows"
+        # from "the filter never ran". A stale-Preview row whose first pitch had
+        # passed reached the board on this path. The date is still exactly the
+        # date that was named; only the filter is now shared with the walk.
         stats["slate_rule"] = "explicit_date"
         stats["slate_candidates"] = []
         stats["partial_slate"] = None
-        return on_date, slate_games(on_date)
+        return _drop_started_rows(on_date, slate_games(on_date), now, stats)
 
     fan = _load("fantasy.json") or {}
     allg = ((fan.get("schedule") or {}).get("games")) or []
@@ -2220,6 +2323,11 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
                       "n_priceable": priceable.get(day, 0),
                       "n_started": counts.get("n_started"),
                       "n_pregame": counts.get("n_pregame"),
+                      # THE DENOMINATOR, published (L14-04). A called-off row is
+                      # in neither count above, so without these two a reader
+                      # cannot check the share against the game count beside it.
+                      "n_called_off": counts.get("n_called_off"),
+                      "n_playable": counts.get("n_playable"),
                       "pregame_share": counts.get("pregame_share"),
                       "min_pregame_share": SLATE_OPEN_MIN_PREGAME_SHARE,
                       "why_not": why_not})
@@ -2297,40 +2405,7 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
         stats["started_rows_dropped"] = None
         return None, []
     on_slate = [g for g in allg if g.get("date") == chosen and is_bettable(g)]
-    # A GAME THAT HAS STARTED IS NOT ON THE BOARD, read off the clock as well as
-    # off StatsAPI. `is_bettable` alone keeps a stale-Preview row whose first
-    # pitch has passed, and `betting_ingest` has already dropped that event from
-    # the snapshot as in progress, so the row reaches the page with every price
-    # cell empty. Board local ON PURPOSE: see the module note on
-    # `anchors_close_window`, which needs stale Preview to keep reading bettable.
-    live_rows = []
-    started = []
-    for g in on_slate:
-        if _has_started(g, now):
-            started.append({
-                "game_pk": g.get("game_pk"),
-                "matchup": f"{(g.get('away') or {}).get('org')} at "
-                           f"{(g.get('home') or {}).get('org')}",
-                "start": g.get("datetime"), "status": g.get("status")})
-        else:
-            live_rows.append(g)
-    stats["started_rows_dropped"] = {
-        "n": len(started),
-        "n_on_slate": len(on_slate),
-        "games": started[:20],
-        "reason": ("first pitch has passed, so the game is no longer on the book's "
-                   "pregame board and carries no price to show"),
-        "basis": "StatsAPI status or a first pitch at or before now, the same two "
-                 "signals the slate rule reads",
-    }
-    # NEVER RETURN AN EMPTY BOARD OVER THIS. If every row on the chosen slate has
-    # started, the slate rule and this filter disagree, and a blank page is worse
-    # than a stale one; the count above still says what happened.
-    if not live_rows:
-        stats["started_rows_dropped"]["applied"] = False
-        return chosen, on_slate
-    stats["started_rows_dropped"]["applied"] = True
-    return chosen, live_rows
+    return _drop_started_rows(chosen, on_slate, now, stats)
 
 
 def cached_pregame_by_slate(now: datetime | None = None) -> dict:
@@ -2832,6 +2907,80 @@ def match_event(game: dict, candidates: list[dict] | None) -> dict | None:
     return best
 
 
+#: THE ONLY RUNLINE THE MARGIN MODEL CAN PRICE. `game_probabilities` returns
+#: exactly four spread numbers and all four sit at this point: P(margin >= 2)
+#: each way round and its complement. There is no fifth number, so a posted
+#: -2.5 or a posted -2.0 has no price in this module.
+RUNLINE_POINT = 1.5
+
+
+def runline_point_refusal(mv: dict | None) -> str | None:
+    """Why this posted spread cannot be priced here, or None when it can.
+
+    L14-06. `team_bets` read only the SIGN of the home point and priced whatever
+    number was posted as if it were 1.5, so a posted -2.5 would have been
+    labelled "-2.5" and priced with P(margin >= 2). And it passed no `p_push`,
+    so an INTEGER runline - which the feed carries - would have been priced as a
+    market that cannot refund, the exact defect `total_side_probabilities` was
+    written to fix for totals. `betting_settle.grade_side` already grades a
+    spread push correctly, so the grader and the pricer disagreed about whether a
+    runline can push at all.
+
+    THIS REFUSES RATHER THAN GUESSES, the way `match_event` returns None rather
+    than pricing the nearest event. A refusal costs the board a runline pair on a
+    game this model has no number for; a guess costs it a wrong number nobody can
+    see is wrong.
+
+    IT IS A GUARD AND NOT A PRICING CHANGE, so MODEL_VERSION does not move: no
+    side that is priced today is priced differently, and none of the four
+    probabilities is touched. Measured 2026-09-17 over the 31 cached snapshots
+    in .cache/odds: 492 pregame events carry a two-sided spread view and every
+    one is posted at +/-1.5, mirrored, with a point on both sides, so this
+    refuses nothing that has ever reached a board, and the served board's 15
+    runline pairs all clear it. The 30 spread views posted at some other number
+    are every one of them in-game, already dropped upstream for an unrelated
+    reason, which is the incidental protection this replaces with a stated one.
+
+    THE MIRROR LEG IS DEFENCE IN DEPTH and is expected never to fire off a
+    `_market_view`: that function picks one consensus point and mirrors it onto
+    the far side itself, which is the 2026-08-06 line-mismatch fix. It is
+    asserted here anyway because the pair is what makes the two probabilities a
+    pair, and a future caller assembling the view some other way would otherwise
+    reopen a closed defect silently.
+
+    Alternate lines are not out of reach forever: price them off the margin
+    distribution AT the posted number and route an integer point through a
+    `p_push` the way the total already does. Until that exists, this says so
+    instead of pretending the posted number is 1.5.
+    """
+    if not mv:
+        return None
+    hp = ((mv.get("best") or {}).get("home") or {}).get("point")
+    ap = ((mv.get("best") or {}).get("away") or {}).get("point")
+    if hp is None or ap is None:
+        return ("the snapshot posts a spread with no point on at least one side, so "
+                "which team has to win by two is not stated anywhere in the quote")
+    try:
+        hp, ap = float(hp), float(ap)
+    except (TypeError, ValueError):
+        return "the posted spread point is not a number"
+    if abs(hp + ap) > 1e-9:
+        return (f"the two sides are posted at {hp:+.1f} and {ap:+.1f}, which are not "
+                f"one line: the best price on each side came off a different number, "
+                f"and pricing them as a pair would fuse two different bets")
+    if hp.is_integer():
+        return (f"the posted runline is the whole number {abs(hp):.1f}, which pushes "
+                f"when the margin lands on it, and the margin model returns no push "
+                f"mass for the spread; a market that can refund must not be priced "
+                f"as one that cannot")
+    if abs(abs(hp) - RUNLINE_POINT) > 1e-9:
+        return (f"the posted runline is {abs(hp):.1f} and this model prices only "
+                f"{RUNLINE_POINT:.1f}: P(margin >= 2) is the only spread probability "
+                f"game_probabilities returns, so any other number would be labelled "
+                f"with the posted point and priced at {RUNLINE_POINT:.1f}")
+    return None
+
+
 def _runline_side_keys(home_is_fav: bool) -> dict:
     """{board side: game_probabilities key} for one runline pair. The -1.5 side
     must win by two, the +1.5 side is the complement of the other's -1.5. One
@@ -3114,6 +3263,8 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
 
     out = []
     n_time_refused = 0                     # games that had a candidate and lost it
+    n_rl_refused = 0                       # games whose posted spread has no price
+    rl_refusals: list[dict] = []
     # The measured runline split of the tie atom, read ONCE per board (L14-01).
     # Disclosure only: the price reads the SERVED split through
     # bm.game_probabilities (SERVE_RUNLINE_TIE_SPLIT), never this block.
@@ -3141,8 +3292,24 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
 
         # Runline sides are read off the posted point: whichever side carries
         # -1.5 must win by two. Never assume the favourite is the home team.
+        #
+        # AND NEVER ASSUME THE POSTED NUMBER IS 1.5 (L14-06). A point this model
+        # has no probability for is refused with its reason, on the row and in
+        # the status block, rather than labelled with the posted number and
+        # priced at 1.5.
         rl_rows = None
-        if rl:
+        rl_refused = runline_point_refusal(rl)
+        if rl and rl_refused:
+            n_rl_refused += 1
+            rl_refusals.append({
+                "game_pk": g.get("game_pk"),
+                "matchup": f"{ao} at {ho}",
+                "home_point": ((rl["best"].get("home") or {}).get("point")),
+                "away_point": ((rl["best"].get("away") or {}).get("point")),
+                "reason": rl_refused})
+            log.warning("betting_export: refusing the runline on %s at %s: %s",
+                        ao, ho, rl_refused)
+        if rl and not rl_refused:
             hp_point = ((rl["best"].get("home") or {}).get("point"))
             home_is_fav = (hp_point is not None and hp_point < 0)
             rl_keys = _runline_side_keys(home_is_fav)
@@ -3213,6 +3380,10 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
             "moneyline": ([_priced_side("home", ho, gp["p_home"], ml),
                            _priced_side("away", ao, gp["p_away"], ml)]),
             "runline": rl_rows,
+            # WHY THERE IS NO RUNLINE when the snapshot carried a spread. None
+            # on every ordinary row, including a game with no spread posted at
+            # all, so a present string always means a refusal happened here.
+            "runline_refused": rl_refused,
             # `p_push` is the model's P(total lands exactly on the line): zero on
             # a half point, and the number the page needs to say a whole number
             # refunds some of the time. The two sides beside it are already
@@ -3260,6 +3431,8 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
     if stats is not None:
         stats["n_events_dropped_in_progress"] = n_in_progress
         stats["n_games_unpriced_time_mismatch"] = n_time_refused
+        stats["n_runline_refused"] = n_rl_refused
+        stats["runline_refusals"] = rl_refusals[:20]
     return out
 
 
@@ -4720,10 +4893,23 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
         },
         "last_evaluation_date": st.get("last_evaluation_date"),
         "today_note": today_note,
-        "note": ("a market must clear BOTH legs to fill a slot or reach the "
-                 "public record. The shadow and calibration ledgers keep "
-                 "recording closed markets; only their evidence can re-open "
-                 "one."),
+        # L14-08. SWITCHED ON THE POLICY, exactly as `slot_market_policy_note`
+        # above is. This sentence was written unconditionally, so under the
+        # any-market policy the payload carried two contradictory statements of
+        # one rule and the published Pick of the Day broke the one stated here.
+        # `assets/betting.js` renders the policy field and not this one, so the
+        # contradiction lived in data/betting.json, which is itself public.
+        "note": (("under the any-market policy every priced market may fill a slot "
+                  "and reach the public record; the two legs below ride the row as "
+                  "disclosure and bar nothing (owner decision 2026-09-05, "
+                  "docs/diamond-betting.md 7d). The shadow and calibration ledgers "
+                  "keep recording closed markets, and only their evidence can "
+                  "re-open one."
+                  if bm.SLOT_MARKET_POLICY == "any" else
+                  "a market must clear BOTH legs to fill a slot or reach the "
+                  "public record. The shadow and calibration ledgers keep "
+                  "recording closed markets; only their evidence can re-open "
+                  "one.")),
         "markets": markets,
     }
 
@@ -5275,7 +5461,8 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     # Zeroed up front so the two counts are always integers on the status block,
     # including on a build with no slate: a missing key reads as "not measured".
     bet_stats = {"n_events_dropped_in_progress": 0,
-                 "n_games_unpriced_time_mismatch": 0}
+                 "n_games_unpriced_time_mismatch": 0,
+                 "n_runline_refused": 0, "runline_refusals": []}
     bets = (team_bets(games, events, teams=teams, parks=parks, starters=starters,
                       stats=bet_stats) if games else [])
     # BET1: the slate's total lean, computed off the board rows BEFORE the slots
@@ -5444,6 +5631,11 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
             # assuming the feed failed. See team_bets for the in-game measurement.
             "n_events_dropped_in_progress": bet_stats["n_events_dropped_in_progress"],
             "n_games_unpriced_time_mismatch": bet_stats["n_games_unpriced_time_mismatch"],
+            # SPREADS THE MARGIN MODEL HAS NO NUMBER FOR (L14-06). Zero on every
+            # board so far; a non-zero count is a posted point this module
+            # refused rather than guessed at, with the reason per game.
+            "n_runline_refused": bet_stats["n_runline_refused"],
+            "runline_refusals": bet_stats["runline_refusals"],
             # WHICH DATE THE BOARD IS, AND WHY IT IS NOT THE OTHER ONE. Every
             # candidate date with its game count and its disqualifying reason, so
             # a one-game board can be read as a fragment instead of as a Monday.

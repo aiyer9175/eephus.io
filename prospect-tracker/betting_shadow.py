@@ -1072,14 +1072,71 @@ def graded_bets_by_tag(*, path: Path | None = None) -> dict:
     return {t: graded_bets(slot=t, path=path) for t in tags}
 
 
+#: What `sweep_readiness.n` counts, carried on every block so the number and
+#: its basis travel together into whatever renders them.
+SWEEP_READINESS_BASIS = (
+    "n is the largest (market, tag) sub-ledger inside this tag, which is the "
+    "sample the 100-row floor is measured against; n_pooled is the tag's whole "
+    "census across its markets and is never swept and never compared with need")
+
+
 def sweep_readiness(*, path: Path | None = None) -> dict:
-    """Per tag: how many settled rows it has, how many it needs, and whether it
-    may be swept at all. No rates, no projections - this is a counter."""
+    """Per tag: how far that tag's LARGEST SUB-LEDGER is from its own sweep.
+
+    `n` IS THE LARGEST (MARKET, TAG) CELL, not the tag's pooled count, since
+    2026-09-17 (L14-05). The min_edge gate sweeps sub-ledgers, so a tag's
+    pooled count is not the quantity its 100-row floor is measured against: on
+    the ledger of 2026-09-17 `board_all` held 292 settled rows across three
+    markets while the largest sample any sweep could run on was 138, and a
+    counter reading 292 against a need of 100 reported "ready" about a unit no
+    sweep runs on. The pooled count keeps its own name, `n_pooled`, and is a
+    census.
+
+    THE CONSUMER IS betting_learning._price_clock, which copies `n`, `need`,
+    `ready` and `max_per_slate` and derives its own arrival rate from them.
+    The repair has to land HERE for the served clock to stop disagreeing with
+    the gate inside one artifact: `have` in that clock and `have` in gate 3 are
+    now the same number by construction, which is what
+    docs/diamond-betting.md section 5b means by one artifact, one quantity, one
+    denominator.
+
+    THE ETA THAT CLOCK DERIVES IS A PER-TAG ARRIVAL RATE applied to a per-cell
+    count, so it is optimistic: rows arrive across all of a tag's markets and
+    only some of them land in its biggest cell. That rate is computed in a
+    module this counter cannot reach, so the fact is named here rather than
+    left for a reader to find. It is a statement about the ETA and not about
+    `n`, which is exact.
+
+    No rates and no projections - this is a counter."""
     by_tag = graded_bets_by_tag(path=path)
-    return {t: {"n": len(rws), "need": MIN_BETS_FOR_SWEEP,
-                "ready": len(rws) >= MIN_BETS_FOR_SWEEP,
-                "max_per_slate": MAX_PER_SLATE_BY_TAG.get(t, "n/a")}
-            for t, rws in sorted(by_tag.items())}
+    cells = sweep_readiness_by_market_tag(path=path)
+    # The same cell blocks the gate reads, re-keyed by tag. One rule, one
+    # place: `sweepable_n` already carries the budget-era filter, so this
+    # counter cannot drift from the sample a sweep would actually run on.
+    per_tag: dict[str, dict] = {}
+    for m, tags in cells.items():
+        for t, block in tags.items():
+            per_tag.setdefault(t, {})[m] = block
+    out = {}
+    for t in sorted(set(by_tag) | set(per_tag)):
+        mine = per_tag.get(t) or {}
+        ranked = sorted((int(b.get("sweepable_n") or 0), m)
+                        for m, b in mine.items())
+        n, largest = ranked[-1] if ranked else (0, None)
+        out[t] = {
+            "n": n,
+            "need": MIN_BETS_FOR_SWEEP,
+            "ready": n >= MIN_BETS_FOR_SWEEP,
+            "largest_cell": (f"{largest}|{t}" if largest else None),
+            "n_pooled": len(by_tag.get(t) or []),
+            "markets": {m: int(b.get("sweepable_n") or 0)
+                        for m, b in sorted(mine.items())},
+            "n_markets": len(mine),
+            "sweep_unit": "(market, tag) sub-ledger",
+            "basis": SWEEP_READINESS_BASIS,
+            "max_per_slate": MAX_PER_SLATE_BY_TAG.get(t, "n/a"),
+        }
+    return out
 
 
 class MarketTagCells(dict):
@@ -1159,6 +1216,55 @@ def graded_bets_by_market_tag(*, era: str, path: Path | None = None) -> MarketTa
                 continue
             cells.setdefault((m, t), []).append(sw)
     return MarketTagCells(cells)
+
+
+def market_span_by_tag(*, era: str, path: Path | None = None) -> dict:
+    """{tag: {market: {n_in_era, n_all_eras, era_split}}} over the SWEEPABLE
+    rows: the census a gate reads before it lets any sample set a threshold.
+
+    IT EXISTS TO PRODUCE A REFUSAL, not a report. `graded_bets_by_tag`
+    conditions on the tag alone, so one tag's rows can span three markets whose
+    ROIs are three different numbers (measured 2026-09-06: moneyline -27.4%,
+    runline -3.2%, total -14.6%), and a threshold fitted to their union is the
+    pooling defect of docs/diamond-betting.md section 7a re-entering one level
+    down through a tag name. A gate cannot see that from the swept rows
+    themselves: `_sweep_row` keeps {edge, decimal, won} and drops the market, so
+    by the time a sweep runs the mixture is invisible. The count is therefore
+    taken here, off the rows on disk, and handed to the gate as evidence about
+    the SAMPLE rather than about the bets.
+
+    `era` IS REQUIRED AND HAS NO "BOTH" VALUE, exactly as in
+    `graded_bets_by_market_tag`, and for the same reason: the two counts a
+    caller might want are different quantities and naming one is how a caller
+    says which. `n_in_era` is counted under the caller's era by the same rule
+    the cells are built with (`era_split_applies`, then `budget_era`), so a
+    cell can be checked against its census entry ROW FOR ROW and a cell holding
+    more rows than its own entry is holding rows that are not its own.
+    `n_all_eras` rides beside it under its own name for the whole history, and
+    the two are never added, compared with each other, or compared with a floor.
+
+    THE SECOND IMPLEMENTATION IS THE POINT. This counts the rows again rather
+    than reusing `graded_bets_by_market_tag`, because a check built from the
+    thing it checks cannot catch a sampler being swapped underneath the gate,
+    which is the accident L14-05 describes."""
+    if era not in BUDGET_ERAS:
+        raise ShadowLedgerError(
+            f"era must be one of {list(BUDGET_ERAS)}; got {era!r}. There is no "
+            "value meaning both: the cap change split the series and a census "
+            "spanning it counts two selection rules as one")
+    span: dict[str, dict[str, dict]] = {}
+    for r in load(path):
+        if _sweep_row(r) is None:
+            continue
+        m = market_of(r)
+        for t in row_tags(r):
+            split = era_split_applies(m, t)
+            cell = span.setdefault(t, {}).setdefault(
+                m, {"n_in_era": 0, "n_all_eras": 0, "era_split": split})
+            cell["n_all_eras"] += 1
+            if not split or budget_era(r) == era:
+                cell["n_in_era"] += 1
+    return {t: dict(sorted(ms.items())) for t, ms in sorted(span.items())}
 
 
 def sweep_readiness_by_market_tag(*, path: Path | None = None) -> dict:

@@ -276,15 +276,31 @@ def test_graded_bets_is_the_shape_sweep_min_edge_consumes(led):
 
 def test_the_gate_reads_the_ledger_when_no_rows_are_handed_in(monkeypatch):
     """THE CIRCLE-BREAKER. min_edge_gate was only ever called with None, so the
-    third gate could never see any evidence at all."""
+    third gate could never see any evidence at all.
+
+    TWO READS ARE PATCHED, because the gate takes two: the pooled count it
+    reports, and the one call that hands back the (market, tag) sub-ledgers it
+    sweeps, the census its tripwire checks them against, and the budget era
+    both were read under (L14-05). Either going dark would hide the evidence
+    again, so both are named here."""
     bm = pytest.importorskip("betting_model")
-    monkeypatch.setattr(bm, "_shadow_graded_bets",
-                        lambda: [{"edge": 0.2, "decimal": 2.0, "won": True}] * 150)
+    rows = [{"edge": 0.2, "decimal": 2.0, "won": True}] * 150
+    monkeypatch.setattr(bm, "_shadow_graded_bets", lambda: rows)
+    monkeypatch.setattr(bm, "_shadow_cells_for_the_gate", lambda: {
+        "available": True, "era": bs.PER_MARKET_CAP_ERA,
+        "split_date": bs.BUDGET_SPLIT_DATE,
+        "cells": {("moneyline", "board_all"): rows},
+        "census": {"board_all": {"moneyline": {
+            "n_in_era": len(rows), "n_all_eras": len(rows), "era_split": False}}},
+        "why": "fixture"})
     gate = bm.min_edge_gate({"n_graded": 0})
     g3 = next(g for g in gate["gates"] if g["id"] == "graded_price_history")
-    assert g3["have"] == 150, (
+    assert g3["have_pooled"] == 150, (
         "the gate must consult the shadow ledger; passing None used to mean "
         "zero evidence forever")
+    assert g3["have"] == 150 and g3["have_cell"] == "moneyline|board_all", (
+        "the sub-ledger the sweep runs on is the number the 100-row floor is "
+        "measured against")
 
 
 # ---------------------------------------------------------------------------
