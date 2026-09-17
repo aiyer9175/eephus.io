@@ -597,3 +597,194 @@ The `spotrac.py` OPEN flag is resolved to this section, and
 `test_arb_gatec_verify.py` pins the semantics: the retained/status tables
 never enter the contract set, and the served rows are the employing-club
 rows.
+
+---
+
+## 11. GATE C2 - the control-window salary path (pre-registered 2026-09-16)
+
+Scope: `salary_path.py`, the one module that prices every remaining season a
+club controls a player for, and the surfaces that consume it (/projections/
+Surplus and the open-row salary path, the MLB player card, the Trade Machine
+board and evaluator). Registry row `control_window_salary_path`. Lab
+`tools/arb_path_gate.py`, writing the `gate_c2` block of
+`data/arbitration_eval.json`, pinned by `test_arb_path_gate.py`.
+
+Sections 1-10 gate the arbitration AWARD model and the 2026-08-09 surplus
+consumer that priced 108 no-contract rows. This section gates the COVERAGE
+extension of that consumer: 408 more veterans and about 1,408 club-controlled
+seasons that price at nothing today. GATE A, B, C and D are not re-opened, and
+no clause here supersedes one of theirs.
+
+### 11a. Order of events, stated plainly
+
+**This gate scores a SERVED model, not a candidate.**
+
+The owner asked ask C on 2026-09-16 and, the same day, BEFORE any acceptance
+number for this gate existed, ordered the path served in full:
+`SALARY_PATH_MODE` defaults to `"full"` rather than `"off"`, and the served
+surplus moves in the same commit. Three consequences, written down rather than
+left to be discovered later:
+
+1. Every clause below is committed BEFORE the code that scores against it,
+   which is the part of "pre-registered" that still holds here. The criteria
+   cannot be tuned to a result nobody has seen yet.
+2. It is NOT true that these numbers cleared a bar before they reached a
+   reader. They did not. At the moment the path ships, no clause has been
+   scored, and the registry verdict reads `provisional` for that reason and
+   not as a formality.
+3. A failure therefore cannot block a ship that has already happened. What a
+   failure does instead is MOVE THE SERVED NUMBER BACK, and 11e fixes in
+   advance which failure moves it how far.
+
+The flag exists for exactly that. `SALARY_PATH_MODE = "off"` reproduces the
+pre-change payload byte for byte, the off path keeps its own tests, and the
+revert is one constant rather than a re-implementation. A gate whose failure
+carries no mechanical consequence is a note; this one carries a constant.
+
+Section 0a's standing rule applies unchanged: a number measured after the
+decision is a receipt, not evidence for it. That rule is also why C4' RECORDS
+whole-board Spearman and does not gate on it.
+
+### 11b. What is claimed, and what is not
+
+The claim, in the owner's words:
+
+> A season a club controls is worth what the player produces minus what the
+> club will owe him. We now price every such season we can name a price for,
+> instead of pricing only the ones with a signed contract. Most of the new
+> money is pre arbitration seasons at the league minimum, which is a CBA rule.
+> The arbitration model supplies about a third of it. This is a coverage
+> change, and the rank order of the trade board moves a lot because of it.
+
+NOT claimed, and no clause below may be read as evidence for any of it:
+
+- that the award model became more accurate. It is unchanged. MLBTR/Swartz is
+  still 2.66x better on settled seasons (MdAPE 0.216 against 0.081, n = 261,
+  section 9 and the `arb_award` row). C3' only checks that the gap does not
+  widen.
+- that the control WINDOW is known. Its length is read off Spotrac's status
+  grid and, past the last priced grid step, off the class token, which flag
+  bit 1 marks as inferred rather than read from published service time on 709
+  of 852 rows. C9' is the only external check on the horizon and its n is
+  small by construction.
+- that the published surplus is the value of the club's tender option. The
+  cliff is applied to the MEAN projection path, and `E[max(0, X)] >=
+  max(0, E[X])`, so the served number is a LOWER BOUND on that option. That is
+  the one remaining conservatism and the served copy names it.
+- that arbitration seasons dominate the change. 61.3% of the added money is
+  PRE-ARB seasons at the CBA league minimum, which is a rule and not a
+  prediction. About a third is on-grid arbitration and about 6% comes through
+  class closure.
+
+### 11c. Protocol, frozen before any number is read
+
+- **Seed 20260917, B = 1000.** Every interval is a paired bootstrap clustered
+  on PLAYER, refitting any fitted arm on every draw: the convention sections 5
+  and 9b already use.
+- **Pools, counted at scoring time and published with their clause**, because
+  the panel and the projection board both regenerate nightly and any count
+  quoted from design day will drift:
+  - C1', C3': the GATE B pool (players with an observed arbitration window),
+    paired across arms, with the dropped count reported.
+  - C2': players whose 2026 award is recorded in `data/arb_history.json` and
+    whose 2026 step the path would have projected off the 2025 board.
+  - C4' to C7': every served veteran row in `data/mlb_projections.json`.
+  - C8': board rows whose grid carries at least 3 seasons (design-day pool 30
+    rows, 29 of them with a prior arb token).
+  - C9': board rows where the panel resolves a published MLBTR service-time
+    string out of `data/arb_ledger.json` (2,032 entries, class years
+    2022-2026, 501 in class 2026). Only 27 unique class-2026 entries carry an
+    `mlbam` directly and 19 of those join the board, so the join runs through
+    the panel's identity resolution and the shipped n is a MEASUREMENT, not a
+    promise. The board's `sv` field is the input and is populated for this
+    gate.
+- **The artifact carries each criterion verbatim beside its result**, with the
+  clause's n, its verdict and the arm it was scored against.
+  `test_arb_path_gate.py` pins the CRITERIA as well as the verdicts, so a
+  criterion cannot be edited after a result has been seen.
+- **Every clause states its own direction.** Nothing is assumed to be
+  higher-is-better.
+- The lab is read-only over the served artifacts and writes one block. It never
+  rebuilds `data/arbitration.json`: class closure lives in `salary_path.py`, so
+  the board's published `tot` does not grow (decision D3).
+
+### 11d. Clauses
+
+| clause | claim | criterion | fails if |
+|---|---|---|---|
+| C1' | the served chain prices an arbitration window better than the incumbent ladder | re-run the 2026-08-19 C1 protocol on the current pool (window MAE of the discounted total, paired, clustered on player): the served chain must beat both `clemens_2026` and the fitted ladder by more than the one-sided MDE95 of each contrast. Prior: $2.215M against $4.927M and $5.372M, a 4.98x floor | the margin falls inside the floor |
+| C2' | realized 2026 awards against what the path projected | on every player whose 2026 award is in `data/arb_history.json` and whose 2026 step the path would have projected from the 2025 board: MdAPE <= the MdAPE the board itself records for those rows, and the signed median residual inside [-0.05, +0.05]. **This is the owner's own check and it can kill the change** | either bound is missed |
+| C3' | the MLBTR/Swartz gap does not widen | on the rows both cover, our MdAPE must not exceed the 2026-08-19 figure (0.216 against Swartz 0.081, a standing NULL) | it widens |
+| C4' | replaces GATE C's old C4. The reordering is exactly the coverage and nothing else | Spearman(pre, post) on rows whose salary path is UNCHANGED must be 1.0000; every row moving by more than $1M must have at least one newly priced season; the count of moving rows must equal the count of rows with a newly priced season and a delta over tolerance. Whole-board Spearman is RECORDED, not gated | any untouched row moves, or any moving row has no new season |
+| C5' | ladder monotonicity survives closure | violations of `usd < 0.80 * prev` across every served path, closure seasons included: 0 | any violation |
+| C6' | no prospect is arb-priced | prospect rows carrying `salPath`: 0 | any |
+| C7'a | the floor never lowers a total | floored NPV >= raw NPV on every row, and no floored season-surplus is negative on a cuttable season. Floored rows and dollars restored are recorded | any floored total below its raw total |
+| C7'b | the shipped stopping rule is not beaten by the rule it replaced | recompute the forward stopping rule (`t* = min{t : C_t < 0}`) on every path: backward induction >= forward on 100% of rows, with the count of rows where it is strictly greater recorded (that count is the bug the repair fixed) | any row where backward < forward |
+| C8' | closure's class CHAIN matches the grid | hold out the last season of every grid with >= 3 seasons, derive it by closure, compare the derived token and salary. Token accuracy 1.000 and salary MdAPE <= the board's arb-2+ MdAPE (0.158). **n must be published in the receipt**: the pool is 30 rows, 29 with a prior arb token, and Spotrac's grid increments the class by construction (0 non-consecutive chains measured), so this clause tests ARITHMETIC, not the horizon. A second tier is scored and reported: hide the last TWO seasons wherever the grid has >= 2 arb tokens | token accuracy < 1.000, or salary MdAPE above the board's own |
+| C9' | **the horizon itself.** The closure rule's implied last controlled season matches published service time | on every board row where the panel resolves an MLBTR service-time string (`data/arb_ledger.json`), derive remaining arbitration years from service time and compare with `K - k_last`. Criterion: **0 rows off by more than one season**, with the disagreement count and n published. If **n < 25** the verdict is pre-registered as **UNDERPOWERED**: the clause has not been scored, closure does not advance past its flag on this clause alone, and it is re-scored when n reaches 25 | any row off by more than one season, or (soft) n < 25, which blocks promotion rather than failing the model |
+
+C2', C7'b and C9' are the clauses that can fail on evidence. C1' and C3' are
+re-runs of a battery that passed. C4' to C6' and C7'a are code invariants: they
+fail on a bug, not on a measurement.
+
+### 11e. The response to a failure, fixed in advance
+
+Because the owner ordered the path served before this gate could run, a failure
+does not withhold a ship. It reverts one. `SALARY_PATH_MODE` is the whole
+mechanism: `"off"` restores the pre-change payload, `"ladder"` keeps the
+on-grid arbitration seasons and drops class closure, `"closure"` keeps closure
+and drops the tender cliff.
+
+| failed clause | pre-registered response |
+|---|---|
+| C2' | `SALARY_PATH_MODE = "off"`. The owner named this the check that can kill the change, and it is the only clause scoring the salary leg against a realized award |
+| C1' | `"off"`. If the served chain cannot beat `clemens_2026` on an arbitration window, the arb leg is priced by the wrong estimator and the question re-opens as which estimator prices it |
+| C3' | no revert. The Swartz gap is a standing NULL this change does not claim to close; a widening is recorded and blocks the verdict leaving `provisional` |
+| C4' | `"off"` until the bug is found. An untouched row that moves is an implementation defect, not a measurement |
+| C5' | `"ladder"` (closure off) until it is fixed |
+| C6' | `"off"` immediately. A prospect carrying `salPath` is out-of-population use, which is the failure mode section 6 exists to prevent |
+| C7'a or C7'b | `"closure"` (cliff off) until the arithmetic is repaired |
+| C8' | `"ladder"` (closure off) |
+| C9' FAIL | `"ladder"` (closure off). The horizon is wrong by more than a season and closure is what sets it |
+| C9' UNDERPOWERED (n < 25) | closure keeps serving under the owner's order, the registry verdict stays `provisional`, the horizon hole stays published in the accountability census, and the clause is re-scored when n reaches 25. It is NOT read as a pass |
+
+A revert is the constant plus a re-run of the exports that consume the path
+(`proj_export`, `export_trade_values_json`, `mlb_player_export`); it needs no
+other edit. Keeping a failed clause serving is the owner's call, and either way
+the failure is published in the accountability census and in this gate's block.
+
+### 11f. Served numbers that must NOT move, asserted rather than believed
+
+The change is a coverage extension of ONE consumer. Everything below prices
+through a different path and must be byte-identical across the flag flip; each
+is an assertion in the commit that moves the flag, not a belief about it:
+
+- `/arbitration/`'s published `tot`, its `l` ladder and `ou_war` (closure lives
+  in `salary_path.py` and `build_board` is untouched; decision D3).
+- the 133 projection rows signed through 2028 or later (measured add exactly
+  $0).
+- the 277 veterans with no board row and no contract, who stay unpriced before
+  and after.
+- every prospect row, on both the projection board and the trade board.
+- `/fa/` Contract Surplus, and farm surplus, `Sur+`, `OrgSur+`,
+  Grad-Contract Surplus and every eFV number: they price through
+  `value_framework`, which this change does not enter.
+
+No route, hash or deep-link key is renamed. `#g=salary_path` is the only new
+one.
+
+### 11g. Non-degrade, and the successor question
+
+`surplus_backtest_real.py` stays producer-independent of this path (it reads
+`storage` / `value_framework` / `backtest` / `consensus` and never reads
+`data/mlb_projections.json`), so the 2026-08-19 C2 argument carries verbatim.
+The artifact hash is recorded as pre == post rather than re-derived.
+
+**Registered successor question, deliberately not a clause here.** No clause
+above scores SURPLUS accuracy out of sample, because this tree holds no
+realized control-window surplus label set. Building one (realized WAR times the
+realized winter $/WAR, minus money actually paid, over closed control windows)
+is the successor gate. It is named here and in the eval artifact so the hole is
+not rediscovered as a finding: what this gate asserts is that a club-controlled
+season is worth its production minus its price, not that the number attached to
+it has been validated against realized surplus.

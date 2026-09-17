@@ -39,6 +39,12 @@ MODEL_GLOSSARY = {
     "arb_label_set": "internal",
     "arb_fa_link": "internal",
     "arb_ladder": "internal",
+    # Ask C, 2026-09-16: the control-window salary path. Mapped to the two
+    # entries that document what it prices and what prices it, because the
+    # dedicated `salary_path` entry lands with the copy pass in the same
+    # program and joins this list then (it also joins prospect_surplus and
+    # trade_machine_surplus, which serve the same number).
+    "control_window_salary_path": ["surplus_value", "arb_award_model"],
     "xfv_label_replacement": "internal",
     "xfv_rank_objective": "internal",
     "surplus_decomposition_v6": "internal",
