@@ -37,6 +37,11 @@ MiniRacer = pytest.importorskip("py_mini_racer").MiniRacer
 
 ROOT = Path(__file__).parent
 JS = (ROOT / "assets" / "projections.js").read_text(encoding="utf-8")
+# The value ruler is a separate module now and every cut lives in it, so any
+# harness that evaluates a board file has to evaluate this one first. In the
+# browser the same ordering is a head tag placed immediately after the nav
+# script (build_site.py), not luck: deferred scripts run in document order.
+TIERS_JS = (ROOT / "assets" / "eephus-tiers.js").read_text(encoding="utf-8")
 
 # Board payload (data/mlb_projections.json contract, proj_export.py): one vet,
 # one eFV-graded prospect (fv_source="xfv", fv carries the eFV grade), one
@@ -67,9 +72,11 @@ BOARD = """{
 }"""
 
 # Player detail payload (data/mlb_player_detail.json contract). Every banded
-# index a test reads sits at 113: that is above the HEM+ 88/112 cut (proj-pos on
-# the ratio ruler) and in the z family's "good" band (rem-good, 107 to 120 on
-# the 93/107/120 ruler /mlbstats/ uses), so the class says which ruler drew it.
+# index a test reads sits at 113, and 113 is the value that separates the two
+# rulers: `good` on the ratio ladder (130 / 120 / 112 / 100 / 88) and `great` on
+# the z ladder (120 / 113 / 107 / 100 / 93). The family class in the markup
+# (vt-fam-ratio against vt-fam-z) says which one drew it, which is the evidence
+# the old rem-* class names could not carry.
 DETAIL = json.dumps({"players": {
     "vet_guy": {
         "key": "vet_guy", "name": "Vet Guy", "pos": "SS", "age": 29.4, "team": "NYY",
@@ -203,7 +210,7 @@ def _render_all(hash_: str, fail_fetch: bool = False) -> dict:
     async fill has already landed by the time this returns; a fill that patches
     its slot shows up under the slot's own id, not inside proj-rows."""
     ctx = MiniRacer()
-    ctx.eval(_prelude(hash_, fail_fetch) + JS)
+    ctx.eval(_prelude(hash_, fail_fetch) + TIERS_JS + JS)
     return json.loads(ctx.eval("JSON.stringify(__html)"))
 
 
@@ -352,63 +359,85 @@ def test_async_slots_are_always_emitted():
 
 
 def test_dem_plus_tile_is_on_the_z_ruler_not_the_hem_cut():
-    """113 is above the HEM+ 88/112 cut and in the z family's good band. DEM+
-    and WAR/PA+ carry the z ruler's rem-good (the class /mlbstats/ remClass gives
-    113), never the ratio ruler's proj-pos; HEM+ reads good on its own ruler."""
+    """Same intent as before the value ruler, with stronger evidence. 113 is
+    `great` on the z ladder and `good` on the ratio ladder, and the FAMILY class
+    proves which ruler drew it rather than leaving it to a shared class name.
+    HEM+ used to carry proj-pos here, i.e. a SIGN pair with no elite step; it
+    carries a real tier now."""
     html = _render("#player=vet_guy")
     dem = _tile_classes(html, "dem_plus")
     assert len(dem) == 2, dem                     # hero slot 4 + the Defense tab
     for cls in dem:
-        assert "mlbp-scale-z" in cls and "rem-good" in cls and "proj-pos" not in cls, cls
+        assert "mlbp-scale-z" in cls and "vt-fam-z vt-great" in cls, cls
+        assert "proj-pos" not in cls and "vt-fam-ratio" not in cls, cls
     for cls in _tile_classes(html, "war_pa_plus"):
-        assert "mlbp-scale-z" in cls and "rem-good" in cls and "proj-pos" not in cls, cls
+        assert "mlbp-scale-z" in cls and "vt-fam-z vt-great" in cls, cls
     hem = _tile_classes(html, "hem_plus")
-    assert hem and all("mlbp-scale-ratio" in c and "proj-pos" in c for c in hem), hem
+    assert hem and all("mlbp-scale-ratio" in c and "vt-fam-ratio vt-good" in c
+                       for c in hem), hem
+    assert all("proj-pos" not in c for c in hem), hem
 
 
 def test_the_z_family_bands_exactly_as_the_mlbstats_board_does():
     """Owner decision 25 (2026-09-11): one colour ruler, 93/107/120, for DEM+,
-    WAR/PA+ and WAR/IP+ on both surfaces. The player page's z cuts and classes
-    are read off both files and must be the same list. Mutation: either surface
-    moving a cut alone."""
+    WAR/PA+ and WAR/IP+ on both surfaces. This used to read two banding
+    functions by regex and compare the pair, which could only ever prove the two
+    COPIES agreed. There is one ladder now, in one file, so the assertion is
+    strictly stronger: the locked cuts are still boundaries, they still carry the
+    tier names they carried before, and NEITHER board file contains a cut."""
+    cuts = re.search(r"z:\s*\{ cuts: \[([^\]]+)\]", TIERS_JS).group(1)
+    cuts = [float(x) for x in cuts.split(",")]
+    assert cuts == [120, 113, 107, 100, 93], cuts
+    assert {120, 107, 93} <= set(cuts)
+    ctx = MiniRacer()
+    ctx.eval("var window = {};" + TIERS_JS)
+    for v, tier in ((120, "elite"), (107, "good"), (93, "avg")):
+        got = ctx.eval('EephusTiers.tier(%d, "z")' % v)
+        assert got == tier, (v, got)
     ms = (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
-    body = ms[ms.index("function remClass(v)"):]
-    body = body[:body.index("}\n") if "}\n" in body else 400]
-    board = [(int(n), c) for n, c in re.findall(r'n >= (\d+)\) return "(rem-[a-z]+)"', body)]
-    card = [(int(n), c) for n, c in re.findall(r'\[(\d+), "(rem-[a-z]+)"\]', JS)]
-    assert board == [(120, "rem-elite"), (107, "rem-good"), (93, "rem-avg")], board
-    assert card == board, card
-    assert 'below: "rem-low"' in JS and 'return "rem-low"' in body
+    for f in (ms, JS):
+        assert "rem-elite" not in f and "rem-good" not in f
+        assert not re.search(r'>=\s*\d+\) return "rem-', f)
 
 
 def test_every_z_band_renders_on_the_card():
-    """One value per band through the real tiles: 133 elite (the backstop's
-    DEM+), 113 good (WAR/IP+), and the average and low bands off fixture copies."""
-    assert all("rem-elite" in c for c in _tile_classes(_render("#player=backstop"), "dem_plus"))
+    """One value per TIER through the real tiles, all six the z ladder can
+    reach: 133 elite (the backstop's DEM+), 113 great (WAR/IP+), and the rest off
+    fixture copies. The z family never reaches vt-poor - red is below zero and
+    an index cannot go there."""
+    assert all("vt-elite" in c for c in _tile_classes(_render("#player=backstop"), "dem_plus"))
     for cls in _tile_classes(_render("#player=ace_arm"), "war_ip_plus_sp"):
-        assert "mlbp-scale-z" in cls and "rem-good" in cls, cls
+        assert "mlbp-scale-z" in cls and "vt-great" in cls, cls
     global DETAIL
     base = DETAIL
     try:
-        for v, band in ((106, "rem-avg"), (93, "rem-avg"), (92, "rem-low"), (107, "rem-good"),
-                        (120, "rem-elite")):
+        for v, band in ((125, "vt-elite"), (116, "vt-great"), (110, "vt-good"),
+                        (103, "vt-above"), (97, "vt-avg"), (88, "vt-below"),
+                        (93, "vt-avg"), (92, "vt-below"), (107, "vt-good"),
+                        (120, "vt-elite")):
             d = json.loads(base)
             d["players"]["vet_guy"]["skills"]["def"]["demPlus"] = v
             DETAIL = json.dumps(d)
             cls = _tile_classes(_render("#player=vet_guy"), "dem_plus")
-            assert cls and all(band in c for c in cls), (v, cls)
+            assert cls and all(band in c and "vt-poor" not in c for c in cls), (v, cls)
     finally:
         DETAIL = base
 
 
 def test_the_defense_lens_paints_the_z_band_on_an_inner_span():
-    """.mlbp-lens-num sets its own colour and outranks a one-class rem-* rule,
-    so the z band rides an inner span there; the ratio lens keeps proj-pos."""
+    """.mlbp-lens-num sets colour AND weight 800 at one class and is declared
+    after the ruler block, so a one-class .vt-* rule loses to it on source order
+    and EVERY tiered lens rides an inner span. The ratio lens used to sit on a
+    sign pair (proj-pos) that could not win that fight either, which is the F4
+    drift this test is the record of: it carries a real tier now."""
     html = _render("#player=vet_guy")
     lens = html.split('data-mlbp-goto="defense"', 1)[1].split('class="mlbp-lens"', 1)[0]
-    assert '<span class="mlbp-lens-num"><span class="mlbp-scale-z rem-good">113</span></span>' in lens
+    assert ('<span class="mlbp-lens-num"><span class="mlbp-scale-z vt-fam-z vt-great">'
+            '113</span></span>') in lens
     hit = html.split('data-mlbp-goto="hitting"', 1)[1].split('class="mlbp-lens"', 1)[0]
-    assert 'class="mlbp-lens-num mlbp-scale-ratio proj-pos"' in hit
+    assert ('<span class="mlbp-lens-num"><span class="mlbp-scale-ratio vt-fam-ratio '
+            'vt-good">113</span></span>') in hit
+    assert "proj-pos" not in hit.split("mlbp-lens-val", 1)[1][:200]
 
 
 def test_season_lines_carry_the_ewar_column_again():

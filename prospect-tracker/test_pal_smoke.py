@@ -19,7 +19,10 @@ import pytest
 MiniRacer = pytest.importorskip("py_mini_racer").MiniRacer
 
 ROOT = Path(__file__).parent
-JS = (ROOT / "assets" / "pal.js").read_text(encoding="utf-8")
+# /pal/ carried its own COPY of the board banding function until 2026-09-16.
+# It calls the shared value ruler now, so the harness evaluates that first.
+TIERS_JS = (ROOT / "assets" / "eephus-tiers.js").read_text(encoding="utf-8")
+JS = TIERS_JS + (ROOT / "assets" / "pal.js").read_text(encoding="utf-8")
 
 SAMPLE = """{
  "season":2026,"n_conversions":95,"verdict":"provisional",

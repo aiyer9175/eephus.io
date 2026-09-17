@@ -141,56 +141,49 @@
     return collapsible("relievers-viz", 'Charts <span class="proj-dim">(REM+ distribution, vs gmLI, vs xREM+)</span>', body);
   }
 
-  // REM+/Bullpen+ index coloring (100 = average).
-  function remClass(v) {
-    var n = num(v);
-    if (n == null) return "rem-avg";
-    if (n >= 120) return "rem-elite";
-    if (n >= 107) return "rem-good";
-    if (n >= 93) return "rem-avg";
-    return "rem-low";
-  }
-  function remCell(v, glossaryTerm) {
+  // ---- index colouring: the value ruler ------------------------------------
+  // Every cut is in assets/eephus-tiers.js, and each of these columns names the
+  // FAMILY it belongs to rather than carrying a threshold:
+  //   z     100 + 10z          WAR/PA+, WAR/IP+, DEM+, Team DEM+, Bullpen+,
+  //                            Rotation+, Lev Deploy+, Hi-Lev Core
+  //   run   FIP-based run prevention, which runs much wider (REM+ to 200 on the
+  //         served artifact, SEM+ to 164): REM+, SEM+, RIV+, xREM+, xSEM+, Front 3
+  //   ratio HEM+ family at wRC+ width: HEM+, xHEM+, xHEM+ Blend, Offense+, Heart 3
+  //   wrc   the industry's PUBLISHED wRC+, and nothing else
+  // The raw eWAR columns on these boards carry NO family and stay uncoloured:
+  // the eWAR section's Player and Team boards, the per-board eWAR column and
+  // the team_war rollup. They are counting totals, and the only WAR ladders the
+  // ruler owns were cut on /projections/ pools: `war` on PROJECTED seasons, which
+  // are regressed and narrower than played ones, and `rosterWar` on the 30
+  // projected club totals. Painting a season-to-date eWAR on either would borrow
+  // a ladder from a pool it was never measured on, which is the one thing the
+  // cut table forbids. They get a family when someone measures their own pool,
+  // and test_value_ruler.py::test_raw_ewar_columns_carry_no_ladder holds that
+  // line until then.
+  // The locked cuts keep their boundary and their tier name: 93 / 107 / 120 on z,
+  // 88 / 112 / 130 on ratio, 85 / 120 / 145 on wrc. Each band splits in two, so
+  // no value crosses a boundary it was on the other side of yesterday. The one
+  // recorded exception is `run`, which adds 140 above 120 so the reliever board
+  // can separate a 200 from a 121; 120 is still a boundary and both are bold teal.
+  function vtCell(v, fam, glossaryTerm) {
     var g = glossaryTerm ? ' data-gl="' + glossaryTerm + '"' : "";
-    return '<span class="rem-plus ' + remClass(v) + '"' + g + '>' + fInt(v) + "</span>";
+    return '<span class="rem-plus ' + EephusTiers.cls(v, fam) + '"' + g + '>' + fInt(v) + "</span>";
   }
-  // HEM+ / xHEM+ / Offense+ ride a WIDER (wRC+-width) scale than the FIP-based
-  // REM+/SEM+, so they get their own color bands (widening the shared remClass
-  // would recolor the reliever/starter metrics). Same rem-* CSS classes, wider
-  // thresholds (mean 100, SD ~16).
-  function hemClass(v) {
-    var n = num(v);
-    if (n == null) return "rem-avg";
-    if (n >= 130) return "rem-elite";
-    if (n >= 112) return "rem-good";
-    if (n >= 88) return "rem-avg";
-    return "rem-low";
-  }
-  function hemCell(v, glossaryTerm) {
-    var g = glossaryTerm ? ' data-gl="' + glossaryTerm + '"' : "";
-    return '<span class="rem-plus ' + hemClass(v) + '"' + g + '>' + fInt(v) + "</span>";
-  }
-  // PUBLISHED wRC+ gets a THIRD band set, and that is deliberate. It is the
+  function remCell(v, glossaryTerm) { return vtCell(v, "z", glossaryTerm); }
+  function runCell(v, glossaryTerm) { return vtCell(v, "run", glossaryTerm); }
+  function hemCell(v, glossaryTerm) { return vtCell(v, "ratio", glossaryTerm); }
+  // PUBLISHED wRC+ gets its OWN ladder, and that is deliberate. It is the
   // industry's number, not one of ours, and it is unshrunk, so it runs wider
   // than the HEM+ family beside it: measured over the pooled 2021-2026
   // qualified pools (n = 2,069), published wRC+ has SD 25.3 against HEM+ 17.7.
-  // Painting it with hemClass 88/112/130 would call 12.4% of qualified hitters
-  // elite where HEM+ calls 4.9%. The breaks below are the round-5 triple that
-  // best reproduces the HEM+ band shares on the wRC+ distribution (85/120/145:
-  // shares 26.0 / 52.1 / 17.9 / 4.1 vs the HEM+ reference 26.5 / 50.9 / 17.6 /
-  // 4.9). SINGLE SOURCE OF TRUTH: hitter_export.WRC_PLUS_BANDS. These three
-  // numbers mirror it and test_hitter_wrc_plus.py fails if they drift apart.
-  function wrcClass(v) {
-    var n = num(v);
-    if (n == null) return "rem-avg";
-    if (n >= 145) return "rem-elite";
-    if (n >= 120) return "rem-good";
-    if (n >= 85) return "rem-avg";
-    return "rem-low";
-  }
-  function wrcCell(v) {
-    return '<span class="rem-plus ' + wrcClass(v) + '" data-gl="wrc_plus">' + fInt(v) + "</span>";
-  }
+  // Painting it on the ratio ladder 88/112/130 would call 12.4% of qualified
+  // hitters elite where HEM+ calls 4.9%. The locked breaks are the round-5 triple
+  // that best reproduces the HEM+ band shares on the wRC+ distribution
+  // (85/120/145: shares 26.0 / 52.1 / 17.9 / 4.1 vs the HEM+ reference 26.5 /
+  // 50.9 / 17.6 / 4.9). SINGLE SOURCE OF TRUTH: hitter_export.WRC_PLUS_BANDS,
+  // of which the `wrc` ladder's cuts are a superset; test_value_ruler.py fails if
+  // they drift apart.
+  function wrcCell(v) { return vtCell(v, "wrc", "wrc_plus"); }
   function gloss(label, term) {
     return '<span class="g-term" data-gl="' + esc(term) + '">' + esc(label) + "</span>";
   }
@@ -457,8 +450,12 @@
     return collapsible(id,
       '<span class="mlbstats-fold-lead">' + lead + "</span>"
       + '<span class="mlbstats-fold-hint">how to read this board</span>',
-      body, { collapsed: true, cls: "mlbstats-fold" });
+      body + VALUE_RULER_NOTE, { collapsed: true, cls: "mlbstats-fold" });
   }
+  // One sentence, once, on every board that carries a ladder. Terse on the page;
+  // the seven steps and the cuts are behind the glossary hook, per house rule.
+  var VALUE_RULER_NOTE = '<p class="mlbstats-note"><span data-gl="value_ruler">'
+    + "Colour reads on the value ruler.</span></p>";
   function bindCollapse(root) {
     root.querySelectorAll("[data-collapse]").forEach(function (el) {
       var head = el.querySelector(".mlbstats-collapse-head");
@@ -478,13 +475,13 @@
   // REM+ talent number by design).
   var REL_COLS = [
     { key: "name", label: "Reliever", term: null, sortable: true, kind: "name", asc: true },
-    { key: "rem_plus", label: "REM+", term: "rem_plus", fmt: remCell, num: true, desc: true, isRem: true },
+    { key: "rem_plus", label: "REM+", term: "rem_plus", fmt: runCell, num: true, desc: true, isRem: true },
     { key: "rem_plus_3yr", label: "REM+ 3yr", term: "rem_plus_3yr", num: true, desc: true, isRem: true,
       vintage: "multiyear",
       get: function (r) { return r.rem_plus_3yr; },
       cell: function (r) {
         if (r.rem_plus_3yr == null) return "";
-        var s = remCell(r.rem_plus_3yr);
+        var s = runCell(r.rem_plus_3yr);
         if (r.rem_plus_3yr_pct != null) s += '<span class="proj-dim mlbstats-pct"> p' + fInt(r.rem_plus_3yr_pct) + "</span>";
         if (r.rem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 40 IP in the trailing window">*</span>';
         return s;
@@ -492,7 +489,7 @@
     { key: "xrem_plus", label: "xREM+", term: "xrem_plus", num: true, desc: true, isRem: true,
       title: "REM+ scale on Savant xwOBA allowed. A deserved read beside REM+, not a replacement: xwOBA allowed did not beat FIP predictively. Tracked relievers only.",
       get: function (r) { return r.xrem_plus; },
-      cell: function (r) { return r.xrem_plus == null ? "" : remCell(r.xrem_plus); } },
+      cell: function (r) { return r.xrem_plus == null ? "" : runCell(r.xrem_plus); } },
     { key: "luck", label: "Luck (wOBA)", num: true, desc: true,
       title: "wOBA allowed minus xwOBA allowed. Positive: allowed more than his contact deserved; negative: less.",
       get: function (r) { return r.luck; },
@@ -507,7 +504,8 @@
     // Reliever-anchored WAR/IP+. Separate metric from the starter board's
     // WAR/IP+ (same field name, different payload, different anchor pool): a
     // reliever banks more WAR per inning than a starter of equal talent, so the
-    // two are never pooled. remCell, not hemCell: 100 + 10z has SD exactly 10.
+    // two are never pooled. The z family, not the ratio family: 100 + 10z has SD
+    // exactly 10.
     { key: "war_ip_plus", label: "WAR/IP+", term: "war_ip_plus_rp", num: true, desc: true, isRem: true,
       ewar: true,
       title: "Pitching eWAR per inning, 100 + 10z over relievers with 20+ IP; shown at 30+ IP. Not comparable with the starter board's WAR/IP+. p = percentile on this board.",
@@ -565,7 +563,7 @@
         if (r.gmli_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 60 relief entries in the trailing window">*</span>';
         return s;
       } },
-    { key: "riv_plus", label: "RIV+", term: "riv_plus", fmt: remCell, num: true, desc: true },
+    { key: "riv_plus", label: "RIV+", term: "riv_plus", fmt: runCell, num: true, desc: true },
     { key: "wpa", label: "WPA", term: "wpa", fmt: fSigned, num: true },
     { key: "wpa_li", label: "WPA/LI", term: "wpa_li", fmt: fSigned, num: true },
     { key: "sd_md", label: "SD-MD", term: "shutdowns_meltdowns", fmt: fInt, num: true,
@@ -1235,12 +1233,12 @@
           + '<span class="bp-slot-role">' + esc(r.role || EM_DASH) + "</span>"
           + '<span class="bp-slot-name"' + (r.name ? ' title="' + esc(r.name) + '"' : "") + ">" + esc(r.name || EM_DASH)
           + (r.gmli != null ? '<span class="proj-dim"> gmLI ' + f2(r.gmli) + "</span>" : "") + "</span>"
-          + '<span class="bp-slot-rem ' + remClass(r.rem_plus) + '">' + fInt(r.rem_plus) + "</span>"
+          + '<span class="bp-slot-rem ' + EephusTiers.clsInk(r.rem_plus, "run") + '">' + fInt(r.rem_plus) + "</span>"
           + "</div>";
       }).join("");
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
         + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
-        + '<span class="rem-plus ' + remClass(t.bullpen_plus) + '" data-gl="bullpen_plus">Bullpen+ ' + fInt(t.bullpen_plus) + "</span>"
+        + '<span class="rem-plus ' + EephusTiers.cls(t.bullpen_plus, "z") + '" data-gl="bullpen_plus">Bullpen+ ' + fInt(t.bullpen_plus) + "</span>"
         + "</div>" + slots + "</div>";
     }).join("");
     return '<div class="mlbstats-note">Each pen by role, then gmLI; number = '
@@ -1725,13 +1723,13 @@
   // and rate columns that ride as context.
   var STARTER_COLS = [
     { key: "name", label: "Starter", term: null, sortable: true, kind: "name", asc: true },
-    { key: "sem_plus", label: "SEM+", term: "sem_plus", fmt: remCell, num: true, desc: true, isRem: true },
+    { key: "sem_plus", label: "SEM+", term: "sem_plus", fmt: runCell, num: true, desc: true, isRem: true },
     { key: "sem_plus_3yr", label: "SEM+ 3yr", term: "sem_plus_3yr", num: true, desc: true, isRem: true,
       vintage: "multiyear",
       get: function (r) { return r.sem_plus_3yr; },
       cell: function (r) {
         if (r.sem_plus_3yr == null) return "";
-        var s = remCell(r.sem_plus_3yr);
+        var s = runCell(r.sem_plus_3yr);
         if (r.sem_plus_3yr_pct != null) s += '<span class="proj-dim mlbstats-pct"> p' + fInt(r.sem_plus_3yr_pct) + "</span>";
         if (r.sem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 120 IP in the trailing window">*</span>';
         return s;
@@ -1739,7 +1737,7 @@
     { key: "xsem_plus", label: "xSEM+", term: "xsem_plus", num: true, desc: true, isRem: true,
       title: "SEM+ scale on Savant xwOBA allowed. A deserved read beside SEM+, not a replacement: xwOBA allowed did not beat FIP predictively. Tracked starters only.",
       get: function (r) { return r.xsem_plus; },
-      cell: function (r) { return r.xsem_plus == null ? "" : remCell(r.xsem_plus); } },
+      cell: function (r) { return r.xsem_plus == null ? "" : runCell(r.xsem_plus); } },
     { key: "luck", label: "Luck (wOBA)", num: true, desc: true,
       title: "wOBA allowed minus xwOBA allowed. Positive: allowed more than his contact deserved; negative: less.",
       get: function (r) { return r.luck; },
@@ -1754,8 +1752,8 @@
     // Starter-anchored WAR/IP+. The reliever board ships a reliever-anchored
     // WAR/IP+ under the same field name in its own payload; the two are separate
     // metrics on separate pools and are never pooled into one column (a reliever
-    // banks more WAR per inning than a starter of equal talent). Both ride
-    // remCell: 100 + 10z has SD exactly 10, which is what remClass bands for.
+    // banks more WAR per inning than a starter of equal talent). Both ride the
+    // z family: 100 + 10z has SD exactly 10, which is what that ladder bands for.
     { key: "war_ip_plus", label: "WAR/IP+", term: "war_ip_plus_sp", num: true, desc: true, isRem: true,
       ewar: true,
       title: "Pitching eWAR per inning, 100 + 10z over starters with 20+ IP; shown at 40+ IP. Not comparable with the reliever board's WAR/IP+. p = percentile on this board.",
@@ -1814,7 +1812,7 @@
     { key: "rotation_plus", label: "Rotation+", term: "rotation_plus", fmt: remCell, num: true, desc: true, isRem: true },
     { key: "team_war", label: "eWAR", term: "ewar", fmt: f1, num: true, ewar: true,
       title: "Starter eWAR of this rotation's arms. Same club basis as the Team column." },
-    { key: "front_sem", label: "Front 3", fmt: remCell, num: true,
+    { key: "front_sem", label: "Front 3", fmt: runCell, num: true,
       title: "Mean SEM+ of the top three starters by SEM+." },
     { key: "n_above_avg", label: "Above-avg", fmt: fInt, num: true,
       title: "Starters at SEM+ 100 or better / starters in the rotation.",
@@ -2055,12 +2053,12 @@
           + '<span class="bp-slot-role">SP' + (i + 1) + "</span>"
           + '<span class="bp-slot-name"' + (r.name ? ' title="' + esc(r.name) + '"' : "") + ">" + esc(r.name || EM_DASH)
           + (r.ip_per_gs != null ? '<span class="proj-dim"> ' + f1(r.ip_per_gs) + " IP/GS</span>" : "") + "</span>"
-          + '<span class="bp-slot-rem ' + remClass(r.sem_plus) + '">' + fInt(r.sem_plus) + "</span>"
+          + '<span class="bp-slot-rem ' + EephusTiers.clsInk(r.sem_plus, "run") + '">' + fInt(r.sem_plus) + "</span>"
           + "</div>";
       }).join("");
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
         + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
-        + '<span class="rem-plus ' + remClass(t.rotation_plus) + '" data-gl="rotation_plus">Rotation+ ' + fInt(t.rotation_plus) + "</span>"
+        + '<span class="rem-plus ' + EephusTiers.cls(t.rotation_plus, "z") + '" data-gl="rotation_plus">Rotation+ ' + fInt(t.rotation_plus) + "</span>"
         + "</div>" + slots + "</div>";
     }).join("");
     return '<div class="mlbstats-note">Top five starters by IP; number = ' + gloss("SEM+", "sem_plus") + ".</div>"
@@ -2265,10 +2263,16 @@
       get: function (r) { return r.pwoba; },
       cell: function (r) {
         if (r.pwoba == null) return "";
-        // Color by pool percentile (the export stamps pwoba_pctile), same
-        // rem-* bands as the HEM+ family so the board reads as one system.
+        // Color by pool PERCENTILE (the export stamps pwoba_pctile). This is not
+        // a value ladder and it has no family among the ten on the value ruler:
+        // a percentile is ALREADY a rank, so it is banded here and exempted by
+        // name in test_value_ruler.py. It borrows the ruler's colour vocabulary
+        // so the board still reads as one system, and never reaches the red
+        // step. It carries `vt-fam-pctile` rather than no family at all, so the
+        // markup still says which ruler drew the cell and a test can read it:
+        // this is the ONE call site whose family is not a ladder.
         var p = num(r.pwoba_pctile);
-        var cls = p == null ? "rem-avg" : p >= 90 ? "rem-elite" : p >= 70 ? "rem-good" : p >= 25 ? "rem-avg" : "rem-low";
+        var cls = "vt vt-fam-pctile " + (p == null ? "vt-avg" : p >= 90 ? "vt-elite" : p >= 70 ? "vt-good" : p >= 25 ? "vt-avg" : "vt-below");
         return '<span class="rem-plus ' + cls + '" data-gl="pwoba">' + f3(r.pwoba) + "</span>";
       } },
     { key: "luck_gap", label: "Luck (pts)", num: true, desc: true,
@@ -2282,14 +2286,14 @@
       } },
     { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true, ewar: true,
       title: "Position-player eWAR this season; the WAR/PA+ numerator." },
-    // WAR/PA+ rides remCell, NOT hemCell, and that is deliberate. The HEM+
-    // family around it is a ratio index widened to wRC+ width (SD about 16), so
-    // hemCell bands at 112/130. WAR/PA+ is 100 + 10z, so its SD is exactly 10 by
-    // construction, and remClass bands it at 93/107/120 (0.7 and 2 sigma), the
-    // one colour ruler the MLB player page shares for the whole 100 + 10z
-    // family (owner decision 25, 2026-09-11). Recoloring it with hemCell would
-    // call a 1.2-sigma hitter average. Do not "fix" this to match the
-    // neighbouring columns.
+    // WAR/PA+ rides the z family, NOT the ratio family, and that is deliberate.
+    // The HEM+ family around it is a ratio index widened to wRC+ width (SD about
+    // 16), so it bands at 112 / 130. WAR/PA+ is 100 + 10z, so its SD is exactly
+    // 10 by construction, and the z ladder bands it at 93 / 107 / 120 (0.7 and 2
+    // sigma), the one colour ruler the MLB player page shares for the whole
+    // 100 + 10z family (owner decision 25, 2026-09-11). Recolouring it on the
+    // ratio ladder would call a 1.2-sigma hitter average. Do not "fix" this to
+    // match the neighbouring columns.
     { key: "war_pa_plus", label: "WAR/PA+", term: "war_pa_plus", num: true, desc: true, isRem: true,
       ewar: true,
       title: "Position-player eWAR (equal to bWAR on this side) per PA, 100 + 10z over hitters with 50+ PA; shown at 100+ PA. Carries fielding, baserunning and the positional adjustment, which HEM+ leaves out. p = percentile on this board.",
@@ -2603,18 +2607,23 @@
   // Otherwise the per-hand HEM+ leads and the season number trails, dim;
   // data-kind names the state (split | thin | fallback) so each is countable.
   function lcValue(hand, v, pa, season) {
-    if (!hand) return '<span class="bp-slot-rem ' + hemClass(season) + '">' + fInt(season) + "</span>";
+    if (!hand) return '<span class="bp-slot-rem ' + EephusTiers.clsInk(season, "ratio") + '">' + fInt(season) + "</span>";
     var lbl = handLabel();
     if (v == null) {
-      return '<span class="bp-slot-rem"><span class="rem-avg" data-kind="fallback" style="opacity:.6" title="No '
+      // STATE, not a rank: there is no split line for this hand, so the cell
+      // reads the neutral step whatever the season number is, exactly as it did
+      // on the old neutral index class before the ruler. It carries no
+      // vt-fam-* because no ladder drew it; test_value_ruler.py exempts it by
+      // its data-kind.
+      return '<span class="bp-slot-rem"><span class="vt-avg" data-kind="fallback" style="opacity:.6" title="No '
         + lbl + ' line; season HEM+ shown">' + fInt(season) + "<sup>s</sup></span></span>";
     }
     var floor = lcConst("min_split_pa");
     var thin = floor != null && (num(pa) || 0) < floor;
     var cell = thin
-      ? '<span class="' + hemClass(v) + '" data-kind="thin" style="opacity:.6;text-decoration:underline dotted" title="'
+      ? '<span class="' + EephusTiers.cls(v, "ratio") + '" data-kind="thin" style="opacity:.6;text-decoration:underline dotted" title="'
         + fInt(pa) + " PA " + lbl + ", under " + fInt(floor) + '">'
-      : '<span class="' + hemClass(v) + '" data-kind="split" title="' + lbl + " HEM+ on " + fInt(pa) + ' PA">';
+      : '<span class="' + EephusTiers.cls(v, "ratio") + '" data-kind="split" title="' + lbl + " HEM+ on " + fInt(pa) + ' PA">';
     return '<span class="bp-slot-rem">' + cell + fInt(v) + '</span><span class="proj-dim" title="Season HEM+"> '
       + fInt(season) + "</span></span>";
   }
@@ -2637,7 +2646,7 @@
       + '<span class="bp-slot-name"' + (b.name ? ' title="' + esc(b.name) + '"' : "") + ">"
       + '<span class="bp-role" data-gl="platoon_option">PLT</span> ' + cardName(b)
       + batsTxt(o.bench_bats) + paTxt(o.bench_split_pa) + "</span>"
-      + '<span class="bp-slot-rem"><span class="' + hemClass(o.bench_split) + '">' + fInt(o.bench_split)
+      + '<span class="bp-slot-rem"><span class="' + EephusTiers.cls(o.bench_split, "ratio") + '">' + fInt(o.bench_split)
       + '</span><span class="proj-dim"> +' + fInt(o.delta) + "</span></span>"
       + "</div>";
   }
@@ -2710,7 +2719,7 @@
     var vl = orderHandMean(t.orders.vl), vr = orderHandMean(t.orders.vr);
     if (vl == null && vr == null) return "";
     function one(hand, v) {
-      return '<span class="' + hemClass(v) + '" data-hand-mean="' + hand + '" data-raw="' + esc(v) + '">'
+      return '<span class="' + EephusTiers.cls(v, "ratio") + '" data-hand-mean="' + hand + '" data-raw="' + esc(v) + '">'
         + "vs " + hand + "HP " + fInt(v) + "</span>";
     }
     return '<span class="proj-dim" data-gl="hem_plus_vs_hand" title="PA-weighted vs-hand HEM+ of the nine">'
@@ -2762,7 +2771,7 @@
         : "";
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
         + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
-        + '<span class="rem-plus ' + hemClass(t.offense_plus) + '" data-gl="offense_plus">Offense+ ' + fInt(t.offense_plus) + "</span>"
+        + '<span class="rem-plus ' + EephusTiers.cls(t.offense_plus, "ratio") + '" data-gl="offense_plus">Offense+ ' + fInt(t.offense_plus) + "</span>"
         + handMeans(t)
         + "</div>" + head + slots + benchHtml + outHtml + "</div>";
     }).join("");
@@ -3294,8 +3303,8 @@
   // Renders data/defense_leaderboards.json (defense_export.py) into Fielders /
   // Team Defense / Defense Charts, a clone of the Hitter section. DEM+ is the
   // sample-shrunk published fielding rate on 100 + 10z, so its SD is exactly 10
-  // and it bands with remClass (93/107/120), NEVER hemClass: it is not on the
-  // HEM+ ratio ruler. Fld and Frm are FanGraphs' published values read from
+  // and it bands on the z ladder (93 / 107 / 120), NEVER the ratio one: it is not
+  // on the HEM+ ruler. Fld and Frm are FanGraphs' published values read from
   // MLB's feed; the positional term inside Def is OUR ladder (Position Fit,
   // owner decision 18, 2026-09-11), with FanGraphs' own beside it as Pos (FG).
   // This page computes none of them. Copy is column titles plus
@@ -3336,9 +3345,9 @@
   }
 
   // Skill core first (DEM+), then the published run columns and the volume
-  // context. DEM+ rides remCell for the reason WAR/PA+ does on the hitter
-  // board: 100 + 10z has SD exactly 10, and remClass's 93/107/120 is the one
-  // colour ruler the player page shares for that family.
+  // context. DEM+ rides the z family for the reason WAR/PA+ does on the hitter
+  // board: 100 + 10z has SD exactly 10, and 93 / 107 / 120 is the one colour
+  // ruler the player page shares for that family.
   var DEFENSE_COLS = [
     { key: "name", label: "Fielder", term: null, sortable: true, kind: "name", asc: true },
     { key: "pos", label: "Pos", title: "Primary position (most defensive innings).", cell: posCell },
@@ -3673,12 +3682,12 @@
             + '<span class="bp-slot-name"' + (a.name ? ' title="' + esc(a.name) + '"' : "") + ">" + esc(a.name || EM_DASH)
             + (a.inn_at_pos != null ? '<span class="proj-dim"> ' + f1(a.inn_at_pos) + " inn</span>" : "")
             + (f != null ? '<span class="proj-dim"> Frm ' + fSigned(f) + "</span>" : "") + "</span>"
-            + '<span class="bp-slot-rem ' + remClass(a.dem_plus) + '">' + fInt(a.dem_plus) + "</span>"
+            + '<span class="bp-slot-rem ' + EephusTiers.clsInk(a.dem_plus, "z") + '">' + fInt(a.dem_plus) + "</span>"
             + "</div>";
         }).join("");
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
         + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
-        + '<span class="rem-plus ' + remClass(t.team_dem_plus) + '" data-gl="team_dem_plus">Team DEM+ ' + fInt(t.team_dem_plus) + "</span>"
+        + '<span class="rem-plus ' + EephusTiers.cls(t.team_dem_plus, "z") + '" data-gl="team_dem_plus">Team DEM+ ' + fInt(t.team_dem_plus) + "</span>"
         + "</div>" + slots + "</div>";
     }).join("");
     return '<div class="mlbstats-note">Alignment: the active-roster fielder with the most innings at each position.</div>'
@@ -4147,6 +4156,8 @@
   var warTeamSort = { key: "war", asc: false };
   var warQuery = "", warTeam = "", warRoles = [], warQualifiedOnly = true;
   var WAR_ROLE_LBL = { H: "Hitter", SP: "Starter", RP: "Reliever", SW: "Swingman", TWP: "Two-way" };
+  // Counting eWAR, uncoloured on purpose: see the family table beside vtCell.
+  // No ladder here was measured on a played-season pool.
   var WAR_COLS = [
     { key: "name", label: "Player", kind: "name", asc: true },
     { key: "pos", label: "Pos", title: "Primary position; P for pitchers.",

@@ -134,17 +134,25 @@ function _tmTierOf(mm) {
   if (v >= 0)  return "low";
   return "minimal";
 }
+// BOARD AND EVALUATOR COLOUR. Both columns are painted from the VALUE, on the
+// value ruler's `trade` ladder (100 / 40 / 15 / 8 / 3 $M plus a red step under
+// zero), so the Surplus figure and the letter Grade beside it can never
+// disagree: the ladder IS the grade ladder merged to seven tiers, so every
+// letter falls in exactly one tier and the map is monotone by construction
+// (A+ elite, A/A- great, B+/B good, B- above, C avg, D below, F poor).
+// _tmTierOf is deliberately NOT the colour source: it is shared with the
+// board's tier FILTER and mirrors bayes_trade_value._platform_tier, and colour
+// must never ride the function the filter and the server share.
+// Measured on trade_values.json (n = 6,426): page 1 of the board goes from 100%
+// one colour to 48.0 / 52.0, the top 250 to 9.6 / 29.6 / 60.8.
+function _tbValTier(mm) { return EephusTiers.varOf(mm, "trade"); }
 // Evaluator value color. It used to break at 80/35/12 against the board's
 // 40/20/8, so an $18M asset read plain grey in the evaluator and cyan "mid" one
-// tab over on the board, on the same number from the same file. (_TB_TIER_COLORS
-// is declared further down; this only ever runs from a render, long after the
-// module body has evaluated.)
-function _tmValColor(mm) {
-  // A negative surplus is a liability and the evaluator says so in red. It is
-  // the board's "minimal" tier - the only tier a negative can land in.
-  if (Number(mm) < 0) return "var(--down, #e05c5c)";
-  return _TB_TIER_COLORS[_tmTierOf(mm)] || "var(--text-secondary)";
-}
+// tab over on the board, on the same number from the same file. Both surfaces
+// call the SAME ladder now, so that class of drift is closed by construction.
+// A negative surplus is a liability and the ruler's red step says so, which is
+// the only tier a negative can land in.
+function _tmValColor(mm) { return _tbValTier(mm) || "var(--text-secondary)"; }
 // FV display rule, ONE implementation for the board's FV column and the
 // evaluator's search / seed sub-lines: the eFV grade LEADS and rounds to
 // NEAREST, the consensus FV is the fallback and rounds UP (the platform's
@@ -328,7 +336,7 @@ function renderTradeMachine() {
   _tmSeedFromURL();
   const sideHtml = (side, label) => {
     const list = _TM[side].map((x, i) => {
-      const g = _tbGrade(x.mm), gc = _tbGradeColor(g);   // contract-adjusted surplus -> letter
+      const g = _tbGrade(x.mm), gc = _tbValTier(x.mm);   // contract-adjusted surplus -> letter
       // Rental split, shown rather than merely labelled: how much of this
       // player's price is the balance of the season in progress, and therefore
       // how much of it a buyer keeps past October.
@@ -523,10 +531,10 @@ const _TB_POS_BUCKETS = {
   SP: p => ["SP", "RHP", "LHP", "P"].includes(_tbPrimaryPos(p)),
   RP: p => ["RP", "CL", "SIRP", "MIRP"].includes(_tbPrimaryPos(p)),
 };
-const _TB_TIER_COLORS = {
-  elite:"var(--card-gold)", high:"var(--neon-green)",
-  mid:"var(--neon-cyan, var(--accent-cyan))", low:"var(--text-secondary)", minimal:"var(--text-tertiary)",
-};
+// DELETED 2026-09-16: the board's tier-to-colour map. Five colours keyed on the
+// tier NAME, one of which (--card-gold) was not a defined token, so the top
+// tier's colour was the empty string in both themes. The board colours from the
+// value now.
 function _tbIsMlb(p) {
   return p && (p.status === "graduated" || p.status === "debuted");
 }
@@ -794,14 +802,10 @@ function _tbGrade(mm) {
   if (v >= 0)   return "D";
   return "F";
 }
-function _tbGradeColor(g) {
-  if (g === "A+" || g === "A") return "var(--card-gold)";
-  if (g === "A-")              return "var(--neon-green)";
-  if (g && g.charAt(0) === "B") return "var(--neon-cyan, var(--accent-cyan))";
-  if (g === "C" || g === "D")  return "var(--text-secondary)";
-  if (g === "F")               return "var(--neon-red)";
-  return "var(--text-tertiary)";
-}
+// DELETED 2026-09-16: the grade-to-colour map. Nine letters into five colours,
+// off the LETTER rather than the number, so the Grade chip and the Surplus
+// figure beside it could land on different colours for the same player. Both
+// take _tbValTier.
 
 // ── Leaderboard render ──────────────────────────────────────────────────────
 // Risk-adjusted surplus (Sortino) column: dark by default pre-launch; opt in
@@ -906,10 +910,12 @@ function _renderTBRows() {
   pagedRows.forEach((p, i) => {
     const rank = (curPage - 1) * pageSize + i + 1;
     const tv    = p.trade_value_mm;
-    const tier  = p.trade_value_tier || "low";
-    const tvCol = _TB_TIER_COLORS[tier] || "var(--text-secondary)";
+    // ONE colour for the row, read off the VALUE, so the Surplus cell and the
+    // letter chip beside it can never disagree. _tmValColor is _tbValTier with
+    // the grey fallback, which is what an unpriced row painted before the ruler
+    // (a bare _tbValTier returns "" there and emits `style="color:;"`).
+    const tvCol = _tmValColor(tv);
     const grade = _tbGrade(tv);              // contract-adjusted surplus -> letter
-    const gradeCol = _tbGradeColor(grade);
     // FV only meaningful for active MiLB prospects - hide for MLB players
     const isProspect = p.status === "active";
     // eFV leads (round-to-NEAREST), consensus ceil as the fallback. The row
@@ -1013,7 +1019,7 @@ function _renderTBRows() {
       <td class="tm-dim">${pos}</td>
       <td><span class="tm-org-cell">${org ? _tmTeamLogo(org) : ""}<span class="tm-org-abbr">${org}</span></span></td>
       <td class="tm-num tm-dim">${fv}</td>
-      <td class="tm-num tm-col-div tm-grade">${grade ? `<span class="tm-grade-chip" style="color:${gradeCol};border-color:${gradeCol};" title="Trade Value Grade ${grade} (${_tbFmt(tv)} contract-adjusted surplus)">${grade}</span>` : ""}</td>
+      <td class="tm-num tm-col-div tm-grade">${grade ? `<span class="tm-grade-chip" style="color:${tvCol};border-color:${tvCol};" title="Trade Value Grade ${grade} (${_tbFmt(tv)} contract-adjusted surplus)">${grade}</span>` : ""}</td>
       <td class="tm-num tm-surplus" style="color:${tvCol};">${_tbFmt(tv)}</td>
       ${showRisk ? _tbRiskCell(p) : ""}
       <td class="tm-contract">${_tbCtrlBadge(p)}</td>

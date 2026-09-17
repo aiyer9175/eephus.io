@@ -700,11 +700,15 @@ def test_war_rate_columns_are_dropped_from_history_boards():
     assert "war: 1" in rel, "eWAR missing from the reliever history allow-list"
 
 
-def test_war_rate_columns_use_remcell_not_hemcell():
-    """100 + 10z has SD exactly 10, so the +-2-sigma read is 80/120 (remClass).
-    hemCell bands for the wRC+-width ratio family and would call a 1.2-sigma
-    hitter average. The hitter board is the trap: every column around WAR/PA+
-    uses hemCell."""
+def test_war_rate_columns_are_on_the_z_family_not_the_ratio_one():
+    """100 + 10z has SD exactly 10, so the z ladder bands it at 93 / 107 / 120.
+    The ratio ladder is cut for the wRC+-width HEM+ family and would call a
+    1.2-sigma hitter average. The hitter board is the trap: every column around
+    WAR/PA+ is on the ratio family.
+
+    Pinned on the FAMILY ARGUMENT rather than the helper name, which is the
+    cleaner pin: a helper can be renamed, and the family is what actually picks
+    the cuts."""
     for key in ("war_pa_plus", "war_pa_plus_3yr", "war_ip_plus", "war_ip_plus_3yr"):
         marker = 'key: "%s", label:' % key
         starts = [i for i in range(len(_JS))
@@ -714,8 +718,17 @@ def test_war_rate_columns_use_remcell_not_hemcell():
             # the column object ends at the next definition or the array close
             nxt = _JS.find('{ key: "', i)
             body = _JS[i:nxt if nxt > i else i + 1200]
-            assert "remCell(" in body, f"{key} column not on remCell"
-            assert "hemCell(" not in body, f"{key} column uses hemCell"
+            assert "remCell(" in body, f"{key} column not on the z family"
+            assert "hemCell(" not in body, f"{key} column is on the ratio family"
+            assert "runCell(" not in body, f"{key} column is on the run family"
+    # and remCell IS the z family, runCell the run one: read it off the file
+    assert 'function remCell(v, glossaryTerm) { return vtCell(v, "z", glossaryTerm); }' in _JS
+    assert 'function runCell(v, glossaryTerm) { return vtCell(v, "run", glossaryTerm); }' in _JS
+    assert 'function hemCell(v, glossaryTerm) { return vtCell(v, "ratio", glossaryTerm); }' in _JS
+    # the run columns took the run ladder with them
+    for key in ("rem_plus", "sem_plus", "riv_plus"):
+        i = _JS.index('key: "%s", label:' % key)
+        assert "runCell" in _JS[i:i + 200], key
 
 
 def test_registry_rows_and_glossary_map():

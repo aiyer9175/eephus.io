@@ -177,24 +177,24 @@
     return "IF";
   }
 
-  // WAR heat class - color escalates with the season's own WAR.
-  function warClass(w) {
-    if (w == null) return "";
-    if (w >= 4) return " proj-war-elite";
-    if (w >= 2.5) return " proj-war-good";
-    if (w >= 1) return " proj-war-avg";
-    return " proj-war-low";
-  }
+  // WAR heat is the value ruler's `war` family now (6 / 4 / 3 / 2.5 / 1.5 plus a
+  // red step under zero), and the cuts live in assets/eephus-tiers.js. The old
+  // local warClass banded 4 / 2.5 / 1, which put 60.2% of the 500 cells the
+  // default board paints in ONE colour; the ruler's widest tier there is 38.6%,
+  // and the #src=prospect view goes from one populated tier to four.
 
   // Projected RATE lines (vets only - fa_projection.rate_path arrays; the
   // prospect outcome model is FV-anchored and carries no rate machinery,
   // so prospect cells render a dash under a rate metric).
+  // No cuts here. `state.cells` IS the ruler family name ("wrc" / "woba" /
+  // "fip"), so a projected rate cell and the published /mlbstats/ column land on
+  // the same ladder and a wRC+ of 121 cannot read two different tiers.
   const RATE_META = {
-    wrc:  { label: "wRC+", fmt: v => String(Math.round(v)), hi: [140, 115, 90],
+    wrc:  { label: "wRC+", fmt: v => String(Math.round(v)),
             tip: "projected wRC+ (park-neutral, 100 = league average)" },
-    woba: { label: "wOBA", fmt: v => v.toFixed(3).replace(/^0(?=\.)/, ""), hi: [0.370, 0.340, 0.310],
+    woba: { label: "wOBA", fmt: v => v.toFixed(3).replace(/^0(?=\.)/, ""),
             tip: "projected wOBA (Marcel components aged along the engine's curves)" },
-    fip:  { label: "FIP", fmt: v => v.toFixed(2), lo: [3.00, 3.75, 4.50],
+    fip:  { label: "FIP", fmt: v => v.toFixed(2),
             tip: "projected FIP (lower is better)" },
   };
   function rateAt(m, t) {
@@ -204,12 +204,7 @@
     return arr ? (arr[t] ?? null) : null;
   }
   function rateClass(v) {
-    const mm = RATE_META[state.cells];
-    if (!mm || v == null) return "";
-    if (mm.hi) return v >= mm.hi[0] ? " proj-war-elite" : v >= mm.hi[1] ? " proj-war-good"
-      : v >= mm.hi[2] ? " proj-war-avg" : " proj-war-low";
-    return v <= mm.lo[0] ? " proj-war-elite" : v <= mm.lo[1] ? " proj-war-good"
-      : v <= mm.lo[2] ? " proj-war-avg" : " proj-war-low";
+    return RATE_META[state.cells] ? EephusTiers.cls(v, state.cells) : "";
   }
 
   const state = { src: "all", pos: "all", team: "all", contract: "all", age: "all", q: "", sort: "warTotal",
@@ -360,6 +355,17 @@
       return s;
     }
     return m.warTotalPTH ?? m.warTotal;
+  }
+  // How many season cells this row actually PAINTS. The 5y total bands on the
+  // average of THOSE seasons, not on total / horizon: warShown gives a prospect
+  // the in-window sum only, and 69 of 183 prospects have fewer than five
+  // in-window seasons, so dividing by five banded a late-ETA prospect a tier low
+  // (worst measured case 3.6 WAR over 2 seasons: 0.72/yr against 1.81/yr). For a
+  // vet this is 5 and nothing moves.
+  function nPainted(m) {
+    let n = 0;
+    for (let t = 0; t < DATA.horizon; t++) if (warAt(m, t) != null) n++;
+    return n;
   }
 
   // Age filter bands: [lo, hi) on the row's decimal age.
@@ -889,7 +895,7 @@
       return `<tr>
       <td>${i + 1}</td>
       <td class="proj-player">${teamLogo(r.team)}<strong>${esc(r.team)}</strong></td>
-      <td class="proj-war${warClass(r.war / 8)}">${r.war.toFixed(1)}</td>
+      <td class="proj-war ${EephusTiers.cls(r.war, "rosterWar")}">${r.war.toFixed(1)}</td>
       <td title="${esc(wlTip)}"><strong>${wl}</strong></td>
       ${hasControl ? `<td>${controlCell(r)}</td>` : ""}
       ${showWindow ? `<td>${windowCell(r)}</td>` : ""}
@@ -1408,18 +1414,22 @@
           const v = rateAt(m, t);
           if (v == null) return gap();
           const mm = RATE_META[state.cells];
-          return td(`<span class="proj-war${rateClass(v)}" title="${s}: ${esc(mm.tip)}. Display only; WAR and pricing are unaffected.">${mm.fmt(v)}</span>`);
+          return td(`<span class="proj-war ${rateClass(v)}" title="${s}: ${esc(mm.tip)}. Display only; WAR and pricing are unaffected.">${mm.fmt(v)}</span>`);
         }
         const w = warAt(m, t);
         if (w == null) return gap();
         const lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
-        return td(`<span class="proj-war${warClass(w)}" title="${s}: ${fmtWar(w)} eWAR (playing-time-held / if-healthy path)${lo != null ? ` &middot; P10 ${war1(lo)} / P90 ${war1(hi)}` : ""}">${fmtWar(w)}</span>`);
+        return td(`<span class="proj-war ${EephusTiers.cls(w, "war")}" title="${s}: ${fmtWar(w)} eWAR (playing-time-held / if-healthy path)${lo != null ? ` &middot; P10 ${war1(lo)} / P90 ${war1(hi)}` : ""}">${fmtWar(w)}</span>`);
       }).join("");
       // Vets: the if-healthy total. Prospects: the in-window sum of the shown
       // cells. The Total P10-P90 band stays withdrawn (F-01).
-      const totTip = isPros
+      // The colour on this cell ranks the PER-SEASON AVERAGE of the seasons the
+      // row paints, not the sum, so the reader is told which number the colour
+      // is about. Same words for every row, no tier word, no em dash.
+      const totTip = (isPros
         ? "Sum of the in-window seasons shown (playing-time-held path)"
-        : `Playing-time-held path${m.warTotal != null ? `; expected path ${fmtWar(m.warTotal)}, which surplus prices` : ""}`;
+        : `Playing-time-held path${m.warTotal != null ? `; expected path ${fmtWar(m.warTotal)}, which surplus prices` : ""}`)
+        + ". Colour ranks the per-season average of the seasons shown";
       const sv = surOf(m);
       const surTip = isPros
         ? "Prospect surplus value over the control window"
@@ -1434,7 +1444,11 @@
               ? ". Control window: the salary path. Arbitration seasons are projected"
               : "")
           + (m.salCut != null ? `. Not tendered from ${m.salCut}` : "");
-      const sur = sv != null ? `<span class="${sv >= 0 ? "proj-pos" : "proj-neg"}" title="${surTip}">${money(sv)}</span>` : EM_DASH;
+      // Surplus is a RANKED value, not a sign: 100 / 50 / 20 / 5 / 1 $M plus the red
+      // step under zero. The cut at 1 exists because unpriced and expiring rows print
+      // "$0.x", and it moves 38.1% of the pool out of the ink tier without touching the
+      // default view (measured 35.4 + 1.0 against a single 36.4).
+      const sur = sv != null ? `<span class="${EephusTiers.cls(sv / 1e6, "surplus")}" title="${surTip}">${money(sv)}</span>` : EM_DASH;
       const aav = (m.aav != null && m.thru && m.thru >= first) ? money(m.aav) : EM_DASH;
       const age = m.age != null ? Math.floor(m.age) : EM_DASH;
       const inCmp = state.cmp.includes(m.key);
@@ -1461,7 +1475,7 @@
         + `<th scope="row" class="pc-player" data-export-text="${esc(m.name)}"><div class="proj-pl">${rowPhoto(m)}`
         + `<a class="fa-player-link mlb-name proj-pl-name" href="${esc(href)}" title="${esc(m.name)}">${esc(m.name)}</a>${cmpBtn}${xpBtn}${sub}</div></th>`
         + `<td class="pc-csv" hidden>${esc(m.pos || "")}</td><td class="pc-csv" hidden>${esc(m.team || "")}</td>`
-        + `<td class="pc-tot"><span class="proj-tot" title="${esc(totTip)}">${fmtWar(warShown(m))}</span></td>`
+        + `<td class="pc-tot"><span class="proj-tot ${EephusTiers.clsAvgInk(warShown(m), nPainted(m), "war")}" title="${esc(totTip)}">${fmtWar(warShown(m))}</span></td>`
         + `<td class="pc-sur">${sur}</td>`
         + seasonCells
         + `<td class="pc-age">${age}</td>`
@@ -1533,9 +1547,18 @@
     const cmpOne = state.cmp.length === 1 ? findRow(state.cmp[0]) : null;
     const tray = cmpOne ? `<span class="proj-cmp-tray" role="status">Compare: <strong>${esc(cmpOne.name)}</strong> &middot; pick one more <button type="button" class="chip" data-cmp-clear>clear</button></span>` : "";
     const tools = `<div class="proj-board-tools${pros ? " is-pros" : ""}">${sortPick}${tray}</div>`;
+    // Legend chip for the ladder the cells are actually on. Built FROM the ruler,
+    // so it cannot drift from the cuts; the reading lives behind the data-gl hook.
+    const keyFmt = state.cells === "war" ? (c => String(c)) : RATE_META[state.cells].fmt;
+    const keyLbl = state.cells === "war" ? "WAR heat" : `${RATE_META[state.cells].label} heat`;
+    const keyLad = EephusTiers.LADDERS[state.cells === "war" ? "war" : state.cells];
+    const keyTail = keyLad.dir === "lo" ? "&gt;" : "&lt;";
+    const tierKey = `<div class="tier-key"><b data-gl="value_ruler">${keyLbl}</b>`
+      + keyLad.cuts.map((c, i) => `<span class="tk-${EephusTiers.TIERS[i]}">${keyFmt(c)}</span>`).join("<i>/</i>")
+      + `<i>/</i><span class="tk-${EephusTiers.TIERS[5]}">${keyTail}${keyFmt(keyLad.cuts[4])}</span></div>`;
     const table = `<div class="proj-board-wrap"><table class="proj-board-table${pros ? " is-pros" : ""}" data-export data-export-title="MLB Projections">${head}<tbody>${body}</tbody></table>`
       + (body ? "" : `<div class="fa-sub proj-empty">No players match.</div>`) + `</div>`;
-    root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main proj-board-main">` + boardHead + tools + table
+    root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main proj-board-main">` + boardHead + tierKey + tools + table
       + (list.length > state.limit ? `<div class="proj-more-wrap"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : "")
       + warMap + `</div>${projBoardSidebar(list)}</div>`;
 
@@ -1698,7 +1721,7 @@
       const edge = (va != null && vb != null) ? va - vb : null;
       const cell = (v, m) => v == null
         ? `<td class="proj-dim">${m.src === "prospect" && s < m.eta ? "MiLB" : EM_DASH}</td>`
-        : `<td class="proj-war${warClass(v)}">${fmtWar(v)}</td>`;
+        : `<td class="proj-war ${EephusTiers.cls(v, "war")}">${fmtWar(v)}</td>`;
       return `<tr><td>${s}</td>${cell(va, a)}${cell(vb, b)}
         <td class="${edge == null ? "proj-dim" : edge >= 0 ? "proj-pos" : "proj-neg"}">${edge == null ? EM_DASH : (edge >= 0 ? "+" : "") + edge.toFixed(1)}</td></tr>`;
     }).join("");
@@ -1770,35 +1793,27 @@
   }
 
   // ---- scale families --------------------------------------------------------
-  // One ruler per family, never shared. "ratio" is the HEM+ family at wRC+ width
-  // (bands 88/112), "run" is REM+/SEM+ (95/105), "z" is 100 + 10z (WAR/PA+,
-  // WAR/IP+, DEM+). A 113 is a good hitter on the ratio ruler and 1.3 sigma on
-  // the z ruler, so DEM+ never borrows the HEM+ cut. The family class rides on
-  // every banded value so a test can read which ruler drew it. Do not tidy
-  // these into one cut.
+  // One ruler per family, never shared, and every CUT now lives in
+  // assets/eephus-tiers.js: "z" is 100 + 10z (WAR/PA+, WAR/IP+, DEM+), "ratio" is
+  // the HEM+ family at wRC+ width, "run" is REM+/SEM+/RIV+. A 113 is `good` on
+  // the ratio ruler and `great` on the z ruler, so DEM+ never borrows the HEM+
+  // cut. The family class (vt-fam-z against vt-fam-ratio) rides on every banded
+  // value so a test can read WHICH ruler drew it.
   //
-  // ONE COLOUR RULER FOR THE z FAMILY (owner decision 25, 2026-09-11: 93/107/120
-  // everywhere). The z family is banded exactly as /mlbstats/ remClass bands the
-  // same numbers (elite 120, good 107, average 93, low below) and paints the same
-  // rem-* classes, so a DEM+ of 113 reads "good" on the card and on the board.
-  // It used to band at 80/120 here, which made that 113 neutral on one surface
-  // and good on the other. `bands` lists the cuts high to low.
-  const SCALES = {
-    ratio: { lo: 88, hi: 112, cls: "mlbp-scale-ratio" },
-    run: { lo: 95, hi: 105, cls: "mlbp-scale-ratio" },
-    z: { lo: 93, hi: 107, cls: "mlbp-scale-z",
-         bands: [[120, "rem-elite"], [107, "rem-good"], [93, "rem-avg"]], below: "rem-low" },
-  };
+  // The two card families that used to disagree with the /mlbstats/ board are
+  // fixed by deletion here: "ratio" was an 88 / 112 proj-pos / proj-neg SIGN pair
+  // with no elite step, and "run" banded 95 / 105, neither of which is what the
+  // board paints for the same number. Both take the board ladder now.
+  //
+  // Only the LAYOUT hook stays local. The shaded guide band on the dot ruler is
+  // the family's own neutral zone, read off the ladder (avg cut to good cut), so
+  // no threshold is typed twice.
+  const SCALE_HOOK = { ratio: "mlbp-scale-ratio", run: "mlbp-scale-ratio", z: "mlbp-scale-z" };
   function bandCls(v, fam) {
-    const s = SCALES[fam];
-    if (!s) return "";
-    const n = Number(v);
-    if (v == null || v === "" || !Number.isFinite(n)) return s.cls;
-    if (s.bands) {
-      const hit = s.bands.find(([cut]) => n >= cut);
-      return s.cls + " " + (hit ? hit[1] : s.below);
-    }
-    return s.cls + (n >= s.hi ? " proj-pos" : n <= s.lo ? " proj-neg" : "");
+    const hook = SCALE_HOOK[fam];
+    if (!hook) return "";
+    const c = EephusTiers.clsInk(v, fam);
+    return c ? hook + " " + c : hook;
   }
   // Glossary hook: the explanation lives in the glossary entry, not on the page.
   const term = (slug, label) => (slug ? `<span data-gl="${slug}">${label}</span>` : label);
@@ -1867,9 +1882,12 @@
   // Dot ruler for one scale family: every index on it shares the axis, the
   // centre line is 100 and the shaded band is the family's neutral zone.
   function rulerHTML(rows, fam, axis) {
-    const s = SCALES[fam];
+    const lad = EephusTiers.LADDERS[fam];
     const use = (rows || []).filter(r => r && r.v != null && Number.isFinite(Number(r.v)));
-    if (!s || !use.length) return "";
+    if (!SCALE_HOOK[fam] || !lad || !use.length) return "";
+    // The shaded band is the family's neutral zone: its `avg` floor up to its
+    // `good` floor, read off the ladder rather than typed.
+    const s = { lo: lad.cuts[4], hi: lad.cuts[2] };
     // The axis widens in steps of 10 to hold every value on it, so a 171 is
     // drawn at 171 rather than pinned to the edge.
     const vals = use.map(r => Number(r.v));
@@ -1880,8 +1898,13 @@
       + `<span class="mlbp-ruler-mid" style="left:${at(100).toFixed(1)}%;"></span>`;
     const body = use.map(r => {
       const cls = bandCls(r.v, fam);
+      // The DOT carries the layout hook only. `.mlbp-ruler-dot` sets its own
+      // `color` at 0,1,0 AFTER the ruler block, so a tier class on the dot loses
+      // on source order and paints nothing: it was a live class with no effect
+      // (the old rem-* classes were equally inert there). The tier rides the
+      // VALUE beside it, which is the element the reader reads.
       return `<div class="mlbp-ruler-row"><span class="mlbp-ruler-label">${term(r.gl, r.label)}</span>`
-        + `<div class="mlbp-ruler-track">${guide}<span class="mlbp-ruler-dot ${cls}" style="left:${at(r.v).toFixed(1)}%;"></span></div>`
+        + `<div class="mlbp-ruler-track">${guide}<span class="mlbp-ruler-dot ${SCALE_HOOK[fam]}" style="left:${at(r.v).toFixed(1)}%;"></span></div>`
         + `<span class="mlbp-ruler-val ${cls}">${esc(String(r.v))}${r.note ? `<span class="fa-band"> ${esc(r.note)}</span>` : ""}</span></div>`;
     }).join("");
     const scale = [a0, 100, a1].map(t => `<span style="left:${at(t).toFixed(1)}%;">${t}</span>`).join("");
@@ -1984,7 +2007,7 @@
     const hi = (p.proj && p.proj.warP90) || [];
     if (!hi.length || !hi.some(v => v != null)) return "";
     const first = DATA.first_season;
-    const cells = hi.map((v, t) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${first + t}</span><span class="mlbp-cell-val${warClass(v)}">${fmtWar(v)}</span></div>`).join("");
+    const cells = hi.map((v, t) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${first + t}</span><span class="mlbp-cell-val ${EephusTiers.clsInk(v, "war")}">${fmtWar(v)}</span></div>`).join("");
     return section("upside", "Upside", "P90 outcome per season · per-year percentiles; they do not add up to a multi-year total",
       `<div class="mlbp-grid mlbp-grid-flow">${cells}</div>`);
   }
@@ -2275,12 +2298,14 @@
     const sk = p.skills || {};
     const hitSide = !p.isPit || !!p.twoWay, pitSide = !!p.isPit || !!p.twoWay;
     const lenses = [];
-    // .mlbp-lens-num sets its own colour, which outranks the single-class rem-*
-    // bands, so a z-family band paints an inner span instead (site.css is not
-    // touched); the ratio and run families keep their two-class proj-* tones.
-    const lensNum = (num, cls) => (/\brem-/.test(cls || "")
+    // .mlbp-lens-num sets colour AND weight 800 at one class, and it is declared
+    // after the ruler block, so a one-class .vt-* colour rule loses to it on
+    // source order. Every tiered lens therefore paints an INNER span; only the
+    // untiered Value lens takes the plain form. This is why the ratio lens used
+    // to look uncoloured with proj-pos sitting right there in its class list.
+    const lensNum = (num, cls) => (cls
       ? `<span class="mlbp-lens-num"><span class="${cls}">${num}</span></span>`
-      : `<span class="mlbp-lens-num ${cls || ""}">${num}</span>`);
+      : `<span class="mlbp-lens-num">${num}</span>`);
     const lens = (goto, head, num, cls, label, sub) => lenses.push(
       `<div class="mlbp-lens"><button type="button" class="mlbp-lens-head" data-mlbp-goto="${goto}">${head} &rarr;</button>`
       + `<div class="mlbp-lens-val">${lensNum(num, cls)}${label}</div>`

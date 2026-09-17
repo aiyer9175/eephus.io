@@ -20,7 +20,12 @@ import pytest
 MiniRacer = pytest.importorskip("py_mini_racer").MiniRacer
 
 ROOT = Path(__file__).parent
-JS = (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
+# The value ruler is a separate module and every colour cut lives in it, so the
+# harness has to evaluate it before the board file, exactly as the page does
+# (build_site.py puts its tag in the shared head block right after the nav
+# script, and deferred scripts run in document order).
+TIERS_JS = (ROOT / "assets" / "eephus-tiers.js").read_text(encoding="utf-8")
+JS = TIERS_JS + (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
 
 # A small, real-shaped sample matching the bullpen_export.py contract.
 SAMPLE = """{
@@ -77,7 +82,13 @@ def test_relievers_view_renders():
     html = _render("")
     assert "mlbstats-table" in html
     assert "Closer Alpha" in html and "Middle Beta" in html
-    assert "rem-elite" in html        # REM+ 138 colors elite
+    # REM+ 138 is `great`, not `elite`: the run family (REM+ / SEM+ / RIV+) adds a
+    # 140 step ABOVE the locked 120 because the served board runs to REM+ 200, so
+    # one ladder could not separate a 200 from a 121 on the board whose whole job
+    # is separating relievers. 120 is still a boundary and both steps are bold
+    # teal. This is the ONE tier name the value ruler moves for a served value.
+    assert "vt-great" in html         # REM+ 138 on the run ladder
+    assert "vt-elite" not in html.split(">138<")[0][-120:]
     assert "xREM+" in html            # deserved run-prevention companion column
     assert "Prov Gamma" not in html   # qualified-only filter (default) drops it
     assert ">138<" in html
@@ -953,13 +964,15 @@ def test_defense_board_renders_via_section_hash():
 
 
 def test_dem_plus_bands_on_the_rem_ruler_not_the_hem_ruler():
-    """DEM+ is 100 + 10z (SD exactly 10), so it bands with remClass
-    93/107/120. hemClass (88/112/130) would call 113 average and 125 merely good."""
+    """DEM+ is 100 + 10z (SD exactly 10), so it bands on the z ladder
+    (120 / 113 / 107 / 100 / 93). The ratio ladder would call 113 `above` and 125
+    merely `elite`-adjacent on a wider spread; the family class says which ruler
+    drew the number."""
     html = _render_defense("#section=defense")
-    assert 'class="rem-plus rem-good">113<' in html
-    assert 'class="rem-plus rem-elite">125<' in html
-    assert 'class="rem-plus rem-avg">113<' not in html
-    assert 'class="rem-plus rem-good">125<' not in html
+    assert 'class="rem-plus vt vt-fam-z vt-great">113<' in html
+    assert 'class="rem-plus vt vt-fam-z vt-elite">125<' in html
+    assert 'vt-fam-ratio">113<' not in html
+    assert 'class="rem-plus vt vt-fam-z vt-great">125<' not in html
 
 
 def test_defense_team_and_chart_tabs_exist():

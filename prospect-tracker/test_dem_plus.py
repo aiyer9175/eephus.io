@@ -270,6 +270,22 @@ def test_tiers_follow_the_warpa_breaks():
     assert (D.DEM_ELITE, D.DEM_ABOVE, D.DEM_AVG) == (120.0, 107.0, 93.0)
 
 
+def test_the_served_breaks_are_boundaries_on_the_value_ruler():
+    """The display ladder REFINES these three and never replaces them: each is
+    still a boundary and still carries the tier name it carried before
+    (elite / good / avg). The served WORDS on the payload stay at four; they
+    describe a coarser cut of the same ruler and are true at their own
+    boundaries. assets/eephus-tiers.js is the only file with the cuts."""
+    import re
+    js = (ROOT / "assets" / "eephus-tiers.js").read_text(encoding="utf-8")
+    cuts = re.search(r"z:\s*\{ cuts: \[([^\]]+)\]", js).group(1)
+    cuts = [float(x) for x in cuts.split(",")]
+    assert {D.DEM_ELITE, D.DEM_ABOVE, D.DEM_AVG} <= set(cuts), cuts
+    assert cuts.index(D.DEM_ELITE) == 0      # elite
+    assert cuts.index(D.DEM_ABOVE) == 2      # good
+    assert cuts.index(D.DEM_AVG) == 4        # avg
+
+
 def test_the_shrink_constants_are_the_frozen_preregistered_values():
     """Changing a constant after the gate read its window is the tuning the
     pre-registration forbids; a change must come with a new registration."""

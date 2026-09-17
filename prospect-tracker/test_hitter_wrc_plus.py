@@ -234,25 +234,36 @@ def test_bands_are_the_measured_values():
     assert HE.WRC_PLUS_BANDS == {"low": 85, "good": 120, "elite": 145}
 
 
+def _ladder(fam):
+    """One ladder's cuts, read off assets/eephus-tiers.js - the only file on the
+    site allowed to contain them."""
+    js = (MLBSTATS_JS.parent / "eephus-tiers.js").read_text(encoding="utf-8")
+    m = re.search(r"%s:\s*\{ cuts: \[([^\]]+)\]" % fam, js)
+    assert m, f"no {fam} ladder in eephus-tiers.js"
+    return [float(x) for x in m.group(1).split(",")]
+
+
 def test_bands_are_not_the_hem_plus_bands():
     """The whole point: published wRC+ is a wider distribution than HEM+, so it
-    must NOT inherit hemClass 88 / 112 / 130."""
-    js = MLBSTATS_JS.read_text(encoding="utf-8")
-    hem = re.search(r"function hemClass\(v\)\s*\{(.*?)\n  \}", js, re.S).group(1)
-    hem_breaks = [int(x) for x in re.findall(r">= (\d+)", hem)]
-    assert hem_breaks == [130, 112, 88]
+    must NOT inherit the ratio ladder's 88 / 112 / 130. Those three are still
+    boundaries on the ratio ladder and still carry their tier names."""
+    ratio = _ladder("ratio")
+    hem_breaks = [130, 112, 88]
+    assert set(hem_breaks) <= set(ratio), ratio
+    assert [ratio.index(x) for x in hem_breaks] == [0, 2, 4], ratio
     assert sorted(HE.WRC_PLUS_BANDS.values()) != sorted(hem_breaks)
 
 
 def test_frontend_mirrors_the_bands():
-    """assets/mlbstats.js wrcClass() is a mirror of WRC_PLUS_BANDS. This is the
-    only place the two can drift, so it is pinned."""
-    js = MLBSTATS_JS.read_text(encoding="utf-8")
-    m = re.search(r"function wrcClass\(v\)\s*\{(.*?)\n  \}", js, re.S)
-    assert m, "wrcClass() missing from assets/mlbstats.js"
-    breaks = [int(x) for x in re.findall(r">= (\d+)", m.group(1))]
+    """The frontend ladder is a SUPERSET of WRC_PLUS_BANDS: the value ruler adds
+    130 and 100 between the published cuts, and every published cut stays a
+    boundary carrying the tier name it carried before (145 elite, 120 good,
+    85 avg). This is the only place the two can drift, so it is pinned."""
+    wrc = _ladder("wrc")
     b = HE.WRC_PLUS_BANDS
-    assert breaks == [b["elite"], b["good"], b["low"]], (breaks, b)
+    assert set(b.values()) <= set(wrc), (wrc, b)
+    assert [wrc.index(b[k]) for k in ("elite", "good", "low")] == [0, 2, 4], wrc
+    assert "wrcClass" not in MLBSTATS_JS.read_text(encoding="utf-8")
     # and the artifact publishes the same numbers, so the payload is self-describing
     board = _board()
     if board.get("wrc_plus"):
@@ -319,15 +330,16 @@ def _render_board_with(wrc_values):
 
 
 def test_rendered_bands_match_the_chosen_thresholds():
-    """Straddle every boundary: 84/85 (low to avg), 119/120 (avg to good),
-    144/145 (good to elite). Each value must land in the band the measurement
-    put it in, in the real rendered table."""
+    """Straddle every boundary: 84/85, 119/120, 144/145. Each still CHANGES
+    tier at the published cut, in the real rendered table; the ruler only splits
+    the bands between them."""
     html = _render_board_with([84, 85, 119, 120, 144, 145])
-    cells = re.findall(r'<span class="rem-plus (rem-[a-z]+)" data-gl="wrc_plus">(\d+)</span>',
-                       html)
+    cells = re.findall(
+        r'<span class="rem-plus vt vt-fam-wrc (vt-[a-z]+)" data-gl="wrc_plus">(\d+)</span>',
+        html)
     got = {int(v): cls for cls, v in cells}
-    assert got == {84: "rem-low", 85: "rem-avg", 119: "rem-avg",
-                   120: "rem-good", 144: "rem-good", 145: "rem-elite"}, got
+    assert got == {84: "vt-below", 85: "vt-avg", 119: "vt-above",
+                   120: "vt-good", 144: "vt-great", 145: "vt-elite"}, got
 
 
 def test_rendered_column_is_present_and_blank_when_absent():

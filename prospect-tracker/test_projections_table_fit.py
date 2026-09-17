@@ -13,6 +13,11 @@ Age still readable once its column folds, 24px sort targets, and a detail
 line that paints exactly as many cells as the header (a colspan past the
 painted columns adds phantom columns to a fixed-layout table and crushes the
 Player column).
+
+Extended 2026-09-16 with the value ruler's legend chip, which is the one new
+block above the table: it has to sit inside the board column and stay on one
+line at 390px, because a wrapping chip pushes the table down and a chip wider
+than its column is the first thing that would scroll the page sideways.
 """
 from __future__ import annotations
 
@@ -57,7 +62,17 @@ _FIT = """() => {
   const wrap = document.querySelector('.proj-board-wrap');
   const heads = [...t.querySelectorAll('thead th')].filter(vis);
   const row = t.querySelector('tbody tr[data-key]');
+  const key = document.querySelector('.proj-board-main .tier-key');
+  const main = document.querySelector('.proj-board-main');
+  const kr = key && key.getBoundingClientRect();
   return {
+    keyPresent: !!key,
+    keyGl: !!(key && key.querySelector('[data-gl="value_ruler"]')),
+    keySteps: key ? key.querySelectorAll('span[class^="tk-"]').length : 0,
+    keyOver: kr ? kr.width - main.getBoundingClientRect().width : 0,
+    keyH: kr ? Math.round(kr.height) : 0,
+    keyControls: key ? key.querySelectorAll('a,button,input,select,textarea').length : 0,
+    keyStops: key ? key.querySelectorAll('[tabindex]:not([tabindex="-1"])').length : 0,
     pageScroll: de.scrollWidth - de.clientWidth,
     over: t.getBoundingClientRect().width - wrap.getBoundingClientRect().width,
     seasons: heads.filter(th => th.classList.contains('pc-y')).length,
@@ -103,6 +118,18 @@ def test_projections_table_fits_without_sideways_scroll(server, w, h):
         assert fit["seasons"] == 5, f"{w}px: {fit['seasons']} of 5 season columns painted"
         assert fit["minSortH"] >= 24, f"{w}px: a sort target is {fit['minSortH']}px tall"
         assert fit["clipped"] == 0, f"{w}px: a number is clipped in row 1"
+        # The legend chip: present, readable through the glossary hook, six
+        # steps, inside its column, one line (measured 15px).
+        assert fit["keyPresent"] and fit["keyGl"], f"{w}px: no legend chip"
+        assert fit["keySteps"] == 6, f"{w}px: {fit['keySteps']} legend steps"
+        assert fit["keyOver"] <= 0.5, f"{w}px: the legend chip is wider than its column"
+        assert fit["keyH"] <= 20, f"{w}px: the legend chip wraps ({fit['keyH']}px tall)"
+        # It carries no control of its own. Its ONE tab stop is the glossary
+        # term, which eephus-gl.js gives tabindex=0 to every [data-gl] on the
+        # site so a keyboard reader can open the definition: the chip is a
+        # glossary term like any other, not a new widget.
+        assert fit["keyControls"] == 0, f"{w}px: the legend chip carries a control"
+        assert fit["keyStops"] == 1, f"{w}px: {fit['keyStops']} tab stops in the chip"
         # Age is a column at a laptop and a sub-line fact on a phone; never neither.
         assert fit["ageCol"] != fit["subAge"], fit
         assert abs(page.evaluate(_STICK)) < 1, f"{w}px: the header does not stick"

@@ -61,7 +61,11 @@ import test_mlbstats_smoke as smoke
 
 MiniRacer = smoke.MiniRacer
 ROOT = Path(__file__).parent
-JS = (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
+# The value ruler (assets/eephus-tiers.js) owns every colour cut and the board
+# file calls it, so this harness evaluates it first - the page does the same with
+# a head tag right after the nav script, where deferred scripts run in order.
+TIERS_JS = (ROOT / "assets" / "eephus-tiers.js").read_text(encoding="utf-8")
+JS = TIERS_JS + (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
 
 # ---------------------------------------------------------------- the Standard views
 STANDARD = {

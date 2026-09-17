@@ -62,6 +62,12 @@ def _asset_ver(rel: str) -> str:
         return "1"
 _CSS_VER = _asset_ver("assets/site.css")
 _NAV_VER = _asset_ver("assets/eephus-nav.js")
+# The value ruler (assets/eephus-tiers.js): the ONE file that knows a colour cut.
+# Its tag rides the shared head block immediately after the nav script rather than
+# ACCOUNT_SCRIPTS, which is injected after {body}. Deferred scripts run in document
+# order, so the head position makes "the ruler is defined before a board renders"
+# deterministic rather than lucky.
+_TIERS_VER = _asset_ver("assets/eephus-tiers.js")
 _ACCT_VER = _asset_ver("assets/eephus-account.js")
 _UI_VER = _asset_ver("assets/eephus-ui.js")
 _ACCT_CSS_VER = _asset_ver("assets/eephus-account.css")
@@ -985,6 +991,7 @@ def page(title: str, active: str, body: str, description: str = "",
 {FAVICON_LINKS}
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
 <script src="/assets/eephus-nav.js?v={_NAV_VER}" defer></script>
+<script src="/assets/eephus-tiers.js?v={_TIERS_VER}" defer></script>
 {ACCOUNT_CSS_LINK}
 </head>
 <body class="eephus-page">

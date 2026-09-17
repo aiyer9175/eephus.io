@@ -393,7 +393,12 @@
     { key: "relief_upside", label: "Relief upside", cell: function (r) { return f1(r.relief_upside); } },
     { key: "best_whiff", label: "Putaway", term: "putaway_pitch", cell: function (r) { return fPct(r.best_whiff); } },
     { key: "proj_velo", label: "velo→RP", term: "role_velo_delta", cell: function (r) { return veloCell(r); } },
-    { key: "proj_relief_rem_plus", label: "proj REM+", term: "rem_plus", cell: function (r) { return r.proj_relief_rem_plus == null ? "-" : '<span class="rem-plus ' + remClass(r.proj_relief_rem_plus) + '">' + fInt(r.proj_relief_rem_plus) + "</span>"; } },
+    // The column is "proj REM+", so it takes the value ruler's `run` ladder, the
+    // one /mlbstats/ paints the same number with. This used to be a PRIVATE COPY
+    // of the board's banding function living in this file, which is how /pal/ and
+    // /mlbstats/ were free to drift on one metric; the copy is deleted rather than
+    // pinned by a test.
+    { key: "proj_relief_rem_plus", label: "proj REM+", term: "rem_plus", cell: function (r) { return r.proj_relief_rem_plus == null ? "-" : '<span class="rem-plus ' + EephusTiers.cls(r.proj_relief_rem_plus, "run") + '">' + fInt(r.proj_relief_rem_plus) + "</span>"; } },
   ];
   // Conversion-history columns: drives the sortable header + the sort accessors
   // (the row cells are still rendered by renderHistory's custom builders). Default
@@ -418,8 +423,6 @@
     var arrow = d == null ? "" : '<span class="proj-dim"> ' + (d > 0 ? "+" : "") + d.toFixed(1) + "</span>";
     return f1(r.fb_velo) + (r.proj_velo != null ? " &rarr; " + f1(r.proj_velo) : "") + arrow;
   }
-  function remClass(v) { var n = num(v); if (n == null) return "rem-avg"; if (n >= 120) return "rem-elite"; if (n >= 107) return "rem-good"; if (n >= 93) return "rem-avg"; return "rem-low"; }
-
   function sortRows(rows, cols) {
     var col = null; cols.forEach(function (c) { if (c.key === sortKey) col = c; });
     var out = rows.slice();

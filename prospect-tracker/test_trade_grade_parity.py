@@ -152,13 +152,40 @@ def test_the_board_tier_ladder_and_the_grade_ladder_share_their_floors():
     assert _platform_tier(8.0) == "mid" and _trade_value_grade(8.0) == "B-"
 
 
-def test_every_tier_the_colour_map_knows_is_reachable():
-    """_TB_TIER_COLORS keys and the tier ladder's labels are one vocabulary; a
-    label with no color falls through to a default and reads as "low"."""
-    cuts, tail = _ladder("_tmTierOf")
+def test_the_board_colours_come_from_the_value():
+    """The tier-name-to-colour map is gone (2026-09-16). It keyed five colours on
+    a tier NAME, one of which (--card-gold) was not a defined token, so the top
+    tier computed to the empty string in both themes; and the Grade chip beside
+    it was coloured off the LETTER by a second, different map, so the two columns
+    could tell different stories about the same player.
+
+    Both are painted from the VALUE now, through one call, on a ladder whose cuts
+    are grade cuts. _tmTierOf is deliberately untouched: it is shared with the
+    board's tier FILTER and mirrors _platform_tier, and colour must never ride
+    the function the filter and the server share."""
     js = JS.read_text(encoding="utf-8")
-    m = re.search(r"const\s+_TB_TIER_COLORS\s*=\s*\{(.*?)\};", js, re.S)
-    assert m, "_TB_TIER_COLORS not found"
-    known = set(re.findall(r"(\w+)\s*:", m.group(1)))
-    for lab in {lab for _, lab in cuts} | {tail}:
-        assert lab in known, f"tier {lab!r} has no entry in _TB_TIER_COLORS"
+    assert "_TB_TIER" + "_COLORS" not in js
+    assert "_tbGrade" + "Color" not in js
+    assert 'function _tbValTier(mm) { return EephusTiers.varOf(mm, "trade"); }' in js
+    # ONE colour per row, computed once from the VALUE and used by both cells,
+    # so the Surplus figure and the letter chip beside it cannot disagree. It
+    # goes through _tmValColor, which is _tbValTier plus the grey fallback the
+    # board painted before the ruler: a bare _tbValTier returns "" for an
+    # unpriced row and emits style="color:;".
+    body = js.split("pagedRows.forEach(", 1)[1][:2000]
+    assert "const tvCol = _tmValColor(tv);" in body
+    assert "const gradeCol" not in js, "two colour bindings for one row again"
+    row = js.split("pagedRows.forEach(", 1)[1]
+    chip = row.split("tm-grade-chip", 1)[1][:200]
+    assert "color:${tvCol};border-color:${tvCol};" in chip, chip[:120]
+    surplus = row.split('class="tm-num tm-surplus"', 1)[1][:120]
+    assert "color:${tvCol};" in surplus, surplus[:120]
+    assert 'function _tmValColor(mm) { return _tbValTier(mm) || "var(--text-secondary)"; }' in js
+    # and every trade cut is a grade cut, so the map is monotone by construction
+    ruler = (JS.parent / "eephus-tiers.js").read_text(encoding="utf-8")
+    cuts = re.search(r"trade:\s*\{ cuts: \[([^\]]+)\]", ruler).group(1)
+    trade = {float(x) for x in cuts.split(",")}
+    assert trade <= {float(thr) for thr, _ in _TRADE_GRADE_CUTS}, trade
+    # _tmTierOf still exists and still matches the server
+    grade_cuts, tail = _ladder("_tmTierOf")
+    assert tail == "minimal" and grade_cuts[0][1] == "elite"
