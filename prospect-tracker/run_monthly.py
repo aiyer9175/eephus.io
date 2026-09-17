@@ -233,6 +233,12 @@ SCHEDULED_EXPORTS = (
     # DEM+ board: the zero-rollup guard, and the framing tripwire that fires if
     # MLB's run line changes shape and the recovered framing residual goes to zero
     "defense_leaderboards", "defense_published_fielding",
+    # The eWAR board: a coverage refusal (a degenerate WAR read) leaves the
+    # previous file on disk and files here, and the empty-block guard on
+    # `players` / `teams` files under the same name. Watched because the page
+    # paints "being computed" on a missing payload, so a silent failure looks
+    # to a reader exactly like a board that has not been built yet.
+    "war_leaderboards",
     # /fantasy/ + /dfs/ + /betting/, all of which read the same probables feed
     "fantasy_schedule", "fantasy_teams_context", "fantasy_export",
     "dfs_schedule", "dfs_slate", "betting_export",
@@ -2871,6 +2877,24 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                              _export_defense_daily(log=log.info))
                 except Exception:
                     log.exception("daily: defense leaderboard refresh failed - continuing")
+
+        # --- 9e-pre0c. Refresh the eWAR board (display only) ----------------
+        # After the four boards above, which it reads for the `boards` field,
+        # and after the vintage snapshot for the same reason 9e-pre0b is: this
+        # board feeds no model, so it must not sit between the leaderboards the
+        # validation clock freezes and the snapshot that freezes them. It pays
+        # the same war_daily stint read 6b4j does (see there) every night it
+        # runs, and refuses rather than publishing when a season feed is dead.
+        with _step("9e-pre0c. Refresh eWAR Leaderboard (war_leaderboards.json)", log):
+            if chained:
+                log.info("daily: SKIP 9e-pre0c: monthly 6b4j just built the eWAR board (chained)")
+            else:
+                try:
+                    from war_board_export import export as _export_war_board_daily
+                    log.info("daily leaderboards: ewar board scored %s",
+                             _export_war_board_daily(log=log.info))
+                except Exception:
+                    log.exception("daily: ewar leaderboard refresh failed - continuing")
 
         # --- 9e-pre-wx. Forecast weather capture (DARK; ARMED 2026-09-11) ---
         # docs/diamond-betting.md section 5h. Captures the pregame forecast for
@@ -5637,6 +5661,30 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     _export_def_history(log=log.info)
             except Exception:
                 log.exception("defense leaderboards export failed - continuing")
+
+        # --- 6b4j. eWAR Leaderboard (war_leaderboards.json) -------------------
+        # The whole-player board the other five cannot draw: batting plus
+        # pitching eWAR summed BEFORE rounding, so a two-way player reads as one
+        # season and a swingman on neither pitcher board still appears, plus the
+        # club rollup on both bases (the roster today, and the club the eWAR was
+        # earned for). LAST of the /mlbstats/ steps on purpose: it reads the four
+        # boards 6b4 to 6b4i just wrote for the `boards` field, and it shares the
+        # lru-cached side map they built, so the eWAR sides cost nothing here.
+        # WHAT IT DOES COST: the Earned basis is the only thing on this page
+        # built from the war_daily STINT frames, so it reads one frame per side
+        # (shared with the name fallback, one read each). The batting one comes
+        # off pybaseball's disk cache; the pitching one is a live download of
+        # war_daily_pitch.txt, which pybaseball does not cache (war_source
+        # .stint_frame's ASYMMETRY note). A failed download is served from the
+        # last-good parquet and disclosed on the artifact, not hidden.
+        # Additive; never aborts.
+        with _step("6b4j. eWAR Leaderboard (war_leaderboards.json)", log):
+            try:
+                from war_board_export import export as _export_war_board
+                _war_n = _export_war_board(log=log.info)
+                log.info("ewar board: %d players scored", _war_n)
+            except Exception:
+                log.exception("ewar leaderboard export failed - continuing")
 
         # --- 6b5. Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion

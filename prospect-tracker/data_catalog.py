@@ -310,6 +310,18 @@ ARTIFACTS = (
                  "ratio scale."),
     },
     {
+        "file": "war_leaderboards.json", "group": "mlb",
+        "title": "eWAR leaderboard",
+        "what": ("Every player with a season eWAR cell, batting and pitching summed "
+                 "before rounding, with the club rollup on two bases: the roster "
+                 "today and the club the eWAR was earned for."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_war_board_export_contract.py",
+        "note": ("`war` is the only summed value we publish: the five player "
+                 "boards each carry ONE side, because the rate columns beside "
+                 "them divide by that side's denominator."),
+    },
+    {
         "file": "pal.json", "group": "mlb",
         "title": "Alchemy Lab conversions",
         "what": "Reliever to starter and starter to reliever fits, with pitch-mix change history.",

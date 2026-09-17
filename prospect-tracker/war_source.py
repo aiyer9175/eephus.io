@@ -426,7 +426,23 @@ def side_war_by_season(*, provider: str = DEFAULT_PROVIDER
 
     Batting-side values equal bWAR by construction today (fielding swap
     weight 0.0); only their float representation changes (the artifact
-    stores 2dp sums, the map sums raw stints)."""
+    stores 2dp sums, the map sums raw stints).
+
+    THE RECEIPT. The overlay records, per side, a receipt of the same shape
+    _ewar_frame writes (door "side_map"; see ewar_frame_diagnostics), so a
+    process that builds a board from this map alone (the reliever, starter
+    and hitter boards read nothing else) still reports a measured `stale` in
+    ewar_vintage() instead of null. Covered = a pre-overlay bWAR cell with an
+    artifact block carrying the side; revised = a covered cell whose bWAR
+    differs from the block's bwar_bat / bwar_pit by more than 0.005 (the
+    frame receipt's rule on the same stint sums). A frame receipt already
+    recorded in the process against the SAME artifact build stays; one taken
+    on another build (the nightly rewrote the file since) or an earlier
+    side-map receipt is replaced, so the stamp always names the artifact the
+    served map was overlaid with. A side whose bWAR frame was not read (the map
+    has no cell for it) records a receipt marked `measured: False` instead of a
+    count, and ewar_vintage then reports `stale` None with a reason naming that
+    side: absent, never a clean zero. Provider 'bwar' records nothing."""
     _require(provider)
     import mlb_player_export
     # pinned for both providers: _war_daily reads stint_frame on the default
@@ -436,6 +452,10 @@ def side_war_by_season(*, provider: str = DEFAULT_PROVIDER
         return out
     import ewar
     blob = _payload()
+    cells = {s: sum(1 for by in out.values() for c in by.values() if s in c)
+             for s in _SIDES}
+    rec_ = {s: {"covered": 0, "artifact": 0, "revised": {}, "delta": 0.0}
+            for s in _SIDES}
     for mid_s, seasons in (blob.get("players") or {}).items():
         mid = int(mid_s)
         for season_s in seasons:
@@ -444,10 +464,18 @@ def side_war_by_season(*, provider: str = DEFAULT_PROVIDER
             if rec is None:
                 continue
             cell = out.setdefault(mid, {}).setdefault(season, {})
-            for key, val in (("bat", rec.get("ewar_bat")),
-                             ("pit", rec.get("ewar_pit"))):
+            for key, val, bw in (("bat", rec.get("ewar_bat"), rec.get("bwar_bat")),
+                                 ("pit", rec.get("ewar_pit"), rec.get("bwar_pit"))):
                 if val is None:
                     continue
+                r = rec_[key]
+                r["artifact"] += 1
+                pre = cell.get(key)
+                if pre is not None:   # covered: the bWAR cell this block replaces
+                    r["covered"] += 1
+                    r["delta"] += float(val) - pre
+                    if bw is not None and abs(pre - float(bw)) > 0.005:
+                        r["revised"][season] = r["revised"].get(season, 0) + 1
                 if key not in cell and float(val) == 0.0:
                     continue          # the blank-row rule (docstring)
                 cell[key] = float(val)
@@ -455,6 +483,43 @@ def side_war_by_season(*, provider: str = DEFAULT_PROVIDER
                 out[mid].pop(season, None)
                 if not out[mid]:
                     out.pop(mid, None)
+    # the served numerator's build and the frozen series' build (_ewar_frame's)
+    label = blob.get("generated_at")
+    gen = blob.get("live_built_at") or label
+    for side in _SIDES:
+        prev = _EWAR_FRAME_DIAG.get(side) or {}
+        frame_here = (prev.get("door") not in (None, "side_map")
+                      and prev.get("artifact_generated_at") == gen
+                      and prev.get("artifact_label_build_at") == label)
+        if not cells[side]:
+            # that side's bWAR frame was not read, so there is nothing to
+            # measure on it. A receipt taken on an earlier build must not keep
+            # printing a measured-looking flag: it is replaced by a marker that
+            # says the side is unmeasured (absent, never a clean zero).
+            if frame_here:
+                continue              # a frame on this build did measure it
+            _EWAR_FRAME_DIAG[side] = {
+                "door": "side_map", "measured": False, "rows": 0,
+                "reason": (f"the {side} bWAR frame was not read, so this side's "
+                           "drift against the artifact is unmeasured"),
+                "artifact_generated_at": gen,
+                "artifact_label_build_at": label,
+            }
+            continue
+        if frame_here:
+            continue                  # a frame receipt on this same build stays
+        r = rec_[side]
+        _EWAR_FRAME_DIAG[side] = {
+            "door": "side_map", "rows": cells[side], "covered_rows": r["covered"],
+            "covered_player_seasons": r["covered"],
+            "artifact_player_seasons": r["artifact"],
+            "bwar_revised": sum(r["revised"].values()),
+            "bwar_revised_by_season": {str(k): r["revised"][k]
+                                       for k in sorted(r["revised"])},
+            "delta_sum": float(r["delta"]),
+            "artifact_generated_at": gen,
+            "artifact_label_build_at": label,
+        }
     return out
 
 
@@ -737,8 +802,8 @@ def ewar_vintage(as_of: str | None = None) -> dict:
     reads and which the nightly never moves). On a hand build the two are one
     stamp and the block says the artifact is hand-built. Both states are read
     from the artifact, never assumed: from the frame receipts first (the
-    artifact the served frames were transformed with in this process), from the
-    file when no frame has been read.
+    artifact the served frames, or the side map, were transformed with in this
+    process), from the file when neither has been read.
 
     The staleness is CURRENT-SEASON ONLY, and that distinction is the useful
     part: 0 of 855 2024 and 0 of 873 2025 pitcher-seasons drift against the
@@ -749,8 +814,9 @@ def ewar_vintage(as_of: str | None = None) -> dict:
 
     This REPORTS and never raises: taking the boards down over a disclosure
     trades one outage for another, so the export stays up and a test fails on
-    the drift instead. `bwar_revised` is empty until a frame has been read on
-    provider 'ewar_v2' in this process, which is stated rather than faked."""
+    the drift instead. `bwar_revised` is empty until a frame or the side map
+    (side_war_by_season, the boards' only WAR read) has been read on provider
+    'ewar_v2' in this process, which is stated rather than faked."""
     diag = ewar_frame_diagnostics()
     blob = None
     try:
@@ -777,18 +843,27 @@ def ewar_vintage(as_of: str | None = None) -> dict:
         hi = (blob.get("seasons") or [None, None])[-1]
         if hi is not None and int(hi) not in ewar_complete_at_build(blob):
             live = int(hi)
-    revised = {s: int((diag.get(s) or {}).get("bwar_revised") or 0) for s in _SIDES}
-    covered = {s: int((diag.get(s) or {}).get("covered_player_seasons") or 0)
-               for s in _SIDES}
+    # a side is MEASURED when a receipt for it counted coverage; a side map that
+    # found no cell for it leaves a marker instead (side_war_by_season), and an
+    # unmeasured side reports None rather than a zero it never measured
+    measured = {s: bool(diag.get(s)) and (diag[s].get("measured") is not False)
+                for s in _SIDES}
+    revised = {s: (int((diag.get(s) or {}).get("bwar_revised") or 0)
+                   if measured[s] else None) for s in _SIDES}
+    covered = {s: (int((diag.get(s) or {}).get("covered_player_seasons") or 0)
+                   if measured[s] else None) for s in _SIDES}
     by_season: dict[int, int] = {}
     for s in _SIDES:
+        if not measured[s]:
+            continue
         for yr, n in ((diag.get(s) or {}).get("bwar_revised_by_season") or {}).items():
             by_season[int(yr)] = by_season.get(int(yr), 0) + int(n)
     # absent, not zero, when no frame has been read (the same rule as `stale`)
     live_rev = by_season.get(int(live), 0) if (diag and live is not None) else None
     frozen_rev = (sum(n for yr, n in by_season.items() if live is None or yr != int(live))
                   if diag else None)
-    worst = max(revised.values()) if revised else 0
+    _counts = [n for n in revised.values() if n is not None]
+    worst = max(_counts) if _counts else 0
     out = {
         "artifact_generated_at": gen,
         "label_build_at": label,
@@ -798,7 +873,7 @@ def ewar_vintage(as_of: str | None = None) -> dict:
         "bwar_revised_frozen": frozen_rev,
         "covered_player_seasons": covered,
         "threshold": EWAR_STALE_REVISED_MAX,
-        "frames_read": bool(diag),
+        "frames_read": any(measured.values()),
         "build_command": EWAR_NIGHTLY_CMD if nightly else EWAR_BUILD_CMD,
         "rebuilds_on_a_schedule": nightly,
         "cadence": {"mode": cad.get("mode") or "hand", "live_season": live,
@@ -811,10 +886,20 @@ def ewar_vintage(as_of: str | None = None) -> dict:
                   "staleness in the WAR numerator while the denominator on the same row "
                   "is current.")),
     }
+    unmeasured = [s for s in _SIDES if not measured[s]]
     if not diag:
         out["stale"] = None
         out["reason"] = ("no eWAR frame has been read in this process, so the "
                          "drift count is unavailable rather than zero")
+    elif unmeasured and worst <= EWAR_STALE_REVISED_MAX:
+        # one side measured clean is not the board's answer while the other side
+        # was never read: say which side is missing rather than serve a bool for
+        # it. Measured drift past the threshold still fires below.
+        out["stale"] = None
+        out["reason"] = ("no eWAR frame has been read for the "
+                         + " and ".join(unmeasured)
+                         + " side in this process, so its drift count is "
+                           "unavailable rather than zero")
     else:
         out["stale"] = worst > EWAR_STALE_REVISED_MAX
         if out["stale"]:
@@ -827,15 +912,24 @@ def ewar_vintage(as_of: str | None = None) -> dict:
     return out
 
 
-#: {side: receipt} for the last _ewar_frame call per side in this process.
+#: {side: receipt} for the last eWAR read per side in this process: an
+#: _ewar_frame call (door "stint" / "condensed") or side_war_by_season's
+#: overlay (door "side_map"), which yields to a frame receipt on the same build.
 _EWAR_FRAME_DIAG: dict[str, dict] = {}
 
 
 def ewar_frame_diagnostics() -> dict[str, dict]:
     """Receipts from the last ewar_v2 frame transform per side:
-      rows                     frame rows
+      door                     "stint" / "condensed" (a frame transform) or
+                               "side_map" (side_war_by_season's overlay, which
+                               yields to a frame receipt on the same build)
+      rows                     frame rows (side_map: the bWAR map's cells
+                               carrying the side, one per player-season)
       covered_rows             rows whose (mlb_ID, year_ID) has an artifact
-                               block with this side
+                               block with this side: frame rows at the frame
+                               doors (a player-season can hold several stints),
+                               player-seasons at the side_map door, where the
+                               map's unit is already the player-season
       covered_player_seasons   distinct such (mlb_ID, year_ID)
       artifact_player_seasons  blocks with this side in the artifact
       bwar_revised             covered player-seasons whose frame bWAR sum
@@ -849,7 +943,11 @@ def ewar_frame_diagnostics() -> dict[str, dict]:
       artifact_generated_at    the served numerator's build: live_built_at on
                                a nightly artifact, generated_at on a hand one
       artifact_label_build_at  generated_at (the frozen series' build)
-    Empty until a frame has been read on provider 'ewar_v2'."""
+      measured                 present and False only on the side_map marker
+                               for a side whose bWAR frame was not read: that
+                               side carries no counts and ewar_vintage reports
+                               `stale` None with a reason naming it
+    Empty until a frame or the side map has been read on provider 'ewar_v2'."""
     return {k: dict(v) for k, v in _EWAR_FRAME_DIAG.items()}
 
 

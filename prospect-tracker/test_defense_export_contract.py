@@ -126,12 +126,26 @@ def test_qualified_split_partitions_the_board():
         assert r["qualified"] == (r["inn"] >= dem_plus.QUALIFY_MIN_INN)
 
 
-def test_no_war_column_and_so_no_ewar_vintage():
-    """ewar_vintage dates an eWAR numerator; this board carries none, and must
-    carry the block if and only if a WAR column ever appears."""
+def test_ewar_vintage_iff_a_war_column():
+    """ewar_vintage dates an eWAR numerator, so the board carries the block if
+    and only if it carries a WAR column (E4 / owner decision O4 put one there;
+    the assertion is the one that held when it had none).
+
+    With the column, the frame sentence moves too: frame.ewar_note names the
+    fielding frame INSIDE eWAR, read from data/ewar.json, and replaces
+    frame.not_ewar, which said eWAR was not on this board. The page types no
+    frame of its own, so a served file with the column and no note leaves the
+    reader with two fielding frames on one row and nothing saying so."""
     d = _doc()
     has_war = any(k.startswith(("war", "ewar")) for r in d["fielders"] for k in r)
     assert ("ewar_vintage" in d) == has_war
+    frame = d.get("frame") or {}
+    if has_war:
+        assert frame.get("ewar_note"), (
+            "the board serves an eWAR column with no frame sentence for it: "
+            "re-run defense_export")
+        assert "not_ewar" not in frame, (
+            "frame.not_ewar says eWAR is not on this board, and it is")
 
 
 def test_alignment_slots_are_valid_positions():

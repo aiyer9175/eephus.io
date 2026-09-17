@@ -31,7 +31,9 @@ WHAT IS HELD
     side total to 1e-9; league sum == bWAR league sum + sum of deltas;
     WAR_bwar preserved; every other column untouched; IPouts / PA split
   * condensed_frame: same replacement, equal split without an exposure column
-  * side_war_by_season: artifact overlay, bWAR fill, superset of keys
+  * side_war_by_season: artifact overlay, bWAR fill, superset of keys, and a
+    side_map receipt equal to the frame receipt, so ewar_vintage()["stale"]
+    is a bool on every board that reads WAR through the side map
   * provider='bwar' byte-exact vs stats over the raw frames
   * coverage_report shape; DataUnavailable names the build command;
     mlbam_for resolution order; the frame pin restores itself
@@ -444,6 +446,186 @@ def test_side_war_by_season_overlays_the_artifact_and_keeps_bwar_elsewhere():
     assert 694973 not in base or "bat" not in base[694973].get(2024, {})
 
 
+# --- the side-map receipt (MLB Stats overhaul E2, wave 0) --------------------
+
+_RECEIPT_KEYS = ("covered_player_seasons", "artifact_player_seasons", "bwar_revised",
+                 "bwar_revised_by_season", "artifact_generated_at",
+                 "artifact_label_build_at")
+
+
+def test_the_side_map_records_a_receipt_so_stale_is_a_bool():
+    """The reliever, starter and hitter boards read WAR only through
+    side_war_by_season, which used to record nothing, so every one of them
+    served ewar_vintage()["stale"] = null: a missed nightly could not be
+    disclosed on the boards that print eWAR. The overlay now writes a receipt of
+    the frame's shape and the flag is measured."""
+    with _world():
+        war_source.side_war_by_season()
+        diag = war_source.ewar_frame_diagnostics()
+        v = war_source.ewar_vintage(as_of="2026-09-11")
+    assert set(diag) == {"bat", "pit"}
+    pit, bat = diag["pit"], diag["bat"]
+    assert pit["door"] == bat["door"] == "side_map"
+    # pit: Ohtani 2023, Skenes 2024, two_stint 2024 covered (777777 has no bWAR
+    # cell, Skenes 2025 no block); 4 blocks carry the side
+    assert pit["rows"] == 4 and pit["covered_player_seasons"] == 3
+    assert pit["covered_rows"] == 3 and pit["artifact_player_seasons"] == 4
+    assert pit["bwar_revised"] == 0 and pit["bwar_revised_by_season"] == {}
+    assert abs(pit["delta_sum"] - (-0.6 + 0.6 + 0.4)) < 1e-9
+    # bat: Trout 2024 and Ohtani 2023 covered; Skenes' blank line is no cell
+    assert bat["rows"] == 3 and bat["covered_player_seasons"] == 2
+    assert bat["artifact_player_seasons"] == 4
+    assert pit["artifact_generated_at"] == "2026-09-03T00:00:00"
+    assert pit["artifact_label_build_at"] == "2026-09-03T00:00:00"
+    assert v["frames_read"] is True and v["stale"] is False
+    assert v["as_of"] == "2026-09-11"
+    assert v["covered_player_seasons"] == {"bat": 2, "pit": 3}
+
+
+def test_the_side_map_receipt_matches_the_frame_receipt():
+    """One rule, two doors: over the same frames and artifact, the side map and
+    the stint transform report the same coverage, drift and build stamps."""
+    with _world():
+        war_source.stint_frame("pit")
+        war_source.stint_frame("bat")
+        frame = war_source.ewar_frame_diagnostics()
+        war_source._EWAR_FRAME_DIAG.clear()
+        war_source.side_war_by_season()
+        side = war_source.ewar_frame_diagnostics()
+    for s in ("bat", "pit"):
+        for k in _RECEIPT_KEYS:
+            assert side[s][k] == frame[s][k], (s, k, side[s][k], frame[s][k])
+        assert abs(side[s]["delta_sum"] - frame[s]["delta_sum"]) < 1e-9, s
+
+
+def test_the_side_map_receipt_counts_a_revised_bwar_row_and_trips_stale(monkeypatch):
+    """A covered cell whose bWAR no longer matches the block's bwar_pit is
+    counted per season, and past the threshold the boards read stale."""
+    moved = json.loads(json.dumps(_EWAR))
+    moved["players"]["660271"]["2023"]["bwp"] = 3.0      # the frame still says 3.8
+    with _world(moved):
+        out = war_source.side_war_by_season()
+        diag = war_source.ewar_frame_diagnostics()["pit"]
+        monkeypatch.setattr(war_source, "EWAR_STALE_REVISED_MAX", 0)
+        v = war_source.ewar_vintage(as_of="2026-09-11")
+    assert out[660271][2023]["pit"] == 3.2, "the artifact's eWAR is served either way"
+    assert diag["bwar_revised"] == 1 and diag["bwar_revised_by_season"] == {"2023": 1}
+    assert v["stale"] is True and "warning" in v
+
+
+def test_a_frame_receipt_already_recorded_stays():
+    with _world():
+        war_source.stint_frame("pit")
+        war_source.side_war_by_season()
+        diag = war_source.ewar_frame_diagnostics()
+    assert diag["pit"]["door"] == "stint"
+    assert diag["bat"]["door"] == "side_map"
+
+
+def test_a_receipt_from_another_build_is_replaced():
+    """A receipt names the artifact the served map was overlaid with. One left
+    in the process by an earlier build (the nightly rewrote data/ewar.json
+    since), frame or side map, must not keep printing the old stamp."""
+    nightly = json.loads(json.dumps(_EWAR))
+    nightly["live_built_at"] = "2026-09-11T03:00:00"
+    with _world():
+        war_source.stint_frame("pit")              # a frame receipt on the hand build
+        war_source.side_war_by_season()            # bat: a side-map receipt, same build
+        import ewar as _e
+        _e._CACHE = nightly                        # the nightly lands mid-process
+        war_source.side_war_by_season()
+        diag = war_source.ewar_frame_diagnostics()
+    for s in ("bat", "pit"):
+        assert diag[s]["door"] == "side_map", s
+        assert diag[s]["artifact_generated_at"] == "2026-09-11T03:00:00", s
+        assert diag[s]["artifact_label_build_at"] == "2026-09-03T00:00:00", s
+
+
+def test_the_bwar_side_map_and_an_unread_side_record_nothing():
+    """Provider 'bwar' is not an eWAR read, and a side whose bWAR frame failed
+    with no last-good copy has nothing to measure: absent, never a clean zero.
+    The unread side is MARKED rather than skipped, so the boards report `stale`
+    None naming it instead of a measured-looking False for a side no frame
+    reached."""
+    with _world():
+        war_source.side_war_by_season(provider="bwar")
+        assert war_source.ewar_frame_diagnostics() == {}
+        v = war_source.ewar_vintage()
+        assert v["stale"] is None and v["frames_read"] is False
+
+    with _world():                      # a fresh world: no last-good copy on disk
+        import pybaseball as pyb
+
+        def _down(return_all=False):
+            raise ConnectionError("B-Ref down")
+        pyb.bwar_pitch = _down
+        out = war_source.side_war_by_season()
+        diag = war_source.ewar_frame_diagnostics()
+        v = war_source.ewar_vintage(as_of="2026-09-16")
+    assert out[777777][2024] == {"pit": 3.0}, "the overlay itself still runs"
+    assert diag["bat"]["door"] == "side_map" and diag["bat"].get("measured") is not False
+    assert diag["pit"]["measured"] is False and diag["pit"]["rows"] == 0
+    assert "covered_player_seasons" not in diag["pit"], "no count it never took"
+    assert v["stale"] is None and "pit" in v["reason"]
+    assert v["covered_player_seasons"] == {"bat": 2, "pit": None}
+    assert v["bwar_revised"]["pit"] is None, "absent, never a clean zero"
+    assert v["frames_read"] is True, "the bat side was read"
+
+
+def test_an_unread_side_drops_a_receipt_left_by_an_earlier_build():
+    """The marker REPLACES a receipt taken on a build the served map was not
+    overlaid with, so a stamp from before the nightly cannot keep printing a
+    measured flag for a side that is now unreadable."""
+    with _world():                      # a fresh world: no last-good pit copy
+        import pybaseball as pyb
+        war_source._EWAR_FRAME_DIAG["pit"] = {
+            "door": "stint", "rows": 9, "covered_rows": 9,
+            "covered_player_seasons": 9, "artifact_player_seasons": 9,
+            "bwar_revised": 0, "bwar_revised_by_season": {}, "delta_sum": 0.0,
+            "artifact_generated_at": "2026-08-01T00:00:00",
+            "artifact_label_build_at": "2026-08-01T00:00:00"}
+
+        def _down(return_all=False):
+            raise ConnectionError("B-Ref down")
+        pyb.bwar_pitch = _down
+        war_source.side_war_by_season()
+        diag = war_source.ewar_frame_diagnostics()
+        v = war_source.ewar_vintage()
+    assert diag["pit"]["measured"] is False, "the old receipt is gone"
+    assert diag["pit"]["artifact_generated_at"] == "2026-09-03T00:00:00"
+    assert v["stale"] is None and "pit" in v["reason"]
+
+
+def test_the_side_map_receipt_counts_a_revision_only_past_its_threshold():
+    """The revised rule is a THRESHOLD, not equality: 0.005 is the frame
+    receipt's own tolerance for the 2dp sums the artifact stores, so a block
+    that rounds differently is not read as a B-Ref restatement."""
+    near = json.loads(json.dumps(_EWAR))
+    near["players"]["660271"]["2023"]["bwp"] = 3.804      # the frame says 3.8
+    with _world(near):
+        war_source.side_war_by_season()
+        assert war_source.ewar_frame_diagnostics()["pit"]["bwar_revised"] == 0
+    past = json.loads(json.dumps(_EWAR))
+    past["players"]["660271"]["2023"]["bwp"] = 3.79       # 0.01 off: a revision
+    with _world(past):
+        war_source.side_war_by_season()
+        assert war_source.ewar_frame_diagnostics()["pit"]["bwar_revised"] == 1
+
+
+def test_the_three_boards_pass_their_as_of_and_report_a_measured_flag():
+    """What the reliever, starter and hitter payloads carry after their WAR
+    read: the payload's as_of, and a bool `stale` (was null on all three)."""
+    import bullpen_export
+    import hitter_export
+    import starter_export
+    for mod in (bullpen_export, starter_export, hitter_export):
+        with _world():
+            bullpen_export._side_war_by_season()
+            v = mod._war_source_vintage(as_of="2026-09-11")
+        assert v["as_of"] == "2026-09-11", mod.__name__
+        assert v["stale"] is False and v["frames_read"] is True, mod.__name__
+
+
 # --------------------------------------------------------------------------- #
 # the table, the coverage report, the name index
 # --------------------------------------------------------------------------- #
@@ -558,9 +740,16 @@ def test_the_vintage_block_reports_absence_rather_than_zero():
     assert v["rebuilds_on_a_schedule"] is nightly, (
         "the flag, the artifact's cadence block and the glossary sentence move together")
     assert v["build_command"] == (ws.EWAR_NIGHTLY_CMD if nightly else ws.EWAR_BUILD_CMD)
+    unmeasured = [s for s, n in v["covered_player_seasons"].items() if n is None]
     if not v["frames_read"]:
         assert v["stale"] is None and "reason" in v, (
             "with no frame read the drift is UNAVAILABLE, not zero")
+        assert unmeasured == list(ws._SIDES), "neither side was measured"
+    elif unmeasured:
+        assert v["stale"] is None and "reason" in v, (
+            "with one side unread the drift is UNAVAILABLE, not zero")
+        for s in unmeasured:
+            assert s in v["reason"], "the reason names the side it could not measure"
     else:
         assert isinstance(v["stale"], bool)
 

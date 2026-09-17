@@ -33,6 +33,13 @@ conversion, fit.inn_per_650pa; DH excluded. The site computes DEM+ and that
 term; every other run column is published. NETWORK-GATED + BEST-EFFORT: nothing
 fetches at import, and a failed pull returns 0 without writing.
 
+TWO FIELDING FRAMES ON ONE ROW. The board also carries `war`, WHOLE-PLAYER eWAR
+(batting plus pitching, summed unrounded), and the fielding inside eWAR is not
+the published fielding beside it. The sentence that says which frame it is
+rides in frame.ewar_note, read from data/ewar.json (_ewar_fielding_note), so
+the page never types a frame and the eWAR v3 switch rewrites it with no code
+change here.
+
 Run: `python defense_export.py [season]`  or  `python defense_export.py history`.
 """
 from __future__ import annotations
@@ -48,7 +55,8 @@ from typing import Optional
 import dem_plus
 from dem_plus import Fielder, DEF_POSITIONS
 from bullpen_export import (_team_abbrev_map, guard_nonempty_block, team_basis_meta,
-                            basis_rows_for, _active_mlbam_ids, _ingest_red)
+                            basis_rows_for, _active_mlbam_ids, _ingest_red,
+                            HISTORY_JOIN_REFUSAL_NOTE)
 
 _log = logging.getLogger(__name__)
 
@@ -359,6 +367,135 @@ def _join_dem_plus_3yr(rows: list[dict]) -> dict:
     return meta
 
 
+def _war_source_vintage(as_of: Optional[str] = None) -> dict:
+    """The served eWAR build stamp, or a stated absence. Never raises: a board
+    that cannot report its vintage must still render (audit F10-02). `as_of` is
+    the payload's own as_of, so the block dates the drift it measured. This
+    The CALLER decides whether to ship it, on the rows it is about to serve:
+    the contract in test_defense_export_contract is an iff, so a refused join
+    (no `war` on any fielder) must ship no stamp either."""
+    try:
+        import war_source as _ws
+        return _ws.ewar_vintage(as_of=as_of)
+    except Exception as e:   # noqa: BLE001 - reporting must not take a board down
+        return {"artifact_generated_at": None, "stale": None,
+                "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}
+
+
+def _ewar_fielding_note() -> str:
+    """The ONE sentence the Defense board's eWAR title says about the fielding
+    frame inside eWAR, READ FROM THE ARTIFACT rather than typed anywhere.
+
+    Two fielding frames sit on one row here: Fld, Frm and DEM+ are FanGraphs'
+    published fielding, while the eWAR column's fielding is whatever
+    data/ewar.json was built with. The reader has to be told which, and the page
+    must never be the thing that says it, because the eWAR v3 fWAR-frame switch
+    moves that answer with no page change: the builder writes
+    meta.fielding_source and this sentence follows it, verbatim when it reads as
+    a sentence and set in one when it is a bare token (the artifact's per-block
+    vocabulary for the same field is "bref", not a sentence).
+
+    Until it does, the configuration states it: fielding_blend_w is the weight
+    on the Statcast read over the innings it covers (ewar.py; 0.0 is the shipped
+    v2 value and means B-Ref's rfield rides through unchanged). An unreadable
+    artifact says so rather than guessing a frame."""
+    try:
+        import ewar as _ewar   # noqa: PLC0415 - optional, artifact may be absent
+        meta = (_ewar.load() or {}).get("meta") or {}
+    except Exception:   # noqa: BLE001 - absence is a reportable state
+        meta = {}
+    src_ = meta.get("fielding_source")
+    if isinstance(src_, str) and src_.strip():
+        # THE FIELD IS NOT PROMISED TO BE A SENTENCE. Every one of the
+        # player-season blocks in data/ewar.json writes its own `fs` as a bare
+        # token ("bref"), so a v3 builder that lifts the same vocabulary to meta
+        # level would put "bref" into a reader-facing column title. A sentence
+        # rides verbatim; anything else is set in one, and the page still types
+        # nothing. The wrapper claims no frame of its own, because a v3 whose
+        # fielding IS the published frame would make "a different frame" false.
+        sent = src_.strip()
+        if sent[:1].isupper() and sent.endswith("."):
+            return sent
+        return "Its fielding comes from " + sent + "."
+    w = meta.get("fielding_blend_w")
+    try:
+        w = None if w is None else float(w)
+    except (TypeError, ValueError):
+        w = None
+    if w is None:
+        return ("The frame behind eWAR's fielding could not be read from "
+                "data/ewar.json this run.")
+    if w == 0.0:
+        return ("Its fielding is Baseball-Reference's (fielding_blend_w 0.0), a "
+                "different frame from Fld and DEM+.")
+    return (f"Its fielding blends the Statcast read at fielding_blend_w {w:g} "
+            f"with Baseball-Reference's over the innings Statcast covers, a "
+            f"different frame from Fld and DEM+.")
+
+
+def _stamp_war(rows: list[dict], season: int) -> dict:
+    """WHOLE-PLAYER eWAR on the fielder rows (E4, owner decision O4): the
+    batting side plus the pitching side of the same player-season, summed
+    UNROUNDED and rounded once to the 1dp the column prints.
+
+    Whole-player is the honest read of a fielder's name on a board that already
+    carries HEM+ beside DEM+: it is the same number the eWAR section prints for
+    him, not a fielding-only slice (eWAR has no separable fielding win, and the
+    fielding runs inside it are on a different frame from Fld: see
+    _ewar_fielding_note, whose sentence rides in the column's title).
+
+    Both sides are optional and a missing side is not a zero: a position player
+    with no pitching cell serves his batting side alone, and a row the eWAR
+    artifact does not cover at all gets NO field.
+
+    A DEGENERATE WAR READ STAMPS NOTHING. Coverage below
+    bullpen_export.WAR_RATE_MIN_COVERAGE of the rows carrying an id is the
+    degenerate fetch score_war_rate refuses on, and this refuses with it: a
+    dozen fabricated-looking numbers beside 640 blanks is the failure that guard
+    exists to stop. Never raises: a failed or refused read leaves every row blank
+    and says so in the returned meta, and the caller then ships no build stamp
+    (the payload's iff)."""
+    meta = {"n_stamped": 0, "n_rows": len(rows), "n_with_id": 0,
+            "n_covered": 0, "n_two_sided": 0, "available": False,
+            "basis": "bat + pit, summed unrounded and rounded once"}
+    try:
+        from bullpen_export import WAR_RATE_MIN_COVERAGE, _side_war_by_season
+        war_by = _side_war_by_season()
+    except Exception as e:   # noqa: BLE001 - best-effort join, never aborts a board
+        _log.warning("defense eWAR unavailable (WAR fetch failed: %s)", e)
+        meta["refused"] = f"WAR fetch failed: {e}"
+        return meta
+    cells, n_pool = [], 0
+    for r in rows:
+        mid = r.get("mlbam")
+        if mid is None:
+            continue
+        n_pool += 1
+        try:
+            cell = (war_by.get(int(mid)) or {}).get(int(season)) or {}
+        except (TypeError, ValueError):   # a non-numeric id is one blank row
+            continue
+        sides = [cell[k] for k in ("bat", "pit") if cell.get(k) is not None]
+        if not sides:
+            continue                      # absent, never zero
+        cells.append((r, sides))
+    meta["n_with_id"] = n_pool
+    meta["n_covered"] = len(cells)
+    if not n_pool or len(cells) < WAR_RATE_MIN_COVERAGE * n_pool:
+        _log.warning("defense eWAR REFUSED: %d of %d fielders covered for %s",
+                     len(cells), n_pool, season)
+        meta["refused"] = (f"eWAR covered {len(cells)} of {n_pool} fielders "
+                           f"(floor {WAR_RATE_MIN_COVERAGE:.0%})")
+        return meta
+    for r, sides in cells:
+        v = round(sum(float(x) for x in sides), 1)
+        r["war"] = 0.0 if v == 0 else v
+        meta["n_stamped"] += 1
+        meta["n_two_sided"] += int(len(sides) == 2)
+    meta["available"] = True
+    return meta
+
+
 def _frame_meta() -> dict:
     return {
         "basis": "FanGraphs' served fielding runs, read verbatim from MLB StatsAPI sabermetrics",
@@ -367,8 +504,10 @@ def _frame_meta() -> dict:
         "framing_derivation": ("rar minus batting, baseRunning, fielding, positional, "
                                "wLeague and replacement; matches FanGraphs CFraming "
                                "exactly on the seasons checked"),
-        "not_ewar": ("eWAR fielding is Baseball-Reference DRS (fielding_blend_w 0.0), a "
-                     "different frame; it is not on this board"),
+        # THE eWAR COLUMN'S FRAME, in the payload because the page must never
+        # type one (it reads frame.ewar_note into the column title). Replaces
+        # not_ewar, which said eWAR was not on this board: it is now (O4).
+        "ewar_note": _ewar_fielding_note(),
         "claim": ("parity with the fWAR fielding frame, framing included; DEM+ is a "
                   "steadier read of that published series, not a better measure of it"),
         "def_basis": ("Def = FanGraphs fielding and framing + our positional ladder "
@@ -462,6 +601,21 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     pub, inn = src["published"], src["innings"]
     n_hem = _join_hem_plus(scored["fielders"], season)
     d3 = _join_dem_plus_3yr(scored["fielders"])
+    war_meta = _stamp_war(scored["fielders"], season)
+    # THE BUILD STAMP SHIPS IFF THE COLUMN DOES (the contract in
+    # test_defense_export_contract, in both directions). Read off the SERVED
+    # rows, the same scan the test makes, so a refused join ships a board with
+    # no eWAR column and no stamp dating one, and the refusal stays readable in
+    # sources.ewar_join.
+    has_war = any(k.startswith(("war", "ewar"))
+                  for r in scored["fielders"] for k in r)
+    ewar_stamp = ({"ewar_vintage": _war_source_vintage(as_of=today)}
+                  if has_war else {})
+    if war_meta.get("n_stamped"):
+        log(f"  defense: eWAR (whole player) joined for {war_meta['n_stamped']}"
+            f"/{war_meta['n_rows']} fielders")
+    elif war_meta.get("refused"):
+        log(f"  defense: eWAR refused ({war_meta['refused']})")
     teams, rollup_meta = guard_nonempty_block(
         scored["teams"], out_path, key="teams", source="defense_leaderboards",
         label="defense", log=log)
@@ -500,6 +654,11 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                      "his framing.")},
         "hem_plus_join": {"n_stamped": n_hem,
                           "note": "HEM+ joined from hitter_leaderboards.json for the glove-versus-bat chart"},
+        "ewar_join": war_meta,
+        # WHICH BUILD the eWAR column on these rows comes from, and whether it
+        # has fallen behind the frame under it (audit F10-02 / F11-01). Present
+        # IFF the column is (test_defense_export_contract).
+        **ewar_stamp,
         "team_basis": team_basis_meta(basis_rows_for(scored["fielders"], res["basis_rows"]),
                                       label=f"fielding {season}"),
         "roster_filter": _roster_filter_meta(scored["teams"], active_ids),
@@ -527,11 +686,20 @@ _HISTORY_FIELDS = ("mlbam", "name", "team", "pos", "inn", "dem_plus", "tier",
 
 def export_history(seasons=None, *, out_path: Optional[Path] = None,
                    write: bool = True, log=print) -> dict:
-    """data/defense_history.json: per-season qualified-fielder boards."""
+    """data/defense_history.json: per-season qualified-fielder boards.
+
+    Each row also carries `war`, that season's WHOLE-PLAYER eWAR (batting plus
+    pitching, summed unrounded and rounded once), joined per (player, season) by
+    the same _stamp_war the live board uses (E6, owner decision O5). The frame
+    sentence that the two fielding frames on a row need is built on the LIVE
+    payload (`frame.ewar_note`, E4) and the page hands that same block to the
+    history render, so a past season is read under the sentence too and this
+    payload does not restate it."""
     seasons = list(seasons or HISTORY_SEASONS)
     out_path = out_path or HISTORY_PATH
     hist = {}
     basis_rows: list[dict] = []
+    ewar_join: dict[str, dict] = {}
     for y in seasons:
         log(f"  defense-history: {y}...")
         res = score_season(y, log=log, file_red=False)
@@ -542,6 +710,30 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         basis_rows.extend(basis_rows_for(qual, res["basis_rows"]))
         board = [{k: r.get(k) for k in _HISTORY_FIELDS if r.get(k) is not None}
                  for r in qual]
+        # Whole-player eWAR per (player, season), E6, by the live board's own
+        # rule: both sides summed UNROUNDED and rounded once, absent when the
+        # artifact covers neither side.
+        #
+        # ONE DISCLOSURE SHAPE ACROSS THE HISTORY PAYLOADS. _stamp_war serves the
+        # live board too and reports what that board needs; a reader walking
+        # ewar_join[<season>] over the four history files must not meet a
+        # different set of keys on the fourth, so the whole-player join names its
+        # season and its side here and keeps its own two extras beside them.
+        raw = _stamp_war(board, y)
+        war_meta = {"season": int(y), "side": "bat + pit",
+                    "n_rows": raw["n_rows"], "n_with_id": raw["n_with_id"],
+                    "n_covered": raw["n_covered"], "n_stamped": raw["n_stamped"],
+                    "available": raw.get("available", False),
+                    "n_two_sided": raw["n_two_sided"], "basis": raw["basis"]}
+        if raw.get("refused"):
+            war_meta["refused"] = raw["refused"]
+            war_meta["note"] = HISTORY_JOIN_REFUSAL_NOTE
+        ewar_join[str(y)] = war_meta
+        if war_meta.get("refused"):
+            log(f"  defense-history: {y} eWAR refused ({war_meta['refused']})")
+        else:
+            log(f"  defense-history: {y} eWAR joined for "
+                f"{war_meta['n_stamped']}/{war_meta['n_with_id']} fielders")
         board.sort(key=lambda r: (r.get("dem_plus") or -999), reverse=True)
         hist[str(y)] = {"season": y, "n_qualified": len(board), "fielders": board,
                         "framing_available": res["framing"]["framing_available"]}
@@ -556,6 +748,14 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
                  "applied to every season."),
         "positional": _positional_meta(load_ladder()),
         "team_basis": team_basis_meta(basis_rows, label="defense history", scope="history"),
+        # Season by season, including a refusal: see bullpen_export.
+        "ewar_join": ewar_join,
+        # The payload receipt, iff the column: see bullpen_export.export_history.
+        # The same iff the live payload holds to, and the same reading: on a
+        # past season the counter that moves is `bwar_revised_frozen`.
+        **({"ewar_vintage": _war_source_vintage(as_of=date.today().isoformat())}
+           if any("war" in r for y in hist.values() for r in y["fielders"])
+           else {}),
         "history": hist,
     }
     if write and hist:

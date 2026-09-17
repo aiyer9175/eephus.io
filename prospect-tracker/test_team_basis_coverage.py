@@ -37,10 +37,13 @@ import pytest
 ROOT = Path(__file__).parent
 JS = ROOT / "assets" / "mlbstats.js"
 
-# Every payload the /mlbstats/ page renders a team column from.
+# Every payload the /mlbstats/ page renders a team column from. The eWAR
+# board joined them in wave 5: it carries a team column on its player list
+# AND a club rollup on two named bases, so it has MORE to disclose than the
+# others, not less.
 BOARDS = ("bullpen_leaderboards.json", "starter_leaderboards.json",
           "hitter_leaderboards.json", "leverage_leaderboards.json",
-          "defense_leaderboards.json",
+          "defense_leaderboards.json", "war_leaderboards.json",
           "bullpen_history.json", "starter_history.json", "hitter_history.json",
           "defense_history.json")
 

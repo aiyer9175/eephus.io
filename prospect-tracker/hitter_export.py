@@ -40,6 +40,7 @@ from typing import Optional
 import hem_plus
 from hem_plus import Hitter
 from bullpen_export import (_team_abbrev_map, _num, score_war_rate,
+                            stamp_team_war, stamp_history_war,
                             join_war_rate_3yr, guard_nonempty_block,
                             team_basis_meta, basis_rows_for, _active_mlbam_ids,
                             _warn_unresolved_teams, _ingest_red,
@@ -56,12 +57,13 @@ MULTIYR_PATH = DATA_DIR / "hem_plus_multiyear_eval.json"
 HISTORY_SEASONS = [2021, 2022, 2023, 2024, 2025]
 
 
-def _war_source_vintage() -> dict:
+def _war_source_vintage(as_of: Optional[str] = None) -> dict:
     """The served eWAR build stamp, or a stated absence. Never raises: a board
-    that cannot report its vintage must still render (audit F10-02)."""
+    that cannot report its vintage must still render (audit F10-02). `as_of`
+    is the payload's own as_of, so the block dates the drift it measured."""
     try:
         import war_source as _ws
-        return _ws.ewar_vintage()
+        return _ws.ewar_vintage(as_of=as_of)
     except Exception as e:   # noqa: BLE001 - reporting must not take a board down
         return {"artifact_generated_at": None, "stale": None,
                 "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}
@@ -1217,6 +1219,16 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     teams, rollup_meta = guard_nonempty_block(
         scored["teams"], out_path, key="teams", source="hitter_leaderboards",
         label="hitters", log=log)
+    # TEAM eWAR (E5). Beside Offense+: the BATTING side (batting, baserunning,
+    # fielding and position: the whole position-player value) of the hitters
+    # this club holds, summed unrounded over every row of the board that names
+    # it. Runs on the SERVED teams; an uncovered club carries no value.
+    rollup_meta["team_war"] = stamp_team_war(
+        teams, scored["hitters"], season, side="bat")
+    if rollup_meta["team_war"].get("n_teams_stamped"):
+        log(f"  hitters: team eWAR stamped on "
+            f"{rollup_meta['team_war']['n_teams_stamped']} lineups "
+            f"({rollup_meta['team_war']['n_rows_summed']} rows summed)")
     # Orders ride ON the team rollups, so this runs on the SERVED teams (a
     # kept-stale rollup carries orders built from the same absent bat side).
     bs_meta = _platoon_availability(teams, bat_side, n_bs, len(hitters), log=log)
@@ -1241,9 +1253,10 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         "war_rate": wr_meta,
         # WHICH BUILD the served eWAR numerator comes from, and whether it has
         # fallen behind the frame under it (audit F10-02 / F11-01). data/ewar.json
-        # is hand-built; nothing in the pipeline rebuilds it, so a current-season
-        # WAR can sit at the artifact date while the innings beside it are current.
-        "ewar_vintage": _war_source_vintage(),
+        # re-prices its live season nightly; a missed or refused night leaves a
+        # current-season WAR behind the innings beside it, and the side-map
+        # receipt (war_source.side_war_by_season) makes `stale` say so.
+        "ewar_vintage": _war_source_vintage(as_of=today),
         "multiyear_war_rate": wr3_meta,
         # Whether the vs-LHP / vs-RHP lineup split was actually applied this run
         # (see _platoon_availability): available=false means the two hand labels
@@ -1278,19 +1291,28 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     return n
 
 
+# `woba_raw` is the season wOBA AS RECORDED and `woba` the pool-shrunk one HEM+
+# is scaled from (E8). Both ship: the live board serves the pair under "wOBA"
+# and "Shrunk wOBA", and a history row that carried only the shrunk value under
+# the unqualified header "wOBA" was the label defect the overhaul audit found.
 _HISTORY_FIELDS = ("mlbam", "name", "team", "hem_plus", "tier", "pa", "ab", "hr", "bb",
-                   "sb", "woba", "avg", "obp", "slg", "ops", "iso", "bb_pct", "k_pct",
-                   "babip", "qualified")
+                   "sb", "woba_raw", "woba", "avg", "obp", "slg", "ops", "iso",
+                   "bb_pct", "k_pct", "babip", "qualified")
 
 
 def export_history(seasons=None, *, out_path: Optional[Path] = None,
                    write: bool = True, log=print) -> dict:
     """Build data/hitter_history.json - per-season qualified-hitter boards for the
-    /mlbstats/ yearly history tabs. One cached StatsAPI call per season."""
+    /mlbstats/ yearly history tabs. One cached StatsAPI call per season.
+
+    Each row also carries `war`, that season's POSITION-PLAYER eWAR, joined per
+    (player, season) (E6), and the recorded `woba_raw` beside the shrunk `woba`
+    (E8)."""
     seasons = list(seasons or HISTORY_SEASONS)
     out_path = out_path or HISTORY_PATH
     hist = {}
     basis_rows: list[dict] = []
+    ewar_join: dict[str, dict] = {}
     for y in seasons:
         log(f"  hitter-history: {y}...")
         rows = load_season_hitting(y)
@@ -1301,6 +1323,10 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         qual = [s for s in scored["hitters"] if s.get("qualified")]
         basis_rows.extend(basis_rows_for(qual, rows))
         board = [{k: s.get(k) for k in _HISTORY_FIELDS} for s in qual]
+        # eWAR per (player, season), E6: the BATTING side, on the served row, so
+        # an uncovered hitter carries no key rather than a null.
+        ewar_join[str(y)] = stamp_history_war(board, y, side="bat",
+                                              label="hitter-history", log=log)
         board.sort(key=lambda s: (s.get("hem_plus") or -999), reverse=True)
         hist[str(y)] = {"season": y, "n_qualified": len(board), "hitters": board}
         log(f"  hitter-history: {y} -> {len(board)} qualified")
@@ -1311,6 +1337,12 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
                  "100 = average qualified hitter. Slash line and volume are context."),
         "team_basis": team_basis_meta(basis_rows, label="hitter history",
                                       scope="history"),
+        # Season by season, including a refusal: see bullpen_export.
+        "ewar_join": ewar_join,
+        # The payload receipt, iff the column: see bullpen_export.export_history.
+        **({"ewar_vintage": _war_source_vintage(as_of=date.today().isoformat())}
+           if any("war" in r for y in hist.values() for r in y["hitters"])
+           else {}),
         "history": hist,
     }
     if write and hist:

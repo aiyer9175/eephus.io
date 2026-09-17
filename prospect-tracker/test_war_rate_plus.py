@@ -16,6 +16,8 @@ Pins the parts of the design that a later reader is most likely to break:
   * a silent WAR failure is REFUSED, never served as a board of zeros.
   * a player with no WAR row gets NO field, not a zero.
   * two-tier volume floors: the pool floor anchors, the display gate publishes.
+    The counting stat `war` is NOT gated: every covered row with a positive
+    denominator carries it (a count needs no floor), the two-way card row too.
   * no clamp (true-to-model policy): a real outlier prints past 160.
   * the 3-year companion is a FROZEN vintage read verbatim, carrying its
     generated_at disclosure, and it is dropped from the history boards.
@@ -262,6 +264,204 @@ def test_two_tier_floors_pool_anchors_display_gate_publishes(monkeypatch):
     assert meta["pool_min"] == 50.0 and meta["display_min"] == 100.0
 
 
+def test_sub_floor_rows_carry_war_but_never_the_index(monkeypatch):
+    """E1 (MLB Stats overhaul, wave 0). eWAR is a counting stat, so it prints
+    for every covered row with a positive denominator, while the RATE index and
+    its companions stay behind the display gate. A row with WAR but no
+    denominator gets no `war` (constraint b), and an uncovered row stays blank
+    (absent, never zero)."""
+    rows = ([{"mlbam": 100 + i, "pa": 400.0} for i in range(30)]
+            + [{"mlbam": 200 + i, "pa": 70.0} for i in range(10)]     # pool only
+            + [{"mlbam": 300 + i, "pa": 20.0} for i in range(10)]     # neither
+            + [{"mlbam": 400, "pa": 0.0},                             # no denominator
+               {"mlbam": 401},                                        # no pa field
+               {"mlbam": 999999, "pa": 70.0}])                        # no WAR cell
+    bat = {}
+    bat.update({100 + i: 1.0 + i * 0.05 for i in range(30)})
+    bat.update({200 + i: 0.24 for i in range(10)})
+    bat.update({300 + i: -0.16 for i in range(10)})
+    bat.update({400: 0.3, 401: 0.3})
+    _patch_war(monkeypatch, _war_map(2026, bat=bat))
+    meta = he._join_war_pa_plus(rows, 2026)
+    assert meta["n_stamped"] == 30 and meta["n_war"] == 50
+    for r in rows[30:50]:
+        assert r["war"] == round(bat[r["mlbam"]], 1), r
+        for k in ("war_pa_plus", "war_pa_plus_raw", "war_pa_plus_adj",
+                  "war_pa_plus_adj_raw", "war_pa_plus_pct"):
+            assert k not in r, (r["mlbam"], k)
+    assert rows[40]["war"] == -0.2                 # a negative count is still a count
+    for r in rows[50:]:
+        assert "war" not in r and "war_pa_plus" not in r, r
+    # the 1-year chip ranks the SERVED index rows only, never the sub-floor war rows
+    assert sum(1 for r in rows if "war_pa_plus_pct" in r) == 30
+
+
+def test_sub_floor_reliever_carries_war_below_the_30_ip_gate(monkeypatch):
+    """The same rule on a pitcher board: a 25-inning reliever sits in the pool
+    (20+ IP) but under the 30-IP display gate, and a 12-inning arm is in
+    neither. Both print their pitching eWAR; neither gets WAR/IP+."""
+    rp = ([{"mlbam": 200 + i, "ip": 60.0} for i in range(30)]
+          + [{"mlbam": 1, "ip": 25.0}, {"mlbam": 2, "ip": 12.0}])
+    war = _war_map(2026, pit={**{200 + i: 0.5 + i * 0.03 for i in range(30)},
+                              1: 0.44, 2: -0.31},
+                   bat={2: 1.5})                    # a batting side is never read here
+    _patch_war(monkeypatch, war)
+    meta = be._join_war_ip_plus(rp, 2026)
+    assert meta["available"] and meta["n_stamped"] == 30 and meta["n_war"] == 32
+    assert rp[30]["war"] == 0.4 and "war_ip_plus" not in rp[30]
+    assert rp[31]["war"] == -0.3 and "war_ip_plus" not in rp[31]
+
+
+def test_a_refused_pool_stamps_no_war_anywhere(monkeypatch):
+    """The refusal is the degenerate-fetch detector: a board of a few surviving
+    WAR values is the failure it stops, so widening `war` must not leak past it."""
+    rows = [{"mlbam": 500 + i, "pa": 400.0} for i in range(40)]
+    bat = {500 + i: 1.0 + i * 0.05 for i in range(5)}   # 5 of 40 covered
+    _patch_war(monkeypatch, _war_map(2026, bat=bat))
+    meta = he._join_war_pa_plus(rows, 2026)
+    assert meta["available"] is False and meta["n_war"] == 0
+    assert all("war" not in r for r in rows)
+
+
+def test_stamp_side_war_reads_one_side_and_one_rule(monkeypatch):
+    """The helper the two-way card rows use: the named side only, a positive
+    denominator only, absent never zero, and a raising fetch stamps nothing."""
+    war = _war_map(2026, bat={660271: 4.04, 7: 1.0}, pit={660271: 2.96, 8: 0.5})
+    _patch_war(monkeypatch, war)
+    rows = [{"mlbam": 660271, "ip": 85.7}, {"mlbam": 7, "ip": 30.0},
+            {"mlbam": 8, "ip": 0.0}, {"ip": 10.0}]
+    assert be.stamp_side_war(rows, 2026, side="pit", denom_key="ip") == 1
+    assert rows[0]["war"] == 3.0                     # pitching, never 7.0 or 4.0
+    assert all("war" not in r for r in rows[1:])
+
+    def _boom():
+        raise RuntimeError("pybaseball down")
+    monkeypatch.setattr(be, "_side_war_by_season", _boom)
+    fresh = [{"mlbam": 660271, "ip": 85.7}]
+    assert be.stamp_side_war(fresh, 2026, side="pit", denom_key="ip") == 0
+    assert "war" not in fresh[0]
+
+
+def test_a_rounded_zero_war_serves_zero_never_negative_zero(monkeypatch):
+    """The house -0 rule holds in the SERVED JSON, not only in the page
+    formatter: a small negative eWAR rounds to 0.0 through both stamps, so no
+    reader of the artifact (the player-card pass-through, a later sum of the
+    two sides) meets a -0.0."""
+    rows = ([{"mlbam": 100 + i, "pa": 400.0} for i in range(30)]
+            + [{"mlbam": 1, "pa": 70.0}])
+    bat = {100 + i: 1.0 + i * 0.05 for i in range(30)}
+    bat[1] = -0.04
+    _patch_war(monkeypatch, _war_map(2026, bat=bat))
+    he._join_war_pa_plus(rows, 2026)
+    assert rows[-1]["war"] == 0.0 and str(rows[-1]["war"]) == "0.0"
+    assert json.dumps(rows[-1]["war"]) == "0.0"
+
+    _patch_war(monkeypatch, _war_map(2026, pit={9: -0.04}))
+    card = [{"mlbam": 9, "ip": 20.0}]
+    assert be.stamp_side_war(card, 2026, side="pit", denom_key="ip") == 1
+    assert str(card[0]["war"]) == "0.0"
+
+
+def test_stamp_side_war_skips_a_row_it_cannot_read(monkeypatch):
+    """A payload build must not abort over one malformed id: the row is left
+    blank and the rest of the block is stamped."""
+    _patch_war(monkeypatch, _war_map(2026, pit={5: 1.24}))
+    rows = [{"mlbam": "not-an-id", "ip": 30.0}, {"mlbam": 5, "ip": 30.0}]
+    assert be.stamp_side_war(rows, 2026, side="pit", denom_key="ip") == 1
+    assert "war" not in rows[0] and rows[1]["war"] == 1.2
+
+
+def _sp_line(pid: int, so: int, *, gs: int = 22, ip: str = "130.0", pos=None) -> dict:
+    """One flat StatsAPI pitching row (bullpen_export.rows_from_pitching_splits
+    shape) for an offline starter export."""
+    row = {"mlbam": pid, "name": f"Arm {pid}", "team": "LAA", "G": gs, "GS": gs,
+           "SV": 0, "HLD": 0, "IP": ip, "ER": 55, "R": 60, "BB": 40, "SO": so,
+           "HR": 15, "HBP": 5, "BF": 560, "Pit": 2100, "IR": 0, "IRS": 0,
+           "CG": 0, "GO": 160, "AO": 130, "Strk": 1350}
+    if pos:
+        row["pos"] = pos
+    return row
+
+
+def _offline_starter_export(monkeypatch, tmp_path, war) -> dict:
+    lines = [_sp_line(1000 + i, 100 + 3 * i) for i in range(40)]
+    lines.append(_sp_line(660271, 105, gs=14, ip="85.2", pos="TWP"))
+    monkeypatch.setattr(se, "load_season_pitching", lambda season, positions=("P",): [
+        dict(r) for r in lines if (r.get("pos") or "P") in positions])
+    monkeypatch.setattr(se, "_active_mlbam_ids", lambda season: None)
+    monkeypatch.setattr(se, "_join_sem_plus_3yr", lambda s: {"n_stamped": 0})
+    monkeypatch.setattr(se, "_join_xsem_plus", lambda s, season: 0)
+    monkeypatch.setattr(se, "_join_war_ip_plus_3yr", lambda s: {"n_stamped": 0})
+    monkeypatch.setattr(se, "_war_source_vintage", lambda as_of=None: {"as_of": as_of})
+    monkeypatch.setattr(se, "guard_nonempty_block",
+                        lambda fresh, out_path, **kw: (fresh, {"n": len(fresh)}))
+    _patch_war(monkeypatch, war)
+    out = tmp_path / "starter_leaderboards.json"
+    se.export(2026, out_path=out, log=lambda *a, **k: None, today="2026-09-11")
+    return json.loads(out.read_text(encoding="utf-8"))
+
+
+def test_the_two_way_starter_row_carries_its_pitching_war(monkeypatch, tmp_path):
+    """E1b. The two-way starter's row carries his PITCHING eWAR, the side that
+    matches the innings beside it (his batting side rides the hitter board).
+    Found wherever the export puts him: starters[] while two-way lines are
+    admitted to the board (ADMIT_TWO_WAY_TO_BOARD, owner decision 2026-09-11),
+    the card-only block while they are not. Exactly one row either way, so the
+    card never double-counts the board."""
+    war = _war_map(2026, pit={**{1000 + i: 1.0 + i * 0.05 for i in range(40)},
+                              660271: 2.96},
+                   bat={660271: 4.04})
+    d = _offline_starter_export(monkeypatch, tmp_path, war)
+    assert d["ewar_vintage"] == {"as_of": "2026-09-11"}, "the payload's as_of rides in"
+    rows = [r for r in d["starters"] + (d.get("two_way_card_only") or {}).get("starters", [])
+            if r.get("mlbam") == 660271]
+    assert len(rows) == 1, rows
+    assert rows[0]["war"] == 3.0, "pitching, never the 4.0 batting side"
+    if rows[0].get("card_only"):
+        assert d["two_way_card_only"]["n_war"] == 1
+        assert "war_ip_plus" not in rows[0], "the card row gets the count, not an index"
+    else:
+        assert d["two_way"]["mlbam"] == [660271], "the board names the line it admitted"
+        assert (d["two_way_card_only"].get("starters") or []) == []
+
+
+def test_the_card_only_row_carries_its_pitching_war_with_the_flag_off(monkeypatch,
+                                                                     tmp_path):
+    """The same rule through the other door. With ADMIT_TWO_WAY_TO_BOARD False
+    the two-way line is scored for its card alone, and that row carries the
+    pitching count (stamp_side_war) and no index, because it never entered the
+    scored pool that publishes one."""
+    monkeypatch.setattr(se, "ADMIT_TWO_WAY_TO_BOARD", False)
+    war = _war_map(2026, pit={**{1000 + i: 1.0 + i * 0.05 for i in range(40)},
+                              660271: 2.96},
+                   bat={660271: 4.04})
+    d = _offline_starter_export(monkeypatch, tmp_path, war)
+    assert all(r.get("mlbam") != 660271 for r in d["starters"]), "off the board"
+    tw = d["two_way_card_only"]
+    assert tw["n_war"] == 1 and tw["n"] == 1
+    row = tw["starters"][0]
+    assert row["mlbam"] == 660271 and row["war"] == 3.0
+    assert "war_ip_plus" not in row, "the card row gets the count, not an index"
+
+
+def test_a_refused_starter_pool_leaves_the_two_way_row_blank(monkeypatch, tmp_path):
+    d = _offline_starter_export(monkeypatch, tmp_path, {})
+    assert d["war_rate"]["available"] is False
+    tw = d.get("two_way_card_only") or {}
+    assert "n_war" not in tw
+    assert all("war" not in r for r in d["starters"] + tw.get("starters", []))
+
+
+def test_a_refused_pool_leaves_the_card_only_row_blank_with_the_flag_off(monkeypatch,
+                                                                        tmp_path):
+    monkeypatch.setattr(se, "ADMIT_TWO_WAY_TO_BOARD", False)
+    d = _offline_starter_export(monkeypatch, tmp_path, {})
+    assert d["war_rate"]["available"] is False
+    tw = d["two_way_card_only"]
+    assert tw["n"] == 1 and "n_war" not in tw, "scored, but no WAR was stamped"
+    assert all("war" not in r for r in tw["starters"])
+
+
 def test_pitcher_floors_differ_by_role():
     assert be.WAR_RATE_POOL_MIN_IP == 20.0
     assert be.WAR_RATE_DISPLAY_MIN_SP_IP == 40.0
@@ -481,18 +681,23 @@ def test_glossary_entries_name_their_anchor_pool():
 
 
 def test_war_rate_columns_are_dropped_from_history_boards():
-    """History rows carry no WAR join, so the columns must drop rather than
-    render as a blank column."""
+    """The RATES are standardised on the live pool, so a past-season board drops
+    them rather than rendering a blank column. eWAR itself is not a rate: it is a
+    season count the history exports join per (player, season) (E6 of the MLB
+    Stats overhaul, 2026-09-11), so `war` stays on all four history boards."""
     hit = _JS.split("var HITTER_HISTORY_DROP =")[1].split(";")[0]
     sp = _JS.split("var STARTER_HISTORY_DROP =")[1].split(";")[0]
     rel = _JS.split("var REL_HISTORY_KEYS =")[1].split(";")[0]
-    for k in ("war_pa_plus", "war_pa_plus_adj", "war_pa_plus_3yr", "war"):
+    for k in ("war_pa_plus", "war_pa_plus_adj", "war_pa_plus_3yr"):
         assert k + ": 1" in hit, f"{k} not dropped from the hitter history board"
-    for k in ("war_ip_plus", "war_ip_plus_adj", "war_ip_plus_3yr", "war"):
+    for k in ("war_ip_plus", "war_ip_plus_adj", "war_ip_plus_3yr"):
         assert k + ": 1" in sp, f"{k} not dropped from the starter history board"
-    # the reliever map is an ALLOW-list: the keys must be ABSENT from it
+    assert "war: 1" not in hit and "war: 1" not in sp, "the count is not a rate"
+    # the reliever map is an ALLOW-list: the RATE keys must be ABSENT from it,
+    # and the count key must be IN it
     for k in ("war_ip_plus", "war_ip_plus_adj", "war_ip_plus_3yr"):
         assert k not in rel, f"{k} leaked into the reliever history allow-list"
+    assert "war: 1" in rel, "eWAR missing from the reliever history allow-list"
 
 
 def test_war_rate_columns_use_remcell_not_hemcell():

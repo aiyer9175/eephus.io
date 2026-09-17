@@ -161,6 +161,12 @@ def test_export_history_keeps_only_qualified_per_season(monkeypatch):
         }
         return {}, bat, strt, {"games": 2430, "games_total": 2430}
 
+    # No network: the eWAR join (E3) reads the shared side map, which falls back
+    # to a Baseball-Reference pull on a cold cache. An empty map keeps this test
+    # on disk and leaves every row's `war` absent, which is what it asserts.
+    import bullpen_export
+    monkeypatch.setattr(bullpen_export, "_side_war_by_season", dict)
+
     monkeypatch.setattr(lev.mlb_leverage, "fetch_season_all_leverage", fake_fetch)
     monkeypatch.setattr(lev, "load_season_hitting", lambda y: [
         {"mlbam": 10, "name": "Reg Ular", "team": "NYY"},
@@ -193,6 +199,12 @@ def test_export_history_skips_a_season_that_fails(monkeypatch):
             raise RuntimeError("boom")
         bat = {10: {"name": "Reg", "pa": 300, "wpa": 1.0, "pli": 1.0, "clutch": 0.0, "wpa_li": 1.0}}
         return {}, bat, {}, {"games": 1, "games_total": 1}
+
+    # No network: the eWAR join (E3) reads the shared side map, which falls back
+    # to a Baseball-Reference pull on a cold cache. An empty map keeps this test
+    # on disk and leaves every row's `war` absent, which is what it asserts.
+    import bullpen_export
+    monkeypatch.setattr(bullpen_export, "_side_war_by_season", dict)
 
     monkeypatch.setattr(lev.mlb_leverage, "fetch_season_all_leverage", fake_fetch)
     monkeypatch.setattr(lev, "load_season_hitting", lambda y: [{"mlbam": 10, "name": "Reg", "team": "NYY"}])

@@ -3951,11 +3951,15 @@ def build_trademachine() -> str:
 
 def build_mlbstats() -> str:
     """The /mlbstats/ MLB Stats module - league-wide MLB stat leaderboards.
-    Five sections, one tab each: Bullpen (REM+, bullpen_export.py), Starters
+    Six sections, one tab each: Bullpen (REM+, bullpen_export.py), Starters
     (SEM+, starter_export.py), Hitters (HEM+, hitter_export.py), Leverage (WPA,
-    leverage_export.py) and Defense (DEM+, defense_export.py). Static shell +
+    leverage_export.py), Defense (DEM+, defense_export.py) and eWAR
+    (war_board_export.py: batting plus pitching on one board, plus the club
+    rollup on both of its named bases). Static shell +
     assets/mlbstats.js, which lazy-fetches each section's data/*_leaderboards.json
-    and *_history.json on first activation. Styles ride the .fa-app block plus
+    and *_history.json on first activation. Every section root opts into the
+    Download CSV control (_csv_optin), which exports the columns on screen:
+    hidden view columns carry data-export-skip. Styles ride the .fa-app block plus
     the .mlbstats-app extension in site.css; the Defense section reuses the
     existing board and depth-card classes, so it adds no CSS."""
     body = (
@@ -3967,31 +3971,40 @@ def build_mlbstats() -> str:
         f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">β beta</span></h1></div>'
         f'<span class="section-sub">Relievers ({_gl("rem_plus", "REM+")}), starters '
         f'({_gl("sem_plus", "SEM+")}), hitters ({_gl("hem_plus", "HEM+")}), fielders '
-        f'({_gl("dem_plus", "DEM+")}) and leverage ({_gl("wpa", "WPA")}), with team rollups. '
+        f'({_gl("dem_plus", "DEM+")}), leverage ({_gl("wpa", "WPA")}) and '
+        f'{_gl("ewar", "eWAR")}, with team rollups. '
         '100 is league average on every + scale.</span></div>'
         # Section nav (built as a tablist; sections join here as they ship).
+        # Short labels: the section is the noun, "Leaderboards" was the noise,
+        # and the phone strip reads at a glance (2026-09-11 overhaul, wave 2).
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="MLB Stats sections">'
-        '<button type="button" class="mlbstats-sectionbtn active" data-mlbsection="bullpen" role="tab" aria-selected="true" aria-controls="mlbstats-section-bullpen">Bullpen Leaderboards</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="starters" role="tab" aria-selected="false" aria-controls="mlbstats-section-starters">Starter Leaderboards</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="hitters" role="tab" aria-selected="false" aria-controls="mlbstats-section-hitters">Hitter Leaderboards</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="leverage" role="tab" aria-selected="false" aria-controls="mlbstats-section-leverage">Leverage Leaderboards</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="defense" role="tab" aria-selected="false" aria-controls="mlbstats-section-defense">Defense Leaderboards</button>'
+        '<button type="button" class="mlbstats-sectionbtn active" data-mlbsection="bullpen" role="tab" aria-selected="true" aria-controls="mlbstats-section-bullpen">Bullpen</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="starters" role="tab" aria-selected="false" aria-controls="mlbstats-section-starters">Starters</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="hitters" role="tab" aria-selected="false" aria-controls="mlbstats-section-hitters">Hitters</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="leverage" role="tab" aria-selected="false" aria-controls="mlbstats-section-leverage">Leverage</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="defense" role="tab" aria-selected="false" aria-controls="mlbstats-section-defense">Defense</button>'
+        # eWAR is the LAST button (owner decision O1): Bullpen stays the landing
+        # board, so every bare /mlbstats/ URL opens where it always did.
+        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="war" role="tab" aria-selected="false" aria-controls="mlbstats-section-war">eWAR</button>'
         '</div>'
         '<div id="mlbstats-section-bullpen" class="mlbstats-section" role="tabpanel" aria-label="Bullpen">'
         '<div id="mlbstats-banner"></div>'
         f'<div id="mlbstats-app-root"{_csv_optin("mlb-leaderboards")}></div>'
         '</div>'
         '<div id="mlbstats-section-starters" class="mlbstats-section" role="tabpanel" aria-label="Starters" hidden>'
-        '<div id="mlbstats-starters-root"></div>'
+        f'<div id="mlbstats-starters-root"{_csv_optin("mlb-starters")}></div>'
         '</div>'
         '<div id="mlbstats-section-hitters" class="mlbstats-section" role="tabpanel" aria-label="Hitters" hidden>'
-        '<div id="mlbstats-hitters-root"></div>'
+        f'<div id="mlbstats-hitters-root"{_csv_optin("mlb-hitters")}></div>'
         '</div>'
         '<div id="mlbstats-section-leverage" class="mlbstats-section" role="tabpanel" aria-label="Leverage" hidden>'
-        '<div id="mlbstats-leverage-root"></div>'
+        f'<div id="mlbstats-leverage-root"{_csv_optin("mlb-leverage")}></div>'
         '</div>'
         '<div id="mlbstats-section-defense" class="mlbstats-section" role="tabpanel" aria-label="Defense" hidden>'
-        '<div id="mlbstats-defense-root"></div>'
+        f'<div id="mlbstats-defense-root"{_csv_optin("mlb-defense")}></div>'
+        '</div>'
+        '<div id="mlbstats-section-war" class="mlbstats-section" role="tabpanel" aria-label="eWAR" hidden>'
+        f'<div id="mlbstats-war-root"{_csv_optin("mlb-ewar")}></div>'
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
@@ -4000,8 +4013,8 @@ def build_mlbstats() -> str:
     )
     return page("MLB Stats - eephus.io", "mlbstats", body,
                 "MLB leaderboards from eephus.io: REM+ relievers and RIV+ impact, SEM+ starters, "
-                "HEM+ hitters, DEM+ fielders, WPA leverage, and team Bullpen+, Rotation+, "
-                "Offense+ and DEM+.",
+                "HEM+ hitters, DEM+ fielders, WPA leverage, team Bullpen+, Rotation+, "
+                "Offense+ and DEM+, and eWAR leaders.",
                 url=f"{SITE_ORIGIN}/mlbstats/")
 
 def build_pal() -> str:

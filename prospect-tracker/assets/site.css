@@ -2255,6 +2255,8 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .mlbx .mlbstats-table.mlbstats-cv-all td.mlbstats-name { max-width: 232px; }
 /* The Download CSV control rides the tab row instead of its own row. */
 @media (min-width: 641px) { .mlbx .eph-csv-bar { float: right; margin: 12px 0 0 12px; } }
+/* The Team note is one line until opened; its summary is the click target. */
+.mlbx details.mlbstats-teambasis > summary { cursor: pointer; }
 /* A table that FITS (markFit sets .is-fit) needs no scroll container: the
    header sticks to the viewport and the page is the only scroll. A table that
    does not fit keeps the scroller and the frozen name column. */

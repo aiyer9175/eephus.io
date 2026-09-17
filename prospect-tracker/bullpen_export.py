@@ -62,12 +62,13 @@ WAR_RATE_MULTIYR_PATH = DATA_DIR / "war_rate_plus_multiyear_eval.json"
 STATSAPI = "https://statsapi.mlb.com/api/v1"
 
 
-def _war_source_vintage() -> dict:
+def _war_source_vintage(as_of: Optional[str] = None) -> dict:
     """The served eWAR build stamp, or a stated absence. Never raises: a board
-    that cannot report its vintage must still render (audit F10-02)."""
+    that cannot report its vintage must still render (audit F10-02). `as_of`
+    is the payload's own as_of, so the block dates the drift it measured."""
     try:
         import war_source as _ws
-        return _ws.ewar_vintage()
+        return _ws.ewar_vintage(as_of=as_of)
     except Exception as e:   # noqa: BLE001 - reporting must not take a board down
         return {"artifact_generated_at": None, "stale": None,
                 "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}
@@ -943,12 +944,23 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
     value. A row with no WAR row of its own gets NO field (not a zero), so the
     column renders blank rather than reading as a real replacement-level season.
 
+    The counting stat `war` (the side's eWAR, 1dp) is NOT behind the display
+    gate: every row with a WAR value and a positive denominator carries it, so a
+    25-inning arm's eWAR prints even though his WAR/IP+ is blank (a count needs
+    no volume floor; the rate does; the reliever gate is 30 IP and `d < 30.0`,
+    so 30.0 itself publishes the index). The index fields (`out_key`, `_raw`,
+    `_adj`, `_pct`) stay gated and `n_stamped` still counts index rows; `n_war`
+    counts `war` rows. A stamped value of exactly zero serves as 0.0, never
+    -0.0. A refused pool stamps neither: the refusal is the degenerate-fetch
+    detector, and a board of a few surviving WAR values is the failure it
+    exists to stop.
+
     Returns a meta block for the payload: the anchor description, the two floors,
     and the pool rate mean and sd that DEFINE the scale, so a reader of the served
     file can check the "ten points is one pool sigma" claim arithmetically instead
     of taking it on trust. Best-effort: any failure logs and returns an
     unavailable meta without touching a row."""
-    meta = {"available": False, "n_stamped": 0, "anchor": anchor,
+    meta = {"available": False, "n_stamped": 0, "n_war": 0, "anchor": anchor,
             "per_sigma": WAR_RATE_PER_SIGMA, "pool_min": pool_min,
             "display_min": display_min}
     try:
@@ -1009,12 +1021,17 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
     mu_s = sum(adj_rates) / n
     sd_s = (sum((x - mu_s) ** 2 for x in adj_rates) / (n - 1)) ** 0.5 if n > 1 else 0.0
 
-    stamped = 0
+    stamped = n_war = 0
     for r in rows:
         d = _num(r.get(denom_key)) or 0.0
         w = _war(r)
-        if w is None or d < display_min or d <= 0:
-            continue
+        if w is None or d <= 0:
+            continue                          # absent, never zero
+        v = round(w, 1)                       # every covered row: a count needs no floor
+        r["war"] = 0.0 if v == 0 else v       # the house -0 rule, in the JSON too
+        n_war += 1
+        if d < display_min:
+            continue                          # the INDEX stays gated
         raw = 100.0 + WAR_RATE_PER_SIGMA * ((w / d) - mu) / sd
         r[out_key] = int(round(raw))          # "+" stats round to nearest
         # pre-display core at the rem_plus_raw / hem_plus_raw precision. The lab
@@ -1026,7 +1043,6 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
                 ((w + pool_rate * K) / (d + K)) - mu_s) / sd_s
             r[f"{out_key}_adj"] = int(round(adj))
             r[f"{out_key}_adj_raw"] = round(adj, 1)
-        r["war"] = round(w, 1)
         stamped += 1
 
     # 1yr percentile chip. The 3yr columns already carry one (`*_3yr_pct`) and the
@@ -1045,7 +1061,7 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
             hi = bisect.bisect_right(served, v)
             r[f"{out_key}_pct"] = int(round(100.0 * ((lo + hi) / 2.0) / m))
     meta.update({
-        "available": True, "n_stamped": stamped, "pool_n": n,
+        "available": True, "n_stamped": stamped, "n_war": n_war, "pool_n": n,
         "pool_mean_rate": round(mu, 6), "pool_sd_rate": round(sd, 6),
         "shrink_K": round(K, 1), "pool_rate": round(pool_rate, 6),
         "adj_mean_rate": round(mu_s, 6), "adj_sd_rate": round(sd_s, 6),
@@ -1063,6 +1079,252 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
                      f"the shrink gain down to volume. Does NOT reproduce "
                      f"war/{denom_key} on the row."),
     })
+    return meta
+
+
+def stamp_side_war(rows: list[dict], season: int, *, side: str,
+                   denom_key: str) -> int:
+    """Stamp the counting stat `war` (the side's eWAR, 1dp) on rows that sit
+    OUTSIDE a scored pool, such as the two-way card-only starter rows
+    (starter_export.score_two_way_card_only), by the same rule as the `war`
+    stamp in score_war_rate: a row with no WAR cell for `side` or no positive
+    denominator gets no field (absent, never zero). No index is written here.
+
+    The caller stamps only when its board's own score_war_rate pool was not
+    refused, so a degenerate fetch still stamps nothing anywhere. A stamped
+    value of exactly zero serves as 0.0, never -0.0. Returns the number of rows
+    stamped; never raises, an unreadable row included (a payload build must not
+    abort over one malformed id)."""
+    try:
+        war_by = _side_war_by_season()
+    except Exception as e:   # noqa: BLE001 - best-effort join, never aborts a board
+        _log.warning("war stamp unavailable (WAR fetch failed: %s)", e)
+        return 0
+    n = 0
+    for r in rows:
+        mid = r.get("mlbam")
+        if mid is None or (_num(r.get(denom_key)) or 0.0) <= 0:
+            continue
+        try:
+            w = ((war_by.get(int(mid)) or {}).get(int(season)) or {}).get(side)
+        except (TypeError, ValueError):   # a non-numeric id is one blank row
+            continue
+        if w is None:
+            continue
+        v = round(w, 1)
+        r["war"] = 0.0 if v == 0 else v
+        n += 1
+    return n
+
+
+#: What a refused season costs the reader, stated in the served payload because
+#: the page has nowhere to put it: an eWAR column with no value anywhere in the
+#: season is dropped from the history board, so a refusal reads as a column that
+#: was never there unless the file says otherwise.
+HISTORY_JOIN_REFUSAL_NOTE = ("this season serves no eWAR column at all; an "
+                             "all-blank column is dropped from the board, so "
+                             "the refusal is stated here and nowhere else")
+
+
+def stamp_history_war(rows: list[dict], season: int, *, side: str,
+                      label: str = "history", log=None) -> dict:
+    """The counting stat `war` on a PAST-SEASON board row (E6, owner decision
+    O5), joined by (mlbam, season) from the SAME side map the live boards read
+    (_side_war_by_season, lru cached for the process, so the four history
+    exports share one WAR read).
+
+    THE JOIN IS THE ID AND THE SEASON, nothing else. A history row is already a
+    qualified season line and nothing here divides by a denominator, so there is
+    no volume gate to apply: the WAR-RATE columns gate because they divide, and
+    they are dropped from these boards for a different reason entirely (they are
+    standardised on the LIVE pool, which is what makes them unreadable on a 2021
+    row). A season count carries no such pool, so it travels. A row the eWAR
+    artifact does not cover gets NO field, which is what lets the page drop an
+    uncovered column instead of printing one of blanks.
+
+    NO DENOMINATOR GATE, and that REVERSES implementer constraint (b) of the
+    spec ("stamp war only where the denominator is positive") on these four
+    boards, deliberately and once for all four. The constraint guards the
+    WAR-RATE indexes, which DIVIDE by the denominator; no history board carries
+    one, and E3 and E4 already stamp the leverage and defense boards with no
+    such gate. A history row is a qualified season line, so gating its count on
+    innings or plate appearances would blank a value for a reason that does not
+    exist on this board.
+
+    THE SIDE IS THE BOARD'S SIDE, exactly as on the live boards: 'pit' on the
+    two pitcher history boards and 'bat' on the hitter one, so a two-way
+    player's 2021 reads the way his 2026 does. The defense history board wants
+    both sides summed onto one row and calls defense_export._stamp_war instead.
+
+    A DEGENERATE WAR READ STAMPS NOTHING FOR THAT SEASON. Coverage below
+    WAR_RATE_MIN_COVERAGE of the rows carrying an id is the degenerate-fetch
+    pattern score_war_rate refuses on (fa_projection.py:191-201) and this
+    refuses with it, PER SEASON: a year the artifact barely covers ships blank
+    while the years around it still ship, rather than a handful of values that
+    read as a real column (twelve numbers among six hundred blanks is still a
+    sortable column). THE REFUSAL IS READABLE ONLY IN THE PAYLOAD, because a
+    blank column is dropped from the board: the served `ewar_join` block carries
+    the count, the floor and HISTORY_JOIN_REFUSAL_NOTE, and the export log says
+    the same line. A stamped value of exactly zero serves as 0.0, never -0.0.
+
+    Returns the meta block the payload discloses, and says the same thing on
+    `log` when one is given (the three history exports share the sentence rather
+    than each writing their own). Never raises: a failed read leaves every row
+    blank and says so."""
+    meta = {"season": int(season), "side": side, "n_rows": len(rows),
+            "n_with_id": 0, "n_covered": 0, "n_stamped": 0, "available": False}
+
+    def _done(m: dict) -> dict:
+        if m.get("refused"):
+            m["note"] = HISTORY_JOIN_REFUSAL_NOTE
+        if log is not None:
+            if m.get("refused"):
+                log(f"  {label}: {season} eWAR refused ({m['refused']})")
+            else:
+                # DENOMINATED ON THE ROWS THE JOIN COULD SEE (n_with_id), the
+                # pool the refusal counts too, so the two lines never disagree
+                # about what they are a share of.
+                log(f"  {label}: {season} eWAR joined for "
+                    f"{m['n_stamped']}/{m['n_with_id']} rows")
+        return m
+
+    try:
+        war_by = _side_war_by_season()
+    except Exception as e:   # noqa: BLE001 - best-effort join, never aborts a board
+        _log.warning("history eWAR unavailable for %s (WAR fetch failed: %s)",
+                     season, e)
+        meta["refused"] = f"WAR fetch failed: {e}"
+        return _done(meta)
+    cells, n_pool = [], 0
+    for r in rows:
+        mid = r.get("mlbam")
+        if mid is None:
+            continue
+        n_pool += 1
+        try:
+            w = ((war_by.get(int(mid)) or {}).get(int(season)) or {}).get(side)
+        except (TypeError, ValueError):   # a non-numeric id is one blank row
+            continue
+        if w is not None:
+            cells.append((r, w))
+    meta["n_with_id"] = n_pool
+    meta["n_covered"] = len(cells)
+    if not n_pool or len(cells) < WAR_RATE_MIN_COVERAGE * n_pool:
+        _log.warning("history eWAR REFUSED for %s: %d of %d rows covered",
+                     season, len(cells), n_pool)
+        meta["refused"] = (f"eWAR covered {len(cells)} of {n_pool} rows "
+                           f"(floor {WAR_RATE_MIN_COVERAGE:.0%})")
+        return _done(meta)
+    for r, w in cells:
+        v = round(float(w), 1)
+        r["war"] = 0.0 if v == 0 else v   # the house -0 rule, in the JSON too
+        meta["n_stamped"] += 1
+    meta["available"] = True
+    return _done(meta)
+
+
+def stamp_team_war(teams: list[dict], rows: list[dict], season: int, *,
+                   side: str) -> dict:
+    """Team eWAR on the three club rollups: `team_war` = the sum of one SIDE's
+    eWAR over every board row that names the club.
+
+    THE SUM IS OVER THE UNROUNDED SIDE VALUES, not the rows' served `war`, so a
+    30-arm pen does not carry 30 rounding errors; the total rounds once, at the
+    end, to the 1dp the column prints. Every row of the board counts, qualified
+    or not and above or below the WAR-rate display floor, because this is the
+    club's production, not a leaderboard cut.
+
+    EVERY ROW MEANS EVERY ROW, including one whose own `war` cell is withheld:
+    score_war_rate stamps no `war` on a row with a zero denominator (an arm with
+    a pitching eWAR cell and 0 IP), and the club total still carries him, so the
+    column does not always reconcile with the visible cells. `team_war_n` counts
+    the rows summed, those blank cells included, and the note says so.
+
+    THE CLUB IS THE BOARD'S CLUB. `team` on a row is whatever team_basis says
+    (current_roster today), so Team eWAR is the eWAR of the players the club
+    holds now, the same basis as Bullpen+/Rotation+/Offense+ beside it. The
+    returned block names that basis in the payload so a reader is never left to
+    infer it; the eWAR section's `war_earned` is the other basis.
+
+    A club with no covered row gets NEITHER field (absent, never zero): a pen
+    whose arms are all missing from the WAR map must render blank rather than
+    read as a replacement-level bullpen.
+
+    A DEGENERATE WAR READ STAMPS NOTHING ANYWHERE. Coverage below
+    WAR_RATE_MIN_COVERAGE of the rows that name a club is the degenerate-fetch
+    pattern score_war_rate already refuses on (fa_projection.py:191-201), and
+    this refuses with it: a handful of surviving arms must never print as a club
+    total beside player rows that are all blank. A refusal also CLEARS the two
+    fields, so a kept-stale rollup never rides an earlier run's total beside
+    this run's blanks.
+
+    Returns the meta block for `team_rollup.team_war`. Never raises: a failed
+    WAR read stamps nothing and says so."""
+    meta = {"side": side, "basis": TEAM_BASIS, "available": False,
+            "n_rows_summed": 0, "n_rows_without_war": 0,
+            "n_rows_without_team": 0, "n_teams_stamped": 0}
+
+    def _clear():
+        for t in teams:
+            t.pop("team_war", None)       # absent, never zero, and never stale
+            t.pop("team_war_n", None)
+
+    try:
+        war_by = _side_war_by_season()
+    except Exception as e:   # noqa: BLE001 - best-effort join, never aborts a board
+        _log.warning("team_war unavailable (WAR fetch failed: %s)", e)
+        meta["refused"] = f"WAR fetch failed: {e}"
+        _clear()
+        return meta
+    totals: dict[str, list] = {}
+    n_pool = 0
+    for r in rows:
+        team = r.get("team")
+        if not team:
+            # A teamless row is in no club total. Counted, so the three counts
+            # reconcile to len(rows): a failed _team_abbrev_map blanks every
+            # team code, and that outage must not read as a clean partial.
+            meta["n_rows_without_team"] += 1
+            continue
+        n_pool += 1
+        mid = r.get("mlbam")
+        w = None
+        if mid is not None:
+            try:
+                w = ((war_by.get(int(mid)) or {}).get(int(season)) or {}).get(side)
+            except (TypeError, ValueError):   # a non-numeric id is one blank row
+                w = None
+        acc = totals.setdefault(str(team), [0.0, 0])
+        if w is None:
+            meta["n_rows_without_war"] += 1
+            continue
+        acc[0] += float(w)
+        acc[1] += 1
+        meta["n_rows_summed"] += 1
+    if not n_pool or meta["n_rows_summed"] < WAR_RATE_MIN_COVERAGE * n_pool:
+        _log.warning("team_war REFUSED: eWAR covers %d of %d club rows for %s",
+                     meta["n_rows_summed"], n_pool, season)
+        meta["refused"] = (f"eWAR covered {meta['n_rows_summed']} of {n_pool} "
+                           f"club rows (floor {WAR_RATE_MIN_COVERAGE:.0%})")
+        _clear()
+        return meta
+    for t in teams:
+        acc = totals.get(str(t.get("team") or ""))
+        if not acc or not acc[1]:
+            t.pop("team_war", None)       # absent, never zero
+            t.pop("team_war_n", None)
+            continue
+        v = round(acc[0], 1)
+        t["team_war"] = 0.0 if v == 0 else v
+        t["team_war_n"] = acc[1]
+        meta["n_teams_stamped"] += 1
+    meta["available"] = True
+    meta["note"] = ("team_war is the sum of the club's board rows' " + side +
+                    " eWAR, summed UNROUNDED and rounded once; team_war_n is "
+                    "the rows summed, a row whose own eWAR cell is withheld for "
+                    "a zero denominator included. A club with no covered row "
+                    "carries no value. Same club basis as the Team column (see "
+                    "team_basis).")
     return meta
 
 
@@ -1252,6 +1514,18 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         scored["teams"], out_path, key="teams", source="bullpen_leaderboards",
         label="bullpen", log=log)
 
+    # TEAM eWAR (E5). The club total the Team Bullpens board prints beside
+    # Bullpen+: every reliever row that names the club, summed on the PITCHING
+    # side unrounded and rounded once. Runs on the SERVED teams, so a kept-stale
+    # rollup is stamped from the rows it is served with, and an uncovered club
+    # carries no value at all.
+    rollup_meta["team_war"] = stamp_team_war(
+        teams, scored["relievers"], season, side="pit")
+    if rollup_meta["team_war"].get("n_teams_stamped"):
+        log(f"  bullpen: team eWAR stamped on "
+            f"{rollup_meta['team_war']['n_teams_stamped']} pens "
+            f"({rollup_meta['team_war']['n_rows_summed']} rows summed)")
+
     # Bullpen Charts should show only players actually ON the active roster; drop
     # off-roster arms (demoted / released) from the depth ladders. Roster fetch is
     # a single guarded pass and falls back to NO filtering if it fails. Runs on the
@@ -1286,9 +1560,10 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         "war_rate": wr_meta,
         # WHICH BUILD the served eWAR numerator comes from, and whether it has
         # fallen behind the frame under it (audit F10-02 / F11-01). data/ewar.json
-        # is hand-built; nothing in the pipeline rebuilds it, so a current-season
-        # WAR can sit at the artifact date while the innings beside it are current.
-        "ewar_vintage": _war_source_vintage(),
+        # re-prices its live season nightly; a missed or refused night leaves a
+        # current-season WAR behind the innings beside it, and the side-map
+        # receipt (war_source.side_war_by_season) makes `stale` say so.
+        "ewar_vintage": _war_source_vintage(as_of=today),
         "multiyear_war_rate": wr3_meta,
         # Which club a row's `team` names, how many rows were repointed, and how
         # many serve a blank team (see team_basis_meta), plus the zero-rollup
@@ -1329,11 +1604,16 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     arms) for the /mlbstats/ yearly history tabs, so users can read past seasons
     and eyeball how REM+ (skill) and RIV+ (realized impact) played forward. One
     compact row per qualified reliever per season; the current live season stays
-    in bullpen_leaderboards.json. Cached winProbability keeps the walk fast."""
+    in bullpen_leaderboards.json. Cached winProbability keeps the walk fast.
+
+    Each row also carries `war`, that season's PITCHING eWAR, joined per
+    (player, season) (E6): the season count travels to a past season the way the
+    live-pool WAR-RATE indexes cannot."""
     seasons = list(seasons or HISTORY_SEASONS)
     out_path = out_path or HISTORY_PATH
     hist = {}
     basis_rows: list[dict] = []
+    ewar_join: dict[str, dict] = {}
     for y in seasons:
         log(f"  bullpen-history: {y}...")
         rows = load_season_pitching(y)
@@ -1351,6 +1631,12 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         qual = [r for r in scored["relievers"] if r.get("qualified")]
         basis_rows.extend(basis_rows_for(qual, rows))
         board = [{k: r.get(k) for k in _HISTORY_FIELDS} for r in qual]
+        # eWAR per (player, season), E6. Stamped on the SERVED row rather than
+        # listed in _HISTORY_FIELDS: those are read off the scored row with
+        # .get, which would write an explicit null on every arm the artifact
+        # does not cover, and absent-means-absent is this column's whole rule.
+        ewar_join[str(y)] = stamp_history_war(board, y, side="pit",
+                                              label="bullpen-history", log=log)
         board.sort(key=lambda r: (r.get("rem_plus") or -999), reverse=True)
         hist[str(y)] = {
             "season": y,
@@ -1367,6 +1653,22 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
                  "realized leverage-weighted impact (deployment, not skill)."),
         "team_basis": team_basis_meta(basis_rows, label="bullpen history",
                                       scope="history"),
+        # What the eWAR join did, season by season, including a season it
+        # refused: "no column on 2021" and "the WAR read failed" are different
+        # facts and the served file states which.
+        "ewar_join": ewar_join,
+        # WHICH eWAR BUILD the column on these rows comes from. A PAYLOAD
+        # RECEIPT, not page copy: the history column titles are static ("eWAR
+        # for the season shown"), so no surface renders this block today, and it
+        # ships for the reason the audit that created it gave (F10-02: a served
+        # number nobody could date). On a PAST season the counter that reads is
+        # `bwar_revised_frozen`, a B-Ref restatement re-priced only by a hand
+        # run; `bwar_revised_live` is the missed-nightly one and belongs to the
+        # live boards. The sibling leverage history ships the same block, so the
+        # five history payloads say one thing. It ships iff the column does.
+        **({"ewar_vintage": _war_source_vintage(as_of=date.today().isoformat())}
+           if any("war" in r for y in hist.values() for r in y["relievers"])
+           else {}),
         "history": hist,
     }
     if write and hist:

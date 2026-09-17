@@ -34,7 +34,9 @@ from sem_plus import Starter
 # reuse the reliever board's StatsAPI loader (season pitching) and the shared
 # WAR-rate machinery (bullpen_export is the base of the /mlbstats/ export chain)
 from bullpen_export import (load_season_pitching, ip_to_float, _num,
-                            score_war_rate, join_war_rate_3yr,
+                            score_war_rate, stamp_side_war, stamp_team_war,
+                            stamp_history_war,
+                            join_war_rate_3yr,
                             guard_nonempty_block, team_basis_meta, basis_rows_for,
                             _active_mlbam_ids,
                             WAR_RATE_POOL_MIN_IP, WAR_RATE_DISPLAY_MIN_SP_IP)
@@ -49,12 +51,13 @@ EVAL_PATH = DATA_DIR / "sem_plus_eval.json"
 HISTORY_SEASONS = [2021, 2022, 2023, 2024, 2025]
 
 
-def _war_source_vintage() -> dict:
+def _war_source_vintage(as_of: Optional[str] = None) -> dict:
     """The served eWAR build stamp, or a stated absence. Never raises: a board
-    that cannot report its vintage must still render (audit F10-02)."""
+    that cannot report its vintage must still render (audit F10-02). `as_of`
+    is the payload's own as_of, so the block dates the drift it measured."""
     try:
         import war_source as _ws
-        return _ws.ewar_vintage()
+        return _ws.ewar_vintage(as_of=as_of)
     except Exception as e:   # noqa: BLE001 - reporting must not take a board down
         return {"artifact_generated_at": None, "stale": None,
                 "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}
@@ -352,6 +355,36 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         scored["teams"], out_path, key="teams", source="starter_leaderboards",
         label="starters", log=log)
 
+    # TEAM eWAR (E5). Beside Rotation+: the PITCHING eWAR of the starters this
+    # club holds, summed unrounded over every row of the board that names it
+    # (a rotation is its arms, qualified or not). An uncovered club carries no
+    # value rather than a zero.
+    rollup_meta["team_war"] = stamp_team_war(
+        teams, scored["starters"], season, side="pit")
+    if rollup_meta["team_war"].get("n_teams_stamped"):
+        log(f"  starters: team eWAR stamped on "
+            f"{rollup_meta['team_war']['n_teams_stamped']} rotations "
+            f"({rollup_meta['team_war']['n_rows_summed']} rows summed)")
+
+    # The card-only block. While ADMIT_TWO_WAY_TO_BOARD is True it is RETIRED
+    # and the two-way rows sit in starters[], where score_war_rate stamps their
+    # pitching eWAR like any other row. With the flag off they are scored here
+    # instead, and each card row carries the PITCHING eWAR that matches the
+    # innings beside it (the batting side rides the hitter board). Stamped only
+    # when this board's own WAR pool was not refused, so a degenerate WAR fetch
+    # leaves the card rows blank too.
+    if ADMIT_TWO_WAY_TO_BOARD:
+        two_way_card_only = {
+            "n": 0, "starters": [],
+            "note": ("retired 2026-09-11: two-way players are on the starter board "
+                     "itself, so their cards read starters[]")}
+    else:
+        two_way_card_only = score_two_way_card_only(rows, two_way_rows)
+        if wr_meta.get("available"):
+            two_way_card_only["n_war"] = stamp_side_war(
+                two_way_card_only.get("starters") or [], season,
+                side="pit", denom_key="ip")
+
     payload = {
         "generated_at": today, "season": season, "as_of": today,
         "verdict": _verdict(), "backtest": _backtest(),
@@ -362,9 +395,10 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         "war_rate": wr_meta,
         # WHICH BUILD the served eWAR numerator comes from, and whether it has
         # fallen behind the frame under it (audit F10-02 / F11-01). data/ewar.json
-        # is hand-built; nothing in the pipeline rebuilds it, so a current-season
-        # WAR can sit at the artifact date while the innings beside it are current.
-        "ewar_vintage": _war_source_vintage(),
+        # re-prices its live season nightly; a missed or refused night leaves a
+        # current-season WAR behind the innings beside it, and the side-map
+        # receipt (war_source.side_war_by_season) makes `stale` say so.
+        "ewar_vintage": _war_source_vintage(as_of=today),
         "multiyear_war_rate": wr3_meta,
         # Which club a row's `team` names, how many rows were repointed, and how
         # many serve a blank team (see bullpen_export.team_basis_meta), plus the
@@ -391,11 +425,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # RETIRED while ADMIT_TWO_WAY_TO_BOARD is True: empty, with a note, so a
         # card that still reads the key finds nothing to double-count. With the
         # flag False it is the card-only score of the pre-2026-09-11 board.
-        "two_way_card_only": (
-            {"n": 0, "starters": [],
-             "note": ("retired 2026-09-11: two-way players are on the starter board "
-                      "itself, so their cards read starters[]")}
-            if ADMIT_TWO_WAY_TO_BOARD else score_two_way_card_only(rows, two_way_rows)),
+        "two_way_card_only": two_way_card_only,
     }
     n = len(scored["starters"])
     log(f"  starters: {n} starters ({scored['pool'].get('n_qualified', 0)} qualified), "
@@ -417,11 +447,16 @@ _HISTORY_FIELDS = ("mlbam", "name", "team", "sem_plus", "role", "ip", "g", "gs",
 def export_history(seasons=None, *, out_path: Optional[Path] = None,
                    write: bool = True, log=print) -> dict:
     """Build data/starter_history.json - per-season qualified-starter boards for
-    the /mlbstats/ yearly history tabs. One StatsAPI call per season, no walk."""
+    the /mlbstats/ yearly history tabs. One StatsAPI call per season, no walk.
+
+    Each row also carries `war`, that season's PITCHING eWAR, joined per
+    (player, season) (E6). The WAR-RATE columns stay off these boards: they are
+    standardised on the LIVE pool, and a count is not."""
     seasons = list(seasons or HISTORY_SEASONS)
     out_path = out_path or HISTORY_PATH
     hist = {}
     basis_rows: list[dict] = []
+    ewar_join: dict[str, dict] = {}
     for y in seasons:
         log(f"  starter-history: {y}...")
         rows = load_season_pitching(y)
@@ -432,6 +467,10 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         qual = [s for s in scored["starters"] if s.get("qualified")]
         basis_rows.extend(basis_rows_for(qual, rows))
         board = [{k: s.get(k) for k in _HISTORY_FIELDS} for s in qual]
+        # eWAR per (player, season), E6: on the SERVED row, so an uncovered
+        # starter carries no key rather than a null (see the bullpen twin).
+        ewar_join[str(y)] = stamp_history_war(board, y, side="pit",
+                                              label="starter-history", log=log)
         board.sort(key=lambda s: (s.get("sem_plus") or -999), reverse=True)
         hist[str(y)] = {"season": y, "n_qualified": len(board), "starters": board}
         log(f"  starter-history: {y} -> {len(board)} qualified")
@@ -442,6 +481,12 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
                  "100 = average qualified starter. Durability columns are context."),
         "team_basis": team_basis_meta(basis_rows, label="starter history",
                                       scope="history"),
+        # Season by season, including a refusal: see bullpen_export.
+        "ewar_join": ewar_join,
+        # The payload receipt, iff the column: see bullpen_export.export_history.
+        **({"ewar_vintage": _war_source_vintage(as_of=date.today().isoformat())}
+           if any("war" in r for y in hist.values() for r in y["starters"])
+           else {}),
         "history": hist,
     }
     if write and hist:
