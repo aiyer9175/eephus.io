@@ -162,20 +162,54 @@ def test_bucket_ordering_floor_mean_ceiling():
         assert m["warTotal"] <= m["warTotalP90"] + 0.11, m["name"]
 
 
-def test_vet_surplus_only_on_contracted_seasons():
-    """The module's honesty rule: a veteran surplus claim rests on a real
-    contract (signed_through + per-season salary) or, since GATE C
-    (2026-08-09, ea9cb564), on projected arbitration salaries for a debuted
-    player with a resolved arbitration step. Those rows are stamped salSrc
-    "arb_projection" and the board says so ("arb est."). A claim on neither
-    is the defect this guards."""
+def test_vet_surplus_only_on_priced_seasons():
+    """The module's honesty rule, widened with the thing it is honest ABOUT.
+
+    A veteran surplus claim rests on a PRICE for each season it covers: a real
+    contract (signed_through + per-season salary), or - since GATE C
+    (2026-08-09) and across the whole control window since ask C (2026-09-16) -
+    the salary path: the CBA league minimum for a pre-arbitration season and the
+    arbitration board's projected award for an arbitration season. Those rows
+    are stamped salSrc and the board says so ("arb est."). A surplus claim on
+    NEITHER is the defect this guards, and it is the same defect as before; only
+    the set of things that count as a price got bigger.
+
+    RENAMED from test_vet_surplus_only_on_contracted_seasons, because the old
+    name stopped describing the rule the moment the league minimum became a
+    price - and a test whose name lies is worse than no test."""
     d = _payload()
     for m in d["vets"]:
         if m.get("surNpv") is not None:
-            assert m.get("thru") or m.get("salSrc") == "arb_projection", (
-                f"{m['name']} has surplus but no contract and no arbitration projection")
+            assert (m.get("thru")
+                    or m.get("salSrc") in ("arb_projection", "contract+arb")
+                    or m.get("salPath")), (
+                f"{m['name']} has surplus but no contract and no salary path")
         if m.get("sur"):
             assert any(s is not None for s in m["sur"])
+        # A cut season carries no surplus, by construction: surNpv is the NPV of
+        # the non-null entries, so the two have to agree to the dollar.
+        if m.get("salCut") is not None:
+            t0 = m["salCut"] - d["first_season"]
+            assert all(s is None for s in (m.get("sur") or [])[t0:]), m["key"]
+        # and nothing is priced past the end of club control.
+        if m.get("salThru") is not None:
+            assert max(s[0] for s in m["salPath"]) == m["salThru"], m["key"]
+
+
+def test_the_salary_path_census_is_published_with_the_payload():
+    """A $8.8B coverage move that cannot say what it reached is a claim. The
+    census says what it priced, from which source, what it could not reach and
+    why, and which board vintage it read."""
+    d = _payload()
+    cen = ((d.get("accountability") or {}).get("salary_path") or {})
+    assert cen, "the accountability block carries no salary_path census"
+    assert cen.get("mode") in ("off", "ladder", "closure", "full")
+    assert cen.get("vintage")
+    assert "stale" in cen
+    if cen["mode"] != "off":
+        for k in ("salary_path_rows", "salary_path_seasons", "truncated",
+                  "cliff_rows", "cliff_first_season", "prearb_negative_seasons"):
+            assert k in cen, k
 
 
 def test_prospects_carry_outcome_buckets_and_eta():

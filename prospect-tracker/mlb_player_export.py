@@ -678,11 +678,22 @@ def build_payload() -> dict:
              # the season in progress. Without them on the card the Trade
              # Machine cannot price a rental and the "Trade Machine" link never
              # renders for one, which is what hid A.J. Minter.
+             # salPath / salThru / salSrc / surSalLo / surSalHi / salCut /
+             # salTrunc / salVintage (ask C, 2026-09-16): the control-window
+             # salary path. The card's Surplus tile prices the SAME number the
+             # /projections/ board does, so it has to carry the same basis, and
+             # the card renders the year-by-year strip from salPath. This list
+             # is a VERBATIM copy of the projection row - it must stay verbatim,
+             # because the moment it starts deriving a field the two surfaces
+             # can disagree about one player's price.
              "proj": {k: v.get(k) for k in ("war", "warP10", "warP90",
                                             "warTotal", "warTotalP10",
                                             "warTotalP90", "sur", "surNpv",
                                             "surTotal", "surRos", "rosWar",
                                             "rosFrac",
+                                            "salPath", "salThru", "salSrc",
+                                            "surSalLo", "surSalHi", "salCut",
+                                            "salTrunc", "salOpt", "salVintage",
                                             "thru", "aav", "warHit", "warPit")},
              "twoWay": bool(v.get("twoWay")) or None,
              "isPit": is_pit and not v.get("twoWay")}

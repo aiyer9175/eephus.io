@@ -172,14 +172,71 @@ def test_every_ladder_step_is_non_decreasing_except_at_the_max_cut():
 # --------------------------------------------------------------------------- #
 
 def test_gate_c_never_overwrites_a_real_contract():
-    """It runs last and only touches rows that carry no surplus at all, so a
-    projected arbitration salary can never displace a signed one."""
+    """THE SINGLE INVARIANT THE WHOLE 2026-09-16 CHANGE TURNS ON, and it moved
+    from the ROW to the SEASON without moving in intent.
+
+    Until ask C the guarantee was "a row that already carries a surplus is
+    skipped wholesale", which is what left 408 veterans on a one-year 2026 deal
+    with their 2027-2028 arbitration steps unread. The guarantee now is "a
+    SEASON a contract prices is never re-priced", which is strictly stronger per
+    season and strictly weaker per row - exactly the change that was wanted.
+
+    Three cases, in the order they matter:
+      1. a season a contract prices keeps the contract's dollars even when the
+         status grid carries a token for that same season (a token must never
+         beat dollars);
+      2. a season AFTER the contract must take the board's step, which is the
+         behaviour that did not exist before;
+      3. the old letter, kept: a row whose grid is entirely inside `thru` takes
+         nothing from the board at all.
+    """
+    import salary_path as sp
+
+    def steps(*rows):
+        return {"steps": [{"season": s, "usd": u, "lo": u, "hi": u, "tok": k}
+                          for s, u, k in rows]}
+
+    # 1 + 2: contracted 2027, arbitration-projected 2028. The board's step for
+    # 2028 clears 80% of the contracted 2027 salary, so nothing but rule 1 and
+    # rule 2 is in play here.
+    p = sp.salary_path(1, first_season=2027, horizon=5, mode="ladder",
+                       contract={"salary_by_year": {2027: 9_500_000},
+                                 "signed_through": 2027},
+                       board_row=steps((2027, 4_000_000, "ARB 2"),
+                                       (2028, 9_000_000, "ARB 3")))
+    assert p["seasons"][0]["src"] == "contract" and p["seasons"][0]["usd"] == 9_500_000
+    assert p["seasons"][1]["src"] == "arb_ladder" and p["seasons"][1]["usd"] == 9_000_000
+
+    # 2b: the ONE rule that may override a board step, and it raises rather
+    # than lowers. CBA Article VI: an award may not cut a salary by more than
+    # 20%, and the board chains off its own panel's prior salary, so it cannot
+    # see an extension paying more. A $6.0M projection beside a contracted
+    # $9.5M is not an award; it is floored at $7.6M and flagged.
+    f = sp.salary_path(1, first_season=2027, horizon=5, mode="ladder",
+                       contract={"salary_by_year": {2027: 9_500_000},
+                                 "signed_through": 2027},
+                       board_row=steps((2027, 4_000_000, "ARB 2"),
+                                       (2028, 6_000_000, "ARB 3")))
+    assert f["seasons"][1]["src"] == "arb_ladder"
+    assert f["seasons"][1]["usd"] == 7_600_000 and f["seasons"][1]["cba_floor"]
+    assert f["cba_floored"] == 1
+
+    # 3: the old case. Everything the grid offers is already bought out.
+    q = sp.salary_path(1, first_season=2027, horizon=5, mode="ladder",
+                       contract={"salary_by_year": {2027: 9_500_000,
+                                                    2028: 10_000_000},
+                                 "signed_through": 2028},
+                       board_row=steps((2027, 4_000_000, "ARB 2"),
+                                       (2028, 6_000_000, "ARB 3")))
+    assert {c["src"] for c in q["seasons"] if c["usd"]} == {"contract"}
+
+    # and the row-level half of the old rule still governs the "off" revert.
     import proj_export as PX
     rows = [
         {"mlbam": 1, "surNpv": 5, "war": [1.0] * 5},          # already priced
         {"mlbam": 2, "surTotal": 7, "war": [1.0] * 5},        # already priced
     ]
-    PX._apply_arbitration_paths(rows, 1e7, 0.07)
+    PX._legacy_arbitration_paths(rows, 1e7, 0.07)
     assert rows[0]["surNpv"] == 5 and rows[0]["salSrc"] == "contract"
     assert rows[1]["surTotal"] == 7 and rows[1]["salSrc"] == "contract"
 
@@ -189,8 +246,9 @@ def test_gate_c_stamps_provenance_on_everything_it_prices():
     import inspect
 
     import proj_export as PX
-    src = inspect.getsource(PX._apply_arbitration_paths)
+    src = inspect.getsource(PX._apply_salary_paths)
     assert '"arb_projection"' in src and '"contract"' in src
+    assert '"contract+arb"' in src and '"pending"' in src
 
 
 def test_gate_c_runs_last_in_the_vet_builder():
@@ -198,9 +256,14 @@ def test_gate_c_runs_last_in_the_vet_builder():
 
     import proj_export as PX
     src = inspect.getsource(PX._veteran_rows)
-    i = src.index("_apply_arbitration_paths(out, dpw, r)")
-    # Every contract application must already have happened.
+    i = src.index("_apply_salary_paths(out, dpw, r, _ct_final)")
+    # Every contract application must already have happened, AND the pass must
+    # be handed the contract set the rows actually got. `_ct_by_mlbam` leaves a
+    # CONTESTED Spotrac key out on purpose and the collision-winner loop applies
+    # it afterwards, so passing the assigned map showed the path ct=None for
+    # exactly the row that had just taken a contract.
     assert src.rindex("_apply_contract(") < i
+    assert "_ct_final[winner[\"mlbam\"]] = ct" in src
 
 
 def test_gate_c_scope_limit_is_stated():
@@ -210,8 +273,12 @@ def test_gate_c_scope_limit_is_stated():
     import inspect
 
     import proj_export as PX
-    doc = inspect.getdoc(PX._apply_arbitration_paths) or ""
+    doc = inspect.getdoc(PX._legacy_arbitration_paths) or ""
     assert "never touches a prospect" in doc
+    # The rule itself lives in salary_path.py now, and its docstring is where a
+    # reader looking for "why is this prospect not priced?" will land.
+    import salary_path
+    assert "never prices a never-debuted prospect" in (salary_path.__doc__ or "")
 
 
 def test_the_status_tables_never_grow_the_contract_set():
@@ -232,3 +299,26 @@ def test_the_eval_artifact_records_its_nulls():
     assert isinstance(ev.get("verdict"), str)
     claims = " ".join(str(x.get("statement", "")) for x in ev.get("loss_ledger") or [])
     assert "NULL" in claims
+
+
+# --------------------------------------------------------------------------- #
+# sv: published service time on the board (ask C commit 1, 2026-09-16)
+# --------------------------------------------------------------------------- #
+
+def test_the_panel_carries_published_service_time_to_the_board():
+    """`sv` asked `build_panel` for `service_time` and got None on all 852 rows,
+    because nothing ever emitted it. Nothing reads it today, so populating it
+    moves no served number; what it unblocks is GATE C2's C9', the only external
+    check on the control horizon."""
+    import inspect
+
+    import arb_dataset as A
+    src = inspect.getsource(A.build_panel)
+    assert '"service_time":' in src and '"service_years":' in src
+
+
+def test_the_board_documents_sv_because_it_now_carries_one():
+    board = _doc("arbitration.json")
+    key = board.get("field_key") or {}
+    assert "sv" in key and "service time" in key["sv"].lower()
+    assert "STRING" in key["sv"], "a float lies about .043 being 43/1000"

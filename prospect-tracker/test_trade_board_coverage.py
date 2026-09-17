@@ -163,3 +163,111 @@ def test_coverage_is_computed_off_valued_rows_only():
         pytest.skip("no projection artifact")
     assert cov["missing"] == cov["priced_vets"], (
         "a null-valued row was counted as board coverage")
+
+
+# --------------------------------------------------------------------------- #
+# The salary path, on the board that re-ordered because of it (ask C)
+# --------------------------------------------------------------------------- #
+
+def test_a_projection_row_is_self_describing_about_its_salary_leg():
+    """`salary_basis` is the whole point: before ask C a board row could not say
+    whether its price rested on signed dollars, a CBA minimum or a projected
+    award, and after ask C most of them rest on more than one."""
+    import json
+    from pathlib import Path
+    import pytest
+    root = Path(__file__).parent
+    tv = root / "data" / "trade_values.json"
+    proj = root / "data" / "mlb_projections.json"
+    if not tv.exists() or not proj.exists():
+        pytest.skip("artifacts not built")
+    vets = {v["key"]: v for v in json.loads(proj.read_text("utf-8")).get("vets") or []}
+    rows = json.loads(tv.read_text("utf-8")).get("players") or []
+    seen = 0
+    for r in rows:
+        v = vets.get(r.get("player_key"))
+        if not v or not v.get("salPath"):
+            continue
+        # PLAYER KEYS COLLIDE ACROSS POPULATIONS, and this join is by key:
+        # `fernando_cruz` is both a veteran reliever on the projection board and
+        # a 19.8-year-old prospect priced through `xfv`. The salary basis is a
+        # statement about the PROJECTION-priced row, so the basis has to agree
+        # before the key is believed. (Pre-existing collision; identity
+        # resolution is its own standing program.)
+        if r.get("surplus_source") != "projection":
+            continue
+        assert r.get("salary_basis"), r.get("player_key")
+        for part in r["salary_basis"].split("+"):
+            assert part in ("contract", "arb_ladder", "class_closure"), r["salary_basis"]
+        seen += 1
+    if not seen:
+        pytest.skip("no board row carries a salary path yet")
+
+
+def test_the_projection_fan_still_brackets_the_price_it_is_drawn_around():
+    """The WAR fan holds every non-production input at its point value, the
+    non-tender decision included, so `trade_value_lo <= trade_value_mm <=
+    trade_value_hi` is an arithmetic property and not a hope. Pinned hardest on
+    the rows that carry a cut season, because those are the rows where the band
+    and the point estimate could most easily disagree about the window."""
+    import json
+    from pathlib import Path
+    import pytest
+    p = Path(__file__).parent / "data" / "trade_values.json"
+    if not p.exists():
+        pytest.skip("data/trade_values.json not built")
+    bad, cut_rows = [], 0
+    for r in json.loads(p.read_text("utf-8")).get("players") or []:
+        # PROJECTION rows only. The xfv prospect band is a different producer
+        # with a known degenerate tail (386 xfv and 74 xfv_backgrade rows carry
+        # lo == hi below their own point today); that is not this change's
+        # object and pinning it here would fail on someone else's bug.
+        if r.get("surplus_source") != "projection":
+            continue
+        mm, lo, hi = (r.get("trade_value_mm"), r.get("trade_value_lo"),
+                      r.get("trade_value_hi"))
+        if mm is None or lo is None or hi is None:
+            continue
+        if r.get("salary_cut_season"):
+            cut_rows += 1
+        if not (lo - 0.15 <= mm <= hi + 0.15):
+            bad.append((r.get("player_key"), lo, mm, hi))
+    assert not bad, f"the projection fan does not bracket its own price: {bad[:5]}"
+    assert cut_rows, "no projection row carries a non-tender cut: the band's "                     "hardest case is not being exercised"
+
+
+def test_the_salary_band_is_ordered_ascending_and_brackets_the_price():
+    """R5: named for the SURPLUS it carries, not for the salary. A LOW salary
+    gives a HIGH surplus, so an ascending pair is the only readable one."""
+    import json
+    from pathlib import Path
+    import pytest
+    p = Path(__file__).parent / "data" / "trade_values.json"
+    if not p.exists():
+        pytest.skip("data/trade_values.json not built")
+    bad = []
+    for r in json.loads(p.read_text("utf-8")).get("players") or []:
+        b = r.get("surplus_salary_band_mm")
+        if not b:
+            continue
+        lo, hi = b
+        if lo > hi or not (lo - 0.15 <= (r.get("trade_value_mm") or lo) <= hi + 0.15):
+            bad.append((r.get("player_key"), b, r.get("trade_value_mm")))
+    assert not bad, f"the salary band is inverted or does not bracket its price: {bad[:3]}"
+
+
+def test_the_coverage_block_says_what_the_salary_path_reached():
+    import json
+    from pathlib import Path
+    import pytest
+    p = Path(__file__).parent / "data" / "trade_values.json"
+    if not p.exists():
+        pytest.skip("data/trade_values.json not built")
+    cov = (json.loads(p.read_text("utf-8")).get("coverage") or {})
+    if "salary_path_mode" not in cov:
+        pytest.skip("artifact predates the salary path")
+    assert cov["salary_path_mode"] in ("off", "ladder", "closure", "full", "unknown")
+    for k in ("salary_path_rows", "salary_path_seasons",
+              "salary_path_seasons_by_source", "salary_path_truncated",
+              "salary_path_cliff_rows"):
+        assert k in cov, k

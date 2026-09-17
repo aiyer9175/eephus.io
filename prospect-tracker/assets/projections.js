@@ -1167,6 +1167,88 @@
     const slug = ESPN_SLUGS[org] || String(org).toLowerCase();
     return `<img class="fa-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png" alt="" loading="lazy" onerror="this.remove()">`;
   }
+
+  // ---- the salary path strip (ask C, 2026-09-16) -----------------------------
+  // The year-by-year salary the surplus was priced on, which is literally what
+  // the owner asked for: surplus "relative to their projected arbitration
+  // amounts". It renders in the OPEN-ROW detail here and under the Surplus tile
+  // on the MLB player card, and NEVER in the always-visible board row - measured
+  // at 390px it costs 3 lines and 177px there.
+  //
+  // Every cell state is a state the payload already carries, so nothing here
+  // infers anything:
+  //   is-ros   the rest-of-season leg (surRos)          solid border
+  //   is-guar  src "contract"                           solid border
+  //   is-est   src "arb_ladder" / "class_closure"       DASHED border
+  //   is-cut   at or past salCut                        dashed, salary struck
+  //   is-fa    the first season past salThru            only when salTrunc null
+  //   is-unk   rendered INSTEAD of is-fa when salTrunc  the window is not known
+  // The dashed border is the board's existing .proj-ct-est idiom, reused so
+  // "estimated, not signed" reads the same way in both places.
+  //
+  // is-fa is SUPPRESSED whenever salTrunc is set. A row whose Spotrac grid is
+  // pre-arbitration-only has no established control end, and printing
+  // "2029 FA / not controlled" for it would be a served falsehood: 266 veterans
+  // are in exactly that state.
+  function salText(usd) {
+    if (usd == null) return EM_DASH;
+    if (usd < 5e4) return "<$0.1M";
+    if (usd < 1e6) return `$${(usd / 1e6).toFixed(2)}M`;
+    return money(usd);
+  }
+  function salaryStripHtml(m, opt) {
+    const path = m && m.salPath;
+    if (!path || !path.length || !DATA) return "";
+    const o = opt || {};
+    const first = DATA.first_season, H = DATA.horizon;
+    const sur = m.sur || [];
+    const opts = {};
+    (m.salOpt || []).forEach(x => { opts[x[0]] = x[1]; });
+    const cells = [];
+    const dTxt = (v) => v == null ? "" :
+      `<span class="sp-d ${v >= 0 ? "proj-pos" : "proj-neg"}">${(v >= 0 ? "+" : "") + money(v * 1e6)}</span>`;
+    if (m.surRos != null)
+      cells.push(`<span class="proj-sp-c is-ros"><span class="sp-y">rest of ${first - 1}</span>`
+        + `<span class="sp-s">${m.rosWar != null ? `${fmtWar(m.rosWar)} WAR` : "in progress"}</span>`
+        + dTxt(m.surRos) + `</span>`);
+    path.forEach(st => {
+      const s = st[0], usd = st[1], tok = st[4] || "", src = st[5], cut = !!st[6];
+      const t = s - first;
+      const cls = cut ? "is-cut" : (src === "contract" ? "is-guar" : "is-est");
+      const opn = opts[s];
+      const yr = cut ? `${s} not tendered`
+        : opn ? `${s} ${opn} option`
+        : src === "contract" ? `${s} signed` : `${s} ${tok.toLowerCase()}`;
+      const tip = cut
+        ? "Carrying him through the rest of his arbitration years costs more than he is worth, so the club walks away here"
+        : opn ? "Priced as if the player stays; an opt out is not modelled"
+        : src === "class_closure" ? "Arbitration year implied by the last class token on the board, not listed by Spotrac yet"
+        : src === "arb_ladder" ? (tok.toUpperCase().indexOf("PRE") === 0
+            ? "Pre arbitration season at the CBA league minimum - a rule, not a prediction"
+            : "Projected arbitration award")
+        : "Guaranteed salary on file";
+      cells.push(`<span class="proj-sp-c ${cls}" title="${esc(tip)}"><span class="sp-y">${esc(yr)}</span>`
+        + `<span class="sp-s">${salText(usd)}</span>`
+        + (cut ? `<span class="sp-d">not tendered</span>` : dTxt(sur[t])) + `</span>`);
+    });
+    const lastS = first + H - 1;
+    if (m.salTrunc) {
+      const why = m.salTrunc === "no_prior_salary"
+        ? "no prior salary on file, arbitration years not priced"
+        : "control end unknown";
+      cells.push(`<span class="proj-sp-c is-unk" title="${esc(why)}">`
+        + `<span class="sp-y">${(m.salThru || lastS) + 1}+</span>`
+        + `<span class="sp-s">window not established</span><span class="sp-d">${esc(why)}</span></span>`);
+    } else if (m.salThru != null && m.salThru < lastS) {
+      cells.push(`<span class="proj-sp-c is-fa"><span class="sp-y">${m.salThru + 1} FA</span>`
+        + `<span class="sp-s">free agent</span><span class="sp-d">not controlled</span></span>`);
+    }
+    if (!cells.length) return "";
+    return `<div class="proj-sp${o.cls ? " " + o.cls : ""}" role="group" aria-label="Salary path">`
+      + `<span class="proj-sp-h"><b data-gl="salary_path">Salary path</b></span>`
+      + cells.join("") + `</div>`;
+  }
+
   // One decimal, never "-0.0" (a P10 of -0.04 would print that).
   function war1(v) { return v == null ? EM_DASH : fmtWar(Math.round(v * 10) / 10 || 0); }
   // A 2026 salary can be a prorated few thousand dollars; money() would say $0.0M.
@@ -1177,15 +1259,32 @@
     const first = DATA.first_season;
     if (m.src === "prospect")
       return { text: "Prospect", sub: "", cls: "proj-ct-prospect", tip: "Pre-MLB; club control starts at debut" };
+    // ASK C: a guaranteed year still governs the pill, but where the salary
+    // path prices seasons AFTER it the sub-line and the tip say so, because a
+    // cell reading "2026" beside a surplus built on 2027-2029 was the surface
+    // contradicting its own number.
+    const est = m.salThru != null && (!m.thru || m.salThru > m.thru);
+    const truncNote = m.salTrunc
+      ? `; the control window past ${m.salThru} is not established` : "";
     if (m.thru && m.thru > first)
       return { text: String(m.thru), sub: `thru ${m.thru}`, cls: "proj-ct-signed",
         tip: `Signed through ${m.thru}${m.aav ? ` at ${money(m.aav)}/yr` : ""}` };
     if (m.thru && m.thru === first)
-      return { text: String(m.thru), sub: `thru ${m.thru}`, cls: "proj-ct-expiring",
-        tip: "Final guaranteed year; arbitration or free agency after it" };
+      return { text: String(m.thru), sub: est ? "+ arb est." : `thru ${m.thru}`,
+        cls: `proj-ct-expiring${est ? " proj-ct-est" : ""}`,
+        tip: est
+          ? `Guaranteed through ${m.thru}; ${m.thru + 1}-${m.salThru} priced on projected arbitration salaries${truncNote}`
+          : "Final guaranteed year; arbitration or free agency after it" };
     if (m.thru)
-      return { text: String(m.thru), sub: `thru ${m.thru}`, cls: "proj-ct-controlled",
-        tip: `Guaranteed through ${m.thru} only` };
+      return { text: String(m.thru), sub: est ? "+ arb est." : `thru ${m.thru}`,
+        cls: `proj-ct-expiring${est ? " proj-ct-est" : ""}`,
+        tip: est
+          ? `Guaranteed through ${m.thru}; ${m.thru + 1}-${m.salThru} priced on projected arbitration salaries${truncNote}`
+          : `Guaranteed through ${m.thru} only` };
+    if (m.salThru != null)
+      return { text: "Arb est.", sub: m.salTrunc ? `thru ${m.salThru}+` : `thru ${m.salThru}`,
+        cls: "proj-ct-controlled proj-ct-est",
+        tip: `No contract on file; surplus prices projected arbitration salaries through ${m.salThru}${truncNote}` };
     if (m.salSrc === "arb_projection")
       return { text: "Arb est.", sub: "arb est.", cls: "proj-ct-controlled proj-ct-est",
         tip: "No contract on file; surplus prices projected arbitration salaries" };
@@ -1223,15 +1322,21 @@
       if (m.warTotal != null) parts.push(g(`Expected ${H}y`, fmtWar(m.warTotal), "ewar"));
       const ct = m.thru && m.thru >= first && m.aav != null ? `${money(m.aav)} AAV thru ${m.thru}`
         : m.thru ? `${m.thru} salary ${aavText(m.aav)}`
-        : m.salSrc === "arb_projection" ? "arb est." : "none on file";
+        : m.salPath ? "arb est." : "none on file";
       parts.push(g("Contract", ct));
       const sv = surOf(m);
       const ros = m.surTotal != null ? m.surTotal - (m.surNpv || 0) : null;
+      // ASK C: the group names the CONTROL WINDOW, because that is now what the
+      // number covers - the seasons a club still holds him for, at whatever the
+      // path says each one costs, not only the ones a contract prices.
+      const thruTxt = m.salThru != null ? ` (control window through ${m.salThru}${m.salTrunc ? "+" : ""})` : "";
       const split = sv == null ? "not priced"
-        : (ros != null && m.surNpv != null) ? `${money(sv)} = rest of ${first - 1} ${money(ros)} + ${first}+ ${money(m.surNpv)}`
+        : (ros != null && m.surNpv != null) ? `${money(sv)} = rest of ${first - 1} ${money(ros)} + ${first}+ ${money(m.surNpv)}${thruTxt}`
         : (ros != null) ? `${money(sv)}, rest of ${first - 1} only`
-        : `${money(sv)}, ${first}+`;
+        : `${money(sv)}, ${first}+${thruTxt}`;
       parts.push(g("Surplus", split, "surplus_value"));
+      if (m.surSalLo != null && m.surSalHi != null)
+        parts.push(g("If the award lands", `${money(m.surSalLo)} to ${money(m.surSalHi)}`, "salary_path"));
       if (m.rosWar != null) parts.push(g(`Rest of ${first - 1}`, `${fmtWar(m.rosWar)} WAR`));
       const line = (arr, fmt) => arr.map(v => v == null ? EM_DASH.trim() : fmt(v)).join(" ");
       if ((m.wrc || []).some(v => v != null)) parts.push(g("wRC+", line(m.wrc, RATE_META.wrc.fmt), "wrc_plus"));
@@ -1245,7 +1350,7 @@
     const tail = [`pc-y pc-y${H - 2}`, `pc-y pc-y${H - 1}`, "pc-age"]
       .concat(pros ? ["pc-fv", "pc-eta", "pc-peak", "pc-bust"] : ["pc-aav", "pc-ct"]);
     return `<tr class="proj-detail" id="projd-${esc(m.key)}" data-export-skip>${pad("pc-rank")}`
-      + `<td colspan="${1 + H}" class="proj-dt-cell"><div class="proj-dt">${parts.join("")}</div></td>`
+      + `<td colspan="${1 + H}" class="proj-dt-cell"><div class="proj-dt">${parts.join("")}${pros ? "" : salaryStripHtml(m)}</div></td>`
       + tail.map(pad).join("") + `</tr>`;
   }
 
@@ -1321,9 +1426,14 @@
         : (m.surRos != null && m.surNpv == null
             ? `Rest-of-season control only: ${Math.round((m.rosFrac || 0) * 100)}% of ${first - 1} left, prorated projection minus prorated salary`
             : (m.surRos != null
-                ? "Rest of this season plus NPV of (convex production value − salary) over salary-known seasons"
-                : "NPV of (convex production value − salary) over salary-known seasons"))
-          + (m.salSrc === "arb_projection" ? ". Priced on projected arbitration salaries" : "");
+                ? "Rest of this season plus NPV of (convex production value − salary) over the control window"
+                : "NPV of (convex production value − salary) over the control window"))
+          + (m.salSrc === "contract+arb"
+              ? ". Control window: contracted seasons plus projected arbitration seasons"
+              : m.salSrc === "arb_projection" || m.salPath
+              ? ". Control window: the salary path. Arbitration seasons are projected"
+              : "")
+          + (m.salCut != null ? `. Not tendered from ${m.salCut}` : "");
       const sur = sv != null ? `<span class="${sv >= 0 ? "proj-pos" : "proj-neg"}" title="${surTip}">${money(sv)}</span>` : EM_DASH;
       const aav = (m.aav != null && m.thru && m.thru >= first) ? money(m.aav) : EM_DASH;
       const age = m.age != null ? Math.floor(m.age) : EM_DASH;
@@ -2228,8 +2338,13 @@
         sub: (p.twoWay && pr.warHit && pr.warPit) ? `hit ${fmtWar(sum(pr.warHit))} / pit ${fmtWar(sum(pr.warPit))}` : "expected" }));
     const sv = surOf(p.proj);
     if (sv != null)
-      out.push(tileHTML((pr.surNpv == null && pr.surRos != null) ? "Surplus (rest of season)" : "Surplus NPV",
-        money(sv), sv >= 0 ? "proj-pos" : "proj-neg", { gl: "surplus_value" }));
+      out.push(tileHTML(
+        (pr.surNpv == null && pr.surRos != null) ? "Surplus (rest of season)"
+          : pr.salPath ? "Surplus (control window)" : "Surplus NPV",
+        money(sv), sv >= 0 ? "proj-pos" : "proj-neg",
+        { gl: "surplus_value",
+          sub: (pr.surSalLo != null && pr.surSalHi != null)
+            ? `award band ${money(pr.surSalLo)} to ${money(pr.surSalHi)}` : "" }));
     const h = sk.hem, d = sk.def, s = (p.isPit || p.twoWay) ? pitchSkill(p) : null;
     const pitIdx = () => {
       if (!s) return "";
@@ -2541,8 +2656,15 @@
     const heroShot = headshotURL(p.mlbam, 96);
     const photo = heroShot
       ? `<img class="mlbp-headshot" src="${heroShot}" alt="" onerror="this.style.visibility='hidden'">` : "";
+    // ASK C: where the salary path knows the window end, the card states THAT
+    // and not "arb / pre-arb". `remaining_control_years` (debut+6) keeps being
+    // emitted for the rank gate but no longer contradicts it on a surface.
+    const _sThru = p.proj && p.proj.salThru;
     const contract = p.proj && p.proj.thru
       ? `signed thru ${p.proj.thru}${p.proj.aav ? ` · ${money(p.proj.aav)}/y` : ""}`
+        + (_sThru && _sThru > p.proj.thru ? ` · club control thru ${_sThru}` : "")
+      : _sThru
+      ? `club control thru ${_sThru}${p.proj.salTrunc ? "+ (window not established)" : ""}`
       : (p.fa ? `free agent${p.fa.type ? ` · ${esc(p.fa.type)}` : ""}` : "arb / pre-arb");
     // Prospect origin line (ex-PROSPX players): the FV arc endpoints +
     // debut date - the hub strip carries the link to the full arc.
@@ -2572,7 +2694,7 @@
           ${originLine}
           <div class="mlbp-hero-actions"><button class="chip egfx-chip" id="mlbp-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && surOf(p.proj) != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}">&#8646; Trade Machine</a>` : ""}</div>
         </div>
-        <div class="mlbp-tiles">${heroTiles(p)}</div>
+        <div class="mlbp-tiles">${heroTiles(p)}${salaryStripHtml(p.proj, { cls: "mlbp-sp" })}</div>
       </div>
       ${mlbpTabs(panels, key)}
       <div class="fa-note mlbp-page-foot">${pageFoot(p)}</div>

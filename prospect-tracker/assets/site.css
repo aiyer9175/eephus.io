@@ -4405,6 +4405,46 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--text-tertiary); margin-right: 3px;
 }
+
+/* ---- salary path strip (ask C, 2026-09-16) ------------------------------
+   The year-by-year price the control-window surplus was built on. Theme
+   tokens only, no new colours, and NO opacity anywhere: the first shape of
+   the non-tender cell used opacity .62 on --text-tertiary, which composites
+   to 2.36:1 light and 2.58:1 dark and fails the house colour rule. The
+   struck-through salary carries the same meaning at full opacity and
+   measures 4.68:1 light / 4.94:1 dark on --bg-primary. --bg-tertiary as the
+   cell background was considered and rejected (4.27 / 3.96). */
+.proj-app .proj-sp { display: flex; flex-wrap: wrap; align-items: stretch;
+  gap: 4px; width: 100%; margin-top: 3px; }
+.proj-app .proj-sp-h { font: 700 9px/1.6 var(--font-retro-mono);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary);
+  align-self: center; margin-right: 2px; }
+.proj-app .proj-sp-c { display: flex; flex-direction: column; gap: 1px;
+  min-width: 82px; flex: 0 1 auto; padding: 2px 6px 3px;
+  border: 1px solid var(--border); border-radius: 3px;
+  background: var(--bg-primary); }
+.proj-app .proj-sp-c.is-est,
+.proj-app .proj-sp-c.is-cut,
+.proj-app .proj-sp-c.is-unk { border-style: dashed; }
+.proj-app .proj-sp-c .sp-y { font: 700 9px/1.4 var(--font-retro-mono);
+  letter-spacing: .04em; text-transform: uppercase; color: var(--text-tertiary);
+  white-space: nowrap; }
+.proj-app .proj-sp-c .sp-s { font-size: 11px; line-height: 1.3;
+  color: var(--text-secondary); white-space: nowrap; }
+.proj-app .proj-sp-c .sp-d { font-size: 11px; line-height: 1.3;
+  font-weight: 700; white-space: nowrap; }
+.proj-app .proj-sp-c.is-cut .sp-s { text-decoration: line-through;
+  color: var(--text-tertiary); }
+.proj-app .proj-sp-c.is-cut .sp-d { color: var(--text-secondary); }
+.proj-app .proj-sp-c.is-unk .sp-s,
+.proj-app .proj-sp-c.is-unk .sp-d { color: var(--text-secondary);
+  font-weight: 400; }
+.proj-app .mlbp-tiles .proj-sp.mlbp-sp { flex: 1 1 100%; margin-top: 6px; }
+@container projboard (max-width: 559px) {
+  .proj-app .proj-sp-c { min-width: 0; flex: 1 1 calc(50% - 4px); }
+  .proj-app .proj-sp-h { flex: 1 1 100%; }
+}
+
 /* Column widths (fixed layout reads them off the header row); Player takes
    the remainder. */
 .proj-app .proj-board-table .pc-rank { width: 40px; }

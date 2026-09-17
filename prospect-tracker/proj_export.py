@@ -25,13 +25,19 @@ labeled sources:
 Dollars: each projected season is priced through the platform's convex
 tier curve at the winter's ex-ante FA $/WAR level, escalated by the
 configured $/WAR inflation per season - the same pricing the FA rational
-value and the (re-anchored) prospect surplus use. Veteran SURPLUS only
-exists where a real contract exists: salary-known seasons (Spotrac
-contract pages) net against production value and discount at the platform
-rate (value_framework discount_rate, read in _veteran_rows); arb/pre-arb
-seasons carry projections but no surplus claim. Prospect
-surplus IS the platform surplus value (control-window, service-time
-aware) - never a parallel number.
+value and the (re-anchored) prospect surplus use. Veteran SURPLUS covers
+the CONTROL WINDOW, not only the contracted part of it (ask C,
+2026-09-16): every remaining season a club controls is priced through
+salary_path.py - contracted dollars where a contract exists, the CBA
+league minimum for pre-arbitration seasons, the arbitration board's
+projected award for arbitration seasons - and netted against production
+value at the platform discount rate (value_framework discount_rate, read
+in _veteran_rows). A season past the end of club control carries a
+projection and no price. Prospect surplus IS the platform surplus value
+(control-window, service-time aware) - never a parallel number, and it
+keeps the clemens_2026 fraction ladder on purpose (docs/
+ARBITRATION_GATE.md section 6: a never-debuted player has no prior salary
+for the award model to raise off).
 
 Run: python proj_export.py   (also wired into run_monthly after the FA
 refresh). Reads only caches + committed artifacts; never writes PROSPX
@@ -50,6 +56,7 @@ import fa_class
 import fa_ident
 import fa_market as fm
 import fa_projection as fp
+import salary_path as sp
 import value_framework as vf
 from rate_stabilization import REPLACEMENT_WINS
 from scrapers import normalize_key
@@ -352,9 +359,13 @@ def _team_by_mlbam(lookback: int = 4) -> dict[int, str]:
             except Exception:                                  # noqa: BLE001
                 log.warning("team map: statsapi %s %d unavailable", group, season)
                 continue
-            for sp in splits or []:
-                pid = (sp.get("player") or {}).get("id")
-                name = (sp.get("team") or {}).get("name")
+            # `split`, not `sp`: the module-level `import salary_path as sp`
+            # (line 59) is shadowed by a loop variable otherwise, which ruff
+            # flags as F402 and which would make any later use of the module
+            # inside this function silently reach for a stats split.
+            for split in splits or []:
+                pid = (split.get("player") or {}).get("id")
+                name = (split.get("team") or {}).get("name")
                 if not pid or not name:
                     continue
                 org = canonical_org(name)
@@ -537,6 +548,13 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         if any_sal:
             m["sur"] = sur
             m["surNpv"] = int(npv)
+        # WHICH SEASONS A CONTRACT PRICED, recorded rather than re-derived.
+        # `_apply_salary_paths` runs last and must never re-price a season this
+        # function already priced (rule 1 of the salary path, and the letter of
+        # test_arb_export::test_gate_c_never_overwrites_a_real_contract moved
+        # from the ROW to the SEASON). Both private keys are stripped by that
+        # pass, which is the last thing to touch a veteran row.
+        m["_salYears"] = sorted(sal)
         # REST-OF-SEASON CONTROL (2026-08-03, owner ask). Until now a contract
         # whose last season is the one in progress produced no `sur` and no
         # `surNpv` at all: the horizon starts at FIRST_SEASON, so the months a
@@ -655,6 +673,12 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         # and any external reader of that field are unchanged.
         if ros_d is not None or any_sal:
             m["surTotal"] = int((ros_d or 0.0) + npv)
+        # The UNROUNDED rest-of-season leg. `surRos` is published to 0.1M and
+        # surTotal was built from the raw float, so re-adding the published
+        # field would move surTotal by up to $50k on every row that carries
+        # one. The salary-path pass rebuilds surTotal and needs the same float.
+        if ros_d is not None:
+            m["_rosUsd"] = ros_d
 
     out: list[dict] = []
     _collision_rows: dict[str, list[dict]] = {}
@@ -820,79 +844,74 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             _collision_rows.setdefault(_ck, []).append(m)
     # Contracts the resolver could not single out: award to the highest-projected-WAR
     # claimant only (Spotrac's collapse keeps the highest-AAV deal, i.e. the flagship).
+    # THE AWARD HAS TO REACH THE PATH PASS. `_resolve_contracts` deliberately
+    # leaves a contested contract OUT of `_ct_by_mlbam`, so handing that map to
+    # `_apply_salary_paths` would show it ct=None for exactly the row that just
+    # took a contract: rule 1's second lock would be off and the board grid
+    # would be free to price a season the contract already buys. `_ct_final` is
+    # the contract set the ROWS actually got.
+    _ct_final = dict(_ct_by_mlbam)
     for _ck, rows in _collision_rows.items():
         ct = contracts.get(_ck)
         if not ct or not rows:
             continue
         winner = max(rows, key=lambda m: m.get("warTotal") or 0.0)
         _apply_contract(winner, ct)   # mutates the row already in `out`
+        if winner.get("mlbam") is not None:
+            _ct_final[winner["mlbam"]] = ct
         if winner["key"].split("__")[0] == _ck:
             winner["key"] = _ck       # flagship keeps the plain key (links/joins)
-    # GATE C. Price the club-control years the contract join left blank. Runs
-    # LAST so it can never overwrite a real contract: it only touches rows that
-    # still carry no surplus at all.
-    _apply_arbitration_paths(out, dpw, r)
+    # THE SALARY PATH (ask C, 2026-09-16; GATE C before it). Price every
+    # remaining season a club controls, not only the ones a contract prices.
+    # Runs LAST so it can never overwrite a real contract - the guarantee is now
+    # per SEASON rather than per ROW, which is the whole change: a row is no
+    # longer skipped wholesale because some season of it is contracted.
+    _apply_salary_paths(out, dpw, r, _ct_final)
     out.sort(key=lambda m: -(m.get("warTotal") or 0))
     return out
 
 
 
-def _arb_salary_paths() -> dict:
-    """{mlbam: {season: projected_usd}} from data/arbitration.json.
-
-    GATE C. The projection board prices surplus ONLY from a Spotrac
-    salary_by_year, so a player whose club controls him through arbitration but
-    has not yet signed him for those years gets no salary, and therefore no
-    surplus at all. Measured on the shipped board: 357 of 358 arbitration and
-    pre-arbitration rows carried sur = None and surTotal = None. Anthony Volpe
-    projected 2.12/1.96/1.45/1.56/1.5 WAR over five seasons and was priced at
-    nothing, on /projections/ AND on the trade board, which prices the same
-    surTotal and is required to agree with it.
-
-    data/trade_values.json already states the gap in its own diagnostics:
-    "The arbitration years the club also controls are NOT priced, so a
-    prearb_min value is a FLOOR on the row's true control-window surplus", with
-    unpriceable 356 and service_time_source "PROXY - the pipeline carries no
-    service time". The platform had the diagnosis and was missing the model.
-
-    Returns {} when the arbitration board has not been exported, so this is a
-    pure addition that cannot break the existing path.
-    """
-    p = DATA_DIR / "arbitration.json"
-    if not p.exists():
-        return {}
-    try:
-        doc = json.loads(p.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
-    out: dict[int, dict[int, int]] = {}
-    for row in doc.get("rows") or []:
-        m = row.get("m")
-        if not m:
-            continue
-        per = {}
-        for step in row.get("l") or []:
-            if len(step) >= 2 and step[0] and step[1]:
-                per[int(step[0])] = int(step[1])
-        if per:
-            out[int(m)] = per
-    return out
+#: What the salary path reached, and what it did not. Filled by
+#: `_apply_salary_paths` (the only place that sees both the built rows and the
+#: /arbitration/ board) and published verbatim by `_accountability_block`. A
+#: census a reader can check beats a claim a reader has to trust: this one says
+#: how many seasons were priced from a contract, from the board and from class
+#: closure, how many rows have NO established control window and why, how many
+#: the non-tender option cuts, and how many negative pre-arbitration dollars
+#: are deliberately left unpriced (decision D11).
+_SALARY_PATH_CENSUS: dict = {}
 
 
-def _apply_arbitration_paths(rows, dpw, r, log=None) -> dict:
-    """Price the club-control years for rows the contract join left blank.
+def _legacy_arbitration_paths(rows, dpw, r, log=None) -> dict:
+    """GATE C exactly as it served from 2026-08-09 to 2026-09-16. THE REVERT.
 
-    SCOPE LIMIT, and it is deliberate. This runs ONLY for players who already
+    `SALARY_PATH_MODE = "off"` runs this and nothing else, so reverting the
+    control-window salary path is one constant rather than a re-implementation,
+    and `test_salary_path_off_mode` can assert the payload is byte-for-byte the
+    pre-change one. docs/ARBITRATION_GATE.md section 11e fixes in advance which
+    failing GATE C2 clause reverts how far.
+
+    SCOPE LIMIT, and it was deliberate. This runs ONLY for players who already
     have an observed MLB record and a resolved arbitration step - the population
     the model was fit on. It never touches a prospect. A never-debuted player's
     arbitration years are four to seven seasons out, he has no prior salary, the
     raise model cannot run at all, and extrapolating a model fit on observed
     awards onto him is the exact shape of a prior failure in this tree.
 
-    Every priced row is stamped `salSrc` so a reader can tell a contract from a
-    projection, and the counts are returned for the caller to log.
+    ITS DEFECT, which is the whole of ask C: the skip is per ROW. A veteran on a
+    one-year 2026 deal carries a rest-of-season surplus, so `surTotal` is not
+    None, so the 2027 and 2028 arbitration steps already sitting on the board
+    were never read. 408 veterans and about 1,400 club-controlled seasons priced
+    at nothing that way.
     """
-    paths = _arb_salary_paths()
+    board = sp.board_rows()
+    paths = {}
+    for mlbam, row in (board.get("rows") or {}).items():
+        per = {st["season"]: st["usd"] for st in row["steps"]
+               if st.get("usd") is not None}
+        if per:
+            paths[mlbam] = per
     if not paths:
         return {"priced": 0, "reason": "arbitration board not exported"}
     priced = 0
@@ -928,6 +947,355 @@ def _apply_arbitration_paths(rows, dpw, r, log=None) -> dict:
     if log:
         log("  gate C: priced %d rows off the arbitration projection" % priced)
     return {"priced": priced}
+
+
+def _strip_private(m: dict) -> None:
+    """Drop the private carrier keys `_apply_contract` records for this pass.
+    `_clean` runs BEFORE the path pass (inside the row loop), so it cannot do
+    this; the path pass is the last thing to touch a veteran row, so it does."""
+    for k in ("_salYears", "_rosUsd"):
+        m.pop(k, None)
+
+
+def _band_npv(path, war, dpw, r, which: str, run_cliff: bool) -> float:
+    """The surplus NPV with the salary held at one END of the board's own award
+    band and the WAR path held at its MEAN.
+
+    The two errors are NOT fused into one range, and the reason is measured:
+    they are positively correlated (a better season raises both the projection
+    and the award), the correlation is estimated nowhere in this tree, and the
+    board's band (22% at arb-1, widening 8 points a rung) is documented as
+    deliberately not a calibrated interval. Fusing them would launder that into
+    a served interval. Measured on the path-priced rows: the salary band is
+    about 1.9% of the WAR band at the median, and above 25% of it on 8.4% of
+    rows - which is why it ships as its own field rather than as a footnote.
+
+    The same cliff rule runs on the band endpoint, because the cliff is
+    monotone in the season surplus: a uniformly cheaper salary can only raise
+    the floored total. Skipping it here would let a floored `surNpv` sit ABOVE
+    an unfloored `surSalHi` and break the published ordering.
+
+    THIS RETURNS THE PROJECTED LEG ONLY. The rest-of-season leg is a contracted
+    salary against a fraction of the first season, so it carries no award
+    uncertainty and it is added back by the CALLER, which is what makes the
+    published pair bracket the published `surTotal` rather than a number no
+    surface shows.
+    """
+    d = []
+    for c in path["seasons"]:
+        if c["usd"] is None:
+            d.append(None)
+            continue
+        s = c.get(which)
+        s = c["usd"] if s is None else s
+        w = war[c["t"]] if c["t"] < len(war) else None
+        d.append(_season_value_usd(w or 0.0, c["t"], dpw) - s)
+    if run_cliff:
+        cuttable = [sp.is_cuttable(c) and c["usd"] is not None
+                    for c in path["seasons"]]
+        npv, _ = sp.tender_cliff([x or 0.0 for x in d], cuttable, r)
+        return npv
+    return sum(x / ((1 + r) ** t) for t, x in enumerate(d) if x is not None)
+
+
+def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
+    """Price every remaining season a club controls, through ONE salary path.
+
+    Replaces GATE C's `_apply_arbitration_paths`. The invariant that change
+    turns on is unchanged in intent and moved in letter: A SEASON A CONTRACT
+    PRICES IS NEVER RE-PRICED. What changes is that a ROW is no longer skipped
+    wholesale because some season of it is contracted, which is what left 408
+    veterans and about 1,400 club-controlled seasons at zero.
+
+    Per row: build the path (salary_path.py owns every rule), price each season
+    at `_season_value_usd(war) - salary`, run the non-tender option on the
+    arbitration seasons, and stamp the payload keys. Contracted seasons are
+    re-derived here from the SAME salary `_apply_contract` used, so a row whose
+    window is entirely contracted comes out byte-identical - which is what the
+    "133 rows signed through 2028+ must not move" assertion checks.
+
+    Runs LAST, after the collision-winner re-award, so the contract set it sees
+    is final.
+    """
+    global _SALARY_PATH_CENSUS
+    mode = sp.SALARY_PATH_MODE
+    board = sp.board_rows()
+    vintage = board.get("vintage")
+    brows = board.get("rows") or {}
+    census = {
+        "mode": mode,
+        "vintage": vintage,
+        # Whether the board the path priced off is older than this payload by
+        # more than six weeks. R6/decision D9: there is no ordering bug to fix -
+        # the monthly runs arb_export (step 6b7) BEFORE the chained daily's
+        # proj_export - but a plain nightly or a standalone --rebuild-only
+        # prices off the last monthly board, which is that board's own cadence.
+        # Disclosed here and asserted in test_calibration_vintage rather than
+        # re-plumbed.
+        "stale": _board_is_stale(vintage),
+        "sv_rows": sum(1 for row in brows.values() if row.get("sv")),
+        "board_rows": len(brows),
+    }
+    if mode == "off" or not brows:
+        out = _legacy_arbitration_paths(rows, dpw, r, log=say)
+        for m in rows:
+            _strip_private(m)
+        census["priced_rows"] = out.get("priced", 0)
+        census["reason"] = out.get("reason")
+        _SALARY_PATH_CENSUS = {k: v for k, v in census.items() if v is not None}
+        return out
+
+    opts_all = sp.options()
+    lm = sp.league_min_table()
+    raise_fn = sp.board_raise_fn() if mode in ("closure", "full") else None
+    census["closure_estimator"] = (
+        "fitted" if raise_fn is not None else
+        ("not_run" if mode in ("ladder",) else "unavailable"))
+    if mode in ("closure", "full") and raise_fn is None:
+        # LOUD, NOT SHORT. `board_raise_fn` degrades to None on a cold tree (no
+        # panel, a stale cache), and a silent degrade ships a materially
+        # different board with a green suite: closure prices 467 seasons on
+        # 245 rows, and 17.8% of the money this change adds comes through it.
+        # The only trace used to be one census string nothing asserted. Serving
+        # the shorter window is a decision, so it is made by a person moving
+        # SALARY_PATH_MODE, not by an exception nobody saw.
+        raise RuntimeError(
+            "salary path mode %r needs the arb raise estimator and "
+            "salary_path.board_raise_fn() returned None; build the panel, or "
+            'set salary_path.SALARY_PATH_MODE = "ladder" to serve without '
+            "class closure" % (mode,))
+    rows_by_src = defaultdict(int)
+    seasons_by_src = defaultdict(int)
+    seasons_by_tok = defaultdict(int)
+    usd_by_tok = defaultdict(list)
+    truncated = defaultdict(int)
+    cliff_first = defaultdict(int)
+    opt_seasons = defaultdict(int)
+    by_sal_src = defaultdict(int)
+    prearb_neg = {"seasons": 0, "usd": 0}
+    arb_neg_kept = {"seasons": 0, "usd": 0}
+    cliff_rows = band_rows = priced = 0
+    rule1_repairs = []
+    cba_floored = 0
+    buyout_rows = 0
+
+    for m in rows:
+        sal_years = m.get("_salYears")
+        mlbam = m.get("mlbam")
+        ct = (contracts or {}).get(mlbam)
+        war = m.get("war") or []
+        path = sp.salary_path(
+            mlbam, key=m.get("key"), first_season=FIRST_SEASON, horizon=HORIZON,
+            contract=ct, board_row=brows.get(mlbam), league_min=lm,
+            opts=opts_all.get(m.get("key")), mode=mode, raise_fn=raise_fn,
+            vintage=vintage)
+        seasons = path["seasons"]
+        # RULE 1, ASSERTED RATHER THAN ASSUMED. `_apply_contract` recorded the
+        # seasons it priced; every one of them inside the horizon must come
+        # back from the path as `contract`, at the same dollars.
+        if sal_years:
+            _sby = {int(y): int(v) for y, v in
+                    ((ct or {}).get("salary_by_year") or {}).items()}
+            for y in sal_years:
+                t = y - FIRST_SEASON
+                if 0 <= t < HORIZON and seasons[t]["src"] != "contract":
+                    # RESTORE THE DOLLARS, NOT ONLY THE LABEL. Relabelling a
+                    # season `contract`/`signed` while it keeps an arbitration
+                    # projection hides the defect from every token-based test,
+                    # and clearing the label alone would leave guaranteed money
+                    # unpriced. Counted, and the count is asserted at 0 on the
+                    # served artifact by test_salary_path_must_not_move.
+                    rule1_repairs.append([m.get("key"), y])
+                    log.error("salary path re-priced a contracted season: "
+                              "%s %s", m.get("key"), y)
+                    _u = _sby.get(y)
+                    seasons[t].update(src="contract", tok="signed", cls=None,
+                                      usd=_u, lo=_u, hi=_u)
+        d_usd, sur = [], []
+        for c in seasons:
+            if c["usd"] is None:
+                d_usd.append(None)
+                sur.append(None)
+                continue
+            w = war[c["t"]] if c["t"] < len(war) else None
+            d = _season_value_usd(w or 0.0, c["t"], dpw) - c["usd"]
+            d_usd.append(d)
+            sur.append(round(d / 1e6, 1))
+        any_priced = any(x is not None for x in d_usd)
+        raw_npv = sum(d / ((1 + r) ** t)
+                      for t, d in enumerate(d_usd) if d is not None)
+        cut = None
+        npv = raw_npv
+        if mode == "full" and any_priced:
+            npv, cut = sp.apply_cliff(path, d_usd, r)
+        if cut is not None:
+            for t in range(cut, len(sur)):
+                sur[t] = None
+            cliff_rows += 1
+            cliff_first[str(seasons[cut]["season"])] += 1
+        ros_usd = m.get("_rosUsd")
+        _strip_private(m)
+
+        # ---- census, on the path as it will be served ---------------------
+        for c in seasons:
+            if c["usd"] is None:
+                continue
+            seasons_by_src[c["src"]] += 1
+            seasons_by_tok[c["tok"] or "?"] += 1
+            if c["src"] != "contract":
+                usd_by_tok[c["tok"] or "?"].append(int(c["usd"]))
+            if c.get("opt"):
+                opt_seasons[c["opt"]] += 1
+            d = d_usd[c["t"]]
+            if d is not None and d < 0:
+                if c["src"] != "contract" and not sp.is_cuttable(c):
+                    # D11: a club abandons a pre-arbitration player by option or
+                    # designation, not by declining to tender him. The mechanism
+                    # is different, the copy would be wrong, so the option is NOT
+                    # priced and the residual is published instead.
+                    prearb_neg["seasons"] += 1
+                    prearb_neg["usd"] += int(d)
+                elif sp.is_cuttable(c) and not c["cut"]:
+                    arb_neg_kept["seasons"] += 1
+                    arb_neg_kept["usd"] += int(d)
+        for s in set(c["src"] for c in seasons if c["usd"] is not None):
+            rows_by_src[s] += 1
+        if path["truncated"]:
+            truncated[path["truncated"]] += 1
+
+        # ---- stamp -------------------------------------------------------
+        has_ct = ros_usd is not None or any(c["src"] == "contract" for c in seasons
+                                            if c["usd"] is not None)
+        has_arb = any(c["src"] in ("arb_ladder", "class_closure")
+                      for c in seasons if c["usd"] is not None)
+        m["salSrc"] = ("contract+arb" if (has_ct and has_arb)
+                       else "contract" if has_ct
+                       else "arb_projection" if has_arb else "pending")
+        by_sal_src[m["salSrc"]] += 1
+        if any(x is not None for x in sur):
+            m["sur"] = sur
+        else:
+            m.pop("sur", None)
+        if any_priced:
+            m["surNpv"] = int(npv)
+            priced += 1
+        else:
+            m.pop("surNpv", None)
+        if ros_usd is not None or any_priced:
+            m["surTotal"] = int((ros_usd or 0.0) + npv)
+        else:
+            m.pop("surTotal", None)
+        pl = sp.payload_path(path)
+        if pl:
+            m["salPath"] = pl
+            m["salVintage"] = vintage
+        if path["last_controlled"] is not None:
+            m["salThru"] = path["last_controlled"]
+        if path["truncated"]:
+            m["salTrunc"] = path["truncated"]
+        if path["cut_season"] is not None:
+            m["salCut"] = path["cut_season"]
+        so = sp.payload_options(path)
+        if so:
+            m["salOpt"] = so
+        # The salary band ships only where the board publishes a genuine award
+        # band. A contracted season and a pre-arbitration minimum carry lo == hi
+        # by construction (dollars and a CBA rule are not estimates), so a row
+        # made only of those would ship a degenerate band that says nothing.
+        if any_priced and any(c["lo"] != c["hi"] for c in seasons
+                              if c["usd"] is not None):
+            lo = _band_npv(path, war, dpw, r, "hi", mode == "full")
+            hi = _band_npv(path, war, dpw, r, "lo", mode == "full")
+            # NAMED FOR THE SURPLUS, ORDERED ASCENDING. A LOW salary gives a
+            # HIGH surplus, so `surSalLo` is the surplus at the HIGH award.
+            #
+            # AND IT CARRIES THE REST-OF-SEASON LEG, because every surface
+            # prints this pair beside `surTotal` (= surRos + surNpv), not
+            # beside `surNpv`: the board detail line, the player-card Surplus
+            # tile and the trade row's `surplus_salary_band_mm` all do. A band
+            # over the projected seasons alone left 69 of 307 band rows with a
+            # published surplus ABOVE the top of its own published band -
+            # Caminero $371.4M against $364.6M-$367.2M. The pair is now the
+            # same object as the headline, so the ordering the test pins is the
+            # ordering a reader sees.
+            _ros = float(ros_usd or 0.0)
+            m["surSalLo"] = int(_ros + min(lo, hi))
+            m["surSalHi"] = int(_ros + max(lo, hi))
+            band_rows += 1
+        cba_floored += int(path.get("cba_floored") or 0)
+        if path.get("closure_buyout"):
+            buyout_rows += 1
+
+    census.update({
+        "priced_rows": priced,
+        "rows_by_salsrc": dict(sorted(by_sal_src.items())),
+        "salary_path_rows": dict(sorted(rows_by_src.items())),
+        "salary_path_seasons": dict(sorted(seasons_by_src.items())),
+        "seasons_by_token": dict(sorted(seasons_by_tok.items())),
+        "truncated": dict(sorted(truncated.items())),
+        "cliff_rows": cliff_rows,
+        "cliff_first_season": dict(sorted(cliff_first.items())),
+        "band_rows": band_rows,
+        "option_seasons": dict(sorted(opt_seasons.items())),
+        # D11 residual: negative pre-arbitration season dollars the cliff
+        # deliberately does not price, and negative ARBITRATION season dollars
+        # the backward induction deliberately KEEPS because a later season in
+        # the same window pays for them.
+        "prearb_negative_seasons": prearb_neg,
+        "arb_negative_seasons_kept": arb_neg_kept,
+        # RULE 1, COUNTED. Every season a contract priced that the path did not
+        # return as `contract`. Asserted at 0 on the served artifact - a
+        # non-zero value means a contract reached a row without reaching this
+        # pass, which is how a contested Spotrac key used to slip through.
+        "rule1_repairs": rule1_repairs,
+        # CBA Article VI floors applied where the path's own prior season is a
+        # CONTRACT the /arbitration/ board's chain never saw.
+        "cba_floored_steps": cba_floored,
+        # What the buy-out guard declines to price: rows whose contract covers
+        # their last listed grid season, so class closure does not run and any
+        # arbitration season after the contract stays unpriced. The guard is
+        # what holds the "133 rows signed through 2028+ move $0" invariant;
+        # lifting it is its own measured change.
+        "closure_buyout_rows": buyout_rows,
+        # THE SALARY LEG'S OWN LEVEL, published so the compression is visible
+        # on the served artifact rather than only in a lab. The /arbitration/
+        # board's arb-1 step tops out about an order of magnitude below the
+        # realized arb-1 maximum, because arb_export.build_board builds its
+        # feature row from `panel_rows` while `war3` and `career_war` are
+        # attached only to the SCORED rows: the arb-1 ridge sees 0.0 for two of
+        # its champion features on the board rows. That is upstream of this
+        # module and it moves /arbitration/'s published ladder, so it is not
+        # repaired here; GATE C2 clause C10' scores it against realized awards
+        # and docs/ARBITRATION_GATE.md section 11i names it as the blocking
+        # defect on the salary leg. Direction: arbitration salaries too LOW,
+        # therefore surplus too HIGH, hardest on the stars.
+        "arb_step_levels": {
+            tok: {"n": len(v), "median_usd": sorted(v)[len(v) // 2],
+                  "max_usd": max(v)}
+            for tok, v in sorted(usd_by_tok.items()) if v
+        },
+        # The curated option file's own size, beside the option census, so the
+        # coverage of the D10 disclosure is legible: it is a hand-kept
+        # supplement, not a league-wide option inventory.
+        "option_file_rows": len(opts_all),
+    })
+    _SALARY_PATH_CENSUS = {k: v for k, v in census.items() if v is not None}
+    if say:
+        say("  salary path (%s): %d rows priced, %d seasons, cliff on %d"
+            % (mode, priced, sum(seasons_by_src.values()), cliff_rows))
+    return {"priced": priced, "mode": mode}
+
+
+def _board_is_stale(vintage, days: int = 45) -> bool:
+    """Is the /arbitration/ board the path priced off older than this payload by
+    more than `days`? Disclosed, not repaired (decision D9)."""
+    if not vintage:
+        return True
+    try:
+        y, mo, d = (int(x) for x in str(vintage).split("-"))
+        return (date.today() - date(y, mo, d)).days > days
+    except (TypeError, ValueError):
+        return True
 
 
 # ============================================================================
@@ -1173,6 +1541,17 @@ def _last_controlled_season(m: dict) -> int:
     - Veteran without a contract row: an AGE-based proxy (the pipeline carries
       no service time) - a pre-arb/arb player (age <= 24) holds the full horizon,
       a likely pending free agent (age >= 29) holds only the first season.
+
+    UNCHANGED BY ASK C, DELIBERATELY (decision D5). `salThru` - the last season
+    the salary path prices - is the successor input here and it is a better
+    statement than the age proxy, but switching this function moves Team
+    Outlook out-year WAR, the playoff odds that ride on it and the
+    contract-aware rank gate in bayes_trade_value, none of which is in this
+    change's blast radius. It moves in its own measured change. What ships now
+    is the cheaper half of the incoherence: where `salThru` exists, the player
+    card and the trade-board tooltip SUPPRESS the control-years line and show
+    the path instead, so no surface states two different window lengths at
+    once.
     """
     last = FIRST_SEASON + HORIZON - 1
     if m.get("src") == "prospect":
@@ -2126,6 +2505,10 @@ def _accountability_block() -> dict:
     to the matching card. Missing artifacts degrade to empty."""
     reg = _read_data_json("model_registry.json")
     by_id = {m["model_id"]: m for m in reg.get("models", [])}
+    # The salary-path census (ask C). Computed in `_apply_salary_paths`, which
+    # is the only place that sees both the built rows and the board, and read
+    # here because this block is where the payload publishes what it did and
+    # did not reach. Empty on a payload built without veterans.
     keep = ("model_id", "surface", "predicts", "champion", "baseline",
             "metric", "verdict", "notes", "eval_artifact", "last_checked",
             "artifact_age_days", "stale")
@@ -2216,6 +2599,13 @@ def _accountability_block() -> dict:
         "registry_version": reg.get("version"),
         "verdict_enum": reg.get("verdict_enum"),
         "models": models,
+        # What the salary path reached and what it did not, published in the
+        # payload rather than left in a log line: coverage by source and by
+        # token, the rows whose control window is NOT established and why, the
+        # non-tender census, the pre-arb negative dollars the cliff
+        # deliberately does not price (decision D11), and the board vintage the
+        # whole thing was priced off.
+        "salary_path": dict(_SALARY_PATH_CENSUS),
         # keyed by eval_artifact so the frontend attaches each table to its card
         "backtests": {
             "data/team_outlook_eval.json": team_wins,
@@ -2285,7 +2675,7 @@ def build_payload() -> dict:
         "notes": [
             "veterans: the FA module's Gate-1-validated Marcel engine; bands = Gate-1 empirical year-1 residual quantiles decayed along the fitted aging curves",
             "prospects: P(bucket|FV) x calibrated per-bucket WAR trajectories from projected debut age, starting at the PROSPX ETA; floor/ceiling = 10th/90th-percentile OUTCOME buckets",
-            f"dollars: convex tier pricing at the {FIRST_SEASON} ex-ante FA $/WAR level, escalated per season; veteran surplus only on salary-known (contracted) seasons, discounted at the platform rate",
+            f"dollars: convex tier pricing at the {FIRST_SEASON} ex-ante FA $/WAR level, escalated per season; veteran surplus over the control window: contracted seasons at their salary, pre-arbitration seasons at the league minimum, arbitration seasons at the projected award, discounted at the platform rate",
             "two-way players project BOTH sides, summed per season (per-side paths in warHit/warPit; bands combine at assumed cross-side correlation rho=0.5 - documented)",
             f"veteran universe: >= {MIN_PA} PA or >= {MIN_IP} IP in one of the last three seasons",
             f"rest-of-season leg: talent basis '{ROS_TALENT_BASIS}' - " + (

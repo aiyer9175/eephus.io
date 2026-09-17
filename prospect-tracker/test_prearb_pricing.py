@@ -495,3 +495,28 @@ class PreArbCoverageAndLedger(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# --------------------------------------------------------------------------- #
+# The league-minimum floor and the salary path are two named things (ask C)
+# --------------------------------------------------------------------------- #
+
+def test_a_salary_path_priced_vet_is_never_re_priced_at_the_minimum():
+    """R5.1's `prearb_min` basis is the FLOOR OF LAST RESORT for a vet the
+    projection system cannot price. The salary path prices most of that
+    population upstream now, so the count falls toward zero - but a row that
+    reached a path must never also be stamped with the floor, or the census
+    stops reconciling and two different salary assumptions sit on one player."""
+    import json
+    from pathlib import Path
+    import pytest
+    root = Path(__file__).parent
+    tv = root / "data" / "trade_values.json"
+    proj = root / "data" / "mlb_projections.json"
+    if not tv.exists() or not proj.exists():
+        pytest.skip("artifacts not built")
+    paths = {v["key"] for v in json.loads(proj.read_text("utf-8")).get("vets") or []
+             if v.get("salPath")}
+    bad = [r.get("player_key") for r in json.loads(tv.read_text("utf-8")).get("players") or []
+           if r.get("surplus_source") == "prearb_min" and r.get("player_key") in paths]
+    assert not bad, f"a salary-path-priced vet is also floored at the minimum: {bad[:5]}"

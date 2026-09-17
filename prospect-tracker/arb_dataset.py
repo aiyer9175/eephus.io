@@ -551,6 +551,18 @@ def build_panel(*, first: int = FIRST_SEASON, last: int = LAST_SEASON,
             "season": season,
             "age": None if r.age != r.age else float(r.age),
             "team": r.team, "debut": debut,
+            # PUBLISHED SERVICE TIME, carried from the MLBTR ledger entry this
+            # loop already resolved (`led`). arb_export emits it as the board's
+            # `sv` field, which asked for `service_time` and got None on all 852
+            # rows because nothing here ever emitted it - a dead field since the
+            # board shipped. Nothing reads `sv` today, so populating it moves no
+            # served number; what it unblocks is the only EXTERNAL check on the
+            # control horizon (GATE C2 clause C9', docs/ARBITRATION_GATE.md
+            # section 11d), which scores class closure's implied last controlled
+            # season against a published service-time string. The string is a
+            # STRING on purpose: 5.043 as a float lies about .043 being 43/1000.
+            "service_time": (led or {}).get("service_time"),
+            "service_years": (led or {}).get("service_years"),
             "salary": salary,
             "prior_salary": prior,
             "league_min": lm.get(season),

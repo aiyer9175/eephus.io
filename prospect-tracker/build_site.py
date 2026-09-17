@@ -3742,7 +3742,7 @@ def build_projections() -> str:
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Projections '
         f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">β beta</span></h1></div>'
         f'<span class="section-sub">five-year {_gl("ewar", "eWAR")} paths for every MLB player · '
-        f'{_gl("proj_buckets", "floor / mean / ceiling")} · contract surplus on salary-known seasons · '
+        f'{_gl("proj_buckets", "floor / mean / ceiling")} · surplus over the control window · '
         'prospects join at their PROSPX ETA</span></div>'
         '<div id="proj-view-projections">'
         '<div id="proj-banner"></div>'
@@ -3757,7 +3757,7 @@ def build_projections() -> str:
     )
     return page("MLB Projections - eephus.io", "projections", body,
                 "Five-year eWAR projections for every MLB player: floor, mean and ceiling paths, "
-                "contract surplus on salary-known seasons, and PROSPX prospects joining at their ETA.",
+                "surplus over the whole control window, and PROSPX prospects joining at their ETA.",
                 url=f"{SITE_ORIGIN}/projections/")
 
 

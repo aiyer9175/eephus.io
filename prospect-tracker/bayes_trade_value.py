@@ -4344,16 +4344,48 @@ def _projection_band_mm(v: dict | None, dpw: float | None, disc: float):
     veteran with no range at all was not, because the projection publishes its own
     fan (warP10 / warP90 - the very per-season paths warTotalP10/P90 sum).
 
-    Salary is contractual and does not move with the fan, so it CANCELS out of the
-    difference: only the production leg is re-priced, season by season, through
-    proj_export's kernel and discounted at the platform rate. The band is exact
-    rather than a re-derivation - reconstructing surNpv from the published `sur`
-    array at this discount rate reproduces the published integer.
+    Salary is held FIXED at the path point, so it cancels out of the difference:
+    only the production leg is re-priced, season by season, through proj_export's
+    kernel and discounted at the platform rate. The band is exact rather than a
+    re-derivation - reconstructing surNpv from the published `sur` array at this
+    discount rate reproduces the published integer.
+
+    DOCSTRING REPAIR (ask C, 2026-09-16). The old wording said salary "is
+    contractual and does not move", which stopped being true the moment the
+    control-window salary path started pricing arbitration seasons: most of the
+    salaries inside this band are now PROJECTED awards, and they carry their own
+    uncertainty. That uncertainty is NOT folded in here. It ships as its own
+    field, `surplus_salary_band_mm`, because the two errors are positively
+    correlated (a better season raises both the projection and the award), the
+    correlation is estimated nowhere in this tree, and the board's award band is
+    documented as deliberately not a calibrated interval. Fusing them would
+    launder that into a served range. Measured: the salary band is about 1.9% of
+    this WAR band at the median.
+
+    ALSO SILENTLY WIDER SINCE ASK C: this loop keys off `sur[t] is not None`, so
+    it now covers every season the salary path prices, not only the contracted
+    ones - the same coverage change, arriving here for free.
 
     COMONOTONE by construction (every season sits at its own p10 together), which
     is what makes it wide and is exactly how the artifact's own warTotalP10/P90
     are built. Narrowing it here would invent a correlation the projection does
-    not claim. Returns (None, None) whenever the inputs are not all present."""
+    not claim. Returns (None, None) whenever the inputs are not all present.
+
+    THE NON-TENDER DECISION IS HELD AT THE MEAN PATH, deliberately, and the
+    tooltip and the glossary say so. Every input except production is held at
+    its point value here: the salary path, the award band and the club's
+    decision about which seasons to tender. Re-deciding the tender at each fan
+    endpoint would make this a different object from `surplus_salary_band_mm`,
+    which holds WAR at the mean for the mirror-image reason, and the pair would
+    stop being one-factor-at-a-time. What the reader is shown is therefore: if
+    production comes in at p10, and the club tenders exactly the seasons it
+    tenders on the mean path, the surplus is this. A season the mean path
+    abandons carries `sur[t] = None` and contributes no range at all, so the
+    low end never prices a liability the point estimate already priced away;
+    what it does not do is shorten the window further at p10 or lengthen it at
+    p90. `trade_value_lo <= trade_value_mm <= trade_value_hi` holds by
+    construction (both legs are non-negative sums) and is pinned by
+    test_trade_board_coverage."""
     if not v or not dpw:
         return None, None
     total = _proj_value_usd(v)
@@ -4367,7 +4399,10 @@ def _projection_band_mm(v: dict | None, dpw: float | None, disc: float):
     sur = v.get("sur") if isinstance(v.get("sur"), list) else []
     d_lo = d_hi = 0.0
     for t in range(min(len(war), len(p10), len(p90))):
-        # Only seasons that carry a salary are in surNpv, so only they get a band.
+        # Only seasons that carry a PRICE are in surNpv, so only they get a
+        # band. A season at or past the non-tender cut carries `sur[t] = None`
+        # by construction, so an abandoned season correctly contributes no
+        # range: the club does not own that fan.
         if t >= len(sur) or sur[t] is None:
             continue
         mid = season_value(float(war[t]), t, dpw)
@@ -5068,13 +5103,55 @@ def _stamp_projection_bands(records: list, proj_rows: dict,
     for r in records:
         if r.get("surplus_source") not in ("projection", _PREARB_SOURCE):
             continue
-        lo, hi = _projection_band_mm(proj_rows.get(r.get("player_key")), dpw, disc)
+        v = proj_rows.get(r.get("player_key")) or {}
+        lo, hi = _projection_band_mm(v, dpw, disc)
         r["trade_value_lo"] = lo
         r["trade_value_hi"] = hi
         if lo is not None:
             r["band_basis"] = "projection"       # named in the range tooltip
             n += 1
+        # ASK C (2026-09-16). Two fields that make a row SELF-DESCRIBING about
+        # what its salary leg was, which the board could not say before:
+        #   salary_basis             which sources priced the control window
+        #                            ("contract", "arb_ladder",
+        #                            "contract+arb_ladder+class_closure", ...)
+        #   surplus_salary_band_mm   the surplus at the two ends of the award
+        #                            band, WAR held at the mean, ASCENDING.
+        #                            Named for the SURPLUS it carries: a LOW
+        #                            salary gives a HIGH surplus, so the first
+        #                            entry is the surplus at the HIGH award.
+        # Neither is fused into trade_value_lo/hi (see _projection_band_mm).
+        basis = _salary_basis(v)
+        if basis:
+            r["salary_basis"] = basis
+        slo, shi = v.get("surSalLo"), v.get("surSalHi")
+        if slo is not None and shi is not None:
+            r["surplus_salary_band_mm"] = [round(float(slo) / 1e6, 1),
+                                           round(float(shi) / 1e6, 1)]
+        if v.get("salThru") is not None:
+            # The path's own window end. `remaining_control_years` keeps coming
+            # from debut+6 (decision D5) and both are emitted, so the surfaces
+            # SUPPRESS the control-years line wherever this one exists rather
+            # than stating two different window lengths at once.
+            r["salary_thru"] = v.get("salThru")
+        if v.get("salCut") is not None:
+            r["salary_cut_season"] = v.get("salCut")
     return n
+
+
+def _salary_basis(v: dict):
+    """The salary path's source mix for one projection row, from its `salPath`.
+
+    Derived from the served tuples rather than carried as a second field, so it
+    cannot disagree with the path a reader can see. Returns None where the row
+    has no path at all (an unpriced vet, or a prospect)."""
+    path = v.get("salPath")
+    if not isinstance(path, list) or not path:
+        return None
+    order = ("contract", "arb_ladder", "class_closure")
+    seen = {str(step[5]) for step in path if len(step) > 5}
+    mix = [s for s in order if s in seen]
+    return "+".join(mix) or None
 
 
 def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
@@ -5289,7 +5366,56 @@ def _projection_coverage(records: list, data_dir) -> dict:
         # club-control assumption does not apply and the salary is genuinely
         # unknown - not that the row was forgotten.
         "unpriceable_no_contract_reasons": _count_prearb_reasons(published, prearb),
+        # ASK C (2026-09-16): what the control-window salary path reached on
+        # THIS board, counted here rather than only in the projection payload,
+        # because the trade board is where the re-ordering is visible and a
+        # reader asking "why did everyone move?" reads this file first.
+        **_salary_path_coverage(vets, records),
     }
+
+
+def _salary_path_coverage(vets: list, records: list) -> dict:
+    """Salary-path census for the trade-board coverage block."""
+    rows = seasons = cliff = 0
+    by_src: dict = {}
+    trunc: dict = {}
+    for v in vets:
+        path = v.get("salPath")
+        if not isinstance(path, list) or not path:
+            if v.get("salTrunc"):
+                trunc[v["salTrunc"]] = trunc.get(v["salTrunc"], 0) + 1
+            continue
+        rows += 1
+        seasons += len(path)
+        for step in path:
+            if len(step) > 5:
+                by_src[step[5]] = by_src.get(step[5], 0) + 1
+        if v.get("salCut") is not None:
+            cliff += 1
+        if v.get("salTrunc"):
+            trunc[v["salTrunc"]] = trunc.get(v["salTrunc"], 0) + 1
+    banded = sum(1 for r in records if r.get("surplus_salary_band_mm"))
+    return {
+        "salary_path_rows": rows,
+        "salary_path_seasons": seasons,
+        "salary_path_seasons_by_source": dict(sorted(by_src.items())),
+        "salary_path_truncated": dict(sorted(trunc.items())),
+        "salary_path_cliff_rows": cliff,
+        "salary_path_band_rows": banded,
+        "salary_path_mode": _salary_path_mode(),
+    }
+
+
+def _salary_path_mode() -> str:
+    """The served SALARY_PATH_MODE, read from the module that owns it so the
+    board cannot disagree with the projection payload about which rule priced
+    it. docs/ARBITRATION_GATE.md section 11e turns this constant into the
+    revert for a failed GATE C2 clause."""
+    try:
+        import salary_path
+        return salary_path.SALARY_PATH_MODE
+    except Exception:                              # pragma: no cover
+        return "unknown"
 
 
 def _count_prearb_reasons(published: list, prearb: dict) -> dict:

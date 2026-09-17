@@ -745,7 +745,19 @@ function _tbCtrlBadge(p) {
   const cOpts = cc.club_opt_years && cc.club_opt_years.length
     ? `C-opt ${_fmtYears(cc.club_opt_years)}` : null;
 
-  const tip = [sal && `Salary: ${sal}/yr`, pOpts, cOpts].filter(Boolean).join(" · ");
+  // ASK C (2026-09-16, decision D4 - the evaluator is one number per player by
+  // design, so it gets the BASIS in the tooltip and not the strip). Where the
+  // salary path knows the window end, the tooltip states it and the row stops
+  // resting on `remaining_control_years` (debut+6), which is still emitted for
+  // the rank gate but is no longer the thing a reader is shown.
+  const _spThru = p.salary_thru != null ? `Control window priced through ${p.salary_thru}` : null;
+  const _spBasis = p.salary_basis ? `Salary basis: ${String(p.salary_basis).replace(/_/g, " ")}` : null;
+  const _spCut = p.salary_cut_season != null
+    ? `Not tendered from ${p.salary_cut_season}: carrying him through the rest of his arbitration years costs more than he is worth` : null;
+  const _spBand = Array.isArray(p.surplus_salary_band_mm)
+    ? `If the award lands at the band ends: $${p.surplus_salary_band_mm[0]}M to $${p.surplus_salary_band_mm[1]}M` : null;
+  const tip = [sal && `Salary: ${sal}/yr`, pOpts, cOpts,
+               _spThru, _spBasis, _spBand, _spCut].filter(Boolean).join(" · ");
   const col = ctrl >= 5 ? "var(--neon-green)" : ctrl >= 2 ? "var(--neon-amber)" : "var(--text-secondary)";
   const parts = [
     `<span style="font-weight:600;">${escapeHtml(phase)}</span>`,
@@ -930,8 +942,15 @@ function _renderTBRows() {
     // busts 92% of the time and every dollar it is worth lives in the top
     // decile. The bounds are right. "Range $0.7M to $0.7M" was not a sentence
     // about them.
+    // ASK C: "salary fixed" now has to say WHICH salary and which decision.
+    // Every non-production input is held at its point value here - the salary
+    // path, the award band and the club's non-tender decision - so the low end
+    // reads "production at P10, club tenders the same seasons it tenders on the
+    // mean path". The award's own uncertainty ships separately as
+    // surplus_salary_band_mm, WAR held at the mean: one factor at a time, in
+    // both directions.
     const bandWhat = p.band_basis === "projection"
-      ? "projection P10-P90 WAR fan, salary fixed (every season at its own P10 together, so it is wide)"
+      ? "projection P10-P90 WAR fan, salary path and the non-tender decision both held at the mean path (every season at its own P10 together, so it is wide)"
       : "eFV credible interval";
     let rangeTip = "";
     if (lo != null && hi != null) {

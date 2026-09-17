@@ -650,3 +650,62 @@ def test_served_coverage_block_reconciles_after_a_regen():
                                   + cov["unpriceable_published"])
     assert cov["unpriceable_published"] == (cov["unpriceable_expiring"]
                                             + cov["unpriceable_no_contract"])
+
+
+# --------------------------------------------------------------------------- #
+# The two legs still add up once the control window got longer (ask C)
+# --------------------------------------------------------------------------- #
+
+def test_sur_total_is_still_ros_plus_npv_when_the_npv_came_from_the_path():
+    """surTotal = surRos + surNpv is the convention this whole file defends.
+    The salary path rebuilds surNpv over more seasons; it must not have
+    rebuilt the identity."""
+    import json
+    from pathlib import Path
+    p = Path(__file__).parent / "data" / "mlb_projections.json"
+    if not p.exists():
+        import pytest
+        pytest.skip("data/mlb_projections.json not built")
+    d = json.loads(p.read_text("utf-8"))
+    r = float(__import__("value_framework")._config().get("discount_rate", 0.07))
+    bad = []
+    for m in d.get("vets") or []:
+        if m.get("surTotal") is None or m.get("surNpv") is None:
+            continue
+        if m.get("surRos") is None:
+            # no rest-of-season leg: the two are the same number
+            if m["surTotal"] != m["surNpv"]:
+                bad.append((m["key"], m["surTotal"], m["surNpv"]))
+            continue
+        ros = m["surTotal"] - m["surNpv"]
+        # surRos is published to 0.1M; the identity is exact in raw dollars, so
+        # the published rounding is the only tolerance allowed.
+        if abs(ros / 1e6 - m["surRos"]) > 0.051:
+            bad.append((m["key"], ros / 1e6, m["surRos"]))
+    assert not bad, f"surTotal != surRos + surNpv on {len(bad)} rows: {bad[:3]}"
+
+
+def test_sur_npv_is_exactly_the_npv_of_the_seasons_it_still_claims():
+    """The published invariant the tender cliff was built to keep: a season at
+    or past the cut carries `sur[t] = None`, and surNpv is the NPV of what is
+    left. If the cliff had floored the TOTAL instead of abandoning SEASONS,
+    these two numbers would silently disagree."""
+    import json
+    from pathlib import Path
+    p = Path(__file__).parent / "data" / "mlb_projections.json"
+    if not p.exists():
+        import pytest
+        pytest.skip("data/mlb_projections.json not built")
+    d = json.loads(p.read_text("utf-8"))
+    r = float(__import__("value_framework")._config().get("discount_rate", 0.07))
+    bad = []
+    for m in d.get("vets") or []:
+        if m.get("surNpv") is None or not m.get("sur"):
+            continue
+        npv = sum(s * 1e6 / ((1 + r) ** t)
+                  for t, s in enumerate(m["sur"]) if s is not None)
+        # `sur` is published to 0.1M per season, so 5 seasons carry at most
+        # $250k of published rounding.
+        if abs(npv - m["surNpv"]) > 260_000:
+            bad.append((m["key"], int(npv), m["surNpv"]))
+    assert not bad, f"surNpv is not the NPV of its own sur[] on {len(bad)} rows: {bad[:3]}"

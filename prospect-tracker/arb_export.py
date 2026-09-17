@@ -209,6 +209,15 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             "n": base.get("name"),
             "t": base.get("team"),
             "sv": base.get("service_time"),
+            # AS OF WHICH SEASON. `base` is the player's LATEST observed panel
+            # row, and the MLBTR ledger entry resolves against that row's
+            # season, so a player last seen in 2022 carries a 2022 service-time
+            # string. Without this field the only external check on the control
+            # horizon (GATE C2 clause C9') compares a four-year-old service
+            # figure with a 2027 grid and reads 63 of 130 rows as disagreeing
+            # when what disagrees is the vintage. Nothing reads either field on
+            # a surface; both exist to let a lab say how old its evidence is.
+            "svy": base.get("season") if base.get("service_time") else None,
             "c": _token_step(ladder[0][1])[0],
             "e": _flags(base, season),
             "yl": len(ladder),
@@ -225,6 +234,7 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
         "field_key": {
             "m": "MLBAM id", "n": "name", "t": "team",
             "sv": "service time, years.days, as a STRING",
+            "svy": "the season that service-time string is as of, or null",
             "c": "arbitration class: 0 pre-arb, 1..4 arbitration year",
             "e": ("flag bits: 1 step not from published service time, "
                   "2 step from the debut heuristic, 4 no salary on file, "
