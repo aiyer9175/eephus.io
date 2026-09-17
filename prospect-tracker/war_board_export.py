@@ -70,12 +70,23 @@ from bullpen_export import (WAR_RATE_DISPLAY_MIN_PA, WAR_RATE_DISPLAY_MIN_RP_IP,
                             _ingest_red, _num, _side_war_by_season,
                             basis_rows_for, guard_nonempty_block, ip_to_float,
                             load_season_pitching, team_basis_meta)
+from bullpen_export import served_war_basis as be_served_war_basis
 from hitter_export import load_season_hitting
 
 _log = logging.getLogger(__name__)
 ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
 OUT_PATH = DATA_DIR / "war_leaderboards.json"
+
+#: The PER-SEASON substrate this board also writes, so a year range folds one
+#: file instead of asking for one payload per selectable window (any start by
+#: any end over sixteen seasons is 136 of them). Written in THIS process from
+#: THIS board's own side map: see build_seasons.
+SEASONS_OUT_PATH = DATA_DIR / "war_seasons.json"
+
+#: The substrate's shape version. The page folds these rows positionally, so a
+#: shape change it has not been taught has to be visible in the payload.
+SEASONS_SCHEMA = 1
 
 #: The qualified cut the board opens on, and the rule it publishes so a reader
 #: never has to infer it. The two numbers are the DISPLAY floors the WAR-rate
@@ -582,7 +593,362 @@ def build(season: int, *, log=print) -> dict:
         f"({sum(1 for r in players if r['qualified'])} qualified), "
         f"{len(teams)} clubs")
     return {"players": players, "teams": teams, "league": league,
-            "sources": sources, "basis_rows": basis_rows}
+            "sources": sources, "basis_rows": basis_rows,
+            # The two season maps this board's rows were built from. The
+            # per-season substrate takes the LIVE season's denominators from
+            # here rather than reading the feeds again, so a one-season window
+            # and the Current view cannot differ by a plate appearance.
+            "season_lines": {"hit": hit_by, "pit": pit_by}}
+
+
+
+# --------------------------------------------------------------------------- #
+# the PER-SEASON SUBSTRATE (data/war_seasons.json)
+# --------------------------------------------------------------------------- #
+def _ewar_doc() -> dict:
+    """The eWAR artifact, through ewar.load (memoised there, so this read is
+    free once the side map above has been built).
+
+    Read for CONTEXT ONLY: the season range, and each player-season's PA, IP and
+    clubs of production. Every eWAR VALUE in the substrate comes from the same
+    `_side_war_by_season()` map the board rows are built from, because the two
+    must not be able to disagree (see build_seasons)."""
+    import ewar
+    return ewar.load()
+
+
+#: The pitching feed's own pool, copied from the call build() makes, so a
+#: position player's mop-up inning is outside this substrate's IP and GS on
+#: EVERY season exactly as it is outside the board's on the live one.
+FEED_PITCHING_POS = ("P", "TWP")
+
+
+def _feed_lines(season: int, *, hit_by: Optional[dict] = None,
+                pit_by: Optional[dict] = None) -> dict:
+    """{mlbam: {"pa", "ip", "age", "pos", "g", "gs"}} for one season: every
+    denominator the substrate publishes, from the door the BOARD reads.
+
+    ONE DOOR PER NUMBER. The eWAR artifact also carries a `pa` and an `ip` per
+    player-season, and taking them from there was measured against the board on
+    2026-09-17: 155 rows disagreed on PA and 86 on IP, by four or five apiece,
+    because the artifact's denominators come off the war_daily frame and the
+    board's come off the StatsAPI season line. Two doors, one column name, a
+    disagreement nobody would see. So the artifact supplies the eWAR and the
+    clubs of production, and the season feed supplies every denominator.
+
+    THE LIVE SEASON IS THE BOARD'S OWN READ, handed in as `hit_by` / `pit_by`
+    (the maps build() just built its rows from), so PA, IP and GS on a
+    one-season window are the board's numbers rather than numbers like them.
+    Past seasons come off the DISK CACHE both loaders read
+    (fa_sources.fetch_statsapi_season_stats, 2000-2026 on disk): the pitching
+    loader is a LIVE call, and a sixteen-season sweep through it would be
+    sixteen live calls in a step that has to stay offline.
+
+    Age and hitting G come from the cached split either way, because neither
+    loader carries them.
+
+    G IS A MAX, NOT A SUM. A two-way player's hitting G and his pitching G are
+    the same games, so the two feeds combine with max() and are never added.
+
+    Best effort by design: a season whose feed is cold contributes no
+    denominator at all, and its rows still carry their eWAR sides."""
+    out: dict = {}
+    try:
+        import fa_sources
+    except Exception:    # noqa: BLE001 - a substrate is not worth a failed board
+        return out
+    for group in ("hitting", "pitching"):
+        try:
+            splits = fa_sources.fetch_statsapi_season_stats(int(season), group)
+        except Exception:   # noqa: BLE001 - a cold season is a thinner row
+            continue
+        for s in splits or []:
+            pid = (s.get("player") or {}).get("id")
+            if not pid:
+                continue
+            st = s.get("stat") or {}
+            pos = (s.get("position") or {}).get("abbreviation")
+            if group == "pitching" and pos and pos not in FEED_PITCHING_POS:
+                continue
+            r = out.setdefault(int(pid), {})
+            age = _num(st.get("age"))
+            if age is not None and r.get("age") is None:
+                r["age"] = int(age)
+            if group == "pitching":
+                # The pitching feed's code wins: a two-way player reads TWP
+                # there and a fielding abbreviation on the hitting side.
+                if pos:
+                    r["pos"] = pos
+                r.setdefault("pos", "P")
+                gs = _num(st.get("gamesStarted"))
+                if gs is not None:
+                    r["gs"] = int(gs)
+                ip = st.get("inningsPitched")
+                if ip is not None:
+                    r["ip"] = ip_to_float(ip)
+                g = _num(st.get("gamesPitched"))
+            else:
+                if pos and not r.get("pos"):
+                    r["pos"] = pos
+                pa = _num(st.get("plateAppearances"))
+                if pa is not None:
+                    r["pa"] = int(pa)
+                g = _num(st.get("gamesPlayed"))
+            if g is not None:
+                r["g"] = max(int(g), int(r.get("g") or 0))
+    # The live season, from the board's own maps. Same fields, same rules; only
+    # the door changes, and only for the season the board itself published.
+    for mid, h in (hit_by or {}).items():
+        pa = _num(h.get("PA"))
+        if pa is not None:
+            out.setdefault(int(mid), {})["pa"] = int(pa)
+        code = h.get("primary_pos")
+        if code:
+            out.setdefault(int(mid), {}).setdefault("pos", code)
+    for mid, p in (pit_by or {}).items():
+        r = out.setdefault(int(mid), {})
+        raw_ip = p.get("IP")
+        # ip_to_float(None) is 0.0, so the None test comes first: an arm with no
+        # innings we can name has no innings, not zero of them.
+        if raw_ip is not None:
+            r["ip"] = ip_to_float(raw_ip)
+        gs = _num(p.get("GS"))
+        if gs is not None:
+            r["gs"] = int(gs)
+        g = _num(p.get("G"))
+        if g is not None:
+            r["g"] = max(int(g), int(r.get("g") or 0))
+        r["pos"] = p.get("pos") or r.get("pos") or "P"
+    return out
+
+
+def _club_dialect(players: list) -> dict:
+    """{canonical org: this board's own spelling}, learned from the clubs on the
+    board exactly as _earned_by_club learns it. The eWAR artifact's per-season
+    `tm` speaks Baseball-Reference ("SFG", "TBR", "CHW") and this board speaks
+    StatsAPI ("SF", "TB", "CWS"), so a club is canonicalised once and written
+    back in the artifact's own spelling."""
+    out: dict = {}
+    try:
+        from trades import canonical_org
+    except Exception:   # noqa: BLE001 - a dialect is a courtesy, not a board
+        return out
+    for r in players:
+        club = r.get("team")
+        if club:
+            out.setdefault(canonical_org(club) or club, club)
+    return out
+
+
+def _season_share(league_war: dict, seasons: list) -> dict:
+    """{season: that season's league eWAR over the mean of the last three
+    COMPLETE seasons}, so a page can say "2020 produced 37% of a normal season"
+    and "2026 has produced 94% of one so far" from a published number instead of
+    two literals typed into the JS.
+
+    Complete is war_source.ewar_season_complete, the same predicate the eWAR
+    cadence uses, so the live season is never inside its own baseline."""
+    try:
+        import war_source as _ws
+        complete = [y for y in seasons if _ws.ewar_season_complete(int(y))]
+    except Exception:   # noqa: BLE001 - a disclosure must not take a board down
+        complete = [y for y in seasons if int(y) < date.today().year]
+    base = [league_war.get(int(y)) or 0.0 for y in complete[-3:]]
+    base = [b for b in base if b > 0]
+    if not base:
+        return {}
+    mean = sum(base) / len(base)
+    return {str(int(y)): round((league_war.get(int(y)) or 0.0) / mean, 4)
+            for y in seasons if league_war.get(int(y))}
+
+
+def build_seasons(war_by: dict, players: list, *, live_season: int,
+                  season_lines: Optional[dict] = None, log=print) -> dict:
+    """The per-season substrate a year range folds: one row per player-season
+    over the eWAR artifact's whole window, with the two sides kept apart.
+
+    THE SAME-PROCESS RULE, and why it is not optional. `war_by` is the map
+    build() built this board's rows from, handed in rather than read again. The
+    served board and this file are then the same numbers by construction. They
+    were not before: measured 2026-09-17, the served board's
+    `ewar_vintage.artifact_generated_at` was 2026-09-16T09:47:15 while
+    data/ewar.json carried `live_built_at` 2026-09-17T14:45:01, and the two
+    disagreed on 173 of the top 400 rows. A year range whose one-season view
+    disagreed with the Current view on the same page would be that defect made
+    visible, so the fold source is built from the board's own read or not at
+    all.
+
+    THE UNIVERSE IS EVERY PLAYER-SEASON. The qualified rule filters the rows a
+    page RENDERS and never the fold: a rate pooled over the seasons in which a
+    player happened to qualify is a rate on a basis it was not computed on.
+    `qualified_rule_window` ships beside it so the page reports the rule rather
+    than typing it.
+
+    SIDES AT FULL PRECISION, ROUNDED ONCE AT THE END. The board rounds each side
+    to a tenth to print it; a window that summed served tenths would carry one
+    rounding error per season. So the sides ship as the map holds them and the
+    fold sums them unrounded and rounds once, which is the board's own rule over
+    one season. There is deliberately no per-season `war` field: a second copy
+    of bat + pit is a second number that could disagree with the first.
+
+    ABSENT IS NOT ZERO. A side, a denominator or a feed field the artifact does
+    not carry is null in the row, never 0."""
+    try:
+        doc = _ewar_doc()
+    except Exception as e:   # noqa: BLE001 - the substrate is additive
+        log(f"  ewar seasons: the eWAR artifact is unreadable "
+            f"({type(e).__name__}); the per-season substrate was not built")
+        return {"refused": f"eWAR artifact unreadable: {type(e).__name__}: {e}",
+                "players": {}}
+    rng = (doc.get("seasons") or [])[:2]
+    if len(rng) != 2:
+        return {"refused": "the eWAR artifact publishes no season range",
+                "players": {}}
+    seasons = list(range(int(rng[0]), int(rng[1]) + 1))
+    blocks = doc.get("players") or {}
+
+    dialect = _club_dialect(players)
+    try:
+        from trades import canonical_org
+    except Exception:   # noqa: BLE001 - a club code we cannot canonicalise ships raw
+        canonical_org = None
+
+    lines_now = season_lines or {}
+    feeds, cold = {}, []
+    for y in seasons:
+        live = int(y) == int(live_season)
+        lines = _feed_lines(y, hit_by=lines_now.get("hit") if live else None,
+                            pit_by=lines_now.get("pit") if live else None)
+        if not lines:
+            cold.append(y)
+        feeds[y] = lines
+
+    tm_dict, tm_idx, pos_dict, pos_idx = [], {}, [], {}
+
+    def _dict_key(value, table, index):
+        if not value:
+            return None
+        i = index.get(value)
+        if i is None:
+            i = len(table)
+            table.append(value)
+            index[value] = i
+        return i
+
+    names = {int(r["mlbam"]): (r.get("name") or "")
+             for r in players if r.get("mlbam") is not None}
+    out_players, league = {}, {}
+    n_rows = n_unresolved = 0
+    for mid, by_season in war_by.items():
+        rows = []
+        for y in seasons:
+            cell = (by_season or {}).get(int(y))
+            if not cell:
+                continue
+            bat, pit = _num(cell.get("bat")), _num(cell.get("pit"))
+            if bat is None and pit is None:
+                continue
+            blk = (blocks.get(str(int(mid))) or {}).get(str(y)) or {}
+            feed = (feeds.get(y) or {}).get(int(mid)) or {}
+            pa, ip = _num(feed.get("pa")), _num(feed.get("ip"))
+            named = []
+            for c in (blk.get("tm") or []):
+                if not c:
+                    continue
+                canon = canonical_org(str(c)) if canonical_org else None
+                if not canon:
+                    n_unresolved += 1
+                club = dialect.get(canon or "") or canon or str(c)
+                if club not in named:
+                    named.append(club)
+            rows.append([
+                int(y),
+                None if bat is None else round(bat, 4),
+                None if pit is None else round(pit, 4),
+                None if pa is None else int(pa),
+                None if ip is None else round(ip, 1),
+                feed.get("age"),
+                _dict_key(feed.get("pos"), pos_dict, pos_idx),
+                feed.get("g"),
+                feed.get("gs"),
+                _dict_key("/".join(named), tm_dict, tm_idx),
+            ])
+            league[int(y)] = league.get(int(y), 0.0) + (bat or 0.0) + (pit or 0.0)
+            n_rows += 1
+        if rows:
+            out_players[str(int(mid))] = [names.get(int(mid)) or "", rows]
+    league_r = {str(y): round(v, 1) for y, v in sorted(league.items())}
+    log(f"  ewar seasons: {len(out_players)} players, {n_rows} player-seasons, "
+        f"{seasons[0]}-{seasons[-1]}")
+    return {
+        "schema": SEASONS_SCHEMA,
+        "seasons": seasons,
+        "fields": ["season", "war_bat", "war_pit", "pa", "ip", "age", "pos",
+                   "g", "gs", "tm"],
+        "tm": tm_dict, "pos": pos_dict,
+        "league_war": league_r,
+        "season_share": _season_share({int(k): v for k, v in league_r.items()},
+                                      seasons),
+        "qualified_rule_window": {"min_pa": int(QUAL_MIN_PA),
+                                  "min_ip": int(QUAL_MIN_IP)},
+        "players": out_players,
+        "sources": {"n_players": len(out_players), "n_player_seasons": n_rows,
+                    "n_seasons_without_a_feed": len(cold),
+                    "seasons_without_a_feed": cold,
+                    "n_club_codes_unresolved": n_unresolved},
+        "note": ("One row per player-season, positional by `fields`. A window is "
+                 "the fold of these rows: counts add, the two eWAR sides sum "
+                 "UNROUNDED and round once. The board's Current view is this "
+                 "file folded at the live season, from the same read, in the "
+                 "same process."),
+    }
+
+
+def _write_seasons(payload: dict, *, today: str, log=print) -> int:
+    """Write data/war_seasons.json, guarded the way every /mlbstats/ block is.
+
+    guard_nonempty_block keeps the previous file and files the refusal under a
+    name run_monthly watches, so a degenerate substrate reaches INGEST RED
+    instead of shipping a year range with nothing in it. The file is written
+    COMPACT (no indent): it is folded by a machine, and indent=1 costs about a
+    third of the payload for whitespace no reader sees."""
+    if payload.get("refused"):
+        log(f"  ewar seasons: REFUSED ({payload['refused']}); leaving "
+            f"{SEASONS_OUT_PATH.name} as it is")
+        _ingest_red("war_seasons", f"{payload['refused']}. The per-season "
+                                   f"substrate was not rewritten; the previous "
+                                   f"file stands.")
+        return 0
+    rows = [[mid, v] for mid, v in (payload.get("players") or {}).items()]
+    kept, guard = guard_nonempty_block(
+        rows, SEASONS_OUT_PATH, key="players", source="war_seasons",
+        label="ewar seasons", log=log)
+    if not kept:
+        return 0
+    if len(kept) != len(rows):
+        # The guard served the previous file's block. A substrate that cannot be
+        # rebuilt keeps the one on disk rather than half of a new one.
+        log("  ewar seasons: the empty-block guard served the previous players "
+            "block; the substrate was not rewritten")
+        return 0
+    out = {"generated_at": today, "as_of": today,
+           "war_provider": None, "ewar_generated_at": None}
+    try:
+        basis = be_served_war_basis()
+        out["war_provider"] = basis.get("war_provider")
+        out["ewar_generated_at"] = basis.get("ewar_generated_at")
+    except Exception:   # noqa: BLE001 - a stamp we cannot read is stated absent
+        pass
+    out["ewar_vintage"] = _war_source_vintage(as_of=today)
+    out.update(payload)
+    out["block_guard"] = {"players": guard}
+    SEASONS_OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    tmp = SEASONS_OUT_PATH.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    tmp.replace(SEASONS_OUT_PATH)
+    log(f"  ewar seasons: wrote {SEASONS_OUT_PATH.name} "
+        f"({payload['sources']['n_player_seasons']} player-seasons)")
+    return payload["sources"]["n_player_seasons"]
 
 
 def _name_fallback(season: int) -> dict:
@@ -756,6 +1122,21 @@ def export(season: Optional[int] = None, *, write: bool = True, log=print,
         tmp.write_text(json.dumps(payload, indent=1), encoding="utf-8")
         tmp.replace(OUT_PATH)
         log(f"  ewar board: wrote {OUT_PATH.name}")
+
+    # THE PER-SEASON SUBSTRATE, from the SAME side map this board was built
+    # from, in the same process (build_seasons says why). It is additive: a
+    # substrate that cannot be built leaves the board alone and files its own
+    # refusal. _side_war_by_season is lru-cached for the process, so this is the
+    # identical object build() read, not a second look at the artifact.
+    if write:
+        try:
+            _write_seasons(build_seasons(_side_war_by_season(), players,
+                                         live_season=season,
+                                         season_lines=built.get("season_lines"),
+                                         log=log),
+                           today=today, log=log)
+        except Exception:   # noqa: BLE001 - the board ships with or without it
+            _log.exception("the per-season substrate failed; the board stands")
     return len(players)
 
 

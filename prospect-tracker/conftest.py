@@ -328,7 +328,19 @@ def _restore_committed_build_artifacts():
     one of those: that is how fixture state reached data/betting_status.json.
     So each dirty-at-start file's BYTES are copied aside at session start and
     put back at the end if a test changed them, and the terminal summary names
-    every file restored, so a new leak is visible instead of silent."""
+    every file restored, so a new leak is visible instead of silent.
+
+    The UNTRACKED half (2026-09-17). Both halves above are keyed off `git
+    diff`, which sees only TRACKED files, so a served artifact that is new and
+    not yet committed is covered by neither. That is not hypothetical: the day
+    war_board_export started writing data/war_seasons.json beside the eWAR
+    board, test_war_board_export_contract's harness redirected OUT_PATH but not
+    the new SEASONS_OUT_PATH, and one pytest run replaced a 5,149-player
+    substrate with a 20-player fixture named H1..H20. Nothing could put it back.
+    So every untracked file under data/ is snapshotted too: one a test CHANGED
+    is restored from its bytes, one a test CREATED is deleted, and both are
+    named in the terminal summary. A brand-new artifact is exactly the case
+    where the tree has no other copy to recover from."""
     import hashlib
     import shutil
     import subprocess
@@ -351,6 +363,17 @@ def _restore_committed_build_artifacts():
         except OSError:
             return None
 
+    def _untracked_data() -> set[str]:
+        """Untracked files under data/, which `git diff` never reports."""
+        try:
+            out = subprocess.run(
+                ["git", "ls-files", "--others", "--exclude-standard",
+                 "--", "data"],
+                cwd=here, capture_output=True, text=True, check=False)
+        except (FileNotFoundError, OSError):
+            return set()
+        return {ln.strip() for ln in out.stdout.splitlines() if ln.strip()}
+
     dirty_at_start = _dirty()
     aside = Path(tempfile.mkdtemp(prefix="pt_dirty_at_start_"))
     kept: dict[str, str | None] = {}
@@ -364,6 +387,17 @@ def _restore_committed_build_artifacts():
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
         kept[rel] = _digest(src)
+    untracked_at_start: dict[str, str | None] = {}
+    for rel in sorted(_untracked_data()):
+        if rel.startswith("..") or "/.." in rel:
+            continue
+        src = here / rel
+        if not src.is_file():
+            continue
+        dst = aside / "_untracked" / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        untracked_at_start[rel] = _digest(src)
     yield
     polluted = sorted(p for p in (_dirty() - dirty_at_start)
                       if not p.startswith("..") and "/.." not in p)
@@ -374,6 +408,21 @@ def _restore_committed_build_artifacts():
         if _digest(here / rel) != before:
             shutil.copy2(aside / rel, here / rel)
             _RESTORED_BY_GUARD.append(rel)
+    for rel, before in untracked_at_start.items():
+        if _digest(here / rel) != before:
+            shutil.copy2(aside / "_untracked" / rel, here / rel)
+            _RESTORED_BY_GUARD.append(rel + " (untracked)")
+    for rel in sorted(_untracked_data() - set(untracked_at_start)):
+        if rel.startswith("..") or "/.." in rel:
+            continue
+        target = here / rel
+        if not target.is_file():
+            continue
+        try:
+            target.unlink()
+        except OSError:
+            continue
+        _RESTORED_BY_GUARD.append(rel + " (untracked, created by a test)")
     shutil.rmtree(aside, ignore_errors=True)
 
 

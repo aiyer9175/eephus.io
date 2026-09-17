@@ -322,6 +322,62 @@ ARTIFACTS = (
                  "them divide by that side's denominator."),
     },
     {
+        "file": "war_seasons.json", "group": "mlb",
+        "title": "eWAR per season",
+        "what": ("One row per player-season over the whole eWAR window, with the "
+                 "batting and pitching sides kept apart and the clubs of "
+                 "production beside them. The eWAR board's Current view is this "
+                 "file folded at the live season."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mlbstats_windows.py",
+        "note": ("Written by war_board_export in the SAME process, from the same "
+                 "side map, as war_leaderboards.json: a year range and the "
+                 "Current view cannot disagree. Rows are positional, by the "
+                 "payload's own `fields`; a window sums the two sides UNROUNDED "
+                 "and rounds once."),
+    },
+    {
+        "file": "mlbstats_windows.json", "group": "mlb",
+        "title": "Multi-year windows (index)",
+        "what": ("Which multi-season windows the lab built, what each window's "
+                 "index pool actually is (n, mean, sd), the qualified rule per "
+                 "board, and every column's treatment: summed, pooled over a "
+                 "named denominator, recomputed as an index, or hidden with its "
+                 "reason."),
+        "cadence": "monthly", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mlbstats_windows.py",
+        "note": ("A window index is the denominator-weighted mean of the "
+                 "per-season index, each season scored against its own pool, "
+                 "which is the recipe the shipped three-year columns use. So 100 "
+                 "is not this window's average and ten points is not its "
+                 "standard deviation: pool_stats says what they are, and no "
+                 "value ruler is carried onto a window."),
+    },
+    {
+        "file": "mlbstats_window_l3.json", "group": "mlb",
+        "title": "Multi-year window: last 3 seasons",
+        "what": ("All six /mlbstats/ boards over the trailing three seasons: "
+                 "counts summed, rates pooled once over their own denominator, "
+                 "HEM+ / SEM+ / REM+ / RIV+ / DEM+ / WAR-rate recomputed for the "
+                 "window with the seasons and denominator behind each value."),
+        "cadence": "monthly", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mlbstats_windows.py",
+        "note": ("This is the window the shipped *_3yr columns are already on, "
+                 "so the index blocks can be checked against a column that "
+                 "ships; the check is on mlbstats_windows.json under "
+                 "`reproduction`."),
+    },
+    {
+        "file": "mlbstats_window_l5.json", "group": "mlb",
+        "title": "Multi-year window: last 5 seasons",
+        "what": "The same six boards over the trailing five seasons.",
+        "cadence": "monthly", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mlbstats_windows.py",
+        "note": ("Five is the longest window that contains no 2020, which every "
+                 "index lab excludes, and no season outside the feed coverage of "
+                 "all six boards."),
+    },
+    {
         "file": "pal.json", "group": "mlb",
         "title": "Alchemy Lab conversions",
         "what": "Reliever to starter and starter to reliever fits, with pitch-mix change history.",

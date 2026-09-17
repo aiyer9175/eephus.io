@@ -239,6 +239,13 @@ SCHEDULED_EXPORTS = (
     # paints "being computed" on a missing payload, so a silent failure looks
     # to a reader exactly like a board that has not been built yet.
     "war_leaderboards",
+    # The per-season substrate the eWAR board writes beside itself, and the
+    # multi-year window lab. Both refuse rather than publish (a substrate on
+    # another eWAR build, a window too thin to carry a pool), and a refusal
+    # that files under a name this list does not hold never reaches the deploy
+    # shell's INGEST RED - which is the inert-guard defect the comment above
+    # records having shipped once already.
+    "war_seasons", "mlbstats_windows",
     # /fantasy/ + /dfs/ + /betting/, all of which read the same probables feed
     "fantasy_schedule", "fantasy_teams_context", "fantasy_export",
     "dfs_schedule", "dfs_slate", "betting_export",
@@ -5742,6 +5749,30 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.info("ewar board: %d players scored", _war_n)
             except Exception:
                 log.exception("ewar leaderboard export failed - continuing")
+
+        # --- 6b4k. Multi-year windows (mlbstats_window_*.json) ----------------
+        # The fixed set of season WINDOWS the /mlbstats/ boards can be read on:
+        # counts summed, rates pooled over their own denominator, and every "+"
+        # index RECOMPUTED for the window by the recipe the shipped three-year
+        # columns use. AFTER 6b4j, because the Overall window folds the
+        # per-season substrate that step writes and the lab refuses to serve a
+        # substrate on another eWAR build.
+        # ON THE LAB CADENCE, not nightly: these are frozen, vintage-stamped
+        # artifacts like every other lab block, and the expensive half is the
+        # per-season panel (the winProbability walk is about 75 seconds a
+        # season). Completed seasons memoise under .cache/mlbstats_windows/ and
+        # are built once; only the live season is re-derived. EEPHUS_LABS=1
+        # forces, the same escape hatch every other lab has.
+        # Additive; never aborts.
+        with _step("6b4k. Multi-year windows (mlbstats_window_*.json)", log):
+            try:
+                if not _lab_should_skip(out_dir / "mlbstats_windows.json",
+                                        "6b4k multi-year windows", log):
+                    from tools import mlbstats_window_lab
+                    _win_n = mlbstats_window_lab.export(log=log.info)
+                    log.info("mlbstats windows: %d window(s) published", _win_n)
+            except Exception:
+                log.exception("multi-year window lab failed - continuing")
 
         # --- 6b5. Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion

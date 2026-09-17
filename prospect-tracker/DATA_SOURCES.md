@@ -108,6 +108,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4i-lab. defense lab (dem_plus + dem_plus_multiyear evals) | dem_plus_eval.json |
 | 6b4i. Defense Leaderboards (defense_leaderboards.json) | defense_history.json, defense_leaderboards.json, war_leaderboards.json |
 | 6b4j. eWAR Leaderboard (war_leaderboards.json) | war_leaderboards.json |
+| 6b4k. Multi-year windows (mlbstats_window_*.json) | mlbstats_windows.json |
 | 6b5. Alchemy Lab (pal.json) | arbitration.json, pal.json |
 | 6b7. Arbitration Predictor (arbitration.json) | arbitration.json, management_board.json |
 | 6b7c. In-Game Management board (management_board.json) | hof_board.json, management_board.json |

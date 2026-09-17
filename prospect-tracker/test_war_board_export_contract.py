@@ -32,6 +32,7 @@ been built on this machine.
 from __future__ import annotations
 
 import json
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -66,6 +67,14 @@ def _stub(monkeypatch, *, sides: dict, hitting: list, pitching: list,
     """Run build()/export() against synthetic feeds. Nothing here touches the
     network, the eWAR artifact, the stint frames or data/.
 
+    THAT LAST CLAUSE IS LOAD-BEARING AND WAS ONCE FALSE (2026-09-17). `export()`
+    writes TWO artifacts: the board at OUT_PATH and the per-season substrate at
+    SEASONS_OUT_PATH. This harness redirected only the first, so one suite run
+    replaced the served 5,149-player data/war_seasons.json with a 20-player
+    fixture named H1..H20, and the conftest guard could not put it back because
+    the file was untracked. Both paths are redirected here now, and a new output
+    added to export() must be redirected here in the same commit.
+
     `seen` collects what the build ASKED the feeds for (the positions argument),
     because that argument is the only thing that puts a two-way player's innings
     on this board and nothing else would notice it going missing."""
@@ -90,6 +99,14 @@ def _stub(monkeypatch, *, sides: dict, hitting: list, pitching: list,
     monkeypatch.setattr(wbe, "_ingest_red", lambda source, msg: filed.append((source, msg)))
     if out is not None:
         monkeypatch.setattr(wbe, "OUT_PATH", out)
+    # The substrate is redirected WHETHER OR NOT the caller passed `out`: a
+    # caller that does not care where the board lands still must not write the
+    # served substrate. When there is no `out` to sit beside, it goes to a
+    # throwaway directory.
+    monkeypatch.setattr(wbe, "SEASONS_OUT_PATH",
+                        (out.with_name("war_seasons.json") if out is not None
+                         else Path(tempfile.mkdtemp(prefix="wbe_seasons_"))
+                         / "war_seasons.json"))
     return filed
 
 
