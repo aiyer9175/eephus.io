@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-06",
+ "generated_at": "2026-09-17",
  "seasons": [
   2021,
   2022,
@@ -7,7 +7,7 @@
   2024,
   2025
  ],
- "note": "Per-season qualified-starter boards for the yearly history tabs. SEM+ is the pure-skill starter run-prevention index (100 = average qualified starter); durability columns are context.",
+ "note": "Qualified starters by season. SEM+: starter run-prevention skill, 100 = average qualified starter. Durability columns are context.",
  "team_basis": {
   "basis": "current_roster",
   "scope": "history",
@@ -15,7 +15,80 @@
   "n_moved_to_current_club": 257,
   "n_team_unresolved": 0,
   "label": "starter history",
-  "note": "These are CLOSED seasons, and `team` points at the club MLB's transaction feed says employs the player TODAY, not the club he played the season for. A 2021 line therefore shows under a 2026 club. The convention is deliberate (filter an organisation and see the players it holds now) and it is applied to the charts AND the aggregates. n_team_unresolved counts rows serving a blank team; those rows are absent from every team rollup."
+  "note": "CLOSED seasons shown under the club MLB's transaction feed lists today, not the club he played for: a past season can show under a club he joined later. Charts and team totals both follow it, so filtering a club shows the players it holds now. Rows with no club (0) are left out of team totals."
+ },
+ "ewar_join": {
+  "2021": {
+   "season": 2021,
+   "side": "pit",
+   "n_rows": 179,
+   "n_with_id": 179,
+   "n_covered": 179,
+   "n_stamped": 179,
+   "available": true
+  },
+  "2022": {
+   "season": 2022,
+   "side": "pit",
+   "n_rows": 181,
+   "n_with_id": 181,
+   "n_covered": 181,
+   "n_stamped": 181,
+   "available": true
+  },
+  "2023": {
+   "season": 2023,
+   "side": "pit",
+   "n_rows": 180,
+   "n_with_id": 180,
+   "n_covered": 180,
+   "n_stamped": 180,
+   "available": true
+  },
+  "2024": {
+   "season": 2024,
+   "side": "pit",
+   "n_rows": 172,
+   "n_with_id": 172,
+   "n_covered": 172,
+   "n_stamped": 172,
+   "available": true
+  },
+  "2025": {
+   "season": 2025,
+   "side": "pit",
+   "n_rows": 180,
+   "n_with_id": 180,
+   "n_covered": 180,
+   "n_stamped": 180,
+   "available": true
+  }
+ },
+ "ewar_vintage": {
+  "artifact_generated_at": "2026-09-17T14:45:01",
+  "label_build_at": "2026-09-03T12:35:09",
+  "as_of": "2026-09-17",
+  "bwar_revised": {
+   "bat": 0,
+   "pit": 0
+  },
+  "bwar_revised_live": 0,
+  "bwar_revised_frozen": 0,
+  "covered_player_seasons": {
+   "bat": 16850,
+   "pit": 12519
+  },
+  "threshold": 25,
+  "frames_read": true,
+  "build_command": "python tools/build_ewar.py --nightly --write",
+  "rebuilds_on_a_schedule": true,
+  "cadence": {
+   "mode": "nightly",
+   "live_season": 2026,
+   "frozen_through": 2025
+  },
+  "note": "data/ewar.json rebuilds its live season nightly; completed seasons are frozen byte for byte and re-priced only by a hand build with the runbook cascade.",
+  "stale": false
  },
  "history": {
   "2021": {
@@ -41,7 +114,8 @@
      "gb_pct": 0.5238,
      "ip_per_gs": 6.13,
      "hr9": 0.59,
-     "qualified": true
+     "qualified": true,
+     "war": 4.6
     },
     {
      "mlbam": 669203,
@@ -62,7 +136,8 @@
      "gb_pct": 0.5346,
      "ip_per_gs": 5.96,
      "hr9": 0.38,
-     "qualified": true
+     "qualified": true,
+     "war": 7.4
     },
     {
      "mlbam": 554430,
@@ -83,7 +158,8 @@
      "gb_pct": 0.5594,
      "ip_per_gs": 6.67,
      "hr9": 0.67,
-     "qualified": true
+     "qualified": true,
+     "war": 7.1
     },
     {
      "mlbam": 607074,
@@ -104,7 +180,8 @@
      "gb_pct": 0.3944,
      "ip_per_gs": 5.53,
      "hr9": 0.88,
-     "qualified": true
+     "qualified": true,
+     "war": 4.5
     },
     {
      "mlbam": 543037,
@@ -125,7 +202,8 @@
      "gb_pct": 0.4775,
      "ip_per_gs": 6.04,
      "hr9": 1.19,
-     "qualified": true
+     "qualified": true,
+     "war": 5.1
     },
     {
      "mlbam": 607192,
@@ -146,7 +224,8 @@
      "gb_pct": 0.4815,
      "ip_per_gs": 6.29,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 669432,
@@ -167,7 +246,8 @@
      "gb_pct": 0.4701,
      "ip_per_gs": 5.32,
      "hr9": 0.41,
-     "qualified": true
+     "qualified": true,
+     "war": 4.4
     },
     {
      "mlbam": 453286,
@@ -188,7 +268,8 @@
      "gb_pct": 0.3699,
      "ip_per_gs": 5.98,
      "hr9": 1.15,
-     "qualified": true
+     "qualified": true,
+     "war": 5.0
     },
     {
      "mlbam": 543135,
@@ -209,7 +290,8 @@
      "gb_pct": 0.4812,
      "ip_per_gs": 5.7,
      "hr9": 0.74,
-     "qualified": true
+     "qualified": true,
+     "war": 6.2
     },
     {
      "mlbam": 657277,
@@ -230,7 +312,8 @@
      "gb_pct": 0.7143,
      "ip_per_gs": 5.71,
      "hr9": 0.55,
-     "qualified": true
+     "qualified": true,
+     "war": 4.4
     },
     {
      "mlbam": 605540,
@@ -251,7 +334,8 @@
      "gb_pct": 0.5174,
      "ip_per_gs": 5.98,
      "hr9": 0.9,
-     "qualified": true
+     "qualified": true,
+     "war": 4.9
     },
     {
      "mlbam": 592332,
@@ -272,7 +356,8 @@
      "gb_pct": 0.4738,
      "ip_per_gs": 5.82,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 5.1
     },
     {
      "mlbam": 477132,
@@ -293,7 +378,8 @@
      "gb_pct": 0.5787,
      "ip_per_gs": 5.53,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": 3.3
     },
     {
      "mlbam": 656557,
@@ -314,7 +400,8 @@
      "gb_pct": 0.4737,
      "ip_per_gs": 5.31,
      "hr9": 0.52,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 669456,
@@ -335,7 +422,8 @@
      "gb_pct": 0.52,
      "ip_per_gs": 6.04,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 642547,
@@ -356,7 +444,8 @@
      "gb_pct": 0.3504,
      "ip_per_gs": 5.35,
      "hr9": 0.87,
-     "qualified": true
+     "qualified": true,
+     "war": 3.6
     },
     {
      "mlbam": 628711,
@@ -377,7 +466,8 @@
      "gb_pct": 0.4407,
      "ip_per_gs": 5.8,
      "hr9": 0.92,
-     "qualified": true
+     "qualified": true,
+     "war": 4.8
     },
     {
      "mlbam": 621111,
@@ -398,7 +488,8 @@
      "gb_pct": 0.5303,
      "ip_per_gs": 6.29,
      "hr9": 0.82,
-     "qualified": true
+     "qualified": true,
+     "war": 5.5
     },
     {
      "mlbam": 450203,
@@ -419,7 +510,8 @@
      "gb_pct": 0.5623,
      "ip_per_gs": 5.63,
      "hr9": 0.78,
-     "qualified": true
+     "qualified": true,
+     "war": 4.9
     },
     {
      "mlbam": 605400,
@@ -440,7 +532,8 @@
      "gb_pct": 0.4665,
      "ip_per_gs": 5.65,
      "hr9": 1.3,
-     "qualified": true
+     "qualified": true,
+     "war": 3.9
     },
     {
      "mlbam": 458681,
@@ -461,7 +554,8 @@
      "gb_pct": 0.4061,
      "ip_per_gs": 5.61,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 3.9
     },
     {
      "mlbam": 593958,
@@ -482,7 +576,8 @@
      "gb_pct": 0.5056,
      "ip_per_gs": 5.09,
      "hr9": 1.08,
-     "qualified": true
+     "qualified": true,
+     "war": 4.3
     },
     {
      "mlbam": 502171,
@@ -503,7 +598,8 @@
      "gb_pct": 0.6322,
      "ip_per_gs": 5.19,
      "hr9": 0.48,
-     "qualified": true
+     "qualified": true,
+     "war": 2.7
     },
     {
      "mlbam": 656302,
@@ -524,7 +620,8 @@
      "gb_pct": 0.3872,
      "ip_per_gs": 5.18,
      "hr9": 1.09,
-     "qualified": true
+     "qualified": true,
+     "war": 3.7
     },
     {
      "mlbam": 663556,
@@ -545,7 +642,8 @@
      "gb_pct": 0.5346,
      "ip_per_gs": 4.93,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 593423,
@@ -566,7 +664,8 @@
      "gb_pct": 0.5029,
      "ip_per_gs": 5.84,
      "hr9": 0.96,
-     "qualified": true
+     "qualified": true,
+     "war": 3.6
     },
     {
      "mlbam": 641154,
@@ -587,7 +686,8 @@
      "gb_pct": 0.558,
      "ip_per_gs": 5.13,
      "hr9": 0.96,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 608331,
@@ -608,7 +708,8 @@
      "gb_pct": 0.618,
      "ip_per_gs": 5.92,
      "hr9": 0.81,
-     "qualified": true
+     "qualified": true,
+     "war": 4.2
     },
     {
      "mlbam": 605135,
@@ -629,7 +730,8 @@
      "gb_pct": 0.4651,
      "ip_per_gs": 5.83,
      "hr9": 0.86,
-     "qualified": true
+     "qualified": true,
+     "war": 3.2
     },
     {
      "mlbam": 645261,
@@ -650,7 +752,8 @@
      "gb_pct": 0.6099,
      "ip_per_gs": 6.23,
      "hr9": 0.92,
-     "qualified": true
+     "qualified": true,
+     "war": 4.5
     },
     {
      "mlbam": 621244,
@@ -671,7 +774,8 @@
      "gb_pct": 0.5196,
      "ip_per_gs": 6.0,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 3.9
     },
     {
      "mlbam": 592662,
@@ -692,7 +796,8 @@
      "gb_pct": 0.4169,
      "ip_per_gs": 6.04,
      "hr9": 1.54,
-     "qualified": true
+     "qualified": true,
+     "war": 4.1
     },
     {
      "mlbam": 622072,
@@ -713,7 +818,8 @@
      "gb_pct": 0.5771,
      "ip_per_gs": 5.33,
      "hr9": 0.91,
-     "qualified": true
+     "qualified": true,
+     "war": 2.7
     },
     {
      "mlbam": 573186,
@@ -734,7 +840,8 @@
      "gb_pct": 0.5861,
      "ip_per_gs": 5.42,
      "hr9": 0.85,
-     "qualified": true
+     "qualified": true,
+     "war": 3.2
     },
     {
      "mlbam": 640455,
@@ -755,7 +862,8 @@
      "gb_pct": 0.4804,
      "ip_per_gs": 5.6,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 677651,
@@ -776,7 +884,8 @@
      "gb_pct": 0.4393,
      "ip_per_gs": 5.55,
      "hr9": 1.1,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 621121,
@@ -797,7 +906,8 @@
      "gb_pct": 0.6117,
      "ip_per_gs": 5.8,
      "hr9": 0.72,
-     "qualified": true
+     "qualified": true,
+     "war": 3.2
     },
     {
      "mlbam": 543101,
@@ -818,7 +928,8 @@
      "gb_pct": 0.5162,
      "ip_per_gs": 5.41,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 605513,
@@ -839,7 +950,8 @@
      "gb_pct": 0.6311,
      "ip_per_gs": 5.56,
      "hr9": 0.36,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 608337,
@@ -860,7 +972,8 @@
      "gb_pct": 0.3969,
      "ip_per_gs": 5.76,
      "hr9": 1.36,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 518633,
@@ -881,7 +994,8 @@
      "gb_pct": 0.3717,
      "ip_per_gs": 5.08,
      "hr9": 0.89,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 605397,
@@ -902,7 +1016,8 @@
      "gb_pct": 0.5166,
      "ip_per_gs": 5.85,
      "hr9": 1.09,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 641482,
@@ -923,7 +1038,8 @@
      "gb_pct": 0.284,
      "ip_per_gs": 6.64,
      "hr9": 1.35,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 669302,
@@ -944,7 +1060,8 @@
      "gb_pct": 0.345,
      "ip_per_gs": 4.97,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 656756,
@@ -965,7 +1082,8 @@
      "gb_pct": 0.4797,
      "ip_per_gs": 5.24,
      "hr9": 1.09,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 425794,
@@ -986,7 +1104,8 @@
      "gb_pct": 0.5667,
      "ip_per_gs": 6.45,
      "hr9": 0.92,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 621107,
@@ -1007,7 +1126,8 @@
      "gb_pct": 0.5192,
      "ip_per_gs": 5.87,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 506433,
@@ -1028,7 +1148,8 @@
      "gb_pct": 0.4315,
      "ip_per_gs": 5.54,
      "hr9": 1.52,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 641816,
@@ -1049,7 +1170,8 @@
      "gb_pct": 0.5174,
      "ip_per_gs": 5.45,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": 4.2
     },
     {
      "mlbam": 545333,
@@ -1070,7 +1192,8 @@
      "gb_pct": 0.3859,
      "ip_per_gs": 6.33,
      "hr9": 1.59,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 605483,
@@ -1091,7 +1214,8 @@
      "gb_pct": 0.4783,
      "ip_per_gs": 4.77,
      "hr9": 1.12,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 622491,
@@ -1112,7 +1236,8 @@
      "gb_pct": 0.6494,
      "ip_per_gs": 5.69,
      "hr9": 0.91,
-     "qualified": true
+     "qualified": true,
+     "war": 4.5
     },
     {
      "mlbam": 660623,
@@ -1133,7 +1258,8 @@
      "gb_pct": 0.5629,
      "ip_per_gs": 5.35,
      "hr9": 1.38,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 663978,
@@ -1154,7 +1280,8 @@
      "gb_pct": 0.527,
      "ip_per_gs": 4.92,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 666201,
@@ -1175,7 +1302,8 @@
      "gb_pct": 0.4372,
      "ip_per_gs": 5.58,
      "hr9": 0.97,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 571927,
@@ -1196,7 +1324,8 @@
      "gb_pct": 0.5608,
      "ip_per_gs": 5.2,
      "hr9": 1.08,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 622608,
@@ -1217,7 +1346,8 @@
      "gb_pct": 0.5751,
      "ip_per_gs": 5.6,
      "hr9": 0.69,
-     "qualified": true
+     "qualified": true,
+     "war": 4.1
     },
     {
      "mlbam": 608566,
@@ -1238,7 +1368,8 @@
      "gb_pct": 0.6358,
      "ip_per_gs": 5.62,
      "hr9": 1.05,
-     "qualified": true
+     "qualified": true,
+     "war": 4.2
     },
     {
      "mlbam": 543243,
@@ -1259,7 +1390,8 @@
      "gb_pct": 0.5569,
      "ip_per_gs": 5.21,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 502043,
@@ -1280,7 +1412,8 @@
      "gb_pct": 0.5881,
      "ip_per_gs": 6.07,
      "hr9": 0.84,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 623167,
@@ -1301,7 +1434,8 @@
      "gb_pct": 0.4806,
      "ip_per_gs": 5.8,
      "hr9": 0.95,
-     "qualified": true
+     "qualified": true,
+     "war": 2.4
     },
     {
      "mlbam": 547943,
@@ -1322,7 +1456,8 @@
      "gb_pct": 0.5501,
      "ip_per_gs": 5.45,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 605507,
@@ -1343,7 +1478,8 @@
      "gb_pct": 0.4968,
      "ip_per_gs": 5.36,
      "hr9": 0.72,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 446372,
@@ -1364,7 +1500,8 @@
      "gb_pct": 0.4898,
      "ip_per_gs": 5.0,
      "hr9": 0.9,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 641778,
@@ -1385,7 +1522,8 @@
      "gb_pct": 0.3915,
      "ip_per_gs": 5.93,
      "hr9": 1.21,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 592866,
@@ -1406,7 +1544,8 @@
      "gb_pct": 0.5657,
      "ip_per_gs": 6.07,
      "hr9": 1.09,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 663776,
@@ -1427,7 +1566,8 @@
      "gb_pct": 0.5813,
      "ip_per_gs": 6.21,
      "hr9": 1.14,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 628317,
@@ -1448,7 +1588,8 @@
      "gb_pct": 0.4639,
      "ip_per_gs": 5.06,
      "hr9": 1.35,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 664353,
@@ -1469,7 +1610,8 @@
      "gb_pct": 0.3733,
      "ip_per_gs": 5.35,
      "hr9": 1.43,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 641540,
@@ -1490,7 +1632,8 @@
      "gb_pct": 0.638,
      "ip_per_gs": 4.71,
      "hr9": 0.99,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 656427,
@@ -1511,7 +1654,8 @@
      "gb_pct": 0.4595,
      "ip_per_gs": 5.22,
      "hr9": 1.38,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 489119,
@@ -1532,7 +1676,8 @@
      "gb_pct": 0.5925,
      "ip_per_gs": 5.82,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 3.6
     },
     {
      "mlbam": 456501,
@@ -1553,7 +1698,8 @@
      "gb_pct": 0.4935,
      "ip_per_gs": 5.46,
      "hr9": 1.18,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 666120,
@@ -1574,7 +1720,8 @@
      "gb_pct": 0.5794,
      "ip_per_gs": 5.35,
      "hr9": 1.12,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 668678,
@@ -1595,7 +1742,8 @@
      "gb_pct": 0.491,
      "ip_per_gs": 5.28,
      "hr9": 1.41,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 518876,
@@ -1616,7 +1764,8 @@
      "gb_pct": 0.5167,
      "ip_per_gs": 5.85,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": 2.0
     },
     {
      "mlbam": 593334,
@@ -1637,7 +1786,8 @@
      "gb_pct": 0.4639,
      "ip_per_gs": 5.46,
      "hr9": 1.56,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 615698,
@@ -1658,7 +1808,8 @@
      "gb_pct": 0.4968,
      "ip_per_gs": 6.8,
      "hr9": 0.96,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 664285,
@@ -1679,7 +1830,8 @@
      "gb_pct": 0.7761,
      "ip_per_gs": 6.12,
      "hr9": 0.8,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 641927,
@@ -1700,7 +1852,8 @@
      "gb_pct": 0.4035,
      "ip_per_gs": 4.62,
      "hr9": 1.95,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 601713,
@@ -1721,7 +1874,8 @@
      "gb_pct": 0.4301,
      "ip_per_gs": 5.17,
      "hr9": 1.39,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 663903,
@@ -1742,7 +1896,8 @@
      "gb_pct": 0.5837,
      "ip_per_gs": 4.75,
      "hr9": 0.98,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 501381,
@@ -1763,7 +1918,8 @@
      "gb_pct": 0.4721,
      "ip_per_gs": 5.21,
      "hr9": 1.4,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 592351,
@@ -1784,7 +1940,8 @@
      "gb_pct": 0.573,
      "ip_per_gs": 5.14,
      "hr9": 1.27,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 501985,
@@ -1805,7 +1962,8 @@
      "gb_pct": 0.434,
      "ip_per_gs": 5.67,
      "hr9": 1.47,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 621076,
@@ -1826,7 +1984,8 @@
      "gb_pct": 0.3991,
      "ip_per_gs": 5.68,
      "hr9": 1.43,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 660761,
@@ -1847,7 +2006,8 @@
      "gb_pct": 0.5764,
      "ip_per_gs": 7.02,
      "hr9": 1.01,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 571510,
@@ -1868,7 +2028,8 @@
      "gb_pct": 0.3988,
      "ip_per_gs": 5.24,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 596133,
@@ -1889,7 +2050,8 @@
      "gb_pct": 0.4436,
      "ip_per_gs": 5.05,
      "hr9": 1.51,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 605452,
@@ -1910,7 +2072,8 @@
      "gb_pct": 0.5261,
      "ip_per_gs": 5.68,
      "hr9": 1.42,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 608379,
@@ -1931,7 +2094,8 @@
      "gb_pct": 0.4833,
      "ip_per_gs": 5.42,
      "hr9": 1.66,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 656731,
@@ -1952,7 +2116,8 @@
      "gb_pct": 0.4877,
      "ip_per_gs": 4.98,
      "hr9": 1.91,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 592791,
@@ -1973,7 +2138,8 @@
      "gb_pct": 0.371,
      "ip_per_gs": 4.98,
      "hr9": 1.5,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 542881,
@@ -1994,7 +2160,8 @@
      "gb_pct": 0.4278,
      "ip_per_gs": 5.39,
      "hr9": 1.46,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 502179,
@@ -2015,7 +2182,8 @@
      "gb_pct": 0.4323,
      "ip_per_gs": 5.77,
      "hr9": 1.56,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 448179,
@@ -2036,7 +2204,8 @@
      "gb_pct": 0.3927,
      "ip_per_gs": 5.12,
      "hr9": 1.19,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 664062,
@@ -2057,7 +2226,8 @@
      "gb_pct": 0.4141,
      "ip_per_gs": 4.28,
      "hr9": 1.29,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 607644,
@@ -2078,7 +2248,8 @@
      "gb_pct": 0.3721,
      "ip_per_gs": 5.64,
      "hr9": 1.84,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 640470,
@@ -2099,7 +2270,8 @@
      "gb_pct": 0.5542,
      "ip_per_gs": 5.98,
      "hr9": 1.79,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 608344,
@@ -2120,7 +2292,8 @@
      "gb_pct": 0.4268,
      "ip_per_gs": 5.57,
      "hr9": 1.16,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 543606,
@@ -2141,7 +2314,8 @@
      "gb_pct": 0.4167,
      "ip_per_gs": 4.55,
      "hr9": 1.38,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 672715,
@@ -2162,7 +2336,8 @@
      "gb_pct": 0.3228,
      "ip_per_gs": 5.16,
      "hr9": 1.4,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 642232,
@@ -2183,7 +2358,8 @@
      "gb_pct": 0.4303,
      "ip_per_gs": 7.38,
      "hr9": 1.45,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 596295,
@@ -2204,7 +2380,8 @@
      "gb_pct": 0.5109,
      "ip_per_gs": 5.01,
      "hr9": 1.56,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 663474,
@@ -2225,7 +2402,8 @@
      "gb_pct": 0.3364,
      "ip_per_gs": 5.0,
      "hr9": 1.57,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 592836,
@@ -2246,7 +2424,8 @@
      "gb_pct": 0.4778,
      "ip_per_gs": 5.48,
      "hr9": 1.47,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 547942,
@@ -2267,7 +2446,8 @@
      "gb_pct": 0.5411,
      "ip_per_gs": 5.08,
      "hr9": 1.01,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 579328,
@@ -2288,7 +2468,8 @@
      "gb_pct": 0.6014,
      "ip_per_gs": 5.41,
      "hr9": 1.55,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 571760,
@@ -2309,7 +2490,8 @@
      "gb_pct": 0.4069,
      "ip_per_gs": 5.64,
      "hr9": 2.01,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 605288,
@@ -2330,7 +2512,8 @@
      "gb_pct": 0.6755,
      "ip_per_gs": 5.47,
      "hr9": 0.76,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 656605,
@@ -2351,7 +2534,8 @@
      "gb_pct": 0.4764,
      "ip_per_gs": 4.38,
      "hr9": 0.89,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 607536,
@@ -2372,7 +2556,8 @@
      "gb_pct": 0.5617,
      "ip_per_gs": 5.25,
      "hr9": 1.49,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 656849,
@@ -2393,7 +2578,8 @@
      "gb_pct": 0.6417,
      "ip_per_gs": 4.44,
      "hr9": 1.48,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 518516,
@@ -2414,7 +2600,8 @@
      "gb_pct": 0.3836,
      "ip_per_gs": 5.63,
      "hr9": 1.48,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 621219,
@@ -2435,7 +2622,8 @@
      "gb_pct": 0.5992,
      "ip_per_gs": 5.95,
      "hr9": 1.21,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 474463,
@@ -2456,7 +2644,8 @@
      "gb_pct": 0.6621,
      "ip_per_gs": 4.0,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 607200,
@@ -2477,7 +2666,8 @@
      "gb_pct": 0.6038,
      "ip_per_gs": 4.94,
      "hr9": 1.55,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 650644,
@@ -2498,7 +2688,8 @@
      "gb_pct": 0.5273,
      "ip_per_gs": 5.92,
      "hr9": 1.66,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 425844,
@@ -2519,7 +2710,8 @@
      "gb_pct": 0.5253,
      "ip_per_gs": 5.9,
      "hr9": 1.58,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 663554,
@@ -2540,7 +2732,8 @@
      "gb_pct": 0.5449,
      "ip_per_gs": 5.01,
      "hr9": 1.44,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 675921,
@@ -2561,7 +2754,8 @@
      "gb_pct": 0.4468,
      "ip_per_gs": 3.31,
      "hr9": 1.27,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 622694,
@@ -2582,7 +2776,8 @@
      "gb_pct": 0.4752,
      "ip_per_gs": 4.7,
      "hr9": 2.26,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 643290,
@@ -2603,7 +2798,8 @@
      "gb_pct": 0.3636,
      "ip_per_gs": 4.58,
      "hr9": 1.07,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 518774,
@@ -2624,7 +2820,8 @@
      "gb_pct": 0.4982,
      "ip_per_gs": 4.56,
      "hr9": 1.34,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 668676,
@@ -2645,7 +2842,8 @@
      "gb_pct": 0.5016,
      "ip_per_gs": 5.71,
      "hr9": 1.45,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 471911,
@@ -2666,7 +2864,8 @@
      "gb_pct": 0.5,
      "ip_per_gs": 4.47,
      "hr9": 2.01,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 669212,
@@ -2687,7 +2886,8 @@
      "gb_pct": 0.35,
      "ip_per_gs": 4.96,
      "hr9": 2.01,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 669373,
@@ -2708,7 +2908,8 @@
      "gb_pct": 0.4565,
      "ip_per_gs": 5.15,
      "hr9": 2.11,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 527048,
@@ -2729,7 +2930,8 @@
      "gb_pct": 0.5238,
      "ip_per_gs": 5.18,
      "hr9": 1.5,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 572070,
@@ -2750,7 +2952,8 @@
      "gb_pct": 0.5448,
      "ip_per_gs": 6.21,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 641745,
@@ -2771,7 +2974,8 @@
      "gb_pct": 0.5644,
      "ip_per_gs": 5.14,
      "hr9": 1.21,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 666159,
@@ -2792,7 +2996,8 @@
      "gb_pct": 0.4923,
      "ip_per_gs": 4.74,
      "hr9": 1.05,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 548389,
@@ -2813,7 +3018,8 @@
      "gb_pct": 0.4126,
      "ip_per_gs": 5.33,
      "hr9": 2.04,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 664141,
@@ -2834,7 +3040,8 @@
      "gb_pct": 0.5252,
      "ip_per_gs": 5.18,
      "hr9": 2.03,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 592767,
@@ -2855,7 +3062,8 @@
      "gb_pct": 0.4683,
      "ip_per_gs": 5.51,
      "hr9": 1.92,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 543294,
@@ -2876,7 +3084,8 @@
      "gb_pct": 0.5239,
      "ip_per_gs": 5.66,
      "hr9": 1.54,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 663738,
@@ -2897,7 +3106,8 @@
      "gb_pct": 0.4397,
      "ip_per_gs": 4.53,
      "hr9": 1.19,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 642545,
@@ -2918,7 +3128,8 @@
      "gb_pct": 0.4677,
      "ip_per_gs": 5.15,
      "hr9": 1.27,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 656288,
@@ -2939,7 +3150,8 @@
      "gb_pct": 0.4167,
      "ip_per_gs": 4.82,
      "hr9": 2.01,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 669145,
@@ -2960,7 +3172,8 @@
      "gb_pct": 0.4769,
      "ip_per_gs": 4.95,
      "hr9": 1.96,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 593372,
@@ -2981,7 +3194,8 @@
      "gb_pct": 0.5934,
      "ip_per_gs": 5.15,
      "hr9": 0.87,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 669211,
@@ -3002,7 +3216,8 @@
      "gb_pct": 0.3834,
      "ip_per_gs": 5.59,
      "hr9": 1.61,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 607231,
@@ -3023,7 +3238,8 @@
      "gb_pct": 0.5595,
      "ip_per_gs": 5.24,
      "hr9": 0.82,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 503449,
@@ -3044,7 +3260,8 @@
      "gb_pct": 0.5981,
      "ip_per_gs": 5.2,
      "hr9": 1.15,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 663460,
@@ -3065,7 +3282,8 @@
      "gb_pct": 0.5725,
      "ip_per_gs": 6.5,
      "hr9": 1.52,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 457918,
@@ -3086,7 +3304,8 @@
      "gb_pct": 0.4019,
      "ip_per_gs": 5.08,
      "hr9": 1.77,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 663465,
@@ -3107,7 +3326,8 @@
      "gb_pct": 0.4682,
      "ip_per_gs": 7.33,
      "hr9": 2.09,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 657053,
@@ -3128,7 +3348,8 @@
      "gb_pct": 0.5773,
      "ip_per_gs": 5.0,
      "hr9": 1.98,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 594835,
@@ -3149,7 +3370,8 @@
      "gb_pct": 0.377,
      "ip_per_gs": 5.73,
      "hr9": 1.82,
-     "qualified": true
+     "qualified": true,
+     "war": -0.6
     },
     {
      "mlbam": 641771,
@@ -3170,7 +3392,8 @@
      "gb_pct": 0.5333,
      "ip_per_gs": 5.74,
      "hr9": 1.46,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 570632,
@@ -3191,7 +3414,8 @@
      "gb_pct": 0.5893,
      "ip_per_gs": 5.59,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 677960,
@@ -3212,7 +3436,8 @@
      "gb_pct": 0.5077,
      "ip_per_gs": 5.26,
      "hr9": 1.9,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 661269,
@@ -3233,7 +3458,8 @@
      "gb_pct": 0.4835,
      "ip_per_gs": 5.18,
      "hr9": 1.58,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 605164,
@@ -3254,7 +3480,8 @@
      "gb_pct": 0.5,
      "ip_per_gs": 4.77,
      "hr9": 1.99,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 605347,
@@ -3275,7 +3502,8 @@
      "gb_pct": 0.5915,
      "ip_per_gs": 4.87,
      "hr9": 1.55,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 642203,
@@ -3296,7 +3524,8 @@
      "gb_pct": 0.4307,
      "ip_per_gs": 5.41,
      "hr9": 1.79,
-     "qualified": true
+     "qualified": true,
+     "war": -0.4
     },
     {
      "mlbam": 666200,
@@ -3317,7 +3546,8 @@
      "gb_pct": 0.442,
      "ip_per_gs": 5.3,
      "hr9": 1.89,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 680686,
@@ -3338,7 +3568,8 @@
      "gb_pct": 0.3759,
      "ip_per_gs": 5.44,
      "hr9": 2.42,
-     "qualified": true
+     "qualified": true,
+     "war": -0.8
     },
     {
      "mlbam": 543475,
@@ -3359,7 +3590,8 @@
      "gb_pct": 0.4426,
      "ip_per_gs": 6.0,
      "hr9": 1.9,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 669060,
@@ -3380,7 +3612,8 @@
      "gb_pct": 0.4226,
      "ip_per_gs": 4.62,
      "hr9": 1.82,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 670912,
@@ -3401,7 +3634,8 @@
      "gb_pct": 0.6241,
      "ip_per_gs": 4.79,
      "hr9": 1.16,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 571578,
@@ -3422,7 +3656,8 @@
      "gb_pct": 0.5795,
      "ip_per_gs": 5.54,
      "hr9": 1.94,
-     "qualified": true
+     "qualified": true,
+     "war": -0.8
     },
     {
      "mlbam": 572971,
@@ -3443,7 +3678,8 @@
      "gb_pct": 0.6423,
      "ip_per_gs": 5.4,
      "hr9": 1.39,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 592346,
@@ -3464,7 +3700,8 @@
      "gb_pct": 0.5108,
      "ip_per_gs": 5.65,
      "hr9": 1.59,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 663531,
@@ -3485,7 +3722,8 @@
      "gb_pct": 0.5283,
      "ip_per_gs": 4.58,
      "hr9": 2.15,
-     "qualified": true
+     "qualified": true,
+     "war": -0.5
     },
     {
      "mlbam": 592826,
@@ -3506,7 +3744,8 @@
      "gb_pct": 0.386,
      "ip_per_gs": 4.49,
      "hr9": 2.19,
-     "qualified": true
+     "qualified": true,
+     "war": -0.9
     },
     {
      "mlbam": 650496,
@@ -3527,7 +3766,8 @@
      "gb_pct": 0.6058,
      "ip_per_gs": 4.76,
      "hr9": 2.24,
-     "qualified": true
+     "qualified": true,
+     "war": -0.4
     },
     {
      "mlbam": 452657,
@@ -3548,7 +3788,8 @@
      "gb_pct": 0.5423,
      "ip_per_gs": 5.05,
      "hr9": 1.59,
-     "qualified": true
+     "qualified": true,
+     "war": -0.8
     },
     {
      "mlbam": 519043,
@@ -3569,7 +3810,8 @@
      "gb_pct": 0.451,
      "ip_per_gs": 5.62,
      "hr9": 1.85,
-     "qualified": true
+     "qualified": true,
+     "war": -0.6
     },
     {
      "mlbam": 640444,
@@ -3590,7 +3832,8 @@
      "gb_pct": 0.4911,
      "ip_per_gs": 4.67,
      "hr9": 1.93,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 605200,
@@ -3611,7 +3854,8 @@
      "gb_pct": 0.5145,
      "ip_per_gs": 4.62,
      "hr9": 1.52,
-     "qualified": true
+     "qualified": true,
+     "war": -0.5
     },
     {
      "mlbam": 656954,
@@ -3632,7 +3876,8 @@
      "gb_pct": 0.5325,
      "ip_per_gs": 5.36,
      "hr9": 1.57,
-     "qualified": true
+     "qualified": true,
+     "war": -0.5
     },
     {
      "mlbam": 685503,
@@ -3653,7 +3898,8 @@
      "gb_pct": 0.5109,
      "ip_per_gs": 4.07,
      "hr9": 2.43,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 592314,
@@ -3674,7 +3920,8 @@
      "gb_pct": 0.459,
      "ip_per_gs": 5.79,
      "hr9": 2.27,
-     "qualified": true
+     "qualified": true,
+     "war": -1.2
     },
     {
      "mlbam": 657093,
@@ -3695,7 +3942,8 @@
      "gb_pct": 0.456,
      "ip_per_gs": 5.47,
      "hr9": 2.3,
-     "qualified": true
+     "qualified": true,
+     "war": -0.6
     },
     {
      "mlbam": 643377,
@@ -3716,7 +3964,8 @@
      "gb_pct": 0.3296,
      "ip_per_gs": 5.86,
      "hr9": 2.52,
-     "qualified": true
+     "qualified": true,
+     "war": -1.2
     },
     {
      "mlbam": 665152,
@@ -3737,7 +3986,8 @@
      "gb_pct": 0.3578,
      "ip_per_gs": 4.13,
      "hr9": 2.85,
-     "qualified": true
+     "qualified": true,
+     "war": -1.0
     },
     {
      "mlbam": 453562,
@@ -3758,7 +4008,8 @@
      "gb_pct": 0.5561,
      "ip_per_gs": 4.11,
      "hr9": 2.19,
-     "qualified": true
+     "qualified": true,
+     "war": -0.8
     },
     {
      "mlbam": 533167,
@@ -3779,7 +4030,8 @@
      "gb_pct": 0.5643,
      "ip_per_gs": 5.48,
      "hr9": 2.24,
-     "qualified": true
+     "qualified": true,
+     "war": -0.9
     }
    ]
   },
@@ -3806,7 +4058,8 @@
      "gb_pct": 0.4583,
      "ip_per_gs": 6.58,
      "hr9": 0.48,
-     "qualified": true
+     "qualified": true,
+     "war": 5.2
     },
     {
      "mlbam": 594798,
@@ -3827,7 +4080,8 @@
      "gb_pct": 0.4382,
      "ip_per_gs": 5.85,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 607074,
@@ -3848,7 +4102,8 @@
      "gb_pct": 0.3741,
      "ip_per_gs": 5.74,
      "hr9": 0.61,
-     "qualified": true
+     "qualified": true,
+     "war": 5.8
     },
     {
      "mlbam": 592332,
@@ -3869,7 +4124,8 @@
      "gb_pct": 0.429,
      "ip_per_gs": 5.63,
      "hr9": 0.77,
-     "qualified": true
+     "qualified": true,
+     "war": 5.5
     },
     {
      "mlbam": 605400,
@@ -3890,7 +4146,8 @@
      "gb_pct": 0.4836,
      "ip_per_gs": 6.41,
      "hr9": 0.83,
-     "qualified": true
+     "qualified": true,
+     "war": 5.9
     },
     {
      "mlbam": 434378,
@@ -3911,7 +4168,8 @@
      "gb_pct": 0.397,
      "ip_per_gs": 6.25,
      "hr9": 0.62,
-     "qualified": true
+     "qualified": true,
+     "war": 5.4
     },
     {
      "mlbam": 453286,
@@ -3932,7 +4190,8 @@
      "gb_pct": 0.3333,
      "ip_per_gs": 6.32,
      "hr9": 0.81,
-     "qualified": true
+     "qualified": true,
+     "war": 4.0
     },
     {
      "mlbam": 477132,
@@ -3953,7 +4212,8 @@
      "gb_pct": 0.5277,
      "ip_per_gs": 5.74,
      "hr9": 0.71,
-     "qualified": true
+     "qualified": true,
+     "war": 3.7
     },
     {
      "mlbam": 608331,
@@ -3974,7 +4234,8 @@
      "gb_pct": 0.5741,
      "ip_per_gs": 6.18,
      "hr9": 0.58,
-     "qualified": true
+     "qualified": true,
+     "war": 5.4
     },
     {
      "mlbam": 605483,
@@ -3995,7 +4256,8 @@
      "gb_pct": 0.3846,
      "ip_per_gs": 5.33,
      "hr9": 0.77,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 669456,
@@ -4016,7 +4278,8 @@
      "gb_pct": 0.5431,
      "ip_per_gs": 6.45,
      "hr9": 0.81,
-     "qualified": true
+     "qualified": true,
+     "war": 4.7
     },
     {
      "mlbam": 663556,
@@ -4037,7 +4300,8 @@
      "gb_pct": 0.5571,
      "ip_per_gs": 5.94,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 3.5
     },
     {
      "mlbam": 554430,
@@ -4058,7 +4322,8 @@
      "gb_pct": 0.5252,
      "ip_per_gs": 5.88,
      "hr9": 0.76,
-     "qualified": true
+     "qualified": true,
+     "war": 3.8
     },
     {
      "mlbam": 502171,
@@ -4079,7 +4344,8 @@
      "gb_pct": 0.6868,
      "ip_per_gs": 5.35,
      "hr9": 0.54,
-     "qualified": true
+     "qualified": true,
+     "war": 3.6
     },
     {
      "mlbam": 605540,
@@ -4100,7 +4366,8 @@
      "gb_pct": 0.4015,
      "ip_per_gs": 5.68,
      "hr9": 1.06,
-     "qualified": true
+     "qualified": true,
+     "war": 3.4
     },
     {
      "mlbam": 645261,
@@ -4121,7 +4388,8 @@
      "gb_pct": 0.6143,
      "ip_per_gs": 7.15,
      "hr9": 0.63,
-     "qualified": true
+     "qualified": true,
+     "war": 5.9
     },
     {
      "mlbam": 669203,
@@ -4142,7 +4410,8 @@
      "gb_pct": 0.552,
      "ip_per_gs": 6.12,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 4.3
     },
     {
      "mlbam": 664299,
@@ -4163,7 +4432,8 @@
      "gb_pct": 0.2746,
      "ip_per_gs": 5.95,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 668678,
@@ -4184,7 +4454,8 @@
      "gb_pct": 0.5058,
      "ip_per_gs": 5.94,
      "hr9": 0.73,
-     "qualified": true
+     "qualified": true,
+     "war": 4.3
     },
     {
      "mlbam": 605488,
@@ -4205,7 +4476,8 @@
      "gb_pct": 0.428,
      "ip_per_gs": 5.41,
      "hr9": 0.93,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 669923,
@@ -4226,7 +4498,8 @@
      "gb_pct": 0.4453,
      "ip_per_gs": 5.2,
      "hr9": 0.9,
-     "qualified": true
+     "qualified": true,
+     "war": 2.7
     },
     {
      "mlbam": 656302,
@@ -4247,7 +4520,8 @@
      "gb_pct": 0.4058,
      "ip_per_gs": 5.75,
      "hr9": 0.78,
-     "qualified": true
+     "qualified": true,
+     "war": 4.6
     },
     {
      "mlbam": 641482,
@@ -4268,7 +4542,8 @@
      "gb_pct": 0.3816,
      "ip_per_gs": 5.65,
      "hr9": 0.91,
-     "qualified": true
+     "qualified": true,
+     "war": 3.7
     },
     {
      "mlbam": 622491,
@@ -4289,7 +4564,8 @@
      "gb_pct": 0.5217,
      "ip_per_gs": 6.01,
      "hr9": 0.78,
-     "qualified": true
+     "qualified": true,
+     "war": 3.7
     },
     {
      "mlbam": 669373,
@@ -4310,7 +4586,8 @@
      "gb_pct": 0.4933,
      "ip_per_gs": 5.6,
      "hr9": 0.69,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 666200,
@@ -4331,7 +4608,8 @@
      "gb_pct": 0.4828,
      "ip_per_gs": 5.57,
      "hr9": 0.9,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 664285,
@@ -4352,7 +4630,8 @@
      "gb_pct": 0.7326,
      "ip_per_gs": 6.49,
      "hr9": 0.49,
-     "qualified": true
+     "qualified": true,
+     "war": 4.4
     },
     {
      "mlbam": 657277,
@@ -4373,7 +4652,8 @@
      "gb_pct": 0.6539,
      "ip_per_gs": 6.01,
      "hr9": 0.51,
-     "qualified": true
+     "qualified": true,
+     "war": 4.2
     },
     {
      "mlbam": 500779,
@@ -4394,7 +4674,8 @@
      "gb_pct": 0.5519,
      "ip_per_gs": 5.18,
      "hr9": 0.43,
-     "qualified": true
+     "qualified": true,
+     "war": 3.8
     },
     {
      "mlbam": 543037,
@@ -4415,7 +4696,8 @@
      "gb_pct": 0.5015,
      "ip_per_gs": 6.08,
      "hr9": 1.48,
-     "qualified": true
+     "qualified": true,
+     "war": 3.5
     },
     {
      "mlbam": 548389,
@@ -4436,7 +4718,8 @@
      "gb_pct": 0.4965,
      "ip_per_gs": 5.6,
      "hr9": 0.8,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 506433,
@@ -4457,7 +4740,8 @@
      "gb_pct": 0.4297,
      "ip_per_gs": 6.49,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 642547,
@@ -4478,7 +4762,8 @@
      "gb_pct": 0.4354,
      "ip_per_gs": 4.59,
      "hr9": 0.69,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 663776,
@@ -4499,7 +4784,8 @@
      "gb_pct": 0.5532,
      "ip_per_gs": 5.51,
      "hr9": 0.48,
-     "qualified": true
+     "qualified": true,
+     "war": 3.6
     },
     {
      "mlbam": 571760,
@@ -4520,7 +4806,8 @@
      "gb_pct": 0.3839,
      "ip_per_gs": 5.19,
      "hr9": 1.73,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 641927,
@@ -4541,7 +4828,8 @@
      "gb_pct": 0.2957,
      "ip_per_gs": 5.09,
      "hr9": 0.64,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 656876,
@@ -4562,7 +4850,8 @@
      "gb_pct": 0.543,
      "ip_per_gs": 5.21,
      "hr9": 0.8,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 664062,
@@ -4583,7 +4872,8 @@
      "gb_pct": 0.4713,
      "ip_per_gs": 5.43,
      "hr9": 0.76,
-     "qualified": true
+     "qualified": true,
+     "war": 2.7
     },
     {
      "mlbam": 666201,
@@ -4604,7 +4894,8 @@
      "gb_pct": 0.4228,
      "ip_per_gs": 6.34,
      "hr9": 0.73,
-     "qualified": true
+     "qualified": true,
+     "war": 3.9
     },
     {
      "mlbam": 657006,
@@ -4625,7 +4916,8 @@
      "gb_pct": 0.5747,
      "ip_per_gs": 4.96,
      "hr9": 0.61,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 542881,
@@ -4646,7 +4938,8 @@
      "gb_pct": 0.4409,
      "ip_per_gs": 6.38,
      "hr9": 0.71,
-     "qualified": true
+     "qualified": true,
+     "war": 3.4
     },
     {
      "mlbam": 527048,
@@ -4667,7 +4960,8 @@
      "gb_pct": 0.5603,
      "ip_per_gs": 6.14,
      "hr9": 0.5,
-     "qualified": true
+     "qualified": true,
+     "war": 4.3
     },
     {
      "mlbam": 669302,
@@ -4688,7 +4982,8 @@
      "gb_pct": 0.4251,
      "ip_per_gs": 5.8,
      "hr9": 0.92,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 663474,
@@ -4709,7 +5004,8 @@
      "gb_pct": 0.3516,
      "ip_per_gs": 6.38,
      "hr9": 1.18,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 543243,
@@ -4730,7 +5026,8 @@
      "gb_pct": 0.5087,
      "ip_per_gs": 4.99,
      "hr9": 0.83,
-     "qualified": true
+     "qualified": true,
+     "war": 2.2
     },
     {
      "mlbam": 605397,
@@ -4751,7 +5048,8 @@
      "gb_pct": 0.5362,
      "ip_per_gs": 6.03,
      "hr9": 1.09,
-     "qualified": true
+     "qualified": true,
+     "war": 2.2
     },
     {
      "mlbam": 471911,
@@ -4772,7 +5070,8 @@
      "gb_pct": 0.5426,
      "ip_per_gs": 5.24,
      "hr9": 1.01,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 663903,
@@ -4793,7 +5092,8 @@
      "gb_pct": 0.5404,
      "ip_per_gs": 6.39,
      "hr9": 1.06,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 622663,
@@ -4814,7 +5114,8 @@
      "gb_pct": 0.508,
      "ip_per_gs": 5.37,
      "hr9": 1.24,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 446372,
@@ -4835,7 +5136,8 @@
      "gb_pct": 0.4223,
      "ip_per_gs": 5.29,
      "hr9": 1.1,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 657140,
@@ -4856,7 +5158,8 @@
      "gb_pct": 0.6493,
      "ip_per_gs": 6.01,
      "hr9": 0.95,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 656756,
@@ -4877,7 +5180,8 @@
      "gb_pct": 0.5482,
      "ip_per_gs": 5.57,
      "hr9": 1.06,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 571927,
@@ -4898,7 +5202,8 @@
      "gb_pct": 0.5055,
      "ip_per_gs": 4.8,
      "hr9": 1.5,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 628711,
@@ -4919,7 +5224,8 @@
      "gb_pct": 0.44,
      "ip_per_gs": 5.65,
      "hr9": 1.18,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 666129,
@@ -4940,7 +5246,8 @@
      "gb_pct": 0.5583,
      "ip_per_gs": 5.18,
      "hr9": 0.92,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 656849,
@@ -4961,7 +5268,8 @@
      "gb_pct": 0.5556,
      "ip_per_gs": 5.56,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 518876,
@@ -4982,7 +5290,8 @@
      "gb_pct": 0.5038,
      "ip_per_gs": 6.07,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 2.9
     },
     {
      "mlbam": 678394,
@@ -5003,7 +5312,8 @@
      "gb_pct": 0.633,
      "ip_per_gs": 5.21,
      "hr9": 0.16,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 605135,
@@ -5024,7 +5334,8 @@
      "gb_pct": 0.559,
      "ip_per_gs": 6.06,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 2.2
     },
     {
      "mlbam": 641154,
@@ -5045,7 +5356,8 @@
      "gb_pct": 0.5552,
      "ip_per_gs": 5.62,
      "hr9": 1.05,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 458681,
@@ -5066,7 +5378,8 @@
      "gb_pct": 0.4667,
      "ip_per_gs": 5.79,
      "hr9": 1.41,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 621107,
@@ -5087,7 +5400,8 @@
      "gb_pct": 0.5127,
      "ip_per_gs": 5.82,
      "hr9": 0.95,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 592351,
@@ -5108,7 +5422,8 @@
      "gb_pct": 0.4895,
      "ip_per_gs": 5.31,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 596001,
@@ -5129,7 +5444,8 @@
      "gb_pct": 0.5238,
      "ip_per_gs": 6.59,
      "hr9": 1.04,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 592836,
@@ -5150,7 +5466,8 @@
      "gb_pct": 0.5232,
      "ip_per_gs": 5.43,
      "hr9": 0.86,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 622072,
@@ -5171,7 +5488,8 @@
      "gb_pct": 0.536,
      "ip_per_gs": 5.03,
      "hr9": 1.17,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 593423,
@@ -5192,7 +5510,8 @@
      "gb_pct": 0.5468,
      "ip_per_gs": 5.35,
      "hr9": 1.12,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 650644,
@@ -5213,7 +5532,8 @@
      "gb_pct": 0.5134,
      "ip_per_gs": 4.85,
      "hr9": 1.3,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 666157,
@@ -5234,7 +5554,8 @@
      "gb_pct": 0.5123,
      "ip_per_gs": 5.44,
      "hr9": 1.13,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 425794,
@@ -5255,7 +5576,8 @@
      "gb_pct": 0.5037,
      "ip_per_gs": 5.99,
      "hr9": 0.75,
-     "qualified": true
+     "qualified": true,
+     "war": 2.4
     },
     {
      "mlbam": 573186,
@@ -5276,7 +5598,8 @@
      "gb_pct": 0.6167,
      "ip_per_gs": 5.55,
      "hr9": 1.04,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 641816,
@@ -5297,7 +5620,8 @@
      "gb_pct": 0.3728,
      "ip_per_gs": 5.25,
      "hr9": 1.19,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 677651,
@@ -5318,7 +5642,8 @@
      "gb_pct": 0.4267,
      "ip_per_gs": 5.62,
      "hr9": 1.32,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 672282,
@@ -5339,7 +5664,8 @@
      "gb_pct": 0.4111,
      "ip_per_gs": 5.16,
      "hr9": 0.91,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 621111,
@@ -5360,7 +5686,8 @@
      "gb_pct": 0.5769,
      "ip_per_gs": 5.42,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 571945,
@@ -5381,7 +5708,8 @@
      "gb_pct": 0.5229,
      "ip_per_gs": 6.32,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 592791,
@@ -5402,7 +5730,8 @@
      "gb_pct": 0.4825,
      "ip_per_gs": 5.54,
      "hr9": 1.32,
-     "qualified": true
+     "qualified": true,
+     "war": 2.0
     },
     {
      "mlbam": 660761,
@@ -5423,7 +5752,8 @@
      "gb_pct": 0.4566,
      "ip_per_gs": 5.45,
      "hr9": 1.16,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 657746,
@@ -5444,7 +5774,8 @@
      "gb_pct": 0.2918,
      "ip_per_gs": 5.44,
      "hr9": 1.22,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 456501,
@@ -5465,7 +5796,8 @@
      "gb_pct": 0.4928,
      "ip_per_gs": 6.6,
      "hr9": 0.85,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 448179,
@@ -5486,7 +5818,8 @@
      "gb_pct": 0.4542,
      "ip_per_gs": 4.78,
      "hr9": 1.09,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 592716,
@@ -5507,7 +5840,8 @@
      "gb_pct": 0.4578,
      "ip_per_gs": 5.49,
      "hr9": 0.86,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 592789,
@@ -5528,7 +5862,8 @@
      "gb_pct": 0.5118,
      "ip_per_gs": 5.61,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 664141,
@@ -5549,7 +5884,8 @@
      "gb_pct": 0.5556,
      "ip_per_gs": 5.14,
      "hr9": 1.06,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 665152,
@@ -5570,7 +5906,8 @@
      "gb_pct": 0.4504,
      "ip_per_gs": 5.97,
      "hr9": 0.79,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 608337,
@@ -5591,7 +5928,8 @@
      "gb_pct": 0.4807,
      "ip_per_gs": 5.39,
      "hr9": 1.34,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 676879,
@@ -5612,7 +5950,8 @@
      "gb_pct": 0.6526,
      "ip_per_gs": 5.65,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 624133,
@@ -5633,7 +5972,8 @@
      "gb_pct": 0.6512,
      "ip_per_gs": 5.36,
      "hr9": 0.87,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 592662,
@@ -5654,7 +5994,8 @@
      "gb_pct": 0.4562,
      "ip_per_gs": 5.91,
      "hr9": 1.52,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 666159,
@@ -5675,7 +6016,8 @@
      "gb_pct": 0.4571,
      "ip_per_gs": 5.25,
      "hr9": 0.86,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 656605,
@@ -5696,7 +6038,8 @@
      "gb_pct": 0.5714,
      "ip_per_gs": 5.48,
      "hr9": 0.79,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 668881,
@@ -5717,7 +6060,8 @@
      "gb_pct": 0.3415,
      "ip_per_gs": 5.24,
      "hr9": 1.72,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 693821,
@@ -5738,7 +6082,8 @@
      "gb_pct": 0.5636,
      "ip_per_gs": 6.0,
      "hr9": 0.67,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 543135,
@@ -5759,7 +6104,8 @@
      "gb_pct": 0.5249,
      "ip_per_gs": 5.47,
      "hr9": 1.73,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 608379,
@@ -5780,7 +6126,8 @@
      "gb_pct": 0.483,
      "ip_per_gs": 5.54,
      "hr9": 1.27,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 669952,
@@ -5801,7 +6148,8 @@
      "gb_pct": 0.472,
      "ip_per_gs": 5.5,
      "hr9": 0.82,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 450203,
@@ -5822,7 +6170,8 @@
      "gb_pct": 0.4778,
      "ip_per_gs": 5.55,
      "hr9": 1.47,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 665621,
@@ -5843,7 +6192,8 @@
      "gb_pct": 0.3663,
      "ip_per_gs": 6.38,
      "hr9": 1.59,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 592767,
@@ -5864,7 +6214,8 @@
      "gb_pct": 0.4598,
      "ip_per_gs": 4.83,
      "hr9": 1.35,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 676710,
@@ -5885,7 +6236,8 @@
      "gb_pct": 0.3517,
      "ip_per_gs": 6.44,
      "hr9": 1.4,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 669022,
@@ -5906,7 +6258,8 @@
      "gb_pct": 0.4154,
      "ip_per_gs": 5.38,
      "hr9": 0.9,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 621112,
@@ -5927,7 +6280,8 @@
      "gb_pct": 0.588,
      "ip_per_gs": 5.3,
      "hr9": 1.21,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 615698,
@@ -5948,7 +6302,8 @@
      "gb_pct": 0.4742,
      "ip_per_gs": 5.82,
      "hr9": 1.01,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 608344,
@@ -5969,7 +6324,8 @@
      "gb_pct": 0.4192,
      "ip_per_gs": 6.03,
      "hr9": 1.24,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 425844,
@@ -5990,7 +6346,8 @@
      "gb_pct": 0.4708,
      "ip_per_gs": 5.27,
      "hr9": 0.92,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 676664,
@@ -6011,7 +6368,8 @@
      "gb_pct": 0.4414,
      "ip_per_gs": 6.36,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 502043,
@@ -6032,7 +6390,8 @@
      "gb_pct": 0.5396,
      "ip_per_gs": 5.41,
      "hr9": 1.29,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 593334,
@@ -6053,7 +6412,8 @@
      "gb_pct": 0.4539,
      "ip_per_gs": 5.17,
      "hr9": 1.37,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 543606,
@@ -6074,7 +6434,8 @@
      "gb_pct": 0.3453,
      "ip_per_gs": 4.83,
      "hr9": 1.18,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 663436,
@@ -6095,7 +6456,8 @@
      "gb_pct": 0.4296,
      "ip_per_gs": 7.04,
      "hr9": 1.14,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 669432,
@@ -6116,7 +6478,8 @@
      "gb_pct": 0.4829,
      "ip_per_gs": 4.65,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 665795,
@@ -6137,7 +6500,8 @@
      "gb_pct": 0.5077,
      "ip_per_gs": 5.12,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 672710,
@@ -6158,7 +6522,8 @@
      "gb_pct": 0.3869,
      "ip_per_gs": 5.28,
      "hr9": 1.23,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 624522,
@@ -6179,7 +6544,8 @@
      "gb_pct": 0.455,
      "ip_per_gs": 6.76,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 663559,
@@ -6200,7 +6566,8 @@
      "gb_pct": 0.3892,
      "ip_per_gs": 5.25,
      "hr9": 1.71,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 622608,
@@ -6221,7 +6588,8 @@
      "gb_pct": 0.605,
      "ip_per_gs": 4.86,
      "hr9": 0.88,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 547179,
@@ -6242,7 +6610,8 @@
      "gb_pct": 0.5787,
      "ip_per_gs": 5.43,
      "hr9": 1.01,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 607536,
@@ -6263,7 +6632,8 @@
      "gb_pct": 0.4906,
      "ip_per_gs": 5.63,
      "hr9": 0.98,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 641778,
@@ -6284,7 +6654,8 @@
      "gb_pct": 0.3816,
      "ip_per_gs": 5.47,
      "hr9": 1.53,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 666120,
@@ -6305,7 +6676,8 @@
      "gb_pct": 0.5487,
      "ip_per_gs": 5.08,
      "hr9": 0.97,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 640455,
@@ -6326,7 +6698,8 @@
      "gb_pct": 0.4463,
      "ip_per_gs": 5.64,
      "hr9": 1.65,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 601713,
@@ -6347,7 +6720,8 @@
      "gb_pct": 0.4319,
      "ip_per_gs": 5.44,
      "hr9": 1.35,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 680694,
@@ -6368,7 +6742,8 @@
      "gb_pct": 0.5422,
      "ip_per_gs": 5.12,
      "hr9": 1.3,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 668933,
@@ -6389,7 +6764,8 @@
      "gb_pct": 0.6186,
      "ip_per_gs": 5.53,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 669330,
@@ -6410,7 +6786,8 @@
      "gb_pct": 0.4053,
      "ip_per_gs": 4.51,
      "hr9": 1.39,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 543475,
@@ -6431,7 +6808,8 @@
      "gb_pct": 0.4572,
      "ip_per_gs": 5.59,
      "hr9": 1.31,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 593958,
@@ -6452,7 +6830,8 @@
      "gb_pct": 0.4796,
      "ip_per_gs": 5.35,
      "hr9": 1.19,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 657093,
@@ -6473,7 +6852,8 @@
      "gb_pct": 0.4774,
      "ip_per_gs": 5.27,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 668676,
@@ -6494,7 +6874,8 @@
      "gb_pct": 0.4637,
      "ip_per_gs": 5.49,
      "hr9": 1.3,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 656629,
@@ -6515,7 +6896,8 @@
      "gb_pct": 0.3852,
      "ip_per_gs": 4.77,
      "hr9": 1.13,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 596295,
@@ -6536,7 +6918,8 @@
      "gb_pct": 0.5172,
      "ip_per_gs": 7.33,
      "hr9": 1.44,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 664353,
@@ -6557,7 +6940,8 @@
      "gb_pct": 0.3879,
      "ip_per_gs": 5.87,
      "hr9": 1.59,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 641540,
@@ -6578,7 +6962,8 @@
      "gb_pct": 0.6192,
      "ip_per_gs": 5.29,
      "hr9": 1.17,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 605288,
@@ -6599,7 +6984,8 @@
      "gb_pct": 0.5385,
      "ip_per_gs": 4.89,
      "hr9": 0.7,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 621244,
@@ -6620,7 +7006,8 @@
      "gb_pct": 0.4352,
      "ip_per_gs": 5.38,
      "hr9": 1.52,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 592717,
@@ -6641,7 +7028,8 @@
      "gb_pct": 0.5952,
      "ip_per_gs": 6.0,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 502042,
@@ -6662,7 +7050,8 @@
      "gb_pct": 0.5327,
      "ip_per_gs": 4.11,
      "hr9": 1.05,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 663455,
@@ -6683,7 +7072,8 @@
      "gb_pct": 0.4132,
      "ip_per_gs": 5.27,
      "hr9": 0.93,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 623167,
@@ -6704,7 +7094,8 @@
      "gb_pct": 0.3871,
      "ip_per_gs": 6.26,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 543294,
@@ -6725,7 +7116,8 @@
      "gb_pct": 0.4463,
      "ip_per_gs": 5.27,
      "hr9": 1.6,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 663738,
@@ -6746,7 +7138,8 @@
      "gb_pct": 0.4624,
      "ip_per_gs": 4.88,
      "hr9": 1.44,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 656412,
@@ -6767,7 +7160,8 @@
      "gb_pct": 0.3604,
      "ip_per_gs": 4.47,
      "hr9": 1.17,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 605164,
@@ -6788,7 +7182,8 @@
      "gb_pct": 0.3668,
      "ip_per_gs": 4.83,
      "hr9": 1.54,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 641745,
@@ -6809,7 +7204,8 @@
      "gb_pct": 0.5809,
      "ip_per_gs": 6.35,
      "hr9": 1.1,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 663372,
@@ -6830,7 +7226,8 @@
      "gb_pct": 0.4925,
      "ip_per_gs": 5.12,
      "hr9": 1.48,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 641712,
@@ -6851,7 +7248,8 @@
      "gb_pct": 0.6026,
      "ip_per_gs": 5.37,
      "hr9": 0.58,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 608566,
@@ -6872,7 +7270,8 @@
      "gb_pct": 0.5623,
      "ip_per_gs": 5.86,
      "hr9": 1.49,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 680739,
@@ -6893,7 +7292,8 @@
      "gb_pct": 0.3784,
      "ip_per_gs": 6.09,
      "hr9": 1.48,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 621076,
@@ -6914,7 +7314,8 @@
      "gb_pct": 0.4184,
      "ip_per_gs": 5.15,
      "hr9": 1.07,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 689225,
@@ -6935,7 +7336,8 @@
      "gb_pct": 0.4301,
      "ip_per_gs": 5.44,
      "hr9": 1.54,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 661309,
@@ -6956,7 +7358,8 @@
      "gb_pct": 0.4696,
      "ip_per_gs": 4.81,
      "hr9": 2.03,
-     "qualified": true
+     "qualified": true,
+     "war": -0.5
     },
     {
      "mlbam": 605200,
@@ -6977,7 +7380,8 @@
      "gb_pct": 0.4932,
      "ip_per_gs": 4.98,
      "hr9": 1.41,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 570632,
@@ -6998,7 +7402,8 @@
      "gb_pct": 0.6019,
      "ip_per_gs": 5.71,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 605182,
@@ -7019,7 +7424,8 @@
      "gb_pct": 0.3765,
      "ip_per_gs": 5.2,
      "hr9": 1.57,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 663460,
@@ -7040,7 +7446,8 @@
      "gb_pct": 0.4724,
      "ip_per_gs": 4.78,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 571578,
@@ -7061,7 +7468,8 @@
      "gb_pct": 0.5298,
      "ip_per_gs": 4.92,
      "hr9": 1.59,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 641302,
@@ -7082,7 +7490,8 @@
      "gb_pct": 0.3793,
      "ip_per_gs": 5.94,
      "hr9": 1.6,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 605507,
@@ -7103,7 +7512,8 @@
      "gb_pct": 0.5376,
      "ip_per_gs": 5.53,
      "hr9": 1.41,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 518516,
@@ -7124,7 +7534,8 @@
      "gb_pct": 0.4241,
      "ip_per_gs": 5.29,
      "hr9": 1.42,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 656970,
@@ -7145,7 +7556,8 @@
      "gb_pct": 0.4313,
      "ip_per_gs": 5.86,
      "hr9": 1.66,
-     "qualified": true
+     "qualified": true,
+     "war": -0.4
     },
     {
      "mlbam": 670174,
@@ -7166,7 +7578,8 @@
      "gb_pct": 0.6203,
      "ip_per_gs": 5.02,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 571800,
@@ -7187,7 +7600,8 @@
      "gb_pct": 0.4496,
      "ip_per_gs": 5.85,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 669060,
@@ -7208,7 +7622,8 @@
      "gb_pct": 0.5195,
      "ip_per_gs": 5.78,
      "hr9": 1.56,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 594835,
@@ -7229,7 +7644,8 @@
      "gb_pct": 0.4499,
      "ip_per_gs": 5.72,
      "hr9": 1.48,
-     "qualified": true
+     "qualified": true,
+     "war": -1.1
     },
     {
      "mlbam": 672851,
@@ -7250,7 +7666,8 @@
      "gb_pct": 0.5821,
      "ip_per_gs": 4.62,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 579328,
@@ -7271,7 +7688,8 @@
      "gb_pct": 0.5412,
      "ip_per_gs": 5.03,
      "hr9": 2.06,
-     "qualified": true
+     "qualified": true,
+     "war": -1.0
     },
     {
      "mlbam": 607200,
@@ -7292,7 +7710,8 @@
      "gb_pct": 0.511,
      "ip_per_gs": 4.7,
      "hr9": 1.49,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 501381,
@@ -7313,7 +7732,8 @@
      "gb_pct": 0.4444,
      "ip_per_gs": 4.24,
      "hr9": 2.51,
-     "qualified": true
+     "qualified": true,
+     "war": -0.8
     },
     {
      "mlbam": 656657,
@@ -7334,7 +7754,8 @@
      "gb_pct": 0.368,
      "ip_per_gs": 5.7,
      "hr9": 2.05,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 657248,
@@ -7355,7 +7776,8 @@
      "gb_pct": 0.4702,
      "ip_per_gs": 5.02,
      "hr9": 1.39,
-     "qualified": true
+     "qualified": true,
+     "war": -0.6
     },
     {
      "mlbam": 669920,
@@ -7376,7 +7798,8 @@
      "gb_pct": 0.6258,
      "ip_per_gs": 6.52,
      "hr9": 1.51,
-     "qualified": true
+     "qualified": true,
+     "war": -0.4
     },
     {
      "mlbam": 641771,
@@ -7397,7 +7820,8 @@
      "gb_pct": 0.4291,
      "ip_per_gs": 5.07,
      "hr9": 1.64,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 434671,
@@ -7418,7 +7842,8 @@
      "gb_pct": 0.4079,
      "ip_per_gs": 4.95,
      "hr9": 1.69,
-     "qualified": true
+     "qualified": true,
+     "war": -0.9
     },
     {
      "mlbam": 669145,
@@ -7439,7 +7864,8 @@
      "gb_pct": 0.4875,
      "ip_per_gs": 5.67,
      "hr9": 2.57,
-     "qualified": true
+     "qualified": true,
+     "war": -1.1
     },
     {
      "mlbam": 622694,
@@ -7460,7 +7886,8 @@
      "gb_pct": 0.28,
      "ip_per_gs": 6.23,
      "hr9": 2.74,
-     "qualified": true
+     "qualified": true,
+     "war": -1.2
     },
     {
      "mlbam": 572971,
@@ -7481,7 +7908,8 @@
      "gb_pct": 0.609,
      "ip_per_gs": 4.33,
      "hr9": 1.63,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 680686,
@@ -7502,7 +7930,8 @@
      "gb_pct": 0.3768,
      "ip_per_gs": 5.31,
      "hr9": 2.3,
-     "qualified": true
+     "qualified": true,
+     "war": -2.1
     },
     {
      "mlbam": 669169,
@@ -7523,7 +7952,8 @@
      "gb_pct": 0.4274,
      "ip_per_gs": 4.95,
      "hr9": 1.64,
-     "qualified": true
+     "qualified": true,
+     "war": -0.9
     },
     {
      "mlbam": 656353,
@@ -7544,7 +7974,8 @@
      "gb_pct": 0.4746,
      "ip_per_gs": 4.73,
      "hr9": 1.21,
-     "qualified": true
+     "qualified": true,
+     "war": -0.5
     },
     {
      "mlbam": 501985,
@@ -7565,7 +7996,8 @@
      "gb_pct": 0.3726,
      "ip_per_gs": 5.16,
      "hr9": 2.2,
-     "qualified": true
+     "qualified": true,
+     "war": -1.3
     },
     {
      "mlbam": 670124,
@@ -7586,7 +8018,8 @@
      "gb_pct": 0.3533,
      "ip_per_gs": 5.31,
      "hr9": 2.06,
-     "qualified": true
+     "qualified": true,
+     "war": -1.7
     }
    ]
   },
@@ -7613,7 +8046,8 @@
      "gb_pct": 0.5414,
      "ip_per_gs": 5.36,
      "hr9": 0.45,
-     "qualified": true
+     "qualified": true,
+     "war": 3.2
     },
     {
      "mlbam": 675911,
@@ -7634,7 +8068,8 @@
      "gb_pct": 0.4015,
      "ip_per_gs": 5.83,
      "hr9": 1.06,
-     "qualified": true
+     "qualified": true,
+     "war": 5.2
     },
     {
      "mlbam": 592332,
@@ -7655,7 +8090,8 @@
      "gb_pct": 0.4587,
      "ip_per_gs": 5.97,
      "hr9": 0.92,
-     "qualified": true
+     "qualified": true,
+     "war": 5.2
     },
     {
      "mlbam": 607192,
@@ -7676,7 +8112,8 @@
      "gb_pct": 0.5885,
      "ip_per_gs": 5.71,
      "hr9": 0.97,
-     "qualified": true
+     "qualified": true,
+     "war": 3.3
     },
     {
      "mlbam": 621107,
@@ -7697,7 +8134,8 @@
      "gb_pct": 0.5422,
      "ip_per_gs": 5.73,
      "hr9": 0.96,
-     "qualified": true
+     "qualified": true,
+     "war": 4.7
     },
     {
      "mlbam": 543243,
@@ -7718,7 +8156,8 @@
      "gb_pct": 0.5367,
      "ip_per_gs": 5.75,
      "hr9": 0.39,
-     "qualified": true
+     "qualified": true,
+     "war": 5.9
     },
     {
      "mlbam": 657006,
@@ -7739,7 +8178,8 @@
      "gb_pct": 0.5879,
      "ip_per_gs": 5.78,
      "hr9": 0.73,
-     "qualified": true
+     "qualified": true,
+     "war": 4.3
     },
     {
      "mlbam": 554430,
@@ -7760,7 +8200,8 @@
      "gb_pct": 0.454,
      "ip_per_gs": 6.0,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 4.7
     },
     {
      "mlbam": 543037,
@@ -7781,7 +8222,8 @@
      "gb_pct": 0.4482,
      "ip_per_gs": 6.33,
      "hr9": 0.86,
-     "qualified": true
+     "qualified": true,
+     "war": 5.8
     },
     {
      "mlbam": 657277,
@@ -7802,7 +8244,8 @@
      "gb_pct": 0.7273,
      "ip_per_gs": 6.55,
      "hr9": 0.83,
-     "qualified": true
+     "qualified": true,
+     "war": 5.0
     },
     {
      "mlbam": 668678,
@@ -7823,7 +8266,8 @@
      "gb_pct": 0.4819,
      "ip_per_gs": 6.18,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 5.0
     },
     {
      "mlbam": 641154,
@@ -7844,7 +8288,8 @@
      "gb_pct": 0.5045,
      "ip_per_gs": 6.06,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": 4.8
     },
     {
      "mlbam": 669923,
@@ -7865,7 +8310,8 @@
      "gb_pct": 0.5092,
      "ip_per_gs": 6.15,
      "hr9": 1.04,
-     "qualified": true
+     "qualified": true,
+     "war": 3.6
     },
     {
      "mlbam": 680694,
@@ -7886,7 +8332,8 @@
      "gb_pct": 0.5535,
      "ip_per_gs": 5.62,
      "hr9": 0.75,
-     "qualified": true
+     "qualified": true,
+     "war": 3.7
     },
     {
      "mlbam": 608331,
@@ -7907,7 +8354,8 @@
      "gb_pct": 0.6667,
      "ip_per_gs": 5.55,
      "hr9": 0.81,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 605483,
@@ -7928,7 +8376,8 @@
      "gb_pct": 0.4897,
      "ip_per_gs": 5.62,
      "hr9": 0.75,
-     "qualified": true
+     "qualified": true,
+     "war": 3.8
     },
     {
      "mlbam": 666200,
@@ -7949,7 +8398,8 @@
      "gb_pct": 0.471,
      "ip_per_gs": 5.58,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": 4.4
     },
     {
      "mlbam": 664285,
@@ -7970,7 +8420,8 @@
      "gb_pct": 0.6497,
      "ip_per_gs": 6.39,
      "hr9": 0.86,
-     "qualified": true
+     "qualified": true,
+     "war": 4.1
     },
     {
      "mlbam": 605540,
@@ -7991,7 +8442,8 @@
      "gb_pct": 0.4215,
      "ip_per_gs": 6.09,
      "hr9": 1.21,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 676440,
@@ -8012,7 +8464,8 @@
      "gb_pct": 0.4044,
      "ip_per_gs": 5.68,
      "hr9": 0.82,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 656756,
@@ -8033,7 +8486,8 @@
      "gb_pct": 0.4921,
      "ip_per_gs": 5.9,
      "hr9": 0.86,
-     "qualified": true
+     "qualified": true,
+     "war": 3.9
     },
     {
      "mlbam": 673540,
@@ -8054,7 +8508,8 @@
      "gb_pct": 0.5018,
      "ip_per_gs": 5.74,
      "hr9": 0.92,
-     "qualified": true
+     "qualified": true,
+     "war": 2.9
     },
     {
      "mlbam": 676272,
@@ -8075,7 +8530,8 @@
      "gb_pct": 0.5432,
      "ip_per_gs": 5.65,
      "hr9": 0.87,
-     "qualified": true
+     "qualified": true,
+     "war": 2.4
     },
     {
      "mlbam": 642547,
@@ -8096,7 +8552,8 @@
      "gb_pct": 0.4748,
      "ip_per_gs": 5.52,
      "hr9": 1.41,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 605397,
@@ -8117,7 +8574,8 @@
      "gb_pct": 0.4945,
      "ip_per_gs": 5.73,
      "hr9": 0.92,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 666129,
@@ -8138,7 +8596,8 @@
      "gb_pct": 0.5696,
      "ip_per_gs": 5.32,
      "hr9": 1.13,
-     "qualified": true
+     "qualified": true,
+     "war": 3.7
     },
     {
      "mlbam": 622491,
@@ -8159,7 +8618,8 @@
      "gb_pct": 0.4337,
      "ip_per_gs": 5.97,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 650644,
@@ -8180,7 +8640,8 @@
      "gb_pct": 0.4333,
      "ip_per_gs": 5.32,
      "hr9": 0.88,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 519242,
@@ -8201,7 +8662,8 @@
      "gb_pct": 0.4602,
      "ip_per_gs": 5.13,
      "hr9": 1.31,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 669302,
@@ -8222,7 +8684,8 @@
      "gb_pct": 0.4545,
      "ip_per_gs": 5.96,
      "hr9": 1.37,
-     "qualified": true
+     "qualified": true,
+     "war": 2.4
     },
     {
      "mlbam": 593958,
@@ -8243,7 +8706,8 @@
      "gb_pct": 0.4716,
      "ip_per_gs": 5.87,
      "hr9": 0.88,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 656302,
@@ -8264,7 +8728,8 @@
      "gb_pct": 0.4175,
      "ip_per_gs": 5.36,
      "hr9": 0.97,
-     "qualified": true
+     "qualified": true,
+     "war": 3.5
     },
     {
      "mlbam": 656605,
@@ -8285,7 +8750,8 @@
      "gb_pct": 0.5152,
      "ip_per_gs": 6.07,
      "hr9": 1.16,
-     "qualified": true
+     "qualified": true,
+     "war": 3.5
     },
     {
      "mlbam": 669203,
@@ -8306,7 +8772,8 @@
      "gb_pct": 0.5095,
      "ip_per_gs": 6.05,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 676710,
@@ -8327,7 +8794,8 @@
      "gb_pct": 0.3811,
      "ip_per_gs": 5.62,
      "hr9": 1.18,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 573186,
@@ -8348,7 +8816,8 @@
      "gb_pct": 0.6762,
      "ip_per_gs": 5.47,
      "hr9": 0.59,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 607625,
@@ -8369,7 +8838,8 @@
      "gb_pct": 0.5193,
      "ip_per_gs": 5.63,
      "hr9": 1.17,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 518876,
@@ -8390,7 +8860,8 @@
      "gb_pct": 0.5204,
      "ip_per_gs": 5.92,
      "hr9": 1.01,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 641927,
@@ -8411,7 +8882,8 @@
      "gb_pct": 0.3519,
      "ip_per_gs": 5.55,
      "hr9": 1.37,
-     "qualified": true
+     "qualified": true,
+     "war": 2.4
     },
     {
      "mlbam": 657746,
@@ -8432,7 +8904,8 @@
      "gb_pct": 0.35,
      "ip_per_gs": 5.57,
      "hr9": 1.78,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 628317,
@@ -8453,7 +8926,8 @@
      "gb_pct": 0.3656,
      "ip_per_gs": 5.22,
      "hr9": 1.47,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 650911,
@@ -8474,7 +8948,8 @@
      "gb_pct": 0.6788,
      "ip_per_gs": 5.52,
      "hr9": 1.45,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 605400,
@@ -8495,7 +8970,8 @@
      "gb_pct": 0.5014,
      "ip_per_gs": 6.05,
      "hr9": 1.49,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 663556,
@@ -8516,7 +8992,8 @@
      "gb_pct": 0.5142,
      "ip_per_gs": 5.48,
      "hr9": 1.17,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 434378,
@@ -8537,7 +9014,8 @@
      "gb_pct": 0.3631,
      "ip_per_gs": 6.01,
      "hr9": 1.0,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 691587,
@@ -8558,7 +9036,8 @@
      "gb_pct": 0.3043,
      "ip_per_gs": 4.81,
      "hr9": 1.48,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 571927,
@@ -8579,7 +9058,8 @@
      "gb_pct": 0.5048,
      "ip_per_gs": 6.18,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 477132,
@@ -8600,7 +9080,8 @@
      "gb_pct": 0.5391,
      "ip_per_gs": 5.49,
      "hr9": 1.3,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 680570,
@@ -8621,7 +9102,8 @@
      "gb_pct": 0.5318,
      "ip_per_gs": 5.3,
      "hr9": 1.18,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 543135,
@@ -8642,7 +9124,8 @@
      "gb_pct": 0.6145,
      "ip_per_gs": 5.76,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 2.4
     },
     {
      "mlbam": 608379,
@@ -8663,7 +9146,8 @@
      "gb_pct": 0.4148,
      "ip_per_gs": 5.6,
      "hr9": 1.0,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 621244,
@@ -8684,7 +9168,8 @@
      "gb_pct": 0.4918,
      "ip_per_gs": 5.93,
      "hr9": 1.19,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 682243,
@@ -8705,7 +9190,8 @@
      "gb_pct": 0.3755,
      "ip_per_gs": 5.25,
      "hr9": 1.23,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 500779,
@@ -8726,7 +9212,8 @@
      "gb_pct": 0.4403,
      "ip_per_gs": 5.82,
      "hr9": 0.59,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 681857,
@@ -8747,7 +9234,8 @@
      "gb_pct": 0.4554,
      "ip_per_gs": 5.76,
      "hr9": 1.22,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 450203,
@@ -8768,7 +9256,8 @@
      "gb_pct": 0.4948,
      "ip_per_gs": 5.44,
      "hr9": 0.77,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 669456,
@@ -8789,7 +9278,8 @@
      "gb_pct": 0.5551,
      "ip_per_gs": 6.1,
      "hr9": 0.98,
-     "qualified": true
+     "qualified": true,
+     "war": 2.0
     },
     {
      "mlbam": 579328,
@@ -8810,7 +9300,8 @@
      "gb_pct": 0.4768,
      "ip_per_gs": 5.24,
      "hr9": 1.45,
-     "qualified": true
+     "qualified": true,
+     "war": 2.2
     },
     {
      "mlbam": 506433,
@@ -8831,7 +9322,8 @@
      "gb_pct": 0.4637,
      "ip_per_gs": 5.68,
      "hr9": 1.19,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 543294,
@@ -8852,7 +9344,8 @@
      "gb_pct": 0.5443,
      "ip_per_gs": 5.71,
      "hr9": 0.85,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 624133,
@@ -8873,7 +9366,8 @@
      "gb_pct": 0.5372,
      "ip_per_gs": 5.68,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 502171,
@@ -8894,7 +9388,8 @@
      "gb_pct": 0.6731,
      "ip_per_gs": 5.4,
      "hr9": 1.13,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 668881,
@@ -8915,7 +9410,8 @@
      "gb_pct": 0.3911,
      "ip_per_gs": 5.09,
      "hr9": 1.53,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 645261,
@@ -8936,7 +9432,8 @@
      "gb_pct": 0.5748,
      "ip_per_gs": 6.6,
      "hr9": 1.07,
-     "qualified": true
+     "qualified": true,
+     "war": 3.4
     },
     {
      "mlbam": 641793,
@@ -8957,7 +9454,8 @@
      "gb_pct": 0.4718,
      "ip_per_gs": 6.43,
      "hr9": 1.3,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 453286,
@@ -8978,7 +9476,8 @@
      "gb_pct": 0.3456,
      "ip_per_gs": 5.65,
      "hr9": 1.65,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 671096,
@@ -8999,7 +9498,8 @@
      "gb_pct": 0.3041,
      "ip_per_gs": 5.21,
      "hr9": 1.32,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 672282,
@@ -9020,7 +9520,8 @@
      "gb_pct": 0.4198,
      "ip_per_gs": 5.31,
      "hr9": 1.15,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 656288,
@@ -9041,7 +9542,8 @@
      "gb_pct": 0.4936,
      "ip_per_gs": 5.77,
      "hr9": 1.56,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 605288,
@@ -9062,7 +9564,8 @@
      "gb_pct": 0.5066,
      "ip_per_gs": 5.3,
      "hr9": 1.05,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 621112,
@@ -9083,7 +9586,8 @@
      "gb_pct": 0.4745,
      "ip_per_gs": 5.18,
      "hr9": 0.95,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 502043,
@@ -9104,7 +9608,8 @@
      "gb_pct": 0.5934,
      "ip_per_gs": 5.82,
      "hr9": 1.08,
-     "qualified": true
+     "qualified": true,
+     "war": 2.0
     },
     {
      "mlbam": 668909,
@@ -9125,12 +9630,13 @@
      "gb_pct": 0.4586,
      "ip_per_gs": 5.12,
      "hr9": 0.88,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 675627,
      "name": "Michael Grove",
-     "team": "TB",
+     "team": "ATL",
      "sem_plus": 102,
      "role": "Mid-rotation",
      "ip": 69.0,
@@ -9146,7 +9652,8 @@
      "gb_pct": 0.4597,
      "ip_per_gs": 5.75,
      "hr9": 1.57,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 671106,
@@ -9167,7 +9674,8 @@
      "gb_pct": 0.4855,
      "ip_per_gs": 5.22,
      "hr9": 1.15,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 686613,
@@ -9188,7 +9696,8 @@
      "gb_pct": 0.5977,
      "ip_per_gs": 5.37,
      "hr9": 1.5,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 605135,
@@ -9209,7 +9718,8 @@
      "gb_pct": 0.5013,
      "ip_per_gs": 6.06,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 641482,
@@ -9230,7 +9740,8 @@
      "gb_pct": 0.265,
      "ip_per_gs": 5.28,
      "hr9": 1.56,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 571510,
@@ -9251,7 +9762,8 @@
      "gb_pct": 0.4328,
      "ip_per_gs": 4.73,
      "hr9": 1.39,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 693433,
@@ -9272,7 +9784,8 @@
      "gb_pct": 0.4667,
      "ip_per_gs": 4.87,
      "hr9": 1.33,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 656849,
@@ -9293,7 +9806,8 @@
      "gb_pct": 0.6304,
      "ip_per_gs": 5.29,
      "hr9": 1.3,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 641540,
@@ -9314,7 +9828,8 @@
      "gb_pct": 0.5395,
      "ip_per_gs": 6.64,
      "hr9": 1.04,
-     "qualified": true
+     "qualified": true,
+     "war": 2.0
     },
     {
      "mlbam": 571945,
@@ -9335,7 +9850,8 @@
      "gb_pct": 0.4241,
      "ip_per_gs": 5.75,
      "hr9": 1.16,
-     "qualified": true
+     "qualified": true,
+     "war": 2.2
     },
     {
      "mlbam": 605182,
@@ -9356,7 +9872,8 @@
      "gb_pct": 0.342,
      "ip_per_gs": 5.47,
      "hr9": 1.1,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 543101,
@@ -9377,7 +9894,8 @@
      "gb_pct": 0.4667,
      "ip_per_gs": 5.54,
      "hr9": 1.35,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 663903,
@@ -9398,7 +9916,8 @@
      "gb_pct": 0.5606,
      "ip_per_gs": 5.51,
      "hr9": 1.13,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 593334,
@@ -9419,7 +9938,8 @@
      "gb_pct": 0.4928,
      "ip_per_gs": 5.72,
      "hr9": 1.66,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 628711,
@@ -9440,7 +9960,8 @@
      "gb_pct": 0.4344,
      "ip_per_gs": 5.59,
      "hr9": 1.84,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 657376,
@@ -9461,7 +9982,8 @@
      "gb_pct": 0.511,
      "ip_per_gs": 4.97,
      "hr9": 1.36,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 663776,
@@ -9482,7 +10004,8 @@
      "gb_pct": 0.54,
      "ip_per_gs": 5.17,
      "hr9": 0.75,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 671737,
@@ -9503,7 +10026,8 @@
      "gb_pct": 0.3892,
      "ip_per_gs": 4.98,
      "hr9": 1.98,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 656427,
@@ -9524,7 +10048,8 @@
      "gb_pct": 0.4981,
      "ip_per_gs": 5.35,
      "hr9": 1.06,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 592351,
@@ -9545,7 +10070,8 @@
      "gb_pct": 0.4503,
      "ip_per_gs": 5.43,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 572020,
@@ -9566,7 +10092,8 @@
      "gb_pct": 0.4833,
      "ip_per_gs": 5.05,
      "hr9": 1.69,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 665795,
@@ -9587,7 +10114,8 @@
      "gb_pct": 0.6012,
      "ip_per_gs": 4.98,
      "hr9": 0.99,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 608344,
@@ -9608,7 +10136,8 @@
      "gb_pct": 0.4938,
      "ip_per_gs": 6.44,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 665152,
@@ -9629,7 +10158,8 @@
      "gb_pct": 0.4553,
      "ip_per_gs": 5.4,
      "hr9": 1.41,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 686218,
@@ -9650,7 +10180,8 @@
      "gb_pct": 0.3333,
      "ip_per_gs": 5.48,
      "hr9": 1.64,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 686973,
@@ -9671,7 +10202,8 @@
      "gb_pct": 0.4922,
      "ip_per_gs": 6.8,
      "hr9": 2.12,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 656557,
@@ -9692,7 +10224,8 @@
      "gb_pct": 0.6103,
      "ip_per_gs": 5.05,
      "hr9": 1.19,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 547179,
@@ -9713,7 +10246,8 @@
      "gb_pct": 0.4523,
      "ip_per_gs": 6.12,
      "hr9": 1.18,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 592791,
@@ -9734,7 +10268,8 @@
      "gb_pct": 0.4377,
      "ip_per_gs": 5.32,
      "hr9": 1.57,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 664299,
@@ -9755,7 +10290,8 @@
      "gb_pct": 0.2532,
      "ip_per_gs": 5.23,
      "hr9": 1.39,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 678394,
@@ -9776,7 +10312,8 @@
      "gb_pct": 0.6375,
      "ip_per_gs": 5.61,
      "hr9": 1.38,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 656412,
@@ -9797,7 +10334,8 @@
      "gb_pct": 0.4,
      "ip_per_gs": 5.39,
      "hr9": 1.67,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 674370,
@@ -9818,7 +10356,8 @@
      "gb_pct": 0.4231,
      "ip_per_gs": 5.63,
      "hr9": 0.71,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 693821,
@@ -9839,7 +10378,8 @@
      "gb_pct": 0.5887,
      "ip_per_gs": 5.63,
      "hr9": 0.98,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 682227,
@@ -9860,7 +10400,8 @@
      "gb_pct": 0.444,
      "ip_per_gs": 5.09,
      "hr9": 1.38,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 594835,
@@ -9881,7 +10422,8 @@
      "gb_pct": 0.4444,
      "ip_per_gs": 5.0,
      "hr9": 0.9,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 681217,
@@ -9902,7 +10444,8 @@
      "gb_pct": 0.5938,
      "ip_per_gs": 6.54,
      "hr9": 1.55,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 571760,
@@ -9923,7 +10466,8 @@
      "gb_pct": 0.444,
      "ip_per_gs": 5.26,
      "hr9": 1.4,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 670912,
@@ -9944,7 +10488,8 @@
      "gb_pct": 0.5055,
      "ip_per_gs": 5.55,
      "hr9": 0.96,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 669330,
@@ -9965,7 +10510,8 @@
      "gb_pct": 0.3879,
      "ip_per_gs": 5.93,
      "hr9": 1.9,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 592836,
@@ -9986,7 +10532,8 @@
      "gb_pct": 0.5014,
      "ip_per_gs": 5.57,
      "hr9": 1.04,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 666745,
@@ -10007,7 +10554,8 @@
      "gb_pct": 0.4892,
      "ip_per_gs": 6.95,
      "hr9": 1.39,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 669022,
@@ -10028,7 +10576,8 @@
      "gb_pct": 0.4686,
      "ip_per_gs": 5.05,
      "hr9": 1.78,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 669461,
@@ -10049,7 +10598,8 @@
      "gb_pct": 0.5188,
      "ip_per_gs": 5.61,
      "hr9": 0.73,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 425844,
@@ -10070,7 +10620,8 @@
      "gb_pct": 0.4952,
      "ip_per_gs": 5.27,
      "hr9": 1.58,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 527054,
@@ -10091,7 +10642,8 @@
      "gb_pct": 0.4706,
      "ip_per_gs": 6.52,
      "hr9": 1.63,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 641585,
@@ -10112,7 +10664,8 @@
      "gb_pct": 0.471,
      "ip_per_gs": 5.93,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 607067,
@@ -10133,7 +10686,8 @@
      "gb_pct": 0.5176,
      "ip_per_gs": 5.67,
      "hr9": 1.66,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 489119,
@@ -10154,7 +10708,8 @@
      "gb_pct": 0.4925,
      "ip_per_gs": 5.23,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 605200,
@@ -10175,7 +10730,8 @@
      "gb_pct": 0.4759,
      "ip_per_gs": 4.57,
      "hr9": 1.09,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 663372,
@@ -10196,7 +10752,8 @@
      "gb_pct": 0.4773,
      "ip_per_gs": 4.33,
      "hr9": 0.42,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 547943,
@@ -10217,7 +10774,8 @@
      "gb_pct": 0.5169,
      "ip_per_gs": 4.73,
      "hr9": 1.56,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 666159,
@@ -10238,7 +10796,8 @@
      "gb_pct": 0.4302,
      "ip_per_gs": 5.2,
      "hr9": 1.27,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 694297,
@@ -10259,7 +10818,8 @@
      "gb_pct": 0.3651,
      "ip_per_gs": 5.33,
      "hr9": 2.06,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 665622,
@@ -10280,7 +10840,8 @@
      "gb_pct": 0.493,
      "ip_per_gs": 6.45,
      "hr9": 1.15,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 592767,
@@ -10301,7 +10862,8 @@
      "gb_pct": 0.3877,
      "ip_per_gs": 6.19,
      "hr9": 1.64,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 548389,
@@ -10322,7 +10884,8 @@
      "gb_pct": 0.4974,
      "ip_per_gs": 8.09,
      "hr9": 2.02,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 448179,
@@ -10343,7 +10906,8 @@
      "gb_pct": 0.4582,
      "ip_per_gs": 5.42,
      "hr9": 1.41,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 672851,
@@ -10364,7 +10928,8 @@
      "gb_pct": 0.4762,
      "ip_per_gs": 5.17,
      "hr9": 1.39,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 674072,
@@ -10385,7 +10950,8 @@
      "gb_pct": 0.375,
      "ip_per_gs": 5.56,
      "hr9": 1.21,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 663559,
@@ -10406,7 +10972,8 @@
      "gb_pct": 0.4682,
      "ip_per_gs": 5.76,
      "hr9": 1.9,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 663738,
@@ -10427,7 +10994,8 @@
      "gb_pct": 0.4426,
      "ip_per_gs": 5.81,
      "hr9": 1.55,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 680686,
@@ -10448,7 +11016,8 @@
      "gb_pct": 0.4236,
      "ip_per_gs": 5.3,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 594902,
@@ -10469,7 +11038,8 @@
      "gb_pct": 0.4722,
      "ip_per_gs": 7.39,
      "hr9": 2.03,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 542881,
@@ -10490,7 +11060,8 @@
      "gb_pct": 0.3549,
      "ip_per_gs": 5.64,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 676664,
@@ -10511,7 +11082,8 @@
      "gb_pct": 0.3147,
      "ip_per_gs": 5.39,
      "hr9": 1.78,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 621076,
@@ -10532,7 +11104,8 @@
      "gb_pct": 0.2833,
      "ip_per_gs": 5.55,
      "hr9": 1.33,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 656731,
@@ -10553,7 +11126,8 @@
      "gb_pct": 0.5078,
      "ip_per_gs": 5.05,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 615698,
@@ -10574,7 +11148,8 @@
      "gb_pct": 0.4592,
      "ip_per_gs": 5.25,
      "hr9": 0.99,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 657053,
@@ -10595,7 +11170,8 @@
      "gb_pct": 0.5482,
      "ip_per_gs": 5.44,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 527048,
@@ -10616,7 +11192,8 @@
      "gb_pct": 0.516,
      "ip_per_gs": 7.08,
      "hr9": 1.33,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 608337,
@@ -10637,7 +11214,8 @@
      "gb_pct": 0.3905,
      "ip_per_gs": 5.59,
      "hr9": 2.0,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 668933,
@@ -10658,7 +11236,8 @@
      "gb_pct": 0.5563,
      "ip_per_gs": 5.6,
      "hr9": 1.42,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 669194,
@@ -10679,7 +11258,8 @@
      "gb_pct": 0.4082,
      "ip_per_gs": 5.33,
      "hr9": 1.5,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 672710,
@@ -10700,7 +11280,8 @@
      "gb_pct": 0.4317,
      "ip_per_gs": 6.21,
      "hr9": 1.45,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 656232,
@@ -10721,7 +11302,8 @@
      "gb_pct": 0.5488,
      "ip_per_gs": 6.15,
      "hr9": 1.35,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 664353,
@@ -10742,7 +11324,8 @@
      "gb_pct": 0.4203,
      "ip_per_gs": 6.3,
      "hr9": 1.57,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 607074,
@@ -10763,7 +11346,8 @@
      "gb_pct": 0.3065,
      "ip_per_gs": 4.6,
      "hr9": 2.1,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 664062,
@@ -10784,7 +11368,8 @@
      "gb_pct": 0.4136,
      "ip_per_gs": 5.15,
      "hr9": 1.66,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 641712,
@@ -10805,7 +11390,8 @@
      "gb_pct": 0.6133,
      "ip_per_gs": 6.78,
      "hr9": 1.0,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 663623,
@@ -10826,7 +11412,8 @@
      "gb_pct": 0.4462,
      "ip_per_gs": 5.04,
      "hr9": 1.49,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 686610,
@@ -10847,7 +11434,8 @@
      "gb_pct": 0.4477,
      "ip_per_gs": 6.41,
      "hr9": 1.53,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 571578,
@@ -10868,7 +11456,8 @@
      "gb_pct": 0.5215,
      "ip_per_gs": 5.62,
      "hr9": 1.65,
-     "qualified": true
+     "qualified": true,
+     "war": -0.4
     },
     {
      "mlbam": 607536,
@@ -10889,7 +11478,8 @@
      "gb_pct": 0.4504,
      "ip_per_gs": 5.37,
      "hr9": 1.68,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 458681,
@@ -10910,7 +11500,8 @@
      "gb_pct": 0.4188,
      "ip_per_gs": 5.74,
      "hr9": 2.16,
-     "qualified": true
+     "qualified": true,
+     "war": -0.4
     },
     {
      "mlbam": 694363,
@@ -10931,7 +11522,8 @@
      "gb_pct": 0.4083,
      "ip_per_gs": 4.79,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 596133,
@@ -10952,7 +11544,8 @@
      "gb_pct": 0.4275,
      "ip_per_gs": 4.95,
      "hr9": 2.11,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 596295,
@@ -10973,7 +11566,8 @@
      "gb_pct": 0.4837,
      "ip_per_gs": 5.15,
      "hr9": 1.68,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 502624,
@@ -10994,7 +11588,8 @@
      "gb_pct": 0.4213,
      "ip_per_gs": 5.08,
      "hr9": 1.77,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 621389,
@@ -11015,7 +11610,8 @@
      "gb_pct": 0.4643,
      "ip_per_gs": 6.0,
      "hr9": 1.73,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 543475,
@@ -11036,7 +11632,8 @@
      "gb_pct": 0.3835,
      "ip_per_gs": 5.73,
      "hr9": 1.98,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 666214,
@@ -11057,7 +11654,8 @@
      "gb_pct": 0.4074,
      "ip_per_gs": 5.56,
      "hr9": 2.13,
-     "qualified": true
+     "qualified": true,
+     "war": -0.4
     },
     {
      "mlbam": 677960,
@@ -11078,7 +11676,8 @@
      "gb_pct": 0.431,
      "ip_per_gs": 4.81,
      "hr9": 1.87,
-     "qualified": true
+     "qualified": true,
+     "war": -0.5
     },
     {
      "mlbam": 682847,
@@ -11099,7 +11698,8 @@
      "gb_pct": 0.5312,
      "ip_per_gs": 5.78,
      "hr9": 1.35,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 456501,
@@ -11120,7 +11720,8 @@
      "gb_pct": 0.4273,
      "ip_per_gs": 5.23,
      "hr9": 2.92,
-     "qualified": true
+     "qualified": true,
+     "war": -0.9
     },
     {
      "mlbam": 471911,
@@ -11141,7 +11742,8 @@
      "gb_pct": 0.5833,
      "ip_per_gs": 4.5,
      "hr9": 1.8,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 622663,
@@ -11162,7 +11764,8 @@
      "gb_pct": 0.5297,
      "ip_per_gs": 4.96,
      "hr9": 2.32,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 592789,
@@ -11183,7 +11786,8 @@
      "gb_pct": 0.4059,
      "ip_per_gs": 4.93,
      "hr9": 2.23,
-     "qualified": true
+     "qualified": true,
+     "war": -1.0
     },
     {
      "mlbam": 592866,
@@ -11204,7 +11808,8 @@
      "gb_pct": 0.4423,
      "ip_per_gs": 4.81,
      "hr9": 2.12,
-     "qualified": true
+     "qualified": true,
+     "war": -1.5
     },
     {
      "mlbam": 666201,
@@ -11225,7 +11830,8 @@
      "gb_pct": 0.4057,
      "ip_per_gs": 4.6,
      "hr9": 1.55,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 623167,
@@ -11246,7 +11852,8 @@
      "gb_pct": 0.4424,
      "ip_per_gs": 6.4,
      "hr9": 2.2,
-     "qualified": true
+     "qualified": true,
+     "war": -0.6
     },
     {
      "mlbam": 666205,
@@ -11267,7 +11874,8 @@
      "gb_pct": 0.4691,
      "ip_per_gs": 5.92,
      "hr9": 1.87,
-     "qualified": true
+     "qualified": true,
+     "war": -0.8
     },
     {
      "mlbam": 425794,
@@ -11288,7 +11896,8 @@
      "gb_pct": 0.4788,
      "ip_per_gs": 4.81,
      "hr9": 1.78,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 682990,
@@ -11309,7 +11918,8 @@
      "gb_pct": 0.6636,
      "ip_per_gs": 6.25,
      "hr9": 2.16,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 446372,
@@ -11330,7 +11940,8 @@
      "gb_pct": 0.3223,
      "ip_per_gs": 6.11,
      "hr9": 2.78,
-     "qualified": true
+     "qualified": true,
+     "war": -0.9
     },
     {
      "mlbam": 570632,
@@ -11351,7 +11962,8 @@
      "gb_pct": 0.5743,
      "ip_per_gs": 4.47,
      "hr9": 2.62,
-     "qualified": true
+     "qualified": true,
+     "war": -0.8
     },
     {
      "mlbam": 656629,
@@ -11372,7 +11984,8 @@
      "gb_pct": 0.3891,
      "ip_per_gs": 4.79,
      "hr9": 2.02,
-     "qualified": true
+     "qualified": true,
+     "war": -1.8
     }
    ]
   },
@@ -11399,7 +12012,8 @@
      "gb_pct": 0.5294,
      "ip_per_gs": 6.13,
      "hr9": 0.46,
-     "qualified": true
+     "qualified": true,
+     "war": 6.8
     },
     {
      "mlbam": 669373,
@@ -11420,7 +12034,8 @@
      "gb_pct": 0.4985,
      "ip_per_gs": 6.19,
      "hr9": 0.7,
-     "qualified": true
+     "qualified": true,
+     "war": 6.8
     },
     {
      "mlbam": 694973,
@@ -11441,7 +12056,8 @@
      "gb_pct": 0.5755,
      "ip_per_gs": 5.78,
      "hr9": 0.68,
-     "qualified": true
+     "qualified": true,
+     "war": 4.6
     },
     {
      "mlbam": 676979,
@@ -11462,7 +12078,8 @@
      "gb_pct": 0.48,
      "ip_per_gs": 4.56,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": 4.5
     },
     {
      "mlbam": 605483,
@@ -11483,7 +12100,8 @@
      "gb_pct": 0.454,
      "ip_per_gs": 5.2,
      "hr9": 0.52,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 607192,
@@ -11504,7 +12122,8 @@
      "gb_pct": 0.5378,
      "ip_per_gs": 6.09,
      "hr9": 1.01,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 808967,
@@ -11525,7 +12144,8 @@
      "gb_pct": 0.5741,
      "ip_per_gs": 5.0,
      "hr9": 0.7,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 666142,
@@ -11546,7 +12166,8 @@
      "gb_pct": 0.4562,
      "ip_per_gs": 5.82,
      "hr9": 0.72,
-     "qualified": true
+     "qualified": true,
+     "war": 5.0
     },
     {
      "mlbam": 543243,
@@ -11567,7 +12188,8 @@
      "gb_pct": 0.5194,
      "ip_per_gs": 5.94,
      "hr9": 1.14,
-     "qualified": true
+     "qualified": true,
+     "war": 3.7
     },
     {
      "mlbam": 625643,
@@ -11588,7 +12210,8 @@
      "gb_pct": 0.4527,
      "ip_per_gs": 5.43,
      "hr9": 0.66,
-     "qualified": true
+     "qualified": true,
+     "war": 3.8
     },
     {
      "mlbam": 656302,
@@ -11609,7 +12232,8 @@
      "gb_pct": 0.4398,
      "ip_per_gs": 5.74,
      "hr9": 0.86,
-     "qualified": true
+     "qualified": true,
+     "war": 4.4
     },
     {
      "mlbam": 554430,
@@ -11630,7 +12254,8 @@
      "gb_pct": 0.4753,
      "ip_per_gs": 6.25,
      "hr9": 0.9,
-     "qualified": true
+     "qualified": true,
+     "war": 5.0
     },
     {
      "mlbam": 657277,
@@ -11651,7 +12276,8 @@
      "gb_pct": 0.6627,
      "ip_per_gs": 6.2,
      "hr9": 0.48,
-     "qualified": true
+     "qualified": true,
+     "war": 4.5
     },
     {
      "mlbam": 669302,
@@ -11672,7 +12298,8 @@
      "gb_pct": 0.4975,
      "ip_per_gs": 6.32,
      "hr9": 1.12,
-     "qualified": true
+     "qualified": true,
+     "war": 3.6
     },
     {
      "mlbam": 650911,
@@ -11693,7 +12320,8 @@
      "gb_pct": 0.6507,
      "ip_per_gs": 5.86,
      "hr9": 0.54,
-     "qualified": true
+     "qualified": true,
+     "war": 4.7
     },
     {
      "mlbam": 669923,
@@ -11714,7 +12342,8 @@
      "gb_pct": 0.4496,
      "ip_per_gs": 5.79,
      "hr9": 1.04,
-     "qualified": true
+     "qualified": true,
+     "war": 3.3
     },
     {
      "mlbam": 656427,
@@ -11735,7 +12364,8 @@
      "gb_pct": 0.4748,
      "ip_per_gs": 5.79,
      "hr9": 1.33,
-     "qualified": true
+     "qualified": true,
+     "war": 3.2
     },
     {
      "mlbam": 680885,
@@ -11756,7 +12386,8 @@
      "gb_pct": 0.5252,
      "ip_per_gs": 5.89,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 592866,
@@ -11777,7 +12408,8 @@
      "gb_pct": 0.4697,
      "ip_per_gs": 5.13,
      "hr9": 0.4,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 607625,
@@ -11798,7 +12430,8 @@
      "gb_pct": 0.5059,
      "ip_per_gs": 6.26,
      "hr9": 0.7,
-     "qualified": true
+     "qualified": true,
+     "war": 4.9
     },
     {
      "mlbam": 657746,
@@ -11819,7 +12452,8 @@
      "gb_pct": 0.415,
      "ip_per_gs": 5.87,
      "hr9": 1.27,
-     "qualified": true
+     "qualified": true,
+     "war": 2.9
     },
     {
      "mlbam": 664285,
@@ -11840,7 +12474,8 @@
      "gb_pct": 0.7027,
      "ip_per_gs": 6.3,
      "hr9": 0.66,
-     "qualified": true
+     "qualified": true,
+     "war": 4.0
     },
     {
      "mlbam": 650633,
@@ -11861,7 +12496,8 @@
      "gb_pct": 0.4727,
      "ip_per_gs": 5.79,
      "hr9": 0.88,
-     "qualified": true
+     "qualified": true,
+     "war": 3.5
     },
     {
      "mlbam": 579328,
@@ -11882,7 +12518,8 @@
      "gb_pct": 0.4448,
      "ip_per_gs": 5.49,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": 3.5
     },
     {
      "mlbam": 657006,
@@ -11903,7 +12540,8 @@
      "gb_pct": 0.4925,
      "ip_per_gs": 5.61,
      "hr9": 0.8,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 676962,
@@ -11924,7 +12562,8 @@
      "gb_pct": 0.3814,
      "ip_per_gs": 6.92,
      "hr9": 0.81,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 608331,
@@ -11945,7 +12584,8 @@
      "gb_pct": 0.6736,
      "ip_per_gs": 6.01,
      "hr9": 0.67,
-     "qualified": true
+     "qualified": true,
+     "war": 3.6
     },
     {
      "mlbam": 681857,
@@ -11966,7 +12606,8 @@
      "gb_pct": 0.5683,
      "ip_per_gs": 5.11,
      "hr9": 0.56,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 693433,
@@ -11987,7 +12628,8 @@
      "gb_pct": 0.4247,
      "ip_per_gs": 5.52,
      "hr9": 1.04,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 624133,
@@ -12008,7 +12650,8 @@
      "gb_pct": 0.6156,
      "ip_per_gs": 5.58,
      "hr9": 0.84,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 668678,
@@ -12029,7 +12672,8 @@
      "gb_pct": 0.5255,
      "ip_per_gs": 5.29,
      "hr9": 0.79,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 656557,
@@ -12050,7 +12694,8 @@
      "gb_pct": 0.625,
      "ip_per_gs": 5.96,
      "hr9": 0.55,
-     "qualified": true
+     "qualified": true,
+     "war": 4.0
     },
     {
      "mlbam": 676440,
@@ -12071,7 +12716,8 @@
      "gb_pct": 0.4081,
      "ip_per_gs": 5.6,
      "hr9": 1.14,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 669203,
@@ -12092,7 +12738,8 @@
      "gb_pct": 0.5155,
      "ip_per_gs": 6.07,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 668881,
@@ -12113,7 +12760,8 @@
      "gb_pct": 0.3667,
      "ip_per_gs": 5.78,
      "hr9": 0.72,
-     "qualified": true
+     "qualified": true,
+     "war": 3.6
     },
     {
      "mlbam": 682243,
@@ -12134,7 +12782,8 @@
      "gb_pct": 0.3955,
      "ip_per_gs": 5.82,
      "hr9": 1.05,
-     "qualified": true
+     "qualified": true,
+     "war": 2.4
     },
     {
      "mlbam": 694297,
@@ -12155,7 +12804,8 @@
      "gb_pct": 0.4812,
      "ip_per_gs": 5.68,
      "hr9": 1.19,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 641154,
@@ -12176,7 +12826,8 @@
      "gb_pct": 0.484,
      "ip_per_gs": 5.79,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 3.5
     },
     {
      "mlbam": 684007,
@@ -12197,7 +12848,8 @@
      "gb_pct": 0.4059,
      "ip_per_gs": 5.98,
      "hr9": 1.4,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 686613,
@@ -12218,7 +12870,8 @@
      "gb_pct": 0.5353,
      "ip_per_gs": 5.67,
      "hr9": 0.95,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 669022,
@@ -12239,7 +12892,8 @@
      "gb_pct": 0.4702,
      "ip_per_gs": 5.2,
      "hr9": 0.81,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 674003,
@@ -12260,7 +12914,8 @@
      "gb_pct": 0.4062,
      "ip_per_gs": 5.87,
      "hr9": 1.18,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 680570,
@@ -12281,7 +12936,8 @@
      "gb_pct": 0.4597,
      "ip_per_gs": 5.83,
      "hr9": 1.16,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 641927,
@@ -12302,7 +12958,8 @@
      "gb_pct": 0.3784,
      "ip_per_gs": 5.76,
      "hr9": 1.36,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 656731,
@@ -12323,7 +12980,8 @@
      "gb_pct": 0.4748,
      "ip_per_gs": 5.2,
      "hr9": 0.92,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 657376,
@@ -12344,7 +13002,8 @@
      "gb_pct": 0.4533,
      "ip_per_gs": 5.33,
      "hr9": 0.84,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 687792,
@@ -12365,7 +13024,8 @@
      "gb_pct": 0.4125,
      "ip_per_gs": 4.67,
      "hr9": 1.12,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 701581,
@@ -12386,7 +13046,8 @@
      "gb_pct": 0.469,
      "ip_per_gs": 4.95,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 543037,
@@ -12407,7 +13068,8 @@
      "gb_pct": 0.4045,
      "ip_per_gs": 5.59,
      "hr9": 1.04,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 608379,
@@ -12428,7 +13090,8 @@
      "gb_pct": 0.4597,
      "ip_per_gs": 5.75,
      "hr9": 0.92,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 674370,
@@ -12449,7 +13112,8 @@
      "gb_pct": 0.3167,
      "ip_per_gs": 7.04,
      "hr9": 0.43,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 621107,
@@ -12470,7 +13134,8 @@
      "gb_pct": 0.479,
      "ip_per_gs": 5.9,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": 2.4
     },
     {
      "mlbam": 543135,
@@ -12491,7 +13156,8 @@
      "gb_pct": 0.5689,
      "ip_per_gs": 5.89,
      "hr9": 1.21,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 601713,
@@ -12512,7 +13178,8 @@
      "gb_pct": 0.3915,
      "ip_per_gs": 5.6,
      "hr9": 1.73,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 641482,
@@ -12533,7 +13200,8 @@
      "gb_pct": 0.3557,
      "ip_per_gs": 5.81,
      "hr9": 1.24,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 669194,
@@ -12554,7 +13222,8 @@
      "gb_pct": 0.4887,
      "ip_per_gs": 6.03,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 640455,
@@ -12575,7 +13244,8 @@
      "gb_pct": 0.4092,
      "ip_per_gs": 5.68,
      "hr9": 1.04,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 592332,
@@ -12596,7 +13266,8 @@
      "gb_pct": 0.4189,
      "ip_per_gs": 5.84,
      "hr9": 0.99,
-     "qualified": true
+     "qualified": true,
+     "war": 2.9
     },
     {
      "mlbam": 622491,
@@ -12617,7 +13288,8 @@
      "gb_pct": 0.4371,
      "ip_per_gs": 5.84,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 605400,
@@ -12638,7 +13310,8 @@
      "gb_pct": 0.5197,
      "ip_per_gs": 6.04,
      "hr9": 1.35,
-     "qualified": true
+     "qualified": true,
+     "war": 2.7
     },
     {
      "mlbam": 641793,
@@ -12659,7 +13332,8 @@
      "gb_pct": 0.3885,
      "ip_per_gs": 5.39,
      "hr9": 1.27,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 592351,
@@ -12680,7 +13354,8 @@
      "gb_pct": 0.4404,
      "ip_per_gs": 5.4,
      "hr9": 0.96,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 668909,
@@ -12701,7 +13376,8 @@
      "gb_pct": 0.4726,
      "ip_per_gs": 4.75,
      "hr9": 0.83,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 605397,
@@ -12722,7 +13398,8 @@
      "gb_pct": 0.478,
      "ip_per_gs": 5.25,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 683003,
@@ -12743,7 +13420,8 @@
      "gb_pct": 0.4685,
      "ip_per_gs": 5.53,
      "hr9": 1.33,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 686752,
@@ -12764,7 +13442,8 @@
      "gb_pct": 0.3891,
      "ip_per_gs": 5.0,
      "hr9": 1.18,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 607200,
@@ -12785,7 +13464,8 @@
      "gb_pct": 0.4377,
      "ip_per_gs": 5.72,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 2.9
     },
     {
      "mlbam": 668964,
@@ -12806,7 +13486,8 @@
      "gb_pct": 0.4255,
      "ip_per_gs": 5.52,
      "hr9": 1.17,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 680730,
@@ -12827,7 +13508,8 @@
      "gb_pct": 0.4076,
      "ip_per_gs": 5.21,
      "hr9": 1.07,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 656849,
@@ -12848,7 +13530,8 @@
      "gb_pct": 0.5691,
      "ip_per_gs": 5.76,
      "hr9": 0.6,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 671737,
@@ -12869,7 +13552,8 @@
      "gb_pct": 0.4781,
      "ip_per_gs": 5.52,
      "hr9": 1.43,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 592791,
@@ -12890,7 +13574,8 @@
      "gb_pct": 0.4377,
      "ip_per_gs": 5.9,
      "hr9": 1.14,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 663903,
@@ -12911,7 +13596,8 @@
      "gb_pct": 0.5552,
      "ip_per_gs": 5.61,
      "hr9": 1.1,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 506433,
@@ -12932,7 +13618,8 @@
      "gb_pct": 0.4172,
      "ip_per_gs": 5.1,
      "hr9": 1.32,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 669467,
@@ -12953,7 +13640,8 @@
      "gb_pct": 0.6745,
      "ip_per_gs": 6.07,
      "hr9": 0.59,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 666157,
@@ -12974,7 +13662,8 @@
      "gb_pct": 0.4837,
      "ip_per_gs": 5.49,
      "hr9": 1.01,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 571760,
@@ -12995,7 +13684,8 @@
      "gb_pct": 0.382,
      "ip_per_gs": 5.16,
      "hr9": 1.29,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 667755,
@@ -13016,7 +13706,8 @@
      "gb_pct": 0.6889,
      "ip_per_gs": 5.65,
      "hr9": 0.64,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 663776,
@@ -13037,7 +13728,8 @@
      "gb_pct": 0.4966,
      "ip_per_gs": 4.98,
      "hr9": 0.9,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 694813,
@@ -13058,7 +13750,8 @@
      "gb_pct": 0.4932,
      "ip_per_gs": 5.61,
      "hr9": 1.15,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 642547,
@@ -13079,7 +13772,8 @@
      "gb_pct": 0.4211,
      "ip_per_gs": 5.43,
      "hr9": 1.35,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 669854,
@@ -13100,7 +13794,8 @@
      "gb_pct": 0.4277,
      "ip_per_gs": 5.77,
      "hr9": 1.18,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 681293,
@@ -13121,7 +13816,8 @@
      "gb_pct": 0.396,
      "ip_per_gs": 5.18,
      "hr9": 1.3,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 656605,
@@ -13142,7 +13838,8 @@
      "gb_pct": 0.4693,
      "ip_per_gs": 5.74,
      "hr9": 1.16,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 669358,
@@ -13163,7 +13860,8 @@
      "gb_pct": 0.4012,
      "ip_per_gs": 5.67,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 661563,
@@ -13184,7 +13882,8 @@
      "gb_pct": 0.3913,
      "ip_per_gs": 5.23,
      "hr9": 1.07,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 677960,
@@ -13205,7 +13904,8 @@
      "gb_pct": 0.5057,
      "ip_per_gs": 5.42,
      "hr9": 1.14,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 663978,
@@ -13226,7 +13926,8 @@
      "gb_pct": 0.3978,
      "ip_per_gs": 5.2,
      "hr9": 1.43,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 663554,
@@ -13247,7 +13948,8 @@
      "gb_pct": 0.5586,
      "ip_per_gs": 5.12,
      "hr9": 0.97,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 518876,
@@ -13268,7 +13970,8 @@
      "gb_pct": 0.5135,
      "ip_per_gs": 5.67,
      "hr9": 1.34,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 605135,
@@ -13289,7 +13992,8 @@
      "gb_pct": 0.4414,
      "ip_per_gs": 5.52,
      "hr9": 0.95,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 680573,
@@ -13310,7 +14014,8 @@
      "gb_pct": 0.3623,
      "ip_per_gs": 4.77,
      "hr9": 1.08,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 666200,
@@ -13331,7 +14036,8 @@
      "gb_pct": 0.458,
      "ip_per_gs": 5.56,
      "hr9": 1.21,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 663372,
@@ -13352,7 +14058,8 @@
      "gb_pct": 0.503,
      "ip_per_gs": 5.41,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 607074,
@@ -13373,7 +14080,8 @@
      "gb_pct": 0.3691,
      "ip_per_gs": 5.47,
      "hr9": 1.59,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 622663,
@@ -13394,7 +14102,8 @@
      "gb_pct": 0.5152,
      "ip_per_gs": 5.87,
      "hr9": 1.14,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 663362,
@@ -13415,7 +14124,8 @@
      "gb_pct": 0.4102,
      "ip_per_gs": 5.64,
      "hr9": 1.29,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 571945,
@@ -13436,7 +14146,8 @@
      "gb_pct": 0.4799,
      "ip_per_gs": 5.36,
      "hr9": 1.36,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 678394,
@@ -13457,7 +14168,8 @@
      "gb_pct": 0.612,
      "ip_per_gs": 5.41,
      "hr9": 1.05,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 687765,
@@ -13478,7 +14190,8 @@
      "gb_pct": 0.5323,
      "ip_per_gs": 6.31,
      "hr9": 1.19,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 679525,
@@ -13499,7 +14212,8 @@
      "gb_pct": 0.4542,
      "ip_per_gs": 5.16,
      "hr9": 1.33,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 544150,
@@ -13520,7 +14234,8 @@
      "gb_pct": 0.3772,
      "ip_per_gs": 5.57,
      "hr9": 1.14,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 689017,
@@ -13541,7 +14256,8 @@
      "gb_pct": 0.3116,
      "ip_per_gs": 5.75,
      "hr9": 1.83,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 690986,
@@ -13562,7 +14278,8 @@
      "gb_pct": 0.425,
      "ip_per_gs": 5.18,
      "hr9": 1.3,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 548389,
@@ -13583,7 +14300,8 @@
      "gb_pct": 0.455,
      "ip_per_gs": 6.1,
      "hr9": 0.74,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 665152,
@@ -13604,7 +14322,8 @@
      "gb_pct": 0.4737,
      "ip_per_gs": 5.4,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 684320,
@@ -13625,7 +14344,8 @@
      "gb_pct": 0.4242,
      "ip_per_gs": 4.13,
      "hr9": 1.14,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 458681,
@@ -13646,7 +14366,8 @@
      "gb_pct": 0.4149,
      "ip_per_gs": 5.1,
      "hr9": 1.23,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 681867,
@@ -13667,7 +14388,8 @@
      "gb_pct": 0.519,
      "ip_per_gs": 5.52,
      "hr9": 0.91,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 672282,
@@ -13688,7 +14410,8 @@
      "gb_pct": 0.4236,
      "ip_per_gs": 5.14,
      "hr9": 1.85,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 663623,
@@ -13709,7 +14432,8 @@
      "gb_pct": 0.5156,
      "ip_per_gs": 5.69,
      "hr9": 1.39,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 663436,
@@ -13730,7 +14454,8 @@
      "gb_pct": 0.4737,
      "ip_per_gs": 5.0,
      "hr9": 0.9,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 663559,
@@ -13751,7 +14476,8 @@
      "gb_pct": 0.4267,
      "ip_per_gs": 5.08,
      "hr9": 1.07,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 806185,
@@ -13772,7 +14498,8 @@
      "gb_pct": 0.439,
      "ip_per_gs": 4.5,
      "hr9": 1.38,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 593958,
@@ -13793,7 +14520,8 @@
      "gb_pct": 0.4455,
      "ip_per_gs": 5.0,
      "hr9": 1.44,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 450203,
@@ -13814,7 +14542,8 @@
      "gb_pct": 0.5623,
      "ip_per_gs": 5.51,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 502043,
@@ -13835,7 +14564,8 @@
      "gb_pct": 0.5089,
      "ip_per_gs": 5.66,
      "hr9": 1.22,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 693821,
@@ -13856,7 +14586,8 @@
      "gb_pct": 0.5773,
      "ip_per_gs": 4.97,
      "hr9": 1.45,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 571578,
@@ -13877,7 +14608,8 @@
      "gb_pct": 0.5444,
      "ip_per_gs": 5.46,
      "hr9": 1.29,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 663855,
@@ -13898,7 +14630,8 @@
      "gb_pct": 0.5853,
      "ip_per_gs": 5.48,
      "hr9": 0.98,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 621112,
@@ -13919,7 +14652,8 @@
      "gb_pct": 0.5414,
      "ip_per_gs": 5.38,
      "hr9": 1.43,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 676710,
@@ -13940,7 +14674,8 @@
      "gb_pct": 0.3794,
      "ip_per_gs": 5.57,
      "hr9": 1.67,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 665795,
@@ -13961,7 +14696,8 @@
      "gb_pct": 0.5402,
      "ip_per_gs": 4.82,
      "hr9": 1.4,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 676775,
@@ -13982,7 +14718,8 @@
      "gb_pct": 0.5872,
      "ip_per_gs": 4.61,
      "hr9": 1.46,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 500779,
@@ -14003,7 +14740,8 @@
      "gb_pct": 0.5196,
      "ip_per_gs": 5.49,
      "hr9": 1.16,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 650644,
@@ -14024,7 +14762,8 @@
      "gb_pct": 0.4074,
      "ip_per_gs": 5.19,
      "hr9": 1.62,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 594902,
@@ -14045,7 +14784,8 @@
      "gb_pct": 0.4548,
      "ip_per_gs": 5.21,
      "hr9": 1.37,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 686563,
@@ -14066,7 +14806,8 @@
      "gb_pct": 0.4483,
      "ip_per_gs": 5.92,
      "hr9": 1.3,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 593423,
@@ -14087,7 +14828,8 @@
      "gb_pct": 0.466,
      "ip_per_gs": 5.02,
      "hr9": 1.43,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 656756,
@@ -14108,7 +14850,8 @@
      "gb_pct": 0.4822,
      "ip_per_gs": 5.57,
      "hr9": 1.08,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 621244,
@@ -14129,7 +14872,8 @@
      "gb_pct": 0.5013,
      "ip_per_gs": 6.01,
      "hr9": 1.45,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 665871,
@@ -14150,7 +14894,8 @@
      "gb_pct": 0.4934,
      "ip_per_gs": 5.07,
      "hr9": 1.22,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 434378,
@@ -14171,7 +14916,8 @@
      "gb_pct": 0.2618,
      "ip_per_gs": 5.31,
      "hr9": 1.49,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 669432,
@@ -14192,7 +14938,8 @@
      "gb_pct": 0.5132,
      "ip_per_gs": 4.97,
      "hr9": 1.01,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 607067,
@@ -14213,7 +14960,8 @@
      "gb_pct": 0.451,
      "ip_per_gs": 6.21,
      "hr9": 1.56,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 700249,
@@ -14234,7 +14982,8 @@
      "gb_pct": 0.3855,
      "ip_per_gs": 4.98,
      "hr9": 1.36,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 676664,
@@ -14255,7 +15004,8 @@
      "gb_pct": 0.3974,
      "ip_per_gs": 5.65,
      "hr9": 1.39,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 677944,
@@ -14276,7 +15026,8 @@
      "gb_pct": 0.3478,
      "ip_per_gs": 5.92,
      "hr9": 1.87,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 542881,
@@ -14297,7 +15048,8 @@
      "gb_pct": 0.4234,
      "ip_per_gs": 5.78,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 573186,
@@ -14318,7 +15070,8 @@
      "gb_pct": 0.5429,
      "ip_per_gs": 5.33,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 671212,
@@ -14339,7 +15092,8 @@
      "gb_pct": 0.4167,
      "ip_per_gs": 4.77,
      "hr9": 0.76,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 607536,
@@ -14360,7 +15114,8 @@
      "gb_pct": 0.4631,
      "ip_per_gs": 5.4,
      "hr9": 1.75,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 471911,
@@ -14381,7 +15136,8 @@
      "gb_pct": 0.5385,
      "ip_per_gs": 4.94,
      "hr9": 1.65,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 628317,
@@ -14402,7 +15158,8 @@
      "gb_pct": 0.3991,
      "ip_per_gs": 6.61,
      "hr9": 1.76,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 596295,
@@ -14423,7 +15180,8 @@
      "gb_pct": 0.438,
      "ip_per_gs": 5.5,
      "hr9": 1.64,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 686799,
@@ -14444,7 +15202,8 @@
      "gb_pct": 0.6323,
      "ip_per_gs": 5.94,
      "hr9": 0.96,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 681190,
@@ -14465,7 +15224,8 @@
      "gb_pct": 0.4299,
      "ip_per_gs": 4.9,
      "hr9": 1.19,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 608344,
@@ -14486,7 +15246,8 @@
      "gb_pct": 0.4453,
      "ip_per_gs": 6.94,
      "hr9": 1.46,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 683155,
@@ -14507,7 +15268,8 @@
      "gb_pct": 0.243,
      "ip_per_gs": 5.32,
      "hr9": 1.62,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 623167,
@@ -14528,7 +15290,8 @@
      "gb_pct": 0.3923,
      "ip_per_gs": 5.33,
      "hr9": 1.35,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 668933,
@@ -14549,7 +15312,8 @@
      "gb_pct": 0.5614,
      "ip_per_gs": 5.16,
      "hr9": 1.28,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 527048,
@@ -14570,7 +15334,8 @@
      "gb_pct": 0.5036,
      "ip_per_gs": 5.19,
      "hr9": 1.47,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 572020,
@@ -14591,7 +15356,8 @@
      "gb_pct": 0.4037,
      "ip_per_gs": 4.78,
      "hr9": 1.08,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 696136,
@@ -14612,7 +15378,8 @@
      "gb_pct": 0.4731,
      "ip_per_gs": 4.6,
      "hr9": 1.76,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 672456,
@@ -14633,7 +15400,8 @@
      "gb_pct": 0.4776,
      "ip_per_gs": 6.15,
      "hr9": 1.74,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 547179,
@@ -14654,7 +15422,8 @@
      "gb_pct": 0.4596,
      "ip_per_gs": 5.43,
      "hr9": 1.17,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 671096,
@@ -14675,7 +15444,8 @@
      "gb_pct": 0.3643,
      "ip_per_gs": 5.52,
      "hr9": 1.63,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 641540,
@@ -14696,7 +15466,8 @@
      "gb_pct": 0.5027,
      "ip_per_gs": 6.33,
      "hr9": 1.71,
-     "qualified": true
+     "qualified": true,
+     "war": -0.5
     },
     {
      "mlbam": 543294,
@@ -14717,7 +15488,8 @@
      "gb_pct": 0.5226,
      "ip_per_gs": 5.44,
      "hr9": 1.45,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 676974,
@@ -14738,7 +15510,8 @@
      "gb_pct": 0.5763,
      "ip_per_gs": 5.18,
      "hr9": 2.21,
-     "qualified": true
+     "qualified": true,
+     "war": -0.6
     },
     {
      "mlbam": 621111,
@@ -14759,7 +15532,8 @@
      "gb_pct": 0.5032,
      "ip_per_gs": 4.71,
      "hr9": 1.91,
-     "qualified": true
+     "qualified": true,
+     "war": -0.6
     },
     {
      "mlbam": 656288,
@@ -14780,7 +15554,8 @@
      "gb_pct": 0.449,
      "ip_per_gs": 5.54,
      "hr9": 1.63,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 678368,
@@ -14801,7 +15576,8 @@
      "gb_pct": 0.2893,
      "ip_per_gs": 5.28,
      "hr9": 1.97,
-     "qualified": true
+     "qualified": true,
+     "war": -0.5
     },
     {
      "mlbam": 676106,
@@ -14822,7 +15598,8 @@
      "gb_pct": 0.3929,
      "ip_per_gs": 5.06,
      "hr9": 1.78,
-     "qualified": true
+     "qualified": true,
+     "war": -0.8
     },
     {
      "mlbam": 615698,
@@ -14843,7 +15620,8 @@
      "gb_pct": 0.5226,
      "ip_per_gs": 5.11,
      "hr9": 1.4,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 671106,
@@ -14864,7 +15642,8 @@
      "gb_pct": 0.5179,
      "ip_per_gs": 4.87,
      "hr9": 2.03,
-     "qualified": true
+     "qualified": true,
+     "war": -1.0
     },
     {
      "mlbam": 641712,
@@ -14885,7 +15664,8 @@
      "gb_pct": 0.5871,
      "ip_per_gs": 4.94,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 663474,
@@ -14906,7 +15686,8 @@
      "gb_pct": 0.3904,
      "ip_per_gs": 4.73,
      "hr9": 2.26,
-     "qualified": true
+     "qualified": true,
+     "war": -1.4
     },
     {
      "mlbam": 676272,
@@ -14927,7 +15708,8 @@
      "gb_pct": 0.5333,
      "ip_per_gs": 4.31,
      "hr9": 2.73,
-     "qualified": true
+     "qualified": true,
+     "war": -1.1
     },
     {
      "mlbam": 621389,
@@ -14948,7 +15730,8 @@
      "gb_pct": 0.491,
      "ip_per_gs": 5.94,
      "hr9": 2.14,
-     "qualified": true
+     "qualified": true,
+     "war": -0.6
     },
     {
      "mlbam": 592836,
@@ -14969,7 +15752,8 @@
      "gb_pct": 0.4148,
      "ip_per_gs": 5.58,
      "hr9": 2.58,
-     "qualified": true
+     "qualified": true,
+     "war": -1.9
     },
     {
      "mlbam": 682610,
@@ -14990,7 +15774,8 @@
      "gb_pct": 0.4046,
      "ip_per_gs": 4.86,
      "hr9": 2.83,
-     "qualified": true
+     "qualified": true,
+     "war": -2.1
     }
    ]
   },
@@ -15017,7 +15802,8 @@
      "gb_pct": 0.4878,
      "ip_per_gs": 6.3,
      "hr9": 0.83,
-     "qualified": true
+     "qualified": true,
+     "war": 6.9
     },
     {
      "mlbam": 694973,
@@ -15038,7 +15824,8 @@
      "gb_pct": 0.5015,
      "ip_per_gs": 5.86,
      "hr9": 0.53,
-     "qualified": true
+     "qualified": true,
+     "war": 7.1
     },
     {
      "mlbam": 650911,
@@ -15059,7 +15846,8 @@
      "gb_pct": 0.6497,
      "ip_per_gs": 6.31,
      "hr9": 0.53,
-     "qualified": true
+     "qualified": true,
+     "war": 7.2
     },
     {
      "mlbam": 657277,
@@ -15080,7 +15868,8 @@
      "gb_pct": 0.6504,
      "ip_per_gs": 6.09,
      "hr9": 0.61,
-     "qualified": true
+     "qualified": true,
+     "war": 5.8
     },
     {
      "mlbam": 666142,
@@ -15101,7 +15890,8 @@
      "gb_pct": 0.4524,
      "ip_per_gs": 4.74,
      "hr9": 1.02,
-     "qualified": true
+     "qualified": true,
+     "war": 2.0
     },
     {
      "mlbam": 519242,
@@ -15122,7 +15912,8 @@
      "gb_pct": 0.445,
      "ip_per_gs": 6.28,
      "hr9": 0.79,
-     "qualified": true
+     "qualified": true,
+     "war": 3.6
     },
     {
      "mlbam": 676979,
@@ -15143,7 +15934,8 @@
      "gb_pct": 0.5262,
      "ip_per_gs": 6.42,
      "hr9": 1.05,
-     "qualified": true
+     "qualified": true,
+     "war": 5.6
     },
     {
      "mlbam": 554430,
@@ -15164,7 +15956,8 @@
      "gb_pct": 0.4917,
      "ip_per_gs": 6.24,
      "hr9": 1.14,
-     "qualified": true
+     "qualified": true,
+     "war": 4.4
     },
     {
      "mlbam": 666200,
@@ -15185,7 +15978,8 @@
      "gb_pct": 0.4857,
      "ip_per_gs": 5.74,
      "hr9": 0.78,
-     "qualified": true
+     "qualified": true,
+     "war": 5.4
     },
     {
      "mlbam": 543135,
@@ -15206,7 +16000,8 @@
      "gb_pct": 0.6169,
      "ip_per_gs": 5.91,
      "hr9": 0.69,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 808967,
@@ -15227,7 +16022,8 @@
      "gb_pct": 0.5877,
      "ip_per_gs": 5.79,
      "hr9": 0.73,
-     "qualified": true
+     "qualified": true,
+     "war": 4.5
     },
     {
      "mlbam": 669432,
@@ -15248,7 +16044,8 @@
      "gb_pct": 0.4932,
      "ip_per_gs": 6.09,
      "hr9": 0.49,
-     "qualified": true
+     "qualified": true,
+     "war": 3.4
     },
     {
      "mlbam": 686218,
@@ -15269,7 +16066,8 @@
      "gb_pct": 0.3566,
      "ip_per_gs": 6.11,
      "hr9": 0.86,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 686613,
@@ -15290,7 +16088,8 @@
      "gb_pct": 0.546,
      "ip_per_gs": 5.98,
      "hr9": 0.83,
-     "qualified": true
+     "qualified": true,
+     "war": 4.8
     },
     {
      "mlbam": 605540,
@@ -15311,7 +16110,8 @@
      "gb_pct": 0.3423,
      "ip_per_gs": 5.39,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 608331,
@@ -15332,7 +16132,8 @@
      "gb_pct": 0.584,
      "ip_per_gs": 6.1,
      "hr9": 0.65,
-     "qualified": true
+     "qualified": true,
+     "war": 5.0
     },
     {
      "mlbam": 668881,
@@ -15353,7 +16154,8 @@
      "gb_pct": 0.3622,
      "ip_per_gs": 5.67,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 669302,
@@ -15374,7 +16176,8 @@
      "gb_pct": 0.4227,
      "ip_per_gs": 5.24,
      "hr9": 1.37,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 663460,
@@ -15395,7 +16198,8 @@
      "gb_pct": 0.5227,
      "ip_per_gs": 5.82,
      "hr9": 0.46,
-     "qualified": true
+     "qualified": true,
+     "war": 3.2
     },
     {
      "mlbam": 605483,
@@ -15416,7 +16220,8 @@
      "gb_pct": 0.5619,
      "ip_per_gs": 5.58,
      "hr9": 0.44,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 680885,
@@ -15437,7 +16242,8 @@
      "gb_pct": 0.5668,
      "ip_per_gs": 6.51,
      "hr9": 1.06,
-     "qualified": true
+     "qualified": true,
+     "war": 2.2
     },
     {
      "mlbam": 543243,
@@ -15458,7 +16264,8 @@
      "gb_pct": 0.5139,
      "ip_per_gs": 5.65,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 3.2
     },
     {
      "mlbam": 624133,
@@ -15479,7 +16286,8 @@
      "gb_pct": 0.4967,
      "ip_per_gs": 6.05,
      "hr9": 0.8,
-     "qualified": true
+     "qualified": true,
+     "war": 4.1
     },
     {
      "mlbam": 693433,
@@ -15500,7 +16308,8 @@
      "gb_pct": 0.4635,
      "ip_per_gs": 6.22,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 669923,
@@ -15521,7 +16330,8 @@
      "gb_pct": 0.4957,
      "ip_per_gs": 5.48,
      "hr9": 1.07,
-     "qualified": true
+     "qualified": true,
+     "war": 2.1
     },
     {
      "mlbam": 592332,
@@ -15542,7 +16352,8 @@
      "gb_pct": 0.3989,
      "ip_per_gs": 6.03,
      "hr9": 0.98,
-     "qualified": true
+     "qualified": true,
+     "war": 4.5
     },
     {
      "mlbam": 601713,
@@ -15563,7 +16374,8 @@
      "gb_pct": 0.3897,
      "ip_per_gs": 5.86,
      "hr9": 1.09,
-     "qualified": true
+     "qualified": true,
+     "war": 3.6
     },
     {
      "mlbam": 664285,
@@ -15584,7 +16396,8 @@
      "gb_pct": 0.6694,
      "ip_per_gs": 6.19,
      "hr9": 0.7,
-     "qualified": true
+     "qualified": true,
+     "war": 4.1
     },
     {
      "mlbam": 676083,
@@ -15605,7 +16418,8 @@
      "gb_pct": 0.444,
      "ip_per_gs": 6.88,
      "hr9": 0.65,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 594798,
@@ -15626,7 +16440,8 @@
      "gb_pct": 0.4286,
      "ip_per_gs": 5.76,
      "hr9": 1.36,
-     "qualified": true
+     "qualified": true,
+     "war": 2.0
     },
     {
      "mlbam": 656302,
@@ -15647,7 +16462,8 @@
      "gb_pct": 0.4116,
      "ip_per_gs": 5.25,
      "hr9": 1.12,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 641154,
@@ -15668,7 +16484,8 @@
      "gb_pct": 0.4503,
      "ip_per_gs": 5.4,
      "hr9": 0.71,
-     "qualified": true
+     "qualified": true,
+     "war": 2.0
     },
     {
      "mlbam": 694819,
@@ -15689,7 +16506,8 @@
      "gb_pct": 0.4059,
      "ip_per_gs": 4.71,
      "hr9": 1.09,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 657746,
@@ -15710,7 +16528,8 @@
      "gb_pct": 0.3824,
      "ip_per_gs": 5.7,
      "hr9": 1.37,
-     "qualified": true
+     "qualified": true,
+     "war": 3.3
     },
     {
      "mlbam": 642547,
@@ -15731,7 +16550,8 @@
      "gb_pct": 0.4169,
      "ip_per_gs": 5.35,
      "hr9": 1.07,
-     "qualified": true
+     "qualified": true,
+     "war": 3.2
     },
     {
      "mlbam": 694477,
@@ -15752,7 +16572,8 @@
      "gb_pct": 0.379,
      "ip_per_gs": 5.2,
      "hr9": 0.98,
-     "qualified": true
+     "qualified": true,
+     "war": 2.2
     },
     {
      "mlbam": 691587,
@@ -15773,7 +16594,8 @@
      "gb_pct": 0.3446,
      "ip_per_gs": 4.77,
      "hr9": 1.13,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 656731,
@@ -15794,7 +16616,8 @@
      "gb_pct": 0.4138,
      "ip_per_gs": 4.88,
      "hr9": 0.79,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 694462,
@@ -15815,7 +16638,8 @@
      "gb_pct": 0.5769,
      "ip_per_gs": 6.26,
      "hr9": 0.48,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 656849,
@@ -15836,7 +16660,8 @@
      "gb_pct": 0.6138,
      "ip_per_gs": 5.62,
      "hr9": 0.59,
-     "qualified": true
+     "qualified": true,
+     "war": 2.9
     },
     {
      "mlbam": 571510,
@@ -15857,7 +16682,8 @@
      "gb_pct": 0.4011,
      "ip_per_gs": 5.8,
      "hr9": 0.95,
-     "qualified": true
+     "qualified": true,
+     "war": 2.2
     },
     {
      "mlbam": 671096,
@@ -15878,7 +16704,8 @@
      "gb_pct": 0.3284,
      "ip_per_gs": 5.74,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 3.7
     },
     {
      "mlbam": 669022,
@@ -15899,7 +16726,8 @@
      "gb_pct": 0.4015,
      "ip_per_gs": 5.32,
      "hr9": 1.13,
-     "qualified": true
+     "qualified": true,
+     "war": 2.4
     },
     {
      "mlbam": 607192,
@@ -15920,7 +16748,8 @@
      "gb_pct": 0.5,
      "ip_per_gs": 5.02,
      "hr9": 1.0,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 518876,
@@ -15941,7 +16770,8 @@
      "gb_pct": 0.4893,
      "ip_per_gs": 5.75,
      "hr9": 1.12,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 666157,
@@ -15962,7 +16792,8 @@
      "gb_pct": 0.4901,
      "ip_per_gs": 5.6,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 3.1
     },
     {
      "mlbam": 641816,
@@ -15983,7 +16814,8 @@
      "gb_pct": 0.4066,
      "ip_per_gs": 5.42,
      "hr9": 0.52,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 607074,
@@ -16004,7 +16836,8 @@
      "gb_pct": 0.4758,
      "ip_per_gs": 5.92,
      "hr9": 1.01,
-     "qualified": true
+     "qualified": true,
+     "war": 3.2
     },
     {
      "mlbam": 656427,
@@ -16025,7 +16858,8 @@
      "gb_pct": 0.4397,
      "ip_per_gs": 5.19,
      "hr9": 1.29,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 687888,
@@ -16046,7 +16880,8 @@
      "gb_pct": 0.4953,
      "ip_per_gs": 5.96,
      "hr9": 1.68,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 690990,
@@ -16067,7 +16902,8 @@
      "gb_pct": 0.459,
      "ip_per_gs": 5.36,
      "hr9": 0.76,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 669194,
@@ -16088,7 +16924,8 @@
      "gb_pct": 0.4403,
      "ip_per_gs": 6.7,
      "hr9": 0.99,
-     "qualified": true
+     "qualified": true,
+     "war": 2.4
     },
     {
      "mlbam": 805673,
@@ -16109,7 +16946,8 @@
      "gb_pct": 0.3716,
      "ip_per_gs": 4.96,
      "hr9": 1.36,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 693645,
@@ -16130,7 +16968,8 @@
      "gb_pct": 0.3968,
      "ip_per_gs": 5.21,
      "hr9": 0.99,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 641778,
@@ -16151,7 +16990,8 @@
      "gb_pct": 0.3155,
      "ip_per_gs": 6.98,
      "hr9": 1.29,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 608379,
@@ -16172,7 +17012,8 @@
      "gb_pct": 0.4118,
      "ip_per_gs": 5.57,
      "hr9": 0.78,
-     "qualified": true
+     "qualified": true,
+     "war": 3.0
     },
     {
      "mlbam": 665795,
@@ -16193,7 +17034,8 @@
      "gb_pct": 0.5516,
      "ip_per_gs": 5.29,
      "hr9": 1.11,
-     "qualified": true
+     "qualified": true,
+     "war": 2.2
     },
     {
      "mlbam": 681857,
@@ -16214,7 +17056,8 @@
      "gb_pct": 0.4773,
      "ip_per_gs": 5.28,
      "hr9": 0.66,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 477132,
@@ -16235,7 +17078,8 @@
      "gb_pct": 0.5083,
      "ip_per_gs": 5.12,
      "hr9": 0.64,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 656876,
@@ -16256,7 +17100,8 @@
      "gb_pct": 0.5467,
      "ip_per_gs": 4.84,
      "hr9": 1.08,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 663554,
@@ -16277,7 +17122,8 @@
      "gb_pct": 0.4291,
      "ip_per_gs": 5.32,
      "hr9": 1.27,
-     "qualified": true
+     "qualified": true,
+     "war": 2.2
     },
     {
      "mlbam": 622491,
@@ -16298,7 +17144,8 @@
      "gb_pct": 0.4558,
      "ip_per_gs": 5.65,
      "hr9": 1.15,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 667755,
@@ -16319,7 +17166,8 @@
      "gb_pct": 0.7364,
      "ip_per_gs": 5.45,
      "hr9": 0.64,
-     "qualified": true
+     "qualified": true,
+     "war": 2.8
     },
     {
      "mlbam": 592662,
@@ -16340,7 +17188,8 @@
      "gb_pct": 0.3983,
      "ip_per_gs": 5.7,
      "hr9": 1.09,
-     "qualified": true
+     "qualified": true,
+     "war": 2.0
     },
     {
      "mlbam": 676962,
@@ -16361,7 +17210,8 @@
      "gb_pct": 0.4588,
      "ip_per_gs": 7.09,
      "hr9": 1.52,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 640455,
@@ -16382,7 +17232,8 @@
      "gb_pct": 0.4579,
      "ip_per_gs": 5.06,
      "hr9": 1.93,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 434378,
@@ -16403,7 +17254,8 @@
      "gb_pct": 0.3942,
      "ip_per_gs": 5.24,
      "hr9": 0.95,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 681347,
@@ -16424,7 +17276,8 @@
      "gb_pct": 0.4641,
      "ip_per_gs": 5.05,
      "hr9": 1.22,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 665152,
@@ -16445,7 +17298,8 @@
      "gb_pct": 0.4338,
      "ip_per_gs": 5.92,
      "hr9": 1.15,
-     "qualified": true
+     "qualified": true,
+     "war": 2.0
     },
     {
      "mlbam": 657376,
@@ -16466,7 +17320,8 @@
      "gb_pct": 0.3654,
      "ip_per_gs": 5.62,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 663903,
@@ -16487,7 +17342,8 @@
      "gb_pct": 0.4559,
      "ip_per_gs": 5.3,
      "hr9": 1.01,
-     "qualified": true
+     "qualified": true,
+     "war": 2.9
     },
     {
      "mlbam": 605135,
@@ -16508,7 +17364,8 @@
      "gb_pct": 0.5589,
      "ip_per_gs": 5.49,
      "hr9": 1.16,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 669203,
@@ -16529,7 +17386,8 @@
      "gb_pct": 0.5887,
      "ip_per_gs": 5.85,
      "hr9": 0.98,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 605288,
@@ -16550,7 +17408,8 @@
      "gb_pct": 0.5581,
      "ip_per_gs": 5.95,
      "hr9": 0.72,
-     "qualified": true
+     "qualified": true,
+     "war": 2.3
     },
     {
      "mlbam": 701542,
@@ -16571,7 +17430,8 @@
      "gb_pct": 0.5032,
      "ip_per_gs": 4.92,
      "hr9": 1.22,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 682052,
@@ -16592,7 +17452,8 @@
      "gb_pct": 0.325,
      "ip_per_gs": 5.45,
      "hr9": 1.46,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 663568,
@@ -16613,7 +17474,8 @@
      "gb_pct": 0.5605,
      "ip_per_gs": 5.93,
      "hr9": 0.72,
-     "qualified": true
+     "qualified": true,
+     "war": 1.7
     },
     {
      "mlbam": 682990,
@@ -16634,7 +17496,8 @@
      "gb_pct": 0.6188,
      "ip_per_gs": 6.56,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 656605,
@@ -16655,7 +17518,8 @@
      "gb_pct": 0.4973,
      "ip_per_gs": 5.51,
      "hr9": 1.07,
-     "qualified": true
+     "qualified": true,
+     "war": 2.5
     },
     {
      "mlbam": 694738,
@@ -16676,7 +17540,8 @@
      "gb_pct": 0.5117,
      "ip_per_gs": 4.85,
      "hr9": 0.93,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 669461,
@@ -16697,7 +17562,8 @@
      "gb_pct": 0.4259,
      "ip_per_gs": 5.23,
      "hr9": 1.13,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 700249,
@@ -16718,7 +17584,8 @@
      "gb_pct": 0.4826,
      "ip_per_gs": 5.62,
      "hr9": 1.36,
-     "qualified": true
+     "qualified": true,
+     "war": 1.1
     },
     {
      "mlbam": 686701,
@@ -16739,7 +17606,8 @@
      "gb_pct": 0.3399,
      "ip_per_gs": 5.09,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 681343,
@@ -16760,7 +17628,8 @@
      "gb_pct": 0.4296,
      "ip_per_gs": 5.05,
      "hr9": 1.05,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 682847,
@@ -16781,7 +17650,8 @@
      "gb_pct": 0.5337,
      "ip_per_gs": 5.54,
      "hr9": 1.22,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 690928,
@@ -16802,7 +17672,8 @@
      "gb_pct": 0.5267,
      "ip_per_gs": 5.55,
      "hr9": 0.89,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 607067,
@@ -16823,7 +17694,8 @@
      "gb_pct": 0.4424,
      "ip_per_gs": 5.9,
      "hr9": 1.13,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 702070,
@@ -16844,7 +17716,8 @@
      "gb_pct": 0.4704,
      "ip_per_gs": 5.76,
      "hr9": 1.17,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 647336,
@@ -16865,7 +17738,8 @@
      "gb_pct": 0.494,
      "ip_per_gs": 5.27,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 683004,
@@ -16886,7 +17760,8 @@
      "gb_pct": 0.4047,
      "ip_per_gs": 5.23,
      "hr9": 1.07,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 656288,
@@ -16907,7 +17782,8 @@
      "gb_pct": 0.549,
      "ip_per_gs": 4.77,
      "hr9": 0.94,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 671212,
@@ -16928,7 +17804,8 @@
      "gb_pct": 0.4362,
      "ip_per_gs": 5.78,
      "hr9": 1.04,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 673540,
@@ -16949,7 +17826,8 @@
      "gb_pct": 0.5434,
      "ip_per_gs": 5.15,
      "hr9": 0.95,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 650633,
@@ -16970,7 +17848,8 @@
      "gb_pct": 0.4071,
      "ip_per_gs": 4.89,
      "hr9": 1.47,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 694297,
@@ -16991,7 +17870,8 @@
      "gb_pct": 0.4866,
      "ip_per_gs": 5.35,
      "hr9": 1.32,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 676974,
@@ -17012,7 +17892,8 @@
      "gb_pct": 0.561,
      "ip_per_gs": 5.39,
      "hr9": 1.67,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 579328,
@@ -17033,7 +17914,8 @@
      "gb_pct": 0.4194,
      "ip_per_gs": 5.4,
      "hr9": 1.21,
-     "qualified": true
+     "qualified": true,
+     "war": 1.9
     },
     {
      "mlbam": 686752,
@@ -17054,7 +17936,8 @@
      "gb_pct": 0.4323,
      "ip_per_gs": 5.41,
      "hr9": 1.4,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 608337,
@@ -17075,7 +17958,8 @@
      "gb_pct": 0.4172,
      "ip_per_gs": 5.58,
      "hr9": 1.06,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 607536,
@@ -17096,7 +17980,8 @@
      "gb_pct": 0.4741,
      "ip_per_gs": 5.25,
      "hr9": 1.22,
-     "qualified": true
+     "qualified": true,
+     "war": 2.9
     },
     {
      "mlbam": 622663,
@@ -17117,7 +18002,8 @@
      "gb_pct": 0.4504,
      "ip_per_gs": 5.61,
      "hr9": 0.89,
-     "qualified": true
+     "qualified": true,
+     "war": 2.6
     },
     {
      "mlbam": 592866,
@@ -17138,7 +18024,8 @@
      "gb_pct": 0.3743,
      "ip_per_gs": 4.86,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 571578,
@@ -17159,7 +18046,8 @@
      "gb_pct": 0.4669,
      "ip_per_gs": 5.18,
      "hr9": 1.22,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 669358,
@@ -17180,7 +18068,8 @@
      "gb_pct": 0.5329,
      "ip_per_gs": 5.37,
      "hr9": 1.41,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 605280,
@@ -17201,7 +18090,8 @@
      "gb_pct": 0.6275,
      "ip_per_gs": 5.34,
      "hr9": 0.76,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 676440,
@@ -17222,7 +18112,8 @@
      "gb_pct": 0.4945,
      "ip_per_gs": 5.88,
      "hr9": 1.33,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 605400,
@@ -17243,7 +18134,8 @@
      "gb_pct": 0.5,
      "ip_per_gs": 5.55,
      "hr9": 1.72,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 527048,
@@ -17264,7 +18156,8 @@
      "gb_pct": 0.4417,
      "ip_per_gs": 5.6,
      "hr9": 0.96,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 656550,
@@ -17285,7 +18178,8 @@
      "gb_pct": 0.5288,
      "ip_per_gs": 5.48,
      "hr9": 1.25,
-     "qualified": true
+     "qualified": true,
+     "war": 0.7
     },
     {
      "mlbam": 678394,
@@ -17306,7 +18200,8 @@
      "gb_pct": 0.5574,
      "ip_per_gs": 5.95,
      "hr9": 0.86,
-     "qualified": true
+     "qualified": true,
+     "war": 1.5
     },
     {
      "mlbam": 645261,
@@ -17327,7 +18222,8 @@
      "gb_pct": 0.5202,
      "ip_per_gs": 5.63,
      "hr9": 1.13,
-     "qualified": true
+     "qualified": true,
+     "war": 1.8
     },
     {
      "mlbam": 668909,
@@ -17348,7 +18244,8 @@
      "gb_pct": 0.5143,
      "ip_per_gs": 5.41,
      "hr9": 1.23,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 669372,
@@ -17369,7 +18266,8 @@
      "gb_pct": 0.622,
      "ip_per_gs": 5.65,
      "hr9": 1.69,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 671737,
@@ -17390,7 +18288,8 @@
      "gb_pct": 0.4913,
      "ip_per_gs": 5.28,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": 1.4
     },
     {
      "mlbam": 607259,
@@ -17411,7 +18310,8 @@
      "gb_pct": 0.4571,
      "ip_per_gs": 6.37,
      "hr9": 1.2,
-     "qualified": true
+     "qualified": true,
+     "war": 2.0
     },
     {
      "mlbam": 700241,
@@ -17432,7 +18332,8 @@
      "gb_pct": 0.5297,
      "ip_per_gs": 5.98,
      "hr9": 1.13,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 675911,
@@ -17453,7 +18354,8 @@
      "gb_pct": 0.44,
      "ip_per_gs": 5.45,
      "hr9": 1.44,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 680573,
@@ -17474,7 +18376,8 @@
      "gb_pct": 0.3379,
      "ip_per_gs": 5.06,
      "hr9": 1.37,
-     "qualified": true
+     "qualified": true,
+     "war": 1.0
     },
     {
      "mlbam": 506433,
@@ -17495,7 +18398,8 @@
      "gb_pct": 0.4599,
      "ip_per_gs": 4.8,
      "hr9": 1.75,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 668678,
@@ -17516,7 +18420,8 @@
      "gb_pct": 0.4898,
      "ip_per_gs": 5.82,
      "hr9": 1.45,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 592791,
@@ -17537,7 +18442,8 @@
      "gb_pct": 0.3908,
      "ip_per_gs": 5.64,
      "hr9": 1.67,
-     "qualified": true
+     "qualified": true,
+     "war": 0.0
     },
     {
      "mlbam": 547179,
@@ -17558,7 +18464,8 @@
      "gb_pct": 0.4491,
      "ip_per_gs": 5.45,
      "hr9": 1.59,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 671106,
@@ -17579,7 +18486,8 @@
      "gb_pct": 0.4695,
      "ip_per_gs": 5.4,
      "hr9": 1.03,
-     "qualified": true
+     "qualified": true,
+     "war": 1.3
     },
     {
      "mlbam": 677944,
@@ -17600,7 +18508,8 @@
      "gb_pct": 0.471,
      "ip_per_gs": 5.74,
      "hr9": 1.64,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 701581,
@@ -17621,7 +18530,8 @@
      "gb_pct": 0.3654,
      "ip_per_gs": 5.33,
      "hr9": 1.69,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 687473,
@@ -17642,7 +18552,8 @@
      "gb_pct": 0.393,
      "ip_per_gs": 5.98,
      "hr9": 1.5,
-     "qualified": true
+     "qualified": true,
+     "war": 0.8
     },
     {
      "mlbam": 650644,
@@ -17663,7 +18574,8 @@
      "gb_pct": 0.3602,
      "ip_per_gs": 5.67,
      "hr9": 1.41,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 693821,
@@ -17684,7 +18596,8 @@
      "gb_pct": 0.5741,
      "ip_per_gs": 5.58,
      "hr9": 1.38,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 676917,
@@ -17705,7 +18618,8 @@
      "gb_pct": 0.5842,
      "ip_per_gs": 4.87,
      "hr9": 1.29,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 453286,
@@ -17726,7 +18640,8 @@
      "gb_pct": 0.311,
      "ip_per_gs": 5.0,
      "hr9": 2.01,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 593958,
@@ -17747,7 +18662,8 @@
      "gb_pct": 0.4437,
      "ip_per_gs": 5.32,
      "hr9": 1.46,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 684007,
@@ -17768,7 +18684,8 @@
      "gb_pct": 0.3203,
      "ip_per_gs": 5.79,
      "hr9": 1.93,
-     "qualified": true
+     "qualified": true,
+     "war": -0.4
     },
     {
      "mlbam": 605488,
@@ -17789,7 +18706,8 @@
      "gb_pct": 0.3589,
      "ip_per_gs": 5.7,
      "hr9": 1.47,
-     "qualified": true
+     "qualified": true,
+     "war": 1.6
     },
     {
      "mlbam": 621244,
@@ -17810,7 +18728,8 @@
      "gb_pct": 0.4777,
      "ip_per_gs": 5.53,
      "hr9": 1.41,
-     "qualified": true
+     "qualified": true,
+     "war": 1.2
     },
     {
      "mlbam": 543294,
@@ -17831,7 +18750,8 @@
      "gb_pct": 0.4372,
      "ip_per_gs": 5.31,
      "hr9": 1.37,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 663436,
@@ -17852,7 +18772,8 @@
      "gb_pct": 0.5163,
      "ip_per_gs": 5.71,
      "hr9": 1.26,
-     "qualified": true
+     "qualified": true,
+     "war": 0.9
     },
     {
      "mlbam": 677958,
@@ -17873,7 +18794,8 @@
      "gb_pct": 0.5789,
      "ip_per_gs": 4.6,
      "hr9": 1.54,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 641927,
@@ -17894,7 +18816,8 @@
      "gb_pct": 0.3333,
      "ip_per_gs": 5.42,
      "hr9": 1.85,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 685299,
@@ -17915,7 +18838,8 @@
      "gb_pct": 0.434,
      "ip_per_gs": 5.02,
      "hr9": 1.91,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 641793,
@@ -17936,7 +18860,8 @@
      "gb_pct": 0.4383,
      "ip_per_gs": 5.83,
      "hr9": 1.74,
-     "qualified": true
+     "qualified": true,
+     "war": 0.6
     },
     {
      "mlbam": 672456,
@@ -17957,7 +18882,8 @@
      "gb_pct": 0.4603,
      "ip_per_gs": 7.56,
      "hr9": 1.59,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 661563,
@@ -17978,7 +18904,8 @@
      "gb_pct": 0.3361,
      "ip_per_gs": 5.18,
      "hr9": 0.79,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 669467,
@@ -17999,7 +18926,8 @@
      "gb_pct": 0.6804,
      "ip_per_gs": 5.25,
      "hr9": 1.16,
-     "qualified": true
+     "qualified": true,
+     "war": 0.5
     },
     {
      "mlbam": 669920,
@@ -18020,7 +18948,8 @@
      "gb_pct": 0.5185,
      "ip_per_gs": 5.95,
      "hr9": 1.75,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 680732,
@@ -18041,7 +18970,8 @@
      "gb_pct": 0.3969,
      "ip_per_gs": 6.11,
      "hr9": 1.54,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 669160,
@@ -18062,7 +18992,8 @@
      "gb_pct": 0.4866,
      "ip_per_gs": 5.75,
      "hr9": 1.43,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 500779,
@@ -18083,7 +19014,8 @@
      "gb_pct": 0.476,
      "ip_per_gs": 5.49,
      "hr9": 1.23,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 663559,
@@ -18104,7 +19036,8 @@
      "gb_pct": 0.4036,
      "ip_per_gs": 5.22,
      "hr9": 1.36,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 663978,
@@ -18125,7 +19058,8 @@
      "gb_pct": 0.4261,
      "ip_per_gs": 5.64,
      "hr9": 1.77,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 450203,
@@ -18146,7 +19080,8 @@
      "gb_pct": 0.517,
      "ip_per_gs": 5.26,
      "hr9": 1.46,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 676467,
@@ -18167,7 +19102,8 @@
      "gb_pct": 0.3661,
      "ip_per_gs": 6.14,
      "hr9": 2.2,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 688138,
@@ -18188,7 +19124,8 @@
      "gb_pct": 0.454,
      "ip_per_gs": 5.42,
      "hr9": 1.44,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 687064,
@@ -18209,7 +19146,8 @@
      "gb_pct": 0.525,
      "ip_per_gs": 4.81,
      "hr9": 1.87,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 607625,
@@ -18230,7 +19168,8 @@
      "gb_pct": 0.4349,
      "ip_per_gs": 5.59,
      "hr9": 1.67,
-     "qualified": true
+     "qualified": true,
+     "war": -0.2
     },
     {
      "mlbam": 682243,
@@ -18251,7 +19190,8 @@
      "gb_pct": 0.4545,
      "ip_per_gs": 5.02,
      "hr9": 1.69,
-     "qualified": true
+     "qualified": true,
+     "war": -0.4
     },
     {
      "mlbam": 676106,
@@ -18272,7 +19212,8 @@
      "gb_pct": 0.526,
      "ip_per_gs": 5.62,
      "hr9": 1.5,
-     "qualified": true
+     "qualified": true,
+     "war": -0.4
     },
     {
      "mlbam": 690916,
@@ -18293,7 +19234,8 @@
      "gb_pct": 0.4505,
      "ip_per_gs": 4.5,
      "hr9": 2.2,
-     "qualified": true
+     "qualified": true,
+     "war": -0.5
     },
     {
      "mlbam": 676664,
@@ -18314,7 +19256,8 @@
      "gb_pct": 0.3523,
      "ip_per_gs": 5.02,
      "hr9": 1.99,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 571945,
@@ -18335,7 +19278,8 @@
      "gb_pct": 0.4528,
      "ip_per_gs": 5.04,
      "hr9": 1.67,
-     "qualified": true
+     "qualified": true,
+     "war": -0.3
     },
     {
      "mlbam": 681190,
@@ -18356,7 +19300,8 @@
      "gb_pct": 0.4026,
      "ip_per_gs": 5.14,
      "hr9": 1.08,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 695549,
@@ -18377,7 +19322,8 @@
      "gb_pct": 0.4327,
      "ip_per_gs": 4.9,
      "hr9": 1.29,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 686563,
@@ -18398,7 +19344,8 @@
      "gb_pct": 0.4018,
      "ip_per_gs": 6.1,
      "hr9": 1.65,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 592836,
@@ -18419,7 +19366,8 @@
      "gb_pct": 0.5073,
      "ip_per_gs": 5.89,
      "hr9": 1.53,
-     "qualified": true
+     "qualified": true,
+     "war": 0.1
     },
     {
      "mlbam": 615698,
@@ -18440,7 +19388,8 @@
      "gb_pct": 0.381,
      "ip_per_gs": 4.53,
      "hr9": 1.68,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 680730,
@@ -18461,7 +19410,8 @@
      "gb_pct": 0.3953,
      "ip_per_gs": 5.49,
      "hr9": 1.37,
-     "qualified": true
+     "qualified": true,
+     "war": -0.1
     },
     {
      "mlbam": 621107,
@@ -18482,7 +19432,8 @@
      "gb_pct": 0.5128,
      "ip_per_gs": 5.1,
      "hr9": 2.27,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 608372,
@@ -18503,7 +19454,8 @@
      "gb_pct": 0.4403,
      "ip_per_gs": 5.23,
      "hr9": 1.89,
-     "qualified": true
+     "qualified": true,
+     "war": -1.0
     },
     {
      "mlbam": 607200,
@@ -18524,7 +19476,8 @@
      "gb_pct": 0.4675,
      "ip_per_gs": 5.88,
      "hr9": 1.21,
-     "qualified": true
+     "qualified": true,
+     "war": -0.5
     },
     {
      "mlbam": 801403,
@@ -18545,7 +19498,8 @@
      "gb_pct": 0.4826,
      "ip_per_gs": 4.67,
      "hr9": 1.65,
-     "qualified": true
+     "qualified": true,
+     "war": 0.2
     },
     {
      "mlbam": 621121,
@@ -18566,7 +19520,8 @@
      "gb_pct": 0.5429,
      "ip_per_gs": 4.26,
      "hr9": 1.63,
-     "qualified": true
+     "qualified": true,
+     "war": -0.4
     },
     {
      "mlbam": 571760,
@@ -18587,7 +19542,8 @@
      "gb_pct": 0.4559,
      "ip_per_gs": 5.32,
      "hr9": 1.84,
-     "qualified": true
+     "qualified": true,
+     "war": -0.7
     },
     {
      "mlbam": 542881,
@@ -18608,7 +19564,8 @@
      "gb_pct": 0.35,
      "ip_per_gs": 5.24,
      "hr9": 1.85,
-     "qualified": true
+     "qualified": true,
+     "war": -0.9
     },
     {
      "mlbam": 608566,
@@ -18629,7 +19586,8 @@
      "gb_pct": 0.419,
      "ip_per_gs": 4.86,
      "hr9": 1.64,
-     "qualified": true
+     "qualified": true,
+     "war": 0.4
     },
     {
      "mlbam": 663623,
@@ -18650,7 +19608,8 @@
      "gb_pct": 0.4875,
      "ip_per_gs": 5.45,
      "hr9": 1.9,
-     "qualified": true
+     "qualified": true,
+     "war": -1.5
     },
     {
      "mlbam": 622608,
@@ -18671,7 +19630,8 @@
      "gb_pct": 0.532,
      "ip_per_gs": 5.65,
      "hr9": 1.52,
-     "qualified": true
+     "qualified": true,
+     "war": 0.3
     },
     {
      "mlbam": 621111,
@@ -18692,7 +19652,8 @@
      "gb_pct": 0.4852,
      "ip_per_gs": 5.25,
      "hr9": 1.57,
-     "qualified": true
+     "qualified": true,
+     "war": -0.9
     },
     {
      "mlbam": 596295,
@@ -18713,7 +19674,8 @@
      "gb_pct": 0.3913,
      "ip_per_gs": 4.81,
      "hr9": 2.5,
-     "qualified": true
+     "qualified": true,
+     "war": -0.5
     },
     {
      "mlbam": 670102,
@@ -18734,7 +19696,8 @@
      "gb_pct": 0.3923,
      "ip_per_gs": 4.57,
      "hr9": 2.67,
-     "qualified": true
+     "qualified": true,
+     "war": -1.2
     },
     {
      "mlbam": 686799,
@@ -18755,7 +19718,8 @@
      "gb_pct": 0.59,
      "ip_per_gs": 4.83,
      "hr9": 1.7,
-     "qualified": true
+     "qualified": true,
+     "war": -1.2
     },
     {
      "mlbam": 687134,
@@ -18776,7 +19740,8 @@
      "gb_pct": 0.4453,
      "ip_per_gs": 4.89,
      "hr9": 2.61,
-     "qualified": true
+     "qualified": true,
+     "war": -0.8
     }
    ]
   }
