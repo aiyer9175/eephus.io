@@ -173,9 +173,27 @@ def fetch_lineups(day: str, *, game_type: str = "R", use_cache: bool = True) -> 
     posts its card, and returns nothing at all before that. Both halves of that
     sentence are the feature: a posted lineup is a fact about tonight, and an
     unposted one has to stay absent rather than be filled in with whoever
-    started yesterday. Verified 2026-08-07 against the boxscore `battingOrder`
-    field for game 824804: the array order and the batting order agree exactly,
-    which is the only reason a bare index is safe to publish as a lineup spot.
+    started yesterday. Verified on game 824804 (2026-08-07, re-checked
+    2026-09-17): the posted card is the nine that STARTED, in the order they
+    batted, on both sides. That is the reason a bare index is safe to publish
+    as a lineup spot.
+
+    WHAT THAT CHECK IS NOT, corrected 2026-09-17 (docs/diamond-betting.md 5j).
+    The sentence above used to say the card was checked against the completed
+    feed's `boxscore.teams[side].battingOrder` ARRAY and agreed with it. It
+    does not agree, and on game 824804 it never did: that array holds the
+    CURRENT occupant of each slot when the feed was written, substitutes
+    included. It differs from the nine who started on 3,464 of the
+    4,394 sides in R4 count A's 2,197 cached feeds (78.8%, 2026-09-11), and on
+    824804 by three home slots and one away slot, while the posted card matched
+    the starters exactly on both sides. The nine who started are the players
+    whose OWN `battingOrder` code ends in `00` (100 to 900), and the reader for
+    them is `tools/betting_lineup_job.starting_nine` (a 5j capture module: read
+    it for the rule, do not import it, because phase 1 is dark and
+    test_betting_lineup_job.py holds the line that nothing else in the tree
+    imports the job). Nothing in this module reads a completed feed at all; the
+    correction is recorded here so the verified claim above is never carried
+    over to a caller that does.
 
     Coverage is LOW by construction and that is not a bug. Measured on
     2026-08-07 at 14:40 ET: 1 of 15 games had a lineup posted for that night, 0

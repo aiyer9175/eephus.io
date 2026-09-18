@@ -6436,6 +6436,7 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                           "betting_model.build_game_cache() on a box that has "
                           ".cache/game_feeds")
         result["vintage"] = _empty_vintage_block(cov, len(games))
+        result["starter_basis"] = _starter_basis(games)
         result["benchmarks"] = {"status": "no data",
                                 "claim_rule": BENCHMARK_CLAIM_RULE}
         result["min_edge_gate"] = min_edge_gate(result["vintage"])
@@ -6588,6 +6589,11 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
 
     # --- mode 2: vintage --------------------------------------------------
     result["vintage"] = _grade_vintage(games, cov, _grade, log_fn=log_fn)
+
+    # --- who the backtest's starter was (plan repair 5) -------------------
+    # A disclosure, not a gate and not a feature: it changes no price, no
+    # coefficient and no gate, and nothing served reads it.
+    result["starter_basis"] = _starter_basis(games)
 
     # --- the B5 calibration gate (section 11b) ----------------------------
     # Lives inside this artifact for the same reason the dispersion gate does:
@@ -6905,6 +6911,122 @@ def _feature_basis(rstats: dict, gradable: list[dict], eval_games: list[dict]) -
                    "served reads these columns; a null is never filled from live "
                    "files")
     return out
+
+
+def _starter_basis(games: list[dict]) -> dict:
+    """WHICH STARTER THE BACKTEST PRICED. It is not the one the board priced.
+
+    Every completed-game row carries the probable the FINAL feed names, and it
+    reaches the row through one of TWO doors. The one-time feed walk in
+    `build_game_cache` reads `gameData.probablePitchers`. The routine top-up
+    (`_topup_game_cache` -> `fetch_finals` -> `_row_from_schedule`) reads the
+    StatsAPI schedule's `teams[side].probablePitcher` and overwrites the row by
+    game_pk on every refresh. Those are two different objects, so their
+    agreement is a MEASUREMENT and not a definition: on 2026-09-17 the stored
+    rows equalled the cached feed's field on 4,576 of 4,576 sides, over all
+    2,288 completed games in the cache, none of them missing a feed. R4's own
+    count A ran on the FEEDS: over the 2,197 cached feeds of the 2,200
+    completed games on 2026-09-11, that field equalled the first pitcher
+    actually used on 4,385 of the 4,392 sides where both are known, 7 differ,
+    and 2 further sides of the 4,394 carry no probable at all.
+
+    The served 03:10 ET board prices the probable LISTED THE NIGHT BEFORE, and
+    the board's own lead falls in R4 count C's 12 to 24 hour bucket: of 200
+    sides whose last pregame capture sat that far out, 14 were TBD and 8 of the
+    remaining 186 did not start. The worst bucket is worse (26 of 418 announced
+    sides at 24 hours or more) and the tightest is far better (1 of 470 inside
+    six hours).
+
+    NOT A LEAK. AN INFORMATION DIFFERENCE, AND A READER IS OWED IT. Who starts
+    is settled before the first pitch, so no outcome of a graded game reaches
+    this field and the vintage mode's dating rule is untouched by it. What it
+    means is that the graded pricer holds a starter the served pricer does not
+    always have, which is one reason the two numbers are not the same
+    measurement. `tools/betting_lineup_job` captures the probable as it stood
+    before first pitch so that a later backtest can price the one the board
+    had; until that store fills, this block is the disclosure.
+
+    A COPY REPAIR THIS BLOCK MAKES OWED, and deliberately does not make. The
+    served sentence `betting_export.MODE_MEANING["vintage"]`, rendered on
+    /betting/ and repeated at `leaderboard_vintages.py:322-325`, says the
+    listed probable comes out of the vintage snapshot. The snapshot supplies
+    that probable's SEM+ ratings; his IDENTITY comes from the completed-game
+    row, which is exactly the difference this block documents. Nothing served
+    may move in the change that added this function, so the sentence is NAMED
+    here and repaired under the copy rules in its own step.
+
+    WHERE IT SITS, AND WHAT THAT DOES AND DOES NOT DECIDE. This artifact is
+    PUBLISHED: `deploy/data_exclude.txt` keeps `data/*_eval.json` in the rsync
+    set on purpose (the accountability surface), and `assets/betting.js`
+    fetches it as `AUX_URL.evald`. So this block SHIPS wherever it is put, and
+    placement decides RENDERING only. It sits at the top of the artifact rather
+    than inside `vintage` because `betting_export` copies the vintage block to
+    /betting/ verbatim (`BACKTEST_KEYS`), so writing it beside `park_basis` and
+    `feature_basis` would have changed the page in a step whose brief was that
+    nothing served moves. Whether the validation tab should carry this
+    qualifier beside the vintage Brier and the skill t is a live decision for
+    the copy step, and this placement does not settle it. The top is also where
+    the block belongs on the merits: it is a property of the completed-game
+    rows every mode here reads, not of the vintage window alone.
+
+    THE FROZEN RATE IS DATED AND ATTRIBUTED, AND ITS DENOMINATOR IS NOT
+    `counts`. `equals_first_pitcher_used` is R4's count over the archive as it
+    stood on 2026-09-11; recomputing it would mean opening every cached feed on
+    every run. `counts` is THIS run's rows and grows every night, so the two
+    are not comparable and the block says so in `denominator_note`. When the
+    capture store fills, the rate is recomputed against it and this block
+    retires."""
+    both = sum(1 for g in games if g.get("home_sp") and g.get("away_sp"))
+    neither = sum(1 for g in games
+                  if not g.get("home_sp") and not g.get("away_sp"))
+    return {
+        "source": "final feed probablePitchers",
+        "field": "completed_games.home_sp / away_sp",
+        "doors": {
+            "feed_walk": ("build_game_cache reads the feed's "
+                          "gameData.probablePitchers"),
+            "top_up": ("_row_from_schedule reads the schedule's "
+                       "teams[side].probablePitcher, and overwrites the row by "
+                       "game_pk on every refresh"),
+            "agreement": {"sides_compared": 4576, "differ": 0, "n_games": 2288,
+                          "games_without_a_cached_feed": 0,
+                          "measured_on": "2026-09-17",
+                          "source": ("the stored rows of "
+                                     ".cache/betting/completed_games.json "
+                                     "against the cached feeds in "
+                                     ".cache/game_feeds")},
+        },
+        "counts": {"n_games": len(games), "both_sides_named": both,
+                   "one_side_named": len(games) - both - neither,
+                   "neither_side_named": neither},
+        "equals_first_pitcher_used": {
+            "sides_total": 4394, "sides_compared": 4392, "equal": 4385,
+            "differ": 7, "sides_without_a_probable": 2,
+            "measured_on": "2026-09-11",
+            "source": ("R4 count A over the 2,197 cached feeds of the 2,200 "
+                       "completed games in the cache that day"),
+            "denominator_note": ("frozen, and NOT the counts block in this same "
+                                 "disclosure: counts is this run's rows and grows "
+                                 "every night, this rate is R4's archive as it "
+                                 "stood"),
+            "retires_when": ("the tools/betting_lineup_job capture store fills and "
+                             "the rate can be recomputed against the probable the "
+                             "board actually had"),
+        },
+        "served_board_reads": ("the probable listed at the nightly build, which is "
+                               "not this field"),
+        "copy_repair_owed": ('betting_export.MODE_MEANING["vintage"], rendered on '
+                             "/betting/, says the listed probable comes out of the "
+                             "vintage snapshot. The snapshot supplies his SEM+ "
+                             "ratings; his identity comes from the completed-game "
+                             "row. Named 2026-09-17, owed, to be repaired under the "
+                             "copy rules in its own step"),
+        "note": ("the backtest's starter is the FINAL feed's probable, so the graded "
+                 "pricer holds a starter the served board does not always have. Who "
+                 "starts is fixed before the first pitch, so this is a difference in "
+                 "information and not an outcome leak (plan 2026-09-11 repair 5; "
+                 "docs/diamond-betting.md 5j)"),
+    }
 
 
 # ---------------------------------------------------------------------------
