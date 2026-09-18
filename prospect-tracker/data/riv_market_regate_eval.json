@@ -1,0 +1,774 @@
+{
+ "generated_at": "2026-09-18",
+ "experiment": "RE-GATE 2 (B1)",
+ "gate_document": "docs/HEM_RIV_REGATE_GATE.md",
+ "pre_registered": "2026-09-18, frozen before any number in this artifact was computed",
+ "model": "riv_plus",
+ "what_riv_is_for": "RIV+ is a VALUE RECORD, not a forecaster: a leverage-weighted account of the wins a reliever actually added. It is therefore gated DESCRIPTIVELY, against what clubs paid, and the claim it carries is descriptive. Gating it as a forecaster would test a claim it never made.",
+ "shipped_eval_defects_addressed": [
+  "two different targets on two different scales (forward_stability_check)",
+  "a pass condition that rewards noise (riv_less_stable_than_rem)",
+  "no interval anywhere on the market comparison",
+  "a stored 0.02 constant used as a floor",
+  "identity by normalized name with no receipts",
+  "un-clustered rows although relievers sign in several winters",
+  "the eval scored riv_raw while the board serves the re-standardized composite, so pooled across winters they are not the same statistic"
+ ],
+ "seasons": [
+  2018,
+  2019,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "seed": 20260918,
+ "boot": 2000,
+ "fa_archive_vintage": {
+  "path": "data/fa_archive.json",
+  "git_blob_sha1": "7ee3ca5dcd866a43c243788eb3f09b4e33400374"
+ },
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "AAV of the signed contract (raw, pooled across winters)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "AAV of the signed contract (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "conventions": {
+  "v1": "iid paired resample over matched signings",
+  "v2": "player-clustered (all of a player's signings move together), SIGNING-WINTER stratified, because pay levels differ by winter",
+  "mde95": "derived in run as 1.645 * bootstrap sd of the gap; the hard-coded 0.02 slack is retired by this gate"
+ },
+ "B1_primary": {
+  "estimand": "rho(RIV+_served(walk year), AAV) - rho(REM+(walk year), AAV), one target, one scale, same matched rows",
+  "target": "the AAV of the free-agent contract signed in the winter following the walk year (raw dollars; Spearman, so the shipped log transform is a rank no-op and is labelled as one)",
+  "baseline": "REM+ (unrounded rem_plus_raw), named explicitly per the owner decision",
+  "primary": "RIV+_served: the per-season composite re-standardized on its own pool spread, as rem_plus.score_riv_plus ships it",
+  "n_matched_signings": 232,
+  "v1": {
+   "rho_primary": 0.5733,
+   "rho_baseline": 0.5665,
+   "gap_ci": {
+    "mean": 0.0052,
+    "lo95": -0.0953,
+    "hi95": 0.1086
+   },
+   "gap_sd_bootstrap": 0.0524,
+   "mde95_in_run": 0.0862,
+   "n_boot_draws": 2000,
+   "lo95_gt_0": false,
+   "hi95_lt_0": false
+  },
+  "v2": {
+   "rho_primary": 0.5733,
+   "rho_baseline": 0.5665,
+   "gap_ci": {
+    "mean": 0.0073,
+    "lo95": -0.0952,
+    "hi95": 0.0997
+   },
+   "gap_sd_bootstrap": 0.0498,
+   "mde95_in_run": 0.082,
+   "n_boot_draws": 2000,
+   "lo95_gt_0": false,
+   "hi95_lt_0": false
+  },
+  "sensitivities": {
+   "served_integers": {
+    "note": "the comparison a board reader actually makes: the served RIV+ integer against the served REM+ integer",
+    "v1": {
+     "rho_primary": 0.5734,
+     "rho_baseline": 0.5653,
+     "gap_ci": {
+      "mean": 0.0065,
+      "lo95": -0.0951,
+      "hi95": 0.1115
+     },
+     "gap_sd_bootstrap": 0.0526,
+     "mde95_in_run": 0.0865,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": false,
+     "hi95_lt_0": false
+    },
+    "v2": {
+     "rho_primary": 0.5734,
+     "rho_baseline": 0.5653,
+     "gap_ci": {
+      "mean": 0.0086,
+      "lo95": -0.0947,
+      "hi95": 0.1022
+     },
+     "gap_sd_bootstrap": 0.05,
+     "mde95_in_run": 0.0823,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": false,
+     "hi95_lt_0": false
+    }
+   },
+   "lab_riv_raw_no_restandardize": {
+    "note": "the statistic the SHIPPED eval scored (tools/rem_plus_lab riv_raw, the bare weighted z with no re-standardize). Pooled across winters it is not the same statistic as the served column; this cell is how much that matters here.",
+    "v1": {
+     "rho_primary": 0.5726,
+     "rho_baseline": 0.5665,
+     "gap_ci": {
+      "mean": 0.0045,
+      "lo95": -0.0959,
+      "hi95": 0.1071
+     },
+     "gap_sd_bootstrap": 0.0524,
+     "mde95_in_run": 0.0861,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": false,
+     "hi95_lt_0": false
+    },
+    "v2": {
+     "rho_primary": 0.5726,
+     "rho_baseline": 0.5665,
+     "gap_ci": {
+      "mean": 0.0065,
+      "lo95": -0.0954,
+      "hi95": 0.0989
+     },
+     "gap_sd_bootstrap": 0.0498,
+     "mde95_in_run": 0.0819,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": false,
+     "hi95_lt_0": false
+    }
+   },
+   "log_aav_is_a_rank_no_op": true
+  },
+  "decision_rule_trigger": {
+   "refuted_directionally_hi95_lt_0": false,
+   "refuted_on_resolution_lo95_le_minus_mde95": true,
+   "v1": {
+    "lo95": -0.0953,
+    "minus_mde95": -0.0862
+   },
+   "v2": {
+    "lo95": -0.0952,
+    "minus_mde95": -0.082
+   }
+  },
+  "rule_note_mis_specification_found_in_run": "RECORDED, not edited away. The pre-registered R2-5 middle band ('lo95 <= 0 but lo95 > -MDE95 under both conventions -> stays provisional') is unreachable for a gap centred near zero, and the algebra is one line: lo95 is the 2.5th percentile of the gap draws, roughly mean - 1.96*sd, while -MDE95 is -1.645*sd, so lo95 > -MDE95 requires mean > 0.315*sd. A dead-centre null therefore lands in the REFUTED row rather than the not-separable row. This run is exactly that case (gap mean 0.099 sd). The rule is applied as written because it is harsher than its own stated intent and softening a pre-registered outcome after seeing it is forbidden; the mis-specification is carried here so the NEXT re-gate fixes the band rather than inheriting it. The reading that travels with the verdict is 'not shown to be better', never 'shown to be worse'."
+ },
+ "multiplicity": {
+  "family": "one primary test, B1, so k = 1 and Holm is the identity; declared anyway so the family size is on the record",
+  "holm": {
+   "v1": {
+    "k": 1,
+    "alpha": 0.05,
+    "procedure": "Holm step-down, one-sided on |delta|/sd",
+    "bonferroni_z_one_sided": 1.6449,
+    "reduction_check": {
+     "z_at_0.05": 1.6449,
+     "z_at_0.0125": 2.2414,
+     "matches_Z95_ONE": true,
+     "matches_Z_BONF4_ONE": true
+    },
+    "note": "uniformly more powerful than Bonferroni and valid under arbitrary dependence. Step 1 uses alpha/k, so a family where nothing clears Bonferroni also clears nothing here.",
+    "cells": [
+     {
+      "key": "B1_riv_plus",
+      "delta": 0.00517,
+      "sd": 0.05242,
+      "abs_t": 0.099,
+      "p_one_sided": 0.46068,
+      "holm_step": 1,
+      "holm_alpha": 0.05,
+      "holm_z_one_sided": 1.6449,
+      "mde95_holm_k1": 0.0862,
+      "clears_own_holm_step": false,
+      "reject_holm": false
+     }
+    ]
+   },
+   "v2": {
+    "k": 1,
+    "alpha": 0.05,
+    "procedure": "Holm step-down, one-sided on |delta|/sd",
+    "bonferroni_z_one_sided": 1.6449,
+    "reduction_check": {
+     "z_at_0.05": 1.6449,
+     "z_at_0.0125": 2.2414,
+     "matches_Z95_ONE": true,
+     "matches_Z_BONF4_ONE": true
+    },
+    "note": "uniformly more powerful than Bonferroni and valid under arbitrary dependence. Step 1 uses alpha/k, so a family where nothing clears Bonferroni also clears nothing here.",
+    "cells": [
+     {
+      "key": "B1_riv_plus",
+      "delta": 0.0073,
+      "sd": 0.04983,
+      "abs_t": 0.146,
+      "p_one_sided": 0.44177,
+      "holm_step": 1,
+      "holm_alpha": 0.05,
+      "holm_z_one_sided": 1.6449,
+      "mde95_holm_k1": 0.082,
+      "clears_own_holm_step": false,
+      "reject_holm": false
+     }
+    ]
+   }
+  },
+  "outside_the_family_by_declaration": [
+   "the R2-7 disclosure leg",
+   "the served-integer sensitivity",
+   "the lab riv_raw sensitivity",
+   "every coverage figure"
+  ]
+ },
+ "disclosure_repeatability_leg": {
+  "verdict_weight": "ZERO, by declaration (gate R2-7)",
+  "interpretation_fixed_in_advance": "If REM+ beats RIV+ at forecasting next-year RIV+, that CONFIRMS RIV+ carries a large non-repeatable deployment and sequencing component, which is consistent with the two-number design and is NOT a failure under the descriptive frame. It does, however, FORBID any forward reading of the RIV+ column, and the glossary and column copy must say so (a display consequence). If RIV+ were to BEAT REM+ at forecasting next-year RIV+, the premise of the two-number design would be wrong and a re-design question would open; it still would not pass this gate, because this gate is the market leg.",
+  "results": {
+   "RIV+(Y+1)": {
+    "n_pairs": 878,
+    "question": "does REM+(Y) or RIV+(Y) predict RIV+(Y+1) better",
+    "gap_is": "rho(REM+) - rho(RIV+)",
+    "v1": {
+     "rho_primary": 0.2943,
+     "rho_baseline": 0.202,
+     "gap_ci": {
+      "mean": 0.0926,
+      "lo95": 0.0422,
+      "hi95": 0.1484
+     },
+     "gap_sd_bootstrap": 0.0278,
+     "mde95_in_run": 0.0457,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": true,
+     "hi95_lt_0": false
+    },
+    "v2": {
+     "rho_primary": 0.2958,
+     "rho_baseline": 0.203,
+     "gap_ci": {
+      "mean": 0.0933,
+      "lo95": 0.0371,
+      "hi95": 0.1469
+     },
+     "gap_sd_bootstrap": 0.0284,
+     "mde95_in_run": 0.0467,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": true,
+     "hi95_lt_0": false
+    }
+   },
+   "REM+(Y+1)": {
+    "n_pairs": 878,
+    "question": "does REM+(Y) or RIV+(Y) predict REM+(Y+1) better",
+    "gap_is": "rho(REM+) - rho(RIV+)",
+    "v1": {
+     "rho_primary": 0.3601,
+     "rho_baseline": 0.1847,
+     "gap_ci": {
+      "mean": 0.1753,
+      "lo95": 0.1176,
+      "hi95": 0.2339
+     },
+     "gap_sd_bootstrap": 0.0295,
+     "mde95_in_run": 0.0485,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": true,
+     "hi95_lt_0": false
+    },
+    "v2": {
+     "rho_primary": 0.3624,
+     "rho_baseline": 0.1859,
+     "gap_ci": {
+      "mean": 0.1764,
+      "lo95": 0.1207,
+      "hi95": 0.233
+     },
+     "gap_sd_bootstrap": 0.0288,
+     "mde95_in_run": 0.0473,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": true,
+     "hi95_lt_0": false
+    }
+   }
+  }
+ },
+ "coverage": {
+  "note": "Coverage is reported separately and is NEVER used to explain a gap. Identity resolution is the binding constraint on this pair set, so it is reported, never assumed.",
+  "n_rp_signings_with_aav_in_archive": 573,
+  "n_matched": 232,
+  "matched_by_identity_method": {
+   "canonical_mlbam": 226,
+   "normalized_name": 6
+  },
+  "canonical_identity_path_available": true,
+  "drops_by_reason": {
+   "no_pool_for_walk_year": 232,
+   "identity_unresolved": 68,
+   "walk_year_tbf_below_floor": 41
+  },
+  "n_unmatched_signings": 68,
+  "unmatched_signings": [
+   {
+    "winter": 2019,
+    "name": "Derek Holland",
+    "key": "derek_holland",
+    "pos": "RP"
+   },
+   {
+    "winter": 2019,
+    "name": "Trevor Rosenthal",
+    "key": "trevor_rosenthal",
+    "pos": "RP"
+   },
+   {
+    "winter": 2019,
+    "name": "Matt Moore",
+    "key": "matt_moore",
+    "pos": "RP/SU7"
+   },
+   {
+    "winter": 2019,
+    "name": "David Phelps",
+    "key": "david_phelps",
+    "pos": "RP"
+   },
+   {
+    "winter": 2019,
+    "name": "Shelby Miller",
+    "key": "shelby_miller",
+    "pos": "RP/SU7"
+   },
+   {
+    "winter": 2019,
+    "name": "Drew Pomeranz",
+    "key": "drew_pomeranz",
+    "pos": "RP"
+   },
+   {
+    "winter": 2019,
+    "name": "Jeremy Hellickson",
+    "key": "jeremy_hellickson",
+    "pos": "RP"
+   },
+   {
+    "winter": 2019,
+    "name": "Kendall Graveman",
+    "key": "kendall_graveman",
+    "pos": "RP/CL"
+   },
+   {
+    "winter": 2020,
+    "name": "Drew Pomeranz",
+    "key": "drew_pomeranz",
+    "pos": "RP"
+   },
+   {
+    "winter": 2020,
+    "name": "Joely Rodriguez",
+    "key": "joely_rodriguez",
+    "pos": "RP"
+   },
+   {
+    "winter": 2020,
+    "name": "Pierce Johnson",
+    "key": "pierce_johnson",
+    "pos": "RP/SU8"
+   },
+   {
+    "winter": 2020,
+    "name": "Kendall Graveman",
+    "key": "kendall_graveman",
+    "pos": "RP/CL"
+   },
+   {
+    "winter": 2020,
+    "name": "Jimmy Nelson",
+    "key": "jimmy_nelson",
+    "pos": "RP"
+   },
+   {
+    "winter": 2020,
+    "name": "Rafael Dolis",
+    "key": "rafael_dolis",
+    "pos": "RP"
+   },
+   {
+    "winter": 2020,
+    "name": "C.J. Edwards",
+    "key": "cj_edwards",
+    "pos": "RP/SU7"
+   },
+   {
+    "winter": 2020,
+    "name": "Collin McHugh",
+    "key": "collin_mchugh",
+    "pos": "RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Nick Martinez",
+    "key": "nick_martinez",
+    "pos": "RP/RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Robert Suarez",
+    "key": "robert_suarez",
+    "pos": "RP/RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Corey Knebel",
+    "key": "corey_knebel",
+    "pos": "RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Collin McHugh",
+    "key": "collin_mchugh",
+    "pos": "RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Kirby Yates",
+    "key": "kirby_yates",
+    "pos": "RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Drew VerHagen",
+    "key": "drew_verhagen",
+    "pos": "RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Trevor Rosenthal",
+    "key": "trevor_rosenthal",
+    "pos": "RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Matt Strahm",
+    "key": "matt_strahm",
+    "pos": "RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Chad Kuhl",
+    "key": "chad_kuhl",
+    "pos": "RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Jake Junis",
+    "key": "jake_junis",
+    "pos": "RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Tyler Thornburg",
+    "key": "tyler_thornburg",
+    "pos": "RP"
+   },
+   {
+    "winter": 2022,
+    "name": "Trevor Gott",
+    "key": "trevor_gott",
+    "pos": "RP/SU7"
+   },
+   {
+    "winter": 2023,
+    "name": "Trevor Williams",
+    "key": "trevor_williams",
+    "pos": "RP"
+   },
+   {
+    "winter": 2023,
+    "name": "Luke Jackson",
+    "key": "luke_jackson",
+    "pos": "RP/RF"
+   },
+   {
+    "winter": 2023,
+    "name": "Scott McGough",
+    "key": "scott_mcgough",
+    "pos": "RP/SU8"
+   },
+   {
+    "winter": 2023,
+    "name": "Shintaro Fujinami",
+    "key": "shintaro_fujinami",
+    "pos": "RP"
+   },
+   {
+    "winter": 2023,
+    "name": "Jimmy Nelson",
+    "key": "jimmy_nelson",
+    "pos": "RP"
+   },
+   {
+    "winter": 2023,
+    "name": "Alex Reyes",
+    "key": "alex_reyes",
+    "pos": "RP"
+   },
+   {
+    "winter": 2023,
+    "name": "Nick Anderson",
+    "key": "nick_anderson",
+    "pos": "RP/SU8"
+   },
+   {
+    "winter": 2024,
+    "name": "Yuki Matsui",
+    "key": "yuki_matsui",
+    "pos": "RP"
+   },
+   {
+    "winter": 2024,
+    "name": "Nick Martinez",
+    "key": "nick_martinez",
+    "pos": "RP/RP"
+   },
+   {
+    "winter": 2024,
+    "name": "John Brebbia",
+    "key": "john_brebbia",
+    "pos": "RP/SU8"
+   },
+   {
+    "winter": 2024,
+    "name": "Woo-Suk Go",
+    "key": "woosuk_go",
+    "pos": "RP"
+   },
+   {
+    "winter": 2024,
+    "name": "Shintaro Fujinami",
+    "key": "shintaro_fujinami",
+    "pos": "RP"
+   },
+   {
+    "winter": 2024,
+    "name": "Scott Alexander",
+    "key": "scott_alexander",
+    "pos": "RP"
+   },
+   {
+    "winter": 2024,
+    "name": "Chris Flexen",
+    "key": "chris_flexen",
+    "pos": "RP/SP"
+   },
+   {
+    "winter": 2024,
+    "name": "Dakota Hudson",
+    "key": "dakota_hudson",
+    "pos": "RP"
+   },
+   {
+    "winter": 2024,
+    "name": "Lou Trivino",
+    "key": "lou_trivino",
+    "pos": "RP"
+   },
+   {
+    "winter": 2025,
+    "name": "Nick Martinez",
+    "key": "nick_martinez",
+    "pos": "SP/RP"
+   },
+   {
+    "winter": 2025,
+    "name": "Jake Junis",
+    "key": "jake_junis",
+    "pos": "RP"
+   },
+   {
+    "winter": 2025,
+    "name": "Joe Ross",
+    "key": "joe_ross",
+    "pos": "RP"
+   },
+   {
+    "winter": 2025,
+    "name": "Shinnosuke Ogasawara",
+    "key": "shinnosuke_ogasawara",
+    "pos": "RP"
+   },
+   {
+    "winter": 2025,
+    "name": "Kendall Graveman",
+    "key": "kendall_graveman",
+    "pos": "RP/CL"
+   },
+   {
+    "winter": 2025,
+    "name": "Shawn Armstrong",
+    "key": "shawn_armstrong",
+    "pos": "RP"
+   },
+   {
+    "winter": 2025,
+    "name": "Bryse Wilson",
+    "key": "bryse_wilson",
+    "pos": "RP/SU7"
+   },
+   {
+    "winter": 2025,
+    "name": "Dylan Covey",
+    "key": "dylan_covey",
+    "pos": "RP"
+   },
+   {
+    "winter": 2025,
+    "name": "Tyler Alexander",
+    "key": "tyler_alexander",
+    "pos": "RP"
+   },
+   {
+    "winter": 2025,
+    "name": "Dan Altavilla",
+    "key": "dan_altavilla",
+    "pos": "RP"
+   },
+   {
+    "winter": 2025,
+    "name": "Corbin Martin",
+    "key": "corbin_martin",
+    "pos": "RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Nick Martinez",
+    "key": "nick_martinez",
+    "pos": "SP/RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Anthony Kay",
+    "key": "anthony_kay",
+    "pos": "RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Michael Soroka",
+    "key": "michael_soroka",
+    "pos": "RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Foster Griffin",
+    "key": "foster_griffin",
+    "pos": "RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Sean Newcomb",
+    "key": "sean_newcomb",
+    "pos": "RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Ryan Yarbrough",
+    "key": "ryan_yarbrough",
+    "pos": "RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Jason Foley",
+    "key": "jason_foley",
+    "pos": "RP/SU8"
+   },
+   {
+    "winter": 2026,
+    "name": "Paul Blackburn",
+    "key": "paul_blackburn",
+    "pos": "RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Sam Hentges",
+    "key": "sam_hentges",
+    "pos": "RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Keegan Thompson",
+    "key": "keegan_thompson",
+    "pos": "RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Kyle Hart",
+    "key": "kyle_hart",
+    "pos": "RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Jake Cousins",
+    "key": "jake_cousins",
+    "pos": "RP"
+   },
+   {
+    "winter": 2026,
+    "name": "Rowan Wick",
+    "key": "rowan_wick",
+    "pos": "RP"
+   }
+  ],
+  "normalized_name_collisions_in_pool_by_season": {
+   "2019": {
+    "javy_guerra": [
+     457915,
+     642770
+    ],
+    "austin_adams": [
+     613534,
+     542866
+    ]
+   },
+   "2021": {
+    "javy_guerra": [
+     642770,
+     457915
+    ]
+   }
+  },
+  "matched_n_by_winter": {
+   "2019": 28,
+   "2020": 24,
+   "2022": 38,
+   "2023": 27,
+   "2024": 33,
+   "2025": 40,
+   "2026": 42
+  },
+  "support_floor": 50
+ },
+ "retirements": [
+  "the hard-coded -0.02 slack at tools/rem_plus_lab.py is replaced by an in-run MDE95",
+  "riv_less_stable_than_rem is removed as a PASS condition, because a check that a number is noisier than its baseline can be passed by adding noise to it"
+ ],
+ "runtime_seconds": 36.3,
+ "verdict": {
+  "riv_plus": "deprecated",
+  "reason": "REFUTED ON RESOLUTION, and the direction must be said plainly so the row is not misread: the gap POINT ESTIMATE still favours RIV+ (0.5733 vs 0.5665, gap mean 0.0052), but its lower bound sits at or below the in-run MDE95, so the pre-registered rule fires. RIV+ is NOT shown to be worse than REM+; it is shown not to be BETTER, which is the only claim the row made. The published market edge (0.576 vs 0.508) does not survive one target, one scale, the walk-year sample floor and canonical identity: on this pair set REM+ reads 0.5665, not 0.508, and the edge collapses to a coin flip. Whether the column stays on the board is an open question for the display lane.",
+  "summary": "RE-GATE 2, B1 market alignment on 232 matched RP signings: RIV+_served vs AAV rho 0.5733, REM+ 0.5665; gap v1 {'mean': 0.0052, 'lo95': -0.0953, 'hi95': 0.1086} (MDE95 0.0862), gap v2 {'mean': 0.0073, 'lo95': -0.0952, 'hi95': 0.0997} (MDE95 0.082). Verdict deprecated. REFUTED ON RESOLUTION, and the direction must be said plainly so the row is not misread: the gap POINT ESTIMATE still favours RIV+ (0.5733 vs 0.5665, gap mean 0.0052), but its lower bound sits at or below the in-run MDE95, so the pre-registered rule fires. RIV+ is NOT shown to be worse than REM+; it is shown not to be BETTER, which is the only claim the row made. The published market edge (0.576 vs 0.508) does not survive one target, one scale, the walk-year sample floor and canonical identity: on this pair set REM+ reads 0.5665, not 0.508, and the edge collapses to a coin flip. Whether the column stays on the board is an open question for the display lane."
+ }
+}

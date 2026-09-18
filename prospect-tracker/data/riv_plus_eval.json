@@ -50,20 +50,23 @@
   "rem_plus_y_to_y1_rho": 0.3601,
   "riv_less_stable_than_rem": true,
   "note": "harness v2: unrounded riv_raw/rem_plus_raw, complete-season pairs only; the within-outcome-season z target convention does not apply (the target here is the next-year metric, already pool-standardized)",
-  "reading": "CONFIRMS the two-number design: RIV+ (realized impact) is less repeatable year to year than REM+ (skill), so leverage-weighted value stays a separate Impact column and never enters the skill scale"
+  "reading": "CONFIRMS the two-number design: RIV+ (realized impact) is less repeatable year to year than REM+ (skill), so leverage-weighted value stays a separate Impact column and never enters the skill scale",
+  "verdict_weight": "ZERO from 2026-09-18. RE-GATE 2 removed riv_less_stable_than_rem as a PASS condition: a check that a number is LESS repeatable than its baseline can be passed by ADDING NOISE to it, so it cannot be a merit condition. The contrast is still reported, as a disclosure. Its measured rhos below are unchanged."
  },
  "market_check_aav": {
   "n_signings_matched": 271,
   "rho_riv_vs_aav": 0.5775,
   "rho_rem_vs_aav": 0.5101,
   "predictors": "unrounded riv_raw / rem_plus_raw (harness v2)",
-  "reading": "RIV+ aligns with RP pay at least as well as REM+ (captures deployed value)"
+  "reading": "RIV+ aligns with RP pay at least as well as REM+ (captures deployed value)",
+  "superseded": "This block compares point rhos with NO interval, on normalized-name matches with no receipts, with no walk-year sample floor, and on riv_raw rather than the re-standardized composite the board serves. On the corrected pair set the REM+ baseline reads 0.5665 rather than 0.5101 and the edge is not separable from zero. See data/riv_market_regate_eval.json."
  },
  "checks": {
+  "riv_market_alignment_ok": false,
   "riv_less_stable_than_rem": true,
-  "riv_market_alignment_ok": true
+  "note": "riv_less_stable_than_rem is a DISCLOSURE with zero verdict weight from 2026-09-18, not a PASS clause. riv_market_alignment_ok is FALSE on the corrected pair set: see superseded_by."
  },
- "verdict": "Ships as a labeled realized-VALUE / Impact column (not a prediction). The two-number design holds: RIV+ captures deployed value (aligns with RP pay) while being less repeatable than the REM+ skill scale.",
+ "verdict": "SUPERSEDED 2026-09-18. The claim this artifact carried, that RIV+ tracks reliever pay at least as well as REM+, does not survive one target, one scale, a walk-year sample floor and canonical identity; the riv_plus registry row is DEPRECATED. RIV+ is not shown to be WORSE than REM+, it is shown not to be BETTER, and 'better than REM+' was the only claim it made. It remains a labeled realized-VALUE reading and never a prediction; the disclosure leg forbids any forward reading of the column. Authority: data/riv_market_regate_eval.json.",
  "proposed_values": {
   "season": 2026,
   "metric": "riv_plus",
@@ -2270,5 +2273,29 @@
    }
   }
  },
- "runtime_seconds": 359.0
+ "runtime_seconds": 359.0,
+ "superseded_by": {
+  "artifact": "data/riv_market_regate_eval.json",
+  "gate_document": "docs/HEM_RIV_REGATE_GATE.md",
+  "date": "2026-09-18",
+  "why": "RE-GATE 2 replaced this eval's descriptive-validity pair with ONE target on ONE scale and an explicit REM+ baseline. This artifact's MEASURED NUMBERS are unchanged and remain the reference for the year-to-year rank correlations; its CLAIMS do not survive.",
+  "verdict": "deprecated",
+  "market_gap_on_the_corrected_pair_set": {
+   "n_matched_signings": 232,
+   "rho_riv_served_vs_aav": 0.5733,
+   "rho_rem_plus_vs_aav": 0.5665,
+   "gap_ci_v1": {
+    "mean": 0.0052,
+    "lo95": -0.0953,
+    "hi95": 0.1086
+   },
+   "mde95_v1": 0.0862,
+   "gap_ci_v2": {
+    "mean": 0.0073,
+    "lo95": -0.0952,
+    "hi95": 0.0997
+   },
+   "mde95_v2": 0.082
+  }
+ }
 }

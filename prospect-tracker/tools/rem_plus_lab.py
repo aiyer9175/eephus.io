@@ -20,10 +20,18 @@ experiments (docs/audit-2026-07/AUDIT_FINDINGS.md, section "Wave B1"):
 
   X-R3  RIV+ (Reliever Impact Value): a 100-anchored realized-value index
         (WPA-primary, leverage-weighted SD-MD overlay). NEW additive column, so
-        the pre-registered checks are descriptive-validity (aligns with RP pay
-        at least as well as REM+; is LESS forward-stable than REM+, confirming
-        the two-number design) rather than a forward-skill ship gate.
+        the check is descriptive-validity: it aligns with RP pay at least as
+        well as REM+, against a margin DERIVED IN RUN.
         -> data/riv_plus_eval.json (+ proposed_values for the current pool).
+        RE-GATE 2 (docs/HEM_RIV_REGATE_GATE.md, 2026-09-18) retired two things
+        here: the hard-coded 0.02 market slack, replaced by an in-run MDE95, and
+        the "RIV+ is LESS forward-stable than REM+" clause as a PASS condition,
+        because a check that a number is noisier than its baseline can be passed
+        by adding noise. That contrast is now reported as a disclosure only. The
+        VERDICT AUTHORITY for the riv_plus row is
+        data/riv_market_regate_eval.json (tools/riv_market_regate_lab.py), which
+        reads the SERVED index, publishes identity receipts and clusters on
+        player with the signing winter as the stratum.
 
 HARNESS v2 (vs the 2026-07-07 run):
   - Y->Y+1 pairs whose OUTCOME season is incomplete are DROPPED (the 2025->2026
@@ -79,6 +87,9 @@ MIN_TBF_NEXT = 60
 BOOT = 2000
 SEED = 20260702
 INCUMBENT_FORWARD_RHO = 0.2363      # data/rem_plus_eval.json (the ship bar for X-R1)
+MDE_Z = 1.645                       # one-sided 95%; every floor here is derived
+                                    # in run (docs/EFV_GATE_STANDARD.md). RE-GATE 2
+                                    # retired the hard-coded 0.02 RIV+ market slack.
 
 # 3yr REM+ window is the trailing three seasons ending at the pool season.
 TAG_MIN_SEASONS = 2
@@ -118,6 +129,27 @@ def _std(xs, mu=None):
     if mu is None:
         mu = sum(xs) / len(xs)
     return (sum((x - mu) ** 2 for x in xs) / (len(xs) - 1)) ** 0.5
+
+
+def _iid_gap_draws(primary, baseline, tgt, boot: int, seed: int) -> list:
+    """The paired-gap bootstrap DRAWS (plh.iid_boot_gaps keeps only the summary).
+    The draw construction is identical to the harness - same single rng stream,
+    same rng.randrange(n) x n per rep - so plh.ci(draws) reproduces the harness
+    CI exactly; what this adds is the gap distribution's SD, which the in-run
+    MDE95 needs. Added by RE-GATE 2 (2026-09-18) to retire a stored constant."""
+    n = len(tgt)
+    rng = random.Random(seed)
+    out = []
+    for _ in range(boot):
+        samp = [rng.randrange(n) for _ in range(n)]
+        st = [tgt[i] for i in samp]
+        rp = plh.spearman([primary[i] for i in samp], st)
+        if rp is None:
+            continue
+        rb = plh.spearman([baseline[i] for i in samp], st)
+        if rb is not None:
+            out.append(rp - rb)
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -416,10 +448,12 @@ def run(write: bool = True) -> dict:
     # (2) market alignment: RIV+ vs REM+ correlation with RP AAV
     market = _riv_market_check(by_season)
 
+    # RETIRED AS A PASS CONDITION by RE-GATE 2 (docs/HEM_RIV_REGATE_GATE.md,
+    # 2026-09-18): a check that a number is LESS repeatable than its baseline can
+    # be passed by ADDING NOISE to it, so it cannot be a merit condition. It is
+    # still REPORTED, as a disclosure with zero verdict weight.
     riv_less_stable = bool(riv_stab is not None and rem_stab is not None and riv_stab < rem_stab)
-    riv_market_ok = bool(market.get("rho_riv_vs_aav") is not None
-                         and market.get("rho_rem_vs_aav") is not None
-                         and market["rho_riv_vs_aav"] >= market["rho_rem_vs_aav"] - 0.02)
+    riv_market_ok = bool(market.get("market_ok"))
 
     dur = round(time.time() - t0, 1)
     payloads = _build_payloads(
@@ -452,6 +486,21 @@ def run(write: bool = True) -> dict:
 
 
 def _riv_market_check(by_season: dict) -> dict:
+    """RIV+ vs REM+ against RP free-agent AAV.
+
+    RE-GATE 2 (docs/HEM_RIV_REGATE_GATE.md, 2026-09-18) RETIRED the hard-coded
+    `- 0.02` slack this function used as a floor. A literal is not a measured
+    resolution, and docs/EFV_GATE_STANDARD.md forbids reading a floor off a
+    stored constant. The margin is now DERIVED IN RUN as MDE95 = 1.645 * the
+    bootstrap sd of the PAIRED gap, and the gap carries an interval, which the
+    shipped point-rho-only version never did.
+
+    The verdict authority for the riv_plus row is
+    data/riv_market_regate_eval.json (tools/riv_market_regate_lab.py): it reads
+    the SERVED index (rem_plus.score_riv_plus re-standardizes the composite on
+    its own pool spread, which `riv_raw` here does not), publishes its identity
+    receipts, and clusters on player with the signing winter as the stratum.
+    This block stays as the lab's own companion read."""
     if not FA_ARCHIVE.exists():
         return {"note": "fa_archive.json absent"}
     arch = json.loads(FA_ARCHIVE.read_text(encoding="utf-8"))
@@ -477,14 +526,28 @@ def _riv_market_check(by_season: dict) -> dict:
         return {"note": "too few matched RP signings", "n": matched}
     r_riv = _spearman(riv, aav)
     r_rem = _spearman(rem, aav)
+    draws = _iid_gap_draws(riv, rem, aav, BOOT, SEED)
+    gap = plh.ci(draws)
+    sd = _std(draws)
+    mde95 = (MDE_Z * sd) if sd else None
+    ok = bool(gap and mde95 is not None and gap["lo95"] > -mde95)
     return {
         "n_signings_matched": matched,
         "rho_riv_vs_aav": _r4(r_riv),
         "rho_rem_vs_aav": _r4(r_rem),
+        "gap_ci_riv_minus_rem": gap,
+        "mde95_in_run": _r4(mde95),
+        "market_ok": ok,
         "predictors": "unrounded riv_raw / rem_plus_raw (harness v2)",
-        "reading": ("RIV+ aligns with RP pay at least as well as REM+ (captures deployed value)"
-                    if (r_riv or 0) >= (r_rem or 0) - 0.02 else
-                    "RIV+ aligns with pay less well than REM+"),
+        "floor": ("in-run MDE95 = 1.645 * bootstrap sd of the paired gap; the "
+                  "hard-coded 0.02 slack was retired by RE-GATE 2 on 2026-09-18"),
+        "reading": ("RIV+ aligns with RP pay at least as well as REM+ within the "
+                    "in-run resolution (captures deployed value)" if ok else
+                    "RIV+ aligns with pay LESS well than REM+ by more than the "
+                    "in-run resolution"),
+        "authority": ("data/riv_market_regate_eval.json is the verdict authority "
+                      "for riv_plus; this block is the lab's companion read on the "
+                      "un-restandardized riv_raw"),
     }
 
 
@@ -673,14 +736,22 @@ def _build_payloads(by_season, n1, dropped_partial, xr1, rho_inc, rho_cand,
                         "would need review before shipping RIV+ as a distinct impact metric"),
         },
         "market_check_aav": market,
-        "checks": {"riv_less_stable_than_rem": riv_less_stable,
-                   "riv_market_alignment_ok": riv_market_ok},
-        "verdict": ("Ships as a labeled realized-VALUE / Impact column (not a prediction). "
-                    "The two-number design holds: RIV+ captures deployed value (aligns with "
-                    "RP pay) while being less repeatable than the REM+ skill scale."
-                    if (riv_less_stable and riv_market_ok) else
-                    "REVIEW: one of the descriptive-validity checks did not hold on the "
-                    "corrected pair set; flag to owner before the Impact column claim is reused."),
+        "checks": {"riv_market_alignment_ok": riv_market_ok,
+                   "riv_less_stable_than_rem": riv_less_stable,
+                   "note": ("riv_less_stable_than_rem is a DISCLOSURE with zero verdict "
+                            "weight from 2026-09-18. It was a required PASS clause until "
+                            "RE-GATE 2 observed that a check rewarding a noisier number "
+                            "can be passed by adding noise. Only riv_market_alignment_ok "
+                            "is a merit condition here, and the verdict authority for the "
+                            "riv_plus row is data/riv_market_regate_eval.json.")},
+        "verdict": ("Market alignment holds within the in-run resolution; RIV+ reads as a "
+                    "labeled realized-VALUE / Impact column, never a prediction. The "
+                    "repeatability contrast is reported beside it as a disclosure, not as "
+                    "a pass."
+                    if riv_market_ok else
+                    "REVIEW: RIV+ aligns with RP pay LESS well than REM+ by more than the "
+                    "in-run resolution; flag to owner before the Impact column claim is "
+                    "reused."),
         "proposed_values": _riv_proposed(by_season),
     })
 
