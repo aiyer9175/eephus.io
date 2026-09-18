@@ -51,6 +51,11 @@ BOARD_FILES = ["bullpen_leaderboards.json", "starter_leaderboards.json", "hitter
 # eWAR cases skip on their own instead (_open would time out on a section that
 # renders the computing note and no table).
 WAR_FILE = "war_leaderboards.json"
+# The year-window artifacts (tools/mlbstats_window_lab.py, data/war_seasons.json
+# from war_board_export). Like the eWAR payload they land on a different commit
+# from this file, so the window cases skip on their own rather than failing a
+# machine that has not built them.
+WINDOW_FILES = ["mlbstats_windows.json", "war_seasons.json"]
 
 # (label, section, hash, qualified-only checkbox id or None)
 PAGES = [
@@ -73,7 +78,26 @@ PAGES = [
     # one that most needs the budget rule asserted on it.
     ("ewar players", "war", "section=war", "mlbstats-war-qual"),
     ("team ewar", "war", "section=war&wview=teams", None),
+    # A WINDOW is a board state with its own column array (an index column
+    # carries its span in the label, a count column is summed, several columns
+    # are gone), so the budget rule is measured on one per section rather than
+    # inferred from the season boards above.
+    ("overall 2023-2025", "war", "section=war&wyears=2023-2025", "mlbstats-war-qual"),
+    ("overall 2011-2026", "war", "section=war&wyears=2011-2026", None),
+    ("hitters last 3", "hitters", "section=hitters&hyears=2024-2026", None),
+    ("starters last 5", "starters", "section=starters&syears=2022-2026", None),
+    ("bullpen last 3", "bullpen", "section=bullpen&ryears=2024-2026", None),
+    ("defense last 3", "defense", "section=defense&dyears=2024-2026", None),
+    ("leverage last 3", "leverage", "section=leverage&lyears=2024-2026", None),
 ]
+# The five sections that carry a methodology fold and a Team note, which is what
+# the vertical-budget case below measures. Overall carries neither (spec 4.7
+# gives it a one-line explainer), and a window carries the window NOTE instead of
+# the fold, so the window states are measured by their own budget case below
+# rather than left out. Named rather than sliced: PAGES grew a window state per
+# section and a slice would have silently measured two of those instead.
+FOLD_PAGES = [p for p in PAGES if p[1] != "war" and "years=" not in p[2]][:5]
+WINDOW_PAGES = [p for p in PAGES if "years=" in p[2]]
 SIZES = [(390, 844), (768, 1024), (1024, 768), (1280, 800), (1440, 900)]
 ALL_FITS_FROM = 1263
 # The one Standard view that drops its eWAR column below 641px: Defense keeps
@@ -165,6 +189,14 @@ def _open(page, server, sec, hash_):
     page.goto("about:blank")
     page.goto(server + "mlbstats/#" + hash_, wait_until="load", timeout=60_000)
     page.wait_for_selector("#mlbstats-section-%s .mlbstats-table" % sec, timeout=30_000)
+    # A board can render before every artifact it reads has landed: the Overall
+    # board paints off war_leaderboards.json while war_seasons.json is still in
+    # flight, and that file adds two columns when it arrives. Measure the settled
+    # page, not the first paint.
+    try:
+        page.wait_for_load_state("networkidle", timeout=15_000)
+    except Exception:       # noqa: BLE001 - a busy page is still measurable
+        pass
     page.wait_for_timeout(200)
 
 
@@ -191,6 +223,8 @@ def test_every_board_and_view_fits_and_the_page_never_scrolls_sideways(browser, 
     try:
         for label, sec, hash_, qual in PAGES:
             if sec == "war" and not (ROOT / "data" / WAR_FILE).exists():
+                continue
+            if "years=" in hash_ and not all((ROOT / "data" / f).exists() for f in WINDOW_FILES):
                 continue
             if "season=" in hash_ and not (ROOT / "data" / (
                     {"bullpen": "bullpen", "starters": "starter", "hitters": "hitter",
@@ -224,7 +258,7 @@ def test_the_all_view_fits_a_1280_window_with_a_classic_scrollbar(browser, serve
     page = ctx.new_page()
     problems = []
     try:
-        for label, sec, hash_, _qual in PAGES[:4]:
+        for label, sec, hash_, _qual in FOLD_PAGES[:4]:
             _open(page, server, sec, hash_)
             alls = [v for v in page.evaluate(_VIEWS, sec) if v.endswith(":all")]
             assert alls, label
@@ -241,9 +275,16 @@ def test_the_all_view_fits_a_1280_window_with_a_classic_scrollbar(browser, serve
 def test_a_fitted_board_keeps_its_header_at_the_top_after_a_long_scroll(browser, server, size):
     ctx = _context(browser, *size)
     page = ctx.new_page()
+    pages = [("bullpen", "section=bullpen"), ("hitters", "section=hitters"),
+             # A window is the widest state the Overall board has (Yrs and Clubs
+             # join it), so the sticky header is measured there too.
+             ("war", "section=war&wyears=2023-2025")]
     try:
-        for sec in ("bullpen", "hitters"):
-            _open(page, server, sec, "section=" + sec)
+        for sec, hash_ in pages:
+            if sec == "war" and not all((ROOT / "data" / f).exists()
+                                        for f in [WAR_FILE] + WINDOW_FILES):
+                continue
+            _open(page, server, sec, hash_)
             r = page.evaluate(_STICKY, sec)
             assert r["fit"], (size, sec, "the Standard board should fit and lose its scroll box")
             assert r["scrolled"] > 0, (size, sec)
@@ -313,6 +354,82 @@ _VERTICAL = r"""
 """
 _TAP_FILTERS = "(sec) => document.querySelector('#mlbstats-section-' + sec + ' .mlbx-filtbtn').click()"
 
+# The window note, and the one control that must NOT be inside it.
+_WINNOTE = r"""
+(sec) => {
+  const root = document.getElementById('mlbstats-section-' + sec);
+  const note = root.querySelector('details.mlbstats-winnote');
+  const est = root.querySelector('.mlbx-est');
+  const idx = [...root.querySelectorAll('tbody .mlbstats-winidx')];
+  return {
+    note: !!note, open: note ? note.open : null,
+    h: note ? note.getBoundingClientRect().height : null,
+    est: !!est, est_h: est ? est.getBoundingClientRect().height : 0,
+    ruler: [...root.querySelectorAll('tbody [class*="vt-"]')].length,
+    idx: idx.length,
+    idx_classes: [...new Set(idx.map(s => s.className))],
+  };
+}
+"""
+# Measured on the served artifacts when the window boards landed (2026-09-17),
+# the WORST window state at each size: 3 rows on the first screen at 390x844
+# (Overall 2024-2026 and Bullpen Last 3, table top y 631), 7 at 768x1024
+# (Overall, y 568) and 9 at 1440x900 (Defense Last 3, y 554). The floors are the
+# measurement minus two, the same rule the season floors above are set by.
+# Before the note was closed by default the same boards measured ZERO rows at
+# 390 (table top y 781 to 802 on an 844px screen).
+WINDOW_FIRST_SCREEN_ROWS = {(1440, 900): 7, (768, 1024): 5, (390, 844): 1}
+
+
+@pytest.mark.parametrize("size", [(390, 844), (768, 1024), (1440, 900)], ids=["390x844", "768x1024", "1440x900"])
+def test_the_vertical_budget_on_a_window(browser, server, size):
+    """A window is a board state of its own: its note replaces the methodology
+    fold, its CSV file is named for the span, and its + index cells carry no
+    value ruler. The budget rule is measured HERE rather than assumed from the
+    season boards, because the note is the tallest thing this page paints and an
+    always-open one put every window board's first row below the fold."""
+    w, h = size
+    ctx = _context(browser, w, h)
+    page = ctx.new_page()
+    problems = []
+    try:
+        for label, sec, hash_, _qual in WINDOW_PAGES:
+            if not all((ROOT / "data" / f).exists() for f in WINDOW_FILES + [WAR_FILE]):
+                continue
+            _open(page, server, sec, hash_)
+            m = page.evaluate(_VERTICAL, sec)
+            n = page.evaluate(_WINNOTE, sec)
+            where = "%dpx %s" % (w, label)
+            if m["page_overflow"] > 0:
+                problems.append("%s: the page scrolls sideways by %dpx" % (where, m["page_overflow"]))
+            # The CSV file carries the span: the headers already do, and a file
+            # named for one season is the one string the reader keeps.
+            span = hash_.split("years=")[1].split("&")[0]
+            want = CSV_NAMES[sec] + "-" + span
+            if m["csv_name"] != want:
+                problems.append("%s: the CSV name is %r, not %r" % (where, m["csv_name"], want))
+            if not n["note"]:
+                problems.append("%s: no window note" % where)
+            elif n["open"]:
+                problems.append("%s: the window note is open (the season fold is closed)" % where)
+            elif n["h"] and n["h"] > 60:
+                problems.append("%s: the closed note is %dpx, not a line or two" % (where, n["h"]))
+            # Established-only changes which rows show, so it cannot be inside a
+            # closed note.
+            if n["est"] and not n["est_h"]:
+                problems.append("%s: the Established-only control is not visible" % where)
+            if n["idx"] and n["ruler"]:
+                problems.append("%s: a value ruler reached a window board" % where)
+            if n["idx"] and n["idx_classes"] != ["mlbstats-winidx"]:
+                problems.append("%s: a window index cell carries %r" % (where, n["idx_classes"]))
+            floor = WINDOW_FIRST_SCREEN_ROWS.get(size)
+            if floor and m["rows_first_screen"] < floor:
+                problems.append("%s: %d rows on the first screen (table top y %d), floor %d"
+                                % (where, m["rows_first_screen"], m["table_top"], floor))
+    finally:
+        ctx.close()
+    assert not problems, "\n".join(problems)
+
 
 @pytest.mark.parametrize("size", [(390, 844), (768, 1024), (1440, 900)], ids=["390x844", "768x1024", "1440x900"])
 def test_the_vertical_budget_on_every_section(browser, server, size):
@@ -321,7 +438,7 @@ def test_the_vertical_budget_on_every_section(browser, server, size):
     page = ctx.new_page()
     problems = []
     try:
-        for label, sec, hash_, _qual in PAGES[:5]:
+        for label, sec, hash_, _qual in FOLD_PAGES:
             _open(page, server, sec, hash_)
             page.wait_for_selector("#mlbstats-section-%s .eph-csv-bar" % sec, timeout=10_000)
             m = page.evaluate(_VERTICAL, sec)
@@ -434,7 +551,7 @@ def test_the_csv_control_and_an_opened_note_survive_a_rerender(browser, server):
     ctx = _context(browser, 1440, 900)
     page = ctx.new_page()
     try:
-        for label, sec, hash_, _qual in PAGES[:5]:
+        for label, sec, hash_, _qual in FOLD_PAGES:
             _open(page, server, sec, hash_)
             page.wait_for_selector("#mlbstats-section-%s .eph-csv-bar" % sec, timeout=10_000)
             page.evaluate(_OPEN_NOTE, sec)
@@ -481,8 +598,12 @@ def test_the_served_shell_opts_every_section_into_csv_with_short_nav_labels():
         assert ('<div id="mlbstats-%s-root" data-csv-export="%s">' % (rid, name)) in shell, (sec, "rerun build_site.py")
     labels = dict(re.findall(r'data-mlbsection="([a-z]+)"[^>]*>([^<]+)</button>', shell))
     for sec, label in {"bullpen": "Bullpen", "starters": "Starters", "hitters": "Hitters",
-                       "leverage": "Leverage", "defense": "Defense", "war": "eWAR"}.items():
+                       "leverage": "Leverage", "defense": "Defense", "war": "Overall"}.items():
         assert labels.get(sec) == label, (sec, labels, "rerun build_site.py")
-    # O1: Bullpen stays the landing board and eWAR is the LAST button, so no
-    # bare /mlbstats/ URL changes what it opens.
-    assert list(labels)[0] == "bullpen" and list(labels)[-1] == "war", list(labels)
+    # Owner decision 2026-09-17: Overall is first and is the landing section, in
+    # the SERVED shell as well as the builder. A shell that still marks Bullpen
+    # active paints the wrong tab over the board the script opens.
+    assert list(labels) == ["war", "hitters", "starters", "bullpen", "defense", "leverage"], list(labels)
+    assert 'class="mlbstats-sectionbtn active" data-mlbsection="war"' in shell, "rerun build_site.py"
+    assert '<div id="mlbstats-section-war" class="mlbstats-section" role="tabpanel" aria-label="Overall">' \
+        in shell, "rerun build_site.py"

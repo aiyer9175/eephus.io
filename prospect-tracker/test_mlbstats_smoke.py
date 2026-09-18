@@ -45,6 +45,15 @@ SAMPLE = """{
 
 
 def _prelude(hash_: str) -> str:
+    # THE BULLPEN BOARD IS NO LONGER WHAT A BARE URL OPENS. Overall is the
+    # landing section since 2026-09-17 and every section is lazy, including
+    # that one, so a harness that wants the bullpen root has to name its
+    # section - which is what the starter, hitter, leverage and defense
+    # preludes below have always done. A hash that already names a section is
+    # untouched, so #view=teams still reaches the Team Bullpens view.
+    if "section=" not in hash_:
+        rest = hash_.lstrip("#")
+        hash_ = "#section=bullpen" + ("&" + rest if rest else "")
     return f"""
     var __html={{}};
     function __el(id){{return new Proxy(function(){{return __el(id);}},{{
@@ -765,13 +774,16 @@ def test_leverage_starter_board_renders_via_view_hash():
     assert "undefined" not in html
 
 
-def test_leverage_board_has_season_pills():
-    # The yearly-history pills seed from the live season before the history file
-    # loads, so "Current" plus the five prior seasons are always offered.
+def test_leverage_board_has_a_years_control():
+    # The season pills are one control now (2026-09-17): Current, the windows
+    # the lab built for this board, and a from/to whose option list seeds from
+    # the live season before the history file loads, so every year the pills
+    # reached is still one click away.
     html = _render_leverage("#section=leverage")
-    assert "mlbstats-seasons" in html
-    assert 'data-leverageseason="current"' in html
-    assert 'data-leverageseason="2025"' in html
+    assert "mlbstats-seasons" in html and "mlbstats-range" in html
+    assert 'data-mlbrange="leverage:current"' in html
+    assert 'data-mlbrangesel="leverage:lo"' in html and 'data-mlbrangesel="leverage:hi"' in html
+    assert '<option value="2025"' in html
     assert "undefined" not in html
 
 
@@ -1016,10 +1028,11 @@ def test_defense_charts_render():
     assert "undefined" not in html
 
 
-def test_defense_season_pills_and_history_board():
+def test_defense_years_control_and_history_board():
     html = _render_defense("#section=defense")
-    assert 'data-defenseseason="current"' in html
-    assert 'data-defenseseason="2025"' in html
+    assert 'data-mlbrange="defense:current"' in html
+    assert 'data-mlbrangesel="defense:lo"' in html
+    assert '<option value="2025"' in html
     hist = _render_defense("#section=defense&dseason=2025")
     assert "Past Glove" in hist and "Past Catcher" in hist
     assert "2025 season, 2 qualified fielders" in hist

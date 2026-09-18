@@ -1725,7 +1725,35 @@
    "priority": 12,
    "definition": "The year by year salary a club controls a player at: contracted dollars where a contract exists, the league minimum for pre arbitration seasons, and the arbitration model's projected award for each arbitration year. Surplus is production value minus this path.",
    "methodology": "One path per player, read by the projections board, the player card and the Trade Machine, so the same player costs the same on every surface. Precedence per season: a guaranteed salary always wins; then the arbitration board's projected step; then the remaining arbitration years implied by the last class token on the board, chained through the same raise estimator the board serves. A season past the end of club control carries no price. Pre arbitration seasons are a CBA rule, not a prediction; arbitration seasons are a projection and are drawn with a dashed border.\n\nThe club's non tender option is priced on arbitration seasons only: if carrying a player for the rest of his arbitration years would cost more than he is worth, the club walks away at the last year that is still worth carrying, and the seasons after it read not tendered. That floor is applied on the expected projection path, which makes the published number a lower bound on the option's worth. A guaranteed contract has no such option, so a signed season can and does carry a negative surplus.\n\nThe salary band shown beside the surplus re prices the same WAR path at the two ends of the board's own award band. It is kept separate from the WAR band on purpose: the two errors move together, nothing here estimates how much, and the award band is not a calibrated interval. Measured, the salary band is about 1.9% of the WAR band at the median.\n\nOne rule overrides the board's own step: an arbitration award may not cut a player's salary by more than 20 percent (CBA Article VI). The board chains each award off the salary its arbitration panel knows about and cannot see an extension that pays more, so where the season before an arbitration year is a contracted one, the projected award is floored at 80 percent of the money the club is actually paying. That is a rule, not a prediction, and it is the only place this path departs from the number /arbitration/ publishes.",
-   "caveat": "Arbitration steps past 2026 assume the 2022 CBA structure survives; it expires 2026-12-01 and no interval covers that. Super Two cutoffs are unverified, and on most rows the class token is inferred rather than read from published service time. Where the board's grid ends on a pre arbitration season, or where no season of the window carries a salary to raise from, the control window is not established and the path is short; the row says so. Player opt outs inside a signed deal are shown but not priced, and the options file they come from is a hand kept supplement of six players, not a league wide inventory: a club option folded into a contract's yearly salaries is priced here as guaranteed money. The arbitration steps themselves sit below the awards the system has actually handed out, by about 1.3x at the median rung and with no star tail at all, which makes surplus on the best players too high rather than too low."
+   "caveat": "Arbitration steps past 2026 assume the 2022 CBA structure survives; it expires 2026-12-01 and no interval covers that. Super Two cutoffs are unverified, and on most rows the class token is inferred rather than read from published service time. Where the board's grid ends on a pre arbitration season, or where no season of the window carries a salary to raise from, the club control window is not established and the path is short; the row says so, and the board prints the year it does know as a floor rather than naming an end. Player opt outs inside a signed deal are shown but not priced, and the options file they come from is a hand kept supplement of six players, not a league wide inventory: a club option folded into a contract's yearly salaries is priced here as guaranteed money. The arbitration steps themselves sit below the awards the system has actually handed out, by about 1.3x at the median rung and with no star tail at all, which makes surplus on the best players too high rather than too low."
+  },
+  {
+   "id": "club_control_window",
+   "term": "Club control window",
+   "category": "mlb-rules",
+   "shelf": "foundation",
+   "module": [
+    "platform",
+    "projections",
+    "trademachine",
+    "arbitration"
+   ],
+   "aliases": [
+    "club control",
+    "control window",
+    "club control thru"
+   ],
+   "priority": 13,
+   "definition": "The seasons a club holds a player's rights: his guaranteed contract seasons, then his remaining pre arbitration seasons at the CBA league minimum, then his arbitration seasons at the projected award. It ends with his first free agency season.",
+   "methodology": "\"Guaranteed through 2026\" and \"club control through 2030\" are two different facts about the same player, and the board shows both: the guarantee is a signed deal and sits on the sub line, the seasons after it are projections and are drawn with a dashed border. The window is derived once, from the salary path, and copied into every payload, so the projections board, the player card and the Trade Machine cannot disagree about which season a club holds a player through.\n\nClub control is a RIGHT and not a commitment. Where the model projects the club declines to tender him, the window still runs to the last controlled season and the SURPLUS stops at the cut; the tooltip on those rows says so.\n\nWhere the published arbitration grid ends on a pre arbitration season the first arbitration season is unknown, so the board says \"through at least 2028\" and prints the year with a trailing plus rather than naming an end it cannot derive. Those rows are also the ones whose later seasons carry no price at all.\n\nDistinct from the 7-season valuation window used for prospect and eFV surplus, which starts at a projected ETA and prices a fixed ladder rather than a known one.",
+   "caveat": "A contract running past the five season projection horizon reads short here, because nothing past the horizon is priced: the window shown is the last season this platform prices, and for those rows it is the guarantee year that is the longer fact. A player option or an opt out inside a guaranteed deal can end the window EARLY, so on those rows the window shown is an upper bound: the option seasons are drawn on the salary path strip and named on the Trade Machine strip, and nothing here prices the choice. /arbitration/ publishes the ladder Spotrac lists and states no control end at all.",
+   "seeAlso": [
+    "salary_path",
+    "arbitration",
+    "service_time",
+    "pre_arbitration",
+    "surplus_value"
+   ]
   },
   {
    "id": "aav",
@@ -3921,7 +3949,7 @@
    ],
    "priority": 61,
    "definition": "Per-year dollar surplus on an org's graduates: current AAV minus the signing bonus amortized over a fixed six years.",
-   "methodology": "For each graduate with Spotrac contract data and a signing bonus on file: surplus per year = current AAV − (signing bonus ÷ 6). The divisor is a fixed 6 in this leaf, not the valuation set's 7-year control window. Averaged across qualifying graduates and z-anchored into the Value branch.",
+   "methodology": "For each graduate with Spotrac contract data and a signing bonus on file: surplus per year = current AAV − (signing bonus ÷ 6). The divisor is a fixed 6 in this leaf: it is a bonus amortization, not the valuation set's 7-season valuation window and not the club control window the MLB Projections board prices. Averaged across qualifying graduates and z-anchored into the Value branch.",
    "formula": "per-year surplus = current_AAV − (signing_bonus / 6)",
    "seeAlso": [
     "farm_grade_financial",
@@ -4324,7 +4352,7 @@
    "definition": "The dollar cost of forfeited draft picks (and intl pool money) when signing a qualifying-offer free agent.",
    "methodology": "Signing a QO-attached free agent forfeits picks per the CBA compensation matrix (rule-versioned; CBT payors forfeit their 2nd- and 5th-highest picks plus $1M of international pool). Each forfeited slot is priced from the site's own draft research: realized expected first-six-season WAR at the slot through the surplus machinery. Rational value and pick values share the same 7% NPV currency, so the tax subtracts directly.",
    "formula": "QO tax = SUM(forfeited picks priced in $) + forfeited intl pool $ at face value\npick $ = realized expected first-6-season WAR at the representative slot, spread flat over 6 control years, priced through the service-time surplus machinery with a draft-to-debut lag (fallback: median consensus FV at the slot through the prospect surplus curve)\nforfeiture matrix is rule-versioned CBA text, e.g. CBT payors forfeit their 2nd- and 5th-highest picks + $1M of intl pool",
-   "example": "A CBT-payor club signing a QO free agent gives up its 2nd- and 5th-highest picks plus $1M of international pool. With the two slots pricing near $12M and $3M of control-window surplus, the tax takes about $16M off the signing's rational value.",
+   "example": "A CBT-payor club signing a QO free agent gives up its 2nd- and 5th-highest picks plus $1M of international pool. With the two slots pricing near $12M and $3M of prospect surplus, the tax takes about $16M off the signing's rational value.",
    "seeAlso": [
     "contract_surplus",
     "qualifying_offer",
@@ -4705,9 +4733,9 @@
    ],
    "priority": 85,
    "definition": "The /projections/ surface: the FA module's Gate-1-validated projection engine applied to every MLB player with recent history (five-year WAR paths, eWAR basis, with floor / mean / ceiling buckets), plus PROSPX prospects joining at their projected ETA through the calibrated FV outcome model.",
-   "methodology": "Veterans: the same Marcel engine, aging curves and fitted WAR map the FA class board uses. Prospects: P(bucket|FV) x per-bucket WAR trajectories scaled by FV and shaped by projected debut age (bust-inclusive means, outcome-bucket floor and ceiling). Seasons price through the convex tier curve at the ex-ante FA $/WAR level, escalating per season. Veteran surplus exists only on salary-known (Spotrac-contracted) seasons and discounts at the platform's 7% rate; veteran surplus prices every controlled season: contracted dollars where a contract exists, the league minimum for pre arbitration seasons, and the projected award for arbitration seasons, discounted at the platform's 7% rate; seasons past club control carry a projection and no price. Prospect surplus is the platform surplus value.\n\nTeam Outlook win totals are retro-backtested and calibrated (2026-06-12). Each roster sums the engine's mean year-1 projections (the median-like quantile point on player pages is never summed), plus a depth pool of sub-floor players and age-cohort corrections fit on 2022-24 backtest residuals and gated on a held-out 2025. The league sums to 2,430 wins. In the 2022-25 backtest team MAE ran 7.3-10.2 wins and beat a prior-season-wins carry-forward in three of four seasons; full accounting in team_outlook_eval.json.\n\nVeteran surplus prices every controlled season (salary_path, ask C 2026-09-16): contracted dollars where a contract exists, the league minimum for pre arbitration seasons, and the projected award for arbitration seasons, discounted at the platform's 7% rate. Seasons past club control carry a projection and no price.",
-   "formula": "veterans: the FA engine (Marcel + aging + fitted WAR map), five-year WAR paths (eWAR basis) with quantile floor / mean / ceiling; surplus only on salary-known seasons\nprospects: P(bucket | FV) x per-bucket WAR trajectories scaled by FV and projected debut age, joining at projected ETA\nteam outlook: SUM roster mean year-1 WAR + depth pool + age-cohort corrections, league-normalized to 2,430 wins",
-   "example": "A 27yo 4-WAR starter shows a declining five-year path with a surplus claim only on his contracted seasons; a FV 55 prospect with ETA 2027 joins his club's 2027 line with a bust-inclusive mean.",
+   "methodology": "Veterans: the same Marcel engine, aging curves and fitted WAR map the FA class board uses. Prospects: P(bucket|FV) x per-bucket WAR trajectories scaled by FV and shaped by projected debut age (bust-inclusive means, outcome-bucket floor and ceiling). Seasons price through the convex tier curve at the ex-ante FA $/WAR level, escalating per season. Veteran surplus prices every season of the club control window: contracted dollars where a contract exists, the league minimum for pre arbitration seasons, and the projected award for arbitration seasons, discounted at the platform's 7% rate. Seasons past club control carry a projection and no price. Prospect surplus is the platform surplus value, over the 7-season valuation window from the projected ETA.\n\nTeam Outlook win totals are retro-backtested and calibrated (2026-06-12). Each roster sums the engine's mean year-1 projections (the median-like quantile point on player pages is never summed), plus a depth pool of sub-floor players and age-cohort corrections fit on 2022-24 backtest residuals and gated on a held-out 2025. The league sums to 2,430 wins. In the 2022-25 backtest team MAE ran 7.3-10.2 wins and beat a prior-season-wins carry-forward in three of four seasons; full accounting in team_outlook_eval.json.\n\nThe board shows two different facts about the same player and keeps them apart by name: the Control column prints the last season the club HOLDS him (guaranteed contract seasons, then the remaining pre arbitration seasons, then the projected arbitration seasons) and its sub line prints the last season a signed contract GUARANTEES him. The seasons past the guarantee are projections and are drawn with a dashed border.",
+   "formula": "veterans: the FA engine (Marcel + aging + fitted WAR map), five-year WAR paths (eWAR basis) with quantile floor / mean / ceiling; surplus over the club control window\nprospects: P(bucket | FV) x per-bucket WAR trajectories scaled by FV and projected debut age, joining at projected ETA\nteam outlook: SUM roster mean year-1 WAR + depth pool + age-cohort corrections, league-normalized to 2,430 wins",
+   "example": "A 27yo 4-WAR starter shows a declining five-year path with a surplus claim over every season his club controls: his contracted years at their salary, then his projected arbitration years. A FV 55 prospect with ETA 2027 joins his club's 2027 line with a bust-inclusive mean.",
    "seeAlso": [
     "fa_projection_engine",
     "proj_buckets",
@@ -5088,9 +5116,9 @@
     "trade evaluator"
    ],
    "priority": 11,
-   "definition": "Values a trade both ways in one surplus currency: prospects on eFV surplus (calibrated control-window NPV), MLB players on projection surplus (NPV of projected production minus salary over the control window). Build a package per side; the verdict reads net surplus, balanced within $5M.",
-   "methodology": "A package evaluator plus the Bayesian trade-value board. Each player carries the surplus the rest of the site shows: a prospect's eFV-driven control-window surplus (value_mm) or an MLB player's projection surplus (proj.surNpv, the MLB Projections NPV of convex production value minus salary on the control window). An MLB Projections player page deep-links into the evaluator with that player loaded; evaluator rows link back. The $5M balanced band is shared with the Transactions Trade Audit. Board ranks are contract-aware (surplus over remaining control), positional-scarcity and opt-out adjusted. Module by Anirudh Iyer.\n\nA club controlled player with no contract for those years is priced on his salary path, not left at zero.",
-   "formula": "side value = SUM player surplus: prospects at value_mm (calibrated eFV control-window NPV), MLB players at proj.surNpv (NPV of projected production minus salary, the control window only)\nnet = side A - side B; |net| <= $5M -> balanced, otherwise the verdict names the winning side",
+   "definition": "Values a trade both ways in one surplus currency: prospects on eFV surplus (calibrated NPV over the 7-season valuation window from their ETA), MLB players on projection surplus (NPV of projected production minus salary over the club control window). Build a package per side; the verdict reads net surplus, balanced within $5M.",
+   "methodology": "A package evaluator plus the Bayesian trade-value board. Each player carries the surplus the rest of the site shows: a prospect's eFV-driven surplus over the 7-season valuation window (value_mm) or an MLB player's projection surplus (proj.surNpv, the MLB Projections NPV of convex production value minus salary over the club control window). An MLB Projections player page deep-links into the evaluator with that player loaded; evaluator rows link back. The $5M balanced band is shared with the Transactions Trade Audit. Board ranks are contract-aware (surplus over the seasons still controlled), positional-scarcity and opt-out adjusted. Module by Anirudh Iyer.\n\nA club controlled player with no contract for those years is priced on his salary path, not left at zero.",
+   "formula": "side value = SUM player surplus: prospects at value_mm (calibrated eFV NPV over the 7-season valuation window), MLB players at proj.surNpv (NPV of projected production minus salary, the club control window only)\nnet = side A - side B; |net| <= $5M -> balanced, otherwise the verdict names the winning side",
    "example": "A FV 55 prospect at $45M plus a FV 40 arm at $6M against a two-control-year MLB starter at $48M: net +$3M, inside the $5M band, verdict balanced.",
    "seeAlso": [
     "surplus_value",
@@ -5588,7 +5616,7 @@
     "trailing WAR/PA+"
    ],
    "priority": 24,
-   "definition": "A hitter's WAR/PA+ over the trailing three seasons, weighted by plate appearances. Steadier than one season, because a WAR rate carries fielding and baserunning on top of the bat. Same ten-points-per-standard-deviation scale as WAR/PA+. Coloured on the value ruler at 120 / 113 / 107 / 100 / 93.",
+   "definition": "A hitter's WAR/PA+ over the trailing three seasons, weighted by plate appearances. Steadier than one season, because a WAR rate carries fielding and baserunning on top of the bat. Each season is scored against its own pool and the seasons are weighted by plate appearances, so 100 is the average of those pools; the shipped column is NARROWER than one season (standard deviation 6.49 against 8.96 on the 450 hitters carrying both), so ten points here is not one standard deviation. Coloured on the value ruler at 120 / 113 / 107 / 100 / 93, a ladder cut on the one-season pool: FILED as a defect 2026-09-17, because removing a served colour is a separate named change.",
    "methodology": "PA-weighted mean of the single-season WAR/PA+ across the trailing three seasons. Established = two or more seasons and 600 plate appearances in the window; otherwise provisional (star).\n\nThe column is a FROZEN vintage: values are read verbatim from data/war_rate_plus_multiyear_eval.json and never recomputed at build, so a same-day one-year value can sit beside a three-year value frozen weeks earlier, and a player who entered the pool after that file was generated is blank. The payload carries the generation date.\n\nForward-checked: over 3845 pairs the three-year read predicts next season's WAR rate at a Spearman correlation of 0.4022 against 0.3711 for one season on the same players, gap confidence floor above zero.\n\nMeasured on the same eWAR series as the one-year WAR/PA+ beside it, so the two columns share one scale (the lab was re-pointed from bWAR on 2026-09-11).",
    "formula": "WAR/PA+ (3yr) = SUM(PA_s x WAR/PA+_s) / SUM PA_s over the trailing three seasons, values read frozen from data/war_rate_plus_multiyear_eval.json\nestablished = 2+ seasons and 600+ PA in the window, else a provisional star",
    "example": "Seasons at 118 (650 PA), 104 (600 PA) and 92 (250 PA of a partial current year) blend to (118x650 + 104x600 + 92x250) / 1500 = 108.",
@@ -5596,7 +5624,8 @@
     "war_pa_plus",
     "hem_plus_3yr",
     "war_ip_plus_sp_3yr",
-    "war_ip_plus_rp_3yr"
+    "war_ip_plus_rp_3yr",
+    "range"
    ],
    "shelf": "ark",
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
@@ -7166,6 +7195,79 @@
    ],
    "shelf": "ark",
    "origin": "Display convention, original to eephus.io."
+  },
+  {
+   "id": "range",
+   "term": "Year range",
+   "category": "site-feature",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "year range",
+    "window",
+    "multi-year window",
+    "Last 3",
+    "Last 5"
+   ],
+   "priority": 30,
+   "definition": "A window of seasons on the MLB Stats boards. Counts add over it. Rates are pooled once, numerator over denominator, never the average of the seasons. A \"+\" index does not travel by itself: 100 on one is the average of one season's pool, so a window index is a different statistic and only appears on a window the lab actually computed. On any other window the column is absent with its reason in its place, and no window index carries a value-ruler colour.",
+   "methodology": "Two mechanisms, and which one you are looking at is stated on the board. (1) The Overall board folds data/war_seasons.json in the browser: one row per player-season, the two eWAR sides summed UNROUNDED and rounded once, an absent denominator contributing nothing rather than a zero. Any from/to span works, because every column on it is a count or a count over its own denominator. (2) The five role boards read data/mlbstats_windows.json and its per-window files, which tools/mlbstats_window_lab.py builds offline for a fixed set of windows (Last 3 and Last 5) by the recipe the shipped 3-year columns already use: the denominator-weighted mean of the per-season index, each season scored against its own pool. So 100 is the average of those pools and not of the window's, and ten points is not one standard deviation of it either - the payload ships pool_stats and the column tooltip reports what both actually are.\n\nMeasured on the two artifacts this page reads, which is why the window index carries no ladder. On the served 2026 hitter board (data/hitter_leaderboards.json, 658 rows) HEM+ averages 95.49 with a standard deviation of 13.76, and the value ruler's elite cut of 120 takes 6.1% of it. On the served Last 5 window (data/mlbstats_window_l5.json, 746 rows, whose pool_stats block is what the column tooltip and the board note print) the same index averages 95.41 with a standard deviation of 13.15, and 120 takes 4.2%. Same numeral, same word, a third fewer players: painting the one-season ladder on a window pool would call a different share of the league elite by the same name.\n\nA longer window is a steadier DESCRIPTION of what happened. Nothing measured in this repo says it is a better prediction of what happens next: four of the seven shipped trailing-window columns (REM+ 3yr, SEM+ 3yr, DEM+ 3yr, WAR/IP+ 3yr) did not clear zero against their one-season gate and ship as steadiness companions.\n\n2020 and the season being played are disclosed rather than dropped: the exporter publishes season_share (that season's league eWAR over the mean of the last three complete seasons) and the board's note reads it, so the window says 2020 produced 37% of a normal season instead of quietly counting as one.",
+   "seeAlso": [
+    "ewar",
+    "bat_600",
+    "pitch_200",
+    "hem_plus",
+    "war_pa_plus_3yr"
+   ],
+   "shelf": "ark",
+   "origin": "eephus.io."
+  },
+  {
+   "id": "bat_600",
+   "term": "Bat/600",
+   "category": "general-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Bat per 600",
+    "batting eWAR per 600 PA"
+   ],
+   "priority": 40,
+   "definition": "Batting eWAR per 600 plate appearances, a full season's worth for a regular. A division, not an index: there is no pool behind it, so it carries no colour and no value ruler. Over a window it is the window's batting eWAR over the window's plate appearances.",
+   "methodology": "Bat/600 = batting eWAR / PA x 600, on the Overall board's own served numbers. Its denominator is PA and PA only. A single eWAR/600 over total eWAR would charge a two-way player's pitching to his plate appearances, which is why the pitching side has its own column over its own denominator (Pitch/200).",
+   "seeAlso": [
+    "ewar",
+    "pitch_200",
+    "war_pa_plus",
+    "range"
+   ],
+   "shelf": "ark",
+   "origin": "eephus.io."
+  },
+  {
+   "id": "pitch_200",
+   "term": "Pitch/200",
+   "category": "general-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Pitch per 200",
+    "pitching eWAR per 200 IP"
+   ],
+   "priority": 41,
+   "definition": "Pitching eWAR per 200 innings, a full starter's season. A division, not an index: no pool behind it, so no colour on it. A reliever's 70 innings and a starter's 200 sit on the same ruler here, which is why IP is shown beside it.",
+   "methodology": "Pitch/200 = pitching eWAR / IP x 200, on the Overall board's own served numbers, with IP as its only denominator. Over a window it is the window's pitching eWAR over the window's innings.",
+   "seeAlso": [
+    "ewar",
+    "bat_600",
+    "war_ip_plus_sp",
+    "range"
+   ],
+   "shelf": "ark",
+   "origin": "eephus.io."
   }
  ]
 }

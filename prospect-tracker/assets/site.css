@@ -2395,8 +2395,6 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   .mlbx .mlbx-filters:not(.is-open) + .mlbstats-roles { display: none; }
   .mlbx .mlbx-filters .mlbstats-search { flex: 1 1 0; min-width: 0; margin-left: 0; }
 }
-/* The eWAR section button keeps its case (the nav is uppercase; EWAR is not the stat). */
-.mlbx .mlbstats-sectionbtn[data-mlbsection="war"] { text-transform: none; }
 /* Tablet tier (641 to 1023px): the phone's two-line identity at a wider cap and one step
    less padding, so every named view fits a 720px container (768 portrait). */
 @media (min-width: 641px) and (max-width: 1023px) {
@@ -2407,6 +2405,82 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   .mlbx .mlbstats-table td.mlbstats-name > .eephus-teamlogo { display: none; }
   .mlbx .mlbstats-table td.mlbstats-name > :is(.mlbstats-name-link, .mlbstats-name-txt) {
     display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+/* ---- the years control ------------------------------------------------------
+   Presets plus a from/to, in the slot the season pills had. It rides
+   .mlbstats-seasons / .mlbstats-season wholesale (active state, 44px target,
+   the wrap), so the only new rules are the from/to pair and its phone row. */
+.mlbx .mlbstats-range { align-items: center; }
+.mlbx .mlbstats-range-fromto { display: inline-flex; align-items: center; gap: 8px; }
+.mlbx .mlbstats-range-fromto .mlbstats-ctl { margin: 0; }
+/* A window index is NOT on the value ruler: 100 is the average of each
+   contributing season's pool, and the window pool is 12 to 18% narrower, so the
+   cell carries the numeral's font and no band colour at all. If a tier class
+   ever reaches one of these cells, this rule is the one that has to lose, so it
+   is scoped to the class the window cell carries and nothing else. */
+.mlbx .mlbstats-table .mlbstats-winidx { color: var(--text-primary); font-weight: 700; }
+/* The window a column was computed on rides the header, under the metric's own
+   name: the span belongs in the LABEL and not only in a tooltip, and on its own
+   line it costs the column no width. */
+.mlbx .mlbstats-table th .mlbstats-winspan {
+  display: block; font-size: 8.5px; font-weight: 400; letter-spacing: .02em;
+  color: var(--text-tertiary);
+}
+/* The window note is the board's own sentence about what it did, so it reads
+   like a note and not like a caption. It is CLOSED by default at every width,
+   the way the methodology fold and the Team note beside it are: measured at
+   390x844 the open note put the table top at y 781 to 802 on an 844px screen,
+   which is a board with no rows on the first screen. The summary is the whole
+   sentence a reader needs to know what basis he is on; the rest is one tap.
+   The Established-only chip is a SIBLING of the details, never inside it: a
+   control that changes which rows show cannot hide behind a closed note. */
+.mlbx .mlbstats-winhead { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 10px; }
+.mlbx .mlbstats-winhead > details.mlbstats-winnote { flex: 1 1 260px; min-width: 0; }
+.mlbx details.mlbstats-winnote > summary { cursor: pointer; }
+.mlbx details.mlbstats-winnote .mlbx-more { color: var(--accent-gold); }
+.mlbx details.mlbstats-winnote[open] .mlbx-more { display: none; }
+.mlbx .mlbx-notebody { margin-top: 5px; }
+/* A fold row the substrate does not name prints the player's MLBAM id. It is
+   quieter than a name and carries the help cursor its tooltip earns. */
+.mlbx .mlbstats-table .mlbx-noname { color: var(--text-tertiary); cursor: help; }
+.mlbx .mlbstats-winnote b { color: var(--text-secondary); }
+.mlbx .mlbstats-winrefused { color: var(--accent-gold); }
+.mlbx .mlbstats-winrefusal { text-align: left; line-height: 1.6; padding: 18px 16px; }
+.mlbx .mlbstats-winrefusal button.chip { margin: 0 2px; }
+/* The expander caret in the identity cell: a CSS triangle, so it carries no
+   glyph a screen reader has to read and no font dependency. */
+.mlbx button.mlbx-caret {
+  appearance: none; background: none; border: 0; cursor: pointer; padding: 0 5px 0 0;
+  color: var(--text-tertiary); line-height: 1; vertical-align: baseline;
+}
+.mlbx button.mlbx-caret::before {
+  content: ""; display: inline-block; width: 0; height: 0;
+  border-left: 4px solid currentColor; border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent; transition: transform .12s ease;
+}
+.mlbx button.mlbx-caret.is-open::before { transform: rotate(90deg) translateX(1px); }
+.mlbx button.mlbx-caret:hover { color: var(--text-primary); }
+/* The per-season line behind a total. It WRAPS and each item can shrink to
+   nothing, so the child cell's min-content width never pushes the table wider
+   than its own columns - which is the one way an expander could break the fit
+   rule at 390px. */
+.mlbx tr.mlbx-seasonrow > td { padding: 2px 8px 8px; }
+.mlbx .mlbx-seasons { display: flex; flex-wrap: wrap; gap: 3px 14px; }
+.mlbx .mlbx-season {
+  flex: 1 1 232px; min-width: 0; font-size: 11px; color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mlbx .mlbx-season b { color: var(--text-primary); font-weight: 700; }
+.mlbx .mlbx-season-total b:first-child { color: var(--text-secondary); }
+/* The Also on chips are links in a table cell: one line, no wrap. */
+.mlbx .mlbstats-table button.mlbx-goto { padding: 1px 6px; font-size: 10px; }
+@media (max-width: 640px) {
+  /* Two rows of control beats a third of the control off the screen: measured
+     at 390px the unwrapped strip runs past its container, so the from/to pair
+     takes its own line. */
+  .mlbx .mlbstats-range-fromto { width: 100%; margin-top: 4px; }
+  .mlbx .mlbx-season { flex-basis: 100%; }
 }
 /* ---- mlbx end ---- */
 /* ---- Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */

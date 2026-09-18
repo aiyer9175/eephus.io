@@ -278,15 +278,53 @@
   //
   // The option list is built from the ROWS, not a static club map, so it can
   // never offer a team the active board (or the active season) has nobody on.
-  function teamSelect(id, rows, sel) {
+  // `sec` is passed so the control can say which basis it is on: on Current the
+  // club is the roster today, on a window it is every club of production inside
+  // it (owner decision D9). A row that carries a clubs list contributes every
+  // one of them, so a club a player produced for in 2024 and nobody is on today
+  // is still selectable.
+  function teamSelect(id, rows, sel, sec) {
     var seen = {}, out = [];
-    (rows || []).forEach(function (r) { if (r.team && !seen[r.team]) { seen[r.team] = 1; out.push(r.team); } });
+    (rows || []).forEach(function (r) {
+      var cl = (r.clubs && r.clubs.length) ? r.clubs : (r.team ? [r.team] : []);
+      cl.forEach(function (t) { if (t && !seen[t]) { seen[t] = 1; out.push(t); } });
+    });
     out.sort();
-    var opts = '<option value="">All teams</option>' + out.map(function (t) {
+    var win = !!(sec && isWindow(sec));
+    var opts = '<option value="">All ' + (win ? "clubs" : "teams") + "</option>" + out.map(function (t) {
       return '<option value="' + esc(t) + '"' + (t === sel ? " selected" : "") + ">" + esc(t) + "</option>";
     }).join("");
-    return '<label class="mlbstats-ctl">team <select id="' + id + '" aria-label="Filter by team">'
+    return '<label class="mlbstats-ctl"' + (win ? ' title="' + esc("Every player who produced for this"
+        + " club in any season of the window, not the roster today.") + '"' : "")
+      + ">" + (win ? "club (produced for)" : "team") + ' <select id="' + id + '" aria-label="'
+      + (win ? "Filter by club of production" : "Filter by team") + '">'
       + opts + "</select></label>";
+  }
+  // The rows the club select is built from: the WINDOW's rows when one is open
+  // and its payload has landed, the board's own rows otherwise.
+  function winSelectRows(sec, cur) {
+    var w = WIN[sec];
+    if (!w) return cur;
+    if (sec === "war") {
+      return (SEASONS && SEASONS.players) ? foldSeasons(w.lo, w.hi).players : cur;
+    }
+    var lw = labWindowFor(LAB_BOARD[sec], w.lo, w.hi);
+    var doc = lw && WINDOW_DOC[lw.key];
+    return doc ? windowRows(sec, doc) : cur;
+  }
+  // The CSV a window exports is named for the window. The column headers already
+  // carry the span (exportLabel), so only the FILE name was still single-season;
+  // a reader who downloads 2024-2026 and files it under 2026 has been told the
+  // wrong thing by the one string he keeps. The base name is the shell's, read
+  // once, so this can never compound over re-renders.
+  var CSV_BASE = {};
+  function stampCsv(sec, host) {
+    if (!host || !host.getAttribute) return;
+    if (CSV_BASE[sec] == null) CSV_BASE[sec] = host.getAttribute("data-csv-export") || "";
+    var base = CSV_BASE[sec];
+    if (!base) return;
+    var w = WIN[sec];
+    host.setAttribute("data-csv-export", w ? base + "-" + winSpan(w) : base);
   }
   // A numeric floor (min IP / min PA). Empty means no floor, which is not the
   // same as zero: the qualified-only checkbox is a different, coarser gate and
@@ -754,13 +792,25 @@
     spteam: [{ id: "standard", label: "Standard", phone: ["rotation_plus", "team_war", "front_sem", "starter_ip"], keys: null }],
     hitteam: [{ id: "standard", label: "Standard", phone: ["offense_plus", "team_war", "heart_hem", "team_pa"], keys: null }],
     defteam: [{ id: "standard", label: "Standard", phone: ["team_dem_plus", "n_above_avg", "team_fld_total", "team_inn"], keys: null }],
-    war: [{ id: "standard", label: "Standard", phone: ["war", "war_bat", "war_pit"], keys: null }],
+    // The Overall board carries 12 to 15 columns now, so it gets named views
+    // like the other four: Standard is the season line, Rate is the two
+    // per-playing-time divisions (each over ITS OWN denominator, which is why
+    // there is no single eWAR/600), All is everything.
+    war: [
+      { id: "standard", label: "Standard", phone: ["war", "war_bat", "war_pit", "pa"],
+        keys: ["pos", "age", "|", "war", "war_bat", "war_pit", "|", "pa", "ip", "g", "gs", "|",
+               "yrs", "clubs"] },
+      { id: "rate", label: "Rate", phone: ["war", "bat_600", "pitch_200", "pa"],
+        keys: ["pos", "age", "|", "war", "bat_600", "pitch_200", "|", "pa", "ip"] },
+      { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
+    ],
     warteam: [{ id: "standard", label: "Standard", phone: ["war", "war_earned", "war_bat", "war_sp"], keys: null }]
   };
   // Which named view each multi-view board is on. The hash outranks the
   // stored preference, which outranks Standard.
-  var COL_VIEW = { rel: "standard", sp: "standard", hit: "standard", def: "standard" };
-  var COL_VIEW_HASH = { rel: "rcols", sp: "scols", hit: "hcols", def: "dcols" };
+  var COL_VIEW = { rel: "standard", sp: "standard", hit: "standard", def: "standard",
+                   war: "standard" };
+  var COL_VIEW_HASH = { rel: "rcols", sp: "scols", hit: "hcols", def: "dcols", war: "wcols" };
   (function () {
     Object.keys(COL_VIEW).forEach(function (b) {
       try {
@@ -843,6 +893,12 @@
   function toolRow(pills, board) {
     return '<div class="mlbstats-toolrow">' + pills + viewPills(board) + "</div>";
   }
+  // The years control plus, when a deep link named a span this board does not
+  // publish, the one line that says so. Every board emits this where its season
+  // pills used to be.
+  function yearsRow(sec) {
+    return toolRow(rangeControl(sec), winColBoard(sec)) + winRefusedNote(sec);
+  }
   function bindColViews(root, rerender) {
     root.querySelectorAll("[data-colview]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -869,6 +925,955 @@
       var again = root.querySelector('.mlbstats-table th[data-col="' + key + '"]');
       if (again) again.focus();
     });
+  }
+
+  // ---- year windows: presets, a from/to range, and what a column may say -----
+  // A window is a span of seasons, and its three classes of column behave
+  // differently because the data does:
+  //   SUM   a count adds over the window (eWAR, PA, IP, HR, WPA, runs).
+  //   POOL  a rate is recomputed once, numerator over denominator, never the
+  //         average of the seasons.
+  //   INDEX a "+" index is NOT foldable in a browser: 100 is the average of ONE
+  //         season's pool, so a window is a different pool and a window index is
+  //         a different statistic. tools/mlbstats_window_lab.py computes a FIXED
+  //         set of windows offline, by the same recipe the shipped 3-year
+  //         columns use, and those are the only windows an index appears on. On
+  //         any other window the board says so in one line instead of printing a
+  //         number on a scale nobody computed.
+  // Two rules ride every window index here, both read from the artifact rather
+  // than typed: the span is in the column LABEL, and no value ruler, tier or
+  // band colour is carried onto it (data/mlbstats_windows.json `method` says
+  // why, and `pool_stats` says what 100 and one standard deviation actually are
+  // on that pool, which the column tooltip reports).
+  var WINDOWS_URL = "/data/mlbstats_windows.json";
+  var SEASONS_URL = "/data/war_seasons.json";
+  var WINDOWS = null, WINDOWS_LOADING = false, WINDOWS_ERROR = false;
+  var WINDOW_DOC = {}, WINDOW_LOADING = {}, WINDOW_ERROR = {};
+  var SEASONS = null, SEASONS_LOADING = false, SEASONS_ERROR = false;
+  // section -> the lab's own board name, and the Columns strip it rides.
+  var LAB_BOARD = { war: "overall", hitters: "hitters", starters: "starters",
+                    bullpen: "bullpen", leverage: "leverage", defense: "defense" };
+  var WIN_COLBOARD = { war: "war", hitters: "hit", starters: "sp", bullpen: "rel",
+                       leverage: null, defense: "def" };
+  // THE WINDOW IS THE STATE. null = Current (the live board). {lo, hi} is a
+  // window, and lo === hi is the single past season the *season= keys have
+  // always opened, so there is one render path and one thing to validate.
+  var WIN = { bullpen: null, starters: null, hitters: null, leverage: null,
+              defense: null, war: null };
+  // One line when a deep link named a span this board does not publish: the
+  // reader gets a visible wrong answer to correct rather than a silent one.
+  var WIN_REFUSED = {};
+  // Established only, ON by default on a window INDEX board. Measured on the
+  // served artifact: 233 of 587 rows (40%) of the Last 3 hitter board are
+  // provisional, which is what a denominator-weighted mean of per-season values
+  // does with a partial window. The count boards need no such filter.
+  var winEstablished = true;
+  var FOLD_CACHE = {};
+
+  function winSpan(w) { return w ? (w.lo === w.hi ? String(w.lo) : (w.lo + "-" + w.hi)) : ""; }
+  function isWindow(sec) { var w = WIN[sec]; return !!(w && w.lo !== w.hi); }
+  function winColBoard(sec) {
+    return sec === "leverage" ? (leverageView === "starters" ? "levsp" : "levbat")
+                              : WIN_COLBOARD[sec];
+  }
+  function round1(v) { return Math.round(v * 10) / 10; }
+
+  // ---- per-section accessors, so one window renderer serves six boards -------
+  function sectionLiveSeason(sec) {
+    var d = sec === "war" ? warData : sec === "starters" ? starterData
+          : sec === "hitters" ? hitterData : sec === "leverage" ? leverageData
+          : sec === "defense" ? defenseData : DATA;
+    return num(d && d.season);
+  }
+  function sectionHistorySeasons(sec) {
+    if (sec === "war") return ((SEASONS && SEASONS.seasons) || []).slice();
+    if (sec === "starters") return starterHistorySeasons();
+    if (sec === "hitters") return hitterHistorySeasons();
+    if (sec === "leverage") return leverageHistorySeasons();
+    if (sec === "defense") return defenseHistorySeasons();
+    return historySeasons();
+  }
+  function sectionCols(sec) {
+    if (sec === "war") return warCols();
+    if (sec === "starters") return STARTER_COLS;
+    if (sec === "hitters") return HITTER_COLS;
+    if (sec === "leverage") return levCols();
+    if (sec === "defense") return DEFENSE_COLS;
+    return REL_COLS;
+  }
+  function sectionSort(sec) {
+    if (sec === "war") return warSort;
+    if (sec === "starters") return starterSort;
+    if (sec === "hitters") return hitterSort;
+    if (sec === "leverage") return levSort();
+    if (sec === "defense") return defenseSort;
+    return relSort;
+  }
+  function sectionTeam(sec) {
+    return sec === "war" ? warTeam : sec === "starters" ? starterTeam
+      : sec === "hitters" ? hitterTeam : sec === "leverage" ? leverageTeam
+      : sec === "defense" ? defenseTeam : relTeam;
+  }
+  function sectionQual(sec) {
+    return sec === "war" ? warQualifiedOnly : sec === "starters" ? starterQualifiedOnly
+      : sec === "hitters" ? hitterQualifiedOnly : sec === "leverage" ? leverageQualifiedOnly
+      : sec === "defense" ? defenseQualifiedOnly : qualifiedOnly;
+  }
+  function sectionQuery(sec) {
+    return sec === "war" ? warQuery : sec === "starters" ? starterQuery
+      : sec === "hitters" ? hitterQuery : sec === "leverage" ? leverageQuery
+      : sec === "defense" ? defenseQuery : query;
+  }
+  // {key, val}: the min-floor control each board carries, over the field it
+  // filters. The Overall board and Leverage have none.
+  var MIN_LABEL = { ip: "IP", pa: "PA", inn: "Inn" };
+  // A floor typed into the min box filters the window TOTAL, not a season: 50 IP
+  // over three seasons is a different question from 50 IP in one, so the control
+  // says which it is asking rather than keeping its one-season label.
+  function minLabel(sec, label) { return isWindow(sec) ? label + " (window)" : label; }
+  function sectionMin(sec) {
+    if (sec === "starters") return { key: "ip", val: starterMinIp };
+    if (sec === "hitters") return { key: "pa", val: hitterMinPa };
+    if (sec === "defense") return { key: "inn", val: defenseMinInn };
+    if (sec === "bullpen") return { key: "ip", val: relMinIp };
+    return { key: null, val: null };
+  }
+  function renderSection(sec) {
+    if (sec === "starters") renderStarters();
+    else if (sec === "hitters") renderHitters();
+    else if (sec === "leverage") renderLeverage();
+    else if (sec === "defense") renderDefense();
+    else if (sec === "war") renderWar();
+    else render();
+  }
+  // The five single-season vars every history path still reads are DERIVED from
+  // the window and written nowhere else: two copies of one piece of state is how
+  // a season and a range end up disagreeing on the same page.
+  function seasonVar(sec) { var w = WIN[sec]; return (w && w.lo === w.hi) ? String(w.lo) : "current"; }
+  function syncSeasonVars() {
+    relSeason = seasonVar("bullpen");
+    starterSeason = seasonVar("starters");
+    hitterSeason = seasonVar("hitters");
+    leverageSeason = seasonVar("leverage");
+    defenseSeason = seasonVar("defense");
+  }
+
+  // ---- the lab's windows -----------------------------------------------------
+  function labWindows(board) {
+    var out = [];
+    ((WINDOWS && WINDOWS.windows) || []).forEach(function (w) {
+      if (!w || !w.key || !w.seasons || w.seasons.length < 2) return;
+      if (board !== "overall" && w.n_rows && !w.n_rows[board]) return;
+      out.push(w);
+    });
+    return out;
+  }
+  function winEnds(w) { return { lo: w.seasons[0], hi: w.seasons[w.seasons.length - 1] }; }
+  function winLabel(w) { var e = winEnds(w); return e.lo + "-" + e.hi; }
+  function labWindowFor(board, lo, hi) {
+    var hit = null;
+    labWindows(board).forEach(function (w) {
+      var e = winEnds(w);
+      if (e.lo === lo && e.hi === hi) hit = w;
+    });
+    return hit;
+  }
+  function labWindowByKey(board, key) {
+    var hit = null;
+    labWindows(board).forEach(function (w) { if (w.key === key) hit = w; });
+    return hit;
+  }
+  function overallSpan() {
+    var s = (SEASONS && SEASONS.seasons) || [];
+    return s.length > 1 ? { lo: s[0], hi: s[s.length - 1] } : null;
+  }
+  // Every season this section can be asked for: its own history list, its live
+  // season, and every season inside a window the lab built for it.
+  function sectionSeasons(sec) {
+    var seen = {}, out = [];
+    function add(y) { y = num(y); if (y != null && !seen[y]) { seen[y] = 1; out.push(y); } }
+    (sectionHistorySeasons(sec) || []).forEach(add);
+    add(sectionLiveSeason(sec));
+    labWindows(LAB_BOARD[sec]).forEach(function (w) { (w.seasons || []).forEach(add); });
+    out.sort(function (a, b) { return a - b; });
+    return out;
+  }
+  // VALIDATE, NEVER TRUST. Both endpoints have to be seasons this section
+  // publishes, and lo <= hi, or the key is refused. Before any payload has
+  // landed there is nothing to validate against, so the decision waits rather
+  // than rejecting a good link: winCheck re-runs on every render.
+  function seasonsReady(sec) {
+    if (sec === "war") return !!(SEASONS && SEASONS.players) || SEASONS_ERROR;
+    if (sec === "starters") return !!STARTER_HISTORY || STARTER_HISTORY_ERROR;
+    if (sec === "hitters") return !!HITTER_HISTORY || HITTER_HISTORY_ERROR;
+    if (sec === "leverage") return !!leverageHistory || leverageHistoryErr;
+    if (sec === "defense") return !!DEFENSE_HISTORY || DEFENSE_HISTORY_ERROR;
+    return !!HISTORY || HISTORY_ERROR;
+  }
+  function spanAllowed(sec, lo, hi) {
+    if (lo == null || hi == null || lo > hi) return false;
+    if (labWindowFor(LAB_BOARD[sec], lo, hi)) return true;   // the lab built it
+    if (!seasonsReady(sec)) return true;                     // decide when it lands
+    var s = sectionSeasons(sec);
+    if (!s.length) return true;
+    return s.indexOf(lo) >= 0 && s.indexOf(hi) >= 0;
+  }
+  // The five history payloads, one per section, each already guarded against a
+  // second fetch. winCheck needs one to JUDGE a span the lab did not build.
+  function loadSectionHistory(sec) {
+    if (sec === "war") loadSeasons(sec);
+    else if (sec === "starters") loadStarterHistory();
+    else if (sec === "hitters") loadHitterHistory();
+    else if (sec === "leverage") loadLeverageHistory();
+    else if (sec === "defense") loadDefenseHistory();
+    else loadHistory();
+  }
+  function winCheck(sec) {
+    var w = WIN[sec];
+    if (!w) return;
+    // A span the lab built is allowed without any history. Anything else has to
+    // be checked against the seasons this section publishes, so the payload that
+    // check reads is FETCHED rather than waited for forever: without this,
+    // #hyears=2019-2025 sat on the generic refusal, seasonsReady stayed false
+    // and the bad key was never cleaned out of the URL.
+    if (!labWindowFor(LAB_BOARD[sec], w.lo, w.hi) && !seasonsReady(sec)) loadSectionHistory(sec);
+    if (spanAllowed(sec, w.lo, w.hi)) return;
+    WIN_REFUSED[sec] = winSpan(w) + (w.lo === w.hi ? " is not a season" : " is not a span")
+      + " this board publishes, so it opened on Current.";
+    WIN[sec] = null;
+    syncSeasonVars();
+    writeHash();
+  }
+  function winRefusedNote(sec) {
+    return WIN_REFUSED[sec] ? '<div class="mlbstats-note mlbstats-winrefused">'
+      + esc(WIN_REFUSED[sec]) + "</div>" : "";
+  }
+  function setWindow(sec, win) {
+    WIN[sec] = win;
+    WIN_REFUSED[sec] = "";
+    syncSeasonVars();
+    if (win) loadWindows(sec);
+    if (win && sec === "war") loadSeasons(sec);
+    writeHash();
+    renderSection(sec);
+  }
+
+  // ---- loaders ---------------------------------------------------------------
+  function loadWindows(sec) {
+    if (WINDOWS || WINDOWS_LOADING) return;
+    WINDOWS_LOADING = true;
+    WINDOWS_ERROR = false;
+    fetch(WINDOWS_URL, { cache: "no-cache" })
+      .then(function (r) {
+        if (r.status === 404) return null;         // the lab has never run here
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (j) {
+        WINDOWS = (j && j.windows) ? j : { windows: [] };
+        WINDOWS_LOADING = false;
+        renderSection(sec);
+      })
+      .catch(function () { WINDOWS_LOADING = false; WINDOWS_ERROR = true; renderSection(sec); });
+  }
+  function loadWindowDoc(w, sec) {
+    var key = w.key;
+    if (WINDOW_DOC[key] || WINDOW_LOADING[key]) return;
+    var file = String(w.file || "").replace(/[^A-Za-z0-9_.-]/g, "");
+    if (!file) { WINDOW_ERROR[key] = true; return; }
+    WINDOW_LOADING[key] = true;
+    WINDOW_ERROR[key] = false;
+    fetch("/data/" + file, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) {
+        WINDOW_DOC[key] = (j && j.boards) ? j : null;
+        WINDOW_LOADING[key] = false;
+        if (!WINDOW_DOC[key]) WINDOW_ERROR[key] = true;
+        renderSection(sec);
+      })
+      .catch(function () { WINDOW_LOADING[key] = false; WINDOW_ERROR[key] = true; renderSection(sec); });
+  }
+  // The per-season substrate the Overall board folds. Fetched WITH the board
+  // rather than on the first non-Current pick, because Overall is the landing
+  // section now and its from/to control has to be complete on the first click:
+  // a picker that grows a second after the reader opens it is worse than the
+  // transfer, and the same fold is what the per-season expander reads.
+  function loadSeasons(sec) {
+    if (SEASONS || SEASONS_LOADING) return;
+    SEASONS_LOADING = true;
+    SEASONS_ERROR = false;
+    fetch(SEASONS_URL, { cache: "no-cache" })
+      .then(function (r) {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (j) {
+        SEASONS = (j && j.players) ? j : null;
+        SEASONS_LOADING = false;
+        if (!SEASONS) SEASONS_ERROR = true;
+        renderSection(sec || "war");
+      })
+      .catch(function () { SEASONS_LOADING = false; SEASONS_ERROR = true; renderSection(sec || "war"); });
+  }
+
+  // ---- the control -----------------------------------------------------------
+  // Presets plus a from/to, in the toolrow slot the season pills used to own.
+  // The pills are REPLACED rather than joined: from/to reaches every year they
+  // did, and a strip of years beside a range picker is two control languages for
+  // one question (owner decision D7).
+  function rangeControl(sec) {
+    if (!WINDOWS && !WINDOWS_LOADING && !WINDOWS_ERROR) loadWindows(sec);
+    var cur = WIN[sec], out = [];
+    function btn(id, label, sub, on, title) {
+      return '<button type="button" class="mlbstats-season' + (on ? " active" : "")
+        + '" data-mlbrange="' + esc(sec) + ":" + esc(id) + '" aria-pressed="' + on + '"'
+        + (title ? ' title="' + esc(title) + '"' : "") + ">" + esc(label)
+        + (sub ? '<span class="proj-dim"> ' + esc(sub) + "</span>" : "") + "</button>";
+    }
+    out.push(btn("current", "Current", "", !cur, "The live season, as the board is served."));
+    labWindows(LAB_BOARD[sec]).forEach(function (w) {
+      var e = winEnds(w);
+      out.push(btn(w.key, w.name || winLabel(w), w.label || winLabel(w),
+        !!cur && cur.lo === e.lo && cur.hi === e.hi,
+        "A window the lab computed, so this board keeps its + indexes on it."));
+    });
+    var all = (sec === "war") ? overallSpan() : null;
+    if (all) {
+      out.push(btn("all", "All", all.lo + "-" + all.hi,
+        !!cur && cur.lo === all.lo && cur.hi === all.hi,
+        "Every season the eWAR artifact covers, summed."));
+    }
+    var years = sectionSeasons(sec);
+    var live = sectionLiveSeason(sec);
+    var lo = cur ? cur.lo : (live != null ? live : years[years.length - 1]);
+    var hi = cur ? cur.hi : lo;
+    function sel(which, val) {
+      return '<select data-mlbrangesel="' + esc(sec) + ":" + which + '" aria-label="'
+        + (which === "lo" ? "First season" : "Last season") + '">'
+        + years.map(function (y) {
+            return '<option value="' + y + '"' + (y === val ? " selected" : "") + ">" + y + "</option>";
+          }).join("") + "</select>";
+    }
+    var picker = years.length > 1
+      ? '<span class="mlbstats-range-fromto"><label class="mlbstats-ctl">from ' + sel("lo", lo)
+        + '</label><label class="mlbstats-ctl">to ' + sel("hi", hi) + "</label></span>"
+      : "";
+    return '<div class="mlbstats-seasons mlbstats-roles mlbstats-range" role="group" aria-label="Years">'
+      + '<span class="mlbstats-roles-lbl">Years</span>' + out.join("") + picker + "</div>";
+  }
+  function applyRange(spec) {
+    var p = String(spec || "").split(":"), sec = p[0], id = p[1];
+    if (!LAB_BOARD[sec]) return;
+    if (id === "current") { setWindow(sec, null); return; }
+    if (id === "all") { var a = overallSpan(); if (a) setWindow(sec, a); return; }
+    var w = labWindowByKey(LAB_BOARD[sec], id);
+    if (w) { var e = winEnds(w); setWindow(sec, { lo: e.lo, hi: e.hi }); }
+  }
+  // Picking a first season above the last pushes the other end with it, so an
+  // inverted range is unreachable rather than validated after the fact. A window
+  // of one season that IS the live season is Current, which keeps one state for
+  // one board.
+  function applyRangeSelect(spec, value) {
+    var p = String(spec || "").split(":"), sec = p[0], which = p[1];
+    var v = num(value);
+    if (!LAB_BOARD[sec] || v == null) return;
+    var live = sectionLiveSeason(sec);
+    var cur = WIN[sec] || { lo: (live == null ? v : live), hi: (live == null ? v : live) };
+    var lo = (which === "lo") ? v : cur.lo, hi = (which === "hi") ? v : cur.hi;
+    if (lo > hi) { if (which === "lo") hi = lo; else lo = hi; }
+    setWindow(sec, (lo === hi && live != null && lo === live) ? null : { lo: lo, hi: hi });
+  }
+  try { document.addEventListener("click", function (e) {
+    var t = e.target && e.target.closest ? e.target : null;
+    if (!t) return;
+    var b = t.closest("[data-mlbrange]");
+    if (b) { applyRange(b.getAttribute("data-mlbrange")); return; }
+    var est = t.closest("[data-mlbest]");
+    if (est) { winEstablished = !winEstablished; renderSection(est.getAttribute("data-mlbest")); return; }
+    var x = t.closest("[data-mlbexpand]");
+    if (x) { toggleSeasonRow(x.getAttribute("data-mlbexpand")); }
+  }); } catch (e) { /* no document events */ }
+  try { document.addEventListener("change", function (e) {
+    var s = e.target && e.target.closest ? e.target.closest("[data-mlbrangesel]") : null;
+    if (!s) return;
+    applyRangeSelect(s.getAttribute("data-mlbrangesel"), s.value);
+  }); } catch (e) { /* no document events */ }
+
+  // ---- the window board ------------------------------------------------------
+  function winLoading(txt) { return '<div class="mlbstats-empty">' + esc(txt) + "&hellip;</div>"; }
+  function winFailed(sec, txt) {
+    return '<div class="mlbstats-empty mlbstats-load-error" role="alert">' + esc(txt)
+      + " Refresh to retry; if it persists the nightly build is mid-run. "
+      + '<button type="button" class="chip" data-mlbrange="' + esc(sec)
+      + ':current">Back to Current</button></div>';
+  }
+  // Returns "" when the window went away while this render was building it,
+  // which is the caller's signal to render the season board instead. Nothing
+  // downstream may assume WIN[sec] is still set: rangeControl starts the window
+  // fetch, and the payload it waits for is what decides whether the span exists.
+  function renderWindowBoard(sec) {
+    var ctl = toolRow(rangeControl(sec), winColBoard(sec)) + winRefusedNote(sec);
+    var win = WIN[sec];
+    if (!win) return "";
+    if (sec === "war") return ctl + renderOverallWindow(win);
+    if (WINDOWS_ERROR) return ctl + winFailed(sec, "The year windows failed to load.");
+    if (!WINDOWS) return ctl + winLoading("Loading the year windows");
+    var w = labWindowFor(LAB_BOARD[sec], win.lo, win.hi);
+    if (!w) return ctl + winRefusal(sec, win);
+    if (WINDOW_ERROR[w.key]) return ctl + winFailed(sec, "The " + winSpan(win) + " board failed to load.");
+    if (!WINDOW_DOC[w.key]) {
+      loadWindowDoc(w, sec);
+      return ctl + winLoading("Loading the " + winSpan(win) + " board");
+    }
+    return ctl + windowBoardBody(sec, w, WINDOW_DOC[w.key]);
+  }
+  // The one-line reason, and the two ways out. A board whose rates ship as
+  // finished numbers with no counts behind them cannot pool an arbitrary window,
+  // and an index on a window nobody computed would be a number on a scale that
+  // does not exist. So the span is refused by name, the windows that DO exist are
+  // offered as buttons, and the Overall board - every column of which is a count
+  // - is offered for the exact span that was asked for.
+  function winRefusal(sec, win) {
+    var opts = labWindows(LAB_BOARD[sec]).map(function (w) {
+      return '<button type="button" class="chip" data-mlbrange="' + esc(sec) + ":" + esc(w.key) + '">'
+        + esc(w.name || "") + ' <span class="proj-dim">' + esc(winLabel(w)) + "</span></button>";
+    }).join(" ");
+    return '<div class="mlbstats-empty mlbstats-winrefusal">'
+      + esc(winSpan(win)) + " is not a window this board can build. Its + indexes are standardised on"
+      + " one season's pool, so a window index is a lab pass, and its season history ships finished"
+      + " rates with no counts behind them, so nothing can be pooled over a span the lab did not build. "
+      + (opts ? "Windows this board has: " + opts + " " : "")
+      // A button, not an in-page link: readHash runs once, at init, so an
+      // <a href="#section=..."> would change the URL and leave the reader on
+      // the board that just refused him.
+      + 'Every column on the Overall board is a count, so it sums over any span: '
+      + '<button type="button" class="chip mlbx-goto" data-mlbgoto="war:'
+      + esc(win.lo + "-" + win.hi) + '">Overall <span class="proj-dim">'
+      + esc(win.lo + "-" + win.hi) + "</span></button> Or pick one season.</div>";
+  }
+  function windowRows(sec, doc) {
+    var b = (doc.boards || {})[LAB_BOARD[sec]] || {};
+    if (sec === "bullpen") return b.relievers || [];
+    if (sec === "leverage") return (leverageView === "starters" ? b.starters : b.batters) || [];
+    if (sec === "defense") return b.fielders || [];
+    if (sec === "hitters") return b.hitters || [];
+    if (sec === "starters") return b.starters || [];
+    return [];
+  }
+  // The index the Established-only gate reads: the board's headline one, which
+  // is the first index column the artifact declares.
+  function primaryIndex(spec) {
+    var keys = Object.keys((spec && spec.index) || {});
+    return keys.length ? keys[0] : null;
+  }
+  // The clubs a row was produced for inside the window. A Current row carries one
+  // club and no list; a window row carries every club it produced for, and the
+  // filter, the search box, the select and the cell all read this one list
+  // (owner decision D9: club of production on a window, not the club of the last
+  // season). Filtering 2024-2026 by BOS used to lose a player who took 400 plate
+  // appearances for BOS in 2024 and is filed under NYY.
+  function rowClubs(r) {
+    if (r.clubs && r.clubs.length) return r.clubs;
+    return r.team ? [r.team] : [];
+  }
+  // The name a row shows. The substrate names the players on the CURRENT board
+  // and leaves the rest blank; data/player_links.json closes part of the gap and
+  // lands on its own schedule, so the fallback is resolved HERE, at render time,
+  // rather than frozen into the fold cache by whichever fetch won the race. The
+  // cell, the search box and the "no name" count all read this one function, so
+  // the board cannot disclose a count it does not render.
+  function rowName(r) {
+    if (r.name) return r.name;
+    return (r.mlbam != null) ? linkName(r.mlbam) : "";
+  }
+  function winMatch(sec, r, idxKey) {
+    if (sectionQual(sec) && r.qualified === false) return false;
+    var tm = sectionTeam(sec);
+    if (tm && rowClubs(r).indexOf(tm) < 0) return false;
+    if (winEstablished && idxKey && r[idxKey + "_tag"] === "provisional") return false;
+    if (sec === "defense" && defensePos.length && defensePos.indexOf(r.pos) < 0) return false;
+    var min = sectionMin(sec);
+    if (min.key && !passesMin(r[min.key], min.val)) return false;
+    var q = String(sectionQuery(sec) || "").trim().toLowerCase();
+    if (!q) return true;
+    // A row the substrate does not name is still addressable: the cell prints
+    // its MLBAM id, so the search box matches that id too.
+    var nm = rowName(r);
+    return (nm.toLowerCase().indexOf(q) >= 0
+      || rowClubs(r).join(" ").toLowerCase().indexOf(q) >= 0
+      || (!nm && r.mlbam != null && String(r.mlbam).indexOf(q.replace(/^#/, "")) >= 0));
+  }
+  function cloneCol(c) {
+    var out = {};
+    for (var k in c) { if (Object.prototype.hasOwnProperty.call(c, k)) out[k] = c[k]; }
+    return out;
+  }
+  // A count or a pooled rate keeps its cell and its formatter and states what was
+  // done to it; the window rides its EXPORT label, so a range number cannot leave
+  // the page under a single-season header.
+  function windowCountCol(c, w, spec) {
+    var out = cloneCol(c), lbl = winLabel(w);
+    if (c.kind === "name") return out;          // a name is not a window number
+    out.exportLabel = c.label + " " + lbl;
+    out.vintage = null;
+    var p = (spec.pool || {})[c.key], rc = (spec.recomposed || {})[c.key];
+    out.title = p ? ("Pooled once over " + lbl + ": " + p.formula + ". Not the average of the seasons.")
+      : rc ? ("Recomposed over " + lbl + ": " + rc + ".")
+      : ("Summed over " + lbl + ".");
+    if (p) {
+      var base = c.cell || function (r) {
+        return c.fmt ? c.fmt(getVal(c, r), c.term) : fInt(getVal(c, r));
+      };
+      // THE POOLED CELL CARRIES ITS OWN DENOMINATOR, and its own contributing
+      // season count where the artifact ships one: a pitcher with three seasons
+      // of innings but one season missing from a feed has his IP summed over
+      // three and his ERA pooled over two, and one row-level Yrs cannot say
+      // that. The numbers are the payload's, never inferred here.
+      out.cell = function (r) {
+        var body = base(r);
+        var d = num((r.denoms || {})[p.denom]);
+        if (d == null) return body;
+        var ns = num(r[c.key + "_n"]), yrs = num(r.yrs);
+        return '<span title="' + esc("Pooled over " + d + " " + p.denom + " in " + lbl
+          + (ns != null ? ", from " + ns + (yrs != null ? " of " + yrs : "") + " seasons" : ""))
+          + '">' + body + "</span>";
+      };
+    }
+    return out;
+  }
+  // A window index: the span in the LABEL, the pool in the tooltip, and NO
+  // ladder. It never routes through remCell / runCell / hemCell / vtCell, which
+  // is the one move that would paint a cut measured on a one-season pool onto a
+  // pool 12 to 18% narrower.
+  function windowIndexCol(c, w, how, stats) {
+    var out = cloneCol(c), lbl = winLabel(w);
+    out.labelExtra = '<span class="mlbstats-winspan">' + esc(lbl) + "</span>";
+    out.exportLabel = c.label + " " + lbl;
+    out.vintage = null;
+    out.isRem = false;
+    out.title = lbl + ": " + how + ", each season scored against its own pool, so 100 is the average of"
+      + " those pools and not of this window's"
+      + (stats && stats.mean != null
+          ? " - measured, this window's pool averages " + stats.mean
+            + (stats.sd != null ? " with a standard deviation of " + stats.sd + " points" : "")
+            + (stats.n != null ? " over " + stats.n + " rows" : "")
+          : "")
+      + ". No value ruler is carried onto a window, so the column is uncoloured."
+      + " p = percentile inside this window's pool; * = provisional.";
+    out.cell = function (r) {
+      var v = num(r[c.key]);
+      if (v == null) return EM_DASH;
+      // NOT .rem-plus: that class is cursor:help, and the explanation is on the
+      // header, not on the cell. A help cursor over nothing is an affordance
+      // that lies.
+      var s = '<span class="mlbstats-winidx">' + fInt(v) + "</span>";
+      var p = num(r[c.key + "_pct"]);
+      if (p != null) s += '<span class="proj-dim mlbstats-pct"> p' + fInt(p) + "</span>";
+      if (r[c.key + "_tag"] === "provisional") {
+        s += '<span class="proj-dim" title="Provisional: fewer contributing seasons or less denominator'
+          + ' than this window asks for">*</span>';
+      }
+      return s;
+    };
+    return out;
+  }
+  // Every column key this window's payload can fill. The board's own column
+  // array MINUS this set is exactly what the window drops, which is why the
+  // note is built from it rather than from spec.hidden: a column the lab
+  // classified nowhere disappeared silently under a sentence that claimed to
+  // name everything that went.
+  function winAllow(spec) {
+    var allow = { name: 1, pos: 1 };
+    (spec.sum || []).forEach(function (k) { allow[k] = 1; });
+    Object.keys(spec.pool || {}).forEach(function (k) { allow[k] = 1; });
+    Object.keys(spec.recomposed || {}).forEach(function (k) { allow[k] = 1; });
+    Object.keys(spec.index || {}).forEach(function (k) { allow[k] = 1; });
+    if (allow.sd && allow.md) allow.sd_md = 1;      // one column over two counts
+    return allow;
+  }
+  function windowCols(sec, w, doc, spec) {
+    var allow = winAllow(spec), idx = spec.index || {};
+    var pool = ((doc.pool_stats || {})[LAB_BOARD[sec]]) || {};
+    var out = [];
+    sectionCols(sec).forEach(function (c) {
+      if (!allow[c.key]) return;
+      out.push(idx[c.key] ? windowIndexCol(c, w, idx[c.key], pool[c.key])
+                          : windowCountCol(c, w, spec));
+    });
+    return out;
+  }
+  // A sort key the window board does not carry falls back to the board's own
+  // first numeric column, the rule readSort has always applied to a stale link.
+  function windowSort(sec, cols) {
+    var s = sectionSort(sec), ok = false, fall = null;
+    cols.forEach(function (c) {
+      if (c.key === s.key) ok = true;
+      if (!fall && c.num) fall = c;
+    });
+    return ok ? s : { key: fall ? fall.key : "name", asc: false };
+  }
+  // A column the lab classified in no family at all. It is still NAMED: the
+  // note's promise is that everything the board serves and this window does not
+  // is listed, and "the lab has no opinion on it" is a reason a reader can act
+  // on, where silence is not.
+  var UNCLASSIFIED_COL = "The lab does not classify this column on a window, so it is off rather than"
+    + " printed on a basis nobody chose.";
+  // The dropped list is the board's OWN column array minus the keys this
+  // window's payload can fill, so a column added to either side is named here
+  // by existing. The reason is the artifact's where it has one.
+  function droppedCols(sec, spec) {
+    var allow = winAllow(spec), hidden = spec.hidden || {}, seen = {}, out = [];
+    sectionCols(sec).forEach(function (c) {
+      if (allow[c.key] || seen[c.key] || c.kind === "name") return;
+      seen[c.key] = 1;
+      out.push('<span title="' + esc(hidden[c.key] || UNCLASSIFIED_COL) + '">' + esc(c.label) + "</span>");
+    });
+    return out.join(", ");
+  }
+  // The label a column carries on the board, so a sentence can name one.
+  function colLabel(sec, key) {
+    var lbl = key;
+    sectionCols(sec).forEach(function (c) { if (c.key === key) lbl = c.label; });
+    return lbl;
+  }
+  // What this window's pool ACTUALLY is, from the payload's pool_stats. It goes
+  // in the note and not only in a column tooltip: a phone has no hover, and this
+  // is the one sentence that says what the scale under the numerals is.
+  function poolStatsLine(sec, doc, idxKey) {
+    var s = (((doc.pool_stats || {})[LAB_BOARD[sec]]) || {})[idxKey];
+    if (!s || s.mean == null) return "";
+    return "Measured on this window, the " + esc(colLabel(sec, idxKey)) + " pool averages " + s.mean
+      + (s.sd != null ? " with a standard deviation of " + s.sd + " points" : "")
+      + (s.n != null ? " over " + s.n + " rows" : "")
+      + ", so ten points here is not one standard deviation of it.";
+  }
+  // The note is a DETAILS: one line of summary and the rest a tap away. Measured
+  // at 390x844, the open note put the first row of every window board below the
+  // fold (table top y 781 to 802 against an 844px screen), which is the board
+  // itself off the first screen. The repo already closes the methodology fold
+  // and the Team note the same way, so this is the page's own pattern and not a
+  // new one. The Established-only control rides OUTSIDE it: a filter that
+  // changes the rows cannot hide inside a collapsed note.
+  function winNoteShell(head, bits, tail) {
+    return '<div class="mlbstats-winhead">'
+      + '<details class="mlbstats-note mlbstats-winnote"><summary>' + head
+      + ' <span class="mlbx-more">What this window did</span></summary>'
+      + '<div class="mlbx-notebody">' + bits.join(" ") + "</div></details>" + (tail || "") + "</div>";
+  }
+  // 2020 and the season still being played, one mechanism and no typed number:
+  // season_share is that season's league eWAR over the mean of the last three
+  // complete seasons, published by the exporter and read here.
+  function shortSeasons(doc, seasons) {
+    var share = (doc && doc.season_share) || (SEASONS && SEASONS.season_share) || null;
+    if (!share) return [];
+    var live = num(doc && doc.live_season);
+    if (live == null) live = num(WINDOWS && WINDOWS.live_season);
+    var out = [];
+    (seasons || []).forEach(function (y) {
+      var v = num(share[String(y)]);
+      if (v == null || v >= 0.98) return;
+      var pct = Math.round(v * 100);
+      out.push(y === live
+        ? y + " is still being played and has produced " + pct + "% of a normal season so far."
+        : y + " is inside this window and produced " + pct + "% of a normal season.");
+    });
+    return out;
+  }
+  // What the page says on a window, every number of it off the payload.
+  function windowNote(sec, w, doc, spec, shown, rows, idxKey) {
+    var lbl = winLabel(w), n = (w.seasons || []).length;
+    var bits = [];
+    bits.push("Counts are summed over the window. Rates are pooled once, numerator over denominator,"
+      + " never an average of the seasons.");
+    if (idxKey) {
+      bits.push("The " + gloss("+ indexes", "range") + " are the window the lab computed: each season"
+        + " scored against its own pool, weighted by its own denominator. So 100 is the average of"
+        + " those pools and not of this window's, and no colour ladder is carried onto them.");
+      var ps = poolStatsLine(sec, doc, idxKey);
+      if (ps) bits.push(ps);
+    }
+    bits.push("Club is every club of production inside the window; the cell shows the last one, the name"
+      + " tooltip lists the rest, and the club filter and the search box match any of them.");
+    var mn = sectionMin(sec);
+    if (mn.key) {
+      bits.push("The min " + esc(MIN_LABEL[mn.key] || mn.key) + " floor applies to the window total,"
+        + " not to a season.");
+    }
+    var qr = ((doc.qualified_rule_window || {})[LAB_BOARD[sec]] || {}).rule;
+    if (qr) bits.push("Qualified: " + esc(qr) + ".");
+    shortSeasons(doc, w.seasons).forEach(function (s) { bits.push(esc(s)); });
+    var ends = winEnds(w);
+    var ex = (doc.excluded_seasons || []).filter(function (y) {
+      return y >= ends.lo && y <= ends.hi && w.seasons.indexOf(y) < 0;
+    });
+    if (ex.length) {
+      bits.push("The index labs exclude " + esc(ex.join(", ")) + ", so this window is " + n
+        + " played seasons inside " + esc(lbl) + ".");
+    }
+    var dropped = droppedCols(sec, spec);
+    if (dropped) bits.push("<b>Off on this window:</b> " + dropped + ".");
+    var est = idxKey
+      ? ' <button type="button" class="chip mlbx-est' + (winEstablished ? " active" : "")
+        + '" data-mlbest="' + esc(sec) + '" aria-pressed="'
+        + winEstablished + '" title="' + esc("A row tagged provisional has fewer contributing seasons"
+          + " or less denominator than this window asks for. Measured on the served window, 40% of the"
+          + " rows are provisional and they reach the top 25, which is what a denominator-weighted mean"
+          + " does with a partial window.") + '">Established only '
+        + (winEstablished ? "on" : "off") + "</button>"
+      : "";
+    var head = "<b>" + esc(lbl) + ", " + n + (n === 1 ? " season" : " seasons") + ".</b> Counts summed,"
+      + " rates pooled once" + (idxKey ? ", + indexes uncoloured" : "") + "."
+      + ' <span class="proj-dim">' + rows.length + " of " + shown.length + " rows shown.</span>";
+    return winNoteShell(head, bits, est);
+  }
+  function windowBoardBody(sec, w, doc) {
+    var spec = (doc.columns || {})[LAB_BOARD[sec]] || {};
+    var cols = windowCols(sec, w, doc, spec);
+    var idxKey = primaryIndex(spec);
+    var all = windowRows(sec, doc);
+    var rows = all.filter(function (r) { return winMatch(sec, r, idxKey); });
+    var sort = windowSort(sec, cols);
+    rows = sortRows(rows, cols, sort);
+    var note = windowNote(sec, w, doc, spec, all, rows, idxKey);
+    if (!rows.length) return note + noRowsNote(sectionTeam(sec), "No rows match the current filters.");
+    return note + '<div class="mlbstats-scroll">'
+      + renderTable(rows, cols, sort, doc, winColBoard(sec)) + "</div>";
+  }
+
+  // The rows a shareable card gets on a window board: the SAME fold, the same
+  // matcher and the same sort as the table, so a card cannot carry a different
+  // set of rows from the board it was generated off. An empty list when the
+  // window payload has not landed, which the card module renders as no card
+  // rather than as the live season's rows.
+  function windowGfxRows(sec) {
+    var win = WIN[sec];
+    var w = win && labWindowFor(LAB_BOARD[sec], win.lo, win.hi);
+    var doc = w && WINDOW_DOC[w.key];
+    if (!doc) return [];
+    var spec = (doc.columns || {})[LAB_BOARD[sec]] || {};
+    var cols = windowCols(sec, w, doc, spec), idx = primaryIndex(spec);
+    return sortRows(windowRows(sec, doc).filter(function (r) { return winMatch(sec, r, idx); }),
+                    cols, windowSort(sec, cols));
+  }
+  // One clause on the card itself, because a card outlives the page it came
+  // from: the subtitle says which window, this says what a window did to the
+  // numbers under it.
+  function winCardNote(sec) {
+    return isWindow(sec)
+      ? " \u00b7 " + winSpan(WIN[sec]) + ": counts summed, rates pooled once, and each + index"
+        + " the denominator-weighted mean of the per-season index on its own pool"
+      : "";
+  }
+
+  // ---- the Overall fold ------------------------------------------------------
+  // One pass over data/war_seasons.json: counts add, the two eWAR sides sum
+  // UNROUNDED and round once (the board's own rule over one season), and a
+  // denominator a season does not carry contributes nothing rather than a zero.
+  // The per-season lines come back WITH the total, so the expander under a row
+  // cannot disagree with the number above it.
+  function fieldIndex(fields) {
+    var idx = {};
+    (fields || []).forEach(function (f, i) { idx[f] = i; });
+    return idx;
+  }
+  function foldSeasons(lo, hi) {
+    var ck = lo + "-" + hi;
+    if (FOLD_CACHE[ck]) return FOLD_CACHE[ck];
+    var idx = fieldIndex(SEASONS.fields), tms = SEASONS.tm || [], poss = SEASONS.pos || [];
+    var players = SEASONS.players || {}, out = [], nameless = 0;
+    var lg = { war: 0, war_bat: 0, war_pit: 0 };
+    var rule = SEASONS.qualified_rule_window || {};
+    Object.keys(players).forEach(function (mid) {
+      var ent = players[mid], lines = ent && ent[1];
+      if (!lines || !lines.length) return;
+      var bat = null, pit = null, pa = null, ip = null, g = null, gs = null;
+      var yrs = 0, last = null, age = null, pos = null, team = null, clubs = [], seasons = [];
+      lines.forEach(function (r) {
+        var y = num(r[idx.season]);
+        if (y == null || y < lo || y > hi) return;
+        yrs++;
+        var b = num(r[idx.war_bat]), p = num(r[idx.war_pit]);
+        var rpa = num(r[idx.pa]), rip = num(r[idx.ip]);
+        var rg = num(r[idx.g]), rgs = num(r[idx.gs]);
+        if (b != null) bat = (bat || 0) + b;
+        if (p != null) pit = (pit || 0) + p;
+        if (rpa != null) pa = (pa || 0) + rpa;
+        if (rip != null) ip = (ip || 0) + rip;
+        if (rg != null) g = (g || 0) + rg;
+        if (rgs != null) gs = (gs || 0) + rgs;
+        var tm = tms[r[idx.tm]] || "";
+        String(tm).split("/").forEach(function (c) { if (c && clubs.indexOf(c) < 0) clubs.push(c); });
+        if (last == null || y >= last) {
+          last = y;
+          age = num(r[idx.age]);
+          pos = poss[r[idx.pos]] || null;
+          team = String(tm).split("/").pop() || null;
+        }
+        seasons.push({ season: y, team: tm, war: round1((b || 0) + (p || 0)),
+                       war_bat: b == null ? null : round1(b),
+                       war_pit: p == null ? null : round1(p),
+                       pa: rpa, ip: rip, g: rg, gs: rgs });
+      });
+      if (!yrs) return;
+      var nm = ent[0] || linkName(mid) || "";
+      if (!nm) nameless++;
+      seasons.sort(function (a, b2) { return b2.season - a.season; });
+      var row = { mlbam: num(mid), name: nm, team: team, pos: pos, age: age,
+        war: round1((bat || 0) + (pit || 0)),
+        war_bat: bat == null ? null : round1(bat),
+        war_pit: pit == null ? null : round1(pit),
+        pa: pa, ip: ip, g: g, gs: gs, yrs: yrs, clubs: clubs, seasons: seasons,
+        bat_600: (bat != null && pa) ? (bat / pa) * 600 : null,
+        pitch_200: (pit != null && ip) ? (pit / ip) * 200 : null };
+      row.qualified = !!((rule.min_pa != null && pa != null && pa >= rule.min_pa)
+                      || (rule.min_ip != null && ip != null && ip >= rule.min_ip));
+      lg.war += (bat || 0) + (pit || 0);
+      lg.war_bat += (bat || 0);
+      lg.war_pit += (pit || 0);
+      out.push(row);
+    });
+    var fold = { players: out, nameless: nameless, seasons: [],
+      league: { war: round1(lg.war), war_bat: round1(lg.war_bat),
+                war_pit: round1(lg.war_pit), n: out.length } };
+    for (var y2 = lo; y2 <= hi; y2++) {
+      if ((SEASONS.seasons || []).indexOf(y2) >= 0) fold.seasons.push(y2);
+    }
+    FOLD_CACHE[ck] = fold;
+    return fold;
+  }
+  // The substrate names the players the CURRENT board names and leaves the rest
+  // blank, so a window reaching back past today's rosters loses names the fold
+  // still has numbers for. The player-links map closes part of the gap; what it
+  // does not close is stated ON the board rather than hidden, and the sentence
+  // disappears by itself when the exporter fills the field.
+  function linkName(mid) {
+    try {
+      var hit = LINKS && LINKS.byMlbam && LINKS.byMlbam[String(mid)];
+      return (hit && hit.name) || "";
+    } catch (e) { return ""; }
+  }
+  function renderOverallWindow(win) {
+    if (SEASONS_ERROR) return winFailed("war", "The per-season eWAR substrate failed to load.");
+    if (!SEASONS) { loadSeasons("war"); return winLoading("Loading every season"); }
+    var fold = foldSeasons(win.lo, win.hi);
+    var cols = warCols();
+    var rows = fold.players.filter(function (r) { return winMatch("war", r, null); });
+    var sort = windowSort("war", cols);
+    rows = sortRows(rows, cols, sort);
+    var note = overallWindowNote(win, fold, rows);
+    if (!rows.length) return note + noRowsNote(warTeam, "No players match the current filters.");
+    return note + '<div class="mlbstats-scroll">'
+      + renderTable(rows, cols, sort, warData, "war", warTableOpts()) + "</div>";
+  }
+  // Why each Overall column goes on a window. `boards` is a fact about the five
+  // boards served TODAY; Yrs and Clubs are facts about a span, so one season has
+  // nothing for them to say.
+  var WAR_WIN_DROP = {
+    boards: "The five role boards this player is on TODAY. A window has no per-season answer on disk,"
+      + " so the column is off rather than answered for the wrong date.",
+    yrs: "One season is not a span, so there is nothing to count.",
+    clubs: "One season is not a span; the club cell already names it."
+  };
+  // The same promise the lab boards make, kept by the same means: the board's own
+  // column array minus what is on screen. "Nothing is hidden" was false the
+  // moment a window opened, because Also on goes on every window and Yrs and
+  // Clubs go on a single season.
+  function overallDropped() {
+    var keep = {}, out = [];
+    warCols().forEach(function (c) { keep[c.key] = 1; });
+    WAR_COLS.forEach(function (c) {
+      if (keep[c.key]) return;
+      out.push('<span title="' + esc(WAR_WIN_DROP[c.key] || UNCLASSIFIED_COL) + '">'
+        + esc(c.label) + "</span>");
+    });
+    return out.join(", ");
+  }
+  function overallWindowNote(win, fold, rows) {
+    var nameless = 0;
+    rows.forEach(function (r) { if (!rowName(r)) nameless++; });
+    var n = fold.seasons.length, lbl = winSpan(win);
+    var bits = [];
+    bits.push("Every column here is a count summed over the window, or one of those counts over its own"
+      + " denominator. Nothing on this board is an index, so no ladder and no colour is carried onto"
+      + " one.");
+    bits.push("Club is every club of production inside the window; the cell shows the last one, the name"
+      + " tooltip lists the rest, and the club filter and the search box match any of them.");
+    var rule = SEASONS.qualified_rule_window || {};
+    if (rule.min_pa != null || rule.min_ip != null) {
+      var f = [];
+      if (rule.min_pa != null) f.push(rule.min_pa + " plate appearances");
+      if (rule.min_ip != null) f.push(rule.min_ip + " innings");
+      bits.push("Qualified: " + f.join(" or ") + " over the whole window. On a long window this filter"
+        + " removes very little, because a small sample makes a small total anyway.");
+    }
+    shortSeasons({ season_share: SEASONS.season_share, live_season: sectionLiveSeason("war") },
+                 fold.seasons).forEach(function (s) { bits.push(esc(s)); });
+    var dropped = overallDropped();
+    if (dropped) bits.push("<b>Off on this window:</b> " + dropped + ".");
+    if (nameless) {
+      bits.push("<b>" + nameless + " of " + rows.length + " rows carry no name:</b> the per-season"
+        + " substrate names the players on the current board and leaves the rest blank, so a window"
+        + " reaching back past today's rosters loses names it still has numbers for. Those rows print"
+        + " the player's MLBAM id instead, which the search box matches, and the names return by"
+        + " themselves when the exporter fills the field.");
+    }
+    bits.push("League eWAR over this window: " + fold.league.war + " from " + fold.league.n
+      + " players.");
+    var head = "<b>" + esc(lbl) + ", " + n + (n === 1 ? " season" : " seasons") + ".</b> Every column is"
+      + " a count summed over it, or a count over its own denominator."
+      + ' <span class="proj-dim">' + rows.length + " of " + fold.players.length + " rows shown.</span>";
+    return winNoteShell(head, bits, "");
+  }
+
+  // ---- the per-season expander ----------------------------------------------
+  // The line behind the total, rendered FROM THE SAME FOLD, so the explanation
+  // cannot disagree with the number above it. No hash key: an expanded row is a
+  // glance, not a page state.
+  var warOpen = {};
+  function toggleSeasonRow(id) {
+    if (!id) return;
+    if (warOpen[id]) delete warOpen[id]; else warOpen[id] = 1;
+    renderWar();
+  }
+  function warTableOpts() {
+    return {
+      nameExtra: function (r) {
+        if (!r.seasons || !r.seasons.length) return "";
+        var open = !!warOpen[String(r.mlbam)];
+        return '<button type="button" class="mlbx-caret' + (open ? " is-open" : "")
+          + '" data-mlbexpand="' + esc(String(r.mlbam)) + '" aria-expanded="' + open
+          + '" aria-label="Season by season" title="Season by season" data-export-skip></button>';
+      },
+      child: function (r, n) {
+        if (!r.seasons || !warOpen[String(r.mlbam)]) return "";
+        // What the lines PRINT, added up. Each one rounds to a tenth and the
+        // total rounds once over the whole window, so on a long window they
+        // genuinely do not add up, and the cell says what they add to rather
+        // than asserting a bound that only holds over three seasons.
+        var printed = 0;
+        r.seasons.forEach(function (s) { printed += (s.war == null ? 0 : s.war); });
+        printed = round1(printed);
+        var cells = r.seasons.map(function (s) {
+          var side = [];
+          if (s.war_bat != null) side.push("bat " + f1(s.war_bat));
+          if (s.war_pit != null) side.push("pitch " + f1(s.war_pit));
+          if (s.pa != null) side.push(fInt(s.pa) + " PA");
+          if (s.ip != null) side.push(f1(s.ip) + " IP");
+          if (s.g != null) side.push(fInt(s.g) + " G");
+          return '<span class="mlbx-season"><b>' + s.season + '</b> <span class="proj-dim">'
+            + esc(s.team || EM_DASH) + "</span> <b>" + f1(s.war) + '</b> <span class="proj-dim">'
+            + esc(side.join(" · ")) + "</span></span>";
+        }).join("");
+        return '<tr class="mlbx-seasonrow" data-export-skip><td colspan="' + n
+          + '" data-export-skip><span class="mlbx-seasons">' + cells
+          + '<span class="mlbx-season mlbx-season-total" title="'
+          + esc("Each season line rounds to a tenth; the total sums the two unrounded sides over the"
+                + " whole window and rounds once, so the lines need not add to it exactly. These lines"
+                + " add to " + f1(printed) + ".")
+          + '"><b>Total</b> <b>' + f1(r.war) + "</b></span></span></td></tr>";
+      }
+    };
   }
 
   // ---- frozen-vintage disclosure --------------------------------------------
@@ -943,7 +1948,11 @@
   // ---- render: shared table -------------------------------------------------
   // `meta` is the section payload, passed only so a column flagged
   // `vintage: "<payload key>"` can date itself in its own tooltip.
-  function renderTable(rows, cols, sort, meta, board) {
+  // `opts` is how a board adds something the shared table has no opinion
+  // about: `nameExtra(row)` rides inside the identity cell (the Overall board's
+  // expander caret) and `child(row, nCols)` emits one extra row under it (the
+  // per-season line). Both are optional and every other board passes neither.
+  function renderTable(rows, cols, sort, meta, board, opts) {
     var plan = viewPlan(cols, sort, board);
     var allv = !!(board && COL_VIEWS[board] && COL_VIEWS[board].length > 1 && !activeView(board).keys);
     var head = "<thead><tr>";
@@ -951,7 +1960,11 @@
       var c = p.c;
       var sortable = !!c.num || c.kind === "name" || c.kind === "team";
       var sorted = (c.key === sort.key) ? " is-sorted" : "";
-      var lbl = c.term ? gloss(c.label, c.term) : esc(c.label);
+      // `labelExtra` is HTML after the label, on its own line: the window
+      // boards put the SPAN there, because the span belongs in the label and a
+      // one-line "HEM+ 2024-2026" header is 60px wider than the column under
+      // it (measured at 390px: five window boards ran past their box).
+      var lbl = (c.term ? gloss(c.label, c.term) : esc(c.label)) + (c.labelExtra || "");
       var vint = c.vintage ? vintageTitle(vintageOf(meta, c.vintage)) : "";
       if (c.ewar) { var ew = ewarTitle(meta); if (ew) vint = vint ? vint + " " + ew : ew; }
       var titleTxt = c.title ? (vint ? c.title + " " + vint : c.title) : vint;
@@ -965,7 +1978,7 @@
         : "";
       var nw = (allv && String(c.label).indexOf(" ") < 0) ? " mlbstats-nw" : "";
       head += '<th class="mlbstats-col-' + c.key + sorted + p.cls + nw + '"' + title + a11y + ' data-col="' + c.key
-        + '" data-export-text="' + esc(c.label) + '"' + (p.off ? " data-export-skip" : "") + '>' + lbl + "</th>";
+        + '" data-export-text="' + esc(c.exportLabel || c.label) + '"' + (p.off ? " data-export-skip" : "") + '>' + lbl + "</th>";
     });
     head += "</tr></thead>";
 
@@ -975,7 +1988,10 @@
       body += "<tr" + prov + ">";
       plan.forEach(function (p) {
         var c = p.c, td = p.cls ? '<td class="' + p.cls.slice(1) + '"' + (p.off ? " data-export-skip" : "") + ">" : "<td>";
-        if (c.kind === "name") { body += nameCell(r); return; }
+        if (c.kind === "name") {
+          body += nameCell(r, opts && opts.nameExtra ? opts.nameExtra(r) : "");
+          return;
+        }
         if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + esc(r.team || EM_DASH) + "</td>"; return; }
         if (c.cell) { body += td + c.cell(r) + "</td>"; return; }
         var v = getVal(c, r);
@@ -990,6 +2006,7 @@
         body += td + rendered + "</td>";
       });
       body += "</tr>";
+      if (opts && opts.child) body += opts.child(r, plan.length);
     });
     body += "</tbody>";
     return '<table class="mlbstats-table' + (allv ? " mlbstats-cv-all" : "") + '">' + head + body + "</table>";
@@ -1013,14 +2030,33 @@
   // anchor would win over the cell's for a pointer over the name itself, on
   // the LINK too. The link keeps its affordance hint after the name rather
   // than instead of it.
-  function nameCell(r) {
+  // `extra` is HTML the board puts at the head of the cell (the Overall
+  // board's expander caret). `clubs`, which only a window row carries, adds the
+  // +N of the other clubs the player produced for inside the window: the cell
+  // shows the last one, and the title says who the rest were, so the club basis
+  // is never silently one club when the window held three.
+  function nameCell(r, extra) {
     var role = r.role ? ' <span class="bp-role">' + esc(r.role) + "</span>" : "";
-    var team = r.team ? '<span class="proj-dim"> ' + esc(r.team) + "</span>" : "";
+    var more = (r.clubs && r.clubs.length > 1)
+      ? '<span class="proj-dim" title="' + esc("Clubs of production: " + r.clubs.join(", "))
+        + '">+' + (r.clubs.length - 1) + "</span>" : "";
+    var team = r.team ? '<span class="proj-dim"> ' + esc(r.team) + "</span>" + more : "";
     var prov = (r.qualified === false) ? '<span class="bp-prov" title="Below the qualifying sample; provisional">prov</span>' : "";
-    var nm = esc(r.name || EM_DASH);
+    // A fold row whose substrate carries no name prints the player's MLBAM id
+    // rather than a null marker: an id is a handle (the search box matches it,
+    // and it is what a reader can look up), where an em-dash at rank 4 of a
+    // ranked board is not.
+    var named = rowName(r);
+    var nm = named ? esc(named)
+      : (r.mlbam != null
+          ? '<span class="mlbx-noname" title="' + esc("The per-season substrate names the players on the"
+              + " current board and leaves the rest blank. This is his MLBAM id; the search box matches"
+              + " it.") + '">#' + esc(String(r.mlbam)) + "</span>"
+          : EM_DASH);
     // A row with no name at all gets no title rather than a title of null
     // markers: an empty tooltip is worse than none.
-    var full = [r.name, r.team, r.role].filter(Boolean).join(" - ");
+    var full = [named, (r.clubs && r.clubs.length > 1) ? r.clubs.join("/") : r.team,
+                r.role].filter(Boolean).join(" - ");
     if (full && r.qualified === false) full += " (provisional)";
     var href = playerHref(r);
     var name = href
@@ -1028,7 +2064,7 @@
         + (full ? esc(full) + " - " : "") + 'open the MLB player card">' + nm + "</a>"
       : '<span class="mlbstats-name-txt">' + nm + "</span>";
     return '<td class="mlbstats-name"' + (full ? ' title="' + esc(full) + '"' : "") + ">"
-      + logo(r.team) + name + team + role + prov + "</td>";
+      + (extra || "") + logo(r.team) + name + team + role + prov + "</td>";
   }
 
   function sortRows(rows, cols, sort) {
@@ -1099,17 +2135,6 @@
     for (var y = cur - 1; y >= cur - 5; y--) out.push(y);
     return out;
   }
-  function seasonPills() {
-    var pills = [["current", "Current"]];
-    historySeasons().slice().sort(function (a, b) { return b - a; }).forEach(function (y) {
-      pills.push([String(y), String(y)]);
-    });
-    return '<div class="mlbstats-seasons" role="tablist" aria-label="Season">' + pills.map(function (p) {
-      var sel = (p[0] === relSeason);
-      return '<button type="button" class="mlbstats-season' + (sel ? " active" : "")
-        + '" data-mlbseason="' + esc(p[0]) + '" role="tab" aria-selected="' + sel + '">' + esc(p[1]) + "</button>";
-    }).join("") + "</div>";
-  }
   function loadHistory() {
     if (HISTORY || HISTORY_LOADING) return;
     HISTORY_LOADING = true;
@@ -1153,6 +2178,11 @@
   }
 
   function renderRelievers() {
+    winCheck("bullpen");
+    if (isWindow("bullpen")) {
+      var wbbullpen = renderWindowBoard("bullpen");
+      if (wbbullpen) return wbbullpen;
+    }
     if (relSeason !== "current") return renderRelieverHistory();
     var rows = sortRows(filteredRelievers(), REL_COLS, relSort);
     var body = rows.length
@@ -1169,14 +2199,14 @@
             + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort, DATA, "rel") + "</div>";
         })()
       : noRowsNote(relTeam, "No relievers match the current filters.");
-    return toolRow(seasonPills(), "rel") + body;
+    return yearsRow("bullpen") + body;
   }
 
   // A past season's board: the same table and controls, restricted to the
   // columns a history row carries (no trailing-window or WPA/LI columns). It
   // lets a user eyeball how each season's REM+ (skill) and RIV+ (impact) aged.
   function renderRelieverHistory() {
-    var pills = toolRow(seasonPills(), "rel");
+    var pills = yearsRow("bullpen");
     if (HISTORY_ERROR) {
       return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
         + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
@@ -1388,17 +2418,24 @@
     }
     if (view !== "relievers") return "";
     var pool = relSourceRows();
-    return '<div class="' + filtCls() + '">' + filtBtn(filtCount(relTeam, relMinIp, relRoles, !qualifiedOnly))
+    // Role is a SEASON fact: the window payload carries no role field, so the
+    // chips cannot be applied on one. They go with the filter rather than
+    // sitting pressed over a board that ignores them, and the Filters badge
+    // stops counting them (a badge that counts a filter which is off is the
+    // same lie in one digit).
+    var relWin = isWindow("bullpen");
+    return '<div class="' + filtCls() + '">'
+      + filtBtn(filtCount(relTeam, relMinIp, relWin ? null : relRoles, !qualifiedOnly))
       + teamFilterChip(relTeam)
       + '<label class="mlbstats-ctl">'
       + '<input type="checkbox" id="mlbstats-qual"' + (qualifiedOnly ? " checked" : "") + "> qualified only</label>"
-      + teamSelect("mlbstats-team", pool, relTeam)
-      + minSelect("mlbstats-minip", "min IP", relMinIp,
+      + teamSelect("mlbstats-team", winSelectRows("bullpen", pool), relTeam, "bullpen")
+      + minSelect("mlbstats-minip", minLabel("bullpen", "min IP"), relMinIp,
           "Minimum innings. Stacks with qualified only.")
       + gfxChip("mlbstats-rel-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-q" placeholder="Search reliever or team" value="' + esc(query) + '">'
       + "</div>"
-      + roleChips(pool, relRoles, "mlbstats-role-");
+      + (relWin ? "" : roleChips(pool, relRoles, "mlbstats-role-"));
   }
 
   function render() {
@@ -1428,6 +2465,7 @@
 
   function bindEvents(root) {
     bindCollapse(root);
+    stampCsv("bullpen", root);
     bindColViews(root, function () { renderInPlace(); });
     root.querySelectorAll("[data-mlbview]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -1467,8 +2505,8 @@
     var relGfx = root.querySelector("#mlbstats-rel-gfx");
     if (relGfx) relGfx.addEventListener("click", function () {
       if (!window.EEPHUS_GFX) return;
-      var rows = (relSeason === "current")
-        ? sortRows(filteredRelievers(), REL_COLS, relSort)
+      var rows = isWindow("bullpen") ? windowGfxRows("bullpen")
+        : (relSeason === "current") ? sortRows(filteredRelievers(), REL_COLS, relSort)
         : sortRows(filteredHistory(), REL_HISTORY_COLS, historySort());
       EEPHUS_GFX.open(_mlbstatsBoardSpec("relievers", rows));
     });
@@ -1476,14 +2514,6 @@
     if (teamGfx) teamGfx.addEventListener("click", function () {
       if (!window.EEPHUS_GFX) return;
       EEPHUS_GFX.open(_mlbstatsBoardSpec("bullpens", sortRows((DATA && DATA.teams) || [], TEAM_COLS, teamSort)));
-    });
-    root.querySelectorAll("[data-mlbseason]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        relSeason = b.getAttribute("data-mlbseason");
-        if (relSeason !== "current") loadHistory();
-        writeHash();
-        render();
-      });
     });
     var hretry = root.querySelector("#mlbstats-history-retry");
     if (hretry) hretry.addEventListener("click", function () {
@@ -1562,6 +2592,31 @@
     var m = new RegExp("(?:^#|[#&])" + key + "=(current|\\d{4})\\b").exec(h);
     return m ? m[1] : fallback;
   }
+  // A WINDOW rides its own key, never a widened season key. readSeason's \b
+  // matches between 2023 and the hyphen, so a browser holding a cached copy of
+  // yesterday's script and reading #hseason=2023-2025 would silently render
+  // 2023; a key it has never heard of is ignored outright, which opens Current -
+  // a visible wrong answer instead of an invisible one. The (?:^#|[#&]) anchor
+  // is the same one that stops sview= matching view=.
+  function readRange(h, key) {
+    var m = new RegExp("(?:^#|[#&])" + key + "=(\\d{4})-(\\d{4})\\b").exec(h);
+    return m ? { lo: Number(m[1]), hi: Number(m[2]) } : null;
+  }
+  // The season key first, then the window key, because a span is the more
+  // specific statement. Neither is TRUSTED: winCheck validates both against the
+  // seasons that section publishes once its payload has landed.
+  function readWindow(h, sec, seasonKey, yearsKey) {
+    var y = readSeason(h, seasonKey, "current");
+    if (y !== "current") WIN[sec] = { lo: Number(y), hi: Number(y) };
+    var r = readRange(h, yearsKey);
+    if (r && r.lo <= r.hi) WIN[sec] = r;
+  }
+  function pushWindow(parts, sec, seasonKey, yearsKey) {
+    var w = WIN[sec];
+    if (!w) return;                       // Current is the default: no key at all
+    if (w.lo === w.hi) parts.push(seasonKey + "=" + w.lo);
+    else parts.push(yearsKey + "=" + w.lo + "-" + w.hi);
+  }
   // A sort key is only honoured if the named column EXISTS on that board and is
   // actually sortable; a stale or hand-edited URL falls back to the default
   // instead of leaving the board sorted by a column it does not have.
@@ -1604,11 +2659,13 @@
     }
     // Season pills. readHash runs from init(), after every one of these vars
     // and column arrays has been assigned, so the forward references are safe.
-    relSeason = readSeason(h, "rseason", relSeason);
-    starterSeason = readSeason(h, "sseason", starterSeason);
-    hitterSeason = readSeason(h, "hseason", hitterSeason);
-    leverageSeason = readSeason(h, "lseason", leverageSeason);
-    defenseSeason = readSeason(h, "dseason", defenseSeason);
+    readWindow(h, "bullpen", "rseason", "ryears");
+    readWindow(h, "starters", "sseason", "syears");
+    readWindow(h, "hitters", "hseason", "hyears");
+    readWindow(h, "leverage", "lseason", "lyears");
+    readWindow(h, "defense", "dseason", "dyears");
+    readWindow(h, "war", "wseason", "wyears");
+    syncSeasonVars();
     // Column view per board (rcols / scols / hcols / dcols). An unknown view
     // id is ignored, so the board opens on the stored view or Standard.
     Object.keys(COL_VIEW_HASH).forEach(function (b) {
@@ -1649,11 +2706,12 @@
     if (leverageView !== "batters") parts.push("lview=" + leverageView);
     if (defenseView !== "fielders") parts.push("dview=" + defenseView);
     if (warView !== "players") parts.push("wview=" + warView);
-    if (relSeason && relSeason !== "current") parts.push("rseason=" + relSeason);
-    if (starterSeason && starterSeason !== "current") parts.push("sseason=" + starterSeason);
-    if (hitterSeason && hitterSeason !== "current") parts.push("hseason=" + hitterSeason);
-    if (leverageSeason && leverageSeason !== "current") parts.push("lseason=" + leverageSeason);
-    if (defenseSeason && defenseSeason !== "current") parts.push("dseason=" + defenseSeason);
+    pushWindow(parts, "bullpen", "rseason", "ryears");
+    pushWindow(parts, "starters", "sseason", "syears");
+    pushWindow(parts, "hitters", "hseason", "hyears");
+    pushWindow(parts, "leverage", "lseason", "lyears");
+    pushWindow(parts, "defense", "dseason", "dyears");
+    pushWindow(parts, "war", "wseason", "wyears");
     Object.keys(COL_VIEW_HASH).forEach(function (b) {
       if (COL_VIEW[b] && COL_VIEW[b] !== "standard") parts.push(COL_VIEW_HASH[b] + "=" + COL_VIEW[b]);
     });
@@ -1697,7 +2755,12 @@
   // number. Renders into #mlbstats-starters-root; reuses every shared helper
   // (renderTable / sortRows / gloss / remCell / explainer / season pills).
   // ===========================================================================
-  var section = "bullpen";                    // bullpen | starters | hitters | leverage | defense | war
+  // THE LANDING SECTION, owner decision 2026-09-17: Overall (hash value `war`,
+  // unchanged, so every link ever copied off this page still opens what it
+  // named). The section nav in build_site.build_mlbstats is ordered and marked
+  // active to match; the two have to move together or a deep link paints the
+  // wrong tab.
+  var section = "war";                        // war | hitters | starters | bullpen | defense | leverage
   var STARTER_URL = "/data/starter_leaderboards.json";
   var STARTER_HISTORY_URL = "/data/starter_history.json";
 
@@ -1854,17 +2917,6 @@
     for (var y = cur - 1; y >= cur - 5; y--) out.push(y);
     return out;
   }
-  function starterSeasonPills() {
-    var pills = [["current", "Current"]];
-    starterHistorySeasons().slice().sort(function (a, b) { return b - a; }).forEach(function (y) {
-      pills.push([String(y), String(y)]);
-    });
-    return '<div class="mlbstats-seasons" role="tablist" aria-label="Season">' + pills.map(function (p) {
-      var sel = (p[0] === starterSeason);
-      return '<button type="button" class="mlbstats-season' + (sel ? " active" : "")
-        + '" data-starterseason="' + esc(p[0]) + '" role="tab" aria-selected="' + sel + '">' + esc(p[1]) + "</button>";
-    }).join("") + "</div>";
-  }
   function loadStarterHistory() {
     if (STARTER_HISTORY || STARTER_HISTORY_LOADING) return;
     STARTER_HISTORY_LOADING = true;
@@ -1925,8 +2977,9 @@
       + teamFilterChip(starterTeam)
       + '<label class="mlbstats-ctl">'
       + '<input type="checkbox" id="mlbstats-starter-qual"' + (starterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
-      + teamSelect("mlbstats-starter-team", starterSourceRows(), starterTeam)
-      + minSelect("mlbstats-starter-minip", "min IP", starterMinIp,
+      + teamSelect("mlbstats-starter-team", winSelectRows("starters", starterSourceRows()),
+          starterTeam, "starters")
+      + minSelect("mlbstats-starter-minip", minLabel("starters", "min IP"), starterMinIp,
           "Minimum innings. Stacks with qualified only.")
       + gfxChip("mlbstats-starter-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-starter-q" placeholder="Search starter or team" value="' + esc(starterQuery) + '">'
@@ -1934,6 +2987,11 @@
   }
 
   function renderStarterBoard() {
+    winCheck("starters");
+    if (isWindow("starters")) {
+      var wbstarters = renderWindowBoard("starters");
+      if (wbstarters) return wbstarters;
+    }
     if (starterSeason !== "current") return renderStarterHistory();
     var rows = sortRows(filteredStarters(), STARTER_COLS, starterSort);
     var body = rows.length
@@ -1946,14 +3004,14 @@
             + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_COLS, starterSort, starterData, "sp") + "</div>";
         })()
       : noRowsNote(starterTeam, "No starters match the current filters.");
-    return toolRow(starterSeasonPills(), "sp") + body;
+    return yearsRow("starters") + body;
   }
 
   // A past season's board: the same table and controls, restricted to the
   // columns a history row carries (no SEM+ 3yr trailing-window column). It lets a
   // user eyeball how each season's SEM+ (skill) aged forward.
   function renderStarterHistory() {
-    var pills = toolRow(starterSeasonPills(), "sp");
+    var pills = yearsRow("starters");
     if (STARTER_HISTORY_ERROR) {
       return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
         + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
@@ -2102,6 +3160,7 @@
 
   function bindStarterEvents(root) {
     bindCollapse(root);
+    stampCsv("starters", root);
     bindColViews(root, function () { renderStartersInPlace(); });
     root.querySelectorAll("[data-starterview]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -2128,18 +3187,10 @@
     var starterGfx = root.querySelector("#mlbstats-starter-gfx");
     if (starterGfx) starterGfx.addEventListener("click", function () {
       if (!window.EEPHUS_GFX) return;
-      var rows = (starterSeason === "current")
-        ? sortRows(filteredStarters(), STARTER_COLS, starterSort)
+      var rows = isWindow("starters") ? windowGfxRows("starters")
+        : (starterSeason === "current") ? sortRows(filteredStarters(), STARTER_COLS, starterSort)
         : sortRows(filteredStarterHistory(), STARTER_HISTORY_COLS, starterHistorySort());
       EEPHUS_GFX.open(_mlbstatsBoardSpec("starters", rows));
-    });
-    root.querySelectorAll("[data-starterseason]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        starterSeason = b.getAttribute("data-starterseason");
-        if (starterSeason !== "current") loadStarterHistory();
-        writeHash();
-        renderStarters();
-      });
     });
     var hretry = root.querySelector("#mlbstats-starter-history-retry");
     if (hretry) hretry.addEventListener("click", function () {
@@ -2397,17 +3448,6 @@
     for (var y = cur - 1; y >= cur - 5; y--) out.push(y);
     return out;
   }
-  function hitterSeasonPills() {
-    var pills = [["current", "Current"]];
-    hitterHistorySeasons().slice().sort(function (a, b) { return b - a; }).forEach(function (y) {
-      pills.push([String(y), String(y)]);
-    });
-    return '<div class="mlbstats-seasons" role="tablist" aria-label="Season">' + pills.map(function (p) {
-      var sel = (p[0] === hitterSeason);
-      return '<button type="button" class="mlbstats-season' + (sel ? " active" : "")
-        + '" data-hitterseason="' + esc(p[0]) + '" role="tab" aria-selected="' + sel + '">' + esc(p[1]) + "</button>";
-    }).join("") + "</div>";
-  }
   function loadHitterHistory() {
     if (HITTER_HISTORY || HITTER_HISTORY_LOADING) return;
     HITTER_HISTORY_LOADING = true;
@@ -2458,8 +3498,9 @@
       + teamFilterChip(hitterTeam)
       + '<label class="mlbstats-ctl">'
       + '<input type="checkbox" id="mlbstats-hitter-qual"' + (hitterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
-      + teamSelect("mlbstats-hitter-team", hitterSourceRows(), hitterTeam)
-      + minSelect("mlbstats-hitter-minpa", "min PA", hitterMinPa,
+      + teamSelect("mlbstats-hitter-team", winSelectRows("hitters", hitterSourceRows()),
+          hitterTeam, "hitters")
+      + minSelect("mlbstats-hitter-minpa", minLabel("hitters", "min PA"), hitterMinPa,
           "Minimum plate appearances. Stacks with qualified only.")
       + gfxChip("mlbstats-hitter-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-hitter-q" placeholder="Search hitter or team" value="' + esc(hitterQuery) + '">'
@@ -2467,6 +3508,11 @@
   }
 
   function renderHitterBoard() {
+    winCheck("hitters");
+    if (isWindow("hitters")) {
+      var wbhitters = renderWindowBoard("hitters");
+      if (wbhitters) return wbhitters;
+    }
     if (hitterSeason !== "current") return renderHitterHistory();
     var rows = sortRows(filteredHitters(), HITTER_COLS, hitterSort);
     var body = rows.length
@@ -2481,11 +3527,11 @@
             + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_COLS, hitterSort, hitterData, "hit") + "</div>";
         })()
       : noRowsNote(hitterTeam, "No hitters match the current filters.");
-    return toolRow(hitterSeasonPills(), "hit") + body;
+    return yearsRow("hitters") + body;
   }
 
   function renderHitterHistory() {
-    var pills = toolRow(hitterSeasonPills(), "hit");
+    var pills = yearsRow("hitters");
     if (HITTER_HISTORY_ERROR) {
       return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
         + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
@@ -2824,6 +3870,7 @@
 
   function bindHitterEvents(root) {
     bindCollapse(root);
+    stampCsv("hitters", root);
     bindColViews(root, function () { renderHittersInPlace(); });
     root.querySelectorAll("[data-hitterview]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -2856,18 +3903,10 @@
     var hitterGfx = root.querySelector("#mlbstats-hitter-gfx");
     if (hitterGfx) hitterGfx.addEventListener("click", function () {
       if (!window.EEPHUS_GFX) return;
-      var rows = (hitterSeason === "current")
-        ? sortRows(filteredHitters(), HITTER_COLS, hitterSort)
+      var rows = isWindow("hitters") ? windowGfxRows("hitters")
+        : (hitterSeason === "current") ? sortRows(filteredHitters(), HITTER_COLS, hitterSort)
         : sortRows(filteredHitterHistory(), HITTER_HISTORY_COLS, hitterHistorySort());
       EEPHUS_GFX.open(_mlbstatsBoardSpec("hitters", rows));
-    });
-    root.querySelectorAll("[data-hitterseason]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        hitterSeason = b.getAttribute("data-hitterseason");
-        if (hitterSeason !== "current") loadHitterHistory();
-        writeHash();
-        renderHitters();
-      });
     });
     var hretry = root.querySelector("#mlbstats-hitter-history-retry");
     if (hretry) hretry.addEventListener("click", function () {
@@ -3043,18 +4082,6 @@
     for (var y = cur - 1; y >= cur - 5; y--) out.push(y);
     return out;
   }
-  function leverageSeasonPills() {
-    var pills = [["current", "Current"]];
-    leverageHistorySeasons().slice().sort(function (a, b) { return b - a; }).forEach(function (y) {
-      pills.push([String(y), String(y)]);
-    });
-    if (pills.length < 2) return "";
-    return '<div class="mlbstats-seasons" role="tablist" aria-label="Season">' + pills.map(function (p) {
-      var sel = (p[0] === leverageSeason);
-      return '<button type="button" class="mlbstats-season' + (sel ? " active" : "")
-        + '" data-leverageseason="' + esc(p[0]) + '" role="tab" aria-selected="' + sel + '">' + esc(p[1]) + "</button>";
-    }).join("") + "</div>";
-  }
   function loadLeverageHistory() {
     if (leverageHistory || leverageHistoryLoading) return;
     leverageHistoryLoading = true;
@@ -3137,7 +4164,8 @@
       + teamFilterChip(leverageTeam)
       + '<label class="mlbstats-ctl">'
       + '<input type="checkbox" id="mlbstats-leverage-qual"' + (leverageQualifiedOnly ? " checked" : "") + "> qualified only</label>"
-      + teamSelect("mlbstats-leverage-team", leverageSourceRows(), leverageTeam)
+      + teamSelect("mlbstats-leverage-team", winSelectRows("leverage", leverageSourceRows()),
+          leverageTeam, "leverage")
       + gfxChip("mlbstats-leverage-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-leverage-q" placeholder="Search player or team" value="' + esc(leverageQuery) + '">'
       + "</div>";
@@ -3156,33 +4184,42 @@
   }
 
   function renderLeverageBoard() {
-    // A past-season pill reads from the lazy-loaded history file; the inline
+    winCheck("leverage");
+    if (isWindow("leverage")) {
+      var wbleverage = renderWindowBoard("leverage");
+      if (wbleverage) return wbleverage;
+    }
+    // A past season reads from the lazy-loaded history file; the inline
     // loading / error states mirror the reliever board so a failed fetch never
     // blanks the board.
     if (leverageSeason !== "current") {
       if (leverageHistoryErr) {
-        return '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
+        return yearsRow("leverage") + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
           + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
           + '<button type="button" class="chip" id="mlbstats-leverage-history-retry">Retry</button></div>';
       }
       if (!leverageHistory || leverageHistoryLoading) {
         if (!leverageHistory) loadLeverageHistory();
-        return '<div class="mlbstats-empty">Loading the ' + esc(leverageSeason) + " season leaderboard&hellip;</div>";
+        return yearsRow("leverage") + '<div class="mlbstats-empty">Loading the '
+          + esc(leverageSeason) + " season leaderboard&hellip;</div>";
       }
       if (!leverageHistory.history || !leverageHistory.history[leverageSeason]) {
-        return '<div class="mlbstats-empty">No leaderboard for the ' + esc(leverageSeason) + " season.</div>";
+        return yearsRow("leverage") + '<div class="mlbstats-empty">No leaderboard for the '
+          + esc(leverageSeason) + " season.</div>";
       }
     }
     var cols = levCols(), sort = levSort();
     var rows = sortRows(filteredLeverage(), cols, sort);
-    if (!rows.length) return noRowsNote(leverageTeam, "No players match the current filters.");
+    if (!rows.length) {
+      return yearsRow("leverage") + noRowsNote(leverageTeam, "No players match the current filters.");
+    }
     var isStart = (leverageView === "starters");
     var seasonLbl = (leverageSeason === "current") ? "" : (esc(leverageSeason) + " season, ");
     // The coverage count rides the fold HEAD, not the folded body: the shell
     // banner suppresses its own copy here (noCoverage) because only this board
     // knows which season the pill is on, so folding it away would leave a phone
     // reader with no games-walked count at all.
-    return proseFold("lev-about",
+    return yearsRow("leverage") + proseFold("lev-about",
         seasonLbl + rows.length + (isStart ? " starters" : " batters") + leverageCoverage(),
         levExplainer())
       + leverageViz() + '<div class="mlbstats-scroll">' + renderTable(rows, cols, sort, leverageData, leverageView === "starters" ? "levsp" : "levbat") + "</div>";
@@ -3213,7 +4250,7 @@
     // load error or a "no rows" state either.
     root.innerHTML = bannerHTML(leverageData, { noCoverage: true })
       + teamBasisNote(leverageData)
-      + leverageTabBar() + leverageSeasonPills() + leverageControls() + renderLeverageBoard();
+      + leverageTabBar() + leverageControls() + renderLeverageBoard();
     bindLeverageEvents(root);
     wireGlossary(root);
   }
@@ -3223,7 +4260,7 @@
     if (!root) return;
     root.innerHTML = bannerHTML(leverageData, { noCoverage: true })
       + teamBasisNote(leverageData)
-      + leverageTabBar() + leverageSeasonPills() + leverageControls() + renderLeverageBoard();
+      + leverageTabBar() + leverageControls() + renderLeverageBoard();
     restoreFocus(root, focusId || "mlbstats-leverage-q");
     bindLeverageEvents(root);
     wireGlossary(root);
@@ -3231,6 +4268,7 @@
 
   function bindLeverageEvents(root) {
     bindCollapse(root);
+    stampCsv("leverage", root);
     root.querySelectorAll("[data-leverageview]").forEach(function (b) {
       b.addEventListener("click", function () {
         leverageView = b.getAttribute("data-leverageview");
@@ -3251,15 +4289,9 @@
     var levGfx = root.querySelector("#mlbstats-leverage-gfx");
     if (levGfx) levGfx.addEventListener("click", function () {
       if (!window.EEPHUS_GFX) return;
-      EEPHUS_GFX.open(_mlbstatsBoardSpec("leverage", sortRows(filteredLeverage(), levCols(), levSort())));
-    });
-    root.querySelectorAll("[data-leverageseason]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        leverageSeason = b.getAttribute("data-leverageseason");
-        if (leverageSeason !== "current") loadLeverageHistory();
-        writeHash();
-        renderLeverage();
-      });
+      EEPHUS_GFX.open(_mlbstatsBoardSpec("leverage", isWindow("leverage")
+        ? windowGfxRows("leverage")
+        : sortRows(filteredLeverage(), levCols(), levSort())));
     });
     var lhretry = root.querySelector("#mlbstats-leverage-history-retry");
     if (lhretry) lhretry.addEventListener("click", function () {
@@ -3463,17 +4495,6 @@
     for (var y = cur - 1; y >= cur - 5; y--) out.push(y);
     return out;
   }
-  function defenseSeasonPills() {
-    var pills = [["current", "Current"]];
-    defenseHistorySeasons().slice().sort(function (a, b) { return b - a; }).forEach(function (y) {
-      pills.push([String(y), String(y)]);
-    });
-    return '<div class="mlbstats-seasons" role="tablist" aria-label="Season">' + pills.map(function (p) {
-      var sel = (p[0] === defenseSeason);
-      return '<button type="button" class="mlbstats-season' + (sel ? " active" : "")
-        + '" data-defenseseason="' + esc(p[0]) + '" role="tab" aria-selected="' + sel + '">' + esc(p[1]) + "</button>";
-    }).join("") + "</div>";
-  }
   function loadDefenseHistory() {
     if (DEFENSE_HISTORY || DEFENSE_HISTORY_LOADING) return;
     DEFENSE_HISTORY_LOADING = true;
@@ -3559,8 +4580,8 @@
       + teamFilterChip(defenseTeam)
       + '<label class="mlbstats-ctl">'
       + '<input type="checkbox" id="mlbstats-defense-qual"' + (defenseQualifiedOnly ? " checked" : "") + "> qualified only</label>"
-      + teamSelect("mlbstats-defense-team", pool, defenseTeam)
-      + minSelect("mlbstats-defense-mininn", "min Inn", defenseMinInn,
+      + teamSelect("mlbstats-defense-team", winSelectRows("defense", pool), defenseTeam, "defense")
+      + minSelect("mlbstats-defense-mininn", minLabel("defense", "min Inn"), defenseMinInn,
           "Minimum defensive innings. Stacks with qualified only.")
       + gfxChip("mlbstats-defense-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-defense-q" placeholder="Search fielder or team" value="' + esc(defenseQuery) + '">'
@@ -3569,6 +4590,11 @@
   }
 
   function renderDefenseBoard() {
+    winCheck("defense");
+    if (isWindow("defense")) {
+      var wbdefense = renderWindowBoard("defense");
+      if (wbdefense) return wbdefense;
+    }
     if (defenseSeason !== "current") return renderDefenseHistory();
     var rows = sortRows(filteredDefense(), DEFENSE_COLS, defenseSort);
     var body = rows.length
@@ -3577,7 +4603,7 @@
           + vintageNote(defenseData, [["multiyear", "DEM+ 3yr"]]))
         + '<div class="mlbstats-scroll">' + renderTable(rows, DEFENSE_COLS, defenseSort, defenseData, "def") + "</div>"
       : noRowsNote(defenseTeam, "No fielders match the current filters.");
-    return toolRow(defenseSeasonPills(), "def") + body;
+    return yearsRow("defense") + body;
   }
 
   function renderDefenseHistory() {
@@ -3585,7 +4611,7 @@
     // once (a warm cache, the smoke harness) paints the board rather than
     // leaving a stale "Loading" over it.
     if (!DEFENSE_HISTORY && !DEFENSE_HISTORY_LOADING && !DEFENSE_HISTORY_ERROR) loadDefenseHistory();
-    var pills = toolRow(defenseSeasonPills(), "def");
+    var pills = yearsRow("defense");
     if (DEFENSE_HISTORY_ERROR) {
       return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
         + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
@@ -3733,6 +4759,7 @@
 
   function bindDefenseEvents(root) {
     bindCollapse(root);
+    stampCsv("defense", root);
     bindColViews(root, function () { renderDefenseInPlace(); });
     root.querySelectorAll("[data-defenseview]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -3770,8 +4797,8 @@
     var dGfx = root.querySelector("#mlbstats-defense-gfx");
     if (dGfx) dGfx.addEventListener("click", function () {
       if (!window.EEPHUS_GFX) return;
-      var rows = (defenseSeason === "current")
-        ? sortRows(filteredDefense(), DEFENSE_COLS, defenseSort)
+      var rows = isWindow("defense") ? windowGfxRows("defense")
+        : (defenseSeason === "current") ? sortRows(filteredDefense(), DEFENSE_COLS, defenseSort)
         : sortRows(filteredDefenseHistory(), DEFENSE_HISTORY_COLS, defenseHistorySort());
       EEPHUS_GFX.open(_mlbstatsBoardSpec("defense", rows));
     });
@@ -3780,14 +4807,6 @@
       if (!window.EEPHUS_GFX) return;
       EEPHUS_GFX.open(_mlbstatsBoardSpec("teamdefense",
         sortRows((defenseData && defenseData.teams) || [], DEFENSE_TEAM_COLS, defenseTeamSort)));
-    });
-    root.querySelectorAll("[data-defenseseason]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        defenseSeason = b.getAttribute("data-defenseseason");
-        if (defenseSeason !== "current") loadDefenseHistory();
-        writeHash();
-        renderDefense();
-      });
     });
     var dhretry = root.querySelector("#mlbstats-defense-history-retry");
     if (dhretry) dhretry.addEventListener("click", function () {
@@ -3865,9 +4884,15 @@
     rows = rows || [];
     // Season/window label for the subtitle: the live board reports the season +
     // as-of date; a past-season pill reports "<year> season". Count noun varies.
+    // The window rides the subtitle, so a range board's graphic cannot leave the
+    // page looking like one season.
     function seasonBits(seasonSel, data, noun) {
       var s;
-      if (seasonSel && seasonSel !== "current") {
+      if (seasonSel && seasonSel.lo != null) {
+        s = (seasonSel.lo === seasonSel.hi)
+          ? (seasonSel.lo + " season")
+          : (seasonSel.lo + "-" + seasonSel.hi + ", " + (seasonSel.hi - seasonSel.lo + 1) + " seasons");
+      } else if (seasonSel && seasonSel !== "current") {
         s = seasonSel + " season";
       } else {
         s = (data && data.season != null) ? ("Season " + data.season) : "";
@@ -3895,9 +4920,9 @@
         ] };
       });
       return spec("MLB Stats · REM+ Leaders",
-        seasonBits(relSeason, DATA, "relievers"),
+        seasonBits(WIN["bullpen"] || "current", DATA, "relievers"),
         "mlbstats-rem-leaders",
-        "REM+ = FIP-based, sample-shrunk run-prevention skill",
+        "REM+ = FIP-based, sample-shrunk run-prevention skill" + winCardNote("bullpen"),
         { defaultCount: 25, counts: [10, 25, 50], legend: "REM+ 100 = average reliever", columns: [
           { label: "#", frac: 0.05 },
           { label: "Player", frac: 0.33 },
@@ -3949,9 +4974,9 @@
         ] };
       });
       return spec("MLB Stats · SEM+ Leaders",
-        seasonBits(starterSeason, starterData, "starters"),
+        seasonBits(WIN["starters"] || "current", starterData, "starters"),
         "mlbstats-sem-leaders",
-        "SEM+ = FIP-based, sample-shrunk starter run-prevention skill",
+        "SEM+ = FIP-based, sample-shrunk starter run-prevention skill" + winCardNote("starters"),
         { defaultCount: 25, counts: [10, 25, 50], legend: "SEM+ 100 = average starter", columns: [
           { label: "#", frac: 0.05 },
           { label: "Player", frac: 0.33 },
@@ -4001,11 +5026,12 @@
           { label: "OPS", frac: 0.10, wideOnly: true },
         ];
       return spec("MLB Stats · HEM+ Leaders",
-        seasonBits(hitterSeason, hitterData, "hitters"),
+        seasonBits(WIN["hitters"] || "current", hitterData, "hitters"),
         "mlbstats-hem-leaders",
-        hitPast
+        (hitPast
           ? "HEM+ = sample-shrunk wOBA on the wRC+ scale · Shrunk wOBA = the number it is scaled from"
-          : "HEM+ = sample-shrunk wOBA on the wRC+ scale · wRC+ = FanGraphs, published",
+          : "HEM+ = sample-shrunk wOBA on the wRC+ scale · wRC+ = FanGraphs, published")
+        + winCardNote("hitters"),
         { defaultCount: 25, counts: [10, 25, 50], legend: "HEM+ 100 = average hitter",
           columns: hitCols, rows: hitRows });
     }
@@ -4036,9 +5062,10 @@
             { label: "WPA", frac: 0.17 }, { label: "WPA/LI", frac: 0.16 },
             { label: "Clutch", frac: 0.17, wideOnly: true } ];
       return spec("MLB Stats · WPA Leaders" + (isStart ? " (Starters)" : " (Batters)"),
-        seasonBits(leverageSeason, leverageData, isStart ? "starters" : "batters"),
+        seasonBits(WIN["leverage"] || "current", leverageData, isStart ? "starters" : "batters"),
         "mlbstats-wpa-leaders",
-        "WPA = realized in-game win-probability impact · Clutch reads timing, not skill",
+        "WPA = realized in-game win-probability impact · Clutch reads timing, not skill"
+        + winCardNote("leverage"),
         { defaultCount: 25, counts: [10, 25, 50],
           legend: "WPA = win probability added · + adds wins, − costs them",
           columns: levCols2, rows: levRows });
@@ -4057,9 +5084,10 @@
         ] };
       });
       return spec("MLB Stats · DEM+ Leaders",
-        seasonBits(defenseSeason, defenseData, "fielders"),
+        seasonBits(WIN["defense"] || "current", defenseData, "fielders"),
         "mlbstats-dem-leaders",
-        "DEM+ = sample-shrunk fielding runs per inning · Fld = FanGraphs, published",
+        "DEM+ = sample-shrunk fielding runs per inning · Fld = FanGraphs, published"
+        + winCardNote("defense"),
         { defaultCount: 25, counts: [10, 25, 50], legend: "DEM+ 100 = average fielder · 10 points = 1 SD", columns: [
           { label: "#", frac: 0.05 },
           { label: "Player", frac: 0.35 },
@@ -4111,9 +5139,9 @@
         ] };
       });
       return spec("MLB Stats · eWAR Leaders",
-        seasonBits("current", warData, "players"),
+        seasonBits(WIN.war || "current", warData, "players"),
         "mlbstats-ewar-leaders",
-        "eWAR = batting plus pitching, summed before rounding",
+        "eWAR = batting plus pitching, summed before rounding" + winCardNote("war"),
         { defaultCount: 25, counts: [10, 25, 50],
           legend: "Hitters, starters, relievers and swingmen on one list", columns: [
           { label: "#", frac: 0.06 },
@@ -4158,20 +5186,101 @@
   var WAR_ROLE_LBL = { H: "Hitter", SP: "Starter", RP: "Reliever", SW: "Swingman", TWP: "Two-way" };
   // Counting eWAR, uncoloured on purpose: see the family table beside vtCell.
   // No ladder here was measured on a played-season pool.
+  // The five role boards a player is also on, as chips that switch section.
+  // An in-page <a href="#section=..."> would change the hash and nothing else:
+  // readHash runs once, at init.
+  var WAR_BOARD_LBL = { hitters: "Hitters", starters: "Starters", bullpen: "Bullpen",
+                        leverage: "Leverage", defense: "Defense" };
+  function boardsCell(r) {
+    var b = r.boards;
+    if (!b) return EM_DASH;
+    if (!b.length) {
+      return '<span class="proj-dim" title="On none of the five role boards: a swingman, a two-way'
+        + ' player split across two of them, or a sample under their floors. That is the claim this'
+        + ' board exists to make.">none</span>';
+    }
+    return b.filter(function (k) { return WAR_BOARD_LBL[k]; }).map(function (k) {
+      return '<button type="button" class="chip mlbx-goto" data-mlbgoto="' + esc(k) + '">'
+        + esc(WAR_BOARD_LBL[k]) + "</button>";
+    }).join(" ");
+  }
   var WAR_COLS = [
     { key: "name", label: "Player", kind: "name", asc: true },
     { key: "pos", label: "Pos", title: "Primary position; P for pitchers.",
       cell: function (r) { return esc(r.pos || EM_DASH); } },
+    { key: "age", label: "Age", fmt: fInt, num: true, asc: true,
+      title: "Age in the season shown; on a window, in the last season with a line." },
     { key: "war", label: "eWAR", term: "ewar", num: true, ewar: true,
       title: "Batting plus pitching eWAR this season, summed before rounding.",
       cell: function (r) { return r.war == null ? EM_DASH : "<b>" + f1(r.war) + "</b>"; } },
     { key: "war_bat", label: "Bat", fmt: f1, num: true,
       title: "Position-player side: batting, baserunning, fielding, position." },
     { key: "war_pit", label: "Pitch", fmt: f1, num: true, title: "Pitching side." },
+    // EACH SIDE OVER ITS OWN DENOMINATOR. One eWAR/600 on the total would charge
+    // a two-way player's pitching to his plate appearances; _side_war_by_season
+    // keeps the two sides apart for the same reason. A division, not an index:
+    // there is no pool behind it, so there is no colour on it and no ladder.
+    { key: "bat_600", label: "Bat/600", term: "bat_600", num: true,
+      title: "Batting eWAR per 600 plate appearances, a full season for a regular. A division, not an"
+        + " index: no pool behind it, so no colour on it.",
+      cell: function (r) { return r.bat_600 == null ? EM_DASH : f1(r.bat_600); } },
+    { key: "pitch_200", label: "Pitch/200", term: "pitch_200", num: true,
+      title: "Pitching eWAR per 200 innings. A reliever's 70 innings and a starter's 200 sit on the"
+        + " same ruler, which is why IP is beside it.",
+      cell: function (r) { return r.pitch_200 == null ? EM_DASH : f1(r.pitch_200); } },
     { key: "pa", label: "PA", fmt: fInt, num: true },
     { key: "ip", label: "IP", fmt: f1, num: true },
+    { key: "g", label: "G", fmt: fInt, num: true,
+      title: "Games played, the larger of the two feeds per season and then summed: a two-way player's"
+        + " hitting games and pitching games are the same games." },
     { key: "gs", label: "GS", fmt: fInt, num: true, title: "Official games started." },
+    { key: "yrs", label: "Yrs", fmt: fInt, num: true,
+      title: "Seasons with a line inside the window." },
+    { key: "clubs", label: "Clubs", num: true,
+      title: "Clubs of production inside the window; the cell names the first two.",
+      get: function (r) { return (r.clubs && r.clubs.length) || null; },
+      cell: function (r) {
+        var c = r.clubs || [];
+        if (!c.length) return EM_DASH;
+        return c.length + '<span class="proj-dim" title="' + esc(c.join(", ")) + '"> '
+          + esc(c.slice(0, 2).join(" ")) + (c.length > 2 ? "+" : "") + "</span>";
+      } },
+    { key: "boards", label: "Also on", cell: boardsCell,
+      title: "The five role boards this player is on today, built from those five artifacts. A window"
+        + " has no per-season answer on disk, so the column drops on one." },
   ];
+  // Which of those the board is serving right now. `yrs` and `clubs` are window
+  // facts; `boards` is a fact about today; `age` and `g` reach the CURRENT board
+  // only through the per-season substrate, because the served payload's `g` is
+  // the pitching feed's alone (800 of 1,457 rows) and it carries no age at all.
+  // A column with no data is dropped rather than served empty, which is the rule
+  // coveredCols already applies to a history board.
+  var WAR_POOLED = { bat_600: "batting eWAR / PA x 600",
+                     pitch_200: "pitching eWAR / IP x 200" };
+  var WAR_LAST_SEASON = { pos: 1, age: 1 };
+  function warCols() {
+    var win = !!WIN.war, span = isWindow("war"), enriched = !!(SEASONS && SEASONS.players);
+    var lbl = win ? winSpan(WIN.war) : "";
+    return WAR_COLS.filter(function (c) {
+      if (c.key === "boards") return !win;
+      if (c.key === "yrs" || c.key === "clubs") return span;
+      if (c.key === "g" || c.key === "age") return win || enriched;
+      return true;
+    }).map(function (c) {
+      if (!win || c.kind === "name") return c;
+      var out = cloneCol(c);
+      out.exportLabel = c.label + " " + lbl;
+      out.title = WAR_LAST_SEASON[c.key]
+        ? ("The last season with a line inside " + lbl + ".")
+        : WAR_POOLED[c.key]
+          ? ("Pooled once over " + lbl + ": " + WAR_POOLED[c.key] + ". A division, not an index: no"
+             + " pool behind it, so no colour on it.")
+          : (c.key === "yrs" || c.key === "clubs") ? c.title
+          : ("Summed over " + lbl + (c.key === "war" ? ", the two sides added unrounded and rounded"
+             + " once, exactly as one season is." : "."));
+      return out;
+    });
+  }
   var WAR_TEAM_COLS = [
     { key: "team", label: "Team", kind: "team", asc: true },
     { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true, ewar: true,
@@ -4184,7 +5293,36 @@
     { key: "war_sw", label: "Swing", fmt: f1, num: true, title: "Pitchers on neither pitcher board." },
     { key: "n_players", label: "Players", fmt: fInt, num: true },
   ];
-  function warRows() { var d = warData; return (d && d.players && d.players.length) ? d.players : []; }
+  // The served board, plus the three columns it cannot carry by itself. Age and
+  // G come from data/war_seasons.json folded at the LIVE season - the same file
+  // war_board_export writes in the same process from the same read, so the join
+  // cannot disagree with the row it lands on - and the two rates are a division
+  // of the row's own served numbers, so they agree with the Bat and Pitch cells
+  // beside them to the tenth those cells print. Cached on identity, because this
+  // runs again on every keystroke in the search box.
+  var WAR_ROWS_CACHE = { src: null, fold: null, out: [] };
+  function warRows() {
+    var d = warData, rows = (d && d.players && d.players.length) ? d.players : [];
+    if (!rows.length) return rows;
+    var live = num(d.season);
+    var fold = (SEASONS && SEASONS.players && live != null) ? foldSeasons(live, live) : null;
+    if (WAR_ROWS_CACHE.src === rows && WAR_ROWS_CACHE.fold === fold) return WAR_ROWS_CACHE.out;
+    var by = {};
+    if (fold) fold.players.forEach(function (p) { by[p.mlbam] = p; });
+    var out = rows.map(function (r) {
+      var o = cloneCol(r), f = by[r.mlbam];
+      o.bat_600 = (r.war_bat != null && r.pa) ? (r.war_bat / r.pa) * 600 : null;
+      o.pitch_200 = (r.war_pit != null && r.ip) ? (r.war_pit / r.ip) * 200 : null;
+      if (f) {
+        o.age = f.age;
+        o.g = f.g;
+        o.seasons = f.seasons;
+      }
+      return o;
+    });
+    WAR_ROWS_CACHE = { src: rows, fold: fold, out: out };
+    return out;
+  }
   function warMatch(r) {
     if (warQualifiedOnly && r.qualified === false) return false;
     if (warTeam && r.team !== warTeam) return false;
@@ -4197,12 +5335,17 @@
   // columns are gated on), so the page reports it instead of typing it and a
   // payload that ships a different floor says so by itself.
   function warQualTitle() {
-    var q = (warData && warData.qualified_rule) || null;
+    var win = !!WIN.war;
+    var q = (win ? (SEASONS && SEASONS.qualified_rule_window) : null)
+         || (warData && warData.qualified_rule) || null;
     if (!q || (q.min_pa == null && q.min_ip == null)) return "";
     var bits = [];
     if (q.min_pa != null) bits.push(q.min_pa + " plate appearances");
     if (q.min_ip != null) bits.push(q.min_ip + " innings");
-    return ' title="' + esc("Qualified: " + bits.join(" or ") + ", the rule this board is served with.") + '"';
+    return ' title="' + esc("Qualified: " + bits.join(" or ")
+      + (win ? " over the whole window, the rule published beside the substrate. On a long window it"
+             + " removes very little, because a small sample makes a small total anyway."
+             : ", the rule this board is served with.")) + '"';
   }
   function warRoleChips() {
     var counts = {};
@@ -4223,25 +5366,56 @@
     return explainer("ewar", gloss("eWAR", "ewar") + ": batting plus pitching, summed before rounding.");
   }
   function renderWarInner() {
+    winCheck("war");
+    var win = !!WIN.war;
     if (warView === "teams") {
+      // A club total over a window is the one thing this substrate cannot say:
+      // a season's line carries every club the player produced for and not the
+      // split between them, so summing it by club would credit a traded man's
+      // whole season to both. Refused by name rather than served on the live
+      // season under a window's heading.
+      if (win) {
+        return yearsRow("war") + warExplainer()
+          + '<div class="mlbstats-empty mlbstats-winrefusal">Team eWAR is a single-season board. A'
+          + " season's line names every club the player produced for but not the split between them,"
+          + " so a club total over " + esc(winSpan(WIN.war)) + " would credit a traded player's whole"
+          + ' season to each of his clubs. <button type="button" class="chip"'
+          + ' data-mlbrange="war:current">Back to Current</button></div>';
+      }
       var t = sortRows((warData && warData.teams) || [], WAR_TEAM_COLS, warTeamSort);
       if (!t.length) return warExplainer() + '<div class="mlbstats-empty">No team eWAR to show yet.</div>';
       return warExplainer()
         + '<div class="mlbstats-scroll">' + renderTable(t, WAR_TEAM_COLS, warTeamSort, warData, "warteam") + "</div>";
     }
-    var rows = sortRows(warRows().filter(warMatch), WAR_COLS, warSort);
-    var bar = '<div class="' + filtCls() + '">' + filtBtn(filtCount(warTeam, null, warRoles, !warQualifiedOnly))
+    // The role chips go on a window (a fold row has no role), so the Filters
+    // badge stops counting them there as well.
+    var bar = '<div class="' + filtCls() + '">'
+      + filtBtn(filtCount(warTeam, null, win ? null : warRoles, !warQualifiedOnly))
       + teamFilterChip(warTeam)
       + '<label class="mlbstats-ctl"' + warQualTitle() + '>'
       + '<input type="checkbox" id="mlbstats-war-qual"' + (warQualifiedOnly ? " checked" : "") + "> qualified only</label>"
-      + teamSelect("mlbstats-war-team", warRows(), warTeam)
+      + teamSelect("mlbstats-war-team", winSelectRows("war", warRows()), warTeam, "war")
       + gfxChip("mlbstats-war-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-war-q" placeholder="Search player or team" value="' + esc(warQuery) + '">'
       + "</div>"
-      + warRoleChips();
-    if (!rows.length) return bar + warExplainer() + noRowsNote(warTeam, "No players match the current filters.");
-    return bar + warExplainer()
-      + '<div class="mlbstats-scroll">' + renderTable(rows, WAR_COLS, warSort, warData, "war") + "</div>";
+      // Role is a season fact by construction, so the chips go on a window and
+      // the filter goes with them rather than silently emptying the board.
+      + (win ? "" : warRoleChips());
+    if (win) {
+      var wbody = renderWindowBoard("war");
+      // Still a window: serve it. Otherwise the span was refused while this
+      // render ran, and Current below is the right answer.
+      if (wbody) return bar + warExplainer() + wbody;
+    }
+    var cols = warCols();
+    var rows = sortRows(warRows().filter(warMatch), cols, warSort);
+    if (!rows.length) {
+      return bar + warExplainer() + yearsRow("war")
+        + noRowsNote(warTeam, "No players match the current filters.");
+    }
+    return bar + warExplainer() + yearsRow("war")
+      + '<div class="mlbstats-scroll">'
+      + renderTable(rows, cols, warSort, warData, "war", warTableOpts()) + "</div>";
   }
   function renderWar(focusId) {
     var root = document.getElementById("mlbstats-war-root");
@@ -4260,11 +5434,15 @@
       return;
     }
     var tabs = [["players", "Players"], ["teams", "Team eWAR"]];
-    root.innerHTML = bannerHTML(warData, { noCoverage: true }) + teamBasisNote(warData)
+    // The club basis note is the CURRENT board's, and on a window the window
+    // note states the basis instead: the served block says "the club today",
+    // which is not what a window row's club is.
+    root.innerHTML = bannerHTML(warData, { noCoverage: true }) + (WIN.war ? "" : teamBasisNote(warData))
       + '<div class="mlbstats-tabs" role="tablist">' + tabs.map(function (t) {
           return '<button type="button" class="mlbstats-tab' + (t[0] === warView ? " active" : "") + '" data-warview="' + t[0]
             + '" role="tab" aria-selected="' + (t[0] === warView) + '">' + t[1] + "</button>"; }).join("") + "</div>"
       + renderWarInner();
+    stampCsv("war", root);
     root.querySelectorAll("[data-warview]").forEach(function (b) { b.addEventListener("click", function () {
       warView = b.getAttribute("data-warview"); writeHash(); renderWar(); }); });
     root.querySelectorAll("[data-warrole]").forEach(function (b) { b.addEventListener("click", function () {
@@ -4284,11 +5462,14 @@
     var wgfx = root.querySelector("#mlbstats-war-gfx");
     if (wgfx) wgfx.addEventListener("click", function () {
       if (!window.EEPHUS_GFX) return;
-      EEPHUS_GFX.open(_mlbstatsBoardSpec("ewar", sortRows(warRows().filter(warMatch), WAR_COLS, warSort)));
+      EEPHUS_GFX.open(_mlbstatsBoardSpec("ewar", WIN.war
+        ? sortRows(foldSeasons(WIN.war.lo, WIN.war.hi).players.filter(function (r) {
+            return winMatch("war", r, null); }), warCols(), warSort)
+        : sortRows(warRows().filter(warMatch), warCols(), warSort)));
     });
     root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
       bindSortKeys(th, root, function () {
-        var key = th.getAttribute("data-col"), cols = (warView === "teams") ? WAR_TEAM_COLS : WAR_COLS;
+        var key = th.getAttribute("data-col"), cols = (warView === "teams") ? WAR_TEAM_COLS : warCols();
         var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
         if (!col || (!col.num && col.kind !== "name" && col.kind !== "team")) return;
         var s = (warView === "teams") ? warTeamSort : warSort;
@@ -4315,6 +5496,19 @@
       })
       .then(function (j) { warData = (j && Array.isArray(j.players)) ? j : null; renderWar(); })
       .catch(function () { warData = null; warErr = true; renderWar(); });
+    // THE PER-SEASON SUBSTRATE RIDES WITH THE BOARD, second in the queue so the
+    // board's own payload paints first. Measured on the served artifacts: the
+    // landing section fetches war_leaderboards.json (40.8 KB gzip) plus
+    // war_seasons.json (279.5 KB) and mlbstats_windows.json (5.2 KB) where it
+    // used to fetch bullpen_leaderboards.json (62.5 KB), so the landing costs
+    // 263 KB more than it did. What that buys, and why it is not lazy: the
+    // from/to control is complete on the first click rather than growing a
+    // second later under the reader's hand, and Age, G and the per-season
+    // expander exist on the CURRENT board at all - the served payload carries
+    // no age and its `g` is the pitching feed's alone. Deferring it to the
+    // first non-Current pick is a one-line change (move this call into
+    // setWindow) that costs those three.
+    loadSeasons("war");
   }
   function initWar() {
     if (warInit) { renderWar(); return; }
@@ -4331,9 +5525,10 @@
       b.classList.toggle("active", on);
       b.setAttribute("aria-selected", on ? "true" : "false");
     });
-    var sects = { bullpen: "mlbstats-section-bullpen", starters: "mlbstats-section-starters",
+    var sects = { war: "mlbstats-section-war", bullpen: "mlbstats-section-bullpen",
+                  starters: "mlbstats-section-starters",
                   hitters: "mlbstats-section-hitters", leverage: "mlbstats-section-leverage",
-                  defense: "mlbstats-section-defense", war: "mlbstats-section-war" };
+                  defense: "mlbstats-section-defense" };
     Object.keys(sects).forEach(function (k) {
       var el = document.getElementById(sects[k]);
       if (el) { if (k === name) el.removeAttribute("hidden"); else el.setAttribute("hidden", "hidden"); }
@@ -4344,7 +5539,35 @@
     else if (name === "leverage") initLeverage();
     else if (name === "defense") initDefense();
     else if (name === "war") initWar();
+    else if (name === "bullpen") initBullpen();
   }
+  // The bullpen board is lazy like the other five now, because it is no longer
+  // the one a bare URL opens: measured on the served payloads, the landing
+  // section fetches war_leaderboards.json (389 KB) instead of
+  // bullpen_leaderboards.json (452 KB).
+  var relInit = false;
+  function initBullpen() {
+    if (relInit) { render(); return; }
+    relInit = true;
+    render();
+    load();
+  }
+  // A chip that switches section, optionally with a window: the Also on column
+  // and the refusal note both use it, because an in-page hash link would change
+  // the URL and nothing else.
+  try { document.addEventListener("click", function (e) {
+    var b = e.target && e.target.closest ? e.target.closest("[data-mlbgoto]") : null;
+    if (!b) return;
+    var p = String(b.getAttribute("data-mlbgoto") || "").split(":");
+    if (!LAB_BOARD[p[0]]) return;
+    if (p[1]) {
+      var yy = String(p[1]).split("-");
+      WIN[p[0]] = { lo: Number(yy[0]), hi: Number(yy[1]) };
+      syncSeasonVars();
+    }
+    showSection(p[0]);
+    writeHash();
+  }); } catch (e) { /* no document events */ }
   function bindSectionNav() {
     document.querySelectorAll("[data-mlbsection]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -4356,15 +5579,16 @@
 
   function init() {
     readHash();
+    syncSeasonVars();
     // A remembered non-Standard view (localStorage) reopens on that view: say
     // so in the URL at once, so a link copied before any click carries it. A
     // bare URL with nothing remembered stays bare.
     if (Object.keys(COL_VIEW).some(function (b) { return COL_VIEW[b] !== "standard"; })) writeHash();
     bindSectionNav();
-    load();
-    // Honor a deep-linked non-default section (#section=starters|hitters|
-    // leverage|defense).
-    if (section !== "bullpen") showSection(section);
+    // Every section is lazy, including the one the page opens on, so the shell's
+    // active tab and this call are the only two places the landing board is
+    // named.
+    showSection(section);
     // Preload the player-links map, then re-render the active section so the
     // leaderboard names upgrade from plain text to merged-card links.
     if (window.EEPHUS_HUB && EEPHUS_HUB.links) {
@@ -4375,7 +5599,7 @@
         else if (section === "leverage") { if (typeof leverageInit !== "undefined" && leverageInit) renderLeverage(); }
         else if (section === "defense") { if (defenseInit) renderDefense(); }
         else if (section === "war") { if (warInit) renderWar(); }
-        else render();
+        else if (relInit) render();
       });
     }
   }

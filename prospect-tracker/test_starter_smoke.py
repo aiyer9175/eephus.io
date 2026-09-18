@@ -113,6 +113,11 @@ def _run() -> dict:
     ctx.eval(_prelude() + JS)
     # fire a click on the Starter Leaderboards section tab, then read the root
     ctx.eval("SEC_ST.fire('click');")
+    # Overall is the landing section since 2026-09-17, so EVERY other board is
+    # lazy: the bullpen one renders when its tab is activated, which is what the
+    # case below is really asserting (its own root, after another section's
+    # init). It used to paint at init only because it was the landing board.
+    ctx.eval("SEC_BP.fire('click');")
     return {
         "starters_root": ctx.eval("(REG['mlbstats-starters-root']||{}).innerHTML || ''"),
         "bullpen_root": ctx.eval("(REG['mlbstats-app-root']||{}).innerHTML || ''"),
@@ -139,7 +144,8 @@ def test_starters_section_has_pills_and_explainer():
 
 
 def test_bullpen_section_unaffected():
-    # the bullpen board still renders into its own root after the starters init
+    # the bullpen board still renders into its own root after the starters init,
+    # on its own activation (Overall lands, so nothing but Overall paints early)
     html = _run()["bullpen_root"]
     assert "mlbstats-table" in html
     assert "Closer A" in html

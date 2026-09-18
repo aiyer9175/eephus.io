@@ -968,7 +968,8 @@ def test_no_deep_linkable_view_id_is_ever_lost():
         have = [v for v, _ in reg[board]]
         assert set(want) <= set(have), (board, have)
     hashkeys = dict(re.findall(r'(\w+): "([a-z]cols)"', re.search(r"var COL_VIEW_HASH = \{([^}]*)\}", JS).group(1)))
-    assert hashkeys == {"rel": "rcols", "sp": "scols", "hit": "hcols", "def": "dcols"}
+    assert hashkeys == {"rel": "rcols", "sp": "scols", "hit": "hcols", "def": "dcols",
+                        "war": "wcols"}
 
 
 def _render_calls() -> list[str]:
@@ -987,6 +988,14 @@ def _render_calls() -> list[str]:
         i = j
 
 
+def _colboard_values() -> list[str]:
+    """Every board id winColBoard() can return: the WIN_COLBOARD map plus the
+    leverage ternary, read out of the file rather than re-typed here."""
+    blk = re.search(r"var WIN_COLBOARD = \{([^}]*)\}", JS).group(1)
+    fn = re.search(r"function winColBoard\(sec\) \{(.*?)\n  \}", JS, re.S).group(1)
+    return [v for v in re.findall(r'"([a-z]+)"', blk + fn) if v not in ("leverage", "starters")]
+
+
 def test_every_render_call_names_a_registry_board():
     reg = _registry()
     calls = _render_calls()
@@ -994,7 +1003,11 @@ def test_every_render_call_names_a_registry_board():
     for c in calls:
         args = c.split(", ", 4)
         assert len(args) == 5, ("a renderTable call without a board id", c)
-        boards = re.findall(r'(?:^|[?:])\s*"([a-z]+)"', args[4])
+        # The window boards resolve their strip from the section, so the id is a
+        # call rather than a literal; every value it can return is pinned here
+        # the same way a literal would be.
+        boards = (_colboard_values() if args[4].startswith("winColBoard(")
+                  else re.findall(r'(?:^|[?:])\s*"([a-z]+)"', args[4]))
         assert boards and all(b in reg for b in boards), c
 
 
@@ -1262,11 +1275,30 @@ def test_the_shell_opts_every_section_root_into_csv_and_uses_short_nav_labels():
     assert not re.search(r'<div id="mlbstats-[a-z]+-root"( [^>]*)?></div>', body), "a section root without the CSV opt-in"
     labels = dict(re.findall(r'data-mlbsection="([a-z]+)"[^>]*>([^<]+)</button>', body))
     for sec, label in {"bullpen": "Bullpen", "starters": "Starters", "hitters": "Hitters",
-                       "leverage": "Leverage", "defense": "Defense", "war": "eWAR"}.items():
+                       "leverage": "Leverage", "defense": "Defense", "war": "Overall"}.items():
         assert labels.get(sec) == label, (sec, labels)
-    # O1: Bullpen stays the landing board and eWAR is the LAST button, so no
-    # bare /mlbstats/ URL changes what it opens.
-    assert list(labels)[0] == "bullpen" and list(labels)[-1] == "war", list(labels)
+    # ORDER AND LANDING (2026-09-17). The nav order is the owner's; the panel
+    # order follows it so tab order and reading order agree; and the shell's
+    # active tab has to be the section assets/mlbstats.js opens on, or a reader
+    # who lands on a bare URL sees one board with another board's tab lit.
+    order = re.findall(r'data-mlbsection="([a-z]+)"', body)
+    assert order == ["war", "hitters", "starters", "bullpen", "defense", "leverage"], order
+    panels = re.findall(r'<div id="mlbstats-section-([a-z]+)"', body)
+    assert panels == order, panels
+    active = re.search(r'class="mlbstats-sectionbtn active" data-mlbsection="([a-z]+)"', body).group(1)
+    assert active == "war", active
+    assert re.search(r'<div id="mlbstats-section-war"[^>]*>', body).group(0).find("hidden") < 0
+    assert len(re.findall(r'aria-selected="true"', body)) == 1
+    assert len(re.findall(r'hidden>', body)) == len(panels) - 1
+    landing = re.search(r"var section = \"([a-z]+)\";", JS).group(1)
+    assert landing == active, (landing, active)
+    # Owner decision 2026-09-17 REVERSES O1: Overall is first and is what a bare
+    # /mlbstats/ URL opens. The hash VALUE stays `war`, so every link ever copied
+    # still opens what it named; what changed is the label, the order and the
+    # default. The one inbound link that pointed at a bare /mlbstats/ meaning
+    # "relievers" (the REM+ hub card) now names its section.
+    assert "'/mlbstats/#section=bullpen'" in src, "the REM+ hub card lost its section"
+    assert not re.search(r"""href="/mlbstats/"[^#]""", src), "a bare /mlbstats/ link now opens Overall"
     assert not any("Leaderboards" in v for v in labels.values()), labels
 
 
@@ -1338,8 +1370,15 @@ WAR_STANDARD = {
     "war": ["name", "pos", "war", "war_bat", "war_pit", "pa", "ip", "gs"],
     "warteam": ["team", "war", "war_earned", "war_bat", "war_sp", "war_rp", "war_sw", "n_players"],
 }
-WAR_PHONE = {"war": ["war", "war_bat", "war_pit"],
+# The Overall board has named views now (Standard / Rate / All), so PA joined
+# its phone subset and Bat/600, Pitch/200 and Also on ride the other two. Age
+# and G are absent from THIS harness on purpose: they reach the Current board
+# only through data/war_seasons.json, which the harness does not answer, and a
+# column with no data drops rather than serving empty - which is what
+# test_the_overall_board_drops_age_and_g_without_the_substrate pins.
+WAR_PHONE = {"war": ["war", "war_bat", "war_pit", "pa"],
              "warteam": ["war", "war_earned", "war_bat", "war_sp"]}
+WAR_HIDDEN = {"war": ["bat_600", "pitch_200", "boards"], "warteam": []}
 
 
 def _war_prelude(hash_: str, sample: str | None = None, status: int = 200) -> str:
@@ -1392,8 +1431,19 @@ def _render_war(hash_: str = "#section=war", sample: str | None = None, status: 
 def test_the_ewar_board_shows_its_standard_columns_in_order(board, hash_):
     html = _render_war(hash_)
     assert _visible(html) == WAR_STANDARD[board], (board, _visible(html))
-    assert _visible(html) == [k for _, k, _ in _heads(html)], "the eWAR board hides no column"
+    hidden = [k for _, k, _ in _heads(html) if k not in _visible(html)]
+    assert hidden == WAR_HIDDEN[board], (board, hidden)
     assert "undefined" not in html and "NaN" not in html
+
+
+def test_the_overall_board_drops_age_and_g_without_the_substrate():
+    """Age is not on war_leaderboards.json at all and its `g` is the pitching
+    feed's alone (800 of 1,457 served rows), so both columns reach the Current
+    board only through data/war_seasons.json. Absent it, they are DROPPED, not
+    served as a column of null markers - the rule coveredCols already applies to
+    a history board."""
+    html = _render_war()
+    assert "age" not in _visible(html) and "g" not in _visible(html), _visible(html)
 
 
 @pytest.mark.parametrize("board,hash_", [("war", "#section=war"), ("warteam", "#section=war&wview=teams")],
@@ -1403,6 +1453,11 @@ def test_the_ewar_board_carries_the_export_contract_and_the_phone_subset(board, 
     for cls, key, tag in _heads(html):
         m = re.search(r'data-export-text="([^"]*)"', tag)
         assert m and m.group(1), (board, key)
+        if key not in _visible(html):
+            # A column outside the view is hidden AND kept out of the export,
+            # which is the contract every other multi-view board is held to.
+            assert "data-export-skip" in tag, (board, key)
+            continue
         assert "data-export-skip" not in tag, (board, key)
         if key != WAR_STANDARD[board][0]:
             wide = "mlbstats-cv-wide" in cls.split()
@@ -1550,8 +1605,12 @@ def test_the_ewar_board_carries_the_shareable_card_every_other_board_has():
     i = JS.index("function renderWarInner(")
     assert 'gfxChip("mlbstats-war-gfx")' in JS[i:JS.index("function renderWar(", i)]
     j = JS.index('root.querySelector("#mlbstats-war-gfx")')
-    assert ('_mlbstatsBoardSpec("ewar", sortRows(warRows().filter(warMatch), WAR_COLS, warSort))'
-            in JS[j:j + 420]), JS[j:j + 420]
+    blk = JS[j:j + 700]
+    # Current: the same filtered, sorted rows the table renders. A window: the
+    # same fold, filtered by the same matcher, so the card cannot carry a
+    # different set of rows from the board it was generated off.
+    assert 'sortRows(warRows().filter(warMatch), warCols(), warSort)' in blk, blk
+    assert 'foldSeasons(WIN.war.lo, WIN.war.hi)' in blk, blk
 
 
 def test_the_ewar_deep_links_read_and_write_and_omit_their_defaults():
