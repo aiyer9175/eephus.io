@@ -542,6 +542,45 @@
     return lead + "the model is unvalidated and no minimum edge has been measured.";
   }
 
+  // THE VINTAGE BLURB HAS TWO DOORS, AND THE SERVED ONE IS THE STALE ONE
+  // (2026-09-18). `betting_export.MODE_MEANING` is a SOURCE CONSTANT that the
+  // nightly export COPIES into data/betting.json, and this page renders the
+  // copy. A repair to that constant therefore reaches a reader only when the
+  // export next writes the file. The sentence repaired on 2026-09-18 was false
+  // about the starter, and the panel below it now states the truth, so a stale
+  // payload would have put the two on one screen contradicting each other. The
+  // current text also lives here, in the door that deploys with the page, and
+  // is preferred over the payload's copy of it.
+  //
+  // THIS IS NOT A SECOND OPINION. `test_betting_policy_copy` pins this table
+  // byte for byte against `betting_export.MODE_MEANING`, and renders the tab
+  // against a payload carrying the OLD sentence to prove which door wins. A
+  // payload that carries no `mode_meaning` at all still renders nothing, as
+  // before: this table is a fresher copy of a served string, never the only
+  // copy of one.
+  var MODE_MEANING = {
+    contaminated: "Team inputs are season-to-date leaderboards, so every graded game " +
+      "sits inside its own features. This measures calibration, not " +
+      "skill, and it cannot validate anything.",
+    vintage: "Every game is priced on a leaderboard snapshot whose knowledge " +
+      "cutoff is strictly before that game: team offense, team run " +
+      "prevention, the starter's SEM+ ratings and the park index all come " +
+      "out of that snapshot. WHICH starter does not: his identity is the " +
+      "probable on the completed-game row, which is the final feed's, " +
+      "while the served board prices the probable listed at the nightly " +
+      "build. Who starts is fixed before first pitch, so that is a " +
+      "difference in information and not an outcome leak. A game with no " +
+      "such snapshot is skipped, not graded on today's numbers, and a " +
+      "game whose snapshot predates the stored park column is priced with " +
+      "the park term at neutral rather than on the live index. This is " +
+      "the only mode that can validate the model."
+  };
+  function modeMeaning(v, mode) {
+    var served = ((v || {}).mode_meaning || {})[mode];
+    if (!served) return "";
+    return MODE_MEANING[mode] || served;
+  }
+
   function modeTag(mode, honest) {
     if (!mode) return '<span class="bt-dim">-</span>';
     return '<span class="bt-tag ' + (honest ? "bt-tag-ok" : "bt-tag-warn") + '">' +
@@ -568,11 +607,11 @@
         ? "The vintage mode cleared every gate below; the headline numbers come from it."
         : "Headline numbers come from the <strong>" +
           esc(v.headline_mode || "contaminated") + "</strong> mode, which cannot validate. " +
-          esc((v.mode_meaning || {}).contaminated || "")) + "</p>");
+          esc(modeMeaning(v, "contaminated"))) + "</p>");
 
     if ((v.mode_meaning || {}).vintage) {
       rows.push("<p><strong>" + gl("Vintage mode", "vintage_grading") + ".</strong> " +
-        esc(v.mode_meaning.vintage) + " Graded " +
+        esc(modeMeaning(v, "vintage")) + " Graded " +
         (vin.n_graded == null ? "-" : vin.n_graded) + " of " +
         (v.n_games_completed == null ? "-" : v.n_games_completed) + " completed games; skipped " +
         (vin.n_skipped_no_vintage == null ? "-" : vin.n_skipped_no_vintage) +
@@ -619,6 +658,174 @@
       rows.push('<div class="bt-asof">Backtest artifact generated ' + esc(v.generated_at) +
         (v.model_version ? " &middot; " + esc(v.model_version) : "") + "</div>");
     }
+    return '<div class="bt-panel">' + rows.join("") + "</div>";
+  }
+
+  // ---- what the graded sample was priced on ---------------------------------
+  // OWNER DECISION 2026-09-18. The headline above states the vintage Brier and
+  // the skill t. Until now the page stated those two numbers without stating
+  // what priced the sample they come from, and one of the three bases is a
+  // qualifier a reader has to have: the backtest grades on the FINAL feed's
+  // probable, while the served board prices the probable listed at the nightly
+  // build. That is a difference in INFORMATION, not an outcome leak, because
+  // who starts is fixed before first pitch, and this panel has to say both
+  // halves or it implies a leak that is not there.
+  //
+  // All three blocks already shipped and none is computed here. `park_basis`
+  // rides the payload's own vintage block; `feature_basis` and `starter_basis`
+  // ride data/betting_model_eval.json, which this page already fetches as
+  // AUX.evald for the dispersion grid and the benchmark ladder. Every number
+  // below is READ: nothing on this page sums, averages or rounds them.
+  function starterBasisBlock(sb) {
+    if (!sb) {
+      return chartAbsent("Starter basis",
+        (auxState("evald") === "ok"
+          ? "data/betting_model_eval.json carries no starter_basis block."
+          : auxMissing("evald")));
+    }
+    var eq = sb.equals_first_pitcher_used || {};
+    var ag = (sb.doors || {}).agreement || {};
+    var c = sb.counts || {};
+    var rows = ['<div class="bt-panel-sub">The starter</div>'];
+    rows.push("<p>The backtest prices each graded game on the starter named by the " +
+      "<strong>final feed</strong>, read off the completed-game row. The served board " +
+      "prices the probable listed at the nightly build, which is not that field, so " +
+      "the graded pricer holds a starter the board did not always have. Who starts is " +
+      "fixed before first pitch: this is a difference in <strong>information</strong>, " +
+      "not an outcome leak.</p>");
+    rows.push('<div class="bt-kv">' +
+      kv("Graded starter", esc(sb.source || "-")) +
+      kv("Stored as", esc(sb.field || "-")) +
+      kv("The served board reads", esc(sb.served_board_reads || "-")) +
+      kv("Sides equal to the first pitcher actually used",
+         (eq.equal == null || eq.sides_compared == null) ? "-"
+           : (eq.equal + " of " + eq.sides_compared +
+              (eq.differ == null ? "" : ", " + eq.differ + " differ") +
+              (eq.sides_without_a_probable == null ? ""
+                : ", " + eq.sides_without_a_probable + " with no probable") +
+              (eq.measured_on ? " (" + esc(eq.measured_on) + ")" : ""))) +
+      kv("The two doors into that field agree on",
+         (ag.sides_compared == null) ? "-"
+           : (ag.sides_compared + " sides across " +
+              (ag.n_games == null ? "-" : ag.n_games) + " games, " +
+              (ag.differ == null ? "-" : ag.differ) + " differences" +
+              (ag.measured_on ? " (" + esc(ag.measured_on) + ")" : ""))) +
+      kv("Games with a starter named on both sides",
+         (c.both_sides_named == null) ? "-"
+           : (c.both_sides_named + " of " + (c.n_games == null ? "-" : c.n_games))) +
+      "</div>");
+    // NEITHER COUNT IS THE GRADED SAMPLE, and both sit inside a panel whose
+    // headline number is. The coverage counts walk the completed-game cache;
+    // the agreement rate is a frozen archive of a smaller cache on the day it
+    // was measured. The block's own served note says the second half, and the
+    // page owes the first.
+    rows.push('<div class="bt-clock-fine">Every count here runs over the ' +
+      "completed-game cache, which is not the graded sample: a game is in that " +
+      "cache whether or not a dated snapshot could price it.</div>");
+    if (eq.denominator_note) rows.push(note(esc(eq.denominator_note) + "."));
+    return rows.join("");
+  }
+
+  // THE PARK COUNTS ARE THE GRADABLE POOL, NOT THE GRADED SAMPLE. They cover
+  // every game a dated snapshot could price, which is the fit half and the
+  // graded half together, so their denominator is larger than the Brier's and
+  // the rows have to say which pool they walk. The fit half is never graded
+  // (house rule), and counting it here does not grade it: a park index is an
+  // input, not a result.
+  function parkBasisBlock(pb, vin, ev) {
+    if (!pb) {
+      return chartAbsent("Park basis",
+        "this artifact predates the stored park column, so it does not know " +
+        "which index priced its games.");
+    }
+    var v = vin || {}, e = ev || {};
+    var pool = (v.n_gradable == null) ? e.n_gradable : v.n_gradable;
+    var fit = (v.n_fit_games == null) ? e.n_fit_games : v.n_fit_games;
+    var graded = (v.n_graded == null) ? e.n_graded : v.n_graded;
+    var rows = ['<div class="bt-panel-sub">The park index</div>'];
+    rows.push('<div class="bt-kv">' +
+      kv("Source", esc(pb.source || "-")) +
+      kv("The pool these rows count",
+         pool == null ? "every gradable game"
+           : (pool + " gradable games" +
+              (fit == null || graded == null ? ""
+                : " (" + fit + " fitted, " + graded + " graded)"))) +
+      kv("Priced on their own dated park index",
+         pb.n_games_vintage_park == null ? "-" : pb.n_games_vintage_park) +
+      kv("Priced with the park term at neutral",
+         pb.n_games_neutral_park == null ? "-" : pb.n_games_neutral_park) +
+      kv("Of those, inside the eval window",
+         pb.n_eval_games_neutral_park == null ? "-" : pb.n_eval_games_neutral_park) +
+      "</div>");
+    if (pb.note) rows.push(note(esc(pb.note) + "."));
+    return rows.join("");
+  }
+
+  // The DARK columns. They price nothing, and the block says so in its own
+  // served note; it is here because a reader owed "what priced this sample"
+  // is also owed "what did not", and because the counts are the only public
+  // record of which captured column a vintage record actually carried.
+  function featureBasisBlock(fb) {
+    if (!fb) {
+      return chartAbsent("Feature basis",
+        (auxState("evald") === "ok"
+          ? "data/betting_model_eval.json carries no feature_basis block."
+          : auxMissing("evald")));
+    }
+    var keys = Object.keys(fb).filter(function (k) {
+      var v = fb[k];
+      return v && typeof v === "object" && v.n_eval_games;
+    }).sort();
+    var rows = ['<div class="bt-panel-sub">The dark columns, which priced nothing</div>'];
+    if (!keys.length) {
+      rows.push(chartAbsent("Feature basis", "no column carries an eval-window count."));
+      return rows.join("");
+    }
+    rows.push('<div class="bt-scroll mlbstats-scroll">' +
+      '<table class="bt-table mlbstats-table"><thead><tr>' +
+      '<th class="bt-l">Column</th><th>Populated</th><th>Null, stated</th>' +
+      "<th>Predates it</th></tr></thead><tbody>" +
+      keys.map(function (k) {
+        var n = fb[k].n_eval_games || {};
+        return '<tr><td class="bt-l">' + esc(k) + "</td><td>" +
+          (n.populated == null ? "-" : n.populated) + "</td><td>" +
+          (n.null_stated == null ? "-" : n.null_stated) + "</td><td>" +
+          (n.predates_column == null ? "-" : n.predates_column) + "</td></tr>";
+      }).join("") + "</tbody></table></div>");
+    rows.push('<div class="bt-clock-fine">Eval-window games, the graded sample ' +
+      'the Brier above is measured on. "Predates it" is a vintage record ' +
+      "written before that column existed. A gradable-pool count rides beside " +
+      "each one in the artifact.</div>");
+    if (typeof fb.note === "string") rows.push(note(esc(fb.note) + "."));
+    return rows.join("");
+  }
+
+  // THREE BLOCKS, THREE POOLS, AND THE PANEL SAYS SO (2026-09-18). The three
+  // bases do not count over one denominator, and a heading that implied they
+  // did would be its own small lie: the park counts run over the GRADABLE pool
+  // (the fit half and the graded half together), the dark-column counts run
+  // over the GRADED sample alone, and the starter counts run over the
+  // completed-game cache, which is larger than either and is not a grading
+  // pool at all. Every number is read. The lead names the graded sample once,
+  // so a reader has the headline denominator before the blocks start, and each
+  // block names its own beside its rows.
+  function basisPanel() {
+    var v = vstate();
+    var e = aux("evald") || {};
+    var vin = (v || {}).vintage || {};
+    var ev = e.vintage || {};
+    var graded = (vin.n_graded == null) ? (ev.n_graded == null ? null : ev.n_graded)
+      : vin.n_graded;
+    var rows = ['<div class="bt-panel-hd">What the graded sample was priced on</div>'];
+    rows.push("<p>The Brier and the skill t above are measured on the " +
+      gl("vintage", "vintage_grading") + " sample" +
+      (graded == null ? "" : " of " + graded + " graded games") +
+      ". These are the three bases that sample was built from, as the backtest " +
+      "artifact records them. They count over three different pools, each named " +
+      "with its block.</p>");
+    rows.push(starterBasisBlock(e.starter_basis || null));
+    rows.push(parkBasisBlock(vin.park_basis || ev.park_basis || null, vin, ev));
+    rows.push(featureBasisBlock(ev.feature_basis || null));
     return '<div class="bt-panel">' + rows.join("") + "</div>";
   }
 
@@ -898,23 +1105,81 @@
       "Poisson difference, which underweights the tails. Grid on the Validation tab.");
   }
 
-  // THE BOTH-LEGS COPY STATE (2026-08-19, pre-decided). A market can be
-  // watch-only twice over: the theory leg (the margin-shape exclusion, its
-  // gate indeterminate) and the evidence leg (the market's own graded record
-  // resolved worse than a coin at the canonical-game floor). When the payload
-  // says both legs closed a market, the page states ONE combined state with
-  // BOTH numbers, every one of them read off market_publishability. Nothing
-  // here is hand-written: the t, the bar, the Brier, the game count and the
-  // floor all ride the payload, so the copy moves the night the numbers do.
+  // WHICH LEG BARS, READ RATHER THAN INFERRED (owner decision 2026-09-17, O15).
+  //
+  // `betting_model.SLOT_MARKET_POLICY` has THREE registered values and a
+  // fail-closed fourth state for an unregistered string, so comparing it to one
+  // name cannot answer "does this leg bar a slot". This file used to do exactly
+  // that: it compared `slot_market_policy` against the single value "any", which
+  // is why its both-legs copy read "clearing one leg does not reopen the
+  // market" under `ledger_gated`, where clearing the LEDGER leg alone reopens it.
+  //
+  // The server derives the pair once, in `betting_export.slot_market_policy_legs`,
+  // and publishes it twice: on `market_publishability.policy` as
+  // `ledger_leg_bars` / `dispersion_leg_bars`, and on
+  // `pick_meta.market_policy_legs` as `ledger_bars` / `dispersion_bars`. This
+  // reads whichever is present and NEVER re-derives the rule from the policy
+  // name: a page that re-implements a server rule is a second reading of one
+  // constant, and the two would drift on the day a fourth value lands.
+  //
+  // `known` is false only for a payload written before those fields existed.
+  // The copy then says which legs are CLOSED, which such a payload does carry,
+  // and stops short of saying which of them can refuse a slot.
+  function policyLegs() {
+    var d = S.data || {};
+    var pol = (d.market_publishability || {}).policy || {};
+    var pm = (d.pick_meta || {}).market_policy_legs || {};
+    var led = (typeof pol.ledger_leg_bars === "boolean") ? pol.ledger_leg_bars
+      : ((typeof pm.ledger_bars === "boolean") ? pm.ledger_bars : null);
+    var dis = (typeof pol.dispersion_leg_bars === "boolean") ? pol.dispersion_leg_bars
+      : ((typeof pm.dispersion_bars === "boolean") ? pm.dispersion_bars : null);
+    var name = pol.slot_market_policy || (d.pick_meta || {}).market_policy || null;
+    // THE OWNER-DECISION RECEIPT, READ RATHER THAN HARD-WRITTEN. The served
+    // note beside the policy ends "(owner decision 2026-09-05, docs/diamond-
+    // betting.md 7d)" and carries the date of whichever value is in force. The
+    // both-legs sentence has printed that date since the any-market decision
+    // shipped, so taking it off the note keeps the receipt on the page without
+    // welding it to one value: a note with no date simply prints none.
+    var rc = /owner decision (\d{4}-\d{2}-\d{2})/.exec(
+      String(pol.slot_market_policy_note || ""));
+    return {
+      known: (led !== null && dis !== null),
+      ledger: led, dispersion: dis,
+      bars: (led === true || dis === true),
+      // The served string, printed verbatim where it is printed at all. The
+      // page names the policy; it never decides anything from the name.
+      name: name,
+      receipt: rc ? (" (" + rc[1] + ")") : "",
+      phrase: name ? (" under the " + esc(name) + " slot market policy") : ""
+    };
+  }
+
+  // THE BOTH-LEGS COPY STATE (2026-08-19, pre-decided; repaired 2026-09-18). A
+  // market can be watch-only twice over: the theory leg (the margin-shape
+  // exclusion, its gate indeterminate) and the evidence leg (the market's own
+  // graded record resolved worse than a coin at the canonical-game floor). When
+  // the payload says both legs closed a market, the page states ONE combined
+  // state with BOTH numbers, every one of them read off market_publishability.
+  // Nothing here is hand-written: the t, the bar, the Brier, the game count and
+  // the floor all ride the payload, so the copy moves the night the numbers do.
+  // WHICH of the two closed legs can refuse a slot comes from `policyLegs`, so
+  // the sentence is true under every value the policy can take and not only
+  // under the one shipped today.
+  //
+  // FOUR STATES ARE WRITTEN AND THREE ARE REACHABLE TODAY.
+  // `betting_export.slot_market_policy_legs` maps "any" to (theory False,
+  // evidence False), "ledger_gated" to (False, True) and every other string,
+  // registered or not, to (True, True), so a theory leg that bars ALWAYS comes
+  // with an evidence leg that bars: the theory-leg-only branch cannot render
+  // off a payload the server writes. It is written anyway, because the day a
+  // fourth registered value lands the alternative is this page falling through
+  // to a branch whose sentence nobody checked. A fifth state covers a payload
+  // written before the two booleans existed.
   function marketGateNotes() {
     var mp = (S.data || {}).market_publishability || null;
     if (!mp || !mp.markets) return "";
     var pol = mp.policy || {};
-    // THE ANY-MARKET POLICY (owner decision 2026-09-05). When the payload says
-    // slot_market_policy is "any", a both-legs market is ELIGIBLE and the two
-    // legs are cautions that ride the published row; the sentence changes with
-    // the policy field and nothing here is hand-written either way.
-    var anyPolicy = pol.slot_market_policy === "any";
+    var pl = policyLegs();
     var out = [];
     Object.keys(mp.markets).forEach(function (k) {
       var m = mp.markets[k] || {};
@@ -924,24 +1189,79 @@
         : ("the n of " + pol.n_min + " floor");
       var bar = (pol.z == null) ? "the one-sided 95% bar"
         : ("the " + num(pol.z, 3) + " one-sided bar");
-      var head = anyPolicy
-        ? ("<strong>The " + esc(k) + " market carries two independent cautions; " +
-           "eligible under the any-market policy (2026-09-05).</strong>")
-        : ("<strong>The " + esc(k) + " market is watch-only for two independent reasons.</strong>");
-      out.push(note(head +
+      var state, tail;
+      if (!pl.known) {
+        state = "is closed on both legs";
+        tail = ". This payload does not say which leg can refuse a slot, so " +
+          "which of them would have to clear is not stated here; the shadow " +
+          "and calibration ledgers keep recording it.";
+      } else if (pl.ledger && pl.dispersion) {
+        state = "is watch-only for two independent reasons";
+        tail = ". Clearing one leg does not reopen the market; the shadow and " +
+          "calibration ledgers keep recording it.";
+      } else if (pl.ledger) {
+        state = "is watch-only: its evidence leg bars it" + pl.phrase + pl.receipt;
+        tail = ". Clearing the evidence leg reopens it, because the theory leg " +
+          "rides a published row as disclosure and bars nothing here; the " +
+          "shadow and calibration ledgers keep recording it.";
+      } else if (pl.dispersion) {
+        state = "is watch-only: its theory leg bars it" + pl.phrase + pl.receipt;
+        tail = ". Clearing the theory leg reopens it, because the evidence leg " +
+          "rides a published row as disclosure and bars nothing here; the " +
+          "shadow and calibration ledgers keep recording it.";
+      } else {
+        // BYTE FOR BYTE THE SENTENCE THE PAGE HAS PRINTED SINCE 2026-09-05,
+        // with the policy name and the decision date READ off the payload
+        // instead of hard-written. Under "any" this renders the identical
+        // words, which is what lets this repair claim it moved no served copy:
+        // a correctness fix that also reworded a shipped sentence would have
+        // been two changes wearing one commit message.
+        state = "carries two independent cautions; eligible under the " +
+          esc(pl.name || "current") + "-market policy" + pl.receipt;
+        tail = ". Both ride any published row on this market as disclosure; the " +
+          "shadow and calibration ledgers keep recording it.";
+      }
+      out.push(note("<strong>The " + esc(k) + " market " + state + ".</strong>" +
         " Theory leg: " +
         esc((m.dispersion_leg || {}).reason ||
             "the margin-shape exclusion bars this market") +
         ". Evidence leg: its graded record resolved worse than a coin at " +
         floor + ", mean Brier " + num(lg.brier, 5) + " on " +
         (lg.n_games == null ? "an unreported count of" : lg.n_games) +
-        " canonical games, t " + num(lg.t, 3) + " against " + bar +
-        (anyPolicy
-          ? ". Both ride any published row on this market as disclosure; the shadow " +
-            "and calibration ledgers keep recording it."
-          : ". Clearing one leg does not reopen the market; the shadow and " +
-            "calibration ledgers keep recording it.")));
+        " canonical games, t " + num(lg.t, 3) + " against " + bar + tail));
     });
+    // ONE LEG, AND IT BARS: the gap the block above left open (named by the
+    // 7d follow-ups, closed 2026-09-18). Everything above fires only where
+    // BOTH legs closed a market. A market closed on ONE leg fills no slot
+    // either, whenever that leg is one the policy lets bar, and the page said
+    // nothing at all about it. On HEAD's payload the runline is theory-closed
+    // with its evidence leg open, which under "dispersion_gated" is barred and
+    // silent.
+    //
+    // THE TEST IS THE SERVED ANSWER. `publishable` is computed by the server
+    // with the policy already folded in, so this page re-derives no rule; the
+    // leg blocks name WHICH leg closed it and `policyLegs` says whether that
+    // leg bars. Where no leg bars, every market is publishable and this loop
+    // prints nothing, which is why it moves no copy on today's board.
+    if (pl.bars) {
+      Object.keys(mp.markets).forEach(function (k) {
+        var m = mp.markets[k] || {};
+        if (m.both_legs || m.publishable !== false) return;
+        var theoryClosed = (m.dispersion_leg || {}).publishable === false;
+        var ledgerClosed = (m.ledger_leg || {}).status === "ledger_closed";
+        var byTheory = theoryClosed && pl.dispersion === true;
+        var byLedger = ledgerClosed && pl.ledger === true;
+        if (!byTheory && !byLedger) return;
+        var closed = byTheory ? "theory" : "evidence";
+        var open = byTheory ? "evidence" : "theory";
+        out.push(note("<strong>The " + esc(k) + " market fills no " + selNoun() +
+          " slot" + pl.phrase + pl.receipt + ": its " + closed +
+          " leg bars it.</strong> " +
+          esc(sentence(m.reason) || "The payload gives no reason.") +
+          ". Its " + open + " leg is open, and the shadow and calibration " +
+          "ledgers keep recording this market."));
+      });
+    }
     return out.join("");
   }
 
@@ -1122,6 +1442,15 @@
     return n;
   }
 
+  // THE CENSUS HAS TWO DENOMINATORS AND USED ONLY ONE (repaired 2026-09-18).
+  // `pick_meta.n_floor_clearing_sides` is policy-filtered at seam 1, so under a
+  // gated policy it counts "cleared the floor AND the policy lets it fill a
+  // slot" while this sentence prints it under the words "cleared the floor".
+  // The server publishes the unfiltered count beside it as
+  // `n_floor_clearing_sides_before_policy` for exactly this read. The floor
+  // clause now takes that one, and the ranked count is named only when the two
+  // differ, so the sentence says what it counts under every policy value. Where
+  // no leg bars, the two are equal and this renders word for word as it did.
   function pickCensus() {
     var d = S.data || {};
     var meta = d.pick_meta || {};
@@ -1130,12 +1459,19 @@
         esc(meta.blocked_reason || "the selection rule never ran") + ".");
     }
     var n = pricedSideCount(d.team_bets);
-    var m = meta.n_floor_clearing_sides;
+    var ranked = meta.n_floor_clearing_sides;
+    var cleared = (meta.n_floor_clearing_sides_before_policy == null)
+      ? ranked : meta.n_floor_clearing_sides_before_policy;
+    var gated = (cleared != null && ranked != null && ranked !== cleared)
+      ? (", " + ranked + " of those are on a market the slot policy lets fill a " +
+         selNoun() + " slot,")
+      : ",";
     var band = ((meta.slots || {}).pick_of_the_day || {}).band || "the price band";
     var floor = (meta.min_edge == null) ? "the floor" : pct(meta.min_edge, 1);
     return note("<strong>Census.</strong> " + n + " sides priced across " +
-      (d.n_games || 0) + " games, " + (m == null ? "an unreported number of" : m) +
-      " cleared the " + esc(floor) + " floor, and none of those are inside " +
+      (d.n_games || 0) + " games, " +
+      (cleared == null ? "an unreported number of" : cleared) +
+      " cleared the " + esc(floor) + " floor" + gated + " and none of those are inside " +
       esc(band) + ". A measurement of tonight's board, not a failure to load one; " +
       "the floor was not lowered.");
   }
@@ -1882,6 +2218,9 @@
     // the second one word for word.
     var out = [honestResult(), clocksPanel()];
     out.push(validationPanel());
+    // Beside the vintage Brier and the skill t, because it qualifies them
+    // (owner decision 2026-09-18).
+    out.push(basisPanel());
     out.push(calibrationPanel());
     out.push(benchmarkPanel());
     out.push(dispersionPanel());
@@ -2441,10 +2780,24 @@
     }
     var thr = pickFloor();
     if (hasMarket && thr != null) {
+      // THE BADGE IS THE EDGE FLOOR AND NOTHING ELSE (repaired 2026-09-18).
+      // Whether that is ALSO the bar the slots use depends on the slot market
+      // policy: where no leg bars, the two are the same bar; where a leg bars,
+      // the slots drop whole markets this badge still marks, so "the bar the
+      // picks use" would be false. The sentence reads the served legs through
+      // `policyLegs` rather than assuming the value shipped today.
+      var pl = policyLegs();
+      var whose = !pl.known
+        ? ". This payload does not say whether the " + selNounPl() +
+          " apply a further market rule"
+        : (pl.bars
+          ? ", the edge floor alone. The " + selNounPl() + " also drop any market " +
+            "the slot policy bars, so a badge is not a claim of eligibility"
+          : ", the bar the " + selNounPl() + " use");
       head += note("A <strong>best value</strong> badge marks the side in each game " +
         "with the largest " + gl("edge", "bet_edge") + " clearing " +
-        esc(floorText((S.data && S.data.pick_meta) || {})) + ", the bar the " +
-        selNounPl() + " use. No badge: nothing in that game cleared it.");
+        esc(floorText((S.data && S.data.pick_meta) || {})) + whose +
+        ". No badge: nothing in that game cleared it.");
     }
     // The both-legs copy state renders above the board too: the closed
     // market's rows stay priced below (the ledgers keep recording it), and a

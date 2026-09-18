@@ -522,13 +522,25 @@ MODE_MEANING = {
     "contaminated": ("Team inputs are season-to-date leaderboards, so every graded game "
                      "sits inside its own features. This measures calibration, not skill, "
                      "and it cannot validate anything."),
+    # WHICH STARTER, SAID OUT LOUD (2026-09-18). This sentence used to put the
+    # listed probable among the things that "come out of that snapshot". The
+    # snapshot supplies that pitcher's SEM+ ratings; his IDENTITY is read off
+    # the completed-game row, which carries the FINAL feed's probable, while
+    # the served board prices the probable listed at the nightly build. The
+    # two agree on 4,385 of 4,392 sides (R4 count, 2026-09-11), and the block
+    # that measures it is `betting_model._starter_basis`, rendered on the
+    # validation tab. Naming it here is a disclosure, not a pricer change.
     "vintage": ("Every game is priced on a leaderboard snapshot whose knowledge cutoff is "
-                "strictly before that game: team offense, team run prevention, the listed "
-                "probable and the park index all come out of that snapshot. A game with no "
-                "such snapshot is skipped, not graded on today's numbers, and a game whose "
-                "snapshot predates the stored park column is priced with the park term at "
-                "neutral rather than on the live index. This is the only mode that can "
-                "validate the model."),
+                "strictly before that game: team offense, team run prevention, the "
+                "starter's SEM+ ratings and the park index all come out of that snapshot. "
+                "WHICH starter does not: his identity is the probable on the completed-game "
+                "row, which is the final feed's, while the served board prices the probable "
+                "listed at the nightly build. Who starts is fixed before first pitch, so "
+                "that is a difference in information and not an outcome leak. A game with "
+                "no such snapshot is skipped, not graded on today's numbers, and a game "
+                "whose snapshot predates the stored park column is priced with the park "
+                "term at neutral rather than on the live index. This is the only mode that "
+                "can validate the model."),
 }
 
 # Correlation rules the parlay builder enforces. A naive parlay multiplies leg

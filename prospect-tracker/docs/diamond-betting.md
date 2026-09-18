@@ -417,6 +417,97 @@ so a stored record joins directly against park factors and the game feed and
 cannot silently drop the eight clubs whose StatsAPI and Baseball-Reference
 codes disagree.
 
+### Correction (2026-09-18): the snapshot dates the starter's RATINGS, not his identity
+
+The paragraph above, `leaderboard_vintages.PARK_SOURCE`'s preamble and the
+served sentence `betting_export.MODE_MEANING["vintage"]` all read as though the
+whole starter came out of the dated snapshot. He does not, and the difference is
+worth one sentence because the vintage mode is the only thing on this platform
+allowed to validate the game model.
+
+What the snapshot dates is `starter_leaderboards.json`: that pitcher's SEM+ and
+his innings per start, as of a cutoff strictly before the game. WHICH pitcher is
+read off the completed-game row (`completed_games.home_sp` / `away_sp`), which
+carries the FINAL feed's `probablePitchers`. The served board prices the
+probable listed at the 03:10 ET build instead, so the graded pricer holds a
+starter the board did not always have. Measured (`betting_model._starter_basis`,
+R4 count, 2026-09-11): the final feed's probable equals the first pitcher
+actually used on 4,385 of 4,392 sides, and the two doors into that stored field
+agree on 4,576 sides across 2,288 games with 0 differences (2026-09-17).
+
+**This is a difference in INFORMATION and not an outcome leak**, because who
+starts is fixed before first pitch. The distinction has to be stated rather than
+implied: a reader who is told the backtest used the final feed must be able to
+tell which of the two it is.
+
+Three copies of the old wording were repaired on 2026-09-18, and no number
+moved:
+
+- `betting_export.MODE_MEANING["vintage"]`, which is COPIED into
+  `data/betting.json` and rendered on /betting/, listed "the listed probable"
+  among the things that come out of the snapshot. It now names the SEM+ ratings
+  as the dated half, the completed-game row as the source of the identity, and
+  carries the information-not-leak sentence.
+
+  **That constant has two doors, and the served one was the stale one.** The
+  page renders `model.validation.mode_meaning.vintage` out of the payload, not
+  the Python constant, and the payload is written by the nightly export. So a
+  repair to the constant alone would have reached a reader only at the next
+  03:10 ET build, and until then the tab would have carried the old sentence
+  directly above the new panel that contradicts it, which is the class of
+  defect this whole step exists to close. `assets/betting.js` therefore carries
+  the current text as well, in `MODE_MEANING`, and prefers it over the payload's
+  copy; `test_betting_policy_copy` pins the two byte for byte and renders the
+  tab against a payload holding the OLD sentence to prove which door wins. A
+  payload with no `mode_meaning` at all still renders nothing there, as before.
+  As of 2026-09-18 the two tracked artifacts `data/betting.json` and
+  `data/betting_preview.json` still hold the old sentence; the page no longer
+  shows it, and the next export rewrites them.
+- The `PARK_SOURCE` preamble in `leaderboard_vintages.py` said the first three
+  of the four inputs "were vintage-dated by this module from day one". It now
+  says which half of the starter that covers.
+- `MODEL_REGISTRY.md`'s `betting_game_prob` row calls the model starter "the
+  listed probable" with no eval basis. That file belongs to another lane; the
+  replacement text is handed over rather than applied here.
+
+### Owner decision (2026-09-18): the validation tab renders the starter basis
+
+The block `starter_basis` shipped in `data/betting_model_eval.json` on
+2026-09-17 and was published but not rendered; the open question that step left
+was whether the validation tab should carry it beside the vintage Brier and the
+skill t. The answer is yes. `assets/betting.js` grows one panel, "What the
+graded sample was priced on", directly under the validation panel and above the
+calibration panel, with three blocks:
+
+- **The starter**, off `starter_basis`: the source and stored field, what the
+  served board reads instead, the 4,385 of 4,392 agreement with the first
+  pitcher used, the two-door agreement, the coverage counts, and the frozen
+  denominator note. The lead sentence states the information-versus-leak
+  distinction in full, so the panel cannot be read as disclosing a leak.
+- **The park index**, off the payload's own `vintage.park_basis`, which was
+  served and never drawn.
+- **The dark columns**, off `vintage.feature_basis`, under a heading that says
+  they priced nothing, with the block's own served note beneath them.
+
+Every number in the panel is READ from an artifact. Nothing on the page sums,
+averages or rounds them, and `starter_basis.copy_repair_owed` is deliberately
+NOT rendered: it is an internal marker, and it went stale the moment the repair
+above landed. Its replacement string is handed to the `betting_model` lane with
+the `MODEL_REGISTRY.md` text.
+
+**THREE BLOCKS, THREE POOLS, SAID OUT LOUD.** The bases do not share a
+denominator, so the panel names each one where it is used rather than letting
+the heading imply a single sample. The lead names the graded sample (`n_graded`,
+642 on the 2026-09-18 artifact). The park rows carry their own pool line,
+`n_gradable` with `n_fit_games` and `n_graded` beside it (947 gradable, 305
+fitted, 642 graded), because a park index is an INPUT and the fit half has one
+too: counting the fit half's park source is not grading it, and the house rule
+that the 305 are never graded is untouched. The dark-column table is labelled as
+the eval-window sample, which is the graded one. The starter block carries a
+fine line saying its counts walk the completed-game cache (2,294 games), which
+is not a grading pool at all, on top of the served note that says the 4,385 of
+4,392 rate is a frozen archive and not those counts.
+
 ### Daily operation
 
 ```
@@ -2503,7 +2594,7 @@ to be listed here the same day.
 | 2 | `dfs_export`: `fantasy_schedule.fetch_lineups(day)` reads the posted card; a posted bat's start rate becomes 1.0 and a club's posted status is stamped on the card | a posted card to a served DFS projection | the StatsAPI card, not the constructed nine; no `woba[0]`; no outcome, no price |
 | 3 | `hem_plus.team_offense` and the site's lineup cards (`77174943`): the orders, bench and per-hand HEM+ published on the hitter board | an order to a served page | a display of the construction; computes no team value from projections; no outcome, no price |
 | 4 | `betting_model._feature_basis`: counts each dark column's status (populated, null stated, predates the column) per graded game, nightly | a column's presence to a count | counts, no value, no fit |
-| 5 | The 5j capture job `tools/betting_lineup_job.py` (to be built; the file does not exist at `a890f36a`) | a posted card to a capture row | computes nothing; 5j's first look is 2027 and its contaminated screen waits for this look (plan 4.1) |
+| 5 | The 5j capture job `tools/betting_lineup_job.py` (BUILT at `78c22d7a`; it did not exist at `a890f36a`) | a posted card to a capture row | computes nothing; 5j's first look is 2027 and its contaminated screen waits for this look (plan 4.1) |
 
 **Coverage on 2026-09-11 (counts, no value; as read at 23:45Z that day).**
 - Post-change nights on disk:
@@ -5251,8 +5342,11 @@ the `star_out` builder). A projections retrain, which the WAR label epoch's casc
 includes, can therefore move those two columns. It cannot move this candidate.
 
 **The capture, which moves no price and computes nothing.** The source is StatsAPI
-`/schedule` hydrated `lineups,probablePitcher`, at zero Odds API credits, read through a
-new helper beside `fantasy_schedule.fetch_lineups` (to be built). `fetch_lineups` itself,
+`/schedule` hydrated `lineups,probablePitcher`, at zero Odds API credits, read through
+`tools/betting_lineup_job.fetch_schedule` (BUILT at `78c22d7a`, line 207). This sentence
+asked for "a new helper beside `fantasy_schedule.fetch_lineups`, to be built"; it was
+built inside the job instead, because it needs its own game types and its own cache
+clock, which is the reason the 2026-09-17 arming note gives. `fetch_lineups` itself,
 which `/dfs/` reads, cannot serve: it hydrates `lineups` only, caches one file per day
 (`lineups_<day>_<game_type>.json`, 12-minute TTL) and returns
 `{game_pk: {home: [ids], away: [ids]}}`. It drops each player's `primaryPosition`, the
@@ -5261,7 +5355,8 @@ game's status and time, and the probables. The helper keeps its own cache, so th
 raw response lists each side's card in batting order with `id`, `fullName` and
 `primaryPosition`, and carries no bat side. Bat side joins from the hitter board and
 pitcher hand from `pal_export.load_pitch_hand`. The job is `tools/betting_lineup_job.py`
-(to be built), modelled on `tools/betting_close_job.py`:
+(BUILT at `78c22d7a`; the list below is the spec it was built to, kept as
+written), modelled on `tools/betting_close_job.py`:
 - cron `*/15` under TZ=UTC, with `--why`, `--selfcheck` and a heartbeat stamped on
   every invocation, including refusals;
 - it acts only when a pregame game is 10 to 180 minutes from first pitch (POLICY, from
@@ -5285,9 +5380,10 @@ cannot touch it.
 feed's `boxscore.teams[side].players` whose own `battingOrder` code is `100` to `900`.
 It is never the `battingOrder` array, which names the CURRENT occupant of each slot,
 substitutes included, and differs on 78.8% of completed sides. The reader is
-`starting_nine(feed, side)` (to be built). A test pins it against the array on a feed
-with a substitution. The `fetch_lineups` docstring's "verified" claim covers the posted
-card's ORDER only, and it is corrected in the same change.
+`starting_nine(feed, side)`, BUILT at `78c22d7a` in `tools/betting_lineup_job.py`, and
+`test_betting_lineup_job.py` pins it against the array on a feed with a substitution.
+The `fetch_lineups` docstring's "verified" claim covers the posted card's ORDER only,
+and that correction has been made (see the 2026-09-17 arming note below).
 
 **The candidate.** For scoring side S facing opponent O, whose starter throws h:
 
@@ -5840,8 +5936,12 @@ rather than written over it. The fetch helper lives inside
 `tools/betting_lineup_job.py`, not beside `fantasy_schedule.fetch_lineups`,
 because it needs its own game types and its own cache clock. And the correction
 that paragraph owes to the `fetch_lineups` docstring, whose "verified" claim
-covers the posted card's ORDER and not the completed feed's array, has not been
-made; it is still owed.
+covers the posted card's ORDER and not the completed feed's array, HAS BEEN MADE
+(re-read 2026-09-18): the docstring now carries it under "WHAT THAT CHECK IS
+NOT, corrected 2026-09-17", keeps the half that is true about the card, and
+points at `tools/betting_lineup_job.starting_nine` for the nine who started.
+This paragraph said it was still owed, which stopped being true in the same
+batch it was written in.
 
 The job's pre-call gate reads a slate the job writes itself, under
 `.cache/lineup_captures/`, and never `data/fantasy.json`. Three properties of
@@ -7158,25 +7258,76 @@ under `"dispersion_gated"`, against 5 before the policy under all three
 True to False under both gated values, and for the runline True to False under
 `"dispersion_gated"` only. No number was read against an outcome.
 
-**NAMED FOLLOW-UPS IN assets/betting.js.** That file is not edited by this
-change, and three things in it read the policy or its census in a shape the
-third value outgrew. They are latent while HEAD is `"any"`, and each has the
-field it needs already on the payload:
+**NAMED FOLLOW-UPS IN assets/betting.js: LANDED 2026-09-18.** Three things in
+that file read the policy or its census in a shape the third value outgrew.
+They were latent while HEAD is `"any"`, each had the field it needed already on
+the payload, and each now reads that field.
 
-- `marketGateNotes` takes its branch from `pol.slot_market_policy === "any"`
-  (line 917), so under `"ledger_gated"` it prints the both-legs copy for a
-  market both legs have closed, including "Clearing one leg does not reopen the
-  market". Under `"ledger_gated"` clearing the LEDGER leg alone DOES reopen it,
-  so that sentence is false there. The fix is to branch on
-  `market_publishability.policy.ledger_leg_bars` and `.dispersion_leg_bars`,
-  which this change publishes for exactly that reason. Until it lands, the
-  page's both-legs copy is wrong under `"ledger_gated"`.
-- `bestValueSide` is unfiltered, as measured above.
-- `pickCensus` renders `pick_meta.n_floor_clearing_sides`, which is
-  policy-filtered at seam 1, under the words "cleared the floor", beside its
-  own unfiltered count of priced sides. `pick_meta.n_floor_clearing_sides_before_policy`
-  is published beside it so the census can pair like with like; the sentence
-  either reads the unfiltered number or names the policy.
+**What moved on the served board: nothing.** Measured by rendering every section
+of /betting/ against `data/betting.json` (policy `"any"`, both legs False) before
+and after, the rendered text of the census sentence, the best-value badge note
+and the both-legs market note are BYTE-IDENTICAL, and no number moves anywhere
+on the page. The both-legs head keeps its owner-decision receipt because the
+sentence now READS it: the policy name comes from `slot_market_policy` and the
+date is parsed off `slot_market_policy_note`, which ends "(owner decision
+2026-09-05, docs/diamond-betting.md 7d)", so "eligible under the any-market
+policy (2026-09-05)" is reproduced rather than re-typed, and a policy whose note
+carries no date prints none. Measured across all nine sections at 1280, 1440 and
+390, the rendered text of potd, teams, props, parlays, calculators, record,
+futures and mybets is byte-identical, and the whole page gains 48 numbers and
+loses none, every one of them inside the validation tab. The two changes there
+are the repaired vintage blurb and the new basis panel, and both are named
+above.
+
+- `marketGateNotes` took its branch from `pol.slot_market_policy === "any"`, so
+  under `"ledger_gated"` it printed the both-legs copy for a market both legs
+  have closed, including "Clearing one leg does not reopen the market". Under
+  `"ledger_gated"` clearing the LEDGER leg alone DOES reopen it, so that
+  sentence was false there. It now branches on a new client helper `policyLegs`,
+  which reads `market_publishability.policy.ledger_leg_bars` and
+  `.dispersion_leg_bars`, falling back to `pick_meta.market_policy_legs`, and
+  re-derives nothing from the policy name. Four states are written, one per
+  combination of the two booleans, plus a fifth for a payload that carries
+  neither field, which says which legs are CLOSED and stops there. THREE OF THE
+  FOUR ARE REACHABLE TODAY: `slot_market_policy_legs` maps every value other
+  than `"any"` and `"ledger_gated"` to both legs barring, so a theory leg that
+  bars always arrives with an evidence leg that bars, and no payload the server
+  writes can render the theory-leg-only branch. It is written anyway, and driven
+  by a synthetic payload in the tests, so that a fourth registered value cannot
+  land on a branch whose sentence nobody has read.
+- `bestValueSide` is unfiltered, as measured above, and the repair is to the
+  SENTENCE rather than to the ranking: the badge note said the edge floor was
+  "the bar the picks use", which is true only where no leg bars. It now reads
+  `policyLegs` and, where a leg bars, says the badge is the edge floor alone and
+  that a badge is not a claim of eligibility.
+- `pickCensus` rendered `pick_meta.n_floor_clearing_sides`, which is
+  policy-filtered at seam 1, under the words "cleared the floor", beside its own
+  unfiltered count of priced sides. The floor clause now reads
+  `pick_meta.n_floor_clearing_sides_before_policy`, and the filtered count is
+  named in its own clause only when the two differ.
+
+**A FOURTH THING, NOT ON THAT LIST, CLOSED IN THE SAME PASS.**
+`marketGateNotes` returned early on `if (!m.both_legs) return;`, so the page's
+only market-bar disclosure was the both-legs one. Under a gated policy a market
+closed on ONE leg fills no slot either and the page said nothing at all about
+it: on the 2026-09-18 payload the runline is theory-closed with its evidence leg
+open, which under `"dispersion_gated"` is barred and silent, and the total is
+ledger-closed under `"ledger_gated"` only through its both-legs row. A second
+pass now emits one line for any market the payload marks `publishable: false`
+whose closing leg is one the policy lets bar, naming which leg bars, which leg
+is open, and the served reason verbatim. It is guarded by `pl.bars`, so under
+`"any"` it prints nothing and moves no served copy.
+
+**THE ONE-BIT PIN MOVED WITH THEM.**
+`test_betting_slot_market_policy.test_the_one_client_side_one_bit_read_is_the_named_follow_up`
+bounded the known state at exactly ONE client-side comparison of the policy
+string. That comparison is gone, so the test is renamed
+`test_no_client_side_one_bit_read_of_the_policy_survives`, holds the count at ZERO and
+asserts the two boolean reads in its place. Both halves walk the
+COMMENT-STRIPPED source, so a comment that quotes the old expression to explain
+why it is gone does not satisfy the pin and deleting a real read does not slip
+past it. A new comparison appearing fails there rather than reaching a page
+under a policy value nobody has read the copy against.
 
 **The lock and the policy do not fight.** A slot published under one policy is
 a claim that was made. Under O21's default (R4-1a, the slot lock) a later build

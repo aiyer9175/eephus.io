@@ -192,17 +192,33 @@ def test_the_prose_and_the_numbers_are_the_same_numbers():
     assert eq["measured_on"] in doc and ag["measured_on"] in doc
 
 
-def test_the_disclosure_names_the_served_sentence_it_leaves_standing():
-    """The served vintage blurb says the listed probable comes out of the
-    vintage snapshot. The snapshot supplies his SEM+ ratings; his IDENTITY
+def test_the_served_sentence_the_disclosure_named_has_been_repaired():
+    """The served vintage blurb USED TO say the listed probable comes out of
+    the vintage snapshot. The snapshot supplies his SEM+ ratings; his IDENTITY
     comes from the completed-game row, which is what this block documents.
-    Nothing served moved in the step that added the block, so the sentence is
-    NAMED as owed rather than quietly left alone."""
+    That sentence was named as owed on 2026-09-17 and repaired on 2026-09-18.
+
+    WHAT THIS PINS NOW. The block still names the repair through
+    `copy_repair_owed` (that string lives in `betting_model`, which this step
+    does not own, so it is stale by one day and is handed to that lane), and
+    the SERVED sentence it named is now true: it credits the snapshot with the
+    ratings, credits the completed-game row with the identity, and says in as
+    many words that the difference is one of information rather than an outcome
+    leak, so a reader cannot take it for a leak.
+
+    MUTATION: put "the listed probable and the park index all come out of that
+    snapshot" back into `MODE_MEANING["vintage"]`. This fails."""
     owed = bm._starter_basis(ROWS)["copy_repair_owed"]
     assert "MODE_MEANING" in owed
     assert "SEM+" in owed and "completed-game row" in owed
-    # and the sentence it names is really the served one
-    assert "the listed probable" in be.MODE_MEANING["vintage"]
+    blurb = be.MODE_MEANING["vintage"]
+    # the false half is gone
+    assert "the listed probable and the park index" not in blurb
+    # the true halves are both there, and neither may stand without the other
+    assert "SEM+ ratings" in blurb
+    assert "completed-game row" in blurb
+    assert "nightly build" in blurb
+    assert "information and not an outcome leak" in blurb
 
 
 def test_the_disclosure_is_pure_and_touches_nothing_it_is_handed():

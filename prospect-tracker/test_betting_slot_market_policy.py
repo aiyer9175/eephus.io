@@ -190,37 +190,48 @@ def test_no_seam_reads_the_policy_as_one_bit():
     assert not bad, f"the policy is compared as one bit at line(s) {bad}"
 
 
-def test_the_one_client_side_one_bit_read_is_the_named_follow_up():
-    """THE PIN ABOVE WALKS ONE FILE, so it cannot see the reader that is NOT
-    in it. assets/betting.js compares the served policy string to "any" and
-    prints a both-legs sentence off the result; under "ledger_gated" that
+def test_no_client_side_one_bit_read_of_the_policy_survives():
+    """THE PIN ABOVE WALKS ONE FILE, so it cannot see the reader that is NOT in
+    it. assets/betting.js used to compare the served policy string to "any" and
+    print a both-legs sentence off the result; under "ledger_gated" that
     sentence ("clearing one leg does not reopen the market") is false, because
     clearing the LEDGER leg does reopen it.
 
-    That file belongs to another track and is not edited here. This test is the
-    boundary of the known state: exactly ONE such comparison exists, it is the
-    follow-up docs/diamond-betting.md 7d names, and the payload already carries
-    the booleans that fix it (`market_publishability.policy.ledger_leg_bars`
-    and `.dispersion_leg_bars`). A second one appearing fails here rather than
+    WHEN THIS PIN WAS WRITTEN (2026-09-17) the client belonged to another track
+    and the boundary of the known state was "exactly ONE such comparison
+    exists". The repair landed on 2026-09-18, so the boundary is now ZERO, and
+    the two booleans the page reads instead are asserted here in place of the
+    comparison it replaced. A new comparison appearing fails here rather than
     reaching a page under a policy value nobody has read the copy against.
 
-    Latent while HEAD is "any": both legs are then open and the client takes
-    the same branch the server does."""
+    COMMENTS ARE STRIPPED FIRST, FOR BOTH HALVES. This walks source lines, and
+    a comment that quotes the old expression to explain why it is gone is
+    documentation, not a read. The same cut applies to the field names: the
+    block of comments that replaced the old branch names all five of them, so a
+    pin that searched the whole file would pass on the comments alone after
+    every real read had been deleted."""
     js = ROOT / "assets" / "betting.js"
     if not js.exists():
         pytest.skip("the client is not in this tree")
     src = js.read_text(encoding="utf-8", errors="replace")
-    hits = [ln for ln in src.splitlines() if "slot_market_policy" in ln
+    code = [ln for ln in src.splitlines() if not ln.lstrip().startswith("//")]
+    assert code, "assets/betting.js is comments all the way down"
+    hits = [ln for ln in code if "slot_market_policy" in ln
             and ("===" in ln or "!==" in ln or "==" in ln)]
-    assert len(hits) == 1, hits
-    assert 'slot_market_policy === "any"' in hits[0]
-    # The fields that let it be fixed without re-deriving the rule are served.
+    assert hits == [], hits
+    # ... and the page reads the pair the server derives, from either block.
+    body = "\n".join(code)
+    for field in ("ledger_leg_bars", "dispersion_leg_bars",
+                  "market_policy_legs", "ledger_bars", "dispersion_bars"):
+        assert field in body, f"the client no longer reads {field}"
+    # The fields it reads are the ones the server publishes.
     assert "ledger_leg_bars" in (ROOT / "betting_export.py").read_text(
         encoding="utf-8")
     if DOC.exists():
         doc = DOC.read_text(encoding="utf-8", errors="replace")
         assert "NAMED FOLLOW-UPS IN assets/betting.js" in doc
         assert "marketGateNotes" in doc and "bestValueSide" in doc
+        assert "LANDED 2026-09-18" in doc
 
 
 def test_the_runbook_does_not_claim_the_badge_is_gated():

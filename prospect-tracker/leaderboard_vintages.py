@@ -321,8 +321,8 @@ SOURCES = ("hitter_leaderboards.json", "starter_leaderboards.json",
 # THE FOURTH INPUT, and the one that was leaking (2026-08-05).
 #
 # betting_model prices a game on four things: team offense, team run prevention,
-# the listed probable, and THE PARK. The first three were vintage-dated by this
-# module from day one; the park was not, so `backtest()` in vintage mode read
+# the STARTER, and THE PARK. The first three were vintage-dated by this module
+# from day one; the park was not, so `backtest()` in vintage mode read
 # `park_index()` -> data/fa_meta.json -> `fa_fit.park_factors(CLASS_YEAR - 1)`,
 # which is the IN-PROGRESS season. Every eval-window game therefore contributed
 # to the park index used to fit and to price it, while the mode label claimed
@@ -338,6 +338,15 @@ SOURCES = ("hitter_leaderboards.json", "starter_leaderboards.json",
 # no park column, and betting_model prices them on a NEUTRAL park and marks the
 # games, which is the conservative direction: it drops the park term rather than
 # inventing a dated one.
+# WHAT "VINTAGE-DATED" MEANS FOR THE STARTER, and it is narrower than the
+# paragraph above reads on its own (2026-09-18). This module dates that
+# pitcher's RATINGS: starter_leaderboards.json as of a cutoff strictly before
+# the game. It does not date WHICH pitcher. The identity is read off the
+# completed-game row, which carries the final feed's probable, and the served
+# board prices the probable listed at the nightly build instead. Measured, the
+# two are the same arm on 4,385 of 4,392 sides (R4 count, 2026-09-11), and who
+# starts is fixed before first pitch, so the difference is one of INFORMATION
+# and not an outcome leak. `betting_model._starter_basis` carries the counts.
 PARK_SOURCE = "fa_meta.json park_factors"
 PARK_UNITS = "runs index / 100 (1.00 = neutral), the same units betting_model.park_index returns"
 
