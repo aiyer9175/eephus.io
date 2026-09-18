@@ -38,6 +38,15 @@ that the longshot slot always has something in it would be the single most
 dishonest number on the site, so an empty slot stays empty and names the floor
 it could not clear.
 
+A SLOT IS PUBLISHED ONCE PER SLATE. Selection is deterministic in its inputs
+and not in time, so a second build of one slate can pick a different side off a
+moved line. `apply_slot_lock` writes the first published row of each slot to
+.cache/betting/published_slots/<slate>.json and every later build of that slate
+serves that row verbatim, carrying what it would select now beside it as
+`since_published`. `maybe_publish_record` refuses a second row for the same
+(slate_date, slot) at the ledger as well, because the two guards protect
+different files.
+
 AND THE PAYLOAD HAS TO SAY SO IN STRUCTURE, NOT JUST IN PROSE. betting_model
 now grades in TWO labelled modes (contaminated and vintage) and puts `min_edge`
 behind three named gates, and none of that reached the reader while this file
@@ -269,12 +278,193 @@ STALE_BOOK_MAX_LAG_MINUTES = 15.0
 CONSENSUS_FAIR_MAX_DISTANCE = 0.05
 CONSENSUS_MIN_BOOKS = 3
 
-# Expected plate appearances by projected lineup slot. League average is about
-# 37.8 PA per team per game; leadoff sees roughly 4.65 and the nine hole about
-# 3.85, near enough to a 0.1 step. Used ONLY for prop fair lines, and the
-# payload says so, because a real lineup card beats this every time.
-SLOT_PA = {s: round(4.65 - 0.10 * (s - 1), 2) for s in range(1, 10)}
-DEFAULT_PA = 4.20
+# Expected plate appearances by projected lineup slot. Used ONLY for prop fair
+# lines, and the payload says so, because a real lineup card beats this every
+# time.
+#
+# THE LINEAR RULE HANDED OUT MORE PLATE APPEARANCES THAN A TEAM-GAME HAS, and
+# its own comment carried the arithmetic that says so: 4.65 at the leadoff spot
+# down to 3.85 in the nine hole, a flat 0.10 step, summing to 9 x 4.25 = 38.25
+# against the "about 37.8 PA per team per game" the same comment named (audit
+# L17-F3, plan repair 8). On a props row that number is not a garnish: it is
+# the binomial TRIAL COUNT for 1+ hits and 1+ home runs and the lambda scale
+# for total bases, so an over-allocated slot is an Over priced too high, on
+# every hitter row at once.
+#
+# THE MEASURED TABLE is counted by tools/props_slot_pa_lab.py off
+# .cache/pbp_corpus and recorded in data/betting_props_slot_pa_eval.json. The
+# quantity is the STARTER'S OWN plate appearances by his slot in the order (the
+# first nine distinct batters a side sends up, in order of first appearance),
+# which is what a props row needs, because the row prices that hitter and not
+# his replacement.
+#
+#   fit      2022, 2023, 2024   14,578 team-games   131,202 starter-games
+#   hold-out 2025                4,860 team-games    43,740 starter-games
+#
+# IT IS SPLIT HOME FROM AWAY, the first conditioning B-PA-DIST registered and
+# the largest one on offer: the home club does not bat in the ninth when it
+# leads, so its starters are censored at every slot. The gap runs 0.16 to 0.20
+# PA a slot (slot 1: away 4.5785, home 4.3873), as large as the whole level
+# correction at the top of the order, and which side a scheduled game puts a
+# hitter on is known when the row is priced. Pooling the two would leave that
+# much bias behind, signed by side.
+#
+# WHAT IS NOT CONDITIONED ON, said plainly: run environment and extra innings,
+# the other two terms in B-PA-DIST's brief. Neither is knowable when a row is
+# priced without first forecasting the thing itself, so both are absorbed into
+# the mean; the lab header and the served basis string say so rather than leave
+# the brief looking fully discharged.
+#
+# UNIVERSAL-DH SEASONS ONLY. In 2018-2021 the nine hole is a pitcher in half
+# the league and reads 2.7853, which answers a different question. 2026 is
+# neither fitted nor held out on: it is the season this board serves, read only
+# as a level check, and it sits about 0.6 percent ABOVE the fit seasons
+# (37.8567 PA per team-game against 37.6324; slot 1 away 4.5825 against
+# 4.5785). That residual is one-signed in the same direction as the repair and
+# is left in rather than corrected out, because the fit seasons are the
+# pre-registered ones and the plan asked for 2025 and earlier.
+#
+# B-PA-DIST'S ACCEPTANCE, run once on the 2025 hold-out before this shipped and
+# recorded in SLOT_PA_ACCEPTANCE below. Accuracy: the side-split table beats
+# the linear rule on plate-appearance MAE, 0.54793 against 0.57540 over 43,740
+# starter-games, and 0.51945 against 0.57749 over the slots 1 to 5 this table
+# actually prices; paired t clustered by team-game 12.65 pooled and 28.63 on
+# the priced slots. It also beats the pooled table (t 7.98). Level: each side's
+# nine slots sum under that side's own league PA per team-game (away 37.0718 of
+# 38.4586, home 35.4739 of 36.8061). The linear rule fails that leg pooled and
+# at home, and passes it away, which is its own tell.
+#
+# WHERE IT LOSES, on the record rather than in a footnote: on the hold-out the
+# split table's MAE is WORSE than the linear rule at slot 7 (0.55801 against
+# 0.51918) and slot 8 (0.63476 against 0.56866), where a whole-PA rule happens
+# to sit nearer the mode of a discrete count. Neither slot is priced. At every
+# priced slot, and on both sides of it, the split table wins. MAE is the
+# registered criterion and the median minimises it, while this table ships the
+# MEAN, which is the functional a trial count needs; RMSE, which the mean does
+# minimise, is on the record beside it (0.71182 against 0.75583).
+#
+# NOT a fitted model and not a betting estimand. Nothing here is estimated
+# from, or scored against, a game result, a price or a market. It is a count of
+# plate appearances.
+#
+# THE OTHER ANCHOR FOR THE SAME QUANTITY, named so the two cannot drift apart
+# unnoticed: dfs_export._PA_PER_START is 4.0169 PA per starting-lineup bat with
+# _LG_PA_PER_TEAM_GAME 37.855, counted on the 2026 StatsAPI boxscores. This
+# module's fit-season pooled mean over all nine slots is 4.0303 at 37.6324, and
+# its own 2026 read is 4.0203 at 37.8567, which agrees with the DFS pass. The
+# two constants describe the same league from different seasons on purpose:
+# DFS prices tonight's slate off this season, and a props trial count is frozen
+# on pre-registered seasons so it cannot be refitted mid-flight.
+#
+# THE FLAG IS A ONE-LINE ROLLBACK. With SERVE_SLOT_PA_MEASURED False every
+# table below is the literal that served before 2026-09-17, and every props
+# fair line reverts exactly (checked on the committed fixture: every published
+# hitter field identical to the pre-repair module). What the flag does NOT undo
+# is the disclosure. The row still carries expected_pa_basis and the method
+# block still carries slot_pa_basis, and with the flag off both say the table
+# is a hand rule, which is the point of them.
+SLOT_PA_LINEAR = {s: round(4.65 - 0.10 * (s - 1), 2) for s in range(1, 10)}
+SLOT_PA_MEASURED_BY_SIDE = {
+    "away": {1: 4.5785, 2: 4.4909, 3: 4.3829, 4: 4.2808, 5: 4.1445,
+             6: 4.0320, 7: 3.8798, 8: 3.7172, 9: 3.5652},
+    "home": {1: 4.3873, 2: 4.3054, 3: 4.2124, 4: 4.1106, 5: 3.9822,
+             6: 3.8516, 7: 3.7200, 8: 3.5333, 9: 3.3711},
+}
+#: The same count with the sides pooled. Published as the one-table summary and
+#: priced off only when a row cannot say which side it bats on.
+SLOT_PA_MEASURED = {1: 4.4829, 2: 4.3981, 3: 4.2976, 4: 4.1957, 5: 4.0633,
+                    6: 3.9418, 7: 3.7999, 8: 3.6253, 9: 3.4682}
+
+#: The league plate appearances one team gets in one game, same corpus and same
+#: fit seasons: the level a slot table has to fit inside. A pooled table answers
+#: to the pooled number, a side table to its own side. The hold-out reads
+#: 37.6391 pooled and the served season 37.8567.
+LEAGUE_PA_PER_TEAM_GAME = 37.6324
+LEAGUE_PA_PER_TEAM_GAME_BY_SIDE = {"away": 38.4586, "home": 36.8061}
+
+#: The acceptance as it was run, carried in the module so a later reader can
+#: see which numbers licensed the flip, WHERE THE TABLE LOSES, and which
+#: population the served rows actually come from, instead of taking a pooled
+#: headline on trust. Regenerate with tools/props_slot_pa_lab.py.
+SLOT_PA_ACCEPTANCE = {
+    "fit_seasons": (2022, 2023, 2024),
+    "holdout_season": 2025,
+    "holdout_starter_games": 43740,
+    "holdout_team_games": 4860,
+    "priced_slots": (1, 2, 3, 4, 5),
+    "mae_measured": 0.54793,
+    "mae_pooled": 0.55453,
+    "mae_linear": 0.57540,
+    "mae_measured_priced_slots": 0.51945,
+    "mae_linear_priced_slots": 0.57749,
+    "rmse_measured": 0.71182,
+    "rmse_linear": 0.75583,
+    "paired_t_clustered": 12.65,
+    "paired_t_clustered_priced_slots": 28.63,
+    "paired_t_clustered_vs_pooled": 7.98,
+    "mae_by_slot_measured": {1: 0.59292, 2: 0.57412, 3: 0.53138, 4: 0.47374,
+                             5: 0.42511, 6: 0.46623, 7: 0.55801, 8: 0.63476,
+                             9: 0.67515},
+    "mae_by_slot_linear": {1: 0.60370, 2: 0.61150, 3: 0.58986, 4: 0.55265,
+                           5: 0.52973, 6: 0.51858, 7: 0.51918, 8: 0.56866,
+                           9: 0.68469},
+    "loses_to_linear_at_slots": (7, 8),
+    "source": ("tools/props_slot_pa_lab.py over .cache/pbp_corpus, "
+               "read 2026-09-17"),
+    "artifact": "data/betting_props_slot_pa_eval.json",
+}
+
+#: Ships ON (2026-09-17). Both acceptance legs passed on the side-split table,
+#: and the rule it replaces fails the level leg on its own arithmetic.
+SERVE_SLOT_PA_MEASURED = True
+
+
+def _slot_pa_tables(measured: bool):
+    """(by_side, pooled, fallback) for one setting of the flag.
+
+    A function rather than three conditionals so the rollback can be EXERCISED
+    by a test instead of restated by one: call it with False and you get the
+    literals that served before 2026-09-17, whatever the module constant says.
+    """
+    if not measured:
+        return ({"away": dict(SLOT_PA_LINEAR), "home": dict(SLOT_PA_LINEAR)},
+                dict(SLOT_PA_LINEAR), 4.20)
+    by_side = {k: dict(v) for k, v in SLOT_PA_MEASURED_BY_SIDE.items()}
+    # THE FALLBACK IS THE PRICED POPULATION'S MEAN, not all nine slots'.
+    # props_fair_lines walks order[:5], so a row that reaches the fallback is a
+    # row whose slot could not be read out of the top five of an order, and the
+    # mean over slots 1 to 5 is the honest stand-in. The nine-slot mean (4.0303)
+    # would sit 0.22 PA below every slot that can actually reach it. No served
+    # row reaches the fallback today, and a row that does carries
+    # expected_pa_basis saying so rather than passing as a slot read.
+    pooled = dict(SLOT_PA_MEASURED)
+    return by_side, pooled, round(sum(pooled[s] for s in (1, 2, 3, 4, 5)) / 5.0,
+                                  4)
+
+
+SLOT_PA_BY_SIDE, SLOT_PA, DEFAULT_PA = _slot_pa_tables(SERVE_SLOT_PA_MEASURED)
+
+
+def _expected_pa(side: str, slot) -> tuple[float, str]:
+    """(expected plate appearances, the basis string that rides the row).
+
+    The basis is stamped on EVERY hitter row, not only on a fallback: a reader
+    of one row should not have to know which table it came off, and a row that
+    fell back to the priced-slot mean has to say so rather than look like a
+    slot read. This is the same disclosure rule `pmf` follows next to it."""
+    try:
+        slot_no = int(slot)
+    except (TypeError, ValueError):
+        slot_no = 0
+    pa = (SLOT_PA_BY_SIDE.get(side) or SLOT_PA).get(slot_no)
+    if pa is None:
+        return DEFAULT_PA, ("fallback: no readable lineup slot, priced at the "
+                            "mean of the slots this table prices (1 to 5)")
+    if not SERVE_SLOT_PA_MEASURED:
+        return pa, ("hand rule: 4.65 at the leadoff spot falling 0.10 a slot, "
+                    "not measured")
+    return pa, ("measured PA by lineup slot, %s side of a scheduled game"
+                % side)
 
 # The legal block. ONE definition, rendered by the client on every section, so
 # a copy edit can never land on five surfaces and miss the sixth.
@@ -821,6 +1011,103 @@ def write_record(rows: list[dict], *, path: Path | None = None) -> list[dict]:
     return list(rows)
 
 
+#: THE SLOT MARKET POLICY, READ AS TWO LEGS (owner decisions 2026-09-05 and
+#: 2026-09-17; docs/diamond-betting.md 7d). `betting_model.SLOT_MARKET_POLICY`
+#: names the policy. The two seams below need a narrower thing: which of the
+#: two LEGS may BAR a market from the slots and the public record, and which
+#: one only rides the published row as disclosure. That was one question while
+#: the constant had two values and `!= "any"` answered both legs at once. It is
+#: two questions now, and asking it as one is the defect this closes.
+SLOT_POLICY_ANY = "any"
+SLOT_POLICY_DISPERSION_GATED = "dispersion_gated"
+SLOT_POLICY_LEDGER_GATED = "ledger_gated"
+
+#: The registered values, in the order section 7d introduces them.
+SLOT_MARKET_POLICIES = (SLOT_POLICY_ANY, SLOT_POLICY_DISPERSION_GATED,
+                        SLOT_POLICY_LEDGER_GATED)
+
+
+def _slot_policy_note(policy: str, known: bool) -> str:
+    """The sentence the payload publishes beside the policy field.
+
+    The first two strings are the ones the payload has carried since
+    2026-09-05 and 2026-09-11 and they are reproduced verbatim: a policy that
+    did not move must not publish a sentence that did."""
+    if policy == SLOT_POLICY_ANY:
+        return ("any: every priced market may fill a slot and reach the record; the "
+                "dispersion and ledger legs below are disclosure on the row (owner "
+                "decision 2026-09-05, docs/diamond-betting.md 7d)")
+    if policy == SLOT_POLICY_LEDGER_GATED:
+        return ("ledger_gated: a LEDGER-CLOSED market fills no slot and reaches no "
+                "public record row; the dispersion leg below rides the row as "
+                "disclosure and bars nothing by itself (owner decision 2026-09-17, "
+                "docs/diamond-betting.md 7d)")
+    if known:
+        return ("dispersion_gated: a market must clear BOTH legs to fill a slot or "
+                "reach the public record")
+    return (f"{policy or 'unset'}: not a registered slot market policy, so both "
+            "legs bar, which is what the strictest registered value does")
+
+
+def slot_market_policy_legs(policy: str | None = None) -> dict:
+    """Which leg BARS and which leg is DISCLOSURE, under the policy in force.
+
+    THE THREE REGISTERED VALUES (docs/diamond-betting.md 7d):
+
+      "any"               neither leg bars. Both ride the published row as
+                          disclosure (`caveat` and `evidence_caveat`). This is
+                          HEAD and the owner decision of 2026-09-05.
+      "dispersion_gated"  BOTH legs bar: the 2026-08-14 dispersion exclusion
+                          and the 2026-08-16 ledger leg, at both seams. The
+                          name says one leg and the registration says two; the
+                          registration is what the code has always done and
+                          nothing here changes it.
+      "ledger_gated"      the LEDGER leg bars and the DISPERSION leg does not
+                          (owner decision 2026-09-17, O15). A ledger-closed
+                          market fills no slot and reaches no record row; a
+                          dispersion-sensitive market whose ledger leg is open
+                          keeps both, under its Poisson caveat. This is the
+                          value sections 5k and 7e-D asked for by name ("a
+                          ledger-leg-only SLOT_MARKET_POLICY value is to be
+                          built"), and it is the one value of the three under
+                          which the dispersion leg can never by itself refuse
+                          a slot.
+
+    AN UNREGISTERED VALUE BARS BOTH LEGS, which is exactly what `!= "any"` did
+    before this function existed, including for a value with the wrong case. A
+    typo in the constant must not be the thing that opens the slots to a market
+    two legs closed.
+
+    THE RAW STRING IS WHAT IS COMPARED, not a stripped copy of it. The first
+    cut stripped first, so " any" opened BOTH legs where `!= "any"` closed
+    both, and published `registered_policy: true` for it: the one value a
+    fail-closed rule may not fail open on is the one a typo produces, and a
+    stray space is a typo. The comparison this replaces is a string compare in
+    `betting_model` and it does not strip either, so stripping here would also
+    have been two readings of one constant.
+
+    WHY THE DISPERSION LEG IS READ THROUGH `betting_model.market_theory_ok` AND
+    NOT THROUGH `market_is_publishable`. The latter folds the policy into the
+    leg (`if SLOT_MARKET_POLICY == "any": return True`), so it answers "may
+    this market publish" under a two-value policy and cannot answer "does the
+    dispersion leg bar this market" under a third. The two agree for both older
+    values, `test_betting_slot_market_policy.py` pins that they agree, and this
+    is therefore a narrowing of the question asked and not a change of answer.
+    `market_is_publishable` keeps its own meaning and its own callers."""
+    raw = bm.SLOT_MARKET_POLICY if policy is None else policy
+    p = str(raw or "")
+    if p == SLOT_POLICY_ANY:
+        dispersion_bars, ledger_bars = False, False
+    elif p == SLOT_POLICY_LEDGER_GATED:
+        dispersion_bars, ledger_bars = False, True
+    else:
+        dispersion_bars, ledger_bars = True, True
+    known = p in SLOT_MARKET_POLICIES
+    return {"policy": p, "known": known,
+            "dispersion_bars": dispersion_bars, "ledger_bars": ledger_bars,
+            "note": _slot_policy_note(p, known)}
+
+
 def append_record(new_rows: list[dict], *, path: Path | None = None,
                   ledger_closed: frozenset | None = None) -> list[dict]:
     """The only sanctioned way to add to the record.
@@ -846,22 +1133,31 @@ def append_record(new_rows: list[dict], *, path: Path | None = None,
     The record is empty today (five publish blockers are open), so this changes
     nothing now. It is here so both exclusions are already true on the first
     nightly that clears those blockers, rather than being remembered then.
+
+    EACH LEG IS ASKED SEPARATELY (2026-09-17). `slot_market_policy_legs` says
+    which of the two may refuse a row; under "ledger_gated" the dispersion leg
+    may not, so a runline row whose ledger leg is open reaches the record with
+    the caveat on it. The dispersion leg is read off `market_theory_ok` rather
+    than `market_is_publishable` because the latter folds the policy back into
+    the leg; see `slot_market_policy_legs`.
     """
     if ledger_closed is None:
         ledger_closed = ledger_closed_markets()
     rows = list(new_rows or [])
-    gated = bm.SLOT_MARKET_POLICY != "any"
+    legs = slot_market_policy_legs()
     kept, refused_dispersion, refused_ledger = [], [], []
     for r in rows:
         mk = board_market(r) or r.get("market")
-        if gated and not bm.market_is_publishable(mk):
+        if legs["dispersion_bars"] and not bm.market_theory_ok(mk):
             refused_dispersion.append(mk)
-        elif gated and mk in ledger_closed:
+        elif legs["ledger_bars"] and mk in ledger_closed:
             refused_ledger.append(mk)
         else:
             # POLICY "any" (2026-09-05): the row is kept and carries both legs as
             # disclosure, computed on the BOARD name so the feed vocabulary (h2h /
-            # spreads / totals) cannot walk past either.
+            # spreads / totals) cannot walk past either. Under "ledger_gated" a
+            # kept row can still be dispersion-sensitive, and this stamp is how
+            # the reader learns which leg the caveat beside it is disclosing.
             r = {**r,
                  "dispersion_sensitive": bool(bm.market_is_dispersion_sensitive(mk)),
                  "evidence_closed": bool(mk in ledger_closed),
@@ -1961,12 +2257,19 @@ def record_row(slot_row: dict, *, slate_date: str, evald: dict | None,
         "ev_per_unit": slot_row.get("ev_per_unit"),
         "min_edge_used": slot_row.get("min_edge_used"),
         "provisional": bool(slot_row.get("provisional")),
-        "model_version": bm.MODEL_VERSION,
+        # THE VERSION THAT PRICED THE ROW, not the version running now. A row
+        # served from the slot lock was priced by the pricer that published it,
+        # and on a slate where MODEL_VERSION was bumped between two builds the
+        # live constant would credit the new pricer with a row it never priced.
+        # Absent on every row the current build priced itself, which is the
+        # case the constant is right for.
+        "model_version": slot_row.get("model_version") or bm.MODEL_VERSION,
         # The version stamped on the context whose coefficients priced the row.
         # Equal to model_version on a healthy night; different only when the
         # refit did not run under this pricer, and then the ledger can tell the
         # rows apart instead of pooling them (see context_version_note).
-        "context_version": bm.context_model_version(),
+        "context_version": (slot_row.get("context_version")
+                            or bm.context_model_version()),
         "label": provisional_record_label(
             evald, min_edge=float(slot_row.get("min_edge_used") or PROVISIONAL_MIN_EDGE),
             provisional=bool(slot_row.get("provisional"))),
@@ -1994,17 +2297,75 @@ def maybe_publish_record(payload: dict, *, evald: dict | None = None,
 
     Idempotent per (slate, game, market, side, point) through `bet_id`, so a
     rebuild of the same slate re-proposes the same rows and
-    `check_append_only` sees nothing new."""
+    `check_append_only` sees nothing new.
+
+    ONE ROW PER (slate_date, slot), WHICH `bet_id` ALONE DOES NOT GIVE. The
+    identity hash is over the BET, so two builds of one slate that select two
+    DIFFERENT sides for the same slot propose two different ids, and both are
+    perfectly legal appends: the record would carry two Picks of the Day for
+    one night and no reader could tell which was the claim. The slot lock above
+    stops the second selection from ever being served; this refuses it at the
+    ledger as well, because the two guards protect different files and a record
+    that depends on a cache file having been written is not guarded at all.
+
+    THE SLOT IS THE PAYLOAD'S KEY, NOT A FIELD ON THE ROW. `record_row` copies
+    `slot` off the row it is handed, and production always sets it, so keying
+    the guard on the copy worked - right up until a row reached here without
+    it, at which point two Pick of the Day rows land on one slate and
+    `n_refused` reads 0. A guard that depends on another seam having written
+    something is not a guard, and this function is handed the key by name."""
     rows = load_record()
     blockers = record_publish_blockers(
         payload=payload, rows=rows, evald=evald, health=health,
         settlement=settlement, published_chain_sha=published_chain_sha,
         chain_anchor=chain_anchor, now=now)
     slate = payload.get("slate_date")
-    slots = [payload.get(k) for k in ("pick_of_the_day", "longshot_of_the_day")]
-    cands = [record_row(s, slate_date=slate, evald=evald) for s in slots if s]
+    cands = []
+    for name in ("pick_of_the_day", "longshot_of_the_day"):
+        s = payload.get(name)
+        if not s:
+            continue
+        c = record_row(s, slate_date=slate, evald=evald)
+        c["slot"] = name
+        cands.append(c)
     seen = {r.get("bet_id") for r in rows}
-    fresh = [c for c in cands if c["bet_id"] not in seen]
+    proposed = {}
+    slot_taken = {(r.get("slate_date"), r.get("slot")) for r in rows
+                  if r.get("slot")}
+    fresh, refused = [], []
+    for c in cands:
+        key = (c.get("slate_date"), c.get("slot"))
+        if c["bet_id"] in seen:
+            # ALREADY ON THE RECORD is silent: a rebuild re-proposing the row
+            # it already wrote is the idempotent case and not an event. THE
+            # SAME BET IN BOTH SLOTS OF ONE BUILD is not that, and it used to
+            # be dropped through this same branch with `n_refused` at 0. It is
+            # unreachable today (the price band and the longshot floor are
+            # disjoint) and is named anyway, because the point of this block is
+            # that a row which does not reach the record says why.
+            other = proposed.get(c["bet_id"])
+            if other:
+                refused.append({
+                    "bet_id": c["bet_id"], "slate_date": c.get("slate_date"),
+                    "slot": c.get("slot"), "selection": c.get("selection"),
+                    "reason": (f"{c.get('slot')} proposed the same bet as "
+                               f"{other} on {c.get('slate_date')}; one bet is "
+                               "one row on the record and it is kept under the "
+                               "first slot that claimed it")})
+            continue
+        if c.get("slot") and key in slot_taken:
+            refused.append({
+                "bet_id": c["bet_id"], "slate_date": c.get("slate_date"),
+                "slot": c.get("slot"), "selection": c.get("selection"),
+                "reason": (f"{c.get('slot')} already has a row on the record "
+                           f"for {c.get('slate_date')}; a slate publishes each "
+                           "slot once and a second selection is not a "
+                           "correction of the first")})
+            continue
+        seen.add(c["bet_id"])
+        proposed[c["bet_id"]] = c.get("slot")
+        slot_taken.add(key)
+        fresh.append(c)
 
     state = {
         "blockers": blockers,
@@ -2014,6 +2375,13 @@ def maybe_publish_record(payload: dict, *, evald: dict | None = None,
         "ok": record_publish_ok(blockers),
         "n_candidates": len(cands),
         "n_new": len(fresh),
+        # THE SECOND SELECTION, NAMED. A refusal that leaves no trace reads as
+        # a slate that simply had nothing new.
+        "refused": refused,
+        "n_refused": len(refused),
+        "slot_policy": ("one row per (slate_date, slot): a slate publishes "
+                        "each slot once, and a later build's different "
+                        "selection is refused rather than appended"),
         "written": 0,
         # The noun follows the 2026-08-16 ruling and lifts with the gates.
         "policy": (f"a {_selection_noun(resolve_min_edge(evald)[2])} enters the "
@@ -2026,9 +2394,15 @@ def maybe_publish_record(payload: dict, *, evald: dict | None = None,
             f"{b['id']} ({b['reason']})" for b in blockers if not b.get("open")))
         return state
     if not fresh:
-        state["reason"] = ("every blocker is open and this slate's published slots are "
-                           "already on the record" if cands else
-                           "every blocker is open and no slot was published on this slate")
+        if refused:
+            state["reason"] = ("every blocker is open and " + "; ".join(
+                r["reason"] for r in refused))
+        else:
+            state["reason"] = (
+                "every blocker is open and this slate's published slots are "
+                "already on the record" if cands else
+                "every blocker is open and no slot was published on this "
+                "slate")
         return state
     if not write:
         state["reason"] = f"every blocker is open; {len(fresh)} row(s) would be appended"
@@ -2366,7 +2740,8 @@ def _slate_is_open(day: str, games: list[dict], now: datetime | None = None,
 
 
 def _drop_started_rows(chosen: str, on_slate: list[dict], now: datetime,
-                       stats: dict) -> tuple[str, list[dict]]:
+                       stats: dict,
+                       all_rows: list[dict] | None = None) -> tuple[str, list[dict]]:
     """The board rows for a chosen slate, with the started ones removed and the
     removal published. ONE filter, reached by both paths into `resolve_slate`.
 
@@ -2389,6 +2764,11 @@ def _drop_started_rows(chosen: str, on_slate: list[dict], now: datetime,
     walk, so `resolve_slate(on_date)` returned before ever reaching it and an
     explicit-date rebuild served rows this filter would have dropped, with
     `started_rows_dropped` null to say nothing had happened.
+
+    `all_rows` is the chosen date's UNFILTERED listing, `on_slate` the bettable
+    part of it. Nothing published here is computed over the first: it exists so
+    `_handoff` below can hand the slot lock every row that is not on the board,
+    including the ones `is_bettable` removed before this filter ran.
     """
     live_rows = []
     started = []
@@ -2427,6 +2807,30 @@ def _drop_started_rows(chosen: str, on_slate: list[dict], now: datetime,
         "basis": "the StatsAPI status string, or the coded and detailed states in "
                  "the cached schedule document data/fantasy.json drops",
     }
+    def _handoff(board: list[dict]) -> list[dict]:
+        """EVERY ROW OF THIS DATE THAT IS NOT ON THE BOARD, KEPT WHOLE, for the
+        slot lock and for nothing else. Not published: the two blocks above are
+        the payload's account of this filter and each carries a REDUCED row,
+        truncated at twenty, without `date` or `datetime`, and counted over the
+        BETTABLE rows alone.
+
+        THE LOCK NEEDS A WIDER SET THAN EITHER BLOCK REPORTS. A locked slot on
+        a game that has since started has to be told so, and by the time a game
+        reads Live or Final `is_bettable` has already removed it, one step
+        before this filter ever sees it: the started bucket above catches the
+        stale-Preview case and no other. So the handoff is defined by
+        SUBTRACTION from the whole date rather than by the two buckets, and the
+        rows in it are whole game dicts because `_has_started` and
+        `_is_called_off` read `date` and `datetime` and the reduced row carries
+        neither. Those two helpers classify it at READ time, which is what
+        keeps this from becoming a fourth definition of a started game.
+
+        `build` copies named keys off `stats` onto the payload, so a key it
+        does not name is an internal handoff and stays one."""
+        pks = {g.get("game_pk") for g in board}
+        whole = all_rows if all_rows is not None else on_slate
+        return [g for g in whole if g.get("game_pk") not in pks]
+
     # NEVER RETURN AN EMPTY BOARD OVER THE STARTED FILTER. If every row on the
     # chosen slate has started, the slate rule and this filter disagree, and a
     # blank page is worse than a stale one; the count above still says what
@@ -2434,13 +2838,16 @@ def _drop_started_rows(chosen: str, on_slate: list[dict], now: datetime,
     # game that was played and this one was not.
     if not live_rows and started:
         stats["started_rows_dropped"]["applied"] = False
-        return chosen, [g for g in on_slate if not _is_called_off(g)]
+        board = [g for g in on_slate if not _is_called_off(g)]
+        stats["dropped_board_rows"] = _handoff(board)
+        return chosen, board
     # `applied` TRUE WITH n 0 ON AN EMPTY SLATE. False is documented above as
     # meaning the never-blank fallback fired, so an explicit-date build whose
     # date holds no bettable row must not publish it: "nothing to filter" and
     # "the filter refused to blank the board" are the two states L14-12 exists to
     # keep apart.
     stats["started_rows_dropped"]["applied"] = True
+    stats["dropped_board_rows"] = _handoff(live_rows)
     return chosen, live_rows
 
 
@@ -2489,7 +2896,15 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
         # `called_off_rows_dropped` from the filter below still reports what left
         # this board.
         stats["slate_called_off"] = None
-        return _drop_started_rows(on_date, slate_games(on_date), now, stats)
+        # ONE READ OF THE SCHEDULE, FILTERED HERE. `slate_games(on_date)` is
+        # this list with `is_bettable` applied, so asking for both would read
+        # data/fantasy.json twice for one answer. The raw list is the second
+        # argument only: it feeds the slot lock's handoff and no published
+        # count is taken over it.
+        raw = slate_games(on_date, include_unbettable=True)
+        return _drop_started_rows(
+            on_date, [g for g in raw if is_bettable(g)], now, stats,
+            all_rows=raw)
 
     fan = _load("fantasy.json") or {}
     allg = ((fan.get("schedule") or {}).get("games")) or []
@@ -2604,6 +3019,7 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
     if chosen is None:
         stats["started_rows_dropped"] = None
         stats["called_off_rows_dropped"] = None
+        stats["dropped_board_rows"] = None
         return None, []
 
     # WHAT THE CHOSEN DATE LOST BEFORE IT WAS CHOSEN (L14-04). The open-share is
@@ -2635,7 +3051,9 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
                        f"over the full listing."),
         }
     on_slate = [g for g in allg if g.get("date") == chosen and is_bettable(g)]
-    return _drop_started_rows(chosen, on_slate, now, stats)
+    return _drop_started_rows(
+        chosen, on_slate, now, stats,
+        all_rows=[g for g in allg if g.get("date") == chosen])
 
 
 def cached_pregame_by_slate(now: datetime | None = None) -> dict:
@@ -3750,7 +4168,9 @@ def _fantasy_index() -> dict:
 #
 # THE SIZE OF IT ON THE WHOLE POPULATION, not one hand-picked hitter. Binomial
 # minus Poisson across all 471 projected hitters in data/fantasy.json at
-# DEFAULT_PA 4.20 (2026-09-06): at the 0.5 line, median +0.04179 and a range of
+# DEFAULT_PA 4.20 (2026-09-06; the fallback is 4.2875 since 2026-09-17, and
+# this paragraph is the record of a measurement taken at the older value, not a
+# reading of today's constant): at the 0.5 line, median +0.04179 and a range of
 # +0.02922 to +0.05293, always positive because the binomial puts less mass on
 # a hitless game; at the 1.5 line, median -0.00658 (range -0.01115 to +0.00491),
 # the sign flipping with whether lam sits above or below the line. Across the
@@ -3880,13 +4300,16 @@ def _props_pmf(lam: float, *, dist: str | None = None,
     """(pmf, distribution_name, fallback_basis) for one prop's count.
 
     THE FRACTIONAL TRIAL COUNT IS A MIXTURE, NOT A ROUNDING. Expected plate
-    appearances are fractional by construction (SLOT_PA runs 4.65 down to
-    3.85) and a binomial needs an integer n. Rounding 4.65 up to 5 and 4.45
-    down to 4 moves P(1+ hits) at lam 1.2 from 0.74645 to 0.75990, a 1.35
-    point step off a 0.2 PA difference, which is an artefact of the rounding
-    and not of the hitter. So the trial count is treated as what it actually
-    is: a random number of trials, 4 with probability 0.35 and 5 with
-    probability 0.65 at exp_pa 4.65. The pmf is the matching mixture of
+    appearances are fractional by construction (SLOT_PA runs 4.5785 down to
+    3.3711 across the two side tables, and 4.65 down to 3.85 with
+    SERVE_SLOT_PA_MEASURED off) and a binomial needs an integer n. Rounding
+    4.65 up to 5 and 4.45 down to 4 moves P(1+ hits) at lam 1.2 from 0.74645 to
+    0.75990, a 1.35 point step off a 0.2 PA difference, which is an artefact of
+    the rounding and not of the hitter. So the trial count is treated as what
+    it actually is: a random number of trials, 4 with probability 0.35 and 5
+    with probability 0.65 at exp_pa 4.65 (the worked numbers in this paragraph
+    are the 2026-09-06 record at the slot-1 value that served then). The pmf is
+    the matching mixture of
     Binomial(4, p) and Binomial(5, p) with p = lam / exp_pa, which preserves
     the mean at exactly lam (measured: mean 1.600000 at lam 1.6, mass summing
     to 1.000000000000 over a support of 6) and is continuous in exp_pa. The
@@ -4068,7 +4491,7 @@ def props_fair_lines(games: list[dict], *, starters=None,
                 pa = float(ros.get("pa") or 0.0)
                 if pa <= 0:
                     continue
-                exp_pa = SLOT_PA.get(int(slot_row.get("slot") or 0), DEFAULT_PA)
+                exp_pa, pa_basis = _expected_pa(side, slot_row.get("slot"))
                 p_hit = float(ros.get("h") or 0.0) / pa
                 p_hr = float(ros.get("hr") or 0.0) / pa
                 tb = (float(ros.get("single") or 0.0) + 2 * float(ros.get("double") or 0.0)
@@ -4077,6 +4500,11 @@ def props_fair_lines(games: list[dict], *, starters=None,
                     "mlbam": mid, "name": slot_row.get("name"), "org": org,
                     "game_pk": g.get("game_pk"), "slot": slot_row.get("slot"),
                     "expected_pa": exp_pa,
+                    # WHICH table priced this row, on the row. The side matters
+                    # (a home club that leads does not bat in the ninth) and a
+                    # row that found no readable slot says so here instead of
+                    # passing its fallback off as a slot read.
+                    "expected_pa_basis": pa_basis,
                     # WHICH order priced this row, and why. The assumption
                     # rides the row so a reader (and the props value machinery)
                     # never has to guess which platoon rates these are.
@@ -4107,8 +4535,24 @@ def props_fair_lines(games: list[dict], *, starters=None,
             "pitchers": "rest-of-season rate per inning from the projection engine, times "
                         "the pitcher's measured innings per start",
             "hitters": "rest-of-season rate per plate appearance times expected PA for the "
-                       "projected lineup slot",
+                       "projected lineup slot, counted by slot on the 2022-2024 "
+                       "play-by-play corpus and split home from away, because the home "
+                       "club does not bat in the ninth when it leads. Run environment "
+                       "and extra innings are not conditioned on: neither is knowable "
+                       "before the game",
             "slot_pa": SLOT_PA,
+            "slot_pa_by_side": SLOT_PA_BY_SIDE,
+            "slot_pa_basis": (
+                "starter plate appearances by lineup slot, counted on the "
+                "cached play-by-play corpus over the 2022-2024 seasons "
+                "(131,202 starter-games), split home from away, and checked "
+                "once against a 2025 hold-out; each side's nine slots sum "
+                "under that side's own PA per team-game (away 37.07 of 38.46, "
+                "home 35.47 of 36.81). Where a row fell back instead, the row "
+                "says so in expected_pa_basis"
+                if SERVE_SLOT_PA_MEASURED else
+                "a hand rule, 4.65 at the leadoff spot falling 0.10 a slot; "
+                "the nine slots sum to 38.25, more than a team-game carries"),
             "lineup_assumption": "projected order against the opposing probable's throwing "
                                  "hand: the vs-LHP order when the probable throws left, the "
                                  "vs-RHP order otherwise, resolved for the whole slate in one "
@@ -5022,6 +5466,7 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
         trailing = (trailing if trailing is not None else
                     bc.market_gate(path=cal_path, trailing=MARKET_GATE_TRAILING))
     st = state if state is not None else load_market_gate_state(state_path)
+    policy_legs = slot_market_policy_legs()
     n_min = next(iter(full.values()))["n_min"] if full else 100
     z = next(iter(full.values()))["z"] if full else 1.645
 
@@ -5072,8 +5517,13 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
                              f"test for {MARKET_GATE_DWELL} consecutive "
                              f"evaluations. Today: {ledger_reason}")
         legs_ok = bool(disp_ok and status != "ledger_closed")
-        policy_any = bm.SLOT_MARKET_POLICY == "any"
-        publishable = bool(legs_ok or policy_any)
+        # WHICH LEG BARS IS NO LONGER ONE BIT (2026-09-17). `policy_any`
+        # answered both legs at once, which is only possible while the policy
+        # has two values. Each leg is asked for itself now, and `publishable`
+        # is false exactly when a leg that BARS under this policy is closed.
+        barred = ((policy_legs["dispersion_bars"] and not disp_ok)
+                  or (policy_legs["ledger_bars"] and status == "ledger_closed"))
+        publishable = not barred
         if legs_ok:
             reason = ("publishable: " + disp_reason + ", and " + ledger_reason)
         elif not disp_ok and status == "ledger_closed":
@@ -5082,18 +5532,22 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
             reason = disp_reason
         else:
             reason = ledger_reason
-        if policy_any and not legs_ok:
+        if publishable and not legs_ok:
             # THE POLICY OVERRIDE (2026-09-05): the legs are still measured and
             # still stated; they ride the published row as disclosure instead of
             # barring the market. The sentence keeps the legs' own words so a
             # reader sees exactly what was overridden.
-            reason = ("eligible under the any-market slot policy (owner decision "
-                      "2026-09-05, section 7d); the legs ride the row as disclosure: "
+            reason = (("eligible under the any-market slot policy (owner decision "
+                       "2026-09-05, section 7d); the legs ride the row as disclosure: "
+                       if not policy_legs["ledger_bars"] else
+                       "eligible under the ledger-gated slot policy (owner decision "
+                       "2026-09-17, section 7d); this market's ledger leg is open and "
+                       "the dispersion leg rides the row as disclosure: ")
                       + reason)
         markets[m] = {
             "market": m,
             "publishable": publishable,
-            "policy_override": bool(policy_any and not legs_ok),
+            "policy_override": bool(publishable and not legs_ok),
             "reason": reason,
             # THE BOTH-LEGS COPY STATE (2026-08-19, pre-decided). True exactly
             # when the evidence leg has CLOSED a market the theory leg already
@@ -5132,13 +5586,14 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
     return {
         "policy": {
             "slot_market_policy": bm.SLOT_MARKET_POLICY,
-            "slot_market_policy_note": (
-                "any: every priced market may fill a slot and reach the record; the "
-                "dispersion and ledger legs below are disclosure on the row (owner "
-                "decision 2026-09-05, docs/diamond-betting.md 7d)"
-                if bm.SLOT_MARKET_POLICY == "any" else
-                "dispersion_gated: a market must clear BOTH legs to fill a slot or "
-                "reach the public record"),
+            "slot_market_policy_note": policy_legs["note"],
+            # WHICH LEG BARS, AS DATA (2026-09-17). The sentence above says it
+            # in words, and a reader should not have to parse the words to know
+            # whether this table's `publishable` column is a bar or a
+            # disclosure. Derived from the policy on every build, never stored.
+            "dispersion_leg_bars": policy_legs["dispersion_bars"],
+            "ledger_leg_bars": policy_legs["ledger_bars"],
+            "registered_policy": policy_legs["known"],
             "n_min": n_min, "z": z, "dwell": MARKET_GATE_DWELL,
             "trailing": MARKET_GATE_TRAILING,
             "basis": ("n_min mirrors betting_shadow.MIN_BETS_FOR_SWEEP and z is "
@@ -5160,7 +5615,14 @@ def market_publishability(*, state: dict | None = None, full: dict | None = None
                   "docs/diamond-betting.md 7d). The shadow and calibration ledgers "
                   "keep recording closed markets, and only their evidence can "
                   "re-open one."
-                  if bm.SLOT_MARKET_POLICY == "any" else
+                  if not policy_legs["ledger_bars"] else
+                  "a LEDGER-CLOSED market fills no slot and reaches no public "
+                  "record row; the dispersion leg below rides the row as "
+                  "disclosure and bars nothing by itself (owner decision "
+                  "2026-09-17, docs/diamond-betting.md 7d). The shadow and "
+                  "calibration ledgers keep recording closed markets; only "
+                  "their evidence can re-open one."
+                  if not policy_legs["dispersion_bars"] else
                   "a market must clear BOTH legs to fill a slot or reach the "
                   "public record. The shadow and calibration ledgers keep "
                   "recording closed markets; only their evidence can re-open "
@@ -5236,7 +5698,8 @@ def market_gate_evaluate(*, cal_path: Path | None = None,
 
 def _floor_clearing_sides(bets: list[dict], thr: float, *,
                           ledger_closed: frozenset | None = None,
-                          extra_rows: list[dict] | None = None) -> list[dict]:
+                          extra_rows: list[dict] | None = None,
+                          stats: dict | None = None) -> list[dict]:
     """Every side on the BOARD that clears `thr` at a real taken price, plus any
     `extra_rows` (priced props value rows) that clear it.
 
@@ -5250,12 +5713,16 @@ def _floor_clearing_sides(bets: list[dict], thr: float, *,
     badge read the rows that came out of that, so no two surfaces on the page
     can disagree about what a side costs.
 
-    MARKET POLICY (2026-09-05, betting_model.SLOT_MARKET_POLICY). Under "any" no
-    market is skipped: the dispersion leg and the section 7b ledger leg stamp the
-    candidate (`evidence_closed`) so the published row can carry them as
-    disclosure. Under "dispersion_gated" the two seams of 2026-08-14 / 2026-08-16
-    apply exactly as before: a dispersion-sensitive market fills no slot while the
-    correction is unserved, and a ledger-closed market fills no slot.
+    MARKET POLICY (2026-09-05 and 2026-09-17, betting_model.SLOT_MARKET_POLICY,
+    read through `slot_market_policy_legs`). Under "any" no market is skipped:
+    the dispersion leg and the section 7b ledger leg stamp the candidate
+    (`evidence_closed`) so the published row can carry them as disclosure. Under
+    "dispersion_gated" the two seams of 2026-08-14 / 2026-08-16 apply exactly as
+    before: a dispersion-sensitive market fills no slot while the correction is
+    unserved, and a ledger-closed market fills no slot. Under "ledger_gated" only
+    the LEDGER leg skips a market: a dispersion-sensitive market with an open
+    ledger leg is a candidate and carries the Poisson caveat on the row, so the
+    dispersion leg cannot by itself refuse a slot.
 
     `extra_rows` are props value rows (props_value_bets value_rows): already priced
     off the same _market_view discipline, already carrying market / game_pk /
@@ -5264,11 +5731,20 @@ def _floor_clearing_sides(bets: list[dict], thr: float, *,
     enter the team ledger (record_props_slate keeps them in their own tags).
 
     `ledger_closed` is the section 7b evidence leg, injectable for tests;
-    None reads the persisted dwell state."""
+    None reads the persisted dwell state.
+
+    `stats` COUNTS WHAT THE POLICY TOOK OUT, and it is counted rather than
+    skipped early so the two numbers share a denominator. A side barred by the
+    policy is a side that CLEARED THE FLOOR and was then refused, so the test
+    order is floor first, policy second: `n_policy_barred_sides` plus the
+    length of the return is the floor-clearing census the page's own sentence
+    means by "cleared the floor". Under "any" it is zero and the two counts are
+    the same number."""
     if ledger_closed is None:
         ledger_closed = ledger_closed_markets()
-    gated = bm.SLOT_MARKET_POLICY != "any"
+    legs = slot_market_policy_legs()
     cands = []
+    n_barred = 0
     for b in bets:
         for market, rows in (("moneyline", b.get("moneyline") or []),
                              ("runline", b.get("runline") or []),
@@ -5276,15 +5752,18 @@ def _floor_clearing_sides(bets: list[dict], thr: float, *,
             # SEAM 1 of 2 for the dispersion exclusion (2026-08-14) and for the
             # section 7b ledger leg (2026-08-16). Both are POLICY-scoped since
             # 2026-09-05: they bar nothing under "any" and stamp the row instead.
-            if gated and not bm.market_is_publishable(market):
-                continue
-            if gated and market in ledger_closed:
-                continue
+            # Since 2026-09-17 they are scoped ONE LEG AT A TIME, because the
+            # third policy value bars on the ledger leg alone.
+            barred = ((legs["dispersion_bars"] and not bm.market_theory_ok(market))
+                      or (legs["ledger_bars"] and market in ledger_closed))
             for row in rows or []:
                 if row.get("edge") is None or row["edge"] < thr:
                     continue
                 if row.get("odds") is None or not row.get("book"):
                     continue        # no real price taken, no pick
+                if barred:
+                    n_barred += 1
+                    continue
                 cands.append({**row, "market": market, "game_pk": b.get("game_pk"),
                               "matchup": f"{b['away']['org']} at {b['home']['org']}",
                               "start": b.get("start"),
@@ -5293,13 +5772,20 @@ def _floor_clearing_sides(bets: list[dict], thr: float, *,
         market = row.get("market")
         if not market:
             continue
-        if gated and market in ledger_closed:
-            continue
+        # Props are not in DISPERSION_SENSITIVE_MARKETS (7c), so the dispersion
+        # leg has never had anything to say about them and the ledger leg is
+        # their whole gate under every policy value.
+        barred = bool(legs["ledger_bars"] and market in ledger_closed)
         if row.get("edge") is None or row["edge"] < thr:
             continue
         if row.get("odds") is None or not row.get("book"):
             continue
+        if barred:
+            n_barred += 1
+            continue
         cands.append({**row, "evidence_closed": bool(market in ledger_closed)})
+    if stats is not None:
+        stats["n_policy_barred_sides"] = n_barred
     return cands
 
 
@@ -5444,13 +5930,38 @@ def provisional_picks(bets: list[dict], *, odds_priceable: bool,
                 present=False, reason=why, n_cands=0)
         return {k: None for k in SLOT_LABELS}, why, meta
 
-    cands = _floor_clearing_sides(bets, thr, extra_rows=extra_candidates)
+    floor_stats: dict = {}
+    cands = _floor_clearing_sides(bets, thr, extra_rows=extra_candidates,
+                                  stats=floor_stats)
     meta["n_floor_clearing_sides"] = len(cands)
+    # THE CENSUS'S OTHER DENOMINATOR, published beside it rather than left to be
+    # inferred. `n_floor_clearing_sides` is policy-filtered at seam 1 above, and
+    # the page's census sentence renders it under the words "cleared the floor"
+    # next to its own UNFILTERED count of priced sides. Under "any" the two
+    # numbers are equal and nothing is hidden; under either gated value the
+    # filtered one is "cleared the floor AND the policy lets it fill a slot",
+    # which is a different sentence. Reading the census off the right number is
+    # assets/betting.js, which belongs to another track: this publishes both so
+    # that fix is a one-line read and not a re-derivation. NAMED FOLLOW-UP,
+    # docs/diamond-betting.md 7d.
+    meta["n_floor_clearing_sides_before_policy"] = (
+        len(cands) + int(floor_stats.get("n_policy_barred_sides") or 0))
+    policy_legs = slot_market_policy_legs()
     meta["market_policy"] = bm.SLOT_MARKET_POLICY
+    # WHICH LEG BARS, BESIDE THE SENTENCE THAT SAYS IT. The same pair the
+    # publishability table's policy block carries, on the block the slots
+    # publish, so the two surfaces cannot state two different rules.
+    meta["market_policy_legs"] = {
+        "dispersion_bars": policy_legs["dispersion_bars"],
+        "ledger_bars": policy_legs["ledger_bars"]}
     meta["markets_eligible"] = (
         "any priced market: moneyline, runline, total, props when armed (owner decision "
         "2026-09-05, section 7d); the dispersion and ledger legs ride the row as disclosure"
-        if bm.SLOT_MARKET_POLICY == "any" else
+        if not policy_legs["ledger_bars"] else
+        "any priced market whose ledger leg is open, props included when armed (owner "
+        "decision 2026-09-17, section 7d); a ledger-closed market fills no slot and the "
+        "dispersion caveat rides the row as disclosure"
+        if not policy_legs["dispersion_bars"] else
         "moneyline while the dispersion correction is unserved; ledger-closed markets excluded")
     in_band = [c for c in cands if lo <= c["odds"] <= hi]
     longshots = [c for c in cands if c["odds"] >= LONGSHOT_MIN_ODDS]
@@ -5478,6 +5989,645 @@ def provisional_picks(bets: list[dict], *, odds_priceable: bool,
             slot, rule=(potd_rule if slot == "pick_of_the_day" else long_rule),
             band=band, present=row is not None, reason=why, n_cands=len(pool))
     return slots, reasons["pick_of_the_day"], meta
+
+
+# ===========================================================================
+# the slot lock: a published slot is published once
+# ===========================================================================
+#: WHERE THE PUBLICATION FACT LIVES. One file per slate under `.cache/`, beside
+#: the record and the chain anchor, for the same two reasons: the nightly
+#: `git checkout -- .` cannot touch it, and deploy/WEBMASTER.md already tells
+#: the webmaster to back that directory up. A lock in `data/` would be reverted
+#: between builds, which is exactly the failure it exists to prevent.
+#:
+#: IT IS A FOURTH NON-REBUILDABLE ARTIFACT AND TWO RUNBOOKS DO NOT SAY SO YET.
+#: deploy/WEBMASTER.md names exactly three files under `.cache/betting/` and
+#: says that list is the one the code writes; docs/diamond-betting.md section 1
+#: tabulates every `.cache` path. Neither is this track's file and neither is
+#: edited here, so the row they both need is stated once, in the place the code
+#: is: `published_slots/<slate>.json`, written by the publishing build, first
+#: write wins, and NOT rebuildable - the publication fact cannot be
+#: reconstructed from anything, which is the whole reason it is stored.
+#:
+#: IT IS A NAME, NOT A PATH, and `published_slots_dir` joins it to
+#: BETTING_CACHE_DIR at CALL time. conftest redirects that directory constant
+#: into a per-session mirror precisely so paths built from it at call time
+#: follow; a module-level join would be frozen at import and a test run would
+#: write real locks into the box's own cache.
+PUBLISHED_SLOTS_DIRNAME = "published_slots"
+
+#: The one way to publish a lock for a slate the caller named itself. See
+#: `apply_slot_lock`: a back-dated ad-hoc build would otherwise mint the
+#: permanent, unrepairable published claim for a night it was never the
+#: publisher of.
+BACKDATED_LOCK_ENV = "BETTING_LOCK_BACKDATED"
+
+#: The lock document's shape version, so a later field can be added without a
+#: reader having to guess whether an old file simply lacks it. `load_slot_lock`
+#: REFUSES a higher number rather than reading it under this schema's rules: a
+#: schema-2 file exists because something about the shape stopped being what a
+#: schema-1 reader assumes, and guessing at it is how a publication fact gets
+#: misread as an absent one.
+SLOT_LOCK_SCHEMA = 1
+
+#: Lock files THIS PROCESS wrote, by resolved path. Consulted under pytest and
+#: nowhere else: see `_lock_written_here`.
+_LOCKS_WRITTEN_HERE: set[str] = set()
+
+
+def _lock_written_here(p: Path) -> bool:
+    """Did this process write this lock file?
+
+    THE DEFECT THIS CLOSES. conftest mirrors the whole of `.cache/betting/`
+    into a per-session directory, so the night after the lock lands, every test
+    that builds today's slate inherits the box's REAL published row and asserts
+    against a publication it never made. A guard whose behaviour differs
+    between a dev checkout and the production box is not a guard.
+
+    Under pytest a lock is a fact only if the test run created it. In
+    production this is never consulted: the whole point of the store is that a
+    later PROCESS reads what an earlier one wrote."""
+    if not os.environ.get("PYTEST_CURRENT_TEST"):
+        return True
+    try:
+        key = str(Path(p).resolve())
+    except OSError:                                            # pragma: no cover
+        key = str(p)
+    return key in _LOCKS_WRITTEN_HERE
+
+
+def _remember_lock_written(p: Path) -> None:
+    try:
+        _LOCKS_WRITTEN_HERE.add(str(Path(p).resolve()))
+    except OSError:                                            # pragma: no cover
+        _LOCKS_WRITTEN_HERE.add(str(p))
+
+SLOT_LOCK_POLICY = (
+    "a slot is published once per slate: the first build that fills it writes "
+    "the row to the lock, and every later build of the same slate serves that "
+    "row verbatim. A later build never re-selects the slot; what it would "
+    "select now rides beside the published row as since_published")
+
+
+def published_slots_dir() -> Path:
+    """Where the slate locks live, resolved now rather than at import."""
+    return Path(BETTING_CACHE_DIR) / PUBLISHED_SLOTS_DIRNAME
+
+
+def published_slots_path(slate_date: str, *, root: Path | None = None) -> Path:
+    """This slate's lock file. `root` is for tests, which must never reach the
+    box's own `.cache/`."""
+    if root is not None:
+        return Path(root) / f"{slate_date}.json"
+    return published_slots_dir() / f"{slate_date}.json"
+
+
+def _fresh_slot_lock(slate_date: str) -> dict:
+    return {"schema": SLOT_LOCK_SCHEMA, "slate_date": slate_date,
+            "policy": SLOT_LOCK_POLICY, "slots": {}}
+
+
+def load_slot_lock(slate_date: str, *, root: Path | None = None) -> dict:
+    """The slate's lock, or an empty one.
+
+    An unreadable lock is LOUD and then empty: the alternative is a build that
+    dies on a corrupt sidecar and publishes nothing at all. It is logged at
+    warning rather than swallowed because an empty lock means the slate can be
+    re-selected, which is the one thing the lock exists to stop."""
+    p = published_slots_path(slate_date, root=root)
+    if not p.exists():
+        return _fresh_slot_lock(slate_date)
+    if not _lock_written_here(p):
+        log.warning("betting_export: ignoring the slot lock at %s under "
+                    "pytest because this run did not write it; the slate's "
+                    "slots are unlocked for this test", p.name)
+        return _fresh_slot_lock(slate_date)
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("betting_export: unreadable slot lock %s; this slate's "
+                    "slots are unlocked and may be re-selected", p.name)
+        return _fresh_slot_lock(slate_date)
+    if not isinstance(obj, dict) or not isinstance(obj.get("slots"), dict):
+        log.warning("betting_export: slot lock %s carries no slots block; this "
+                    "slate's slots are unlocked", p.name)
+        return _fresh_slot_lock(slate_date)
+    # A SHAPE THIS READER DOES NOT KNOW IS REFUSED, NOT GUESSED AT. Same
+    # treatment as the missing slots block above, and for the same reason: an
+    # empty lock re-selects a slate, which is bad, and a misread lock serves a
+    # row under rules it was not written by, which is worse.
+    try:
+        schema = int(obj.get("schema") or SLOT_LOCK_SCHEMA)
+    except (TypeError, ValueError):
+        schema = -1
+    if schema != SLOT_LOCK_SCHEMA:
+        log.warning("betting_export: slot lock %s is schema %s and this reader "
+                    "is schema %s; the file is left alone and this slate's "
+                    "slots are unlocked", p.name, obj.get("schema"),
+                    SLOT_LOCK_SCHEMA)
+        out = _fresh_slot_lock(slate_date)
+        out["unreadable_schema"] = obj.get("schema")
+        return out
+    out = _fresh_slot_lock(slate_date)
+    out.update(obj)
+    out["slots"] = dict(obj.get("slots") or {})
+    return out
+
+
+def _save_slot_lock(doc: dict, *, root: Path | None = None) -> Path:
+    """Write the lock, FIRST WRITE WINS on every slot entry already on disk.
+
+    The exclusive create is the real guarantee: the first build to reach a
+    slate's lock creates the file and nobody creates it again. Adding a SECOND
+    slot later (the first build filled one slot and left the other empty) has
+    to be a read-modify-write, so it re-reads the file and keeps every entry
+    already there, dropping its own proposal for any slot that now has one.
+
+    The residual race is two builds adding two DIFFERENT slots in the same
+    instant, where one addition can be lost. That costs a lock, not a rewrite:
+    the slot locks on the next build instead, and no published row can be
+    replaced by this path at all.
+
+    AN EXISTING FILE THIS WRITER CANNOT READ IS NOT OVERWRITTEN. The merge used
+    to read through `load_slot_lock`, which answers "empty" for a corrupt or
+    future-schema file, so the read-modify-write would have replaced a
+    publication fact it could not parse with one slot of its own. Raising here
+    is the correct outcome: `apply_slot_lock` treats a failed write as a
+    non-publication, says so on the slot, and the file on disk survives for
+    whoever can read it."""
+    p = published_slots_path(doc["slate_date"], root=root)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(p, "x", encoding="utf-8") as fh:
+            json.dump(doc, fh, indent=1)
+        _remember_lock_written(p)
+        return p
+    except FileExistsError:
+        pass
+    if not _lock_written_here(p):
+        # UNDER PYTEST ONLY, and the same rule as the read: a lock this run did
+        # not write is not this run's publication, so it is not merged into one
+        # either. Without this the mirrored production lock would survive the
+        # read-modify-write and be served back to the test that just wrote over
+        # it, which is the dev-versus-production divergence this guard exists to
+        # remove. `_lock_written_here` is always True outside pytest.
+        on_disk = {"slots": {}}
+    else:
+        try:
+            on_disk = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise OSError(f"the slot lock at {p.name} cannot be read, so it is "
+                          "not overwritten") from exc
+        if (not isinstance(on_disk, dict)
+                or not isinstance(on_disk.get("slots"), dict)
+                or int(on_disk.get("schema") or SLOT_LOCK_SCHEMA)
+                != SLOT_LOCK_SCHEMA):
+            raise OSError(f"the slot lock at {p.name} is a shape this writer "
+                          "does not know, so it is not overwritten")
+    merged = {**doc, "slots": {**(doc.get("slots") or {}),
+                               **(on_disk.get("slots") or {})}}
+    tmp = p.with_name(p.name + f".tmp{os.getpid()}")
+    try:
+        tmp.write_text(json.dumps(merged, indent=1), encoding="utf-8")
+        os.replace(tmp, p)
+        _remember_lock_written(p)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+    return p
+
+
+def slot_identity(row: dict | None) -> tuple | None:
+    """What makes two rows the same published claim: the bet, never the price.
+
+    The same side of the same market at the same number is one claim whether or
+    not the book moved a point of vig between two builds. `bet_id` keys on the
+    same four fields for the same reason (section 8)."""
+    if not row:
+        return None
+    pt = row.get("point")
+    return (row.get("game_pk"), row.get("market"), row.get("side"),
+            None if pt is None else float(pt))
+
+
+def _slot_claim(row: dict | None) -> dict | None:
+    """A candidate's identity and price, small enough to ride on the payload
+    beside the published row without duplicating the board."""
+    if not row:
+        return None
+    return {k: row.get(k) for k in (
+        "game_pk", "matchup", "market", "side", "point", "label", "book",
+        "odds", "edge", "model_prob", "ev_per_unit")}
+
+
+def _since_published(locked: dict, fresh: dict | None, *,
+                     board: list[dict] | None = None,
+                     dropped: list[dict] | None = None,
+                     now: datetime | None = None,
+                     model_version: str | None = None) -> dict:
+    """What has changed since this slot was published. Disclosure only.
+
+    THE RULE THIS ENCODES. The published row is the claim; a later build's
+    opinion is not a correction of it, it is a later opinion, and the two are
+    reported side by side. Nothing here moves the served row, and nothing here
+    is graded: the record and both ledgers key on the published claim."""
+    row = (locked or {}).get("row") or {}
+    out = {"published_at": (locked or {}).get("published_at"),
+           "now_selected": _slot_claim(fresh)}
+    lid, fid = slot_identity(row), slot_identity(fresh)
+    if fresh is None:
+        out["status"] = "no_longer_selected"
+        out["note"] = ("this slot would be empty on the current board; the row "
+                       "above is the one that was published and it stands")
+    elif lid != fid:
+        out["status"] = "different_side"
+        out["note"] = ("the current board would select a different side; the "
+                       "row above is the one that was published and it stands")
+    elif (fresh.get("odds") != row.get("odds")
+          or fresh.get("book") != row.get("book")
+          or fresh.get("edge") != row.get("edge")):
+        out["status"] = "price_moved"
+        out["note"] = ("the same side is still selected at a different price; "
+                       "the row above carries the price it was published at, "
+                       "which is the price the record and the ledgers grade")
+    else:
+        out["status"] = "unchanged"
+        out["note"] = ("the current board would publish the same row at the "
+                       "same price")
+    # THE GAME'S OWN STATE. A locked slot whose game has started is still
+    # shown, with the state that says why the price beside it is no longer
+    # bettable, rather than being quietly dropped.
+    #
+    # THE ROWS THIS HAS TO SEARCH ARE THE ROWS THAT ARE NOT ON THE BOARD.
+    # `build` hands the lock the board `resolve_slate` returned, and a game
+    # that has started has left it twice over - `is_bettable` drops it the
+    # moment StatsAPI flips it to Live, and `_drop_started_rows` drops a
+    # stale-Preview row whose first pitch has passed - so for exactly the games
+    # this block exists for the board holds nothing and the read came back
+    # silent: a locked row on a game already under way was served with "this
+    # slot would be empty on the current board" and no word about the price.
+    # `dropped` is every row of the slate that is not on the board, whole, from
+    # the same function. The board is searched first.
+    #
+    # ONE DEFINITION OF STARTED, AND ONE OF CALLED OFF. `_has_started` is the
+    # module's single reading and it takes TWO signals: the status string and a
+    # first pitch at or before `now`. The first cut of this block tested the
+    # string alone, which is a fourth reading of a question the module answers
+    # once, and it answered "not started" for a row whose first pitch had
+    # passed while its cached status still said Preview - precisely the case
+    # the clock signal exists for. `_has_started` also returns False for a
+    # called-off game, so the two keys below cannot both be true.
+    now = now or datetime.now(timezone.utc)
+    brow = None
+    for b in list(board or []) + list(dropped or []):
+        if b.get("game_pk") == row.get("game_pk"):
+            brow = b
+            break
+    if brow is not None:
+        out["game_status"] = brow.get("status")
+        out["game_called_off"] = _is_called_off(brow)
+        out["game_started"] = _has_started(brow, now)
+    # A MID-SLATE MODEL_VERSION BUMP DOES NOT UNPUBLISH ANYTHING. The locked row
+    # was priced by the version stamped on it at publication; a build running
+    # under a newer pricer says so here, and its own re-priced opinion rides in
+    # `now_selected` under that newer version.
+    if model_version and (locked or {}).get("model_version") != model_version:
+        out["model_version_at_publish"] = (locked or {}).get("model_version")
+        out["model_version_now"] = model_version
+        out["model_version_note"] = (
+            "the pricer version changed after this slot was published; the "
+            "published row keeps the version that priced it and is not "
+            "re-priced under the new one")
+    return out
+
+
+def lock_disclosure(since: dict | None) -> str | None:
+    """The sentence a reader has to see beside a locked row, or None.
+
+    WHY THIS IS COPY AND NOT A FIELD. `since_published` is a block, and
+    assets/betting.js renders none of its keys: a served row at a price the
+    market no longer offers, or one whose game has already started, would
+    otherwise be badged on the page exactly like a fresh selection. This
+    sentence rides in `caveat`, which the pick card already renders as a note
+    under the row, so the disclosure reaches the reader through a field that is
+    on the page today. A dedicated lock block on the card is the better shape
+    and it is a NAMED FOLLOW-UP: assets/betting.js belongs to another track and
+    is not edited here.
+
+    None means there is nothing to disclose. The same side at the same price on
+    a game that has not started is the row the reader is already looking at,
+    and a note saying so would be noise on every build of the evening."""
+    if not since:
+        return None
+    bits = []
+    stamp = since.get("published_at")
+    if since.get("status") != "unchanged":
+        bits.append(f"Published {stamp} and served from the lock: "
+                    f"{since.get('note')}.")
+    if since.get("game_called_off"):
+        bits.append("This game has been called off, so the price beside the "
+                    "row cannot be taken; the published claim stands and is "
+                    "graded as the bet it was.")
+    elif since.get("game_started"):
+        bits.append("This game has started, so the price beside the row is no "
+                    "longer available: it is the price this claim was "
+                    "published at, not one you can take now.")
+    if not bits:
+        return None
+    if since.get("status") == "unchanged":
+        bits.insert(0, f"Published {stamp} and served from the lock.")
+    return " ".join(bits)
+
+
+def _join_caveat(existing: str | None, extra: str | None) -> str | None:
+    """Two notes in one field, in the order a reader needs them.
+
+    The row's own caveat (the Poisson one, say) is about the model; the lock's
+    is about the price in front of it. Appending rather than replacing is the
+    whole point: neither of the two is allowed to hide the other."""
+    parts = [str(x).strip() for x in (existing, extra) if x]
+    return " ".join(parts) if parts else None
+
+
+def apply_slot_lock(slots: dict, meta: dict, *, slate_date: str | None,
+                    pick_reason: str, has_board: bool = True,
+                    board: list[dict] | None = None,
+                    dropped: list[dict] | None = None,
+                    write: bool = True, may_lock: bool | None = None,
+                    now: str | None = None,
+                    root: Path | None = None, log_fn=None) -> tuple[str, dict]:
+    """Serve each slot's FIRST published row, and record what changed since.
+
+    THE DEFECT THIS CLOSES. The board is built by the nightly, but nothing in
+    the tree stops a second build of the same slate: a manual rebuild, a re-run
+    after a failure, and (the reason this lands now) any intraday rebuild. Slot
+    selection is deterministic in its inputs and NOT in time, so a second build
+    against a moved line, a changed probable or a game that has since started
+    can publish a different Pick of the Day for one night. The site would then
+    have published two picks for that night, the shadow ledger would hold the
+    first, the record would be free to hold the second, and nothing on the page
+    would say which one the day's claim was.
+
+    THE RULE: first write wins, per slot, per slate. Every later build serves
+    the published row VERBATIM, and verbatim includes the sentence published
+    beside it: the selection reason, the floor it cleared and whether that
+    floor was policy or measurement all travel in the lock entry's `meta` and
+    are served back. What THIS build would select rides beside that row as
+    `since_published`, never in place of it, and the one sentence a reader must
+    see goes through `lock_disclosure` into `caveat`, which the page renders.
+
+    `has_board` is "does this build have a slate at all". The call site passes
+    `bool(bets)` and `team_bets` emits a row for every scheduled game including
+    games with no market, so it does NOT mean "I priced something". The guard
+    that covers an unpriced board is the `meta['blocked']` refusal below, which
+    keys on the same expression the stale-board guard does.
+
+    `may_lock` IS WHO MAY PUBLISH, and it defaults to `write` so a direct
+    caller behaves as before. `build` passes False for a build that named its
+    slate explicitly (`--date`), because the store is first-write-wins and an
+    ad-hoc back-dated run would otherwise mint the permanent, unrepairable
+    "published claim" for a night the site may never have served that way. Such
+    a build still SERVES an existing lock, which is the correct reading of a
+    slate that was published. BETTING_LOCK_BACKDATED=1 lifts the refusal for an
+    operator who means it.
+
+    `write=False` NEVER CREATES A LOCK. A dry build is not a publication. It
+    still READS the lock and serves what is already published, so a dry run
+    shows what the site shows.
+
+    `board` AND `dropped` ARE THE TWO HALVES OF THE SAME SLATE, and the second
+    one is why the disclosure works at all. `board` is the board `resolve_slate`
+    returned; `dropped` is its `dropped_board_rows`, every row of that date that
+    is not on the board. A locked slot on a game that has since started is by
+    construction NOT on the board - `is_bettable` removes it the moment
+    StatsAPI flips it to Live - so a lock given only the board could never say
+    so, and the one sentence this block exists to publish would be unreachable
+    in production. `now` doubles as the clock the two state reads are taken
+    against: the same stamp that would be written on a first publication, so a
+    caller that pins the publication time pins the reading of "has this game
+    started" with it.
+
+    A MID-SLATE MODEL_VERSION BUMP CHANGES NOTHING HERE. The lock holds the
+    version that priced the row, the served row keeps it, `record_row` prefers
+    it over the constant running now, and `_since_published` names both. A new
+    pricer does not get to re-price a published claim, and it does not get
+    credit for one it did not price.
+
+    Returns (pick_reason, state); `slots` and `meta` are updated in place."""
+    state = {"policy": SLOT_LOCK_POLICY, "slate_date": slate_date,
+             "schema": SLOT_LOCK_SCHEMA, "write": bool(write),
+             "locked": {}, "created": [], "served_from_lock": [],
+             "applied": False}
+    may_lock = bool(write) and (True if may_lock is None else bool(may_lock))
+    state["may_lock"] = may_lock
+    if not slate_date:
+        state["reason"] = ("this build carries no slate date, so no slot can "
+                           "be locked")
+        return pick_reason, state
+    state["path"] = _public_path(published_slots_path(slate_date, root=root))
+    if not has_board:
+        state["reason"] = ("this build has no board for this slate, so it "
+                           "neither locks a slot nor serves one; the "
+                           "stale-board guard owns this case")
+        return pick_reason, state
+    # A BLOCKED BOARD IS A HARD STOP, AND THE LOCK DOES NOT LIFT IT. When no
+    # odds snapshot is cached, or the cached one belongs to another slate,
+    # `provisional_picks` empties both slots and says so: a selection needs a
+    # real market price to disagree with. Serving a published row through that
+    # stop would put a price on the page that this build could not verify
+    # exists, on a board whose own blocker list says there is no market. The
+    # published claim is not lost - it is on the record and in the ledgers -
+    # and the slate locks or serves again on the next build that has a market.
+    if (meta or {}).get("blocked"):
+        state["reason"] = (
+            "both slots are blocked on this build (" +
+            str((meta or {}).get("blocked_reason") or "no priceable market") +
+            "), so the lock is neither written nor served; the hard stop on a "
+            "slot without a market stands")
+        return pick_reason, state
+    state["applied"] = True
+    doc = load_slot_lock(slate_date, root=root)
+    # A LOCK IN A SHAPE THIS BUILD CANNOT READ STOPS BOTH HALVES. It cannot be
+    # served (nothing here knows what is in it) and it must not be replaced
+    # (that would destroy the publication fact it holds), so this slate simply
+    # publishes nothing tonight and says which schema it found.
+    lock_refusal = None
+    if doc.get("unreadable_schema") is not None:
+        state["unreadable_schema"] = doc.get("unreadable_schema")
+        lock_refusal = (
+            f"the lock on disk is schema {doc.get('unreadable_schema')} and "
+            f"this build reads schema {SLOT_LOCK_SCHEMA}: nothing is published "
+            "for this slate and the file is left exactly as it is")
+        may_lock = False
+        state["may_lock"] = False
+    entries = doc.get("slots") or {}
+    stamp = now or _now()
+    # ONE CLOCK FOR THE WHOLE CALL. `_has_started` needs a datetime, `stamp` is
+    # the ISO string this build would publish at, and deriving one from the
+    # other keeps a single build from stamping a row at one instant and asking
+    # about first pitch at another.
+    clock = _stamp(stamp) or datetime.now(timezone.utc)
+    version = bm.MODEL_VERSION
+    fresh_entries, pending_meta = {}, {}
+    for slot in SLOT_LABELS:
+        fresh = slots.get(slot)
+        entry = entries.get(slot)
+        sm = (meta.get("slots") or {}).get(slot)
+        if entry and isinstance(entry.get("row"), dict):
+            served = json.loads(json.dumps(entry["row"]))
+            served["published_at"] = entry.get("published_at")
+            served["locked"] = True
+            served["lock_note"] = SLOT_LOCK_POLICY
+            # THE PRICER THAT PRICED THIS ROW TRAVELS WITH IT, so the record
+            # row written on a later build cannot credit the version running
+            # then. `record_row` prefers these when they are present. A lock
+            # entry written before these fields existed carries neither, and
+            # the LIVE constant is the honest fallback there: an explicit null
+            # on the served row reads as "no pricer priced this", which is a
+            # stronger and falser claim than "not recorded".
+            served["model_version"] = entry.get("model_version") or version
+            served["context_version"] = (entry.get("context_version")
+                                         or bm.context_model_version())
+            since = _since_published(entry, fresh, board=board,
+                                     dropped=dropped, now=clock,
+                                     model_version=version)
+            disclose = lock_disclosure(since)
+            if disclose:
+                served["since_published"] = since
+                # THE DISCLOSURE GOES WHERE THE PAGE LOOKS. See
+                # `lock_disclosure`: the client renders `caveat` as a note on
+                # the pick card and renders nothing else this block writes.
+                served["caveat"] = _join_caveat(served.get("caveat"), disclose)
+            slots[slot] = served
+            state["served_from_lock"].append(slot)
+            state["locked"][slot] = {"published_at": entry.get("published_at"),
+                                     "model_version": entry.get("model_version"),
+                                     "disclosure": disclose,
+                                     "since_published": since}
+            pub = entry.get("meta") or {}
+            if isinstance(sm, dict):
+                # WHAT THIS BUILD WOULD HAVE SAID, KEPT AND LABELLED. These
+                # fields used to describe the fresh selection while `present`
+                # said True about the served one, so the block could read
+                # "nothing cleared the floor" beside a row that was on the
+                # page. The published values are served back and the current
+                # board's own answer moves under a name that says whose it is.
+                sm["current_board"] = {k: sm.get(k) for k in
+                                       ("reason", "min_edge", "provisional",
+                                        "basis", "n_candidates")}
+                for k in ("reason", "min_edge", "provisional", "basis",
+                          "n_candidates"):
+                    if k in pub:
+                        sm[k] = pub[k]
+                sm["locked"] = True
+                sm["published_at"] = entry.get("published_at")
+                sm["present"] = True
+                sm["lock_note"] = SLOT_LOCK_POLICY
+                sm["since_published"] = since
+                sm["disclosure"] = disclose
+            if slot == "pick_of_the_day":
+                # THE SELECTION RULE IS NOT REPLACED BY A CACHING POLICY. This
+                # string is the page's fallback copy for an EMPTY slot, so
+                # overwriting it with the lock's policy could print "a slot is
+                # published once per slate" under "Nothing qualifies today".
+                # The published sentence is served back; the disclosure is
+                # appended when there is one, and an unchanged build appends
+                # nothing, which is the rule the served row follows too.
+                base = pub.get("pick_reason") or pick_reason
+                pick_reason = f"{base} {disclose}" if disclose else base
+            continue
+        if not fresh:
+            continue
+        # FIRST PUBLICATION OF THIS SLOT ON THIS SLATE.
+        pub_meta = {"pick_reason": pick_reason}
+        if isinstance(sm, dict):
+            pub_meta.update({k: sm.get(k) for k in
+                             ("reason", "min_edge", "provisional", "basis",
+                              "n_candidates") if k in sm})
+        fresh_entries[slot] = {
+            "published_at": stamp,
+            # WHICH PRICER PRICED THE ROW, stamped at publication. A later build
+            # running under a bumped MODEL_VERSION must not be able to describe
+            # this row as having been priced by the newer one.
+            "model_version": version,
+            "context_version": bm.context_model_version(),
+            # WHAT WAS PUBLISHED BESIDE THE ROW. Serving the row verbatim while
+            # a later build's copy narrates it is half a guarantee: the floor
+            # and the reason would describe a selection that was refused.
+            "meta": pub_meta,
+            "row": json.loads(json.dumps(fresh)),
+        }
+        pending_meta[slot] = sm
+    pending_note = None
+    if fresh_entries and may_lock:
+        doc["slots"] = {**entries, **fresh_entries}
+        try:
+            _save_slot_lock(doc, root=root)
+        except OSError:
+            log.warning("betting_export: could not write the slot lock for %s; "
+                        "a later build of this slate could re-select its slots",
+                        slate_date)
+            state["error"] = ("the slot lock could not be written; a later "
+                              "build of this slate could re-select its slots")
+            # A FAILED WRITE IS NOT A PUBLICATION. The slot meta used to be
+            # stamped `locked: true` with a timestamp before the write was
+            # attempted, so a slate with no lock file on disk reported itself
+            # as published: the one fact this store exists to hold, asserted
+            # off a file that does not exist.
+            pending_note = ("this row was selected but its lock could not be "
+                            "written, so it is not published and a later build "
+                            "may select a different one")
+            for slot, sm2 in pending_meta.items():
+                if isinstance(sm2, dict):
+                    sm2["locked"] = False
+                    sm2["published_at"] = None
+                    sm2["lock_note"] = pending_note
+        else:
+            state["created"] = sorted(fresh_entries)
+            state["locked"].update({
+                s: {"published_at": e["published_at"],
+                    "model_version": e["model_version"],
+                    "disclosure": None,
+                    "since_published": None}
+                for s, e in fresh_entries.items()})
+            for slot, sm2 in pending_meta.items():
+                if isinstance(sm2, dict):
+                    sm2["locked"] = True
+                    sm2["published_at"] = fresh_entries[slot]["published_at"]
+            if log_fn:
+                log_fn("betting_export: slot lock written for "
+                       f"{slate_date} ({', '.join(sorted(fresh_entries))})")
+    elif fresh_entries:
+        would = ", ".join(sorted(fresh_entries))
+        pending_note = (
+            lock_refusal if lock_refusal else
+            f"write=False: this build would have locked {would} and did not"
+            if not write else
+            "this build named its slate explicitly, so it is not the "
+            f"publishing path: it would have locked {would} and did not "
+            "(BETTING_LOCK_BACKDATED=1 lifts this)")
+        for slot, sm2 in pending_meta.items():
+            if isinstance(sm2, dict):
+                sm2["locked"] = False
+                sm2["published_at"] = None
+                sm2["lock_note"] = pending_note
+    # EVERY FACT IN ONE SENTENCE. A build that serves one slot and publishes
+    # the other used to report only the serve, so the night a slot was first
+    # published could read as a night nothing happened.
+    bits = []
+    if state["served_from_lock"]:
+        bits.append("served from the lock: "
+                    + ", ".join(state["served_from_lock"]))
+    if state["created"]:
+        bits.append("locked " + ", ".join(state["created"]))
+    if pending_note:
+        bits.append(pending_note)
+    if state.get("error"):
+        bits.append(state["error"])
+    state["reason"] = ("; ".join(bits) if bits else
+                       "no slot was published on this slate, so there is "
+                       "nothing to lock")
+    return pick_reason, state
 
 
 def pick_of_the_day(bets: list[dict], *, min_edge: float | None,
@@ -5791,6 +6941,34 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         bets, odds_priceable=odds_priceable, evald=evald,
         block_reason=(odds_slate["reason"] if odds_slate.get("mismatch") else None),
         extra_candidates=list(_props_pre.get("value_rows") or []))
+    # THE SLOT LOCK, BEFORE ANY SURFACE READS THE SLOTS. A slate's slots are
+    # published once: a second build of the same slate serves the first build's
+    # rows verbatim and carries what it would select now beside them. It sits
+    # here, above the payload, so the props ordering, the shadow ledger, the
+    # public record and the page all read ONE set of slots. `has_board` is
+    # `bool(bets)`: a build with no board at all hands the case to the
+    # stale-board guard below, which nulls both slots.
+    #
+    # ONLY THE PUBLISHING PATH MAY CREATE A LOCK. The nightly and the daily
+    # tail resolve the slate themselves (`on_date is None`). A run that NAMES a
+    # slate is an ad-hoc read of a night that has already happened or has not
+    # arrived, and because the store is first-write-wins its selection would
+    # become that night's published claim permanently. Such a build serves an
+    # existing lock and creates none, unless an operator sets
+    # BETTING_LOCK_BACKDATED=1 and means it.
+    _backdated_ok = os.environ.get(BACKDATED_LOCK_ENV, "").strip() == "1"
+    #
+    # BOTH HALVES OF THE SLATE GO IN. `bets` is the board, which is the half
+    # that CANNOT answer the question a locked row raises: a published price on
+    # a game that has since started, because such a game is no longer on it.
+    # `slate_stats['dropped_board_rows']` is the other half, whole, from the
+    # same function, and it is what makes the started and called-off disclosure
+    # reachable from here rather than from a test.
+    pick_reason, slot_lock = apply_slot_lock(
+        slots, pick_meta, slate_date=slate_date, pick_reason=pick_reason,
+        has_board=bool(bets), board=bets,
+        dropped=slate_stats.get("dropped_board_rows"), write=write,
+        may_lock=(on_date is None or _backdated_ok), log_fn=log_fn)
     pick = slots["pick_of_the_day"]
     longshot = slots["longshot_of_the_day"]
     # STORAGE FIRST, BEFORE ANYTHING READS THE RECORD. `ensure_record_log`
@@ -5803,6 +6981,16 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         except OSError:
             log.warning("betting_export: could not create the append-only record log; "
                         "the record_storage blocker will stay closed")
+    # See payload["model"]["pricing_basis"]. Read from betting_shadow so one
+    # module owns the vocabulary that keeps the two populations apart.
+    try:
+        import betting_shadow as _bs_basis
+        pricing_basis = str(_bs_basis.SERVED_PRICING_BASIS)
+    except Exception:                                          # noqa: BLE001
+        log.warning("betting_export: betting_shadow is unreadable, so this "
+                    "payload states no pricing basis and its ledger rows will "
+                    "be unstamped", exc_info=True)
+        pricing_basis = None
     record = load_record()
     # THE LAST PUBLISHED CHAIN HASH, read off the DURABLE anchor under .cache/.
     # It is what `record_storage` is checked against: a record that no longer
@@ -5943,6 +7131,15 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
                 "leaderboards already absorb",
             ],
             "backtest": {k: evald.get(k) for k in BACKTEST_KEYS if k in evald} or None,
+            # WHICH PRICER'S BOARD THIS PAYLOAD IS, named as the ledgers name
+            # it. betting_shadow.record_slate reads the basis off THIS key
+            # rather than taking it as a keyword, so an intraday pass priced on
+            # a posted lineup cannot stamp its rows `constructed` by forgetting
+            # an argument: the stamp is a fact about the board instead of a
+            # promise about the caller. None when betting_shadow cannot be
+            # read, which leaves those rows unstamped rather than asserting a
+            # basis this build could not confirm.
+            "pricing_basis": pricing_basis,
             # The vintage state, the coverage behind it and the three gates on
             # min_edge, so the client can say WHICH number it is showing and
             # WHY there is no pick without guessing at either.
@@ -5958,6 +7155,11 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         "pick_of_the_day": pick,
         "longshot_of_the_day": longshot,
         "pick_reason": pick_reason,
+        # WHICH SLOTS ARE SERVED FROM THE LOCK, what changed since they were
+        # published, and where the lock lives. Published whether or not
+        # anything is locked, because a rule a reader cannot see is a rule he
+        # cannot hold the site to.
+        "slot_lock": slot_lock,
         # The label the page keys off. Published even when a slot is empty, so
         # a client can render the provisional treatment around an empty slot
         # rather than having to infer it from the row's own fields.
@@ -6080,6 +7282,10 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         # one payload shape this module is built to prevent. It is the free
         # slice's job to carry the qualifier more than anyone's.
         "pick_meta": payload["pick_meta"],
+        # THE LOCK TRAVELS WITH THE PICK for the same reason the label does: a
+        # free-tier reader seeing a slot must be able to see that it is the row
+        # this slate published and when, not a fresh selection made now.
+        "slot_lock": payload["slot_lock"],
         "pick_blockers": payload["pick_blockers"],
         # The market gate travels with the free slice for the same reason the
         # publish blockers do: it is part of the trust surface.

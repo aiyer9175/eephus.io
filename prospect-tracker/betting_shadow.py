@@ -166,6 +166,38 @@ DEFAULT_SLOT_TAG = "ev_rank"
 #: day needs 34 and each single-pick slot needs about 100.
 BOARD_ALL_TAG = "board_all"
 
+#: WHICH PRICER'S BOARD A ROW WAS TAKEN OFF (2026-09-17).
+#:
+#: Every row on disk today was selected off a board priced from the club's
+#: season Offense+ rollup and the CONSTRUCTED nine. Nothing in the tree prices
+#: a posted lineup, and nothing may until 5j passes. The stamp exists so that
+#: the day a second basis is served, the two populations are two samples and
+#: not one: a ROI pooled across them measures a mixture nobody bet, which is
+#: the tag rule of section 7a applied one level down, exactly as `board_all`
+#: applies it to the capped tags.
+#:
+#: `board_all` is the tag that makes this urgent. The capped tags carry a
+#: per-slate budget, so a second build of one slate cannot add to them; the
+#: uncapped tag is the one an intraday pass CAN extend, and an intraday pass is
+#: precisely the pass that would carry a different basis.
+#:
+#: ROWS WRITTEN BEFORE THIS EXISTED ARE NOT BACKFILLED. They read `unstamped`,
+#: the same discipline the pre-2026-08-07 untagged rows get: a writer that did
+#: not know a fact does not get to have known it later. `unstamped` is swept
+#: WITH `constructed` because no other pricer has ever written to this ledger,
+#: and that reading is recorded here rather than left implicit.
+PRICING_BASIS_CONSTRUCTED = "constructed"
+PRICING_BASIS_POSTED = "posted"
+PRICING_BASIS_UNSTAMPED = "unstamped"
+PRICING_BASES = (PRICING_BASIS_CONSTRUCTED, PRICING_BASIS_POSTED)
+
+#: The basis the served board prices on today. `_sweep_row` refuses any row
+#: stamped with a different one, so a posted-basis row cannot reach a sweep, a
+#: gate or a readiness count by default. It is a parameter of the reader, not a
+#: filter applied at write time: the rows stay on disk and stay countable.
+SERVED_PRICING_BASIS = PRICING_BASIS_CONSTRUCTED
+
+
 #: THE PROPS TAGS (2026-08-16, docs/diamond-betting.md section 7c). One tag
 #: per props market, because the four markets are four different selection
 #: populations and pooling them would repeat the exact defect the team tags
@@ -677,12 +709,50 @@ def candidates_from_board(payload: dict, *, min_edge: float,
 
 def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = None,
                  slots: dict | None = None, include_board_all: bool = False,
+                 pricing_basis: str | None = None,
                  path: Path | None = None, log_fn=None) -> dict:
     """Append this slate's shadow bets. Idempotent per (slate, game, market, side).
 
     Returns a summary rather than raising when there is nothing to record: an
     empty slate is a normal outcome and has to be distinguishable from a
-    failure, which is why `reason` is always populated."""
+    failure, which is why `reason` is always populated.
+
+    THE BASIS IS READ OFF THE PAYLOAD, NOT TAKEN ON TRUST. The rows this call
+    writes come from `payload['team_bets']`, and the board that priced them
+    states which pricer it is in `payload['model']['pricing_basis']`. A default
+    keyword would be a promise about the caller: an intraday pass priced on a
+    posted lineup that forgot the argument would stamp `constructed` on
+    posted-basis rows, they would pool into every sweep, and this module never
+    backfills a row, so the contamination would be permanent and invisible.
+    An explicit `pricing_basis` that DISAGREES with the payload raises rather
+    than winning, because one of the two is then wrong about the same board.
+
+    An intraday pass priced on a posted lineup stamps `PRICING_BASIS_POSTED`
+    and its rows are a SECOND POPULATION: `_sweep_row` refuses them, so they
+    can never be pooled into a threshold with the rows above them. The uncapped
+    `board_all` tag is the one an intraday pass can add to at all, which is why
+    the stamp lands before such a pass exists rather than after it.
+
+    A payload that states NO basis leaves its rows unstamped. That is what the
+    323 rows written before this field existed read as, and inferring a basis
+    for them here would assert a fact this module never knew."""
+    if pricing_basis is not None and pricing_basis not in PRICING_BASES:
+        raise ValueError(f"unknown pricing_basis {pricing_basis!r}; "
+                         f"expected one of {', '.join(PRICING_BASES)}")
+    declared = ((payload.get("model") or {}).get("pricing_basis")
+                if isinstance(payload.get("model"), dict) else None)
+    if declared is not None and declared not in PRICING_BASES:
+        raise ValueError(
+            f"the payload states pricing_basis {declared!r}, which is not one "
+            f"of {', '.join(PRICING_BASES)}; a ledger cannot be written off a "
+            "board whose basis it cannot name")
+    if (pricing_basis is not None and declared is not None
+            and pricing_basis != declared):
+        raise ValueError(
+            f"pricing_basis {pricing_basis!r} was passed for a board that "
+            f"states {declared!r}; the row's basis is a fact about the board "
+            "and the two may not disagree")
+    pricing_basis = declared if declared is not None else pricing_basis
     slate = payload.get("slate_date")
     if not slate:
         return {"written": 0, "reason": "payload carries no slate_date"}
@@ -786,6 +856,14 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
             "gate_state": gate_state or {},
             "result": None, "settled_at": None, "profit_units": None,
             **c,
+            # WHICH PRICER'S BOARD THIS ROW CAME OFF, stamped AFTER the board
+            # row is spread in so the writer's own fact cannot be overwritten by
+            # a stray key travelling on a candidate. See PRICING_BASES: the
+            # ledger is one sample only for as long as one basis wrote it, and
+            # this is what lets a reader tell, row by row, whether that holds.
+            # Absent, not null, when the board named no basis: `pricing_basis_of`
+            # reads that as `unstamped`, which is what it is.
+            **({"pricing_basis": pricing_basis} if pricing_basis else {}),
         })
     if not new:
         return {"written": 0, "slate_date": slate,
@@ -801,6 +879,11 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
                f"at a {min_edge:.1%} floor "
                f"({', '.join(f'{k} {v}' for k, v in sorted(by_slot.items()))})")
     return {"written": len(new), "slate_date": slate, "reason": "ok",
+            # WHICH BASIS THESE ROWS CARRY, reported back to the caller that
+            # did not pass it. None means the board named none and the rows are
+            # unstamped, which a reader has to be able to see without opening
+            # the ledger.
+            "pricing_basis": pricing_basis,
             "by_slot": by_slot, "rows": new}
 
 
@@ -995,6 +1078,50 @@ def row_tags(row: dict) -> set:
     return {slot} if slot else {UNTAGGED}
 
 
+def pricing_basis_of(row: dict) -> str:
+    """Which pricer's board this row was taken off, as its writer stamped it.
+
+    An unstamped row reads `unstamped` rather than `constructed`: the writer
+    did not record a basis and inferring one here would assert a fact it never
+    knew. `sweeps_with_served_basis` is where the reading that unstamped rows
+    were constructed-basis rows is applied, once, in the open."""
+    b = row.get("pricing_basis")
+    return str(b) if b else PRICING_BASIS_UNSTAMPED
+
+
+def sweeps_with_served_basis(row: dict) -> bool:
+    """May this row enter a sweep priced on the basis that serves today?
+
+    True for the served basis and for the pre-stamp rows, false for every other
+    basis. The whole point is that the false branch is reachable: the day a
+    posted-lineup basis is served, its rows accumulate in the ledger and stay
+    out of every sweep that has not asked for them by name."""
+    return pricing_basis_of(row) in (SERVED_PRICING_BASIS, PRICING_BASIS_UNSTAMPED)
+
+
+def basis_refusals(rows: list[dict]) -> dict:
+    """How many settled rows a sweep refuses on basis grounds, and whose.
+
+    THE DEFECT THIS CLOSES. `_sweep_row` returns None for a row written on a
+    basis the served board does not price on, and a `return None` is a silent
+    drop: the day a posted-basis row is written, gate 3's per-tag counts stop
+    advancing and every counter downstream says only that `n` is lower. A gate
+    that stalls has to name its own cause, and a guard that drops instead of
+    refusing loudly is the shape this program keeps finding.
+
+    Settled rows only. An open row is not refused by anything yet; it has not
+    reached the question a sweep asks."""
+    out: dict[str, int] = {}
+    for r in rows or []:
+        if r.get("result") not in ("won", "lost"):
+            continue
+        if sweeps_with_served_basis(r):
+            continue
+        b = pricing_basis_of(r)
+        out[b] = out.get(b, 0) + 1
+    return dict(sorted(out.items()))
+
+
 def _sweep_row(r: dict) -> dict | None:
     """One settled row as {edge, decimal, won}, or None when it cannot be swept.
 
@@ -1003,6 +1130,13 @@ def _sweep_row(r: dict) -> dict | None:
     two different samples wearing one name. A push never reaches here, a row
     with no edge or no usable price is dropped rather than defaulted."""
     if r.get("result") not in ("won", "lost"):
+        return None
+    # THE BASIS REFUSAL (2026-09-17). One shaping seam, so every sweepable read
+    # in this module inherits it: the pooled shape, the per-tag shape, the
+    # per-(market, tag) cells and the readiness counts all pass through here.
+    # Nothing on disk is stamped with a foreign basis today, so this drops zero
+    # rows now and drops every row of a second basis the day one is written.
+    if not sweeps_with_served_basis(r):
         return None
     dec = r.get("decimal")
     if not dec:
@@ -1077,7 +1211,10 @@ def graded_bets_by_tag(*, path: Path | None = None) -> dict:
 SWEEP_READINESS_BASIS = (
     "n is the largest (market, tag) sub-ledger inside this tag, which is the "
     "sample the 100-row floor is measured against; n_pooled is the tag's whole "
-    "census across its markets and is never swept and never compared with need")
+    "census across its markets and is never swept and never compared with need. "
+    "n_refused_basis counts the rows that sample refused on pricing-basis "
+    "grounds and is measured on the same cell as n; n_refused_basis_pooled is "
+    "the tag-wide sum and belongs beside n_pooled")
 
 
 def sweep_readiness(*, path: Path | None = None) -> dict:
@@ -1123,6 +1260,21 @@ def sweep_readiness(*, path: Path | None = None) -> dict:
         ranked = sorted((int(b.get("sweepable_n") or 0), m)
                         for m, b in mine.items())
         n, largest = ranked[-1] if ranked else (0, None)
+        # THE REFUSAL TRAVELS WITH THE COUNT, AND WITH ITS OWN DENOMINATOR.
+        # betting_learning._price_clock copies `n`, `need` and `ready` off this
+        # block; a stalled clock that cannot say why it stalled is exactly the
+        # kind of number this section forbids. `n` is the LARGEST (market, tag)
+        # cell since L14-05, so the refusal beside it is that cell's, not the
+        # tag's: summing the tag's cells there would put a count over three
+        # markets next to a count over one, which is the mixture this whole
+        # section exists to keep apart. The tag-wide sum is published under a
+        # name that says its scope, beside `n_pooled`, which is the count it
+        # belongs to.
+        refused = dict((mine.get(largest) or {}).get("refused_bases") or {})
+        pooled_refused = 0
+        for _b in mine.values():
+            pooled_refused += int(_b.get("n_refused_basis_cell")
+                                  or _b.get("n_refused_basis") or 0)
         out[t] = {
             "n": n,
             "need": MIN_BETS_FOR_SWEEP,
@@ -1132,6 +1284,9 @@ def sweep_readiness(*, path: Path | None = None) -> dict:
             "markets": {m: int(b.get("sweepable_n") or 0)
                         for m, b in sorted(mine.items())},
             "n_markets": len(mine),
+            "n_refused_basis": sum(refused.values()),
+            "refused_bases": dict(sorted(refused.items())),
+            "n_refused_basis_pooled": pooled_refused,
             "sweep_unit": "(market, tag) sub-ledger",
             "basis": SWEEP_READINESS_BASIS,
             "max_per_slate": MAX_PER_SLATE_BY_TAG.get(t, "n/a"),
@@ -1288,6 +1443,19 @@ def sweep_readiness_by_market_tag(*, path: Path | None = None) -> dict:
                     for e in BUDGET_ERAS}
         split = era_split_applies(m, t)
         n_now = n_by_era[PER_MARKET_CAP_ERA] if split else len(sweepable)
+        # WHAT THIS CELL REFUSED, beside what it counted, ON THE SAME
+        # POPULATION. `sweepable_n` is one budget era when the cap split
+        # applies, so a refusal counted over both eras would be a number a
+        # reader subtracts from a count it does not belong to: one artifact,
+        # one quantity, one denominator. The whole-cell figure keeps its own
+        # name. Zero on every cell for as long as one basis writes the ledger;
+        # the day a second one does, the clock that stops advancing says which
+        # population it is not counting instead of reporting a smaller n and no
+        # reason.
+        era_rows = ([r for r in rws if budget_era(r) == PER_MARKET_CAP_ERA]
+                    if split else rws)
+        refused = basis_refusals(era_rows)
+        refused_cell = basis_refusals(rws) if split else refused
         out.setdefault(m, {})[t] = {
             "n": len(sweepable),
             "n_by_era": n_by_era,
@@ -1295,6 +1463,9 @@ def sweep_readiness_by_market_tag(*, path: Path | None = None) -> dict:
             "sweepable_n": n_now,
             "need": MIN_BETS_FOR_SWEEP,
             "ready": n_now >= MIN_BETS_FOR_SWEEP,
+            "n_refused_basis": sum(refused.values()),
+            "refused_bases": refused,
+            "n_refused_basis_cell": sum(refused_cell.values()),
             "max_per_slate": cell_budget(m, t),
         }
     return out
@@ -1364,6 +1535,21 @@ def summary(*, path: Path | None = None) -> dict:
     out["by_tag"] = {k: _tally(v) for k, v in sorted(tag_buckets.items())}
     out["by_tag_note"] = ("membership, not a partition: a capped row is also a "
                           "board_all row, so these counts overlap by design")
+
+    # BY PRICING BASIS (2026-09-17). A partition, and today a partition into
+    # one non-empty cell: every row was taken off a board priced on the season
+    # rollup and the constructed nine. It is REPORTED so that the day a second
+    # basis appears, the page and the gate block both say so without anyone
+    # having to notice; `_sweep_row` is what enforces the split.
+    basis_buckets: dict[str, list[dict]] = {}
+    for r in rows:
+        basis_buckets.setdefault(pricing_basis_of(r), []).append(r)
+    out["by_pricing_basis"] = {b: _tally(v) for b, v in sorted(basis_buckets.items())}
+    out["by_pricing_basis_note"] = (
+        "a partition: every row was priced on exactly one basis, so these "
+        f"counts sum to n_rows. Only {SERVED_PRICING_BASIS} rows and the "
+        "pre-stamp rows are swept; any other basis is a second sample and is "
+        "never pooled with this one")
 
     # BY MARKET (2026-09-06). The tag says which rule chose a row; it never said
     # what was bet, and the two questions have different answers. Measured on

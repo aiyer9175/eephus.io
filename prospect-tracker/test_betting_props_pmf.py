@@ -402,7 +402,10 @@ def test_the_measured_gap_the_repair_removed():
     fair-line Bernoulli read 0.85929, the old value-block Poisson read 0.79810,
     and the one binomial path reads 0.85630. If any of these three move, the
     claim in the module header is stale and must be re-measured."""
-    exp_pa, lam = be.SLOT_PA[1], 1.6
+    # 4.65 is the LITERAL slot-1 value that served on 2026-09-06, not a read
+    # of today's table: this records a measurement taken then, and it does not
+    # move when the trial count is repaired (SERVE_SLOT_PA_MEASURED).
+    exp_pa, lam = 4.65, 1.6
     p = lam / exp_pa
     old_fair = 1.0 - (1.0 - p) ** exp_pa
     old_val = be._props_side_probabilities(lam, 0.5)["p_over"]
@@ -445,6 +448,232 @@ def test_the_market_view_discipline_is_still_the_team_board_s():
         assert "hold_pct" in r
     assert "verbatim" in pv["method"]["market_view"]
     assert pv["floor"]["min_edge"] is not None
+
+
+# ===========================================================================
+# 6. THE PA-BY-SLOT TABLE (plan repair 8, audit L17-F3, B-PA-DIST)
+# ===========================================================================
+# The trial count is the props table's quietest number and its most load
+# bearing: it is n for the two binomial markets and the lambda scale for total
+# bases. These tests hold the two acceptance legs the flip was granted on, the
+# shape of the table, the direction a smaller trial count can move an Over, the
+# rollback, and the served path that reads it.
+
+
+def test_the_slot_table_fits_inside_a_team_game():
+    """B-PA-DIST's level leg, BOTH WAYS. Nine starters cannot be handed more
+    plate appearances than their team gets in a game, and the rule that served
+    until 2026-09-17 was handing out 38.25 of the 37.63 there are. The floor
+    matters as much as the ceiling: nine starters take about 96 percent of a
+    team's plate appearances, so a table 3 percent low would clear a bare
+    ceiling test while under-pricing every Over on the board."""
+    lg = be.LEAGUE_PA_PER_TEAM_GAME_BY_SIDE
+    for side, tab in be.SLOT_PA_MEASURED_BY_SIDE.items():
+        share = sum(tab.values()) / lg[side]
+        assert 0.95 < share < 0.99, (side, share)
+    pooled = sum(be.SLOT_PA_MEASURED.values()) / be.LEAGUE_PA_PER_TEAM_GAME
+    assert 0.95 < pooled < 0.99, pooled
+    # The incumbent fails the ceiling pooled and at home, and the fallback
+    # cannot sit outside the slots that can reach it.
+    assert sum(be.SLOT_PA_LINEAR.values()) > be.LEAGUE_PA_PER_TEAM_GAME
+    assert sum(be.SLOT_PA_LINEAR.values()) > lg["home"]
+    if be.SERVE_SLOT_PA_MEASURED:
+        for side, tab in be.SLOT_PA_BY_SIDE.items():
+            assert 0.95 < sum(tab.values()) / lg[side] < 0.99, side
+        lo = min(be.SLOT_PA_BY_SIDE["home"][s] for s in (1, 2, 3, 4, 5))
+        hi = max(be.SLOT_PA_BY_SIDE["away"][s] for s in (1, 2, 3, 4, 5))
+        assert lo <= be.DEFAULT_PA <= hi, be.DEFAULT_PA
+
+
+def test_the_shipped_tables_are_the_committed_derivation():
+    """The record moves with the constant. The tables in the module are the
+    ones tools/props_slot_pa_lab.py wrote into the eval artifact, and the
+    acceptance numbers quoted beside them are that run's numbers, so a hand
+    edit to either one is a test failure rather than a discrepancy nobody
+    reads."""
+    import json
+    art = json.loads((ROOT / "data" / "betting_props_slot_pa_eval.json")
+                     .read_text(encoding="utf-8"))
+    for side in ("home", "away"):
+        got = {int(k): v for k, v in art["table"][side].items()}
+        assert got == be.SLOT_PA_MEASURED_BY_SIDE[side], side
+    assert {int(k): v for k, v in art["table"]["pooled"].items()} == \
+        be.SLOT_PA_MEASURED
+    lg = art["league_pa_per_team_game"]["fit"]
+    assert lg["pooled"] == be.LEAGUE_PA_PER_TEAM_GAME
+    assert {k: lg[k] for k in ("away", "home")} == \
+        be.LEAGUE_PA_PER_TEAM_GAME_BY_SIDE
+    a, acc = be.SLOT_PA_ACCEPTANCE, art["acceptance"]
+    assert a["mae_measured"] == acc["split"]["mae"]
+    assert a["mae_pooled"] == acc["pooled"]["mae"]
+    assert a["mae_linear"] == acc["linear"]["mae"]
+    assert a["mae_measured_priced_slots"] == acc["split"]["mae_priced_slots"]
+    assert a["mae_linear_priced_slots"] == acc["linear"]["mae_priced_slots"]
+    assert a["rmse_measured"] == acc["split"]["rmse"]
+    assert a["rmse_linear"] == acc["linear"]["rmse"]
+    t = art["acceptance_clustered_t"]
+    assert a["paired_t_clustered"] == t["split_vs_linear"]["t"]
+    assert a["paired_t_clustered_priced_slots"] == \
+        t["split_vs_linear"]["t_priced_slots"]
+    assert a["paired_t_clustered_vs_pooled"] == t["split_vs_pooled"]["t"]
+    assert a["holdout_season"] == int(art["holdout_season"])
+    assert list(a["fit_seasons"]) == [int(s) for s in art["fit_seasons"]]
+    assert a["holdout_season"] not in a["fit_seasons"] and \
+        2026 not in a["fit_seasons"]
+
+
+def test_the_lab_reproduces_the_shipped_table_from_the_corpus():
+    """The derivation is repeatable, not a number someone typed. Re-counts ONE
+    fit season straight off the cached corpus and checks the side tables land
+    on the shipped ones; a season is 1.7 seconds and the whole fit is three.
+    Skipped, not failed, where the corpus is not on disk: it is a cache, not a
+    committed input."""
+    import importlib.util
+    corpus = ROOT / ".cache" / "pbp_corpus" / "plays" / "2024"
+    lab_path = ROOT / "tools" / "props_slot_pa_lab.py"
+    if not corpus.exists() or not lab_path.exists():
+        return
+    spec = importlib.util.spec_from_file_location("props_slot_pa_lab", lab_path)
+    lab = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lab)
+    rows, team_pa = lab.read_season("2024", str(ROOT / ".cache" / "pbp_corpus"
+                                                / "plays"))
+    tab, _n = lab.tables(rows)
+    for s in range(1, 10):
+        for side in ("home", "away"):
+            shipped = be.SLOT_PA_MEASURED_BY_SIDE[side][s]
+            assert abs(tab[side][s] - shipped) < 0.06, (side, s, tab[side][s],
+                                                        shipped)
+        assert tab["away"][s] > tab["home"][s], s
+    lg = lab.league_pa(team_pa)
+    assert abs(lg["pooled"] - be.LEAGUE_PA_PER_TEAM_GAME) < 0.3, lg
+
+
+def test_the_measured_table_is_an_order_and_the_away_side_bats_more():
+    """A slot lower in the order cannot bat more often; the away side bats more
+    at every slot, because the home club skips the ninth when it leads; and the
+    repair was one-signed against the rule it replaced, by more further down."""
+    away, home = (be.SLOT_PA_MEASURED_BY_SIDE["away"],
+                  be.SLOT_PA_MEASURED_BY_SIDE["home"])
+    for tab in (away, home, be.SLOT_PA_MEASURED):
+        assert sorted(tab) == list(range(1, 10))
+        assert all(tab[s] > tab[s + 1] for s in range(1, 9))
+        assert all(tab[s] < be.SLOT_PA_LINEAR[s] for s in range(1, 10))
+    for s in range(1, 10):
+        assert away[s] > be.SLOT_PA_MEASURED[s] > home[s], s
+        assert 0.15 < away[s] - home[s] < 0.21, s
+    gaps = [be.SLOT_PA_LINEAR[s] - be.SLOT_PA_MEASURED[s] for s in range(1, 10)]
+    assert gaps[-1] > gaps[0] > 0
+
+
+def test_the_acceptance_says_where_the_table_loses():
+    """B-PA-DIST's accuracy leg, as it was run and INCLUDING ITS LOSSES. The
+    pooled win is not the served result: props_fair_lines prices order[:5], so
+    the slots 1 to 5 aggregate is the one that describes the board. The per
+    slot record has to name every slot the fitted table is worse at, or the
+    headline is doing the arguing."""
+    a = be.SLOT_PA_ACCEPTANCE
+    assert a["mae_measured"] < a["mae_pooled"] < a["mae_linear"]
+    assert a["mae_measured_priced_slots"] < a["mae_linear_priced_slots"]
+    assert a["rmse_measured"] < a["rmse_linear"]
+    assert a["paired_t_clustered"] >= 1.645
+    assert a["paired_t_clustered_priced_slots"] >= 1.645
+    assert a["paired_t_clustered_vs_pooled"] >= 1.645
+    assert a["holdout_starter_games"] == 9 * a["holdout_team_games"]
+    worse = tuple(s for s in range(1, 10)
+                  if a["mae_by_slot_measured"][s] > a["mae_by_slot_linear"][s])
+    assert worse == tuple(a["loses_to_linear_at_slots"]), worse
+    # It may lose somewhere, but never on a slot the board actually prices.
+    assert not set(worse) & set(a["priced_slots"])
+
+
+def test_a_smaller_trial_count_can_only_lower_an_over():
+    """The direction the served numbers moved, market by market, at a rate held
+    fixed: fewer plate appearances is fewer chances, on every line this module
+    prices and on both sides of the schedule. Taken on the MASS, not on the
+    published row, because the row rounds lambda and at a home-run rate two
+    neighbouring slots can round to the same lambda."""
+    for rate, line, dist in ((0.20, 0.5, "binomial"),
+                             (0.04, 0.5, "binomial"),
+                             (0.33, 1.5, None)):
+        for side in ("home", "away"):
+            for s in range(1, 10):
+                old = be.SLOT_PA_LINEAR[s]
+                new = be.SLOT_PA_MEASURED_BY_SIDE[side][s]
+                kw_a = {"dist": dist, "n_trials": old} if dist else {}
+                kw_b = {"dist": dist, "n_trials": new} if dist else {}
+                a = be._props_side_probabilities(rate * old, line,
+                                                 **kw_a)["p_over"]
+                b = be._props_side_probabilities(rate * new, line,
+                                                 **kw_b)["p_over"]
+                assert b < a, (rate, side, s, a, b)
+
+
+def test_the_flag_off_is_the_table_that_served_before_the_repair():
+    """The one-line rollback, EXERCISED rather than restated. _slot_pa_tables
+    is called with the flag off and has to hand back the literals of
+    2026-09-16, side tables included, so a later edit that wires SLOT_PA
+    straight to the measured table breaks this test instead of quietly
+    breaking the rollback."""
+    by_side, pooled, default = be._slot_pa_tables(False)
+    linear = {s: round(4.65 - 0.10 * (s - 1), 2) for s in range(1, 10)}
+    assert pooled == linear and default == 4.20
+    assert by_side == {"home": linear, "away": linear}
+    on_side, on_pooled, on_default = be._slot_pa_tables(True)
+    assert on_side == be.SLOT_PA_MEASURED_BY_SIDE
+    assert on_pooled == be.SLOT_PA_MEASURED and on_default == 4.2875
+    live = be._slot_pa_tables(be.SERVE_SLOT_PA_MEASURED)
+    assert (be.SLOT_PA_BY_SIDE, be.SLOT_PA, be.DEFAULT_PA) == live
+    assert be.SLOT_PA is not be.SLOT_PA_MEASURED  # a copy, never the constant
+
+
+def test_a_served_hitter_row_prices_on_its_own_side_of_the_table():
+    """The served path, pinned end to end. A hitter row's expected_pa is the
+    table for the side HIS club bats on, the binomial markets use that same
+    number as their trial count, and the row says which table it came off."""
+    fl = _fair_lines()
+    rows = fl["hitters"]
+    assert rows and {r["org"] for r in rows} == {"BOS", "NYY"}
+    for r in rows:
+        side = "home" if r["org"] == "BOS" else "away"
+        want = be.SLOT_PA_BY_SIDE[side][int(r["slot"])]
+        assert r["expected_pa"] == want, (r["org"], r["slot"])
+        assert side in r["expected_pa_basis"], r["expected_pa_basis"]
+        assert not r["expected_pa_basis"].startswith("fallback")
+        for p in r["props"]:
+            if p["prop"] in ("1+ hits", "1+ home runs"):
+                assert abs(p["n_trials"] - want) < 5e-4, p
+    home = [r for r in rows if r["org"] == "BOS"]
+    away = [r for r in rows if r["org"] == "NYY"]
+    for a, b in zip(sorted(home, key=lambda r: r["slot"]),
+                    sorted(away, key=lambda r: r["slot"])):
+        assert b["expected_pa"] > a["expected_pa"], (a["slot"], b["slot"])
+    meth = fl["method"]
+    assert meth["slot_pa_by_side"] == be.SLOT_PA_BY_SIDE
+    assert "split home from away" in meth["hitters"]
+    assert "hold-out" in meth["slot_pa_basis"]
+
+
+def test_a_row_with_no_readable_slot_says_it_fell_back():
+    """The fallback is disclosed on the row, the way the pmf fallback beside it
+    is. An unreadable slot must not reach a paying reader looking like a slot
+    read, and the number it falls back to has to belong to the population that
+    can reach it (the top five of an order), not to all nine slots."""
+    lb = {"teams": [
+        {"team": "BOS", "orders": {"vr": [dict(_order_row(1, 101, "BOS bat 1"),
+                                               slot=None)],
+                                   "vl": []}},
+    ]}
+    files = {"hitter_leaderboards.json": lb, "fantasy.json": _fantasy()}
+    with _FakeLoad(files):
+        fl = be.props_fair_lines(_GAMES, starters={},
+                                 pitch_hands={11: "R", 22: "R"})
+    row = [r for r in fl["hitters"] if r["org"] == "BOS"]
+    assert len(row) == 1
+    assert row[0]["expected_pa"] == be.DEFAULT_PA
+    assert row[0]["expected_pa_basis"].startswith("fallback")
+    assert be.SLOT_PA_BY_SIDE["home"][5] <= be.DEFAULT_PA <= \
+        be.SLOT_PA_BY_SIDE["away"][1]
 
 
 # ===========================================================================

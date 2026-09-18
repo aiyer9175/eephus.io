@@ -6398,7 +6398,11 @@ Poisson spread and the clamp.
 - **Slots.** **DEFAULT, owner decision O15 open:** slots come from publishable markets
   only, so the total stays out of the slots and badges while its ledger leg is closed
   (since 2026-09-03, plan 4.2). No `SLOT_MARKET_POLICY` value does that today (HEAD
-  `"any"`, `betting_model.py:385`); a ledger-leg value is to be built. Under that default
+  `"any"`, `betting_model.py:385`); a ledger-leg value is to be built. **2026-09-17:
+  built as `"ledger_gated"` and registered at the end of 7d, which also corrects how
+  this sentence reads, the line number in it, and the words "and badges" (the
+  best-value badge is a client-side surface no policy value has ever gated,
+  measured in 7d); HEAD is still `"any"`.** Under that default
   a flip moves total prices, not slots. If O15 is answered otherwise, a slot can change on
   any night a total holds it or newly clears the 0.06 floor (at the nightly only, under
   O21's DEFAULT lock).
@@ -7059,6 +7063,128 @@ vintage backtest before it replaces this rule.
 Settlement gap, stated plainly: a props row that wins a slot settles only when
 the props box-score grader exists (7c). Until then a props pick accrues no record
 of its own and the slot meta says so through the tag record.
+
+### The third value: `ledger_gated` (owner decision 2026-09-17, O15)
+
+**What the owner locked.** The LEDGER leg BARS a slot. The DISPERSION leg stays
+a DISCLOSURE. `betting_model.SLOT_MARKET_POLICY = "ledger_gated"` is that
+value. A market whose section 7b ledger leg is CLOSED fills neither slot and
+reaches no public record row. A market the 11a dispersion correction bars,
+whose ledger leg is open, keeps both slots and the record and carries the
+Poisson `caveat` on the published row exactly as it does under `"any"` today.
+
+**WHAT THE POLICY DOES NOT REACH: the per-game best-value badge.** 5k and 7e-D
+both say "slots and badges", and the badge half of that sentence has never been
+true of any `SLOT_MARKET_POLICY` value, this one included. The badge is
+computed CLIENT-SIDE by `bestValueSide` in assets/betting.js, which walks
+`b.moneyline`, `b.runline` and `(b.total || {}).sides` on the served board and
+takes the highest edge clearing `pick_meta.min_edge`. There is no market-policy
+filter anywhere on that path, and the payload carries no field that would let
+there be one. MEASURED on the cached 2026-09-18 board, under all three values
+alike: three games still carry a best-value badge on the TOTAL, the one
+ledger-closed market on this box - game 823331 Over 8.0 at edge 0.10854, 825032
+Over 8.0 at 0.14793 and 823898 Over 8.0 at 0.13013. The badge is therefore an
+UNFILTERED surface and is recorded as one here rather than asserted away.
+Gating it means stamping the board rows server-side and having `bestValueSide`
+skip them; that is a change to assets/betting.js, which belongs to another
+track, and it is a NAMED FOLLOW-UP below rather than a claim made in advance.
+
+**Why the second value could not serve as the third.** Two sections asked for
+this state by name and could not have it. 5k: "slots come from publishable
+markets only, so the total stays out of the slots and badges while its ledger
+leg is closed". 7e-D: "under its default (publishable markets only; the policy
+value is to be built), the ledger-closed total cannot fill a slot". Under
+`"dispersion_gated"` the total does leave the slots, but so does the RUNLINE,
+whose own ledger leg is OPEN and which is barred there only by the dispersion
+correction this section decided on 2026-09-05 to disclose rather than enforce.
+One bit cannot both bar on one leg and speak on the other, and until today
+every seam read the policy as one bit (`gated = SLOT_MARKET_POLICY != "any"`).
+
+**A correction to how two of those sentences read.** 5k says "No
+`SLOT_MARKET_POLICY` value does that today ... a ledger-leg value is to be
+built". Read literally that is not what the code did: `"dispersion_gated"` has
+barred a ledger-closed market from the slots since 2026-08-16, at both seams.
+What did not exist is a value that bars on the LEDGER leg WITHOUT also barring
+on the dispersion leg, which is how 7e-D and stop item X2 word it and which is
+what was built. The pointer in that 5k sentence and in X2 to
+`betting_model.py:385` is also stale: `SLOT_MARKET_POLICY` is at
+`betting_model.py:438` in the tree that carries this paragraph. The words "and
+badges" in 5k and in 7e-D are a THIRD thing those sentences get wrong, and that
+one is not repaired by this change: see the measured badge paragraph above.
+Nothing else in either sentence changes, and neither default moves.
+
+**Where it is implemented, and how the legs are read.**
+`betting_export.slot_market_policy_legs()` is the single reading of the
+constant. It answers two booleans, `dispersion_bars` and `ledger_bars`, and
+every seam asks it instead of comparing the constant:
+
+- `_floor_clearing_sides` (seam 1, the slots; NOT the badges, see above);
+- `append_record` (seam 2, the public record funnel);
+- `market_publishability` (the served table's `publishable`, `policy_override`
+  and both note sentences, plus the new `policy.dispersion_leg_bars`,
+  `policy.ledger_leg_bars` and `policy.registered_policy`);
+- `provisional_picks` (`pick_meta.markets_eligible` and the new
+  `pick_meta.market_policy_legs`).
+
+The dispersion leg is read through `betting_model.market_theory_ok`, the leg
+itself, and not through `market_is_publishable`, which folds the policy back
+into the leg (`if SLOT_MARKET_POLICY == "any": return True`) and so cannot
+answer a three-value question. The two agree for both older values and
+`test_betting_slot_market_policy.py` pins that they agree, so this is a
+narrowing of the question asked and not a change of answer.
+`market_is_publishable` keeps its meaning and its other callers, and
+`betting_model.py` is not edited by this change.
+
+**An unregistered value bars BOTH legs**, which is exactly what `!= "any"` did,
+including for a value with the wrong case. A typo in the constant must not be
+the thing that opens the slots to a market two legs closed. The served table
+says so through `policy.registered_policy`.
+
+**DEFAULT OFF. HEAD is still `SLOT_MARKET_POLICY = "any"`.** Building a value
+is not selecting it. Selecting it is one constant in `betting_model.py` and the
+owner's own commit, and that commit carries: the constant, this paragraph's
+date, and the 7b table re-read. It does NOT carry a `MODEL_VERSION` bump,
+because no probability, edge, EV or Kelly number moves: the policy chooses
+among rows the pricer already priced.
+
+**What a flip would move, measured on the cached 2026-09-18 board (15 games,
+write=False, no request made).** The only ledger-closed market on the box is
+the total. The Pick of the Day is PIT moneyline -175 at edge 0.08328 under all
+three values and the longshot slot is empty under all three, so on THIS board a
+flip moves no published row. What moves is the candidate pool and the table:
+floor-clearing candidate sides 5 under `"any"`, 2 under `"ledger_gated"`, 1
+under `"dispersion_gated"`, against 5 before the policy under all three
+(`pick_meta.n_floor_clearing_sides_before_policy`); `publishable` for the total
+True to False under both gated values, and for the runline True to False under
+`"dispersion_gated"` only. No number was read against an outcome.
+
+**NAMED FOLLOW-UPS IN assets/betting.js.** That file is not edited by this
+change, and three things in it read the policy or its census in a shape the
+third value outgrew. They are latent while HEAD is `"any"`, and each has the
+field it needs already on the payload:
+
+- `marketGateNotes` takes its branch from `pol.slot_market_policy === "any"`
+  (line 917), so under `"ledger_gated"` it prints the both-legs copy for a
+  market both legs have closed, including "Clearing one leg does not reopen the
+  market". Under `"ledger_gated"` clearing the LEDGER leg alone DOES reopen it,
+  so that sentence is false there. The fix is to branch on
+  `market_publishability.policy.ledger_leg_bars` and `.dispersion_leg_bars`,
+  which this change publishes for exactly that reason. Until it lands, the
+  page's both-legs copy is wrong under `"ledger_gated"`.
+- `bestValueSide` is unfiltered, as measured above.
+- `pickCensus` renders `pick_meta.n_floor_clearing_sides`, which is
+  policy-filtered at seam 1, under the words "cleared the floor", beside its
+  own unfiltered count of priced sides. `pick_meta.n_floor_clearing_sides_before_policy`
+  is published beside it so the census can pair like with like; the sentence
+  either reads the unfiltered number or names the policy.
+
+**The lock and the policy do not fight.** A slot published under one policy is
+a claim that was made. Under O21's default (R4-1a, the slot lock) a later build
+of the same slate serves the published row verbatim whatever the policy is
+now, and the flip is disclosed through `since_published` as
+`no_longer_selected` with the sentence riding in `caveat`. That is the same
+rule 7e-D writes for a pricer flip: "a slate whose slots were already locked
+keeps them". The policy takes effect on the next slate.
 
 ---
 
@@ -7780,7 +7906,8 @@ Accepted before the run: the Pick of the Day, the longshot and the value badges
 may go empty until a pricer clears. The shared floor (`PROVISIONAL_MIN_EDGE`
 0.06, 7a) is not lowered, and no slot gets a floor of its own. An empty slot
 names the floor it could not clear. Whether the slots empty depends on O15.
-Under its default (publishable markets only; the policy value is to be built),
+Under its default (publishable markets only; the policy value is to be built,
+and was built 2026-09-17 as `"ledger_gated"` and registered at the end of 7d),
 the ledger-closed total cannot fill a slot. Under `SLOT_MARKET_POLICY = "any"`
 as it stands, the total's Over lean can fill them under either pricer (on the
 served set, 232 of 425 re-priced games carried an Over clearing 0.06, 7f), with
@@ -8997,8 +9124,10 @@ What does not move:
   171 games (plan 4.2). A pass does not reopen it. Only 7b's re-open test does, on the
   pooled window above.
 - **The total's slots.** Under O15's DEFAULT (slots from publishable markets only; a
-  ledger-leg-only `SLOT_MARKET_POLICY` value is to be built), the total stays out of the
-  slots until its ledger leg reopens.
+  ledger-leg-only `SLOT_MARKET_POLICY` value is to be built; **built 2026-09-17 as
+  `"ledger_gated"`, registered at the end of 7d, and OFF: HEAD is still `"any"`**), the
+  total stays out of the slots until its ledger leg reopens. The BADGE is not gated
+  by any policy value and is measured as an unfiltered client-side surface in 7d.
 
 **What a pass cannot claim.** The lab grades the kernel on its own refit vintage pricer,
 with the Athletics' park neutral. The served kernel rides the served pricer, the park
@@ -9243,6 +9372,27 @@ never edits `assets/eephus-account.js`.
 - Hitter prop lines assume a projected batting order against a right-hander and
   a PA-by-slot table (4.65 at leadoff down to 3.85 at the nine hole). A posted
   lineup card beats this every time.
+  **2026-09-17:** the table is now a MEASURED one, counted off the cached
+  play-by-play corpus over 2022-2024 and checked once against a 2025 hold-out
+  (`tools/props_slot_pa_lab.py`, `data/betting_props_slot_pa_eval.json`, flag
+  `SERVE_SLOT_PA_MEASURED`, plan repair 8 and audit L17-F3). It is SPLIT HOME
+  FROM AWAY, because the home club does not bat in the ninth when it leads:
+  leadoff reads 4.5785 away and 4.3873 at home, the nine hole 3.5652 and
+  3.3711. The rule it replaced handed nine starters 38.25 plate appearances out
+  of the 37.6 a team-game carries, so every hitter Over was priced a little
+  high. THIS MOVED SERVED NUMBERS, all in one direction, measured on the
+  2026-09-17 board (39 hitter rows, 117 sides, every one of them down): total
+  bases P(over) -0.0177 on average and -0.0335 at worst, 1+ hits -0.0124, 1+
+  home runs -0.0045, and the published fair lines -0.056, -0.033 and -0.005.
+  The `Exp PA` column on the page moves with them, from 4.65 to 4.5785 for an
+  away leadoff man and to 4.3873 for a home one. The plan's own estimate was
+  0.5 to 1.8 points on 30 of 30 rows; the home side of the split is larger than
+  that range because it corrects the level and the side at once, and that gap
+  against the estimate is recorded rather than smoothed. What did NOT move: no
+  moneyline, runline or total, so `MODEL_VERSION` does not bump; and no props
+  value bet, because that block stays unarmed. A posted lineup card still beats
+  the table. What the table still does not condition on, from B-PA-DIST's own
+  brief: run environment and extra innings, neither knowable before the game.
 - No weather, no umpire, no travel, no injury news beyond what the leaderboards
   already absorb.
   **2026-09-11:** still true of every served price. Venue weather
