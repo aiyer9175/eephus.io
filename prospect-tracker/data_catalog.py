@@ -334,7 +334,10 @@ ARTIFACTS = (
                  "side map, as war_leaderboards.json: a year range and the "
                  "Current view cannot disagree. Rows are positional, by the "
                  "payload's own `fields`; a window sums the two sides UNROUNDED "
-                 "and rounds once."),
+                 "and rounds once. COST: about 1 MB of tracked payload rewritten "
+                 "on every eWAR build (compact, no indent), and the per-season "
+                 "denominators are memoised under .cache/war_seasons_lines/, so "
+                 "a nightly rebuild reads the live season's feed and no other."),
     },
     {
         "file": "mlbstats_windows.json", "group": "mlb",

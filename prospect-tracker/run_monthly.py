@@ -239,13 +239,6 @@ SCHEDULED_EXPORTS = (
     # paints "being computed" on a missing payload, so a silent failure looks
     # to a reader exactly like a board that has not been built yet.
     "war_leaderboards",
-    # The per-season substrate the eWAR board writes beside itself, and the
-    # multi-year window lab. Both refuse rather than publish (a substrate on
-    # another eWAR build, a window too thin to carry a pool), and a refusal
-    # that files under a name this list does not hold never reaches the deploy
-    # shell's INGEST RED - which is the inert-guard defect the comment above
-    # records having shipped once already.
-    "war_seasons", "mlbstats_windows",
     # /fantasy/ + /dfs/ + /betting/, all of which read the same probables feed
     "fantasy_schedule", "fantasy_teams_context", "fantasy_export",
     "dfs_schedule", "dfs_slate", "betting_export",
@@ -288,6 +281,15 @@ SCHEDULED_EXPORTS = (
     # The /arbitration/ board. Watched because a silent failure
     # here empties a whole module rather than erroring.
     "arbitration_export",
+    # The per-season eWAR substrate and the multi-year window lab. Both refuse
+    # rather than publish (a substrate on another eWAR build; a window too thin
+    # to carry a pool), and both file an ok=True heartbeat on a good run, so
+    # "ran and refused" is distinguishable from "never ran". A refusal filed
+    # under a name this list does not hold never reaches the deploy shell's
+    # INGEST RED, which is the inert-guard defect the war_leaderboards comment
+    # above records. Placed HERE, below mgmt_export, on purpose:
+    # test_mgmt_export scans a fixed window of this tuple's text.
+    "war_seasons", "mlbstats_windows",
     # THE CLOSE-ODDS CAPTURE. Not an export this pipeline runs at all: it is
     # tools/betting_close_job.py, on its own cron, and that is exactly why it is
     # watched from here. The job exits 0 on every legitimate no-op, so a cron
@@ -5766,9 +5768,21 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # Additive; never aborts.
         with _step("6b4k. Multi-year windows (mlbstats_window_*.json)", log):
             try:
-                if not _lab_should_skip(out_dir / "mlbstats_windows.json",
-                                        "6b4k multi-year windows", log):
-                    from tools import mlbstats_window_lab
+                from tools import mlbstats_window_lab
+                _win_path = out_dir / "mlbstats_windows.json"
+                # THE CADENCE GATE ASKS AGE; THIS ASKS BASIS. The windows carry
+                # an eWAR column and the eWAR build moves nightly, so a 45-day
+                # cadence could leave the window's `war` up to 45 days behind
+                # the column beside it - and the test that asserts the two share
+                # a basis would go red on a rebuild this gate then refused to
+                # let the pipeline clear. basis_moved is the artifact-level
+                # `invalidated_by` argument applied one step earlier.
+                _win_moved = mlbstats_window_lab.basis_moved(_win_path)
+                if _win_moved:
+                    log.info("6b4k multi-year windows: RUN - the served eWAR "
+                             "basis moved under the window artifact")
+                if _win_moved or not _lab_should_skip(
+                        _win_path, "6b4k multi-year windows", log):
                     _win_n = mlbstats_window_lab.export(log=log.info)
                     log.info("mlbstats windows: %d window(s) published", _win_n)
             except Exception:

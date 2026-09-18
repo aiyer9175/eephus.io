@@ -58,6 +58,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
+import time
 from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
@@ -82,11 +83,34 @@ OUT_PATH = DATA_DIR / "war_leaderboards.json"
 #: file instead of asking for one payload per selectable window (any start by
 #: any end over sixteen seasons is 136 of them). Written in THIS process from
 #: THIS board's own side map: see build_seasons.
-SEASONS_OUT_PATH = DATA_DIR / "war_seasons.json"
+SEASONS_FILENAME = "war_seasons.json"
 
 #: The substrate's shape version. The page folds these rows positionally, so a
 #: shape change it has not been taught has to be visible in the payload.
 SEASONS_SCHEMA = 1
+
+#: Where the per-season DENOMINATOR LINES are memoised, completed seasons only.
+#: A finished season's stat line is frozen, which is the same argument the
+#: window lab's panel memo makes - and it is what keeps this step's cost claim
+#: true. scrapers._cache_ttl_for_key gives a prior-year key a 30-DAY TTL, so
+#: without a memo the NIGHTLY eWAR refresh refetches about 30 season feeds
+#: (roughly 1.1 MB and half a second of rate limit apiece) once a month inside a
+#: step documented as opening no new door. Nothing in .cache/ ships.
+SEASONS_LINES_CACHE = ROOT / ".cache" / "war_seasons_lines"
+SEASONS_LINES_SCHEMA = 1
+
+
+def seasons_out_path() -> Path:
+    """Where the substrate is written, RESOLVED FROM OUT_PATH AT CALL TIME.
+
+    Not a module constant, and the difference is not cosmetic: every test that
+    drives this exporter redirects OUT_PATH to a tmp_path and nothing else, so a
+    second module-level path would keep writing the synthetic substrate into the
+    real, git-tracked data/ directory. Measured before this was a function: one
+    stubbed test took data/war_seasons.json from 5,149 players to 24, and a full
+    suite run left it at 20. That is the documented "pytest pollutes build
+    artifacts" trap, and the fix is to have one door for both files."""
+    return Path(OUT_PATH).parent / SEASONS_FILENAME
 
 #: The qualified cut the board opens on, and the rule it publishes so a reader
 #: never has to infer it. The two numbers are the DISPLAY floors the WAR-rate
@@ -623,10 +647,54 @@ def _ewar_doc() -> dict:
 FEED_PITCHING_POS = ("P", "TWP")
 
 
+def _lines_memo_path(season: int) -> Path:
+    return (SEASONS_LINES_CACHE /
+            f"lines_{int(season)}_v{SEASONS_LINES_SCHEMA}.json")
+
+
+def _read_lines_memo(season: int) -> Optional[dict]:
+    """The memoised denominator lines for a COMPLETED season, or None."""
+    try:
+        doc = json.loads(_lines_memo_path(season).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    rows = doc.get("lines")
+    if not isinstance(rows, dict) or not rows:
+        return None
+    return {int(k): v for k, v in rows.items()}
+
+
+def _write_lines_memo(season: int, lines: dict) -> None:
+    """Memoise a COMPLETE read of a COMPLETED season. A partial read is never
+    written: a hole memoised once is a hole forever, which is the defect
+    arb_metrics.season_metrics records having shipped."""
+    path = _lines_memo_path(season)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps({"season": int(season),
+                                   "schema": SEASONS_LINES_SCHEMA,
+                                   "built_at": date.today().isoformat(),
+                                   "lines": {str(k): v for k, v in lines.items()}},
+                                  separators=(",", ":")), encoding="utf-8")
+        tmp.replace(path)
+    except OSError:     # pragma: no cover - a memo we cannot write is a refetch
+        pass
+
+
 def _feed_lines(season: int, *, hit_by: Optional[dict] = None,
-                pit_by: Optional[dict] = None) -> dict:
-    """{mlbam: {"pa", "ip", "age", "pos", "g", "gs"}} for one season: every
-    denominator the substrate publishes, from the door the BOARD reads.
+                pit_by: Optional[dict] = None,
+                live: bool = False) -> tuple:
+    """({mlbam: {"pa", "ip", "age", "pos", "g", "gs"}}, [dead groups], origin)
+    for one season: every denominator the substrate publishes, from the door the
+    BOARD reads.
+
+    THE HOLE IS PER GROUP, SO THE REPORT IS TOO. A season does not usually fail;
+    ONE of its two feeds does. A 2019 pitching read that 500s leaves every 2019
+    pitcher-season without `ip` or `gs` while the hitting rows sail through, and
+    a caller told only "the season is fine" would print a three-season IP total
+    silently missing one season. So the dead groups come back by name and
+    build_seasons publishes them.
 
     ONE DOOR PER NUMBER. The eWAR artifact also carries a `pa` and an `ip` per
     player-season, and taking them from there was measured against the board on
@@ -653,14 +721,23 @@ def _feed_lines(season: int, *, hit_by: Optional[dict] = None,
     Best effort by design: a season whose feed is cold contributes no
     denominator at all, and its rows still carry their eWAR sides."""
     out: dict = {}
+    missing: list = []
+    if not live:
+        memo = _read_lines_memo(season)
+        if memo is not None:
+            return memo, [], "memo"
     try:
         import fa_sources
     except Exception:    # noqa: BLE001 - a substrate is not worth a failed board
-        return out
+        return out, ["hitting", "pitching"], "unavailable"
     for group in ("hitting", "pitching"):
         try:
             splits = fa_sources.fetch_statsapi_season_stats(int(season), group)
         except Exception:   # noqa: BLE001 - a cold season is a thinner row
+            missing.append(group)
+            continue
+        if not splits:
+            missing.append(group)
             continue
         for s in splits or []:
             pid = (s.get("player") or {}).get("id")
@@ -719,7 +796,9 @@ def _feed_lines(season: int, *, hit_by: Optional[dict] = None,
         if g is not None:
             r["g"] = max(int(g), int(r.get("g") or 0))
         r["pos"] = p.get("pos") or r.get("pos") or "P"
-    return out
+    if not live and not missing and out:
+        _write_lines_memo(season, out)
+    return out, missing, "feed"
 
 
 def _club_dialect(players: list) -> dict:
@@ -814,14 +893,26 @@ def build_seasons(war_by: dict, players: list, *, live_season: int,
         canonical_org = None
 
     lines_now = season_lines or {}
-    feeds, cold = {}, []
+    feeds, cold, group_cold = {}, [], {}
+    n_memo = n_fetch = 0
+    t_feed = time.time()
     for y in seasons:
         live = int(y) == int(live_season)
-        lines = _feed_lines(y, hit_by=lines_now.get("hit") if live else None,
-                            pit_by=lines_now.get("pit") if live else None)
+        lines, missing, origin = _feed_lines(
+            y, hit_by=lines_now.get("hit") if live else None,
+            pit_by=lines_now.get("pit") if live else None, live=live)
+        n_memo += 1 if origin == "memo" else 0
+        n_fetch += 1 if origin == "feed" else 0
         if not lines:
             cold.append(y)
+        elif missing:
+            # HALF A SEASON, NAMED. The rows still ship and the side that failed
+            # is absent rather than zero, which is right; what would be wrong is
+            # a payload reporting full coverage over a season with no innings in
+            # it.
+            group_cold[str(y)] = missing
         feeds[y] = lines
+    feed_seconds = round(time.time() - t_feed, 2)
 
     tm_dict, tm_idx, pos_dict, pos_idx = [], {}, [], {}
 
@@ -895,12 +986,35 @@ def build_seasons(war_by: dict, players: list, *, live_season: int,
         "sources": {"n_players": len(out_players), "n_player_seasons": n_rows,
                     "n_seasons_without_a_feed": len(cold),
                     "seasons_without_a_feed": cold,
+                    # {season: [feed groups that failed]}. A season here has its
+                    # eWAR sides and NO denominator for the named side, so a
+                    # window folding it sums fewer seasons of PA or IP than of
+                    # eWAR. The page states it; it is not inferable from the
+                    # rows.
+                    "groups_without_a_feed": group_cold,
+                    "feed_reads": {"from_memo": n_memo, "fetched": n_fetch,
+                                   "seconds": feed_seconds,
+                                   "memo": str(SEASONS_LINES_CACHE.name)},
                     "n_club_codes_unresolved": n_unresolved},
+        "field_notes": {
+            "g": ("games PLAYED: the MAX of the hitting and pitching feed G, "
+                  "never their sum, because a two-way player's hitting games "
+                  "and pitching games are the same games. The eWAR BOARD's own "
+                  "`g` is the pitching feed's G alone, so a hitter reads blank "
+                  "there and a real number here. Two different questions, "
+                  "pinned apart by test_mlbstats_windows."),
+            "war_bat": ("the batting side at full precision. The board prints "
+                        "it rounded to a tenth; a window sums these and rounds "
+                        "once."),
+        },
         "note": ("One row per player-season, positional by `fields`. A window is "
                  "the fold of these rows: counts add, the two eWAR sides sum "
                  "UNROUNDED and round once. The board's Current view is this "
                  "file folded at the live season, from the same read, in the "
-                 "same process."),
+                 "same process. A season named in `groups_without_a_feed` "
+                 "carries its eWAR and no denominator for that side, so a "
+                 "window over it is short of one season's PA or IP and says "
+                 "so."),
     }
 
 
@@ -912,16 +1026,17 @@ def _write_seasons(payload: dict, *, today: str, log=print) -> int:
     instead of shipping a year range with nothing in it. The file is written
     COMPACT (no indent): it is folded by a machine, and indent=1 costs about a
     third of the payload for whitespace no reader sees."""
+    out_path = seasons_out_path()
     if payload.get("refused"):
         log(f"  ewar seasons: REFUSED ({payload['refused']}); leaving "
-            f"{SEASONS_OUT_PATH.name} as it is")
+            f"{out_path.name} as it is")
         _ingest_red("war_seasons", f"{payload['refused']}. The per-season "
                                    f"substrate was not rewritten; the previous "
                                    f"file stands.")
         return 0
     rows = [[mid, v] for mid, v in (payload.get("players") or {}).items()]
     kept, guard = guard_nonempty_block(
-        rows, SEASONS_OUT_PATH, key="players", source="war_seasons",
+        rows, out_path, key="players", source="war_seasons",
         label="ewar seasons", log=log)
     if not kept:
         return 0
@@ -942,12 +1057,14 @@ def _write_seasons(payload: dict, *, today: str, log=print) -> int:
     out["ewar_vintage"] = _war_source_vintage(as_of=today)
     out.update(payload)
     out["block_guard"] = {"players": guard}
-    SEASONS_OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    tmp = SEASONS_OUT_PATH.with_suffix(".json.tmp")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = out_path.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
-    tmp.replace(SEASONS_OUT_PATH)
-    log(f"  ewar seasons: wrote {SEASONS_OUT_PATH.name} "
-        f"({payload['sources']['n_player_seasons']} player-seasons)")
+    tmp.replace(out_path)
+    log(f"  ewar seasons: wrote {out_path.name} "
+        f"({payload['sources']['n_player_seasons']} player-seasons, "
+        f"{payload['sources']['feed_reads']['from_memo']} seasons from the "
+        f"line memo)")
     return payload["sources"]["n_player_seasons"]
 
 

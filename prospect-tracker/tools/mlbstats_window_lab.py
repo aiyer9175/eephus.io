@@ -12,19 +12,27 @@ shipped three-year columns already use. Nothing here is folded in the browser
 and nothing is recomputed at export time: the artifacts are frozen and
 vintage-stamped exactly as `hem_plus_3yr` and its siblings are.
 
-THE METHOD, FOUND IN THIS REPO RATHER THAN INVENTED HERE
-========================================================
-Four exporters already ship a multi-season index, and all four compute it the
-same way. Read them before changing anything here:
+THE METHOD, PER COLUMN, FOUND IN THIS REPO RATHER THAN INVENTED HERE
+====================================================================
+Five exporters already ship a multi-season value. Each column names the ONE its
+recipe came from, because they do not all weight the same thing, and the column
+easiest to get wrong is the one whose shipped recipe is easiest to miss:
 
-  tools/hem_plus_lab._multiyear_proposed   PA-weighted mean of the per-season
-                                           HEM+ over the trailing three seasons
-  tools/sem_plus_lab._multiyear_proposed   IP-weighted, starters
-  tools/rem_plus_lab._multiyear_proposed   IP-weighted, relievers
-  tools/dem_plus_lab._multiyear_proposed   innings-weighted, fielders
-  tools/war_rate_plus_lab.window_values    the same recipe with an arbitrary
-                                           window length, already parameterised
-                                           by `years`
+  hem_plus     tools/hem_plus_lab._multiyear_proposed  PA-weighted mean of the
+                                                       ROUNDED per-season HEM+
+  sem_plus     tools/sem_plus_lab._multiyear_proposed  IP-weighted, rounded
+  rem_plus     tools/rem_plus_lab._multiyear_proposed  IP-weighted, rounded
+  dem_plus     tools/dem_plus_lab._dem3                innings-weighted, on the
+                                                       UNROUNDED dem_plus_raw:
+                                                       that builder's choice,
+                                                       and the one place the
+                                                       four labs differ
+  gmli         tools/leverage_consistency_eval         RELIEF-ENTRY-weighted
+               .proposed_values                        (gmli x appearances),
+                                                       never innings-weighted
+  war_pa_plus  tools/war_rate_plus_lab.window_values   the same recipe with an
+  war_ip_plus                                          arbitrary window length,
+                                                       CALLED here, not copied
 
 So the house recipe is one sentence, and this module states it once:
 
@@ -53,6 +61,24 @@ and they are published rather than hidden:
      carries `n_seasons`, `denom_total` and the `established` / `provisional`
      tag each lab already defines, with the labs' own thresholds imported rather
      than retyped.
+
+TWO CHOICES HERE ARE THIS MODULE'S OWN, AND THEY ARE SAID OUT LOUD
+==================================================================
+  1. RIV+ HAS NO SHIPPED MULTI-YEAR COLUMN. There is no `riv_plus_3yr` anywhere
+     in this repo, so the innings weighting is ours. RIV+ is REALISED IMPACT
+     rather than a rate skill, and innings are the exposure that produced the
+     impact, which is why they are the weight; its established / provisional
+     thresholds are REM+'s, because the pool is the same arms, and that is a
+     borrowed threshold rather than a measured one.
+  2. THE UNIVERSE IS THE WINDOW'S, NOT THE CURRENT SEASON'S. Every shipped
+     `_multiyear_proposed` publishes a value only for a player who qualifies in
+     the CURRENT season (hem_plus_lab: PA >= 200 this year), so a player who
+     stopped playing mid-window has no three-year value at all. This lab
+     publishes anyone clearing the window's own summed floor, which is the
+     spec's universe rule and is what makes a window a board rather than a
+     column on today's board. A 2024-2025 regular with no 2026 line therefore
+     gets an l3 index the shipped column would not give him, and that is
+     deliberate.
 
 CONTRIBUTING SEASONS. Each metric keeps its OWN rule, because the point of this
 module is to travel the shipped method rather than to add a second one:
@@ -118,6 +144,13 @@ bullpen_export.rows_from_pitching_splits, both disk-cached 2000-2026) plus
 defense_export.score_season and mlb_leverage.fetch_season_all_leverage for the
 two boards arb_metrics does not cover. Nothing in .cache/ ships.
 
+THE FIELDING BLOCK IS THE EXCEPTION TO "FROZEN". A completed season's stat line
+never changes, which is what makes the memo sound, but the fielding block is
+FanGraphs-sourced and FanGraphs can revise a past season (the spec says so in
+terms: a window is as of each row's own fetch). So `dfn` carries its own build
+date inside the panel and expires after DFN_MAX_AGE_DAYS, rescored in place on
+the next run; the rest of the panel is permanent.
+
 eWAR IS NEVER MEMOISED. The panel holds what a completed season's stat line
 holds, which never changes; the eWAR sides come from bullpen_export
 ._side_war_by_season on every run, so a window's `war` column always describes
@@ -153,7 +186,17 @@ SUBSTRATE_PATH = DATA / "war_seasons.json"
 #: Panel shape version. Bump to invalidate this module's memo files ALONE; the
 #: arbitration panel's own SCHEMA is a different constant in a different
 #: namespace and must never be bumped from here.
-SCHEMA = 1
+#: v2: the pitching block carries each reliever's RELIEF ENTRIES, because gmLI
+#: pools on entries and not on innings (leverage_consistency_eval owns that
+#: recipe), and the fielding block carries `dem_plus_raw`, because
+#: dem_plus_lab._dem3 weights the UNROUNDED per-season DEM+.
+SCHEMA = 2
+
+#: How long a memoised panel's FanGraphs fielding block is trusted. The lab's
+#: own cadence (run_monthly.LAB_EVAL_FRESH_DAYS), so a revision to a past
+#: season's fielding runs reaches a window within one lab pass instead of
+#: waiting for a --force nobody would know to run.
+DFN_MAX_AGE_DAYS = 45
 
 #: The windows this lab builds, longest name first in the artifact. `years` is
 #: the count of seasons ENDING AT the live season, which is the convention
@@ -171,6 +214,11 @@ WINDOWS = (
 #: index pool is too small for a mean and a standard deviation to describe it.
 MIN_BOARD_ROWS = 50
 MIN_POOL_N = 100
+#: ... and a fourth way: a season that loaded every block can still be HALF a
+#: season, because the leverage walk reports its coverage and returns what it
+#: walked. A block whose season is under this share of the window's median
+#: season is a refusal rather than a quietly shorter denominator.
+MIN_SEASON_SHARE = 0.5
 
 
 def _num(v):
@@ -203,6 +251,7 @@ def _tags() -> dict:
     provisional tag, read from the lab that defines each one so a threshold
     cannot drift into a second copy here."""
     from tools import dem_plus_lab, hem_plus_lab, rem_plus_lab, sem_plus_lab
+    from tools import leverage_consistency_eval as lce
     from tools import war_rate_plus_lab as wrp
     return {
         "hem_plus": (hem_plus_lab.TAG_MIN_SEASONS, hem_plus_lab.TAG_MIN_PA),
@@ -210,6 +259,10 @@ def _tags() -> dict:
         "rem_plus": (rem_plus_lab.TAG_MIN_SEASONS, rem_plus_lab.TAG_MIN_IP),
         "riv_plus": (rem_plus_lab.TAG_MIN_SEASONS, rem_plus_lab.TAG_MIN_IP),
         "dem_plus": (dem_plus_lab.TAG_MIN_SEASONS, dem_plus_lab.TAG_MIN_INN),
+        # gmLI is the one POOLED RATE here that carries a tag, because the
+        # shipped gmli_3yr does: 2+ seasons and 60+ relief entries, counted in
+        # relief entries and not in innings.
+        "gmli": (lce.TAG_MIN_SEASONS, lce.TAG_MIN_ENTRIES),
         "war_pa_plus": (wrp.EST_MIN_SEASONS, wrp.EST_MIN_PA),
         "war_ip_plus_sp": (wrp.EST_MIN_SEASONS, wrp.EST_MIN_SP_IP),
         "war_ip_plus_rp": (wrp.EST_MIN_SEASONS, wrp.EST_MIN_RP_IP),
@@ -229,27 +282,39 @@ def _qualified_rule() -> dict:
     sentence, and a count board is self-protecting anyway."""
     import dem_plus
     import hem_plus
+    import leverage_export
     import rem_plus
     import sem_plus
     import war_board_export as wbe
+    # EVERY NUMBER AND EVERY SENTENCE IS READ, the leverage board's included:
+    # that is the one place a threshold could have drifted without a test
+    # noticing, and leverage_export.QUAL_PA / QUAL_STARTS are what the served
+    # leverage board opens on.
+    overall = (int(wbe.QUAL_MIN_PA), int(wbe.QUAL_MIN_IP))
+    hit_pa = int(hem_plus.QUALIFY_MIN_PA)
+    sp = (int(sem_plus.QUALIFY_MIN_GS), int(sem_plus.QUALIFY_MIN_IP))
+    rp = (int(rem_plus.QUALIFY_MIN_TBF), int(rem_plus.QUALIFY_MIN_IP),
+          int(rem_plus.QUALIFY_MIN_G))
+    lev = (int(leverage_export.QUAL_PA), int(leverage_export.QUAL_STARTS))
+    dfn_inn = int(dem_plus.QUALIFY_MIN_INN)
     return {
-        "overall": {"min_pa": int(wbe.QUAL_MIN_PA), "min_ip": int(wbe.QUAL_MIN_IP),
-                    "rule": "PA >= 100 or IP >= 30 over the whole window"},
-        "hitters": {"min_pa": int(hem_plus.QUALIFY_MIN_PA),
-                    "rule": "PA >= 200 over the whole window"},
-        "starters": {"min_gs": int(sem_plus.QUALIFY_MIN_GS),
-                     "min_ip": int(sem_plus.QUALIFY_MIN_IP),
-                     "rule": "GS >= 10 or IP >= 50 over the whole window"},
-        "bullpen": {"min_tbf": int(rem_plus.QUALIFY_MIN_TBF),
-                    "min_ip": int(rem_plus.QUALIFY_MIN_IP),
-                    "min_g": int(rem_plus.QUALIFY_MIN_G),
-                    "rule": ("TBF >= 100, or IP >= 20 with G >= 20, over the "
-                             "whole window")},
-        "leverage": {"min_pa": 250, "min_starts": 5,
-                     "rule": ("PA >= 250 for a batter or starts >= 5 for a "
-                              "starter, over the whole window")},
-        "defense": {"min_inn": int(dem_plus.QUALIFY_MIN_INN),
-                    "rule": "defensive innings >= 400 over the whole window"},
+        "overall": {"min_pa": overall[0], "min_ip": overall[1],
+                    "rule": (f"PA >= {overall[0]} or IP >= {overall[1]} over "
+                             f"the whole window")},
+        "hitters": {"min_pa": hit_pa,
+                    "rule": f"PA >= {hit_pa} over the whole window"},
+        "starters": {"min_gs": sp[0], "min_ip": sp[1],
+                     "rule": (f"GS >= {sp[0]} or IP >= {sp[1]} over the whole "
+                              f"window")},
+        "bullpen": {"min_tbf": rp[0], "min_ip": rp[1], "min_g": rp[2],
+                    "rule": (f"TBF >= {rp[0]}, or IP >= {rp[1]} with G >= "
+                             f"{rp[2]}, over the whole window")},
+        "leverage": {"min_pa": lev[0], "min_starts": lev[1],
+                     "rule": (f"PA >= {lev[0]} for a batter or starts >= "
+                              f"{lev[1]} for a starter, over the whole window")},
+        "defense": {"min_inn": dfn_inn,
+                    "rule": (f"defensive innings >= {dfn_inn} over the whole "
+                             f"window")},
     }
 
 
@@ -360,11 +425,19 @@ def _pitching_block(season: int, leverage: dict | None, log=_nolog) -> tuple[dic
             mid = r.get("mlbam")
             if mid is None or int(mid) not in out:
                 continue
+            # `gapp` is RELIEF ENTRIES, off the same winProbability walk
+            # (mlb_leverage._finalize returns `appearances`). It is carried
+            # because gmLI pools on entries: tools/leverage_consistency_eval
+            # .proposed_values builds the shipped gmli_3yr as
+            # sum(gmli * appearances) / sum(appearances), and the Reliever
+            # dataclass drops the count on the way through.
+            lev_row = (leverage or {}).get(int(mid)) or {}
             out[int(mid)].update({
                 "rem": _num(r.get("rem_plus")), "riv": _num(r.get("riv_plus")),
                 "rp_qual": bool(r.get("qualified")),
                 "gmli": _num(r.get("gmli")), "wpa": _num(r.get("wpa")),
                 "wpa_li": _num(r.get("wpa_li")),
+                "gapp": _i(lev_row.get("appearances")),
                 "sd": _i(r.get("sd")), "md": _i(r.get("md")),
             })
     except Exception as exc:                # noqa: BLE001
@@ -400,7 +473,14 @@ def _defense_block(season: int, log=_nolog) -> tuple[dict, bool]:
             "name": f.name, "team": f.team, "pos": f.primary_pos,
             "inn": _r(f.inn, 1),
             "pos_inn": _r(float((f.inn_by_pos or {}).get(f.primary_pos) or 0.0), 1),
-            "dem": _num(f.dem_plus), "qual": bool(f.qualified),
+            # BOTH: `dem` is the published (rounded) season value, which is
+            # what the per-season reproduction check compares against the
+            # served board, and `dem_raw` is what the WINDOW weights, because
+            # dem_plus_lab._dem3 weights dem_plus_raw. HEM+, SEM+ and REM+
+            # weight their rounded per-season value; DEM+ is the exception, and
+            # following each builder is the whole point of this module.
+            "dem": _num(f.dem_plus), "dem_raw": _num(f.dem_plus_raw),
+            "qual": bool(f.qualified),
             "fld_runs": _num(f.fld_runs), "frm_runs": _num(frm),
             "pos_runs": _num(f.pos_runs), "pos_runs_fg": _num(f.pos_runs_fg),
             "po": _num(f.putouts), "a": _num(f.assists), "e": _num(f.errors),
@@ -429,6 +509,25 @@ def _leverage_blocks(season: int, log=_nolog) -> tuple[dict, dict, dict, bool]:
             rel or {}, True)
 
 
+def _age_days(stamp) -> int | None:
+    """Whole days since an ISO date stamp, or None if it cannot be read."""
+    try:
+        return (date.today() - date.fromisoformat(str(stamp)[:10])).days
+    except (TypeError, ValueError):
+        return None
+
+
+def _write_panel(panel: dict, path: Path) -> None:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(panel, separators=(",", ":")), encoding="utf-8")
+        tmp.replace(path)
+    except OSError as exc:                  # pragma: no cover - defensive
+        _log.warning("window lab: could not memoise %s: %s",
+                     panel.get("season"), exc)
+
+
 def season_panel(season: int, *, force: bool = False, cache_dir: Path | None = None,
                  log=_nolog) -> dict:
     """The whole-league panel for one season, memoised for completed seasons.
@@ -436,16 +535,40 @@ def season_panel(season: int, *, force: bool = False, cache_dir: Path | None = N
     A season is memoised only when EVERY block loaded. A partial panel written
     once is trusted forever, which is the defect arb_metrics.season_metrics
     records having shipped (a hitters-only memo that silently dropped every
-    pitcher from the model)."""
+    pitcher from the model).
+
+    THE FIELDING BLOCK EXPIRES; nothing else does. A completed season's stat
+    line is frozen, but its FanGraphs fielding runs can be revised, so `dfn`
+    carries its own build date and is rescored in place after DFN_MAX_AGE_DAYS.
+    A rescore that fails keeps the block it has rather than dropping a board:
+    the age is on the panel and on the window's coverage block either way."""
     season = int(season)
     path = _panel_path(season, cache_dir)
     if not force and _is_final(season) and path.exists():
         try:
             doc = json.loads(path.read_text(encoding="utf-8"))
             if doc.get("schema") == SCHEMA:
-                return {k: ({int(kk): vv for kk, vv in v.items()}
-                            if isinstance(v, dict) and k in _PANEL_BLOCKS else v)
-                        for k, v in doc.items()}
+                panel = {k: ({int(kk): vv for kk, vv in v.items()}
+                             if isinstance(v, dict) and k in _PANEL_BLOCKS else v)
+                         for k, v in doc.items()}
+                age = _age_days((panel.get("block_built_at") or {}).get("dfn")
+                                or panel.get("built_at"))
+                if age is None or age <= DFN_MAX_AGE_DAYS:
+                    return panel
+                log(f"  window lab: {season} fielding block is {age}d old "
+                    f"(> {DFN_MAX_AGE_DAYS}d); rescoring it")
+                dfn, dfn_ok = _defense_block(season, log=log)
+                if dfn_ok:
+                    panel["dfn"] = dfn
+                    panel.setdefault("block_built_at", {})["dfn"] = \
+                        date.today().isoformat()
+                    (panel.setdefault("sources", {})).update(
+                        {"defense": True, "n_fielders": len(dfn)})
+                    _write_panel(panel, path)
+                else:
+                    _log.warning("window lab: %s fielding rescore failed; the "
+                                 "%dd-old block stands", season, age)
+                return panel
         except (OSError, ValueError):
             _log.warning("window lab: unreadable panel %s; rebuilding", path.name)
 
@@ -455,9 +578,15 @@ def season_panel(season: int, *, force: bool = False, cache_dir: Path | None = N
     hit, hit_ok = _hitting_block(season, log=log)
     pit, pit_ok = _pitching_block(season, lev_rel, log=log)
     dfn, dfn_ok = _defense_block(season, log=log)
+    today = date.today().isoformat()
     panel = {
         "schema": SCHEMA, "season": season,
-        "built_at": date.today().isoformat(),
+        "built_at": today,
+        # PER-BLOCK VINTAGE. Only `dfn` can go stale on a completed season, but
+        # every block states when it was read so a window's coverage block can
+        # say how old each number is rather than how old the file is.
+        "block_built_at": {"hit": today, "pit": today, "dfn": today,
+                           "lev": today},
         "complete": bool(hit_ok and pit_ok and dfn_ok and lev_ok),
         "sources": {"hitting": hit_ok, "pitching": pit_ok, "defense": dfn_ok,
                     "leverage": lev_ok,
@@ -469,13 +598,7 @@ def season_panel(season: int, *, force: bool = False, cache_dir: Path | None = N
     log(f"  window lab: {season} panel in {round(time.time() - t0, 1)}s "
         f"(complete={panel['complete']})")
     if panel["complete"] and _is_final(season):
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_suffix(".json.tmp")
-            tmp.write_text(json.dumps(panel, separators=(",", ":")), encoding="utf-8")
-            tmp.replace(path)
-        except OSError as exc:              # pragma: no cover - defensive
-            _log.warning("window lab: could not memoise %s: %s", season, exc)
+        _write_panel(panel, path)
     elif not panel["complete"]:
         _log.warning("window lab: %s is incomplete (%s); not memoised", season,
                      panel["sources"])
@@ -558,8 +681,11 @@ def _stamp_index(rows: dict, key: str, vals: dict, published: set) -> dict:
     tag. There is deliberately no tier, no band and no `_adj`: a ruler measured
     on a one-season pool does not travel (see the module docstring, point 2)."""
     live = {mid: v["value"] for mid, v in vals.items() if mid in published}
+    est = {mid: v["value"] for mid, v in vals.items()
+           if mid in published and v["tag"] == "established"}
     pcts = _pct_map(live)
     mu, sd = _mu_sd(sorted(live.values()))
+    emu, esd = _mu_sd(sorted(est.values()))
     for mid, v in vals.items():
         row = rows.get(mid)
         if row is None:
@@ -570,11 +696,24 @@ def _stamp_index(rows: dict, key: str, vals: dict, published: set) -> dict:
         row[f"{key}_tag"] = v["tag"]
         row[f"{key}_n"] = v["n_seasons"]
         row[f"{key}_denom"] = v["denom_total"]
+    # THE POOL THE PAGE SHOWS IS NOT THE POOL THIS DESCRIBES, unless both are
+    # published. A window pool is 30-40% provisional (measured on l3: HEM+ 233
+    # of 587), and the spec defaults the page to established-only, so the
+    # established block is what that view's 100 and one sigma actually are.
+    # `pct` stays ranked over EVERY published row, provisional included,
+    # because that is the ordering the rows are printed in and one ordering is
+    # all a row can carry.
     return {"n": len(live), "mean": _r(mu, 2), "sd": _r(sd, 2),
+            "n_established": len(est), "n_provisional": len(live) - len(est),
+            "established": {"n": len(est), "mean": _r(emu, 2), "sd": _r(esd, 2)},
+            "pct_pool": ("every published row on this board, provisional rows "
+                         "included"),
             "note": ("100 is the average of each contributing SEASON'S pool, "
                      "not of this window's pool, because the value is the "
                      "denominator-weighted mean of the per-season index. This "
-                     "block reports what the window pool actually is.")}
+                     "block reports what the window pool actually is, and "
+                     "`established` reports what the established-only view's "
+                     "pool is.")}
 
 
 # --------------------------------------------------------------------------- #
@@ -748,6 +887,7 @@ def _overall_board(seasons: list, war_by: dict, sub: dict, qual: dict) -> dict:
     tm, pos_d = sub.get("tm") or [], sub.get("pos") or []
     lo, hi = min(seasons), max(seasons)
     rows = []
+    lg_bat = lg_pit = 0.0
     for mid, entry in (sub.get("players") or {}).items():
         name, srows = entry[0], entry[1]
         bat = pit = 0.0
@@ -791,6 +931,8 @@ def _overall_board(seasons: list, war_by: dict, sub: dict, qual: dict) -> dict:
                         clubs.append(c)
         if not yrs:
             continue
+        lg_bat += bat
+        lg_pit += pit
         row = {"mlbam": int(mid), "name": name, "pos": pos, "age": age,
                "yrs": yrs, "clubs": clubs, "last_season": last,
                "war": round(bat + pit, 1),
@@ -804,15 +946,34 @@ def _overall_board(seasons: list, war_by: dict, sub: dict, qual: dict) -> dict:
         # summed value would charge a two-way player's pitching to his plate
         # appearances, which is the same reason _side_war_by_season keeps the
         # sides on separate keys.
-        row["bat_600"] = _pooled(bat * 600.0, pa, 2) if (has_bat and pa) else None
-        row["pitch_200"] = _pooled(pit * 200.0, ip, 2) if (has_pit and ip) else None
+        # A DISPLAY FLOOR UNDER BOTH RATES, and not a taste.
+        # war_rate_plus_lab.window_values gates a contributing season on
+        # DISPLAY_MIN_PA / DISPLAY_MIN_RP_IP and its docstring argues exactly
+        # this: admitting a sample the one-season column would refuse to print
+        # puts small-sample noise at the top of the board (measured on the
+        # unfloored build: Ryne Nelson, a starting pitcher, read Bat/600 = 42.0
+        # off a handful of plate appearances). This board's own qualified
+        # numbers ARE those two floors (war_board_export.QUAL_MIN_PA = 100,
+        # QUAL_MIN_IP = 30, both aliases of the WAR-rate display floors), so a
+        # side's rate appears exactly when its denominator would have been
+        # printable over one season, and `display_min` is on the payload so the
+        # page states the rule instead of guessing it.
+        row["bat_600"] = (_pooled(bat * 600.0, pa, 2)
+                          if (has_bat and pa >= qual["min_pa"]) else None)
+        row["pitch_200"] = (_pooled(pit * 200.0, ip, 2)
+                            if (has_pit and ip >= qual["min_ip"]) else None)
         row["qualified"] = bool((row["pa"] or 0) >= qual["min_pa"]
                                 or (row["ip"] or 0) >= qual["min_ip"])
         # Absent is absent, the board's own convention: a field with nothing
         # behind it is left OFF the row rather than served as a null or a zero.
         rows.append({k: v for k, v in row.items() if v is not None})
     rows.sort(key=lambda r: (-(r["war"] if r["war"] is not None else -99), r["name"]))
-    league = {"war": round(sum(r["war"] or 0.0 for r in rows), 1),
+    # SUMMED UNROUNDED, ROUNDED ONCE, which is the rule build_seasons states for
+    # a row and the league total is no different: summing the rows' printed
+    # tenths carries one rounding error per row (measured on l3: 2935.9 that
+    # way against 2937.5 honestly, 1.6 wins of rounding).
+    league = {"war": round(lg_bat + lg_pit, 1),
+              "war_bat": round(lg_bat, 1), "war_pit": round(lg_pit, 1),
               "n_players": len(rows),
               "n_qualified": sum(1 for r in rows if r.get("qualified"))}
     return {"players": rows, "league": league}
@@ -867,6 +1028,15 @@ def _pitcher_board(panels: dict, seasons: list, war_by: dict, qual: dict,
     keys = ("g", "gs", "outs", "tbf", "er", "r", "bb", "so", "hr", "hbp", "pit",
             "strk", "cg", "go", "ao", "sv", "hld", "wpa", "wpa_li", "sd", "md")
     acc = _sum_counts(panels, seasons, "pit", keys, keep=keep)
+    # gmLI POOLS ON RELIEF ENTRIES. tools/leverage_consistency_eval
+    # .proposed_values builds the shipped gmli_3yr as sum(gmli * appearances) /
+    # sum(appearances) and its own docstring calls it the relief-entry-weighted
+    # mean; innings would be a second method and a different number (measured
+    # on Adrian Morejon 2024-2026: 1.51 on entries against 1.52 on innings).
+    # The tag is that module's own 2 seasons / 60 entries. Computed ONCE for the
+    # board, not once per row.
+    gmli = ({} if starter else window_index(panels, seasons, "pit", "gmli",
+                                            "gapp", tag=tags["gmli"]))
     rows, published = {}, set()
     for mid, a in acc.items():
         ip = round((a.get("outs") or 0) / 3.0, 1)
@@ -884,18 +1054,16 @@ def _pitcher_board(panels: dict, seasons: list, war_by: dict, qual: dict,
             row["sd"] = _i(a.get("sd"))
             row["md"] = _i(a.get("md"))
             row["wpa"] = _r(a.get("wpa"), 2)
+            row["wpa_li"] = _r(a.get("wpa_li"), 3)
             row["qualified"] = bool((a.get("tbf") or 0) >= qual["min_tbf"]
                                     or (ip >= qual["min_ip"]
                                         and (a.get("g") or 0) >= qual["min_g"]))
-            # gmLI is a mean over relief entries, so it pools on innings the way
-            # the season value pools on them: a window mean weighted by each
-            # season's own exposure.
-            gm = window_index(panels, seasons, "pit", "gmli",
-                              lambda r: (r.get("outs") or 0) / 3.0,
-                              tag=(1, 0.0)).get(mid)
+            gm = gmli.get(mid)
             if gm:
                 row["gmli"] = _r(gm["value"], 2)
                 row["gmli_n"] = gm["n_seasons"]
+                row["gmli_entries"] = int(gm["denom_total"])
+                row["gmli_tag"] = gm["tag"]
         row.update(_pitcher_rates(a, starter=starter))
         war, n = _war_window(war_by, seasons, mid, "pit")
         if war is not None:
@@ -905,6 +1073,8 @@ def _pitcher_board(panels: dict, seasons: list, war_by: dict, qual: dict,
                          "gs": _i(a.get("gs")),
                          "bip": _i((a.get("go") or 0) + (a.get("ao") or 0)),
                          "pitches": _i(a.get("pit"))}
+        if not starter and row.get("gmli") is not None:
+            row["denoms"]["entries"] = row["gmli_entries"]
         rows[mid] = row
         if row["qualified"]:
             published.add(mid)
@@ -949,11 +1119,14 @@ def _leverage_board(panels: dict, seasons: list, war_by: dict,
                 if not r.get("team"):
                     r["team"] = ((panel.get(src) or {}).get(int(mid)) or {}).get("team")
     bat = _sum_counts(panels, seasons, "lev_bat", ("pa", "wpa", "wpa_li"))
+    # pLI is the PA-weighted mean of the season pLI, which is the same fold as
+    # an index without the tag: the leverage board publishes no established /
+    # provisional tag on it, so none is invented here. Computed ONCE.
+    pli_all = window_index(panels, seasons, "lev_bat", "pli", "pa", tag=(1, 0.0))
     brows = []
     for mid, a in bat.items():
         pa = a.get("pa") or 0
-        pli = window_index(panels, seasons, "lev_bat", "pli", "pa",
-                           tag=(1, 0.0)).get(mid)
+        pli = pli_all.get(mid)
         row = {"mlbam": mid, "name": a.get("name"), "team": a.get("team"),
                "yrs": a["_yrs"], "clubs": a["_clubs"], "last_season": a["_last"],
                "pa": int(pa), "wpa": _r(a.get("wpa"), 3),
@@ -1027,9 +1200,14 @@ def _defense_board(panels: dict, seasons: list, war_by: dict, qual: dict,
         rows[mid] = row
         if row["qualified"]:
             published.add(mid)
+    # `dem_raw`, not `dem`: dem_plus_lab._dem3 weights dem_plus_raw, and this is
+    # the one metric of the four whose shipped builder does. Weighting the
+    # rounded value instead moved 146 of 400 shared rows by up to 5 points in
+    # the build that did it.
     pools = {"dem_plus": _stamp_index(
         rows, "dem_plus",
-        window_index(panels, seasons, "dfn", "dem", "inn", tag=tags["dem_plus"]),
+        window_index(panels, seasons, "dfn", "dem_raw", "inn",
+                     tag=tags["dem_plus"]),
         published)}
     out = [r for mid, r in rows.items() if mid in published]
     out.sort(key=lambda r: -(r.get("dem_plus_raw") or -999))
@@ -1096,10 +1274,44 @@ def guard_window(block: dict, seasons: list, panels: dict) -> str | None:
     A thin window is refused rather than shipped. The page then says the window
     is unavailable and why, which is a visible absence; a published thin window
     is an invisible wrong answer, and this program exists because of one of
-    those (four history payloads documented as carrying eWAR that did not)."""
+    those (four history payloads documented as carrying eWAR that did not).
+
+    Five questions, in order of how invisible the failure would be: is a season
+    missing entirely, did a season lose a BLOCK (the panel's own `complete`),
+    is a season half-walked against the window's median season, is a board too
+    short to be a board, and is an index pool too small for a mean and a spread
+    to describe it."""
     missing = [y for y in seasons if not (panels.get(y) or {}).get("hit")]
     if missing:
         return f"no panel for {missing}"
+    # THE PANEL'S OWN COMPLETENESS FLAG. season_panel already computes it and
+    # already refuses to memoise on it, and a row-count floor cannot see what it
+    # sees: a season whose defense scoring or leverage walk died still carries
+    # hitters, so the defense and leverage boards would simply pool fewer
+    # seasons than the eWAR column beside them, disclosed nowhere a reader looks.
+    incomplete = []
+    for y in seasons:
+        panel = panels.get(y) or {}
+        if panel.get("complete"):
+            continue
+        src_blocks = panel.get("sources") or {}
+        dead = [k for k in ("hitting", "pitching", "defense", "leverage")
+                if not src_blocks.get(k)] or ["an unnamed block"]
+        incomplete.append(f"{y} is missing {', '.join(dead)}")
+    if incomplete:
+        return "an incomplete panel is inside this window: " + "; ".join(incomplete)
+    # A season can load every block and still be HALF a season: the leverage
+    # walk returns what it walked and reports its coverage. So each block's
+    # season is measured against the window's own median season.
+    for blk, label in (("hit", "hitters"), ("pit", "pitchers"),
+                       ("dfn", "fielders"), ("lev_bat", "leverage batters"),
+                       ("lev_sp", "leverage starters")):
+        counts = [len((panels.get(y) or {}).get(blk) or {}) for y in seasons]
+        med = sorted(counts)[len(counts) // 2]
+        for y, n in zip(seasons, counts):
+            if med and n < MIN_SEASON_SHARE * med:
+                return (f"{y} carries {n} {label} against a median season of "
+                        f"{med} on this window")
     for name, doc in (block.get("boards") or {}).items():
         for key, rows in doc.items():
             if key in ("league",) or not isinstance(rows, list):
@@ -1274,6 +1486,99 @@ def reproduction(window: dict, log=_nolog) -> dict:
     return out
 
 
+#: (metric, served history payload, its block, panel block, panel key). The
+#: history payloads carry the per-season index for every completed season, which
+#: is what makes the check below decisive.
+_PER_SEASON_CHECK = (
+    ("hem_plus", "hitter_history.json", "hitters", "hit", "hem"),
+    ("sem_plus", "starter_history.json", "starters", "pit", "sem"),
+    ("rem_plus", "bullpen_history.json", "relievers", "pit", "rem"),
+    ("dem_plus", "defense_history.json", "fielders", "dfn", "dem"),
+)
+
+
+def per_season_reproduction(panels: dict, log=_nolog) -> dict:
+    """THE CHECK THAT CANNOT MOVE UNDER ITS OWN FEET.
+
+    `reproduction` compares this lab's l3 index against a shipped three-year
+    artifact built on ANOTHER DAY, so a delta there is a method difference or a
+    vintage difference and the block cannot tell you which. This one compares
+    the panel's PER-SEASON index for a COMPLETED season against the value that
+    season's served history payload publishes. A completed season's stat line is
+    frozen and both numbers come out of the same scorer, so a delta here is a
+    method difference and nothing else - which is what makes it the block to
+    read first when a window looks wrong."""
+    out = {}
+    for metric, fname, block, pblk, pkey in _PER_SEASON_CHECK:
+        try:
+            doc = json.loads((DATA / fname).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            out[metric] = {"available": False, "reason": f"{fname} absent"}
+            continue
+        hist = doc.get("history") or {}
+        per_season, n_both, n_equal, worst = {}, 0, 0, None
+        for y in sorted(panels):
+            if not _is_final(y) or str(y) not in hist:
+                continue
+            rows = (hist.get(str(y)) or {}).get(block) or []
+            mine = (panels.get(y) or {}).get(pblk) or {}
+            eq = tot = 0
+            mx = None
+            for r in rows:
+                mid = r.get("mlbam")
+                if mid is None:
+                    continue
+                served = r.get(metric)
+                ours = (mine.get(int(mid)) or {}).get(pkey)
+                if served is None or ours is None:
+                    continue
+                tot += 1
+                d = abs(int(round(ours)) - int(served))
+                eq += 1 if d == 0 else 0
+                mx = d if mx is None or d > mx else mx
+            if not tot:
+                continue
+            per_season[str(y)] = {"n": tot, "n_equal": eq, "max_abs_delta": mx}
+            n_both += tot
+            n_equal += eq
+            worst = mx if worst is None or (mx is not None and mx > worst) else worst
+        out[metric] = {"available": bool(per_season), "artifact": fname,
+                       "n": n_both, "n_equal": n_equal, "max_abs_delta": worst,
+                       "per_season": per_season,
+                       "means": ("the panel's per-season index against the "
+                                 "served history payload for the same completed "
+                                 "season: a delta is a METHOD difference, never "
+                                 "a build date")}
+        log(f"  window lab: per-season {metric}: {n_equal}/{n_both} equal, "
+            f"max delta {worst}")
+    return out
+
+
+def basis_moved(index_path: Path | None = None) -> bool:
+    """True when the SERVED eWAR build is not the one the window artifact was
+    built on, so the cadence gate must NOT skip this lab.
+
+    _artifact_fresh's `invalidated_by` hatch exists for exactly this shape, and
+    its docstring says why: age is the wrong question for an artifact whose
+    inputs were re-keyed under it. The eWAR board rebuilds nightly and this lab
+    is on a 45-day cadence, so without this the window's `war` column could sit
+    up to 45 days behind the eWAR column beside it - and the test that asserts
+    the two share a basis would go red on a rebuild the cadence gate then
+    refused to let the pipeline clear."""
+    path = Path(index_path or INDEX_PATH)
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False        # absent or unreadable: the cadence gate re-runs it
+    try:
+        import bullpen_export as be
+        basis = be.served_war_basis()
+    except Exception:       # noqa: BLE001 - a basis we cannot read is not a move
+        return False
+    return bool(doc.get("war_provider") != basis.get("war_provider")
+                or doc.get("ewar_generated_at") != basis.get("ewar_generated_at"))
+
+
 def columns_spec() -> dict:
     """WHAT EVERY COLUMN ON A WINDOW BOARD IS, published so the page reports the
     rule instead of typing it, and so a test can assert the FORMULA rather than
@@ -1282,12 +1587,28 @@ def columns_spec() -> dict:
     SUM adds over the window. POOL is one numerator over one named denominator,
     computed by handing the summed counts back through the shipped derivation.
     RECOMPOSED is built from other pooled values. INDEX is the house window
-    recipe. HIDDEN never appears on a window, with the reason it does not."""
+    recipe, and each one names the shipped builder its recipe came from (`from`)
+    so the provenance is on the artifact and not only in this module's
+    docstring; `own_choice` marks the two places this lab had no shipped recipe
+    to follow. HIDDEN is a column the SERVED one-season board carries and a
+    window does not, with the reason it does not, so the page can state the
+    absence in one line instead of leaving a hole."""
     return {
         "overall": {
             "sum": ["war", "war_bat", "war_pit", "pa", "ip", "g", "gs"],
-            "pool": {"bat_600": {"denom": "pa", "formula": "batting eWAR / PA x 600"},
-                     "pitch_200": {"denom": "ip", "formula": "pitching eWAR / IP x 200"}},
+            "pool": {"bat_600": {"denom": "pa",
+                                 "formula": "batting eWAR / PA x 600",
+                                 "display_min": 100,
+                                 "display_min_note": ("PA over the window, the "
+                                                      "WAR-rate display floor "
+                                                      "war_board_export.QUAL_MIN_PA "
+                                                      "already uses")},
+                     "pitch_200": {"denom": "ip",
+                                   "formula": "pitching eWAR / IP x 200",
+                                   "display_min": 30,
+                                   "display_min_note": ("IP over the window, "
+                                                        "war_board_export"
+                                                        ".QUAL_MIN_IP")}},
             "index": {},
             "hidden": {"role": ("Role is a season fact: a pitcher who started "
                                 "one year and relieved the next has no one role "
@@ -1307,8 +1628,15 @@ def columns_spec() -> dict:
                 "woba_raw": {"denom": "woba", "formula": "the wOBA weights over the six events / (AB + BB - IBB + HBP + SF)"},
             },
             "recomposed": {"ops": "pooled OBP + pooled SLG"},
-            "index": {"hem_plus": "PA-weighted mean of the per-season HEM+",
-                      "war_pa_plus": "PA-weighted mean of the per-season WAR/PA+"},
+            "index": {
+                "hem_plus": {"formula": ("PA-weighted mean of the ROUNDED "
+                                         "per-season HEM+"),
+                             "from": "tools/hem_plus_lab._multiyear_proposed"},
+                "war_pa_plus": {"formula": ("PA-weighted mean of the per-season "
+                                            "WAR/PA+, seasons gated on that "
+                                            "lab's display floor"),
+                                "from": "tools/war_rate_plus_lab.window_values"},
+            },
             "hidden": {
                 "woba": "The shrink target is that season's pool.",
                 "wrc_plus": ("wRC+ is MLB's published season index. We hold the "
@@ -1322,6 +1650,10 @@ def columns_spec() -> dict:
                 "hem_plus_3yr": ("A frozen lab artifact with a window of its own. "
                                  "It shows on a one-year view."),
                 "war_pa_plus_3yr": "The same frozen window.",
+                "war_pa_plus_adj": ("The park and pool adjustment behind WAR/PA+ "
+                                    "is fitted on one season's pool, so the "
+                                    "adjusted value cannot be re-weighted across "
+                                    "seasons."),
             },
         },
         "starters": {
@@ -1336,8 +1668,14 @@ def columns_spec() -> dict:
                 "ip_per_gs": {"denom": "gs", "formula": "IP / GS"},
                 "strike_pct": {"denom": "pitches", "formula": "strikes / pitches"},
             },
-            "index": {"sem_plus": "IP-weighted mean of the per-season SEM+",
-                      "war_ip_plus": "IP-weighted mean of the per-season WAR/IP+ on the starter pool"},
+            "index": {
+                "sem_plus": {"formula": ("IP-weighted mean of the ROUNDED "
+                                         "per-season SEM+"),
+                             "from": "tools/sem_plus_lab._multiyear_proposed"},
+                "war_ip_plus": {"formula": ("IP-weighted mean of the per-season "
+                                            "WAR/IP+ on the starter pool"),
+                                "from": "tools/war_rate_plus_lab.window_values"},
+            },
             "hidden": {
                 "fip": ("Skill FIP is shrunk toward that season's starter pool "
                         "and offset by that season's FIP constant. Two season "
@@ -1348,31 +1686,61 @@ def columns_spec() -> dict:
                 "luck": "A difference of two season-pool numbers.",
                 "sem_plus_3yr": "A frozen lab artifact with a window of its own.",
                 "war_ip_plus_3yr": "The same frozen window.",
+                "war_ip_plus_adj": ("The adjustment behind WAR/IP+ is fitted on "
+                                    "one season's pool."),
             },
         },
         "bullpen": {
-            "sum": ["ip", "g", "tbf", "saves", "holds", "sd", "md", "wpa", "war"],
+            "sum": ["ip", "g", "tbf", "saves", "holds", "sd", "md", "wpa",
+                    "wpa_li", "war"],
             "pool": {
                 "era": {"denom": "ip", "formula": "ER / IP x 9"},
                 "hr9": {"denom": "ip", "formula": "HR / IP x 9"},
                 "k_pct": {"denom": "tbf", "formula": "SO / TBF"},
                 "bb_pct": {"denom": "tbf", "formula": "BB / TBF"},
                 "k_bb_pct": {"denom": "tbf", "formula": "(SO - BB) / TBF"},
-                "gmli": {"denom": "ip", "formula": "innings-weighted mean of the per-season gmLI"},
+                "gmli": {"denom": "entries",
+                         "formula": ("relief-entry-weighted mean of the "
+                                     "per-season gmLI"),
+                         "from": ("tools/leverage_consistency_eval"
+                                  ".proposed_values"),
+                         "tag": ("established with 2+ seasons and 60+ relief "
+                                 "entries, that module's own thresholds")},
             },
-            "index": {"rem_plus": "IP-weighted mean of the per-season REM+",
-                      "riv_plus": "IP-weighted mean of the per-season RIV+",
-                      "war_ip_plus": "IP-weighted mean of the per-season WAR/IP+ on the reliever pool"},
+            "index": {
+                "rem_plus": {"formula": ("IP-weighted mean of the ROUNDED "
+                                         "per-season REM+"),
+                             "from": "tools/rem_plus_lab._multiyear_proposed"},
+                "riv_plus": {"formula": "IP-weighted mean of the per-season RIV+",
+                             "from": "tools/rem_plus_lab._multiyear_proposed",
+                             "own_choice": ("There is no riv_plus_3yr in this "
+                                            "repo. RIV+ is realised impact "
+                                            "rather than a rate skill, so the "
+                                            "weight is the innings that "
+                                            "produced the impact, and the "
+                                            "established thresholds are REM+'s "
+                                            "because the pool is the same "
+                                            "arms.")},
+                "war_ip_plus": {"formula": ("IP-weighted mean of the per-season "
+                                            "WAR/IP+ on the reliever pool"),
+                                "from": "tools/war_rate_plus_lab.window_values"},
+            },
             "hidden": {
                 "fip": "Two season-pool parameters, as on the starter board.",
                 "swstr_pct": ("Swinging-strike rate reaches us as a rate with no "
                               "pitch count behind it, so it cannot be repooled."),
                 "gmli_3yr": ("Its source ships no date at all, so it cannot be "
-                             "vintage-stamped beside columns that are."),
+                             "vintage-stamped beside columns that are. The "
+                             "window computes its own gmLI by that module's "
+                             "recipe instead."),
                 "xrem_plus": "Anchored to one season's pool.",
                 "xwoba_against": "The same anchoring and the same coverage gap.",
                 "rem_plus_3yr": "A frozen lab artifact with a window of its own.",
                 "war_ip_plus_3yr": "The same frozen window.",
+                "war_ip_plus_adj": ("The adjustment behind WAR/IP+ is fitted on "
+                                    "one season's pool."),
+                "role": "Role is a season fact.",
+                "luck": "A difference of two season-pool numbers.",
             },
         },
         "leverage": {
@@ -1381,16 +1749,33 @@ def columns_spec() -> dict:
                      "wpa_per_start": {"denom": "starts", "formula": "WPA / starts"}},
             "recomposed": {"clutch": "summed WPA / pooled pLI - summed WPA/LI"},
             "index": {},
-            "hidden": {},
+            "hidden": {
+                "gs": ("The leverage board prints the season feed's games "
+                       "started beside the walk's own start count. The window "
+                       "sums `starts`, which is the denominator every other "
+                       "column on the row divides by; two start counts over a "
+                       "window would be two answers to one question."),
+            },
         },
         "defense": {
             "sum": ["inn", "pos_inn", "fld_runs", "frm_runs", "fld_total",
                     "pos_runs", "pos_runs_fg", "def_runs", "war"],
             "pool": {"rate_1000": {"denom": "inn", "formula": "(fielding + framing runs) / innings x 1000"},
                      "fld_pct": {"denom": "chances", "formula": "(PO + A) / (PO + A + E)"}},
-            "index": {"dem_plus": "innings-weighted mean of the per-season DEM+"},
+            "index": {
+                "dem_plus": {"formula": ("innings-weighted mean of the UNROUNDED "
+                                         "per-season DEM+ (dem_plus_raw)"),
+                             "from": "tools/dem_plus_lab._dem3",
+                             "note": ("The one metric of the four whose shipped "
+                                      "builder weights the unrounded value; the "
+                                      "other three weight the rounded one, and "
+                                      "each is followed rather than "
+                                      "harmonised.")},
+            },
             "hidden": {
                 "rate_1000_shrunk": "The shrink constant is a season-pool parameter.",
+                "rel": ("The reliability weight inn / (inn + k) behind the "
+                        "shrunk rate; k is that season pool's constant."),
                 "dem_plus_pct": ("A percentile inside ONE season's pool. The "
                                  "window carries its own, beside its own value."),
                 "dem_plus_pos_pct": "The same, within a position.",
@@ -1427,12 +1812,31 @@ def build(live_season: int | None = None, *, force: bool = False,
     # name.
     sub_basis_ok = (sub.get("war_provider") == basis.get("war_provider")
                     and sub.get("ewar_generated_at") == basis.get("ewar_generated_at"))
+    invalidate = None
     if sub.get("players") and not sub_basis_ok:
+        # ... and the artifact says so in the one key the cadence gate reads, so
+        # the next pipeline run REBUILDS instead of skipping a 45-day-fresh file
+        # that is missing a whole board.
+        invalidate = (f"the Overall board was dropped: the substrate is on "
+                      f"{sub.get('war_provider')} / {sub.get('ewar_generated_at')} "
+                      f"and the served basis is {basis.get('war_provider')} / "
+                      f"{basis.get('ewar_generated_at')}")
         log(f"  window lab: data/war_seasons.json is on "
             f"{sub.get('war_provider')} / {sub.get('ewar_generated_at')} and the "
             f"served basis is {basis.get('war_provider')} / "
             f"{basis.get('ewar_generated_at')}; the Overall window is dropped")
         sub = {"refused": "the substrate is on another eWAR build"}
+
+    # WHAT THE SUBSTRATE ITSELF SAYS IS MISSING. war_board_export publishes the
+    # seasons whose feed died and, per season, WHICH GROUP died; a window that
+    # folded a season with no feed at all would print a three-season PA total
+    # over two seasons of plate appearances, which is the invisible kind of
+    # wrong. A dead group is thinner than that and is disclosed rather than
+    # refused: the eWAR sides are all there and one side's denominator is not.
+    sub_src = sub.get("sources") or {}
+    cold_all = {int(y) for y in (sub_src.get("seasons_without_a_feed") or [])}
+    cold_groups = {int(y): g
+                   for y, g in (sub_src.get("groups_without_a_feed") or {}).items()}
 
     built, refused = {}, {}
     for spec in WINDOWS:
@@ -1442,11 +1846,27 @@ def build(live_season: int | None = None, *, force: bool = False,
             refused[spec["key"]] = (f"{bad} is inside this window and every "
                                     f"index lab excludes it")
             continue
-        block = build_window(spec["key"], seasons, panels, war_by, sub, log=log,
-                             overall=bool(sub.get("players")))
-        block["name"] = spec["name"]
+        overall_absent = None
         if not sub.get("players"):
-            block["overall_absent"] = sub.get("refused") or "no substrate"
+            overall_absent = sub.get("refused") or "no substrate"
+        elif cold_all & set(seasons):
+            overall_absent = (f"the substrate has no season feed for "
+                              f"{sorted(cold_all & set(seasons))}, so this "
+                              f"window's PA, IP, G and GS would be short by a "
+                              f"whole season")
+        block = build_window(spec["key"], seasons, panels, war_by, sub, log=log,
+                             overall=overall_absent is None)
+        block["name"] = spec["name"]
+        if overall_absent:
+            block["overall_absent"] = overall_absent
+            log(f"  window lab: {spec['key']} has no Overall board: {overall_absent}")
+        caveat = {str(y): g for y, g in cold_groups.items() if y in set(seasons)}
+        if caveat and not overall_absent:
+            block["overall_caveat"] = {
+                "groups_without_a_feed": caveat,
+                "means": ("those seasons carry their eWAR and no denominator "
+                          "for the named side, so this window's PA or IP is "
+                          "summed over fewer seasons than its eWAR is")}
         reason = guard_window(block, seasons, panels)
         if reason:
             refused[spec["key"]] = reason
@@ -1456,6 +1876,9 @@ def build(live_season: int | None = None, *, force: bool = False,
     index = {
         "generated_at": date.today().isoformat(),
         "schema": SCHEMA, "live_season": live_season,
+        # run_monthly._artifact_fresh reads this key and rebuilds on any truthy
+        # value, whatever the stamp says.
+        "invalidated_by": invalidate,
         "war_provider": basis.get("war_provider"),
         "ewar_generated_at": basis.get("ewar_generated_at"),
         "excluded_seasons": _excluded_seasons(),
@@ -1497,8 +1920,12 @@ def build(live_season: int | None = None, *, force: bool = False,
                     "season_share": sub.get("season_share")},
         "build_seconds": None,
     }
-    if "l3" in built:
-        index["reproduction"] = reproduction(built["l3"], log=log)
+    index["reproduction"] = {
+        "per_season": per_season_reproduction(panels, log=log),
+        "vs_shipped_3yr": (reproduction(built["l3"], log=log) if "l3" in built
+                           else {"available": False,
+                                 "reason": "no l3 window was published"}),
+    }
     index["build_seconds"] = round(time.time() - t0, 1)
     return {"index": index, "windows": built}
 
@@ -1537,6 +1964,16 @@ def export(live_season: int | None = None, *, write: bool = True,
                    "columns": index["columns"],
                    "method": index["method"],
                    "season_share": (index["sources"] or {}).get("season_share"),
+                   # THE CONSUMER'S RULE, stated on the payload rather than left
+                   # to each consumer. bullpen_export.join_war_rate_3yr is the
+                   # precedent: on a basis mismatch it BLANKS the columns rather
+                   # than serving them beside a series they are not part of.
+                   "war_basis_rule": ("A consumer must blank every eWAR column "
+                                      "on this payload when war_provider or "
+                                      "ewar_generated_at differ from the served "
+                                      "basis, the way bullpen_export"
+                                      ".join_war_rate_3yr blanks its columns "
+                                      "rather than serving them stale."),
                    **block}
         path = out_dir / f"mlbstats_window_{key}.json"
         tmp = path.with_suffix(".json.tmp")
@@ -1544,11 +1981,37 @@ def export(live_season: int | None = None, *, write: bool = True,
         tmp.replace(path)
         log(f"  window lab: wrote {path.name} "
             f"({round(path.stat().st_size / 1024)} KB)")
+    # A REFUSED WINDOW MUST NOT KEEP SERVING ITS LAST PAYLOAD. Only surviving
+    # windows are written, so without this a window that went thin would vanish
+    # from the index while its previous file stayed on disk, catalogued, and
+    # fetchable by anyone who kept the URL.
+    for spec in WINDOWS:
+        if spec["key"] in windows:
+            continue
+        stale = out_dir / f"mlbstats_window_{spec['key']}.json"
+        if stale.exists():
+            stale.unlink()
+            log(f"  window lab: removed {stale.name} - {spec['key']} was "
+                f"refused ({index['windows_refused'].get(spec['key'])})")
     tmp = (out_dir / INDEX_PATH.name).with_suffix(".json.tmp")
     tmp.write_text(json.dumps(index, indent=1), encoding="utf-8")
     tmp.replace(out_dir / INDEX_PATH.name)
     log(f"  window lab: wrote {INDEX_PATH.name} ({len(windows)} windows, "
         f"{index['build_seconds']}s)")
+    # THE HEARTBEAT. SCHEDULED_EXPORTS' own comment says silence in the ledger
+    # cannot tell "this step ran and found nothing" from "this step never ran",
+    # and this lab files only on a total refusal. war_seasons gets its ok=True
+    # free from guard_nonempty_block; this one has to file its own.
+    try:
+        import bullpen_export as be
+        be.record_ingest("mlbstats_windows", ok=True, n_rows=len(windows),
+                         message=("multi-year windows: "
+                                  + ", ".join(sorted(windows))
+                                  + (f"; refused {sorted(index['windows_refused'])}"
+                                     if index["windows_refused"] else "")),
+                         import_fallback=False)
+    except Exception:                       # noqa: BLE001 - reporting is best effort
+        pass
     return len(windows)
 
 

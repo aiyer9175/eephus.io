@@ -33,6 +33,7 @@ been built on this machine.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -344,7 +345,8 @@ def test_every_window_column_is_declared():
     idx, windows = _served_windows()
     spec = idx["columns"]
     ident = {"mlbam", "name", "team", "pos", "age", "yrs", "clubs", "qualified",
-             "last_season", "denoms", "war_n", "pli_n", "gmli_n"}
+             "last_season", "denoms", "war_n", "pli_n", "gmli_n",
+             "gmli_entries", "gmli_tag"}
     for key, doc in windows.items():
         for board, blocks in (doc.get("boards") or {}).items():
             s = spec[board]
@@ -360,8 +362,14 @@ def test_every_window_column_is_declared():
                     for field in r:
                         assert field in ident or field in declared, (
                             f"{key}/{board}: {field} is served and not declared")
-        for col, meta in (spec[board].get("pool") or {}).items():
-            assert meta.get("denom") and meta.get("formula"), (board, col)
+            # INSIDE the board loop. This assertion used to sit outside it and
+            # reuse the leaked `board`, so it only ever checked the last board.
+            for col, meta in (s.get("pool") or {}).items():
+                assert meta.get("denom") and meta.get("formula"), (board, col)
+            for metric, meta in (s.get("index") or {}).items():
+                assert meta.get("from"), (
+                    f"{board}/{metric} does not name the shipped builder its "
+                    f"recipe came from")
 
 
 def test_a_pooled_rate_publishes_its_denominator_total():
@@ -401,18 +409,52 @@ def test_no_index_window_contains_an_excluded_season():
         assert not (set(w["seasons"]) & excluded), w
 
 
+def _panel_ok(n: int = 200) -> dict:
+    """A season that loaded every block, at a plausible width."""
+    rows = {i: {} for i in range(n)}
+    return {"hit": dict(rows), "pit": dict(rows), "dfn": dict(rows),
+            "lev_bat": dict(rows), "lev_sp": dict(rows), "complete": True,
+            "sources": {"hitting": True, "pitching": True, "defense": True,
+                        "leverage": True}}
+
+
 def test_a_thin_window_is_refused_rather_than_published():
     """A window with a season missing, a board with almost no rows, or an index
     pool too small for a mean and a spread is REFUSED. A published thin window
     is an invisible wrong answer; a refused one is a visible absence."""
-    panels = {2025: {"hit": {1: {}}}, 2026: {"hit": {}}}
+    panels = {2025: _panel_ok(), 2026: {"hit": {}}}
     assert lab.guard_window({}, [2025, 2026], panels)
+    ok = {2025: _panel_ok()}
     block = {"boards": {"hitters": {"hitters": [{"mlbam": 1}]}}, "pool_stats": {}}
-    assert lab.guard_window(block, [2025], {2025: {"hit": {1: {}}}})
+    assert lab.guard_window(block, [2025], ok)
     block = {"boards": {"hitters": {"hitters": [{} for _ in range(60)]}},
              "pool_stats": {"hitters": {"hem_plus": {"n": 10, "mean": 100.0,
                                                      "sd": 12.0}}}}
-    assert lab.guard_window(block, [2025], {2025: {"hit": {1: {}}}})
+    assert lab.guard_window(block, [2025], ok)
+    assert lab.guard_window({"boards": {}, "pool_stats": {}}, [2025], ok) is None
+
+
+def test_an_incomplete_panel_refuses_the_window_by_name():
+    """season_panel already computes `complete` and already refuses to memoise
+    without it; the guard has to read it. A season whose defense scoring or
+    leverage walk died still carries hitters, so a row-count floor cannot see
+    the hole: the defense board would just pool fewer seasons than the eWAR
+    column beside it, disclosed nowhere a reader looks."""
+    panel = _panel_ok()
+    panel["complete"] = False
+    panel["sources"]["defense"] = False
+    reason = lab.guard_window({}, [2026], {2026: panel})
+    assert reason and "defense" in reason and "2026" in reason
+
+
+def test_a_half_walked_season_refuses_the_window():
+    """The leverage walk returns what it walked and reports its coverage, so a
+    season can load every block and still be half a season. Each block is
+    measured against the window's own median season."""
+    thin = _panel_ok()
+    thin["lev_bat"] = {i: {} for i in range(20)}
+    reason = lab.guard_window({}, [2025, 2026], {2025: _panel_ok(), 2026: thin})
+    assert reason and "leverage batters" in reason
 
 
 def test_the_windows_the_lab_builds_are_the_registered_ones():
@@ -449,7 +491,16 @@ def test_the_pipeline_writes_them():
     src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
     assert "6b4k" in src
     assert "from tools import mlbstats_window_lab" in src
-    assert '_lab_should_skip(out_dir / "mlbstats_windows.json"' in src
+    assert "_lab_should_skip(" in src and "6b4k multi-year windows" in src
+    assert "mlbstats_window_lab.basis_moved(" in src, (
+        "the cadence gate asks age; a nightly eWAR rebuild moves the basis, and "
+        "nothing would force the window rebuild that clears it")
+    i = src.index("SCHEDULED_EXPORTS = (")
+    watched = src[i:src.index(chr(10) + ")", i)]
+    assert '"war_seasons"' in watched and '"mlbstats_windows"' in watched
+    assert watched.index('"mgmt_export"') < watched.index('"mlbstats_windows"'), (
+        "test_mgmt_export scans a fixed window of this tuple; the new names go "
+        "below mgmt_export or they fail a test about the management board")
     wbe_src = (ROOT / "war_board_export.py").read_text(encoding="utf-8")
     assert "build_seasons(" in wbe_src and "_write_seasons(" in wbe_src
     assert '"war_seasons"' in wbe_src, (
@@ -488,3 +539,307 @@ def test_the_window_artifacts_share_the_served_war_basis():
     for key, doc in windows.items():
         assert doc["war_provider"] == basis["war_provider"], key
         assert doc["ewar_generated_at"] == basis["ewar_generated_at"], key
+
+
+# --------------------------------------------------------------------------- #
+# the recipes the shipped columns own, followed rather than re-invented
+# --------------------------------------------------------------------------- #
+def test_gmli_pools_on_relief_entries_and_not_on_innings():
+    """THE ONE MULTI-YEAR RECIPE THAT WAS ALREADY DISCOVERABLE.
+    tools/leverage_consistency_eval.proposed_values builds the shipped gmli_3yr
+    as sum(gmli x appearances) / sum(appearances) and its own docstring calls it
+    the relief-entry-weighted mean. Innings are a different weight and a
+    different number."""
+    from tools import leverage_consistency_eval as lce
+    panels = {2025: {"pit": {1: {"gmli": 1.00, "gapp": 60, "outs": 570}}},
+              2026: {"pit": {1: {"gmli": 2.00, "gapp": 20, "outs": 480}}}}
+    seasons = [2025, 2026]
+    entries = lab.window_index(panels, seasons, "pit", "gmli", "gapp", tag=(2, 60))
+    innings = lab.window_index(panels, seasons, "pit", "gmli",
+                               lambda r: (r.get("outs") or 0) / 3.0, tag=(2, 60))
+    assert abs(entries[1]["value"] - (1.0 * 60 + 2.0 * 20) / 80.0) < 1e-9
+    assert entries[1]["denom_total"] == 80.0
+    assert abs(entries[1]["value"] - innings[1]["value"]) > 0.1, (
+        "the two weightings would have to differ for this to be worth pinning")
+    # the tag is that module's, not a number typed here
+    assert lab._tags()["gmli"] == (lce.TAG_MIN_SEASONS, lce.TAG_MIN_ENTRIES)
+    spec = lab.columns_spec()["bullpen"]["pool"]["gmli"]
+    assert spec["denom"] == "entries" and "entry" in spec["formula"]
+
+
+def test_the_defense_window_weights_the_unrounded_per_season_index():
+    """dem_plus_lab._dem3 weights `dem_plus_raw`, and this window follows the
+    builder it names. HEM+, SEM+ and REM+ weight their ROUNDED per-season value
+    and are followed too: the four labs differ, and copying one onto all four
+    would be a second method wearing four names."""
+    panels = {2025: {"dfn": {1: {"name": "A", "team": "BOS", "pos": "SS",
+                                 "dem": 104, "dem_raw": 104.4, "inn": 900.0}}},
+              2026: {"dfn": {1: {"name": "A", "team": "BOS", "pos": "SS",
+                                 "dem": 96, "dem_raw": 95.6, "inn": 300.0}}}}
+    board, pools = lab._defense_board(panels, [2025, 2026], {},
+                                      {"min_inn": 400}, {"dem_plus": (2, 400.0)})
+    row = board["fielders"][0]
+    assert row["dem_plus_raw"] == round((104.4 * 900 + 95.6 * 300) / 1200.0, 2)
+    assert row["dem_plus_raw"] != round((104 * 900 + 96 * 300) / 1200.0, 2)
+    assert row["dem_plus_n"] == 2 and row["dem_plus_tag"] == "established"
+    assert pools["dem_plus"]["n"] == 1
+
+
+def test_every_window_index_names_the_builder_it_came_from():
+    """The module docstring says the method was found in this repo rather than
+    invented here. That is true per column, so it is claimed per column, and the
+    two places it is NOT true say so in the same block."""
+    spec = lab.columns_spec()
+    own = []
+    for board, s in spec.items():
+        for metric, meta in (s.get("index") or {}).items():
+            assert meta.get("from"), (board, metric)
+            if meta.get("own_choice"):
+                own.append((board, metric))
+    assert own == [("bullpen", "riv_plus")], (
+        "RIV+ has no shipped multi-year column, so its weighting is this "
+        "module's own choice and has to be marked as one")
+
+
+def test_every_served_board_column_is_declared_or_explained():
+    """The other direction of the column contract. A column the one-season board
+    carries and a window drops must say WHY on the artifact, or the page cannot
+    put the one-line reason where the column was."""
+    idx, _windows = _served_windows()
+    spec = idx["columns"]
+    ident = {"mlbam", "name", "team", "pos", "key", "qualified", "bats", "age",
+             "boards"}
+    served = {
+        "overall": ("war_leaderboards.json", ("players",)),
+        "hitters": ("hitter_leaderboards.json", ("hitters",)),
+        "starters": ("starter_leaderboards.json", ("starters",)),
+        "bullpen": ("bullpen_leaderboards.json", ("relievers",)),
+        "leverage": ("leverage_leaderboards.json", ("batters", "starters")),
+        "defense": ("defense_leaderboards.json", ("fielders",)),
+    }
+    for board, (fname, blocks) in served.items():
+        doc = _load(DATA / fname)
+        s = spec[board]
+        known = set(s.get("sum") or []) | set(s.get("pool") or {}) \
+            | set(s.get("recomposed") or {}) | set(s.get("index") or {}) \
+            | set(s.get("hidden") or {}) | ident
+        fields = set()
+        for block in blocks:
+            for r in (doc.get(block) or [])[:50]:
+                fields |= set(r)
+        unexplained = sorted(f for f in fields
+                             if not any(f == k or f.startswith(k + "_")
+                                        for k in known))
+        assert not unexplained, (
+            f"{board}: {unexplained} are on the served board and the window "
+            f"neither publishes nor explains them")
+
+
+# --------------------------------------------------------------------------- #
+# the pool the page shows, and the sample under a rate
+# --------------------------------------------------------------------------- #
+def test_pool_stats_describes_the_pool_the_page_defaults_to():
+    """A window pool is 30-40% provisional and the spec defaults the view to
+    established-only, so a payload that published only the all-rows mean and sd
+    would be describing a pool the page is not showing."""
+    _idx, windows = _served_windows()
+    for key, doc in windows.items():
+        for board, metrics in (doc.get("pool_stats") or {}).items():
+            for metric, st in metrics.items():
+                assert st["n_established"] + st["n_provisional"] == st["n"], (
+                    key, board, metric, st)
+                est = st["established"]
+                assert est["n"] == st["n_established"]
+                if est["n"] >= 2:
+                    assert est["mean"] is not None and est["sd"] is not None
+                assert "provisional" in st["pct_pool"], (
+                    "the payload does not say which pool `pct` is ranked in")
+
+
+def test_a_window_rate_carries_a_denominator_the_one_season_column_would_print():
+    """war_rate_plus_lab gates a contributing season on its DISPLAY floor and
+    argues why: a rate off a sample the one-season column would refuse puts
+    small-sample noise at the top of the board. Measured before the floor: Ryne
+    Nelson, a starting pitcher, read Bat/600 = 42.0."""
+    idx, windows = _served_windows()
+    spec = idx["columns"]["overall"]["pool"]
+    min_pa = spec["bat_600"]["display_min"]
+    min_ip = spec["pitch_200"]["display_min"]
+    assert min_pa and min_ip
+    for key, doc in windows.items():
+        for r in ((doc.get("boards") or {}).get("overall") or {}).get("players", []):
+            if r.get("bat_600") is not None:
+                assert (r.get("pa") or 0) >= min_pa, (key, r["name"], r.get("pa"))
+            if r.get("pitch_200") is not None:
+                assert (r.get("ip") or 0) >= min_ip, (key, r["name"], r.get("ip"))
+
+
+def test_the_overall_window_league_is_summed_unrounded():
+    """The league total of a window is the fold of the substrate's unrounded
+    sides, rounded ONCE. Summing the rows' printed tenths carries one rounding
+    error per row (measured on l3: 2935.9 that way against 2937.5 honestly).
+
+    THE TOLERANCE IS NOT SLOP, IT IS A ROUNDING TIE (2026-09-18). The l3 fold
+    sums to EXACTLY 2937.4500000000 over the same 2,072 players the artifact
+    carries, which sits precisely on the half-tenth boundary: a left-to-right
+    sum rounds it to 2937.5 and math.fsum rounds it to 2937.4 on identical
+    inputs. Pinning the exact tenth therefore tests the summation ORDER of a
+    few thousand floats, which is not what this test is for. The defect it
+    exists to catch is worth 1.6 WAR, so a half-tenth window still catches that
+    and every larger error, while a tie no longer fails the suite for the wrong
+    reason. The player-count assertion below is exact and unchanged."""
+    idx, windows = _served_windows()
+    sub = _load(SERVED_SEASONS)
+    if sub.get("ewar_generated_at") != idx.get("ewar_generated_at"):
+        pytest.skip("the substrate and the windows are on different eWAR builds")
+    checked = 0
+    for key, doc in windows.items():
+        board = (doc.get("boards") or {}).get("overall")
+        if not board:
+            continue
+        seasons = doc["window"]["seasons"]
+        folded = _fold(sub, seasons[0], seasons[-1])
+        raw = math.fsum(v["_bat"] + v["_pit"] for v in folded.values())
+        # The published tenth must be a CORRECT ROUNDING of the unrounded fold.
+        # Comparing two already-rounded numbers is what put a tie one whole
+        # tenth apart; comparing against `raw` states the invariant directly and
+        # still fails the 1.6 WAR round-then-sum error by a factor of thirty.
+        assert abs(board["league"]["war"] - raw) <= 0.05 + 1e-9, (
+            key, board["league"]["war"], raw)
+        assert board["league"]["n_players"] == len(folded)
+        checked += 1
+    assert checked, "no window published an Overall board"
+
+
+# --------------------------------------------------------------------------- #
+# the decisive reproduction check, and the basis door
+# --------------------------------------------------------------------------- #
+def test_the_panel_reproduces_the_served_per_season_index_exactly():
+    """THE CHECK THAT CANNOT MOVE UNDER ITS OWN FEET. Comparing a window against
+    a shipped three-year artifact cannot separate a method difference from a
+    build-date difference, because the two are built on different days. A
+    COMPLETED season's per-season index can: the stat line is frozen and both
+    numbers come out of the same scorer, so any delta is a method difference."""
+    idx, _windows = _served_windows()
+    per = (idx.get("reproduction") or {}).get("per_season") or {}
+    assert per, "the artifact publishes no per-season reproduction block"
+    live = str(idx["live_season"])
+    for metric, block in per.items():
+        if not block.get("available"):
+            continue
+        for season, st in (block.get("per_season") or {}).items():
+            assert season != live, "a live season is not frozen; it cannot check"
+            assert st["n_equal"] == st["n"], (
+                f"{metric} {season}: {st['n_equal']} of {st['n']} equal, max "
+                f"delta {st['max_abs_delta']} - that is a METHOD difference")
+
+
+def test_a_moved_ewar_basis_forces_a_rebuild(tmp_path):
+    """The cadence gate asks age. An eWAR rebuild re-keys the window's `war`
+    column under it, which is what run_monthly._artifact_fresh's
+    `invalidated_by` hatch exists for; basis_moved applies the same argument one
+    step earlier, so the pipeline can clear a red it just created."""
+    import bullpen_export as be
+    basis = be.served_war_basis()
+    p = tmp_path / "mlbstats_windows.json"
+    p.write_text(json.dumps({"war_provider": basis["war_provider"],
+                             "ewar_generated_at": basis["ewar_generated_at"]}),
+                 encoding="utf-8")
+    assert lab.basis_moved(p) is False
+    p.write_text(json.dumps({"war_provider": basis["war_provider"],
+                             "ewar_generated_at": "1999-01-01T00:00:00"}),
+                 encoding="utf-8")
+    assert lab.basis_moved(p) is True
+    assert lab.basis_moved(tmp_path / "absent.json") is False
+
+
+def test_a_refused_window_stops_being_served(tmp_path, monkeypatch):
+    """export() writes only the windows that survived the guard. Without this,
+    a window that went thin would vanish from the index while its previous
+    payload stayed on disk, catalogued and fetchable."""
+    import bullpen_export as be
+    filed: list = []
+    monkeypatch.setattr(be, "record_ingest",
+                        lambda *a, **k: filed.append((a, k)))
+    stale = tmp_path / "mlbstats_window_l5.json"
+    stale.write_text('{"window": {"key": "l5"}}', encoding="utf-8")
+    index = {"generated_at": "2026-09-17", "schema": lab.SCHEMA,
+             "war_provider": "x", "ewar_generated_at": "y",
+             "excluded_seasons": [2020], "columns": {}, "method": "m",
+             "sources": {"season_share": {}}, "build_seconds": 0.1,
+             "windows_refused": {"l5": "too thin"}}
+    block = {"name": "Last 3", "window": {"key": "l3", "label": "2024-2026",
+                                          "years": 3,
+                                          "seasons": [2024, 2025, 2026]},
+             "boards": {}, "pool_stats": {}, "n_rows": {}}
+    monkeypatch.setattr(lab, "build",
+                        lambda *a, **k: {"index": index, "windows": {"l3": block}})
+    n = lab.export(2026, out_dir=tmp_path, log=lambda *a, **k: None)
+    assert n == 1
+    assert (tmp_path / "mlbstats_window_l3.json").exists()
+    assert not stale.exists(), "a refused window kept serving its old payload"
+    assert any(k.get("ok") for _a, k in filed), (
+        "a successful run files no heartbeat, so it reads in the ledger exactly "
+        "like a step that never ran")
+
+
+# --------------------------------------------------------------------------- #
+# the substrate's own doors
+# --------------------------------------------------------------------------- #
+def test_the_substrate_is_written_beside_the_board_it_was_built_with(tmp_path,
+                                                                    monkeypatch):
+    """THE PYTEST TRAP, pinned. Every existing test of this exporter redirects
+    OUT_PATH and nothing else, so a second module-level path would write a
+    synthetic substrate into the real, git-tracked data/ directory: measured at
+    5,149 players down to 24 on one stubbed test."""
+    assert not hasattr(wbe, "SEASONS_OUT_PATH"), (
+        "a module-level substrate path is a second door a test cannot redirect")
+    monkeypatch.setattr(wbe, "OUT_PATH", tmp_path / "war_leaderboards.json")
+    assert wbe.seasons_out_path() == tmp_path / "war_seasons.json"
+
+
+def test_a_dead_feed_is_reported_per_group_not_per_season():
+    """The failure that happens is ONE of a season's two feeds, not both. A 2019
+    pitching read that fails leaves every 2019 pitcher-season without IP or GS
+    while the hitting rows sail through, so a payload that only counted whole
+    cold seasons would report full coverage over a season with no innings."""
+    sub = _load(SERVED_SEASONS)
+    src_block = sub["sources"]
+    assert "groups_without_a_feed" in src_block
+    assert isinstance(src_block["groups_without_a_feed"], dict)
+    for season, groups in src_block["groups_without_a_feed"].items():
+        assert set(groups) <= {"hitting", "pitching"}, (season, groups)
+    assert "groups_without_a_feed" in sub["note"]
+    reads = src_block["feed_reads"]
+    assert reads["from_memo"] + reads["fetched"] >= 1
+
+
+def test_the_substrate_g_is_the_max_and_the_boards_g_is_the_pitching_side():
+    """TWO DIFFERENT QUESTIONS, PINNED APART. The board's `g` is the pitching
+    feed's G alone, so a hitter reads blank; the substrate's `g` is the max of
+    the two feeds, because a two-way player's hitting games and pitching games
+    are the same games. They disagree on most live rows ON PURPOSE, and the
+    payload says so."""
+    board, sub = _load(SERVED_BOARD), _load(SERVED_SEASONS)
+    if board.get("generated_at") != sub.get("generated_at"):
+        pytest.skip("the board and the substrate are from different runs")
+    assert "MAX" in (sub.get("field_notes") or {}).get("g", "")
+    f = {k: i for i, k in enumerate(sub["fields"])}
+    live = int(board["season"])
+    sub_g = {}
+    for mid, (_name, rows) in sub["players"].items():
+        for r in rows:
+            if r[f["season"]] == live and r[f["g"]] is not None:
+                sub_g[int(mid)] = r[f["g"]]
+    blank_on_the_board = 0
+    for r in board["players"]:
+        mine = sub_g.get(r["mlbam"])
+        if mine is None:
+            continue
+        if r.get("g") is None:
+            blank_on_the_board += 1
+            continue
+        assert mine >= r["g"], (r["name"], mine, r["g"])
+    assert blank_on_the_board, (
+        "no row is blank on the board and present in the substrate, so the two "
+        "G rules no longer differ and this pin is stale")
