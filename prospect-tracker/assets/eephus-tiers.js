@@ -46,6 +46,21 @@
      war        6/4/3/2.5/1.5   default view (500 cells) 2.8/24.2/38.6/21.6/11.8/1.0/0.0
                                 #src=prospect (492)      0/0/1.0/6.7/69.5/22.8
                                 whole pool (7,709)       0.2/1.6/3.1/2.8/12.3/80.0/0.1
+     warProspect 1.1/0.65/0.45/0.30/0.15
+                                #src=prospect (1,281 cells, 2026-09-18)
+                                                         3.7/19.9/34.5/32.6/8.2/1.1
+       WHY A SECOND WAR LADDER, and why it is not a softer one. On 2026-09-18
+       the projections board stopped showing the if-healthy path and went to the
+       expected value, which is the path surplus has always priced. A prospect
+       expected path is bucket-weighted by P(bucket|FV), so it already carries
+       the bust probability: the whole prospect pool then lands between 0.07 and
+       1.84 WAR a season, median 0.49, and 99.6 percent of it sits under the war
+       ladder's bottom cut of 1.5. One colour is not a ruler. These cuts are set
+       at the percentiles where the war ladder's OWN cuts fall on its own pool
+       (97.2 / 73.0 / 34.4 / 12.8 / 1.0), so a prospect cell and a veteran cell
+       painted the same colour occupy the same RANK in their own population,
+       which is the only claim a colour on this board makes. The war ladder is
+       untouched and no veteran cell changes colour.
      rosterWar  40/35/32/29/26  30 clubs 10.0/3.3/36.7/16.7/23.3/10.0
      z          120/113/107/100/93   war_pa_plus qualified (351) 1.1/8.3/23.1/34.5/23.9/9.1
      run        140/120/107/100/93   rem_plus qualified (261) 1.9/8.0/14.2/22.2/25.7/28.0
@@ -83,6 +98,7 @@
   // neg true: values under zero take `poor`; the ladder's last cut is >= 0.
   var LADDERS = {
     war:       { cuts: [6, 4, 3, 2.5, 1.5],            dir: "hi", neg: true,  round: r1 },
+    warProspect: { cuts: [1.1, 0.65, 0.45, 0.30, 0.15], dir: "hi", neg: true, round: r1 },
     rosterWar: { cuts: [40, 35, 32, 29, 26],           dir: "hi", neg: false, round: r1 },
     z:         { cuts: [120, 113, 107, 100, 93],       dir: "hi", neg: false, round: Math.round },
     run:       { cuts: [140, 120, 107, 100, 93],       dir: "hi", neg: false, round: Math.round },

@@ -180,10 +180,18 @@ def test_the_index_ladders_are_strict_refinements(ruler):
 
 def test_every_ladder_is_five_strictly_decreasing_cuts(ruler):
     """Five cuts, six positive tiers. "Decreasing" is in QUALITY order: a `lo`
-    family (FIP) reads better as the number falls, so its cuts ascend."""
+    family (FIP) reads better as the number falls, so its cuts ascend.
+
+    The inventory is pinned so a ladder cannot appear without someone saying
+    why. `warProspect` was added 2026-09-18 with a reason on the record: when
+    the board moved from the if-healthy path to the expected value, the whole
+    prospect pool fell under the war ladder's bottom cut of 1.5 and the view
+    went to one colour. Its cuts sit at the percentiles the war ladder's own
+    cuts occupy on its own pool, so it is a second ruler of the same shape on a
+    different population, not a softer ruler on the same one."""
     lads = _ladders(ruler)
-    assert set(lads) == {"war", "rosterWar", "z", "run", "ratio", "wrc",
-                         "woba", "fip", "surplus", "trade"}, sorted(lads)
+    assert set(lads) == {"war", "warProspect", "rosterWar", "z", "run", "ratio",
+                         "wrc", "woba", "fip", "surplus", "trade"}, sorted(lads)
     for fam, L in lads.items():
         cuts = L["cuts"]
         assert len(cuts) == 5, (fam, cuts)
@@ -197,7 +205,8 @@ def test_red_is_only_below_zero(ruler):
     its last positive cut then sits at or above zero, so red is EXACTLY the set
     of negative numbers. An above-average index can never take it."""
     lads = _ladders(ruler)
-    assert {f for f, L in lads.items() if L["neg"]} == {"war", "surplus", "trade"}
+    assert {f for f, L in lads.items() if L["neg"]} == {"war", "warProspect",
+                                                       "surplus", "trade"}
     for fam, L in lads.items():
         if L["neg"]:
             assert L["cuts"][-1] >= 0, (fam, L["cuts"])

@@ -310,11 +310,19 @@
 
   // Season-aligned WAR for a row: vets start at first_season; prospects at
   // their ETA (pre-ETA seasons are MiLB time - rendered as such, never 0).
-  // The WAR shown on the board/cells is the "playing-time-held" (if-healthy)
-  // path - the 70th-percentile outcome - so a star's out-years read at their
-  // healthy level rather than the attrition-discounted expected value. Surplus
-  // and all valuation still price off the expected value (m.war / surNpv), never
-  // this display series. Vets carry warPTH; prospects fall back to war.
+  // THE BOARD SHOWS THE EXPECTED VALUE (owner decision 2026-09-18). It used to
+  // show the "playing-time-held" (if-healthy) 70th-percentile path, asked for
+  // on 2026-06-13 after the Skenes year-5 report so a star's out-years read at
+  // their healthy level. That path answers "how good is he when he plays",
+  // which is the wrong question for a board whose next column is surplus: it
+  // strips out exactly the attrition a club is buying, and it strips most from
+  // the players who carry most of it. Measured on the served board the day it
+  // was reverted, the if-healthy total ran 37.9 percent above the expected
+  // value league-wide and the median row nearly halved (ratio 0.563), while a
+  // two-way pitcher's arm, the case that raised it, moved only 12 percent.
+  // Surplus and all valuation ALREADY priced the expected value (m.war /
+  // surNpv) and do not move; this aligns the display with what was always
+  // being priced. warPTH stays on the payload and on the player card.
   // The player's full remaining surplus, in raw dollars. `surTotal`
   // (2026-08-03) is the balance of the season in progress plus the NPV of every
   // controlled season after it; `surNpv` counted only seasons from
@@ -331,7 +339,7 @@
     return m.surNpv != null ? m.surNpv : null;
   }
   function warAt(m, t) {
-    const arr = (m.warPTH && m.warPTH.length) ? m.warPTH : m.war;
+    const arr = m.war;
     if (m.src === "prospect") {
       const off = t - (m.eta - DATA.first_season);
       return off >= 0 && off < (arr || []).length ? arr[off] : null;
@@ -341,7 +349,7 @@
   function bandAt(m, t, which) {
     // Prefer the prime-path bands so a prospect's displayed (prime) cell never
     // sits outside its own band; vets fall back to their expected bands.
-    const arr = which === "lo" ? (m.warPTHP10 || m.warP10) : (m.warPTHP90 || m.warP90);
+    const arr = which === "lo" ? m.warP10 : m.warP90;
     if (!arr) return null;
     if (m.src === "prospect") {
       const off = t - (m.eta - DATA.first_season);
@@ -353,7 +361,13 @@
   // The DISPLAYED 5-year (windowed, ETA-aligned) WAR total, so the board sorts on
   // the same number the Total column shows. Prospects get the in-window sum only
   // (a late-ETA prospect's off-window prime years do NOT float him up the board);
-  // vets keep their full if-healthy total (already 5-year, truncated at export).
+  // vets keep their full expected-value total (already 5-year, truncated at export).
+  // WHICH RULER A ROW IS PAINTED ON. A prospect expected path is bucket-weighted
+  // by P(bucket|FV), so the whole prospect pool sits under the war ladder's
+  // bottom cut and would be one colour. `warProspect` bands the prospect pool at
+  // the percentiles the war ladder's cuts occupy on ITS pool, so the same colour
+  // means the same rank in the population the row belongs to.
+  function warLadder(m) { return m.src === "prospect" ? "warProspect" : "war"; }
   function warShown(m) {
     if (m.src === "prospect") {
       let s = null;
@@ -363,7 +377,7 @@
       }
       return s;
     }
-    return m.warTotalPTH ?? m.warTotal;
+    return m.warTotal;
   }
   // How many season cells this row actually PAINTS. The 5y total bands on the
   // average of THOSE seasons, not on total / horizon: warShown gives a prospect
@@ -458,7 +472,7 @@
   const SCATTER_AXES = {
     age:      { label: "Age",                  get: m => m.age },
     warY1:    { label: "Year-1 WAR",           get: m => warAt(m, 0) },
-    warTotal: { label: "5y WAR (shown)",       get: m => warShown(m) },
+    warTotal: { label: "5y WAR",               get: m => warShown(m) },
     woba:     { label: "Year-1 wOBA (proj)",   get: m => (m.woba || [])[0] ?? null, f3: true },
     wrc:      { label: "Year-1 wRC+ (proj)",   get: m => (m.wrc || [])[0] ?? null },
     fip:      { label: "Year-1 FIP (proj)",    get: m => (m.fip || [])[0] ?? null, f2: true },
@@ -602,7 +616,7 @@
       ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${DATA.n_vets} veterans (<span data-gl="fa_projection_engine">FA projection engine</span>)
       &middot; ${DATA.n_prospects} prospects (<span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA)
       &middot; priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons"}
-      &middot; WAR shown: <strong>playing-time-held</strong> (if-healthy) path; <span data-gl="surplus_value">surplus</span> prices the expected value over the club control window
+      &middot; WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window
       &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
     const gfxBtn = document.getElementById("proj-board-gfx");
     if (gfxBtn) gfxBtn.onclick = () => {
@@ -1531,7 +1545,7 @@
       + th("name", "Player", "pc-player", "Sort by name", "Player")
       + `<th class="pc-csv" hidden data-export-text="Pos"></th><th class="pc-csv" hidden data-export-text="Team"></th>`
       + th("warTotal", `${H}y<span class="proj-sr-sm"> WAR</span>`, "pc-tot",
-          "Projected eWAR over the window, playing-time-held (if-healthy) path. Surplus prices the expected path.", `${H}y WAR`)
+          "Projected eWAR over the window on the expected path, which is the path surplus prices.", `${H}y WAR`)
       + th("sur", "Surplus", "pc-sur",
           "Veterans: production value minus salary over the club control window - contracted dollars where a contract exists, the league minimum for pre-arbitration seasons, the projected award for arbitration seasons. Prospects: surplus over the 7-season valuation window from their ETA.", "Surplus")
       + seasons.map((s, t) => th("y" + t,
@@ -1572,16 +1586,16 @@
         const w = warAt(m, t);
         if (w == null) return gap();
         const lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
-        return td(`<span class="proj-war ${EephusTiers.cls(w, "war")}" title="${s}: ${fmtWar(w)} eWAR (playing-time-held / if-healthy path)${lo != null ? ` &middot; P10 ${war1(lo)} / P90 ${war1(hi)}` : ""}">${fmtWar(w)}</span>`);
+        return td(`<span class="proj-war ${EephusTiers.cls(w, warLadder(m))}" title="${s}: ${fmtWar(w)} eWAR (expected path)${lo != null ? ` &middot; P10 ${war1(lo)} / P90 ${war1(hi)}` : ""}">${fmtWar(w)}</span>`);
       }).join("");
-      // Vets: the if-healthy total. Prospects: the in-window sum of the shown
-      // cells. The Total P10-P90 band stays withdrawn (F-01).
+      // Vets: the expected-value total. Prospects: the in-window sum of the
+      // shown cells. The Total P10-P90 band stays withdrawn (F-01).
       // The colour on this cell ranks the PER-SEASON AVERAGE of the seasons the
       // row paints, not the sum, so the reader is told which number the colour
       // is about. Same words for every row, no tier word, no em dash.
       const totTip = (isPros
-        ? "Sum of the in-window seasons shown (playing-time-held path)"
-        : `Playing-time-held path${m.warTotal != null ? `; expected path ${fmtWar(m.warTotal)}, which surplus prices` : ""}`)
+        ? "Sum of the in-window seasons shown (expected path)"
+        : `Expected path, which is also what surplus prices${m.warTotalPTH != null ? `; if he holds his playing time, ${fmtWar(m.warTotalPTH)}` : ""}`)
         + ". Colour ranks the per-season average of the seasons shown";
       const sv = surOf(m);
       const surTip = isPros
@@ -1672,7 +1686,7 @@
       const warTot = m => warShown(m) ?? -99;
       const topWar = curr.slice().sort((a, b) => warTot(b) - warTot(a)).slice(0, 6);
       const warRow = m => `<div class="fa-rail-row"><a class="fa-player-link" href="${m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`}">${esc(m.name)}</a><span class="fa-rail-num">${fmtWar(warTot(m))}</span></div>`;
-      const warMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Top ${DATA.horizon}-year projected eWAR among the current filters (if-healthy path)">Top projected WAR</div>
+      const warMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Top ${DATA.horizon}-year projected eWAR among the current filters (expected path)">Top projected WAR</div>
         ${topWar.map(warRow).join("")}</div>`;
       const surList = curr.filter(m => surOf(m) != null).sort((a, b) => (surOf(b) || 0) - (surOf(a) || 0)).slice(0, 6);
       const surRow = m => `<div class="fa-rail-row"><a class="fa-player-link" href="${m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`}">${esc(m.name)}</a><span class="fa-rail-num ${surOf(m) >= 0 ? "proj-pos" : "proj-neg"}">${money(surOf(m))}</span></div>`;
@@ -2977,7 +2991,7 @@
       title: `MLB Projections · ${DATA.horizon}-Year eWAR Leaders`,
       subtitle: `${DATA.n_vets} veterans + ${DATA.n_prospects} prospects · seasons ${DATA.first_season}-${DATA.first_season + DATA.horizon - 1}`,
       url: "eephus.io/projections", filenameBase: "eephus-projections-board",
-      caption: "eWAR on the playing-time-held path · prospects join at their PROSPX ETA · surplus is priced over each player's club control window",
+      caption: "eWAR on the expected path · prospects join at their PROSPX ETA · surplus is priced over each player's club control window",
       board: { defaultCount: 25, counts: [10, 25, 50], columns: [
         { label: "#", frac: 0.05 },
         { label: "Player", frac: 0.52 },
