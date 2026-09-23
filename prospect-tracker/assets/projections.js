@@ -244,10 +244,10 @@
   // `thru` was the contract column's key until 2026-09-17; syncFromURL aliases
   // it to `ctrl`, so a saved share link resolves to the Control column that
   // replaced it instead of silently falling back to the default order.
-  const SORT_KEYS = ["warTotal", "rank", "name", "sur", "y0", "y1", "y2", "y3", "y4",
+  const SORT_KEYS = ["warTotal", "rank", "name", "team", "sur", "y0", "y1", "y2", "y3", "y4",
                      "age", "aav", "ctrl", "warPeak", "warPrime", "fv", "eta", "pBust"];
   // First click ascending: A-Z, youngest, soonest, safest.
-  const ASC_FIRST = ["name", "age", "eta", "pBust"];
+  const ASC_FIRST = ["name", "team", "age", "eta", "pBust"];
   function naturalDir(k) { return ASC_FIRST.includes(k) ? 1 : -1; }
   // The prospect column set replaces the contract tail. Both filters that
   // leave only prospects switch to it.
@@ -255,7 +255,7 @@
   // Keys with a header (or a picker entry) in a column set. One list, read by
   // the header, the sort picker and the orphaned-sort reset in render().
   function viewSortKeys(pros) {
-    return ["rank", "name", "warTotal", "sur", "y0", "y1", "y2", "y3", "y4", "age"]
+    return ["rank", "name", "team", "warTotal", "sur", "y0", "y1", "y2", "y3", "y4", "age"]
       .concat(pros ? ["fv", "eta", "warPeak", "warPrime", "pBust"] : ["aav", "ctrl"]);
   }
 
@@ -482,6 +482,10 @@
     if (k === "warTotal" || k === "rank") return warShown(m);
     if (k === "sur") return surOf(m);
     if (k === "name") return String(m.name || "");
+    // Org sort (owner ask 2026-09-18): groups the board by club. A row with no
+    // club returns null rather than "", so it sorts LAST in both directions per
+    // the rule above instead of clumping at the top under an empty string.
+    if (k === "team") return m.team ? String(m.team) : null;
     if (/^y[0-4]$/.test(k)) {
       const t = Number(k.slice(1));
       if (state.cells !== "war") {
@@ -1825,13 +1829,13 @@
     // Sort vocabulary: one table for the eyebrow cue, the picker and its
     // reverse button. The cue is the only on-screen sign of a sort whose column
     // has folded at this width.
-    const SORT_LBL = { rank: `${H}y WAR`, name: "Name", warTotal: `${H}y WAR`, sur: "Surplus", age: "Age",
+    const SORT_LBL = { rank: `${H}y WAR`, name: "Name", team: "Org", warTotal: `${H}y WAR`, sur: "Surplus", age: "Age",
       aav: "AAV", ctrl: "Club control thru", fv: "eFV", eta: "ETA", warPeak: "Peak WAR",
       warPrime: `Prime ${H}y WAR`, pBust: "P(bust)" };
     seasons.forEach((s, t) => { SORT_LBL["y" + t] = `${s} ${cellLbl}`; });
     const sortName = SORT_LBL[state.sort] || SORT_LBL.warTotal;
     const arrow = state.dir < 0 ? "▾" : "▴";
-    const dirWord = state.sort === "name" ? (state.dir > 0 ? "A-Z" : "Z-A") : (state.dir < 0 ? "high first" : "low first");
+    const dirWord = (state.sort === "name" || state.sort === "team") ? (state.dir > 0 ? "A-Z" : "Z-A") : (state.dir < 0 ? "high first" : "low first");
     const boardHead = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">${H}-Year Projection Board</span>
       <span class="newsprint-eyebrow-meta">${seasons[0]}-${seasons[seasons.length - 1]} &middot; ${list.length} shown &middot; sorted by ${esc(sortName)} ${arrow}
