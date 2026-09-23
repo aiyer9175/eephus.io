@@ -110,7 +110,8 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4j. eWAR Leaderboard (war_leaderboards.json) | war_leaderboards.json |
 | 6b4k. Multi-year windows (mlbstats_window_*.json) | mlbstats_windows.json |
 | 6b5. Alchemy Lab (pal.json) | arbitration.json, pal.json |
-| 6b7. Arbitration Predictor (arbitration.json) | arbitration.json, management_board.json |
+| 6b7. Arbitration Predictor (arbitration.json) | arbitration.json, management_baseline.json, management_decisions.json |
+| 6b7e. In-Game Management decision ledger | management_baseline.json, management_board.json |
 | 6b7c. In-Game Management board (management_board.json) | hof_board.json, management_board.json |
 | 6b7b. Hall of Fame board (hof_board.json) | hof_board.json |
 | 6b6. Fantasy Tools (fantasy.json) | fantasy.json |

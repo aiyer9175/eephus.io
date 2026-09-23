@@ -358,8 +358,9 @@ def coarse():
                     continue
                 _load(page, base + path, theme)
                 seen[(label, path, theme)] = page.evaluate(_READ)
-                # the fantasy filters live behind the module tabs
-                if label == "fantasy":
+                # the fantasy filters live behind the module tabs, and the
+                # glossary calculator (#gx-surplus-side) behind a glossary view
+                if label in ("fantasy", "glossary"):
                     n = page.evaluate("s => document.querySelectorAll(s).length", TABSEL)
                     for k in range(min(n, MAX_CLICKS_PER_ROUTE)):
                         try:
