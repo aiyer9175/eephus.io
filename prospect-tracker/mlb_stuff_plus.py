@@ -8,6 +8,33 @@
 The model artifact and feature construction come from Thomas Nestico's
 MIT-licensed tjstuff_plus project:
 https://github.com/tnestico/tjstuff_plus
+
+THE BASELINE IS PART OF THE NUMBER, SO IT IS PART OF THE RETURN
+==============================================================
+Three of the ten model features are DIFFERENCES against the pitcher's own
+primary fastball (`speed_diff`, `az_diff`, `ax_diff`). A tjStuff+ value is
+therefore not a property of a pitch on its own: it is that pitch measured
+against one named baseline, and the baseline is whatever `_primary_fastball`
+picks out of the row set this module was handed.
+
+Hand it a pooled row set, then hand it a per-level subset of the same pitcher,
+and it can pick a DIFFERENT primary fastball - a different code (SI instead of
+FF), or the same code with a different mean velo - after which every pitch in
+that view moves. That is not an arithmetic bug. It is two rulers wearing one
+name, and the house rule is that a number is never shown on a scale it was not
+computed on.
+
+The repair is the one tools/mlbstats_window_lab.py already made for the
+multi-year index boards: keep scoring each row set on ITS OWN pool, because a
+level split is a different population and that level's own fastball is the
+right comparison, and PUBLISH the pool the number was computed on so no reader
+is handed two numbers with nothing to tell them apart. `score_pitch_points`
+therefore returns a `ScoredPitches` - a list, so every existing caller is
+untouched - that also carries `.baseline`, the one primary fastball every row
+in it was scored against. Callers that publish the rows publish that baseline
+beside them. Nobody re-derives it downstream: a view truncated to its last N
+points would re-derive a baseline its numbers were never scored on, and 22 per
+cent of published plot views are at that cap.
 """
 
 from __future__ import annotations
@@ -36,6 +63,7 @@ FEATURES = [
 # mean 0.35, stdev 0.68. The model target itself is per-pitch run value.
 TJSTUFF_TARGET_MEAN = 0.0035
 TJSTUFF_TARGET_STD = 0.0068
+TJSTUFF_MODEL_NAME = "tjstuff_plus_2020_2023_lgbm"
 FASTBALL_TYPES = {"FF", "SI", "FC", "FT"}
 
 
@@ -89,10 +117,20 @@ def _primary_fastball(rows: list[dict]) -> dict | None:
         return (len(pitch_rows), _mean(r.get("velo") for r in pitch_rows) or 0.0)
 
     _code, pitch_rows = max(candidates.items(), key=key)
+    # velo / az / ax are the UNROUNDED means the feature rows subtract, and
+    # they stay unrounded or every scored value moves. The rest of the dict
+    # is the label: which pitch this baseline is, how many of them it was
+    # taken over, and whether it is a fastball at all - it is not, when the
+    # pitcher threw none and the fallback picked his most-thrown pitch.
     return {
         "velo": _mean(r.get("velo") for r in pitch_rows),
         "az": _mean(r.get("az") for r in pitch_rows),
         "ax": _mean(r.get("ax_mirrored") for r in pitch_rows),
+        "pitch_type": _code,
+        "pitch_name": next((r.get("pitch_name") for r in pitch_rows
+                            if r.get("pitch_name")), _code),
+        "n": len(pitch_rows),
+        "is_fastball": _code in FASTBALL_TYPES,
     }
 
 
@@ -123,12 +161,62 @@ def _feature_row(row: dict, primary: dict) -> list[float] | None:
     ]
 
 
-def score_pitch_points(points: list[dict]) -> list[dict]:
-    """Return copies of pitch rows with `tj_stuff_plus` when scoreable."""
+class ScoredPitches(list):
+    """The scored rows PLUS the one baseline they were all scored against.
+
+    A plain `list` subclass on purpose: every caller that only iterates the
+    rows keeps working unchanged, and the one caller that publishes them can
+    read `.baseline` and ship the label with the numbers. Slicing returns a
+    plain list, which is the honest result - a truncated view must be handed
+    its baseline, never left to re-derive one.
+    """
+
+    __slots__ = ("baseline", "model_name")
+
+    def __init__(self, rows=(), baseline=None, model_name=None):
+        super().__init__(rows)
+        self.baseline = baseline
+        self.model_name = model_name
+
+
+def baseline_label(primary: dict | None, tracked_rows: int | None = None) -> dict:
+    """The PUBLISHABLE description of the baseline a view was scored on.
+
+    Rounded for the payload; the scoring itself always uses the unrounded
+    means on `primary`. `tracked_rows` is how many rows were HANDED to the
+    scorer, which is neither how many got a value (a row with no features is
+    returned unscored) nor how many points the view publishes (the plot caps
+    at PITCH_PLOT_LIMIT and the baseline does not move when it does). The
+    scale sentence is NOT in the payload: it is one constant, rendered by the
+    page, rather than one copy per view in the boot payload.
+    """
+
+    if not primary:
+        return {"scored": False}
+    velo = _num(primary.get("velo"))
+    return {
+        "scored": True,
+        "pitch_type": primary.get("pitch_type"),
+        "pitch_name": primary.get("pitch_name") or primary.get("pitch_type"),
+        "avg_velo": round(velo, 1) if velo is not None else None,
+        "n": primary.get("n"),
+        "is_fastball": bool(primary.get("is_fastball")),
+        "tracked_rows": tracked_rows,
+        "model": TJSTUFF_MODEL_NAME,
+    }
+
+
+def score_pitch_points(points: list[dict]) -> ScoredPitches:
+    """Return copies of pitch rows with `tj_stuff_plus` when scoreable.
+
+    The return also carries `.baseline`: the primary fastball every returned
+    row was scored against. Publish it with the rows (see the module
+    docstring) - it is the only record of which ruler these numbers sit on.
+    """
 
     model = _load_model()
     if model is None:
-        return [dict(p) for p in points]
+        return ScoredPitches([dict(p) for p in points])
 
     rows: list[dict] = []
     for point in points:
@@ -147,7 +235,7 @@ def score_pitch_points(points: list[dict]) -> list[dict]:
 
     primary = _primary_fastball(rows)
     if not primary:
-        return rows
+        return ScoredPitches(rows)
 
     feature_rows: list[list[float]] = []
     feature_indexes: list[int] = []
@@ -158,7 +246,7 @@ def score_pitch_points(points: list[dict]) -> list[dict]:
         feature_rows.append(feats)
         feature_indexes.append(idx)
     if not feature_rows:
-        return rows
+        return ScoredPitches(rows, baseline=primary)
 
     # Predict with the feature NAMES the model was fitted with. A bare
     # list/array triggers sklearn's "X does not have valid feature names"
@@ -178,5 +266,5 @@ def score_pitch_points(points: list[dict]) -> list[dict]:
     for idx, pred in zip(feature_indexes, preds):
         z = (float(pred) - TJSTUFF_TARGET_MEAN) / TJSTUFF_TARGET_STD
         rows[idx]["tj_stuff_plus"] = round(max(20.0, min(180.0, 100.0 - (z * 10.0))), 1)
-        rows[idx]["tj_stuff_plus_model"] = "tjstuff_plus_2020_2023_lgbm"
-    return rows
+        rows[idx]["tj_stuff_plus_model"] = TJSTUFF_MODEL_NAME
+    return ScoredPitches(rows, baseline=primary, model_name=TJSTUFF_MODEL_NAME)

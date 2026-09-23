@@ -1441,7 +1441,7 @@ Measured today across **all 1,789 files, 957.1 MiB** (not a sample):
   left both copies in the serialized payload.
 - The per-point encoding is the other half. Each of up to 900 rows carries `venue_name`
   "American Family Field", `pitch_name` "Curveball" and
-  `tj_stuff_plus_model` "tjstuff_plus_2020_2023_lgbm" (that one constant is roughly 30 KB per
+  `tj_stuff_plus_model` "tjstuff_plus_2020_2023_lgbm" (hoisted to one view-level `stuff_model` on 2026-09-23; before that, one constant of roughly 30 KB per
   player), and full double-precision physics (`extension 5.594834799829195`,
   `ax -4.83044697864399`) for values that render as a dot in a scatter plot.
 - Re-encoding one real file (columnar arrays, a string lookup table, 3-decimal rounding):

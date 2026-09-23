@@ -86,7 +86,11 @@ PITCH_PLOT_LIMIT = 900
 #   1 — first stamped shape: coverage / contact_quality / pitch_movement /
 #       pitch_plot / level_splits / standout_games / recent_games, with the
 #       2026-08-03 gameLog-extras repair in place.
-METRIC_SCHEMA_VERSION = 1
+#   2 - pitch_movement / pitch_plot carry stuff_baseline, the primary fastball
+#       each view's tjStuff+ was scored against, plus a view-level stuff_model
+#       (2026-09-23). A stored row without it must rebuild or its numbers ship
+#       with no ruler named.
+METRIC_SCHEMA_VERSION = 2
 
 SESSION = requests.Session()
 retries = Retry(total=2, backoff_factor=0.3, status_forcelist=[500, 502, 503, 504])
@@ -833,9 +837,21 @@ def _finalize_pitch(points: list[dict], outings: list[dict]) -> tuple[dict, dict
     ]
     if not tracked:
         return {}, {}
+    # tjStuff+ is scored against ONE primary fastball picked out of the row
+    # set handed to the scorer, so this view's numbers and another view's are
+    # only comparable when the baseline is the same. It never is by accident:
+    # pool a pitcher's levels and the pick can change. The baseline the
+    # scorer actually used comes back on the return and is carried into both
+    # published blocks below, because it is the only record of which ruler
+    # these values sit on, and because re-deriving it downstream from a plot
+    # truncated to PITCH_PLOT_LIMIT points would name a baseline the numbers
+    # were never scored on.
+    stuff_baseline: dict = {"scored": False}
     try:
-        from mlb_stuff_plus import score_pitch_points
+        from mlb_stuff_plus import baseline_label, score_pitch_points
         tracked = score_pitch_points(tracked)
+        stuff_baseline = baseline_label(getattr(tracked, "baseline", None),
+                                        len(tracked))
     except Exception:
         tracked = [dict(p) for p in tracked]
     by_type: dict[str, list[dict]] = {}
@@ -890,10 +906,12 @@ def _finalize_pitch(points: list[dict], outings: list[dict]) -> tuple[dict, dict
             "tracked_pitches": len(tracked),
             "pitch_summary": summary,
             "outings": outings,
+            "stuff_baseline": stuff_baseline,
         },
         {
             "x_axis": "Horizontal break",
             "y_axis": "Induced vertical break",
+            "stuff_baseline": stuff_baseline,
             "points": plot_points,
         },
     )

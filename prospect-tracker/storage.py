@@ -16512,7 +16512,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         captured: dict = {}
         top_plot = sc.get("pitch_plot")
         if top_plot:
-            captured["top"] = top_plot
+            captured["top"] = slim_pitch_plot_view(top_plot)
             sc["pitch_plot"] = {}
         ls = sc.get("level_splits") or []
         if ls:
@@ -16523,12 +16523,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 rp = row.get("pitch_plot")
                 if rp:
                     lvl = row.get("level") or "_"
-                    level_plots[lvl] = rp
+                    level_plots[lvl] = slim_pitch_plot_view(rp)
                     row["pitch_plot"] = {}
             if level_plots:
                 captured["level_splits"] = level_plots
         if captured and pkey:
-            pitch_plots_sidecar[pkey] = captured
+            # See slim_pitch_plot_view / dedupe_pitch_plot_entry above for
+            # the published contract; readers go through
+            # resolve_pitch_plot_entry (Python) or _resolvePitchPlot (JS).
+            pitch_plots_sidecar[pkey] = dedupe_pitch_plot_entry(captured)
     for p in active_payload:
         _harvest_and_strip_pitch_plots(p)
     for p in graduate_payload:
@@ -17043,6 +17046,101 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     return out_path
 
 
+# ============================================================================
+# data/pitch_plots/{player_key}.json - the published shape
+# ============================================================================
+# An entry is one pitcher's pitch-movement coordinates: a `top` view and a
+# `level_splits` map of per-level views. Three rules hold over what ships,
+# and all three are about a Stuff+ value only meaning something next to the
+# baseline it was scored on (mlb_stuff_plus's module docstring has the why):
+#
+#   1. EVERY VIEW NAMES ITS BASELINE. `stuff_baseline` is written by
+#      statcast_metrics from the scorer's own return, so it is the baseline
+#      the numbers in that view were ACTUALLY scored against, not one
+#      re-derived here from a point list the plot already truncated.
+#   2. THE MODEL LABEL SHIPS ONCE PER VIEW, not once per pitch. It was the
+#      same 38-character string on all 1.85 million published points.
+#   3. A VIEW IS NEVER SHIPPED TWICE. On 2026-09-18, 1,767 of 1,789 entries
+#      had a `top` byte-identical to one of their own splits - every
+#      single-level pitcher plus 588 multi-level ones whose aggregate
+#      covered one level. Those ship `top_ref: "<LEVEL>"` instead, and
+#      readers call resolve_pitch_plot_entry (prospx does the same in JS).
+#      The 22 entries whose `top` is a genuine pool of several levels keep a
+#      real `top`, because their numbers really are on a third baseline.
+
+PITCH_PLOT_INTERNAL_FIELDS = ("ax_mirrored", "x0_mirrored")
+
+
+def slim_pitch_plot_view(view: dict) -> dict:
+    """One pitch-plot view in its published shape. Moves no number.
+
+    Drops the scorer's own mirrored inputs (`ax_mirrored` / `x0_mirrored`,
+    which exist to build a feature row and are read by no consumer) and
+    hoists the per-row model stamp to `stuff_model` on the view. The stamp
+    is only hoisted when every scored row agrees on it: a view carrying two
+    model names keeps them per row rather than publishing one label over
+    numbers that did not all come from it.
+    """
+
+    if not isinstance(view, dict):
+        return view
+    points = view.get("points")
+    if not isinstance(points, list):
+        return dict(view)
+    models = {p.get("tj_stuff_plus_model") for p in points
+              if isinstance(p, dict) and p.get("tj_stuff_plus_model")}
+    hoist = len(models) == 1
+    out = {k: v for k, v in view.items() if k != "points"}
+    if hoist:
+        out["stuff_model"] = next(iter(models))
+    slim_points = []
+    for p in points:
+        if not isinstance(p, dict):
+            slim_points.append(p)
+            continue
+        q = {k: v for k, v in p.items()
+             if k not in PITCH_PLOT_INTERNAL_FIELDS
+             and not (hoist and k == "tj_stuff_plus_model")}
+        slim_points.append(q)
+    out["points"] = slim_points
+    return out
+
+
+def dedupe_pitch_plot_entry(entry: dict) -> dict:
+    """Replace a `top` that equals one of the entry's own splits with a
+    `top_ref` naming that level. Byte-for-byte equality only - a pooled top
+    that differs from every split by so much as one value is kept whole."""
+
+    if not isinstance(entry, dict):
+        return entry
+    top = entry.get("top")
+    splits = entry.get("level_splits") or {}
+    if not top or not splits:
+        return entry
+    for level, block in splits.items():
+        if block == top:
+            out = {"top_ref": level}
+            out.update({k: v for k, v in entry.items() if k != "top"})
+            return out
+    return entry
+
+
+def resolve_pitch_plot_entry(entry: dict) -> dict:
+    """Inverse of dedupe_pitch_plot_entry: the {top, level_splits} shape
+    every reader expects, whichever form was on disk."""
+
+    if not isinstance(entry, dict):
+        return entry
+    ref = entry.get("top_ref")
+    if not ref:
+        return entry
+    out = {k: v for k, v in entry.items() if k != "top_ref"}
+    block = (entry.get("level_splits") or {}).get(ref)
+    if block is not None:
+        out["top"] = block
+    return out
+
+
 def load_export_unified(boot_path: Path) -> dict:
     """Inverse of `export_timeseries_json`'s split — reads the boot JSON
     and inlines `debuts` / `inactive` / `rosters_by_org` /
@@ -17086,7 +17184,7 @@ def load_export_unified(boot_path: Path) -> dict:
                 sc = p.get("statcast_metrics") or {}
                 if not sc:
                     continue
-                entry = pp[pkey]
+                entry = resolve_pitch_plot_entry(pp[pkey])
                 if entry.get("top"):
                     sc["pitch_plot"] = entry["top"]
                 level_map = entry.get("level_splits") or {}

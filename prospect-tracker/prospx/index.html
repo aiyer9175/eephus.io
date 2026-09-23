@@ -45159,12 +45159,10 @@ function _pitchOutingsForPlot(sc, points) {
 // so we split it back into raw key + level lookup. Kicks off
 // loadSlice("pitch_plots") on first miss so the next render() picks
 // up the data once it arrives.
-function _resolvePitchPlot(sc, compoundKey) {
-  const inline = sc && sc.pitch_plot;
-  if (inline && (inline.points || []).length) return inline;
-  // Strip the trailing -<level> or -main suffix to recover the raw
-  // player_key for sidecar lookup. Player keys themselves can contain
-  // hyphens, so split on the LAST hyphen only.
+// Strip the trailing -<level> or -main suffix off a pitch-plot compound key
+// to recover the raw player_key. Player keys themselves can contain hyphens,
+// so split on the LAST hyphen only.
+function _splitPitchPlotKey(compoundKey) {
   let rawKey = compoundKey;
   let levelSuffix = "main";
   if (typeof compoundKey === "string") {
@@ -45174,6 +45172,28 @@ function _resolvePitchPlot(sc, compoundKey) {
       levelSuffix = compoundKey.slice(i + 1);
     }
   }
+  return { rawKey, levelSuffix };
+}
+
+// The entry's aggregate view. `top_ref` names the level split the aggregate
+// is identical to: before it, 1,767 of 1,789 published entries carried the
+// same points array twice (every single-level pitcher, plus 588 multi-level
+// ones whose aggregate covered a single level). A ref is the SAME view, not
+// a different one, so nothing rendered from it changes. The 22 entries whose
+// aggregate really pools several levels still carry a real `top`.
+function _pitchPlotTopView(entry) {
+  if (!entry) return null;
+  if (entry.top && (entry.top.points || []).length) return entry.top;
+  const ref = entry.top_ref;
+  const block = ref && entry.level_splits && entry.level_splits[ref];
+  if (block && (block.points || []).length) return block;
+  return null;
+}
+
+function _resolvePitchPlot(sc, compoundKey) {
+  const inline = sc && sc.pitch_plot;
+  if (inline && (inline.points || []).length) return inline;
+  const { rawKey, levelSuffix } = _splitPitchPlotKey(compoundKey);
   const entry = (DATA && DATA.pitch_plots && DATA.pitch_plots[rawKey]) || null;
   if (entry) {
     // Level-specific lookup first (e.g. "AAA"), then fall back to the
@@ -45183,7 +45203,8 @@ function _resolvePitchPlot(sc, compoundKey) {
         && (entry.level_splits[levelSuffix].points || []).length) {
       return entry.level_splits[levelSuffix];
     }
-    if (entry.top && (entry.top.points || []).length) return entry.top;
+    const top = _pitchPlotTopView(entry);
+    if (top) return top;
   }
   // v32 - PER-PLAYER sidecar fetch. The monolithic pitch_plots.json
   // reached 411MB (918 pitchers x ~450KB of per-pitch coordinates) and
@@ -45307,10 +45328,70 @@ function _ensurePlayerDetail(p) {
     .finally(() => { delete _playerDetailInFlight[rawKey]; });
 }
 
+// Name the baseline the plotted Stuff+ values were scored against. Three of
+// the ten model features are DIFFERENCES against the pitcher's own primary
+// fastball, so a Stuff+ number is that pitch measured against one named
+// pitch, not a property of the pitch alone. Each view - the aggregate and
+// each level - is scored on its own pool, which is the right comparison
+// (a level split is a different population of pitches) but makes two views
+// two rulers. So the ruler is printed. `stuff_baseline` is written at
+// scoring time and carried through the payload; it is never re-derived from
+// the plotted points, which the export already truncated.
+//
+// The signature carries the COUNT as well as the code and the mean velo: two
+// views can round to the same mph over different sets of fastballs, and the
+// model subtracts the unrounded mean, so a different count is a different
+// baseline even when the printed one looks the same.
+function _pitchPlotBaselineSig(view) {
+  const b = view && view.stuff_baseline;
+  if (!b || !b.scored || !b.pitch_type) return "";
+  return String(b.pitch_type) + "|" + String(b.avg_velo) + "|" + String(b.n);
+}
+
+// One constant, rendered, instead of one 157-character copy per view in the boot
+// payload: what a tjStuff+ number is relative to.
+const _STUFF_SCALE_NOTE = "Scored against this view's own primary fastball. A view over a "
+  + "different set of pitches has a different baseline, and its values are not comparable with these.";
+// Does another view of this pitcher sit on a different baseline? If so the same
+// pitch carries a different Stuff+ there, and every table that prints one must say so.
+function _pitcherHasMixedBaselines(rawKey) {
+  const entry = (DATA && DATA.pitch_plots && DATA.pitch_plots[rawKey]) || null;
+  if (!entry) return false;
+  const sigs = {};
+  [_pitchPlotTopView(entry)].concat(Object.values(entry.level_splits || {}))
+    .forEach(v => { const sg = _pitchPlotBaselineSig(v); if (sg) sigs[sg] = 1; });
+  return Object.keys(sigs).length > 1;
+}
+// The label above ANY table or plot that prints a tjStuff+ value. `b` is the
+// view's stuff_baseline dict; an unscored view gets nothing, never a guess.
+function _stuffBaselineNote(b, mixed) {
+  if (!b || !b.scored || !b.pitch_type) return "";
+  const velo = Number(b.avg_velo);
+  const bits = [String(b.pitch_type)];
+  if (isFinite(velo)) bits.push(velo.toFixed(1) + " mph");
+  if (Number(b.n) > 0) bits.push(Number(b.n) + " thrown");
+  let text = "Stuff+ baseline: " + bits.join(" \u00b7 ");
+  if (!b.is_fastball) text += " (no fastball tracked, most-thrown pitch used)";
+  if (mixed) text += " \u00b7 other levels have their own baseline, so the same pitch carries a different Stuff+ there";
+  const tip = _STUFF_SCALE_NOTE + (b.model ? " Model: " + b.model + "." : "");
+  return `<div style="font-size:11px;color:var(--text-tertiary);margin:0 0 8px;`
+    + `line-height:1.35;overflow-wrap:anywhere;" title="${escapeHtml(tip)}">`
+    + `${escapeHtml(text)}</div>`;
+}
+function _pitchPlotBaselineNote(compoundKey, plot) {
+  const { rawKey } = _splitPitchPlotKey(compoundKey);
+  return _stuffBaselineNote(plot && plot.stuff_baseline, _pitcherHasMixedBaselines(rawKey));
+}
+
 function makePitchMovementPlot(sc, playerKey) {
   const plot = _resolvePitchPlot(sc, playerKey);
   const points = (plot && plot.points) || [];
   if (!points.length) return "";
+  const baselineNote = _pitchPlotBaselineNote(playerKey, plot);
+  // A number with no ruler named is not shown: the per-pitch Stuff+ rides in the
+  // tooltip ONLY when this view carries a scored baseline, so the value and its
+  // label land together (pre-refetch rows have neither).
+  const hasBase = !!(plot && plot.stuff_baseline && plot.stuff_baseline.scored);
   const rootId = `pitch-plot-${String(playerKey || "player").replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const W = 520, H = 340, ML = 48, MR = 18, MT = 16, MB = 38;
   const xs = points.map(p => Number(p.hb)).filter(Number.isFinite);
@@ -45335,7 +45416,7 @@ function makePitchMovementPlot(sc, playerKey) {
     const hb = Number(p.hb), ivb = Number(p.ivb);
     if (!isFinite(hb) || !isFinite(ivb)) return "";
     const code = p.pitch_type || "?";
-    const title = `${p.date || ""} · ${p.pitch_name || code} · HB ${hb.toFixed(1)} · IVB ${ivb.toFixed(1)}${p.velo != null ? ` · ${Number(p.velo).toFixed(1)} mph` : ""}`;
+    const title = `${p.date || ""} \u00b7 ${p.pitch_name || code} \u00b7 HB ${hb.toFixed(1)} \u00b7 IVB ${ivb.toFixed(1)}${p.velo != null ? ` \u00b7 ${Number(p.velo).toFixed(1)} mph` : ""}${hasBase && p.tj_stuff_plus != null ? ` \u00b7 Stuff+ ${Math.round(Number(p.tj_stuff_plus))}` : ""}`;
     return `<circle data-pitch-point data-game-pk="${escapeHtml(String(p.game_pk || ""))}" cx="${sx(hb).toFixed(1)}" cy="${sy(ivb).toFixed(1)}" r="3.4" fill="${_pitchColor(code)}" fill-opacity="0.78" stroke="var(--bg-primary)" stroke-width="0.5"><title>${escapeHtml(title)}</title></circle>`;
   }).join("");
   const byType = {};
@@ -45357,8 +45438,9 @@ function makePitchMovementPlot(sc, playerKey) {
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
       <div class="stat-group-label" style="margin:0;">Pitch movement</div>
       <select class="chip" onchange="updatePitchMovementPlot('${rootId}', this.value)" title="Filter plot to one outing or the full season">${options}</select>
-      <span style="font-size:11px;color:var(--text-tertiary);">${points.length} tracked pitches · HB x IVB</span>
+      <span style="font-size:11px;color:var(--text-tertiary);">${points.length} tracked pitches \u00b7 HB x IVB</span>
     </div>
+    ${baselineNote}
     <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-height:380px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;">
       ${grid}
       <line x1="${ML}" x2="${W-MR}" y1="${H-MB}" y2="${H-MB}" stroke="var(--text-secondary)" stroke-width="1"/>
@@ -45665,6 +45747,7 @@ function makeReleaseTraitsTable(sc, player) {
   </tr>`).join("");
   return `<div style="margin-top:12px;">
     <div class="stat-group-label">Release traits <span style="font-weight:500;color:var(--text-tertiary);letter-spacing:0;text-transform:none;"> · VAA + release geometry</span></div>
+    ${_stuffBaselineNote(((sc || {}).pitch_movement || {}).stuff_baseline, _pitcherHasMixedBaselines(player && player.player_key))}
     <table class="detail-table vaa-table" style="margin-top:8px;"><thead><tr>
       <th>Pitch</th><th>Pitches</th><th>Velo</th><th>VAA</th><th>Ext</th><th>Rel Ht</th><th>VAAoe</th><th title="Raw Stuff+ with pitch-level percentile among same-level pitchers for this pitch type">Stuff+</th>
     </tr></thead><tbody>${body}</tbody></table>
@@ -45702,7 +45785,7 @@ function makeStatcastApiBlock(sc, player) {
       <div class="stat-label">${escapeHtml(label)}</div>
       <div class="stat-value" style="font-family:var(--font-mono);">${escapeHtml(String(val))}</div>
     </div>`).join("")}</div>` : "";
-  const pitchSummary = (pm.pitch_summary || []).length ? `<table class="detail-table" style="margin-top:8px;"><thead><tr>
+  const pitchSummary = (pm.pitch_summary || []).length ? `${_stuffBaselineNote(pm.stuff_baseline, _pitcherHasMixedBaselines(player && player.player_key))}<table class="detail-table" style="margin-top:8px;"><thead><tr>
     <th>Pitch</th><th>Usage</th><th>Velo</th><th>HB</th><th>IVB</th><th>Spin</th><th title="Raw Stuff+ with pitch-level percentile among same-level pitchers for this pitch type">Stuff+</th>
   </tr></thead><tbody>${pm.pitch_summary.map(p => `<tr>
     <td><span style="color:${_pitchColor(p.pitch_type)};font-weight:700;">${escapeHtml(p.pitch_type || "?")}</span> ${escapeHtml(p.pitch_name || "")}</td>
@@ -46240,7 +46323,7 @@ function makeArsenalBlock(pa, p) {
   // screens - pure visual at-a-glance summary of pitch mix. Collapses
   // below the table on narrow viewports via flex-wrap.
   const radar = makeArsenalRadar(pa);
-  const tableHtml = `<table class="detail-table"><thead><tr><th>Pitch</th><th title="Average velocity in mph">Velo</th><th>Usage</th><th title="Raw Stuff+ with pitch-level percentile among same-level pitchers for this pitch type">Stuff+</th></tr></thead><tbody>${rows}</tbody></table>`;
+  const tableHtml = `${_stuffBaselineNote((((p || {}).statcast_metrics || {}).pitch_movement || {}).stuff_baseline, _pitcherHasMixedBaselines(p && p.player_key))}<table class="detail-table"><thead><tr><th>Pitch</th><th title="Average velocity in mph">Velo</th><th>Usage</th><th title="Raw Stuff+ with pitch-level percentile among same-level pitchers for this pitch type">Stuff+</th></tr></thead><tbody>${rows}</tbody></table>`;
   const handednessTable = _arsenalHandednessUsageTable(sorted);
   if (!radar) return fgArsenalLine + fb + tableHtml + handednessTable;
   return fgArsenalLine + fb + `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
