@@ -57,6 +57,15 @@
 }
 
 :root {
+  /* THE BROWSER'S OWN WIDGET PARTS FOLLOW THIS (2026-09-23). The site never
+     declared color-scheme, so it computed `normal` and the option list that
+     drops out of a themed <select>, the number spinners and the range track
+     rendered LIGHT on both themes, and any control the sheet did not reach
+     fell back to a white box, which is exactly what the /mlbstats/ year
+     pickers were. None of that is reachable from CSS except through this
+     property. Paired with the dark arm below so the parts flip with the
+     tokens; the site's own scrollbars are authored separately and unaffected. */
+  color-scheme: light;
   --bg-primary:    #F4F0E6;   /* warm paper */
   --bg-secondary:  #FAF5E6;   /* card surface - warm baseball-card cream (was near-white #FBF8F0) */
   --bg-tertiary:   #ECE6D6;   /* alt panel */
@@ -309,6 +318,7 @@
    Toggled via <html data-theme="dark">, shared with PROSPX via the same
    localStorage key ('prospect-tracker.theme'). */
 [data-theme="dark"] {
+  color-scheme: dark; /* the dark arm of the pair declared on :root */
   --bg-primary:    #0C0C0E;
   --bg-secondary:  #1A1A1E;
   --bg-tertiary:   #232328;
@@ -2412,7 +2422,10 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    the wrap), so the only new rules are the from/to pair and its phone row. */
 .mlbx .mlbstats-range { align-items: center; }
 .mlbx .mlbstats-range-fromto { display: inline-flex; align-items: center; gap: 8px; }
-.mlbx .mlbstats-range-fromto .mlbstats-ctl { margin: 0; }
+.mlbx .mlbstats-range-fromto .mlbstats-ctl {
+  margin: 0; font-size: 11px; color: var(--text-tertiary);
+  display: inline-flex; gap: 5px; align-items: center;
+}
 /* A window index is NOT on the value ruler: 100 is the average of each
    contributing season's pool, and the window pool is 12 to 18% narrower, so the
    cell carries the numeral's font and no band colour at all. If a tier class
@@ -4788,3 +4801,66 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   .fa-app .fa-select { font-size: 16px; }
   .fa-app .fa-board-table .fa-xp-btn::after { content: ""; position: absolute; inset: 0 -4px; }
 }
+
+
+/* ===========================================================================
+   THE NATIVE-CONTROL LAYER (owner report 2026-09-18, MLB Stats first)
+
+   "The years period 'from: 2026 to 2026' is off theme." It was never one
+   picker. Measured in Chromium over the served site in both themes at 1440
+   and 390: the six boards' year from/to selects carried NO author
+   declaration at all (Arial 13.33px, rgb(255,255,255), the browser grey
+   border) because they shipped with no class and sit in a pill row the
+   module's only control rule (`.mlbstats-bar input, .mlbstats-bar select`)
+   does not reach; the themed selects still let the browser draw its own
+   disclosure arrow and option list; and every checkbox painted the OS
+   accent (rgb(35,37,92), identical in both themes, in neither palette).
+
+   Every control here STAYS NATIVE. A custom dropdown would look right and
+   cost keyboard, screen-reader and touch behaviour; only the paint is ours.
+   Written in tokens, so the dark block needs no arm of its own.
+   =========================================================================== */
+
+/* 1. the checkbox / radio / slider fill: one property, every one of them,
+   site-wide on purpose (the OS accent was the one colour from no palette). */
+input[type="checkbox"], input[type="radio"], input[type="range"] {
+  accent-color: var(--accent-cyan);
+}
+
+/* 2. the themed select. The `.mlbstats-bar select` dialect (retro-mono 12px,
+   --bg-secondary) with ONE deliberate departure: the border is
+   --text-tertiary, not --border. Measured: --border on --bg-secondary is
+   about 1.1:1 in the dark theme and 1.6:1 in the light, which is below the
+   3:1 floor a control boundary needs to be perceivable, and it is the
+   pattern the audit called already failing. --text-tertiary reads 3.9:1
+   dark and 4.9:1 light, and it is already this module's chip HOVER border
+   (.mlbstats-season:hover), so it is the same dialect and not a new colour. */
+.eephus-select {
+  font-family: var(--font-retro-mono); font-size: 12px;
+  color: var(--text-primary); background-color: var(--bg-secondary);
+  border: 1px solid var(--text-tertiary); border-radius: 0; cursor: pointer;
+  padding: 4px 24px 4px 8px; line-height: 1.3;
+}
+.eephus-select:hover { border-color: var(--text-secondary); }
+.mlbstats-bar select { border-color: var(--text-tertiary); }
+.mlbstats-bar select:hover { border-color: var(--text-secondary); }
+
+/* 3. the disclosure arrow, REPLACED and never removed: two linear-gradient
+   halves make one downward chevron in currentColor, the same device the
+   .mlbx-caret row expander uses, so it follows the theme with no colour
+   literal. padding-right above reserves the room the browser arrow used, so
+   no text runs under the caret. Scoped to this module and the shared class;
+   the other routes' selects are a separate pass. */
+.eephus-select, .mlbstats-bar select {
+  appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 14px) 55%, calc(100% - 9px) 55%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 24px;
+}
+
+/* 4. iOS zooms the page when a focused control's text is under 16px; a
+   coarse pointer gets the larger face and the layout row still fits. */
+@media (pointer: coarse) { .eephus-select, .mlbstats-bar select { font-size: 16px; } }

@@ -1249,7 +1249,12 @@
     var lo = cur ? cur.lo : (live != null ? live : years[years.length - 1]);
     var hi = cur ? cur.hi : lo;
     function sel(which, val) {
-      return '<select data-mlbrangesel="' + esc(sec) + ":" + which + '" aria-label="'
+      // Shipped with no class, in a pill row the module's only control rule does
+      // not reach, so it rendered in the browser default (owner report
+      // 2026-09-18). `.eephus-select` is the shared themed-select class in
+      // site.css; the element, its options, its keyboard and screen-reader
+      // behaviour and every deep-link value are untouched.
+      return '<select class="eephus-select" data-mlbrangesel="' + esc(sec) + ":" + which + '" aria-label="'
         + (which === "lo" ? "First season" : "Last season") + '">'
         + years.map(function (y) {
             return '<option value="' + y + '"' + (y === val ? " selected" : "") + ">" + y + "</option>";
