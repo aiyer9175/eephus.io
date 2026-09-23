@@ -70,20 +70,28 @@ def _utc_stamp() -> str:
 
 
 def _assemble(corpus: dict):
-    """(league, by_player, war_actual) from the corpus. war_actual sums WAR
-    across sides per (mlbam, season), matching the label the harness scores."""
+    """(league, by_player, war_actual) from the corpus.
+
+    war_actual is {(mlbam, season): TOTAL player WAR}, built by
+    fa_projection.war_actual_map - the SAME function proj_ml
+    .build_training_frame calls, so what this harness scores and what the
+    frame trains on cannot drift apart.
+
+    It used to be accumulated here by adding r["war"] across sides. The corpus
+    wrote the whole-player total onto the hitter row AND the pitcher row, so
+    that sum doubled every player-season carrying a row on both sides, and it
+    doubled them on BOTH sides of the comparison: the harness scored against
+    the same doubled truth the frame trained on, so the error cancelled in
+    every published receipt and surfaced only as a level. Repaired
+    2026-09-18; see fa_projection._side_war_age_maps."""
     league = corpus["league"]
     by_player: dict[str, dict[int, dict[int, dict]]] = {
         "hit": defaultdict(dict), "pit": defaultdict(dict)}
-    war_actual: dict[tuple, float] = {}
     for side in ("hit", "pit"):
         for r in corpus[side]:
             if r.get("mlbam"):
                 by_player[side][r["mlbam"]][r["season"]] = r
-                if r.get("war") is not None:
-                    key = (r["mlbam"], r["season"])
-                    war_actual[key] = war_actual.get(key, 0.0) + r["war"]
-    return league, by_player, war_actual
+    return league, by_player, fp.war_actual_map(corpus)
 
 
 def _pinball(q: float, actual: float, pred_q: float) -> float:

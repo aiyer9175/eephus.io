@@ -297,16 +297,31 @@ def build_features(hist: list[dict], side: str, base: int, age: float | None,
 
 
 def _war_tag(corpus: dict) -> str:
-    """Cache-key suffix for the WAR basis the corpus was labelled on
-    (fa_projection.build_corpus stamps 'war_provider'; an unstamped corpus
-    predates the 2026-09-03 epoch and is bWAR). '' for bWAR so no historical
-    filename moves; '_ewar_v2' otherwise. The frame and point-in-time bundle
-    keys below carry corpus.first / corpus.last and nothing about the ROWS,
-    and the epoch moves pitcher labels without moving either, so without
-    this a frame cached under bWAR would feed bWAR labels to a retrain on
-    the eWAR corpus (tools/train_proj_models.py --final)."""
+    """Cache-key suffix for the LABEL the corpus carries: its WAR BASIS and
+    the SHAPE of its WAR columns.
+
+    Basis: fa_projection.build_corpus stamps 'war_provider'; an unstamped
+    corpus predates the 2026-09-03 epoch and is bWAR. '' for bWAR so no
+    historical filename moves; '_ewar_v2' otherwise.
+
+    Shape: build_corpus also stamps 'label_shape' (fa_projection.LABEL_SHAPE).
+    An unstamped corpus predates the 2026-09-18 two-sided repair and carries
+    the whole-player WAR on BOTH of a two-way player's rows, which this module
+    then summed again - so its labels are 2x on every player-season with a row
+    on both sides. Appended only when present, for the same reason the basis
+    tag is empty on bWAR: no historical filename moves.
+
+    The frame and point-in-time bundle keys below carry corpus.first /
+    corpus.last and nothing about the ROWS, and neither the epoch nor the
+    repair moves either, so without this a frame cached under the old labels
+    would feed them straight to a retrain on the repaired corpus
+    (tools/train_proj_models.py --final). THE LIVE BUNDLE IS NOT COVERED:
+    model/proj_lgbm loads by path and carries no key at all, which is why
+    train() stamps the shape into meta and load() says so when it is absent."""
     prov = corpus.get("war_provider") or "bwar"
-    return "" if prov == "bwar" else f"_{prov}"
+    tag = "" if prov == "bwar" else f"_{prov}"
+    shape = corpus.get("label_shape")
+    return tag if not shape else f"{tag}_{shape}"
 
 
 def build_training_frame(corpus: dict, first_base: int, max_label_season: int,
@@ -317,7 +332,16 @@ def build_training_frame(corpus: dict, first_base: int, max_label_season: int,
     a row contributes to horizon h only when base+h-1 <= max_label_season
     (later horizons simply have fewer rows — no truncation bias from
     requiring all five). Disk-cached per (first_base, max_label_season,
-    corpus span) since assembly walks the full corpus."""
+    corpus span) since assembly walks the full corpus.
+
+    THE LABEL is the player-season's TOTAL WAR, taken once from
+    fa_projection.war_actual_map. Until the 2026-09-18 repair it was
+    accumulated here across sides over a corpus that wrote the whole-player
+    total onto the hitter row AND the pitcher row, so every player-season with
+    a row on both sides trained at exactly 2x (671 of 35,825 corpus
+    player-seasons; Ohtani 2023 at 17.08 against a real 8.54). The label is
+    still the TOTAL and not this side's share - that is L2 of
+    docs/PROJ_PATH_SHAPE_GATE.md and the repair does not touch it."""
     cache = (fp.CACHE_DIR /
              f"proj_ml_frame_{_SCHEMA_TAG}_{first_base}_{max_label_season}_{corpus['first']}_{corpus['last']}{_war_tag(corpus)}.pkl")
     if use_cache and cache.exists():
@@ -326,14 +350,15 @@ def build_training_frame(corpus: dict, first_base: int, max_label_season: int,
             return pickle.load(fh)
     league = corpus["league"]
     by_player = {"hit": {}, "pit": {}}
-    war_actual: dict[tuple, float] = {}
     for side in ("hit", "pit"):
         for r in corpus[side]:
             if r.get("mlbam"):
                 by_player[side].setdefault(r["mlbam"], {})[r["season"]] = r
-                if r.get("war") is not None:
-                    key = (r["mlbam"], r["season"])
-                    war_actual[key] = war_actual.get(key, 0.0) + r["war"]
+    # ONE construction of the label, shared with proj_eval._assemble, so the
+    # frame and the harness cannot drift apart. This loop used to build it
+    # inline by adding r["war"] across sides; see the docstring and
+    # fa_projection.war_actual_map for what that summed.
+    war_actual = fp.war_actual_map(corpus)
     out = {}
     for side in ("hit", "pit"):
         X, y, ls = [], {h: [] for h in range(1, HORIZONS + 1)}, {h: [] for h in range(1, HORIZONS + 1)}
@@ -384,6 +409,14 @@ def train(corpus: dict, max_label_season: int, first_base: int = 2003,
         "first_base": first_base, "params": dict(LGBM_PARAMS),
         "quantiles": list(quantiles),
         "features": {s: feature_names(s) for s in ("hit", "pit")},
+        # WHAT THE LABELS WERE, stamped so a bundle on disk can say it. The
+        # point-in-time bundles carry both in their filename (_war_tag); the
+        # LIVE bundle loads by path and carries nothing, so without this a
+        # bundle fitted on the pre-2026-09-18 doubled labels is
+        # indistinguishable from one fitted after the repair. load() reads
+        # label_shape back and says so when it does not match.
+        "war_provider": corpus.get("war_provider"),
+        "label_shape": corpus.get("label_shape"),
     }}
     for side in ("hit", "pit"):
         models[side] = {}
@@ -609,4 +642,17 @@ def load(path: Path | None = None) -> dict | None:
         _LOADED = {}
         return None
     _LOADED = joblib.load(p)
+    shape = (_LOADED.get("meta") or {}).get("label_shape")
+    if shape != fp.LABEL_SHAPE:
+        # NOT a refusal. Returning None here would drop every /projections/ row
+        # to the champion decay the moment the corpus is rebuilt and before the
+        # bundle is retrained, which is a large unmeasured move in the served
+        # numbers to fix a bookkeeping gap. It is loud instead, and the retrain
+        # is the fix.
+        log.warning("proj_ml: live bundle label_shape %s (want %s) - it was "
+                    "fitted before the 2026-09-18 two-sided label repair, so "
+                    "its labels are 2x on every player-season with a row on "
+                    "both sides. It keeps serving; retrain and re-stamp it "
+                    "before the next regeneration is published.",
+                    shape or "absent", fp.LABEL_SHAPE)
     return _LOADED

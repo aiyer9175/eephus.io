@@ -22,6 +22,12 @@ Written and committed BEFORE any candidate exists, in the shape of
 Where this document and a later measurement disagree, **the measurement is what
 this gate uses**, and the disagreement is recorded rather than edited away.
 
+**AMENDED 2026-09-18, before any look: see section 21.** The two-sided label
+defect recorded in open question 18.8 is repaired. Section 21 names which of this
+document's design-day descriptives go stale with it and what each is restated
+from. No threshold, frame boundary, decision rule or criterion in this document
+is changed by that amendment.
+
 ---
 
 ## G-0. Honesty clause, first
@@ -1734,6 +1740,8 @@ the 5c amendment form and it is the only way this document changes.
 | date | arm | verdict | artifact | notes |
 |---|---|---|---|---|
 | 2026-09-18 | - | registered | - | pre-registration committed; no candidate scored |
+| 2026-09-18 | - | amended | - | AMENDMENT A-1 (section 21): the two-sided label defect is repaired; the design-day descriptives it moves are named and restated. No candidate scored, no look spent, no threshold moved |
+| 2026-09-18 | - | restated | - | REPAIR + RESTATEMENT (section 22): the label repair landed and every descriptive A-1 named as stale is restated from the repaired corpus. No candidate scored, no arm fitted, no look spent, no threshold moved |
 
 ---
 
@@ -1807,3 +1815,541 @@ which were declined and why.
   the frame.** Both were done, not one. The standard is restated evenly in G-0.1 AND
   the verdict frame moved, because restating alone would have left the verdict on
   label seasons whose incumbent statistics are already published.
+
+---
+
+## 21. AMENDMENT A-1, 2026-09-18: the two-sided label defect is repaired, and the descriptives that move with it
+
+This section is an amendment under the form registered in section 19. It records a
+defect in the training and scoring LABELS, filed before any look, and it restates
+which of this document's design-day numbers go stale when that defect is repaired.
+**It changes no decision rule, no threshold, no frame boundary and no primary
+criterion.** Section 21.5 lists what it did not change, item by item, so the absence
+of a change is on the record rather than inferred.
+
+### 21.1 Standing: what admits an amendment at this point
+
+`docs/diamond-betting.md` 5c, protocol rule 1, verbatim:
+
+> "Each candidate gets its own gate section in this document before any number is
+> computed on it. The section names the estimand, the split, the criteria and the
+> thresholds, the way 11a and 11b do. **A candidate measured before its section
+> exists is disqualified, whatever it measured.**"
+
+Rule 1 binds a number computed ON A CANDIDATE. It does not reach a fact established
+about the DATA, and the precedent in this repo says so in those words: 5c-B's
+standing paragraph admits a section under rule 1 because it "was written ... before
+any number related the column ... to a game outcome or a price", and the
+`out_of_sample_skill` section's disclosure reads "Nothing was run. Every number
+quoted below was already on the record."
+
+Section 19 of this document sets the same bar for changing it:
+
+> "An amendment to this document is admissible **only before the arm's first look**,
+> on an established fact about the data, is filed with what moved on disk since this
+> document was committed, and **may not loosen any threshold in section 15**."
+
+All four conditions hold, and each is checkable:
+
+1. **Before the first look.** The ARM A look is 2026-10-23 and the ARM B look is
+   2026-11-13 (section 13). Today is 2026-09-18. Every intermediate artifact date is
+   also still ahead: the blast-radius bound 2026-09-25, the power artifact 2026-10-02,
+   the S2 pre-flight and B0-COMPARE 2026-10-09, B0-GATE 2026-11-06. **None of the
+   three producers exists yet**, so no artifact this gate authorises has been written.
+2. **An established fact about the data.** How it was established is in 21.2: three
+   source files were READ (`fa_projection.py`, `proj_ml.py`, `proj_eval.py`) and rows
+   of the corpus were COUNTED. Nothing was fitted, no arm was run, no candidate was
+   compared against the shipped engine, no lambda was chosen, no frame in 4.6 was
+   opened for a candidate, and no statistic in S1 through S6, A-SHAPE, B1 through B4
+   or the Holm family was computed on anything. That is the identical standard the
+   G-0 honesty clause applies to the original registration, applied again.
+3. **Filed with what moved on disk.** 21.3.
+4. **Loosens no threshold in section 15.** 21.5, and in particular 21.4's treatment
+   of A-SHAPE, whose two bars stay at 0.2617 and 0.1192 even though the design-day
+   baselines they were derived from are restated. Re-deriving them from a restated
+   baseline would be exactly the move section 15 forbids, and it is refused here.
+
+**Why the order is amend, then fix, then re-measure.** Repairing the label moves the
+training labels, which moves the frames and therefore moves descriptives this
+registration quotes. Amending first records which numbers are stale and what they
+will be restated from, **before** any of them has been recomputed; doing it the other
+way round would file an amendment against numbers that were already in hand, which is
+the shape of the error the honesty clause exists to prevent.
+
+### 21.2 The defect, and how it was measured
+
+**Mechanism.** `fa_projection._war_age_maps` (fa_projection.py:87) returns
+`{(mlbam, season): war}` and its own docstring says the value is **"(bat+pit
+summed)"**. Line 117 is the accumulation:
+
+```
+war[key] = war.get(key, 0.0) + _f(row.WAR)
+```
+
+The loop at line 105 runs over `("bat", "pit")` and the key carries no side, so one
+map value is the player-season's WHOLE WAR. `build_corpus` then writes that same map
+value onto the hitter row (fa_projection.py:292) and onto the pitcher row
+(fa_projection.py:332) through the identical `war_map.get(key)` call. A player-season
+with rows on both sides therefore carries his TOTAL WAR twice.
+
+Both consumers then sum across sides a second time:
+
+- `proj_ml.build_training_frame`, proj_ml.py:336 - `war_actual[key] = war_actual.get(key, 0.0) + r["war"]`
+- `proj_eval._assemble`, proj_eval.py:85 - the same line, and its docstring says so:
+  "war_actual sums WAR across sides per (mlbam, season), matching the label the
+  harness scores."
+
+Neither of those two lines is wrong given a correct corpus. The defect is upstream,
+in a side-blind map written onto side-keyed rows, and the two sums downstream are
+what turn it into a factor of two.
+
+**Measured on the corpus, 2026-09-18, with no candidate scored:**
+
+| quantity | measured |
+|---|---|
+| corpus player-seasons carrying rows on BOTH sides | **671** of 35,825 (1.9 percent) |
+| of those, share holding the IDENTICAL value on each row | **100 percent**, all 671 |
+| Ohtani 2023, hitter row / pitcher row / value entering the frame | 8.54 / 8.54 / **17.08** |
+| Ohtani 2025, value entering the frame against his real WAR | **16.72** against 8.36 |
+| Ohtani 2024, a season he did not pitch | **9.04**, correct |
+| the five largest doubled labels in the whole corpus | all five are his |
+| aggregate phantom WAR across the corpus | **138.6** against a corpus total of **26,408**, = **0.52 percent** |
+| concentration | roughly **60 player-seasons a year**, most of them position players who threw a mop-up inning and had their whole season doubled for it |
+
+The last row is the part that is not an Ohtani story. A position player with one
+mop-up inning gets a pitcher row, and that row and his hitter row each carry his
+entire season's value, so the frame sees his year at twice its size on both sides.
+
+**This is open question 18.8, and this lane closes it.** 18.8 already recorded the
+defect, the counts and the consequence: "If it lands before either flip here, every
+design-day baseline in section 9 is void and this gate is restated." This amendment
+is that restatement, filed before the fix rather than after it.
+
+**The repair, named so the restatement has a source.** `_war_age_maps` becomes
+side-keyed, so the hitter row carries the player's hitting WAR and the pitcher row
+his pitching WAR. The two downstream sums at proj_ml.py:336 and proj_eval.py:85 are
+left alone and become correct by arithmetic: `H + P = T` where they currently produce
+`T + T`. **The label the models see is still TOTAL player WAR**, which is why L2 is
+unchanged (21.5).
+
+### 21.3 What moved on disk, and what re-derives from the repair
+
+**First-order.** The `war` value on the corpus rows of the 671 two-sided
+player-seasons, on both sides.
+
+**Second-order, and it reaches every player, not only the 671.** `fit_war_map`
+(fa_projection.py:1659) regresses `r["war"]` per side over corpus rows, and
+`fit_aging_curves` is fitted on the same rows. Two-sided rows are in both fits today
+carrying a value that belongs partly to the other side, so the repair moves **both
+WAR maps and both curve sets**, and therefore moves the champion path
+`contract_war_path(use_ml=False)` for **every** player. That in turn moves
+`build_features`' `champ_h1..champ_h5` stack columns for every row, and the
+`war_l1..war_l3` lags for the two-sided rows.
+
+**Caches, and which ones invalidate themselves.**
+
+| cache | key | self-invalidating | consequence |
+|---|---|---|---|
+| `.cache/fa_corpus.pkl` | none; read unless `force` (fa_projection.py:207) | **no** | must be force-rebuilt, or the repair is invisible |
+| `.cache/fa_fits_*.pkl` | includes `_corpus_sig`, which digests every row's `war` (fa_projection.py:397) | **yes** | re-keys on its own; the comment at fa_projection.py:467 says so |
+| `.cache/proj_ml_frame_*.pkl` | `_SCHEMA_TAG`, first_base, max_label_season, `corpus.first`, `corpus.last`, `_war_tag` - **nothing about the rows** (proj_ml.py:322) | **no** | holds doubled labels; must be deleted. This is the same key 4.7 leak 2 already names, and `_war_tag`'s own docstring at proj_ml.py:299 states the weakness |
+| `.cache/proj_ml_pit_*.joblib` (29 files, 793,446,247 bytes) | MODEL_VERSION, `_SCHEMA_TAG`, max_label_season, qtag, war_tag - nothing about labels | **no** | all 29 were fitted on doubled labels and must be deleted |
+| `model/proj_lgbm/models.joblib` (the live bundle) | n/a | n/a | trained on the doubled frame; `train_hash` digests `X.shape` and `X.sum(axis=0)` and never `y` (18.6), so a pure label change does not move it |
+
+4.7's existing control for candidate labs (`use_cache=False`, leak 2) is unchanged and
+still binding. What is new is a fact about disk and not a rule: the PRODUCTION frame
+cache and the point-in-time bundle cache currently hold doubled labels and do not
+re-key themselves, so a run that reads either of them after the repair is reading the
+defect. `G-0.2` records a read of
+`.cache/proj_ml_frame_fe323aac_2003_2025_2000_2026_ewar_v2.pkl`; that read stays on
+the ledger as it happened, and the file it names may not be reused.
+
+**One consequence of the repair that is disclosed here and adjudicated nowhere.** A
+player-season can carry a row on one side only: a pitcher whose plate appearances
+fall below the hit-row threshold gets no hitter row at all. Today his batting WAR
+still reaches the label through the side-blind map. Under a side-keyed map it does
+not, so for those rows the repair REMOVES a small true component instead of removing
+a phantom one. It is named here so the restatement measures and publishes it rather
+than discovering it later; **no clause in this gate adjudicates it**, and it is
+successor question 21.6 item 2.
+
+### 21.4 The registration numbers that go stale, and what each is restated from
+
+Grouped by why. The numbers are reprinted here so the restatement can be checked
+against them rather than replacing them silently, which is the same discipline
+section 14 sets for the pools.
+
+#### A. The corpus census (L1, section 7, section 0's last row)
+
+| as registered | status under the repair | restated from |
+|---|---|---|
+| L1: "**671 of 35,825** corpus player-seasons (1.9 percent)" | **UNCHANGED as a count.** Which player-seasons carry rows on both sides is structural and does not depend on the label value | the rebuilt corpus; L1 already requires the recount at scoring time |
+| L1: "**identical `war` in all 671**" | **SUPERSEDED, by construction.** After the repair the two sides hold different values except where a player's hitting and pitching WAR happen to coincide. This sentence is the defect's signature, and it is what the repair removes | the rebuilt corpus |
+| L1 and section 7: "**327** above the magnitude floor" (absolute WAR at or above 0.5 on BOTH sides) | **STALE and expected to fall sharply.** The floor was applied to doubled values; a mop-up inning that reads as a whole season's WAR today reads as a fraction of a WAR after the repair | the rebuilt corpus, under L1's own rule unchanged |
+| section 0, last table row: "those player-seasons train and score at **2x**" | **REPAIRED.** The 2x is what the fix removes | n/a; the row stands as the record of what was found |
+
+#### B. The frame descriptives (L8, 4.1 item 1)
+
+| as registered | why it can move | restated from |
+|---|---|---|
+| L8: hit **19,965 / 19,038 / 18,092 / 17,187 / 16,341**; pit **24,325 / 22,997 / 21,617 / 20,340 / 19,083** | row inclusion does NOT turn on the label value: proj_ml.py:355-361 appends `war_actual.get(target, 0.0)` unconditionally once the base row exists. It turns on `build_features` returning non-None, which is None exactly when the champion cannot project (proj_ml.py:220-224), and the champion is built from `curves` and `war_map` that the repair moves. Any movement is therefore second-order, through champion feasibility, not first-order through the labels | `build_training_frame(corpus, 2003, 2025)` on a force-rebuilt corpus with the frame disk cache bypassed |
+| L8: "**81.8 percent** of hit base rows and **78.4 percent** of pit base rows carry all five horizons" | same | same |
+| 4.1 item 1: "**90,623** hit rows plus **108,362** pit rows = **198,985**" | same | same |
+
+**These are republished whether or not they move.** A count that comes back identical
+is published as identical; silence is not a restatement.
+
+#### C. The served descriptives (4.5, section 0)
+
+Every cell of 4.5's table, and the section 0 rows that quote it:
+
+| series | pool | RS2 mean | RS2 median | UAF | RAF |
+|---|---|---|---|---|---|
+| `war` | 278 | 0.4362 | 0.3668 | 177 / 1,112 = 0.1592 | 153 |
+| `warPTH` | 447 | 0.5749 | 0.4778 | 328 / 1,788 = 0.1834 | 279 |
+| `warChamp` | 311 | 0.0670 | 0.0451 | 0 / 1,244 = 0.0000 | 0 |
+
+plus section 0's "the champion aging path wobbles on **0 of 311** served rows ... the
+ML central path wobbles on **153 of 278**", and section 0's "Vets 5y `warPTH`
+**4,716.1** against `war` **2,925.6**, **37.9%** high; Ohtani `warTotalPTH` **36.4**
+against `warTotal` **32.1**".
+
+**All of them are STALE**, including the `warChamp` row, because the champion curves
+are refitted on the repaired corpus (21.3). They are restated from the first
+regeneration of `data/mlb_projections.json` after the repair lands, which requires a
+force-rebuilt corpus, a cleared frame cache and a retrained live bundle. **This lane
+does not run that regeneration**, so the restatement is filed at the regeneration and
+governed by section 14's standing rule: pools are counted at scoring time and
+published with their clause, and the numbers above are design-day descriptives that
+the recount is checked against, never quoted as the result.
+
+> **A-SHAPE's two bars do NOT move with the baselines they were derived from.** RS2
+> mean at or below **0.2617** and UAF at or below **0.1192** are frozen by section 15
+> and are NOT re-derived from a restated 0.4362 or a restated 0.1592. If the restated
+> RS2 mean comes in lower, the frozen absolute bar is a strictly harder relative bar;
+> if it comes in higher, the frozen bar is harder still. Both directions are
+> non-loosening, which is why freezing is the admissible response and re-deriving is
+> not. **Disclosed contingency, recorded and not repaired:** if the restated RS2 mean
+> or UAF already sits at or below its frozen bar, A-SHAPE becomes non-binding on that
+> leg. That would be recorded in `data/proj_shape_gate.json` in those words. It is not
+> fixed by moving the bar, because moving it is a new registration (section 19), and
+> nothing in this amendment authorises one.
+
+#### D. The design-day baselines and bands (section 9)
+
+Section 9.2 already pre-registered this exact event, and it fires now:
+
+> "**One standing exception that voids these baselines.** If the two-sided label
+> defect (18.8) is fixed before either flip, the corpus and therefore the champion
+> curves change, every number in 9.1 and 9.2 is restated, and this gate's design-day
+> baselines are void."
+
+**Void and restated**, from a regenerated `data/mlb_projections.json` and its
+downstream exports: `1,383` vets, `183` prospects, `dpw_usd 17,971,003`; vets 5-year
+`war` sum **2,925.6** and the derived band **2,779.3 to 3,071.9**; vets year-1 `war`
+sum **852.0**; vets median year-1 `war` **0.25**; rows carrying `surNpv` **895**; sum
+of `surNpv` **$15,205,338,537** and the derived band **$14.065B to $16.346B**; Ohtani
+`warTotal` **32.1**; Ohtani `surNpv` / `surTotal` **$401,046,245 / $409,804,789**.
+
+> **The BANDS themselves are frozen and are not re-derived.** Plus or minus 5 percent,
+> plus or minus 7.5 percent, plus or minus 10 rows, plus or minus 0.05 WAR absolute,
+> plus or minus 20 percent or 2.0 WAR whichever is larger, the 50-row trigger, the
+> Ohtani 4.0 WAR trigger, the Ohtani $75M `surNpv` trigger, the 5-team Team Outlook
+> trigger and the 0.95 Spearman trigger all stand exactly as written in 9.1. What is
+> restated is the BASELINE each band is applied to; the two ranges printed above are
+> arithmetic consequences at the same frozen percentages and are recomputed, not
+> re-chosen.
+
+Section 9.2's "must not move" list needs one distinction recorded, and it is a
+distinction about scope, not a change to the rule:
+
+- `warChamp`, `warY1Champ`, the Team Outlook WAR roll-up, `lockedPct` and
+  `byYear[].war` are listed as "insulated by construction because neither arm
+  re-estimates the champion curves". **That insulation is against THE ARMS and it
+  still holds against the arms.** It does not hold against the label repair, which
+  does refit the champion curves. So their pre/post values are restated once, at the
+  repair, and 9.2's assertion is then checked against the RESTATED values at each flag
+  flip, exactly as written. The rule is unchanged.
+- **The prospect rows.** 9.2 says the 183 prospect rows and their **683.1** five-year
+  WAR sum "do not move under either arm", and 20.2 restates 683.1 as the sum over all
+  183 rows. `vf.prospect_prime_path` (value_framework.py:1023) takes an FV, a role and
+  an age, and does not take the corpus, so the claim about the ARMS stands unchanged.
+  Whether the repair reaches those rows by some other route is **not asserted here**
+  and is checked and published at the repair.
+
+#### E. What does NOT go stale, stated so it is not restated by mistake
+
+- Every number sourced from the committed artifacts `data/proj_horizon_eval.json`
+  (2026-08-19) and `data/proj_calibration_eval.json` (2026-07-25). The repair does not
+  regenerate either file. That covers **M's source edge** 0.0142 / 0.0271 / 0.0279 /
+  0.0199 / 0.0106 and therefore **M = 0.0065**; the three levers' priors and intervals
+  (role:C +0.2453 [+0.186, +0.309] on n=4,585; star -0.3961 [-0.621, -0.149] on
+  n=2,085; the four age cells); 3.3's planted effect sizes, which are the nearer-zero
+  ends of those intervals; 5.1's expectation that a B0-GATE cell lands near 40 percent
+  of its published n; and the 65-cell selection disclosure in 1.2.
+- **L3 already governs all of them**: they are priors and never comparators. The
+  repair adds one more reason they are priors and changes nothing about their status.
+- The READ LEDGER in G-0.1. It records reads that happened; a label repair does not
+  un-read them.
+- 4.6b's `season_fraction` 0.947, which moves with the calendar and not with this
+  repair.
+- 4.12's disk figures (29 bundles, 793,446,247 bytes) are a measurement of disk, not
+  of the registration. They go stale when those bundles are deleted (21.3), and 4.12
+  already states that the paragraph is replaced by the gate artifact's measured wall
+  time.
+
+### 21.5 What this amendment did NOT change, item by item
+
+- **No threshold in section 15.** `M = 0.0065`; S1b's +0.0130; A-SHAPE's 0.2617 and
+  0.1192; S3's 0.0200; S4's 0.0200 and [0.75, 0.87]; S5's 0.0050; S6's 0.0500; A0's
+  0.0050 and 0.0100; B3's +0.0100; B4's 0.0500; B2's 0.5 ratio and 0.01 WAR floor;
+  5.4a's 0.75 share; CONFIRM's n = 1,000; the VIF's 1.8 lower bound; Tripwire 2's 10
+  points; k = 3; the lambda grid {0, 0.05, 0.10, 0.20, 0.40, 0.80}; and every band in
+  section 9. **None is re-derived, in either direction.**
+- **No frame boundary.** DEV = label seasons 2008-2011, GATE = 2012-2014, CONFIRM =
+  2026, Tier-2 = 2015-2025, `first_base = 2003`, and 4.6's cell table stand exactly as
+  written. No base and no label season is added to or removed from any frame; section
+  15 bans widening and this amendment does not test that ban.
+- **No primary criterion.** S1 is still the primary, still an accuracy non-inferiority
+  test against S, still one-sided at 1.645 sd with the VIF applied. A-SHAPE is still
+  NECESSARY and never sufficient. RS2, UAF and RAF are still DESCRIPTIVE and still
+  cannot pass an arm in any direction.
+- **No decision rule.** 4.4's Form 1 and Form 2 and the rule that selects between
+  them; 4.4a's pre-flight; 4.3's comparator set and A0's tolerance branch; 4.6a's
+  veto-only asymmetry; 4.6b's CONFIRM conditions; 4.11a's one-void cap; 5.1's B0 split;
+  5.2's order; 5.3's absorption rule; 5.4a's twin rule; 5.5's Holm family, its k = 3
+  and 5.5a's substitution; 5.5b's sign precondition; 5.5c's four legs; 12.2's failure
+  responses; section 11's pre-committed sentences; and section 14's closed verdict
+  vocabulary. All unchanged.
+- **No clock date.** Section 13 stands: 2026-09-25, 2026-10-02, 2026-10-09,
+  **2026-10-23 (ARM A look)**, 2026-11-06, **2026-11-13 (ARM B look)**, 2027-02-15.
+  This amendment does not move a look and does not spend one.
+- **No flag default.** `SERVE_SHAPE_REFIT = False` and
+  `SERVE_BIAS_LEVERS = frozenset()` (8.2), and `MODEL_VERSION` stays derived from
+  them (8.3).
+- **No estimand in section 1**, and **L2 in particular is unchanged.** After the
+  repair, `war_actual` at proj_ml.py:336 and proj_eval.py:85 still sums both sides per
+  (mlbam, season), so each side-keyed model still estimates **E[TOTAL player WAR given
+  this side's line]**. What the repair removes is the DOUBLING, not the totality. No
+  arm may make a claim about two-way accuracy in either direction, and the served
+  two-way population is still n = 1.
+- **No change to L1's exclusion.** Every two-sided row stays excluded from every
+  fitted cell and every scored cell in both arms **and** from the comparator S's
+  point-in-time refits. The repair removes the 2x that was the exclusion's stated
+  reason, and the exclusion still stands, because relaxing a control on the strength
+  of a newly established fact is a re-registration and not an amendment. L1's
+  disclosed consequence is also unchanged: the gate measures a CONTRAST between two
+  consistently built arms and does not measure the served bundle's absolute level.
+- **Nothing in section 20 is edited.** Two of its entries touch this row and both
+  stand as the record of what was decided on design day: 20.1's row "S excluded the
+  two-sided rows while the serve does not", and 20.2's declined item "Two-sided rows
+  should be included so the comparator matches the serve", whose stated reason was
+  that the implied fix "would score a known 2x label defect in both arms". That reason
+  is superseded by the repair; **the decision it supported is not reopened here**, and
+  reopening it is successor question 21.6 item 1.
+- **No new criterion, clause, tripwire or verdict** is added by this amendment. It
+  restates descriptives and records a repair. A gate that gains a clause in an
+  amendment is a gate that was re-registered.
+
+### 21.6 Successor questions this amendment opens and does not answer
+
+1. **Whether L1's two-sided exclusion is still warranted** once the labels are
+   correct. It is kept here unchanged. Revisiting it is a new registration that
+   discloses this one.
+2. **The one-sided-row consequence** in 21.3: a side-keyed map drops a true WAR
+   component for a player-season that has a row on one side only. Measured and
+   published at the repair; adjudicated by no clause here.
+3. **18.7, the two-way workload discount.** Untouched. `TWO_WAY_PIT_PTH_FACTOR = 0.48`
+   still applies only to the `warPTH` sum, the served `war` sum still carries no
+   workload discount, and section 7's statement that a PASS in this battery is not
+   evidence the owner's Ohtani complaint was addressed is unchanged.
+4. **The live bundle.** `model/proj_lgbm/models.joblib` was fitted on the doubled
+   frame. The comparator S is retrained point-in-time per base by the harness and
+   therefore inherits the repair automatically; the LIVE bundle is what generates
+   `data/mlb_projections.json` and therefore every descriptive in 21.4 group C and
+   group D, and it does not. When it is retrained, and by whom, is not decided here.
+
+### 21.7 The record
+
+Filed 2026-09-18. No candidate scored, no arm run, no look spent, no threshold moved.
+The row is appended to section 19.
+
+---
+
+## 22. THE RESTATEMENT, 2026-09-18: the repair landed and the numbers A-1 named are restated
+
+Section 21 named the descriptives the two-sided label repair would move and named
+the SOURCE each would be restated from. This section is that restatement, and it
+contains **nothing but measurements**. It adds no clause, no criterion, no tripwire
+and no verdict, it moves no threshold in either direction, and it spends no look.
+Nothing was fitted and no candidate was scored: the only estimators run below are
+the CHAMPION (`contract_war_path(use_ml=False)`) and the SHIPPED live bundle, both
+of which are the incumbent, and both were run on the shipped corpus and on the
+repaired corpus so the pair brackets the repair.
+
+### 22.1 How the pair was measured, so the repair is separated from the drift
+
+The `.cache/fa_corpus.pkl` on disk was pickled 2026-09-17 and the eWAR frames are
+rebuilt nightly, so a straight before/after against that pickle mixes the repair
+with a day of in-progress-season drift: measured, 791 player-seasons move for that
+reason alone, all of them 2026. So both arms of every comparison below were rebuilt
+from the SAME war_daily frames in the same session:
+
+- **CONTROL**: `build_corpus(force=True)` on the shipped code. Its frame reproduces
+  every L8 count and 4.1 item 1 exactly (22.3), which is what qualifies it as a
+  control.
+- **REPAIRED**: the same call on the repaired code.
+
+The difference between the two arms is the repair and nothing else.
+
+### 22.2 Group A, the corpus census (L1, section 7, section 0's last row)
+
+| as registered | restated | verdict |
+|---|---|---|
+| L1: 671 of 35,825 corpus player-seasons (1.9 percent) carry rows on both sides | **671 of 35,825, 1.87 percent** | UNCHANGED, as A-1 predicted: which player-seasons carry two rows is structural |
+| L1: identical `war` in all 671 | **6 of 671** | SUPERSEDED. The 6 are player-seasons whose hitting and pitching WAR happen to coincide. The other 665 held the same number on each row only because it was the same number: the whole-player total, written twice |
+| L1 and section 7: 327 above the magnitude floor (absolute WAR at or above 0.5 on BOTH sides) | **7** | STALE, and it fell as A-1 predicted it would. The floor was being applied to a doubled whole-player value on both rows; on the repaired rows a mop-up inning reads as a fraction of a WAR |
+| section 0, last row: those player-seasons train and score at 2x | **REPAIRED.** On the control/repaired pair the label moves on exactly **670** player-seasons and the ratio control/repaired is **exactly 2.0000 on every one of them** (min = max). The 671st has a zero label either way | the 2x is removed, and the measurement says it was a clean factor of two and not a mixture |
+
+**The label itself.** Corpus label sum **26,408.0 control, 26,269.7 repaired**: the
+repair removes **138.4 WAR, 0.524 percent**. That is A-1's 138.6 against 26,408,
+reproduced on a same-session pair.
+
+**Ohtani, the five largest doubled labels in the corpus, restated:**
+
+| season | control | repaired | his hitter row `war` | his pitcher row `war` |
+|---|---|---|---|---|
+| 2021 | 15.84 | **7.92** | 4.89 | 3.03 |
+| 2022 | 18.64 | **9.32** | 3.40 | 5.92 |
+| 2023 | 17.08 | **8.54** | 6.11 | 2.43 |
+| 2024 | 9.04 | **9.04** | 9.04 | (no pitcher row) |
+| 2025 | 16.72 | **8.36** | 6.58 | 1.78 |
+
+### 22.3 Group B, the frame descriptives (L8, 4.1 item 1): restated as IDENTICAL
+
+A-1 required these to be republished whether or not they moved, because silence is
+not a restatement. `build_training_frame(corpus, 2003, 2025, use_cache=False)` on
+both arms:
+
+| as registered | control | repaired |
+|---|---|---|
+| L8 hit per-horizon 19,965 / 19,038 / 18,092 / 17,187 / 16,341 | identical | **identical** |
+| L8 pit per-horizon 24,325 / 22,997 / 21,617 / 20,340 / 19,083 | identical | **identical** |
+| L8: 81.8 percent of hit base rows and 78.4 percent of pit base rows carry all five horizons | 0.8185 / 0.7845 | **0.8185 / 0.7845** |
+| 4.1 item 1: 90,623 hit rows plus 108,362 pit rows = 198,985 | identical | **identical** |
+
+**Not one row moved.** A-1 reasoned that any movement here could only be
+second-order, through `build_features` returning None when the champion cannot
+project, because row inclusion never turns on the label value. The champion did
+move (22.4) and it did not move any row across the feasibility boundary.
+
+The label SUMS inside those unchanged rows do move, and they are published because
+they are what the frame trains on: hit `y` by horizon 12,771.9 / 11,135.3 / 9,256.9
+/ 7,362.3 / 5,706.3 becomes **12,661.5 / 11,040.9 / 9,164.9 / 7,282.1 / 5,655.5**,
+and pit 8,876.3 / 7,569.6 / 6,228.0 / 4,941.6 / 3,785.8 becomes **8,819.0 / 7,533.7
+/ 6,192.1 / 4,914.3 / 3,773.7**.
+
+### 22.4 What 21.3 said moved on disk, checked against what did
+
+Three of A-1's own statements are corrected here by measurement, under this
+document's standing rule that where it and a later measurement disagree, the
+measurement is what the gate uses. All three corrections run in the same direction:
+the repair is better contained than A-1 assumed.
+
+| 21.3 said | measured | correction |
+|---|---|---|
+| the repair "moves both WAR maps and both curve sets, and therefore moves the champion path for EVERY player" | **919 of 2,199** champion paths at the serving base move at all (41.8 percent). Median 5-year move **0.0000**, mean **-0.0013 WAR**, p95 **0.14**, and only **2** rows move by more than 1.0 WAR, both of them Ohtani's two sides | the reach claim was too strong. The maps and the curves do move (hitter coefficients [-0.1495, 1.98, 0.868, -0.1483, 0.2647] to [-0.1479, 1.9778, 0.8661, -0.1540, 0.2670], pitcher [-0.1259, 0.9564, 1.1887, 0.2264] to [-0.1248, 0.9612, 1.1779, 0.2196]), and most players' champion path does not |
+| `model/proj_lgbm/models.joblib`: "`train_hash` digests `X.shape` and `X.sum(axis=0)` and never `y` (18.6), so a pure label change does not move it" | on the control/repaired pair the shipped recipe returns **a30bb9ae8f9cd9c3** and **cb42b96eb5ea533c** | the recipe's blindness to `y` is real and 18.6 stands, but THIS repair is not a pure label change: `champ_h1..champ_h5` are columns of `X` and the champion moves, so the hash moves anyway. A retrain will be visible in the hash |
+| `.cache/proj_ml_frame_*.pkl` and the 29 `.cache/proj_ml_pit_*.joblib` "must be deleted" | the repair stamps `label_shape` on the corpus and `proj_ml._war_tag` carries it, so the frame key becomes `proj_ml_frame_fe323aac_2003_2025_2000_2026_ewar_v2_side_keyed_v1.pkl` and every pit bundle re-keys with it | they no longer need deleting, because they can no longer be read. Deleting them is now housekeeping rather than a correctness step. `.cache/fa_corpus.pkl` likewise no longer needs a manual `force`: `_corpus_label_shape_stale` refuses a corpus without the stamp |
+
+`.cache/fa_fits_*.pkl` self-invalidated exactly as 21.3 said, through `_corpus_sig`,
+which digests every row's `war`.
+
+**What is NOT covered, stated so it is not assumed.** `model/proj_lgbm/models.joblib`
+loads by path and carries no key at all, so nothing re-keys it. It is stamped and
+announced instead: `train()` now writes `war_provider` and `label_shape` into bundle
+meta and `load()` logs when a bundle predates the repair. That is A-1's successor
+question 21.6 item 4 and it is still open: the live bundle is not retrained by this
+lane.
+
+### 22.5 Groups C and D are NOT restated here. This is the pre-view, and it is labelled as one
+
+A-1 filed the served descriptives (4.5's table, section 0's rows, and all of section
+9's design-day baselines) to be restated **at the first regeneration of
+`data/mlb_projections.json` after the repair**, under section 14's standing rule that
+pools are counted at scoring time. **This lane does not run that regeneration and
+does not restate them.** What follows is the incumbent engine scored on both corpora
+over a corpus-derived population of 2,199 rows, published so that the regeneration
+has something to be checked against, and it is **not** the recount. It is also not a
+candidate: the estimator is the shipped bundle in both arms.
+
+| 4.5 row | as registered (served artifact) | pre-view, control | pre-view, repaired |
+|---|---|---|---|
+| `war` pool / RS2 mean / RS2 median / UAF / RAF | 278 / 0.4362 / 0.3668 / 0.1592 / 153 | 257 / 0.4519 / 0.3821 / 0.1615 / 144 | **258 / 0.4514 / 0.3852 / 0.1628 / 146** |
+| `warPTH` | 447 / 0.5749 / 0.4778 / 0.1834 / 279 | 450 / 0.5740 / 0.4701 / 0.1861 / 284 | **443 / 0.5728 / 0.4810 / 0.1868 / 278** |
+| `warChamp` | 311 / 0.0670 / 0.0451 / 0.0000 / 0 | 311 / 0.0661 / 0.0443 / 0.0000 / 0 | **311 / 0.0668 / 0.0443 / 0.0000 / 0** |
+
+The `warChamp` pool of 311 comes back at exactly 311, on the same rule, from the
+engine rather than from the artifact. **A-SHAPE's contingency does not fire on this
+pre-view**: the `war` RS2 mean sits at 0.4514 against a frozen bar of 0.2617 and UAF
+at 0.1628 against 0.1192, so both legs remain binding, and neither bar is touched.
+
+**The wobble is not what this repair fixes, and the numbers say so.** RS2 mean moves
+by 0.0005 and UAF by 0.0013. The owner's first symptom stays exactly where ARM A
+found it.
+
+**The level moves, and the two-way row moves a lot.** 5-year served `war` over the
+2,199 rows: **3,031.7 to 2,999.4, -1.06 percent**, with a median row move of 0.0000
+and 698 rows moving at all. Ohtani's two sides sum **31.30 to 21.90, a 9.40 WAR
+fall**. Section 9.1's Ohtani trigger fires at a move of more than 4.0 WAR, so **that
+trigger is crossed on the pre-view**, and it is recorded here rather than discovered
+at the flip. Ten rows move by more than 1.0 WAR and two by more than 3.0, which is
+well inside 9.1's 50-row threshold. The other movers of size are position players
+whose PITCHER row used to carry their whole batting season: four of them fall from
+about 1.6 to 2.0 five-year WAR to about 0.03 to 0.06, which is the cohort section
+0 described as "position players who threw a mop-up inning and had their whole value
+doubled for it", finally reading as what they are.
+
+### 22.6 Successor question 21.6 item 2, answered
+
+A-1 disclosed that a side-keyed map would drop a TRUE component of the label for a
+player-season carrying a corpus row on ONE side only (a pitcher's plate appearances
+are excluded from the hitter corpus by position, so his batting WAR would have no
+row to ride on), and filed it as measured at the repair and adjudicated by no clause.
+
+**Measured: 7,745 player-seasons and 44.3 WAR, and the repair does not incur it.**
+The corpus carries two columns rather than one: `war` is the row's own side, which
+is what the per-side fits regress, and `war_total` is the player-season's whole WAR,
+which is what the label reads, ONCE, through `fa_projection.war_actual_map`. On the
+control/repaired pair **zero one-sided player-seasons move**. The estimand L2
+registers, E[TOTAL player WAR given this side's line], is therefore unchanged in
+fact and not only in intent.
+
+The per-side column does move, and that is the point of it: 601 of 17,091 hitter
+rows and 7,619 of 19,405 pitcher rows, net -3.3 and -90.9 WAR. Those rows are the
+input to `fit_war_map` and `fit_aging_curves`, which were regressing a pitcher's WAR
+on his innings while his batting WAR sat in the dependent variable.
+
+### 22.7 What this section did NOT do
+
+- **No candidate was scored.** No arm was fitted, no lambda was chosen, no frame in
+  4.6 was opened for a candidate, no look was spent, and no statistic in S1 through
+  S6, A-SHAPE, S7, S8, B1 through B4 or the Holm family was computed on anything.
+  The two estimators run above are the champion and the shipped bundle.
+- **No threshold moved**, in either direction. Every number in section 15 stands,
+  including A-SHAPE's 0.2617 and 0.1192 against a restated baseline, which is
+  precisely the case 21.4 froze them for.
+- **No clock date moved and no look was spent.** Section 13 stands.
+- **No flag default moved.** `SERVE_SHAPE_REFIT = False` and
+  `SERVE_BIAS_LEVERS = frozenset()` are unwritten and stay that way.
+- **L1's two-sided exclusion is unchanged**, still in force, still disclosed. The
+  repair removes its stated reason and reopening it remains successor question 21.6
+  item 1.
+- **Sections 9.1 and 9.2 are not restated.** They are restated at the regeneration,
+  from the served artifact, per 21.4 group D. The pre-view in 22.5 is not that
+  restatement and may not be quoted as it.
+
+### 22.8 The record
+
+Measured and filed 2026-09-18. No candidate scored, no arm run, no look spent, no
+threshold moved. The row is appended to section 19.

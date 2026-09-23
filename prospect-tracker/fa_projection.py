@@ -51,6 +51,16 @@ CACHE_DIR = Path(__file__).parent / ".cache"
 CORPUS_CACHE = CACHE_DIR / "fa_corpus.pkl"
 CURVES_PATH = Path(__file__).parent / "data" / "fa_aging_curves.json"
 
+# The SHAPE of the corpus WAR columns, stamped onto every corpus this module
+# builds and read by everything keyed off the label. Bumped when the MEANING of
+# a row's `war` changes, which is a label change even when the WAR provider has
+# not moved. 'side_keyed_v1' is the 2026-09-18 two-sided repair: a row's `war`
+# is THIS SIDE'S WAR and `war_total` is the player-season's whole WAR. A corpus
+# pickled without the stamp predates the repair and carries the whole-player
+# total on the hitter row AND on the pitcher row, so _corpus_label_shape_stale
+# refuses it and proj_ml._war_tag keeps its caches apart from it.
+LABEL_SHAPE = "side_keyed_v1"
+
 HIT_COMPONENTS = ("k_pct", "bb_pct", "iso", "babip", "hr_pa")
 PIT_COMPONENTS = ("k_pct", "bb_pct", "hr_bf")
 # Direction of HARM for the survivorship correction: dropouts were headed
@@ -84,23 +94,49 @@ def _ip_to_float(raw) -> float:
     return _f(s)
 
 
-def _war_age_maps(provider: str | None = None) -> tuple[dict, dict]:
-    """{(mlbam, season): war} (bat+pit summed) and {(mlbam, season): age}
-    from the war_daily stint frames, read through the war_source facade on
-    ``provider`` (None = the facade DEFAULT, eWAR v2 since 2026-09-03).
+def _side_war_age_maps(provider: str | None = None) -> tuple[dict, dict]:
+    """{(side, mlbam, season): war} KEYED BY WAR_DAILY SIDE ('bat' | 'pit'),
+    and {(mlbam, season): age}, from the war_daily stint frames read through
+    the war_source facade on ``provider`` (None = the facade DEFAULT, eWAR v2
+    since 2026-09-03).
 
-    The corpus's WAR labels, the fitted WAR map and proj_ml's label frames
-    therefore follow the served basis: pitcher-seasons carry FIP-repriced
-    WAR (redistributed within role, league sum preserved per season) and
-    position players equal bWAR until the SDR defense drop. Age rides the
-    same rows and is basis-invariant. provider='bwar' reproduces the
-    pre-epoch corpus. This is a basis decision, not an accuracy claim:
-    data/ewar_eval.json gate 1 team wins r 0.8595 vs bWAR 0.8803, gate 2
-    pitcher persistence 0.3617 vs 0.1768."""
+    THE SIDE KEY IS THE REPAIR (2026-09-18, the label lane). _war_age_maps
+    below returns these same rows SUMMED ACROSS SIDES, and build_corpus used
+    to write that whole-player total onto the hitter row AND onto the pitcher
+    row through one side-blind lookup. 671 of 35,825 corpus player-seasons
+    carry a row on both sides and every one of them held the IDENTICAL value
+    on each row; proj_ml.build_training_frame and proj_eval._assemble then
+    summed across sides again, so a player who both hit and pitched trained
+    and scored at EXACTLY TWICE his real WAR (Ohtani 2023 entered the frame at
+    17.08 against a real 8.54, 2025 at 16.72 against 8.36, while 2024 - a year
+    he did not pitch - was correct at 9.04). Keying by side gives the hitter
+    row his hitting WAR and the pitcher row his pitching WAR, and the two
+    downstream sums become H + P = T by arithmetic instead of T + T.
+
+    Per-side is also what the per-side FITS have always needed. fit_war_map
+    regresses a hitter's WAR on PA and a pitcher's WAR on IP, and
+    fit_aging_curves ages a per-side war_rate; handing either the other side's
+    WAR is incoherent whatever the doubling does, and it reached far more rows
+    than the 671 - every corpus row whose player-season has war_daily rows on
+    both sides, 9,087 of 36,496 on the 2026-09-17 corpus.
+
+    THE LABEL IS A DIFFERENT QUANTITY and keeps its own column. The training
+    and eval label is the player's TOTAL WAR (docs/PROJ_PATH_SHAPE_GATE.md L2:
+    each side-keyed model estimates E[TOTAL player WAR | this side's line]),
+    so build_corpus stamps `war_total` alongside `war` and war_actual_map
+    reads it ONCE per player-season. The repair removes the DOUBLING, not the
+    TOTALITY, and a player-season carrying a corpus row on one side only keeps
+    the label it already had.
+
+    Age rides the same rows, is basis-invariant and is deliberately NOT
+    side-keyed: it is a property of the player-season and both frames carry
+    it. provider='bwar' reproduces the pre-epoch corpus. The basis is a
+    decision, not an accuracy claim: data/ewar_eval.json gate 1 team wins
+    r 0.8595 vs bWAR 0.8803, gate 2 pitcher persistence 0.3617 vs 0.1768."""
     import pybaseball  # noqa: F401 - availability probe; frames come via war_source
     import war_source
     provider = provider or war_source.DEFAULT_PROVIDER
-    war: dict[tuple[int, int], float] = {}
+    war: dict[tuple[str, int, int], float] = {}
     age: dict[tuple[int, int], int] = {}
     for side in ("bat", "pit"):
         try:
@@ -111,15 +147,55 @@ def _war_age_maps(provider: str | None = None) -> tuple[dict, dict]:
         sub = df[df["mlb_ID"].notna() & df["WAR"].notna()]
         for row in sub.itertuples(index=False):
             try:
-                key = (int(row.mlb_ID), int(row.year_ID))
+                ps = (int(row.mlb_ID), int(row.year_ID))
             except (TypeError, ValueError):
                 continue
+            key = (side, ps[0], ps[1])
             war[key] = war.get(key, 0.0) + _f(row.WAR)
             try:
-                age[key] = int(row.age)
+                age[ps] = int(row.age)
             except (TypeError, ValueError):
                 pass
     return war, age
+
+
+def _sum_sides(side_war: dict) -> dict:
+    """Collapse a side-keyed WAR map onto {(mlbam, season): TOTAL player WAR}.
+
+    Iteration runs in the side-keyed map's insertion order - the whole bat
+    frame, then the whole pit frame - which is the order the pre-repair
+    accumulation used, so the summed value is float-identical to what
+    _war_age_maps returned before the side key existed. That identity is what
+    lets `war_total` leave a one-sided player-season's label exactly where it
+    was."""
+    out: dict[tuple[int, int], float] = {}
+    for (_side, mlbam, season), w in side_war.items():
+        out[(mlbam, season)] = out.get((mlbam, season), 0.0) + w
+    return out
+
+
+def _war_age_maps(provider: str | None = None) -> tuple[dict, dict]:
+    """{(mlbam, season): war} (bat+pit summed) and {(mlbam, season): age}.
+
+    THE WHOLE-PLAYER VIEW, kept deliberately and with its contract unchanged.
+    A player-season's TOTAL WAR is the right quantity for a LABEL, and
+    war_actual_map builds the training and eval label from it. What was wrong
+    was writing this total onto a SIDE-KEYED corpus row: build_corpus now
+    reads _side_war_age_maps for a row's own `war` and this map for its
+    `war_total`. See _side_war_age_maps for the defect and its measurement."""
+    side_war, age = _side_war_age_maps(provider)
+    return _sum_sides(side_war), age
+
+
+# _war_age_maps is a documented OFF HOOK, not only a function.
+# tools/build_ewar.live_fip_corpus rebuilds a FIP-only corpus for the nightly
+# eWAR artifact and switches the WAR and age join off by replacing this name
+# with a stub returning empty maps - it has to, because the war_daily frames it
+# would otherwise read are priced by the very artifact it is rebuilding, which
+# is the re-entrancy war_source's own docstring warns about. build_corpus now
+# reads the SIDE-keyed map instead, so it compares the name against this alias
+# to see whether the hook has been taken, rather than silently defeating it.
+_WHOLE_PLAYER_WAR_AGE_MAPS = _war_age_maps
 
 
 # ============================================================================
@@ -190,6 +266,25 @@ def _corpus_provider_stale(cached: dict) -> str | None:
     return None
 
 
+def _corpus_label_shape_stale(cached: dict) -> str | None:
+    """Why a cached corpus must be rebuilt on LABEL SHAPE grounds, or None.
+
+    A corpus pickled before the 2026-09-18 two-sided label repair carries no
+    'label_shape' and holds the player's TOTAL WAR on his hitter row AND on
+    his pitcher row, which the training frame and the eval harness then sum
+    again. Nothing else on this path can see that: the pickle is fresh, the
+    provider matches, and the WAR column is simply the wrong quantity. So the
+    shape is stamped and compared, and a mismatch is stale whatever the data
+    age - the same argument _corpus_provider_stale makes for the basis, and
+    the reason the repair cannot be half-applied by an operator who forgot
+    ``force=True``."""
+    have = cached.get("label_shape")
+    if have != LABEL_SHAPE:
+        return (f"label shape {have or 'pre-side-keyed (2x on two-sided rows)'} "
+                f"!= {LABEL_SHAPE}")
+    return None
+
+
 def build_corpus(first_season: int | None = None, last_season: int | None = None,
                  force: bool = False) -> dict:
     """{"hit": [rows], "pit": [rows], "league": {season: {...}}}.
@@ -209,6 +304,7 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
             cached = pickle.load(fh)
         if cached.get("first") == first and cached.get("last") >= last - 0:
             reason = (_corpus_provider_stale(cached)
+                      or _corpus_label_shape_stale(cached)
                       or _corpus_stale_reason(cached, last))
             if reason is None:
                 return cached
@@ -216,7 +312,19 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
         else:
             cached = None
     try:
-        war_map, age_map = _war_age_maps()
+        if _war_age_maps is _WHOLE_PLAYER_WAR_AGE_MAPS:
+            # The normal path: ONE pull of the war_daily frames. `war_side`
+            # feeds each row's own `war`; `war_map` is the same rows summed per
+            # player-season, in the same order the pre-repair lookup summed
+            # them, and feeds the `war_total` LABEL column.
+            war_side, age_map = _side_war_age_maps()
+            war_map = _sum_sides(war_side)
+        else:
+            # The OFF hook has been taken (see _WHOLE_PLAYER_WAR_AGE_MAPS).
+            # Honour it exactly: whatever the override returns is the whole
+            # WAR and age join, and there is no per-side column to write.
+            war_map, age_map = _war_age_maps()
+            war_side = {}
     except Exception as e:                       # noqa: BLE001 - fail-soft
         # P-CTTL: the staleness rebuild must never be able to take a surface
         # DOWN that a stale-but-usable pickle would have served. Any source
@@ -227,7 +335,7 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
                         f"; WAR BASIS MISMATCH, {mismatch}" if mismatch else "")
             return cached
         raise
-    # P-CTTL guard: _war_age_maps is fail-SOFT (a bwar fetch failure logs and
+    # P-CTTL guard: _side_war_age_maps is fail-SOFT (a bwar fetch failure logs and
     # returns an EMPTY map), so without this a network blip would pickle a corpus
     # with war=None on every row — silently zeroing the WAR map, the war_rate
     # aging curves and every projection. Refuse to overwrite a good cache with
@@ -289,7 +397,16 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
                 "iso": ((d + 2 * t + 3 * hr) / ab) if ab > 0 else 0.0,
                 "babip": ((h - hr) / babip_den) if babip_den > 0 else None,
                 "hr_pa": hr / pa,
-                "war": war_map.get(key),
+                # THIS SIDE'S WAR, and the only WAR the per-side fits may see
+                # (fit_war_map's hitter regression, fit_aging_curves' war_rate,
+                # realwar_residual). Before 2026-09-18 this read the side-blind
+                # total, so a player who also pitched carried his pitching WAR
+                # on his hitter row - see _side_war_age_maps.
+                "war": war_side.get(("bat", *key)) if key else None,
+                # THE LABEL, and a different quantity: the player-season's
+                # WHOLE WAR, identical on his hitter and his pitcher row and
+                # read ONCE by war_actual_map rather than summed across them.
+                "war_total": war_map.get(key),
             })
         if tot["pa"] > 0:
             w = _pcfg()["assembly"]["woba_weights"]
@@ -329,7 +446,10 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
                 "bf": bf, "ip": ip,
                 "k_pct": so / bf, "bb_pct": bb / bf, "hr_bf": hr / bf,
                 "_fip_core": (13 * hr + 3 * (bb + hbp) - 2 * so) / ip,
-                "war": war_map.get(key),
+                # This side's WAR and the whole-player label; see the hitter
+                # row above and _side_war_age_maps for why they are two columns.
+                "war": war_side.get(("pit", *key)) if key else None,
+                "war_total": war_map.get(key),
             })
         if ptot["ip"] > 0:
             lg_era = 9 * ptot["er"] / ptot["ip"]
@@ -344,15 +464,66 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
         pit_rows.extend(season_pit)
     corpus = {"hit": hit_rows, "pit": pit_rows, "league": league,
               "first": first, "last": last,
-              # the WAR basis the rows were labelled on (_war_age_maps read
-              # the facade default); _corpus_provider_stale invalidates on it
-              "war_provider": _war_provider()}
+              # the WAR basis the rows were labelled on (_side_war_age_maps
+              # read the facade default); _corpus_provider_stale invalidates
+              # on it
+              "war_provider": _war_provider(),
+              # the SHAPE of the two WAR columns; _corpus_label_shape_stale
+              # invalidates on it and proj_ml._war_tag keys the frame and the
+              # point-in-time bundle caches on it
+              "label_shape": LABEL_SHAPE}
     CACHE_DIR.mkdir(exist_ok=True)
     with open(CORPUS_CACHE, "wb") as fh:
         pickle.dump(corpus, fh)
     log.info("fa corpus: %d hitter-seasons, %d pitcher-seasons, %d league-years",
              len(hit_rows), len(pit_rows), len(league))
     return corpus
+
+
+def war_actual_map(corpus: dict) -> dict:
+    """{(mlbam, season): TOTAL player WAR} - THE LABEL, taken ONCE per
+    player-season instead of accumulated across sides.
+
+    ONE IMPLEMENTATION, because the training frame and the eval harness must
+    agree: proj_ml.build_training_frame and proj_eval._assemble both call
+    this. Scoring against a truth that is built differently from the one you
+    trained on is how the two-sided defect stayed invisible - both sides of
+    the comparison were doubled, so the error cancelled in every published
+    receipt and showed up only in the level.
+
+    WHY NOT SUM `war` ACROSS SIDES. After the repair a row's `war` is its own
+    side's WAR, so hit + pit does recover the total for a player-season that
+    carries a corpus row on BOTH sides. It does NOT for one that carries a row
+    on one side only: a pitcher's plate appearances are excluded from the
+    hitter corpus by position (build_corpus skips pos == 'P'), so summing the
+    rows would silently drop his batting WAR. Measured on the 2026-09-17
+    corpus that is 7,745 player-seasons and +44.3 WAR of label movement that
+    has nothing to do with the defect being repaired, and it would change the
+    estimand L2 registers. `war_total` is the whole quantity, identical on
+    both of a two-way player's rows, so this assigns it rather than adding it.
+
+    A corpus pickled before the 2026-09-18 repair carries no `war_total`. Such
+    a corpus is already refused by _corpus_label_shape_stale, so this branch is
+    reachable only from a hand-built fixture; it reproduces the old summing
+    behaviour, doubling and all, and says so in the log rather than inventing
+    a label it cannot source."""
+    out: dict[tuple, float] = {}
+    if corpus.get("label_shape") == LABEL_SHAPE:
+        for side in ("hit", "pit"):
+            for r in corpus.get(side) or []:
+                if r.get("mlbam") and r.get("war_total") is not None:
+                    out[(r["mlbam"], r["season"])] = r["war_total"]
+        return out
+    log.warning("war_actual_map: corpus label_shape %s (want %s) - falling back "
+                "to summing `war` across sides, which DOUBLES every "
+                "player-season carrying a row on both sides",
+                corpus.get("label_shape") or "absent", LABEL_SHAPE)
+    for side in ("hit", "pit"):
+        for r in corpus.get(side) or []:
+            if r.get("mlbam") and r.get("war") is not None:
+                key = (r["mlbam"], r["season"])
+                out[key] = out.get(key, 0.0) + r["war"]
+    return out
 
 
 # ============================================================================
@@ -423,7 +594,10 @@ def _corpus_sig(corpus: dict) -> str:
         h.update(f"{side}:{len(rows)}|".encode())
         # Digest the fields the fit actually consumes. Hashing whole dicts would
         # make the key depend on incidental columns and on dict ordering, so it
-        # would churn for changes that cannot move a coefficient.
+        # would churn for changes that cannot move a coefficient. `war_total` is
+        # deliberately absent for that reason: it is the LABEL column and no fit
+        # keyed here reads it. What DOES key on it is proj_ml._war_tag, through
+        # the corpus-level label_shape stamp.
         for r in rows:
             h.update(f"{r.get('mlbam')},{r.get('season')},{r.get('war')},"
                      f"{r.get('pa') or r.get('ip')}|".encode())
