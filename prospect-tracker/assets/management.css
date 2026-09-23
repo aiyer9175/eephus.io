@@ -35,12 +35,14 @@
 .mgmt-mini--wide { max-width: 520px; font-size: 13px; }
 .mgmt-mini--wide td { padding: 4px 0; border-bottom: 1px solid var(--border-subtle); }
 
-.mgmt-controls { margin: 10px 0; }
-.mgmt-controls select {
-  font: inherit; font-size: 13px; padding: 6px 8px;
-  border: 1px solid var(--border-light); border-radius: 6px;
-  background: var(--bg-secondary); color: inherit;
-}
+/* NATIVE CONTROLS STAY NATIVE AND ON THEME. The selects carry .eephus-select
+   (site.css foot layer: retro-mono, --bg-secondary, a --text-tertiary boundary
+   that clears 3:1, the currentColor chevron); the module adds only the row.
+   The caption dims through --text-tertiary (the /mlbstats/ .mlbstats-ctl idiom),
+   never through opacity on the label: the select sits inside the label, and an
+   opacity there dilutes the boundary and the text the foot layer designed. */
+.mgmt-controls { margin: 10px 0; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.mgmt-controls label { font-size: 12px; color: var(--text-tertiary); display: inline-flex; align-items: center; gap: 6px; }
 
 .mgmt-tablewrap { overflow-x: auto; margin: 8px 0; }
 .mgmt-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -63,8 +65,88 @@
 }
 .mgmt-dark-why { font-size: 13px; font-weight: 600; margin: 4px 0; }
 
+/* ---- the decision ledger (2026-09-23) --------------------------------------
+   Colour is on the SIGN of a published realized figure only (.mgmt-pos /
+   .mgmt-neg above). Nothing here paints a ladder: the style z chips are
+   neutral, and there is no EephusTiers call anywhere in management.js. */
+
+/* the agent sentence, at .mgmt-note weight, under every leaderboard and club page */
+.mgmt-agent { font-size: 13px; line-height: 1.5; opacity: .85; margin: 8px 0; max-width: 78ch; font-style: italic; }
+
+/* the club header card */
+.mgmt-club-head {
+  border: 1px solid var(--border-light); border-radius: 10px; padding: 14px 18px;
+  background: var(--bg-secondary); margin: 12px 0;
+}
+.mgmt-club-head h2 { margin: 0 0 4px; font-size: 20px; }
+.mgmt-club-head .mgmt-club-meta { font-size: 12px; opacity: .7; margin-bottom: 8px; }
+.mgmt-club-fams { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.mgmt-club-fams .mgmt-fam { font-size: 13px; }
+.mgmt-club-fams .mgmt-fam b { font-variant-numeric: tabular-nums; }
+
+/* the small uppercase chip (borrowed from .mgmt-darktag): flags, header tags */
+.mgmt-flag {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+  border: 1px solid var(--border-light); border-radius: 999px;
+  padding: 0 6px; opacity: .75; margin-left: 4px; white-space: nowrap;
+}
+/* the "realized" header tag: a sort on that column is a rank by what happened */
+.mgmt-th-tag { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; opacity: .6; margin-left: 4px; }
+
+/* style z chips: NEUTRAL. No tier colour, no plus sign as a suffix, a signed
+   number in a bordered chip. The border is the same token as .mgmt-flag. */
+.mgmt-zstrip { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.mgmt-zchip {
+  border: 1px solid var(--border-light); border-radius: 8px; padding: 6px 10px;
+  background: var(--bg-secondary); font-size: 12px; min-width: 84px;
+}
+.mgmt-zchip b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.mgmt-zchip .mgmt-zlbl { opacity: .7; }
+
+/* CSS-grid histogram: one bin per column, two bars per bin (club beside the
+   league), --accent-cyan at .35 alpha for the club and the tertiary text token
+   at the same alpha for the league; no new colours. */
+.mgmt-hist { display: grid; align-items: end; gap: 3px; height: 90px; margin: 8px 0 2px; }
+.mgmt-hist .mgmt-bin { height: 100%; display: flex; align-items: flex-end; gap: 2px; }
+.mgmt-hist .mgmt-bin span { display: block; flex: 1 1 0; border-radius: 2px 2px 0 0; min-height: 1px; }
+.mgmt-hist .mgmt-bin .mgmt-b-club { background: color-mix(in srgb, var(--accent-cyan) 35%, transparent); }
+.mgmt-hist .mgmt-bin .mgmt-b-league { background: color-mix(in srgb, var(--text-tertiary) 35%, transparent); }
+.mgmt-hist-axis { display: grid; font-size: 10px; opacity: .6; gap: 3px; }
+.mgmt-hist-axis span { text-align: center; }
+.mgmt-hist-legend { font-size: 11px; opacity: .7; margin: 2px 0 8px; }
+.mgmt-hist-legend i { display: inline-block; width: 10px; height: 10px; vertical-align: middle; margin-right: 4px; border-radius: 2px; }
+.mgmt-hist-legend i.mgmt-i-club { background: color-mix(in srgb, var(--accent-cyan) 35%, transparent); }
+.mgmt-hist-legend i.mgmt-i-league { background: color-mix(in srgb, var(--text-tertiary) 35%, transparent); }
+
+/* the sparkline wrap: one polyline in currentColor, no library */
+.mgmt-spark { width: 100%; max-width: 720px; margin: 6px 0; }
+.mgmt-spark svg { width: 100%; height: 90px; display: block; color: var(--text-secondary); }
+.mgmt-spark .mgmt-spark-zero { stroke: var(--border-light); stroke-width: 1; }
+.mgmt-spark .mgmt-spark-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
+
+/* the drill-down: clickable rows and the detail card */
+.mgmt-table tbody tr[data-mrow] { cursor: pointer; }
+.mgmt-table tbody tr[data-mrow]:hover { background: var(--bg-hover); }
+.mgmt-table tbody tr.mgmt-row--open { outline: 2px solid var(--accent-cyan); outline-offset: -2px; }
+.mgmt-detail {
+  border: 1px solid var(--border-light); border-left: 3px solid var(--accent-cyan);
+  border-radius: 10px; padding: 12px 16px; background: var(--bg-secondary); margin: 10px 0;
+}
+.mgmt-detail h3 { margin: 0 0 4px; font-size: 15px; }
+.mgmt-detail .mgmt-detail-sub { font-size: 12px; opacity: .7; margin-bottom: 8px; }
+.mgmt-detail .mgmt-mini { max-width: 560px; }
+.mgmt-detail-close { float: right; font: inherit; font-size: 12px; background: none; border: 1px solid var(--border-light); border-radius: 6px; color: inherit; padding: 2px 8px; cursor: pointer; }
+
+/* the link rail on a club page */
+.mgmt-links { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; margin: 8px 0; }
+
+/* the census table on the League tab wraps its family label */
+.mgmt-table--census td:first-child { white-space: normal; min-width: 120px; }
+
 @media (max-width: 720px) {
   .mgmt-table { font-size: 12px; }
   .mgmt-table th, .mgmt-table td { padding: 4px 6px; }
   .mgmt-card-big { font-size: 22px; }
+  .mgmt-club-head h2 { font-size: 17px; }
+  .mgmt-hist { height: 64px; }
 }

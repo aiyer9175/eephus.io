@@ -53,6 +53,13 @@ RUNNING = ROOT / "data" / "management_running.json"
 GATE_EVAL = ROOT / "data" / "management_gate_eval.json"
 WE = ROOT / "data" / "win_expectancy.json"
 GATE_DOC = ROOT / "docs" / "IN_GAME_MANAGEMENT_GATE.md"
+#: The decision ledger summary (mgmt_decisions.py), the matched-state baseline
+#: (mgmt_baseline.py) and the manager ledger (mgmt_managers.py, Wave C, dark until
+#: it runs). The board reads them; it never recomputes the ledger.
+DECISIONS = ROOT / "data" / "management_decisions.json"
+BASELINE = ROOT / "data" / "management_baseline.json"
+MANAGERS = ROOT / "data" / "managers.json"
+SHARD_DIR = ROOT / "data" / "mgmt_decisions"
 
 BASE_LABEL = {0: "empty", 1: "1B", 2: "2B", 3: "1B 2B", 4: "3B",
               5: "1B 3B", 6: "2B 3B", 7: "loaded"}
@@ -354,6 +361,131 @@ def _families_sentence(net, bunt) -> str:
             f"been measured.")
 
 
+def _read_json(p: Path):
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _decision_blocks() -> dict:
+    """The decision ledger's blocks, READ off data/management_decisions.json and
+    data/management_baseline.json; the board never recomputes the ledger.
+
+    Key discipline on `clubs.rows`: no key contains "dv" or "decision" (the gate test
+    scans this block with the same rule as `teams.rows`); counts are n_all / n_<family>,
+    realized columns are mwpa_<family> and there is no cross-family total. DVS is not a
+    club-season column: it lives in the drill-down shards and the League census only.
+    """
+    d = _read_json(DECISIONS)
+    b = _read_json(BASELINE)
+    # Reader sentences, never an operator instruction: the page prints both.
+    dark = {"status": "the decision ledger is not on this build", "live": False}
+    if not d or d.get("status") != "built":
+        why = ((d or {}).get("status")
+               or "data/management_decisions.json is not on this build; the ledger step "
+                  "writes it from the play corpus and it ships committed with the site")
+        blocked = {"live": False, "blocked_on": "the decision ledger (mgmt_decisions.py, step 6b7e)",
+                   "why": str(why)}
+        return {"decisions": {**dark, "why": str(why)},
+                "clubs": {"status": str(why), "rows": [], "plus_metric": False},
+                "managers": {**blocked, "fixture": {"ejection_named_managers": None}},
+                "challenges": {**blocked, "seasons": [2026]},
+                "lineups": {**blocked, "seasons": [2026]},
+                "shards": {"path_template": "/data/mgmt_decisions/{season}-{club}.json", "index": []},
+                "league": {"live": False, "why": str(why)}}
+    fams = d.get("families") or {}
+    decisions = {
+        "status": "built", "live": True,
+        "produced_by": d.get("produced_by"), "generated_at": d.get("generated_at"),
+        "corpus_built_at": d.get("corpus_built_at"),
+        "corpus_schema_version": d.get("corpus_schema_version"),
+        "seasons": d.get("seasons"), "through_by_season": d.get("through_by_season"),
+        "n_all": d.get("n_all"),
+        "chain_break": d.get("chain_break"),
+        "families": fams,
+        "gate_status_by_family": d.get("gate_status_by_family"),
+        "floors": d.get("floors"), "games_floor": d.get("games_floor"),
+        "realized_sentence": d.get("realized_sentence"),
+        "agent_sentence": d.get("agent_sentence"),
+        "style_sentence": d.get("style_sentence"),
+        "single_pa_caveat": d.get("single_pa_caveat"),
+        "overlap_note": d.get("overlap_note"),
+        "dvs_note": d.get("dvs_note"),
+        "li_note": d.get("li_note"),
+        "units": d.get("units"),
+        "no_cross_family_total": True, "plus_metric": False,
+        "removed_pitcher": d.get("removed_pitcher"),
+        "switch_classification": d.get("switch_classification"),
+        "hook_hist": d.get("hook_hist"),
+        "steal_excluded": d.get("steal_excluded"),
+        "club_attribution": d.get("club_attribution"),
+        "baseline": {
+            "artifact": "data/management_baseline.json",
+            "min_cell": (b or {}).get("min_cell"),
+            "identity": (b or {}).get("identity"),
+            "single_pa_caveat": (b or {}).get("single_pa_caveat"),
+            "selection_caveat": (b or {}).get("selection_caveat"),
+            "where_dvs_lives": (b or {}).get("where_dvs_lives"),
+            "families": {f: {k: v for k, v in blk.items() if k != "cells"}
+                         for f, blk in ((b or {}).get("families") or {}).items()},
+        } if b else {"artifact": "data/management_baseline.json", "status": "absent"},
+    }
+    clubs = dict(d.get("clubs") or {})
+    clubs.setdefault("plus_metric", False)
+    clubs["floors"] = d.get("floors")
+    clubs["games_floor"] = d.get("games_floor")
+    clubs["live"] = True
+    mgr = _read_json(MANAGERS)
+    fixture = d.get("managers_fixture") or {}
+    if mgr and mgr.get("status") == "built" and mgr.get("managers"):
+        managers = {"live": True, "rows": mgr.get("managers"), "source": "data/managers.json",
+                    "fixture": fixture, "agent_sentence": d.get("agent_sentence")}
+    else:
+        managers = {
+            "live": False,
+            "blocked_on": "mgmt_managers ingest (M-MWAR-2)",
+            "why": ("there is no manager entity anywhere on disk: no manager in any game "
+                    "feed, no manager transaction, no coach or staff cache. The ledger needs "
+                    "/api/v1/teams/{id}/coaches per team-season with schedule-date bisection, "
+                    "which is a network ingest. Until it runs every row is a club-season."),
+            "fixture": {"ejection_named_managers": fixture.get("ejection_named_managers"),
+                        "ejections": fixture.get("ejections"),
+                        "note": fixture.get("note")},
+            "rows_until_then": "clubs.rows",
+            "agent_sentence": d.get("agent_sentence"),
+        }
+    challenges = {
+        "live": False, "seasons": [2026],
+        "blocked_on": "mgmt_feeds_2026 (Wave B): the reviewDetails reader over .cache/game_feeds",
+        "why": ("the corpus dropped about.hasReview and carries no challenging side; the "
+                "2026 game feeds carry reviewDetails on the reviewed play and are read in "
+                "Wave B. Pre-2026 side attribution is not sourceable offline."),
+        "regime_note": ("ABS pitch challenges (reviewType MJ, a player's challenge) are a "
+                        "separate 2026 regime, counted per club as abs_challenges and never "
+                        "mixed with replay challenges; crew-chief reviews (N*) are counted, "
+                        "not credited"),
+        "value_not_observable": ("the feed prices only the final ruling, so a challenge's "
+                                 "win-probability value is not observable even in 2026; "
+                                 "the family ships counts, overturn rate, timing and LI"),
+    }
+    lineups = {
+        "live": False, "seasons": [2026],
+        "blocked_on": "mgmt_feeds_2026 (Wave B): boxscore battingOrder and lineup_captures readers",
+        "why": ("game feeds with a batting order exist for 2026 only and are read in Wave "
+                "B; pre-2026 lineups need a network fetch (M-CORPUS-2)"),
+        "value_not_measured": ("lineup value is not measured; optimality needs the "
+                               "per-plate-appearance model (M-ENG-1) and the lineup chain "
+                               "(M-ENG-2), neither built"),
+    }
+    sh = dict(d.get("shards") or {})
+    sh["storage_note"] = ("owner decision open (spec 14.1): the shards are written to "
+                          "data/mgmt_decisions/ and neither tracked nor ignored by this build")
+    league = {"live": True, "reads": "decisions.families and decisions.baseline"}
+    return {"decisions": decisions, "clubs": clubs, "managers": managers,
+            "challenges": challenges, "lineups": lineups, "shards": sh, "league": league}
+
+
 def build(*, corpus=None, teams=True) -> dict:
     run = json.loads(RUNNING.read_text(encoding="utf-8"))
     gate = json.loads(GATE_EVAL.read_text(encoding="utf-8"))
@@ -363,6 +495,9 @@ def build(*, corpus=None, teams=True) -> dict:
     raw = sh["raw_for_comparison"]
     bt = run["by_target"]
     _bunt = _bunt_section()
+    blocks = _decision_blocks()
+    _dec = blocks["decisions"]
+    _n_realized = len([f for f, v in (_dec.get("families") or {}).items() if v.get("has_window")])
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -455,9 +590,35 @@ def build(*, corpus=None, teams=True) -> dict:
 
         "teams": _team_board(corpus) if teams else {"status": "skipped"},
 
+        # The decision ledger (mgmt_decisions.py), read off its artifact. Realized
+        # value per family, never a cross-family total, never a plus metric; the
+        # club-season is the agent until the manager ledger lands.
+        "decisions": _dec,
+        "clubs": blocks["clubs"],
+        "managers": blocks["managers"],
+        "challenges": blocks["challenges"],
+        "lineups": blocks["lineups"],
+        "shards": blocks["shards"],
+
+        # Cross-module links the club page draws ONLY when the route is built:
+        # /franchise/ is D3 and /ledger/ is D1, neither shipped, and an anchor
+        # to a route that does not exist is a 404 on every club page.
+        "routes": {"franchise": (ROOT / "franchise" / "index.html").exists(),
+                   "ledger": (ROOT / "ledger" / "index.html").exists()},
+
         "sections": {
             "running_game": {"live": True},
             "reference": {"live": True},
+            "league": blocks["league"],
+            "decisions": {"live": bool(_dec.get("live")), "plus_metric": False,
+                          "realized_not_skill": _dec.get("realized_sentence")},
+            "clubs": {"live": bool(blocks["clubs"].get("live")), "plus_metric": False},
+            "managers": {"live": bool(blocks["managers"].get("live")),
+                         "blocked_on": blocks["managers"].get("blocked_on")},
+            "challenges": {"live": bool(blocks["challenges"].get("live")),
+                           "blocked_on": blocks["challenges"].get("blocked_on")},
+            "lineups": {"live": bool(blocks["lineups"].get("live")),
+                        "blocked_on": blocks["lineups"].get("blocked_on")},
             "team_style": {"live": True, "plus_metric": False,
                            "why_no_plus_metric": (
                                "the gate battery found a club's decision value in "
@@ -473,14 +634,29 @@ def build(*, corpus=None, teams=True) -> dict:
                         "manager entity would attribute a signal that is not "
                         "there.")},
             "sacrifice_bunt": _bunt,
+            # NARROWED (2026-09-23) to what is still dark once the decision ledger
+            # carries realized value for the bullpen call and the pinch hit: the
+            # DECISION VALUE of either (the counterfactual) and lineup VALUE.
             "bullpen_and_lineup": {
-                "live": False, "blocked_on": "not yet measured",
+                "live": False,
+                "blocked_on": ("bullpen decision value and lineup value: the pitcher not "
+                               "used and the batter not lifted need the availability model "
+                               "(M-PIT-9) and the per-plate-appearance model (M-ENG-1); "
+                               "lineup optimality needs M-ENG-1 and the lineup chain (M-ENG-2)"),
+                "still_dark": ["bullpen_decision_value", "pinch_hit_decision_value",
+                               "lineup_value"],
+                "now_live_as_realized_value": sorted(
+                    f for f, v in (_dec.get("families") or {}).items() if v.get("has_window")),
                 # DERIVED, not typed (audit F07-02). Both figures in this
                 # sentence moved when the score convention was corrected, and
                 # one of them changed sign.
                 "why": _families_sentence(
                     _r(gate["headline"]["net_dv_all_seasons_wins"], 2),
-                    _bunt.get("total_decision_value_wins") or 0)},
+                    _bunt.get("total_decision_value_wins") or 0)
+                + (f" The decision ledger carries REALIZED value for {_words(_n_realized)} "
+                   "families, which is what happened after the decision and not the "
+                   "decision's value; the counterfactual for the bullpen call and the "
+                   "pinch hit has not been measured." if _n_realized else "")},
         },
 
         # The detection floor is read off the gate block, never typed.
@@ -511,6 +687,10 @@ def main(argv=None) -> int:
           f"{d['gate']['null_band']}, clears={d['gate']['clears_null']}")
     print(f"  teams: {d['teams'].get('status')} "
           f"({d['teams'].get('n_rows', 0)} club-seasons)")
+    print(f"  decisions: {d['decisions'].get('status')} "
+          f"({(d['decisions'].get('n_all') or 0):,} rows, "
+          f"{d['clubs'].get('n_rows', 0)} club-season rows, "
+          f"{len(d['shards'].get('index') or [])} shards)")
     print(f"  live sections: "
           f"{sorted(k for k, v in d['sections'].items() if v['live'])}")
     return 0

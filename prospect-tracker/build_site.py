@@ -518,7 +518,7 @@ MODULE_STAGE = {
     "arbitration": ("β", "Beta. Arb-1 model gated; arb-2+ is a population multiplier"),
     "forums": ("β", "Forums is in beta"),
     "parks": ("β", "Beta. Display only: no model reads these factors"),
-    "management": ("β", "Beta. Gate returned a bounded null: no per-club plus metric"),
+    "management": ("β", "Beta. Realized value only; the gate returned a bounded null for the steal and no family is ranked by skill"),
     "hof": ("β", "Beta. Every unpublished section names its blocker"),
     # Diamond section (2026-08-05). These rows carry the FULL chip text in
     # slot [0] and render through _stage_chip(); the older rows above predate
@@ -3696,7 +3696,7 @@ _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
     </div>
   </div>
   <div style="padding:8px 0 4px;">
-    <input id="tb-search" type="search" placeholder="Search player name..." style="width:100%;max-width:340px;padding:7px 10px;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-secondary);color:var(--text-primary);" autocomplete="off" spellcheck="false">
+    <input id="tb-search" type="search" placeholder="Search player name..." style="width:100%;max-width:340px;padding:7px 10px;border-radius:6px;border:1px solid var(--text-tertiary);background:var(--bg-secondary);color:var(--text-primary);" autocomplete="off" spellcheck="false">
   </div>
   <div id="tb-group-panel" style="display:none;margin:8px 0;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -4780,18 +4780,35 @@ def build_management() -> str:
     reference surface, because they need no gate: they are what every break-even
     on the page is computed from.
 
-    In NAV_ITEMS under MLB Modules since the 2026-09-06 nav fix."""
+    In NAV_ITEMS under MLB Modules since the 2026-09-06 nav fix.
+
+    THE DECISION LEDGER (2026-09-23, D2 Wave A). Nine families the play corpus can
+    name (pitching change, pinch hitter, pinch runner, defensive sub, intentional
+    walk, bunt, steal, mound visit, ejection), each valued as the win probability that
+    actually moved from the decision to the last play it governed: REALIZED value, not
+    skill, per family and never as a cross-family total. The agent is the club-season
+    until the manager ledger (a network ingest) lands. Ten tabs, a hash router on the
+    /mlbstats/ idiom (#section=clubs&team=CODE&season=YYYY, #section=decisions&...
+    family=F[&game=PK&ab=N]) so the franchise page can link into a club, and per
+    club-season shards under data/mgmt_decisions/ for the drill-down. No figure is
+    typed here: the masthead names two glossary terms and nothing else."""
     body = (
         '<div class="fa-app mlbstats-app mgmt-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>In-Game Management <span class="eephus-beta" title="{html.escape(MODULE_STAGE["management"][1])}">β beta</span></h1></div>'
-        '<span class="section-sub">Every stolen-base attempt since 2018, priced in win probability '
-        f'against its {_gl("sb_break_even", "break-even")} with a league-average runner (speed is a '
-        'roster fact, not a decision). No per-club plus metric: the gate returned a bounded null, so '
-        'the page reports the league.</span></div>'
+        '<span class="section-sub">Every in-game decision the play corpus can name, with the '
+        f'{_gl("realized_mwpa", "realized win probability")} it governed beside the priced '
+        f'{_gl("decision_value", "decision value")} where one exists; realized value is a record of what '
+        'happened, not a measure of skill, and no club is ranked by decision quality.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Management sections">'
-        '<button type="button" class="mlbstats-sectionbtn active" data-mgmtsection="running" role="tab" aria-selected="true">The Running Game</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="teams" role="tab" aria-selected="false">Club Style</button>'
+        '<button type="button" class="mlbstats-sectionbtn active" data-mgmtsection="league" role="tab" aria-selected="true">League</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="running" role="tab" aria-selected="false">Running Game</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="bunt" role="tab" aria-selected="false">Bunt</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="decisions" role="tab" aria-selected="false">Decisions</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="clubs" role="tab" aria-selected="false">Clubs</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="managers" role="tab" aria-selected="false">Managers</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="challenges" role="tab" aria-selected="false">Challenges</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="lineups" role="tab" aria-selected="false">Lineups</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="reference" role="tab" aria-selected="false">Run Expectancy</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="gate" role="tab" aria-selected="false">Club Gate</button>'
         '</div>'
@@ -4804,9 +4821,11 @@ def build_management() -> str:
         f'<script src="/assets/management.js?v={_MGMT_VER}" defer></script>'
     )
     return page("In-Game Management - eephus.io", "management", body,
-                "Every stolen-base attempt since 2018 priced in win probability with a "
-                "league-average runner. The league steals second near its break-even. No "
-                "per-club plus metric: the gate returned a bounded null.",
+                "Every in-game decision the play corpus can name: pitching changes, pinch "
+                "hitters and runners, defensive subs, intentional walks, bunts, steals, "
+                "mound visits and ejections, with the win probability that moved after each. "
+                "Realized value per family, never a cross-family total, never a plus metric. "
+                "Club pages, a per-decision drill-down and the priced steal and bunt families.",
                 url=f"{SITE_ORIGIN}/management/")
 
 

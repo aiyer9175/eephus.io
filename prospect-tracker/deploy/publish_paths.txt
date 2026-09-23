@@ -23,7 +23,11 @@
 #
 # Directories ship recursively; bare filenames ship from the app root.
 # data/ is handled separately by both consumers (top-level *.json plus
-# the pitch_plots/ and player_detail/ per-player splits).
+# the pitch_plots/, player_detail/ and debuts_full/ per-player splits and,
+# since 2026-09-23, the mgmt_decisions/ per club-season decision shards
+# the /management/ drill-down fetches on demand; a shard directory ships
+# only when BOTH consumers name it, and test_the_shard_index_matches_the_
+# files_on_disk asserts the two rules carry it).
 index.html
 404.html
 robots.txt

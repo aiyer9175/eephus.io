@@ -274,6 +274,12 @@ SCHEDULED_EXPORTS = (
     "efv_regen_tripwire",
     # The /management/ board, watched on the same reasoning as /hof/ below.
     "mgmt_export",
+    # The /management/ decision ledger (step 6b7e: management_decisions.json,
+    # management_baseline.json and the data/mgmt_decisions/ shards). Watched
+    # for a raise: the page renders four tabs dark on a missing ledger. On a
+    # box without the play corpus the step records nothing and the committed
+    # artifacts stand (an export absent from a run is not a red, see below).
+    "mgmt_decisions",
     # The /hof/ board. Watched for the same reason as the arbitration board
     # below: the page paints an empty state on a missing payload, so a silent
     # failure is invisible to a reader and to an operator alike.
@@ -5820,8 +5826,53 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 _record_ingest("arbitration_export", False, 0,
                                "arbitration export raised", "mlb", log)
 
+        # --- 6b7e. In-Game Management decision ledger --------------------
+        # The decision ledger behind the League, Clubs and Decisions tabs:
+        # mgmt_decisions.build runs the matched-state baseline
+        # (management_baseline.json), the nine-family ledger
+        # (management_decisions.json) and the per club-season shards
+        # (data/mgmt_decisions/). Realized value per family only; no plus
+        # metric, no cross-family total, the club-season as the agent.
+        #
+        # PLACED BEFORE 6b7c because the board export reads the ledger summary
+        # this step writes; the other way round the served board was one run
+        # stale after every corpus rebuild (the baked-rank precedent).
+        #
+        # OFFLINE BY CONSTRUCTION: it reads the play corpus, the daily WAR
+        # frames and the raw win_prob feed heads; nothing fetches. The ledger
+        # moves only when the corpus is rebuilt by hand (M-CORPUS-4 nightly
+        # incremental is not built). WITHOUT THE CORPUS (the deploy box carries
+        # none) the step writes nothing and records nothing: the committed
+        # artifacts stand, and a "not built" stub must never overwrite them,
+        # which is what served four tabs dark with an operator instruction.
+        # A raise is still recorded as a red. 6b7d is the Franchise board (D3).
+        with _step("6b7e. In-Game Management decision ledger "
+                   "(management_baseline.json, mgmt_decisions shards)", log):
+            try:
+                import mgmt_decisions as _mdc
+                _mdd = _mdc.build()
+                if _mdd.get("status") == "built":
+                    _mdc.OUT.write_text(
+                        json.dumps(_mdd, ensure_ascii=False, separators=(",", ":")),
+                        encoding="utf-8")
+                    log.info("mgmt decisions: %s rows, %d club-seasons, %d shards",
+                             f"{_mdd.get('n_all', 0):,}",
+                             (_mdd.get("clubs") or {}).get("n_rows", 0),
+                             len((_mdd.get("shards") or {}).get("index") or []))
+                    _record_ingest("mgmt_decisions", True, int(_mdd.get("n_all") or 0),
+                                   "in-game management decision ledger", "mlb", log)
+                else:
+                    log.info("mgmt decisions: %s; the committed ledger stands",
+                             _mdd.get("status"))
+            except Exception:
+                log.exception("mgmt decisions failed - continuing")
+                _record_ingest("mgmt_decisions", False, 0,
+                               "mgmt decisions raised", "mlb", log)
+
         # --- 6b7c. In-Game Management board (management_board.json) ------
-        # The /management/ payload. Reads the three committed artifacts and,
+        # The /management/ payload. Reads the committed artifacts (the running
+        # game, the gate eval, the win expectancy model and the ledger summary
+        # 6b7e writes just above, so the board is never a run stale) and,
         # when the play corpus is present, recomputes the club STYLE board from
         # it. No per-club plus metric is written: the gate battery returned a
         # bounded null and the payload says so.

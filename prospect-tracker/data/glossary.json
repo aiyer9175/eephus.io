@@ -7268,6 +7268,341 @@
    ],
    "shelf": "ark",
    "origin": "eephus.io."
+  },
+  {
+   "id": "decision_value",
+   "term": "Decision value (DV)",
+   "category": "custom-index",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "DV",
+    "decision value",
+    "priced decision"
+   ],
+   "priority": 40,
+   "definition": "The win-probability value of an in-game decision priced against a league-wide alternative from the same pre-decision state, so what the manager chose is worth what it is worth regardless of how the play turned out. Exists for two families on eephus.io: the stolen-base attempt (management.py) and the sacrifice bunt (mgmt_bunt.py).",
+   "methodology": "Steal: DV = E[WE | attempt with the league success rate] - WE[hold], priced off the win-expectancy model with a league-average runner, so a fast roster cannot flatter a manager. Bunt: DV(S) = E[change in WE | bunt from state S] - E[change in WE | any other plate appearance from S], league-wide, MIN_CELL 25, two outs excluded. Both are expectations over league outcomes, never the realized change of the play in front of you. The per-club sum of steal DV FAILED its frozen gate (bounded null), so no club is ranked by it.",
+   "formula": "DV = E[WE | decision, league rate] - WE[alternative]\nrealized change = DV + ER (execution residual)",
+   "seeAlso": [
+    "execution_residual",
+    "realized_mwpa",
+    "steal_break_even",
+    "win_expectancy"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "execution_residual",
+   "term": "Execution residual (ER)",
+   "category": "custom-index",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "ER",
+    "execution residual"
+   ],
+   "priority": 41,
+   "definition": "What happened minus what the decision was worth: the realized win-probability change of a priced play minus its decision value. The runner's speed, the catcher's arm and the luck of the throw live here, not in the manager's column.",
+   "methodology": "For a steal attempt: ER = (WE of the state that actually resulted) - (expected WE at the league success rate). The identity DV + ER = realized change holds exactly on every priced attempt and is checked in the artifact rather than asserted in prose. ER does not sum to zero across the league because the league's success rate is measured over the same attempts it prices.",
+   "seeAlso": [
+    "decision_value",
+    "realized_mwpa"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "realized_mwpa",
+   "term": "Realized mWPA (realized value of a decision)",
+   "category": "custom-index",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "mWPA",
+    "realized mWPA",
+    "realized value",
+    "realized win probability"
+   ],
+   "priority": 39,
+   "definition": "Realized value, not skill. Each figure is the win probability that actually moved after the decision, credited to the club that made it, from the decision to the last play it governed. What the alternative would have produced, the reliever not used, the batter not lifted, the pitch not thrown, is not observed, so this is a record of what happened after a manager acted and not a measure of how well he chose. A reliever who pitched well after a poor choice and a hitter who homered after a bad matchup are both in these numbers.",
+   "methodology": "mWPA(d) = s * (wp_home_after[last play of the window] - wp_home_before[first play]) / 100, with s = +1 for the home club and -1 for the away club and wp in the MLB feed's percentage points. An ENDPOINT DIFFERENCE, never a sum of per-play wpa rows: consecutive plays do not chain on about three percent of plays (in-PA events move the state and are credited to neither), so a row sum misses part of the game's journey. Windows per family: the reliever's stint (pitching change), the plate appearance (pinch hit, bunt, steal), the rest of the half-inning (pinch runner), the walk plus the on-deck plate appearance (intentional walk), the rest of the game (defensive sub, stored and never summed). Per-family sums only; the windows overlap across families, so no cross-family total exists. The agent is the club-season until the manager ledger lands.",
+   "formula": "mWPA(d) = s(club, half) * (wp_home_after[p1] - wp_home_before[p0]) / 100",
+   "example": "A reliever enters with the home club's win probability at 62.0 and leaves it at 71.5 two innings later: +0.095 wins to the home club's pitching-change column, whoever else contributed inside the window.",
+   "seeAlso": [
+    "wpa",
+    "leverage_index",
+    "decision_value",
+    "dvs",
+    "manager_agent"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "dvs",
+   "term": "Decision value above state (DVS)",
+   "category": "custom-index",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "DVS",
+    "value above state",
+    "decision value above state"
+   ],
+   "priority": 42,
+   "definition": "A decision's realized value minus what the league realized from the same spot: the realized mWPA of the window less the league mean realized value over every window of the same shape from the matched state (season, inning bucket, half, outs, bases, score bucket). Removes the level of the state, not player quality and not selection, so it is still descriptive and still not skill.",
+   "methodology": "The bunt recipe generalised. baseline_f(S) is the league mean window mWPA over every window from state S, decision or not (every stint start for the pitching change, every plate appearance for the pinch hit, every half-inning remainder with a runner on for the pinch runner, every two-plate-appearance span for the intentional walk), MIN_CELL 25 with thin cells published as excluded. DVS(d) = mWPA(d) - baseline_f(S(d)). Selection caveat: intentional walks are given to the hitters a manager least wants to face and pinch hitters replace the batters he least wants at the plate, so the state-matched mean is measured over a different population and the bias is stated, not solved. For single-plate-appearance families the baseline sits near zero, so DVS there is not an independent second number. DVS lives on the per-decision drill-down and the League census only, never on a club-season or manager row: a sortable per-club column of value above state would be the rank the frozen gate withheld.",
+   "formula": "DVS(d) = mWPA(d) - mean over league windows from S(d) of mWPA(window)",
+   "seeAlso": [
+    "realized_mwpa",
+    "decision_value",
+    "leverage_index"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "steal_break_even",
+   "term": "Steal break-even (p*)",
+   "category": "custom-index",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "break-even",
+    "steal break-even",
+    "p*",
+    "swing-weighted break-even"
+   ],
+   "priority": 43,
+   "definition": "The success rate at which attempting a steal and holding the runner are worth the same win probability from a given base-out-score state. Above it, running pays; below it, holding does. Three are published per target base: the mean, the median and the swing-weighted break-even, and only the swing-weighted one predicts the sign of the league's summed decision value.",
+   "methodology": "p* = (WE[hold] - WE[caught]) / (WE[success] - WE[caught]) from the win-expectancy model, with the third out priced off the measured half-inning-start table. The swing-weighted break-even weights each attempt's p* by its swing (WE[success] - WE[caught]), which is why the league's summed decision value is positive exactly when the league success rate beats it. Two-out attempts are excluded because the caught case crosses the half-inning boundary where two estimators meet.",
+   "formula": "p* = (WE_hold - WE_fail) / (WE_success - WE_fail)",
+   "seeAlso": [
+    "decision_value",
+    "win_expectancy",
+    "run_expectancy"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "win_expectancy",
+   "term": "Win expectancy (WE)",
+   "category": "general-stat",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "win expectancy",
+    "WE",
+    "win probability"
+   ],
+   "priority": 44,
+   "definition": "The probability the batting team wins the game from a given state (inning, half, score difference, outs, bases). Every break-even and decision value on the In-Game Management page is a difference of two win expectancies.",
+   "methodology": "eephus.io fits its own model (win_expectancy.py) on the play corpus rather than reading a cell table: the base-out state enters only through run expectancy with a positive coefficient, so the model is monotone by construction and safe to difference; the half-inning boundary is read from a measured half-inning-start table because a smooth model is free to be discontinuous across a boundary it was never constrained at. Smoothing costs the ninth-inning tails and the page says so. The MLB StatsAPI feed ships its own win probability on every play (wp_home_before, wp_home_after in percentage points); the realized figures on the page come from that feed, the priced figures from the model, and the two are never averaged.",
+   "seeAlso": [
+    "run_expectancy",
+    "wpa",
+    "realized_mwpa",
+    "decision_value"
+   ],
+   "shelf": "industry",
+   "origin": "Industry concept. Win expectancy tables from the win-probability framework (Tom Tango and coauthors, The Book); the model here is fitted in-house on the play corpus."
+  },
+  {
+   "id": "run_expectancy",
+   "term": "Run expectancy (RE24)",
+   "category": "general-stat",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "run expectancy",
+    "RE24",
+    "run expectancy matrix"
+   ],
+   "priority": 45,
+   "definition": "The average number of runs scored from a base-out state to the end of the half-inning: the 24-cell matrix (eight base states by three out states). Bases empty with nobody out is worth about half a run; bases loaded with nobody out more than two.",
+   "methodology": "Measured on the play corpus per season and published with the sample size behind every cell. It is the only channel through which the base-out state reaches the win model, which is what makes the model monotone and its differences safe. The matrix ships on the Run Expectancy tab because it needs no gate.",
+   "seeAlso": [
+    "win_expectancy",
+    "steal_break_even"
+   ],
+   "shelf": "industry",
+   "origin": "Industry concept. The run-expectancy matrix (Tom Tango and coauthors, The Book), measured here on the eephus.io play corpus."
+  },
+  {
+   "id": "hook_z",
+   "term": "Hook z (style z-score)",
+   "category": "custom-index",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "Hook z",
+    "hook z-score",
+    "starter hook"
+   ],
+   "priority": 46,
+   "definition": "Style z-score, not an index, not skill: the z of a club-season's median starter pitch count at removal across the thirty club-seasons of its season. A NEGATIVE z is an earlier hook. Sign as measured, no ladder, no plus sign; a hook has no good direction on its own.",
+   "methodology": "The starter hook is the first pitching change for a fielding side in a game; the removed pitcher's pitch count is the count of pitches over the plate appearances he pitched (derived, because the events table names the lineup-slot occupant rather than the pitcher on a double switch). Median per club-season, then a population z across the season's clubs, mean zero and sd one by construction. Repeats because it is policy.",
+   "seeAlso": [
+    "pen_z",
+    "bench_z",
+    "ibb_z",
+    "visit_z",
+    "li_at_decision"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "pen_z",
+   "term": "Pen z (style z-score)",
+   "category": "custom-index",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "Pen z",
+    "pen z-score",
+    "pitching changes per game"
+   ],
+   "priority": 47,
+   "definition": "Style z-score, not an index, not skill: the z of pitching changes per game across the thirty club-seasons of its season. Sign as measured, no ladder, no plus sign; more changes is not better.",
+   "methodology": "Pitching changes (events.pitching_substitution) divided by the club-season's games, then a population z across the season's clubs. Descriptive; it repeats because bullpen usage is policy.",
+   "seeAlso": [
+    "hook_z",
+    "bench_z",
+    "ibb_z",
+    "visit_z"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "bench_z",
+   "term": "Bench z (style z-score)",
+   "category": "custom-index",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "Bench z",
+    "bench z-score",
+    "pinch hitters per game"
+   ],
+   "priority": 48,
+   "definition": "Style z-score, not an index, not skill: the z of pinch hitters plus pinch runners per game across the thirty club-seasons of its season. Sign as measured, no ladder, no plus sign.",
+   "methodology": "Offensive substitutions with position code 11 (pinch hitter) and 12 (pinch runner) divided by the club-season's games, then a population z across the season's clubs. Descriptive; it repeats because bench usage is policy.",
+   "seeAlso": [
+    "hook_z",
+    "pen_z",
+    "ibb_z",
+    "visit_z"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "ibb_z",
+   "term": "IBB z (style z-score)",
+   "category": "custom-index",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "IBB z",
+    "ibb z-score",
+    "intentional walks per game"
+   ],
+   "priority": 49,
+   "definition": "Style z-score, not an index, not skill: the z of intentional walks per game across the thirty club-seasons of its season. Sign as measured, no ladder, no plus sign; an intentional walk has no good direction as a frequency.",
+   "methodology": "Plays with event type intent_walk credited to the fielding club, divided by the club-season's games, then a population z across the season's clubs. Descriptive; it repeats because it is policy.",
+   "seeAlso": [
+    "hook_z",
+    "pen_z",
+    "bench_z",
+    "visit_z"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "visit_z",
+   "term": "Visit z (style z-score)",
+   "category": "custom-index",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "Visit z",
+    "visit z-score",
+    "mound visits per game"
+   ],
+   "priority": 50,
+   "definition": "Style z-score, not an index, not skill: the z of mound visits per game across the thirty club-seasons of its season. Sign as measured, no ladder, no plus sign. Mound visits are counted and never valued.",
+   "methodology": "Events of type mound_visit credited to the fielding club of the half, divided by the club-season's games, then a population z across the season's clubs. Descriptive; it repeats because it is policy.",
+   "seeAlso": [
+    "hook_z",
+    "pen_z",
+    "bench_z",
+    "ibb_z"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "li_at_decision",
+   "term": "LI at decision (mean leverage at decision)",
+   "category": "general-stat",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "LI@D",
+    "LI at decision",
+    "leverage at decision"
+   ],
+   "priority": 51,
+   "definition": "The mean Leverage Index of the plate appearance at which a club's decisions were made, across every family, on the MLB feed's scale (1.0 is average). A number on its own scale: a cut and a style axis, never a weight in the value column.",
+   "methodology": "leverage_index of the plays row at the decision point (null on the leadoff plate appearance of every game, carried as null and never as zero). Leverage is never multiplied into realized value: a high-leverage state already moves win probability more by itself, so weighting by it would count leverage twice.",
+   "seeAlso": [
+    "leverage_index",
+    "gmli",
+    "realized_mwpa"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. Leverage Index (Tom Tango), read from the MLB StatsAPI win-probability feed; the decision-point cut is eephus.io's."
+  },
+  {
+   "id": "manager_agent",
+   "term": "Manager agent (club-season until the ledger lands)",
+   "category": "methodology",
+   "module": [
+    "management"
+   ],
+   "aliases": [
+    "agent",
+    "club-season agent",
+    "manager agent"
+   ],
+   "priority": 52,
+   "definition": "The agent is the club-season until the manager ledger lands; a club that changed managers during a season is one row here and two in reality. There is no manager entity anywhere on disk, so no row on the In-Game Management page is a manager.",
+   "methodology": "Every decision is attributed to a club through the play corpus's club-of-record map (mgmt_teams.build_map, validated at 0.99+ against the 2026 truth): offensive decisions to the batting club, pitching and defensive decisions to the fielding club. The manager entity needs the StatsAPI coaches endpoint per team-season with schedule-date bisection (a network ingest, plan lane M-MWAR-2); the ejection rows that name a manager with an mlbam id are that ingest's validation fixture, not a source. A team-season is an UPPER BOUND on a manager: managers change and teams do not, so a null at the club-season level decides the manager question too.",
+   "seeAlso": [
+    "realized_mwpa",
+    "dvs"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   }
  ]
 }

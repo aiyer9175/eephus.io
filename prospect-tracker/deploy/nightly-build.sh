@@ -243,6 +243,7 @@ rsync -a --delete \
   --include='/data/' --include='/data/*.json' --include='/data/*.js' \
   --include='/data/pitch_plots/***' --include='/data/player_detail/***' \
   --include='/data/debuts_full/***' \
+  --include='/data/mgmt_decisions/***' \
   --exclude='*' \
   "$APP/" "$WEBROOT/"
 

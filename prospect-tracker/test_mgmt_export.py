@@ -58,7 +58,13 @@ def d():
 # --------------------------------------------------------------------------
 
 def test_the_club_board_carries_no_decision_value_column(d):
-    """MISTAKE 1. The gate allows volume and refuses the plus metric."""
+    """MISTAKE 1. The gate allows volume and refuses the plus metric.
+
+    EXTENDED 2026-09-23 to the decision ledger's `clubs` block: the same rule scans
+    every club-season row there, so decision value above state (DVS) cannot reach a
+    club-season row under a new block name. The realized columns are named
+    mwpa_<family> and are a different quantity (what happened, not what the
+    decision was worth); the count keys are n_all / n_<family>."""
     t = d["teams"]
     if t.get("status") != "built":
         pytest.skip(f"club board not built: {t.get('status')}")
@@ -67,6 +73,15 @@ def test_the_club_board_carries_no_decision_value_column(d):
             assert "dv" not in k and "decision" not in k, (
                 f"the club board carries {k}, which is the plus metric the gate "
                 "withheld")
+    c = d.get("clubs") or {}
+    for r in c.get("rows") or []:
+        for k in r:
+            assert "dv" not in k and "decision" not in k, (
+                f"the clubs block carries {k}: a per-club decision value column is "
+                "the rank the gate withheld, whatever the header tag says")
+            if isinstance(r[k], dict):
+                for kk in r[k]:
+                    assert "dv" not in kk and "decision" not in kk, (k, kk)
 
 
 def test_the_payload_says_why_there_is_no_plus_metric(d):
@@ -430,3 +445,167 @@ def test_the_bunt_sentence_agrees_with_its_own_total(d):
         f"the bunt sentence quotes {nums} wins against an artifact total of {total}")
     if total < 0:
         assert "cost" in sentence
+
+
+# --------------------------------------------------------------------------
+# The decision ledger blocks (2026-09-23, D2 Wave A)
+# --------------------------------------------------------------------------
+
+def _ledger(d):
+    dec = d.get("decisions") or {}
+    if not dec.get("live"):
+        pytest.skip(f"decision ledger not built: {dec.get('status')}")
+    return dec
+
+
+def test_club_rows_carry_per_family_mwpa_and_no_cross_family_total(d):
+    """Per-family sums only: the windows overlap across families, so one composite
+    per club-season would double count. The defensive sub's window is stored on
+    each decision and never summed."""
+    dec = _ledger(d)
+    fams = dec["families"]
+    summed = [f for f, v in fams.items() if v.get("summed")]
+    assert "pitching_change" in summed and "pinch_hit" in summed and "defensive_sub" not in summed
+    rows = d["clubs"]["rows"]
+    assert len(rows) >= 200
+    for r in rows:
+        for f in summed:
+            assert f"mwpa_{f}" in r, (r["club"], r["season"], f)
+            assert f"n_{f}" in r
+        for bad in ("mwpa", "mwpa_total", "mwpa_all", "mwpa_sum", "mwpa_defensive_sub"):
+            assert bad not in r, (r["club"], r["season"], bad)
+        assert r["agent"] == "club-season"
+    # and no league sum either: the census prints "stored, not summed" for it
+    for f, v in fams.items():
+        if not v.get("summed"):
+            assert not v.get("league_sum_mwpa_by_season"), f
+    assert dec["no_cross_family_total"] is True
+    assert d["clubs"]["plus_metric"] is False
+    assert "realized" in d["clubs"]["realized_header_tag"]
+
+
+def test_the_dark_section_narrowed_to_what_is_still_dark(d):
+    """bullpen_and_lineup used to say the bullpen call and the pinch hit were not
+    measured. Their REALIZED value now ships; what stays dark is their DECISION
+    value (the counterfactual) and lineup value, and the section says exactly that."""
+    _ledger(d)
+    s = d["sections"]["bullpen_and_lineup"]
+    assert s["live"] is False
+    assert s["still_dark"] == ["bullpen_decision_value", "pinch_hit_decision_value", "lineup_value"]
+    assert "pitching_change" in s["now_live_as_realized_value"]
+    assert "pinch_hit" in s["now_live_as_realized_value"]
+    assert "M-ENG-1" in s["blocked_on"]
+    assert "not been measured" in s["why"]
+    assert "not the decision's value" in s["why"]
+    for k in ("league", "decisions", "clubs"):
+        assert d["sections"][k]["live"] is True, k
+    for k in ("managers", "challenges", "lineups"):
+        assert d["sections"][k]["live"] is False, k
+        assert d["sections"][k]["blocked_on"], k
+
+
+def test_the_shard_index_matches_the_files_on_disk(d):
+    """The board's shard index is what the drill-down fetches from; every entry
+    must be a file on disk with the same byte count, every file must be indexed,
+    and BOTH deploy consumers must ship the directory or the whole tab 404s in
+    production (the debuts_full lesson)."""
+    _ledger(d)
+    idx = d["shards"]["index"]
+    assert idx, "no shards indexed"
+    assert d["shards"]["path_template"] == "/data/mgmt_decisions/{season}-{club}.json"
+    sdir = ROOT / "data" / "mgmt_decisions"
+    on_disk = {p.name: p.stat().st_size for p in sdir.glob("*.json")} if sdir.exists() else {}
+    if not on_disk:
+        pytest.skip("shards not on this machine (untracked; regenerate with mgmt_decisions.py)")
+    for e in idx:
+        name = f"{e['season']}-{e['club']}.json"
+        assert name in on_disk, f"indexed shard {name} is not on disk"
+        assert on_disk[name] == e["bytes"], f"{name}: index says {e['bytes']} bytes, disk {on_disk[name]}"
+    indexed = {f"{e['season']}-{e['club']}.json" for e in idx}
+    assert set(on_disk) == indexed, sorted(set(on_disk) ^ indexed)
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    assert "--include='/data/mgmt_decisions/***'" in nightly
+    wf = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
+    if wf.exists():
+        assert re.search(r"cp\s+-r\s+data/mgmt_decisions\b", wf.read_text(encoding="utf-8"))
+    header = (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8")
+    assert "mgmt_decisions/" in header
+
+
+def test_the_new_step_is_a_watched_scheduled_export():
+    """"mgmt_decisions" sits directly BELOW "mgmt_export" in SCHEDULED_EXPORTS (the
+    window scan on mgmt_export has 97 characters of slack, so nothing may be added
+    above it) and before "hof_export"; step 6b7e exists."""
+    src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    i = src.index("SCHEDULED_EXPORTS = (")
+    j = src.index(")", src.index('"hof_export"', i))
+    block = src[i:j]
+    a, b, c = block.index('"mgmt_export"'), block.index('"mgmt_decisions"'), block.index('"hof_export"')
+    assert a < b < c
+    assert '"mgmt_export"' in src[i:i + 3200], "the window scan on mgmt_export must still hold"
+    assert "6b7e. In-Game Management decision ledger" in src
+    assert '_record_ingest("mgmt_decisions"' in src
+
+
+def test_statsapi_code_maps_every_canonical_club(d):
+    """Wave 0 helper: the outbound StatsAPI code for every club the board serves,
+    so the club page's link into /mlbstats/#team= never renders an empty board."""
+    import trades
+    for site, sapi in (("KCR", "KC"), ("CHW", "CWS"), ("WSN", "WSH"), ("ARI", "AZ"),
+                       ("SDP", "SD"), ("SFG", "SF"), ("TBR", "TB"), ("ATH", "ATH"), ("NYY", "NYY")):
+        assert trades.statsapi_code(site) == sapi, site
+    assert trades.statsapi_code("KC") == "KC", "an already-StatsAPI code round-trips"
+    assert trades.statsapi_code(None) is None and trades.statsapi_code("ZZZ") is None
+    _ledger(d)
+    codes = d["clubs"]["statsapi_codes"]
+    clubs = {r["club"] for r in d["clubs"]["rows"]}
+    assert clubs <= set(codes), sorted(clubs - set(codes))
+    assert all(codes[c] for c in clubs)
+
+
+def test_the_ejection_census_agrees_with_the_managers_fixture(d):
+    """Every ejection row the corpus carries is counted (a row with no role word
+    parses loosely off the club nickname), so the League census and the Managers
+    tab print one number for the family, and a row the parser could not place is
+    published rather than dropped in silence."""
+    dec = _ledger(d)
+    ej = dec["families"]["ejection"]
+    assert ej["n"] + ej["unattributed"] + ej["unpositioned"] == ej["n_corpus_rows"]
+    assert ej["n_corpus_rows"] == d["managers"]["fixture"]["ejections"]
+    assert sum(ej["n_corpus_rows_by_season"].values()) == ej["n_corpus_rows"]
+    for s, n in ej["n_by_season"].items():
+        assert n <= ej["n_corpus_rows_by_season"][s], s
+    assert "n_corpus_rows_by_season" in JS.read_text(encoding="utf-8")
+
+
+def test_club_page_routes_are_read_off_the_disk(d):
+    """The club page links to /franchise/ (D3) and /ledger/ (D1) only once the
+    route is built: the export reads the route directory and never assumes it."""
+    for route in ("franchise", "ledger"):
+        assert d["routes"][route] == (ROOT / route / "index.html").exists()
+    assert "DATA.routes" in JS.read_text(encoding="utf-8")
+
+
+def test_the_dark_ledger_reads_as_a_sentence_not_an_instruction():
+    """A missing ledger prints to readers; it must never print a shell command."""
+    src = (ROOT / "mgmt_export.py").read_text(encoding="utf-8")
+    assert "run python mgmt_decisions.py" not in src
+    assert "the decision ledger is not on this build" in src
+    rm = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    e, c = rm.index("6b7e. In-Game Management decision ledger"), rm.index("6b7c. In-Game Management board")
+    assert e < c, "the ledger step runs before the board export that reads it"
+    body = rm[e:c]
+    assert 'if _mdd.get("status") == "built":' in body
+    assert body.index('if _mdd.get("status") == "built":') < body.index("_mdc.OUT.write_text"), (
+        "a not-built stub must never overwrite the committed ledger")
+    assert body.count('_record_ingest("mgmt_decisions", False') == 1, "only a raise is a red"
+
+
+def test_the_managers_block_is_dark_with_its_fixture(d):
+    _ledger(d)
+    m = d["managers"]
+    if m.get("live"):
+        pytest.skip("the manager ledger has landed")
+    assert "M-MWAR-2" in m["blocked_on"]
+    assert m["fixture"]["ejection_named_managers"] > 0
+    assert m["agent_sentence"] == d["decisions"]["agent_sentence"]

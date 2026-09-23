@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-09-23**. `validate()` at generation time: **clean**.
 
-**311 models.** Verdicts: validated: 53, provisional: 130, unvalidated: 41, deprecated: 87.
+**314 models.** Verdicts: validated: 53, provisional: 133, unvalidated: 41, deprecated: 87.
 
 ## Instrument boundary
 
@@ -330,6 +330,9 @@ can be measured.
 | `playoff_odds_sim` | /projections/ team outlook and the Futures tab on /bettin... | division, playoff, bye, pennant and World Series probability per club, plus the full win-total distribution. | Monte Carlo over the actual remaining schedule at a blended true-talent estim... | none published. There is no captured futures market to compare against and no... | none yet. Monte Carlo intervals are published on every probability so a reade... | **provisional** | `data/futures.json` | 1 | no |
 | `efv_encompassing` | none (diagnostic; nothing is served off it) | whether the eFV model leg adds information to the consensus anchor, out of fold | consensus anchor alone (b2 = 0) | within-fold permutation of the model residual on cons_war, plus a zero-inform... | b2 in y = a + b1*cons_war + b2*model_war + fold fixed effects | **provisional** | `data/xfv_encompassing_eval.json` | 17 | no |
 | `hof_merit` | none - /hof/ predictor section stays DARK on this result | P(elected by the BBWAA) for a retired, ballot-resolved player | hof_monitor (best public arm, AUC 0.9785 on the scored rows) | the in-house shelf columns; best single is career_war at AUC 0.9492 | AUC (discrimination, non-inferiority) then Brier and ECE (calibration) | **deprecated** | `data/hof_merit_eval.json` | 16 | no |
+| `mgmt_decision_ledger` | /management/, the Clubs, Decisions and League tabs. data/... | nothing. It is a DESCRIPTIVE ledger of realized in-game value: for nine decision families the win probability that actually mov... | mWPA(d) = s(club, half) * (wp_home_after[p1] - wp_home_before[p0]) / 100 per... | n/a - a descriptive realized-value board on the leverage_board precedent. Wha... | descriptive; no forward gate by design (realized value is an outcome, not a f... | **provisional** | `data/management_decisions.json` | - | - |
+| `mgmt_state_baseline` | /management/, the per-decision drill-down (DVS column) an... | nothing. It is the matched-state league baseline: for each family and cell (season, inning bucket, half, outs, base code, score... | cell means with MIN_CELL 25 on the baseline side; thin cells published as exc... | n/a - descriptive. Removes the LEVEL of the state (a club that faced many hig... | descriptive; the within-cell identity (league residuals sum to zero) is check... | **provisional** | `data/management_baseline.json` | - | - |
+| `mgmt_style_z` | /management/, the club-season rows (Managers tab until th... | nothing. Five descriptive league-relative style figures per club-season: hook z (the starter's median pitch count at removal; a... | signed z to one decimal, population sd, sign as measured. | n/a - descriptive style axes; they repeat because they are policy, and a freq... | descriptive; NOT a 100 + 10z index, no ladder, no plus sign, no tier colour (... | **provisional** | - | - | - |
 
 Stored problems at last refresh: none.
 

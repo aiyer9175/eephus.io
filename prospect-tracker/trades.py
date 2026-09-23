@@ -403,6 +403,50 @@ def canonical_org(raw: str | None) -> str | None:
     return s
 
 
+
+#: The StatsAPI abbreviation per canonical club, read once from the cached
+#: /api/v1/teams payload. `canonical_org` maps INBOUND only (KC -> KCR); nothing
+#: reversed it, so an outbound deep link into /mlbstats/ (whose team hash is
+#: compared raw against the StatsAPI code) rendered an EMPTY board when handed a
+#: site code. Every module that links into /mlbstats/#team= goes through this.
+_STATSAPI_TEAMS = Path(__file__).resolve().parent / ".cache" / "statsapi_teams_2026.json"
+_STATSAPI_CODE: dict | None = None
+
+
+def _statsapi_codes(path=None) -> dict:
+    global _STATSAPI_CODE
+    if _STATSAPI_CODE is None or path is not None:
+        out: dict = {}
+        try:
+            import json as _json
+            raw = _json.loads(Path(path or _STATSAPI_TEAMS).read_text(encoding="utf-8"))
+            for t in (raw.get("teams") or []):
+                if (t.get("sport") or {}).get("id") not in (1, None):
+                    continue
+                ab = t.get("abbreviation")
+                club = canonical_org(ab) if ab else None
+                if club and ab:
+                    out[club] = ab
+        except (OSError, ValueError, AttributeError):
+            out = {}
+        if path is not None:
+            return out
+        _STATSAPI_CODE = out
+    return _STATSAPI_CODE
+
+
+def statsapi_code(org: str | None, path=None) -> str | None:
+    """The StatsAPI abbreviation for a canonical club (KCR -> KC, CHW -> CWS,
+    WSN -> WSH, ARI -> AZ, SDP -> SD, SFG -> SF, TBR -> TB, ATH -> ATH).
+
+    Reads .cache/statsapi_teams_2026.json (abbreviation per club id); an input
+    that is not canonical is canonicalised first, so KC -> KC round-trips. None
+    when the cache is absent or the club is unknown, never a guess."""
+    club = canonical_org(org)
+    if not club:
+        return None
+    return _statsapi_codes(path).get(club)
+
 def infer_trades_from_snapshots(snapshots: list[Snapshot]) -> list[Trade]:
     """
     Walk a player's snapshots chronologically. When the canonical org

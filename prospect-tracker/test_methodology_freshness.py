@@ -857,6 +857,13 @@ MODEL_GLOSSARY = {
     "playoff_odds_sim": ["mlb_projections", "fa_projection_engine"],
     "mgmt_running_game": "internal",
     "mgmt_board_export": "internal",
+    # The decision ledger trio (2026-09-23, D2 Wave A). NOT internal: realized
+    # mWPA, DVS and the five style z-scores are reader-facing figures on the
+    # Clubs, Decisions and League tabs, and each has a glossary entry that says
+    # in its own words what the number is and what it is not (skill).
+    "mgmt_decision_ledger": ["realized_mwpa", "manager_agent"],
+    "mgmt_state_baseline": ["dvs"],
+    "mgmt_style_z": ["hook_z", "pen_z", "bench_z", "ibb_z", "visit_z"],
     # The public benchmark bake-off. NOT internal: its panel RENDERS on /hof/,
     # and it is the one comparison that page publishes. It points at the two
     # glossary entries that carry the reader-facing method behind the columns it

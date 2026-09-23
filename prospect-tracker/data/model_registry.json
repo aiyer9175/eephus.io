@@ -4574,6 +4574,48 @@
    "stale": false,
    "artifact_age_days": 16,
    "notes": "NO_SHIP_DISCRIMINATION, and the loss is the deliverable. L2 logistic on the in-house shelf (career WAR, WAR7, JAWS, WAA, positive-WAA, ink, seasons, position indicators), fit per fold on players whose ballot resolved strictly earlier, 15 forward-chained blocks 1956-2030, scored on 1,067 out-of-fold players at a 10.0% base rate. AUC 0.9557 against hof_monitor 0.9785: a deficit of 0.0228 that CLEARS its own 0.0138 player-clustered detection floor, so the gap is real. Worse calibrated too (Brier 0.0427 vs 0.0353), so the calibration-first gate never opens. THE MODEL IS NOT BAD: it beats every in-house arm, 0.9557 against 0.9492 for the strongest single column, and beats hof_standard (0.9473) and JAWS (0.9463). The gap to hof_monitor is MISSING DATA, not modelling: that metric is built from batting titles, MVP shares, All-Star selections and postseason play and none of it is in our feature set, exactly as docs/HOF_BAKEOFF_GATE.md predicted before the run. Features are in-house ONLY; a public arm as a feature would score the model against its own input. Do not re-attempt on these features: the honest unlock is awards data. Rerun with tools/hof_merit.py."
+  },
+  {
+   "model_id": "mgmt_decision_ledger",
+   "surface": "/management/, the Clubs, Decisions and League tabs. data/management_decisions.json summarised into data/management_board.json; per club-season shards under data/mgmt_decisions/.",
+   "predicts": "nothing. It is a DESCRIPTIVE ledger of realized in-game value: for nine decision families the win probability that actually moved from the decision to the last play it governed, credited to the club that made it (an endpoint difference of the MLB feed's win probability, never a sum of per-play rows).",
+   "champion": "mWPA(d) = s(club, half) * (wp_home_after[p1] - wp_home_before[p0]) / 100 per decision window, summed per family per club-season; the club-season is the agent until the manager ledger lands.",
+   "baseline": "n/a - a descriptive realized-value board on the leverage_board precedent. What the alternative would have produced is not observed, so nothing here is a decision-quality claim; the priced counterfactuals (steal DV, bunt DV) ship beside it as different quantities.",
+   "metric": "descriptive; no forward gate by design (realized value is an outcome, not a forecast). No cross-family total, no plus metric, no rank by decision quality; the style figures are signed z-scores with no ladder.",
+   "eval_artifact": "data/management_decisions.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "owner": "In-Game Management module",
+   "last_validated": "2026-09-23",
+   "notes": "2026-09-23 (D2 Wave A). 298,640 decisions over eight seasons (2018, 2019, 2021-2026) in nine families: pitching change 127,192; pinch hit 35,759; pinch run 6,616; defensive sub 34,636; intentional walk 4,876; bunt 18,242; steal 13,973 (the priced management.py rows); mound visit 55,930; ejection 1,416. Measured on 2025: wpa_home equals wp_home_after minus wp_home_before on every play, every game starts at 50.0 and ends at 0 or 100, and 3.04 percent of consecutive plays do NOT chain at a 1e-9 tolerance (max gap 32.1 points), so a window is valued as an endpoint difference. The removed pitcher is DERIVED (replaced_player_id names the lineup-slot occupant on a double switch) and agrees with the description's replaces-NAME clause on 99.98 percent of 2025 rows. The defensive sub's rest-of-game window is stored and never summed. THE AGENT IS THE CLUB-SEASON: no manager entity exists on disk (M-MWAR-2 is a network ingest); the 92 ejection rows naming a manager with an mlbam id in 2025 are the ingest's fixture. Nothing here claims skill: the steal family failed its per-agent gate (bounded null) and no other family has a frozen gate section."
+  },
+  {
+   "model_id": "mgmt_state_baseline",
+   "surface": "/management/, the per-decision drill-down (DVS column) and the League census. data/management_baseline.json.",
+   "predicts": "nothing. It is the matched-state league baseline: for each family and cell (season, inning bucket, half, outs, base code, score bucket) the league mean realized window value over every window of the same shape, decision or not; DVS(d) = mWPA(d) - baseline(S(d)).",
+   "champion": "cell means with MIN_CELL 25 on the baseline side; thin cells published as excluded, exactly as mgmt_bunt does.",
+   "baseline": "n/a - descriptive. Removes the LEVEL of the state (a club that faced many high-leverage spots is not credited for the spots); does not remove player quality or selection, and says so.",
+   "metric": "descriptive; the within-cell identity (league residuals sum to zero) is checked and published as identity_max_abs, not asserted. DVS is never a club-season or manager column: a sortable per-club column of value above state is the rank the gate withheld.",
+   "eval_artifact": "data/management_baseline.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "owner": "In-Game Management module",
+   "last_validated": "2026-09-23",
+   "notes": "2026-09-23 (D2 Wave A). Six cell tables (single plate appearance shared by pinch hit, bunt and steal; pitching change stint starts; pinch run half-inning remainders; intentional walk two-plate-appearance spans; defensive sub rest-of-game spans). Because the cell carries the season and the state grid is 2,160 cells a season, a large share of cells is thin at MIN_CELL 25 and the decisions that land in them carry a null DVS; the thin share ships per family. For the single-PA families the baseline is the league mean realized change over every plate appearance from the state, which a calibrated win model puts near zero, so DVS there is mWPA plus the feed model's local miscalibration and is NOT an independent second number (stated on the League tab). Selection caveat stated for the intentional walk and the pinch hit."
+  },
+  {
+   "model_id": "mgmt_style_z",
+   "surface": "/management/, the club-season rows (Managers tab until the manager ledger lands) and the club page style strip.",
+   "predicts": "nothing. Five descriptive league-relative style figures per club-season: hook z (the starter's median pitch count at removal; a negative z is an earlier hook), pen z (pitching changes per game), bench z (pinch hitters plus pinch runners per game), IBB z (intentional walks per game), visit z (mound visits per game), each a signed z across the thirty club-seasons of its season.",
+   "champion": "signed z to one decimal, population sd, sign as measured.",
+   "baseline": "n/a - descriptive style axes; they repeat because they are policy, and a frequency has no good direction.",
+   "metric": "descriptive; NOT a 100 + 10z index, no ladder, no plus sign, no tier colour (the eephus-tiers ruler promises a brighter cell is better in its column, and mound visits per game have no better).",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "owner": "In-Game Management module",
+   "last_validated": "2026-09-23",
+   "notes": "2026-09-23 (D2 Wave A). Computed in mgmt_decisions.club_rows from the ledger counts and the club-season game counts (mgmt_teams.build_map). Mean zero and sd one across the clubs of each season by construction (test_mgmt_style.py). Rendered as neutral chips under the words style, not skill; management.js makes no EephusTiers call."
   }
  ],
  "problems": []

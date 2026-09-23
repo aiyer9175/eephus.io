@@ -450,7 +450,54 @@ ARTIFACTS = (
         "note": ("Rendering payload for /management/. Carries NO per-club plus "
                  "metric: the gate battery returned a bounded null and the "
                  "payload states the verdict rather than leaving the omission to "
-                 "be noticed."),
+                 "be noticed. Since 2026-09-23 it also carries the decision "
+                 "ledger's summary blocks (decisions, clubs, managers, challenges, "
+                 "lineups, shards): realized value per family, never a cross-family "
+                 "total."),
+    },
+    {
+        "file": "management_decisions.json", "group": "mlb",
+        "title": "In-Game Management decision ledger (summary)",
+        "what": ("Nine decision families the play corpus can name (pitching change, pinch "
+                 "hitter, pinch runner, defensive sub, intentional walk, bunt, steal, mound "
+                 "visit, ejection): counts, the realized win-probability change per family "
+                 "and per club-season (an endpoint difference over the window each decision "
+                 "governed), style z-scores, the chain-break measurement and the shard "
+                 "index. The agent is the club-season."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mgmt_decisions.py",
+        "note": ("REALIZED VALUE, NOT SKILL, and the payload says so verbatim. No key on a "
+                 "club-season row contains dv or decision; no cross-family total; no plus "
+                 "metric. Rebuilt when the play corpus is rebuilt (mgmt_decisions.py, "
+                 "nightly step 6b7e)."),
+    },
+    {
+        "file": "management_baseline.json", "group": "mlb",
+        "title": "In-Game Management matched-state baseline",
+        "what": ("The league mean realized window value per matched state cell (season, "
+                 "inning bucket, half, outs, base code, score bucket) for each decision "
+                 "family, from every window of the same shape, decision or not; the "
+                 "baseline behind decision value above state (DVS) in the drill-down."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mgmt_decisions.py",
+        "note": ("Eval artifact for the registry row mgmt_state_baseline. Thin cells "
+                 "(under min_cell windows) are published as excluded; the within-cell "
+                 "identity is checked, not asserted. DVS is descriptive and never a "
+                 "club-season column."),
+    },
+    {
+        "file": "mgmt_decisions/*.json", "group": "mlb",
+        "title": "In-Game Management decision shards (one per club-season)",
+        "what": ("data/mgmt_decisions/{season}-{club}.json: every decision of one "
+                 "club-season with its window (the plays governed, win probability before "
+                 "and after each), realized value, value above state, flags and names. The "
+                 "drill-down fetches one shard on demand; the index lives in "
+                 "management_board.json under shards."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mgmt_decisions.py",
+        "note": ("Written on corpus rebuild by mgmt_decisions.py through mgmt_shards.py. "
+                 "Whether the shards are tracked in git or generated on the box is an open "
+                 "owner decision; both deploy consumers ship the directory."),
     },
     {
         "file": "hof_board.json", "group": "mlb",
