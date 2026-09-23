@@ -61,7 +61,7 @@
       padding: 6px 9px; font-size: var(--fs-base); font-family: inherit;
       margin-bottom: 6px;
     }
-#trade-machine .tm-search:focus { outline: none; border-color: var(--accent-cyan); }
+#trade-machine .tm-search:focus { border-color: var(--accent-cyan); }
 #trade-machine .tm-results { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
 #trade-machine .tm-hit {
       display: flex; align-items: baseline; gap: 8px; width: 100%;
@@ -199,11 +199,31 @@
   #tb-group-panel table { min-width: 560px; }
 }
 
+/* --- Trade Board filter bar: theme the native <select>s + toggle to match the chips
+   and tie the active state to the view's cyan accent (was OS-default selects + gold).
+   The frame only (2026-09-23): the disclosure arrow is the native-control layer's
+   currentColor chevron at the foot of assets/site.css (`body select.chip`), which
+   replaced a data-URI caret hardcoded to the literal grey %23888 that followed
+   neither theme. The boundary is --text-tertiary for the reason that layer gives:
+   --border on this fill measures about 1.1:1 dark / 1.6:1 light, under the 3:1 a
+   control boundary needs; hover steps to --text-secondary. The 26px right padding
+   stays, so the box does not move. `outline: none` is gone from both focus rules:
+   it removed the site's 2px keyboard ring and left a 1px border change. --- */
+.tm-app select.chip {
+  font-family: var(--font-retro); font-size: 12px; font-weight: 500;
+  padding: 4px 26px 4px 10px; cursor: pointer; border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--text-tertiary); background-color: var(--bg-secondary); color: var(--text-secondary);
+}
+.tm-app select.chip:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+.tm-app select.chip:focus { border-color: var(--accent-cyan); }
+
 /* Touch pass (2026-08-03). The equivalent block in assets/site.css cannot
    reach these: `#trade-machine .tm-search` is an ID selector in a stylesheet
    that loads AFTER site.css, so it wins on both counts. Fixed at the source
    instead of escalating to !important. 16px is the size below which iOS zooms
-   the viewport when a field takes focus. */
+   the viewport when a field takes focus. Sits BELOW `.tm-app select.chip`
+   (2026-09-23): the two are equal specificity, so where this block sat above
+   it, the 12px there won and the chip selects measured 12px on a touch device. */
 @media (pointer: coarse) {
   #trade-machine .tm-search,
   .tm-app .tm-search,
@@ -217,19 +237,6 @@
     min-height: 44px;
   }
 }
-
-/* --- Trade Board filter bar: theme the native <select>s + toggle to match the chips
-   and tie the active state to the view's cyan accent (was OS-default selects + gold). --- */
-.tm-app select.chip {
-  font-family: var(--font-retro); font-size: 12px; font-weight: 500;
-  padding: 4px 26px 4px 10px; cursor: pointer; border-radius: var(--radius-sm, 4px);
-  border: 1px solid var(--border); background-color: var(--bg-secondary); color: var(--text-secondary);
-  appearance: none; -webkit-appearance: none; -moz-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 8px center; background-size: 9px;
-}
-.tm-app select.chip:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
-.tm-app select.chip:focus { outline: none; border-color: var(--accent-cyan); }
 
 .tm-app .filter-toggle-row { margin: 12px 0 6px; }
 .tm-app .filter-toggle {

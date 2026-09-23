@@ -220,9 +220,12 @@ select {
   border: 1px solid var(--line);
   border-radius: 4px;
   background: var(--paper);
-  outline: none;
 }
 
+/* No `outline: none` here (2026-09-23): at (0,1,1) in a sheet that loads after
+   site.css it beat the site's `input:focus-visible` ring, so a keyboard user
+   got a 1px border change and no ring. Measured: outline-style none before,
+   2px solid --accent-cyan after. The border colour change stays. */
 .global-search input:focus {
   border-color: var(--blue);
   box-shadow: none;

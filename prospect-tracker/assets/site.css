@@ -4864,3 +4864,200 @@ input[type="checkbox"], input[type="radio"], input[type="range"] {
 /* 4. iOS zooms the page when a focused control's text is under 16px; a
    coarse pointer gets the larger face and the layout row still fits. */
 @media (pointer: coarse) { .eephus-select, .mlbstats-bar select { font-size: 16px; } }
+
+/* ---------------------------------------------------------------------------
+   THE OTHER ROUTES (owner ask 2026-09-18, confirmed 2026-09-23: "ensure that
+   no elements like this exist on the site that are off theme"). Sections 1
+   to 4 above landed MLB Stats first. The rendered sweep behind that commit
+   (26 routes, both themes, 392 page states) left three classes of control
+   on the other routes: 24 themed selects that still let the browser draw
+   the disclosure arrow and the option list, two chip selects whose own
+   caret was a colour literal from the wrong theme, and a handful of buttons
+   and search boxes whose text fell through to the browser font. Everything
+   below is measured on the served page, not read off the cascade, and
+   every control stays native.
+   --------------------------------------------------------------------------- */
+
+/* 5. the disclosure arrow on the other routes' selects. The same device as
+   section 3 (two currentColor halves, one chevron, room reserved on the
+   right), declared once more for the selectors that OUT-RANK the shared
+   class, because every one of these selects already carries a module
+   dialect that beats `.eephus-select` (0,1,0) on the properties that matter:
+   an id (1,0,0) wins wherever the module rule loads, and it has to, since
+   hof.css and management.css load after this sheet and arbitration, betting,
+   dfs, dynasty and redraft inject theirs into <head> at runtime, which is
+   later still; `.proj-app .proj-select` and `.fa-app .fa-select` are the
+   module's own (0,2,0) rules restated later in the same sheet, so this copy
+   wins the tie; `select.select-box` (0,1,1) beats CollegeSavant's
+   `.select-box` (0,1,0) although that sheet loads later; and the `body`
+   prefix buys the PROSPX rail, GFX, Time Machine, cycle and splits-builder
+   pickers exactly one element over their inline (0,1,0), (0,1,1) and
+   (0,2,0) rules. The splits builder is the case that proves the class alone
+   is not enough: its two selects carry `.eephus-select`, and PROSPX's own
+   `.split-custom select` (0,1,1) still won on the `background` shorthand,
+   which reset the caret to none and left an arrow-less text box (measured
+   before this arm: appearance none, background-image none). Each module
+   keeps its own font, size, fill and block padding; only the arrow, the
+   room for it and the boundary change. `.mlbstats-bar select` is not
+   repeated: the parks season picker sits in a `.mlbstats-bar` and section
+   3 already has it. */
+#arb-team, #bt-legsel,
+#dfs-f-team, #dfs-tpl, #dyn-f-org, #dyn-f-tier, #rd-f-team,
+#hof-ind, #hof-pos, #mgmt-season, #gx-surplus-side,
+.proj-app .proj-select, .fa-app .fa-select, .egfx-select,
+select.select-box, body select.eph-input,
+body .tm-sel, body .sr-cycle-picker, body .gfx-select,
+body .active-context-rail .ctx-tool-select,
+body .split-custom select {
+  appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 14px) 55%, calc(100% - 9px) 55%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 24px;
+}
+
+/* 6. the chip selects already drew their own caret and reserved their own
+   room for it: PROSPX's `select.chip` (prospx/index.html) paints a data-URI
+   triangle in the literal navy %230E2B4D, which measures 1.22:1 against the
+   chip's own fill on the dark theme, a smudge on near-black; the Trade
+   Machine's painted a literal grey %23888 (now removed from
+   trademachine.css, which keeps only the frame). A later background-image
+   REPLACES a data URI rather than stacking on it, so the same currentColor
+   chevron lands here and nothing double-draws; verified by reading the
+   computed background-image of every chip select on the served page (no
+   url() left). No padding in this group: the chips reserve 24px and 26px
+   already, so their boxes do not move. */
+body select.chip {
+  appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 14px) 55%, calc(100% - 9px) 55%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* 7. the boundary, the one thing a repaint can make worse. Section 2's
+   decision, applied to every select above and to the text field that sits
+   in the same bar as one of them, so a bar carries one boundary and not
+   two: `--border` on the control fill reads about 1.1:1 dark and 1.6:1
+   light, under the 3:1 a control boundary needs to be perceivable;
+   `--text-tertiary` reads 3.9:1 / 4.9:1 on --bg-secondary and 4.9:1 / 4.6:1
+   on --bg-primary (the dfs, dynasty, redraft and parlay fills). Hover steps
+   to --text-secondary as section 2 does. The same selectors as sections 5
+   and 6, for the same reason: each module's `border` shorthand out-ranks
+   the shared class. The text fields: the Hall of Fame search (#hof-q beside
+   #hof-ind), the projections search (#proj-q beside .proj-select), the
+   three fantasy filter searches (beside #dfs-f-team, #dyn-f-org, #rd-f-team)
+   and CollegeSavant's search box (beside select.select-box). Two more take
+   the same token in their own markup, because an inline style attribute
+   beats any rule here: the Trade Board search (#tb-search, build_site.py)
+   and the scatterplot highlight box (#chart-highlight, prospx/index.html).
+   Button chips are NOT lifted: the site's 863 chips carry `--border` as
+   their shared dialect and are identified by their glyph and fill, not by
+   the hairline; lifting the five this pass re-fonted would make them louder
+   than every sibling chip. */
+#arb-team, #bt-legsel,
+#dfs-f-team, #dfs-tpl, #dyn-f-org, #dyn-f-tier, #rd-f-team,
+#hof-ind, #hof-pos, #mgmt-season, #gx-surplus-side,
+.proj-app .proj-select, .fa-app .fa-select, .egfx-select,
+select.select-box, body select.eph-input,
+body .tm-sel, body .sr-cycle-picker, body .gfx-select,
+body .active-context-rail .ctx-tool-select,
+body .split-custom select,
+body select.chip,
+#hof-q, #proj-q, #dfs-f-q, #dyn-f-q, #rd-f-q, input.search-box {
+  border-color: var(--text-tertiary);
+}
+#arb-team:hover, #bt-legsel:hover,
+#dfs-f-team:hover, #dfs-tpl:hover, #dyn-f-org:hover, #dyn-f-tier:hover, #rd-f-team:hover,
+#hof-ind:hover, #hof-pos:hover, #mgmt-season:hover, #gx-surplus-side:hover,
+.proj-app .proj-select:hover, .fa-app .fa-select:hover, .egfx-select:hover,
+select.select-box:hover, body select.eph-input:hover,
+body .tm-sel:hover, body .sr-cycle-picker:hover, body .gfx-select:hover,
+body .active-context-rail .ctx-tool-select:hover,
+body .split-custom select:hover,
+body select.chip:hover {
+  border-color: var(--text-secondary);
+}
+
+/* 8. the disabled state the browser used to supply. `appearance: none`
+   takes the user agent's grey-out with it, so a disabled select would paint
+   exactly like an enabled one in both themes. No sheet defined the state,
+   and the one disabled select in the tree (the PROSPX splits builder's
+   Home/Away placeholder) rendered in the browser default. The treatment is
+   `.eph-btn[disabled]` (eephus-account.css) and `.pg-nav[disabled]`
+   (trademachine.css), not a new one. */
+select:disabled { opacity: .5; cursor: not-allowed; }
+
+/* 9. the font leaks. A button and a form control do not inherit
+   font-family, so each of these rendered its glyph or its typed text in the
+   browser default (Arial) inside an otherwise themed frame: the phone
+   hamburger on every module route and the homepage sidebar toggle (their
+   rules at the 900px block set size, colour and border and no face), the
+   PROSPX watchlist star and row expander, the eephus-gfx modal's close
+   glyph, and the two search boxes whose TYPED text was Arial: the Trade
+   Board search (an inline style attribute that names no font, so a rule
+   here reaches it without a fight) and the scatterplot highlight box. The
+   face only; each keeps its size. The two searches take a size here as
+   well: the Trade Board search had none (13.33px is the browser's) and
+   PixelMplus12 is a 12px-native face; the highlight box's 11px moved out
+   of its inline style so section 11 can reach it on a coarse pointer. The
+   export chip is not here: it renders an SVG, not a glyph, so it has no
+   font to leak. */
+.eephus-nav .eephus-nav-toggle, .home-nav-toggle,
+.watch-btn, .row-expand-btn, .egfx-x,
+#tb-search, #chart-highlight {
+  font-family: var(--font-retro-mono);
+}
+#tb-search { font-size: 12px; }
+#chart-highlight { font-size: 11px; }
+
+/* 10. the keyboard focus ring, where a module took it away or recoloured
+   it. The site's ring is 2px --accent-cyan at offset 2px (the two backstops
+   near the top of this sheet). Three rules elsewhere beat those backstops:
+   PROSPX ends `select.chip:focus` and `input.lb-date-input:focus` with
+   `outline: none` (0,2,1), leaving keyboard users a 1px border change, and
+   arbitration.js injects a GOLD ring on the club filter (0,3,1) that
+   measures 2.22:1 against the light theme's page, under the 3:1 a focus
+   indicator needs. Each arm is one step over the rule it beats, and it is
+   the site's own ring, not a third idiom. (The Trade Machine's two
+   `outline: none` lines are simply gone from trademachine.css.) */
+body select.chip:focus-visible,
+body input.lb-date-input:focus-visible,
+#arb-team:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+/* 11. iOS zooms the page when a focused field computes under 16px. The
+   coarse-pointer guard earlier in this sheet is a bare element rule and
+   loses to every module dialect above, and the named list beside it sits
+   earlier than the injected sheets and hof.css / management.css, so it
+   cannot carry these. Measured on a coarse pointer at 390: 13px on the Hall
+   of Fame fields, 13px on the club-style season, 12px on the fantasy
+   filters, 13px on the parlay leg picker, 12px on the glossary surplus side
+   picker and 12px on the Trade Board search (its size is set in section 9).
+   An id wins wherever the sheet sits. Two touch heights are kept by name,
+   because a touch target must not shrink: the Hall of Fame search wraps to
+   a line of its own once the two selects beside it widen at 16px, and
+   nothing stretches it there (measured 44 to 38.8px without this); the
+   Trade Board search keeps 34px, because PixelMplus12's line box at 16px is
+   one pixel shorter than Arial's (measured 34 to 33px). The splits builder
+   and the scatterplot highlight box are lifted too, now that their sizes
+   are in reach: both sit in rows that wrap. The PROSPX chip pickers (the
+   13 chart chips, the two IFA pickers, the 10px rail select) are
+   deliberately not lifted: an 11px chip taken to 16px re-flows rows laid
+   out around that size on a surface this pass is not rebuilding, and they
+   are recorded instead. */
+@media (pointer: coarse) {
+  #hof-ind, #hof-pos, #hof-q, #mgmt-season,
+  #dfs-f-team, #dfs-tpl, #dyn-f-org, #dyn-f-tier, #rd-f-team,
+  #bt-legsel, #arb-team, #gx-surplus-side, #tb-search, #chart-highlight,
+  body .split-custom select, body .split-custom input {
+    font-size: 16px;
+  }
+  #hof-q { min-height: 44px; }
+  #tb-search { min-height: 34px; }
+}

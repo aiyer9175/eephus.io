@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=ce0e9216">
+  <link rel="stylesheet" href="/assets/site.css?v=3c75b078">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -10262,7 +10262,7 @@
         <div class="filter-group">
           <span class="filter-label">Find</span>
           <input id="chart-highlight" type="search" placeholder="highlight a player…" autocomplete="off"
-                 style="width:150px;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
+                 style="width:150px;padding:4px 8px;border:1px solid var(--text-tertiary);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
         </div>
         <div class="filter-group">
           <button class="chip" id="chart-reset-view" type="button" title="Reset zoom/pan to fit all points" style="display:none;">⤢ Reset view</button>
@@ -20085,13 +20085,13 @@ function _splitCustomBuilder(key, caps, ui){
   const lvlBtns=caps.levels.map(l=>`<button class="${c.levels.includes(l)?"on":""}" onclick="splitCustomToggleLevel('${escapeHtml(key)}','${escapeHtml(l)}')">${escapeHtml(l)}</button>`).join("");
   const seasonOpts=["all",...caps.seasons].map(s=>`<option value="${s}" ${c.season===s?"selected":""}>${s==="all"?"All seasons":s}</option>`).join("");
   const homeSel=caps.hasHome
-    ? `<label>Home/Away<select onchange="splitCustomSet('${escapeHtml(key)}','home',this.value)"><option value="both" ${c.home==="both"?"selected":""}>Both</option><option value="home" ${c.home==="home"?"selected":""}>Home</option><option value="away" ${c.home==="away"?"selected":""}>Away</option></select></label>`
-    : `<label title="Venue flag not in the current game-log slice; repopulates after the next gamelog build.">Home/Away<select disabled><option>n/a</option></select></label>`;
+    ? `<label>Home/Away<select class="eephus-select" onchange="splitCustomSet('${escapeHtml(key)}','home',this.value)"><option value="both" ${c.home==="both"?"selected":""}>Both</option><option value="home" ${c.home==="home"?"selected":""}>Home</option><option value="away" ${c.home==="away"?"selected":""}>Away</option></select></label>`
+    : `<label title="Venue flag not in the current game-log slice; repopulates after the next gamelog build.">Home/Away<select class="eephus-select" disabled><option>n/a</option></select></label>`;
   return `<div class="split-custom">
     <label>From<input type="date" value="${c.from}" onchange="splitCustomSet('${escapeHtml(key)}','from',this.value)"></label>
     <label>To<input type="date" value="${c.to}" onchange="splitCustomSet('${escapeHtml(key)}','to',this.value)"></label>
     <label>Levels<div class="split-lvlbox">${lvlBtns||'<span class="split-sub">none</span>'}</div></label>
-    <label>Season<select onchange="splitCustomSet('${escapeHtml(key)}','season',this.value)">${seasonOpts}</select></label>
+    <label>Season<select class="eephus-select" onchange="splitCustomSet('${escapeHtml(key)}','season',this.value)">${seasonOpts}</select></label>
     ${homeSel}
     <label>Min PA/BF<input type="number" min="0" style="width:72px;" value="${c.minSample||""}" onchange="splitCustomSet('${escapeHtml(key)}','minSample',this.value)"></label>
   </div>`;
