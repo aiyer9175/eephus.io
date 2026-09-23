@@ -129,14 +129,11 @@ def run():
     frame = PM.build_training_frame(corpus, FIRST_BASE, FRAME_MAX_LABEL)
 
     by_player = {"hit": {}, "pit": {}}
-    war_actual = {}
+    war_actual = fp.war_actual_map(corpus)  # the ONE label (809902c6); never sum r['war'] across sides
     for side in ("hit", "pit"):
         for r in corpus[side]:
             if r.get("mlbam"):
                 by_player[side].setdefault(r["mlbam"], {})[r["season"]] = r
-                if r.get("war") is not None:
-                    k = (r["mlbam"], r["season"])
-                    war_actual[k] = war_actual.get(k, 0.0) + r["war"]
 
     # accumulators: variant -> cohort -> horizon -> list[(pred, actual, is_star)]
     variants = ("champion", "mh_same", "mh_full")
@@ -257,14 +254,11 @@ def run_star_slice():
     frame = PM.build_training_frame(corpus, FIRST_BASE, FRAME_MAX_LABEL)
 
     by_player = {"hit": {}, "pit": {}}
-    war_actual = {}
+    war_actual = fp.war_actual_map(corpus)  # the ONE label (809902c6); never sum r['war'] across sides
     for side in ("hit", "pit"):
         for r in corpus[side]:
             if r.get("mlbam"):
                 by_player[side].setdefault(r["mlbam"], {})[r["season"]] = r
-                if r.get("war") is not None:
-                    k = (r["mlbam"], r["season"])
-                    war_actual[k] = war_actual.get(k, 0.0) + r["war"]
 
     # rows[cohort][h] = list of (mlbam, side, base, champ, new, act, is_star)
     rows = {c: {h: [] for h in range(1, PM.HORIZONS + 1)} for c in ("dev", "holdout")}

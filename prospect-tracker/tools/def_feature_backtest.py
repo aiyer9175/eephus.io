@@ -104,13 +104,10 @@ def run():
     corpus = fp.build_corpus()
     last_complete = corpus["last"] - 1
     by_player: dict = {}
-    war_actual: dict = {}
+    war_actual = fp.war_actual_map(corpus)  # the ONE label (809902c6); never sum r['war'] across sides
     for r in corpus[SIDE]:
         if r.get("mlbam"):
             by_player.setdefault(r["mlbam"], {})[r["season"]] = r
-            if r.get("war") is not None:
-                k = (r["mlbam"], r["season"])
-                war_actual[k] = war_actual.get(k, 0.0) + r["war"]
 
     results = {}
     for vname, keys in VARIANTS.items():

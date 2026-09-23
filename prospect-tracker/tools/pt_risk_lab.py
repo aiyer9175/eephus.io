@@ -499,14 +499,11 @@ def cmd_gate() -> None:
 
     corpus = fp.build_corpus()
     by_player = {"hit": defaultdict(dict), "pit": defaultdict(dict)}
-    war_actual: dict = {}
+    war_actual = fp.war_actual_map(corpus)  # the ONE label (809902c6); never sum r['war'] across sides
     for side in ("hit", "pit"):
         for r in corpus[side]:
             if r.get("mlbam"):
                 by_player[side][r["mlbam"]][r["season"]] = r
-                if r.get("war") is not None:
-                    key = (r["mlbam"], r["season"])
-                    war_actual[key] = war_actual.get(key, 0.0) + r["war"]
 
     all_bases = sorted(set(range(TRAIN_FIRST, 2019)) | set(DEV_BASES) | set(HOLDOUT_BASES))
     fits = {B: fp.fitted_models(corpus, B - 1) for B in all_bases}
@@ -614,14 +611,11 @@ def cmd_finalize(sides: list[str]) -> None:
                for p, yrs in il_raw["il"].items()}
     corpus = fp.build_corpus()
     by_player = {"hit": defaultdict(dict), "pit": defaultdict(dict)}
-    war_actual: dict = {}
+    war_actual = fp.war_actual_map(corpus)  # the ONE label (809902c6); never sum r['war'] across sides
     for side in ("hit", "pit"):
         for r in corpus[side]:
             if r.get("mlbam"):
                 by_player[side][r["mlbam"]][r["season"]] = r
-                if r.get("war") is not None:
-                    key = (r["mlbam"], r["season"])
-                    war_actual[key] = war_actual.get(key, 0.0) + r["war"]
     out = {"generated_at": "2026-07-23", "fit_through": 2025, "seed": SEED,
            "lab": "tools/pt_risk_lab.py", "features": FEATURES,
            "hit": {"enabled": False}, "pit": {"enabled": False}}

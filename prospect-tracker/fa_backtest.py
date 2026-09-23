@@ -371,9 +371,18 @@ def run_projection_gate(persist: bool = True) -> dict:
                            for k in GATE1_SLICES},
         "coverage_p10_p90": coverage,
         "per_season": per_season,
+        # The label basis is READ from the corpus, never asserted: this string said
+        # "bWAR" for 20 days after the 2026-09-03 epoch moved the facade default.
+        "war_provider": corpus.get("war_provider") or fp._war_provider(),
+        "label_shape": corpus.get("label_shape"),
         "notes": [
-            "WAR = bWAR (war_daily); absent target seasons score actual WAR 0 for model AND baseline",
-            "eWAR LABEL SWAP MEASURED 2026-08-04 (lane R3b) and NOT ADOPTED. "
+            f"WAR label = {corpus.get('war_provider') or fp._war_provider()} through the war_source facade "
+            f"(bWAR/war_daily before the 2026-09-03 epoch), label_shape {corpus.get('label_shape')}; "
+            "absent target seasons score actual WAR 0 for model AND baseline",
+            "HISTORY, measured on the bWAR label of its day and SUPERSEDED IN SCOPE on 2026-09-03, when the "
+            "facade default moved to ewar_v2 site-wide by owner decision: this gate now scores the eWAR label, "
+            "so the smaller pitcher margin measured below is the expected shape of the current numbers, not a "
+            "regression. eWAR LABEL SWAP MEASURED 2026-08-04 (lane R3b) and NOT ADOPTED then. "
             "Swapping the realized label to eWAR on the 6 fully covered targets "
             "(12,934 rows) makes the margin over the 5/4/3 carry-forward baseline "
             "SMALLER on pitchers, not larger: -0.0387 WAR against a pre-registered "

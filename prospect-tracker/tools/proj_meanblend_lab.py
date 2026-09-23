@@ -66,14 +66,11 @@ def collect(corpus, bases, cache_dir: Path):
     variant be evaluated as pure arithmetic on the same rows."""
     league = corpus["league"]
     by_player = {"hit": defaultdict(dict), "pit": defaultdict(dict)}
-    war_actual: dict[tuple, float] = {}
+    war_actual = fp.war_actual_map(corpus)  # the ONE label (809902c6); never sum r['war'] across sides
     for side in ("hit", "pit"):
         for r in corpus[side]:
             if r.get("mlbam"):
                 by_player[side][r["mlbam"]][r["season"]] = r
-                if r.get("war") is not None:
-                    k = (r["mlbam"], r["season"])
-                    war_actual[k] = war_actual.get(k, 0.0) + r["war"]
     rows = []
     for B in bases:
         ck = cache_dir / f"mblab_rows_base{B}.pkl"

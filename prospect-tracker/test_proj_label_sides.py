@@ -40,6 +40,7 @@ import logging
 import pickle
 import sys
 import types
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -308,3 +309,20 @@ def test_the_corpus_pickle_round_trips_the_stamp(corpus, tmp_path):
     assert back["label_shape"] == fp.LABEL_SHAPE
     assert _row(back, "hit", TWOWAY)["war"] == 5.0
     assert _row(back, "hit", TWOWAY)["war_total"] == 8.0
+
+
+def test_no_lab_builds_its_own_label_by_summing_across_sides():
+    """809902c6 named nine lab sites that accumulated r["war"] across sides into
+    their own war_actual. After the repair a row's `war` is its own side's WAR,
+    so that sum is the whole-player total only by accident of the summing
+    order; the ONE label is fa_projection.war_actual_map. A source fence, so
+    the pattern cannot come back in a new lab."""
+    import re
+    pat = re.compile(r'war_actual\[[^\]]+\]\s*=\s*war_actual\.get\([^)]*\)\s*\+\s*r\["war"\]')
+    here = Path(__file__).parent
+    offenders = sorted(
+        str(f.relative_to(here)).replace("\\", "/")
+        for f in list(here.glob("tools/*.py")) + list(here.glob("*.py"))
+        if f.name != Path(__file__).name and pat.search(f.read_text(encoding="utf-8", errors="replace"))
+    )
+    assert offenders == [], offenders

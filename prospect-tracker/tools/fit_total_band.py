@@ -201,14 +201,11 @@ def _collect(bases, predict_fn=None):
     league = corpus["league"]
     last = corpus["last"]
     by_player = {"hit": {}, "pit": {}}
-    war_actual = {}
+    war_actual = fp.war_actual_map(corpus)  # the ONE label (809902c6); never sum r['war'] across sides
     for side in ("hit", "pit"):
         for r in corpus[side]:
             if r.get("mlbam"):
                 by_player[side].setdefault(r["mlbam"], {})[r["season"]] = r
-                if r.get("war") is not None:
-                    k = (r["mlbam"], r["season"])
-                    war_actual[k] = war_actual.get(k, 0.0) + r["war"]
     records = []
     for B in bases:
         curves, war_map = fp.fitted_models(corpus, B - 1)
