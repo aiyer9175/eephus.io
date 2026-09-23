@@ -294,6 +294,17 @@ WRITES: `model/proj_lgbm/models.joblib`, `model/proj_lgbm/meta.json`. INVALIDATE
 prices off the projections on disk), `proj_export`'s league benchmark note
 (`proj_export.py:1597`, "1000 bWAR"). BOX: pulls the bundle with the commit.
 
+2026-09-23 retrain (side-keyed label, 809902c6): train_hash 4baf67400e5af498 -> cb42b96eb5ea533c.
+Two rules the run proved. (1) `proj_ml.save()` writes meta.json FRESH, so the stored
+`mean_blend` and `star_blend` stamps must be copied back from `data/proj_mean_blend.json`
+and `data/proj_star_blend.json` (key `lambda_by_horizon`) after `--final`; `apply_mean_blend.py
+--apply` restamps, `fit_star_blend.py --apply` REFITS and is a registered look. (2) NOTHING
+may run pytest while the bundle is being written: the conftest build-artifact guard restores
+every tracked file, `model/proj_lgbm/` included, and the first retrain of the day was reverted
+to HEAD by a theme test session that overlapped the save. The proj_export accountability
+block copies registry text verbatim, so the registry hash edit (step W) comes BEFORE the
+re-export, not after.
+
 ### N. Star odds artifacts and the shadow constant
 
     grep -n "_RESOLVED_THROUGH = " tools/build_star_odds_artifacts.py   # 27: 2025, must equal efv_dataset.RESOLVED_THROUGH
