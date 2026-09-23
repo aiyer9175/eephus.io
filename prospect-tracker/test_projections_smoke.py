@@ -61,6 +61,7 @@ BOARD = """{
    "fv":50.4,"consensus_fv":50,"fv_source":"xfv","eta":2026,
    "war":[1.0,1.5,2.0,2.5,3.0],"warP10":[0,0.2,0.4,0.6,0.8],"warP90":[3,4,5,5.5,6],
    "warTotal":10.0,"warTotalP10":2.0,"warTotalP90":23.5,
+   "warPTH":[2.0,2.6,3.2,3.8,4.4],"warTotalPTH":16.0,"warPeak":4.4,
    "bucketLo":"bust","bucketHi":"star","pBust":0.3,"surNpv":30000000},
   {"key":"cons_kid","name":"Cons Kid","pos":"OF","age":19.5,"team":"SEA","src":"prospect",
    "fv":45.2,"consensus_fv":45.2,"fv_source":"consensus","eta":2027,
@@ -611,13 +612,73 @@ def test_rows_carry_compare_and_a_collapsed_detail_toggle():
 
 def test_season_headers_keep_the_full_year_for_assistive_tech_and_the_csv():
     """Phones show 26..30; the '20' is visually hidden, not removed, and the
-    CSV header is the full year plus the cell unit."""
+    CSV header is the full year plus the cell unit.
+
+    The 5y total header carries ONE unit line of its own in WAR mode, and it
+    is not a unit: it is the column's ANCHOR, "expected", stated on screen
+    rather than only in a tooltip (2026-09-18b). The season headers still
+    carry no unit line until the cells swap to a rate."""
     head = _head(_render(""))
     assert '<span class="proj-sr-sm">20</span>26' in head
-    assert 'data-export-text="2026 WAR"' in head and 'data-export-text="5y WAR"' in head
-    assert "proj-th-unit" not in head            # no unit line under WAR ...
+    assert 'data-export-text="2026 WAR"' in head
+    assert 'data-export-text="5y WAR (expected)"' in head
+    assert head.count("proj-th-unit") == 1 and ">expected</span>" in head
     head = _head(_render("#cells=wrc"))
-    assert 'data-export-text="2026 wRC+"' in head and "proj-th-unit" in head   # ... only under a rate
+    assert 'data-export-text="2026 wRC+"' in head
+    # five season units plus the 5y anchor line, which does not move.
+    assert head.count("proj-th-unit") == 6 and ">expected</span>" in head
+
+
+def test_the_five_year_column_carries_one_anchor_for_every_row():
+    """THE HOUSE RULE, on the column the owner reads first. Both row
+    populations print the EXPECTED path in the 5y cell and in every season
+    cell: one anchor, one sort, one ruler per pool. A prospect also has a
+    prime-anchored total, and it is never the number in this cell.
+
+    05a25ce1 moved this column from the if-healthy path to the expected value,
+    which was right for a veteran (the if-healthy series ran 37.9 percent high
+    league-wide). Putting the PROSPECT rows back on their prime anchor here
+    would rank a 62-eFV teenager 17th on the served board instead of 113th, so
+    the prime total is published beside the column, never inside it."""
+    body = _body(_render(""))
+    row = [r for r in body.split("<tr ") if 'data-key="efv_kid"' in r][0]
+    tot = row.split('class="pc-tot"', 1)[1].split("</td>", 1)[0]
+    printed = re.sub(r'\stitle="[^"]*"', "", tot)
+    assert ">10.0</span>" in printed, printed   # warTotal, the expected path
+    assert "16.0" not in printed, printed       # warTotalPTH is NOT printed here
+    assert "proj-ct-sub" not in tot, tot        # and not as a sub-line either
+    # The tooltip may name the other anchor -- it must not be the ONLY place
+    # the page says so, and the header and the row tag both carry it too.
+    assert "Prime 16.0" in tot, tot
+
+
+def test_a_prospect_row_publishes_its_prime_total_once_and_says_so():
+    """The talent number the owner was missing, in the row sub line, labelled
+    in TEXT and not only in a tooltip, exactly once per row. A prospect whose
+    payload carries no prime series gets no tag and no crash; a veteran never
+    gets one, because the veteran warPTH field is a DIFFERENT series (the
+    if-healthy path) and reading it here would re-make 05a25ce1's mistake in
+    the other direction."""
+    body = _body(_render(""))
+    rows = {k: r for k, r in
+            ((r.split('data-key="', 1)[1].split('"', 1)[0], r)
+             for r in body.split("<tr ")[1:])}
+    assert rows["efv_kid"].count("prime 16.0") == 1, rows["efv_kid"]
+    assert "proj-tag-prospect" in rows["efv_kid"]
+    assert "prime " not in rows["cons_kid"]      # no warPTH on the payload row
+    assert "prime " not in rows["vet_guy"]       # never a veteran
+
+
+def test_the_prime_total_is_sortable_and_sorts_no_veteran_up():
+    """It is a published value, so a reader can rank the prospect pool by
+    talent, and the key survives in a share link. A veteran has no prime path
+    on this anchor at all, so he sorts with the missing values rather than
+    borrowing a number that means something else."""
+    keys = _row_keys(_render("#sort=warPrime"))
+    assert keys[0] == "efv_kid", keys
+    # Everything with no prime path lands behind it, in the board's own WAR
+    # order (the documented tie-break), never interleaved with it.
+    assert set(keys[1:]) == {"vet_guy", "cons_kid"}, keys
 
 
 def test_contract_cell_is_the_year_and_aav_needs_a_live_deal():

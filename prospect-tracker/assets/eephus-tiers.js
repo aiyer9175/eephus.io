@@ -43,24 +43,52 @@
 
    CUT TABLE PROVENANCE (all shares measured 2026-09-16 on the served artifacts,
    tiering the DISPLAYED value; pools named per row)
-     war        6/4/3/2.5/1.5   default view (500 cells) 2.8/24.2/38.6/21.6/11.8/1.0/0.0
-                                #src=prospect (492)      0/0/1.0/6.7/69.5/22.8
-                                whole pool (7,709)       0.2/1.6/3.1/2.8/12.3/80.0/0.1
-     warProspect 1.1/0.65/0.45/0.30/0.15
-                                #src=prospect (1,281 cells, 2026-09-18)
-                                                         3.7/19.9/34.5/32.6/8.2/1.1
+     war        6/4/3/2.5/1.5   default view (500 cells, 2026-09-18b)
+                                                         0.6/8.0/19.6/16.4/41.8/13.6/0.0
+                                vet 5y total / 5 (1,383) 0.1/0.4/1.0/1.4/5.9/91.3/0.0
+                                (the 2026-09-16 reading of the default view,
+                                2.8/24.2/38.6/21.6/11.8/1.0/0.0, was taken while the
+                                board printed the IF-HEALTHY path and is superseded.
+                                The CUTS did not move; the pool under them did.)
+     warProspect 1.5/0.9/0.7/0.6/0.4
+                                #src=prospect PAINTED season cells
+                                (813, 2026-09-18b) 0.4/8.1/16.2/18.1/36.4/20.8
+                                the same rows' 5y totals / seasons painted
+                                (183)              0.5/6.6/14.8/18.0/39.9/20.2
        WHY A SECOND WAR LADDER, and why it is not a softer one. On 2026-09-18
        the projections board stopped showing the if-healthy path and went to the
        expected value, which is the path surplus has always priced. A prospect
        expected path is bucket-weighted by P(bucket|FV), so it already carries
        the bust probability: the whole prospect pool then lands between 0.07 and
-       1.84 WAR a season, median 0.49, and 99.6 percent of it sits under the war
-       ladder's bottom cut of 1.5. One colour is not a ruler. These cuts are set
-       at the percentiles where the war ladder's OWN cuts fall on its own pool
-       (97.2 / 73.0 / 34.4 / 12.8 / 1.0), so a prospect cell and a veteran cell
-       painted the same colour occupy the same RANK in their own population,
-       which is the only claim a colour on this board makes. The war ladder is
-       untouched and no veteran cell changes colour.
+       1.69 WAR a season, median 0.50, and 99.6 percent of it sits under the war
+       ladder's bottom cut of 1.5. One colour is not a ruler.
+
+       THE CUTS ARE FITTED, NOT CHOSEN. They are the 0.1-grid cut vector that
+       minimizes the L1 distance between its CUMULATIVE tier shares and the war
+       ladder's own cumulative shares on the default view, so a prospect cell and
+       a veteran cell painted one colour occupy the same RANK in their own
+       population, which is the only claim a colour on this board makes. The
+       reference, re-measured 2026-09-18b on the SERVED board, is the war row
+       above: 0.6/8.0/19.6/16.4/41.8/13.6/0.0. The fit is bounded by tie mass --
+       813 cells over 17 distinct printed values -- so `good` lands 3.4 points
+       light and `below` 7.2 heavy; no 0.1-grid vector does better.
+
+       WHY THE OLD CUTS (1.1/0.65/0.45/0.30/0.15) ARE RETIRED. They were pinned
+       to the war ladder's shares as measured on 2026-09-16, 2.8/24.2/38.6/
+       21.6/11.8/1.0, which was the IF-HEALTHY display, one commit before the
+       revert. That distribution no longer exists, so the percentile match they
+       claimed was to a pool that had already gone: under them the prospect pool
+       ran 4.4/20.3/34.9/34.6/4.9/0.9, three times the war ladder's `elite` share
+       and a third of its `below`. They also stated two-decimal boundaries under a
+       one-decimal `round`, so 0.65 really cut at 0.7 and 0.15 really cut at 0.2:
+       the printed cut table did not mean what it said. Every cut here is on the
+       0.1 grid the war formatter prints.
+
+       AND WHY THERE IS NO THIRD LADDER FOR THE PRIME PATH. A prospect row also
+       publishes a prime-anchored total (talent, same bucket weights, higher
+       anchor). It is printed as labelled TEXT under the expected value, never as
+       a coloured cell, so it needs no cuts. A ladder nothing paints would be a
+       set of numbers in this file with no column to answer for them.
      rosterWar  40/35/32/29/26  30 clubs 10.0/3.3/36.7/16.7/23.3/10.0
      z          120/113/107/100/93   war_pa_plus qualified (351) 1.1/8.3/23.1/34.5/23.9/9.1
      run        140/120/107/100/93   rem_plus qualified (261) 1.9/8.0/14.2/22.2/25.7/28.0
@@ -98,7 +126,7 @@
   // neg true: values under zero take `poor`; the ladder's last cut is >= 0.
   var LADDERS = {
     war:       { cuts: [6, 4, 3, 2.5, 1.5],            dir: "hi", neg: true,  round: r1 },
-    warProspect: { cuts: [1.1, 0.65, 0.45, 0.30, 0.15], dir: "hi", neg: true, round: r1 },
+    warProspect: { cuts: [1.5, 0.9, 0.7, 0.6, 0.4],    dir: "hi", neg: true,  round: r1 },
     rosterWar: { cuts: [40, 35, 32, 29, 26],           dir: "hi", neg: false, round: r1 },
     z:         { cuts: [120, 113, 107, 100, 93],       dir: "hi", neg: false, round: Math.round },
     run:       { cuts: [140, 120, 107, 100, 93],       dir: "hi", neg: false, round: Math.round },

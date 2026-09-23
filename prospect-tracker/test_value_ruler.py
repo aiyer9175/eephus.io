@@ -186,9 +186,12 @@ def test_every_ladder_is_five_strictly_decreasing_cuts(ruler):
     why. `warProspect` was added 2026-09-18 with a reason on the record: when
     the board moved from the if-healthy path to the expected value, the whole
     prospect pool fell under the war ladder's bottom cut of 1.5 and the view
-    went to one colour. Its cuts sit at the percentiles the war ladder's own
-    cuts occupy on its own pool, so it is a second ruler of the same shape on a
-    different population, not a softer ruler on the same one."""
+    went to one colour. It is a second ruler of the same SHAPE on a different
+    population, not a softer ruler on the same one -- see
+    test_the_prospect_ladder_is_the_war_ladder_on_its_own_pool, which measures
+    that claim against the served board instead of asserting it in prose. Its
+    first cuts were fitted to the war shares as they read on 2026-09-16, which
+    was the IF-HEALTHY display; they were refitted on 2026-09-18b."""
     lads = _ladders(ruler)
     assert set(lads) == {"war", "warProspect", "rosterWar", "z", "run", "ratio",
                          "wrc", "woba", "fip", "surplus", "trade"}, sorted(lads)
@@ -619,3 +622,70 @@ def test_the_weight_channel_is_opt_in():
     # and the .proj-tot colour rules match the 0,3,0 rule they have to beat
     for t in TIERS:
         assert (f".proj-app .proj-board-table .proj-tot.vt-{t}") in css, t
+
+def test_the_prospect_ladder_is_the_war_ladder_on_its_own_pool(ruler):
+    """THE CLAIM warProspect MAKES, measured on the served artifact rather
+    than asserted: a prospect cell and a veteran cell painted one colour
+    occupy the same RANK in their own population.
+
+    Two failures this pins. (1) ONE COLOUR. On 2026-09-18 the board moved to
+    the expected value; a prospect expected path is P(bucket|FV)-weighted, so
+    99.6 percent of the pool landed under the war ladder's bottom cut and the
+    view painted one colour. (2) A STALE FIT. The first cuts were set against
+    the war ladder's shares as they read one commit earlier, on the if-healthy
+    display, and that pool no longer exists.
+
+    Tolerance is 10 points per tier, which is loose on purpose: the prospect
+    pool is 813 cells over 17 distinct printed values, so the cut grid cannot
+    land the shares exactly. It is tight enough to catch either failure -- the
+    old cuts miss `avg` by 37 points and `below` by 13."""
+    import json
+    from pathlib import Path
+    doc = Path(__file__).parent / "data" / "mlb_projections.json"
+    if not doc.exists():
+        pytest.skip("data/mlb_projections.json not built")
+    d = json.loads(doc.read_text(encoding="utf-8"))
+    first, H = d["first_season"], d["horizon"]
+
+    def war_at(m, t):
+        arr = m.get("war") or []
+        if m.get("src") == "prospect":
+            off = t - (m["eta"] - first)
+            return arr[off] if 0 <= off < len(arr) else None
+        return arr[t] if t < len(arr) else None
+
+    def shown(m):
+        if m.get("src") != "prospect":
+            return m.get("warTotal")
+        vals = [war_at(m, t) for t in range(H)]
+        vals = [v for v in vals if v is not None]
+        return sum(vals) if vals else None
+
+    def shares(cells, fam):
+        """Tier every cell in ONE eval: the real tier(), on the real cuts."""
+        assert cells, fam
+        js = ("JSON.stringify(%s.map(function(v){return EephusTiers.tier(v, %r);}))"
+              % (json.dumps(cells), fam))
+        got = json.loads(ruler.eval(js))
+        return {t: 100.0 * got.count(t) / len(got) for t in TIERS}
+
+    rows = (d.get("vets") or []) + (d.get("prospects") or [])
+    top = sorted(rows, key=lambda m: -(shown(m) or 0))[:100]
+    default_cells = [war_at(m, t) for m in top for t in range(H)
+                     if war_at(m, t) is not None]
+    pros_cells = [war_at(m, t) for m in (d.get("prospects") or []) for t in range(H)
+                  if war_at(m, t) is not None]
+    want = shares(default_cells, "war")
+    got = shares(pros_cells, "warProspect")
+
+    # (1) never one colour: no tier may own the pool.
+    assert max(got.values()) < 60.0, got
+    assert sum(1 for v in got.values() if v >= 1.0) >= 4, got
+    # (2) the same shape as the war ladder on its own pool.
+    for t in TIERS:
+        assert abs(got[t] - want[t]) <= 10.0, (t, got, want)
+    # The cuts are on the grid the war formatter PRINTS, so the table means
+    # what it says: under a one-decimal round, a cut of 0.65 really cuts at
+    # 0.7 and the printed boundary is a fiction.
+    for c in _ladders(ruler)["warProspect"]["cuts"]:
+        assert abs(round(c, 1) - c) < 1e-9, c

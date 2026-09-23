@@ -245,7 +245,7 @@
   // it to `ctrl`, so a saved share link resolves to the Control column that
   // replaced it instead of silently falling back to the default order.
   const SORT_KEYS = ["warTotal", "rank", "name", "sur", "y0", "y1", "y2", "y3", "y4",
-                     "age", "aav", "ctrl", "warPeak", "fv", "eta", "pBust"];
+                     "age", "aav", "ctrl", "warPeak", "warPrime", "fv", "eta", "pBust"];
   // First click ascending: A-Z, youngest, soonest, safest.
   const ASC_FIRST = ["name", "age", "eta", "pBust"];
   function naturalDir(k) { return ASC_FIRST.includes(k) ? 1 : -1; }
@@ -256,7 +256,7 @@
   // the header, the sort picker and the orphaned-sort reset in render().
   function viewSortKeys(pros) {
     return ["rank", "name", "warTotal", "sur", "y0", "y1", "y2", "y3", "y4", "age"]
-      .concat(pros ? ["fv", "eta", "warPeak", "pBust"] : ["aav", "ctrl"]);
+      .concat(pros ? ["fv", "eta", "warPeak", "warPrime", "pBust"] : ["aav", "ctrl"]);
   }
 
   function syncFromURL() {
@@ -347,8 +347,11 @@
     return (arr || [])[t] ?? null;
   }
   function bandAt(m, t, which) {
-    // Prefer the prime-path bands so a prospect's displayed (prime) cell never
-    // sits outside its own band; vets fall back to their expected bands.
+    // The P10/P90 bands of the EXPECTED path, for every row. They were
+    // described here as "the prime-path bands" while the board still printed
+    // the prime path; warP10/warP90 have always been the expected-path bucket
+    // paths (proj_export writes the prime ones to warPTHP10/warPTHP90), so the
+    // comment named the wrong series and the cell it wrapped never moved.
     const arr = which === "lo" ? m.warP10 : m.warP90;
     if (!arr) return null;
     if (m.src === "prospect") {
@@ -364,9 +367,15 @@
   // vets keep their full expected-value total (already 5-year, truncated at export).
   // WHICH RULER A ROW IS PAINTED ON. A prospect expected path is bucket-weighted
   // by P(bucket|FV), so the whole prospect pool sits under the war ladder's
-  // bottom cut and would be one colour. `warProspect` bands the prospect pool at
-  // the percentiles the war ladder's cuts occupy on ITS pool, so the same colour
-  // means the same rank in the population the row belongs to.
+  // bottom cut and would be one colour. `warProspect` bands the prospect pool to
+  // the SHAPE the war ladder has on its own pool, so the same colour means the
+  // same rank in the population the row belongs to. The cuts are fitted, and
+  // refitted on 2026-09-18b because the first fit was pinned to the if-healthy
+  // display that the revert had already replaced; eephus-tiers.js carries the
+  // measurement and test_value_ruler re-measures it on the served board.
+  // This function answers for the SEASON cells and the 5y total alike -- the
+  // total cell was left on "war" when warProspect shipped and painted 182 of
+  // 183 prospect rows one colour.
   function warLadder(m) { return m.src === "prospect" ? "warProspect" : "war"; }
   function warShown(m) {
     if (m.src === "prospect") {
@@ -389,6 +398,53 @@
     let n = 0;
     for (let t = 0; t < DATA.horizon; t++) if (warAt(m, t) != null) n++;
     return n;
+  }
+
+  // THE PROSPECT TALENT PATH, the second series a prospect row publishes.
+  // value_framework.prospect_prime_path is P(bucket|FV)-weighted exactly as the
+  // expected path is -- it carries the same bust probability -- and differs in
+  // one thing only: the bucket levels reconcile to the PRIME anchor instead of
+  // the realized 6-year-average anchor. It is a TALENT level, not a forecast of
+  // what a club collects, so it never enters the sort of the board, the colour
+  // of the WAR cells or any priced number; it is published beside the expected
+  // value, under its own name, so the reader sees the gap instead of being
+  // handed one of the two without being told which.
+  //
+  // WHY NOT IN THE 5y COLUMN. Measured 2026-09-18 on the served artifact: on the
+  // expected path Jesus Made (eFV 62) is 113th of the 1,566 rows on this board.
+  // Print his prime total in the same column and he is 17th, ahead of Elly De La
+  // Cruz and Jackson Chourio, and 9 prospects enter the top 50 where none are
+  // now. That board is not sortable and not readable: it ranks a teenager who
+  // has not played a major-league game above established stars because his row
+  // was measured with a different ruler. One anchor owns the column.
+  //
+  // Vets get null here. The veteran warPTH field is a DIFFERENT series (the
+  // if-healthy, playing-time-held path, which does strip attrition); one field
+  // name, two meanings, and reading it across both populations is exactly the
+  // mistake 05a25ce1 made in the other direction.
+  function primeAt(m, t) {
+    if (m.src !== "prospect") return null;
+    const arr = m.warPTH;
+    if (!arr) return null;
+    const off = t - (m.eta - DATA.first_season);
+    return off >= 0 && off < arr.length ? arr[off] : null;
+  }
+  // In-window prime total. proj_export already publishes it as warTotalPTH over
+  // EXACTLY this window (_wtot sums the first HORIZON - (eta - first_season)
+  // seasons, which is the span warShown paints), and it rounds the unrounded
+  // series where summing the published 2-decimal cells rounds twice: Made
+  // reads 15.4 from the field and 15.5 from the sum. The published field wins,
+  // so the number in the cell is the number a CSV consumer joins on. The sum
+  // is the fallback for a row whose prime path did not build.
+  function warShownPrime(m) {
+    if (m.src !== "prospect") return null;
+    if (typeof m.warTotalPTH === "number") return m.warTotalPTH;
+    let s = null;
+    for (let t = 0; t < DATA.horizon; t++) {
+      const w = primeAt(m, t);
+      if (w != null) s = (s == null ? 0 : s) + w;
+    }
+    return s;
   }
 
   // Age filter bands: [lo, hi) on the row's decimal age.
@@ -444,6 +500,11 @@
     // the last season a contract guarantees him. Sorting the old `thru`
     // descending buried every cost-controlled star under every signed veteran.
     if (k === "ctrl") return ctrlThruOf(m);
+    // The prime total is sortable but has no header: it is a sub-line, not a
+    // column, so the sort picker is where a reader reaches it. A veteran sorts
+    // null here and falls to the bottom, which is correct -- he has no prime
+    // path on this anchor at all.
+    if (k === "warPrime") return warShownPrime(m);
     if (["age", "thru", "warPeak", "fv", "eta", "pBust"].includes(k)) return m[k] ?? null;
     return null;
   }
@@ -537,6 +598,34 @@
     }
     return m.twoWay
       ? `<span class="proj-tag" title="Two-way: hitting and pitching projected separately and summed per season">two-way</span>` : "";
+  }
+
+  // THE PRIME TOTAL IN THE ROW SUB LINE, and why it is a separate element from
+  // the grade tag rather than more text inside it. .proj-tag is white-space:
+  // nowrap and .proj-sub-tag-pros is a BLOCK that does not shrink below its
+  // max-content width, so appending "prime 15.4" to the grade tag made one
+  // 149px unbreakable item inside a 96px sub line, and .pc-player (overflow:
+  // hidden) clipped it: measured at 390, the row read "eFV 62 - ETA 2027 -
+  // prime" with the number cut off. Two wrappers are two flex items and the
+  // sub line wraps between them.
+  function primeTagFor(m) {
+    const pr = warShownPrime(m);
+    if (pr == null) return "";
+    return `<span class="proj-tag proj-tag-prospect" title="Prime ${fmtWar(pr)}: the same P(bucket|FV)-weighted path reconciled to the PRIME anchor, so it carries the same bust probability. Talent, not what a club collects -- the board column and every priced number stay on the expected value.">prime ${fmtWar(pr)}</span>`;
+  }
+  // ONE PLACE, EVERY WIDTH, EVERY VIEW. site.css hides .proj-sub-tag-pros at
+  // >= 700px in the prospect view because "the prospect set shows eFV and ETA
+  // as columns; the sub-line tag repeats them, so it steps aside while they are
+  // on screen". The prime tag repeats NO column -- there is no prime column in
+  // either set -- so it does not step aside, and it is emitted outside that
+  // wrapper. That is why the prime total is NOT also printed under the 5y
+  // number: .pc-tot is 34px on a phone and clipped the label to "prim" with the
+  // number cut off (measured at 390), and a second copy at wide widths would be
+  // the repetition the rule above exists to prevent.
+  function rowTagsHtml(m, pros) {
+    if (m.src !== "prospect") return tagFor(m);
+    const grade = pros ? `<span class="proj-sub-tag-pros">${tagFor(m)}</span>` : tagFor(m);
+    return grade + primeTagFor(m);
   }
 
   // Contract control status: the Contract chip row, the scatter tint and the
@@ -1467,6 +1556,12 @@
       parts.push(g("ETA", esc(m.eta ?? EM_DASH)));
       if (m.pBust != null) parts.push(g("P(bust)", `${(m.pBust * 100).toFixed(0)}%`, "bust_prob"));
       if (m.bucketLo || m.bucketHi) parts.push(g("Outcomes", `${esc(m.bucketLo || "?")} to ${esc(m.bucketHi || "?")}`, "proj_buckets"));
+      // Both anchors, named, one beside the other. The group says which series
+      // each number is on, because the two differ only by anchor and a bare pair
+      // of numbers would not say that.
+      const _pr = warShownPrime(m);
+      if (_pr != null)
+        parts.push(g(`Prime ${H}y`, `${fmtWar(_pr)} on the prime (talent) anchor &middot; ${fmtWar(warShown(m))} expected, which is the column and the priced path`));
       if (m.warPeak != null) parts.push(g("Peak", fmtWar(m.warPeak)));
       parts.push(g("P10/P90", bands, "p10_p90_bands"));
     } else {
@@ -1544,8 +1639,16 @@
       + th("rank", "#", "pc-rank", "Board position under the current sort", "#")
       + th("name", "Player", "pc-player", "Sort by name", "Player")
       + `<th class="pc-csv" hidden data-export-text="Pos"></th><th class="pc-csv" hidden data-export-text="Team"></th>`
-      + th("warTotal", `${H}y<span class="proj-sr-sm"> WAR</span>`, "pc-tot",
-          "Projected eWAR over the window on the expected path, which is the path surplus prices.", `${H}y WAR`)
+      // THE ANCHOR IS ON THE HEADER, not only in the tooltip: one column, one
+      // anchor, for every row in every view. A prospect row publishes a second
+      // total on the prime anchor, and it is carried under its own name (the 5y
+      // cell sub-line, the row tag, the detail line and its own CSV column),
+      // never mixed into this one.
+      + th("warTotal", `${H}y<span class="proj-sr-sm"> WAR</span><span class="proj-th-unit">expected</span>`, "pc-tot",
+          "Projected eWAR over the window on the expected path, which is the path surplus prices. Prospects carry a second, prime-anchored total beside it, labelled prime.", `${H}y WAR (expected)`)
+      // Export-only: the prospect prime total, so the anchor the sub-line carries
+      // survives a CSV. Empty on a veteran row, which has no prime path.
+      + `<th class="pc-csv" hidden data-export-text="Prime ${H}y WAR (prospects, talent anchor)"></th>`
       + th("sur", "Surplus", "pc-sur",
           "Veterans: production value minus salary over the club control window - contracted dollars where a contract exists, the league minimum for pre-arbitration seasons, the projected award for arbitration seasons. Prospects: surplus over the 7-season valuation window from their ETA.", "Surplus")
       + seasons.map((s, t) => th("y" + t,
@@ -1586,17 +1689,29 @@
         const w = warAt(m, t);
         if (w == null) return gap();
         const lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
-        return td(`<span class="proj-war ${EephusTiers.cls(w, warLadder(m))}" title="${s}: ${fmtWar(w)} eWAR (expected path)${lo != null ? ` &middot; P10 ${war1(lo)} / P90 ${war1(hi)}` : ""}">${fmtWar(w)}</span>`);
+        // The number is the expected path for every row. The COLOUR is ranked
+        // within the row's own population (see warLadder), so the cell says so
+        // rather than leaving a reader to infer that a prospect and a veteran
+        // painted the same green mean the same WAR. They mean the same rank.
+        const _pw = primeAt(m, t);
+        return td(`<span class="proj-war ${EephusTiers.cls(w, warLadder(m))}" title="${s}: ${fmtWar(w)} eWAR (expected path)${lo != null ? ` &middot; P10 ${war1(lo)} / P90 ${war1(hi)}` : ""}${_pw != null ? ` &middot; prime ${fmtWar(_pw)} (talent anchor)` : ""}${isPros ? " &middot; colour ranks him in the prospect pool" : ""}">${fmtWar(w)}</span>`);
+
       }).join("");
       // Vets: the expected-value total. Prospects: the in-window sum of the
       // shown cells. The Total P10-P90 band stays withdrawn (F-01).
       // The colour on this cell ranks the PER-SEASON AVERAGE of the seasons the
       // row paints, not the sum, so the reader is told which number the colour
       // is about. Same words for every row, no tier word, no em dash.
+      // A prospect and a veteran read the SAME anchor in this column. What they
+      // do not share is the pool the colour ranks them in, and the prospect row
+      // publishes a second total the veteran row has no analogue for, so its
+      // tooltip names both and the cell prints the second one under the first.
+      const primeTot = warShownPrime(m);
       const totTip = (isPros
-        ? "Sum of the in-window seasons shown (expected path)"
+        ? `Sum of the in-window seasons shown, on the expected path -- the path surplus prices${primeTot != null ? `. Prime ${fmtWar(primeTot)} is the same P(bucket|FV)-weighted path reconciled to the PRIME anchor: talent, not what a club collects, and no dollar reads it` : ""}`
         : `Expected path, which is also what surplus prices${m.warTotalPTH != null ? `; if he holds his playing time, ${fmtWar(m.warTotalPTH)}` : ""}`)
-        + ". Colour ranks the per-season average of the seasons shown";
+        + (isPros ? ". Colour ranks the per-season average against the PROSPECT pool"
+                  : ". Colour ranks the per-season average of the seasons shown");
       const sv = surOf(m);
       const surTip = isPros
         ? "Prospect surplus value over the 7-season valuation window from his projected ETA"
@@ -1628,7 +1743,7 @@
       const sub = `<span class="proj-pl-sub"><span class="proj-sub-id">${esc(m.pos || "")}${m.team ? ` &middot; ${logoMark(m.team)}${esc(m.team)}` : " &middot; FA"}</span>`
         + `<span class="proj-sub-age">age ${age}</span>`
         + (isPros ? "" : `<span class="proj-sub-ct ${ct.cls}" title="${esc(ct.tip)}">${esc(ct.fold)}</span>`)
-        + (pros && isPros ? `<span class="proj-sub-tag-pros">${tagFor(m)}</span>` : tagFor(m))
+        + rowTagsHtml(m, pros)
         + `<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span></span>`;
       const tail = pros
         ? `<td class="pc-fv"><span title="${m.fv_source === "xfv" ? `Graded on eFV${m.consensus_fv != null ? `; consensus FV ${EEPHUS_HUB.fvCeil(m.consensus_fv)}` : ""}` : "Consensus FV (eFV abstains)"}">${isPros ? (m.fv_source === "xfv" ? Math.round(m.fv) : `FV ${EEPHUS_HUB.fvCeil(m.fv)}`) : EM_DASH}</span></td>`
@@ -1652,7 +1767,15 @@
         + `<th scope="row" class="pc-player" data-export-text="${esc(m.name)}"><div class="proj-pl">${rowPhoto(m)}`
         + `<a class="fa-player-link mlb-name proj-pl-name" href="${esc(href)}" title="${esc(m.name)}">${esc(m.name)}</a>${cmpBtn}${xpBtn}${sub}</div></th>`
         + `<td class="pc-csv" hidden>${esc(m.pos || "")}</td><td class="pc-csv" hidden>${esc(m.team || "")}</td>`
-        + `<td class="pc-tot"><span class="proj-tot ${EephusTiers.clsAvgInk(warShown(m), nPainted(m), "war")}" title="${esc(totTip)}">${fmtWar(warShown(m))}</span></td>`
+        // The ladder is the ROW'S ladder, not always "war". Measured on the
+        // served board: 182 of the 183 prospect totals painted one colour,
+        // because a bucket-weighted expected path averages 0.4 to 1.5 a season
+        // and the war ladder's bottom cut is 1.5. warProspect was added for the
+        // season cells on 2026-09-18 and never reached this cell. No veteran
+        // total changes colour (warLadder returns "war" for every vet row) and
+        // no printed number moves.
+        + `<td class="pc-tot"><span class="proj-tot ${EephusTiers.clsAvgInk(warShown(m), nPainted(m), warLadder(m))}" title="${esc(totTip)}">${fmtWar(warShown(m))}</span></td>`
+        + `<td class="pc-csv" hidden>${primeTot != null ? fmtWar(primeTot) : ""}</td>`
         + `<td class="pc-sur">${sur}</td>`
         + seasonCells
         + `<td class="pc-age">${age}</td>`
@@ -1703,7 +1826,8 @@
     // reverse button. The cue is the only on-screen sign of a sort whose column
     // has folded at this width.
     const SORT_LBL = { rank: `${H}y WAR`, name: "Name", warTotal: `${H}y WAR`, sur: "Surplus", age: "Age",
-      aav: "AAV", ctrl: "Club control thru", fv: "eFV", eta: "ETA", warPeak: "Peak WAR", pBust: "P(bust)" };
+      aav: "AAV", ctrl: "Club control thru", fv: "eFV", eta: "ETA", warPeak: "Peak WAR",
+      warPrime: `Prime ${H}y WAR`, pBust: "P(bust)" };
     seasons.forEach((s, t) => { SORT_LBL["y" + t] = `${s} ${cellLbl}`; });
     const sortName = SORT_LBL[state.sort] || SORT_LBL.warTotal;
     const arrow = state.dir < 0 ? "▾" : "▴";
@@ -1727,8 +1851,14 @@
     // Legend chip for the ladder the cells are actually on. Built FROM the ruler,
     // so it cannot drift from the cuts; the reading lives behind the data-gl hook.
     const keyFmt = state.cells === "war" ? (c => String(c)) : RATE_META[state.cells].fmt;
-    const keyLbl = state.cells === "war" ? "WAR heat" : `${RATE_META[state.cells].label} heat`;
-    const keyLad = EephusTiers.LADDERS[state.cells === "war" ? "war" : state.cells];
+    // The legend has to name the ladder the cells on screen are ACTUALLY on. In
+    // the prospect view they are on warProspect and the key was printing the war
+    // cuts (6 / 4 / 3 / 2.5 / 1.5) over a pool whose best season is 1.69, so the
+    // key disagreed with every cell under it.
+    const keyFam = state.cells === "war" ? (pros ? "warProspect" : "war") : state.cells;
+    const keyLbl = state.cells === "war" ? (pros ? "WAR heat (ranked in the prospect pool)" : "WAR heat")
+                                         : `${RATE_META[state.cells].label} heat`;
+    const keyLad = EephusTiers.LADDERS[keyFam];
     const keyTail = keyLad.dir === "lo" ? "&gt;" : "&lt;";
     const tierKey = `<div class="tier-key"><b data-gl="value_ruler">${keyLbl}</b>`
       + keyLad.cuts.map((c, i) => `<span class="tk-${EephusTiers.TIERS[i]}">${keyFmt(c)}</span>`).join("<i>/</i>")
@@ -1898,7 +2028,7 @@
       const edge = (va != null && vb != null) ? va - vb : null;
       const cell = (v, m) => v == null
         ? `<td class="proj-dim">${m.src === "prospect" && s < m.eta ? "MiLB" : EM_DASH}</td>`
-        : `<td class="proj-war ${EephusTiers.cls(v, "war")}">${fmtWar(v)}</td>`;
+        : `<td class="proj-war ${EephusTiers.cls(v, warLadder(m))}">${fmtWar(v)}</td>`;
       return `<tr><td>${s}</td>${cell(va, a)}${cell(vb, b)}
         <td class="${edge == null ? "proj-dim" : edge >= 0 ? "proj-pos" : "proj-neg"}">${edge == null ? EM_DASH : (edge >= 0 ? "+" : "") + edge.toFixed(1)}</td></tr>`;
     }).join("");
