@@ -149,9 +149,12 @@ COARSE_ROUTES = [
     ("fantasy", "fantasy/"), ("betting", "betting/"), ("arbitration", "arbitration/"),
     ("glossary", "glossary/#view=calculators"),
 ]
-COARSE_16 = ("#hof-ind", "#hof-pos", "#hof-q", "#mgmt-season", "#mgmt-cseason", "#mgmt-bseason", "#mgmt-club",
-             "#mgmt-family", "#mgmt-spark", "#dfs-f-team", "#dfs-tpl", "#dyn-f-org",
-             "#dyn-f-tier", "#rd-f-team", "#bt-legsel", "#arb-team", "#gx-surplus-side", "#tb-search")
+# The team selects (#mgmt-club, #dfs-f-team, #dyn-f-org, #rd-f-team, #arb-team)
+# are hidden behind the team picker since 2026-09-24 (assets/eephus-teampick.js);
+# the control a hand touches is the picker's trigger, "<id>-pick", held here.
+COARSE_16 = ("#hof-ind", "#hof-pos", "#hof-q", "#mgmt-season", "#mgmt-cseason", "#mgmt-bseason", "#mgmt-club-pick",
+             "#mgmt-family", "#mgmt-spark", "#dfs-f-team-pick", "#dfs-tpl", "#dyn-f-org-pick",
+             "#dyn-f-tier", "#rd-f-team-pick", "#bt-legsel", "#arb-team-pick", "#gx-surplus-side", "#tb-search")
 COARSE_HEIGHT = {"#hof-q": 44, "#tb-search": 34}
 
 # The site's own tab hooks, as the audit sweep used them.
@@ -552,7 +555,7 @@ def test_the_lifted_fields_do_not_zoom_or_shrink_on_a_touch_screen(coarse):
     # #mgmt-cseason is the League tab's season select, the management page's
     # default tab since Wave A; #mgmt-season sits on the Running Game tab, which
     # only the fine-pointer tab sweep reaches.
-    for key in ("#hof-ind", "#hof-q", "#tb-search", "#mgmt-cseason", "#arb-team", "#gx-surplus-side"):
+    for key in ("#hof-ind", "#hof-q", "#tb-search", "#mgmt-cseason", "#arb-team-pick", "#gx-surplus-side"):
         assert key in seen, (key, "never rendered on a coarse pointer: the guard is mis-wired")
 
 

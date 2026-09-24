@@ -358,7 +358,9 @@ def test_the_hash_router_anchors_every_key_and_validates_the_team():
 
 def test_the_club_picker_is_a_native_eephus_select():
     html, _ = _render("club", team="LAD")
-    assert '<select id="ledger-club" class="eephus-select" aria-label="Club">' in html
+    # data-team-picker (2026-09-24): assets/eephus-teampick.js paints the logo
+    # picker over it; the select itself stays native and carries the value.
+    assert '<select id="ledger-club" class="eephus-select" data-team-picker aria-label="Club">' in html
     assert '<option value="LAD" selected>' in html
     assert html.count('type="radio" name="ledger-season"') == 2
     assert "ledger-chip" in CSS and "accent-color:" not in CSS, "the radio fill comes from site.css, not a module colour"

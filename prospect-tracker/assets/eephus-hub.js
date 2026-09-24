@@ -40,21 +40,82 @@
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  // ---- shared team logo (ESPN slugs) ----------------------------------------
-  // Keyed on the MLB StatsAPI abbreviations the MLB modules use (SD/SF/TB/CWS/AZ
-  // differ from the FanGraphs codes fa.js/projections.js use), with the ESPN
-  // slug aliases folded in so either family resolves.
-  var _ESPN = {
-    ARI: "ari", AZ: "ari", ATH: "ath", ATL: "atl", BAL: "bal", BOS: "bos",
-    CHC: "chc", CWS: "chw", CHW: "chw", CIN: "cin", CLE: "cle", COL: "col",
-    DET: "det", HOU: "hou", KC: "kc", KCR: "kc", LAA: "laa", LAD: "lad",
-    MIA: "mia", MIL: "mil", MIN: "min", NYM: "nym", NYY: "nyy", PHI: "phi",
-    PIT: "pit", SD: "sd", SDP: "sd", SEA: "sea", SF: "sf", SFG: "sf",
-    STL: "stl", TB: "tb", TBR: "tb", TEX: "tex", TOR: "tor", WSH: "wsh", WSN: "wsh",
+  // ---- shared club table: code, ESPN logo slug, name, MLBAM id ----------------
+  // THE one club resolver for the served pages. Keyed on the FanGraphs codes the
+  // prospect side treats as canonical (trades.canonical_org), with every alias a
+  // source spells differently folded in: the MLB StatsAPI codes the MLB modules
+  // use (AZ, CWS, KC, SD, SF, TB, WSH), the pre-2025 Athletics code OAK and the
+  // pre-2012 Marlins code FLA (both map to the club that franchise is today, as
+  // canonical_org does). A join that misses an alias fails silently, so every
+  // alias resolves here or it resolves nowhere. Logos are the ESPN CDN images
+  // PROSPX already serves.
+  var _CLUB_ROWS = [
+    // [code, ESPN slug, full name, MLBAM id, aliases...]
+    ["ARI", "ari", "Arizona Diamondbacks", 109, "AZ"],
+    ["ATH", "ath", "Athletics", 133, "OAK"],
+    ["ATL", "atl", "Atlanta Braves", 144],
+    ["BAL", "bal", "Baltimore Orioles", 110],
+    ["BOS", "bos", "Boston Red Sox", 111],
+    ["CHC", "chc", "Chicago Cubs", 112],
+    ["CHW", "chw", "Chicago White Sox", 145, "CWS"],
+    ["CIN", "cin", "Cincinnati Reds", 113],
+    ["CLE", "cle", "Cleveland Guardians", 114],
+    ["COL", "col", "Colorado Rockies", 115],
+    ["DET", "det", "Detroit Tigers", 116],
+    ["HOU", "hou", "Houston Astros", 117],
+    ["KCR", "kc", "Kansas City Royals", 118, "KC"],
+    ["LAA", "laa", "Los Angeles Angels", 108],
+    ["LAD", "lad", "Los Angeles Dodgers", 119],
+    ["MIA", "mia", "Miami Marlins", 146, "FLA"],
+    ["MIL", "mil", "Milwaukee Brewers", 158],
+    ["MIN", "min", "Minnesota Twins", 142],
+    ["NYM", "nym", "New York Mets", 121],
+    ["NYY", "nyy", "New York Yankees", 147],
+    ["PHI", "phi", "Philadelphia Phillies", 143],
+    ["PIT", "pit", "Pittsburgh Pirates", 134],
+    ["SDP", "sd", "San Diego Padres", 135, "SD"],
+    ["SEA", "sea", "Seattle Mariners", 136],
+    ["SFG", "sf", "San Francisco Giants", 137, "SF"],
+    ["STL", "stl", "St. Louis Cardinals", 138],
+    ["TBR", "tb", "Tampa Bay Rays", 139, "TB"],
+    ["TEX", "tex", "Texas Rangers", 140],
+    ["TOR", "tor", "Toronto Blue Jays", 141],
+    ["WSN", "wsh", "Washington Nationals", 120, "WSH"],
+  ];
+  // Former full names a payload can still carry for the same franchise.
+  var _CLUB_OLD_NAMES = {
+    "oakland athletics": "ATH", "florida marlins": "MIA", "cleveland indians": "CLE",
+    "tampa bay devil rays": "TBR", "anaheim angels": "LAA", "los angeles angels of anaheim": "LAA",
   };
+  var _CLUB_BY = {}, _CLUB_BY_ID = {}, _CLUB_BY_NAME = {};
+  _CLUB_ROWS.forEach(function (r) {
+    var c = { code: r[0], slug: r[1], name: r[2], id: r[3], aliases: r.slice(4),
+              logo: "https://a.espncdn.com/i/teamlogos/mlb/500/" + r[1] + ".png" };
+    _CLUB_BY[r[0]] = c;
+    c.aliases.forEach(function (a) { _CLUB_BY[a] = c; });
+    _CLUB_BY_ID[r[3]] = c;
+    _CLUB_BY_NAME[r[2].toLowerCase()] = c;
+  });
+  Object.keys(_CLUB_OLD_NAMES).forEach(function (n) { _CLUB_BY_NAME[n] = _CLUB_BY[_CLUB_OLD_NAMES[n]]; });
+  // club(x): a club code in either family, an MLBAM team id (number or digit
+  // string) or a full club name -> {code, slug, name, id, aliases, logo}, or
+  // null when x is not one of the thirty (a college, an overseas club, "all").
+  function club(x) {
+    if (x == null || x === "") return null;
+    if (typeof x === "number") return _CLUB_BY_ID[x] || null;
+    var s = String(x).trim();
+    if (/^\d+$/.test(s)) return _CLUB_BY_ID[+s] || null;
+    return _CLUB_BY[s.toUpperCase()] || _CLUB_BY_NAME[s.toLowerCase()] || null;
+  }
+  function clubs() { return _CLUB_ROWS.map(function (r) { return _CLUB_BY[r[0]]; }); }
+  function teamLogoURL(team) {
+    var c = club(team);
+    return c ? c.logo : "";
+  }
   function teamLogo(team, cls) {
     if (!team) return "";
-    var slug = _ESPN[team] || String(team).toLowerCase();
+    var c = club(team);
+    var slug = c ? c.slug : String(team).toLowerCase();
     return '<img class="' + (cls || "eephus-teamlogo") + '" src="https://a.espncdn.com/i/teamlogos/mlb/500/'
       + slug + '.png" alt="' + esc(team) + '" loading="lazy" onerror="this.remove()">';
   }
@@ -594,5 +655,5 @@
     return (mm < 0 ? "-" : "") + "$" + Math.abs(mm).toFixed(d) + "M";
   }
 
-  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, openCard, templates, esc, teamLogo, histogram, scatter, fvCeil, money, dash, DASH };
+  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, openCard, templates, esc, teamLogo, teamLogoURL, club, clubs, histogram, scatter, fvCeil, money, dash, DASH };
 })();
