@@ -55,16 +55,22 @@
   // Boards render several sections into one mount and hide the inactive ones,
   // so "the table" is the VISIBLE one. offsetParent is null for a display:none
   // subtree, which is exactly the test we want and costs one layout read.
+  // A board that paints several tables into one host (a club page with a
+  // key-value mini table above its ledger) names the one the reader came for
+  // with data-csv-primary on the <table>; a visible primary wins over the
+  // first visible table, and a host with no primary behaves as before.
   function targetTable(host) {
     var tables = host.querySelectorAll ? host.querySelectorAll(TABLE_SEL) : [];
-    var first = null;
+    var first = null, visible = null;
     for (var i = 0; i < tables.length; i++) {
       var t = tables[i];
       if (!dataRowCount(t)) continue;
       if (!first) first = t;
-      if (t.offsetParent !== null) return t;
+      if (t.offsetParent === null) continue;
+      if (t.getAttribute && t.getAttribute("data-csv-primary") != null) return t;
+      if (!visible) visible = t;
     }
-    return first;
+    return visible || first;
   }
 
   function dataRowCount(table) {

@@ -65,6 +65,14 @@
     return Number(v) > 0 ? "ledger-pos" : "ledger-neg";
   }
   function signedMoney(usd) { return '<span class="' + signCls(usd) + '">' + money(usd) + "</span>"; }
+  // A distance past a line that costs money (the overage above the tax
+  // threshold) takes the house sign for a COST: over is red, under is green,
+  // the convention the League column's negative "vs threshold" cell already
+  // uses. The magnitude prints unsigned; the word beside it says over or under.
+  function costMoney(usd) {
+    return '<span class="' + signCls(isNum(usd) ? -Number(usd) : null) + '">' + (isNum(usd) ? money(Math.abs(Number(usd))) : "") + "</span>";
+  }
+  function overUnder(usd) { return isNum(usd) && Number(usd) < 0 ? "Under by " : "Over by "; }
   // The ONE ruler call site. A 100+10z index on the `z` ladder, family named.
   function zCls(v) {
     try {
@@ -219,8 +227,12 @@
     }).join("") + '<td class="lb-xp"></td></tr>';
     var pool = L.pools.cost_plus;
     return '<p class="ledger-lede">' + esc(copy("league_lede")) + "</p>" + banner() +
-      '<div class="ledger-board"><table class="ledger-table"><thead><tr>' + head + "</tr></thead><tbody>" + body +
-      "</tbody><tfoot>" + foot + "</tfoot></table>" + renderQuadrant() + "</div>" +
+      '<div class="ledger-board"><table class="ledger-table" data-csv-primary><thead><tr>' + head + "</tr></thead><tbody>" + body +
+      "</tbody><tfoot>" + foot + "</tfoot></table>" +
+      // Why the two footer means disagree: one sentence from the export,
+      // pinned to the measured cause (the fetch stamps), never typed here.
+      (copy("footer_means_note") ? '<p class="ledger-count ledger-foot-note">' + esc(copy("footer_means_note")) + "</p>" : "") +
+      renderQuadrant() + "</div>" +
       '<p class="ledger-count">' + gl("Cost+", "cost_plus") + " pool: n " + esc(pool.n) + ", mean " + esc(num(pool.mean_index, 1)) +
       ", sd " + esc(num(pool.sd_index, 1)) + "; " + esc(copy("cost_plus_basis")) + ". " + esc(copy("cost_plus_registry")) + "</p>" +
       '<p class="ledger-note">' + esc(copy("surplus_ev")) + " " + esc(copy("surplus_no_tier")) + "</p>";
@@ -332,9 +344,9 @@
       return '<li class="' + (here ? "is-here" : "") + '"><span>' + esc(i === 0 ? "threshold" : "+" + money(tiers[i - 1])) + "</span><span>" + esc(money(r)) + "</span></li>";
     }).join("") + "</ul>";
     var bracket = (DATA.cba.brackets || {})[C.bracket] || "";
-    var over = '<p class="ledger-note">' + gl("Bracket", "cbt_bracket") + ": " + esc(bracket) + ". Over by " + signedMoney(C.over_usd) +
+    var over = '<p class="ledger-note">' + gl("Bracket", "cbt_bracket") + ": " + esc(bracket) + ". " + overUnder(C.over_usd) + costMoney(C.over_usd) +
       " (platform " + esc(money(T)) + ", " + esc(C.threshold_verify) + ")" +
-      (y === classYear() && isNum(C.over_spotrac_basis_usd) ? "; Spotrac " + esc(money(C.spotrac_basis_usd)) + " basis: " + signedMoney(C.over_spotrac_basis_usd) : "") + "</p>";
+      (y === classYear() && isNum(C.over_spotrac_basis_usd) ? "; Spotrac " + esc(money(C.spotrac_basis_usd)) + " basis: " + overUnder(C.over_spotrac_basis_usd).toLowerCase() + costMoney(C.over_spotrac_basis_usd) : "") + "</p>";
     var comp = isNum(C.spotrac_est_bill_usd)
       ? "<tr><td>" + gl("Computed bill", "computed_cbt_bill") + "</td><td>" + esc(money(C.computed_bill_usd)) + "</td></tr>" +
         "<tr><td>Spotrac estimate</td><td>" + esc(money(C.spotrac_est_bill_usd)) + "</td></tr>" +
@@ -426,7 +438,7 @@
     var D = K.deferrals;
     var out = banner() + '<p class="ledger-count">' + esc(K.n_priced) + " priced, " + esc(K.n_unpriced) + " unpriced. Season cells: " +
       Object.keys(bases).map(function (k) { return esc(k) + " = " + esc(bases[k]); }).join("; ") + "</p>" +
-      '<div class="ledger-scroll"><table class="ledger-table ledger-contracts"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>";
+      '<div class="ledger-scroll"><table class="ledger-table ledger-contracts" data-csv-primary><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>";
     out += "<details><summary>" + esc(K.n_unpriced) + " vets with no salary path</summary><div class=\"ledger-chips\">" +
       K.unpriced.map(function (u) { return '<span class="ledger-flag">' + esc(u[1]) + " " + esc(u[2]) + " " + esc(u[3]) + "</span>"; }).join("") + "</div></details>";
     out += '<p class="ledger-count">' + esc(copy("options_note")) + " " + esc(K.options.length) + " players carry options here.</p>";
@@ -704,6 +716,12 @@
     else if (s === "rules") root.innerHTML = renderRules();
     else if (s === "method") root.innerHTML = renderMethod();
     else root.innerHTML = renderLeague();
+    // The CSV control on the mount (build_site's data-csv-export opt-in)
+    // exports the table marked data-csv-primary: the League board, or the
+    // club's contract ledger. The file name says which one it holds.
+    try {
+      root.setAttribute("data-csv-export", "club-ledger-" + (s === "club" ? String(state.team).toLowerCase() + "-contracts" : s));
+    } catch (e) { /* the host attribute is a courtesy */ }
     syncTabs();
     wire();
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(root); } catch (e) { /* glossary optional */ }

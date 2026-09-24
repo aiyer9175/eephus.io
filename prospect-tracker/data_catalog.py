@@ -529,8 +529,12 @@ ARTIFACTS = (
         "cadence": "on change", "stability": EXPERIMENTAL,
         "pinned_by": "test_mgmt_decisions.py",
         "note": ("Written on corpus rebuild by mgmt_decisions.py through mgmt_shards.py. "
-                 "Whether the shards are tracked in git or generated on the box is an open "
-                 "owner decision; both deploy consumers ship the directory."),
+                 "Schema 2 (2026-09-23): array rows under a per-family key legend with a "
+                 "game table, a name table keyed by player id and code tables for events, "
+                 "kinds and flags; a window play is [event, wp_after] with wp_before only "
+                 "where the feed's chain breaks. About 1,250 rows and 170 KB per shard, "
+                 "41.5 MB over 240 (schema 1 was 655 KB per shard, 157 MB), so the set can "
+                 "be tracked in git; both deploy consumers ship the directory."),
     },
     {
         "file": "hof_board.json", "group": "mlb",

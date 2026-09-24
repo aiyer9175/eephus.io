@@ -19,6 +19,7 @@ Skips when py_mini_racer is unavailable.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -27,6 +28,11 @@ MiniRacer = pytest.importorskip("py_mini_racer").MiniRacer
 
 ROOT = Path(__file__).parent
 JS = (ROOT / "assets" / "management.js").read_text(encoding="utf-8")
+
+import sys  # noqa: E402
+
+sys.path.insert(0, str(ROOT))
+import mgmt_shards  # noqa: E402
 
 SAMPLE = {
     "gate_doc": "docs/IN_GAME_MANAGEMENT_GATE.md", "gate_frozen_at": "2026-09-06",
@@ -232,7 +238,7 @@ SAMPLE2 = dict(SAMPLE, **{
     "shards": {"path_template": "/data/mgmt_decisions/{season}-{club}.json",
                "index": [{"season": 2026, "club": "MIA", "n": 4, "bytes": 1000}]},
 })
-SHARD_MIA = {"season": 2026, "club": "MIA", "n": 4, "rows": [
+SHARD_MIA_ROWS = [
     {"date": "2026-04-01", "game_pk": 1, "ab": 6, "idx": 0, "opp": "NYY", "home": True, "half": "top", "inning": 6,
      "outs": 0, "base": 0, "score_diff": 1, "li": 1.4, "family": "pitching_change", "kind": "starter_hook",
      "in_id": 2, "out_id": 1, "in_name": "Arm Two", "out_name": "Arm One", "mwpa": 0.09, "dvs": 0.05, "win_len": 2,
@@ -248,7 +254,15 @@ SHARD_MIA = {"season": 2026, "club": "MIA", "n": 4, "rows": [
      "window": [[8, "Strikeout", 72.0, 68.0]], "flags": ["stayed_in"]},
     {"date": "2026-04-01", "game_pk": 1, "ab": 2, "idx": 0, "opp": "NYY", "home": True, "half": "top", "inning": 1,
      "outs": 2, "base": 0, "score_diff": 0, "family": "mound_visit", "win_len": 0, "pitcher_id": 1, "pitcher_name": "Arm One"},
-]}
+]
+# The fixture shard is written by the SAME codec the export uses (schema 2, array
+# rows under per-family legends), so the JS reader is held to what mgmt_shards.py
+# writes and not to a hand-typed shape.
+SHARD_MIA = mgmt_shards.compact_season(SHARD_MIA_ROWS, 2026, "MIA", "2026-09-23T00:00:00+00:00")
+
+
+#: The attributes the last _render2 set on the mount (data-csv-export, the host name).
+_ATTRS: dict = {}
 
 
 def _render2(hash_: str, payload: dict | None = None, shards: dict | None = None) -> tuple:
@@ -256,11 +270,12 @@ def _render2(hash_: str, payload: dict | None = None, shards: dict | None = None
     shard URL to the shard map (404 when absent) and everything else to the board."""
     shards = {"/data/mgmt_decisions/2026-MIA.json": SHARD_MIA} if shards is None else shards
     prelude = """
-    var __html={};
+    var __html={}; var __attrs={};
     function __el(id){return new Proxy(function(){return __el(id);},{
       get:function(t,k){ if(k==='innerHTML')return __html[id]||'';
         if(k==='querySelectorAll')return function(){return [];};
-        if(k==='addEventListener'||k==='setAttribute'||k==='getAttribute')return function(){return null;};
+        if(k==='setAttribute')return function(a,v){var o=__attrs[id]||(__attrs[id]={});o[a]=v;};
+        if(k==='addEventListener'||k==='getAttribute')return function(){return null;};
         return __el(id);},
       set:function(t,k,v){if(k==='innerHTML')__html[id]=v;return true;}});}
     function FT(v){return {then:function(cb){var r=cb(v);return (r&&r.then)?r:FT(r);},catch:function(){return FT(v);}};}
@@ -276,6 +291,8 @@ def _render2(hash_: str, payload: dict | None = None, shards: dict | None = None
     """ % (json.dumps(payload or SAMPLE2), json.dumps(shards), json.dumps(hash_))
     ctx = MiniRacer()
     ctx.eval(prelude + JS)
+    _ATTRS.clear()
+    _ATTRS.update(json.loads(ctx.eval("JSON.stringify(__attrs['mgmt-app-root'] || {})")))
     return ctx.eval("__html['mgmt-app-root'] || ''"), ctx.eval("location.hash")
 
 
@@ -360,3 +377,83 @@ def test_no_dashes_in_any_ledger_section():
         html, _ = _render2(h)
         for bad in ("&mdash;", "&ndash;", chr(0x2014), chr(0x2013), "undefined", "NaN"):
             assert bad not in html, (h, bad)
+
+
+# --------------------------------------------------------------------------
+# The compacted shard (schema 2, 2026-09-23): one reader in the JS, its twin in Python
+# --------------------------------------------------------------------------
+
+def test_the_shard_reader_rebuilds_every_row_its_python_twin_does():
+    """assets/management.js expandShard and mgmt_shards.expand read one schema-2
+    shard: every row the Python twin expands opens as a card in the drill-down with
+    the same id, names, game line, situation, realized figure and window plays, and
+    the table lists the rows in the shard order (date, game_pk, ab, idx)."""
+    rows = mgmt_shards.expand(SHARD_MIA)
+    assert [r["family"] for r in rows] == ["mound_visit", "pitching_change", "pitching_change", "pinch_hit"]
+    listing, _ = _render2("#section=decisions&team=MIA&season=2026")
+    body = listing.split("<tbody>")[1]
+    ids = re.findall(r'data-mrow="([^"]+)"', body)
+    assert ids == ["%d:%d:%d" % (r["game_pk"], r["ab"], r["idx"]) for r in rows]
+    for r in rows:
+        html, _ = _render2("#section=decisions&team=MIA&season=2026&family=%s&game=%d&ab=%d" % (r["family"], r["game_pk"], r["ab"]))
+        assert 'id="mgmt-detail"' in html
+        assert '<div class="mgmt-detail-sub">%d:%d:%d</div>' % (r["game_pk"], r["ab"], r["idx"]) in html
+        assert "2026-04-01, vs NYY" in html
+        for name in (r.get("in_name"), r.get("out_name"), r.get("pitcher_name")):
+            if name:
+                assert name in html, name
+        if r.get("mwpa") is None:
+            assert "not valued" in html and "The plays governed" not in html
+            assert "<td>0 plays</td>" in html
+        else:
+            assert ("%+.4f" % r["mwpa"]) in html
+            assert "<td>%d plays</td>" % len(r["window"]) in html
+            for p in r["window"]:
+                assert "<tr><td>%d</td><td>%s</td><td>%.1f</td><td>%.1f</td></tr>" % (p[0], p[1], p[2], p[3]) in html, p
+        if r.get("flags"):
+            assert 'class="mgmt-flag">' + r["flags"][0].replace("_", " ") in html
+    # a coded window keeps wp_before only where the chain breaks: the reader chains
+    # the first pitching change's second play from its first
+    pc = SHARD_MIA["families"]["pitching_change"]
+    w = pc["rows"][0][pc["keys"].index("window")]
+    assert len(w[0]) == 3 and len(w[1]) == 2
+    assert "in_name" not in pc["keys"] and "date" not in pc["keys"] and "win_len" not in pc["keys"]
+
+
+def test_a_schema_1_shard_is_refused_because_there_is_no_legacy_reader():
+    legacy = {"season": 2026, "club": "MIA", "n": 4, "rows": SHARD_MIA_ROWS}
+    html, _ = _render2("#section=decisions&team=MIA&season=2026", shards={"/data/mgmt_decisions/2026-MIA.json": legacy})
+    assert "No decisions shard for MIA 2026." in html and "Arm Two" not in html
+    assert "function expandShard(" in JS and JS.count("expandShard(") == 2, "one reader, called once"
+    assert "d.rows" not in JS.split("function expandShard(")[1].split("function shardKey")[0]
+
+
+def test_the_csv_control_exports_the_decision_listing_not_an_open_card():
+    """build_site puts one data-csv-export host on the mount and eephus-csv.js exports
+    the first visible table with rows unless one carries data-csv-primary. The decision
+    listing carries it, so an open card's situation and plays tables (painted above the
+    listing) never become the download; the club page marks its bullpen deployment table
+    the same way over the two-row hook-profile mini table above it; every other section
+    paints one table and carries no marker; and the host is renamed per section so the
+    file name says what it holds."""
+    listing, _ = _render2("#section=decisions&team=MIA&season=2026")
+    assert listing.count("data-csv-primary") == 1
+    assert '<table class="mgmt-table" data-csv-primary><thead><tr><th data-dsort="date"' in listing
+    assert _ATTRS.get("data-csv-export") == "in-game-management-decisions-mia-2026"
+    card, _ = _render2("#section=decisions&team=MIA&season=2026&family=pitching_change&game=1&ab=6")
+    assert 'id="mgmt-detail"' in card and '<table class="mgmt-mini">' in card and "<th>PA</th>" in card
+    assert card.count("data-csv-primary") == 1
+    above = card.split("data-csv-primary")[0]
+    assert 'id="mgmt-detail"' in above and "<th>PA</th>" in above, "the card's tables sit above the marked listing"
+    assert 'mgmt-mini" data-csv-primary' not in card
+    club, _ = _render2("#section=clubs&team=MIA&season=2026")
+    assert club.count("data-csv-primary") == 1
+    assert '<table class="mgmt-table" data-csv-primary><thead><tr><th>LI at entry</th>' in club
+    assert club.index("Inning of the hook") < club.index("data-csv-primary"), "the mini table above it is unmarked"
+    assert _ATTRS.get("data-csv-export") == "in-game-management-clubs-mia-2026"
+    for sec in ("league", "running", "managers", "reference", "gate"):
+        html, _ = _render2("#section=" + sec)
+        assert "data-csv-primary" not in html, sec
+        assert _ATTRS.get("data-csv-export") == "in-game-management-" + sec, sec
+    csv = (ROOT / "assets" / "eephus-csv.js").read_text(encoding="utf-8")
+    assert 'getAttribute("data-csv-primary")' in csv, "the helper prefers a marked table"

@@ -479,8 +479,10 @@ def _decision_blocks() -> dict:
                                "(M-ENG-2), neither built"),
     }
     sh = dict(d.get("shards") or {})
-    sh["storage_note"] = ("owner decision open (spec 14.1): the shards are written to "
-                          "data/mgmt_decisions/ and neither tracked nor ignored by this build")
+    sh["storage_note"] = ("tracked in git by owner decision (spec 14.1, taken 2026-09-23 on the "
+                          "measured size): the shards are written to data/mgmt_decisions/ "
+                          "(schema 2, compacted to about 41 MB over 240) and committed with the "
+                          "board, so the box serves them before its first nightly")
     league = {"live": True, "reads": "decisions.families and decisions.baseline"}
     return {"decisions": decisions, "clubs": clubs, "managers": managers,
             "challenges": challenges, "lineups": lineups, "shards": sh, "league": league}

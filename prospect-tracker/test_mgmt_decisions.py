@@ -63,7 +63,8 @@ def board():
 
 
 @pytest.fixture(scope="module")
-def shard(art):
+def shard_payload(art):
+    """One schema-2 shard as written (2025, the first club in the index)."""
     idx = (art.get("shards") or {}).get("index") or []
     if not idx:
         pytest.skip("no shards on this build")
@@ -72,6 +73,16 @@ def shard(art):
     if not p.exists():
         pytest.skip(f"{p.name} not on disk")
     return json.loads(p.read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="module")
+def shard(shard_payload):
+    """The same shard through the one reader: header plus the schema-1 rows that
+    mgmt_shards.expand (the Python twin of expandShard in management.js) rebuilds."""
+    import mgmt_shards
+    d = {k: v for k, v in shard_payload.items() if k != "families"}
+    d["rows"] = mgmt_shards.expand(shard_payload)
+    return d
 
 
 # --------------------------------------------------------------------------
@@ -434,3 +445,86 @@ def test_the_baseline_artifact_is_dated_and_the_shard_family_is_named(art):
     assert b["generated_at"] and b["produced_by"] == "mgmt_baseline.py"
     assert art["shards"]["path_template"] == "/data/mgmt_decisions/{season}-{club}.json"
     assert art["baseline_artifact"] == "data/management_baseline.json"
+
+
+# --------------------------------------------------------------------------
+# the compacted shard (schema 2, 2026-09-23): 157 MB of dict rows became 41.5 MB
+# --------------------------------------------------------------------------
+
+def test_shard_schema_2_round_trips_the_synthetic_rows(rows):
+    """compact_season then expand reproduces the schema-1 rows exactly, in the shard
+    order (date, game_pk, ab, idx), for the home club of the synthetic game; the
+    rows carry ids, codes and coded windows only, and the header the legends."""
+    import mgmt_shards as S
+    club = rows[0]["club"]
+    mine = [r for r in rows if r["club"] == club]
+    payload = S.compact_season(mine, 2099, club, "2099-04-02T00:00:00+00:00")
+    assert payload["schema_version"] == 2 and payload["n"] == len(mine) and payload["club"] == club
+    back = S.expand(json.loads(json.dumps(payload)))
+    assert back == [S.compact_row(r) for r in sorted(mine, key=S._sort_key)]
+    for k in ("games", "names", "events", "kinds", "flags", "legend", "schema_note", "generated_at"):
+        assert k in payload, k
+    pc = payload["families"]["pitching_change"]
+    assert pc["keys"][:9] == ["game_pk", "ab", "idx", "half", "inning", "outs", "base", "score_diff", "li"]
+    for k in ("date", "opp", "home", "in_name", "out_name", "win_len", "family", "id"):
+        assert k not in pc["keys"], k
+    # the fixture breaks the chain on every pair of plays, so every coded play
+    # carries wp_before; a chained play would carry [event, wp_after] alone
+    wi = pc["keys"].index("window")
+    for arr in pc["rows"]:
+        assert all(len(p) == 3 for p in arr[wi]), arr[wi]
+    assert payload["games"] == {"1": ["2099-04-01", "BOS" if club == "NYY" else "NYY", 1 if club == "NYY" else 0]}
+    assert payload["names"]["110"] == "Reliever B"
+
+
+def test_the_shard_header_carries_schema_2_the_legends_n_and_a_stamp(shard_payload, art):
+    d = shard_payload
+    assert d["schema_version"] == 2 and d["produced_by"] == "mgmt_shards.py" and d["generated_at"]
+    assert d["n"] == sum(len(b["rows"]) for b in d["families"].values())
+    for k in ("games", "names", "events", "kinds", "flags", "legend", "schema_note"):
+        assert k in d, k
+    assert d["legend"]["half"] == ["top", "bottom"]
+    for f, b in d["families"].items():
+        assert f in MD.FAMILIES, f
+        assert b["keys"][:3] == ["game_pk", "ab", "idx"], f
+        for k in ("date", "opp", "home", "win_len", "in_name", "out_name", "pitcher_name", "family", "id"):
+            assert k not in b["keys"], (f, k)
+    assert art["shards"]["schema_note"].startswith("schema 2")
+    e = [x for x in art["shards"]["index"] if x["season"] == d["season"] and x["club"] == d["club"]][0]
+    assert e["n"] == d["n"]
+
+
+def test_realized_pitching_change_mwpa_recomputed_from_the_compacted_shard_matches_the_board(shard, art, board):
+    """Each pitching change's mWPA is the endpoint difference of its decoded window
+    (sign to the deciding club, never a row sum), the plays are consecutive plate
+    appearances, and the club-season's per-family sum is the board's
+    mwpa_pitching_change column: the compaction lost no value."""
+    pc_all = [r for r in shard["rows"] if r["family"] == "pitching_change"]
+    valued = [r for r in pc_all if r.get("mwpa") is not None]
+    assert valued
+    total = 0.0
+    for r in valued:
+        w = r["window"]
+        s = 1 if r["home"] else -1
+        assert r["win_len"] == len(w) > 0
+        assert round(s * (w[-1][3] - w[0][2]) / 100, 4) == r["mwpa"], r
+        assert [p[0] for p in w] == [w[0][0] + k for k in range(len(w))]
+        assert r["first_pa_mwpa"] == round(s * (w[0][3] - w[0][2]) / 100, 4)
+        total += r["mwpa"]
+    for src in (art, board):
+        club = [c for c in src["clubs"]["rows"] if c["club"] == shard["club"] and c["season"] == shard["season"]][0]
+        assert club["n_pitching_change"] == len(pc_all)
+        if len(valued) >= MD.FLOORS["pitching_change"]:
+            assert club["mwpa_pitching_change"] == pytest.approx(total, abs=5.1e-4)
+        else:
+            assert club["mwpa_pitching_change"] is None
+
+
+def test_the_shard_set_fits_the_tracking_budget(art):
+    """157.07 MB of schema-1 shards became 41.50 MB on 2026-09-23 (240 shards, 298,701
+    rows, every row equal after the round trip); the set stays well under the 60 MB
+    line set for tracking it in git."""
+    idx = art["shards"]["index"]
+    total = sum(e["bytes"] for e in idx)
+    assert total < 60_000_000, total
+    assert total / len(idx) < 300_000

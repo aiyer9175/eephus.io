@@ -156,6 +156,61 @@
     });
   }
 
+  // ---- shard schema 2 (mgmt_shards.py): the one reader ---------------------
+  // A shard is array rows under a per-family key legend, with a game table
+  // (date, opponent, home), a name table keyed by player id, and code tables
+  // for events, kinds and flags. A window play is [event, wp_after], with
+  // wp_before written only where the feed's chain breaks (the first play
+  // always carries it), and its plate appearance is the row's ab plus its
+  // offset unless a fourth element says otherwise. This rebuilds the row
+  // objects every renderer below reads, in the shard's order (date, game_pk,
+  // ab, idx; ties in family order), so nothing downstream knows the shape on
+  // disk. mgmt_shards.expand is the Python twin the tests hold it to.
+  var NAME_OF = { in_id: "in_name", out_id: "out_name", pitcher_id: "pitcher_name", due_id: "due_name", ondeck_id: "ondeck_name" };
+  function expandShard(d) {
+    if (!d || !d.families || !d.games) return null;
+    var games = d.games || {}, names = d.names || {}, events = d.events || [], kinds = d.kinds || [], flagsL = d.flags || [];
+    var half = (d.legend && d.legend.half) || ["top", "bottom"];
+    var rows = [];
+    Object.keys(d.families).forEach(function (fam) {
+      var blk = d.families[fam] || {}, keys = blk.keys || [];
+      (blk.rows || []).forEach(function (arr) {
+        var r = {}, i, k, v;
+        for (i = 0; i < keys.length; i++) {
+          k = keys[i]; v = i < arr.length ? arr[i] : null;
+          if (v === null || v === undefined) continue;
+          if (k === "half") r.half = half[v];
+          else if (k === "kind") r.kind = kinds[v];
+          else if (k === "flags") r.flags = v.map(function (f) { return flagsL[f]; });
+          else r[k] = v;
+          if (NAME_OF[k] && names[String(v)] != null) r[NAME_OF[k]] = names[String(v)];
+        }
+        var g = games[String(r.game_pk)];
+        r.home = !!(g && g[2]);
+        if (g && g[0] != null) r.date = g[0];
+        if (g && g[1] != null) r.opp = g[1];
+        r.family = fam;
+        if (r.window) {
+          var prev = null;
+          r.window = r.window.map(function (p, j) {
+            var wpb = p.length > 2 ? p[2] : prev;
+            var ab = p.length > 3 ? p[3] : r.ab + j;
+            prev = p[1];
+            return [ab, events[p[0]], wpb, p[1]];
+          });
+        }
+        r.win_len = r.window ? r.window.length : 0;
+        rows.push(r);
+      });
+    });
+    rows.sort(function (a, b) {
+      var x = a.date || "", y = b.date || "";
+      if (x !== y) return x < y ? -1 : 1;
+      return (a.game_pk - b.game_pk) || (a.ab - b.ab) || (a.idx - b.idx);
+    });
+    return { season: d.season, club: d.club, n: d.n, generated_at: d.generated_at, schema_version: d.schema_version, rows: rows };
+  }
+
   // ---- shard fetch, one-entry cache ----------------------------------------
   function shardKey() { return state.cseason + "-" + state.team; }
   function shardUrl(season, club) {
@@ -183,8 +238,9 @@
         .then(function (d) {
           if (SHARD.key !== key) return;
           SHARD.loading = "";
-          if (!d || !d.rows) { SHARD.error = "No decisions shard for " + state.team + " " + state.cseason + "."; }
-          else SHARD.data = d;
+          var expanded = expandShard(d);
+          if (!expanded) { SHARD.error = "No decisions shard for " + state.team + " " + state.cseason + "."; }
+          else SHARD.data = expanded;
           render();
         })
         .catch(function () {
@@ -815,8 +871,10 @@
     }).join("");
     var inh = sum(pc.map(function (r) { return r.inherited || 0; }));
     var inhS = sum(pc.map(function (r) { return r.inherited_scored || 0; }));
+    // data-csv-primary: the club page's export is this table, not the two-row
+    // hook-profile mini table painted above it.
     out += "<h3>Bullpen deployment</h3>" +
-      '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr><th>LI at entry</th><th>Entries</th>' +
+      '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table" data-csv-primary><thead><tr><th>LI at entry</th><th>Entries</th>' +
       '<th>Mean first-PA ' + gl("mWPA", "realized_mwpa") + '</th><th>Stint mWPA, summed <span class="mgmt-th-tag">realized</span></th></tr></thead><tbody>' +
       liRows + "</tbody></table></div>" +
       '<p class="mgmt-note">Inherited runners: ' + esc(inhS) + " scored of " + esc(inh) + " inherited" +
@@ -995,8 +1053,10 @@
           return "<td>" + (v == null ? "" : esc(v)) + "</td>";
         }).join("") + "</tr>";
     }).join("");
+    // data-csv-primary: the CSV control on the mount exports this listing, never
+    // an open card's situation or plays table, which are painted above it.
     return out + (opened ? detailCard(opened) : "") +
-      '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' + head + "</tr></thead><tbody>" +
+      '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table" data-csv-primary><thead><tr>' + head + "</tr></thead><tbody>" +
       body + "</tbody></table></div>" +
       '<p class="mgmt-count">' + rows.length + " decisions" + (rows.length > 500 ? ", first 500 shown" : "") +
       "; a row opens the plays it governed. " + esc(sh.schema_note ? "" : "") + "</p>" +
@@ -1029,6 +1089,7 @@
     return out;
   }
 
+  var CSV_SECTIONS = ["gate", "reference", "teams", "bunt", "league", "decisions", "clubs", "managers", "challenges", "lineups"];
   function render() {
     var root = el("mgmt-app-root");
     if (!root) return;
@@ -1046,6 +1107,16 @@
     else if (s === "challenges") root.innerHTML = renderDarkTab("Challenges", DATA.challenges, ["regime_note", "value_not_observable"]);
     else if (s === "lineups") root.innerHTML = renderDarkTab("Lineups", DATA.lineups, ["value_not_measured"]);
     else root.innerHTML = renderRunning();
+    // The CSV control on the mount (build_site's data-csv-export opt-in)
+    // exports the table marked data-csv-primary where a section paints more
+    // than one (the decision listing, the club page's bullpen deployment),
+    // else the first visible table. The file name says which section, and
+    // for those two which club-season, it holds.
+    try {
+      var csvName = "in-game-management-" + (CSV_SECTIONS.indexOf(s) >= 0 ? s : "running");
+      if ((s === "decisions" || s === "clubs") && state.team) csvName += "-" + String(state.team).toLowerCase() + "-" + state.cseason;
+      root.setAttribute("data-csv-export", csvName);
+    } catch (e) { /* the host attribute is a courtesy */ }
     syncTabs();
     wire();
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(root); } catch (e) { /* glossary optional */ }

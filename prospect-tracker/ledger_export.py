@@ -251,7 +251,11 @@ def _team_names() -> dict:
 
 
 def _payroll_rows() -> tuple[dict, dict, dict]:
-    """{(club, season): row} for the clubs, the AVERAGES rows, and the join census."""
+    """{(club, season): row} for the clubs, the AVERAGES rows, and the join census.
+
+    The census also carries each row's fetch stamp (fetched_at, date part) keyed
+    (canonical code or AVERAGES, season): the League footer's two means are two
+    fetches of one Spotrac page, and the page has to say when each was taken."""
     import storage
     raw = storage.load_fa_team_payroll()
     clubs: dict = {}
@@ -267,7 +271,43 @@ def _payroll_rows() -> tuple[dict, dict, dict]:
         if key in clubs and team != c:
             continue      # an alias row never overwrites the canonical one
         clubs[key] = row
-    return clubs, averages, {"rows_in": len(raw), "club_rows": len(clubs), "averages_rows": len(averages)}
+    stamps: dict = {}
+    try:
+        with storage.connect() as con:
+            for team, season, at in con.execute(
+                    "SELECT team, season, fetched_at FROM fa_team_payroll").fetchall():
+                key = ("AVERAGES" if team == "AVERAGES" else _canon(team), int(season))
+                if key[0] and at and (key not in stamps or str(at)[:10] > stamps[key]):
+                    stamps[key] = str(at)[:10]
+    except Exception as exc:                      # noqa: BLE001
+        log.warning("ledger_export: fa_team_payroll stamps unavailable: %s", exc)
+    return clubs, averages, {"rows_in": len(raw), "club_rows": len(clubs),
+                             "averages_rows": len(averages), "fetched_at": stamps}
+
+
+def footer_means_note(av_fetched, clubs_fetched, gap_usd, class_year) -> str:
+    """The one sentence beneath the League footer: why Spotrac's league-average row
+    and the mean of the 30 club rows disagree on Committed {class_year}.
+
+    MEASURED 2026-09-23: the gap (about $17.0M) is VINTAGE, not basis. Both figures
+    are Spotrac total payroll allocations for 2027. The AVERAGES row in
+    fa_team_payroll is the last one the payroll-page parser emitted, fetched
+    2026-07-07 (the 2026-09-23 page parses to the 30 clubs and no Averages row, so
+    the nightly refresh rewrites the clubs and leaves the average where it was),
+    while the club rows carry the 2026-09-23 stamp; that page's own Averages row
+    reads 144,788,882, the computed mean to the dollar. test_ledger_export pins the
+    sentence to the two stamps and, where the page cache is on disk, to that
+    identity. When the stamps agree the sentence says so and the gap is the whole
+    story, which the same test then requires to be small."""
+    if gap_usd is None:
+        return ""
+    g = f"${abs(gap_usd) / 1e6:.1f}M"
+    if av_fetched and clubs_fetched and av_fetched < clubs_fetched:
+        return (f"The two rows differ by {g} because Spotrac's league average is the page's average "
+                f"row as fetched {av_fetched}, while the 30 club rows were refetched {clubs_fetched}; "
+                f"the basis is the same (Spotrac total payroll allocations {class_year}), so the gap "
+                f"is {class_year} money that reached club books between the two fetches.")
+    return f"Both rows are from the {clubs_fetched or av_fetched} fetch and differ by {g}."
 
 
 def _trade_trajectory() -> dict:
@@ -855,6 +895,15 @@ def build() -> dict:
         means[k] = round(statistics.mean(xs), 3 if k == "locked_pct" else 1) if xs else None
         means[k + "_n"] = len(xs)
     av27 = averages.get(CLASS_YEAR) or {}
+    # The footer's two means are two fetches of one Spotrac page: stamp both and
+    # state the gap's cause beneath them (footer_means_note).
+    stamps = payroll_join.get("fetched_at") or {}
+    av27_at = stamps.get(("AVERAGES", CLASS_YEAR))
+    club27_at = sorted(s for s in (stamps.get((c, CLASS_YEAR)) for c in clubs) if s)
+    means_at = club27_at[-1] if club27_at else None
+    footer_gap = (means["committed_2027"] - av27["total_payroll_usd"]
+                  if means.get("committed_2027") is not None and av27.get("total_payroll_usd") is not None
+                  else None)
     tw = verdict_of.get("team_win_projections")
     league = {
         "rows": league_rows,
@@ -880,8 +929,9 @@ def build() -> dict:
         "averages_row": {"label": "Spotrac league average",
                          "committed_2027": av27.get("total_payroll_usd"), "active_2027": av27.get("active_usd"),
                          "retained_2027": av27.get("retained_usd"), "buried_2027": av27.get("buried_usd"),
-                         "avg_age_2027": av27.get("avg_age")},
-        "means": {"label": "Mean of the 30 club rows", "values": means},
+                         "avg_age_2027": av27.get("avg_age"), "fetched_at": av27_at},
+        "means": {"label": "Mean of the 30 club rows", "values": means,
+                  "fetched_at": means_at, "fetched_at_min": club27_at[0] if club27_at else None},
         "pools": {"cost_plus": {"mean_ratio": _r(mu, 4), "sd_ratio": _r(sd, 4), "n": len(vals),
                                 "mean_index": _r(statistics.mean(cp), 2), "sd_index": _r(statistics.pstdev(cp), 2),
                                 "averages_excluded": True}},
@@ -926,6 +976,7 @@ def build() -> dict:
         "league_lede": ("Thirty clubs on two Spotrac bases and the platform's own prices. Only Cost+ "
                         "and OrgSur+ take a colour; every dollar cell prints plain, and the league "
                         "average row is a reference, never a club."),
+        "footer_means_note": footer_means_note(av27_at, means_at, footer_gap, CLASS_YEAR),
         "club_foot": ("Descriptive ledger. No single projected payroll is served: contract dollars "
                       "on file, projected arbitration steps and rule minimums are three keys the page "
                       "never sums."),

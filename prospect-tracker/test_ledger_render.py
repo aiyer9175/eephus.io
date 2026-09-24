@@ -51,6 +51,7 @@ SAMPLE = {
             "rates": {}, "unverified_records": 3},
     "copy": {
         "masthead": "Every dollar a club has on the books.", "league_lede": "Thirty clubs on two bases.",
+        "footer_means_note": "The two rows differ by $17.0M because Spotrac's league average is the page's average row as fetched 2026-07-07, while the 30 club rows were refetched 2026-09-23.",
         "club_foot": "Descriptive ledger.", "cba_banner": "Every 2027 figure is a 2022 CBA carry-forward: the agreement expires 2026-12-01.",
         "cbt_computed_label": "computed from Spotrac tax payroll and the schedule", "cbt_under": "under the threshold",
         "cbt_clock_rule": "rule text, not a forecast", "cbt_verify_note": "curated-unverified",
@@ -518,6 +519,68 @@ def test_the_contract_ledger_expander_base_rule_precedes_its_container_query():
     assert base < query, "source order lets the base rule win at every width"
     assert CSS.count(".ledger-app .lc-xp { display: none; }") == 1
     assert CSS.index(".ledger-app .lb-xp { display: none; }") < CSS.index("@container ledgerboard (max-width: 560px)")
+
+
+# --------------------------------------------------------------------------
+# Review notes on 53726dd8 (2026-09-23): the CSV target, the overage sign, the footer
+# --------------------------------------------------------------------------
+
+def test_the_csv_control_exports_the_table_the_reader_sees():
+    """eephus-csv.js exports the first VISIBLE table with rows inside the host. The
+    club section renders a three-row "Expiring after" mini table (commitments)
+    above the contract ledger, so the club CSV used to be that mini table. The
+    League board and the contract ledger now carry data-csv-primary, the helper
+    prefers a visible primary, and the host's file name says which table it holds."""
+    csv = (ROOT / "assets" / "eephus-csv.js").read_text(encoding="utf-8")
+    assert 'getAttribute("data-csv-primary")' in csv
+    body = csv[csv.index("function targetTable"):csv.index("function dataRowCount")]
+    assert body.index("data-csv-primary") < body.index("if (!visible) visible = t;"), "a visible primary wins over the first visible table"
+    club, _ = _render("club", team="LAD")
+    assert re.search(r"<table[^>]*>", club).group(0) == '<table class="ledger-mini">', "the DOM-first table with rows is a mini table"
+    assert club.count("data-csv-primary") == 1
+    assert '<table class="ledger-table ledger-contracts" data-csv-primary>' in club
+    league, _ = _render("league")
+    assert league.count("data-csv-primary") == 1
+    assert '<table class="ledger-table" data-csv-primary>' in league
+    assert '"club-ledger-" + (s === "club" ? String(state.team).toLowerCase() + "-contracts" : s)' in JS
+    if PAGE.exists():
+        assert 'id="ledger-app-root" data-csv-export="club-ledger"' in PAGE.read_text(encoding="utf-8"), "build_site's opt-in stays on the mount"
+
+
+def test_an_overage_takes_the_cost_sign_on_both_surfaces():
+    """Over the tax line is a cost. The League column "vs threshold" paints LAD's
+    -$186.3M red; the club CBT note painted the same fact green as "Over by
+    +$186.3M". One convention now: over is red, under is green, on both surfaces,
+    and the word beside the unsigned magnitude says which."""
+    league, _ = _render("league")
+    assert '<span class="ledger-neg">-$186.3M</span>' in league, "the League cell keeps the house sign"
+    club, _ = _render("club", team="LAD")
+    cbt = club[club.index('id="ledger-block-cbt"'):club.index('id="ledger-block-contracts"')]
+    assert 'Over by <span class="ledger-neg">$186.3M</span>' in cbt
+    note = cbt[cbt.index("Over by"):cbt.index("</p>", cbt.index("Over by"))]
+    assert "ledger-pos" not in note and "+$" not in note
+    club27, _ = _render("club", team="LAD", season="2027")
+    cbt27 = club27[club27.index('id="ledger-block-cbt"'):club27.index('id="ledger-block-contracts"')]
+    assert 'Over by <span class="ledger-neg">$128.9M</span>' in cbt27
+    assert 'basis: over by <span class="ledger-neg">$125.9M</span>' in cbt27
+    under = _copy.deepcopy(SAMPLE)
+    under["clubs"]["LAD"]["cbt"]["2026"]["over_usd"] = -20_000_000
+    html, _ = _render("club", team="LAD", payload=under)
+    cbt2 = html[html.index('id="ledger-block-cbt"'):html.index('id="ledger-block-contracts"')]
+    assert 'Under by <span class="ledger-pos">$20.0M</span>' in cbt2 and "Over by" not in cbt2
+    assert "costMoney(" in _fn_body("renderCbt") and "signedMoney(C.over_usd)" not in JS and "signedMoney(C.over_spotrac_basis_usd)" not in JS
+
+
+def test_the_footer_means_note_prints_beneath_the_two_means_from_the_payload():
+    html, _ = _render("league")
+    i = html.index("</tfoot>")
+    assert '<p class="ledger-count ledger-foot-note">' + SAMPLE["copy"]["footer_means_note"] + "</p>" in html[i:]
+    assert html.index("ledger-foot-note") < html.index('<figure class="ledger-quadrant">'), "beneath the footer, above the quadrant"
+    silent = _copy.deepcopy(SAMPLE)
+    silent["copy"]["footer_means_note"] = ""
+    html2, _ = _render("league", payload=silent)
+    assert "ledger-foot-note" not in html2
+    assert 'copy("footer_means_note")' in JS
 
 
 def test_the_league_board_takes_short_linked_labels_under_1400px_of_block_width():

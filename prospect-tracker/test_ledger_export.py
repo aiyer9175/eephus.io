@@ -113,6 +113,46 @@ def test_the_averages_row_is_a_reference_and_not_a_club(d):
     assert d["accountability"]["averages_excluded"] is True
 
 
+def test_the_league_footer_note_is_pinned_to_the_measured_vintage_gap(d):
+    """Spotrac's average row and the mean of the 30 club rows disagreed on Committed
+    2027 by $17.0M (review of 53726dd8). Measured cause: VINTAGE, not basis. The
+    AVERAGES row's fetched_at is 2026-07-07 (the payroll-page parser has emitted no
+    Averages row since; the 2026-09-23 page parses to 30 clubs) while the club rows
+    are refetched nightly; the cached 2026-09-23 page's own Averages row reads
+    144,788,882, the computed mean to the dollar. The sentence beneath the footer
+    names the gap and both stamps, and this test recomputes each from the payload
+    and, where the page cache is on disk, checks the basis identity too."""
+    import ledger_export as LE
+    L = d["league"]
+    av, mv = L["averages_row"], L["means"]
+    note = d["copy"]["footer_means_note"]
+    assert note and chr(0x2014) not in note and chr(0x2013) not in note
+    gap = mv["values"]["committed_2027"] - av["committed_2027"]
+    assert f"${abs(gap) / 1e6:.1f}M" in note
+    assert av["fetched_at"] and mv["fetched_at"] and mv["fetched_at_min"] <= mv["fetched_at"]
+    assert note == LE.footer_means_note(av["fetched_at"], mv["fetched_at"], gap, d["class_year"])
+    if abs(gap) >= 1_000_000:
+        assert av["fetched_at"] < mv["fetched_at"], "a gap with no vintage difference has no measured cause"
+        assert av["fetched_at"] in note and mv["fetched_at"] in note
+        assert "the basis is the same" in note and str(d["class_year"]) in note
+    else:
+        assert "Both rows are from" in note
+    page = ROOT / ".cache" / f"spotrac_payroll_{d['class_year']}.html"
+    if not page.exists():
+        return
+    from datetime import datetime
+    if datetime.fromtimestamp(page.stat().st_mtime).strftime("%Y-%m-%d") != mv["fetched_at"]:
+        return
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(page.read_text(encoding="utf-8", errors="replace"), "html.parser")
+    avg_rows = [tr for tr in soup.find("table").find_all("tr") if tr.get_text(" ", strip=True).startswith("Averages")]
+    if not avg_rows:
+        return
+    dollars = [int(c.replace("$", "").replace(",", "")) for c in
+               (td.get_text(strip=True) for td in avg_rows[0].find_all("td")) if c.startswith("$")]
+    assert abs(dollars[0] - mv["values"]["committed_2027"]) < 1, "the page's own average IS the computed mean: basis, not vintage"
+
+
 # --------------------------------------------------------------------------
 # Mistake 1: no single projected payroll
 # --------------------------------------------------------------------------
