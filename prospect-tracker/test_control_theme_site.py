@@ -118,6 +118,7 @@ ROUTES = [
     ("glossary", "glossary/index.html", ["glossary/", "glossary/#view=calculators"]),
     ("hof", "hof/index.html", ["hof/"]),
     ("management", "management/index.html", ["management/"]),
+    ("franchise", "franchise/index.html", ["franchise/", "franchise/#view=board"]),
     ("models", "models/index.html", ["models/"]),
     ("sources", "sources/index.html", ["sources/"]),
     ("team", "team/index.html", ["team/"]),

@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-09-23**. `validate()` at generation time: **clean**.
 
-**314 models.** Verdicts: validated: 53, provisional: 133, unvalidated: 41, deprecated: 87.
+**316 models.** Verdicts: validated: 53, provisional: 133, unvalidated: 43, deprecated: 87.
 
 ## Instrument boundary
 
@@ -333,6 +333,8 @@ can be measured.
 | `mgmt_decision_ledger` | /management/, the Clubs, Decisions and League tabs. data/... | nothing. It is a DESCRIPTIVE ledger of realized in-game value: for nine decision families the win probability that actually mov... | mWPA(d) = s(club, half) * (wp_home_after[p1] - wp_home_before[p0]) / 100 per... | n/a - a descriptive realized-value board on the leverage_board precedent. Wha... | descriptive; no forward gate by design (realized value is an outcome, not a f... | **provisional** | `data/management_decisions.json` | - | - |
 | `mgmt_state_baseline` | /management/, the per-decision drill-down (DVS column) an... | nothing. It is the matched-state league baseline: for each family and cell (season, inning bucket, half, outs, base code, score... | cell means with MIN_CELL 25 on the baseline side; thin cells published as exc... | n/a - descriptive. Removes the LEVEL of the state (a club that faced many hig... | descriptive; the within-cell identity (league residuals sum to zero) is check... | **provisional** | `data/management_baseline.json` | - | - |
 | `mgmt_style_z` | /management/, the club-season rows (Managers tab until th... | nothing. Five descriptive league-relative style figures per club-season: hook z (the starter's median pitch count at removal; a... | signed z to one decimal, population sd, sign as measured. | n/a - descriptive style axes; they repeat because they are policy, and a freq... | descriptive; NOT a 100 + 10z index, no ladder, no plus sign, no tier colour (... | **provisional** | - | - | - |
+| `franchise_index` | /franchise/ root card, canopy and the 30-club board (fran... | nothing. A DESCRIPTIVE league-relative rank index: the weighted mean of the three franchise branch scores (ROSTER 0.40 team eWA... | franchise_export._score_100 applied to the weighted mean of the three branch... | league mean = 100, +1 population sd = 110 | none standalone; the three inputs carry their own rows (ewar provisional, tea... | **unvalidated** | - | - | - |
+| `franchise_branch_score` | /franchise/ canopy bubbles, the full tree and the board c... | nothing. A DESCRIPTIVE 100 + 10z of ONE served value across the 30 clubs (population sd, one decimal): war_leaderboards.teams.w... | franchise_export._score_100 (the storage._zscore_to_100 formula, re-implement... | league mean = 100, +1 population sd = 110 | none standalone; a rank index over served values, each of which carries its o... | **unvalidated** | - | - | - |
 
 Stored problems at last refresh: none.
 

@@ -50,6 +50,10 @@ def test_a_new_module_appends_and_never_reorders_the_existing_ones():
     anything that was already in the list.
     """
     keys = tuple(k for k, _l, _h in _mlb_children())
+    # 2026-09-23: the Franchise hub sits FIRST in the group by owner decision
+    # (the hub before the modules, not a module appended to them), so it is
+    # skipped here and the invariant still reads the modules' own order.
+    keys = tuple(k for k in keys if k != "franchise")
     assert keys[:len(_MLB_PREFIX_AT_ARBITRATION)] == _MLB_PREFIX_AT_ARBITRATION, (
         f"the MLB Modules group was REORDERED, not appended to: {keys}")
 

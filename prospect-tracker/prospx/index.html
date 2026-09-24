@@ -8800,6 +8800,7 @@
     <details class="eephus-nav-group" data-nav-group>
       <summary aria-haspopup="true">MLB Modules<span class="nav-caret" aria-hidden="true">▾</span></summary>
       <div class="eephus-nav-menu" role="menu">
+        <a href="/franchise/" role="menuitem">Franchise</a>
         <a href="/fa/" role="menuitem">Free Agency</a>
         <a href="/projections/" role="menuitem">Projections</a>
         <a href="/mlbstats/" role="menuitem">MLB Stats</a>
@@ -51703,7 +51704,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
           </div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;flex:none;">
+      <div style="display:flex;align-items:center;flex:none;gap:8px;">
+        <a class="chip" href="/franchise/#team=${escapeHtml(org.org)}" title="Open this club's Franchise Overview: the org-level grade tree and every module's numbers for the club">Franchise</a>
         <button class="gfx-card-btn" type="button" title="Generate a shareable PROSPX graphic of this farm system"><span class="gfx-card-btn-icon" aria-hidden="true">📊</span>Generate GFX</button>
       </div>
     </div>

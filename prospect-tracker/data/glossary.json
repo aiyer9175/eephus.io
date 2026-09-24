@@ -1533,7 +1533,8 @@
     "prospx",
     "projections",
     "fa",
-    "mlbstats"
+    "mlbstats",
+    "franchise"
    ],
    "aliases": [
     "eWAR",
@@ -3229,7 +3230,8 @@
    "term": "OrgSur+",
    "category": "custom-index",
    "module": [
-    "prospx"
+    "prospx",
+    "franchise"
    ],
    "aliases": [
     "OrgSur+",
@@ -7320,7 +7322,8 @@
    "term": "Realized mWPA (realized value of a decision)",
    "category": "custom-index",
    "module": [
-    "management"
+    "management",
+    "franchise"
    ],
    "aliases": [
     "mWPA",
@@ -7707,7 +7710,8 @@
    "term": "Payor tier",
    "category": "financial",
    "module": [
-    "ledger"
+    "ledger",
+    "franchise"
    ],
    "aliases": [
     "payor status",
@@ -7942,7 +7946,8 @@
    "term": "Realized contract value",
    "category": "fa",
    "module": [
-    "ledger"
+    "ledger",
+    "franchise"
    ],
    "aliases": [
     "contract value delivered",
@@ -7960,6 +7965,210 @@
    ],
    "shelf": "ark",
    "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "franchise_index",
+   "term": "Franchise Index",
+   "category": "custom-index",
+   "module": [
+    "franchise"
+   ],
+   "aliases": [
+    "Franchise Index",
+    "franchise grade",
+    "org grade tree"
+   ],
+   "priority": 40,
+   "definition": "A descriptive rank of a club's realized standing plus one provisional projection: the weighted mean of the ROSTER, OUTLOOK and FARM branch scores, re-standardised to 100 + 10z across the 30 clubs. Not a forecast of anything else.",
+   "methodology": "franchise_export.py: branch scores (100 + 10z of team eWAR, projected 2027 wins and the PROSPX farm composite) are combined at ROSTER 0.40 / OUTLOOK 0.30 / FARM 0.30, and the weighted mean is re-standardised by the same formula before any rank or letter is taken, because a weighted mean of z-scores has sd below 10 unless the branches are perfectly correlated. Letters follow rank (storage._letter_grade) and print in neutral ink; only the score takes the z ladder. Thirty percent rests on the provisional team_win_projections row.",
+   "example": "",
+   "formula": "index = 100 + 10 * (w - mean(w)) / sd(w), w = 0.40 * roster + 0.30 * outlook + 0.30 * farm",
+   "seeAlso": [
+    "franchise_branch_score",
+    "ewar",
+    "sur_plus"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Franchise, franchise_export.py); registry row franchise_index, unvalidated (descriptive)"
+  },
+  {
+   "id": "franchise_branch_score",
+   "term": "Branch score",
+   "category": "custom-index",
+   "module": [
+    "franchise"
+   ],
+   "aliases": [
+    "branch score",
+    "ROSTER score",
+    "OUTLOOK score",
+    "FARM score"
+   ],
+   "priority": 41,
+   "definition": "One served value re-expressed as 100 + 10z across the 30 clubs: team eWAR on the current roster (ROSTER), projected 2027 wins (OUTLOOK, a provisional projection) and the PROSPX farm composite (FARM, whose letter and rank pass through from PROSPX unchanged).",
+   "methodology": "franchise_export._score_100: population sd over the 30 served values, one decimal, None stays None. The FARM score is re-standardised because farm_score measures sd 6.36 across the 30 and would tier at two thirds of the z ladder if passed through raw. Nine further branches are descriptive nameplates with no score, letter or weight.",
+   "example": "",
+   "formula": "score = 100 + 10 * (v - mean(v)) / sd(v) over the 30 clubs",
+   "seeAlso": [
+    "franchise_index",
+    "ewar",
+    "farm_grade_financial"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Franchise, franchise_export.py); registry row franchise_branch_score, unvalidated (descriptive)"
+  },
+  {
+   "id": "season_record",
+   "term": "Season record",
+   "category": "standard-stat",
+   "module": [
+    "franchise"
+   ],
+   "aliases": [
+    "record",
+    "W-L",
+    "wins and losses"
+   ],
+   "priority": 60,
+   "definition": "A club's wins and losses in the season, with games played, run differential and division rank as the standings carry them.",
+   "methodology": "Read from the cached StatsAPI standings, joined by team id (stable across relocations) for 2000 to 2026; the Franchise page prints it as a descriptive section and grades nothing on it.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "pythag_pct",
+    "franchise_index"
+   ],
+   "shelf": "foundation",
+   "origin": ""
+  },
+  {
+   "id": "locked_pct",
+   "term": "Core under control",
+   "category": "custom-index",
+   "module": [
+    "franchise",
+    "projections",
+    "ledger"
+   ],
+   "aliases": [
+    "locked pct",
+    "lockedPct",
+    "share under club control"
+   ],
+   "priority": 45,
+   "definition": "The share of a club's projected 2027 to 2031 core WAR that is under club control (signed, arbitration or pre-arbitration seasons), a share of a projection rather than a measurement.",
+   "methodology": "mlb_projections.team_outlook.lockedPct (proj_export): controlled WAR over the five-season horizon divided by the full projected WAR of the same players; team_win_projections is provisional and the share inherits that.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "franchise_branch_score",
+    "controlled_surplus"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (MLB Projections Team Outlook, proj_export.py)"
+  },
+  {
+   "id": "leverage_deploy_plus",
+   "term": "Leverage deployment index",
+   "category": "custom-index",
+   "module": [
+    "franchise",
+    "mlbstats"
+   ],
+   "aliases": [
+    "leverage deploy",
+    "leverage_deploy_plus",
+    "deployment index"
+   ],
+   "priority": 46,
+   "definition": "A 100 + 10z index of how a bullpen's best relievers are deployed into leverage, a deployment fact about the manager's usage and not a measure of reliever skill.",
+   "methodology": "bullpen_export: relief-entry-weighted gmLI of the pen's high-leverage core across the 30 clubs, anchored 100 + 10z; the Franchise page labels it deployment index, not skill (registry row leverage_consistency, provisional) and never folds it into a grade.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "gmli_3yr",
+    "bullpen_plus",
+    "rem_plus"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (MLB Stats bullpen leaderboards, bullpen_export.py)"
+  },
+  {
+   "id": "cbt_space",
+   "term": "Cap space (CBT)",
+   "category": "financial",
+   "module": [
+    "franchise",
+    "ledger"
+   ],
+   "aliases": [
+    "space",
+    "room under the threshold",
+    "cap space"
+   ],
+   "priority": 42,
+   "definition": "The gap between a club's competitive balance tax payroll and the threshold it is measured against; negative when the club sits over the line. A capacity fact, never coloured on a ladder.",
+   "methodology": "Spotrac's 2027 page computes space against a 247M basis while the platform's cba_rules carry 244M forward as explicitly unknown; the Club Ledger and the Franchise page print both, each labelled with its basis, and never mix them.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "cbt_payroll",
+    "cbt_bracket",
+    "payor_tier"
+   ],
+   "shelf": "foundation",
+   "origin": ""
+  },
+  {
+   "id": "park_factor",
+   "term": "Park factor",
+   "category": "industry-stat",
+   "module": [
+    "franchise",
+    "fa"
+   ],
+   "aliases": [
+    "park factors",
+    "PF",
+    "wOBA park factor",
+    "HR park factor"
+   ],
+   "priority": 61,
+   "definition": "How much a ballpark inflates or deflates a statistic relative to a neutral park, indexed at 100: a runs factor of 110 means ten percent more runs than average in that park.",
+   "methodology": "fa_meta.park_factors from Baseball Savant's statcast park factors, default three-season view (wOBA, HR, runs), with a rolling two-season row for a venue the default view drops (Sutter Health Park) flagged as a short window. Printed plain on the Franchise page and never tiered: a hitter's park is not better.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "season_record"
+   ],
+   "shelf": "industry",
+   "origin": "Baseball Savant statcast park factors (MLB Advanced Media)"
+  },
+  {
+   "id": "pythag_pct",
+   "term": "Pythagorean winning percentage",
+   "category": "industry-stat",
+   "module": [
+    "franchise",
+    "projections",
+    "betting"
+   ],
+   "aliases": [
+    "pythag",
+    "pythagorean record",
+    "pythagPct"
+   ],
+   "priority": 62,
+   "definition": "The winning percentage a club's runs scored and allowed imply, which tracks true talent more closely than the actual record over a season.",
+   "methodology": "mlb_projections.team_outlook.current.pythagPct, computed in proj_export from the season's runs scored and allowed and blended with the actual record and a talent prior under the current overlay; the Franchise page prints it beside the actual percentage under the label current overlay, blended.",
+   "example": "",
+   "formula": "RS^e / (RS^e + RA^e), e near 1.83",
+   "seeAlso": [
+    "season_record",
+    "win_expectancy"
+   ],
+   "shelf": "industry",
+   "origin": "Bill James (Pythagorean expectation)"
   }
  ]
 }

@@ -4616,6 +4616,28 @@
    "owner": "In-Game Management module",
    "last_validated": "2026-09-23",
    "notes": "2026-09-23 (D2 Wave A). Computed in mgmt_decisions.club_rows from the ledger counts and the club-season game counts (mgmt_teams.build_map). Mean zero and sd one across the clubs of each season by construction (test_mgmt_style.py). Rendered as neutral chips under the words style, not skill; management.js makes no EephusTiers call."
+  },
+  {
+   "model_id": "franchise_index",
+   "surface": "/franchise/ root card, canopy and the 30-club board (franchise_export.py -> data/franchise_board.json)",
+   "predicts": "nothing. A DESCRIPTIVE league-relative rank index: the weighted mean of the three franchise branch scores (ROSTER 0.40 team eWAR on the current roster, OUTLOOK 0.30 projected 2027 wins, FARM 0.30 the PROSPX farm composite), RE-STANDARDISED to 100 + 10z across the 30 clubs before any rank, letter or tier is taken from it. Thirty percent of the weight rests on a provisional projection (team_win_projections) and the root card says so; no forward claim of its own.",
+   "champion": "franchise_export._score_100 applied to the weighted mean of the three branch scores (raw_weighted_mean ships beside the score; its sd is below 10 because the branches are not perfectly correlated, which is why it is re-standardised rather than passed through)",
+   "baseline": "league mean = 100, +1 population sd = 110",
+   "metric": "none standalone; the three inputs carry their own rows (ewar provisional, team_win_projections provisional, farm_grades provisional) and this index adds no measurement to them",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "notes": "Registered 2026-09-23 with the Franchise module (D3), on the org_sur_plus precedent: a descriptive scale claim (mean 100, sd 10 across the 30 clubs by construction, pinned by test_franchise_export), never a prediction. Letters follow rank through storage._letter_grade and print in neutral ink; only the score takes the z ladder. Weights are declared in the payload and never redistributed at runtime."
+  },
+  {
+   "model_id": "franchise_branch_score",
+   "surface": "/franchise/ canopy bubbles, the full tree and the board columns ROSTER / OUTLOOK / FARM",
+   "predicts": "nothing. A DESCRIPTIVE 100 + 10z of ONE served value across the 30 clubs (population sd, one decimal): war_leaderboards.teams.war for ROSTER, mlb_projections.team_outlook.wins for OUTLOOK (a provisional projection, chip on the bubble) and timeseries.org_summary.farm_score for FARM, whose letter and rank pass through from PROSPX unchanged because farm_score measures sd 6.36 across the 30 and would tier at two thirds of the ladder if passed through raw.",
+   "champion": "franchise_export._score_100 (the storage._zscore_to_100 formula, re-implemented because that function is a closure inside export_timeseries_json and cannot be imported)",
+   "baseline": "league mean = 100, +1 population sd = 110",
+   "metric": "none standalone; a rank index over served values, each of which carries its own registry row",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "notes": "Registered 2026-09-23 with the Franchise module (D3). Descriptive by construction; the only claim is the scale (mean 100, sd 10 across the 30 clubs), pinned by test_franchise_export against the served org_summary score_100 leaves for formula parity. Nine further branches (SEASON, FIN, MARKET, FRONT OFFICE, DUGOUT, ARBITRATION, PARK, HISTORY, ODDS) are descriptive nameplates with no score, no letter and no weight."
   }
  ],
  "problems": []

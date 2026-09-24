@@ -26,6 +26,11 @@
   var board = null, hist = null;
   var boardErr = false, histErr = false;
   var filters = { cls: "all", team: "all", flag: null };
+  // #teams&team=CODE narrows the club view to one club (the Franchise page
+  // links in with it, 2026-09-23). Anchored to a separator on the mlbstats
+  // idiom; trusted only once the board carries that club.
+  var TEAM_NARROW_RE = /(?:^#|[#&])team=([A-Z]{2,3})\b/;
+  var teamNarrow = "";
   var sort = { key: "tot", dir: -1 };
 
   /* ---------------------------------------------------------------- css */
@@ -431,21 +436,44 @@
       var t = by[r.t] || (by[r.t] = { t: r.t, n: 0, tot: 0, next: 0 });
       t.n++;
       t.tot += r.tot || 0;
-      if (r.l && r.l.length && r.l[0][1]) t.next += r.l[0][1];
+      // The board season's step for EVERY player (not l[0], whose season varies
+      // by player: a pre-arb row may start at 2028, a carried row at 2026), so
+      // "Next season" is one season for the whole column and the Franchise
+      // hub's projected cost, which sums the same tuple, agrees with it.
+      if (r.l && r.l.length) {
+        for (var li = 0; li < r.l.length; li++) {
+          if (r.l[li][0] === board.season) { if (r.l[li][1]) t.next += r.l[li][1]; break; }
+        }
+      }
     });
     var rows = Object.keys(by).map(function (k) { return by[k]; });
     rows.sort(function (a, b) { return b.tot - a.tot; });
+    // The league rank is taken BEFORE narrowing, so a narrowed row keeps its
+    // place among the thirty.
+    var narrowed = teamNarrow && by[teamNarrow] ? teamNarrow : "";
     var body = rows.map(function (t, i) {
-      return '<tr><td class="mlbstats-col-rank">' + (i + 1) + "</td><td>" + club(t.t) +
+      if (narrowed && t.t !== narrowed) return "";
+      return '<tr class="' + (narrowed ? "arb-row-narrow" : "") + '"><td class="mlbstats-col-rank">' + (i + 1) + "</td><td>" + club(t.t) +
         "</td><td>" + t.n + "</td><td>" + money(t.next) + "</td><td>" + money(t.tot) + "</td></tr>";
     }).join("");
-    root.innerHTML =
+    var narrowNote = narrowed
+      ? '<p class="arb-narrow-note">Narrowed to ' + esc(narrowed) + ' (league rank kept). <a href="#teams" id="arb-narrow-clear">All clubs</a></p>'
+      : "";
+    root.innerHTML = narrowNote +
       '<div class="card arb-note"><p>Remaining arbitration cost by club. Non-tendered players ' +
       "are absent, so each total is an <strong>upper bound</strong>, not a payroll forecast.</p></div>" +
       '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead><tr>' +
       '<th class="mlbstats-col-rank">#</th><th>Club</th><th>Arb-eligible</th>' +
-      "<th>Next season</th><th>Total remaining</th></tr></thead><tbody>" + body +
+      "<th>" + (board.season ? "Next season (" + board.season + ")" : "Next season") + "</th><th>Total remaining</th></tr></thead><tbody>" + body +
       "</tbody></table></div>";
+    var clear = el("arb-narrow-clear");
+    if (clear) clear.onclick = function (e) {
+      e.preventDefault();
+      teamNarrow = "";
+      filters.team = "all";
+      renderBoard();
+      show("teams");
+    };
   }
 
   /* -------------------------------------------------------------- boot */
@@ -463,7 +491,7 @@
     if (which === "history" && !hist && !histErr) loadHistory();
     if (which === "history") renderHistory();
     if (which === "teams") renderTeams();
-    try { location.hash = "#" + which; } catch (e) { /* hash is optional */ }
+    try { location.hash = "#" + which + (which === "teams" && teamNarrow ? "&team=" + teamNarrow : ""); } catch (e) { /* hash is optional */ }
   }
 
   function loadHistory() {
@@ -482,8 +510,15 @@
     fetch(BOARD_URL, { cache: "no-cache" }).then(function (r) {
       if (!r.ok) throw new Error("http " + r.status);
       return r.json();
-    }).then(function (d) { board = d; renderBoard(); })
-      .catch(function () { boardErr = true; renderBoard(); });
+    }).then(function (d) {
+      board = d;
+      // The narrowing is honoured only for a club the board carries; the
+      // projections filter takes the same club so both views read narrowed.
+      if (teamNarrow && !(d.rows || []).some(function (r) { return r.t === teamNarrow; })) teamNarrow = "";
+      if (teamNarrow) filters.team = teamNarrow;
+      renderBoard();
+      if (el("arb-panel-teams") && !el("arb-panel-teams").hidden) renderTeams();
+    }).catch(function () { boardErr = true; renderBoard(); });
   }
 
   function init() {
@@ -491,8 +526,11 @@
       b.onclick = function () { show(b.getAttribute("data-arbsection")); };
     });
     var h = (location.hash || "").replace("#", "");
+    var sec = h.split("&")[0];
+    var tn = TEAM_NARROW_RE.exec(location.hash || "");
+    if (tn && sec === "teams") teamNarrow = tn[1];
     load();
-    if (h === "history" || h === "teams" || h === "model") show(h);
+    if (sec === "history" || sec === "teams" || sec === "model") show(sec);
   }
 
   if (document.readyState === "loading") {

@@ -1,0 +1,208 @@
+/* Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Noah J. Dengler (@ARKNDJL), 2026 */
+
+/* /franchise/ - Franchise Overview. Shares site.css for type and chrome; tokens
+   only, no colour literal anywhere. COLOUR RULES BAKED IN: a branch SCORE and
+   the Franchise Index take the z ladder from EephusTiers; a LETTER prints in
+   neutral ink and is never tiered, so a rank letter and a score colour cannot
+   disagree on one cell. A salary, a club surplus total, a cap-space cell and a
+   style z-score never take a ladder; the only colour a dollar carries is its
+   sign. The PROSPX .grade-tree rules are ported here under the .fr- prefix;
+   nothing is shared across the two pages by selector. Below 1100px (the PROSPX
+   breakpoint) the canopy and the full SVG hide and the accordion is the tree. */
+
+.fr-app .fr-lede { font-size: 15px; line-height: 1.55; margin: 6px 0 14px; max-width: 74ch; }
+.fr-app .fr-note { font-size: 13px; line-height: 1.5; opacity: .85; margin: 8px 0; max-width: 78ch; }
+.fr-app .fr-count { font-size: 12px; opacity: .6; margin: 6px 0; }
+.fr-app .fr-basis { font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-tertiary); margin: 2px 0 6px; }
+.fr-app .fr-pos { color: var(--up); }
+.fr-app .fr-neg { color: var(--down); }
+.fr-app .fr-neutral { color: var(--text-primary); }
+
+/* the CBA carry-forward banner: every 2027 dollar sits under one of these */
+.fr-app .fr-banner {
+  border: 1px solid var(--border-light); border-left: 3px solid var(--accent-gold);
+  background: var(--bg-secondary); padding: 8px 12px; margin: 10px 0; font-size: 12.5px; line-height: 1.5;
+}
+
+/* masthead row: logo, name, division, record, the native picker, the GFX chip */
+.fr-app .fr-mast { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 8px 0 12px; }
+.fr-app .fr-mast-logo { width: 48px; height: 48px; object-fit: contain; flex: none; }
+.fr-app .fr-mast-name { font-family: var(--font-retro); font-size: 22px; font-weight: 700; line-height: 1.1; }
+.fr-app .fr-mast-meta { font-family: var(--font-retro-mono); font-size: 12px; color: var(--text-tertiary); }
+.fr-app .fr-mast-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
+.fr-app .fr-mast-controls label { font-size: 12px; color: var(--text-tertiary); display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 720px) {
+  .fr-app .fr-mast-controls { margin-left: 0; width: 100%; }
+  .fr-app .fr-mast-controls label, .fr-app .fr-mast-controls select { width: 100%; }
+}
+
+/* root card + canopy in one row at desk; stacked below 1100 (the SVG hides) */
+.fr-app .fr-top { display: flex; gap: 16px; align-items: stretch; margin: 8px 0 12px; }
+.fr-app .fr-root {
+  flex: 0 0 260px; max-width: 260px; border: 1px solid var(--border-light); background: var(--bg-secondary);
+  padding: 10px 14px; min-width: 0;
+}
+.fr-app .fr-root-eyebrow { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); font-weight: 600; }
+.fr-app .fr-root-row { display: flex; align-items: baseline; gap: 14px; margin-top: 4px; flex-wrap: wrap; }
+.fr-app .fr-root-letter { font-family: var(--font-retro-mono); font-size: 40px; line-height: 1; font-weight: 700; letter-spacing: .04em; color: var(--text-primary); }
+.fr-app .fr-root-rank { font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary); }
+.fr-app .fr-root-score { font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
+.fr-app .fr-root-sentence { font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-top: 6px; }
+.fr-app .fr-root-foot { font-size: 10px; color: var(--text-tertiary); margin-top: 6px; line-height: 1.4; }
+.fr-app .fr-canopy { flex: 1 1 auto; min-width: 0; border: 1px solid var(--border-light); background: var(--bg-secondary); padding: 4px 8px; }
+.fr-app .fr-canopy svg, .fr-app .fr-tree-wrap svg { width: 100%; height: auto; display: block; }
+.fr-app .fr-svg-text { font-family: var(--font-sans); fill: var(--text-primary); }
+.fr-app .fr-svg-mono { font-family: var(--font-mono); fill: var(--text-tertiary); }
+.fr-app .fr-svg-serif { font-family: var(--font-serif); fill: var(--text-primary); }
+.fr-app .fr-svg-rule { stroke: var(--text-tertiary); }
+.fr-app .fr-svg-plate { fill: var(--bg-tertiary); stroke: var(--text-tertiary); }
+.fr-app .fr-svg-node { fill: var(--bg-secondary); }
+.fr-app .fr-svg-leaf { fill: var(--bg-secondary); stroke: var(--border-light); }
+.fr-app .fr-svg-desc { stroke: var(--text-tertiary); }
+.fr-app .fr-svg-chip { fill: var(--accent-gold); }
+.fr-app .fr-svg-chip-text { font-family: var(--font-mono); fill: var(--bg-secondary); font-size: 7px; letter-spacing: .06em; text-transform: uppercase; }
+
+/* the tree wrap: tri-state chip strip, then the canopy or the full SVG */
+.fr-app .fr-tree-wrap { border: 1px solid var(--border-light); background: var(--bg-secondary); margin: 8px 0 0; overflow: hidden; }
+.fr-app .fr-tree-toggle {
+  display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-bottom: 1px solid var(--border-light);
+  font-size: 10px; color: var(--text-tertiary);
+}
+.fr-app .fr-tree-toggle span { letter-spacing: .06em; text-transform: uppercase; font-weight: 600; }
+.fr-app .fr-tree-toggle .chip { font-size: 10px; padding: 2px 8px; letter-spacing: .04em; }
+.fr-app .fr-tree-svg { padding: 6px 8px 10px; }
+.fr-app .fr-tree-fallback { display: none; }
+
+/* the accordion (mobile tree): one details per branch, graded first */
+.fr-app .fr-acc { border: 1px solid var(--border-light); background: var(--bg-secondary); margin-bottom: 4px; }
+.fr-app .fr-acc summary { cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px 10px; font-size: 13px; min-height: 24px; }
+.fr-app .fr-acc summary .fr-acc-label { font-weight: 700; flex: 1 1 auto; }
+.fr-app .fr-acc summary .fr-acc-letter { font-family: var(--font-serif); font-weight: 700; color: var(--text-primary); }
+.fr-app .fr-acc summary .fr-acc-score { font-family: var(--font-mono); font-size: 12px; }
+.fr-app .fr-acc summary .fr-acc-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+.fr-app .fr-acc-leaves { list-style: none; margin: 0; padding: 0 10px 8px; }
+.fr-app .fr-acc-leaves li { display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid var(--border-subtle); padding: 4px 0; font-size: 12px; }
+.fr-app .fr-acc-leaves li b { font-family: var(--font-mono); font-weight: 600; white-space: nowrap; }
+
+@media (max-width: 1100px) {
+  .fr-app .fr-top { flex-direction: column; }
+  .fr-app .fr-root { max-width: none; flex-basis: auto; }
+  .fr-app .fr-canopy { display: none; }
+  .fr-app .fr-tree-wrap { display: none; }
+  .fr-app .fr-tree-fallback { display: block; margin-top: 10px; }
+}
+
+/* section blocks */
+.fr-app .fr-block {
+  container-type: inline-size; container-name: frblock;
+  border: 1px solid var(--border-light); background: var(--bg-secondary);
+  padding: 12px 16px; margin: 0 0 16px; min-width: 0;
+}
+.fr-app .fr-block h2 { font-size: 16px; margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.fr-app .fr-block h2 .fr-sec-title { font-size: 12px; font-weight: 400; color: var(--text-secondary); }
+.fr-app .fr-block h3 { font-size: 13.5px; margin: 14px 0 4px; }
+.fr-app .fr-verdict { font-size: 10px; margin-left: 4px; vertical-align: middle; }
+.fr-app .fr-verdict-none { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.fr-app .fr-open { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0 8px; font-size: 11px; color: var(--text-tertiary); }
+.fr-app .fr-open a { border: 1px solid var(--border-light); padding: 2px 8px; font-size: 11.5px; white-space: nowrap; color: var(--text-primary); text-decoration: none; }
+.fr-app .fr-open a:hover { border-color: var(--text-secondary); }
+
+/* dark blocks name their blocker (the .hof-dark idiom under the .fr- prefix) */
+.fr-app .fr-dark { border-left: 3px solid var(--border-light); padding-left: 12px; margin: 8px 0; }
+.fr-app .fr-darktag {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+  border: 1px solid var(--border-light); padding: 0 6px; opacity: .75; margin-left: 6px; vertical-align: middle;
+}
+.fr-app .fr-dark-why { font-size: 12.5px; margin: 4px 0; }
+
+/* tiles: flex-wrap at desk, two-up at phone width (the .mgmt-card proportions) */
+.fr-app .fr-tiles { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+/* a tile is a <div> always (a gl() title inside an <a> tile splintered the box);
+   the deep link is the trailing "open" chip. A basis string such as
+   hitter_leaderboards.teams.offense_plus has no break opportunity, so every text
+   line in a tile may wrap anywhere inside its 162px phone cell. */
+.fr-app .fr-tile { flex: 1 1 200px; border: 1px solid var(--border-light); padding: 8px 10px; min-width: 0; }
+.fr-app .fr-tile-linked:hover { border-color: var(--text-secondary); }
+.fr-app .fr-tile-title { font-size: 13px; opacity: .8; min-width: 0; overflow-wrap: anywhere; }
+.fr-app .fr-tile-big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 2px 0; font-family: var(--font-mono); min-width: 0; overflow-wrap: anywhere; }
+.fr-app .fr-tile-sub { font-size: 12px; opacity: .7; line-height: 1.4; min-width: 0; overflow-wrap: anywhere; }
+.fr-app .fr-tile-open { display: inline-block; margin-top: 5px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--border-light); padding: 2px 7px; color: var(--text-primary); text-decoration: none; }
+.fr-app .fr-tile-open:hover, .fr-app .fr-tile-open:focus-visible { border-color: var(--text-secondary); }
+.fr-app .fr-chip-prov { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 0 5px; margin-left: 6px; vertical-align: middle; }
+@media (max-width: 720px) {
+  .fr-app .fr-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fr-app .fr-tile-big { font-size: 20px; }
+}
+
+/* tables (the .mgmt-table rules): right-aligned tabular cells, first column left */
+.fr-app .fr-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.fr-app .fr-table th, .fr-app .fr-table td { padding: 4px 8px; text-align: right; white-space: nowrap; }
+.fr-app .fr-table th:first-child, .fr-app .fr-table td:first-child { text-align: left; }
+.fr-app .fr-table thead th { background: var(--bg-secondary); border-bottom: 2px solid var(--border-light); font-weight: 600; }
+.fr-app .fr-table thead th[data-frsort] { cursor: pointer; min-height: 36px; }
+.fr-app .fr-table thead th:focus { outline: 2px solid var(--accent-gold); outline-offset: -2px; }
+.fr-app .fr-table td { border-bottom: 1px solid var(--border-subtle); font-variant-numeric: tabular-nums; }
+.fr-app .fr-table tbody tr:nth-child(even) { background: var(--bg-hover); }
+.fr-app .fr-mini { width: 100%; border-collapse: collapse; font-size: 12px; }
+.fr-app .fr-mini td { padding: 3px 0; border-bottom: 1px solid var(--border-subtle); }
+.fr-app .fr-mini td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.fr-app .fr-tag { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; opacity: .65; margin-left: 4px; }
+.fr-app .fr-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.fr-app .fr-grid2 > div { min-width: 0; overflow-x: auto; }
+@container frblock (max-width: 640px) { .fr-app .fr-grid2 { grid-template-columns: 1fr; } }
+/* the fits and arbitration mini tables keep name + one number under 420px of block width */
+@container frblock (max-width: 420px) { .fr-app .fr-col-hide { display: none; } }
+
+/* letter chips: neutral ink, never tiered */
+.fr-app .fr-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.fr-app .fr-lchip { border: 1px solid var(--border-light); padding: 5px 9px; font-size: 12px; min-width: 84px; }
+.fr-app .fr-lchip b { display: block; font-size: 15px; font-family: var(--font-serif); color: var(--text-primary); }
+.fr-app .fr-lchip .fr-lchip-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+.fr-app .fr-chips a.fr-lchip { text-decoration: none; color: inherit; }
+
+/* sparklines and strips: currentColor strokes, axis-free, 36px */
+.fr-app .fr-spark { width: 100%; max-width: 520px; margin: 6px 0; }
+.fr-app .fr-spark svg { width: 100%; height: 36px; display: block; color: var(--text-secondary); }
+.fr-app .fr-spark .fr-spark-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.fr-app .fr-spark .fr-spark-zero { stroke: var(--border-light); stroke-width: 1; }
+.fr-app .fr-strip { width: 100%; margin: 6px 0; }
+.fr-app .fr-strip svg { width: 100%; height: 72px; display: block; color: var(--text-secondary); }
+.fr-app .fr-strip .fr-bar { fill: color-mix(in srgb, var(--accent-cyan) 55%, transparent); }
+.fr-app .fr-strip .fr-bar-lo { fill: color-mix(in srgb, var(--text-tertiary) 45%, transparent); }
+.fr-app .fr-strip text { fill: var(--text-tertiary); font-size: 8px; font-family: var(--font-retro-mono); }
+.fr-app .fr-strip .fr-axis { stroke: var(--border-light); stroke-width: 1; }
+
+/* z-bars: style, never a ladder; sign colour only */
+.fr-app .fr-zrow { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, .6fr) minmax(0, 1fr) 3.5em; gap: 8px; align-items: center; font-size: 12px; border-top: 1px solid var(--border-subtle); padding: 3px 0; }
+.fr-app .fr-zbar { position: relative; height: 8px; background: var(--bg-hover); }
+.fr-app .fr-zbar span { position: absolute; top: 0; height: 100%; }
+.fr-app .fr-zbar .fr-zpos { background: color-mix(in srgb, var(--up) 60%, transparent); }
+.fr-app .fr-zbar .fr-zneg { background: color-mix(in srgb, var(--down) 60%, transparent); }
+.fr-app .fr-zbar .fr-zmid { position: absolute; top: -2px; bottom: -2px; left: 50%; width: 1px; background: var(--text-tertiary); }
+.fr-app .fr-zval { font-family: var(--font-mono); text-align: right; }
+@container frblock (max-width: 480px) { .fr-app .fr-zrow { grid-template-columns: minmax(0, 1fr) 3.5em; } .fr-app .fr-zrow .fr-zhide { display: none; } }
+
+/* the 2027-2031 wins strip and the locked bar: height only, ladder-free */
+.fr-app .fr-lock { position: relative; height: 10px; background: var(--bg-hover); max-width: 320px; margin: 4px 0; }
+.fr-app .fr-lock span { display: block; height: 100%; background: color-mix(in srgb, var(--accent-cyan) 55%, transparent); }
+
+/* the board: container query on the wrap named frboard */
+.fr-app .fr-board { container-type: inline-size; container-name: frboard; overflow-x: auto; }
+.fr-app .fr-board .fr-table th:first-child, .fr-app .fr-board .fr-table td:first-child { position: sticky; left: 0; background: var(--bg-secondary); z-index: 1; }
+.fr-app .fr-board .fr-table { font-size: 12px; }
+.fr-app .fr-board .fr-table th, .fr-app .fr-board .fr-table td { padding: 4px 6px; }
+.fr-app .fr-board .fr-board-letter { font-family: var(--font-serif); font-weight: 700; color: var(--text-primary); margin-right: 4px; }
+@container frboard (max-width: 560px) { .fr-app .fr-board .fr-bcol-hide { display: none; } }
+
+/* the link rail at the foot */
+.fr-app .fr-links { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.fr-app .fr-links a { border: 1px solid var(--border-light); padding: 3px 8px; font-size: 12px; white-space: nowrap; text-decoration: none; color: var(--text-primary); }
+.fr-app details summary { cursor: pointer; font-size: 12.5px; margin: 6px 0; min-height: 24px; }
+
+@media (max-width: 720px) {
+  .fr-app .fr-block { padding: 10px 12px; }
+  .fr-app .fr-table { font-size: 12px; }
+}

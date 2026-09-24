@@ -471,6 +471,24 @@ ARTIFACTS = (
                  "exists; the writer refuses them."),
     },
     {
+        "file": "franchise_board.json", "group": "mlb",
+        "title": "Franchise board",
+        "what": ("Thirty clubs' org-level grade tree: the Franchise Index (the weighted "
+                 "mean of three branch scores, ROSTER 0.40 / OUTLOOK 0.30 / FARM 0.30, "
+                 "re-standardised to 100 + 10z across the 30) and twelve sections that "
+                 "re-serve what every module already publishes for the club, on the "
+                 "scale each was computed on, with the deep link back."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_franchise_export.py",
+        "note": ("Descriptive rank index, not a forecast: thirty percent rests on the "
+                 "provisional team_win_projections row and the root card says so. No "
+                 "HoF tile (dark with hof_export's wording), no pennants, no club "
+                 "decision-quality grade, no manager skill claim, no revenue or "
+                 "valuation. futures.json has no registry row, so the ODDS section "
+                 "carries no verdict chip. The writer refuses to publish on fewer than "
+                 "30 clubs and leaves the previous file on disk."),
+    },
+    {
         "file": "management_decisions.json", "group": "mlb",
         "title": "In-Game Management decision ledger (summary)",
         "what": ("Nine decision families the play corpus can name (pitching change, pinch "

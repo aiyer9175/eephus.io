@@ -302,6 +302,13 @@ SCHEDULED_EXPORTS = (
     # Appended BELOW mlbstats_windows on purpose: nothing may sit above
     # mgmt_export (test_mgmt_export scans a fixed window of this tuple's text).
     "ledger_export",
+    # The /franchise/ board (step 6b7d: franchise_board.json). Watched because
+    # the page paints its load-error sentence on a missing payload and the
+    # exporter REFUSES (FranchiseRefusal) when fewer than 30 clubs resolve on
+    # a graded branch, leaving the previous file on disk: without this row a
+    # refusal never reaches INGEST RED. Appended BELOW ledger_export on purpose
+    # (test_mgmt_export scans a fixed window above mgmt_export).
+    "franchise_export",
     # THE CLOSE-ODDS CAPTURE. Not an export this pipeline runs at all: it is
     # tools/betting_close_job.py, on its own cron, and that is exactly why it is
     # watched from here. The job exits 0 on every legitimate no-op, so a cron
@@ -3535,6 +3542,45 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 log.exception("ledger export failed - continuing")
                 _record_ingest("ledger_export", False, 0, f"ledger export raised: {e}",
                                "mlb", log)
+
+        # --- 6b7d. Franchise board ----------------------------------------
+        with _step("6b7d. Franchise board (franchise_board.json)", log):
+            # The /franchise/ payload (2026-09-23, D3): the org-level grade tree
+            # in data/franchise_board.json. Reads served artifacts and three
+            # caches only (standings, venues, war_daily through
+            # data/franchise_spine.json); never a socket. Sits AFTER d10e so the
+            # FIN section quotes the ledger board written a moment ago, after
+            # d9's rebuild_only for fresh trade_values, and after the day's
+            # projections; the id is the one the D3 spec reserved (6b7e is the
+            # management ledger, d10e the club ledger). A refusal (fewer than 30
+            # clubs on a graded branch) or a raise leaves the previous file on
+            # disk and files a red under "franchise_export". The comment sits
+            # inside the _step body on purpose: tools/gen_audit_docs.py credits
+            # a phase's text from its _step line to the next one, so a comment
+            # above the line would credit these files to d10e.
+            try:
+                import franchise_export as _fr
+                _frd = _fr.build()
+                _fr.OUT.write_text(
+                    json.dumps(_frd, ensure_ascii=False, separators=(",", ":")),
+                    encoding="utf-8")
+                _fr_top = min(_frd["clubs"], key=lambda d: d["index"]["rank"])
+                log.info("franchise: %d clubs; #1 %s index %s",
+                         len(_frd["clubs"]), _fr_top["code"], _fr_top["index"]["score"])
+                _record_ingest("franchise_export", True, len(_frd["clubs"]),
+                               "franchise board", "mlb", log)
+            except Exception as e:                # noqa: BLE001
+                # A refusal is a result, not a crash: the exporter declined to
+                # publish and the committed board stands. Matched by name so a
+                # failed import cannot leave the alias unbound in this clause.
+                if type(e).__name__ == "FranchiseRefusal":
+                    log.warning("franchise board REFUSED: %s; the previous file stands", e)
+                    _record_ingest("franchise_export", False, 0,
+                                   f"franchise export refused: {e}", "mlb", log)
+                else:
+                    log.exception("franchise export failed - continuing")
+                    _record_ingest("franchise_export", False, 0,
+                                   f"franchise export raised: {e}", "mlb", log)
 
         finish_run(run_id, new_snapshots=0, stat_lines=0,
                    notes=f"DAILY: {n_il} on IL, {n_debuts} debuts, {n_trades} new trades")

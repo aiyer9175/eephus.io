@@ -117,6 +117,9 @@ _MGMT_CSS_VER = _asset_ver("assets/management.css")
 # /ledger/ - Club Ledger (2026-09-23, D1).
 _LEDGER_VER = _asset_ver("assets/ledger.js")
 _LEDGER_CSS_VER = _asset_ver("assets/ledger.css")
+# /franchise/ - Franchise Overview (2026-09-23, D3): the org-level grade tree.
+_FRANCHISE_VER = _asset_ver("assets/franchise.js")
+_FRANCHISE_CSS_VER = _asset_ver("assets/franchise.css")
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /models/ - the model accountability hub. Client is filter-only: every row,
 # count and date on that page is server-rendered here at build time, so the
@@ -333,6 +336,10 @@ NAV_ITEMS = [
     ("prospx",   "PROSPX",           "/prospx/"),
     ("collegesavant", "CollegeSavant", "/collegesavant/"),
     {"group": "MLB Modules", "key": "mlb", "children": [
+        # Franchise (2026-09-23, D3): the hub before the modules, FIRST in the
+        # group by owner decision. The hand-kept static copies carry the same
+        # entry in the same slot (test_collegesavant_nav_in_sync).
+        ("franchise",   "Franchise",   "/franchise/"),
         ("fa",          "Free Agency", "/fa/"),
         ("projections", "Projections", "/projections/"),
         ("mlbstats",    "MLB Stats",   "/mlbstats/"),
@@ -526,6 +533,8 @@ MODULE_STAGE = {
     # Club Ledger (2026-09-23). Slot 0 is the SIGIL the rows above carry, not the
     # word: the shell writes sigil plus word itself, as the legacy shells do.
     "ledger": ("β", "Beta. Descriptive ledger: no payroll forecast, no revenue"),
+    # Franchise (2026-09-23). Slot 0 is the sigil, as the rows above.
+    "franchise": ("β", "Beta. Franchise Index is a descriptive rank, not a forecast"),
     "forums": ("β", "Forums is in beta"),
     "parks": ("β", "Beta. Display only: no model reads these factors"),
     "management": ("β", "Beta. Realized value only; the gate returned a bounded null for the steal and no family is ranked by skill"),
@@ -3348,7 +3357,9 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
                      "management": "⚑", "hof": "⚜",
                      # Club Ledger (2026-09-23): a ledger book, in the same
                      # ornamental family as the rows above.
-                     "ledger": "▤"}
+                     "ledger": "▤",
+                     # Franchise (2026-09-23): an org chart of four nodes.
+                     "franchise": "❖"}
     def _sb_link(key, label, href, grouped=False):
         classes = []
         if key == "home":
@@ -4899,6 +4910,63 @@ def build_ledger() -> str:
                 url=f"{SITE_ORIGIN}/ledger/")
 
 
+def build_franchise() -> str:
+    """The /franchise/ Franchise Overview module (2026-09-23, D3).
+
+    A HUB, NOT A MODEL. One page per club re-serving what every module already
+    publishes, on the scale each was computed on, with a labelled basis and a
+    deep link back to the module that owns it. It computes exactly two new
+    things, both descriptive: a branch score (100 + 10z of one served value
+    across the 30 clubs) for ROSTER, OUTLOOK and FARM, and the Franchise Index,
+    the weighted mean of those three re-standardised to 100 + 10z across the
+    30 before any rank or letter is taken from it. Thirty percent of the index
+    rests on a provisional projection (team_win_projections) and the root card
+    says so. Every figure is read off a served artifact by franchise_export.py
+    and rendered by assets/franchise.js from data/franchise_board.json; this
+    shell types no number and no sentence beyond two glossary hooks, and the
+    masthead line is filled from the payload.
+
+    NEVER HERE: a HoF tile (dark with hof_export's own wording), pennants or
+    titles, any club decision-quality grade, any manager skill claim, revenue
+    or valuation figures. Letters print in neutral ink and only scores take
+    the z ladder.
+
+    Shell on the build_ledger pattern: section-head with the byline and the
+    stage chip, the .mlbstats-sectionnav tablist (Club, Board), one mount root
+    with the CSV opt-in, module css + eephus-hub.js + eephus-gfx.js (the GFX
+    export goes through the shared header helper) + module js deferred. Hash
+    grammar: #team=CODE (validated against the payload's 30 codes),
+    #view=board|club, #tree=hidden|canopy|full, #sec=<branch key>."""
+    body = (
+        '<div class="fa-app mlbstats-app fr-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>Franchise Overview <span class="eephus-beta" title="{html.escape(MODULE_STAGE["franchise"][1])}">'
+        f'{html.escape(MODULE_STAGE["franchise"][0])} beta</span></h1></div>'
+        f'<span class="section-sub" id="franchise-masthead">The {_gl("franchise_index", "Franchise Index")} of every club '
+        f'and the {_gl("franchise_branch_score", "branch scores")} beneath it, re-standardised across 30 clubs, '
+        'with every number on the scale it was computed on.</span></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Franchise sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-frsection="club" role="tab" aria-selected="true">Club</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-frsection="board" role="tab" aria-selected="false">Board</button>'
+        '</div>'
+        '<div id="franchise-section" class="mlbstats-section">'
+        f'<div id="franchise-app-root"{_csv_optin("franchise")}></div>'
+        '</div>'
+        '</div>'
+        f'<link rel="stylesheet" href="/assets/franchise.css?v={_FRANCHISE_CSS_VER}">'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
+        f'<script src="/assets/franchise.js?v={_FRANCHISE_VER}" defer></script>'
+    )
+    return page("Franchise Overview - eephus.io", "franchise", body,
+                "One page per club: the Franchise Index and its three graded branches (roster eWAR, "
+                "the provisional 2027 projection, the PROSPX farm composite), re-standardised across "
+                "30 clubs, with nine descriptive sections re-serving the season, finances, free agency, "
+                "front office, dugout, arbitration, park, history and the model's season view, each "
+                "number on its own scale and linked back to the module that owns it.",
+                url=f"{SITE_ORIGIN}/franchise/")
+
+
 def build_hof() -> str:
     """The /hof/ Hall of Fame module.
 
@@ -5976,6 +6044,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/trademachine/", "daily", "0.8"),
         ("/arbitration/", "daily", "0.8"),
         ("/ledger/", "daily", "0.7"),
+        ("/franchise/", "daily", "0.7"),
         # /dynasty/, /redraft/ and /dfs/ are redirect stubs into /fantasy/ and
         # carry meta robots=noindex, so they are deliberately absent here (same
         # treatment as /teams/). Their content is one crawlable page.
@@ -6602,6 +6671,7 @@ def main() -> None:
     _write("parks/index.html", build_parks())
     _write("hof/index.html", build_hof())
     _write("management/index.html", build_management())
+    _write("franchise/index.html", build_franchise())
     _write("ledger/index.html", build_ledger())
     _write("models/index.html", build_models())
     _write("glossary/index.html", build_glossary())

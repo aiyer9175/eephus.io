@@ -95,6 +95,10 @@ TARGETS: list[str] = [
     # lands in the served JSON verbatim.
     "ledger/index.html",
     "ledger_export.py",
+    # Franchise (2026-09-23, D3): the page and its exporter, whose copy block
+    # lands in the served JSON verbatim.
+    "franchise/index.html",
+    "franchise_export.py",
     "player/index.html",
     # /models/ renders registry `notes` prose verbatim, so its copy is only ever
     # as clean as the registry's, and it inherits any dash a future row carries.

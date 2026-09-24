@@ -1,0 +1,334 @@
+{
+ "generated_at": "2026-09-23",
+ "scope": "Baseball-Reference war_daily team_ID to canonical org, seasons 1969 to 2026, for the /franchise/ club bWAR line ONLY. The 2000-2026 standings join by StatsAPI team id (stable across relocations) and need no spine. The Hall of Fame franchises section needs a team column on the season frame and a frozen multi-team attribution rule with the rejected alternative named; this spine supplies neither and does not claim to unblock /hof/.",
+ "source": ".cache/war_daily/bat.parquet and pit.parquet (team_ID, year_ID); intervals measured 2026-09-23",
+ "first_season": 1969,
+ "last_season": 2026,
+ "orgs": {
+  "ARI": [
+   {
+    "team_id": "ARI",
+    "first": 1998,
+    "last": 2026
+   }
+  ],
+  "ATH": [
+   {
+    "team_id": "OAK",
+    "first": 1969,
+    "last": 2024
+   },
+   {
+    "team_id": "ATH",
+    "first": 2025,
+    "last": 2026
+   }
+  ],
+  "ATL": [
+   {
+    "team_id": "ATL",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "BAL": [
+   {
+    "team_id": "BAL",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "BOS": [
+   {
+    "team_id": "BOS",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "CHC": [
+   {
+    "team_id": "CHC",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "CHW": [
+   {
+    "team_id": "CHW",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "CIN": [
+   {
+    "team_id": "CIN",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "CLE": [
+   {
+    "team_id": "CLE",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "COL": [
+   {
+    "team_id": "COL",
+    "first": 1993,
+    "last": 2026
+   }
+  ],
+  "DET": [
+   {
+    "team_id": "DET",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "HOU": [
+   {
+    "team_id": "HOU",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "KCR": [
+   {
+    "team_id": "KCR",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "LAA": [
+   {
+    "team_id": "CAL",
+    "first": 1969,
+    "last": 1996
+   },
+   {
+    "team_id": "ANA",
+    "first": 1997,
+    "last": 2004
+   },
+   {
+    "team_id": "LAA",
+    "first": 2005,
+    "last": 2026
+   }
+  ],
+  "LAD": [
+   {
+    "team_id": "LAD",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "MIA": [
+   {
+    "team_id": "FLA",
+    "first": 1993,
+    "last": 2011
+   },
+   {
+    "team_id": "MIA",
+    "first": 2012,
+    "last": 2026
+   }
+  ],
+  "MIL": [
+   {
+    "team_id": "SEP",
+    "first": 1969,
+    "last": 1969
+   },
+   {
+    "team_id": "MIL",
+    "first": 1970,
+    "last": 2026
+   }
+  ],
+  "MIN": [
+   {
+    "team_id": "MIN",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "NYM": [
+   {
+    "team_id": "NYM",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "NYY": [
+   {
+    "team_id": "NYY",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "PHI": [
+   {
+    "team_id": "PHI",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "PIT": [
+   {
+    "team_id": "PIT",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "SDP": [
+   {
+    "team_id": "SDP",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "SEA": [
+   {
+    "team_id": "SEA",
+    "first": 1977,
+    "last": 2026
+   }
+  ],
+  "SFG": [
+   {
+    "team_id": "SFG",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "STL": [
+   {
+    "team_id": "STL",
+    "first": 1969,
+    "last": 2026
+   }
+  ],
+  "TBR": [
+   {
+    "team_id": "TBD",
+    "first": 1998,
+    "last": 2007
+   },
+   {
+    "team_id": "TBR",
+    "first": 2008,
+    "last": 2026
+   }
+  ],
+  "TEX": [
+   {
+    "team_id": "WSA",
+    "first": 1969,
+    "last": 1971
+   },
+   {
+    "team_id": "TEX",
+    "first": 1972,
+    "last": 2026
+   }
+  ],
+  "TOR": [
+   {
+    "team_id": "TOR",
+    "first": 1977,
+    "last": 2026
+   }
+  ],
+  "WSN": [
+   {
+    "team_id": "MON",
+    "first": 1969,
+    "last": 2004
+   },
+   {
+    "team_id": "WSN",
+    "first": 2005,
+    "last": 2026
+   }
+  ]
+ },
+ "relocations": [
+  {
+   "from": "OAK",
+   "to": "ATH",
+   "season": 2025,
+   "kind": "relocation",
+   "note": "Oakland to West Sacramento (Sutter Health Park) for 2025; ATH is also the 1871-1875 Philadelphia Athletics code in the frame, outside this spine's window"
+  },
+  {
+   "from": "MON",
+   "to": "WSN",
+   "season": 2005,
+   "kind": "relocation",
+   "note": "Montreal Expos to Washington Nationals"
+  },
+  {
+   "from": "FLA",
+   "to": "MIA",
+   "season": 2012,
+   "kind": "rename",
+   "note": "Florida Marlins to Miami Marlins"
+  },
+  {
+   "from": "TBD",
+   "to": "TBR",
+   "season": 2008,
+   "kind": "rename",
+   "note": "Tampa Bay Devil Rays to Tampa Bay Rays"
+  },
+  {
+   "from": "CAL",
+   "to": "ANA",
+   "season": 1997,
+   "kind": "rename",
+   "note": "California Angels to Anaheim Angels"
+  },
+  {
+   "from": "ANA",
+   "to": "LAA",
+   "season": 2005,
+   "kind": "rename",
+   "note": "Anaheim Angels to Los Angeles Angels"
+  },
+  {
+   "from": "SEP",
+   "to": "MIL",
+   "season": 1970,
+   "kind": "relocation",
+   "note": "Seattle Pilots to Milwaukee Brewers"
+  },
+  {
+   "from": "WSA",
+   "to": "TEX",
+   "season": 1972,
+   "kind": "relocation",
+   "note": "Washington Senators (expansion) to Texas Rangers"
+  }
+ ],
+ "expansions": {
+  "KCR": 1969,
+  "SDP": 1969,
+  "MON": 1969,
+  "SEP": 1969,
+  "SEA": 1977,
+  "TOR": 1977,
+  "COL": 1993,
+  "FLA": 1993,
+  "ARI": 1998,
+  "TBD": 1998
+ },
+ "not_in_scope": [
+  "standings (joined by StatsAPI team id)",
+  "Hall of Fame plaques per franchise",
+  "pennants and titles"
+ ]
+}
