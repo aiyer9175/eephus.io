@@ -288,6 +288,35 @@ def test_the_picker_on_the_page(browser, label, path, css, _):
         assert page.evaluate("""s => !document.querySelector('.teampick-panel')
             && document.activeElement === document.querySelector(s).previousElementSibling""", css), label
         assert page.evaluate("s => document.querySelector(s).value", css) == want, label
+        # Enter in an EMPTY search keeps the chosen club (the first row is "All";
+        # taking it silently reset the filter, review finding 2026-09-24)
+        trig.click()
+        page.wait_for_timeout(150)
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(300)
+        assert not page.evaluate("() => !!document.querySelector('.teampick-panel')"), label
+        assert page.evaluate("s => document.querySelector(s).value", css) == want, label
+        assert page.evaluate("() => window.__tp") == [want], label
+        # a type-ahead "/" on a focused row stays in the picker: the site's
+        # quick-search shortcut must not open over it
+        trig.click()
+        page.wait_for_timeout(150)
+        page.keyboard.press("ArrowDown")
+        page.keyboard.press("/")
+        page.wait_for_timeout(200)
+        assert page.evaluate("""() => { const o = document.getElementById('qk-overlay');
+            return !(o && o.classList.contains('is-open')); }"""), label
+        assert page.evaluate("() => !!document.querySelector('.teampick-panel')"), label
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(150)
+        # Tab closes the panel and moves on past the trigger
+        trig.click()
+        page.wait_for_timeout(150)
+        page.keyboard.press("Tab")
+        page.wait_for_timeout(200)
+        assert page.evaluate("""s => !document.querySelector('.teampick-panel')
+            && document.activeElement !== document.querySelector(s).previousElementSibling""", css), label
+        assert page.evaluate("s => document.querySelector(s).value", css) == want, label
         assert not errors, (label, errors)
     finally:
         ctx.close()

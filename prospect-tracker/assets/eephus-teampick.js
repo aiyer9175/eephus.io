@@ -37,9 +37,9 @@
 // aria-expanded and a name built from the control's own label plus the
 // current value. The panel is a search box over a role=listbox of
 // role=option rows (aria-selected on the chosen one). Arrow keys, Home and
-// End move; Enter or Space choose; typing on a row goes to the search box;
-// Escape and Tab close and return focus to the trigger; an outside press
-// closes. One panel is open at a time. A module that restores focus to its
+// End move; Enter or Space choose (Enter in an EMPTY search keeps the chosen
+// value); typing on a row goes to the search box; Escape closes and returns
+// focus to the trigger; Tab closes and moves on; an outside press closes. One panel is open at a time. A module that restores focus to its
 // select after a re-render (MLB Stats does) lands on the trigger instead.
 //
 // LOGOS come from EEPHUS_HUB.club(), the one club table (both code families,
@@ -375,9 +375,17 @@
     var rows = visibleRows();
     if (e.key === "ArrowDown") { e.preventDefault(); moveTo(rows, 0); }
     else if (e.key === "ArrowUp") { e.preventDefault(); moveTo(rows, rows.length - 1); }
-    else if (e.key === "Enter") { e.preventDefault(); if (rows.length) choose(+rows[0].getAttribute("data-i")); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      // An empty query means "keep what is chosen": the first row is "All",
+      // and taking it would silently reset the filter.
+      if (!openState.search.value.trim()) close(true);
+      else if (rows.length) choose(+rows[0].getAttribute("data-i"));
+    }
     else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(true); }
-    else if (e.key === "Tab") { e.preventDefault(); close(true); }
+    // Tab closes and returns to the trigger WITHOUT preventDefault, so the
+    // browser's own Tab then moves on to the next control.
+    else if (e.key === "Tab") { close(true); }
   }
 
   function onRowKey(e) {
@@ -394,14 +402,16 @@
     else if (k === "End") { e.preventDefault(); moveTo(rows, rows.length - 1); }
     else if (k === "Enter" || k === " ") { e.preventDefault(); choose(+row.getAttribute("data-i")); }
     else if (k === "Escape") { e.preventDefault(); e.stopPropagation(); close(true); }
-    else if (k === "Tab") { e.preventDefault(); close(true); }
+    else if (k === "Tab") { close(true); }
     else if (k === "Backspace") {
       e.preventDefault();
       var s = openState.search;
       s.value = s.value.slice(0, -1); s.focus(); filterRows(s.value); position();
     } else if (k.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      // type-ahead: the keystroke goes to the search box
+      // type-ahead: the keystroke goes to the search box, and stops here so
+      // the site's "/" quick-search shortcut never sees it
       e.preventDefault();
+      e.stopPropagation();
       var s2 = openState.search;
       s2.value += k; s2.focus(); filterRows(s2.value); position();
     }
