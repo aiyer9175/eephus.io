@@ -777,11 +777,11 @@
       var p = F.pools[y];
       return "<div>" + esc(y) + "<b>" + esc(p[0] !== null ? money(p[0]) : p[1]) + "</b></div>";
     }).join("") + "</div>" + '<p class="ledger-count">' + esc(copy("pools_note")) + "</p>";
-    out += '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Draft</th><th>Picks</th><th>Signed</th><th>Paid</th><th>Slot (slotted)</th><th>Over slot</th><th>Slot coverage</th><th>Pool used</th></tr></thead><tbody>' +
+    out += '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Draft</th><th>Picks</th><th>Signed</th><th>Paid, all rounds</th><th>Paid (slotted)</th><th>Slot (slotted)</th><th>Over slot</th><th>Slot coverage</th><th>Pool used</th></tr></thead><tbody>' +
       Object.keys(F.draft_paid).sort().reverse().map(function (y) {
         var r = F.draft_paid[y];
-        return "<tr><td>" + esc(y) + "</td><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(money(r[3])) + "</td><td>" + esc(money(r[5])) + " (" + esc(r[4]) + ")</td><td>" + signedMoney(r[7]) + "</td><td>" + esc(isNum(r[8]) ? num(r[8], 0) + "%" : "") + "</td><td>" + esc(isNum(r[10]) ? pct(r[10], 0) : "") + "</td></tr>";
-      }).join("") + "</tbody></table></div>" + '<p class="ledger-count">Slot coverage: ' + esc(copy("slot_coverage_basis")) + "</p>";
+        return "<tr><td>" + esc(y) + "</td><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(money(r[3])) + "</td><td>" + esc(money(r[6])) + "</td><td>" + esc(money(r[5])) + " (" + esc(r[4]) + ")</td><td>" + signedMoney(r[7]) + "</td><td>" + esc(isNum(r[8]) ? num(r[8], 0) + "%" : "") + "</td><td>" + esc(isNum(r[10]) ? pct(r[10], 0) : "") + "</td></tr>";
+      }).join("") + "</tbody></table></div>" + '<p class="ledger-count">Slot coverage: ' + esc(copy("slot_coverage_basis")) + ". Pool used: " + esc(copy("pool_used_basis")) + ".</p>";
     var shp = shardOf(d.club);
     if (shp && shp.farm && shp.farm.picks) out += renderPicks(shp.farm.picks, F.picks_summary || {});
     var sc = F.slot_chips || {}, lg = copy("slot_league") || {};
@@ -942,7 +942,7 @@
         '<td class="lc-col-hide">' + esc((cv("farm.graduates", r, "acq_method") || "") + " " + (cv("farm.graduates", r, "acq_year") || "")) + "</td>" +
         '<td class="lc-col-hide">' + esc(isNum(cv("farm.graduates", r, "bonus_usd")) ? money(cv("farm.graduates", r, "bonus_usd")) : "no bonus on file") + "</td>" +
         '<td class="lc-col-hide">' + esc(moneyMM(cv("farm.graduates", r, "dv_realized_mm"))) + "</td>" +
-        '<td class="lc-col-hide">' + esc(isNum(cv("farm.graduates", r, "dv_remaining_control_years")) ? cv("farm.graduates", r, "dv_remaining_control_years") + " yrs" : "") + " " + esc(cv("farm.graduates", r, "service_phase") || "") + "</td>" +
+        '<td class="lc-col-hide">' + esc(isNum(cv("farm.graduates", r, "control_thru")) ? "thru " + cv("farm.graduates", r, "control_thru") : "") + (cv("farm.graduates", r, "control_why") ? ' <span class="ledger-src">' + esc(cv("farm.graduates", r, "control_why")) + "</span>" : "") + " " + esc(cv("farm.graduates", r, "service_phase") || "") + "</td>" +
         '<td class="lc-col-hide">' + esc(num(cv("farm.graduates", r, "career_war"), 1)) + "</td>" +
         '<td class="lc-col-hide">' + esc(cv("farm.graduates", r, "wag_label") || "") + "</td>" + xpBtn(k) + "</tr>";
       if (open) row += '<tr class="ledger-xp-row"><td colspan="11"><dl class="ledger-dl">' + rowDl(L, r) + dd("Engines", esc(copy("grad_two_engines"))) + "</dl></td></tr>";

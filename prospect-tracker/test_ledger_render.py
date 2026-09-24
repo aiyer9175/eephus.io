@@ -168,7 +168,7 @@ SAMPLE = {
                  "financial_roi": {"war_per_million": 2.394, "total_bonus_usd": 22144990, "grad_count_with_bonus": 32},
                  "method_surplus": {"draft": {"net_mm": 250.3, "count": 68}},
                  "pools": {"2021": [None, "not parsed", None], "2026": [3951900, "live", [[28, 3200000]]]},
-                 "draft_paid": {"2026": [16, 15, 1, 5384475, 6, 3951900, 4053975, 102075, 51.1, 3951900, 1.363]},
+                 "draft_paid": {"2026": [16, 15, 1, 5384475, 6, 3951900, 4053975, 102075, 51.1, 3951900, 1.026]},
                  "slot_chips": {"nSlotted": 65, "overSlotShare": 0.2, "r1UnderShare": 0.5, "bonusHHI": 0.045, "prepDollarShare": 0.468, "label": "typical", "spendLabel": "top-heavy pool"},
                  "lottery": [28, None, None, 97, 60, "2026-09-23", "tankathon"], "pick_war": [2.579, 35, 28],
                  "ifa": {"2026": [5537500, 37, 997500, "Rubel Arias", 77.0, 7176328, 20]},
@@ -624,8 +624,8 @@ SHARD_LAD = {
     "calibration": {"version": "cal-v6", "sources": {}, "agree": True}, "cba_banner": True,
     "farm": {
         "prospects": [P_ONE, P_TWO, P_THREE],
-        "graduates": [["josue_de_paula", "Josue De Paula", "OF", "2026-09-11", "international_fa", 2022, 397500, 66.2, 3.14, 7, 55.2, "projection", "pre_arb", 0.46, "unsettled", True],
-                      ["g_two", "G Two", "RP", "2025-08-01", "draft", 2021, None, 4.0, 1.0, 5, None, None, "pre_arb", 1.2, "boom", False]],
+        "graduates": [["josue_de_paula", "Josue De Paula", "OF", "2026-09-11", "international_fa", 2022, 397500, 66.2, 3.14, 2032, "prearb_grid", 55.2, "projection", "pre_arb", 0.46, "unsettled", True],
+                      ["g_two", "G Two", "RP", "2025-08-01", "draft", 2021, None, 4.0, 1.0, None, None, None, None, "pre_arb", 1.2, "boom", False]],
         "picks": {"2026": [[28, "1", "P One", 3200000, 3500000, 1, 300000, "p_one"], [60, "2", "Some Pick", 1500000, 1200000, 1, -300000, None],
                            [75, "3", "Unsigned Pick", 900000, 0, 0, None, None]]},
         "prospect_trajectory": {"p_one": [["2026-07-01", 90.0], ["2026-09-23", 100.1]], "p_two": []},
@@ -806,6 +806,7 @@ def test_prospect_dollar_cells_take_no_ladder_and_the_grade_chip_is_neutral_ink(
     assert "vt-fam" not in gr and "$66.2M" in gr and "$55.2M" in gr and "PROSPX debuted_player_value" in gr
     assert "$121.4M" not in gr, "the two engines are never summed"
     assert COPY2["grad_two_engines"] in gr and COPY2["grad_contract_dark"] in gr
+    assert "thru 2032" in gr and "prearb_grid" in gr and " yrs" not in gr, "control is the current window, never the at-debut years"
 
 
 def test_the_shown_rows_footer_sums_means_and_prints_not_summed_under_the_bands():

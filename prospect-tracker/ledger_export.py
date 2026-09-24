@@ -142,7 +142,7 @@ COLUMNS = {
                        "service_phase", "on_40_man", "options_left", "rule5_exposed", "tv_grade",
                        "cons_surplus_mm", "cons_lo_mm", "cons_hi_mm"],
     "farm.graduates": ["key", "name", "pos", "debut_date", "acq_method", "acq_year", "bonus_usd",
-                       "dv_trade_value_mm", "dv_realized_mm", "dv_remaining_control_years",
+                       "dv_trade_value_mm", "dv_realized_mm", "control_thru", "control_why",
                        "tv_trade_value_mm", "tv_surplus_source", "service_phase", "career_war",
                        "wag_label", "in_vets"],
     "farm.picks": ["pick_overall", "round_label", "player_name", "slot_usd", "bonus_usd", "signed",
@@ -1029,13 +1029,19 @@ def build_all() -> tuple:
             mine = [r for r in draft_results if r.get("draft_year") == y and _canon(r.get("team")) == c]
             slotted = [r for r in mine if r.get("slot_usd") and r.get("bonus_usd")]
             paid = int(sum(r.get("bonus_usd") or 0 for r in mine))
+            paid_slotted = int(sum(r.get("bonus_usd") or 0 for r in slotted))
             pool_usd = (pool_by_year.get(str(y)) or [None])[0]
+            # pool_used divides by the published pool, which is the sum of the
+            # club's round 1-10 slot values; the numerator is the bonuses on those
+            # slotted picks only. Rounds 11+ carry no slot_usd, so their bonuses
+            # stay in paid_usd (all rounds) and out of the pool share.
             paid_by_year[str(y)] = [
                 len(mine), sum(1 for r in mine if r.get("signed")), sum(1 for r in mine if r.get("signed") == 0),
                 paid, len(slotted), int(sum(r.get("slot_usd") or 0 for r in slotted)),
-                int(sum(r.get("bonus_usd") or 0 for r in slotted)),
+                paid_slotted,
                 int(sum((r.get("bonus_usd") or 0) - (r.get("slot_usd") or 0) for r in slotted)),
-                slot_cov.get(str(y)), pool_usd, round(paid / pool_usd, 3) if (pool_usd and paid) else None]
+                slot_cov.get(str(y)), pool_usd,
+                round(paid_slotted / pool_usd, 3) if (pool_usd and paid_slotted) else None]
         sc = slot_orgs.get(c) or {}
         slot_chips = {k: sc.get(k) for k in ("nSlotted", "overSlotShare", "r1UnderShare", "bonusHHI",
                                               "prepDollarShare", "zOver", "zBonusHHI", "zPrepDollar",
@@ -1225,10 +1231,21 @@ def build_all() -> tuple:
             dv = g.get("debuted_value") or {}
             tvr = tv_by_key.get(key) or {}
             tv_deb = tvr if tvr.get("status") == "debuted" else {}
+            # current control: the trade board's control_thru (as surplus.rows_debuted
+            # prints it), else the projections vet row's ctrlThru; blank when neither
+            # carries the player. debuted_value.remaining_control_years is the at-debut
+            # window the engine priced (7 on every row) and is not served here.
+            vr = vets_by_key.get(key) or {}
+            if tv_deb.get("control_thru") is not None:
+                ctrl_thru, ctrl_why = tv_deb.get("control_thru"), tv_deb.get("control_why")
+            elif vr.get("ctrlThru") is not None:
+                ctrl_thru, ctrl_why = vr.get("ctrlThru"), vr.get("ctrlWhy")
+            else:
+                ctrl_thru = ctrl_why = None
             grad_rows.append([
                 key, g.get("player_name"), g.get("position"), g.get("debut_date"),
                 acq.get("method"), acq.get("year"), acq.get("bonus_usd"),
-                dv.get("trade_value_mm"), dv.get("realized_mm"), dv.get("remaining_control_years"),
+                dv.get("trade_value_mm"), dv.get("realized_mm"), ctrl_thru, ctrl_why,
                 tv_deb.get("trade_value_mm"), tv_deb.get("surplus_source"),
                 (g.get("roster_status") or {}).get("service_phase"),
                 (g.get("career_war") or {}).get("career_war"),
@@ -1557,6 +1574,9 @@ def build_all() -> tuple:
         "farm_letters_note": "letters come from org_summary.grades (rank across 30 orgs) and are never recomputed; a sparse leaf prints a dash",
         "pools_note": "2021 holds nine clubs (parser miss on the MLB.com article); 2027 pools are not published",
         "slot_coverage_basis": "share of the league's draft_results rows for that year carrying slot_usd",
+        "pool_used_basis": ("bonuses on the round 1-10 slotted picks over the published pool, which is "
+                            "the sum of those slot values; the Paid column also counts rounds 11 and later, "
+                            "which carry no slot, and their bonuses above $150,000 are not added to Pool used"),
         "slot_window": slot_window,
         "slot_league": slot_league,
         "pick_war_label": ("expected first-6 WAR of the 2027 first-round pick (draft_slot_curve, validated; "
@@ -1717,7 +1737,7 @@ def build_all() -> tuple:
         "arbitration.realized.seasons": "[season, n, actual_usd, ours_usd, ou_mkt_usd, ou_war_usd, war]; ou_mkt and ou_war are never combined",
         "surplus.trajectory": "[snapshot_date, trade_value_mm sum]",
         "farm.pools": "year -> [pool_usd, status, picks [[pick_overall, slot_usd]]]",
-        "farm.draft_paid": "year -> [n_picks, n_signed, n_unsigned, paid_usd, n_slotted, slot_usd_on_slotted, paid_usd_on_slotted, over_slot_usd, slot_coverage_pct, pool_usd, pool_used]",
+        "farm.draft_paid": "year -> [n_picks, n_signed, n_unsigned, paid_usd, n_slotted, slot_usd_on_slotted, paid_usd_on_slotted, over_slot_usd, slot_coverage_pct, pool_usd, pool_used]; paid_usd is every round; pool_used = paid_usd_on_slotted / pool_usd, the round 1-10 slotted bonuses over the published pool (round 11+ bonuses above $150,000 are not added)",
         "farm.lottery": "[pick_pos, odds_pct, odds_top6_pct, wins, losses, snapshot_date, source]",
         "farm.pick_war": "[expected_first6_war, bucket_upper_bound, pick_pos]",
         "farm.ifa": "class year -> [total_usd, signings, top_bonus, top_player, pool_pct_sum, implied_pool_usd, implied_n]",
@@ -1741,10 +1761,12 @@ def build_all() -> tuple:
             "the leaf sums; cons_* are the PROSPX consensus-basis figures for the expander only"),
         "farm.graduates": (
             "[key, name, pos, debut_date, acq_method, acq_year, bonus_usd, dv_trade_value_mm, "
-            "dv_realized_mm, dv_remaining_control_years, tv_trade_value_mm, tv_surplus_source, "
+            "dv_realized_mm, control_thru, control_why, tv_trade_value_mm, tv_surplus_source, "
             "service_phase, career_war, wag_label, in_vets]; dv_* from debuts_lite debuted_value "
             "(debuted_player_value), tv_* from the trade board; two engines on one row, each labelled, "
-            "never summed; in_vets says whether /projections/ carries the player"),
+            "never summed; control_thru/control_why are the current control window from the trade "
+            "board's debuted row, else the /projections/ vet row, else null (never the at-debut "
+            "window); in_vets says whether /projections/ carries the player"),
         "farm.picks": (
             "year -> [[pick_overall, round_label, player_name, slot_usd, bonus_usd, signed, over_slot_usd, "
             "prospect_key]]; over_slot_usd is bonus minus slot only when both are non-zero (the "

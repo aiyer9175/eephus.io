@@ -1219,6 +1219,57 @@ def test_the_graduate_row_carries_two_engines_labelled_and_no_sum(d, shards, tv)
         assert "grad_total" not in str(k) and "engines_mean" not in str(k), path
 
 
+def test_graduate_control_is_current_not_at_debut(d, shards, tv, proj):
+    """The Control column is the current window (the trade board's control_thru,
+    else the projections vet ctrlThru), never debuted_value's at-debut window,
+    which is 7 on every priced row. A graduate neither source carries prints
+    blank, so a 2010 debut can no longer read seven years of control."""
+    G = "farm.graduates"
+    assert "dv_remaining_control_years" not in d["columns"][G]
+    k_i, th_i, why_i, dd_i = [_col(d, G, k) for k in ("key", "control_thru", "control_why", "debut_date")]
+    vets = {v["key"]: v for v in proj.get("vets") or [] if v.get("key")}
+    n = n_set = n_old = 0
+    for c in d["clubs"]:
+        for r in _rows(shards[c], G):
+            n += 1
+            t = tv["by_key"].get(r[k_i]) or {}
+            t = t if t.get("status") == "debuted" else {}
+            v = vets.get(r[k_i]) or {}
+            if t.get("control_thru") is not None:
+                want = (t["control_thru"], t.get("control_why"))
+            elif v.get("ctrlThru") is not None:
+                want = (v["ctrlThru"], v.get("ctrlWhy"))
+            else:
+                want = (None, None)
+            assert (r[th_i], r[why_i]) == want, (c, r[k_i])
+            if r[th_i] is not None:
+                n_set += 1
+            if r[dd_i] and int(r[dd_i][:4]) <= 2019:
+                n_old += 1
+                assert r[th_i] is None or r[th_i] == want[0], (c, r[k_i])
+    assert n and 0 < n_set < n and n_old
+    assert "never the at-debut" in d["field_key"][G]
+
+
+def test_draft_pool_usage_is_slotted_bonuses_over_the_pool(d):
+    """Pool used divides the round 1-10 slotted bonuses by the published pool
+    (the sum of those slot values). Dividing every round's bonuses printed
+    146 of 159 club-years above the CBA's 5% tolerance; on the slotted
+    numerator none exceed it."""
+    n = 0
+    for c, club in d["clubs"].items():
+        for y, r in club["farm"]["draft_paid"].items():
+            if not r[9]:
+                continue
+            n += 1
+            assert r[10] == (round(r[6] / r[9], 3) if r[6] else None), (c, y)
+            assert r[10] is None or r[10] <= 1.0505, (c, y, r[10], "over the 5% tolerance")
+            assert r[3] >= r[6], (c, y, "paid, all rounds includes the slotted picks")
+    assert n > 100
+    assert "paid_usd_on_slotted / pool_usd" in d["field_key"]["farm.draft_paid"]
+    assert "rounds 11 and later" in d["copy"]["pool_used_basis"]
+
+
 def test_grad_contract_surplus_per_graduate_is_dark_and_the_mean_is_copied(d, org_summary):
     s = d["sections"]["grad_contract_per_graduate"]
     assert s["live"] is False and s["blocked_on"] == d["copy"]["grad_contract_dark"]
