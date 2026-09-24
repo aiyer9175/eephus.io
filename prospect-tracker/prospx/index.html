@@ -9881,7 +9881,7 @@
         <button class="chip" data-farm-sort="ifa_spend_pct" title="IFA's share of total Draft+IFA spending over the trailing 3 years - orgs that allocate the highest percentage of their amateur-acquisition dollars to international free agents rise to the top">IFA Spending %</button>
         <button class="chip" data-farm-sort="draft_spend_pct" title="Draft's share of total Draft+IFA spending over the trailing 3 years - orgs that allocate the highest percentage of their amateur-acquisition dollars to the draft rise to the top">Draft Spending %</button>
         <button class="chip" data-farm-sort="roi" title="Financial ROI - career WAR per million USD spent on signing bonuses (draft + IFA). Higher = more efficient development per dollar.">ROI</button>
-        <button class="chip" data-farm-sort="surplus" title="Aggregate FV-implied surplus value ($M) over each prospect's controlled seasons, across all active prospects in the org. v32.0 - re-derived from FV→WAR primer × non-linear $/WAR; click the Sur+ term in the glossary for details.">Surplus value</button>
+        <button class="chip" data-farm-sort="surplus" title="Net surplus ($M): the eFV expected surplus of each org's active prospects over their controlled seasons, minus the acquisition bonuses paid. Click the Sur+ term in the glossary for details.">Surplus value</button>
         <button class="chip" data-farm-sort="total_fv">Total FV</button>
         <button class="chip" data-farm-sort="count">Count</button>
         <button class="chip" data-farm-sort="tier_60">60+ prospects</button>
@@ -17367,7 +17367,7 @@ function _farmDetailSidebarCards(org, activeTab) {
     const signals = [
       org.financial_score != null ? { key: "Financial score", value: org.financial_score } : null,
       fr.war_per_million != null ? { key: "WAR / $M", value: fr.war_per_million.toFixed(2) } : null,
-      org._active_surplus_net_mm != null ? { key: "Surplus $M", value: org._active_surplus_net_mm.toFixed(1) } : null,
+      org._active_surplus_net_mm != null ? { key: "Net surplus $M", value: org._active_surplus_net_mm.toFixed(1) } : null,
     ].filter(Boolean);
     const fin_rank = _rankAmongOrgs("financial_score");
     const link = { href: "#", onclick: `event.preventDefault();state.section='farm';state.farmSort='roi';render();syncToURL();`, label: "ROI leaderboard →" };
@@ -22785,10 +22785,11 @@ function successProb(fv, isPitcher) {
 // career-path engine value (p.surplus.value_mm) - the same number shown on the
 // prospect list/detail/GFX via makeSurplusCell. Falls back to the FV-anchored
 // client estimate ONLY when no baked value is on file (older payloads / amateurs
-// with no engine run). Farm-level surplus rolls up via org._active_surplus_net_mm
-// (the engine's org aggregate of this same per-player surplus). Use THIS for any
-// per-player surplus $ so the farm + trade + GFX surfaces can't drift from the
-// list/detail or silently break when the legacy estimate changes shape.
+// with no engine run). The farm-level org._active_surplus_net_mm is NOT a sum of
+// this value: it sums the eFV expected surplus net of acquisition bonus, and the
+// Trade Audit prices on the Trade Machine trade value. Use THIS for any per-player
+// surplus $ that must match the list/detail cells, so those surfaces can't drift
+// or silently break when the legacy estimate changes shape.
 function playerSurplusMM(p) {
   if (p && p.surplus && p.surplus.value_mm != null) return p.surplus.value_mm;
   if (!p || p.fv_close == null) return null;
@@ -41399,9 +41400,13 @@ function makeFarmFinancialComposite(org) {
   const parentLetter = grades.financial || 'C';
   const parentRank = (org.component_ranks || {}).financial;
 
-  const totalSurplus = activeSurplus.surplus_total_mm;
+  // surplus_total_mm is already NET of the acquisition bonus: storage.py adds
+  // (eFV expected surplus - bonus paid) per active prospect into the leaf and
+  // the bonus alone into cost_basis_mm. So net is the leaf total as served and
+  // gross puts the bonus back; subtracting the cost again double-counts it.
+  const netActive    = activeSurplus.surplus_total_mm;
   const costBasis    = activeSurplus.cost_basis_mm;
-  const netActive    = (totalSurplus != null && costBasis != null) ? (totalSurplus - costBasis) : null;
+  const grossActive  = (netActive != null && costBasis != null) ? (netActive + costBasis) : null;
   const perProspect  = activeSurplus.surplus_per_prospect_mm;
 
   const fmtMM = v => v == null ? ' - ' : `$${v.toFixed(1)}M`;
@@ -41452,7 +41457,13 @@ function makeFarmFinancialComposite(org) {
     </div>`;
   };
 
-  // Top-line tile strip: parent letter, total surplus, net, per-prospect
+  // Top-line tile strip: parent letter, gross, cost, net (per-prospect and
+  // $/FV sit under net, the basis they are computed on).
+  const _netSub = [
+    (netActive != null && costBasis) ? `${netActive >= 0 ? '+' : ''}${(100 * netActive / costBasis).toFixed(0)}% over cost` : '',
+    perProspect != null ? `${fmtPerProspect(perProspect)} / prospect` : '',
+    activeSurplus.surplus_per_fv_pt_mm != null ? `<span class="g-term" data-term="surplus_per_fv_pt" style="cursor:help;" title="Net $ surplus per FV-pt - captures the quality-of-FV-mix dimension. Click for glossary.">$${activeSurplus.surplus_per_fv_pt_mm.toFixed(2)}M/FV</span>` : '',
+  ].filter(Boolean).join(' · ');
   const tile = (label, value, sub) => `
     <div style="background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:4px;padding:10px 14px;min-width:120px;">
       <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin-bottom:3px;">${escapeHtml(label)}</div>
@@ -41467,9 +41478,9 @@ function makeFarmFinancialComposite(org) {
         <div style="font-family:var(--font-mono);font-size:36px;font-weight:700;line-height:1;color:${gradeColor(parentLetter)};margin:2px 0;">${parentLetter}</div>
         <div style="font-size:10px;color:var(--text-tertiary);">#${parentRank ?? ' - '} of 30</div>
       </div>
-      ${tile('Active Surplus', fmtMM(totalSurplus), perProspect != null ? `${fmtPerProspect(perProspect)} / prospect${activeSurplus.surplus_per_fv_pt_mm != null ? ` · <span class="g-term" data-term="surplus_per_fv_pt" style="cursor:help;" title="$ surplus per FV-pt - captures the quality-of-FV-mix dimension. Click for glossary.">$${activeSurplus.surplus_per_fv_pt_mm.toFixed(2)}M/FV</span>` : ''} · ${activeSurplus.active_count ?? ' - '} actives` : '')}
+      ${tile('Gross Surplus',     fmtMM(grossActive),   `eFV expected surplus of ${activeSurplus.active_count ?? ' - '} actives, before bonuses`)}
       ${tile('Cost Basis',        fmtMM(costBasis),     'Acquisition bonus paid for the active roster')}
-      ${tile('Net Surplus',       fmtMM(netActive),     netActive != null ? `${netActive >= 0 ? '+' : ''}${(100 * netActive / (costBasis || 1)).toFixed(0)}% over cost` : '')}
+      ${tile('Net Surplus',       fmtMM(netActive),     _netSub)}
       ${tile('Grad-Contract / yr', contractSurplus.mean_usd_per_yr != null ? `$${(contractSurplus.mean_usd_per_yr / 1_000_000).toFixed(2)}M` : ' - ', `${contractSurplus.grad_count ?? 0} qualifying grads`)}
     </div>
     <div style="margin-top:4px;padding:10px 12px;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:4px;">
@@ -43317,8 +43328,9 @@ function renderFarmSystems() {
     });
   }
   // Org-level surplus comes straight from the engine's authoritative aggregate
-  // (org._active_surplus_net_mm - the roll-up of each active prospect's baked
-  // p.surplus.value_mm), the SAME number the Finances tab + detail tile show.
+  // (org._active_surplus_net_mm - each active prospect's eFV expected surplus
+  // minus the acquisition bonus paid), the SAME number the Finances Net Surplus
+  // tile + detail header tile show.
   // (Was a client-side re-sum of estimateSurplusValueMM, which the v38
   // value-framework refactor silently broke → every row showed " - ".)
   const surplusByOrg = {};
@@ -43360,7 +43372,7 @@ function renderFarmSystems() {
         <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--spend-draft);"></span>Draft</span>
       </span>
     </span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="surplus" title="Sum of FV-implied surplus value across the org's active prospects (millions USD). Click to sort by surplus.">Surplus</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="surplus" title="Net surplus across the org's active prospects (millions USD): eFV expected surplus minus the acquisition bonuses paid. Click to sort by surplus.">Surplus</span>
     <span style="text-align:right;">Stock</span>
     <span></span>
   </div>`;
@@ -43569,7 +43581,7 @@ function renderFarmSystems() {
             const n = countByOrg[org.org];
             if (s == null || !n) return '<span style="color:var(--text-tertiary);"> - </span>';
             const fmt = s >= 100 ? s.toFixed(0) : s.toFixed(1);
-            return `<span class="g-term farm-surplus-amt" data-term="surplus_value" title="Total surplus value across ${n} active prospects · sum of FV-implied Sur+">$${fmt}M</span><div class="farm-surplus-count">${n}p</div>`;
+            return `<span class="g-term farm-surplus-amt" data-term="surplus_value" title="Net surplus across ${n} active prospects: eFV expected surplus minus the acquisition bonuses paid">$${fmt}M</span><div class="farm-surplus-count">${n}p</div>`;
           })()}</div>
         <div class="stock-cell" style="font-size:12px;">${stockHtml}</div>
         <div style="text-align:right;display:flex;gap:4px;justify-content:flex-end;align-items:center;">
@@ -51865,10 +51877,11 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // surplus-value sidebar card on the detail page. Each prospect's
   // estimate uses the FV → $M lookup with hitter/pitcher split.
   const farmSurplusBreakdown = (() => {
-    // Org total = the engine's authoritative aggregate (matches the farm list
-    // cell + Finances tab). Top contributor = the active prospect with the
-    // largest baked per-player surplus (the SAME p.surplus.value_mm shown on
-    // the prospect list). One definition: per-player baked, per-org aggregate.
+    // Org total = the engine's aggregate, net of acquisition bonus (matches the
+    // farm list cell + the Finances Net Surplus tile). It sums the eFV expected
+    // surplus, not p.surplus.value_mm; the top contributor below is picked on
+    // p.surplus.value_mm (the per-player value on the prospect list), so the
+    // tooltip names that basis.
     let topContributor = null, topShare = 0, n = 0;
     for (const p of rosterPlayersAll) {
       const s = playerSurplusMM(p);
@@ -51880,7 +51893,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
                   ? org._active_surplus_net_mm
                   : null;
     const count = (org && org._active_surplus_count != null) ? org._active_surplus_count : n;
-    return { total: total ?? 0, n: count, topContributor, topShare };
+    const _fas = (org && org.tree && org.tree.fin_active_surplus) || {};
+    return { total: total ?? 0, n: count, topContributor, topShare, cost: _fas.cost_basis_mm };
   })();
   const fmtSurplusUsd = m => {
     if (m == null) return " - ";
@@ -51889,7 +51903,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     if (m >= 10)   return `$${m.toFixed(0)}M`;
     return `$${m.toFixed(1)}M`;
   };
-  const surplusTip = `Sum of FV-implied surplus value across this org's ${farmSurplusBreakdown.n} active prospects (debuts excluded). Each prospect's value comes from the eephus value framework (a career-path mixture model over the FV grade). Real surplus depends on health, performance variance, and changes in the $/WAR market rate.${farmSurplusBreakdown.topContributor ? ` Top contributor: ${farmSurplusBreakdown.topContributor.player_name} (${fmtSurplusUsd(farmSurplusBreakdown.topShare)}).` : ""}`;
+  const surplusTip = `Net surplus: the eFV expected surplus of this org's ${farmSurplusBreakdown.n} active prospects (debuts excluded), minus the acquisition bonuses paid for them${farmSurplusBreakdown.cost != null ? ` ($${farmSurplusBreakdown.cost.toFixed(1)}M)` : ""}. The same figure as Net Surplus on the Finances tab. Real surplus depends on health, performance variance, and changes in the $/WAR market rate.${farmSurplusBreakdown.topContributor ? ` Largest single prospect by the per-player value on the prospect list: ${farmSurplusBreakdown.topContributor.player_name} (${fmtSurplusUsd(farmSurplusBreakdown.topShare)}).` : ""}`;
   const surplusValue = farmSurplusBreakdown.total > 0
     ? fmtSurplusUsd(farmSurplusBreakdown.total)
     : " - ";
@@ -51984,7 +51998,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const tilesHtml = `<div style="display:grid;grid-template-columns:2fr 1.1fr 0.9fr 0.95fr 0.85fr 0.85fr;gap:10px;margin-bottom:18px;">
     ${dvmTileHtml}
     <div class="stat-tile" title="${escapeHtml(surplusTip)}" style="cursor:help;">
-      <div class="stat-label">Surplus value</div>
+      <div class="stat-label">Net surplus</div>
       <div class="stat-value" style="color:${surplusColor};font-variant-numeric:tabular-nums;">${surplusValue}</div>
       <div class="stat-sub">${farmSurplusBreakdown.n} active prospects · debuts excluded</div>
     </div>
@@ -53178,9 +53192,17 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const _orgDvmSub = (_orgDvm != null)
     ? ` · org $DvM+ <span style="color:${dollarDvmColor(_orgDvm)};font-weight:700;">${Math.round(_orgDvm)}</span>`
     : "";
+  // The Financial composite above sums a different per-player basis (the eFV
+  // expected surplus the farm grade reads), so the two totals differ; say so.
+  const _orgFas = (org.tree && org.tree.fin_active_surplus) || {};
+  const _orgGross = (_orgFas.surplus_total_mm != null && _orgFas.cost_basis_mm != null)
+    ? _orgFas.surplus_total_mm + _orgFas.cost_basis_mm : null;
+  const _orgGrossSub = _orgGross != null
+    ? ` · the Financial composite's ${_fmtM(_orgGross)} gross sums the eFV expected surplus instead, a different per-player basis`
+    : "";
   const _topN = Math.min(8, _surplusByProspect.length);
   const surplusSection = _surplusByProspect.length
-    ? `<div class="detail-title" style="margin-top:18px;">Surplus details <span class="detail-title-sub">baked career-path engine SV across the active roster · ${_fmtM(_surplusTotal)} total${_orgDvmSub}</span></div>
+    ? `<div class="detail-title" style="margin-top:18px;">Surplus details <span class="detail-title-sub">baked career-path engine SV across the active roster (the per-player value on the prospect list) · ${_fmtM(_surplusTotal)} total${_orgGrossSub}${_orgDvmSub}</span></div>
        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;align-items:start;">
          <div>
            <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Top surplus contributors</div>

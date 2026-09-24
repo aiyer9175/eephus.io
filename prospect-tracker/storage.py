@@ -7594,12 +7594,13 @@ _PITCHER_POS_RE = re.compile(r"^(RHP|LHP|SP|RP|MIRP|SIRP|P)")
 
 
 def _finalize_active_surplus_leaf(m: dict) -> dict:
-    """v18 — New financial leaf: sum of FV-implied surplus value across
+    """v18 - New financial leaf: sum of the eFV expected surplus across
     the org's active prospects (graduates excluded — they belong to the
     existing fin_contract_surplus / mlb_production_* family) minus the
-    amortized acquisition bonus paid. Spreads the bonus over the 6yr
-    cost-controlled window so a $5M signing bonus reads as ~$0.83M/yr
-    of cost. Result = surplus_total_mm, surplus_per_prospect_mm, and a
+    FULL acquisition bonus paid (not amortized). surplus_total_mm is
+    therefore NET of the bonus and cost_basis_mm is the bonus total, so
+    gross = surplus_total_mm + cost_basis_mm; a reader must not subtract
+    the cost again. Result = surplus_total_mm, surplus_per_prospect_mm, and a
     contributor count so a Cleveland-style depth org doesn't look the
     same as a top-loaded LAD without per-head normalization. Gates at
     ≥5 contributing actives so a tiny system doesn't anchor on a single
