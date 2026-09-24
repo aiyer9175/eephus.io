@@ -2263,6 +2263,10 @@ def fetch_player_transactions(player_key: str, mlbam_id: int,
             "from_team_name": ft.get("name") or "",
             "to_team_id": tt.get("id"),
             "to_team_name": tt.get("name") or "",
+            # Entry order and the effective day. _walk_il_stints needs both
+            # to sequence late-entered, backdated IL placements.
+            "id": tx.get("id"),
+            "effective_date": tx.get("effectiveDate") or "",
         })
     out.sort(key=lambda r: r.get("date") or "")
     return out
@@ -3105,73 +3109,11 @@ def derive_injury_history(transactions: list[dict]) -> list[dict]:
 
     Reuses _IL_PLACE_RE / _IL_TRANSFER_RE / _IL_ACTIVATE_RE / _REHAB_RE
     from the fetch_il_status path so placement-vs-rehab detection stays
-    consistent across the codebase.
+    consistent across the codebase. Both paths walk the same
+    _walk_il_stints, so a stint that fetch_il_status reports closed is
+    closed here too (see that function for the close signals).
     """
-    out: list[dict] = []
-    open_stint: dict | None = None
-    for tx in transactions or []:
-        date_iso = tx.get("date") or ""
-        desc = (tx.get("description") or "").strip()
-        if not desc or not date_iso:
-            continue
-        if (tx.get("type_code") or "").upper() != "SC":
-            # IL events are always SC. ASG/SE rows can't open or close
-            # an IL stint, even when their descriptions happen to mention
-            # 'rehab' (e.g. "sent on a rehab assignment to Norfolk Tides"
-            # comes back as ASG and would otherwise muddle the logic).
-            continue
-        if _REHAB_RE.search(desc):
-            # Rehab assignments leave the player on IL — neither open
-            # nor close a stint.
-            continue
-        m_act = _IL_ACTIVATE_RE.search(desc)
-        m_trans = _IL_TRANSFER_RE.search(desc)
-        m_place = _IL_PLACE_RE.search(desc)
-        if m_act and open_stint is not None:
-            open_stint["until"] = date_iso
-            open_stint["active"] = False
-            try:
-                s = date.fromisoformat(open_stint["since"])
-                e = date.fromisoformat(date_iso)
-                open_stint["days"] = (e - s).days
-            except ValueError:
-                pass
-            out.append(open_stint)
-            open_stint = None
-            continue
-        if m_trans and open_stint is not None:
-            open_stint["type"] = m_trans.group(1)
-            if not open_stint.get("reason"):
-                open_stint["reason"] = _il_stint_reason(desc)
-            open_stint["description"] = desc
-            continue
-        if m_place:
-            # Close any prior open stint defensively (should not happen
-            # under normal API ordering, but a missed activation row
-            # would otherwise leave an old stint dangling forever).
-            if open_stint is not None:
-                open_stint["until"] = date_iso
-                open_stint["active"] = False
-                try:
-                    s = date.fromisoformat(open_stint["since"])
-                    e = date.fromisoformat(date_iso)
-                    open_stint["days"] = (e - s).days
-                except ValueError:
-                    pass
-                out.append(open_stint)
-            retro_iso = _parse_il_retro_date(m_place.group(2))
-            open_stint = {
-                "since":       retro_iso or date_iso,
-                "until":       None,
-                "type":        m_place.group(1),
-                "reason":      _il_stint_reason(desc),
-                "description": desc,
-                "days":        None,
-                "active":      True,
-            }
-    if open_stint is not None:
-        out.append(open_stint)
-    return out
+    return _walk_il_stints(transactions or [])
 
 
 # ---------------------------------------------------------------------------
@@ -4454,9 +4396,12 @@ _IL_ACTIVATE_RE = _re.compile(
 # explicit "activated from the X-day injured list"). We only honor this as
 # an IL clear when we already know the player is currently on IL; otherwise
 # normal roster activations (e.g. activating an option) would falsely
-# zero out the IL state.
+# zero out the IL state. The optional position token may carry a digit
+# ("activated 1B Tommy Hopfe"): with letters only, 1B/2B/3B returns never
+# cleared and the stint stayed open for a season (2 of 22 stale rows,
+# 2026-09-24).
 _BARE_ACTIVATE_RE = _re.compile(
-    r"\bactivated\s+(?:[A-Z]{1,4}\s+)?[A-Z][A-Za-z]",
+    r"\bactivated\s+(?:[A-Z0-9]{1,4}\s+)?[A-Z][A-Za-z]",
     _re.IGNORECASE,
 )
 # Rehab assignments do NOT end the IL stint — the player is still on IL,
@@ -4480,6 +4425,194 @@ def _parse_il_retro_date(retro: str | None) -> str | None:
     return None
 
 
+# Non-SC transactions that END an open IL stint. MiLB returns from the IL
+# very often emit no activation row at all: the club simply reassigns the
+# player ("assigned to Portland Sea Dogs from Greenville Drive") or lets him
+# go. Walking SC rows alone left those stints open for months: on
+# 2026-09-24 the served IL carried 436 rows, and 104 of them had a release,
+# retirement or reassignment after the placement (all 50 reassignments to a
+# non-complex club were followed by games in the MiLB game log). Rehab
+# assignments are ASG rows too and are excluded by _REHAB_RE before this
+# check.
+_IL_EXIT_TYPE_CODES = frozenset({
+    "REL",   # released
+    "RET",   # retired
+    "DFA",   # elected free agency
+})
+
+
+def _il_tx_type(tx: dict) -> str:
+    """typeCode for a raw /transactions row or type_code for a normalized one."""
+    return str(tx.get("typeCode") or tx.get("type_code") or "").upper()
+
+
+def _il_tx_from_team(tx: dict) -> object:
+    """The from-team id of an assignment, raw or normalized row shape."""
+    ft = tx.get("fromTeam")
+    if isinstance(ft, dict) and ft.get("id") is not None:
+        return ft.get("id")
+    return tx.get("from_team_id")
+
+
+def _il_tx_seq(tx: dict) -> tuple[str, int]:
+    """Chronological sort key for one transaction.
+
+    The date is the LATER of `date` and `effectiveDate`. Late-entered MiLB
+    placements carry a backdated `date` (the day the player joined the club)
+    and the real placement day in `effectiveDate`: Zac Leigh reads date
+    2026-06-26, effectiveDate 2026-07-30, and pitched through 07-28.
+    Retroactive placements run the other way (effectiveDate is the earlier
+    retro date, which the placement text also carries), so max() keeps them
+    at their entry date. Ties on a date break on the transaction id, the
+    order the transactions were entered, instead of the API list order.
+    """
+    d = str(tx.get("date") or "")
+    e = str(tx.get("effectiveDate") or tx.get("effective_date") or "")
+    try:
+        tid = int(tx.get("id") or 0)
+    except (TypeError, ValueError):
+        tid = 0
+    return (max(d, e), tid)
+
+
+def _walk_il_stints(transactions: list[dict]) -> list[dict]:
+    """Walk one player's transactions in order and return every IL stint as
+    {since, until, type, reason, description, days, active}, oldest first.
+
+    Accepts raw MLB Stats API rows (typeCode, fromTeam, effectiveDate, id)
+    and the normalized player_transactions rows (type_code, from_team_id).
+
+    A stint opens on an SC placement and closes on:
+      * an SC activation ("activated ... from the 7-day injured list"),
+      * a bare SC "<club> activated <pos> <player>" while a stint is open,
+      * a later placement (the prior stint is closed at that date),
+      * a release, retirement or free-agent election (_IL_EXIT_TYPE_CODES),
+      * a non-rehab reassignment between clubs ("assigned to X from Y")
+        entered after the last placement or transfer. A same-day
+        reassignment counts only when both rows carry ids and the
+        reassignment's id is the later one; normalized rows without ids
+        need a strictly later date, so a player who joins a club and is
+        placed the same day is not cleared by his own arrival.
+    Rehab assignments neither open nor close a stint.
+    """
+    out: list[dict] = []
+    open_stint: dict | None = None
+    last_il_seq: tuple[str, int] = ("", 0)
+
+    def _close(until: str) -> None:
+        nonlocal open_stint
+        if open_stint is None:
+            return
+        open_stint["until"] = until
+        open_stint["active"] = False
+        try:
+            s = date.fromisoformat(open_stint["since"])
+            e = date.fromisoformat(until)
+            open_stint["days"] = (e - s).days
+        except (TypeError, ValueError):
+            pass
+        out.append(open_stint)
+        open_stint = None
+
+    for tx in sorted(transactions or [], key=_il_tx_seq):
+        seq = _il_tx_seq(tx)
+        date_iso = seq[0]
+        desc = (tx.get("description") or "").strip()
+        if not desc or not date_iso:
+            continue
+        if _REHAB_RE.search(desc):
+            # Rehab assignments leave the player on IL: neither open
+            # nor close a stint.
+            continue
+        tcode = _il_tx_type(tx)
+        if tcode != "SC":
+            if open_stint is None:
+                continue
+            if tcode in _IL_EXIT_TYPE_CODES:
+                _close(date_iso)
+                continue
+            if tcode == "ASG" and _il_tx_from_team(tx) is not None:
+                later = seq[0] > last_il_seq[0] or (
+                    seq[0] == last_il_seq[0] and seq[1] and last_il_seq[1]
+                    and seq[1] > last_il_seq[1])
+                if later:
+                    _close(date_iso)
+            continue
+        if _IL_ACTIVATE_RE.search(desc):
+            _close(date_iso)
+            continue
+        m_trans = _IL_TRANSFER_RE.search(desc)
+        if m_trans:
+            if open_stint is not None:
+                open_stint["type"] = m_trans.group(1)
+                if not open_stint.get("reason"):
+                    open_stint["reason"] = _il_stint_reason(desc)
+                open_stint["description"] = desc
+                last_il_seq = seq
+            continue
+        m_place = _IL_PLACE_RE.search(desc)
+        if m_place:
+            # Close any prior open stint defensively (a missed activation
+            # row would otherwise leave an old stint dangling forever).
+            _close(date_iso)
+            retro_iso = _parse_il_retro_date(m_place.group(2))
+            open_stint = {
+                "since":       retro_iso or date_iso,
+                "until":       None,
+                "type":        m_place.group(1),
+                "reason":      _il_stint_reason(desc),
+                "description": desc,
+                "days":        None,
+                "active":      True,
+            }
+            last_il_seq = seq
+            continue
+        # Fallback: bare "<team> activated <player>" while a stint is open.
+        # MLB sometimes drops the "from the X-day IL" clause; Painter's
+        # 2024-10-11 activation is the canonical example.
+        if open_stint is not None and _BARE_ACTIVATE_RE.search(desc):
+            _close(date_iso)
+    if open_stint is not None:
+        out.append(open_stint)
+    return out
+
+
+def _first_game_for_club_after(mlbam_id: int, club_id: object,
+                               after_iso: str) -> str | None:
+    """First MiLB game date later than `after_iso` that the player logged for
+    `club_id`, across the seasons from after_iso's year to today's. None when
+    there is none, the club is unknown, or the game log cannot be read (a
+    fetch failure keeps the stint open rather than clearing it on no data).
+    MLB games are not in the milb_all game log, and an MLB club always
+    records its activations."""
+    if club_id is None or not after_iso:
+        return None
+    try:
+        first_season = int(after_iso[:4])
+    except ValueError:
+        return None
+    for season in range(first_season, date.today().year + 1):
+        for group in ("hitting", "pitching"):
+            url = (f"{MLB_STATS_API}/people/{mlbam_id}/stats?stats=gameLog"
+                   f"&group={group}&season={season}&leagueListId=milb_all")
+            try:
+                resp = requests.get(url, timeout=20, ttl=12 * 3600)
+                resp.raise_for_status()
+                payload = resp.json()
+            except Exception as e:
+                log.debug("IL game-log fetch failed for %s: %s", mlbam_id, e)
+                continue
+            dates = sorted(
+                str(s.get("date") or "")
+                for st in (payload.get("stats") or [])
+                for s in (st.get("splits") or [])
+                if (s.get("team") or {}).get("id") == club_id
+                and str(s.get("date") or "") > after_iso
+            )
+            if dates:
+                return dates[0]
+    return None
+
 def fetch_il_status(mlbam_id: int) -> dict | None:
     """Determine the player's current IL stint by walking their full
     transactions history chronologically.
@@ -4492,7 +4625,9 @@ def fetch_il_status(mlbam_id: int) -> dict | None:
         description: full text of the placement transaction
       }
 
-    Returns None when the player is not on IL.
+    Returns None when the player is not on IL. The stint walk and its close
+    signals live in _walk_il_stints; a stint the walk leaves open is also
+    closed when the game log shows the player back with the placing club.
 
     Cache TTL is 12h. IL refresh runs on the DAILY job (and is chained into the
     monthly run), so a 12h TTL means every nightly pass re-pulls the player's
@@ -4509,61 +4644,32 @@ def fetch_il_status(mlbam_id: int) -> dict | None:
         log.debug("IL transactions fetch failed for %s: %s", mlbam_id, e)
         return None
 
-    txs = sorted(
-        data.get("transactions") or [],
-        key=lambda t: t.get("date") or "",
-    )
-
-    is_on_il = False
-    il_since: str | None = None
-    il_type:  str | None = None
-    il_desc:  str | None = None
-
-    for tx in txs:
-        if (tx.get("typeCode") or "").upper() != "SC":
-            continue
-        desc = (tx.get("description") or "").strip()
-        if not desc:
-            continue
-        # Rehab assignment — player stays on IL while rehabbing. Skip
-        # before the bare-activation match so "sent on a rehab assignment"
-        # isn't mistaken for an activation by sloppy wording.
-        if _REHAB_RE.search(desc):
-            continue
-        # Explicit activation: "activated from the X-day injured list".
-        # Highest-confidence end-of-stint signal.
-        if _IL_ACTIVATE_RE.search(desc):
-            is_on_il = False
-            il_since = il_type = il_desc = None
-            continue
-        m_t = _IL_TRANSFER_RE.search(desc)
-        if m_t:
-            if is_on_il:
-                il_type = m_t.group(1)
-                il_desc = desc
-            continue
-        m_p = _IL_PLACE_RE.search(desc)
-        if m_p:
-            is_on_il = True
-            il_type = m_p.group(1)
-            retro_iso = _parse_il_retro_date(m_p.group(2))
-            il_since = retro_iso or tx.get("date")
-            il_desc = desc
-            continue
-        # Fallback: bare "<team> activated <player>" when we know they
-        # were on IL. MLB sometimes drops the "from the X-day IL" clause
-        # — Painter's 2024-10-11 activation is the canonical example.
-        if is_on_il and _BARE_ACTIVATE_RE.search(desc):
-            is_on_il = False
-            il_since = il_type = il_desc = None
-
-    if not is_on_il:
+    txs = data.get("transactions") or []
+    stints = _walk_il_stints(txs)
+    cur = stints[-1] if stints else None
+    if not cur or not cur.get("active"):
         return None
+    # A player who appears in a game for the club whose IL he is on has been
+    # activated, whatever the transaction feed says. Rehab games are played
+    # for a different affiliate, so they never trip this. Three open stints
+    # on 2026-09-24 ended this way with no activation row: Tate Kuehner
+    # (Nashville, placed 05-21, pitched for Nashville from 08-16), Christian
+    # Becerra (Cedar Rapids, 06-11, from 07-01) and Brady Day (Jersey Shore,
+    # 05-02, from 08-18 after a rehab).
+    place = None
+    for tx in sorted(txs, key=_il_tx_seq):
+        if _il_tx_type(tx) == "SC" and _IL_PLACE_RE.search(tx.get("description") or ""):
+            place = tx
+    if place is not None:
+        club = (place.get("toTeam") or {}).get("id")
+        back = _first_game_for_club_after(mlbam_id, club, _il_tx_seq(place)[0])
+        if back:
+            return None
     return {
         "is_on_il":    True,
-        "since":       il_since,
-        "type":        il_type,
-        "description": il_desc,
+        "since":       cur.get("since"),
+        "type":        cur.get("type"),
+        "description": cur.get("description"),
     }
 
 

@@ -1288,10 +1288,14 @@ def _injury_factor(r, is_pit: bool | None = None) -> float:
     # An ACTIVE stint contributing ZERO trailing days AND ZERO trailing stints can
     # only mean the placement predates the 12-month window: storage._health_profile
     # counts open stints with their elapsed days, so the only way an on-IL player
-    # scores 0/0 is a `since` older than the 365-day cutoff (measured: 29 live rows,
-    # placed 2025-03 to 2025-07 and still on the IL). Those are the LONGEST absences
-    # on the board and a naive days ramp would hand them a free pass, so the mild
-    # branch reads them at the saturated floor. A player placed TODAY has stints=1,
+    # scores 0/0 is a `since` older than the 365-day cutoff. The rows that first
+    # motivated this branch (29 live rows placed 2025-03 to 2025-07) turned out to be
+    # stale stints: the players had come back through a reassignment or release that
+    # the IL parser did not read. Since the 2026-09-24 parser repair
+    # (stats._walk_il_stints) no live on-IL row scores 0/0 (22 before the repair). A
+    # genuine stint that old is still one of the LONGEST absences on the board and a
+    # naive days ramp would hand it a free pass, so the mild branch keeps reading
+    # these rows at the saturated floor. A player placed TODAY has stints=1,
     # days=0 and is correctly treated as day 0. `days` itself is left alone so the
     # 60/120-day chronicity modifiers keep their exact prior behaviour on these rows.
     mild_days = days if (days > 0.0 or stints > 0.0) else _IL_MILD_FULL_DAYS
