@@ -609,3 +609,41 @@ def test_the_managers_block_is_dark_with_its_fixture(d):
     assert "M-MWAR-2" in m["blocked_on"]
     assert m["fixture"]["ejection_named_managers"] > 0
     assert m["agent_sentence"] == d["decisions"]["agent_sentence"]
+
+
+# --------------------------------------------------------------------------
+# The betting Dugout context block reads these keys (cross-module contract pin)
+# --------------------------------------------------------------------------
+
+def test_the_board_carries_the_keys_the_betting_dugout_block_reads(d):
+    """betting_dugout.py (the /betting/ Dugout context sidecar) copies these board
+    strings verbatim and these row values unchanged. Reading the constant tuples from
+    betting_dugout in a MANAGEMENT test is a one-way read of names and is allowed; the
+    reverse (betting_dugout importing mgmt_*) is what test_betting_mgmt_fence forbids.
+    A rename on the board that this test misses would render as a dark block on every
+    game card, so the keys are pinned here where the board is built."""
+    c = d.get("clubs") or {}
+    if c.get("status") != "built":
+        pytest.skip(f"clubs block not built: {c.get('status')}")
+    bd = pytest.importorskip("betting_dugout")
+    dec = d["decisions"]
+    for k in ("realized_sentence", "agent_sentence", "overlap_note", "through_by_season",
+              "corpus_built_at"):
+        assert dec.get(k), k
+    assert dec["units"].get("mwpa") and dec["units"].get("z")
+    assert dec["families"]["pitching_change"]["hook_pitch_count"]["median"]
+    for k in ("style_sentence", "agent_sentence", "floors", "games_floor", "statsapi_codes"):
+        assert c.get(k), k
+    for f in bd.REALIZED_FAMILIES:
+        assert dec["families"][f].get("label"), f
+        assert f in c["floors"], f
+    row_keys = ([k for k, _l, _b in bd.STYLE_COLUMNS] + [k for k, _l, _u, _d in bd.RATE_COLUMNS]
+                + [f"mwpa_{f}" for f in bd.REALIZED_FAMILIES]
+                + [f"n_{f}" for f in bd.REALIZED_FAMILIES] + ["games", "partial", "club", "season"])
+    for r in c["rows"]:
+        for k in row_keys:
+            assert k in r, (r["club"], r["season"], k)
+    # the block's own key rule holds on what it would copy: no key contains dv / decision
+    for k in row_keys:
+        assert "dv" not in k and "decision" not in k
+

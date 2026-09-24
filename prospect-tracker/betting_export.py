@@ -75,6 +75,7 @@ from pathlib import Path
 
 import betting_ingest as bi
 import betting_model as bm
+import betting_dugout as bd
 
 log = logging.getLogger("betting_export")
 
@@ -7271,6 +7272,15 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
                         "fall back to the git-tracked board and the rewrite check "
                         "will be unarmed for one night", PUBLISHED_CHAIN_PATH.name)
 
+    # DUGOUT CONTEXT (D4, 2026-09-23): In-Game Management club-season figures
+    # beside the price and in none of it. Built from the PAYLOAD's list and date
+    # (a carried night replaced both above, and the client renders the payload's
+    # list), added as the LAST key before the preview is sliced, and passed to
+    # nothing: test_betting_mgmt_fence.py pins one Store and two Loads of this
+    # name by AST. betting_dugout never raises; a missing board is a dark block.
+    dugout = bd.build_block(payload["team_bets"], payload["slate_date"])
+    payload["dugout_context"] = dugout
+
     preview = {
         "generated_at": payload["generated_at"],
         "slate_date": payload["slate_date"],
@@ -7314,6 +7324,9 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         "n_games": payload["n_games"],
         "team_bets": bets[:PREVIEW_GAMES],
         "record": payload["record"],
+        # The dugout block travels WHOLE (owner decision D4-7): the pick card's game
+        # may not be among the three preview cards, and nothing in it is a selection.
+        "dugout_context": dugout,
         "gating_note": ("Preview slice. Everything is public during the Diamond preview; "
                         "this file is the seam a future gate would read."),
     }
