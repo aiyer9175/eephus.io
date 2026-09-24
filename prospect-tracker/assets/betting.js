@@ -1354,6 +1354,102 @@
       "</div></details>";
   }
 
+  // ---- Dugout context (In-Game Management), beside the price and in none of it ----
+  // Rendered from S.data.dugout_context only. Reads no priced key, moves no number,
+  // and prints the payload's own not-priced sentence in every block it draws. Every
+  // sentence a reader sees comes from the payload; the client types only the glue
+  // words "Family" and "n" and the league parenthetical. No plus suffix, no tier
+  // class, no ladder, no sign colour: a z prints with its leading sign in neutral
+  // ink, because beside a price a green number reads as a signal. The block is a
+  // <details> closed by default at the FOOT of the card, after every priced cell.
+  function dugoutCtx() { return (S.data && S.data.dugout_context) || null; }
+
+  function dugoutFill(tpl, vars) {
+    return String(tpl || "").replace(/\{(\w+)\}/g, function (m, k) {
+      return (vars && vars[k] != null) ? String(vars[k]) : m;
+    });
+  }
+
+  function dugoutBlock(gamePk) {
+    var ctx = dugoutCtx();
+    if (!ctx || ctx.status !== "built") return "";        // dark: the section note says why
+    var g = ctx.games && ctx.games[String(gamePk)];
+    if (!g) return "";
+    return '<details class="bt-dugout"><summary class="bt-details-sum bt-dugout-sum">' +
+      esc(ctx.head) + ": " + esc(g.away) + ", " + esc(g.home) + "</summary>" +
+      '<div class="bt-dugout-body">' +
+      '<p class="bt-dugout-np">' + esc(ctx.not_priced_sentence) + "</p>" +
+      '<div class="bt-dugout-clubs">' + dugoutClub(g.away, ctx) + dugoutClub(g.home, ctx) + "</div>" +
+      '<p class="bt-dugout-fine">' + esc(ctx.style_sentence) + "</p>" +
+      '<p class="bt-dugout-fine">' + esc(ctx.realized_sentence) + " " + esc(ctx.agent_sentence) + "</p>" +
+      '<p class="bt-dugout-fine">' + esc(ctx.overlap_note) + "</p>" +
+      '<p class="bt-dugout-src">' + esc(ctx.source_label) + "</p>" +
+      "</div></details>";
+  }
+
+  function dugoutDarkNote() {
+    var ctx = dugoutCtx();
+    if (!ctx || ctx.status === "built") return "";
+    return '<div class="bt-note bt-dugout-dark">' + esc(ctx.head) + ": " +
+      esc(ctx.blocker || "") + " " + esc(ctx.not_priced_sentence) + "</div>";
+  }
+
+  function dugoutClub(org, ctx) {
+    var c = (ctx.clubs || {})[org];
+    var head = '<div class="bt-dugout-org">' + teamLogo(org) + " " + esc(org) + "</div>";
+    if (!c || c.row_note || !c.style) {
+      return '<div class="bt-dugout-club">' + head +
+        '<p class="bt-dim">' + esc((c && c.row_note) || ctx.season_note || "") + "</p>" +
+        dugoutLink(c, org) + "</div>";
+    }
+    var zs = (ctx.style_columns || []).map(function (col) {
+      return '<span class="bt-dugout-z" title="' + esc(col.basis) + '">' +
+        '<span class="bt-dugout-zl">' + gl(col.label, col.key.replace("z_", "") + "_z") + "</span>" +
+        '<span class="bt-dugout-zv">' + esc(signed(c.style[col.key], 1)) + "</span></span>";
+    }).join("");
+    var rates = (ctx.rate_columns || []).map(function (col) {
+      return "<tr><td class=\"bt-l\">" + esc(col.label) + "</td><td>" +
+        esc(num((c.rates || {})[col.key], col.decimals)) + "</td></tr>";
+    }).join("");
+    var sh = c.shape || {};
+    var shape = "<tr><td class=\"bt-l\">Hook, median pitches (league " +
+      esc(num(sh.league_hook_median_pitches, 0)) + ")</td><td>" +
+      esc(num(sh.hook_median_pitches, 0)) + "</td></tr>" +
+      "<tr><td class=\"bt-l\" colspan=\"2\"><span class=\"bt-dim\">" +
+      esc(sh.li_at_entry_blocker || ctx.shape_dark_sentence || "") + "</span></td></tr>";
+    var realized = (ctx.realized_families || []).map(function (f) {
+      var v = (c.realized || {})["mwpa_" + f.key], n = (c.counts || {})["n_" + f.key];
+      var cell = (v == null)
+        ? '<span class="bt-dim">' + esc("- " + dugoutFill(ctx.below_floor_template,
+                                                          {floor: f.floor, n: (n == null ? "-" : n)})) + "</span>"
+        : esc(signed(v, 3));
+      return "<tr><td class=\"bt-l\">" + esc(f.label) + "</td><td>" +
+        esc(n == null ? "-" : n) + "</td><td>" + cell + "</td></tr>";
+    }).join("");
+    return '<div class="bt-dugout-club">' + head +
+      '<div class="bt-dugout-hd">' + esc(ctx.style_head) + "</div>" +
+      '<div class="bt-dugout-zs">' + zs + "</div>" +
+      '<div class="bt-dugout-hd">' + esc(ctx.rates_head) + "</div>" +
+      '<table class="bt-dugout-t"><tbody>' + rates + "</tbody></table>" +
+      '<div class="bt-dugout-hd">' + esc(ctx.shape_head) + "</div>" +
+      '<table class="bt-dugout-t"><tbody>' + shape + "</tbody></table>" +
+      '<div class="bt-dugout-hd">' + esc(ctx.realized_head) + "</div>" +
+      '<div class="bt-scroll mlbstats-scroll"><table class="bt-dugout-t"><thead><tr>' +
+      '<th class="bt-l">Family</th><th>n</th><th>' + gl("mWPA", "realized_mwpa") +
+      "</th></tr></thead><tbody>" + realized + "</tbody></table></div>" +
+      // the units sentence of the board sits under the table, not inside the
+      // header cell, so the column reads as one word at 390 and the unit stays
+      // visible on a touch screen (a title attribute never opens there)
+      '<p class="bt-dugout-fine">' + esc("mWPA: " + ((ctx.units || {}).mwpa || "")) + "</p>" +
+      dugoutLink(c, org) + "</div>";
+  }
+
+  function dugoutLink(c, org) {
+    var href = (c && c.link) || ("/management/#section=clubs&team=" + org);
+    var label = (c && c.link_label) || ("Open " + org + " on In-Game Management");
+    return '<a class="bt-link bt-dugout-link" href="' + esc(href) + '">' + esc(label) + "</a>";
+  }
+
   function pickCard(slot) {
     var d = S.data;
     var p = d[slot.key];
@@ -1421,7 +1517,7 @@
       chip("Model", pct(p.model_prob)) + chip("Market fair", pct(p.market_fair_prob)) +
       chip("Edge", signed(p.edge * 100, 1) + "%") +
       chip("EV / unit", signed(p.ev_per_unit, 3)) + "</div>" +
-      watchBits + caveat + unitLine(p, m) + "</div>";
+      watchBits + caveat + unitLine(p, m) + dugoutBlock(p.game_pk) + "</div>";
   }
 
   // AN EMPTY BOARD IS A MEASUREMENT, NOT AN OUTAGE, and it has to read as one.
@@ -1488,6 +1584,9 @@
     // A market closed by BOTH legs never reaches a slot card, so its copy
     // state renders here at market level or nowhere.
     out.push(marketGateNotes());
+    // Dugout context dark state, once, at section level (a built block renders
+    // on the filled slot cards themselves; the redacted and empty slots carry none).
+    out.push(dugoutDarkNote());
 
     if (!any) out.push(pickCensus());
     if (!any) {
@@ -2814,6 +2913,9 @@
     // and warnings above (unpriced counts, missing feed, blocked slots) are
     // shown once and apply to whichever view is up.
     var view = teamView();
+    // Dugout context dark state, once, under the notes, cards view only: the
+    // all-bets board view is a row table and carries no management figure.
+    if (view !== "board") head += dugoutDarkNote();
     return head + teamViewToggle() +
       (view === "board" ? allBetsTable(bets) : bets.map(gameCard).join(""));
   }
@@ -2904,7 +3006,8 @@
       ". No posted line to compare.</div></div>");
 
     return '<div class="bt-game">' + hd + probs + sp +
-      '<div class="bt-markets">' + blocks.join("") + "</div>" + devigPanel(b) + "</div>";
+      '<div class="bt-markets">' + blocks.join("") + "</div>" + devigPanel(b) +
+      dugoutBlock(b.game_pk) + "</div>";
   }
 
   // WHICH BOOK SET THE DENOMINATOR OF EVERY EDGE IN THIS GAME. One book's
@@ -4083,6 +4186,30 @@
     ".bt-chart-absent strong{color:var(--text-primary)}",
     ".bt-sha{font:600 10px/1 var(--font-retro-mono,var(--font-retro,monospace));color:var(--text-secondary);word-break:break-all}",
     ".bt-unpriced{white-space:normal}",
+    // ---- Dugout context (In-Game Management) ------------------------------
+    // Site tokens only. Never --accent-green, --accent-red, --up, --down, a vt-*
+    // ruler class, .bt-pos, .bt-neg, .bt-tag-ok or .bt-tag-warn: nothing in the
+    // block may read as a signal beside a price. Dark mode needs nothing extra.
+    ".bt-dugout{border-top:1px dashed var(--border-light,#222);margin-top:8px;padding-top:4px}",
+    ".bt-dugout-sum{font:700 11px/1.3 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;padding:6px 0}",
+    ".bt-dugout-body{padding:4px 2px 6px;font-size:12px;color:var(--text-secondary)}",
+    ".bt-dugout-np{color:var(--text-primary);margin:4px 0 8px}",
+    ".bt-dugout-clubs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px 14px}",
+    ".bt-dugout-club{min-width:0}",
+    ".bt-dugout-org{font:700 12px/1.2 var(--font-retro,monospace);color:var(--text-primary);display:flex;align-items:center;gap:6px;margin-bottom:4px}",
+    ".bt-dugout-hd{font:600 9px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 3px}",
+    ".bt-dugout-zs{display:flex;flex-wrap:wrap;gap:4px 8px}",
+    ".bt-dugout-z{display:inline-flex;flex-direction:column;border:1px solid var(--border,#333);padding:3px 7px;min-width:64px}",
+    ".bt-dugout-zl{font:600 9px/1 var(--font-retro,monospace);color:var(--text-tertiary)}",
+    ".bt-dugout-zv{font:700 13px/1.2 var(--font-retro,monospace);color:var(--text-primary);margin-top:2px}",
+    ".bt-dugout-t{width:100%;border-collapse:collapse;font-size:12px}",
+    ".bt-dugout-t td,.bt-dugout-t th{padding:3px 6px;border-bottom:1px solid var(--border-light,#222);text-align:right;color:var(--text-primary)}",
+    ".bt-dugout-t th{font:600 9px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase}",
+    ".bt-dugout-t td.bt-l,.bt-dugout-t th.bt-l{text-align:left}",
+    ".bt-dugout-fine{font-size:11.5px;color:var(--text-tertiary);margin:6px 0 0}",
+    ".bt-dugout-src{font-size:11px;color:var(--text-tertiary);margin-top:6px}",
+    ".bt-dugout-link{display:inline-block;margin-top:6px;font-size:12px}",
+    ".bt-dugout-dark{border-left-color:var(--border,#333)}",
     // ---- <= 640px ----------------------------------------------------------
     // A SEPARATE TIER, ADDED BELOW THE 720px RULE RATHER THAN REPLACING IT, so
     // nothing between 641 and 720 moves. Everything here is about a 390px
@@ -4102,6 +4229,8 @@
     ".bt-gate-more > summary{display:list-item;list-style:none}",
     ".bt-gate-sum{font:600 10px/1.3 var(--font-retro,monospace);color:var(--accent-cyan,#2a7);cursor:pointer;text-transform:uppercase;letter-spacing:.04em;padding:3px 0}",
     ".bt-pick-sel{font-size:17px}",
+    ".bt-dugout-body{padding:6px 8px}",
+    ".bt-dugout-link{display:block;margin-top:6px}",
     "}"
   ].join("");
   document.head.appendChild(css);
