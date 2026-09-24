@@ -17085,7 +17085,7 @@ function _draftDetailSidebarCards(p, cls, activeTab) {
     // position string, so this equality already misses a compound label ("SS/2B"
     // never equals "SS"). Recorded in docs/efv-2026-07-30/POSITION_ROLE_GATE.md.
     const posPeers = classProspects
-      .filter(q => q.position === pos)
+      .filter(q => q.position === pos && q.consensus_fv != null)
       .sort((a, b) => (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0))
       .slice(0, 5)
       .map(q => ({
@@ -17098,8 +17098,8 @@ function _draftDetailSidebarCards(p, cls, activeTab) {
       topTool ? { type: "leaderboard",
         title: `${cls.year} · top ${topTool.toUpperCase()} (you: ${Math.round(topVal)})`,
         rows: peers } : null,
-      { type: "leaderboard", title: `${cls.year} · ${pos || "pos"} peers by FV`,
-        rows: posPeers },
+      posPeers.length ? { type: "leaderboard", title: `${cls.year} · ${pos || "pos"} peers by FV`,
+        rows: posPeers } : null,
       classRankCard,
     ].filter(Boolean);
   }
@@ -23780,8 +23780,51 @@ function _applyDraftFilters(prospects) {
 
 // v28 - Apply the per-page sort to a draft-prospect array in place.
 // v29 - Honors state.sortRev.draftSort for second-click direction flip.
+// Whole-class rank vs Baseball America scope rank. A draft prospect holds a
+// whole-class rank only when some source ranked him across the full class
+// (consensus_rank) or graded him (consensus_fv). BA's HS and College lists rank
+// a subset of the class: the export keeps that number at
+// tool_grades.baseballamerica_draft._extras.ba_scope_rank and never reads it as
+// a class rank (baseballamerica_csv.scope_rank_is_global), because BA never
+// published how the two lists interleave. So an unranked prospect gets no #n
+// ordinal; he shows a labelled scope chip ("BA HS #57") and the unranked tail
+// is ordered in scope blocks (HS list, then College list), never merged into
+// one sequence.
+function _draftHasClassRank(p) {
+  return p != null && (p.consensus_fv != null || p.consensus_rank != null);
+}
+function _draftBaScope(p) {
+  const tg = (p && p.tool_grades && p.tool_grades.baseballamerica_draft) || {};
+  const ex = tg._extras || {};
+  const r = Number(ex.ba_scope_rank);
+  if (ex.ba_rank_is_global !== false || ex.ba_scope_rank == null || !isFinite(r)) return null;
+  const scope = String(ex.ba_scope || "BA list");
+  const pool = /^HS/i.test(scope) ? "HS" : (/^Col/i.test(scope) ? "College" : null);
+  return { scope, pool, rank: r,
+           chip: `BA ${pool === "College" ? "Col" : (pool || scope)} #${r}` };
+}
+// Tail order for two prospects that both lack a whole-class rank: scope block
+// (HS, then College, then any other list, then no BA list), then BA's rank
+// inside that list, then name.
+function _draftTailCmp(a, b) {
+  const sa = _draftBaScope(a), sb = _draftBaScope(b);
+  const blk = s => !s ? 3 : (s.pool === "HS" ? 0 : (s.pool === "College" ? 1 : 2));
+  return (blk(sa) - blk(sb))
+    || (sa && sb ? (sa.scope.localeCompare(sb.scope) || (sa.rank - sb.rank)) : 0)
+    || String(a.player_name || "").localeCompare(String(b.player_name || ""));
+}
+function _draftRankedFirstCmp(a, b) {
+  const ra = _draftHasClassRank(a), rb = _draftHasClassRank(b);
+  if (ra !== rb) return ra ? -1 : 1;
+  return ra ? 0 : _draftTailCmp(a, b);
+}
+
 function _applyDraftSort(prospects) {
   const mode = state.draftSort || "fv";
+  // Stable pre-sort: ranked rows keep their export order (consensus rank) and
+  // the unranked tail takes the scope-block order, so any tie the mode sort
+  // below leaves falls back to that, never to the export's alphabetical order.
+  prospects.sort(_draftRankedFirstCmp);
   if (mode === "upside") {
     prospects.sort((a, b) => {
       const au = fvBadgeUpsideClass(a) ? 1 : 0;
@@ -23851,6 +23894,10 @@ function _applyDraftSort(prospects) {
     // "better tool / production stack" prospect when two share an
     // identical FV grade.
     prospects.sort((a, b) => {
+      // A prospect with no FV and no whole-class rank has nothing to sort
+      // on: he sinks below every ranked row and takes the scope-block order.
+      const rankedCmp = _draftRankedFirstCmp(a, b);
+      if (rankedCmp !== 0 || !_draftHasClassRank(a)) return rankedCmp;
       // Normalize prospect shape for tiebreakerScore - it expects
       // `fv_close` and `draft_stock_plus`. Draft prospects use
       // consensus_fv as their FV proxy.
@@ -23927,16 +23974,32 @@ function _renderDraftRankings(host, cls) {
     return;
   }
   _applyDraftSort(prospects);
-  prospects.forEach((p, i) => { p._fvSortRank = i + 1; });
+  // The #n ordinal goes only on a prospect with a whole-class rank or FV. An
+  // unranked row gets none: numbering it would print the export's alphabetical
+  // order (or a merge of BA's separate HS and College lists) as a class rank.
+  let _nOrd = 0;
+  prospects.forEach(p => { p._fvSortRank = _draftHasClassRank(p) ? ++_nOrd : null; });
+  const _nRanked = _nOrd;
+  const _nTail = prospects.length - _nRanked;
+  const _nTailScoped = prospects.filter(p => !_draftHasClassRank(p) && _draftBaScope(p)).length;
+  // Sources actually present in this class's points, not a fixed list.
+  const _DRAFT_SRC_LABEL = { fangraphs: "FanGraphs", espn_draft: "ESPN draft",
+    mlb_pipeline_draft: "MLB Pipeline draft", baseballamerica_draft: "Baseball America draft" };
+  const _srcSeen = [];
+  for (const q of basePool) for (const pt of (q.points || [])) {
+    if (pt && pt.source && !_srcSeen.includes(pt.source)) _srcSeen.push(pt.source);
+  }
+  const _srcLabels = _srcSeen.map(s => _DRAFT_SRC_LABEL[s] || s).sort();
 
   // Header strip
   let html = `<div style="padding:12px 14px;background:var(--bg-secondary);
        border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
     <strong style="color:var(--text-primary);">${cls.year} draft class - 
-    ${prospects.length}${prospects.length !== totalUnfiltered ? ` of ${totalUnfiltered}` : ""} ranked prospects</strong>
+    ${prospects.length}${prospects.length !== totalUnfiltered ? ` of ${totalUnfiltered}` : ""} ${_nTail ? "prospects" : "ranked prospects"}</strong>${_nTail ? ` · ${_nRanked} with a whole-class rank` : ""}
     ${cls.is_current ? " · still pre-draft" : " · drafted"}
-    · sources: FanGraphs, ESPN draft, MLB Pipeline draft.
+    ${_srcLabels.length ? `· sources: ${escapeHtml(_srcLabels.join(", "))}.` : ""}
     Draft Stock+ is normalized within this class only (100 = class median).
+    ${_nTailScoped ? `The ${_nTail} unranked prospects carry no #n: they are listed by Baseball America's HS list, then its College list, with BA's rank inside that list (BA HS #n, BA Col #n), which is not a class order.` : ""}
   </div>`;
 
   const pageSize = state.pageSizes.draft || 50;
@@ -23944,7 +24007,7 @@ function _renderDraftRankings(host, cls) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   if ((state.pages.draft || 1) > totalPages) state.pages.draft = 1;
   const curPage = state.pages.draft || 1;
-  _gfxSet("draft", "draftee", prospects, { year: (typeof cls !== "undefined" && cls) ? cls.year : null });
+  _gfxSet("draft", "draftee", prospects.filter(_draftHasClassRank), { year: (typeof cls !== "undefined" && cls) ? cls.year : null });
   const pagedItems = pageSlice(prospects, curPage, pageSize);
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "draft");
   const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "draft");
@@ -24109,22 +24172,37 @@ function _renderDraftCard(p) {
   // _renderDraftRankings stamps _fvSortRank after sorting). Falls back to
   // consensus_pick / consensus_rank for non-flat-list contexts (per-team
   // group views, etc. - they don't re-stamp).
-  const pickDisplay = p._fvSortRank != null ? p._fvSortRank
+  // A prospect with no whole-class rank and no FV prints no ordinal; BA's
+  // scope rank rides a labelled chip in the meta strip instead.
+  const _classRanked = _draftHasClassRank(p);
+  const _scope = _classRanked ? null : _draftBaScope(p);
+  const pickDisplay = !_classRanked ? "-"
+    : p._fvSortRank != null ? p._fvSortRank
     : p.consensus_pick != null ? p.consensus_pick
-    : (p.consensus_rank != null ? Math.round(p.consensus_rank) : "?");
-  const pickTitle = p._fvSortRank != null
-    ? `Sequential rank by consensus FV${p.consensus_rank != null
-        ? ` (source-consensus rank was #${Math.round(p.consensus_rank)})` : ''}`
-    : (p.consensus_rank != null
-        ? `Consensus sequential rank · raw avg ${p.consensus_rank.toFixed(2)}`
-        : "Consensus rank");
+    : (p.consensus_rank != null ? Math.round(p.consensus_rank) : "-");
+  const _rawRank = p.consensus_rank != null
+    ? ` (source-consensus rank was #${Math.round(p.consensus_rank)})` : "";
+  const pickTitle = !_classRanked
+    ? `No whole-class rank: no source has ranked or graded this prospect across the full class.${_scope
+        ? ` Baseball America ranks him #${_scope.rank} on its ${_scope.scope}, a list of ${_scope.pool === "HS" ? "high-school" : _scope.pool === "College" ? "college" : "part of the class"} players only.` : ""}`
+    : p._fvSortRank != null
+      ? (p.consensus_fv != null
+          ? `Sequential rank by consensus FV${_rawRank}`
+          : `Sequential position on this board; no source has published an FV for this prospect${_rawRank}`)
+      : (p.consensus_rank != null
+          ? `Consensus sequential rank · raw avg ${p.consensus_rank.toFixed(2)}`
+          : "Consensus rank");
+  const scopeChip = _scope
+    ? `<span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-weight:700;color:var(--text-secondary);"
+            title="${escapeHtml(`Baseball America ${_scope.scope} rank. It orders ${_scope.pool === "HS" ? "high-school" : _scope.pool === "College" ? "college" : "listed"} players only, so it is not a rank in the whole class.`)}">${escapeHtml(_scope.chip)}</span>`
+    : "";
 
   return `<div class="draft-card" style="position:relative;cursor:pointer;${p.org ? orgStripe(p.org) : ''}" onclick="if(event.target.closest('a,button'))return;goToDraftee('${escapeHtml(p.player_key)}');">
     <div style="display:flex;align-items:center;gap:6px;min-width:0;">
       <span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass(p) : ''}"
             style="width:24px;height:24px;flex-shrink:0;"
             title="${escapeHtml(pickTitle)}">
-        <span class="rank-num-inner" style="font-size:10px;">#${pickDisplay}</span>
+        <span class="rank-num-inner" style="font-size:10px;">${_classRanked ? `#${pickDisplay}` : "-"}</span>
       </span>
       ${_headshotImg(p.headshot_url, p.player_name, { fv: p.consensus_fv })}
       <span style="font-size:${(p.player_name || '').length > 18 ? 11 : (p.player_name || '').length > 15 ? 12 : 13}px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25;" title="${escapeHtml(p.player_name || '')}">
@@ -24142,7 +24220,7 @@ function _renderDraftCard(p) {
          backgrounds + gap visually divide entries. School name
          truncates with ellipsis when the card is at min-width. -->
     <div class="draft-card-meta" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:var(--fs-xs);color:var(--text-secondary);margin-top:4px;min-width:0;">
-      <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-weight:700;"><b>${escapeHtml(p.position || "?")}</b></span>
+      <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-weight:700;"><b>${escapeHtml(p.position || "?")}</b></span>${scopeChip}
       <span style="display:inline-flex;align-items:center;gap:3px;min-width:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${schoolLine}</span>
       <span style="margin-left:auto;display:inline-flex;gap:4px;flex-shrink:0;">
         <span style="padding:1px 5px;border-radius:3px;background:${spColor}22;
@@ -25042,8 +25120,15 @@ function _renderDraftLeaderboard(host, cls) {
     return;
   }
   // DS+ ties broken by consensus FV so #1 vs #2 is a real ranking, not insertion order.
-  prospects.sort((a, b) => (b.draft_stock_plus || 0) - (a.draft_stock_plus || 0)
-    || (b.consensus_fv || 0) - (a.consensus_fv || 0));
+  // A prospect with no whole-class rank and no FV has neither key: he sinks
+  // below the ranked rows, takes the BA scope-block order, and gets no ordinal.
+  prospects.sort((a, b) => {
+    const rc = _draftRankedFirstCmp(a, b);
+    if (rc !== 0 || !_draftHasClassRank(a)) return rc;
+    return (b.draft_stock_plus || 0) - (a.draft_stock_plus || 0)
+      || (b.consensus_fv || 0) - (a.consensus_fv || 0);
+  });
+  const nLeadRanked = prospects.filter(_draftHasClassRank).length;
   // Cap to the top 50 by default with a "show all" expander (mirrors the IFA /
   // Transactions lists) so the rest of the class is reachable, not truncated.
   const LEADER_CAP = 50;
@@ -25057,6 +25142,8 @@ function _renderDraftLeaderboard(host, cls) {
   const POS_ORDER = ["C", "SS", "INF", "OF", "SP", "RP"];
   const byPos = {};
   for (const p of prospects) {
+    // "Best" is by Draft Stock+; a prospect without one cannot be the best.
+    if (p.draft_stock_plus == null) continue;
     const key = _draftPosBucket(p.position);
     if (!key) continue;
     if (!byPos[key] || (p.draft_stock_plus || 0) > (byPos[key].draft_stock_plus || 0)) byPos[key] = p;
@@ -25137,22 +25224,31 @@ function _renderDraftLeaderboard(host, cls) {
         ${restPills}</li>`;
     }).join("");
 
-  const topRows = top.map((p, i) => `<tr onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
-    <td>${i + 1}</td>
+  const topRows = top.map((p, i) => {
+    const _sc = _draftHasClassRank(p) ? null : _draftBaScope(p);
+    const ord = _draftHasClassRank(p) ? String(i + 1)
+      : (_sc ? `<span title="${escapeHtml(`Baseball America ${_sc.scope} rank, not a rank in the whole class`)}">${escapeHtml(_sc.chip)}</span>` : " - ");
+    return `<tr onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
+    <td>${ord}</td>
     <td><strong>${escapeHtml(p.player_name)}</strong></td>
     <td>${escapeHtml(p.position || "?")}</td>
     <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${p.school ? _draftSchoolLinkHTML(p) : "?"}</span></td>
     <td style="color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus || " - "}</td>
     <td>${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}</td>
     <td>${p.projected_round ? "R" + p.projected_round : " - "}</td>
-  </tr>`).join("");
+  </tr>`;
+  }).join("");
 
-  host.innerHTML = _draftCaption(`${cls.year} draft leaderboard`,
-      `${prospects.length} prospects · ranked by Draft Stock+ (100 = class median), then consensus FV`)
+  const _leadSub = nLeadRanked === prospects.length
+    ? `${prospects.length} prospects · ranked by Draft Stock+ (100 = class median), then consensus FV`
+    : nLeadRanked > 0
+      ? `${prospects.length} prospects · the ${nLeadRanked} with a whole-class rank are ranked by Draft Stock+ (100 = class median), then consensus FV; the other ${prospects.length - nLeadRanked} follow Baseball America's HS list, then its College list, and carry BA's list rank instead of a number`
+      : `${prospects.length} prospects · no source has ranked or graded this class as a whole yet, so there is no Draft Stock+ order. Rows follow Baseball America's HS list, then its College list, and carry BA's list rank (not a class rank)`;
+  host.innerHTML = _draftCaption(`${cls.year} draft leaderboard`, _leadSub)
     + `
     <div class="draft-results-grid">
       <div class="draft-panel" style="grid-column:1/-1;">
-        <h3>${cls.year} class ${leaderShowAll ? `all ${top.length}` : `top ${top.length}`} by Draft Stock+</h3>
+        <h3>${cls.year} class ${nLeadRanked === 0 ? `${leaderShowAll ? `all ${top.length}` : `first ${top.length}`} by Baseball America list` : `${leaderShowAll ? `all ${top.length}` : `top ${top.length}`} by Draft Stock+`}</h3>
         <table class="draft-table">
           <thead><tr><th>#</th><th>Name</th><th>Pos</th><th>School</th>
             <th>DS+</th><th>FV</th><th>Round</th></tr></thead>
@@ -25164,7 +25260,7 @@ function _renderDraftLeaderboard(host, cls) {
       </div>
       <div class="draft-panel">
         <h3>Best at each position</h3>
-        <ul class="draft-list">${posRows}</ul>
+        <ul class="draft-list">${posRows || `<li style="color:var(--text-tertiary);">No prospect in this class has a Draft Stock+ yet.</li>`}</ul>
       </div>
       <div class="draft-panel">
         <h3>Top tools in class <small style="font-weight:400;color:var(--text-tertiary);">(top 3)</small></h3>
@@ -28871,6 +28967,9 @@ async function renderDraftDetail(key) {
     ${_statTileHTML("Class", String(cls.year))}
     ${_statTileHTML("Position", escapeHtml(p.position || " - "))}
     ${_statTileHTML("Proj round", p.projected_round ? `R${p.projected_round}` : " - ")}
+    ${(() => { const _sc = _draftHasClassRank(p) ? null : _draftBaScope(p);
+      return _sc ? _statTileHTML(`BA ${_sc.scope}`, `#${_sc.rank}`,
+        { title: `Baseball America ranks this prospect #${_sc.rank} on its ${_sc.scope}. That list covers ${_sc.pool === "HS" ? "high-school" : _sc.pool === "College" ? "college" : "part of the class's"} players only, so it is not a rank in the whole class.` }) : ""; })()}
     ${p.draft_stock_plus != null ? _statTileHTML("Draft Stock+", `<span style="color:${stockColor};">${p.draft_stock_plus}</span>`,
       { title: "Z-normalized within this draft class. 100 = class median." }) : ""}
     ${classRank ? _statTileHTML("Class rank", `#${classRank} of ${classTotal}`,
