@@ -152,3 +152,23 @@ def test_a_row_that_is_both_reverse_and_extreme_shows_both():
     if not both:
         pytest.skip("no dual-flag rows on this build")
     assert len(both) > 0
+
+
+def test_no_served_watch_row_prints_the_efv_floor_as_a_level():
+    """M07-02 (2026-09-24). A watch row whose eFV grade is the outcome map's floor
+    (data/xfv.json xfv_grade_is_floor) must carry fvE_is_floor, or the card prints
+    the bottom of the scale as a resolved grade. 12 of 140 rows on the 2026-09-23
+    build, 6 of 60 on the staged list."""
+    d = _payload()
+    xp = HERE / "data" / "xfv.json"
+    if not xp.exists():
+        pytest.skip("data/xfv.json not built on this machine")
+    by = json.loads(xp.read_text(encoding="utf-8")).get("by_player") or {}
+    rows = (d.get("prospect_watch") or []) + (d.get("prospect_watch_all") or [])
+    if not rows:
+        pytest.skip("no prospect-watch rows on this build")
+    bad = [r.get("name") for r in rows
+           if r.get("fvE") is not None
+           and (by.get(r.get("player_key")) or {}).get("xfv_grade_is_floor") is True
+           and r.get("fvE_is_floor") is not True]
+    assert not bad, f"floor eFV served without the floor flag: {bad[:6]}"

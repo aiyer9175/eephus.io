@@ -940,6 +940,22 @@
           + bar((tools[k] - 20) / 60 * 100) + '<span class="pal-ars-meta">' + fInt(tools[k]) + "</span></div>";
       }).join("");
     }
+    // Two grades, two labels. "FV" is the consensus close, which the listing
+    // floor reads and which displays as a ceiling; "eFV" is the model grade,
+    // to nearest. Printing the eFV grade under "FV" put 38 and 39 on a list
+    // gated at FV 40 and printed the scale floor as "FV 20". A floor row
+    // (fvE_is_floor) is the outcome curve's lowest knot for every non-positive
+    // projection, so it is named as the floor, never read as a level, and no
+    // FV-vs-eFV difference is printed on any row.
+    var FLOOR_TIP = "The outcome curve returns its lowest knot for every non-positive "
+      + "projection, so this is the floor of the 20-80 scale rather than a resolved level.";
+    function gradeText(p) {
+      var s = "FV " + fCeil(p.fv);
+      if (p.fvE == null) return s;
+      s += " &middot; " + gloss("eFV", "xfv") + " " + Math.round(p.fvE);
+      if (p.fvE_is_floor) s += ' <span class="proj-dim" title="' + esc(FLOOR_TIP) + '">scale floor</span>';
+      return s;
+    }
     var cards = rows.map(function (p) {
       // Read the LEAN, not the negation of "SP". Only SP and RP rows can be a
       // mismatch, so the else-branch is right today, but it asserted "scouted a
@@ -955,7 +971,7 @@
         + '<span class="proj-dim"> ' + esc(p.org || "") + "</span></span>"
         + '<span class="pal-dir' + dirClass(pdir) + '">' + arrow + "</span></h4>"
         + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position)
-        + " &middot; FV " + (p.fvE != null ? Math.round(p.fvE) : fCeil(p.fv))
+        + " &middot; " + gradeText(p)
         + " &middot; shape " + f1(p.starter_shape) + " &middot; " + esc(p.arsenal_depth) + " plus pitches"
         + sevChip(p) + "</div>"
         + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"

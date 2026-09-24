@@ -64,18 +64,33 @@ DATA_DIR = Path(__file__).parent / "data"
 
 
 @functools.lru_cache(maxsize=1)
-def _efv_by_key() -> dict:
-    """{player_key: xfv_grade} off data/xfv.json - the site-wide grade.
-    Empty when the artifact is absent, so callers fall back to consensus."""
+def _efv_index() -> tuple:
+    """({player_key: xfv_grade}, frozenset of floor keys) off data/xfv.json, in one
+    parse. A floor key carries xfv_grade_is_floor: the outcome map returned its
+    lowest knot, so its 20.0 is the bottom of the scale and not a resolved level.
+    Both empty when the artifact is absent, so callers fall back to consensus."""
     try:
         x = json.loads((DATA_DIR / "xfv.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return {}
+        return {}, frozenset()
     by = x.get("by_player") if isinstance(x, dict) else None
     if not isinstance(by, dict):
-        return {}
-    return {k: v.get("xfv_grade") for k, v in by.items()
-            if isinstance(v, dict) and v.get("xfv_grade") is not None}
+        return {}, frozenset()
+    grades = {k: v.get("xfv_grade") for k, v in by.items()
+              if isinstance(v, dict) and v.get("xfv_grade") is not None}
+    floor = frozenset(k for k, v in by.items()
+                      if k in grades and v.get("xfv_grade_is_floor") is True)
+    return grades, floor
+
+
+def _efv_by_key() -> dict:
+    """{player_key: xfv_grade} off data/xfv.json - the site-wide grade."""
+    return _efv_index()[0]
+
+
+def _efv_floor_keys() -> frozenset:
+    """player_keys whose eFV grade is the outcome map's floor (xfv_grade_is_floor)."""
+    return _efv_index()[1]
 
 
 OUT_PATH = DATA_DIR / "pal.json"
@@ -315,10 +330,14 @@ def load_prospect_pitchers(exclude_keys: Optional[set] = None) -> list:
             # fvE = the site-wide eFV grade; fv stays as the consensus close so
             # the card can fall back where eFV abstains. Serving only fv meant
             # an unlabeled consensus number under a bare "FV" label.
+            # fvE_is_floor rides with it: the card names a floor grade as the
+            # scale floor instead of printing 20 as if it were a level.
             efv = _efv_by_key().get(p.player_key)
             out.append({"player_key": p.player_key, "name": p.player_name, "org": p.org,
                         "position": p.position, "fv": _r(getattr(p, "fv_close", None), 1),
-                        "fvE": _r(efv, 1), "tools": tools})
+                        "fvE": _r(efv, 1),
+                        "fvE_is_floor": efv is not None and p.player_key in _efv_floor_keys(),
+                        "tools": tools})
         except Exception:
             continue
     return out
@@ -640,6 +659,7 @@ def build_prospect_watch_all(prospects: list) -> list:
         watch.append({"player_key": p.get("player_key"), "name": p["name"],
                       "org": p.get("org"), "position": p.get("position"),
                       "fv": p.get("fv"), "fvE": p.get("fvE"),
+                      "fvE_is_floor": bool(p.get("fvE_is_floor")) and p.get("fvE") is not None,
                       "tools": p.get("tools"), **rf})
     # Severity first (the owner's ranking), FV as the tiebreak, name as the stable
     # third key: starter_shape is quantized hard enough that ties are the norm, and

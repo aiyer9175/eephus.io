@@ -210,3 +210,37 @@ def test_tier_rule_survives_an_empty_direction():
     rule = pal_export.tier_rule([], "sp2rp")
     assert rule["n_rows"] == 0 and rule["fit_max"] is None
     assert all(t["n"] == 0 for t in rule["tiers"])
+
+
+# M07-02 (2026-09-24): the /pal/ card names a floor eFV grade as the scale floor,
+# so the flag has to survive from the loader to both watch lists.
+def test_watch_rows_carry_the_efv_floor_flag_only_with_a_grade():
+    floor = dict(_THIN_SP, player_key="floor-1", fvE=20.0, fvE_is_floor=True)
+    level = dict(_DEEP_RP, player_key="level-1", fvE=47.3, fvE_is_floor=False)
+    orphan = dict(_THIN_SP, player_key="orphan-1", fvE=None, fvE_is_floor=True)
+    old = dict(_THIN_SP, player_key="old-1", fvE=41.2)
+    full = pal_export.build_prospect_watch_all([floor, level, orphan, old])
+    by = {w["player_key"]: w for w in full}
+    assert by["floor-1"]["fvE_is_floor"] is True
+    assert by["level-1"]["fvE_is_floor"] is False
+    assert by["orphan-1"]["fvE_is_floor"] is False, "a flag with no grade is not a floor grade"
+    assert by["old-1"]["fvE_is_floor"] is False
+    staged = {w["player_key"]: w for w in pal_export.build_prospect_watch([floor, level])}
+    assert staged["floor-1"]["fvE_is_floor"] is True
+
+
+def test_efv_index_reads_the_floor_flag_off_xfv(tmp_path, monkeypatch):
+    import json
+    (tmp_path / "xfv.json").write_text(json.dumps({"by_player": {
+        "a": {"xfv_grade": 20.0, "xfv_grade_is_floor": True},
+        "b": {"xfv_grade": 44.7, "xfv_grade_is_floor": False},
+        "c": {"xfv_grade": None, "xfv_grade_is_floor": True},
+        "d": {"xfv_grade": 38.1},
+    }}), encoding="utf-8")
+    monkeypatch.setattr(pal_export, "DATA_DIR", tmp_path)
+    pal_export._efv_index.cache_clear()
+    try:
+        assert pal_export._efv_by_key() == {"a": 20.0, "b": 44.7, "d": 38.1}
+        assert pal_export._efv_floor_keys() == frozenset({"a"})
+    finally:
+        pal_export._efv_index.cache_clear()

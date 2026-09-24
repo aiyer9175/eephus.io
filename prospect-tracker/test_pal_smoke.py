@@ -467,3 +467,47 @@ def test_pal_json_carries_the_shape_the_catalog_promises():
     d = json.loads(p.read_text(encoding="utf-8"))
     for k in ("rp2sp", "sp2rp", "pitch_mix_changes"):
         assert k in d, f"pal.json lost {k}; the catalog row promises it"
+
+
+# ---------------------------------------------------------------------------
+# M07-02 (2026-09-24): the prospect card printed the eFV grade under the label
+# "FV". 49 of 60 served cards disagreed with ceil(consensus FV), 15 printed a
+# number below the list's own FV 40 floor, and 6 printed the eFV scale floor as
+# "FV 20". FV is the consensus close as a ceiling; eFV is the model grade to
+# nearest, under its own glossary label; a floor grade is named as the floor.
+# ---------------------------------------------------------------------------
+
+def _watch_card(**row) -> str:
+    d = json.loads(SAMPLE)
+    card = dict(d["prospect_watch"][0])
+    card.update(row)
+    d["prospect_watch"] = [card]
+    return _render_payload("#prospects", json.dumps(d))
+
+
+def test_prospect_card_prints_consensus_fv_as_fv_and_efv_as_efv():
+    html = _watch_card(fv=40.0, fvE=37.9)
+    assert "FV 40" in html, "consensus FV is the FV label"
+    assert 'data-gl="xfv">eFV</span> 38' in html, "eFV to nearest, under the eFV term"
+    assert "FV 38" not in html, "the eFV grade is printed under the FV label"
+
+
+def test_prospect_card_ceils_consensus_fv():
+    html = _watch_card(fv=40.86, fvE=44.7)
+    assert "FV 41" in html
+    assert 'data-gl="xfv">eFV</span> 45' in html
+    assert "FV 45" not in html
+
+
+def test_prospect_card_names_the_efv_floor_and_never_prints_fv_20():
+    html = _watch_card(fv=42.0, fvE=20.0, fvE_is_floor=True)
+    assert "FV 42" in html
+    assert "FV 20" not in html
+    assert "scale floor" in html
+
+
+def test_prospect_card_without_efv_prints_the_consensus_ceiling_alone():
+    html = _watch_card(fv=40.0, fvE=None)
+    assert "FV 40" in html
+    assert 'data-gl="xfv"' not in html
+    assert "scale floor" not in html
