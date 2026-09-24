@@ -864,6 +864,8 @@ MODEL_GLOSSARY = {
     "mgmt_decision_ledger": ["realized_mwpa", "manager_agent"],
     "mgmt_state_baseline": ["dvs"],
     "mgmt_style_z": ["hook_z", "pen_z", "bench_z", "ibb_z", "visit_z"],
+    "franchise_index": ["franchise_index"],
+    "franchise_branch_score": ["franchise_branch_score"],
     # The public benchmark bake-off. NOT internal: its panel RENDERS on /hof/,
     # and it is the one comparison that page publishes. It points at the two
     # glossary entries that carry the reader-facing method behind the columns it
