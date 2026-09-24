@@ -6525,6 +6525,314 @@ candidate.**
 
 ---
 
+## 5l. Club policy rates from the dugout (`mg_pen_per_game_l30`, `mg_hook_pitches_l30`), schema after 5j's (pre-registered 2026-09-23)
+
+**Written before the schema bump it describes exists in code and before any value of
+the column has been related to any game outcome**, in the discipline of 5a, 5c, 5d, 5g,
+5k, 7b and 11a. Nothing served reads either column and nothing served changes. The long
+form of this registration, with the read ledger and the candidate census, is
+docs/BETTING_DUGOUT_GATE.md; the two documents carry one wording for every threshold
+and for the contaminated-screen paragraph, and test_betting_mgmt_policy_registration.py
+pins both.
+
+**What this section is not.** The Dugout context block on /betting/ (the collapsed
+"Dugout context, not priced" details on every game card and both slot cards, read from
+data/management_board.json by betting_dugout.py) is a rendering of the served
+descriptive board beside a price. It is not a candidate, not a column, not a look, and
+it reads into no probability, edge, expected value, Kelly figure, slot, badge or record
+row; test_betting_mgmt_fence.py keeps it so. A rendered value is not a measurement.
+This section registers two DATED columns that do not exist tonight and that the board
+does not carry.
+
+**Disclosed, because 5c rule 1 turns on it.** No candidate was scored to write this
+section. Nothing was fitted, no column was built, no dated value exists. What was read
+during design: the served management board's season-to-date club-season rows and its
+league hook_pitch_count {median 89, p10 64, p90 102, n 37,964}, none of them related to
+any game outcome or any price; the served model's own vintage eval (brier 0.24269, log
+loss 0.6784, n_graded 705, split 2026-08-01, fit window 305 games 2026-07-06 to
+2026-07-31), read for the power floor only; docs/IN_GAME_MANAGEMENT_GATE.md (a
+management gate on a management quantity, relating nothing to a betting outcome); 5c,
+5d, 5f, 5g, 5j, 5k and the plan's 5.1 calendar. Layer 1 of the D4 spec shipping before
+this section is committed does not constitute a look: no Layer 1 code, test or fixture
+relates a management value to a result or to an edge.
+
+**Why this is a gap and not a double count.** The served model's run prevention is
+`z_prev`, a blend of the probable's SEM+ and the club's `bullpen_plus` weighted by the
+STARTER's own innings share, w = ip_per_gs / 9 (`game_prevention_z`). That share is a
+fact about the pitcher. How quickly THIS club goes to its bullpen, independent of who
+starts, is a fact about the dugout: two clubs with the same probable and the same
+bullpen_plus can hand the game to the pen at different points. The candidate asks
+whether the club's policy carries information the starter's share and his third-time-
+through exposure (5d-E `sp_tto3_bf`) do not. It is a gap only if it beats those two
+neighbours, which is why the twin and a variance-inflation read are part of the result.
+"A candidate that only reproduces the innings share has found nothing" (5d-E).
+
+**Source.** .cache/game_feeds/{game_pk}.json (the 2026 MLB feeds the 5d builders
+already walk; the same source in 2027), read by a builder in betting_usage.py beside
+`build_schema4_team_columns`, over the club's games dated STRICTLY BEFORE the vintage
+date. Never the management board, never the corpus parquet, never a per-club decision
+ledger file, never mgmt_*. The fence tests keep betting_usage free of management
+imports.
+
+**The numbers.**
+- 5l-A `mg_pen_per_game_l30`: for club C on vintage date D, the count of pitching
+  substitutions made by C as the fielding side over C's games in the 30 calendar days
+  before D (dated strictly before D), divided by C's games in that window. Source
+  event: liveData.plays.allPlays[].playEvents[] entries of type "action" whose
+  details.eventType is "pitching_substitution" (the corpus's own event vocabulary).
+  Fielding side from the half. Null when the window holds fewer than 10 club games.
+  Units: changes per game, never an index.
+- 5l-B `mg_hook_pitches_l30`: over the same window, the median pitch count at removal
+  of C's FIRST pitcher in each game (liveData.boxscore.teams[side].pitchers[0], his
+  players["ID<mlbam>"].stats.pitching.pitchesThrown, the per-arm workload field 5d
+  already reads), across games in which he was removed (a complete game has no hook and
+  is excluded, the count published in the basis). Null when fewer than 5 hooks in the
+  window. Units: pitches. Openers are not separated; a separate opener-aware form is
+  not asked.
+
+**Why not the board's z's.** The served board's z_hook and z_pen are standardized across
+the thirty club-seasons of a season through the corpus rebuild date, so a vintage dated
+2026-06-01 would read a value that includes July games (the offense_plus
+contamination), and the board moves only when the corpus is rebuilt by hand. They are
+NOT the registered form. The registered form is the dated trailing-30-day rate above,
+built strictly before the vintage date and standardized by the one seam like every
+other column.
+
+**Standardization.** Each rides through `_assemble_team_inputs` as `<col>` and
+`z_<col>` standardized over the clubs carrying a value on that vintage, None never
+zero, exactly as every dark column does. The z is a betting-lane z over the slate's
+clubs on the vintage date; it is not the board's z (thirty club-seasons, season to
+date): two different quantities with the same name shape.
+
+**Vintage safety.** The rule is 5d's (betting_usage.py: a game is skipped when
+`d >= on_date`): the window holds C's games dated STRICTLY BEFORE D whose cached feed
+is complete (gameData.status.abstractGameState "Final" and liveData.plays.allPlays
+present); an incomplete or missing feed is excluded with the count stated in the
+basis. The cached feed carries NO fetch time (top keys copyright, gameData, gamePk,
+link, liveData, metaData; metaData holds gameEvents, logicalEvents, timeStamp, wait),
+so the basis records, per club, the latest `metaData.timeStamp` among the feeds read
+(the feed's own last-update stamp, e.g. "20260803_172707") and names it as such; a
+stamp later than the vintage night is visible in the basis and is a disclosure, not an
+exclusion rule. Old records return None; `inputs_as_of` never fills the column from
+live files or from the board. First-write-wins: the column lands on the NEXT vintage
+night after the builder ships.
+
+**Parity fixture (buildable now, no look).** On one 2025 game and one 2026 game, the
+builder's per-game pitching-substitution count and first-pitcher pitch count at removal
+must equal the management corpus's (the decision ledger's events.event_type
+"pitching_substitution" and starter_hook pitch_count). The comparison lives in
+test_schema7_builders.py, which may import the ledger module as a TEST (the fence
+forbids pricer modules importing it, not tests). Comparing two derivations of a count
+on two games relates nothing to an outcome.
+
+**Candidate terms.** Two additive terms on run prevention, fitted by the same
+`fit_coefficients` path on the vintage fit window, computed by a function nothing
+served calls:
+  runs_S = b0 + b1 z_off_S + b2 z_prev_O + b3 park + b4 home + b7 z_mgpen_O   (5l-A)
+  runs_S = b0 + b1 z_off_S + b2 z_prev_O + b3 park + b4 home + b8 z_mghook_O  (5l-B)
+Each member is tested ALONE (one test each); the pair together is a reported
+diagnostic, not a third test. No sign is predicted for either coefficient (a quick
+hook can mean weak starters, already in z_prev, or aggressive leverage relief), so the
+5g sign criterion does not apply and the twin plus the VIF read are the controls, in
+the 5d-E form. The sign is REPORTED.
+
+**Not asked, each needing its own section.** An opener-aware hook form; the club's
+first-reliever LI policy (needs LI, which is post-game in the feed); the season-to-date
+form; any interaction with the probable's ip_per_gs; a total or runline estimand; a
+bench rate (a close variant of 5f `ph_share`, deferred until 5f's first look is
+recorded); an intentional-walk rate (no predicted sign, no mechanism named; owner
+decision 2026-09-23, not asked); a mound-visit rate (counted only in the module, capped
+by rule, nothing priceable pregame).
+
+**Never a candidate, in any window, under any label.** Realized mwpa_<family> (the
+same game's figure leaks the outcome; a trailing or season-to-date series is exactly
+the club "decision quality" rank docs/IN_GAME_MANAGEMENT_GATE.md withheld, and a pricer
+that reads it asserts the skill claim the page refuses; "but it is lagged" is not an
+argument); DVS, best, worst, per-decision ledger rows, window plays, wp_before and
+wp_after (post-game by construction); the steal DV, ER and realized_delta and the bunt
+dv_cell (the running-game model's priced decision values; the steal family's gate
+returned a bounded null); defensive-sub timing (5g team_fld_runs owns fielding);
+challenges, lineups and ejections (dark or counted; lineups are 5j's). Bullpen usage
+over the last three days is ALREADY REGISTERED as 5d `pen_ip_l3` with `pen_b2b_arms`,
+`pen_arms_avail` and `pen_plus_avail` (look 2026-10-07); a management-corpus version
+would be a second registration of a quantity 5d owns, the double look rule 1 forbids.
+
+**Estimand.** Does adding the club-policy term improve moneyline calibration on the
+vintage eval half. The label is the moneyline result (home club wins, 0/1, the served
+model's own objective). The score is the paired per-game Brier of p_home against the
+served model on the same games; log loss is criterion 2. Regular-season games only;
+postseason vintages accrue toward the clock and are not graded. A game enters the pair
+only when BOTH clubs carry a populated dated value on that vintage (otherwise excluded
+and counted).
+
+**Split.** The existing vintage fit / eval split, 2027 form: the fit window is the
+VINTAGE_FIT_TARGET_GAMES (300) games immediately preceding the eval half, on which
+`fit_coefficients` fits b0..b4 and the candidate coefficient jointly; the eval half is
+every later graded game with a populated value. The 305 games of the 2026 fit window
+(2026-07-06 to 2026-07-31) stay ungraded in every mode of every artifact this gate
+writes; they are the fit half, named in the eval as fit_window.why_not_graded, and
+grading them would open the 600-game gate on in-sample data
+(test_min_edge_cannot_be_set_from_the_contaminated_mode). The 2027 look never reads a
+2026 game as evidence.
+
+**Decision rule, per member, ALL required.**
+1. Paired Brier improvement at one-sided t >= 1.645, and under the family adjustment
+   below the smaller of the two members' p-values must clear alpha / 2 = 0.025 (Holm,
+   m = 2).
+2. Paired log loss not worse on the point estimate.
+3. The 5c rule 3 permuted twin: the same fit with the column permuted across clubs
+   within each date; the candidate's improvement exceeds the 95th percentile of 200
+   twin improvements (the 5f form).
+4. At least VINTAGE_MIN_GRADED_GAMES (600) eval-half games with a populated value on
+   both clubs, with the 300-game fit window in front of them.
+5. The VIF read: the candidate's z against z_prev, z_off, and the neighbours
+   ip_per_gs / sp_tto3_bf (as dark columns). A VIF above 5 against the innings share
+   fails the member as "reproduces the innings share", whatever (1) and (2) read.
+Report whichever way it lands: the coefficient and its sign, the twin distribution,
+the VIF table, the pair's joint fit as a diagnostic, coverage per club, the count of
+complete games excluded from 5l-B, and the contaminated screen's reading.
+
+**Outcomes.** PASS, FAIL and INDETERMINATE are final for this registration.
+UNDERPOWERED and NOT READ wait for the 2028 look. A PASS serves nothing until the
+contaminated screen has run without disqualifying (5c rule 4) and the flip commit
+lands.
+
+**MDE and the power precondition (computed BEFORE the eval read, on the fit half
+only).** At n = 600 paired eval-half games, one-sided alpha 0.025 (the Holm-adjusted
+level for the harder member) and 80 percent power, the smallest detectable paired Brier
+improvement is (1.96 + 0.84) * sd_d / sqrt(600) = 0.114 * sd_d, where sd_d is the
+standard deviation of the per-game paired Brier difference. sd_d is unknown until a
+candidate exists and is measured ONCE, on the 300-game 2027 fit window from the
+candidate fit, before any eval-half game is read, and published as
+`mgmt_policy_gate.power_precondition` in betting_model_eval.json. That sd_d is
+IN-SAMPLE (the residual sd of the fit that produced it) and therefore smaller than the
+eval-half sd, so the precondition is lenient by construction; the gate block records
+`power_precondition.basis = "in-sample fit-window sd, lenient"`, and after the eval
+read the eval-half sd_d and the MDE it implies are reported beside it as a diagnostic.
+No threshold changes. The floor of interest is pre-declared at 0.0024 Brier, one
+percent of the served vintage Brier 0.24269 (betting_model_eval.json vintage.brier on
+705 graded games, 2026-09-23). If 0.114 * sd_d exceeds 0.0024 the look returns
+UNDERPOWERED without reading the eval half and waits for 2028 with the larger n; the
+precondition may not be re-measured on a different window to lower it. If a member
+passes (1) with an improvement below 0.0024, the result is recorded as
+PASS-BELOW-FLOOR and does not ship (an effect the gate can detect but the site would
+not serve).
+
+**Contaminated screen (5c rule 4's first serve leg, in the 5c-A form as corrected
+2026-09-11).** It runs ONCE, AFTER the 2027 look, only on a member that passed
+criteria 1-5, on the 2027 season-to-date form of the same rate (the club's pitching
+changes per game, or its starter pitch count at removal, over the 2027 regular season
+through the look date, built by the betting lane from the feeds; never the board's
+z_pen or z_hook, which are standardized across thirty club-seasons and move only when
+the corpus is rebuilt by hand), labelled contaminated, and it can only DISQUALIFY. It
+is graded in the 5c-A fit-and-grade form on backtest()'s own split of the 2027
+completed regular-season dates, and it disqualifies when the paired Brier delta
+(served model minus candidate) on the held-out dates is <= 0 on the point estimate;
+the 5c-A sign criterion does not apply because no sign is predicted. A contaminated
+positive qualifies nothing. No look of any 2026 form exists, contaminated or not, and
+no contaminated number exists for a member that did not pass (5c-A: "a column that did
+not pass has no serve to block"). It is not the look, it reads no dated column, and it
+is taken on a calendar date after the look's, never the same one. This paragraph is
+the 5c-A form; the older 5g wording of a contaminated screen on the registration
+season's outcomes, which the 2026-09-11 correction superseded for 5j, is not inherited
+here.
+
+### The dugout Holm family (MG)
+
+**Members, one test each.** 5l-A `mg_pen_per_game_l30`, 5l-B `mg_hook_pitches_l30`;
+m = 2. Family alpha 0.05, one-sided, Holm: the smaller p at 0.025, the larger at 0.05.
+Criteria 2 to 5, the twins and the screens carry no alpha and add nothing to m (the 5k
+family's rule). Not members of RE (a total-side family), of the coefficient-vector
+family (7e-B/C/D), of the z_prev family (N6), or of 5d's moneyline candidates (5d-A,
+5d-B, 5d-D, 5d-E, which the 5k section records as "not members" of any family). Why
+one family: both members ask one question of the moneyline (does a dugout policy term
+beat the served prevention blend) from two mechanically correlated measurements of one
+policy; a reader offered the better of the two has been offered the best of two looks.
+Owner decision 2026-09-23: MG = {5l-A, 5l-B}, m = 2; the intentional-walk rate is not
+a third member.
+
+### The clock, and the sentence that binds it
+
+5c rule 2 AND criterion 4. The 2026 regular season ends 2026-09-27; a column that does
+not exist tonight accrues nothing in 2026 and plan stop item X7 forbids registering it
+as if a 2026 look existed. The builder lands before Opening Day 2027 (plan 5.1: "every
+2027 dark column landed"), after 5j's schema-6 bump; if 5j's bump has not landed when
+this builder is ready, this builder WAITS (no renumbering of 5j). April is null by the
+window floor; populated values begin about the third week of the season; 900 games
+with both clubs populated (600 eval behind a 300 fit) arrive about mid-June at the
+league's rate.
+
+**The earliest admissible look is 2027-07-01.** The look is taken on the first nightly
+on or after 2027-07-01 on which criterion 4 holds, by
+tools/betting_mgmt_policy_gate.py (to be written), which reads vintages only, refuses
+a run dated before 2027-07-01 and a second run once a `mgmt_policy_gate` block exists,
+and writes that one block. If criterion 4 does not hold by 2027-08-01 the candidate
+waits for 2028 (no stretch-run read, and no read on the same date as the season-end
+looks of 5j and 5f). The look is never taken on the same calendar date as any other
+registered look (5g's first-2027-date look is expected in June; 5e's, if not read in
+October 2026, is scheduled by its own section), so a read of two families is never one
+commit. If another registered look falls on the nightly 5l would take, 5l yields and
+is taken on the next nightly on which criterion 4 holds; the yield is recorded in the
+`mgmt_policy_gate` block.
+
+Disclosures that will precede the look and are amended into this section the day each
+is recorded, without changing any threshold above: the 5c-B and 5c-C reads
+(2026-10-05), the 5d read of `pen_ip_l3`, `pen_b2b_arms`, `pen_arms_avail`,
+`pen_plus_avail` and `sp_tto3_bf` (2026-10-07), the 5e read (2026-10-09 or 2027), the
+5g read (2027). Each tells the lane something about the innings-share neighbourhood
+the 5l members sit in; none is a read of a 5l column.
+
+**Whatever the effect size, neither column enters the model before that look.** Not
+as a served input, not as a slot tiebreak, not as a badge, not as a "context-adjusted"
+probability, not as a shadow-ledger tag, and not through the Dugout context block. A
+Dugout context figure that appears to predict is a reason to wait for the look, not to
+shorten it.
+
+**The SERVE flag and MODEL_VERSION.** When the builder lands (before Opening Day 2027),
+betting_model.py gains `SERVE_MGMT_POLICY = False` in the SERVE_RUN_DISPERSION idiom
+and `DARK7_TEAM_COLUMNS = ("mg_pen_per_game_l30", "mg_hook_pitches_l30")` under
+DARK_TEAM_COLUMNS; nothing served reads them. SERVE_MGMT_POLICY stays False until a
+separate flip commit that cannot exist before the look's artifact does. The flip
+requires, in ONE commit: the 5l look returning PASS on a member, the contaminated
+screen having run without disqualifying, MODEL_VERSION bumped to betting_runs_v3 (or
+the next), the --context re-run, the tripwire in test_betting_mgmt_policy.py and the
+persisted `mgmt_policy_gate` block in betting_model_eval.json. The four move together
+or not at all. MODEL_VERSION does not move on the registration, on the builder, or on
+the look; only on the flip.
+
+**What lands after this section, and before Opening Day 2027.** leaderboard_vintages
+`SCHEMA7_TEAM_COLUMNS` appended to TEAM_COLUMNS with the SCHEMA bump to the number
+after 5j's; `betting_usage.build_schema7_team_columns(*, on_date, feed_dir=None,
+games=None)` in the `build_schema4_team_columns` idiom on the nightly 9e-pre path
+inside its own try/except; the DARK7 tuple and the flag above; test_schema7_builders.py
+(strictly-before rule, the 10-game and 5-hook null floors, complete games excluded and
+counted, incomplete feeds excluded and counted, the parity fixture, the basis stamp,
+and a clock test that the schema-7 clock does not open before 2027-07-01);
+test_betting_mgmt_policy.py (the flag is off at HEAD; no served path reads an mg_
+column by AST and by string; the registration predates the builder by git date); and a
+"### Builder landed YYYY-MM-DD" amendment here naming the first vintage night carrying
+the columns (the X9 same-day amendment). Until that amendment exists, no non-test
+module at the repo root or under tools/ may contain "mg_pen_" or "mg_hook_"; the
+registration test asserts it.
+
+**Disqualification.** Any number relating either column, or a close variant (the
+board's z_pen or z_hook, the season-to-date rates, a different window length, the
+opener-aware form, a per-pitcher hook rate), to game outcomes, to edges or to
+shadow-ledger results before this section is committed, or before 2027-07-01 after it,
+voids the member under 5c rule 1. A voided member may return only as a new
+registration that discloses the early read.
+
+**What would falsify this registration's premise.** If the 5d read of 2026-10-07 shows
+`sp_tto3_bf` and the innings share already absorb the hook (the VIF read of criterion 5
+would then fail 5l-B by construction), the member stays registered and the look still
+runs; the disclosure is amended in and the result is reported whichever way it lands.
+If the parity fixture fails, no look is taken until it passes. If the power
+precondition is not on disk, no criterion may be read. **No number has been computed
+on either candidate.**
+
+---
+
+
 ## 6. The backtest: two modes, both labelled
 
 ```

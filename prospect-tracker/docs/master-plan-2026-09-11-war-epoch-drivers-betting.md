@@ -758,6 +758,7 @@ fitted on pre-2026 data, or carries a 2027 first look, and its registration says
 | after 2026-11-15 | the `pwoba` re-gate, on the new-label projections bundle | the epoch's step M | R2 |
 | before Opening Day 2027 | N9 protocol; every 2027 dark column landed | | R5 |
 | 2027 | 5e (if not read in October), 5g (first date with 4 weeks and 600/300 games), 5h live arm, 5j (after the last regular-season game), 5f (end of the 2027 season, with a power precondition) | | R4, R5 |
+| 2027-07-01 earliest | 5l club policy rates, family MG (m = 2) | builder landed before Opening Day 2027 in the schema after 5j's; 4 weeks of vintages AND 600/300 with a populated value; no other look on the same date | R5 |
 | 2027 season close | the next label epoch (RT 2027), bundling any passed W1.3 departures | | R1 |
 | 2028 run | the reserved 2025-fold confirmation of any Z1 passer | | R2 |
 
