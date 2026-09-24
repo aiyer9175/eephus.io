@@ -433,38 +433,59 @@
     var by = {};
     board.rows.forEach(function (r) {
       if (!r.t) return;
-      var t = by[r.t] || (by[r.t] = { t: r.t, n: 0, tot: 0, next: 0 });
+      var t = by[r.t] || (by[r.t] = { t: r.t, n: 0, cls: 0, nextArb: 0, nextPre: 0, remArb: 0, remPre: 0 });
       t.n++;
-      t.tot += r.tot || 0;
+      // Class at the player's first remaining rung, the count the Franchise
+      // hub publishes as n_arb. Not "eligible now": a class-3 player whose
+      // next season is contracted is counted here too.
+      if ((r.c || 0) >= 1) t.cls++;
+      // PRE-ARB rungs are the league minimum by rule, not an arbitration
+      // award, so every dollar column is split by the rung's token.
+      (r.l || []).forEach(function (s) {
+        if (s[4] === "PRE-ARB") t.remPre += s[1] || 0; else t.remArb += s[1] || 0;
+      });
       // The board season's step for EVERY player (not l[0], whose season varies
       // by player: a pre-arb row may start at 2028, a carried row at 2026), so
-      // "Next season" is one season for the whole column and the Franchise
-      // hub's projected cost, which sums the same tuple, agrees with it.
+      // the season columns are one season for the whole column and the
+      // Franchise hub's projected cost, which sums the same tuple, equals the
+      // two season columns added together.
       if (r.l && r.l.length) {
         for (var li = 0; li < r.l.length; li++) {
-          if (r.l[li][0] === board.season) { if (r.l[li][1]) t.next += r.l[li][1]; break; }
+          if (r.l[li][0] === board.season) {
+            if (r.l[li][4] === "PRE-ARB") t.nextPre += r.l[li][1] || 0; else t.nextArb += r.l[li][1] || 0;
+            break;
+          }
         }
       }
     });
     var rows = Object.keys(by).map(function (k) { return by[k]; });
-    rows.sort(function (a, b) { return b.tot - a.tot; });
+    rows.sort(function (a, b) { return (b.remArb - a.remArb) || (b.remPre - a.remPre); });
     // The league rank is taken BEFORE narrowing, so a narrowed row keeps its
     // place among the thirty.
     var narrowed = teamNarrow && by[teamNarrow] ? teamNarrow : "";
+    var season = board.season ? esc(String(board.season)) : "Next season";
+    // A club with no rung of a kind owes $0 there, not "$0K".
+    function usd(v) { return v ? money(v) : "$0"; }
     var body = rows.map(function (t, i) {
       if (narrowed && t.t !== narrowed) return "";
       return '<tr class="' + (narrowed ? "arb-row-narrow" : "") + '"><td class="mlbstats-col-rank">' + (i + 1) + "</td><td>" + club(t.t) +
-        "</td><td>" + t.n + "</td><td>" + money(t.next) + "</td><td>" + money(t.tot) + "</td></tr>";
+        "</td><td>" + t.n + "</td><td>" + t.cls + "</td><td>" + usd(t.nextArb) + "</td><td>" + usd(t.nextPre) +
+        "</td><td>" + usd(t.remArb) + "</td><td>" + usd(t.remPre) + "</td></tr>";
     }).join("");
     var narrowNote = narrowed
       ? '<p class="arb-narrow-note">Narrowed to ' + esc(narrowed) + ' (league rank kept). <a href="#teams" id="arb-narrow-clear">All clubs</a></p>'
       : "";
     root.innerHTML = narrowNote +
-      '<div class="card arb-note"><p>Remaining arbitration cost by club. Non-tendered players ' +
-      "are absent, so each total is an <strong>upper bound</strong>, not a payroll forecast.</p></div>" +
+      '<div class="card arb-note"><p>Projected cost of each club&rsquo;s arbitration ladder, sorted by ' +
+      "remaining arbitration dollars. Arbitration seasons are model projections; pre-arb seasons are " +
+      "the league minimum by rule and sit in their own columns. Every listed player is assumed " +
+      "tendered through his last ladder season, so a non-tender lowers these figures. Not a payroll forecast.</p></div>" +
       '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead><tr>' +
-      '<th class="mlbstats-col-rank">#</th><th>Club</th><th>Arb-eligible</th>' +
-      "<th>" + (board.season ? "Next season (" + board.season + ")" : "Next season") + "</th><th>Total remaining</th></tr></thead><tbody>" + body +
+      '<th class="mlbstats-col-rank">#</th><th>Club</th>' +
+      '<th title="Players on the club\'s arbitration ladder, pre-arb included.">Players</th>' +
+      '<th title="Players whose first remaining ladder season is arbitration year 1 to 4.">Arb class 1-4</th>' +
+      "<th>" + season + " arbitration</th><th>" + season + " pre-arb min.</th>" +
+      "<th>Remaining arbitration<small>sorted</small></th><th>Remaining pre-arb min.</th></tr></thead><tbody>" + body +
       "</tbody></table></div>";
     var clear = el("arb-narrow-clear");
     if (clear) clear.onclick = function (e) {

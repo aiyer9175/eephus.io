@@ -291,13 +291,15 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             "m": "MLBAM id", "n": "name", "t": "team",
             "sv": "service time, years.days, as a STRING",
             "svy": "the season that service-time string is as of, or null",
-            "c": "arbitration class: 0 pre-arb, 1..4 arbitration year",
+            "c": ("arbitration class at the first remaining ladder season: "
+                  "0 pre-arb, 1..4 arbitration year"),
             "e": ("flag bits: 1 step not from published service time, "
                   "2 step from the debut heuristic, 4 no salary on file, "
                   "8 past the CBA expiry, 16 2020 prorated"),
             "yl": "club-control years remaining",
             "l": "ladder, one tuple per remaining season: [season, proj_usd, lo_usd, hi_usd, token]",
-            "tot": "total remaining arbitration cost, usd",
+            "tot": ("sum of the ladder, usd: projected arbitration rungs plus "
+                    "PRE-ARB rungs at the league minimum"),
             "w": "projected WAR (eWAR basis) per remaining season, aligned to l",
         },
         "rules": {
