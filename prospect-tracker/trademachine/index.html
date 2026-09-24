@@ -24,7 +24,7 @@
 <link rel="manifest" href="/assets/site.webmanifest">
 <meta name="theme-color" content="#0E2B4D" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0C0C0E" media="(prefers-color-scheme: dark)">
-<link rel="stylesheet" href="/assets/site.css?v=3c75b078">
+<link rel="stylesheet" href="/assets/site.css?v=299cf8b0">
 <script src="/assets/eephus-nav.js?v=44768f08" defer></script>
 <script src="/assets/eephus-tiers.js?v=6db2d6c1" defer></script>
 <link rel="stylesheet" href="/assets/eephus-account.css?v=fd2c90cc">
@@ -73,7 +73,7 @@
       <button class="chip" data-tb-pos="RP" type="button">RP</button>
     </div>
     <div class="filter-group"><span class="filter-label">Org</span>
-      <select class="chip" id="tb-org-filter" title="Filter Trade Board by organization"><option value="all">All orgs</option></select>
+      <select class="chip" id="tb-org-filter" data-team-picker title="Filter Trade Board by organization"><option value="all">All orgs</option></select>
     </div>
     <div class="filter-group"><span class="filter-label">Exact pos</span>
       <select class="chip" id="tb-exact-pos-filter" title="Filter Trade Board by primary position"><option value="all">All positions</option></select>
@@ -100,7 +100,7 @@
     </div>
     <div id="tb-group-body"></div>
   </div>
-  <div id="tradeboard-content" data-csv-export="trade-board"><div class="spinner-wrap"><span class="spinner"></span></div></div></div><link rel="stylesheet" href="/assets/trademachine.css?v=d45b4eaa"><script src="/assets/eephus-hub.js?v=dd464868" defer></script><script src="/assets/eephus-gfx.js?v=9cca59bc" defer></script><script src="/assets/trademachine.js?v=a824892b" defer></script><script>
+  <div id="tradeboard-content" data-csv-export="trade-board"><div class="spinner-wrap"><span class="spinner"></span></div></div></div><link rel="stylesheet" href="/assets/trademachine.css?v=d45b4eaa"><script src="/assets/eephus-hub.js?v=4f08ae53" defer></script><script src="/assets/eephus-teampick.js?v=2b084124" defer></script><script src="/assets/eephus-gfx.js?v=9cca59bc" defer></script><script src="/assets/trademachine.js?v=a824892b" defer></script><script>
 (function(){
   function mount(){ if(window.TradeMachine && window.TradeMachine.mount) window.TradeMachine.mount(); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount); else mount();
