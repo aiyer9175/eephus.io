@@ -728,7 +728,7 @@
       <span class="filter-label proj-fgroup">Contract</span>
       ${[["All", "all"], ["Signed", "signed"], ["Expiring", "expiring"], ["Club control", "ctrl"], ["No deal", "nodeal"], ["Prospect", "prospect"]].map(([l, k]) => chip(l, k, "contract")).join("")}
       <span class="filter-label proj-fgroup">Team</span>
-      <select id="proj-team" class="proj-select">
+      <select id="proj-team" class="proj-select" data-team-picker>
         <option value="all">All teams</option>
         ${teams.map(t => `<option value="${t}"${state.team === t ? " selected" : ""}>${t}</option>`).join("")}
       </select>

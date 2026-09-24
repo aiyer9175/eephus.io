@@ -191,7 +191,7 @@
       });
       var orgList = Object.keys(orgs).sort();
       if (orgList.length > 1) {
-        out += '<select id="dyn-f-org" aria-label="Filter by org"><option value="">All orgs</option>' +
+        out += '<select id="dyn-f-org" data-team-picker aria-label="Filter by org"><option value="">All orgs</option>' +
           orgList.map(function (o) {
             return '<option value="' + esc(o) + '"' + (o === S.org ? " selected" : "") + ">" +
               esc(o) + "</option>";

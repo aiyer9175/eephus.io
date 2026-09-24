@@ -414,7 +414,7 @@
       }).join("");
     }
     if (v.team.length > 1) {
-      out += '<select id="dfs-f-team" aria-label="Filter by team"><option value="">All teams</option>' +
+      out += '<select id="dfs-f-team" data-team-picker aria-label="Filter by team"><option value="">All teams</option>' +
         v.team.map(function (t) {
           return '<option value="' + esc(t) + '"' + (t === S.team ? " selected" : "") + ">" +
             esc(t) + "</option>";

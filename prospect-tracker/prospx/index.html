@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=3c75b078">
+  <link rel="stylesheet" href="/assets/site.css?v=299cf8b0">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -10204,7 +10204,7 @@
         <span class="filter-cluster-label">WHO</span>
         <div class="filter-group">
           <span class="filter-label" data-chart-filter-label="org">Org</span>
-          <select id="chart-filter-org" class="chip" data-chart-filter="org"></select>
+          <select id="chart-filter-org" class="chip" data-chart-filter="org" data-team-picker aria-label="Org"></select>
         </div>
         <div class="filter-group">
           <span class="filter-label" data-chart-filter-label="level">Level</span>
@@ -10365,7 +10365,9 @@
 <script src="/assets/eephus-ui.js?v=d1d01ba2" defer></script>
   <script src="/assets/eephus-gl.js?v=7b97df51" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
-  <script src="/assets/eephus-hub.js?v=dd464868" defer></script>
+  <script src="/assets/eephus-hub.js?v=4f08ae53" defer></script>
+  <!-- Team picker: logo listbox on every select[data-team-picker] (reads the hub's club table) -->
+  <script src="/assets/eephus-teampick.js?v=2b084124" defer></script>
 <!-- Dark-theme phosphor-starfield background - shared with the editorial
      pages (single component + token set in assets/site.css [data-theme=dark]).
      Mounts only while the dark theme is active; render() feeds it the
@@ -24708,7 +24710,7 @@ function _simSetupHTML() {
         ${_sim.teamMode === "single" ? `
         <div>
           <div class="filter-label" style="margin-bottom:4px;">Your team</div>
-          <select class="chip" id="sim-team-select" name="sim-team" onchange="_simSetPrimaryTeam(this.value)">${teamOpts}</select>
+          <select class="chip" id="sim-team-select" name="sim-team" data-team-picker aria-label="Your team" onchange="_simSetPrimaryTeam(this.value)">${teamOpts}</select>
         </div>` : ""}
         <div>
           <div class="filter-label" style="margin-bottom:4px;">Length</div>
@@ -25682,7 +25684,7 @@ function _renderIFAAllTime(host, classes, usd) {
     <span class="filter-label">Sort</span>
     <select class="chip" id="ifa-all-sort">${_opt("bonus", aSort, "Bonus (high)")}${_opt("fv", aSort, "FV (high)")}${_opt("year", aSort, "Year (newest)")}${_opt("name", aSort, "Player (A→Z)")}${_opt("country", aSort, "Country (A→Z)")}</select>
     <span class="filter-label" style="margin-left:8px;">Org</span>
-    <select class="chip" id="ifa-all-org"><option value="all">All orgs</option>${orgOpts.map(o => _opt(o, aOrg, o)).join("")}</select>
+    <select class="chip" id="ifa-all-org" data-team-picker aria-label="Org"><option value="all">All orgs</option>${orgOpts.map(o => _opt(o, aOrg, o)).join("")}</select>
     <span class="filter-label" style="margin-left:8px;">Country</span>
     <select class="chip" id="ifa-all-country"><option value="all">All countries</option>${countryOpts.map(c => _opt(c, aCountry, c)).join("")}</select>
     <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);margin-left:8px;"><input type="checkbox" id="ifa-all-tracked" ${aTracked ? "checked" : ""}> Tracked only</label>
@@ -41036,7 +41038,7 @@ function makeFarmComparePicker(currentOrg) {
     : "";
   return `<div class="filter-bar" style="margin-bottom:10px;padding:8px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;">
     <span class="filter-label" style="margin-right:8px;">Compare ${escapeHtml(currentOrg.org)} to</span>
-    <select id="farm-compare-select" class="chip" style="min-width:160px;">
+    <select id="farm-compare-select" class="chip" data-team-picker aria-label="Compare to org" style="min-width:160px;">
       <option value=""> - pick an org - </option>
       ${opts}
     </select>

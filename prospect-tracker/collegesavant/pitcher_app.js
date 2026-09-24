@@ -882,9 +882,9 @@ function renderLeaderboard() {
     <section class="toolbar">
       <input class="search-box" type="search" placeholder="Search pitcher" value="${escapeHtml(state.query)}" aria-label="Search pitcher">
       ${renderYearSelect()}
-      <select class="select-box" data-team-filter aria-label="Filter by team">
+      <select class="select-box" data-team-filter data-team-picker="college" aria-label="Filter by team">
         <option value="all">All teams</option>
-        ${teams.map((t) => `<option value="${escapeHtml(t)}" ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
+        ${teams.map((t) => `<option value="${escapeHtml(t)}"${TEAM_LOGOS.has(t) ? ` data-logo="logos/${escapeHtml(t)}.png"` : ""} ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
       </select>
       <label class="lb-pa">Min pitches <input type="number" min="0" step="50" value="${minPitch}" data-min-pitch></label>
       <button class="control-button" type="button" data-reset>Reset</button>

@@ -369,7 +369,7 @@
 
   // ---- Club --------------------------------------------------------------------
   function renderControls(d) {
-    var sel = '<label>Club <select id="ledger-club" class="eephus-select" aria-label="Club">' +
+    var sel = '<label>Club <select id="ledger-club" class="eephus-select" data-team-picker aria-label="Club">' +
       clubs().map(function (c) { return opt(c, c + (clubOf(c).name ? " " + clubOf(c).name : ""), state.team); }).join("") + "</select></label>";
     var seasons = [seasonNow(), classYear()].map(function (y) {
       return '<label class="ledger-chip"><input type="radio" name="ledger-season" value="' + esc(y) + '"' + (state.season === y ? " checked" : "") + "> " + esc(y) + "</label>";

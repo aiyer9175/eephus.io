@@ -78,8 +78,8 @@
     try { return !!document.querySelector('[data-mgmtsection="' + name + '"]'); }
     catch (e) { return false; }
   }
-  function sel(id, opts, label) {
-    return '<label>' + esc(label) + ' <select id="' + esc(id) + '" class="eephus-select" aria-label="' +
+  function sel(id, opts, label, attrs) {
+    return '<label>' + esc(label) + ' <select id="' + esc(id) + '" class="eephus-select"' + (attrs ? " " + attrs : "") + ' aria-label="' +
       esc(label) + '">' + opts + "</select></label>";
   }
   function opt(v, label, cur) {
@@ -722,7 +722,7 @@
   function controls(withFamily) {
     var clubs = clubList().map(function (c) { return opt(c, c, state.team); }).join("");
     var ys = seasonsOf(state.team).map(function (y) { return opt(y, y, state.cseason); }).join("");
-    var out = '<div class="mgmt-controls">' + sel("mgmt-club", clubs, "Club") + sel("mgmt-cseason", ys, "Season");
+    var out = '<div class="mgmt-controls">' + sel("mgmt-club", clubs, "Club", "data-team-picker") + sel("mgmt-cseason", ys, "Season");
     if (withFamily) {
       var fo = [opt("", "Every family", state.family)].concat(families().map(function (f) {
         return opt(f, famLabel(f), state.family);

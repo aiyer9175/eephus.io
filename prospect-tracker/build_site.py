@@ -96,6 +96,10 @@ _ARB_VER = _asset_ver("assets/arbitration.js")
 _TM_VER = _asset_ver("assets/trademachine.js")
 _TM_CSS_VER = _asset_ver("assets/trademachine.css")
 _HUB_VER = _asset_ver("assets/eephus-hub.js")
+# The team picker (assets/eephus-teampick.js): upgrades every select[data-team-picker]
+# to a logo listbox and keeps the native select as the value. It reads the club
+# table from eephus-hub.js, so its tag always follows the hub's in document order.
+_TEAMPICK_VER = _asset_ver("assets/eephus-teampick.js")
 _GFX_VER = _asset_ver("assets/eephus-gfx.js")
 # assets/fantasy.js is FROZEN and no page loads it. It is the pre-split parity
 # reference that test_fantasy_split drives assets/redraft.js against in a JS
@@ -3702,7 +3706,7 @@ _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
       <button class="chip" data-tb-pos="RP" type="button">RP</button>
     </div>
     <div class="filter-group"><span class="filter-label">Org</span>
-      <select class="chip" id="tb-org-filter" title="Filter Trade Board by organization"><option value="all">All orgs</option></select>
+      <select class="chip" id="tb-org-filter" data-team-picker title="Filter Trade Board by organization"><option value="all">All orgs</option></select>
     </div>
     <div class="filter-group"><span class="filter-label">Exact pos</span>
       <select class="chip" id="tb-exact-pos-filter" title="Filter Trade Board by primary position"><option value="all">All positions</option></select>
@@ -3782,6 +3786,7 @@ def build_projections() -> str:
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/projections.js?v={_PROJ_VER}" defer></script>'
         + _PROJ_TM_REDIRECT
@@ -3942,6 +3947,7 @@ def build_arbitration() -> str:
         + _arb_model_panel() + '</div>'
         '</div>'
         '<script src="/assets/eephus-hub.js?v=' + _HUB_VER + '" defer></script>'
+        '<script src="/assets/eephus-teampick.js?v=' + _TEAMPICK_VER + '" defer></script>'
         '<script src="/assets/arbitration.js?v=' + _ARB_VER + '" defer></script>'
     )
     return page("Arbitration Predictor - eephus.io", "arbitration", body,
@@ -3970,6 +3976,7 @@ def build_trademachine() -> str:
         '</div>'
         f'<link rel="stylesheet" href="/assets/trademachine.css?v={_TM_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/trademachine.js?v={_TM_VER}" defer></script>'
         + _TRADE_MACHINE_INIT
@@ -4053,6 +4060,7 @@ def build_mlbstats() -> str:
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/mlbstats.js?v={_MLBSTATS_VER}" defer></script>'
     )
@@ -4262,6 +4270,7 @@ def build_fantasy() -> str:
         f'{_data_vers_script(FANTASY_DATA_STAMPS)}'
         f'{DIAMOND_CONFIG_SCRIPT}'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/fantasy-card.js?v={_FANTASY_CARD_VER}" defer></script>'
         # LAST, and the only client-side script the shell names. It injects one
@@ -4842,6 +4851,7 @@ def build_management() -> str:
         '</div>'
         f'<link rel="stylesheet" href="/assets/management.css?v={_MGMT_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
         f'<script src="/assets/management.js?v={_MGMT_VER}" defer></script>'
     )
     return page("In-Game Management - eephus.io", "management", body,
@@ -4899,6 +4909,7 @@ def build_ledger() -> str:
         '</div>'
         f'<link rel="stylesheet" href="/assets/ledger.css?v={_LEDGER_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
         f'<script src="/assets/ledger.js?v={_LEDGER_VER}" defer></script>'
     )
     return page("Club Ledger - eephus.io", "ledger", body,
@@ -4955,6 +4966,7 @@ def build_franchise() -> str:
         '</div>'
         f'<link rel="stylesheet" href="/assets/franchise.css?v={_FRANCHISE_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/franchise.js?v={_FRANCHISE_VER}" defer></script>'
     )

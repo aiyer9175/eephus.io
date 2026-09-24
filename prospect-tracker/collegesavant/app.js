@@ -608,9 +608,9 @@ function renderLeaderboard() {
     <section class="toolbar">
       <input class="search-box" type="search" placeholder="Search hitter" value="${escapeHtml(state.query)}" aria-label="Search hitter">
       ${renderYearSelect()}
-      <select class="select-box" data-team-filter aria-label="Filter by team">
+      <select class="select-box" data-team-filter data-team-picker="college" aria-label="Filter by team">
         <option value="all">All teams</option>
-        ${teams.map((t) => `<option value="${escapeHtml(t)}" ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
+        ${teams.map((t) => `<option value="${escapeHtml(t)}"${TEAM_LOGOS[t] ? ` data-logo="${TEAM_LOGOS[t]}"` : ""} ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
       </select>
       ${hasPa ? `<label class="lb-pa">Min PA <input type="number" min="0" step="10" value="${minPA}" data-min-pa></label>` : ""}
       <button class="control-button" type="button" data-reset>Reset</button>

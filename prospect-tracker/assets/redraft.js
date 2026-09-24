@@ -235,7 +235,7 @@
       }
       var teamList = Object.keys(team).sort();
       if (teamList.length > 1) {
-        out += '<select id="rd-f-team" aria-label="Filter by team"><option value="">All teams</option>' +
+        out += '<select id="rd-f-team" data-team-picker aria-label="Filter by team"><option value="">All teams</option>' +
           teamList.map(function (t) {
             return '<option value="' + esc(t) + '"' + (t === S.team ? " selected" : "") + ">" +
               esc(t) + "</option>";

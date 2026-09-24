@@ -178,7 +178,7 @@
     var rd = isNum(s.run_diff) ? ' <span class="' + signCls(s.run_diff) + '">' + signed(s.run_diff, 0) + "</span>" : "";
     var gfx = "";
     try { if (typeof window !== "undefined" && window.EEPHUS_GFX && window.EEPHUS_GFX.chipHTML) gfx = window.EEPHUS_GFX.chipHTML("fr-gfx"); } catch (e) { gfx = ""; }
-    var sel = '<label>Club <select id="fr-club" class="eephus-select" aria-label="Club">' +
+    var sel = '<label>Club <select id="fr-club" class="eephus-select" data-team-picker aria-label="Club">' +
       codes().map(function (c) { var k = clubOf(c); return opt(c, c + (k && k.name ? " " + k.name : ""), state.team); }).join("") + "</select></label>";
     return '<div class="fr-mast">' +
       '<img class="fr-mast-logo" src="' + esc(d.logo) + '" alt="" loading="lazy">' +

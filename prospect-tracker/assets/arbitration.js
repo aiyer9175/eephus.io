@@ -335,7 +335,7 @@
     }).join("");
 
     root.innerHTML = caveats() +
-      '<div class="filter-bar">' + chips + ' <select id="arb-team">' + opts + "</select></div>" +
+      '<div class="filter-bar">' + chips + ' <select id="arb-team" data-team-picker aria-label="Club">' + opts + "</select></div>" +
       (rows.length
         ? '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead>' +
           head + "</thead><tbody>" + body + "</tbody></table></div>"

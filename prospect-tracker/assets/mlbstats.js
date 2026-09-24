@@ -296,7 +296,7 @@
     }).join("");
     return '<label class="mlbstats-ctl"' + (win ? ' title="' + esc("Every player who produced for this"
         + " club in any season of the window, not the roster today.") + '"' : "")
-      + ">" + (win ? "club (produced for)" : "team") + ' <select id="' + id + '" aria-label="'
+      + ">" + (win ? "club (produced for)" : "team") + ' <select id="' + id + '" data-team-picker aria-label="'
       + (win ? "Filter by club of production" : "Filter by team") + '">'
       + opts + "</select></label>";
   }
