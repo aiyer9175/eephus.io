@@ -1128,6 +1128,64 @@ function renderProspects() {
   });
 }
 
+// ---- Trust copy, read off the backtest ---------------------------------------
+// Which leg of the college -> Single-A translation to trust is never written by
+// hand. On the pitcher side it flipped as the matched sample grew (K% fell under
+// the low-signal line and BB% rose above it), and a fixed sentence kept telling
+// readers the opposite of the table under it. A leg whose r2 is below the
+// payload's low-signal line is flagged: the same rule college_translation.py
+// applies to the per-player low_confidence flags and the PROSPX chips.
+function lowSignalR2() {
+  const t = window.CS_TRANSLATION && window.CS_TRANSLATION.low_signal_r2;
+  return typeof t === "number" ? t : 0.10;
+}
+
+function isLowSignal(f) {
+  return !f || f.r2 == null || f.r2 < lowSignalR2();
+}
+
+function joinWords(xs) {
+  return xs.length < 3 ? xs.join(" and ") : xs.slice(0, -1).join(", ") + ", and " + xs[xs.length - 1];
+}
+
+function upperFirst(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+// legs: [[eval key, reader-facing name]]. opts.brief drops the numbers (the
+// player-page note); opts.unflagged says the surface prints no flag chip.
+function trustSentence(E, legs, opts) {
+  const o = opts || {};
+  const have = legs.filter(([k]) => E[k] && E[k].r2 != null);
+  if (!have.length) return "No backtest is on file, so no projection is marked as trusted.";
+  const bar = `r² ${lowSignalR2().toFixed(2)}`;
+  const detail = ([k, name]) => {
+    if (o.brief) return name;
+    const f = E[k];
+    let s = `${name} (r² ${f.r2.toFixed(2)}`;
+    if (f.mae != null && f.null_mae != null) {
+      s += `, leave-one-out MAE ${f.mae.toFixed(3)} against ${f.null_mae.toFixed(3)} for predicting the Single-A mean`;
+      // Under two standard errors of the paired gain, the leg has no
+      // measurable edge over that mean, whichever way the point estimate leans.
+      if (f.skill_se != null && Math.abs(f.null_mae - f.mae) < 2 * f.skill_se) s += ", no measurable edge over it";
+    }
+    return s + ")";
+  };
+  const strong = have.filter(([k]) => !isLowSignal(E[k]));
+  const weak = have.filter(([k]) => isLowSignal(E[k]));
+  const out = [];
+  if (strong.length) {
+    out.push(`${upperFirst(joinWords(strong.map(detail)))} ${strong.length > 1 ? "clear" : "clears"} the ${bar} bar in the current backtest.`);
+  }
+  if (weak.length) {
+    const one = weak.length === 1;
+    const where = strong.length ? "that bar" : `the ${bar} bar`;
+    const flag = o.unflagged ? "" : ` and ${one ? "is" : "are"} flagged`;
+    out.push(`${upperFirst(joinWords(weak.map(detail)))} ${one ? "falls" : "fall"} below ${where}${flag}; read ${one ? "it" : "them"} as context, not a forecast.`);
+  }
+  return out.join(" ");
+}
+
 // ---- College -> Single-A Projections (pitchers) ----------------------------
 // Mirror of the hitter Pro Projections page: the methodology, the leave-one-out
 // backtest, and a board of every pitcher's projected Single-A K% / BB% (the only
@@ -1140,7 +1198,7 @@ function renderProjections() {
       const f = E[k];
       if (!f) return "";
       const cov = f.coverage != null ? Math.round(f.coverage * 100) + "%" : " - ";
-      const flag = (f.r2 != null && f.r2 < 0.10) ? ` <span class="trans-flag">low signal</span>` : "";
+      const flag = (f.r2 != null && f.r2 < lowSignalR2()) ? ` <span class="trans-flag">low signal</span>` : "";
       return `<tr><td class="tt-team">${label}${flag}</td>
         <td class="tt-col">${f.r2 != null ? f.r2.toFixed(2) : " - "}</td>
         <td class="tt-col">${f.band_sd != null ? `±${f.band_sd}` : " - "}</td>
@@ -1169,7 +1227,7 @@ function renderProjections() {
       <li><strong>Matched pairs.</strong> We take college pitchers who later reached Single-A, pair each one's college rate with the Single-A rate they actually posted, and fit how the two relate. Strikeout and walk rates are read from K/9 and BB/9 over batters faced.</li>
       <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by an amount set from how strongly the two levels track in the data, a fitted slope shrunk for sample size. An extreme college number is moderated, not copied straight across.</li>
       <li><strong>Bands.</strong> The P10-P90 band is the spread of the model's misses on arms it was not fit on (leave-one-out). Coverage near 80% in the table below means the band is sized to the data.</li>
-      <li><strong>What to trust.</strong> Strikeout rate carries the signal here; walk rate largely washes out to the Single-A mean and is flagged. Read it as context, not a forecast.</li>
+      <li><strong>What to trust.</strong> ${trustSentence(E, [["pit_k", "strikeout rate"], ["pit_bb", "walk rate"]])}</li>
       <li><strong>What it does not do.</strong> No schedule-strength or park adjustment, since no college conference or park table is held. Stuff+, CS+, and the tracked pitch shapes describe college stuff; they are not a scouting Future Value, which the tracked data does not predict.</li>
     </ol>
     <div class="panel-title" style="margin-top:18px;"><span class="g-term" data-gl="single_a_equivalent">How accurate is this</span><span>leave-one-out backtest on the matched college-to-Single-A pairs</span></div>
@@ -1229,9 +1287,10 @@ function renderTeams() {
 }
 
 // College -> Single-A projection block. Reads window.CS_TRANSLATION by slug and
-// shows projected Single-A K% / BB% (expected + P10-P90 band). BB% carries no
-// signal in the matched data, so it is flagged; stuff/shapes are descriptive
-// only (the CS+ index), never an outcome forecast. Empty when no translation.
+// shows projected Single-A K% / BB% (expected + P10-P90 band). Each row carries
+// the low_confidence flag the translation set from the backtest, and the note
+// names the trusted leg from the same eval; stuff/shapes are descriptive only
+// (the CS+ index), never an outcome forecast. Empty when no translation.
 function renderTranslation(pitcher) {
   const T = window.CS_TRANSLATION && window.CS_TRANSLATION.translations;
   const t = T && T[pitcher.slug];
@@ -1248,10 +1307,11 @@ function renderTranslation(pitcher) {
     </div>`;
   };
   const rows = [
-    row("Proj. Single-A K%", sa.k_pct, null),
+    row("Proj. Single-A K%", sa.k_pct, sa.k_pct && sa.k_pct.low_confidence ? "low confidence" : null),
     row("Proj. Single-A BB%", sa.bb_pct, sa.bb_pct && sa.bb_pct.low_confidence ? "low confidence" : null),
   ].join("");
   if (!rows.trim()) return "";
+  const E = (window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {};
   return `
     <section class="panel trans-panel">
       <div class="panel-title">
@@ -1264,9 +1324,8 @@ function renderTranslation(pitcher) {
       </div>
       <p class="trans-note">Matched-pair projection from this college K% / BB% to a Single-A
       expectation, fit on our own college-to-Single-A pairs. Not adjusted for schedule
-      strength or park. The band is the P10-P90 range. K% is moderately reliable; BB%
-      carries little signal yet. Stuff+ and pitch shapes stay descriptive (the CS+ index),
-      not a pro outcome forecast.</p>
+      strength or park. The band is the P10-P90 range. ${trustSentence(E, [["pit_k", "strikeout rate"], ["pit_bb", "walk rate"]], { brief: true })}
+      Stuff+ and pitch shapes stay descriptive (the CS+ index), not a pro outcome forecast.</p>
     </section>`;
 }
 

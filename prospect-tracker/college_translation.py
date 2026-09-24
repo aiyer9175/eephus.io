@@ -63,6 +63,17 @@ from rate_stabilization import BF_PER_9, SLOPE_SHRINK_K
 ROOT = Path(__file__).parent
 CS = ROOT / "collegesavant"
 
+# One low-signal rule for every leg and every surface: a factor whose r2 is
+# below this is flagged (the per-player low_confidence band flag, the PROSPX
+# bridge chip, and the CollegeSavant accuracy table and trust copy, which read
+# the same threshold off the eval). It was already the BB% rule; K% now obeys
+# it too, because on the pitcher side K% is the leg that falls under it.
+LOW_SIGNAL_R2 = 0.10
+
+
+def _low_signal(factor: dict) -> bool:
+    return factor["r2"] < LOW_SIGNAL_R2
+
 _DEC = json.JSONDecoder()
 
 
@@ -269,7 +280,8 @@ def _equiv_headline(sa: dict, side: str) -> list[dict]:
             band = f"{b['lo']:.3f}".lstrip("0") + "-" + f"{b['hi']:.3f}".lstrip("0")
         chips.append({"label": label, "value": val, "band": band, "flag": flag})
 
-    chip("Proj A K%", sa.get("k_pct"), "pct", None)
+    chip("Proj A K%", sa.get("k_pct"), "pct",
+         "low confidence" if (sa.get("k_pct") or {}).get("low_confidence") else None)
     chip("Proj A BB%", sa.get("bb_pct"), "pct",
          "low confidence" if (sa.get("bb_pct") or {}).get("low_confidence") else None)
     if side == "hit":
@@ -387,7 +399,8 @@ def _loo_mae_cov(cs, pro, cs_key, pro_idx):
     n = len(items)
     if n < 12:
         return None
-    abs_err, inside = [], 0
+    abs_err, null_err, inside = [], [], 0
+    y_sum = sum(b for _, b in items)
     for i in range(n):
         train = items[:i] + items[i + 1:]
         f = _fit([a for a, _ in train], [b for _, b in train])
@@ -396,12 +409,23 @@ def _loo_mae_cov(cs, pro, cs_key, pro_idx):
         x, y = items[i]
         pred = _predict(f, x)
         abs_err.append(abs(y - pred))
+        # The registry baseline, scored on the same held-out pair: predict the
+        # Single-A mean of the OTHER pairs (no college information).
+        null_err.append(abs(y - (y_sum - y) / (n - 1)))
         lo, hi = pred - 1.2816 * f["band_sd"], pred + 1.2816 * f["band_sd"]
         if lo <= y <= hi:
             inside += 1
-    return {"mae": round(sum(abs_err) / len(abs_err), 3),
-            "p10_p90_coverage": round(inside / len(abs_err), 3),
-            "target_coverage": 0.80, "n": len(abs_err)}
+    m = len(abs_err)
+    # skill = null MAE - model MAE (positive = the college rate helps); its se
+    # is the paired standard error of the per-pair gains.
+    gains = [b - a for a, b in zip(abs_err, null_err)]
+    g_mean = sum(gains) / m
+    g_sd = math.sqrt(sum((g - g_mean) ** 2 for g in gains) / (m - 1)) if m > 1 else 0.0
+    return {"mae": round(sum(abs_err) / m, 3),
+            "null_mae": round(sum(null_err) / m, 3),
+            "skill": round(g_mean, 3), "skill_se": round(g_sd / math.sqrt(m), 3),
+            "p10_p90_coverage": round(inside / m, 3),
+            "target_coverage": 0.80, "n": m}
 
 
 # --------------------------------------------------------------------------- #
@@ -496,9 +520,11 @@ def _translate_hitter(v, F):
     out = {}
     if v.get("k_pct") is not None and F.get("hit_k"):
         out["k_pct"] = _band(_predict(F["hit_k"], v["k_pct"]), F["hit_k"]["band_sd"], 0, 100)  # C2/C3b: hi_clip -> true [0,100] domain (display band widened to LOO-validated coverage)
+        if _low_signal(F["hit_k"]):
+            out["k_pct"]["low_confidence"] = True
     if v.get("bb_pct") is not None and F.get("hit_bb"):
         b = _band(_predict(F["hit_bb"], v["bb_pct"]), F["hit_bb"]["band_sd"], 0, 100)
-        b["low_confidence"] = F["hit_bb"]["r2"] < 0.10
+        b["low_confidence"] = _low_signal(F["hit_bb"])
         out["bb_pct"] = b
     if v.get("xwoba") is not None and F.get("hit_ops"):
         o = _band(_predict(F["hit_ops"], v["xwoba"]), F["hit_ops"]["band_sd"], 0.3, 1.2, ndigits=3)
@@ -517,9 +543,13 @@ def _translate_pitcher(v, F, stuff_wt=None):
         out["k_pct"] = _band(_predict2(f2, v["k_pct"], stuff_wt), f2["band_sd"], 0, 100)
     elif v.get("k_pct") is not None and F.get("pit_k"):
         out["k_pct"] = _band(_predict(F["pit_k"], v["k_pct"]), F["pit_k"]["band_sd"], 0, 100)
+        # K% carries the flag only when it fires (BB% always carries the key),
+        # so the 4,500-row sidecar does not grow a false on every row.
+        if _low_signal(F["pit_k"]):
+            out["k_pct"]["low_confidence"] = True
     if v.get("bb_pct") is not None and F.get("pit_bb"):
         b = _band(_predict(F["pit_bb"], v["bb_pct"]), F["pit_bb"]["band_sd"], 0, 100)
-        b["low_confidence"] = F["pit_bb"]["r2"] < 0.10
+        b["low_confidence"] = _low_signal(F["pit_bb"])
         out["bb_pct"] = b
     return out
 
@@ -534,9 +564,11 @@ def _box_project(box, F):
     out = {}
     if box.get("k_pct") is not None and F.get("box_k"):
         out["k_pct"] = _band(_predict(F["box_k"], box["k_pct"] * 100), F["box_k"]["band_sd"], 0, 100)
+        if _low_signal(F["box_k"]):
+            out["k_pct"]["low_confidence"] = True
     if box.get("bb_pct") is not None and F.get("box_bb"):
         b = _band(_predict(F["box_bb"], box["bb_pct"] * 100), F["box_bb"]["band_sd"], 0, 100)
-        b["low_confidence"] = F["box_bb"]["r2"] < 0.10
+        b["low_confidence"] = _low_signal(F["box_bb"])
         out["bb_pct"] = b
     return out or None
 
@@ -619,6 +651,7 @@ def build(out_dir: Path | None = None) -> dict:
             "method": "matched-pair regression-to-the-mean (college -> Single-A), "
                       "our-data join: CollegeSavant name -> draft_players -> statlines (A/A+)",
             "bf_per_9": BF_PER_9, "slope_shrink_k": SLOPE_SHRINK_K,
+            "low_signal_r2": LOW_SIGNAL_R2,
             "competition_park_adjusted": False,
             "caveat": "Not adjusted for strength of schedule or park (no conference/park "
                       "table held). Bands are P10-P90 and widen with thinner support. "
@@ -695,10 +728,13 @@ def build(out_dir: Path | None = None) -> dict:
         # Compact backtest summary for the frontend "how accurate is this" panel.
         eval_summary = {k: {"r2": f.get("r2"), "n": f.get("n"), "band_sd": f.get("band_sd"),
                             "mae": (f.get("loo") or {}).get("mae"),
+                            "null_mae": (f.get("loo") or {}).get("null_mae"),
+                            "skill_se": (f.get("loo") or {}).get("skill_se"),
                             "coverage": (f.get("loo") or {}).get("p10_p90_coverage")}
                         for k, f in F.items()}
         payload = {"generated_from": "college_translation.build", "translations": translations,
-                   "eval": eval_summary, "caveat": eval_doc["caveat"]}
+                   "eval": eval_summary, "low_signal_r2": LOW_SIGNAL_R2,
+                   "caveat": eval_doc["caveat"]}
         (out_dir / "collegesavant_translation.js").write_text(
             "window.CS_TRANSLATION = " + json.dumps(payload) + ";\n", encoding="utf-8")
 

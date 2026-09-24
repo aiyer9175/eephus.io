@@ -106,6 +106,20 @@ BANNED_CLAIM_FRAGMENTS = (
     "best of every grader",
     "leads the pooled ordering",
     "the lead grows",
+    # Census M03-04 (2026-09-24). The CollegeSavant pitcher Projections page
+    # told readers strikeout rate carried the signal and walk rate washed out,
+    # directly above a table that flagged K% (r2 0.03) and not BB% (r2 0.11);
+    # the pitcher player-page note and the single_a_equivalent glossary
+    # methodology said the same. On the 232 matched pairs pitcher K% ties the
+    # predict-the-mean baseline (LOO MAE 4.013 against 3.995) while BB% beats
+    # it (3.138 against 3.380). The trust copy is now generated from the eval;
+    # the hitter prospects note also quoted a box K% r-squared of 0.47 against
+    # a served 0.26.
+    "strikeout rate carries the signal here",
+    "k% is moderately reliable",
+    "k% is the reliable output",
+    "k% is the most reliable",
+    "r-squared about 0.47",
 )
 
 # Copy surfaces the ratchet scans. content/*.json is globbed at test time.
@@ -113,6 +127,8 @@ CLAIM_SURFACES = (
     "assets/glossary.js",
     "data/glossary.json",
     "index.html",
+    "collegesavant/app.js",
+    "collegesavant/pitcher_app.js",
 )
 
 # ---------------------------------------------------------------------------
@@ -234,6 +250,27 @@ GLOSSARY_CLAIMS = (
      "data/value_framework_fitted.json", ("empirical_anchors", "anchors", "50"), "abs", 0.005),
     ("fv_to_war_table", "EV anchor FV 60", r"FV 60 (\d\.\d+)",
      "data/value_framework_fitted.json", ("empirical_anchors", "anchors", "60"), "abs", 0.005),
+    # single_a_equivalent names the trusted leg per side as a dated reading
+    # (census M03-04, 2026-09-24): the pitcher legs had swapped places while
+    # the copy still called K% the reliable output. Two-decimal copy.
+    ("single_a_equivalent", "hitter K% r2", r"hitter K% r2 (0\.\d+)",
+     "data/college_translation_eval.json", ("factors", "hit_k", "r2"), "abs", 0.01),
+    ("single_a_equivalent", "hitter K% LOO MAE", r"hitter K% r2 0\.\d+ \(leave-one-out MAE (\d+\.\d+)",
+     "data/college_translation_eval.json", ("factors", "hit_k", "loo", "mae"), "abs", 0.01),
+    ("single_a_equivalent", "hitter K% null MAE", r"hitter K% r2 0\.\d+ \(leave-one-out MAE \d+\.\d+ against (\d+\.\d+)",
+     "data/college_translation_eval.json", ("factors", "hit_k", "loo", "null_mae"), "abs", 0.01),
+    ("single_a_equivalent", "pitcher BB% r2", r"pitcher BB% r2 (0\.\d+)",
+     "data/college_translation_eval.json", ("factors", "pit_bb", "r2"), "abs", 0.01),
+    ("single_a_equivalent", "pitcher BB% LOO MAE", r"pitcher BB% r2 0\.\d+ \((\d+\.\d+) against",
+     "data/college_translation_eval.json", ("factors", "pit_bb", "loo", "mae"), "abs", 0.01),
+    ("single_a_equivalent", "pitcher BB% null MAE", r"pitcher BB% r2 0\.\d+ \(\d+\.\d+ against (\d+\.\d+)\)",
+     "data/college_translation_eval.json", ("factors", "pit_bb", "loo", "null_mae"), "abs", 0.01),
+    ("single_a_equivalent", "pitcher K% r2", r"pitcher K% r2 (0\.\d+)",
+     "data/college_translation_eval.json", ("factors", "pit_k", "r2"), "abs", 0.01),
+    ("single_a_equivalent", "pitcher K% LOO MAE", r"pitcher K% r2 0\.\d+ \((\d+\.\d+) against",
+     "data/college_translation_eval.json", ("factors", "pit_k", "loo", "mae"), "abs", 0.01),
+    ("single_a_equivalent", "pitcher K% null MAE", r"pitcher K% r2 0\.\d+ \(\d+\.\d+ against (\d+\.\d+)\)",
+     "data/college_translation_eval.json", ("factors", "pit_k", "loo", "null_mae"), "abs", 0.01),
 )
 
 # ---------------------------------------------------------------------------
@@ -364,6 +401,37 @@ def test_glossary_numbers_match_artifacts():
                     f"{'/'.join(keypath)} = {actual} (tol {tol_mode} {tol})"
                 )
     assert not problems, "glossary claim drift: " + "; ".join(problems)
+
+
+def test_single_a_equivalent_example_matches_live_factor():
+    """The single_a_equivalent worked example is a served number (the /glossary/
+    card's example line). Census M03-04 found it quoting 19% (band 11-27%) for
+    a 12% college K% when the live hit_k factor gave 23.7% (15.2-32.2%); it had
+    never matched a committed factor. Recompute it from the eval artifact with
+    college_translation's own regression-to-the-mean and P10-P90 band."""
+    entry = _glossary_entry("single_a_equivalent")
+    m = re.search(r"at a (\d+(?:\.\d+)?)% strikeout rate projects to about (\d+(?:\.\d+)?)% "
+                  r"at Single-A, with an 80% band near (\d+)-(\d+)%", entry.get("example") or "")
+    assert m, "single_a_equivalent example changed shape; update this test with it"
+    x, claimed, lo, hi = (float(g) for g in m.groups())
+    f = _read_json("data/college_translation_eval.json")["factors"]["hit_k"]
+    pred = f["y_mean"] + f["slope"] * (x - f["x_mean"])
+    half = 1.2816 * f["band_sd"]
+    assert abs(claimed - pred) <= 0.5, f"example says {claimed}%, live hit_k factor gives {pred:.1f}%"
+    assert abs(lo - max(0.0, pred - half)) <= 1.0, f"band low {lo} vs {pred - half:.1f}"
+    assert abs(hi - min(100.0, pred + half)) <= 1.0, f"band high {hi} vs {pred + half:.1f}"
+
+
+def test_collegesavant_trust_copy_reads_the_eval():
+    """Both CollegeSavant apps generate the What-to-trust copy from the
+    translation eval and flag K% from the per-player low_confidence field, so
+    the sentence, the table flag and the player-page flag cannot disagree."""
+    for rel, legs in (("collegesavant/pitcher_app.js", '[["pit_k", "strikeout rate"], ["pit_bb", "walk rate"]]'),
+                      ("collegesavant/app.js", '[["hit_k", "strikeout rate"], ["hit_bb", "walk rate"], ["hit_ops", "OPS"]]')):
+        src = _read_text(rel)
+        assert "<strong>What to trust.</strong> ${trustSentence(E, " + legs + ")}" in src, rel
+        assert 'sa.k_pct && sa.k_pct.low_confidence ? "low confidence"' in src, rel
+        assert "r2 < 0.10" not in src and "r2 < lowSignalR2()" in src, rel
 
 
 # ---------------------------------------------------------------------------
