@@ -11557,6 +11557,33 @@ function fvCmpDesc(a, b) {
   return an.localeCompare(bn);
 }
 
+// Consensus FV order: state.sort === "fv", which both the "Consensus FV" sort option and
+// the Rank-by Consensus toggle write. Rows sit in three tiers, pinned in both directions:
+//   0  a published consensus grade, ordered by the integer the consensus badge prints
+//      (fv_close) and then the decimal behind it (fv_close_raw), so the printed badges
+//      never invert down the list;
+//   1  consensus_is_placeholder: no source published an FV and the 35 is a fixed anchor
+//      (C-6), so it must not outrank a real published 34;
+//   2  no consensus grade at all (the provisional pool).
+// rev flips only the tier-0 term. Tiers 1 and 2, and exact ties, keep the eFV order.
+function consensusSortTier(p) {
+  if (!p || p._is_provisional || p.fv_close == null || !isFinite(Number(p.fv_close))) return 2;
+  const x = (typeof getEfv === "function") ? getEfv(p) : null;
+  return (x && x.consensus_is_placeholder) ? 1 : 0;
+}
+function consensusSortCmp(a, b, rev) {
+  const at = consensusSortTier(a), bt = consensusSortTier(b);
+  if (at !== bt) return at - bt;
+  if (at === 0) {
+    const ai = Number(a.fv_close), bi = Number(b.fv_close);
+    const ad = (a.fv_close_raw != null && isFinite(Number(a.fv_close_raw))) ? Number(a.fv_close_raw) : ai;
+    const bd = (b.fv_close_raw != null && isFinite(Number(b.fv_close_raw))) ? Number(b.fv_close_raw) : bi;
+    const d = (bi - ai) || (bd - ad);
+    if (d) return rev ? -d : d;
+  }
+  return fvCmpDesc(a, b);
+}
+
 // Returns the total (source, snapshot_date) instances where an explicit
 // FV exists across the player's full history. Drives the single-instance
 // shrinkage indicator: 1 instance ever → pulled toward FV 35; ≥2 → well-
@@ -14197,7 +14224,7 @@ const REVERSE_SORT_PAIRS = {
 const _INTERNAL_DIR_MAIN_SORTS = new Set([
   "surplus_sv", "surplus_risk", "surplus_p10", "surplus_p90",
   "surplus_pbust", "wag", "star_odds", "opt_pct",
-  "tool", "t_plus", "conviction",
+  "tool", "t_plus", "conviction", "fv",
 ]);
 
 // v29 - Universal post-sort direction helper. Each renderer that owns
@@ -15999,6 +16026,12 @@ function getFilteredActives() {
     // efvRankValue falls back to consensus FV for players with no pro track record
     // (where eFV abstains) so they interleave by consensus instead of vanishing.
     pool.sort((a, b) => efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b));
+  } else if (state.sort === "fv") {
+    // Consensus FV, highest first (consensusSortCmp). Reverse flag handled inside the
+    // comparator so placeholder and no-consensus rows stay pinned to the bottom in both
+    // directions (_applySortDir skips this key).
+    const _rev = !!(state.sortRev && state.sortRev.sort);
+    pool.sort((a, b) => consensusSortCmp(a, b, _rev));
   } else if (state.sort === "xfv_delta") {
     // Biggest eFV-minus-consensus gap first: surfaces the prospects the outcome
     // model rates furthest ABOVE the scouting consensus (the model's top "buys"),
@@ -33104,13 +33137,14 @@ function efvCompactBadge(p, opts) {
 //   - it would contradict every other rank surface at once (the detail-page Overall pill,
 //     the news tooltip's "Board rank #N", the field registry's overall_rank, the GFX
 //     footer's "number = board rank"), none of which have a consensus basis to move to;
-//   - it would not even match the rendered row order: as of 2026-08-03 the sort chain has
-//     NO state.sort === "fv" branch, so consensus mode leaves the pool in board order.
-//     (That is a separate open bug - the toggle's own title says "Rank + lead with
-//     consensus FV" and the re-rank half has never run. If that branch is ever added,
-//     re-open this decision; a consensus rank would then at least match the row order.)
-//     Today it would be exactly the "rendered order vs rank field" contradiction the
-//     BOARD NUMBER block above exists to prevent.
+//   - re-opened 2026-09-24, when the state.sort === "fv" branch landed (consensusSortCmp).
+//     Before that, consensus mode left the pool in baked board order. A consensus rank
+//     would now match the row order, but the two reasons above still hold: every
+//     placeholder row carries the same fixed 35 and the real grades tie by the hundred
+//     per low tier, so a dense rank would be tiebreak noise, and no other rank surface
+//     has a consensus basis. Decision kept. Under the Consensus FV sort the #N diamonds
+//     read out of order, as they already do under the age, ETA and tool sorts, and the
+//     tooltip says why.
 // So: show the live board rank in BOTH modes (baked overall_rank only as the fallback) and
 // say in the tooltip what basis it is on.
 function efvRankNumHTML(p) {
@@ -33120,7 +33154,7 @@ function efvRankNumHTML(p) {
   }
   const tip = (_gradePrimary() === "xfv")
     ? `Board rank #${n} (eFV basis)`
-    : `Board rank #${n} - still the eFV board ordering. The Consensus toggle changes which GRADE leads the cells; PROSPX does not publish a consensus-FV rank.`;
+    : `Board rank #${n} - still the eFV board ordering. The Consensus toggle changes which GRADE leads the cells${state.sort === "fv" ? " and orders the rows by consensus FV" : ""}; PROSPX does not publish a consensus-FV rank.`;
   return `<div class="rank-num ${rankNumRarityClass(p)}" title="${escapeHtml(tip)}"><span class="rank-num-inner">#${n}</span></div>`;
 }
 // Detail-page header: eFV as the primary big grade, consensus FV as the reference line.
