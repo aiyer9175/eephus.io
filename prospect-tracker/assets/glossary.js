@@ -2110,8 +2110,10 @@ function _loadReliability() {
 // model_registry.json for the ledger tile), never hardcoded, so the card can
 // never carry a number the page does not. Claims match the corrected prose:
 // equal-weight consensus, EV surplus, and NO per-side margin is stated as a
-// win (the hitter rank margin sits under its own MDE floor; only the common-
-// set head-to-head and the receipts, which resolve, are shown). Returns null
+// win (the hitter rank margin sits under its own MDE floor). The head-to-head
+// bars are the scoreboard's vintage-matched frame (2026-09-24), the frame its
+// verdict is read off, where public sources can sit above eFV, so the Spearman
+// scale tops out at 0.5 rather than clipping every bar at 0.4. Returns null
 // while the scoreboard artifact has not loaded - the click is then a no-op.
 function _methAdGfxSpec() {
   const sb = _S.scoreEval;
@@ -2156,7 +2158,7 @@ function _methAdGfxSpec() {
     });
   }
 
-  const panels = [{ title: "Ordering skill · Spearman, common resolved set", lo: 0, hi: 0.4, rows: spRows }];
+  const panels = [{ title: "Ordering skill · Spearman, common resolved set", lo: 0, hi: 0.5, rows: spRows }];
   if (auRows.length >= 2) panels.push({ title: "Discrimination · contributor AUC", lo: 0.5, hi: 0.85, rows: auRows });
 
   const nH2h = cons && cons.spearman ? cons.spearman.n : null;

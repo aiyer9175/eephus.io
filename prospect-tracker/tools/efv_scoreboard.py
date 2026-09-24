@@ -343,13 +343,36 @@ def _head_to_head(sb):
     compared eFV's number against a rival's number computed on rows eFV never saw,
     and the Diamond hub printed the difference as a head-to-head margin. It now
     reads `pooled_efv_common`, which re-scores every rater on the eFV rows.
+
+    FRAME FIX 2026-09-24. Identical rows was not the whole fix. pooled_efv_common
+    keeps every base year, post-debut consensus reads included, so it is the
+    all_vintages frame that source_backtest itself labels tilted toward one
+    grader, and verdict_vs_consensus below is read off the vintage-matched frame.
+    The Diamond card printed tiles from the first (n 3,272, +0.044) directly
+    above a margin sentence from the second (n 812, -0.007). The cells now read
+    the frame the verdict is read off (docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md:
+    the verdict is read off the vintage-matched basis and the tilted frames are
+    not headlines), and every frame rides along in head_to_head_by_frame.
     """
     acc = sb.get("accuracy") or {}
-    pooled = acc.get("pooled_efv_common") or acc.get("pooled") or {}
-    basis = ("identical rows (accuracy.pooled_efv_common)"
-             if acc.get("pooled_efv_common") else
-             "MIXED: each rater on its own rows (accuracy.pooled); "
-             "regenerate source_backtest.json for the identical-rows basis")
+    if acc.get("pooled_efv_common_vintage_matched"):
+        pooled = acc["pooled_efv_common_vintage_matched"]
+        frame = "vintage_matched"
+        basis = ("identical rows, vintage-matched "
+                 "(accuracy.pooled_efv_common_vintage_matched), the frame "
+                 "verdict_vs_consensus is read off")
+    elif acc.get("pooled_efv_common"):
+        pooled = acc["pooled_efv_common"]
+        frame = "all_vintages"
+        basis = ("identical rows, ALL base years (accuracy.pooled_efv_common), "
+                 "tilted toward the consensus; regenerate source_backtest.json "
+                 "for the vintage-matched frame")
+    else:
+        pooled = acc.get("pooled") or {}
+        frame = "mixed"
+        basis = ("MIXED: each rater on its own rows (accuracy.pooled); "
+                 "regenerate source_backtest.json for the identical-rows basis")
+    by_frame = acc.get("head_to_head_by_frame") or {}
     x = pooled.get("xfv") or {}
     if x.get("spearman") is None:
         return None
@@ -385,10 +408,18 @@ def _head_to_head(sb):
                          "preseason); eFV enters with its forward-chained OOS grade, "
                          "never an in-sample fit"),
             "basis": basis,
+            "vs_frame": frame,
+            "vs_frame_n": x.get("n"),
+            "vs_frame_note": (by_frame.get(frame) or {}).get("basis_note"),
             "common_n": acc.get("common_n"),
             "common_n_efv": acc.get("common_n_efv"),
             "verdict_vs_consensus": acc.get("head_to_head_verdict"),
-            "vs": rivals, "by_archetype_vs_consensus": arch}
+            "head_to_head_by_frame": by_frame or None,
+            "vs": rivals, "by_archetype_vs_consensus": arch,
+            "by_archetype_basis": ("one row per player, the latest read before debut, "
+                                   "on the players eFV also graded; a different set "
+                                   "from the tiles, so group n does not sum to the "
+                                   "tile n")}
 
 
 def _top20_capture(sb):

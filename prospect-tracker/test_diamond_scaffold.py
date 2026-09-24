@@ -561,20 +561,28 @@ def _run_diamond_js(fixture: dict, extra_js: str = "") -> dict:
     return json.loads(ctx.eval("JSON.stringify(__els())"))
 
 
-def _scoreboard(resolvable: bool, generated_at: str | None = None) -> dict:
+def _scoreboard(resolvable: bool, generated_at: str | None = None,
+                tile_n: int = 812) -> dict:
+    # The fixture agrees with itself (2026-09-24): the tiles and the verdict
+    # carry one n and one sign. It used to print a tile gap of -0.002 over a
+    # verdict delta of +0.0297, which is the served defect this file missed.
     return {
         "generated_at": generated_at or date.today().isoformat(),
         "head_to_head": {
             "protocol": "forward-chained scoring on identical rows",
+            "vs_frame": "vintage_matched",
+            "vs_frame_note": "base year equals the eFV decision year",
             "verdict_vs_consensus": {
-                "n": 3210, "delta": 0.0297, "mde95": 0.0352,
+                "n": 812, "delta": 0.0297,
+                "mde95": 0.0250 if resolvable else 0.0352,
                 "mde95_estimator": "E_refit", "resolvable": resolvable,
             },
             "vs": {"prospx_consensus": {
-                "label": "MLB Pipeline",
-                "spearman": {"efv": 0.394, "consensus": 0.396, "n": 3210, "win": False},
-                "auc_contributor": {"efv": 0.71, "consensus": 0.70, "n": 3210, "win": True},
+                "label": "PROSPX consensus",
+                "spearman": {"efv": 0.4257, "consensus": 0.396, "n": tile_n, "win": True},
+                "auc_contributor": {"efv": 0.71, "consensus": 0.70, "n": tile_n, "win": True},
             }},
+            "by_archetype_basis": "one row per player, the latest read before debut",
             "by_archetype_vs_consensus": [
                 {"label": "Hit-first", "n": 400,
                  "spearman": {"efv": 0.41, "consensus": 0.39, "win": True}},
@@ -607,6 +615,54 @@ def test_receipts_win_paint_unlocks_only_when_the_artifact_resolves_it():
     assert "real lead" in htm
     assert "statistically indistinguishable" not in htm, (
         "the tie lead renders over a resolvable win")
+
+
+def _tile_frame(htm: str):
+    """(tile n, tile efv - tile consensus) for the rank-correlation tile."""
+    m = re.search(r"Rank correlation with realized career WAR</div>"
+                  r'<div class="dm-tile-row"><span class="dm-tile-who">eFV</span>'
+                  r'<span class="dm-tile-val[^"]*">([-0-9.]+)</span></div>'
+                  r'<div class="dm-tile-row"><span class="dm-tile-who">[^<]*</span>'
+                  r'<span class="dm-tile-val">([-0-9.]+)</span></div>'
+                  r'<div class="dm-tile-n">([0-9,]+) players', htm)
+    assert m, "rank-correlation tile not rendered"
+    return int(m.group(3).replace(",", "")), float(m.group(1)) - float(m.group(2))
+
+
+def test_receipts_tiles_sit_on_the_verdict_frame():
+    """The n under the Spearman tile is verdict_vs_consensus.n, and the tile gap
+    has the sign of the margin sentence under it (M12-03, 2026-09-24)."""
+    fx = _scoreboard(False)
+    n, gap = _tile_frame(_run_diamond_js(fx)["diamond-receipts"])
+    vv = fx["head_to_head"]["verdict_vs_consensus"]
+    assert n == vv["n"]
+    assert (gap > 0) == (vv["delta"] > 0)
+
+
+def test_receipts_withhold_tiles_drawn_from_another_frame():
+    htm = _run_diamond_js(_scoreboard(False, tile_n=3272))["diamond-receipts"]
+    assert "dm-tile-n" not in htm, "tiles printed over a verdict on other players"
+    assert "tiles are withheld" in htm
+    assert "tie whatever its sign" in htm, "the verdict sentence went with the tiles"
+
+
+def test_served_scoreboard_tiles_and_verdict_share_a_frame():
+    """The served artifact through the real renderer: one population, one sign."""
+    p = ROOT / "data" / "xfv_scoreboard_eval.json"
+    if not p.exists():
+        pytest.skip("scoreboard artifact not built on this tree")
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    vv = (doc.get("head_to_head") or {}).get("verdict_vs_consensus") or {}
+    if vv.get("n") is None or vv.get("delta") is None:
+        pytest.skip("scoreboard artifact carries no verdict")
+    htm = _run_diamond_js(doc)["diamond-receipts"]
+    assert "tiles are withheld" not in htm, (
+        "the served scoreboard scores its tiles and its verdict on different "
+        "players; rerun python tools/efv_scoreboard.py")
+    n, gap = _tile_frame(htm)
+    assert n == vv["n"]
+    assert (gap > 0) == (vv["delta"] > 0), (
+        f"tile gap {gap:+.3f} and margin sentence {vv['delta']:+.4f} disagree in sign")
 
 
 def test_receipts_print_the_scoring_date_and_flag_a_stale_artifact():

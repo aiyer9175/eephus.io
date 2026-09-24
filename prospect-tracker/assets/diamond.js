@@ -136,10 +136,26 @@
     var resolvable = !!(vv && vv.resolvable);
     var sp = against.spearman || {};
     var auc = against.auc_contributor || {};
-    var tiles =
-      tile("Rank correlation with realized career WAR", sp.efv, sp.consensus, sp.n, who, resolvable) +
-      tile("Contributor AUC", auc.efv, auc.consensus, auc.n, who, resolvable);
-    if (!tiles) {
+    // ONE FRAME OR NO TILES (2026-09-24). The tiles once came from the all base
+    // years frame (eFV ahead) while the margin sentence under them came from the
+    // vintage-matched frame (eFV behind, on about a quarter of the players), so a
+    // reader who subtracted the tiles got the opposite sign of the sentence. The
+    // exporter now builds both from one frame; if an artifact ever hands this
+    // card two populations again, the tiles are withheld rather than printed
+    // against a verdict they do not belong to.
+    var sameFrame = !(vv && vv.n != null && sp.n != null && Number(vv.n) !== Number(sp.n));
+    var tiles = sameFrame
+      ? tile("Rank correlation with realized career WAR", sp.efv, sp.consensus, sp.n, who, resolvable) +
+        tile("Contributor AUC", auc.efv, auc.consensus, auc.n, who, resolvable)
+      : "";
+    var frameHTML = !sameFrame
+      ? '<p class="dm-fine">The tiles are withheld: this scoreboard scored them on ' +
+        esc(commas(sp.n)) + " players and the verdict below on " + esc(commas(vv.n)) +
+        ", so they do not describe the same comparison.</p>"
+      : (h2h.vs_frame_note
+        ? '<p class="dm-fine">Tiles and margin share one frame: ' + esc(h2h.vs_frame_note) + ".</p>"
+        : "");
+    if (!tiles && sameFrame) {
       root.innerHTML = note("The scoreboard artifact carries no comparable metrics yet.");
       return;
     }
@@ -220,7 +236,10 @@
         }).join("") +
         "</tbody></table></div>" +
         '<p class="dm-fine">These are point estimates on small groups. No per-group winner is ' +
-        "called: no row carries its own verdict.</p>";
+        "called: no row carries its own verdict.</p>" +
+        (h2h.by_archetype_basis
+          ? '<p class="dm-fine">Groups score ' + esc(h2h.by_archetype_basis) + ".</p>"
+          : "");
     }
     var protocol = h2h.protocol ? "<p class=\"dm-fine\">" + esc(h2h.protocol) + "</p>" : "";
     // The scoring date, and a loud note when it is old. 21 days: the scoreboard
@@ -238,7 +257,8 @@
     root.innerHTML = card(
       "<h3>eFV against the public consensus</h3>" +
       intro +
-      '<div class="dm-tiles">' + tiles + "</div>" +
+      (tiles ? '<div class="dm-tiles">' + tiles + "</div>" : "") +
+      frameHTML +
       verdictHTML +
       archHTML +
       protocol +
