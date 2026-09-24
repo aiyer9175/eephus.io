@@ -21548,25 +21548,84 @@ function renderInjuredActiveFilters() {
   el.innerHTML = chips.join("");
 }
 
-// v31.8c - Lazy-load the mlb_trade_players sidecar exactly once on
-// first open of the Transactions tab. The slice file is ~165KB
-// (618 vets) and only the trade audit consumes it, so keeping it
-// out of the boot payload saves ~165KB on every page load.
-let _mlbTradePlayersLoading = null;
-async function _ensureMlbTradePlayersLoaded() {
-  if (DATA.mlb_trade_players) return;
-  if (_mlbTradePlayersLoading) return _mlbTradePlayersLoading;
-  _mlbTradePlayersLoading = (async () => {
-    try {
-      const base = DATA_URL.replace(/[^/]+$/, "");
-      const resp = await fetch(`${base}mlb_trade_players.json`);
-      if (resp.ok) DATA.mlb_trade_players = await resp.json();
-      else         DATA.mlb_trade_players = {};
-    } catch (e) {
-      DATA.mlb_trade_players = {};
+// ---------------------------------------------------------------------------
+// TRADE AUDIT PRICING (2026-09-24). One currency: every party in an audited
+// trade is priced at the Trade Machine's trade value (trade_value_mm, the
+// posterior expected surplus; its lo/hi band is never summed), read from the
+// artifact /trademachine/ reads. It is today's value of what each club
+// received, not the value on the trade date. Career WAR is context only and
+// never enters a total. A party with no trade value is unpriced: it is left
+// out of both sides and the card names no winner while any party is unpriced.
+// ---------------------------------------------------------------------------
+const _TA_TV = { idx: null, loading: null };
+// Accent-folded name key: "Jose Soriano" with or without the accent -> jose_soriano;
+// initials fold together, so "C.J. Abrams" and "CJ Abrams" both read cj_abrams.
+function _taFold(name) {
+  return String(name || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[.'\u2019]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+function _taBuildIndex(payload) {
+  const byKey = {}, byName = {};
+  ((payload && payload.players) || []).forEach(r => {
+    if (!r || !r.player_key) return;
+    byKey[r.player_key] = r;
+    const f = _taFold(r.player_name);
+    if (f) (byName[f] = byName[f] || []).push(r);
+  });
+  const asOf = (payload && payload.generated_at) ? String(payload.generated_at).slice(0, 10) : null;
+  return { byKey, byName, asOf, ok: !!(payload && payload.players) };
+}
+function _taTradeValuesLoad() {
+  if (_TA_TV.idx) return Promise.resolve(_TA_TV.idx);
+  if (_TA_TV.loading) return _TA_TV.loading;
+  const base = DATA_URL.replace(/[^/]+$/, "");
+  _TA_TV.loading = fetch(base + "trade_values.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .catch(() => null)
+    .then(j => { _TA_TV.idx = _taBuildIndex(j); _TA_TV.loading = null; return _TA_TV.idx; });
+  return _TA_TV.loading;
+}
+// idx: _taBuildIndex output, or null while loading. key: an identity already
+// known, matched first. A key with no row falls back to the folded name only
+// inside `orgs` (the two clubs in the trade), so a disambiguated key such as
+// dj_herz__26389 still finds DJ Herz at WSN while a retired namesake elsewhere
+// stays unpriced. Without a key, a unique folded-name match prices the
+// player; several are narrowed to `orgs` and any tie left is unpriced.
+function _taPriceParty(idx, key, name, orgs) {
+  if (!idx) return { value: null, kind: "pending" };
+  let row = null;
+  if (key) {
+    row = idx.byKey[key] || null;
+    if (!row && orgs) {
+      const c = (idx.byName[_taFold(name)] || []).filter(r => orgs.indexOf(r.org) >= 0);
+      if (c.length === 1) row = c[0];
     }
-  })();
-  return _mlbTradePlayersLoading;
+  } else {
+    let c = idx.byName[_taFold(name)] || [];
+    if (c.length > 1 && orgs) c = c.filter(r => orgs.indexOf(r.org) >= 0);
+    if (c.length > 1) return { value: null, kind: "unpriced", why: "ambiguous" };
+    row = c.length === 1 ? c[0] : null;
+  }
+  if (!row) return { value: null, kind: "unpriced", why: "no_row" };
+  const base = {
+    key: row.player_key, src: row.surplus_source || null, status: row.status || null,
+    fv: row.fv != null ? Number(row.fv) : null, pos: row.position || null,
+  };
+  const mm = row.trade_value_mm == null ? NaN : Number(row.trade_value_mm);
+  if (!isFinite(mm)) return Object.assign(base, { value: null, kind: "unpriced", why: row.surplus_source || "no_price" });
+  return Object.assign(base, { value: mm, kind: "tv" });
+}
+// Verdict for one trade: no winner while a price is loading or any party is
+// unpriced; otherwise the shared dead band decides balanced vs a winner.
+function _taVerdict(netDeltaA, unpriced, pending, band) {
+  if (pending > 0) return "pending";
+  if (unpriced > 0) return "withheld";
+  if (Math.abs(netDeltaA) < band) return "balanced";
+  return netDeltaA > 0 ? "orgA" : "orgB";
+}
+// Signed $M: -0.4 -> "-$0.4M".
+function _taMM(v) {
+  return `${v < 0 ? "-" : ""}$${Math.abs(v).toFixed(1)}M`;
 }
 
 // ===========================================================================
@@ -21643,21 +21702,9 @@ function _ctrlWinLoad() {
 function renderRecentlyTraded() {
   // v31.9 - Transactions tab now ships the league-context rail.
   try { renderActiveContextRail("traded-context-rail"); } catch (e) { /* silent */ }
-  // v31.8c - Kick off the lazy MLB-vet sidecar load. If it's not
-  // ready yet, we render with empty mlb_trade_players (the trade
-  // audit falls back to DATA.debuts / inactive for prospect-grads,
-  // which covers most cases); when the fetch lands we re-render so
-  // the verdict picks up MLB veteran valuations.
-  if (!DATA.mlb_trade_players) {
-    DATA.mlb_trade_players = {};
-    _ensureMlbTradePlayersLoaded().then(() => {
-      // Only re-render if the user is still on this tab.
-      if (state.section === "traded") renderRecentlyTraded();
-    });
-  }
   // v47 wire-slim - inactive.json left the idle warm; it is the tier-3
-  // source for the trade-audit vet lookup below (legacy players with WAR).
-  // Same lazy load + conditional re-render pattern as mlb_trade_players.
+  // source for the trade-audit identity lookup below (legacy players).
+  // Same lazy load + conditional re-render pattern as the trade values.
   if (DATA._slices && DATA._slices.inactive && !(DATA.inactive || []).length
       && !_inactiveEnrichKicked) {
     _inactiveEnrichKicked = true;
@@ -21675,6 +21722,13 @@ function renderRecentlyTraded() {
   // already render in the section's main event list below.
   renderWhatsNew("whats-new-traded", kind => kind === "trade" || kind === "debuted");
   const filtered = getFilteredAcquired();
+  // Trade Audit prices ride the Trade Machine artifact, fetched once on
+  // the first view that holds a trade row; the cards re-render when it lands.
+  if (!_TA_TV.idx && filtered.some(r => r.acq && r.acq.method === "trade")) {
+    _taTradeValuesLoad().then(() => {
+      if (state.section === "traded") renderRecentlyTraded();
+    });
+  }
 
   // Client-side sort over the filtered list. Default "date" preserves
   // the existing newest-first ordering from getFilteredAcquired().
@@ -21728,39 +21782,19 @@ function renderRecentlyTraded() {
   // players (tracked + MLB vets + IBP/cash) and renders ONE audit
   // card per trade, attached to the FIRST player's row in the list.
   //
-  // Valuation rules (v32.0 - now sourced from value_framework):
-  //   * Tracked debuted players → career WAR × $/WAR_overall (rolling
-  //     3yr avg ≈ $11.74M, vs prior flat $8M)
-  //   * Tracked active prospects → estimateSurplusValueMM(...) with
-  //     v31.8 position + TBS nudges, now reading from value_framework's
-  //     re-derived surplus table (FV→WAR×bust_prob×$/WAR formula)
-  // * v31.8b - MLB VETERANS named in the trade description but not
-  //     in our tracked database (e.g. Brendan Donovan dealt for a
-  //     prospect package) → looked up in DATA.mlb_trade_players via
-  //     name slug; valued by their career WAR × $/WAR_overall same as
-  //     tracked debutants. This closes the "PTBNL / no tracked
-  //     players" gap that mis-stated trade surplus when one side
-  //     received an established MLB vet.
-  //   * International bonus pool / cash considerations parsed from
-  //     the trade narrative (e.g. "$500,000 in international bonus
-  //     pool space" → +$0.5M to receiving side)
+  // Valuation (2026-09-24): ONE currency, the Trade Machine's. Every party,
+  // prospect or MLB player, is priced at trade_value_mm through
+  // _taPriceParty. That is today's value of what each club received, not
+  // the value on the trade date; the prospect side was already today's
+  // baked surplus, so both sides now share one clock. Career WAR is
+  // context text only. A party with no trade value is unpriced: it is left
+  // out of both sides and the card names no winner. International bonus
+  // pool / cash considerations parsed from the trade narrative (e.g.
+  // "$500,000 in international bonus pool space" -> +$0.5M) still credit
+  // the side that received less.
   // Output: per-trade `evalByTrade[tradeKey]` carries net surplus
   // delta + per-side breakdowns; the row renderer below injects an
   // expanded card under each trade row with the verdict.
-  // v32.0 - $/WAR is now tier-aware via dollarsPerWar(). The flat
-  // constant remains for career-WAR aggregates where tier-dispatching
-  // doesn't make sense (multi-season aggregate spans multiple tiers).
-  // v33 - the snapshot emits dollars_per_war.flat_mm (with tiered_mm.{lt_1,
-  // 1_to_2,2plus}); an older snapshot exposed dollars_per_war.tiers.overall.
-  // Read the real key, keep the legacy path for back-compat, and fall back to
-  // the CURRENT live flat rate (not the pre-reanchor seed) so a load miss
-  // degrades to correct-as-of-now instead of silently ~11% low. This flat
-  // constant is for multi-season WAR aggregates; dollarsPerWar() does per-tier.
-  const _dpwSnap = (window.VALUE_FRAMEWORK && window.VALUE_FRAMEWORK.dollars_per_war) || null;
-  const _WAR_DOLLAR_VALUE = (_dpwSnap && (
-                              (typeof _dpwSnap.flat_mm === "number" && isFinite(_dpwSnap.flat_mm) && _dpwSnap.flat_mm)
-                              || (_dpwSnap.tiers && _dpwSnap.tiers.overall)))
-                              || 13.0252;
   // Parse IBP + cash mentions from a trade description. Returns
   // {ibp_mm, cash_mm, recipient_hint} where recipient_hint is
   // either "from" / "to" / null (we use the canonical sender / receiver
@@ -21810,28 +21844,22 @@ function renderRecentlyTraded() {
       cash_mm: Math.round(cash_mm * 100) / 100,
     };
   };
-  const _TRADE_PITCHER_RE = /^(RHP|LHP|SP|RP|MIRP|SIRP)/;
-  const _playerTradeValue = (p) => {
-    if (!p) return { value: null, kind: "unknown" };
-    // Debuted players get WAR-derived value when career_war is on file.
-    const cwObj = p.career_war;
-    const careerWar = (cwObj && typeof cwObj === "object" && cwObj.career_war != null)
-      ? Number(cwObj.career_war)
-      : (typeof cwObj === "number" ? cwObj : null);
-    if (careerWar != null && (p.debut_date || p.status === "debuted")) {
-      return {
-        value: Math.round(careerWar * _WAR_DOLLAR_VALUE * 10) / 10,
-        kind:  "war",
-        war:   careerWar,
-      };
-    }
-    // Prospects (with or without realized WAR) → baked engine surplus (the
-    // single source of truth; FV-estimate fallback only when none is baked).
-    if (p.fv_close != null || (p.surplus && p.surplus.value_mm != null)) {
-      const surplus = playerSurplusMM(p);
-      return { value: surplus, kind: "fv", fv: p.fv_close };
-    }
-    return { value: null, kind: "unknown" };
+  // Career WAR, shown in a chip's tooltip as context only. It never enters
+  // a total: it counts seasons before the trade and at other clubs.
+  const _taCareerWar = (p) => {
+    const cw = p && p.career_war;
+    const v = (cw && typeof cw === "object") ? cw.career_war : cw;
+    return (v != null && isFinite(Number(v))) ? Number(v) : null;
+  };
+  // A tracked row's player: priced by his own key on the trade value.
+  const _playerTradeValue = (p, orgs) => {
+    if (!p) return { value: null, kind: "unpriced", why: "no_row" };
+    const price = _taPriceParty(_TA_TV.idx, p.player_key || null, p.player_name, orgs);
+    return Object.assign(price, {
+      war: _taCareerWar(p),
+      fv: p.fv_close != null ? p.fv_close : price.fv,
+      debuted: price.status ? price.status !== "active" : !!(p.debut_date || p.status === "debuted"),
+    });
   };
   // Build trade groups: tradeKey = `${date}|${from}|${to}` (and
   // the mirror `${date}|${to}|${from}` resolves to the same group).
@@ -21840,32 +21868,25 @@ function renderRecentlyTraded() {
     const lo = from < to ? from : to, hi = from < to ? to : from;
     return `${acq.date}|${lo}|${hi}`;
   };
-  // v31.8b - MLB trade-vet lookup. Description-parser identifies
-  // candidate player names; we resolve in this order:
-  //   1. DATA.mlb_trade_players (storage-cached MLB Stats API + BBRef)
-  //   2. DATA.debuts (tracked debutants that aren't in the active
-  // pool but DO carry career_war - covers prospect-grads dealt
-  //      AFTER their debut, e.g. Brendan Donovan SEA→STL trade)
-  //   3. DATA.inactive (legacy / no-longer-tracked players with WAR)
-  // Names already added to this trade's seen-set are skipped.
-  const _mlbVets = DATA.mlb_trade_players || {};
-  const _nameToSlug = (name) =>
-    String(name || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-  // Build a debuts/inactive index by slug for the secondary lookup.
-  // Cached lazily - only built when we actually need to resolve a vet.
-  let _debutSlugIndex = null;
-  const _buildDebutSlugIndex = () => {
-    if (_debutSlugIndex !== null) return _debutSlugIndex;
-    _debutSlugIndex = {};
+  // Identity index for names that appear only in the trade narrative:
+  // tracked debuts and inactive rows keyed by the accent-folded name
+  // (_taFold), every row kept so a shared name reads as ambiguous
+  // instead of taking whichever row came first. Built lazily.
+  let _identIndex = null;
+  const _buildIdentIndex = () => {
+    if (_identIndex !== null) return _identIndex;
+    _identIndex = {};
     const sources = [DATA.debuts || [], DATA.inactive || []];
+    const seenKeys = new Set();
     for (const list of sources) {
       for (const p of list) {
-        if (!p || !p.player_name) continue;
-        const slug = _nameToSlug(p.player_name);
-        if (slug && !_debutSlugIndex[slug]) _debutSlugIndex[slug] = p;
+        if (!p || !p.player_name || !p.player_key || seenKeys.has(p.player_key)) continue;
+        seenKeys.add(p.player_key);
+        const f = _taFold(p.player_name);
+        if (f) (_identIndex[f] = _identIndex[f] || []).push(p);
       }
     }
-    return _debutSlugIndex;
+    return _identIndex;
   };
   // Reuse the same description parser shape used by storage's
   // mlb_trade_lookup so the JS extraction mirrors the backend's.
@@ -22006,7 +22027,7 @@ function renderRecentlyTraded() {
     // parser below (matching the same logic we use for description-
     // extracted MLB vets). Falls back to the acq's to_org when the
     // narrative parser can't find the name.
-    const val = _playerTradeValue(row.p);
+    const val = _playerTradeValue(row.p, (g.orgA && g.orgB) ? [g.orgA, g.orgB] : null);
     let side = null;
     if (g.orgA && g.orgB) {
       side = _resolveSideForName(desc, row.p.player_name, g.orgA, g.orgB)
@@ -22020,90 +22041,47 @@ function renderRecentlyTraded() {
       to:   side,
       val,
     });
-    g.seenSlugs.add(_nameToSlug(row.p.player_name));
+    g.seenSlugs.add(_taFold(row.p.player_name));
     g.rows.push(row);
   });
-  // Second pass - for each group, parse the description for names
-  // not yet seen, and inject them as MLB-vet / unresolved entries.
+  // Second pass - for each group, parse the description for names not
+  // yet seen and price them on the same trade value. Identity comes from
+  // the tracked debuts / inactive rows when the folded name is unique
+  // there (_taPriceParty matches that key first, then the name inside the
+  // two clubs); otherwise the trade-value board is matched by folded name,
+  // narrowed to the two clubs on a tie.
   for (const k in evalByTrade) {
     const g = evalByTrade[k];
     if (!g.orgA || !g.orgB) continue; // unparseable narrative - skip vet injection
     for (const desc of g.descriptions) {
       const names = _extractNames(desc);
       for (const nm of names) {
-        const slug = _nameToSlug(nm);
+        const slug = _taFold(nm);
         if (g.seenSlugs.has(slug)) continue;
-        let vet = _mlbVets[slug];
-        let vetSource = "mlb_api";
-        if (!vet || vet.career_war == null) {
-          const idx = _buildDebutSlugIndex();
-          const debut = idx[slug];
-          if (debut) {
-            const cwObj = debut.career_war;
-            const cwVal = (cwObj && typeof cwObj === "object" && cwObj.career_war != null)
-              ? Number(cwObj.career_war)
-              : (typeof cwObj === "number" ? cwObj : null);
-            if (cwVal != null) {
-              vet = {
-                player_name: debut.player_name,
-                mlbam_id:    debut.mlbam_id,
-                primary_position: (debut.position || '').split('/')[0],
-                career_war:  cwVal,
-                last_team:   debut.org,
-                is_pitcher:  /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(debut.position || ''),
-              };
-              vetSource = "debuts";
-            }
-          }
-        }
+        // A narrative name cut short at a lowercase particle ("Slater" out
+        // of "Slater de Brun") is the longer name already in this trade.
+        if ([...g.seenSlugs].some(s => s.startsWith(slug + "_"))) continue;
         const side = _resolveSideForName(desc, nm, g.orgA, g.orgB);
         if (!side) continue;
         g.seenSlugs.add(slug);
-        if (!vet) {
-          g.players.push({
-            p: { player_name: nm, player_key: "" },
-            from: side === g.orgA ? g.orgB : g.orgA,
-            to:   side,
-            val:  { value: null, kind: "unresolved" },
-          });
-          continue;
-        }
-        // v31.9c - Prefer contract-based surplus_mm when on file. Falls
-        // back to career_war × $/WAR_overall (rolling 3yr ~$11.74M) only
-        // when contract data is missing (which is most prospect-grads - 
-        // their AAV isn't on Spotrac yet so we still use the realized-
-        // value approximation).
-        const war = vet.career_war != null ? Number(vet.career_war) : null;
-        const hasSurplus = vet.surplus_mm != null;
-        const value = hasSurplus
-          ? Math.round(Number(vet.surplus_mm) * 10) / 10
-          : (war != null ? Math.round(war * _WAR_DOLLAR_VALUE * 10) / 10 : null);
-        const valueKind = hasSurplus ? "surplus_mm"
-                        : war != null ? "war_vet"
-                        : "unresolved";
-        const playerKey = vet.mlbam_id
-          ? (vetSource === "debuts" ? slug : `mlbam_${vet.mlbam_id}`)
-          : "";
+        const cands = _buildIdentIndex()[slug] || [];
+        const ident = cands.length === 1 ? cands[0] : null;
+        const price = _taPriceParty(_TA_TV.idx, ident ? ident.player_key : null,
+                                    ident ? ident.player_name : nm, [g.orgA, g.orgB]);
         g.players.push({
           p: {
-            player_name: vet.player_name || nm,
-            player_key:  playerKey,
+            player_name: ident ? ident.player_name : nm,
+            // Link only to a player this page carries (goToPlayer target).
+            player_key:  ident ? ident.player_key : "",
             _mlb_vet:    true,
           },
           from: side === g.orgA ? g.orgB : g.orgA,
           to:   side,
-          val:  {
-            value:    value,
-            kind:     valueKind,
-            war:      war,
-            pos:      vet.primary_position,
-            team:     vet.last_team,
-            src:      vetSource,
-            aav_usd:  vet.current_aav_usd,
-            years:    vet.years_remaining,
-            age:      vet.age,
-            proj_war: vet.projected_war_remaining,
-          },
+          val:  Object.assign(price, {
+            war: _taCareerWar(ident),
+            pos: price.pos || (ident ? String(ident.position || "").split("/")[0] : null),
+            debuted: price.status ? price.status !== "active" : !!ident,
+          }),
         });
       }
     }
@@ -22127,9 +22105,17 @@ function renderRecentlyTraded() {
     // sideB = "what orgB received". Net for orgA = sideA - sideB.
     let aIn = 0, bIn = 0;
     let aCount = 0, bCount = 0;
-    let unknownCount = 0;
+    let unknownCount = 0, pendingCount = 0, aUnpriced = 0, bUnpriced = 0;
     for (const e of g.players) {
-      if (e.val.value == null) { unknownCount++; continue; }
+      if (e.val.value == null) {
+        if (e.val.kind === "pending") pendingCount++;
+        else {
+          unknownCount++;
+          if (e.to === g.orgA) aUnpriced++;
+          else if (e.to === g.orgB) bUnpriced++;
+        }
+        continue;
+      }
       if (e.to === g.orgA) { aIn += e.val.value; aCount++; }
       else if (e.to === g.orgB) { bIn += e.val.value; bCount++; }
     }
@@ -22150,6 +22136,9 @@ function renderRecentlyTraded() {
     g.bReceived = Math.round((bIn + bIbp + bCash) * 10) / 10;
     g.netDeltaA = Math.round((g.aReceived - g.bReceived) * 10) / 10;
     g.unknownCount = unknownCount;
+    g.pendingCount = pendingCount;
+    g.aUnpriced = aUnpriced;
+    g.bUnpriced = bUnpriced;
     g.aCount = aCount;
     g.bCount = bCount;
     g.ibp_mm  = totalIbp;
@@ -22157,17 +22146,10 @@ function renderRecentlyTraded() {
     g.aIbp = aIbp;   g.bIbp = bIbp;
     g.aCash = aCash; g.bCash = bCash;
     // Verdict: who won + by how much. Shared dead-band with the Trade Machine
-    // so a sub-$5M edge reads as balanced, not a precise winner.
-    if (Math.abs(g.netDeltaA) < BALANCED_THRESHOLD_MM) {
-      g.verdict = "balanced";
-      g.winner = null;
-    } else if (g.netDeltaA > 0) {
-      g.verdict = "orgA";
-      g.winner = g.orgA;
-    } else {
-      g.verdict = "orgB";
-      g.winner = g.orgB;
-    }
+    // so a sub-$5M edge reads as balanced, not a precise winner; no winner
+    // at all while any party is unpriced or the prices are still loading.
+    g.verdict = _taVerdict(g.netDeltaA, unknownCount, pendingCount, BALANCED_THRESHOLD_MM);
+    g.winner = g.verdict === "orgA" ? g.orgA : g.verdict === "orgB" ? g.orgB : null;
   }
   // v33 - Trade GROUPING. Pull every tracked prospect from the same trade
   // into one contiguous block (members collapse to the first member's slot),
@@ -22341,7 +22323,7 @@ function renderRecentlyTraded() {
         const g = evalByTrade[k];
         if (!g) return "";
         const highlightKeys = _groupKeys[k] || new Set([p.player_key]);
-        const winColor = g.verdict === "balanced" ? "var(--text-secondary)" : "var(--up)";
+        const winColor = (g.verdict === "orgA" || g.verdict === "orgB") ? "var(--up)" : "var(--text-secondary)";
         const aTone = g.verdict === "orgA" ? "var(--up)"
                     : g.verdict === "orgB" ? "var(--down)"
                     : "var(--text-secondary)";
@@ -22350,6 +22332,10 @@ function renderRecentlyTraded() {
                     : "var(--text-secondary)";
         const verdictText = g.verdict === "balanced"
           ? `<span style="color:var(--text-secondary);">Balanced trade</span>`
+          : g.verdict === "pending"
+          ? `<span style="color:var(--text-tertiary);">Pricing</span>`
+          : g.verdict === "withheld"
+          ? `<span style="color:var(--text-secondary);" title="A party in this trade has no trade value on file today, so the card names no winner.">No verdict · ${g.unknownCount} unpriced</span>`
           : `<span style="color:var(--up);font-weight:700;">${escapeHtml(g.winner)} +$${Math.abs(g.netDeltaA).toFixed(1)}M</span>`;
         const _tbsFor = (pp) => (pp ? (typeof tiebreakerScore === "function" ? tiebreakerScore(pp) : null) : null);
         const sidePlayerChips = (orgCode, highlightKeys = null) => {
@@ -22360,20 +22346,29 @@ function renderRecentlyTraded() {
             // above, so the audit visibly ties back to them.
             const isRowPlayer = highlightKeys && highlightKeys.has(e.p.player_key);
             const v = e.val;
-            const valStr = v.value != null ? `$${v.value.toFixed(1)}` : ' - ';
-            const tbsHere = (v.kind === "fv") ? _tbsFor(e.p) : null;
-            const aavMm = v.aav_usd != null ? (v.aav_usd / 1_000_000).toFixed(1) : null;
-            const kindLbl = v.kind === "war"        ? `Realized · ${v.war?.toFixed(1)} WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M`
-                          : v.kind === "surplus_mm" ? `MLB vet contract surplus · ${v.pos || ' - '}${v.age ? ` · age ${v.age}` : ''} · proj ${v.proj_war?.toFixed(1) ?? '?'} WAR over ${v.years || '?'}yr at $${aavMm || '?'}M AAV · net $${v.value.toFixed(1)}M`
-                          : v.kind === "war_vet" ? `MLB vet (no contract on file) · ${v.pos || ' - '} · ${v.war?.toFixed(1)} career WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M - using realized career value as proxy`
-                          : v.kind === "fv"         ? `Projected MLB surplus · FV ${v.fv}${tbsHere != null ? ` · TBS ${tbsHere}` : ''} · controlled seasons`
-                          : v.kind === "unresolved" ? "Untracked MLB player - career WAR not on file yet"
-                          : 'unknown';
-            const vetTag = (v.kind === "war_vet" || v.kind === "surplus_mm")
+            const valStr = v.value != null ? _taMM(v.value)
+                         : v.kind === "pending" ? "..." : "unpriced";
+            const tbsHere = (v.kind === "tv" && !v.debuted) ? _tbsFor(e.p) : null;
+            const _srcLbl = { projection: "contract surplus over the club control window",
+                              xfv: "eFV expected surplus over club control",
+                              xfv_backgrade: "prospect-era eFV surplus, tempered toward MLB results",
+                              prearb_min: "pre-arbitration surplus at the league minimum",
+                              bayes_unrepointed: "trade-value model price" }[v.src] || "trade value";
+            const _whyLbl = { inactive_dropped: "not an active MLB asset",
+                              ambiguous: "the name matches more than one player",
+                              no_row: "not on the trade-value board" }[v.why] || "no trade value on file";
+            const _warCtx = v.war != null
+              ? ` · ${v.war.toFixed(1)} career WAR, context only: not in the total, and it counts seasons before this trade`
+              : "";
+            const kindLbl = v.kind === "tv"
+              ? `Value today ${_taMM(v.value)}: the Trade Machine price (${_srcLbl})${v.fv != null && !v.debuted ? ` · FV ${v.fv}` : ""}${tbsHere != null ? ` · TBS ${tbsHere}` : ""}${_warCtx}`
+              : v.kind === "pending" ? "Loading trade values"
+              : `Unpriced (${_whyLbl}); left out of both totals, so the card names no winner${_warCtx}`;
+            const vetTag = (v.debuted || (e.p._mlb_vet && v.kind !== "tv" && v.status == null))
               ? `<span style="font-size:8px;color:var(--neon-cyan);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;margin-right:1px;">MLB</span>` : "";
             const nameMarkup = e.p.player_key
               ? `<a href="#player=${escapeHtml(e.p.player_key)}" onclick="event.preventDefault();event.stopPropagation();goToPlayer('${escapeHtml(e.p.player_key)}');" style="color:var(--text-primary);text-decoration:none;font-weight:600;">${escapeHtml(e.p.player_name)}</a>`
-              : `<span style="color:${v.kind === 'unresolved' ? 'var(--text-tertiary)' : 'var(--text-primary)'};font-weight:600;">${escapeHtml(e.p.player_name)}</span>`;
+              : `<span style="color:${v.value == null ? 'var(--text-tertiary)' : 'var(--text-primary)'};font-weight:600;">${escapeHtml(e.p.player_name)}</span>`;
             const star = isRowPlayer ? `<span style="color:var(--neon-amber);font-size:9px;flex-shrink:0;" aria-label="tracked prospect">★</span>` : "";
             const wrapStyle = isRowPlayer
               ? `display:inline-flex;align-items:baseline;gap:3px;font-size:10px;background:var(--bg-tertiary);border:1px solid var(--neon-amber);border-radius:3px;padding:1px 5px;`
@@ -22386,12 +22381,12 @@ function renderRecentlyTraded() {
             const _posLvl = (_pos || _lvl)
               ? `<span style="color:var(--text-tertiary);font-size:8px;white-space:nowrap;">${escapeHtml([_pos, _lvl].filter(Boolean).join(" · "))}</span>`
               : "";
-            const _fvNum = (v.kind === "fv" && v.fv != null) ? v.fv
-                         : (e.p.fv_close != null ? e.p.fv_close : null);
+            const _fvNum = e.p.fv_close != null ? e.p.fv_close
+                         : (!v.debuted && v.fv != null ? v.fv : null);
             const _fvBadge = _fvNum != null
               ? `<span class="fv-badge ${fvClass(String(fvCeil(_fvNum)))}" style="font-size:8px;padding:0 3px;line-height:1.5;flex-shrink:0;">${fvCeil(_fvNum)}</span>`
               : "";
-            chips.push(`<span style="${wrapStyle}" title="${escapeHtml(kindLbl)}">${star}${vetTag}${nameMarkup}${_posLvl}${_fvBadge}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}M</span></span>`);
+            chips.push(`<span style="${wrapStyle}" title="${escapeHtml(kindLbl)}" data-ta-kind="${v.kind}" data-ta-key="${escapeHtml(v.key || "")}" data-ta-mm="${v.value != null ? v.value : ""}">${star}${vetTag}${nameMarkup}${_posLvl}${_fvBadge}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}</span></span>`);
           }
           const ibp  = (orgCode === g.orgA) ? g.aIbp  : g.bIbp;
           const cash = (orgCode === g.orgA) ? g.aCash : g.bCash;
@@ -22407,20 +22402,18 @@ function renderRecentlyTraded() {
           return chips.join(`<span style="color:var(--text-tertiary);margin:0 4px;">,</span>`);
         };
         if (!g.orgA || !g.orgB) return "";  // unparseable narrative
-        // v32.1 - Honors the project principle: prospects use FV→$
-        // (projected), vets use realized career-WAR×$/WAR. The $/FV-pt
-        // ratio is therefore PROSPECT-ONLY (vets have no meaningful
-        // "per FV-pt" rate). Vet $ is shown as a separate inline chip.
+        // Every party is on the one trade value. The $/FV-pt ratio stays
+        // PROSPECT-ONLY (an MLB player has no meaningful per-FV-pt rate), so
+        // MLB dollars are named separately when a side mixes the two.
         const sideSplit = (orgCode) => {
           let fv = 0, prospect_$ = 0, vet_$ = 0, vet_n = 0;
           for (const e of g.players) {
             if (e.to !== orgCode) continue;
             const v = e.val;
-            if (v.kind === "fv" && v.fv != null && v.value != null) {
-              fv += Number(v.fv);
-              prospect_$ += Number(v.value);
-            } else if ((v.kind === "war" || v.kind === "war_vet" || v.kind === "surplus_mm")
-                       && v.value != null) {
+            if (v.kind !== "tv" || v.value == null) continue;
+            if (!v.debuted) {
+              if (v.fv != null) { fv += Number(v.fv); prospect_$ += Number(v.value); }
+            } else {
               vet_$ += Number(v.value);
               vet_n += 1;
             }
@@ -22436,9 +22429,9 @@ function renderRecentlyTraded() {
             const perFv = (split.prospect_$ / split.fv).toFixed(1);
             parts.push(`<span class="g-term" data-term="dollars_per_fv" style="color:var(--text-tertiary);font-size:9px;font-weight:500;cursor:help;" title="Prospect-side FV-pts received and the per-FV-pt $ implied by FV→WAR→$ projection (click for glossary)">(${split.fv.toFixed(0)} FV · $${perFv}M/FV)</span>`);
           }
-          if (split.vet_$ > 0) {
+          if (split.vet_n > 0 && split.prospect_$ !== 0) {
             const vLabel = split.vet_n === 1 ? "vet" : `${split.vet_n} vets`;
-            parts.push(`<span style="color:var(--text-tertiary);font-size:9px;font-weight:500;" title="MLB veteran(s) valued at realized career WAR × $/WAR_overall. Prospects above are projected via FV → WAR → $ - vet $ is realized, not projected.">+ $${split.vet_$.toFixed(1)}M (${vLabel})</span>`);
+            parts.push(`<span style="color:var(--text-tertiary);font-size:9px;font-weight:500;" title="The MLB player(s) on this side, at the same trade value the Trade Machine shows. Included in the side total; never in the $/FV ratio.">${split.vet_$ < 0 ? "incl. -" : "incl. "}$${Math.abs(split.vet_$).toFixed(1)}M (${vLabel})</span>`);
           }
           return parts.length ? " " + parts.join(" ") : "";
         };
@@ -22447,14 +22440,14 @@ function renderRecentlyTraded() {
         // org got + the $ total (right-aligned). The row's own prospect is
         // ★/tinted inside its side so the card ties back to the row above.
         const _hl = highlightKeys;
-        const orgLine = (orgCode, tone, received, split) => {
+        const orgLine = (orgCode, tone, received, split, unpriced) => {
           const logo = (typeof teamLogoHTML === "function" && orgCode)
             ? teamLogoHTML(orgCode, "sm", (typeof fullOrgName === "function" ? fullOrgName(orgCode) : orgCode)) : "";
           return `<div style="display:flex;align-items:baseline;gap:6px;width:100%;">
             <span style="display:inline-flex;align-items:center;gap:4px;flex-shrink:0;min-width:52px;">${logo}<span style="font-family:var(--font-serif);font-size:11px;font-weight:700;color:${tone};">${escapeHtml(orgCode)}</span></span>
             <span style="color:var(--text-tertiary);font-size:9px;flex-shrink:0;letter-spacing:0.04em;">receives ▸</span>
             <span style="flex:1;min-width:0;display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:3px 6px;">${sidePlayerChips(orgCode, _hl)}</span>
-            <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;color:${tone};white-space:nowrap;margin-left:auto;flex-shrink:0;">$${received.toFixed(1)}M${fvSuffix(split)}</span>
+            <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;color:${tone};white-space:nowrap;margin-left:auto;flex-shrink:0;">${_taMM(received)}${unpriced ? ` <span style="color:var(--text-tertiary);font-weight:500;font-size:9px;">+ ${unpriced} unpriced</span>` : ""}${fvSuffix(split)}</span>
           </div>`;
         };
         // Nest the card under its prospect row: pull it flush against the
@@ -22463,13 +22456,15 @@ function renderRecentlyTraded() {
         // row's stripe straight down into its audit. The ↳ + verdict-tinted
         // top accent keep the "this belongs to the row above" read.
         const _railColor = (typeof orgColor === "function" && p.org) ? orgColor(p.org) : "var(--border)";
-        return `<div class="trade-audit-card is-traded" style="grid-column:1 / -1;margin:-6px 0 8px 26px;padding:6px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-left:3px solid ${_railColor};border-top:2px solid ${winColor};border-radius:0 0 var(--radius-sm) var(--radius-sm);box-shadow:var(--shadow-card);font-size:10px;display:flex;flex-direction:column;gap:4px;line-height:1.5;">
+        const _asOf = _TA_TV.idx && _TA_TV.idx.asOf;
+        return `<div class="trade-audit-card is-traded" data-ta-verdict="${g.verdict}" data-ta-net="${g.netDeltaA}" style="grid-column:1 / -1;margin:-6px 0 8px 26px;padding:6px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-left:3px solid ${_railColor};border-top:2px solid ${winColor};border-radius:0 0 var(--radius-sm) var(--radius-sm);box-shadow:var(--shadow-card);font-size:10px;display:flex;flex-direction:column;gap:4px;line-height:1.5;">
           <div style="display:flex;align-items:baseline;gap:8px;width:100%;">
             <span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;flex-shrink:0;">↳ Trade Audit</span>
+            <span style="font-size:9px;color:var(--text-tertiary);flex-shrink:0;" title="Each party is priced at today's trade value, the number the Trade Machine shows, not the value on the trade date. Career WAR is context only.">value today${_asOf ? `, ${escapeHtml(_asOf)}` : ""}</span>
             <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;white-space:nowrap;margin-left:auto;flex-shrink:0;">${verdictText}</span>
           </div>
-          ${orgLine(g.orgA, aTone, g.aReceived, aSplit)}
-          ${orgLine(g.orgB, bTone, g.bReceived, bSplit)}
+          ${orgLine(g.orgA, aTone, g.aReceived, aSplit, g.aUnpriced)}
+          ${orgLine(g.orgB, bTone, g.bReceived, bSplit, g.bUnpriced)}
         </div>`;
       })()}
       ${_groupClose}
