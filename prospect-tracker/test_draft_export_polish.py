@@ -11,7 +11,7 @@ from __future__ import annotations
 import unittest
 
 from draft_export import (
-    _projected_round, build_draft_export, _consensus,
+    _projected_round, build_draft_export, _consensus, _consensus_rank,
     _edit_distance_le1, _same_person, _name_part, _dedupe_merge_map,
     _name_first_last, _canon_player_type,
 )
@@ -90,6 +90,56 @@ class SequentialRanking(unittest.TestCase):
                     f"pick {prev['consensus_pick']} has higher raw rank "
                     f"than pick {cur['consensus_pick']} in {klass['year']}"
                 )
+
+
+    def test_ba_global_rank_survives_a_later_scope_board(self):
+        """M03-01 artifact invariant: every prospect BA ranked on its global
+        Top 100 keeps a whole-class rank, even when a later BA scope board
+        (HS Top 150, College Top 100) also lists him."""
+        for klass in self.export["classes"]:
+            for p in klass["prospects"]:
+                has_global = any(
+                    pt.get("source") == "baseballamerica_draft"
+                    and pt.get("rank") is not None
+                    and ((pt.get("tools") or {}).get("_extras") or {}).get("ba_rank_is_global") is True
+                    for pt in p.get("points") or [])
+                if has_global:
+                    self.assertIsNotNone(
+                        p.get("consensus_rank"),
+                        f"{klass['year']} {p['player_name']} lost its BA global rank")
+
+
+class ScopeBoardRankVote(unittest.TestCase):
+    """M03-01: a scoped BA board carries no whole-class rank, so it must not
+    stand as BA's latest snapshot in the rank vote."""
+
+    @staticmethod
+    def _ba(date, rank, is_global, label):
+        return {"source": "baseballamerica_draft", "snapshot_date": date,
+                "interval_label": label, "rank": rank, "fv": None,
+                "tools": {"_extras": {"ba_rank_is_global": is_global,
+                                      "ba_scope_rank": 1}}}
+
+    def test_global_rank_kept_after_later_scope_snapshot(self):
+        snaps = [self._ba("2026-07-15", 1, True, "Top 100"),
+                 self._ba("2026-07-17", None, False, "HS Top 150")]
+        self.assertEqual(_consensus_rank(snaps), 1.0)
+        # The plain latest-per-source vote is what dropped it.
+        self.assertIsNone(_consensus(snaps, "rank"))
+
+    def test_scope_board_alone_is_unranked(self):
+        snaps = [self._ba("2026-07-17", None, False, "HS Top 100")]
+        self.assertIsNone(_consensus_rank(snaps))
+
+    def test_other_sources_later_null_rank_still_ends_its_vote(self):
+        """Only scope boards step aside. A FanGraphs board that no longer
+        ranks the player still ends FG's vote (2026 stays byte-identical)."""
+        snaps = [
+            {"source": "fangraphs", "snapshot_date": "2026-05-22", "rank": 22, "tools": {}},
+            {"source": "fangraphs", "snapshot_date": "2026-07-15", "rank": None, "tools": {}},
+            {"source": "mlb_pipeline_draft", "snapshot_date": "2026-07-01", "rank": 140, "tools": None},
+        ]
+        self.assertEqual(_consensus_rank(snaps), 140.0)
 
 
 class IntegerFV(unittest.TestCase):

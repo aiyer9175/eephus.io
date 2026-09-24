@@ -272,7 +272,10 @@ _DRAFT_SOURCE_WEIGHTS = _load_draft_source_weights()
 
 def _consensus(snaps: list[dict], field: str,
                weights: dict[str, float] | None = None) -> float | None:
-    """Mean of latest non-null `field` per source across this player's snaps.
+    """Mean of `field` across sources, one vote per source: each source's
+    LATEST snapshot votes, and a source whose latest snapshot has `field` null
+    does not vote (an older non-null value is not carried forward, so a source
+    that dropped a player from its current board stops voting on him).
     When `weights` is given, sources vote by their relative weight (default 1.0
     for any source not listed) - an accuracy-weighted mean instead of equal."""
     latest = _latest_per_source(snaps)
@@ -287,6 +290,27 @@ def _consensus(snaps: list[dict], field: str,
         return round(sum(float(v) for _, v in pairs) / len(pairs), 2)
     except (TypeError, ValueError):
         return None
+
+
+def _is_scope_board_snap(snap: dict) -> bool:
+    """True for a snapshot from a SCOPED board (BA's HS Top 150, College Top
+    100 and the like): its rank orders a subset of the class, so the ingest
+    withholds it from `rank` and keeps it at _extras.ba_scope_rank
+    (baseballamerica_csv.scope_rank_is_global)."""
+    tools = snap.get("tools")
+    extras = tools.get("_extras") if isinstance(tools, dict) else None
+    return isinstance(extras, dict) and extras.get("ba_rank_is_global") is False
+
+
+def _consensus_rank(snaps: list[dict]) -> float | None:
+    """Whole-class consensus rank. Scope-board snapshots do not take part in
+    the rank vote at all. They carry no whole-class rank, and letting one
+    stand as its source's latest snapshot would erase that same source's
+    global rank: BA's HS Top 150 (2026-07-17) postdates its Top 100
+    (2026-07-15), so every HS player on both lost his BA Top 100 rank. The FV
+    and tool paths are unchanged; any other source's later null rank still
+    ends its vote, as _consensus documents."""
+    return _consensus([s for s in snaps if not _is_scope_board_snap(s)], "rank")
 
 
 def _consensus_fv_plus(snaps: list[dict]) -> bool:
@@ -507,7 +531,7 @@ def _build_class(year: int,
     # Consensus ranks for the whole class (used by stock+ normalization).
     consensus_ranks: dict[str, float] = {}
     for pk, plist in by_player.items():
-        r = _consensus(plist, "rank")
+        r = _consensus_rank(plist)
         if r is not None:
             consensus_ranks[pk] = r
     # Keep the consensus ranks as floats. int() truncation collapsed distinct
