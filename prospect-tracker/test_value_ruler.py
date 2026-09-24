@@ -714,3 +714,11 @@ def test_the_ledger_hand_written_tier_classes_name_their_family():
         i = js.index("function " + fn + "(")
         j = js.index("\n  function ", i + 1)
         assert "EephusTiers" not in js[i:j], fn + " took a tier; salaries are costs, not ranked values"
+    # D5 (2026-09-24): the three new tables (farm ledger, graduates, debuted
+    # trade rows), the full arbitration ladder and the realized rows print a
+    # surplus, a rung and a trade value plain with a sign and a grade letter in
+    # neutral ink: no zCls, no zCell, no ruler call.
+    for fn in ("renderProspects", "renderGraduates", "renderTrade", "renderLadder", "renderRealizedRows"):
+        i = js.index("function " + fn + "(")
+        j = js.index("\n  function ", i + 1)
+        assert "zCls(" not in js[i:j] and "zCell(" not in js[i:j] and "EephusTiers" not in js[i:j], fn + " took a ladder"

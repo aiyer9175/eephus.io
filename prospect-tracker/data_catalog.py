@@ -462,13 +462,36 @@ ARTIFACTS = (
                  "beside Spotrac's estimate, contract dollars on file and projected "
                  "arbitration steps per season, controlled surplus in $M, farm capital "
                  "(pools, bonuses paid vs slot, IFA, the fin_* leaves) and the free "
-                 "agency ledger with realized contract value."),
+                 "agency ledger with realized contract value; since 2026-09-24 also "
+                 "the per-club reconciliation blocks (farm rows to the fin_active_surplus "
+                 "leaf, arbitration rungs by season to the ladder sums, contract strips "
+                 "to the NPV leg), a ten-row preview per block and the index of the "
+                 "per-club row files."),
         "cadence": "daily", "stability": EXPERIMENTAL,
         "pinned_by": "test_ledger_export.py",
         "note": ("Descriptive ledger. Carries NO single projected payroll: contract "
                  "dollars on file and projected arbitration steps are two keys and the "
                  "page never sums them. No revenue, attendance, TV or valuation key "
                  "exists; the writer refuses them."),
+    },
+    {
+        "file": "ledger_clubs/*.json", "group": "mlb",
+        "title": "Club Ledger per-club row files (one per club)",
+        "what": ("data/ledger_clubs/{CODE}.json: every active prospect of the club with "
+                 "its eFV expected surplus, band, bonus, slot and net; every graduate "
+                 "with the two debuted-value engines side by side; every arbitration "
+                 "rung with its fixed-spread band; the realized arbitration rows with "
+                 "the MLBTR figure as a third column; every priced contract's WAR and "
+                 "surplus strips; the trade board's debuted rows. The club page fetches "
+                 "one file on demand; the index (bytes, sha256_16) lives in "
+                 "ledger_board.json under shards."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_ledger_export.py",
+        "note": ("Written by ledger_export.write_shards from the bytes the board indexed "
+                 "(run_monthly d10e, right after the board). About 85-100 KB per file, "
+                 "capped at 160 KB by test; tracked in git like mgmt_decisions/. Every "
+                 "band prints per row and is never summed; no figure is recomputed "
+                 "through value_framework; both deploy consumers ship the directory."),
     },
     {
         "file": "franchise_board.json", "group": "mlb",

@@ -75,11 +75,100 @@ IFA_YEARS = (2021, 2022, 2023, 2024, 2025, 2026)
 #: against the rows at build time), never as a rule.
 SPOTRAC_2027_BASIS_USD = 247_000_000
 
-#: Registry rows whose verdicts the Method tab quotes beside the numbers.
+#: Registry rows whose verdicts the Method tab quotes beside the numbers. The
+#: last three landed with the depth pass (D5, 2026-09-24): the salary path the
+#: contract strips read, the prospect rows of the projections board, and the
+#: provisional eFV prior the farm rows can inherit.
 REGISTRY_IDS = ("arb_award", "team_win_projections", "prospect_surplus", "fa_market",
                 "fa_projection_marcel", "fa_team_fit", "fa_dpw_series", "draft_slot_curve",
                 "org_sur_plus", "dvm_plus_dollar", "farm_grades", "trade_machine_surplus",
-                "ifa_step_prior")
+                "ifa_step_prior",
+                "control_window_salary_path", "mlb_projections_prospects", "xfv_provisional_prior")
+
+# --------------------------------------------------------------------------
+# D5 depth pass (2026-09-24): one board plus thirty lazy per-club files.
+# The six per-club row arrays (prospects, graduates, arbitration ladders,
+# realized arbitration rows, contract paths, debuted trade rows) measured about
+# 1.8 MB over 30 clubs against the 1,000,000-byte line, so they live in
+# data/ledger_clubs/CODE.json and the board keeps a preview of PREVIEW_N rows
+# per block plus the reconciliation blocks that tie every row layer to the v1
+# roll-up it sits under.
+# --------------------------------------------------------------------------
+
+SHARD_DIRNAME = "ledger_clubs"
+SHARD_DIR = DATA / SHARD_DIRNAME
+SHARD_CAP_BYTES = 160_000
+#: Preview rows per block on the board; drops to PREVIEW_N_SMALL when the
+#: written board would pass PREVIEW_GUARD_BYTES (the guard prints on the
+#: Method tab as shards.preview_n).
+PREVIEW_N = 10
+PREVIEW_N_SMALL = 5
+PREVIEW_GUARD_BYTES = 950_000
+BOARD_CAP_BYTES = 1_000_000
+
+#: Farm reconciliation (owner decision D3): the leaf is a net figure written by
+#: storage.export_timeseries_json at one point of the nightly and the rows come
+#: from trade_values written later the same night, so the identity holds to a
+#: tolerance, never asserted exact.
+FARM_EXACT_MM = 0.05
+FARM_TOL_PCT = 0.02
+FARM_TOL_FLOOR_MM = 5.0
+#: Contract identities (5.3): the strip is published to 0.1 $M per cell and the
+#: served NPV discounts the unrounded figures; surRos is published rounded and
+#: surTotal was built from the raw float.
+NPV_TOL_USD = 300_000
+SURTOTAL_TOL_USD = 50_000
+TV_MATCH_TOL_MM = 0.06
+
+#: Method buckets the PROSPX org summary keeps (storage: every other method
+#: aggregates outside the three, and so do these rows).
+METHOD_BUCKETS = ("draft", "international_fa", "trade")
+
+#: The key walker's rule for the new blocks (R1 / L14). Under any dict key in
+#: AGGREGATE_KEYS a key whose underscore tokens name a band end (lo, hi, p10,
+#: p90) is refused, and a "rows" sum in $M must be one of SUM_KEYS_ALLOWED: a
+#: seventh sum fails until it is named here.
+AGGREGATE_KEYS = ("reconciliation", "summary", "method", "paths_summary", "by_season", "footer")
+BAND_TOKENS = ("lo", "hi", "p10", "p90")
+SUM_KEYS_ALLOWED = ("rows_gross_mm", "rows_cost_mm", "rows_net_mm",
+                    "trade_rows_active_mm", "trade_rows_debuted_mm", "mlb_rows_mm")
+
+#: Column names in row order for every row array the depth pass serves. The
+#: renderer indexes through these (colIdx), never through the prose legend.
+COLUMNS = {
+    "farm.prospects": ["key", "name", "pos", "age", "consensus_fv", "efv", "acq_method", "acq_year",
+                       "pick_overall", "bonus_usd", "slot_usd", "cur_method", "cur_year", "surplus_mm",
+                       "band_lo_mm", "band_hi_mm", "p_bust", "net_mm", "dollar_dvm_plus", "eta_year",
+                       "service_phase", "on_40_man", "options_left", "rule5_exposed", "tv_grade",
+                       "cons_surplus_mm", "cons_lo_mm", "cons_hi_mm"],
+    "farm.graduates": ["key", "name", "pos", "debut_date", "acq_method", "acq_year", "bonus_usd",
+                       "dv_trade_value_mm", "dv_realized_mm", "dv_remaining_control_years",
+                       "tv_trade_value_mm", "tv_surplus_source", "service_phase", "career_war",
+                       "wag_label", "in_vets"],
+    "farm.picks": ["pick_overall", "round_label", "player_name", "slot_usd", "bonus_usd", "signed",
+                   "over_slot_usd", "prospect_key"],
+    "farm.picks_summary": ["n_picks", "n_still_active", "n_graduated"],
+    "farm.method": ["n", "n_with_bonus", "gross_mm", "cost_mm", "net_mm", "net_per_cost_ratio",
+                    "served_net_mm", "served_cost_mm", "served_count", "served_per_fv_pt_mm"],
+    "farm.trajectory_active": ["snapshot_date", "active_trade_value_mm"],
+    "farm.prospect_trajectory": ["snapshot_date", "trade_value_mm"],
+    "arbitration.ladders": ["name", "mlbam", "sv", "svy", "class", "flags", "years_left", "ladder", "war",
+                            "tot_usd", "in_vets", "has_salpath"],
+    "arbitration.by_season": ["season", "arb_rung_usd", "n_arb_rungs", "prearb_rung_usd",
+                              "n_prearb_rungs", "n_null_rungs"],
+    "arbitration.realized.rows": ["season", "mlbam", "name", "arb_year", "actual_usd", "ours_usd",
+                                  "swartz_usd", "ou_mkt_usd", "ou_war_usd", "war", "flags"],
+    "contracts.paths": ["key", "war", "war_p10", "war_p90", "sur_mm", "sur_npv_usd", "sur_ros_mm",
+                        "sur_total_usd", "tv_mm", "tv_lo_mm", "tv_hi_mm", "tv_grade", "surplus_source",
+                        "band_basis", "salary_basis", "control_thru", "control_why",
+                        "remaining_control_years", "player_opt_years", "club_opt_years", "reanchored",
+                        "npv_check_usd"],
+    "surplus.rows_debuted": ["key", "name", "pos", "tv_mm", "tv_lo_mm", "tv_hi_mm", "tv_tier", "tv_grade",
+                             "surplus_source", "salary_basis", "control_thru", "control_why",
+                             "in_contract_rows"],
+}
+SHARD_ROW_KEYS = ("farm.prospects", "farm.graduates", "arbitration.ladders",
+                  "arbitration.realized.rows", "contracts.paths", "surplus.rows_debuted")
 
 #: Key names the writer refuses to emit anywhere in the document. The QO tier
 #: key revenue_sharing_recipient is a rule-file vocabulary word for a tier the
@@ -330,11 +419,159 @@ def _trade_trajectory() -> dict:
     return dict(out)
 
 
+def _trade_trajectory_active() -> dict:
+    """club -> [[snapshot_date, sum trade_value_mm over that snapshot's ACTIVE rows]].
+
+    Each snapshot's own actives, on that snapshot's own status, gross of bonuses:
+    so this is not the leaf's series and a graduation moves it (L15). The copy
+    says what the query does."""
+    import storage
+    out: dict = defaultdict(list)
+    try:
+        with storage.connect() as con:
+            rows = con.execute(
+                "SELECT org, snapshot_date, SUM(trade_value_mm) FROM trade_value_history "
+                "WHERE org IS NOT NULL AND status = 'active' GROUP BY org, snapshot_date "
+                "ORDER BY snapshot_date"
+            ).fetchall()
+    except Exception as exc:                      # noqa: BLE001
+        log.warning("ledger_export: trade_value_history (active) unavailable: %s", exc)
+        return {}
+    for org, d, mm in rows:
+        c = _canon(org)
+        if c and mm is not None:
+            out[c].append([d, round(float(mm), 1)])
+    return dict(out)
+
+
+def _player_trajectories(keys) -> dict:
+    """player_key -> [[snapshot_date, trade_value_mm]] for the preview keys only
+    (owner decision D6). One query with an IN list; 300 keys over 64 snapshots."""
+    import storage
+    keys = sorted({k for k in keys if k})
+    if not keys:
+        return {}
+    out: dict = defaultdict(list)
+    try:
+        with storage.connect() as con:
+            for i in range(0, len(keys), 400):
+                chunk = keys[i:i + 400]
+                rows = con.execute(
+                    "SELECT player_key, snapshot_date, trade_value_mm FROM trade_value_history "
+                    f"WHERE player_key IN ({','.join('?' * len(chunk))}) ORDER BY snapshot_date",
+                    chunk).fetchall()
+                for k, d, mm in rows:
+                    if mm is not None:
+                        out[k].append([d, round(float(mm), 1)])
+    except Exception as exc:                      # noqa: BLE001
+        log.warning("ledger_export: per-player trade_value_history unavailable: %s", exc)
+        return {}
+    return dict(out)
+
+
+def _xfv_meta() -> dict:
+    """xfv.json's `meta` header only. The file is 9 MB and the farm rows never
+    read its player rows (trade_values carries the same surplus, pinned equal by
+    test_the_prospect_row_surplus_equals_the_trade_board_and_the_efv_export); the
+    header is the first key, so a raw_decode from its opening brace reads the
+    calibration stamp without parsing the rest."""
+    p = DATA / "xfv.json"
+    try:
+        with p.open("r", encoding="utf-8") as fh:
+            head = fh.read(262_144)
+    except OSError as exc:
+        log.warning("ledger_export: xfv.json unreadable: %s", exc)
+        return {}
+    i = head.find('"meta"')
+    if i < 0:
+        return {}
+    j = head.find("{", i + 6)
+    if j < 0:
+        return {}
+    try:
+        meta, _end = json.JSONDecoder().raw_decode(head, j)
+    except ValueError as exc:
+        log.warning("ledger_export: xfv.json meta header did not decode: %s", exc)
+        return {}
+    return meta if isinstance(meta, dict) else {}
+
+
+def _file_stamp(name: str):
+    """ISO stamp of a data file's mtime, for an artifact that carries no
+    generated_at of its own (debuts_lite.json is a bare list)."""
+    try:
+        ts = (DATA / name).stat().st_mtime
+    except OSError:
+        return None
+    return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat(timespec="seconds")
+
+
+def arbitration_link(club: str, arbitration_js: str | None = None) -> str:
+    """Feature-detected at build time (owner decision D8): the Team View of
+    /arbitration/ narrows to a club only when assets/arbitration.js carries
+    TEAM_NARROW_RE; otherwise the v1 unnarrowed link. If that lane's change is
+    ever reverted the ledger degrades without an edit, and no key is added to
+    the arbitration grammar by this file."""
+    if arbitration_js is None:
+        try:
+            arbitration_js = (ROOT / "assets" / "arbitration.js").read_text(encoding="utf-8")
+        except OSError:
+            arbitration_js = ""
+    if "TEAM_NARROW_RE" in arbitration_js:
+        return f"/arbitration/#teams&team={club}"
+    return "/arbitration/#teams"
+
+
+def farm_reconcile_status(leaf_mm, rows_net_mm) -> tuple:
+    """(gap_mm, tolerance_mm, status) for the farm roll-up against its rows:
+    exact under FARM_EXACT_MM, vintage_drift inside max(2 pct of the leaf,
+    5 $M), broken beyond it. Both figures always print; neither is corrected."""
+    if leaf_mm is None or rows_net_mm is None:
+        return None, None, "broken"
+    gap = round(float(leaf_mm) - float(rows_net_mm), 2)
+    tol = round(max(FARM_TOL_PCT * abs(float(leaf_mm)), FARM_TOL_FLOOR_MM), 2)
+    if abs(gap) < FARM_EXACT_MM:
+        return gap, tol, "exact"
+    if abs(gap) <= tol:
+        return gap, tol, "vintage_drift"
+    return gap, tol, "broken"
+
+
+def npv_of_strip(sur_mm, rate: float) -> int:
+    """NPV in usd of a published per-season surplus strip ($M, t = 0 at the
+    class year) at the platform rate: the identity the contract expander prints
+    beside the served surNpv. A None cell is a season with no salary and enters
+    no sum."""
+    total = 0.0
+    for t, s in enumerate(sur_mm or []):
+        if s is None:
+            continue
+        total += float(s) * 1e6 / ((1.0 + rate) ** t)
+    return int(round(total))
+
+
+def _shard_bytes(shard: dict) -> bytes:
+    """The one serialization of a shard, shared by the index on the board and
+    the writer, so bytes and sha256_16 on the board equal the file on disk."""
+    return json.dumps(shard, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+
+def _sha16(b: bytes) -> str:
+    import hashlib
+    return hashlib.sha256(b).hexdigest()[:16]
+
+
+def _doc_bytes(doc: dict) -> int:
+    return len(json.dumps(doc, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+
+
 # --------------------------------------------------------------------------
 # the build
 # --------------------------------------------------------------------------
 
-def build() -> dict:
+def build_all() -> tuple:
+    """(doc, shard_docs): the board and the thirty per-club row files, built
+    together and never written here (tests call this under tmp_path)."""
     import fa_cba
     import fa_market
     import storage
@@ -358,6 +595,19 @@ def build() -> dict:
     registry = _j("model_registry.json") or {}
     dpw_series = _j("fa_dpw_series.json") or (fa_meta.get("dpw_series") or {})
     options_file = _j("contract_options.json") or {}
+    # D5 reads: the debuted rows (S24, a bare list), the eFV export's meta
+    # header only (S26), the a6 Swartz arm to quote (S25), and the arbitration
+    # page's source for the link feature detection (D8).
+    debuts_lite = _j("debuts_lite.json") or []
+    if not isinstance(debuts_lite, list):
+        debuts_lite = debuts_lite.get("players") or debuts_lite.get("rows") or []
+    xfv_meta = _xfv_meta()
+    arb_eval = _j("arbitration_eval.json") or {}
+    try:
+        arbitration_js = (ROOT / "assets" / "arbitration.js").read_text(encoding="utf-8")
+    except OSError:
+        arbitration_js = ""
+    generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     payroll, averages, payroll_join = _payroll_rows()
     names = _team_names()
@@ -407,6 +657,10 @@ def build() -> dict:
     sp_census = (proj.get("accountability") or {}).get("salary_path") or {}
     prearb_min_season = max(LEAGUE_MIN_CURATED)
     prearb_min = LEAGUE_MIN_CURATED[prearb_min_season]
+    vets_by_mlbam: dict = {}
+    for v in vets:
+        if v.get("mlbam") is not None:
+            vets_by_mlbam[int(v["mlbam"])] = v
 
     # trade values (31 org values; non-club values dropped after the join)
     tv_by_club: dict = defaultdict(list)
@@ -463,6 +717,38 @@ def build() -> dict:
     trajectory = _trade_trajectory()
     leaf_weights = dict(getattr(storage, "FARM_LEAF_WEIGHTS", {}).get("financial") or {})
 
+    # D5 farm joins (R16): player_key joins timeseries / trade_values / debuts_lite
+    # / mlb_projections; draft_results joins on (draft_year, pick_overall), never
+    # on name (Sirota: a signed 2024 CIN row at 87 and an unsigned 2021 LAD row
+    # at 492); orgs go through canonical_org and the non-club codes drop.
+    ts_by_key = {p.get("player_key"): p for p in (ts.get("players") or []) if p.get("player_key")}
+    slot_by_year_pick = {(r.get("draft_year"), r.get("pick_overall")): r for r in draft_results
+                         if r.get("draft_year") is not None and r.get("pick_overall") is not None}
+    acq_table = storage.load_acquisitions()
+    trajectory_active = _trade_trajectory_active()
+    grads_by_club: dict = defaultdict(list)
+    grads_orgs_in = set()
+    for g in debuts_lite:
+        grads_orgs_in.add(g.get("org"))
+        gc = _canon(g.get("org"))
+        if gc in clubs:
+            grads_by_club[gc].append(g)
+    grads_dropped = sorted(o for o in grads_orgs_in if _canon(o) not in clubs)
+    # league-wide pick maps for the picks summary: a pick counts as still active
+    # or graduated wherever the player is now, not only on the drafting club
+    active_by_pick: dict = {}
+    for p in ts.get("players") or []:
+        a = p.get("acquisition") or {}
+        if a.get("method") == "draft" and a.get("year") is not None and a.get("pick_overall") is not None:
+            active_by_pick[(a["year"], a["pick_overall"])] = p.get("player_key")
+    grad_by_pick: dict = {}
+    for g in debuts_lite:
+        a = g.get("acquisition") or acq_table.get(g.get("player_key")) or {}
+        if a.get("method") == "draft" and a.get("year") is not None and a.get("pick_overall") is not None:
+            grad_by_pick[(a["year"], a["pick_overall"])] = g.get("player_key")
+    hist_n_swartz = sum(1 for r in (arb_hist.get("rows") or []) if r[7] is not None)
+    a6 = arb_eval.get("a6_swartz") or {}
+
     # deferrals (curated ledger, platform rate read off the engine)
     rate = float(fa_market._discount_rate())
     deferral_ledger = fa_market._deferral_ledger()
@@ -487,6 +773,7 @@ def build() -> dict:
 
     # ---- per-club blocks ---------------------------------------------------
     club_docs: dict = {}
+    shard_docs: dict = {}
     ratio_by_club: dict = {}
     contract_disagreements = 0
 
@@ -833,7 +1120,7 @@ def build() -> dict:
             "team_outlook": "/projections/#view=teams",
             "fa_fits": f"/fa/#view=fits&team={c}",
             "fa_archive": f"/fa/#view=archive&winter={SEASON_NOW}",
-            "arbitration_teams": "/arbitration/#teams",
+            "arbitration_teams": arbitration_link(c, arbitration_js),
             "trade_board": "/trademachine/#tab=tradeboard",
             "mlbstats_war": f"/mlbstats/#section=war&wview=teams&team={code}",
             "mlbstats_bullpen": f"/mlbstats/#section=bullpen&view=teams&team={code}",
@@ -848,6 +1135,216 @@ def build() -> dict:
             "payroll": payroll_block, "cbt": cbt, "commitments": commitments,
             "contracts": contracts, "arbitration": arbitration, "surplus": surplus,
             "indexes": indexes, "farm": farm, "fa": fa, "links": links,
+        }
+
+        # ==== D5 depth: the row layers, each reconciled to the v1 roll-up above ====
+        # -- (a) farm rows: the trade board's actives joined to the PROSPX rows ----
+        actives = [p for p in tvp if p.get("status") == "active"]
+        prospect_rows = []
+        n_with_bonus = 0
+        gross = cost = 0.0
+        by_method = {m: {"n": 0, "n_with_bonus": 0, "gross": 0.0, "cost": 0.0} for m in METHOD_BUCKETS}
+        n_unbucketed = 0
+        pick_to_prospect: dict = {}
+        for p in sorted(actives, key=lambda x: (-(x.get("trade_value_mm") or 0), x.get("player_key") or "")):
+            key = p.get("player_key")
+            t = ts_by_key.get(key) or {}
+            acq = t.get("acquisition") or acq_table.get(key) or {}
+            cur = t.get("current_acquisition") or {}
+            cr = p.get("crunch") or {}
+            psur = t.get("surplus") or {}
+            dist = psur.get("dist") or {}
+            bonus = acq.get("bonus_usd")
+            method = acq.get("method")
+            slot = None
+            if method == "draft":
+                dr = slot_by_year_pick.get((acq.get("year"), acq.get("pick_overall")))
+                slot = dr.get("slot_usd") if dr else None
+                if acq.get("year") is not None and acq.get("pick_overall") is not None:
+                    pick_to_prospect[(acq["year"], acq["pick_overall"])] = key
+            tvmm = p.get("trade_value_mm")
+            bonus_mm = float(bonus or 0) / 1e6
+            net = round(float(tvmm) - bonus_mm, 3) if tvmm is not None else None
+            if tvmm is not None:
+                gross += float(tvmm)
+                cost += bonus_mm
+            if bonus:
+                n_with_bonus += 1
+            if method in by_method:
+                b = by_method[method]
+                b["n"] += 1
+                b["n_with_bonus"] += 1 if bonus else 0
+                if tvmm is not None:
+                    b["gross"] += float(tvmm)
+                    b["cost"] += bonus_mm
+            else:
+                n_unbucketed += 1
+            cur_date = cur.get("date") or (cur.get("event") or {}).get("date")
+            cur_year = int(str(cur_date)[:4]) if cur_date and str(cur_date)[:4].isdigit() else None
+            prospect_rows.append([
+                key, p.get("player_name") or t.get("player_name"), p.get("position") or t.get("position"),
+                p.get("age") if p.get("age") is not None else t.get("age"),
+                t.get("fv_close"), p.get("xfv_grade"), method, acq.get("year"), acq.get("pick_overall"),
+                bonus, slot, cur.get("method"), cur_year,
+                tvmm, p.get("trade_value_lo"), p.get("trade_value_hi"), p.get("p_bust"), net,
+                t.get("dollar_dvm_plus"), (t.get("eta") or {}).get("year"),
+                cr.get("service_phase"), cr.get("on_40_man"), cr.get("options_left"), cr.get("rule5_exposed"),
+                p.get("trade_value_grade"), psur.get("value_mm"), dist.get("p10_mm"), dist.get("p90_mm")])
+        fas = tree.get("fin_active_surplus") or {}
+        leaf_mm = fas.get("surplus_total_mm")
+        gap, tol, fstatus = farm_reconcile_status(leaf_mm, gross - cost)
+        farm["reconciliation"] = {
+            "leaf_mm": leaf_mm, "leaf_cost_mm": fas.get("cost_basis_mm"), "leaf_n": fas.get("active_count"),
+            "leaf_source": "timeseries.org_summary tree.fin_active_surplus",
+            "leaf_generated_at": ts.get("generated_at"),
+            "rows_gross_mm": round(gross, 2), "rows_cost_mm": round(cost, 2), "rows_net_mm": round(gross - cost, 2),
+            "rows_source": "trade_values.json + timeseries.players", "rows_generated_at": tv.get("generated_at"),
+            "n_rows": len(prospect_rows), "n_with_bonus": n_with_bonus, "n_unbucketed": n_unbucketed,
+            "gap_mm": gap, "tolerance_mm": tol, "status": fstatus,
+        }
+        me = fas.get("method_efficiency") or {}
+        farm_method = {}
+        for m in METHOD_BUCKETS:
+            b, s = by_method[m], (me.get(m) or {})
+            has = b["n"] > 0
+            net_m = b["gross"] - b["cost"]
+            farm_method[m] = [b["n"], b["n_with_bonus"],
+                              round(b["gross"], 2) if has else None, round(b["cost"], 2) if has else None,
+                              round(net_m, 2) if has else None,
+                              round(net_m / b["cost"], 2) if (has and b["cost"] > 0) else None,
+                              s.get("surplus_total_mm"), s.get("cost_basis_mm"), s.get("count") or 0,
+                              s.get("surplus_per_fv_pt_mm")]
+        farm["method"] = farm_method
+        farm["trajectory_active"] = trajectory_active.get(c) or []
+        farm["n_prospects"] = len(prospect_rows)
+        # graduates: debuts_lite rows for the club, two engines per row, never summed
+        grad_rows = []
+        for g in sorted(grads_by_club.get(c) or [], key=lambda x: (x.get("debut_date") or "", x.get("player_key") or ""), reverse=True):
+            key = g.get("player_key")
+            acq = g.get("acquisition") or acq_table.get(key) or {}
+            dv = g.get("debuted_value") or {}
+            tvr = tv_by_key.get(key) or {}
+            tv_deb = tvr if tvr.get("status") == "debuted" else {}
+            grad_rows.append([
+                key, g.get("player_name"), g.get("position"), g.get("debut_date"),
+                acq.get("method"), acq.get("year"), acq.get("bonus_usd"),
+                dv.get("trade_value_mm"), dv.get("realized_mm"), dv.get("remaining_control_years"),
+                tv_deb.get("trade_value_mm"), tv_deb.get("surplus_source"),
+                (g.get("roster_status") or {}).get("service_phase"),
+                (g.get("career_war") or {}).get("career_war"),
+                (dv.get("wag") or {}).get("boom_label"), key in vets_by_key])
+        farm["n_graduates"] = len(grad_rows)
+        # draft picks by year: joined on (draft_year, pick_overall), never on name
+        picks: dict = {}
+        picks_summary: dict = {}
+        for y in DRAFT_YEARS:
+            mine = [r for r in draft_results if r.get("draft_year") == y and _canon(r.get("team")) == c]
+            prow = []
+            n_act = n_grad = 0
+            for r in sorted(mine, key=lambda x: x.get("pick_overall") or 0):
+                pk = (y, r.get("pick_overall"))
+                # the v1 draft_paid slotted rule: a figure only when both slot and
+                # bonus are non-zero; an unsigned pick (bonus 0) is not a saving
+                over = ((int(r["bonus_usd"]) - int(r["slot_usd"]))
+                        if (r.get("slot_usd") and r.get("bonus_usd")) else None)
+                prow.append([r.get("pick_overall"), r.get("round_label"), r.get("player_name"), r.get("slot_usd"),
+                             r.get("bonus_usd"), r.get("signed"), over, pick_to_prospect.get(pk)])
+                n_act += 1 if pk in active_by_pick else 0
+                n_grad += 1 if pk in grad_by_pick else 0
+            picks[str(y)] = prow
+            picks_summary[str(y)] = [len(prow), n_act, n_grad]
+        farm["picks_summary"] = picks_summary
+
+        # -- (b) arbitration: every rung, the by-season split, the realized rows ----
+        ladders = []
+        per_season: dict = {}
+        n_in_vets = n_with_sp = 0
+        for r in sorted(arows, key=lambda x: -(x.get("tot") or 0)):
+            m = r.get("m")
+            vv = vets_by_mlbam.get(int(m)) if m is not None else None
+            in_v = vv is not None
+            has_sp = bool(vv and vv.get("salPath"))
+            n_in_vets += 1 if in_v else 0
+            n_with_sp += 1 if has_sp else 0
+            ladders.append([r.get("n"), m, r.get("sv"), r.get("svy"), r.get("c"), r.get("e"), r.get("yl"),
+                            r.get("l") or [], r.get("w") or [], r.get("tot"), in_v, has_sp])
+            for rung in r.get("l") or []:
+                season, proj_usd, tok = rung[0], rung[1], rung[4]
+                dd = per_season.setdefault(int(season), [0, 0, 0, 0, 0])
+                if proj_usd is None:
+                    dd[4] += 1
+                elif tok == "PRE-ARB":
+                    dd[2] += int(round(float(proj_usd)))
+                    dd[3] += 1
+                else:
+                    dd[0] += int(round(float(proj_usd)))
+                    dd[1] += 1
+        arbitration["by_season"] = [[s] + per_season[s] for s in sorted(per_season)]
+        arbitration["n_in_vets"] = n_in_vets
+        arbitration["n_with_salpath"] = n_with_sp
+        arbitration["s2027_note"] = "arb_prearb_rungs"
+        realized_rows = [[r[0], r[1], r[2], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11]]
+                         for r in sorted(hrows, key=lambda x: (-int(x[0]), str(x[2])))]
+
+        # -- (c) contract paths and the debuted trade rows -------------------------
+        contract_keys = {row[0] for row in rows}
+        opts_by_key = {row[0]: row[11] for row in rows}
+        paths = []
+        n_re = n_opt_rows = n_opt_seasons = 0
+        for v in sorted(priced, key=lambda x: -(x.get("aav") or 0)):
+            key = v.get("key")
+            tvr = tv_by_key.get(key) or {}
+            strip = v.get("sur") if isinstance(v.get("sur"), list) else [None] * len(HORIZON)
+            tvmm, src, st = tvr.get("trade_value_mm"), tvr.get("surplus_source"), v.get("surTotal")
+            re_ = bool(src == "projection" and tvmm is not None and st is not None
+                       and abs(float(tvmm) - float(st) / 1e6) > TV_MATCH_TOL_MM)
+            n_re += 1 if re_ else 0
+            po = sorted({int(o[0]) for o in (opts_by_key.get(key) or []) if o[1] == "player"})
+            co = sorted({int(o[0]) for o in (opts_by_key.get(key) or []) if o[1] == "club"})
+            if po:
+                n_opt_rows += 1
+                n_opt_seasons += len(po)
+            paths.append([key, v.get("war"), v.get("warP10"), v.get("warP90"), strip, v.get("surNpv"),
+                          v.get("surRos"), st, tvmm, tvr.get("trade_value_lo"), tvr.get("trade_value_hi"),
+                          tvr.get("trade_value_grade"), src, tvr.get("band_basis"), tvr.get("salary_basis"),
+                          tvr.get("control_thru"), tvr.get("control_why"), tvr.get("remaining_control_years"),
+                          po, co, re_, npv_of_strip(strip, rate)])
+        contracts["paths_summary"] = {"n_paths": len(paths), "n_reanchored": n_re,
+                                      "n_opt_out_rows": n_opt_rows, "n_opt_out_seasons": n_opt_seasons}
+        debuted = [p for p in tvp if p.get("status") == "debuted"]
+        rows_debuted = [[p.get("player_key"), p.get("player_name"), p.get("position"), p.get("trade_value_mm"),
+                         p.get("trade_value_lo"), p.get("trade_value_hi"), p.get("trade_value_tier"),
+                         p.get("trade_value_grade"), p.get("surplus_source"), p.get("salary_basis"),
+                         p.get("control_thru"), p.get("control_why"), p.get("player_key") in contract_keys]
+                        for p in sorted(debuted, key=lambda x: (-(x.get("trade_value_mm") or 0), x.get("player_key") or ""))]
+        by_salsrc = {}
+        for src in mlb_by_src_mm:
+            rr = [row for row in rows if (row[4] or "unknown") == src]
+            by_salsrc[src] = [mlb_by_src_mm[src], round(sum(int(row[9] or 0) for row in rr) / 1e6, 1), len(rr)]
+        mlb_rows_mm = round(sum(v[1] for v in by_salsrc.values()), 1)
+        tra = round(sum(float(p.get("trade_value_mm") or 0) for p in actives), 1)
+        trd = round(sum(float(p.get("trade_value_mm") or 0) for p in debuted), 1)
+        s_ok = (mlb_rows_mm == surplus["mlb_mm"]
+                and all(v[0] == v[1] for v in by_salsrc.values())
+                and (farm_mm is None or leaf_mm is None or abs(float(farm_mm) - float(leaf_mm)) <= FARM_EXACT_MM)
+                and abs(float(surplus["trade_currency_mm"]) - (tra + trd)) <= 0.1)
+        surplus["reconciliation"] = {
+            "by_salsrc": by_salsrc, "mlb_served_mm": surplus["mlb_mm"], "mlb_rows_mm": mlb_rows_mm,
+            "farm_served_mm": farm_mm, "farm_leaf_mm": leaf_mm,
+            "trade_currency_served_mm": surplus["trade_currency_mm"],
+            "trade_rows_active_mm": tra, "trade_rows_debuted_mm": trd,
+            "status": "exact" if s_ok else "broken",
+        }
+        surplus["n_debuted_rows"] = len(rows_debuted)
+
+        shard_docs[c] = {
+            "club": c, "statsapi_code": code, "board_generated_at": generated_at, "generated_at": generated_at,
+            "calibration": None, "cba_banner": True,
+            "farm": {"prospects": prospect_rows, "graduates": grad_rows, "picks": picks, "prospect_trajectory": {}},
+            "arbitration": {"ladders": ladders, "realized_rows": realized_rows},
+            "contracts": {"paths": paths},
+            "surplus": {"rows_debuted": rows_debuted},
+            "field_key": {}, "columns": {},
         }
 
     # ---- Cost+ across the 30 clubs (AVERAGES never in the pool) ----------------
@@ -1094,6 +1591,121 @@ def build() -> dict:
         "league_minimum_note": f"salary_path.LEAGUE_MIN_CURATED; seasons past {prearb_min_season} carry the last value forward by rule",
     }
 
+    # ---- D5 copy: every new sentence once; the two templates take their figure
+    # from the artifact at build time (L11, L12), never typed ------------------
+    tv_cal = ((tv.get("calibration") or {}).get("version")) or "unstamped"
+    copy.update({
+        "farm_dollar_is_template": (
+            "A farm dollar here is an expected value: the eFV expected surplus of an active prospect, "
+            "in millions, on the clemens_2026 valuation set over its own seven-season window, priced "
+            "through the platform's calibrated engine (calibration {calibration_version}, "
+            "prospect_surplus validated on data/surplus_backtest_real.json). It is the mean of a "
+            "distribution whose 10th and 90th percentiles print on the row. Net of the signing bonus "
+            "it is what the club roll-up sums."),
+        "farm_dollar_is_not": (
+            "It is not a trade price (the Trade Machine re-anchors debuted players and adds a roster "
+            "crunch), not the club-control-window surplus the MLB Projections board prices for the "
+            "prospects it carries (a different window and a different discount), not a quantile, and "
+            "not a realized figure: no farm dollar has been earned. Quantiles on these rows are never "
+            "summed, and a row's number is never added to a number on another basis."),
+        "farm_reconcile": (
+            "The roll-up leaf is the sum over active prospects of eFV expected surplus minus the "
+            "signing bonus on file, computed inside the PROSPX org summary. The rows below carry the "
+            "same two quantities from the trade board export and the PROSPX prospect rows; their sum "
+            "is printed beside the leaf with both artifacts' stamps."),
+        "farm_vintage_gap": (
+            "The leaf and the rows were written at different points of the same nightly, and eFV "
+            "surplus moves nightly; a gap inside the tolerance is vintage drift, not a disagreement "
+            "about any prospect."),
+        "farm_gap_broken": (
+            "The rows do not reconcile to the leaf beyond the tolerance. Both figures are shown; "
+            "neither is corrected."),
+        "farm_no_bonus": (
+            "A prospect with no bonus on file counts a cost of zero in the leaf and in these rows; the "
+            "count is printed beside every cost figure. Most such rows are international signings "
+            "whose bonus the pipeline never captured."),
+        "trade_cost_dark": (
+            "What a trade cost is the value given up, in FV and surplus, not dollars; no cost basis "
+            "exists for the trade channel and none is invented. The Trade Machine prices the exchange."),
+        "grad_two_engines": (
+            "Two engines price a graduate: debuted_player_value (PROSPX debuted rows) and the trade "
+            "board's posterior. Each prints under its own name; they are never averaged or summed."),
+        "grad_contract_dark": (
+            "Grad-Contract Surplus is served as the org mean only (current AAV minus the bonus "
+            "amortized over six years, storage.py); no per-graduate row is exported, and recomputing "
+            "one here would be a new number with no registry row."),
+        "grad_contract_formula": (
+            "per graduate with both a current AAV and a bonus on file: AAV minus bonus over six; the "
+            "org mean and its n are the leaf, which is why n is smaller than the graduate count"),
+        "grad_no_registry": (
+            "debuted_player_value carries no registry row of its own; its parent prospect_surplus is "
+            "validated. Read the debuted column as a served number without its own eval."),
+        "shard_failed": "The per-club rows did not load; the preview above is the board's.",
+        "shard_vintage": "These rows were written against a different board build than the one on screen.",
+        "dvm_within_tier": ("$DvM+ is scaled within the prospect's FV tier and clamped 40-160: not on "
+                            "the league z pool, unvalidated."),
+        "p_bust_basis": ("P(bust) on the eFV row is the retired realized_implied map (ground-truthed "
+                         "there); the MLB Projections prospect row's pBust is a different curve and "
+                         "prints only under its own label."),
+        "preview_note": "top rows by expected surplus; the full farm ledger loads per club",
+        "grad_preview_note": "the graduate rows load per club",
+        "arb_preview_note": "the class-year rung per row; the full ladder and the realized rows load per club",
+        "trade_preview_note": "the debuted trade rows load per club",
+        "paths_preview_note": "the WAR and surplus strips load per club",
+        "trajectory_active_basis": ("the actives of each snapshot, on that snapshot's own status, gross "
+                                    "of bonuses; so it does not chart the leaf and a graduation moves it"),
+        "band_row_only": "p10 to p90, eFV basis, per row only",
+        "years_to_fa_dark": "control not started; service time is a proxy on this site",
+        "service_time_source": (tv.get("prearb_basis") or {}).get("service_time_source"),
+        "ifa_slot_dark": "no slot: IFA is pool-percentage, see implied pool",
+        "arb_prearb_rungs": ("board rows at the pre-arbitration minimum sit in this sum; the "
+                             "arbitration rungs alone are the first figure"),
+        "arb_two_populations": (
+            "The stack above prices the club's priced veterans' salary paths; this bar sums the "
+            "Arbitration Predictor's board rows for the same season. They overlap on the players both "
+            "carry and differ on the rest; neither is added to the other and neither is a payroll."),
+        "swartz_label_template": ("MLB Trade Rumors, Matt Swartz, published before settlement; present "
+                                  "on {n_swartz} history rows, of which the a6 arm scored {n_a6} on "
+                                  "identical rows"),
+        "swartz_a6": a6.get("statement"),
+        "swartz_a6_prefix": "a6 arm",
+        "arb_quantiles_dark": ("P10 / P50 / P90 are not published: the band is the champion's MdAPE "
+                               "spread by rung (arb_export.py) and no per-rung residual quantiles exist"),
+        "arb_comps_dark": ("no comps are served; the champion is a ridge level model on log deflated "
+                           "salary (arb-1) and an empirical raise multiplier (arb-2+); a comps consumer "
+                           "must not read the contract set's aav_usd as a player's income "
+                           "(ARBITRATION_GATE 10)"),
+        "arb_filing_dark": ("filing figures and hearing outcomes are on no served row; svy is the "
+                            "service-time as-of season"),
+        "arb_class_labels": {"0": "Pre-Arb", "1": "Arb 1", "2": "Arb 2", "3": "Arb 3", "4": "Arb 4"},
+        "npv_identity": ("the served NPV discounts the unrounded per-season figures; the strip is "
+                         "rounded to 0.1M, so the two can differ by a few tens of thousands"),
+        "sur_total_identity": ("the rest-of-season leg is published to 0.1M and the total was built "
+                               "from the raw float; the printed equation can miss by a few tens of "
+                               "thousands"),
+        "sur_strip_basis": (f"MLB Projections per-season surplus: convex tier pricing at the {CLASS_YEAR} "
+                            "ex-ante FA $/WAR level, escalated per season, minus the season's salary "
+                            "path cell; not war x $/WAR"),
+        "war_band_cell": "per season, never summed",
+        "tv_reanchored": ("re-anchored on the trade board (archetype posterior floor); the projections "
+                          "figure is the contract row's"),
+        "prearb_min_floor": (tv.get("prearb_basis") or {}).get("window_priced"),
+        "opt_out_two_engines": (
+            "player option seasons: the salary path prices them as guaranteed (opt-out not modelled, "
+            "salary_path); the trade board's value folds an opt-out probability into this row "
+            "(bayes_trade_value); the two are different numbers on purpose and neither is a served "
+            "opt-out value"),
+        "trade_currency_split": ("the trade currency is the farm ledger's gross rows plus the debuted "
+                                 "rows; it overlaps both legs and is never added to them"),
+        "shown_rows": "shown rows: a sum of expected values",
+        "not_summed": "not summed",
+        "sources_stamps": "each block names the artifact and the build stamp it was read from",
+        "registry_sentence": ("provisional rows are labelled with the registry verdict quoted on the "
+                              "Method tab; nothing on this page is scored by this page"),
+    })
+    copy["farm_dollar_is"] = copy["farm_dollar_is_template"].format(calibration_version=tv_cal)
+    copy["swartz_label"] = copy["swartz_label_template"].format(n_swartz=hist_n_swartz, n_a6=a6.get("n"))
+
     field_key = {
         "commitments.by_season": "[season, contract_usd, n_contract, arb_projected_usd, n_arb, prearb_rule_usd, n_prearb, n_cliff]; n_unpriced is on the block; NO SUM of the three",
         "commitments.expiring": "[n, prev_aav_usd, proj_guar_usd]",
@@ -1117,6 +1729,89 @@ def build() -> dict:
         "fa.realized.by_winter": "[winter, n, n_covered, war_td, paid_td_usd, surplus_td_usd, realized_usd, n_complete]",
     }
 
+    # ---- D5 legends: prose beside a `columns` array for every row array -------
+    shard_field_key = {
+        "farm.prospects": (
+            "[key, name, pos, age, consensus_fv, efv, acq_method, acq_year, pick_overall, bonus_usd, "
+            "slot_usd, cur_method, cur_year, surplus_mm, band_lo_mm, band_hi_mm, p_bust, net_mm, "
+            "dollar_dvm_plus, eta_year, service_phase, on_40_man, options_left, rule5_exposed, tv_grade, "
+            "cons_surplus_mm, cons_lo_mm, cons_hi_mm]; surplus_mm is the eFV expected surplus (trade board "
+            "trade_value_mm, equal to the eFV export's surplus_mm); band_lo/hi are the row's p10/p90 on "
+            "that basis and are never summed; net_mm = surplus_mm - bonus_usd / 1e6 and is the only column "
+            "the leaf sums; cons_* are the PROSPX consensus-basis figures for the expander only"),
+        "farm.graduates": (
+            "[key, name, pos, debut_date, acq_method, acq_year, bonus_usd, dv_trade_value_mm, "
+            "dv_realized_mm, dv_remaining_control_years, tv_trade_value_mm, tv_surplus_source, "
+            "service_phase, career_war, wag_label, in_vets]; dv_* from debuts_lite debuted_value "
+            "(debuted_player_value), tv_* from the trade board; two engines on one row, each labelled, "
+            "never summed; in_vets says whether /projections/ carries the player"),
+        "farm.picks": (
+            "year -> [[pick_overall, round_label, player_name, slot_usd, bonus_usd, signed, over_slot_usd, "
+            "prospect_key]]; over_slot_usd is bonus minus slot only when both are non-zero (the "
+            "draft_paid slotted rule), else null: an unsigned pick is not an under-slot saving; "
+            "prospect_key is the farm.prospects row when the pick is still an active "
+            "prospect of this club, else null"),
+        "arbitration.ladders": (
+            "[name, mlbam, sv, svy, class, flags, years_left, ladder [[season, proj_usd, lo_usd, hi_usd, "
+            "token]], war [eWAR per rung, aligned], tot_usd, in_vets, has_salpath]; lo/hi are a "
+            "fixed-spread band (0.22 + 0.08 per rung) and not P10/P90; sv is a string and prints as is; "
+            "svy is the season the string is as of; no filing figure, hearing flag or comp exists on "
+            "any row"),
+        "arbitration.realized.rows": (
+            "[season, mlbam, name, arb_year, actual_usd, ours_usd, swartz_usd, ou_mkt_usd, ou_war_usd, "
+            "war, flags]; the arb_history row minus its team; swartz_usd is the MLB Trade Rumors (Matt "
+            "Swartz) published pre-settlement projection, present on some rows; ou_mkt and ou_war are "
+            "never combined and swartz is neither"),
+        "contracts.paths": (
+            "[key, war[5], war_p10[5], war_p90[5], sur_mm[5], sur_npv_usd, sur_ros_mm, sur_total_usd, "
+            "tv_mm, tv_lo_mm, tv_hi_mm, tv_grade, surplus_source, band_basis, salary_basis, control_thru, "
+            "control_why, remaining_control_years, player_opt_years, club_opt_years, reanchored, "
+            "npv_check_usd]; war and sur are per-season expected values (MLB Projections); war_p10/p90 "
+            "and tv_lo/hi print per row and are never summed; sur_npv_usd equals the contract row's; "
+            "reanchored is true when tv_mm differs from sur_total_usd / 1e6 by more than 0.06 on a "
+            "projection-sourced row; npv_check_usd is the NPV of the published strip at the platform "
+            "rate, printed beside sur_npv_usd as an identity check"),
+        "surplus.rows_debuted": (
+            "[key, name, pos, tv_mm, tv_lo_mm, tv_hi_mm, tv_tier, tv_grade, surplus_source, salary_basis, "
+            "control_thru, control_why, in_contract_rows]; the trade board's debuted rows for the club; "
+            "active rows are the farm ledger's prospect rows and are not repeated"),
+        "farm.prospect_trajectory": "key -> [[snapshot_date, trade_value_mm]] for the preview keys only",
+    }
+    board_field_key = {
+        "farm.preview": "same legend as farm.prospects, the top PREVIEW_N rows by surplus_mm (board)",
+        "farm.reconciliation": (
+            "{leaf_mm, leaf_cost_mm, leaf_n, leaf_source 'timeseries.org_summary tree.fin_active_surplus', "
+            "leaf_generated_at, rows_gross_mm, rows_cost_mm, rows_net_mm, rows_source 'trade_values.json + "
+            "timeseries.players', rows_generated_at, n_rows, n_with_bonus, n_unbucketed, gap_mm (= leaf_mm - "
+            "rows_net_mm), tolerance_mm, status exact|vintage_drift|broken}"),
+        "farm.method": (
+            "method -> [n, n_with_bonus, gross_mm, cost_mm, net_mm, net_per_cost_ratio, served_net_mm, "
+            "served_cost_mm, served_count, served_per_fv_pt_mm]; the served_* cells are org_summary "
+            "method_efficiency copied; net_per_cost_ratio is net_mm / cost_mm, a ratio of two served "
+            "numbers, plain, no ladder; trade is always [0, 0, null, null, null, null, null, null, 0, null] "
+            "today"),
+        "farm.picks_summary": ("year -> [n_picks, n_still_active, n_graduated]; a pick counts as still "
+                               "active or graduated wherever the player is now, not only on the drafting club"),
+        "farm.trajectory_active": (
+            "[snapshot_date, sum of trade_value_mm over that snapshot's active-status rows]; each "
+            "snapshot's own actives, gross eFV basis, no bonus netting, so it is not the leaf's series"),
+        "arbitration.by_season": (
+            "[season, arb_rung_usd, n_arb_rungs, prearb_rung_usd, n_prearb_rungs, n_null_rungs]; "
+            "arb_rung_usd sums the season's arbitration rungs that carry a projection and prearb_rung_usd "
+            "the season's PRE-ARB rungs; their sum is the v1 ladder sum for that season (s2027_usd for "
+            "2027) and the sum over seasons of both is v1 remaining_usd; each is an upper bound and neither "
+            "is summed into the commitments stack; n_arb_rungs and n_prearb_rungs count the rungs in each "
+            "sum; n_null_rungs counts rungs with proj null (no salary on file, flag 13), which enter no sum "
+            "and print dark on the ladder"),
+        "surplus.reconciliation": (
+            "{by_salsrc: {src: [served_mm, rows_mm, n_rows]}, mlb_served_mm, mlb_rows_mm, farm_served_mm, "
+            "farm_leaf_mm, trade_currency_served_mm, trade_rows_active_mm, trade_rows_debuted_mm, status}"),
+        "contracts.paths_summary": "{n_paths, n_reanchored, n_opt_out_rows, n_opt_out_seasons}",
+        "shard": "{path, bytes, sha256_16, generated_at}: the per-club row file this club's rows live in",
+    }
+    field_key.update(shard_field_key)
+    field_key.update(board_field_key)
+
     sources = [
         ["S1", "fa_meta.json teams / cba / qo_tax_by_payor_tier / dpw_series", "fa_export", "daily"],
         ["S2", "storage.fa_team_payroll (Spotrac tax and payroll pages)", "fa_pipeline.refresh_payroll", "monthly"],
@@ -1138,9 +1833,25 @@ def build() -> dict:
         ["S20", "fa_dpw_series.json", "fa_export", "daily"],
         ["S21", "model_registry.json", "hand-committed", "frozen"],
         ["S22", "storage.fa_events (qo_offered)", "fa_pipeline", "daily"],
+        ["S23", "timeseries.json players (acquisition, surplus, roster_status, eta)", "storage.export_timeseries_json", "nightly"],
+        ["S24", "debuts_lite.json (debuted rows, debuted_value)", "storage.export_timeseries_json", "nightly"],
+        ["S25", "arbitration_eval.json a6_swartz (quoted only)", "arb_eval", "on change"],
+        ["S26", "xfv.json meta header (calibration stamp only)", "efv_export", "nightly"],
     ]
+    cal_sources = {
+        "timeseries": {"version": (ts.get("calibration") or {}).get("version"), "generated_at": ts.get("generated_at")},
+        "trade_values": {"version": (tv.get("calibration") or {}).get("version"), "generated_at": tv.get("generated_at")},
+        "xfv": {"version": (xfv_meta.get("calibration") or {}).get("version"), "generated_at": xfv_meta.get("generated_at")},
+        "mlb_projections": {"version": (proj.get("calibration") or {}).get("version"), "generated_at": proj.get("generated_at")},
+    }
+    cal_versions = {s["version"] for s in cal_sources.values() if s.get("version")}
+    calibration = {"version": (tv.get("calibration") or {}).get("version"), "sources": cal_sources,
+                   "agree": len(cal_versions) <= 1}
+    arbitration_eval = {k: a6.get(k) for k in ("n", "ours_mdape", "swartz_mdape", "ratio_ours_over_swartz",
+                                                "verdict", "claim", "statement")}
+    arbitration_eval["generated_at"] = arb_eval.get("generated_at")
     doc = {
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": generated_at,
         "season_now": SEASON_NOW, "class_year": CLASS_YEAR, "horizon": list(HORIZON),
         "cba": {"threshold_by_season": {str(s): thr[s]["threshold_usd"] for s in range(2017, 2028)},
                 "threshold_2027_basis": "carry_forward",
@@ -1150,10 +1861,29 @@ def build() -> dict:
                 "unverified_records": len(unverified)},
         "copy": copy,
         "field_key": field_key,
+        "columns": {k: list(v) for k, v in COLUMNS.items()},
+        "calibration": calibration,
+        "arbitration_eval": arbitration_eval,
+        "shards": None,        # filled once the shard bytes are known (below)
         "league": league,
         "clubs": club_docs,
         "rules": rules,
         "sections": {
+            # D5 dark and partial items, each with its blocker (section 11)
+            "farm_trade_cost_basis": {"live": False, "blocked_on": copy["trade_cost_dark"]},
+            "grad_contract_per_graduate": {"live": False, "blocked_on": copy["grad_contract_dark"]},
+            "farm_years_to_fa": {"live": False, "blocked_on": copy["years_to_fa_dark"] + " (trade_values prearb_basis.service_time_source)"},
+            "farm_bonus_missing": {"live": True, "note": "partial: actives with no bonus on file are counted per club and per method", "blocked_on": copy["farm_no_bonus"]},
+            "ifa_slot": {"live": False, "blocked_on": copy["ifa_slot_dark"]},
+            "arb_quantiles": {"live": False, "blocked_on": copy["arb_quantiles_dark"]},
+            "arb_comps": {"live": False, "blocked_on": copy["arb_comps_dark"]},
+            "arb_filing": {"live": False, "blocked_on": copy["arb_filing_dark"]},
+            "arb_service_time": {"live": True, "note": "partial: sv on a minority of board rows; the class token is inferred elsewhere (flag 1)",
+                                 "blocked_on": "published service time is on a minority of rows; the class token is inferred (flag bit 1)"},
+            "opt_out_value": {"live": False, "blocked_on": copy["opt_out_two_engines"]},
+            "debuted_value_registry": {"live": True, "note": "partial: debuted_player_value has no registry row; prospect_surplus (validated) is its parent",
+                                       "blocked_on": copy["grad_no_registry"]},
+            "shard_rows": {"live": True, "note": "per-club row files; dark at render time only when the fetch fails (copy.shard_failed)"},
             "league": {"live": True}, "club": {"live": True}, "rules": {"live": True}, "method": {"live": True},
             "fa_realized": {"live": True, "note": "realized value, not skill"},
             "payroll_history": {"live": False, "blocked_on": copy["history_blocked_on"]},
@@ -1183,7 +1913,12 @@ def build() -> dict:
                                            "timeseries": ts.get("generated_at"),
                                            "ifa_timeseries": ifa_ts.get("generated_at"),
                                            "org_tendencies": org_tend.get("generated_at"),
-                                           "draft_slot_curve": slot_curve.get("generated_at")}},
+                                           "draft_slot_curve": slot_curve.get("generated_at"),
+                                           "debuts_lite": _file_stamp("debuts_lite.json"),
+                                           "arbitration_eval": arb_eval.get("generated_at"),
+                                           "xfv": xfv_meta.get("generated_at")},
+                   "grad_contract_formula": copy["grad_contract_formula"],
+                   "sources_stamps": copy["sources_stamps"]},
         "accountability": {
             "registry_verdicts": registry_verdicts,
             "registry_checked_at": registry.get("checked_at"),
@@ -1198,7 +1933,9 @@ def build() -> dict:
                          "fa_team_payroll": [payroll_join["rows_in"], payroll_join["club_rows"]],
                          "trade_values": [len(tv_orgs_in), len([o for o in tv_orgs_in if _canon(o) in clubs])],
                          "trade_values_dropped": tv_dropped,
-                         "arb_history": [len(hist_teams_in), len({_canon(t) for t in hist_teams_in if _canon(t) in clubs})]},
+                         "arb_history": [len(hist_teams_in), len({_canon(t) for t in hist_teams_in if _canon(t) in clubs})],
+                         "debuts_lite": [len(grads_orgs_in), len({_canon(o) for o in grads_orgs_in if _canon(o) in clubs})],
+                         "debuts_lite_dropped": grads_dropped},
             "deferral_entries_unmatched": deferral_unmatched,
             "discount_rate": rate,
             "prearb_min_usd": prearb_min,
@@ -1219,10 +1956,85 @@ def build() -> dict:
             f"{CLASS_YEAR}+ bonus pools and IFA pool allocations as published: pools past {POOL_YEARS[-1]} are not on disk and IFA pools are implied from Spotrac percentages",
             "service-time ground truth: the class token is inferred on most arbitration rows",
             "a single projected payroll: three labelled segments only",
+            "a prospect or contract number recomputed through value_framework: every figure on the row layers is a copy of a served artifact (PROSPECT_ANCHOR_GATE 13.2)",
+            "a summed quantile or a combined residual: bands print per row, footers under a band column read not summed, ou_mkt and ou_war stay apart and the Swartz figure is a third quantity",
+            "a dollar cost basis for the trade channel: FV given up is the Trade Machine's currency",
+            "a per-graduate Grad-Contract Surplus: the org mean only is served (storage.py)",
+            "arbitration comps, filing figures, hearing outcomes or per-rung residual quantiles: none is on any served row",
+            "a served opt-out value: player option seasons are priced as guaranteed by the salary path and folded as a probability by the trade board, and neither is an opt-out value",
+            "a rank or grade of clubs by farm finance beyond the v1 fin_* leaves",
+            "a betting or management figure: the ledger's only touches are two links",
         ],
     }
+
+    # ---- D5 finalize: previews, per-player trajectories, shard bytes and the
+    # board index; the preview guard re-runs the step at the small size if the
+    # written board would pass PREVIEW_GUARD_BYTES --------------------------------
+    for c, sd in shard_docs.items():
+        sd["calibration"] = calibration
+        sd["field_key"] = dict(shard_field_key)
+        sd["columns"] = {k: list(COLUMNS[k]) for k in
+                         ("farm.prospects", "farm.graduates", "farm.picks", "arbitration.ladders",
+                          "arbitration.realized.rows", "contracts.paths", "surplus.rows_debuted",
+                          "farm.prospect_trajectory")}
+
+    def _finalize(n: int) -> None:
+        keys = []
+        for c, sd in shard_docs.items():
+            club_docs[c]["farm"]["preview"] = [list(r) for r in sd["farm"]["prospects"][:n]]
+            keys.extend(r[0] for r in sd["farm"]["prospects"][:n])
+        traj = _player_trajectories(keys)
+        files = {}
+        for c, sd in shard_docs.items():
+            sd["farm"]["prospect_trajectory"] = {r[0]: traj.get(r[0]) or [] for r in sd["farm"]["prospects"][:n]}
+            b = _shard_bytes(sd)
+            stamp = {"path": f"{SHARD_DIRNAME}/{c}.json", "bytes": len(b), "sha256_16": _sha16(b)}
+            files[c] = stamp
+            club_docs[c]["shard"] = dict(stamp, generated_at=generated_at)
+        doc["shards"] = {"dir": SHARD_DIRNAME, "n": len(files), "files": files, "preview_n": n,
+                         "cap_bytes": SHARD_CAP_BYTES, "board_guard_bytes": PREVIEW_GUARD_BYTES}
+
+    _finalize(PREVIEW_N)
+    if _doc_bytes(doc) > PREVIEW_GUARD_BYTES:
+        log.warning("ledger_export: board over %d bytes at preview %d; dropping to %d",
+                    PREVIEW_GUARD_BYTES, PREVIEW_N, PREVIEW_N_SMALL)
+        _finalize(PREVIEW_N_SMALL)
     _assert_document(doc)
-    return doc
+    _assert_shards(doc, shard_docs)
+    return doc, shard_docs
+
+
+def build() -> dict:
+    """The v1 signature: the board alone. run_monthly's d10e step and the tests
+    that pin the v1 keys call this; the shards come from build_all()."""
+    return build_all()[0]
+
+
+def write_shards(doc: dict, shard_docs: dict) -> list:
+    """Write data/ledger_clubs/CODE.json for the 30 clubs from the bytes the
+    board indexed, remove any CODE.json whose club is not on the board, leave
+    the directory otherwise. Returns the written paths. Called from main() and
+    from run_monthly step d10e right after the board write."""
+    import re as _re
+    SHARD_DIR.mkdir(parents=True, exist_ok=True)
+    files = (doc.get("shards") or {}).get("files") or {}
+    written = []
+    for c, sd in shard_docs.items():
+        b = _shard_bytes(sd)
+        stamp = files.get(c) or {}
+        assert stamp.get("bytes") == len(b) and stamp.get("sha256_16") == _sha16(b), \
+            f"{c}: shard bytes drifted from the board index"
+        p = SHARD_DIR / f"{c}.json"
+        p.write_bytes(b)
+        written.append(p)
+    keep = set(shard_docs)
+    for p in SHARD_DIR.glob("*.json"):
+        if _re.fullmatch(r"[A-Z]{2,3}\.json", p.name) and p.stem not in keep:
+            try:
+                p.unlink()
+            except OSError as exc:
+                log.warning("ledger_export: stale shard %s not removed: %s", p.name, exc)
+    return written
 
 
 # --------------------------------------------------------------------------
@@ -1240,6 +2052,35 @@ def _walk_keys(obj, path=""):
             yield from _walk_keys(v, f"{path}[{i}]")
 
 
+def _walk_aggregates(obj, path="", inside=False):
+    """(path, key) for every dict key that sits under an AGGREGATE_KEYS key."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            here = f"{path}.{k}" if path else str(k)
+            if inside:
+                yield here, k
+            yield from _walk_aggregates(v, here, inside or str(k) in AGGREGATE_KEYS)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            yield from _walk_aggregates(v, f"{path}[{i}]", inside)
+
+
+def assert_aggregate_keys(obj) -> None:
+    """The depth pass's key rule (R1, L14). Under reconciliation / summary /
+    method / paths_summary / by_season / footer: no key whose underscore
+    tokens name a band end (lo, hi, p10, p90), because a band under an
+    aggregate key is a summed quantile by construction; and a "rows" sum in
+    $M must be one of SUM_KEYS_ALLOWED, so a seventh sum fails until it is
+    named there. Positional rows carry their bands per row, where the
+    renderer test pins "not summed" under every band column."""
+    for path, k in _walk_aggregates(obj):
+        ks = str(k).lower()
+        toks = ks.split("_")
+        assert not any(t in BAND_TOKENS for t in toks), f"{path}: a band end under an aggregate key"
+        if "rows" in toks and ks.endswith("_mm"):
+            assert ks in SUM_KEYS_ALLOWED, f"{path}: a sum the allow-list does not name"
+
+
 def _assert_document(doc: dict) -> None:
     assert len(doc["clubs"]) == 30 and len(doc["league"]["rows"]) == 30
     for c, d in doc["clubs"].items():
@@ -1251,19 +2092,66 @@ def _assert_document(doc: dict) -> None:
         for blk in ("payroll", "commitments", "contracts", "arbitration", "fa", "indexes"):
             assert d[blk].get("cba_banner") is True, (c, blk)
         assert d["cbt"]["2027"].get("cba_banner") is True
+        # D5: every row layer reconciles to the roll-up it sits under
+        fr = d["farm"]["reconciliation"]
+        assert fr["status"] in ("exact", "vintage_drift", "broken"), (c, fr["status"])
+        assert fr["n_rows"] == d["farm"]["n_prospects"] and len(d["farm"]["preview"]) <= fr["n_rows"], c
+        bs = {row[0]: row for row in d["arbitration"]["by_season"]}
+        s27 = bs.get(CLASS_YEAR) or [CLASS_YEAR, 0, 0, 0, 0, 0]
+        assert s27[1] + s27[3] == d["arbitration"]["s2027_usd"], (c, "by_season 2027 != s2027_usd")
+        assert sum(r[1] + r[3] for r in bs.values()) == d["arbitration"]["remaining_usd"], (c, "by_season != remaining")
+        assert d["surplus"]["reconciliation"]["status"] == "exact", (c, d["surplus"]["reconciliation"])
+        assert d["shard"]["path"] == f"{SHARD_DIRNAME}/{c}.json", c
     for path, k in _walk_keys(doc):
         ks = str(k).lower()
         assert ks not in FORBIDDEN_KEYS, path
         for frag in FORBIDDEN_KEY_FRAGMENTS:
             assert frag not in ks, path
         assert not (("ou_mkt" in ks and "ou_war" in ks) or ks in ("ou_total", "ou_combined", "ou_sum")), path
+    assert_aggregate_keys(doc)
+    assert doc["shards"] and doc["shards"]["n"] == 30 and set(doc["shards"]["files"]) == set(doc["clubs"])
+
+
+def _assert_shards(doc: dict, shard_docs: dict) -> None:
+    assert set(shard_docs) == set(doc["clubs"])
+    for c, sd in shard_docs.items():
+        assert sd["club"] == c and sd["board_generated_at"] == doc["generated_at"], c
+        b = _shard_bytes(sd)
+        assert len(b) <= SHARD_CAP_BYTES, (c, len(b), "shard over the cap")
+        st = doc["shards"]["files"][c]
+        assert st["bytes"] == len(b) and st["sha256_16"] == _sha16(b), c
+        for key in SHARD_ROW_KEYS:
+            blk, _, name = key.rpartition(".")
+            if key == "arbitration.realized.rows":
+                rows = sd["arbitration"]["realized_rows"]
+            else:
+                rows = sd[blk][name]
+            n_cols = len(COLUMNS[key])
+            for row in rows:
+                assert len(row) == n_cols, (c, key, len(row), n_cols)
+        for year_rows in sd["farm"]["picks"].values():
+            for row in year_rows:
+                assert len(row) == len(COLUMNS["farm.picks"]), (c, "farm.picks")
+        for path, k in _walk_keys(sd):
+            ks = str(k).lower()
+            assert ks not in FORBIDDEN_KEYS, (c, path)
+            for frag in FORBIDDEN_KEY_FRAGMENTS:
+                assert frag not in ks, (c, path)
+            assert not (("ou_mkt" in ks and "ou_war" in ks) or ks in ("ou_total", "ou_combined", "ou_sum")), (c, path)
+        assert_aggregate_keys(sd)
 
 
 def main(argv=None) -> int:
-    doc = build()
+    doc, shard_docs = build_all()
     OUT.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     n = OUT.stat().st_size
     print(f"wrote {OUT.relative_to(ROOT)} ({n / 1e3:.0f} KB)")
+    written = write_shards(doc, shard_docs)
+    sizes = [p.stat().st_size for p in written]
+    print(f"  shards: {len(written)} files in data/{SHARD_DIRNAME}/, {min(sizes) / 1e3:.0f}-{max(sizes) / 1e3:.0f} KB, "
+          f"preview_n {doc['shards']['preview_n']}")
+    fr = Counter(d["farm"]["reconciliation"]["status"] for d in doc["clubs"].values())
+    print(f"  farm reconciliation: {dict(fr)}")
     rows = doc["league"]["rows"]
     print(f"  clubs: {len(doc['clubs'])}; contract rows priced: "
           f"{sum(d['contracts']['n_priced'] for d in doc['clubs'].values())}")

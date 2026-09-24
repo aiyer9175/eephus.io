@@ -593,3 +593,414 @@ def test_the_league_board_takes_short_linked_labels_under_1400px_of_block_width(
     assert '<span class="lb-lab-short"><a class="g-term" href="/glossary/#g=controlled_surplus" data-gl="controlled_surplus">Ctrl surplus</a></span>' in league
     assert '<span class="lb-lab-long">Proj wins 2027</span><span class="lb-lab-short">Proj wins 27</span>' in league
     assert '<span class="lb-lab-short">Club</span>' in league
+
+
+# ==========================================================================
+# D5 depth pass (2026-09-24): the per-club rows on the club page
+# ==========================================================================
+# The board paints first (a preview per block); the club's row file is
+# fetched after the paint and the blocks re-render with every row. These
+# tests drive that through a fetch stub keyed by URL: one club resolves, a
+# missing file rejects, a "pending" file never settles. Rules pinned here:
+# a surplus cell, a rung, a trade value and a strip cell take no ladder; a
+# grade letter is neutral ink; a band prints per row and its footer reads
+# "not summed"; the arbitration band says band, never P10/P90; the second
+# exposure bar is its own element; Swartz, ou_mkt and ou_war stay apart.
+
+import ledger_export as _LE
+
+COLUMNS2 = {k: list(v) for k, v in _LE.COLUMNS.items()}
+GEN = SAMPLE["generated_at"]
+P_ONE = ["p_one", "P One", "SS", 19.4, 55.0, 61.8, "draft", 2024, 28, 3500000, 3200000, "draft", 2024,
+         100.1, 26.8, 189.0, 0.349, 96.6, 108.5, 2026, "none", False, 3, False, "A+", 99.8, 11.15, 146.28]
+P_TWO = ["p_two", "P Two", "RHP", 21.0, 50.0, 52.0, "international_fa", 2021, None, None, None, "trade", 2025,
+         40.0, 10.0, 80.0, 0.5, 40.0, 92.0, 2027, "none", True, 2, True, "B", 38.0, 8.0, 70.0]
+P_THREE = ["p_three", "P Three", "C", 23.0, 45.0, 46.0, "international_fa", 2020, None, 500000, None, "international_fa", 2020,
+           12.5, 2.0, 30.0, 0.6, 12.0, 80.0, 2027, "pre_arb", False, 1, False, "C+", 11.0, 1.0, 25.0]
+SHARD_LAD = {
+    "club": "LAD", "statsapi_code": "LAD", "board_generated_at": GEN, "generated_at": GEN,
+    "calibration": {"version": "cal-v6", "sources": {}, "agree": True}, "cba_banner": True,
+    "farm": {
+        "prospects": [P_ONE, P_TWO, P_THREE],
+        "graduates": [["josue_de_paula", "Josue De Paula", "OF", "2026-09-11", "international_fa", 2022, 397500, 66.2, 3.14, 7, 55.2, "projection", "pre_arb", 0.46, "unsettled", True],
+                      ["g_two", "G Two", "RP", "2025-08-01", "draft", 2021, None, 4.0, 1.0, 5, None, None, "pre_arb", 1.2, "boom", False]],
+        "picks": {"2026": [[28, "1", "P One", 3200000, 3500000, 1, 300000, "p_one"], [60, "2", "Some Pick", 1500000, 1200000, 1, -300000, None],
+                           [75, "3", "Unsigned Pick", 900000, 0, 0, None, None]]},
+        "prospect_trajectory": {"p_one": [["2026-07-01", 90.0], ["2026-09-23", 100.1]], "p_two": []},
+    },
+    "arbitration": {
+        "ladders": [["A Player", 1, "3.000", 2025, 1, 9, 3, [[2027, 1400000, 1100000, 1900000, "ARB 1"], [2028, 5200000, 3800000, 6600000, "ARB 2"]], [1.2, 1.4], 6600000, True, True],
+                    ["B Player", 2, None, None, 0, 4, 2, [[2027, 780000, 780000, 780000, "PRE-ARB"], [2028, None, None, None, "ARB 1"]], [0.5, 0.6], 780000, True, False]],
+        "realized_rows": [[2024, 10, "R One", 2, 20000000, 19000000, 19500000, 1000000, -15000000, 3.0, 0],
+                          [2024, 11, "R Two", 1, 10000000, 10000000, None, 0, -5000000, 2.0, 0],
+                          [2023, 12, "R Three", 3, 35550000, 33544000, None, 2006000, -30109000, 6.35, 0]],
+    },
+    "contracts": {"paths": [
+        ["shohei_ohtani", [6.4, 6.2, 5.0, 3.8, 2.1], [1.9, 1.5, 1.4, 0.8, 0.0], [10.8, 10.7, 9.8, 6.7, 4.6], [88.5, 82.7, 57.6, 33.8, -7.0],
+         238359792, 2.7, 241042446, None, None, None, None, None, None, None, None, None, None, [2031], [], False, 238350392],
+        ["andy_pages", [3.1, 3.0, 2.8, 2.5, 2.0], [1.0, 1.0, 0.9, 0.8, 0.5], [5.0, 5.0, 4.8, 4.5, 4.0], [50.0, 45.0, 40.0, None, None],
+         51000000, 1.0, 52000000, 60.0, 20.0, 90.0, "A", "projection", "projection", "arb_ladder+class_closure", 2030, "class_closure", 4.0, [], [], True, 50990000]]},
+    "surplus": {"rows_debuted": [["andy_pages", "Andy Pages", "CF", 60.0, 20.0, 90.0, "elite", "A", "projection", "arb_ladder+class_closure", 2030, "class_closure", True],
+                                 ["x_deb", "X Deb", "RP", 5.0, 1.0, 12.0, "role", "C", "prearb_min", "league_minimum", 2029, "proxy", False]]},
+    "field_key": {}, "columns": COLUMNS2,
+}
+COPY2 = {
+    "farm_dollar_is": "A farm dollar here is an expected value.", "farm_dollar_is_not": "It is not a trade price; never added.",
+    "farm_reconcile": "The roll-up leaf is the sum over active prospects.", "farm_vintage_gap": "vintage drift, not a disagreement about any prospect",
+    "farm_gap_broken": "Both figures are shown; neither is corrected.", "farm_no_bonus": "counts a cost of zero in the leaf",
+    "trade_cost_dark": "no cost basis exists for the trade channel", "grad_two_engines": "Two engines price a graduate; never averaged or summed.",
+    "grad_contract_dark": "served as the org mean only", "grad_no_registry": "debuted_player_value carries no registry row",
+    "shard_failed": "The per-club rows did not load; the preview above is the board's.",
+    "shard_vintage": "These rows were written against a different board build than the one on screen.",
+    "dvm_within_tier": "scaled within the FV tier", "p_bust_basis": "the retired realized_implied map",
+    "preview_note": "top rows by expected surplus; the full farm ledger loads per club",
+    "grad_preview_note": "the graduate rows load per club", "arb_preview_note": "the full ladder loads per club",
+    "trade_preview_note": "the debuted trade rows load per club", "paths_preview_note": "the strips load per club",
+    "trajectory_active_basis": "each snapshot's own actives, gross of bonuses", "band_row_only": "p10 to p90, eFV basis, per row only",
+    "years_to_fa_dark": "control not started; service time is a proxy", "service_time_source": "PROXY", "ifa_slot_dark": "no slot",
+    "arb_prearb_rungs": "board rows at the pre-arbitration minimum sit in this sum",
+    "arb_two_populations": "neither is added to the other and neither is a payroll",
+    "swartz_label": "MLB Trade Rumors, Matt Swartz, published before settlement", "swartz_a6": "This model does not beat the Swartz projection.",
+    "swartz_a6_prefix": "a6 arm", "arb_quantiles_dark": "P10 / P50 / P90 are not published: the band is the champion's spread",
+    "arb_comps_dark": "no comps are served", "arb_filing_dark": "filing figures are on no served row",
+    "arb_class_labels": {"0": "Pre-Arb", "1": "Arb 1", "2": "Arb 2"},
+    "npv_identity": "the strip is rounded to 0.1M", "sur_strip_basis": "per-season surplus, not war x dollars per WAR",
+    "sur_total_identity": "the rest-of-season leg is published to 0.1M; the printed equation can miss by a few tens of thousands",
+    "war_band_cell": "per season, never summed", "tv_reanchored": "re-anchored on the trade board", "prearb_min_floor": "a FLOOR on the window",
+    "opt_out_two_engines": "player option seasons: opt-out not modelled; the trade board folds a probability in",
+    "trade_currency_split": "it overlaps both legs and is never added to them", "shown_rows": "shown rows: a sum of expected values",
+    "not_summed": "not summed", "sources_stamps": "each block names the artifact it was read from",
+}
+
+
+def _sample2():
+    s = _copy.deepcopy(SAMPLE)
+    s["copy"].update(COPY2)
+    s["columns"] = COLUMNS2
+    s["calibration"] = SHARD_LAD["calibration"]
+    s["accountability"]["discount_rate"] = 0.07
+    s["arbitration_eval"] = {"n": 261, "ours_mdape": 0.2156, "swartz_mdape": 0.0811, "ratio_ours_over_swartz": 2.659, "verdict": "NULL",
+                             "claim": "identical rows", "statement": COPY2["swartz_a6"]}
+    s["shards"] = {"dir": "ledger_clubs", "n": 1, "files": {"LAD": {"path": "ledger_clubs/LAD.json", "bytes": 1000, "sha256_16": "x"}},
+                   "preview_n": 2, "cap_bytes": 160000, "board_guard_bytes": 950000}
+    c = s["clubs"]["LAD"]
+    c["farm"].update({
+        "preview": [P_ONE, P_TWO], "n_prospects": 3, "n_graduates": 2, "picks_summary": {"2026": [2, 1, 0]},
+        "trajectory_active": [["2026-06-25", 500.0], ["2026-09-23", 514.0]],
+        "reconciliation": {"leaf_mm": 455.4, "leaf_cost_mm": 57.6, "leaf_n": 3, "leaf_source": "timeseries.org_summary tree.fin_active_surplus",
+                           "leaf_generated_at": "2026-09-23T18:22:28Z", "rows_gross_mm": 514.0, "rows_cost_mm": 57.62, "rows_net_mm": 456.38,
+                           "rows_source": "trade_values.json + timeseries.players", "rows_generated_at": "2026-09-23", "n_rows": 3, "n_with_bonus": 2,
+                           "n_unbucketed": 0, "gap_mm": -0.98, "tolerance_mm": 9.11, "status": "vintage_drift"},
+        "method": {"draft": [1, 1, 100.1, 3.5, 96.6, 27.6, 250.3, 45.4, 68, 0.113], "international_fa": [2, 1, 52.5, 0.5, 52.0, 104.0, 205.1, 12.2, 88, 0.079],
+                   "trade": [0, 0, None, None, None, None, None, None, 0, None]},
+    })
+    c["arbitration"].update({"by_season": [[2027, 1400000, 1, 780000, 1, 0], [2028, 5200000, 1, 0, 0, 1]], "n_in_vets": 2, "n_with_salpath": 1,
+                             "s2027_note": "arb_prearb_rungs", "s2027_usd": 2180000})
+    c["surplus"].update({"reconciliation": {"by_salsrc": {"contract": [300.1, 300.1, 1], "contract+arb": [118.4, 118.4, 1]}, "mlb_served_mm": 418.5,
+                                            "mlb_rows_mm": 418.5, "farm_served_mm": 455.4, "farm_leaf_mm": 455.4, "trade_currency_served_mm": 990.8,
+                                            "trade_rows_active_mm": 514.0, "trade_rows_debuted_mm": 476.8, "status": "exact"}, "n_debuted_rows": 2})
+    c["contracts"]["paths_summary"] = {"n_paths": 2, "n_reanchored": 1, "n_opt_out_rows": 1, "n_opt_out_seasons": 1}
+    c["shard"] = {"path": "ledger_clubs/LAD.json", "bytes": 1000, "sha256_16": "x", "generated_at": GEN}
+    return s
+
+
+SHARD_URL_LAD = "/data/ledger_clubs/LAD.json"
+
+
+def _render2(team="LAD", payload=None, shards=None, hash_="", tiers=False, pfilter="all", open_keys=()):
+    """The club page with a fetch stub keyed by URL: `shards` maps a shard URL to
+    its document, to "fail" (rejects) or to "pending" (never settles)."""
+    js = JS.replace('state = { section: "league", team: ""', 'state = { section: "club", team: "%s"' % team, 1)
+    js = js.replace('open: {}, pfilter: "all" }', 'open: %s, pfilter: "%s" }' % (json.dumps({k: True for k in open_keys}), pfilter), 1)
+    assert js != JS
+    prelude = """
+    var __html={};
+    function __el(id){return new Proxy(function(){return __el(id);},{
+      get:function(t,k){ if(k==='innerHTML')return __html[id]||'';
+        if(k==='querySelectorAll')return function(){return [];};
+        if(k==='addEventListener'||k==='setAttribute'||k==='getAttribute'||k==='scrollIntoView')return function(){return null;};
+        return __el(id);},
+      set:function(t,k,v){if(k==='innerHTML')__html[id]=v; if(k==='textContent')__html[id+':text']=v; return true;}});}
+    function SP(ok,v){return {then:function(f,g){try{ if(ok){var r=f?f(v):v; return (r&&r.then)?r:SP(true,r);} if(g){var r2=g(v); return (r2&&r2.then)?r2:SP(true,r2);} return SP(false,v);}catch(e){return SP(false,e);}},catch:function(g){return this.then(null,g);}};}
+    var PENDING={then:function(){return PENDING;},catch:function(){return PENDING;}};
+    var P=%s; var S=%s;
+    var fetch=function(url){
+      if(url==="/data/ledger_board.json") return SP(true,{ok:true,json:function(){return SP(true,P);}});
+      if(S[url]==="pending") return PENDING;
+      if(S[url]==="fail") return SP(false,new Error("404"));
+      if(S[url]) return SP(true,{ok:true,json:function(){return SP(true,S[url]);}});
+      return SP(true,{ok:false,status:404});
+    };
+    var document={readyState:'complete',getElementById:function(id){return __el(id);},
+      querySelector:function(){return null;},querySelectorAll:function(){return [];},addEventListener:function(){}};
+    var window={document:document,EEPHUS_GL:{wire:function(){}}};
+    var location={hash:%s};
+    %s
+    """ % (json.dumps(payload or _sample2()), json.dumps(shards or {}), json.dumps(hash_), TIERS_STUB if tiers else "")
+    ctx = MiniRacer()
+    ctx.eval(prelude + js)
+    return ctx.eval("__html['ledger-app-root'] || ''")
+
+
+def _block(html, bid):
+    i = html.index('id="ledger-block-%s"' % bid)
+    j = html.index("</section>", i)
+    return html[i:j]
+
+
+def test_the_club_page_renders_the_preview_before_the_shard_arrives():
+    html = _render2(shards={SHARD_URL_LAD: "pending"})
+    pr = _block(html, "prospects")
+    assert "P One" in pr and "P Two" in pr and "P Three" not in pr, "the board's preview rows, not the shard's"
+    assert COPY2["preview_note"] in pr and "3 active prospects, 2 with a bonus on file" in pr
+    assert 'class="ledger-banner"' in pr and COPY2["farm_dollar_is"] in pr
+    assert COPY2["grad_preview_note"] in _block(html, "graduates") and COPY2["trade_preview_note"] in _block(html, "trade")
+    assert COPY2["arb_preview_note"] in _block(html, "arbitration") and "<th>Token</th>" in _block(html, "arbitration"), "the v1 six-column table is the ladder's preview"
+    assert 'class="ledger-darktag">dark<' not in pr, "pending is not failed"
+
+
+def test_the_shard_rows_render_after_fetch_and_a_failed_fetch_leaves_a_dark_block_not_a_blank():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD})
+    pr = _block(html, "prospects")
+    assert "P Three" in pr and "P One" in pr, "every shard row"
+    assert COPY2["preview_note"] not in pr and COPY2["shard_failed"] not in pr
+    assert "Josue De Paula" in _block(html, "graduates") and "X Deb" in _block(html, "trade")
+    assert "A Player" in _block(html, "arbitration") and 'class="ledger-rung"' in _block(html, "arbitration")
+    failed = _render2(shards={SHARD_URL_LAD: "fail"})
+    pf = _block(failed, "prospects")
+    assert "P One" in pf and "P Three" not in pf, "the preview stays"
+    assert "<strong>Per-club rows</strong>" in pf and COPY2["shard_failed"] in pf
+    assert COPY2["shard_failed"] in _block(failed, "graduates") and COPY2["shard_failed"] in _block(failed, "trade")
+    assert "could not be loaded" not in failed
+    other = _render2(shards={"/data/ledger_clubs/TBR.json": SHARD_LAD})
+    assert COPY2["shard_failed"] in _block(other, "prospects"), "a missing file is a failed fetch, never a blank"
+    wrong = _render2(shards={SHARD_URL_LAD: dict(SHARD_LAD, club="TBR")})
+    assert COPY2["shard_failed"] in _block(wrong, "prospects"), "a file naming another club is refused"
+
+
+def test_a_shard_whose_vintage_differs_from_the_board_is_flagged_not_refused():
+    stale = dict(SHARD_LAD, board_generated_at="2026-09-01T00:00:00+00:00")
+    html = _render2(shards={SHARD_URL_LAD: stale})
+    pr = _block(html, "prospects")
+    assert "P Three" in pr, "the rows render"
+    assert '<span class="ledger-flag">' + COPY2["shard_vintage"] + "</span>" in pr
+    assert COPY2["shard_vintage"] in _block(html, "arbitration")
+    fresh = _render2(shards={SHARD_URL_LAD: SHARD_LAD})
+    assert COPY2["shard_vintage"] not in fresh
+
+
+def test_prospect_dollar_cells_take_no_ladder_and_the_grade_chip_is_neutral_ink():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD}, tiers=True)
+    pr = _block(html, "prospects")
+    assert "vt-fam" not in pr and "vt-avg" not in pr, "no ruler class on a prospect row"
+    assert '<span class="ledger-letter">A+</span>' in pr and '<span class="ledger-letter">C+</span>' in pr
+    assert '<span class="ledger-pos">$100.1M</span>' in pr, "expected surplus: plain with its sign"
+    assert '<span class="ledger-band" title="' + COPY2["band_row_only"] + '">$26.8M to $189.0M</span>' in pr
+    assert "no bonus on file" in pr and COPY2["ifa_slot_dark"] in pr
+    for fn in ("renderProspects", "renderGraduates", "renderTrade", "renderLadder", "renderRealizedRows", "renderPicks", "contractDepth", "warStripCell", "arbSeasonBar"):
+        body = _fn_body(fn)
+        assert "EephusTiers" not in body and "zCell(" not in body and "zCls(" not in body, fn
+    gr = _block(html, "graduates")
+    assert "vt-fam" not in gr and "$66.2M" in gr and "$55.2M" in gr and "PROSPX debuted_player_value" in gr
+    assert "$121.4M" not in gr, "the two engines are never summed"
+    assert COPY2["grad_two_engines"] in gr and COPY2["grad_contract_dark"] in gr
+
+
+def test_the_shown_rows_footer_sums_means_and_prints_not_summed_under_the_bands():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD})
+    pr = _block(html, "prospects")
+    foot = pr[pr.index("<tfoot>"):pr.index("</tfoot>")]
+    cells = re.findall(r"<td[^>]*>(.*?)</td>", foot)
+    assert COPY2["shown_rows"] + " (3)" in cells[0]
+    assert "$152.6M" in cells[1], "expected surplus over the rows shown, a sum of means"
+    assert COPY2["not_summed"] in cells[2], "the band column's footer"
+    assert not re.search(r"\d", re.sub(r"<[^>]+>", "", cells[2])), "no footer cell under a band column parses as a number"
+    assert "$4.0M" in foot and "$148.6M" in foot, "bonus and net over the rows shown"
+    draft = _render2(shards={SHARD_URL_LAD: SHARD_LAD}, pfilter="draft")
+    pd_ = _block(draft, "prospects")
+    assert "P One" in pd_ and "P Two" not in pd_ and "P Three" not in pd_
+    fd = pd_[pd_.index("<tfoot>"):pd_.index("</tfoot>")]
+    assert COPY2["shown_rows"] + " (1)" in fd and "$100.1M" in fd and COPY2["not_summed"] in fd
+    assert 'data-lfilter="draft" aria-pressed="true"' in pd_
+    tr = _block(html, "trade")
+    ft = tr[tr.index("<tfoot>"):tr.index("</tfoot>")]
+    assert "$65.0M" in ft and COPY2["not_summed"] in ft
+
+
+def test_the_arbitration_ladder_cells_say_band_not_interval():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD})
+    arb = _block(html, "arbitration")
+    assert '<span class="ledger-rung" title="$1.1M to $1.9M; band, not a calibrated interval">$1.4M</span>' in arb
+    assert '<span class="ledger-rung is-null" title="no salary on file; outside every sum">ARB 1</span>' in arb
+    assert "Arb 1" in arb and "Pre-Arb" in arb and "3.000 as of 2025" in arb
+    assert arb.count("P10") == 1 and COPY2["arb_quantiles_dark"] in arb, "the only P10 on the block is the dark sentence saying none is published"
+    assert "P90" not in arb.replace(COPY2["arb_quantiles_dark"], "")
+    assert "Ladder sum 2027 (arb and pre-arb rungs)" in arb and "arb rungs $1.4M (1), pre-arb rungs $0.8M (1)" in arb
+    assert COPY2["arb_prearb_rungs"] in arb and SAMPLE["copy"]["arb_upper_bound"] in arb
+    assert "1 null rung(s) outside every sum" in arb
+    for title in ("Award quantiles", "Comps", "Filing figures and hearings"):
+        assert "<strong>" + title + "</strong>" in arb
+    v1 = _render2(shards={SHARD_URL_LAD: "pending"})
+    a1 = _block(v1, "arbitration")
+    assert 'title="band, not a calibrated interval">$1.1M to $1.9M</td>' in a1, "the preview band cell carries the sentence too"
+
+
+def test_the_two_arbitration_exposures_are_drawn_apart_and_never_stacked():
+    html = _render2(shards={SHARD_URL_LAD: "pending"})
+    cm = _block(html, "commitments")
+    assert cm.count('class="ledger-bar2"') == 2, "one bar per season the board carries"
+    assert '<i class="ledger-seg-arb2"></i>' in cm and COPY2["arb_two_populations"] in cm
+    assert "Arbitration Predictor board, 2 rows, 2 in the projections vets: ladder sum $2.2M = arb rungs $1.4M (1) + pre-arb rungs $0.8M (1)" in cm
+    row27 = SAMPLE["clubs"]["LAD"]["commitments"]["by_season"][0]
+    stack = row27[1] + row27[3] + row27[5]
+    bar = 1400000 + 780000
+    assert "$%.1fM" % ((stack + bar) / 1e6) not in cm and "$%.1fM" % ((row27[3] + bar) / 1e6) not in cm, "the stack and the bar never combine"
+    i = cm.index('class="ledger-stack"')
+    j = cm.index('class="ledger-bar2"')
+    assert i < j and "</div>" in cm[i:j], "the bar is a sibling element under the stack, not a segment of it"
+    assert ".ledger-app .ledger-seg-arb2" in CSS and "repeating-linear-gradient" in CSS
+    assert "EephusTiers" not in _fn_body("renderCommitments")
+
+
+def test_the_realized_rows_keep_swartz_ou_mkt_and_ou_war_in_separate_columns():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD})
+    arb = _block(html, "arbitration")
+    assert '<th title="' + COPY2["swartz_label"] + '">MLBTR (Swartz)</th>' in arb
+    assert "<th>ou_war</th>" in arb and 'data-gl="arb_market_residual">ou_mkt</a>' in arb
+    i = arb.index("<summary>2024: 2 players</summary>")
+    grp = arb[i:arb.index("</details>", i)]
+    assert "R One" in grp and "$19.5M" in grp, "the Swartz figure prints on the row that carries it"
+    assert grp.count("<td></td>") >= 1, "a row without a Swartz figure prints blank, never zero"
+    foot = grp[grp.index("<tfoot>"):]
+    assert "$30.0M" in foot and "$29.0M" in foot and '<span class="ledger-pos">$1.0M</span>' in foot and '<span class="ledger-neg">-$20.0M</span>' in foot
+    assert "-$19.0M" not in foot and "$-19.0M" not in foot, "ou_mkt and ou_war never combined"
+    assert "$19.5M" not in foot, "no Swartz total: present on some rows only"
+    assert "a6 arm, n 261: " + COPY2["swartz_a6"] in arb
+    assert SAMPLE["copy"]["never_combine"] in arb
+
+
+def test_an_unsigned_pick_prints_a_blank_over_slot_cell_not_a_saving():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD})
+    farm = _block(html, "farm")
+    assert '<td>Some Pick</td><td>$1.5M</td><td>$1.2M</td><td><span class="ledger-neg">-$0.3M</span></td><td>signed</td>' in farm, "a signed under-slot pick keeps its figure"
+    assert '<td>Unsigned Pick</td><td>$0.9M</td><td>$0.0M</td><td><span class=""></span></td><td>unsigned</td>' in farm, "an unsigned pick prints a blank over-slot cell"
+    assert "-$0.9M" not in farm
+
+
+def test_the_war_path_strip_shows_means_and_the_expander_shows_bands():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD}, open_keys=("C:shohei_ohtani",))
+    ct = _block(html, "contracts")
+    assert '<span class="ledger-warcell" title="WAR P10 1.9 to P90 10.8, ' + COPY2["war_band_cell"] + '">6.4 WAR</span>' in ct
+    assert "1 of 2 re-anchored on the trade board, 1 with a player option (1 seasons)" in ct
+    xp = ct[ct.index('class="ledger-xp-row"'):]
+    assert "<dt>Surplus strip</dt>" in xp and '<span class="ledger-pos">$88.5M</span>' in xp and '<span class="ledger-neg">-$7.0M</span>' in xp
+    assert "NPV of the strip at 7 pct: $238.4M; served $238.4M" in xp and COPY2["npv_identity"] in xp
+    assert ("Total to acquire</dt><dd>$241.0M = rest of season $2.7M + NPV $238.4M"
+            '<div class="ledger-count">' + COPY2["sur_total_identity"] + "</div></dd>") in xp, "the tolerance sentence sits on the Total line"
+    assert "<dt>Player option 2031</dt><dd>" + COPY2["opt_out_two_engines"] in xp
+    assert "Trade Machine" not in xp, "a row the trade board does not carry prints no trade line"
+    pages = _render2(shards={SHARD_URL_LAD: SHARD_LAD}, open_keys=("C:andy_pages",))
+    xp2 = _block(pages, "contracts")
+    xp2 = xp2[xp2.index('class="ledger-xp-row"'):]
+    assert "<dt>Trade Machine</dt><dd>$60.0M (<span class=\"ledger-band\"" in xp2 and '<span class="ledger-letter">A</span>' in xp2
+    assert '<span class="ledger-flag">re-anchored</span> ' + COPY2["tv_reanchored"] in xp2
+    assert "vt-fam" not in ct and "EephusTiers" not in _fn_body("renderContracts")
+    pending = _render2(shards={SHARD_URL_LAD: "pending"})
+    assert "ledger-warcell" not in _block(pending, "contracts") and COPY2["paths_preview_note"] in _block(pending, "contracts")
+
+
+def test_the_debuted_trade_rows_take_no_ladder_and_print_their_source():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD}, tiers=True, open_keys=("T:x_deb",))
+    tr = _block(html, "trade")
+    assert "vt-fam" not in tr
+    assert '<span class="ledger-pos">$60.0M</span>' in tr and '<span class="ledger-src">projection</span>' in tr and '<span class="ledger-src">prearb_min</span>' in tr
+    assert '<span class="ledger-letter">elite</span>' in tr and '<span class="ledger-letter">A</span>' in tr
+    assert 'href="/projections/#player=andy_pages"' in tr and 'href="/prospx/#player=x_deb"' in tr
+    assert "<dt>Floor</dt><dd>" + COPY2["prearb_min_floor"] in tr, "a prearb_min row quotes the artifact's floor sentence"
+    assert "2 debuted rows on the trade board" in tr
+    sp = _block(html, "surplus")
+    assert "Trade currency: served / farm rows gross + debuted rows</td><td>$990.8M / $514.0M + $476.8M" in sp
+    assert "MLB leg, contract: served / contract rows (n 1)</td><td>$300.1M / $300.1M" in sp and COPY2["trade_currency_split"] in sp
+
+
+def test_the_new_block_keys_are_anchored_in_the_router():
+    assert "(?:^#|[#&])block=(payroll|cbt|commitments|contracts|arbitration|surplus|farm|fa|prospects|graduates|trade)\\b" in JS
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD}, hash_="#section=club&team=LAD&block=prospects")
+    for bid in ("trade", "prospects", "graduates"):
+        assert 'id="ledger-block-%s"' % bid in html, bid
+    assert html.index('id="ledger-block-farm"') < html.index('id="ledger-block-trade"') < html.index('id="ledger-block-prospects"') < html.index('id="ledger-block-graduates"') < html.index('id="ledger-block-fa"')
+    assert 'el("ledger-block-" + state.block)' in JS and "scrollIntoView" in JS
+    opened = _render2(shards={SHARD_URL_LAD: SHARD_LAD}, hash_="#section=club&team=LAD&block=arbitration")
+    assert "<details open><summary>2024: 2 players</summary>" in _block(opened, "arbitration"), "the hash opens the shard-fed groups"
+    assert "<details><summary>2024: 2 players</summary>" in _block(html, "arbitration")
+    assert 'data-lprospect="p_one"' in _block(html, "farm") and 'href="#section=club&amp;team=LAD&amp;block=prospects"' in _block(html, "farm")
+
+
+def test_the_new_tables_hide_columns_by_container_and_carry_an_expander():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD})
+    for cls in ("ledger-prospects", "ledger-graduates", "ledger-trade", "ledger-ladder-table"):
+        i = html.index('<table class="ledger-table %s"' % cls)
+        head = html[i:html.index("</thead>", i)]
+        ths = re.findall(r"<th(?:\s[^>]*)?>", head)
+        kept = [t for t in ths if "lc-col-hide" not in t and "lc-xp" not in t]
+        assert len(kept) <= 3, (cls, kept)
+        assert any("lc-xp" in t for t in ths) and any("lc-col-hide" in t for t in ths), cls
+        assert html[html.rindex('<div class="ledger-scroll">', 0, i):i].count("<table") == 0, (cls, "wrapped in .ledger-scroll")
+        assert 'class="ledger-xp-btn"' in html[i:html.index("</table>", i)]
+    assert ".ledger-app .lc-xp { display: none; }" in CSS and CSS.index(".ledger-app .lc-xp { display: none; }") < CSS.index("@container ledgerblock (max-width: 560px) {\n  .ledger-app .lc-col-hide")
+    assert ".ledger-app .ledger-prospects .ledger-xp-row td" in CSS
+    assert 'class="ledger-chips" role="group" aria-label="Acquisition method"' in html and 'class="ledger-chip is-on"' in html
+    assert "ledger-dl" in _render2(shards={SHARD_URL_LAD: SHARD_LAD}, open_keys=("P:p_one",))
+    opened = _render2(shards={SHARD_URL_LAD: SHARD_LAD}, open_keys=("P:p_one",))
+    pr = _block(opened, "prospects")
+    assert "<dt>PROSPX consensus basis, not added</dt>" in pr and "$99.8M" in pr and 'class="ledger-spark"' in pr, "the expander: consensus basis and the per-player spark"
+    assert "<dt>cons_surplus_mm</dt>" in pr and COPY2["p_bust_basis"] in pr
+
+
+def test_every_new_glossary_hook_resolves():
+    g = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    ids = {e["id"]: e for e in g["entries"]}
+    for slug in ("farm_dollar", "debuted_value", "arb_award_band", "acquisition_cost_basis"):
+        assert slug in ids and "ledger" in ids[slug]["module"] and ids[slug]["shelf"] == "ark", slug
+        assert 'gl(' in JS and '"%s")' % slug in JS, slug
+        for ref in ids[slug].get("seeAlso", []):
+            assert ref in ids, (slug, ref)
+    hooks = set(re.findall(r'gl\([^,]+,\s*"([a-z_]+)"\)', JS))
+    missing = sorted(h for h in hooks if h not in ids)
+    assert not missing, missing
+    for slug in ("tvi", "xfv", "signing_bonus", "slot_value", "roster_crunch", "fin_dollar_dvm", "eta", "wag", "mlb_debut",
+                 "club_control_window", "trade_machine", "salary_path", "service_time", "surplus_value", "arb_award_band",
+                 "acquisition_cost_basis", "surplus_per_fv_pt", "fin_contract_surplus", "farm_dollar", "debuted_value"):
+        assert slug in hooks, slug
+
+
+def test_the_js_reads_every_shard_column_through_the_legend():
+    reads = re.findall(r'cv\("([a-z_.]+)",\s*[A-Za-z_0-9]+,\s*"([a-z_0-9]+)"\)', JS)
+    assert len(reads) > 60
+    for key, name in reads:
+        assert key in COLUMNS2, key
+        assert name in COLUMNS2[key], (key, name)
+    assert not re.search(r"\b(prospects|graduates|ladders|realized_rows|paths|rows_debuted)\[\w+\]\[\d+\]", JS), "no positional read on a shard row"
+    assert "function colIdx(key, name)" in JS and "DATA.columns[key]" in JS
+    shard_dir = ROOT / "data" / "ledger_clubs"
+    if not shard_dir.exists() or not ART.exists():
+        return
+    d = _served()
+    for c in list(d["clubs"])[:5] + ["LAD"]:
+        s = json.loads((shard_dir / f"{c}.json").read_text(encoding="utf-8"))
+        for key, cols in s["columns"].items():
+            assert cols == d["columns"][key], (c, key)
+            if key == "arbitration.realized.rows":
+                rows = s["arbitration"]["realized_rows"]
+            elif key in ("farm.picks", "farm.prospect_trajectory"):
+                continue
+            else:
+                blk, _, name = key.rpartition(".")
+                rows = s[blk][name]
+            for row in rows:
+                assert len(row) == len(cols), (c, key)
+        html = _render2(team=c, payload=d, shards={"/data/ledger_clubs/%s.json" % c: s}, tiers=True)
+        for bid in ("prospects", "graduates", "trade", "arbitration", "contracts", "farm", "surplus", "commitments"):
+            assert 'id="ledger-block-%s"' % bid in html, (c, bid)
+        assert "could not be loaded" not in html and "undefined" not in _block(html, "prospects"), c
+        assert d["copy"]["shard_failed"] not in html, (c, "the served shard resolves")

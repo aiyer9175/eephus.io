@@ -795,3 +795,795 @@ def test_each_league_header_and_farm_leaf_links_the_entry_that_defines_it(d):
     js = JS.read_text(encoding="utf-8")
     assert 'k === "fin_active_surplus" ? "farm_grade_financial" : k' in js
     assert '"contract_dollars_on_file"), money(p27' not in js
+
+
+# ==========================================================================
+# D5 depth pass (2026-09-24): one board plus thirty per-club row files
+# ==========================================================================
+# Every new row layer RECONCILES to the v1 roll-up it sits under, and each
+# identity here is measured on the served files, never assumed: farm rows to
+# the fin_active_surplus leaf (to a vintage tolerance, both stamps printed),
+# arbitration rungs by season to the v1 ladder sums (exact), contract strips to
+# the served NPV and surTotal (to the stated rounding). Quantiles are never
+# summed anywhere; ou_mkt and ou_war never share a key; the Swartz figure is a
+# third quantity; no P10 or P90 sits beside an arbitration figure.
+
+SHARD_DIR = ROOT / "data" / "ledger_clubs"
+NEW_COPY_STATIC = ("farm_dollar_is_not", "farm_reconcile", "farm_vintage_gap", "farm_gap_broken", "farm_no_bonus",
+                   "trade_cost_dark", "grad_two_engines", "grad_contract_dark", "grad_no_registry", "shard_failed",
+                   "shard_vintage", "dvm_within_tier", "p_bust_basis", "preview_note", "trajectory_active_basis",
+                   "arb_prearb_rungs", "arb_two_populations", "arb_quantiles_dark", "arb_comps_dark", "arb_filing_dark",
+                   "npv_identity", "sur_total_identity", "tv_reanchored", "opt_out_two_engines", "trade_currency_split", "sources_stamps",
+                   "not_summed", "shown_rows", "band_row_only", "grad_preview_note", "arb_preview_note",
+                   "trade_preview_note", "paths_preview_note")
+NEW_COPY_TEMPLATES = ("farm_dollar_is_template", "swartz_label_template")
+
+
+@pytest.fixture(scope="module")
+def shards(d):
+    if not SHARD_DIR.exists():
+        pytest.skip("run python ledger_export.py (writes data/ledger_clubs/)")
+    out = {}
+    for c in d["clubs"]:
+        p = SHARD_DIR / f"{c}.json"
+        if not p.exists():
+            pytest.skip(f"shard {p.name} absent; run python ledger_export.py")
+        out[c] = json.loads(p.read_text(encoding="utf-8"))
+    return out
+
+
+@pytest.fixture(scope="module")
+def tv():
+    p = ROOT / "data" / "trade_values.json"
+    if not p.exists():
+        pytest.skip("trade_values.json absent")
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    return {"doc": doc, "by_key": {r["player_key"]: r for r in doc["players"] if r.get("player_key")}}
+
+
+def _col(d, key, name):
+    return d["columns"][key].index(name)
+
+
+def _rows(shard, key):
+    if key == "arbitration.realized.rows":
+        return shard["arbitration"]["realized_rows"]
+    blk, _, name = key.rpartition(".")
+    return shard[blk][name]
+
+
+# --------------------------------------------------------------------------
+# D5-0: the spine
+# --------------------------------------------------------------------------
+
+def test_the_main_payload_carries_no_row_array_and_stays_under_one_megabyte(d):
+    import ledger_export as L
+    assert ART.stat().st_size < L.BOARD_CAP_BYTES
+    n = d["shards"]["preview_n"]
+    assert n in (L.PREVIEW_N, L.PREVIEW_N_SMALL) and d["shards"]["board_guard_bytes"] == L.PREVIEW_GUARD_BYTES
+    if ART.stat().st_size <= L.PREVIEW_GUARD_BYTES:
+        assert n == L.PREVIEW_N, "the guard only drops the preview when the board passes the line"
+    for c, club in d["clubs"].items():
+        assert "prospects" not in club["farm"] and "graduates" not in club["farm"] and "picks" not in club["farm"], c
+        assert "ladders" not in club["arbitration"] and "realized_rows" not in club["arbitration"], c
+        assert "paths" not in club["contracts"] and "rows_debuted" not in club["surplus"], c
+        assert len(club["farm"]["preview"]) <= n, c
+
+
+def test_every_shard_is_under_160_kb_names_its_club_and_the_index_matches_disk(d, shards):
+    import hashlib
+    import ledger_export as L
+    idx = d["shards"]
+    assert idx["dir"] == L.SHARD_DIRNAME and idx["n"] == 30 and set(idx["files"]) == set(d["clubs"])
+    on_disk = {p.stem for p in SHARD_DIR.glob("*.json") if re.fullmatch(r"[A-Z]{2,3}", p.stem)}
+    assert on_disk == set(d["clubs"]), "no extra CODE.json and none missing"
+    for c, club in d["clubs"].items():
+        p = SHARD_DIR / f"{c}.json"
+        b = p.read_bytes()
+        st = idx["files"][c]
+        assert st["path"] == f"{L.SHARD_DIRNAME}/{c}.json" and club["shard"]["path"] == st["path"], c
+        assert st["bytes"] == len(b) == club["shard"]["bytes"], c
+        assert st["sha256_16"] == hashlib.sha256(b).hexdigest()[:16] == club["shard"]["sha256_16"], c
+        assert len(b) <= L.SHARD_CAP_BYTES, (c, len(b))
+        s = shards[c]
+        assert s["club"] == c and s["statsapi_code"] == club["statsapi_code"]
+        assert s["board_generated_at"] == d["generated_at"] == club["shard"]["generated_at"]
+        assert s["cba_banner"] is True and s["calibration"] == d["calibration"]
+        for key, cols in s["columns"].items():
+            assert cols == d["columns"][key], (c, key)
+            if key in L.SHARD_ROW_KEYS:
+                for row in _rows(s, key):
+                    assert len(row) == len(cols), (c, key)
+        for year_rows in s["farm"]["picks"].values():
+            for row in year_rows:
+                assert len(row) == len(s["columns"]["farm.picks"]), c
+
+
+def test_the_shard_writer_never_opens_a_socket_and_build_all_never_writes(monkeypatch, tmp_path):
+    import socket
+    import ledger_export as L
+
+    def _no(*a, **k):
+        raise AssertionError("ledger_export opened a socket")
+    monkeypatch.setattr(socket, "socket", _no)
+    monkeypatch.setattr(socket, "create_connection", _no)
+    before = {p: p.stat().st_mtime for p in [ART] + sorted(SHARD_DIR.glob("*.json")) if p.exists()}
+    doc, shard_docs = L.build_all()
+    assert len(doc["clubs"]) == 30 == len(shard_docs)
+    assert L.build()["clubs"].keys() == doc["clubs"].keys(), "build() keeps its v1 signature: the board alone"
+    assert {p: p.stat().st_mtime for p in before} == before, "build_all() and build() never write"
+    monkeypatch.setattr(L, "SHARD_DIR", tmp_path / "ledger_clubs")
+    (tmp_path / "ledger_clubs").mkdir()
+    (tmp_path / "ledger_clubs" / "ZZZ.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "ledger_clubs" / "keep.txt").write_text("x", encoding="utf-8")
+    written = L.write_shards(doc, shard_docs)
+    assert len(written) == 30 and all(p.parent == tmp_path / "ledger_clubs" for p in written)
+    assert not (tmp_path / "ledger_clubs" / "ZZZ.json").exists(), "a stale club file is removed"
+    assert (tmp_path / "ledger_clubs" / "keep.txt").exists(), "the directory is otherwise left alone"
+    for c, p in zip(sorted(shard_docs), sorted(written)):
+        assert p.stat().st_size == doc["shards"]["files"][c]["bytes"], c
+    assert {p: p.stat().st_mtime for p in before} == before
+
+
+def test_no_new_key_serves_a_summed_quantile_or_a_combined_residual(d, shards):
+    import ledger_export as L
+    L.assert_aggregate_keys(d)
+    for s in shards.values():
+        L.assert_aggregate_keys(s)
+    for bad in ({"reconciliation": {"rows_p10_mm": 1}}, {"summary": {"band_lo_mm": 1}},
+                {"by_season": [{"lo_usd": 1}]}, {"paths_summary": {"war_p90_sum": 1}},
+                {"method": {"draft": {"hi": 1}}}, {"footer": {"p90": 1}},
+                {"reconciliation": {"rows_extra_mm": 1}}, {"summary": {"trade_rows_all_mm": 1}}):
+        with pytest.raises(AssertionError):
+            L.assert_aggregate_keys(bad)
+    L.assert_aggregate_keys({"reconciliation": {k: 1 for k in L.SUM_KEYS_ALLOWED}})
+    L.assert_aggregate_keys({"rows": [{"band_lo_mm": 1, "band_hi_mm": 2}]})   # a band on a row outside the aggregates is the rule
+    L.assert_aggregate_keys({"method": {"inputs_generated_at": {"arb_history": "x"}}})   # a token match, never a substring one
+    for path, k, _v in _walk(d):
+        ks = str(k).lower()
+        assert not ("ou_mkt" in ks and "ou_war" in ks), path
+    for c, s in shards.items():
+        for path, k, _v in _walk(s):
+            ks = str(k).lower()
+            assert not ("ou_mkt" in ks and "ou_war" in ks) and "swartz_ou" not in ks, (c, path)
+
+
+def test_the_new_registry_verdicts_are_quoted_from_the_registry(d):
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    by = {m.get("model_id"): m for m in reg["models"]}
+    quoted = {r["model_id"]: r for r in d["accountability"]["registry_verdicts"]}
+    for mid in ("control_window_salary_path", "mlb_projections_prospects", "xfv_provisional_prior"):
+        assert mid in quoted and quoted[mid]["present"] is True, mid
+        assert quoted[mid]["verdict"] == by[mid]["verdict"] == "provisional", mid
+    assert "debuted_player_value" not in by, "no registry row; the graduates copy says so"
+    assert "no registry row" in d["copy"]["grad_no_registry"] and "prospect_surplus" in d["copy"]["grad_no_registry"]
+    assert d["sections"]["debuted_value_registry"]["live"] is True
+
+
+def test_the_new_copy_sentences_exist_and_carry_no_typed_figure(d, tv):
+    cp = d["copy"]
+    for k in NEW_COPY_STATIC + NEW_COPY_TEMPLATES + ("farm_dollar_is", "swartz_label", "swartz_a6", "sur_strip_basis"):
+        assert cp.get(k), k
+        assert chr(0x2014) not in cp[k] and chr(0x2013) not in cp[k], k
+    for k in NEW_COPY_STATIC + NEW_COPY_TEMPLATES:
+        assert not re.search(r"(?<![_a-z])\d{4,}", cp[k]), (k, "a typed figure in a copy template")
+        assert "isotonic" not in cp[k], (k, "a typed calibration stamp")
+    cal = tv["doc"]["calibration"]["version"]
+    assert cal in cp["farm_dollar_is"] and cp["farm_dollar_is"] == cp["farm_dollar_is_template"].format(calibration_version=cal)
+    hist = json.loads((ROOT / "data" / "arb_history.json").read_text(encoding="utf-8"))
+    n_swartz = sum(1 for r in hist["rows"] if r[7] is not None)
+    a6 = json.loads((ROOT / "data" / "arbitration_eval.json").read_text(encoding="utf-8"))["a6_swartz"]
+    assert cp["swartz_label"] == cp["swartz_label_template"].format(n_swartz=n_swartz, n_a6=a6["n"])
+    assert str(d["class_year"]) in cp["sur_strip_basis"], "the class year is formatted at build time"
+
+
+def test_the_new_sources_rows_and_stamps_are_published(d, shards):
+    ids = {s[0]: s for s in d["method"]["sources"]}
+    for sid, frag in (("S23", "timeseries.json players"), ("S24", "debuts_lite.json"),
+                      ("S25", "arbitration_eval.json"), ("S26", "xfv.json meta header")):
+        assert sid in ids and frag in ids[sid][1], sid
+    stamps = d["method"]["inputs_generated_at"]
+    for k in ("debuts_lite", "arbitration_eval", "xfv", "timeseries", "trade_values", "mlb_projections"):
+        assert stamps.get(k), k
+    oj = d["accountability"]["org_join"]
+    assert oj["debuts_lite"][1] == 30 and oj["debuts_lite"][0] > 30
+    assert "Cuba" in oj["debuts_lite_dropped"] and "Office of the Commissioner" in oj["debuts_lite_dropped"]
+    assert d["method"]["sources_stamps"] == d["copy"]["sources_stamps"]
+    for c, club in d["clubs"].items():
+        fr = club["farm"]["reconciliation"]
+        assert fr["leaf_generated_at"] == stamps["timeseries"] and fr["rows_generated_at"] == stamps["trade_values"], c
+        assert shards[c]["generated_at"] == d["generated_at"], c
+
+
+def test_the_shards_are_catalogued_shipped_and_written_by_the_step():
+    src = (ROOT / "data_catalog.py").read_text(encoding="utf-8")
+    assert '"ledger_clubs/*.json"' in src
+    i = src.index('"ledger_clubs/*.json"')
+    assert '"pinned_by": "test_ledger_export.py"' in src[i:i + 1600] and "never summed" in src[i:i + 1600]
+    rm = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    i = rm.index("d10e. Club Ledger board")
+    step = rm[i:i + 2500]
+    assert "_lgd, _lgs = _lg.build_all()" in step and "_lg.write_shards(_lgd, _lgs)" in step
+    assert step.index("_lg.OUT.write_text(") < step.index("_lg.write_shards("), "the board is written first, then the shards"
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    assert "--include='/data/ledger_clubs/***'" in nightly
+    wf = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
+    if wf.exists():
+        assert "cp -r data/ledger_clubs _site/data/ledger_clubs" in wf.read_text(encoding="utf-8")
+    assert "ledger_clubs" in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8")
+    assert '"ledger_board.json": ("calibration",)' in (ROOT / "test_calibration_vintage.py").read_text(encoding="utf-8")
+
+
+# --------------------------------------------------------------------------
+# D5-1: farm finance per prospect
+# --------------------------------------------------------------------------
+
+def test_the_farm_rows_sum_to_the_served_leaf_within_the_vintage_tolerance_and_print_the_gap(d, shards, org_summary):
+    import ledger_export as L
+    P = "farm.prospects"
+    for c, club in d["clubs"].items():
+        fr = club["farm"]["reconciliation"]
+        leaf = org_summary[c]["tree"]["fin_active_surplus"]
+        assert fr["leaf_mm"] == leaf["surplus_total_mm"] and fr["leaf_n"] == leaf["active_count"], c
+        assert fr["status"] in ("exact", "vintage_drift"), (c, fr["status"], fr["gap_mm"], fr["tolerance_mm"])
+        assert abs(fr["gap_mm"] - (fr["leaf_mm"] - fr["rows_net_mm"])) <= 0.05, c
+        assert fr["tolerance_mm"] == round(max(L.FARM_TOL_PCT * abs(fr["leaf_mm"]), L.FARM_TOL_FLOOR_MM), 2), c
+        assert abs(fr["gap_mm"]) <= fr["tolerance_mm"], c
+        rows = _rows(shards[c], P)
+        assert len(rows) == fr["n_rows"] == club["farm"]["n_prospects"], c
+        net = sum(r[_col(d, P, "net_mm")] or 0 for r in rows)
+        gross = sum(r[_col(d, P, "surplus_mm")] or 0 for r in rows)
+        bonus = sum((r[_col(d, P, "bonus_usd")] or 0) for r in rows) / 1e6
+        assert abs(net - fr["rows_net_mm"]) <= 0.05 and abs(gross - fr["rows_gross_mm"]) <= 0.05, c
+        assert abs(gross - bonus - net) <= 0.05, c
+        assert fr["leaf_source"].startswith("timeseries.org_summary") and "trade_values.json" in fr["rows_source"]
+        assert fr["leaf_generated_at"] and fr["rows_generated_at"], "both stamps always print"
+    assert L.farm_reconcile_status(455.4, 456.38) == (-0.98, 9.11, "vintage_drift")
+    assert L.farm_reconcile_status(100.0, 100.04)[2] == "exact"
+    assert L.farm_reconcile_status(100.0, 106.0)[2] == "broken"
+    assert L.farm_reconcile_status(100.0, 104.9)[2] == "vintage_drift", "the floor is 5 $M"
+    assert L.farm_reconcile_status(None, 1.0)[2] == "broken"
+    for k in ("farm_reconcile", "farm_vintage_gap", "farm_gap_broken"):
+        assert d["copy"][k]
+    assert "neither is corrected" in d["copy"]["farm_gap_broken"]
+
+
+def test_the_farm_cost_basis_reconciles_exactly_and_names_the_rows_without_a_bonus(d, shards, org_summary):
+    P = "farm.prospects"
+    for c, club in d["clubs"].items():
+        fr = club["farm"]["reconciliation"]
+        leaf = org_summary[c]["tree"]["fin_active_surplus"]
+        assert fr["leaf_cost_mm"] == leaf["cost_basis_mm"], c
+        assert abs(fr["rows_cost_mm"] - leaf["cost_basis_mm"]) <= 0.05 + 1e-9, (c, fr["rows_cost_mm"], leaf["cost_basis_mm"])
+        rows = _rows(shards[c], P)
+        with_bonus = sum(1 for r in rows if r[_col(d, P, "bonus_usd")])
+        assert fr["n_with_bonus"] == with_bonus <= fr["n_rows"], c
+        assert abs(sum((r[_col(d, P, "bonus_usd")] or 0) for r in rows) / 1e6 - fr["rows_cost_mm"]) <= 0.05, c
+    assert "counts a cost of zero" in d["copy"]["farm_no_bonus"]
+    assert d["sections"]["farm_bonus_missing"]["blocked_on"] == d["copy"]["farm_no_bonus"]
+    assert sum(club["farm"]["reconciliation"]["n_rows"] - club["farm"]["reconciliation"]["n_with_bonus"]
+               for club in d["clubs"].values()) > 0, "the uncaptured bonuses are real and counted"
+
+
+def test_the_farm_method_buckets_reconcile_to_method_efficiency_and_trade_is_dark(d, shards, org_summary):
+    import ledger_export as L
+    M = "farm.method"
+    n, nb, gross, cost, net, ratio, s_net, s_cost, s_n, s_pfv = [_col(d, M, k) for k in d["columns"][M]]
+    for c, club in d["clubs"].items():
+        me = org_summary[c]["tree"]["fin_active_surplus"]["method_efficiency"]
+        fm = club["farm"]["method"]
+        assert set(fm) == set(L.METHOD_BUCKETS)
+        for m in L.METHOD_BUCKETS:
+            row = fm[m]
+            assert row[n] == (me[m]["count"] or 0) == row[s_n], (c, m, "counts equal exactly")
+            assert row[s_net] == me[m]["surplus_total_mm"] and row[s_cost] == me[m]["cost_basis_mm"] and row[s_pfv] == me[m]["surplus_per_fv_pt_mm"], (c, m)
+            if row[n]:
+                assert abs(row[cost] - me[m]["cost_basis_mm"]) <= 0.05 + 1e-9, (c, m, "cost equal exactly")
+                tol = max(L.FARM_TOL_PCT * abs(me[m]["surplus_total_mm"] or 0), L.FARM_TOL_FLOOR_MM)
+                assert abs(row[net] - me[m]["surplus_total_mm"]) <= tol, (c, m)
+                assert row[nb] <= row[n]
+                if row[cost] > 0:
+                    assert abs(row[ratio] - row[net] / row[cost]) <= 0.011, (c, m, "a ratio of two served numbers")
+                else:
+                    assert row[ratio] is None, (c, m)
+        assert fm["trade"] == [0, 0, None, None, None, None, None, None, 0, None], (c, "trade has no cost basis today")
+        rows = _rows(shards[c], "farm.prospects")
+        i = _col(d, "farm.prospects", "acq_method")
+        assert club["farm"]["reconciliation"]["n_unbucketed"] == sum(1 for r in rows if r[i] not in L.METHOD_BUCKETS), c
+    s = d["sections"]["farm_trade_cost_basis"]
+    assert s["live"] is False and s["blocked_on"] == d["copy"]["trade_cost_dark"]
+    assert "no cost basis exists for the trade channel" in d["copy"]["trade_cost_dark"]
+    assert "no ladder" in d["field_key"]["farm.method"]
+
+
+def test_the_prospect_row_prints_one_surplus_basis_and_its_band_is_never_summed(d, shards):
+    P = "farm.prospects"
+    fk = d["field_key"][P]
+    assert "never summed" in fk and "the only column the leaf sums" in fk and "consensus-basis" in fk
+    assert d["columns"][P][:3] == ["key", "name", "pos"] and len(d["columns"][P]) == 28
+    s_i, lo_i, hi_i, cs_i = [_col(d, P, k) for k in ("surplus_mm", "band_lo_mm", "band_hi_mm", "cons_surplus_mm")]
+    for c, club in d["clubs"].items():
+        rows = _rows(shards[c], P)
+        assert [r[s_i] for r in rows] == sorted((r[s_i] for r in rows), reverse=True), (c, "rows by surplus desc")
+        lo_sum = sum(r[lo_i] or 0 for r in rows)
+        hi_sum = sum(r[hi_i] or 0 for r in rows)
+        leaves = set(_leaves(club["farm"]["reconciliation"])) | set(_leaves(club["farm"]["method"])) | set(_leaves(club["surplus"]["reconciliation"]))
+        for bad in (round(lo_sum, 1), round(lo_sum, 2), round(hi_sum, 1), round(hi_sum, 2)):
+            if bad:
+                assert bad not in leaves, (c, bad, "a summed band reached a reconciliation block")
+        for r in rows:
+            if r[lo_i] is not None and r[hi_i] is not None:
+                assert r[lo_i] <= r[hi_i], (c, r[0])
+            assert r[cs_i] is None or isinstance(r[cs_i], (int, float)), (c, r[0])
+    assert "never added" in d["copy"]["farm_dollar_is_not"]
+
+
+def test_the_prospect_row_surplus_equals_the_trade_board_and_the_efv_export(d, shards, tv):
+    P = "farm.prospects"
+    xp = ROOT / "data" / "xfv.json"
+    if not xp.exists():
+        pytest.skip("xfv.json absent")
+    xfv = json.loads(xp.read_text(encoding="utf-8"))["by_player"]
+    k_i, s_i, lo_i, hi_i, g_i = [_col(d, P, k) for k in ("key", "surplus_mm", "band_lo_mm", "band_hi_mm", "tv_grade")]
+    n = 0
+    for c in d["clubs"]:
+        for r in _rows(shards[c], P):
+            t = tv["by_key"][r[k_i]]
+            assert t["status"] == "active" and r[s_i] == t["trade_value_mm"], (c, r[k_i])
+            assert r[lo_i] == t["trade_value_lo"] and r[hi_i] == t["trade_value_hi"] and r[g_i] == t["trade_value_grade"], (c, r[k_i])
+            x = xfv.get(r[k_i])
+            if x and x.get("surplus_mm") is not None:
+                assert abs(r[s_i] - x["surplus_mm"]) <= 0.05, (c, r[k_i], "eFV export")
+                n += 1
+    assert n > 4000, "the equality is pinned on the whole active pool"
+
+
+def test_the_slot_join_is_by_year_and_pick_never_by_name(d, shards):
+    import storage
+    P = "farm.prospects"
+    rows = storage.load_draft_results()
+    sirota = [r for r in rows if (r.get("player_key") or "").endswith("mike_sirota")]
+    if len(sirota) < 2:
+        pytest.skip("the Sirota fixture (two draft_results rows) is not on this box")
+    signed = [r for r in sirota if r.get("signed")]
+    assert len(signed) == 1 and signed[0]["draft_year"] == 2024 and signed[0]["pick_overall"] == 87
+    unsigned = [x for x in sirota if not x.get("signed")][0]
+    assert unsigned["slot_usd"] is None, "the name-match row carries no slot; a join on name would print none or the wrong one"
+    k_i, y_i, p_i, sl_i, b_i = [_col(d, P, k) for k in ("key", "acq_year", "pick_overall", "slot_usd", "bonus_usd")]
+    hit = None
+    for c in d["clubs"]:
+        for r in _rows(shards[c], P):
+            if r[k_i] == "mike_sirota":
+                hit = (c, r)
+    if hit is None:
+        pytest.skip("mike_sirota is not an active prospect on this board")
+    c, r = hit
+    assert (r[y_i], r[p_i]) == (2024, 87) and r[sl_i] == signed[0]["slot_usd"] and r[b_i] == signed[0]["bonus_usd"], c
+    src = (ROOT / "ledger_export.py").read_text(encoding="utf-8")
+    assert 'slot_by_year_pick.get((acq.get("year"), acq.get("pick_overall")))' in src
+    i = src.index("slot_by_year_pick = {")
+    assert "player_name" not in src[i:i + 220] and "player_key" not in src[i:i + 220]
+
+
+def test_an_unsigned_pick_carries_no_over_slot_figure_and_the_pick_rows_sum_to_draft_paid(d, shards):
+    """farm.picks over_slot_usd follows the v1 draft_paid slotted rule: bonus minus
+    slot only when both are non-zero. An unsigned pick (bonus 0) prints no
+    fabricated under-slot saving, and per club and year the rows sum to the v1
+    draft_paid over_slot_usd exactly (ints, no tolerance)."""
+    P = "farm.picks"
+    sl_i, b_i, sg_i, ov_i = [_col(d, P, k) for k in ("slot_usd", "bonus_usd", "signed", "over_slot_usd")]
+    n_rows = 0
+    for c, club in d["clubs"].items():
+        for y, rows in shards[c]["farm"]["picks"].items():
+            paid = club["farm"]["draft_paid"][y]
+            assert len(rows) == paid[0], (c, y, "the pick rows are the draft_paid population")
+            for r in rows:
+                n_rows += 1
+                if r[sg_i] == 0:
+                    assert r[ov_i] is None, (c, y, r, "an unsigned pick carries no over-slot figure")
+                if r[sl_i] and r[b_i]:
+                    assert r[ov_i] == int(r[b_i]) - int(r[sl_i]), (c, y, r)
+                else:
+                    assert r[ov_i] is None, (c, y, r, "no figure without both a slot and a bonus")
+            assert sum(r[ov_i] or 0 for r in rows) == paid[7], (c, y, "rows sum to draft_paid over_slot_usd")
+    assert n_rows
+    assert "unsigned pick is not an under-slot saving" in d["field_key"][P]
+
+
+def test_the_graduate_row_carries_two_engines_labelled_and_no_sum(d, shards, tv):
+    G = "farm.graduates"
+    fk = d["field_key"][G]
+    assert "two engines" in fk and "never summed" in fk
+    k_i, dv_i, tvv_i, src_i, inv_i = [_col(d, G, k) for k in ("key", "dv_trade_value_mm", "tv_trade_value_mm", "tv_surplus_source", "in_vets")]
+    differ = both = 0
+    for c, club in d["clubs"].items():
+        rows = _rows(shards[c], G)
+        assert len(rows) == club["farm"]["n_graduates"], c
+        dv_sum = round(sum(r[dv_i] or 0 for r in rows), 1)
+        tv_sum = round(sum(r[tvv_i] or 0 for r in rows), 1)
+        leaves = set(_leaves(club["farm"]))
+        for bad in (dv_sum, tv_sum, round(dv_sum + tv_sum, 1)):
+            if bad:
+                assert bad not in leaves, (c, bad, "an engine total reached the board")
+        for r in rows:
+            if r[tvv_i] is not None:
+                t = tv["by_key"][r[k_i]]
+                assert t["status"] == "debuted" and r[tvv_i] == t["trade_value_mm"] and r[src_i] == t["surplus_source"], (c, r[k_i])
+                if r[dv_i] is not None:
+                    both += 1
+                    differ += 1 if abs(r[dv_i] - r[tvv_i]) > 0.05 else 0
+            assert isinstance(r[inv_i], bool)
+    assert both > 100 and differ > both * 0.5, "the two engines are different numbers on most rows, which is why they are never averaged"
+    assert "never averaged or summed" in d["copy"]["grad_two_engines"]
+    for path, k, _v in _walk(d):
+        assert "grad_total" not in str(k) and "engines_mean" not in str(k), path
+
+
+def test_grad_contract_surplus_per_graduate_is_dark_and_the_mean_is_copied(d, org_summary):
+    s = d["sections"]["grad_contract_per_graduate"]
+    assert s["live"] is False and s["blocked_on"] == d["copy"]["grad_contract_dark"]
+    assert "org mean only" in d["copy"]["grad_contract_dark"] and "no registry row" in d["copy"]["grad_contract_dark"]
+    assert "six" in d["method"]["grad_contract_formula"] and "AAV minus bonus" in d["method"]["grad_contract_formula"]
+    for c, club in d["clubs"].items():
+        leaf = club["farm"]["leaves"]["fin_contract_surplus"]
+        src = org_summary[c]["tree"]["fin_contract_surplus"]
+        assert leaf["value"] == src.get("mean_usd_per_yr") and leaf["n"] == src.get("grad_count"), c
+        assert leaf["n"] is None or leaf["n"] <= club["farm"]["n_graduates"], (c, "n is the rows with both an AAV and a bonus")
+    for path, k, _v in _walk(d):
+        assert "per_graduate_surplus" not in str(k) and "grad_surplus_rows" not in str(k), path
+
+
+def test_the_farm_block_carries_the_calibration_stamp_of_every_source(d, shards, tv):
+    cal = d["calibration"]
+    assert set(cal["sources"]) == {"timeseries", "trade_values", "xfv", "mlb_projections"}
+    for k, s in cal["sources"].items():
+        assert s["version"] and s["generated_at"], k
+    assert cal["version"] == tv["doc"]["calibration"]["version"] == cal["sources"]["trade_values"]["version"]
+    assert cal["agree"] is (len({s["version"] for s in cal["sources"].values()}) == 1)
+    xp = ROOT / "data" / "xfv.json"
+    if xp.exists():
+        import ledger_export as L
+        meta = L._xfv_meta()
+        assert meta["calibration"]["version"] == cal["sources"]["xfv"]["version"]
+        assert meta["generated_at"] == cal["sources"]["xfv"]["generated_at"]
+    for c in d["clubs"]:
+        assert shards[c]["calibration"] == cal, c
+    import test_calibration_vintage as TCV
+    assert TCV._SURPLUS_ARTIFACTS.get("ledger_board.json") == ("calibration",), "owner decision D9"
+
+
+def test_the_preview_is_the_top_n_of_the_shard_rows_and_n_is_published(d, shards):
+    import ledger_export as L
+    n = d["shards"]["preview_n"]
+    assert n == L.PREVIEW_N or n == L.PREVIEW_N_SMALL
+    s_i = _col(d, "farm.prospects", "surplus_mm")
+    for c, club in d["clubs"].items():
+        rows = _rows(shards[c], "farm.prospects")
+        assert club["farm"]["preview"] == rows[:n], c
+        assert [r[s_i] for r in club["farm"]["preview"]] == sorted((r[s_i] for r in club["farm"]["preview"]), reverse=True), c
+        traj = shards[c]["farm"]["prospect_trajectory"]
+        assert set(traj) == {r[0] for r in rows[:n]}, (c, "per-player series for the preview keys only")
+        for k, series in traj.items():
+            for p in series:
+                assert len(p) == 2 and isinstance(p[0], str) and isinstance(p[1], (int, float)), (c, k)
+    assert "PREVIEW_N" in d["field_key"]["farm.preview"]
+
+
+def test_the_actives_trajectory_is_status_filtered_and_labelled_gross(d):
+    src = (ROOT / "ledger_export.py").read_text(encoding="utf-8")
+    body = src[src.index("def _trade_trajectory_active"):src.index("def _player_trajectories")]
+    assert "status = 'active'" in body and "GROUP BY org, snapshot_date" in body
+    assert "gross" in d["copy"]["trajectory_active_basis"] and "each snapshot" in d["copy"]["trajectory_active_basis"]
+    assert "not the leaf's series" in d["field_key"]["farm.trajectory_active"]
+    for c, club in d["clubs"].items():
+        ta = club["farm"]["trajectory_active"]
+        fr = club["farm"]["reconciliation"]
+        assert all(len(p) == 2 for p in ta), c
+        assert [p[0] for p in ta] == sorted(p[0] for p in ta), c
+        if ta and ta[-1][0] == fr["rows_generated_at"]:
+            assert abs(ta[-1][1] - fr["rows_gross_mm"]) <= 0.15, (c, "today's snapshot is the rows' gross")
+        v1 = club["surplus"]["trajectory"]
+        if ta and v1 and ta[-1][0] == v1[-1][0]:
+            assert ta[-1][1] <= v1[-1][1] + 0.05, (c, "actives are a subset of the trade currency")
+
+
+# --------------------------------------------------------------------------
+# D5-2: arbitration per player
+# --------------------------------------------------------------------------
+
+def test_the_full_ladder_reproduces_tot_and_the_2027_rung_of_v1(d, shards):
+    Lk = "arbitration.ladders"
+    n_i, m_i, l_i, w_i, t_i = [_col(d, Lk, k) for k in ("name", "mlbam", "ladder", "war", "tot_usd")]
+    for c, club in d["clubs"].items():
+        rows = _rows(shards[c], Lk)
+        A = club["arbitration"]
+        assert len(rows) == A["n"] == len(A["rows"]), c
+        v1 = {r[1]: r for r in A["rows"]}
+        for r in rows:
+            lad = r[l_i]
+            assert (r[t_i] or 0) == sum(t[1] for t in lad if t[1] is not None), (c, r[n_i], "tot is the ladder's non-null sum")
+            assert len(r[w_i]) == len(lad), (c, r[n_i], "eWAR aligned to the ladder")
+            r27 = next((t for t in lad if t[0] == d["class_year"]), None)
+            v = v1[r[m_i]]
+            assert (v[2], v[3], v[4], v[5]) == ((r27[4], r27[1], r27[2], r27[3]) if r27 else (None, None, None, None)), (c, r[n_i])
+            for t in lad:
+                assert len(t) == 5 and (t[1] is None or (t[2] <= t[1] <= t[3])), (c, r[n_i], t)
+        assert sum(r[t_i] or 0 for r in rows) == A["remaining_usd"], c
+        assert A["n_in_vets"] == sum(1 for r in rows if r[_col(d, Lk, "in_vets")]) and A["n_with_salpath"] == sum(1 for r in rows if r[_col(d, Lk, "has_salpath")]), c
+        assert A["n_with_salpath"] <= A["n_in_vets"] <= A["n"], c
+
+
+def test_the_arbitration_band_is_labelled_a_band_and_never_p10_p90(d):
+    assert d["copy"]["band_note"] == "band, not a calibrated interval"
+    assert "not P10/P90" in d["field_key"]["arbitration.ladders"] and "fixed-spread" in d["field_key"]["arbitration.ladders"]
+    for k, v in d["copy"].items():
+        if isinstance(v, str) and k.startswith("arb") and k != "arb_quantiles_dark":
+            assert "P10" not in v and "P90" not in v, k
+    assert "not published" in d["copy"]["arb_quantiles_dark"]
+    js = JS.read_text(encoding="utf-8")
+    for m in re.finditer(r"P10|P90", js):
+        window = js[max(0, m.start() - 40):m.end() + 40].lower()
+        assert "arb" not in window, (m.start(), window)
+
+
+def test_arbitration_by_season_splits_arb_and_prearb_rungs_and_reproduces_v1_sums(d, shards):
+    B, Lk = "arbitration.by_season", "arbitration.ladders"
+    assert d["columns"][B] == ["season", "arb_rung_usd", "n_arb_rungs", "prearb_rung_usd", "n_prearb_rungs", "n_null_rungs"]
+    assert "n_null_rungs counts rungs with proj null" in d["field_key"][B] and "neither is summed into the commitments stack" in d["field_key"][B]
+    l_i = _col(d, Lk, "ladder")
+    for c, club in d["clubs"].items():
+        A = club["arbitration"]
+        per = {}
+        for r in _rows(shards[c], Lk):
+            for season, proj, _lo, _hi, tok in r[l_i]:
+                row = per.setdefault(season, [season, 0, 0, 0, 0, 0])
+                if proj is None:
+                    row[5] += 1
+                elif tok == "PRE-ARB":
+                    row[3] += proj
+                    row[4] += 1
+                else:
+                    row[1] += proj
+                    row[2] += 1
+        assert A["by_season"] == [per[s] for s in sorted(per)], c
+        bs = {row[0]: row for row in A["by_season"]}
+        s27 = bs.get(d["class_year"], [d["class_year"], 0, 0, 0, 0, 0])
+        assert s27[1] + s27[3] == A["s2027_usd"], (c, "the two parts of the v1 ladder sum")
+        assert sum(row[1] + row[3] for row in A["by_season"]) == A["remaining_usd"], c
+        assert A["s2027_note"] == "arb_prearb_rungs"
+    league = {r["club"]: r for r in d["league"]["rows"]}
+    for c, club in d["clubs"].items():
+        assert league[c]["arb_exposure_2027"] == club["arbitration"]["s2027_usd"], (c, "D14: the league column keeps the v1 value")
+    assert "pre-arbitration minimum sit in this sum" in d["copy"]["arb_prearb_rungs"]
+    # the spec's worked example, recomputed from the artifact rather than typed
+    arb = json.loads((ROOT / "data" / "arbitration.json").read_text(encoding="utf-8"))
+    lad_rows = [r for r in arb["rows"] if r.get("t") == "LAD"]
+    row28 = {row[0]: row for row in d["clubs"]["LAD"]["arbitration"]["by_season"]}.get(2028)
+    if lad_rows and row28:
+        n28 = sum(1 for r in lad_rows for t in r["l"] if t[0] == 2028 and t[4] != "PRE-ARB")
+        null28 = sum(1 for r in lad_rows for t in r["l"] if t[0] == 2028 and t[1] is None)
+        assert row28[2] + row28[5] == n28 and row28[5] == null28, "n_arb_rungs counts priced rungs; the null rungs sit apart"
+
+
+def test_the_realized_rows_reproduce_the_v1_season_sums_and_keep_two_residual_columns(d, shards):
+    R = "arbitration.realized.rows"
+    cols = d["columns"][R]
+    assert cols.index("ou_mkt_usd") != cols.index("ou_war_usd") and "swartz_usd" in cols and "team" not in cols
+    s_i, a_i, o_i, m_i, w_i, war_i = [cols.index(k) for k in ("season", "actual_usd", "ours_usd", "ou_mkt_usd", "ou_war_usd", "war")]
+    for c, club in d["clubs"].items():
+        rows = _rows(shards[c], R)
+        by = {}
+        for r in rows:
+            by.setdefault(r[s_i], []).append(r)
+        v1 = {s[0]: s for s in club["arbitration"]["realized"]["seasons"]}
+        assert set(by) == set(v1), c
+        for s, rs in by.items():
+            exp = v1[s]
+            assert exp[1] == len(rs), (c, s)
+            assert exp[2] == int(sum(r[a_i] or 0 for r in rs)) and exp[3] == int(sum(r[o_i] or 0 for r in rs)), (c, s)
+            assert exp[4] == int(sum(r[m_i] or 0 for r in rs)) and exp[5] == int(sum(r[w_i] or 0 for r in rs)), (c, s)
+            assert abs(exp[6] - sum(float(r[war_i] or 0) for r in rs)) <= 0.011, (c, s)
+        assert club["arbitration"]["realized"]["n"] == len(rows), c
+        assert [r[s_i] for r in rows] == sorted((r[s_i] for r in rows), reverse=True), (c, "season desc")
+
+
+def test_swartz_is_labelled_mlbtr_and_the_a6_statement_is_quoted_verbatim(d, shards):
+    ae = json.loads((ROOT / "data" / "arbitration_eval.json").read_text(encoding="utf-8"))["a6_swartz"]
+    E = d["arbitration_eval"]
+    for k in ("n", "ours_mdape", "swartz_mdape", "ratio_ours_over_swartz", "verdict", "claim", "statement"):
+        assert E[k] == ae[k], k
+    assert E["verdict"] == "NULL"
+    assert d["copy"]["swartz_a6"] == ae["statement"] and d["copy"]["swartz_a6_prefix"] == "a6 arm"
+    assert d["copy"]["swartz_label"].startswith("MLB Trade Rumors, Matt Swartz")
+    assert "MLB Trade Rumors" in d["field_key"]["arbitration.realized.rows"] and "swartz is neither" in d["field_key"]["arbitration.realized.rows"]
+    sw_i = _col(d, "arbitration.realized.rows", "swartz_usd")
+    n_sw = sum(1 for c in d["clubs"] for r in _rows(shards[c], "arbitration.realized.rows") if r[sw_i] is not None)
+    hist = json.loads((ROOT / "data" / "arb_history.json").read_text(encoding="utf-8"))
+    n_hist = sum(1 for r in hist["rows"] if r[7] is not None)
+    assert n_sw == n_hist, "every Swartz figure on the history reaches a club row (OAK joins as ATH)"
+    assert str(n_hist) in d["copy"]["swartz_label"] and str(ae["n"]) in d["copy"]["swartz_label"]
+    js = JS.read_text(encoding="utf-8")
+    assert "MLBTR (Swartz)" in js and 'copy("swartz_a6")' in js
+
+
+def test_comps_filing_and_quantiles_are_dark_with_blockers(d):
+    for k in ("arb_quantiles", "arb_comps", "arb_filing", "opt_out_value", "ifa_slot", "farm_years_to_fa"):
+        s = d["sections"][k]
+        assert s["live"] is False and s["blocked_on"], k
+    assert d["sections"]["arb_comps"]["blocked_on"] == d["copy"]["arb_comps_dark"]
+    assert "aav_usd" in d["copy"]["arb_comps_dark"] and "ARBITRATION_GATE 10" in d["copy"]["arb_comps_dark"]
+    assert "svy" in d["copy"]["arb_filing_dark"]
+    assert "MdAPE" in d["copy"]["arb_quantiles_dark"]
+    for key in ("arbitration.ladders", "arbitration.realized.rows"):
+        for name in d["columns"][key]:
+            assert "comp" not in name and "filing" not in name and "hearing" not in name and "p10" not in name, (key, name)
+    assert d["sections"]["arb_service_time"]["live"] is True and "inferred" in d["sections"]["arb_service_time"]["note"]
+
+
+def test_the_arbitration_link_is_narrowed_only_when_the_page_honours_team(d):
+    import ledger_export as L
+    js = (ROOT / "assets" / "arbitration.js").read_text(encoding="utf-8")
+    narrows = "TEAM_NARROW_RE" in js
+    for c, club in d["clubs"].items():
+        assert club["links"]["arbitration_teams"] == (f"/arbitration/#teams&team={c}" if narrows else "/arbitration/#teams"), c
+    assert L.arbitration_link("LAD", "var x = 1;") == "/arbitration/#teams"
+    assert L.arbitration_link("LAD", "var TEAM_NARROW_RE = /x/;") == "/arbitration/#teams&team=LAD"
+    assert L.arbitration_link("LAD", js) == d["clubs"]["LAD"]["links"]["arbitration_teams"]
+
+
+# --------------------------------------------------------------------------
+# D5-3: contracts and surplus per contract
+# --------------------------------------------------------------------------
+
+def test_the_contract_path_npv_reproduces_sur_npv_at_the_payload_rate(d, shards):
+    import ledger_export as L
+    C = "contracts.paths"
+    rate = d["accountability"]["discount_rate"]
+    assert rate and 0 < rate < 0.2
+    s_i, n_i, chk_i, k_i = [_col(d, C, k) for k in ("sur_mm", "sur_npv_usd", "npv_check_usd", "key")]
+    worst = 0
+    n = 0
+    for c, club in d["clubs"].items():
+        rows = _rows(shards[c], C)
+        assert [r[k_i] for r in rows] == [r[0] for r in club["contracts"]["rows"]], (c, "one path per priced row, same order")
+        npv_by_key = {r[0]: r[9] for r in club["contracts"]["rows"]}
+        for r in rows:
+            assert r[n_i] == npv_by_key[r[k_i]], (c, r[k_i], "sur_npv_usd equals the contract row's")
+            chk = L.npv_of_strip(r[s_i], rate)
+            assert r[chk_i] == chk, (c, r[k_i])
+            gap = abs(chk - (r[n_i] or 0))
+            worst = max(worst, gap)
+            assert gap <= L.NPV_TOL_USD, (c, r[k_i], gap)
+            n += 1
+    assert n > 800 and worst < L.NPV_TOL_USD
+    assert "rounded to 0.1M" in d["copy"]["npv_identity"]
+    strip = [88.5, 82.7, 57.6, 33.8, -7.0]
+    assert L.npv_of_strip(strip, 0.07) == int(round(sum(v * 1e6 / 1.07 ** t for t, v in enumerate(strip))))
+    assert L.npv_of_strip([None, None], 0.07) == 0 and L.npv_of_strip(None, 0.07) == 0
+
+
+def test_sur_total_is_sur_ros_plus_sur_npv(d, shards, proj):
+    import ledger_export as L
+    C = "contracts.paths"
+    t_i, r_i, n_i, k_i = [_col(d, C, k) for k in ("sur_total_usd", "sur_ros_mm", "sur_npv_usd", "key")]
+    vets = {v["key"]: v for v in proj["vets"] if v.get("key")}
+    worst = 0
+    for c in d["clubs"]:
+        for r in _rows(shards[c], C):
+            v = vets[r[k_i]]
+            assert r[t_i] == v.get("surTotal") and r[n_i] == v.get("surNpv") and r[r_i] == v.get("surRos"), (c, r[k_i])
+            gap = abs(r[t_i] - (int(round((r[r_i] or 0.0) * 1e6)) + r[n_i]))
+            worst = max(worst, gap)
+            assert gap <= L.SURTOTAL_TOL_USD, (c, r[k_i], gap)
+    assert worst <= L.SURTOTAL_TOL_USD
+
+
+def test_the_trade_value_matches_sur_total_on_projection_rows_or_is_flagged_reanchored(d, shards, tv):
+    import ledger_export as L
+    C = "contracts.paths"
+    k_i, t_i, tv_i, src_i, re_i = [_col(d, C, k) for k in ("key", "sur_total_usd", "tv_mm", "surplus_source", "reanchored")]
+    n_proj = n_re = 0
+    for c, club in d["clubs"].items():
+        rows = _rows(shards[c], C)
+        n_re_c = 0
+        for r in rows:
+            if r[tv_i] is not None:
+                t = tv["by_key"][r[k_i]]
+                assert r[tv_i] == t["trade_value_mm"] and r[src_i] == t["surplus_source"], (c, r[k_i])
+            if r[src_i] == "projection" and r[tv_i] is not None and r[t_i] is not None:
+                n_proj += 1
+                off = abs(r[tv_i] - r[t_i] / 1e6) > L.TV_MATCH_TOL_MM
+                assert r[re_i] is off, (c, r[k_i], r[tv_i], r[t_i])
+                n_re_c += 1 if off else 0
+            else:
+                assert r[re_i] is False, (c, r[k_i], "no equality asserted off the projection source")
+        assert club["contracts"]["paths_summary"]["n_reanchored"] == n_re_c and club["contracts"]["paths_summary"]["n_paths"] == len(rows), c
+        n_re += n_re_c
+    assert n_proj > 800 and n_re < n_proj * 0.1, (n_proj, n_re, "most projection rows equal surTotal; the rest are flagged")
+    assert "archetype posterior floor" in d["copy"]["tv_reanchored"]
+    assert "FLOOR" in d["copy"]["prearb_min_floor"], "the prearb_min sentence is quoted from the artifact"
+
+
+def test_the_war_path_is_expected_values_and_the_bands_are_never_summed(d, shards, proj):
+    C = "contracts.paths"
+    k_i, w_i, lo_i, hi_i, s_i = [_col(d, C, k) for k in ("key", "war", "war_p10", "war_p90", "sur_mm")]
+    vets = {v["key"]: v for v in proj["vets"] if v.get("key")}
+    for c, club in d["clubs"].items():
+        for r in _rows(shards[c], C):
+            v = vets[r[k_i]]
+            assert r[w_i] == v["war"] and r[lo_i] == v.get("warP10") and r[hi_i] == v.get("warP90"), (c, r[k_i])
+            assert len(r[w_i]) == len(d["horizon"]) == len(r[s_i]), (c, r[k_i])
+            for t, w in enumerate(r[w_i]):
+                if r[lo_i] and r[hi_i] and w is not None and r[lo_i][t] is not None:
+                    assert r[lo_i][t] <= w <= r[hi_i][t] + 1e-9, (c, r[k_i], t)
+        ps = club["contracts"]["paths_summary"]
+        assert set(ps) == {"n_paths", "n_reanchored", "n_opt_out_rows", "n_opt_out_seasons"}
+    fk = d["field_key"][C]
+    assert "never summed" in fk and "per-season expected values" in fk
+    assert "never summed" in d["copy"]["war_band_cell"]
+
+
+def test_the_salary_source_split_reconciles_row_by_row(d, shards):
+    C = "contracts.paths"
+    k_i, n_i = _col(d, C, "key"), _col(d, C, "sur_npv_usd")
+    for c, club in d["clubs"].items():
+        src_by_key = {r[0]: (r[4] or "unknown") for r in club["contracts"]["rows"]}
+        by = {}
+        for r in _rows(shards[c], C):
+            by[src_by_key[r[k_i]]] = by.get(src_by_key[r[k_i]], 0) + int(r[n_i] or 0)
+        R = club["surplus"]["reconciliation"]
+        assert set(R["by_salsrc"]) == set(club["surplus"]["mlb_by_salsrc_mm"]) == set(by), c
+        for src, (served, rows_mm, n) in R["by_salsrc"].items():
+            assert served == club["surplus"]["mlb_by_salsrc_mm"][src] == rows_mm == round(by[src] / 1e6, 1), (c, src)
+            assert n == sum(1 for k, s in src_by_key.items() if s == src), (c, src)
+        assert R["mlb_rows_mm"] == R["mlb_served_mm"] == club["surplus"]["mlb_mm"], c
+        assert R["status"] == "exact", c
+
+
+def test_the_trade_currency_equals_prospect_rows_plus_debuted_rows(d, shards, tv):
+    P, T = "farm.prospects", "surplus.rows_debuted"
+    s_i, tv_i, k_i, inc_i = _col(d, P, "surplus_mm"), _col(d, T, "tv_mm"), _col(d, T, "key"), _col(d, T, "in_contract_rows")
+    for c, club in d["clubs"].items():
+        R = club["surplus"]["reconciliation"]
+        act = round(sum(r[s_i] or 0 for r in _rows(shards[c], P)), 1)
+        deb_rows = _rows(shards[c], T)
+        deb = round(sum(r[tv_i] or 0 for r in deb_rows), 1)
+        assert abs(R["trade_rows_active_mm"] - act) <= 0.1 and abs(R["trade_rows_debuted_mm"] - deb) <= 0.1, c
+        assert abs(R["trade_currency_served_mm"] - (act + deb)) <= 0.1 and R["trade_currency_served_mm"] == club["surplus"]["trade_currency_mm"], c
+        assert R["farm_served_mm"] == club["surplus"]["farm_mm"] and R["farm_leaf_mm"] == club["farm"]["reconciliation"]["leaf_mm"], c
+        assert abs((R["farm_served_mm"] or 0) - (R["farm_leaf_mm"] or 0)) <= 0.05, c
+        assert len(deb_rows) == club["surplus"]["n_debuted_rows"] == club["surplus"]["crunch"]["n_debuted"], c
+        keys = {r[0] for r in club["contracts"]["rows"]}
+        for r in deb_rows:
+            assert tv["by_key"][r[k_i]]["status"] == "debuted" and r[inc_i] is (r[k_i] in keys), (c, r[k_i])
+    assert "never added to them" in d["copy"]["trade_currency_split"]
+
+
+def test_opt_outs_are_stamped_not_priced_and_the_sentence_is_quoted(d, shards):
+    sp = " ".join((ROOT / "salary_path.py").read_text(encoding="utf-8").split())
+    assert "Pricing an opt-out needs an opt-out model with its own gate" in sp
+    assert "the tooltip says the opt-out is not modelled" in sp
+    btv = (ROOT / "bayes_trade_value.py").read_text(encoding="utf-8")
+    assert "def _p_player_opts_out" in btv
+    s = d["copy"]["opt_out_two_engines"]
+    assert "opt-out not modelled" in s and "bayes_trade_value" in s and "neither is a served opt-out value" in s
+    assert d["sections"]["opt_out_value"]["live"] is False and d["sections"]["opt_out_value"]["blocked_on"] == s
+    C = "contracts.paths"
+    po_i, k_i = _col(d, C, "player_opt_years"), _col(d, C, "key")
+    total_rows = total_seasons = 0
+    for c, club in d["clubs"].items():
+        opts = {r[0]: r[11] for r in club["contracts"]["rows"]}
+        n_rows = n_seasons = 0
+        for r in _rows(shards[c], C):
+            po = r[po_i]
+            assert po == sorted({o[0] for o in opts[r[k_i]] if o[1] == "player"}), (c, r[k_i], "the option years are the v1 chips' years")
+            if po:
+                n_rows += 1
+                n_seasons += len(po)
+        ps = club["contracts"]["paths_summary"]
+        assert ps["n_opt_out_rows"] == n_rows and ps["n_opt_out_seasons"] == n_seasons, c
+        total_rows += n_rows
+        total_seasons += n_seasons
+    assert total_rows >= 1 and total_seasons >= total_rows
+    for path, k, _v in _walk(d):
+        assert "opt_out_value" not in str(k) or path.startswith("sections"), path

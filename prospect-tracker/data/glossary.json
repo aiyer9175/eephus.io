@@ -1,5 +1,5 @@
 {
- "version": "2026-09-23",
+ "version": "2026-09-24",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -8169,6 +8169,114 @@
    ],
    "shelf": "industry",
    "origin": "Bill James (Pythagorean expectation)"
+  },
+  {
+   "id": "farm_dollar",
+   "term": "Farm dollar",
+   "category": "financial",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "farm dollar",
+    "expected surplus dollar",
+    "prospect surplus dollar"
+   ],
+   "priority": 44,
+   "definition": "An expected value: the eFV expected surplus of an active prospect, in millions, on the clemens_2026 valuation set over the prospect's own seven-season window, priced through the platform's calibrated engine (prospect_surplus, validated). It is the mean of a distribution whose 10th and 90th percentiles print on the row; net of the signing bonus it is what the club roll-up sums.",
+   "methodology": "It is not a trade price (the Trade Machine re-anchors debuted players and adds a roster crunch), not the club-control-window surplus the MLB Projections board prices for the prospects it carries (a different window and a different discount), not a quantile, and not a realized figure: no farm dollar has been earned. Quantiles on the rows are never summed, and a row's number is never added to a number on another basis. The Club Ledger farm rows carry the trade board's trade_value_mm, equal to the eFV export's surplus_mm, and reconcile to the PROSPX fin_active_surplus leaf to a stated tolerance with both artifacts' stamps printed.",
+   "example": "",
+   "formula": "net_mm = eFV expected surplus ($M) - signing bonus ($M); the leaf sums net_mm over active prospects",
+   "seeAlso": [
+    "tvi",
+    "xfv",
+    "signing_bonus",
+    "acquisition_cost_basis",
+    "farm_grade_financial"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "debuted_value",
+   "term": "Debuted player value",
+   "category": "financial",
+   "module": [
+    "ledger",
+    "prospx"
+   ],
+   "aliases": [
+    "debuted_player_value",
+    "graduate value",
+    "debuted value"
+   ],
+   "priority": 46,
+   "definition": "The PROSPX pricing of a graduate after his debut: a trade value in millions, the value realized so far (realized_mm) and the remaining club-control years, served on the debuted rows of the prospect tracker and repeated on the Club Ledger graduates block.",
+   "methodology": "Two engines price a graduate and the ledger prints both under their own names: debuted_player_value (the PROSPX debuted rows) and the trade board's posterior (bayes_trade_value, surplus_source named per row). They are never averaged or summed. debuted_player_value carries no registry row of its own; its parent prospect_surplus is validated, so the debuted column reads as a served number without its own eval. The realized figure is value delivered, not skill: the counterfactual is not observed.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "tvi",
+    "trade_machine",
+    "wag",
+    "mlb_debut",
+    "fin_contract_surplus"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "arb_award_band",
+   "term": "Arbitration award band",
+   "category": "fa",
+   "module": [
+    "ledger",
+    "arbitration"
+   ],
+   "aliases": [
+    "arbitration band",
+    "award band",
+    "arb band"
+   ],
+   "priority": 47,
+   "definition": "The low and high figures beside every projected arbitration award on the Club Ledger ladder: a fixed spread around the projection set from the champion's observed error by arbitration step, deliberately not published as a calibrated interval and never a P10 or P90.",
+   "methodology": "arb_export.py widens the band by a constant per rung so a later rung carries a wider spread than the first; no per-rung residual quantiles, comps, filing figures or hearing outcomes exist on any served row, and the ledger says so beside the ladder. The band prints per row and enters no sum; the by-season split sums projections only.",
+   "example": "",
+   "formula": "lo, hi = projection x (1 -/+ (base spread + step increment x (step - 1))), constants in arb_export.py",
+   "seeAlso": [
+    "arb_award_model",
+    "arb_exposure",
+    "arb_market_residual"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "acquisition_cost_basis",
+   "term": "Cost basis",
+   "category": "financial",
+   "module": [
+    "ledger",
+    "prospx"
+   ],
+   "aliases": [
+    "cost basis",
+    "acquisition cost",
+    "bonus cost basis"
+   ],
+   "priority": 45,
+   "definition": "The signing bonus on file, the only dollar cost the site carries per prospect. The farm roll-up nets it from eFV expected surplus in full, not amortized, and the Club Ledger prints the count of rows with no bonus on file beside every cost figure.",
+   "methodology": "Draft rows carry the bonus and, where the pick is on the draft results table, its slot value joined on draft year and overall pick, never on name; international signings carry the bonus where the pipeline captured it and count a cost of zero where it did not, which is why the ratio of net surplus to cost basis is printed with its coverage. The trade channel has no dollar cost basis and none is invented: what a trade cost is the value given up, which the Trade Machine prices.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "signing_bonus",
+    "slot_value",
+    "farm_dollar",
+    "farm_grade_financial_roi"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
   }
  ]
 }

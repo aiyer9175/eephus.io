@@ -37,6 +37,10 @@ _SURPLUS_ARTIFACTS = {
     "trade_values.json": ("calibration",),
     "mlb_projections.json": ("calibration",),
     "timeseries.json": ("calibration",),
+    # D9 (2026-09-24): the Club Ledger board copies the stamp of every source its
+    # farm rows read (calibration.version = trade_values'), so a v7 flip flags it
+    # with the other four instead of leaving a stale ledger beside fresh boards.
+    "ledger_board.json": ("calibration",),
 }
 
 

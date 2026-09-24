@@ -109,6 +109,10 @@
 .ledger-app .ledger-dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; font-size: 12px; margin: 4px 0; }
 .ledger-app .ledger-dl dt { color: var(--text-tertiary); }
 .ledger-app .ledger-dl dd { margin: 0; font-variant-numeric: tabular-nums; }
+/* an expander's dl sits in a cell as wide as the table; pinned to the visible
+   block width (100cqw is the ledgerblock container) and sticky, so the depth
+   sentences stay in view while the table scrolls beneath the wrapper */
+.ledger-app .ledger-xp-row .ledger-dl { position: sticky; left: 0; max-width: calc(100cqw - 24px); box-sizing: border-box; }
 /* under 1400px of board width the headers take their short labels (the glossary
    hook rides both), so sixteen columns sit inside the block at desk */
 @container ledgerboard (max-width: 1400px) {
@@ -233,6 +237,47 @@
 .ledger-app .ledger-leaves li { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border-subtle); padding: 3px 0; font-size: 12.5px; }
 .ledger-app .ledger-leaves .ledger-letter { font-weight: 700; min-width: 2.2em; text-align: right; }
 @container ledgerblock (max-width: 560px) { .ledger-app .ledger-leaves { grid-template-columns: 1fr; } }
+
+/* ---- the depth pass (D5, 2026-09-24) ------------------------------------
+   Every new table follows the contract ledger's pattern: .ledger-scroll, the
+   first three columns kept, the rest .lc-col-hide with the .lc-xp expander
+   under 560px of block width (the base rule above precedes the query). No
+   ruler class anywhere below: a surplus cell takes its sign, a letter takes
+   neutral ink, a band prints plain. */
+
+/* the second exposure population under a commitments season: its own block,
+   hatched so the eye cannot stack it onto the bar above it */
+.ledger-app .ledger-bar2 { margin: 6px 0 2px; }
+.ledger-app .ledger-bar2-track { display: flex; height: 8px; width: 100%; background: var(--bg-hover); }
+.ledger-app .ledger-bar2-track span { display: block; height: 100%; margin-right: 2px; min-width: 0; }
+.ledger-app .ledger-seg-arb2 {
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--accent-gold) 65%, transparent) 0 3px, transparent 3px 6px);
+}
+.ledger-app .ledger-seg-prearb2 {
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--text-tertiary) 55%, transparent) 0 3px, transparent 3px 6px);
+}
+.ledger-app .ledger-bar2-lab { font-size: 10.5px; color: var(--text-tertiary); margin-top: 3px; white-space: normal; }
+.ledger-app .ledger-legend i.ledger-seg-arb2, .ledger-app .ledger-legend i.ledger-seg-prearb2 { border: 1px solid var(--border-light); }
+
+/* a grade letter or tier token: neutral ink, weight only */
+.ledger-app .ledger-letter { font-weight: 700; color: var(--text-secondary); }
+/* a band prints plain and small; "not summed" under it in the footer */
+.ledger-app .ledger-band { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+.ledger-app .ledger-notsum { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-tertiary); }
+/* the WAR strip beneath a salary cell */
+.ledger-app .ledger-warcell { display: block; font-size: 10px; color: var(--text-tertiary); margin-top: 1px; }
+/* arbitration rungs on the full ladder */
+.ledger-app .ledger-rung { display: inline-block; border: 1px dashed var(--accent-gold); padding: 0 4px; }
+.ledger-app .ledger-rung.is-null { border-style: dotted; border-color: var(--border-light); color: var(--text-tertiary); }
+.ledger-app .ledger-rung-tok { display: block; font-size: 10px; color: var(--text-tertiary); }
+.ledger-app .ledger-dark-cell { color: var(--text-tertiary); font-style: italic; white-space: normal; }
+/* the method filter chips on the farm ledger: native buttons on theme */
+.ledger-app button.ledger-chip { font: inherit; font-size: 12px; background: none; }
+.ledger-app button.ledger-chip.is-on { border-color: var(--accent-gold); font-weight: 600; }
+/* the expander cells on the new tables wrap their text */
+.ledger-app .ledger-prospects .ledger-xp-row td, .ledger-app .ledger-graduates .ledger-xp-row td,
+.ledger-app .ledger-trade .ledger-xp-row td, .ledger-app .ledger-ladder-table .ledger-xp-row td { white-space: normal; }
+.ledger-app .ledger-dl .ledger-spark { max-width: 360px; }
 
 @media (max-width: 720px) {
   .ledger-app .ledger-block { padding: 10px 12px; }

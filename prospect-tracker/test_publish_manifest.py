@@ -226,3 +226,19 @@ def test_excluded_data_is_not_a_registry_artifact():
     assert not offenders, (
         f"data_exclude.txt lists registry eval artifacts {offenders} - "
         "they are publicly linked from Models & Proofs and must ship")
+
+
+def test_ledger_clubs_shards_ship_in_both_deploy_consumers():
+    """D5 (2026-09-24): the Club Ledger's per-club row files (data/ledger_clubs/
+    CODE.json, fetched by /ledger/ on demand) are not a storage._slices_dir
+    shard, so the helper test above would never notice them missing. Same
+    class of defect, same guard: both consumers must name the directory."""
+    d = "ledger_clubs"
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    assert _ships_in_nightly(nightly, d), "deploy/nightly-build.sh never ships /data/ledger_clubs/"
+    wf_path = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
+    if wf_path.exists():
+        assert _ships_in_workflow(wf_path.read_text(encoding="utf-8"), d), "the CI workflow never copies data/ledger_clubs/"
+    assert "ledger_clubs" in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8")
+    js = (ROOT / "assets" / "ledger.js").read_text(encoding="utf-8")
+    assert 'var SHARD_URL = "/data/ledger_clubs/";' in js, "the page fetches the directory both consumers ship"

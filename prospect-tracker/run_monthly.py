@@ -3528,10 +3528,14 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         with _step("d10e. Club Ledger board (ledger_board.json)", log):
             try:
                 import ledger_export as _lg
-                _lgd = _lg.build()
+                _lgd, _lgs = _lg.build_all()
                 _lg.OUT.write_text(
                     json.dumps(_lgd, ensure_ascii=False, separators=(",", ":")),
                     encoding="utf-8")
+                # D5 (2026-09-24): the thirty per-club row files beside the board,
+                # tracked like data/mgmt_decisions; written from the bytes the
+                # board indexed so shards.files matches disk.
+                _lg.write_shards(_lgd, _lgs)
                 _lg_n = sum(int((d.get("contracts") or {}).get("n_priced") or 0)
                             for d in _lgd["clubs"].values())
                 log.info("ledger: %d clubs, %d priced contract rows",

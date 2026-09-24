@@ -27,16 +27,33 @@
 // comes out of the payload's own `copy`, `field_key` and per-club blocks. The
 // one thing this file decides for itself is which dollar cell gets a sign
 // colour, and the answer is: the ones that can go negative.
+//
+// THE DEPTH PASS (D5, 2026-09-24). The board carries a preview of each row
+// layer; the full rows live in /data/ledger_clubs/CODE.json and are fetched
+// once per club after the club page paints (ensureShard). Every row array is
+// indexed through the board's `columns` legend (colIdx / cv), never by a
+// positional guess. Three more rules ride the new blocks:
+//   4. A band (p10/p90, lo/hi) prints on its row and the footer under a band
+//      column reads "not summed". Sums are sums of expected values, labelled
+//      "shown rows" when a filter applies.
+//   5. A per-prospect surplus cell, a rung, a trade value and a strip cell
+//      print plain with a sign only; a grade letter prints in neutral ink.
+//   6. The Swartz figure is a third quantity beside ou_mkt and ou_war, never a
+//      residual; no award quantile sits beside an arbitration figure.
 (function () {
   "use strict";
 
   var DATA_URL = "/data/ledger_board.json";
+  var SHARD_URL = "/data/ledger_clubs/";
   var DATA = null;
+  var SHARDS = {};          // code -> the club's row file once fetched (a revisit is free)
+  var SHARD_STATE = {};     // code -> "loading" | "ready" | "failed"
+  var SCROLLED = "";        // team:block already scrolled to from the hash
   var LOAD_ERROR = "";
   var SECTIONS = ["league", "club", "rules", "method"];
-  var BLOCKS = ["payroll", "cbt", "commitments", "contracts", "arbitration", "surplus", "farm", "fa"];
+  var BLOCKS = ["payroll", "cbt", "commitments", "contracts", "arbitration", "surplus", "farm", "fa", "prospects", "graduates", "trade"];
   var state = { section: "league", team: "", season: "", block: "",
-                sort: { key: "cbt_payroll_2026", asc: false }, open: {} };
+                sort: { key: "cbt_payroll_2026", asc: false }, open: {}, pfilter: "all" };
 
   // ---- helpers --------------------------------------------------------------
   function esc(s) {
@@ -89,6 +106,67 @@
       '<div class="ledger-dark-why">' + esc(why) + "</div></div>";
   }
   function banner() { return '<div class="ledger-banner" role="note">' + esc(copy("cba_banner")) + "</div>"; }
+  // ---- the depth pass's row plumbing ------------------------------------------
+  // Every row array is read through the board's `columns` legend: a legend edit
+  // and a renderer edit cannot drift apart, and a nested form ("[[season, ...]]",
+  // "war[5]") is one column holding an array, never a bracket parse of prose.
+  function colIdx(key, name) {
+    var cols = (DATA && DATA.columns && DATA.columns[key]) || [];
+    return cols.indexOf(name);
+  }
+  function cv(key, row, name) {
+    var i = colIdx(key, name);
+    return (i < 0 || !row) ? undefined : row[i];
+  }
+  function shardOf(code) { return SHARDS[code] || null; }
+  function shardFailed(code) { return SHARD_STATE[code] === "failed"; }
+  // Fetch the club's row file once, after the club page has painted from the
+  // board; a file whose club is not the one asked for is treated as failed, a
+  // file from another board build is flagged and never refused.
+  function ensureShard(code) {
+    if (!code || SHARDS[code] || SHARD_STATE[code] === "loading" || SHARD_STATE[code] === "failed") return;
+    SHARD_STATE[code] = "loading";
+    try {
+      fetch(SHARD_URL + code + ".json", { cache: "no-cache" })
+        .then(function (r) { if (!r || !r.ok) return null; return r.json(); })
+        .then(function (s) {
+          if (s && s.club === code) {
+            s.vintage_mismatch = !!(DATA && s.board_generated_at !== DATA.generated_at);
+            SHARDS[code] = s;
+            SHARD_STATE[code] = "ready";
+          } else {
+            SHARD_STATE[code] = "failed";
+          }
+          render();
+        })
+        .catch(function () { SHARD_STATE[code] = "failed"; render(); });
+    } catch (e) { SHARD_STATE[code] = "failed"; }
+  }
+  // A grade letter or tier token copied from the artifact: neutral ink, never
+  // a ruler class (R7).
+  function letter(g) { return isNum(g) || g ? '<span class="ledger-letter">' + esc(g) + "</span>" : ""; }
+  function yn(v, label) { return v ? '<span class="ledger-flag">' + esc(label) + "</span>" : ""; }
+  function signedMM(mm) { return '<span class="' + signCls(mm) + '">' + moneyMM(mm) + "</span>"; }
+  function bandMM(lo, hi, title) {
+    if (!isNum(lo) && !isNum(hi)) return "";
+    return '<span class="ledger-band" title="' + esc(title || "") + '">' + esc(moneyMM(lo)) + " to " + esc(moneyMM(hi)) + "</span>";
+  }
+  function notSummed() { return '<span class="ledger-notsum">' + esc(copy("not_summed")) + "</span>"; }
+  function xpBtn(k) {
+    var open = !!state.open[k];
+    return '<td class="lc-xp"><button type="button" class="ledger-xp-btn" data-lxp="' + esc(k) + '" aria-expanded="' + (open ? "true" : "false") + '">' + (open ? "&minus;" : "+") + "</button></td>";
+  }
+  function dd(label, html) { return "<dt>" + esc(label) + "</dt><dd>" + (html || "") + "</dd>"; }
+  function pctStr(rate) { return isNum(rate) ? (Number(rate) * 100).toFixed(0) + " pct" : ""; }
+  // The line above every shard-fed block: the preview note before the rows
+  // arrive, the dark line when the fetch failed, the vintage flag when the
+  // file was written against another board build.
+  function shardLine(code, previewNote) {
+    var s = shardOf(code);
+    if (s) return s.vintage_mismatch ? '<p class="ledger-count">' + flag(copy("shard_vintage")) + "</p>" : "";
+    if (shardFailed(code)) return dark("Per-club rows", copy("shard_failed"));
+    return '<p class="ledger-count">' + esc(previewNote || copy("preview_note")) + "</p>";
+  }
   function clubOf(code) { return DATA && DATA.clubs ? DATA.clubs[code] : null; }
   function clubs() { return DATA ? Object.keys(DATA.clubs).sort() : []; }
   function opt(v, label, cur) {
@@ -105,7 +183,7 @@
   var SECTION_RE = /(?:^#|[#&])section=(league|club|rules|method)\b/;
   var TEAM_RE = /(?:^#|[#&])team=([A-Z]{2,3})\b/;
   var SEASON_RE = /(?:^#|[#&])season=(20\d\d)\b/;
-  var BLOCK_RE = /(?:^#|[#&])block=(payroll|cbt|commitments|contracts|arbitration|surplus|farm|fa)\b/;
+  var BLOCK_RE = /(?:^#|[#&])block=(payroll|cbt|commitments|contracts|arbitration|surplus|farm|fa|prospects|graduates|trade)\b/;
   function hashNow() {
     try { return (typeof location !== "undefined" && location.hash) || ""; } catch (e) { return ""; }
   }
@@ -382,8 +460,13 @@
         '<div class="ledger-stack">' + thr +
         '<span class="ledger-seg-contract" style="width:' + w(a) + '"></span><span class="ledger-seg-arb" style="width:' + w(b) + '"></span><span class="ledger-seg-prearb" style="width:' + w(c) + '"></span></div>' +
         '<div class="ledger-segs"><div><b>' + esc(money(a)) + "</b><i>on file</i></div><div><b>" + esc(money(b)) + "</b><i>arb, projected</i></div><div><b>" + esc(money(c)) + "</b><i>pre-arb by rule</i></div></div>" +
-        '<div class="ledger-threshold-lab">' + esc(season === DATA.class_year ? "threshold " + money(T) + ", " + copy("commitments_threshold_2027") : copy("commitments_threshold_later")) + "</div></div>";
+        '<div class="ledger-threshold-lab">' + esc(season === DATA.class_year ? "threshold " + money(T) + ", " + copy("commitments_threshold_2027") : copy("commitments_threshold_later")) + "</div>" +
+        arbSeasonBar(d, season, w) + "</div>";
     });
+    if (d.arbitration && d.arbitration.by_season) {
+      out += '<div class="ledger-legend"><span><i class="ledger-seg-arb2"></i>arb rungs (Arbitration Predictor board)</span><span><i class="ledger-seg-prearb2"></i>pre-arb rungs (board)</span></div>' +
+        '<p class="ledger-count">' + esc(copy("arb_two_populations")) + "</p>";
+    }
     var ex = K.expiring;
     out += '<p class="ledger-note">' + gl("Payroll horizon", "payroll_horizon") + ": " + esc(copy("horizon_label")) + " " + esc(K.horizon_season || copy("horizon_beyond")) + ". " +
       esc(K.n_priced) + " priced of " + esc(K.n_vets) + " vets; " + esc(K.n_unpriced) + " carry no price.</p>";
@@ -394,6 +477,56 @@
     out += '<p class="ledger-note">' + esc(copy("commitments_not_summed")) + "</p>";
     out += "<details><summary>" + gl("Salary path", "salary_path") + ": the four disclosed holes</summary><ul>" +
       (copy("holes") || []).map(function (h) { return "<li>" + esc(h) + "</li>"; }).join("") + "</ul></details>";
+    return out;
+  }
+  // The second exposure population, drawn APART from the stack (4.4): a thin
+  // hatched bar of the Arbitration Predictor board's rungs for the season, two
+  // parts of one number (the v1 ladder sum), its own legend and total, on the
+  // stack's axis so widths compare but never inside the stack. No ruler call.
+  function arbSeasonBar(d, season, w) {
+    var A = d.arbitration || {};
+    if (!A.by_season) return "";
+    var row = null;
+    A.by_season.forEach(function (b) { if (cv("arbitration.by_season", b, "season") === season) row = b; });
+    if (!row) return "";
+    var arb = cv("arbitration.by_season", row, "arb_rung_usd") || 0, pre = cv("arbitration.by_season", row, "prearb_rung_usd") || 0;
+    var na = cv("arbitration.by_season", row, "n_arb_rungs") || 0, np = cv("arbitration.by_season", row, "n_prearb_rungs") || 0, nn = cv("arbitration.by_season", row, "n_null_rungs") || 0;
+    return '<div class="ledger-bar2" role="group" aria-label="Arbitration Predictor board rungs ' + esc(season) + '">' +
+      '<div class="ledger-bar2-track"><span class="ledger-seg-arb2" style="width:' + w(arb) + '"></span><span class="ledger-seg-prearb2" style="width:' + w(pre) + '"></span></div>' +
+      '<div class="ledger-bar2-lab">Arbitration Predictor board, ' + esc(A.n) + " rows, " + esc(A.n_in_vets) + " in the projections vets: ladder sum " + esc(money(arb + pre)) +
+      " = arb rungs " + esc(money(arb)) + " (" + esc(na) + ") + pre-arb rungs " + esc(money(pre)) + " (" + esc(np) + ")" + (nn ? "; " + esc(nn) + " null rung(s) outside every sum" : "") + "</div></div>";
+  }
+  // The WAR strip beneath a salary cell: the season's expected WAR (a mean),
+  // blank where the surplus strip has no salary so the two strips align; the
+  // band rides the title, per season, never summed. No ruler call.
+  function warStripCell(pr, i) {
+    if (!pr) return "";
+    var war = cv("contracts.paths", pr, "war") || [], lo = cv("contracts.paths", pr, "war_p10") || [], hi = cv("contracts.paths", pr, "war_p90") || [], sur = cv("contracts.paths", pr, "sur_mm") || [];
+    if (!isNum(sur[i]) || !isNum(war[i])) return "";
+    return '<span class="ledger-warcell" title="' + esc("WAR P10 " + num(lo[i], 1) + " to P90 " + num(hi[i], 1) + ", " + copy("war_band_cell")) + '">' + esc(num(war[i], 1)) + " WAR</span>";
+  }
+  // The contract expander's depth lines: the surplus strip, the two identities
+  // (NPV of the strip against the served NPV; total = rest of season + NPV),
+  // the trade board's value with its source and the re-anchored chip, control,
+  // and the opt-out sentence when the row carries a player option.
+  function contractDepth(pr, opts) {
+    if (!pr) return "";
+    function P(n) { return cv("contracts.paths", pr, n); }
+    var sur = P("sur_mm") || [], seasons = DATA.horizon, rate = (DATA.accountability || {}).discount_rate;
+    var strip = seasons.map(function (s, i) { return isNum(sur[i]) ? esc(s) + " " + signedMM(sur[i]) : ""; }).filter(Boolean).join(", ");
+    var out = dd("Surplus strip", strip + '<div class="ledger-count">' + esc(copy("sur_strip_basis")) + "</div>");
+    out += dd("NPV identity", "NPV of the strip at " + esc(isNum(rate) ? pctStr(rate) : "the platform rate") + ": " + esc(money(P("npv_check_usd"))) + "; served " + esc(money(P("sur_npv_usd"))) +
+      '<div class="ledger-count">' + esc(copy("npv_identity")) + "</div>");
+    out += dd("Total to acquire", esc(money(P("sur_total_usd"))) + " = rest of season " + esc(moneyMM(P("sur_ros_mm"))) + " + NPV " + esc(money(P("sur_npv_usd"))) +
+      '<div class="ledger-count">' + esc(copy("sur_total_identity")) + "</div>");
+    if (isNum(P("tv_mm"))) {
+      out += dd("Trade Machine", esc(moneyMM(P("tv_mm"))) + " (" + bandMM(P("tv_lo_mm"), P("tv_hi_mm"), copy("band_row_only")) + ") " + letter(P("tv_grade")) + " " + esc(P("surplus_source") || "") +
+        (P("reanchored") ? " " + flag("re-anchored") + " " + esc(copy("tv_reanchored")) : "") +
+        (P("surplus_source") === "prearb_min" ? '<div class="ledger-count">' + esc(copy("prearb_min_floor")) + "</div>" : ""));
+    }
+    out += dd("Control", esc(P("control_thru") || "") + " " + esc(P("control_why") || "") + (isNum(P("remaining_control_years")) ? "; " + esc(P("remaining_control_years")) + " control years remaining" : ""));
+    var po = P("player_opt_years") || [];
+    if (po.length) out += dd("Player option " + po.join(", "), esc(copy("opt_out_two_engines")));
     return out;
   }
   function cellState(tok, cliff) {
@@ -407,6 +540,9 @@
   // sign only.
   function renderContracts(d) {
     var K = d.contracts, seasons = DATA.horizon, bases = copy("cell_basis") || {};
+    // the depth rows: the club's contract paths, keyed, once the shard is in
+    var sh = shardOf(d.club), pathBy = {};
+    if (sh && sh.contracts && sh.contracts.paths) sh.contracts.paths.forEach(function (p) { pathBy[cv("contracts.paths", p, "key")] = p; });
     var head = "<tr><th>Player</th><th class=\"lc-col-hide\">Src</th>" + seasons.map(function (s, i) {
       return '<th class="' + (i === 0 ? "" : "lc-col-hide") + '">' + esc(s) + "</th>";
     }).join("") + "<th>Thru</th><th class=\"lc-col-hide\">Ctrl</th><th class=\"lc-col-hide\">NPV surplus</th><th class=\"lc-xp\"></th></tr>";
@@ -414,14 +550,15 @@
       var key = r[0], name = r[1], pos = r[2], src = r[4], thru = r[6], ctrl = r[7], why = r[8], npv = r[9], path = r[10] || [], opts = r[11] || [];
       var byS = {};
       path.forEach(function (c) { byS[c[0]] = c; });
+      var pr = pathBy[key] || null;
       var cells = seasons.map(function (s, i) {
         var c = byS[s];
         if (!c) return '<td class="' + (i === 0 ? "" : "lc-col-hide") + '"></td>';
-        return '<td class="' + (i === 0 ? "" : "lc-col-hide") + '"><span class="ledger-cell ' + cellState(c[4], c[6]) + '" title="' + esc(c[4]) + ", " + esc(bases[c[5]] || c[5]) + '">' + esc(money(c[1])) + "</span></td>";
+        return '<td class="' + (i === 0 ? "" : "lc-col-hide") + '"><span class="ledger-cell ' + cellState(c[4], c[6]) + '" title="' + esc(c[4]) + ", " + esc(bases[c[5]] || c[5]) + '">' + esc(money(c[1])) + "</span>" + warStripCell(pr, i) + "</td>";
       }).join("");
       var ok = "C:" + key, open = !!state.open[ok];
       var optChips = opts.map(function (o) { return '<span class="ledger-opt">' + esc((o[1] === "club" ? "CO " : "PO ") + o[0] + (isNum(o[2]) ? " " + money(o[2]) : "")) + "</span>"; }).join("");
-      var row = "<tr><td><a href=\"/projections/#player=" + esc(key) + '">' + esc(name) + "</a> <span class=\"ledger-src\">" + esc(pos) + "</span>" + optChips + "</td>" +
+      var row = "<tr><td><a href=\"/projections/#player=" + esc(key) + '">' + esc(name) + "</a> <span class=\"ledger-src\">" + esc(pos) + "</span>" + optChips + (pr && cv("contracts.paths", pr, "reanchored") ? flag("re-anchored") : "") + "</td>" +
         '<td class="lc-col-hide"><span class="ledger-src">' + esc(src) + "</span></td>" + cells +
         "<td>" + esc(thru || "") + "</td><td class=\"lc-col-hide\" title=\"" + esc(why || "") + '">' + esc(ctrl || "") + "</td>" +
         '<td class="lc-col-hide">' + signedMoney(npv) + "</td>" +
@@ -431,13 +568,15 @@
           "<dt>Source</dt><dd>" + esc(src) + "</dd><dt>Control</dt><dd>" + esc(ctrl || "") + " " + esc(why || "") + "</dd><dt>NPV surplus</dt><dd>" + signedMoney(npv) + "</dd>" +
           path.map(function (c) {
             return "<dt>" + esc(c[0]) + " " + esc(c[4]) + "</dt><dd>" + esc(money(c[1])) + (isNum(c[2]) && isNum(c[3]) && (c[2] !== c[1] || c[3] !== c[1]) ? " (" + esc(money(c[2])) + " to " + esc(money(c[3])) + ", " + esc(copy("band_note")) + ")" : "") + "; " + esc(bases[c[5]] || c[5]) + (c[6] ? "; non-tender cliff" : "") + "</dd>";
-          }).join("") + "</dl></td></tr>";
+          }).join("") + contractDepth(pr, opts) + "</dl></td></tr>";
       }
       return row;
     }).join("");
-    var D = K.deferrals;
+    var D = K.deferrals, PS = K.paths_summary;
     var out = banner() + '<p class="ledger-count">' + esc(K.n_priced) + " priced, " + esc(K.n_unpriced) + " unpriced. Season cells: " +
-      Object.keys(bases).map(function (k) { return esc(k) + " = " + esc(bases[k]); }).join("; ") + "</p>" +
+      Object.keys(bases).map(function (k) { return esc(k) + " = " + esc(bases[k]); }).join("; ") +
+      (PS ? "; " + esc(PS.n_reanchored) + " of " + esc(PS.n_paths) + " re-anchored on the trade board, " + esc(PS.n_opt_out_rows) + " with a player option (" + esc(PS.n_opt_out_seasons) + " seasons)" : "") + "</p>" +
+      (PS ? shardLine(d.club, copy("paths_preview_note")) : "") +
       '<div class="ledger-scroll"><table class="ledger-table ledger-contracts" data-csv-primary><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>";
     out += "<details><summary>" + esc(K.n_unpriced) + " vets with no salary path</summary><div class=\"ledger-chips\">" +
       K.unpriced.map(function (u) { return '<span class="ledger-flag">' + esc(u[1]) + " " + esc(u[2]) + " " + esc(u[3]) + "</span>"; }).join("") + "</div></details>";
@@ -451,25 +590,115 @@
       '<p class="ledger-count">Cross-check for ' + gl("retained salary", "retained_salary") + ": Spotrac " + esc(classYear()) + " retained allocation " + esc(isNum(K.retained.retained_usd_2027) ? money(K.retained.retained_usd_2027) : "n/a") + " (" + esc(copy("retained_cross_check")) + ").</p>";
     return out;
   }
+  function flagChips(e) {
+    var bits = [1, 2, 4, 8, 16], out = "";
+    bits.forEach(function (b) { if (e & b) out += '<span class="ledger-flag" title="' + esc(copy("arb_flag_key")) + '">bit ' + b + "</span>"; });
+    return out;
+  }
+  // The full ladder (shard): one cell per season carrying the rung with its
+  // token and eWAR beneath and the band in the title, labelled a band, never an
+  // interval; a null rung prints dark and enters no sum. Per-season cells are
+  // the hidden set at phone width (Player, Class, Remaining kept).
+  function renderLadder(rows) {
+    var labels = copy("arb_class_labels") || {}, years = [];
+    rows.forEach(function (r) { (cv("arbitration.ladders", r, "ladder") || []).forEach(function (t) { if (years.indexOf(t[0]) < 0) years.push(t[0]); }); });
+    years.sort();
+    var head = "<tr><th>Player</th><th>Class</th>" + '<th class="lc-col-hide">' + gl("Service", "service_time") + '</th><th class="lc-col-hide">Yrs left</th>' +
+      years.map(function (y) { return '<th class="lc-col-hide">' + esc(y) + "</th>"; }).join("") + "<th>Remaining</th>" + '<th class="lc-col-hide">Flags</th><th class="lc-xp"></th></tr>';
+    var body = rows.map(function (r) {
+      var name = cv("arbitration.ladders", r, "name"), m = cv("arbitration.ladders", r, "mlbam"), cls = cv("arbitration.ladders", r, "class"), fl = cv("arbitration.ladders", r, "flags") || 0, sv = cv("arbitration.ladders", r, "sv"), svy = cv("arbitration.ladders", r, "svy"), yl = cv("arbitration.ladders", r, "years_left");
+      var lad = cv("arbitration.ladders", r, "ladder") || [], war = cv("arbitration.ladders", r, "war") || [], tot = cv("arbitration.ladders", r, "tot_usd");
+      var clsLab = ((fl & 1) ? "~" : "") + (labels[String(cls)] || String(cls));
+      var byY = {};
+      lad.forEach(function (t, i) { byY[t[0]] = { t: t, w: war[i] }; });
+      var cells = years.map(function (y) {
+        var e = byY[y];
+        if (!e) return '<td class="lc-col-hide"></td>';
+        var t = e.t;
+        if (!isNum(t[1])) return '<td class="lc-col-hide"><span class="ledger-rung is-null" title="no salary on file; outside every sum">' + esc(t[4]) + "</span></td>";
+        return '<td class="lc-col-hide"><span class="ledger-rung" title="' + esc(money(t[2]) + " to " + money(t[3]) + "; " + copy("band_note")) + '">' + esc(money(t[1])) + "</span>" +
+          '<span class="ledger-rung-tok">' + esc(t[4]) + (isNum(e.w) ? " " + esc(num(e.w, 1)) + " eWAR" : "") + "</span></td>";
+      }).join("");
+      var k = "A:" + m, open = !!state.open[k];
+      var svTxt = sv ? String(sv) + (svy ? " as of " + svy : "") : " - ";
+      var row = '<tr><td><span title="mlbam ' + esc(m) + '">' + esc(name) + "</span>" + (cv("arbitration.ladders", r, "in_vets") ? flag("vets") : "") + (cv("arbitration.ladders", r, "has_salpath") ? flag("salary path") : "") + "</td><td>" + esc(clsLab) + "</td>" +
+        '<td class="lc-col-hide">' + esc(svTxt) + "</td>" + '<td class="lc-col-hide">' + esc(yl) + "</td>" + cells + "<td>" + esc(money(tot)) + "</td>" + '<td class="lc-col-hide">' + flagChips(fl) + "</td>" + xpBtn(k) + "</tr>";
+      if (open) {
+        row += '<tr class="ledger-xp-row"><td colspan="' + (years.length + 7) + '"><dl class="ledger-dl">' +
+          lad.map(function (t, i) {
+            return dd(t[0] + " " + t[4], (isNum(t[1]) ? esc(money(t[1])) + " (" + esc(money(t[2])) + " to " + esc(money(t[3])) + ", " + esc(copy("band_note")) + ")" : "no salary on file, outside every sum") + (isNum(war[i]) ? "; eWAR " + esc(num(war[i], 2)) : ""));
+          }).join("") +
+          dd("Service", esc(svTxt)) + dd("Class", esc(clsLab) + " (" + esc(cls) + ")") + dd("Remaining", esc(money(tot))) +
+          dd("Projections", (cv("arbitration.ladders", r, "in_vets") ? "in the projections vets" : "not in the projections vets") + (cv("arbitration.ladders", r, "has_salpath") ? ", salary path priced" : "")) +
+          dd("Flags", flagChips(fl) + ((fl & 8) ? '<div class="ledger-count">' + esc(copy("cba_banner")) + "</div>" : "")) +
+          "</dl></td></tr>";
+      }
+      return row;
+    }).join("");
+    return '<div class="ledger-scroll"><table class="ledger-table ledger-ladder-table"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>";
+  }
+  // The realized rows per season (shard), grouped and collapsed under the v1
+  // seasons row: Actual, Ours, MLBTR (Swartz) as a THIRD quantity that is never
+  // a residual, then ou_mkt and ou_war in their own columns with their own
+  // group totals; the Swartz footer stays blank (present on some rows only).
+  function renderRealizedRows(rows) {
+    var by = {};
+    rows.forEach(function (r) { var s = cv("arbitration.realized.rows", r, "season"); (by[s] = by[s] || []).push(r); });
+    return Object.keys(by).sort().reverse().map(function (s) {
+      var rs = by[s], tot = { a: 0, o: 0, m: 0, w: 0, war: 0 };
+      var body = rs.map(function (r) {
+        var a = cv("arbitration.realized.rows", r, "actual_usd"), o = cv("arbitration.realized.rows", r, "ours_usd"), sw = cv("arbitration.realized.rows", r, "swartz_usd"), m = cv("arbitration.realized.rows", r, "ou_mkt_usd"), w = cv("arbitration.realized.rows", r, "ou_war_usd"), war = cv("arbitration.realized.rows", r, "war");
+        tot.a += Number(a || 0); tot.o += Number(o || 0); tot.m += Number(m || 0); tot.w += Number(w || 0); tot.war += Number(war || 0);
+        return "<tr><td>" + esc(cv("arbitration.realized.rows", r, "name")) + "</td><td>" + esc(cv("arbitration.realized.rows", r, "arb_year")) + "</td><td>" + esc(money(a)) + "</td><td>" + esc(money(o)) + "</td><td>" + (isNum(sw) ? esc(money(sw)) : "") + "</td><td>" + signedMoney(m) + "</td><td>" + signedMoney(w) + "</td><td>" + esc(num(war, 2)) + "</td></tr>";
+      }).join("");
+      return "<details" + (state.block === "arbitration" ? " open" : "") + "><summary>" + esc(s) + ": " + esc(rs.length) + " players</summary>" +
+        '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Player</th><th>Arb yr</th><th>Actual</th><th>Ours</th><th title="' + esc(copy("swartz_label")) + '">MLBTR (Swartz)</th><th>' + gl("ou_mkt", "arb_market_residual") + "</th><th>ou_war</th><th>eWAR</th></tr></thead><tbody>" + body +
+        "</tbody><tfoot><tr><td>" + esc(s) + "</td><td></td><td>" + esc(money(tot.a)) + "</td><td>" + esc(money(tot.o)) + "</td><td></td><td>" + signedMoney(tot.m) + "</td><td>" + signedMoney(tot.w) + "</td><td>" + esc(num(tot.war, 2)) + "</td></tr></tfoot></table></div></details>";
+    }).join("");
+  }
   function renderArbitration(d) {
-    var A = d.arbitration, R = A.realized;
+    var A = d.arbitration, R = A.realized, sh = shardOf(d.club);
+    var bs = {};
+    (A.by_season || []).forEach(function (b) { bs[cv("arbitration.by_season", b, "season")] = b; });
+    var s27 = bs[DATA.class_year];
+    var splitSub = s27
+      ? "arb rungs " + esc(money(cv("arbitration.by_season", s27, "arb_rung_usd"))) + " (" + esc(cv("arbitration.by_season", s27, "n_arb_rungs")) + "), pre-arb rungs " + esc(money(cv("arbitration.by_season", s27, "prearb_rung_usd"))) + " (" + esc(cv("arbitration.by_season", s27, "n_prearb_rungs")) + "); " + esc(copy("arb_prearb_rungs")) + ". "
+      : "";
     var out = banner() + '<div class="ledger-tiles ledger-tiles--2">' +
-      tile("Arb-eligible", esc(A.n), "class mix " + Object.keys(A.class_mix).map(function (k) { return k + ": " + A.class_mix[k]; }).join(", ")) +
-      tile(gl("Exposure " + esc(classYear()), "arb_exposure"), money(A.s2027_usd), esc(copy("arb_upper_bound"))) +
+      tile("Arb-eligible", esc(A.n), "class mix " + Object.keys(A.class_mix).map(function (k) { return k + ": " + A.class_mix[k]; }).join(", ") +
+        (isNum(A.n_in_vets) ? "; " + esc(A.n_in_vets) + " in the projections vets, " + esc(A.n_with_salpath) + " with a salary path" : "")) +
+      tile(gl("Ladder sum " + esc(classYear()) + " (arb and pre-arb rungs)", "arb_exposure"), money(A.s2027_usd), splitSub + esc(copy("arb_upper_bound"))) +
       tile("Remaining, all seasons", money(A.remaining_usd), esc(copy("arb_provisional"))) +
       tile("Projected eWAR over the ladder", num(A.war, 1), "sum of the per-season projections") + "</div>";
     out += '<p class="ledger-count">Flag census: ' + Object.keys(A.flags).map(function (b) { return "bit " + b + ": " + A.flags[b]; }).join(", ") + ". " + esc(copy("arb_flag_key")) + "</p>";
-    out += '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Player</th><th>Token</th><th>' + esc(classYear()) + " proj</th><th>Band</th><th>Yrs left</th><th>eWAR</th></tr></thead><tbody>" +
-      A.rows.map(function (r) {
-        return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[2] || "") + "</td><td>" + esc(money(r[3])) + "</td><td>" + esc(isNum(r[4]) ? money(r[4]) + " to " + money(r[5]) : "") + "</td><td>" + esc(r[6]) + "</td><td>" + esc(num(r[7], 2)) + "</td></tr>";
-      }).join("") + "</tbody></table></div>";
+    if (A.by_season) {
+      out += '<table class="ledger-mini">' + A.by_season.map(function (b) {
+        var nn = cv("arbitration.by_season", b, "n_null_rungs");
+        return "<tr><td>" + esc(cv("arbitration.by_season", b, "season")) + " ladder sum</td><td>" + esc(money((cv("arbitration.by_season", b, "arb_rung_usd") || 0) + (cv("arbitration.by_season", b, "prearb_rung_usd") || 0))) + " = arb " + esc(money(cv("arbitration.by_season", b, "arb_rung_usd"))) + " (" + esc(cv("arbitration.by_season", b, "n_arb_rungs")) + ") + pre-arb " + esc(money(cv("arbitration.by_season", b, "prearb_rung_usd"))) + " (" + esc(cv("arbitration.by_season", b, "n_prearb_rungs")) + ")" + (nn ? "; " + esc(nn) + " null rung(s) outside every sum" : "") + "</td></tr>";
+      }).join("") + "</table>";
+    }
+    out += shardLine(d.club, copy("arb_preview_note"));
+    if (sh && sh.arbitration && sh.arbitration.ladders) {
+      out += renderLadder(sh.arbitration.ladders);
+    } else {
+      out += '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Player</th><th>Token</th><th>' + esc(classYear()) + " proj</th><th>" + gl("Band", "arb_award_band") + "</th><th>Yrs left</th><th>eWAR</th></tr></thead><tbody>" +
+        A.rows.map(function (r) {
+          return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[2] || "") + "</td><td>" + esc(money(r[3])) + "</td><td title=\"" + esc(copy("band_note")) + '">' + esc(isNum(r[4]) ? money(r[4]) + " to " + money(r[5]) : "") + "</td><td>" + esc(r[6]) + "</td><td>" + esc(num(r[7], 2)) + "</td></tr>";
+        }).join("") + "</tbody></table></div>";
+    }
+    out += '<p class="ledger-count">' + gl("Band", "arb_award_band") + ": " + esc(copy("band_note")) + "</p>";
+    out += dark("Award quantiles", copy("arb_quantiles_dark")) + dark("Comps", copy("arb_comps_dark")) + dark("Filing figures and hearings", copy("arb_filing_dark"));
     out += "<h3>" + esc(copy("arb_realized_title")) + "</h3>" +
       '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Season</th><th>n</th><th>Actual</th><th>Ours</th><th>' + gl("ou_mkt", "arb_market_residual") + "</th><th>ou_war</th><th>eWAR</th></tr></thead><tbody>" +
       R.seasons.map(function (s) {
         return "<tr><td>" + esc(s[0]) + "</td><td>" + esc(s[1]) + "</td><td>" + esc(money(s[2])) + "</td><td>" + esc(money(s[3])) + "</td><td>" + signedMoney(s[4]) + "</td><td>" + signedMoney(s[5]) + "</td><td>" + esc(num(s[6], 1)) + "</td></tr>";
-      }).join("") + "</tbody><tfoot><tr><td>Total</td><td>" + esc(R.n) + "</td><td></td><td></td><td>" + signedMoney(R.ou_mkt_total_usd) + "</td><td>" + signedMoney(R.ou_war_total_usd) + "</td><td></td></tr></tfoot></table></div>" +
-      '<p class="ledger-count">ou_mkt: ' + esc(copy("ou_mkt")) + " ou_war: " + esc(copy("ou_war")) + " " + esc(copy("never_combine")) + "</p>" +
-      '<p class="ledger-note">' + esc(copy("arb_realized_copy")) + "</p>";
+      }).join("") + "</tbody><tfoot><tr><td>Total</td><td>" + esc(R.n) + "</td><td></td><td></td><td>" + signedMoney(R.ou_mkt_total_usd) + "</td><td>" + signedMoney(R.ou_war_total_usd) + "</td><td></td></tr></tfoot></table></div>";
+    if (sh && sh.arbitration && sh.arbitration.realized_rows) out += renderRealizedRows(sh.arbitration.realized_rows);
+    out += '<p class="ledger-count">ou_mkt: ' + esc(copy("ou_mkt")) + " ou_war: " + esc(copy("ou_war")) + " " + esc(copy("never_combine")) + "</p>";
+    if (DATA.arbitration_eval && copy("swartz_a6")) {
+      out += '<p class="ledger-count">' + esc(copy("swartz_label")) + ". " + esc(copy("swartz_a6_prefix")) + ", n " + esc(DATA.arbitration_eval.n) + ": " + esc(copy("swartz_a6")) + "</p>";
+    }
+    out += '<p class="ledger-note">' + esc(copy("arb_realized_copy")) + "</p>";
     return out;
   }
   function spark(series, valueIdx) {
@@ -499,6 +728,16 @@
       "<tr><td><strong>Total</strong></td><td>" + esc(moneyMM(S.total_mm)) + "</td></tr>" +
       "<tr><td>Trade Machine currency (not added)</td><td>" + esc(moneyMM(S.trade_currency_mm)) + "</td></tr></table>" +
       '<p class="ledger-count">' + esc(copy("surplus_basis")) + " " + esc(copy("surplus_ev")) + " " + esc(copy("surplus_no_tier")) + " " + esc(copy("trade_currency_basis")) + "</p>";
+    if (S.reconciliation) {
+      var Rc = S.reconciliation, bys = Rc.by_salsrc || {};
+      out += "<h3>The legs against their rows</h3><table class=\"ledger-mini\">" +
+        Object.keys(bys).map(function (k) { return "<tr><td>MLB leg, " + esc(k) + ": served / contract rows (n " + esc(bys[k][2]) + ")</td><td>" + esc(moneyMM(bys[k][0])) + " / " + esc(moneyMM(bys[k][1])) + "</td></tr>"; }).join("") +
+        "<tr><td>MLB leg: served / rows</td><td>" + esc(moneyMM(Rc.mlb_served_mm)) + " / " + esc(moneyMM(Rc.mlb_rows_mm)) + "</td></tr>" +
+        "<tr><td>Farm leg: served / PROSPX leaf</td><td>" + esc(moneyMM(Rc.farm_served_mm)) + " / " + esc(moneyMM(Rc.farm_leaf_mm)) + "</td></tr>" +
+        "<tr><td>Trade currency: served / farm rows gross + debuted rows</td><td>" + esc(moneyMM(Rc.trade_currency_served_mm)) + " / " + esc(moneyMM(Rc.trade_rows_active_mm)) + " + " + esc(moneyMM(Rc.trade_rows_debuted_mm)) + "</td></tr>" +
+        "<tr><td>Status</td><td>" + esc(Rc.status) + "</td></tr></table>" +
+        '<p class="ledger-count">' + esc(copy("trade_currency_split")) + "</p>";
+    }
     var c = S.crunch;
     out += '<p class="ledger-note">40-man crunch: ' + esc(c.on_40_man) + " on the 40-man, " + esc(c.rule5_exposed) + " Rule 5 exposed, " + esc(c.options_left_0) + " out of options; " + esc(c.n_active) + " active and " + esc(c.n_debuted) + " debuted assets on the trade board.</p>";
     out += "<h3>Trade currency trajectory</h3>" + spark(S.trajectory, 1) + '<p class="ledger-count">' + esc(copy("trajectory_note")) + "</p>";
@@ -517,6 +756,23 @@
     var roi = F.financial_roi || {}, ms = F.method_surplus || {};
     out += '<p class="ledger-note">Financial ROI: ' + esc(num(roi.war_per_million, 2)) + " WAR per $M over " + esc(roi.grad_count_with_bonus) + " graduates with a bonus (" + esc(money(roi.total_bonus_usd)) + "). Surplus by method: " +
       Object.keys(ms).map(function (k) { return esc(k) + " " + esc(moneyMM(ms[k].net_mm)) + " on " + esc(ms[k].count); }).join("; ") + ".</p>";
+    if (F.reconciliation) {
+      var Rf = F.reconciliation, M = F.method || {};
+      out += "<h3>" + gl("Farm dollar", "farm_dollar") + " leaf against the rows</h3>" +
+        '<p class="ledger-note">Leaf ' + esc(moneyMM(Rf.leaf_mm)) + " (n " + esc(Rf.leaf_n) + "; " + esc(Rf.leaf_source) + ", " + esc(Rf.leaf_generated_at) + "). Rows: gross " + esc(moneyMM(Rf.rows_gross_mm)) +
+        ", bonuses " + esc(moneyMM(Rf.rows_cost_mm)) + " (" + esc(Rf.n_with_bonus) + " of " + esc(Rf.n_rows) + " with a bonus on file; leaf cost basis " + esc(moneyMM(Rf.leaf_cost_mm)) + "), net " + esc(moneyMM(Rf.rows_net_mm)) +
+        " (" + esc(Rf.rows_source) + ", " + esc(Rf.rows_generated_at) + "). Gap " + esc(moneyMM(Rf.gap_mm)) + " against a tolerance of " + esc(moneyMM(Rf.tolerance_mm)) + ": " + esc(String(Rf.status).replace("_", " ")) + ".</p>" +
+        (Rf.status === "broken" ? '<p class="ledger-note">' + flag("does not reconcile") + " " + esc(copy("farm_gap_broken")) + "</p>" : "") +
+        '<p class="ledger-count">' + esc(copy("farm_reconcile")) + (Rf.status === "vintage_drift" ? " " + esc(copy("farm_vintage_gap")) : "") + " " + esc(copy("farm_no_bonus")) + "</p>";
+      out += '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Method</th><th>n (with bonus)</th><th>Gross</th><th>' + gl("Cost basis", "acquisition_cost_basis") + "</th><th>Net</th><th>Net per $ of cost</th><th>Served net / cost (org_summary, n)</th><th>" + gl("$ per FV pt", "surplus_per_fv_pt") + "</th></tr></thead><tbody>" +
+        Object.keys(M).map(function (m) {
+          var r = M[m], n = cv("farm.method", r, "n"), ratio = cv("farm.method", r, "net_per_cost_ratio");
+          if (m === "trade") return "<tr><td>trade</td><td>" + esc(n) + '</td><td colspan="6" class="ledger-dark-cell">' + esc(copy("trade_cost_dark")) + "</td></tr>";
+          return "<tr><td>" + esc(m) + "</td><td>" + esc(n) + " (" + esc(cv("farm.method", r, "n_with_bonus")) + ")</td><td>" + esc(moneyMM(cv("farm.method", r, "gross_mm"))) + "</td><td>" + esc(moneyMM(cv("farm.method", r, "cost_mm"))) + "</td><td>" + signedMM(cv("farm.method", r, "net_mm")) + "</td><td>" + esc(isNum(ratio) ? num(ratio, 1) + "x" : "") + "</td><td>" +
+            esc(moneyMM(cv("farm.method", r, "served_net_mm"))) + " / " + esc(moneyMM(cv("farm.method", r, "served_cost_mm"))) + " (n " + esc(cv("farm.method", r, "served_count")) + ")</td><td>" + esc(num(cv("farm.method", r, "served_per_fv_pt_mm"), 3)) + "</td></tr>";
+        }).join("") + "</tbody></table></div>" +
+        '<p class="ledger-count">Net per dollar of cost basis is a ratio of two served numbers, plain, no ladder; the bonus coverage beside n says how much of the cost basis the pipeline captured.</p>';
+    }
     out += "<h3>" + gl("Draft pools", "bonus_pool") + "</h3><div class=\"ledger-strip\">" + Object.keys(F.pools).map(function (y) {
       var p = F.pools[y];
       return "<div>" + esc(y) + "<b>" + esc(p[0] !== null ? money(p[0]) : p[1]) + "</b></div>";
@@ -526,6 +782,8 @@
         var r = F.draft_paid[y];
         return "<tr><td>" + esc(y) + "</td><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(money(r[3])) + "</td><td>" + esc(money(r[5])) + " (" + esc(r[4]) + ")</td><td>" + signedMoney(r[7]) + "</td><td>" + esc(isNum(r[8]) ? num(r[8], 0) + "%" : "") + "</td><td>" + esc(isNum(r[10]) ? pct(r[10], 0) : "") + "</td></tr>";
       }).join("") + "</tbody></table></div>" + '<p class="ledger-count">Slot coverage: ' + esc(copy("slot_coverage_basis")) + "</p>";
+    var shp = shardOf(d.club);
+    if (shp && shp.farm && shp.farm.picks) out += renderPicks(shp.farm.picks, F.picks_summary || {});
     var sc = F.slot_chips || {}, lg = copy("slot_league") || {};
     out += "<h3>Slot behaviour (" + esc(copy("slot_window")) + ")</h3><div class=\"ledger-chips\">" +
       ["overSlotShare", "r1UnderShare", "bonusHHI", "prepDollarShare"].map(function (k) {
@@ -542,7 +800,27 @@
       }).join("") + "</tbody></table></div>" + '<p class="ledger-count">' + esc(copy("ifa_implied_basis")) + "</p>" +
       dark("IFA history", (DATA.sections.ifa_history || {}).blocked_on || "");
     out += "<h3>Farm score trajectory</h3>" + spark(F.score_history, 1);
+    if (F.trajectory_active && F.trajectory_active.length) {
+      out += "<h3>Active eFV surplus trajectory (gross)</h3>" + spark(F.trajectory_active, 1) + '<p class="ledger-count">' + esc(copy("trajectory_active_basis")) + "</p>";
+    }
     return out;
+  }
+  // Draft picks by year (shard): slot against bonus, the over-slot figure
+  // sign-coloured, a pick that is still an active prospect of the club linked
+  // to its farm ledger row. One collapsed group per year.
+  function renderPicks(picks, summary) {
+    ;
+    return "<h3>" + gl("Draft picks", "slot_value") + "</h3>" + Object.keys(picks).sort().reverse().map(function (y) {
+      var rows = picks[y] || [], sm = summary[y];
+      if (!rows.length) return "";
+      var body = rows.map(function (r) {
+        var pk = cv("farm.picks", r, "prospect_key"), nm = esc(cv("farm.picks", r, "player_name"));
+        return "<tr><td>" + esc(cv("farm.picks", r, "pick_overall")) + "</td><td>" + esc(cv("farm.picks", r, "round_label")) + "</td><td>" + (pk ? '<a href="' + esc("#section=club&team=" + state.team + "&block=prospects") + '" data-lprospect="' + esc(pk) + '">' + nm + "</a>" : nm) + "</td>" +
+          "<td>" + esc(isNum(cv("farm.picks", r, "slot_usd")) ? money(cv("farm.picks", r, "slot_usd")) : "") + "</td><td>" + esc(isNum(cv("farm.picks", r, "bonus_usd")) ? money(cv("farm.picks", r, "bonus_usd")) : "") + "</td><td>" + signedMoney(cv("farm.picks", r, "over_slot_usd")) + "</td><td>" + esc(cv("farm.picks", r, "signed") ? "signed" : (cv("farm.picks", r, "signed") === 0 ? "unsigned" : "")) + "</td></tr>";
+      }).join("");
+      return "<details><summary>" + esc(y) + ": " + esc(rows.length) + " picks" + (sm ? ", " + esc(cv("farm.picks_summary", sm, "n_still_active")) + " still active, " + esc(cv("farm.picks_summary", sm, "n_graduated")) + " graduated" : "") + "</summary>" +
+        '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Pick</th><th>Round</th><th>Player</th><th>Slot</th><th>Bonus</th><th>Over slot</th><th>Signed</th></tr></thead><tbody>' + body + "</tbody></table></div></details>";
+    }).join("") + '<p class="ledger-count">joined on draft year and overall pick, never on name; still-active and graduated counts follow the player wherever he is now</p>';
   }
   function renderFa(d) {
     var A = d.fa, R = A.realized;
@@ -571,6 +849,134 @@
       '<p class="ledger-note">' + esc(copy("realized_sentence")) + "</p>";
     return out;
   }
+  // A generic dt/dd for every column of a row (the expander lists them all),
+  // formatted by the column's suffix: _mm in $M, _usd in dollars, booleans as
+  // words. Nothing is summed here.
+  function rowDl(key, row) {
+    var cols = (DATA.columns || {})[key] || [];
+    return cols.map(function (n, i) {
+      var v = row[i], txt;
+      if (v === true) txt = "yes";
+      else if (v === false) txt = "no";
+      else if (/_mm$/.test(n)) txt = moneyMM(v);
+      else if (/_usd$/.test(n)) txt = money(v);
+      else if (Array.isArray(v)) txt = v.length ? v.join(", ") : "";
+      else txt = isNum(v) || v ? String(v) : "";
+      return dd(n, esc(txt));
+    }).join("");
+  }
+  // ---- C7a Farm ledger: every active prospect on the eFV basis -------------
+  // NO RULER CALL IN THIS FUNCTION. A surplus cell prints plain with a sign, a
+  // grade letter in neutral ink, the band per row, and the footer sums means
+  // over the rows SHOWN while the band column's footer reads "not summed".
+  function renderProspects(d) {
+    var F = d.farm, sh = shardOf(d.club), L = "farm.prospects";
+    var full = !!(sh && sh.farm && sh.farm.prospects);
+    var rows = full ? sh.farm.prospects : (F.preview || []);
+    if (!F.preview && !full) return dark("Farm ledger", copy("shard_failed") || "no prospect rows on this board");
+    var Rf = F.reconciliation || {}, traj = (sh && sh.farm && sh.farm.prospect_trajectory) || {};
+    var out = banner() + '<p class="ledger-note">' + esc(F.n_prospects) + " active prospects, " + esc(Rf.n_with_bonus) + " with a bonus on file; eFV surplus is an expected value, bands per row.</p>";
+    out += '<p class="ledger-count">' + esc(copy("farm_dollar_is")) + " " + esc(copy("farm_dollar_is_not")) + "</p>";
+    out += shardLine(d.club, copy("preview_note"));
+    var f = state.pfilter || "all";
+    out += '<div class="ledger-chips" role="group" aria-label="Acquisition method">' + [["all", "all"], ["draft", "draft"], ["international_fa", "IFA"]].map(function (c) {
+      return '<button type="button" class="ledger-chip' + (f === c[0] ? " is-on" : "") + '" data-lfilter="' + c[0] + '" aria-pressed="' + (f === c[0] ? "true" : "false") + '">' + esc(c[1]) + "</button>";
+    }).join("") + "</div>";
+    var shown = rows.filter(function (r) { return f === "all" || cv("farm.prospects", r, "acq_method") === f; });
+    var head = "<tr><th>Player</th><th>" + gl("Expected surplus", "tvi") + "</th><th>" + gl("Band", "surplus_value") + '</th><th class="lc-col-hide">' + gl("eFV", "xfv") + '</th><th class="lc-col-hide">' + gl("Bonus", "signing_bonus") +
+      '</th><th class="lc-col-hide">' + gl("Slot", "slot_value") + '</th><th class="lc-col-hide">' + gl("Net", "acquisition_cost_basis") + '</th><th class="lc-col-hide">Acquired</th><th class="lc-col-hide">' + gl("ETA", "eta") +
+      ' / phase</th><th class="lc-col-hide">' + gl("Crunch", "roster_crunch") + '</th><th class="lc-col-hide">' + gl("$DvM+", "fin_dollar_dvm") + '</th><th class="lc-xp"></th></tr>';
+    var sums = { s: 0, b: 0, n: 0 };
+    var body = shown.map(function (r) {
+      var key = cv("farm.prospects", r, "key"), s = cv("farm.prospects", r, "surplus_mm"), bonus = cv("farm.prospects", r, "bonus_usd"), slot = cv("farm.prospects", r, "slot_usd"), net = cv("farm.prospects", r, "net_mm"), method = cv("farm.prospects", r, "acq_method"), pick = cv("farm.prospects", r, "pick_overall"), dvm = cv("farm.prospects", r, "dollar_dvm_plus");
+      sums.s += Number(s || 0); sums.b += Number(bonus || 0); sums.n += Number(net || 0);
+      var k = "P:" + key, open = !!state.open[k];
+      var crunch = yn(cv("farm.prospects", r, "on_40_man"), "40-man") + (isNum(cv("farm.prospects", r, "options_left")) ? '<span class="ledger-flag">' + esc(cv("farm.prospects", r, "options_left")) + " opt</span>" : "") + yn(cv("farm.prospects", r, "rule5_exposed"), "Rule 5");
+      var row = '<tr id="ledger-prospect-' + esc(key) + '"><td><a href="/prospx/#player=' + esc(key) + '">' + esc(cv("farm.prospects", r, "name")) + '</a> <span class="ledger-src">' + esc(cv("farm.prospects", r, "pos")) + "</span> " + letter(cv("farm.prospects", r, "tv_grade")) + "</td>" +
+        "<td>" + signedMM(s) + "</td><td>" + bandMM(cv("farm.prospects", r, "band_lo_mm"), cv("farm.prospects", r, "band_hi_mm"), copy("band_row_only")) + "</td>" +
+        '<td class="lc-col-hide">' + esc(num(cv("farm.prospects", r, "efv"), 1)) + "</td>" +
+        '<td class="lc-col-hide">' + esc(isNum(bonus) ? money(bonus) : "no bonus on file") + "</td>" +
+        (isNum(slot) ? '<td class="lc-col-hide">' + esc(money(slot)) + "</td>"
+          : (method === "international_fa" ? '<td class="lc-col-hide" title="' + esc(copy("ifa_slot_dark")) + '">' + esc(String(copy("ifa_slot_dark")).split(":")[0]) + "</td>" : '<td class="lc-col-hide"></td>')) +
+        '<td class="lc-col-hide">' + signedMM(net) + "</td>" +
+        '<td class="lc-col-hide">' + esc((method || "") + " " + (cv("farm.prospects", r, "acq_year") || "") + (isNum(pick) ? ", pick " + pick : "")) + "</td>" +
+        '<td class="lc-col-hide">' + esc((cv("farm.prospects", r, "eta_year") || "") + " / " + (cv("farm.prospects", r, "service_phase") || "")) + "</td>" +
+        '<td class="lc-col-hide">' + crunch + "</td>" +
+        '<td class="lc-col-hide" title="' + esc(copy("dvm_within_tier")) + '">' + esc(isNum(dvm) ? Math.round(dvm) : "") + "</td>" + xpBtn(k) + "</tr>";
+      if (open) {
+        var cur = cv("farm.prospects", r, "cur_method"), cy = cv("farm.prospects", r, "cur_year");
+        row += '<tr class="ledger-xp-row"><td colspan="12"><dl class="ledger-dl">' + rowDl(L, r) +
+          dd("PROSPX consensus basis, not added", esc(moneyMM(cv("farm.prospects", r, "cons_surplus_mm"))) + " (" + bandMM(cv("farm.prospects", r, "cons_lo_mm"), cv("farm.prospects", r, "cons_hi_mm"), copy("band_row_only")) + ")") +
+          dd("P(bust)", esc(num(cv("farm.prospects", r, "p_bust"), 2)) + '<div class="ledger-count">' + esc(copy("p_bust_basis")) + "</div>") +
+          dd("Current acquisition", esc((cur || "") + (cy ? " " + cy : "")) + (cur === "trade" || cur === "free_agent" ? " (" + esc(cur) + " event; the original signing channel is the method column)" : "")) +
+          dd("Years to free agency", esc(copy("years_to_fa_dark"))) +
+          (traj[key] && traj[key].length > 1 ? dd("eFV surplus trajectory", spark(traj[key], 1)) : "") +
+          "</dl></td></tr>";
+      }
+      return row;
+    }).join("");
+    var foot = "<tr><td>" + esc(copy("shown_rows")) + " (" + esc(shown.length) + ")</td><td>" + esc(moneyMM(sums.s)) + "</td><td>" + notSummed() + "</td>" +
+      '<td class="lc-col-hide"></td><td class="lc-col-hide">' + esc(money(sums.b)) + '</td><td class="lc-col-hide"></td><td class="lc-col-hide">' + signedMM(sums.n) + '</td><td class="lc-col-hide" colspan="4"></td><td class="lc-xp"></td></tr>';
+    out += '<div class="ledger-scroll"><table class="ledger-table ledger-prospects"><thead>' + head + "</thead><tbody>" + body + "</tbody><tfoot>" + foot + "</tfoot></table></div>";
+    out += '<p class="ledger-count">' + esc(copy("dvm_within_tier")) + " " + esc(copy("years_to_fa_dark")) + (copy("service_time_source") ? " (" + esc(copy("service_time_source")) + ")" : "") + "</p>";
+    return out;
+  }
+  // ---- C7b Graduates: two engines per row, each under its own name ---------
+  function renderGraduates(d) {
+    var F = d.farm, sh = shardOf(d.club), L = "farm.graduates";
+    var rows = (sh && sh.farm && sh.farm.graduates) || null;
+    var leaf = (F.leaves || {}).fin_contract_surplus || {};
+    var out = banner() + '<p class="ledger-note">' + esc(F.n_graduates) + " graduates on the debuted rows. " + esc(copy("grad_two_engines")) + " " + esc(copy("grad_no_registry")) + "</p>";
+    out += '<p class="ledger-count">' + gl("Grad-Contract Surplus", "fin_contract_surplus") + " org mean " + esc(money(leaf.value)) + " per year (n " + esc(leaf.n) + ")</p>" +
+      dark("Grad-Contract Surplus per graduate", copy("grad_contract_dark"));
+    if (!rows) return out + shardLine(d.club, copy("grad_preview_note"));
+    out += shardLine(d.club, copy("grad_preview_note"));
+    var head = "<tr><th>Player</th><th>" + gl("Debut", "mlb_debut") + "</th><th>" + gl("Debuted value", "debuted_value") + '</th><th class="lc-col-hide">' + gl("Trade board", "trade_machine") + '</th><th class="lc-col-hide">Acquired</th><th class="lc-col-hide">' + gl("Bonus", "signing_bonus") +
+      '</th><th class="lc-col-hide">Realized<span class="ledger-th-tag">realized</span></th><th class="lc-col-hide">' + gl("Control", "club_control_window") + '</th><th class="lc-col-hide">Career WAR</th><th class="lc-col-hide">' + gl("WAG", "wag") + '</th><th class="lc-xp"></th></tr>';
+    var body = rows.map(function (r) {
+      var key = cv("farm.graduates", r, "key"), k = "G:" + key, open = !!state.open[k], inv = cv("farm.graduates", r, "in_vets");
+      var href = inv ? "/projections/#player=" + esc(key) : "/prospx/#player=" + esc(key);
+      var row = '<tr><td><a href="' + href + '">' + esc(cv("farm.graduates", r, "name")) + '</a> <span class="ledger-src">' + esc(cv("farm.graduates", r, "pos")) + "</span></td><td>" + esc(cv("farm.graduates", r, "debut_date") || "") + "</td>" +
+        "<td>" + esc(moneyMM(cv("farm.graduates", r, "dv_trade_value_mm"))) + ' <span class="ledger-src">PROSPX debuted_player_value</span></td>' +
+        '<td class="lc-col-hide">' + esc(moneyMM(cv("farm.graduates", r, "tv_trade_value_mm"))) + (cv("farm.graduates", r, "tv_surplus_source") ? ' <span class="ledger-src">' + esc(cv("farm.graduates", r, "tv_surplus_source")) + "</span>" : "") + "</td>" +
+        '<td class="lc-col-hide">' + esc((cv("farm.graduates", r, "acq_method") || "") + " " + (cv("farm.graduates", r, "acq_year") || "")) + "</td>" +
+        '<td class="lc-col-hide">' + esc(isNum(cv("farm.graduates", r, "bonus_usd")) ? money(cv("farm.graduates", r, "bonus_usd")) : "no bonus on file") + "</td>" +
+        '<td class="lc-col-hide">' + esc(moneyMM(cv("farm.graduates", r, "dv_realized_mm"))) + "</td>" +
+        '<td class="lc-col-hide">' + esc(isNum(cv("farm.graduates", r, "dv_remaining_control_years")) ? cv("farm.graduates", r, "dv_remaining_control_years") + " yrs" : "") + " " + esc(cv("farm.graduates", r, "service_phase") || "") + "</td>" +
+        '<td class="lc-col-hide">' + esc(num(cv("farm.graduates", r, "career_war"), 1)) + "</td>" +
+        '<td class="lc-col-hide">' + esc(cv("farm.graduates", r, "wag_label") || "") + "</td>" + xpBtn(k) + "</tr>";
+      if (open) row += '<tr class="ledger-xp-row"><td colspan="11"><dl class="ledger-dl">' + rowDl(L, r) + dd("Engines", esc(copy("grad_two_engines"))) + "</dl></td></tr>";
+      return row;
+    }).join("");
+    out += '<div class="ledger-scroll"><table class="ledger-table ledger-graduates"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>" +
+      '<p class="ledger-count">' + esc(copy("realized_not_skill")) + " No total is printed for either engine.</p>";
+    return out;
+  }
+  // ---- C6b Trade board, debuted rows ---------------------------------------
+  // NO RULER CALL IN THIS FUNCTION. Trade value plain, band per row, tier and
+  // grade in neutral ink, the footer a sum of expected values over shown rows.
+  function renderTrade(d) {
+    var S = d.surplus, sh = shardOf(d.club), L = "surplus.rows_debuted";
+    var rows = (sh && sh.surplus && sh.surplus.rows_debuted) || null;
+    var out = banner() + '<p class="ledger-note">' + esc(S.n_debuted_rows) + " debuted rows on the trade board; the active rows are the farm ledger's prospect rows and are not repeated. " + esc(copy("trade_currency_basis")) + "</p>";
+    if (!rows) return out + shardLine(d.club, copy("trade_preview_note"));
+    out += shardLine(d.club, copy("trade_preview_note"));
+    var head = "<tr><th>Player</th><th>" + gl("Trade value", "trade_machine") + "</th><th>" + gl("Band", "surplus_value") + '</th><th class="lc-col-hide">Tier</th><th class="lc-col-hide">Grade</th><th class="lc-col-hide">Source</th><th class="lc-col-hide">' + gl("Salary basis", "salary_path") + '</th><th class="lc-col-hide">' + gl("Control", "club_control_window") + '</th><th class="lc-xp"></th></tr>';
+    var sum = 0;
+    var body = rows.map(function (r) {
+      var key = cv("surplus.rows_debuted", r, "key"), k = "T:" + key, open = !!state.open[k], v = cv("surplus.rows_debuted", r, "tv_mm"), src = cv("surplus.rows_debuted", r, "surplus_source");
+      sum += Number(v || 0);
+      var href = cv("surplus.rows_debuted", r, "in_contract_rows") ? "/projections/#player=" + esc(key) : "/prospx/#player=" + esc(key);
+      var row = '<tr><td><a href="' + href + '">' + esc(cv("surplus.rows_debuted", r, "name")) + '</a> <span class="ledger-src">' + esc(cv("surplus.rows_debuted", r, "pos")) + "</span></td><td>" + signedMM(v) + "</td><td>" + bandMM(cv("surplus.rows_debuted", r, "tv_lo_mm"), cv("surplus.rows_debuted", r, "tv_hi_mm"), copy("band_row_only")) + "</td>" +
+        '<td class="lc-col-hide">' + letter(cv("surplus.rows_debuted", r, "tv_tier")) + '</td><td class="lc-col-hide">' + letter(cv("surplus.rows_debuted", r, "tv_grade")) + '</td><td class="lc-col-hide"><span class="ledger-src">' + esc(src || "") + "</span></td>" +
+        '<td class="lc-col-hide">' + esc(cv("surplus.rows_debuted", r, "salary_basis") || "") + '</td><td class="lc-col-hide">' + esc((cv("surplus.rows_debuted", r, "control_thru") || "") + " " + (cv("surplus.rows_debuted", r, "control_why") || "")) + "</td>" + xpBtn(k) + "</tr>";
+      if (open) row += '<tr class="ledger-xp-row"><td colspan="9"><dl class="ledger-dl">' + rowDl(L, r) + (src === "prearb_min" ? dd("Floor", esc(copy("prearb_min_floor"))) : "") + "</dl></td></tr>";
+      return row;
+    }).join("");
+    var foot = "<tr><td>" + esc(copy("shown_rows")) + " (" + esc(rows.length) + ")</td><td>" + esc(moneyMM(sum)) + "</td><td>" + notSummed() + '</td><td class="lc-col-hide" colspan="5"></td><td class="lc-xp"></td></tr>';
+    out += '<div class="ledger-scroll"><table class="ledger-table ledger-trade"><thead>' + head + "</thead><tbody>" + body + "</tbody><tfoot>" + foot + "</tfoot></table></div>";
+    return out;
+  }
   function renderLinks(d) {
     var L = d.links, labels = {
       farm_tree: "Farm system tree", org_tendencies: "Org tendencies", farm_board: "Farm board", ifa_board: "IFA board", draft_board: "Draft board",
@@ -596,6 +1002,9 @@
     out += block("arbitration", "C5", gl("Arbitration exposure", "arb_exposure"), 5, renderArbitration(d));
     out += block("surplus", "C6", gl("Cost per projected WAR", "cost_plus"), 6, renderSurplus(d));
     out += block("farm", "C7", "Farm capital", 6, renderFarm(d));
+    out += block("trade", "C6b", gl("Trade board, debuted", "trade_machine"), 12, renderTrade(d));
+    out += block("prospects", "C7a", gl("Farm ledger", "farm_dollar"), 12, renderProspects(d));
+    out += block("graduates", "C7b", gl("Graduates", "debuted_value"), 12, renderGraduates(d));
     out += block("fa", "C8", "Free agency ledger", 12, renderFa(d));
     out += block("links", "C9", "Into every module", 12, renderLinks(d));
     out += "</div>" + '<p class="ledger-foot">' + esc(copy("club_foot")) + " " + esc(copy("no_payroll_line")) + "</p>";
@@ -690,6 +1099,21 @@
     }).join("") + "</table>";
     out += "<h3>Inputs</h3><table class=\"ledger-mini\">" + Object.keys(M.inputs_generated_at).map(function (k) { return "<tr><td>" + esc(k) + "</td><td>" + esc(M.inputs_generated_at[k] || "") + "</td></tr>"; }).join("") + "</table>" +
       '<p class="ledger-count">Board generated ' + esc(DATA.generated_at) + "</p>";
+    var C = DATA.calibration;
+    if (C && C.sources) {
+      out += "<h3>Calibration stamps</h3><table class=\"ledger-mini\">" + Object.keys(C.sources).map(function (k) { return "<tr><td>" + esc(k) + " (" + esc(C.sources[k].generated_at || "") + ")</td><td>" + esc(C.sources[k].version || "unstamped") + "</td></tr>"; }).join("") +
+        "<tr><td>agree</td><td>" + esc(C.agree ? "yes" : "no") + "</td></tr></table>" + '<p class="ledger-count">' + esc(M.sources_stamps || "") + "</p>";
+    }
+    var Sh = DATA.shards;
+    if (Sh) {
+      out += "<h3>Per-club row files</h3>" + '<p class="ledger-count">' + esc(Sh.n) + " files in data/" + esc(Sh.dir) + "/, preview " + esc(Sh.preview_n) + " rows per block on the board, cap " + esc(Sh.cap_bytes) + " bytes per file; the club page fetches one on demand and flags a file from another board build.</p>";
+    }
+    if (DATA.arbitration_eval && DATA.arbitration_eval.statement) {
+      var E = DATA.arbitration_eval;
+      out += "<h3>Arbitration a6 arm (MLBTR / Swartz)</h3>" + '<p class="ledger-count">n ' + esc(E.n) + ", ours MdAPE " + esc(num(E.ours_mdape, 4)) + ", Swartz MdAPE " + esc(num(E.swartz_mdape, 4)) + ", ratio " + esc(num(E.ratio_ours_over_swartz, 3)) + ", verdict " + esc(E.verdict) + ". " + esc(E.claim) + "</p>" +
+        '<p class="ledger-note">' + esc(E.statement) + "</p>";
+    }
+    if (M.grad_contract_formula) out += '<p class="ledger-count">Grad-Contract Surplus, ' + esc(M.grad_contract_formula) + "</p>";
     return out;
   }
 
@@ -716,6 +1140,15 @@
     else if (s === "rules") root.innerHTML = renderRules();
     else if (s === "method") root.innerHTML = renderMethod();
     else root.innerHTML = renderLeague();
+    if (s === "club" && state.team) {
+      // the hash's block key: scroll to the named block once per team
+      if (state.block && SCROLLED !== state.team + ":" + state.block) {
+        SCROLLED = state.team + ":" + state.block;
+        try { var blk = el("ledger-block-" + state.block); if (blk && blk.scrollIntoView) blk.scrollIntoView(); } catch (e) { /* optional */ }
+      }
+      // the per-club rows, fetched AFTER the preview has painted
+      ensureShard(state.team);
+    }
     // The CSV control on the mount (build_site's data-csv-export opt-in)
     // exports the table marked data-csv-primary: the League board, or the
     // club's contract ledger. The file name says which one it holds.
@@ -747,6 +1180,19 @@
         var k = b.getAttribute("data-lxp");
         state.open[k] = !state.open[k];
         render();
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-lfilter]"), function (b) {
+      b.addEventListener("click", function () { state.pfilter = b.getAttribute("data-lfilter") || "all"; render(); });
+    });
+    // a draft pick that is still an active prospect: open its farm ledger row
+    Array.prototype.forEach.call(document.querySelectorAll("a[data-lprospect]"), function (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        var k = a.getAttribute("data-lprospect");
+        state.block = "prospects"; state.pfilter = "all"; state.open["P:" + k] = true; SCROLLED = "";
+        writeHash(); render();
+        try { var row = el("ledger-prospect-" + k); if (row && row.scrollIntoView) row.scrollIntoView(); } catch (err) { /* optional */ }
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll("a[data-llink]"), function (a) {
