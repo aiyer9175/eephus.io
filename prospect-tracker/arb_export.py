@@ -79,6 +79,13 @@ def _flags(row: dict, season: int) -> int:
     return f
 
 
+def _f0(v) -> float:
+    try:
+        return float(v) if v is not None else 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def _projected_war() -> dict[int, list[float]]:
     """{mlbam: [war per future season]} from the MLB projection board."""
     p = ROOT / "data" / "mlb_projections.json"
@@ -132,8 +139,15 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
     proj = _projected_war()
     # Latest observed row per player, for the salary anchor and the features.
     by_player: dict[int, dict] = {}
+    # Realized WAR per player-season over the WHOLE panel, not only the scored
+    # rows. export() stamps war3/career_war on scored rows alone, and `base`
+    # below is usually an unscored pre-arb season, so a forward rung used to
+    # read war3 = career_war = 0 through features()' default.
+    war_by: dict[int, dict[int, float]] = {}
     for r in sorted(panel_rows, key=lambda x: x["season"]):
         by_player[int(r["mlbam"])] = r
+        war_by.setdefault(int(r["mlbam"]), {})[int(r["season"])] = float(r.get("war") or 0.0)
+    last_obs = max((int(r["season"]) for r in panel_rows), default=season - 1)
     lm = A.league_min_by_year()
 
     rows = []
@@ -150,14 +164,29 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
         steps = []
         total = 0
         wars = []
-        for y, tok in ladder:
-            step, s2flag = _token_step(tok)
-            war = None
+        hist = war_by.get(mlbam, {})
+        base_season = int(base["season"])
+
+        def _proj_war(yr: int):
             if pw:
                 first, arr = pw
-                i = int(y) - first
+                i = int(yr) - first
                 if 0 <= i < len(arr):
-                    war = arr[i]
+                    return arr[i]
+            return None
+
+        def _war_at(yr: int) -> float:
+            """Realized WAR through the last observed season, projected WAR
+            after it, base WAR where no projection exists (the same fallback
+            the rung's own `war` uses)."""
+            if yr <= last_obs:
+                return hist.get(int(yr), 0.0)
+            v = _proj_war(yr)
+            return float(v) if v is not None else _f0(base.get("war"))
+
+        for y, tok in ladder:
+            step, s2flag = _token_step(tok)
+            war = _proj_war(y)
             wars.append(round(war, 2) if war is not None else None)
             if step == 0:
                 # Pre-arb years are the league minimum by rule, not a prediction.
@@ -171,8 +200,29 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             row["season"] = int(y)
             row["arb_year"] = step
             row["super_two"] = s2flag
+            # A first arbitration trip with no salary on file raises off the
+            # prior season's league minimum, which is what a pre-arb player is
+            # paid and what the training rows carry (their prior is season-1's
+            # salary). None here set has_prior = 0 on every class-1 row.
+            if prior is None and step == 1:
+                prior = lm.get(int(y) - 1) or (lm.get(max(lm)) if lm else None)
             row["prior_salary"] = prior
             row["war"] = war if war is not None else base.get("war")
+            # The forward row is built the way a training row is: war3 is the
+            # award season plus the two before it and career_war runs through
+            # the award season inclusive, realized WAR where it exists and the
+            # projection after it. Age advances with the season.
+            row["war3"] = round(sum(_war_at(int(y) - k) for k in (0, 1, 2)), 2)
+            row["career_war"] = round(
+                sum(v for yr, v in hist.items() if yr <= min(int(y), last_obs))
+                + sum(_war_at(yr) for yr in range(last_obs + 1, int(y) + 1)), 2)
+            if base.get("age") is not None:
+                row["age"] = float(base["age"]) + (int(y) - base_season)
+            # Training reads hem/sem/rem from the award season itself, which
+            # has not been played. The latest observed season's block is the
+            # stated proxy; keying on the future season found nothing and
+            # every forward rung defaulted to 100.
+            rung_metrics = {int(y): (metrics or {}).get(base_season) or {}}
             row["league_min"] = lm.get(int(y))
             pred = None
             if defl is not None:
@@ -185,12 +235,18 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
                     # serving the model there would be shipping a more complex
                     # estimator the evidence does not support.
                     if step == 1:
-                        d = Mod.predict(row, metrics, defl, s1, None)
+                        d = Mod.predict(row, rung_metrics, defl, s1, None)
                     else:
                         d = Mod.banded_predict(row, banded, defl)
                     pred = d * (defl.get(int(y)) or defl[max(defl)]) if d else None
                 except Exception:
                     pred = None
+            # No major league salary is below the league minimum, so neither is
+            # an award. A rule, like the pre-arb rung, and it binds only on a
+            # fringe arb-1 rung whose built features are all below average.
+            floor = (lm.get(int(y)) or lm.get(max(lm))) if lm else None
+            if pred and floor and pred < floor:
+                pred = float(floor)
             if pred:
                 # The band widens down the chain: each rung inherits the
                 # previous rung's error. 22% at arb-1 growing 8 points a rung

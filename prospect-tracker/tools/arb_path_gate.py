@@ -394,13 +394,13 @@ def c10_the_salary_leg_has_a_star_tail(proj):
                                            "surplus too high, hardest on the "
                                            "stars at the top of the board"),
         "response_if_failed": ("NOT a revert of the salary path: the defect is "
-                               "upstream of it and predates it. The repair is "
-                               "arb_export attaching war3/career_war to every "
-                               "row before build_board, which moves "
-                               "/arbitration/ published l and tot and so needs "
-                               "its own measured change under GATE A. "
-                               "Registered in docs/ARBITRATION_GATE.md section "
-                               "11i as the blocking defect on the salary leg"),
+                               "upstream of it and predates it. The repair "
+                               "builds war3/career_war and the metric block on "
+                               "every forward row inside build_board, which "
+                               "moves /arbitration/ published l and tot, so it "
+                               "landed as its own measured change (2026-09-24) "
+                               "with no refit. Registered in "
+                               "docs/ARBITRATION_GATE.md section 11h"),
     }
 
 

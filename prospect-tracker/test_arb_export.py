@@ -322,3 +322,132 @@ def test_the_board_documents_sv_because_it_now_carries_one():
     key = board.get("field_key") or {}
     assert "sv" in key and "service time" in key["sv"].lower()
     assert "STRING" in key["sv"], "a float lies about .043 being 43/1000"
+
+# --------------------------------------------------------------------------- #
+# Forward rungs are built the way training rows are (2026-09-24, M08-01;
+# docs/ARBITRATION_GATE.md section 11h)
+# --------------------------------------------------------------------------- #
+
+def _spearman(xs, ys):
+    def ranks(v):
+        order = sorted(range(len(v)), key=lambda i: v[i])
+        r = [0.0] * len(v)
+        i = 0
+        while i < len(order):
+            j = i
+            while j + 1 < len(order) and v[order[j + 1]] == v[order[i]]:
+                j += 1
+            for k in range(i, j + 1):
+                r[order[k]] = (i + j) / 2.0
+            i = j + 1
+        return r
+    rx, ry = ranks(xs), ranks(ys)
+    n = len(xs)
+    mx, my = sum(rx) / n, sum(ry) / n
+    cov = sum((a - mx) * (b - my) for a, b in zip(rx, ry))
+    vx = sum((a - mx) ** 2 for a in rx) ** 0.5
+    vy = sum((b - my) ** 2 for b in ry) ** 0.5
+    return cov / (vx * vy) if vx and vy else 0.0
+
+
+def test_a_forward_arb1_rung_reads_built_features_not_zeros(monkeypatch):
+    """A pre-arb player's latest panel row is not a scored row, so it carries
+    no war3/career_war, and the rung's own season is in the future, so the
+    metric lookup keyed on it found nothing. Both used to fall to features()'
+    defaults (0.0 and 100) on every forward ARB 1 rung."""
+    import arb_dataset as A
+    panel = [
+        {"mlbam": 7, "season": 2024, "war": 1.0, "name": "P", "team": "AAA",
+         "age": 22.0, "pa": 300, "ipouts": 0, "gs": 0, "salary": None},
+        {"mlbam": 7, "season": 2025, "war": 3.0, "name": "P", "team": "AAA",
+         "age": 23.0, "pa": 600, "ipouts": 0, "gs": 0, "salary": None},
+        {"mlbam": 7, "season": 2026, "war": 4.0, "name": "P", "team": "AAA",
+         "age": 24.0, "pa": 640, "ipouts": 0, "gs": 0, "salary": None},
+    ]
+    monkeypatch.setattr(A, "spotrac_status_by_mlbam",
+                        lambda: {7: {2027: "PRE-ARB", 2028: "ARB 1"}})
+    monkeypatch.setattr(A, "league_min_by_year",
+                        lambda: {2025: 760000.0, 2026: 780000.0})
+    monkeypatch.setattr(X, "_projected_war", lambda: {7: [2027, [5.0, 6.0]]})
+    seen = []
+
+    def spy(row, metrics_by, defl, s1, s2):
+        seen.append((dict(row), M._mx(metrics_by, row)))
+        return 1_000_000.0
+
+    monkeypatch.setattr(M, "predict", spy)
+    metrics = {2026: {7: {"hem": 130.0, "sem": 100.0, "rem": 100.0}}}
+    X.build_board(panel, {}, metrics, {}, season=2027, s1={"keys": []},
+                  defl={2026: 1.0}, banded={})
+    assert len(seen) == 1
+    row, mx = seen[0]
+    assert row["season"] == 2028
+    # award season inclusive: 2028 proj 6.0 + 2027 proj 5.0 + 2026 realized 4.0
+    assert row["war3"] == 15.0
+    # realized 1 + 3 + 4 through 2026, then projected 5 + 6 through 2028
+    assert row["career_war"] == 19.0
+    assert row["age"] == 26.0
+    assert mx and mx["hem"] == 130.0, "metrics must come from the latest observed season"
+    # the PRE-ARB rung before it sets the prior at the league minimum
+    assert row["prior_salary"] == 780000.0
+
+
+def test_a_first_trip_with_no_salary_on_file_raises_off_the_league_minimum(monkeypatch):
+    import arb_dataset as A
+    panel = [{"mlbam": 9, "season": 2026, "war": 2.0, "name": "Q", "team": "BBB",
+              "age": 26.0, "pa": 500, "ipouts": 0, "gs": 0, "salary": None}]
+    monkeypatch.setattr(A, "spotrac_status_by_mlbam", lambda: {9: {2027: "ARB 1"}})
+    monkeypatch.setattr(A, "league_min_by_year", lambda: {2026: 780000.0})
+    monkeypatch.setattr(X, "_projected_war", lambda: {9: [2027, [2.5]]})
+    seen = []
+    monkeypatch.setattr(M, "predict",
+                        lambda row, *a: seen.append(dict(row)) or 500_000.0)
+    out = X.build_board(panel, {}, {}, {}, season=2027, s1={"keys": []},
+                        defl={2027: 1.0}, banded={})
+    assert seen[0]["prior_salary"] == 780000.0
+    # and no award is served below the league minimum
+    assert out["rows"][0]["l"][0][1] == 780000
+
+
+def _arb1_rungs(board):
+    out = []
+    for r in board.get("rows") or []:
+        w = r.get("w") or []
+        for i, s in enumerate(r.get("l") or []):
+            if str(s[4]).startswith("ARB 1") and s[1]:
+                out.append((s[0], s[1], w[i] if i < len(w) else None, r.get("c")))
+    return out
+
+
+def test_served_arb1_rungs_respond_to_projected_war():
+    """The zeroed-feature board ranked its ARB 1 rungs against projected WAR at
+    Spearman 0.151 (n 187), and the four rungs projected at 3+ WAR were among
+    the cheapest. The backtest with full features ranks at 0.546 (arb_history
+    ours vs war, n 361)."""
+    b = _doc("arbitration.json")
+    rungs = [t for t in _arb1_rungs(b) if t[2] is not None]
+    if len(rungs) < 30:
+        pytest.skip("too few projected ARB 1 rungs to rank")
+    assert _spearman([t[1] for t in rungs], [t[2] for t in rungs]) >= 0.35
+    direct = [t for t in rungs if t[3] == 1]
+    if len(direct) >= 20:
+        assert _spearman([t[1] for t in direct], [t[2] for t in direct]) >= 0.35
+
+
+def test_served_arb1_rungs_have_a_star_tail():
+    """The level check reads the backtest's own full-feature predictions (ours,
+    column 6), not realized awards, so it never tunes against the 2026 pool
+    GATE C2 clause C2' scores."""
+    b = _doc("arbitration.json")
+    h = _doc("arb_history.json")
+    served = sorted(t[1] for t in _arb1_rungs(b))
+    ours = sorted(r[6] for r in h["rows"] if r[4] == 1 and r[6])
+    if len(served) < 30 or len(ours) < 30:
+        pytest.skip("pools too small")
+    p90 = served[int(round(0.9 * (len(served) - 1)))]
+    p75 = ours[int(round(0.75 * (len(ours) - 1)))]
+    assert p90 >= p75, (p90, p75)
+    lm = min(s[1] for r in b["rows"] for s in r["l"] if s[4] == "PRE-ARB" and s[1])
+    low = [t for t in _arb1_rungs(b) if t[2] is not None and t[2] >= 3 and t[1] < 2 * lm]
+    assert not low, f"3+ WAR ARB 1 rungs priced under twice the league minimum: {low}"
+    assert all(t[1] >= lm for t in _arb1_rungs(b)), "an award below the league minimum"

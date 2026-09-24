@@ -788,3 +788,56 @@ is the successor gate. It is named here and in the eval artifact so the hole is
 not rediscovered as a finding: what this gate asserts is that a club-controlled
 season is worth its production minus its price, not that the number attached to
 it has been validated against realized surplus.
+
+### 11h. Pre-scoring amendment (2026-09-24): forward ARB 1 rungs are built the way training rows are
+
+Registered before any clause of this gate was scored. On this date
+`data/arbitration_eval.json` carries no `gate_c2` block and no C2 number has
+been read, so this amendment cannot have been shaped by a result.
+
+**The defect.** `arb_export.build_board` priced each forward ARB 1 rung off a
+copy of the player's latest panel row. Three of the arb-1 champion's inputs did
+not match their training definition on that copy:
+
+- `war3` and `career_war` were attached only to `scored_rows` inside
+  `export()`. The latest row of a pre-arb player is not a scored row, so both
+  read 0.0 on every forward rung.
+- `hem`, `sem` and `rem` were looked up under the rung's own season (2027 or
+  2028), which `metric_panel` does not hold, so all three took the 100 default.
+- a first trip with no salary on file (57 class-1 rows) carried no prior, while
+  a rung after a PRE-ARB rung (145 rows) raised off the league minimum.
+
+The served ARB 1 rungs ranked against projected WAR at Spearman 0.153 (n 187),
+topped out at $2.0M and priced the four 3+ WAR rungs at $0.85M to $1.21M.
+
+**The repair fills existing keys and refits nothing.** The GATE A champion
+tuple, its coefficients, the deflator and every backtest row in
+`data/arb_history.json` are unchanged.
+
+- `war3` is the award season plus the two before it, and `career_war` runs
+  through the award season inclusive: the training definition. Realized WAR is
+  used through the last observed season and projected WAR after it.
+- `hem`, `sem` and `rem` come from the latest observed season. This is a stated
+  proxy: training reads the award season itself, which has not been played.
+- a first trip with no salary on file raises off the prior season's league
+  minimum, which is what a pre-arb player is paid. Age advances with the
+  season. No rung is served below the league minimum (a rule; it binds on one
+  rung).
+
+**What moves:** `/arbitration/` `l` and `tot` on the 202 rows with an ARB 1
+rung, and through them every salary path that runs through one (rule 2, and
+rule 3 closure anchored on such a rung). ARB 1 median $1.342M to $1.542M, p90
+$1.754M to $3.218M, max $2.001M to $12.106M, Spearman against projected WAR
+0.153 to 0.844. Board `tot` sums $2,041.9M to $2,339.5M.
+
+**What does not move:** `arb_history.json`, C3' (scored on those backtest
+rows) and its 0.216 anchor, and the constant `C2_CHAIN_MDAPE_BOUND` (taken
+from the same backtest record).
+
+**Consequences for this gate.** 11f lists `/arbitration/` `tot` and `l` as
+must-not-move ACROSS THE `SALARY_PATH_MODE` FLIP. That still holds: this repair
+does not touch the flag, and `tot` still equals its own ladder. It moves them
+in its own commit, with its own before and after, and C1', C2' and C10' score
+the repaired chain. This section is the registration the C10' response in
+`tools/arb_path_gate.py` names as the repair of the blocking defect on the
+salary leg.
