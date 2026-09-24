@@ -96,6 +96,16 @@ BANNED_CLAIM_FRAGMENTS = (
     "chance that efv is better",
     "posterior probability that efv",
     "odds that efv beats",
+    # Census X01-02 (2026-09-24). glossary.js printed all three as fixed text on
+    # the Source Comparison view while its hero, read off
+    # accuracy.head_to_head_verdict, put eFV at 0.406 against consensus 0.413
+    # (-0.007, floor 0.030, not resolvable). The first sat on a findings card
+    # over the all-vintages frame; the second said eFV led the pooled comparison
+    # by less than its floor, false on every published frame; the third
+    # promised a lead the page does not measure.
+    "best of every grader",
+    "leads the pooled ordering",
+    "the lead grows",
 )
 
 # Copy surfaces the ratchet scans. content/*.json is globbed at test time.
@@ -536,6 +546,35 @@ def test_accuracy_chart_verdict_is_derived():
         "_methAccuracyChart no longer derives the best public rater by "
         "max over the rater list; the three-branch verdict depends on it"
     )
+
+
+# Census X01-02 (2026-09-24): the Source Comparison findings strip must not
+# carry a ranking or AUC card off a frame other than the verdict's. The strip's
+# comparative cards read pooled_efv_common (the all-vintages regression
+# control) beside a hero on the vintage-matched verdict. The guard is
+# structural: the function may not read any pooled_* accuracy block, and the
+# honesty caveat's head-to-head bullet must come from the derived helper.
+_FINDINGS_FN_RE = re.compile(
+    r"function _methEfvFindings\(bt\) \{(.*?)\n\}\n", re.S)
+
+
+def test_findings_strip_reads_no_pooled_frame():
+    js = _read_text("assets/glossary.js").replace("\r\n", "\n")
+    m = _FINDINGS_FN_RE.search(js)
+    assert m, "_methEfvFindings not found in assets/glossary.js (renamed?)"
+    code = "\n".join(ln for ln in m.group(1).split("\n")
+                     if not ln.lstrip().startswith("//"))
+    assert not re.search(r"\.pooled\w*", code), (
+        "_methEfvFindings reads a pooled accuracy block; the head-to-head "
+        "ranking belongs to the hero on head_to_head_verdict's basis")
+    assert not re.search(r"\bauc\b", code), (
+        "_methEfvFindings prints an AUC figure; no floor on the page covers "
+        "it (do-not-reopen item 3)")
+    assert not _HARDCODED_DECIMAL_RE.findall(code), (
+        "_methEfvFindings carries a hard-coded accuracy constant")
+    assert "${_methCaveatHeadToHead(bt)}" in js, (
+        "the honesty caveat's head-to-head bullet is no longer derived from "
+        "head_to_head_verdict")
 
 
 # Control-window and discount copy must track the ACTIVE valuation set, not the

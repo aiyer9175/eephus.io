@@ -38,7 +38,7 @@
 //     items?: [{name, sub?, type?, val?, c?, shot?, logo?}] (newsday),
 //     dateLabel?: "Jul 23, 2026" (newsday),
 //     comp?:  { tiles:[{stat, label, sub?}],
-//               panels:[{title, lo, hi, rows:[{label, v, isEfv?, c?}]}],
+//               panels:[{title, lo, hi, star?, rows:[{label, v, isEfv?, c?}]}],
 //               note? } (sourcecomp) }
 //   EEPHUS_GFX.chipHTML(id, label?)   a ready "Generate GFX" chip button
 (function () {
@@ -592,7 +592,8 @@
       var rows = pn.rows || [];
       var lo = pn.lo || 0;
       var hi = (pn.hi != null && pn.hi !== lo) ? pn.hi : 1;
-      var best = rows.reduce(function (m, r) {
+      // star:false = the caller has no floor that licenses a "best" mark.
+      var best = pn.star === false ? null : rows.reduce(function (m, r) {
         return (r.v != null && (m == null || r.v > m)) ? r.v : m;
       }, null);
       var labelW = Math.round(panelW * 0.34), valW = 82;

@@ -1187,20 +1187,51 @@ function _methCalibrationChart(bt, metricKey, metricLabel, opts) {
   </div>`;
 }
 
+// THE STAR IS EARNED BY A FLOOR, NOT BY A MAXIMUM (2026-09-24, census X01-01).
+// The head-to-head bars and the share card starred whichever bar was longest.
+// The artifact publishes ONE floor for this comparison, head_to_head_verdict
+// (eFV against PROSPX consensus on the vintage-matched rows), and none for the
+// AUC leg, which do-not-reopen item 3 records as null on every admissible cell.
+// So a star goes to the winner of that one floored pair, only when the pair
+// resolves, and only when that winner also tops every bar; otherwise no bar is
+// starred. Returns the rater key to star on the Spearman leg, or null.
+function _hhStarRater(bt) {
+  const acc = bt && bt.accuracy;
+  const hh = acc && acc.head_to_head_verdict;
+  const blk = acc && acc.pooled_efv_common_vintage_matched;
+  if (!hh || hh.resolvable !== true || !blk) return null;
+  if (hh.basis !== "pooled_efv_common_vintage_matched") return null;
+  const winner = hh.xfv_beats ? "xfv" : "prospx_consensus";
+  const w = blk[winner];
+  const vals = Object.keys(blk).map(r => blk[r] && blk[r].spearman).filter(v => v != null);
+  if (!w || w.spearman == null || !vals.length) return null;
+  return w.spearman >= Math.max(...vals) - 1e-9 ? winner : null;
+}
+
 // Source-accuracy comparison - horizontal bars for Spearman ρ + AUC, consensus
 // highlighted. Answers "which is most reliable, and does the blend win?"
+//
+// SAME ROWS AND SAME VINTAGE FOR THE BARS TOO (2026-09-24, census X01-01). The
+// bars read accuracy.pooled, each rater on its own rows (eFV n 3,272, the boards
+// n 4,316), under a title that says "same players", and starred eFV at 0.361
+// against 0.286 while the verdict printed under them, read off the
+// vintage-matched block, put eFV at 0.406 against 0.413. The verdict was moved
+// onto that block on 2026-08-13 and the bars were not. HEADTOHEAD_FRAME_GATE
+// says every artifact-driven surface follows the corrected number, so the bars
+// read the verdict's block with no fallback: an artifact without it renders no
+// chart rather than the uncorrected one.
 function _methAccuracyChart(bt) {
-  const acc = bt.accuracy && bt.accuracy.pooled;
+  const acc = bt.accuracy && bt.accuracy.pooled_efv_common_vintage_matched;
   if (!acc) return "";
   const h2hRaters = (bt.accuracy && bt.accuracy.head_to_head_raters) || bt.raters;
-  const metric = (key, label, lo, hi, fmt) => {
+  const spStar = _hhStarRater(bt);
+  const metric = (key, label, lo, hi, fmt, starRater) => {
     const rows = h2hRaters.map(r => ({ r, v: acc[r] ? acc[r][key] : null })).filter(x => x.v != null);
     if (!rows.length) return "";
-    const best = Math.max(...rows.map(x => x.v));
     const bars = rows.map(x => {
-      const w = Math.max(2, ((x.v - lo) / (hi - lo)) * 100);
+      const w = Math.min(100, Math.max(2, ((x.v - lo) / (hi - lo)) * 100));
       const emph = x.r === "prospx_consensus";
-      const isBest = x.v === best;
+      const isBest = starRater != null && x.r === starRater;
       return `<div class="meth-bar-row">
         <span class="meth-bar-label">${escapeHtml(_raterMeta(x.r).label)}</span>
         <span class="meth-bar-track"><span class="meth-bar-fill${emph ? " is-consensus" : ""}" style="width:${w.toFixed(1)}%;background:${_raterMeta(x.r).color};"></span></span>
@@ -1209,8 +1240,14 @@ function _methAccuracyChart(bt) {
     }).join("");
     return `<div class="meth-metric"><div class="meth-metric-title">${escapeHtml(label)}</div>${bars}</div>`;
   };
-  const sp = metric("spearman", "Ordering skill - Spearman ρ (grade vs realized WAR)", 0, 0.4, v => v.toFixed(3));
-  const au = metric("auc", "Discrimination - AUC (grade predicts ‘became a contributor’)", 0.5, 0.85, v => v.toFixed(3));
+  const sp = metric("spearman", "Ordering skill - Spearman ρ (grade vs realized WAR)", 0, 0.5, v => v.toFixed(3), spStar);
+  const au = metric("auc", "Discrimination - AUC (grade predicts ‘became a contributor’)", 0.5, 0.85, v => v.toFixed(3), null);
+  const hhStar = bt.accuracy.head_to_head_verdict || null;
+  const starNote = `<p class="meth-sub">★ marks a grader only where its gap clears a published noise floor. ${spStar
+    ? "The Spearman gap clears its floor."
+    : (hhStar && hhStar.resolvable === false)
+      ? "The Spearman gap does not, so no bar is starred."
+      : "No floor is published for the Spearman gap here, so no bar is starred."} No floor is published for the AUC leg on these rows, so no AUC bar is starred and no discrimination claim is made.</p>`;
   // SAME ROWS OR THE COMPARISON IS NOT ONE. accuracy.pooled scores each rater on
   // whatever it covers, so the eFV bar ran on 3,210 players and the board bars on
   // 4,259; roughly half the gap that pairing showed was the row difference, not
@@ -1228,8 +1265,7 @@ function _methAccuracyChart(bt) {
   // head_to_head_verdict is computed on, so reading it here keeps the number and
   // the floor beneath it on the same population - which is the mismatch the hero
   // banner below was already fixed for once.
-  const pld = bt.accuracy.pooled_efv_common_vintage_matched
-    || bt.accuracy.pooled_efv_common || bt.accuracy.pooled || {};
+  const pld = acc;
   const x = pld.xfv, c = pld.prospx_consensus, fg = pld.fangraphs, mlb = pld.mlb_pipeline;
   const hh = bt.accuracy.head_to_head_verdict || null;
   let verdict;
@@ -1269,9 +1305,10 @@ function _methAccuracyChart(bt) {
   } else {
     verdict = `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric (reported as measured, not cherry-picked).</p>`;
   }
+  const nRows = bt.accuracy.common_n_efv_vintage_matched || (acc.xfv && acc.xfv.n) || null;
   return `<div class="meth-chart meth-accuracy">
-    <div class="meth-chart-title">Head-to-head predictive accuracy <span class="meth-sub">same players, same outcome, same window</span></div>
-    ${sp}${au}${verdict}
+    <div class="meth-chart-title">Head-to-head predictive accuracy <span class="meth-sub">same players, same outcome, same window, same vintage${nRows ? ` &middot; n=${Number(nRows).toLocaleString()}` : ""}</span></div>
+    ${sp}${au}${starNote}${verdict}
   </div>`;
 }
 
@@ -1426,18 +1463,20 @@ function _methEfvPanel(bt) {
 
 // Findings-led callout strip: the headline numbers that make the eFV case, pulled live from
 // the backtest so they never drift from the artifact. Cards read stat -> what it means.
+//
+// NO RANKING OR AUC CARD HERE (2026-09-24, census X01-02). The strip opened
+// with eFV's Spearman read off pooled_efv_common, the all-vintages frame the
+// artifact keeps as a regression control and HEADTOHEAD_FRAME_GATE bars as a
+// headline, under a hand-typed superlative, one screen below a hero that reads
+// the vintage-matched verdict and puts eFV third of four. It closed with the
+// same frame's contributor AUC, a gap no floor on the page covers and one
+// do-not-reopen item 3 says copy may not present as better discrimination.
+// The hero already prints the ranking on the verdict basis, so both cards are
+// dropped rather than re-derived; the strip keeps the two cards that carry
+// their own basis and interval.
 function _methEfvFindings(bt) {
-  // Same-rows basis as the hero and the chart: these cards sit beside them on
-  // one page, so a card reading eFV on 3,234 rows against the boards on 4,299
-  // would put two different comparisons in one line of type.
-  const p = (bt.accuracy && (bt.accuracy.pooled_efv_common || bt.accuracy.pooled)) || {};
   const det = bt.accuracy && bt.accuracy.xfv_vs_consensus_detail;
-  const x = p.xfv, c = p.prospx_consensus, fg = p.fangraphs, mlb = p.mlb_pipeline;
-  if (!x || x.spearman == null) return "";
-  const f3 = v => (v == null ? "-" : v.toFixed(3));
   const cards = [];
-  cards.push({ stat: f3(x.spearman), label: "eFV ranking skill (Spearman ρ vs realized WAR)",
-    sub: `best of every grader &middot; consensus ${f3(c && c.spearman)} &middot; FanGraphs ${f3(fg && fg.spearman)} &middot; MLB ${f3(mlb && mlb.spearman)}` });
   // WAR-capture headline: the lift curve's top-20% point translated to plain
   // English, read live from capture_curve so it can never drift from the chart.
   const cc = bt.accuracy && bt.accuracy.capture_curve;
@@ -1455,9 +1494,7 @@ function _methEfvFindings(bt) {
         ? "eFV closer on the biggest disagreements"
         : "eFV closer on the biggest disagreements (inside the noise)",
       sub: _dr2.sub });
-  if (x.auc != null)
-    cards.push({ stat: f3(x.auc), label: "eFV AUC (predicts “becomes a contributor”)",
-      sub: `consensus ${f3(c && c.auc)} &middot; FanGraphs ${f3(fg && fg.auc)} &middot; MLB ${f3(mlb && mlb.auc)}` });
+  if (!cards.length) return "";
   return `<div class="meth-findings">${cards.map(cd => `
     <div class="meth-find-card">
       <div class="meth-find-stat">${cd.stat}</div>
@@ -1466,20 +1503,29 @@ function _methEfvFindings(bt) {
     </div>`).join("")}</div>`;
 }
 
-// Year-by-year ordering skill: Spearman per preseason cohort for every grader
-// with per_year coverage. Same inline-SVG idiom as _methCaptureCurve /
-// _methCalibrationChart: owner palette via _raterMeta, eFV drawn boldest and
-// solid, the public sources muted (thin, dashed), identity carried by the
-// legend + line style, never color alone. The takeaway line is computed from
-// the data so it can never contradict the chart.
+// Year-by-year ordering skill: Spearman per preseason cohort for each PUBLIC
+// board. Same inline-SVG idiom as _methCaptureCurve / _methCalibrationChart:
+// owner palette via _raterMeta, consensus solid, the single sources muted
+// (thin, dashed), identity carried by the legend + line style, never color
+// alone.
+//
+// eFV IS NOT DRAWN HERE (2026-09-24, census X01-01). accuracy.per_year scores
+// the boards on each full cohort and eFV on its out-of-sample resolved subset
+// of it (2023: 411 of 829 rows), so an eFV line compared different players,
+// and the bold caption under it counted "best in N of M cohorts" off those
+// mismatched rows. On matched rows that count does not hold, and the artifact
+// publishes no per-cohort floor to call any year either way.
+// HEADTOHEAD_FRAME_GATE puts every eFV comparison on the vintage-matched
+// basis, which lives in the head-to-head chart below; the boards here share
+// identical rows inside each cohort, so their lines remain a fair comparison.
 function _methPerYearChart(bt) {
   const py = bt.accuracy && bt.accuracy.per_year;
   if (!py || typeof py !== "object") return "";
   const years = Object.keys(py).sort();
   if (years.length < 2) return "";
-  // Fixed series order: the head-to-head raters as committed, then eFV.
-  const raterList = ((bt.accuracy && bt.accuracy.head_to_head_raters) || bt.raters || []).slice();
-  if (raterList.indexOf("xfv") === -1) raterList.push("xfv");
+  // Fixed series order: the head-to-head raters as committed, eFV excluded.
+  const raterList = ((bt.accuracy && bt.accuracy.head_to_head_raters) || bt.raters || [])
+    .filter(r => r !== "xfv");
   const series = raterList.map(r => ({
     rater: r,
     pts: years.map(y => {
@@ -1514,23 +1560,10 @@ function _methPerYearChart(bt) {
   }).join("");
   const legend = series.map(s =>
     `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${_raterMeta(s.rater).color};"></span>${escapeHtml(_raterMeta(s.rater).label)}</span>`).join("");
-  // Computed takeaway: in how many resolved cohorts does eFV post the best
-  // Spearman among the graders scored that year?
-  let wins = 0, total = 0;
-  years.forEach(y => {
-    const e = py[y] || {};
-    const vals = raterList.map(r => (e[r] && e[r].spearman)).filter(v => v != null);
-    const xa = e.xfv && e.xfv.spearman;
-    if (xa == null || vals.length < 2) return;
-    total++;
-    if (xa >= Math.max(...vals) - 1e-9) wins++;
-  });
-  const takeaway = total
-    ? `<p class="meth-note"><strong>eFV posts the best ordering skill in ${wins} of ${total} resolved preseason cohorts.</strong> Each point is one preseason's cohort scored against the WAR those prospects went on to produce. eFV is scored on its out-of-sample resolved subset of each cohort, so its yearly n runs smaller than the sources' full cohorts.</p>`
-    : "";
+  const takeaway = `<p class="meth-note">Each point is one preseason cohort, every public board scored on the same players against the WAR those prospects went on to produce. eFV is not drawn: inside each cohort it grades only its out-of-sample resolved subset, so a line for it would compare different players. The head-to-head below scores eFV on identical, vintage-matched rows.</p>`;
   return `<div class="meth-chart">
-    <div class="meth-chart-title">Ordering skill by preseason cohort <span class="meth-sub">Spearman ρ, grade vs realized WAR, per base year</span></div>
-    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Spearman ordering skill by preseason cohort for each grader">
+    <div class="meth-chart-title">Ordering skill by preseason cohort <span class="meth-sub">Spearman ρ, grade vs realized WAR, per base year, public boards</span></div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Spearman ordering skill by preseason cohort for each public board">
       ${grid.join("")}
       <line x1="${ML}" y1="${MT + iH}" x2="${ML + iW}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
       <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
@@ -1745,6 +1778,30 @@ function _methCaveatArchetypeClause(bt) {
   });
   if (!total) return "";
   return ` Ordering and discrimination also split by archetype: on identical rows eFV posts the row-best Spearman in ${spWins} of ${total} archetypes and the row-best AUC in ${aucWins} of ${total} - row maxima, not significance claims - which is why the two tables below can look like different stories.`;
+}
+
+// The head-to-head bullet of the honesty caveat is DERIVED (2026-09-24, census
+// X01-02). The static bullet it replaces said eFV led the pooled comparison by
+// less than its floor, which was false on every frame the artifact publishes:
+// on the verdict basis eFV trails, and on the two tilted frames its lead clears
+// the floor. Three branches off head_to_head_verdict, the same call the hero
+// makes, so the caveat cannot say what the verdict does not.
+function _methCaveatHeadToHead(bt) {
+  const hh = bt && bt.accuracy && bt.accuracy.head_to_head_verdict;
+  const fmt = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
+  if (!hh || hh.delta == null || hh.mde95 == null) {
+    return "<strong>The head-to-head is a point estimate.</strong> No floored verdict is loaded, so no ordering claim is made.";
+  }
+  const n = hh.n != null ? `the same ${Number(hh.n).toLocaleString()}` : "identical";
+  const d = Number(hh.delta);
+  const sd = (d > 0 ? "+" : "") + d.toFixed(3);
+  if (hh.resolvable === true && hh.xfv_beats === true) {
+    return `<strong>eFV's head-to-head lead clears its floor.</strong> On ${n} vintage-matched rows eFV leads PROSPX consensus by ${sd} against a noise floor of ${fmt(hh.mde95)}.`;
+  }
+  if (hh.resolvable === true) {
+    return `<strong>eFV trails the consensus by a margin that clears its floor.</strong> On ${n} vintage-matched rows eFV minus PROSPX consensus is ${sd} against a noise floor of ${fmt(hh.mde95)}.`;
+  }
+  return `<strong>The head-to-head does not resolve.</strong> On ${n} vintage-matched rows eFV minus PROSPX consensus is ${sd} against a noise floor of ${fmt(hh.mde95)}, so neither grade is called the winner.`;
 }
 
 // "How to Read the Site" (Part 1 anchor) - annotated anatomy of a player card,
@@ -2158,8 +2215,21 @@ function _methAdGfxSpec() {
     });
   }
 
-  const panels = [{ title: "Ordering skill · Spearman, common resolved set", lo: 0, hi: 0.5, rows: spRows }];
-  if (auRows.length >= 2) panels.push({ title: "Discrimination · contributor AUC", lo: 0.5, hi: 0.85, rows: auRows });
+  // THE STAR IS EARNED BY A FLOOR HERE TOO (2026-09-24, census X01-01 sibling).
+  // The engine starred each panel's longest bar, so this card starred eFV's
+  // contributor AUC (0.754 against consensus 0.751) with no floor behind it,
+  // which do-not-reopen item 3 forbids. The Spearman panel stars the winner of
+  // verdict_vs_consensus only when that verdict resolves and the winner also
+  // tops every bar; the AUC panel never stars.
+  const vv = sb.head_to_head.verdict_vs_consensus || null;
+  let spStar = false;
+  if (vv && vv.resolvable === true) {
+    const win = vv.xfv_beats ? spRows.find(r => r.isEfv)
+      : spRows.find(r => !r.isEfv && r.label === ((cons && cons.label) || _raterMeta("prospx_consensus").label));
+    spStar = !!(win && win.v >= spRows[0].v - 1e-9);
+  }
+  const panels = [{ title: "Ordering skill · Spearman, common resolved set", lo: 0, hi: 0.5, rows: spRows, star: spStar }];
+  if (auRows.length >= 2) panels.push({ title: "Discrimination · contributor AUC (no floor, none starred)", lo: 0.5, hi: 0.85, rows: auRows, star: false });
 
   const nH2h = cons && cons.spearman ? cons.spearman.n : null;
   return {
@@ -2175,7 +2245,7 @@ function _methAdGfxSpec() {
     filenameBase: "eephus-efv-methodology",
     caption: "Forward-chained, out of sample, leakage-free · every change ships through a pre-registered gate and failed gates are committed as no-ships",
     comp: { tiles: tiles, panels: panels,
-      note: "eFV enters every cell with its forward-chained out-of-sample grade, never an in-sample fit. Surplus dollars are calibrated expected values. Higher is better · ★ = best in metric." },
+      note: "eFV enters every cell with its forward-chained out-of-sample grade, never an in-sample fit. Surplus dollars are calibrated expected values. Higher is better · ★ = gap clears its floor." },
   };
 }
 
@@ -3125,10 +3195,20 @@ function _methScoreboardHTML() {
 // (_S.backtest primary; _S.scoreEval fills capture / receipts if the backtest
 // detail is absent), so the card can never carry a number the page does not.
 // Returns null while the data has not loaded - the click is then a no-op.
+//
+// SAME BASIS AS THE PAGE (2026-09-24, census X01-01). The card read
+// accuracy.pooled (eFV n 3,272 against the boards n 4,316) under the subtitle
+// "Same players", starred eFV in both panels and tiled "0.757, best public
+// 0.736", the full-pool AUC do-not-reopen item 3 rules inadmissible. It now
+// reads the vintage-matched block the verdict is computed on, with no fallback,
+// stars only through _hhStarRater, and carries no AUC tile: the AUC leg has no
+// floor on these rows, and a share card travels without the page's caveats.
 function _scxGfxSpec() {
   const bt = _S.backtest;
-  if (!bt || bt.__error || !bt.accuracy || !bt.accuracy.pooled) return null;
-  const pooled = bt.accuracy.pooled;
+  if (!bt || bt.__error || !bt.accuracy || !bt.accuracy.pooled_efv_common_vintage_matched) return null;
+  const pooled = bt.accuracy.pooled_efv_common_vintage_matched;
+  const hh = bt.accuracy.head_to_head_verdict || null;
+  const spStar = _hhStarRater(bt);
   const raters = ((bt.accuracy.head_to_head_raters) || bt.raters || []).slice();
   if (raters.indexOf("xfv") === -1 && pooled.xfv) raters.push("xfv");
   const f3 = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
@@ -3151,16 +3231,12 @@ function _scxGfxSpec() {
   // non-eFV row of the already-sorted list.
   const tiles = [];
   const bestPubSp = sp.filter(r => !r.isEfv)[0];
-  const bestPubAu = au.filter(r => !r.isEfv)[0];
+  const floorTxt = (hh && hh.resolvable === true) ? " · gap clears its floor"
+    : (hh && hh.resolvable === false) ? " · gap inside its floor" : "";
   if (x.spearman != null) tiles.push({
     stat: f3(x.spearman),
     label: "eFV ordering skill (Spearman)",
-    sub: bestPubSp ? "best public " + f3(bestPubSp.v) + " (" + bestPubSp.label + ")" : "grade vs realized WAR",
-  });
-  if (x.auc != null) tiles.push({
-    stat: f3(x.auc),
-    label: "eFV contributor AUC",
-    sub: bestPubAu ? "best public " + f3(bestPubAu.v) + " (" + bestPubAu.label + ")" : "predicts a 3+ WAR career",
+    sub: bestPubSp ? "best public " + f3(bestPubSp.v) + " (" + bestPubSp.label + ")" + floorTxt : "grade vs realized WAR",
   });
   const cc = bt.accuracy.capture_curve;
   const sbCap = sb && sb.top20_capture && sb.top20_capture.top20;
@@ -3194,27 +3270,30 @@ function _scxGfxSpec() {
                       : "resolved disagreements, no interval available",
   });
 
-  // Bar panels share the page chart's scales (_methAccuracyChart lo/hi).
+  // Bar panels share the page chart's scales (_methAccuracyChart lo/hi). The
+  // engine stars a panel's longest bar unless the panel says star:false.
   const panels = [];
-  if (sp.length >= 2) panels.push({ title: "Ordering skill · Spearman (grade vs realized WAR)", lo: 0, hi: 0.4, rows: sp });
-  if (au.length >= 2) panels.push({ title: "Discrimination · contributor AUC", lo: 0.5, hi: 0.85, rows: au });
+  if (sp.length >= 2) panels.push({ title: "Ordering skill · Spearman (grade vs realized WAR)", lo: 0, hi: 0.5, rows: sp, star: spStar != null });
+  if (au.length >= 2) panels.push({ title: "Discrimination · contributor AUC (no floor, none starred)", lo: 0.5, hi: 0.85, rows: au, star: false });
 
   const years = (bt.window && bt.window.years) || [];
   const span = years.length ? years[0] + "-" + years[years.length - 1] : "";
-  const nCommon = bt.accuracy.common_n;
-  const note = (x.n && nCommon)
-    ? "eFV is scored out of sample on its resolved subset (n=" + Number(x.n).toLocaleString()
-      + "); public sources on the full common set (n=" + Number(nCommon).toLocaleString()
-      + "). Higher is better · ★ = best in metric."
-    : "Higher is better · ★ = best in metric.";
+  const nCommon = bt.accuracy.common_n_efv_vintage_matched || x.n || null;
+  const sgn3 = v => (v == null || isNaN(Number(v)) ? "-" : (Number(v) > 0 ? "+" : "") + Number(v).toFixed(3));
+  const call = (hh && hh.delta != null && hh.mde95 != null)
+    ? "eFV vs consensus " + sgn3(hh.delta) + ", floor " + f3(hh.mde95)
+      + (hh.resolvable ? ", resolved" : ", not resolvable") + " · "
+    : "";
+  const note = "Every grader on the same rows, base year equal to the eFV decision year · "
+    + call + "★ only where a gap clears a published floor";
   return {
     kind: "sourcecomp",
     module: "Source Comparison",
     accentToken: "--accent-lilac",
     format: "twitter",
     title: "Does eFV outperform its sources?",
-    subtitle: "Same players, same outcome, same window"
-      + (nCommon ? " · common set n=" + Number(nCommon).toLocaleString() : "")
+    subtitle: "Same players, same outcome, same window, same vintage"
+      + (nCommon ? " · n=" + Number(nCommon).toLocaleString() : "")
       + (span ? " · preseason cohorts " + span : ""),
     url: "eephus.io/glossary/",
     filenameBase: "eephus-source-comparison",
@@ -3300,8 +3379,8 @@ function renderSourceComparison() {
           <li><strong>Short track record.</strong> Only ${bt.window.years.length} preseason base years (${bt.window.years.join(", ")}) are old enough to have resolved outcomes. The newer sources have <em>zero</em> resolved cohorts.</li>
           <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40-60 across all years - a handful of hits or misses moves its rates a lot.</li>
           <li><strong>Censoring.</strong> Outcomes are cumulative WAR as of ${escapeHtml(bt.as_of_date || "today")}; the 2023 cohort has had ~3 seasons, the 2021 cohort ~5. Rate metrics mitigate but don't erase this.</li>
-          <li><strong>eFV's edge is a point estimate, and the pooled one does not clear its floor.</strong> eFV leads the pooled ordering comparison, but by less than the noise floor of that comparison, so we report it as unresolved rather than as a win.${_methCaveatArchetypeClause(bt)} The margins are a few Spearman points either way: a calibrated grade, not a perfect predictor.</li>
-          <li><strong>eFV is in-the-loop, not infallible.</strong> Its grades come from production we have; for the youngest prospects (recent draftees, int'l signs with no pro reps) it leans on the consensus prior, and where richer data exists (Statcast, Stuff+) it is only a live overlay, not yet historical. The lead grows when the data does.</li>
+          <li>${_methCaveatHeadToHead(bt)}${_methCaveatArchetypeClause(bt)}</li>
+          <li><strong>eFV is in-the-loop, not infallible.</strong> Its grades come from production we have; for the youngest prospects (recent draftees, int'l signs with no pro reps) it leans on the consensus prior, and where richer data exists (Statcast, Stuff+) it is only a live overlay, not yet historical.</li>
         </ul>
       </div>`;
   }
