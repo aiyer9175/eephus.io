@@ -1,0 +1,240 @@
+/* Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Noah J. Dengler (@ARKNDJL), 2026 */
+
+/* /ledger/ - Club Ledger. Shares site.css for type and chrome; tokens only.
+   COLOUR RULES BAKED IN: only an index cell (Cost+, OrgSur+, a fin_* score_100)
+   takes a ruler class, and the app takes it from EephusTiers on the `z` ladder.
+   A salary cell, a club surplus total and a cap-space cell print plain; the only
+   colour a dollar figure ever carries is the SIGN pair (--up / --down). Column
+   hiding on the League board and the contract ledger is decided by a CONTAINER
+   query on the block, never by the viewport. */
+
+.ledger-app .ledger-lede { font-size: 15px; line-height: 1.55; margin: 6px 0 14px; max-width: 74ch; }
+.ledger-app .ledger-note { font-size: 13px; line-height: 1.5; opacity: .85; margin: 8px 0; max-width: 78ch; }
+.ledger-app .ledger-count { font-size: 12px; opacity: .6; margin: 6px 0; }
+.ledger-app .ledger-foot { font-size: 12px; opacity: .7; margin: 14px 0 4px; max-width: 78ch; font-style: italic; }
+
+/* the CBA carry-forward banner: every 2027 dollar sits under one of these */
+.ledger-app .ledger-banner {
+  border: 1px solid var(--border-light); border-left: 3px solid var(--accent-gold);
+  background: var(--bg-secondary); padding: 8px 12px; margin: 10px 0; font-size: 12.5px; line-height: 1.5;
+}
+
+/* sign pair: the ONLY colour a dollar figure carries */
+.ledger-app .ledger-pos { color: var(--up); }
+.ledger-app .ledger-neg { color: var(--down); }
+
+/* blocks and the 12-column grid at desk width */
+.ledger-app .ledger-block {
+  container-type: inline-size; container-name: ledgerblock;
+  border: 1px solid var(--border-light); background: var(--bg-secondary);
+  padding: 12px 16px; margin: 0 0 16px; min-width: 0;
+}
+.ledger-app .ledger-block h2 { font-size: 16px; margin: 0 0 6px; }
+.ledger-app .ledger-block h3 { font-size: 13.5px; margin: 14px 0 4px; }
+.ledger-app .ledger-eyebrow {
+  font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 2px;
+}
+.ledger-app .ledger-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; margin-top: 12px; }
+.ledger-app .ledger-grid .ledger-block { margin: 0; }
+.ledger-app .ledger-span-12 { grid-column: span 12; }
+.ledger-app .ledger-span-7 { grid-column: span 7; }
+.ledger-app .ledger-span-6 { grid-column: span 6; }
+.ledger-app .ledger-span-5 { grid-column: span 5; }
+@media (max-width: 900px) {
+  .ledger-app .ledger-span-7, .ledger-app .ledger-span-6, .ledger-app .ledger-span-5 { grid-column: span 12; }
+}
+
+/* dark blocks name their blocker */
+.ledger-app .ledger-dark { border-left: 3px solid var(--border-light); padding-left: 12px; margin: 8px 0; }
+.ledger-app .ledger-darktag {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+  border: 1px solid var(--border-light); padding: 0 6px; opacity: .75; margin-left: 6px; vertical-align: middle;
+}
+.ledger-app .ledger-dark-why { font-size: 12.5px; margin: 4px 0; }
+
+/* tiles: 2x2 at phone width, four across at desk */
+.ledger-app .ledger-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
+.ledger-app .ledger-tiles--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ledger-app .ledger-tile { border: 1px solid var(--border-light); padding: 8px 10px; min-width: 0; }
+.ledger-app .ledger-tile-title { font-size: 11.5px; opacity: .7; }
+.ledger-app .ledger-tile-big { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 2px 0; }
+.ledger-app .ledger-tile-sub { font-size: 11px; opacity: .65; line-height: 1.4; }
+@media (max-width: 720px) {
+  .ledger-app .ledger-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ledger-app .ledger-tile-big { font-size: 19px; }
+}
+
+/* controls: native, on theme. The picker carries .eephus-select (site.css foot
+   layer); the season toggle is two native radios whose fill is the site accent
+   through the site-wide accent-color rule. */
+.ledger-app .ledger-controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 10px 0; }
+.ledger-app .ledger-controls label { font-size: 12px; color: var(--text-tertiary); display: inline-flex; align-items: center; gap: 6px; }
+.ledger-app .ledger-chip { border: 1px solid var(--border-light); padding: 3px 8px; cursor: pointer; color: var(--text-primary); }
+.ledger-app .ledger-chip input { margin: 0; }
+
+/* tables */
+.ledger-app .ledger-scroll { overflow-x: auto; margin: 8px 0; }
+.ledger-app .ledger-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.ledger-app .ledger-table th, .ledger-app .ledger-table td { padding: 4px 8px; text-align: right; white-space: nowrap; }
+.ledger-app .ledger-table th:first-child, .ledger-app .ledger-table td:first-child { text-align: left; }
+.ledger-app .ledger-table thead th { background: var(--bg-secondary); border-bottom: 2px solid var(--border-light); font-weight: 600; }
+.ledger-app .ledger-table thead th[data-lsort] { cursor: pointer; }
+.ledger-app .ledger-table thead th:focus { outline: 2px solid var(--accent-gold); outline-offset: -2px; }
+.ledger-app .ledger-table td { border-bottom: 1px solid var(--border-subtle); font-variant-numeric: tabular-nums; }
+.ledger-app .ledger-table tbody tr:nth-child(even) { background: var(--bg-hover); }
+.ledger-app .ledger-table tfoot td { border-top: 2px solid var(--border-light); font-style: italic; opacity: .85; }
+.ledger-app .ledger-table .ledger-th-tag { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; opacity: .6; margin-left: 4px; }
+.ledger-app .ledger-mini { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ledger-app .ledger-mini td { padding: 2px 0; border-bottom: 1px solid var(--border-subtle); }
+.ledger-app .ledger-mini td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* the League board: sticky first column and a CONTAINER query that keeps four
+   columns plus the row expander under 560px of board width */
+.ledger-app .ledger-board { container-type: inline-size; container-name: ledgerboard; overflow-x: auto; }
+.ledger-app .ledger-board .ledger-table th:first-child, .ledger-app .ledger-board .ledger-table td:first-child {
+  position: sticky; left: 0; background: var(--bg-secondary); z-index: 1;
+}
+.ledger-app .ledger-board .ledger-table { font-size: 11.5px; }
+.ledger-app .ledger-board .ledger-table th, .ledger-app .ledger-board .ledger-table td { padding: 4px 5px; }
+.ledger-app .lb-xp { display: none; }
+.ledger-app .lb-lab-short { display: none; }
+.ledger-app .ledger-xp-btn {
+  font: inherit; font-size: 12px; line-height: 1; background: none; border: 1px solid var(--border-light);
+  color: inherit; padding: 2px 7px; cursor: pointer; min-width: 36px; min-height: 28px;
+}
+.ledger-app .ledger-xp-row td { white-space: normal; background: var(--bg-hover); }
+.ledger-app .ledger-dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; font-size: 12px; margin: 4px 0; }
+.ledger-app .ledger-dl dt { color: var(--text-tertiary); }
+.ledger-app .ledger-dl dd { margin: 0; font-variant-numeric: tabular-nums; }
+/* under 1400px of board width the headers take their short labels (the glossary
+   hook rides both), so sixteen columns sit inside the block at desk */
+@container ledgerboard (max-width: 1400px) {
+  .ledger-app .ledger-board .lb-lab-long { display: none; }
+  .ledger-app .ledger-board .lb-lab-short { display: inline; }
+}
+@container ledgerboard (max-width: 560px) {
+  .ledger-app .ledger-board .lb-col-hide { display: none; }
+  .ledger-app .ledger-board .lb-xp { display: table-cell; }
+  .ledger-app .ledger-board .lb-lab-long { display: none; }
+  .ledger-app .ledger-board .lb-lab-short { display: inline; }
+  /* the footer labels wrap so the sticky first column is sized by the codes */
+  .ledger-app .ledger-board tfoot td:first-child { white-space: normal; }
+}
+
+/* the quadrant: descriptive, one series, hidden under 700px of board width
+   (the table above carries the same numbers) */
+.ledger-app .ledger-quadrant { max-width: 560px; margin: 12px 0; }
+.ledger-app .ledger-quadrant svg { width: 100%; height: auto; display: block; color: var(--text-secondary); }
+.ledger-app .ledger-quadrant .lq-grid { stroke: var(--border-subtle); stroke-width: 1; }
+.ledger-app .ledger-quadrant .lq-axis { stroke: var(--border-light); stroke-width: 1; }
+.ledger-app .ledger-quadrant .lq-dot { fill: var(--accent-cyan); stroke: var(--bg-secondary); stroke-width: 2; }
+.ledger-app .ledger-quadrant .lq-hit { fill: transparent; }
+.ledger-app .ledger-quadrant .lq-hit:hover + .lq-dot, .ledger-app .ledger-quadrant .lq-dot:hover { fill: var(--accent-gold); }
+.ledger-app .ledger-quadrant text { fill: var(--text-secondary); font-size: 10px; font-family: var(--font-retro-mono); }
+.ledger-app .ledger-quadrant .lq-title { fill: var(--text-tertiary); font-size: 10.5px; }
+@container ledgerboard (max-width: 699px) { .ledger-app .ledger-quadrant { display: none; } }
+
+/* the CBT ladder: four rungs, a marker, the overage in $M. Vertical at desk,
+   a rung LIST at phone width. */
+.ledger-app .ledger-ladder { position: relative; height: 220px; margin: 12px 8px 12px 0; border-left: 2px solid var(--border-light); }
+.ledger-app .ledger-rung { position: absolute; left: 0; right: 0; border-top: 1px solid var(--border-light); font-size: 11px; color: var(--text-tertiary); padding-left: 8px; }
+.ledger-app .ledger-marker { position: absolute; left: -7px; width: 12px; height: 12px; background: var(--accent-cyan); border: 2px solid var(--bg-secondary); }
+.ledger-app .ledger-marker-lab { position: absolute; left: 12px; font-size: 12px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ledger-app .ledger-rungs { list-style: none; padding: 0; margin: 8px 0; font-size: 12px; }
+.ledger-app .ledger-rungs li { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding: 3px 0; font-variant-numeric: tabular-nums; }
+.ledger-app .ledger-rungs li.is-here { font-weight: 700; }
+@container ledgerblock (max-width: 560px) {
+  .ledger-app .ledger-ladder { display: none; }
+  .ledger-app .ledger-rungs { display: block; }
+}
+@container ledgerblock (min-width: 561px) { .ledger-app .ledger-rungs { display: none; } }
+
+/* commitments: one stacked bar per season, three segments, a 2px surface gap
+   between fills, the three figures beneath. The segment hues are tokens; a
+   legend and the printed figures carry identity, never the colour alone. */
+.ledger-app .ledger-season { margin: 8px 0 12px; }
+.ledger-app .ledger-season-head { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
+.ledger-app .ledger-stack { position: relative; display: flex; height: 14px; width: 100%; background: var(--bg-hover); }
+.ledger-app .ledger-stack span { display: block; height: 100%; margin-right: 2px; min-width: 0; }
+.ledger-app .ledger-seg-contract { background: color-mix(in srgb, var(--accent-cyan) 55%, transparent); }
+.ledger-app .ledger-seg-arb { background: color-mix(in srgb, var(--accent-gold) 55%, transparent); }
+.ledger-app .ledger-seg-prearb { background: color-mix(in srgb, var(--text-tertiary) 45%, transparent); }
+.ledger-app .ledger-threshold { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--text-primary); }
+.ledger-app .ledger-threshold-lab { font-size: 10.5px; color: var(--text-tertiary); }
+.ledger-app .ledger-segs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; font-size: 11.5px; margin-top: 4px; }
+.ledger-app .ledger-segs b { display: block; font-variant-numeric: tabular-nums; }
+.ledger-app .ledger-segs i { font-style: normal; opacity: .65; }
+.ledger-app .ledger-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11px; opacity: .8; margin: 6px 0; }
+.ledger-app .ledger-legend i { display: inline-block; width: 10px; height: 10px; vertical-align: middle; margin-right: 4px; }
+
+/* the 2027 allocation split (Spotrac active / injured / retained / buried) */
+.ledger-app .ledger-split { display: flex; height: 10px; width: 100%; background: var(--bg-hover); margin: 6px 0 2px; }
+.ledger-app .ledger-split span { display: block; height: 100%; margin-right: 2px; }
+.ledger-app .ledger-split-active { background: color-mix(in srgb, var(--accent-cyan) 55%, transparent); }
+.ledger-app .ledger-split-injured { background: color-mix(in srgb, var(--accent-gold) 55%, transparent); }
+.ledger-app .ledger-split-retained { background: color-mix(in srgb, var(--text-tertiary) 45%, transparent); }
+.ledger-app .ledger-split-buried { background: color-mix(in srgb, var(--text-secondary) 35%, transparent); }
+
+/* contract ledger season cells: STATES drawn with a border and a strike, exactly
+   as the /projections/ salary strip draws them; no ruler class, ever */
+.ledger-app .ledger-cell { display: inline-block; min-width: 56px; padding: 0 4px; border: 1px solid transparent; }
+.ledger-app .ledger-cell.is-signed { border-color: var(--border-light); }
+.ledger-app .ledger-cell.is-arb { border-color: var(--accent-gold); border-style: dashed; }
+.ledger-app .ledger-cell.is-prearb { color: var(--text-tertiary); }
+.ledger-app .ledger-cell.is-cut { text-decoration: line-through; color: var(--text-tertiary); }
+.ledger-app .ledger-opt { font-size: 10px; border: 1px solid var(--border-light); padding: 0 5px; margin-left: 4px; white-space: nowrap; }
+.ledger-app .ledger-src { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+/* the base rule sits BEFORE the container query so the query wins under 560px
+   (equal specificity: source order decides, exactly as .lb-xp above) */
+.ledger-app .lc-xp { display: none; }
+@container ledgerblock (max-width: 560px) {
+  .ledger-app .lc-col-hide { display: none; }
+  .ledger-app .lc-xp { display: table-cell; }
+}
+
+/* z chips, flags, chips generally */
+.ledger-app .ledger-flag {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .06em; border: 1px solid var(--border-light);
+  padding: 0 6px; opacity: .75; margin-left: 4px; white-space: nowrap;
+}
+.ledger-app .ledger-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.ledger-app .ledger-zchip { border: 1px solid var(--border-light); padding: 5px 9px; font-size: 12px; min-width: 84px; }
+.ledger-app .ledger-zchip b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; }
+.ledger-app .ledger-zchip .ledger-zlbl { opacity: .7; }
+
+/* sparklines: one polyline in currentColor */
+.ledger-app .ledger-spark { width: 100%; max-width: 520px; margin: 6px 0; }
+.ledger-app .ledger-spark svg { width: 100%; height: 64px; display: block; color: var(--text-secondary); }
+.ledger-app .ledger-spark .ledger-spark-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.ledger-app .ledger-spark .ledger-spark-zero { stroke: var(--border-light); stroke-width: 1; }
+
+/* the two-line dollars-per-WAR chart on the Rules tab: legend + direct labels */
+.ledger-app .ledger-dpw svg { width: 100%; max-width: 560px; height: auto; display: block; color: var(--text-secondary); }
+.ledger-app .ledger-dpw .ld-open { fill: none; stroke: var(--accent-cyan); stroke-width: 2; }
+.ledger-app .ledger-dpw .ld-arb { fill: none; stroke: var(--accent-gold); stroke-width: 2; }
+.ledger-app .ledger-dpw text { fill: var(--text-secondary); font-size: 10px; font-family: var(--font-retro-mono); }
+.ledger-app .ledger-dpw .lq-grid { stroke: var(--border-subtle); stroke-width: 1; }
+
+/* the link rail */
+.ledger-app .ledger-links { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.ledger-app .ledger-links a { border: 1px solid var(--border-light); padding: 3px 8px; font-size: 12px; white-space: nowrap; }
+
+/* pools strip: five cells */
+.ledger-app .ledger-strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin: 6px 0; }
+.ledger-app .ledger-strip div { border: 1px solid var(--border-light); padding: 4px 6px; font-size: 11.5px; min-width: 0; }
+.ledger-app .ledger-strip b { display: block; font-variant-numeric: tabular-nums; }
+@container ledgerblock (max-width: 560px) { .ledger-app .ledger-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.ledger-app details summary { cursor: pointer; font-size: 12.5px; margin: 6px 0; }
+.ledger-app .ledger-leaves { list-style: none; padding: 0; margin: 6px 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; }
+.ledger-app .ledger-leaves li { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border-subtle); padding: 3px 0; font-size: 12.5px; }
+.ledger-app .ledger-leaves .ledger-letter { font-weight: 700; min-width: 2.2em; text-align: right; }
+@container ledgerblock (max-width: 560px) { .ledger-app .ledger-leaves { grid-template-columns: 1fr; } }
+
+@media (max-width: 720px) {
+  .ledger-app .ledger-block { padding: 10px 12px; }
+  .ledger-app .ledger-table { font-size: 12px; }
+}

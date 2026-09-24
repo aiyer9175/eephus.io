@@ -1,5 +1,5 @@
 {
- "version": "2026-09-11",
+ "version": "2026-09-23",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -7603,6 +7603,363 @@
    ],
    "shelf": "ark",
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "cbt_payroll",
+   "term": "CBT payroll",
+   "category": "financial",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "tax payroll",
+    "competitive balance tax payroll",
+    "CBT"
+   ],
+   "priority": 40,
+   "definition": "A club's payroll as the competitive balance tax counts it: the average annual value of every contract on the 40-man roster plus benefits, the basis the threshold is measured against.",
+   "methodology": "Read from Spotrac's tax page into storage.fa_team_payroll (tax_payroll_usd) and served by ledger_export.py; the Club Ledger prints it beside the season's threshold from data/cba_rules.json and never mixes it with the cash allocation basis.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "payroll_allocations",
+    "cbt_bracket",
+    "payor_tier"
+   ],
+   "shelf": "foundation",
+   "origin": "2022 MLB collective bargaining agreement; Spotrac's payroll tables"
+  },
+  {
+   "id": "payroll_allocations",
+   "term": "Payroll allocations",
+   "category": "financial",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "total payroll",
+    "cash payroll",
+    "active payroll"
+   ],
+   "priority": 40,
+   "definition": "A club's cash payroll for a season as Spotrac allocates it, active plus injured plus retained plus buried, which differs from the CBT basis because it counts cash paid rather than average annual value.",
+   "methodology": "storage.fa_team_payroll total_payroll_usd and the four-way split where Spotrac's page carries it (2027 only today); ledger_export.py serves the split for 2027 and says the 2026 page has none.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "cbt_payroll",
+    "retained_salary",
+    "dead_money"
+   ],
+   "shelf": "foundation",
+   "origin": "2022 MLB collective bargaining agreement; Spotrac's payroll tables"
+  },
+  {
+   "id": "cbt_bracket",
+   "term": "CBT bracket",
+   "category": "financial",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "surcharge tier",
+    "tax bracket"
+   ],
+   "priority": 40,
+   "definition": "Which band of the competitive balance tax a club's tax payroll falls in: under the threshold, the base band, or the first, second or third surcharge band at fixed dollar offsets above the threshold.",
+   "methodology": "The offsets and the threshold come from data/cba_rules.json through fa_cba; ledger_export.py names the band from the club's Spotrac tax payroll and prints the 2027 band on both the platform carry-forward basis and Spotrac's basis.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "cbt_payroll",
+    "computed_cbt_bill",
+    "payor_tier"
+   ],
+   "shelf": "foundation",
+   "origin": "2022 MLB collective bargaining agreement; Spotrac's payroll tables"
+  },
+  {
+   "id": "computed_cbt_bill",
+   "term": "Computed CBT bill",
+   "category": "financial",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "computed tax",
+    "tax bill"
+   ],
+   "priority": 40,
+   "definition": "The tax a club would owe under the published schedule, computed here from its Spotrac tax payroll, its payor tier and the rate table, and printed beside Spotrac's own estimate where one exists.",
+   "methodology": "ledger_export.computed_cbt_bill applies the base rate for the payor year and the surcharge rates by band, all read from data/cba_rules.json; a rule application, not a forecast, and never the actual bill paid, which no source carries.",
+   "example": "",
+   "formula": "bill = base x min(over, t1) + (base + s1) x clip(over - t1, 0, t2 - t1) + (base + s2) x clip(over - t2, 0, t3 - t2) + (base + s3) x max(over - t3, 0)",
+   "seeAlso": [
+    "cbt_bracket",
+    "payor_tier",
+    "cbt_payroll"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "payor_tier",
+   "term": "Payor tier",
+   "category": "financial",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "payor status",
+    "first-time payor",
+    "repeat payor"
+   ],
+   "priority": 40,
+   "definition": "How many consecutive seasons a club has paid the competitive balance tax, which sets its base rate: non-payor, first time, second time, or third time and beyond.",
+   "methodology": "Spotrac's payor status per season in storage.fa_team_payroll; for 2027 the Club Ledger serves Spotrac's token where the page carries one and derives the next step from the 2026 status only where it is blank, labelling which.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "cbt_bracket",
+    "computed_cbt_bill",
+    "qo_tax"
+   ],
+   "shelf": "foundation",
+   "origin": "2022 MLB collective bargaining agreement; Spotrac's payroll tables"
+  },
+  {
+   "id": "dead_money",
+   "term": "Dead money",
+   "category": "financial",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "released obligations",
+    "buyouts"
+   ],
+   "priority": 40,
+   "definition": "Salary a club still owes to players it has released or bought out, counted against its payroll though nobody is on the roster for it.",
+   "methodology": "Spotrac's dead-money table on each club page; the Club Ledger block is dark until the read side tags rows with their table id, so the priced contract set cannot widen by accident.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "retained_salary",
+    "payroll_allocations"
+   ],
+   "shelf": "foundation",
+   "origin": "2022 MLB collective bargaining agreement; Spotrac's payroll tables"
+  },
+  {
+   "id": "retained_salary",
+   "term": "Retained salary",
+   "category": "financial",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "retained obligations",
+    "cash considerations"
+   ],
+   "priority": 40,
+   "definition": "Money a club keeps paying on a contract it traded away, which sits on the paying club's books and is never folded into the employing club's average annual value.",
+   "methodology": "Spotrac's retained table per club page; the Club Ledger serves the 2027 club total from the allocation split as a cross-check and keeps the per-player block dark until the table id tag lands.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "dead_money",
+    "payroll_allocations"
+   ],
+   "shelf": "foundation",
+   "origin": "2022 MLB collective bargaining agreement; Spotrac's payroll tables"
+  },
+  {
+   "id": "contract_dollars_on_file",
+   "term": "Contract dollars on file",
+   "category": "fa",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "committed dollars",
+    "guaranteed dollars"
+   ],
+   "priority": 40,
+   "definition": "The season's salary total across a club's contracts that Spotrac has on file, the one segment of the commitments timeline that is a record rather than a projection.",
+   "methodology": "Summed by ledger_export.py from mlb_projections.json salPath cells whose source is contract; printed beside projected arbitration steps and pre-arbitration minimums as three labelled segments that no key sums into a payroll.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "arb_exposure",
+    "payroll_horizon",
+    "salary_path"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "arb_exposure",
+   "term": "Arbitration exposure",
+   "category": "fa",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "arbitration cost",
+    "arb steps"
+   ],
+   "priority": 40,
+   "definition": "The sum of a club's projected arbitration awards for a season across every eligible player, an upper bound rather than a payroll forecast because non-tenders and extensions are absent.",
+   "methodology": "ledger_export.py sums the 2027 ladder step of every data/arbitration.json row for the club; the arb_award model is provisional and every 2027 step is a CBA carry-forward, both of which the cell says.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "arb_award_model",
+    "contract_dollars_on_file",
+    "cba_carry_forward"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "payroll_horizon",
+   "term": "Payroll horizon",
+   "category": "fa",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "roll-off season"
+   ],
+   "priority": 40,
+   "definition": "The first season in which a club's contract dollars on file fall below half of its current season's figure, a plain reading of when today's commitments roll off.",
+   "methodology": "Derived by ledger_export.py from the commitments timeline's contract segment only; arbitration steps and minimums are not part of it, and a club that never crosses the half-line within the horizon prints beyond it.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "contract_dollars_on_file",
+    "salary_path"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "cost_plus",
+   "term": "Cost+",
+   "category": "custom-index",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "cost plus",
+    "WAR per dollar"
+   ],
+   "priority": 40,
+   "definition": "Descriptive, not a model: projected wins above replacement per million dollars of next season's CBT payroll, indexed so that 100 is the league mean and each 10 points is one standard deviation across the thirty clubs.",
+   "methodology": "ledger_export.py divides team_outlook 2027 WAR by Spotrac's 2027 tax payroll in millions, standardises across the 30 clubs and rounds to the nearest point; the numerator is a provisional projection, the index carries no registry row because it predicts nothing, and any efficiency skill claim would need an eval first.",
+   "example": "",
+   "formula": "Cost+ = 100 + 10 x z(projected WAR / (CBT payroll in $M))",
+   "seeAlso": [
+    "sur_plus",
+    "controlled_surplus",
+    "winter_dpw"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io"
+  },
+  {
+   "id": "controlled_surplus",
+   "term": "Controlled surplus",
+   "category": "fa",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "club surplus",
+    "roster surplus"
+   ],
+   "priority": 40,
+   "definition": "The expected value of a club's controlled talent above what it is paid, in millions: the MLB leg from the projections' contract surplus plus the farm leg from the org's active prospect surplus, both sums of means.",
+   "methodology": "ledger_export.py converts each vet's surNpv from mlb_projections.json to millions, adds the org_summary active surplus from timeseries.json, and prints the total plain: the surplus ladder was cut on player rows and a club total would paint every club elite. Quantiles are never summed.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "surplus_value",
+    "sur_plus",
+    "cost_plus"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "implied_ifa_pool",
+   "term": "Implied IFA pool",
+   "category": "fa",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "international pool",
+    "IFA pool"
+   ],
+   "priority": 40,
+   "definition": "A club's international bonus pool inferred from the pool percentages Spotrac attaches to its signings, since the published allocations are not on file anywhere in the tree.",
+   "methodology": "For each signing in data/ifa_timeseries.json carrying both a bonus and a pool percentage, bonus divided by the percentage gives an implied pool; ledger_export.py serves the median with the count of signings behind it and labels it as implied.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "bonus_pool",
+    "fin_draft_pool_efficiency"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "pick_war",
+   "term": "Pick WAR",
+   "category": "fa",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "slot WAR",
+    "draft pick value"
+   ],
+   "priority": 40,
+   "definition": "The expected wins above replacement over the first six seasons of a draft pick at a given slot, read off the realized slot curve, used here for a club's projected first-round pick.",
+   "methodology": "data/draft_slot_curve.json fitted_first6_by_bucket (validated) at the bucket holding the projected slot from the latest lottery snapshot; not lottery-weighted because the snapshot carries only the odds of pick one and of a top-six pick, and not priced in dollars.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "bonus_pool",
+    "qo_tax"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "realized_contract_value",
+   "term": "Realized contract value",
+   "category": "fa",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "contract value delivered",
+    "realized value"
+   ],
+   "priority": 40,
+   "definition": "What a club's free agent contracts have returned so far, valued at each elapsed season's dollars per win, beside what has been paid to date: realized value, not a measure of how well the club chose.",
+   "methodology": "fa_archive.json carries war_to_date, paid_to_date and surplus_to_date per signing (method level_proration_backcast_dpw_v1); ledger_export.py sums them by signing club and winter with the coverage count. The counterfactual, what the same dollars would have bought elsewhere, is not observed, so no club is ranked by it.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "winter_dpw",
+    "surplus_value",
+    "realized_mwpa"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
   }
  ]
 }

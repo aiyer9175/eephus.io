@@ -114,6 +114,9 @@ _PARKS_CSS_VER = _asset_ver("assets/parks.css")
 _HOF_VER = _asset_ver("assets/hof.js")
 _MGMT_VER = _asset_ver("assets/management.js")
 _MGMT_CSS_VER = _asset_ver("assets/management.css")
+# /ledger/ - Club Ledger (2026-09-23, D1).
+_LEDGER_VER = _asset_ver("assets/ledger.js")
+_LEDGER_CSS_VER = _asset_ver("assets/ledger.css")
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /models/ - the model accountability hub. Client is filter-only: every row,
 # count and date on that page is server-rendered here at build time, so the
@@ -336,6 +339,10 @@ NAV_ITEMS = [
         ("pal",         "Alchemy Lab", "/pal/"),
         ("trademachine", "Trade Machine", "/trademachine/"),
         ("arbitration", "Arbitration", "/arbitration/"),
+        # Club Ledger (2026-09-23, D1): the finances module, directly after
+        # Arbitration by owner decision. The hand-kept static copies carry the
+        # same entry in the same slot (test_collegesavant_nav_in_sync).
+        ("ledger",      "Club Ledger", "/ledger/"),
         # SHIPPED 2026-09-06 AND UNREACHABLE UNTIL NOW. Both pages were built,
         # both were registered in the sitemap, and both already pass their own
         # key to page() as the nav `active` marker, so they were authored
@@ -516,6 +523,9 @@ MODULE_STAGE = {
     "mlbstats": ("β", "MLB Stats is in beta"),
     "pal": ("β", "Alchemy Lab is in beta"),
     "arbitration": ("β", "Beta. Arb-1 model gated; arb-2+ is a population multiplier"),
+    # Club Ledger (2026-09-23). Slot 0 is the SIGIL the rows above carry, not the
+    # word: the shell writes sigil plus word itself, as the legacy shells do.
+    "ledger": ("β", "Beta. Descriptive ledger: no payroll forecast, no revenue"),
     "forums": ("β", "Forums is in beta"),
     "parks": ("β", "Beta. Display only: no model reads these factors"),
     "management": ("β", "Beta. Realized value only; the gate returned a bounded null for the steal and no family is ranked by skill"),
@@ -3335,7 +3345,10 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
                      # A signal flag for the manager flashing signs, and a
                      # heraldic mark for the plaque; both sit in the same
                      # ornamental family as ⚖ (arbitration) and ⚗ (alchemy).
-                     "management": "⚑", "hof": "⚜"}
+                     "management": "⚑", "hof": "⚜",
+                     # Club Ledger (2026-09-23): a ledger book, in the same
+                     # ornamental family as the rows above.
+                     "ledger": "▤"}
     def _sb_link(key, label, href, grouped=False):
         classes = []
         if key == "home":
@@ -4829,6 +4842,63 @@ def build_management() -> str:
                 url=f"{SITE_ORIGIN}/management/")
 
 
+def build_ledger() -> str:
+    """The /ledger/ Club Ledger module (2026-09-23, D1).
+
+    A LEDGER, NOT A FORECAST. What each club has on the books, owes and controls,
+    from Spotrac and the platform's own models, with what each dollar is projected
+    to buy. Every figure is read off a served artifact by ledger_export.py and
+    rendered by assets/ledger.js from data/ledger_board.json; this shell types no
+    number and no sentence of copy beyond two glossary hooks, and the masthead
+    line itself is filled from the payload.
+
+    THREE THINGS THE PAGE NEVER SERVES, decided before it was built. A single
+    projected payroll (the commitments block is three labelled segments plus the
+    count of unpriced vets, never summed: a club payroll forecast would need
+    registry row club_payroll_path and the 2016-2025 payroll history as labels).
+    Revenue, attendance money, TV money, valuations, revenue-sharing status,
+    minor-league payroll, actual CBT bills paid (no source in the tree carries
+    them, and the exporter refuses any key by those names). A colour on a salary,
+    a club surplus total or a cap-space cell: only Cost+ and OrgSur+, both
+    100+10z indexes, take the z ladder.
+
+    Shell on the build_management pattern: section-head with the byline and the
+    stage chip (sigil from MODULE_STAGE slot 0, the chip text in the title), the
+    .mlbstats-sectionnav tablist (League, Club, Rules, Method), one mount root
+    with the CSV opt-in, module css + eephus-hub.js + module js deferred. Hash
+    grammar: #section=league|club|rules|method, #section=club&team=CODE
+    [&season=2026|2027][&block=...], and #team=CODE as the shorthand the
+    franchise page links with."""
+    body = (
+        '<div class="fa-app mlbstats-app ledger-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>Club Ledger <span class="eephus-beta" title="{html.escape(MODULE_STAGE["ledger"][1])}">'
+        f'{html.escape(MODULE_STAGE["ledger"][0])} beta</span></h1></div>'
+        f'<span class="section-sub" id="ledger-masthead">Every club\'s {_gl("cbt_payroll", "CBT payroll")}, '
+        f'commitments and {_gl("controlled_surplus", "controlled surplus")}, on the scale each was computed on.</span></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Ledger sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-ledgersection="league" role="tab" aria-selected="true">League</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-ledgersection="club" role="tab" aria-selected="false">Club</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-ledgersection="rules" role="tab" aria-selected="false">Rules</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-ledgersection="method" role="tab" aria-selected="false">Method</button>'
+        '</div>'
+        '<div id="ledger-section" class="mlbstats-section">'
+        f'<div id="ledger-app-root"{_csv_optin("club-ledger")}></div>'
+        '</div>'
+        '</div>'
+        f'<link rel="stylesheet" href="/assets/ledger.css?v={_LEDGER_CSS_VER}">'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/ledger.js?v={_LEDGER_VER}" defer></script>'
+    )
+    return page("Club Ledger - eephus.io", "ledger", body,
+                "Every dollar a club has on the books, from Spotrac and the platform's own "
+                "models, with what each dollar is projected to buy: CBT payroll on both "
+                "bases, the computed tax beside Spotrac's estimate, contract dollars on file "
+                "and projected arbitration steps as separate keys, controlled surplus, farm "
+                "capital and the free agency ledger. No revenue, no valuations, no TV money.",
+                url=f"{SITE_ORIGIN}/ledger/")
+
+
 def build_hof() -> str:
     """The /hof/ Hall of Fame module.
 
@@ -5905,6 +5975,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/pal/", "daily", "0.8"),
         ("/trademachine/", "daily", "0.8"),
         ("/arbitration/", "daily", "0.8"),
+        ("/ledger/", "daily", "0.7"),
         # /dynasty/, /redraft/ and /dfs/ are redirect stubs into /fantasy/ and
         # carry meta robots=noindex, so they are deliberately absent here (same
         # treatment as /teams/). Their content is one crawlable page.
@@ -6531,6 +6602,7 @@ def main() -> None:
     _write("parks/index.html", build_parks())
     _write("hof/index.html", build_hof())
     _write("management/index.html", build_management())
+    _write("ledger/index.html", build_ledger())
     _write("models/index.html", build_models())
     _write("glossary/index.html", build_glossary())
     _write("teams/index.html", build_teams_redirect())

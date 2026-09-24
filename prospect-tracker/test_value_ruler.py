@@ -689,3 +689,28 @@ def test_the_prospect_ladder_is_the_war_ladder_on_its_own_pool(ruler):
     # 0.7 and the printed boundary is a fiction.
     for c in _ladders(ruler)["warProspect"]["cuts"]:
         assert abs(round(c, 1) - c) < 1e-9, c
+
+
+# --------------------------------------------------------------------------- #
+# 6. The Club Ledger (2026-09-23, D1)
+# --------------------------------------------------------------------------- #
+
+def test_the_ledger_hand_written_tier_classes_name_their_family():
+    """assets/ledger.js is inside the ASSETS glob the rule above walks; this
+    extends the same rule to the module's STYLESHEET, which the glob does not
+    cover, and pins the two calls the module is allowed: the z ladder on an
+    index cell, and nothing at all inside the contract ledger and commitments
+    renderers (a salary cell, a club surplus total and a cap-space cell never
+    take a ladder)."""
+    offenders = []
+    for name in ("ledger.js", "ledger.css"):
+        for i, line in enumerate((ASSETS / name).read_text(encoding="utf-8").splitlines(), 1):
+            if _VT_CLASS.search(line) and not any(x in line for x in _FAM_EXEMPT):
+                offenders.append(f"{name}:{i}: {line.strip()[:90]}")
+    assert not offenders, "\n  ".join(offenders)
+    js = (ASSETS / "ledger.js").read_text(encoding="utf-8")
+    assert 'EephusTiers.cls(v, "z")' in js, "the ledger's one ruler call is the z ladder"
+    for fn in ("renderContracts", "renderCommitments"):
+        i = js.index("function " + fn + "(")
+        j = js.index("\n  function ", i + 1)
+        assert "EephusTiers" not in js[i:j], fn + " took a tier; salaries are costs, not ranked values"

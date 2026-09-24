@@ -296,6 +296,12 @@ SCHEDULED_EXPORTS = (
     # above records. Placed HERE, below mgmt_export, on purpose:
     # test_mgmt_export scans a fixed window of this tuple's text.
     "war_seasons", "mlbstats_windows",
+    # The /ledger/ Club Ledger board (step d10e: ledger_board.json). Watched
+    # because the page paints its load-error sentence on a missing payload,
+    # which reads to a visitor exactly like a board that has not been built.
+    # Appended BELOW mlbstats_windows on purpose: nothing may sit above
+    # mgmt_export (test_mgmt_export scans a fixed window of this tuple's text).
+    "ledger_export",
     # THE CLOSE-ODDS CAPTURE. Not an export this pipeline runs at all: it is
     # tools/betting_close_job.py, on its own cron, and that is exactly why it is
     # watched from here. The job exits 0 on every legitimate no-op, so a cron
@@ -3502,6 +3508,33 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 log.exception("espn article probe crashed - continuing")
                 _record_ingest("espn_article_probe", False, 0, f"crashed: {e}",
                                log=log)
+
+        # --- d10e. Club Ledger board (ledger_board.json) ------------------
+        # The /ledger/ payload (2026-09-23, D1): every club's CBT payroll on
+        # both Spotrac bases, the computed tax beside Spotrac's estimate, the
+        # commitments timeline as three labelled segments (never summed into a
+        # payroll), controlled surplus, farm capital and the free agency ledger.
+        # Reads served artifacts and the DB only, never a socket. Sits after
+        # d10b's FA re-export so fa_meta / fa_class are the fresh ones; d10c and
+        # d10d are taken, hence the letter. A failure leaves the previous file
+        # on disk and files a red under "ledger_export" (SCHEDULED_EXPORTS).
+        with _step("d10e. Club Ledger board (ledger_board.json)", log):
+            try:
+                import ledger_export as _lg
+                _lgd = _lg.build()
+                _lg.OUT.write_text(
+                    json.dumps(_lgd, ensure_ascii=False, separators=(",", ":")),
+                    encoding="utf-8")
+                _lg_n = sum(int((d.get("contracts") or {}).get("n_priced") or 0)
+                            for d in _lgd["clubs"].values())
+                log.info("ledger: %d clubs, %d priced contract rows",
+                         len(_lgd["clubs"]), _lg_n)
+                _record_ingest("ledger_export", True, len(_lgd["clubs"]),
+                               f"club ledger board, {_lg_n} priced rows", "mlb", log)
+            except Exception as e:                # noqa: BLE001
+                log.exception("ledger export failed - continuing")
+                _record_ingest("ledger_export", False, 0, f"ledger export raised: {e}",
+                               "mlb", log)
 
         finish_run(run_id, new_snapshots=0, stat_lines=0,
                    notes=f"DAILY: {n_il} on IL, {n_debuts} debuts, {n_trades} new trades")

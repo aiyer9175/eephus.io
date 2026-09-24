@@ -46,7 +46,8 @@ happen inside the called module, so this file alone cannot split them).
 | d10. FA signing-window refresh | mlb_projections.json |
 | d10b. FA re-export off fresh projections | - |
 | d10c. TJStats Live second capture | - |
-| d10d. ESPN new-article probe | timeseries.json |
+| d10d. ESPN new-article probe | ledger_board.json |
+| d10e. Club Ledger board (ledger_board.json) | ledger_board.json, timeseries.json |
 | d11. Rebuild site (build_site) | pipeline_steps_daily.json, timeseries.json |
 
 ## Monthly pipeline (`run_monthly.main`)

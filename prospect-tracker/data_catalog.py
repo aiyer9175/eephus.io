@@ -456,6 +456,21 @@ ARTIFACTS = (
                  "total."),
     },
     {
+        "file": "ledger_board.json", "group": "mlb",
+        "title": "Club Ledger board",
+        "what": ("Thirty clubs' CBT payroll on both Spotrac bases, the computed tax "
+                 "beside Spotrac's estimate, contract dollars on file and projected "
+                 "arbitration steps per season, controlled surplus in $M, farm capital "
+                 "(pools, bonuses paid vs slot, IFA, the fin_* leaves) and the free "
+                 "agency ledger with realized contract value."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_ledger_export.py",
+        "note": ("Descriptive ledger. Carries NO single projected payroll: contract "
+                 "dollars on file and projected arbitration steps are two keys and the "
+                 "page never sums them. No revenue, attendance, TV or valuation key "
+                 "exists; the writer refuses them."),
+    },
+    {
         "file": "management_decisions.json", "group": "mlb",
         "title": "In-Game Management decision ledger (summary)",
         "what": ("Nine decision families the play corpus can name (pitching change, pinch "
