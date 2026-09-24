@@ -224,3 +224,62 @@ def test_hitter_app_missing_payload_renders_error_state():
     assert "nightly build is mid-run" in html
     assert "Retry" in html
     assert 'role="alert"' in html
+
+
+# ---------------------------------------------------------------------------
+# M03-03: every cs-tabs route must survive a COLD load. A shared, bookmarked or
+# refreshed URL (and the Hitters/Pitchers toggle, which carries #/teams across
+# pages as a full document load) evaluates the app with the hash already set,
+# so init() renders that route before the rest of the file has run. A route
+# that reads a top-level const declared below the init() call then paints the
+# "Data failed to load" panel. The tests above boot at '#/' and only change
+# the hash after the whole file has run, which hides exactly this.
+# ---------------------------------------------------------------------------
+
+def _rows_for_years(rows: str, years: list[int]) -> str:
+    import json
+    base = json.loads(rows)
+    out = []
+    for y in years:
+        for r in base:
+            out.append(dict(r, year=y))
+    return json.dumps(out)
+
+
+_COLD_ROUTES = [
+    ("app.js", "hitter", "#/leaders/cs_plus/2025"),
+    ("app.js", "hitter", "#/leaders/k_pct/2025"),
+    ("app.js", "hitter", "#/leaders/cs_plus"),
+    ("app.js", "hitter", "#/teams"),
+    ("app.js", "hitter", "#/prospects"),
+    ("app.js", "hitter", "#/projections"),
+    ("app.js", "hitter", "#/player/2025/test-alpha"),
+    ("pitcher_app.js", "pitcher", "#/leaders/cs_plus/2026"),
+    ("pitcher_app.js", "pitcher", "#/leaders/stuff_plus/2026"),
+    ("pitcher_app.js", "pitcher", "#/leaders/cs_plus/2025"),
+    ("pitcher_app.js", "pitcher", "#/teams"),
+    ("pitcher_app.js", "pitcher", "#/prospects"),
+    ("pitcher_app.js", "pitcher", "#/projections"),
+    ("pitcher_app.js", "pitcher", "#/player/2025/arm-alpha-1"),
+]
+
+
+@pytest.mark.parametrize("app,kind,route", _COLD_ROUTES)
+def test_cold_load_on_deep_link_does_not_hit_dead_zone(app, kind, route):
+    ctx = MiniRacer()
+    prelude = _CAP_PRELUDE.replace("var location={hash:'#/'", "var location={hash:'" + route + "'", 1)
+    assert route in prelude, "hash preset did not land in the prelude"
+    if kind == "hitter":
+        data = ("window.HITTER_DATA=" + _rows_for_years(HITTER_ROWS, [2025]) + ";"
+                " window.HITTER_BIP_2025={};")
+        shared = (CS / "team_names.js").read_text(encoding="utf-8") + chr(10)
+    else:
+        # 2025 and 2026 ride in with the page; pitch shapes load lazily, so
+        # PITCH_SHAPES_2025 is left unset to exercise that loader at boot.
+        data = ("window.PITCHER_DATA=" + _rows_for_years(PITCHER_ROWS, [2025, 2026]) + ";"
+                " window.PITCHER_PITCH_DATA_2025=[]; window.PITCHER_PITCH_DATA_2026=[];")
+        shared = ""
+    ctx.eval(prelude + data + chr(10) + shared + (CS / app).read_text(encoding="utf-8"))
+    html = ctx.eval("__html['app'] || ''")
+    assert "before initialization" not in html, f"{app} {route}: {html[:200]}"
+    assert "Data failed to load" not in html, f"{app} {route}: {html[:200]}"

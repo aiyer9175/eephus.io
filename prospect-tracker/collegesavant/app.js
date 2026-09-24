@@ -208,8 +208,6 @@ function ensureHitterBip(year) {
   return false;
 }
 
-init();
-
 async function init() {
   try {
     if (window.HITTER_DATA) {
@@ -1281,3 +1279,8 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+// Boot LAST: init() renders the current hash synchronously, so on a cold
+// deep link it reads top-level consts (leaderboard columns, team tendency
+// metrics, prospect columns, loader state) that must already be initialized.
+init();
