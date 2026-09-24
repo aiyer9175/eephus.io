@@ -48339,7 +48339,12 @@ function renderPlayerDetail(key) {
     // P(bust) / risk-adjusted SV. Only when the baked engine output is present.
     let bakedDetailRow = "";
     if (_baked) {
-      const d = _baked.dist || {};
+      // One basis per card. Under the eFV headline the distribution meta (P(bust), the
+      // P10-P90 fallback) reads the eFV dist, the same source the board Surplus cell and
+      // the GFX surplus block use in eFV mode, so it matches the eFV grade card above.
+      // The consensus engine's dist is the Consensus-mode read. The eFV dist carries no
+      // risk_adjusted_mm, so the consensus "risk-adj" no longer prints under an eFV headline.
+      const d = _useEfv ? (_xf.dist || {}) : (_baked.dist || {});
       const bk = (p.debuted_value && p.debuted_value.posterior)
                  ? p.debuted_value.posterior : _baked.buckets;
       const pb = d.p_bust != null ? Math.round(d.p_bust * 100) : null;
