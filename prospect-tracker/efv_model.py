@@ -882,7 +882,8 @@ def blend_lambda(side: str) -> float:
 
 
 def oos_grades(side: str, *, timing_pin: bool = False,
-               receipts: dict | None = None) -> dict:
+               receipts: dict | None = None, overlays=(),
+               overlay_inputs: dict | None = None, legs: dict | None = None) -> dict:
     """{player_key: OUT-OF-SAMPLE eFV ranking score} over the full labeled pool
     (debuted + busts), forward-chained: each cohort year is scored by a model fit ONLY
     on earlier cohorts. The score is the guarded-blend rank_war (monotone in the grade),
@@ -898,13 +899,29 @@ def oos_grades(side: str, *, timing_pin: bool = False,
     out, so the result covers only rows a vintage-matched frame can hold. When
     `receipts` is a dict it receives {player_key: {asof_date, window, window_year,
     consensus_fv_raw, matrix_asof_date, matrix_consensus_fv_raw}} for every scored
-    row. The default mode is unchanged and fills no receipts."""
+    row. The default mode is unchanged and fills no receipts.
+
+    SERVED OVERLAYS (DS-11, bug B6). `overlays` names model-leg overlays from
+    efv_score.MODEL_LEG_OVERLAYS to apply to each scored row's model leg exactly as
+    efv_score.run_live applies them (efv_score.overlay_factors and apply_overlay_war,
+    the same two functions), reading each row's AS-OF inputs from `overlay_inputs`
+    ({player_key: row fields at the read, e.g. age_now, position, il_on}); the matrix
+    row itself supplies anything absent there. Empty by default, so every existing
+    caller is unchanged. `legs`, when a dict, receives {player_key: {decision_year,
+    model_war, cons_war}} for every scored row (model_war after the overlays)."""
     from efv_dataset import matrix_path
     keys, _m = _feature_spec(side)
     lam = blend_lambda(side)
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
     full = [r for r in rows if not (r["kind"] == "bust" and r.get("bust_recent"))]
     data = _prep(full, "target_censored", side)
+    ovs = tuple(overlays or ())
+    if ovs:
+        import efv_score as _es
+        bad = set(ovs) - set(_es.MODEL_LEG_OVERLAYS)
+        if bad:
+            raise ValueError(f"not a model-leg overlay: {sorted(bad)}")
+        raw_ov = {r["player_key"]: r for r in full}
     pinned = {}
     if timing_pin:
         import efv_dataset as _ed
@@ -954,7 +971,15 @@ def oos_grades(side: str, *, timing_pin: bool = False,
                 r = dict(r, **pin)
             cons_war = max(0.0, _pred_ols(ols, r["fv"]))
             model_war = max(-2.0, a + b * _predict(ridge, r["feats"]))
+            if ovs:
+                src = dict(raw_ov.get(r["player_key"]) or {})
+                src.update((overlay_inputs or {}).get(r["player_key"]) or {})
+                parts = _es.overlay_factors(src, side, model_war, ovs)
+                model_war = _es.apply_overlay_war(model_war, parts, ols)
             out[r["player_key"]] = (1 - lam) * cons_war + lam * model_war
+            if legs is not None:
+                legs[r["player_key"]] = {"decision_year": r["decision_year"],
+                                         "model_war": model_war, "cons_war": cons_war}
     if timing_pin and receipts is not None:
         for k in [k for k in receipts if k in pinned and k not in out]:
             receipts.pop(k, None)

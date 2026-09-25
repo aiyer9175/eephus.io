@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-25T20:30:33+00:00",
+ "generated_at": "2026-09-25T21:04:15+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
  "n_arms": 80,
  "by_lane": {
@@ -1543,9 +1543,249 @@
    "probe": "DS-08:pit.combiner_rule",
    "verdict": "OK",
    "generated_at": "2026-09-25T20:29:12+00:00"
+  },
+  {
+   "lane": "served overlay grades (DS-11)",
+   "artifact": "efv_overlay_oos_eval.json",
+   "probe": "DS-11:hit.overlay.age",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T20:53:07+00:00",
+   "reason": "fires on 467 rows; delta -0.00042",
+   "ci95": [
+    -0.0041,
+    0.0031
+   ]
+  },
+  {
+   "lane": "served overlay grades (DS-11)",
+   "artifact": "efv_overlay_oos_eval.json",
+   "probe": "DS-11:hit.overlay.all",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T20:53:07+00:00",
+   "reason": "fires on 467 rows; delta -0.00042",
+   "ci95": [
+    -0.0041,
+    0.0031
+   ]
+  },
+  {
+   "lane": "served overlay grades (DS-11)",
+   "artifact": "efv_overlay_oos_eval.json",
+   "probe": "DS-11:hit.overlay.injury",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T20:53:07+00:00",
+   "reason": "fires on 0 rows; delta 0.0",
+   "ci95": [
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "lane": "served overlay grades (DS-11)",
+   "artifact": "efv_overlay_oos_eval.json",
+   "probe": "DS-11:hit.overlay.role",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T20:53:07+00:00",
+   "reason": "fires on 0 rows; delta 0.0",
+   "ci95": [
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "lane": "served overlay grades (DS-11)",
+   "artifact": "efv_overlay_oos_eval.json",
+   "probe": "DS-11:pit.overlay.age",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T20:53:07+00:00",
+   "reason": "fires on 674 rows; delta -0.00224",
+   "ci95": [
+    -0.007,
+    0.0022
+   ]
+  },
+  {
+   "lane": "served overlay grades (DS-11)",
+   "artifact": "efv_overlay_oos_eval.json",
+   "probe": "DS-11:pit.overlay.all",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T20:53:07+00:00",
+   "reason": "fires on 706 rows; delta -0.0002",
+   "ci95": [
+    -0.0068,
+    0.0065
+   ]
+  },
+  {
+   "lane": "served overlay grades (DS-11)",
+   "artifact": "efv_overlay_oos_eval.json",
+   "probe": "DS-11:pit.overlay.injury",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T20:53:07+00:00",
+   "reason": "fires on 144 rows; delta 0.00119",
+   "ci95": [
+    -0.0031,
+    0.0058
+   ]
+  },
+  {
+   "lane": "served overlay grades (DS-11)",
+   "artifact": "efv_overlay_oos_eval.json",
+   "probe": "DS-11:pit.overlay.role",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T20:53:07+00:00",
+   "reason": "fires on 15 rows; delta 0.00032",
+   "ci95": [
+    -0.0012,
+    0.0018
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:lv_dev.hit.chip",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta 0.00911",
+   "ci95": [
+    0.00327,
+    0.01495
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:lv_dev.hit.reached_head",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta 0.00911",
+   "ci95": [
+    0.00327,
+    0.01495
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:lv_dev.hit.spread_forced",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta -0.00012",
+   "ci95": [
+    -0.0006,
+    0.00031
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:lv_dev.pit.chip",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta 0.02757",
+   "ci95": [
+    0.01993,
+    0.03448
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:lv_dev.pit.reached_head",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta 0.02757",
+   "ci95": [
+    0.01993,
+    0.03448
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:lv_dev.pit.spread_forced",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta 0.002",
+   "ci95": [
+    0.00063,
+    0.00342
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:vm_oos_dev.hit.chip",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta -0.05576",
+   "ci95": [
+    -0.06445,
+    -0.0475
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:vm_oos_dev.hit.reached_head",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta -0.05576",
+   "ci95": [
+    -0.06445,
+    -0.0475
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:vm_oos_dev.hit.spread_forced",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta 0.0007",
+   "ci95": [
+    0.00018,
+    0.00126
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:vm_oos_dev.pit.chip",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta -0.01402",
+   "ci95": [
+    -0.01923,
+    -0.00851
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:vm_oos_dev.pit.reached_head",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta -0.01485",
+   "ci95": [
+    -0.02006,
+    -0.00952
+   ]
+  },
+  {
+   "lane": "P(bust) calibration reads (DS-17)",
+   "artifact": "efv_v2_pbust_eval.json",
+   "probe": "DS-17:vm_oos_dev.pit.spread_forced",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:04:05+00:00",
+   "reason": "Brier delta 0.0002",
+   "ci95": [
+    -0.00169,
+    0.00207
+   ]
   }
  ],
- "n_probes": 20,
+ "n_probes": 40,
  "probes_are_not_arms": "a validity probe tests the frame or the resolver, not a driver; probes are listed and counted apart and never summed into the arm count",
  "sources_missing": [],
  "expected_spurious_passes_at_nominal_5pct": 4.0,

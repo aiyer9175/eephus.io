@@ -1,0 +1,1143 @@
+{
+ "schema": 1,
+ "generated_at": "2026-09-25T20:53:07+00:00",
+ "produced_by": "tools/efv_overlay_oos_read.py",
+ "model_id": "efv_v1_overlays",
+ "role": "development",
+ "adjudicates": false,
+ "item": "DS-11 (bug B6), docs/efv-v2/DRIVER_SYSTEM_V2.md",
+ "reserved_guard": {
+  "decision_years": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "r_vm_first_debut_year": 2025,
+  "list_vintages_read": [],
+  "reserved_lv": [
+   2020,
+   2021
+  ]
+ },
+ "label": {
+  "id": "ewar_v2@2026-09-03T12:35:09",
+  "provider": "ewar_v2",
+  "resolved_through": 2025
+ },
+ "code": {
+  "commit": "db21d3d0"
+ },
+ "rule": "An overlay stays on the served grade only if it can be graded out of sample (as-of inputs exist for the labelled rows) AND, on every side where it fires, its paired within-(side, decision year) Spearman delta (overlay on minus off, scored object, rows with a MiLB block) has a CI95 lower bound above zero. Every other overlay leaves the grade: one with a measurable per-player statement becomes a labelled chip; one that cannot reorder players inside a side (a monotone per-side map, or a pricing-only map) is retired from the V2 grade because V2 sets the level from consensus values within (side, year) and prices from its own WAR line.",
+ "rule_fixed_before_read": true,
+ "registry": {
+  "injury": {
+   "function": "efv_score._injury_factor",
+   "acts_on": "model_leg",
+   "sides": [
+    "pit"
+   ],
+   "gradeable": true,
+   "order_neutral": false,
+   "asof_input": "injured-list status at the read from player_transactions (placements and activations before the read); the archive is reliable from 2017 (tools/efv_health_profile_lab.py)",
+   "chip": "On the injured list",
+   "owner_decision": "2026-09-04: pitchers only (hitter sign contraindicated)"
+  },
+  "age": {
+   "function": "efv_score._age_factor",
+   "acts_on": "model_leg",
+   "sides": [
+    "hit",
+    "pit"
+   ],
+   "gradeable": true,
+   "order_neutral": false,
+   "asof_input": "age at the read from the row's birth date and read date",
+   "chip": "Old for a prospect",
+   "owner_decision": "2026-07-30: onset 23.0 (policy dial D2)"
+  },
+  "role": {
+   "function": "efv_score._role_factor",
+   "acts_on": "model_leg",
+   "sides": [
+    "pit"
+   ],
+   "gradeable": true,
+   "order_neutral": false,
+   "asof_input": "the row's list-time position (SIRP / MIRP / RP / CL) and age at the read",
+   "chip": "Reliever ceiling",
+   "owner_decision": "2026-07-15: the reliever-ceiling directive"
+  },
+  "statcast": {
+   "function": "efv_score._statcast_factor",
+   "acts_on": "model_leg",
+   "sides": [
+    "hit",
+    "pit"
+   ],
+   "gradeable": false,
+   "order_neutral": false,
+   "why_not_gradeable": "Statcast+ exists for current seasons only; no labelled row has a Statcast+ value as of its read",
+   "chip": "Statcast+ quality"
+  },
+  "xline": {
+   "function": "efv_statcast_overlay.overlay_fv",
+   "acts_on": "model_leg",
+   "sides": [
+    "hit",
+    "pit"
+   ],
+   "gradeable": false,
+   "order_neutral": false,
+   "why_not_gradeable": "the A-ball and AAA tracking signals start in 2023; no cohort they cover has resolved, and the module itself states it ships with no resolved out-of-sample fold",
+   "chip": "Statcast lean"
+  },
+  "dispersion": {
+   "function": "efv_score.apply_dispersion_correction",
+   "acts_on": "board_grade",
+   "sides": [
+    "hit",
+    "pit"
+   ],
+   "gradeable": true,
+   "order_neutral": true,
+   "why_order_neutral": "a strictly increasing per-side map, applied after the blend; identity (0, 1) on both sides since 2026-08-14, so it moves nothing today",
+   "chip": null
+  },
+  "side_fairness": {
+   "function": "efv_score._apply_side_fairness_fix",
+   "acts_on": "pricing_grade",
+   "sides": [
+    "hit",
+    "pit"
+   ],
+   "gradeable": true,
+   "order_neutral": true,
+   "why_order_neutral": "re-anchors the surplus-pricing grade of the joint top band only; within-side order is preserved by construction and neither rank_war nor the board grade reads it",
+   "chip": null
+  }
+ },
+ "arms": {
+  "injury": {
+   "overlays": [
+    "injury"
+   ],
+   "fires": 144,
+   "fires_by_side": {
+    "hit": 0,
+    "pit": 144
+   },
+   "scored_object": {
+    "within": {
+     "delta": 0.00056,
+     "ci95": [
+      -0.0015,
+      0.0028
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": 0.00119,
+     "ci95": [
+      -0.0031,
+      0.0058
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": 0.00038,
+     "ci95": [
+      -0.0025,
+      0.0032
+     ],
+     "n_boot": 1000
+    }
+   },
+   "board_object": {
+    "within": {
+     "delta": 0.00014,
+     "ci95": [
+      -0.0024,
+      0.0028
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": 0.00029,
+     "ci95": [
+      -0.0051,
+      0.0058
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": 0.00014,
+     "ci95": [
+      -0.0038,
+      0.0039
+     ],
+     "n_boot": 1000
+    }
+   },
+   "vs_consensus": {
+    "within": {
+     "delta": 0.00674,
+     "ci95": [
+      -0.0106,
+      0.0248
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": 0.00671,
+     "ci95": [
+      -0.0165,
+      0.0291
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": 0.00677,
+     "ci95": [
+      -0.0223,
+      0.0341
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": 0.00649,
+     "ci95": [
+      -0.0175,
+      0.0304
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": 0.01377,
+     "ci95": [
+      -0.0161,
+      0.0463
+     ],
+     "n_boot": 1000
+    }
+   }
+  },
+  "age": {
+   "overlays": [
+    "age"
+   ],
+   "fires": 1141,
+   "fires_by_side": {
+    "hit": 467,
+    "pit": 674
+   },
+   "scored_object": {
+    "within": {
+     "delta": -0.00129,
+     "ci95": [
+      -0.0043,
+      0.0016
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": -0.00042,
+     "ci95": [
+      -0.0041,
+      0.0031
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": -0.00224,
+     "ci95": [
+      -0.007,
+      0.0022
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": -0.00066,
+     "ci95": [
+      -0.0036,
+      0.0023
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": -0.00218,
+     "ci95": [
+      -0.0055,
+      0.0012
+     ],
+     "n_boot": 1000
+    }
+   },
+   "board_object": {
+    "within": {
+     "delta": -0.0024,
+     "ci95": [
+      -0.006,
+      0.0011
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": -0.00048,
+     "ci95": [
+      -0.0047,
+      0.0038
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": -0.00452,
+     "ci95": [
+      -0.0099,
+      0.0013
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": -0.00067,
+     "ci95": [
+      -0.0039,
+      0.0026
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": -0.00299,
+     "ci95": [
+      -0.0066,
+      0.0011
+     ],
+     "n_boot": 1000
+    }
+   },
+   "vs_consensus": {
+    "within": {
+     "delta": 0.00489,
+     "ci95": [
+      -0.0127,
+      0.0221
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": 0.00629,
+     "ci95": [
+      -0.0163,
+      0.028
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": 0.00333,
+     "ci95": [
+      -0.0242,
+      0.0301
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": 0.00583,
+     "ci95": [
+      -0.0169,
+      0.029
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": 0.01121,
+     "ci95": [
+      -0.0173,
+      0.0439
+     ],
+     "n_boot": 1000
+    }
+   }
+  },
+  "role": {
+   "overlays": [
+    "role"
+   ],
+   "fires": 15,
+   "fires_by_side": {
+    "hit": 0,
+    "pit": 15
+   },
+   "scored_object": {
+    "within": {
+     "delta": 0.00015,
+     "ci95": [
+      -0.0006,
+      0.0008
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": 0.00032,
+     "ci95": [
+      -0.0012,
+      0.0018
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": 0.00032,
+     "ci95": [
+      -0.0009,
+      0.0015
+     ],
+     "n_boot": 1000
+    }
+   },
+   "board_object": {
+    "within": {
+     "delta": 0.00032,
+     "ci95": [
+      -0.0005,
+      0.0012
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": 0.00068,
+     "ci95": [
+      -0.0011,
+      0.0025
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": 0.00056,
+     "ci95": [
+      -0.001,
+      0.0021
+     ],
+     "n_boot": 1000
+    }
+   },
+   "vs_consensus": {
+    "within": {
+     "delta": 0.00632,
+     "ci95": [
+      -0.0113,
+      0.0241
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": 0.00671,
+     "ci95": [
+      -0.0165,
+      0.0291
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": 0.0059,
+     "ci95": [
+      -0.0236,
+      0.034
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": 0.00649,
+     "ci95": [
+      -0.0175,
+      0.0304
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": 0.01371,
+     "ci95": [
+      -0.0167,
+      0.0474
+     ],
+     "n_boot": 1000
+    }
+   }
+  },
+  "all": {
+   "overlays": [
+    "injury",
+    "age",
+    "role"
+   ],
+   "fires": 1173,
+   "fires_by_side": {
+    "hit": 467,
+    "pit": 706
+   },
+   "scored_object": {
+    "within": {
+     "delta": -0.00032,
+     "ci95": [
+      -0.004,
+      0.0034
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": -0.00042,
+     "ci95": [
+      -0.0041,
+      0.0031
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": -0.0002,
+     "ci95": [
+      -0.0068,
+      0.0065
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": -0.00066,
+     "ci95": [
+      -0.0036,
+      0.0023
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": -0.00168,
+     "ci95": [
+      -0.0063,
+      0.0031
+     ],
+     "n_boot": 1000
+    }
+   },
+   "board_object": {
+    "within": {
+     "delta": -0.00187,
+     "ci95": [
+      -0.0063,
+      0.0026
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": -0.00048,
+     "ci95": [
+      -0.0047,
+      0.0038
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": -0.00342,
+     "ci95": [
+      -0.0109,
+      0.0049
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": -0.00067,
+     "ci95": [
+      -0.0039,
+      0.0026
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": -0.00298,
+     "ci95": [
+      -0.0086,
+      0.0029
+     ],
+     "n_boot": 1000
+    }
+   },
+   "vs_consensus": {
+    "within": {
+     "delta": 0.00586,
+     "ci95": [
+      -0.0113,
+      0.0232
+     ],
+     "n_boot": 1000
+    },
+    "within_hit": {
+     "delta": 0.00629,
+     "ci95": [
+      -0.0163,
+      0.028
+     ],
+     "n_boot": 1000
+    },
+    "within_pit": {
+     "delta": 0.00537,
+     "ci95": [
+      -0.0229,
+      0.0325
+     ],
+     "n_boot": 1000
+    },
+    "pooled_hit": {
+     "delta": 0.00583,
+     "ci95": [
+      -0.0169,
+      0.029
+     ],
+     "n_boot": 1000
+    },
+    "pooled_pit": {
+     "delta": 0.01171,
+     "ci95": [
+      -0.0168,
+      0.0435
+     ],
+     "n_boot": 1000
+    }
+   }
+  }
+ },
+ "overlays": {
+  "injury": {
+   "hit": {
+    "fires": 0,
+    "within": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "pooled": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "board_within": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    }
+   },
+   "pit": {
+    "fires": 144,
+    "within": {
+     "delta": 0.00119,
+     "ci95": [
+      -0.0031,
+      0.0058
+     ],
+     "n_boot": 1000
+    },
+    "pooled": {
+     "delta": 0.00038,
+     "ci95": [
+      -0.0025,
+      0.0032
+     ],
+     "n_boot": 1000
+    },
+    "board_within": {
+     "delta": 0.00029,
+     "ci95": [
+      -0.0051,
+      0.0058
+     ],
+     "n_boot": 1000
+    }
+   }
+  },
+  "age": {
+   "hit": {
+    "fires": 467,
+    "within": {
+     "delta": -0.00042,
+     "ci95": [
+      -0.0041,
+      0.0031
+     ],
+     "n_boot": 1000
+    },
+    "pooled": {
+     "delta": -0.00066,
+     "ci95": [
+      -0.0036,
+      0.0023
+     ],
+     "n_boot": 1000
+    },
+    "board_within": {
+     "delta": -0.00048,
+     "ci95": [
+      -0.0047,
+      0.0038
+     ],
+     "n_boot": 1000
+    }
+   },
+   "pit": {
+    "fires": 674,
+    "within": {
+     "delta": -0.00224,
+     "ci95": [
+      -0.007,
+      0.0022
+     ],
+     "n_boot": 1000
+    },
+    "pooled": {
+     "delta": -0.00218,
+     "ci95": [
+      -0.0055,
+      0.0012
+     ],
+     "n_boot": 1000
+    },
+    "board_within": {
+     "delta": -0.00452,
+     "ci95": [
+      -0.0099,
+      0.0013
+     ],
+     "n_boot": 1000
+    }
+   }
+  },
+  "role": {
+   "hit": {
+    "fires": 0,
+    "within": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "pooled": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    },
+    "board_within": {
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n_boot": 1000
+    }
+   },
+   "pit": {
+    "fires": 15,
+    "within": {
+     "delta": 0.00032,
+     "ci95": [
+      -0.0012,
+      0.0018
+     ],
+     "n_boot": 1000
+    },
+    "pooled": {
+     "delta": 0.00032,
+     "ci95": [
+      -0.0009,
+      0.0015
+     ],
+     "n_boot": 1000
+    },
+    "board_within": {
+     "delta": 0.00068,
+     "ci95": [
+      -0.0011,
+      0.0025
+     ],
+     "n_boot": 1000
+    }
+   }
+  },
+  "statcast": null,
+  "xline": null,
+  "dispersion": null,
+  "side_fairness": null
+ },
+ "dispositions": {
+  "injury": {
+   "disposition": "chip",
+   "on_grade": false,
+   "why": "graded out of sample; the paired within-(side, decision year) delta does not clear zero on every side where it fires",
+   "ci95_low": {
+    "pit": -0.0031
+   }
+  },
+  "age": {
+   "disposition": "chip",
+   "on_grade": false,
+   "why": "graded out of sample; the paired within-(side, decision year) delta does not clear zero on every side where it fires",
+   "ci95_low": {
+    "hit": -0.0041,
+    "pit": -0.007
+   }
+  },
+  "role": {
+   "disposition": "chip",
+   "on_grade": false,
+   "why": "graded out of sample; the paired within-(side, decision year) delta does not clear zero on every side where it fires",
+   "ci95_low": {
+    "pit": -0.0012
+   }
+  },
+  "statcast": {
+   "disposition": "chip",
+   "on_grade": false,
+   "why": "not gradeable out of sample: Statcast+ exists for current seasons only; no labelled row has a Statcast+ value as of its read"
+  },
+  "xline": {
+   "disposition": "chip",
+   "on_grade": false,
+   "why": "not gradeable out of sample: the A-ball and AAA tracking signals start in 2023; no cohort they cover has resolved, and the module itself states it ships with no resolved out-of-sample fold"
+  },
+  "dispersion": {
+   "disposition": "retired",
+   "on_grade": false,
+   "why": "a strictly increasing per-side map, applied after the blend; identity (0, 1) on both sides since 2026-08-14, so it moves nothing today"
+  },
+  "side_fairness": {
+   "disposition": "retired",
+   "on_grade": false,
+   "why": "re-anchors the surplus-pricing grade of the joint top band only; within-side order is preserved by construction and neither rank_war nor the board grade reads it"
+  }
+ },
+ "on_grade": [],
+ "to_chips": [
+  "age",
+  "injury",
+  "role",
+  "statcast",
+  "xline"
+ ],
+ "retired": [
+  "dispersion",
+  "side_fairness"
+ ],
+ "served_now": "unchanged: eFV v1's board keeps every overlay until DS-02 serves V2 (owner answer DS-Q1); the dispositions are what that step applies",
+ "point": {
+  "consensus": {
+   "within": 0.29552,
+   "within_hit": 0.30036,
+   "pooled_hit": 0.31712,
+   "within_pit": 0.29018,
+   "pooled_pit": 0.30721
+  },
+  "off": {
+   "within": 0.30169,
+   "within_hit": 0.30707,
+   "pooled_hit": 0.32361,
+   "within_pit": 0.29576,
+   "pooled_pit": 0.3206
+  },
+  "off_model_leg": {
+   "within": 0.29643,
+   "within_hit": 0.30391,
+   "pooled_hit": 0.31888,
+   "within_pit": 0.28816,
+   "pooled_pit": 0.30089
+  },
+  "injury": {
+   "within": 0.30226,
+   "within_hit": 0.30707,
+   "pooled_hit": 0.32361,
+   "within_pit": 0.29695,
+   "pooled_pit": 0.32098
+  },
+  "injury_model_leg": {
+   "within": 0.29657,
+   "within_hit": 0.30391,
+   "pooled_hit": 0.31888,
+   "within_pit": 0.28846,
+   "pooled_pit": 0.30103
+  },
+  "age": {
+   "within": 0.30041,
+   "within_hit": 0.30665,
+   "pooled_hit": 0.32295,
+   "within_pit": 0.29352,
+   "pooled_pit": 0.31842
+  },
+  "age_model_leg": {
+   "within": 0.29403,
+   "within_hit": 0.30343,
+   "pooled_hit": 0.31821,
+   "within_pit": 0.28365,
+   "pooled_pit": 0.29791
+  },
+  "role": {
+   "within": 0.30184,
+   "within_hit": 0.30707,
+   "pooled_hit": 0.32361,
+   "within_pit": 0.29608,
+   "pooled_pit": 0.32092
+  },
+  "role_model_leg": {
+   "within": 0.29675,
+   "within_hit": 0.30391,
+   "pooled_hit": 0.31888,
+   "within_pit": 0.28884,
+   "pooled_pit": 0.30146
+  },
+  "all": {
+   "within": 0.30138,
+   "within_hit": 0.30665,
+   "pooled_hit": 0.32295,
+   "within_pit": 0.29556,
+   "pooled_pit": 0.31892
+  },
+  "all_model_leg": {
+   "within": 0.29455,
+   "within_hit": 0.30343,
+   "pooled_hit": 0.31821,
+   "within_pit": 0.28474,
+   "pooled_pit": 0.29792
+  }
+ },
+ "frames": {
+  "vm_oos_dev": {
+   "frame_version": "v1_oos_block",
+   "window": [
+    2014,
+    2024
+   ],
+   "n": 2096,
+   "n_by_side": {
+    "hit": 1100,
+    "pit": 996
+   },
+   "statistic": "size-weighted mean of within-(side, decision year) Spearman (owner answer DS-Q3 primary)",
+   "outcome": "six-season WAR label (target_censored), v1's own training label",
+   "raters": {
+    "efv": {
+     "spearman": 0.3014,
+     "auc": null,
+     "n": 2096
+    },
+    "efv_v1": {
+     "spearman": 0.3017,
+     "auc": null,
+     "n": 2096
+    },
+    "prospx_consensus": {
+     "spearman": 0.2955,
+     "auc": null,
+     "n": 2096
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.00586,
+      "ci95": [
+       -0.0113,
+       0.0232
+      ],
+      "mde95": null,
+      "estimator": null,
+      "ci95_estimator": "paired, player-clustered, B 1000",
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_oos_dev.deltas.vs_prospx_consensus.spearman"
+     }
+    },
+    "vs_efv_v1": {
+     "spearman": {
+      "delta": -0.00032,
+      "ci95": [
+       -0.004,
+       0.0034
+      ],
+      "mde95": null,
+      "estimator": null,
+      "ci95_estimator": "paired, player-clustered, B 1000",
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_oos_dev.deltas.vs_efv_v1.spearman"
+     }
+    },
+    "efv_v1_vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.00617,
+      "ci95": [
+       -0.0114,
+       0.0239
+      ],
+      "mde95": null,
+      "estimator": null,
+      "ci95_estimator": "paired, player-clustered, B 1000",
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_oos_dev.deltas.efv_v1_vs_prospx_consensus.spearman"
+     }
+    }
+   },
+   "verdict": "development only; CI95 spans zero",
+   "note": "DS-11 overlay read: eFV v1 WITH the gradeable served overlays (injury, age, reliever ceiling) against v1 without them, on v1's own forward-chained pool, rows with a MiLB block; within-(side, decision year) Spearman; spent frame, not a claim"
+  }
+ },
+ "probes": {
+  "DS-11:hit.overlay.injury": {
+   "tag": "DS-11:hit.overlay.injury",
+   "verdict": "READ",
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "reason": "fires on 0 rows; delta 0.0"
+  },
+  "DS-11:pit.overlay.injury": {
+   "tag": "DS-11:pit.overlay.injury",
+   "verdict": "READ",
+   "ci95": [
+    -0.0031,
+    0.0058
+   ],
+   "reason": "fires on 144 rows; delta 0.00119"
+  },
+  "DS-11:hit.overlay.age": {
+   "tag": "DS-11:hit.overlay.age",
+   "verdict": "READ",
+   "ci95": [
+    -0.0041,
+    0.0031
+   ],
+   "reason": "fires on 467 rows; delta -0.00042"
+  },
+  "DS-11:pit.overlay.age": {
+   "tag": "DS-11:pit.overlay.age",
+   "verdict": "READ",
+   "ci95": [
+    -0.007,
+    0.0022
+   ],
+   "reason": "fires on 674 rows; delta -0.00224"
+  },
+  "DS-11:hit.overlay.role": {
+   "tag": "DS-11:hit.overlay.role",
+   "verdict": "READ",
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "reason": "fires on 0 rows; delta 0.0"
+  },
+  "DS-11:pit.overlay.role": {
+   "tag": "DS-11:pit.overlay.role",
+   "verdict": "READ",
+   "ci95": [
+    -0.0012,
+    0.0018
+   ],
+   "reason": "fires on 15 rows; delta 0.00032"
+  },
+  "DS-11:hit.overlay.all": {
+   "tag": "DS-11:hit.overlay.all",
+   "verdict": "READ",
+   "ci95": [
+    -0.0041,
+    0.0031
+   ],
+   "reason": "fires on 467 rows; delta -0.00042"
+  },
+  "DS-11:pit.overlay.all": {
+   "tag": "DS-11:pit.overlay.all",
+   "verdict": "READ",
+   "ci95": [
+    -0.0068,
+    0.0065
+   ],
+   "reason": "fires on 706 rows; delta -0.0002"
+  }
+ },
+ "n_probes": 8,
+ "elapsed_s": 169.2
+}

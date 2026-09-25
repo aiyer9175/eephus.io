@@ -66,6 +66,11 @@ SOURCES: tuple[tuple[str, str, str], ...] = (
 PROBES: tuple[tuple[str, str, str], ...] = (
     ("efv_identity_balance.json", "probes", "identity balance probes (DS-03)"),
     ("efv_v2_assembly.json", "probes", "combiner rule reads (DS-08)"),
+    # DS-11: each served overlay graded out of sample, per side; DS-17: each P(bust)
+    # arm scored by Brier and log loss, per side and frame. Reads of the label, so they
+    # are counted; they test a served overlay or a calibration, not a rank driver.
+    ("efv_overlay_oos_eval.json", "probes", "served overlay grades (DS-11)"),
+    ("efv_v2_pbust_eval.json", "probes", "P(bust) calibration reads (DS-17)"),
 )
 
 #: Fields an arm may carry that the ledger copies through unchanged, so a driver's

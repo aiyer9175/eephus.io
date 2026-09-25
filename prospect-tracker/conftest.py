@@ -544,6 +544,10 @@ _SIDECAR_GLOBS = (
     # EV-09: the development read of eFV v2 champion H0, a spent-frame record
     # the progress ledger copies from.
     "data/efv_v2_dev_eval.json",
+    # DS-11 and DS-17: the overlay read and the P(bust) calibration read, both
+    # development records the progress ledger copies from.
+    "data/efv_overlay_oos_eval.json",
+    "data/efv_v2_pbust_eval.json",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES

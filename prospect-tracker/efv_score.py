@@ -1383,6 +1383,78 @@ def _apply_war_tilt(war: float, factor: float) -> float:
     return max(-2.0, adj)
 
 
+# ---------------------------------------------------------------------------
+# THE SERVED OVERLAYS, named (DS-11, bug B6 in docs/efv-v2/DRIVER_SYSTEM_V2.md)
+# ---------------------------------------------------------------------------
+# run_live applies seven things to the model leg or the grade that the out-of-sample
+# path (efv_model.oos_grades) never applied, so the scored object and the served one
+# differed by every one of them. Each now has a name, run_live takes the set it applies
+# (default: all of them, so the served board is byte-identical), and oos_grades can apply
+# the same set to the same rows through the same two functions below. With the set empty
+# the two paths give the same order on the same rows (test_efv_overlays.py).
+#
+#   injury         _injury_factor, pitchers only (INJURY_PENALTY_SIDES)   model leg
+#   age            _age_factor, the prospect-age ramp                    model leg
+#   role           _role_factor, the reliever ceiling                    model leg
+#   statcast       _statcast_factor, the Statcast+ tilt                  model leg
+#   xline          efv_statcast_overlay.overlay_fv, the S-XLINE lean     model leg
+#   dispersion     apply_dispersion_correction                           board grade only
+#   side_fairness  _apply_side_fairness_fix                              pricing grade only
+#
+# Which of them stay on the grade and which become labelled chips is decided by the
+# out-of-sample read (tools/efv_overlay_oos_read.py, data/efv_overlay_oos_eval.json) and
+# recorded in efv_overlays.py. NOTHING HERE CHANGES WHAT IS SERVED.
+SERVED_OVERLAYS: tuple[str, ...] = ("injury", "age", "role", "statcast", "xline",
+                                    "dispersion", "side_fairness")
+#: The overlays that act on the model leg (and so on rank_war, the scored object).
+MODEL_LEG_OVERLAYS: tuple[str, ...] = ("injury", "age", "role", "statcast", "xline")
+
+
+def _overlay_set(overlays) -> frozenset:
+    ov = frozenset(SERVED_OVERLAYS if overlays is None else overlays)
+    bad = ov - set(SERVED_OVERLAYS)
+    if bad:
+        raise ValueError(f"unknown overlay(s) {sorted(bad)}; known: {SERVED_OVERLAYS}")
+    return ov
+
+
+def overlay_factors(r, side: str, model_war: float, overlays=None) -> dict:
+    """The model-leg overlays for one row, exactly as run_live computes them: the four
+    multiplicative factors (1.0 when off or not triggered) and the S-XLINE lean in FV
+    points (0.0 when off or uncovered) with its chip label. `model_war` is the model
+    leg BEFORE any tilt (the reliever ceiling reads it)."""
+    ov = _overlay_set(overlays)
+    is_pit = side == "pit"
+    inj = _injury_factor(r, is_pit=is_pit) if "injury" in ov else 1.0
+    agef = _age_factor(r) if "age" in ov else 1.0
+    rolef = _role_factor(r, model_war) if "role" in ov else 1.0
+    xov, xlabel = 0.0, None
+    if "xline" in ov and _xoverlay is not None:
+        try:
+            _ov = _xoverlay.overlay_fv(r, side)
+        except Exception:
+            _ov = None
+        if _ov:
+            xov, xlabel = float(_ov[0]), _ov[1]
+    sc = _statcast_factor(r, side) if "statcast" in ov else 1.0
+    return {"injury": inj, "age": agef, "role": rolef, "statcast": sc,
+            "xline_fv": xov, "xline_label": xlabel}
+
+
+def apply_overlay_war(model_war: float, parts: dict, ols: dict | None) -> float:
+    """The model leg after the overlays in `parts` (overlay_factors), in run_live's order:
+    one multiplicative tilt by the product (injury x Statcast x age x role, the same
+    product and order run_live forms), then the S-XLINE lean priced through the
+    consensus OLS slope."""
+    adj = parts["injury"] * parts["statcast"] * parts["age"] * parts["role"]
+    war = model_war
+    if adj != 1.0:
+        war = _apply_war_tilt(war, adj)
+    if parts["xline_fv"] and ols:
+        war = max(-2.0, war + ols["b"] * parts["xline_fv"])
+    return war
+
+
 def _cal_mm(v_mm, grade, is_pit: bool):
     """bughunt F1 (P0, 2026-07-23): pass a raw engine $M figure through the
     engine's OWN isotonic calibration layer (vf.apply_calibration), exactly the
@@ -2196,18 +2268,30 @@ def _krp_display_raw(era_rel: float, k_rel: float) -> float:
     return x
 
 
-def run_live(persist: bool = True, side: str = "hit") -> dict:
+def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=None,
+             rows=None, rank_out: dict | None = None) -> dict:
     """Score the CURRENT active prospect board (efv_dataset.build_live_matrix) with the
     model fit on the full labeled matrix. Same production seam as run() -- grade +
     5-bucket distribution + surplus + uncertainty band via value_framework -- but these
     players have no outcome label yet, so there is no validation block; they ARE the
     grades the site shows next to consensus FV. Surplus/distribution use each player's
     real timing (current age + ETA) so eFV prices on the same basis as the site's
-    consensus surplus. Run after build_live + the site export (timeseries.json)."""
+    consensus surplus. Run after build_live + the site export (timeseries.json).
+
+    DS-11 seams, all defaulting to the served behaviour: `overlays` is the set of named
+    overlays applied (SERVED_OVERLAYS when None); `stack` replaces the production fit
+    with a fit_production_stack-shaped dict; `rows` replaces the live matrix; `rank_out`,
+    when a dict, receives {player_key: unrounded rank_war}. The parity test drives the
+    same rows through this path and efv_model.oos_grades."""
     is_pit = side == "pit"
-    ridge, a, b, ols, _keys = _fit_production(side)
+    ov = _overlay_set(overlays)
+    if stack is None:
+        ridge, a, b, ols, _keys = _fit_production(side)
+    else:
+        ridge, a, b, ols = stack["ridge"], stack["a"], stack["b"], stack["ols"]
     lam = blend_lambda(side)
-    live = json.loads(live_matrix_path(side).read_text(encoding="utf-8"))
+    live = (json.loads(live_matrix_path(side).read_text(encoding="utf-8"))
+            if rows is None else rows)
 
     scored, skipped_no_track = [], 0
     krp_disp_raw = {}                                     # KRP+ DISPLAY pool: player_key -> _krp_display_raw (decoupled from the model's zeroed x_era_k; LANE H2)
@@ -2288,25 +2372,20 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             # grade sits under a stale consensus (the Hickey complaint).
             factors.insert(0, {"label": "Stale list coverage", "dir": "down",
                                "mag": round(_stale_shown / 2.0, 2)})
-        inj = _injury_factor(r, is_pit=is_pit)             # owner-directed live injury penalty (pitchers only)
-        agef = _age_factor(r)                              # owner-directed live prospect-age penalty
-        rolef = _role_factor(r, xfv_war)                   # owner-directed reliever-ceiling penalty
-        # S-XLINE-4 "A-ball Statcast lean" (docs/efv-2026-07-23/GATES.md): a
-        # bounded additive FV lean on the MODEL leg for active A/CPX prospects,
-        # frozen-coefficient residual, clamped +-2 FV, default-OFF module flags.
-        # Applied below next to the multiplicative tilts; chip mirrors the
-        # stale-coverage convention (FV-scale magnitude / 2).
-        xov = 0.0
-        if _xoverlay is not None:
-            try:
-                _ov = _xoverlay.overlay_fv(r, side)
-            except Exception:
-                _ov = None
-            if _ov:
-                xov = float(_ov[0])
-                factors.insert(0, {"label": _ov[1], "dir": "up" if xov > 0 else "down",
-                                   "mag": round(abs(xov) / 2.0, 2)})
-        sc = _statcast_factor(r, side)                     # live Statcast+ quality tilt (per-side r-calibrated)
+        # The named model-leg overlays (DS-11): injury (owner-directed, pitchers only),
+        # the prospect-age ramp, the reliever ceiling, the Statcast+ tilt and the
+        # S-XLINE-4 lean (docs/efv-2026-07-23/GATES.md: an additive FV lean on the
+        # MODEL leg for covered prospects, frozen-coefficient residual). Computed by
+        # overlay_factors, the same function the out-of-sample path uses.
+        _ovp = overlay_factors(r, side, xfv_war, ov)
+        inj, agef, rolef = _ovp["injury"], _ovp["age"], _ovp["role"]
+        # The S-XLINE lean is applied below next to the multiplicative tilts; its chip
+        # mirrors the stale-coverage convention (FV-scale magnitude / 2).
+        xov = _ovp["xline_fv"]
+        if xov:
+            factors.insert(0, {"label": _ovp["xline_label"], "dir": "up" if xov > 0 else "down",
+                               "mag": round(abs(xov) / 2.0, 2)})
+        sc = _ovp["statcast"]                              # live Statcast+ quality tilt (per-side r-calibrated)
         if sc != 1.0:
             factors.insert(0, {"label": "Statcast+ quality", "dir": "up" if sc > 1 else "down",
                                "mag": round(abs(sc - 1) * 6, 2)})
@@ -2373,7 +2452,8 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         # exactly (measured: 0 rows lose a routed grade, 0 gain one).
         _grade_uncorrected = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
         _war_pre_correction = xfv_war
-        xfv_war = apply_dispersion_correction(xfv_war, is_pit)
+        if "dispersion" in ov:
+            xfv_war = apply_dispersion_correction(xfv_war, is_pit)
         # NAME THE LEVEL CORRECTION ON THE CARD, added 2026-08-14 (owner: "why is eFV
         # -4 on Jesus Made when all of his drivers are positive?").
         #
@@ -2400,7 +2480,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         _healthy_uncorrected = (vf.outcome_implied_fv(xfv_war_healthy,
                                                       exposure_seasons=TARGET_SEASONS)
                                 if xfv_war_healthy is not None else None)
-        if xfv_war_healthy is not None:                    # keep the counterfactual on one basis
+        if xfv_war_healthy is not None and "dispersion" in ov:   # keep the counterfactual on one basis
             xfv_war_healthy = apply_dispersion_correction(xfv_war_healthy, is_pit)
         xfv_grade = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
         _odds_grade = vf.realized_implied_fv(xfv_war, is_pit, age=_gm_age, position=pos,
@@ -2473,6 +2553,8 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
                 float(_mk["era_rel"]) if _mk.get("era_rel") is not None else 0.0,
                 float(_mk.get("k_rel")) if _mk.get("k_rel") is not None else 0.0)
         _rank_exact[r["player_key"]] = rank_war           # unrounded, for the display-map sort
+        if rank_out is not None:
+            rank_out[r["player_key"]] = rank_war
         # C-6: publish the delta only where the industry spoke and the map answered.
         _delta, _placeholder, _is_floor = consensus_delta(
             round(xfv_grade, 1), round(cons_fv, 1),
@@ -2603,7 +2685,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
 
     # F-SIDE-FIX joint top-band display recalibration (default-OFF flag) -- see
     # run(): after the per-side map + TOP-QUANT hook, before the surplus re-price.
-    if scored:
+    if scored and "side_fairness" in ov:
         _apply_side_fairness_fix(scored, side, live=True)
 
     # Re-price SURPLUS DOLLARS on the DISPLAYED (quantile) grade (see run()): eFV surplus

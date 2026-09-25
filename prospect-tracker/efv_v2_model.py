@@ -1644,3 +1644,186 @@ def v2_vm_scores(side: str, *, weights: dict[str, dict], years=None,
     if timing_pin and receipts is not None:
         receipts.update(mine)
     return out
+
+
+# ===========================================================================
+# DS-17: the P(bust) chip (docs/efv-v2/DRIVER_SYSTEM_V2.md s3 idea 10, s4.2 ADD, s5)
+# ===========================================================================
+# A PROBABILITY, NOT AN ORDER. P(bust) is one minus the probability of reaching the
+# majors inside the frame's window (R3 on the list-vintage frame: a debut inside
+# V..V+3; on the v1 matrices: the matrix's own debuted-versus-never split). It comes
+# from the SAME REACHED/timing head that feeds V2's order index (fit_timing_head, same
+# candidates, same admission rule), plus one calibration term: the FG-vs-Pipeline
+# spread, the absolute difference of the two sources' within-(side, year) percentiles
+# (lane I4: two graders who disagree mark a riskier prospect; every conversion of the
+# spread into a RANK shift lost, so it enters here and nowhere else).
+#
+#     logit P(REACHED) = b0 + b_uc * u_c + timing drivers + c_s * z(spread)
+#     P(bust)          = 1 - P(REACHED)
+#
+# The spread enters only if it passes the DS-06 admission rule with the REACHED target
+# inside the fold (per training vintage, on the rows that OBSERVE both sources); c_s is
+# then fitted with the head's linear predictor as a fixed offset. A row without both
+# sources reads the head alone (never an imputed spread), so the spread's presence can
+# carry no signal. FG grades exist from list vintage 2017, so the spread can be admitted
+# only in folds with two earlier vintages that observe it.
+#
+# RESERVED FRAMES: the spread may not be credited on R-LV (bug B9a, one prior exposure of
+# R-LV-overlapping rows); nothing here reads a reserved row (_check_years).
+# GATE COMPLIANCE (docs/PROSPECT_ANCHOR_GATE.md): consensus enters as a within-year
+# percentile only; calibration is reported by side and by equal-count ranges of the
+# PREDICTED probability, never by grade level.
+
+PBUST_MODEL_ID = "efv_v2_pbust"
+PBUST_SPREAD_KEY = "spread"
+
+
+def spread_values(pairs, groups) -> list[float | None]:
+    """|within-group percentile of Pipeline - within-group percentile of FanGraphs| per
+    row, over the rows of each group that carry BOTH grades; None where either is
+    missing. `pairs` is [(fangraphs, pipeline) or None], `groups` the rows' (side, year)
+    labels."""
+    out: list[float | None] = [None] * len(pairs)
+    by: dict = {}
+    for i, (p, g) in enumerate(zip(pairs, groups)):
+        if p is None or p[0] is None or p[1] is None:
+            continue
+        by.setdefault(g, []).append(i)
+    for idx in by.values():
+        fg = within_pct([float(pairs[i][0]) for i in idx], [0] * len(idx))
+        pl = within_pct([float(pairs[i][1]) for i in idx], [0] * len(idx))
+        for j, i in enumerate(idx):
+            out[i] = float(abs(pl[j] - fg[j]))
+    return out
+
+
+def _spread_arr(rows: list[dict]) -> np.ndarray:
+    return np.array([np.nan if r.get(PBUST_SPREAD_KEY) is None
+                     else float(r[PBUST_SPREAD_KEY]) for r in rows], dtype=np.float64)
+
+
+def _u_c(rows: list[dict]) -> np.ndarray:
+    """The consensus percentile within each row's own year (no label read)."""
+    return within_pct([r["fv"] for r in rows], [int(r["decision_year"]) for r in rows])
+
+
+def spread_admission(train: list[dict], *, min_rows: int = ADMIT_MIN_ROWS) -> dict:
+    """The DS-06 rule for the spread against REACHED: per training vintage, the t of
+    z(spread) in OLS reached ~ 1 + u_c + z(spread) on the rows that observe the spread
+    (u_c within the vintage over all its rows)."""
+    _check_years({int(r["decision_year"]) for r in train})
+    u_c = _u_c(train)
+    s = _spread_arr(train)
+    y = np.array([r["reached"] for r in train], dtype=np.float64)
+    t_by = {}
+    for yr in sorted({int(r["decision_year"]) for r in train}):
+        ix = [i for i, r in enumerate(train)
+              if int(r["decision_year"]) == yr and not np.isnan(s[i])]
+        t_by[yr] = (admission_t(u_c[ix], y[ix], s[ix], min_rows=min_rows)
+                    if len(ix) >= min_rows else None)
+    return admission_check(t_by)
+
+
+def _head_eta(head: dict, rows: list[dict]) -> np.ndarray:
+    """The REACHED head's full linear predictor on rows (u_c within the rows' years)."""
+    return (head["b0"] + head["b_uc"] * _u_c(rows)
+            + _lin(head, _v2_x(rows, head["keys"], head["means"])))
+
+
+def consensus_only_head(train: list[dict], side: str) -> dict | None:
+    """The reference REACHED head: a logistic on the consensus percentile alone."""
+    head = _timing_fit(train, (), math.inf)
+    if head is not None:
+        head.update({"side": side, "admission": {}, "candidates": []})
+    return head
+
+
+def fit_pbust(train: list[dict], side: str, *, frame: str, timing: dict | None = None,
+              spread: str = "admit", absent_ok: bool | None = None,
+              consensus_only: bool = False) -> dict:
+    """The P(bust) chip on one fold's training rows (each carrying `v2`, `fv`,
+    `reached`, `decision_year` and optionally `spread`).
+
+    timing  the REACHED head (fit_timing_head with V2's candidates for the frame and the
+            admission rule) unless one is handed in; with no usable head, the consensus
+            percentile alone (a logistic on u_c).
+    spread  "admit" (the chip: the DS-06 rule decides), "force" (a diagnostic: always
+            fitted when enough rows observe it) or "off".
+    consensus_only  the reference arm (consensus_only_head, no spread): what the served
+            chip uses while the DS-17 read says the chip does not beat it
+            (pbust_serving_arm)."""
+    if frame not in ("lv", "vm"):
+        raise ValueError(f"frame must be lv or vm, got {frame!r}")
+    if spread not in ("admit", "force", "off"):
+        raise ValueError(f"spread must be admit, force or off, got {spread!r}")
+    _check_years({int(r["decision_year"]) for r in train})
+    ob = frame == "lv"
+    ab = ob and (absence_admitted(side) if absent_ok is None else bool(absent_ok))
+    if consensus_only:
+        timing, spread = consensus_only_head(train, side), "off"
+    head = timing
+    if head is None:
+        head = fit_timing_head(train, side, ids_outcome_blind=ob, absence_admitted=ab,
+                               candidates=timing_candidates(side, ids_outcome_blind=ob,
+                                                            absence_admitted=ab))
+    if head is None:
+        head = consensus_only_head(train, side)
+    out = {"model_id": PBUST_MODEL_ID, "consensus_only": bool(consensus_only), "side": side, "frame": frame, "timing": head,
+           "spread_mode": spread, "spread_admission": None, "spread_used": False,
+           "c_spread": 0.0, "spread_mu": None, "spread_sd": None,
+           "n_train": len(train), "n_spread_train": 0,
+           "train_years": sorted({int(r["decision_year"]) for r in train})}
+    if head is None or spread == "off":
+        return out
+    s = _spread_arr(train)
+    obs = ~np.isnan(s)
+    out["n_spread_train"] = int(obs.sum())
+    chk = spread_admission(train)
+    out["spread_admission"] = chk
+    use = chk["admitted"] if spread == "admit" else True
+    if not use or obs.sum() < MIN_TRAIN_ROWS or float(np.nanstd(s)) <= 0:
+        return out
+    mu, sd = float(np.nanmean(s)), float(np.nanstd(s))
+    z = (s[obs] - mu) / sd
+    y = np.array([r["reached"] for r in train], dtype=np.float64)
+    eta = _head_eta(head, train)
+    c = _logistic(z[:, None], y[obs], eta[obs], np.array([_OFFSET_EPS]))
+    out.update(spread_used=True, c_spread=float(c[0]), spread_mu=mu, spread_sd=sd)
+    return out
+
+
+def predict_pbust(model: dict, rows: list[dict]) -> list[dict]:
+    """Per row: p_reach and p_bust = 1 - p_reach, from the head's linear predictor plus
+    the spread term on rows that observe it (u_c within the rows' own years)."""
+    if not rows:
+        return []
+    head = model["timing"]
+    if head is None:
+        raise ValueError("the P(bust) model has no REACHED head")
+    eta = _head_eta(head, rows)
+    if model.get("spread_used"):
+        s = _spread_arr(rows)
+        obs = ~np.isnan(s)
+        zs = np.where(obs, (np.nan_to_num(s) - model["spread_mu"]) / model["spread_sd"], 0.0)
+        eta = eta + model["c_spread"] * zs
+    p = _sigmoid(eta)
+    return [{"player_key": r["player_key"], "decision_year": int(r["decision_year"]),
+             "p_reach": float(p[i]), "p_bust": float(1.0 - p[i]),
+             "spread_used": bool(model.get("spread_used")
+                                 and r.get(PBUST_SPREAD_KEY) is not None)}
+            for i, r in enumerate(rows)]
+
+
+PBUST_EVAL_PATH = DATA_DIR / "efv_v2_pbust_eval.json"
+
+
+def pbust_serving_arm(path: Path | None = None) -> str:
+    """The P(bust) arm the served chip may use, from the committed DS-17 read
+    (tools/efv_pbust_read.py SERVING_RULE): "chip" or "consensus". With no read on disk
+    the answer is "consensus" (the chip has not been shown to beat it)."""
+    p = PBUST_EVAL_PATH if path is None else Path(path)
+    if not p.exists():
+        return "consensus"
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    arm = (doc.get("serving") or {}).get("arm")
+    return arm if arm in ("chip", "consensus") else "consensus"

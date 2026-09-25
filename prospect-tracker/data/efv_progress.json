@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-09-25T19:24:09Z",
+ "generated_at": "2026-09-25T21:04:06Z",
  "headline_frame": "vm",
  "frames": {
   "vm": {
@@ -27,6 +27,12 @@
    "role": "development",
    "tilted": false,
    "label": "List vintage, development",
+   "note": "development frame, spent, not a claim"
+  },
+  "vm_oos_dev": {
+   "role": "development",
+   "tilted": false,
+   "label": "v1 out-of-sample pool, development",
    "note": "development frame, spent, not a claim"
   },
   "lv_res": {
@@ -1124,7 +1130,7 @@
     }
    ],
    "note": "development frame, spent, not a claim",
-   "last_verified_at": "2026-09-25T19:24:09Z",
+   "last_verified_at": "2026-09-25T21:04:06Z",
    "content_hash": "1ce13465b106abd12b48cfe67e0664b5ecad2f19556de78d16a6d2ee34683dc6"
   },
   {
@@ -1332,7 +1338,7 @@
     }
    ],
    "note": "development frame, spent, not a claim",
-   "last_verified_at": "2026-09-25T19:24:09Z",
+   "last_verified_at": "2026-09-25T21:04:06Z",
    "content_hash": "0ab5d2f252c78b76a367447860d2cf23117d38173097a1c758aeeae2b0559d43"
   },
   {
@@ -2431,7 +2437,7 @@
     }
    ],
    "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress.",
-   "last_verified_at": "2026-09-25T19:24:09Z",
+   "last_verified_at": "2026-09-25T21:04:06Z",
    "content_hash": "5995e45dcc42c1904831b187e67986d504256c6cee8af4f7b0395d5b6baca65d"
   },
   {
@@ -2576,7 +2582,7 @@
     }
    ],
    "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress. timing-pinned: eFV's consensus input is the raters' own preseason read; becomes the headline once the owner has seen it",
-   "last_verified_at": "2026-09-25T19:24:09Z",
+   "last_verified_at": "2026-09-25T21:04:06Z",
    "content_hash": "9f131097bb9102a4a7952808c02e38302f8b672bc72d48fc25712bc816b560d4"
   },
   {
@@ -2657,7 +2663,7 @@
     }
    ],
    "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress. post-debut consensus reads removed, all remaining base years kept; tilted TOWARD eFV, which is graded at the decision year while the retained earlier reads are not",
-   "last_verified_at": "2026-09-25T19:24:09Z",
+   "last_verified_at": "2026-09-25T21:04:06Z",
    "content_hash": "7ff5cd1a819f60e00783d65c3867c1352cbe9498665b622b4122018efd1873d6"
   },
   {
@@ -2738,7 +2744,7 @@
     }
    ],
    "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress. every base year including post-debut consensus reads; tilted TOWARD the consensus, which sees major league performance on those rows",
-   "last_verified_at": "2026-09-25T19:24:09Z",
+   "last_verified_at": "2026-09-25T21:04:06Z",
    "content_hash": "4f071cbaeabc00ba288e1b601294910f08d0785a2fee389e04999954099fa55b"
   },
   {
@@ -2788,8 +2794,247 @@
     }
    ],
    "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress. latest pre-debut consensus read",
-   "last_verified_at": "2026-09-25T19:24:09Z",
+   "last_verified_at": "2026-09-25T21:04:06Z",
    "content_hash": "1264090b416dc42371ceeb6b469872bd89c3d0b75a02754b71646ce8b89d781d"
+  },
+  {
+   "run_id": "2026-09-25T20:53:07+00:00|vm_oos_dev|0f2fbcc4",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v1_overlays",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "db21d3d0",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025,
+    "provider": "ewar_v2"
+   },
+   "frame": "vm_oos_dev",
+   "frame_version": "v1_oos_block",
+   "role": "development",
+   "tilted": false,
+   "window": [
+    2014,
+    2024
+   ],
+   "n": 2096,
+   "n_by_side": {
+    "hit": 1100,
+    "pit": 996
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3014,
+     "auc": null,
+     "n": 2096
+    },
+    "efv_v1": {
+     "spearman": 0.3017,
+     "auc": null,
+     "n": 2096
+    },
+    "prospx_consensus": {
+     "spearman": 0.2955,
+     "auc": null,
+     "n": 2096
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.00586,
+      "ci95": [
+       -0.0113,
+       0.0232
+      ],
+      "mde95": null,
+      "mde95_estimator": null,
+      "ci95_estimator": "paired, player-clustered, B 1000",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_oos_dev.deltas.vs_prospx_consensus.spearman"
+     }
+    },
+    "vs_efv_v1": {
+     "spearman": {
+      "delta": -0.00032,
+      "ci95": [
+       -0.004,
+       0.0034
+      ],
+      "mde95": null,
+      "mde95_estimator": null,
+      "ci95_estimator": "paired, player-clustered, B 1000",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_oos_dev.deltas.vs_efv_v1.spearman"
+     }
+    },
+    "efv_v1_vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.00617,
+      "ci95": [
+       -0.0114,
+       0.0239
+      ],
+      "mde95": null,
+      "mde95_estimator": null,
+      "ci95_estimator": "paired, player-clustered, B 1000",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_oos_dev.deltas.efv_v1_vs_prospx_consensus.spearman"
+     }
+    }
+   },
+   "resolvable": null,
+   "verdict": "development only; CI95 spans zero",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/efv_overlay_oos_eval.json",
+     "generated_at": "2026-09-25T20:53:07+00:00",
+     "sha256": "e66555730ce71b69be2c9b25ddfbb7393d56b8da0d64d33e82b0d88fdc454be5"
+    }
+   ],
+   "note": "DS-11 overlay read: eFV v1 WITH the gradeable served overlays (injury, age, reliever ceiling) against v1 without them, on v1's own forward-chained pool, rows with a MiLB block; within-(side, decision year) Spearman; spent frame, not a claim",
+   "last_verified_at": "2026-09-25T21:04:06Z",
+   "content_hash": "0f2fbcc4bd06b299e786af2053f1006b28ebe795b735aa35cdbaa96141e8587b"
+  },
+  {
+   "run_id": "2026-09-25T21:04:05+00:00|vm_oos_dev|f9ff1952",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v2_pbust",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "db21d3d0",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025,
+    "provider": "ewar_v2"
+   },
+   "frame": "vm_oos_dev",
+   "frame_version": "v1_oos_pbust",
+   "role": "development",
+   "tilted": false,
+   "window": [
+    2017,
+    2024
+   ],
+   "n": 3073,
+   "n_by_side": {
+    "hit": 1501,
+    "pit": 1572
+   },
+   "raters": {
+    "efv": {
+     "spearman": null,
+     "auc": 0.82291,
+     "n": 3073
+    },
+    "prospx_consensus": {
+     "spearman": null,
+     "auc": 0.72727,
+     "n": 3073
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "auc": {
+      "delta": 0.09563,
+      "ci95": [
+       0.0807,
+       0.11137
+      ],
+      "mde95": null,
+      "mde95_estimator": null,
+      "ci95_estimator": "paired, player-clustered, B 1000",
+      "resolvable": null,
+      "reading": "development only; CI95 above zero",
+      "key": "frames.vm_oos_dev.deltas.vs_prospx_consensus.auc"
+     }
+    }
+   },
+   "resolvable": null,
+   "verdict": "development only; tilted; P(bust) Brier chip minus consensus-only CI95 below zero",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/efv_v2_pbust_eval.json",
+     "generated_at": "2026-09-25T21:04:05+00:00",
+     "sha256": "9805d25697536a6c4f0601cf0d4a101813de9aa0fbeaf42732e4f6cfc4dd78bc"
+    }
+   ],
+   "note": "DS-17 P(bust) chip read (REACHED head plus the FG-vs-Pipeline spread when admitted): Brier 0.1816 against consensus-only 0.21601 (delta -0.03441, CI95 [-0.03954, -0.02948]); log loss 0.52987 against 0.62148 (delta -0.09161, CI95 [-0.10387, -0.07985]). The AUC is for reaching the majors, not the WAR label. TILTED toward any head that reads level: a debuted matrix row is read just before its debut, so its level at the read foretells the debut. Spent frame, not a claim.",
+   "last_verified_at": "2026-09-25T21:04:06Z",
+   "content_hash": "f9ff1952c187343c191e884f7da14e3114488ad2ff4d8666ea0bceab0c1408b0"
+  },
+  {
+   "run_id": "2026-09-25T21:04:05+00:00|lv_dev|7b7c3193",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v2_pbust",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "db21d3d0",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025,
+    "provider": "ewar_v2"
+   },
+   "frame": "lv_dev",
+   "frame_version": "lv1_pbust",
+   "role": "development",
+   "tilted": false,
+   "window": [
+    2017,
+    2019
+   ],
+   "n": 2862,
+   "n_by_side": {
+    "hit": 1463,
+    "pit": 1399
+   },
+   "raters": {
+    "efv": {
+     "spearman": null,
+     "auc": 0.63568,
+     "n": 2862
+    },
+    "prospx_consensus": {
+     "spearman": null,
+     "auc": 0.66356,
+     "n": 2862
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "auc": {
+      "delta": -0.02788,
+      "ci95": [
+       -0.03888,
+       -0.01585
+      ],
+      "mde95": null,
+      "mde95_estimator": null,
+      "ci95_estimator": "paired, player-clustered, B 1000",
+      "resolvable": null,
+      "reading": "development only; CI95 below zero",
+      "key": "frames.lv_dev.deltas.vs_prospx_consensus.auc"
+     }
+    }
+   },
+   "resolvable": null,
+   "verdict": "development only; P(bust) Brier chip minus consensus-only CI95 above zero",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/efv_v2_pbust_eval.json",
+     "generated_at": "2026-09-25T21:04:05+00:00",
+     "sha256": "9805d25697536a6c4f0601cf0d4a101813de9aa0fbeaf42732e4f6cfc4dd78bc"
+    }
+   ],
+   "note": "DS-17 P(bust) chip read (REACHED head plus the FG-vs-Pipeline spread when admitted): Brier 0.24632 against consensus-only 0.22818 (delta 0.01814, CI95 [0.01322, 0.02249]); log loss 0.70709 against 0.64926 (delta 0.05784, CI95 [0.04479, 0.07041]). The AUC is for reaching the majors, not the WAR label. Spent frame, not a claim.",
+   "last_verified_at": "2026-09-25T21:04:06Z",
+   "content_hash": "7b7c3193e6cb96aa3c97e920d93e7b603d63f6871814d6841422c88de6c3520c"
   }
  ],
  "backfill": {

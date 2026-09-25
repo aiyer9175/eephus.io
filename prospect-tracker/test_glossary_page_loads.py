@@ -226,8 +226,13 @@ def test_progress_ledger_fetch_resolves_and_renders(server, browser):
     assert status == 200
     assert not page_errors, "JS errors: " + " | ".join(page_errors)
     rows = doc["rows"]
+    # A row is charted when it sits in a chart frame AND carries the Spearman delta the
+    # chart plots (the page's _progSeriesRows rule). The DS-17 P(bust) rows carry an AUC
+    # for reaching the majors and no Spearman, so they sit in the table only.
     charted = [r for r in rows if r.get("role") not in ("tilted", "secondary")
-               and r.get("frame") in ("vm", "vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros")]
+               and r.get("frame") in ("vm", "vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros")
+               and ((r.get("deltas") or {}).get("vs_prospx_consensus") or {})
+               .get("spearman", {}).get("delta") is not None]
     assert out["marks"] == len(charted), (out["marks"], len(charted))
     tilted = [r for r in rows if r.get("role") == "tilted"]
     assert out["tilted"] == len(tilted) and out["open"] in (False, None)
