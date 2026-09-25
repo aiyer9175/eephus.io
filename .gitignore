@@ -36,3 +36,9 @@ ncaa_statsapi_2026_summary.json
 # committed into it.
 .claude/worktrees/
 .claude/settings.json
+
+# Pre-epoch evidence snapshots taken beside prospect-tracker/ (the
+# 2026-09-04 eWAR label epoch took _pre_epoch_2026-09/: a 1.77 GB DB plus
+# served artifacts and withheld label files such as star_label_view.json
+# and the xfv matrices). Kept on disk, never committed.
+/_pre_epoch_*/
