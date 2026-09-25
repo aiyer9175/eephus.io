@@ -656,3 +656,34 @@ def test_established_only_is_on_by_default_on_an_index_window():
     names = [re.sub(r"<[^>]+>", "", c) for c in _cells(html, "name")]
     assert any("Window Judge" in n for n in names), names
     assert not any("Thin Window" in n for n in names), names
+
+
+# ---------------------------------------------------------------- the stamp
+def _stamp(html: str) -> str:
+    m = re.search(r'<div class="mlbstats-note mlbstats-freshness">(.*?)</div>', html, re.S)
+    return re.sub(r"<[^>]+>", "", m.group(1)) if m else ""
+
+
+def test_a_past_season_stamps_itself_not_the_live_payload():
+    """Census M06-03. Every past season read "Season 2026 through <today>"
+    because the banner only ever read the live payload."""
+    stamp = _stamp(_render("#section=war&wseason=2019"))
+    assert "Season 2019, complete" in stamp, stamp
+    assert "2026" not in stamp and "2026-06-29" not in stamp, stamp
+
+
+def test_a_window_stamps_the_date_its_live_slice_was_built():
+    """The Overall window folds war_seasons.json and prints its as_of; a role
+    board window prints the lab file's panel_built_at for the live season,
+    never the live payload's as_of."""
+    seasons = dict(WAR_SEASONS, as_of="2026-09-17")
+    stamp = _stamp(_render("#section=war&wyears=2024-2026", seasons=seasons))
+    assert stamp.startswith("2024-2026") and "2026 through 2026-09-17" in stamp, stamp
+    assert "Season 2026" not in stamp and "2026-06-29" not in stamp, stamp
+    l3 = dict(WINDOW_L3, panel_built_at={"2024": "2026-09-16", "2025": "2026-09-16",
+                                         "2026": "2026-09-16"})
+    stamp = _stamp(_hitters("#section=hitters&hyears=2024-2026", l3=l3))
+    assert stamp.startswith("2024-2026") and "2026 through 2026-09-16" in stamp, stamp
+    assert "Season 2026" not in stamp and "2026-06-29" not in stamp, stamp
+    # Current is untouched
+    assert "Season 2026" in _stamp(_hitters("#section=hitters"))

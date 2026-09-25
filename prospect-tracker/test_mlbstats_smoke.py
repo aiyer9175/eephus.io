@@ -1064,7 +1064,10 @@ def test_the_team_basis_disclosure_is_actually_rendered():
     assert "team_basis" in js, (
         "the page still does not read the team_basis block the exporters write")
     assert "function teamBasisNote" in js
-    assert "teamBasisNote(DATA)" in js, "the note is defined but never mounted"
+    # Mounted through sectionBasis since census M06-03, so a past season reads
+    # its history payload's block rather than the live one.
+    assert 'teamBasisNote(sectionBasis("bullpen", DATA, HISTORY))' in js, (
+        "the note is defined but never mounted")
 
 
 def test_the_note_is_derived_from_the_payload_and_not_typed():

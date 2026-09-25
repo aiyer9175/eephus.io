@@ -2301,13 +2301,28 @@
   // the same markup inside their own root instead. `opts.noCoverage` is for
   // Leverage, whose board note already prints a SEASON-AWARE coverage line
   // (the live count is wrong for a past-season pill); one number, once.
+  //
+  // `opts.sec` names the section, so a past season or a window stamps ITSELF
+  // rather than the live payload (census M06-03): the 2023 hitter board and
+  // the 2024-2026 window both read "Season 2026 through <today>" while the
+  // window's 2026 slice was built days earlier, and a past bullpen board
+  // printed the live season's play-by-play coverage.
   function bannerHTML(d, opts) {
     if (!d) return "";
     var o = opts || {};
     var bits = [];
-    if (d.season) bits.push("Season " + esc(d.season));
-    if (d.as_of) bits.push("through " + esc(d.as_of));
-    if (!o.noCoverage && d.coverage && d.coverage.games != null) {
+    var w = o.sec ? viewWin(o.sec) : null, liveY = num(d.season);
+    if (w && w.lo === w.hi && (liveY == null || w.lo >= liveY)) w = null;
+    if (w && w.lo === w.hi) {
+      bits.push("Season " + esc(w.lo) + ", complete");
+    } else if (w) {
+      bits.push(esc(w.lo + "-" + w.hi));
+      var thru = (liveY != null && w.hi >= liveY) ? liveSliceDate(o.sec, w, liveY) : null;
+      if (thru) bits.push(esc(liveY) + " through " + esc(thru));
+    }
+    if (!w && d.season) bits.push("Season " + esc(d.season));
+    if (!w && d.as_of) bits.push("through " + esc(d.as_of));
+    if (!w && !o.noCoverage && d.coverage && d.coverage.games != null) {
       var cov = d.coverage;
       // bullpen stamps `expected`, leverage stamps `games_total`.
       var tot = (cov.expected != null) ? cov.expected : cov.games_total;
@@ -2321,7 +2336,36 @@
     if (!bits.length) return "";
     return '<div class="mlbstats-note mlbstats-freshness">' + bits.join(" &middot; ") + "</div>";
   }
-  function banner() { return bannerHTML(DATA); }
+  function banner() { return bannerHTML(DATA, { sec: "bullpen" }); }
+  // The window or past season a section's PLAYER board is showing, or null for
+  // Current. The team and chart views of the role boards always serve the live
+  // payload, so they stamp it whatever the season control says. The Overall
+  // board's Team eWAR tab refuses a window outright, so it keeps the stamp.
+  function viewWin(sec) {
+    var on = sec === "bullpen" ? view === "relievers"
+      : sec === "starters" ? starterView === "starters"
+      : sec === "hitters" ? hitterView === "hitters"
+      : sec === "defense" ? defenseView === "fielders"
+      : true;
+    return on ? (WIN[sec] || null) : null;
+  }
+  // The date the live season's slice of a window was built: the Overall board
+  // folds data/war_seasons.json, whose as_of it prints; the role boards read
+  // the lab window file's panel_built_at. Null until that payload has landed.
+  function liveSliceDate(sec, w, liveY) {
+    if (sec === "war") return (SEASONS && SEASONS.as_of) || null;
+    var lw = labWindowFor(LAB_BOARD[sec], w.lo, w.hi);
+    var doc = lw && WINDOW_DOC[lw.key];
+    return (doc && doc.panel_built_at && doc.panel_built_at[String(liveY)]) || null;
+  }
+  // The payload whose team_basis block describes the rows on screen: the live
+  // one on Current, the section's history payload on a past season, and none on
+  // a window, whose own note states that the club is every club of production.
+  function sectionBasis(sec, live, hist) {
+    var w = viewWin(sec), liveY = num(live && live.season);
+    if (!w || (w.lo === w.hi && liveY != null && w.lo >= liveY)) return live;
+    return w.lo === w.hi ? (hist || null) : null;
+  }
 
   // WHAT THE TEAM COLUMN MEANS, and it is not what a reader assumes.
   //
@@ -2484,7 +2528,7 @@
     bindEvents(root);
     wireGlossary(root);
     var bann = document.getElementById("mlbstats-banner");
-    if (bann) bann.innerHTML = banner() + teamBasisNote(DATA);
+    if (bann) bann.innerHTML = banner() + teamBasisNote(sectionBasis("bullpen", DATA, HISTORY));
   }
 
   function bindEvents(root) {
@@ -3176,7 +3220,7 @@
       : (starterView === "charts") ? renderStarterCharts() : renderStarterBoard();
     // No #mlbstats-banner div exists for this section, so the freshness line
     // leads the section's own root.
-    root.innerHTML = bannerHTML(starterData) + teamBasisNote(starterData)
+    root.innerHTML = bannerHTML(starterData, { sec: "starters" }) + teamBasisNote(sectionBasis("starters", starterData, STARTER_HISTORY))
       + starterTabBar() + starterControls() + inner;
     bindStarterEvents(root);
     wireGlossary(root);
@@ -3244,7 +3288,7 @@
     if (!root) return;
     var inner = (starterView === "teams") ? renderStarterTeams()
       : (starterView === "charts") ? renderStarterCharts() : renderStarterBoard();
-    root.innerHTML = bannerHTML(starterData) + teamBasisNote(starterData)
+    root.innerHTML = bannerHTML(starterData, { sec: "starters" }) + teamBasisNote(sectionBasis("starters", starterData, STARTER_HISTORY))
       + starterTabBar() + starterControls() + inner;
     restoreFocus(root, focusId || "mlbstats-starter-q");
     bindStarterEvents(root);
@@ -3891,7 +3935,7 @@
       : (hitterView === "charts") ? renderHitterCharts() : renderHitterBoard();
     // No #mlbstats-banner div for this section; the freshness line leads the
     // section's own root.
-    root.innerHTML = bannerHTML(hitterData) + teamBasisNote(hitterData)
+    root.innerHTML = bannerHTML(hitterData, { sec: "hitters" }) + teamBasisNote(sectionBasis("hitters", hitterData, HITTER_HISTORY))
       + hitterTabBar() + hitterControls() + inner;
     bindHitterEvents(root);
     wireGlossary(root);
@@ -3964,7 +4008,7 @@
     if (!root) return;
     var inner = (hitterView === "teams") ? renderHitterTeams()
       : (hitterView === "charts") ? renderHitterCharts() : renderHitterBoard();
-    root.innerHTML = bannerHTML(hitterData) + teamBasisNote(hitterData)
+    root.innerHTML = bannerHTML(hitterData, { sec: "hitters" }) + teamBasisNote(sectionBasis("hitters", hitterData, HITTER_HISTORY))
       + hitterTabBar() + hitterControls() + inner;
     restoreFocus(root, focusId || "mlbstats-hitter-q");
     bindHitterEvents(root);
@@ -4277,8 +4321,8 @@
     // levExplainer() is no longer prepended here: it rides the board's own
     // methodology fold (renderLeverageBoard), so it does not stand above a
     // load error or a "no rows" state either.
-    root.innerHTML = bannerHTML(leverageData, { noCoverage: true })
-      + teamBasisNote(leverageData)
+    root.innerHTML = bannerHTML(leverageData, { noCoverage: true, sec: "leverage" })
+      + teamBasisNote(sectionBasis("leverage", leverageData, leverageHistory))
       + leverageTabBar() + leverageControls() + renderLeverageBoard();
     bindLeverageEvents(root);
     wireGlossary(root);
@@ -4287,8 +4331,8 @@
   function renderLeverageInPlace(focusId) {
     var root = document.getElementById("mlbstats-leverage-root");
     if (!root) return;
-    root.innerHTML = bannerHTML(leverageData, { noCoverage: true })
-      + teamBasisNote(leverageData)
+    root.innerHTML = bannerHTML(leverageData, { noCoverage: true, sec: "leverage" })
+      + teamBasisNote(sectionBasis("leverage", leverageData, leverageHistory))
       + leverageTabBar() + leverageControls() + renderLeverageBoard();
     restoreFocus(root, focusId || "mlbstats-leverage-q");
     bindLeverageEvents(root);
@@ -4565,10 +4609,6 @@
   // own team_basis sentence for that case (a 2021 line under a 2026 club); the
   // live board's sentence describes an in-season trade. Each board discloses
   // its own. Team Defense and Defense Charts are always the live season.
-  function defenseBasis() {
-    return (defenseView === "fielders" && defenseSeason !== "current" && DEFENSE_HISTORY)
-      ? DEFENSE_HISTORY : defenseData;
-  }
 
   // Position chips: the roleChips markup (season-pill buttons, OR set, "All"
   // clears), keyed on the primary position in diamond order.
@@ -4780,7 +4820,7 @@
     // Build the body first: a past-season render can start the history fetch,
     // and the team-basis note should read whichever payload the board shows.
     var inner = defenseInner();
-    root.innerHTML = bannerHTML(defenseData) + teamBasisNote(defenseBasis())
+    root.innerHTML = bannerHTML(defenseData, { sec: "defense" }) + teamBasisNote(sectionBasis("defense", defenseData, DEFENSE_HISTORY))
       + defenseTabBar() + defenseControls() + inner;
     bindDefenseEvents(root);
     wireGlossary(root);
@@ -4863,7 +4903,7 @@
     var root = document.getElementById("mlbstats-defense-root");
     if (!root) return;
     var inner = defenseInner();
-    root.innerHTML = bannerHTML(defenseData) + teamBasisNote(defenseBasis())
+    root.innerHTML = bannerHTML(defenseData, { sec: "defense" }) + teamBasisNote(sectionBasis("defense", defenseData, DEFENSE_HISTORY))
       + defenseTabBar() + defenseControls() + inner;
     restoreFocus(root, focusId || "mlbstats-defense-q");
     bindDefenseEvents(root);
@@ -5466,7 +5506,7 @@
     // The club basis note is the CURRENT board's, and on a window the window
     // note states the basis instead: the served block says "the club today",
     // which is not what a window row's club is.
-    root.innerHTML = bannerHTML(warData, { noCoverage: true }) + (WIN.war ? "" : teamBasisNote(warData))
+    root.innerHTML = bannerHTML(warData, { noCoverage: true, sec: "war" }) + teamBasisNote(sectionBasis("war", warData, null))
       + '<div class="mlbstats-tabs" role="tablist">' + tabs.map(function (t) {
           return '<button type="button" class="mlbstats-tab' + (t[0] === warView ? " active" : "") + '" data-warview="' + t[0]
             + '" role="tab" aria-selected="' + (t[0] === warView) + '">' + t[1] + "</button>"; }).join("") + "</div>"
