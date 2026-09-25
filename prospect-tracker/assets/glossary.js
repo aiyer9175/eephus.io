@@ -238,8 +238,9 @@
   // Every figure is read from the committed eval artifact at expand time and
   // passes through ONE formatter (_rn); no measured number is typed by hand.
   // Ledger notes, recorded rather than approximated:
-  //   - milb_park_factor: intentionally left as-is (its entry copy already
-  //     stands on data/milb_park_factors_eval.json; no receipt spec added).
+  //   - milb_park_factor: no receipt spec. Its entry types no measured
+  //     figure; the stability reads are computed live on /parks/#method
+  //     from the served park table.
   //   - war_pa_plus_3yr / _adj and the war_ip_plus_* 3yr/adj variants: the
   //     committed eval (war_rate_plus_eval.json) scores only the base
   //     single-season indexes, so the variants get NO receipt (no clean key).

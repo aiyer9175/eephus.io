@@ -158,7 +158,7 @@
       club: latestClubs.length === 1 ? latestClubs[0]
         : (latestClubs.length ? latestClubs.length + " clubs" : "-"),
       shared: clubs.length > 1,
-      unnamed: !v.venue_name || v.venue_name === "TBD",
+      unnamed: isPooled(v),
       level: levels[0] || "-",
       levels: levels,
       league: leagues.length === 1 ? leagues[0] : (leagues.length ? "mixed" : "-"),
@@ -504,8 +504,12 @@
   }
   function spearman(a, b) { return pearson(ranks(a), ranks(b)); }
 
+  // The feed's no-venue bucket (StatsAPI 401 "TBD") is a row, not a park.
+  function isPooled(v) { return !v.venue_name || v.venue_name === "TBD"; }
+
   function stability() {
-    var vs = (DATA && DATA.venues) || [];
+    // A park's repeatability, so the pooled no-venue row stays out of it.
+    var vs = ((DATA && DATA.venues) || []).filter(function (v) { return !isPooled(v); });
     var out = { yoy: [], splitRun: null, splitHr: null, runLo: null, runHi: null };
     SEASONS.slice().sort(function (a, b) { return a - b; }).forEach(function (y) {
       var xs = [], ys = [];
@@ -572,7 +576,10 @@
     var stop = (DATA && DATA.stop_d) || {};
     var sp = (m.seasons || []);
     var clamps = m.application_clamps || {};
-    var venues = ((DATA && DATA.venues) || []).length;
+    // Count the pooled no-venue row apart, the glossary's policy.
+    var allV = (DATA && DATA.venues) || [];
+    var pooledV = allV.filter(isPooled).length;
+    var venues = allV.length - pooledV;
     var ts = ((DATA && DATA.team_seasons) || []).length;
     var h = '<div class="pk-prose">';
     // The shrink constant is read out of the artifact's own method string
@@ -602,7 +609,10 @@
     // so a rebuild can never leave this paragraph claiming a stale number.
     var rng = observedRanges();
     h += "<h3>What backs it</h3><ul>"
-      + "<li>" + esc(String(venues)) + " venues, " + esc(String(ts)) + " club-seasons.</li>"
+      + "<li>" + esc(String(venues)) + " venues"
+      + (pooledV ? " plus " + esc(String(pooledV)) + " pooled row" + (pooledV === 1 ? "" : "s")
+          + " for club-seasons with no reported venue" : "")
+      + ", " + esc(String(ts)) + " club-seasons.</li>"
       + "<li>Three-season range: run " + f3(rng.runLo) + " to " + f3(rng.runHi)
       + ", home run " + f3(rng.hrLo) + " to " + f3(rng.hrHi) + ". Single seasons: run "
       + f3(rng.sRunLo) + " to " + f3(rng.sRunHi) + ".</li>"
