@@ -4656,6 +4656,20 @@
    "eval_artifact": null,
    "verdict": "unvalidated",
    "notes": "Registered 2026-09-23 with the Franchise module (D3). Descriptive by construction; the only claim is the scale (mean 100, sd 10 across the 30 clubs), pinned by test_franchise_export against the served org_summary score_100 leaves for formula parity. Nine further branches (SEASON, FIN, MARKET, FRONT OFFICE, DUGOUT, ARBITRATION, PARK, HISTORY, ODDS) are descriptive nameplates with no score, no letter and no weight."
+  },
+  {
+   "model_id": "efv_v2_h0",
+   "surface": "model-dev (rendered as development rows on the glossary Source Comparison progress ledger only; not served) - eFV v2 champion H0, efv_v2_model.py, EV-09 of docs/efv-v2/PROGRAM.md",
+   "predicts": "score_v2 = P(REACHED) * E[WAR | REACHED]: consensus-offset hurdle, logistic and weighted-OLS maps on consensus FV fixed as within-fold offsets, ridge heads on v1's feature columns with penalties by nested forward-chained CV, no zero-WAR clip",
+   "champion": "eFV v1 stays served; H0 is adjudicated only on the reserved frames (R-LV, R-VM) after docs/efv-v2/EFV_V2_GATE.md commits",
+   "baseline": "PROSPX consensus (primary) and eFV v1 (non-inferiority, TOST 0.02) on identical rows",
+   "metric": "Spearman vs realized WAR (gate), contributor AUC (veto); E_cond player-clustered CI95 on development frames",
+   "eval_artifact": "data/efv_v2_dev_eval.json",
+   "verdict": "provisional",
+   "notes": "DEVELOPMENT READ ONLY (2026-09-25, eWAR v2 label, spent frames, adjudicates nothing). vm_dev (vintage-matched vm2, n 803): H0 0.3807 vs consensus 0.4129, delta -0.0322 (E_cond CI95 -0.0581 to -0.0075); vs v1 0.3916, delta -0.0109 (E_cond CI95 -0.0343 to +0.0130). lv_dev (list vintages 2014-2019, W3, n 4702): H0 0.1575 vs consensus 0.17, delta -0.0124 (E_cond CI95 -0.0298 to +0.0044); vs v1 0.1641, delta -0.0065 (E_cond CI95 -0.0233 to +0.0097). Non-inferiority to v1 at 0.02 is not shown on either frame (both CI95 lower bounds sit below -0.02). Offset-only liveness holds on every fold.",
+   "last_checked": "2026-09-25",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []

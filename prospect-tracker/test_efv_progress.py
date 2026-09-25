@@ -318,3 +318,69 @@ def test_vm1_and_vm2_rows_dedupe_against_their_own_history(arts):
     (arts / P.SB_NAME).write_text(json.dumps(sb), encoding="utf-8")
     res = _run(arts, now=T0 + timedelta(days=2))
     assert [x.split("|")[1] for x in res["appended"]] == ["vm2"]
+
+
+# ---------------------------------------------------------------------------
+# EV-09: development reads of eFV v2 champion H0 (data/efv_v2_dev_eval.json)
+
+DEV = ROOT / "data" / "efv_v2_dev_eval.json"
+
+
+def _with_dev(arts):
+    if not DEV.exists():
+        pytest.skip("data/efv_v2_dev_eval.json not built")
+    shutil.copy2(DEV, arts / P.DEV_NAME)
+    return json.loads(DEV.read_text(encoding="utf-8"))
+
+
+def test_dev_rows_copy_the_dev_artifact(arts):
+    dev = _with_dev(arts)
+    _run(arts)
+    doc = _doc(arts)
+    for fid in P.DEV_FRAMES:
+        rows = [r for r in doc["rows"] if r["frame"] == fid]
+        assert len(rows) == 1, fid
+        r, f = rows[0], dev["frames"][fid]
+        assert r["role"] == "development" and r["tilted"] is False
+        assert r["model_id"] == dev["model_id"] != P.MODEL_ID
+        assert r["resolvable"] is None and r["verdict"] == f["verdict"]
+        assert r["verdict"].startswith("development only")
+        assert r["note"] == "development frame, spent, not a claim"
+        assert r["n"] == f["n"] and r["window"] == f["window"]
+        for name, key in P.DEV_RATERS:
+            assert r["raters"][name]["spearman"] == f["raters"][key]["spearman"]
+            assert r["raters"][name]["auc"] == f["raters"][key]["auc"]
+        for name, comp in P.DEV_DELTAS:
+            for metric in ("spearman", "auc"):
+                leg, src = r["deltas"][name][metric], f["deltas"][comp][metric]
+                assert leg["delta"] == src["delta"] and leg["ci95"] == src["ci95"]
+                assert leg["mde95"] == src["mde95"] and leg["resolvable"] is None
+        assert r["sources"][0]["path"].endswith(P.DEV_NAME)
+        assert r["content_hash"] == P.content_hash(r)
+    assert set(P.DEV_FRAMES) <= set(doc["chart"]["series_frames"])
+
+
+def test_dev_rows_append_once_and_never_displace_v1(arts):
+    _with_dev(arts)
+    _run(arts)
+    assert _run(arts, now=T0 + timedelta(days=1))["appended"] == []
+    doc = _doc(arts)
+    assert doc["headline_frame"] == "vm"
+    head = [r for r in doc["rows"] if r["frame"] == "vm"]
+    assert len(head) == 1 and head[0]["model_id"] == P.MODEL_ID
+    # a changed development read appends development rows only
+    dev = json.loads((arts / P.DEV_NAME).read_text(encoding="utf-8"))
+    dev["frames"]["lv_dev"]["raters"]["efv_v2_h0"]["spearman"] += 0.01
+    dev["generated_at"] = "2027-03-01T00:00:00Z"
+    (arts / P.DEV_NAME).write_text(json.dumps(dev), encoding="utf-8")
+    res = _run(arts, now=T0 + timedelta(days=2))
+    assert [x.split("|")[1] for x in res["appended"]] == ["lv_dev"]
+
+
+def test_a_non_development_artifact_yields_no_dev_row():
+    assert P.build_dev_rows({"role": "look", "frames": {}}, sources=[],
+                            date="2026-09-25", trigger="efv_change",
+                            now_iso="2026-09-25T00:00:00Z") == []
+    with pytest.raises(ValueError):
+        P.build_dev_rows({}, sources=[], date="2026-09-25", trigger="whenever",
+                         now_iso="2026-09-25T00:00:00Z")

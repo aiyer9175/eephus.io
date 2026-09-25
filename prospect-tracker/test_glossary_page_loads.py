@@ -227,7 +227,7 @@ def test_progress_ledger_fetch_resolves_and_renders(server, browser):
     assert not page_errors, "JS errors: " + " | ".join(page_errors)
     rows = doc["rows"]
     charted = [r for r in rows if r.get("role") not in ("tilted", "secondary")
-               and r.get("frame") in ("vm", "vm2", "lv_dev", "lv_res", "vm_pros")]
+               and r.get("frame") in ("vm", "vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros")]
     assert out["marks"] == len(charted), (out["marks"], len(charted))
     tilted = [r for r in rows if r.get("role") == "tilted"]
     assert out["tilted"] == len(tilted) and out["open"] in (False, None)

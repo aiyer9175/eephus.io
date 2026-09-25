@@ -14,7 +14,8 @@ HONEST BY CONSTRUCTION (PROGRAM.md s5.1):
 
 1. THIS LAYER COMPUTES NO STATISTIC. Every number in a row is copied from a
    named key of a named artifact (data/source_backtest.json,
-   data/xfv_scoreboard_eval.json), and the row stores each artifact's path,
+   data/xfv_scoreboard_eval.json, and for development reads of a v2 candidate
+   data/efv_v2_dev_eval.json), and the row stores each artifact's path,
    generated_at and sha256. The only things computed here are a content hash
    and a timestamp.
 2. CIs come from the producer (source_backtest._paired_delta_ci), never from
@@ -54,6 +55,20 @@ OUT_PATH = DATA_DIR / "efv_progress.json"
 LEDGER_PATH = ROOT / ".cache" / "efv_progress" / "ledger.jsonl"
 SB_NAME = "source_backtest.json"
 SC_NAME = "xfv_scoreboard_eval.json"
+#: EV-09: the development read of eFV v2 champion H0 (tools/efv_v2_dev_read.py).
+DEV_NAME = "efv_v2_dev_eval.json"
+#: dev-artifact frame id -> ledger frame id (both development).
+DEV_FRAMES = ("vm_dev", "lv_dev")
+#: ledger rater name -> rater name in the dev artifact. `efv` is the candidate.
+DEV_RATERS = (("efv", "efv_v2_h0"), ("efv_v1", "efv_v1"),
+              ("prospx_consensus", "prospx_consensus"),
+              ("mlb_pipeline", "mlb_pipeline"), ("fangraphs", "fangraphs"))
+#: ledger delta name -> comparison name in the dev artifact.
+DEV_DELTAS = (("vs_prospx_consensus", "h0_vs_prospx_consensus"),
+              ("vs_efv_v1", "h0_vs_efv_v1"),
+              ("vs_mlb_pipeline", "h0_vs_mlb_pipeline"),
+              ("vs_fangraphs", "h0_vs_fangraphs"),
+              ("efv_v1_vs_prospx_consensus", "efv_v1_vs_prospx_consensus"))
 
 SCHEMA = 1
 MODEL_ID = "efv_v1"
@@ -80,6 +95,11 @@ FRAMES = {
             "label": "Vintage-matched, timing-pinned",
             "note": ("timing-pinned: eFV's consensus input is the raters' own "
                      "preseason read; becomes the headline once the owner has seen it")},
+    # EV-09 (PROGRAM.md s3.4): development reads of a v2 candidate. Both frames are
+    # spent; their rows are charted hollow and adjudicate nothing.
+    "vm_dev": {"role": "development", "tilted": False,
+               "label": "Vintage-matched, development",
+               "note": "development frame, spent, not a claim"},
     "lv_dev": {"role": "development", "tilted": False,
                "label": "List vintage, development",
                "note": "development frame, spent, not a claim"},
@@ -109,7 +129,7 @@ BY_FRAME_KEY = {"vm": "vintage_matched", "vm2": "vintage_matched_vm2",
 #: artifact when the artifact says.
 DEFAULT_FRAME_VERSION = {"vm": "vm1", "vm2": "vm2"}
 #: Frames a chart series may contain. Tilted and secondary frames never.
-CHART_FRAMES = ("vm", "vm2", "lv_dev", "lv_res", "vm_pros")
+CHART_FRAMES = ("vm", "vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros")
 #: The only strata a row may carry (n_by_side keys).
 STRATA = ("hit", "pit")
 #: ledger rater name -> rater key in source_backtest.
@@ -349,6 +369,66 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
     return rows
 
 
+def build_dev_rows(dev: dict | None, *, sources: list[dict], date: str, trigger: str,
+                   now_iso: str) -> list[dict]:
+    """Development rows (EV-09) copied from data/efv_v2_dev_eval.json, one per frame
+    it carries. role "development", resolvable None: a development read adjudicates
+    nothing. Copies only."""
+    if trigger not in TRIGGERS:
+        raise ValueError(f"trigger must be one of {TRIGGERS}, not {trigger!r}")
+    if not dev or dev.get("role") != "development":
+        return []
+    frames = dev.get("frames") or {}
+    lab = dev.get("label") or {}
+    mv = {"fingerprint": None, "commit": (dev.get("code") or {}).get("commit"),
+          "label": lab.get("id"), "resolved_through": lab.get("resolved_through"),
+          "provider": lab.get("provider")}
+    gen = dev.get("generated_at") or ""
+    rows = []
+    for fid in DEV_FRAMES:
+        f = frames.get(fid) or {}
+        if not f.get("n") or not f.get("raters"):
+            continue
+        meta = FRAMES[fid]
+        raters = {}
+        for name, key in DEV_RATERS:
+            r = (f.get("raters") or {}).get(key) or {}
+            if r.get("spearman") is None and r.get("auc") is None:
+                continue
+            raters[name] = {"spearman": r.get("spearman"), "auc": r.get("auc"),
+                            "n": r.get("n")}
+        deltas = {}
+        for name, comp in DEV_DELTAS:
+            legs = {}
+            for metric in ("spearman", "auc"):
+                leg = ((f.get("deltas") or {}).get(comp) or {}).get(metric)
+                if not leg:
+                    continue
+                legs[metric] = {"delta": leg.get("delta"), "ci95": leg.get("ci95"),
+                                "mde95": leg.get("mde95"),
+                                "mde95_estimator": leg.get("estimator"),
+                                "ci95_estimator": leg.get("ci95_estimator"),
+                                "resolvable": None, "reading": leg.get("reading"),
+                                "key": f"frames.{fid}.deltas.{comp}.{metric}"}
+            if legs:
+                deltas[name] = legs
+        nbs = {s: (f.get("n_by_side") or {})[s] for s in STRATA
+               if (f.get("n_by_side") or {}).get(s)} or None
+        row = {"run_id": None, "date": date, "trigger": trigger,
+               "model_id": dev.get("model_id"), "model_version": dict(mv),
+               "frame": fid, "frame_version": f.get("frame_version"),
+               "role": meta["role"], "tilted": bool(meta["tilted"]),
+               "window": f.get("window"), "n": f.get("n"), "n_by_side": nbs,
+               "raters": raters, "deltas": deltas, "resolvable": None,
+               "verdict": f.get("verdict"), "share": None,
+               "sources": [dict(s) for s in sources], "note": meta.get("note") or "",
+               "last_verified_at": now_iso}
+        _finish(row)
+        row["run_id"] = f"{gen}|{fid}|{row['content_hash'][:8]}"
+        rows.append(row)
+    return rows
+
+
 # ---------------------------------------------------------------------------
 # the ledger
 
@@ -402,9 +482,12 @@ def apply(rows: list[dict], candidates: list[dict], now_iso: str) -> tuple[list[
     rows = [dict(r) for r in rows]
     appended = []
     for cand in candidates:
+        # A frame's history is per model: a v2 development row never displaces a
+        # v1 row of the same frame, or the reverse.
         last = None
         for r in reversed(rows):
-            if r.get("frame") == cand.get("frame"):
+            if (r.get("frame") == cand.get("frame")
+                    and (r.get("model_id") or MODEL_ID) == (cand.get("model_id") or MODEL_ID)):
                 last = r
                 break
         same_id = next((r for r in rows if r.get("run_id") == cand.get("run_id")), None)
@@ -519,6 +602,13 @@ def update(data_dir=None, trigger: str = "nightly", *, out_path=None,
     mv = model_version if model_version is not None else current_model_version()
     cands = build_rows(sb, sc, mv, sources=sources, date=now_dt.date().isoformat(),
                        trigger=trigger, now_iso=now_iso)
+    dev_path = data_dir / DEV_NAME
+    dev = _load_json(dev_path)
+    if dev:
+        cands += build_dev_rows(
+            dev, sources=[{"path": _rel(dev_path), "generated_at": dev.get("generated_at"),
+                           "sha256": _sha256(dev_path)}],
+            date=now_dt.date().isoformat(), trigger=trigger, now_iso=now_iso)
     res = commit_rows(cands, data_dir=data_dir, out_path=out, ledger_path=led,
                       sb=sb, now_iso=now_iso)
     res["status"] = "ok"

@@ -3330,7 +3330,9 @@ function _loadProgress() {
 // Frames a chart series may hold. Tilted frames never, whatever the artifact
 // lists: they are timing, not skill (PROGRAM.md s7 item 1). vm2 is the EV-01
 // timing-pinned vintage-matched frame, drawn as a hollow square beside vm1.
-const _PROG_CHART_FRAMES = ["vm", "vm2", "lv_dev", "lv_res", "vm_pros"];
+// vm_dev and lv_dev hold development reads of a v2 candidate (EV-09), drawn as
+// hollow circles: spent frames, never a claim.
+const _PROG_CHART_FRAMES = ["vm", "vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros"];
 
 function _progRows(prog) {
   return (prog && !prog.__error && Array.isArray(prog.rows)) ? prog.rows : [];
@@ -3463,9 +3465,12 @@ function _methProgressChart(prog) {
   const col = _raterMeta("xfv").color;
   const marks = rows.map((r, i) => {
     // A headline-candidate row sits a few pixels right of the same-date
-    // headline row so the two whiskers do not overprint.
+    // headline row, and development rows a few pixels left, so the whiskers
+    // do not overprint.
     const cand = r.role === "headline_candidate";
-    const l = legs[i], x = sx(ts[i]) + (cand ? 9 : 0), y = sy(Number(l.delta));
+    const dev = r.role === "development";
+    const dx = cand ? 9 : (dev ? (r.frame === "lv_dev" ? -18 : -9) : 0);
+    const l = legs[i], x = sx(ts[i]) + dx, y = sy(Number(l.delta));
     const ci = Array.isArray(l.ci95) && l.ci95[0] != null
       ? `<line x1="${x.toFixed(1)}" y1="${sy(Number(l.ci95[0])).toFixed(1)}" x2="${x.toFixed(1)}" y2="${sy(Number(l.ci95[1])).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>`
         + [l.ci95[0], l.ci95[1]].map(v => `<line x1="${(x - 4).toFixed(1)}" y1="${sy(Number(v)).toFixed(1)}" x2="${(x + 4).toFixed(1)}" y2="${sy(Number(v)).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>`).join("")
@@ -3476,7 +3481,7 @@ function _methProgressChart(prog) {
       mark = `<path d="M ${x.toFixed(1)},${(y - 6).toFixed(1)} L ${(x + 6).toFixed(1)},${y.toFixed(1)} L ${x.toFixed(1)},${(y + 6).toFixed(1)} L ${(x - 6).toFixed(1)},${y.toFixed(1)} Z" fill="${col}" stroke="var(--bg-secondary)" stroke-width="1">${tip}</path>`;
     } else if (cand) {
       mark = `<path d="M ${(x - 4.5).toFixed(1)},${(y - 4.5).toFixed(1)} L ${(x + 4.5).toFixed(1)},${(y - 4.5).toFixed(1)} L ${(x + 4.5).toFixed(1)},${(y + 4.5).toFixed(1)} L ${(x - 4.5).toFixed(1)},${(y + 4.5).toFixed(1)} Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="2">${tip}</path>`;
-    } else if (r.role === "development") {
+    } else if (dev) {
       mark = `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="var(--bg-secondary)" stroke="${col}" stroke-width="2">${tip}</circle>`;
     } else {
       mark = `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col}" stroke="var(--bg-secondary)" stroke-width="1">${tip}</circle>`;
@@ -3521,6 +3526,15 @@ function _progRaterCell(r, name) {
   return `<td>${_progFmt(x.spearman, 3)}${x.auc != null ? ` / ${_progFmt(x.auc, 3)}` : ""}</td>`;
 }
 
+// The eFV cell. A development row of a v2 candidate carries eFV v1 on the
+// same rows as well; it prints under the candidate's own figures.
+function _progEfvCell(r) {
+  const v1 = (r.raters || {}).efv_v1;
+  const base = _progRaterCell(r, "efv");
+  if (!v1 || (v1.spearman == null && v1.auc == null)) return base;
+  return base.replace(/<\/td>$/, `<br><span class="meth-sub">v1 ${_progFmt(v1.spearman, 3)}${v1.auc != null ? ` / ${_progFmt(v1.auc, 3)}` : ""}</span></td>`);
+}
+
 function _progRowHtml(prog, r) {
   const leg = _progConsLeg(r);
   const mv = r.model_version || {};
@@ -3544,7 +3558,7 @@ function _progRowHtml(prog, r) {
   return `<tr>
     <td>${escapeHtml(r.date || "")}</td><td>${model}</td><td>${frame}</td>
     <td>${r.n != null ? Number(r.n).toLocaleString() : "-"}</td>
-    ${_progRaterCell(r, "efv")}${_progRaterCell(r, "prospx_consensus")}${_progRaterCell(r, "mlb_pipeline")}${_progRaterCell(r, "fangraphs")}
+    ${_progEfvCell(r)}${_progRaterCell(r, "prospx_consensus")}${_progRaterCell(r, "mlb_pipeline")}${_progRaterCell(r, "fangraphs")}
     <td>${deltaCell}</td><td>${floorCell}</td>
     <td><span class="${verdictCls}">${escapeHtml(r.verdict || "-")}</span></td>
     <td class="meth-sub">${escapeHtml(r.note || "")}</td>

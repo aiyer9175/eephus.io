@@ -541,6 +541,9 @@ _SIDECAR_GLOBS = (
     # append-only records a test must never write into.
     "data/efv_progress.json",
     ".cache/efv_progress/**/*",
+    # EV-09: the development read of eFV v2 champion H0, a spent-frame record
+    # the progress ledger copies from.
+    "data/efv_v2_dev_eval.json",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -871,6 +874,9 @@ _SIDECAR_WRITE_TARGETS = (
     # either against the real data dir writes the mirror.
     ("efv_progress", "OUT_PATH", "data/efv_progress.json"),
     ("efv_progress", "LEDGER_PATH", ".cache/efv_progress/ledger.jsonl"),
+    # EV-09: tools/efv_v2_dev_read.py writes through efv_v2_model.DEV_EVAL_PATH,
+    # resolved at call time.
+    ("efv_v2_model", "DEV_EVAL_PATH", "data/efv_v2_dev_eval.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands
