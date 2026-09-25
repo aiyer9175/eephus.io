@@ -1458,13 +1458,20 @@
   // ladder. It never routes through remCell / runCell / hemCell / vtCell, which
   // is the one move that would paint a cut measured on a one-season pool onto a
   // pool 12 to 18% narrower.
-  function windowIndexCol(c, w, how, stats) {
+  // `how` is the lab's spec for this index: {formula, from, ...} on the served
+  // window files, a bare sentence on older ones. The object used to be glued
+  // into the sentence whole, so every served index header read
+  // "2024-2026: [object Object], each season scored..." (census M06-06).
+  // `built` is the window file's generated_at; `frozen` is true when the
+  // Current board carries a frozen 3yr column over the same span.
+  function windowIndexCol(c, w, how, stats, built, frozen) {
     var out = cloneCol(c), lbl = winLabel(w);
+    var howTxt = (how && typeof how === "object") ? (how.formula || "") : String(how || "");
     out.labelExtra = '<span class="mlbstats-winspan">' + esc(lbl) + "</span>";
     out.exportLabel = c.label + " " + lbl;
     out.vintage = null;
     out.isRem = false;
-    out.title = lbl + ": " + how + ", each season scored against its own pool, so 100 is the average of"
+    out.title = lbl + ": " + (howTxt ? howTxt + ", " : "") + "each season scored against its own pool, so 100 is the average of"
       + " those pools and not of this window's"
       + (stats && stats.mean != null
           ? " - measured, this window's pool averages " + stats.mean
@@ -1472,7 +1479,10 @@
             + (stats.n != null ? " over " + stats.n + " rows" : "")
           : "")
       + ". No value ruler is carried onto a window, so the column is uncoloured."
-      + " p = percentile inside this window's pool; * = provisional.";
+      + " p = percentile inside this window's pool; * = provisional."
+      + (built ? " Built " + built + " by the window lab." : "")
+      + (frozen ? " The Current board's frozen 3yr column is a separate, dated build of the same"
+        + " recipe, so the two can differ by a few points." : "");
     out.cell = function (r) {
       var v = num(r[c.key]);
       if (v == null) return EM_DASH;
@@ -1506,11 +1516,14 @@
   }
   function windowCols(sec, w, doc, spec) {
     var allow = winAllow(spec), idx = spec.index || {};
+    var ends = winEnds(w), spans3 = ends.hi - ends.lo === 2, keys = {};
+    sectionCols(sec).forEach(function (c) { keys[c.key] = 1; });
     var pool = ((doc.pool_stats || {})[LAB_BOARD[sec]]) || {};
     var out = [];
     sectionCols(sec).forEach(function (c) {
       if (!allow[c.key]) return;
-      out.push(idx[c.key] ? windowIndexCol(c, w, idx[c.key], pool[c.key])
+      out.push(idx[c.key] ? windowIndexCol(c, w, idx[c.key], pool[c.key], doc.generated_at || null,
+                                           spans3 && !!keys[c.key + "_3yr"])
                           : windowCountCol(c, w, spec));
     });
     return out;
@@ -1953,7 +1966,9 @@
     if (!bits.length && !ew) return "";
     return '<div class="mlbstats-note mlbstats-vintage">'
       + (bits.length ? "<b>Frozen columns</b> (lab artifacts, not recomputed; blank for anyone who"
-        + " joined the pool later): " + bits.join(", ") + "." + (extra || "") : "")
+        + " joined the pool later): " + bits.join(", ") + "." + (extra || "")
+        + " The Last 3 window recomputes the same 3-year recipe on its own build, dated in that"
+        + " view's stamp, so a player's 3yr value here and his Last 3 index can differ by a few points." : "")
       + (ew ? (bits.length ? " " : "") + esc(ew) : "") + "</div>";
   }
 

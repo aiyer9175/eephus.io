@@ -687,3 +687,37 @@ def test_a_window_stamps_the_date_its_live_slice_was_built():
     assert "Season 2026" not in stamp and "2026-06-29" not in stamp, stamp
     # Current is untouched
     assert "Season 2026" in _stamp(_hitters("#section=hitters"))
+
+
+def test_a_window_index_header_prints_the_lab_formula_not_an_object():
+    """Census M06-06. The served window files carry each index as an object
+    ({formula, from}), and the header glued the object in whole: every index
+    tooltip read "2024-2026: [object Object], each season scored...". It also
+    now says when the window was built and that the Current board's frozen 3yr
+    column is a separate build."""
+    import copy
+    l3 = copy.deepcopy(WINDOW_L3)
+    l3["columns"]["hitters"]["index"] = {"hem_plus": {
+        "formula": "PA-weighted mean of the ROUNDED per-season HEM+",
+        "from": "tools/hem_plus_lab._multiyear_proposed"}}
+    html = _hitters("#section=hitters&hyears=2024-2026", l3=l3)
+    tag = {k: t for _, k, t in _heads(html)}["hem_plus"]
+    assert "[object Object]" not in tag, tag
+    assert "2024-2026: PA-weighted mean of the ROUNDED per-season HEM+, each season" in tag, tag
+    assert "Built 2026-09-17 by the window lab" in tag, tag
+    assert "frozen 3yr column is a separate, dated build" in tag, tag
+    # the older string form still reads
+    tag = {k: t for _, k, t in _heads(_hitters("#section=hitters&hyears=2024-2026"))}["hem_plus"]
+    assert "PA-weighted mean of the per-season HEM+, each season" in tag, tag
+
+
+def test_the_current_frozen_note_names_the_window_build():
+    sample = json.loads(smoke.HITTER_SAMPLE)
+    sample["multiyear"] = {"available": True, "generated_at": "2026-08-30",
+                           "window": [2024, 2025, 2026]}
+    ctx = MiniRacer()
+    ctx.eval(smoke._hitter_prelude("#section=hitters", json.dumps(sample)) + _routes_js()
+             + _DOC_STUB + JS)
+    html = ctx.eval("__html['mlbstats-hitters-root'] || ''")
+    assert "HEM+ 3yr as of 2026-08-30 (2024-2026)" in html
+    assert "The Last 3 window recomputes the same 3-year recipe on its own build" in html
