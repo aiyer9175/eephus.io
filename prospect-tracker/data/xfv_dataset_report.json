@@ -12,36 +12,38 @@
   "bust_seen": 2337,
   "bust_hitter": 1121,
   "bust_no_fv": 61,
-  "bust_kept": 1046,
+  "bust_kept": 1043,
   "bust_recent_flagged": 26,
   "bust_mlb_exposure_rerouted": 0,
-  "bust_mlb_exposure_dropped": 14,
+  "bust_mlb_exposure_dropped": 16,
   "debuted_veteran_dropped": 25,
+  "bust_identity_adjudicated": 5,
+  "bust_identity_excluded": 1,
   "debuted_terminal_resolved": 3
  },
  "counts": {
-  "rows_total": 1893,
+  "rows_total": 1890,
   "debuted": 847,
-  "busts": 1046,
+  "busts": 1043,
   "resolved_debuted": 464,
   "censored_debuted": 383,
   "bust_recent_excluded_from_label": 26
  },
  "feature_coverage": {
-  "consensus_fv_raw": "1893/1893",
-  "fv_fangraphs": "1260/1893",
-  "fv_mlb_pipeline": "1568/1893",
-  "fv_stddev": "971/1893",
-  "tool_hit": "1684/1893",
-  "tool_game_pwr": "1684/1893",
-  "pick_overall": "754/1893",
-  "bonus_usd": "535/1893"
+  "consensus_fv_raw": "1890/1890",
+  "fv_fangraphs": "1257/1890",
+  "fv_mlb_pipeline": "1566/1890",
+  "fv_stddev": "969/1890",
+  "tool_hit": "1682/1890",
+  "tool_game_pwr": "1682/1890",
+  "pick_overall": "753/1890",
+  "bonus_usd": "533/1890"
  },
  "milb_feature_coverage": {
-  "level_rank": "1109/1893",
-  "age_rel_level": "1109/1893",
-  "k_rel": "1109/1893",
-  "iso_rel": "1109/1893"
+  "level_rank": "1111/1890",
+  "age_rel_level": "1111/1890",
+  "k_rel": "1111/1890",
+  "iso_rel": "1111/1890"
  },
  "war_distribution_resolved_debuted": {
   "n": 464,
@@ -58,12 +60,12 @@
    "spearman": 0.3843
   },
   "full_pool_resolved": {
-   "n": 1484,
-   "spearman": 0.2649
+   "n": 1481,
+   "spearman": 0.2651
   },
   "full_pool_km_censored": {
-   "n": 1867,
-   "spearman": 0.275
+   "n": 1864,
+   "spearman": 0.2752
   },
   "debuted_km_censored": {
    "n": 847,

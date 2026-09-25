@@ -472,6 +472,76 @@ def resolved_debut_date(rec: dict) -> tuple[str | None, bool, str | None]:
     return dd, bool(rec.get("debut_date_is_placeholder")), None
 
 
+# ---------------------------------------------------------------------------
+# DS-13 (docs/efv-v2/DRIVER_SYSTEM_V2.md, bug B8): training identities
+# ---------------------------------------------------------------------------
+# Every training key on data/identity_collisions.json's critical list is
+# adjudicated here, from evidence that reads no outcome column (org, position,
+# list timeline, birth year against the list date), and the matrix builder
+# applies it. "rebind" puts the right human's id and birth date on the record
+# (and, for a record that merges two humans, keeps only the points that are
+# his), and replaces the slug-keyed sidecars that belong to another human (the
+# acquisitions row when the entry names one, the IL history always); "exclude" drops a record that is a second key for a player held under
+# another key. A rebind to an id with MLB exposure is then handled by the
+# bust-loop guard like any other (never a fabricated 0.0 label). The served
+# board identity is not changed here: that is the identity pipeline's repair
+# (slug split or alias), and until it lands identity_collisions.json keeps
+# listing these keys for the board.
+TRAINING_IDENTITY: dict[str, dict] = {
+    "michael_perez": {
+        "action": "rebind", "mlbam_id": 605421, "birth_date": "1992-08-07",
+        "evidence": ("C on MLB Pipeline ARI lists 2012-2018 and TBR lists 2018-2020: "
+                     "Michael Perez, C, ARI 2011 draft, traded to TBR in 2018. The "
+                     "record carried no id, so the bust guard could not see his MLB "
+                     "career and trained him as a 0.0 bust.")},
+    "miguel_gomez": {
+        "action": "rebind", "mlbam_id": 622497, "birth_date": "1992-12-17",
+        "evidence": ("3B on SFG lists in 2018: Miguel Gomez, SFG infielder. The bound "
+                     "id 685777 is a WSN pitcher first on a roster in 2019 (DSL), who "
+                     "cannot be the man on a 2018 SFG list.")},
+    "david_rodriguez": {
+        "action": "rebind", "mlbam_id": 630034, "birth_date": "1996-02-25",
+        "acquisition": {"method": "international_fa", "year": None,
+                        "pick_overall": None, "bonus_usd": None},
+        "evidence": ("C on TBR lists in 2017: David Rodriguez, C, Rays system "
+                     "2013-2019, first on a roster in the Venezuelan Summer League "
+                     "(an international signee). The bound id 703330 is a KCR pitcher "
+                     "born 2003, first on a roster in 2022, and the acquisitions row "
+                     "under the key is a 2023 ATL draftee: neither can be the man on a "
+                     "2017 TBR list.")},
+    "adrian_hernandez": {
+        "action": "rebind", "mlbam_id": 677600, "birth_date": "2001-02-08",
+        "points_through": "2021-12-31",
+        "acquisition": {"method": "international_fa", "year": 2017,
+                        "pick_overall": None, "bonus_usd": None},
+        "evidence": ("the record merges two humans: the CF on NYM lists 2018-2021 is "
+                     "Adrian Hernandez, OF, Mets system from 2018 (677600); the TOR "
+                     "Pipeline rows of 2022-2023 are the Blue Jays RHP of the same name "
+                     "(681753, the id the record carried). The hitter row keeps only "
+                     "the NYM points.")},
+    "enmanuel_rodriguez": {
+        "action": "exclude", "alias_of": "emmanuel_rodriguez",
+        "evidence": ("one FanGraphs MIN list row on 2019-07-31, CF: the Twins' 2019 "
+                     "international signee listed from 2020 under emmanuel_rodriguez "
+                     "(691181, MIN OF). A misspelled second key for a player the board "
+                     "holds under another key, so it is not a never-MLB bust.")},
+}
+
+
+def adjudicated_record(rec: dict) -> dict | None:
+    """The record with its training identity applied, or None when excluded."""
+    adj = TRAINING_IDENTITY.get(rec.get("player_key"))
+    if not adj:
+        return rec
+    if adj["action"] == "exclude":
+        return None
+    out = dict(rec, mlbam_id=adj["mlbam_id"], birth_date=adj.get("birth_date"))
+    if adj.get("points_through"):
+        out["points"] = [p for p in (rec.get("points") or [])
+                         if str(p.get("snapshot_date") or "")[:10] <= adj["points_through"]]
+    return out
+
+
 def debut_day_for_cutoff(rec: dict) -> tuple[str | None, bool, str | None]:
     """resolved_debut_date, with a still-placeholder day moved back to the season
     start so no row reads a synthesized day as its debut."""
@@ -1320,6 +1390,11 @@ def build_matrix(side: str = "hit"):
     # --- debuted ---
     for rec in debuts:
         acct["debuted_seen"] += 1
+        if rec.get("player_key") in TRAINING_IDENTITY:
+            rec = adjudicated_record(rec)
+            if rec is None:
+                acct["debuted_identity_excluded"] = acct.get("debuted_identity_excluded", 0) + 1
+                continue
         pk, mlbam = rec.get("player_key"), rec.get("mlbam_id")
         dd, dd_placeholder, dd_redated_from = debut_day_for_cutoff(rec)
         if not (pk and dd):
@@ -1404,6 +1479,13 @@ def build_matrix(side: str = "hit"):
         if not _side_match(rec, side):
             continue
         acct["bust_hitter"] += 1
+        # DS-13: the adjudicated training identity (TRAINING_IDENTITY above).
+        if pk in TRAINING_IDENTITY:
+            acct["bust_identity_adjudicated"] = acct.get("bust_identity_adjudicated", 0) + 1
+            rec = adjudicated_record(rec)
+            if rec is None:
+                acct["bust_identity_excluded"] = acct.get("bust_identity_excluded", 0) + 1
+                continue
         # F1 bust-loop guard (audit 2026-07-24): a record whose mlbam id has
         # real MLB (sport-1) stat lines, or whose player_key already carries
         # career_war seasons, is NOT a never-MLB bust - the hardcoded 0.0
@@ -1486,6 +1568,12 @@ def build_matrix(side: str = "hit"):
     term = _load_terminal_dates({r["player_key"] for r in rows})
     for r in rows:
         a = acq.get(r["player_key"]) or {}
+        _adj = TRAINING_IDENTITY.get(r["player_key"]) or {}
+        if _adj.get("action") == "rebind":
+            # DS-13: slug-keyed sidecars belong to whoever holds the slug now.
+            if "acquisition" in _adj:
+                a = _adj["acquisition"] or {}
+            il.pop(r["player_key"], None)
         r["pick_overall"] = a.get("pick_overall")
         r["bonus_usd"] = a.get("bonus_usd")
         r["is_ifa"], r["is_college"] = _cohort_flags(a.get("method"), a.get("year"), r.get("birth_date"))

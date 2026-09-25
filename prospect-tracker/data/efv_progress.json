@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-09-25T19:07:29Z",
+ "generated_at": "2026-09-25T19:24:09Z",
  "headline_frame": "vm",
  "frames": {
   "vm": {
@@ -1124,7 +1124,7 @@
     }
    ],
    "note": "development frame, spent, not a claim",
-   "last_verified_at": "2026-09-25T19:07:29Z",
+   "last_verified_at": "2026-09-25T19:24:09Z",
    "content_hash": "1ce13465b106abd12b48cfe67e0664b5ecad2f19556de78d16a6d2ee34683dc6"
   },
   {
@@ -1332,7 +1332,7 @@
     }
    ],
    "note": "development frame, spent, not a claim",
-   "last_verified_at": "2026-09-25T19:07:29Z",
+   "last_verified_at": "2026-09-25T19:24:09Z",
    "content_hash": "0ab5d2f252c78b76a367447860d2cf23117d38173097a1c758aeeae2b0559d43"
   },
   {
@@ -2288,6 +2288,508 @@
    "note": "Data correction DS-12 (bug B7): 131 eFV training rows whose debut day was a synthesized July 1 placeholder now read the real debut day from the StatsAPI people record; same model specification, not model progress. latest pre-debut consensus read",
    "last_verified_at": "2026-09-25T19:07:29Z",
    "content_hash": "7ce289ce5bf3e0ae7f74358c6b33d5b650f68f36f0d7de8cab2ecc8ca324be81"
+  },
+  {
+   "run_id": "2026-09-25T19:22:58Z|vm|5995e45d",
+   "date": "2026-09-25",
+   "trigger": "data_correction",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "5441c969",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "vm",
+   "frame_version": "vm1",
+   "role": "headline",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 806,
+   "n_by_side": {
+    "hit": 389,
+    "pit": 417
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3998,
+     "auc": 0.7489,
+     "n": 806
+    },
+    "prospx_consensus": {
+     "spearman": 0.4122,
+     "auc": 0.7485,
+     "n": 806
+    },
+    "mlb_pipeline": {
+     "spearman": 0.4113,
+     "auc": 0.7388,
+     "n": 806
+    },
+    "fangraphs": {
+     "spearman": 0.3649,
+     "auc": 0.7144,
+     "n": 806
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.0124,
+      "ci95": [
+       -0.0413,
+       0.0166
+      ],
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": "E_cond, player-clustered",
+      "resolvable": false,
+      "key": "accuracy.head_to_head_verdict"
+     },
+     "auc": {
+      "delta": 0.0004,
+      "ci95": [
+       -0.0176,
+       0.0178
+      ],
+      "mde95": 0.0149,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.0115,
+      "ci95": [
+       -0.0452,
+       0.0233
+      ],
+      "mde95": 0.0288,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": 0.0101,
+      "ci95": [
+       -0.0101,
+       0.03
+      ],
+      "mde95": 0.0167,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.0349,
+      "ci95": [
+       -0.0069,
+       0.0768
+      ],
+      "mde95": 0.0355,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.0345,
+      "ci95": [
+       0.0097,
+       0.0592
+      ],
+      "mde95": 0.021,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources.sources.fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T19:22:58Z",
+     "sha256": "05150eb8d691b0cab6f6bbe399b187a37e3539aae2f9907d0b9a89ca889eec3e"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "7553765fa297c9545e49aed654e51930f01730221b50a3772673e56ad9b4009f"
+    }
+   ],
+   "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress.",
+   "last_verified_at": "2026-09-25T19:24:09Z",
+   "content_hash": "5995e45dcc42c1904831b187e67986d504256c6cee8af4f7b0395d5b6baca65d"
+  },
+  {
+   "run_id": "2026-09-25T19:22:58Z|vm2|9f131097",
+   "date": "2026-09-25",
+   "trigger": "data_correction",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "5441c969",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "vm2",
+   "frame_version": "vm2",
+   "role": "headline_candidate",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 803,
+   "n_by_side": {
+    "hit": 388,
+    "pit": 415
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.393,
+     "auc": 0.748,
+     "n": 803
+    },
+    "prospx_consensus": {
+     "spearman": 0.4129,
+     "auc": 0.7492,
+     "n": 803
+    },
+    "mlb_pipeline": {
+     "spearman": 0.4116,
+     "auc": 0.7392,
+     "n": 803
+    },
+    "fangraphs": {
+     "spearman": 0.3662,
+     "auc": 0.7153,
+     "n": 803
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.0199,
+      "ci95": [
+       -0.0468,
+       0.0092
+      ],
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": "E_cond, player-clustered",
+      "resolvable": false,
+      "key": "accuracy.head_to_head_verdict_vm2"
+     },
+     "auc": {
+      "delta": -0.0012,
+      "ci95": [
+       -0.0172,
+       0.0158
+      ],
+      "mde95": 0.0141,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.0186,
+      "ci95": [
+       -0.0514,
+       0.0172
+      ],
+      "mde95": 0.029,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": 0.0088,
+      "ci95": [
+       -0.0097,
+       0.029
+      ],
+      "mde95": 0.0165,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.0268,
+      "ci95": [
+       -0.0135,
+       0.0706
+      ],
+      "mde95": 0.0354,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.0327,
+      "ci95": [
+       0.0082,
+       0.057
+      ],
+      "mde95": 0.0203,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T19:22:58Z",
+     "sha256": "05150eb8d691b0cab6f6bbe399b187a37e3539aae2f9907d0b9a89ca889eec3e"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "7553765fa297c9545e49aed654e51930f01730221b50a3772673e56ad9b4009f"
+    }
+   ],
+   "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress. timing-pinned: eFV's consensus input is the raters' own preseason read; becomes the headline once the owner has seen it",
+   "last_verified_at": "2026-09-25T19:24:09Z",
+   "content_hash": "9f131097bb9102a4a7952808c02e38302f8b672bc72d48fc25712bc816b560d4"
+  },
+  {
+   "run_id": "2026-09-25T19:22:58Z|predebut|7ff5cd1a",
+   "date": "2026-09-25",
+   "trigger": "data_correction",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "5441c969",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "predebut",
+   "frame_version": null,
+   "role": "tilted",
+   "tilted": true,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 2693,
+   "n_by_side": {
+    "hit": 1374,
+    "pit": 1319
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3685,
+     "auc": 0.7638,
+     "n": 2693
+    },
+    "prospx_consensus": {
+     "spearman": 0.2933,
+     "auc": 0.7118,
+     "n": 2693
+    },
+    "mlb_pipeline": {
+     "spearman": 0.2983,
+     "auc": 0.7017,
+     "n": 2693
+    },
+    "fangraphs": {
+     "spearman": 0.2533,
+     "auc": 0.6729,
+     "n": 2693
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.0752,
+      "ci95": [
+       0.0332,
+       0.1155
+      ],
+      "ci95_estimator": "E_cond, player-clustered",
+      "mde95": 0.0372,
+      "mde95_estimator": "E_refit",
+      "resolvable": true,
+      "key": "accuracy.head_to_head_by_frame.predebut"
+     }
+    }
+   },
+   "resolvable": true,
+   "verdict": "beats consensus",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T19:22:58Z",
+     "sha256": "05150eb8d691b0cab6f6bbe399b187a37e3539aae2f9907d0b9a89ca889eec3e"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "7553765fa297c9545e49aed654e51930f01730221b50a3772673e56ad9b4009f"
+    }
+   ],
+   "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress. post-debut consensus reads removed, all remaining base years kept; tilted TOWARD eFV, which is graded at the decision year while the retained earlier reads are not",
+   "last_verified_at": "2026-09-25T19:24:09Z",
+   "content_hash": "7ff5cd1a819f60e00783d65c3867c1352cbe9498665b622b4122018efd1873d6"
+  },
+  {
+   "run_id": "2026-09-25T19:22:58Z|all_vintages|4f071cba",
+   "date": "2026-09-25",
+   "trigger": "data_correction",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "5441c969",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "all_vintages",
+   "frame_version": null,
+   "role": "tilted",
+   "tilted": true,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 3255,
+   "n_by_side": {
+    "hit": 1610,
+    "pit": 1645
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3564,
+     "auc": 0.752,
+     "n": 3255
+    },
+    "prospx_consensus": {
+     "spearman": 0.3161,
+     "auc": 0.7214,
+     "n": 3255
+    },
+    "mlb_pipeline": {
+     "spearman": 0.317,
+     "auc": 0.7074,
+     "n": 3255
+    },
+    "fangraphs": {
+     "spearman": 0.2758,
+     "auc": 0.6835,
+     "n": 3255
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.0403,
+      "ci95": [
+       -0.0004,
+       0.0777
+      ],
+      "ci95_estimator": "E_cond, player-clustered",
+      "mde95": 0.0352,
+      "mde95_estimator": "E_refit",
+      "resolvable": true,
+      "key": "accuracy.head_to_head_by_frame.all_vintages"
+     }
+    }
+   },
+   "resolvable": true,
+   "verdict": "beats consensus",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T19:22:58Z",
+     "sha256": "05150eb8d691b0cab6f6bbe399b187a37e3539aae2f9907d0b9a89ca889eec3e"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "7553765fa297c9545e49aed654e51930f01730221b50a3772673e56ad9b4009f"
+    }
+   ],
+   "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress. every base year including post-debut consensus reads; tilted TOWARD the consensus, which sees major league performance on those rows",
+   "last_verified_at": "2026-09-25T19:24:09Z",
+   "content_hash": "4f071cbaeabc00ba288e1b601294910f08d0785a2fee389e04999954099fa55b"
+  },
+  {
+   "run_id": "2026-09-25T19:22:58Z|disagreement|1264090b",
+   "date": "2026-09-25",
+   "trigger": "data_correction",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "5441c969",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "disagreement",
+   "frame_version": null,
+   "role": "secondary",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 284,
+   "n_by_side": null,
+   "raters": {},
+   "deltas": {},
+   "resolvable": false,
+   "verdict": "eFV is closer on 56% of the 284 resolved disagreements, 95% CI 50% to 61%. The interval CONTAINS 50%, so on this sample the share is not distinguishable from a coin flip and must not be presented as an edge.",
+   "share": {
+    "efv_right_share": 0.556,
+    "ci95": [
+     0.4965,
+     0.6127
+    ],
+    "null": 0.5,
+    "key": "disagreement_receipts"
+   },
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T19:22:58Z",
+     "sha256": "05150eb8d691b0cab6f6bbe399b187a37e3539aae2f9907d0b9a89ca889eec3e"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "7553765fa297c9545e49aed654e51930f01730221b50a3772673e56ad9b4009f"
+    }
+   ],
+   "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress. latest pre-debut consensus read",
+   "last_verified_at": "2026-09-25T19:24:09Z",
+   "content_hash": "1264090b416dc42371ceeb6b469872bd89c3d0b75a02754b71646ce8b89d781d"
   }
  ],
  "backfill": {
