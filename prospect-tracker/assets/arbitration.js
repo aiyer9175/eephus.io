@@ -32,6 +32,17 @@
   var TEAM_NARROW_RE = /(?:^#|[#&])team=([A-Z]{2,3})\b/;
   var teamNarrow = "";
   var sort = { key: "tot", dir: -1 };
+  // Census X06-05 (2026-09-25): the board was pinned to this one order with no
+  // name search across 853 rows. Every head but the rank now sorts; "next" is
+  // the first remaining rung's dollars. The first click on a head takes its
+  // natural direction (names A to Z, money high to low).
+  var SORT_FIRST = { n: 1, t: 1, c: 1, yl: -1, next: -1, tot: -1 };
+  var SORT_DEFAULT = { key: "tot", dir: -1 };
+  var SORT_RE = /(?:^#|[#&])sort=(n|t|c|yl|next|tot)\.(a|d)\b/;
+  var query = "";
+  // player_links, so a name opens the player's page (census X06-04): the
+  // projections page when he has one, else his PROSPX card, else plain text.
+  var LINKS = null;
   // History season filter. "all" shows every row the artifact carries.
   var histSeason = "all";
 
@@ -132,6 +143,25 @@
        No colour literals, no radius (the global rule zeroes it anyway). */
     ".arb-app .filter-bar select{font-family:var(--font-retro-mono);font-size:12px;padding:6px 9px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border)}",
     ".arb-app .filter-bar select:focus-visible{outline:2px solid var(--accent-gold);outline-offset:1px}",
+    /* The name search and the club picker sit on a row of their own above
+       the class chips: on a phone the chip bar is a sideways scroller, and a
+       search at its far end would be off screen. The field takes the site's
+       control dialect (site.css section 12 and the control-theme sweep): the
+       --text-tertiary boundary that clears 3:1 on its fill, the cyan ring,
+       and 16px under a coarse pointer so iOS does not zoom on focus. */
+    ".arb-app .arb-findbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 6px}",
+    ".arb-app .arb-findbar input[type=search]{font-family:var(--font-retro-mono);font-size:12px;line-height:16px;padding:3px 8px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--text-tertiary);min-width:0;width:200px;max-width:100%;box-sizing:border-box}",
+    ".arb-app .arb-findbar input[type=search]:hover{border-color:var(--text-secondary)}",
+    ".arb-app .arb-findbar input[type=search]:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:2px}",
+    "@media (pointer:coarse){.arb-app .arb-findbar input[type=search]{font-size:16px;min-height:44px}}",
+    /* Sortable heads: a native <button> inside a <th scope=col aria-sort>, the
+       /fa/ board's pattern, so a screen reader hears the sort state and Enter
+       and Space work with no key shim. The sorted head takes the gold rule. */
+    ".arb-app .arb-sort{display:block;width:100%;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;text-align:inherit;cursor:pointer;white-space:nowrap}",
+    ".arb-app .arb-sort:hover{color:var(--text-primary)}",
+    ".arb-app .arb-sort:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:2px}",
+    ".arb-app .arb-sort-ind{display:inline-block;min-width:.9em;text-align:left}",
+    ".arb-app th[aria-sort=ascending],.arb-app th[aria-sort=descending]{color:var(--text-primary);border-bottom:2px solid var(--accent-gold)}",
 
     /* Club logos ride the board's Club cell and the Team View rows. The mark
        is 17px and the cell is nowrap, so the row height does not move. */
@@ -274,12 +304,46 @@
 
   function filtered() {
     var rows = (board && board.rows) || [];
+    var q = fold(query).trim();
     return rows.filter(function (r) {
       if (filters.team !== "all" && r.t !== filters.team) return false;
       if (filters.cls !== "all" && String(r.c) !== filters.cls) return false;
       if (filters.flag && !((r.e || 0) & filters.flag)) return false;
+      if (q && fold(r.n).indexOf(q) < 0) return false;
       return true;
     });
+  }
+
+  /* Case- and accent-blind, so "rodriguez" finds "Rodr\u00edguez". */
+  function fold(s) {
+    var t = String(s == null ? "" : s).toLowerCase();
+    try { t = t.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) { /* old engines */ }
+    return t;
+  }
+
+  function sortVal(r, key) {
+    if (key === "next") return r.l && r.l.length ? r.l[0][1] : null;
+    if (key === "n") return fold(r.n);
+    return r[key];
+  }
+
+  function hrefFor(r) {
+    var e = LINKS && LINKS.byMlbam && r.m != null ? LINKS.byMlbam[String(r.m)] : null;
+    if (!e) return null;
+    var proj = e.proj === undefined ? !!e.key : e.proj;
+    if (proj && e.key) return "/projections/#player=" + encodeURIComponent(e.key);
+    if (e.prospx) return "/prospx/#player=" + encodeURIComponent(e.prospx);
+    return null;
+  }
+
+  function nameCell(r) {
+    var h = hrefFor(r);
+    return h ? '<a href="' + esc(h) + '">' + esc(r.n) + "</a>" : esc(r.n);
+  }
+
+  function sortHash() {
+    if (sort.key === SORT_DEFAULT.key && sort.dir === SORT_DEFAULT.dir) return "";
+    return "&sort=" + sort.key + "." + (sort.dir < 0 ? "d" : "a");
   }
 
   function renderBoard() {
@@ -301,14 +365,6 @@
       root.innerHTML = '<div class="mlbstats-empty">The arbitration board is not built yet. Check back shortly.</div>';
       return;
     }
-    var rows = filtered().slice();
-    rows.sort(function (a, b) {
-      var x = a[sort.key], y = b[sort.key];
-      if (x == null) return 1;
-      if (y == null) return -1;
-      return (x > y ? 1 : x < y ? -1 : 0) * sort.dir;
-    });
-
     var teams = {};
     (board.rows || []).forEach(function (r) { if (r.t) teams[r.t] = 1; });
     var chips = [["all", "All"], ["1", "Arb 1"], ["2", "Arb 2"], ["3", "Arb 3"], ["0", "Pre-Arb"]]
@@ -324,27 +380,13 @@
         return '<option value="' + esc(t) + '"' + (filters.team === t ? " selected" : "") + ">" + esc(t) + "</option>";
       })).join("");
 
-    var head =
-      '<tr><th class="mlbstats-col-rank">#</th><th>Player</th><th>Club</th>' +
-      '<th>Class</th><th title="Seasons on the published grid. Not the number of ' +
-      'club-control seasons remaining.">Ladder yrs</th><th>Remaining arbitration ladder</th>' +
-      '<th data-col="tot" title="Sum of the seasons on the published grid, not of the ' +
-      'club control window.">Total remaining<small>sorted</small></th></tr>';
-    var body = rows.map(function (r, i) {
-      return '<tr><td class="mlbstats-col-rank">' + (i + 1) + "</td>" +
-        "<td>" + esc(r.n) + "</td><td>" + club(r.t) + "</td>" +
-        "<td>" + esc(classLabel(r)) + "</td><td>" + (r.yl == null ? DASH : r.yl) + "</td>" +
-        '<td class="arb-laddercell">' + ladder(r) + "</td>" +
-        "<td>" + money(r.tot) + "</td></tr>";
-    }).join("");
-
     root.innerHTML = caveats() +
-      '<div class="filter-bar">' + chips + ' <select id="arb-team" data-team-picker aria-label="Club">' + opts + "</select></div>" +
-      (rows.length
-        ? '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead>' +
-          head + "</thead><tbody>" + body + "</tbody></table></div>"
-        : '<div class="mlbstats-empty">No player matches these filters. ' +
-          '<button type="button" class="chip" id="arb-clear">Clear filters</button></div>');
+      '<div class="arb-findbar"><input type="search" id="arb-q" placeholder="Search players" ' +
+      'aria-label="Search players by name" autocomplete="off" value="' + esc(query) + '">' +
+      '<select id="arb-team" data-team-picker aria-label="Club">' + opts + "</select></div>" +
+      '<div class="filter-bar">' + chips + "</div>" +
+      '<p class="arb-histcount" id="arb-count" role="status"></p>' +
+      '<div id="arb-board-table"></div>';
 
     root.querySelectorAll("[data-cls]").forEach(function (b) {
       b.onclick = function () { filters.cls = b.getAttribute("data-cls"); renderBoard(); };
@@ -354,11 +396,75 @@
     });
     var sel = el("arb-team");
     if (sel) sel.onchange = function () { filters.team = sel.value; renderBoard(); };
-    var clr = el("arb-clear");
-    if (clr) clr.onclick = function () {
-      filters = { cls: "all", team: "all", flag: null }; renderBoard();
+    // Typing re-paints the table only, so the field keeps its focus and caret.
+    var qi = el("arb-q");
+    if (qi) qi.oninput = function () { query = qi.value; renderTable(); };
+    var tbl = el("arb-board-table");
+    if (tbl) tbl.onclick = function (e) {
+      var b = e.target && e.target.closest ? e.target.closest("[data-asort]") : null;
+      if (b) {
+        var k = b.getAttribute("data-asort");
+        sort = sort.key === k ? { key: k, dir: -sort.dir } : { key: k, dir: SORT_FIRST[k] || -1 };
+        renderTable();
+        var nb = tbl.querySelector('[data-asort="' + k + '"]');
+        if (nb) nb.focus();
+        try { history.replaceState(null, "", "#projections" + sortHash()); } catch (err) { /* hash is optional */ }
+        return;
+      }
+      if (e.target && e.target.id === "arb-clear") {
+        filters = { cls: "all", team: "all", flag: null };
+        query = "";
+        renderBoard();
+      }
     };
+    renderTable();
     wireGl(root);
+  }
+
+  function renderTable() {
+    var box = el("arb-board-table");
+    if (!box || !board) return;
+    var all = (board.rows || []).length;
+    var rows = filtered().slice();
+    // Missing values sink to the bottom in either direction; ties fall back to
+    // the total remaining, largest first.
+    rows.sort(function (a, b) {
+      var x = sortVal(a, sort.key), y = sortVal(b, sort.key);
+      if (x == null && y == null) return (b.tot || 0) - (a.tot || 0);
+      if (x == null) return 1;
+      if (y == null) return -1;
+      return (x > y ? 1 : x < y ? -1 : 0) * sort.dir || ((b.tot || 0) - (a.tot || 0));
+    });
+    var arrow = sort.dir < 0 ? "&#9662;" : "&#9652;";
+    function th(key, label, title, small) {
+      var on = sort.key === key;
+      return '<th scope="col" aria-sort="' + (on ? (sort.dir < 0 ? "descending" : "ascending") : "none") +
+        '" data-export-text="' + esc(label) + '"><button type="button" class="arb-sort" data-asort="' + key +
+        '" title="' + esc(title) + '">' + label + '<span class="arb-sort-ind" aria-hidden="true">' +
+        (on ? arrow : "") + "</span>" + (small ? "<small>" + small + "</small>" : "") + "</button></th>";
+    }
+    var head =
+      '<tr><th scope="col" class="mlbstats-col-rank">#</th>' +
+      th("n", "Player", "Sort by name") + th("t", "Club", "Sort by club") +
+      th("c", "Class", "Sort by arbitration class") +
+      th("yl", "Ladder yrs", "Seasons on the published grid. Not the number of club-control seasons remaining.") +
+      th("next", "Remaining arbitration ladder", "Sort by the first remaining season's dollars", "sorts on the next rung") +
+      th("tot", "Total remaining", "Sum of the seasons on the published grid, not of the club control window.") +
+      "</tr>";
+    var body = rows.map(function (r, i) {
+      return '<tr><td class="mlbstats-col-rank">' + (i + 1) + "</td>" +
+        "<td>" + nameCell(r) + "</td><td>" + club(r.t) + "</td>" +
+        "<td>" + esc(classLabel(r)) + "</td><td>" + (r.yl == null ? DASH : r.yl) + "</td>" +
+        '<td class="arb-laddercell">' + ladder(r) + "</td>" +
+        "<td>" + money(r.tot) + "</td></tr>";
+    }).join("");
+    var cnt = el("arb-count");
+    if (cnt) cnt.textContent = "Showing " + rows.length + " of " + all + " players.";
+    box.innerHTML = rows.length
+      ? '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead>' +
+        head + "</thead><tbody>" + body + "</tbody></table></div>"
+      : '<div class="mlbstats-empty">No player matches these filters. ' +
+        '<button type="button" class="chip" id="arb-clear">Clear filters</button></div>';
   }
 
   /* Glossary spans ([data-gl]) get their aria wiring from the shared runtime;
@@ -547,7 +653,10 @@
     if (which === "history" && !hist && !histErr) loadHistory();
     if (which === "history") renderHistory();
     if (which === "teams") renderTeams();
-    try { location.hash = "#" + which + (which === "teams" && teamNarrow ? "&team=" + teamNarrow : ""); } catch (e) { /* hash is optional */ }
+    try {
+      location.hash = "#" + which + (which === "teams" && teamNarrow ? "&team=" + teamNarrow : "") +
+        (which === "projections" ? sortHash() : "");
+    } catch (e) { /* hash is optional */ }
   }
 
   function loadHistory() {
@@ -563,6 +672,10 @@
 
   function load() {
     renderBoard();
+    if (!LINKS && window.EEPHUS_HUB && typeof window.EEPHUS_HUB.links === "function") {
+      window.EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderTable(); })
+        .catch(function () { /* names stay plain text */ });
+    }
     fetch(BOARD_URL, { cache: "no-cache" }).then(function (r) {
       if (!r.ok) throw new Error("http " + r.status);
       return r.json();
@@ -585,6 +698,8 @@
     var sec = h.split("&")[0];
     var tn = TEAM_NARROW_RE.exec(location.hash || "");
     if (tn && sec === "teams") teamNarrow = tn[1];
+    var so = SORT_RE.exec(location.hash || "");
+    if (so) sort = { key: so[1], dir: so[2] === "d" ? -1 : 1 };
     load();
     if (sec === "history" || sec === "teams" || sec === "model") show(sec);
   }
