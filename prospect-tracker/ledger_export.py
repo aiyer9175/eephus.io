@@ -875,6 +875,15 @@ def build_all() -> tuple:
                 blk["spotrac_basis_usd"] = SPOTRAC_2027_BASIS_USD
                 blk["over_spotrac_basis_usd"] = (tax - SPOTRAC_2027_BASIS_USD) if tax is not None else None
                 blk["cba_banner"] = True
+                # Spotrac's 2027 estimate, reconstructed: the same schedule with no
+                # base rate on Spotrac's own basis. The note prints only where the
+                # reconstruction lands within $1, never as a standing claim.
+                sur_only = None
+                if est is not None and tax is not None:
+                    no_base = {**rates, "base_rate_by_payor_year": {k: 0.0 for k in rates["base_rate_by_payor_year"]}}
+                    sur_only = computed_cbt_bill(tax, SPOTRAC_2027_BASIS_USD, tier, no_base, tiers)["bill_usd"]
+                blk["spotrac_est_surcharges_only_usd"] = sur_only
+                blk["spotrac_est_is_surcharges_only"] = sur_only is not None and abs(sur_only - est) <= 1
             cbt[str(season)] = blk
         n_consec = PAYOR_SEASONS.get(r26.get("payor_status_raw") or "Non-Tax", 0)
         cbt["clock"] = {"consecutive_payor_seasons_implied": n_consec, "tier_2026": r26.get("payor_status_raw") or "Non-Tax"}
@@ -1577,6 +1586,9 @@ def build_all() -> tuple:
                         PAYOR_BASIS_DERIVED: PAYOR_BASIS_DERIVED},
         "space_2027_spotrac_label": f"Spotrac, {SPOTRAC_2027_BASIS_USD // 1_000_000}M basis",
         "space_2027_platform_label": f"platform carry-forward, {T_next // 1_000_000}M",
+        "cbt_spotrac_surcharges_only": (f"Spotrac's {CLASS_YEAR} estimate equals the surcharges alone on its "
+                                        f"{SPOTRAC_2027_BASIS_USD // 1_000_000}M basis, to the dollar; it carries no base "
+                                        "rate, which the computed bill does"),
         "tax_floor_flag": "below own contracts",
         "tax_floor_note": ("Spotrac's 2027 tax payroll sits below the AAV of this club's own guaranteed 2027 "
                            "contract rows (club and mutual option years left out). The figure prints as "

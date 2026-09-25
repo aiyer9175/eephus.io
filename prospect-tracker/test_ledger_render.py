@@ -1037,3 +1037,16 @@ def test_a_club_below_its_own_contract_floor_is_flagged_on_the_league_board_and_
     assert "$372.9M" in club, "Spotrac's figure still prints"
     s["clubs"]["LAD"]["payroll"]["tax_floor_2027"]["below"] = False
     assert "below own contracts" not in _render("club", payload=s, team="LAD", season="2027")[0]
+
+
+def test_the_2027_spotrac_estimate_says_it_is_surcharges_only_and_the_difference_takes_no_sign_colour():
+    s = _copy.deepcopy(SAMPLE)
+    s["copy"]["cbt_spotrac_surcharges_only"] = "Spotrac's 2027 estimate equals the surcharges alone on its 247M basis"
+    s["clubs"]["LAD"]["cbt"]["2027"]["spotrac_est_is_surcharges_only"] = True
+    html, _ = _render("club", payload=s, team="LAD", season="2027")
+    assert "<tr><td>Difference</td><td>$66.3M</td></tr>" in html, "a bill gap is not a gain: no green"
+    assert "equals the surcharges alone on its 247M basis" in html
+    assert "Spotrac estimate, surcharges only (no base rate)" in html
+    s["clubs"]["LAD"]["cbt"]["2027"]["spotrac_est_is_surcharges_only"] = False
+    html, _ = _render("club", payload=s, team="LAD", season="2027")
+    assert "surcharges alone" not in html and "surcharges only" not in html

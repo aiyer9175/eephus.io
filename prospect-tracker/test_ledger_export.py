@@ -1723,3 +1723,29 @@ def test_tax_floor_census_names_every_club_below_its_own_guaranteed_2027_contrac
     for code in expect:
         assert d["clubs"][code]["payroll"]["space_2027"]["spotrac_usd"] + d["clubs"][code]["payroll"]["s2027"]["tax_payroll_usd"]             == LE.SPOTRAC_2027_BASIS_USD, "the flagged figure is Spotrac's, unreplaced"
     assert "below own contracts" == d["copy"]["tax_floor_flag"] and "overstate" in d["copy"]["tax_floor_note"]
+
+
+def test_the_2027_surcharges_only_note_is_derived_from_an_exact_reconstruction(d):
+    """Spotrac's 2027 estimate for a payor is the surcharge schedule alone on its
+    247M basis. The flag is set only where the reconstruction lands within $1."""
+    import ledger_export as LE
+    n_flag = 0
+    for code, c in d["clubs"].items():
+        blk = c["cbt"]["2027"]
+        est = blk["spotrac_est_bill_usd"]
+        if est is None:
+            assert blk["spotrac_est_is_surcharges_only"] is False, code
+            continue
+        sur = blk["spotrac_est_surcharges_only_usd"]
+        assert blk["spotrac_est_is_surcharges_only"] == (abs(sur - est) <= 1), code
+        n_flag += blk["spotrac_est_is_surcharges_only"]
+    assert n_flag >= 1
+    lad = d["clubs"]["LAD"]["cbt"]["2027"]
+    if lad["spotrac_est_is_surcharges_only"]:
+        rates = d["cba"]["rates"]
+        over = lad["tax_payroll_usd"] - LE.SPOTRAC_2027_BASIS_USD
+        t = d["cba"]["surcharge_tiers_usd"]
+        manual = (rates["surcharge_rates"]["tier1"] * (t[1] - t[0]) + rates["surcharge_rates"]["tier2_repeat"] * (t[2] - t[1])
+                  + rates["surcharge_rates"]["tier3"] * max(over - t[2], 0))
+        assert abs(manual - lad["spotrac_est_bill_usd"]) <= 1
+    assert "247M basis" in d["copy"]["cbt_spotrac_surcharges_only"]

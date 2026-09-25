@@ -398,7 +398,8 @@
     // The 2027 tier names its basis (the Spotrac page, or derived) in both branches.
     var basis27 = y === classYear() ? " (" + esc(copy("payor_basis")[P.payor_2027.basis] || P.payor_2027.basis) + ")" : "";
     var payorTxt = gl("payor", "payor_tier") + " " + esc(y === classYear() ? P.payor_2027.value : ps.payor_status_raw) + basis27;
-    var t2 = ps.est_tax_bill_usd ? tile("Est. tax " + esc(y), money(ps.est_tax_bill_usd), "Spotrac estimate; " + payorTxt)
+    var surOnly = y === classYear() && (d.cbt[y] || {}).spotrac_est_is_surcharges_only;
+    var t2 = ps.est_tax_bill_usd ? tile("Est. tax " + esc(y), money(ps.est_tax_bill_usd), "Spotrac estimate" + (surOnly ? ", surcharges only (no base rate)" : "") + "; " + payorTxt)
       : tile("Est. tax " + esc(y), "not a payor", payorTxt);
     var t3 = tile(gl("Committed " + esc(classYear()), "payroll_allocations"), money(p27.total_payroll_usd), "Spotrac total payroll allocations");
     var sp = P.space_2027;
@@ -441,7 +442,8 @@
     var comp = isNum(C.spotrac_est_bill_usd)
       ? "<tr><td>" + gl("Computed bill", "computed_cbt_bill") + "</td><td>" + esc(money(C.computed_bill_usd)) + "</td></tr>" +
         "<tr><td>Spotrac estimate</td><td>" + esc(money(C.spotrac_est_bill_usd)) + "</td></tr>" +
-        "<tr><td>Difference</td><td>" + signedMoney(C.diff_usd) + "</td></tr>"
+        "<tr><td>Difference</td><td>" + esc(money(C.diff_usd)) + "</td></tr>" +
+        (C.spotrac_est_is_surcharges_only ? '<tr><td colspan="2" class="ledger-count">' + esc(copy("cbt_spotrac_surcharges_only")) + "</td></tr>" : "")
       : "<tr><td>" + gl("Computed bill", "computed_cbt_bill") + "</td><td>" + esc(money(C.computed_bill_usd)) + (C.bracket === "under" ? " (" + esc(copy("cbt_under")) + ")" : "") + "</td></tr>" +
         "<tr><td>Spotrac estimate</td><td></td></tr>";
     comp += "<tr><td>" + gl("Payor tier", "payor_tier") + "</td><td>" + esc(C.tier || "") + " (" + esc(copy("payor_basis")[C.tier_basis] || C.tier_basis) + ")</td></tr>";
