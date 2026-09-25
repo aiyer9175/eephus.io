@@ -111,6 +111,51 @@
     return (m.provisional === false) ? "pick" : "watch";
   }
   function watchMode() { return slotFrame() !== "pick"; }
+
+  // ---- the board's own clock (M12-06, 2026-09-25) ---------------------------
+  // Staleness used to be judged at BUILD time only, so on a missed night the
+  // page kept serving yesterday's slate as pregame prices under an "odds feed
+  // live" chip, the locked Model Watch card included. The client now reads the
+  // clock against each game's served first pitch (team_bets[].start, UTC). No
+  // price, edge, slot or record row moves; the page only says which prices are
+  // no longer on offer. window.EEPHUS_BETTING_NOW (ISO) overrides the clock for
+  // tests and render checks.
+  function nowMs() {
+    var o = (typeof window !== "undefined" && window) ? window.EEPHUS_BETTING_NOW : null;
+    var t = o ? Date.parse(o) : NaN;
+    return isFinite(t) ? t : Date.now();
+  }
+  function gameStarted(b) {
+    var t = (b && b.start) ? Date.parse(b.start) : NaN;
+    return isFinite(t) && t <= nowMs();
+  }
+  function boardClock() {
+    var bets = (S.data && S.data.team_bets) || [];
+    var n = 0, started = 0;
+    bets.forEach(function (b) {
+      var t = (b && b.start) ? Date.parse(b.start) : NaN;
+      if (!isFinite(t)) return;
+      n++;
+      if (gameStarted(b)) started++;
+    });
+    // "All started" needs a known first pitch on every game: a game with no
+    // served start cannot be said to have begun.
+    return { n: n, started: started, all: n > 0 && started === n && n === bets.length };
+  }
+  function staleLine() {
+    var clk = boardClock();
+    if (clk.all) {
+      return '<div class="bt-stale" role="status"><strong>This board is from ' +
+        esc((S.data && S.data.slate_date) || "an earlier slate") + ".</strong> Every game on it " +
+        "has started, so its prices are historical and no longer on offer.</div>";
+    }
+    if (clk.started) {
+      return '<div class="bt-stale" role="status">' + clk.started + " of " + clk.n +
+        " games on this board have started; their prices were pregame and are no " +
+        "longer on offer.</div>";
+    }
+    return "";
+  }
   function selNoun() { return watchMode() ? "selection" : "pick"; }
   function selNounPl() { return watchMode() ? "selections" : "picks"; }
   function selNounCap() { return watchMode() ? "Selection" : "Pick"; }
@@ -949,14 +994,18 @@
           vin.min_graded_games_for_min_edge + "</span>");
       }
     }
-    chips.push('<span class="bt-chip ' + (st.odds_feed === "ok" ? "bt-chip-ok" : "bt-chip-warn") + '">' +
-      (st.odds_feed === "ok" ? "odds feed live" : "no odds feed") + "</span>");
+    if (boardClock().all) {
+      chips.push('<span class="bt-chip bt-chip-warn">prices historical</span>');
+    } else {
+      chips.push('<span class="bt-chip ' + (st.odds_feed === "ok" ? "bt-chip-ok" : "bt-chip-warn") + '">' +
+        (st.odds_feed === "ok" ? "odds feed live" : "no odds feed") + "</span>");
+    }
     if (gated()) {
       chips.push('<a class="bt-chip bt-chip-warn bt-chip-link" href="/diamond/">preview slice</a>');
     }
     host.innerHTML = '<div class="bt-asof">' +
       esc(S.data.slate_date || "") + " slate &middot; " + (S.data.n_games || 0) +
-      " games priced &middot; " + chips.join(" ") + "</div>";
+      " games priced &middot; " + chips.join(" ") + "</div>" + staleLine();
     wireGl(host);
   }
 
@@ -1506,7 +1555,13 @@
     var watchBits = watchMode()
       ? tagRecordLine(slot.key, m) + devigExample(p)
       : "";
-    return '<div class="bt-pick">' + hd +
+    var pastGame = ((d.team_bets || []).filter(function (b) {
+      return b && p.game_pk != null && b.game_pk === p.game_pk;
+    })[0]);
+    var past = !!(pastGame && gameStarted(pastGame));
+    return '<div class="bt-pick' + (past ? " bt-pick-past" : "") + '">' + hd +
+      (past ? note("<strong>This game has started.</strong> The price below was " +
+        "pregame and is no longer on offer.") : "") +
       "<p class=\"bt-pick-lead\">" + esc(slotLead(slot)) + "</p>" +
       '<div class="bt-pick-sel">' + esc(p.label || p.side || "") + " " +
       fmtOdds(p.odds) + "</div>" +
@@ -2999,6 +3054,7 @@
     var best = bestValueSide(b, pickFloor());
     var badge = best ? badgeTag(best, esc(best.label || best.side || "") + " " +
       fmtOdds(best.odds)) : "";
+    if (gameStarted(b)) badge += ' <span class="bt-tag bt-tag-warn bt-started">started</span>';
     // BET1: a best-value badge on a total that leans with the whole slate
     // carries the lean, so the badge cannot be read without it.
     if (best && best.total_level_caveat) {
@@ -3996,6 +4052,8 @@
     ".bt-legal-body p{margin:0 0 4px;font-size:12.5px;color:var(--text-secondary)}",
     ".bt-legal-help{font-weight:700;color:var(--text-primary)}",
     ".bt-asof{font-size:12px;color:var(--text-tertiary);margin:4px 0}",
+    ".bt-stale{border-left:3px solid var(--accent-gold,#a80);padding:6px 10px;margin:6px 0;font-size:12.5px;color:var(--text-primary)}",
+    ".bt-pick.bt-pick-past{border-color:var(--accent-gold,#a80)}",
     ".bt-chip{font:600 10px/1 var(--font-retro,monospace);border:1px solid var(--border,#333);padding:3px 6px;margin-left:4px;text-transform:uppercase;letter-spacing:.03em}",
     ".bt-chip-ok{color:var(--accent-green,#3a9);border-color:var(--accent-green,#3a9)}",
     ".bt-chip-warn{color:var(--text-primary);border-color:var(--accent-gold,#a80);border-width:1.5px}",

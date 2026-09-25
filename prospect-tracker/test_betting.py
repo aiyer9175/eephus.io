@@ -1863,6 +1863,47 @@ def test_a_blocked_build_suppresses_the_best_value_badge_and_says_why(live_ctx):
     assert "nothing in that game cleared it" not in text      # the head note goes down too
 
 
+def _clocked(now: str):
+    """The live payload with its Model Watch row on game 1, rendered at `now`."""
+    d = json.loads(LIVE_PAYLOAD)
+    d["pick_of_the_day"]["game_pk"] = 1
+    return _ctx(f"window.EEPHUS_BETTING_NOW = {json.dumps(now)};\n" +
+                _fetch_js(main=json.dumps(d), learning=LEARNING_ARTIFACT,
+                          evald=EVAL_ARTIFACT))
+
+
+def test_a_board_whose_games_have_all_started_says_its_prices_are_historical():
+    """M12-06 (2026-09-25). Staleness was judged at build time only, so a board
+    built yesterday rendered today as pregame prices under "odds feed live",
+    locked Model Watch card included. Fixture games start 20:10Z and 23:05Z.
+
+    MUTATION: drop staleLine() from renderBanner, or the boardClock() branch
+    on the feed chip. The after-the-slate half fails."""
+    before = _clocked("2026-08-09T18:00:00Z")
+    before.eval("__show('potd')")
+    banner = before.eval("__html['betting-banner']")
+    assert "odds feed live" in banner and "prices historical" not in banner
+    assert "bt-stale" not in banner
+    assert "This game has started" not in before.eval("__show('potd')")
+    assert "bt-started" not in before.eval("__show('teams')")
+
+    mid = _clocked("2026-08-09T21:00:00Z")
+    mid.eval("__show('potd')")
+    assert "1 of 2 games on this board have started" in _visible_text(
+        mid.eval("__html['betting-banner']"))
+
+    after = _clocked("2026-08-10T12:00:00Z")
+    potd = after.eval("__show('potd')")
+    banner = after.eval("__html['betting-banner']")
+    assert "odds feed live" not in banner
+    assert "prices historical" in banner
+    assert "This board is from 2026-08-09." in _visible_text(banner)
+    assert "prices are historical and no longer on offer" in _visible_text(banner)
+    assert "This game has started." in _visible_text(potd)
+    assert "bt-pick-past" in potd
+    assert after.eval("__show('teams')").count("bt-started") >= 1
+
+
 def _badges(payload: dict) -> list:
     c = _ctx(_fetch_js(main=json.dumps(payload), learning=LEARNING_ARTIFACT,
                        evald=EVAL_ARTIFACT))
