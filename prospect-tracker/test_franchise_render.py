@@ -430,3 +430,8 @@ def test_roster_table_columns_take_the_family_mlbstats_applies():
         assert m, label
         assert m.group(1) == fam, (label, m.group(1), fam)
     assert expect["SEM+"] == "run" and expect["HEM+"] == "ratio"
+
+
+def test_the_board_payroll_column_names_the_cbt_basis():
+    assert '["tax_payroll_2027", "CBT payroll ", 1, "cbt_payroll"]' in JS
+    assert '"Payroll ", 1' not in JS

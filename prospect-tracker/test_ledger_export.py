@@ -1749,3 +1749,26 @@ def test_the_2027_surcharges_only_note_is_derived_from_an_exact_reconstruction(d
                   + rates["surcharge_rates"]["tier3"] * max(over - t[2], 0))
         assert abs(manual - lad["spotrac_est_bill_usd"]) <= 1
     assert "247M basis" in d["copy"]["cbt_spotrac_surcharges_only"]
+
+
+def test_cost_plus_says_what_its_denominator_leaves_out_and_what_it_ranks(d):
+    """The Cost+ family divides by Spotrac's CBT payroll, which carries no
+    arbitration or pre-arbitration salaries; the disclosure and both rank
+    correlations are measured every build, never typed."""
+    import ledger_export as LE
+    pool = d["league"]["pools"]["cost_plus"]
+    rows = [(c["indexes"]["cost_ratio_war_per_mm"], -c["payroll"]["s2027"]["tax_payroll_usd"], c["indexes"]["proj_war_2027"])
+            for c in d["clubs"].values() if c["indexes"]["cost_ratio_war_per_mm"] is not None]
+    assert pool["n_spearman"] == len(rows) == 30
+    rho_pay = LE._spearman([r[0] for r in rows], [r[1] for r in rows])
+    rho_war = LE._spearman([r[0] for r in rows], [r[2] for r in rows])
+    assert abs(pool["spearman_vs_neg_cbt_payroll"] - rho_pay) <= 0.02
+    assert abs(pool["spearman_vs_proj_war"] - rho_war) <= 0.02
+    basis = d["copy"]["cost_plus_basis"]
+    assert "no arbitration or pre-arbitration salaries" in basis
+    assert f"Spearman {pool['spearman_vs_neg_cbt_payroll']:.2f}" in basis and f"{pool['spearman_vs_proj_war']:.2f} against projected WAR" in basis
+    assert ("inverse payroll rank" in basis) == (abs(pool["spearman_vs_neg_cbt_payroll"]) > abs(pool["spearman_vs_proj_war"]))
+    cols = {c[0]: c for c in d["league"]["columns"]}
+    for k in ("cost_plus", "usd_per_win", "usd_per_war"):
+        assert LE.NO_ARB_IN_DENOM in cols[k][3], k
+    assert LE._spearman([1, 2, 3, 4], [4, 3, 2, 1]) == -1.0 and LE._spearman([1, 2], [1, 2]) is None

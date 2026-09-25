@@ -75,6 +75,10 @@ IFA_YEARS = (2021, 2022, 2023, 2024, 2025, 2026)
 #: against the rows at build time), never as a rule.
 SPOTRAC_2027_BASIS_USD = 247_000_000
 
+#: The Cost+ family's denominator gap, said on every column that divides by it.
+NO_ARB_IN_DENOM = ("the payroll carries no arbitration or pre-arbitration salaries, the projected roster "
+                   "in the numerator does")
+
 #: fa_class option types whose 2027 year is not guaranteed, so the tax floor
 #: census leaves those contract rows out of the guaranteed AAV.
 TAX_FLOOR_NOT_GUARANTEED = ("club_option", "mutual_option")
@@ -267,6 +271,25 @@ def _isum(rows, key):
 # --------------------------------------------------------------------------
 # the CBT computation (rule application, unit-tested against cba_rules.json)
 # --------------------------------------------------------------------------
+
+def _spearman(xs: list, ys: list) -> float | None:
+    """Spearman rank correlation with average ranks for ties; None under 3 pairs."""
+    def ranks(v):
+        order = sorted(range(len(v)), key=lambda i: v[i])
+        out = [0.0] * len(v)
+        i = 0
+        while i < len(order):
+            j = i
+            while j + 1 < len(order) and v[order[j + 1]] == v[order[i]]:
+                j += 1
+            for k in range(i, j + 1):
+                out[order[k]] = (i + j) / 2 + 1
+            i = j + 1
+        return out
+    if len(xs) < 3:
+        return None
+    return statistics.correlation(ranks(xs), ranks(ys))
+
 
 def payor_base_key(tier: str | None) -> str:
     """cba_rules base_rate_by_payor_year key for a Spotrac payor token. A
@@ -1453,6 +1476,12 @@ def build_all() -> tuple:
     cp = [club_docs[c]["indexes"]["cost_plus"] for c in clubs if club_docs[c]["indexes"]["cost_plus"] is not None]
     assert abs(statistics.mean(cp) - 100) <= 0.5, statistics.mean(cp)
     assert abs(statistics.pstdev(cp) - 10) <= 0.5, statistics.pstdev(cp)
+    # what the index ranks: its Spearman against minus the CBT payroll and against
+    # the projected WAR, on the unrounded ratio, measured here every build
+    rk = [c for c in clubs if ratio_by_club.get(c) is not None
+          and club_docs[c]["payroll"]["s2027"]["tax_payroll_usd"] and club_docs[c]["indexes"]["proj_war_2027"]]
+    rho_pay = _spearman([ratio_by_club[c] for c in rk], [-club_docs[c]["payroll"]["s2027"]["tax_payroll_usd"] for c in rk])
+    rho_war = _spearman([ratio_by_club[c] for c in rk], [club_docs[c]["indexes"]["proj_war_2027"] for c in rk])
 
     # ---- league board ------------------------------------------------------------
     league_rows = []
@@ -1510,9 +1539,9 @@ def build_all() -> tuple:
             ["committed_2027", "Committed 2027", "payroll_allocations", "Spotrac total payroll allocations 2027"],
             ["space_2027_spotrac", "Space 2027", "cbt_payroll", f"Spotrac, {SPOTRAC_2027_BASIS_USD // 1_000_000}M basis; the platform {T_next // 1_000_000}M carry-forward figure sits in the tooltip and the two are never mixed"],
             ["proj_wins_2027", "Proj wins 2027", None, f"team_win_projections ({tw})"],
-            ["usd_per_win", "$ per proj win", "cost_plus", f"Spotrac CBT payroll 2027 over team_win_projections 2027 wins ({tw}); plain dollars"],
-            ["cost_plus", "Cost+", "cost_plus", f"100+10z of projected 2027 WAR per $M of 2027 CBT payroll across the 30 clubs; descriptive index, numerator {tw}"],
-            ["usd_per_war", "$ per proj WAR", "cost_plus", "Spotrac CBT payroll 2027 over projected 2027 WAR; plain dollars, no ladder"],
+            ["usd_per_win", "$ per proj win", "cost_plus", f"Spotrac CBT payroll 2027 over team_win_projections 2027 wins ({tw}); plain dollars; {NO_ARB_IN_DENOM}"],
+            ["cost_plus", "Cost+", "cost_plus", f"100+10z of projected 2027 WAR per $M of 2027 CBT payroll across the 30 clubs; descriptive index, numerator {tw}; {NO_ARB_IN_DENOM}"],
+            ["usd_per_war", "$ per proj WAR", "cost_plus", f"Spotrac CBT payroll 2027 over projected 2027 WAR; plain dollars, no ladder; {NO_ARB_IN_DENOM}"],
             ["locked_pct", "Locked", "controlled_surplus", "share of 2027-31 core WAR under club control (a share of a projection)"],
             ["controlled_surplus_mm", "Controlled surplus", "controlled_surplus", "$M: MLB leg (surNpv) + farm leg (org active surplus), sums of means; plain"],
             ["arb_exposure_2027", "Arb exposure 2027", "arb_exposure", "upper bound, not a payroll forecast; arb_award provisional"],
@@ -1528,7 +1557,9 @@ def build_all() -> tuple:
                   "fetched_at": means_at, "fetched_at_min": club27_at[0] if club27_at else None},
         "pools": {"cost_plus": {"mean_ratio": _r(mu, 4), "sd_ratio": _r(sd, 4), "n": len(vals),
                                 "mean_index": _r(statistics.mean(cp), 2), "sd_index": _r(statistics.pstdev(cp), 2),
-                                "averages_excluded": True}},
+                                "averages_excluded": True,
+                                "spearman_vs_neg_cbt_payroll": _r(rho_pay, 3), "spearman_vs_proj_war": _r(rho_war, 3),
+                                "n_spearman": len(rk)}},
         "quadrant": {"x": "cbt_payroll_2026", "y": "controlled_surplus_mm", "unit": "$M", "min_width_px": 700},
         "cba_banner": True,
     }
@@ -1654,7 +1685,13 @@ def build_all() -> tuple:
                                  "MLB and farm legs by construction and is never added to them"),
         "trajectory_note": "since late June, no earlier history",
         "ratio_bases": (f"Spotrac CBT payroll {CLASS_YEAR} over team_win_projections {CLASS_YEAR} ({tw})"),
-        "cost_plus_basis": "descriptive index: a ratio of two served numbers, not a model",
+        "cost_plus_basis": ("descriptive index: a ratio of two served numbers, not a model. The denominator is "
+                            f"Spotrac's {CLASS_YEAR} CBT payroll, which carries no arbitration or pre-arbitration "
+                            f"salaries, while the numerator is the whole projected {CLASS_YEAR} roster, so the index "
+                            + ("runs mostly as an inverse payroll rank" if abs(rho_pay or 0) > abs(rho_war or 0)
+                               else "reads payroll as well as WAR")
+                            + f": Spearman {rho_pay:.2f} against minus the CBT "
+                            f"payroll and {rho_war:.2f} against projected WAR across {len(rk)} clubs"),
         "cost_plus_registry": "no registry row: Cost+ predicts nothing; a skill claim would need an eval first",
         "orgsur_chip": "descriptive, unvalidated",
         "farm_leaves": {k: {"basis": LEAF_VALUE[k][2], "weight": leaf_weights.get(k)} for k in FIN_LEAVES},

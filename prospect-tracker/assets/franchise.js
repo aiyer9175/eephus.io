@@ -664,7 +664,7 @@
     ["code", "Club", 1, null], ["index_score", "Index", 1, "franchise_index"], ["roster_score", "ROSTER", 0, "franchise_branch_score"],
     ["outlook_score", "OUTLOOK", 0, "franchise_branch_score"], ["farm_score", "FARM", 0, "franchise_branch_score"],
     ["cost_plus", "FIN (Cost+)", 0, "cost_plus"], ["wins_2027", "Wins " , 1, null], ["war", "eWAR", 0, "ewar"],
-    ["tax_payroll_2027", "Payroll ", 1, "cbt_payroll"], ["farm_rank", "Farm rank", 0, null], ["playoff_pct", "Playoff", 0, null]
+    ["tax_payroll_2027", "CBT payroll ", 1, "cbt_payroll"], ["farm_rank", "Farm rank", 0, null], ["playoff_pct", "Playoff", 0, null]
   ];
   var TEXT_COLS = { code: 1 };
   function boardCell(r, key) {

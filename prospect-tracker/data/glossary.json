@@ -7860,7 +7860,7 @@
    ],
    "priority": 40,
    "definition": "Descriptive, not a model: projected wins above replacement per million dollars of next season's CBT payroll, indexed so that 100 is the league mean and each 10 points is one standard deviation across the thirty clubs.",
-   "methodology": "ledger_export.py divides team_outlook 2027 WAR by Spotrac's 2027 tax payroll in millions, standardises across the 30 clubs and rounds to the nearest point; the numerator is a provisional projection, the index carries no registry row because it predicts nothing, and any efficiency skill claim would need an eval first.",
+   "methodology": "ledger_export.py divides team_outlook 2027 WAR by Spotrac's 2027 tax payroll in millions, standardises across the 30 clubs and rounds to the nearest point; the numerator is a provisional projection, the index carries no registry row because it predicts nothing, and any efficiency skill claim would need an eval first. The denominator carries no arbitration or pre-arbitration salaries while the numerator is the whole projected roster, so the index can track a small CBT payroll more than projected WAR; the ledger prints both rank correlations, measured each build, beside the index.",
    "example": "",
    "formula": "Cost+ = 100 + 10 x z(projected WAR / (CBT payroll in $M))",
    "seeAlso": [
