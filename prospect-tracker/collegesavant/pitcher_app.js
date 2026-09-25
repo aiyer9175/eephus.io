@@ -465,7 +465,7 @@ function computeCSPlus(pitchers) {
 function plusPill(value, label) {
   if (!Number.isFinite(value)) return "";
   const cls = value >= 110 ? "is-pos" : value <= 90 ? "is-neg" : "";
-  const tip = `${label} ${value} - tracked-skill index, 100 = ${state.year} college pitcher average, +10 = one standard deviation better. College-relative, not a Single-A projection.`;
+  const tip = `${label} ${value} - tracked-skill index, 100 = the ${state.year} pool average (${poolText(state.year)}), +10 = one standard deviation better. College-relative, not a Single-A projection.`;
   return `<span class="cs-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${value}</span>`;
 }
 
@@ -527,7 +527,7 @@ function init() {
     state.allPitchers = (window.PITCHER_DATA || []).map(normalizePitcher);
     state.allPitches = collectPitchRows().map(normalizePitchRow);
     state.availableYears = [...new Set(state.allPitchers.map((pitcher) => pitcher.year))].sort((a, b) => b - a);
-    state.year = state.availableYears[0] || 2026;
+    state.year = largestPoolYear(state.availableYears) || 2026;
     setActiveYear(yearFromHash(window.location.hash) || state.year);
     window.addEventListener("hashchange", render);
     render();
@@ -572,6 +572,28 @@ function normalizePitcher(row) {
     .toUpperCase();
   pitcher.teamClass = pitcher.team ? `team-${slugify(pitcher.team)}` : "team-unknown";
   return pitcher;
+}
+
+// Each season's payload is a different pool: 2024 is the national TrackMan set
+// (4,400+ arms on 480+ teams), 2025 is a Big Ten slice, and 2026 is an early
+// cut (a median of about 70 pitches, no K/BB or swing-decision columns). CS+
+// and every percentile are z-scored within the active season, so "100" means
+// that pool's average. The season picker names each pool's size, team count
+// and median pitch count, the default season is the largest pool, and the CS+
+// copy says which pool it is relative to (census M03-10).
+function yearPool(year) {
+  const rows = (state.allPitchers || []).filter((p) => p.year === year);
+  const teams = new Set(rows.map((p) => p.team).filter(Boolean)).size;
+  const pc = rows.map((p) => Number(p.pitch_count)).filter(Number.isFinite).sort((a, b) => a - b);
+  return { n: rows.length, teams, medPitches: pc.length ? pc[Math.floor(pc.length / 2)] : null };
+}
+function poolText(year) {
+  const { n, teams, medPitches } = yearPool(year);
+  return `${n.toLocaleString()} arm${n === 1 ? "" : "s"}${teams ? `, ${teams} team${teams === 1 ? "" : "s"}` : ""}`
+    + (medPitches != null ? `, median ${medPitches} pitches` : "");
+}
+function largestPoolYear(years) {
+  return years.slice().sort((a, b) => yearPool(b).n - yearPool(a).n || b - a)[0];
 }
 
 function setActiveYear(year) {
@@ -951,7 +973,7 @@ function csLeaderboardSpec(rows, col, dir) {
     subtitle: `${state.year} college pitchers · sorted by ${col.label}${dir < 0 ? " (high → low)" : " (low → high)"} · ${rows.length} qualified`,
     url: "eephus.io/collegesavant/pitcher_index.html", filenameBase: `eephus-collegesavant-pitchers-${col.key}`,
     caption: "college tracked-skill leaders · CollegeSavant by Joseph Gillis",
-    board: { defaultCount: 25, counts: [10, 25, 50], legend: "CS+ 100 = D1 average", columns: [
+    board: { defaultCount: 25, counts: [10, 25, 50], legend: `CS+ 100 = ${state.year} pool average (${poolText(state.year)})`, columns: [
       { label: "#", frac: 0.06 },
       { label: "Pitcher", frac: 0.42 },
       { label: col.label, frac: 0.20 },
@@ -1279,7 +1301,7 @@ function renderTeams() {
         ${TEAM_TENDENCY_METRICS.map((m) => `<option value="${m.key}" ${m.key === sortKey ? "selected" : ""}>Rank by ${m.label}</option>`).join("")}
       </select>
     </section>
-    <p class="note-line">College pitching-staff tendencies for ${state.year}: every staff with at least ${TEAM_MIN_ARMS} tracked arms, aggregated across its pitchers. Team CS+ is the mean of its arms' CS+ (100 = the college average).</p>
+    <p class="note-line">College pitching-staff tendencies for ${state.year}: every staff with at least ${TEAM_MIN_ARMS} tracked arms, aggregated across its pitchers. Team CS+ is the mean of its arms' CS+ (100 = the ${state.year} pool average, ${poolText(state.year)}).</p>
     <section class="leaderboard tt-board">
       <div class="tt-scroll"><table class="tt-table">
         <thead><tr><th class="tt-rank">#</th><th class="tt-team">Staff</th>${head}</tr></thead>
@@ -1718,7 +1740,7 @@ function renderYearSelect(years = state.availableYears) {
   const loading = pitchDataLoading(state.year);
   return `
     <select class="select-box year-select${loading ? " is-loading" : ""}" aria-label="Select season"${loading ? ` aria-busy="true" title="Loading ${state.year} pitch data"` : ""}>
-      ${years.map((year) => `<option value="${year}" ${year === state.year ? "selected" : ""}>${year}</option>`).join("")}
+      ${years.map((year) => `<option value="${year}" ${year === state.year ? "selected" : ""}>${year} · ${poolText(year)}</option>`).join("")}
     </select>
   `;
 }

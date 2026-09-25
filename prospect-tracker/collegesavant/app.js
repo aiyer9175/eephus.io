@@ -156,7 +156,7 @@ function computeCSPlus(players) {
 function plusPill(value, label) {
   if (!Number.isFinite(value)) return "";
   const cls = value >= 110 ? "is-pos" : value <= 90 ? "is-neg" : "";
-  const tip = `${label} ${value} - tracked-skill index, 100 = ${state.year} college average, +10 = one standard deviation better. College-relative, not a Single-A projection.`;
+  const tip = `${label} ${value} - tracked-skill index, 100 = the ${state.year} pool average (${poolText(state.year)}), +10 = one standard deviation better. College-relative, not a Single-A projection.`;
   return `<span class="cs-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${value}</span>`;
 }
 
@@ -225,7 +225,7 @@ async function init() {
       state.battedBalls = normalizeBattedBalls({});
     }
     state.availableYears = [...new Set(state.allPlayers.map((player) => player.year))].sort((a, b) => b - a);
-    state.year = state.availableYears[0] || 2025;
+    state.year = largestPoolYear(state.availableYears) || 2025;
     setActiveYear(yearFromHash(window.location.hash) || state.year);
     window.addEventListener("hashchange", render);
     render();
@@ -312,6 +312,25 @@ function normalizePlayer(row) {
     .join("")
     .toUpperCase();
   return player;
+}
+
+// Each season's payload is a different pool: 2024 is the national TrackMan set
+// (3,600+ hitters on 300+ teams) while 2025 is a Big Ten-only file with no team
+// or PA column. CS+ and every percentile are z-scored within the active
+// season, so "100" means that pool's average. The season picker therefore
+// names each pool's size and team count, the default season is the largest
+// pool, and the CS+ copy says which pool it is relative to (census M03-10).
+function yearPool(year) {
+  const rows = (state.allPlayers || []).filter((p) => p.year === year);
+  const teams = new Set(rows.map((p) => p.team).filter(Boolean)).size;
+  return { n: rows.length, teams };
+}
+function poolText(year) {
+  const { n, teams } = yearPool(year);
+  return `${n.toLocaleString()} hitter${n === 1 ? "" : "s"}${teams ? `, ${teams} team${teams === 1 ? "" : "s"}` : ""}`;
+}
+function largestPoolYear(years) {
+  return years.slice().sort((a, b) => yearPool(b).n - yearPool(a).n || b - a)[0];
 }
 
 function setActiveYear(year) {
@@ -677,7 +696,7 @@ function csLeaderboardSpec(rows, col, dir) {
     subtitle: `${state.year} college hitters · sorted by ${col.label}${dir < 0 ? " (high → low)" : " (low → high)"} · ${rows.length} qualified`,
     url: "eephus.io/collegesavant", filenameBase: `eephus-collegesavant-${col.key}`,
     caption: "college tracked-skill leaders · CollegeSavant by Joseph Gillis",
-    board: { defaultCount: 25, counts: [10, 25, 50], legend: "CS+ 100 = D1 average", columns: [
+    board: { defaultCount: 25, counts: [10, 25, 50], legend: `CS+ 100 = ${state.year} pool average (${poolText(state.year)})`, columns: [
       { label: "#", frac: 0.06 },
       { label: "Player", frac: 0.42 },
       { label: col.label, frac: 0.20 },
@@ -764,7 +783,7 @@ function renderTeams() {
         ${TEAM_TENDENCY_METRICS.map((m) => `<option value="${m.key}" ${m.key === sortKey ? "selected" : ""}>Rank by ${m.label}</option>`).join("")}
       </select>
     </section>
-    <p class="note-line">College team tendencies for ${state.year}: every team with at least ${TEAM_MIN_BATTERS} tracked batters, aggregated across its hitters. Team CS+ is the mean of its hitters' CS+ (100 = the college average). Top EV is the team's single hardest-hit ball; the rest are team averages.</p>
+    <p class="note-line">College team tendencies for ${state.year}: every team with at least ${TEAM_MIN_BATTERS} tracked batters, aggregated across its hitters. Team CS+ is the mean of its hitters' CS+ (100 = the ${state.year} pool average, ${poolText(state.year)}). Top EV is the team's single hardest-hit ball; the rest are team averages.</p>
     <section class="leaderboard tt-board">
       <div class="tt-scroll"><table class="tt-table">
         <thead><tr><th class="tt-rank">#</th><th class="tt-team">Team</th>${head}</tr></thead>
@@ -1261,7 +1280,7 @@ function renderYearSelect(years = state.availableYears) {
   const loading = bipLoading(state.year);
   return `
     <select class="select-box year-select${loading ? " is-loading" : ""}" aria-label="Select season"${loading ? ` aria-busy="true" title="Loading ${state.year} batted balls"` : ""}>
-      ${years.map((year) => `<option value="${year}" ${year === state.year ? "selected" : ""}>${year}</option>`).join("")}
+      ${years.map((year) => `<option value="${year}" ${year === state.year ? "selected" : ""}>${year} · ${poolText(year)}</option>`).join("")}
     </select>
   `;
 }
