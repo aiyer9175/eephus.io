@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-25T19:55:18+00:00",
+ "generated_at": "2026-09-25T20:28:28+00:00",
  "produced_by": "tools/efv_driver_admission.py",
  "role": "development",
  "adjudicates": "which V2 candidate drivers the rule admits on the training cohorts",
@@ -13,7 +13,7 @@
  },
  "frame": "v1 training matrices, decision years before 2025; skill drivers on has-block rows, timing drivers on every row",
  "code": {
-  "commit": "fbe80e65772f48a05f767dafe6d976d6fe2a3f4b"
+  "commit": "8b2d4908159fc16fe877d79fa3609ac5620b8813"
  },
  "scrapped": {
   "pit": {
@@ -918,6 +918,103 @@
    },
    "n_folds_admitted": 4
   },
+  "DS-06:pit.skill.bmi": {
+   "tag": "DS-06:pit.skill.bmi",
+   "side": "pit",
+   "head": "skill",
+   "driver": "bmi",
+   "target": "u_y",
+   "rows": "has_block",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2019": 1,
+    "2020": -1,
+    "2021": -1,
+    "2022": 1,
+    "2023": 1,
+    "2024": 1
+   },
+   "t_by_vintage": {
+    "2019": 1.6494,
+    "2020": -0.3899,
+    "2021": -0.0671,
+    "2022": 0.0523,
+    "2023": 0.8749,
+    "2024": 1.1495
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018
+   ],
+   "mean_abs_t": 0.6972,
+   "n_valid_vintages": 6,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "by_fold": {
+    "2014": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2015": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2016": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2017": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2020": {
+     "admitted": false,
+     "n_valid_vintages": 1,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2021": {
+     "admitted": false,
+     "n_valid_vintages": 2,
+     "reason": "sign flipped between training vintages"
+    },
+    "2022": {
+     "admitted": false,
+     "n_valid_vintages": 3,
+     "reason": "sign flipped between training vintages"
+    },
+    "2023": {
+     "admitted": false,
+     "n_valid_vintages": 4,
+     "reason": "sign flipped between training vintages"
+    },
+    "2024": {
+     "admitted": false,
+     "n_valid_vintages": 5,
+     "reason": "sign flipped between training vintages"
+    }
+   },
+   "n_folds_admitted": 0
+  },
   "DS-06:pit.timing.age_rel_level": {
    "tag": "DS-06:pit.timing.age_rel_level",
    "side": "pit",
@@ -1113,7 +1210,7 @@
    "n_folds_admitted": 4
   }
  },
- "n_arms": 11,
+ "n_arms": 12,
  "admitted": [
   "DS-06:hit.skill.tool_hit",
   "DS-06:hit.timing.level_rank",
@@ -1126,6 +1223,7 @@
   "DS-06:hit.skill.obp_rel",
   "DS-06:hit.skill.tool_speed",
   "DS-06:hit.timing.age_rel_level",
+  "DS-06:pit.skill.bmi",
   "DS-06:pit.skill.k_rel",
   "DS-06:pit.timing.age_rel_level"
  ]

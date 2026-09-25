@@ -1,0 +1,3248 @@
+{
+ "generated_at": "2026-09-25T20:29:12+00:00",
+ "produced_by": "tools/efv_v2_assemble.py",
+ "model_id": "efv_v2_ds_assembled",
+ "role": "development",
+ "adjudicates": false,
+ "registered_before_any_read": true,
+ "what": "the assembled Driver System V2 (s4.3): weights fixed by the DS-08 rule, admission per development fold, sidecar coverage; no V2 score on any scored row",
+ "guards": {
+  "reserved_lv": [
+   2020,
+   2021
+  ],
+  "r_vm_first_debut_year": 2025,
+  "lv_vintages_read": [
+   2011,
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019
+  ],
+  "rule_last_year": 2016,
+  "scored_folds": [
+   2017,
+   2018,
+   2019
+  ]
+ },
+ "label": {
+  "provider": "ewar_v2",
+  "resolved_through": 2025,
+  "skill_target": "W3 percentile within (side, list vintage)",
+  "timing_target": "R3 (debut inside V..V+3)"
+ },
+ "code": {
+  "commit": "8b2d4908159fc16fe877d79fa3609ac5620b8813"
+ },
+ "model": {
+  "order_idx": "u_c + w_skill * e_skill + w_time * e_time",
+  "e_units": "each head's driver sum over its own consensus slope (consensus-percentile equivalents)",
+  "grade": "consensus FV value of (side, V) at order_idx's within-group rank, ties averaged (DS-07)",
+  "war": "continuous WLS line of the training target on consensus FV, evaluated at the eFV grade (pricing only)",
+  "skill_candidates": {
+   "hit": [
+    "obp_rel",
+    "contact",
+    "tool_hit",
+    "tool_speed",
+    "is_college",
+    "level_rank",
+    "pl_rev"
+   ],
+   "pit": [
+    "k_rel",
+    "bmi",
+    "pl_rev"
+   ]
+  },
+  "timing_candidates_lv": {
+   "hit": [
+    "age_rel_level",
+    "level_rank",
+    "milb_absent",
+    "on_40man",
+    "nov_add"
+   ],
+   "pit": [
+    "age_rel_level",
+    "level_rank",
+    "milb_absent",
+    "on_40man",
+    "nov_add"
+   ]
+  },
+  "timing_candidates_vm": {
+   "hit": [
+    "age_rel_level",
+    "level_rank"
+   ],
+   "pit": [
+    "age_rel_level",
+    "level_rank"
+   ]
+  },
+  "pitchers": "owner DS-Q2: consensus order in any fold where no pitcher skill driver is admitted",
+  "scrapped": {
+   "pit": {
+    "peak_k_rel": "pitcher block, owner DS-Q2; its slope learned block presence (B3)",
+    "k_rel": "pitcher block, owner DS-Q2; returns only as the DS-10 list-vintage residual if admitted",
+    "bb_rel": "pitcher block, owner DS-Q2",
+    "age_rel_level": "pitcher block as a skill slope, owner DS-Q2; kept as a timing input",
+    "x_era_k": "pitcher block, owner DS-Q2",
+    "tool_fb": "pitcher block, owner DS-Q2",
+    "age": "pitcher block, owner DS-Q2; opposite signs on reach and WAR given reach",
+    "seasons_at_level": "pitcher block, owner DS-Q2"
+   },
+   "hit": {
+    "age": "opposite signs on reach and WAR given reach, positive in 5 of 11 folds; dropping it helped on vm1, vm2 and lv_dev (A1)",
+    "milb_missing": "missingness is a debut proxy (B3); weight 0.0001",
+    "n_milb_seasons": "drop helps on vm1 and lv (A1); a declared suppressor",
+    "ops_rel": "collinear with obp_rel; drop helps on vm1 and lv (A1)",
+    "is_ifa": "no slope: drop helps on vm1 and lv (A1)",
+    "k_rel": "merged into the contact term",
+    "peak_k_rel": "merged into the contact term"
+   }
+  }
+ },
+ "weights": {
+  "hit": {
+   "w_skill": 0.599508,
+   "w_time": 0.012287,
+   "a": 0.020496,
+   "status": "ok"
+  },
+  "pit": {
+   "w_skill": 1.0,
+   "w_time": 0.107279,
+   "a": 0.107279,
+   "status": "ok"
+  }
+ },
+ "rule": {
+  "hit": {
+   "side": "hit",
+   "last_year": 2016,
+   "n_pooled": 1330,
+   "sources": {
+    "matrix": {
+     "n_rows": 363,
+     "ids_outcome_blind": false,
+     "years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "folds": {
+      "2014": {
+       "n_train": 91,
+       "n_test": 98,
+       "counted": false,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank"
+       ],
+       "timing_alpha": "30.0"
+      },
+      "2015": {
+       "n_train": 189,
+       "n_test": 78,
+       "counted": false,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank"
+       ],
+       "timing_alpha": "off"
+      },
+      "2016": {
+       "n_train": 267,
+       "n_test": 96,
+       "counted": false,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank"
+       ],
+       "timing_alpha": "off"
+      }
+     }
+    },
+    "lv": {
+     "n_rows": 1588,
+     "ids_outcome_blind": true,
+     "years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "folds": {
+      "2012": {
+       "n_train": 6,
+       "n_test": 189,
+       "counted": false,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": null,
+       "timing_alpha": "off"
+      },
+      "2013": {
+       "n_train": 61,
+       "n_test": 268,
+       "counted": true,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank",
+        "milb_absent",
+        "on_40man",
+        "nov_add"
+       ],
+       "timing_alpha": "30.0"
+      },
+      "2014": {
+       "n_train": 287,
+       "n_test": 260,
+       "counted": true,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank",
+        "milb_absent",
+        "on_40man",
+        "nov_add"
+       ],
+       "timing_alpha": "10.0"
+      },
+      "2015": {
+       "n_train": 432,
+       "n_test": 397,
+       "counted": true,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank",
+        "milb_absent",
+        "on_40man",
+        "nov_add"
+       ],
+       "timing_alpha": "3.0"
+      },
+      "2016": {
+       "n_train": 767,
+       "n_test": 405,
+       "counted": true,
+       "skill_keys": [
+        "obp_rel",
+        "contact",
+        "tool_hit",
+        "tool_speed",
+        "is_college",
+        "level_rank",
+        "pl_rev"
+       ],
+       "skill_alpha": "30.0",
+       "skill_n_train": 152,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank",
+        "milb_absent",
+        "on_40man",
+        "nov_add"
+       ],
+       "timing_alpha": "30.0"
+      }
+     }
+    }
+   },
+   "absence_admitted": true,
+   "coef": {
+    "intercept": 0.4032897851326613,
+    "u_c": 0.19462470366786605,
+    "e_skill": 0.11667913289123898,
+    "e_time": 0.0023914507957946457
+   },
+   "se": {
+    "intercept": 0.014770223242881537,
+    "u_c": 0.02522109863376619,
+    "e_skill": 0.044204459964525405,
+    "e_time": 0.03366558012173063
+   },
+   "w_skill": 0.599508,
+   "w_time": 0.012287,
+   "a": 0.020496,
+   "status": "ok",
+   "live_columns": [
+    "u_c",
+    "e_skill",
+    "e_time"
+   ],
+   "w_skill_ratio": 0.599508,
+   "w_time_ratio": 0.012287
+  },
+  "pit": {
+   "side": "pit",
+   "last_year": 2016,
+   "n_pooled": 1038,
+   "sources": {
+    "matrix": {
+     "n_rows": 398,
+     "ids_outcome_blind": false,
+     "years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "folds": {
+      "2014": {
+       "n_train": 94,
+       "n_test": 89,
+       "counted": false,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank"
+       ],
+       "timing_alpha": "30.0"
+      },
+      "2015": {
+       "n_train": 183,
+       "n_test": 95,
+       "counted": false,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank"
+       ],
+       "timing_alpha": "off"
+      },
+      "2016": {
+       "n_train": 278,
+       "n_test": 120,
+       "counted": false,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank"
+       ],
+       "timing_alpha": "off"
+      }
+     }
+    },
+    "lv": {
+     "n_rows": 1512,
+     "ids_outcome_blind": true,
+     "years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "folds": {
+      "2013": {
+       "n_train": 59,
+       "n_test": 246,
+       "counted": false,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": null,
+       "timing_alpha": "off"
+      },
+      "2014": {
+       "n_train": 266,
+       "n_test": 245,
+       "counted": true,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank",
+        "milb_absent",
+        "on_40man",
+        "nov_add"
+       ],
+       "timing_alpha": "10.0"
+      },
+      "2015": {
+       "n_train": 402,
+       "n_test": 388,
+       "counted": true,
+       "skill_keys": null,
+       "skill_alpha": "off",
+       "skill_n_train": null,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank",
+        "milb_absent",
+        "on_40man",
+        "nov_add"
+       ],
+       "timing_alpha": "10.0"
+      },
+      "2016": {
+       "n_train": 719,
+       "n_test": 405,
+       "counted": true,
+       "skill_keys": [
+        "k_rel",
+        "bmi",
+        "pl_rev"
+       ],
+       "skill_alpha": "30.0",
+       "skill_n_train": 161,
+       "timing_keys": [
+        "age_rel_level",
+        "level_rank",
+        "milb_absent",
+        "on_40man",
+        "nov_add"
+       ],
+       "timing_alpha": "10.0"
+      }
+     }
+    }
+   },
+   "absence_admitted": true,
+   "coef": {
+    "intercept": 0.4310883381208374,
+    "u_c": 0.14266760440631832,
+    "e_skill": 0.18466275411349675,
+    "e_time": 0.015305197644493456
+   },
+   "se": {
+    "intercept": 0.01576147738633418,
+    "u_c": 0.026892863723453588,
+    "e_skill": 0.09020781582942247,
+    "e_time": 0.013976645662354818
+   },
+   "w_skill": 1.0,
+   "w_time": 0.107279,
+   "a": 0.107279,
+   "status": "ok",
+   "live_columns": [
+    "u_c",
+    "e_skill",
+    "e_time"
+   ],
+   "w_skill_ratio": 1.294357,
+   "w_time_ratio": 0.107279
+  }
+ },
+ "rule_statement": "DS-08. The weights, by one rule that reads only rows at or before `last_year`.\n\nTHE RULE AS SPECIFIED (s4.3): the pooled forward-chained OLS coefficient on (model leg\nminus consensus) over decision years up to 2016, the timing share at the ratio of the\ntwo heads' coefficients, and w at or below 0 means that side orders by consensus.\n\nAS IMPLEMENTED, per source (the v1 matrices, decision years <= last_year; the F-LV\nframe, list vintages <= last_year), for every rule year y with MIN_TEST_ROWS rows\nand MIN_TRAIN_ROWS earlier rows: fit the side's skill and timing heads on the\nearlier rows (F-LV: every player in year y left out of them) and express each on\nyear y's rows in consensus-percentile equivalents (e_skill, e_time). A year counts\nwhen either head moves some row. Pool the counted years of every source and fit\nOLS u_y ~ 1 + u_c + e_skill + e_time (u_c, u_y within year). Then\n    w_skill = clip(c_skill / c_uc, 0, W_MAX),  w_time = clip(c_time / c_uc, 0, W_MAX),\nboth 0 when c_uc <= 0, and a column that is zero on every pooled row gets weight 0.\nA weight is a SHARE of the head's own estimate (1 = the head as fitted, 0 =\nconsensus alone), so it is bounded by W_MAX = 1: a ratio above 1 would extrapolate\npast the head, and the rule's fixed fallback penalty (adaptation 3) over-shrinks the\nrule-fold head, which inflates the ratio. DISCLOSED: the bound was added after the\nfirst dry run of the rule read 1.29 for pitchers; the unbounded ratios stay in the\nreceipt (w_skill_ratio, w_time_ratio).\n\nTHREE STATED ADAPTATIONS, each because the literal rule cannot run:\n  1. the matrices at decision years <= 2016 carry 3 rows with a MiLB block per side\n     (the era rule marks the rest milb_unavailable), so no skill head fits there; the\n     list-vintage frame at vintages <= 2016 is added. V2 is then scored only from\n     V2_FIRST_SCORED_YEAR, so no rule row is ever a scored row.\n  2. admission is off inside rule folds: it needs two earlier vintages that give a\n     t, and no rule year has them.\n  3. a head whose nested CV has no inner year takes RULE_FALLBACK_ALPHA.\nReads no row after last_year; the receipt carries every (source, year) read.",
+ "prior_bio_tests": "Height, weight, BMI and frame were tested twice before, both null: the D-2 driver arms (data/xfv_driver_extras.json) and the archetype bio lab (tools/_arch_bio_result.json: pitcher BMI d_rho +0.0102, CI95 -0.023 to +0.043, 5 of 6 folds positive, NULL below the MDE, beside the full pitcher block that is now scrapped). The pitcher BMI candidate here is ONE pre-declared re-test in a new context (list-vintage frame, W3 label, residual to consensus, admission rule), counted in the forking-path total.",
+ "coverage": {
+  "hit": {
+   "protection": {
+    "2011": {
+     "rows": 69,
+     "observed": 65,
+     "on_40man": 7,
+     "nov_add": 4,
+     "feed_years_before_read": 2
+    },
+    "2012": {
+     "rows": 189,
+     "observed": 180,
+     "on_40man": 21,
+     "nov_add": 16,
+     "feed_years_before_read": 3
+    },
+    "2013": {
+     "rows": 268,
+     "observed": 251,
+     "on_40man": 45,
+     "nov_add": 27,
+     "feed_years_before_read": 4
+    },
+    "2014": {
+     "rows": 260,
+     "observed": 242,
+     "on_40man": 48,
+     "nov_add": 35,
+     "feed_years_before_read": 5
+    },
+    "2015": {
+     "rows": 397,
+     "observed": 368,
+     "on_40man": 57,
+     "nov_add": 38,
+     "feed_years_before_read": 6
+    },
+    "2016": {
+     "rows": 405,
+     "observed": 368,
+     "on_40man": 52,
+     "nov_add": 29,
+     "feed_years_before_read": 7
+    },
+    "2017": {
+     "rows": 472,
+     "observed": 418,
+     "on_40man": 91,
+     "nov_add": 45,
+     "feed_years_before_read": 8
+    },
+    "2018": {
+     "rows": 449,
+     "observed": 393,
+     "on_40man": 84,
+     "nov_add": 35,
+     "feed_years_before_read": 9
+    },
+    "2019": {
+     "rows": 542,
+     "observed": 468,
+     "on_40man": 63,
+     "nov_add": 29,
+     "feed_years_before_read": 10
+    }
+   },
+   "bmi": {
+    "2011": {
+     "rows": 69,
+     "observed": 0
+    },
+    "2012": {
+     "rows": 189,
+     "observed": 0
+    },
+    "2013": {
+     "rows": 268,
+     "observed": 0
+    },
+    "2014": {
+     "rows": 260,
+     "observed": 0
+    },
+    "2015": {
+     "rows": 397,
+     "observed": 0
+    },
+    "2016": {
+     "rows": 405,
+     "observed": 0
+    },
+    "2017": {
+     "rows": 472,
+     "observed": 324
+    },
+    "2018": {
+     "rows": 449,
+     "observed": 373
+    },
+    "2019": {
+     "rows": 542,
+     "observed": 516
+    }
+   },
+   "pl_rev": {
+    "2011": {
+     "pipeline_anchored": 69,
+     "observed": 0
+    },
+    "2012": {
+     "pipeline_anchored": 189,
+     "observed": 0
+    },
+    "2013": {
+     "pipeline_anchored": 268,
+     "observed": 0
+    },
+    "2014": {
+     "pipeline_anchored": 260,
+     "observed": 0
+    },
+    "2015": {
+     "pipeline_anchored": 397,
+     "observed": 0
+    },
+    "2016": {
+     "pipeline_anchored": 405,
+     "observed": 0
+    },
+    "2017": {
+     "pipeline_anchored": 444,
+     "observed": 0
+    },
+    "2018": {
+     "pipeline_anchored": 421,
+     "observed": 0
+    },
+    "2019": {
+     "pipeline_anchored": 445,
+     "observed": 0
+    }
+   }
+  },
+  "pit": {
+   "protection": {
+    "2011": {
+     "rows": 58,
+     "observed": 55,
+     "on_40man": 6,
+     "nov_add": 5,
+     "feed_years_before_read": 2
+    },
+    "2012": {
+     "rows": 170,
+     "observed": 163,
+     "on_40man": 21,
+     "nov_add": 16,
+     "feed_years_before_read": 3
+    },
+    "2013": {
+     "rows": 246,
+     "observed": 229,
+     "on_40man": 53,
+     "nov_add": 40,
+     "feed_years_before_read": 4
+    },
+    "2014": {
+     "rows": 245,
+     "observed": 227,
+     "on_40man": 33,
+     "nov_add": 18,
+     "feed_years_before_read": 5
+    },
+    "2015": {
+     "rows": 388,
+     "observed": 358,
+     "on_40man": 63,
+     "nov_add": 45,
+     "feed_years_before_read": 6
+    },
+    "2016": {
+     "rows": 405,
+     "observed": 371,
+     "on_40man": 91,
+     "nov_add": 61,
+     "feed_years_before_read": 7
+    },
+    "2017": {
+     "rows": 469,
+     "observed": 424,
+     "on_40man": 129,
+     "nov_add": 48,
+     "feed_years_before_read": 8
+    },
+    "2018": {
+     "rows": 440,
+     "observed": 398,
+     "on_40man": 110,
+     "nov_add": 56,
+     "feed_years_before_read": 9
+    },
+    "2019": {
+     "rows": 490,
+     "observed": 439,
+     "on_40man": 99,
+     "nov_add": 48,
+     "feed_years_before_read": 10
+    }
+   },
+   "bmi": {
+    "2011": {
+     "rows": 58,
+     "observed": 0
+    },
+    "2012": {
+     "rows": 170,
+     "observed": 0
+    },
+    "2013": {
+     "rows": 246,
+     "observed": 0
+    },
+    "2014": {
+     "rows": 245,
+     "observed": 0
+    },
+    "2015": {
+     "rows": 388,
+     "observed": 0
+    },
+    "2016": {
+     "rows": 405,
+     "observed": 0
+    },
+    "2017": {
+     "rows": 469,
+     "observed": 291
+    },
+    "2018": {
+     "rows": 440,
+     "observed": 363
+    },
+    "2019": {
+     "rows": 490,
+     "observed": 466
+    }
+   },
+   "pl_rev": {
+    "2011": {
+     "pipeline_anchored": 58,
+     "observed": 0
+    },
+    "2012": {
+     "pipeline_anchored": 170,
+     "observed": 0
+    },
+    "2013": {
+     "pipeline_anchored": 246,
+     "observed": 0
+    },
+    "2014": {
+     "pipeline_anchored": 245,
+     "observed": 0
+    },
+    "2015": {
+     "pipeline_anchored": 388,
+     "observed": 0
+    },
+    "2016": {
+     "pipeline_anchored": 405,
+     "observed": 0
+    },
+    "2017": {
+     "pipeline_anchored": 450,
+     "observed": 0
+    },
+    "2018": {
+     "pipeline_anchored": 400,
+     "observed": 0
+    },
+    "2019": {
+     "pipeline_anchored": 414,
+     "observed": 0
+    }
+   }
+  },
+  "protection_feed": {
+   "months_on_disk": 132,
+   "first_month": "2008-01",
+   "complete_from_year": 2009,
+   "join": "outcome-blind id (efv_identity via efv_vintage_frame); never the record id",
+   "known_gap": "a pre-2012 draftee signed to a major league contract is on the 40-man from signing, but the league feed's signing line does not say so, so he reads off the 40-man until his first option or recall"
+  },
+  "pl_rev_source": {
+   "first_anchor": "2021-10-15",
+   "first_list_vintage": 2022,
+   "in_repo": false,
+   "note": "the forward-chained PG2 Pipeline prediction exists for anchors 2021 to 2025 only (provisional lane PG2/PG3, not committed), so no development or R-LV row can carry it; the admission rule refuses it for want of vintages that give a t"
+  }
+ },
+ "arms": {
+  "V2-LV:hit.skill.obp_rel": {
+   "tag": "V2-LV:hit.skill.obp_rel",
+   "side": "hit",
+   "head": "skill",
+   "driver": "obp_rel",
+   "target": "u_y",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "has_block",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2015": 1,
+    "2016": 1,
+    "2017": 1,
+    "2018": -1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2015": 2.3328,
+    "2016": 2.4081,
+    "2017": 1.4299,
+    "2018": -0.3657,
+    "2019": 0.7339
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 1.4541,
+   "n_valid_vintages": 5,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": true,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1
+     },
+     "mean_abs_t": 1.5063,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2018": {
+     "admitted": true,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1
+     },
+     "mean_abs_t": 1.3382,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2019": {
+     "admitted": true,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1,
+      "2018": 1
+     },
+     "mean_abs_t": 1.463,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    }
+   },
+   "n_folds_admitted": 3
+  },
+  "V2-LV:hit.skill.contact": {
+   "tag": "V2-LV:hit.skill.contact",
+   "side": "hit",
+   "head": "skill",
+   "driver": "contact",
+   "target": "u_y",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "has_block",
+   "verdict": "ADMITTED",
+   "per_vintage_signs": {
+    "2015": 1,
+    "2016": 1,
+    "2017": 1,
+    "2018": 1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2015": 0.8079,
+    "2016": 2.9285,
+    "2017": 0.1218,
+    "2018": 0.9294,
+    "2019": 1.2134
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 1.2002,
+   "n_valid_vintages": 5,
+   "admitted": true,
+   "reason": "sign held in every training vintage and mean |t| cleared",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": false,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": 1
+     },
+     "mean_abs_t": 1.5469,
+     "reason": "sign flipped between training vintages"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": -1
+     },
+     "mean_abs_t": 1.0813,
+     "reason": "sign flipped between training vintages"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": -1,
+      "2018": 1
+     },
+     "mean_abs_t": 1.0751,
+     "reason": "sign flipped between training vintages"
+    }
+   },
+   "n_folds_admitted": 0
+  },
+  "V2-LV:hit.skill.tool_hit": {
+   "tag": "V2-LV:hit.skill.tool_hit",
+   "side": "hit",
+   "head": "skill",
+   "driver": "tool_hit",
+   "target": "u_y",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "has_block",
+   "verdict": "ADMITTED",
+   "per_vintage_signs": {
+    "2015": 1,
+    "2016": 1,
+    "2017": 1,
+    "2018": 1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2015": 3.0768,
+    "2016": 3.9929,
+    "2017": 1.8571,
+    "2018": 2.6277,
+    "2019": 1.8329
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 2.6775,
+   "n_valid_vintages": 5,
+   "admitted": true,
+   "reason": "sign held in every training vintage and mean |t| cleared",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": true,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1
+     },
+     "mean_abs_t": 3.6974,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2018": {
+     "admitted": true,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1
+     },
+     "mean_abs_t": 2.3531,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2019": {
+     "admitted": true,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1,
+      "2018": 1
+     },
+     "mean_abs_t": 2.9409,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    }
+   },
+   "n_folds_admitted": 3
+  },
+  "V2-LV:hit.skill.tool_speed": {
+   "tag": "V2-LV:hit.skill.tool_speed",
+   "side": "hit",
+   "head": "skill",
+   "driver": "tool_speed",
+   "target": "u_y",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "has_block",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2015": 1,
+    "2016": 1,
+    "2017": 1,
+    "2018": 1,
+    "2019": -1
+   },
+   "t_by_vintage": {
+    "2015": 1.1015,
+    "2016": 1.7249,
+    "2017": 0.4243,
+    "2018": 0.7673,
+    "2019": -0.1043
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 0.8245,
+   "n_valid_vintages": 5,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": true,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1
+     },
+     "mean_abs_t": 1.866,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1
+     },
+     "mean_abs_t": 0.9897,
+     "reason": "mean |t| 0.990 below 1.0"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1,
+      "2018": 1
+     },
+     "mean_abs_t": 0.8573,
+     "reason": "mean |t| 0.857 below 1.0"
+    }
+   },
+   "n_folds_admitted": 1
+  },
+  "V2-LV:hit.skill.is_college": {
+   "tag": "V2-LV:hit.skill.is_college",
+   "side": "hit",
+   "head": "skill",
+   "driver": "is_college",
+   "target": "u_y",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "has_block",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2015": -1,
+    "2016": 1,
+    "2017": 1,
+    "2018": 1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2015": -0.1034,
+    "2016": 1.3733,
+    "2017": 2.6649,
+    "2018": 0.6843,
+    "2019": 1.2879
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 1.2228,
+   "n_valid_vintages": 5,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "per_vintage_signs": {},
+     "mean_abs_t": null,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2018": {
+     "admitted": true,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1
+     },
+     "mean_abs_t": 1.3754,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": 1,
+      "2017": 1,
+      "2018": 1
+     },
+     "mean_abs_t": 1.2008,
+     "reason": "sign flipped between training vintages"
+    }
+   },
+   "n_folds_admitted": 1
+  },
+  "V2-LV:hit.skill.level_rank": {
+   "tag": "V2-LV:hit.skill.level_rank",
+   "side": "hit",
+   "head": "skill",
+   "driver": "level_rank",
+   "target": "u_y",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "has_block",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2015": 1,
+    "2016": -1,
+    "2017": -1,
+    "2018": 1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2015": 0.7845,
+    "2016": -0.3491,
+    "2017": -0.221,
+    "2018": 0.7659,
+    "2019": 0.03
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 0.4301,
+   "n_valid_vintages": 5,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": false,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": -1
+     },
+     "mean_abs_t": 0.4913,
+     "reason": "sign flipped between training vintages"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1
+     },
+     "mean_abs_t": 0.3267,
+     "reason": "mean |t| 0.327 below 1.0"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": -1,
+      "2017": 1,
+      "2018": 1
+     },
+     "mean_abs_t": 0.4158,
+     "reason": "sign flipped between training vintages"
+    }
+   },
+   "n_folds_admitted": 0
+  },
+  "V2-LV:hit.skill.pl_rev": {
+   "tag": "V2-LV:hit.skill.pl_rev",
+   "side": "hit",
+   "head": "skill",
+   "driver": "pl_rev",
+   "target": "u_y",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "PV-12",
+   "rows": "has_block",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {},
+   "t_by_vintage": {},
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019
+   ],
+   "mean_abs_t": null,
+   "n_valid_vintages": 0,
+   "admitted": false,
+   "reason": "fewer than 2 vintages give a t",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "per_vintage_signs": {},
+     "mean_abs_t": null,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "per_vintage_signs": {},
+     "mean_abs_t": null,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "per_vintage_signs": {},
+     "mean_abs_t": null,
+     "reason": "fewer than 2 vintages give a t"
+    }
+   },
+   "n_folds_admitted": 0
+  },
+  "V2-LV:hit.timing.age_rel_level": {
+   "tag": "V2-LV:hit.timing.age_rel_level",
+   "side": "hit",
+   "head": "timing",
+   "driver": "age_rel_level",
+   "target": "reached",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "all (unobserved at the observed train means)",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2015": -1,
+    "2016": -1,
+    "2017": -1,
+    "2018": 1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2015": -1.411,
+    "2016": -0.8534,
+    "2017": -0.3782,
+    "2018": 0.1155,
+    "2019": 2.1922
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 0.9901,
+   "n_valid_vintages": 5,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": false,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": -1
+     },
+     "mean_abs_t": 0.6747,
+     "reason": "sign flipped between training vintages"
+    },
+    "2018": {
+     "admitted": true,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": -1,
+      "2017": -1
+     },
+     "mean_abs_t": 1.1363,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2019": {
+     "admitted": true,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": -1,
+      "2017": -1,
+      "2018": -1
+     },
+     "mean_abs_t": 2.0605,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    }
+   },
+   "n_folds_admitted": 2
+  },
+  "V2-LV:hit.timing.level_rank": {
+   "tag": "V2-LV:hit.timing.level_rank",
+   "side": "hit",
+   "head": "timing",
+   "driver": "level_rank",
+   "target": "reached",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "all (unobserved at the observed train means)",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2015": 1,
+    "2016": 1,
+    "2017": -1,
+    "2018": 1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2015": 4.232,
+    "2016": 1.7573,
+    "2017": -2.1424,
+    "2018": 2.948,
+    "2019": 7.7791
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 3.7718,
+   "n_valid_vintages": 5,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": true,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1
+     },
+     "mean_abs_t": 5.1057,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": -1
+     },
+     "mean_abs_t": 2.7702,
+     "reason": "sign flipped between training vintages"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": -1,
+      "2018": 1
+     },
+     "mean_abs_t": 2.0111,
+     "reason": "sign flipped between training vintages"
+    }
+   },
+   "n_folds_admitted": 1
+  },
+  "V2-LV:hit.timing.milb_absent": {
+   "tag": "V2-LV:hit.timing.milb_absent",
+   "side": "hit",
+   "head": "timing",
+   "driver": "milb_absent",
+   "target": "reached",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "all (unobserved at the observed train means)",
+   "verdict": "ADMITTED",
+   "per_vintage_signs": {
+    "2015": -1,
+    "2016": -1,
+    "2017": -1,
+    "2018": -1,
+    "2019": -1
+   },
+   "t_by_vintage": {
+    "2015": -2.2318,
+    "2016": -0.957,
+    "2017": -0.8832,
+    "2018": -0.9018,
+    "2019": -3.6347
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 1.7217,
+   "n_valid_vintages": 5,
+   "admitted": true,
+   "reason": "sign held in every training vintage and mean |t| cleared",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": false,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": -1
+     },
+     "mean_abs_t": 0.9224,
+     "reason": "mean |t| 0.922 below 1.0"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": -1,
+      "2017": 1
+     },
+     "mean_abs_t": 1.2006,
+     "reason": "sign flipped between training vintages"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": 1,
+      "2017": -1,
+      "2018": -1
+     },
+     "mean_abs_t": 0.8989,
+     "reason": "sign flipped between training vintages"
+    }
+   },
+   "n_folds_admitted": 0
+  },
+  "V2-LV:hit.timing.on_40man": {
+   "tag": "V2-LV:hit.timing.on_40man",
+   "side": "hit",
+   "head": "timing",
+   "driver": "on_40man",
+   "target": "reached",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-09",
+   "rows": "all (unobserved at the observed train means)",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2011": 1,
+    "2012": 1,
+    "2013": 1,
+    "2014": 1,
+    "2015": 1,
+    "2016": 1,
+    "2017": -1,
+    "2018": 1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2011": 2.5463,
+    "2012": 1.1459,
+    "2013": 2.9514,
+    "2014": 4.4099,
+    "2015": 3.4481,
+    "2016": 0.9348,
+    "2017": -3.0156,
+    "2018": 0.4817,
+    "2019": 1.9145
+   },
+   "vintages_without_t": [],
+   "mean_abs_t": 2.3164,
+   "n_valid_vintages": 9,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": true,
+     "n_valid_vintages": 6,
+     "per_vintage_signs": {
+      "2011": 1,
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1
+     },
+     "mean_abs_t": 2.7427,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 7,
+     "per_vintage_signs": {
+      "2011": 1,
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1,
+      "2017": -1
+     },
+     "mean_abs_t": 2.3192,
+     "reason": "sign flipped between training vintages"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 8,
+     "per_vintage_signs": {
+      "2011": 1,
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1,
+      "2017": -1,
+      "2018": 1
+     },
+     "mean_abs_t": 2.2118,
+     "reason": "sign flipped between training vintages"
+    }
+   },
+   "n_folds_admitted": 1
+  },
+  "V2-LV:hit.timing.nov_add": {
+   "tag": "V2-LV:hit.timing.nov_add",
+   "side": "hit",
+   "head": "timing",
+   "driver": "nov_add",
+   "target": "reached",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-09",
+   "rows": "all (unobserved at the observed train means)",
+   "verdict": "ADMITTED",
+   "per_vintage_signs": {
+    "2011": 1,
+    "2012": 1,
+    "2013": 1,
+    "2014": 1,
+    "2015": 1,
+    "2016": 1,
+    "2017": 1,
+    "2018": 1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2011": 1.7985,
+    "2012": 0.6868,
+    "2013": 2.1632,
+    "2014": 4.1736,
+    "2015": 3.4729,
+    "2016": 1.4467,
+    "2017": 0.9781,
+    "2018": 3.8649,
+    "2019": 2.8991
+   },
+   "vintages_without_t": [],
+   "mean_abs_t": 2.3871,
+   "n_valid_vintages": 9,
+   "admitted": true,
+   "reason": "sign held in every training vintage and mean |t| cleared",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": true,
+     "n_valid_vintages": 6,
+     "per_vintage_signs": {
+      "2011": 1,
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1
+     },
+     "mean_abs_t": 2.3489,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2018": {
+     "admitted": true,
+     "n_valid_vintages": 7,
+     "per_vintage_signs": {
+      "2011": 1,
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1,
+      "2017": 1
+     },
+     "mean_abs_t": 2.1558,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2019": {
+     "admitted": true,
+     "n_valid_vintages": 8,
+     "per_vintage_signs": {
+      "2011": 1,
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1,
+      "2017": 1,
+      "2018": 1
+     },
+     "mean_abs_t": 2.4406,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    }
+   },
+   "n_folds_admitted": 3
+  },
+  "V2-LV:pit.skill.k_rel": {
+   "tag": "V2-LV:pit.skill.k_rel",
+   "side": "pit",
+   "head": "skill",
+   "driver": "k_rel",
+   "target": "u_y",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-10",
+   "rows": "has_block",
+   "verdict": "ADMITTED",
+   "per_vintage_signs": {
+    "2015": 1,
+    "2016": 1,
+    "2017": 1,
+    "2018": 1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2015": 1.8932,
+    "2016": 2.2695,
+    "2017": 0.4549,
+    "2018": 1.0678,
+    "2019": 1.3908
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 1.4152,
+   "n_valid_vintages": 5,
+   "admitted": true,
+   "reason": "sign held in every training vintage and mean |t| cleared",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": true,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1
+     },
+     "mean_abs_t": 2.63,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2018": {
+     "admitted": true,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1
+     },
+     "mean_abs_t": 2.1494,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2019": {
+     "admitted": true,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1,
+      "2018": 1
+     },
+     "mean_abs_t": 1.4114,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    }
+   },
+   "n_folds_admitted": 3
+  },
+  "V2-LV:pit.skill.bmi": {
+   "tag": "V2-LV:pit.skill.bmi",
+   "side": "pit",
+   "head": "skill",
+   "driver": "bmi",
+   "target": "u_y",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "BMI re-test",
+   "rows": "has_block",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2017": -1,
+    "2018": -1,
+    "2019": -1
+   },
+   "t_by_vintage": {
+    "2017": -0.0739,
+    "2018": -0.0154,
+    "2019": -0.4542
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016
+   ],
+   "mean_abs_t": 0.1812,
+   "n_valid_vintages": 3,
+   "admitted": false,
+   "reason": "mean |t| 0.181 below 1.0",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "per_vintage_signs": {},
+     "mean_abs_t": null,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 1,
+     "per_vintage_signs": {
+      "2017": 1
+     },
+     "mean_abs_t": 0.8572,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2017": 1,
+      "2018": -1
+     },
+     "mean_abs_t": 0.8358,
+     "reason": "sign flipped between training vintages"
+    }
+   },
+   "n_folds_admitted": 0
+  },
+  "V2-LV:pit.skill.pl_rev": {
+   "tag": "V2-LV:pit.skill.pl_rev",
+   "side": "pit",
+   "head": "skill",
+   "driver": "pl_rev",
+   "target": "u_y",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "PV-12",
+   "rows": "has_block",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {},
+   "t_by_vintage": {},
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019
+   ],
+   "mean_abs_t": null,
+   "n_valid_vintages": 0,
+   "admitted": false,
+   "reason": "fewer than 2 vintages give a t",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "per_vintage_signs": {},
+     "mean_abs_t": null,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "per_vintage_signs": {},
+     "mean_abs_t": null,
+     "reason": "fewer than 2 vintages give a t"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 0,
+     "per_vintage_signs": {},
+     "mean_abs_t": null,
+     "reason": "fewer than 2 vintages give a t"
+    }
+   },
+   "n_folds_admitted": 0
+  },
+  "V2-LV:pit.timing.age_rel_level": {
+   "tag": "V2-LV:pit.timing.age_rel_level",
+   "side": "pit",
+   "head": "timing",
+   "driver": "age_rel_level",
+   "target": "reached",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "all (unobserved at the observed train means)",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2015": -1,
+    "2016": -1,
+    "2017": -1,
+    "2018": 1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2015": -2.4706,
+    "2016": -1.073,
+    "2017": -0.3004,
+    "2018": 0.0902,
+    "2019": 1.3849
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 1.0638,
+   "n_valid_vintages": 5,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": true,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": -1
+     },
+     "mean_abs_t": 1.3015,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2018": {
+     "admitted": true,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": -1,
+      "2017": -1
+     },
+     "mean_abs_t": 1.6533,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2019": {
+     "admitted": true,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": -1,
+      "2017": -1,
+      "2018": -1
+     },
+     "mean_abs_t": 1.6631,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    }
+   },
+   "n_folds_admitted": 3
+  },
+  "V2-LV:pit.timing.level_rank": {
+   "tag": "V2-LV:pit.timing.level_rank",
+   "side": "pit",
+   "head": "timing",
+   "driver": "level_rank",
+   "target": "reached",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "all (unobserved at the observed train means)",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2015": 1,
+    "2016": -1,
+    "2017": -1,
+    "2018": -1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2015": 6.1988,
+    "2016": -0.4015,
+    "2017": -5.4592,
+    "2018": -1.7296,
+    "2019": 2.2798
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 3.2138,
+   "n_valid_vintages": 5,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": true,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1
+     },
+     "mean_abs_t": 6.2046,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": -1
+     },
+     "mean_abs_t": 3.1544,
+     "reason": "sign flipped between training vintages"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": -1,
+      "2017": -1,
+      "2018": -1
+     },
+     "mean_abs_t": 2.749,
+     "reason": "sign flipped between training vintages"
+    }
+   },
+   "n_folds_admitted": 1
+  },
+  "V2-LV:pit.timing.milb_absent": {
+   "tag": "V2-LV:pit.timing.milb_absent",
+   "side": "pit",
+   "head": "timing",
+   "driver": "milb_absent",
+   "target": "reached",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-06",
+   "rows": "all (unobserved at the observed train means)",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2015": -1,
+    "2016": 1,
+    "2017": 1,
+    "2018": -1,
+    "2019": -1
+   },
+   "t_by_vintage": {
+    "2015": -1.4045,
+    "2016": 0.5772,
+    "2017": 0.4725,
+    "2018": -2.0826,
+    "2019": -2.318
+   },
+   "vintages_without_t": [
+    2011,
+    2012,
+    2013,
+    2014
+   ],
+   "mean_abs_t": 1.371,
+   "n_valid_vintages": 5,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": false,
+     "n_valid_vintages": 2,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": 1
+     },
+     "mean_abs_t": 1.2288,
+     "reason": "sign flipped between training vintages"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 3,
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1
+     },
+     "mean_abs_t": 0.8111,
+     "reason": "mean |t| 0.811 below 1.0"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 4,
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": 1,
+      "2017": 1,
+      "2018": -1
+     },
+     "mean_abs_t": 0.6583,
+     "reason": "sign flipped between training vintages"
+    }
+   },
+   "n_folds_admitted": 0
+  },
+  "V2-LV:pit.timing.on_40man": {
+   "tag": "V2-LV:pit.timing.on_40man",
+   "side": "pit",
+   "head": "timing",
+   "driver": "on_40man",
+   "target": "reached",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-09",
+   "rows": "all (unobserved at the observed train means)",
+   "verdict": "REFUSED",
+   "per_vintage_signs": {
+    "2012": 1,
+    "2013": 1,
+    "2014": 1,
+    "2015": 1,
+    "2016": -1,
+    "2017": -1,
+    "2018": -1,
+    "2019": -1
+   },
+   "t_by_vintage": {
+    "2012": 2.7114,
+    "2013": 4.0947,
+    "2014": 2.6411,
+    "2015": 4.0851,
+    "2016": -0.2948,
+    "2017": -5.1299,
+    "2018": -3.0851,
+    "2019": -0.737
+   },
+   "vintages_without_t": [
+    2011
+   ],
+   "mean_abs_t": 2.8474,
+   "n_valid_vintages": 8,
+   "admitted": false,
+   "reason": "sign flipped between training vintages",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": true,
+     "n_valid_vintages": 5,
+     "per_vintage_signs": {
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1
+     },
+     "mean_abs_t": 2.9164,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2018": {
+     "admitted": false,
+     "n_valid_vintages": 6,
+     "per_vintage_signs": {
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1,
+      "2017": -1
+     },
+     "mean_abs_t": 2.3668,
+     "reason": "sign flipped between training vintages"
+    },
+    "2019": {
+     "admitted": false,
+     "n_valid_vintages": 7,
+     "per_vintage_signs": {
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": -1,
+      "2017": -1,
+      "2018": -1
+     },
+     "mean_abs_t": 2.558,
+     "reason": "sign flipped between training vintages"
+    }
+   },
+   "n_folds_admitted": 1
+  },
+  "V2-LV:pit.timing.nov_add": {
+   "tag": "V2-LV:pit.timing.nov_add",
+   "side": "pit",
+   "head": "timing",
+   "driver": "nov_add",
+   "target": "reached",
+   "frame": "lv_dev (list vintages 2011 to 2019, W3 / R3, outcome-blind ids)",
+   "item": "DS-09",
+   "rows": "all (unobserved at the observed train means)",
+   "verdict": "ADMITTED",
+   "per_vintage_signs": {
+    "2012": 1,
+    "2013": 1,
+    "2014": 1,
+    "2015": 1,
+    "2016": 1,
+    "2017": 1,
+    "2018": 1,
+    "2019": 1
+   },
+   "t_by_vintage": {
+    "2012": 2.2901,
+    "2013": 3.581,
+    "2014": 3.0146,
+    "2015": 3.5353,
+    "2016": 1.1807,
+    "2017": 0.0435,
+    "2018": 1.3471,
+    "2019": 2.1905
+   },
+   "vintages_without_t": [
+    2011
+   ],
+   "mean_abs_t": 2.1478,
+   "n_valid_vintages": 8,
+   "admitted": true,
+   "reason": "sign held in every training vintage and mean |t| cleared",
+   "verdict_scope": "all development vintages 2011 to 2019 together",
+   "by_fold": {
+    "2017": {
+     "admitted": true,
+     "n_valid_vintages": 5,
+     "per_vintage_signs": {
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1
+     },
+     "mean_abs_t": 2.9142,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2018": {
+     "admitted": true,
+     "n_valid_vintages": 6,
+     "per_vintage_signs": {
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1,
+      "2017": 1
+     },
+     "mean_abs_t": 2.587,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    },
+    "2019": {
+     "admitted": true,
+     "n_valid_vintages": 7,
+     "per_vintage_signs": {
+      "2012": 1,
+      "2013": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1,
+      "2017": 1,
+      "2018": 1
+     },
+     "mean_abs_t": 2.4202,
+     "reason": "sign held in every training vintage and mean |t| cleared"
+    }
+   },
+   "n_folds_admitted": 3
+  }
+ },
+ "n_arms": 20,
+ "admitted": [
+  "V2-LV:hit.skill.contact",
+  "V2-LV:hit.skill.tool_hit",
+  "V2-LV:hit.timing.milb_absent",
+  "V2-LV:hit.timing.nov_add",
+  "V2-LV:pit.skill.k_rel",
+  "V2-LV:pit.timing.nov_add"
+ ],
+ "refused": [
+  "V2-LV:hit.skill.is_college",
+  "V2-LV:hit.skill.level_rank",
+  "V2-LV:hit.skill.obp_rel",
+  "V2-LV:hit.skill.pl_rev",
+  "V2-LV:hit.skill.tool_speed",
+  "V2-LV:hit.timing.age_rel_level",
+  "V2-LV:hit.timing.level_rank",
+  "V2-LV:hit.timing.on_40man",
+  "V2-LV:pit.skill.bmi",
+  "V2-LV:pit.skill.pl_rev",
+  "V2-LV:pit.timing.age_rel_level",
+  "V2-LV:pit.timing.level_rank",
+  "V2-LV:pit.timing.milb_absent",
+  "V2-LV:pit.timing.on_40man"
+ ],
+ "folds": {
+  "lv": {
+   "hit": {
+    "2017": {
+     "n_train": 1038,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "skill": {
+      "keys": [
+       "obp_rel",
+       "tool_hit",
+       "tool_speed"
+      ],
+      "alpha": "1.0",
+      "n_train": 341,
+      "b_uc": 0.21243,
+      "beta": [
+       0.007603,
+       0.06523,
+       0.019742
+      ],
+      "refused": [
+       "contact",
+       "is_college",
+       "level_rank",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "level_rank",
+       "on_40man",
+       "nov_add"
+      ],
+      "alpha": "30.0",
+      "n_train": 1038,
+      "b_uc": 2.723702,
+      "beta": [
+       0.377936,
+       0.176114,
+       0.182806
+      ],
+      "refused": [
+       "age_rel_level",
+       "milb_absent"
+      ]
+     },
+     "w_skill": 0.599508,
+     "w_time": 0.012287,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    },
+    "2018": {
+     "n_train": 1474,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "skill": {
+      "keys": [
+       "obp_rel",
+       "tool_hit",
+       "is_college"
+      ],
+      "alpha": "10.0",
+      "n_train": 680,
+      "b_uc": 0.129758,
+      "beta": [
+       0.012121,
+       0.037293,
+       0.019575
+      ],
+      "refused": [
+       "contact",
+       "tool_speed",
+       "level_rank",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "age_rel_level",
+       "nov_add"
+      ],
+      "alpha": "30.0",
+      "n_train": 1474,
+      "b_uc": 2.720617,
+      "beta": [
+       -0.131122,
+       0.267037
+      ],
+      "refused": [
+       "level_rank",
+       "milb_absent",
+       "on_40man"
+      ]
+     },
+     "w_skill": 0.599508,
+     "w_time": 0.012287,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    },
+    "2019": {
+     "n_train": 1922,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "skill": {
+      "keys": [
+       "obp_rel",
+       "tool_hit"
+      ],
+      "alpha": "1.0",
+      "n_train": 1059,
+      "b_uc": 0.124596,
+      "beta": [
+       0.009703,
+       0.04276
+      ],
+      "refused": [
+       "contact",
+       "tool_speed",
+       "is_college",
+       "level_rank",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "age_rel_level",
+       "nov_add"
+      ],
+      "alpha": "30.0",
+      "n_train": 1922,
+      "b_uc": 2.511827,
+      "beta": [
+       -0.196939,
+       0.263939
+      ],
+      "refused": [
+       "level_rank",
+       "milb_absent",
+       "on_40man"
+      ]
+     },
+     "w_skill": 0.599508,
+     "w_time": 0.012287,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    }
+   },
+   "pit": {
+    "2017": {
+     "n_train": 965,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "skill": {
+      "keys": [
+       "k_rel"
+      ],
+      "alpha": "1.0",
+      "n_train": 324,
+      "b_uc": 0.315855,
+      "beta": [
+       0.050684
+      ],
+      "refused": [
+       "bmi",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "age_rel_level",
+       "level_rank",
+       "on_40man",
+       "nov_add"
+      ],
+      "alpha": "30.0",
+      "n_train": 965,
+      "b_uc": 2.22212,
+      "beta": [
+       -0.095326,
+       0.472598,
+       0.137399,
+       0.24103
+      ],
+      "refused": [
+       "milb_absent"
+      ]
+     },
+     "w_skill": 1.0,
+     "w_time": 0.107279,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    },
+    "2018": {
+     "n_train": 1468,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "skill": {
+      "keys": [
+       "k_rel"
+      ],
+      "alpha": "300.0",
+      "n_train": 712,
+      "b_uc": 0.20001,
+      "beta": [
+       0.021002
+      ],
+      "refused": [
+       "bmi",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "age_rel_level",
+       "nov_add"
+      ],
+      "alpha": "100.0",
+      "n_train": 1468,
+      "b_uc": 1.590626,
+      "beta": [
+       -0.109374,
+       0.219698
+      ],
+      "refused": [
+       "level_rank",
+       "milb_absent",
+       "on_40man"
+      ]
+     },
+     "w_skill": 1.0,
+     "w_time": 0.107279,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    },
+    "2019": {
+     "n_train": 1882,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "skill": {
+      "keys": [
+       "k_rel"
+      ],
+      "alpha": "1000.0",
+      "n_train": 1053,
+      "b_uc": 0.17983,
+      "beta": [
+       0.009978
+      ],
+      "refused": [
+       "bmi",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "age_rel_level",
+       "nov_add"
+      ],
+      "alpha": "100.0",
+      "n_train": 1882,
+      "b_uc": 1.808305,
+      "beta": [
+       -0.121096,
+       0.204513
+      ],
+      "refused": [
+       "level_rank",
+       "milb_absent",
+       "on_40man"
+      ]
+     },
+     "w_skill": 1.0,
+     "w_time": 0.107279,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    }
+   }
+  },
+  "vm": {
+   "hit": {
+    "2017": {
+     "n_train": 363,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "skill": null,
+     "timing": {
+      "keys": [],
+      "alpha": "off",
+      "n_train": 363,
+      "b_uc": 2.114007,
+      "beta": [],
+      "refused": [
+       "age_rel_level",
+       "level_rank"
+      ]
+     },
+     "w_skill": 0.0,
+     "w_time": 0.0,
+     "consensus_only": true,
+     "consensus_only_reason": "no usable head carries a positive registered weight"
+    },
+    "2018": {
+     "n_train": 473,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "skill": null,
+     "timing": {
+      "keys": [],
+      "alpha": "off",
+      "n_train": 473,
+      "b_uc": 2.740441,
+      "beta": [],
+      "refused": [
+       "age_rel_level",
+       "level_rank"
+      ]
+     },
+     "w_skill": 0.0,
+     "w_time": 0.0,
+     "consensus_only": true,
+     "consensus_only_reason": "no usable head carries a positive registered weight"
+    },
+    "2019": {
+     "n_train": 646,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "skill": null,
+     "timing": {
+      "keys": [],
+      "alpha": "off",
+      "n_train": 646,
+      "b_uc": 2.17985,
+      "beta": [],
+      "refused": [
+       "age_rel_level",
+       "level_rank"
+      ]
+     },
+     "w_skill": 0.0,
+     "w_time": 0.0,
+     "consensus_only": true,
+     "consensus_only_reason": "no usable head carries a positive registered weight"
+    },
+    "2020": {
+     "n_train": 841,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019
+     ],
+     "skill": {
+      "keys": [
+       "obp_rel",
+       "contact",
+       "tool_hit",
+       "tool_speed",
+       "is_college"
+      ],
+      "alpha": "100.0",
+      "n_train": 274,
+      "b_uc": 0.327702,
+      "beta": [
+       0.016913,
+       0.008101,
+       0.036228,
+       0.025082,
+       0.029861
+      ],
+      "refused": [
+       "level_rank",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "age_rel_level",
+       "level_rank"
+      ],
+      "alpha": "10.0",
+      "n_train": 841,
+      "b_uc": 1.900343,
+      "beta": [
+       0.010189,
+       1.259974
+      ],
+      "refused": []
+     },
+     "w_skill": 0.599508,
+     "w_time": 0.012287,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    },
+    "2021": {
+     "n_train": 1009,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "skill": {
+      "keys": [
+       "obp_rel",
+       "contact",
+       "tool_hit"
+      ],
+      "alpha": "30.0",
+      "n_train": 388,
+      "b_uc": 0.29291,
+      "beta": [
+       0.015904,
+       -0.008149,
+       0.063294
+      ],
+      "refused": [
+       "tool_speed",
+       "is_college",
+       "level_rank",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "age_rel_level",
+       "level_rank"
+      ],
+      "alpha": "10.0",
+      "n_train": 1009,
+      "b_uc": 2.367888,
+      "beta": [
+       -0.0677,
+       1.324336
+      ],
+      "refused": []
+     },
+     "w_skill": 0.599508,
+     "w_time": 0.012287,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    },
+    "2022": {
+     "n_train": 1136,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+     ],
+     "skill": {
+      "keys": [
+       "contact",
+       "tool_hit"
+      ],
+      "alpha": "1.0",
+      "n_train": 491,
+      "b_uc": 0.235218,
+      "beta": [
+       -0.016271,
+       0.076069
+      ],
+      "refused": [
+       "obp_rel",
+       "tool_speed",
+       "is_college",
+       "level_rank",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "level_rank"
+      ],
+      "alpha": "3.0",
+      "n_train": 1136,
+      "b_uc": 2.358994,
+      "beta": [
+       1.564866
+      ],
+      "refused": [
+       "age_rel_level"
+      ]
+     },
+     "w_skill": 0.599508,
+     "w_time": 0.012287,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    },
+    "2023": {
+     "n_train": 1386,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+     ],
+     "skill": {
+      "keys": [
+       "tool_hit"
+      ],
+      "alpha": "1.0",
+      "n_train": 691,
+      "b_uc": 0.256728,
+      "beta": [
+       0.057955
+      ],
+      "refused": [
+       "obp_rel",
+       "contact",
+       "tool_speed",
+       "is_college",
+       "level_rank",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "level_rank"
+      ],
+      "alpha": "3.0",
+      "n_train": 1386,
+      "b_uc": 2.767772,
+      "beta": [
+       1.928847
+      ],
+      "refused": [
+       "age_rel_level"
+      ]
+     },
+     "w_skill": 0.599508,
+     "w_time": 0.012287,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    },
+    "2024": {
+     "n_train": 1630,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "skill": {
+      "keys": [
+       "tool_hit"
+      ],
+      "alpha": "1.0",
+      "n_train": 892,
+      "b_uc": 0.248428,
+      "beta": [
+       0.049045
+      ],
+      "refused": [
+       "obp_rel",
+       "contact",
+       "tool_speed",
+       "is_college",
+       "level_rank",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "level_rank"
+      ],
+      "alpha": "3.0",
+      "n_train": 1630,
+      "b_uc": 3.021639,
+      "beta": [
+       2.029966
+      ],
+      "refused": [
+       "age_rel_level"
+      ]
+     },
+     "w_skill": 0.599508,
+     "w_time": 0.012287,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    }
+   },
+   "pit": {
+    "2017": {
+     "n_train": 398,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "skill": null,
+     "timing": null,
+     "w_skill": 0.0,
+     "w_time": 0.0,
+     "consensus_only": true,
+     "consensus_only_reason": "owner DS-Q2: no pitcher skill driver passed the admission rule in this fold, so pitchers take the consensus order"
+    },
+    "2018": {
+     "n_train": 486,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "skill": null,
+     "timing": null,
+     "w_skill": 0.0,
+     "w_time": 0.0,
+     "consensus_only": true,
+     "consensus_only_reason": "owner DS-Q2: no pitcher skill driver passed the admission rule in this fold, so pitchers take the consensus order"
+    },
+    "2019": {
+     "n_train": 696,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "skill": null,
+     "timing": null,
+     "w_skill": 0.0,
+     "w_time": 0.0,
+     "consensus_only": true,
+     "consensus_only_reason": "owner DS-Q2: no pitcher skill driver passed the admission rule in this fold, so pitchers take the consensus order"
+    },
+    "2020": {
+     "n_train": 891,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019
+     ],
+     "skill": null,
+     "timing": null,
+     "w_skill": 0.0,
+     "w_time": 0.0,
+     "consensus_only": true,
+     "consensus_only_reason": "owner DS-Q2: no pitcher skill driver passed the admission rule in this fold, so pitchers take the consensus order"
+    },
+    "2021": {
+     "n_train": 1094,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "skill": {
+      "keys": [
+       "k_rel"
+      ],
+      "alpha": "300.0",
+      "n_train": 310,
+      "b_uc": 0.436699,
+      "beta": [
+       0.025405
+      ],
+      "refused": [
+       "bmi",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "level_rank"
+      ],
+      "alpha": "1.0",
+      "n_train": 1094,
+      "b_uc": 2.021901,
+      "beta": [
+       0.478638
+      ],
+      "refused": [
+       "age_rel_level"
+      ]
+     },
+     "w_skill": 1.0,
+     "w_time": 0.107279,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    },
+    "2022": {
+     "n_train": 1246,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+     ],
+     "skill": {
+      "keys": [
+       "k_rel"
+      ],
+      "alpha": "300.0",
+      "n_train": 427,
+      "b_uc": 0.363756,
+      "beta": [
+       0.024533
+      ],
+      "refused": [
+       "bmi",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "level_rank"
+      ],
+      "alpha": "10.0",
+      "n_train": 1246,
+      "b_uc": 2.216539,
+      "beta": [
+       0.360037
+      ],
+      "refused": [
+       "age_rel_level"
+      ]
+     },
+     "w_skill": 1.0,
+     "w_time": 0.107279,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    },
+    "2023": {
+     "n_train": 1466,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+     ],
+     "skill": {
+      "keys": [
+       "k_rel"
+      ],
+      "alpha": "300.0",
+      "n_train": 578,
+      "b_uc": 0.334414,
+      "beta": [
+       0.024421
+      ],
+      "refused": [
+       "bmi",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "level_rank"
+      ],
+      "alpha": "1.0",
+      "n_train": 1466,
+      "b_uc": 2.454063,
+      "beta": [
+       0.536838
+      ],
+      "refused": [
+       "age_rel_level"
+      ]
+     },
+     "w_skill": 1.0,
+     "w_time": 0.107279,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    },
+    "2024": {
+     "n_train": 1713,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "skill": {
+      "keys": [
+       "k_rel"
+      ],
+      "alpha": "300.0",
+      "n_train": 779,
+      "b_uc": 0.338114,
+      "beta": [
+       0.025914
+      ],
+      "refused": [
+       "bmi",
+       "pl_rev"
+      ]
+     },
+     "timing": {
+      "keys": [
+       "level_rank"
+      ],
+      "alpha": "1.0",
+      "n_train": 1713,
+      "b_uc": 2.607494,
+      "beta": [
+       0.658528
+      ],
+      "refused": [
+       "age_rel_level"
+      ]
+     },
+     "w_skill": 1.0,
+     "w_time": 0.107279,
+     "consensus_only": false,
+     "consensus_only_reason": null
+    }
+   }
+  }
+ },
+ "probes": {
+  "DS-08:hit.combiner_rule": {
+   "tag": "DS-08:hit.combiner_rule",
+   "verdict": "OK",
+   "reads": {
+    "matrix": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016
+    ],
+    "lv": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016
+    ]
+   },
+   "n_pooled": 1330
+  },
+  "DS-08:pit.combiner_rule": {
+   "tag": "DS-08:pit.combiner_rule",
+   "verdict": "OK",
+   "reads": {
+    "matrix": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016
+    ],
+    "lv": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016
+    ]
+   },
+   "n_pooled": 1038
+  }
+ },
+ "n_probes": 2,
+ "not_in_efv_progress": "no V2 score is read here; the first V2 row in data/efv_progress.json is DS-16's development read"
+}

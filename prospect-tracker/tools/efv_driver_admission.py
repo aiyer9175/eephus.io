@@ -25,7 +25,11 @@ labelled training cohorts the V2 heads fit on today. Skill drivers are read on h
 rows only (DS-04). Timing drivers are read on REACHED over every row, no-block rows at
 the has-block means; the block-absence flag is not a candidate here, because matrix ids
 are not outcome-blind (DS-03). The pitcher K-rate candidate is read on the same matrices
-for the record; DS-10 re-runs it on list vintages inside each fold.
+for the record; DS-10 re-runs it on list vintages inside each fold
+(tools/efv_v2_assemble.py). The pitcher BMI re-test (as of each row's own read, dated
+FanGraphs board archives) is read here too. The PV-12 Pipeline-revision slot has no
+matrix row (its first anchor is 2021-10-15 and the matrices carry no pre-grade
+prediction), so it is checked on the list-vintage frame only.
 
 Development only: it fits nothing that is served and scores no frame. It never reads a
 decision year at or after efv_vintage_frame.R_VM_FIRST_DEBUT_YEAR, and it groups nothing
@@ -55,7 +59,7 @@ def candidates() -> list[tuple[str, str, str, str, bool]]:
     """(side, head, key, target, has_block_only) for every V2 candidate driver."""
     out = []
     for side in F.SIDES:
-        skill = H.skill_keys(side) or H.V2_PIT_SKILL_CANDIDATES
+        skill = [k for k in H.skill_candidates(side) if k != H.V2_PL_REV_KEY]
         for k in skill:
             out.append((side, "skill", k, "u_y", True))
         for k in H.timing_keys(side):
@@ -64,9 +68,8 @@ def candidates() -> list[tuple[str, str, str, str, bool]]:
 
 
 def training(side: str) -> list[dict]:
-    rows = [r for r in H.training_rows(side)
+    return [r for r in H.matrix_training_rows(side)
             if int(r["decision_year"]) < F.R_VM_FIRST_DEBUT_YEAR]
-    return H.attach_v2(rows)
 
 
 def run() -> dict:

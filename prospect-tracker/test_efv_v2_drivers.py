@@ -279,7 +279,7 @@ def test_admission_artifact_carries_per_vintage_signs():
             assert not a["admitted"], tag
     # every V2 candidate is on the record
     want = {f"DS-06:{s}.skill.{k}" for s in F.SIDES
-            for k in (H.skill_keys(s) or H.V2_PIT_SKILL_CANDIDATES)}
+            for k in H.skill_candidates(s) if k != H.V2_PL_REV_KEY}
     want |= {f"DS-06:{s}.timing.{k}" for s in F.SIDES for k in H.timing_keys(s)}
     assert set(doc["arms"]) == want
 

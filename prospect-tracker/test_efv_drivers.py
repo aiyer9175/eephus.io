@@ -59,7 +59,7 @@ def _imports(tree):
 
 def test_imports_are_the_allowed_set():
     tree = ast.parse(SRC.read_text(encoding="utf-8"))
-    allowed = {"__future__", "math", "json", "sys", "numpy", "scipy",
+    allowed = {"__future__", "math", "json", "sys", "gzip", "pathlib", "numpy", "scipy",
                "efv_vintage_frame", "source_backtest", "storage"}
     got = _imports(tree)
     assert got <= allowed, got - allowed

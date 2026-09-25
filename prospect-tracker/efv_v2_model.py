@@ -670,6 +670,12 @@ V2_MILB_KEYS: tuple[str, ...] = ("obp_rel", "contact", "level_rank", "age_rel_le
 V2_ACQ_KEYS: tuple[str, ...] = ("is_college",)
 #: Keys that come off neither block (tools are already mean-imputed in efv_model._vec).
 V2_OTHER_KEYS: tuple[str, ...] = ("tool_hit", "tool_speed")
+#: Sidecar drivers read off the row's record as of its read, each None when not observed
+#: and imputed per fit at the mean of the TRAIN rows that observe it (no indicator ever
+#: enters a skill head): pitcher BMI from the dated FanGraphs board archives, the PV-12
+#: Pipeline-revision slot, and protection status from the league transaction feed on
+#: outcome-blind ids (DS-09).
+V2_OBSERVED_KEYS: tuple[str, ...] = ("bmi", "pl_rev", "on_40man", "nov_add")
 
 #: DS-05 SCRAP list (DRIVER_SYSTEM_V2.md s4.2), per side: key -> measured reason. None of
 #: these may appear in a V2 SKILL design matrix. Pitcher age_rel_level is scrapped as a
@@ -709,13 +715,16 @@ ADMIT_MIN_MEAN_ABS_T = 1.0      # mean |t| over those vintages
 V2_ALPHAS: tuple[float, ...] = (1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1000.0, math.inf)
 
 
-def v2_row(feats: dict) -> dict:
+def v2_row(feats: dict, extra: dict | None = None) -> dict:
     """The V2 view of one efv_model._vec feature dict. `has_block` is True for a row whose
     MiLB keys came off a real block; a no-block row carries None on every V2_MILB_KEYS
     entry (imputed later, per fit) and milb_absent 1.0. The contact term is the mean of
     the two strikeout rates, sign flipped so more contact reads higher. `acq_known` is
     True for a drafted row (a pick) or an international signing; otherwise every
-    V2_ACQ_KEYS entry is None and imputed per fit."""
+    V2_ACQ_KEYS entry is None and imputed per fit. `extra` carries the sidecar drivers
+    read off the row's own record as of its read (V2_OBSERVED_KEYS: BMI, protection
+    status, the Pipeline-revision slot); a key it lacks, or holds as None, is None here
+    and imputed per fit at the observed training mean."""
     has = bool(V1._has_milb_block(feats))
     acq = bool(float(feats.get("is_ifa") or 0.0) == 1.0
                or float(feats.get("pick_missing", 1.0)) == 0.0)
@@ -732,25 +741,34 @@ def v2_row(feats: dict) -> dict:
     for k in V2_OTHER_KEYS:
         v = feats.get(k)
         out[k] = float(v) if v is not None else 0.0
+    ex = extra or {}
+    for k in V2_OBSERVED_KEYS:
+        v = ex.get(k)
+        out[k] = (float(v) if isinstance(v, (int, float)) and not isinstance(v, bool)
+                  and math.isfinite(float(v)) else None)
     return out
 
 
 def attach_v2(rows: list[dict]) -> list[dict]:
-    """Each row (carrying `feats`) with its `v2` view attached, as new dicts."""
-    return [dict(r, v2=v2_row(r["feats"])) for r in rows]
+    """Each row (carrying `feats`, optionally `extra`) with its `v2` view attached, as
+    new dicts."""
+    return [dict(r, v2=v2_row(r["feats"], r.get("extra"))) for r in rows]
 
 
 def has_block_means(train: list[dict]) -> dict[str, float]:
-    """{key: mean} of every V2_MILB_KEYS entry over the TRAIN rows that have a block, and
-    of every V2_ACQ_KEYS entry over the TRAIN rows whose acquisition is known. Unweighted,
-    like efv_model._has_milb_impute_means. A key with no observed value falls back to
-    0.0."""
+    """{key: mean} of every V2_MILB_KEYS entry over the TRAIN rows that have a block, of
+    every V2_ACQ_KEYS entry over the TRAIN rows whose acquisition is known, and of every
+    V2_OBSERVED_KEYS entry over the TRAIN rows that observe it. Unweighted, like
+    efv_model._has_milb_impute_means. A key with no observed value falls back to 0.0."""
     out = {}
     for keys, flag in ((V2_MILB_KEYS, "has_block"), (V2_ACQ_KEYS, "acq_known")):
         for k in keys:
             vals = [r["v2"][k] for r in train
                     if r["v2"][flag] and r["v2"].get(k) is not None]
             out[k] = float(sum(vals) / len(vals)) if vals else 0.0
+    for k in V2_OBSERVED_KEYS:
+        vals = [r["v2"][k] for r in train if r["v2"].get(k) is not None]
+        out[k] = float(sum(vals) / len(vals)) if vals else 0.0
     return out
 
 
@@ -987,11 +1005,13 @@ def _timing_fit(train: list[dict], keys, alpha: float) -> dict | None:
 
 
 def _select_alpha(train: list[dict], keys, head: str,
-                  alphas: tuple[float, ...] = V2_ALPHAS) -> float:
+                  alphas: tuple[float, ...] = V2_ALPHAS,
+                  no_inner: float = math.inf) -> float:
     """Nested forward-chained penalty choice over training years only (the H0 rule):
     each inner year is scored by a fit on the years before it. Skill: weighted squared
     error of the residual target on the inner year's has-block rows. Timing: log loss of
-    REACHED. Ties go to the larger penalty; no inner year switches the head off."""
+    REACHED. Ties go to the larger penalty; no inner year returns `no_inner` (the head
+    off by default; only the DS-08 combiner rule passes a fixed finite penalty)."""
     loss = {a: 0.0 for a in alphas}
     used = 0
     for yr in inner_years(train):
@@ -1027,7 +1047,7 @@ def _select_alpha(train: list[dict], keys, head: str,
             ok = True
         used += ok
     if not used:
-        return math.inf
+        return no_inner
     best = None
     for a in sorted(alphas, reverse=True):
         if best is None or loss[a] < loss[best]:
@@ -1036,20 +1056,26 @@ def _select_alpha(train: list[dict], keys, head: str,
 
 
 def fit_skill_head(train: list[dict], side: str, *, admit: bool = True,
-                   alpha: float | None = None) -> dict | None:
+                   alpha: float | None = None, candidates=None,
+                   no_inner_alpha: float = math.inf) -> dict | None:
     """The skill head on one fold's training rows (each carrying `v2`): a ridge of the
     target percentile u_y on the consensus percentile u_c (free) and the admitted skill
     drivers (penalized), fit on has-block rows only. None when the
     side has no skill driver (pitchers by default), when no driver is admitted, or when
-    the rows cannot support a fit; the caller then orders by consensus alone."""
+    the rows cannot support a fit; the caller then orders by consensus alone.
+    `candidates` overrides the side's base list (skill_candidates() in the assembly);
+    the absence flag is refused in any list."""
     _check_years({int(r["decision_year"]) for r in train})
-    cands = skill_keys(side)
+    cands = skill_keys(side) if candidates is None else tuple(candidates)
+    if V2_ABSENCE_KEY in cands:
+        raise ValueError("the absence flag may not enter the skill head (DS-04)")
     if not cands:
         return None
     keys, checks = admitted_keys(train, cands) if admit else (cands, {})
     if not keys:
         return None
-    a = _select_alpha(train, keys, "skill") if alpha is None else alpha
+    a = (_select_alpha(train, keys, "skill", no_inner=no_inner_alpha)
+         if alpha is None else alpha)
     head = _skill_fit(train, keys, a)
     if head is None:
         return None
@@ -1061,17 +1087,23 @@ def fit_skill_head(train: list[dict], side: str, *, admit: bool = True,
 
 def fit_timing_head(train: list[dict], side: str, *, ids_outcome_blind: bool = False,
                     absence_admitted: bool = False, admit: bool = True,
-                    alpha: float | None = None) -> dict | None:
+                    alpha: float | None = None, candidates=None,
+                    no_inner_alpha: float = math.inf) -> dict | None:
     """The REACHED/timing head on one fold's training rows: a penalized logistic of
     REACHED on u_c (free) and the admitted timing drivers (penalized).
     No-block rows take the has-block means; the absence flag joins only per
-    timing_keys()."""
+    timing_keys(); `candidates` overrides the list (timing_candidates() in the
+    assembly), and an absence flag in it still needs outcome-blind admitted ids."""
     _check_years({int(r["decision_year"]) for r in train})
-    cands = timing_keys(side, ids_outcome_blind=ids_outcome_blind,
-                        absence_admitted=absence_admitted)
+    cands = (timing_keys(side, ids_outcome_blind=ids_outcome_blind,
+                         absence_admitted=absence_admitted)
+             if candidates is None else tuple(candidates))
+    if V2_ABSENCE_KEY in cands and not (ids_outcome_blind and absence_admitted):
+        raise ValueError("the absence flag needs outcome-blind admitted ids (DS-04)")
     keys, checks = (admitted_keys(train, cands, target="reached", has_block_only=False)
                     if admit else (cands, {}))
-    a = _select_alpha(train, keys, "timing") if alpha is None else alpha
+    a = (_select_alpha(train, keys, "timing", no_inner=no_inner_alpha)
+         if alpha is None else alpha)
     head = _timing_fit(train, keys, a)
     if head is None:
         return None
@@ -1103,3 +1135,512 @@ def z_time(head: dict | None, rows: list[dict]) -> np.ndarray:
     if head is None:
         return np.zeros(len(rows))
     return _lin(head, _v2_x(rows, head["keys"], head["means"])) / head["score_sd"]
+
+
+# ===========================================================================
+# DRIVER SYSTEM V2 assembly (DS-07, DS-08, DS-09 wiring, DS-10, the BMI re-test,
+# PV-12; docs/efv-v2/DRIVER_SYSTEM_V2.md s4.3)
+# ===========================================================================
+# TRAINING CODE ONLY, like the core above: nothing here is served and nothing here
+# scores V2 against consensus or any source. The development read is DS-16's
+# (tools/efv_v2_dev_read.py); the served grade moves only in DS_F_serve_v2.
+#
+# THE MODEL (s4.3), for one side s and one list year V (or debut year on F-VM):
+#
+#     u_c        within-(s, V) percentile of the consensus FV (the anchor, no fit)
+#     e_skill    the skill head's driver part in CONSENSUS-PERCENTILE EQUIVALENTS: the
+#                head's driver sum divided by its own (free) consensus slope, so +0.1
+#                means "the head values this as much as 0.1 of consensus percentile"
+#     e_time     the same for the REACHED/timing head (its logit driver sum over its
+#                own logit consensus slope)
+#     order_idx  u_c + w_skill * e_skill + w_time * e_time
+#     eFV grade  the consensus FV value of (s, V) at order_idx's within-group rank,
+#                ties averaged (DS-07, output_map)
+#     eFV WAR    a continuous linear consensus-FV-to-WAR map fitted on the fold's
+#                training rows, evaluated at the eFV grade (pricing only, never ranked)
+#
+# The spec writes order_idx = u_c + w_s * (z_skill + a * z_time) with "standardized"
+# head scores. Standardizing by each head's own consensus slope (not its SD) is what lets
+# ONE fixed weight mean the same thing on the list-vintage frame (consensus slope on the
+# W3 percentile about 0.2) and the debut-year frame (about 0.4); in the spec's notation
+# w_s = w_skill and a = w_time / w_skill.
+#
+# WEIGHTS (DS-08): w_skill and w_time per side are fixed by combiner_rule BEFORE any
+# development read and written to data/efv_v2_assembly.json by
+# tools/efv_v2_assemble.py. See combiner_rule for the rule and its three stated
+# adaptations (the literal rule's rows hold no MiLB block).
+#
+# PITCHERS (owner answer DS-Q2, binding over s4.3's "timing only by default"): pitcher
+# eFV is the consensus order in any fold where no pitcher SKILL driver passes the
+# admission rule. The pitcher skill candidates are the DS-10 list-vintage K rate
+# (k_rel off the as-of MiLB block), the pre-declared BMI re-test, and the PV-12 slot.
+#
+# GATE COMPLIANCE (docs/PROSPECT_ANCHOR_GATE.md): consensus enters as a within-group
+# percentile and as the value multiset the grade is drawn from; the WAR map is a
+# continuous line in the grade. Nothing groups, counts or averages rows by grade level.
+
+V2_ASSEMBLED_ID = "efv_v2_ds_assembled"
+#: The pre-declared pitcher skill re-test beside the DS-10 K rate (owner question
+#: 2026-09-25): BMI as of the read from the dated FanGraphs board archives.
+V2_PIT_SKILL_EXTRA: tuple[str, ...] = ("bmi",)
+#: PV-12: the Pipeline-revision candidate, both sides, Pipeline-anchored rows only.
+V2_PL_REV_KEY = "pl_rev"
+#: DS-09 protection status, timing head only, outcome-blind ids only.
+V2_PROTECTION_KEYS: tuple[str, ...] = ("on_40man", "nov_add")
+#: DS-08: the combiner rule reads decision years and list vintages up to this year.
+RULE_LAST_YEAR = 2016
+#: The penalty a combiner-rule head uses when its nested CV has no inner year (the
+#: middle of V2_ALPHAS' finite grid, fixed before any read).
+RULE_FALLBACK_ALPHA = 30.0
+#: The largest combiner weight: a weight is a share of the head's own estimate.
+W_MAX = 1.0
+#: The development window V2 may be scored on, disjoint from the rule's years.
+V2_FIRST_SCORED_YEAR = RULE_LAST_YEAR + 1
+#: The registration artifact (weights, rule receipt, per-fold admission, coverage).
+ASSEMBLY_PATH = DATA_DIR / "efv_v2_assembly.json"
+IDENTITY_BALANCE_PATH = DATA_DIR / "efv_identity_balance.json"
+
+
+def skill_candidates(side: str) -> tuple[str, ...]:
+    """Every skill-head candidate the admission rule checks, per side. Hitters: the
+    DS-05 list plus PV-12. Pitchers: the DS-10 K rate, the BMI re-test and PV-12."""
+    if side == "hit":
+        base = skill_keys("hit")
+    elif side == "pit":
+        base = tuple(V2_PIT_SKILL_CANDIDATES) + tuple(V2_PIT_SKILL_EXTRA)
+    else:
+        raise ValueError(f"side must be one of {F.SIDES}, got {side!r}")
+    out = tuple(base) + (V2_PL_REV_KEY,)
+    if V2_ABSENCE_KEY in out:
+        raise ValueError("the absence flag may not enter the skill head (DS-04)")
+    return out
+
+
+def timing_candidates(side: str, *, ids_outcome_blind: bool = False,
+                      absence_admitted: bool = False) -> tuple[str, ...]:
+    """The timing head's candidates: age for level and level, the absence flag on
+    outcome-blind admitted ids, and protection status on outcome-blind ids only (the
+    matrix ids are a debut proxy, bug B4, so protection never enters a matrix fit)."""
+    keys = timing_keys(side, ids_outcome_blind=ids_outcome_blind,
+                       absence_admitted=absence_admitted)
+    return keys + (V2_PROTECTION_KEYS if ids_outcome_blind else ())
+
+
+def absence_admitted(side: str, path: Path | None = None) -> bool:
+    """True when data/efv_identity_balance.json lists milb_absent as admissible to the
+    side's timing head (label-balanced on outcome-blind ids, DS-03)."""
+    p = IDENTITY_BALANCE_PATH if path is None else Path(path)
+    if not p.exists():
+        return False
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    return V2_ABSENCE_KEY in ((doc.get("timing_head_admissible") or {}).get(side) or [])
+
+
+# ---------------------------------------------------------------------------
+# rows: the list-vintage frame (outcome-blind ids) and the v1 matrices
+# ---------------------------------------------------------------------------
+
+def _extra_from_frame_row(r: dict) -> dict:
+    return {"bmi": r.get("bmi_at_read"), "pl_rev": r.get("pl_rev_at_read"),
+            "on_40man": r.get("on_40man_at_v"), "nov_add": r.get("nov_add_v_minus_1")}
+
+
+def lv_v2_rows(side: str, vintage: int, frame_rows: list[dict], *,
+               gate_sha: str | None = None) -> list[dict]:
+    """F-LV rows as V2 rows (no label): the V read's consensus as `fv`, the as-of MiLB
+    block on the outcome-blind id (lv_model_row), and the sidecars efv_drivers attached
+    (bmi_for_rows, protection_for_frame, pl_revision_for_rows). Rows without a
+    consensus are dropped. Reserved vintages raise without the gate sha."""
+    V = int(vintage)
+    F.guard_score_request(V, gate_sha=gate_sha, purpose="V2 rows")
+    out = []
+    for r in frame_rows:
+        if int(r["vintage"]) != V:
+            raise ValueError(f"row {r.get('player_key')} is at {r['vintage']}, not {V}")
+        c = (r.get("grades") or {}).get(SB.CONSENSUS_KEY)
+        if c is None:
+            continue
+        feats = V1._vec(lv_model_row(r), side)
+        extra = _extra_from_frame_row(r)
+        out.append({"player_key": r["player_key"], "decision_year": V, "fv": float(c),
+                    "feats": feats, "extra": extra, "v2": v2_row(feats, extra),
+                    "frame": "lv", "ids_outcome_blind": True})
+    return out
+
+
+def lv_training_rows(side: str, frames: dict[int, tuple[list[dict], list[dict]]], *,
+                     gate_sha: str | None = None) -> list[dict]:
+    """Labelled F-LV rows for V2 fits: {V: (frame rows, efv_labels rows)} in, one row
+    per (player, V) with target = W3 (the skill head's within-(s, V) percentile target),
+    reached = R3 (debut inside the V window, the timing head's target) and weight 1.
+    A row without a consensus, a W3 or an R3 is left out (a reserved_vm label is None
+    and so never enters). The labels are joined by the caller; this module imports no
+    label module."""
+    out = []
+    for V, (rows, labs) in sorted(frames.items()):
+        if len(rows) != len(labs):
+            raise ValueError(f"vintage {V}: {len(rows)} rows but {len(labs)} labels")
+        v2rows = {r["player_key"]: r for r in lv_v2_rows(side, V, rows,
+                                                         gate_sha=gate_sha)}
+        for r, lab in zip(rows, labs):
+            if lab.get("player_key") != r.get("player_key"):
+                raise ValueError(f"label for {lab.get('player_key')} on row "
+                                 f"{r.get('player_key')}")
+            m = v2rows.get(r["player_key"])
+            if m is None or lab.get("w3") is None or lab.get("r3") is None:
+                continue
+            out.append(dict(m, target=float(lab["w3"]), reached=float(lab["r3"]),
+                            weight=1.0))
+    _check_years({r["decision_year"] for r in out})
+    return out
+
+
+def matrix_training_rows(side: str, *, bio_panel: dict | None = None) -> list[dict]:
+    """The v1 matrix pool (training_rows) as V2 rows. The only sidecar is BMI as of the
+    row's own read date (the pitcher re-test); protection is left None because matrix
+    ids are not outcome-blind (B4), and PV-12 has no row before list vintage 2022."""
+    import efv_drivers as DRV
+    panel = DRV.load_bio_panel() if bio_panel is None else bio_panel
+    raw = json.loads(_matrix_path(side).read_text(encoding="utf-8"))
+    asof = {r["player_key"]: r.get("asof_date") for r in raw}
+    out = []
+    for d in training_rows(side):
+        extra = {"bmi": DRV.bmi_asof(d["player_key"], asof.get(d["player_key"]), panel)}
+        out.append(dict(d, extra=extra, v2=v2_row(d["feats"], extra), frame="vm",
+                        ids_outcome_blind=False))
+    return out
+
+
+# ---------------------------------------------------------------------------
+# DS-07: the output map
+# ---------------------------------------------------------------------------
+
+def output_map(order_idx, groups, values) -> np.ndarray:
+    """Inside each group, the row at order rank k takes the k-th smallest of the group's
+    own consensus values; rows tied on order_idx share the mean of the values their
+    ranks draw. So within a group the grade orders rows exactly as order_idx does, and
+    with no ties the group's grade multiset IS its consensus multiset: consensus sets
+    the level, the model only reorders (principle 1, bug B5)."""
+    o = np.asarray(order_idx, dtype=np.float64)
+    v = np.asarray(values, dtype=np.float64)
+    if o.shape != v.shape:
+        raise ValueError("order_idx and values differ in length")
+    out = np.zeros(o.size)
+    by: dict = {}
+    for i, g in enumerate(groups):
+        by.setdefault(g, []).append(i)
+    for idx in by.values():
+        ix = np.asarray(idx)
+        oo = o[ix]
+        perm = np.argsort(oo, kind="mergesort")
+        g = np.empty(ix.size)
+        g[perm] = np.sort(v[ix])
+        for u in np.unique(oo):
+            m = oo == u
+            if m.sum() > 1:
+                g[m] = g[m].mean()
+        out[ix] = g
+    return out
+
+
+def fit_war_map(train: list[dict]) -> dict | None:
+    """The continuous consensus-FV-to-WAR line for pricing: weighted least squares of the
+    training target on [1, consensus FV]. A line, so it is monotone and never a table by
+    grade. None when the rows cannot support it."""
+    if len(train) < MIN_TEST_ROWS:
+        return None
+    fv = np.array([r["fv"] for r in train], dtype=np.float64)
+    if float(fv.std()) <= 0:
+        return None
+    y = np.array([r["target"] for r in train], dtype=np.float64)
+    w = np.array([max(float(r.get("weight", 1.0) or 0.0), 1e-3) for r in train])
+    b = _wls(np.column_stack([np.ones(fv.size), fv]), y, w, np.zeros(2))
+    return {"a": float(b[0]), "b": float(b[1]), "n": int(fv.size)}
+
+
+def war_at(war_map: dict | None, grade) -> np.ndarray:
+    g = np.asarray(grade, dtype=np.float64)
+    if war_map is None:
+        return np.full(g.shape, np.nan)
+    return war_map["a"] + war_map["b"] * g
+
+
+# ---------------------------------------------------------------------------
+# the heads in consensus-percentile equivalents
+# ---------------------------------------------------------------------------
+
+def head_usable(head: dict | None) -> bool:
+    """A head moves the order only when it carries a nonzero driver slope and a positive
+    consensus slope to express it against."""
+    return bool(head is not None and head.get("b_uc", 0.0) > 0
+                and any(abs(b) > 0 for b in head.get("beta") or ()))
+
+
+def e_skill(head: dict | None, rows: list[dict]) -> np.ndarray:
+    """The skill head's driver sum over its own consensus slope (0 when unusable)."""
+    if not head_usable(head):
+        return np.zeros(len(rows))
+    return _lin(head, skill_design(rows, head)) / head["b_uc"]
+
+
+def e_time(head: dict | None, rows: list[dict]) -> np.ndarray:
+    """The timing head's logit driver sum over its own logit consensus slope."""
+    if not head_usable(head):
+        return np.zeros(len(rows))
+    return _lin(head, _v2_x(rows, head["keys"], head["means"])) / head["b_uc"]
+
+
+# ---------------------------------------------------------------------------
+# DS-08: the combiner rule (fixed weights, fixed before any development read)
+# ---------------------------------------------------------------------------
+
+def _rule_heads(train: list[dict], side: str, *, ids_outcome_blind: bool,
+                absent_ok: bool) -> tuple[dict | None, dict | None]:
+    """The side's FULL candidate heads on rule-fold training rows: admission is not
+    applied (no rule fold has two earlier vintages that give a t, the rule's own
+    precondition failing, recorded in the receipt), and a head whose nested CV has no
+    inner year takes RULE_FALLBACK_ALPHA instead of switching off."""
+    skill = fit_skill_head(train, side, admit=False, candidates=skill_candidates(side),
+                           no_inner_alpha=RULE_FALLBACK_ALPHA)
+    timing = fit_timing_head(train, side, admit=False, ids_outcome_blind=ids_outcome_blind,
+                             absence_admitted=absent_ok,
+                             candidates=timing_candidates(
+                                 side, ids_outcome_blind=ids_outcome_blind,
+                                 absence_admitted=absent_ok),
+                             no_inner_alpha=RULE_FALLBACK_ALPHA)
+    return skill, timing
+
+
+def combiner_rule(side: str, sources: dict[str, list[dict]], *,
+                  last_year: int = RULE_LAST_YEAR, absent_ok: bool | None = None) -> dict:
+    """DS-08. The weights, by one rule that reads only rows at or before `last_year`.
+
+    THE RULE AS SPECIFIED (s4.3): the pooled forward-chained OLS coefficient on (model leg
+    minus consensus) over decision years up to 2016, the timing share at the ratio of the
+    two heads' coefficients, and w at or below 0 means that side orders by consensus.
+
+    AS IMPLEMENTED, per source (the v1 matrices, decision years <= last_year; the F-LV
+    frame, list vintages <= last_year), for every rule year y with MIN_TEST_ROWS rows
+    and MIN_TRAIN_ROWS earlier rows: fit the side's skill and timing heads on the
+    earlier rows (F-LV: every player in year y left out of them) and express each on
+    year y's rows in consensus-percentile equivalents (e_skill, e_time). A year counts
+    when either head moves some row. Pool the counted years of every source and fit
+    OLS u_y ~ 1 + u_c + e_skill + e_time (u_c, u_y within year). Then
+        w_skill = clip(c_skill / c_uc, 0, W_MAX),  w_time = clip(c_time / c_uc, 0, W_MAX),
+    both 0 when c_uc <= 0, and a column that is zero on every pooled row gets weight 0.
+    A weight is a SHARE of the head's own estimate (1 = the head as fitted, 0 =
+    consensus alone), so it is bounded by W_MAX = 1: a ratio above 1 would extrapolate
+    past the head, and the rule's fixed fallback penalty (adaptation 3) over-shrinks the
+    rule-fold head, which inflates the ratio. DISCLOSED: the bound was added after the
+    first dry run of the rule read 1.29 for pitchers; the unbounded ratios stay in the
+    receipt (w_skill_ratio, w_time_ratio).
+
+    THREE STATED ADAPTATIONS, each because the literal rule cannot run:
+      1. the matrices at decision years <= 2016 carry 3 rows with a MiLB block per side
+         (the era rule marks the rest milb_unavailable), so no skill head fits there; the
+         list-vintage frame at vintages <= 2016 is added. V2 is then scored only from
+         V2_FIRST_SCORED_YEAR, so no rule row is ever a scored row.
+      2. admission is off inside rule folds: it needs two earlier vintages that give a
+         t, and no rule year has them.
+      3. a head whose nested CV has no inner year takes RULE_FALLBACK_ALPHA.
+    Reads no row after last_year; the receipt carries every (source, year) read."""
+    _check_years({int(r["decision_year"]) for rows in sources.values() for r in rows})
+    ab = absence_admitted(side) if absent_ok is None else bool(absent_ok)
+    pooled = {"u_c": [], "u_y": [], "e_s": [], "e_t": []}
+    receipt: dict = {}
+    for name, rows in sources.items():
+        rule_rows = [r for r in rows if int(r["decision_year"]) <= int(last_year)]
+        ob = all(bool(r.get("ids_outcome_blind")) for r in rule_rows) and bool(rule_rows)
+        rec = {"n_rows": len(rule_rows), "ids_outcome_blind": ob,
+               "years": sorted({int(r["decision_year"]) for r in rule_rows}),
+               "folds": {}}
+        for y in inner_years(rule_rows):
+            te = [r for r in rule_rows if r["decision_year"] == y]
+            te_keys = {r["player_key"] for r in te}
+            tr = [r for r in rule_rows if r["decision_year"] < y
+                  and not (ob and r["player_key"] in te_keys)]
+            skill, timing = _rule_heads(tr, side, ids_outcome_blind=ob,
+                                        absent_ok=ob and ab)
+            es, et = e_skill(skill, te), e_time(timing, te)
+            moved = bool(np.any(es != 0) or np.any(et != 0))
+            rec["folds"][str(y)] = {
+                "n_train": len(tr), "n_test": len(te), "counted": moved,
+                "skill_keys": (skill or {}).get("keys"),
+                "skill_alpha": _akey((skill or {}).get("alpha", math.inf)),
+                "skill_n_train": (skill or {}).get("n_train"),
+                "timing_keys": (timing or {}).get("keys"),
+                "timing_alpha": _akey((timing or {}).get("alpha", math.inf))}
+            if not moved:
+                continue
+            u_c, u_y = _percentiles(te)
+            pooled["u_c"] += u_c.tolist()
+            pooled["u_y"] += u_y.tolist()
+            pooled["e_s"] += es.tolist()
+            pooled["e_t"] += et.tolist()
+        receipt[name] = rec
+    n = len(pooled["u_y"])
+    out = {"side": side, "last_year": int(last_year), "n_pooled": n, "sources": receipt,
+           "absence_admitted": ab, "coef": None, "se": None,
+           "w_skill": 0.0, "w_time": 0.0, "a": None}
+    if n < MIN_TRAIN_ROWS:
+        out["status"] = "not_estimable"
+        out["reason"] = f"{n} pooled rows, fewer than {MIN_TRAIN_ROWS}"
+        return out
+    cols = {"u_c": pooled["u_c"], "e_skill": pooled["e_s"], "e_time": pooled["e_t"]}
+    live = [k for k, v in cols.items() if k == "u_c" or np.any(np.asarray(v) != 0)]
+    X = np.column_stack([np.ones(n)] + [np.asarray(cols[k]) for k in live])
+    y = np.asarray(pooled["u_y"], dtype=np.float64)
+    XtX = X.T @ X
+    b = np.linalg.solve(XtX, X.T @ y)
+    resid = y - X @ b
+    s2 = float(resid @ resid) / (n - X.shape[1])         # n >= MIN_TRAIN_ROWS
+    se = np.sqrt(np.abs(np.diag(np.linalg.inv(XtX))) * s2)
+    coef = {"intercept": float(b[0]), **{k: float(b[i + 1]) for i, k in enumerate(live)}}
+    ses = {"intercept": float(se[0]), **{k: float(se[i + 1]) for i, k in enumerate(live)}}
+    c_uc = coef["u_c"]
+    c_s, c_t = coef.get("e_skill"), coef.get("e_time")
+    r_s = c_s / c_uc if (c_uc > 0 and c_s is not None) else None
+    r_t = c_t / c_uc if (c_uc > 0 and c_t is not None) else None
+    w_s, w_t = _share(r_s), _share(r_t)
+    out.update(status="ok", coef=coef, se=ses, live_columns=live,
+               w_skill_ratio=None if r_s is None else round(r_s, 6),
+               w_time_ratio=None if r_t is None else round(r_t, 6),
+               w_skill=round(w_s, 6), w_time=round(w_t, 6),
+               a=(round(w_t / w_s, 6) if w_s > 0 else None))
+    return out
+
+
+def _share(ratio: float | None) -> float:
+    """A combiner ratio as a weight: 0 when absent or not positive, W_MAX above it.
+    It bounds a weight on a head, never a prediction."""
+    if ratio is None or not ratio > 0:
+        return 0.0
+    return W_MAX if ratio > W_MAX else float(ratio)
+
+
+def load_weights(path: Path | None = None) -> dict[str, dict]:
+    """{side: {"w_skill", "w_time"}} from the registration artifact."""
+    p = ASSEMBLY_PATH if path is None else Path(path)
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    return {s: {"w_skill": float(doc["weights"][s]["w_skill"]),
+                "w_time": float(doc["weights"][s]["w_time"])} for s in F.SIDES}
+
+
+# ---------------------------------------------------------------------------
+# the assembled model: fit, order, grade
+# ---------------------------------------------------------------------------
+
+def fit_v2(train: list[dict], side: str, *, frame: str, weights: dict[str, dict],
+           absent_ok: bool | None = None) -> dict:
+    """V2 on one fold's training rows. frame "lv" (outcome-blind ids: protection and the
+    absence flag may enter the timing head) or "vm" (the v1 matrices: they may not).
+    Admission runs inside both head fits on the fold's own training vintages."""
+    if frame not in ("lv", "vm"):
+        raise ValueError(f"frame must be lv or vm, got {frame!r}")
+    _check_years({int(r["decision_year"]) for r in train})
+    ob = frame == "lv"
+    ab = ob and (absence_admitted(side) if absent_ok is None else bool(absent_ok))
+    skill = fit_skill_head(train, side, candidates=skill_candidates(side))
+    timing = None
+    why = None
+    if side == "pit" and not head_usable(skill):
+        why = ("owner DS-Q2: no pitcher skill driver passed the admission rule in this "
+               "fold, so pitchers take the consensus order")
+    else:
+        timing = fit_timing_head(train, side, ids_outcome_blind=ob, absence_admitted=ab,
+                                 candidates=timing_candidates(
+                                     side, ids_outcome_blind=ob, absence_admitted=ab))
+    w = weights[side]
+    w_s = float(w["w_skill"]) if head_usable(skill) else 0.0
+    w_t = float(w["w_time"]) if head_usable(timing) else 0.0
+    if why is None and w_s <= 0 and w_t <= 0:
+        why = "no usable head carries a positive registered weight"
+    return {"model_id": V2_ASSEMBLED_ID, "side": side, "frame": frame,
+            "skill": skill, "timing": timing, "w_skill": w_s, "w_time": w_t,
+            "consensus_only": w_s <= 0 and w_t <= 0, "consensus_only_reason": why,
+            "war_map": fit_war_map(train), "n_train": len(train),
+            "train_years": sorted({int(r["decision_year"]) for r in train})}
+
+
+def predict_v2(model: dict, rows: list[dict]) -> list[dict]:
+    """Per row: u_c, e_skill, e_time, order_idx, the eFV grade (DS-07) and the eFV WAR
+    (pricing). Groups are the rows' own (side, decision year or list vintage)."""
+    if not rows:
+        return []
+    groups = [int(r["decision_year"]) for r in rows]
+    fv = np.array([r["fv"] for r in rows], dtype=np.float64)
+    u_c = within_pct(fv, groups)
+    es = e_skill(model["skill"], rows) if model["w_skill"] > 0 else np.zeros(len(rows))
+    et = e_time(model["timing"], rows) if model["w_time"] > 0 else np.zeros(len(rows))
+    order = u_c + model["w_skill"] * es + model["w_time"] * et
+    grade = output_map(order, groups, fv)
+    war = war_at(model["war_map"], grade)
+    return [{"player_key": r["player_key"], "u_c": float(u_c[i]),
+             "e_skill": float(es[i]), "e_time": float(et[i]),
+             "order_idx": float(order[i]), "efv_grade": float(grade[i]),
+             "efv_war": float(war[i])} for i, r in enumerate(rows)]
+
+
+def _check_scored_year(y: int) -> None:
+    if int(y) <= RULE_LAST_YEAR:
+        raise ValueError(f"year {y} is a combiner-rule year (<= {RULE_LAST_YEAR}); V2 is "
+                         f"scored only from {V2_FIRST_SCORED_YEAR}")
+
+
+def v2_lv_scores(side: str, vintage: int, frame_rows: list[dict],
+                 train_rows: list[dict], *, weights: dict[str, dict],
+                 gate_sha: str | None = None) -> dict:
+    """V2 on one F-LV (side, V) frame, fitted on labelled F-LV rows at vintages before V
+    with every player in the V frame left out of training. Reserved vintages raise
+    without the committed gate sha; rule years raise."""
+    V = int(vintage)
+    F.guard_score_request(V, gate_sha=gate_sha, purpose="V2 score")
+    _check_scored_year(V)
+    test = lv_v2_rows(side, V, frame_rows, gate_sha=gate_sha)
+    in_frame = {r["player_key"] for r in frame_rows}
+    tr = [r for r in train_rows if r["decision_year"] < V
+          and r["player_key"] not in in_frame]
+    model = fit_v2(tr, side, frame="lv", weights=weights)
+    return {"side": side, "vintage": V, "n_train": len(tr), "n_scored": len(test),
+            "model": model, "rows": predict_v2(model, test)}
+
+
+def v2_vm_scores(side: str, *, weights: dict[str, dict], years=None,
+                 timing_pin: bool = False, data: list[dict] | None = None,
+                 receipts: dict | None = None) -> dict[int, dict]:
+    """V2 on the vintage-matched frame, forward-chained like oos_scores: each decision
+    year scored by a fit on earlier matrix rows. timing_pin=True scores only the debuted
+    rows with an in-window preseason read, with that read (and BMI as of it) as input."""
+    years = [y for y in (V1.SCORED_YEARS if years is None else years)]
+    _check_years(years)
+    for y in years:
+        _check_scored_year(y)
+    data = matrix_training_rows(side) if data is None else data
+    mine: dict = {}
+    pinned = pinned_inputs(side, data, mine) if timing_pin else {}
+    if timing_pin:
+        import efv_drivers as DRV
+        panel = DRV.load_bio_panel()
+    out = {}
+    for yr in years:
+        tr = [r for r in data if r["decision_year"] < yr]
+        te = [r for r in data if r["decision_year"] == yr]
+        if len(te) < MIN_TEST_ROWS or len(tr) < MIN_TRAIN_ROWS:
+            continue
+        if timing_pin:
+            te2 = []
+            for r in te:
+                pin = pinned.get(r["player_key"])
+                if pin is None:
+                    continue
+                extra = {"bmi": DRV.bmi_asof(r["player_key"],
+                                             mine[r["player_key"]].get("asof_date"),
+                                             panel)}
+                te2.append(dict(r, feats=pin["feats"], fv=pin["fv"], extra=extra,
+                                v2=v2_row(pin["feats"], extra)))
+            te = te2
+        model = fit_v2(tr, side, frame="vm", weights=weights)
+        out[yr] = {"model": model, "rows": predict_v2(model, te)}
+    if timing_pin and receipts is not None:
+        receipts.update(mine)
+    return out

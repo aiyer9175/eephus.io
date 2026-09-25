@@ -55,6 +55,9 @@ SOURCES: tuple[tuple[str, str, str], ...] = (
     # Driver System V2 (docs/efv-v2/DRIVER_SYSTEM_V2.md s5 DS-06): every candidate
     # driver the admission rule checked, with its per-vintage signs.
     ("xfv_driver_admission.json", "arms", "admission rule (DS-06)"),
+    # The assembled V2 (DS-09, DS-10, the BMI re-test, PV-12): the admission rule on the
+    # list-vintage frame, per development fold, for every V2 candidate.
+    ("efv_v2_assembly.json", "arms", "V2 assembly admission (list vintages)"),
 )
 
 #: Development probes that are NOT feature arms: validity reads (a label-balance
@@ -62,6 +65,7 @@ SOURCES: tuple[tuple[str, str, str], ...] = (
 #: into the arm count, because they test the frame rather than a driver.
 PROBES: tuple[tuple[str, str, str], ...] = (
     ("efv_identity_balance.json", "probes", "identity balance probes (DS-03)"),
+    ("efv_v2_assembly.json", "probes", "combiner rule reads (DS-08)"),
 )
 
 #: Fields an arm may carry that the ledger copies through unchanged, so a driver's
