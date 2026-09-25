@@ -19,8 +19,8 @@
            the contact quality), pa, season.
 
 Sidecar: data/statcast_aaa_hitters.json {"generated_at", "note",
-"by_mlbam": {mlbam: {...}}}. Consumer: a PROSPX hitter-card pill lands in
-a later pass; until it does the file stays in deploy/data_exclude.txt.
+"source_fetched": {season: fetch date}, "by_mlbam": {mlbam: {...}}}. Consumer: the PROSPX hitter-card "AAA Statcast"
+pill row (aaaStatcastPanel), which prints the fetch date on a partial season.
 
 Run: python statcast_aaa_hitters.py    (bake the sidecar from the cache)
 """
@@ -30,7 +30,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 log = logging.getLogger(__name__)
@@ -94,7 +94,27 @@ def build(seasons=SEASONS) -> dict:
         log.info("aaa statcast hitters %d: %d qualified rows", season, n)
     return {"generated_at": date.today().isoformat(),
             "note": NOTE,
+            "source_fetched": source_fetched(seasons, af.CACHE_DIR),
             "by_mlbam": by_mlbam}
+
+
+def source_fetched(seasons, cache_dir: Path) -> dict[str, str]:
+    """{season: UTC date the cached Savant CSV was fetched}.
+
+    generated_at is the BAKE date and says nothing about the data: on
+    2026-09-24 the sidecar read generated_at 2026-07-23 while its 2026 rows
+    came from a CSV fetched on 2026-06-22, so the card printed "AAA 2026"
+    over roughly half a season. The cache lives only on the machine that
+    bakes (.cache/ is gitignored) and savant_rows writes it on fetch, so the
+    file's modification time is its fetch time. A season fetched during that
+    same year is a partial season, and the card prints the date."""
+    out: dict[str, str] = {}
+    for season in seasons:
+        p = cache_dir / f"batter_{season}.csv"
+        if p.exists():
+            out[str(season)] = datetime.fromtimestamp(
+                p.stat().st_mtime, tz=timezone.utc).date().isoformat()
+    return out
 
 
 def bake(persist: bool = True) -> dict:

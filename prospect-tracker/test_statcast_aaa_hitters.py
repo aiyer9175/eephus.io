@@ -39,7 +39,7 @@ def payload():
 
 
 def test_payload_shape(payload):
-    assert set(payload) == {"generated_at", "note", "by_mlbam"}
+    assert set(payload) == {"generated_at", "note", "source_fetched", "by_mlbam"}
     assert isinstance(payload["note"], str) and payload["note"]
     by = payload["by_mlbam"]
     assert len(by) > 500, "cached seasons should yield hundreds of hitters"
@@ -83,3 +83,33 @@ def test_luck_gap_arithmetic(payload):
         assert row["luck_gap"] == round(row["xwoba"] - row["woba"], 3), mid
         checked += 1
     assert checked > 500, "luck_gap should be computable for nearly all rows"
+
+
+def test_every_served_season_names_its_fetch_date(payload):
+    """generated_at is the bake date. The card needs the date the season's
+    CSV was fetched, or a June snapshot reads as the whole season."""
+    import re
+    fetched = payload["source_fetched"]
+    for season in {row["season"] for row in payload["by_mlbam"].values()}:
+        d = fetched.get(str(season))
+        assert d and re.fullmatch(r"\d{4}-\d{2}-\d{2}", d), (season, d)
+        assert int(d[:4]) >= season, (season, d)
+
+
+def test_source_fetched_reads_the_file_time(tmp_path):
+    import os
+    p = tmp_path / "batter_2026.csv"
+    p.write_text("x", encoding="utf-8")
+    ts = 1782163845  # 2026-06-22T21:30:45Z
+    os.utime(p, (ts, ts))
+    assert sah.source_fetched((2025, 2026), tmp_path) == {"2026": "2026-06-22"}
+
+
+def test_the_served_card_prints_the_fetch_date_on_a_partial_season():
+    """The PROSPX panel reads source_fetched and prints the date when the
+    CSV was fetched inside the season it covers."""
+    html = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    start = html.index("// ===== AAA Statcast hitter sidecar")
+    block = html[start:html.index("// ===== A-ball Statcast signal pill", start)]
+    assert "source_fetched" in block
+    assert "_aaaFetchedSuffix" in block
