@@ -2143,6 +2143,97 @@ def _econd_floor(label, cluster_ids, a, b, target, *, is_auc=False,
     }
 
 
+def _paired_delta_ci(rows, a, b, metric, *, label=None,
+                     B=_CLAIM_BOOT_B, seed=_CLAIM_SEED):
+    """Paired, player-clustered CI95 of stat(a) - stat(b) on the rows given
+    (EV-00, docs/efv-v2/PROGRAM.md s5.1 item 2).
+
+    A thin adapter over `_econd_floor`, so the interval comes from the SAME
+    resampler (`_cluster_layout` / `_cluster_draw`), the same B and the same
+    fixed seed as the claim-instrument floors. On the vintage-matched frame the
+    consensus Spearman leg therefore reproduces
+    claim_instruments.head_to_head_floors.vintage_matched.floor_E_cond_in_run
+    byte for byte: one frame, one interval, whichever block a reader opens.
+
+    `rows` are common-set rows carrying `grades[a]`, `grades[b]` and an
+    outcome; `metric` is "spearman" (realized WAR) or "auc" (contributor).
+    E_cond: both grade columns are fixed and only the players are resampled.
+    """
+    if metric not in ("spearman", "auc"):
+        raise ValueError(f"metric must be spearman or auc, not {metric!r}")
+    use = [c for c in rows if (c.get("grades") or {}).get(a) is not None
+           and (c.get("grades") or {}).get(b) is not None]
+    keys = [c.get("key") for c in use]
+    av = [c["grades"][a] for c in use]
+    bv = [c["grades"][b] for c in use]
+    if metric == "auc":
+        tgt = [bool((c.get("outcome") or {}).get("contributor")) for c in use]
+    else:
+        tgt = [(c.get("outcome") or {}).get("war") or 0.0 for c in use]
+    return _econd_floor(label or f"{a}_vs_{b}.{metric}", keys, av, bv, tgt,
+                        is_auc=(metric == "auc"), B=B, seed=seed)
+
+
+#: Display names for the per-source head-to-head block. Keys are rater keys.
+_H2H_SOURCE_LABELS = {CONSENSUS_KEY: "PROSPX consensus",
+                      "mlb_pipeline": "MLB Pipeline", "fangraphs": "FanGraphs"}
+
+
+def _head_to_head_vs_sources(rows, block, *, frame, basis):
+    """eFV against each rater on one frame, both legs, each with its paired
+    player-clustered CI95 and E_cond MDE95 (EV-00, PROGRAM.md s5.1 item 2).
+
+    `block` is the frame's served accuracy block (the `_acc` output for the
+    same rows), so every point value here is the one the page already prints;
+    the bootstrap adds only the interval and the floor. DESCRIPTIVE: no Holm
+    correction is applied across the sources and no per-source verdict word is
+    written. `clears_e_cond_floor` is a plain comparison against the one-sided
+    E_cond floor, carried so a reader can see it, and it is not a claim.
+    """
+    block = block or {}
+    x = block.get("xfv") or {}
+    out = {"frame": frame, "basis": basis, "n": x.get("n"),
+           "estimator": "E_cond", "resampling_unit": "player cluster",
+           "B": _CLAIM_BOOT_B, "seed": _CLAIM_SEED,
+           "convention": ("delta = eFV minus the rater on identical rows; ci95 is "
+                          "the 2.5th and 97.5th percentile of the paired "
+                          "player-clustered bootstrap; MDE95 = 1.645 * sd(delta), "
+                          "one-sided"),
+           "note": ("descriptive: no multiplicity correction across sources and no "
+                    "per-source verdict. The secondary Holm family is registered "
+                    "only for eFV v2 on reserved frames (docs/efv-v2/PROGRAM.md "
+                    "s4 (d))."),
+           "sources": {}}
+    for rater in (CONSENSUS_KEY, "mlb_pipeline", "fangraphs"):
+        r = block.get(rater) or {}
+        if not r:
+            continue
+        cell = {"label": _H2H_SOURCE_LABELS.get(rater, rater)}
+        for metric in ("spearman", "auc"):
+            xv, rv = x.get(metric), r.get(metric)
+            if xv is None or rv is None:
+                cell[metric] = None
+                continue
+            fl = _paired_delta_ci(rows, "xfv", rater, metric,
+                                  label=f"{frame}.xfv_vs_{rater}.{metric}")
+            delta = round(xv - rv, 5)
+            mde = fl.get("mde95")
+            cell[metric] = {
+                "xfv": xv, "rater": rv, "n": r.get("n"),
+                "delta": delta,
+                "point_delta_unrounded": fl.get("point_delta"),
+                "ci95": fl.get("ci95"),
+                "mde95": mde,
+                "mde95_estimator": "E_cond",
+                "derived_in_run": bool(fl.get("derived_in_run")),
+                "status": fl.get("status"),
+                "clears_e_cond_floor": (None if mde is None
+                                        else bool(abs(delta) >= mde)),
+            }
+        out["sources"][rater] = cell
+    return out
+
+
 def _econd_two_target_floor(label, cluster_ids, a, a_target, b, b_target, *,
                             B=_CLAIM_BOOT_B, seed=_CLAIM_SEED):
     """Player-clustered E_cond bootstrap of rho(a, a_target) - rho(b, b_target).
@@ -3678,6 +3769,26 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
             "read off the vintage-matched basis. The other two frames are published "
             "in head_to_head_by_frame and each is tilted toward one of the two "
             "graders; see docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md.")
+    # EV-00 (docs/efv-v2/PROGRAM.md s5.1 item 2). The paired, player-clustered
+    # interval for every rater on the verdict's own rows, and the verdict's CI95
+    # copied from the consensus Spearman leg of that same block. ADDITIVE: the
+    # verdict's delta, floor, resolvable flag and verdict word are unchanged;
+    # the floor that decides `resolvable` stays the stored E_refit constant.
+    accuracy["head_to_head_vs_sources"] = (
+        _head_to_head_vs_sources(
+            efv_common_vintage,
+            accuracy.get("pooled_efv_common_vintage_matched"),
+            frame="vintage_matched", basis="pooled_efv_common_vintage_matched")
+        if accuracy.get("pooled_efv_common_vintage_matched") else None)
+    if accuracy.get("head_to_head_verdict") and accuracy["head_to_head_vs_sources"]:
+        _leg = ((accuracy["head_to_head_vs_sources"]["sources"]
+                 .get(CONSENSUS_KEY) or {}).get("spearman") or {})
+        _hv = accuracy["head_to_head_verdict"]
+        _hv["ci95"] = _leg.get("ci95")
+        _hv["ci95_estimator"] = "E_cond, player-clustered"
+        _hv["ci95_source"] = ("accuracy.head_to_head_vs_sources.sources."
+                              f"{CONSENSUS_KEY}.spearman.ci95")
+        _hv["mde95_estimator"] = "E_refit"
     # Does the consensus beat its best individual input on each metric? Each leg
     # carries its own measured floor (CONSENSUS_VS_INPUTS_MDE95) because the two do
     # not have the same precision: on this vintage the AUC leg clears its floor by
