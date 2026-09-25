@@ -2142,6 +2142,14 @@ def test_the_retired_state_shows_results_grading_and_no_clv_panel():
     assert "Mean CLV" not in text
     assert "realized results" in text
     assert "noisier" in text
+    # M12-04 (2026-09-25): the record panel names the files that exist. No
+    # closing-line sidecar is written while CLV is retired, so no third file
+    # and no link to one.
+    html = c.eval("__show('record')")
+    assert "Joined across two files on bet_id" in text
+    assert "Joined across three files" not in text
+    assert "closing-line sidecar" not in text
+    assert "betting_clv.json" not in html
 
 
 def test_clv_absent_state_names_the_crontab_and_the_selfcheck(live_ctx):

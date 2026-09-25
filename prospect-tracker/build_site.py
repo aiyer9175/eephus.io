@@ -4386,6 +4386,26 @@ def _usd(v: float) -> str:
     return str(int(v)) if float(v).is_integer() else f"{float(v):.2f}"
 
 
+def _betting_serve_clv() -> bool:
+    """betting_export.SERVE_CLV, read at build time: the one switch that says
+    whether the record is graded against the closing line. The shell copy on
+    /betting/ and /diamond/ reads it here rather than repeating a sentence the
+    owner retired on 2026-09-07 (M12-04, 2026-09-25). An import failure reads
+    as off, because off is the served state and the weaker claim."""
+    try:
+        import betting_export
+    except Exception:  # noqa: BLE001 - any import failure is the off state
+        return False
+    return bool(getattr(betting_export, "SERVE_CLV", False))
+
+
+def _betting_grading_clause(short: bool = False) -> str:
+    """How the public record is graded, in the words the served flag allows."""
+    if _betting_serve_clv():
+        return "graded against the close" if short else "graded against the closing line"
+    return "graded on realized results"
+
+
 def _partof_diamond(extra: str = "") -> str:
     """One masthead line under each Diamond module naming the pass it belongs
     to. Gating-aware so the line cannot promise a free preview after the flag
@@ -4446,7 +4466,8 @@ def build_betting() -> str:
     THE RAILS ARE PART OF THE PAGE, not a footnote. BETTING_DISCLAIMER renders
     ABOVE the boards, not below them, so nobody reaches a pick without passing
     it. There are no affiliate links here and there never will be without legal
-    review. The record is append-only and graded against the closing line, so
+    review. The record is append-only and graded on the basis
+    betting_export.SERVE_CLV names (realized results while CLV is retired), so
     it can embarrass us; that is the point of publishing it.
 
     THE SECTION IDS ARE A THREE-FILE CONTRACT. The `data-bettingsection` values
@@ -4471,8 +4492,11 @@ def build_betting() -> str:
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>Sports Betting {_stage_chip("betting")}</h1></div>'
         f'<span class="section-sub">Model probability vs the {_gl("devig", "de-vigged")} book price. '
-        'Every pick posts with timestamp, book, odds and a flat one-unit stake; the record is '
-        f'append-only and graded against the {_gl("clv", "closing line")}.</span>'
+        'Each published pick records its timestamp, book, odds and a flat one-unit stake; the '
+        'record is append-only and '
+        + (f'graded against the {_gl("clv", "closing line")}.' if _betting_serve_clv()
+           else "graded on realized results.")
+        + '</span>'
         f'{_partof_diamond()}</div>'
         f'{BETTING_DISCLAIMER}'
         # THE FEED-HEALTH STRIP, ABOVE THE TABS. betting.js paints it from
@@ -4570,7 +4594,8 @@ def build_diamond() -> str:
          "the dynasty board and keeper calculator; DFS projections and the lineup optimizer on "
          "your salaries."),
         ("Sports Betting", "/betting/",
-         "Model prices on every game, the pick of the day, calculators, and the record graded against the close."),
+         "Model prices on every game, the pick of the day, calculators, and the record "
+         f"{_betting_grading_clause(short=True)}."),
     ]
     # THE EXTRAS, REWRITTEN AGAINST WHAT EXISTS (2026-08-05).
     #
@@ -4631,8 +4656,8 @@ def build_diamond() -> str:
          "source turned up. It is not a member benefit and returns only if a licensed price source is "
          "wired."),
         ("Do you guarantee I will make money betting?",
-         "No. What we publish is an auditable record: every pick with timestamp, book and odds, a flat "
-         "one-unit stake, nothing deleted, each graded against the closing line."),
+         "No. The record is built to be audited: each published pick carries its timestamp, book and "
+         f"odds, a flat one-unit stake, nothing deleted, each {_betting_grading_clause()}."),
         ("What happens to the free site?",
          "It stays free."),
         ("Who is behind this?",
@@ -4723,7 +4748,8 @@ def build_diamond() -> str:
         '<div class="card"><p>The prospect model scoreboard loads here from its eval artifact. If '
         'this line is still here, the artifact did not load and no accuracy is claimed.</p></div>'
         '</div>'
-        '<div id="diamond-betting-record" class="diamond-record">'
+        '<div id="diamond-betting-record" class="diamond-record" '
+        f'data-serve-clv="{1 if _betting_serve_clv() else 0}">'
         '<div class="card"><p>The betting record loads here. If this line is still here, the '
         'record has not published yet.</p></div>'
         '</div>'

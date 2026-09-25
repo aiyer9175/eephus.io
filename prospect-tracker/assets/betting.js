@@ -2580,19 +2580,30 @@
       '<code class="bt-sha">' + esc(sha) + "</code>. " +
       esc((r || {}).chain_note || "") + " Archive it: a later record whose prefix " +
       "hashes include it is an append; one without it is a rewrite.</div>") : "";
+    // THE JOIN FOLLOWS THE SERVED FLAG (M12-04, 2026-09-25). With CLV retired
+    // (serve_clv false) no closing-line sidecar is written, so the sentence
+    // names two files and links the settlement sidecar alone; the third file
+    // and its link return with the flag.
+    var clvOn = clvEnabled();
+    var setUrl = (S.data && S.data.settlement_url) || "/data/betting_settlement.json";
+    var clvUrl = (S.data && S.data.clv_url) || AUX_URL.clv;
+    var setLink = '<a class="bt-link" href="' + esc(setUrl) + '">' + esc(setUrl) + "</a>";
     return '<div class="bt-panel"><div class="bt-panel-hd">The public record</div>' + body +
-      "<p>Joined across three files on bet_id: the append-only record, the settlement " +
-      "sidecar and the closing-line sidecar. To verify, recompute the chain by " +
+      (clvOn
+        ? "<p>Joined across three files on bet_id: the append-only record, the settlement " +
+          "sidecar and the closing-line sidecar."
+        : "<p>Joined across two files on bet_id: the append-only record and the settlement " +
+          "sidecar.") +
+      " To verify, recompute the chain by " +
       "folding sha256 row by row over " + esc(url) + " and compare to the hash " +
       "below.</p>" + chain +
       "<p>" + esc((S.data && S.data.record_policy) ||
         "Append only. Rows are never edited or deleted; a correction is a new row.") + " " +
       'Raw file: <a class="bt-link" href="' + esc(url) + '">' + esc(url) + "</a>. " +
-      'Sidecars: <a class="bt-link" href="' +
-      esc((S.data && S.data.settlement_url) || "/data/betting_settlement.json") + '">' +
-      esc((S.data && S.data.settlement_url) || "/data/betting_settlement.json") + "</a> and " +
-      '<a class="bt-link" href="' + esc((S.data && S.data.clv_url) || AUX_URL.clv) + '">' +
-      esc((S.data && S.data.clv_url) || AUX_URL.clv) + "</a>.</p></div>";
+      (clvOn
+        ? "Sidecars: " + setLink + " and " +
+          '<a class="bt-link" href="' + esc(clvUrl) + '">' + esc(clvUrl) + "</a>.</p></div>"
+        : "Sidecar: " + setLink + ".</p></div>");
   }
 
   // ---- CLV, and the reasons it graded nothing -------------------------------

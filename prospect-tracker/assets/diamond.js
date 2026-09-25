@@ -14,9 +14,10 @@
 //      data/xfv_scoreboard_eval.json at render time and prints what is in it.
 //      If the model gets worse, this page says so by itself. A hardcoded
 //      "0.384" would have been a claim with a shelf life.
-//   2. THE BETTING RECORD. Reads data/betting_record.json. While that file
-//      does not exist (no picks posted yet) the card says the record starts
-//      when the picks do, which is the truth, instead of hiding the section.
+//   2. THE BETTING RECORD. Reads the joined record summary the betting board
+//      serves (falling back to counting the raw append-only rows). While no
+//      pick has posted the card says the record starts when the picks do,
+//      which is the truth, instead of hiding the section.
 //   3. A SIGN-IN AWARE CALL TO ACTION that only replaces the server-rendered
 //      card once the account layer is configured and switched on. The static
 //      card is the truth for every other build.
@@ -277,43 +278,65 @@
   }
 
   // ---- 2. betting record ----------------------------------------------------
-  // data/betting_record.json is APPEND ONLY by design and is written by the
-  // betting export. It does not exist until the first pick posts, and that is
-  // a normal state, not an error: an absent file means no pick has ever been
-  // published, which is exactly what the card should say.
+  // THE SUMMARY, NOT THE ROWS (M12-14, 2026-09-25). data/betting_record.json is
+  // a bare array of append-only rows, and a row never carries its result: the
+  // result lives in the settlement sidecar and is joined on bet_id by
+  // betting_export.record_summary. This card used to read doc.summary and
+  // doc.picks off that array, found neither, and so would have said "No pick
+  // published yet" on the day the first row posted. It now reads the joined
+  // summary the betting board serves (the `record` block of the public preview
+  // slice), and falls back to counting the array only when that slice does not
+  // load, in which case it can say how many rows posted and nothing about
+  // results.
   //
-  // Key names are read tolerantly (summary block or top level, a couple of
-  // spellings each) so this card does not become the reason a small rename in
-  // the exporter breaks the pricing page.
-  function pick(obj, names) {
-    for (var i = 0; i < names.length; i++) {
-      if (obj && obj[names[i]] != null) return obj[names[i]];
-    }
-    return null;
+  // THE GRADING BASIS IS A SERVED FLAG (M12-04, 2026-09-25). Closing line value
+  // was retired on 2026-09-07 (betting_export.SERVE_CLV). build_site bakes that
+  // flag onto the mount as data-serve-clv, so every sentence here names the
+  // basis the record is actually graded on, and no CLV row prints while it is
+  // off.
+  var PREVIEW_URL = "/data/betting_preview.json";
+
+  function serveClv(root) {
+    if (!root || typeof root.getAttribute !== "function") return false;
+    return root.getAttribute("data-serve-clv") === "1";
   }
-  // Tolerate both 0.043 and 4.3 for a rate: anything inside [-1.5, 1.5] is read
-  // as a fraction, which is how every other artifact on the site emits one.
-  function asPct(v) {
-    if (v == null || isNaN(v)) return null;
-    var x = Number(v);
-    return (x >= -1.5 && x <= 1.5) ? x * 100 : x;
+  function gradedOn(root) {
+    return serveClv(root) ? "graded against the closing line" : "graded on its realized result";
   }
-  // SIGNED, for quantities where the direction is the point: ROI and average
-  // closing line value are returns, and "+7.1%" says something "7.1%" does not.
-  function pctOf(v) {
-    var x = asPct(v);
+  function num(v) { return (v == null || isNaN(v)) ? null : Number(v); }
+  // Percent in, percent out: record_summary serves roi_pct and avg_clv_pct as
+  // percentages and beat_close_rate as a fraction, and each is formatted on its
+  // own basis rather than guessed from its size.
+  function signedPct(v) {
+    var x = num(v);
     return x == null ? null : (x >= 0 ? "+" : "") + x.toFixed(1) + "%";
   }
-  // UNSIGNED, for a hit rate. "Beat the closing line +57.4%" reads as a change
-  // in the rate; it is a share of picks, so it gets no sign.
   function ratePct(v) {
-    var x = asPct(v);
-    return x == null ? null : x.toFixed(1) + "%";
+    var x = num(v);
+    return x == null ? null : (x * 100).toFixed(1) + "%";
   }
   function statRow(label, value) {
     if (value == null || value === "") return "";
     return '<div class="dm-stat"><span class="dm-stat-lbl">' + esc(label) + "</span>" +
       '<span class="dm-stat-val">' + esc(value) + "</span></div>";
+  }
+  // One shape for both sources: {posted, settled, won, lost, push, net_units,
+  // roi_pct, avg_clv_pct, beat_close_rate, asof}. Null means not known.
+  function fromSummary(doc) {
+    var s = doc && doc.record;
+    if (!s || typeof s !== "object" || s.n_rows == null) return null;
+    return {
+      posted: num(s.n_rows) || 0, settled: num(s.n_settled) || 0,
+      won: num(s.won) || 0, lost: num(s.lost) || 0, push: num(s.push) || 0,
+      net_units: num(s.net_units), roi_pct: num(s.roi_pct),
+      avg_clv_pct: num(s.avg_clv_pct), beat_close_rate: num(s.beat_close_rate),
+      asof: doc.generated_at || null
+    };
+  }
+  function fromRows(rows) {
+    if (!Array.isArray(rows)) return null;
+    // Rows do not carry results, so this fallback knows the posted count only.
+    return { posted: rows.length, settled: null, asof: null };
   }
   function emptyRecord(reason) {
     var root = el("diamond-betting-record");
@@ -321,65 +344,70 @@
     root.innerHTML = card(
       "<h3>Betting record</h3>" +
       "<p>No pick published yet. Each pick will carry its timestamp, book, posted odds and a flat " +
-      "1-unit stake, and be graded against the closing line. The file is append only.</p>" +
+      "1-unit stake, and be " + gradedOn(root) +
+      ". The file is append only.</p>" +
       (reason ? '<p class="dm-fine">' + esc(reason) + "</p>" : "")
     );
   }
-  // POSTED IS NOT THE SAME AS GRADED, and the guard below used to say one
-  // sentence for both. A record file carrying picks that have not settled yet
-  // has no wins and no losses, so it fell into emptyRecord and the page said
-  // "no pick has been published yet" on a page whose own file listed picks.
-  // That is a false statement about our own record, on the page that asks for
-  // money on the strength of that record being honest.
-  function ungradedRecord(nPosted, asof) {
+  // POSTED IS NOT THE SAME AS GRADED. A record carrying picks that have not
+  // settled has no wins and no losses, and the card says so rather than
+  // falling into the no-picks sentence its own file contradicts.
+  function ungradedRecord(nPosted, asof, resultsKnown) {
     var root = el("diamond-betting-record");
     if (!root) return;
     root.innerHTML = card(
-      "<h3>" + esc(nPosted) + " pick" + (nPosted === 1 ? "" : "s") + " posted, none settled</h3>" +
-      "<p>Each carries its timestamp, book, posted odds and a flat 1-unit stake. No pick is graded " +
-      "yet, so there is no record. Each is graded against the closing line when it settles.</p>" +
+      "<h3>" + esc(commas(nPosted)) + " pick" + (nPosted === 1 ? "" : "s") + " posted" +
+        (resultsKnown ? ", none settled" : "") + "</h3>" +
+      "<p>Each carries its timestamp, book, posted odds and a flat 1-unit stake, and is " +
+      gradedOn(root) + " when it settles." +
+      (resultsKnown ? " No pick is graded yet, so there is no record."
+                    : " The results did not load, so none are shown.") + "</p>" +
       (asof ? '<p class="dm-fine">Record as of ' + esc(String(asof).slice(0, 10)) + ".</p>" : "")
     );
   }
-  function renderRecord(doc) {
-    var s = (doc && (doc.summary || doc.totals)) || doc || {};
-    var picks = (doc && doc.picks) || [];
-    var n = pick(s, ["n_picks", "n", "graded", "count"]);
-    if (n == null && picks.length) n = picks.length;
-    var w = pick(s, ["wins", "w", "won"]);
-    var l = pick(s, ["losses", "l", "lost"]);
-    var asofEarly = pick(doc || {}, ["generated_at", "as_of", "updated_at"]);
-    // Three states, three messages. Nothing posted; posted but nothing settled;
-    // and a real graded record. The middle one used to be told the first one's
-    // sentence, which was a claim about our own file that the file contradicts.
-    var nPosted = (n != null && n) ? n : picks.length;
-    if (!nPosted) { emptyRecord(""); return; }
-    if (w == null && l == null) { ungradedRecord(nPosted, asofEarly); return; }
-    var p = pick(s, ["pushes", "push", "void", "voids"]);
-    var units = pick(s, ["net_units", "units", "profit_units"]);
-    var roi = pick(s, ["roi", "roi_pct"]);
-    var clv = pick(s, ["avg_clv", "clv_avg", "avg_clv_pct"]);
-    var beat = pick(s, ["beat_close_rate", "beat_close", "clv_win_rate"]);
-    var asof = pick(doc || {}, ["generated_at", "as_of", "updated_at"]);
+  function renderRecord(rec) {
     var root = el("diamond-betting-record");
     if (!root) return;
+    if (!rec || !rec.posted) { emptyRecord(""); return; }
+    if (rec.settled == null) { ungradedRecord(rec.posted, rec.asof, false); return; }
+    if (!rec.settled) { ungradedRecord(rec.posted, rec.asof, true); return; }
+    var clv = serveClv(root);
     root.innerHTML = card(
       "<h3>The betting record</h3>" +
       '<div class="dm-stats">' +
-        statRow("Record", (w == null ? "0" : w) + " - " + (l == null ? "0" : l) +
-                          (p ? " - " + p : "")) +
-        statRow("Picks graded", commas(n)) +
-        statRow("Net units", units == null ? null : (Number(units) >= 0 ? "+" : "") + Number(units).toFixed(2)) +
-        statRow("ROI", pctOf(roi)) +
-        statRow("Average closing line value", pctOf(clv)) +
-        statRow("Beat the closing line", ratePct(beat)) +
+        statRow("Record", rec.won + " - " + rec.lost + (rec.push ? " - " + rec.push : "")) +
+        statRow("Picks settled", commas(rec.settled)) +
+        statRow("Picks posted", commas(rec.posted)) +
+        statRow("Net units", rec.net_units == null ? null
+          : (rec.net_units >= 0 ? "+" : "") + rec.net_units.toFixed(2)) +
+        statRow("ROI", signedPct(rec.roi_pct)) +
+        (clv ? statRow("Average closing line value", signedPct(rec.avg_clv_pct)) +
+               statRow("Beat the closing line", ratePct(rec.beat_close_rate)) : "") +
       "</div>" +
-      "<p>Flat 1 unit per pick, append only. Closing line value: posted odds against the closing " +
-      "odds.</p>" +
-      (asof ? '<p class="dm-fine">Record as of ' + esc(String(asof).slice(0, 10)) + ".</p>" : "") +
+      "<p>Flat 1 unit per pick, append only. " + (clv
+        ? "Closing line value: posted odds against the closing odds.</p>"
+        : "Graded on realized results; closing line value is not captured.</p>") +
+      (rec.asof ? '<p class="dm-fine">Record as of ' + esc(String(rec.asof).slice(0, 10)) + ".</p>" : "") +
       '<p class="dm-fine">21+. Informational and for entertainment only. Sports betting is not legal in ' +
       "every state. No affiliate links. If betting stops being fun, call 1-800-GAMBLER.</p>"
     );
+  }
+  function loadRecord() {
+    // fresh:true on both reads: each mutates with the nightly and neither is
+    // stamped (build_site's _data_vers_script refuses betting names).
+    getJSON(PREVIEW_URL, true).then(function (doc) {
+      var rec = fromSummary(doc);
+      if (!rec) throw new Error("no record block");
+      renderRecord(rec);
+    }).catch(function () {
+      getJSON(RECORD_URL, true).then(function (rows) {
+        renderRecord(fromRows(rows));
+      }).catch(function () {
+        // 404 is the expected state before the first pick. Anything else lands
+        // in the same honest card: there is no record to show.
+        emptyRecord("");
+      });
+    });
   }
 
   // ---- 3. sign-in aware call to action -------------------------------------
@@ -471,12 +499,7 @@
     getJSON(SCOREBOARD_URL).then(renderReceipts).catch(function (e) {
       receiptsFailed(String((e && e.message) || e));
     });
-    // fresh:true - the record mutates intra-day and keeps no-cache; see getJSON.
-    getJSON(RECORD_URL, true).then(renderRecord).catch(function () {
-      // 404 is the expected state before the first pick. Anything else lands
-      // in the same honest card: there is no record to show.
-      emptyRecord("");
-    });
+    loadRecord();
     afterScripts(renderCTA);
   }
   boot();

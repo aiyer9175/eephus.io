@@ -777,3 +777,109 @@ def test_diamond_module_mastheads_carry_the_part_of_line():
         out = getattr(build_site, fn)()
         assert PARTOF_LINE in out, f"{fn} lost the Part of Diamond line"
         assert "Free during the founding preview." in out, fn
+
+
+# ---- the grading basis follows the served flag (M12-04, 2026-09-25) --------
+# CLV was retired on 2026-09-07 (betting_export.SERVE_CLV False) and no closing
+# snapshot was ever captured, yet the /betting/ masthead, the /diamond/ member
+# card, the FAQ and the record card still said the record is graded against
+# the closing line. Every one of those sentences now reads the flag.
+
+_CLOSE_CLAIMS = ("graded against the closing line", "graded against the close")
+
+
+def test_shells_name_results_grading_while_clv_is_retired(monkeypatch):
+    import betting_export
+    monkeypatch.setattr(betting_export, "SERVE_CLV", False)
+    for fn in ("build_betting", "build_diamond"):
+        out = getattr(build_site, fn)()
+        for claim in _CLOSE_CLAIMS:
+            assert claim not in out, f"{fn} still claims {claim!r} with CLV retired"
+        assert "graded on realized results" in out or "graded on its realized result" in out, fn
+    assert 'data-serve-clv="0"' in build_site.build_diamond()
+    # The masthead no longer says every pick posts while nothing is published.
+    assert "Every pick posts" not in build_site.build_betting()
+
+
+def test_shells_restore_the_closing_line_copy_with_the_flag(monkeypatch):
+    import betting_export
+    monkeypatch.setattr(betting_export, "SERVE_CLV", True)
+    assert "closing line" in build_site.build_betting()
+    out = build_site.build_diamond()
+    assert "the record graded against the close." in out
+    assert "each graded against the closing line." in out
+    assert 'data-serve-clv="1"' in out
+
+
+# ---- the record card reads the joined summary (M12-14, 2026-09-25) ---------
+# data/betting_record.json is a bare array whose rows never carry a result, so
+# the card that read doc.summary / doc.picks off it said "No pick published
+# yet" for any array, including the day the first row posts.
+
+def _record_html(preview=None, rows=None, serve_clv=False) -> str:
+    js = ""
+    if preview is not None:
+        js += "__setFixture('/data/betting_preview.json', %s);" % json.dumps(preview)
+    if rows is not None:
+        js += "__setFixture('/data/betting_record.json', %s);" % json.dumps(rows)
+    if serve_clv:
+        js += ("document.getElementById('diamond-betting-record').getAttribute = "
+               "function (n) { return n === 'data-serve-clv' ? '1' : null; };")
+    return _run_diamond_js(_scoreboard(False), extra_js=js)["diamond-betting-record"]
+
+
+def _summary(**kw) -> dict:
+    rec = {"n_rows": 0, "n_settled": 0, "n_open": 0, "won": 0, "lost": 0, "push": 0,
+           "net_units": 0.0, "roi_pct": None, "n_clv_graded": 0,
+           "beat_close_rate": None, "avg_clv_pct": None}
+    rec.update(kw)
+    return {"generated_at": "2026-09-25T18:00:00Z", "record": rec}
+
+
+def test_record_card_counts_posted_rows_from_the_served_summary():
+    htm = _record_html(preview=_summary(n_rows=2, n_open=2))
+    assert "No pick published yet" not in htm
+    assert "2 picks posted, none settled" in htm
+    assert "graded on its realized result" in htm
+    assert "closing line" not in htm
+
+
+def test_record_card_falls_back_to_counting_the_raw_array():
+    """The served shape of betting_record.json: a list of rows with no result
+    on any of them. Without the summary the card counts rows and says the
+    results did not load, never that nothing was published."""
+    rows = [{"bet_id": "a", "odds_at_post": -110}, {"bet_id": "b", "odds_at_post": 120}]
+    htm = _record_html(rows=rows)
+    assert "No pick published yet" not in htm
+    assert "2 picks posted" in htm
+    assert "none settled" not in htm
+    assert "results did not load" in htm
+
+
+def test_record_card_empty_state_names_the_served_basis():
+    htm = _record_html(preview=_summary(), rows=[])
+    assert "No pick published yet" in htm
+    for claim in _CLOSE_CLAIMS:
+        assert claim not in htm
+    assert "graded on its realized result" in htm
+
+
+def test_record_card_graded_state_prints_results_and_no_clv_while_retired():
+    htm = _record_html(preview=_summary(n_rows=3, n_settled=3, won=2, lost=1,
+                                        net_units=0.82, roi_pct=27.33))
+    assert "The betting record" in htm
+    assert "2 - 1" in htm and "+0.82" in htm and "+27.3%" in htm
+    assert "closing line value is not captured" in htm
+    assert "Average closing line value" not in htm
+    assert "Beat the closing line" not in htm
+
+
+def test_record_card_prints_clv_rows_only_under_the_flag():
+    htm = _record_html(preview=_summary(n_rows=3, n_settled=3, won=2, lost=1,
+                                        net_units=0.82, roi_pct=1.2,
+                                        avg_clv_pct=1.4, beat_close_rate=0.6667),
+                       serve_clv=True)
+    assert "Average closing line value" in htm and "+1.4%" in htm
+    assert "Beat the closing line" in htm and "66.7%" in htm
+    # roi_pct is a percentage: 1.2 prints as 1.2%, never as 120%.
+    assert "+1.2%" in htm and "120" not in htm

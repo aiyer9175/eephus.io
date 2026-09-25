@@ -597,8 +597,8 @@ ARTIFACTS = (
     {
         "file": "betting.json", "group": "diamond",
         "title": "Betting model board",
-        "what": ("Model prices for the slate, the pick of the day, and the graded public record "
-                 "with each pick's book, odds and closing line."),
+        "what": ("Model prices for the slate, the pick of the day, and the public record's "
+                 "summary: won, lost, net units and ROI on a flat one-unit stake."),
         "cadence": "daily", "stability": STABLE, "pinned_by": "test_betting.py",
         "note": "Informational and for entertainment. 21+.",
     },
@@ -613,8 +613,8 @@ ARTIFACTS = (
     {
         "file": "betting_record.json", "group": "diamond",
         "title": "Betting public record",
-        "what": ("Every pick the site has stood behind, append-only, with the book, the price "
-                 "taken, the closing line and the graded result."),
+        "what": ("Every pick the site has stood behind, append-only, with the book and the "
+                 "price taken. Results are joined from the settlement sidecar on bet_id."),
         "cadence": "daily", "stability": STABLE, "pinned_by": "test_betting.py",
         "note": ("Append-only by construction: a published row is never edited, and a "
                  "correction is a new row. Two slots a day at most."),
