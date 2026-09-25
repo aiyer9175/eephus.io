@@ -20,7 +20,7 @@
   --paper: var(--bg-primary, #F4F0E6);
   --paper-2: var(--bg-secondary, #FBF8F0);
   --line: var(--border, #C9C1AE);
-  --muted: var(--text-tertiary, #706B5C);
+  --muted: var(--text-tertiary, #6B6657);
   --chip: var(--bg-tertiary, #ECE6D6);
   --green: var(--accent-green, #1F7A3A);
   --red: var(--accent-red, #B91C1C);

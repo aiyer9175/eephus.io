@@ -72,7 +72,11 @@
   --bg-header:     #0E2B4D;   /* deep navy band */
   --text-primary:  #0F1B2D;
   --text-secondary:#4A5468;
-  --text-tertiary: #706B5C;  /* v43: darkened from #8B8474 -> ~4.7:1 on warm paper (WCAG AA) */
+  /* 2026-09-25 (census X06-03): #706B5C cleared AA on the page field only;
+     on --bg-tertiary it read 4.27:1, and a label cannot know which surface
+     it lands on. #6B6657 on primary / secondary / tertiary: 5.04 / 5.26 /
+     4.60. test_text_token_contrast.py pins every text token on all three. */
+  --text-tertiary: #6B6657;
   /* DIM TEXT (2026-08-05). The site dimmed its quiet strings by dropping element
      OPACITY on top of --text-tertiary, which is the one operation that cannot
      preserve a contrast ratio: opacity composites the glyph back toward the
@@ -87,7 +91,9 @@
      three surfaces a dim string can land on rather than just the page field:
      --bg-tertiary is the tightest of the three and is the one --text-tertiary
      itself misses (4.27:1 there). Measured light #6A6456 on
-     primary / secondary / tertiary: 5.17 / 5.40 / 4.72. Rules repointed here
+     primary / secondary / tertiary: 5.17 / 5.40 / 4.72. (Since 2026-09-25
+     --text-tertiary clears all three as well; the two now sit close.)
+     Rules repointed here
      drop their opacity, because the token IS the dimming now. */
   --text-dim:      #6A6456;
   /* Gold is a BRAND accent and it is fine as a border, a stripe or a fill. As
@@ -120,7 +126,11 @@
   --accent-red:    #B91C1C;
   --accent-green:  #1F7A3A;
   --accent-navy:   #0E2B4D;
-  --accent-orange: #C2540A;   /* alpha/beta version chips (warm, AA on paper) */
+  /* alpha/beta version chips and early-stage flags. #C2540A read 4.04:1 on
+     the page field, under AA for the 10px masthead chip it colours (census
+     X06-03); #A94A08 reads 5.03 / 5.25 / 4.59 on primary / secondary /
+     tertiary and keeps the hue. */
+  --accent-orange: #A94A08;
   --radius-sm: 0;  /* corners sharpened site-wide (retro / newspaper theme) */
   --radius-md: 0;
   --radius-lg: 0;
@@ -327,11 +337,15 @@
   --bg-header:     #08080A;
   --text-primary:  #ECEEF2;
   --text-secondary:#A6ABB5;
-  --text-tertiary: #7C808A;  /* v43: lightened from #6E727B -> ~4.9:1 on near-black (WCAG AA) */
+  /* 2026-09-25 (census X06-03): #7C808A read 4.94 on the page field but 4.39
+     on --bg-secondary and 3.96 on --bg-tertiary, the card and panel fills
+     most labels sit on. #868A95 reads 5.66 / 5.03 / 4.53. */
+  --text-tertiary: #868A95;
   /* Dark counterpart to the light --text-dim (see the note there). Measured on
      the three dark surfaces primary / secondary / tertiary: 6.18 / 5.49 / 4.95.
-     --text-tertiary misses the tertiary panel here too (3.96:1), which is why
-     the dim role gets its own colour on both themes rather than an opacity. */
+     --text-tertiary missed the tertiary panel here too (3.96:1 before
+     2026-09-25), which is why the dim role got its own colour on both themes
+     rather than an opacity. */
   --text-dim:      #8C919C;
   /* Refractor gold already measures 11.2:1 on the near-black field, so the
      dark theme needs no bronze; the alias keeps every repointed rule on one

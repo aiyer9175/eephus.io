@@ -98,7 +98,7 @@
       bg:   tok("--bg-primary",    dark ? "#101014" : "#F6F1E4"),
       bg2:  tok("--bg-secondary",  dark ? "#16161B" : "#EFE9D8"),
       fg:   tok("--text-primary",  dark ? "#ECEEF2" : "#0F1B2D"),
-      sub:  tok("--text-tertiary", dark ? "#7C808A" : "#706B5C"),
+      sub:  tok("--text-tertiary", dark ? "#868A95" : "#6B6657"),
       line: tok("--border",        dark ? "#2B2B31" : "#C9C1AE"),
       accent: tok(accentTok || "--accent-lilac", dark ? "#00D9FF" : "#0E7C86"),
       pos: dark ? "#4FFF9E" : "#1F7A3A",

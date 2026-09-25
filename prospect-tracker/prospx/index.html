@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=ff63a6bf">
+  <link rel="stylesheet" href="/assets/site.css?v=a74ba1a9">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -96,7 +96,7 @@
       --bg-header:        #0E2B4D;     /* deep navy headline band  */
       --text-primary:     #0F1B2D;     /* near-black navy          */
       --text-secondary:   #4A5468;     /* slate                    */
-      --text-tertiary:    #706B5C;     /* sepia gray (v43: darkened #8B8474 -> ~4.7:1 on paper for WCAG AA) */
+      --text-tertiary:    #6B6657;     /* sepia gray; 4.60:1 or better on all three paper fills (2026-09-25, site.css) */
       --border:           #C9C1AE;     /* warm tan border          */
       --border-light:     #E2DCC9;     /* faint divider            */
       /* Mirrors assets/site.css. Referenced by six inline drawer rules in this
@@ -344,7 +344,7 @@
       --bg-header:        #08080A;   /* near-black header band */
       --text-primary:     #ECEEF2;   /* near-neutral bright white */
       --text-secondary:   #A6ABB5;   /* cool-neutral mid gray */
-      --text-tertiary:    #7C808A;   /* dim cool-neutral gray (v43: lightened #6E727B -> ~4.9:1 on near-black for WCAG AA) */
+      --text-tertiary:    #868A95;   /* dim cool-neutral gray; 4.53:1 or better on all three dark fills (2026-09-25, site.css) */
       --border:           #2B2B31;   /* neutral hairline (was #2A3142 slate) */
       --border-light:     #1D1D21;   /* faint neutral divider */
 
@@ -10381,7 +10381,7 @@
 
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
-<script src="/assets/eephus-export.js?v=abf28509" defer></script>
+<script src="/assets/eephus-export.js?v=2d88d7cb" defer></script>
 <script src="/assets/eephus-csv.js?v=a8613a12" defer></script>
 
 <!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
@@ -10396,7 +10396,7 @@
 <script src="/assets/eephus-ui.js?v=850aedd1" defer></script>
   <script src="/assets/eephus-gl.js?v=7b97df51" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
-  <script src="/assets/eephus-hub.js?v=4f08ae53" defer></script>
+  <script src="/assets/eephus-hub.js?v=f09d4370" defer></script>
   <!-- Team picker: logo listbox on every select[data-team-picker] (reads the hub's club table) -->
   <script src="/assets/eephus-teampick.js?v=20ac7df2" defer></script>
 <!-- Dark-theme phosphor-starfield background - shared with the editorial

@@ -497,7 +497,7 @@
     var ry = pad + headH + content.height + 12 * S;
     _rampRule(g, pad, ry, W - pad * 2, 4 * S, dark);
     g.font = (12 * S) + "px " + _LOGO;
-    g.fillStyle = dark ? "#7C808A" : "#706B5C";
+    g.fillStyle = dark ? "#868A95" : "#6B6657";
     g.fillText(SITE, pad, ry + 22 * S);
     return c;
   }
