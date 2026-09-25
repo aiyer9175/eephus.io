@@ -607,7 +607,9 @@ def test_the_served_board_is_whole_players_sorted_by_ewar():
     assert wars == sorted(wars, reverse=True), "the board does not open on eWAR"
     for r in players[:200]:
         sides = (r.get("war_bat") or 0.0) + (r.get("war_pit") or 0.0)
-        assert abs(r["war"] - sides) <= 0.1, (r["name"], r["war"], sides)
+        # One printed tenth of rounding; the epsilon keeps 2.9 - 2.8 (which is
+        # 0.10000000000000009 in floating point) inside it.
+        assert abs(r["war"] - sides) <= 0.1 + 1e-9, (r["name"], r["war"], sides)
         assert "war_bat" in r or "war_pit" in r
     assert {"war", "war_bat", "war_pit"} <= set(doc["league"])
     # the feed census the dead-feed guard is measured on rides with the board
