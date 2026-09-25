@@ -113,6 +113,34 @@ _LOGO_SLUG_OVERRIDE = {"ARI": "ari", "CHW": "chw"}
 DUGOUT_FAMILIES = (("pitching_change", "Pitching changes"), ("pinch_hit", "Pinch hitters"),
                    ("pinch_run", "Pinch runners"), ("intentional_walk", "Intentional walks"),
                    ("bunt", "Bunts"), ("steal", "Steals"))
+# What a reader saw happen, per family, for the dugout sentence. The sentence names
+# only the families the decision ledger sums (decisions.families[f].summed), so it
+# cannot promise a family the table already shows or name one it does not.
+DUGOUT_HAPPENED = {"steal": "the run sent", "bunt": "the bunt laid down",
+                   "pitching_change": "the reliever called", "pinch_hit": "the pinch hitter sent",
+                   "pinch_run": "the pinch runner sent", "intentional_walk": "the intentional walk issued"}
+
+
+def _summed_families(mgmt: dict) -> list:
+    """DUGOUT_FAMILIES keys the decision ledger sums, in DUGOUT_FAMILIES order."""
+    fams = ((mgmt.get("decisions") or {}).get("families") or {})
+    return [fk for fk, _ in DUGOUT_FAMILIES if (fams.get(fk) or {}).get("summed") is True]
+
+
+def _dugout_sentence(live: list) -> str:
+    """The Dugout note, read off the families the ledger sums."""
+    said = [DUGOUT_HAPPENED[f] for f in live if f in DUGOUT_HAPPENED]
+    if not said:
+        lead = "What is shown here is what happened after the club's decisions."
+    elif len(said) == 1:
+        lead = f"What is shown here is what happened after the club's decisions: {said[0]}."
+    else:
+        lead = ("What is shown here is what happened after the club's decisions: "
+                + ", ".join(said[:-1]) + ", and " + said[-1] + ".")
+    return ("Realized value, not skill. " + lead + " What the alternative would have produced, "
+            "the runner held, the starter left in, was never observed, so nothing on this page "
+            "ranks a manager or a club by decision quality. The running game's gate returned a "
+            "bounded null: a club's decision value did not repeat between halves of its own season.")
 
 TENDENCY_PANELS = (
     ("slot", "Draft slot behaviour", "draft",
@@ -485,6 +513,7 @@ def build() -> dict:
     tend_similar = ((org_tend.get("similarFarms") or {}).get("orgs") or {})
     mgmt_teams = (mgmt.get("teams") or {}).get("rows") or []
     mgmt_clubs = (mgmt.get("clubs") or {}).get("rows") or []
+    live_fams = _summed_families(mgmt)
     mgmt_routes = mgmt.get("routes") or {}
     arb_rows_by: dict = defaultdict(list)
     for r in arb.get("rows") or []:
@@ -722,7 +751,8 @@ def build() -> dict:
         trows = sorted((r for r in mgmt_teams if _canon(r.get("team")) == c), key=lambda r: r.get("season") or 0)
         t26 = next((r for r in trows if r.get("season") == SEASON_NOW), None) or {}
         crow = next((r for r in mgmt_clubs if _canon(r.get("club")) == c and r.get("season") == SEASON_NOW), None) or {}
-        fam_rows = [[fk, flabel, crow.get(f"n_{fk}"), crow.get(f"mwpa_{fk}")] for fk, flabel in DUGOUT_FAMILIES] if crow else []
+        fam_rows = [[fk, flabel, crow.get(f"n_{fk}"), crow.get(f"mwpa_{fk}")]
+                    for fk, flabel in DUGOUT_FAMILIES if fk in live_fams] if crow else []
         dugout = {
             "style": {k: t26.get(k) for k in ("attempts", "success_rate", "share_2B", "share_3B", "mean_breakeven_faced")},
             "attempts_by_season": [[r.get("season"), r.get("attempts")] for r in trows],
@@ -731,7 +761,7 @@ def build() -> dict:
                          "defensive_sub_n": crow.get("n_defensive_sub"),
                          "style_z": {k: crow.get(f"z_{k}") for k in ("hook", "pen", "bench", "ibb", "visit")}},
             "plus_metric": False, "letter": None,
-            "basis": "management_board teams (style rows, OAK joined to ATH) and clubs (realized mWPA per family); gate frozen, bounded null",
+            "basis": "management_board teams (style rows) and clubs (realized mWPA per family), both keyed on the canonical org; gate frozen, bounded null",
         }
 
         # -- ARBITRATION (descriptive) ----------------------------------------------------------
@@ -1031,12 +1061,7 @@ def build() -> dict:
                                      "because no season has elapsed"),
         "front_office_note": "descriptive league-relative behavioural profiles; no forward claims (org_tendencies)",
         "zbar_note": "z against the panel's league mean and sd; style, never a ladder",
-        "dugout_sentence": ("Realized value, not skill. What is shown here is what happened after the club's decisions: "
-                            "the run sent, the bunt laid down, and, once the next families land, the reliever called "
-                            "and the pinch hitter sent. What the alternative would have produced, the runner held, "
-                            "the starter left in, was never observed, so nothing on this page ranks a manager or a "
-                            "club by decision quality. The running game's gate returned a bounded null: a club's "
-                            "decision value did not repeat between halves of its own season."),
+        "dugout_sentence": _dugout_sentence(live_fams),
         "dugout_realized_tag": "realized",
         "dugout_agent": ((mgmt.get("clubs") or {}).get("agent_sentence") or "team-season"),
         "dugout_style": ((mgmt.get("clubs") or {}).get("style_sentence") or "style, not skill"),

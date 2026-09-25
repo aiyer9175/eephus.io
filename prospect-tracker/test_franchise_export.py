@@ -97,7 +97,9 @@ def test_thirty_clubs_and_only_canonical_codes(d, clubs):
     assert oj["war_leaderboards"][1] == 30 and oj["team_outlook"][1] == 30 and oj["org_summary"][1] == 30
     assert oj["fa_meta"][0] > 30 and not set(oj["trade_values_dropped"]) & set(clubs)
     assert oj["trade_values"][0] - oj["trade_values"][1] == len(oj["trade_values_dropped"])
-    assert oj["management_teams"][0] == 31 and oj["management_teams"][1] == 30, "OAK joins ATH"
+    # mgmt_export keys its style rows on the canonical org since M10-03, so no OAK
+    # row reaches this join (it counted 31 raw codes while OAK and ATH were split).
+    assert oj["management_teams"][0] == 30 and oj["management_teams"][1] == 30, "one code per org"
     assert oj["standings_ids"] == 30
 
 
@@ -442,6 +444,23 @@ def test_dugout_copy_contains_realized_value_not_skill_and_the_counterfactual_se
     assert "nothing on this page ranks a manager or a club by decision quality" in s
     assert "bounded null" in s
     assert d["copy"]["dugout_realized_tag"] == "realized"
+
+
+def test_the_dugout_sentence_names_the_families_the_table_shows(d, clubs):
+    """M10-07. The sentence said the reliever and the pinch hitter would come "once the
+    next families land" while the same table showed both. It is now read off the
+    decision ledger's summed families, and every family row is one of them."""
+    import franchise_export as FE
+    mgmt = _load("management_board.json")
+    fams = mgmt["decisions"]["families"]
+    s = d["copy"]["dugout_sentence"]
+    assert "once the next families land" not in s
+    for c in clubs.values():
+        for f in c["sections"]["dugout"]["realized"]["families"]:
+            assert fams[f[0]]["summed"] is True, f[0]
+            assert FE.DUGOUT_HAPPENED[f[0]] in s, f[0]
+    assert FE._dugout_sentence(["steal"]).count("the run sent.") == 1
+    assert "the reliever called" not in FE._dugout_sentence(["steal", "bunt"])
 
 
 def test_every_leaf_names_its_basis_and_kind(d, clubs):
