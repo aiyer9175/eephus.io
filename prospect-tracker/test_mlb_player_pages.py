@@ -48,6 +48,23 @@ def test_player_detail_fa_members_attached():
     assert "projAav" in m and "verdict" in m
 
 
+def test_player_detail_fa_block_carries_the_path_fa_prices_on():
+    """M05-06: /fa/ prices on the Marcel champion path (fa_class warPath), not
+    the proj_lgbm_v1 path the card prints, so the card's FA block carries the
+    FA path and its Deal WAR verbatim and can name it."""
+    d = _load("data/mlb_player_detail.json")
+    fc = _load("data/fa_class.json")
+    members = {m["key"]: m for m in fc.get("members") or []}
+    bad = []
+    for key, p in d["players"].items():
+        m = members.get(key)
+        if not p.get("fa") or m is None:
+            continue
+        if p["fa"].get("warPath") != m.get("warPath") or p["fa"].get("warTotal") != m.get("warTotal"):
+            bad.append(key)
+    assert not bad, f"{len(bad)} FA blocks miss the FA pricing path: {bad[:5]}"
+
+
 def test_projections_app_has_player_route():
     src = (ROOT / "assets" / "projections.js").read_text(encoding="utf-8")
     for needle in ("renderPlayer", "mlb_player_detail.json", "#player=",

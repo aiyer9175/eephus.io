@@ -1580,6 +1580,7 @@
       ${(m.surplusP10 != null && m.surplusP90 != null) ? `<p class="fa-note" title="Rational value of the P10 and P90 WAR paths minus the predicted price">Surplus range, P10 &rarr; P90: ${surplusSpan(m.surplusP10)} &rarr; ${surplusSpan(m.surplusP90)}; mean ${surplusSpan(m.surplus)}</p>` : ""}`;
     const seasonPanel = `
       ${yearRows ? `<h3>Season-by-season projection</h3>
+      <p class="fa-note">Mean is the <span data-gl="fa_projection_engine">Marcel champion</span> path this page prices on. /projections/ shows the proj_lgbm_v1 path for the same seasons, which can differ: ML paths failed the <span data-gl="fa_gates">Gate 2</span> market test, so contracts stay priced on the champion.</p>
       <table class="detail-table fa-year-table">
       <thead><tr><th>Season</th><th>Age</th><th><span data-gl="proj_buckets">Floor</span></th><th>Mean</th><th><span data-gl="proj_buckets">Ceiling</span></th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
       <tbody>${yearRows}</tbody></table>` : ""}

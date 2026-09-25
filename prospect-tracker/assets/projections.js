@@ -731,7 +731,7 @@
     const teams = [...new Set((DATA.vets || []).map(m => m.team).filter(Boolean))].sort();
 
     banner.innerHTML = `<div class="fa-note fa-sources">
-      ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${DATA.n_vets} veterans (<span data-gl="fa_projection_engine">FA projection engine</span>)
+      ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${DATA.n_vets} veterans (proj_lgbm_v1 on the <span data-gl="fa_projection_engine">FA projection engine</span>; /fa/ prices on its Marcel champion)
       &middot; ${DATA.n_prospects} prospects (<span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA)
       &middot; priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons"}
       &middot; WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window, through ${first + (DATA.horizon || 5) - 1} at most
@@ -1088,7 +1088,7 @@
       : "";
     const header = nowMode
       ? `<thead><tr><th>#</th>${sth("team", "Team")}${sth("nowPct", "Record", `Actual ${curSeason} record + win%`)}${sth("pythag", "Pythag", "Pythagorean win% from run differential (exp 1.83)")}${sth("blend", "Proj W-L", "Bayesian blend of talent prior + actual + Pythag -> projected full-season record")}${sth("playoff", "Playoff odds", "Monte-Carlo division/wildcard/playoff probability")}${sth("sos", "Rem SOS", "Remaining strength of schedule via log5 (rank 1 = hardest)")}</tr></thead>`
-      : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under contract, or projected controlled by age where no contract is on file. Not the club control window; that is on the players board.`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net prospect surplus NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
+      : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR", "Sum of each rostered veteran's champion mean year-1 WAR (the Marcel path /fa/ prices on; quantile points are never summed) plus arrived prospects. Top projected names print the proj_lgbm_v1 path, so a player's figure there can differ from his share of this sum.")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under contract, or projected controlled by age where no contract is on file. Not the club control window; that is on the players board.`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net prospect surplus NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
     root.innerHTML = `${modeChips}<div class="fa-note proj-teams-note">${note}</div>
       <table class="detail-table proj-table">
       ${header}
@@ -2387,7 +2387,28 @@
     ];
     return section("contract-fa", "Free Agency", `${esc(f.status || "")} · ${term("fa_gates", "Gate 2")} market model ${verd}`,
       `<div class="mlbp-grid">${cells.map(([l, v]) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${l}</span><span class="mlbp-cell-val">${v}</span></div>`).join("")}</div>
+      ${faPricingPathNote(p)}
       <div class="fa-sub mlbp-block-foot"><a class="fa-player-link" href="/fa/#player=${encodeURIComponent(p.key)}">FA market card &rarr;</a></div>`);
+  }
+  // TWO PATHS, SAID ONCE (M05-06, 2026-09-25). The expected path above is
+  // proj_lgbm_v1; the FA numbers in this block (Rational value, Contract
+  // surplus, Deal+) are priced on the Marcel champion path, because ML paths as
+  // market inputs failed Gate 2 (fa_export use_ml=False, a do-not-reopen item).
+  // The block names the path it prices and its per-season values, so a reader
+  // moving between this card and /fa/ sees why the two pages print different
+  // WAR for the same season instead of finding a contradiction.
+  function faPricingPathNote(p) {
+    const f = p.fa || {}, pr = p.proj || {};
+    const fp = f.warPath || [];
+    if (!fp.length) return "";
+    const first = DATA ? DATA.first_season : null;
+    const ml = pr.war || [];
+    const n = Math.min(fp.length, ml.length);
+    const sum = (a, k) => a.slice(0, k).reduce((s, v) => s + (v || 0), 0);
+    const cmp = n && first != null
+      ? ` Over ${first}-${first + n - 1} the FA path sums ${fmtWar(sum(fp, n))} against ${fmtWar(sum(ml, n))} on the projection path above.`
+      : "";
+    return `<div class="fa-sub mlbp-block-foot" data-fa-pricing-path>FA values are priced on the ${term("fa_projection_engine", "Marcel champion path")}, not the projection path above: ${fp.map(fmtWar).join(" / ")}${first != null ? ` (${first}-${first + fp.length - 1})` : ""}, Deal WAR ${fmtWar(f.warTotal)}.${cmp} ML paths failed the ${term("fa_gates", "Gate 2")} market test, so /fa/ keeps the champion.</div>`;
   }
   function projectionPanel(p) {
     const pr = p.proj || {};

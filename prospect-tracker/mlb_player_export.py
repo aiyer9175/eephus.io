@@ -719,7 +719,11 @@ def build_payload() -> dict:
         p["fa"] = {k: m.get(k) for k in (
             "status", "type", "projYears", "projGuar", "projAav",
             "projAavP10", "projAavP90", "rational", "surplus", "dealPlus",
-            "verdict", "prevAav", "enterProb")}
+            "verdict", "prevAav", "enterProb",
+            # The path the FA numbers above are priced on (the Marcel
+            # champion, fa_export use_ml=False) and its Deal WAR, so the card
+            # can name it beside the proj_lgbm_v1 path it prints (M05-06).
+            "warPath", "warTotal")}
 
     # Thin cards for MLB Stats leaderboard players outside the projections / FA
     # universe, so their leaderboard names link to a card. Collision-safe keys

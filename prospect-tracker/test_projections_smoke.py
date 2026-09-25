@@ -498,6 +498,34 @@ def test_a_deal_past_the_horizon_never_calls_its_surplus_the_control_window():
         DETAIL, BOARD = base_d, base_b
 
 
+def test_the_fa_block_names_the_path_it_prices_on():
+    """M05-06: the Projection tab prints the proj_lgbm_v1 path and, below it,
+    FA values priced on the Marcel champion. The block must name that path,
+    its seasons and Deal WAR, and compare the two sums on shared seasons."""
+    global DETAIL, BOARD
+    base_d, base_b = DETAIL, BOARD
+    try:
+        d = json.loads(base_d)
+        d["players"]["vet_guy"]["fa"] = {
+            "status": "FA 2027", "projYears": 7, "projGuar": 150000000,
+            "projAav": 21000000, "rational": 180000000, "surplus": 30000000,
+            "dealPlus": 120, "verdict": "fair",
+            "warPath": [4.25, 3.75, 3.25, 2.71, 2.08, 1.36, 0.74], "warTotal": 18.1}
+        DETAIL = json.dumps(d)
+        bd = json.loads(base_b)
+        bd["first_season"] = 2027
+        BOARD = json.dumps(bd)
+        blk = _section(_render("#player=vet_guy&ptab=projection"), "contract-fa")
+        note = blk.split("data-fa-pricing-path", 1)[1][:900]
+        assert "Marcel champion path" in note
+        assert "4.3 / 3.8 / 3.3 / 2.7 / 2.1 / 1.4 / 0.7 (2027-2033)" in note
+        assert "Deal WAR 18.1" in note
+        # shared seasons 2027-2031: FA 16.0 against the card's 13.0
+        assert "Over 2027-2031 the FA path sums 16.0 against 13.0" in note
+    finally:
+        DETAIL, BOARD = base_d, base_b
+
+
 def test_season_lines_carry_the_ewar_column_again():
     """Owner decision 20 (2026-09-11): the eWAR column is back in the season
     lines, and the Value tab keeps its bars. A two-way card shows each side's
