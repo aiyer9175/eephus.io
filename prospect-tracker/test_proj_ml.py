@@ -146,6 +146,40 @@ def test_ml_config_gate_defaults_off_until_shipped():
             "registry champion not updated for the shipped ML model"
 
 
+def test_registry_champion_names_the_committed_bundle_hash():
+    """PORT_SPEC P0.6 (X04-03): a registry champion that names a proj_lgbm
+    bundle hash must name the one in model/proj_lgbm/meta.json. The docs
+    carried 6a691e03ff096a35 after the bundle became cb42b96eb5ea533c, and
+    the older test above only checked that a hash existed."""
+    import re
+    meta_path = ROOT / "model" / "proj_lgbm" / "meta.json"
+    if not meta_path.exists():
+        pytest.skip("no committed proj_lgbm bundle")
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    named = 0
+    for row in reg["models"]:
+        champ = str(row.get("champion") or "")
+        if "proj_lgbm" not in champ:
+            continue
+        for h in re.findall(r"\b[0-9a-f]{16}\b", champ):
+            named += 1
+            assert h == meta["train_hash"], (row["model_id"], h, meta["train_hash"])
+    assert named, "no registry champion names the bundle hash"
+
+
+def test_bundle_war_provider_is_the_default_provider():
+    """P0.6: the committed bundle was trained on the WAR provider every
+    reader defaults to, so a provider flip without a retrain fails here."""
+    import war_source
+    meta_path = ROOT / "model" / "proj_lgbm" / "meta.json"
+    if not meta_path.exists():
+        pytest.skip("no committed proj_lgbm bundle")
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    assert meta.get("war_provider") == war_source.DEFAULT_PROVIDER, (
+        meta.get("war_provider"), war_source.DEFAULT_PROVIDER)
+
+
 def test_training_frame_no_lookahead_property(fitted):
     """Every label season in a frame respects <= max_label_season — the
     forward-chaining contract, asserted on a small real frame."""
