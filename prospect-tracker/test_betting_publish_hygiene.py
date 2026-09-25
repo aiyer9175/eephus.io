@@ -150,6 +150,10 @@ def test_a_nonempty_record_with_no_anchor_closes_the_chain_half(tmp_path, monkey
     monkeypatch.setattr(be, "RECORD_JSONL", jsonl)
     monkeypatch.setattr(be, "RECORD_PATH", tmp_path / "betting_record.json")
     monkeypatch.setattr(be, "PUBLISHED_CHAIN_PATH", tmp_path / "published_chain.json")
+    # The board fallback reads DATA_DIR/betting.json. Point it at the empty
+    # tmp dir so the "previous chain value None" state is the fixture's, not
+    # whatever record the served board carries (a real chain since 2026-09-25).
+    monkeypatch.setattr(be, "DATA_DIR", tmp_path)
     be.write_record([ROW], path=jsonl)
 
     bl = be.record_publish_blockers(payload={"slate_date": None, "status": {}},
@@ -176,6 +180,10 @@ def test_the_anchor_report_says_unarmed_for_the_same_state(tmp_path, monkeypatch
     monkeypatch.setattr(be, "RECORD_JSONL", jsonl)
     monkeypatch.setattr(be, "RECORD_PATH", tmp_path / "betting_record.json")
     monkeypatch.setattr(be, "PUBLISHED_CHAIN_PATH", tmp_path / "published_chain.json")
+    # The board fallback reads DATA_DIR/betting.json. Point it at the empty
+    # tmp dir so the "previous chain value None" state is the fixture's, not
+    # whatever record the served board carries (a real chain since 2026-09-25).
+    monkeypatch.setattr(be, "DATA_DIR", tmp_path)
     be.write_record([ROW], path=jsonl)
 
     anchor = be.read_published_chain()

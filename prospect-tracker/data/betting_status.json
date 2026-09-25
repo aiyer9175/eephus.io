@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-09-07T19:05:32+00:00",
- "configured": false,
+ "generated_at": "2026-09-25T23:34:22+00:00",
+ "configured": true,
  "provider": "The Odds API (free tier)",
  "sport": "baseball_mlb",
  "markets": [
@@ -14,19 +14,19 @@
  "credits_per_snapshot": 3,
  "monthly_budget": 500,
  "planned_monthly_credits": 186,
- "n_snapshots_cached": 24,
- "latest_snapshot": "2026-09-07T17:03:24+00:00",
+ "n_snapshots_cached": 37,
+ "latest_snapshot": "2026-09-25T23:34:22+00:00",
  "latest_kind": "open",
  "latest_credits": {
   "cost": 3,
-  "used": 15,
-  "remaining": 485,
+  "used": 54,
+  "remaining": 446,
   "last": 3
  },
- "props": "props machinery is inert: EEPHUS_ODDS_API_KEY and EEPHUS_PROPS_CREDITS are not set. Both EEPHUS_ODDS_API_KEY and EEPHUS_PROPS_CREDITS must be set before a per-event props pull can spend a credit.",
+ "props": "props machinery is inert: EEPHUS_PROPS_CREDITS is not set. Both EEPHUS_ODDS_API_KEY and EEPHUS_PROPS_CREDITS must be set before a per-event props pull can spend a credit.",
  "props_armed": false,
  "props_credits_cap": null,
  "props_credits_per_event": 4,
  "props_spent_this_month": 0,
- "note": "odds feed not configured: set EEPHUS_ODDS_API_KEY on the build box"
+ "note": "odds feed configured"
 }

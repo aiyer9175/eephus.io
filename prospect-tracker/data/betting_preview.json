@@ -1,156 +1,128 @@
 {
- "generated_at": "2026-09-07T19:05:33+00:00",
- "slate_date": "2026-09-07",
+ "generated_at": "2026-09-25T23:34:23+00:00",
+ "slate_date": "2026-09-26",
  "status": {
   "odds_feed": "ok",
-  "odds_note": "odds feed not configured: set EEPHUS_ODDS_API_KEY on the build box",
-  "odds_captured_at": "2026-09-07T17:03:24+00:00",
+  "odds_note": "odds feed configured",
+  "odds_captured_at": "2026-09-25T23:34:22+00:00",
   "odds_kind": "open",
   "model": "unvalidated",
   "model_registry_verdict": "provisional",
-  "model_verdict_sentence": "the eval artifact's gates are closed and no minimum edge is measured, so the served state is unvalidated; the model registry's verdict is \"provisional\", which there means measured but short of its sample gate, not working.",
+  "model_verdict_sentence": "the eval artifact's gates are closed and no minimum edge is measured, so the served state is unvalidated; the model registry's verdict is \"provisional\" (measured, short of its sample gate).",
   "model_mode": "contaminated",
   "team_input_sources": {
    "offense": {
     "file": "hitter_leaderboards.json",
     "present": true,
     "n_orgs": 30,
-    "as_of": "2026-09-07"
+    "as_of": "2026-09-25"
    },
    "rotation": {
     "file": "starter_leaderboards.json",
     "present": true,
     "n_orgs": 30,
-    "as_of": "2026-09-07"
+    "as_of": "2026-09-25"
    },
    "bullpen": {
     "file": "bullpen_leaderboards.json",
     "present": true,
     "n_orgs": 30,
-    "as_of": "2026-09-07"
+    "as_of": "2026-09-25"
    },
    "n_orgs_joined": 30
   },
-  "n_slate_games": 5,
-  "n_events_dropped_in_progress": 6,
-  "n_games_unpriced_time_mismatch": 0,
-  "slate_rule": "earliest_priced_partial_slate",
+  "n_slate_games": 14,
+  "n_events_dropped_in_progress": 7,
+  "n_games_unpriced_time_mismatch": 2,
+  "n_runline_refused": 0,
+  "runline_refusals": [],
+  "slate_rule": "first_open_priced_slate",
   "slate_candidates": [
    {
-    "date": "2026-09-07",
-    "n_games": 11,
-    "n_bettable": 11,
+    "date": "2026-09-25",
+    "n_games": 17,
+    "n_bettable": 17,
     "open": false,
-    "n_priceable": 5,
-    "n_started": 6,
-    "n_pregame": 5,
-    "pregame_share": 0.4545,
+    "n_priceable": 8,
+    "n_started": 9,
+    "n_pregame": 8,
+    "n_called_off": 0,
+    "n_playable": 17,
+    "pregame_share": 0.4706,
     "min_pregame_share": 0.5,
-    "why_not": "2026-09-07 holds 11 game(s), 6 have already started or finished and 5 are still to come, so less than half of the card is left and what remains is a fragment rather than a board"
+    "why_not": "2026-09-25 holds 17 game(s), 9 have already started or finished and 8 are still to come, so less than half of the card is left and what remains is a fragment rather than a board"
    },
    {
-    "date": "2026-09-08",
-    "n_games": 15,
-    "n_bettable": 15,
+    "date": "2026-09-26",
+    "n_games": 14,
+    "n_bettable": 14,
     "open": true,
-    "n_priceable": 0,
+    "n_priceable": 8,
     "n_started": 0,
-    "n_pregame": 15,
+    "n_pregame": 14,
+    "n_called_off": 0,
+    "n_playable": 14,
     "pregame_share": 1.0,
     "min_pregame_share": 0.5,
     "why_not": null
    },
    {
-    "date": "2026-09-09",
-    "n_games": 15,
-    "n_bettable": 15,
+    "date": "2026-09-27",
+    "n_games": 14,
+    "n_bettable": 14,
     "open": true,
     "n_priceable": 0,
     "n_started": 0,
-    "n_pregame": 15,
+    "n_pregame": 14,
+    "n_called_off": 0,
+    "n_playable": 14,
     "pregame_share": 1.0,
     "min_pregame_share": 0.5,
     "why_not": null
    }
   ],
-  "partial_slate": {
-   "slate_date": "2026-09-07",
-   "n_games_on_date": 11,
-   "n_bettable": 11,
-   "n_still_to_come": 5,
-   "n_priceable": 5,
-   "reason": "no whole card on the schedule has a cached market, so the board is the 5 game(s) still to come on 2026-09-07, which the snapshot can price. 2026-09-07 holds 11 game(s), 6 have already started or finished and 5 are still to come, so less than half of the card is left and what remains is a fragment rather than a board"
-  },
+  "partial_slate": null,
+  "slate_called_off": null,
   "started_rows_dropped": {
-   "n": 6,
-   "n_on_slate": 11,
-   "games": [
-    {
-     "game_pk": 823415,
-     "matchup": "ATL at PHI",
-     "start": "2026-09-07T17:05:00Z",
-     "status": "Preview"
-    },
-    {
-     "game_pk": 823820,
-     "matchup": "NYM at MIA",
-     "start": "2026-09-07T17:10:00Z",
-     "status": "Preview"
-    },
-    {
-     "game_pk": 824715,
-     "matchup": "LAA at BOS",
-     "start": "2026-09-07T17:35:00Z",
-     "status": "Preview"
-    },
-    {
-     "game_pk": 824793,
-     "matchup": "CLE at BAL",
-     "start": "2026-09-07T17:35:00Z",
-     "status": "Preview"
-    },
-    {
-     "game_pk": 824062,
-     "matchup": "ARI at KCR",
-     "start": "2026-09-07T18:10:00Z",
-     "status": "Preview"
-    },
-    {
-     "game_pk": 823742,
-     "matchup": "CHC at MIL",
-     "start": "2026-09-07T18:10:00Z",
-     "status": "Preview"
-    }
-   ],
+   "n": 0,
+   "n_on_slate": 14,
+   "games": [],
    "reason": "first pitch has passed, so the game is no longer on the book's pregame board and carries no price to show",
    "basis": "StatsAPI status or a first pitch at or before now, the same two signals the slate rule reads",
    "applied": true
   },
+  "called_off_rows_dropped": {
+   "n": 0,
+   "n_on_slate": 14,
+   "games": [],
+   "reason": "the game will not be played on this date, so there is nothing here to price and a posted number would grade as a void",
+   "basis": "the StatsAPI status string, or the coded and detailed states in the cached schedule document data/fantasy.json drops"
+  },
   "odds_slate": {
-   "board_slate": "2026-09-07",
-   "snapshot_slate": "2026-09-07",
-   "snapshot_captured_at": "2026-09-07T17:03:24+00:00",
-   "snapshot_age_hours": 2.0,
+   "board_slate": "2026-09-26",
+   "snapshot_slate": "2026-09-25",
+   "snapshot_captured_at": "2026-09-25T23:34:22+00:00",
+   "snapshot_age_hours": 0.0,
    "matched": true,
-   "match_rule": "slate_label",
-   "n_pregame_events_on_board_slate": 5,
+   "match_rule": "carries_slate_events",
+   "n_pregame_events_on_board_slate": 8,
    "mismatch": false,
-   "reason": "the cached snapshot is stamped for the 2026-09-07 slate"
+   "reason": "the newest snapshot is stamped for the 2026-09-25 slate and carries 8 game(s) on the 2026-09-26 board that have not started; a capture is labelled by its earliest event, so this is the normal shape of an evening board"
   },
   "odds_slate_mismatch": false,
-  "odds_snapshot_age_hours": 2.0,
+  "odds_snapshot_age_hours": 0.0,
   "stale_board": false,
   "feed_health": {
-   "generated_at": "2026-09-07T19:05:33+00:00",
+   "generated_at": "2026-09-25T23:34:23+00:00",
    "window_days": 14,
    "source": ".cache/odds",
-   "n_slates": 10,
+   "n_slates": 12,
    "n_slates_with_close": 0,
-   "n_slates_missing_close": 10,
+   "n_slates_missing_close": 12,
    "n_unreadable_files": 0,
    "ever_captured_close": false,
    "hours_since_last_close": null,
-   "hours_since_last_open": 2.04,
+   "hours_since_last_open": 0.0,
    "close_stale_hours": 36.0,
    "close_job_last_run": null,
    "close_job_last_reason": null,
@@ -159,113 +131,129 @@
    "red": true,
    "slates": [
     {
-     "slate_date": "2026-08-23",
+     "slate_date": "2026-09-10",
      "open": 1,
      "close": 0,
      "unknown": 0,
-     "first_capture": "2026-08-23T23:13:40+00:00",
-     "last_capture": "2026-08-23T23:13:40+00:00",
+     "first_capture": "2026-09-10T19:34:23+00:00",
+     "last_capture": "2026-09-10T19:34:23+00:00",
      "clv_gradable": false
     },
     {
-     "slate_date": "2026-08-24",
+     "slate_date": "2026-09-11",
      "open": 1,
      "close": 0,
      "unknown": 0,
-     "first_capture": "2026-08-24T19:25:03+00:00",
-     "last_capture": "2026-08-24T19:25:03+00:00",
+     "first_capture": "2026-09-11T17:35:00+00:00",
+     "last_capture": "2026-09-11T17:35:00+00:00",
      "clv_gradable": false
     },
     {
-     "slate_date": "2026-08-27",
+     "slate_date": "2026-09-13",
      "open": 1,
      "close": 0,
      "unknown": 0,
-     "first_capture": "2026-08-27T21:38:35+00:00",
-     "last_capture": "2026-08-27T21:38:35+00:00",
+     "first_capture": "2026-09-13T20:22:56+00:00",
+     "last_capture": "2026-09-13T20:22:56+00:00",
      "clv_gradable": false
     },
     {
-     "slate_date": "2026-08-30",
+     "slate_date": "2026-09-14",
      "open": 1,
      "close": 0,
      "unknown": 0,
-     "first_capture": "2026-08-30T20:44:31+00:00",
-     "last_capture": "2026-08-30T20:44:31+00:00",
+     "first_capture": "2026-09-14T17:29:51+00:00",
+     "last_capture": "2026-09-14T17:29:51+00:00",
      "clv_gradable": false
     },
     {
-     "slate_date": "2026-08-31",
+     "slate_date": "2026-09-16",
      "open": 1,
      "close": 0,
      "unknown": 0,
-     "first_capture": "2026-08-31T20:40:51+00:00",
-     "last_capture": "2026-08-31T20:40:51+00:00",
+     "first_capture": "2026-09-16T15:16:35+00:00",
+     "last_capture": "2026-09-16T15:16:35+00:00",
      "clv_gradable": false
     },
     {
-     "slate_date": "2026-09-03",
+     "slate_date": "2026-09-17",
      "open": 1,
      "close": 0,
      "unknown": 0,
-     "first_capture": "2026-09-03T15:16:49+00:00",
-     "last_capture": "2026-09-03T15:16:49+00:00",
+     "first_capture": "2026-09-17T20:18:01+00:00",
+     "last_capture": "2026-09-17T20:18:01+00:00",
      "clv_gradable": false
     },
     {
-     "slate_date": "2026-09-04",
+     "slate_date": "2026-09-18",
      "open": 1,
      "close": 0,
      "unknown": 0,
-     "first_capture": "2026-09-04T19:12:06+00:00",
-     "last_capture": "2026-09-04T19:12:06+00:00",
+     "first_capture": "2026-09-18T13:33:46+00:00",
+     "last_capture": "2026-09-18T13:33:46+00:00",
      "clv_gradable": false
     },
     {
-     "slate_date": "2026-09-05",
+     "slate_date": "2026-09-19",
      "open": 1,
      "close": 0,
      "unknown": 0,
-     "first_capture": "2026-09-05T17:18:49+00:00",
-     "last_capture": "2026-09-05T17:18:49+00:00",
+     "first_capture": "2026-09-19T16:44:48+00:00",
+     "last_capture": "2026-09-19T16:44:48+00:00",
      "clv_gradable": false
     },
     {
-     "slate_date": "2026-09-06",
+     "slate_date": "2026-09-21",
      "open": 1,
      "close": 0,
      "unknown": 0,
-     "first_capture": "2026-09-06T19:25:15+00:00",
-     "last_capture": "2026-09-06T19:25:15+00:00",
+     "first_capture": "2026-09-21T19:28:37+00:00",
+     "last_capture": "2026-09-21T19:28:37+00:00",
      "clv_gradable": false
     },
     {
-     "slate_date": "2026-09-07",
+     "slate_date": "2026-09-23",
      "open": 1,
      "close": 0,
      "unknown": 0,
-     "first_capture": "2026-09-07T17:03:24+00:00",
-     "last_capture": "2026-09-07T17:03:24+00:00",
+     "first_capture": "2026-09-23T18:39:59+00:00",
+     "last_capture": "2026-09-23T18:39:59+00:00",
+     "clv_gradable": false
+    },
+    {
+     "slate_date": "2026-09-24",
+     "open": 1,
+     "close": 0,
+     "unknown": 0,
+     "first_capture": "2026-09-24T19:44:48+00:00",
+     "last_capture": "2026-09-24T19:44:48+00:00",
+     "clv_gradable": false
+    },
+    {
+     "slate_date": "2026-09-25",
+     "open": 1,
+     "close": 0,
+     "unknown": 0,
+     "first_capture": "2026-09-25T23:34:22+00:00",
+     "last_capture": "2026-09-25T23:34:22+00:00",
      "clv_gradable": false
     }
    ],
    "diagnosis": "no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above",
    "why_not_a_heartbeat": "data/job_heartbeat.json is git-tracked and deploy/nightly-build.sh reverts it before every pipeline, so a close-job heartbeat cannot survive to be read; this is measured off .cache/odds/ instead"
   },
-  "empty_reasons": [
-   "no whole card on the schedule has a cached market, so the board is the 5 game(s) still to come on 2026-09-07, which the snapshot can price. 2026-09-07 holds 11 game(s), 6 have already started or finished and 5 are still to come, so less than half of the card is left and what remains is a fragment rather than a board"
-  ]
+  "empty_reasons": []
  },
  "model": {
-  "version": "betting_runs_v1",
+  "version": "betting_runs_v2",
   "validated": false,
   "stage": "Diamond preview",
   "min_edge": null,
   "validation": {
    "available": true,
    "artifact": "data/betting_model_eval.json",
-   "generated_at": "2026-09-07T17:21:11+00:00",
-   "model_version": "betting_runs_v1",
+   "generated_at": "2026-09-24T19:45:49+00:00",
+   "model_version": "betting_runs_v2",
    "validated": false,
    "gates_picks": false,
    "min_edge": null,
@@ -276,45 +264,45 @@
    "headline_mode": "contaminated",
    "mode_meaning": {
     "contaminated": "Team inputs are season-to-date leaderboards, so every graded game sits inside its own features. This measures calibration, not skill, and it cannot validate anything.",
-    "vintage": "Every game is priced on a leaderboard snapshot whose knowledge cutoff is strictly before that game: team offense, team run prevention, the listed probable and the park index all come out of that snapshot. A game with no such snapshot is skipped, not graded on today's numbers, and a game whose snapshot predates the stored park column is priced with the park term at neutral rather than on the live index. This is the only mode that can validate the model."
+    "vintage": "Every game is priced on a leaderboard snapshot whose knowledge cutoff is strictly before that game: team offense, team run prevention, the starter's SEM+ ratings and the park index all come out of that snapshot. WHICH starter does not: his identity is the probable on the completed-game row, which is the final feed's, while the served board prices the probable listed at the nightly build. Who starts is fixed before first pitch, so that is a difference in information and not an outcome leak. A game with no such snapshot is skipped, not graded on today's numbers, and a game whose snapshot predates the stored park column is priced with the park term at neutral rather than on the live index. This is the only mode that can validate the model."
    },
    "graded_blocks": [
     {
      "label": "in-sample (coefficients and features both leak)",
      "mode": "contaminated",
      "honest": false,
-     "n": 2154,
-     "brier": 0.24148,
+     "n": 2374,
+     "brier": 0.23992,
      "brier_flat_500": 0.25,
-     "brier_home_base": 0.24932,
-     "accuracy": 0.5608,
+     "brier_home_base": 0.24916,
+     "accuracy": 0.5725,
      "key": "in_sample",
      "skill_vs_home_base": {
-      "delta": 0.007845,
-      "sd": 0.08612,
-      "t": 4.228,
+      "delta": 0.009238,
+      "sd": 0.09212,
+      "t": 4.886,
       "beats_baseline_95": true,
-      "n_for_95": 326,
-      "baseline": 0.526
+      "n_for_95": 269,
+      "baseline": 0.5291
      }
     },
     {
-     "label": "forward from 2026-07-20 (coefficient leakage removed, feature leakage remains)",
+     "label": "forward from 2026-08-01 (coefficient leakage removed, feature leakage remains)",
      "mode": "contaminated",
      "honest": false,
-     "n": 664,
-     "brier": 0.24118,
+     "n": 722,
+     "brier": 0.23648,
      "brier_flat_500": 0.25,
-     "brier_home_base": 0.2488,
-     "accuracy": 0.5512,
+     "brier_home_base": 0.24791,
+     "accuracy": 0.5789,
      "key": "forward",
      "skill_vs_home_base": {
-      "delta": 0.007619,
-      "sd": 0.08304,
-      "t": 2.364,
+      "delta": 0.011428,
+      "sd": 0.08744,
+      "t": 3.512,
       "beats_baseline_95": true,
-      "n_for_95": 321,
-      "baseline": 0.5346
+      "n_for_95": 158,
+      "baseline": 0.5457
      }
     },
     {
@@ -322,35 +310,35 @@
      "mode": "vintage",
      "honest": true,
      "status": "graded",
-     "n": 502,
-     "n_graded": 502,
-     "brier": 0.24418,
+     "n": 722,
+     "n_graded": 722,
+     "brier": 0.24266,
      "brier_flat_500": 0.25,
-     "brier_home_base": 0.24841,
-     "accuracy": 0.5697,
-     "note": "502 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season",
+     "brier_home_base": 0.24791,
+     "accuracy": 0.5706,
+     "note": "722 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season",
      "key": "vintage",
      "skill_vs_home_base": {
-      "delta": 0.00423,
-      "sd": 0.04277,
-      "t": 2.216,
+      "delta": 0.005246,
+      "sd": 0.04691,
+      "t": 3.005,
       "beats_baseline_95": true,
-      "n_for_95": 277,
-      "baseline": 0.5398
+      "n_for_95": 216,
+      "baseline": 0.5457
      }
     }
    ],
    "vintage": {
     "status": "graded",
-    "n_vintages": 35,
-    "n_gradable": 807,
-    "n_graded": 502,
+    "n_vintages": 46,
+    "n_gradable": 1027,
+    "n_graded": 722,
     "n_skipped_no_vintage": 1347,
     "min_fit_games": 100,
     "min_eval_games": 50,
     "min_graded_games_for_min_edge": 600,
     "first_graded_date": "2026-08-01",
-    "last_graded_date": "2026-09-06",
+    "last_graded_date": "2026-09-24",
     "n_fit_games": 305,
     "fit_window": {
      "n_games": 305,
@@ -361,7 +349,7 @@
     "split_date": "2026-08-01",
     "park_basis": {
      "source": "mixed",
-     "n_games_vintage_park": 796,
+     "n_games_vintage_park": 1016,
      "n_games_neutral_park": 11,
      "n_eval_games_neutral_park": 11,
      "n_dates_neutral_park": 1,
@@ -369,18 +357,18 @@
      "neutral_park_last_date": "2026-08-06",
      "note": "the park index is read from each game's own vintage record; a record written before the park column existed prices its games on a NEUTRAL park (the park term drops out) rather than on the live index, which is the in-progress season and would leak the eval window into its own features"
     },
-    "note": "502 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season"
+    "note": "722 games graded on vintage features; 600 are needed before min_edge may be fitted, and the paired-Brier gate must also clear. 11 of the eval games carry no park term at all (their vintage predates the park column); the park index is NOT borrowed from the live file, which would leak the in-progress season"
    },
    "coverage": {
-    "schema": 3,
-    "n_vintages": 35,
+    "schema": 5,
+    "n_vintages": 46,
     "n_vintages_backfilled": 10,
-    "n_vintages_live": 25,
+    "n_vintages_live": 36,
     "n_vintages_unknown_provenance": 0,
-    "n_vintages_with_parks": 34,
+    "n_vintages_with_parks": 45,
     "n_vintages_neutral_park": 1,
     "first": "2026-07-05",
-    "last": "2026-09-07",
+    "last": "2026-09-24",
     "missing_dates": [
      "2026-07-06",
      "2026-07-08",
@@ -411,96 +399,318 @@
      "2026-08-28",
      "2026-08-29",
      "2026-09-01",
-     "2026-09-02"
+     "2026-09-02",
+     "2026-09-08",
+     "2026-09-11",
+     "2026-09-12",
+     "2026-09-15",
+     "2026-09-20",
+     "2026-09-22"
     ],
-    "span_days": 65,
-    "latest_cutoff": "2026-09-07",
+    "span_days": 82,
+    "latest_cutoff": "2026-09-24",
     "earliest_gradable_game_date": "2026-07-06",
     "vintage_age_days": {
      "basis": "graded game dates",
-     "n": 807,
+     "n": 1027,
      "median_days": 1,
-     "p90_days": 8,
+     "p90_days": 6,
      "max_days": 13,
-     "mean_days": 2.79
+     "mean_days": 2.49
     },
-    "note": "35 vintages (10 backfilled, 25 live), 30 missing days inside the span; a game is gradable when a vintage cutoff of the SAME SEASON is strictly before it"
+    "note": "46 vintages (10 backfilled, 36 live), 36 missing days inside the span; a game is gradable when a vintage cutoff of the SAME SEASON is strictly before it"
    },
-   "n_games_completed": 2154,
+   "n_games_completed": 2374,
    "gate": {
     "all_gates_open": false,
     "gates": [
      {
       "id": "vintage_sample",
       "need": "600 vintage-graded games",
-      "have": 502,
-      "open": false,
+      "have": 722,
+      "open": true,
       "why": "the contaminated forward margin over the home-field baseline is +0.005794 Brier with a paired sd of 0.08647, so a margin that size needs 603 games to clear one-sided 95%; 600 is that number, and a clean margin will be smaller, so this is a floor and not a pass"
      },
      {
       "id": "out_of_sample_skill",
       "need": "paired Brier vs the home-field baseline, t >= 1.645",
-      "have": 2.216,
+      "have": 3.005,
       "open": true,
       "why": "sample size is not evidence; the model has to actually beat 'always take the home team' on games it could not see"
      },
      {
       "id": "graded_price_history",
-      "need": "settled bets with a taken price, enough that some edge threshold clears an ROI lower bound of zero on at least 100 of them, WITHIN ONE TAG",
-      "have": 252,
+      "need": "settled bets with a taken price, enough that some edge threshold clears an ROI lower bound of zero in every market holding settled rows, on at least 100 of them WITHIN ONE (MARKET, TAG) SUB-LEDGER",
+      "have": 175,
+      "have_cell": "total|board_all",
+      "have_pooled": 370,
+      "have_pooled_basis": "every tag and every market, both budget eras, props rows excluded: a count, never a sample",
+      "census_era": "per_market_cap",
       "have_by_tag": {
-       "board_all": 246,
-       "ev_rank": 48,
-       "longshot": 5,
-       "potd_band": 16
+       "board_all": 364,
+       "ev_rank": 27,
+       "longshot": 6,
+       "potd_band": 25
+      },
+      "have_by_tag_all_eras": {
+       "board_all": 364,
+       "ev_rank": 75,
+       "longshot": 6,
+       "potd_band": 25
+      },
+      "have_by_market_tag": {
+       "moneyline": {
+        "board_all": 69,
+        "ev_rank": 6,
+        "longshot": 6,
+        "potd_band": 10
+       },
+       "runline": {
+        "board_all": 120,
+        "ev_rank": 8,
+        "potd_band": 12
+       },
+       "total": {
+        "board_all": 175,
+        "ev_rank": 13,
+        "potd_band": 3
+       }
       },
       "open": false,
       "by_tag": {
        "board_all": {
-        "n": 246,
-        "min_edge": null,
-        "open": false,
-        "may_set_a_threshold": true,
-        "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        "n_in_era": 364,
+        "n_all_eras": 364,
+        "era": "per_market_cap",
+        "markets_in_era": {
+         "moneyline": 69,
+         "runline": 120,
+         "total": 175
+        },
+        "markets_all_eras": {
+         "moneyline": 69,
+         "runline": 120,
+         "total": 175
+        },
+        "n_markets": 3,
+        "swept": false,
+        "may_set_a_threshold": false,
+        "reason": "364 settled rows in the per_market_cap era spanning 3 markets (moneyline 69, runline 120, total 175); a threshold fitted to their union would be fitted to a mixture nobody bet, so this tag is counted and never swept"
        },
        "ev_rank": {
-        "n": 48,
-        "min_edge": null,
-        "open": false,
-        "may_set_a_threshold": true,
-        "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        "n_in_era": 27,
+        "n_all_eras": 75,
+        "era": "per_market_cap",
+        "markets_in_era": {
+         "moneyline": 6,
+         "runline": 8,
+         "total": 13
+        },
+        "markets_all_eras": {
+         "moneyline": 10,
+         "runline": 17,
+         "total": 48
+        },
+        "n_markets": 3,
+        "swept": false,
+        "may_set_a_threshold": false,
+        "reason": "27 settled rows in the per_market_cap era spanning 3 markets (moneyline 6, runline 8, total 13); a threshold fitted to their union would be fitted to a mixture nobody bet, so this tag is counted and never swept"
        },
        "longshot": {
-        "n": 5,
-        "min_edge": null,
-        "open": false,
+        "n_in_era": 6,
+        "n_all_eras": 6,
+        "era": "per_market_cap",
+        "markets_in_era": {
+         "moneyline": 6
+        },
+        "markets_all_eras": {
+         "moneyline": 6
+        },
+        "n_markets": 1,
+        "swept": true,
         "may_set_a_threshold": true,
-        "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        "reason": "6 settled rows in the per_market_cap era, all moneyline; this tag IS one sub-ledger and its threshold is swept as the (moneyline, longshot) cell"
        },
        "potd_band": {
-        "n": 16,
-        "min_edge": null,
-        "open": false,
-        "may_set_a_threshold": true,
-        "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        "n_in_era": 25,
+        "n_all_eras": 25,
+        "era": "per_market_cap",
+        "markets_in_era": {
+         "moneyline": 10,
+         "runline": 12,
+         "total": 3
+        },
+        "markets_all_eras": {
+         "moneyline": 10,
+         "runline": 12,
+         "total": 3
+        },
+        "n_markets": 3,
+        "swept": false,
+        "may_set_a_threshold": false,
+        "reason": "25 settled rows in the per_market_cap era spanning 3 markets (moneyline 10, runline 12, total 3); a threshold fitted to their union would be fitted to a mixture nobody bet, so this tag is counted and never swept"
        }
       },
-      "why": "an edge threshold is a claim about EV against real prices; 23 dates of odds snapshots are cached. The sweep runs per tag and a tag opens only if it individually clears - a pooled ROI measures a mixture nobody bet",
-      "pooled_is_not_sweepable": "`have` is the union of every tag and is never swept; see by_tag for the four clocks that are"
+      "by_market_tag": {
+       "moneyline": {
+        "board_all": {
+         "n": 69,
+         "min_edge": null,
+         "open": false,
+         "may_set_a_threshold": true,
+         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        },
+        "ev_rank": {
+         "n": 6,
+         "min_edge": null,
+         "open": false,
+         "may_set_a_threshold": true,
+         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        },
+        "longshot": {
+         "n": 6,
+         "min_edge": null,
+         "open": false,
+         "may_set_a_threshold": true,
+         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        },
+        "potd_band": {
+         "n": 10,
+         "min_edge": null,
+         "open": false,
+         "may_set_a_threshold": true,
+         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        }
+       },
+       "runline": {
+        "board_all": {
+         "n": 120,
+         "min_edge": null,
+         "open": false,
+         "may_set_a_threshold": true,
+         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        },
+        "ev_rank": {
+         "n": 8,
+         "min_edge": null,
+         "open": false,
+         "may_set_a_threshold": true,
+         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        },
+        "potd_band": {
+         "n": 12,
+         "min_edge": null,
+         "open": false,
+         "may_set_a_threshold": true,
+         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        }
+       },
+       "total": {
+        "board_all": {
+         "n": 175,
+         "min_edge": null,
+         "open": false,
+         "may_set_a_threshold": true,
+         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        },
+        "ev_rank": {
+         "n": 13,
+         "min_edge": null,
+         "open": false,
+         "may_set_a_threshold": true,
+         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        },
+        "potd_band": {
+         "n": 3,
+         "min_edge": null,
+         "open": false,
+         "may_set_a_threshold": true,
+         "reason": "no edge threshold produced an ROI whose one-sided 95% lower bound clears zero on the graded sample"
+        }
+       }
+      },
+      "coverage": {
+       "markets_with_evidence": [],
+       "markets_without_evidence": [
+        "moneyline",
+        "runline",
+        "total"
+       ],
+       "rule": "every market holding sweepable rows must clear a threshold of its own before one scalar floor may serve a board that prices all of them; a market with rows and no cleared threshold holds gate 3 shut rather than borrowing another market's floor"
+      },
+      "multiplicity_family": {
+       "n_cells_swept": 10,
+       "n_thresholds_per_cell": 20,
+       "n_one_sided_looks": 200,
+       "corrected": false,
+       "note": "the family grows with the cells: one sweep is a one-sided test per grid step and the sub-ledgers multiply the sweeps by the markets. The max reduction over the CLEARED cells is a severity control across cells that already agree a floor exists, NOT a multiplicity control across the looks, and nothing here corrects for them"
+      },
+      "cross_market_tripwire": {
+       "passes": true,
+       "n_cells_checked": 10,
+       "census_available": true,
+       "failures": [],
+       "cross_market_tags": {
+        "board_all": {
+         "moneyline": 69,
+         "runline": 120,
+         "total": 175
+        },
+        "ev_rank": {
+         "moneyline": 6,
+         "runline": 8,
+         "total": 13
+        },
+        "potd_band": {
+         "moneyline": 10,
+         "runline": 12,
+         "total": 3
+        }
+       },
+       "rule": "a threshold may only be swept on a sample that is one market and one selection rule; a sampler whose cells span more than one market closes gate 3 rather than setting a floor",
+       "reason": "every swept sample is one (market, tag) sub-ledger",
+       "finding": "L14-05"
+      },
+      "why": "an edge threshold is a claim about EV against real prices; 35 dates of odds snapshots are cached. The sweep runs per (market, tag) sub-ledger and one opens only if it individually clears - a pooled ROI measures a mixture nobody bet, and a tag pools three markets the same way four tags pool four selection rules. The scalar floor then needs every market with rows to have cleared, because one number filters all of them",
+      "pooled_is_not_sweepable": "`have_pooled` is the union of every tag and every market and is never swept; see by_market_tag for the sub-ledgers that are"
      }
     ],
-    "n_open": 1,
+    "n_open": 2,
     "n_gates": 3,
-    "odds_snapshot_dates": 23,
+    "odds_snapshot_dates": 35,
     "sweep": {
-     "n_rows": 252,
-     "reason": "no tag cleared: 4 tag(s) present and none of them produced an ROI lower bound above zero on 100+ of its own settled rows",
+     "n_rows": 370,
+     "reason": "no sub-ledger cleared: 10 (market, tag) cell(s) present and none of them produced an ROI lower bound above zero on 100+ of its own settled rows",
+     "n_cells": 10,
+     "n_cells_cleared": 0,
      "n_tags": 4,
-     "n_tags_cleared": 0
+     "basis": "one sweep per (market, tag) sub-ledger; the union is counted and never swept",
+     "coverage": {
+      "markets_with_evidence": [],
+      "markets_without_evidence": [
+       "moneyline",
+       "runline",
+       "total"
+      ],
+      "rule": "every market holding sweepable rows must clear a threshold of its own before one scalar floor may serve a board that prices all of them; a market with rows and no cleared threshold holds gate 3 shut rather than borrowing another market's floor"
+     },
+     "multiplicity_family": {
+      "n_cells_swept": 10,
+      "n_thresholds_per_cell": 20,
+      "n_one_sided_looks": 200,
+      "corrected": false,
+      "note": "the family grows with the cells: one sweep is a one-sided test per grid step and the sub-ledgers multiply the sweeps by the markets. The max reduction over the CLEARED cells is a severity control across cells that already agree a floor exists, NOT a multiplicity control across the looks, and nothing here corrects for them"
+     },
+     "budget_era": {
+      "era": "per_market_cap",
+      "split_date": "2026-09-06",
+      "ledger_available": true,
+      "why": "the per-market allocation of 2026-09-06 changed what an ev_rank cell holds, so a sample spanning the date mixes two selection rules; cells whose membership did not change keep their whole history under either era"
+     }
     },
     "policy": "min_edge stays null until all three gates are open. A threshold invented to make a pick appear is the single most dishonest number this module could publish."
    },
-   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 502 games. A pick threshold is set from the vintage mode or from nothing."
+   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 722 games. A pick threshold is set from the vintage mode or from nothing."
   }
  },
  "disclaimer": {
@@ -513,27 +723,28 @@
   "staking": "Every row on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
  },
  "pick_of_the_day": {
-  "side": "under",
-  "label": "Under 8.5",
-  "model_prob": 0.67464,
-  "fair_odds": -207,
-  "p_push": null,
-  "book": "draftkings",
-  "odds": -112,
-  "decimal": 1.8929,
-  "implied_prob": 0.52829,
-  "market_fair_prob": 0.52354,
-  "edge": 0.1511,
-  "ev_per_unit": 0.27702,
-  "ev_per_unit_if_no_push": 0.27702,
-  "kelly_full": 0.31024,
-  "book_title": "DraftKings",
-  "point": 8.5,
+  "side": "over",
+  "label": "Over 8.0",
+  "model_prob": 0.65721,
+  "fair_odds": -192,
+  "p_push": 0.12828,
+  "book": "lowvig",
+  "odds": -113,
+  "decimal": 1.885,
+  "implied_prob": 0.5305,
+  "market_fair_prob": 0.51235,
+  "edge": 0.14486,
+  "ev_per_unit": 0.2082,
+  "ev_per_unit_if_no_push": 0.23884,
+  "kelly_full": 0.26987,
+  "book_title": "LowVig.ag",
+  "point": 8.0,
+  "total_level_caveat": "Slate leans Over: model Over probability 11.2 pts above market on 8 totals (8 positive-edge Overs). Known model shape, not value: the total is priced as a Poisson centred on expected runs; real totals split lower. Fit window: Over 8.5 priced 50.9%, hit 43.3%.",
   "market": "total",
-  "game_pk": 824958,
-  "matchup": "TOR at ATH",
-  "start": "2026-09-08T02:05:00Z",
-  "evidence_closed": true,
+  "game_pk": 824057,
+  "matchup": "CLE at KCR",
+  "start": "2026-09-26T23:10:00Z",
+  "evidence_closed": false,
   "slot": "pick_of_the_day",
   "slot_label": "Model Watch: largest disagreement",
   "slot_frame": "watch",
@@ -541,24 +752,23 @@
   "suggested_units": 1.0,
   "provisional": true,
   "min_edge_used": 0.06,
-  "kelly_quarter": 0.07756,
+  "kelly_quarter": 0.06747,
   "market_policy": "any",
   "caveat": "this is a runline or total, and the margin model is a Poisson difference that underdisperses real run scoring, so its probabilities sit too close to the middle; treat this edge as the softest of the three markets",
-  "evidence_caveat": "this market's own settled paper record resolved worse than a coin at the section 7b floor for the closure dwell; it is eligible under the any-market slot policy (owner decision 2026-09-05) and that record rides here as the disclosure, not as a bar",
   "tag_record": {
    "available": true,
    "tag": "potd_band",
-   "n_settled": 16,
-   "won": 8,
-   "lost": 8,
+   "n_settled": 26,
+   "won": 13,
+   "lost": 13,
    "push": 0,
-   "net_units": -1.004,
-   "roi": -0.0628,
+   "net_units": -2.643,
+   "roi": -0.1017,
    "small_n": true,
    "sweep_floor": 100,
    "source": "betting_shadow.summary() by_tag"
   },
-  "provisional_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 502 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. This row is in the public record because a claim that is not written down before the result is not a claim."
+  "provisional_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 722 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. Recorded before the result."
  },
  "longshot_of_the_day": null,
  "pick_reason": "highest model win probability among sides clearing the provisional floor on any priced market, restricted to american odds from -199 to +199; ties go to the price nearest -110, then to the higher expected value",
@@ -569,7 +779,7 @@
   "frame": "watch",
   "frame_note": "Model Watch framing, owner decision 2026-08-16: while the three validation gates are closed the slots present the model's largest measured disagreements with the market, not recommendations. The structural keys keep their names for ledger continuity; the vocabulary returns automatically when the gates open.",
   "policy": "a provisional selection is published against a POLICY floor, not a validated threshold; it is labelled as such everywhere it appears and it is recorded in the shadow ledger so it becomes evidence",
-  "shared_floor_note": "both slots clear the same floor; no slot is allowed a lower one, because a threshold lowered to make a selection appear is not a threshold",
+  "shared_floor_note": "both slots clear the same floor, and it is never lowered to make a selection appear",
   "slots": {
    "pick_of_the_day": {
     "slot": "pick_of_the_day",
@@ -580,7 +790,7 @@
     "band": "american odds from -199 to +199",
     "present": true,
     "reason": "highest model win probability among sides clearing the provisional floor on any priced market, restricted to american odds from -199 to +199; ties go to the price nearest -110, then to the higher expected value",
-    "n_candidates": 7,
+    "n_candidates": 8,
     "provisional": true,
     "min_edge": 0.06,
     "basis": "provisional_policy_floor",
@@ -589,16 +799,18 @@
     "tag_record": {
      "available": true,
      "tag": "potd_band",
-     "n_settled": 16,
-     "won": 8,
-     "lost": 8,
+     "n_settled": 26,
+     "won": 13,
+     "lost": 13,
      "push": 0,
-     "net_units": -1.004,
-     "roi": -0.0628,
+     "net_units": -2.643,
+     "roi": -0.1017,
      "small_n": true,
      "sweep_floor": 100,
      "source": "betting_shadow.summary() by_tag"
-    }
+    },
+    "locked": true,
+    "published_at": "2026-09-25T23:34:23+00:00"
    },
    "longshot_of_the_day": {
     "slot": "longshot_of_the_day",
@@ -618,12 +830,12 @@
     "tag_record": {
      "available": true,
      "tag": "longshot",
-     "n_settled": 5,
+     "n_settled": 6,
      "won": 2,
-     "lost": 3,
+     "lost": 4,
      "push": 0,
-     "net_units": 1.16,
-     "roi": 0.232,
+     "net_units": 0.16,
+     "roi": 0.0267,
      "small_n": true,
      "sweep_floor": 100,
      "source": "betting_shadow.summary() by_tag"
@@ -631,43 +843,72 @@
    }
   },
   "n_floor_clearing_sides": 8,
+  "n_floor_clearing_sides_before_policy": 8,
   "market_policy": "any",
+  "market_policy_legs": {
+   "dispersion_bars": false,
+   "ledger_bars": false
+  },
   "markets_eligible": "any priced market: moneyline, runline, total, props when armed (owner decision 2026-09-05, section 7d); the dispersion and ledger legs ride the row as disclosure"
+ },
+ "slot_lock": {
+  "policy": "a slot is published once per slate: the first build that fills it writes the row to the lock, and every later build of the same slate serves that row verbatim. A later build never re-selects the slot; what it would select now rides beside the published row as since_published",
+  "slate_date": "2026-09-26",
+  "schema": 1,
+  "write": true,
+  "locked": {
+   "pick_of_the_day": {
+    "published_at": "2026-09-25T23:34:23+00:00",
+    "model_version": "betting_runs_v2",
+    "disclosure": null,
+    "since_published": null
+   }
+  },
+  "created": [
+   "pick_of_the_day"
+  ],
+  "served_from_lock": [],
+  "applied": true,
+  "may_lock": true,
+  "path": ".cache/betting/published_slots/2026-09-26.json",
+  "reason": "locked pick_of_the_day"
  },
  "pick_blockers": [
   {
    "id": "min_edge",
    "open": false,
-   "need": "600 vintage-graded games",
-   "have": 502,
+   "need": "settled bets with a taken price, enough that some edge threshold clears an ROI lower bound of zero in every market holding settled rows, on at least 100 of them WITHIN ONE (MARKET, TAG) SUB-LEDGER",
+   "have": 175,
    "gates_closed": [
-    "vintage_sample",
     "graded_price_history"
    ],
-   "n_closed": 2,
+   "n_closed": 1,
    "n_gates": 3,
-   "reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 2 are closed, starting with 600 vintage-graded games against 502 in hand"
+   "reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 1 are closed, starting with settled bets with a taken price, enough that some edge threshold clears an ROI lower bound of zero in every market holding settled rows, on at least 100 of them WITHIN ONE (MARKET, TAG) SUB-LEDGER against 175 in hand"
   }
  ],
  "market_publishability": {
   "policy": {
    "slot_market_policy": "any",
    "slot_market_policy_note": "any: every priced market may fill a slot and reach the record; the dispersion and ledger legs below are disclosure on the row (owner decision 2026-09-05, docs/diamond-betting.md 7d)",
+   "dispersion_leg_bars": false,
+   "ledger_leg_bars": false,
+   "registered_policy": true,
    "n_min": 100,
    "z": 1.645,
    "dwell": 3,
    "trailing": 200,
    "basis": "n_min mirrors betting_shadow.MIN_BETS_FOR_SWEEP and z is betting_model.Z_95_ONE_SIDED; the dwell of 3 and the trailing 200 are POLICY chosen for hysteresis, not measured (docs/diamond-betting.md section 7b)"
   },
-  "last_evaluation_date": "2026-09-07",
+  "last_evaluation_date": "2026-09-25",
   "today_note": null,
-  "note": "a market must clear BOTH legs to fill a slot or reach the public record. The shadow and calibration ledgers keep recording closed markets, because they are the only instruments that can ever accumulate the evidence to re-open one.",
+  "note": "under the any-market policy every priced market may fill a slot and reach the public record; the two legs below ride the row as disclosure and bar nothing (owner decision 2026-09-05, docs/diamond-betting.md 7d). The shadow and calibration ledgers keep recording closed markets, and only their evidence can re-open one.",
   "markets": {
    "moneyline": {
     "market": "moneyline",
     "publishable": true,
     "policy_override": false,
-    "reason": "publishable: the margin-shape exclusion does not bar this market, and mean Brier 0.245977 on 158 canonical games does not resolve worse than a coin",
+    "reason": "publishable: the margin-shape exclusion does not bar this market, and mean Brier 0.239268 on 255 canonical games does not resolve worse than a coin",
     "both_legs": false,
     "dispersion_leg": {
      "publishable": true,
@@ -676,23 +917,23 @@
     "ledger_leg": {
      "status": "open",
      "verdict": "not_worse_than_coin",
-     "n_games": 158,
-     "brier": 0.245977,
-     "delta_vs_coin": -0.004023,
-     "t": -0.6096,
+     "n_games": 255,
+     "brier": 0.239268,
+     "delta_vs_coin": -0.010732,
+     "t": -1.9881,
      "worse_than_coin_95": false,
      "trailing": {
-      "n_games": 158,
-      "brier": 0.245977,
-      "delta_vs_coin": -0.004023,
-      "t": -0.6096,
+      "n_games": 200,
+      "brier": 0.233749,
+      "delta_vs_coin": -0.016251,
+      "t": -2.6868,
       "worse_than_coin_95": false,
       "window": 200
      },
      "consecutive_worse": 0,
      "consecutive_recovered": 0,
      "dwell_need": 3,
-     "reason": "mean Brier 0.245977 on 158 canonical games does not resolve worse than a coin"
+     "reason": "mean Brier 0.239268 on 255 canonical games does not resolve worse than a coin"
     }
    },
    "runline": {
@@ -708,55 +949,55 @@
     "ledger_leg": {
      "status": "open",
      "verdict": "not_worse_than_coin",
-     "n_games": 156,
-     "brier": 0.263278,
-     "delta_vs_coin": 0.013278,
-     "t": 1.063,
+     "n_games": 253,
+     "brier": 0.251261,
+     "delta_vs_coin": 0.001261,
+     "t": 0.1343,
      "worse_than_coin_95": false,
      "trailing": {
-      "n_games": 156,
-      "brier": 0.263278,
-      "delta_vs_coin": 0.013278,
-      "t": 1.063,
+      "n_games": 200,
+      "brier": 0.242938,
+      "delta_vs_coin": -0.007062,
+      "t": -0.6947,
       "worse_than_coin_95": false,
       "window": 200
      },
      "consecutive_worse": 0,
      "consecutive_recovered": 0,
      "dwell_need": 3,
-     "reason": "mean Brier 0.263278 on 156 canonical games does not resolve worse than a coin"
+     "reason": "mean Brier 0.251261 on 253 canonical games does not resolve worse than a coin"
     }
    },
    "total": {
     "market": "total",
     "publishable": true,
     "policy_override": true,
-    "reason": "eligible under the any-market slot policy (owner decision 2026-09-05, section 7d); the legs ride the row as disclosure: excluded by both legs: excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate; LEDGER-CLOSED: resolved worse than a coin for 3 consecutive evaluations (closed 2026-09-03T15:21:47+00:00); re-opens when the trailing 200 games fail the same test for 3 consecutive evaluations. Today: mean Brier 0.269767 on 154 canonical games resolves worse than a coin (t 2.2306 at the one-sided 95% bar of 1.645)",
-    "both_legs": true,
+    "reason": "eligible under the any-market slot policy (owner decision 2026-09-05, section 7d); the legs ride the row as disclosure: excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate",
+    "both_legs": false,
     "dispersion_leg": {
      "publishable": false,
      "reason": "excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate"
     },
     "ledger_leg": {
-     "status": "ledger_closed",
+     "status": "open",
      "verdict": "worse_than_coin",
-     "n_games": 154,
-     "brier": 0.269767,
-     "delta_vs_coin": 0.019767,
-     "t": 2.2306,
+     "n_games": 250,
+     "brier": 0.267026,
+     "delta_vs_coin": 0.017026,
+     "t": 2.3314,
      "worse_than_coin_95": true,
      "trailing": {
-      "n_games": 154,
-      "brier": 0.269767,
-      "delta_vs_coin": 0.019767,
-      "t": 2.2306,
+      "n_games": 200,
+      "brier": 0.26557,
+      "delta_vs_coin": 0.01557,
+      "t": 1.8762,
       "worse_than_coin_95": true,
       "window": 200
      },
-     "consecutive_worse": 3,
-     "consecutive_recovered": 0,
+     "consecutive_worse": 2,
+     "consecutive_recovered": 3,
      "dwell_need": 3,
-     "reason": "LEDGER-CLOSED: resolved worse than a coin for 3 consecutive evaluations (closed 2026-09-03T15:21:47+00:00); re-opens when the trailing 200 games fail the same test for 3 consecutive evaluations. Today: mean Brier 0.269767 on 154 canonical games resolves worse than a coin (t 2.2306 at the one-sided 95% bar of 1.645)"
+     "reason": "mean Brier 0.267026 on 250 canonical games resolves worse than a coin (t 2.3314 at the one-sided 95% bar of 1.645)"
     }
    },
    "props_pitcher_strikeouts": {
@@ -889,13 +1130,34 @@
    }
   }
  },
+ "total_level_check": {
+  "statistic": "mean over the slate of the Over's model probability minus its de-vigged market probability at the posted line",
+  "tolerance": 0.03,
+  "min_games": 8,
+  "z": 1.645,
+  "n": 8,
+  "n_positive_edge": {
+   "over": 8,
+   "under": 0
+  },
+  "mean_gap_runs": 0.916,
+  "mean_gap_runs_note": "the model's EXPECTED total minus the posted line, published as a description and not tested: a line sits where real totals split, about a run under their mean, so this reads positive for a model whose level is right",
+  "total_level_served": false,
+  "surface": "disclosure only; no price, edge, slot or ledger reads this block",
+  "fires": true,
+  "direction": "over",
+  "caveat": "Slate leans Over: model Over probability 11.2 pts above market on 8 totals (8 positive-edge Overs). Known model shape, not value: the total is priced as a Poisson centred on expected runs; real totals split lower. Fit window: Over 8.5 priced 50.9%, hit 43.3%.",
+  "mean_lean": 0.11197,
+  "sd": 0.03991,
+  "t": 7.935
+ },
  "record_publish_blockers": [
   {
    "id": "publish_armed",
-   "open": false,
+   "open": true,
    "need": "an explicit owner decision to publish the record",
-   "have": "not armed",
-   "reason": "the close_snapshot blocker was retired on 2026-09-07 (SERVE_CLV), which left this list all-open and would have started the public record as a side effect of removing a different gate. Publishing is an owner decision: with CLV retired these rows grade on realized results alone, which is noisier than closing line value, on a model whose gate still reads unvalidated"
+   "have": "armed",
+   "reason": "the record is armed by owner decision"
   },
   {
    "id": "odds_slate",
@@ -909,7 +1171,7 @@
    "open": true,
    "need": "betting_model's run-dispersion gate to have RUN (not to have passed)",
    "have": "ran",
-   "reason": "the dispersion gate ran on 664 held-out games and reported passed=False, so the margin model behind the published probability is known"
+   "reason": "the dispersion gate ran on 722 held-out games and reported passed=False, so the margin model behind the published probability is known"
   },
   {
    "id": "record_storage",
@@ -938,235 +1200,353 @@
    "stale": []
   }
  ],
- "record_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 502 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. This row is in the public record because a claim that is not written down before the result is not a claim.",
+ "record_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 722 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. Recorded before the result.",
  "record_storage": {
   "backend": "jsonl",
   "authoritative_path": ".cache/betting/record.jsonl",
   "durable": true,
-  "n_rows": 0,
-  "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
+  "n_rows": 1,
+  "chain_sha": "fe113aaf4505ae11a64af6a41938ae74da3bd2597bd876cb91a0e209d9177d26",
   "derived_path": "data/betting_record.json",
   "path_basis": "relative to the site checkout root",
   "why": "the append-only log under .cache/ is untracked, so the nightly `git checkout -- .` cannot revert it; data/betting_record.json is re-rendered from it every build"
  },
  "honest_backtest": {
-  "n_graded": 502,
+  "n_graded": 722,
   "n_needed": 600,
   "source": "data/betting_model_eval.json vintage block"
  },
- "n_games": 5,
+ "n_games": 14,
  "team_bets": [
   {
-   "game_pk": 824229,
-   "date": "2026-09-07",
-   "start": "2026-09-07T19:10:00Z",
+   "game_pk": 824219,
+   "date": "2026-09-26",
+   "start": "2026-09-26T17:10:00Z",
    "status": "Preview",
    "double_header": false,
-   "odds_event_id": "a410afcc86bee1b6cbe7e60eafd8d50e",
-   "odds_commence_time": "2026-09-07T19:11:00Z",
+   "odds_event_id": null,
+   "odds_commence_time": null,
    "venue": "Comerica Park",
    "home": {
     "org": "DET",
     "team": "Detroit Tigers",
     "probable": {
-     "mlbam": 675512,
-     "name": "Troy Melton"
+     "mlbam": 434378,
+     "name": "Justin Verlander"
     },
-    "offense_plus": 99.0,
+    "offense_plus": 100.0,
     "bullpen_plus": 96.0
    },
    "away": {
-    "org": "MIN",
-    "team": "Minnesota Twins",
-    "probable": {
-     "mlbam": 657746,
-     "name": "Joe Ryan"
-    },
-    "offense_plus": 101.0,
-    "bullpen_plus": 98.0
+    "org": "PIT",
+    "team": "Pittsburgh Pirates",
+    "probable": null,
+    "offense_plus": 104.0,
+    "bullpen_plus": 110.0
    },
    "model": {
-    "p_home": 0.45824,
-    "p_away": 0.54176,
-    "lam_home": 4.196,
-    "lam_away": 4.497,
-    "fair_total": 8.69,
+    "p_home": 0.39917,
+    "p_away": 0.60083,
+    "lam_home": 4.288,
+    "lam_away": 5.073,
+    "fair_total": 9.36,
     "park_index": 1.0,
     "home_prevention": {
-     "starter_plus": 102.0,
+     "starter_plus": 85.0,
      "bullpen_plus": 96.0,
-     "starter_share": 0.669,
-     "blend_plus": 100.0,
+     "starter_share": 0.408,
+     "blend_plus": 91.5,
      "source": "probable"
     },
     "away_prevention": {
-     "starter_plus": 117.0,
-     "bullpen_plus": 98.0,
-     "starter_share": 0.607,
-     "blend_plus": 109.5,
-     "source": "probable"
+     "starter_plus": 109.0,
+     "bullpen_plus": 110.0,
+     "starter_share": 0.587,
+     "blend_plus": 109.4,
+     "source": "rotation-average"
     }
    },
    "moneyline": [
     {
      "side": "home",
      "label": "DET",
-     "model_prob": 0.45824,
-     "fair_odds": 118,
+     "model_prob": 0.39917,
+     "fair_odds": 151,
      "p_push": null,
-     "book": "lowvig",
-     "odds": -115,
-     "decimal": 1.8696,
-     "implied_prob": 0.53487,
-     "market_fair_prob": 0.52743,
-     "edge": -0.06919,
-     "ev_per_unit": -0.14327,
-     "ev_per_unit_if_no_push": -0.14327,
+     "book": null,
+     "odds": null,
+     "decimal": null,
+     "implied_prob": null,
+     "market_fair_prob": null,
+     "edge": null,
+     "ev_per_unit": null,
+     "ev_per_unit_if_no_push": null,
+     "kelly_full": null
+    },
+    {
+     "side": "away",
+     "label": "PIT",
+     "model_prob": 0.60083,
+     "fair_odds": -151,
+     "p_push": null,
+     "book": null,
+     "odds": null,
+     "decimal": null,
+     "implied_prob": null,
+     "market_fair_prob": null,
+     "edge": null,
+     "ev_per_unit": null,
+     "ev_per_unit_if_no_push": null,
+     "kelly_full": null
+    }
+   ],
+   "runline": null,
+   "runline_refused": null,
+   "total": {
+    "line": null,
+    "sides": null,
+    "p_push": null,
+    "fair_total": 9.36
+   },
+   "market": null
+  },
+  {
+   "game_pk": 822759,
+   "date": "2026-09-26",
+   "start": "2026-09-26T19:07:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "0112f4a595862d820eb4e9640d31ea4c",
+   "odds_commence_time": "2026-09-26T19:08:00Z",
+   "venue": "Rogers Centre",
+   "home": {
+    "org": "TOR",
+    "team": "Toronto Blue Jays",
+    "probable": null,
+    "offense_plus": 93.0,
+    "bullpen_plus": 107.0
+   },
+   "away": {
+    "org": "CIN",
+    "team": "Cincinnati Reds",
+    "probable": {
+     "mlbam": 695076,
+     "name": "Rhett Lowder"
+    },
+    "offense_plus": 100.0,
+    "bullpen_plus": 94.0
+   },
+   "model": {
+    "p_home": 0.52909,
+    "p_away": 0.47091,
+    "lam_home": 4.743,
+    "lam_away": 4.511,
+    "fair_total": 9.25,
+    "park_index": 1.02,
+    "home_prevention": {
+     "starter_plus": 98.0,
+     "bullpen_plus": 107.0,
+     "starter_share": 0.718,
+     "blend_plus": 100.5,
+     "source": "rotation-average"
+    },
+    "away_prevention": {
+     "starter_plus": 88.0,
+     "bullpen_plus": 94.0,
+     "starter_share": 0.566,
+     "blend_plus": 90.6,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "TOR",
+     "model_prob": 0.52909,
+     "fair_odds": -112,
+     "p_push": null,
+     "book": "fanduel",
+     "odds": -158,
+     "decimal": 1.6329,
+     "implied_prob": 0.61241,
+     "market_fair_prob": 0.58899,
+     "edge": -0.0599,
+     "ev_per_unit": -0.13605,
+     "ev_per_unit_if_no_push": -0.13605,
      "kelly_full": 0.0,
-     "book_title": "LowVig.ag",
+     "book_title": "FanDuel",
      "point": null
     },
     {
      "side": "away",
-     "label": "MIN",
-     "model_prob": 0.54176,
-     "fair_odds": -118,
+     "label": "CIN",
+     "model_prob": 0.47091,
+     "fair_odds": 112,
      "p_push": null,
-     "book": "betus",
-     "odds": 107,
-     "decimal": 2.07,
-     "implied_prob": 0.48309,
-     "market_fair_prob": 0.47257,
-     "edge": 0.06919,
-     "ev_per_unit": 0.12144,
-     "ev_per_unit_if_no_push": 0.12144,
-     "kelly_full": 0.1135,
-     "book_title": "BetUS",
+     "book": "fanduel",
+     "odds": 134,
+     "decimal": 2.34,
+     "implied_prob": 0.42735,
+     "market_fair_prob": 0.41101,
+     "edge": 0.0599,
+     "ev_per_unit": 0.10193,
+     "ev_per_unit_if_no_push": 0.10193,
+     "kelly_full": 0.07607,
+     "book_title": "FanDuel",
      "point": null
     }
    ],
    "runline": [
     {
      "side": "home",
-     "label": "DET -1.5",
-     "model_prob": 0.26732,
-     "fair_odds": 274,
+     "label": "TOR -1.5",
+     "model_prob": 0.34158,
+     "fair_odds": 193,
      "p_push": null,
-     "book": "lowvig",
-     "odds": 182,
-     "decimal": 2.82,
-     "implied_prob": 0.35461,
-     "market_fair_prob": 0.34395,
-     "edge": -0.07663,
-     "ev_per_unit": -0.24616,
-     "ev_per_unit_if_no_push": -0.24616,
+     "book": "fanduel",
+     "odds": 140,
+     "decimal": 2.4,
+     "implied_prob": 0.41667,
+     "market_fair_prob": 0.39823,
+     "edge": -0.05665,
+     "ev_per_unit": -0.18021,
+     "ev_per_unit_if_no_push": -0.18021,
      "kelly_full": 0.0,
-     "book_title": "LowVig.ag",
-     "point": -1.5
+     "book_title": "FanDuel",
+     "point": -1.5,
+     "tie_atom": {
+      "p_tie": 0.13267,
+      "split_served": true,
+      "model_prob_if_split": 0.34158,
+      "shift_if_split": 0.0,
+      "edge_if_split": -0.05665,
+      "n_games": 2374,
+      "n_extra_inning_games": 208,
+      "n_home_wins": 102,
+      "n_home_wins_by_2plus": 10,
+      "n_away_wins": 106,
+      "n_away_wins_by_2plus": 55
+     }
     },
     {
      "side": "away",
-     "label": "MIN +1.5",
-     "model_prob": 0.73268,
-     "fair_odds": -274,
+     "label": "CIN +1.5",
+     "model_prob": 0.65842,
+     "fair_odds": -193,
      "p_push": null,
-     "book": "bovada",
-     "odds": -200,
-     "decimal": 1.5,
-     "implied_prob": 0.66667,
-     "market_fair_prob": 0.65605,
-     "edge": 0.07663,
-     "ev_per_unit": 0.09902,
-     "ev_per_unit_if_no_push": 0.09902,
-     "kelly_full": 0.19804,
-     "book_title": "Bovada",
-     "point": 1.5
+     "book": "fanduel",
+     "odds": -170,
+     "decimal": 1.5882,
+     "implied_prob": 0.62964,
+     "market_fair_prob": 0.60177,
+     "edge": 0.05665,
+     "ev_per_unit": 0.0457,
+     "ev_per_unit_if_no_push": 0.0457,
+     "kelly_full": 0.0777,
+     "book_title": "FanDuel",
+     "point": 1.5,
+     "tie_atom": {
+      "p_tie": 0.13267,
+      "split_served": true,
+      "model_prob_if_split": 0.65842,
+      "shift_if_split": 0.0,
+      "edge_if_split": 0.05665,
+      "n_games": 2374,
+      "n_extra_inning_games": 208,
+      "n_home_wins": 102,
+      "n_home_wins_by_2plus": 10,
+      "n_away_wins": 106,
+      "n_away_wins_by_2plus": 55
+     }
     }
    ],
+   "runline_refused": null,
    "total": {
-    "line": 8.0,
+    "line": 8.5,
     "sides": [
      {
       "side": "over",
-      "label": "Over 8.0",
-      "model_prob": 0.58223,
-      "fair_odds": -139,
-      "p_push": 0.13568,
-      "book": "lowvig",
-      "odds": 103,
-      "decimal": 2.03,
-      "implied_prob": 0.49261,
-      "market_fair_prob": 0.47646,
-      "edge": 0.10577,
-      "ev_per_unit": 0.15724,
-      "ev_per_unit_if_no_push": 0.18192,
-      "kelly_full": 0.17663,
-      "book_title": "LowVig.ag",
-      "point": 8.0
+      "label": "Over 8.5",
+      "model_prob": 0.57737,
+      "fair_odds": -137,
+      "p_push": null,
+      "book": "fanduel",
+      "odds": 112,
+      "decimal": 2.12,
+      "implied_prob": 0.4717,
+      "market_fair_prob": 0.44858,
+      "edge": 0.12879,
+      "ev_per_unit": 0.22402,
+      "ev_per_unit_if_no_push": 0.22402,
+      "kelly_full": 0.20001,
+      "book_title": "FanDuel",
+      "point": 8.5,
+      "total_level_caveat": "Slate leans Over: model Over probability 11.2 pts above market on 8 totals (8 positive-edge Overs). Known model shape, not value: the total is priced as a Poisson centred on expected runs; real totals split lower. Fit window: Over 8.5 priced 50.9%, hit 43.3%."
      },
      {
       "side": "under",
-      "label": "Under 8.0",
-      "model_prob": 0.41777,
-      "fair_odds": 139,
-      "p_push": 0.13568,
-      "book": "mybookieag",
-      "odds": -118,
-      "decimal": 1.8475,
-      "implied_prob": 0.54127,
-      "market_fair_prob": 0.52354,
-      "edge": -0.10577,
-      "ev_per_unit": -0.19721,
-      "ev_per_unit_if_no_push": -0.22817,
+      "label": "Under 8.5",
+      "model_prob": 0.42263,
+      "fair_odds": 137,
+      "p_push": null,
+      "book": "fanduel",
+      "odds": -138,
+      "decimal": 1.7246,
+      "implied_prob": 0.57984,
+      "market_fair_prob": 0.55142,
+      "edge": -0.12879,
+      "ev_per_unit": -0.27113,
+      "ev_per_unit_if_no_push": -0.27113,
       "kelly_full": 0.0,
-      "book_title": "MyBookie.ag",
-      "point": 8.0
+      "book_title": "FanDuel",
+      "point": 8.5,
+      "total_level_caveat": "Slate leans Over: model Over probability 11.2 pts above market on 8 totals (8 positive-edge Overs). Known model shape, not value: the total is priced as a Poisson centred on expected runs; real totals split lower. Fit window: Over 8.5 priced 50.9%, hit 43.3%."
      }
     ],
-    "p_push": 0.13568
+    "p_push": 0.0
    },
    "market": {
-    "moneyline_hold_pct": 2.226,
-    "total_hold_pct": 3.39,
-    "moneyline_fair_book": "betus",
+    "moneyline_hold_pct": 3.975,
+    "total_hold_pct": 5.153,
+    "moneyline_fair_book": "fanduel",
     "moneyline_hold_range": [
-     2.226,
-     4.867
+     3.975,
+     3.975
     ],
-    "moneyline_n_books_on_line": 9,
-    "total_fair_book": "lowvig",
+    "moneyline_n_books_on_line": 1,
+    "total_fair_book": "fanduel",
     "total_hold_range": [
-     3.39,
-     5.109
+     5.153,
+     5.153
     ],
-    "total_n_books_on_line": 5,
-    "runline_fair_book": "lowvig",
-    "runline_hold_pct": 3.099,
+    "total_n_books_on_line": 1,
+    "runline_fair_book": "fanduel",
+    "runline_hold_pct": 4.63,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 9
+      "on_line": 1
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 6
+      "on_line": 1
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 5
+      "on_line": 1
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.8,
-     "runline": 0.8,
-     "total": 0.8
+     "moneyline": 0.0,
+     "runline": 0.0,
+     "total": 0.0
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -1174,433 +1554,245 @@
    }
   },
   {
-   "game_pk": 823254,
-   "date": "2026-09-07",
-   "start": "2026-09-07T21:10:00Z",
+   "game_pk": 822678,
+   "date": "2026-09-26",
+   "start": "2026-09-26T20:05:00Z",
    "status": "Preview",
    "double_header": false,
-   "odds_event_id": "4b966f5cc20bd2c8aabb3ffae91d489c",
-   "odds_commence_time": "2026-09-07T21:11:00Z",
-   "venue": "Petco Park",
+   "odds_event_id": "b9398adf1faaf0c53a1212c75565dff6",
+   "odds_commence_time": "2026-09-26T20:05:00Z",
+   "venue": "Nationals Park",
    "home": {
-    "org": "SDP",
-    "team": "San Diego Padres",
-    "probable": {
-     "mlbam": 601713,
-     "name": "Nick Pivetta"
-    },
-    "offense_plus": 97.0,
-    "bullpen_plus": 120.0
-   },
-   "away": {
     "org": "WSN",
     "team": "Washington Nationals",
     "probable": {
      "mlbam": 663623,
      "name": "Jake Irvin"
     },
-    "offense_plus": 100.0,
+    "offense_plus": 98.0,
     "bullpen_plus": 90.0
    },
-   "model": {
-    "p_home": 0.68647,
-    "p_away": 0.31353,
-    "lam_home": 4.684,
-    "lam_away": 3.282,
-    "fair_total": 7.97,
-    "park_index": 0.94,
-    "home_prevention": {
-     "starter_plus": 125.0,
-     "bullpen_plus": 120.0,
-     "starter_share": 0.444,
-     "blend_plus": 122.2,
-     "source": "probable"
-    },
-    "away_prevention": {
-     "starter_plus": 88.0,
-     "bullpen_plus": 90.0,
-     "starter_share": 0.529,
-     "blend_plus": 88.9,
-     "source": "probable"
-    }
-   },
-   "moneyline": [
-    {
-     "side": "home",
-     "label": "SDP",
-     "model_prob": 0.68647,
-     "fair_odds": -219,
-     "p_push": null,
-     "book": "draftkings",
-     "odds": -192,
-     "decimal": 1.5208,
-     "implied_prob": 0.65755,
-     "market_fair_prob": 0.64511,
-     "edge": 0.04136,
-     "ev_per_unit": 0.04398,
-     "ev_per_unit_if_no_push": 0.04398,
-     "kelly_full": 0.08445,
-     "book_title": "DraftKings",
-     "point": null
-    },
-    {
-     "side": "away",
-     "label": "WSN",
-     "model_prob": 0.31353,
-     "fair_odds": 219,
-     "p_push": null,
-     "book": "betrivers",
-     "odds": 180,
-     "decimal": 2.8,
-     "implied_prob": 0.35714,
-     "market_fair_prob": 0.35489,
-     "edge": -0.04136,
-     "ev_per_unit": -0.12212,
-     "ev_per_unit_if_no_push": -0.12212,
-     "kelly_full": 0.0,
-     "book_title": "BetRivers",
-     "point": null
-    }
-   ],
-   "runline": [
-    {
-     "side": "home",
-     "label": "SDP -1.5",
-     "model_prob": 0.48123,
-     "fair_odds": 108,
-     "p_push": null,
-     "book": "draftkings",
-     "odds": 111,
-     "decimal": 2.11,
-     "implied_prob": 0.47393,
-     "market_fair_prob": 0.46875,
-     "edge": 0.01248,
-     "ev_per_unit": 0.0154,
-     "ev_per_unit_if_no_push": 0.0154,
-     "kelly_full": 0.01387,
-     "book_title": "DraftKings",
-     "point": -1.5
-    },
-    {
-     "side": "away",
-     "label": "WSN +1.5",
-     "model_prob": 0.51877,
-     "fair_odds": -108,
-     "p_push": null,
-     "book": "betrivers",
-     "odds": -121,
-     "decimal": 1.8264,
-     "implied_prob": 0.54753,
-     "market_fair_prob": 0.53125,
-     "edge": -0.01248,
-     "ev_per_unit": -0.05252,
-     "ev_per_unit_if_no_push": -0.05252,
-     "kelly_full": 0.0,
-     "book_title": "BetRivers",
-     "point": 1.5
-    }
-   ],
-   "total": {
-    "line": 8.0,
-    "sides": [
-     {
-      "side": "over",
-      "label": "Over 8.0",
-      "model_prob": 0.46804,
-      "fair_odds": 114,
-      "p_push": 0.13958,
-      "book": "lowvig",
-      "odds": -107,
-      "decimal": 1.9346,
-      "implied_prob": 0.5169,
-      "market_fair_prob": 0.5,
-      "edge": -0.03196,
-      "ev_per_unit": -0.08134,
-      "ev_per_unit_if_no_push": -0.09454,
-      "kelly_full": 0.0,
-      "book_title": "LowVig.ag",
-      "point": 8.0
-     },
-     {
-      "side": "under",
-      "label": "Under 8.0",
-      "model_prob": 0.53196,
-      "fair_odds": -114,
-      "p_push": 0.13958,
-      "book": "lowvig",
-      "odds": -107,
-      "decimal": 1.9346,
-      "implied_prob": 0.5169,
-      "market_fair_prob": 0.5,
-      "edge": 0.03196,
-      "ev_per_unit": 0.02507,
-      "ev_per_unit_if_no_push": 0.02914,
-      "kelly_full": 0.03118,
-      "book_title": "LowVig.ag",
-      "point": 8.0
-     }
-    ],
-    "p_push": 0.13958
-   },
-   "market": {
-    "moneyline_hold_pct": 2.465,
-    "total_hold_pct": 3.382,
-    "moneyline_fair_book": "betonlineag",
-    "moneyline_hold_range": [
-     2.465,
-     4.707
-    ],
-    "moneyline_n_books_on_line": 9,
-    "total_fair_book": "lowvig",
-    "total_hold_range": [
-     3.382,
-     8.777
-    ],
-    "total_n_books_on_line": 9,
-    "runline_fair_book": "lowvig",
-    "runline_hold_pct": 3.06,
-    "fair_book_rule": "min_hold",
-    "n_books_rejected": {
-     "moneyline": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 9
-     },
-     "runline": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 9
-     },
-     "total": {
-      "hold": 0,
-      "stale": 0,
-      "consensus": 0,
-      "on_line": 9
-     }
-    },
-    "max_book_lag_minutes": {
-     "moneyline": 0.8,
-     "runline": 0.8,
-     "total": 0.8
-    },
-    "stale_book_max_lag_minutes": 15.0,
-    "consensus_fair_max_distance": 0.05,
-    "devig_method": "proportional"
-   }
-  },
-  {
-   "game_pk": 823175,
-   "date": "2026-09-07",
-   "start": "2026-09-08T00:10:00Z",
-   "status": "Preview",
-   "double_header": false,
-   "odds_event_id": "7e08f8c46ae533c3c09d2e5d1a37ac2b",
-   "odds_commence_time": "2026-09-08T00:11:00Z",
-   "venue": "Oracle Park",
-   "home": {
-    "org": "SFG",
-    "team": "San Francisco Giants",
-    "probable": {
-     "mlbam": 657277,
-     "name": "Logan Webb"
-    },
-    "offense_plus": 98.0,
-    "bullpen_plus": 91.0
-   },
    "away": {
-    "org": "STL",
-    "team": "St. Louis Cardinals",
+    "org": "NYM",
+    "team": "New York Mets",
     "probable": {
-     "mlbam": 700241,
-     "name": "Michael McGreevy"
+     "mlbam": 804636,
+     "name": "Jonah Tong"
     },
-    "offense_plus": 98.0,
-    "bullpen_plus": 95.0
+    "offense_plus": 99.0,
+    "bullpen_plus": 100.0
    },
    "model": {
-    "p_home": 0.56984,
-    "p_away": 0.43016,
-    "lam_home": 4.52,
-    "lam_away": 3.987,
-    "fair_total": 8.51,
-    "park_index": 0.94,
+    "p_home": 0.46645,
+    "p_away": 0.53355,
+    "lam_home": 4.778,
+    "lam_away": 5.038,
+    "fair_total": 9.82,
+    "park_index": 1.04,
     "home_prevention": {
-     "starter_plus": 110.0,
-     "bullpen_plus": 91.0,
-     "starter_share": 0.666,
-     "blend_plus": 103.6,
+     "starter_plus": 89.0,
+     "bullpen_plus": 90.0,
+     "starter_share": 0.564,
+     "blend_plus": 89.4,
      "source": "probable"
     },
     "away_prevention": {
-     "starter_plus": 96.0,
-     "bullpen_plus": 95.0,
-     "starter_share": 0.607,
-     "blend_plus": 95.6,
+     "starter_plus": 99.0,
+     "bullpen_plus": 100.0,
+     "starter_share": 0.85,
+     "blend_plus": 99.1,
      "source": "probable"
     }
    },
    "moneyline": [
     {
      "side": "home",
-     "label": "SFG",
-     "model_prob": 0.56984,
-     "fair_odds": -132,
-     "p_push": null,
-     "book": "betonlineag",
-     "odds": -126,
-     "decimal": 1.7937,
-     "implied_prob": 0.55751,
-     "market_fair_prob": 0.54518,
-     "edge": 0.02466,
-     "ev_per_unit": 0.02212,
-     "ev_per_unit_if_no_push": 0.02212,
-     "kelly_full": 0.02787,
-     "book_title": "BetOnline.ag",
-     "point": null
-    },
-    {
-     "side": "away",
-     "label": "STL",
-     "model_prob": 0.43016,
-     "fair_odds": 132,
-     "p_push": null,
-     "book": "betus",
-     "odds": 115,
-     "decimal": 2.15,
-     "implied_prob": 0.46512,
-     "market_fair_prob": 0.45482,
-     "edge": -0.02466,
-     "ev_per_unit": -0.07516,
-     "ev_per_unit_if_no_push": -0.07516,
-     "kelly_full": 0.0,
-     "book_title": "BetUS",
-     "point": null
-    }
-   ],
-   "runline": [
-    {
-     "side": "home",
-     "label": "SFG -1.5",
-     "model_prob": 0.36634,
-     "fair_odds": 173,
-     "p_push": null,
-     "book": "mybookieag",
-     "odds": 167,
-     "decimal": 2.67,
-     "implied_prob": 0.37453,
-     "market_fair_prob": 0.3646,
-     "edge": 0.00174,
-     "ev_per_unit": -0.02187,
-     "ev_per_unit_if_no_push": -0.02187,
-     "kelly_full": 0.0,
-     "book_title": "MyBookie.ag",
-     "point": -1.5
-    },
-    {
-     "side": "away",
-     "label": "STL +1.5",
-     "model_prob": 0.63366,
-     "fair_odds": -173,
+     "label": "WSN",
+     "model_prob": 0.46645,
+     "fair_odds": 114,
      "p_push": null,
      "book": "fanduel",
-     "odds": -188,
-     "decimal": 1.5319,
-     "implied_prob": 0.65278,
-     "market_fair_prob": 0.6354,
-     "edge": -0.00174,
-     "ev_per_unit": -0.0293,
-     "ev_per_unit_if_no_push": -0.0293,
+     "odds": 116,
+     "decimal": 2.16,
+     "implied_prob": 0.46296,
+     "market_fair_prob": 0.44548,
+     "edge": 0.02097,
+     "ev_per_unit": 0.00753,
+     "ev_per_unit_if_no_push": 0.00753,
+     "kelly_full": 0.00649,
+     "book_title": "FanDuel",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "NYM",
+     "model_prob": 0.53355,
+     "fair_odds": -114,
+     "p_push": null,
+     "book": "fanduel",
+     "odds": -136,
+     "decimal": 1.7353,
+     "implied_prob": 0.57627,
+     "market_fair_prob": 0.55452,
+     "edge": -0.02097,
+     "ev_per_unit": -0.07413,
+     "ev_per_unit_if_no_push": -0.07413,
      "kelly_full": 0.0,
      "book_title": "FanDuel",
-     "point": 1.5
+     "point": null
     }
    ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "WSN +1.5",
+     "model_prob": 0.62297,
+     "fair_odds": -165,
+     "p_push": null,
+     "book": "draftkings",
+     "odds": -143,
+     "decimal": 1.6993,
+     "implied_prob": 0.58848,
+     "market_fair_prob": 0.58025,
+     "edge": 0.04272,
+     "ev_per_unit": 0.05861,
+     "ev_per_unit_if_no_push": 0.05861,
+     "kelly_full": 0.08382,
+     "book_title": "DraftKings",
+     "point": 1.5,
+     "tie_atom": {
+      "p_tie": 0.12864,
+      "split_served": true,
+      "model_prob_if_split": 0.62297,
+      "shift_if_split": 0.0,
+      "edge_if_split": 0.04272,
+      "n_games": 2374,
+      "n_extra_inning_games": 208,
+      "n_home_wins": 102,
+      "n_home_wins_by_2plus": 10,
+      "n_away_wins": 106,
+      "n_away_wins_by_2plus": 55
+     }
+    },
+    {
+     "side": "away",
+     "label": "NYM -1.5",
+     "model_prob": 0.37703,
+     "fair_odds": 165,
+     "p_push": null,
+     "book": "fanduel",
+     "odds": 128,
+     "decimal": 2.28,
+     "implied_prob": 0.4386,
+     "market_fair_prob": 0.41975,
+     "edge": -0.04272,
+     "ev_per_unit": -0.14037,
+     "ev_per_unit_if_no_push": -0.14037,
+     "kelly_full": 0.0,
+     "book_title": "FanDuel",
+     "point": -1.5,
+     "tie_atom": {
+      "p_tie": 0.12864,
+      "split_served": true,
+      "model_prob_if_split": 0.37703,
+      "shift_if_split": 0.0,
+      "edge_if_split": -0.04272,
+      "n_games": 2374,
+      "n_extra_inning_games": 208,
+      "n_home_wins": 102,
+      "n_home_wins_by_2plus": 10,
+      "n_away_wins": 106,
+      "n_away_wins_by_2plus": 55
+     }
+    }
+   ],
+   "runline_refused": null,
    "total": {
-    "line": 7.5,
+    "line": 8.5,
     "sides": [
      {
       "side": "over",
-      "label": "Over 7.5",
-      "model_prob": 0.61535,
-      "fair_odds": -160,
+      "label": "Over 8.5",
+      "model_prob": 0.64612,
+      "fair_odds": -183,
       "p_push": null,
-      "book": "betrivers",
-      "odds": -113,
-      "decimal": 1.885,
-      "implied_prob": 0.5305,
-      "market_fair_prob": 0.51235,
-      "edge": 0.103,
-      "ev_per_unit": 0.15993,
-      "ev_per_unit_if_no_push": 0.15993,
-      "kelly_full": 0.18071,
-      "book_title": "BetRivers",
-      "point": 7.5
+      "book": "fanduel",
+      "odds": 104,
+      "decimal": 2.04,
+      "implied_prob": 0.4902,
+      "market_fair_prob": 0.48917,
+      "edge": 0.15695,
+      "ev_per_unit": 0.31809,
+      "ev_per_unit_if_no_push": 0.31809,
+      "kelly_full": 0.30586,
+      "book_title": "FanDuel",
+      "point": 8.5,
+      "total_level_caveat": "Slate leans Over: model Over probability 11.2 pts above market on 8 totals (8 positive-edge Overs). Known model shape, not value: the total is priced as a Poisson centred on expected runs; real totals split lower. Fit window: Over 8.5 priced 50.9%, hit 43.3%."
      },
      {
       "side": "under",
-      "label": "Under 7.5",
-      "model_prob": 0.38465,
-      "fair_odds": 160,
+      "label": "Under 8.5",
+      "model_prob": 0.35388,
+      "fair_odds": 183,
       "p_push": null,
-      "book": "fanduel",
-      "odds": 100,
-      "decimal": 2.0,
-      "implied_prob": 0.5,
-      "market_fair_prob": 0.48765,
-      "edge": -0.103,
-      "ev_per_unit": -0.2307,
-      "ev_per_unit_if_no_push": -0.2307,
+      "book": "draftkings",
+      "odds": -115,
+      "decimal": 1.8696,
+      "implied_prob": 0.53487,
+      "market_fair_prob": 0.51083,
+      "edge": -0.15695,
+      "ev_per_unit": -0.33839,
+      "ev_per_unit_if_no_push": -0.33839,
       "kelly_full": 0.0,
-      "book_title": "FanDuel",
-      "point": 7.5
+      "book_title": "DraftKings",
+      "point": 8.5,
+      "total_level_caveat": "Slate leans Over: model Over probability 11.2 pts above market on 8 totals (8 positive-edge Overs). Known model shape, not value: the total is priced as a Poisson centred on expected runs; real totals split lower. Fit window: Over 8.5 priced 50.9%, hit 43.3%."
      }
     ],
     "p_push": 0.0
    },
    "market": {
-    "moneyline_hold_pct": 2.264,
-    "total_hold_pct": 3.547,
-    "moneyline_fair_book": "betus",
+    "moneyline_hold_pct": 3.923,
+    "total_hold_pct": 4.708,
+    "moneyline_fair_book": "fanduel",
     "moneyline_hold_range": [
-     2.264,
-     5.066
+     3.923,
+     4.575
     ],
-    "moneyline_n_books_on_line": 9,
-    "total_fair_book": "lowvig",
+    "moneyline_n_books_on_line": 2,
+    "total_fair_book": "draftkings",
     "total_hold_range": [
-     3.547,
-     4.975
+     4.708,
+     5.16
     ],
-    "total_n_books_on_line": 9,
-    "runline_fair_book": "lowvig",
-    "runline_hold_pct": 3.111,
+    "total_n_books_on_line": 2,
+    "runline_fair_book": "fanduel",
+    "runline_hold_pct": 4.49,
     "fair_book_rule": "min_hold",
     "n_books_rejected": {
      "moneyline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 9
+      "on_line": 2
      },
      "runline": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 9
+      "on_line": 2
      },
      "total": {
       "hold": 0,
       "stale": 0,
       "consensus": 0,
-      "on_line": 9
+      "on_line": 2
      }
     },
     "max_book_lag_minutes": {
-     "moneyline": 0.8,
-     "runline": 0.8,
-     "total": 0.8
+     "moneyline": 0.85,
+     "runline": 0.85,
+     "total": 0.85
     },
     "stale_book_max_lag_minutes": 15.0,
     "consensus_fair_max_distance": 0.05,
@@ -1609,9 +1801,9 @@
   }
  ],
  "record": {
-  "n_rows": 0,
+  "n_rows": 1,
   "n_settled": 0,
-  "n_open": 0,
+  "n_open": 1,
   "won": 0,
   "lost": 0,
   "push": 0,
@@ -1621,8 +1813,1633 @@
   "beat_close_rate": null,
   "avg_clv_pct": null,
   "stake_policy": "flat 1 unit",
-  "chain_sha": "0000000000000000000000000000000000000000000000000000000000000000",
+  "chain_sha": "fe113aaf4505ae11a64af6a41938ae74da3bd2597bd876cb91a0e209d9177d26",
   "chain_note": "sha256 folded row by row over the record; a record that still contains an archived value as one of its prefix hashes is an append, and one that does not is a rewrite"
+ },
+ "dugout_context": {
+  "status": "built",
+  "blocker": null,
+  "source_module": "In-Game Management",
+  "source": "/data/management_board.json",
+  "board_generated_at": "2026-09-25T10:11:59+00:00",
+  "corpus_built_at": "2026-09-25T10:06:36+00:00",
+  "season": 2026,
+  "through": "2026-09-24",
+  "season_rows_present": true,
+  "season_note": null,
+  "head": "Dugout context, not priced",
+  "not_priced_sentence": "Dugout context sits beside the price and enters none of it. No probability, edge, expected value, Kelly figure, slot, badge or record row on this page reads anything from In-Game Management, and no In-Game Management figure is a pricer input.",
+  "source_label": "Source: In-Game Management, club-season 2026 through 2026-09-24, corpus built 2026-09-25T10:06:36+00:00, read from data/management_board.json.",
+  "style_head": "Style this season",
+  "style_sentence": "Style, not skill: each is a signed z-score across the thirty club-seasons of its season, sign as measured. Not an index, no ladder, no plus sign; a frequency has no good direction, and these repeat because they are policy.",
+  "style_columns": [
+   {
+    "key": "z_hook",
+    "label": "Hook z",
+    "basis": "starter pitch count at removal; a negative z is an earlier hook"
+   },
+   {
+    "key": "z_pen",
+    "label": "Pen z",
+    "basis": "pitching changes per game"
+   },
+   {
+    "key": "z_bench",
+    "label": "Bench z",
+    "basis": "pinch hitters plus pinch runners per game"
+   },
+   {
+    "key": "z_ibb",
+    "label": "IBB z",
+    "basis": "intentional walks per game"
+   },
+   {
+    "key": "z_visit",
+    "label": "Visit z",
+    "basis": "mound visits per game"
+   }
+  ],
+  "rates_head": "On its own scale",
+  "rate_columns": [
+   {
+    "key": "hook_median_pitches",
+    "label": "Hook, median pitches",
+    "unit": "pitches",
+    "decimals": 0
+   },
+   {
+    "key": "pen_per_game",
+    "label": "Pitching changes per game",
+    "unit": "per game",
+    "decimals": 2
+   },
+   {
+    "key": "bench_per_game",
+    "label": "Bench moves per game",
+    "unit": "per game",
+    "decimals": 2
+   },
+   {
+    "key": "ibb_per_game",
+    "label": "Intentional walks per game",
+    "unit": "per game",
+    "decimals": 2
+   },
+   {
+    "key": "visit_per_game",
+    "label": "Mound visits per game",
+    "unit": "per game",
+    "decimals": 2
+   }
+  ],
+  "shape_head": "Bullpen shape",
+  "shape_dark_sentence": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them.",
+  "league": {
+   "hook_median_pitches": 89.0,
+   "hook_p10": 64.0,
+   "hook_p90": 102.0,
+   "hook_n": 38486
+  },
+  "realized_head": "Realized value this season, per family, never summed",
+  "realized_sentence": "Realized value, not skill. Each figure is the win probability that actually moved after the decision, credited to the club that made it, from the decision to the last play it governed. What the alternative would have produced, the reliever not used, the batter not lifted, the pitch not thrown, is not observed, so this is a record of what happened after a manager acted and not a measure of how well he chose. A reliever who pitched well after a poor choice and a hitter who homered after a bad matchup are both in these numbers.",
+  "agent_sentence": "The agent is the club-season until the manager ledger lands; a club that changed managers during a season is one row here and two in reality.",
+  "overlap_note": "No cross-family total exists on any row. The family windows overlap: a club's intentional-walk window sits inside its own reliever's stint window, a pinch-hit plate appearance can contain that club's bunt or steal, and a pinch-run window overlaps the pinch hit before it, so one composite per club-season would double count. Per-family sums only.",
+  "units": {
+   "mwpa": "wins, realized value, not skill (wp percentage points divided by 100; the steal's is the house win expectancy change of the steal itself)",
+   "z": "signed style z-score, not an index, not skill"
+  },
+  "realized_families": [
+   {
+    "key": "pitching_change",
+    "label": "Pitching changes",
+    "floor": 100
+   },
+   {
+    "key": "pinch_hit",
+    "label": "Pinch hitters",
+    "floor": 40
+   },
+   {
+    "key": "pinch_run",
+    "label": "Pinch runners",
+    "floor": 15
+   },
+   {
+    "key": "intentional_walk",
+    "label": "Intentional walks",
+    "floor": 8
+   },
+   {
+    "key": "bunt",
+    "label": "Bunts",
+    "floor": 20
+   },
+   {
+    "key": "steal",
+    "label": "Steals",
+    "floor": 30
+   }
+  ],
+  "floors": {
+   "pitching_change": 100,
+   "pinch_hit": 40,
+   "pinch_run": 15,
+   "intentional_walk": 8,
+   "bunt": 20,
+   "steal": 30
+  },
+  "games_floor": 40,
+  "plus_metric": false,
+  "no_cross_family_total": true,
+  "below_floor_template": "below the floor of {floor} ({n} this season)",
+  "games": {
+   "824219": {
+    "away": "PIT",
+    "home": "DET"
+   },
+   "822759": {
+    "away": "CIN",
+    "home": "TOR"
+   },
+   "822678": {
+    "away": "NYM",
+    "home": "WSN"
+   },
+   "823165": {
+    "away": "LAD",
+    "home": "SFG"
+   },
+   "823653": {
+    "away": "TEX",
+    "home": "MIN"
+   },
+   "823813": {
+    "away": "ATL",
+    "home": "MIA"
+   },
+   "824057": {
+    "away": "CLE",
+    "home": "KCR"
+   },
+   "824543": {
+    "away": "COL",
+    "home": "CHW"
+   },
+   "823733": {
+    "away": "STL",
+    "home": "MIL"
+   },
+   "824705": {
+    "away": "CHC",
+    "home": "BOS"
+   },
+   "823407": {
+    "away": "TBR",
+    "home": "PHI"
+   },
+   "823245": {
+    "away": "ARI",
+    "home": "SDP"
+   },
+   "824949": {
+    "away": "HOU",
+    "home": "ATH"
+   },
+   "823083": {
+    "away": "LAA",
+    "home": "SEA"
+   }
+  },
+  "clubs": {
+   "PIT": {
+    "club": "PIT",
+    "statsapi_code": "PIT",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1595,
+    "mean_li": 1.454,
+    "share_li_high": 0.387,
+    "style": {
+     "z_hook": -1.0,
+     "z_pen": -0.09,
+     "z_bench": -0.5,
+     "z_ibb": 0.42,
+     "z_visit": -0.2
+    },
+    "rates": {
+     "hook_median_pitches": 85.0,
+     "pen_per_game": 3.27,
+     "bench_per_game": 1.038,
+     "ibb_per_game": 0.132,
+     "visit_per_game": 2.899
+    },
+    "shape": {
+     "hook_median_pitches": 85.0,
+     "pen_per_game": 3.27,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 520,
+     "n_pinch_hit": 118,
+     "n_pinch_run": 47,
+     "n_intentional_walk": 21,
+     "n_bunt": 109,
+     "n_steal": 78
+    },
+    "realized": {
+     "mwpa_pitching_change": 3.416,
+     "mwpa_pinch_hit": -0.635,
+     "mwpa_pinch_run": 0.184,
+     "mwpa_intentional_walk": 0.65,
+     "mwpa_bunt": -0.465,
+     "mwpa_steal": 0.31
+    },
+    "link": "/management/#section=clubs&team=PIT&season=2026",
+    "drill_link": "/management/#section=decisions&team=PIT&season=2026&family={family}",
+    "link_label": "Open PIT on In-Game Management",
+    "row_note": null
+   },
+   "DET": {
+    "club": "DET",
+    "statsapi_code": "DET",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1469,
+    "mean_li": 1.326,
+    "share_li_high": 0.357,
+    "style": {
+     "z_hook": -0.35,
+     "z_pen": -1.02,
+     "z_bench": 1.98,
+     "z_ibb": -1.18,
+     "z_visit": -0.2
+    },
+    "rates": {
+     "hook_median_pitches": 87.0,
+     "pen_per_game": 3.132,
+     "bench_per_game": 1.516,
+     "ibb_per_game": 0.057,
+     "visit_per_game": 2.899
+    },
+    "shape": {
+     "hook_median_pitches": 87.0,
+     "pen_per_game": 3.132,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 498,
+     "n_pinch_hit": 223,
+     "n_pinch_run": 18,
+     "n_intentional_walk": 9,
+     "n_bunt": 33,
+     "n_steal": 28
+    },
+    "realized": {
+     "mwpa_pitching_change": -6.14,
+     "mwpa_pinch_hit": -3.084,
+     "mwpa_pinch_run": 1.007,
+     "mwpa_intentional_walk": -0.249,
+     "mwpa_bunt": -0.482,
+     "mwpa_steal": null
+    },
+    "link": "/management/#section=clubs&team=DET&season=2026",
+    "drill_link": "/management/#section=decisions&team=DET&season=2026&family={family}",
+    "link_label": "Open DET on In-Game Management",
+    "row_note": null
+   },
+   "CIN": {
+    "club": "CIN",
+    "statsapi_code": "CIN",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1573,
+    "mean_li": 1.342,
+    "share_li_high": 0.385,
+    "style": {
+     "z_hook": 1.28,
+     "z_pen": 1.83,
+     "z_bench": -0.67,
+     "z_ibb": 0.55,
+     "z_visit": -0.22
+    },
+    "rates": {
+     "hook_median_pitches": 92.0,
+     "pen_per_game": 3.553,
+     "bench_per_game": 1.006,
+     "ibb_per_game": 0.138,
+     "visit_per_game": 2.893
+    },
+    "shape": {
+     "hook_median_pitches": 92.0,
+     "pen_per_game": 3.553,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 565,
+     "n_pinch_hit": 127,
+     "n_pinch_run": 33,
+     "n_intentional_walk": 22,
+     "n_bunt": 101,
+     "n_steal": 74
+    },
+    "realized": {
+     "mwpa_pitching_change": -0.582,
+     "mwpa_pinch_hit": 0.122,
+     "mwpa_pinch_run": -1.896,
+     "mwpa_intentional_walk": -0.035,
+     "mwpa_bunt": -0.664,
+     "mwpa_steal": -0.033
+    },
+    "link": "/management/#section=clubs&team=CIN&season=2026",
+    "drill_link": "/management/#section=decisions&team=CIN&season=2026&family={family}",
+    "link_label": "Open CIN on In-Game Management",
+    "row_note": null
+   },
+   "TOR": {
+    "club": "TOR",
+    "statsapi_code": "TOR",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1650,
+    "mean_li": 1.378,
+    "share_li_high": 0.389,
+    "style": {
+     "z_hook": -0.35,
+     "z_pen": 3.1,
+     "z_bench": 0.97,
+     "z_ibb": 2.17,
+     "z_visit": -0.09
+    },
+    "rates": {
+     "hook_median_pitches": 87.0,
+     "pen_per_game": 3.742,
+     "bench_per_game": 1.321,
+     "ibb_per_game": 0.214,
+     "visit_per_game": 2.937
+    },
+    "shape": {
+     "hook_median_pitches": 87.0,
+     "pen_per_game": 3.742,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 595,
+     "n_pinch_hit": 173,
+     "n_pinch_run": 37,
+     "n_intentional_walk": 34,
+     "n_bunt": 110,
+     "n_steal": 39
+    },
+    "realized": {
+     "mwpa_pitching_change": 4.851,
+     "mwpa_pinch_hit": -1.213,
+     "mwpa_pinch_run": 0.325,
+     "mwpa_intentional_walk": -0.471,
+     "mwpa_bunt": -0.135,
+     "mwpa_steal": 0.381
+    },
+    "link": "/management/#section=clubs&team=TOR&season=2026",
+    "drill_link": "/management/#section=decisions&team=TOR&season=2026&family={family}",
+    "link_label": "Open TOR on In-Game Management",
+    "row_note": null
+   },
+   "NYM": {
+    "club": "NYM",
+    "statsapi_code": "NYM",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1352,
+    "mean_li": 1.399,
+    "share_li_high": 0.402,
+    "style": {
+     "z_hook": 0.3,
+     "z_pen": -1.23,
+     "z_bench": -0.44,
+     "z_ibb": -1.45,
+     "z_visit": -0.02
+    },
+    "rates": {
+     "hook_median_pitches": 89.0,
+     "pen_per_game": 3.101,
+     "bench_per_game": 1.05,
+     "ibb_per_game": 0.044,
+     "visit_per_game": 2.962
+    },
+    "shape": {
+     "hook_median_pitches": 89.0,
+     "pen_per_game": 3.101,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 493,
+     "n_pinch_hit": 137,
+     "n_pinch_run": 30,
+     "n_intentional_walk": 7,
+     "n_bunt": 61,
+     "n_steal": 49
+    },
+    "realized": {
+     "mwpa_pitching_change": 4.114,
+     "mwpa_pinch_hit": -0.057,
+     "mwpa_pinch_run": 0.565,
+     "mwpa_intentional_walk": null,
+     "mwpa_bunt": -0.22,
+     "mwpa_steal": -0.655
+    },
+    "link": "/management/#section=clubs&team=NYM&season=2026",
+    "drill_link": "/management/#section=decisions&team=NYM&season=2026&family={family}",
+    "link_label": "Open NYM on In-Game Management",
+    "row_note": null
+   },
+   "WSN": {
+    "club": "WSN",
+    "statsapi_code": "WSH",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1620,
+    "mean_li": 1.518,
+    "share_li_high": 0.422,
+    "style": {
+     "z_hook": -1.32,
+     "z_pen": -0.64,
+     "z_bench": 1.68,
+     "z_ibb": -0.52,
+     "z_visit": 1.48
+    },
+    "rates": {
+     "hook_median_pitches": 84.0,
+     "pen_per_game": 3.189,
+     "bench_per_game": 1.459,
+     "ibb_per_game": 0.088,
+     "visit_per_game": 3.484
+    },
+    "shape": {
+     "hook_median_pitches": 84.0,
+     "pen_per_game": 3.189,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 507,
+     "n_pinch_hit": 202,
+     "n_pinch_run": 30,
+     "n_intentional_walk": 14,
+     "n_bunt": 82,
+     "n_steal": 98
+    },
+    "realized": {
+     "mwpa_pitching_change": -8.205,
+     "mwpa_pinch_hit": -0.915,
+     "mwpa_pinch_run": -0.373,
+     "mwpa_intentional_walk": 0.632,
+     "mwpa_bunt": 0.417,
+     "mwpa_steal": 0.797
+    },
+    "link": "/management/#section=clubs&team=WSN&season=2026",
+    "drill_link": "/management/#section=decisions&team=WSN&season=2026&family={family}",
+    "link_label": "Open WSN on In-Game Management",
+    "row_note": null
+   },
+   "LAD": {
+    "club": "LAD",
+    "statsapi_code": "LAD",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1350,
+    "mean_li": 1.424,
+    "share_li_high": 0.393,
+    "style": {
+     "z_hook": 0.95,
+     "z_pen": 0.13,
+     "z_bench": -0.11,
+     "z_ibb": 1.9,
+     "z_visit": -1.42
+    },
+    "rates": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.302,
+     "bench_per_game": 1.113,
+     "ibb_per_game": 0.201,
+     "visit_per_game": 2.472
+    },
+    "shape": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.302,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 525,
+     "n_pinch_hit": 161,
+     "n_pinch_run": 16,
+     "n_intentional_walk": 32,
+     "n_bunt": 51,
+     "n_steal": 52
+    },
+    "realized": {
+     "mwpa_pitching_change": 2.963,
+     "mwpa_pinch_hit": 0.628,
+     "mwpa_pinch_run": -0.593,
+     "mwpa_intentional_walk": 0.613,
+     "mwpa_bunt": -0.55,
+     "mwpa_steal": 0.255
+    },
+    "link": "/management/#section=clubs&team=LAD&season=2026",
+    "drill_link": "/management/#section=decisions&team=LAD&season=2026&family={family}",
+    "link_label": "Open LAD on In-Game Management",
+    "row_note": null
+   },
+   "SFG": {
+    "club": "SFG",
+    "statsapi_code": "SF",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1527,
+    "mean_li": 1.431,
+    "share_li_high": 0.398,
+    "style": {
+     "z_hook": 0.63,
+     "z_pen": -0.51,
+     "z_bench": -0.27,
+     "z_ibb": 0.15,
+     "z_visit": 0.29
+    },
+    "rates": {
+     "hook_median_pitches": 90.0,
+     "pen_per_game": 3.208,
+     "bench_per_game": 1.082,
+     "ibb_per_game": 0.119,
+     "visit_per_game": 3.069
+    },
+    "shape": {
+     "hook_median_pitches": 90.0,
+     "pen_per_game": 3.208,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 510,
+     "n_pinch_hit": 144,
+     "n_pinch_run": 28,
+     "n_intentional_walk": 19,
+     "n_bunt": 119,
+     "n_steal": 56
+    },
+    "realized": {
+     "mwpa_pitching_change": -6.681,
+     "mwpa_pinch_hit": -1.612,
+     "mwpa_pinch_run": -0.787,
+     "mwpa_intentional_walk": -0.623,
+     "mwpa_bunt": -0.026,
+     "mwpa_steal": 0.117
+    },
+    "link": "/management/#section=clubs&team=SFG&season=2026",
+    "drill_link": "/management/#section=decisions&team=SFG&season=2026&family={family}",
+    "link_label": "Open SFG on In-Game Management",
+    "row_note": null
+   },
+   "TEX": {
+    "club": "TEX",
+    "statsapi_code": "TEX",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1602,
+    "mean_li": 1.26,
+    "share_li_high": 0.335,
+    "style": {
+     "z_hook": -0.02,
+     "z_pen": 0.17,
+     "z_bench": 1.91,
+     "z_ibb": 2.3,
+     "z_visit": -0.74
+    },
+    "rates": {
+     "hook_median_pitches": 88.0,
+     "pen_per_game": 3.308,
+     "bench_per_game": 1.503,
+     "ibb_per_game": 0.22,
+     "visit_per_game": 2.711
+    },
+    "shape": {
+     "hook_median_pitches": 88.0,
+     "pen_per_game": 3.308,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 526,
+     "n_pinch_hit": 215,
+     "n_pinch_run": 24,
+     "n_intentional_walk": 35,
+     "n_bunt": 128,
+     "n_steal": 50
+    },
+    "realized": {
+     "mwpa_pitching_change": 0.001,
+     "mwpa_pinch_hit": -2.199,
+     "mwpa_pinch_run": -0.292,
+     "mwpa_intentional_walk": -0.558,
+     "mwpa_bunt": -0.481,
+     "mwpa_steal": 0.385
+    },
+    "link": "/management/#section=clubs&team=TEX&season=2026",
+    "drill_link": "/management/#section=decisions&team=TEX&season=2026&family={family}",
+    "link_label": "Open TEX on In-Game Management",
+    "row_note": null
+   },
+   "MIN": {
+    "club": "MIN",
+    "statsapi_code": "MIN",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1535,
+    "mean_li": 1.495,
+    "share_li_high": 0.414,
+    "style": {
+     "z_hook": 0.95,
+     "z_pen": 0.3,
+     "z_bench": -0.31,
+     "z_ibb": 0.3,
+     "z_visit": 0.94
+    },
+    "rates": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.327,
+     "bench_per_game": 1.075,
+     "ibb_per_game": 0.126,
+     "visit_per_game": 3.296
+    },
+    "shape": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.327,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 529,
+     "n_pinch_hit": 130,
+     "n_pinch_run": 41,
+     "n_intentional_walk": 20,
+     "n_bunt": 69,
+     "n_steal": 57
+    },
+    "realized": {
+     "mwpa_pitching_change": -0.293,
+     "mwpa_pinch_hit": 0.766,
+     "mwpa_pinch_run": 0.46,
+     "mwpa_intentional_walk": 0.595,
+     "mwpa_bunt": 0.305,
+     "mwpa_steal": -0.177
+    },
+    "link": "/management/#section=clubs&team=MIN&season=2026",
+    "drill_link": "/management/#section=decisions&team=MIN&season=2026&family={family}",
+    "link_label": "Open MIN on In-Game Management",
+    "row_note": null
+   },
+   "ATL": {
+    "club": "ATL",
+    "statsapi_code": "ATL",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1213,
+    "mean_li": 1.468,
+    "share_li_high": 0.424,
+    "style": {
+     "z_hook": -0.67,
+     "z_pen": -1.19,
+     "z_bench": -0.27,
+     "z_ibb": -0.39,
+     "z_visit": -2.31
+    },
+    "rates": {
+     "hook_median_pitches": 86.0,
+     "pen_per_game": 3.107,
+     "bench_per_game": 1.082,
+     "ibb_per_game": 0.094,
+     "visit_per_game": 2.164
+    },
+    "shape": {
+     "hook_median_pitches": 86.0,
+     "pen_per_game": 3.107,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 494,
+     "n_pinch_hit": 144,
+     "n_pinch_run": 28,
+     "n_intentional_walk": 15,
+     "n_bunt": 50,
+     "n_steal": 46
+    },
+    "realized": {
+     "mwpa_pitching_change": 8.6,
+     "mwpa_pinch_hit": 0.115,
+     "mwpa_pinch_run": -0.116,
+     "mwpa_intentional_walk": 0.439,
+     "mwpa_bunt": 0.502,
+     "mwpa_steal": 0.254
+    },
+    "link": "/management/#section=clubs&team=ATL&season=2026",
+    "drill_link": "/management/#section=decisions&team=ATL&season=2026&family={family}",
+    "link_label": "Open ATL on In-Game Management",
+    "row_note": null
+   },
+   "MIA": {
+    "club": "MIA",
+    "statsapi_code": "MIA",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1544,
+    "mean_li": 1.345,
+    "share_li_high": 0.374,
+    "style": {
+     "z_hook": -0.18,
+     "z_pen": 0.63,
+     "z_bench": 0.02,
+     "z_ibb": -0.92,
+     "z_visit": -2.11
+    },
+    "rates": {
+     "hook_median_pitches": 87.5,
+     "pen_per_game": 3.377,
+     "bench_per_game": 1.138,
+     "ibb_per_game": 0.069,
+     "visit_per_game": 2.233
+    },
+    "shape": {
+     "hook_median_pitches": 87.5,
+     "pen_per_game": 3.377,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 537,
+     "n_pinch_hit": 166,
+     "n_pinch_run": 15,
+     "n_intentional_walk": 11,
+     "n_bunt": 151,
+     "n_steal": 111
+    },
+    "realized": {
+     "mwpa_pitching_change": -2.102,
+     "mwpa_pinch_hit": 1.035,
+     "mwpa_pinch_run": 0.861,
+     "mwpa_intentional_walk": 1.306,
+     "mwpa_bunt": 1.077,
+     "mwpa_steal": 0.374
+    },
+    "link": "/management/#section=clubs&team=MIA&season=2026",
+    "drill_link": "/management/#section=decisions&team=MIA&season=2026&family={family}",
+    "link_label": "Open MIA on In-Game Management",
+    "row_note": null
+   },
+   "CLE": {
+    "club": "CLE",
+    "statsapi_code": "CLE",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1493,
+    "mean_li": 1.49,
+    "share_li_high": 0.41,
+    "style": {
+     "z_hook": 0.95,
+     "z_pen": 0.98,
+     "z_bench": 0.05,
+     "z_ibb": -0.79,
+     "z_visit": -1.07
+    },
+    "rates": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.428,
+     "bench_per_game": 1.145,
+     "ibb_per_game": 0.075,
+     "visit_per_game": 2.597
+    },
+    "shape": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.428,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 545,
+     "n_pinch_hit": 155,
+     "n_pinch_run": 27,
+     "n_intentional_walk": 12,
+     "n_bunt": 94,
+     "n_steal": 101
+    },
+    "realized": {
+     "mwpa_pitching_change": 5.603,
+     "mwpa_pinch_hit": -2.409,
+     "mwpa_pinch_run": 1.401,
+     "mwpa_intentional_walk": -0.219,
+     "mwpa_bunt": -0.655,
+     "mwpa_steal": 0.688
+    },
+    "link": "/management/#section=clubs&team=CLE&season=2026",
+    "drill_link": "/management/#section=decisions&team=CLE&season=2026&family={family}",
+    "link_label": "Open CLE on In-Game Management",
+    "row_note": null
+   },
+   "KCR": {
+    "club": "KCR",
+    "statsapi_code": "KC",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1468,
+    "mean_li": 1.396,
+    "share_li_high": 0.377,
+    "style": {
+     "z_hook": 0.63,
+     "z_pen": -0.04,
+     "z_bench": -0.24,
+     "z_ibb": -0.64,
+     "z_visit": -0.31
+    },
+    "rates": {
+     "hook_median_pitches": 90.0,
+     "pen_per_game": 3.277,
+     "bench_per_game": 1.088,
+     "ibb_per_game": 0.082,
+     "visit_per_game": 2.862
+    },
+    "shape": {
+     "hook_median_pitches": 90.0,
+     "pen_per_game": 3.277,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 521,
+     "n_pinch_hit": 134,
+     "n_pinch_run": 39,
+     "n_intentional_walk": 13,
+     "n_bunt": 119,
+     "n_steal": 71
+    },
+    "realized": {
+     "mwpa_pitching_change": -7.282,
+     "mwpa_pinch_hit": -1.077,
+     "mwpa_pinch_run": -1.094,
+     "mwpa_intentional_walk": -0.702,
+     "mwpa_bunt": -0.247,
+     "mwpa_steal": 0.075
+    },
+    "link": "/management/#section=clubs&team=KCR&season=2026",
+    "drill_link": "/management/#section=decisions&team=KCR&season=2026&family={family}",
+    "link_label": "Open KCR on In-Game Management",
+    "row_note": null
+   },
+   "COL": {
+    "club": "COL",
+    "statsapi_code": "COL",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1674,
+    "mean_li": 1.395,
+    "share_li_high": 0.374,
+    "style": {
+     "z_hook": -1.32,
+     "z_pen": -1.28,
+     "z_bench": 0.77,
+     "z_ibb": 0.3,
+     "z_visit": 0.72
+    },
+    "rates": {
+     "hook_median_pitches": 84.0,
+     "pen_per_game": 3.094,
+     "bench_per_game": 1.283,
+     "ibb_per_game": 0.126,
+     "visit_per_game": 3.22
+    },
+    "shape": {
+     "hook_median_pitches": 84.0,
+     "pen_per_game": 3.094,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 492,
+     "n_pinch_hit": 171,
+     "n_pinch_run": 33,
+     "n_intentional_walk": 20,
+     "n_bunt": 140,
+     "n_steal": 74
+    },
+    "realized": {
+     "mwpa_pitching_change": -3.578,
+     "mwpa_pinch_hit": -0.166,
+     "mwpa_pinch_run": -1.586,
+     "mwpa_intentional_walk": -0.203,
+     "mwpa_bunt": 0.005,
+     "mwpa_steal": -0.093
+    },
+    "link": "/management/#section=clubs&team=COL&season=2026",
+    "drill_link": "/management/#section=decisions&team=COL&season=2026&family={family}",
+    "link_label": "Open COL on In-Game Management",
+    "row_note": null
+   },
+   "CHW": {
+    "club": "CHW",
+    "statsapi_code": "CWS",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1662,
+    "mean_li": 1.465,
+    "share_li_high": 0.387,
+    "style": {
+     "z_hook": -1.32,
+     "z_pen": 0.34,
+     "z_bench": 2.43,
+     "z_ibb": 0.42,
+     "z_visit": 0.14
+    },
+    "rates": {
+     "hook_median_pitches": 84.0,
+     "pen_per_game": 3.333,
+     "bench_per_game": 1.604,
+     "ibb_per_game": 0.132,
+     "visit_per_game": 3.019
+    },
+    "shape": {
+     "hook_median_pitches": 84.0,
+     "pen_per_game": 3.333,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 530,
+     "n_pinch_hit": 213,
+     "n_pinch_run": 42,
+     "n_intentional_walk": 21,
+     "n_bunt": 141,
+     "n_steal": 52
+    },
+    "realized": {
+     "mwpa_pitching_change": -1.129,
+     "mwpa_pinch_hit": -0.982,
+     "mwpa_pinch_run": -2.079,
+     "mwpa_intentional_walk": 0.688,
+     "mwpa_bunt": 0.409,
+     "mwpa_steal": -0.258
+    },
+    "link": "/management/#section=clubs&team=CHW&season=2026",
+    "drill_link": "/management/#section=decisions&team=CHW&season=2026&family={family}",
+    "link_label": "Open CHW on In-Game Management",
+    "row_note": null
+   },
+   "STL": {
+    "club": "STL",
+    "statsapi_code": "STL",
+    "season": 2026,
+    "games": 158,
+    "partial": true,
+    "n_all": 1483,
+    "mean_li": 1.519,
+    "share_li_high": 0.44,
+    "style": {
+     "z_hook": 0.3,
+     "z_pen": 0.78,
+     "z_bench": -0.4,
+     "z_ibb": -0.49,
+     "z_visit": -0.84
+    },
+    "rates": {
+     "hook_median_pitches": 89.0,
+     "pen_per_game": 3.399,
+     "bench_per_game": 1.057,
+     "ibb_per_game": 0.089,
+     "visit_per_game": 2.677
+    },
+    "shape": {
+     "hook_median_pitches": 89.0,
+     "pen_per_game": 3.399,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 537,
+     "n_pinch_hit": 134,
+     "n_pinch_run": 33,
+     "n_intentional_walk": 14,
+     "n_bunt": 98,
+     "n_steal": 73
+    },
+    "realized": {
+     "mwpa_pitching_change": -5.867,
+     "mwpa_pinch_hit": -2.48,
+     "mwpa_pinch_run": -1.163,
+     "mwpa_intentional_walk": -0.18,
+     "mwpa_bunt": -0.105,
+     "mwpa_steal": 0.33
+    },
+    "link": "/management/#section=clubs&team=STL&season=2026",
+    "drill_link": "/management/#section=decisions&team=STL&season=2026&family={family}",
+    "link_label": "Open STL on In-Game Management",
+    "row_note": null
+   },
+   "MIL": {
+    "club": "MIL",
+    "statsapi_code": "MIL",
+    "season": 2026,
+    "games": 158,
+    "partial": true,
+    "n_all": 1676,
+    "mean_li": 1.433,
+    "share_li_high": 0.396,
+    "style": {
+     "z_hook": -1.32,
+     "z_pen": -0.89,
+     "z_bench": 0.32,
+     "z_ibb": -0.24,
+     "z_visit": 1.65
+    },
+    "rates": {
+     "hook_median_pitches": 84.0,
+     "pen_per_game": 3.152,
+     "bench_per_game": 1.196,
+     "ibb_per_game": 0.101,
+     "visit_per_game": 3.544
+    },
+    "shape": {
+     "hook_median_pitches": 84.0,
+     "pen_per_game": 3.152,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 498,
+     "n_pinch_hit": 140,
+     "n_pinch_run": 49,
+     "n_intentional_walk": 16,
+     "n_bunt": 153,
+     "n_steal": 101
+    },
+    "realized": {
+     "mwpa_pitching_change": 6.834,
+     "mwpa_pinch_hit": -1.846,
+     "mwpa_pinch_run": -1.008,
+     "mwpa_intentional_walk": 0.229,
+     "mwpa_bunt": 0.339,
+     "mwpa_steal": 0.105
+    },
+    "link": "/management/#section=clubs&team=MIL&season=2026",
+    "drill_link": "/management/#section=decisions&team=MIL&season=2026&family={family}",
+    "link_label": "Open MIL on In-Game Management",
+    "row_note": null
+   },
+   "CHC": {
+    "club": "CHC",
+    "statsapi_code": "CHC",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1382,
+    "mean_li": 1.341,
+    "share_li_high": 0.36,
+    "style": {
+     "z_hook": -0.02,
+     "z_pen": -0.39,
+     "z_bench": 0.05,
+     "z_ibb": -0.64,
+     "z_visit": -0.07
+    },
+    "rates": {
+     "hook_median_pitches": 88.0,
+     "pen_per_game": 3.226,
+     "bench_per_game": 1.145,
+     "ibb_per_game": 0.082,
+     "visit_per_game": 2.943
+    },
+    "shape": {
+     "hook_median_pitches": 88.0,
+     "pen_per_game": 3.226,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 513,
+     "n_pinch_hit": 155,
+     "n_pinch_run": 27,
+     "n_intentional_walk": 13,
+     "n_bunt": 52,
+     "n_steal": 69
+    },
+    "realized": {
+     "mwpa_pitching_change": -1.259,
+     "mwpa_pinch_hit": 0.626,
+     "mwpa_pinch_run": -0.326,
+     "mwpa_intentional_walk": -0.121,
+     "mwpa_bunt": -0.463,
+     "mwpa_steal": 0.574
+    },
+    "link": "/management/#section=clubs&team=CHC&season=2026",
+    "drill_link": "/management/#section=decisions&team=CHC&season=2026&family={family}",
+    "link_label": "Open CHC on In-Game Management",
+    "row_note": null
+   },
+   "BOS": {
+    "club": "BOS",
+    "statsapi_code": "BOS",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1353,
+    "mean_li": 1.412,
+    "share_li_high": 0.408,
+    "style": {
+     "z_hook": -0.02,
+     "z_pen": -1.75,
+     "z_bench": -1.28,
+     "z_ibb": -1.05,
+     "z_visit": -0.52
+    },
+    "rates": {
+     "hook_median_pitches": 88.0,
+     "pen_per_game": 3.025,
+     "bench_per_game": 0.887,
+     "ibb_per_game": 0.063,
+     "visit_per_game": 2.786
+    },
+    "shape": {
+     "hook_median_pitches": 88.0,
+     "pen_per_game": 3.025,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 481,
+     "n_pinch_hit": 116,
+     "n_pinch_run": 25,
+     "n_intentional_walk": 10,
+     "n_bunt": 119,
+     "n_steal": 72
+    },
+    "realized": {
+     "mwpa_pitching_change": 4.598,
+     "mwpa_pinch_hit": 0.279,
+     "mwpa_pinch_run": 0.236,
+     "mwpa_intentional_walk": 0.1,
+     "mwpa_bunt": 0.253,
+     "mwpa_steal": -0.199
+    },
+    "link": "/management/#section=clubs&team=BOS&season=2026",
+    "drill_link": "/management/#section=decisions&team=BOS&season=2026&family={family}",
+    "link_label": "Open BOS on In-Game Management",
+    "row_note": null
+   },
+   "TBR": {
+    "club": "TBR",
+    "statsapi_code": "TB",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1667,
+    "mean_li": 1.45,
+    "share_li_high": 0.399,
+    "style": {
+     "z_hook": -2.29,
+     "z_pen": -0.6,
+     "z_bench": 0.18,
+     "z_ibb": 1.23,
+     "z_visit": 0.92
+    },
+    "rates": {
+     "hook_median_pitches": 81.0,
+     "pen_per_game": 3.195,
+     "bench_per_game": 1.17,
+     "ibb_per_game": 0.17,
+     "visit_per_game": 3.289
+    },
+    "shape": {
+     "hook_median_pitches": 81.0,
+     "pen_per_game": 3.195,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 508,
+     "n_pinch_hit": 133,
+     "n_pinch_run": 53,
+     "n_intentional_walk": 27,
+     "n_bunt": 225,
+     "n_steal": 105
+    },
+    "realized": {
+     "mwpa_pitching_change": 8.444,
+     "mwpa_pinch_hit": -1.195,
+     "mwpa_pinch_run": -0.054,
+     "mwpa_intentional_walk": 1.188,
+     "mwpa_bunt": 0.243,
+     "mwpa_steal": 0.175
+    },
+    "link": "/management/#section=clubs&team=TBR&season=2026",
+    "drill_link": "/management/#section=decisions&team=TBR&season=2026&family={family}",
+    "link_label": "Open TBR on In-Game Management",
+    "row_note": null
+   },
+   "PHI": {
+    "club": "PHI",
+    "statsapi_code": "PHI",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1303,
+    "mean_li": 1.326,
+    "share_li_high": 0.36,
+    "style": {
+     "z_hook": 1.93,
+     "z_pen": -0.04,
+     "z_bench": -1.81,
+     "z_ibb": -0.92,
+     "z_visit": -1.34
+    },
+    "rates": {
+     "hook_median_pitches": 94.0,
+     "pen_per_game": 3.277,
+     "bench_per_game": 0.786,
+     "ibb_per_game": 0.069,
+     "visit_per_game": 2.503
+    },
+    "shape": {
+     "hook_median_pitches": 94.0,
+     "pen_per_game": 3.277,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 521,
+     "n_pinch_hit": 97,
+     "n_pinch_run": 28,
+     "n_intentional_walk": 11,
+     "n_bunt": 72,
+     "n_steal": 47
+    },
+    "realized": {
+     "mwpa_pitching_change": -2.237,
+     "mwpa_pinch_hit": 1.584,
+     "mwpa_pinch_run": 2.389,
+     "mwpa_intentional_walk": 0.355,
+     "mwpa_bunt": -0.63,
+     "mwpa_steal": 0.216
+    },
+    "link": "/management/#section=clubs&team=PHI&season=2026",
+    "drill_link": "/management/#section=decisions&team=PHI&season=2026&family={family}",
+    "link_label": "Open PHI on In-Game Management",
+    "row_note": null
+   },
+   "ARI": {
+    "club": "ARI",
+    "statsapi_code": "AZ",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1548,
+    "mean_li": 1.332,
+    "share_li_high": 0.373,
+    "style": {
+     "z_hook": 0.47,
+     "z_pen": 0.63,
+     "z_bench": -1.51,
+     "z_ibb": 0.3,
+     "z_visit": -0.09
+    },
+    "rates": {
+     "hook_median_pitches": 89.5,
+     "pen_per_game": 3.377,
+     "bench_per_game": 0.843,
+     "ibb_per_game": 0.126,
+     "visit_per_game": 2.937
+    },
+    "shape": {
+     "hook_median_pitches": 89.5,
+     "pen_per_game": 3.377,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 537,
+     "n_pinch_hit": 105,
+     "n_pinch_run": 29,
+     "n_intentional_walk": 20,
+     "n_bunt": 159,
+     "n_steal": 54
+    },
+    "realized": {
+     "mwpa_pitching_change": 7.086,
+     "mwpa_pinch_hit": 1.138,
+     "mwpa_pinch_run": 1.757,
+     "mwpa_intentional_walk": -0.515,
+     "mwpa_bunt": 0.189,
+     "mwpa_steal": 0.212
+    },
+    "link": "/management/#section=clubs&team=ARI&season=2026",
+    "drill_link": "/management/#section=decisions&team=ARI&season=2026&family={family}",
+    "link_label": "Open ARI on In-Game Management",
+    "row_note": null
+   },
+   "SDP": {
+    "club": "SDP",
+    "statsapi_code": "SD",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1650,
+    "mean_li": 1.459,
+    "share_li_high": 0.43,
+    "style": {
+     "z_hook": -1.64,
+     "z_pen": 0.81,
+     "z_bench": -0.67,
+     "z_ibb": 0.15,
+     "z_visit": 1.14
+    },
+    "rates": {
+     "hook_median_pitches": 83.0,
+     "pen_per_game": 3.403,
+     "bench_per_game": 1.006,
+     "ibb_per_game": 0.119,
+     "visit_per_game": 3.365
+    },
+    "shape": {
+     "hook_median_pitches": 83.0,
+     "pen_per_game": 3.403,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 541,
+     "n_pinch_hit": 118,
+     "n_pinch_run": 42,
+     "n_intentional_walk": 19,
+     "n_bunt": 141,
+     "n_steal": 86
+    },
+    "realized": {
+     "mwpa_pitching_change": 5.065,
+     "mwpa_pinch_hit": -2.324,
+     "mwpa_pinch_run": 1.009,
+     "mwpa_intentional_walk": -0.07,
+     "mwpa_bunt": -0.734,
+     "mwpa_steal": 0.072
+    },
+    "link": "/management/#section=clubs&team=SDP&season=2026",
+    "drill_link": "/management/#section=decisions&team=SDP&season=2026&family={family}",
+    "link_label": "Open SDP on In-Game Management",
+    "row_note": null
+   },
+   "HOU": {
+    "club": "HOU",
+    "statsapi_code": "HOU",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1566,
+    "mean_li": 1.37,
+    "share_li_high": 0.389,
+    "style": {
+     "z_hook": 0.3,
+     "z_pen": -0.13,
+     "z_bench": -0.4,
+     "z_ibb": -1.86,
+     "z_visit": 1.48
+    },
+    "rates": {
+     "hook_median_pitches": 89.0,
+     "pen_per_game": 3.264,
+     "bench_per_game": 1.057,
+     "ibb_per_game": 0.025,
+     "visit_per_game": 3.484
+    },
+    "shape": {
+     "hook_median_pitches": 89.0,
+     "pen_per_game": 3.264,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 519,
+     "n_pinch_hit": 137,
+     "n_pinch_run": 31,
+     "n_intentional_walk": 4,
+     "n_bunt": 94,
+     "n_steal": 28
+    },
+    "realized": {
+     "mwpa_pitching_change": 4.084,
+     "mwpa_pinch_hit": -0.655,
+     "mwpa_pinch_run": -0.231,
+     "mwpa_intentional_walk": null,
+     "mwpa_bunt": -0.113,
+     "mwpa_steal": null
+    },
+    "link": "/management/#section=clubs&team=HOU&season=2026",
+    "drill_link": "/management/#section=decisions&team=HOU&season=2026&family={family}",
+    "link_label": "Open HOU on In-Game Management",
+    "row_note": null
+   },
+   "ATH": {
+    "club": "ATH",
+    "statsapi_code": "ATH",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1599,
+    "mean_li": 1.328,
+    "share_li_high": 0.346,
+    "style": {
+     "z_hook": -0.51,
+     "z_pen": 1.02,
+     "z_bench": 0.44,
+     "z_ibb": 0.55,
+     "z_visit": 1.35
+    },
+    "rates": {
+     "hook_median_pitches": 86.5,
+     "pen_per_game": 3.434,
+     "bench_per_game": 1.22,
+     "ibb_per_game": 0.138,
+     "visit_per_game": 3.44
+    },
+    "shape": {
+     "hook_median_pitches": 86.5,
+     "pen_per_game": 3.434,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 546,
+     "n_pinch_hit": 168,
+     "n_pinch_run": 26,
+     "n_intentional_walk": 22,
+     "n_bunt": 62,
+     "n_steal": 53
+    },
+    "realized": {
+     "mwpa_pitching_change": -5.207,
+     "mwpa_pinch_hit": -0.096,
+     "mwpa_pinch_run": -1.2,
+     "mwpa_intentional_walk": -0.672,
+     "mwpa_bunt": -0.447,
+     "mwpa_steal": -0.158
+    },
+    "link": "/management/#section=clubs&team=ATH&season=2026",
+    "drill_link": "/management/#section=decisions&team=ATH&season=2026&family={family}",
+    "link_label": "Open ATH on In-Game Management",
+    "row_note": null
+   },
+   "LAA": {
+    "club": "LAA",
+    "statsapi_code": "LAA",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1573,
+    "mean_li": 1.484,
+    "share_li_high": 0.42,
+    "style": {
+     "z_hook": 0.63,
+     "z_pen": -0.47,
+     "z_bench": -0.08,
+     "z_ibb": 1.11,
+     "z_visit": 0.9
+    },
+    "rates": {
+     "hook_median_pitches": 90.0,
+     "pen_per_game": 3.214,
+     "bench_per_game": 1.119,
+     "ibb_per_game": 0.164,
+     "visit_per_game": 3.283
+    },
+    "shape": {
+     "hook_median_pitches": 90.0,
+     "pen_per_game": 3.214,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 511,
+     "n_pinch_hit": 135,
+     "n_pinch_run": 43,
+     "n_intentional_walk": 26,
+     "n_bunt": 102,
+     "n_steal": 66
+    },
+    "realized": {
+     "mwpa_pitching_change": -10.869,
+     "mwpa_pinch_hit": -1.764,
+     "mwpa_pinch_run": -1.666,
+     "mwpa_intentional_walk": -1.976,
+     "mwpa_bunt": -0.657,
+     "mwpa_steal": -0.352
+    },
+    "link": "/management/#section=clubs&team=LAA&season=2026",
+    "drill_link": "/management/#section=decisions&team=LAA&season=2026&family={family}",
+    "link_label": "Open LAA on In-Game Management",
+    "row_note": null
+   },
+   "SEA": {
+    "club": "SEA",
+    "statsapi_code": "SEA",
+    "season": 2026,
+    "games": 159,
+    "partial": true,
+    "n_all": 1387,
+    "mean_li": 1.491,
+    "share_li_high": 0.423,
+    "style": {
+     "z_hook": 0.95,
+     "z_pen": -1.19,
+     "z_bench": -1.31,
+     "z_ibb": 0.02,
+     "z_visit": 0.16
+    },
+    "rates": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.107,
+     "bench_per_game": 0.881,
+     "ibb_per_game": 0.113,
+     "visit_per_game": 3.025
+    },
+    "shape": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.107,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 494,
+     "n_pinch_hit": 124,
+     "n_pinch_run": 16,
+     "n_intentional_walk": 18,
+     "n_bunt": 76,
+     "n_steal": 76
+    },
+    "realized": {
+     "mwpa_pitching_change": -1.004,
+     "mwpa_pinch_hit": -1.591,
+     "mwpa_pinch_run": -0.747,
+     "mwpa_intentional_walk": -0.936,
+     "mwpa_bunt": -0.078,
+     "mwpa_steal": -0.278
+    },
+    "link": "/management/#section=clubs&team=SEA&season=2026",
+    "drill_link": "/management/#section=decisions&team=SEA&season=2026&family={family}",
+    "link_label": "Open SEA on In-Game Management",
+    "row_note": null
+   }
+  }
  },
  "gating_note": "Preview slice. Everything is public during the Diamond preview; this file is the seam a future gate would read."
 }
