@@ -239,8 +239,8 @@ def _bakeoff_panel() -> dict:
     IT IS A LOSS AND IT SHIPS AS ONE. The point of benchmarking against the
     public work rather than asserting over it is that the answer is allowed to
     be "their column is better", and this panel says so in the first sentence.
-    Only the primary label reaches the page: label_any's shelf hole is seventeen
-    positives and zero negatives, so its pooled comparison is refused upstream
+    Only the primary label reaches the page: label_any's shelf hole is all
+    positives and no negatives, so its pooled comparison is refused upstream
     and a refused comparison has no business on a page.
     """
     if not BAKEOFF.exists():
@@ -397,7 +397,7 @@ def build() -> dict:
             "n_in_eligible_universe": sum(1 for p in b.get("inducted") or {} if p in uni),
             "resolution": {k: v for k, v in res.items()
                            if k in ("from_ballot_tables", "from_mlbam_crosswalk",
-                                    "unresolved")},
+                                    "from_hand_bridge", "unresolved")},
             "unresolved_names": res.get("unresolved_names") or [],
             "plaque_role_unverified": {
                 "n": len(unverified),

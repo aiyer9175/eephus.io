@@ -358,7 +358,7 @@ def test_the_loss_is_attributed_to_missing_data_not_to_modelling(d):
 
 
 def test_only_the_primary_label_reaches_the_page(d):
-    """label_any's shelf hole is seventeen positives and zero negatives, so its
+    """label_any's shelf hole is all positives and no negatives, so its
     pooled comparison is refused upstream. A refused comparison has no business
     on a page."""
     b = d["sections"]["bakeoff"]

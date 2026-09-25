@@ -20,7 +20,7 @@ THE SIX MISTAKES THESE TESTS EXIST FOR, and the fourth is the subtle one:
      a CORRECT implementation fails that check and a builder would hunt a leak that is not
      there. The per-fold version is the real guard and it holds exactly.
   5. LETTING A LABEL WITH AN OUTCOME-CORRELATED HOLE CARRY THE HEADLINE. label_any drops
-     seventeen rows and every one is a positive.
+     twenty-one rows and every one is a positive.
   6. RUNNING THE BATTERY BEFORE ITS OWN CLAUSES ARE WRITTEN.
 """
 from __future__ import annotations
@@ -134,14 +134,20 @@ def test_the_common_support_drop_accounting_sums_and_names_its_rows(d):
 
 
 def test_an_outcome_correlated_drop_refuses_the_pooled_comparison(d):
-    """MISTAKE 5. Seventeen dropped rows and every one a positive. A ninety
-    percent positive-share threshold would not fire on 17 of 286, which is
-    exactly the case such a threshold would exist for."""
+    """MISTAKE 5. Twenty-one dropped rows and every one a positive. A ninety
+    percent positive-share threshold would not fire on 21 of 290, which is
+    exactly the case such a threshold would exist for.
+
+    Seventeen before the 2026-09-24 ledger repair, which resolved Josh Gibson,
+    Oscar Charleston, Cool Papa Bell and Ray Brown: none has a public shelf row,
+    so all four land in the hole. The prior is in the gate doc's G-8 addendum."""
     a = d["labels"]["any"]["frame"]["drop_accounting"]
-    assert a["n_dropped"] == 17
-    assert a["dropped_positive"] == 17 and a["dropped_negative"] == 0
+    assert a["n_dropped"] == 21
+    assert a["dropped_positive"] == 21 and a["dropped_negative"] == 0
     assert a["pooled_comparison_refused"] is True
-    assert "Roberto Clemente" in a["dropped_names"]
+    for name in ("Roberto Clemente", "Josh Gibson", "Oscar Charleston",
+                 "Cool Papa Bell", "Ray Brown"):
+        assert name in a["dropped_names"], name
 
 
 def test_the_primary_label_has_no_shelf_hole_at_all(d):
@@ -154,7 +160,12 @@ def test_the_primary_label_has_no_shelf_hole_at_all(d):
 def test_bbwaa_is_the_primary_label_and_the_reason_is_recorded(d):
     assert d["primary_label"] == "bbwaa"
     why = d["why_bbwaa_is_primary"]
-    assert "OUTCOME-DEPENDENT" in why and "seventeen positives" in why
+    assert "OUTCOME-DEPENDENT" in why
+    a = d["labels"]["any"]["frame"]["drop_accounting"]
+    assert f"shelf hole is also {a['dropped_positive']} positives" in why, (
+        "the shelf-hole count in the reason must be the run's own count")
+    src = (ROOT / "tools" / "hof_bakeoff.py").read_text(encoding="utf-8")
+    assert "shelf hole is also seventeen" not in src
 
 
 def test_the_population_caveat_travels_with_every_label(d):

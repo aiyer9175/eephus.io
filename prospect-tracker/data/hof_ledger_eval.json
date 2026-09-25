@@ -1,27 +1,28 @@
 {
- "generated_at": "2026-09-06T21:21:23+00:00",
+ "generated_at": "2026-09-25T00:16:53+00:00",
  "produced_by": "tools/hof_ledger_check.py",
  "deterministic": true,
  "as_of_year": 2026,
  "what": "the induction-ledger repair: StatsAPI inductees the ingest could not bridge to a bbref id were dropped from the ledger, and the label layer reported them as not in the Hall",
  "crosswalk": {
-  "pairs": 23681,
-  "distinct_bbref": 23681,
-  "distinct_mlbam": 23681,
+  "pairs": 23695,
+  "distinct_bbref": 23695,
+  "distinct_mlbam": 23695,
   "is_one_to_one": true,
   "source": "war_source last-good parquets, read by path, never over the network"
  },
  "ledger": {
   "n_statsapi": 354,
   "n_resolved_before": 226,
-  "n_resolved_after": 306,
+  "n_resolved_after": 310,
   "resolution": {
    "from_ballot_tables": 224,
    "from_mlbam_crosswalk": 82,
-   "unresolved": 48,
+   "from_hand_bridge": 4,
+   "unresolved": 44,
    "crosswalk_available": true,
-   "crosswalk_pairs": 23681,
-   "what_the_unresolved_are": "overwhelmingly people who never played: managers, executives, commissioners, union leaders, umpires and Negro Leagues pioneers. A crosswalk built from playing records cannot find them and should not: they have no player record to find. That is why the residual is reported rather than chased."
+   "crosswalk_pairs": 23695,
+   "what_the_unresolved_are": "overwhelmingly people with no row in the WAR file: managers, executives, commissioners, union leaders, umpires and Negro Leagues pioneers whose playing record Baseball-Reference does not carry. Four Negro Leagues players who DO carry a row (Josh Gibson, Oscar Charleston, Cool Papa Bell, Ray Brown) sat here until 2026-09-24 and are bridged by NEGRO_LEAGUES_ID_BRIDGE. The residual is reported rather than chased."
   },
   "unresolved_names": [
    "Al Barlick",
@@ -37,7 +38,6 @@
    "Bud Selig",
    "Byron Johnson",
    "Cal Hubbard",
-   "Cool Papa Bell",
    "Cum Posey",
    "Doug Harvey",
    "Earl Weaver",
@@ -54,16 +54,13 @@
    "Jim Leyland",
    "Joe McCarthy",
    "John Schuerholz",
-   "Josh Gibson",
    "Kenesaw Landis",
    "Larry MacPhail",
    "Lee MacPhail",
    "Marvin Miller",
    "Morgan Bulkeley",
    "Nestor Chylak",
-   "Oscar Charleston",
    "Pat Gillick",
-   "Ray Brown",
    "Rube Foster",
    "Sol White",
    "Tom Connolly",
@@ -73,7 +70,7 @@
    "Will Harridge",
    "William Hulbert"
   ],
-  "n_in_eligible_universe": 286,
+  "n_in_eligible_universe": 290,
   "out_of_universe": [
    {
     "player_id": "jossad01",
@@ -198,8 +195,8 @@
   ]
  },
  "plaque_role_unverified": {
-  "n": 167,
-  "n_in_eligible_universe": 147,
+  "n": 171,
+  "n_in_eligible_universe": 151,
   "players_in_eligible_universe": [
    {
     "player_id": "lopezal01",
@@ -385,6 +382,12 @@
     "player_id": "mackco01",
     "name": "Connie Mack",
     "election_year": 1937,
+    "route": "UNKNOWN"
+   },
+   {
+    "player_id": "bellco99",
+    "name": "Cool Papa Bell",
+    "election_year": 1974,
     "route": "UNKNOWN"
    },
    {
@@ -736,6 +739,12 @@
     "route": "VETERANS"
    },
    {
+    "player_id": "gibsojo99",
+    "name": "Josh Gibson",
+    "election_year": 1972,
+    "route": "UNKNOWN"
+   },
+   {
     "player_id": "wilsoju99",
     "name": "Jud Wilson",
     "election_year": 2006,
@@ -880,6 +889,12 @@
     "route": "VETERANS"
    },
    {
+    "player_id": "charlos99",
+    "name": "Oscar Charleston",
+    "election_year": 1976,
+    "route": "UNKNOWN"
+   },
+   {
     "player_id": "reesepe01",
     "name": "Pee Wee Reese",
     "election_year": 1984,
@@ -896,6 +911,12 @@
     "name": "Pud Galvin",
     "election_year": 1965,
     "route": "VETERANS"
+   },
+   {
+    "player_id": "brownra99",
+    "name": "Ray Brown",
+    "election_year": 2006,
+    "route": "UNKNOWN"
    },
    {
     "player_id": "schalra01",
@@ -1101,9 +1122,9 @@
  },
  "labels_after": {
   "label_any": {
-   "positive": 286,
+   "positive": 290,
    "negative": 649,
-   "censored": 2685
+   "censored": 2681
   },
   "label_bbwaa": {
    "positive": 139,
@@ -1112,10 +1133,10 @@
   }
  },
  "repair_effect": {
-  "n_added_positive": 63,
+  "n_added_positive": 67,
   "n_lost_positive": 0,
   "false_zeros_corrected": 33,
-  "false_censors_corrected": 30,
+  "false_censors_corrected": 34,
   "added_names": [
    "Al Lopez",
    "Alan Trammell",
@@ -1134,6 +1155,7 @@
    "Charlie Gehringer",
    "Clark Griffith",
    "Connie Mack",
+   "Cool Papa Bell",
    "Cristóbal Torriente",
    "Dan Brouthers",
    "Dave Parker",
@@ -1157,6 +1179,7 @@
    "Joe Tinker",
    "Joe Torre",
    "Johnny Evers",
+   "Josh Gibson",
    "Jud Wilson",
    "Judy Johnson",
    "Kid Nichols",
@@ -1171,6 +1194,8 @@
    "Mule Suttles",
    "Ned Hanlon",
    "Old Hoss Radbourn",
+   "Oscar Charleston",
+   "Ray Brown",
    "Red Ruffing",
    "Roberto Clemente",
    "Roger Bresnahan",
@@ -1235,8 +1260,8 @@
   "route_census_any": {
    "committee_horizon": 975,
    "elected": 243,
-   "inducted_never_balloted": 43,
-   "none": 2359
+   "inducted_never_balloted": 47,
+   "none": 2355
   },
   "players_with_a_pre_1979_drop_flag": 426,
   "players_whose_drop_flag_precedes_their_last_appearance": 296,
@@ -1614,29 +1639,29 @@
  },
  "horizon_sensitivity": {
   "15": {
-   "positive": 286,
+   "positive": 290,
    "negative": 773,
-   "censored": 2561
+   "censored": 2557
   },
   "20": {
-   "positive": 286,
+   "positive": 290,
    "negative": 711,
-   "censored": 2623
+   "censored": 2619
   },
   "25": {
-   "positive": 286,
+   "positive": 290,
    "negative": 649,
-   "censored": 2685
+   "censored": 2681
   },
   "30": {
-   "positive": 286,
+   "positive": 290,
    "negative": 598,
-   "censored": 2736
+   "censored": 2732
   },
   "40": {
-   "positive": 286,
+   "positive": 290,
    "negative": 450,
-   "censored": 2884
+   "censored": 2880
   }
  },
  "what_this_does_not_show": "any accuracy gain. This is a correctness repair. Its most likely downstream effect on a benchmark bake-off is NEGATIVE, because the recovered positives are heavily the 1930s and 1940s veterans wave and carry lower JAWS than the existing positive class. It also makes the plaque-role problem larger rather than smaller, because the players it recovers include managers who also played."

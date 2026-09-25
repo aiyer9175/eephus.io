@@ -643,7 +643,6 @@ def run(*, offline=True, as_of_year=2026, labels=("bbwaa", "any"), B=B_BOOT,
             "label_any's censoring is OUTCOME-DEPENDENT: induction resolves a one "
             "immediately while non-induction requires the window close plus the "
             "committee horizon, so recent strata contribute positives and no "
-            "negatives. Its shelf hole is also seventeen positives and zero "
             "negatives. Either one on its own would disqualify it from a headline."),
         "labels": {},
     }
@@ -702,6 +701,14 @@ def run(*, offline=True, as_of_year=2026, labels=("bbwaa", "any"), B=B_BOOT,
             "discrimination_test_pool": disc_test,
             "calibration": cal,
         }
+    # THE SHELF-HOLE COUNT IS READ OFF THE RUN, never typed. It was a literal
+    # "seventeen" until the 2026-09-24 ledger repair moved it to twenty-one.
+    a_any = ((out["labels"].get("any") or {}).get("frame") or {}).get("drop_accounting")
+    if a_any and a_any["n_dropped"]:
+        out["why_bbwaa_is_primary"] = out["why_bbwaa_is_primary"].replace(
+            " Either one on its own",
+            f" Its shelf hole is also {a_any['dropped_positive']} positives and "
+            f"{a_any['dropped_negative']} negatives. Either one on its own")
     if write:
         OUT.write_text(json.dumps(out, indent=1, ensure_ascii=False), encoding="utf-8")
     return out

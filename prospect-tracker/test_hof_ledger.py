@@ -384,3 +384,75 @@ def test_a_drop_flag_on_a_year_the_player_survived_does_not_resolve_him(art):
         assert y >= x["last_appearance"], (
             f"{x['name']} resolves at {y}, on a flag from "
             f"{x['drop_years']} that he survived through {x['last_appearance']}")
+
+
+# --------------------------------------------------------------------------
+# The Negro Leagues id bridge (2026-09-24)
+# --------------------------------------------------------------------------
+
+#: mlbam id -> (bbref id, StatsAPI election year). Josh Gibson, Oscar Charleston,
+#: Cool Papa Bell, Ray Brown.
+BRIDGED = {"492568": ("gibsojo99", 1972), "492560": ("charlos99", 1976),
+           "492555": ("bellco99", 1974), "820313": ("brownra99", 2006)}
+
+
+def test_the_four_negro_leagues_inductees_resolve_through_the_bridge():
+    """They were in `unresolved_names` while each carries 14 to 21 seasons in
+    war_daily, so the Eligible board showed four Hall of Famers as not
+    inducted and the 'In the Hall' filter left Josh Gibson out."""
+    hd.clear_cache()
+    b = hd.ballots()
+    for mid, (pid, year) in BRIDGED.items():
+        r = b["inducted"].get(pid)
+        assert r is not None, f"{pid} is not in the induction ledger"
+        assert str(r["mlbam_id"]) == mid
+        assert int(r["election_year"]) == year
+        assert r["route_source"] == "hand crosswalk, Negro Leagues id"
+        assert r["player_name"] not in b["resolution"]["unresolved_names"]
+    assert b["resolution"]["from_hand_bridge"] == len(BRIDGED)
+
+
+def test_the_bridge_is_keyed_on_mlbam_ids_and_every_pair_is_sourced():
+    """A name rule is unsafe: war_daily holds two Ray Browns, and umpire Tom
+    Connolly and executive Rube Foster share names with 1910s players."""
+    bridge = hd.NEGRO_LEAGUES_ID_BRIDGE
+    assert set(bridge) == set(BRIDGED)
+    for mid, row in bridge.items():
+        assert mid.isdigit()
+        assert row["player_id"] == BRIDGED[mid][0]
+        assert "StatsAPI person " + mid in row["provenance"]
+        assert "Chadwick key_bbref " + row["player_id"] in row["provenance"]
+    hd.clear_cache()
+    inducted = hd.ballots()["inducted"]
+    assert "connoto01" not in inducted and "fosteru01" not in inducted
+    assert "brownra01" not in inducted
+
+
+def test_the_unrepaired_ledger_still_excludes_the_bridge():
+    """`crosswalk={}` is the before-and-after receipt; the hand bridge is part of
+    the repair and must not leak into the 'before' side."""
+    hd.clear_cache()
+    before = hd.ballots(crosswalk={})
+    for pid, _year in BRIDGED.values():
+        assert pid not in before["inducted"]
+    assert before["resolution"]["from_hand_bridge"] == 0
+
+
+def test_the_bridged_four_are_positives_and_label_bbwaa_does_not_move(frames):
+    before, after = frames
+    for pid, _year in BRIDGED.values():
+        assert after.loc[pid, "label_any"] == 1, pid
+    assert before["label_bbwaa"].equals(after["label_bbwaa"])
+
+
+def test_the_served_board_marks_the_bridged_four_as_inducted():
+    board = ROOT / "data" / "hof_board.json"
+    if not board.exists():
+        pytest.skip("run python hof_export.py")
+    d = json.loads(board.read_text(encoding="utf-8"))
+    rows = {r["id"]: r for r in d["leaderboard"]}
+    for pid, year in BRIDGED.values():
+        assert rows[pid]["induction"] == "route_unverified", pid
+        assert rows[pid]["induction_year"] == year, pid
+    names = set(d["ledger"]["unresolved_names"])
+    assert not names & {"Josh Gibson", "Oscar Charleston", "Cool Papa Bell", "Ray Brown"}

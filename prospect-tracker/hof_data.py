@@ -467,6 +467,41 @@ def crosswalk_bbref_mlbam() -> dict:
     return dict(_XWALK_CACHE)
 
 
+#: THE FOUR INDUCTEES NEITHER BRIDGE REACHES, keyed on the StatsAPI MLBAM id.
+#:
+#: StatsAPI names Josh Gibson, Oscar Charleston, Cool Papa Bell and Ray Brown by
+#: MLBAM ids the war_daily parquets never carry: three of the four bbref rows have
+#: no mlb_ID at all, and brownra99 carries 506627, a second MLBAM record for the
+#: same man. Each has a full row in war_daily (14 to 21 seasons), so leaving
+#: them unresolved put four Hall of Famers on the Eligible board as not inducted
+#: while fourteen Negro Leagues peers read inducted, route unverified.
+#:
+#: THIS IS AN ID BRIDGE AND NOT A MEMBERSHIP LIST. The induction itself still
+#: comes from the StatsAPI recipients feed; this only says which bbref row that
+#: feed's MLBAM id is. Every pair was matched on identity fields, never on a
+#: name: the StatsAPI person record's birth date and primary position against
+#: the Chadwick Bureau register row (github.com/chadwickbureau/register,
+#: people files) carrying that key_bbref and the same birth date, read
+#: 2026-09-24. A name rule is unsafe here: war_daily holds two Ray Browns
+#: (brownra01, born 1889, and brownra99), and a name rule would also hand umpire
+#: Tom Connolly and executive Rube Foster to 1910s players who share the name.
+NEGRO_LEAGUES_ID_BRIDGE: dict = {
+    "492568": {"player_id": "gibsojo99", "name": "Josh Gibson",
+               "provenance": "StatsAPI person 492568 born 1911-12-21, C; "
+                             "Chadwick key_bbref gibsojo99 born 1911-12-21"},
+    "492560": {"player_id": "charlos99", "name": "Oscar Charleston",
+               "provenance": "StatsAPI person 492560 born 1896-10-14, OF; "
+                             "Chadwick key_bbref charlos99 born 1896-10-14"},
+    "492555": {"player_id": "bellco99", "name": "Cool Papa Bell",
+               "provenance": "StatsAPI person 492555 born 1903-05-17, OF; "
+                             "Chadwick key_bbref bellco99 born 1903-05-17"},
+    "820313": {"player_id": "brownra99", "name": "Ray Brown",
+               "provenance": "StatsAPI person 820313 born 1908-02-23, P; "
+                             "Chadwick key_bbref brownra99 born 1908-02-23 "
+                             "(brownra01 is born 1889-01-31)"},
+}
+
+
 # ---------------------------------------------------------------------------
 # Season frame.
 # ---------------------------------------------------------------------------
@@ -1187,14 +1222,25 @@ def _load_ballots(path=None, *, crosswalk=None) -> dict:
     # both ids, so the bridge is on disk; `crosswalk={}` reproduces the
     # unrepaired ledger for the before-and-after receipt.
     xwalk = crosswalk_bbref_mlbam() if crosswalk is None else dict(crosswalk)
+    # The hand bridge rides with the repaired ledger only, so `crosswalk={}`
+    # still reproduces the ingest as it shipped.
+    bridge = NEGRO_LEAGUES_ID_BRIDGE if crosswalk is None else {}
     n_from_xwalk = 0
+    n_from_bridge = 0
     still: list = []
     for r in unresolved:
-        pid = xwalk.get(str(r.get("mlbam_id")))
+        mid = str(r.get("mlbam_id"))
+        pid = xwalk.get(mid)
+        how = "war_daily mlbam crosswalk"
+        if not pid and mid in bridge:
+            pid = bridge[mid]["player_id"]
+            how = "hand crosswalk, Negro Leagues id"
         if pid and pid not in inducted:
-            inducted[pid] = {**r, "player_id": pid,
-                             "route_source": "war_daily mlbam crosswalk"}
-            n_from_xwalk += 1
+            inducted[pid] = {**r, "player_id": pid, "route_source": how}
+            if how == "war_daily mlbam crosswalk":
+                n_from_xwalk += 1
+            else:
+                n_from_bridge += 1
         elif not pid:
             still.append(r)
     # A player elected by the writers appears in the ballot table with
@@ -1229,6 +1275,7 @@ def _load_ballots(path=None, *, crosswalk=None) -> dict:
         "resolution": {
             "from_ballot_tables": n_from_ingest,
             "from_mlbam_crosswalk": n_from_xwalk,
+            "from_hand_bridge": n_from_bridge,
             "unresolved": len(still),
             "unresolved_names": sorted(x.get("player_name") or "" for x in still),
             "crosswalk_available": bool(xwalk),
@@ -1236,11 +1283,13 @@ def _load_ballots(path=None, *, crosswalk=None) -> dict:
             "plaque_role_unverified": sorted(unverified,
                                              key=lambda x: (x["name"] or "")),
             "what_the_unresolved_are": (
-                "overwhelmingly people who never played: managers, executives, "
-                "commissioners, union leaders, umpires and Negro Leagues "
-                "pioneers. A crosswalk built from playing records cannot find "
-                "them and should not: they have no player record to find. That "
-                "is why the residual is reported rather than chased."),
+                "overwhelmingly people with no row in the WAR file: managers, "
+                "executives, commissioners, union leaders, umpires and Negro "
+                "Leagues pioneers whose playing record Baseball-Reference does "
+                "not carry. Four Negro Leagues players who DO carry a row (Josh "
+                "Gibson, Oscar Charleston, Cool Papa Bell, Ray Brown) sat here "
+                "until 2026-09-24 and are bridged by NEGRO_LEAGUES_ID_BRIDGE. "
+                "The residual is reported rather than chased."),
         },
     }
 

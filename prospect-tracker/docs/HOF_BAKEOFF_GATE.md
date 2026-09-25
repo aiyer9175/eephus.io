@@ -181,6 +181,29 @@ The ledger repair is likewise fixed upstream. Its pre-repair numbers are recorde
 so the repair cannot later be sold as a modelling improvement, and all six label_bbwaa cells
 are asserted byte-identical across it: movement there is a bug, not a result.
 
+### G-8 addendum, 2026-09-24: a second ledger repair, recorded under this clause
+
+Four Negro Leagues inductees, Josh Gibson (1972), Oscar Charleston (1976), Cool Papa Bell
+(1974) and Ray Brown (2006), were unresolved: StatsAPI names them by MLBAM ids the war_daily
+parquets never carry. `hof_data.NEGRO_LEAGUES_ID_BRIDGE` now bridges them, keyed on the
+MLBAM id and matched on birth date against the Chadwick register, never on a name. The
+clauses above are unchanged; only the ledger the frame reads moved. Pre-repair numbers,
+kept as priors:
+
+| quantity | before | after |
+|---|---|---|
+| inductees in the eligible universe (label_any positives) | 286 | 290 |
+| label_any negatives / censored | 649 / 2,685 | 649 / 2,681 |
+| label_any resolved rows read by the bake-off | 935 | 939 |
+| label_any shelf hole (dropped, all positive) | 17 | 21 |
+| plaque role unverified inside the eligible universe | 147 | 151 |
+| label_bbwaa cells (all six) | byte-identical | byte-identical |
+
+None of the four has a public shelf row, so all four join the label_any hole and the
+scored label_any frame (918 rows) is identical row for row. No AUC, floor or calibration
+cell moves on either label. The G-1 table and the G-9 base rate above are the frozen
+pre-repair figures and are left as written; read them with this table.
+
 ## G-9 POPULATION DISCLOSURE, frozen
 
 **This frame is not the eligible universe.** It is almost exactly the set of players a

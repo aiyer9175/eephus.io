@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-06T21:45:04+00:00",
+ "generated_at": "2026-09-25T00:16:54+00:00",
  "produced_by": "tools/hof_bakeoff.py",
  "gate_doc": "docs/HOF_BAKEOFF_GATE.md",
  "gate_frozen": "Frozen 2026-09-06, before the battery was run. The frame rules, the fold rules, the",
@@ -43,7 +43,7 @@
   }
  },
  "primary_label": "bbwaa",
- "why_bbwaa_is_primary": "label_any's censoring is OUTCOME-DEPENDENT: induction resolves a one immediately while non-induction requires the window close plus the committee horizon, so recent strata contribute positives and no negatives. Its shelf hole is also seventeen positives and zero negatives. Either one on its own would disqualify it from a headline.",
+ "why_bbwaa_is_primary": "label_any's censoring is OUTCOME-DEPENDENT: induction resolves a one immediately while non-induction requires the window close plus the committee horizon, so recent strata contribute positives and no negatives. Its shelf hole is also 21 positives and 0 negatives. Either one on its own would disqualify it from a headline.",
  "labels": {
   "bbwaa": {
    "frame": {
@@ -3282,15 +3282,15 @@
     "n_positive": 269,
     "base_rate": 0.293,
     "drop_accounting": {
-     "n_read": 935,
+     "n_read": 939,
      "n_kept": 918,
-     "n_dropped": 17,
+     "n_dropped": 21,
      "per_arm_n_missing": {
-      "hof_monitor": 17,
-      "hof_standard": 17,
-      "WAR_career": 17,
-      "WAR_peak7": 17,
-      "JAWS": 17,
+      "hof_monitor": 21,
+      "hof_standard": 21,
+      "WAR_career": 21,
+      "WAR_peak7": 21,
+      "JAWS": 21,
       "career_war": 0,
       "war7": 0,
       "jaws": 0,
@@ -3298,7 +3298,7 @@
       "waa_pos": 0,
       "ink": 0
      },
-     "dropped_positive": 17,
+     "dropped_positive": 21,
      "dropped_negative": 0,
      "dropped_names": [
       "Andy Cooper",
@@ -3307,20 +3307,24 @@
       "Biz Mackey",
       "Buck Leonard",
       "Clark Griffith",
+      "Cool Papa Bell",
       "Cristóbal Torriente",
       "Dick Williams",
       "Jim O'Rourke",
+      "Josh Gibson",
       "Jud Wilson",
       "Judy Johnson",
       "Miller Huggins",
       "Monte Irvin",
       "Mule Suttles",
       "Ned Hanlon",
+      "Oscar Charleston",
+      "Ray Brown",
       "Roberto Clemente",
       "Willard Brown"
      ],
      "dropped_route_census": {
-      "inducted_never_balloted": 17
+      "inducted_never_balloted": 21
      },
      "sums": true,
      "pooled_comparison_refused": true,
