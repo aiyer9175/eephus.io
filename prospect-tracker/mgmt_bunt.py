@@ -60,6 +60,16 @@ BUNT_EVENTS = ("Sac Bunt",)
 #: downside, not a different decision.
 BUNT_ALSO = ("Bunt Groundout", "Bunt Pop Out", "Bunt Lineout",
              "Sac Bunt Double Play", "Bunt Ground Out", "Bunt Popout")
+#: A BUNT IS READ OFF THE BALL, NOT THE RESULT NAME (audit M10-02). The two lists
+#: above name only bunts that ended in an out or a sacrifice. A bunt single reads
+#: "Single", a bunt the fielder threw away "Field Error", a bunt turned into a
+#: force "Forceout", so selecting on those names filed every bunt that WORKED
+#: under the alternative, and the bases-empty cells could only hold outs. The
+#: corpus now flags every plate appearance that ended on a bunt
+#: (tools/build_pbp_corpus.is_bunted: the in-play pitch's hitData trajectory is
+#: bunt_*, the result is one of the names above, or strike three came on a foul or
+#: missed bunt), and that flag is the side.
+BUNT_HIT_EVENTS = ("Single", "Double", "Triple")
 #: A state needs this many of BOTH kinds before its cell is priced. Below it the
 #: difference of two means is noise wearing a decimal point.
 MIN_CELL = 25
@@ -161,6 +171,10 @@ def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
     df = _load_plays(corpus, seasons)
     if df is None or df.empty:
         return {"status": f"not built: no play corpus at {corpus}"}
+    if "bunted" not in df.columns:
+        # Refused, not guessed: the result names alone select on the outcome.
+        return {"status": ("not built: the play corpus predates its bunted column; "
+                           "rebuild it with python tools/build_pbp_corpus.py --force")}
     W = we or wx.WinExpectancy.load()
     df = _state(df)
     df = _attach_base_after(df)
@@ -170,7 +184,9 @@ def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
     df = df[df["outs_before"] <= MAX_OUTS].copy()
 
     ev = df["event"].astype(str)
-    df["is_bunt"] = ev.isin(list(BUNT_EVENTS) + list(BUNT_ALSO))
+    df["is_bunt"] = (df["bunted"].fillna(False).astype(bool)
+                     | ev.isin(list(BUNT_EVENTS) + list(BUNT_ALSO)))
+    df["is_bunt_hit"] = df["is_bunt"] & ev.isin(list(BUNT_HIT_EVENTS))
     # the alternative is EVERY other plate appearance from the same state
     df["is_alt"] = ~df["is_bunt"]
 
@@ -208,6 +224,8 @@ def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
 
     cells, n_bunt_priced = [], 0
     total_dv = 0.0
+    by_sit = {k: {"n_bunts_priced": 0, "n_bunt_hits": 0, "total": 0.0}
+              for k in ("sacrifice", "for_a_hit")}
     for (outs, base), g in df.groupby(["outs_before", "base_before"]):
         b = g[g["is_bunt"]]
         a = g[g["is_alt"]]
@@ -219,10 +237,16 @@ def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
         dv = e_bunt - e_alt
         total_dv += dv * len(b)
         n_bunt_priced += int(len(b))
+        sit = _situation(int(base))
+        by_sit[sit]["n_bunts_priced"] += int(len(b))
+        by_sit[sit]["n_bunt_hits"] += int(b["is_bunt_hit"].sum())
+        by_sit[sit]["total"] += dv * len(b)
         cells.append({
             "outs": int(outs), "base": int(base),
             "bases": _base_label(int(base)),
+            "situation": sit,
             "n_bunt": int(len(b)), "n_alt": int(len(a)),
+            "n_bunt_hit": int(b["is_bunt_hit"].sum()),
             "e_dwe_bunt": round(e_bunt, 5),
             "e_dwe_alt": round(e_alt, 5),
             "dv_per_bunt": round(dv, 5),
@@ -245,16 +269,56 @@ def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
         wpa_bat = df["wpa_home"].to_numpy(dtype=float) * sign / 100.0
         df2 = df.assign(_wpa_bat=wpa_bat)
         tot_c = 0.0
+        ctl_sit = {"sacrifice": 0.0, "for_a_hit": 0.0}
+        # THE RECONCILIATION (audit M10-02). Each total is the sum of the bunts'
+        # own changes minus the alternative's cell mean times the bunt count, so
+        # both split exactly by the bunt's result and show where the two win
+        # expectancy models part.
+        rec = {}
+        alt_model = alt_feed = 0.0
         for (o, bs), g in df2.groupby(["outs_before", "base_before"]):
             bb, aa = g[g["is_bunt"]], g[g["is_alt"]]
             if len(bb) < MIN_CELL or len(aa) < MIN_CELL:
                 continue
-            tot_c += (float(bb["_wpa_bat"].mean()) - float(aa["_wpa_bat"].mean())) * len(bb)
+            part = (float(bb["_wpa_bat"].mean()) - float(aa["_wpa_bat"].mean())) * len(bb)
+            tot_c += part
+            ctl_sit[_situation(int(bs))] += part
+            alt_model += float(aa["dwe"].mean()) * len(bb)
+            alt_feed += float(aa["_wpa_bat"].mean()) * len(bb)
+            for res, gg in bb.groupby(bb["event"].astype(str).map(_result_group)):
+                r = rec.setdefault(res, {"n": 0, "model": 0.0, "control": 0.0})
+                r["n"] += int(len(gg))
+                r["model"] += float(gg["dwe"].sum())
+                r["control"] += float(gg["_wpa_bat"].sum())
+        reconciliation = {
+            "identity": ("total = the bunts' own summed change, by result, minus the "
+                         "alternative's cell mean times the bunt count; exact for both "
+                         "the model and the control"),
+            "by_result": {k: {"n": v["n"], "model_wins": round(v["model"], 3),
+                              "control_wins": round(v["control"], 3),
+                              "gap_wins": round(v["model"] - v["control"], 3)}
+                          for k, v in sorted(rec.items(), key=lambda kv: -kv[1]["n"])},
+            "alternative_offset": {"model_wins": round(alt_model, 3),
+                                   "control_wins": round(alt_feed, 3),
+                                   "gap_wins": round(alt_model - alt_feed, 3)},
+        }
+        worst = max(rec.items(), key=lambda kv: abs(kv[1]["model"] - kv[1]["control"])) if rec else None
         control = {
             "source": "StatsAPI wp_home_before / wpa_home, converted to the batting "
                       "team's frame and divided by 100 (those columns are percentage "
                       "points, not probabilities)",
             "total_wins": round(tot_c, 3),
+            "by_situation_wins": {k: round(v, 3) for k, v in ctl_sit.items()},
+            # DERIVED, not explained away: the two totals come from two
+            # different win expectancy models over the same rows, and nothing
+            # here calibrates one against the other.
+            "model_over_control": (round(total_dv / tot_c, 3) if tot_c else None),
+            "reconciliation": reconciliation,
+            "largest_gap_sentence": (
+                (f"The two models part most on {worst[0].replace('_', ' ')} "
+                 f"({worst[1]['n']:,} bunts): {worst[1]['model']:+.1f} wins on the house "
+                 f"model against {worst[1]['control']:+.1f} on the feed's.")
+                if worst else None),
             "is_realized_wpa": True,
             "why_it_is_not_the_metric": (
                 "it is the REALIZED win-probability change of the plays that "
@@ -280,13 +344,30 @@ def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
         "total_decision_value_wins": round(total_dv, 3),
         "dv_per_bunt_mean": (round(total_dv / n_bunt_priced, 5)
                              if n_bunt_priced else None),
+        "by_situation": {
+            k: {"n_bunts_priced": v["n_bunts_priced"], "n_bunt_hits": v["n_bunt_hits"],
+                "total_decision_value_wins": round(v["total"], 3),
+                "dv_per_bunt_mean": (round(v["total"] / v["n_bunts_priced"], 5)
+                                     if v["n_bunts_priced"] else None)}
+            for k, v in by_sit.items()},
+        "situations": {
+            "sacrifice": "a runner on and fewer than two out, where a bunt can move him up",
+            "for_a_hit": ("the bases empty, where there is no runner to sacrifice and the "
+                          "bunt is a try for a hit"),
+        },
+        "what_counts_as_a_bunt": (
+            "every plate appearance that ended on a bunt, whatever the result: "
+            "sacrifices, bunt outs, bunt hits, bunts reached on an error, bunt "
+            "fielder's choices and strike three on a foul or missed bunt. A bunt fouled "
+            "off or missed earlier in a plate appearance the batter then swung is not a "
+            "bunt here; the decision ledger lists those as abandoned attempts."),
         "cells": cells,
         "independent_control": control,
         "what_this_is": (
             "DV(S) = E[change in WE | a bunt was called from state S] minus E[change "
             "in WE | any other plate appearance from S], both measured league-wide. "
             "Each play is differenced against its OWN pre-play state, so the score "
-            "and inning cancel and what is left is what the plate appearance did. "
+            "and inning cancel and what is left is what the plate appearance did, "
             "so every bunt from one state carries the same decision value. The "
             "realized outcome of an individual bunt never enters it."),
         "the_selection_problem": (
@@ -317,6 +398,25 @@ def _corpus_built_at(corpus: Path):
     except (OSError, ValueError):
         return None
     return m.get("built_at")
+
+
+def _result_group(event: str) -> str:
+    """The bunt's result, grouped the way the decision ledger names its kinds."""
+    if event == "Sac Bunt":
+        return "sacrifice"
+    if event in BUNT_ALSO:
+        return "bunt_out"
+    if event in BUNT_HIT_EVENTS:
+        return "bunt_hit"
+    if event == "Strikeout":
+        return "strike_three_on_a_bunt"
+    return "reached_or_double_play"
+
+
+def _situation(base: int) -> str:
+    """sacrifice with a runner on (the family prices outs 0 and 1 only), for_a_hit
+    with the bases empty."""
+    return "sacrifice" if base else "for_a_hit"
 
 
 def _base_label(b: int) -> str:

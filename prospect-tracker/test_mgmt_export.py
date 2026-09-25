@@ -485,6 +485,16 @@ def test_the_bunt_sentence_agrees_with_its_own_total(d):
     if total is None:
         pytest.skip("no machine-readable bunt total on this build")
     nums = [float(x) for x in re.findall(r"(\d+\.?\d*)\s*wins", sentence)]
+    sit = blk.get("by_situation") or {}
+    if sit:
+        # M10-02: the sentence quotes each situation's total, and says
+        # "sacrifice" only of the runner-on part.
+        for k in ("sacrifice", "for_a_hit"):
+            t = float(sit[k]["total_decision_value_wins"])
+            assert any(abs(n - abs(t)) < 1.5 for n in nums), (k, nums, t)
+        head, _, rest = sentence.partition("bunts for a hit")
+        assert "sacrifice" in head and "sacrifice" not in rest
+        return
     assert any(abs(n - abs(total)) < 1.5 for n in nums), (
         f"the bunt sentence quotes {nums} wins against an artifact total of {total}")
     if total < 0:

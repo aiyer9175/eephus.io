@@ -142,6 +142,27 @@ def test_the_running_and_bunt_blocks_print_their_corpus_vintage():
     assert "Play corpus through" not in _render("running")
 
 
+def test_a_bunt_payload_split_by_situation_draws_the_situation_and_bunt_hits():
+    """M10-02. With every bunt priced, a cell carries its situation and its bunt hits,
+    the heading stops calling the whole table the sacrifice, and the control line says
+    how far the modelled total sits from the feed's."""
+    d = json.loads(json.dumps(SAMPLE))
+    b = d["sections"]["sacrifice_bunt"]
+    b["cells"] = [{"bases": "empty", "outs": 0, "situation": "for_a_hit", "n_bunt": 1692,
+                   "n_bunt_hit": 820, "dv_per_bunt": 0.00853, "dv_total": 14.429},
+                  {"bases": "1B", "outs": 0, "situation": "sacrifice", "n_bunt": 2793,
+                   "n_bunt_hit": 400, "dv_per_bunt": -0.01168, "dv_total": -32.633}]
+    b["independent_control"]["model_over_control"] = 17.311
+    b["independent_control"]["largest_gap_sentence"] = "The two models part most on sacrifice."
+    b["what_counts_as_a_bunt"] = "every plate appearance that ended on a bunt."
+    html = _render("running", d)
+    assert "<h2>The bunt</h2>" in html and "The sacrifice bunt" not in html
+    assert "<th>Situation</th>" in html and "<th>Bunt hits</th>" in html
+    assert "<td>For a hit</td>" in html and "<td>820</td>" in html
+    assert "the modelled total is 17.31 times it" in html
+    assert "What counts as a bunt" in html and "The two models part most on sacrifice." in html
+
+
 def test_the_bunt_moves_to_its_own_tab_once_the_shell_has_one():
     assert "The sacrifice bunt" not in _render("running", bunt_tab=True)
     assert "Bunting cost 127 wins." in _render("bunt", bunt_tab=True)

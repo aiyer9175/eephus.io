@@ -1,8 +1,8 @@
 {
  "status": "built",
- "generated_at": "2026-09-25T09:52:20Z",
+ "generated_at": "2026-09-25T10:10:12Z",
  "produced_by": "mgmt_bunt.price",
- "corpus_built_at": "2026-09-25T09:51:13+00:00",
+ "corpus_built_at": "2026-09-25T10:06:36+00:00",
  "seasons": [
   2018,
   2019,
@@ -14,156 +14,245 @@
   2026
  ],
  "n_plate_appearances": 996176,
- "n_bunts_priced": 6937,
+ "n_bunts_priced": 11013,
  "min_cell": 25,
  "excluded": {
   "two_outs": 472640,
   "unpriceable_state": 0,
-  "thin_cell": 16
+  "thin_cell": 43
  },
- "total_decision_value_wins": -129.392,
- "dv_per_bunt_mean": -0.01865,
+ "total_decision_value_wins": -55.999,
+ "dv_per_bunt_mean": -0.00508,
+ "by_situation": {
+  "sacrifice": {
+   "n_bunts_priced": 8365,
+   "n_bunt_hits": 1293,
+   "total_decision_value_wins": -74.544,
+   "dv_per_bunt_mean": -0.00891
+  },
+  "for_a_hit": {
+   "n_bunts_priced": 2648,
+   "n_bunt_hits": 1247,
+   "total_decision_value_wins": 18.545,
+   "dv_per_bunt_mean": 0.007
+  }
+ },
+ "situations": {
+  "sacrifice": "a runner on and fewer than two out, where a bunt can move him up",
+  "for_a_hit": "the bases empty, where there is no runner to sacrifice and the bunt is a try for a hit"
+ },
+ "what_counts_as_a_bunt": "every plate appearance that ended on a bunt, whatever the result: sacrifices, bunt outs, bunt hits, bunts reached on an error, bunt fielder's choices and strike three on a foul or missed bunt. A bunt fouled off or missed earlier in a plate appearance the batter then swung is not a bunt here; the decision ledger lists those as abandoned attempts.",
  "cells": [
   {
    "outs": 0,
    "base": 0,
    "bases": "empty",
-   "n_bunt": 816,
-   "n_alt": 357419,
-   "e_dwe_bunt": -0.02507,
-   "e_dwe_alt": -0.0,
-   "dv_per_bunt": -0.02507,
-   "dv_total": -20.4571
+   "situation": "for_a_hit",
+   "n_bunt": 1692,
+   "n_alt": 356543,
+   "n_bunt_hit": 806,
+   "e_dwe_bunt": 0.00843,
+   "e_dwe_alt": -0.0001,
+   "dv_per_bunt": 0.00853,
+   "dv_total": 14.4291
   },
   {
    "outs": 0,
    "base": 1,
    "bases": "1B",
-   "n_bunt": 1946,
-   "n_alt": 83327,
-   "e_dwe_bunt": -0.02249,
-   "e_dwe_alt": 9e-05,
-   "dv_per_bunt": -0.02258,
-   "dv_total": -43.9346
+   "situation": "sacrifice",
+   "n_bunt": 2793,
+   "n_alt": 82480,
+   "n_bunt_hit": 406,
+   "e_dwe_bunt": -0.01173,
+   "e_dwe_alt": -5e-05,
+   "dv_per_bunt": -0.01168,
+   "dv_total": -32.6333
   },
   {
    "outs": 0,
    "base": 2,
    "bases": "2B",
-   "n_bunt": 1028,
-   "n_alt": 22255,
-   "e_dwe_bunt": -0.02008,
-   "e_dwe_alt": 0.00306,
-   "dv_per_bunt": -0.02314,
-   "dv_total": -23.7882
+   "situation": "sacrifice",
+   "n_bunt": 1336,
+   "n_alt": 21947,
+   "n_bunt_hit": 201,
+   "e_dwe_bunt": -0.00902,
+   "e_dwe_alt": 0.00272,
+   "dv_per_bunt": -0.01173,
+   "dv_total": -15.6757
   },
   {
    "outs": 0,
    "base": 3,
    "bases": "1B+2B",
-   "n_bunt": 1239,
-   "n_alt": 20245,
-   "e_dwe_bunt": -0.01064,
-   "e_dwe_alt": -0.00027,
-   "dv_per_bunt": -0.01037,
-   "dv_total": -12.8511
+   "situation": "sacrifice",
+   "n_bunt": 1774,
+   "n_alt": 19710,
+   "n_bunt_hit": 227,
+   "e_dwe_bunt": -0.00553,
+   "e_dwe_alt": -0.00045,
+   "dv_per_bunt": -0.00508,
+   "dv_total": -9.0195
   },
   {
    "outs": 0,
    "base": 5,
    "bases": "1B+3B",
-   "n_bunt": 95,
-   "n_alt": 7229,
-   "e_dwe_bunt": -0.00609,
+   "situation": "sacrifice",
+   "n_bunt": 161,
+   "n_alt": 7163,
+   "n_bunt_hit": 30,
+   "e_dwe_bunt": -0.00291,
    "e_dwe_alt": 0.0016,
-   "dv_per_bunt": -0.00769,
-   "dv_total": -0.7303
+   "dv_per_bunt": -0.00451,
+   "dv_total": -0.7265
   },
   {
    "outs": 1,
    "base": 0,
    "bases": "empty",
-   "n_bunt": 486,
-   "n_alt": 259999,
-   "e_dwe_bunt": -0.01761,
-   "e_dwe_alt": 0.00016,
-   "dv_per_bunt": -0.01777,
-   "dv_total": -8.6374
+   "situation": "for_a_hit",
+   "n_bunt": 956,
+   "n_alt": 259529,
+   "n_bunt_hit": 441,
+   "e_dwe_bunt": 0.00441,
+   "e_dwe_alt": 0.00011,
+   "dv_per_bunt": 0.00431,
+   "dv_total": 4.116
   },
   {
    "outs": 1,
    "base": 1,
    "bases": "1B",
-   "n_bunt": 741,
-   "n_alt": 104634,
-   "e_dwe_bunt": -0.01949,
-   "e_dwe_alt": 0.00034,
-   "dv_per_bunt": -0.01983,
-   "dv_total": -14.6916
+   "situation": "sacrifice",
+   "n_bunt": 1263,
+   "n_alt": 104112,
+   "n_bunt_hit": 211,
+   "e_dwe_bunt": -0.01069,
+   "e_dwe_alt": 0.00033,
+   "dv_per_bunt": -0.01102,
+   "dv_total": -13.9205
   },
   {
    "outs": 1,
    "base": 2,
    "bases": "2B",
-   "n_bunt": 62,
-   "n_alt": 35225,
-   "e_dwe_bunt": -0.03011,
-   "e_dwe_alt": 0.00058,
-   "dv_per_bunt": -0.03069,
-   "dv_total": -1.9027
+   "situation": "sacrifice",
+   "n_bunt": 106,
+   "n_alt": 35181,
+   "n_bunt_hit": 38,
+   "e_dwe_bunt": 0.00088,
+   "e_dwe_alt": 0.00053,
+   "dv_per_bunt": 0.00035,
+   "dv_total": 0.0371
   },
   {
    "outs": 1,
    "base": 3,
    "bases": "1B+2B",
-   "n_bunt": 181,
-   "n_alt": 36775,
-   "e_dwe_bunt": -0.02791,
-   "e_dwe_alt": -0.0011,
-   "dv_per_bunt": -0.02681,
-   "dv_total": -4.8528
+   "situation": "sacrifice",
+   "n_bunt": 316,
+   "n_alt": 36640,
+   "n_bunt_hit": 45,
+   "e_dwe_bunt": -0.01935,
+   "e_dwe_alt": -0.00108,
+   "dv_per_bunt": -0.01828,
+   "dv_total": -5.7759
   },
   {
    "outs": 1,
    "base": 4,
    "bases": "3B",
-   "n_bunt": 50,
-   "n_alt": 10707,
-   "e_dwe_bunt": 0.02736,
-   "e_dwe_alt": 0.004,
-   "dv_per_bunt": 0.02336,
-   "dv_total": 1.1678
+   "situation": "sacrifice",
+   "n_bunt": 87,
+   "n_alt": 10670,
+   "n_bunt_hit": 24,
+   "e_dwe_bunt": 0.01836,
+   "e_dwe_alt": 0.00399,
+   "dv_per_bunt": 0.01437,
+   "dv_total": 1.25
   },
   {
    "outs": 1,
    "base": 5,
    "bases": "1B+3B",
-   "n_bunt": 264,
-   "n_alt": 15887,
-   "e_dwe_bunt": 0.00558,
-   "e_dwe_alt": 0.00189,
-   "dv_per_bunt": 0.0037,
-   "dv_total": 0.9759
+   "situation": "sacrifice",
+   "n_bunt": 473,
+   "n_alt": 15678,
+   "n_bunt_hit": 98,
+   "e_dwe_bunt": 0.00545,
+   "e_dwe_alt": 0.00184,
+   "dv_per_bunt": 0.00361,
+   "dv_total": 1.7064
   },
   {
    "outs": 1,
    "base": 6,
    "bases": "2B+3B",
-   "n_bunt": 29,
-   "n_alt": 10204,
-   "e_dwe_bunt": 0.01169,
-   "e_dwe_alt": 0.00098,
-   "dv_per_bunt": 0.01071,
-   "dv_total": 0.3106
+   "situation": "sacrifice",
+   "n_bunt": 56,
+   "n_alt": 10177,
+   "n_bunt_hit": 13,
+   "e_dwe_bunt": 0.0048,
+   "e_dwe_alt": 0.00099,
+   "dv_per_bunt": 0.00381,
+   "dv_total": 0.2135
   }
  ],
  "independent_control": {
   "source": "StatsAPI wp_home_before / wpa_home, converted to the batting team's frame and divided by 100 (those columns are percentage points, not probabilities)",
-  "total_wins": -76.715,
+  "total_wins": -3.235,
+  "by_situation_wins": {
+   "sacrifice": -20.727,
+   "for_a_hit": 17.492
+  },
+  "model_over_control": 17.311,
+  "reconciliation": {
+   "identity": "total = the bunts' own summed change, by result, minus the alternative's cell mean times the bunt count; exact for both the model and the control",
+   "by_result": {
+    "sacrifice": {
+     "n": 4847,
+     "model_wins": -54.813,
+     "control_wins": -10.692,
+     "gap_wins": -44.121
+    },
+    "bunt_hit": {
+     "n": 2540,
+     "model_wins": 139.273,
+     "control_wins": 131.066,
+     "gap_wins": 8.207
+    },
+    "bunt_out": {
+     "n": 2090,
+     "model_wins": -70.554,
+     "control_wins": -70.28,
+     "gap_wins": -0.274
+    },
+    "reached_or_double_play": {
+     "n": 990,
+     "model_wins": -42.779,
+     "control_wins": -40.546,
+     "gap_wins": -2.233
+    },
+    "strike_three_on_a_bunt": {
+     "n": 546,
+     "model_wins": -22.82,
+     "control_wins": -21.478,
+     "gap_wins": -1.342
+    }
+   },
+   "alternative_offset": {
+    "model_wins": 4.306,
+    "control_wins": -8.695,
+    "gap_wins": 13.001
+   }
+  },
+  "largest_gap_sentence": "The two models part most on sacrifice (4,847 bunts): -54.8 wins on the house model against -10.7 on the feed's.",
   "is_realized_wpa": true,
   "why_it_is_not_the_metric": "it is the REALIZED win-probability change of the plays that happened, so it carries outcome variance the decision did not choose. It is here to check the sign and the size of the modelled number against a win-expectancy model this repo did not build."
  },
- "what_this_is": "DV(S) = E[change in WE | a bunt was called from state S] minus E[change in WE | any other plate appearance from S], both measured league-wide. Each play is differenced against its OWN pre-play state, so the score and inning cancel and what is left is what the plate appearance did. so every bunt from one state carries the same decision value. The realized outcome of an individual bunt never enters it.",
+ "what_this_is": "DV(S) = E[change in WE | a bunt was called from state S] minus E[change in WE | any other plate appearance from S], both measured league-wide. Each play is differenced against its OWN pre-play state, so the score and inning cancel and what is left is what the plate appearance did, so every bunt from one state carries the same decision value. The realized outcome of an individual bunt never enters it.",
  "the_selection_problem": "NOT SOLVED, STATED. Managers bunt with the batters they least want swinging, so E[WE | bunt] is measured over a weaker population than E[WE | swing]. This prices THE BUNT AS DEPLOYED, which is a fair read of what the league's bunting has been worth, and it is biased against the bunt as a tactic. Removing the bias needs a per-batter plate appearance model (the plan's M-ENG-1), which does not exist yet.",
  "two_outs_excluded": "With two down an out ends the half-inning, so its value comes from the measured half-inning-start table while the alternative comes from the smooth model. Those are two estimators with nothing calibrating them against each other, so their difference has no guaranteed sign. A two-out sacrifice is also nearly nonexistent.",
  "no_per_club_metric": "None is published here, and it is not an oversight. The running-game battery found per-agent decision value does not repeat between halves of a season; nothing has shown this family behaves differently, so a per-club column would be a ranking of noise a reader could not recognise as one. It needs its own split-half before it can ship."

@@ -234,10 +234,24 @@ def _bunt_sentence(d: dict) -> str:
         else:
             tail = (f"The one positive cell is a squeeze (runner on third, one "
                     f"out): {best['bases']} at {best['dv_per_bunt']:+.4f} wins a bunt.")
+    n_seasons = len(d.get("seasons") or [])
+    sit = d.get("by_situation") or {}
+    sac, hit = sit.get("sacrifice"), sit.get("for_a_hit")
+    if sac and hit:
+        # "Sacrifice" is said only over the runner-on cells (audit M10-02): a
+        # bases-empty bunt has no runner to sacrifice and is a try for a hit.
+        def _part(v):
+            t = v.get("total_decision_value_wins") or 0
+            return (f"{'cost' if t < 0 else 'gained'} the league {abs(t):.0f} wins over "
+                    f"{v.get('n_bunts_priced'):,} bunts, "
+                    f"{abs(v.get('dv_per_bunt_mean') or 0):.4f} wins each")
+        return (f"Sacrifice bunts (a runner on, fewer than two out) {_part(sac)}, in "
+                f"{n_seasons} seasons. Bunts for a hit with the bases empty {_part(hit)}; "
+                f"{hit.get('n_bunt_hits'):,} of them went for hits. " + tail)
     tot = d.get("total_decision_value_wins") or 0
-    return (f"Sacrifice bunts {'cost' if tot < 0 else 'gained'} the league "
+    return (f"Bunts {'cost' if tot < 0 else 'gained'} the league "
             f"{abs(tot):.0f} wins over {d.get('n_bunts_priced'):,} bunts in "
-            f"{len(d.get('seasons') or [])} seasons, "
+            f"{n_seasons} seasons, "
             f"{abs(d.get('dv_per_bunt_mean') or 0):.4f} wins each. " + tail)
 
 
@@ -283,6 +297,9 @@ def _bunt_section() -> dict:
         "seasons": d.get("seasons"),
         "total_decision_value_wins": d.get("total_decision_value_wins"),
         "dv_per_bunt_mean": d.get("dv_per_bunt_mean"),
+        "by_situation": d.get("by_situation"),
+        "situations": d.get("situations"),
+        "what_counts_as_a_bunt": d.get("what_counts_as_a_bunt"),
         "cells": d.get("cells"),
         "sentence": _bunt_sentence(d),
         "independent_control": ctl,
@@ -372,15 +389,22 @@ def _decomposition(dec: dict) -> dict:
     return out
 
 
-def _families_sentence(net, bunt) -> str:
+def _families_sentence(net, bunt, sacrifice=None, for_a_hit=None) -> str:
     """The still-dark families, with both measured totals and their size ratio
     read off the artifacts (audit F07-02: both figures moved on the score
-    repair, and one changed sign)."""
+    repair, and one changed sign). Since M10-02 the bunt family prices every
+    bunt; the sacrifice-situation part is named beside the whole when the
+    artifact splits it."""
+    if sacrifice is not None and for_a_hit is not None:
+        bunt = sacrifice
+        what = (f"the sacrifice bunt ({sacrifice:+.0f} wins; bunts for a hit with the "
+                f"bases empty {for_a_hit:+.0f})")
+    else:
+        what = f"the sacrifice bunt ({bunt:+.0f} wins)"
     apart = (f", a {max(abs(bunt), abs(net)) / min(abs(bunt), abs(net)):.0f}-fold "
              f"gap in size" if net and bunt else "")
     return (f"two decision families are measured: the running game "
-            f"({net:+.2f} wins to the league) and the sacrifice bunt "
-            f"({bunt:+.0f} wins){apart}, so neither generalises to the rest. "
+            f"({net:+.2f} wins to the league) and {what}{apart}, so neither generalises to the rest. "
             f"The bullpen call and the pinch hit have more room and have not "
             f"been measured.")
 
@@ -683,8 +707,12 @@ def build(*, corpus=None, teams=True) -> dict:
                 # sentence moved when the score convention was corrected, and
                 # one of them changed sign.
                 "why": _families_sentence(
-                    _r(gate["headline"]["net_dv_all_seasons_wins"], 2),
-                    _bunt.get("total_decision_value_wins") or 0)
+                    _r(run.get("net_dv_wins", gate["headline"]["net_dv_all_seasons_wins"]), 2),
+                    _bunt.get("total_decision_value_wins") or 0,
+                    ((_bunt.get("by_situation") or {}).get("sacrifice") or {}).get(
+                        "total_decision_value_wins"),
+                    ((_bunt.get("by_situation") or {}).get("for_a_hit") or {}).get(
+                        "total_decision_value_wins"))
                 + (f" The decision ledger carries REALIZED value for {_words(_n_realized)} "
                    "families, which is what happened after the decision and not the "
                    "decision's value; the counterfactual for the bullpen call and the "

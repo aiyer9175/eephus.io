@@ -346,28 +346,42 @@
   function renderBunt() {
     var b = (DATA.sections || {}).sacrifice_bunt;
     if (!b || !b.live) return "";
+    // The situation and bunt-hit columns ride only on a payload that reads a bunt
+    // off the ball (audit M10-02); an older payload draws the five columns it had.
+    var bySit = (b.cells || []).some(function (c) { return c.situation != null; });
+    var sitLabel = { sacrifice: "Sacrifice", for_a_hit: "For a hit" };
     var rows = (b.cells || []).map(function (c) {
-      return "<tr><td>" + esc(c.bases) + "</td><td>" + esc(c.outs) + "</td><td>" +
-        esc(c.n_bunt) + '</td><td class="' + (c.dv_per_bunt > 0 ? "mgmt-pos" : "mgmt-neg") + '">' +
+      return "<tr><td>" + esc(c.bases) + "</td><td>" + esc(c.outs) + "</td>" +
+        (bySit ? "<td>" + esc(sitLabel[c.situation] || c.situation) + "</td>" : "") + "<td>" +
+        esc(c.n_bunt) + "</td>" + (bySit ? "<td>" + esc(c.n_bunt_hit) + "</td>" : "") +
+        '<td class="' + (c.dv_per_bunt > 0 ? "mgmt-pos" : "mgmt-neg") + '">' +
         signed(c.dv_per_bunt, 4) + "</td><td>" + signed(c.dv_total, 1) + "</td></tr>";
     }).join("");
     var ic = b.independent_control || {};
     var fam = (((DATA.decisions || {}).families) || {}).bunt;
-    return '<section class="mgmt-block"><h2>The sacrifice bunt</h2>' +
+    return '<section class="mgmt-block"><h2>' + (bySit ? "The bunt" : "The sacrifice bunt") + "</h2>" +
       '<p class="mgmt-lede">' + esc(b.sentence) + "</p>" + vintageLine(b.vintage) +
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' +
-      "<th>Bases</th><th>Outs</th><th>Bunts</th><th>" + gl("DV", "decision_value") +
+      "<th>Bases</th><th>Outs</th>" + (bySit ? "<th>Situation</th>" : "") + "<th>Bunts</th>" +
+      (bySit ? "<th>Bunt hits</th>" : "") + "<th>" + gl("DV", "decision_value") +
       " per bunt</th><th>DV total</th></tr></thead><tbody>" + rows + "</tbody></table></div>" +
       (ic.total_wins != null
         ? '<p class="mgmt-note"><b>Control</b> (StatsAPI realized WPA, same bunts): ' +
-          signed(ic.total_wins, 1) + " wins; " + esc(ic.why_it_is_not_the_metric) + "</p>" : "") +
+          signed(ic.total_wins, 1) + " wins" +
+          (ic.model_over_control != null ? "; the modelled total is " + num(ic.model_over_control, 2) +
+            " times it, from a different win expectancy model that nothing here calibrates against it" : "") +
+          "; " + esc(ic.why_it_is_not_the_metric) +
+          (ic.largest_gap_sentence ? " " + esc(ic.largest_gap_sentence) : "") + "</p>" : "") +
+      (b.what_counts_as_a_bunt ? '<p class="mgmt-note"><b>What counts as a bunt</b>: ' +
+        esc(b.what_counts_as_a_bunt) + "</p>" : "") +
       (b.the_selection_problem
         ? '<p class="mgmt-note"><b>Selection</b>: ' + esc(b.the_selection_problem) + "</p>" : "") +
       (b.two_outs_excluded ? '<p class="mgmt-note">' + esc(b.two_outs_excluded) + "</p>" : "") +
       // The bunt ATTEMPT ledger (pitch codes) rides beside the priced result.
       (fam && fam.kinds ? '<p class="mgmt-note"><b>Attempts in the ledger</b>: ' +
         Object.keys(fam.kinds).map(function (k) { return esc(k.replace(/_/g, " ")) + " " + esc(fam.kinds[k]); }).join(", ") +
-        ". " + esc(fam.sign_note || "") + " " + esc(fam.counterfactual_sentence || "") + "</p>" : "") +
+        ". " + esc(fam.kinds_note ? fam.kinds_note + ". " : "") + esc(fam.sign_note || "") + " " +
+        esc(fam.counterfactual_sentence || "") + "</p>" : "") +
       "</section>";
   }
 

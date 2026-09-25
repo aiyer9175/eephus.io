@@ -87,20 +87,60 @@ def test_bunting_costs_the_league_wins():
 
 
 def test_the_independent_control_agrees_in_sign_and_magnitude():
+    """REWRITTEN 2026-09-25 (audit M10-02). The old check bounded the whole-family
+    ratio at 0.4 to 2.5, and it held (-127.2 against -75.3) only while both sides
+    counted the same outcome-selected bunts. With every bunt priced the whole-family
+    ratio is 17.3 (-56.0 against -3.2), because the two situations point opposite
+    ways. So the check is per situation on the sign, and the gap is not bounded but
+    RECONCILED: each total splits exactly by the bunt's result, and the payload names
+    where the models part (the successful sacrifice, -54.8 against -10.7)."""
     d = _art()
     c = d.get("independent_control")
     if not c:
         pytest.skip("control not computed on this build")
-    assert c["total_wins"] < 0, "the independent model disagrees on the sign"
-    ratio = d["total_decision_value_wins"] / c["total_wins"]
-    assert 0.4 < ratio < 2.5, (
-        f"model and control differ by {ratio:.2f}x, which is past the range two "
-        f"win-expectancy models should disagree by")
+    for k, v in d["by_situation"].items():
+        ctl = c["by_situation_wins"][k]
+        assert (v["total_decision_value_wins"] < 0) == (ctl < 0), (
+            f"the independent model disagrees on the sign in the {k} situation")
+    rec = c["reconciliation"]
+    for side, tot in (("model_wins", d["total_decision_value_wins"]),
+                      ("control_wins", c["total_wins"])):
+        s = sum(v[side] for v in rec["by_result"].values()) - rec["alternative_offset"][side]
+        assert abs(s - tot) < 0.01, (side, s, tot)
+    assert abs(c["model_over_control"] - d["total_decision_value_wins"] / c["total_wins"]) < 0.01
+    assert c["largest_gap_sentence"]
     assert c["is_realized_wpa"] is True
     why = c["why_it_is_not_the_metric"].lower()
     assert "realized" in why and "check the sign" in why, (
         "the control no longer says what it is FOR; it is a second opinion on sign "
         "and size, and it must never be mistaken for the published metric")
+
+
+def test_every_bunt_is_priced_whatever_its_result():
+    """M10-02. The family counted only bunts named by an out or a sacrifice, so the
+    bases-empty cells held nothing but outs. Every bunted ball in play and strike
+    three on a bunt is now on the bunt side, and the bases-empty cells carry the
+    bunt hits."""
+    import mgmt_bunt as mb
+    d = _art()
+    assert "bunted" in Path(mb.__file__).read_text(encoding="utf-8")
+    empty = [c for c in d["cells"] if c["base"] == 0]
+    assert empty and all(c["n_bunt_hit"] > 0 and c["situation"] == "for_a_hit" for c in empty)
+    assert all(c["situation"] == "sacrifice" for c in d["cells"] if c["base"] != 0)
+    hits = sum(v["n_bunt_hits"] for v in d["by_situation"].values())
+    assert hits == sum(c["n_bunt_hit"] for c in d["cells"]) and hits > 0
+    assert sum(v["n_bunts_priced"] for v in d["by_situation"].values()) == d["n_bunts_priced"]
+    assert "strike three" in d["what_counts_as_a_bunt"]
+
+
+def test_the_family_refuses_a_corpus_without_the_bunted_column(tmp_path):
+    import pandas as pd
+    import mgmt_bunt as mb
+    d = tmp_path / "plays" / "2099"
+    d.mkdir(parents=True)
+    pd.DataFrame({"event": ["Single"], "outs_before": [0]}).to_parquet(d / "plays-2099.parquet")
+    out = mb.price(corpus=tmp_path)
+    assert out["status"].startswith("not built") and "bunted" in out["status"]
 
 
 def test_two_outs_are_excluded():

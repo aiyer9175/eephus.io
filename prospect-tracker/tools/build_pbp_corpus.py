@@ -12,7 +12,10 @@ under ``.cache/pbp_corpus/``:
 
   plays    one row per plate appearance. Identity, count, score, Leverage Index,
            win probability, and the RECONSTRUCTED pre-play state (outs_before,
-           on_first/on_second/on_third runner ids, runs_scored_on_play).
+           on_first/on_second/on_third runner ids, runs_scored_on_play), plus
+           the in-play pitch's ``hitData.trajectory`` and ``bunted`` (the plate
+           appearance ended on a bunt: a bunted ball in play whatever the result
+           name says, or strike three on a foul or missed bunt).
   pitches  one row per ``playEvents`` entry with ``isPitch``. Call code, pitch
            type, velocity, zone, plate coordinates, strike-zone edges, and the
            home-plate umpire id off the event's own ``officials`` block.
@@ -387,6 +390,54 @@ def truth_bases(play: dict) -> dict | None:
     return None
 
 
+#: Result names that are a bunt whatever the ball did. They cover the rare
+#: sacrifice with no hitData on the in-play pitch.
+_BUNT_RESULT_NAMES = ("Sac Bunt", "Sac Bunt Double Play", "Bunt Groundout",
+                      "Bunt Ground Out", "Bunt Pop Out", "Bunt Popout", "Bunt Lineout")
+
+
+def in_play_trajectory(play: dict):
+    """``hitData.trajectory`` of the play's in-play pitch, or None.
+
+    The result name cannot say whether a ball was bunted: a bunt single reads
+    "Single", a bunt the fielder threw away reads "Field Error", a bunt the
+    catcher turned into a force reads "Forceout". The trajectory can
+    ("bunt_grounder", "bunt_popup", "bunt_line_drive"). The description is not
+    used: it misses errors and fielder's choices ("reaches on a throwing error
+    by pitcher").
+    """
+    traj = None
+    for ev in play.get("playEvents") or ():
+        if ev.get("isPitch") and (ev.get("details") or {}).get("isInPlay"):
+            traj = (ev.get("hitData") or {}).get("trajectory") or traj
+    return traj
+
+
+#: Pitch call codes of a bunt that was not put in play: foul bunt, missed bunt,
+#: bunt foul tip.
+_BUNT_MISS_CODES = ("L", "M", "O")
+
+
+def is_bunted(play: dict) -> bool:
+    """True when the plate appearance ENDED on a bunt: a bunted ball in play, or
+    strike three on a foul or missed bunt. Both are the bunt's own result; a bunt
+    fouled off earlier in a plate appearance the batter then swung through is not.
+    """
+    traj = in_play_trajectory(play)
+    if traj and str(traj).startswith("bunt"):
+        return True
+    event = (play.get("result") or {}).get("event") or ""
+    if event in _BUNT_RESULT_NAMES:
+        return True
+    if event == "Strikeout":
+        last = None
+        for ev in play.get("playEvents") or ():
+            if ev.get("isPitch"):
+                last = ((ev.get("details") or {}).get("call") or {}).get("code")
+        return last in _BUNT_MISS_CODES
+    return False
+
+
 def reconstruct_plays(plays, game_pk=None, season=None,
                       diag: dict | None = None) -> list[dict]:
     """Walk one game's play list into play rows carrying the pre-play state.
@@ -561,6 +612,8 @@ def reconstruct_plays(plays, game_pk=None, season=None,
             "on_second": pre["2B"],
             "on_third": pre["3B"],
             "runs_scored_on_play": runs_scored,
+            "trajectory": in_play_trajectory(play),
+            "bunted": is_bunted(play),
         })
         prev_outs = outs_after
 
@@ -782,6 +835,7 @@ def _schemas():
             ("wp_home_before", f8), ("wp_home_after", f8), ("wpa_home", f8),
             ("outs_before", i8), ("on_first", i64), ("on_second", i64),
             ("on_third", i64), ("runs_scored_on_play", i8),
+            ("trajectory", s), ("bunted", b),
         ]),
         "pitches": pa.schema([
             ("game_pk", i64), ("season", i16), ("at_bat_index", i16),

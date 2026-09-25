@@ -435,6 +435,31 @@ class TestMissingFields:
         assert bpc.reconstruct_plays([], game_pk=1, season=2023) == []
         assert bpc.reconstruct_plays(None, game_pk=1, season=2023) == []
 
+    def test_a_bunt_single_is_flagged_bunted_from_its_trajectory(self):
+        """M10-02. The result name of a bunt single is "Single"; only the in-play
+        pitch's hitData says the ball was bunted. Strike three on a missed bunt is
+        the bunt's own result and is flagged; a strikeout swinging after an early
+        foul bunt is not; a sacrifice is flagged by name."""
+        hit = _pitch(call="X")
+        hit["details"]["isInPlay"] = True
+        hit["hitData"] = {"trajectory": "bunt_grounder"}
+        swing = _pitch(call="X")
+        swing["details"]["isInPlay"] = True
+        swing["hitData"] = {"trajectory": "ground_ball"}
+        plays = [
+            _play(0, 1, "top", 0, play_events=[hit]),
+            _play(1, 1, "top", 0, play_events=[swing]),
+            _play(2, 1, "top", 1, event="Strikeout", event_type="strikeout",
+                  play_events=[_pitch(call="M")]),
+            _play(3, 1, "top", 2, event="Sac Bunt", event_type="sac_bunt",
+                  play_events=[_pitch(call="X")]),
+            _play(4, 2, "top", 1, event="Strikeout", event_type="strikeout",
+                  play_events=[_pitch(call="L"), _pitch(call="S")]),
+        ]
+        rows = bpc.reconstruct_plays(plays, game_pk=1, season=2023)
+        assert [r["bunted"] for r in rows] == [True, False, True, True, False]
+        assert rows[0]["trajectory"] == "bunt_grounder" and rows[2]["trajectory"] is None
+
     def test_win_probability_before_is_after_minus_added(self):
         rows = bpc.reconstruct_plays([_play(0, 1, "top", 0)], game_pk=1, season=2023)
         assert rows[0]["wp_home_after"] == pytest.approx(51.5)

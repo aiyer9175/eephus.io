@@ -218,6 +218,19 @@ REMOVED_DERIVATION = (
 BUNT_RESULTS = ("Sac Bunt", "Bunt Groundout", "Bunt Pop Out", "Bunt Lineout",
                 "Sac Bunt Double Play", "Bunt Ground Out", "Bunt Popout")
 BUNT_CODES = ("L", "M", "O")           # foul bunt, missed bunt, bunt foul tip
+#: The corpus column `bunted` (tools/build_pbp_corpus.is_bunted) marks a plate
+#: appearance that ended on a bunt whatever the result name (audit M10-02): strike
+#: three on a foul or missed bunt, a bunt single, a bunt
+#: reached on an error and a bunt fielder's choice are bunts, where the result
+#: names above left them out and filed a bunt single after a foul bunt as an
+#: abandoned attempt.
+BUNT_HIT_EVENTS = ("Single", "Double", "Triple")
+BUNT_KINDS_NOTE = ("sac_bunt and bunt_out are named by the result; bunt_hit is a bunted ball "
+                   "for a hit; bunt_strikeout is strike three on a foul or missed bunt; "
+                   "bunt_other is a bunted ball the batter reached on by an error, "
+                   "a fielder's choice or a force, or a bunt into a double play; "
+                   "bunt_attempt_abandoned is a plate appearance with a foul or missed bunt "
+                   "that did not end on a bunted ball")
 
 _SWITCH_DH = re.compile(r" remains in the game as the designated hitter")
 _SWITCH_FIELD = re.compile(r" remains in the game as the (right fielder|left fielder|"
@@ -479,6 +492,8 @@ class SeasonCtx:
         self.on3 = pl["on_third"].to_numpy(dtype=float)
         self.runs = pl["runs_scored_on_play"].fillna(0).to_numpy(dtype="int64")
         self.event = pl["event"].astype(object).to_numpy()
+        self.bunted = (pl["bunted"].fillna(False).to_numpy(dtype=bool)
+                       if "bunted" in pl.columns else np.zeros(self.n, dtype=bool))
         self.etype = pl["event_type"].astype(object).to_numpy()
         # (game_pk, at_bat_index) -> row
         self.pos = {(int(g), int(a)): i for i, (g, a) in enumerate(zip(self.gp, self.ab))}
@@ -926,12 +941,14 @@ def detect_bunts(ctx: SeasonCtx, cells: dict | None = None) -> list:
     import numpy as np
     cells = _bunt_cells() if cells is None else cells
     rows = []
-    is_result = np.isin(ctx.event.astype(str), BUNT_RESULTS)
+    is_result = np.isin(ctx.event.astype(str), BUNT_RESULTS) | ctx.bunted
     seen = set()
     for i in np.flatnonzero(is_result):
         i = int(i)
         ev = str(ctx.event[i])
-        kind = "sac_bunt" if ev == "Sac Bunt" else "bunt_out"
+        kind = ("sac_bunt" if ev == "Sac Bunt" else "bunt_out" if ev in BUNT_RESULTS
+                else "bunt_hit" if ev in BUNT_HIT_EVENTS
+                else "bunt_strikeout" if ev == "Strikeout" else "bunt_other")
         flags = []
         key = (int(ctx.gp[i]), int(ctx.ab[i]))
         seen.add(key)
@@ -1412,6 +1429,7 @@ def families_block(ledger, baseline: dict | None, gate_status: dict, thin_by_fam
                 "dvs": None}
         if f == "bunt":
             out[f]["kinds"] = {str(k): int(n) for k, n in g.groupby("kind").size().items()}
+            out[f]["kinds_note"] = BUNT_KINDS_NOTE
             out[f]["sign_note"] = ("the bunt sign is not observable; an attempt with a runner "
                                    "on and fewer than two outs is the closest proxy and is "
                                    "flagged sign_proxy")
