@@ -456,6 +456,13 @@ def main() -> None:
             print(f"  {k:10s} model MAE {v['mae_model']:.3f}  vs base {v['mae_base']:.3f}  (n={v['n']})")
         print(f"  gates: {s['gates']}")
         print(f"  PASS: {s['pass']}")
+    if args.gate1 or args.gate2:
+        # fa_meta.json carries a COPY of both gate artifacts (the /fa/ Model
+        # view renders it) and the class bands read band_scale at export time,
+        # so a persisted gate is not served until the sidecars are rebuilt.
+        # test_fa_meta_gate_parity.py fails until they are.
+        print("\n  NEXT: python fa_export.py, so fa_meta.json and the class "
+              "bands follow this gate")
 
 
 

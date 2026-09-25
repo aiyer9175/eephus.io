@@ -289,6 +289,10 @@ READING_MAX_AGE_DAYS = 45
 STABLE_GATE_CHECKS = (
     ("fa_market", "guarantee", "data/fa_gate2_eval.json",
      ("pooled", "guarantee", "mae_model"), 0.05),
+    # The literal card served 0.63 on /glossary/#view=models while the artifact
+    # read 0.574 (2026-08-03) and then 0.5157 (2026-09-23); it is derived now.
+    ("fa_projection_marcel", "WAR error", "data/fa_gate1_eval.json",
+     ("pooled", "war", "mae_model"), 0.005),
 )
 
 

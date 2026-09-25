@@ -139,7 +139,10 @@ def validate(reg: dict | None = None) -> list[str]:
 # eval_artifact on every run. Only these fields may be derived, and each must
 # resolve to this type. `resolvable` and `verdict` are the artifact's own
 # resolvability flag and verdict string; the Models and Proofs view withholds
-# the star from a headline whose `resolvable` is False.
+# the star from a headline whose `resolvable` is False. An optional integer
+# `digits` on the spec rounds the derived numbers for display, because the card
+# prints the value as stored and an artifact carries full float precision
+# (fa_gate1_eval.json's WAR MAE is 0.5156555204307136).
 _CARD_DERIVABLE = {
     "champion": "number",
     "baseline": "number",
@@ -180,6 +183,10 @@ def derive_card(m: dict, doc=None) -> dict | None:
         doc = json.loads((Path(__file__).parent / m["eval_artifact"])
                          .read_text(encoding="utf-8"))
     out = dict(card)
+    digits = spec.get("digits")
+    if digits is not None and (not isinstance(digits, int) or isinstance(digits, bool)
+                               or not 0 <= digits <= 6):
+        raise ValueError("card.derived_from.digits must be an integer 0-6")
     if "n" in spec:
         n = _dig_path(doc, spec["n"])
         if not _typed(n, "number"):
@@ -200,6 +207,8 @@ def derive_card(m: dict, doc=None) -> dict | None:
             val = _dig_path(doc, path)
             if not _typed(val, kind):
                 raise ValueError(f"card {field} path {path} is not a {kind}")
+            if kind == "number" and digits is not None:
+                val = round(val, digits)
             nh[field] = val
         new_heads.append(nh)
     out["headline"] = new_heads

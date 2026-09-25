@@ -161,6 +161,37 @@ def test_consensus_fv_card_carries_only_the_leg_its_artifact_resolves():
         "order realized WAR better than its best input")
 
 
+def test_fa_projection_marcel_card_reads_gate1_pooled_war():
+    """The literal 0.63 vs 0.73 card outlived two Gate 1 re-measures (0.574 on
+    2026-08-03, 0.5157 on 2026-09-23). It is read from pooled.war now, rounded
+    to three places for display, with the star gated on the artifact's own WAR
+    gate."""
+    row = next(m for m in mr.load()["models"] if m["model_id"] == "fa_projection_marcel")
+    spec = row["card"].get("derived_from")
+    assert spec, "fa_projection_marcel's card is typed again; it must be derived"
+    assert spec["headline"] == [{"champion": "pooled.war.mae_model",
+                                 "baseline": "pooled.war.mae_base",
+                                 "resolvable": "gates.war"}]
+    art = json.loads((HERE / "data" / "fa_gate1_eval.json").read_text(encoding="utf-8"))
+    h = row["card"]["headline"][0]
+    assert h["champion"] == round(art["pooled"]["war"]["mae_model"], spec["digits"])
+    assert h["baseline"] == round(art["pooled"]["war"]["mae_base"], spec["digits"])
+    assert row["card"]["n"] == art["pooled"]["war"]["n"]
+
+
+def test_derived_card_digits_must_be_a_small_integer():
+    import pytest
+    art = {"a": 0.123456, "b": 0.2}
+    card = {"headline": [{"label": "x", "champion": 0, "baseline": 0, "better": "lower"}],
+            "derived_from": {"headline": [{"champion": "a", "baseline": "b"}]}}
+    got = mr.derive_card({"card": dict(card, derived_from=dict(card["derived_from"], digits=2))}, art)
+    assert got["headline"][0]["champion"] == 0.12
+    assert mr.derive_card({"card": card}, art)["headline"][0]["champion"] == 0.123456
+    for bad in (True, -1, 7, 2.0, "3"):
+        with pytest.raises(ValueError):
+            mr.derive_card({"card": dict(card, derived_from=dict(card["derived_from"], digits=bad))}, art)
+
+
 def test_a_validated_derived_card_shows_a_resolved_win():
     """`validated` means the champion beats its stated baseline. When a
     derived card is the proof, at least one headline must be a strict win on a
