@@ -778,24 +778,80 @@ def cash_direction(description: str) -> str | None:
     return None
 
 
-def trades_panel(con) -> dict:
+def trade_moves(rows, mlb30: set,
+                include_inferred: bool = False) -> list[tuple[str, str, str, str]]:
+    """Distinct cross-org moves (player_key, trade_date, from, to) from trades rows
+    (player_key, trade_date, from_org, to_org, source, date_range_start).
+
+    By default only mlb_api rows (the MLB transaction feed) count. Inferred rows
+    (an org change between two board snapshots) stay out: after de-duplication
+    2,104 of 3,706 cross-club moves were inferred-only, and 1,512 of all moves
+    were A -> B -> A round trips, mostly two sources disagreeing on a player's org
+    (adam_kloffenstein TOR -> NYY -> TOR within a month); on mlb_api rows alone
+    26 of 1,602 are round trips. include_inferred=True keeps the de-duplicated
+    inferred moves the feed does not confirm.
+
+    Census M02-05 (2026-09-25). The table carries four artifacts that inflated
+    every org's trade panel:
+      * inferred rows re-fire daily when a player's newest snapshot is the rolling
+        performance_ingest row, so one move sits on up to 45 rows; a move is
+        (player, from, to, date_range_start) and counts once, dated by its
+        earliest row;
+      * affiliate codes (SAL, ALB, OMA...) pass through canonical_org, so a
+        SAL -> LAA transition (a Salt Lake roster row, then an Angels row) read as
+        a trade; a move counts only when BOTH ends are one of the 30 clubs and they
+        differ;
+      * mlb_api rows carry full club names, which the old len(org) > 3 skip dropped
+        entirely; they are canonicalised here and counted;
+      * an inferred move that an mlb_api row confirms for the same player and clubs
+        is the same move and is dropped.
+    """
+    api: dict[tuple, str] = {}
+    inferred: dict[tuple, str] = {}
+    for key, d, frm, to, src, start in rows:
+        a, b = canonical_org(frm), canonical_org(to)
+        if not key or a not in mlb30 or b not in mlb30 or a == b:
+            continue
+        if src == "mlb_api":
+            api.setdefault((key, a, b, d), d)
+        elif include_inferred:
+            k = (key, a, b, start or d)
+            if k not in inferred or d < inferred[k]:
+                inferred[k] = d
+    confirmed = {(k[0], k[1], k[2]) for k in api}
+    moves = [(k[0], d, k[1], k[2]) for k, d in api.items()]
+    moves += [(k[0], d, k[1], k[2]) for k, d in inferred.items()
+              if (k[0], k[1], k[2]) not in confirmed]
+    return moves
+
+
+def trades_panel(con, mlb30: set | None = None) -> dict:
     rows = con.execute("""
-        SELECT player_key, trade_date, from_org, to_org, source, description
+        SELECT player_key, trade_date, from_org, to_org, source, description,
+               date_range_start
         FROM trades WHERE trade_date >= ?""", (TRADE_FIRST_DATE,)).fetchall()
+    if mlb30 is None:
+        mlb30 = set(storage.MLB_30_ORGS)
     fv_near = _fv_near_date_index(con)
     inb: dict[str, list] = defaultdict(list)
     out_n: dict[str, int] = defaultdict(int)
     deals: dict[str, set] = defaultdict(set)
     cash_recv: dict[str, int] = defaultdict(int)
     cash_any: dict[str, int] = defaultdict(int)
-    for key, d, frm, to, _src, desc in rows:
-        if to:
-            inb[to].append((key, d))
-            deals[to].add((d, frm, to))
-        if frm:
-            out_n[frm] += 1
-            deals[frm].add((d, frm, to))
-        if desc and "cash" in desc.lower():
+    for key, d, frm, to in trade_moves(
+            [(k, d, f, t, s, st) for k, d, f, t, s, _desc, st in rows], mlb30):
+        inb[to].append((key, d))
+        deals[to].add((d, frm, to))
+        out_n[frm] += 1
+        deals[frm].add((d, frm, to))
+    # A multi-player deal writes one mlb_api row per player, all with the same
+    # description: count each described deal once.
+    seen_desc: set = set()
+    for key, d, frm, to, _src, desc, _st in rows:
+        if not desc or (d, desc) in seen_desc:
+            continue
+        seen_desc.add((d, desc))
+        if "cash" in desc.lower():
             # mlb_api description rows often carry NULL org columns — both
             # clubs come from the description parse, never the columns.
             m = _CASH_RE.match(desc)
@@ -810,10 +866,9 @@ def trades_panel(con) -> dict:
                 if recv_org:
                     cash_recv[recv_org] += 1
     raw = {}
-    orgs = set(inb) | set(out_n)
-    for org in orgs:
-        if len(org or "") > 3:
-            continue                                    # foreign league codes
+    # League stats run over the 30 clubs only (they ran over 69 codes, 39 of them
+    # affiliate or foreign, which put 24 of 30 clubs at z >= +0.5).
+    for org in sorted(mlb30):
         acquired = inb.get(org, [])
         fvs = [fv for fv in (fv_near(key, d) for key, d in acquired) if fv is not None]
         n_in, n_out = len(acquired), out_n.get(org, 0)
@@ -843,9 +898,11 @@ def trades_panel(con) -> dict:
                               "balanced")
     return {"orgs": raw, "league": lg,
             "window": f"{TRADE_FIRST_DATE[:4]}-present",
-            "note": ("prospect-capital lens: 'in'/'out' count tracked-prospect moves; "
-                     "FV graded from board snapshots within ±120d of the trade — "
-                     "ungraded moves are counted, never guessed")}
+            "note": ("prospect-capital lens: 'in'/'out' count distinct tracked-prospect "
+                     "trades between two of the 30 clubs in the MLB transaction feed; "
+                     "org changes seen only on board snapshots are not counted; FV "
+                     "graded from board snapshots within ±120d of the trade, ungraded "
+                     "moves are counted, never guessed")}
 
 
 def _fv_near_date_index(con):
@@ -1130,7 +1187,7 @@ def build_payload() -> dict:
             "pitchStuff": _filter_mlb30(pitch_stuff_panel(con, players, debuts, mlbam_org), mlb30),
             "toolDev": _filter_mlb30(tool_dev_panel(con), mlb30),
             "ifa": _filter_mlb30(ifa_panel(), mlb30),
-            "trades": _filter_mlb30(trades_panel(con), mlb30),
+            "trades": _filter_mlb30(trades_panel(con, mlb30), mlb30),
             "health": health_panel(con, by_org),
             "graduation": _filter_mlb30(graduation_panel(con, debuts), mlb30),
             "hitterApproach": _filter_mlb30(hitter_approach_panel(players), mlb30),

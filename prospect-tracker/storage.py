@@ -2338,11 +2338,23 @@ def upsert_statlines(statlines: dict[str, StatLine], season: int) -> int:
 
 
 def insert_trades(trades) -> int:
-    """Append-only insert; the UNIQUE constraint dedupes re-runs."""
+    """Append-only insert; the UNIQUE constraint dedupes re-runs.
+
+    An inferred move is idempotent on (player_key, from_org, to_org,
+    date_range_start) as well (census M02-05): a player whose newest snapshot is the
+    rolling performance_ingest row re-fires the same move with a new trade_date on
+    every run, which UNIQUE(player_key, trade_date, source) never collapsed (45 rows
+    for one move). Rows already on file are left alone; readers de-duplicate."""
     from trades import Trade
     n = 0
     with connect() as con:
         for t in trades:
+            if t.source == "inferred" and con.execute(
+                    """SELECT 1 FROM trades WHERE source = 'inferred' AND player_key = ?
+                       AND from_org IS ? AND to_org IS ? AND date_range_start IS ?
+                       LIMIT 1""",
+                    (t.player_key, t.from_org, t.to_org, t.date_range_start)).fetchone():
+                continue
             cur = con.execute(
                 """INSERT OR IGNORE INTO trades
                    (player_key, trade_date, from_org, to_org, source,
