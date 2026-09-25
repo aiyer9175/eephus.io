@@ -4009,7 +4009,7 @@ def _arb_model_panel() -> str:
         downstream.append(
             '<details class="arb-row"><summary class="arb-sum">'
             '<span class="arb-vd arb-vd--%s">%s</span> GATE C2, the '
-            'control-window salary path (scored %s)</summary><dl>'
+            'club-control-window salary path (scored %s)</summary><dl>'
             '<dt>served mode</dt><dd>%s</dd></dl></details>'
             % ("pass" if vd == "PASS" else "null", html.escape(vd),
                html.escape(str(g2.get("scored_at") or g2.get("generated_at") or "?")),
@@ -4018,7 +4018,7 @@ def _arb_model_panel() -> str:
         downstream.append(
             '<details class="arb-row" open><summary class="arb-sum">'
             '<span class="arb-vd arb-vd--null">NOT SCORED</span> GATE C2, the '
-            'control-window salary path</summary><dl>'
+            'club-control-window salary path</summary><dl>'
             '<dt>served mode</dt><dd>%s</dd>'
             '<dt>status</dt><dd>Registered 2026-09-16 (docs/ARBITRATION_GATE.md '
             'section 11). None of its clauses has been scored, so the surplus '
